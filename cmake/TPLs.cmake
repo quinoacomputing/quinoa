@@ -85,7 +85,16 @@ if (NOT NO_SYSTEM_ZOLTAN)
   find_package(Zoltan REQUIRED)
 endif()
 if(ZOLTAN_FOUND)
-  #message(STATUS "Zoltan found at ${ZOLTAN_INCLUDES} (include)) and at ${ZOLTAN_LIBRARIES} (lib)")
+  #message(STATUS "Zoltan found at ${ZOLTAN_INCLUDES} (include) and at ${ZOLTAN_LIBRARIES} (lib)")
+endif()
+
+#### Hypre library
+if (NOT NO_SYSTEM_HYPRE)
+  set(HYPRE_ROOT ${TPL_DIR}) # prefer ours
+  find_package(Hypre REQUIRED)
+endif()
+if(HYPRE_FOUND)
+  #message(STATUS "Hypre found at ${HYPRE_INCLUDES} (include) and at ${HYPRE_LIBRARIES} (lib)")
 endif()
 
 #### BLAS/LAPACK library
