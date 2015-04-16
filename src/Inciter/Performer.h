@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.h
   \author    J. Bakosi
-  \date      Fri 10 Apr 2015 03:58:33 PM MDT
+  \date      Thu 16 Apr 2015 05:33:24 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Performer advances the Euler equations
   \details   Performer advances the Euler equations. There are a potentially
@@ -39,7 +39,8 @@ extern ctr::InputDeck g_inputdeck;
 extern
   std::pair< std::vector< std::size_t >, std::vector< std::size_t > > g_esup;
 extern std::vector< int > g_tetinpoel;
-extern std::vector< std::size_t > g_colors;
+extern std::vector< std::size_t > g_chare;
+extern std::vector< std::size_t > g_gid;
 extern
   std::vector< std::map< std::size_t, std::vector< std::size_t > > > g_comm;
 
@@ -123,14 +124,14 @@ class Performer : public CBase_Performer< Proxy > {
       // Generate global->local and local->global node ids for owned nodes
       std::vector< std::size_t > gnode;
       std::map< std::size_t, std::size_t > lnode;
-      std::size_t gid = 0, lid = 0;
-      for (auto n : g_colors) {
+      std::size_t i = 0, lid = 0;
+      for (auto n : g_chare) {
         if (n == Array::thisIndex) {
-          gnode.push_back( gid );
-          lnode[ gid ] = lid;
+          gnode.push_back( i );
+          lnode[ i ] = lid;
           ++lid;
         }
-        ++gid;
+        ++i;
       }
       // Create set of unique owned global element ids
       std::set< std::size_t > gelem;

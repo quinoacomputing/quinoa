@@ -80,6 +80,7 @@ namespace grm {
     UNSUPPORTED,        //!< Option not supported
     NOOPTION,           //!< Option does not exist
     NOINIT,             //!< No initialization policy selected
+    NOPROBLEM,          //!< No test problem type selected
     NOCOEFF,            //!< No coefficients policy selected
     NOTSELECTED,        //!< Option not selected upstream
     EXISTS,             //!< Variable already used
@@ -153,6 +154,9 @@ namespace grm {
     { MsgKey::NOINIT, "No initialization policy has been specified within the "
       "block preceding this position. This is mandatory for the preceding "
       "block. Use the keyword 'init' to specify an initialization policy." },
+    { MsgKey::NOPROBLEM, "No test problem has been specified within the "
+      "block preceding this position. This is mandatory for the preceding "
+      "block. Use the keyword 'problem' to specify a test problem." },
     { MsgKey::NOCOEFF, "No coefficients policy has been specified within the "
       "block preceding this position. This is mandatory for the preceding "
       "block. Use the keyword 'coeff' to specify an coefficients policy." },

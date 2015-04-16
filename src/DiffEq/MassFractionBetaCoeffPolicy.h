@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/MassFractionBetaCoeffPolicy.h
   \author    J. Bakosi
-  \date      Wed 01 Apr 2015 07:26:52 AM MDT
+  \date      Wed 15 Apr 2015 10:09:45 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Mass-fraction beta SDE coefficients policies
   \details   This file defines coefficients policy classes for the
@@ -40,8 +40,8 @@
     - Must define the static function _type()_, returning the enum value of the
       policy option. Example:
       \code{.cpp}
-        static tk::ctr::CoeffPolicyType type() noexcept {
-          return tk::ctr::CoeffPolicyType::CONSTANT;
+        static ctr::CoeffPolicyType type() noexcept {
+          return ctr::CoeffPolicyType::CONSTANT;
         }
       \endcode
       which returns the enum value of the option from the underlying option
@@ -54,7 +54,7 @@
 #include <boost/mpl/vector.hpp>
 
 #include <Types.h>
-#include <Options/CoeffPolicy.h>
+#include <Walker/Options/CoeffPolicy.h>
 
 namespace walker {
 
@@ -96,8 +96,8 @@ class MassFractionBetaCoeffConst {
     }
 
     //! Coefficients policy type accessor
-    static tk::ctr::CoeffPolicyType type() noexcept
-    { return tk::ctr::CoeffPolicyType::CONSTANT; }
+    static ctr::CoeffPolicyType type() noexcept
+    { return ctr::CoeffPolicyType::CONSTANT; }
 };
 
 //! \brief Mass-fraction beta SDE JRRJ coefficients policity
@@ -137,8 +137,8 @@ class MassFractionBetaCoeffJRRJ {
     }
 
     //! Coefficients policy type accessor
-    static tk::ctr::CoeffPolicyType type() noexcept
-    { return tk::ctr::CoeffPolicyType::JRRJ; }
+    static ctr::CoeffPolicyType type() noexcept
+    { return ctr::CoeffPolicyType::JRRJ; }
 };
 
 //! List of all beta's coefficients policies

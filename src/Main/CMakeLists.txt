@@ -38,11 +38,13 @@ target_link_libraries(${INCITER_EXECUTABLE}
                       Mesh
                       Inciter
                       InciterControl
+                      LinearSystem
                       ${NEMESIS_LIBRARIES}
                       ${EXODUS_LIBRARIES}
                       ${NETCDF_LIBRARIES}
                       ${HDF5_LIBRARY}
                       ${ZOLTAN_LIBRARIES}
+                      ${HYPRE_LIBRARIES}
 )
 
 # Add custom dependencies for Inciter's main Charm++ module
@@ -191,7 +193,6 @@ target_link_libraries(${MESHCONV_EXECUTABLE}
                       ${NEMESIS_LIBRARIES}
                       ${EXODUS_LIBRARIES}
                       ${NETCDF_LIBRARIES}
-                      ${ZOLTAN_LIBRARIES}
 )
 
 # Add custom dependencies for MeshConv's main Charm++ module
@@ -240,7 +241,6 @@ target_link_libraries(${WALKER_EXECUTABLE}
                       ${MKL_CORE_LIBRARY}
                       ${MKL_SEQUENTIAL_LAYER_LIBRARY}
                       ${RNGSSE_LIBRARY}
-                      ${ZOLTAN_LIBRARIES}
 )
 
 # Add custom dependencies for Walker's main Charm++ module

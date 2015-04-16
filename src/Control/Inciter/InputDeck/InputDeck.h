@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Mon 23 Feb 2015 08:58:02 AM MST
+  \date      Wed 15 Apr 2015 09:10:39 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Inciter's input deck definition
   \details   This file defines the heterogeneous stack that is used for storing
@@ -34,7 +34,11 @@ namespace ctr {
 class InputDeck :
   public tk::Control< // tag           type
                       tag::title,      kw::title::info::expect::type,
+                      tag::selected,   selects,
+                      tag::discr,      discretization,
+                      tag::interval,   intervals,
                       tag::cmd,        CmdLine,
+                      tag::param,      parameters,
                       tag::error,      std::vector< std::string > > {
 
   public:
@@ -44,13 +48,30 @@ class InputDeck :
     //!   preprocessor-generated boost::mpl headers), the whole set is broken up
     //!   into several sets each containing 20 keywords.
     //! \see tk::grm::use and its documentation
-    using keywords = boost::mpl::set< kw::title >;
+    using keywords = boost::mpl::set< kw::title,
+                                      kw::nstep,
+                                      kw::term,
+                                      kw::dt,
+                                      kw::ttyi,
+                                      kw::scalar,
+                                      kw::end,
+                                      kw::shear_diff,
+                                      kw::slot_cyl,
+                                      kw::problem,
+                                      kw::inciter >;
                                      
     //! \brief Constructor: set defaults
     //! \details Anything not set here is initialized by the compiler using the
     //!   default constructor for the corresponding type.
     //! \author J. Bakosi
     InputDeck() {
+      // Default discretization parameters
+      set< tag::discr, tag::nstep >
+         ( std::numeric_limits< kw::nstep::info::expect::type >::max() );
+      set< tag::discr, tag::term >( 1.0 );
+      set< tag::discr, tag::dt >( 0.5 );
+      // Default intervals
+      set< tag::interval, tag::tty >( 1 );
       // Initialize help: fill own keywords
       const auto& ctrinfoFill = tk::ctr::Info( get< tag::cmd, tag::ctrinfo >() );
       boost::mpl::for_each< keywords >( ctrinfoFill );
@@ -63,7 +84,11 @@ class InputDeck :
     //! \author J. Bakosi
     void pup( PUP::er& p ) {
       tk::Control< tag::title,      kw::title::info::expect::type,
+                   tag::selected,   selects,
+                   tag::discr,      discretization,
+                   tag::interval,   intervals,
                    tag::cmd,        CmdLine,
+                   tag::param,      parameters,
                    tag::error,      std::vector< std::string > >::pup(p);
     }
     //! \brief Pack/Unpack serialize operator|

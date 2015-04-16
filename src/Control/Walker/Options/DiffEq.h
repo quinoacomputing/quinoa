@@ -2,10 +2,10 @@
 /*!
   \file      src/Control/Walker/Options/DiffEq.h
   \author    J. Bakosi
-  \date      Wed 01 Apr 2015 09:20:07 AM MDT
+  \date      Wed 15 Apr 2015 10:05:55 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
-  \brief     Differential equation options and associations
-  \details   Differential equation options and associations
+  \brief     Differential equation options and associations for walker
+  \details   Differential equation options and associations for walker
 */
 //******************************************************************************
 #ifndef WalkerDiffEqOptions_h
@@ -16,8 +16,8 @@
 #include <TaggedTuple.h>
 #include <Toggle.h>
 #include <Keywords.h>
-#include <Options/InitPolicy.h>
-#include <Options/CoeffPolicy.h>
+#include <Walker/Options/InitPolicy.h>
+#include <Walker/Options/CoeffPolicy.h>
 
 namespace walker {
 namespace ctr {
@@ -41,9 +41,9 @@ inline void operator|( PUP::er& p, DiffEqType& e ) { PUP::pup( p, e ); }
 
 //! Differential equation key used to access a diff eq in a factory
 using DiffEqKey =
-  tk::tuple::tagged_tuple< tag::diffeq,      ctr::DiffEqType,
-                           tag::initpolicy,  tk::ctr::InitPolicyType,
-                           tag::coeffpolicy, tk::ctr::CoeffPolicyType >;
+  tk::tuple::tagged_tuple< tag::diffeq,      DiffEqType,
+                           tag::initpolicy,  ctr::InitPolicyType,
+                           tag::coeffpolicy, ctr::CoeffPolicyType >;
 
 //! Class with base templated on the above enum class with associations
 class DiffEq : public tk::Toggle< DiffEqType > {

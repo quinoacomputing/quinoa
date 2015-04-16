@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/MixBetaCoeffPolicy.h
   \author    J. Bakosi
-  \date      Thu 19 Mar 2015 09:14:02 AM MDT
+  \date      Wed 15 Apr 2015 10:09:22 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Mix beta SDE coefficients policies
   \details   This file defines coefficients policy classes for the mix beta SDE,
@@ -40,8 +40,8 @@
     - Must define the static function _type()_, returning the enum value of the
       policy option. Example:
       \code{.cpp}
-        static tk::ctr::CoeffPolicyType type() noexcept {
-          return tk::ctr::CoeffPolicyType::CONSTANT;
+        static ctr::CoeffPolicyType type() noexcept {
+          return ctr::CoeffPolicyType::CONSTANT;
         }
       \endcode
       which returns the enum value of the option from the underlying option
@@ -73,7 +73,7 @@
 #include <boost/mpl/vector.hpp>
 
 #include <Types.h>
-#include <Options/CoeffPolicy.h>
+#include <Walker/Options/CoeffPolicy.h>
 
 namespace walker {
 
@@ -122,8 +122,8 @@ class MixBetaCoeffConst {
     }
 
     //! Coefficients policy type accessor
-    static tk::ctr::CoeffPolicyType type() noexcept
-    { return tk::ctr::CoeffPolicyType::CONSTANT; }
+    static ctr::CoeffPolicyType type() noexcept
+    { return ctr::CoeffPolicyType::CONSTANT; }
 
     //! Update coefficients using constant coefficients for b' and kappa'
     void update(
@@ -190,8 +190,8 @@ class MixBetaCoeffJRRJ {
     }
 
     //! Coefficients policy type accessor
-    static tk::ctr::CoeffPolicyType type() noexcept
-    { return tk::ctr::CoeffPolicyType::JRRJ; }
+    static ctr::CoeffPolicyType type() noexcept
+    { return ctr::CoeffPolicyType::JRRJ; }
 
     //! Update coefficients using the JRRJ model
     void update(

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/Types.h
   \author    J. Bakosi
-  \date      Mon 23 Feb 2015 08:52:44 AM MST
+  \date      Wed 15 Apr 2015 10:45:53 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Types for Incitier's parsers
   \details   Types for Incitier's parsers. This file defines the components of the
@@ -16,18 +16,17 @@
 
 #include <Tags.h>
 #include <Types.h>
-#include <RNGParam.h>
-#include <Options/InitPolicy.h>
-#include <Options/CoeffPolicy.h>
-#include <Options/PDFFile.h>
-#include <Options/PDFPolicy.h>
-#include <Options/PDFCentering.h>
-#include <Options/TxtFloatFormat.h>
-#include <Options/RNG.h>
+#include <Inciter/Options/DiffEq.h>
+#include <Inciter/Options/Problem.h>
 #include <PUPUtil.h>
 
 namespace inciter {
 namespace ctr {
+
+//! Storage of selected options
+using selects = tk::tuple::tagged_tuple<
+  tag::diffeq,       std::vector< ctr::DiffEqType >  //!< Differential eqs
+>;
 
 //! Discretization parameters storage
 using discretization = tk::tuple::tagged_tuple<
@@ -38,9 +37,7 @@ using discretization = tk::tuple::tagged_tuple<
 
 //! Output intervals storage
 using intervals = tk::tuple::tagged_tuple<
-  tag::tty,  kw::ttyi::info::expect::type,  //!< TTY output interval
-  tag::dump, uint32_t,  //!< Dump output interval
-  tag::glob, uint32_t   //!< Glob output interval
+  tag::tty,  kw::ttyi::info::expect::type        //!< TTY output interval
 >;
 
 //! IO parameters storage
@@ -48,6 +45,16 @@ using ios = tk::tuple::tagged_tuple<
   tag::control,     kw::control::info::expect::type,  //!< Control filename
   tag::input,       std::string,  //!< Input filename
   tag::output,      std::string   //!< Output filename
+>;
+
+//! Scalar transport equation parameters storage
+using ScalarEqParameters = tk::tuple::tagged_tuple<
+  tag::problem,  std::vector< ProblemType >
+>;
+
+//! Parameters storage
+using parameters = tk::tuple::tagged_tuple<
+  tag::scalar,       ScalarEqParameters
 >;
 
 //! PEGTL location type to use throughout Incitier's parsers

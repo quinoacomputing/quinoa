@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/DiffEqStack.C
   \author    J. Bakosi
-  \date      Wed 01 Apr 2015 09:20:25 AM MDT
+  \date      Wed 15 Apr 2015 10:14:11 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Stack of differential equations
   \details   This file defines class DiffEqStack, which implements various
@@ -105,7 +105,8 @@ DiffEqStack::DiffEqStack()
 
   // Dirichlet SDE
   // Construct vector of vectors for all possible policies for SDE
-  using DirPolicies = mpl::vector< tk::InitPolicies, DirichletCoeffPolicies >;
+  using DirPolicies =
+    mpl::vector< walker::InitPolicies, DirichletCoeffPolicies >;
   // Register SDE for all combinations of policies
   mpl::cartesian_product< DirPolicies >(
     registerDiffEq< Dirichlet >
@@ -114,7 +115,7 @@ DiffEqStack::DiffEqStack()
   // Lochner's generalized Dirichlet SDE
   // Construct vector of vectors for all possible policies for SDE
   using GenDirPolicies =
-    mpl::vector< tk::InitPolicies, GeneralizedDirichletCoeffPolicies >;
+    mpl::vector< walker::InitPolicies, GeneralizedDirichletCoeffPolicies >;
   // Register SDE for all combinations of policies
   mpl::cartesian_product< GenDirPolicies >(
     registerDiffEq< GeneralizedDirichlet >
@@ -123,7 +124,7 @@ DiffEqStack::DiffEqStack()
   // Wright-Fisher SDE
   // Construct vector of vectors for all possible policies for SDE
   using WrightFisherPolicies =
-    mpl::vector< tk::InitPolicies, WrightFisherCoeffPolicies >;
+    mpl::vector< walker::InitPolicies, WrightFisherCoeffPolicies >;
   // Register SDE for all combinations of policies
   mpl::cartesian_product< WrightFisherPolicies >(
     registerDiffEq< WrightFisher >
@@ -132,7 +133,7 @@ DiffEqStack::DiffEqStack()
   // Ornstein-Uhlenbeck SDE
   // Construct vector of vectors for all possible policies for SDE
   using OrnsteinUhlenbeckPolicies =
-    mpl::vector< tk::InitPolicies, OrnsteinUhlenbeckCoeffPolicies >;
+    mpl::vector< walker::InitPolicies, OrnsteinUhlenbeckCoeffPolicies >;
   // Register SDE for all combinations of policies
   mpl::cartesian_product< OrnsteinUhlenbeckPolicies >(
     registerDiffEq< OrnsteinUhlenbeck >
@@ -141,7 +142,7 @@ DiffEqStack::DiffEqStack()
   // Diagonal Ornstein-Uhlenbeck SDE
   // Construct vector of vectors for all possible policies for SDE
   using DiagOrnsteinUhlenbeckPolicies =
-    mpl::vector< tk::InitPolicies, DiagOrnsteinUhlenbeckCoeffPolicies >;
+    mpl::vector< walker::InitPolicies, DiagOrnsteinUhlenbeckCoeffPolicies >;
   // Register SDE for all combinations of policies
   mpl::cartesian_product< DiagOrnsteinUhlenbeckPolicies >(
     registerDiffEq< DiagOrnsteinUhlenbeck >
@@ -149,7 +150,7 @@ DiffEqStack::DiffEqStack()
 
   // Beta SDE
   // Construct vector of vectors for all possible policies for SDE
-  using BetaPolicies = mpl::vector< tk::InitPolicies, BetaCoeffPolicies >;
+  using BetaPolicies = mpl::vector< walker::InitPolicies, BetaCoeffPolicies >;
   // Register SDE for all combinations of policies
   mpl::cartesian_product< BetaPolicies >(
     registerDiffEq< Beta >
@@ -158,7 +159,7 @@ DiffEqStack::DiffEqStack()
   // Number-fraction Beta SDE
   // Construct vector of vectors for all possible policies for SDE
   using NumberFractionBetaPolicies =
-    mpl::vector< tk::InitPolicies, NumberFractionBetaCoeffPolicies >;
+    mpl::vector< walker::InitPolicies, NumberFractionBetaCoeffPolicies >;
   // Register SDE for all combinations of policies
   mpl::cartesian_product< NumberFractionBetaPolicies >(
     registerDiffEq< NumberFractionBeta >
@@ -167,7 +168,7 @@ DiffEqStack::DiffEqStack()
   // Mass-fraction Beta SDE
   // Construct vector of vectors for all possible policies for SDE
   using MassFractionBetaPolicies =
-    mpl::vector< tk::InitPolicies, MassFractionBetaCoeffPolicies >;
+    mpl::vector< walker::InitPolicies, MassFractionBetaCoeffPolicies >;
   // Register SDE for all combinations of policies
   mpl::cartesian_product< MassFractionBetaPolicies >(
     registerDiffEq< MassFractionBeta >
@@ -176,7 +177,7 @@ DiffEqStack::DiffEqStack()
   // Mix Beta SDE
   // Construct vector of vectors for all possible policies for SDE
   using MixBetaPolicies =
-    mpl::vector< tk::InitPolicies, MixBetaCoeffPolicies >;
+    mpl::vector< walker::InitPolicies, MixBetaCoeffPolicies >;
   // Register SDE for all combinations of policies
   mpl::cartesian_product< MixBetaPolicies >(
     registerDiffEq< MixBeta >
@@ -185,7 +186,7 @@ DiffEqStack::DiffEqStack()
   // Skew-normal SDE
   // Construct vector of vectors for all possible policies for SDE
   using SkewNormalPolicies =
-    mpl::vector< tk::InitPolicies, SkewNormalCoeffPolicies >;
+    mpl::vector< walker::InitPolicies, SkewNormalCoeffPolicies >;
   // Register SDE for all combinations of policies
   mpl::cartesian_product< SkewNormalPolicies >(
     registerDiffEq< SkewNormal >
@@ -193,7 +194,7 @@ DiffEqStack::DiffEqStack()
 
   // Gamma SDE
   // Construct vector of vectors for all possible policies for SDE
-  using GammaPolicies = mpl::vector< tk::InitPolicies, GammaCoeffPolicies >;
+  using GammaPolicies = mpl::vector< walker::InitPolicies, GammaCoeffPolicies >;
   // Register SDE for all combinations of policies
   mpl::cartesian_product< GammaPolicies >(
     registerDiffEq< Gamma >
@@ -301,9 +302,9 @@ const
   info.emplace_back( "kind", "stochastic" );
   info.emplace_back( "dependent variable", std::string( 1,
     g_inputdeck.get< tag::param, tag::dirichlet, tag::depvar >()[c] ) );
-  info.emplace_back( "initialization policy", tk::ctr::InitPolicy().name(
+  info.emplace_back( "initialization policy", ctr::InitPolicy().name(
     g_inputdeck.get< tag::param, tag::dirichlet, tag::initpolicy >()[c] ) );
-  info.emplace_back( "coefficients policy", tk::ctr::CoeffPolicy().name(
+  info.emplace_back( "coefficients policy", ctr::CoeffPolicy().name(
     g_inputdeck.get< tag::param, tag::dirichlet, tag::coeffpolicy >()[c] ) );
   info.emplace_back( "start offset in particle array", std::to_string(
     g_inputdeck.get< tag::component >().offset< tag::dirichlet >(c) ) );
@@ -346,9 +347,9 @@ DiffEqStack::infoGenDir( std::map< ctr::DiffEqType, std::size_t >& cnt ) const
   info.emplace_back( "kind", "stochastic" );
   info.emplace_back( "dependent variable", std::string( 1,
     g_inputdeck.get< tag::param, tag::gendir, tag::depvar >()[c] ) );
-  info.emplace_back( "initialization policy", tk::ctr::InitPolicy().name(
+  info.emplace_back( "initialization policy", ctr::InitPolicy().name(
     g_inputdeck.get< tag::param, tag::gendir, tag::initpolicy >()[c] ) );
-  info.emplace_back( "coefficients policy", tk::ctr::CoeffPolicy().name(
+  info.emplace_back( "coefficients policy", ctr::CoeffPolicy().name(
     g_inputdeck.get< tag::param, tag::gendir, tag::coeffpolicy >()[c] ) );
   info.emplace_back( "start offset in particle array", std::to_string(
     g_inputdeck.get< tag::component >().offset< tag::gendir >(c) ) );
@@ -394,9 +395,9 @@ const
   info.emplace_back( "kind", "stochastic" );
   info.emplace_back( "dependent variable", std::string( 1,
     g_inputdeck.get< tag::param, tag::wrightfisher, tag::depvar >()[c] ) );
-  info.emplace_back( "initialization policy", tk::ctr::InitPolicy().name(
+  info.emplace_back( "initialization policy", ctr::InitPolicy().name(
     g_inputdeck.get< tag::param, tag::wrightfisher, tag::initpolicy >()[c] ) );
-  info.emplace_back( "coefficients policy", tk::ctr::CoeffPolicy().name(
+  info.emplace_back( "coefficients policy", ctr::CoeffPolicy().name(
     g_inputdeck.get< tag::param, tag::wrightfisher, tag::coeffpolicy >()[c] ) );
   info.emplace_back( "start offset in particle array", std::to_string(
     g_inputdeck.get< tag::component >().offset< tag::wrightfisher >(c) ) );
@@ -433,9 +434,9 @@ DiffEqStack::infoOU( std::map< ctr::DiffEqType, std::size_t >& cnt ) const
   info.emplace_back( "kind", "stochastic" );
   info.emplace_back( "dependent variable", std::string( 1,
     g_inputdeck.get< tag::param, tag::ou, tag::depvar >()[c] ) );
-  info.emplace_back( "initialization policy", tk::ctr::InitPolicy().name(
+  info.emplace_back( "initialization policy", ctr::InitPolicy().name(
     g_inputdeck.get< tag::param, tag::ou, tag::initpolicy >()[c] ) );
-  info.emplace_back( "coefficients policy", tk::ctr::CoeffPolicy().name(
+  info.emplace_back( "coefficients policy", ctr::CoeffPolicy().name(
     g_inputdeck.get< tag::param, tag::ou, tag::coeffpolicy >()[c] ) );
   info.emplace_back( "start offset in particle array", std::to_string(
     g_inputdeck.get< tag::component >().offset< tag::ou >(c) ) );
@@ -474,9 +475,9 @@ DiffEqStack::infoDiagOU( std::map< ctr::DiffEqType, std::size_t >& cnt ) const
   info.emplace_back( "kind", "stochastic" );
   info.emplace_back( "dependent variable", std::string( 1,
     g_inputdeck.get< tag::param, tag::diagou, tag::depvar >()[c] ) );
-  info.emplace_back( "initialization policy", tk::ctr::InitPolicy().name(
+  info.emplace_back( "initialization policy", ctr::InitPolicy().name(
     g_inputdeck.get< tag::param, tag::diagou, tag::initpolicy >()[c] ) );
-  info.emplace_back( "coefficients policy", tk::ctr::CoeffPolicy().name(
+  info.emplace_back( "coefficients policy", ctr::CoeffPolicy().name(
     g_inputdeck.get< tag::param, tag::diagou, tag::coeffpolicy >()[c] ) );
   info.emplace_back( "start offset in particle array", std::to_string(
     g_inputdeck.get< tag::component >().offset< tag::diagou >(c) ) );
@@ -517,9 +518,9 @@ DiffEqStack::infoBeta( std::map< ctr::DiffEqType, std::size_t >& cnt ) const
   info.emplace_back( "kind", "stochastic" );
   info.emplace_back( "dependent variable", std::string( 1,
     g_inputdeck.get< tag::param, tag::beta, tag::depvar >()[c] ) );
-  info.emplace_back( "initialization policy", tk::ctr::InitPolicy().name(
+  info.emplace_back( "initialization policy", ctr::InitPolicy().name(
     g_inputdeck.get< tag::param, tag::beta, tag::initpolicy >()[c] ) );
-  info.emplace_back( "coefficients policy", tk::ctr::CoeffPolicy().name(
+  info.emplace_back( "coefficients policy", ctr::CoeffPolicy().name(
     g_inputdeck.get< tag::param, tag::beta, tag::coeffpolicy >()[c] ) );
   info.emplace_back( "start offset in particle array", std::to_string(
     g_inputdeck.get< tag::component >().offset< tag::beta >(c) ) );
@@ -562,9 +563,9 @@ DiffEqStack::infoNumberFractionBeta(
   info.emplace_back( "kind", "stochastic" );
   info.emplace_back( "dependent variable", std::string( 1,
     g_inputdeck.get< tag::param, tag::numfracbeta, tag::depvar >()[c] ) );
-  info.emplace_back( "initialization policy", tk::ctr::InitPolicy().name(
+  info.emplace_back( "initialization policy", ctr::InitPolicy().name(
     g_inputdeck.get< tag::param, tag::numfracbeta, tag::initpolicy >()[c] ) );
-  info.emplace_back( "coefficients policy", tk::ctr::CoeffPolicy().name(
+  info.emplace_back( "coefficients policy", ctr::CoeffPolicy().name(
     g_inputdeck.get< tag::param, tag::numfracbeta, tag::coeffpolicy >()[c] ) );
   info.emplace_back( "start offset in particle array", std::to_string(
     g_inputdeck.get< tag::component >().offset< tag::numfracbeta >(c) ) );
@@ -619,9 +620,9 @@ DiffEqStack::infoMassFractionBeta(
   info.emplace_back( "kind", "stochastic" );
   info.emplace_back( "dependent variable", std::string( 1,
     g_inputdeck.get< tag::param, tag::massfracbeta, tag::depvar >()[c] ) );
-  info.emplace_back( "initialization policy", tk::ctr::InitPolicy().name(
+  info.emplace_back( "initialization policy", ctr::InitPolicy().name(
     g_inputdeck.get< tag::param, tag::massfracbeta, tag::initpolicy >()[c] ) );
-  info.emplace_back( "coefficients policy", tk::ctr::CoeffPolicy().name(
+  info.emplace_back( "coefficients policy", ctr::CoeffPolicy().name(
     g_inputdeck.get< tag::param, tag::massfracbeta, tag::coeffpolicy >()[c] ) );
   info.emplace_back( "start offset in particle array", std::to_string(
     g_inputdeck.get< tag::component >().offset< tag::massfracbeta >(c) ) );
@@ -676,9 +677,9 @@ DiffEqStack::infoMixBeta(
   info.emplace_back( "kind", "stochastic" );
   info.emplace_back( "dependent variable", std::string( 1,
     g_inputdeck.get< tag::param, tag::mixbeta, tag::depvar >()[c] ) );
-  info.emplace_back( "initialization policy", tk::ctr::InitPolicy().name(
+  info.emplace_back( "initialization policy", ctr::InitPolicy().name(
     g_inputdeck.get< tag::param, tag::mixbeta, tag::initpolicy >()[c] ) );
-  info.emplace_back( "coefficients policy", tk::ctr::CoeffPolicy().name(
+  info.emplace_back( "coefficients policy", ctr::CoeffPolicy().name(
     g_inputdeck.get< tag::param, tag::mixbeta, tag::coeffpolicy >()[c] ) );
   info.emplace_back( "start offset in particle array", std::to_string(
     g_inputdeck.get< tag::component >().offset< tag::mixbeta >(c) ) );
@@ -732,9 +733,9 @@ const
   info.emplace_back( "kind", "stochastic" );
   info.emplace_back( "dependent variable", std::string( 1,
     g_inputdeck.get< tag::param, tag::skewnormal, tag::depvar >()[c] ) );
-  info.emplace_back( "initialization policy", tk::ctr::InitPolicy().name(
+  info.emplace_back( "initialization policy", ctr::InitPolicy().name(
     g_inputdeck.get< tag::param, tag::skewnormal, tag::initpolicy >()[c] ) );
-  info.emplace_back( "coefficients policy", tk::ctr::CoeffPolicy().name(
+  info.emplace_back( "coefficients policy", ctr::CoeffPolicy().name(
     g_inputdeck.get< tag::param, tag::skewnormal, tag::coeffpolicy >()[c] ) );
   info.emplace_back( "start offset in particle array", std::to_string(
     g_inputdeck.get< tag::component >().offset< tag::skewnormal >(c) ) );
@@ -779,9 +780,9 @@ DiffEqStack::infoGamma( std::map< ctr::DiffEqType, std::size_t >& cnt ) const
   info.emplace_back( "kind", "stochastic" );
   info.emplace_back( "dependent variable", std::string( 1,
     g_inputdeck.get< tag::param, tag::gamma, tag::depvar >()[c] ) );
-  info.emplace_back( "initialization policy", tk::ctr::InitPolicy().name(
+  info.emplace_back( "initialization policy", ctr::InitPolicy().name(
     g_inputdeck.get< tag::param, tag::gamma, tag::initpolicy >()[c] ) );
-  info.emplace_back( "coefficients policy", tk::ctr::CoeffPolicy().name(
+  info.emplace_back( "coefficients policy", ctr::CoeffPolicy().name(
     g_inputdeck.get< tag::param, tag::gamma, tag::coeffpolicy >()[c] ) );
   info.emplace_back( "start offset in particle array", std::to_string(
     g_inputdeck.get< tag::component >().offset< tag::gamma >(c) ) );

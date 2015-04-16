@@ -40,9 +40,9 @@
 #include <Macro.h>
 #include <Types.h>
 #include <ParticleProperties.h>
-#include <Options/InitPolicy.h>
+#include <Walker/Options/InitPolicy.h>
 
-namespace tk {
+namespace walker {
 
 //! Raw initialization policy: leave memory uninitialized
 struct InitRaw {
@@ -50,7 +50,7 @@ struct InitRaw {
   //! Initialize particle properties (raw: no-op)
   template< class eq, class InputDeck >
   static void init( const InputDeck& deck,
-                    ParProps& particles,
+                    tk::ParProps& particles,
                     tk::ctr::ncomp_type e,
                     tk::ctr::ncomp_type ncomp,
                     tk::ctr::ncomp_type offset ) {}
@@ -65,12 +65,12 @@ struct InitZero {
   //! Initialize particle properties (zero)
   template< class eq, class InputDeck >
   static void init( const InputDeck& deck,
-                    ParProps& particles,
+                    tk::ParProps& particles,
                     tk::ctr::ncomp_type e,
                     tk::ctr::ncomp_type ncomp,
                     tk::ctr::ncomp_type offset )
   {
-    std::memset( particles.ptr(), 0, particles.size()*sizeof(real) );
+    std::memset( particles.ptr(), 0, particles.size()*sizeof(tk::real) );
   }
 
   static ctr::InitPolicyType type() noexcept
@@ -83,7 +83,7 @@ struct InitDelta {
   //! Initialize particle properties (zero)
   template< class eq, class InputDeck >
   static void init( const InputDeck& deck,
-                    ParProps& particles,
+                    tk::ParProps& particles,
                     tk::ctr::ncomp_type e,
                     tk::ctr::ncomp_type ncomp,
                     tk::ctr::ncomp_type offset )
@@ -119,6 +119,6 @@ struct InitDelta {
 //! List of all initialization policies
 using InitPolicies = boost::mpl::vector< InitRaw, InitZero, InitDelta >;
 
-} // tk::
+} // walker::
 
 #endif // InitPolicy_h

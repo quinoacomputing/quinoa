@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Wed 08 Apr 2015 09:41:52 PM MDT
+  \date      Wed 15 Apr 2015 10:12:49 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Walker's input deck grammar definition
   \details   Walker's input deck grammar definition. We use the [Parsing
@@ -21,7 +21,8 @@
 #include <Walker/Types.h>
 #include <Keywords.h>
 #include <Grammar.h>
-#include <Options/InitPolicy.h>
+#include <Walker/Options/InitPolicy.h>
+#include <Walker/Options/CoeffPolicy.h>
 
 #ifdef HAS_MKL
 #include <MKLGrammar.h>
@@ -147,7 +148,7 @@ namespace deck {
       // Error checks for delta initpolicy
       const auto& init = stack.get< tag::param, eq, tag::initpolicy >();
       if (init.size() == neq.get< eq >() &&
-          init.back() == tk::ctr::InitPolicyType::DELTA) {
+          init.back() == ctr::InitPolicyType::DELTA) {
         // Make sure there was a delta...end block with at least a single
         // spike...end block
         const auto& spike = stack.template get< tag::param, eq, tag::spike >();
@@ -216,7 +217,7 @@ namespace deck {
                              eq,
                              tag::spike > > > {};
 
-  //! Error checks after a equation..end block has been parsed
+  //! Error checks after an equation...end block has been parsed
   template< class eq >
   struct check_errors :
          pegtl::seq<
@@ -261,13 +262,13 @@ namespace deck {
                            tk::grm::policy< Stack,
                                             use,
                                             use< kw::init >,
-                                            tk::ctr::InitPolicy,
+                                            ctr::InitPolicy,
                                             tag::diagou,
                                             tag::initpolicy >,
                            tk::grm::policy< Stack,
                                             use,
                                             use< kw::coeff >,
-                                            tk::ctr::CoeffPolicy,
+                                            ctr::CoeffPolicy,
                                             tag::diagou,
                                             tag::coeffpolicy >,
                            delta< tag::diagou >,
@@ -304,13 +305,13 @@ namespace deck {
                            tk::grm::policy< Stack,
                                             use,
                                             use< kw::init >,
-                                            tk::ctr::InitPolicy,
+                                            ctr::InitPolicy,
                                             tag::ou,
                                             tag::initpolicy >,
                            tk::grm::policy< Stack,
                                             use,
                                             use< kw::coeff >,
-                                            tk::ctr::CoeffPolicy,
+                                            ctr::CoeffPolicy,
                                             tag::ou,
                                             tag::coeffpolicy >,
                            delta< tag::ou >,
@@ -347,13 +348,13 @@ namespace deck {
                            tk::grm::policy< Stack,
                                             use,
                                             use< kw::init >,
-                                            tk::ctr::InitPolicy,
+                                            ctr::InitPolicy,
                                             tag::skewnormal,
                                             tag::initpolicy >,
                            tk::grm::policy< Stack,
                                             use,
                                             use< kw::coeff >,
-                                            tk::ctr::CoeffPolicy,
+                                            ctr::CoeffPolicy,
                                             tag::skewnormal,
                                             tag::coeffpolicy >,
                            delta< tag::skewnormal >,
@@ -390,13 +391,13 @@ namespace deck {
                            tk::grm::policy< Stack,
                                             use,
                                             use< kw::init >,
-                                            tk::ctr::InitPolicy,
+                                            ctr::InitPolicy,
                                             tag::beta,
                                             tag::initpolicy >,
                            tk::grm::policy< Stack,
                                             use,
                                             use< kw::coeff >,
-                                            tk::ctr::CoeffPolicy,
+                                            ctr::CoeffPolicy,
                                             tag::beta,
                                             tag::coeffpolicy >,
                            delta< tag::beta >,
@@ -433,13 +434,13 @@ namespace deck {
                            tk::grm::policy< Stack,
                                             use,
                                             use< kw::init >,
-                                            tk::ctr::InitPolicy,
+                                            ctr::InitPolicy,
                                             tag::numfracbeta,
                                             tag::initpolicy >,
                            tk::grm::policy< Stack,
                                             use,
                                             use< kw::coeff >,
-                                            tk::ctr::CoeffPolicy,
+                                            ctr::CoeffPolicy,
                                             tag::numfracbeta,
                                             tag::coeffpolicy >,
                            delta< tag::numfracbeta >,
@@ -482,13 +483,13 @@ namespace deck {
                            tk::grm::policy< Stack,
                                             use,
                                             use< kw::init >,
-                                            tk::ctr::InitPolicy,
+                                            ctr::InitPolicy,
                                             tag::massfracbeta,
                                             tag::initpolicy >,
                            tk::grm::policy< Stack,
                                             use,
                                             use< kw::coeff >,
-                                            tk::ctr::CoeffPolicy,
+                                            ctr::CoeffPolicy,
                                             tag::massfracbeta,
                                             tag::coeffpolicy >,
                            delta< tag::massfracbeta >,
@@ -531,13 +532,13 @@ namespace deck {
                            tk::grm::policy< Stack,
                                             use,
                                             use< kw::init >,
-                                            tk::ctr::InitPolicy,
+                                            ctr::InitPolicy,
                                             tag::mixbeta,
                                             tag::initpolicy >,
                            tk::grm::policy< Stack,
                                             use,
                                             use< kw::coeff >,
-                                            tk::ctr::CoeffPolicy,
+                                            ctr::CoeffPolicy,
                                             tag::mixbeta,
                                             tag::coeffpolicy >,
                            delta< tag::mixbeta >,
@@ -580,13 +581,13 @@ namespace deck {
                            tk::grm::policy< Stack,
                                             use,
                                             use< kw::init >,
-                                            tk::ctr::InitPolicy,
+                                            ctr::InitPolicy,
                                             tag::gamma,
                                             tag::initpolicy >,
                            tk::grm::policy< Stack,
                                             use,
                                             use< kw::coeff >,
-                                            tk::ctr::CoeffPolicy,
+                                            ctr::CoeffPolicy,
                                             tag::gamma,
                                             tag::coeffpolicy >,
                            delta< tag::gamma >,
@@ -623,13 +624,13 @@ namespace deck {
                            tk::grm::policy< Stack,
                                             use,
                                             use< kw::init >,
-                                            tk::ctr::InitPolicy,
+                                            ctr::InitPolicy,
                                             tag::dirichlet,
                                             tag::initpolicy >,
                            tk::grm::policy< Stack,
                                             use,
                                             use< kw::coeff >,
-                                            tk::ctr::CoeffPolicy,
+                                            ctr::CoeffPolicy,
                                             tag::dirichlet,
                                             tag::coeffpolicy >,
                            delta< tag::dirichlet >,
@@ -666,13 +667,13 @@ namespace deck {
                            tk::grm::policy< Stack,
                                             use,
                                             use< kw::init >,
-                                            tk::ctr::InitPolicy,
+                                            ctr::InitPolicy,
                                             tag::gendir,
                                             tag::initpolicy >,
                            tk::grm::policy< Stack,
                                             use,
                                             use< kw::coeff >,
-                                            tk::ctr::CoeffPolicy,
+                                            ctr::CoeffPolicy,
                                             tag::gendir,
                                             tag::coeffpolicy >,
                            delta< tag::gendir >,
@@ -712,13 +713,13 @@ namespace deck {
                            tk::grm::policy< Stack,
                                             use,
                                             use< kw::init >,
-                                            tk::ctr::InitPolicy,
+                                            ctr::InitPolicy,
                                             tag::wrightfisher,
                                             tag::initpolicy >,
                            tk::grm::policy< Stack,
                                             use,
                                             use< kw::coeff >,
-                                            tk::ctr::CoeffPolicy,
+                                            ctr::CoeffPolicy,
                                             tag::wrightfisher,
                                             tag::coeffpolicy >,
                            delta< tag::wrightfisher >,

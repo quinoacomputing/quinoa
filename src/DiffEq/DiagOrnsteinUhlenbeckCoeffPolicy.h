@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/DiagOrnsteinUhlenbeckCoeffPolicy.h
   \author    J. Bakosi
-  \date      Thu 19 Mar 2015 11:24:00 AM MDT
+  \date      Wed 15 Apr 2015 10:08:26 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Diagonal Ornstein-Uhlenbeck coefficients policies
   \details   This file defines coefficients policy classes for the diagonal
@@ -36,8 +36,8 @@
     - Must define the static function _type()_, returning the enum value of the
       policy option. Example:
       \code{.cpp}
-        static tk::ctr::CoeffPolicyType type() noexcept {
-          return tk::ctr::CoeffPolicyType::CONSTANT;
+        static ctr::CoeffPolicyType type() noexcept {
+          return ctr::CoeffPolicyType::CONSTANT;
         }
       \endcode
       which returns the enum value of the option from the underlying option
@@ -50,7 +50,7 @@
 #include <boost/mpl/vector.hpp>
 
 #include <Types.h>
-#include <Options/CoeffPolicy.h>
+#include <Walker/Options/CoeffPolicy.h>
 
 namespace walker {
 
@@ -81,8 +81,8 @@ class DiagOrnsteinUhlenbeckCoeffConst {
     }
 
     //! Coefficients policy type accessor
-    static tk::ctr::CoeffPolicyType type() noexcept
-    { return tk::ctr::CoeffPolicyType::CONSTANT; }
+    static ctr::CoeffPolicyType type() noexcept
+    { return ctr::CoeffPolicyType::CONSTANT; }
 };
 
 //! List of all Ornstein-Uhlenbeck's coefficients policies

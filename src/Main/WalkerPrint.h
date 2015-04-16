@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/WalkerPrint.h
   \author    J. Bakosi
-  \date      Wed 25 Feb 2015 09:03:56 AM MST
+  \date      Wed 15 Apr 2015 10:13:26 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Walker-specific pretty printer functionality
   \details   Walker-specific pretty printer functionality.
@@ -19,6 +19,8 @@
 #include <DiffEq.h>
 #include <Walker/Types.h>
 #include <Walker/Options/DiffEq.h>
+#include <Walker/Options/InitPolicy.h>
+#include <Walker/Options/CoeffPolicy.h>
 #include <Walker/InputDeck/InputDeck.h>
 
 namespace walker {
@@ -143,8 +145,8 @@ class WalkerPrint : public tk::RNGPrint {
                            + kw::constant::info::name() + "-const, "
                            + kw::jrrj::info::name() + "-jrrj\n\n" );
         // extract eqname and supported policies
-        const auto ip = tk::ctr::InitPolicy();
-        const auto cp = tk::ctr::CoeffPolicy();
+        const auto ip = ctr::InitPolicy();
+        const auto cp = ctr::CoeffPolicy();
         std::map< std::string, Policies > eqs;      // eqname : policies
         for (const auto& f : factory)
           eqs[ DiffEqName( f.first ) ] +=

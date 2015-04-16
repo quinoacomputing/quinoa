@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/WrightFisherCoeffPolicy.h
   \author    J. Bakosi
-  \date      Thu 19 Mar 2015 11:27:26 AM MDT
+  \date      Wed 15 Apr 2015 10:07:44 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Wright-Fisher coefficients policies
   \details   This file defines coefficients policy classes for the Wright-Fisher
@@ -30,8 +30,8 @@
     - Must define the static function _type()_, returning the enum value of the
       policy option. Example:
       \code{.cpp}
-        static tk::ctr::CoeffPolicyType type() noexcept {
-          return tk::ctr::CoeffPolicyType::CONSTANT;
+        static ctr::CoeffPolicyType type() noexcept {
+          return ctr::CoeffPolicyType::CONSTANT;
         }
       \endcode
       which returns the enum value of the option from the underlying option
@@ -44,7 +44,7 @@
 #include <boost/mpl/vector.hpp>
 
 #include <Types.h>
-#include <Options/CoeffPolicy.h>
+#include <Walker/Options/CoeffPolicy.h>
 
 namespace walker {
 
@@ -64,8 +64,8 @@ class WrightFisherCoeffConst {
       omega = omega_;
     }
 
-    static tk::ctr::CoeffPolicyType type() noexcept
-    { return tk::ctr::CoeffPolicyType::CONSTANT; }
+    static ctr::CoeffPolicyType type() noexcept
+    { return ctr::CoeffPolicyType::CONSTANT; }
 };
 
 //! List of all Wright-Fisher's coefficients policies
