@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/ZoltanInterOp.h
   \author    J. Bakosi
-  \date      Mon 06 Apr 2015 01:48:49 PM MDT
+  \date      Wed 15 Apr 2015 09:22:35 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Interoperation with the Zoltan library
   \details   Interoperation with the Zoltan library, used for static mesh
@@ -25,7 +25,8 @@ tk::tuple::tagged_tuple< tag::esup,  std::pair< std::vector< std::size_t >,
                                                 std::vector< std::size_t > >,
                          tag::psup,  std::pair< std::vector< std::size_t >,
                                                 std::vector< std::size_t > >,
-                         tag::owner, std::vector< std::size_t > >
+                         tag::chare, std::vector< std::size_t >,
+                         tag::gid, std::vector< std::size_t > >
 partitionMesh( const tk::UnsMesh& mesh,
                uint64_t npart,
                const tk::Print& print );

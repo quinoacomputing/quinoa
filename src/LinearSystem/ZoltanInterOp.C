@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/ZoltanInterOp.C
   \author    J. Bakosi
-  \date      Tue 07 Apr 2015 09:10:16 PM MDT
+  \date      Wed 15 Apr 2015 10:07:57 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Interoperation with the Zoltan library
   \details   Interoperation with the Zoltan library, used for static mesh graph
@@ -15,7 +15,6 @@
 #endif
 
 #include <zoltan.h>
-#include <charm++.h>
 
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic pop
@@ -292,15 +291,17 @@ createHyperGraph( const tk::UnsMesh& graph, HGRAPH_DATA& hg )
   // Allocate data to store the hypergraph ids. The total number of vertices or
   // neighbors in all the hyperedges of the hypergraph, nhedge = all points
   // surrounding points + number of points, since psup does not store the
-  // connection to the own point, i.e., the main-diagonal.
-  auto nhedge = psup1.size() + npoin;
+  // connection to the own point, i.e., in matrix parlance, the main-diagonal.
+  // In other words, here we need the number of edges in the graph, independent
+  // of direction.
+  auto nhedge = psup1.size() - 1 + npoin;
   hg.numAllNbors = static_cast< int >( nhedge );
   hg.nborGID = (ZOLTAN_ID_PTR)malloc(sizeof(ZOLTAN_ID_TYPE) * nhedge);
 
   // Fill up hypergraph edge ids and their indices
   hg.nborIndex[0] = 0;
   for (std::size_t p=0; p<npoin; ++p) {
-    hg.edgeGID[p] = static_cast< ZOLTAN_ID_TYPE >( p );
+    hg.edgeGID[p] = static_cast< ZOLTAN_ID_TYPE >( p+1 );
     // put in own point id, i.e., main diagonal
     hg.nborGID[ hg.nborIndex[p] ] = static_cast< ZOLTAN_ID_TYPE >( p );
     int j = 1;
@@ -353,7 +354,8 @@ tuple::tagged_tuple< tag::esup,  std::pair< std::vector< std::size_t >,
                                             std::vector< std::size_t > >,
                      tag::psup,  std::pair< std::vector< std::size_t >,
                                             std::vector< std::size_t > >,
-                     tag::owner, std::vector< std::size_t > >
+                     tag::chare, std::vector< std::size_t >,
+                     tag::gid, std::vector< std::size_t > >
 partitionMesh( const tk::UnsMesh& graph,
                uint64_t npart,
                const tk::Print& print )
@@ -364,8 +366,9 @@ partitionMesh( const tk::UnsMesh& graph,
 //! \param[in] print Pretty printer
 //! \return Tagged tuple containing elements surrounding points (at tag::esup),
 //!   see tk::genEsup(), points surrounding points (at tag::psup), see
-//!   tk::genPsup(), and array of chare ownership IDs mapping graph points
-//!   to concurrent arsync chares (at tag::owner)
+//!   tk::genPsup(), array of chare ownership IDs mapping graph points to
+//!   concurrent async chares (at tag::chare), and their associated global ids
+//!   (at tag::gid) so that global ids on a chare are contiguous.
 //! \details This function uses Zoltan to partition the mesh graph in serial. It
 //!   assumes the mesh graph only exists on MPI rank 0.
 //! \author J. Bakosi
@@ -433,15 +436,27 @@ partitionMesh( const tk::UnsMesh& graph,
       &exportProcs,      // Process to which I send each of the vertices
       &exportToPart );   // Partition to which each vertex will belong
 
+  // Destructor lambda
+  auto destruct = [&]() {
+    destroyHyperGraph( hg, nhedge );    // destroy hypergraph data structure
+    Zoltan_Destroy( &zz );              // destroy Zoltan data structure
+  };
+
+  if (rc != ZOLTAN_OK) {
+    destruct();
+    Throw( "Zoltan_LB_Partition failed" );
+  }
+
   // Will return, only on MPI rank 0, array of chare IDs corresponding to the
   // ownership of all points in the mesh graph, i.e., the coloring
-  std::vector< std::size_t > owner;
+  std::vector< std::size_t > chare;
   for( int p=0; p<numExport; ++p )
-    owner.push_back( static_cast< std::size_t >( exportToPart[p] ) );
+    chare.push_back( static_cast< std::size_t >( exportToPart[p] ) );
 
+  std::size_t nchare = 1;
   if (peid == 0) {
-    auto minmax = std::minmax_element( begin(owner), end(owner) );
-    auto nchare = *minmax.second - *minmax.first + 1;
+    auto minmax = std::minmax_element( begin(chare), end(chare) );
+    nchare = *minmax.second - *minmax.first + 1;
 
     if (npart > nchare)
       print << "\n>>> WARNING: The number of parts returned from the graph "
@@ -461,15 +476,17 @@ partitionMesh( const tk::UnsMesh& graph,
              "of parts (" + std::to_string(npart) + ")?" );
   }
 
-  // Destructor lambda
-  auto destruct = [&]() {
-    destroyHyperGraph( hg, nhedge );    // destroy hypergraph data structure
-    Zoltan_Destroy( &zz );              // destroy Zoltan data structure
-  };
+  // Construct global ids contiguous per chare
+  std::vector< std::size_t > gid;
+  for (std::size_t i=0; i<nchare; ++i)
+    for (std::size_t n=0; n<chare.size(); ++n)
+      if (chare[n] == i) gid.push_back( n );
 
-  if (rc != ZOLTAN_OK) {
-    destruct();
-    Throw( "Zoltan_LB_Partition failed" );
+  if (peid == 0) {
+    for (auto i : chare) std::cout << i << " ";
+    std::cout << '\n';
+    for (auto i : gid) std::cout << i << " ";
+    std::cout << '\n';
   }
 
   // Free the arrays allocated by Zoltan_LB_Partition
@@ -481,7 +498,7 @@ partitionMesh( const tk::UnsMesh& graph,
   // Free hypergraph and Zoltan data structure
   destruct();
 
-  return { esup, psup, owner };
+  return { esup, psup, chare, gid };
 }
 
 } // zoltan::

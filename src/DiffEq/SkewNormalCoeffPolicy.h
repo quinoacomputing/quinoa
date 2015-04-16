@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/SkewNormalCoeffPolicy.h
   \author    J. Bakosi
-  \date      Thu 19 Mar 2015 11:27:05 AM MDT
+  \date      Wed 15 Apr 2015 10:10:02 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Skew-normal coefficients policies
   \details   This file defines coefficients policy classes for the diagonal
@@ -35,8 +35,8 @@
     - Must define the static function _type()_, returning the enum value of the
       policy option. Example:
       \code{.cpp}
-        static tk::ctr::CoeffPolicyType type() noexcept {
-          return tk::ctr::CoeffPolicyType::CONSTANT;
+        static ctr::CoeffPolicyType type() noexcept {
+          return ctr::CoeffPolicyType::CONSTANT;
         }
       \endcode
       which returns the enum value of the option from the underlying option
@@ -49,7 +49,7 @@
 #include <boost/mpl/vector.hpp>
 
 #include <Types.h>
-#include <Options/CoeffPolicy.h>
+#include <Walker/Options/CoeffPolicy.h>
 
 namespace walker {
 
@@ -79,8 +79,8 @@ class SkewNormalCoeffConst {
       lambda = lambda_;
     }
 
-    static tk::ctr::CoeffPolicyType type() noexcept
-    { return tk::ctr::CoeffPolicyType::CONSTANT; }
+    static ctr::CoeffPolicyType type() noexcept
+    { return ctr::CoeffPolicyType::CONSTANT; }
 };
 
 //! List of all Skew-normal SDE's coefficients policies

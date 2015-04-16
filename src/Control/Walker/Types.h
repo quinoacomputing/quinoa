@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/Types.h
   \author    J. Bakosi
-  \date      Wed 08 Apr 2015 09:24:41 PM MDT
+  \date      Wed 15 Apr 2015 10:05:39 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Types for Walker's parsers
   \details   Types for Walker's parsers. This file defines the components of the
@@ -18,8 +18,8 @@
 #include <Types.h>
 #include <RNGParam.h>
 #include <Walker/Options/DiffEq.h>
-#include <Options/InitPolicy.h>
-#include <Options/CoeffPolicy.h>
+#include <Walker/Options/InitPolicy.h>
+#include <Walker/Options/CoeffPolicy.h>
 #include <Options/PDFFile.h>
 #include <Options/PDFPolicy.h>
 #include <Options/PDFCentering.h>
@@ -89,8 +89,8 @@ using DirichletParameters = tk::tuple::tagged_tuple<
   tag::spike,       std::vector< std::vector< std::vector <
                       kw::spike::info::expect::type > > >,
   tag::rng,         std::vector< tk::ctr::RNGType >,
-  tag::initpolicy,  std::vector< tk::ctr::InitPolicyType >,
-  tag::coeffpolicy, std::vector< tk::ctr::CoeffPolicyType >
+  tag::initpolicy,  std::vector< InitPolicyType >,
+  tag::coeffpolicy, std::vector< CoeffPolicyType >
 >;
 
 //! Generalized Dirichlet parameters storage
@@ -107,8 +107,8 @@ using GenDirichletParameters = tk::tuple::tagged_tuple<
   tag::spike,       std::vector< std::vector< std::vector <
                       kw::spike::info::expect::type > > >,
   tag::rng,         std::vector< tk::ctr::RNGType >,
-  tag::initpolicy,  std::vector< tk::ctr::InitPolicyType >,
-  tag::coeffpolicy, std::vector< tk::ctr::CoeffPolicyType >
+  tag::initpolicy,  std::vector< InitPolicyType >,
+  tag::coeffpolicy, std::vector< CoeffPolicyType >
 >;
 
 //! Wright-Fisher parameters storage
@@ -119,8 +119,8 @@ using WrightFisherParameters = tk::tuple::tagged_tuple<
   tag::spike,       std::vector< std::vector< std::vector <
                       kw::spike::info::expect::type > > >,
   tag::rng,         std::vector< tk::ctr::RNGType >,
-  tag::initpolicy,  std::vector< tk::ctr::InitPolicyType >,
-  tag::coeffpolicy, std::vector< tk::ctr::CoeffPolicyType >
+  tag::initpolicy,  std::vector< InitPolicyType >,
+  tag::coeffpolicy, std::vector< CoeffPolicyType >
 >;
 
 //! Ornstein-Uhlenbeck parameters storage
@@ -135,8 +135,8 @@ using OrnsteinUhlenbeckParameters = tk::tuple::tagged_tuple<
   tag::spike,       std::vector< std::vector< std::vector <
                       kw::spike::info::expect::type > > >,
   tag::rng,         std::vector< tk::ctr::RNGType >,
-  tag::initpolicy,  std::vector< tk::ctr::InitPolicyType >,
-  tag::coeffpolicy, std::vector< tk::ctr::CoeffPolicyType >
+  tag::initpolicy,  std::vector< InitPolicyType >,
+  tag::coeffpolicy, std::vector< CoeffPolicyType >
 >;
 
 //! Diagonal Ornstein-Uhlenbeck parameters storage
@@ -151,8 +151,8 @@ using DiagOrnsteinUhlenbeckParameters = tk::tuple::tagged_tuple<
   tag::spike,       std::vector< std::vector< std::vector <
                       kw::spike::info::expect::type > > >,
   tag::rng,         std::vector< tk::ctr::RNGType >,
-  tag::initpolicy,  std::vector< tk::ctr::InitPolicyType >,
-  tag::coeffpolicy, std::vector< tk::ctr::CoeffPolicyType >
+  tag::initpolicy,  std::vector< InitPolicyType >,
+  tag::coeffpolicy, std::vector< CoeffPolicyType >
 >;
 
 //! Skew-normal parameters storage
@@ -167,8 +167,8 @@ using SkewNormalParameters = tk::tuple::tagged_tuple<
   tag::spike,       std::vector< std::vector< std::vector <
                       kw::spike::info::expect::type > > >,
   tag::rng,         std::vector< tk::ctr::RNGType >,
-  tag::initpolicy,  std::vector< tk::ctr::InitPolicyType >,
-  tag::coeffpolicy, std::vector< tk::ctr::CoeffPolicyType >
+  tag::initpolicy,  std::vector< InitPolicyType >,
+  tag::coeffpolicy, std::vector< CoeffPolicyType >
 >;
 
 //! Gamma parameters storage
@@ -183,8 +183,8 @@ using GammaParameters = tk::tuple::tagged_tuple<
   tag::spike,       std::vector< std::vector< std::vector <
                       kw::spike::info::expect::type > > >,
   tag::rng,         std::vector< tk::ctr::RNGType >,
-  tag::initpolicy,  std::vector< tk::ctr::InitPolicyType >,
-  tag::coeffpolicy, std::vector< tk::ctr::CoeffPolicyType >
+  tag::initpolicy,  std::vector< InitPolicyType >,
+  tag::coeffpolicy, std::vector< CoeffPolicyType >
 >;
 
 //! Beta parameters storage
@@ -199,8 +199,8 @@ using BetaParameters = tk::tuple::tagged_tuple<
   tag::spike,       std::vector< std::vector< std::vector <
                       kw::spike::info::expect::type > > >,
   tag::rng,         std::vector< tk::ctr::RNGType >,
-  tag::initpolicy,  std::vector< tk::ctr::InitPolicyType >,
-  tag::coeffpolicy, std::vector< tk::ctr::CoeffPolicyType >
+  tag::initpolicy,  std::vector< InitPolicyType >,
+  tag::coeffpolicy, std::vector< CoeffPolicyType >
 >;
 
 //! Number-fraction beta parameters storage
@@ -219,8 +219,8 @@ using NumberFractionBetaParameters = tk::tuple::tagged_tuple<
   tag::spike,       std::vector< std::vector< std::vector <
                       kw::spike::info::expect::type > > >,
   tag::rng,         std::vector< tk::ctr::RNGType >,
-  tag::initpolicy,  std::vector< tk::ctr::InitPolicyType >,
-  tag::coeffpolicy, std::vector< tk::ctr::CoeffPolicyType >
+  tag::initpolicy,  std::vector< InitPolicyType >,
+  tag::coeffpolicy, std::vector< CoeffPolicyType >
 >;
 
 //! Mass-fraction beta parameters storage
@@ -239,8 +239,8 @@ using MassFractionBetaParameters = tk::tuple::tagged_tuple<
   tag::spike,       std::vector< std::vector< std::vector <
                       kw::spike::info::expect::type > > >,
   tag::rng,         std::vector< tk::ctr::RNGType >,
-  tag::initpolicy,  std::vector< tk::ctr::InitPolicyType >,
-  tag::coeffpolicy, std::vector< tk::ctr::CoeffPolicyType >
+  tag::initpolicy,  std::vector< InitPolicyType >,
+  tag::coeffpolicy, std::vector< CoeffPolicyType >
 >;
 
 //! Mix beta parameters storage
@@ -259,8 +259,8 @@ using MixBetaParameters = tk::tuple::tagged_tuple<
   tag::spike,      std::vector< std::vector< std::vector <
                       kw::spike::info::expect::type > > >,
   tag::rng,         std::vector< tk::ctr::RNGType >,
-  tag::initpolicy,  std::vector< tk::ctr::InitPolicyType >,
-  tag::coeffpolicy, std::vector< tk::ctr::CoeffPolicyType >
+  tag::initpolicy,  std::vector< InitPolicyType >,
+  tag::coeffpolicy, std::vector< CoeffPolicyType >
 >;
 
 //! Parameters storage

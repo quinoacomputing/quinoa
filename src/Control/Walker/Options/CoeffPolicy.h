@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Options/CoeffPolicy.h
   \author    J. Bakosi
-  \date      Fri 23 Jan 2015 06:44:59 AM MST
+  \date      Wed 15 Apr 2015 10:11:51 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Differential equation coefficients policy options
   \details   Differential equation coefficients policy options
@@ -17,7 +17,7 @@
 #include <Keywords.h>
 #include <PUPUtil.h>
 
-namespace tk {
+namespace walker {
 namespace ctr {
 
 //! Differential equation coefficients policy types
@@ -59,6 +59,6 @@ class CoeffPolicy : public tk::Toggle< CoeffPolicyType > {
 };
 
 } // ctr::
-} // tk::
+} // walker::
 
 #endif // oeffPolicyOptions_h

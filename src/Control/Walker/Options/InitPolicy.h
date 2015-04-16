@@ -1,11 +1,11 @@
 //******************************************************************************
 /*!
-  \file      src/Control/Options/InitPolicy.h
+  \file      src/Control/Walker/Options/InitPolicy.h
   \author    J. Bakosi
-  \date      Wed 25 Feb 2015 08:26:51 AM MST
+  \date      Wed 15 Apr 2015 09:43:38 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
-  \brief     Differential equation initialization policy options
-  \details   Differential equation initialization policy options
+  \brief     Differential equation initialization policy options for walker
+  \details   Differential equation initialization policy options for walker
 */
 //******************************************************************************
 #ifndef InitPolicyOptions_h
@@ -17,7 +17,7 @@
 #include <Keywords.h>
 #include <PUPUtil.h>
 
-namespace tk {
+namespace walker {
 namespace ctr {
 
 //! Differential equation initializion policy types
@@ -30,7 +30,7 @@ enum class InitPolicyType : uint8_t { RAW=0,
 //! \author J. Bakosi
 inline void operator|( PUP::er& p, InitPolicyType& e ) { PUP::pup( p, e ); }
 
-//! \brief InitPolicy options: outsourcs earches to base templated on enum type
+//! \brief InitPolicy options: outsource searches to base templated on enum type
 //! \author J. Bakosi
 class InitPolicy : public tk::Toggle< InitPolicyType > {
 
@@ -61,6 +61,6 @@ class InitPolicy : public tk::Toggle< InitPolicyType > {
 };
 
 } // ctr::
-} // tk::
+} // walker::
 
 #endif // InitPolicyOptions_h

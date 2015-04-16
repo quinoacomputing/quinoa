@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Inciter.C
   \author    J. Bakosi
-  \date      Sun 12 Apr 2015 07:22:27 AM MDT
+  \date      Thu 16 Apr 2015 05:34:43 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Inciter, computational shock hydrodynamics tool, Charm++ main
     chare.
@@ -35,6 +35,7 @@
 #include <MeshFactory.h>
 #include <LoadDistributor.h>
 #include <ZoltanInterOp.h>
+#include <HypreInterOp.h>
 #include <ExceptionMPI.h>
 #include <ProcessException.h>
 #include <ExodusIIMeshReader.h>
@@ -63,8 +64,10 @@ ctr::InputDeck g_inputdeck;
 std::pair< std::vector< std::size_t >, std::vector< std::size_t > > g_esup;
 //! Mesh tetrahedron element connectivity
 std::vector< int > g_tetinpoel;
-//! Graph coloring for all mesh points
-std::vector< std::size_t > g_colors;
+//! Graph coloring, i.e., owning chare ids, for all mesh points
+std::vector< std::size_t > g_chare;
+//! Global node ids for all mesh points
+std::vector< std::size_t > g_gid;
 //! Vector of export/import maps for all chare ids (empty if nchares = 1)
 std::vector< std::map< std::size_t, std::vector< std::size_t > > > g_comm;
 
@@ -342,35 +345,39 @@ comMaps( const tk::UnsMesh& graph,
                                   std::vector< std::size_t > >,
            tag::psup,  std::pair< std::vector< std::size_t >,
                                   std::vector< std::size_t > >,
-           tag::owner, std::vector< std::size_t > >&& partitions )
+           tag::chare, std::vector< std::size_t >,
+           tag::gid, std::vector< std::size_t > >&& partitioning )
 //******************************************************************************
-//! Compute communication (export-, and import-) maps for all graph partitions
+//! Compute communication (export) maps for all graph partitions
 //! \param[in] graph Unstructured mesh graph object
-//! \param[in] partitions Tagged tuple containing elements surrounding points
+//! \param[in] partitioning Tagged tuple containing elements surrounding points
 //!   (at tag::esup), see tk::genEsup(), points surrounding points (at
-//!   tag::psup), see tk::genPsup(), and array of chare ownership IDs mapping
-//!   graph points to concurrent arsync chares (at tag::owner). Assumed to be
-//!   non-emtpy only on MPI rank 0. Note that this tuple is swallowed in and
-//!   cannibalized moving some of its parts to global scope.
-//! \return Vector of export/import maps associating receiver/sender chare ids
-//!   to unique communicated point ids for all chare ids, only on MPI rank 0.
+//!   tag::psup), see tk::genPsup(), array of chare ownership IDs mapping graph
+//!   points to concurrent async chares (at tag::chare), and their associated
+//!   global ids (at tag::gid) so that global ids on a chare are contiguous.
+//!   Assumed to be non-emtpy only on MPI rank 0. Note that this tuple is
+//!   swallowed in and cannibalized moving some of its parts to global scope.
+//! \return Vector of export maps associating receiver chare ids to unique
+//!   communicated global point ids for all chare ids, only on MPI rank 0.
 //! \details Compute communication maps: (1) the export map, associating chare
-//!   ids to a set of receiver chare ids associated to unique mesh points sent,
-//!   and (2) the import map, associating chare ids to a set of sender chare ids
-//!   associated to unique mesh points received. In the MPI paradigm, these maps
+//!   ids to a set of receiver chare global ids associated to unique mesh points
+//!   sent, and (2) the import map, associating chare ids to a set of sender
+//!   chare ids associated to unique mesh point global ids received. Note that
+//!   only the export maps are stored, from which the import maps can be
+//!   computed by inverting the export maps. In the MPI paradigm, these maps
 //!   correspond to the export and import lists, respectively, i.e., lists of
-//!   ids exported by a given rank to a set of receiver ranks and their
+//!   global ids exported by a given rank to a set of receiver ranks and their
 //!   associated mesh points sent at which data are to be sent (export), and
-//!   lists of ids imported by a given rank to a set of sender ranks and their
-//!   associated mesh points sent at which data are to be received (import).
-//!   For example, in Zoltan, this roughly corresponds to the "exported" and
-//!   "imported" ids after partitioning. Actually, Zoltan_LB_Partition() already
-//!   returns this information. However, if the partitioning with Zoltan is done
-//!   using less MPI ranks than the number of desired mesh partitions, i.e.,
-//!   overdecomposition (as is the case here), there are more mesh partitions
-//!   than MPI ranks and thus the arrays returned by Zoltan are not sufficient
-//!   to determine the export and import maps for all the chares. Thus we
-//!   compute the export and import mapping here.
+//!   lists of global ids imported by a given rank to a set of sender ranks and
+//!   their associated mesh points sent at which data are to be received
+//!   (import). For example, in Zoltan, this roughly corresponds to the
+//!   "exported" and "imported" ids after partitioning. Actually,
+//!   Zoltan_LB_Partition() already returns this information. However, if the
+//!   partitioning with Zoltan is done using less MPI ranks than the number of
+//!   desired mesh partitions, i.e., overdecomposition (as is the case here),
+//!   there are more mesh partitions than MPI ranks and thus the arrays returned
+//!   by Zoltan are not sufficient to determine the export and import maps for
+//!   all the chares. Thus we compute the export mapping here.
 //! \note This function only operates on MPI rank 0, since that is the only rank
 //!   where the argument partitions is expected to be non-empty.
 //! \author J. Bakosi
@@ -380,40 +387,42 @@ comMaps( const tk::UnsMesh& graph,
   MPI_Comm_rank( MPI_COMM_WORLD, &peid );
 
   if (peid == 0) {
-    const auto& psup1 = partitions.get< tag::psup >().first;
-    const auto& psup2 = partitions.get< tag::psup >().second;
-    const auto& owner = partitions.get< tag::owner >();
-
-    Assert( owner.size() == graph.size(),
+    const auto& psup1 = partitioning.get< tag::psup >().first;
+    const auto& psup2 = partitioning.get< tag::psup >().second;
+    const auto& chare = partitioning.get< tag::chare >();
+    const auto& gid = partitioning.get< tag::gid >();
+     
+    Assert( chare.size() == graph.size(),
             "Size of ownership array must equal the number of graph nodes" );
 
     // Move derived data structure storing elements surrounding points of mesh
     // to global scope for Charm++ chares
-    g_esup = std::move( partitions.get< tag::esup >() );
+    g_esup = std::move( partitioning.get< tag::esup >() );
 
     // find out number of chares desired
-    auto minmax = std::minmax_element( begin(owner), end(owner) );
+    auto minmax = std::minmax_element( begin(chare), end(chare) );
     auto nchare = *minmax.second - *minmax.first + 1;
     // if graph not partitioned, nothing to do, leave communication maps empty
     if (nchare == 1) {
-      // Move ownership array to global scope for Charm++ chares
-      g_colors = std::move( owner );
+      // Move ownership and global id arrays to global scope for Charm++ chares
+      g_chare = std::move( chare );
+      g_gid = std::move( gid );
       return;
     }
 
     auto npoin = graph.size();
 
-    // map to associate a chare id to a map of receiver/sender chare ids
-    // accociated to unique point ids sent/received (export/import map)
+    // map to associate a chare id to a map of receiver chare ids accociated to
+    // unique global point ids sent (export map)
     std::map< std::size_t,
               std::map< std::size_t, std::set< std::size_t > > > comm;
 
-    // construct export and import maps
+    // construct export maps
     for (std::size_t p=0; p<npoin; ++p)
       for (auto i=psup2[p]+1; i<=psup2[p+1]; ++i) {
         auto q = psup1[i];
-        if (owner[p] != owner[q])
-          comm[ owner[p] ][ owner[q] ].insert( p );
+        if (chare[p] != chare[q])       // if the colors differ, store global id
+          comm[ chare[p] ][ chare[q] ].insert( p );
       }
 
     // This check should always be done, as it can result from incorrect user
@@ -444,13 +453,13 @@ comMaps( const tk::UnsMesh& graph,
                 "Export/import map recv/send chare ids must be non-negative" );
     }
 
-    // Move ownership array to global scope for Charm++ chares
-    g_colors = std::move( owner );
+    // Move ownership and global id arrays to global scope for Charm++ chares
+    g_chare = std::move( chare );
+    g_gid = std::move( gid );
 
-    // Construct final product: a vector of export/import maps associating
-    // receiver/sender chare ids to unique communicated point ids for all chare
-    // ids, and store it in global scope so that the main Charm++ chare can
-    // access it
+    // Construct final product: a vector of export maps associating receiver
+    // chare ids to unique communicated global point ids for all chare ids, and
+    // store it in global scope so that the main Charm++ chare can access it
     for (const auto& e : comm) {
       g_comm.push_back( {} );
       for (const auto& x : e.second)
@@ -580,7 +589,8 @@ int main( int argc, char **argv ) {
     // chares
     tk::Timer t;
     inciter::comMaps( graph, tk::zoltan::partitionMesh(graph, nchare, iprint) );
-    g_timestamp.emplace_back("Partition mesh & compute communication maps", t.hms());
+    g_timestamp.emplace_back( "Partition mesh & compute communication maps",
+                              t.hms() );
 
   } catch (...) { tk::processExceptionMPI(); }
 
@@ -588,9 +598,15 @@ int main( int argc, char **argv ) {
 
   // Run Charm++ main chare using the partitioned graph
   CharmLibInit( MPI_COMM_WORLD, argc, argv );
+  MPI_Barrier( MPI_COMM_WORLD );
+
+  tk::hypre::test();
+
+  MPI_Barrier( MPI_COMM_WORLD );
   CharmLibExit();
 
   // Finalize MPI
+  MPI_Barrier( MPI_COMM_WORLD );
   MPI_Finalize();
 
   return tk::ErrCode::SUCCESS;

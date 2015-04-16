@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/GammaCoeffPolicy.h
   \author    J. Bakosi
-  \date      Thu 19 Mar 2015 11:25:10 AM MDT
+  \date      Wed 15 Apr 2015 10:06:38 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Gamma coefficients policies
   \details   This file defines coefficients policy classes for the gamma SDE,
@@ -35,8 +35,8 @@
     - Must define the static function _type()_, returning the enum value of the
       policy option. Example:
       \code{.cpp}
-        static tk::ctr::CoeffPolicyType type() noexcept {
-          return tk::ctr::CoeffPolicyType::CONSTANT;
+        static ctrCoeffPolicyType type() noexcept {
+          return ctrCoeffPolicyType::CONSTANT;
         }
       \endcode
       which returns the enum value of the option from the underlying option
@@ -49,7 +49,7 @@
 #include <boost/mpl/vector.hpp>
 
 #include <Types.h>
-#include <Options/CoeffPolicy.h>
+#include <Walker/Options/CoeffPolicy.h>
 
 namespace walker {
 
@@ -79,8 +79,8 @@ class GammaCoeffConst {
       k = k_;
     }
 
-    static tk::ctr::CoeffPolicyType type() noexcept
-    { return tk::ctr::CoeffPolicyType::CONSTANT; }
+    static ctr::CoeffPolicyType type() noexcept
+    { return ctr::CoeffPolicyType::CONSTANT; }
 };
 
 //! List of all gamma's coefficients policies

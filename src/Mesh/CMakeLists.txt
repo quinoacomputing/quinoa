@@ -5,10 +5,7 @@ project(Mesh CXX)
 add_library(Mesh
             DerivedData.C
             STLMesh.C
-            ZoltanInterOp.C
 )
-
-removeWarnings("ZoltanInterOp.C")
 
 INSTALL(TARGETS Mesh
   	RUNTIME DESTINATION bin COMPONENT Runtime

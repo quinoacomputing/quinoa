@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Keywords.h
   \author    J. Bakosi
-  \date      Wed 01 Apr 2015 09:17:44 AM MDT
+  \date      Wed 15 Apr 2015 10:40:09 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Definition of all keywords
   \details   This file contains the definition of all keywords, including those
@@ -1086,9 +1086,8 @@ struct raw_info {
     the initial conditions are set at t = 0 before time-integration.
     Example: "init raw", which selects raw initialization policy, which
     leaves the memory uninitialized. Note that this option may behave
-    differently depending on the particular equation or physical model. For
-    an example, see tk::InitPolicies in DiffEq/InitPolicy.h for valid
-    options.)"; }
+    differently depending on the particular equation or physical model. See the
+    the init policies in DiffEq/InitPolicy.h for valid options.)"; }
 };
 using raw = keyword< raw_info, r,a,w >;
 
@@ -1102,8 +1101,8 @@ struct zero_info {
     the initial conditions are set at t = 0 before time-integration.
     Example: "init zero", which selects zero initialization policy, which
     puts zeros in memory. Note that this option may behave differently
-    depending on the particular equation or physical model. For an example,
-    see tk::InitPolicies in DiffEq/InitPolicy.h for valid options.)"; }
+    depending on the particular equation or physical model. See the init
+    policies in DiffEq/InitPolicy.h for valid options.)"; }
 };
 using zero = keyword< zero_info, z,e,r,o >;
 
@@ -1117,7 +1116,7 @@ struct delta_info {
     set at t = 0 before time-integration. Example: "init zero", which selects
     zero initialization policy, which puts zeros in memory. Note that this
     option may behave differently depending on the particular equation or
-    physical model. For an example, see tk::InitPolicies in DiffEq/InitPolicy.h
+    physical model. See the init policies in DiffEq/InitPolicy.h
     for valid options.) The delta initialization policy can be used to prescribe
     delta-spikes on the sample space with given heights, i.e., probabilities.
     Example: "init delta" - select delta init-policy, "delta spike 0.1 0.3 end
@@ -1138,7 +1137,7 @@ struct init_info {
     are set at t = 0 before time-integration. Example: "init raw", which
     selects raw initialization policy, which leaves the memory uninitialized.
     Note that this option may behave differently depending on the particular
-    equation or physical model. For an example, see tk::InitPolicies in
+    equation or physical model. See the init policies in
     DiffEq/InitPolicy.h for valid options.)"; }
   struct expect {
     static std::string description() { return "string"; }
@@ -1149,7 +1148,7 @@ struct init_info {
     }
   };
 };
-using init = keyword< init_info,  i,n,i,t >;
+using init = keyword< init_info, i,n,i,t >;
 
 struct const_info {
   static std::string name() { return "C"; }
@@ -2170,6 +2169,82 @@ struct group_info {
   };
 };
 using group = keyword< group_info, g,r,o,u,p >;
+
+struct inciter_info {
+  static std::string name() { return "inciter"; }
+  static std::string shortDescription() { return
+    "Start configuration block for inciter"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select inciter. Inciter, is a continuum-realm
+    shock hydrodynamics tool, solving the Euler equation.)";
+  }
+};
+using inciter = keyword< inciter_info, i,n,c,i,t,e,r >;
+
+struct scalar_info {
+  static std::string name() { return "Scalar transport"; }
+  static std::string shortDescription() { return
+    "Start configuration block for the scalar transport equation"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to introduce the scalar ... end block, used to
+    specify the configuration for a scalar transport equation. Keywords allowed
+    in a scalar ... end block: )" + std::string("\'")
+    + init::string() + "\'."
+    + R"(For an example scalar ... end block, see
+      doc/html/inicter_example_scalar.html.)";
+  }
+};
+using scalar = keyword< scalar_info, s,c,a,l,a,r >;
+
+struct shear_diff_info {
+  static std::string name() { return "shear_diff"; }
+  static std::string shortDescription() { return
+    "Select test shear + diffusion test problem "; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the shear diffusion test problem. The
+    initial and boundary conditions are specified to set up the test problem
+    suitable to exercise and test the advection and diffusion terms of the
+    scalar transport equation. Example: "problem shear_diff".)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+  };
+};
+using shear_diff = keyword< shear_diff_info, s,h,e,a,r,'_',d,i,f,f >;
+
+struct slot_cyl_info {
+  static std::string name() { return "slot_cyl"; }
+  static std::string shortDescription() { return
+    "Select Zalesak's slotted cylinder test problem"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the Zalesak's slotted cylinder test
+    problem. The initial and boundary conditions are specified to set up the
+    test problem suitable to exercise and test the advection and diffusion
+    terms of the scalar transport equation. Example: "problem slot_cyl".)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+  };
+};
+using slot_cyl = keyword< slot_cyl_info, s,l,o,t,'_',c,y,l >;
+
+struct problem_info {
+  static std::string name() { return "problem"; }
+  static std::string shortDescription() { return
+    "Select test problem type"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select a test problem, which selects the intial
+    and boundary conditions from a set of available test problems. Example:
+    "problem shear_diff", which selects the shear-diffusion test problem, used
+    to test the advection and diffusion terms of a scalar transport equation.)";
+  }
+  struct expect {
+    static std::string description() { return "string"; }
+    static std::string choices() {
+      return '\'' + shear_diff::string() + "\' | \'"
+                  + slot_cyl::string() + '\'';
+    }
+  };
+};
+using problem = keyword< problem_info, p,r,o,b,l,e,m >;
 
 ////////// NOT YET FULLY DOCUMENTED //////////
 
