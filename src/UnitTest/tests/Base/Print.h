@@ -136,16 +136,24 @@ void Print_object::test< 9 >() {
   prv.subsection( "title" );
 }
 
-//! Test that tk::Print::item(name) does not throw an exception
+//! Test that tk::Print::title(title) runs without throwing an exception
 template<> template<>
 void Print_object::test< 10 >() {
+  set_test_name( "title(title) does not throw" );
+  prv.title( "value" );
+  prv.title( "value\n\n asdgfads g f\n\t\t afg   " );
+}
+
+//! Test that tk::Print::item(name) does not throw an exception
+template<> template<>
+void Print_object::test< 11 >() {
   set_test_name( "item(name) does not throw" );
   prv.item( "name" );
 }
 
 //! Test that tk::Print::item(name,value) does not throw an exception
 template<> template<>
-void Print_object::test< 11 >() {
+void Print_object::test< 12 >() {
   set_test_name( "item(name,value) does not throw" );
   prv.item( "name", "value" );
   prv.item( "name", 1 );
@@ -154,14 +162,14 @@ void Print_object::test< 11 >() {
 
 //! Test that tk::Print::item(name,watch) does not throw an exception
 template<> template<>
-void Print_object::test< 12 >() {
+void Print_object::test< 13 >() {
   set_test_name( "item(name,watch) does not throw" );
   prv.item( "name", tk::Timer::Watch() );
 }
 
 //! Test that tk::Print::list(name,entries) does not throw an exception
 template<> template<>
-void Print_object::test< 13 >() {
+void Print_object::test< 14 >() {
   set_test_name( "list(name,entries) does not throw" );
   std::vector< std::string > vec{ "blah1", "blah2", "blah3" };
   prv.list( "name", vec );
@@ -173,7 +181,7 @@ void Print_object::test< 13 >() {
 
 //! Test that tk::Print::list(name,factory) does not throw an exception
 template<> template<>
-void Print_object::test< 14 >() {
+void Print_object::test< 15 >() {
   set_test_name( "list(name,factory) does not throw" );
 
   // Create a fake factory. Only the key is used in list(name,factory), so the
@@ -188,7 +196,7 @@ void Print_object::test< 14 >() {
 
 //! Test that tk::Print::time(title,clocks) does not throw an exception
 template<> template<>
-void Print_object::test< 15 >() {
+void Print_object::test< 16 >() {
   set_test_name( "time(title,clocks) does not throw" );
 
   std::vector< std::pair< std::string, tk::Timer::Watch > > timesw;
@@ -204,14 +212,14 @@ void Print_object::test< 15 >() {
 
 //! Test that tk::Print::note() does not throw an exception
 template<> template<>
-void Print_object::test< 16 >() {
+void Print_object::test< 17 >() {
   set_test_name( "note() does not throw" );
   prv.note( "some note" );
 }
 
 //! Test that tk::Print::help() does not throw an exception
 template<> template<>
-void Print_object::test< 17 >() {
+void Print_object::test< 18 >() {
   set_test_name( "help() does not throw" );
   prv.help( "executable", unittest::ctr::CmdLine().get< tag::cmdinfo >(),
             "Command-line Parameters:", "-" );
@@ -219,7 +227,7 @@ void Print_object::test< 17 >() {
 
 //! Test that tk::Print::helpkw() does not throw an exception
 template<> template<>
-void Print_object::test< 18 >() {
+void Print_object::test< 19 >() {
   set_test_name( "helpkw() does not throw" );
 
   // Default-construct command line object (will have info on keywords)
@@ -237,28 +245,28 @@ void Print_object::test< 18 >() {
 
 //! Test that tk::Print::endpart() does not throw an exception
 template<> template<>
-void Print_object::test< 19 >() {
+void Print_object::test< 20 >() {
   set_test_name( "endpart() does not throw" );
   prv.endpart();
 }
 
 //! Test that tk::Print::endsubsection() does not throw an exception
 template<> template<>
-void Print_object::test< 20 >() {
+void Print_object::test< 21 >() {
   set_test_name( "endsubsection() does not throw" );
   prv.endsubsection();
 }
 
 //! Test that tk::Print::raw() does not throw an exception
 template<> template<>
-void Print_object::test< 21 >() {
+void Print_object::test< 22 >() {
   set_test_name( "raw() does not throw" );
   prv.raw( "blah" );
 }
 
 //! Test tk::Print::stream to access verbose stream
 template<> template<>
-void Print_object::test< 22 >() {
+void Print_object::test< 23 >() {
   set_test_name( "verbose stream access" );
 
   std::ostream_iterator< int > i( prv.stream< tk::VERBOSE >(), "; " );
@@ -271,7 +279,7 @@ void Print_object::test< 22 >() {
 
 //! Test tk::Print::stream to access quiet stream
 template<> template<>
-void Print_object::test< 23 >() {
+void Print_object::test< 24 >() {
   set_test_name( "quiet stream access" );
 
   std::ostream_iterator< int > i( prq.stream< tk::QUIET >(), "; " );
@@ -284,35 +292,42 @@ void Print_object::test< 23 >() {
 
 //! Test that tk::Print::headerInciter() does not throw an exception
 template<> template<>
-void Print_object::test< 24 >() {
+void Print_object::test< 25 >() {
   set_test_name( "headerInciter() does not throw" );
   prv.headerInciter();
 }
 
 //! Test that tk::Print::headerRNGTest() does not throw an exception
 template<> template<>
-void Print_object::test< 25 >() {
+void Print_object::test< 26 >() {
   set_test_name( "headerRNGTest() does not throw" );
   prv.headerRNGTest();
 }
 
+//! Test that tk::Print::headerRegTest() does not throw an exception
+template<> template<>
+void Print_object::test< 27 >() {
+  set_test_name( "headerRegTest() does not throw" );
+  prv.headerRegTest();
+}
+
 //! Test that tk::Print::headerUnitTest() does not throw an exception
 template<> template<>
-void Print_object::test< 26 >() {
+void Print_object::test< 28 >() {
   set_test_name( "headerUnitTest() does not throw" );
   prv.headerUnitTest();
 }
 
 //! Test that tk::Print::headerMeshConv() does not throw an exception
 template<> template<>
-void Print_object::test< 27 >() {
+void Print_object::test< 29 >() {
   set_test_name( "headerMeshConv() does not throw" );
   prv.headerMeshConv();
 }
 
 //! Test that tk::Print::headerWalker() does not throw an exception
 template<> template<>
-void Print_object::test< 28 >() {
+void Print_object::test< 30 >() {
   set_test_name( "headerWalker() does not throw" );
   prv.headerWalker();
 }
