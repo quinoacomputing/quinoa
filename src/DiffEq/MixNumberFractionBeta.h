@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/MixNumberFractionBeta.h
   \author    J. Bakosi
-  \date      Fri 17 Apr 2015 08:24:07 AM MDT
+  \date      Fri 17 Apr 2015 09:26:06 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     System of mix number-fraction beta SDEs
   \details   This file implements the time integration of a system of stochastic
@@ -63,8 +63,8 @@
     _All of this is unpublished, but will be linked in here once published_.
 */
 //******************************************************************************
-#ifndef MixBeta_h
-#define MixBeta_h
+#ifndef MixNumberFractionBeta_h
+#define MixNumberFractionBeta_h
 
 #include <cmath>
 

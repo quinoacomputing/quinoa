@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/MassFractionBetaCoeffPolicy.h
   \author    J. Bakosi
-  \date      Fri 17 Apr 2015 08:35:07 AM MDT
+  \date      Fri 17 Apr 2015 09:46:08 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Mass-fraction beta SDE coefficients policies
   \details   This file defines coefficients policy classes for the
@@ -100,7 +100,7 @@ class MassFractionBetaCoeffConst {
     { return tk::ctr::CoeffPolicyType::CONSTANT; }
 };
 
-//! List of all beta's coefficients policies
+//! List of all mass-fraction beta's coefficients policies
 using MassFractionBetaCoeffPolicies =
   boost::mpl::vector< MassFractionBetaCoeffConst >;
 

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Fri 17 Apr 2015 08:16:04 AM MDT
+  \date      Fri 17 Apr 2015 08:55:08 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Walker's input deck
   \details   Walker's input deck
@@ -172,6 +172,7 @@ class InputDeck :
                                      , kw::sde_bprime
                                      , kw::sde_kappaprime
                                      , kw::mixnumfracbeta
+                                     , kw::mixmassfracbeta
                                      , kw::massfracbeta
                                      , kw::sde_r
                                      >;

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Keywords.h
   \author    J. Bakosi
-  \date      Fri 17 Apr 2015 08:44:27 AM MDT
+  \date      Fri 17 Apr 2015 09:43:37 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Definition of all keywords
   \details   This file contains the definition of all keywords, including those
@@ -1927,6 +1927,49 @@ struct mixnumfracbeta_info {
 };
 using mixnumfracbeta =
   keyword< mixnumfracbeta_info, m,i,x,n,u,m,f,r,a,c,b,e,t,a >;
+
+struct mixmassfracbeta_info {
+  static std::string name() { return "Mix mass-fraction beta"; }
+  static std::string shortDescription() { return
+    "Introduce the mixmassfracbeta SDE input block"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to introduce the mixmassfracbeta ... end block, used
+    to specify the configuration of a system of mix mass-fraction beta SDEs, a
+    system of stochastic differential equations (SDEs), whose solution is the
+    joint beta distribution and in which the usual beta SDE parameters b and
+    kappa are specified via functions that constrain the beta SDE to be
+    consistent with the turbulent mixing process. The mix mass-fraction beta
+    SDE is similar to the mass-fraction beta SDE, only the process is made
+    consistent with the no-mix and fully mixed limits via the specification of
+    the SDE coefficients b and kappa. As in the mass-fraction beta SDE, Y is
+    governed by the beta SDE and two additional stochastic variables are
+    computed. However, in the mix mass-fraction beta SDE the parameters b and
+    kappa are given by b = Theta * b' and kappa = kappa' * <y^2>, where Theta =
+    1 - <y^2> / [ <Y> ( 1 - <Y> ], the fluctuation about the mean, <Y>, is
+    defined as usual: y = Y - <Y>, and b' and kappa' are user-specified
+    constants. Similar to the mass-fraction beta SDE, there two additional
+    random variables computed besides, Y, and they are rho(Y) and V(Y). For more
+    detail on the mass-fraction beta SDE, see the help on keyword
+    'massfracbeta'. For more details on the beta SDE, see
+    http://doi.org/10.1080/14685248.2010.510843 and src/DiffEq/Beta.h. Keywords
+    allowed in a mixmassfracbeta ... end block: )"
+    + std::string("\'")
+    + depvar::string()+ "\', \'"
+    + ncomp::string() + "\', \'"
+    + rng::string() + "\', \'"
+    + init::string() + "\', \'"
+    + coeff::string() + "\', \'"
+    + sde_bprime::string() + "\', \'"
+    + sde_S::string() + "\', \'"
+    + sde_kappaprime::string() + "\', \'"
+    + sde_rho2::string() + "\', \'"
+    + sde_r::string() + "\'. "
+    + R"(For an example mixmassfracbeta ... end block, see
+      doc/html/walker_example_mixmassfracbeta.html.)";
+  }
+};
+using mixmassfracbeta =
+  keyword< mixmassfracbeta_info, m,i,x,m,a,s,s,f,r,a,c,b,e,t,a >;
 
 struct gamma_info {
   static std::string name() { return "Gamma"; }
