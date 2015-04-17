@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Print.h
   \author    J. Bakosi
-  \date      Sat 11 Apr 2015 07:49:09 AM MDT
+  \date      Fri 17 Apr 2015 12:15:13 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     General purpose pretty printer functionality
   \details   This file contains general purpose printer functions. Using the
@@ -121,31 +121,31 @@ class Print {
       std::ostream& (*pf)(std::ostream&) ) { os.m_qstream << pf; return os; }
 
     //! Formatted print of part header: title.
-    //! \param[in] title Part title to be printed
+    //! \param[in] t Part title to be printed
     //! \author J. Bakosi
     template< Style s = VERBOSE >
-    void part( const std::string& title ) const {
+    void part( const std::string& t ) const {
       using std::operator+;
-      std::size_t half_length = title.size()/2;
+      std::size_t half_length = t.size()/2;
       std::string left( half_length+1, '-' );
-      std::string right( title.size()%2 ? half_length+1 : half_length, '-' );
+      std::string right( t.size()%2 ? half_length+1 : half_length, '-' );
       std::string underline( left + " o " + right );
-      std::string upper( title );
-      std::transform( begin(title), end(title), begin(upper), ::toupper );
+      std::string upper( t );
+      std::transform( begin(t), end(t), begin(upper), ::toupper );
       upper = "< " + upper + " >";
       stream<s>() << m_part_fmt % upper;
       stream<s>() << m_part_underline_fmt % underline;
     }
 
-    //! Formatted print of section header: title.
-    //! \param[in] title Section title to be printed
+    //! Formatted print of section header: t.
+    //! \param[in] t Section title to be printed
     //! \author J. Bakosi
     template< Style s = VERBOSE >
-    void section( const std::string& title ) const {
+    void section( const std::string& t ) const {
       stream<s>() << m_section_title_fmt % m_section_indent % m_section_bullet
-                     % title;
+                     % t;
       stream<s>() << m_section_underline_fmt % m_section_indent
-               % std::string( m_section_indent.size() + 2 + title.size(), '-' );
+               % std::string( m_section_indent.size() + 2 + t.size(), '-' );
     }
 
     //! Formatted print of section header: title : value.
@@ -162,12 +162,25 @@ class Print {
     }
 
     //! Formatted print of subsection header: title.
-    //! \param[in] title Subsection title to be printed
+    //! \param[in] t Subsection title to be printed
     //! \author J. Bakosi
     template< Style s = VERBOSE >
-    void subsection( const std::string& title ) const {
+    void subsection( const std::string& t ) const {
       stream<s>() << m_subsection_title_fmt % m_subsection_indent
-                     % m_subsection_bullet % title;
+                     % m_subsection_bullet % t;
+    }
+
+    //! Formatted print of title.
+    //! \param[in] value Title string to be printed
+    //! \author J. Bakosi
+    template< Style s = VERBOSE >
+    void title( const std::string& value ) const {
+      // clean up white spaces and format title with no indent or line-break
+      auto t = splitLines( value, "", "", 10000 );
+      stream<s>() << m_section_title_value_fmt % m_section_indent
+                     % m_section_bullet % "Title" % t;
+      stream<s>() << m_section_underline_fmt % m_section_indent
+                     % std::string( m_section_indent.size()+8+t.size(), '-' );
     }
 
     //! Formatted print of item: name.
@@ -213,15 +226,15 @@ class Print {
     }
 
     //! Formatted print of a list: name: option names...
-    //! \param[in] title Title of the section containing a list
+    //! \param[in] t Title of the section containing a list
     //! \param[in] factory Factory (an std::map) whose values are printed
     //!   interpreted as options (classes deriving from Toggle), defining the
     //!   name querying member function name().
     //! \author J. Bakosi
     template< class Option, Style s = VERBOSE, class Factory >
-    void list( const std::string& title, const Factory& factory ) const {
+    void list( const std::string& t, const Factory& factory ) const {
       if ( !factory.empty() ) {
-        section<s>( title );
+        section<s>( t );
         Option option;
         for (const auto& f : factory)
           stream<s>() << m_list_item_fmt % m_item_indent % option.name(f.first);
@@ -229,7 +242,7 @@ class Print {
     }
 
     //! Formatted print of elapsed times
-    //! \param[in] title Title of section containing a list of elapsed times
+    //! \param[in] t Title of section containing a list of elapsed times
     //! \param[in] clock std::map of strings (clock names) and associated timers
     //!   which could be in various formats as long as there is a corresponding
     //!   item() overload that can apply operator << for outputing their value
@@ -238,11 +251,11 @@ class Print {
     //!   format, and the return value of Timer::dsec(), which is a tk::real.
     //! \author J. Bakosi
     template< Style s = VERBOSE, class ClockFormat >
-    void time( const std::string& title,
+    void time( const std::string& t,
                const std::vector<
                  std::pair< std::string, ClockFormat > >& clock ) const
     {
-      section<s>( title );
+      section<s>( t );
       for (const auto& c : clock) item<s>( c.first, c.second );
       endsubsection<s>();
     }
@@ -304,16 +317,21 @@ class Print {
                        % executable
                        % kw.keyword;
       // print short description
-      stream<s>() << m_description_fmt % splitLines(info.shortDescription);
+      stream<s>() << m_description_fmt
+                     % splitLines( info.shortDescription, m_subsection_indent );
       // print long description
-      stream<s>() << m_description_fmt % splitLines(info.longDescription);
+      stream<s>() << m_description_fmt
+                     % splitLines( info.longDescription, m_subsection_indent );
       // print expected type description
       if (expt)
-        stream<s>() << m_description_fmt % splitLines(*expt, "Expected type: ");
+        stream<s>() << m_description_fmt
+                       % splitLines( *expt, m_subsection_indent,
+                                     "Expected type: " );
       // print expected valied choices
       if (choices)
         stream<s>() << m_description_fmt
-                    % splitLines(*choices, "Expected valid choices: ");
+                    % splitLines( *choices, m_subsection_indent,
+                                  "Expected valid choices: ");
     }
 
     //! Print end of a part
@@ -416,7 +434,7 @@ class Print {
     //! used for converting the logo text "Quinoa": http://picascii.com.
     //! \author J. Bakosi
     template< Style s = VERBOSE >
-    void headerREGTest() const {
+    void headerRegTest() const {
        stream<s>() << R"(
       ,::,`                                                            `.
    .;;;'';;;:                                                          ;;#
@@ -582,15 +600,16 @@ class Print {
     //! \brief Clean up whitespaces and format a long string into multiple lines
     //! \param[in] str String to format
     //! \param[in] name String to insert before string to output
+    //! \param[in] indent String to use as identation
     //! \param[in] width Width in characters to insert newlines for output
     //! \author J. Bakosi
     //! \see http://stackoverflow.com/a/6892562
     //! \see http://stackoverflow.com/a/8362145
     // TODO A line longer than 'width' will cause a hang!
     std::string splitLines( std::string str,
+                            std::string indent,
                             std::string name = "",
-                            std::size_t width = 80 ) const
-    {
+                            std::size_t width = 80 ) const {
       // remove form feeds, line feeds, carriage returns, horizontal tabs,
       // vertical tabs, see http://en.cppreference.com/w/cpp/string/byte/isspace
       str.erase(
@@ -603,7 +622,6 @@ class Print {
                      []( char a, char b ){ return a == b && a == ' '; } ),
         str.end() );
       // format str to 'width'-character-long lines with indent
-      const auto& indent = m_subsection_indent;
       str.insert( 0, indent + name );
       std::size_t currIndex = width - 1;
       std::size_t sizeToElim;

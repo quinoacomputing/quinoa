@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Init.h
   \author    J. Bakosi
-  \date      Fri 20 Mar 2015 11:44:24 AM MDT
+  \date      Fri 17 Apr 2015 11:51:57 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Common initialization routines for main() functions for multiple
      exectuables
@@ -92,7 +92,7 @@ static void echoHeader( const Print& print, HeaderType header )
   else if ( header == HeaderType::RNGTEST )
     print.headerRNGTest();
   else if ( header == HeaderType::REGTEST )
-    print.headerREGTest();
+    print.headerRegTest();
   else if ( header == HeaderType::UNITTEST )
     print.headerUnitTest();
   else if ( header == HeaderType::MESHCONV )
