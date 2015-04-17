@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/BetaCoeffPolicy.h
   \author    J. Bakosi
-  \date      Thu 19 Mar 2015 11:23:30 AM MDT
+  \date      Fri 17 Apr 2015 08:36:53 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Beta coefficients policies
   \details   This file defines coefficients policy classes for the beta SDE,
@@ -85,8 +85,7 @@ class BetaCoeffConst {
 };
 
 //! List of all beta's coefficients policies
-using BetaCoeffPolicies = boost::mpl::vector< BetaCoeffConst
-                                            >;
+using BetaCoeffPolicies = boost::mpl::vector< BetaCoeffConst >;
 
 } // walker::
 
