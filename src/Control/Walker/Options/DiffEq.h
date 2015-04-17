@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/Options/DiffEq.h
   \author    J. Bakosi
-  \date      Wed 01 Apr 2015 09:20:07 AM MDT
+  \date      Fri 17 Apr 2015 08:12:15 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Differential equation options and associations
   \details   Differential equation options and associations
@@ -31,7 +31,7 @@ enum class DiffEqType : uint8_t { NO_DIFFEQ=0,
                                   BETA,
                                   NUMFRACBETA,
                                   MASSFRACBETA,
-                                  MIXBETA,
+                                  MIXNUMFRACBETA,
                                   DIRICHLET,
                                   GENDIR,
                                   WRIGHTFISHER };
@@ -57,7 +57,7 @@ class DiffEq : public tk::Toggle< DiffEqType > {
                                        , kw::beta
                                        , kw::numfracbeta
                                        , kw::massfracbeta
-                                       , kw::mixbeta
+                                       , kw::mixnumfracbeta
                                        , kw::dirichlet
                                        , kw::gendir
                                        , kw::wrightfisher
@@ -76,7 +76,7 @@ class DiffEq : public tk::Toggle< DiffEqType > {
           { DiffEqType::BETA, kw::beta::name() },
           { DiffEqType::NUMFRACBETA, kw::numfracbeta::name() },
           { DiffEqType::MASSFRACBETA, kw::massfracbeta::name() },
-          { DiffEqType::MIXBETA, kw::mixbeta::name() },
+          { DiffEqType::MIXNUMFRACBETA, kw::mixnumfracbeta::name() },
           { DiffEqType::DIRICHLET, kw::dirichlet::name() },
           { DiffEqType::GENDIR, kw::gendir::name() },
           { DiffEqType::WRIGHTFISHER, kw::wrightfisher::name() } },
@@ -89,7 +89,7 @@ class DiffEq : public tk::Toggle< DiffEqType > {
           { kw::beta::string(), DiffEqType::BETA },
           { kw::numfracbeta::string(), DiffEqType::NUMFRACBETA },
           { kw::massfracbeta::string(), DiffEqType::MASSFRACBETA },
-          { kw::mixbeta::string(), DiffEqType::MIXBETA },
+          { kw::mixnumfracbeta::string(), DiffEqType::MIXNUMFRACBETA },
           { kw::dirichlet::string(), DiffEqType::DIRICHLET },
           { kw::gendir::string(), DiffEqType::GENDIR },
           { kw::wrightfisher::string(), DiffEqType::WRIGHTFISHER } } ) {}

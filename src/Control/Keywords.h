@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Keywords.h
   \author    J. Bakosi
-  \date      Wed 01 Apr 2015 09:17:44 AM MDT
+  \date      Fri 17 Apr 2015 08:44:27 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Definition of all keywords
   \details   This file contains the definition of all keywords, including those
@@ -1885,26 +1885,31 @@ struct massfracbeta_info {
 };
 using massfracbeta = keyword< massfracbeta_info, m,a,s,s,f,r,a,c,b,e,t,a >;
 
-struct mixbeta_info {
-  static std::string name() { return "Mix beta"; }
+struct mixnumfracbeta_info {
+  static std::string name() { return "Mix number-fraction beta"; }
   static std::string shortDescription() { return
-    "Introduce the mixbeta SDE input block"; }
+    "Introduce the mixnumfracbeta SDE input block"; }
   static std::string longDescription() { return
-    R"(This keyword is used to introduce the mixbeta ... end block, used to
-    specify the configuration of a system of mix beta SDEs, a system of
-    stochastic differential equations (SDEs), in which the usual parameters, b
-    and kappa are specified via functions that constrain the beta SDE to be
-    consistent with the turbulent mixing process. In particular, the SDE is made
-    consistent with the no-mix and fully mixed limits. If X is governed by the
-    beta SDE, but b = Theta * b' and kappa = kappa' * <x^2>, where Theta =
+    R"(This keyword is used to introduce the mixnumfracbeta ... end block, used
+    to specify the configuration of a system of mix number-fraction beta SDEs, a
+    system of stochastic differential equations (SDEs), whose solution is the
+    joint beta distribution and in which the usual beta SDE parameters b and
+    kappa are specified via functions that constrain the beta SDE to be
+    consistent with the turbulent mixing process. The mix number-fraction beta
+    SDE is similar to the number-fraction beta SDE, only the process is made
+    consistent with the no-mix and fully mixed limits via the specification of
+    the SDE coefficients b and kappa. As in the number-fraction beta SDE, X is
+    governed by the beta SDE and two additional stochastic variables are
+    computed. However, in the mix number-fraction beta SDE the parameters b and
+    kappa are given by b = Theta * b' and kappa = kappa' * <x^2>, where Theta =
     1 - <x^2> / [ <X> ( 1 - <X> ], the fluctuation about the mean, <X>, is
     defined as usual: x = X - <X>, and b' and kappa' are user-specified
-    constants. Also, there two additional random variables computed besides, X,
-    and they are rho(X) and V(X), also computed by the number-fraction beta
-    equation. For more detail on the number-fraction beta SDE, see the help on
-    keyword 'numfracbeta'. For more details on the beta SDE, see
+    constants. Similar to the number-fraction beta SDE, there two additional
+    random variables computed besides, X, and they are rho(X) and V(X). For more
+    detail on the number-fraction beta SDE, see the help on keyword
+    'numfracbeta'. For more details on the beta SDE, see
     http://doi.org/10.1080/14685248.2010.510843 and src/DiffEq/Beta.h. Keywords
-    allowed in a mixbeta ... end block: )"
+    allowed in a mixnumfracbeta ... end block: )"
     + std::string("\'")
     + depvar::string()+ "\', \'"
     + ncomp::string() + "\', \'"
@@ -1916,11 +1921,12 @@ struct mixbeta_info {
     + sde_kappaprime::string() + "\', \'"
     + sde_rho2::string() + "\', \'"
     + sde_rcomma::string() + "\'. "
-    + R"(For an example mixbeta ... end block, see
-      doc/html/walker_example_mixbeta.html.)";
+    + R"(For an example mixnumfracbeta ... end block, see
+      doc/html/walker_example_mixnumfracbeta.html.)";
   }
 };
-using mixbeta = keyword< mixbeta_info, m,i,x,b,e,t,a >;
+using mixnumfracbeta =
+  keyword< mixnumfracbeta_info, m,i,x,n,u,m,f,r,a,c,b,e,t,a >;
 
 struct gamma_info {
   static std::string name() { return "Gamma"; }

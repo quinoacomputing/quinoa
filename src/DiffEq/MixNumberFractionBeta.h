@@ -1,10 +1,10 @@
 //******************************************************************************
 /*!
-  \file      src/DiffEq/MixBeta.h
+  \file      src/DiffEq/MixNumberFractionBeta.h
   \author    J. Bakosi
-  \date      Thu 19 Mar 2015 01:57:42 PM MDT
+  \date      Fri 17 Apr 2015 08:24:07 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
-  \brief     System of mix beta SDEs
+  \brief     System of mix number-fraction beta SDEs
   \details   This file implements the time integration of a system of stochastic
     differential equations (SDEs) with linear drift and quadratic diagonal
     diffusion, whose invariant is the joint [beta
@@ -14,7 +14,7 @@
     - First, the parameters, b, and kappa are specified via functions that
     constrain the beta SDE to be consistent with the turbulent mixing process.
     In particular, the SDE is made consistent with the no-mix and fully mixed
-    limits.
+    limits. See, e.g., MixNumberFractionBetaCoeffConst::update().
 
     - Second, there two additional random variables computed, the same as also
     computed by the number-fraction beta equation, see also
@@ -69,7 +69,7 @@
 #include <cmath>
 
 #include <InitPolicy.h>
-#include <MixBetaCoeffPolicy.h>
+#include <MixNumberFractionBetaCoeffPolicy.h>
 #include <RNG.h>
 
 namespace walker {
@@ -77,54 +77,59 @@ namespace walker {
 extern ctr::InputDeck g_inputdeck;
 extern std::map< tk::ctr::RawRNGType, tk::RNG > g_rng;
 
-//! \brief MixBeta SDE used polymorphically with DiffEq
+//! \brief MixNumberFractionBeta SDE used polymorphically with DiffEq
 //! \details The template arguments specify policies and are used to configure
 //!   the behavior of the class. The policies are:
 //!   - Init - initialization policy, see DiffEq/InitPolicy.h
 //!   - Coefficients - coefficients policy, see
-//!     DiffEq/MixBetaCoeffPolicy.h
+//!     DiffEq/MixNumberFractionBetaCoeffPolicy.h
 template< class Init, class Coefficients >
-class MixBeta {
+class MixNumberFractionBeta {
 
   private:
     using ncomp_t = kw::ncomp::info::expect::type;
 
   public:
     //! \brief Constructor
-    //! \param[in] c Index specifying which system of mix beta SDEs
-    //!   to construct. There can be multiple mixbeta ... end blocks in a
-    //!   control file. This index specifies which mix beta SDE
-    //!   system to instantiate. The index corresponds to the order in which the
-    //!   mixbeta ... end blocks are given the control file.
+    //! \param[in] c Index specifying which system of mix number-fraction beta
+    //!   SDEs to construct. There can be multiple mixnumfracbeta ... end blocks
+    //!   in a control file. This index specifies which mix number-fraction beta
+    //!   SDE system to instantiate. The index corresponds to the order in which
+    //!   the mixnumfracbeta ... end blocks are given the control file.
     //! \author J. Bakosi
-    explicit MixBeta( ncomp_t c ) :
+    explicit MixNumberFractionBeta( ncomp_t c ) :
       m_c( c ),
       m_depvar(
-        g_inputdeck.get< tag::param, tag::mixbeta, tag::depvar >().at(c) ),
+        g_inputdeck.get< tag::param, tag::mixnumfracbeta, tag::depvar >().at(c)
+      ),
       m_ncomp(
-        g_inputdeck.get< tag::component >().get< tag::mixbeta >().at(c) / 3 ),
+        g_inputdeck.get< tag::component >().get< tag::mixnumfracbeta >().at(c)/3
+      ),
       m_offset(
-        g_inputdeck.get< tag::component >().offset< tag::mixbeta >(c) ),
+        g_inputdeck.get< tag::component >().offset< tag::mixnumfracbeta >(c) ),
       m_rng( g_rng.at( tk::ctr::raw(
-        g_inputdeck.get< tag::param, tag::mixbeta, tag::rng >().at(c) ) ) ),
-      coeff( m_ncomp,
-             g_inputdeck.get< tag::param, tag::mixbeta, tag::bprime >().at(c),
-             g_inputdeck.get< tag::param, tag::mixbeta, tag::S >().at(c),
-             g_inputdeck.get< tag::param, tag::mixbeta, tag::kappaprime >().at(c),
-             g_inputdeck.get< tag::param, tag::mixbeta, tag::rho2 >().at(c),
-             g_inputdeck.get< tag::param, tag::mixbeta, tag::rcomma >().at(c),
-             m_bprime, m_S, m_kprime, m_rho2, m_rcomma, m_b, m_k ) {}
+        g_inputdeck.get< tag::param, tag::mixnumfracbeta, tag::rng >().at(c) ) )
+      ),
+      coeff(
+        m_ncomp,
+        g_inputdeck.get< tag::param, tag::mixnumfracbeta, tag::bprime >().at(c),
+        g_inputdeck.get< tag::param, tag::mixnumfracbeta, tag::S >().at(c),
+        g_inputdeck.get< tag::param, tag::mixnumfracbeta, tag::kappaprime >().at(c),
+        g_inputdeck.get< tag::param, tag::mixnumfracbeta, tag::rho2 >().at(c),
+        g_inputdeck.get< tag::param, tag::mixnumfracbeta, tag::rcomma >().at(c),
+        m_bprime, m_S, m_kprime, m_rho2, m_rcomma, m_b, m_k ) {}
 
     //! Initalize SDE, prepare for time integration
     //! \param[inout] particles Array of particle properties 
     //! \author J. Bakosi
     void initialize( tk::ParProps& particles ) {
       //! Set initial conditions using initialization policy
-      Init::template init< tag::mixbeta >
+      Init::template init< tag::mixnumfracbeta >
                          ( g_inputdeck, particles, m_c, m_ncomp, m_offset );
     }
 
-    //! \brief Advance particles according to the system of mix beta SDEs
+    //! \brief Advance particles according to the system of mix number-fraction
+    //!   beta SDEs
     //! \author J. Bakosi
     void advance( tk::ParProps& particles,
                   int stream,
@@ -190,10 +195,10 @@ class MixBeta {
     //! \param[in] i Index specifying which (of multiple) parameters to use
     //! \return Instantaneous value of the specific volume, V
     tk::real vol( tk::real X, ncomp_t i ) const {
-      return 1.0 / m_rho2[i] / ( 1.0 - m_rcomma[i] * X );
+      return 1.0 / rho( X, i );
     }
 };
 
 } // walker::
 
-#endif // MixBeta_h
+#endif // MixNumberFractionBeta_h
