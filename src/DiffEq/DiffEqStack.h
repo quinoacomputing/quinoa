@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/DiffEqStack.h
   \author    J. Bakosi
-  \date      Fri 17 Apr 2015 08:14:19 AM MDT
+  \date      Fri 17 Apr 2015 09:18:37 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Stack of differential equations
   \details   This file declares class DiffEqStack, which implements various
@@ -147,15 +147,16 @@ class DiffEqStack {
     infoBeta( std::map< ctr::DiffEqType, ncomp_t >& cnt ) const;
     //! Get information on number-fraction beta SDE
     std::vector< std::pair< std::string, std::string > >
-    infoNumberFractionBeta( std::map< ctr::DiffEqType, ncomp_t >& cnt )
-    const;
+    infoNumberFractionBeta( std::map< ctr::DiffEqType, ncomp_t >& cnt ) const;
     //! Get information on mass-fraction beta SDE
     std::vector< std::pair< std::string, std::string > >
-    infoMassFractionBeta( std::map< ctr::DiffEqType, ncomp_t >& cnt )
-    const;
+    infoMassFractionBeta( std::map< ctr::DiffEqType, ncomp_t >& cnt ) const;
     //! Get information on mix number-fraction beta SDE
     std::vector< std::pair< std::string, std::string > >
     infoMixNumFracBeta( std::map< ctr::DiffEqType, ncomp_t >& cnt ) const;
+    //! Get information on mix mass-fraction beta SDE
+    std::vector< std::pair< std::string, std::string > >
+    infoMixMassFracBeta( std::map< ctr::DiffEqType, ncomp_t >& cnt ) const;
     //! Get information on skew-normal SDE
     std::vector< std::pair< std::string, std::string > >
     infoSkewNormal( std::map< ctr::DiffEqType, ncomp_t >& cnt ) const;

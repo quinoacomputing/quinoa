@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/NumberFractionBetaCoeffPolicy.h
   \author    J. Bakosi
-  \date      Fri 17 Apr 2015 08:35:44 AM MDT
+  \date      Fri 17 Apr 2015 09:45:59 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Number-fraction beta SDE coefficients policies
   \details   This file defines coefficients policy classes for the
@@ -100,7 +100,7 @@ class NumberFractionBetaCoeffConst {
     { return tk::ctr::CoeffPolicyType::CONSTANT; }
 };
 
-//! List of all beta's coefficients policies
+//! List of all number-fraction beta's coefficients policies
 using NumberFractionBetaCoeffPolicies =
   boost::mpl::vector< NumberFractionBetaCoeffConst >;
 
