@@ -15,7 +15,6 @@
 //******************************************************************************
 
 #include <Conductor.h>
-#include <Performer.h>
 #include <inciter.decl.h>
 
 extern CProxy_Main mainProxy;
@@ -31,7 +30,7 @@ using inciter::Conductor;
 
 Conductor::Conductor() :
   m_print( g_inputdeck.get<tag::cmd,tag::verbose>() ? std::cout : std::clog ),
-  m_count( 0, 0 ),
+  m_count( 0 ),
   m_timer( 1 )  // start timer
 //******************************************************************************
 // Constructor
@@ -39,26 +38,31 @@ Conductor::Conductor() :
 //******************************************************************************
 {
   // Get number of chares
-  m_count.get< tag::chare >() =
-    static_cast< int >( g_comm.empty() ? 1 : g_comm.size() );
+  auto nchare = static_cast< int >( g_comm.empty() ? 1 : g_comm.size() );
+
+  // Create linear system merger chare group collecting chear contributions
+  m_lsmproxy = LinSysMergerProxy::ckNew( thisProxy );
 
   // Fire up array of asynchronous performers
-  CProxyPerf::ckNew( thisProxy, m_count.get< tag::chare >() );
+  m_perfproxy = PerfProxy::ckNew( thisProxy, m_lsmproxy, nchare );
 }
 
 void
 Conductor::init()
 //******************************************************************************
-// Wait for all performers to finish initializing their data structures
+// Wait for all members of LinSysMerger to create their portion of the linear
+// system distributed across all PEs
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // Increase number of performers completing initialization
+// Increase number of performers completing initialization
   ++m_count.get< tag::init >();
 
   // Wait for all performers completing initialization
-  if (m_count.get< tag::init >() == m_count.get< tag::chare >()) {
-    mainProxy.timestamp( "Initialize chare array", m_timer[0].dsec() );
+  if (m_count.get< tag::init >() == CkNumPes()) {
+    mainProxy.timestamp(
+      "Initialize Charm++ chare arrays and distributed linear system",
+      m_timer[0].dsec() );
     mainProxy.finalize();
   }
 }

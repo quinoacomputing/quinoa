@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/STLMesh.C
   \author    J. Bakosi
-  \date      Sat 14 Mar 2015 07:00:07 AM MDT
+  \date      Mon 20 Apr 2015 09:47:24 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     ASCII STL (STereoLithography) mesh class definition
   \details   ASCII STL (STereoLithography) mesh class definition.
@@ -30,10 +30,4 @@ STLMesh::alloc( std::size_t num )
   m_x = tk::make_unique< tk::real[] >( num );
   m_y = tk::make_unique< tk::real[] >( num );
   m_z = tk::make_unique< tk::real[] >( num );
-
-  // Allocate memory to store the node indices describing facets
-  m_nodelist = tk::make_unique< int[] >( num );
-  // Fill nodelist with increasing integers; this serves as connectivity
-  for (std::size_t i=0; i<num; ++i)
-    m_nodelist[ i ] = static_cast< int >( i );
 }

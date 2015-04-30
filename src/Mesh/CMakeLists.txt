@@ -4,6 +4,7 @@ project(Mesh CXX)
 
 add_library(Mesh
             DerivedData.C
+            Reorder.C
             STLMesh.C
 )
 

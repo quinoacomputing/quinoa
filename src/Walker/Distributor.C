@@ -2,7 +2,7 @@
 /*!
   \file      src/Walker/Distributor.C
   \author    J. Bakosi
-  \date      Fri 17 Apr 2015 11:22:15 AM MDT
+  \date      Thu 30 Apr 2015 11:42:38 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Distributor drives the time integration of differential equations
   \details   Distributor drives the time integration of differential equations.
@@ -442,7 +442,8 @@ Distributor::writeBiPDF( const tk::BiPDF& p, int& cnt )
     pdfw.writeGmshBin( p, info,
                        g_inputdeck.get< tag::selected, tag::pdfctr >() );
   else if (filetype == tk::ctr::PDFFileType::EXODUSII)
-    pdfw.writeExodusII( p, info, static_cast< int >( m_it ),
+    pdfw.writeExodusII( p, info,
+                        m_it,
                         g_inputdeck.get< tag::selected, tag::pdfctr >() );
 }
 
@@ -499,7 +500,8 @@ Distributor::writeTriPDF( const tk::TriPDF& p, int& cnt )
      pdfw.writeGmshBin( p, info,
                         g_inputdeck.get< tag::selected, tag::pdfctr >() );
   else if (filetype == tk::ctr::PDFFileType::EXODUSII)
-    pdfw.writeExodusII( p, info, static_cast< int >( m_it ),
+    pdfw.writeExodusII( p, info,
+                        m_it,
                         g_inputdeck.get< tag::selected, tag::pdfctr >() );
 }
 

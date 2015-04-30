@@ -2,13 +2,14 @@
 /*!
   \file      src/Control/Walker/InputDeck/Parser.C
   \author    J. Bakosi
-  \date      Wed 08 Apr 2015 12:41:51 PM MDT
+  \date      Fri 24 Apr 2015 06:04:40 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Walker's input deck file parser
   \details   Walker's input deck file parser
 */
 //******************************************************************************
 
+#include <ContainerUtil.h>
 #include <Walker/InputDeck/Parser.h>
 #include <Walker/InputDeck/Grammar.h>
 
@@ -55,5 +56,5 @@ InputDeckParser::InputDeckParser( const tk::Print& print,
   inputdeck = std::move( id );
 
   // Filter out repeated statistics
-  tk::ctr::unique( inputdeck.get< tag::stat >() );
+  tk::unique( inputdeck.get< tag::stat >() );
 }

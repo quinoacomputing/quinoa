@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/performer.ci
   \author    J. Bakosi
-  \date      Thu 09 Apr 2015 02:17:56 PM MDT
+  \date      Fri 24 Apr 2015 07:50:09 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Charm++ module interface file for Performer
   \details   Charm++ module interface file for Performer
@@ -11,23 +11,16 @@
 
 module performer {
 
-  // Note that template chare Performer depends on chare Conductor and in
-  // turn Conductor depends on Performer (see also the interface file
-  // montecarlo.ci). This is a mutual dependency and it is made to work with
-  // one of the chares (Performer) being a template chare. Note: if this
-  // extern module dependency is removed the code does not compile. See also
-  // the Charm++ manual on more information on template chares.
   extern module conductor;
+  extern module linsysmerger;
 
   namespace inciter {
 
-    // List all possible specializations of templated chare to instantiate
-    // registration and delivery of code for the individual specializations
-    chare Performer< CProxy_Conductor >;
-
-    template< class Proxy >
     array [1D] Performer {
-      entry Performer( Proxy& proxy );
+      entry Performer( CProxy_Conductor& hostproxy,
+                       tk::CProxy_LinSysMerger< CProxy_Conductor >& lsmproxy );
+      entry void initLinearSystem();
+      entry void pe( int branch );
     }
 
   } // inciter::

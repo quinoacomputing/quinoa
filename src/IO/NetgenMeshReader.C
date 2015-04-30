@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/NetgenMeshReader.C
   \author    J. Bakosi
-  \date      Tue 24 Mar 2015 08:27:18 PM MDT
+  \date      Mon 20 Apr 2015 06:11:13 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Netgen mesh reader class definition
   \details   Netgen mesh reader class definition. Only supports tetrahedra.
@@ -14,7 +14,7 @@
 #include <cmath>
 
 #include <NetgenMeshReader.h>
-#include <DerivedData.h>
+#include <Reorder.h>
 
 using tk::NetgenMeshReader;
 
@@ -79,7 +79,7 @@ NetgenMeshReader::readElements()
     // Read in tetrahedra element tags and connectivity
     for (int i=0; i<nel; ++i) {
       int tag;
-      std::array< int, 4 > n;
+      std::array< std::size_t, 4 > n;
       // tag n[1-4]
       m_inFile >> tag >> n[3] >> n[0] >> n[1] >> n[2];
       m_mesh.tettag().push_back( { tag } );
@@ -104,7 +104,7 @@ NetgenMeshReader::readElements()
     // Read in triangle element tags and connectivity
     for (int i=0; i<nel; ++i) {
       int tag;
-      std::array< int, 3 > n;
+      std::array< std::size_t, 3 > n;
       // tag n[1-3]
       m_inFile >> tag >> n[0] >> n[1] >> n[2];
       m_mesh.tritag().push_back( { tag } );

@@ -36,9 +36,9 @@ target_link_libraries(${INCITER_EXECUTABLE}
                       Base
                       IO
                       Mesh
+                      LinSys
                       Inciter
                       InciterControl
-                      LinearSystem
                       ${NEMESIS_LIBRARIES}
                       ${EXODUS_LIBRARIES}
                       ${NETCDF_LIBRARIES}

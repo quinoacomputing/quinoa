@@ -1,8 +1,8 @@
 //******************************************************************************
 /*!
-  \file      src/Mesh/ZoltanInterOp.C
+  \file      src/LinSys/ZoltanInterOp.C
   \author    J. Bakosi
-  \date      Wed 15 Apr 2015 10:07:57 PM MDT
+  \date      Sat 25 Apr 2015 12:15:29 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Interoperation with the Zoltan library
   \details   Interoperation with the Zoltan library, used for static mesh graph
@@ -28,6 +28,7 @@ namespace tk {
 namespace zoltan {
 
 //! Zoltan hypergraph data structure
+//! \details Used by Zoltan to describe the graph of the mesh connectivity.
 struct HGRAPH_DATA {
   int numMyVertices;            //!< number of vertices that I own initially
   ZOLTAN_ID_TYPE *vtxGID;       //!< global ID of these vertices
@@ -245,17 +246,13 @@ get_hypergraph( void *data,
   for (int i=0; i<num_nonzeros; ++i) vtxGID[i] = hg->nborGID[i];
 }
 
-static 
-std::tuple< std::pair< std::vector< std::size_t >, std::vector< std::size_t > >,
-            std::pair< std::vector< std::size_t >, std::vector< std::size_t > >,
-            std::size_t >
+static std::size_t
 createHyperGraph( const tk::UnsMesh& graph, HGRAPH_DATA& hg )
 //******************************************************************************
 //  Create hypergraph data structure on MPI rank zero
 //! \param[in] graph Unstructured mesh graph object reference
 //! \param[inout] hg Hypergraph data structure to fill
-//! \return Tuple containing at 0 elements surrounding points, at 1 points
-//!   surrounding points, and at 2 number of hyperedges in graph
+//! \return The number of hyperedges in graph
 //! \warning This function must not be called on MPI ranks other than zero.
 //! \author J. Bakosi
 //******************************************************************************
@@ -283,8 +280,7 @@ createHyperGraph( const tk::UnsMesh& graph, HGRAPH_DATA& hg )
   const auto& inpoel = graph.tetinpoel();
 
   // Generate (connectivity graph) points surrounding points of graph
-  auto esup = tk::genEsup( inpoel, 4 );
-  auto psup = tk::genPsup( inpoel, 4, esup );
+  auto psup = tk::genPsup( inpoel, 4, tk::genEsup( inpoel, 4 ) );
   auto& psup1 = psup.first;
   auto& psup2 = psup.second;
 
@@ -313,7 +309,7 @@ createHyperGraph( const tk::UnsMesh& graph, HGRAPH_DATA& hg )
     hg.nborIndex[p+1] = hg.nborIndex[p] + j;
   }
 
-  return std::make_tuple( esup, psup, nhedge );
+  return nhedge;
 }
 
 static std::size_t
@@ -350,12 +346,7 @@ destroyHyperGraph( HGRAPH_DATA& hg, std::size_t nhedge )
   if (nhedge > 0) free( hg.nborGID );
 }
 
-tuple::tagged_tuple< tag::esup,  std::pair< std::vector< std::size_t >,
-                                            std::vector< std::size_t > >,
-                     tag::psup,  std::pair< std::vector< std::size_t >,
-                                            std::vector< std::size_t > >,
-                     tag::chare, std::vector< std::size_t >,
-                     tag::gid, std::vector< std::size_t > >
+std::vector< std::size_t >
 partitionMesh( const tk::UnsMesh& graph,
                uint64_t npart,
                const tk::Print& print )
@@ -364,11 +355,8 @@ partitionMesh( const tk::UnsMesh& graph,
 //! \param[in] graph Unstructured mesh graph object reference
 //! \param[in] npart Number of desired graph partitions
 //! \param[in] print Pretty printer
-//! \return Tagged tuple containing elements surrounding points (at tag::esup),
-//!   see tk::genEsup(), points surrounding points (at tag::psup), see
-//!   tk::genPsup(), array of chare ownership IDs mapping graph points to
-//!   concurrent async chares (at tag::chare), and their associated global ids
-//!   (at tag::gid) so that global ids on a chare are contiguous.
+//! \return Array of chare ownership IDs mapping graph points to concurrent
+//!   async chares.
 //! \details This function uses Zoltan to partition the mesh graph in serial. It
 //!   assumes the mesh graph only exists on MPI rank 0.
 //! \author J. Bakosi
@@ -401,10 +389,8 @@ partitionMesh( const tk::UnsMesh& graph,
 
   HGRAPH_DATA hg;
   std::size_t nhedge = 0;
-  std::pair< std::vector< std::size_t >, std::vector< std::size_t > > esup;
-  std::pair< std::vector< std::size_t >, std::vector< std::size_t > > psup;
   if (peid == 0)  
-    std::tie( esup, psup, nhedge ) = createHyperGraph( graph, hg );
+    nhedge = createHyperGraph( graph, hg );
   else
     nhedge = emptyHyperGraph( hg );
 
@@ -447,16 +433,17 @@ partitionMesh( const tk::UnsMesh& graph,
     Throw( "Zoltan_LB_Partition failed" );
   }
 
-  // Will return, only on MPI rank 0, array of chare IDs corresponding to the
-  // ownership of all points in the mesh graph, i.e., the coloring
+  // Copy over array of chare IDs corresponding to the ownership of all points
+  // in the mesh graph, i.e., the coloring or chare ids for all mesh nodes
   std::vector< std::size_t > chare;
-  for( int p=0; p<numExport; ++p )
+  for (int p=0; p<numExport; ++p )
     chare.push_back( static_cast< std::size_t >( exportToPart[p] ) );
 
   std::size_t nchare = 1;
   if (peid == 0) {
+    // Find out the number of partitions created by Zoltan
     auto minmax = std::minmax_element( begin(chare), end(chare) );
-    nchare = *minmax.second - *minmax.first + 1;
+    nchare = *minmax.second - *minmax.first + 1; 
 
     if (npart > nchare)
       print << "\n>>> WARNING: The number of parts returned from the graph "
@@ -476,16 +463,9 @@ partitionMesh( const tk::UnsMesh& graph,
              "of parts (" + std::to_string(npart) + ")?" );
   }
 
-  // Construct global ids contiguous per chare
-  std::vector< std::size_t > gid;
-  for (std::size_t i=0; i<nchare; ++i)
-    for (std::size_t n=0; n<chare.size(); ++n)
-      if (chare[n] == i) gid.push_back( n );
-
   if (peid == 0) {
+    std::cout << "\nchp: ";
     for (auto i : chare) std::cout << i << " ";
-    std::cout << '\n';
-    for (auto i : gid) std::cout << i << " ";
     std::cout << '\n';
   }
 
@@ -498,7 +478,7 @@ partitionMesh( const tk::UnsMesh& graph,
   // Free hypergraph and Zoltan data structure
   destruct();
 
-  return { esup, psup, chare, gid };
+  return chare;
 }
 
 } // zoltan::

@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshMeshWriter.C
   \author    J. Bakosi
-  \date      Tue 24 Mar 2015 04:24:56 PM MDT
+  \date      Mon 20 Apr 2015 06:15:22 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Gmsh mesh writer class definition
   \details   Gmsh mesh writer class definition. Currently, this class supports
@@ -138,7 +138,7 @@ void
 GmshMeshWriter::writeElemBlock( std::size_t nnpe,
                                 GmshElemType type,
                                 const std::vector< std::vector< int > >& tag,
-                                const std::vector< int >& inpoel )
+                                const std::vector< std::size_t >& inpoel )
 //******************************************************************************
 //  Write element block: element ids, tags, and connectivity (node list)
 //! \param[in] nnpe Number of nodes per element
@@ -192,7 +192,8 @@ GmshMeshWriter::writeElemBlock( std::size_t nnpe,
       int I = static_cast< int >( i );
       // gmsh likes one-based node ids
       std::vector< int > Inpoel;
-      for (std::size_t k=0; k<nnpe; ++k) Inpoel.push_back( inpoel[i*nnpe+k]+1 );
+      for (std::size_t k=0; k<nnpe; ++k)
+         Inpoel.push_back( static_cast< int >( inpoel[i*nnpe+k]+1 ) );
       // element id
       m_outFile.write( reinterpret_cast<const char*>(&I), sizeof(int) );
       // element tags

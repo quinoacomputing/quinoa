@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Inciter.C
   \author    J. Bakosi
-  \date      Thu 30 Apr 2015 11:38:12 AM MDT
+  \date      Thu 30 Apr 2015 11:42:55 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Inciter, computational shock hydrodynamics tool, Charm++ main
     chare.
@@ -18,6 +18,7 @@
 
 #include <mpi.h>
 #include <mpi-interoperate.h>   // for interoperation of MPI and Charm++
+#include <inciter.decl.h>
 
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic pop
@@ -35,11 +36,10 @@
 #include <MeshFactory.h>
 #include <LoadDistributor.h>
 #include <ZoltanInterOp.h>
-#include <HypreInterOp.h>
 #include <ExceptionMPI.h>
 #include <ProcessException.h>
 #include <ExodusIIMeshReader.h>
-#include <inciter.decl.h>
+#include <DerivedData.h>
 #include <Init.h>
 
 //! \brief Charm handle to the main proxy, facilitates call-back to finalize,
@@ -63,24 +63,39 @@ ctr::InputDeck g_inputdeck;
 //! Derived data structure, storing elements surrounding points in mesh
 std::pair< std::vector< std::size_t >, std::vector< std::size_t > > g_esup;
 //! Mesh tetrahedron element connectivity
-std::vector< int > g_tetinpoel;
-//! Graph coloring, i.e., owning chare ids, for all mesh points
-std::vector< std::size_t > g_chare;
-//! Global node ids for all mesh points
-std::vector< std::size_t > g_gid;
-//! Vector of export/import maps for all chare ids (empty if nchares = 1)
+std::vector< std::size_t > g_tetinpoel;
+//! \brief Global unordered mesh point ids owned by each chare
+//! \details The global ids stored here for each chare correspond to that in the
+//!   file the mesh graph was read in from. Note that these ids are unordered
+//!   and thus this mapping yields non-contiguous partitions.
+std::vector< std::vector< std::size_t > > g_point;
+//! \brief Global mesh element ids owned by each chare
+std::vector< std::vector< std::size_t > > g_element;
+//! \brief Lower index at which each chare contributes to a distributed global
+//!   matrix and vector
+//! \details This vector stores the lower index of a partition in a global
+//!   distributed matrix and vector. The lower index is used to construct an
+//!   ordered (as opposed an unordered, see g_point) global id mapping
+//!   resulting in contiguous mesh point ids for chares. The need for the
+//!   ordered mapping arises from mesh partitioning. The mesh point ordering in
+//!   a file, once the mesh is partitioned, rarely results in contiguous point
+//!   ordering. For example PE0:0,1,4,5 and PE1:2,3,6,7, give a non-contiguous
+//!   ordering. A contigous order, i.e., PE0:0,1,2,3, PE1:4,5,6,7, is required
+//!   for constructing a distributed parallel matrix and vector for a parallel
+//!   linear solver, e.g., Hypre, that expects contiguous partitions.
+std::vector< std::size_t > g_lower;
+//! Vector of export maps for all chare ids (empty if nchares = 1)
 std::vector< std::map< std::size_t, std::vector< std::size_t > > > g_comm;
-
 //! \brief Time stamps in h:m:s for the initial MPI portion
 //! \details Time stamps collected here are those collected by the initial MPI
 //!   portion and are displayed by the Charm++ main chare at the end. While this
-//!   map of timers is declared in global scope (so that the Charm++ main chare
-//!   can access it), it is intentionally NOT declared in the Charm++ main
-//!   module interface file for Inciter in Main/inciter.ci, so that the Charm++
-//!   runtime system does not migrate it across all PEs. This is okay, since
-//!   since there is no need for any of the other Charm++ chares to access it in
-//!   the future. In fact, the main chare grabs it and swallows it right away
-//!   during its constructor.
+//!   map of timers is declared in global scope (so that Charm++ chares can
+//!   access it), it is intentionally NOT declared in the Charm++ main module
+//!   interface file for Inciter in Main/inciter.ci, so that the Charm++ runtime
+//!   system does not migrate it across all PEs. This is okay, since since there
+//!   is no need for any of the other Charm++ chares to access it in the future.
+//!   In fact, the main chare grabs it and swallows it right away during its
+//!   constructor.
 std::vector< std::pair< std::string, tk::Timer::Watch > > g_timestamp;
 
 //! Conductor Charm++ proxy facilitating call-back to Conductor by the
@@ -153,7 +168,8 @@ class Main : public CBase_Main {
     //! Execute driver created and initialized by constructor
     void execute() {
       try {
-        m_timestamp.emplace_back("Migrate global-scope data", m_timer[1].hms());
+        m_timestamp.emplace_back( "Migrate Charm++ read-only global-scope data",
+                                  m_timer[1].hms());
         m_driver.execute();
       } catch (...) { tk::processExceptionCharm(); }
     }
@@ -328,7 +344,7 @@ meshinfo( const tk::Print& print,
     print.section( "Load distribution" );
     print.item( "Virtualization [0.0...1.0]",
                   g_inputdeck.get< tag::cmd, tag::virtualization >() );
-    print.item( "Load (number of mesh points)", load );
+    print.item( "Load (number of tetrahedra)", load );
     print.item( "Number of processing elements", numpes );
     print.item( "Number of work units",
                 std::to_string( nchare ) + " (" +
@@ -340,25 +356,12 @@ meshinfo( const tk::Print& print,
 
 void
 comMaps( const tk::UnsMesh& graph,
-         tk::tuple::tagged_tuple<
-           tag::esup,  std::pair< std::vector< std::size_t >,
-                                  std::vector< std::size_t > >,
-           tag::psup,  std::pair< std::vector< std::size_t >,
-                                  std::vector< std::size_t > >,
-           tag::chare, std::vector< std::size_t >,
-           tag::gid, std::vector< std::size_t > >&& partitioning )
+         const std::vector< std::size_t >& chp )
 //******************************************************************************
 //! Compute communication (export) maps for all graph partitions
 //! \param[in] graph Unstructured mesh graph object
-//! \param[in] partitioning Tagged tuple containing elements surrounding points
-//!   (at tag::esup), see tk::genEsup(), points surrounding points (at
-//!   tag::psup), see tk::genPsup(), array of chare ownership IDs mapping graph
-//!   points to concurrent async chares (at tag::chare), and their associated
-//!   global ids (at tag::gid) so that global ids on a chare are contiguous.
-//!   Assumed to be non-emtpy only on MPI rank 0. Note that this tuple is
-//!   swallowed in and cannibalized moving some of its parts to global scope.
-//! \return Vector of export maps associating receiver chare ids to unique
-//!   communicated global point ids for all chare ids, only on MPI rank 0.
+//! \param[in] chp Array of chare ownership IDs mapping graph points to
+//!   concurrent async chares.
 //! \details Compute communication maps: (1) the export map, associating chare
 //!   ids to a set of receiver chare global ids associated to unique mesh points
 //!   sent, and (2) the import map, associating chare ids to a set of sender
@@ -387,42 +390,143 @@ comMaps( const tk::UnsMesh& graph,
   MPI_Comm_rank( MPI_COMM_WORLD, &peid );
 
   if (peid == 0) {
-    const auto& psup1 = partitioning.get< tag::psup >().first;
-    const auto& psup2 = partitioning.get< tag::psup >().second;
-    const auto& chare = partitioning.get< tag::chare >();
-    const auto& gid = partitioning.get< tag::gid >();
-     
-    Assert( chare.size() == graph.size(),
+
+    Assert( chp.size() == graph.size(),
             "Size of ownership array must equal the number of graph nodes" );
 
-    // Move derived data structure storing elements surrounding points of mesh
-    // to global scope for Charm++ chares
-    g_esup = std::move( partitioning.get< tag::esup >() );
-
-    // find out number of chares desired
-    auto minmax = std::minmax_element( begin(chare), end(chare) );
+    // Find out number of chares desired
+    auto minmax = std::minmax_element( begin(chp), end(chp) );
     auto nchare = *minmax.second - *minmax.first + 1;
-    // if graph not partitioned, nothing to do, leave communication maps empty
-    if (nchare == 1) {
-      // Move ownership and global id arrays to global scope for Charm++ chares
-      g_chare = std::move( chare );
-      g_gid = std::move( gid );
-      return;
+
+    // Construct unordered (as in mesh file) global mesh node ids for each
+    // chare, also store lower global index for each chare
+    g_point.resize( nchare );
+    std::size_t o = 0;
+    for (std::size_t i=0; i<nchare; ++i) {            // for all colors
+      g_lower.push_back( o );
+      for (std::size_t p=0; p<chp.size(); ++p )       // for all mesh points
+        if (chp[p] == i) {
+          g_point[i].push_back( p );
+          ++o;
+        }
     }
 
-    auto npoin = graph.size();
+    // Store element connectivity in global scope for Charm++ chares
+    g_tetinpoel = graph.tetinpoel();
 
-    // map to associate a chare id to a map of receiver chare ids accociated to
+    // Generate elements surrounding points and store in global scope for
+    // Charm++ chares
+    g_esup = tk::genEsup( g_tetinpoel, 4 );
+
+    // lambda to find out if all 4 points of tetrahedron e are owned by the same
+    // chare that owns point p; if so, return true, if not, return the lowest of
+    // the owner chare ids of the points of the tetrahedron (chosen as the owner
+    // of e)
+    auto own = [ &chp ]( std::size_t e, std::size_t p )
+             -> std::pair< bool, std::size_t >
+    {
+      std::vector< bool > op;
+      std::set< std::size_t > owner;
+      for (std::size_t n=0; n<4; ++n)
+        if (chp[ g_tetinpoel[e*4+n] ] == chp[p])
+          op.push_back( true );
+        else
+          owner.insert( chp[ g_tetinpoel[e*4+n] ] );
+      if (op.size() == 4)
+        return { true, 0 };
+      else
+        return { false, std::min( chp[p], *owner.begin() ) };
+    };
+
+    // Construct array of chare ownership IDs mapping mesh elements to chares
+    std::vector< std::size_t > che( g_tetinpoel.size()/4 );
+    for (std::size_t p=0; p<graph.size(); ++p)  // for all mesh points
+      for (auto i=g_esup.second[p]+1; i<=g_esup.second[p+1]; ++i) {
+        auto e = g_esup.first[i];
+        auto o = own(e,p);
+        if (o.first)
+          che[e] = chp[p];
+        else
+          che[e] = o.second;
+      }
+
+    std::cout << "che: ";
+    for (auto o : che) std::cout << o << " ";
+    std::cout << '\n';
+
+    Assert( nchare > *std::max_element( begin(che), end(che) ),
+            "Elements assigned to more than the number chares" );
+
+    // This check should always be done, as it can result from incorrect user
+    // input compared to the mesh size and not due to programmer error.
+    minmax = std::minmax_element( begin(che), end(che) );
+    ErrChk( *minmax.first == 0 && *minmax.second == nchare-1,
+            "Too fine-grained decomposition. "
+            "This happens when the overdecomposition of the mesh is too large "
+            "compared to the number of work units computed based on the degree "
+            "of virtualization desired. As a result, there would be at least "
+            "one work unit with no mesh elements to work on, i.e., nothing to "
+            "do. Solution 1: decrease the virtualization (currently: "
+            + std::to_string(g_inputdeck.get< tag::cmd, tag::virtualization >())
+            + ") to a lower value using the command-line argument '-u'. "
+            "Solution 2: decrease the number processing elements (PEs) using "
+            "the charmrun command-line argument '+pN' where N is the number of "
+            "PEs, which implicitly increases the size (and thus decreases the "
+            "number) of work units." );
+
+    // Construct global mesh element ids for each chare
+    g_element.resize( nchare );
+    for (std::size_t i=0; i<nchare; ++i)              // for all colors
+      for (std::size_t e=0; e<che.size(); ++e )       // for all mesh elements
+        if (che[e] == i)
+          g_element[i].push_back( e );
+
+//     std::size_t i = 0;
+//     for (const auto& c : g_element) {
+//       std::cout << i++ << ": ";
+//       for (auto e : c) {
+//         std::cout << g_tetinpoel[e*4] << " "
+//                   << g_tetinpoel[e*4+1] << " "
+//                   << g_tetinpoel[e*4+2] << " "
+//                   << g_tetinpoel[e*4+3] << ", ";
+//       }
+//       std::cout << '\n';
+//     }
+
+    // This check should always be done, as it can result from incorrect user
+    // input compared to the mesh size and not due to programmer error.
+    for(const auto& c : g_element)
+      ErrChk( !c.empty(),
+            "At least one chare ended up without any elements to work on. "
+            "This happens when the overdecomposition of the mesh is too large "
+            "compared to the number of work units computed based on the degree "
+            "of virtualization desired. As a result, there would be at least "
+            "one work unit with no mesh elements to work on, i.e., nothing to "
+            "do. Solution 1: decrease the virtualization (currently: "
+            + std::to_string(g_inputdeck.get< tag::cmd, tag::virtualization >())
+            + ") to a lower value using the command-line argument '-u'. "
+            "Solution 2: decrease the number processing elements (PEs) using "
+            "the charmrun command-line argument '+pN' where N is the number of "
+            "PEs, which implicitly increases the size (and thus decreases the "
+            "number) of work units." );
+
+    // If graph not partitioned, quit leaving communication maps empty
+    if (nchare == 1) return;
+
+    // Generate points surrounding points
+    auto psup = tk::genPsup( g_tetinpoel, 4, g_esup );
+
+    // Map to associate a chare id to a map of receiver chare ids associated to
     // unique global point ids sent (export map)
     std::map< std::size_t,
               std::map< std::size_t, std::set< std::size_t > > > comm;
 
-    // construct export maps
-    for (std::size_t p=0; p<npoin; ++p)
-      for (auto i=psup2[p]+1; i<=psup2[p+1]; ++i) {
-        auto q = psup1[i];
-        if (chare[p] != chare[q])       // if the colors differ, store global id
-          comm[ chare[p] ][ chare[q] ].insert( p );
+    // Construct export maps
+    for (std::size_t p=0; p<graph.size(); ++p)  // for all mesh points
+      for (auto i=psup.second[p]+1; i<=psup.second[p+1]; ++i) {
+        auto q = psup.first[i];
+        if (chp[p] != chp[q])       // if the colors differ, store global id
+          comm[ chp[p] ][ chp[q] ].insert( p );
       }
 
     // This check should always be done, as it can result from incorrect user
@@ -449,13 +553,9 @@ comMaps( const tk::UnsMesh& graph,
               "Export/import maps should not be missing for chare id " +
               std::to_string(c-1) );
 
-    // Move ownership and global id arrays to global scope for Charm++ chares
-    g_chare = std::move( chare );
-    g_gid = std::move( gid );
-
     // Construct final product: a vector of export maps associating receiver
     // chare ids to unique communicated global point ids for all chare ids, and
-    // store it in global scope so that the main Charm++ chare can access it
+    // store it in global scope so that the Charm++ chares can access it
     for (const auto& e : comm) {
       g_comm.push_back( {} );
       for (const auto& x : e.second)
@@ -477,6 +577,7 @@ comMaps( const tk::UnsMesh& graph,
 //       std::cout << '\n';
 //       std::cout << '\n';
 //     }
+
   }
 }
 
@@ -536,10 +637,10 @@ int main( int argc, char **argv ) {
       iprint.part( "Factory" );
     }
 
-    // The load is taken to be proportional to the number of points of the mesh
-    // which is proportional to the number of unique edges in the mesh. Note
-    // that for a typical mesh of tetrahedra nelem = 5.5*npoin, nedge = 7*npoin,
-    // and npsup = 14*npoin, where
+    // The load is taken to be proportional to the number of elements of the
+    // mesh which is proportional to the number of points as well as the number
+    // of unique edges in the mesh. For a typical mesh of tetrahedra nelem =
+    // 5.5*npoin, nedge = 7*npoin, and npsup = 14*npoin, where
     //  * nelem - number of elements,
     //  * npoin - number of points,
     //  * nedge - number of unique edges,
@@ -559,16 +660,12 @@ int main( int argc, char **argv ) {
       tk::ExodusIIMeshReader er( cmdline.get< tag::io, tag::input >(), graph );
       er.readGraph();
       g_timestamp.emplace_back( "Read mesh graph from file", timer.hms() );
-      load = graph.size();
+      load = graph.tetinpoel().size()/4;
       for (int i=1; i<numpes; ++i)
         MPI_Send( &load, 1, MPI_UINT64_T, i, load_tag, MPI_COMM_WORLD );
     } else {
       MPI_Recv( &load, 1, MPI_UINT64_T, 0, load_tag, MPI_COMM_WORLD, &status );
     }
-
-    // Store tetrahedron element connectivity graph in global scope so Charm++
-    // chares will be able to access it
-    inciter::g_tetinpoel = graph.tetinpoel();
 
     // Compute load distribution given total work (load) and user-specified
     // virtualization
@@ -594,11 +691,9 @@ int main( int argc, char **argv ) {
 
   // Run Charm++ main chare using the partitioned graph
   CharmLibInit( MPI_COMM_WORLD, argc, argv );
-  MPI_Barrier( MPI_COMM_WORLD );
-
-  tk::hypre::test();
-
-  MPI_Barrier( MPI_COMM_WORLD );
+  //MPI_Barrier( MPI_COMM_WORLD );
+  // ...
+  //MPI_Barrier( MPI_COMM_WORLD );
   CharmLibExit();
 
   // Finalize MPI
