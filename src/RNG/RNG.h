@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/RNG.h
   \author    J. Bakosi
-  \date      Thu 12 Mar 2015 09:42:12 PM MDT
+  \date      Thu 30 Apr 2015 12:45:55 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Random number generator
   \details   This file defines a generic random number generator class. The
@@ -63,6 +63,11 @@ class RNG {
     void gaussian( int stream, ncomp_t num, double* r ) const
     { self->gaussian( stream, num, r ); }
 
+    //! Public interface to beta RNG
+    void beta( int stream, ncomp_t num, double p, double q, double a, double b,
+               double* r ) const
+    { self->beta( stream, num, p, q, a, b, r ); }
+
     //! Copy assignment
     RNG& operator=( const RNG& x )
     { RNG tmp(x); *this = std::move(tmp); return *this; }
@@ -81,6 +86,8 @@ class RNG {
       virtual Concept* copy() const = 0;
       virtual void uniform( int, ncomp_t, double* ) const = 0;
       virtual void gaussian( int, ncomp_t, double* ) const = 0;
+      virtual void beta( int, ncomp_t, double, double, double, double, double* )
+      const = 0;
     };
 
     //! Model models the Concept above by deriving from it and overriding the
@@ -93,6 +100,9 @@ class RNG {
       { data.uniform( stream, num, r ); }
       void gaussian( int stream, ncomp_t num, double* r ) const override
       { data.gaussian( stream, num, r ); }
+      void beta( int stream, ncomp_t num, double p, double q, double a,
+                 double b, double* r ) const override
+      { data.beta( stream, num, p, q, a, b, r ); }
       T data;
     };
 

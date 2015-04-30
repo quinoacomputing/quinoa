@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Thu 30 Apr 2015 09:47:01 AM MDT
+  \date      Thu 30 Apr 2015 04:10:15 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Walker's input deck grammar definition
   \details   Walker's input deck grammar definition. We use the [Parsing
@@ -145,18 +145,29 @@ namespace deck {
   template< class eq >
   struct check_init : pegtl::action_base< check_init< eq > > {
     static void apply( const std::string& value, Stack& stack ) {
-
-      // Error checks for delta initpolicy
       const auto& init = stack.get< tag::param, eq, tag::initpolicy >();
+      // Error checks for joint delta initpolicy
       if (init.size() == neq.get< eq >() &&
-          init.back() == ctr::InitPolicyType::DELTA) {
-        // Make sure there was a delta...end block with at least a single
+          init.back() == ctr::InitPolicyType::JOINTDELTA) {
+        // Make sure there was an icdelta...end block with at least a single
         // spike...end block
         const auto& spike = stack.template get< tag::param, eq, tag::spike >();
         if (!spike.empty() && spike.back().empty())
           tk::grm::Message< Stack, tk::grm::ERROR, tk::grm::MsgKey::NODELTA >
                           ( stack, value );
       }
+      // Error checks for joint beta initpolicy
+      if (init.size() == neq.get< eq >() &&
+          init.back() == ctr::InitPolicyType::JOINTBETA) {
+        // Make sure there was an icbeta...end block with at least a single
+        // betapdf...end block
+        const auto& betapdf =
+          stack.template get< tag::param, eq, tag::betapdf >();
+        if (!betapdf.empty() && betapdf.back().empty())
+          tk::grm::Message< Stack, tk::grm::ERROR, tk::grm::MsgKey::NOBETA >
+                          ( stack, value );
+      }
+
     }
   };
 
@@ -174,11 +185,17 @@ namespace deck {
                                                     tag::selected,
                                                     tag::diffeq >,
                         // start new vector or vectors of spikes for a potential
-                        // delta initpolicy
+                        // jointdelta initpolicy
                         tk::grm::start_vector< Stack,
                                                tag::param,
                                                eq,
-                                               tag::spike > > {};
+                                               tag::spike >,
+                        // start new vector or vectors of beta parameters for a
+                        // potential jointbeta initpolicy
+                        tk::grm::start_vector< Stack,
+                                               tag::param,
+                                               eq,
+                                               tag::betapdf > > {};
 
   //! Discretization parameters
   struct discretization_parameters :
@@ -200,11 +217,11 @@ namespace deck {
                                        tag::selected, tag::rng,
                                        tag::param, tag::rngsse > > {};
 
-  //! scan delta ... end block
+  //! scan icdelta ... end block
   template< class eq >
-  struct delta :
+  struct icdelta :
          pegtl::ifmust<
-           tk::grm::readkw< Stack, use< kw::delta >::pegtl_string >,
+           tk::grm::readkw< Stack, use< kw::icdelta >::pegtl_string >,
            // parse a spike ... end block (there can be multiple)
            tk::grm::block< Stack,
                            use< kw::end >,
@@ -218,7 +235,25 @@ namespace deck {
                              eq,
                              tag::spike > > > {};
 
-  //! Error checks after an equation...end block has been parsed
+  //! scan icbeta ... end block
+  template< class eq >
+  struct icbeta :
+         pegtl::ifmust<
+           tk::grm::readkw< Stack, use< kw::icbeta >::pegtl_string >,
+           // parse a betapdf ... end block (there can be multiple)
+           tk::grm::block< Stack,
+                           use< kw::end >,
+                           tk::grm::parameter_vector<
+                             Stack,
+                             use,
+                             use< kw::betapdf >,
+                             tk::grm::Store_back_back_back,
+                             tk::grm::start_vector_back,
+                             tk::grm::check_betapdfs,
+                             eq,
+                             tag::betapdf > > > {};
+
+  //! Error checks after a equation..end block has been parsed
   template< class eq >
   struct check_errors :
          pegtl::seq<
@@ -272,7 +307,8 @@ namespace deck {
                                             ctr::CoeffPolicy,
                                             tag::diagou,
                                             tag::coeffpolicy >,
-                           delta< tag::diagou >,
+                           icdelta< tag::diagou >,
+                           icbeta< tag::diagou >,
                            sde_parameter_vector< kw::sde_sigmasq,
                                                  tag::diagou,
                                                  tag::sigmasq >,
@@ -315,7 +351,8 @@ namespace deck {
                                             ctr::CoeffPolicy,
                                             tag::ou,
                                             tag::coeffpolicy >,
-                           delta< tag::ou >,
+                           icdelta< tag::ou >,
+                           icbeta< tag::ou >,
                            sde_parameter_vector< kw::sde_sigmasq,
                                                  tag::ou,
                                                  tag::sigmasq >,
@@ -358,7 +395,8 @@ namespace deck {
                                             ctr::CoeffPolicy,
                                             tag::skewnormal,
                                             tag::coeffpolicy >,
-                           delta< tag::skewnormal >,
+                           icdelta< tag::skewnormal >,
+                           icbeta< tag::skewnormal >,
                            sde_parameter_vector< kw::sde_T,
                                                  tag::skewnormal,
                                                  tag::timescale >,
@@ -401,7 +439,8 @@ namespace deck {
                                             ctr::CoeffPolicy,
                                             tag::beta,
                                             tag::coeffpolicy >,
-                           delta< tag::beta >,
+                           icdelta< tag::beta >,
+                           icbeta< tag::beta >,
                            sde_parameter_vector< kw::sde_b,
                                                  tag::beta,
                                                  tag::b >,
@@ -444,7 +483,8 @@ namespace deck {
                                             ctr::CoeffPolicy,
                                             tag::numfracbeta,
                                             tag::coeffpolicy >,
-                           delta< tag::numfracbeta >,
+                           icdelta< tag::numfracbeta >,
+                           icbeta< tag::numfracbeta >,
                            sde_parameter_vector< kw::sde_b,
                                                  tag::numfracbeta,
                                                  tag::b >,
@@ -493,7 +533,8 @@ namespace deck {
                                             ctr::CoeffPolicy,
                                             tag::massfracbeta,
                                             tag::coeffpolicy >,
-                           delta< tag::massfracbeta >,
+                           icdelta< tag::massfracbeta >,
+                           icbeta< tag::massfracbeta >,
                            sde_parameter_vector< kw::sde_b,
                                                  tag::massfracbeta,
                                                  tag::b >,
@@ -542,7 +583,8 @@ namespace deck {
                                             ctr::CoeffPolicy,
                                             tag::mixnumfracbeta,
                                             tag::coeffpolicy >,
-                           delta< tag::mixnumfracbeta >,
+                           icdelta< tag::mixnumfracbeta >,
+                           icbeta< tag::mixnumfracbeta >,
                            sde_parameter_vector< kw::sde_bprime,
                                                  tag::mixnumfracbeta,
                                                  tag::bprime >,
@@ -591,7 +633,8 @@ namespace deck {
                                             ctr::CoeffPolicy,
                                             tag::mixmassfracbeta,
                                             tag::coeffpolicy >,
-                           delta< tag::mixmassfracbeta >,
+                           icdelta< tag::mixmassfracbeta >,
+                           icbeta< tag::mixmassfracbeta >,
                            sde_parameter_vector< kw::sde_bprime,
                                                  tag::mixmassfracbeta,
                                                  tag::bprime >,
@@ -640,7 +683,8 @@ namespace deck {
                                             ctr::CoeffPolicy,
                                             tag::gamma,
                                             tag::coeffpolicy >,
-                           delta< tag::gamma >,
+                           icdelta< tag::gamma >,
+                           icbeta< tag::gamma >,
                            sde_parameter_vector< kw::sde_b,
                                                  tag::gamma,
                                                  tag::b >,
@@ -683,7 +727,8 @@ namespace deck {
                                             ctr::CoeffPolicy,
                                             tag::dirichlet,
                                             tag::coeffpolicy >,
-                           delta< tag::dirichlet >,
+                           icdelta< tag::dirichlet >,
+                           icbeta< tag::dirichlet >,
                            sde_parameter_vector< kw::sde_b,
                                                  tag::dirichlet,
                                                  tag::b >,
@@ -726,7 +771,8 @@ namespace deck {
                                             ctr::CoeffPolicy,
                                             tag::gendir,
                                             tag::coeffpolicy >,
-                           delta< tag::gendir >,
+                           icdelta< tag::gendir >,
+                           icbeta< tag::gendir >,
                            sde_parameter_vector< kw::sde_b,
                                                  tag::gendir,
                                                  tag::b >,
@@ -772,7 +818,8 @@ namespace deck {
                                             ctr::CoeffPolicy,
                                             tag::wrightfisher,
                                             tag::coeffpolicy >,
-                           delta< tag::wrightfisher >,
+                           icdelta< tag::wrightfisher >,
+                           icbeta< tag::wrightfisher >,
                            sde_parameter_vector< kw::sde_omega,
                                                  tag::wrightfisher,
                                                  tag::omega > >,

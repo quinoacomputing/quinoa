@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/Options/InitPolicy.h
   \author    J. Bakosi
-  \date      Wed 15 Apr 2015 09:43:38 AM MDT
+  \date      Thu 30 Apr 2015 04:08:12 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Differential equation initialization policy options for walker
   \details   Differential equation initialization policy options for walker
@@ -24,7 +24,8 @@ namespace ctr {
 //! \author J. Bakosi
 enum class InitPolicyType : uint8_t { RAW=0,
                                       ZERO,
-                                      DELTA };
+                                      JOINTDELTA,
+                                      JOINTBETA };
 
 //! Pack/Unpack InitPolicyType: forward overload to generic enum class packer
 //! \author J. Bakosi
@@ -39,7 +40,8 @@ class InitPolicy : public tk::Toggle< InitPolicyType > {
     //! \author J. Bakosi
     using keywords = boost::mpl::vector< kw::raw
                                        , kw::zero
-                                       , kw::delta
+                                       , kw::jointdelta
+                                       , kw::jointbeta
                                        >;
 
     //! \brief Options constructor
@@ -53,11 +55,13 @@ class InitPolicy : public tk::Toggle< InitPolicyType > {
         //! Enums -> names
         { { InitPolicyType::RAW, kw::raw::name() },
           { InitPolicyType::ZERO, kw::zero::name() },
-          { InitPolicyType::DELTA, kw::delta::name() } },
+          { InitPolicyType::JOINTDELTA, kw::jointdelta::name() },
+          { InitPolicyType::JOINTBETA, kw::jointbeta::name() } },
         //! keywords -> Enums
         { { kw::raw::string(), InitPolicyType::RAW },
           { kw::zero::string(), InitPolicyType::ZERO },
-          { kw::delta::string(), InitPolicyType::DELTA } } ) {}
+          { kw::jointdelta::string(), InitPolicyType::JOINTDELTA },
+          { kw::jointbeta::string(), InitPolicyType::JOINTBETA } } ) {}
 };
 
 } // ctr::

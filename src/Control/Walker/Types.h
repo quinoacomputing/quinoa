@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/Types.h
   \author    J. Bakosi
-  \date      Thu 30 Apr 2015 09:44:55 AM MDT
+  \date      Thu 30 Apr 2015 04:07:53 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Types for Walker's parsers
   \details   Types for Walker's parsers. This file defines the components of the
@@ -88,6 +88,8 @@ using DirichletParameters = tk::tuple::tagged_tuple<
                       kw::sde_kappa::info::expect::type > >,
   tag::spike,       std::vector< std::vector< std::vector <
                       kw::spike::info::expect::type > > >,
+  tag::betapdf,     std::vector< std::vector< std::vector <
+                      kw::betapdf::info::expect::type > > >,
   tag::rng,         std::vector< tk::ctr::RNGType >,
   tag::initpolicy,  std::vector< InitPolicyType >,
   tag::coeffpolicy, std::vector< CoeffPolicyType >
@@ -106,6 +108,8 @@ using GenDirichletParameters = tk::tuple::tagged_tuple<
                       kw::sde_c::info::expect::type > >,
   tag::spike,       std::vector< std::vector< std::vector <
                       kw::spike::info::expect::type > > >,
+  tag::betapdf,     std::vector< std::vector< std::vector <
+                      kw::betapdf::info::expect::type > > >,
   tag::rng,         std::vector< tk::ctr::RNGType >,
   tag::initpolicy,  std::vector< InitPolicyType >,
   tag::coeffpolicy, std::vector< CoeffPolicyType >
@@ -118,6 +122,8 @@ using WrightFisherParameters = tk::tuple::tagged_tuple<
                       kw::sde_omega::info::expect::type > >,
   tag::spike,       std::vector< std::vector< std::vector <
                       kw::spike::info::expect::type > > >,
+  tag::betapdf,     std::vector< std::vector< std::vector <
+                      kw::betapdf::info::expect::type > > >,
   tag::rng,         std::vector< tk::ctr::RNGType >,
   tag::initpolicy,  std::vector< InitPolicyType >,
   tag::coeffpolicy, std::vector< CoeffPolicyType >
@@ -134,6 +140,8 @@ using OrnsteinUhlenbeckParameters = tk::tuple::tagged_tuple<
                       kw::sde_mu::info::expect::type > >,
   tag::spike,       std::vector< std::vector< std::vector <
                       kw::spike::info::expect::type > > >,
+  tag::betapdf,     std::vector< std::vector< std::vector <
+                      kw::betapdf::info::expect::type > > >,
   tag::rng,         std::vector< tk::ctr::RNGType >,
   tag::initpolicy,  std::vector< InitPolicyType >,
   tag::coeffpolicy, std::vector< CoeffPolicyType >
@@ -150,6 +158,8 @@ using DiagOrnsteinUhlenbeckParameters = tk::tuple::tagged_tuple<
                       kw::sde_mu::info::expect::type > >,
   tag::spike,       std::vector< std::vector< std::vector <
                       kw::spike::info::expect::type > > >,
+  tag::betapdf,     std::vector< std::vector< std::vector <
+                      kw::betapdf::info::expect::type > > >,
   tag::rng,         std::vector< tk::ctr::RNGType >,
   tag::initpolicy,  std::vector< InitPolicyType >,
   tag::coeffpolicy, std::vector< CoeffPolicyType >
@@ -166,6 +176,8 @@ using SkewNormalParameters = tk::tuple::tagged_tuple<
                       kw::sde_lambda::info::expect::type > >,
   tag::spike,       std::vector< std::vector< std::vector <
                       kw::spike::info::expect::type > > >,
+  tag::betapdf,     std::vector< std::vector< std::vector <
+                      kw::betapdf::info::expect::type > > >,
   tag::rng,         std::vector< tk::ctr::RNGType >,
   tag::initpolicy,  std::vector< InitPolicyType >,
   tag::coeffpolicy, std::vector< CoeffPolicyType >
@@ -182,6 +194,8 @@ using GammaParameters = tk::tuple::tagged_tuple<
                       kw::sde_kappa::info::expect::type > >,
   tag::spike,       std::vector< std::vector< std::vector <
                       kw::spike::info::expect::type > > >,
+  tag::betapdf,     std::vector< std::vector< std::vector <
+                      kw::betapdf::info::expect::type > > >,
   tag::rng,         std::vector< tk::ctr::RNGType >,
   tag::initpolicy,  std::vector< InitPolicyType >,
   tag::coeffpolicy, std::vector< CoeffPolicyType >
@@ -198,6 +212,8 @@ using BetaParameters = tk::tuple::tagged_tuple<
                       kw::sde_kappa::info::expect::type > >,
   tag::spike,       std::vector< std::vector< std::vector <
                       kw::spike::info::expect::type > > >,
+  tag::betapdf,     std::vector< std::vector< std::vector <
+                      kw::betapdf::info::expect::type > > >,
   tag::rng,         std::vector< tk::ctr::RNGType >,
   tag::initpolicy,  std::vector< InitPolicyType >,
   tag::coeffpolicy, std::vector< CoeffPolicyType >
@@ -218,6 +234,8 @@ using NumberFractionBetaParameters = tk::tuple::tagged_tuple<
                       kw::sde_rcomma::info::expect::type > >,
   tag::spike,       std::vector< std::vector< std::vector <
                       kw::spike::info::expect::type > > >,
+  tag::betapdf,     std::vector< std::vector< std::vector <
+                      kw::betapdf::info::expect::type > > >,
   tag::rng,         std::vector< tk::ctr::RNGType >,
   tag::initpolicy,  std::vector< InitPolicyType >,
   tag::coeffpolicy, std::vector< CoeffPolicyType >
@@ -238,6 +256,8 @@ using MassFractionBetaParameters = tk::tuple::tagged_tuple<
                       kw::sde_rcomma::info::expect::type > >,
   tag::spike,       std::vector< std::vector< std::vector <
                       kw::spike::info::expect::type > > >,
+  tag::betapdf,     std::vector< std::vector< std::vector <
+                      kw::betapdf::info::expect::type > > >,
   tag::rng,         std::vector< tk::ctr::RNGType >,
   tag::initpolicy,  std::vector< InitPolicyType >,
   tag::coeffpolicy, std::vector< CoeffPolicyType >
@@ -258,6 +278,8 @@ using MixNumberFractionBetaParameters = tk::tuple::tagged_tuple<
                       kw::sde_rcomma::info::expect::type > >,
   tag::spike,      std::vector< std::vector< std::vector <
                       kw::spike::info::expect::type > > >,
+  tag::betapdf,     std::vector< std::vector< std::vector <
+                      kw::betapdf::info::expect::type > > >,
   tag::rng,         std::vector< tk::ctr::RNGType >,
   tag::initpolicy,  std::vector< InitPolicyType >,
   tag::coeffpolicy, std::vector< CoeffPolicyType >
@@ -278,6 +300,8 @@ using MixMassFractionBetaParameters = tk::tuple::tagged_tuple<
                       kw::sde_r::info::expect::type > >,
   tag::spike,      std::vector< std::vector< std::vector <
                       kw::spike::info::expect::type > > >,
+  tag::betapdf,     std::vector< std::vector< std::vector <
+                      kw::betapdf::info::expect::type > > >,
   tag::rng,         std::vector< tk::ctr::RNGType >,
   tag::initpolicy,  std::vector< ctr::InitPolicyType >,
   tag::coeffpolicy, std::vector< ctr::CoeffPolicyType >

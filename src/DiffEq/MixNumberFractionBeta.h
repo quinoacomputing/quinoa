@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/MixNumberFractionBeta.h
   \author    J. Bakosi
-  \date      Fri 17 Apr 2015 09:26:06 AM MDT
+  \date      Thu 30 Apr 2015 03:01:32 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     System of mix number-fraction beta SDEs
   \details   This file implements the time integration of a system of stochastic
@@ -120,12 +120,14 @@ class MixNumberFractionBeta {
         m_bprime, m_S, m_kprime, m_rho2, m_rcomma, m_b, m_k ) {}
 
     //! Initalize SDE, prepare for time integration
+    //! \param[in] stream Thread (or more precisely stream) ID 
     //! \param[inout] particles Array of particle properties 
     //! \author J. Bakosi
-    void initialize( tk::ParProps& particles ) {
+    void initialize( int stream, tk::ParProps& particles ) {
       //! Set initial conditions using initialization policy
-      Init::template init< tag::mixnumfracbeta >
-                         ( g_inputdeck, particles, m_c, m_ncomp, m_offset );
+      Init::template
+        init< tag::mixnumfracbeta >
+            ( g_inputdeck, m_rng, stream, particles, m_c, m_ncomp, m_offset );
     }
 
     //! \brief Advance particles according to the system of mix number-fraction

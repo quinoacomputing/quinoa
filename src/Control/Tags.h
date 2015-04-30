@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Tags.h
   \author    J. Bakosi
-  \date      Thu 30 Apr 2015 11:43:07 AM MDT
+  \date      Thu 30 Apr 2015 04:08:58 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Tags
   \details   Tags are unique types, used for metaprogramming.
@@ -20,6 +20,7 @@ struct output {};
 struct seed {};
 struct uniform_method {};
 struct gaussian_method {};
+struct beta_method {};
 struct rng {};
 struct rngmkl {};
 struct rngsse {};
@@ -49,6 +50,7 @@ struct mixnumfracbeta {};
 struct mixmassfracbeta {};
 struct gamma {};
 struct spike {};
+struct betapdf {};
 struct diffeq {};
 struct initpolicy {};
 struct coeffpolicy {};

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Fri 17 Apr 2015 08:55:08 AM MDT
+  \date      Thu 30 Apr 2015 01:10:39 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Walker's input deck
   \details   Walker's input deck
@@ -124,6 +124,8 @@ class InputDeck :
                                      , kw::rngsse_lfsr113
                                      , kw::rngsse_mrg32k3a
                                      , kw::seqlen
+                                     , kw::cja
+                                     , kw::cja_accurate
                                      >;
     using keywords4 = boost::mpl::set< kw::seed
                                      #ifdef HAS_MKL
@@ -140,6 +142,7 @@ class InputDeck :
                                      , kw::mkl_nondeterm
                                      , kw::uniform_method
                                      , kw::gaussian_method
+                                     , kw::beta_method
                                      , kw::standard
                                      , kw::accurate
                                      , kw::boxmuller
@@ -166,7 +169,7 @@ class InputDeck :
                                      , kw::numfracbeta
                                      , kw::sde_rho2
                                      , kw::sde_rcomma
-                                     , kw::delta
+                                     , kw::icdelta
                                      >;
     using keywords6 = boost::mpl::set< kw::spike
                                      , kw::sde_bprime
@@ -177,6 +180,11 @@ class InputDeck :
                                      , kw::sde_r
                                      , kw::homdecay
                                      , kw::mchomdecay
+                                     , kw::jointbeta
+                                     , kw::jointdelta
+                                     , kw::jointbeta
+                                     , kw::icbeta
+                                     , kw::betapdf
                                      >;
 
     //! \brief Constructor: set all defaults
