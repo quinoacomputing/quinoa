@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/MassFractionBeta.h
   \author    J. Bakosi
-  \date      Wed 01 Apr 2015 11:12:58 AM MDT
+  \date      Thu 30 Apr 2015 03:01:00 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     System of mass-fraction beta SDEs
   \details   This file implements the time integration of a system of stochastic
@@ -102,12 +102,14 @@ class MassFractionBeta {
         m_b, m_S, m_k, m_rho2, m_r ) {}
 
     //! Initalize SDE, prepare for time integration
+    //! \param[in] stream Thread (or more precisely stream) ID 
     //! \param[inout] particles Array of particle properties 
     //! \author J. Bakosi
-    void initialize( tk::ParProps& particles ) {
+    void initialize( int stream, tk::ParProps& particles ) {
       //! Set initial conditions using initialization policy
-      Init::template init< tag::massfracbeta >
-                         ( g_inputdeck, particles, m_c, m_ncomp, m_offset );
+      Init::template
+        init< tag::massfracbeta >
+            ( g_inputdeck, m_rng, stream, particles, m_c, m_ncomp, m_offset );
     }
 
     //! \brief Advance particles according to the system of mass-fraction beta

@@ -2,7 +2,7 @@
 /*!
   \file      src/Walker/Integrator.h
   \author    J. Bakosi
-  \date      Thu 19 Mar 2015 11:43:50 AM MDT
+  \date      Thu 30 Apr 2015 03:37:21 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Integrator advances differential equations
   \details   Integrator advances differential equations. There are a potentially
@@ -70,7 +70,7 @@ class Integrator : public CBase_Integrator< Proxy > {
 
     //! Set initial conditions
     void ic() {
-      for (const auto& eq : g_diffeqs) eq.initialize( m_particles );
+      for (const auto& eq : g_diffeqs) eq.initialize( CkMyPe(), m_particles );
       m_proxy.init();   // signal to host that initialization is complete
     }
 
