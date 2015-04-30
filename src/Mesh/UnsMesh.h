@@ -2,17 +2,18 @@
 /*!
   \file      src/Mesh/UnsMesh.h
   \author    J. Bakosi
-  \date      Fri 10 Apr 2015 03:53:44 PM MDT
+  \date      Mon 27 Apr 2015 12:56:00 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     3D unstructured mesh class declaration
   \details   3D unstructured mesh class declaration. This mesh class currently
     supports line, triangle, and tetrahedron elements.
 */
 //******************************************************************************
-#ifndef UnshMesh_h
-#define UnshMesh_h
+#ifndef UnsMesh_h
+#define UnsMesh_h
 
 #include <vector>
+#include <array>
 #include <memory>
 
 //#include <pup_stl.h>
@@ -26,33 +27,88 @@ namespace tk {
 class UnsMesh {
 
   public:
+    /** @name Constructors */
+    ///@{
     //! Constructor without initializing anything
     explicit UnsMesh() {}
 
     //! Constructor copying over element connectivity
-    explicit UnsMesh( const std::vector< int >& tetinp ) :
-      m_tetinpoel( tetinp ) {}
+    explicit UnsMesh( const std::vector< std::size_t >& tetinp ) :
+      m_graphsize( tetinp.size()/4 ),
+      m_tetinpoel( tetinp )
+    {
+      Assert( m_tetinpoel.size()%4 == 0,
+              "Size of tetinpoel must be divisible by 4" );
+    }
 
     //! Constructor swallowing element connectivity
-    explicit UnsMesh( std::vector< int >&& tetinp ) :
-      m_tetinpoel( std::move(tetinp) ) {}
+    explicit UnsMesh( std::vector< std::size_t >&& tetinp ) :
+      m_graphsize( tetinp.size()/4 ),
+      m_tetinpoel( std::move(tetinp) )
+    {
+      Assert( m_tetinpoel.size()%4 == 0,
+              "Size of tetinpoel must be divisible by 4" );
+    }
 
     //! Constructor copying over element connectivity and point coordinates
-    explicit UnsMesh( const std::vector< int >& tetinp,
+    explicit UnsMesh( const std::vector< std::size_t >& tetinp,
                       const std::vector< tk::real >& X,
                       const std::vector< tk::real >& Y,
                       const std::vector< tk::real >& Z ) :
-      m_tetinpoel( tetinp ), m_x( X ), m_y( Y ), m_z( Z ) {}
+      m_graphsize( tetinp.size()/4 ),
+      m_tetinpoel( tetinp ),
+      m_x( X ),
+      m_y( Y ),
+      m_z( Z )
+    {
+      Assert( m_tetinpoel.size()%4 == 0,
+              "Size of tetinpoel must be divisible by 4" );
+    }
+
+    //! \brief Constructor copying over element connectivity and array of point
+    //!   coordinates
+    explicit UnsMesh( const std::vector< std::size_t >& tetinp,
+                      const std::array< std::vector< tk::real >, 3 >& coord ) :
+      m_graphsize( tetinp.size()/4 ),
+      m_tetinpoel( tetinp ),
+      m_x( coord[0] ),
+      m_y( coord[1] ),
+      m_z( coord[2] )
+    {
+      Assert( m_tetinpoel.size()%4 == 0,
+              "Size of tetinpoel must be divisible by 4" );
+    }
 
     //! Constructor swallowing element connectivity and point coordinates
-    explicit UnsMesh( std::vector< int >&& tetinp,
+    explicit UnsMesh( std::vector< std::size_t >&& tetinp,
                       std::vector< tk::real >&& X,
                       std::vector< tk::real >&& Y,
                       std::vector< tk::real >&& Z ) :
+      m_graphsize( tetinp.size()/4 ),
       m_tetinpoel( std::move(tetinp) ),
       m_x( std::move(X) ),
       m_y( std::move(Y) ),
-      m_z( std::move(Z) ) {}
+      m_z( std::move(Z) )
+    {
+      Assert( m_tetinpoel.size()%4 == 0,
+              "Size of tetinpoel must be divisible by 4" );
+    }
+
+
+    //! \brief Constructor swallowing element connectivity and array of point
+    //!   coordinates
+    explicit UnsMesh( std::vector< std::size_t >&& tetinp,
+                      std::array< std::vector< tk::real >, 3 >&& coord ) :
+      m_graphsize( tetinp.size()/4 ),
+      m_tetinpoel( std::move(tetinp) ),
+      m_x( std::move(coord[0]) ),
+      m_y( std::move(coord[1]) ),
+      m_z( std::move(coord[2]) )
+    {
+      Assert( m_tetinpoel.size()%4 == 0,
+              "Size of tetinpoel must be divisible by 4" );
+    }
+    ///@}
 
     /** @name Point coordinates accessors */
     ///@{
@@ -88,8 +144,9 @@ class UnsMesh {
 
     /** @name Line elements connectivity accessors */
     ///@{
-    const std::vector< int >& lininpoel() const noexcept { return m_lininpoel; }
-    std::vector< int >& lininpoel() noexcept { return m_lininpoel; }
+    const std::vector< std::size_t >& lininpoel() const noexcept
+    { return m_lininpoel; }
+    std::vector< std::size_t >& lininpoel() noexcept { return m_lininpoel; }
     ///@}
 
     /** @name Line element tags accessors */
@@ -101,8 +158,9 @@ class UnsMesh {
 
     /** @name Triangles elements connectivity accessors */
     ///@{
-    const std::vector< int >& triinpoel() const noexcept { return m_triinpoel; }
-    std::vector< int >& triinpoel() noexcept { return m_triinpoel; }
+    const std::vector< std::size_t >& triinpoel() const noexcept
+    { return m_triinpoel; }
+    std::vector< std::size_t >& triinpoel() noexcept { return m_triinpoel; }
     ///@}
 
     /** @name Triangle element tags accessors */
@@ -114,8 +172,9 @@ class UnsMesh {
 
     /** @name Tetrahedra elements connectivity accessors */
     ///@{
-    const std::vector< int >& tetinpoel() const noexcept { return m_tetinpoel; }
-    std::vector< int >& tetinpoel() noexcept { return m_tetinpoel; }
+    const std::vector< std::size_t >& tetinpoel() const noexcept
+    { return m_tetinpoel; }
+    std::vector< std::size_t >& tetinpoel() noexcept { return m_tetinpoel; }
     ///@}
 
     /** @name Tetrahedra element tags accessors */
@@ -135,9 +194,9 @@ class UnsMesh {
     std::size_t m_graphsize;
 
     //! Element connectivity
-    std::vector< int > m_lininpoel;             //!< Line connectivity
-    std::vector< int > m_triinpoel;             //!< Triangle connectivity
-    std::vector< int > m_tetinpoel;             //!< Tetrahedron connectivity
+    std::vector< std::size_t > m_lininpoel;     //!< Line connectivity
+    std::vector< std::size_t > m_triinpoel;     //!< Triangle connectivity
+    std::vector< std::size_t > m_tetinpoel;     //!< Tetrahedron connectivity
 
     //! Node coordinates
     std::vector< tk::real > m_x;

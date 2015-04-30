@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/WalkerPrint.h
   \author    J. Bakosi
-  \date      Wed 15 Apr 2015 10:13:26 AM MDT
+  \date      Fri 24 Apr 2015 06:03:59 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Walker-specific pretty printer functionality
   \details   Walker-specific pretty printer functionality.
@@ -17,6 +17,7 @@
 
 #include <RNGPrint.h>
 #include <DiffEq.h>
+#include <ContainerUtil.h>
 #include <Walker/Types.h>
 #include <Walker/Options/DiffEq.h>
 #include <Walker/Options/InitPolicy.h>
@@ -112,8 +113,8 @@ class WalkerPrint : public tk::RNGPrint {
       private:
         // Make all policies unique
         void unique() {
-          tk::ctr::unique( init );
-          tk::ctr::unique( coef );
+          tk::unique( init );
+          tk::unique( coef );
         }
 
         std::string init;

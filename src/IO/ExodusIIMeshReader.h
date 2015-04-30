@@ -59,8 +59,8 @@ class ExodusIIMeshReader : public Reader {
 
     UnsMesh& m_mesh;            //!< Mesh object
     int m_inFile;               //!< ExodusII file handle
-    int m_neblk;                //!< Number of element blocks
-    int m_nnode;                //!< Number of nodes
+    std::size_t m_neblk;        //!< Number of element blocks
+    std::size_t m_nnode;        //!< Number of nodes
 };
 
 } // tk::

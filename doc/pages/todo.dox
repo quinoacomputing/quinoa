@@ -105,6 +105,15 @@
  - Add separate page to doxygen on papers with links
  - Add and hook up optional field specifying default expected value to keywords
 
+### Concepts
+ - Add concepts (as they will be in C++17 as comments for now) to all templates.
+   See
+   + https://isocpp.org/blog/2013/02/concepts-lite-constraining-templates-with-predicates-andrew-sutton-bjarne-s
+   + http://concepts.axiomatics.org/~ans/
+
+ - Explore the use of Eric Niebler's concept checking "library",
+   http://ericniebler.com/2013/11/23/concept-checking-in-c11/
+
 ### Uncategorized
  - Charm++ codes to explore: GTC, NAMD, LeanMD, Mol3D
 
@@ -152,16 +161,13 @@
  - Any libs for concurrent containers? Would be nice for PDF/JPDF. TBB, NVIDIA
    Thrust?
 
- - Explore the use of Eric Niebler's concept checking "library",
-   http://ericniebler.com/2013/11/23/concept-checking-in-c11/
-
  - Use static_assert for templates, see e.g., http://cxxninjitsu.blogspot.com/2013/12/staticassert-better-template-error.html?m=1
 
  - Pass strings and other function argument types that need copies and do not need to be modified by value, see http://stackoverflow.com/questions/16724657/why-do-we-copy-then-move
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Mon 13 Apr 2015 12:25:07 PM MDT
+<em>Page last updated:</em> Mon 20 Apr 2015 02:13:13 PM MDT
 <em>Copyright 2012-2015, Jozsef Bakosi.</em>
 </small></div>
 */

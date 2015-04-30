@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/STLMesh.h
   \author    J. Bakosi
-  \date      Sat 14 Mar 2015 07:00:35 AM MDT
+  \date      Mon 20 Apr 2015 09:47:08 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     STL (STereoLithography) mesh class declaration
   \details   STL (STereoLithography) mesh class declaration.
@@ -38,9 +38,6 @@ class STLMesh {
     tk::real* gety() const noexcept { return m_y.get(); }
     tk::real* getz() const noexcept { return m_z.get(); }
 
-    //! Node list accessor
-    int* nodelist() const noexcept { return m_nodelist.get(); }
-
     //! Number of nodes accessor
     std::size_t nnode() const noexcept { return m_nnode; }
 
@@ -49,7 +46,6 @@ class STLMesh {
     std::unique_ptr< tk::real[] > m_x;          //!< Vertex x coordinates
     std::unique_ptr< tk::real[] > m_y;          //!< Vertex y coordinates
     std::unique_ptr< tk::real[] > m_z;          //!< Vertex z coordinates
-    std::unique_ptr< int[] > m_nodelist;        //!< Node indices for facets
 
     std::size_t m_nnode;                        //!< Number of nodes
 };

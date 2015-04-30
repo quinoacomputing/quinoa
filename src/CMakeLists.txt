@@ -307,7 +307,7 @@ include_directories(${QUINOA_SOURCE_DIR}
                     ${QUINOA_SOURCE_DIR}/DiffEq
                     ${QUINOA_SOURCE_DIR}/Walker
                     ${QUINOA_SOURCE_DIR}/Inciter
-                    ${QUINOA_SOURCE_DIR}/LinearSystem
+                    ${QUINOA_SOURCE_DIR}/LinSys
                     ${QUINOA_SOURCE_DIR}/IO
                     ${QUINOA_SOURCE_DIR}/Main
                     ${QUINOA_SOURCE_DIR}/Mesh
@@ -326,6 +326,7 @@ include_directories(${QUINOA_SOURCE_DIR}
                     ${PROJECT_BINARY_DIR}/RNGTest       # for Charm++ modules
                     ${PROJECT_BINARY_DIR}/UnitTest      # for Charm++ modules
                     ${PROJECT_BINARY_DIR}/RegTest       # for Charm++ modules
+                    ${PROJECT_BINARY_DIR}/LinSys        # for Charm++ modules
 )
 
 # Components
@@ -334,7 +335,7 @@ add_subdirectory(Control)
 add_subdirectory(DiffEq)
 add_subdirectory(Walker)
 add_subdirectory(Inciter)
-add_subdirectory(LinearSystem)
+add_subdirectory(LinSys)
 add_subdirectory(IO)
 add_subdirectory(Main)
 add_subdirectory(Mesh)

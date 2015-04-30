@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/PDFWriter.C
   \author    J. Bakosi
-  \date      Sat 14 Mar 2015 12:12:03 PM MDT
+  \date      Mon 20 Apr 2015 09:44:47 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Univariate PDF writer
   \brief     PDF writer class definition
@@ -843,7 +843,7 @@ PDFWriter::writeGmshBin( const TriPDF& pdf,
 void
 PDFWriter::writeExodusII( const BiPDF& pdf,
                           const tk::ctr::PDFInfo& info,
-                          int it,
+                          std::size_t it,
                           ctr::PDFCenteringType centering ) const
 //******************************************************************************
 //  Write out standardized bivariate PDF to Exodus II format
@@ -967,7 +967,7 @@ PDFWriter::writeExodusII( const BiPDF& pdf,
 void
 PDFWriter::writeExodusII( const TriPDF& pdf,
                           const tk::ctr::PDFInfo& info,
-                          int it,
+                          std::size_t it,
                           ctr::PDFCenteringType centering ) const
 //******************************************************************************
 //  Write out standardized trivariate PDF to Exodus II format
@@ -1138,7 +1138,9 @@ PDFWriter::writeExHdr( int outFileId, int nnode, int nelem ) const
 }
 
 void
-PDFWriter::writeExVar( int exoFile, int it, ctr::PDFCenteringType centering,
+PDFWriter::writeExVar( int exoFile,
+                       std::size_t it,
+                       ctr::PDFCenteringType centering,
                        const std::vector< tk::real >& probability ) const
 //******************************************************************************
 //  Output probability density function as Exodus II results field

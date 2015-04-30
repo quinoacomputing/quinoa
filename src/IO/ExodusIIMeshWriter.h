@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/ExodusIIMeshWriter.h
   \author    J. Bakosi
-  \date      Sun 12 Apr 2015 08:20:36 AM MDT
+  \date      Mon 27 Apr 2015 03:39:34 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     ExodusII mesh writer
   \details   ExodusII mesh writer class declaration. Currently, this is a bare
@@ -41,11 +41,19 @@ class ExodusIIMeshWriter : public Writer {
     //!  Write time stamp to ExodusII file
     void writeTimeStamp( int it, tk::real time );
 
-    //! Write the number and names of output variables to ExodusII file
-    void writeVarNames( const std::vector< std::string >& nvar );
+    //! Write the names of nodal output variables to ExodusII file
+    void writeNodeVarNames( const std::vector< std::string >& nv );
+
+    //! Write the names of element output variables to ExodusII file
+    void writeElemVarNames( const std::vector< std::string >& ev );
 
     //!  Write node scalar field to ExodusII file
     void writeNodeScalar( int it,
+                          int varid,
+                          const std::vector< tk::real >& var );
+
+    //!  Write elem scalar field to ExodusII file
+    void writeElemScalar( int it,
                           int varid,
                           const std::vector< tk::real >& var );
 
@@ -63,7 +71,7 @@ class ExodusIIMeshWriter : public Writer {
     void writeElemBlock( int& elclass,
                          int nnpe,
                          const std::string& eltype,
-                         std::vector< int >& inpoel );
+                         const std::vector< std::size_t >& inpoel );
 
     const std::string m_filename;          //!< File name
     const UnsMesh& m_mesh;                 //!< Mesh object

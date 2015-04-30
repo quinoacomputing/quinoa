@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/StatCtr.h
   \author    J. Bakosi
-  \date      Thu 23 Apr 2015 03:29:46 PM MDT
+  \date      Thu 30 Apr 2015 11:43:19 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Types and associated functions to deal with moments and PDFs
   \details   Types and associated functions to deal with statistical moments and
@@ -312,19 +312,6 @@ PDFInfo pdfInfo( const std::vector< std::vector< tk::real > >& binsizes,
     ++i;
   }
   Throw( "Cannot find PDF name." );
-}
-
-//! \brief Make elements of container unique
-//! \param[inout] c Container
-//! \author  J. Bakosi
-template< class Container >
-static inline void
-unique( Container& c ) {
-  std::sort( begin(c), end(c) );
-  auto it = std::unique( begin(c), end(c) );
-  auto d = std::distance( begin(c), it );
-  Assert( d >= 0, "Distance must be non-negative in tk::ctr::unique()" );
-  c.resize( static_cast< std::size_t >( d ) );
 }
 
 //! Lookup moment in moments map based on product key

@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Mesh/DerivedData.h
   \author    J. Bakosi
-  \date      Tue 14 Apr 2015 11:39:31 AM MDT
+  \date      Mon 20 Apr 2015 08:09:10 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Mesh/DerivedData
   \details   Unit tests for Mesh/DerivedData. All unit tests start from simple
@@ -141,7 +141,7 @@ void DerivedData_object::test< 1 >() {
   // Attempt to shift node IDs with empty connectivity. If some error happens or an
   // exception is throw that will go to the screen; no further tests are
   // necessary.
-  std::vector< int > empty;
+  std::vector< std::size_t > empty;
   tk::shiftToZero( empty );
 }
 
@@ -151,25 +151,25 @@ void DerivedData_object::test< 2 >() {
   set_test_name( "shiftToZero for lines" );
 
   // Mesh connectivity for simple line-only mesh
-  std::vector< int > inpoel { 1, 2,
-                              2, 3,
-                              3, 4,
-                              4, 1,
-                              5, 6,
-                              6, 7,
-                              7, 8,
-                              8, 5,
-                              1, 5,
-                              2, 6,
-                              3, 7,
-                              4, 8 };
+  std::vector< std::size_t > inpoel { 1, 2,
+                                      2, 3,
+                                      3, 4,
+                                      4, 1,
+                                      5, 6,
+                                      6, 7,
+                                      7, 8,
+                                      8, 5,
+                                      1, 5,
+                                      2, 6,
+                                      3, 7,
+                                      4, 8 };
 
   // Shift node IDs to start from zero
   tk::shiftToZero( inpoel );
 
   // Test new extents of node IDs in element connectivity
-  auto minmax = std::minmax_element( begin(inpoel), end(inpoel) );
-  ensure_equals( "node ids should start from zero", *minmax.first, 0 );
+  auto min = std::min_element( begin(inpoel), end(inpoel) );
+  ensure_equals( "node ids should start from zero", *min, 0 );
 }
 
 //! Shift node ids to zero in triangle mesh
@@ -178,37 +178,37 @@ void DerivedData_object::test< 3 >() {
   set_test_name( "shiftToZero for triangles" );
 
   // Mesh connectivity for simple triangle-only mesh
-  std::vector< int > inpoel { 1,  9,  2,
-                              1,  4,  9,
-                              2,  9,  3,
-                              3,  9,  4,
-                              5,  6, 10,
-                              5, 10,  8,
-                              6,  7, 10,
-                              7,  8, 10,
-                              1,  2, 11,
-                              1, 11,  5,
-                              2,  6, 11,
-                              5, 11,  6,
-                              2,  3, 12,
-                              2, 12,  6,
-                              3,  7, 12,
-                              6, 12,  7,
-                              3,  4, 13,
-                              3, 13,  7,
-                              4,  8, 13,
-                              7, 13,  8,
-                              1, 14,  4,
-                              1,  5, 14,
-                              4, 14,  8,
-                              5,  8, 14 };
+  std::vector< std::size_t > inpoel { 1,  9,  2,
+                                      1,  4,  9,
+                                      2,  9,  3,
+                                      3,  9,  4,
+                                      5,  6, 10,
+                                      5, 10,  8,
+                                      6,  7, 10,
+                                      7,  8, 10,
+                                      1,  2, 11,
+                                      1, 11,  5,
+                                      2,  6, 11,
+                                      5, 11,  6,
+                                      2,  3, 12,
+                                      2, 12,  6,
+                                      3,  7, 12,
+                                      6, 12,  7,
+                                      3,  4, 13,
+                                      3, 13,  7,
+                                      4,  8, 13,
+                                      7, 13,  8,
+                                      1, 14,  4,
+                                      1,  5, 14,
+                                      4, 14,  8,
+                                      5,  8, 14 };
 
   // Shift node IDs to start from zero
   tk::shiftToZero( inpoel );
 
   // Test new extents of node IDs in element connectivity
-  auto minmax = std::minmax_element( begin(inpoel), end(inpoel) );
-  ensure_equals( "node ids should start from zero", *minmax.first, 0 );
+  auto min = std::min_element( begin(inpoel), end(inpoel) );
+  ensure_equals( "node ids should start from zero", *min, 0 );
 }
 
 //! Shift node ids to zero in tetrahedron-only mesh
@@ -217,37 +217,37 @@ void DerivedData_object::test< 4 >() {
   set_test_name( "shiftToZero for tetrahedra" );
 
   // Mesh connectivity for simple tetrahedron-only mesh
-  std::vector< int > inpoel { 12, 14,  9, 11,
-                              10, 14, 13, 12,
-                              14, 13, 12,  9,
-                              10, 14, 12, 11,
-                              1,  14,  5, 11,
-                              7,   6, 10, 12,
-                              14,  8,  5, 10,
-                              8,   7, 10, 13,
-                              7,  13,  3, 12,
-                              1,   4, 14,  9,
-                              13,  4,  3,  9,
-                              3,   2, 12,  9,
-                              4,   8, 14, 13,
-                              6,   5, 10, 11,
-                              1,   2,  9, 11,
-                              2,   6, 12, 11,
-                              6,  10, 12, 11,
-                              2,  12,  9, 11,
-                              5,  14, 10, 11,
-                              14,  8, 10, 13,
-                              13,  3, 12,  9,
-                              7,  10, 13, 12,
-                              14,  4, 13,  9,
-                              14,  1,  9, 11 };
+  std::vector< std::size_t > inpoel { 12, 14,  9, 11,
+                                      10, 14, 13, 12,
+                                      14, 13, 12,  9,
+                                      10, 14, 12, 11,
+                                      1,  14,  5, 11,
+                                      7,   6, 10, 12,
+                                      14,  8,  5, 10,
+                                      8,   7, 10, 13,
+                                      7,  13,  3, 12,
+                                      1,   4, 14,  9,
+                                      13,  4,  3,  9,
+                                      3,   2, 12,  9,
+                                      4,   8, 14, 13,
+                                      6,   5, 10, 11,
+                                      1,   2,  9, 11,
+                                      2,   6, 12, 11,
+                                      6,  10, 12, 11,
+                                      2,  12,  9, 11,
+                                      5,  14, 10, 11,
+                                      14,  8, 10, 13,
+                                      13,  3, 12,  9,
+                                      7,  10, 13, 12,
+                                      14,  4, 13,  9,
+                                      14,  1,  9, 11 };
 
   // Shift node IDs to start from zero
   tk::shiftToZero( inpoel );
 
   // Test new extents of node IDs in element connectivity
-  auto minmax = std::minmax_element( begin(inpoel), end(inpoel) );
-  ensure_equals( "node ids should start from zero", *minmax.first, 0 );
+  auto min = std::min_element( begin(inpoel), end(inpoel) );
+  ensure_equals( "node ids should start from zero", *min, 0 );
 }
 
 //! Attempt to generate elements surrounding points with empty connectivity
@@ -259,7 +259,7 @@ void DerivedData_object::test< 5 >() {
     skip( "in RELEASE mode, would yield segmentation fault" );
   #else
   try {
-    std::vector< int > empty;
+    std::vector< std::size_t > empty;
     tk::genEsup( empty, 4 );
     fail( "should throw exception in DEBUG mode" );
   }
@@ -279,8 +279,8 @@ void DerivedData_object::test< 6 >() {
   #else
   try {
     // Partial mesh non-zero based mesh connectivity for tetrahedron-mesh
-    std::vector< int > inpoel { 12, 14,  9, 11,
-                                14,  4, 13,  9 };
+    std::vector< std::size_t > inpoel { 12, 14,  9, 11,
+                                        14,  4, 13,  9 };
     auto esup = tk::genEsup( inpoel, 0 );
     fail( "should throw exception in DEBUG mode" );
   }
@@ -298,8 +298,8 @@ void DerivedData_object::test< 7 >() {
 
   try {
     // Partial mesh mesh connectivity
-    std::vector< int > inpoel { 12, 14,  9, 11,
-                                14,  4, 13 };
+    std::vector< std::size_t > inpoel { 12, 14,  9, 11,
+                                        14,  4, 13 };
     tk::genEsup( inpoel, 4 );
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
@@ -317,30 +317,30 @@ void DerivedData_object::test< 8 >() {
   set_test_name( "genEsup for tetrahedra" );
 
   // Mesh connectivity for simple tetrahedron-only mesh
-  std::vector< int > inpoel { 12, 14,  9, 11,
-                              10, 14, 13, 12,
-                              14, 13, 12,  9,
-                              10, 14, 12, 11,
-                              1,  14,  5, 11,
-                              7,   6, 10, 12,
-                              14,  8,  5, 10,
-                              8,   7, 10, 13,
-                              7,  13,  3, 12,
-                              1,   4, 14,  9,
-                              13,  4,  3,  9,
-                              3,   2, 12,  9,
-                              4,   8, 14, 13,
-                              6,   5, 10, 11,
-                              1,   2,  9, 11,
-                              2,   6, 12, 11,
-                              6,  10, 12, 11,
-                              2,  12,  9, 11,
-                              5,  14, 10, 11,
-                              14,  8, 10, 13,
-                              13,  3, 12,  9,
-                              7,  10, 13, 12,
-                              14,  4, 13,  9,
-                              14,  1,  9, 11 };
+  std::vector< std::size_t > inpoel { 12, 14,  9, 11,
+                                      10, 14, 13, 12,
+                                      14, 13, 12,  9,
+                                      10, 14, 12, 11,
+                                      1,  14,  5, 11,
+                                      7,   6, 10, 12,
+                                      14,  8,  5, 10,
+                                      8,   7, 10, 13,
+                                      7,  13,  3, 12,
+                                      1,   4, 14,  9,
+                                      13,  4,  3,  9,
+                                      3,   2, 12,  9,
+                                      4,   8, 14, 13,
+                                      6,   5, 10, 11,
+                                      1,   2,  9, 11,
+                                      2,   6, 12, 11,
+                                      6,  10, 12, 11,
+                                      2,  12,  9, 11,
+                                      5,  14, 10, 11,
+                                      14,  8, 10, 13,
+                                      13,  3, 12,  9,
+                                      7,  10, 13, 12,
+                                      14,  4, 13,  9,
+                                      14,  1,  9, 11 };
 
   // Shift node IDs to start from zero
   tk::shiftToZero( inpoel );
@@ -369,7 +369,7 @@ void DerivedData_object::test< 8 >() {
   // find out number of points from mesh connectivity
   auto minmax = std::minmax_element( begin(inpoel), end(inpoel) );
   Assert( *minmax.first == 0, "node ids should start from zero" );
-  auto npoin = static_cast< std::size_t >( *minmax.second + 1 );
+  auto npoin = *minmax.second + 1;
 
   // this is more of a test on this test
   ensure_equals( "number of points in 'correct' esup incorrect",
@@ -400,30 +400,30 @@ void DerivedData_object::test< 9 >() {
   set_test_name( "genEsup for triangles" );
 
   // Mesh connectivity for simple triangle-only mesh
-  std::vector< int > inpoel { 1,  9,  2,
-                              1,  4,  9,
-                              2,  9,  3,
-                              3,  9,  4,
-                              5,  6, 10,
-                              5, 10,  8,
-                              6,  7, 10,
-                              7,  8, 10,
-                              1,  2, 11,
-                              1, 11,  5,
-                              2,  6, 11,
-                              5, 11,  6,
-                              2,  3, 12,
-                              2, 12,  6,
-                              3,  7, 12,
-                              6, 12,  7,
-                              3,  4, 13,
-                              3, 13,  7,
-                              4,  8, 13,
-                              7, 13,  8,
-                              1, 14,  4,
-                              1,  5, 14,
-                              4, 14,  8,
-                              5,  8, 14 };
+  std::vector< std::size_t > inpoel { 1,  9,  2,
+                                      1,  4,  9,
+                                      2,  9,  3,
+                                      3,  9,  4,
+                                      5,  6, 10,
+                                      5, 10,  8,
+                                      6,  7, 10,
+                                      7,  8, 10,
+                                      1,  2, 11,
+                                      1, 11,  5,
+                                      2,  6, 11,
+                                      5, 11,  6,
+                                      2,  3, 12,
+                                      2, 12,  6,
+                                      3,  7, 12,
+                                      6, 12,  7,
+                                      3,  4, 13,
+                                      3, 13,  7,
+                                      4,  8, 13,
+                                      7, 13,  8,
+                                      1, 14,  4,
+                                      1,  5, 14,
+                                      4, 14,  8,
+                                      5,  8, 14 };
 
   // Shift node IDs to start from zero
   tk::shiftToZero( inpoel );
@@ -452,7 +452,7 @@ void DerivedData_object::test< 9 >() {
   // find out number of points from mesh connectivity
   auto minmax = std::minmax_element( begin(inpoel), end(inpoel) );
   Assert( *minmax.first == 0, "node ids should start from zero" );
-  auto npoin = static_cast< std::size_t >( *minmax.second + 1 );
+  auto npoin = *minmax.second + 1;
 
   // this is more of a test on this test
   ensure_equals( "number of points in 'correct' esup incorrect",
@@ -486,8 +486,8 @@ void DerivedData_object::test< 10 >() {
     skip( "in RELEASE mode, would yield segmentation fault" );
   #else
   try {
-    std::vector< int > inpoel { 0, 1, 2, 3 };
-    std::vector< int > empty;
+    std::vector< std::size_t > inpoel { 0, 1, 2, 3 };
+    std::vector< std::size_t > empty;
     tk::genPsup( empty, 4, tk::genEsup(inpoel,4) );
     fail( "should throw exception in DEBUG mode" );
   }
@@ -506,7 +506,7 @@ void DerivedData_object::test< 11 >() {
     skip( "in RELEASE mode, would yield floating point exception" );
   #else
   try {
-    std::vector< int > inpoel { 0, 1, 2, 3 };
+    std::vector< std::size_t > inpoel { 0, 1, 2, 3 };
     tk::genPsup( inpoel, 0, tk::genEsup(inpoel,4) );
     fail( "should throw exception in DEBUG mode" );
   }
@@ -525,7 +525,7 @@ void DerivedData_object::test< 12 >() {
     skip( "in RELEASE mode, would yield segmentation fault" );
   #else
   try {
-    std::vector< int > inpoel { 0, 1, 2, 3 };
+    std::vector< std::size_t > inpoel { 0, 1, 2, 3 };
     tk::genPsup( inpoel, 4, {} );
     fail( "should throw exception in DEBUG mode" );
   }
@@ -546,8 +546,8 @@ void DerivedData_object::test< 13 >() {
   #else
   try {
     // Partial mesh mesh connectivity
-    std::vector< int > inpoel { 12, 14,  9, 11,
-                                14,  4, 13 };
+    std::vector< std::size_t > inpoel { 12, 14,  9, 11,
+                                        14,  4, 13 };
     tk::genPsup( inpoel, 4, tk::genEsup(inpoel,4) );
     fail( "should throw exception in DEBUG mode" );
   }
@@ -563,30 +563,30 @@ void DerivedData_object::test< 14 >() {
   set_test_name( "genPsup for tetrahedra" );
 
   // mesh connectivity for simple tetrahedron-only mesh
-  std::vector< int > inpoel { 12, 14,  9, 11,
-                              10, 14, 13, 12,
-                              14, 13, 12,  9,
-                              10, 14, 12, 11,
-                              1,  14,  5, 11,
-                              7,   6, 10, 12,
-                              14,  8,  5, 10,
-                              8,   7, 10, 13,
-                              7,  13,  3, 12,
-                              1,   4, 14,  9,
-                              13,  4,  3,  9,
-                              3,   2, 12,  9,
-                              4,   8, 14, 13,
-                              6,   5, 10, 11,
-                              1,   2,  9, 11,
-                              2,   6, 12, 11,
-                              6,  10, 12, 11,
-                              2,  12,  9, 11,
-                              5,  14, 10, 11,
-                              14,  8, 10, 13,
-                              13,  3, 12,  9,
-                              7,  10, 13, 12,
-                              14,  4, 13,  9,
-                              14,  1,  9, 11 };
+  std::vector< std::size_t > inpoel { 12, 14,  9, 11,
+                                      10, 14, 13, 12,
+                                      14, 13, 12,  9,
+                                      10, 14, 12, 11,
+                                      1,  14,  5, 11,
+                                      7,   6, 10, 12,
+                                      14,  8,  5, 10,
+                                      8,   7, 10, 13,
+                                      7,  13,  3, 12,
+                                      1,   4, 14,  9,
+                                      13,  4,  3,  9,
+                                      3,   2, 12,  9,
+                                      4,   8, 14, 13,
+                                      6,   5, 10, 11,
+                                      1,   2,  9, 11,
+                                      2,   6, 12, 11,
+                                      6,  10, 12, 11,
+                                      2,  12,  9, 11,
+                                      5,  14, 10, 11,
+                                      14,  8, 10, 13,
+                                      13,  3, 12,  9,
+                                      7,  10, 13, 12,
+                                      14,  4, 13,  9,
+                                      14,  1,  9, 11 };
 
   // Shift node IDs to start from zero
   tk::shiftToZero( inpoel );
@@ -615,7 +615,7 @@ void DerivedData_object::test< 14 >() {
   // find out number of points from mesh connectivity
   auto minmax = std::minmax_element( begin(inpoel), end(inpoel) );
   Assert( *minmax.first == 0, "node ids should start from zero" );
-  auto npoin = static_cast< std::size_t >( *minmax.second + 1 );
+  auto npoin = *minmax.second + 1;
 
   // this is more of a test on this test
   ensure_equals( "number of points in psup incorrect",
@@ -646,30 +646,30 @@ void DerivedData_object::test< 15 >() {
   set_test_name( "genPsup for triangles" );
 
   // Mesh connectivity for simple triangle-only mesh
-  std::vector< int > inpoel { 1,  9,  2,
-                              1,  4,  9,
-                              2,  9,  3,
-                              3,  9,  4,
-                              5,  6, 10,
-                              5, 10,  8,
-                              6,  7, 10,
-                              7,  8, 10,
-                              1,  2, 11,
-                              1, 11,  5,
-                              2,  6, 11,
-                              5, 11,  6,
-                              2,  3, 12,
-                              2, 12,  6,
-                              3,  7, 12,
-                              6, 12,  7,
-                              3,  4, 13,
-                              3, 13,  7,
-                              4,  8, 13,
-                              7, 13,  8,
-                              1, 14,  4,
-                              1,  5, 14,
-                              4, 14,  8,
-                              5,  8, 14 };
+  std::vector< std::size_t > inpoel { 1,  9,  2,
+                                      1,  4,  9,
+                                      2,  9,  3,
+                                      3,  9,  4,
+                                      5,  6, 10,
+                                      5, 10,  8,
+                                      6,  7, 10,
+                                      7,  8, 10,
+                                      1,  2, 11,
+                                      1, 11,  5,
+                                      2,  6, 11,
+                                      5, 11,  6,
+                                      2,  3, 12,
+                                      2, 12,  6,
+                                      3,  7, 12,
+                                      6, 12,  7,
+                                      3,  4, 13,
+                                      3, 13,  7,
+                                      4,  8, 13,
+                                      7, 13,  8,
+                                      1, 14,  4,
+                                      1,  5, 14,
+                                      4, 14,  8,
+                                      5,  8, 14 };
 
   // Shift node IDs to start from zero
   tk::shiftToZero( inpoel );
@@ -698,7 +698,7 @@ void DerivedData_object::test< 15 >() {
   // find out number of points from mesh connectivity
   auto minmax = std::minmax_element( begin(inpoel), end(inpoel) );
   Assert( *minmax.first == 0, "node ids should start from zero" );
-  auto npoin = static_cast< std::size_t >( *minmax.second + 1 );
+  auto npoin = *minmax.second + 1;
 
   // this is more of a test on this test
   ensure_equals( "number of points in psup incorrect",
@@ -733,8 +733,8 @@ void DerivedData_object::test< 16 >() {
     skip( "in RELEASE mode, would yield segmentation fault" );
   #else
   try {
-    std::vector< int > inpoel { 0, 1, 2, 3 };
-    std::vector< int > empty;
+    std::vector< std::size_t > inpoel { 0, 1, 2, 3 };
+    std::vector< std::size_t > empty;
     tk::genEsupel( empty, 4, tk::genEsup(inpoel,4) );
     fail( "should throw exception in DEBUG mode" );
   }
@@ -753,7 +753,7 @@ void DerivedData_object::test< 17 >() {
     skip( "in RELEASE mode, would yield floating point exception" );
   #else
   try {
-    std::vector< int > inpoel { 0, 1, 2, 3 };
+    std::vector< std::size_t > inpoel { 0, 1, 2, 3 };
     tk::genEsupel( inpoel, 0, tk::genEsup(inpoel,4) );
     fail( "should throw exception in DEBUG mode" );
   }
@@ -772,7 +772,7 @@ void DerivedData_object::test< 18 >() {
     skip( "in RELEASE mode, would yield segmentation fault" );
   #else
   try {
-    std::vector< int > inpoel { 0, 1, 2, 3 };
+    std::vector< std::size_t > inpoel { 0, 1, 2, 3 };
     tk::genEsupel( inpoel, 4, {} );
     fail( "should throw exception in DEBUG mode" );
   }
@@ -790,8 +790,8 @@ void DerivedData_object::test< 19 >() {
 
   try {
     // Partial mesh mesh connectivity
-    std::vector< int > inpoel { 12, 14,  9, 11,
-                                14,  4, 13 };
+    std::vector< std::size_t > inpoel { 12, 14,  9, 11,
+                                        14,  4, 13 };
     tk::genEsupel( inpoel, 4, tk::genEsup(inpoel,4) );
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
@@ -810,30 +810,30 @@ void DerivedData_object::test< 20 >() {
   set_test_name( "genEsupel for tetrahedra" );
 
   // mesh connectivity for simple tetrahedron-only mesh
-  std::vector< int > inpoel { 12, 14,  9, 11,
-                              10, 14, 13, 12,
-                              14, 13, 12,  9,
-                              10, 14, 12, 11,
-                              1,  14,  5, 11,
-                              7,   6, 10, 12,
-                              14,  8,  5, 10,
-                              8,   7, 10, 13,
-                              7,  13,  3, 12,
-                              1,   4, 14,  9,
-                              13,  4,  3,  9,
-                              3,   2, 12,  9,
-                              4,   8, 14, 13,
-                              6,   5, 10, 11,
-                              1,   2,  9, 11,
-                              2,   6, 12, 11,
-                              6,  10, 12, 11,
-                              2,  12,  9, 11,
-                              5,  14, 10, 11,
-                              14,  8, 10, 13,
-                              13,  3, 12,  9,
-                              7,  10, 13, 12,
-                              14,  4, 13,  9,
-                              14,  1,  9, 11 };
+  std::vector< std::size_t > inpoel { 12, 14,  9, 11,
+                                      10, 14, 13, 12,
+                                      14, 13, 12,  9,
+                                      10, 14, 12, 11,
+                                      1,  14,  5, 11,
+                                      7,   6, 10, 12,
+                                      14,  8,  5, 10,
+                                      8,   7, 10, 13,
+                                      7,  13,  3, 12,
+                                      1,   4, 14,  9,
+                                      13,  4,  3,  9,
+                                      3,   2, 12,  9,
+                                      4,   8, 14, 13,
+                                      6,   5, 10, 11,
+                                      1,   2,  9, 11,
+                                      2,   6, 12, 11,
+                                      6,  10, 12, 11,
+                                      2,  12,  9, 11,
+                                      5,  14, 10, 11,
+                                      14,  8, 10, 13,
+                                      13,  3, 12,  9,
+                                      7,  10, 13, 12,
+                                      14,  4, 13,  9,
+                                      14,  1,  9, 11 };
 
   // Shift node IDs to start from zero
   tk::shiftToZero( inpoel );
@@ -916,30 +916,30 @@ void DerivedData_object::test< 21 >() {
   set_test_name( "genEsupel for triangles" );
 
   // Mesh connectivity for simple triangle-only mesh
-  std::vector< int > inpoel { 1,  9,  2,
-                              1,  4,  9,
-                              2,  9,  3,
-                              3,  9,  4,
-                              5,  6, 10,
-                              5, 10,  8,
-                              6,  7, 10,
-                              7,  8, 10,
-                              1,  2, 11,
-                              1, 11,  5,
-                              2,  6, 11,
-                              5, 11,  6,
-                              2,  3, 12,
-                              2, 12,  6,
-                              3,  7, 12,
-                              6, 12,  7,
-                              3,  4, 13,
-                              3, 13,  7,
-                              4,  8, 13,
-                              7, 13,  8,
-                              1, 14,  4,
-                              1,  5, 14,
-                              4, 14,  8,
-                              5,  8, 14 };
+  std::vector< std::size_t > inpoel { 1,  9,  2,
+                                      1,  4,  9,
+                                      2,  9,  3,
+                                      3,  9,  4,
+                                      5,  6, 10,
+                                      5, 10,  8,
+                                      6,  7, 10,
+                                      7,  8, 10,
+                                      1,  2, 11,
+                                      1, 11,  5,
+                                      2,  6, 11,
+                                      5, 11,  6,
+                                      2,  3, 12,
+                                      2, 12,  6,
+                                      3,  7, 12,
+                                      6, 12,  7,
+                                      3,  4, 13,
+                                      3, 13,  7,
+                                      4,  8, 13,
+                                      7, 13,  8,
+                                      1, 14,  4,
+                                      1,  5, 14,
+                                      4, 14,  8,
+                                      5,  8, 14 };
 
   // Shift node IDs to start from zero
   tk::shiftToZero( inpoel );
@@ -1009,8 +1009,8 @@ void DerivedData_object::test< 22 >() {
   set_test_name( "genEsuel throws with empty inpoel" );
 
   try {
-    std::vector< int > inpoel { 0, 1, 2, 3 };
-    std::vector< int > empty;
+    std::vector< std::size_t > inpoel { 0, 1, 2, 3 };
+    std::vector< std::size_t > empty;
     tk::genEsuel( empty, 4, tk::genEsup(inpoel,4) );
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
@@ -1031,7 +1031,7 @@ void DerivedData_object::test< 23 >() {
     skip( "in RELEASE mode, would yield floating point exception" );
   #else
   try {
-    std::vector< int > inpoel { 0, 1, 2, 3 };
+    std::vector< std::size_t > inpoel { 0, 1, 2, 3 };
     tk::genEsuel( inpoel, 0, tk::genEsup(inpoel,4) );
     fail( "should throw exception in DEBUG mode" );
   }
@@ -1050,7 +1050,7 @@ void DerivedData_object::test< 24 >() {
     skip( "in RELEASE mode, would yield segmentation fault" );
   #else
   try {
-    std::vector< int > inpoel { 0, 1, 2, 3 };
+    std::vector< std::size_t > inpoel { 0, 1, 2, 3 };
     tk::genEsuel( inpoel, 4, {} );
     fail( "should throw exception in DEBUG mode" );
   }
@@ -1070,8 +1070,8 @@ void DerivedData_object::test< 25 >() {
     skip( "in RELEASE mode, would yield invalid read" );
   try {
     // Partial mesh mesh connectivity
-    std::vector< int > inpoel { 12, 14,  9, 11,
-                                14,  4, 13 };
+    std::vector< std::size_t > inpoel { 12, 14,  9, 11,
+                                        14,  4, 13 };
     tk::genEsuel( inpoel, 4, tk::genEsup(inpoel,4) );
     fail( "should throw exception in DEBUG mode" );
   }
@@ -1087,30 +1087,30 @@ void DerivedData_object::test< 26 >() {
   set_test_name( "genEsuel for tetrahedra" );
 
   // mesh connectivity for simple tetrahedron-only mesh
-  std::vector< int > inpoel { 12, 14,  9, 11,
-                              10, 14, 13, 12,
-                              14, 13, 12,  9,
-                              10, 14, 12, 11,
-                              1,  14,  5, 11,
-                              7,   6, 10, 12,
-                              14,  8,  5, 10,
-                              8,   7, 10, 13,
-                              7,  13,  3, 12,
-                              1,   4, 14,  9,
-                              13,  4,  3,  9,
-                              3,   2, 12,  9,
-                              4,   8, 14, 13,
-                              6,   5, 10, 11,
-                              1,   2,  9, 11,
-                              2,   6, 12, 11,
-                              6,  10, 12, 11,
-                              2,  12,  9, 11,
-                              5,  14, 10, 11,
-                              14,  8, 10, 13,
-                              13,  3, 12,  9,
-                              7,  10, 13, 12,
-                              14,  4, 13,  9,
-                              14,  1,  9, 11 };
+  std::vector< std::size_t > inpoel { 12, 14,  9, 11,
+                                      10, 14, 13, 12,
+                                      14, 13, 12,  9,
+                                      10, 14, 12, 11,
+                                      1,  14,  5, 11,
+                                      7,   6, 10, 12,
+                                      14,  8,  5, 10,
+                                      8,   7, 10, 13,
+                                      7,  13,  3, 12,
+                                      1,   4, 14,  9,
+                                      13,  4,  3,  9,
+                                      3,   2, 12,  9,
+                                      4,   8, 14, 13,
+                                      6,   5, 10, 11,
+                                      1,   2,  9, 11,
+                                      2,   6, 12, 11,
+                                      6,  10, 12, 11,
+                                      2,  12,  9, 11,
+                                      5,  14, 10, 11,
+                                      14,  8, 10, 13,
+                                      13,  3, 12,  9,
+                                      7,  10, 13, 12,
+                                      14,  4, 13,  9,
+                                      14,  1,  9, 11 };
 
   // Shift node IDs to start from zero
   tk::shiftToZero( inpoel );
@@ -1182,30 +1182,30 @@ void DerivedData_object::test< 27 >() {
   set_test_name( "genEsuel for triangles" );
 
   // Mesh connectivity for simple triangle-only mesh
-  std::vector< int > inpoel { 1,  9,  2,
-                              1,  4,  9,
-                              2,  9,  3,
-                              3,  9,  4,
-                              5,  6, 10,
-                              5, 10,  8,
-                              6,  7, 10,
-                              7,  8, 10,
-                              1,  2, 11,
-                              1, 11,  5,
-                              2,  6, 11,
-                              5, 11,  6,
-                              2,  3, 12,
-                              2, 12,  6,
-                              3,  7, 12,
-                              6, 12,  7,
-                              3,  4, 13,
-                              3, 13,  7,
-                              4,  8, 13,
-                              7, 13,  8,
-                              1, 14,  4,
-                              1,  5, 14,
-                              4, 14,  8,
-                              5,  8, 14 };
+  std::vector< std::size_t > inpoel { 1,  9,  2,
+                                      1,  4,  9,
+                                      2,  9,  3,
+                                      3,  9,  4,
+                                      5,  6, 10,
+                                      5, 10,  8,
+                                      6,  7, 10,
+                                      7,  8, 10,
+                                      1,  2, 11,
+                                      1, 11,  5,
+                                      2,  6, 11,
+                                      5, 11,  6,
+                                      2,  3, 12,
+                                      2, 12,  6,
+                                      3,  7, 12,
+                                      6, 12,  7,
+                                      3,  4, 13,
+                                      3, 13,  7,
+                                      4,  8, 13,
+                                      7, 13,  8,
+                                      1, 14,  4,
+                                      1,  5, 14,
+                                      4, 14,  8,
+                                      5,  8, 14 };
 
   // Shift node IDs to start from zero
   tk::shiftToZero( inpoel );
@@ -1280,8 +1280,8 @@ void DerivedData_object::test< 28 >() {
     skip( "in RELEASE mode, would yield segmentation fault" );
   #else
   try {
-    std::vector< int > inpoel { 0, 1, 2, 3 };
-    std::vector< int > empty;
+    std::vector< std::size_t > inpoel { 0, 1, 2, 3 };
+    std::vector< std::size_t > empty;
     tk::genEdsup( empty, 4, tk::genEsup(inpoel,4) );
     fail( "should throw exception in DEBUG mode" );
   }
@@ -1300,7 +1300,7 @@ void DerivedData_object::test< 29 >() {
     skip( "in RELEASE mode, would yield floating point exception" );
   #else
   try {
-    std::vector< int > inpoel { 0, 1, 2, 3 };
+    std::vector< std::size_t > inpoel { 0, 1, 2, 3 };
     tk::genEdsup( inpoel, 0, tk::genEsup(inpoel,4) );
     fail( "should throw exception in DEBUG mode" );
   }
@@ -1320,7 +1320,7 @@ void DerivedData_object::test< 30 >() {
     skip( "in RELEASE mode, would yield floating point exception" );
   #else
   try {
-    std::vector< int > inpoel { 0, 1, 2, 3 };
+    std::vector< std::size_t > inpoel { 0, 1, 2, 3 };
     tk::genEdsup( inpoel, 5, tk::genEsup(inpoel,4) );
     fail( "should throw exception in DEBUG mode" );
   }
@@ -1339,7 +1339,7 @@ void DerivedData_object::test< 31 >() {
     skip( "in RELEASE mode, would yield segmentation fault" );
   #else
   try {
-    std::vector< int > inpoel { 0, 1, 2, 3 };
+    std::vector< std::size_t > inpoel { 0, 1, 2, 3 };
     tk::genEdsup( inpoel, 4, {} );
     fail( "should throw exception in DEBUG mode" );
   }
@@ -1360,8 +1360,8 @@ void DerivedData_object::test< 32 >() {
   #else
   try {
     // Partial mesh mesh connectivity
-    std::vector< int > inpoel { 12, 14,  9, 11,
-                                14,  4, 13 };
+    std::vector< std::size_t > inpoel { 12, 14,  9, 11,
+                                        14,  4, 13 };
     tk::genEdsup( inpoel, 4, tk::genEsup(inpoel,4) );
     fail( "should throw exception in DEBUG mode" );
   }
@@ -1377,30 +1377,30 @@ void DerivedData_object::test< 33 >() {
   set_test_name( "genEdsup for tetrahedra" );
 
   // mesh connectivity for simple tetrahedron-only mesh
-  std::vector< int > inpoel { 12, 14,  9, 11,
-                              10, 14, 13, 12,
-                              14, 13, 12,  9,
-                              10, 14, 12, 11,
-                              1,  14,  5, 11,
-                              7,   6, 10, 12,
-                              14,  8,  5, 10,
-                              8,   7, 10, 13,
-                              7,  13,  3, 12,
-                              1,   4, 14,  9,
-                              13,  4,  3,  9,
-                              3,   2, 12,  9,
-                              4,   8, 14, 13,
-                              6,   5, 10, 11,
-                              1,   2,  9, 11,
-                              2,   6, 12, 11,
-                              6,  10, 12, 11,
-                              2,  12,  9, 11,
-                              5,  14, 10, 11,
-                              14,  8, 10, 13,
-                              13,  3, 12,  9,
-                              7,  10, 13, 12,
-                              14,  4, 13,  9,
-                              14,  1,  9, 11 };
+  std::vector< std::size_t > inpoel { 12, 14,  9, 11,
+                                      10, 14, 13, 12,
+                                      14, 13, 12,  9,
+                                      10, 14, 12, 11,
+                                      1,  14,  5, 11,
+                                      7,   6, 10, 12,
+                                      14,  8,  5, 10,
+                                      8,   7, 10, 13,
+                                      7,  13,  3, 12,
+                                      1,   4, 14,  9,
+                                      13,  4,  3,  9,
+                                      3,   2, 12,  9,
+                                      4,   8, 14, 13,
+                                      6,   5, 10, 11,
+                                      1,   2,  9, 11,
+                                      2,   6, 12, 11,
+                                      6,  10, 12, 11,
+                                      2,  12,  9, 11,
+                                      5,  14, 10, 11,
+                                      14,  8, 10, 13,
+                                      13,  3, 12,  9,
+                                      7,  10, 13, 12,
+                                      14,  4, 13,  9,
+                                      14,  1,  9, 11 };
 
   // Shift node IDs to start from zero
   tk::shiftToZero( inpoel );
@@ -1436,7 +1436,7 @@ void DerivedData_object::test< 33 >() {
   // find out number of points from mesh connectivity
   auto minmax = std::minmax_element( begin(inpoel), end(inpoel) );
   Assert( *minmax.first == 0, "node ids should start from zero" );
-  auto npoin = static_cast< std::size_t >( *minmax.second + 1 );
+  auto npoin = *minmax.second + 1;
 
   // this is more of a test on this test
   ensure_equals( "number of points (star centers) in edsup incorrect",
@@ -1471,30 +1471,30 @@ void DerivedData_object::test< 34 >() {
   set_test_name( "genEdsup for triangles" );
 
   // Mesh connectivity for simple triangle-only mesh
-  std::vector< int > inpoel { 1,  9,  2,
-                              1,  4,  9,
-                              2,  9,  3,
-                              3,  9,  4,
-                              5,  6, 10,
-                              5, 10,  8,
-                              6,  7, 10,
-                              7,  8, 10,
-                              1,  2, 11,
-                              1, 11,  5,
-                              2,  6, 11,
-                              5, 11,  6,
-                              2,  3, 12,
-                              2, 12,  6,
-                              3,  7, 12,
-                              6, 12,  7,
-                              3,  4, 13,
-                              3, 13,  7,
-                              4,  8, 13,
-                              7, 13,  8,
-                              1, 14,  4,
-                              1,  5, 14,
-                              4, 14,  8,
-                              5,  8, 14 };
+  std::vector< std::size_t > inpoel { 1,  9,  2,
+                                      1,  4,  9,
+                                      2,  9,  3,
+                                      3,  9,  4,
+                                      5,  6, 10,
+                                      5, 10,  8,
+                                      6,  7, 10,
+                                      7,  8, 10,
+                                      1,  2, 11,
+                                      1, 11,  5,
+                                      2,  6, 11,
+                                      5, 11,  6,
+                                      2,  3, 12,
+                                      2, 12,  6,
+                                      3,  7, 12,
+                                      6, 12,  7,
+                                      3,  4, 13,
+                                      3, 13,  7,
+                                      4,  8, 13,
+                                      7, 13,  8,
+                                      1, 14,  4,
+                                      1,  5, 14,
+                                      4, 14,  8,
+                                      5,  8, 14 };
 
   // Shift node IDs to start from zero
   tk::shiftToZero( inpoel );
@@ -1531,7 +1531,7 @@ void DerivedData_object::test< 34 >() {
   // find out number of points from mesh connectivity
   auto minmax = std::minmax_element( begin(inpoel), end(inpoel) );
   Assert( *minmax.first == 0, "node ids should start from zero" );
-  auto npoin = static_cast< std::size_t >( *minmax.second + 1 );
+  auto npoin = *minmax.second + 1;
 
   // this is more of a test on this test
   ensure_equals( "number of points (star centers) in edsup incorrect",
@@ -1569,8 +1569,8 @@ void DerivedData_object::test< 35 >() {
     skip( "in RELEASE mode, would yield segmentation fault" );
   #else
   try {
-    std::vector< int > inpoel { 0, 1, 2, 3 };
-    std::vector< int > empty;
+    std::vector< std::size_t > inpoel { 0, 1, 2, 3 };
+    std::vector< std::size_t > empty;
     tk::genInpoed( empty, 4, tk::genEsup(inpoel,4) );
     fail( "should throw exception in DEBUG mode" );
   }
@@ -1589,7 +1589,7 @@ void DerivedData_object::test< 36 >() {
     skip( "in RELEASE mode, would yield floating point exception" );
   #else
   try {
-    std::vector< int > inpoel { 0, 1, 2, 3 };
+    std::vector< std::size_t > inpoel { 0, 1, 2, 3 };
     tk::genInpoed( inpoel, 0, tk::genEsup(inpoel,4) );
     fail( "should throw exception in DEBUG mode" );
   }
@@ -1609,7 +1609,7 @@ void DerivedData_object::test< 37 >() {
     skip( "in RELEASE mode, would yield floating point exception" );
   #else
   try {
-    std::vector< int > inpoel { 0, 1, 2, 3 };
+    std::vector< std::size_t > inpoel { 0, 1, 2, 3 };
     tk::genInpoed( inpoel, 5, tk::genEsup(inpoel,4) );
     fail( "should throw exception in DEBUG mode" );
   }
@@ -1628,7 +1628,7 @@ void DerivedData_object::test< 38 >() {
     skip( "in RELEASE mode, would yield segmentation fault" );
   #else
   try {
-    std::vector< int > inpoel { 0, 1, 2, 3 };
+    std::vector< std::size_t > inpoel { 0, 1, 2, 3 };
     tk::genInpoed( inpoel, 4, {} );
     fail( "should throw exception in DEBUG mode" );
   }
@@ -1649,8 +1649,8 @@ void DerivedData_object::test< 39 >() {
   #else
   try {
     // Partial mesh mesh connectivity
-    std::vector< int > inpoel { 12, 14,  9, 11,
-                                14,  4, 13 };
+    std::vector< std::size_t > inpoel { 12, 14,  9, 11,
+                                        14,  4, 13 };
     tk::genInpoed( inpoel, 4, tk::genEsup(inpoel,4) );
     fail( "should throw exception in DEBUG mode" );
   }
@@ -1666,30 +1666,30 @@ void DerivedData_object::test< 40 >() {
   set_test_name( "genInpoed for tetrahedra" );
 
   // mesh connectivity for simple tetrahedron-only mesh
-  std::vector< int > inpoel { 12, 14,  9, 11,
-                              10, 14, 13, 12,
-                              14, 13, 12,  9,
-                              10, 14, 12, 11,
-                              1,  14,  5, 11,
-                              7,   6, 10, 12,
-                              14,  8,  5, 10,
-                              8,   7, 10, 13,
-                              7,  13,  3, 12,
-                              1,   4, 14,  9,
-                              13,  4,  3,  9,
-                              3,   2, 12,  9,
-                              4,   8, 14, 13,
-                              6,   5, 10, 11,
-                              1,   2,  9, 11,
-                              2,   6, 12, 11,
-                              6,  10, 12, 11,
-                              2,  12,  9, 11,
-                              5,  14, 10, 11,
-                              14,  8, 10, 13,
-                              13,  3, 12,  9,
-                              7,  10, 13, 12,
-                              14,  4, 13,  9,
-                              14,  1,  9, 11 };
+  std::vector< std::size_t > inpoel { 12, 14,  9, 11,
+                                      10, 14, 13, 12,
+                                      14, 13, 12,  9,
+                                      10, 14, 12, 11,
+                                      1,  14,  5, 11,
+                                      7,   6, 10, 12,
+                                      14,  8,  5, 10,
+                                      8,   7, 10, 13,
+                                      7,  13,  3, 12,
+                                      1,   4, 14,  9,
+                                      13,  4,  3,  9,
+                                      3,   2, 12,  9,
+                                      4,   8, 14, 13,
+                                      6,   5, 10, 11,
+                                      1,   2,  9, 11,
+                                      2,   6, 12, 11,
+                                      6,  10, 12, 11,
+                                      2,  12,  9, 11,
+                                      5,  14, 10, 11,
+                                      14,  8, 10, 13,
+                                      13,  3, 12,  9,
+                                      7,  10, 13, 12,
+                                      14,  4, 13,  9,
+                                      14,  1,  9, 11 };
 
   // Shift node IDs to start from zero
   tk::shiftToZero( inpoel );
@@ -1736,30 +1736,30 @@ void DerivedData_object::test< 41 >() {
   set_test_name( "genInpoed for triangles" );
 
   // Mesh connectivity for simple triangle-only mesh
-  std::vector< int > inpoel { 1,  9,  2,
-                              1,  4,  9,
-                              2,  9,  3,
-                              3,  9,  4,
-                              5,  6, 10,
-                              5, 10,  8,
-                              6,  7, 10,
-                              7,  8, 10,
-                              1,  2, 11,
-                              1, 11,  5,
-                              2,  6, 11,
-                              5, 11,  6,
-                              2,  3, 12,
-                              2, 12,  6,
-                              3,  7, 12,
-                              6, 12,  7,
-                              3,  4, 13,
-                              3, 13,  7,
-                              4,  8, 13,
-                              7, 13,  8,
-                              1, 14,  4,
-                              1,  5, 14,
-                              4, 14,  8,
-                              5,  8, 14 };
+  std::vector< std::size_t > inpoel { 1,  9,  2,
+                                      1,  4,  9,
+                                      2,  9,  3,
+                                      3,  9,  4,
+                                      5,  6, 10,
+                                      5, 10,  8,
+                                      6,  7, 10,
+                                      7,  8, 10,
+                                      1,  2, 11,
+                                      1, 11,  5,
+                                      2,  6, 11,
+                                      5, 11,  6,
+                                      2,  3, 12,
+                                      2, 12,  6,
+                                      3,  7, 12,
+                                      6, 12,  7,
+                                      3,  4, 13,
+                                      3, 13,  7,
+                                      4,  8, 13,
+                                      7, 13,  8,
+                                      1, 14,  4,
+                                      1,  5, 14,
+                                      4, 14,  8,
+                                      5,  8, 14 };
 
   // Shift node IDs to start from zero
   tk::shiftToZero( inpoel );
@@ -1804,8 +1804,8 @@ void DerivedData_object::test< 42 >() {
     skip( "in RELEASE mode, would yield floating point exception" );
   #else
   try {
-    std::vector< int > inpoel { 0, 1, 2, 3 };
-    std::vector< int > empty;
+    std::vector< std::size_t > inpoel { 0, 1, 2, 3 };
+    std::vector< std::size_t > empty;
     tk::genInedel( empty, 4, tk::genInpoed(inpoel,4,tk::genEsup(inpoel,4)) );
     fail( "should throw exception in DEBUG mode" );
   }
@@ -1824,7 +1824,7 @@ void DerivedData_object::test< 43 >() {
     skip( "in RELEASE mode, would yield floating point exception" );
   #else
   try {
-    std::vector< int > inpoel { 0, 1, 2, 3 };
+    std::vector< std::size_t > inpoel { 0, 1, 2, 3 };
     tk::genInedel( inpoel, 0, tk::genInpoed(inpoel,4,tk::genEsup(inpoel,4)) );
     fail( "should throw exception in DEBUG mode" );
   }
@@ -1844,7 +1844,7 @@ void DerivedData_object::test< 44 >() {
     skip( "in RELEASE mode, would yield floating point exception" );
   #else
   try {
-    std::vector< int > inpoel { 0, 1, 2, 3 };
+    std::vector< std::size_t > inpoel { 0, 1, 2, 3 };
     tk::genInedel( inpoel, 5, tk::genInpoed(inpoel,4,tk::genEsup(inpoel,4)) );
     fail( "should throw exception in DEBUG mode" );
   }
@@ -1863,7 +1863,7 @@ void DerivedData_object::test< 45 >() {
     skip( "in RELEASE mode, would yield segmentation fault" );
   #else
   try {
-    std::vector< int > inpoel { 0, 1, 2, 3 };
+    std::vector< std::size_t > inpoel { 0, 1, 2, 3 };
     tk::genInedel( inpoel, 0, {} );
     fail( "should throw exception in DEBUG mode" );
   }
@@ -1884,8 +1884,8 @@ void DerivedData_object::test< 46 >() {
   #else
   try {
     // Partial mesh mesh connectivity
-    std::vector< int > inpoel { 12, 14,  9, 11,
-                                14,  4, 13 };
+    std::vector< std::size_t > inpoel { 12, 14,  9, 11,
+                                        14,  4, 13 };
     tk::genInedel( inpoel, 4, tk::genInpoed(inpoel,4,tk::genEsup(inpoel,4)) );
     fail( "should throw exception in DEBUG mode" );
   }
@@ -1901,30 +1901,30 @@ void DerivedData_object::test< 47 >() {
   set_test_name( "genInedel for tetrahedra" );
 
   // mesh connectivity for simple tetrahedron-only mesh
-  std::vector< int > inpoel { 12, 14,  9, 11,
-                              10, 14, 13, 12,
-                              14, 13, 12,  9,
-                              10, 14, 12, 11,
-                              1,  14,  5, 11,
-                              7,   6, 10, 12,
-                              14,  8,  5, 10,
-                              8,   7, 10, 13,
-                              7,  13,  3, 12,
-                              1,   4, 14,  9,
-                              13,  4,  3,  9,
-                              3,   2, 12,  9,
-                              4,   8, 14, 13,
-                              6,   5, 10, 11,
-                              1,   2,  9, 11,
-                              2,   6, 12, 11,
-                              6,  10, 12, 11,
-                              2,  12,  9, 11,
-                              5,  14, 10, 11,
-                              14,  8, 10, 13,
-                              13,  3, 12,  9,
-                              7,  10, 13, 12,
-                              14,  4, 13,  9,
-                              14,  1,  9, 11 };
+  std::vector< std::size_t > inpoel { 12, 14,  9, 11,
+                                      10, 14, 13, 12,
+                                      14, 13, 12,  9,
+                                      10, 14, 12, 11,
+                                      1,  14,  5, 11,
+                                      7,   6, 10, 12,
+                                      14,  8,  5, 10,
+                                      8,   7, 10, 13,
+                                      7,  13,  3, 12,
+                                      1,   4, 14,  9,
+                                      13,  4,  3,  9,
+                                      3,   2, 12,  9,
+                                      4,   8, 14, 13,
+                                      6,   5, 10, 11,
+                                      1,   2,  9, 11,
+                                      2,   6, 12, 11,
+                                      6,  10, 12, 11,
+                                      2,  12,  9, 11,
+                                      5,  14, 10, 11,
+                                      14,  8, 10, 13,
+                                      13,  3, 12,  9,
+                                      7,  10, 13, 12,
+                                      14,  4, 13,  9,
+                                      14,  1,  9, 11 };
 
   // Shift node IDs to start from zero
   tk::shiftToZero( inpoel );
@@ -1996,30 +1996,30 @@ void DerivedData_object::test< 48 >() {
   set_test_name( "genInedel for triangles" );
 
   // Mesh connectivity for simple triangle-only mesh
-  std::vector< int > inpoel { 1,  9,  2,
-                              1,  4,  9,
-                              2,  9,  3,
-                              3,  9,  4,
-                              5,  6, 10,
-                              5, 10,  8,
-                              6,  7, 10,
-                              7,  8, 10,
-                              1,  2, 11,
-                              1, 11,  5,
-                              2,  6, 11,
-                              5, 11,  6,
-                              2,  3, 12,
-                              2, 12,  6,
-                              3,  7, 12,
-                              6, 12,  7,
-                              3,  4, 13,
-                              3, 13,  7,
-                              4,  8, 13,
-                              7, 13,  8,
-                              1, 14,  4,
-                              1,  5, 14,
-                              4, 14,  8,
-                              5,  8, 14 };
+  std::vector< std::size_t > inpoel { 1,  9,  2,
+                                      1,  4,  9,
+                                      2,  9,  3,
+                                      3,  9,  4,
+                                      5,  6, 10,
+                                      5, 10,  8,
+                                      6,  7, 10,
+                                      7,  8, 10,
+                                      1,  2, 11,
+                                      1, 11,  5,
+                                      2,  6, 11,
+                                      5, 11,  6,
+                                      2,  3, 12,
+                                      2, 12,  6,
+                                      3,  7, 12,
+                                      6, 12,  7,
+                                      3,  4, 13,
+                                      3, 13,  7,
+                                      4,  8, 13,
+                                      7, 13,  8,
+                                      1, 14,  4,
+                                      1,  5, 14,
+                                      4, 14,  8,
+                                      5,  8, 14 };
 
   // Shift node IDs to start from zero
   tk::shiftToZero( inpoel );
@@ -2093,8 +2093,8 @@ void DerivedData_object::test< 49 >() {
     skip( "in RELEASE mode, would yield segmentation fault" );
   #else
   try {
-    std::vector< int > inpoel { 0, 1, 2, 3 };
-    std::vector< int > empty;
+    std::vector< std::size_t > inpoel { 0, 1, 2, 3 };
+    std::vector< std::size_t > empty;
     tk::genEsued( empty, 4, tk::genEsup(inpoel,4) );
     fail( "should throw exception in DEBUG mode" );
   }
@@ -2113,7 +2113,7 @@ void DerivedData_object::test< 50 >() {
     skip( "in RELEASE mode, would yield floating point exception" );
   #else
   try {
-    std::vector< int > inpoel { 0, 1, 2, 3 };
+    std::vector< std::size_t > inpoel { 0, 1, 2, 3 };
     tk::genEsued( inpoel, 0, tk::genEsup(inpoel,4) );
     fail( "should throw exception in DEBUG mode" );
   }
@@ -2133,7 +2133,7 @@ void DerivedData_object::test< 51 >() {
     skip( "in RELEASE mode, would yield floating point exception" );
   #else
   try {
-    std::vector< int > inpoel { 0, 1, 2, 3 };
+    std::vector< std::size_t > inpoel { 0, 1, 2, 3 };
     tk::genEsued( inpoel, 5, tk::genEsup(inpoel,4) );
     fail( "should throw exception in DEBUG mode" );
   }
@@ -2152,7 +2152,7 @@ void DerivedData_object::test< 52 >() {
     skip( "in RELEASE mode, would yield segmentation fault" );
   #else
   try {
-    std::vector< int > inpoel { 0, 1, 2, 3 };
+    std::vector< std::size_t > inpoel { 0, 1, 2, 3 };
     tk::genEsued( inpoel, 4, {} );
     fail( "should throw exception in DEBUG mode" );
   }
@@ -2173,8 +2173,8 @@ void DerivedData_object::test< 53 >() {
   #else
   try {
     // Partial mesh mesh connectivity
-    std::vector< int > inpoel { 12, 14,  9, 11,
-                                14,  4, 13 };
+    std::vector< std::size_t > inpoel { 12, 14,  9, 11,
+                                        14,  4, 13 };
     tk::genEsued( inpoel, 4, tk::genEsup(inpoel,4) );
     fail( "should throw exception in DEBUG mode" );
   }
@@ -2190,30 +2190,30 @@ void DerivedData_object::test< 54 >() {
   set_test_name( "genEsued for tetrahedra" );
 
   // mesh connectivity for simple tetrahedron-only mesh
-  std::vector< int > inpoel { 12, 14,  9, 11,
-                              10, 14, 13, 12,
-                              14, 13, 12,  9,
-                              10, 14, 12, 11,
-                              1,  14,  5, 11,
-                              7,   6, 10, 12,
-                              14,  8,  5, 10,
-                              8,   7, 10, 13,
-                              7,  13,  3, 12,
-                              1,   4, 14,  9,
-                              13,  4,  3,  9,
-                              3,   2, 12,  9,
-                              4,   8, 14, 13,
-                              6,   5, 10, 11,
-                              1,   2,  9, 11,
-                              2,   6, 12, 11,
-                              6,  10, 12, 11,
-                              2,  12,  9, 11,
-                              5,  14, 10, 11,
-                              14,  8, 10, 13,
-                              13,  3, 12,  9,
-                              7,  10, 13, 12,
-                              14,  4, 13,  9,
-                              14,  1,  9, 11 };
+  std::vector< std::size_t > inpoel { 12, 14,  9, 11,
+                                      10, 14, 13, 12,
+                                      14, 13, 12,  9,
+                                      10, 14, 12, 11,
+                                      1,  14,  5, 11,
+                                      7,   6, 10, 12,
+                                      14,  8,  5, 10,
+                                      8,   7, 10, 13,
+                                      7,  13,  3, 12,
+                                      1,   4, 14,  9,
+                                      13,  4,  3,  9,
+                                      3,   2, 12,  9,
+                                      4,   8, 14, 13,
+                                      6,   5, 10, 11,
+                                      1,   2,  9, 11,
+                                      2,   6, 12, 11,
+                                      6,  10, 12, 11,
+                                      2,  12,  9, 11,
+                                      5,  14, 10, 11,
+                                      14,  8, 10, 13,
+                                      13,  3, 12,  9,
+                                      7,  10, 13, 12,
+                                      14,  4, 13,  9,
+                                      14,  1,  9, 11 };
 
   // Shift node IDs to start from zero
   tk::shiftToZero( inpoel );
@@ -2313,30 +2313,30 @@ void DerivedData_object::test< 55 >() {
   set_test_name( "genEsued for triangles" );
 
   // Mesh connectivity for simple triangle-only mesh
-  std::vector< int > inpoel { 1,  9,  2,
-                              1,  4,  9,
-                              2,  9,  3,
-                              3,  9,  4,
-                              5,  6, 10,
-                              5, 10,  8,
-                              6,  7, 10,
-                              7,  8, 10,
-                              1,  2, 11,
-                              1, 11,  5,
-                              2,  6, 11,
-                              5, 11,  6,
-                              2,  3, 12,
-                              2, 12,  6,
-                              3,  7, 12,
-                              6, 12,  7,
-                              3,  4, 13,
-                              3, 13,  7,
-                              4,  8, 13,
-                              7, 13,  8,
-                              1, 14,  4,
-                              1,  5, 14,
-                              4, 14,  8,
-                              5,  8, 14 };
+  std::vector< std::size_t > inpoel { 1,  9,  2,
+                                      1,  4,  9,
+                                      2,  9,  3,
+                                      3,  9,  4,
+                                      5,  6, 10,
+                                      5, 10,  8,
+                                      6,  7, 10,
+                                      7,  8, 10,
+                                      1,  2, 11,
+                                      1, 11,  5,
+                                      2,  6, 11,
+                                      5, 11,  6,
+                                      2,  3, 12,
+                                      2, 12,  6,
+                                      3,  7, 12,
+                                      6, 12,  7,
+                                      3,  4, 13,
+                                      3, 13,  7,
+                                      4,  8, 13,
+                                      7, 13,  8,
+                                      1, 14,  4,
+                                      1,  5, 14,
+                                      4, 14,  8,
+                                      5,  8, 14 };
 
   // Shift node IDs to start from zero
   tk::shiftToZero( inpoel );

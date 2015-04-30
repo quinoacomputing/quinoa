@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/PDFWriter.h
   \author    J. Bakosi
-  \date      Wed 08 Apr 2015 08:53:44 PM MDT
+  \date      Mon 20 Apr 2015 09:45:09 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     PDF writer class declaration
   \details   This file declares a PDF writer class that facilitates outputing
@@ -62,11 +62,11 @@ class PDFWriter : public tk::Writer {
 
     //! Write bivariate PDF to Exodus II file format
     void writeExodusII( const BiPDF& pdf, const tk::ctr::PDFInfo& info,
-                        int it, ctr::PDFCenteringType centering ) const;
+                        std::size_t it, ctr::PDFCenteringType centering ) const;
 
     //! Write trivariate PDF to Exodus II file format
     void writeExodusII( const TriPDF& pdf, const tk::ctr::PDFInfo& info,
-                        int it, ctr::PDFCenteringType centering ) const;
+                        std::size_t it, ctr::PDFCenteringType centering ) const;
 
   private:
     //! Assert the number of sample space dimensions given
@@ -93,7 +93,9 @@ class PDFWriter : public tk::Writer {
     void writeExHdr( int outFileId, int nnode, int nelem ) const;
 
     // Output probability density function as Exodus II results field
-    void writeExVar( int exoFile, int it, ctr::PDFCenteringType centering,
+    void writeExVar( int exoFile,
+                     std::size_t it,
+                     ctr::PDFCenteringType centering,
                      const std::vector< tk::real >& probability ) const;
 
     //! Query extents and other metadata of univariate PDF sample space

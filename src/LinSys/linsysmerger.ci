@@ -1,0 +1,106 @@
+//******************************************************************************
+/*!
+  \file      src/LinSys/linsysmerger.ci
+  \author    J. Bakosi
+  \date      Wed 29 Apr 2015 12:11:17 PM MDT
+  \copyright 2012-2015, Jozsef Bakosi.
+  \brief     Charm++ module interface file for merging a linear system
+  \details   Charm++ module interface file for merging a linear system
+*/
+//******************************************************************************
+
+module linsysmerger {
+
+  extern module conductor;
+
+  namespace tk {
+
+    // LinSysMerger is templated so that the same code (parameterized by the
+    // type given by the template argument, Proxy) can be generated for
+    // different types of host proxies. All possible specializations must be
+    // listed below.
+
+    // List all possible specializations of templated chare to instantiate
+    // registration and delivery of code for the individual specializations
+
+    // Will specialize linear system merger for inciter's Conductor chare
+    chare LinSysMerger< inciter::CProxy_Conductor >;
+
+    template< class HostProxy >
+    group LinSysMerger {
+      entry LinSysMerger( HostProxy& host );
+      entry void createLinearSystem();
+      entry void workPe( int ch, int pe );
+      entry void add( int caller, const std::vector< std::size_t >& transfer );
+      entry void rgr();
+      entry void assemble();
+
+      // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
+      // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
+
+      // High-level overview of the dependency and asynchronous call structure
+      // ---------------------------------------------------------------------
+      //
+      // Directed Acyclic Graph (DAG):        DAG legend:
+      // -----------------------------          WPe  - Query worker PEs
+      //                                        Sys  - Create linear system
+      // WPe -- Pts                             Pts  - Export mesh points
+      //           \                            Init - Initialized
+      // Sys ------ Init
+      //
+      // Interpretation of the above DAG
+      // -------------------------------
+      // Control flow is from left to right and top to bottom.
+      //
+      // Workers calling the member function structure() initiate two paths of
+      // execution: (WPe) querying and associating worker's chare ids to their
+      // PEs we need to export to followed by (Pts) exporting mesh points to
+      // fellow PEs, and (Sys) creating the linear system. Only when both are
+      // completed is the linear system is deemed initialized (Init) and the
+      // call is made back to the host. Note that mesh points cannot be exported
+      // unless all PEs of the worker chares are known and the PE-export map is
+      // constructed, hence the serial dependence of Pts on Wpe.
+
+      // SDAG wait-for: wait for (1) all worker chares whose PEs we need to
+      // export to have contributed their PE, (2) the linear system has been
+      // created, and all mesh points to fellow PEs have been exported (and
+      // received). The triggers after the 'when' statement are undestood with a
+      // logical AND between them, i.e., the code following executes when all
+      // triggers have been received.
+      entry void wait4init() {
+        when systemCreated(), pointsExported() serial {
+          wait4fill();   // Activate SDAG-wait for finishing matrix fill
+          fillMatrix();
+        }
+      };
+
+      entry void wait4fill() {
+        when filled() serial {
+          wait4asm();   // Activate SDAG-wait for matrix assembly
+          assemble();
+        }
+      };
+
+      entry void wait4asm() {
+        when assembled() serial {
+          // Signal to host that initialization on this PE has completed
+          m_host.init();
+        }
+      };
+
+      // SDAG trigger signaling that all worker chares whose PEs we need to
+      // export to have contributed their PE
+      //entry void workPesReceived();
+      // SDAG trigger signaling that the linear system has been created
+      entry void systemCreated();
+      // SDAG trigger signaling that all fellow PEs have received their points
+      entry void pointsExported();
+      // SDAG trigger signaling that all PEs have finished filling the matrix
+      entry void filled();
+      // SDAG trigger signaling that the matrix has been assembled
+      entry void assembled();
+    };
+
+  } // tk::
+
+}

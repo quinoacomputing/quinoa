@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Breeze/InputDeck/Parser.C
   \author    J. Bakosi
-  \date      Wed 08 Apr 2015 12:42:59 PM MDT
+  \date      Fri 24 Apr 2015 06:05:45 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Breeze's input deck file parser
   \details   This file declares the input deck, i.e., control file, parser for
@@ -10,6 +10,7 @@
 */
 //******************************************************************************
 
+#include <ContainerUtil.h>
 #include <Breeze/InputDeck/Parser.h>
 #include <Breeze/InputDeck/Grammar.h>
 
@@ -67,5 +68,5 @@ InputDeckParser::InputDeckParser( const tk::Print& print,
   inputdeck = std::move( id );
 
   // Filter out repeated statistics
-  tk::ctr::unique( inputdeck.get< tag::stat >() );
+  tk::unique( inputdeck.get< tag::stat >() );
 }

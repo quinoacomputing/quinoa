@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/ExodusIIMeshReader.C
   \author    J. Bakosi
-  \date      Sun 12 Apr 2015 08:05:05 AM MDT
+  \date      Mon 20 Apr 2015 09:24:34 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     ExodusII mesh reader
   \details   ExodusII mesh reader class definition. Currently, this is a bare
@@ -19,7 +19,7 @@
 
 #include <ExodusIIMeshReader.h>
 #include <Exception.h>
-#include <DerivedData.h>
+#include <Reorder.h>
 
 using tk::ExodusIIMeshReader;
 
@@ -87,22 +87,24 @@ ExodusIIMeshReader::readHeader()
 //******************************************************************************
 {
   char title[MAX_LINE_LENGTH+1];
-  int ndim, nel, nnodeset, nelemset;
+  int ndim, nel, nnodeset, nelemset, nnode, neblk;
 
   ErrChk(
-    ex_get_init( m_inFile, title, &ndim, &m_nnode, &nel, &m_neblk, &nnodeset,
+    ex_get_init( m_inFile, title, &ndim, &nnode, &nel, &neblk, &nnodeset,
                  &nelemset ) == 0,
     "Failed to read header from ExodusII file: " + m_filename );
 
-  ErrChk( m_nnode > 0,
+  ErrChk( nnode > 0,
           "Number of nodes read from ExodusII file must be larger than zero" );
-  ErrChk( m_neblk > 0,
+  ErrChk( neblk > 0,
           "Number of element blocks read from ExodusII file must be larger "
           "than zero" );
   ErrChk( ndim == 3, "Need a 3D mesh from ExodusII file " + m_filename);
 
+  m_neblk = static_cast< std::size_t >( neblk );
+
   // set mesh graph size
-  m_mesh.size() = static_cast< std::size_t >( m_nnode );
+  m_mesh.size() = m_nnode = static_cast< std::size_t >( nnode );
 }
 
 void
@@ -112,9 +114,9 @@ ExodusIIMeshReader::readNodes()
 //! \author J. Bakosi
 //******************************************************************************
 {
-  m_mesh.x().resize( static_cast< std::size_t >( m_nnode ) );
-  m_mesh.y().resize( static_cast< std::size_t >( m_nnode ) );
-  m_mesh.z().resize( static_cast< std::size_t >( m_nnode ) );
+  m_mesh.x().resize( m_nnode );
+  m_mesh.y().resize( m_nnode );
+  m_mesh.z().resize( m_nnode );
 
   ErrChk( ex_get_coord( m_inFile, m_mesh.x().data(), m_mesh.y().data(),
                         m_mesh.z().data() ) == 0,
@@ -155,14 +157,14 @@ ExodusIIMeshReader::readElements()
 //! \author J. Bakosi
 //******************************************************************************
 {
-  std::vector< int > id( static_cast< std::size_t >( m_neblk ) );
+  std::vector< int > id( m_neblk );
 
   // Read element block ids
   ErrChk( ex_get_elem_blk_ids( m_inFile, id.data()) == 0,
           "Failed to read element block ids from ExodusII file: " +
           m_filename );
 
-  for (std::size_t i=0; i<static_cast<std::size_t>(m_neblk); ++i) {
+  for (std::size_t i=0; i<m_neblk; ++i) {
     char eltype[MAX_STR_LENGTH+1];
     int nel, nnpe, nattr;
 
@@ -175,19 +177,27 @@ ExodusIIMeshReader::readElements()
     // Read element connectivity
     auto connectsize = static_cast< std::size_t >( nel*nnpe );
     if (nnpe == 4) {    // tetrahedra
+
       m_mesh.tettag().resize( connectsize, { 1 } );
-      m_mesh.tetinpoel().resize( connectsize );
+      std::vector< int > inpoel( connectsize );
       ErrChk(
-        ex_get_elem_conn( m_inFile, id[i], m_mesh.tetinpoel().data() ) == 0,
+        ex_get_elem_conn( m_inFile, id[i], inpoel.data() ) == 0,
         "Failed to read " + std::string(eltype) + " element connectivity from "
         "ExodusII file: " + m_filename );
+      for (auto n : inpoel)
+        m_mesh.tetinpoel().push_back( static_cast< std::size_t >( n ) );
+
     } else if (nnpe == 3) {    // triangles
+
       m_mesh.tritag().resize( connectsize, { 1 } );
-      m_mesh.triinpoel().resize( connectsize );
+      std::vector< int > inpoel( connectsize );
       ErrChk(
-        ex_get_elem_conn( m_inFile, id[i], m_mesh.triinpoel().data() ) == 0,
+        ex_get_elem_conn( m_inFile, id[i], inpoel.data() ) == 0,
         "Failed to read " + std::string(eltype) + " element connectivity from "
         "ExodusII file: " + m_filename );
+      for (auto n : inpoel)
+        m_mesh.triinpoel().push_back( static_cast< std::size_t >( n ) );
+
     }
   }
 

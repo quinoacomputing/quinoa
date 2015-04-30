@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshMeshReader.C
   \author    J. Bakosi
-  \date      Tue 24 Mar 2015 12:12:48 PM MDT
+  \date      Mon 20 Apr 2015 09:30:07 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Gmsh mesh reader class definition
   \details   Gmsh mesh reader class definition. Currently, this class supports
@@ -16,7 +16,7 @@
 
 #include <UnsMesh.h>
 #include <GmshMeshReader.h>
-#include <DerivedData.h>
+#include <Reorder.h>
 
 using tk::GmshMeshReader;
 
@@ -208,26 +208,26 @@ GmshMeshReader::readElements()
 
       // Read and add element node list (i.e. connectivity)
       std::size_t nnode = static_cast< std::size_t >( it->second );
-      std::vector< int > nodes( nnode, 0 );
+      std::vector< std::size_t > nodes( nnode, 0 );
       if (isASCII()) {
         for (std::size_t j=0; j<nnode; j++)
           m_inFile >> nodes[j];
       } else {
+        std::vector< int > nds( nnode, 0 );
         m_inFile.read(
-          reinterpret_cast<char*>(nodes.data()),
-            static_cast<std::streamsize>( nnode * sizeof(int) ) );
+          reinterpret_cast< char* >( nds.data() ),
+          static_cast< std::streamsize >( nnode * sizeof(int) ) );
+        for (std::size_t j=0; j<nnode; j++)
+          nodes[j] = static_cast< std::size_t >( nds[j] );
       }
       // Put in element connectivity for different types of elements
       switch ( elmtype ) {
         case GmshElemType::LIN:
-          for (const auto& j : nodes) m_mesh.lininpoel().push_back( j );
-          break;
+          for (const auto& j : nodes) m_mesh.lininpoel().push_back( j ); break;
         case GmshElemType::TRI:
-          for (const auto& j : nodes) m_mesh.triinpoel().push_back( j );
-          break;
+          for (const auto& j : nodes) m_mesh.triinpoel().push_back( j ); break;
         case GmshElemType::TET:
-          for (const auto& j : nodes) m_mesh.tetinpoel().push_back( j );
-          break;
+          for (const auto& j : nodes) m_mesh.tetinpoel().push_back( j ); break;
         case GmshElemType::PNT:
           break;     // ignore 1-node 'point element' type
         default: Throw( std::string("Unsupported element type ") << elmtype <<

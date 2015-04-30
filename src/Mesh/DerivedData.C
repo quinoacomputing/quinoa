@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/DerivedData.C
   \author    J. Bakosi
-  \date      Thu 02 Apr 2015 03:40:11 PM MDT
+  \date      Mon 20 Apr 2015 06:55:05 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Generate data structures derived from unstructured mesh
   \details   Generate data structures derived from the connectivity information
@@ -18,34 +18,15 @@
 
 namespace tk {
 
-void
-shiftToZero( std::vector< int >& inpoel )
-//******************************************************************************
-//  Shift node IDs to start with zero in element connectivity
-//! \param[inout] inpoel Inteconnectivity of points and elements
-//! \note It is okay to call this function with an empty container; it will
-//!    simply return without throwing an exception.
-//! \author J. Bakosi
-//******************************************************************************
-{
-  if (inpoel.empty()) return;
-
-  // find smallest node id
-  auto minId = *std::min_element( begin(inpoel), end(inpoel) );
-
-  // shift node ids to start from zero
-  for (auto& n : inpoel) n -= minId;
-}
-
 std::pair< std::vector< std::size_t >, std::vector< std::size_t > >
-genEsup( const std::vector< int >& inpoel, std::size_t nnpe )
+genEsup( const std::vector< std::size_t >& inpoel, std::size_t nnpe )
 //******************************************************************************
 //  Generate derived data structure, elements surrounding points
 //! \param[in] inpoel Inteconnectivity of points and elements. These are the
 //!   node ids of each element of an unstructured mesh. Example:
 //!   \code{.cpp}
-//!     std::vector< int > inpoel { 12, 14,  9, 11,
-//!                                 10, 14, 13, 12 };
+//!     std::vector< std::size_t > inpoel { 12, 14,  9, 11,
+//!                                         10, 14, 13, 12 };
 //!   \endcode
 //!   specifies two tetrahedra whose vertices (node ids) are { 12, 14, 9, 11 },
 //!   and { 10, 14, 13, 12 }.
@@ -68,7 +49,7 @@ genEsup( const std::vector< int >& inpoel, std::size_t nnpe )
 //!   \code{.cpp}
 //!     auto minmax = std::minmax_element( begin(inpoel), end(inpoel) );
 //!     Assert( *minmax.first == 0, "node ids should start from zero" );
-//!     auto npoin = static_cast< std::size_t >( *minmax.second + 1 );
+//!     auto npoin = *minmax.second + 1;
 //!   \endcode
 //! \note In principle, this function *should* work for any positive nnpe,
 //!   however, only nnpe = 4 (tetrahedra) and nnpe = 3 (triangles) are tested.
@@ -83,14 +64,14 @@ genEsup( const std::vector< int >& inpoel, std::size_t nnpe )
   // find out number of points in mesh connectivity
   auto minmax = std::minmax_element( begin(inpoel), end(inpoel) );
   Assert( *minmax.first == 0, "node ids should start from zero" );
-  auto npoin = static_cast< std::size_t >( *minmax.second + 1 );
+  auto npoin = *minmax.second + 1;
 
   // allocate one of the linked lists storing elements surrounding points: esup2
   // fill with zeros
   std::vector< std::size_t > esup2( npoin+1, 0 );
 
   // element pass 1: count number of elements connected to each point
-  for (auto n : inpoel) ++esup2[ static_cast<std::size_t>(n) + 1 ];
+  for (auto n : inpoel) ++esup2[ n + 1 ];
 
   // storage/reshuffling pass 1: update storage counter and store
   // also find out the maximum size of esup1 (mesup)
@@ -107,19 +88,14 @@ genEsup( const std::vector< int >& inpoel, std::size_t nnpe )
   // store the elements in esup1
   std::size_t e = 0;
   for (auto n : inpoel) {
-    auto N = static_cast< std::size_t >( n );
-    auto j = esup2[N]+1;
-    esup2[N] = j;
+    auto j = esup2[n]+1;
+    esup2[n] = j;
     esup1[j] = e/nnpe;
     ++e;
   }
 
   // storage/reshuffling pass 2
-  auto snpoin = static_cast< long long >( npoin );
-  for (auto i=snpoin; i>0; --i) {
-    auto I = static_cast< std::size_t >( i );
-    esup2[I] = esup2[I-1];
-  }
+  for (auto i=npoin; i>0; --i) esup2[i] = esup2[i-1];
   esup2[0] = 0;
 
   // Return (move out) linked lists
@@ -127,7 +103,7 @@ genEsup( const std::vector< int >& inpoel, std::size_t nnpe )
 }
 
 std::pair< std::vector< std::size_t >, std::vector< std::size_t > >
-genPsup( const std::vector< int >& inpoel,
+genPsup( const std::vector< std::size_t >& inpoel,
          std::size_t nnpe,
          const std::pair< std::vector< std::size_t >,
                           std::vector< std::size_t > >& esup )
@@ -136,8 +112,8 @@ genPsup( const std::vector< int >& inpoel,
 //! \param[in] inpoel Inteconnectivity of points and elements. These are the
 //!   node ids of each element of an unstructured mesh. Example:
 //!   \code{.cpp}
-//!     std::vector< int > inpoel { 12, 14,  9, 11,
-//!                                 10, 14, 13, 12 };
+//!     std::vector< std::size_t > inpoel { 12, 14,  9, 11,
+//!                                         10, 14, 13, 12 };
 //!   \endcode
 //!   specifies two tetrahedra whose vertices (node ids) are { 12, 14, 9, 11 },
 //!   and { 10, 14, 13, 12 }.
@@ -157,12 +133,16 @@ genPsup( const std::vector< int >& inpoel,
 //!       for (auto i=psup.second[p]+1; i<=psup.second[p+1]; ++i)
 //!          use point id psup.first[i]
 //!   \endcode
-//!     To find out the number of points, _npoin_, the mesh connectivity,
-//!     _inpoel_, can be queried:
+//!    To find out the number of points, _npoin_, the mesh connectivity,
+//!    _inpoel_, can be queried:
 //!   \code{.cpp}
 //!     auto minmax = std::minmax_element( begin(inpoel), end(inpoel) );
 //!     Assert( *minmax.first == 0, "node ids should start from zero" );
-//!     auto npoin = static_cast< std::size_t >( *minmax.second + 1 );
+//!     auto npoin = *minmax.second + 1;
+//!   \endcode
+//!   or the length-1 of the generated index list:
+//!   \code{.cpp}
+//!     autp npoin = psup.second.size()-1;
 //!   \endcode
 //! \note In principle, this function *should* work for any positive nnpe,
 //!   however, only nnpe = 4 (tetrahedra) and nnpe = 3 (triangles) are tested.
@@ -179,7 +159,7 @@ genPsup( const std::vector< int >& inpoel,
   // find out number of points in mesh connectivity
   auto minmax = std::minmax_element( begin(inpoel), end(inpoel) );
   Assert( *minmax.first == 0, "node ids should start from zero" );
-  auto npoin = static_cast< std::size_t >( *minmax.second + 1 );
+  auto npoin = *minmax.second + 1;
 
   auto& esup1 = esup.first;
   auto& esup2 = esup.second;
@@ -197,7 +177,7 @@ genPsup( const std::vector< int >& inpoel,
   for (std::size_t p=0; p<npoin; ++p) {
     for (std::size_t i=esup2[p]+1; i<=esup2[p+1]; ++i ) {
       for (std::size_t n=0; n<nnpe; ++n) {
-        auto q = static_cast< std::size_t >( inpoel[ esup1[i] * nnpe + n ] );
+        auto q = inpoel[ esup1[i] * nnpe + n ];
         if (q != p && lpoin[q] != p+1) {
           ++j;
           psup1.push_back( q );
@@ -219,7 +199,7 @@ genPsup( const std::vector< int >& inpoel,
 }
 
 std::pair< std::vector< std::size_t >, std::vector< std::size_t > >
-genEdsup( const std::vector< int >& inpoel,
+genEdsup( const std::vector< std::size_t >& inpoel,
           std::size_t nnpe,
           const std::pair< std::vector< std::size_t >,
                            std::vector< std::size_t > >& esup )
@@ -228,8 +208,8 @@ genEdsup( const std::vector< int >& inpoel,
 //! \param[in] inpoel Inteconnectivity of points and elements. These are the
 //!   node ids of each element of an unstructured mesh. Example:
 //!   \code{.cpp}
-//!     std::vector< int > inpoel { 12, 14,  9, 11,
-//!                                 10, 14, 13, 12 };
+//!     std::vector< std::size_t > inpoel { 12, 14,  9, 11,
+//!                                         10, 14, 13, 12 };
 //!   \endcode
 //!   specifies two tetrahedra whose vertices (node ids) are { 12, 14, 9, 11 },
 //!   and { 10, 14, 13, 12 }.
@@ -257,7 +237,7 @@ genEdsup( const std::vector< int >& inpoel,
 //!   \code{.cpp}
 //!     auto minmax = std::minmax_element( begin(inpoel), end(inpoel) );
 //!     Assert( *minmax.first == 0, "node ids should start from zero" );
-//!     auto npoin = static_cast< std::size_t >( *minmax.second + 1 );
+//!     auto npoin = *minmax.second + 1;
 //!   \endcode
 //! \note At first sight, this function seems to work for elements with more
 //!   vertices than that of tetrahedra. However, that is not the case since the
@@ -282,7 +262,7 @@ genEdsup( const std::vector< int >& inpoel,
   // find out number of points in mesh connectivity
   auto minmax = std::minmax_element( begin(inpoel), end(inpoel) );
   Assert( *minmax.first == 0, "node ids should start from zero" );
-  auto npoin = static_cast< std::size_t >( *minmax.second + 1 );
+  auto npoin = *minmax.second + 1;
 
   auto& esup1 = esup.first;
   auto& esup2 = esup.second;
@@ -298,7 +278,7 @@ genEdsup( const std::vector< int >& inpoel,
   for (std::size_t p=0; p<npoin; ++p)
     for (std::size_t i=esup2[p]+1; i<=esup2[p+1]; ++i )
       for (std::size_t n=0; n<nnpe; ++n) {
-        auto q = static_cast< std::size_t >( inpoel[ esup1[i] * nnpe + n ] );
+        auto q = inpoel[ esup1[i] * nnpe + n ];
         if (q != p && lpoin[q] != p+1) {
           if (p < q) star[p].push_back(q);
           lpoin[q] = p+1;
@@ -323,7 +303,7 @@ genEdsup( const std::vector< int >& inpoel,
 }
 
 std::vector< std::size_t >
-genInpoed( const std::vector< int >& inpoel,
+genInpoed( const std::vector< std::size_t >& inpoel,
            std::size_t nnpe,
            const std::pair< std::vector< std::size_t >,
                             std::vector< std::size_t > >& esup )
@@ -332,8 +312,8 @@ genInpoed( const std::vector< int >& inpoel,
 //! \param[in] inpoel Inteconnectivity of points and elements. These are the
 //!   node ids of each element of an unstructured mesh. Example:
 //!   \code{.cpp}
-//!     std::vector< int > inpoel { 12, 14,  9, 11,
-//!                                 10, 14, 13, 12 };
+//!     std::vector< std::size_t > inpoel { 12, 14,  9, 11,
+//!                                         10, 14, 13, 12 };
 //!   \endcode
 //!   specifies two tetrahedra whose vertices (node ids) are { 12, 14, 9, 11 },
 //!   and { 10, 14, 13, 12 }.
@@ -385,7 +365,7 @@ genInpoed( const std::vector< int >& inpoel,
   // find out number of points in mesh connectivity
   auto minmax = std::minmax_element( begin(inpoel), end(inpoel) );
   Assert( *minmax.first == 0, "node ids should start from zero" );
-  auto npoin = static_cast< std::size_t >( *minmax.second + 1 );
+  auto npoin = *minmax.second + 1;
 
   auto& esup1 = esup.first;
   auto& esup2 = esup.second;
@@ -401,7 +381,7 @@ genInpoed( const std::vector< int >& inpoel,
   for (std::size_t p=0; p<npoin; ++p)
     for (std::size_t i=esup2[p]+1; i<=esup2[p+1]; ++i )
       for (std::size_t n=0; n<nnpe; ++n) {
-        auto q = static_cast< std::size_t >( inpoel[ esup1[i] * nnpe + n ] );
+        auto q = inpoel[ esup1[i] * nnpe + n ];
         if (q != p && lpoin[q] != p+1) {
           if (p < q) star[p].push_back( q );
           lpoin[q] = p+1;
@@ -426,7 +406,7 @@ genInpoed( const std::vector< int >& inpoel,
 }
 
 std::pair< std::vector< std::size_t >, std::vector< std::size_t > >
-genEsupel( const std::vector< int >& inpoel,
+genEsupel( const std::vector< std::size_t >& inpoel,
            std::size_t nnpe,
            const std::pair< std::vector< std::size_t >,
                             std::vector< std::size_t > >& esup )
@@ -435,8 +415,8 @@ genEsupel( const std::vector< int >& inpoel,
 //! \param[in] inpoel Inteconnectivity of points and elements. These are the
 //!   node ids of each element of an unstructured mesh. Example:
 //!   \code{.cpp}
-//!     std::vector< int > inpoel { 12, 14,  9, 11,
-//!                                 10, 14, 13, 12 };
+//!     std::vector< std::size_t > inpoel { 12, 14,  9, 11,
+//!                                         10, 14, 13, 12 };
 //!   \endcode
 //!   specifies two tetrahedra whose vertices (node ids) are { 12, 14, 9, 11 },
 //!   and { 10, 14, 13, 12 }.
@@ -485,9 +465,8 @@ genEsupel( const std::vector< int >& inpoel,
   std::size_t e = 0;
   std::set< std::size_t > esuel;
   for (auto p : inpoel) {       // loop over all points of all elements
-    auto P = static_cast< std::size_t >( p );
     // collect unique element ids of elements surrounding points of element
-    for (auto i=esup2[P]+1; i<=esup2[P+1]; ++i) esuel.insert( esup1[i] );
+    for (auto i=esup2[p]+1; i<=esup2[p+1]; ++i) esuel.insert( esup1[i] );
     if (++e%nnpe == 0) {        // when finished checking all nodes of element
       // erase element whose surrounding elements are considered
       esuel.erase( e/nnpe-1 );
@@ -504,7 +483,7 @@ genEsupel( const std::vector< int >& inpoel,
 }
 
 std::pair< std::vector< std::size_t >, std::vector< std::size_t > >
-genEsuel( const std::vector< int >& inpoel,
+genEsuel( const std::vector< std::size_t >& inpoel,
           std::size_t nnpe,
           const std::pair< std::vector< std::size_t >,
                            std::vector< std::size_t > >& esup )
@@ -513,8 +492,8 @@ genEsuel( const std::vector< int >& inpoel,
 //! \param[in] inpoel Inteconnectivity of points and elements. These are the
 //!   node ids of each element of an unstructured mesh. Example:
 //!   \code{.cpp}
-//!     std::vector< int > inpoel { 12, 14,  9, 11,
-//!                                 10, 14, 13, 12 };
+//!     std::vector< std::size_t > inpoel { 12, 14,  9, 11,
+//!                                         10, 14, 13, 12 };
 //!   \endcode
 //!   specifies two tetrahedra whose vertices (node ids) are { 12, 14, 9, 11 },
 //!   and { 10, 14, 13, 12 }.
@@ -572,7 +551,7 @@ genEsuel( const std::vector< int >& inpoel,
   for (std::size_t e=0; e<nelem; ++e) {
     std::set< std::size_t > faces; // will collect elem ids of shared faces
     for (std::size_t n=0; n<nnpe; ++n) {
-      auto i = static_cast< std::size_t >( inpoel[ e*nnpe+n ] );
+      auto i = inpoel[ e*nnpe+n ];
       for (auto j=esup2[i]+1; j<=esup2[i+1]; ++j)
         if (adj( e, esup1[j] )) faces.insert( esup1[j] );
     }
@@ -594,7 +573,7 @@ genEsuel( const std::vector< int >& inpoel,
 }
 
 std::vector< std::size_t >
-genInedel( const std::vector< int >& inpoel,
+genInedel( const std::vector< std::size_t >& inpoel,
            std::size_t nnpe,
            const std::vector< std::size_t >& inpoed )
 //******************************************************************************
@@ -602,8 +581,8 @@ genInedel( const std::vector< int >& inpoel,
 //! \param[in] inpoel Inteconnectivity of points and elements. These are the
 //!   node ids of each element of an unstructured mesh. Example:
 //!   \code{.cpp}
-//!     std::vector< int > inpoel { 12, 14,  9, 11,
-//!                                 10, 14, 13, 12 };
+//!     std::vector< std::size_t > inpoel { 12, 14,  9, 11,
+//!                                         10, 14, 13, 12 };
 //!   \endcode
 //!   specifies two tetrahedra whose vertices (node ids) are { 12, 14, 9, 11 },
 //!   and { 10, 14, 13, 12 }.
@@ -659,7 +638,7 @@ genInedel( const std::vector< int >& inpoel,
   // find out number of points in mesh connectivity
   auto minmax = std::minmax_element( begin(inpoel), end(inpoel) );
   Assert( *minmax.first == 0, "node ids should start from zero" );
-  auto npoin = static_cast< std::size_t >( *minmax.second + 1 );
+  auto npoin = *minmax.second + 1;
 
   // First, generate index of star centers. This is necessary to avoid a
   // brute-force search for point ids of edges when searching for element edges.
@@ -697,11 +676,11 @@ genInedel( const std::vector< int >& inpoel,
   // generate map of elements associated to edge ids
   for (std::size_t e=0; e<nelem; ++e)
     for (std::size_t n=0; n<nnpe; ++n) {
-      auto p = static_cast< std::size_t >( inpoel[e*nnpe+n] );
+      auto p = inpoel[e*nnpe+n];
       for (auto i=edsup2[p]+1; i<=edsup2[p+1]; ++i)
          for (std::size_t j=0; j<nnpe; ++j)
-            if (inpoed[(i-1)*2+1] == static_cast<std::size_t>(inpoel[e*nnpe+j]))
-               edges[e].push_back( i-1 );
+            if (inpoed[(i-1)*2+1] == inpoel[e*nnpe+j])
+              edges[e].push_back( i-1 );
     }
 
   // linear vector to store the edge ids of all elements
@@ -715,7 +694,7 @@ genInedel( const std::vector< int >& inpoel,
 }
 
 std::pair< std::vector< std::size_t >, std::vector< std::size_t > >
-genEsued( const std::vector< int >& inpoel,
+genEsued( const std::vector< std::size_t >& inpoel,
           std::size_t nnpe,
           const std::pair< std::vector< std::size_t >,
                            std::vector< std::size_t > >& esup )
@@ -724,8 +703,8 @@ genEsued( const std::vector< int >& inpoel,
 //! \param[in] inpoel Inteconnectivity of points and elements. These are the
 //!   node ids of each element of an unstructured mesh. Example:
 //!   \code{.cpp}
-//!     std::vector< int > inpoel { 12, 14,  9, 11,
-//!                                 10, 14, 13, 12 };
+//!     std::vector< std::size_t > inpoel { 12, 14,  9, 11,
+//!                                         10, 14, 13, 12 };
 //!   \endcode
 //!   specifies two tetrahedra whose vertices (node ids) are { 12, 14, 9, 11 },
 //!   and { 10, 14, 13, 12 }.
@@ -775,7 +754,7 @@ genEsued( const std::vector< int >& inpoel,
   // find out number of points in mesh connectivity
   auto minmax = std::minmax_element( begin(inpoel), end(inpoel) );
   Assert( *minmax.first == 0, "node ids should start from zero" );
-  auto npoin = static_cast< std::size_t >( *minmax.second + 1 );
+  auto npoin = *minmax.second + 1;
 
   auto& esup1 = esup.first;
   auto& esup2 = esup.second;
@@ -788,8 +767,7 @@ genEsued( const std::vector< int >& inpoel,
   -> bool {
     std::vector< bool > sp;
     for (std::size_t n=0; n<nnpe; ++n)
-      if (static_cast< std::size_t >( inpoel[e*nnpe+n] ) == p ||
-          static_cast< std::size_t >( inpoel[e*nnpe+n] ) == q)
+      if (inpoel[e*nnpe+n] == p || inpoel[e*nnpe+n] == q)
         sp.push_back( true );
     if (sp.size() == 2) return true; else return false;
   };
@@ -802,7 +780,7 @@ genEsued( const std::vector< int >& inpoel,
   for (std::size_t p=0; p<npoin; ++p)
     for (std::size_t i=esup2[p]+1; i<=esup2[p+1]; ++i )
       for (std::size_t n=0; n<nnpe; ++n) {
-        auto q = static_cast< std::size_t >( inpoel[ esup1[i] * nnpe + n ] );
+        auto q = inpoel[ esup1[i] * nnpe + n ];
         if (q != p && lpoin[q] != p+1) {
           if (p < q) {  // for edge given point ids p < q
             for (std::size_t j=esup2[p]+1; j<=esup2[p+1]; ++j ) {
