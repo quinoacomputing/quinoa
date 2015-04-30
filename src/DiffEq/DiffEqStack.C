@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/DiffEqStack.C
   \author    J. Bakosi
-  \date      Wed 29 Apr 2015 01:47:36 PM MDT
+  \date      Thu 30 Apr 2015 02:40:40 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Stack of differential equations
   \details   This file defines class DiffEqStack, which implements various
@@ -385,6 +385,8 @@ DiffEqStack::infoGenDir( std::map< ctr::DiffEqType, std::size_t >& cnt ) const
     parameters( g_inputdeck.get< tag::param, tag::gendir, tag::c >().at(c) ) );
   spikes( info,
           g_inputdeck.get< tag::param, tag::gendir, tag::spike >().at(c) );
+  betapdfs( info,
+            g_inputdeck.get< tag::param, tag::gendir, tag::betapdf >().at(c) );
 
   return info;
 }
@@ -425,6 +427,9 @@ const
   spikes( info,
           g_inputdeck.get< tag::param, tag::wrightfisher, tag::spike >().at(c)
   );
+  betapdfs(
+    info,
+    g_inputdeck.get< tag::param, tag::wrightfisher, tag::betapdf >().at(c) );
 
   return info;
 }
@@ -466,6 +471,8 @@ DiffEqStack::infoOU( std::map< ctr::DiffEqType, std::size_t >& cnt ) const
   info.emplace_back( "coeff mu [" + std::to_string( ncomp ) + "]",
     parameters( g_inputdeck.get< tag::param, tag::ou, tag::mu >().at(c) ) );
   spikes( info, g_inputdeck.get< tag::param, tag::ou, tag::spike >().at(c) );
+  betapdfs( info,
+            g_inputdeck.get< tag::param, tag::ou, tag::betapdf >().at(c) );
 
   return info;
 }
@@ -509,6 +516,8 @@ DiffEqStack::infoDiagOU( std::map< ctr::DiffEqType, std::size_t >& cnt ) const
     parameters( g_inputdeck.get< tag::param, tag::diagou, tag::mu >().at(c) ) );
   spikes( info,
           g_inputdeck.get< tag::param, tag::diagou, tag::spike >().at(c) );
+  betapdfs( info,
+            g_inputdeck.get< tag::param, tag::diagou, tag::betapdf >().at(c) );
 
   return info;
 }
@@ -553,6 +562,8 @@ DiffEqStack::infoBeta( std::map< ctr::DiffEqType, std::size_t >& cnt ) const
   );
   spikes( info,
           g_inputdeck.get< tag::param, tag::beta, tag::spike >().at(c) );
+  betapdfs( info,
+            g_inputdeck.get< tag::param, tag::beta, tag::betapdf >().at(c) );
 
   return info;
 }
@@ -610,6 +621,9 @@ DiffEqStack::infoNumberFractionBeta(
       g_inputdeck.get< tag::param, tag::numfracbeta, tag::rcomma >().at(c) ) );
   spikes( info,
           g_inputdeck.get< tag::param, tag::numfracbeta, tag::spike >().at(c) );
+  betapdfs(
+    info,
+    g_inputdeck.get< tag::param, tag::numfracbeta, tag::betapdf >().at(c) );
 
   return info;
 }
@@ -667,6 +681,9 @@ DiffEqStack::infoMassFractionBeta(
   spikes(
     info,
     g_inputdeck.get< tag::param, tag::massfracbeta, tag::spike >().at(c) );
+  betapdfs(
+    info,
+    g_inputdeck.get< tag::param, tag::massfracbeta, tag::betapdf >().at(c) );
 
   return info;
 }
@@ -730,6 +747,9 @@ DiffEqStack::infoMixNumFracBeta(
   );
   spikes( info,
     g_inputdeck.get< tag::param, tag::mixnumfracbeta, tag::spike >().at(c) );
+  betapdfs(
+    info,
+    g_inputdeck.get< tag::param, tag::mixnumfracbeta, tag::betapdf >().at(c) );
 
   return info;
 }
@@ -793,6 +813,9 @@ DiffEqStack::infoMixMassFracBeta(
   );
   spikes( info,
     g_inputdeck.get< tag::param, tag::mixmassfracbeta, tag::spike >().at(c) );
+  betapdfs(
+    info,
+    g_inputdeck.get< tag::param, tag::mixmassfracbeta, tag::betapdf >().at(c) );
 
   return info;
 }
@@ -841,6 +864,9 @@ const
       g_inputdeck.get< tag::param, tag::skewnormal, tag::lambda >().at(c) ) );
   spikes( info,
           g_inputdeck.get< tag::param, tag::skewnormal, tag::spike >().at(c) );
+  betapdfs(
+    info,
+    g_inputdeck.get< tag::param, tag::skewnormal, tag::betapdf >().at(c) );
 
   return info;
 }
@@ -884,6 +910,9 @@ DiffEqStack::infoGamma( std::map< ctr::DiffEqType, std::size_t >& cnt ) const
     parameters( g_inputdeck.get< tag::param, tag::gamma, tag::kappa >().at(c) )
   );
   spikes( info, g_inputdeck.get< tag::param, tag::gamma, tag::spike >().at(c) );
+  betapdfs(
+    info,
+    g_inputdeck.get< tag::param, tag::gamma, tag::betapdf >().at(c) );
 
   return info;
 }

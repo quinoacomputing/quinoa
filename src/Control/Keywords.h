@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Keywords.h
   \author    J. Bakosi
-  \date      Thu 30 Apr 2015 09:02:20 AM MDT
+  \date      Thu 30 Apr 2015 03:49:35 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Definition of all keywords
   \details   This file contains the definition of all keywords, including those
@@ -539,6 +539,56 @@ struct gaussian_method_info {
 };
 using gaussian_method =
   keyword< gaussian_method_info, g,a,u,s,s,i,a,n,'_',m,e,t,h,o,d >;
+
+struct cja_info {
+  static std::string name() { return "CJA"; }
+  static std::string shortDescription() { return
+   "Select the Cheng, Johnk, Atkinson algorithm for sampling a beta"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the Cheng-Johnk-Atkinson method used to
+    generate beta random numbers using the Intel Math Kernel Library (MKL)
+    random number generators. For more info on MKL see
+    https://software.intel.com/en-us/
+    articles/intel-math-kernel-library-documentation.)";
+  }
+};
+using cja = keyword< cja_info, c,j,a >;
+
+struct cja_accurate_info {
+  static std::string name() { return "CJA accurate"; }
+  static std::string shortDescription() { return
+   "Select the accurate Cheng, Johnk, Atkinson algorithm for sampling a beta"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the accurate version of the
+    Cheng-Johnk-Atkinson method used to generate beta random numbers using the
+    Intel Math Kernel Library (MKL) random number generators. For more info on
+    MKL see https://software.intel.com/en-us/
+    articles/intel-math-kernel-library-documentation.)";
+  }
+};
+using cja_accurate = keyword< cja_info, c,j,a,'_',a,c,c,u,r,a,t,e >;
+
+struct beta_method_info {
+  static std::string name() { return "Beta method"; }
+  static std::string shortDescription() { return
+    "Select an Intel MKL beta RNG method"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify the method used to generate beta
+    random numbers using the Intel Math Kernel Library (MKL) random number
+    generators. Valid options are 'cja' and 'cja_accurate'. For
+    more info on MKL see https://software.intel.com/en-us/articles/intel-math-
+    kernel-library-documentation.)";
+  }
+  struct expect {
+    static std::string description() { return "string"; }
+    static std::string choices() {
+      return '\'' + cja::string() + "\' | \'"
+                  + cja_accurate::string() + '\'';
+    }
+  };
+};
+using beta_method =
+  keyword< beta_method_info, b,e,t,a,'_',m,e,t,h,o,d >;
 
 struct rngsse_gm19_info {
   static std::string name() { return "RNGSSE GM19"; }
@@ -1107,26 +1157,45 @@ struct zero_info {
 };
 using zero = keyword< zero_info, z,e,r,o >;
 
-struct delta_info {
+struct jointdelta_info {
   static std::string name() { return "D"; }
   static std::string shortDescription() { return
-    "Select the delta initialization policy"; }
+    "Select the joint delta initialization policy"; }
   static std::string longDescription() { return
-    R"(This keyword is used to select the delta initialization policy.
+    R"(This keyword is used to select the joint delta initialization policy.
     The initialization policy is used to specify how the initial conditions are
     set at t = 0 before time-integration. Example: "init zero", which selects
     zero initialization policy, which puts zeros in memory. Note that this
     option may behave differently depending on the particular equation or
     physical model. For an example, see tk::InitPolicies in DiffEq/InitPolicy.h
-    for valid options.) The delta initialization policy can be used to prescribe
-    delta-spikes on the sample space with given heights, i.e., probabilities.
-    Example: "init delta" - select delta init-policy, "delta spike 0.1 0.3 end
-    spike 0.8 0.7 end end" - prescribe two delta-spikes at sample space
-    positions 0.1 and 0.8 with spike heights 0.3 and 0.7, respectively. Note
-    that the sum of the heights must add up to unity. See also the help on
-    keyword spike.)"; }
+    for valid options.) The joint delta initialization policy can be used to
+    prescribe delta-spikes on the sample space with given heights, i.e.,
+    probabilities. Example: "init jointdelta" - select delta init-policy,
+    "delta spike 0.1 0.3 0.8 0.7 end end" - prescribe two delta-spikes
+    at sample space positions 0.1 and 0.8 with spike heights 0.3 and 0.7,
+    respectively. Note that the sum of the heights must add up to unity. See
+    also the help on keyword spike.)"; }
 };
-using delta = keyword< delta_info, d,e,l,t,a >;
+using jointdelta = keyword< jointdelta_info, j,o,i,n,t,d,e,l,t,a >;
+
+struct jointbeta_info {
+  static std::string name() { return "B"; }
+  static std::string shortDescription() { return
+    "Select the joint beta initialization policy"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the joint beta initialization policy.
+    The initialization policy is used to specify how the initial conditions are
+    set at t = 0 before time-integration. Example: "init zero", which selects
+    zero initialization policy, which puts zeros in memory. Note that this
+    option may behave differently depending on the particular equation or
+    physical model. For an example, see tk::InitPolicies in DiffEq/InitPolicy.h
+    for valid options.) The joint beta initialization policy can be used to
+    prescribe a multi-dimensional sample space where the samples are generated
+    from a joint beta distribution with independent marginal univariate beta
+    distributions.)";
+  }
+};
+using jointbeta = keyword< jointbeta_info, j,o,i,n,t,b,e,t,a >;
 
 struct init_info {
   static std::string name() { return "initpolicy"; }
@@ -1145,7 +1214,8 @@ struct init_info {
     static std::string choices() {
       return '\'' + raw::string() + "\' | \'"
                   + zero::string() + "\' | \'"
-                  + delta::string() + '\'';
+                  + jointdelta::string() + "\' | \'"
+                  + jointbeta::string() + '\'';
     }
   };
 };
@@ -1660,19 +1730,64 @@ struct spike_info {
     R"(Configure a delta spike)"; }
   static std::string longDescription() { return
     R"(This keyword is used to specify the configuration of delta spikes for,
-    e.g., the delta initialization policy. The configuration is given by a two
-    real numbers inside a spike...end block. Example: "spike 0.12 0.3 end",
-    which specifies a delta spike at sample space position 0.12 with relative
-    height 0.3. The height must be between [0.0...1.0] inclusive and specifies a
-    relative probability. This keyword is used inside a delta...end block
-    containing as many spike...end blocks so that the sum of the spikes add up
-    to unity. See also the help on keyword delta.)"; }
+    the delta initialization policy. The configuration is given by an even set
+    of real numbers inside a spike...end block. Example: "spike 0.1 1.0 end",
+    which specifies a delta spike at sample space position 0.1 with relative
+    height 1.0. The height must be between [0.0...1.0] inclusive and specifies a
+    relative probability. See also the help on keyword icdelta.)"; }
   struct expect {
     using type = tk::real;
-    static std::string description() { return "real(s)"; }
+    static std::string description() { return "list of even number of reals"; }
   };
 };
 using spike = keyword< spike_info, s,p,i,k,e >;
+
+struct icdelta_info {
+  static std::string name() { return "icdelta"; }
+  static std::string shortDescription() { return
+    R"(Introduce a icdelta...end block used to configure delta spikes)"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to introduce a icdelta...end block in which delta
+    spikes are configured for the delta initialization policy. Example:
+    "init jointdelta" - select joint delta init-policy,"icdelta spike 0.1 0.3
+    0.9 0.7 end end" - prescribe a univariate distribution that consists of two
+    delta-spikes at sample space positions 0.1 and 0.9 with spike heights 0.3
+    and 0.7, respectively. Note that the sum of the heights must add up to
+    unity. See also the help on keyword jointdelta and spike.)"; }
+};
+using icdelta = keyword< icdelta_info, i,c,d,e,l,t,a >;
+
+struct betapdf_info {
+  static std::string name() { return "betapdf"; }
+  static std::string shortDescription() { return
+    R"(Configure a beta distribution)"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify the configuration of beta distributions
+    for the beta initialization policy. The configuration is given by four
+    real numbers inside a betapdf...end block. Example: "betapdf 0.2 0.3 0.0 1.0
+    end", which specifies a univariate beta distribution with shape parameters
+    0.2 and 0.3, displacement 0.0, and scale 1.0. See also the help on keyword
+    icbeta.)"; }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "exactly 4 reals"; }
+  };
+};
+using betapdf = keyword< betapdf_info, b,e,t,a,p,d,f >;
+
+struct icbeta_info {
+  static std::string name() { return "icbeta"; }
+  static std::string shortDescription() { return
+    R"(Introduce a icbeta...end block used to configure beta distributions)"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to introduce an icbeta...end block in which beta
+    distributions are configured for the beta initialization policy. Example:
+    "init jointbeta" - select beta init-policy,"icbeta betapdf 0.2 0.3 0.0 1.0
+    end end" - prescribe a univariate beta distribution with shape parameters
+    0.2 and 0.3, displacement 0.0, and scale 1.0. See also the help on keyword
+    jointbeta and betapdf.)"; }
+};
+using icbeta = keyword< icbeta_info, i,c,b,e,t,a >;
 
 struct depvar_info {
   static std::string name() { return "depvar"; }

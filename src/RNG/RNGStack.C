@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/RNGStack.C
   \author    J. Bakosi
-  \date      Thu 12 Mar 2015 09:36:01 PM MDT
+  \date      Thu 30 Apr 2015 12:40:08 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Stack of random number generators
   \details   This file defines class RNGStack, which implements various
@@ -104,17 +104,21 @@ RNGStack::regMKL( int nstreams, const tk::ctr::RNGMKLParameters& param )
   using tk::ctr::RNGType;
   using tk::ctr::MKLUniformMethodType;
   using tk::ctr::MKLGaussianMethodType;
+  using tk::ctr::MKLBetaMethodType;
   using tag::uniform_method;
   using tag::gaussian_method;
+  using tag::beta_method;
 
   // Defaults for MKL RNGs
   unsigned int s_def = 0;
   MKLUniformMethodType u_def = MKLUniformMethodType::STANDARD;
   MKLGaussianMethodType g_def = MKLGaussianMethodType::BOXMULLER;
+  MKLBetaMethodType b_def = MKLBetaMethodType::CJA;
 
   tk::ctr::RNG opt;
   tk::ctr::MKLUniformMethod um_opt;
   tk::ctr::MKLGaussianMethod gm_opt;
+  tk::ctr::MKLBetaMethod bm_opt;
 
   //! Lambda to register a MKL random number generator into factory
   auto regMKLRNG = [&]( RNGType rng ) {
@@ -124,7 +128,8 @@ RNGStack::regMKL( int nstreams, const tk::ctr::RNGMKLParameters& param )
         opt.param( rng ),
         opt.param< tag::seed >( rng, s_def, param ),
         um_opt.param( opt.param< uniform_method >( rng, u_def, param ) ),
-        gm_opt.param( opt.param< gaussian_method >( rng, g_def, param) ) );
+        gm_opt.param( opt.param< gaussian_method >( rng, g_def, param) ),
+        bm_opt.param( opt.param< beta_method >( rng, b_def, param) ) );
   };
 
   // Register MKL RNGs

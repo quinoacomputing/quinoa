@@ -49,6 +49,8 @@ class InputDeck : public tk::Control<
                                      , kw::smallcrush
                                      , kw::crush
                                      , kw::bigcrush
+                                     , kw::cja
+                                     , kw::cja_accurate
                                      >;
     using keywords2 = boost::mpl::set< kw::rngsse_gm19
                                      , kw::rngsse_gm29
@@ -78,6 +80,7 @@ class InputDeck : public tk::Control<
                                      , kw::mkl_nondeterm
                                      , kw::uniform_method
                                      , kw::gaussian_method
+                                     , kw::beta_method
                                      , kw::standard
                                      , kw::accurate
                                      , kw::boxmuller

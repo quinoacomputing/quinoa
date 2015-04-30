@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/MKLRNG.h
   \author    J. Bakosi
-  \date      Thu 19 Mar 2015 11:52:52 AM MDT
+  \date      Thu 30 Apr 2015 03:42:29 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Interface to Intel MKL VSL random number generators
   \details   Interface to Intel MKL VSL random number generators.
@@ -29,16 +29,20 @@ class MKLRNG {
     //! \param[in] seed RNG seed
     //! \param[in] uniform_method MKL ID of the method to use for uniform RNGs
     //! \param[in] gaussian_method MKL ID of the method to use for Gaussian RNGs
+    //! \param[in] beta_method MKL ID of the method to use for beta RNGs
     explicit MKLRNG( int nthreads,
                      int brng,
                      unsigned int seed,
                      int uniform_method,
-                     int gaussian_method ) :
+                     int gaussian_method,
+                     int beta_method ) :
       m_brng( brng ),
       m_seed( seed ),
       m_uniform_method( uniform_method ),
       m_gaussian_method( gaussian_method ),
-      m_nthreads( nthreads ) {
+      m_beta_method( beta_method ),
+      m_nthreads( nthreads )
+    {
       Assert( nthreads > 0, "Need at least one thread" );
       // Allocate array of stream-pointers for threads
       m_stream = tk::make_unique< VSLStreamStatePtr[] >(
@@ -61,7 +65,7 @@ class MKLRNG {
     ~MKLRNG() { deleteStreams(); }
 
     //! Uniform RNG: Generate uniform random numbers
-    //! \param[in] tid Thread (or more precisely) stream ID
+    //! \param[in] tid Thread (or more precisely stream) ID
     //! \param[in] num Number of RNGs to generate
     //! \param[inout] r Pointer to memory to write the RNGs to
     void uniform( int tid, ncomp_t num, double* r ) const {
@@ -69,12 +73,11 @@ class MKLRNG {
                     m_stream[ static_cast<std::size_t>(tid) ],
                     static_cast< long long >( num ),
                     r,
-                    0.0,
-                    1.0 );
+                    0.0, 1.0 );
     }
 
     //! Gaussian RNG: Generate Gaussian random numbers
-    //! \param[in] tid Thread (or rather) stream ID
+    //! \param[in] tid Thread (or more precisely stream) ID
     //! \param[in] num Number of RNGs to generate
     //! \param[inout] r Pointer to memory to write the RNGs to
     void gaussian( int tid, ncomp_t num, double* r ) const {
@@ -82,8 +85,21 @@ class MKLRNG {
                      m_stream[ static_cast<std::size_t>(tid) ],
                      static_cast< long long >( num ),
                      r,
-                     0.0,
-                     1.0 );
+                     0.0, 1.0 );
+    }
+
+    //! Beta RNG: Generate beta random numbers
+    //! \param[in] tid Thread (or more precisely stream) ID
+    //! \param[in] num Number of RNGs to generate
+    //! \param[inout] r Pointer to memory to write the RNGs to
+    void beta( int tid, ncomp_t num, double p, double q, double a, double b,
+               double* r ) const
+    {
+      vdRngBeta( m_beta_method,
+                 m_stream[ static_cast<std::size_t>(tid) ],
+                 static_cast< long long >( num ),
+                 r,
+                 p, q, a, b );
     }
 
     //! Copy assignment
@@ -92,6 +108,7 @@ class MKLRNG {
       m_seed = x.m_seed;
       m_uniform_method = x.m_uniform_method;
       m_gaussian_method = x.m_gaussian_method;
+      m_beta_method = x.m_beta_method;
       m_nthreads = x.m_nthreads;
       m_stream = tk::make_unique< VSLStreamStatePtr[] >(
                    static_cast<std::size_t>(x.m_nthreads) );
@@ -113,6 +130,7 @@ class MKLRNG {
       m_seed = x.m_seed;
       m_uniform_method = x.m_uniform_method;
       m_gaussian_method = x.m_gaussian_method;
+      m_beta_method = x.m_beta_method;
       m_nthreads = x.m_nthreads;
       m_stream = tk::make_unique< VSLStreamStatePtr[] >(
                    static_cast<std::size_t>(x.m_nthreads) );
@@ -125,6 +143,7 @@ class MKLRNG {
       x.m_seed = 0;
       x.m_uniform_method = 0;
       x.m_gaussian_method = 0;
+      x.m_beta_method = 0;
       x.m_nthreads = 0;
       x.m_stream.reset( nullptr );
       return *this;
@@ -136,6 +155,7 @@ class MKLRNG {
       m_seed( 0 ),
       m_uniform_method( 0 ),
       m_gaussian_method( 0 ),
+      m_beta_method( 0 ),
       m_nthreads( 0 ),
       m_stream( nullptr )
     { *this = std::move(x); }
@@ -156,6 +176,7 @@ class MKLRNG {
     unsigned int m_seed;                             //!< Seed
     int m_uniform_method;                            //!< Uniform method to use
     int m_gaussian_method;                           //!< Gaussian method to use
+    int m_beta_method;                               //!< Beta method to use
     int m_nthreads;                                  //!< Number of threads
     std::unique_ptr< VSLStreamStatePtr[] > m_stream; //!< Random number streams
 };
