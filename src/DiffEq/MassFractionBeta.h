@@ -76,9 +76,9 @@ class MassFractionBeta {
 
   public:
     //! \brief Constructor
-    //! \param[in] c Index specifying which system of number-fraction beta SDEs
+    //! \param[in] c Index specifying which system of mass-fraction beta SDEs
     //!   to construct. There can be multiple massfracbeta ... end blocks in a
-    //!   control file. This index specifies which number-fraction beta SDE
+    //!   control file. This index specifies which mass-fraction beta SDE
     //!   system to instantiate. The index corresponds to the order in which the
     //!   massfracbeta ... end blocks are given the control file.
     //! \author J. Bakosi
@@ -110,7 +110,7 @@ class MassFractionBeta {
                          ( g_inputdeck, particles, m_c, m_ncomp, m_offset );
     }
 
-    //! \brief Advance particles according to the system of number-fraction beta
+    //! \brief Advance particles according to the system of mass-fraction beta
     //!    SDEs
     //! \author J. Bakosi
     void advance( tk::ParProps& particles,
@@ -154,22 +154,22 @@ class MassFractionBeta {
     //! Coefficients policy
     Coefficients coeff;
 
-    //! \brief Return density for mole fraction
+    //! \brief Return density for mass fraction
     //! \details Functional wrapper around the dependent variable of the beta
     //!   SDE. This function returns the instantaneous density, rho,
-    //!   based on the number fraction, Y, and parameters rho2 and r'.
-    //! \param[in] Y Instantaneous value of the mole fraction, Y
+    //!   based on the mass fraction, Y, and parameters rho2 and r'.
+    //! \param[in] Y Instantaneous value of the mass fraction, Y
     //! \param[in] i Index specifying which (of multiple) parameters to use
     //! \return Instantaneous value of the density, rho
     tk::real rho( tk::real Y, ncomp_t i ) const {
       return m_rho2[i] / ( 1.0 + m_r[i] * Y );
     }
 
-    //! \brief Return specific volume for mole fraction
+    //! \brief Return specific volume for mass fraction
     //! \details Functional wrapper around the dependent variable of the beta
     //!   SDE. This function returns the instantaneous specific volume, V,
-    //!   based on the number fraction, Y, and parameters rho2 and r'.
-    //! \param[in] Y Instantaneous value of the mole fraction, Y
+    //!   based on the mass fraction, Y, and parameters rho2 and r'.
+    //! \param[in] Y Instantaneous value of the mass fraction, Y
     //! \param[in] i Index specifying which (of multiple) parameters to use
     //! \return Instantaneous value of the specific volume, V
     tk::real vol( tk::real Y, ncomp_t i ) const {

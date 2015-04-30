@@ -53,18 +53,22 @@ Statistics::setupOrdinary( const ctr::OffsetMap& offset,
 //! \author J. Bakosi
 //******************************************************************************
 {
-  for (const auto& product : stat) {
+  for (const auto& product : stat)
     if (ordinary(product)) {
 
       m_instOrd.emplace_back( std::vector< const tk::real* >() );
 
+      int i = 0;
       for (const auto& term : product) {
         auto o = offset.find( term.var );
         Assert( o != end( offset ), "No such depvar" );
         // Put in starting address of instantaneous variable
         m_instOrd.back().push_back( m_particles.cptr( term.field, o->second ) );
-        // Collect all Terms of all estimated statistics in a linear vector
-        m_ordTerm.push_back( term );
+        // Collect all means of estimated statistics in a linear vector; this
+        // will be used to find means for fluctuations. Thus only collect single
+        // terms, i.e., <Y1>, <Y2>, etc., but not <Y1Y2>, etc.
+        if (i==0) m_ordTerm.push_back( term );
+        ++i;
       }
 
       // Increase number of ordinary moments by one
@@ -72,7 +76,6 @@ Statistics::setupOrdinary( const ctr::OffsetMap& offset,
       // Count up orindary moments
       ++m_nord;
     }
-  }
 
   // Put in a zero as the last ordinary moment. This will be used as the center
   // about which central moments are computed. If this is not needed, e.g.,
@@ -98,7 +101,7 @@ Statistics::setupCentral( const ctr::OffsetMap& offset,
 //******************************************************************************
 {
   // Central moments can only be estimated about ordinary moments
-  if (m_nord) {
+  if (m_nord)
     for (const auto& product : stat) {
       if (central(product)) {
 
@@ -112,7 +115,7 @@ Statistics::setupCentral( const ctr::OffsetMap& offset,
           m_instCen.back().push_back( m_particles.cptr(term.field, o->second) );
           // Put in index of center for central, m_nord for ordinary moment
           m_ctr.back().push_back(
-            &m_ordinary[0] + (std::islower(term.var) ? mean(term) : m_nord) );
+           m_ordinary.data() + (std::islower(term.var) ? mean(term) : m_nord) );
         }
 
         // Increase number of central moments by one
@@ -121,10 +124,6 @@ Statistics::setupCentral( const ctr::OffsetMap& offset,
         ++m_ncen;
       }
     }
-
-    // Allocate storage for all required central moments
-    m_central.resize( m_ncen );
-  }
 }
 
 void
@@ -194,7 +193,7 @@ Statistics::setupPDF( const ctr::OffsetMap& offset,
         // of center for central, m_nord for ordinary moment
         const tk::real* iptr = m_particles.cptr( term.field, o->second );
         const tk::real* cptr =
-          &m_ordinary[0] + (std::islower(term.var) ? mean(term) : m_nord);
+          m_ordinary.data() + (std::islower(term.var) ? mean(term) : m_nord);
         if (bs.size() == 1) {
           m_instCenUniPDF.back().push_back( iptr );
           m_ctrUniPDF.back().push_back( cptr );
@@ -226,7 +225,6 @@ Statistics::mean( const tk::ctr::Term& term ) const
       return i;
     }
   }
-
   Throw( std::string("Cannot find mean for variable ") + term );
 }
 

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Wed 08 Apr 2015 09:42:59 PM MDT
+  \date      Fri 17 Apr 2015 08:55:08 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Walker's input deck
   \details   Walker's input deck
@@ -148,7 +148,7 @@ class InputDeck :
                                      #endif
                                      >;
     using keywords5 = boost::mpl::set< kw::constant
-                                     , kw::jrrj
+                                     , kw::decay
                                      , kw::raw
                                      , kw::zero
                                      , kw::elem
@@ -171,9 +171,12 @@ class InputDeck :
     using keywords6 = boost::mpl::set< kw::spike
                                      , kw::sde_bprime
                                      , kw::sde_kappaprime
-                                     , kw::mixbeta
+                                     , kw::mixnumfracbeta
+                                     , kw::mixmassfracbeta
                                      , kw::massfracbeta
                                      , kw::sde_r
+                                     , kw::homdecay
+                                     , kw::mchomdecay
                                      >;
 
     //! \brief Constructor: set all defaults
