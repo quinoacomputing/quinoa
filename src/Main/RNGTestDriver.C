@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTestDriver.C
   \author    J. Bakosi
-  \date      Wed 08 Apr 2015 08:07:53 AM MDT
+  \date      Fri 17 Apr 2015 11:50:23 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Random number generator test suite driver
   \details   Random number generator test suite driver.
@@ -72,7 +72,7 @@ RNGTestDriver::execute() const
 
   m_print.part( "Problem" );
   if ( !g_inputdeck.get< tag::title >().empty() )
-    m_print.section( "Title", g_inputdeck.get< tag::title >() );
+    m_print.title( g_inputdeck.get< tag::title >() );
 
   // Instantiate and run battery
   const auto s = bf.find( g_inputdeck.get< tag::selected, tag::battery >() );

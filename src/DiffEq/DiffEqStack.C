@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/DiffEqStack.C
   \author    J. Bakosi
-  \date      Wed 15 Apr 2015 10:14:11 AM MDT
+  \date      Thu 30 Apr 2015 09:50:06 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Stack of differential equations
   \details   This file defines class DiffEqStack, which implements various
@@ -25,7 +25,8 @@
 #include <Beta.h>
 #include <NumberFractionBeta.h>
 #include <MassFractionBeta.h>
-#include <MixBeta.h>
+#include <MixNumberFractionBeta.h>
+#include <MixMassFractionBeta.h>
 #include <SkewNormal.h>
 #include <Gamma.h>
 #include <Factory.h>
@@ -148,7 +149,7 @@ DiffEqStack::DiffEqStack()
     registerDiffEq< DiagOrnsteinUhlenbeck >
                   ( m_factory, ctr::DiffEqType::DIAG_OU, m_eqTypes ) );
 
-  // Beta SDE
+  // beta SDE
   // Construct vector of vectors for all possible policies for SDE
   using BetaPolicies = mpl::vector< walker::InitPolicies, BetaCoeffPolicies >;
   // Register SDE for all combinations of policies
@@ -156,7 +157,7 @@ DiffEqStack::DiffEqStack()
     registerDiffEq< Beta >
                   ( m_factory, ctr::DiffEqType::BETA, m_eqTypes ) );
 
-  // Number-fraction Beta SDE
+  // Number-fraction beta SDE
   // Construct vector of vectors for all possible policies for SDE
   using NumberFractionBetaPolicies =
     mpl::vector< walker::InitPolicies, NumberFractionBetaCoeffPolicies >;
@@ -165,7 +166,7 @@ DiffEqStack::DiffEqStack()
     registerDiffEq< NumberFractionBeta >
                   ( m_factory, ctr::DiffEqType::NUMFRACBETA, m_eqTypes ) );
 
-  // Mass-fraction Beta SDE
+  // Mass-fraction beta SDE
   // Construct vector of vectors for all possible policies for SDE
   using MassFractionBetaPolicies =
     mpl::vector< walker::InitPolicies, MassFractionBetaCoeffPolicies >;
@@ -174,14 +175,23 @@ DiffEqStack::DiffEqStack()
     registerDiffEq< MassFractionBeta >
                   ( m_factory, ctr::DiffEqType::MASSFRACBETA, m_eqTypes ) );
 
-  // Mix Beta SDE
+  // Mix number-fraction beta SDE
   // Construct vector of vectors for all possible policies for SDE
-  using MixBetaPolicies =
-    mpl::vector< walker::InitPolicies, MixBetaCoeffPolicies >;
+  using MixNumFracBetaPolicies =
+    mpl::vector< walker::InitPolicies, MixNumFracBetaCoeffPolicies >;
   // Register SDE for all combinations of policies
-  mpl::cartesian_product< MixBetaPolicies >(
-    registerDiffEq< MixBeta >
-                  ( m_factory, ctr::DiffEqType::MIXBETA, m_eqTypes ) );
+  mpl::cartesian_product< MixNumFracBetaPolicies >(
+    registerDiffEq< MixNumberFractionBeta >
+                  ( m_factory, ctr::DiffEqType::MIXNUMFRACBETA, m_eqTypes ) );
+
+  // Mix mass-fraction beta SDE
+  // Construct vector of vectors for all possible policies for SDE
+  using MixMassFracBetaPolicies =
+    mpl::vector< walker::InitPolicies, MixMassFracBetaCoeffPolicies >;
+  // Register SDE for all combinations of policies
+  mpl::cartesian_product< MixMassFracBetaPolicies >(
+    registerDiffEq< MixMassFractionBeta >
+                  ( m_factory, ctr::DiffEqType::MIXMASSFRACBETA, m_eqTypes ) );
 
   // Skew-normal SDE
   // Construct vector of vectors for all possible policies for SDE
@@ -230,8 +240,10 @@ DiffEqStack::selected() const
       diffeqs.push_back( createDiffEq< tag::numfracbeta >( d, cnt ) );
     else if (d == ctr::DiffEqType::MASSFRACBETA)
       diffeqs.push_back( createDiffEq< tag::massfracbeta >( d, cnt ) );
-    else if (d == ctr::DiffEqType::MIXBETA)
-      diffeqs.push_back( createDiffEq< tag::mixbeta >( d, cnt ) );
+    else if (d == ctr::DiffEqType::MIXNUMFRACBETA)
+      diffeqs.push_back( createDiffEq< tag::mixnumfracbeta >( d, cnt ) );
+    else if (d == ctr::DiffEqType::MIXMASSFRACBETA)
+      diffeqs.push_back( createDiffEq< tag::mixmassfracbeta >( d, cnt ) );
     else if (d == ctr::DiffEqType::SKEWNORMAL)
       diffeqs.push_back( createDiffEq< tag::skewnormal >( d, cnt ) );
     else if (d == ctr::DiffEqType::GAMMA)
@@ -271,8 +283,10 @@ DiffEqStack::info() const
       info.emplace_back( infoNumberFractionBeta( cnt ) );
     else if (d == ctr::DiffEqType::MASSFRACBETA)
       info.emplace_back( infoMassFractionBeta( cnt ) );
-    else if (d == ctr::DiffEqType::MIXBETA)
-      info.emplace_back( infoMixBeta( cnt ) );
+    else if (d == ctr::DiffEqType::MIXNUMFRACBETA)
+      info.emplace_back( infoMixNumFracBeta( cnt ) );
+    else if (d == ctr::DiffEqType::MIXMASSFRACBETA)
+      info.emplace_back( infoMixMassFracBeta( cnt ) );
     else if (d == ctr::DiffEqType::SKEWNORMAL)
       info.emplace_back( infoSkewNormal( cnt ) );
     else if (d == ctr::DiffEqType::GAMMA)
@@ -659,57 +673,127 @@ DiffEqStack::infoMassFractionBeta(
 }
 
 std::vector< std::pair< std::string, std::string > >
-DiffEqStack::infoMixBeta(
+DiffEqStack::infoMixNumFracBeta(
   std::map< ctr::DiffEqType, std::size_t >& cnt ) const
 //******************************************************************************
-//  Return information on the mix beta SDE
+//  Return information on the mix number-fraction beta SDE
 //! \param[inout] cnt std::map of counters for all differential equation types
 //! \return vector of string pairs describing the SDE configuration
 //! \author J. Bakosi
 //******************************************************************************
 {
-  auto c = ++cnt[ ctr::DiffEqType::MIXBETA ];       // count eqs
+  auto c = ++cnt[ ctr::DiffEqType::MIXNUMFRACBETA ];       // count eqs
   --c;  // used to index vectors starting with 0
 
   std::vector< std::pair< std::string, std::string > > info;
 
-  info.emplace_back( ctr::DiffEq().name( ctr::DiffEqType::MIXBETA ), "" );
+  info.emplace_back(
+    ctr::DiffEq().name( ctr::DiffEqType::MIXNUMFRACBETA ), "" );
   info.emplace_back( "kind", "stochastic" );
   info.emplace_back( "dependent variable", std::string( 1,
-    g_inputdeck.get< tag::param, tag::mixbeta, tag::depvar >()[c] ) );
+    g_inputdeck.get< tag::param, tag::mixnumfracbeta, tag::depvar >()[c] ) );
   info.emplace_back( "initialization policy", ctr::InitPolicy().name(
-    g_inputdeck.get< tag::param, tag::mixbeta, tag::initpolicy >()[c] ) );
+    g_inputdeck.get< tag::param, tag::mixnumfracbeta, tag::initpolicy >()[c] ) );
   info.emplace_back( "coefficients policy", ctr::CoeffPolicy().name(
-    g_inputdeck.get< tag::param, tag::mixbeta, tag::coeffpolicy >()[c] ) );
+    g_inputdeck.get< tag::param, tag::mixnumfracbeta, tag::coeffpolicy >()[c] )
+  );
   info.emplace_back( "start offset in particle array", std::to_string(
-    g_inputdeck.get< tag::component >().offset< tag::mixbeta >(c) ) );
-  auto ncomp = g_inputdeck.get< tag::component >().get< tag::mixbeta >()[c] / 3;
+    g_inputdeck.get< tag::component >().offset< tag::mixnumfracbeta >(c) ) );
+  auto ncomp =
+    g_inputdeck.get< tag::component >().get< tag::mixnumfracbeta >()[c] / 3;
   info.emplace_back( "number of components", std::to_string( ncomp ) );
   info.emplace_back( "random number generator", tk::ctr::RNG().name(
-    g_inputdeck.get< tag::param, tag::mixbeta, tag::rng >()[c] ) );
+    g_inputdeck.get< tag::param, tag::mixnumfracbeta, tag::rng >()[c] ) );
   info.emplace_back(
     "coeff b' [" + std::to_string( ncomp ) + "]",
     parameters(
-      g_inputdeck.get< tag::param, tag::mixbeta, tag::bprime >().at(c) )
+      g_inputdeck.get< tag::param, tag::mixnumfracbeta, tag::bprime >().at(c) )
   );
   info.emplace_back(
     "coeff S [" + std::to_string( ncomp ) + "]",
-    parameters( g_inputdeck.get< tag::param, tag::mixbeta, tag::S >().at(c) )
+    parameters(
+      g_inputdeck.get< tag::param, tag::mixnumfracbeta, tag::S >().at(c) )
   );
   info.emplace_back(
     "coeff kappa' [" + std::to_string( ncomp ) + "]",
     parameters(
-      g_inputdeck.get< tag::param, tag::mixbeta, tag::kappaprime >().at(c) ) );
+      g_inputdeck.get< tag::param, tag::mixnumfracbeta, tag::kappaprime >().at(c)
+    )
+  );
   info.emplace_back(
     "coeff rho2 [" + std::to_string( ncomp ) + "]",
     parameters(
-      g_inputdeck.get< tag::param, tag::mixbeta, tag::rho2 >().at(c) ) );
+      g_inputdeck.get< tag::param, tag::mixnumfracbeta, tag::rho2 >().at(c) ) );
   info.emplace_back(
     "coeff rcomma [" + std::to_string( ncomp ) + "]",
     parameters(
-      g_inputdeck.get< tag::param, tag::mixbeta, tag::rcomma >().at(c) ) );
+      g_inputdeck.get< tag::param, tag::mixnumfracbeta, tag::rcomma >().at(c) )
+  );
   spikes( info,
-          g_inputdeck.get< tag::param, tag::mixbeta, tag::spike >().at(c) );
+    g_inputdeck.get< tag::param, tag::mixnumfracbeta, tag::spike >().at(c) );
+
+  return info;
+}
+
+std::vector< std::pair< std::string, std::string > >
+DiffEqStack::infoMixMassFracBeta(
+  std::map< ctr::DiffEqType, std::size_t >& cnt ) const
+//******************************************************************************
+//  Return information on the mix mass-fraction beta SDE
+//! \param[inout] cnt std::map of counters for all differential equation types
+//! \return vector of string pairs describing the SDE configuration
+//! \author J. Bakosi
+//******************************************************************************
+{
+  auto c = ++cnt[ ctr::DiffEqType::MIXMASSFRACBETA ];       // count eqs
+  --c;  // used to index vectors starting with 0
+
+  std::vector< std::pair< std::string, std::string > > info;
+
+  info.emplace_back(
+    ctr::DiffEq().name( ctr::DiffEqType::MIXMASSFRACBETA ), "" );
+  info.emplace_back( "kind", "stochastic" );
+  info.emplace_back( "dependent variable", std::string( 1,
+    g_inputdeck.get< tag::param, tag::mixmassfracbeta, tag::depvar >()[c] ) );
+  info.emplace_back( "initialization policy", ctr::InitPolicy().name(
+    g_inputdeck.get< tag::param, tag::mixmassfracbeta, tag::initpolicy >()[c] )
+  );
+  info.emplace_back( "coefficients policy", ctr::CoeffPolicy().name(
+    g_inputdeck.get< tag::param, tag::mixmassfracbeta, tag::coeffpolicy >()[c] )
+  );
+  info.emplace_back( "start offset in particle array", std::to_string(
+    g_inputdeck.get< tag::component >().offset< tag::mixmassfracbeta >(c) ) );
+  auto ncomp =
+    g_inputdeck.get< tag::component >().get< tag::mixmassfracbeta >()[c] / 4;
+  info.emplace_back( "number of components", std::to_string( ncomp ) );
+  info.emplace_back( "random number generator", tk::ctr::RNG().name(
+    g_inputdeck.get< tag::param, tag::mixmassfracbeta, tag::rng >()[c] ) );
+  info.emplace_back(
+    "coeff b' [" + std::to_string( ncomp ) + "]",
+    parameters(
+      g_inputdeck.get< tag::param, tag::mixmassfracbeta, tag::bprime >().at(c) )
+  );
+  info.emplace_back(
+    "coeff S [" + std::to_string( ncomp ) + "]",
+    parameters(
+      g_inputdeck.get< tag::param, tag::mixmassfracbeta, tag::S >().at(c) )
+  );
+  info.emplace_back(
+    "coeff kappa' [" + std::to_string( ncomp ) + "]",
+    parameters( g_inputdeck.get< tag::param,
+                                 tag::mixmassfracbeta,
+                                 tag::kappaprime >().at(c) ) );
+  info.emplace_back(
+    "coeff rho2 [" + std::to_string( ncomp ) + "]",
+    parameters(
+      g_inputdeck.get< tag::param, tag::mixmassfracbeta, tag::rho2 >().at(c) ) );
+  info.emplace_back(
+    "coeff r [" + std::to_string( ncomp ) + "]",
+    parameters(
+      g_inputdeck.get< tag::param, tag::mixmassfracbeta, tag::r >().at(c) )
+  );
+  spikes( info,
+    g_inputdeck.get< tag::param, tag::mixmassfracbeta, tag::spike >().at(c) );
 
   return info;
 }

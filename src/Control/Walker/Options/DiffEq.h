@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/Options/DiffEq.h
   \author    J. Bakosi
-  \date      Wed 15 Apr 2015 10:05:55 AM MDT
+  \date      Thu 30 Apr 2015 09:40:59 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Differential equation options and associations for walker
   \details   Differential equation options and associations for walker
@@ -31,7 +31,8 @@ enum class DiffEqType : uint8_t { NO_DIFFEQ=0,
                                   BETA,
                                   NUMFRACBETA,
                                   MASSFRACBETA,
-                                  MIXBETA,
+                                  MIXNUMFRACBETA,
+                                  MIXMASSFRACBETA,
                                   DIRICHLET,
                                   GENDIR,
                                   WRIGHTFISHER };
@@ -57,7 +58,8 @@ class DiffEq : public tk::Toggle< DiffEqType > {
                                        , kw::beta
                                        , kw::numfracbeta
                                        , kw::massfracbeta
-                                       , kw::mixbeta
+                                       , kw::mixnumfracbeta
+                                       , kw::mixmassfracbeta
                                        , kw::dirichlet
                                        , kw::gendir
                                        , kw::wrightfisher
@@ -76,7 +78,8 @@ class DiffEq : public tk::Toggle< DiffEqType > {
           { DiffEqType::BETA, kw::beta::name() },
           { DiffEqType::NUMFRACBETA, kw::numfracbeta::name() },
           { DiffEqType::MASSFRACBETA, kw::massfracbeta::name() },
-          { DiffEqType::MIXBETA, kw::mixbeta::name() },
+          { DiffEqType::MIXNUMFRACBETA, kw::mixnumfracbeta::name() },
+          { DiffEqType::MIXMASSFRACBETA, kw::mixmassfracbeta::name() },
           { DiffEqType::DIRICHLET, kw::dirichlet::name() },
           { DiffEqType::GENDIR, kw::gendir::name() },
           { DiffEqType::WRIGHTFISHER, kw::wrightfisher::name() } },
@@ -89,7 +92,8 @@ class DiffEq : public tk::Toggle< DiffEqType > {
           { kw::beta::string(), DiffEqType::BETA },
           { kw::numfracbeta::string(), DiffEqType::NUMFRACBETA },
           { kw::massfracbeta::string(), DiffEqType::MASSFRACBETA },
-          { kw::mixbeta::string(), DiffEqType::MIXBETA },
+          { kw::mixnumfracbeta::string(), DiffEqType::MIXNUMFRACBETA },
+          { kw::mixmassfracbeta::string(), DiffEqType::MIXMASSFRACBETA },
           { kw::dirichlet::string(), DiffEqType::DIRICHLET },
           { kw::gendir::string(), DiffEqType::GENDIR },
           { kw::wrightfisher::string(), DiffEqType::WRIGHTFISHER } } ) {}

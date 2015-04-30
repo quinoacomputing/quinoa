@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/NumberFractionBetaCoeffPolicy.h
   \author    J. Bakosi
-  \date      Wed 15 Apr 2015 10:11:03 AM MDT
+  \date      Thu 30 Apr 2015 09:36:41 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Number-fraction beta SDE coefficients policies
   \details   This file defines coefficients policy classes for the
@@ -100,52 +100,9 @@ class NumberFractionBetaCoeffConst {
     { return ctr::CoeffPolicyType::CONSTANT; }
 };
 
-//! \brief Number-fraction beta SDE JRRJ coefficients policity
-class NumberFractionBetaCoeffJRRJ {
-
-  public:
-    //! Constructor: initialize coefficients
-    NumberFractionBetaCoeffJRRJ(
-      tk::ctr::ncomp_type ncomp,
-      const std::vector< kw::sde_b::info::expect::type >& b_,
-      const std::vector< kw::sde_S::info::expect::type >& S_,
-      const std::vector< kw::sde_kappa::info::expect::type >& k_,
-      const std::vector< kw::sde_rho2::info::expect::type >& rho2_,
-      const std::vector< kw::sde_rcomma::info::expect::type >& rcomma_,
-      std::vector< kw::sde_b::info::expect::type  >& b,
-      std::vector< kw::sde_S::info::expect::type >& S,
-      std::vector< kw::sde_kappa::info::expect::type >& k,
-      std::vector< kw::sde_rho2::info::expect::type >& rho2,
-      std::vector< kw::sde_rcomma::info::expect::type >& rcomma )
-    {
-      ErrChk( b_.size() == ncomp,
-              "Wrong number of number-fraction beta SDE parameters 'b'");
-      ErrChk( S_.size() == ncomp,
-              "Wrong number of number-fraction beta SDE parameters 'S'");
-      ErrChk( k_.size() == ncomp,
-              "Wrong number of number-fraction beta SDE parameters 'k'");
-      ErrChk( rho2_.size() == ncomp,
-              "Wrong number of number-fraction beta SDE parameters 'rho2'");
-      ErrChk( rcomma_.size() == ncomp,
-              "Wrong number of number-fraction beta SDE parameters 'rcomma'");
-
-      b = b_;
-      S = S_;
-      k = k_;
-      rho2 = rho2_;
-      rcomma = rcomma_;
-    }
-
-    //! Coefficients policy type accessor
-    static ctr::CoeffPolicyType type() noexcept
-    { return ctr::CoeffPolicyType::JRRJ; }
-};
-
-//! List of all beta's coefficients policies
+//! List of all number-fraction beta's coefficients policies
 using NumberFractionBetaCoeffPolicies =
-  boost::mpl::vector< NumberFractionBetaCoeffConst
-                    , NumberFractionBetaCoeffJRRJ
-                    >;
+  boost::mpl::vector< NumberFractionBetaCoeffConst >;
 
 } // walker::
 

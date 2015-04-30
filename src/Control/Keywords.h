@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Keywords.h
   \author    J. Bakosi
-  \date      Wed 15 Apr 2015 10:40:09 AM MDT
+  \date      Thu 30 Apr 2015 09:42:08 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Definition of all keywords
   \details   This file contains the definition of all keywords, including those
@@ -1161,31 +1161,70 @@ struct const_info {
     Example: "coeff const", which selects constant coefficients policy,
     which sets constant coefficients before t = 0 and leaves the coefficients
     unchanged during time integration. Note that this option may behave
-    differently depending on the particular equation or physical model. For
-    an example, see walker::DirCoeffPolicies in DiffEq/DirCoeffPolicy.h for
-    valid options.)"; }
+    differently depending on the particular equation or physical model.)"; }
 };
 using constant = keyword< const_info, c,o,n,s,t >;
 
-struct jrrj_info {
-  static std::string name() { return "J"; }
+struct decay_info {
+  static std::string name() { return "D"; }
   static std::string shortDescription() { return
-    "Select JRRJ coefficients policy"; }
+    "Select decay coefficients policy"; }
   static std::string longDescription() { return
-    R"(This keyword is used to select the JRRJ coefficients policy. This policy
-    (or model) is named after Joseph Raymond Ristorcelli Jr., which, at this
-    time, is used to test some of Ray's closure ideas while we are working on
-    a PDF/moment closure for variable-density binary material mixing for
-    turbulent flows based on the beta distribution. A coefficients policy, in
-    general, is used to specify how
+    R"(This keyword is used to select the decay coefficients policy. This policy
+    (or model) is used to constrain a beta stochastic differential equation so
+    that its variance, <y^2>, always decays. A coefficients policy, in general,
+    is used to specify how the coefficients are set at each time step during
+    time-integration. Example: "coeff const", which selects constant
+    coefficients policy, which sets constant coefficients before t = 0 and
+    leaves the coefficients unchanged during time integration. Note that this
+    option may behave differently depending on the particular equation or
+    physical model.)"; }
+};
+using decay = keyword< decay_info, d,e,c,a,y >;
+
+struct homdecay_info {
+  static std::string name() { return "H"; }
+  static std::string shortDescription() { return
+    "Select homogeneous decay coefficients policy"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the homogeneous decay coefficients policy.
+    This policy (or model) is used to constrain a beta stochastic differential
+    equation so that its variance, <y^2>, always decays and its mean, <R> =
+    rho2/(1+r<RY>/<R>), where Y = <Y> + y, does not change in time. Note that
+    R = rho2/(1+rY). This policy is similar to 'mchomdecay', but computes the
+    SDE coefficient S in a different but statistically equivalent way. While
+    'homdecay' only requires the estimation of statistics, <R>, <r^2>, and
+    <r^3>, 'mchomdecay' requires <R^2>, <YR^2>, and <Y(1-Y)R^3>. A coefficients
+    policy, in general, is used to specify how the coefficients are set at each
+    time step during time-integration. Example: "coeff const", which selects
+    constant coefficients policy, which sets constant coefficients before t = 0
+    and leaves the coefficients unchanged during time integration. Note that
+    this option may behave differently depending on the particular equation or
+    physical model.)"; }
+};
+using homdecay = keyword< homdecay_info, h,o,m,d,e,c,a,y >;
+
+struct mchomdecay_info {
+  static std::string name() { return "M"; }
+  static std::string shortDescription() { return
+    "Select Monte Carlo homogeneous decay coefficients policy"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the Monte Carlo homogeneous decay
+    coefficients policy. This policy (or model) is used to constrain a beta
+    stochastic differential equation (SDE) so that its variance, <y^2>, always
+    decays and its mean, <R> = rho2/(1+r<RY>/<R>), where Y = <Y> + y, does not
+    change in time. Note that R = rho2/(1+rY). This policy is similar to
+    'homdecay', but computes the the SDE coefficient S in a different but
+    statistically equivalent way. While 'homdecay' only requires the estimation
+    of statistics, <R>, <r^2>, and <r^3>, 'mchomdecay' requires <R^2>, <YR^2>,
+    and <Y(1-Y)R^3>. A coefficients policy, in general, is used to specify how
     the coefficients are set at each time step during time-integration. Example:
     "coeff const", which selects constant coefficients policy, which sets
     constant coefficients before t = 0 and leaves the coefficients unchanged
     during time integration. Note that this option may behave differently
-    depending on the particular equation or physical model. For an example, see
-    walker::DirCoeffPolicies in DiffEq/DirCoeffPolicy.h for valid options.)"; }
+    depending on the particular equation or physical model.)"; }
 };
-using jrrj = keyword< jrrj_info, j,r,r,j >;
+using mchomdecay = keyword< mchomdecay_info, m,c,h,o,m,d,e,c,a,y >;
 
 struct coeff_info {
   static std::string name() { return "coeffpolicy"; }
@@ -1198,8 +1237,7 @@ struct coeff_info {
     which selects constant coefficients policy, which sets constant
     coefficients before t = 0 and leaves the coefficients unchanged during
     time integration. Note that this option may behave differently depending
-    on the particular equation or physical model. For an example, see
-    walker::DirCoeffPolicies in DiffEq/DirCoeffPolicy.h for valid options.)"; }
+    on the particular equation or physical model.)"; }
   struct expect {
     static std::string description() { return "string"; }
     static std::string choices() {
@@ -1884,26 +1922,31 @@ struct massfracbeta_info {
 };
 using massfracbeta = keyword< massfracbeta_info, m,a,s,s,f,r,a,c,b,e,t,a >;
 
-struct mixbeta_info {
-  static std::string name() { return "Mix beta"; }
+struct mixnumfracbeta_info {
+  static std::string name() { return "Mix number-fraction beta"; }
   static std::string shortDescription() { return
-    "Introduce the mixbeta SDE input block"; }
+    "Introduce the mixnumfracbeta SDE input block"; }
   static std::string longDescription() { return
-    R"(This keyword is used to introduce the mixbeta ... end block, used to
-    specify the configuration of a system of mix beta SDEs, a system of
-    stochastic differential equations (SDEs), in which the usual parameters, b
-    and kappa are specified via functions that constrain the beta SDE to be
-    consistent with the turbulent mixing process. In particular, the SDE is made
-    consistent with the no-mix and fully mixed limits. If X is governed by the
-    beta SDE, but b = Theta * b' and kappa = kappa' * <x^2>, where Theta =
+    R"(This keyword is used to introduce the mixnumfracbeta ... end block, used
+    to specify the configuration of a system of mix number-fraction beta SDEs, a
+    system of stochastic differential equations (SDEs), whose solution is the
+    joint beta distribution and in which the usual beta SDE parameters b and
+    kappa are specified via functions that constrain the beta SDE to be
+    consistent with the turbulent mixing process. The mix number-fraction beta
+    SDE is similar to the number-fraction beta SDE, only the process is made
+    consistent with the no-mix and fully mixed limits via the specification of
+    the SDE coefficients b and kappa. As in the number-fraction beta SDE, X is
+    governed by the beta SDE and two additional stochastic variables are
+    computed. However, in the mix number-fraction beta SDE the parameters b and
+    kappa are given by b = Theta * b' and kappa = kappa' * <x^2>, where Theta =
     1 - <x^2> / [ <X> ( 1 - <X> ], the fluctuation about the mean, <X>, is
     defined as usual: x = X - <X>, and b' and kappa' are user-specified
-    constants. Also, there two additional random variables computed besides, X,
-    and they are rho(X) and V(X), also computed by the number-fraction beta
-    equation. For more detail on the number-fraction beta SDE, see the help on
-    keyword 'numfracbeta'. For more details on the beta SDE, see
+    constants. Similar to the number-fraction beta SDE, there two additional
+    random variables computed besides, X, and they are rho(X) and V(X). For more
+    detail on the number-fraction beta SDE, see the help on keyword
+    'numfracbeta'. For more details on the beta SDE, see
     http://doi.org/10.1080/14685248.2010.510843 and src/DiffEq/Beta.h. Keywords
-    allowed in a mixbeta ... end block: )"
+    allowed in a mixnumfracbeta ... end block: )"
     + std::string("\'")
     + depvar::string()+ "\', \'"
     + ncomp::string() + "\', \'"
@@ -1915,11 +1958,55 @@ struct mixbeta_info {
     + sde_kappaprime::string() + "\', \'"
     + sde_rho2::string() + "\', \'"
     + sde_rcomma::string() + "\'. "
-    + R"(For an example mixbeta ... end block, see
-      doc/html/walker_example_mixbeta.html.)";
+    + R"(For an example mixnumfracbeta ... end block, see
+      doc/html/walker_example_mixnumfracbeta.html.)";
   }
 };
-using mixbeta = keyword< mixbeta_info, m,i,x,b,e,t,a >;
+using mixnumfracbeta =
+  keyword< mixnumfracbeta_info, m,i,x,n,u,m,f,r,a,c,b,e,t,a >;
+
+struct mixmassfracbeta_info {
+  static std::string name() { return "Mix mass-fraction beta"; }
+  static std::string shortDescription() { return
+    "Introduce the mixmassfracbeta SDE input block"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to introduce the mixmassfracbeta ... end block, used
+    to specify the configuration of a system of mix mass-fraction beta SDEs, a
+    system of stochastic differential equations (SDEs), whose solution is the
+    joint beta distribution and in which the usual beta SDE parameters b and
+    kappa are specified via functions that constrain the beta SDE to be
+    consistent with the turbulent mixing process. The mix mass-fraction beta
+    SDE is similar to the mass-fraction beta SDE, only the process is made
+    consistent with the no-mix and fully mixed limits via the specification of
+    the SDE coefficients b and kappa. As in the mass-fraction beta SDE, Y is
+    governed by the beta SDE and two additional stochastic variables are
+    computed. However, in the mix mass-fraction beta SDE the parameters b and
+    kappa are given by b = Theta * b' and kappa = kappa' * <y^2>, where Theta =
+    1 - <y^2> / [ <Y> ( 1 - <Y> ], the fluctuation about the mean, <Y>, is
+    defined as usual: y = Y - <Y>, and b' and kappa' are user-specified
+    constants. Similar to the mass-fraction beta SDE, there two additional
+    random variables computed besides, Y, and they are rho(Y) and V(Y). For more
+    detail on the mass-fraction beta SDE, see the help on keyword
+    'massfracbeta'. For more details on the beta SDE, see
+    http://doi.org/10.1080/14685248.2010.510843 and src/DiffEq/Beta.h. Keywords
+    allowed in a mixmassfracbeta ... end block: )"
+    + std::string("\'")
+    + depvar::string()+ "\', \'"
+    + ncomp::string() + "\', \'"
+    + rng::string() + "\', \'"
+    + init::string() + "\', \'"
+    + coeff::string() + "\', \'"
+    + sde_bprime::string() + "\', \'"
+    + sde_S::string() + "\', \'"
+    + sde_kappaprime::string() + "\', \'"
+    + sde_rho2::string() + "\', \'"
+    + sde_r::string() + "\'. "
+    + R"(For an example mixmassfracbeta ... end block, see
+      doc/html/walker_example_mixmassfracbeta.html.)";
+  }
+};
+using mixmassfracbeta =
+  keyword< mixmassfracbeta_info, m,i,x,m,a,s,s,f,r,a,c,b,e,t,a >;
 
 struct gamma_info {
   static std::string name() { return "Gamma"; }

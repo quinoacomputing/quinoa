@@ -23,7 +23,9 @@ namespace ctr {
 //! Differential equation coefficients policy types
 //! \author J. Bakosi
 enum class CoeffPolicyType : uint8_t { CONSTANT=0
-                                     , JRRJ
+                                     , DECAY
+                                     , HOMOGENEOUS_DECAY
+                                     , MONTE_CARLO_HOMOGENEOUS_DECAY
                                      };
 
 //! Pack/Unpack CoeffPolicyType: forward overload to generic enum class packer
@@ -39,7 +41,8 @@ class CoeffPolicy : public tk::Toggle< CoeffPolicyType > {
     //! Valid expected choices to make them also available at compile-time
     //! \author J. Bakosi
     using keywords = boost::mpl::vector< kw::constant
-                                       , kw::jrrj
+                                       , kw::decay
+                                       , kw::homdecay
                                        >;
 
     //! \brief Options constructor
@@ -52,10 +55,16 @@ class CoeffPolicy : public tk::Toggle< CoeffPolicyType > {
         "Coefficients Policy",
         //! Enums -> names
         { { CoeffPolicyType::CONSTANT, kw::constant::name() },
-          { CoeffPolicyType::JRRJ, kw::jrrj::name() } },
+          { CoeffPolicyType::DECAY, kw::decay::name() },
+          { CoeffPolicyType::HOMOGENEOUS_DECAY, kw::homdecay::name() },
+          { CoeffPolicyType::MONTE_CARLO_HOMOGENEOUS_DECAY,
+            kw::mchomdecay::name() } },
         //! keywords -> Enums
         {  { kw::constant::string(), CoeffPolicyType::CONSTANT },
-           { kw::jrrj::string(), CoeffPolicyType::JRRJ } } ) {}
+           { kw::decay::string(), CoeffPolicyType::DECAY },
+           { kw::homdecay::string(), CoeffPolicyType::HOMOGENEOUS_DECAY },
+           { kw::mchomdecay::string(),
+             CoeffPolicyType::MONTE_CARLO_HOMOGENEOUS_DECAY } } ) {}
 };
 
 } // ctr::

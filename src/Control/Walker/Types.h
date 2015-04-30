@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/Types.h
   \author    J. Bakosi
-  \date      Wed 15 Apr 2015 10:05:39 AM MDT
+  \date      Thu 30 Apr 2015 09:44:55 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Types for Walker's parsers
   \details   Types for Walker's parsers. This file defines the components of the
@@ -243,8 +243,8 @@ using MassFractionBetaParameters = tk::tuple::tagged_tuple<
   tag::coeffpolicy, std::vector< CoeffPolicyType >
 >;
 
-//! Mix beta parameters storage
-using MixBetaParameters = tk::tuple::tagged_tuple<
+//! Mix number-fraction beta parameters storage
+using MixNumberFractionBetaParameters = tk::tuple::tagged_tuple<
   tag::depvar,      std::vector< char >,
   tag::bprime,      std::vector< std::vector<
                       kw::sde_bprime::info::expect::type > >,
@@ -263,23 +263,44 @@ using MixBetaParameters = tk::tuple::tagged_tuple<
   tag::coeffpolicy, std::vector< CoeffPolicyType >
 >;
 
+//! Mix mass-fraction beta parameters storage
+using MixMassFractionBetaParameters = tk::tuple::tagged_tuple<
+  tag::depvar,      std::vector< char >,
+  tag::bprime,      std::vector< std::vector<
+                      kw::sde_bprime::info::expect::type > >,
+  tag::S,           std::vector< std::vector<
+                      kw::sde_S::info::expect::type > >,
+  tag::kappaprime, std::vector< std::vector<
+                      kw::sde_kappaprime::info::expect::type > >,
+  tag::rho2,       std::vector< std::vector<
+                      kw::sde_rho2::info::expect::type > >,
+  tag::r,          std::vector< std::vector<
+                      kw::sde_r::info::expect::type > >,
+  tag::spike,      std::vector< std::vector< std::vector <
+                      kw::spike::info::expect::type > > >,
+  tag::rng,         std::vector< tk::ctr::RNGType >,
+  tag::initpolicy,  std::vector< ctr::InitPolicyType >,
+  tag::coeffpolicy, std::vector< ctr::CoeffPolicyType >
+>;
+
 //! Parameters storage
 using parameters = tk::tuple::tagged_tuple<
   #ifdef HAS_MKL
-  tag::rngmkl,       tk::ctr::RNGMKLParameters,
+  tag::rngmkl,          tk::ctr::RNGMKLParameters,
   #endif
-  tag::rngsse,       tk::ctr::RNGSSEParameters,
-  tag::dirichlet,    DirichletParameters,
-  tag::gendir,       GenDirichletParameters,
-  tag::wrightfisher, WrightFisherParameters,
-  tag::ou,           OrnsteinUhlenbeckParameters,
-  tag::diagou,       DiagOrnsteinUhlenbeckParameters,
-  tag::skewnormal,   SkewNormalParameters,
-  tag::gamma,        GammaParameters,
-  tag::beta,         BetaParameters,
-  tag::numfracbeta,  NumberFractionBetaParameters,
-  tag::massfracbeta, MassFractionBetaParameters,
-  tag::mixbeta,      MixBetaParameters
+  tag::rngsse,          tk::ctr::RNGSSEParameters,
+  tag::dirichlet,       DirichletParameters,
+  tag::gendir,          GenDirichletParameters,
+  tag::wrightfisher,    WrightFisherParameters,
+  tag::ou,              OrnsteinUhlenbeckParameters,
+  tag::diagou,          DiagOrnsteinUhlenbeckParameters,
+  tag::skewnormal,      SkewNormalParameters,
+  tag::gamma,           GammaParameters,
+  tag::beta,            BetaParameters,
+  tag::numfracbeta,     NumberFractionBetaParameters,
+  tag::massfracbeta,    MassFractionBetaParameters,
+  tag::mixnumfracbeta,  MixNumberFractionBetaParameters,
+  tag::mixmassfracbeta, MixMassFractionBetaParameters
 >;
 
 //! PEGTL location type to use throughout Walker's parsers
