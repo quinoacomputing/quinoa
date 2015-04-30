@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/NumberFractionBeta.h
   \author    J. Bakosi
-  \date      Wed 01 Apr 2015 07:45:06 AM MDT
+  \date      Thu 30 Apr 2015 03:01:48 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     System of number-fraction beta SDEs
   \details   This file implements the time integration of a system of stochastic
@@ -101,12 +101,14 @@ class NumberFractionBeta {
              m_b, m_S, m_k, m_rho2, m_rcomma ) {}
 
     //! Initalize SDE, prepare for time integration
+    //! \param[in] stream Thread (or more precisely stream) ID 
     //! \param[inout] particles Array of particle properties 
     //! \author J. Bakosi
-    void initialize( tk::ParProps& particles ) {
+    void initialize( int stream, tk::ParProps& particles ) {
       //! Set initial conditions using initialization policy
-      Init::template init< tag::numfracbeta >
-                         ( g_inputdeck, particles, m_c, m_ncomp, m_offset );
+      Init::template
+        init< tag::numfracbeta >
+            ( g_inputdeck, m_rng, stream, particles, m_c, m_ncomp, m_offset );
     }
 
     //! \brief Advance particles according to the system of number-fraction beta

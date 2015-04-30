@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/DiffEqStack.h
   \author    J. Bakosi
-  \date      Thu 30 Apr 2015 09:39:15 AM MDT
+  \date      Thu 30 Apr 2015 04:07:34 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Stack of differential equations
   \details   This file declares class DiffEqStack, which implements various
@@ -189,6 +189,19 @@ class DiffEqStack {
       for (const auto& s : spike)
         info.emplace_back( "delta spikes [comp" + std::to_string(++i) + ":" +
                              std::to_string( s.size()/2 ) + "]",
+                           parameters( s ) );
+    }
+
+    //! \brief Insert betapdf information (used to specify beta PDFs) into info
+    //!   vector
+    //! \param[inout] info Info vector of string-pairs to insert to
+    //! \param[in] betapdf Vector of vectors specifying betapdf info
+    //! \author J. Bakosi
+    template< typename Info, typename VV >
+    void betapdfs( Info& info, const VV& betapdf ) const {
+      std::size_t i = 0;
+      for (const auto& s : betapdf)
+        info.emplace_back( "beta pds [comp" + std::to_string(++i) + "]",
                            parameters( s ) );
     }
 
