@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/DiffEqStack.C
   \author    J. Bakosi
-  \date      Fri 17 Apr 2015 09:43:00 AM MDT
+  \date      Wed 29 Apr 2015 01:47:36 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Stack of differential equations
   \details   This file defines class DiffEqStack, which implements various
@@ -763,7 +763,7 @@ DiffEqStack::infoMixMassFracBeta(
   info.emplace_back( "start offset in particle array", std::to_string(
     g_inputdeck.get< tag::component >().offset< tag::mixmassfracbeta >(c) ) );
   auto ncomp =
-    g_inputdeck.get< tag::component >().get< tag::mixmassfracbeta >()[c] / 3;
+    g_inputdeck.get< tag::component >().get< tag::mixmassfracbeta >()[c] / 4;
   info.emplace_back( "number of components", std::to_string( ncomp ) );
   info.emplace_back( "random number generator", tk::ctr::RNG().name(
     g_inputdeck.get< tag::param, tag::mixmassfracbeta, tag::rng >()[c] ) );

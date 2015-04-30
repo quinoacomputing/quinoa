@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/MixNumberFractionBetaCoeffPolicy.h
   \author    J. Bakosi
-  \date      Fri 17 Apr 2015 09:45:45 AM MDT
+  \date      Thu 30 Apr 2015 09:32:30 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Mix number-fraction beta SDE coefficients policies
   \details   This file defines coefficients policy classes for the mix
@@ -42,7 +42,7 @@
       policy option. Example:
       \code{.cpp}
         static tk::ctr::CoeffPolicyType type() noexcept {
-          return tk::ctr::CoeffPolicyType::CONSTANT;
+          return tk::ctr::CoeffPolicyType::DECAY;
         }
       \endcode
       which returns the enum value of the option from the underlying option
@@ -79,15 +79,17 @@
 
 namespace walker {
 
-//! \brief Mix number-fraction beta SDE constant coefficients policity: b' and
-//!   kappa' constants in time
-class MixNumFracBetaCoeffConst {
+//! \brief Mix number-fraction beta SDE decay coefficients policity.
+//! \details User-defined parameters b' and kappa' are constants in time and
+//!   ensure decay in the evolution of <x^2>.
+//! \author J. Bakosi
+class MixNumFracBetaCoeffDecay {
 
     using ncomp_t = kw::ncomp::info::expect::type;
 
   public:
     //! Constructor: initialize coefficients
-    MixNumFracBetaCoeffConst(
+    MixNumFracBetaCoeffDecay(
       ncomp_t ncomp,
       const std::vector< kw::sde_bprime::info::expect::type >& bprime_,
       const std::vector< kw::sde_S::info::expect::type >& S_,
@@ -125,7 +127,7 @@ class MixNumFracBetaCoeffConst {
 
     //! Coefficients policy type accessor
     static tk::ctr::CoeffPolicyType type() noexcept
-    { return tk::ctr::CoeffPolicyType::CONSTANT; }
+    { return tk::ctr::CoeffPolicyType::DECAY; }
 
     //! \brief Update coefficients using constant coefficients for b' and kappa'
     //! \details This where the mix number-fraction beta SDE is made consistent
@@ -155,7 +157,7 @@ class MixNumFracBetaCoeffConst {
 
 //! List of all mix numberf-fraction beta's coefficients policies
 using MixNumFracBetaCoeffPolicies =
-  boost::mpl::vector< MixNumFracBetaCoeffConst >;
+  boost::mpl::vector< MixNumFracBetaCoeffDecay >;
 
 } // walker::
 
