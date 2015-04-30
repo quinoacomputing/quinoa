@@ -135,13 +135,23 @@ class WalkerPrint : public tk::RNGPrint {
         raw( m_item_indent + "Legend: equation name : supported policies\n" );
         raw( '\n' );
         raw( m_item_indent + "Policy codes:\n" +
-             m_item_indent + " * i: initialization policy: "
-                           + kw::raw::info::name() + "-raw, "
-                           + kw::zero::info::name() + "-zero, "
-                           + kw::delta::info::name() + "-delta\n" +
-             m_item_indent + " * c: coefficients policy: "
-                           + kw::constant::info::name() + "-const, "
-                           + kw::jrrj::info::name() + "-jrrj\n\n" );
+             m_item_indent + " * i: initialization policy:\n" +
+             m_item_indent + "   " +
+               kw::raw::info::name() + " - raw\n" +
+             m_item_indent + "   " +
+               kw::zero::info::name() + " - zero\n" +
+             m_item_indent + "   " +
+               kw::delta::info::name() + " - delta\n" +
+             m_item_indent + " * c: coefficients policy:\n" +
+             m_item_indent + "   " +
+               kw::constant::info::name() + " - const\n" +
+             m_item_indent + "   " +
+               kw::decay::info::name() + " - decay\n" +
+             m_item_indent + "   " +
+               kw::homdecay::info::name() + " - homogeneous decay\n" +
+             m_item_indent + "   " +
+               kw::mchomdecay::info::name() +
+               " - Monte Carlo homogeneous decay\n\n" );
         // extract eqname and supported policies
         const auto ip = tk::ctr::InitPolicy();
         const auto cp = tk::ctr::CoeffPolicy();

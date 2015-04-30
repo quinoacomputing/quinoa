@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/MixMassFractionBeta.h
   \author    J. Bakosi
-  \date      Fri 17 Apr 2015 09:48:11 AM MDT
+  \date      Thu 23 Apr 2015 02:30:54 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     System of mix mass-fraction beta SDEs
   \details   This file implements the time integration of a system of stochastic
@@ -102,7 +102,7 @@ class MixMassFractionBeta {
         g_inputdeck.get< tag::param, tag::mixmassfracbeta, tag::depvar >().at(c)
       ),
       m_ncomp(
-        g_inputdeck.get< tag::component >().get< tag::mixmassfracbeta >().at(c)/3
+        g_inputdeck.get< tag::component >().get< tag::mixmassfracbeta >().at(c)/4
       ),
       m_offset(
         g_inputdeck.get< tag::component >().offset< tag::mixmassfracbeta >(c) ),
@@ -136,7 +136,8 @@ class MixMassFractionBeta {
                   const std::map< tk::ctr::Product, tk::real >& moments )
     {
       // Update SDE coefficients
-      coeff.update( m_depvar, m_ncomp, moments, m_bprime, m_kprime, m_b, m_k );
+      coeff.update( m_depvar, m_ncomp, moments, m_bprime, m_kprime, m_rho2, m_r,
+                    m_b, m_k, m_S );
       // Advance particles
       const auto npar = particles.npar();
       for (auto p=decltype(npar){0}; p<npar; ++p) {
@@ -152,6 +153,7 @@ class MixMassFractionBeta {
           // Compute instantaneous values derived from updated Y
           particles( p, m_ncomp+i, m_offset ) = rho( Y, i );
           particles( p, m_ncomp*2+i, m_offset ) = vol( Y, i );
+          particles( p, m_ncomp*3+i, m_offset ) = 1.0 - Y;
         }
       }
     }

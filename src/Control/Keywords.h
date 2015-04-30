@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Keywords.h
   \author    J. Bakosi
-  \date      Fri 17 Apr 2015 09:43:37 AM MDT
+  \date      Thu 30 Apr 2015 09:02:20 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Definition of all keywords
   \details   This file contains the definition of all keywords, including those
@@ -1162,31 +1162,70 @@ struct const_info {
     Example: "coeff const", which selects constant coefficients policy,
     which sets constant coefficients before t = 0 and leaves the coefficients
     unchanged during time integration. Note that this option may behave
-    differently depending on the particular equation or physical model. For
-    an example, see walker::DirCoeffPolicies in DiffEq/DirCoeffPolicy.h for
-    valid options.)"; }
+    differently depending on the particular equation or physical model.)"; }
 };
 using constant = keyword< const_info, c,o,n,s,t >;
 
-struct jrrj_info {
-  static std::string name() { return "J"; }
+struct decay_info {
+  static std::string name() { return "D"; }
   static std::string shortDescription() { return
-    "Select JRRJ coefficients policy"; }
+    "Select decay coefficients policy"; }
   static std::string longDescription() { return
-    R"(This keyword is used to select the JRRJ coefficients policy. This policy
-    (or model) is named after Joseph Raymond Ristorcelli Jr., which, at this
-    time, is used to test some of Ray's closure ideas while we are working on
-    a PDF/moment closure for variable-density binary material mixing for
-    turbulent flows based on the beta distribution. A coefficients policy, in
-    general, is used to specify how
+    R"(This keyword is used to select the decay coefficients policy. This policy
+    (or model) is used to constrain a beta stochastic differential equation so
+    that its variance, <y^2>, always decays. A coefficients policy, in general,
+    is used to specify how the coefficients are set at each time step during
+    time-integration. Example: "coeff const", which selects constant
+    coefficients policy, which sets constant coefficients before t = 0 and
+    leaves the coefficients unchanged during time integration. Note that this
+    option may behave differently depending on the particular equation or
+    physical model.)"; }
+};
+using decay = keyword< decay_info, d,e,c,a,y >;
+
+struct homdecay_info {
+  static std::string name() { return "H"; }
+  static std::string shortDescription() { return
+    "Select homogeneous decay coefficients policy"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the homogeneous decay coefficients policy.
+    This policy (or model) is used to constrain a beta stochastic differential
+    equation so that its variance, <y^2>, always decays and its mean, <R> =
+    rho2/(1+r<RY>/<R>), where Y = <Y> + y, does not change in time. Note that
+    R = rho2/(1+rY). This policy is similar to 'mchomdecay', but computes the
+    SDE coefficient S in a different but statistically equivalent way. While
+    'homdecay' only requires the estimation of statistics, <R>, <r^2>, and
+    <r^3>, 'mchomdecay' requires <R^2>, <YR^2>, and <Y(1-Y)R^3>. A coefficients
+    policy, in general, is used to specify how the coefficients are set at each
+    time step during time-integration. Example: "coeff const", which selects
+    constant coefficients policy, which sets constant coefficients before t = 0
+    and leaves the coefficients unchanged during time integration. Note that
+    this option may behave differently depending on the particular equation or
+    physical model.)"; }
+};
+using homdecay = keyword< homdecay_info, h,o,m,d,e,c,a,y >;
+
+struct mchomdecay_info {
+  static std::string name() { return "M"; }
+  static std::string shortDescription() { return
+    "Select Monte Carlo homogeneous decay coefficients policy"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the Monte Carlo homogeneous decay
+    coefficients policy. This policy (or model) is used to constrain a beta
+    stochastic differential equation (SDE) so that its variance, <y^2>, always
+    decays and its mean, <R> = rho2/(1+r<RY>/<R>), where Y = <Y> + y, does not
+    change in time. Note that R = rho2/(1+rY). This policy is similar to
+    'homdecay', but computes the the SDE coefficient S in a different but
+    statistically equivalent way. While 'homdecay' only requires the estimation
+    of statistics, <R>, <r^2>, and <r^3>, 'mchomdecay' requires <R^2>, <YR^2>,
+    and <Y(1-Y)R^3>. A coefficients policy, in general, is used to specify how
     the coefficients are set at each time step during time-integration. Example:
     "coeff const", which selects constant coefficients policy, which sets
     constant coefficients before t = 0 and leaves the coefficients unchanged
     during time integration. Note that this option may behave differently
-    depending on the particular equation or physical model. For an example, see
-    walker::DirCoeffPolicies in DiffEq/DirCoeffPolicy.h for valid options.)"; }
+    depending on the particular equation or physical model.)"; }
 };
-using jrrj = keyword< jrrj_info, j,r,r,j >;
+using mchomdecay = keyword< mchomdecay_info, m,c,h,o,m,d,e,c,a,y >;
 
 struct coeff_info {
   static std::string name() { return "coeffpolicy"; }
@@ -1199,8 +1238,7 @@ struct coeff_info {
     which selects constant coefficients policy, which sets constant
     coefficients before t = 0 and leaves the coefficients unchanged during
     time integration. Note that this option may behave differently depending
-    on the particular equation or physical model. For an example, see
-    walker::DirCoeffPolicies in DiffEq/DirCoeffPolicy.h for valid options.)"; }
+    on the particular equation or physical model.)"; }
   struct expect {
     static std::string description() { return "string"; }
     static std::string choices() {

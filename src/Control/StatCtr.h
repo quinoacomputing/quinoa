@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/StatCtr.h
   \author    J. Bakosi
-  \date      Thu 19 Mar 2015 11:49:54 AM MDT
+  \date      Thu 23 Apr 2015 03:29:46 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Types and associated functions to deal with moments and PDFs
   \details   Types and associated functions to deal with statistical moments and
@@ -70,14 +70,14 @@ struct Term {
   //! \return Boolean indicating if term equals 'this'
   //! \author J. Bakosi
   bool operator== ( const Term& term ) const {
-    if (var == term.var && field == term.field && moment == term.moment )
+    if (var == term.var && field == term.field && moment == term.moment)
       return true;
     else
       return false;
   }
 
   //! \brief Less-than operator for ordering, used by, e.g., std::sort().
-  //! \details Test on field, var, and moment.
+  //! \details Test on var, field, and moment.
   //! \param[in] term Term to compare
   //! \return Boolean indicating if term is less than 'this'
   //! \author J. Bakosi
@@ -143,6 +143,23 @@ static std::ostream& operator<< ( std::ostream& os, const Term& term ) {
 //! \<y1y2y3\> = \<(Y1-\<Y1\>)(Y2-\<Y2\>)(Y3-\<Y3\>)\>.
 //! \author J. Bakosi
 using Product = std::vector< Term >;
+
+//! \brief Operator + for adding products (var+field) to a std::string
+//! \param[in] lhs std::string to add to
+//! \param[in] product Product to add
+//! \return Updated std::string
+//! \author J. Bakosi
+static std::string operator+ ( const std::string& lhs, const Product& p ) {
+  std::stringstream ss;
+  ss << lhs;
+  if (!p.empty()) {
+    ss << "<";
+    for (const auto& w : p) ss << w;
+    ss << ">";
+  }
+  std::string rhs = ss.str();
+  return rhs;
+}
 
 //! \brief Operator << for writing products to output streams
 //! \param[inout] os Output stream to write to
@@ -317,7 +334,7 @@ lookup( const Product& p, const std::map< Product, tk::real >& moments ) {
   if (it != end(moments))
     return it->second;
   else
-    Throw( "Cannot find moment in moments map" );
+    Throw( "Cannot find moment " + p + " in moments map" );
 }
 
 //! Construct mean
@@ -328,7 +345,7 @@ lookup( const Product& p, const std::map< Product, tk::real >& moments ) {
 //! \author J. Bakosi
 static inline Product
 mean( char var, kw::ncomp::info::expect::type c ) {
-  tk::ctr::Term m( static_cast<char>(toupper(var)), c, Moment::ORDINARY );
+  tk::ctr::Term m( static_cast<char>(std::toupper(var)), c, Moment::ORDINARY );
   return tk::ctr::Product( { m } );
 }
 //! Construct variance
@@ -339,7 +356,30 @@ mean( char var, kw::ncomp::info::expect::type c ) {
 //! \author J. Bakosi
 static inline Product
 variance( char var, kw::ncomp::info::expect::type c ) {
-  tk::ctr::Term f( static_cast<char>(tolower(var)), c, Moment::CENTRAL );
+  tk::ctr::Term f( static_cast<char>(std::tolower(var)), c, Moment::CENTRAL );
+  return tk::ctr::Product( { f, f } );
+}
+//! Construct third central moment
+//! \param[in] var Variable
+//! \param[in] c Component number
+//! \return Constructed vector< Term > identifying the third central moment
+//!   of field (component) c of variable var
+//! \author J. Bakosi
+static inline Product
+cen3( char var, kw::ncomp::info::expect::type c ) {
+  tk::ctr::Term f( static_cast<char>(std::tolower(var)), c, Moment::CENTRAL );
+  return tk::ctr::Product( { f, f, f } );
+}
+
+//! Construct second ordinary moment
+//! \param[in] var Variable
+//! \param[in] c Component number
+//! \return Constructed vector< Term > identifying the second ordinary moment
+//!   of field (component) c of variable var
+//! \author J. Bakosi
+static inline Product
+ord2( char var, kw::ncomp::info::expect::type c ) {
+  tk::ctr::Term f( static_cast<char>(std::toupper(var)), c, Moment::ORDINARY );
   return tk::ctr::Product( { f, f } );
 }
 
