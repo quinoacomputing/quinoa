@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGParam.h
   \author    J. Bakosi
-  \date      Wed 14 Jan 2015 01:40:28 PM MST
+  \date      Thu 30 Apr 2015 12:28:28 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Types for storing parameters of random number generators
   \details   Types for storing parameters of random number generators.
@@ -19,6 +19,7 @@
 #ifdef HAS_MKL
 #include <Options/MKLUniformMethod.h>
 #include <Options/MKLGaussianMethod.h>
+#include <Options/MKLBetaMethod.h>
 #endif
 
 namespace tk {
@@ -37,7 +38,8 @@ using RNGSSEParameters = std::map< RNGType, RNGSSEParam >;
 using RNGMKLParam = tk::tuple::tagged_tuple<
   tag::seed,            kw::seed::info::expect::type, //!< seed
   tag::uniform_method,  MKLUniformMethodType,         //!< uniform method type
-  tag::gaussian_method, MKLGaussianMethodType         //!< Gaussian method type
+  tag::gaussian_method, MKLGaussianMethodType,        //!< Gaussian method type
+  tag::beta_method,     MKLBetaMethodType             //!< beta method type
 >;
 //! MKL RNG parameters bundle associating RNG types and their parameters
 using RNGMKLParameters = std::map< RNGType, RNGMKLParam >;
