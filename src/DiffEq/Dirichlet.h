@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/Dirichlet.h
   \author    J. Bakosi
-  \date      Thu 19 Mar 2015 11:29:18 AM MDT
+  \date      Thu 30 Apr 2015 02:59:21 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Dirichlet SDE
   \details   This file implements the time integration of a system of stochastic
@@ -78,12 +78,14 @@ class Dirichlet {
              m_b, m_S, m_k ) {}
 
     //! Initalize SDE, prepare for time integration
+    //! \param[in] stream Thread (or more precisely stream) ID 
     //! \param[inout] particles Array of particle properties 
     //! \author J. Bakosi
-    void initialize( tk::ParProps& particles ) {
+    void initialize( int stream, tk::ParProps& particles ) {
       //! Set initial conditions using initialization policy
-      Init::template init< tag::dirichlet >
-                         ( g_inputdeck, particles, m_c, m_ncomp, m_offset );
+      Init::template
+        init< tag::dirichlet >
+            ( g_inputdeck, m_rng, stream, particles, m_c, m_ncomp, m_offset );
     }
 
     //! \brief Advance particles according to the Dirichlet SDE

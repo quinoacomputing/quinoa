@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/RNGSSE.h
   \author    J. Bakosi
-  \date      Thu 19 Mar 2015 11:51:17 AM MDT
+  \date      Thu 30 Apr 2015 04:01:01 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Interface to RNGSSE random number generators
   \details   Interface to RNGSSE random number generators
@@ -61,7 +61,7 @@ class RNGSSE {
     }
 
     //! Gaussian RNG: Generate Gaussian random numbers
-    //! \param[in] tid Thread (or rather) stream ID
+    //! \param[in] tid Thread (or more precisely stream) ID
     //! \param[in] num Number of RNGs to generate
     //! \param[inout] r Pointer to memory to write the RNGs to
     // TODO: not yet implemented
@@ -69,6 +69,23 @@ class RNGSSE {
       Throw( "RNGSSE::gaussian undefined" );
       IGNORE(tid);
       IGNORE(num);
+      IGNORE(r);
+    }
+
+    //! Beta RNG: Generate beta random numbers
+    //! \param[in] tid Thread (or more precisely stream) ID
+    //! \param[in] num Number of RNGs to generate
+    //! \param[inout] r Pointer to memory to write the RNGs to
+    // TODO: not yet implemented
+    void beta( int tid, ncomp_t num, double p, double q, double a, double b,
+               double* r ) const {
+      Throw( "RNGSSE::beta undefined" );
+      IGNORE(tid);
+      IGNORE(num);
+      IGNORE(p);
+      IGNORE(q);
+      IGNORE(a);
+      IGNORE(b);
       IGNORE(r);
     }
 

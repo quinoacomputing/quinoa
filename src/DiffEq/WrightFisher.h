@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/WrightFisher.h
   \author    J. Bakosi
-  \date      Thu 19 Mar 2015 11:30:45 AM MDT
+  \date      Thu 30 Apr 2015 03:02:44 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Wright-Fisher SDE
   \details   This file implements the time integration of a system of stochastic
@@ -82,12 +82,14 @@ class WrightFisher {
              "in code for details." );
     }
     //! Initalize SDE, prepare for time integration
+    //! \param[in] stream Thread (or more precisely stream) ID 
     //! \param[inout] particles Array of particle properties 
     //! \author J. Bakosi
-    void initialize( tk::ParProps& particles ) {
+    void initialize( int stream, tk::ParProps& particles ) {
       //! Set initial conditions using initialization policy
-      //Init::template init< tag::wrightfisher >
-      //                   ( g_inputdeck, particles, m_c, m_ncomp, m_offset );
+      //Init::template
+      //  init< tag::wrightfisher >
+      //      ( g_inputdeck, m_rng, stream, particles, m_c, m_ncomp, m_offset );
 
       const auto npar = particles.npar();
       for (auto p=decltype(npar){0}; p<npar; ++p) {

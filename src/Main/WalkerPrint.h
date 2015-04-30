@@ -141,7 +141,9 @@ class WalkerPrint : public tk::RNGPrint {
              m_item_indent + "   " +
                kw::zero::info::name() + " - zero\n" +
              m_item_indent + "   " +
-               kw::delta::info::name() + " - delta\n" +
+               kw::jointdelta::info::name() + " - delta\n" +
+             m_item_indent + "   " +
+               kw::jointbeta::info::name() + " - beta\n" +
              m_item_indent + " * c: coefficients policy:\n" +
              m_item_indent + "   " +
                kw::constant::info::name() + " - const\n" +

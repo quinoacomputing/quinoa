@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Grammar.h
   \author    J. Bakosi
-  \date      Wed 08 Apr 2015 09:41:33 PM MDT
+  \date      Thu 30 Apr 2015 02:31:05 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Generic, low-level grammar
   \details   Generic, low-level grammar. We use the [Parsing Expression Grammar
@@ -89,7 +89,9 @@ namespace grm {
     NOTERMS,            //!< Statistic need a variable
     ODDSPIKES,          //!< Incomplete spikes block
     HEIGHTSPIKES,       //!< Height-sum of spikes does not add up to unity
-    NODELTA,            //!< No delta...end block when initpolicy = delta
+    NODELTA,            //!< No icdelta...end block when initpolicy = jointdelta
+    NOBETA,             //!< No icbeta...end block when initpolicy = jointbeta
+    WRONGBETAPDF,       //!< Wrong number of parameters configuring a beta pdf
     NONCOMP,            //!< No number of components selected
     NORNG,              //!< No RNG selected
     NOSAMPLES,          //!< PDF need a variable
@@ -156,17 +158,26 @@ namespace grm {
     { MsgKey::NOCOEFF, "No coefficients policy has been specified within the "
       "block preceding this position. This is mandatory for the preceding "
       "block. Use the keyword 'coeff' to specify an coefficients policy." },
-    { MsgKey::NODELTA, "No delta...end block with at least a single "
+    { MsgKey::NODELTA, "No icdelta...end block with at least a single "
       "spike...end block has been specified within the block preceding this "
-      "position. This is mandatory for the preceding block if delta initpolicy "
-      "is selected. Pick an initpolicy different than delta (using keyword "
-      "'init') or specify at least a single spike...end block (within a "
-      "delta...end block)." },
+      "position. This is mandatory for the preceding block if the joint delta "
+      "initpolicy is selected. Pick an initpolicy different than jointdelta "
+      "(using keyword 'init') or specify at least a single spike...end block "
+      "(within an icdelta...end block)." },
+    { MsgKey::NOBETA, "No beta...end block with at least a single "
+      "betapdf...end block has been specified within the block preceding this "
+      "position. This is mandatory for the preceding block if jointbeta "
+      "initpolicy is selected. Pick an initpolicy different than jointbeta "
+      "(using keyword 'init') or specify at least a single betapdf...end block "
+      "(within a icbeta...end block)." },
     { MsgKey::ODDSPIKES, "Incomplete spike...end block has been specified "
       "within the  block preceding this position. A spike...end block "
       "must contain an even number of real numbers, where every odd one is the "
       "sample space position of a spike followed by the spike height "
       "specifying the relative probability of the spike." },
+    { MsgKey::WRONGBETAPDF, "Wrong number of beta distribution parameters. A "
+      "beta distribution must be configured by exactly four real numbers in a "
+      "betapdf...end block." },
     { MsgKey::NOTERMS, "Statistic requires at least one variable." },
     { MsgKey::NOSAMPLES, "PDF requires at least one sample space variable." },
     { MsgKey::INVALIDSAMPLESPACE, "PDF sample space specification incorrect. A "
@@ -790,12 +801,11 @@ namespace grm {
     static void apply( const std::string& value, Stack& stack ) {
       const auto& spike =
         stack.template get< tag::param, eq, param >().back().back();
-      // Warn on empty spikes...end block
       // Error out if the number of spikes-vector is odd
       if (spike.size() % 2)
         Message< Stack, ERROR, MsgKey::ODDSPIKES >( stack, value );
       // Error out if the sum of spike heights does not add up to unity, but
-      // only if there the spike block is not empty (an empty spike..end block
+      // only if the spike block is not empty (an empty spike..end block
       // is okay and is used to specify no delta spikes for a dependent
       // variable).
       if (!spike.empty()) {
@@ -805,6 +815,23 @@ namespace grm {
         if (std::abs(sum-1.0) > std::numeric_limits< tk::real >::epsilon())
           Message< Stack, ERROR, MsgKey::HEIGHTSPIKES >( stack, value );
       }
+    }
+  };
+
+  //! \brief Check if the betapdf parameter vector specifications are correct
+  //! \details Betapdf vectors are used to configure univariate beta
+  //!   distributions.
+  //! \author J. Bakosi
+  template< class Stack, class eq, class param >
+  struct check_betapdfs :
+    pegtl::action_base< check_betapdfs< Stack, eq, param > >
+  {
+    static void apply( const std::string& value, Stack& stack ) {
+      const auto& betapdf =
+        stack.template get< tag::param, eq, param >().back().back();
+      // Error out if the number parameters is not four
+      if (betapdf.size() != 4)
+        Message< Stack, ERROR, MsgKey::WRONGBETAPDF >( stack, value );
     }
   };
 
@@ -1367,7 +1394,7 @@ namespace grm {
   //!   functor used to do error checking on the value parsed. Arguments 'eq'
   //!   and 'param' denote two levels of the hierarchy relative to tag::param,
   //!   at which the parameter vector lives. Example client-code: see
-  //!   walker::deck::beta, or walker::deck::delta.
+  //!   walker::deck::icbeta, or walker::deck::icdelta.
   //! \author J. Bakosi
   template< class Stack,
             template< class > class use,

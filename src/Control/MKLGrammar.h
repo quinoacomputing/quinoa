@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/MKLGrammar.h
   \author    J. Bakosi
-  \date      Tue 13 Jan 2015 12:35:04 PM MST
+  \date      Thu 30 Apr 2015 01:35:49 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Intel MKL-related grammar
   \details   This file defines Intel Math Kernel Library related grammar,
@@ -68,6 +68,17 @@ namespace mkl {
                           tag::gaussian_method,
                           sel, vec, tags... > {};
 
+  //! \brief Match and set MKL beta method algorithm
+  //! \author J. Bakosi
+  template< typename Stack, template< class > class use, typename sel,
+            typename vec, typename... tags >
+  struct beta_method :
+         grm::rng_option< Stack, use,
+                          use< kw::beta_method >,
+                          ctr::MKLBetaMethod,
+                          tag::beta_method,
+                          sel, vec, tags... > {};
+
   //! \brief Match MKL RNGs in an rngs ... end block
   //! \see walker::deck::rngs
   //! \author J. Bakosi
@@ -84,7 +95,8 @@ namespace mkl {
                            kw::end,
                            seed< Stack, use, sel, vec, tags... >,
                            uniform_method< Stack, use, sel, vec, tags... >,
-                           gaussian_method< Stack, use, sel, vec, tags... > > >
+                           gaussian_method< Stack, use, sel, vec, tags... >,
+                           beta_method< Stack, use, sel, vec, tags... > > >
   {};
 
 } // mkl::
