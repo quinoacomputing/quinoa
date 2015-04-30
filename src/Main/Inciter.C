@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Inciter.C
   \author    J. Bakosi
-  \date      Thu 16 Apr 2015 05:34:43 AM MDT
+  \date      Thu 30 Apr 2015 11:38:12 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Inciter, computational shock hydrodynamics tool, Charm++ main
     chare.
@@ -444,14 +444,10 @@ comMaps( const tk::UnsMesh& graph,
             "number) of work units." );
 
     std::size_t c = 0;
-    for (const auto& e : comm) {
+    for (const auto& e : comm)
       Assert( e.first == c++,
               "Export/import maps should not be missing for chare id " +
               std::to_string(c-1) );
-      for (const auto& x : e.second)
-        Assert( x.first >= 0,
-                "Export/import map recv/send chare ids must be non-negative" );
-    }
 
     // Move ownership and global id arrays to global scope for Charm++ chares
     g_chare = std::move( chare );
