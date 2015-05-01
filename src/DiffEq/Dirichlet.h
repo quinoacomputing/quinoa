@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/Dirichlet.h
   \author    J. Bakosi
-  \date      Thu 30 Apr 2015 02:59:21 PM MDT
+  \date      Thu 30 Apr 2015 10:17:18 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Dirichlet SDE
   \details   This file implements the time integration of a system of stochastic
@@ -89,6 +89,10 @@ class Dirichlet {
     }
 
     //! \brief Advance particles according to the Dirichlet SDE
+    //! \param[inout] particles Array of particle properties
+    //! \param[in] stream Thread (or more precisely stream) ID
+    //! \param[in] dt Time step size
+    //! \param[in] moments Map of statistical moments
     //! \author J. Bakosi
     void advance( tk::ParProps& particles,
                   int stream,
