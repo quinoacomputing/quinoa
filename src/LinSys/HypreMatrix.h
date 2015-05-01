@@ -58,9 +58,14 @@ class HypreMatrix {
     }
 
     //! Assemble matrix
-    void assemble() {
-      HYPRE_IJMatrixAssemble( m_A );
-    }
+    void assemble() { HYPRE_IJMatrixAssemble( m_A ); }
+
+    //! Print out matrix to file (for debugging)
+    //! \param[in] filename Base file name
+    //! \details The files names will be <filename>.XXXXX, where XXXXX is the
+    //!   processor id.
+    void print( const std::string& filename )
+    { HYPRE_IJMatrixPrint( m_A, filename.c_str() ); }
 
   private:
     HYPRE_IJMatrix m_A;         //!< Hypre IJ matrix
