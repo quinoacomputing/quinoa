@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/DiffEqStack.C
   \author    J. Bakosi
-  \date      Thu 30 Apr 2015 04:07:43 PM MDT
+  \date      Thu 30 Apr 2015 02:40:40 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Stack of differential equations
   \details   This file defines class DiffEqStack, which implements various

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Thu 30 Apr 2015 04:10:15 PM MDT
+  \date      Thu 30 Apr 2015 01:11:09 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Walker's input deck grammar definition
   \details   Walker's input deck grammar definition. We use the [Parsing
@@ -148,7 +148,7 @@ namespace deck {
       const auto& init = stack.get< tag::param, eq, tag::initpolicy >();
       // Error checks for joint delta initpolicy
       if (init.size() == neq.get< eq >() &&
-          init.back() == ctr::InitPolicyType::JOINTDELTA) {
+          init.back() == tk::ctr::InitPolicyType::JOINTDELTA) {
         // Make sure there was an icdelta...end block with at least a single
         // spike...end block
         const auto& spike = stack.template get< tag::param, eq, tag::spike >();
@@ -158,7 +158,7 @@ namespace deck {
       }
       // Error checks for joint beta initpolicy
       if (init.size() == neq.get< eq >() &&
-          init.back() == ctr::InitPolicyType::JOINTBETA) {
+          init.back() == tk::ctr::InitPolicyType::JOINTBETA) {
         // Make sure there was an icbeta...end block with at least a single
         // betapdf...end block
         const auto& betapdf =
