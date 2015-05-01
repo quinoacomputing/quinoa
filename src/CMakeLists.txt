@@ -169,6 +169,8 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")  # gcc-specific settings
 
   # Warn on implicit conversions
   add_compiler_flag("-Wconversion")
+  # Dont' warn on multi-line comments
+  add_compiler_flag("-Wno-comment")
 
   # Suppress the following warnings for Charm++ hostfiles including the
   # Charm-generated .decl.h and .def.h:
