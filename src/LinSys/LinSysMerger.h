@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/LinSysMerger.h
   \author    J. Bakosi
-  \date      Thu 30 Apr 2015 11:47:20 AM MDT
+  \date      Thu 30 Apr 2015 10:54:25 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Linear system merger
   \details   Linear system merger.
@@ -47,11 +47,11 @@ namespace tk {
 template< class HostProxy  >
 class LinSysMerger : public CBase_LinSysMerger< HostProxy > {
 
- // Include Charm++ SDAG code. See http://charm.cs.illinois.edu/manuals/html/
- // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
- LinSysMerger_SDAG_CODE
+  // Include Charm++ SDAG code. See http://charm.cs.illinois.edu/manuals/html/
+  // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
+  LinSysMerger_SDAG_CODE
 
- private:
+  private:
    using Group = CBase_LinSysMerger< HostProxy >;
 
   public:

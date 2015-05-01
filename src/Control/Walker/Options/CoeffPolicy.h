@@ -1,8 +1,8 @@
 //******************************************************************************
 /*!
-  \file      src/Control/Options/CoeffPolicy.h
+  \file      src/Control/Walker/Options/CoeffPolicy.h
   \author    J. Bakosi
-  \date      Wed 15 Apr 2015 10:11:51 AM MDT
+  \date      Thu 30 Apr 2015 10:49:22 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Differential equation coefficients policy options
   \details   Differential equation coefficients policy options
