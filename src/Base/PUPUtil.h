@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/PUPUtil.h
   \author    J. Bakosi
-  \date      Thu 12 Mar 2015 12:03:45 PM MDT
+  \date      Fri 01 May 2015 05:14:44 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Charm++ Pack/UnPack utilities
   \brief     This file contains some extensions to Charm++'s Pack/UnPack
@@ -45,8 +45,7 @@ namespace PUP {
 template< typename E,
           typename std::enable_if< std::is_enum< E >::value, int >::type = 0 >
 inline void pup( PUP::er& p, E& e ) {
-  using underlying_type = typename std::underlying_type< E >::type;
-  underlying_type v = static_cast< underlying_type >( e );
+  auto v = static_cast< typename std::underlying_type< E >::type >( e );
   p | v;
   e = static_cast< E >( v );
 }
