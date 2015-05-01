@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/InitPolicy.h
   \author    J. Bakosi
-  \date      Thu 30 Apr 2015 10:09:31 PM MDT
+  \date      Thu 30 Apr 2015 10:48:15 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Initialization policies
   \details   This file defines initialization policy classes. As opposed to
@@ -18,7 +18,7 @@
         static void init( const InputDeck& deck,
                           const tk::RNG& rng,
                           int stream,
-                          ParProps& particles,
+                          tk::ParProps& particles,
                           tk::ctr::ncomp_type e,
                           tk::ctr::ncomp_type ncomp,
                           tk::ctr::ncomp_type offset );
@@ -53,7 +53,7 @@
 #include <Macro.h>
 #include <Types.h>
 #include <ParticleProperties.h>
-#include <Options/InitPolicy.h>
+#include <Walker/Options/InitPolicy.h>
 #include <RNG.h>
 
 namespace walker {
@@ -66,7 +66,7 @@ struct InitRaw {
   static void init( const InputDeck& deck,
                     const tk::RNG& rng,
                     int stream,
-                    ParProps& particles,
+                    tk::ParProps& particles,
                     tk::ctr::ncomp_type e,
                     tk::ctr::ncomp_type ncomp,
                     tk::ctr::ncomp_type offset ) {}
@@ -83,7 +83,7 @@ struct InitZero {
   static void init( const InputDeck& deck,
                     const tk::RNG& rng,
                     int stream,
-                    ParProps& particles,
+                    tk::ParProps& particles,
                     tk::ctr::ncomp_type e,
                     tk::ctr::ncomp_type ncomp,
                     tk::ctr::ncomp_type offset )
@@ -103,7 +103,7 @@ struct InitDelta {
   static void init( const InputDeck& deck,
                     const tk::RNG& rng,
                     int stream,
-                    ParProps& particles,
+                    tk::ParProps& particles,
                     tk::ctr::ncomp_type e,
                     tk::ctr::ncomp_type ncomp,
                     tk::ctr::ncomp_type offset )
@@ -144,7 +144,7 @@ struct InitBeta {
   static void init( const InputDeck& deck,
                     const tk::RNG& rng,
                     int stream,
-                    ParProps& particles,
+                    tk::ParProps& particles,
                     tk::ctr::ncomp_type e,
                     tk::ctr::ncomp_type ncomp,
                     tk::ctr::ncomp_type offset )
