@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Conductor.C
   \author    J. Bakosi
-  \date      Fri 10 Apr 2015 05:29:47 PM MDT
+  \date      Fri 01 May 2015 05:51:09 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Conductor drives the time integration of the Euler equations
   \details   Conductor drives the time integration of the Euler equations.
@@ -30,7 +30,6 @@ using inciter::Conductor;
 
 Conductor::Conductor() :
   m_print( g_inputdeck.get<tag::cmd,tag::verbose>() ? std::cout : std::clog ),
-  m_count( 0 ),
   m_timer( 1 )  // start timer
 //******************************************************************************
 // Constructor
@@ -50,21 +49,15 @@ Conductor::Conductor() :
 void
 Conductor::init()
 //******************************************************************************
-// Wait for all members of LinSysMerger to create their portion of the linear
-// system distributed across all PEs
+// Reduction target indicating that all members of LinSysMerger have finished
+// their portion of initializing the linear system distributed across all PEs
 //! \author J. Bakosi
 //******************************************************************************
 {
-// Increase number of performers completing initialization
-  ++m_count.get< tag::init >();
-
-  // Wait for all performers completing initialization
-  if (m_count.get< tag::init >() == CkNumPes()) {
-    mainProxy.timestamp(
-      "Initialize Charm++ chare arrays and distributed linear system",
-      m_timer[0].dsec() );
-    mainProxy.finalize();
-  }
+  mainProxy.timestamp(
+    "Initialize Charm++ chare arrays and distributed linear system",
+    m_timer[0].dsec() );
+  mainProxy.finalize();
 }
 
 #if defined(__clang__) || defined(__GNUC__)

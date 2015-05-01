@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/StatCtr.h
   \author    J. Bakosi
-  \date      Thu 30 Apr 2015 11:43:19 AM MDT
+  \date      Fri 01 May 2015 07:30:06 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Types and associated functions to deal with moments and PDFs
   \details   Types and associated functions to deal with statistical moments and
@@ -146,7 +146,7 @@ using Product = std::vector< Term >;
 
 //! \brief Operator + for adding products (var+field) to a std::string
 //! \param[in] lhs std::string to add to
-//! \param[in] product Product to add
+//! \param[in] p Product to add
 //! \return Updated std::string
 //! \author J. Bakosi
 static std::string operator+ ( const std::string& lhs, const Product& p ) {

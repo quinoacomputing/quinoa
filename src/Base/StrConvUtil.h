@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/StrConvUtil.h
   \author    J. Bakosi
-  \date      Thu 19 Mar 2015 11:54:52 AM MDT
+  \date      Fri 01 May 2015 07:28:14 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     String conversion utilities
   \details   Various string conversion utilities.
@@ -29,7 +29,7 @@ operator<< ( std::basic_ostream< Ch, Tr >& os, const T& e ) {
 }
 
 //! Delegate operator << to default for writing non-enums to output streams.
-//! \param[in] os Output stream into which e is written
+//! \param[in] os Output stream into which t is written
 //! \param[in] t  Value of arbitrary non-enum-class type to write to stream
 //! \return Updated output stream for chain-use of the operator
 //! \author J. Bakosi
