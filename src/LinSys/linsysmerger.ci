@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/linsysmerger.ci
   \author    J. Bakosi
-  \date      Wed 29 Apr 2015 12:11:17 PM MDT
+  \date      Fri 01 May 2015 05:53:45 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Charm++ module interface file for merging a linear system
   \details   Charm++ module interface file for merging a linear system
@@ -84,7 +84,7 @@ module linsysmerger {
       entry void wait4asm() {
         when assembled() serial {
           // Signal to host that initialization on this PE has completed
-          m_host.init();
+          contributeTo( m_host );
         }
       };
 

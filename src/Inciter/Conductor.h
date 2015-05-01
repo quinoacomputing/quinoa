@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Conductor.h
   \author    J. Bakosi
-  \date      Wed 29 Apr 2015 11:49:15 AM MDT
+  \date      Fri 01 May 2015 05:50:52 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Conductor drives the time integration of the Euler equations
   \details   Conductor drives the time integration of the Euler equations.
@@ -65,8 +65,10 @@ class Conductor : public CBase_Conductor {
     //! \author J. Bakosi
     void linsysinit() { m_lsmproxy.createLinearSystem(); }
 
-    //! \brief Wait for all members of LinSysMerger to create their portion of
-    //!   the linear system distrubted across all PEs
+    //! \brief Reduction target indicating that all members of LinSysMerger have
+    //!   finished their portion of initializing the linear system distributed
+    //!   across all PEs
+    //! \author J. Bakosi
     void init();
 
   private:
@@ -75,9 +77,6 @@ class Conductor : public CBase_Conductor {
 
     //! Pretty printer
     InciterPrint m_print;
-
-    //! Counters of performer chares completing a function
-    tk::tuple::tagged_tuple< tag::init, int > m_count;
 
     //! Timers
     std::vector< tk::Timer > m_timer;

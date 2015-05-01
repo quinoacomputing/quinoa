@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/LinSysMerger.h
   \author    J. Bakosi
-  \date      Thu 30 Apr 2015 10:54:25 PM MDT
+  \date      Fri 01 May 2015 07:32:40 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Linear system merger
   \details   Linear system merger.
@@ -318,6 +318,48 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy > {
                vals.data() );
       // Activate SDAG trigger signaling that our matrix part has been filled
       filled();
+    }
+
+    //! \brief Contribute to reduction on all branches (PEs) of LinSysMerger to
+    //!   the host, inciter::CProxy_Conductor, given by a template argument.
+    //! \details This is an overload on the specialization,
+    //!   inciter::CProxy_Conductor, of the LinSysMerger template. It creates a
+    //!   Charm++ reduction target via creating a callback that invokes the
+    //!   typed reduction client, where m_host is the proxy on which the
+    //!   reduction target method, init(), is called upon completion of the
+    //!   reduction. Note that we do not use Charm++'s CkReductionTarget macro,
+    //!   but explicitly generate the code that the macro would generate. To
+    //!   explain why here is Charm++'s CkReductionTarget macro's definition,
+    //!   defined in ckreduction.h:
+    //!   \code{.cpp}
+    //!      #define CkReductionTarget(me, method) \
+    //!        CkIndex_##me::redn_wrapper_##method(NULL)
+    //!   \endcode
+    //!   which takes arguments 'me' (a class name) and 'method' a member
+    //!   function of class 'me' and generates the call
+    //!   'CkIndex_<class>::redn_wrapper_<method>(NULL)'. With this overload to
+    //!   contributeTo() we do the above macro's job for LinSysMerger
+    //!   specialized on class inciter::CProxy_Conductor and its init()
+    //!   reduction target. This is required since (1) Charm++'s
+    //!   CkReductionTarget macro's preprocessing happens earlier than type
+    //!   resolution and the string of the template argument would be
+    //!   substituted instead of the type specialized (which not what we want
+    //!   here), and (2) the template argument class, CProxy_Conductor, is in a
+    //!   namespace different than that of LinSysMerger. When a new class is
+    //!   used to specialize LinSysMerger, the compiler will alert that a new
+    //!   overload needs to be defined.
+    //! \note This simplifies client-code, e.g., Conductor, which now requires
+    //!   no explicit book-keeping with counters, etc. Also a reduction (instead
+    //!   of a direct call to the host) better utilizes the communication
+    //!   network as computational nodes can send their aggregated contribution
+    //!   to other nodes on a network instead of all chares sending their
+    //!   (smaller) contributions to the same host.
+    //! \see http://charm.cs.illinois.edu/manuals/html/charm++/manual.html,
+    //!   Sections "Processor-Aware Chare Collections" and "Chare Arrays".
+    void contributeTo( const inciter::CProxy_Conductor& ) {
+      Group::contribute(
+        CkCallback(inciter::CkIndex_Conductor::redn_wrapper_init(NULL), m_host)
+      );
     }
 };
 

@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/RNGSSE.h
   \author    J. Bakosi
-  \date      Thu 30 Apr 2015 04:01:01 PM MDT
+  \date      Fri 01 May 2015 07:31:28 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Interface to RNGSSE random number generators
   \details   Interface to RNGSSE random number generators
@@ -75,6 +75,10 @@ class RNGSSE {
     //! Beta RNG: Generate beta random numbers
     //! \param[in] tid Thread (or more precisely stream) ID
     //! \param[in] num Number of RNGs to generate
+    //! \param[in] p First beta shape parameter
+    //! \param[in] q Second beta shape parameter
+    //! \param[in] a Beta displacement parameter
+    //! \param[in] b Beta scale factor
     //! \param[inout] r Pointer to memory to write the RNGs to
     // TODO: not yet implemented
     void beta( int tid, ncomp_t num, double p, double q, double a, double b,
