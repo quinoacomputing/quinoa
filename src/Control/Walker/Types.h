@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/Types.h
   \author    J. Bakosi
-  \date      Thu 30 Apr 2015 04:07:53 PM MDT
+  \date      Thu 30 Apr 2015 02:10:30 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Types for Walker's parsers
   \details   Types for Walker's parsers. This file defines the components of the

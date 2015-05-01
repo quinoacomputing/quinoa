@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/Options/InitPolicy.h
   \author    J. Bakosi
-  \date      Thu 30 Apr 2015 04:08:12 PM MDT
+  \date      Thu 30 Apr 2015 01:14:45 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Differential equation initialization policy options for walker
   \details   Differential equation initialization policy options for walker
