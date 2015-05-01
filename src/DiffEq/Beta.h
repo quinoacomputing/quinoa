@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/Beta.h
   \author    J. Bakosi
-  \date      Thu 30 Apr 2015 02:59:45 PM MDT
+  \date      Thu 30 Apr 2015 10:16:54 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     System of beta SDEs
   \details   This file implements the time integration of a system of stochastic
@@ -84,6 +84,10 @@ class Beta {
     }
 
     //! \brief Advance particles according to the system of beta SDEs
+    //! \param[inout] particles Array of particle properties
+    //! \param[in] stream Thread (or more precisely stream) ID
+    //! \param[in] dt Time step size
+    //! \param[in] moments Map of statistical moments
     //! \author J. Bakosi
     void advance( tk::ParProps& particles,
                   int stream,
