@@ -110,7 +110,7 @@ ExodusIIMeshReader::readHeader()
 void
 ExodusIIMeshReader::readNodes()
 //******************************************************************************
-//  Read node coordinates from ExodusII file
+//  Read all node coordinates from ExodusII file
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -129,7 +129,7 @@ ExodusIIMeshReader::readNode( std::size_t id,
                               std::vector< tk::real >& y,
                               std::vector< tk::real >& z )
 //******************************************************************************
-//  Read the coordinates of a single mesh node from ExodusII file
+//  Read coordinates of a single mesh node from ExodusII file
 //! \param[in] id Node id whose coordinates to read
 //! \param[inout] x Vector of x coordinates to push to
 //! \param[inout] y Vector of y coordinates to push to
