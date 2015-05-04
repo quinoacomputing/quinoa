@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/LinSysMerger.h
   \author    J. Bakosi
-  \date      Fri 01 May 2015 07:32:40 AM MDT
+  \date      Fri 01 May 2015 02:18:30 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Linear system merger
   \details   Linear system merger.
@@ -284,12 +284,12 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy > {
     // Set non-zero matrix values for my PE
     void fillMatrix() {
       std::cout << "pi: [" << m_lower << "..." << m_upper << ")\n";
-      std::cout << "m on PE " << CkMyPe() << ": ";
-      for (const auto& l : m) {
-        std::cout << "(" << l.first << ") ";
-        for (auto c : l.second) std::cout << c << " ";
-      }
-      std::cout << std::endl;
+//       std::cout << "m on PE " << CkMyPe() << ": ";
+//       for (const auto& l : m) {
+//         std::cout << "(" << l.first << ") ";
+//         for (auto c : l.second) std::cout << c << " ";
+//       }
+//       std::cout << std::endl;
       for (const auto& l : m)
         Assert( l.first >= m_lower || l.first < m_upper,
                 "Matrix contributions collected from chares on PE " +

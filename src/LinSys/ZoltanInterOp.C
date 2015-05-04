@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/ZoltanInterOp.C
   \author    J. Bakosi
-  \date      Sat 25 Apr 2015 12:15:29 PM MDT
+  \date      Sun 03 May 2015 07:05:40 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Interoperation with the Zoltan library
   \details   Interoperation with the Zoltan library, used for static mesh graph
@@ -23,6 +23,7 @@
 #include <ExceptionMPI.h>
 #include <ZoltanInterOp.h>
 #include <DerivedData.h>
+#include <Reorder.h>
 
 namespace tk {
 namespace zoltan {
@@ -247,7 +248,7 @@ get_hypergraph( void *data,
 }
 
 static std::size_t
-createHyperGraph( const tk::UnsMesh& graph, HGRAPH_DATA& hg )
+createHyperGraph( tk::UnsMesh& graph, HGRAPH_DATA& hg )
 //******************************************************************************
 //  Create hypergraph data structure on MPI rank zero
 //! \param[in] graph Unstructured mesh graph object reference
@@ -260,7 +261,7 @@ createHyperGraph( const tk::UnsMesh& graph, HGRAPH_DATA& hg )
   // Get number of points from graph. The total load is taken to be proportional
   // to the number of points of the graph which is proportional to the number of
   // unique edges in the graph.
-  auto npoin = graph.size();
+  const auto npoin = graph.size();
 
   // Create hypergraph data structure based on mesh graph
   hg.numMyVertices = static_cast< int >( npoin );
@@ -273,8 +274,8 @@ createHyperGraph( const tk::UnsMesh& graph, HGRAPH_DATA& hg )
     malloc(sizeof(int) * static_cast<std::size_t>(hg.numMyHEdges + 1));
 
   // Assign global point ids
-  for (int i=0; i<hg.numMyVertices; ++i)
-    hg.vtxGID[ static_cast<std::size_t>(i) ] = static_cast<ZOLTAN_ID_TYPE>(i);
+  for (std::size_t i=0; i<static_cast<std::size_t>(hg.numMyVertices); ++i)
+    hg.vtxGID[i] = static_cast< ZOLTAN_ID_TYPE >( i );
 
   // Get tetrahedron mesh graph connectivity
   const auto& inpoel = graph.tetinpoel();
@@ -283,6 +284,12 @@ createHyperGraph( const tk::UnsMesh& graph, HGRAPH_DATA& hg )
   auto psup = tk::genPsup( inpoel, 4, tk::genEsup( inpoel, 4 ) );
   auto& psup1 = psup.first;
   auto& psup2 = psup.second;
+
+  // Renumber mesh points for better data locality
+  // This would probably be the place to enable renumber for the full mesh in
+  // the future, but most likely, will be put per-chare, i.e., in Performer.
+  //const auto mapvec = tk::renumber( psup );
+  //tk::remap( inpoel, mapvec );
 
   // Allocate data to store the hypergraph ids. The total number of vertices or
   // neighbors in all the hyperedges of the hypergraph, nhedge = all points
@@ -347,7 +354,7 @@ destroyHyperGraph( HGRAPH_DATA& hg, std::size_t nhedge )
 }
 
 std::vector< std::size_t >
-partitionMesh( const tk::UnsMesh& graph,
+partitionMesh( tk::UnsMesh& graph,
                uint64_t npart,
                const tk::Print& print )
 //******************************************************************************

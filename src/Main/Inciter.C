@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Inciter.C
   \author    J. Bakosi
-  \date      Thu 30 Apr 2015 11:42:55 AM MDT
+  \date      Sun 03 May 2015 07:05:06 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Inciter, computational shock hydrodynamics tool, Charm++ main
     chare.
@@ -40,6 +40,7 @@
 #include <ProcessException.h>
 #include <ExodusIIMeshReader.h>
 #include <DerivedData.h>
+#include <Reorder.h>
 #include <Init.h>
 
 //! \brief Charm handle to the main proxy, facilitates call-back to finalize,
@@ -450,9 +451,9 @@ comMaps( const tk::UnsMesh& graph,
           che[e] = o.second;
       }
 
-    std::cout << "che: ";
-    for (auto o : che) std::cout << o << " ";
-    std::cout << '\n';
+//     std::cout << "che: ";
+//     for (auto o : che) std::cout << o << " ";
+//     std::cout << '\n';
 
     Assert( nchare > *std::max_element( begin(che), end(che) ),
             "Elements assigned to more than the number chares" );
@@ -513,15 +514,15 @@ comMaps( const tk::UnsMesh& graph,
     // If graph not partitioned, quit leaving communication maps empty
     if (nchare == 1) return;
 
-    // Generate points surrounding points
-    auto psup = tk::genPsup( g_tetinpoel, 4, g_esup );
-
     // Map to associate a chare id to a map of receiver chare ids associated to
     // unique global point ids sent (export map)
     std::map< std::size_t,
               std::map< std::size_t, std::set< std::size_t > > > comm;
 
-    // Construct export maps
+     // Generate points surrounding points
+    auto psup = tk::genPsup( g_tetinpoel, 4, tk::genEsup(g_tetinpoel,4) );
+
+   // Construct export maps
     for (std::size_t p=0; p<graph.size(); ++p)  // for all mesh points
       for (auto i=psup.second[p]+1; i<=psup.second[p+1]; ++i) {
         auto q = psup.first[i];
