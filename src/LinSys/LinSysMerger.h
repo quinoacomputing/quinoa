@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/LinSysMerger.h
   \author    J. Bakosi
-  \date      Fri 01 May 2015 02:18:30 PM MDT
+  \date      Mon 04 May 2015 08:10:49 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Linear system merger
   \details   Linear system merger.
@@ -68,8 +68,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy > {
     //! \param[in] id Charm++ chare array index the contribution coming from
     //! \note This function does not have to be declared as a Charm++ entry
     //!   method since it is always called by chares on the same PE.
-    void checkin( int id )
-    { m_chare.insert( static_cast< std::size_t >( id ) ); }
+    void checkin( std::size_t id ) { m_chare.insert( id ); }
 
     //! \brief Function called by chares on my PE to contribute their part of
     //!   the structure of the global distributed matrix and vector
@@ -148,7 +147,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy > {
     //! Receive and associate worker's chare id to its PE we need to export to
     //! \param[in] ch Chare worker array index PE coming from
     //! \param[in] pe PE the chare happens to be on
-    void workPe( int ch, int pe ) {
+    void workPe( std::size_t ch, int pe ) {
       ++m_nCharePes;
       // Construct PE-export map from chare-export map. That is, create a new
       // map that associates mesh points sent to PEs based on the map

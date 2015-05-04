@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/linsysmerger.ci
   \author    J. Bakosi
-  \date      Fri 01 May 2015 11:13:57 AM MDT
+  \date      Mon 04 May 2015 08:12:18 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Charm++ module interface file for merging a linear system
   \details   Charm++ module interface file for merging a linear system
@@ -30,7 +30,7 @@ module linsysmerger {
     group LinSysMerger {
       entry LinSysMerger( HostProxy& host );
       entry void createLinearSystem();
-      entry void workPe( int ch, int pe );
+      entry void workPe( std::size_t ch, int pe );
       entry void add( int caller, const std::vector< std::size_t >& transfer );
       entry void rgr();
       entry void assemble();

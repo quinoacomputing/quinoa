@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/ExodusIIMeshReader.h
   \author    J. Bakosi
-  \date      Fri 13 Mar 2015 05:08:19 PM MDT
+  \date      Mon 04 May 2015 09:13:52 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     ExodusII mesh reader
   \details   ExodusII mesh reader class declaration. Currently, this is a bare
@@ -41,7 +41,7 @@ class ExodusIIMeshReader : public Reader {
     //! Read only connectivity graph from file
     void readGraph();
 
-    //  Read the coordinates of a single mesh node from ExodusII file
+    //  Read coordinates of a single mesh node from ExodusII file
     void readNode( std::size_t id,
                    std::vector< tk::real >& x,
                    std::vector< tk::real >& y,
@@ -51,10 +51,10 @@ class ExodusIIMeshReader : public Reader {
     //! Read ExodusII header
     void readHeader();
 
-    //! Read node coordinates from ExodusII file
+    //! Read all node coordinates from ExodusII file
     void readNodes();
 
-    //! Read element blocks and connectivity from ExodusII file
+    //! Read all element blocks and connectivity from ExodusII file
     void readElements();
 
     UnsMesh& m_mesh;            //!< Mesh object
