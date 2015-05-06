@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Inciter.C
   \author    J. Bakosi
-  \date      Sun 03 May 2015 07:05:06 PM MDT
+  \date      Wed 06 May 2015 07:32:29 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Inciter, computational shock hydrodynamics tool, Charm++ main
     chare.
@@ -356,8 +356,7 @@ meshinfo( const tk::Print& print,
 }
 
 void
-comMaps( const tk::UnsMesh& graph,
-         const std::vector< std::size_t >& chp )
+comMaps( const tk::UnsMesh& graph, const std::vector< std::size_t >& chp )
 //******************************************************************************
 //! Compute communication (export) maps for all graph partitions
 //! \param[in] graph Unstructured mesh graph object
@@ -394,6 +393,18 @@ comMaps( const tk::UnsMesh& graph,
 
     Assert( chp.size() == graph.size(),
             "Size of ownership array must equal the number of graph nodes" );
+
+    std::string toofine =
+      R"(This happens when the overdecomposition of the mesh is too large
+      compared to the number of work units computed based on the degree of
+      virtualization desired. As a result, there would be at least one work unit
+      with no mesh elements to work on, i.e., nothing to do. Solution 1:
+      decrease the virtualization (currently:)" +
+      std::to_string(g_inputdeck.get< tag::cmd, tag::virtualization >()) +
+      R"(") to a lower value using the command-line argument '-u'. Solution 2:
+      decrease the number processing elements (PEs) using the charmrun
+      command-line argument '+pN' where N is the number of PEs, which implicitly
+      increases the size (and thus decreases the number) of work units.)";
 
     // Find out number of chares desired
     auto minmax = std::minmax_element( begin(chp), end(chp) );
@@ -461,19 +472,7 @@ comMaps( const tk::UnsMesh& graph,
     // This check should always be done, as it can result from incorrect user
     // input compared to the mesh size and not due to programmer error.
     minmax = std::minmax_element( begin(che), end(che) );
-    ErrChk( *minmax.first == 0 && *minmax.second == nchare-1,
-            "Too fine-grained decomposition. "
-            "This happens when the overdecomposition of the mesh is too large "
-            "compared to the number of work units computed based on the degree "
-            "of virtualization desired. As a result, there would be at least "
-            "one work unit with no mesh elements to work on, i.e., nothing to "
-            "do. Solution 1: decrease the virtualization (currently: "
-            + std::to_string(g_inputdeck.get< tag::cmd, tag::virtualization >())
-            + ") to a lower value using the command-line argument '-u'. "
-            "Solution 2: decrease the number processing elements (PEs) using "
-            "the charmrun command-line argument '+pN' where N is the number of "
-            "PEs, which implicitly increases the size (and thus decreases the "
-            "number) of work units." );
+    ErrChk( *minmax.first == 0 && *minmax.second == nchare-1, std::move(toofine) );
 
     // Construct global mesh element ids for each chare
     g_element.resize( nchare );
@@ -496,20 +495,7 @@ comMaps( const tk::UnsMesh& graph,
 
     // This check should always be done, as it can result from incorrect user
     // input compared to the mesh size and not due to programmer error.
-    for(const auto& c : g_element)
-      ErrChk( !c.empty(),
-            "At least one chare ended up without any elements to work on. "
-            "This happens when the overdecomposition of the mesh is too large "
-            "compared to the number of work units computed based on the degree "
-            "of virtualization desired. As a result, there would be at least "
-            "one work unit with no mesh elements to work on, i.e., nothing to "
-            "do. Solution 1: decrease the virtualization (currently: "
-            + std::to_string(g_inputdeck.get< tag::cmd, tag::virtualization >())
-            + ") to a lower value using the command-line argument '-u'. "
-            "Solution 2: decrease the number processing elements (PEs) using "
-            "the charmrun command-line argument '+pN' where N is the number of "
-            "PEs, which implicitly increases the size (and thus decreases the "
-            "number) of work units." );
+    for(const auto& c : g_element) ErrChk( !c.empty(), std::move(toofine) );
 
     // If graph not partitioned, quit leaving communication maps empty
     if (nchare == 1) return;
@@ -532,21 +518,7 @@ comMaps( const tk::UnsMesh& graph,
 
     // This check should always be done, as it can result from incorrect user
     // input compared to the mesh size and not due to programmer error.
-    ErrChk( comm.size() == nchare,
-            "Number of export/import maps computed (" +
-            std::to_string(comm.size()) + ") must equal the number of "
-            "work units desired (" + std::to_string(nchare) + "). "
-            "This happens when the overdecomposition is too large compared to "
-            "the number of work units computed based on the degree of "
-            "virtualization desired. As a result, there would be " +
-            std::to_string(nchare-comm.size()) +" work unit(s) with nothing to "
-            "do. Solution 1: decrease the virtualization (currently: "
-            + std::to_string(g_inputdeck.get< tag::cmd, tag::virtualization >())
-            + ") to a lower value using the command-line argument '-u'. "
-            "Solution 2: decrease the number processing elements (PEs) using "
-            "the charmrun command-line argument '+pN' where N is the number of "
-            "PEs, which implicitly increases the size (and thus decreases the "
-            "number) of work units." );
+    ErrChk( comm.size() == nchare, std::move(toofine) );
 
     std::size_t c = 0;
     for (const auto& e : comm)
