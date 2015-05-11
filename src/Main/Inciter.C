@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Inciter.C
   \author    J. Bakosi
-  \date      Wed 06 May 2015 11:53:46 AM MDT
+  \date      Mon 11 May 2015 02:52:03 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Inciter, computational shock hydrodynamics tool, Charm++ main
     chare.
@@ -387,11 +387,11 @@ comMaps( const tk::UnsMesh& graph, const std::vector< std::size_t >& chp )
     g_npoin = chp.size();
 
     std::string toofine =
-      "This happens when the overdecomposition of the mesh is too large "
-      "compared to the number of work units computed based on the degree of "
-      "virtualization desired. As a result, there would be at least one work "
-      "unit with no mesh elements to work on, i.e., nothing to do. Solution 1: "
-      "decrease the virtualization (currently: " +
+      "Overdecomposition of the mesh is too large compared to the number of "
+      "work units computed based on the degree of virtualization desired. As "
+      "a result, there would be at least one work unit with no mesh elements "
+      "to work on, i.e., nothing to do. Solution 1: decrease the "
+      "virtualization (currently: " +
       std::to_string(g_inputdeck.get< tag::cmd, tag::virtualization >()) +
       ") to a lower value using the command-line argument '-u'. Solution 2: "
       "decrease the number processing elements (PEs) using the charmrun "

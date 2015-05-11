@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/LinSysMerger.h
   \author    J. Bakosi
-  \date      Mon 11 May 2015 01:26:54 PM MDT
+  \date      Mon 11 May 2015 03:07:16 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Linear system merger
   \details   Linear system merger.
@@ -62,8 +62,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy > {
       m_host( host ),
       m_chunksize( npoin / static_cast<std::size_t>(CkNumPes()) ),
       m_lower( static_cast<std::size_t>(CkMyPe()) * m_chunksize ),
-      m_upper( m_lower + m_chunksize ),
-      m_nnz( 0 )
+      m_upper( m_lower + m_chunksize )
     {
       auto remainder = npoin % static_cast<std::size_t>(CkNumPes());
       if (remainder && CkMyPe() == CkNumPes()-1) m_upper += remainder;
@@ -76,53 +75,47 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy > {
       wait4asm();
     }
 
-    //! Chares register on my PE
-    //! \param[in] id Charm++ chare array index the contribution coming from
-    //! \note This function does not have to be declared as a Charm++ entry
-    //!   method since it is always called by chares on the same PE.
-    void checkin( std::size_t id ) { m_chare.insert( id ); }
-
     //! Chares contribute their matrix nonzero structure
-    //! \param[in] id Charm++ chare array index the contribution coming from
     //! \param[in] point Global mesh point ids sent by chares on our PE
     //! \param[in] psup Points surrounding points, see tk::genPsup()
     //! \note This function does not have to be declared as a Charm++ entry
     //!   method since it is always called by chares on the same PE.
-    void charenz( std::size_t id,
-                  const std::vector< std::size_t >& point,
+    void charenz( const std::vector< std::size_t >& point,
                   const std::pair< std::vector< std::size_t >,
                                    std::vector< std::size_t > >& psup )
     {
       Assert( point.size() == psup.second.size()-1,
               "Number of owned points must equal in global id vector and "
               "derived data, points surrounding points, sent by chare." );
+      // Lambda to add all column indices to a row
+      auto storenz = [ &psup ]( std::size_t p, std::vector< std::size_t >& row )
+      {
+        for (auto i=psup.second[p]+1; i<=psup.second[p+1]; ++i)
+          row.push_back( psup.first[i] );
+      };
       // Store matrix nonzero locations owned and pack those to be exported
       std::map< std::size_t,
                 std::map< std::size_t, std::vector< std::size_t > > > exp;
       for (std::size_t p=0; p<psup.second.size()-1; ++p) {
         auto gid = point[ p ];
         if (gid >= m_lower && gid < m_upper)    // if own
-          for (auto i=psup.second[p]+1; i<=psup.second[p+1]; ++i)
-            m_psup[ gid ].push_back( psup.first[i] );
+          storenz( p, m_psup[gid] );
         else {
           auto pe = gid / m_chunksize;
           if (pe == CkNumPes()) --pe;
-          auto& e = exp[ pe ];
-          for (auto i=psup.second[p]+1; i<=psup.second[p+1]; ++i)
-            e[ gid ].push_back( psup.first[i] );
+          storenz( p, exp[pe][gid] );
         }
       }
-      if (++m_nnz == m_chare.size() && complete()) nz_complete();
+      // If all chares contributed and our portion is complete
+      if (complete()) nz_complete();
       // Export non-owned matrix rows to fellow branches that own them
       for (const auto& p : exp)
-        Group::thisProxy[ static_cast<int>(p.first) ].add( CkMyPe(), p.second );
+        Group::thisProxy[ static_cast<int>(p.first) ].add( p.second );
     }
 
     //! Receive mesh point ids from fellow group branches
-    //! \param[in] caller Caller PE index we send back 'roger' to
     //! \param[in] transfer Mesh point ids received
-    void add( int caller,
-              const std::map< std::size_t, std::vector< std::size_t > >& psup )
+    void add( const std::map< std::size_t, std::vector< std::size_t > >& psup )
     {
       // Store imported matrix nonzero structure contributed from a chare
       for (const auto& p : psup) m_psup[ p.first ] = p.second;
@@ -131,24 +124,18 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy > {
 
   private:
     HostProxy m_host;           //!< Host proxy
-
     std::size_t m_chunksize;    //!< Number of rows the first npe-1 PE own
-
     std::size_t m_lower;        //!< Lower index of the global rows for my PE
     std::size_t m_upper;        //!< Upper index of the global rows for my PE
-
-    //! Number of chares contributed their matrix non-zero structure
-    std::size_t m_nnz;
-
-    //! Unique chare IDs on my PE
-    std::set< std::size_t > m_chare;
-
     tk::hypre::HypreMatrix m_A; //!< Hypre matrix
-
-    //! Nonzero locations of the distributed matrix
-    std::map< std::size_t, std::vector< std::size_t > > m_psup;
+    std::map< std::size_t, std::vector< std::size_t > > m_psup; //! Nonzeros
 
     //! Check if our portion of the matrix non-zero structure is complete
+    //! \return True if our portion of the distributed matrix is complete
+    //! \details Since we known what rows we own, there is no need to explicitly
+    //!   send and receive information rows imported. This function is used to
+    //!   test whether we have received all of the non-zero structure that we
+    //!   own in the distributed matrix.
     bool complete() {
       if ( m_psup.size() == m_upper-m_lower &&
             m_psup.begin()->first == m_lower &&
@@ -187,18 +174,19 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy > {
       filled();
     }
 
-    //! Assemble matrix
+    //! Assemble distributed matrix
     void assemble() {
       m_A.assemble();
       assembled();
     }
 
-    //! \brief Contribute to reduction on all branches (PEs) of LinSysMerger to
-    //!   the host, inciter::CProxy_Conductor, given by a template argument.
-    //! \details This is an overload on the specialization,
+    //! Signal back to host that the initialization of the matrix is complete
+    //! \details This function contributes to a reduction on all branches (PEs)
+    //!   of LinSysMerger to the host, inciter::CProxy_Conductor, given by a
+    //!   template argument. This is an overload on the specialization,
     //!   inciter::CProxy_Conductor, of the LinSysMerger template. It creates a
     //!   Charm++ reduction target via creating a callback that invokes the
-    //!   typed reduction client, where m_host is the proxy on which the
+    //!   typed reduction client, where host is the proxy on which the
     //!   reduction target method, init(), is called upon completion of the
     //!   reduction. Note that we do not use Charm++'s CkReductionTarget macro,
     //!   but explicitly generate the code that the macro would generate. To
@@ -229,9 +217,9 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy > {
     //!   (smaller) contributions to the same host.
     //! \see http://charm.cs.illinois.edu/manuals/html/charm++/manual.html,
     //!   Sections "Processor-Aware Chare Collections" and "Chare Arrays".
-    void contributeTo( const inciter::CProxy_Conductor& ) {
+    void init_complete( const inciter::CProxy_Conductor& host ) {
       Group::contribute(
-        CkCallback(inciter::CkIndex_Conductor::redn_wrapper_init(NULL), m_host)
+        CkCallback( inciter::CkIndex_Conductor::redn_wrapper_init(NULL), host )
       );
     }
 };

@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.C
   \author    J. Bakosi
-  \date      Mon 11 May 2015 02:14:04 PM MDT
+  \date      Mon 11 May 2015 02:48:00 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Performer advances the Euler equations
   \details   Performer advances the Euler equations. There are a potentially
@@ -53,16 +53,8 @@ Performer::Performer( CProxy_Conductor& hostproxy,
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // Register ourselves with the linear system merger
-  m_lsmproxy.ckLocalBranch()->checkin( m_id );
-  // Tell the Charm++ runtime system to call back to Conductor::registered()
-  // once all Performer chares have registered themselves, i.e., checked in,
-  // with their local branch of the linear system merger group, LinSysMerger.
-  // The reduction is done via creating a callback that invokes the typed
-  // reduction client, where m_hostproxy is the proxy on which the reduction
-  // target method, registered(), is called upon completion of the reduction.
-  contribute(
-    CkCallback( CkReductionTarget( Conductor, registered ), m_hostproxy ) );
+  // Contribute our matrix nonzero structure to the linear system merger
+  m_lsmproxy.ckLocalBranch()->charenz( m_point, psup() );
 
   // Take over global mesh point ids of owned nodes
   std::vector< std::size_t > gelem( g_element[ m_id ] );

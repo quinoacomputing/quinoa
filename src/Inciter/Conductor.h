@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Conductor.h
   \author    J. Bakosi
-  \date      Mon 11 May 2015 02:09:50 PM MDT
+  \date      Mon 11 May 2015 02:47:03 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Conductor drives the time integration of the Euler equations
   \details   Conductor drives the time integration of the Euler equations.
@@ -38,15 +38,6 @@ class Conductor : public CBase_Conductor {
   public:
     //! Constructor
     explicit Conductor();
-
-    //! \brief Reduction target indicating that all Performer chares have
-    //!   registered with the linear system merger, LinSysMerger
-    //! \details This function is a Charm++ reduction target that is called when
-    //!   all Performer chares have registered with their their local branch of
-    //!   the linear system merger group, LinSysMerger. Once this is done, we
-    //!   issue a broadcast to all Performer chares to send their portion of the
-    //!   matrix non-zero structure.
-    void registered() { m_perfproxy.charenz(); }
 
     //! \brief Reduction target indicating that all members of LinSysMerger have
     //!   finished their portion of initializing the linear system distributed

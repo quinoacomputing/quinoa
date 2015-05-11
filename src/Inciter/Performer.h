@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.h
   \author    J. Bakosi
-  \date      Mon 11 May 2015 02:14:08 PM MDT
+  \date      Mon 11 May 2015 02:46:27 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Performer advances the Euler equations
   \details   Performer advances the Euler equations. There are a potentially
@@ -49,10 +49,6 @@ class Performer : public CBase_Performer {
 
     //! Migrate constructor
     Performer( CkMigrateMessage* ) {}
-
-    //! Contribute our matrix nonzero structure to the linear system merger
-    void charenz()
-    { m_lsmproxy.ckLocalBranch()->charenz( m_id, m_point, psup() ); }
 
   private:
     std::size_t m_id;                   //!< Charm++ array id (Base::thisIndex)
