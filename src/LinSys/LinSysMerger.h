@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/LinSysMerger.h
   \author    J. Bakosi
-  \date      Mon 11 May 2015 03:07:16 PM MDT
+  \date      Mon 11 May 2015 03:16:01 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Linear system merger
   \details   Linear system merger.
@@ -28,6 +28,7 @@
 
 #include <Types.h>
 #include <HypreMatrix.h>
+#include <HypreVector.h>
 #include <Exception.h>
 #include <ContainerUtil.h>
 
@@ -69,6 +70,10 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy > {
       std::cout << CkMyPe() << ": [" << m_lower << "..." << m_upper << ")\n";
       // Create my PE's part of the lhs matrix distributed across all PEs
       m_A.create( m_lower, m_upper );
+      // Create my PE's part of the rhs and unknown vectors distributed across
+      // all PEs
+      m_b.create( m_lower, m_upper );
+      m_x.create( m_lower, m_upper );
       // Start SDAG waits
       wait4nz();
       wait4fill();
@@ -127,7 +132,9 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy > {
     std::size_t m_chunksize;    //!< Number of rows the first npe-1 PE own
     std::size_t m_lower;        //!< Lower index of the global rows for my PE
     std::size_t m_upper;        //!< Upper index of the global rows for my PE
-    tk::hypre::HypreMatrix m_A; //!< Hypre matrix
+    tk::hypre::HypreMatrix m_A; //!< Hypre matrix to store lhs
+    tk::hypre::HypreVector m_b; //!< Hypre vector to store the rhs
+    tk::hypre::HypreVector m_x; //!< Hypre vector to store the unknowns
     std::map< std::size_t, std::vector< std::size_t > > m_psup; //! Nonzeros
 
     //! Check if our portion of the matrix non-zero structure is complete
