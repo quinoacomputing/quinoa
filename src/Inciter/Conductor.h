@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Conductor.h
   \author    J. Bakosi
-  \date      Fri 01 May 2015 05:50:52 AM MDT
+  \date      Mon 11 May 2015 02:09:50 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Conductor drives the time integration of the Euler equations
   \details   Conductor drives the time integration of the Euler equations.
@@ -35,10 +35,6 @@ namespace inciter {
 //! Conductor drives the time integration of the Euler equations
 class Conductor : public CBase_Conductor {
 
-  // Include Charm++ SDAG code. See http://charm.cs.illinois.edu/manuals/html/
-  // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
-  //Conductor_SDAG_CODE
-
   public:
     //! Constructor
     explicit Conductor();
@@ -48,22 +44,9 @@ class Conductor : public CBase_Conductor {
     //! \details This function is a Charm++ reduction target that is called when
     //!   all Performer chares have registered with their their local branch of
     //!   the linear system merger group, LinSysMerger. Once this is done, we
-    //!   issue a broadcast to all Performer chares to initialize their portion
-    //!   of the linear system.
-    void registered() { m_perfproxy.initLinearSystem(); }
-
-    //! \brief Reduction target indicating that all Performer chares have
-    //!   submitted their contribution toward initialization of the linear
-    //!   system distributed across all PEs
-    //! \details This function is a Charm++ reduction target that is called when
-    //!   all Performer chares have submitted their contribution toward
-    //!   initialization of the linear system distributed across all PEs by
-    //!   submitting their contribution to their local branch of the linear
-    //!   system merger group, LinSysMerger. Once this is done, we issue a
-    //!   broadcast to all members of LinSysMerger (one per PE) to create the
-    //!   linear system.
-    //! \author J. Bakosi
-    void linsysinit() { m_lsmproxy.createLinearSystem(); }
+    //!   issue a broadcast to all Performer chares to send their portion of the
+    //!   matrix non-zero structure.
+    void registered() { m_perfproxy.charenz(); }
 
     //! \brief Reduction target indicating that all members of LinSysMerger have
     //!   finished their portion of initializing the linear system distributed
