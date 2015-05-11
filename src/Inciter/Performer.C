@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.C
   \author    J. Bakosi
-  \date      Mon 04 May 2015 09:14:20 AM MDT
+  \date      Mon 11 May 2015 02:14:04 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Performer advances the Euler equations
   \details   Performer advances the Euler equations. There are a potentially
@@ -28,26 +28,22 @@
 namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
-extern
-  std::pair< std::vector< std::size_t >, std::vector< std::size_t > > g_esup;
+extern std::pair< std::vector<std::size_t>, std::vector<std::size_t> > g_esup;
 extern std::vector< std::size_t > g_tetinpoel;
 extern std::vector< std::vector< std::size_t > > g_point;
 extern std::vector< std::vector< std::size_t > > g_element;
-extern std::vector< std::size_t > g_lower;
-extern
-  std::vector< std::map< std::size_t, std::vector< std::size_t > > > g_comm;
+extern std::vector< std::map< std::size_t, std::vector<std::size_t> > > g_comm;
 
 } // inciter::
 
 using inciter::Performer;
 
 Performer::Performer( CProxy_Conductor& hostproxy,
-                       LinSysMergerProxy& lsmproxy ) :
+                      LinSysMergerProxy& lsmproxy ) :
   m_id( static_cast< std::size_t >( thisIndex ) ),
   m_hostproxy( hostproxy ),
   m_lsmproxy( lsmproxy ),
   m_point( g_point[ m_id ] ),
-  m_nown( m_point.size() ),
   m_export( g_comm.size() > m_id ? g_comm[ m_id ] :
             std::map< std::size_t, std::vector< std::size_t > >() )
 //******************************************************************************
@@ -57,68 +53,26 @@ Performer::Performer( CProxy_Conductor& hostproxy,
 //! \author J. Bakosi
 //******************************************************************************
 {
-//   std::cout << m_id << ": ";
-//   for (auto p : m_point) std::cout << p << " ";
-//   std::cout << '\n';
+  // Register ourselves with the linear system merger
+  m_lsmproxy.ckLocalBranch()->checkin( m_id );
+  // Tell the Charm++ runtime system to call back to Conductor::registered()
+  // once all Performer chares have registered themselves, i.e., checked in,
+  // with their local branch of the linear system merger group, LinSysMerger.
+  // The reduction is done via creating a callback that invokes the typed
+  // reduction client, where m_hostproxy is the proxy on which the reduction
+  // target method, registered(), is called upon completion of the reduction.
+  contribute(
+    CkCallback( CkReductionTarget( Conductor, registered ), m_hostproxy ) );
 
-  // Initialize communication maps
-  //initImports();
   // Take over global mesh point ids of owned nodes
   std::vector< std::size_t > gelem( g_element[ m_id ] );
   // Initialize local->global, global->local node ids, element connectivity
   std::vector< std::size_t > gnode, inpoel;
   std::tie( gnode, inpoel ) = initIds( gelem );
-  // Generate derived data structures
-  initDerivedData();
   // Read coordinates of owned and received mesh nodes
   auto coord = initCoords( gnode );
-  // Register ourselves with our PE's linear system merger
-  registerWithLinSysMerger();
   // Output chare mesh and nodal chare id field to file
   writeChareId( inpoel, coord );
-}
-
-// void
-// Performer::initImports()
-// //******************************************************************************
-// // Initialize import map
-// //! \author J. Bakosi
-// //******************************************************************************
-// {
-//   std::size_t h = 0;
-//   for (const auto& m : g_comm) {
-//     for (const auto& x : m)
-//       if (m_id == x.first)
-//         for (auto p : x.second)
-//           m_import[ h ].push_back( p );
-//     ++h;
-//   }
-// }
-
-void
-Performer::initLinearSystem()
-//******************************************************************************
-//! Merge performer linear system contributions to PEs
-//! \author J. Bakosi
-//******************************************************************************
-{
-  // Submit contribution to the structure of the linear system
-  m_lsmproxy.ckLocalBranch()->structure( thisProxy,
-                                         g_lower[ m_id ],
-                                         g_lower[ m_id ] + m_nown,
-                                         m_export,
-                                         m_point,
-                                         m_psup );
-
-  // Tell the Charm++ runtime system to call back to Conductor::linsysinit()
-  // once all Performer chares have initialized their portion of the linear
-  // system by submitting their contribution to their local branch of the linear
-  // system merger group, LinSysMerger. The reduction is done via creating a
-  // callback that invokes the typed reduction client, where m_hostproxy is the
-  // proxy on which the reduction target method, linsysinit(), is called upon
-  // completion of the reduction.
-  contribute(
-    CkCallback( CkReductionTarget( Conductor, linsysinit ), m_hostproxy ) );
 }
 
 std::pair< std::vector< std::size_t >, std::vector< std::size_t > >
@@ -166,14 +120,21 @@ Performer::initIds( const std::vector< std::size_t >& gelem )
   return { gnode, inpoel };
 }
 
-void
-Performer::initDerivedData()
+std::pair< std::vector< std::size_t >, std::vector< std::size_t > >
+Performer::psup()
 //******************************************************************************
-//! Initialize data structures derived from mesh connectivity
+//! Compute points surrounding points owned
+//! \return Linked vectors storing points surrounding points owned
+//! \details This function computes a special version of points surrounding
+//!   points, derived from the mesh connectivity. The data structure returned
+//!   contains only those points surrounding points that we own. Note that we
+//!   only store points that we own, but of course, their surrounding points
+//!   might list point ids that we do not own. This data structure describes our
+//!   portion of the nonzero structure of a distributed matrix.
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // Build unique global node ids of elements with at least one owned point
+  // Build unique global point ids of elements with at least one owned point
   std::vector< std::size_t > gnode;
   for (auto p : m_point)
     for (auto i=g_esup.second[p]+1; i<=g_esup.second[p+1]; ++i) {
@@ -188,7 +149,7 @@ Performer::initDerivedData()
     }
   tk::unique( gnode );
 
-  // Assign local node ids to global node ids
+  // Assign local point ids to global point ids
   const auto lnode = assignLid( gnode );
 
   // Get element connectivity of those containing at least one owned point
@@ -206,9 +167,9 @@ Performer::initDerivedData()
     }
 
   // Generate points surrounding points based on inpoel with local ids
-  m_psup = tk::genPsup( inpoel, 4, tk::genEsup(inpoel,4) );
-  auto& psup1 = m_psup.first;
-  auto& psup2 = m_psup.second;
+  auto psup = tk::genPsup( inpoel, 4, tk::genEsup(inpoel,4) );
+  auto& psup1 = psup.first;
+  auto& psup2 = psup.second;
 
   // Lambda to find out if a point is owned
   auto own = [&]( std::size_t gid ) -> bool {
@@ -216,7 +177,7 @@ Performer::initDerivedData()
     return false;
   };
 
-  // Create new derived data psup with only the owned points
+  // Create new points surrounding points of owned points only
   std::vector< std::size_t > p1( 1, 0 ), p2( 1, 0 );
   std::size_t k = 0;
   for (std::size_t p=0; p<psup2.size()-1; ++p)
@@ -228,16 +189,10 @@ Performer::initDerivedData()
   psup1 = std::move( p1 );
   psup2 = std::move( p2 );
 
-  // Convert local to global point ids in derived data psup
+  // Convert local to global point ids in points surrounding points
   for (auto& p : psup1) p = gnode[ p ];
 
-//   std::cout << m_id << ": ";
-//   for (std::size_t p=0; p<psup2.size()-1; ++p) {
-//     std::cout << "(" << p << "," << gnode[p] << ") ";
-//     for (auto i=psup2[p]+1; i<=psup2[p+1]; ++i)
-//       std::cout << psup1[i] << " ";
-//   }
-//   std::cout << std::endl;
+  return psup;
 }
 
 std::map< std::size_t, std::size_t >
@@ -291,26 +246,6 @@ Performer::initCoords( const std::vector< std::size_t >& gnode )
   for (auto p : gnode) er.readNode( p, x, y, z );
 
   return { { x, y, z } };
-}
-
-void
-Performer::registerWithLinSysMerger()
-//******************************************************************************
-//  Register ourselves with our PE's linear system merger
-//! \author J. Bakosi
-//******************************************************************************
-{
-  // Register with merger
-  m_lsmproxy.ckLocalBranch()->checkin( m_id );
-
-  // Tell the Charm++ runtime system to call back to Conductor::registered()
-  // once all Performer chares have registered themselves, i.e., checked in,
-  // with their local branch of the linear system merger group, LinSysMerger.
-  // The reduction is done via creating a callback that invokes the typed
-  // reduction client, where m_hostproxy is the proxy on which the reduction
-  // target method, registered(), is called upon completion of the reduction.
-  contribute(
-    CkCallback( CkReductionTarget( Conductor, registered ), m_hostproxy ) );
 }
 
 void

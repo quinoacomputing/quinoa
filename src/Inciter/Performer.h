@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.h
   \author    J. Bakosi
-  \date      Mon 04 May 2015 09:14:51 AM MDT
+  \date      Mon 11 May 2015 02:14:08 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Performer advances the Euler equations
   \details   Performer advances the Euler equations. There are a potentially
@@ -50,11 +50,9 @@ class Performer : public CBase_Performer {
     //! Migrate constructor
     Performer( CkMigrateMessage* ) {}
 
-    //! Merge performer linear system contributions to PEs
-    void initLinearSystem();
-
-    //! Return our processing element number to caller's group branch
-    void pe( int branch ) { m_lsmproxy[ branch ].workPe( m_id, CkMyPe() ); }
+    //! Contribute our matrix nonzero structure to the linear system merger
+    void charenz()
+    { m_lsmproxy.ckLocalBranch()->charenz( m_id, m_point, psup() ); }
 
   private:
     std::size_t m_id;                   //!< Charm++ array id (Base::thisIndex)
@@ -64,25 +62,18 @@ class Performer : public CBase_Performer {
     //! Global ids of nodes owned
     std::vector< std::size_t > m_point;
 
-    //! Number of owned mesh points
-    std::size_t m_nown;
-
-    //! Communication maps
+    //! Export maps
     std::map< std::size_t, std::vector< std::size_t > > m_export;
-    //std::map< std::size_t, std::vector< std::size_t > > m_import;
 
     //! Points surrounding points
     std::pair< std::vector< std::size_t >, std::vector< std::size_t > > m_psup;
-
-    //! Initialize import map
-    void initImports();
 
     //! Initialize local->global, global->local node ids, element connectivity
     std::pair< std::vector< std::size_t >, std::vector< std::size_t > >
     initIds( const std::vector< std::size_t >& gelem );
 
-    //! Initialize data structures derived from mesh connectivity
-    void initDerivedData();
+    //! Initialize points surrounding points
+    std::pair< std::vector< std::size_t >, std::vector< std::size_t > > psup();
 
     //! Assign local ids to global ids
     std::map< std::size_t, std::size_t >

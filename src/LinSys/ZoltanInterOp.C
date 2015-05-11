@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/ZoltanInterOp.C
   \author    J. Bakosi
-  \date      Sun 03 May 2015 07:05:40 PM MDT
+  \date      Mon 11 May 2015 11:32:44 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Interoperation with the Zoltan library
   \details   Interoperation with the Zoltan library, used for static mesh graph
@@ -278,7 +278,7 @@ createHyperGraph( tk::UnsMesh& graph, HGRAPH_DATA& hg )
     hg.vtxGID[i] = static_cast< ZOLTAN_ID_TYPE >( i );
 
   // Get tetrahedron mesh graph connectivity
-  const auto& inpoel = graph.tetinpoel();
+  auto& inpoel = graph.tetinpoel();
 
   // Generate (connectivity graph) points surrounding points of graph
   auto psup = tk::genPsup( inpoel, 4, tk::genEsup( inpoel, 4 ) );
@@ -286,10 +286,8 @@ createHyperGraph( tk::UnsMesh& graph, HGRAPH_DATA& hg )
   auto& psup2 = psup.second;
 
   // Renumber mesh points for better data locality
-  // This would probably be the place to enable renumber for the full mesh in
-  // the future, but most likely, will be put per-chare, i.e., in Performer.
-  //const auto mapvec = tk::renumber( psup );
-  //tk::remap( inpoel, mapvec );
+  const auto mapvec = tk::renumber( psup );
+  tk::remap( inpoel, mapvec );
 
   // Allocate data to store the hypergraph ids. The total number of vertices or
   // neighbors in all the hyperedges of the hypergraph, nhedge = all points
@@ -470,11 +468,11 @@ partitionMesh( tk::UnsMesh& graph,
              "of parts (" + std::to_string(npart) + ")?" );
   }
 
-  if (peid == 0) {
-    std::cout << "\nchp: ";
-    for (auto i : chare) std::cout << i << " ";
-    std::cout << '\n';
-  }
+//   if (peid == 0) {
+//     std::cout << "\nchp: ";
+//     for (auto i : chare) std::cout << i << " ";
+//     std::cout << '\n';
+//   }
 
   // Free the arrays allocated by Zoltan_LB_Partition
   Zoltan_LB_Free_Part( &importGlobalGids, &importLocalGids, &importProcs,

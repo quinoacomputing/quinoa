@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Inciter.C
   \author    J. Bakosi
-  \date      Wed 06 May 2015 07:32:29 AM MDT
+  \date      Wed 06 May 2015 11:53:46 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Inciter, computational shock hydrodynamics tool, Charm++ main
     chare.
@@ -61,6 +61,8 @@ namespace inciter {
 ctr::InputDeck g_inputdeck_defaults;
 //! Input deck filled by parser, containing all input data
 ctr::InputDeck g_inputdeck;
+//! Total number of points in mesh
+std::size_t g_npoin;
 //! Derived data structure, storing elements surrounding points in mesh
 std::pair< std::vector< std::size_t >, std::vector< std::size_t > > g_esup;
 //! Mesh tetrahedron element connectivity
@@ -72,19 +74,6 @@ std::vector< std::size_t > g_tetinpoel;
 std::vector< std::vector< std::size_t > > g_point;
 //! \brief Global mesh element ids owned by each chare
 std::vector< std::vector< std::size_t > > g_element;
-//! \brief Lower index at which each chare contributes to a distributed global
-//!   matrix and vector
-//! \details This vector stores the lower index of a partition in a global
-//!   distributed matrix and vector. The lower index is used to construct an
-//!   ordered (as opposed an unordered, see g_point) global id mapping
-//!   resulting in contiguous mesh point ids for chares. The need for the
-//!   ordered mapping arises from mesh partitioning. The mesh point ordering in
-//!   a file, once the mesh is partitioned, rarely results in contiguous point
-//!   ordering. For example PE0:0,1,4,5 and PE1:2,3,6,7, give a non-contiguous
-//!   ordering. A contigous order, i.e., PE0:0,1,2,3, PE1:4,5,6,7, is required
-//!   for constructing a distributed parallel matrix and vector for a parallel
-//!   linear solver, e.g., Hypre, that expects contiguous partitions.
-std::vector< std::size_t > g_lower;
 //! Vector of export maps for all chare ids (empty if nchares = 1)
 std::vector< std::map< std::size_t, std::vector< std::size_t > > > g_comm;
 //! \brief Time stamps in h:m:s for the initial MPI portion
@@ -394,34 +383,32 @@ comMaps( const tk::UnsMesh& graph, const std::vector< std::size_t >& chp )
     Assert( chp.size() == graph.size(),
             "Size of ownership array must equal the number of graph nodes" );
 
+    // Store total number points in global schope for Charm++ chares
+    g_npoin = chp.size();
+
     std::string toofine =
-      R"(This happens when the overdecomposition of the mesh is too large
-      compared to the number of work units computed based on the degree of
-      virtualization desired. As a result, there would be at least one work unit
-      with no mesh elements to work on, i.e., nothing to do. Solution 1:
-      decrease the virtualization (currently:)" +
+      "This happens when the overdecomposition of the mesh is too large "
+      "compared to the number of work units computed based on the degree of "
+      "virtualization desired. As a result, there would be at least one work "
+      "unit with no mesh elements to work on, i.e., nothing to do. Solution 1: "
+      "decrease the virtualization (currently: " +
       std::to_string(g_inputdeck.get< tag::cmd, tag::virtualization >()) +
-      R"(") to a lower value using the command-line argument '-u'. Solution 2:
-      decrease the number processing elements (PEs) using the charmrun
-      command-line argument '+pN' where N is the number of PEs, which implicitly
-      increases the size (and thus decreases the number) of work units.)";
+      ") to a lower value using the command-line argument '-u'. Solution 2: "
+      "decrease the number processing elements (PEs) using the charmrun "
+      "command-line argument '+pN' where N is the number of PEs, which "
+      "implicitlyincreases the size (and thus decreases the number) of work "
+      "units.";
 
     // Find out number of chares desired
     auto minmax = std::minmax_element( begin(chp), end(chp) );
     auto nchare = *minmax.second - *minmax.first + 1;
 
-    // Construct unordered (as in mesh file) global mesh node ids for each
-    // chare, also store lower global index for each chare
+    // Construct unordered (as in mesh file) global mesh node ids for each chare
     g_point.resize( nchare );
-    std::size_t o = 0;
-    for (std::size_t i=0; i<nchare; ++i) {            // for all colors
-      g_lower.push_back( o );
+    for (std::size_t i=0; i<nchare; ++i)              // for all colors
       for (std::size_t p=0; p<chp.size(); ++p )       // for all mesh points
-        if (chp[p] == i) {
+        if (chp[p] == i)
           g_point[i].push_back( p );
-          ++o;
-        }
-    }
 
     // Store element connectivity in global scope for Charm++ chares
     g_tetinpoel = graph.tetinpoel();
