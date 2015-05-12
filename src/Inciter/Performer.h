@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.h
   \author    J. Bakosi
-  \date      Mon 11 May 2015 02:46:27 PM MDT
+  \date      Tue 12 May 2015 07:38:59 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Performer advances the Euler equations
   \details   Performer advances the Euler equations. There are a potentially
@@ -54,13 +54,9 @@ class Performer : public CBase_Performer {
     std::size_t m_id;                   //!< Charm++ array id (Base::thisIndex)
     CProxy_Conductor m_hostproxy;       //!< Host proxy
     LinSysMergerProxy m_lsmproxy;       //!< Linear system merger proxy
-
-    //! Global ids of nodes owned
-    std::vector< std::size_t > m_point;
-
-    //! Export maps
+    std::vector< std::size_t > m_point; //!< Global ids of nodes owned
+    //! Export map
     std::map< std::size_t, std::vector< std::size_t > > m_export;
-
     //! Points surrounding points
     std::pair< std::vector< std::size_t >, std::vector< std::size_t > > m_psup;
 
@@ -79,14 +75,11 @@ class Performer : public CBase_Performer {
     std::size_t
     lid( const std::map< std::size_t, std::size_t >& lnode, std::size_t gid );
 
-    //! Read coordinates of owned and received mesh nodes
+    //! Read coordinates of mesh nodes given
     std::array< std::vector< tk::real >, 3 >
     initCoords( const std::vector< std::size_t >& gnode );
 
-    //! Register ourselves with our PE's linear system merger
-    void registerWithLinSysMerger();
-
-    //! Output chare mesh and nodal chare id field to file
+    //! Output chare mesh chare id field to file
     void writeChareId( const std::vector< std::size_t >& inpoel,
                        const std::array< std::vector< tk::real >, 3 >& coord );
 };
