@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.C
   \author    J. Bakosi
-  \date      Mon 11 May 2015 02:48:00 PM MDT
+  \date      Tue 12 May 2015 07:28:12 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Performer advances the Euler equations
   \details   Performer advances the Euler equations. There are a potentially
@@ -61,7 +61,7 @@ Performer::Performer( CProxy_Conductor& hostproxy,
   // Initialize local->global, global->local node ids, element connectivity
   std::vector< std::size_t > gnode, inpoel;
   std::tie( gnode, inpoel ) = initIds( gelem );
-  // Read coordinates of owned and received mesh nodes
+  // Read coordinates of mesh nodes
   auto coord = initCoords( gnode );
   // Output chare mesh and nodal chare id field to file
   writeChareId( inpoel, coord );
@@ -98,16 +98,6 @@ Performer::initIds( const std::vector< std::size_t >& gelem )
     inpoel.push_back( lid( lnode, g_tetinpoel[e*4+2] ) );
     inpoel.push_back( lid( lnode, g_tetinpoel[e*4+3] ) );
   }
-
-//   // Add received node ids to local->global and global->local node ids
-//   for (auto& m : m_import)
-//     for (auto p : m.second) {
-//       //m_point.push_back( p );
-//       lnode[p] = l++;
-//     }
-//   Assert( m_import.empty() ? lnode.size() == m_point.size() : true,
-//           "The size of global->local and local->global node id map must "
-//           "be equal if there is only a single chare" );
 
   return { gnode, inpoel };
 }
