@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.h
   \author    J. Bakosi
-  \date      Tue 12 May 2015 07:38:59 AM MDT
+  \date      Tue 12 May 2015 09:33:39 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Performer advances the Euler equations
   \details   Performer advances the Euler equations. There are a potentially
@@ -62,26 +62,29 @@ class Performer : public CBase_Performer {
 
     //! Initialize local->global, global->local node ids, element connectivity
     std::pair< std::vector< std::size_t >, std::vector< std::size_t > >
-    initIds( const std::vector< std::size_t >& gelem );
+    initIds( const std::vector< std::size_t >& gelem ) const;
 
     //! Initialize points surrounding points
-    std::pair< std::vector< std::size_t >, std::vector< std::size_t > > psup();
+    std::pair< std::vector< std::size_t >, std::vector< std::size_t > >
+    psup() const;
 
     //! Assign local ids to global ids
     std::map< std::size_t, std::size_t >
-    assignLid( const std::vector< std::size_t >& gid );
+    assignLid( const std::vector< std::size_t >& gid ) const;
 
     //! Find local for global node id
     std::size_t
-    lid( const std::map< std::size_t, std::size_t >& lnode, std::size_t gid );
+    lid( const std::map< std::size_t, std::size_t >& lnode, std::size_t gid )
+    const;
 
     //! Read coordinates of mesh nodes given
     std::array< std::vector< tk::real >, 3 >
-    initCoords( const std::vector< std::size_t >& gnode );
+    initCoords( const std::vector< std::size_t >& gnode ) const;
 
     //! Output chare mesh chare id field to file
     void writeChareId( const std::vector< std::size_t >& inpoel,
-                       const std::array< std::vector< tk::real >, 3 >& coord );
+                       const std::array< std::vector< tk::real >, 3 >& coord )
+    const;
 };
 
 } // inciter::

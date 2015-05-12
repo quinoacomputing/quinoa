@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Conductor.C
   \author    J. Bakosi
-  \date      Mon 11 May 2015 11:17:40 AM MDT
+  \date      Tue 12 May 2015 09:27:52 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Conductor drives the time integration of the Euler equations
   \details   Conductor drives the time integration of the Euler equations.
@@ -47,7 +47,7 @@ Conductor::Conductor() :
 }
 
 void
-Conductor::init()
+Conductor::init() const
 //******************************************************************************
 // Reduction target indicating that all members of LinSysMerger have finished
 // their portion of initializing the linear system distributed across all PEs
