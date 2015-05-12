@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.C
   \author    J. Bakosi
-  \date      Tue 12 May 2015 07:28:12 AM MDT
+  \date      Tue 12 May 2015 09:33:27 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Performer advances the Euler equations
   \details   Performer advances the Euler equations. There are a potentially
@@ -61,14 +61,14 @@ Performer::Performer( CProxy_Conductor& hostproxy,
   // Initialize local->global, global->local node ids, element connectivity
   std::vector< std::size_t > gnode, inpoel;
   std::tie( gnode, inpoel ) = initIds( gelem );
-  // Read coordinates of mesh nodes
+  // Read coordinates of owned and received mesh nodes
   auto coord = initCoords( gnode );
   // Output chare mesh and nodal chare id field to file
   writeChareId( inpoel, coord );
 }
 
 std::pair< std::vector< std::size_t >, std::vector< std::size_t > >
-Performer::initIds( const std::vector< std::size_t >& gelem )
+Performer::initIds( const std::vector< std::size_t >& gelem ) const
 //******************************************************************************
 //! Initialize local->global, global->local node ids, element connectivity
 //! \param[in] gelem Set of unique owned global element ids
@@ -103,7 +103,7 @@ Performer::initIds( const std::vector< std::size_t >& gelem )
 }
 
 std::pair< std::vector< std::size_t >, std::vector< std::size_t > >
-Performer::psup()
+Performer::psup() const
 //******************************************************************************
 //! Compute points surrounding points owned
 //! \return Linked vectors storing points surrounding points owned
@@ -178,7 +178,7 @@ Performer::psup()
 }
 
 std::map< std::size_t, std::size_t >
-Performer::assignLid( const std::vector< std::size_t >& gid )
+Performer::assignLid( const std::vector< std::size_t >& gid ) const
 //******************************************************************************
 //! Assign local ids to global ids
 //! \param[in] gid
@@ -194,7 +194,7 @@ Performer::assignLid( const std::vector< std::size_t >& gid )
 
 std::size_t
 Performer::lid( const std::map< std::size_t, std::size_t >& lnode,
-                std::size_t gid )
+                std::size_t gid ) const
 //******************************************************************************
 //! Find local for global node id
 //! \param[in] lnode Global->local id map
@@ -212,7 +212,7 @@ Performer::lid( const std::map< std::size_t, std::size_t >& lnode,
 }
 
 std::array< std::vector< tk::real >, 3 >
-Performer::initCoords( const std::vector< std::size_t >& gnode )
+Performer::initCoords( const std::vector< std::size_t >& gnode ) const
 //******************************************************************************
 //  Read coordinates of mesh nodes from file
 //! \param[in] gnode Global node ids whose coordinates to read from file
@@ -233,6 +233,7 @@ Performer::initCoords( const std::vector< std::size_t >& gnode )
 void
 Performer::writeChareId( const std::vector< std::size_t >& inpoel,
                          const std::array< std::vector< tk::real >, 3 >& coord )
+const
 //******************************************************************************
 // Output chare mesh and nodal chare id field to file
 //! \param[in] inpoel Tetrahedron element connectivity

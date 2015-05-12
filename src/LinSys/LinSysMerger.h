@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/LinSysMerger.h
   \author    J. Bakosi
-  \date      Mon 11 May 2015 03:16:01 PM MDT
+  \date      Tue 12 May 2015 09:34:48 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Linear system merger
   \details   Linear system merger.
@@ -86,8 +86,8 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy > {
     //! \note This function does not have to be declared as a Charm++ entry
     //!   method since it is always called by chares on the same PE.
     void charenz( const std::vector< std::size_t >& point,
-                  const std::pair< std::vector< std::size_t >,
-                                   std::vector< std::size_t > >& psup )
+                  std::pair< std::vector< std::size_t >,
+                             std::vector< std::size_t > >&& psup )
     {
       Assert( point.size() == psup.second.size()-1,
               "Number of owned points must equal in global id vector and "
@@ -143,7 +143,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy > {
     //!   send and receive information rows imported. This function is used to
     //!   test whether we have received all of the non-zero structure that we
     //!   own in the distributed matrix.
-    bool complete() {
+    bool complete() const {
       if ( m_psup.size() == m_upper-m_lower &&
             m_psup.begin()->first == m_lower &&
           (--m_psup.end())->first == m_upper-1 )

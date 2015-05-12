@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Conductor.h
   \author    J. Bakosi
-  \date      Mon 11 May 2015 02:47:03 PM MDT
+  \date      Tue 12 May 2015 09:27:56 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Conductor drives the time integration of the Euler equations
   \details   Conductor drives the time integration of the Euler equations.
@@ -42,8 +42,7 @@ class Conductor : public CBase_Conductor {
     //! \brief Reduction target indicating that all members of LinSysMerger have
     //!   finished their portion of initializing the linear system distributed
     //!   across all PEs
-    //! \author J. Bakosi
-    void init();
+    void init() const;
 
   private:
     using PerfProxy = CProxy_Performer;
