@@ -1,0 +1,391 @@
+/*!
+  \page      walker_example_mixmassfracbeta Walker: Integrating the mix mass-fraction beta SDE
+  \tableofcontents
+
+This example runs [walker](walker_doc.html) to integrate the mix mass-fraction
+beta SDE (see DiffEq/MixMassFractionBeta.h) using constant coefficients. The mix
+mass-fraction beta SDE is based on the beta SDE, (1) additionally computing two
+more stochastic variables that are functions of the beta variables integrated,
+and (2) the coefficients _b_ and _kappa_ are specified via functions that
+constrain the beta SDE to be consistent with the turbulent mixing process. For
+more detail on the beta SDE, see http://dx.doi.org/10.1080/14685248.2010.510843.
+
+\section walker_example_mixmassfracbeta_control Control file
+
+\verbatim
+title "Test evolution of some stats in mass fraction mixing"
+
+walker
+
+  #nstep 0      # Max number of time steps
+  term  5.0    # Max time
+  dt    0.01    # Time step size
+  npar  100000   # Number of particles
+  ttyi  100      # TTY output interval
+
+  rngs
+    mkl_r250
+      beta_method cja
+    end
+  end
+
+  mixmassfracbeta
+    depvar y
+    ncomp 20
+    init jointbeta
+    icbeta
+      betapdf 0.2 0.2 0.0 1.0 end       # light = heavy
+      betapdf 0.2 0.8 0.0 1.0 end       # light > heavy
+      betapdf 0.8 0.2 0.0 1.0 end       # light < heavy
+      betapdf 2.0 2.0 0.0 1.0 end
+      betapdf 2.0 5.0 0.0 1.0 end
+    end
+#    init jointdelta
+#    icdelta
+#      spike 0.01 0.5 0.99 0.5 end
+#      spike 0.01 0.9 0.99 0.1 end
+#      spike 0.01 0.1 0.99 0.9 end
+#      spike 0.01 0.5 0.99 0.5 end
+#      spike 0.01 0.5 0.99 0.5 end
+#    end
+    coeff homdecay
+    # alpha = Sb/kappa, beta = (1-S)b/kappa
+    # decay in <y^2> if bprime/kappaprime > 1/4
+    kappaprime 1.0  1.0  1.0  1.0  1.0 end
+    bprime     1.9  1.9  1.9  1.9  1.9 end
+    S          0.5  0.5  0.5  0.5  0.5 end
+    rng mkl_r250
+    rho2 1.0 1.0 1.0 1.0 1.0 end
+    #r 0.0101 0.0101 0.0101 0.0101 0.0101 end    # low-A
+    r 9.0 9.0 9.0 9.0 9.0 end                  # high-A
+  end
+
+  statistics
+    format    scientific
+    precision 12
+    # <Y>, mass fraction means
+    <Y1> <Y2> <Y3> <Y4> <Y5>
+    # <R>, mean densities
+    <Y6> <Y7> <Y8> <Y9> <Y10>
+    # <V>, mean specific volumes
+    <Y11> <Y12> <Y13> <Y14> <Y15>
+    # <y^2>, mass fraction variances
+    <y1y1> <y2y2> <y3y3> <y4y4> <y5y5>
+
+    # stats required for homdecay
+    # <y^3>, mass fraction third moments
+    <y1y1y1> <y2y2y2> <y3y3y3> <y4y4y4> <y5y5y5>
+    # <r^2>, density variances
+    <y6y6> <y7y7> <y8y8> <y9y9> <y10y10>
+    # <r^3>, density third moments
+    <y6y6y6> <y7y7y7> <y8y8y8> <y9y9y9> <y10y10y10>
+    # <rv>, density-specific-volume covariances
+    <y6y11> <y7y12> <y8y13> <y9y14> <y10y15>
+    # <RY>
+    <Y6Y1> <Y7Y2> <Y8Y3> <Y9Y4> <Y10Y5>
+
+#    # stats required for mchomdecay
+#    # <R^2>
+#    <Y6Y6> <Y7Y7> <Y8Y8> <Y9Y9> <Y10Y10>
+#    # <YR^2>
+#    <Y1Y6Y6> <Y2Y7Y7> <Y3Y8Y8> <Y4Y9Y9> <Y5Y10Y10>
+#    # <Y(1-Y)R^3>
+#    <Y1Y16Y6Y6Y6>
+#    <Y2Y17Y7Y7Y7>
+#    <Y3Y18Y8Y8Y8>
+#    <Y4Y19Y9Y9Y9>
+#    <Y5Y20Y10Y10Y10>
+  end
+
+  pdfs
+    interval  100
+    filetype  txt
+    policy    overwrite
+    centering elem
+    format    scientific
+    precision 4
+    p1( Y1 : 5.0e-3 )
+    p2( Y2 : 5.0e-3 )
+    p3( Y3 : 5.0e-3 )
+#    p4( Y4 : 1.0e-2 )
+#    p5( Y5 : 1.0e-2 )
+    p6( Y6 : 5.0e-5 )
+    p7( Y7 : 5.0e-5 )
+    p8( Y8 : 5.0e-5 )
+#    p9( Y9 : 1.0e-2 )
+#    p10( Y10 : 1.0e-2 )
+  end
+end
+\endverbatim
+
+\section walker_example_mixmassfracbeta_run Example run on 8 CPUs
+\verbatim
+./charmrun +p8 Main/walker -v -c ../../tmp/mixmassfracbeta.q -v
+\endverbatim
+
+\section walker_example_mixmassfracbeta_output Output
+\verbatim
+Running on 8 processors:  Main/walker -v -c ../../tmp/mixmassfracbeta.q -v
+charmrun>  /usr/bin/setarch x86_64 -R  mpirun -np 8  Main/walker -v -c ../../tmp/mixmassfracbeta.q -v
+Charm++> Running on MPI version: 3.0
+Charm++> level of thread support used: MPI_THREAD_SINGLE (desired: MPI_THREAD_SINGLE)
+Charm++> Running in non-SMP mode: numPes 8
+Converse/Charm++ Commit ID: 91b9a77
+CharmLB> Load balancer assumes all CPUs are same.
+Charm++> Running on 1 unique compute nodes (8-way SMP).
+Charm++> cpu topology info is gathered in 0.002 seconds.
+
+      ,::,`                                                            `.
+   .;;;'';;;:                                                          ;;#
+  ;;;@+   +;;;  ;;;;;,   ;;;;. ;;;;;, ;;;;      ;;;;   `;;;;;;:        ;;;
+ :;;@`     :;;' .;;;@,    ,;@, ,;;;@: .;;;'     .;+;. ;;;@#:';;;      ;;;;'
+ ;;;#       ;;;: ;;;'      ;:   ;;;'   ;;;;;     ;#  ;;;@     ;;;     ;+;;'
+.;;+        ;;;# ;;;'      ;:   ;;;'   ;#;;;`    ;#  ;;@      `;;+   .;#;;;.
+;;;#        :;;' ;;;'      ;:   ;;;'   ;# ;;;    ;# ;;;@       ;;;   ;# ;;;+
+;;;#        .;;; ;;;'      ;:   ;;;'   ;# ,;;;   ;# ;;;#       ;;;:  ;@  ;;;
+;;;#        .;;' ;;;'      ;:   ;;;'   ;#  ;;;;  ;# ;;;'       ;;;+ ;',  ;;;@
+;;;+        ,;;+ ;;;'      ;:   ;;;'   ;#   ;;;' ;# ;;;'       ;;;' ;':::;;;;
+`;;;        ;;;@ ;;;'      ;:   ;;;'   ;#    ;;;';# ;;;@       ;;;:,;+++++;;;'
+ ;;;;       ;;;@ ;;;#     .;.   ;;;'   ;#     ;;;;# `;;+       ;;# ;#     ;;;'
+ .;;;      :;;@  ,;;+     ;+    ;;;'   ;#      ;;;#  ;;;      ;;;@ ;@      ;;;.
+  ';;;    ;;;@,   ;;;;``.;;@    ;;;'   ;+      .;;#   ;;;    :;;@ ;;;      ;;;+
+   :;;;;;;;+@`     ';;;;;'@    ;;;;;, ;;;;      ;;+    +;;;;;;#@ ;;;;.   .;;;;;;
+     .;;#@'         `#@@@:     ;::::; ;::::      ;@      '@@@+   ;:::;    ;::::::
+    :;;;;;;.      __      __        .__   __
+  .;@+@';;;;;;'  /  \    /  \_____  |  | |  | __ ___________
+    `     '#''@` \   \/\/   /\__  \ |  | |  |/ // __ \_  __ \
+                  \        /  / __ \|  |_|    <\  ___/|  | \/
+                   \__/\  /  (____  /____/__|_ \\___  >__|
+                        \/        \/          \/    \/
+
+                                 < ENVIRONMENT >                                
+                                 ------ o ------                          
+
+ * Build environment:
+ --------------------
+     Hostname                       : karman
+     Executable                     : walker
+     Version                        : 0.1
+     Release                        : LA-CC-XX-XXX
+     Revision                       : 1206ad80adbb2a6f3a2f17d3fc0a1032586f4096
+     CMake build type               : DEBUG
+     Asserts                        : on (turn off: CMAKE_BUILD_TYPE=RELEASE)
+     Exception trace                : on (turn off: CMAKE_BUILD_TYPE=RELEASE)
+     MPI C++ wrapper                : /opt/openmpi/1.8/clang/system/bin/mpicxx
+     Underlying C++ compiler        : /usr/bin/clang++-3.5
+     Build date                     : Wed May 13 11:42:14 MDT 2015
+
+ * Run-time environment:
+ -----------------------
+     Date, time                     : Wed May 13 11:52:46 2015
+     Work directory                 : /home/jbakosi/code/quinoa/build/clang
+     Executable (rel. to work dir)  : Main/walker
+     Command line arguments         : '-v -c ../../tmp/mixmassfracbeta.q -v'
+     Output                         : verbose (quiet: omit -v)
+     Control file                   : ../../tmp/mixmassfracbeta.q
+     Parsed control file            : success
+
+
+                                   < FACTORY >                                  
+                                   ---- o ----                            
+
+ * Particle properties data layout policy (CMake: LAYOUT):
+ ---------------------------------------------------------
+     particle-major                
+
+ * Registered differential equations:
+ ------------------------------------
+     Unique equation types          : 12
+     With all policy combinations   : 56
+
+     Legend: equation name : supported policies
+
+     Policy codes:
+      * i: initialization policy:
+        R - raw
+        Z - zero
+        D - delta
+        B - beta
+      * c: coefficients policy:
+        C - const
+        D - decay
+        H - homogeneous decay
+        M - Monte Carlo homogeneous decay
+
+     Beta                           : i:BDRZ, c:C
+     Diagonal Ornstein-Uhlenbeck    : i:BDRZ, c:C
+     Dirichlet                      : i:BDRZ, c:C
+     Gamma                          : i:BDRZ, c:C
+     Generalized Dirichlet          : i:BDRZ, c:C
+     Mass-fraction beta             : i:BDRZ, c:C
+     Mix mass-fraction beta         : i:BDRZ, c:DHM
+     Mix number-fraction beta       : i:BDRZ, c:D
+     Number-fraction beta           : i:BDRZ, c:C
+     Ornstein-Uhlenbeck             : i:BDRZ, c:C
+     Skew-Normal                    : i:BDRZ, c:C
+     Wright-Fisher                  : i:BDRZ, c:C
+
+
+                                   < PROBLEM >                                  
+                                   ---- o ----                            
+
+ * Title: Test evolution of some stats in mass fraction mixing
+ -------------------------------------------------------------
+
+ * Differential equations integrated (1):
+ ----------------------------------------
+   < Mix mass-fraction beta >
+     kind                           : stochastic
+     dependent variable             : y
+     initialization policy          : B
+     coefficients policy            : H
+     start offset in particle array : 0
+     number of components           : 5
+     random number generator        : MKL R250
+     coeff b' [5]                   : { 1.9 1.9 1.9 1.9 1.9 }
+     coeff S [5]                    : { 0.5 0.5 0.5 0.5 0.5 }
+     coeff kappa' [5]               : { 1 1 1 1 1 }
+     coeff rho2 [5]                 : { 1 1 1 1 1 }
+     coeff r [5]                    : { 9 9 9 9 9 }
+     beta pds [comp1]               : { 0.2 0.2 0 1 }
+     beta pds [comp2]               : { 0.2 0.8 0 1 }
+     beta pds [comp3]               : { 0.8 0.2 0 1 }
+     beta pds [comp4]               : { 2 2 0 1 }
+     beta pds [comp5]               : { 2 5 0 1 }
+
+ * Output filenames:
+ -------------------
+     Statistics                     : stat.txt
+     PDF                            : pdf
+
+ * Discretization parameters:
+ ----------------------------
+     Number of time steps           : 18446744073709551615
+     Terminate time                 : 5
+     Initial time step size         : 0.01
+
+ * Output intervals:
+ -------------------
+     TTY                            : 100
+     Statistics                     : 1
+     PDF                            : 100
+
+ * Statistical moments and distributions:
+ ----------------------------------------
+     Estimated statistical moments  : <Y1> <Y2> <Y3> <Y4> <Y5> <Y6> <Y6Y1> <Y7> <Y7Y2> <Y8> <Y8Y3> <Y9> <Y9Y4> <Y10> <Y10Y5> <Y11> <Y12> <Y13> <Y14> <Y15> <y1y1> <y1y1y1> <y2y2> <y2y2y2> <y3y3> <y3y3y3> <y4y4> <y4y4y4> <y5y5> <y5y5y5> <y6y6> <y6y6y6> <y6y11> <y7y7> <y7y7y7> <y7y12> <y8y8> <y8y8y8> <y8y13> <y9y9> <y9y9y9> <y9y14> <y10y10> <y10y10y10> <y10y15> 
+     Stats floating-point format    : scientific
+     Stats text precision, digits   : 12
+     Estimated PDFs                 : p1(Y1:0.005) p2(Y2:0.005) p3(Y3:0.005) p6(Y6:5e-05) p7(Y7:5e-05) p8(Y8:5e-05) 
+     PDF output file type           : txt
+     PDF output file policy         : overwrite
+     PDF output file centering      : elem
+     PDF text floating-point format : scientific
+     PDF text precision, digits     : 4
+
+ * Load distribution:
+ --------------------
+     Virtualization [0.0...1.0]     : 0
+     Load (number of particles)     : 100000
+     Number of processing elements  : 8
+     Number of work units           : 8 (7*12500+12500)
+
+ * Time integration: Differential equations testbed
+ --------------------------------------------------
+     Legend: it - iteration count
+              t - time
+             dt - time step size
+            ETE - estimated time elapsed (h:m:s)
+            ETA - estimated time for accomplishment (h:m:s)
+            out - output-saved flags (S: statistics, P: PDFs)
+     
+      it             t            dt        ETE        ETA   out
+ ---------------------------------------------------------------
+     100  1.000000e+00  1.000000e-02  000:00:13  000:00:52  SP
+     200  2.000000e+00  1.000000e-02  000:00:26  000:00:39  SP
+     300  3.000000e+00  1.000000e-02  000:00:39  000:00:26  SP
+     400  4.000000e+00  1.000000e-02  000:00:52  000:00:13  SP
+     500  5.000000e+00  1.000000e-02  000:01:05  000:00:00  SP
+
+     Normal finish, maximum time reached: 5.000000
+
+ * Timers (h:m:s):
+ -----------------
+     Migrate global-scope data                                         : 0:0:0
+     Initial conditions                                                : 0:0:0
+     Total runtime                                                     : 0:1:5
+
+
+[Partition 0][Node 0] End of program
+d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 
+\endverbatim
+
+\section walker_example_mixmassfracbeta_results Results
+
+The rationale for these runs is to integrate the system in time, extract the
+time evolution of various statistics and PDFs, and then test if the evolution of
+the statistics allow us to qualitatively correctly model the physical process of
+mixing. Example questions these simulations help answer:
+
+ - Can we start with a symmetric initial mass fraction PDF and generate a
+   nonzero skewness?
+
+ - Can we start with positive or negative initial mass fraction skewness?
+
+ - Does the time evolution ensure monotonic decay of the mass fraction
+   variancess as well as the density variances at all times?
+
+ - Does the initially symmetric mass fraction PDF generate a smaller skewness
+   for the low Atwood number than the large Atwood number case?
+
+\verbatim
+# vim: filetype=gnuplot:
+
+# Nomenclature:
+# -------------
+# V - instantaneous specific volume
+# R - instantaneous density
+# v = V - <V>, fluctuating specific volume
+# r = R - <R>, fluctuating density
+# b = -<rv>, density-specific-volume covariance
+# B - as postfix means the Bousinessq approximation
+# nm - no-mix value
+
+# For homdecay
+
+# <Y>, mass fraction means
+plot "stat.txt" u 2:3 w l t "<Y1>", "stat.txt" u 2:4 w l t "<Y2>", "stat.txt" u 2:5 w l t "<Y3>", "stat.txt" u 2:6 w l t "<Y4>", "stat.txt" u 2:7 w l t "<Y5>"
+# <R>, mean densities
+plot "stat.txt" u 2:8 w l t "<R1>", "stat.txt" u 2:10 w l t "<R2>", "stat.txt" u 2:12 w l t "<R3>", "stat.txt" u 2:14 w l t "<R4>", "stat.txt" u 2:16 w l t "<R5>"
+# <V>, mean specific volumes
+plot "stat.txt" u 2:18 w l t "<V1>", "stat.txt" u 2:19 w l t "<V2>", "stat.txt" u 2:20 w l t "<V3>", "stat.txt" u 2:21 w l t "<V4>", "stat.txt" u 2:22 w l t "<V5>"
+# <y^2>, mass fraction variances
+plot "stat.txt" u 2:23 w l t "<y1y1>", "stat.txt" u 2:25 w l t "<y2y2>", "stat.txt" u 2:27 w l t "<y3y3>", "stat.txt" u 2:29 w l t "<y4y4>", "stat.txt" u 2:31 w l t "<y5y5>"
+# <y^3>, mass fraction third moments
+plot "stat.txt" u 2:24 w l t "<y1y1y1>", "stat.txt" u 2:26 w l t "<y2y2y2>", "stat.txt" u 2:28 w l t "<y3y3y3>", "stat.txt" u 2:30 w l t "<y4y4y4>", "stat.txt" u 2:32 w l t "<y5y5y5>"
+# <r^2>, density variances
+plot "stat.txt" u 2:33 w l t "<r1r1>", "stat.txt" u 2:36 w l t "<r2r2>", "stat.txt" u 2:39 w l t "<r3r3>", "stat.txt" u 2:42 w l t "<r4r4>", "stat.txt" u 2:45 w l t "<r5r5>"
+# <r^3>, density third moments
+plot "stat.txt" u 2:34 w l t "<r1r1r1>", "stat.txt" u 2:37 w l t "<r2r2r2>", "stat.txt" u 2:40 w l t "<r3r3r3>", "stat.txt" u 2:43 w l t "<r4r4r4>", "stat.txt" u 2:46 w l t "<r5r5r5>"
+# <rv>, density-specific-volume covariances
+plot "stat.txt" u 2:35 w l t "<r1v1>", "stat.txt" u 2:38 w l t "<r2v2>", "stat.txt" u 2:41 w l t "<r3v3>", "stat.txt" u 2:44 w l t "<r4v4>", "stat.txt" u 2:47 w l t "<r5v5>"
+# <RY>
+plot "stat.txt" u 2:9 w l t "<R1Y1>", "stat.txt" u 2:11 w l t "<R2Y2>", "stat.txt" u 2:13 w l t "<R3Y3>", "stat.txt" u 2:15 w l t "<R4Y4>", "stat.txt" u 2:17 w l t "<R5Y5>"
+
+# For mchomdecay
+
+# <R>, mean densities
+plot "stat.txt" u 2:18 w l t "<R1>", "stat.txt" u 2:20 w l t "<R2>", "stat.txt" u 2:22 w l t "<R3>", "stat.txt" u 2:24 w l t "<R4>", "stat.txt" u 2:26 w l t "<R5>"
+# <r^2>, density variances
+plot "stat.txt" u 2:38 w l t "<r1r1>", "stat.txt" u 2:39 w l t "<r2r2>", "stat.txt" u 2:40 w l t "<r3r3>", "stat.txt" u 2:41 w l t "<r4r4>", "stat.txt" u 2:42 w l t "<r5r5>"
+# <R^2>
+plot "stat.txt" u 2:19 w l t "<R1R1>", "stat.txt" u 2:21 w l t "<R2R2>", "stat.txt" u 2:23 w l t "<R3R3>", "stat.txt" u 2:25 w l t "<R4R4>", "stat.txt" u 2:27 w l t "<R5R5>"
+# <y^2>, mass fraction variances
+plot "stat.txt" u 2:33 w l t "<y1y1>", "stat.txt" u 2:34 w l t "<y2y2>", "stat.txt" u 2:35 w l t "<y3y3>", "stat.txt" u 2:36 w l t "<y4y4>", "stat.txt" u 2:37 w l t "<y5y5>"
+\endverbatim
+
+<hr>
+<div><small>
+<em>Page last updated:</em> Wed 13 May 2015 12:06:32 PM MDT
+<em>Copyright 2012-2015, Jozsef Bakosi.</em>
+</small></div>
+*/

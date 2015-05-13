@@ -12,6 +12,7 @@
   - \subpage walker_example_gamma
   - \subpage walker_example_numfracbeta
   - \subpage walker_example_massfracbeta
+  - \subpage walker_example_mixmassfracbeta
 
 \section rngtest_examples RNGTest examples
   - \subpage rngtest_example_smallcrush
@@ -20,7 +21,7 @@
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Wed 01 Apr 2015 11:04:32 AM MDT
+<em>Page last updated:</em> Wed 13 May 2015 11:45:07 AM MDT
 <em>Copyright 2012-2015, Jozsef Bakosi.</em>
 </small></div>
 */
