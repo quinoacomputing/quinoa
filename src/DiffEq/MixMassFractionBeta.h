@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/MixMassFractionBeta.h
   \author    J. Bakosi
-  \date      Thu 30 Apr 2015 10:17:58 PM MDT
+  \date      Wed 13 May 2015 11:20:04 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     System of mix mass-fraction beta SDEs
   \details   This file implements the time integration of a system of stochastic
@@ -127,6 +127,11 @@ class MixMassFractionBeta {
       Init::template
         init< tag::mixmassfracbeta >
             ( g_inputdeck, m_rng, stream, particles, m_c, m_ncomp, m_offset );
+      // Initialize values derived from primary prognostic variable
+      const auto npar = particles.npar();
+      for (auto p=decltype(npar){0}; p<npar; ++p)
+        for (ncomp_t i=0; i<m_ncomp; ++i)
+          derived( particles, p, i );
     }
 
     //! \brief Advance particles according to the system of mix mass-fraction
@@ -157,9 +162,7 @@ class MixMassFractionBeta {
           d = (d > 0.0 ? std::sqrt(d) : 0.0);
           Y += 0.5*m_b[i]*(m_S[i] - Y)*dt + d*dW[i];
           // Compute instantaneous values derived from updated Y
-          particles( p, m_ncomp+i, m_offset ) = rho( Y, i );
-          particles( p, m_ncomp*2+i, m_offset ) = vol( Y, i );
-          particles( p, m_ncomp*3+i, m_offset ) = 1.0 - Y;
+          derived( particles, p, i );
         }
       }
     }
@@ -203,6 +206,17 @@ class MixMassFractionBeta {
     //! \return Instantaneous value of the specific volume, V
     tk::real vol( tk::real Y, ncomp_t i ) const {
       return 1.0 / rho( Y, i );
+    }
+
+    //! Compute instantaneous values derived from updated Y
+    //! \param[inout] particles Particle properties array
+    //! \param[in] p Particle index
+    //! \param[in] i Component index
+    void derived( tk::ParProps& particles, ncomp_t p, ncomp_t i ) const {
+      tk::real& Y = particles( p, i, m_offset );
+      particles( p, m_ncomp+i, m_offset ) = rho( Y, i );
+      particles( p, m_ncomp*2+i, m_offset ) = vol( Y, i );
+      particles( p, m_ncomp*3+i, m_offset ) = 1.0 - Y;
     }
 };
 
