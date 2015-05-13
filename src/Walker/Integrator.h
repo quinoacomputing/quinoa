@@ -2,7 +2,7 @@
 /*!
   \file      src/Walker/Integrator.h
   \author    J. Bakosi
-  \date      Thu 30 Apr 2015 03:37:21 PM MDT
+  \date      Wed 13 May 2015 10:52:01 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Integrator advances differential equations
   \details   Integrator advances differential equations. There are a potentially
@@ -83,8 +83,9 @@ class Integrator : public CBase_Integrator< Proxy > {
                   const std::map< tk::ctr::Product, tk::real >& moments )
     {
       //! Advance all equations one step in time
-      for (const auto& e : g_diffeqs)
-        e.advance( m_particles, CkMyPe(), dt, moments );
+      if (it < g_inputdeck.get< tag::discr, tag::nstep >())
+        for (const auto& e : g_diffeqs)
+          e.advance( m_particles, CkMyPe(), dt, moments );
       // Accumulate sums for ordinary moments (every time step)
       accumulateOrd();
       // Accumulate sums for ordinary PDFs at select times
