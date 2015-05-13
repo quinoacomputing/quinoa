@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/MixMassFractionBetaCoeffPolicy.h
   \author    J. Bakosi
-  \date      Thu 30 Apr 2015 09:48:39 AM MDT
+  \date      Wed 13 May 2015 11:29:56 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Mix mass-fraction beta SDE coefficients policies
   \details   This file defines coefficients policy classes for the mix
@@ -256,7 +256,10 @@ class MixMassFracBetaCoeffHomDecay {
         //b[c] = 1.0;
         //k[c] = 0.5*v/(m*(1.0-m));
 
-        if (d < 1.0e-8) d = 0.5;
+        if (d < 1.0e-8) {
+          std::cout << "d:" << d << " ";
+          d = 0.5;
+        }
         tk::real R = 1.0 + d2/d/d;
         tk::real B = -1.0/r[c]/r[c];
         tk::real C = (2.0+r[c])/r[c]/r[c];
@@ -267,7 +270,10 @@ class MixMassFracBetaCoeffHomDecay {
           D*d*d*d*(1.0 + 3.0*d2/d/d + d3/d/d/d)/rho2[c]/rho2[c]/rho2[c];
         S[c] = (rho2[c]/d/R +
                 2.0*k[c]/b[c]*rho2[c]*rho2[c]/d/d*r[c]*r[c]/R*diff - 1.0) / r[c];
-        if (S[c] < 0.0 || S[c] > 1.0) std::cout << S[c] << " ";
+        if (S[c] < 0.0 || S[c] > 1.0) {
+          std::cout << S[c] << " ";
+          S[c] = 0.5;
+        }
       }
     }
 };
