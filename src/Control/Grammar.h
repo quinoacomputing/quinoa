@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Grammar.h
   \author    J. Bakosi
-  \date      Thu 30 Apr 2015 02:31:05 PM MDT
+  \date      Wed 13 May 2015 08:57:34 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Generic, low-level grammar
   \details   Generic, low-level grammar. We use the [Parsing Expression Grammar
@@ -189,7 +189,7 @@ namespace grm {
       "colon, followed by a non-empty list of bin sizes (reals numbers), e.g., "
       "\"(x y : 0.1 0.2)\"" },
     { MsgKey::MALFORMEDSAMPLE, "A PDF sample space variable must be a single "
-      "upper or lowercase letter optionally followed by a single digit. "
+      "upper or lowercase letter optionally followed by an integer. "
       "Multiple variables, specifying a multi-dimensional sample space, must "
       "be separated by white spaces." },
     { MsgKey::INVALIDBINSIZE, "PDF sample space bin size(s) specification "
@@ -725,15 +725,12 @@ namespace grm {
       if ( pdf.back().size() >= 3 ) {
         Message< Stack, ERROR, MsgKey::MAXSAMPLES >( stack, value );
       }
-      // Error out if matched sample space variable is longer than two
-      // characters or if it is two-character long but the second character is
-      // not a digit - malformed sample
-      if ( value.size() > 2 || (value.size() > 1 && !std::isdigit(value[1])) ) {
+      // Error out if matched sample space variable starts with a digit
+      if ( std::isdigit(value[0]) )
         Message< Stack, ERROR, MsgKey::MALFORMEDSAMPLE >( stack, value );
-      }
       // Push term into current vector
       pdf.back().emplace_back( tk::ctr::Term( value[0], field, m ) );
-      // If central moment, trigger mean (in statistics)
+      // If central moment, trigger estimation of mean (in statistics)
       if (m == tk::ctr::Moment::CENTRAL) {
         tk::ctr::Term term( static_cast<char>(toupper(value[0])),
                             field,
@@ -1281,10 +1278,11 @@ namespace grm {
          pegtl::ifapply< pegtl::identifier,
                          match_pdfname< Stack > > {};
 
-  //! \brief Match sample space specification between characters '(' and ')'
-  //! \details Example syntax (without the quotes): "(x y z : 1.0 2.0 3.0)",
-  //!    where x,y,z are sample space variables, while 1.0 2.0 3.0 are bin sizes
-  //!    corresponding to the x y z sample space dimensions, respectively.
+  //! \brief Match pdf description: name + sample space specification
+  //! \details Example syntax (without the quotes): "name(x y z : 1.0 2.0 3.0)",
+  //!    'name' is the name of the pdf, and x,y,z are sample space variables,
+  //!    while 1.0 2.0 3.0 are bin sizes corresponding to the x y z sample space
+  //!    dimensions, respectively.
   //! \author J. Bakosi
   template< class Stack >
   struct parse_pdf :
