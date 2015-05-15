@@ -41,9 +41,8 @@ extern std::vector< std::map< std::size_t, std::vector<std::size_t> > > g_ecomm;
 
 using inciter::Performer;
 
-Performer::Performer( CProxy_Conductor& hostproxy,
-                      LinSysMergerProxy& lsmproxy ) :
-  m_id( static_cast< std::size_t >( thisIndex ) ),
+Performer::Performer( CProxy_Conductor& hostproxy, LinSysMergerProxy& lsmproxy )
+: m_id( static_cast< std::size_t >( thisIndex ) ),
   m_hostproxy( hostproxy ),
   m_lsmproxy( lsmproxy ),
   m_point( g_point[ m_id ] )
@@ -72,6 +71,8 @@ Performer::Performer( CProxy_Conductor& hostproxy,
           std::map< std::size_t, std::vector< std::size_t > >() );
   // Output chare mesh and nodal chare id field to file
   writeChareId( inpoel, coord );
+  // Send some timing results to the host
+  m_hostproxy.timestamp( m_timestamp );
 }
 
 void
@@ -112,6 +113,8 @@ Performer::consistentMass(
 //! \author J. Bakosi
 //******************************************************************************
 {
+  tk::Timer t;
+
   for (std::size_t e=0; e<inpoel.size()/4; ++e) {
     const auto& x = coord[0];
     const auto& y = coord[1];
@@ -149,6 +152,8 @@ Performer::consistentMass(
     mD[C] += vol;
     mD[D] += 2.0*vol;
   }
+
+  m_timestamp.emplace_back( "Compute consistent mass matrix", t.dsec() );
 }
 
 void
@@ -310,7 +315,7 @@ Performer::lid( const std::map< std::size_t, std::size_t >& lnode,
 }
 
 std::array< std::vector< tk::real >, 3 >
-Performer::initCoords( const std::vector< std::size_t >& gnode ) const
+Performer::initCoords( const std::vector< std::size_t >& gnode )
 //******************************************************************************
 //  Read coordinates of mesh nodes from file
 //! \param[in] gnode Global node ids whose coordinates to read from file
@@ -318,6 +323,8 @@ Performer::initCoords( const std::vector< std::size_t >& gnode ) const
 //! \author J. Bakosi
 //******************************************************************************
 {
+  tk::Timer t;
+
   tk::UnsMesh mesh;
   tk::ExodusIIMeshReader
     er( g_inputdeck.get< tag::cmd, tag::io, tag::input >(), mesh );
@@ -328,13 +335,14 @@ Performer::initCoords( const std::vector< std::size_t >& gnode ) const
   else
     for (auto p : gnode) er.readNode( p, x, y, z );
 
+  m_timestamp.emplace_back( "Read mesh point coordinates from file", t.dsec() );
+
   return { { x, y, z } };
 }
 
 void
 Performer::writeChareId( const std::vector< std::size_t >& inpoel,
                          const std::array< std::vector< tk::real >, 3 >& coord )
-const
 //******************************************************************************
 // Output chare mesh and nodal chare id field to file
 //! \param[in] inpoel Tetrahedron element connectivity
@@ -342,6 +350,8 @@ const
 //! \author J. Bakosi
 //******************************************************************************
 {
+  tk::Timer t;
+
   // Create mesh object initializing element connectivity and point coords
   tk::UnsMesh mesh( inpoel, coord );
 
@@ -359,4 +369,6 @@ const
   std::vector< tk::real > chid( mesh.nelem(), static_cast<tk::real>(m_id) );
   ew.writeElemVarNames( { "Chare Id" } );
   ew.writeElemScalar( 1, 1, chid );
- }
+
+  m_timestamp.emplace_back( "Write chare id to file", t.dsec() );
+}
