@@ -60,14 +60,17 @@ remap( std::vector< std::size_t >& id, const std::vector< std::size_t >& newid )
           "attempt to index out of node id bounds using newid" );
 
   // remap node ids in vector id
-  for (auto& n : id) n = newid[ n ];
+  for (auto& n : id) n = newid[n];
 }
 
-std::vector< std::size_t >
+std::pair< std::vector< std::size_t >, std::vector< std::size_t > >
 renumber( std::pair< std::vector< std::size_t >,
                      std::vector< std::size_t > >& psup )
 //******************************************************************************
 //  Reorder mesh points with the advancing front technique
+//! \param[inout] psup Points surrounding points (used and updated with new
+//!   ordering)
+//! \return Pair of maps between old->new and new->old order
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -104,8 +107,13 @@ renumber( std::pair< std::vector< std::size_t >,
   // Apply new point ids to points surrounding points
   remap( psup.first, mapvec );
 
-  // Return new mapping
-  return mapvec;
+  // Construct new->old id map
+  std::size_t i = 0;
+  std::vector< std::size_t > oldmap( npoin );
+  for (auto n : mapvec) oldmap[n] = i++;
+
+  // Return old->new and new->old maps
+  return { mapvec, oldmap };
 }
 
 } // tk::

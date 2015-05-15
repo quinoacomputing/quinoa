@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/performer.ci
   \author    J. Bakosi
-  \date      Mon 11 May 2015 02:47:10 PM MDT
+  \date      Wed 13 May 2015 12:42:52 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Charm++ module interface file for Performer
   \details   Charm++ module interface file for Performer
@@ -14,12 +14,44 @@ module performer {
   extern module conductor;
   extern module linsysmerger;
 
+  include "Types.h";
+
   namespace inciter {
 
     array [1D] Performer {
       entry Performer( CProxy_Conductor& hostproxy,
                        tk::CProxy_LinSysMerger< CProxy_Conductor >& lsmproxy );
-    }
+      entry void add(
+        int id,
+        const std::map< std::size_t,
+                        std::map< std::size_t, tk::real > >& rows );
+
+      // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
+      // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
+
+      // High-level overview of the dependency and asynchronous call structure
+      // ---------------------------------------------------------------------
+      //
+      // Directed Acyclic Graph (DAG):        DAG legend:
+      // -----------------------------          WPe  - Query worker PEs
+      //                                        Sys  - Create linear system
+      // WPe -- Pts                             Pts  - Export mesh points
+      //           \                            Init - Initialized
+      // Sys ------ Init
+      //
+      // Interpretation of the above DAG
+      // -------------------------------
+      // Control flow is from left to right and top to bottom.
+      //
+
+      entry void wait4mass() {
+        when mass_complete() serial {
+          contributeLhs();
+        }
+      };
+
+      entry void mass_complete();
+    };
 
   } // inciter::
 

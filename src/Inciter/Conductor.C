@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Conductor.C
   \author    J. Bakosi
-  \date      Tue 12 May 2015 09:27:52 AM MDT
+  \date      Wed 13 May 2015 06:12:42 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Conductor drives the time integration of the Euler equations
   \details   Conductor drives the time integration of the Euler equations.
@@ -22,7 +22,7 @@ extern CProxy_Main mainProxy;
 namespace inciter {
 
 extern std::size_t g_npoin;
-extern std::vector< std::map< std::size_t, std::vector<std::size_t> > > g_comm;
+extern std::vector< std::map< std::size_t, std::vector<std::size_t> > > g_pcomm;
 
 } // inciter::
 
@@ -37,7 +37,7 @@ Conductor::Conductor() :
 //******************************************************************************
 {
   // Get number of chares
-  auto nchare = static_cast< int >( g_comm.empty() ? 1 : g_comm.size() );
+  auto nchare = static_cast< int >( g_pcomm.empty() ? 1 : g_pcomm.size() );
 
   // Create linear system merger chare group collecting chear contributions
   m_lsmproxy = LinSysMergerProxy::ckNew( thisProxy, g_npoin );

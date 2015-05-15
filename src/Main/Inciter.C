@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Inciter.C
   \author    J. Bakosi
-  \date      Mon 11 May 2015 02:52:03 PM MDT
+  \date      Fri 15 May 2015 08:56:02 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Inciter, computational shock hydrodynamics tool, Charm++ main
     chare.
@@ -27,20 +27,10 @@
 #include <pup_stl.h>
 
 #include <Config.h>
-#include <RNG.h>
-#include <RNGStack.h>
 #include <InciterPrint.h>
 #include <InciterDriver.h>
-#include <Inciter/CmdLine/Parser.h>
-#include <Inciter/InputDeck/Parser.h>
-#include <MeshFactory.h>
-#include <LoadDistributor.h>
-#include <ZoltanInterOp.h>
-#include <ExceptionMPI.h>
+#include <InciterSetup.h>
 #include <ProcessException.h>
-#include <ExodusIIMeshReader.h>
-#include <DerivedData.h>
-#include <Reorder.h>
 #include <Init.h>
 
 //! \brief Charm handle to the main proxy, facilitates call-back to finalize,
@@ -67,15 +57,17 @@ std::size_t g_npoin;
 std::pair< std::vector< std::size_t >, std::vector< std::size_t > > g_esup;
 //! Mesh tetrahedron element connectivity
 std::vector< std::size_t > g_tetinpoel;
-//! \brief Global unordered mesh point ids owned by each chare
-//! \details The global ids stored here for each chare correspond to that in the
-//!   file the mesh graph was read in from. Note that these ids are unordered
-//!   and thus this mapping yields non-contiguous partitions.
+//! Index map between renumbered mesh point ids and those in mesh file
+//! \note Empty if mesh has not been renumbered.
+std::vector< std::size_t > g_meshfilemap;
+//! Global mesh point ids owned by each chare
 std::vector< std::vector< std::size_t > > g_point;
-//! \brief Global mesh element ids owned by each chare
+//! Global mesh element ids owned by each chare
 std::vector< std::vector< std::size_t > > g_element;
-//! Vector of export maps for all chare ids (empty if nchares = 1)
-std::vector< std::map< std::size_t, std::vector< std::size_t > > > g_comm;
+//! \brief Vector of point-based export maps for all chares (empty if nchares=1)
+std::vector< std::map< std::size_t, std::vector< std::size_t > > > g_pcomm;
+//! \brief Vector of elem-based export maps for all chares (empty if nchares=1)
+std::vector< std::map< std::size_t, std::vector< std::size_t > > > g_ecomm;
 //! \brief Time stamps in h:m:s for the initial MPI portion
 //! \details Time stamps collected here are those collected by the initial MPI
 //!   portion and are displayed by the Charm++ main chare at the end. While this
@@ -85,7 +77,7 @@ std::vector< std::map< std::size_t, std::vector< std::size_t > > > g_comm;
 //!   system does not migrate it across all PEs. This is okay, since since there
 //!   is no need for any of the other Charm++ chares to access it in the future.
 //!   In fact, the main chare grabs it and swallows it right away during its
-//!   constructor.
+//!   constructor for output at the end of the run.
 std::vector< std::pair< std::string, tk::Timer::Watch > > g_timestamp;
 
 //! Conductor Charm++ proxy facilitating call-back to Conductor by the
@@ -200,349 +192,6 @@ class Main : public CBase_Main {
 //! \author J. Bakosi
 struct execute : CBase_execute { execute() { mainProxy.execute(); } };
 
-namespace inciter {
-
-void
-help( int argc,
-      char** argv,
-      const ctr::CmdLine& cmdline,
-      const tk::Print& print )
-//******************************************************************************
-//! Echo help if requested and make sure mandatory command-line args are set
-//! \param[in] argc Number of command-line arguments passed to executable
-//! \param[in] argv C-style character array of character arrays (cmd line args)
-//! \param[in] cmdline Command-line stack
-//! \param[in] print Pretty printer
-//! \author J. Bakosi
-//******************************************************************************
-{
-  int peid;
-  MPI_Comm_rank( MPI_COMM_WORLD, &peid );
-
-  const auto helpcmd = cmdline.get< tag::help >();
-  const auto helpctr = cmdline.get< tag::helpctr >();
-  const auto helpkw = cmdline.get< tag::helpkw >();
-
-  // Output help if requested or exectuable was called without argument and exit
-  if (argc == 1 || helpcmd || helpctr || !helpkw.keyword.empty()) {
-
-    // Initialize the Charm++ runtime system to output Charm++/Converse help
-    CharmLibInit( MPI_COMM_WORLD, argc, argv );
-    CharmLibExit();
-
-    // Print out help on all command-line arguments if the executable was
-    // invoked without arguments or help was requested
-    if (peid == 0 && (argc == 1 || helpcmd))
-      print.help< tk::QUIET >( INCITER_EXECUTABLE,
-                               cmdline.get< tag::cmdinfo >(),
-                               "Command-line Parameters:", "-" );
-
-    // Print out help on all control file keywords if they were requested
-    if (peid == 0 && helpctr)
-      print.help< tk::QUIET >( INCITER_EXECUTABLE,
-                               cmdline.get< tag::ctrinfo >(),
-                               "Control File Keywords:" );
-
-    // Print out verbose help for a single keyword if requested
-    if (peid == 0 && !helpkw.keyword.empty())
-      print.helpkw< tk::QUIET >( INCITER_EXECUTABLE, helpkw );
-
-    // Quit
-    MPI_Finalize();
-    exit( tk::ErrCode::SUCCESS );
-  }
-
-  // Make sure mandatory command-line arguments are set
-  auto ctralias = kw::control().alias();
-  ErrChkMPI( !(cmdline.get< tag::io, tag::control >().empty()),
-             "Mandatory control file not specified. "
-             "Use '--" + kw::control().string() + " <filename>'" +
-             ( ctralias ? " or '-" + *ctralias + " <filename>'" : "" ) + '.' );
-
-  auto inpalias = kw::input().alias();
-  ErrChkMPI( !(cmdline.get< tag::io, tag::input >().empty()),
-             "Mandatory input file not specified. "
-             "Use '--" + kw::input().string() + " <filename>'" +
-             ( inpalias ? " or '-" + *inpalias + " <filename>'" : "" ) + '.' );
-}
-
-inciter::ctr::CmdLine
-parseCmdLine( int argc, char** argv )
-//******************************************************************************
-//! Parse command line
-//! \param[in] argc Number of command-line arguments passed to executable
-//! \param[in] argv C-style character array of character arrays (cmd line args)
-//! \return Hierarchical tagged tuple containind command line data
-//! \author J. Bakosi
-//******************************************************************************
-{
-  int peid;
-  MPI_Comm_rank( MPI_COMM_WORLD, &peid );
-
-  // Create basic pretty printer
-  tk::Print print;    // quiet output by default using print, see tk::Print ctor
-
-  // Create hearchical tagged tuple to store data from command line
-  inciter::ctr::CmdLine cmdline;
-
-  // Parse command line into cmdline
-  inciter::CmdLineParser cmdParser( argc, argv, print, cmdline, peid );
-
-  // Echo help if requested and make sure mandatory command-line args are set
-  inciter::help( argc, argv, cmdline, print );
-
-  return cmdline;
-}
-
-void
-meshinfo( const tk::Print& print,
-          const tk::UnsMesh& graph,
-          uint64_t load,
-          uint64_t chunksize,
-          uint64_t remainder,
-          uint64_t nchare )
-//******************************************************************************
-//! Print information on mesh graph and load distribution
-//! \param[in] print Pretty printer
-//! \param[in] graph Unstructured mesh graph object
-//! \param[in] load Computational load (here: number of graph nodes)
-//! \param[in] chunksize Chunk size, see Base/LoadDistribution.h
-//! \param[in] remainder Remainder, see Base/LoadDistribution.h
-//! \param[in] nchare Number of work units (Charm++ chares)
-//! \author J. Bakosi
-//******************************************************************************
-{
-  int peid, numpes;
-  MPI_Comm_rank( MPI_COMM_WORLD, &peid );
-  MPI_Comm_size( MPI_COMM_WORLD, &numpes );
-
-  if (peid == 0) {
-    // Print out mesh graph stats
-    print.section( "Input mesh graph statistics" );
-    print.item( "Number of element blocks", graph.neblk() );
-    print.item( "Number of elements", graph.nelem() );
-    print.item( "Number of nodes", graph.size() );
-
-    if (!graph.lininpoel().empty())
-      print.item( "Number of lines", graph.lininpoel().size()/2 );
-    if (!graph.triinpoel().empty())
-      print.item( "Number of triangles", graph.triinpoel().size()/3 );
-    if (!graph.tetinpoel().empty())
-      print.item( "Number of tetrahedra", graph.tetinpoel().size()/4 );
-
-    // Print out info on load distribution
-    print.section( "Load distribution" );
-    print.item( "Virtualization [0.0...1.0]",
-                  g_inputdeck.get< tag::cmd, tag::virtualization >() );
-    print.item( "Load (number of tetrahedra)", load );
-    print.item( "Number of processing elements", numpes );
-    print.item( "Number of work units",
-                std::to_string( nchare ) + " (" +
-                std::to_string( nchare-1 ) + "*" +
-                std::to_string( chunksize ) + "+" +
-                std::to_string( chunksize+remainder ) + ")" );
-  }
-}
-
-void
-comMaps( const tk::UnsMesh& graph, const std::vector< std::size_t >& chp )
-//******************************************************************************
-//! Compute communication (export) maps for all graph partitions
-//! \param[in] graph Unstructured mesh graph object
-//! \param[in] chp Array of chare ownership IDs mapping graph points to
-//!   concurrent async chares.
-//! \details Compute communication maps: (1) the export map, associating chare
-//!   ids to a set of receiver chare global ids associated to unique mesh points
-//!   sent, and (2) the import map, associating chare ids to a set of sender
-//!   chare ids associated to unique mesh point global ids received. Note that
-//!   only the export maps are stored, from which the import maps can be
-//!   computed by inverting the export maps. In the MPI paradigm, these maps
-//!   correspond to the export and import lists, respectively, i.e., lists of
-//!   global ids exported by a given rank to a set of receiver ranks and their
-//!   associated mesh points sent at which data are to be sent (export), and
-//!   lists of global ids imported by a given rank to a set of sender ranks and
-//!   their associated mesh points sent at which data are to be received
-//!   (import). For example, in Zoltan, this roughly corresponds to the
-//!   "exported" and "imported" ids after partitioning. Actually,
-//!   Zoltan_LB_Partition() already returns this information. However, if the
-//!   partitioning with Zoltan is done using less MPI ranks than the number of
-//!   desired mesh partitions, i.e., overdecomposition (as is the case here),
-//!   there are more mesh partitions than MPI ranks and thus the arrays returned
-//!   by Zoltan are not sufficient to determine the export and import maps for
-//!   all the chares. Thus we compute the export mapping here.
-//! \note This function only operates on MPI rank 0, since that is the only rank
-//!   where the argument partitions is expected to be non-empty.
-//! \author J. Bakosi
-//******************************************************************************
-{
-  int peid;
-  MPI_Comm_rank( MPI_COMM_WORLD, &peid );
-
-  if (peid == 0) {
-
-    Assert( chp.size() == graph.size(),
-            "Size of ownership array must equal the number of graph nodes" );
-
-    // Store total number points in global schope for Charm++ chares
-    g_npoin = chp.size();
-
-    std::string toofine =
-      "Overdecomposition of the mesh is too large compared to the number of "
-      "work units computed based on the degree of virtualization desired. As "
-      "a result, there would be at least one work unit with no mesh elements "
-      "to work on, i.e., nothing to do. Solution 1: decrease the "
-      "virtualization (currently: " +
-      std::to_string(g_inputdeck.get< tag::cmd, tag::virtualization >()) +
-      ") to a lower value using the command-line argument '-u'. Solution 2: "
-      "decrease the number processing elements (PEs) using the charmrun "
-      "command-line argument '+pN' where N is the number of PEs, which "
-      "implicitlyincreases the size (and thus decreases the number) of work "
-      "units.";
-
-    // Find out number of chares desired
-    auto minmax = std::minmax_element( begin(chp), end(chp) );
-    auto nchare = *minmax.second - *minmax.first + 1;
-
-    // Construct unordered (as in mesh file) global mesh node ids for each chare
-    g_point.resize( nchare );
-    for (std::size_t i=0; i<nchare; ++i)              // for all colors
-      for (std::size_t p=0; p<chp.size(); ++p )       // for all mesh points
-        if (chp[p] == i)
-          g_point[i].push_back( p );
-
-    // Store element connectivity in global scope for Charm++ chares
-    g_tetinpoel = graph.tetinpoel();
-
-    // Generate elements surrounding points and store in global scope for
-    // Charm++ chares
-    g_esup = tk::genEsup( g_tetinpoel, 4 );
-
-    // lambda to find out if all 4 points of tetrahedron e are owned by the same
-    // chare that owns point p; if so, return true, if not, return the lowest of
-    // the owner chare ids of the points of the tetrahedron (chosen as the owner
-    // of e)
-    auto own = [ &chp ]( std::size_t e, std::size_t p )
-             -> std::pair< bool, std::size_t >
-    {
-      std::vector< bool > op;
-      std::set< std::size_t > owner;
-      for (std::size_t n=0; n<4; ++n)
-        if (chp[ g_tetinpoel[e*4+n] ] == chp[p])
-          op.push_back( true );
-        else
-          owner.insert( chp[ g_tetinpoel[e*4+n] ] );
-      if (op.size() == 4)
-        return { true, 0 };
-      else
-        return { false, std::min( chp[p], *owner.begin() ) };
-    };
-
-    // Construct array of chare ownership IDs mapping mesh elements to chares
-    std::vector< std::size_t > che( g_tetinpoel.size()/4 );
-    for (std::size_t p=0; p<graph.size(); ++p)  // for all mesh points
-      for (auto i=g_esup.second[p]+1; i<=g_esup.second[p+1]; ++i) {
-        auto e = g_esup.first[i];
-        auto o = own(e,p);
-        if (o.first)
-          che[e] = chp[p];
-        else
-          che[e] = o.second;
-      }
-
-//     std::cout << "che: ";
-//     for (auto o : che) std::cout << o << " ";
-//     std::cout << '\n';
-
-    Assert( nchare > *std::max_element( begin(che), end(che) ),
-            "Elements assigned to more than the number chares" );
-
-    // This check should always be done, as it can result from incorrect user
-    // input compared to the mesh size and not due to programmer error.
-    minmax = std::minmax_element( begin(che), end(che) );
-    ErrChk( *minmax.first == 0 && *minmax.second == nchare-1, std::move(toofine) );
-
-    // Construct global mesh element ids for each chare
-    g_element.resize( nchare );
-    for (std::size_t i=0; i<nchare; ++i)              // for all colors
-      for (std::size_t e=0; e<che.size(); ++e )       // for all mesh elements
-        if (che[e] == i)
-          g_element[i].push_back( e );
-
-//     std::size_t i = 0;
-//     for (const auto& c : g_element) {
-//       std::cout << i++ << ": ";
-//       for (auto e : c) {
-//         std::cout << g_tetinpoel[e*4] << " "
-//                   << g_tetinpoel[e*4+1] << " "
-//                   << g_tetinpoel[e*4+2] << " "
-//                   << g_tetinpoel[e*4+3] << ", ";
-//       }
-//       std::cout << '\n';
-//     }
-
-    // This check should always be done, as it can result from incorrect user
-    // input compared to the mesh size and not due to programmer error.
-    for(const auto& c : g_element) ErrChk( !c.empty(), std::move(toofine) );
-
-    // If graph not partitioned, quit leaving communication maps empty
-    if (nchare == 1) return;
-
-    // Map to associate a chare id to a map of receiver chare ids associated to
-    // unique global point ids sent (export map)
-    std::map< std::size_t,
-              std::map< std::size_t, std::set< std::size_t > > > comm;
-
-     // Generate points surrounding points
-    auto psup = tk::genPsup( g_tetinpoel, 4, tk::genEsup(g_tetinpoel,4) );
-
-   // Construct export maps
-    for (std::size_t p=0; p<graph.size(); ++p)  // for all mesh points
-      for (auto i=psup.second[p]+1; i<=psup.second[p+1]; ++i) {
-        auto q = psup.first[i];
-        if (chp[p] != chp[q])       // if the colors differ, store global id
-          comm[ chp[p] ][ chp[q] ].insert( p );
-      }
-
-    // This check should always be done, as it can result from incorrect user
-    // input compared to the mesh size and not due to programmer error.
-    ErrChk( comm.size() == nchare, std::move(toofine) );
-
-    std::size_t c = 0;
-    for (const auto& e : comm)
-      Assert( e.first == c++,
-              "Export/import maps should not be missing for chare id " +
-              std::to_string(c-1) );
-
-    // Construct final product: a vector of export maps associating receiver
-    // chare ids to unique communicated global point ids for all chare ids, and
-    // store it in global scope so that the Charm++ chares can access it
-    for (const auto& e : comm) {
-      g_comm.push_back( {} );
-      for (const auto& x : e.second)
-        for (auto p : x.second)
-          g_comm.back()[ x.first ].push_back( p );
-    }
-
-    Assert( g_comm.size() == nchare,
-            "Number of export/import maps must equal the number of chares" );
-
-//     std::size_t h = 0;
-//     for (const auto& m : g_comm) {
-//       std::cout << h++ << " -> ";
-//       for (const auto& x : m) {
-//         std::cout << x.first << ": ";
-//         for (auto p : x.second)
-//           std::cout << p << " ";
-//       }
-//       std::cout << '\n';
-//       std::cout << '\n';
-//     }
-
-  }
-}
-
-} // inciter::
-
 //! \brief Inciter main()
 //! \details Inciter does have a main() function so that Zoltan, an MPI library,
 //!   can partition the mesh. Then we initialize the Charm++ runtime system and
@@ -552,98 +201,29 @@ comMaps( const tk::UnsMesh& graph, const std::vector< std::size_t >& chp )
 //! \author J. Bakosi
 int main( int argc, char **argv ) {
 
-  using inciter::g_timestamp;
+  using namespace inciter;
 
   tk::Timer mpi;        // start timing the MPI portion
 
-  int peid, numpes;
-  MPI_Status status;
-
   // Initialize MPI
   MPI_Init( &argc, &argv );
-  MPI_Comm_rank( MPI_COMM_WORLD, &peid );
-  MPI_Comm_size( MPI_COMM_WORLD, &numpes );
 
   try {
-
-    // Parse command line into cmdline
-    const auto cmdline = inciter::parseCmdLine( argc, argv );
+    // Parse command line
+    const auto cmdline = parseCmdLine( argc, argv );
    
     // Instantiate inciter's pretty printer
-    inciter::InciterPrint
+    InciterPrint
       iprint( cmdline.get< tag::verbose >() ? std::cout : std::clog );
 
-    if (peid == 0) {
-      // Echo program header
-      echoHeader( iprint, tk::HeaderType::INCITER );
-      // Echo environment
-      iprint.part( "Environment" );
-      // Build environment
-      echoBuildEnv( iprint, INCITER_EXECUTABLE );
-      // Runtime environment
-      echoRunEnv( iprint, argc, argv, cmdline.get< tag::verbose >() );
-    }
+    // Parse input deck, echo info
+    init( cmdline, iprint, g_inputdeck, argc, argv );
 
-    // Parse input deck into g_inputdeck
-    if (peid == 0)
-      iprint.item( "Control file", cmdline.get< tag::io, tag::control >() );
-
-    inciter::InputDeckParser
-      inputdeckParser( iprint, cmdline, inciter::g_inputdeck, peid );
-
-    if (peid == 0) {
-      iprint.item( "Parsed control file", "success" );
-      iprint.endpart();
-      iprint.part( "Factory" );
-    }
-
-    // The load is taken to be proportional to the number of elements of the
-    // mesh which is proportional to the number of points as well as the number
-    // of unique edges in the mesh. For a typical mesh of tetrahedra nelem =
-    // 5.5*npoin, nedge = 7*npoin, and npsup = 14*npoin, where
-    //  * nelem - number of elements,
-    //  * npoin - number of points,
-    //  * nedge - number of unique edges,
-    //  * npsup - number of points surrounding points, which is the same as the
-    // number of (non-unique) edges surrounding points. See also Lohner, An
-    // Introduction to Applied CFD Techniques, Wiley, 2008.
-    uint64_t load;
-    int load_tag = 1;
-
-    // Create empty unstructured mesh object (will only load connectivity, so we
-    // call it a graph instead of a mesh)
-    tk::UnsMesh graph;
-
-    // Read mesh graph from file only on MPI rank 0 and distribute load size
-    if (peid == 0) {
-      tk::Timer timer;
-      tk::ExodusIIMeshReader er( cmdline.get< tag::io, tag::input >(), graph );
-      er.readGraph();
-      g_timestamp.emplace_back( "Read mesh graph from file", timer.hms() );
-      load = graph.tetinpoel().size()/4;
-      for (int i=1; i<numpes; ++i)
-        MPI_Send( &load, 1, MPI_UINT64_T, i, load_tag, MPI_COMM_WORLD );
-    } else {
-      MPI_Recv( &load, 1, MPI_UINT64_T, 0, load_tag, MPI_COMM_WORLD, &status );
-    }
-
-    // Compute load distribution given total work (load) and user-specified
-    // virtualization
-    uint64_t chunksize, remainder;
-    const auto nchare =
-      tk::linearLoadDistributor( cmdline.get< tag::virtualization >(),
-                                 load, numpes, chunksize, remainder );
-
-    // Print out info on mesh and load distribution
-    inciter::meshinfo( iprint, graph, load, chunksize, remainder, nchare );
-
-    // Partition graph using Zoltan and compute communication maps (stored in
-    // g_comMaps) for each graph partition, each of which will become Charm++
-    // chares
-    tk::Timer t;
-    inciter::comMaps( graph, tk::zoltan::partitionMesh(graph, nchare, iprint) );
-    g_timestamp.emplace_back( "Partition mesh & compute communication maps",
-                              t.hms() );
+    // Prepare computational mesh and fill some global-scope data (all given at
+    // the top of this file) so that Charm++ chares can access them
+    prepareMesh( cmdline, iprint, g_inputdeck,  // <- const
+                 g_timestamp, g_npoin, g_point, g_element, g_meshfilemap,
+                 g_tetinpoel, g_esup, g_pcomm, g_ecomm );
 
   } catch (...) { tk::processExceptionMPI(); }
 

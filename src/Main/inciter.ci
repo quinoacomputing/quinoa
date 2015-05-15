@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/inciter.ci
   \author    J. Bakosi
-  \date      Wed 06 May 2015 11:34:13 AM MDT
+  \date      Thu 14 May 2015 11:12:07 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Charm++ module interface file for inciter
   \details   Charm++ module interface file for the computational shock
@@ -28,10 +28,13 @@ mainmodule inciter {
     readonly std::pair< std::vector< std::size_t >,
                         std::vector< std::size_t > > g_esup;
     readonly std::vector< std::size_t > g_tetinpoel;
+    readonly std::vector< std::size_t > g_meshfilemap;
     readonly std::vector< std::vector< std::size_t > > g_point;
     readonly std::vector< std::vector< std::size_t > > g_element;
-    readonly std::vector<
-               std::map< std::size_t, std::vector< std::size_t > > > g_comm;
+    readonly
+     std::vector< std::map< std::size_t, std::vector< std::size_t > > > g_pcomm;
+    readonly
+     std::vector< std::map< std::size_t, std::vector< std::size_t > > > g_ecomm;
 
   } // inciter::
 

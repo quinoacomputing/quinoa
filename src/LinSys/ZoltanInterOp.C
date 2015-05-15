@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/ZoltanInterOp.C
   \author    J. Bakosi
-  \date      Mon 11 May 2015 11:32:44 AM MDT
+  \date      Wed 13 May 2015 10:24:41 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Interoperation with the Zoltan library
   \details   Interoperation with the Zoltan library, used for static mesh graph
@@ -247,13 +247,13 @@ get_hypergraph( void *data,
   for (int i=0; i<num_nonzeros; ++i) vtxGID[i] = hg->nborGID[i];
 }
 
-static std::size_t
+static std::pair< std::size_t, std::vector< std::size_t > >
 createHyperGraph( tk::UnsMesh& graph, HGRAPH_DATA& hg )
 //******************************************************************************
 //  Create hypergraph data structure on MPI rank zero
 //! \param[in] graph Unstructured mesh graph object reference
 //! \param[inout] hg Hypergraph data structure to fill
-//! \return The number of hyperedges in graph
+//! \return The number of hyperedges in graph and the new->old mesh point map
 //! \warning This function must not be called on MPI ranks other than zero.
 //! \author J. Bakosi
 //******************************************************************************
@@ -286,8 +286,9 @@ createHyperGraph( tk::UnsMesh& graph, HGRAPH_DATA& hg )
   auto& psup2 = psup.second;
 
   // Renumber mesh points for better data locality
-  const auto mapvec = tk::renumber( psup );
-  tk::remap( inpoel, mapvec );
+  std::vector< std::size_t > map, invmap;
+  std::tie( map, invmap ) = tk::renumber( psup );
+  tk::remap( inpoel, map );
 
   // Allocate data to store the hypergraph ids. The total number of vertices or
   // neighbors in all the hyperedges of the hypergraph, nhedge = all points
@@ -314,7 +315,7 @@ createHyperGraph( tk::UnsMesh& graph, HGRAPH_DATA& hg )
     hg.nborIndex[p+1] = hg.nborIndex[p] + j;
   }
 
-  return nhedge;
+  return { nhedge, invmap };
 }
 
 static std::size_t
@@ -351,7 +352,7 @@ destroyHyperGraph( HGRAPH_DATA& hg, std::size_t nhedge )
   if (nhedge > 0) free( hg.nborGID );
 }
 
-std::vector< std::size_t >
+std::pair< std::vector< std::size_t >, std::vector< std::size_t > >
 partitionMesh( tk::UnsMesh& graph,
                uint64_t npart,
                const tk::Print& print )
@@ -361,7 +362,8 @@ partitionMesh( tk::UnsMesh& graph,
 //! \param[in] npart Number of desired graph partitions
 //! \param[in] print Pretty printer
 //! \return Array of chare ownership IDs mapping graph points to concurrent
-//!   async chares.
+//!   async chares, and new->old mesh point id map (new: renumbered, old: as in
+//f   mesh file).
 //! \details This function uses Zoltan to partition the mesh graph in serial. It
 //!   assumes the mesh graph only exists on MPI rank 0.
 //! \author J. Bakosi
@@ -390,12 +392,15 @@ partitionMesh( tk::UnsMesh& graph,
   Zoltan_Set_Param( zz, "OBJ_WEIGHT_DIM", "0" );
   Zoltan_Set_Param( zz, "EDGE_WEIGHT_DIM", "0" );
   Zoltan_Set_Param( zz, "RETURN_LISTS", "PART" );
+  //Zoltan_Set_Param( zz, "PHG_EDGE_SIZE_THRESHOLD", "1.0" );
+  //Zoltan_Set_Param( zz, "REMAP", "0" );
   Zoltan_Set_Param( zz, "NUM_GLOBAL_PARTS", std::to_string(npart).c_str() );
 
   HGRAPH_DATA hg;
   std::size_t nhedge = 0;
+  std::vector< std::size_t > invmap;
   if (peid == 0)  
-    nhedge = createHyperGraph( graph, hg );
+    std::tie( nhedge, invmap ) = createHyperGraph( graph, hg );
   else
     nhedge = emptyHyperGraph( hg );
 
@@ -450,22 +455,16 @@ partitionMesh( tk::UnsMesh& graph,
     auto minmax = std::minmax_element( begin(chare), end(chare) );
     nchare = *minmax.second - *minmax.first + 1; 
 
-    if (npart > nchare)
-      print << "\n>>> WARNING: The number of parts returned from the graph "
-               "partitioner (" + std::to_string(nchare) + ") is smaller than "
-               "the number of work units computed (" + std::to_string(npart) +
-               ") based on the degree of virtualization desired. This may not "
-               "be a problem of itself, however, it may be an indication of a "
-               "too large overdecomposition. Solution 1: decrease the "
-               "virtualization to a lower value using the command-line "
-               "argument '-u'. Solution 2: decrease the number processing "
-               "elements (PEs) using the charmrun command-line argument '+pN' "
-               "where N is the number of PEs, which implicitly increases the "
-               "size (and thus decreases the number) of work units.";
-    else if (npart < nchare)
-      Throw( "The number of parts returned from Zoltan ("
-             + std::to_string(nchare) + ") is larger than the desired number "
-             "of parts (" + std::to_string(npart) + ")?" );
+    ErrChk( npart == nchare,
+      "The number of parts returned from the graph partitioner (" +
+      std::to_string(nchare) + ") does not equal the number of work units "
+      "computed (" + std::to_string(npart) + ") based on the degree of "
+      "virtualization desired. This is an indication of a too large "
+      "overdecomposition. Solution 1: decrease the virtualization to a lower "
+      "value using the command-line arrgument '-u'. Solution 2: decrease the "
+      "number processing elements (PEs) using the charmrun command-line "
+      "argument '+pN' where N is the number of PEs, which implicitly increases "
+      "the size (and thus decreases the number) of work units." );
   }
 
 //   if (peid == 0) {
@@ -483,7 +482,7 @@ partitionMesh( tk::UnsMesh& graph,
   // Free hypergraph and Zoltan data structure
   destruct();
 
-  return chare;
+  return { chare, invmap };
 }
 
 } // zoltan::

@@ -62,6 +62,7 @@ const int MAX_TESTS_IN_GROUP = 80;
 #include <tests/Base/Writer.h>
 #include <tests/Base/LoadDistributor.h>
 #include <tests/Base/ProcessControl.h>
+#include <tests/Base/Vector.h>
 
 #include <tests/Control/Components.h>
 #include <tests/Control/Control.h>
