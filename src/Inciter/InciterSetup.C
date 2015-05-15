@@ -452,7 +452,8 @@ prepareMesh(
 //! Prepare computational mesh
 //! \param[in] cmdline Command-line stack
 //! \param[in] print Pretty printer
-//! \param[inout] inputdeck Time stamps in h:m:s format
+//! \param[in] inputdeck Input deck with inser input
+//! \param[inout] timestamp Time stamps in h:m:s format
 //! \param[inout] npoin Total number of points in mesh
 //! \param[inout] point Global mesh point ids owned by each chare
 //! \param[inout] element Global mesh element ids owned by each chare

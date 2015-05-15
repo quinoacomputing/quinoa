@@ -43,6 +43,8 @@ mainmodule inciter {
     entry void execute();
     entry void finalize();
     entry void timestamp( std::string label, tk::real stamp );
+    entry
+      void timestamp( const std::vector< std::pair<std::string,tk::real> >& s );
   }
 
   chare execute { entry execute(); }

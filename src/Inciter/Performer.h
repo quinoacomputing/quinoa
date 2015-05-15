@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.h
   \author    J. Bakosi
-  \date      Wed 13 May 2015 09:59:41 PM MDT
+  \date      Fri 15 May 2015 11:28:53 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Performer advances the Euler equations
   \details   Performer advances the Euler equations. There are a potentially
@@ -67,6 +67,7 @@ class Performer : public CBase_Performer {
     std::map< std::size_t, std::vector< std::size_t > > m_import;
     std::map< std::size_t, std::vector< std::size_t > > m_toimport;
     std::map< std::size_t, std::map< std::size_t, tk::real > > m_lhs;
+    std::vector< std::pair< std::string, tk::real > > m_timestamp;
 
     //! Find out if a point is owned
     bool own( std::size_t gid ) const {
@@ -99,12 +100,12 @@ class Performer : public CBase_Performer {
 
     //! Read coordinates of mesh nodes given
     std::array< std::vector< tk::real >, 3 >
-    initCoords( const std::vector< std::size_t >& gnode ) const;
+    initCoords( const std::vector< std::size_t >& gnode );
 
     //! Output chare mesh chare id field to file
     void
     writeChareId( const std::vector< std::size_t >& inpoel,
-                  const std::array< std::vector< tk::real >, 3 >& coord ) const;
+                  const std::array< std::vector< tk::real >, 3 >& coord );
 
     //! Compute consistent mass matrix
     void

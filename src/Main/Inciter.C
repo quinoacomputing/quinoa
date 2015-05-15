@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Inciter.C
   \author    J. Bakosi
-  \date      Fri 15 May 2015 08:56:02 AM MDT
+  \date      Fri 15 May 2015 12:38:46 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Inciter, computational shock hydrodynamics tool, Charm++ main
     chare.
@@ -160,7 +160,9 @@ class Main : public CBase_Main {
     void finalize() {
       try {
         if (!m_timer.empty()) {
-          m_timestamp.emplace_back("Total Charm++ runtime", m_timer[0].hms());
+          m_timestamp.emplace_back(
+           "Total Charm++ runtime . . . . . . . . . . . . . . . . . . . . . .",
+           m_timer[0].hms() );
           m_print.time( "Timers (h:m:s)", m_timestamp );
           m_print.endpart();
         }
@@ -169,12 +171,15 @@ class Main : public CBase_Main {
       CkExit();
     }
 
-    //! Add time stamp contributing to final timers output
+    //! Add a time stamp contributing to final timers output
     void timestamp( std::string label, tk::real stamp ) {
       try {
         m_timestamp.emplace_back( label, tk::hms( stamp ) );
       } catch (...) { tk::processExceptionCharm(); }
     }
+    //! Add multiple time stamps contributing to final timers output
+    void timestamp( const std::vector< std::pair< std::string, tk::real > >& s )
+    { for (const auto& t : s) timestamp( t.first, t.second ); }
 
   private:
     inciter::InciterPrint m_print;                    //!< Pretty printer
@@ -227,7 +232,9 @@ int main( int argc, char **argv ) {
 
   } catch (...) { tk::processExceptionMPI(); }
 
-  g_timestamp.emplace_back( "Total MPI runtime", mpi.hms());
+  g_timestamp.emplace_back(
+    "Total MPI runtime . . . . . . . . . . . . . . . . . . . . . . . .",
+    mpi.hms() );
 
   // Run Charm++ main chare using the partitioned graph
   CharmLibInit( MPI_COMM_WORLD, argc, argv );

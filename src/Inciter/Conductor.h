@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Conductor.h
   \author    J. Bakosi
-  \date      Tue 12 May 2015 09:27:56 AM MDT
+  \date      Fri 15 May 2015 03:01:35 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Conductor drives the time integration of the Euler equations
   \details   Conductor drives the time integration of the Euler equations.
@@ -44,21 +44,21 @@ class Conductor : public CBase_Conductor {
     //!   across all PEs
     void init() const;
 
+    //! Forward a vector of time stamps to the main proxy
+    void timestamp(
+      const std::vector< std::pair< std::string, tk::real > >& stamp );
+
   private:
     using PerfProxy = CProxy_Performer;
     using LinSysMergerProxy = tk::CProxy_LinSysMerger< CProxy_Conductor >;
 
-    //! Pretty printer
-    InciterPrint m_print;
-
-    //! Timers
-    std::vector< tk::Timer > m_timer;
-
-    //! Charm++ proxy to array of Performer chares
-    PerfProxy m_perfproxy;
-
-    //! Charm++ proxy to group of linear system merger chares
-    LinSysMergerProxy m_lsmproxy;
+    InciterPrint m_print;               //!< Pretty printer
+    std::vector< tk::Timer > m_timer;   //!< Timers
+    int m_nchare;                       //!< Number of performer chares
+    int m_charecnt;                     //!< Chare counter
+    PerfProxy m_perfproxy;              //!< Performer chare array
+    LinSysMergerProxy m_lsmproxy;       //!< Linear system merger chare group
+    std::map< std::string, std::vector< tk::real > > m_avg; //!< Avg time stamps
 };
 
 } // inciter::

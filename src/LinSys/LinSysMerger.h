@@ -27,6 +27,7 @@
 #endif
 
 #include <Types.h>
+#include <Timer.h>
 #include <HypreMatrix.h>
 #include <HypreVector.h>
 #include <Exception.h>
@@ -148,6 +149,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy > {
     std::vector< int > m_ncols; //!< Number of matrix columns/rows for my PE
     std::vector< int > m_cols;  //!< Matrix column indices for rows for my PE
     std::vector< tk::real > m_vals;  //!< Matrix nonzero values for my PE
+    std::vector< std::pair< std::string, tk::Timer::Watch > > m_timestamp;
 
     //! Check if our portion of the matrix values is complete
     bool lhscomplete() const {
@@ -239,8 +241,9 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy > {
     //! \see http://charm.cs.illinois.edu/manuals/html/charm++/manual.html,
     //!   Sections "Processor-Aware Chare Collections" and "Chare Arrays".
     void init_complete( const inciter::CProxy_Conductor& host ) {
+      using inciter::CkIndex_Conductor;
       Group::contribute(
-        CkCallback( inciter::CkIndex_Conductor::redn_wrapper_init(NULL), host )
+        CkCallback( CkIndex_Conductor::redn_wrapper_init(NULL), host )
       );
     }
 };
