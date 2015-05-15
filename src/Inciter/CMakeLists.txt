@@ -8,11 +8,12 @@ include(charm)
 add_library(Inciter
             Conductor.C
             Performer.C
+            InciterSetup.C
 )
 
 addCharmModule( "conductor" "Inciter" )
 addCharmModule( "performer" "Inciter" )
-removeWarnings( "Conductor.C;Performer.C" )
+removeWarnings( "Conductor.C;Performer.C;InciterSetup.C" )
 
 # Add extra dependency of Inciter on inciterCharmModule. This is required as
 # Inciter refers to the main Charm++ proxy defined in the Charm++ module

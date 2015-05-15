@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/LinSysMerger.h
   \author    J. Bakosi
-  \date      Tue 12 May 2015 09:34:48 AM MDT
+  \date      Thu 14 May 2015 06:36:38 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Linear system merger
   \details   Linear system merger.
@@ -68,63 +68,71 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy > {
       auto remainder = npoin % static_cast<std::size_t>(CkNumPes());
       if (remainder && CkMyPe() == CkNumPes()-1) m_upper += remainder;
       std::cout << CkMyPe() << ": [" << m_lower << "..." << m_upper << ")\n";
-      // Create my PE's part of the lhs matrix distributed across all PEs
+      // Create my PE's lhs matrix distributed across all PEs
       m_A.create( m_lower, m_upper );
-      // Create my PE's part of the rhs and unknown vectors distributed across
-      // all PEs
+      // Create my PE's rhs and unknown vectors distributed across all PEs
       m_b.create( m_lower, m_upper );
       m_x.create( m_lower, m_upper );
-      // Start SDAG waits
-      wait4nz();
+      // Activate SDAG waits
+      wait4lhs();
+      wait4hypremat();
       wait4fill();
       wait4asm();
     }
 
-    //! Chares contribute their matrix nonzero structure
-    //! \param[in] point Global mesh point ids sent by chares on our PE
-    //! \param[in] psup Points surrounding points, see tk::genPsup()
+    //! Chares contribute their matrix nonzero values
     //! \note This function does not have to be declared as a Charm++ entry
     //!   method since it is always called by chares on the same PE.
-    void charenz( const std::vector< std::size_t >& point,
-                  std::pair< std::vector< std::size_t >,
-                             std::vector< std::size_t > >&& psup )
+    void charelhs( const std::map< std::size_t,
+                                   std::map< std::size_t, tk::real > >& lhs )
     {
-      Assert( point.size() == psup.second.size()-1,
-              "Number of owned points must equal in global id vector and "
-              "derived data, points surrounding points, sent by chare." );
-      // Lambda to add all column indices to a row
-      auto storenz = [ &psup ]( std::size_t p, std::vector< std::size_t >& row )
-      {
-        for (auto i=psup.second[p]+1; i<=psup.second[p+1]; ++i)
-          row.push_back( psup.first[i] );
-      };
-      // Store matrix nonzero locations owned and pack those to be exported
+      // Store matrix nonzero values owned and pack those to be exported
       std::map< std::size_t,
-                std::map< std::size_t, std::vector< std::size_t > > > exp;
-      for (std::size_t p=0; p<psup.second.size()-1; ++p) {
-        auto gid = point[ p ];
+                std::map< std::size_t,
+                          std::map< std::size_t, tk::real > > > exp;
+      for (const auto& r : lhs) {
+        auto gid = r.first;
         if (gid >= m_lower && gid < m_upper)    // if own
-          storenz( p, m_psup[gid] );
+          m_lhs[gid] = r.second;
         else {
           auto pe = gid / m_chunksize;
           if (pe == CkNumPes()) --pe;
-          storenz( p, exp[pe][gid] );
+          exp[pe][gid] = r.second;
         }
       }
-      // If all chares contributed and our portion is complete
-      if (complete()) nz_complete();
-      // Export non-owned matrix rows to fellow branches that own them
+// 
+//       std::cout << CkMyPe() << ": nrows=" << m_lhs.size() << ", ";
+//       for (const auto& r : m_lhs) {
+//         std::cout << "(" << r.first << ":" << r.second.size() << ") ";
+//         for (const auto& c : r.second) std::cout << c.first << " ";
+//       }
+//       for (const auto& p : exp) {
+//         std::cout << "e:" << p.first << " ";
+//         for (const auto& r : p.second) {
+//           std::cout << "(" << r.first << ":" << r.second.size() << ") ";
+//           for (const auto& c : r.second) std::cout << c.first << " ";
+//         }
+//       }
+//       std::cout << std::endl;
+
+      // Export non-owned matrix rows values to fellow branches that own them
       for (const auto& p : exp)
-        Group::thisProxy[ static_cast<int>(p.first) ].add( p.second );
+        Group::thisProxy[ static_cast<int>(p.first) ].addlhs( p.second );
+      // If our portion is complete, we are done
+      if (lhscomplete()) trigger_lhs_complete();
     }
 
-    //! Receive mesh point ids from fellow group branches
-    //! \param[in] transfer Mesh point ids received
-    void add( const std::map< std::size_t, std::vector< std::size_t > >& psup )
-    {
-      // Store imported matrix nonzero structure contributed from a chare
-      for (const auto& p : psup) m_psup[ p.first ] = p.second;
-      if (complete()) nz_complete();
+    //! Receive matrix nonzeros from fellow group branches
+    void addlhs( const std::map< std::size_t,
+                                 std::map< std::size_t, tk::real > >& lhs ) {
+//       std::cout << "import on " << CkMyPe() << ": nrows=" << lhs.size() << ", ";
+//       for (const auto& r : lhs) {
+//         std::cout << "(" << r.first << ":" << r.second.size() << ") ";
+//         for (const auto& c : r.second) std::cout << c.first << " ";
+//       }
+//       std::cout << std::endl;
+      for (const auto& r : lhs) m_lhs[ r.first ] = r.second;
+      if (lhscomplete()) trigger_lhs_complete();
     }
 
   private:
@@ -132,59 +140,65 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy > {
     std::size_t m_chunksize;    //!< Number of rows the first npe-1 PE own
     std::size_t m_lower;        //!< Lower index of the global rows for my PE
     std::size_t m_upper;        //!< Upper index of the global rows for my PE
-    tk::hypre::HypreMatrix m_A; //!< Hypre matrix to store lhs
+    tk::hypre::HypreMatrix m_A; //!< Hypre matrix to store the lhs
     tk::hypre::HypreVector m_b; //!< Hypre vector to store the rhs
     tk::hypre::HypreVector m_x; //!< Hypre vector to store the unknowns
-    std::map< std::size_t, std::vector< std::size_t > > m_psup; //! Nonzeros
+    std::map< std::size_t, std::map< std::size_t, tk::real > > m_lhs;
+    std::vector< int > m_rows;  //!< Row indices for my PE
+    std::vector< int > m_ncols; //!< Number of matrix columns/rows for my PE
+    std::vector< int > m_cols;  //!< Matrix column indices for rows for my PE
+    std::vector< tk::real > m_vals;  //!< Matrix nonzero values for my PE
 
-    //! Check if our portion of the matrix non-zero structure is complete
-    //! \return True if our portion of the distributed matrix is complete
-    //! \details Since we known what rows we own, there is no need to explicitly
-    //!   send and receive information rows imported. This function is used to
-    //!   test whether we have received all of the non-zero structure that we
-    //!   own in the distributed matrix.
-    bool complete() const {
-      if ( m_psup.size() == m_upper-m_lower &&
-            m_psup.begin()->first == m_lower &&
-          (--m_psup.end())->first == m_upper-1 )
-        return true;
-      else
-        return false;
+    //! Check if our portion of the matrix values is complete
+    bool lhscomplete() const {
+      return m_lhs.size() == m_upper-m_lower &&
+             m_lhs.cbegin()->first == m_lower &&
+             (--m_lhs.cend())->first == m_upper-1;
     }
 
-    // Create and set non-zero matrix values
-    void fillMatrix() {
-      Assert( !m_psup.empty(),
-              "Distributed matrix empty on PE " + std::to_string( CkMyPe() ) );
-      Assert( complete(),
-              "Lower and upper row indices of distributed matrix on PE " +
+    //! Build Hypre data for our portion of the matrix
+    void hyprelhs() {
+      Assert( lhscomplete(),
+              "Nonzero values of distributed matrix on PE " +
               std::to_string( CkMyPe() ) + " is incomplete" );
-      // Build Hypre data for my PE
-      std::vector< int > rows;    // Row indices from my PE
-      std::vector< int > ncols;   // Number of matrix columns/row from my PE
-      std::vector< int > cols;    // Matrix column indices for rows from my PE
-      for (const auto& p : m_psup) {
-        rows.push_back( static_cast< int >( p.first ) );
-        ncols.push_back( static_cast< int >( p.second.size()+1 ) );
-        cols.push_back( static_cast< int >( p.first ) );
-        for (auto c : p.second) cols.push_back( static_cast< int >( c ) );
+      for (const auto& r : m_lhs) {
+        m_rows.push_back( static_cast< int >( r.first ) );
+        m_ncols.push_back( static_cast< int >( r.second.size() ) );
+        for (const auto& c : r.second) {
+           m_cols.push_back( static_cast< int >( c.first ) );
+           m_vals.push_back( c.second );
+         }
       }
-      std::vector< tk::real > vals;
-      for (auto v : cols) vals.push_back( 1 );
+
+//       std::cout << CkMyPe() << ": ";
+//       for (const auto& r : m_lhs) {
+//         std::cout << "(" << r.first << ") ";
+//         for (const auto& c : r.second)
+//           std::cout << c.first << " ";
+//       }
+//       std::cout << '\n';
+
+      trigger_hyprelhs_complete();
+    }
+
+    //! Set our portion of values of the distributed matrix
+    void lhs() {
+      Assert( m_vals.size() == m_cols.size(),
+              "Matrix values incomplete on " + std::to_string(CkMyPe()) );
       // Set our portion of the matrix values
       m_A.set( static_cast< int >( m_upper - m_lower ),
-               ncols.data(),
-               rows.data(),
-               cols.data(),
-               vals.data() );
+               m_ncols.data(),
+               m_rows.data(),
+               m_cols.data(),
+               m_vals.data() );
       // Activate SDAG trigger signaling that our matrix part has been filled
-      filled();
+      trigger_fill_complete();
     }
 
     //! Assemble distributed matrix
     void assemble() {
       m_A.assemble();
-      assembled();
+      trigger_assembly_complete();
     }
 
     //! Signal back to host that the initialization of the matrix is complete

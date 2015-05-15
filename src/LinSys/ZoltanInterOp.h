@@ -21,7 +21,7 @@ namespace tk {
 namespace zoltan {
 
 //! Partition mesh using Zoltan's hypergraph algorithm in serial
-std::vector< std::size_t >
+std::pair< std::vector< std::size_t >, std::vector< std::size_t > >
 partitionMesh( tk::UnsMesh& graph,
                uint64_t npart,
                const tk::Print& print );

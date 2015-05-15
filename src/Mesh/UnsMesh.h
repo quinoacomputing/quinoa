@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/UnsMesh.h
   \author    J. Bakosi
-  \date      Mon 27 Apr 2015 12:56:00 PM MDT
+  \date      Thu 14 May 2015 11:45:14 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     3D unstructured mesh class declaration
   \details   3D unstructured mesh class declaration. This mesh class currently
@@ -185,7 +185,7 @@ class UnsMesh {
     ///@}
 
   private:
-    //! \brief Number of nodes
+    //! Number of nodes
     //! \details Stores the size (number of nodes) of the mesh graph.
     //!   Used if only the graph is needed but not the node coordinates, e.g.,
     //!   for graph partitioning, in which case only the connectivity is

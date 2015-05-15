@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/linsysmerger.ci
   \author    J. Bakosi
-  \date      Mon 11 May 2015 03:01:53 PM MDT
+  \date      Thu 14 May 2015 06:33:45 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Charm++ module interface file for merging a linear system
   \details   Charm++ module interface file for merging a linear system
@@ -13,10 +13,12 @@ module linsysmerger {
 
   extern module conductor;
 
+  include "Types.h";
+
   namespace tk {
 
     // LinSysMerger is templated so that the same code (parameterized by the
-    // type given by the template argument, Proxy) can be generated for
+    // type given by the template argument, HostProxy) can be generated for
     // different types of host proxies. All possible specializations must be
     // listed below.
 
@@ -29,8 +31,9 @@ module linsysmerger {
     template< class HostProxy >
     group LinSysMerger {
       entry LinSysMerger( HostProxy& host, std::size_t npoin );
-      entry void add(
-        const std::map< std::size_t, std::vector< std::size_t > >& psup );
+      entry void addlhs(
+        const std::map< std::size_t,
+                        std::map< std::size_t, tk::real > >& lhs );
 
       // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
       // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
@@ -50,28 +53,35 @@ module linsysmerger {
       // Control flow is from left to right and top to bottom.
       //
 
-      entry void wait4nz() {
-        when nz_complete() serial {
-          fillMatrix();
+      entry void wait4lhs() {
+        when trigger_lhs_complete() serial {
+          hyprelhs();
+        }
+      };
+
+      entry void wait4hypremat() {
+        when trigger_hyprelhs_complete() serial {
+          lhs();
         }
       };
 
       entry void wait4fill() {
-        when filled() serial {
+        when trigger_fill_complete() serial {
           assemble();
         }
       };
 
       entry void wait4asm() {
-        when assembled() serial {
+        when trigger_assembly_complete() serial {
           m_A.print( "hypre_mat" );
           init_complete( m_host );
         }
       };
 
-      entry void nz_complete();
-      entry void filled();
-      entry void assembled();
+      entry void trigger_lhs_complete();
+      entry void trigger_hyprelhs_complete();
+      entry void trigger_fill_complete();
+      entry void trigger_assembly_complete();
     };
 
   } // tk::
