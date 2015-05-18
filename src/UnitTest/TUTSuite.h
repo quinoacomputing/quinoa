@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/TUTSuite.h
   \author    J. Bakosi
-  \date      Wed 18 Mar 2015 08:40:35 AM MDT
+  \date      Sun 17 May 2015 02:45:53 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Template Unit Test suite class declaration
   \details   Template Unit Test suite class declaration. In principle there can
@@ -60,12 +60,13 @@ class TUTSuite : public CBase_TUTSuite {
     //!   receive side is created manually, i.e., without the awareness of the
     //!   TUT library. Unfortunately thus, there is no good way to count up
     //!   these additional tests, so they need to be explicitly maintained here.
-    //!   To find out what tests spanw a new Charm++ chare, grep the src
+    //!   To find out what tests spawn a new Charm++ chare, grep the src
     //!   directory for 'This test spawns a new Charm++ chare', which appears in
     //!   the comment before each Charm++ migration test name.
-    const std::map< std::string, std::size_t > migrations {
-      { "Base/Factory", 2 },
-      { "Base/PUPUtil", 11 }
+    const std::map< std::string, std::size_t > m_migrations {
+        { "Base/Factory", 2 }
+      , { "Base/PUPUtil", 11 }
+      , { "Base/Timer", 1 }
     };
 
     //! Fire up all tests in a test group

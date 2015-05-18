@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/MigratedTypes.h
   \author    J. Bakosi
-  \date      Wed 18 Feb 2015 11:19:03 AM MST
+  \date      Sun 17 May 2015 01:09:06 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Type definitions for unit tests of Charm++ migrated data
   \details   Type definitions for unit tests of Charm++ migrated data
@@ -41,7 +41,6 @@ using BoostOptionalInt = boost::optional< int >;
 using TaggedTuple = tk::tuple::tagged_tuple< tag::name,  std::string,
                                              tag::age,   int,
                                              tag::email, std::string >;
-
 //! Pack/Unpack: delegate to tk::
 inline void operator|( PUP::er& p, Enum_default& e ) { PUP::pup( p, e ); }
 inline void operator|( PUP::er& p, Enum_uint8_t& e ) { PUP::pup( p, e ); }

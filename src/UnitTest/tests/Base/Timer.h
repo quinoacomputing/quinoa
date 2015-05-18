@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/Timer.h
   \author    J. Bakosi
-  \date      Tue 14 Apr 2015 11:45:44 AM MDT
+  \date      Sun 17 May 2015 03:04:24 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Base/Timer.h
   \details   Unit tests for Base/Timer.h
@@ -14,6 +14,13 @@
 #include <unistd.h>
 #include <tut/tut.hpp>
 #include <Timer.h>
+#include <charmtimer.decl.h>
+
+namespace unittest {
+
+extern CProxy_TUTSuite g_suiteProxy;
+
+} // unittest::
 
 namespace tut {
 
@@ -139,6 +146,54 @@ void Timer_object::test< 5 >() {
                  static_cast<tk::real>(w.min.count()), 0.0, precision );
   ensure_equals( "time 1.0s elapsed as float represented as Timer::Watch in sec",
                  static_cast<tk::real>(w.sec.count()), 1.0, precision );
+}
+
+//! Charm chare having a tk::Timer object
+struct CharmTimer : CBase_CharmTimer {
+  CharmTimer( const tk::Timer& timer ) {
+    // Create test result struct, assume test is ok
+    tut::test_result tr( "Base/Timer", 7,
+                         "Charm:migrate tk::Timer 2",
+                         tut::test_result::result_type::ok );
+    // Evaluate test: The incoming timer's time point is queried here that
+    // includes the time elapsed before the Charm++ chare has been created + the
+    // migration time, so tested with a somewhat lose precision that includes
+    // the approximate (guessed) migration time.
+    try {
+     ensure_equals( "timer different after migrated: ",
+                    timer.dsec(), 1.0, 0.05 );
+    } catch ( const failure& ex ) {
+      tr.result = ex.result();
+      tr.exception_typeid = ex.type();
+      tr.message = ex.what();
+    }
+    // Send back a new test result, with tag "2", signaling the second part.
+    unittest::g_suiteProxy.evaluate(
+      { tr.group, tr.name, std::to_string(tr.result), tr.message,
+        tr.exception_typeid } );
+  }
+};
+
+//! Test Charm++ migration of a tk::Timer object across the network
+//! \details Every Charm++ migration test, such as this one, consists of two
+//!   unit tests: one for send and one for receive. Both triggers a TUT test,
+//!   but the receive side is created manually, i.e., without the awareness of
+//!   the TUT library. Unfortunately thus, there is no good way to count up
+//!   these additional tests, and thus if a test such as this is added to the
+//!   suite this number must be updated in UnitTest/TUTSuite.h in
+//!   unittest::TUTSuite::m_migrations.
+template<> template<>
+void Timer_object::test< 6 >() {
+  // This test spawns a new Charm++ chare. The "1" at the end of the test name
+  // signals that this is only the first part of this test: the part up to
+  // firing up an asynchronous Charm++ chare. The second part creates a new test
+  // result, sending it back to the suite if successful. If that chare never
+  // executes, the suite will hang waiting for that chare to call back.
+  set_test_name( "Charm:migrate tk::Timer 1" );
+  
+  tk::Timer timer;
+  usleep( 1000000 );     // in micro-seconds, sleep for 1.0 second
+  CProxy_CharmTimer::ckNew( timer );    // fire up Charm++ chare
 }
 
 } // tut::

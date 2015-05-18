@@ -16,7 +16,7 @@ add_library(IO
 #            SiloWriter.C
 )
 
-removeWarnings( "TxtStatWriter.C;PDFWriter.C" )
+removeWarnings( "TxtStatWriter.C;PDFWriter.C;MeshFactory.C;GmshMeshReader.C;GmshMeshWriter.C;NetgenMeshReader.C;NetgenMeshWriter.C;ExodusIIMeshReader.C;ExodusIIMeshWriter.C" )
 
 INSTALL(TARGETS IO
   	RUNTIME DESTINATION bin COMPONENT Runtime

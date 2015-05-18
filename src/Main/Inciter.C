@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Inciter.C
   \author    J. Bakosi
-  \date      Fri 15 May 2015 12:38:46 PM MDT
+  \date      Fri 15 May 2015 03:59:19 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Inciter, computational shock hydrodynamics tool, Charm++ main
     chare.
@@ -164,6 +164,7 @@ class Main : public CBase_Main {
            "Total Charm++ runtime . . . . . . . . . . . . . . . . . . . . . .",
            m_timer[0].hms() );
           m_print.time( "Timers (h:m:s)", m_timestamp );
+          m_print.perf( "Performance statistics", m_perf );
           m_print.endpart();
         }
       } catch (...) { tk::processExceptionCharm(); }
@@ -181,6 +182,16 @@ class Main : public CBase_Main {
     void timestamp( const std::vector< std::pair< std::string, tk::real > >& s )
     { for (const auto& t : s) timestamp( t.first, t.second ); }
 
+    //! Add a performance statistic contributing to final perfstat output
+    void perfstat( std::string label, tk::real value ) {
+      try {
+        m_perf.emplace_back( label, value );
+      } catch (...) { tk::processExceptionCharm(); }
+    }
+    //! Add multiple performance statistics contributing to final perf output
+    void perfstat( const std::vector< std::pair< std::string, tk::real > >& p )
+    { for (const auto& s : p) perfstat( s.first, s.second ); }
+
   private:
     inciter::InciterPrint m_print;                    //!< Pretty printer
     inciter::InciterDriver m_driver;                  //!< Driver
@@ -188,6 +199,9 @@ class Main : public CBase_Main {
 
     //! Time stamps in h:m:s with labels
     std::vector< std::pair< std::string, tk::Timer::Watch > > m_timestamp;
+
+    //! Performance statistics
+    std::vector< std::pair< std::string, tk::real > > m_perf;
 };
 
 //! \brief Charm++ chare execute

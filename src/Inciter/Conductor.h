@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Conductor.h
   \author    J. Bakosi
-  \date      Fri 15 May 2015 03:01:35 PM MDT
+  \date      Sat 16 May 2015 02:37:50 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Conductor drives the time integration of the Euler equations
   \details   Conductor drives the time integration of the Euler equations.
@@ -44,9 +44,25 @@ class Conductor : public CBase_Conductor {
     //!   across all PEs
     void init() const;
 
-    //! Forward a vector of time stamps to the main proxy
-    void timestamp(
+    //! \brief Forward a vector of time stamps from (Performer) chare array to
+    //!   the main proxy
+    void arrTimestamp(
       const std::vector< std::pair< std::string, tk::real > >& stamp );
+
+    //! \brief Forward a vector of time stamps from (LinSysMerger) chare group
+    //!   branches to the main proxy
+    void grpTimestamp(
+      const std::vector< std::pair< std::string, tk::real > >& stamp );
+
+    //! \brief Forward a vector of performance statistics from (Performer) chare
+    //!   array elements to the main proxy
+    void arrPerfstat(
+      const std::vector< std::pair< std::string, tk::real > >& p );
+
+    //! \brief Forward a vector of performance statistics from (LinSysMerger)
+    //!   chare group branches to the main proxy
+    void grpPerfstat(
+      const std::vector< std::pair< std::string, tk::real > >& p );
 
   private:
     using PerfProxy = CProxy_Performer;
@@ -55,10 +71,35 @@ class Conductor : public CBase_Conductor {
     InciterPrint m_print;               //!< Pretty printer
     std::vector< tk::Timer > m_timer;   //!< Timers
     int m_nchare;                       //!< Number of performer chares
-    int m_charecnt;                     //!< Chare counter
+    int m_arrTimestampCnt;              //!< Time stamp chare array counter
+    int m_grpTimestampCnt;              //!< Time stamp chare group counter
+    int m_arrPerfstatCnt;               //!< Perfstat chare array counter
+    int m_grpPerfstatCnt;               //!< Perfstat chare group counter
     PerfProxy m_perfproxy;              //!< Performer chare array
     LinSysMergerProxy m_lsmproxy;       //!< Linear system merger chare group
-    std::map< std::string, std::vector< tk::real > > m_avg; //!< Avg time stamps
+    //! Time stamps merged from chare array elements
+    std::map< std::string, std::vector< tk::real > > m_arrTimestamp;
+    //! Time stamps merged from chare group elements
+    std::map< std::string, std::vector< tk::real > > m_grpTimestamp;
+    //! Performance statistics merged from chare array elements
+    std::map< std::string, std::vector< tk::real > > m_arrPerfstat;
+    //! Performance statistics merged from chare group elements
+    std::map< std::string, std::vector< tk::real > > m_grpPerfstat;
+
+    //! Collect and compute averages of time stamps contributed by chares
+    void timestamp(
+      const std::vector< std::pair< std::string, tk::real > >& stamp,
+      std::map< std::string, std::vector< tk::real > >& map,
+      int& counter,
+      int max,
+      const std::string& of );
+
+    //! Collect and compute performance statistics contributed by chares
+    void perfstat( const std::vector< std::pair< std::string, tk::real > >& p,
+                   std::map< std::string, std::vector< tk::real > >& map,
+                   int& counter,
+                   int max,
+                   const std::string& of );
 };
 
 } // inciter::

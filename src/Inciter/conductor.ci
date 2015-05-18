@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/conductor.ci
   \author    J. Bakosi
-  \date      Fri 15 May 2015 11:33:55 AM MDT
+  \date      Sat 16 May 2015 06:57:09 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Charm++ module interface file for Conductor
   \details   Charm++ module interface file for Conductor
@@ -18,8 +18,14 @@ module conductor {
     chare Conductor {
       entry Conductor();
       entry [reductiontarget] void init();
-      entry void timestamp(
+      entry void arrTimestamp(
         const std::vector< std::pair< std::string, tk::real > >& stamp );
+      entry void grpTimestamp(
+        const std::vector< std::pair< std::string, tk::real > >& stamp );
+      entry void arrPerfstat(
+        const std::vector< std::pair< std::string, tk::real > >& p );
+      entry void grpPerfstat(
+        const std::vector< std::pair< std::string, tk::real > >& p );
     }
 
   } // inciter::

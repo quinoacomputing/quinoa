@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/PUPUtil.h
   \author    J. Bakosi
-  \date      Fri 01 May 2015 05:14:44 AM MDT
+  \date      Mon 18 May 2015 08:08:49 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Charm++ Pack/UnPack utilities
   \brief     This file contains some extensions to Charm++'s Pack/UnPack
@@ -35,6 +35,11 @@ namespace PUP {
 
 //////////////////// Serialize enum class ////////////////////
 
+#if defined(__clang__) || defined(__GNUC__)
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wuninitialized"
+#endif
+
 //! Pack/Unpack enum class. In Charm++ usually both the pup() overload and an
 //! overload for operator| are defined for all serializable types. However, we
 //! cannot define operator| for enum class as it would conflict with Charm++'s
@@ -49,6 +54,10 @@ inline void pup( PUP::er& p, E& e ) {
   p | v;
   e = static_cast< E >( v );
 }
+
+#if defined(__clang__) || defined(__GNUC__)
+  #pragma GCC diagnostic pop
+#endif
 
 //////////////////// Serialize std::tuple ////////////////////
 

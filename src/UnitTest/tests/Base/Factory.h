@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/Factory.h
   \author    J. Bakosi
-  \date      Tue 14 Apr 2015 11:43:37 AM MDT
+  \date      Sun 17 May 2015 02:59:33 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Base/Factory.h
   \details   Unit tests for Base/Factory.h
@@ -447,7 +447,7 @@ using ValueFactory = std::map< int, std::function< VBase() > >;
 //!   the TUT library. Unfortunately thus, there is no good way to count up
 //!   these additional tests, and thus if a test such as this is added to the
 //!   suite this number must be updated in UnitTest/TUTSuite.h in
-//!   unittest::TUTSuite::evaluate().
+//!   unittest::TUTSuite::m_migrations.
 template<> template<>
 void Factory_object::test< 13 >() {
   // This test spawns a new Charm++ chare. The "1" at the end of the test name
@@ -477,7 +477,7 @@ void Factory_object::test< 13 >() {
 //!   the TUT library. Unfortunately thus, there is no good way to count up
 //!   these additional tests, and thus if a test such as this is added to the
 //!   suite this number must be updated in UnitTest/TUTSuite.h in
-//!   unittest::TUTSuite::evaluate().
+//!   unittest::TUTSuite::m_migrations.
 template<> template<>
 void Factory_object::test< 14 >() {
   // This test spawns a new Charm++ chare. The "1" at the end of the test name

@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/CommMap.C
   \author    J. Bakosi
-  \date      Mon 04 May 2015 07:46:55 AM MDT
+  \date      Fri 15 May 2015 10:25:49 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Calculation of communication maps for unstructured meshes
   \details   Calculation of communication maps for unstructured meshes.
@@ -32,7 +32,7 @@ poinCommMaps( const tk::UnsMesh& graph,
 //! \param[in] nchare Number of work units (Charm++ chares)
 //! \param[in] toofine Error message to print triggered for too large
 //!   overdecomposition
-//! \return Point-based communication map
+//! \return Point-based communication map for all chares
 //! \details This is a _point-based_ export map, because it stores the global
 //!   ids of the mesh points that chares need to export to fellow chares
 //!   computed based on which chare owns a mesh point. This is for algorithms
@@ -83,7 +83,9 @@ poinCommMaps( const tk::UnsMesh& graph,
   // input compared to the mesh size and not due to programmer error.
   ErrChk( comm.size() == nchare, std::move(toofine) );
 
+  #ifndef NDEBUG
   std::size_t c = 0;
+  #endif
   for (const auto& e : comm)
     Assert( e.first == c++,
             "Export/import maps should not be missing for chare id " +
@@ -129,7 +131,7 @@ elemCommMaps( const std::vector< std::size_t >& chp,
 //! \param[in] tetinpoel Tetrahedra element connectivity
 //! \param[in] element Global mesh element ids owned by each chare
 //! \param[in] nchare Number of work units (Charm++ chares)
-//! \return Element-based communication map
+//! \return Element-based communication map for all chares
 //! \details This is an _element-based_ export map, because it stores the global
 //!   ids of the mesh points that chares need to export to fellow chares
 //!   computed based on which chare owns an element the mesh point is a vertex
