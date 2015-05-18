@@ -16,7 +16,7 @@ add_library(Base
 )
 
 #addCharmModule( "msg" "Base" )
-removeWarnings( "LoadDistributor.C;ProcessException.C")
+removeWarnings( "LoadDistributor.C;ProcessException.C;Timer.C")
 
 INSTALL(TARGETS Base
   	RUNTIME DESTINATION bin COMPONENT Runtime

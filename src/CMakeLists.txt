@@ -153,7 +153,7 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")  # clang-specific settings
 
   # Suppress the following warnings for Charm++ hostfiles including the
   # Charm-generated .decl.h and .def.h:
-  set(HOSTFILE_FLAGS "-Wno-shadow -Wno-unused-variable -Wno-unused-parameter -Wno-deprecated-register -Wno-mismatched-tags -Wno-cast-align -Wno-zero-length-array -Wno-sign-compare -Wno-unused-private-field")
+  set(HOSTFILE_FLAGS "-Wno-shadow -Wno-unused-variable -Wno-unused-parameter -Wno-deprecated-register -Wno-mismatched-tags -Wno-cast-align -Wno-zero-length-array -Wno-sign-compare -Wno-unused-private-field ")
   # Ignore warnings for linking with a Charm++ module
   set(PARTOF_FLAGS "-Wno-unused-parameter")
 

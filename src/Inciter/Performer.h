@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.h
   \author    J. Bakosi
-  \date      Fri 15 May 2015 11:28:53 AM MDT
+  \date      Mon 18 May 2015 09:08:21 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Performer advances the Euler equations
   \details   Performer advances the Euler equations. There are a potentially
@@ -19,6 +19,7 @@
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wconversion"
+  #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #endif
 
 #include <inciter.decl.h>
@@ -32,16 +33,35 @@
 #include <ExodusIIMeshReader.h>
 #include <ExodusIIMeshWriter.h>
 #include <LinSysMerger.h>
+
+#if defined(__clang__) || defined(__GNUC__)
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
+
 #include <performer.decl.h>
+
+#if defined(__clang__) || defined(__GNUC__)
+  #pragma GCC diagnostic pop
+#endif
 
 namespace inciter {
 
 //! Performer Charm++ chare used to advance the Euler equations in time
 class Performer : public CBase_Performer {
 
+  #if defined(__clang__) || defined(__GNUC__)
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+  #endif
+
   // Include Charm++ SDAG code. See http://charm.cs.illinois.edu/manuals/html/
   // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
   Performer_SDAG_CODE
+
+  #if defined(__clang__) || defined(__GNUC__)
+    #pragma GCC diagnostic pop
+  #endif
 
   private:
     using LinSysMergerProxy = tk::CProxy_LinSysMerger< CProxy_Conductor >;
@@ -64,10 +84,15 @@ class Performer : public CBase_Performer {
     CProxy_Conductor m_hostproxy;       //!< Host proxy
     LinSysMergerProxy m_lsmproxy;       //!< Linear system merger proxy
     std::vector< std::size_t > m_point; //!< Global ids of nodes owned
+    //! Import map associating global mesh point ids to chares during import
     std::map< std::size_t, std::vector< std::size_t > > m_import;
+    //! Import map associating global mesh point ids to chares before import
     std::map< std::size_t, std::vector< std::size_t > > m_toimport;
+    //! Sparse matrix: global mesh point row and column ids, and nonzero value
     std::map< std::size_t, std::map< std::size_t, tk::real > > m_lhs;
+    //! Time stamps
     std::vector< std::pair< std::string, tk::real > > m_timestamp;
+    std::vector< tk::Timer > m_timer;   //!< Timers
 
     //! Find out if a point is owned
     bool own( std::size_t gid ) const {
@@ -83,11 +108,7 @@ class Performer : public CBase_Performer {
 
     //! Initialize local->global, global->local node ids, element connectivity
     std::pair< std::vector< std::size_t >, std::vector< std::size_t > >
-    initIds( const std::vector< std::size_t >& gelem ) const;
-
-    //! Initialize points surrounding points
-    std::pair< std::vector< std::size_t >, std::vector< std::size_t > >
-    psup() const;
+    initIds( const std::vector< std::size_t >& gelem );
 
     //! Assign local ids to global ids
     std::map< std::size_t, std::size_t >

@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Print.h
   \author    J. Bakosi
-  \date      Fri 17 Apr 2015 12:15:13 PM MDT
+  \date      Sat 16 May 2015 02:39:51 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     General purpose pretty printer functionality
   \details   This file contains general purpose printer functions. Using the
@@ -209,6 +209,14 @@ class Print {
                    % watch.hrs.count() % watch.min.count() % watch.sec.count();
     }
 
+    //! Formatted print of a performance statistic (an item of a list)
+    //! \param[in] name Performance statistic name to be printed
+    //! \param[in] value Performance statistic value
+    //! \author J. Bakosi
+    template< Style s = VERBOSE >
+    void perfitem( const std::string& name, tk::real value ) const
+    { stream<s>() << m_item_name_perf_fmt % m_item_indent % name % value; }
+
     //! Formatted print of a list: name: entries...
     //! \param[in] name Name of a section (consisting of a list) to be printed
     //! \param[in] entries Container of type Container whose elements to be
@@ -243,10 +251,10 @@ class Print {
 
     //! Formatted print of elapsed times
     //! \param[in] t Title of section containing a list of elapsed times
-    //! \param[in] clock std::map of strings (clock names) and associated timers
-    //!   which could be in various formats as long as there is a corresponding
-    //!   item() overload that can apply operator << for outputing their value
-    //!   to an output stream. Examples of allowed ClockFormats are:
+    //! \param[in] clock std::vector of strings (clock names) and associated
+    //!   timers which could be in various formats as long as there is a
+    //!   corresponding item() overload that can apply operator << for outputing
+    //!   their value to an output stream. Examples of allowed ClockFormats are:
     //!   tk::Timer::Watch, which is a struct containing a timestamp in h:m:s
     //!   format, and the return value of Timer::dsec(), which is a tk::real.
     //! \author J. Bakosi
@@ -257,7 +265,22 @@ class Print {
     {
       section<s>( t );
       for (const auto& c : clock) item<s>( c.first, c.second );
-      endsubsection<s>();
+    }
+
+    //! Formatted print of performance statistics
+    //! \param[in] t Title of section containing a list of performance stats
+    //! \param[in] stat std::vector of strings (names of a performance
+    //!   statistics) and associated values.
+    //! \author J. Bakosi
+    template< Style s = VERBOSE >
+    void perf( const std::string& t,
+               const std::vector< std::pair< std::string, tk::real > >& stat )
+    const
+    {
+      if (!stat.empty()) {
+        section<s>( t );
+        for (const auto& c : stat) perfitem<s>( c.first, c.second );
+      }
     }
 
     //! Formatted print of a note
@@ -587,6 +610,7 @@ class Print {
     mutable format m_item_name_fmt = format("%s%-30s : ");
     mutable format m_item_name_value_fmt = format("%s%-30s : %s\n");
     mutable format m_item_name_watch_fmt = format("%s%-65s : %d:%d:%d\n");
+    mutable format m_item_name_perf_fmt = format("%s%-65s : %s\n");
     mutable format m_item_widename_value_fmt = format("%s%-65s : %s\n");
     mutable format m_part_underline_fmt = format("      %|=68|\n");
     mutable format m_section_underline_fmt = format("%s%s\n");

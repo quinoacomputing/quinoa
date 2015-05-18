@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.C
   \author    J. Bakosi
-  \date      Thu 14 May 2015 06:26:01 AM MDT
+  \date      Sun 17 May 2015 12:41:37 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Performer advances the Euler equations
   \details   Performer advances the Euler equations. There are a potentially
@@ -71,8 +71,8 @@ Performer::Performer( CProxy_Conductor& hostproxy, LinSysMergerProxy& lsmproxy )
           std::map< std::size_t, std::vector< std::size_t > >() );
   // Output chare mesh and nodal chare id field to file
   writeChareId( inpoel, coord );
-  // Send some timing results to the host
-  m_hostproxy.timestamp( m_timestamp );
+  // Send some time stamps to the host
+  m_hostproxy.arrTimestamp( m_timestamp );
 }
 
 void
@@ -162,21 +162,25 @@ Performer::update(
 //******************************************************************************
 //  Perform the necessary communication among fellow Performers to update the
 //  chare-boundaries for matrix
-//! \param[in] exp Chare export map
+//! \param[in] exp Chare export map, see tk::elemCommMaps()
 //! \author J. Bakosi
 //******************************************************************************
 {
+  m_timer.emplace_back();
+
   // Pack matrix values for export
   std::map< std::size_t,
             std::map< std::size_t,
                       std::map< std::size_t, tk::real > > > expmat;
+  std::size_t ncommpts = 0;
   for (const auto& c : exp) {
     auto& e = expmat[ c.first ];
     for (auto p : c.second) {
       const auto it = m_lhs.find( p );
-      if (it != m_lhs.end())
+      if (it != m_lhs.end()) {
         e.insert( *it );
-      else
+        ncommpts += it->second.size();
+      } else
         Throw( "Performer chare " + std::to_string(thisIndex) +
                " can't find gid " + std::to_string(p) +
                " to be exported in its part of the matrix" );
@@ -246,7 +250,7 @@ Performer::contributeLhs()
 }
 
 std::pair< std::vector< std::size_t >, std::vector< std::size_t > >
-Performer::initIds( const std::vector< std::size_t >& gelem ) const
+Performer::initIds( const std::vector< std::size_t >& gelem )
 //******************************************************************************
 //! Initialize local->global, global->local node ids, element connectivity
 //! \param[in] gelem Set of unique owned global element ids
@@ -255,6 +259,8 @@ Performer::initIds( const std::vector< std::size_t >& gelem ) const
 //! \author J. Bakosi
 //******************************************************************************
 {
+  tk::Timer t;
+
   // Build unique global node ids of owned elements
   std::vector< std::size_t > gnode;
   for (auto e : gelem) {
@@ -277,6 +283,8 @@ Performer::initIds( const std::vector< std::size_t >& gelem ) const
     inpoel.push_back( lid( lnode, g_tetinpoel[e*4+3] ) );
   }
 
+  m_timestamp.emplace_back( "Initialize mesh point ids, element connectivity",
+                            t.dsec() );
   return { gnode, inpoel };
 }
 
@@ -370,5 +378,5 @@ Performer::writeChareId( const std::vector< std::size_t >& inpoel,
   ew.writeElemVarNames( { "Chare Id" } );
   ew.writeElemScalar( 1, 1, chid );
 
-  m_timestamp.emplace_back( "Write chare id to file", t.dsec() );
+  m_timestamp.emplace_back( "Write chare id field to file", t.dsec() );
 }

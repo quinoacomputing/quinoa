@@ -14,7 +14,7 @@ add_library(InciterControl
             Inciter/CmdLine/Parser.C
 )
 
-removeWarnings("Inciter/InputDeck/Parser.C;Inciter/CmdLine/Parser.C")
+removeWarnings("Inciter/InputDeck/Parser.C;Inciter/CmdLine/Parser.C;StringParser.C;FileParser.C")
 
 INSTALL(TARGETS InciterControl
         RUNTIME DESTINATION bin COMPONENT Runtime
@@ -32,7 +32,7 @@ add_library(RNGTestControl
             RNGTest/CmdLine/Parser.C
 )
 
-removeWarnings("RNGTest/InputDeck/Parser.C;RNGTest/CmdLine/Parser.C")
+removeWarnings("RNGTest/InputDeck/Parser.C;RNGTest/CmdLine/Parser.C;StringParser.C;FileParser.C")
 
 INSTALL(TARGETS RNGTestControl
         RUNTIME DESTINATION bin COMPONENT Runtime
@@ -49,7 +49,7 @@ add_library(UnitTestControl
             UnitTest/CmdLine/Parser.C
 )
 
-removeWarnings("UnitTest/CmdLine/Parser.C")
+removeWarnings("UnitTest/CmdLine/Parser.C;StringParser.C;FileParser.C")
 
 INSTALL(TARGETS UnitTestControl
         RUNTIME DESTINATION bin COMPONENT Runtime
@@ -66,7 +66,7 @@ add_library(RegTestControl
             RegTest/CmdLine/Parser.C
 )
 
-removeWarnings("RegTest/CmdLine/Parser.C")
+removeWarnings("RegTest/CmdLine/Parser.C;StringParser.C;FileParser.C")
 
 INSTALL(TARGETS RegTestControl
         RUNTIME DESTINATION bin COMPONENT Runtime
@@ -82,7 +82,7 @@ add_library(MeshConvControl
             MeshConv/CmdLine/Parser.C
 )
 
-removeWarnings("MeshConv/CmdLine/Parser.C")
+removeWarnings("MeshConv/CmdLine/Parser.C;StringParser.C")
 
 INSTALL(TARGETS MeshConvControl
         RUNTIME DESTINATION bin COMPONENT Runtime
@@ -98,7 +98,7 @@ add_library(WalkerControl
             Walker/CmdLine/Parser.C
 )
 
-removeWarnings("Walker/InputDeck/Parser.C;Walker/CmdLine/Parser.C")
+removeWarnings("Walker/InputDeck/Parser.C;Walker/CmdLine/Parser.C;StringParser.C;FileParser.C")
 
 INSTALL(TARGETS WalkerControl
         RUNTIME DESTINATION bin COMPONENT Runtime

@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/PUPUtil.h
   \author    J. Bakosi
-  \date      Tue 14 Apr 2015 11:45:54 AM MDT
+  \date      Sun 17 May 2015 01:06:58 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Base/PUPUtil.h
   \details   Unit tests for Base/PUPUtil.h
@@ -395,7 +395,7 @@ struct Migrated : CBase_Migrated {
 //!   the TUT library. Unfortunately thus, there is no good way to count up
 //!   these additional tests, and thus if a test such as this is added to the
 //!   suite this number must be updated in UnitTest/TUTSuite.h in
-//!   unittest::TUTSuite::evaluate().
+//!   unittest::TUTSuite::m_migrations.
 template<> template<>
 void PUPUtil_object::test< 1 >() {
   // This test spawns a new Charm++ chare. The "1" at the end of the test name
@@ -415,7 +415,7 @@ void PUPUtil_object::test< 1 >() {
 //!   the TUT library. Unfortunately thus, there is no good way to count up
 //!   these additional tests, and thus if a test such as this is added to the
 //!   suite this number must be updated in UnitTest/TUTSuite.h in
-//!   unittest::TUTSuite::evaluate().
+//!   unittest::TUTSuite::m_migrations.
 template<> template<>
 void PUPUtil_object::test< 2 >() {
   // This test spawns a new Charm++ chare. The "1" at the end of the test name
@@ -435,7 +435,7 @@ void PUPUtil_object::test< 2 >() {
 //!   the TUT library. Unfortunately thus, there is no good way to count up
 //!   these additional tests, and thus if a test such as this is added to the
 //!   suite this number must be updated in UnitTest/TUTSuite.h in
-//!   unittest::TUTSuite::evaluate().
+//!   unittest::TUTSuite::m_migrations.
 template<> template<>
 void PUPUtil_object::test< 3 >() {
   // This test spawns a new Charm++ chare. The "1" at the end of the test name
@@ -455,7 +455,7 @@ void PUPUtil_object::test< 3 >() {
 //!   the TUT library. Unfortunately thus, there is no good way to count up
 //!   these additional tests, and thus if a test such as this is added to the
 //!   suite this number must be updated in UnitTest/TUTSuite.h in
-//!   unittest::TUTSuite::evaluate().
+//!   unittest::TUTSuite::m_migrations.
 template<> template<>
 void PUPUtil_object::test< 4 >() {
   // This test spawns a new Charm++ chare. The "1" at the end of the test name
@@ -475,7 +475,7 @@ void PUPUtil_object::test< 4 >() {
 //!   the TUT library. Unfortunately thus, there is no good way to count up
 //!   these additional tests, and thus if a test such as this is added to the
 //!   suite this number must be updated in UnitTest/TUTSuite.h in
-//!   unittest::TUTSuite::evaluate().
+//!   unittest::TUTSuite::m_migrations.
 template<> template<>
 void PUPUtil_object::test< 5 >() {
   // This test spawns a new Charm++ chare. The "1" at the end of the test name
@@ -497,7 +497,7 @@ void PUPUtil_object::test< 5 >() {
 //!   the TUT library. Unfortunately thus, there is no good way to count up
 //!   these additional tests, and thus if a test such as this is added to the
 //!   suite this number must be updated in UnitTest/TUTSuite.h in
-//!   unittest::TUTSuite::evaluate().
+//!   unittest::TUTSuite::m_migrations.
 template<> template<>
 void PUPUtil_object::test< 6 >() {
   // This test spawns a new Charm++ chare. The "1" at the end of the test name
@@ -522,7 +522,7 @@ void PUPUtil_object::test< 6 >() {
 //!   the TUT library. Unfortunately thus, there is no good way to count up
 //!   these additional tests, and thus if a test such as this is added to the
 //!   suite this number must be updated in UnitTest/TUTSuite.h in
-//!   unittest::TUTSuite::evaluate().
+//!   unittest::TUTSuite::m_migrations.
 template<> template<>
 void PUPUtil_object::test< 7 >() {
   // This test spawns a new Charm++ chare. The "1" at the end of the test name
@@ -542,7 +542,7 @@ void PUPUtil_object::test< 7 >() {
 //!   the TUT library. Unfortunately thus, there is no good way to count up
 //!   these additional tests, and thus if a test such as this is added to the
 //!   suite this number must be updated in UnitTest/TUTSuite.h in
-//!   unittest::TUTSuite::evaluate().
+//!   unittest::TUTSuite::m_migrations.
 template<> template<>
 void PUPUtil_object::test< 8 >() {
   // This test spawns a new Charm++ chare. The "1" at the end of the test name
@@ -562,7 +562,7 @@ void PUPUtil_object::test< 8 >() {
 //!   the TUT library. Unfortunately thus, there is no good way to count up
 //!   these additional tests, and thus if a test such as this is added to the
 //!   suite this number must be updated in UnitTest/TUTSuite.h in
-//!   unittest::TUTSuite::evaluate().
+//!   unittest::TUTSuite::m_migrations.
 template<> template<>
 void PUPUtil_object::test< 9 >() {
   // This test spawns a new Charm++ chare. The "1" at the end of the test name
@@ -582,7 +582,7 @@ void PUPUtil_object::test< 9 >() {
 //!   the TUT library. Unfortunately thus, there is no good way to count up
 //!   these additional tests, and thus if a test such as this is added to the
 //!   suite this number must be updated in UnitTest/TUTSuite.h in
-//!   unittest::TUTSuite::evaluate().
+//!   unittest::TUTSuite::m_migrations.
 template<> template<>
 void PUPUtil_object::test< 10 >() {
   // This test spawns a new Charm++ chare. The "1" at the end of the test name
@@ -602,7 +602,7 @@ void PUPUtil_object::test< 10 >() {
 //!   the TUT library. Unfortunately thus, there is no good way to count up
 //!   these additional tests, and thus if a test such as this is added to the
 //!   suite this number must be updated in UnitTest/TUTSuite.h in
-//!   unittest::TUTSuite::evaluate().
+//!   unittest::TUTSuite::m_migrations.
 template<> template<>
 void PUPUtil_object::test< 11 >() {
   // This test spawns a new Charm++ chare. The "1" at the end of the test name
@@ -614,6 +614,7 @@ void PUPUtil_object::test< 11 >() {
 
   CProxy_Migrated::ckNew( charm::TaggedTuple{ "Bob", 32, "bob@bob.bob" } );
 }
+
 } // tut::
 
 #endif // test_PUPUtil_h

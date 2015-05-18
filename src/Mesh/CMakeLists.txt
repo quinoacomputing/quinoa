@@ -9,6 +9,8 @@ add_library(Mesh
             STLMesh.C
 )
 
+removeWarnings( "DerivedData.C;CommMap.C" )
+
 INSTALL(TARGETS Mesh
   	RUNTIME DESTINATION bin COMPONENT Runtime
   	LIBRARY DESTINATION lib COMPONENT Runtime

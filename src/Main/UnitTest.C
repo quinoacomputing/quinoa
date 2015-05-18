@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/UnitTest.C
   \author    J. Bakosi
-  \date      Tue 14 Apr 2015 11:49:56 AM MDT
+  \date      Sun 17 May 2015 01:53:11 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     UnitTest's Charm++ main chare and main().
   \details   UnitTest's Charm++ main chare and main(). This file contains
@@ -349,6 +349,7 @@ int main( int argc, char **argv ) {
 #endif
 
 #include <charmchild.def.h>
+#include <charmtimer.def.h>
 #include <migrated.def.h>
 #include <unittest.def.h>
 

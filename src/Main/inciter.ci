@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/inciter.ci
   \author    J. Bakosi
-  \date      Thu 14 May 2015 11:12:07 AM MDT
+  \date      Fri 15 May 2015 04:07:54 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Charm++ module interface file for inciter
   \details   Charm++ module interface file for the computational shock
@@ -45,6 +45,9 @@ mainmodule inciter {
     entry void timestamp( std::string label, tk::real stamp );
     entry
       void timestamp( const std::vector< std::pair<std::string,tk::real> >& s );
+    entry void perfstat( std::string label, tk::real value );
+    entry
+      void perfstat( const std::vector< std::pair<std::string,tk::real> >& p );
   }
 
   chare execute { entry execute(); }

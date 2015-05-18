@@ -22,10 +22,10 @@ module tutsuite {
 
   // TUTSuite spawns chares defined in the modules defined below as extern. If
   // this is not included, Charm++ generates bad code and valgrind detects
-  // memory errors as CharmChild chares are fired up from unit tests inside
-  // TUTSuite.
-  extern module charmchild;
+  // memory errors as chares are fired up from unit tests inside TUTSuite.
   extern module migrated;
+  extern module charmchild;
+  extern module charmtimer;
 
   include "UnitTest/CmdLine/CmdLine.h";
 

@@ -55,6 +55,11 @@ module linsysmerger {
 
       entry void wait4lhs() {
         when trigger_lhs_complete() serial {
+          m_perfstat.emplace_back( "Communicate/total of lhs matrix",
+            static_cast<tk::real>(m_compts) / (m_ownpts + m_compts) );
+          m_timestamp.emplace_back( "Communicate lhs matrix",
+                                    m_timer[0].dsec() );
+          m_timer.clear();
           hyprelhs();
         }
       };
@@ -73,7 +78,9 @@ module linsysmerger {
 
       entry void wait4asm() {
         when trigger_assembly_complete() serial {
-          m_A.print( "hypre_mat" );
+          //m_A.print( "hypre_mat" );
+          m_host.grpTimestamp( m_timestamp );
+          m_host.grpPerfstat( m_perfstat );
           init_complete( m_host );
         }
       };

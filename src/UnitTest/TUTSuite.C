@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/TUTSuite.C
   \author    J. Bakosi
-  \date      Wed 18 Mar 2015 09:27:37 AM MDT
+  \date      Sun 17 May 2015 01:07:19 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Template Unit Test suite class definition
   \details   Template Unit Test suite class definition. In principle there can
@@ -99,8 +99,8 @@ TUTSuite::spawngrp( const std::string& g )
 
   // Add up number of Charm++ migration tests (this is so we know how many to
   // expect results from)
-  const auto it = migrations.find( g );
-  if (it != migrations.end()) m_nmigr += it->second;
+  const auto it = m_migrations.find( g );
+  if (it != m_migrations.end()) m_nmigr += it->second;
 
   // Asynchronously fire up all tests in test group
   for (int t=1; t<=g_maxTestsInGroup; ++t)
