@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/UnitTest.C
   \author    J. Bakosi
-  \date      Sun 17 May 2015 01:53:11 PM MDT
+  \date      Tue 19 May 2015 02:22:30 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     UnitTest's Charm++ main chare and main().
   \details   UnitTest's Charm++ main chare and main(). This file contains
@@ -31,8 +31,18 @@
 #include <UnitTest/CmdLine/Parser.h>
 #include <ProcessException.h>
 #include <Assessment.h>
-#include <unittest.decl.h>
 #include <Init.h>
+
+#if defined(__clang__)
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wshorten-64-to-32"
+#endif
+
+#include <unittest.decl.h>
+
+#if defined(__clang__)
+  #pragma GCC diagnostic pop
+#endif
 
 namespace tut {
 
@@ -63,6 +73,7 @@ const int MAX_TESTS_IN_GROUP = 80;
 #include <tests/Base/LoadDistributor.h>
 #include <tests/Base/ProcessControl.h>
 #include <tests/Base/Vector.h>
+#include <tests/Base/LinearMap.h>
 
 #include <tests/Control/Components.h>
 #include <tests/Control/Control.h>
@@ -351,6 +362,7 @@ int main( int argc, char **argv ) {
 #include <charmchild.def.h>
 #include <charmtimer.def.h>
 #include <migrated.def.h>
+#include <testarray.def.h>
 #include <unittest.def.h>
 
 #if defined(__clang__) || defined(__GNUC__)

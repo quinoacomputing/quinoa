@@ -78,6 +78,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy > {
       wait4hypremat();
       wait4fill();
       wait4asm();
+      wait4stat();
     }
 
     void create() {

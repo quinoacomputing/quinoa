@@ -322,6 +322,7 @@ include_directories(${QUINOA_SOURCE_DIR}
                     ${TPL_DIR}/include/pegtl
                     ${TPL_DIR}/include/tut
                     ${TPL_DIR}/charm/include
+                    ${PROJECT_BINARY_DIR}/Base          # for Charm++ modules
                     ${PROJECT_BINARY_DIR}/Main          # for Charm++ modules
                     ${PROJECT_BINARY_DIR}/Walker        # for Charm++ modules
                     ${PROJECT_BINARY_DIR}/Inciter       # for Charm++ modules

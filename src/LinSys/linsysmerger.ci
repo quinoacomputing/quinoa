@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/linsysmerger.ci
   \author    J. Bakosi
-  \date      Thu 14 May 2015 06:33:45 AM MDT
+  \date      Tue 19 May 2015 11:46:27 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Charm++ module interface file for merging a linear system
   \details   Charm++ module interface file for merging a linear system
@@ -81,6 +81,11 @@ module linsysmerger {
           //m_A.print( "hypre_mat" );
           m_host.grpTimestamp( m_timestamp );
           m_host.grpPerfstat( m_perfstat );
+        }
+      };
+
+      entry void wait4stat() {
+        when trigger_timestamp_complete(), trigger_perfstat_complete() serial {
           init_complete( m_host );
         }
       };
@@ -89,6 +94,8 @@ module linsysmerger {
       entry void trigger_hyprelhs_complete();
       entry void trigger_fill_complete();
       entry void trigger_assembly_complete();
+      entry void trigger_timestamp_complete();
+      entry void trigger_perfstat_complete();
     };
 
   } // tk::
