@@ -1,0 +1,24 @@
+//******************************************************************************
+/*!
+  \file      src/Base/linearmap.ci
+  \author    J. Bakosi
+  \date      Sat 16 May 2015 06:57:09 AM MDT
+  \copyright 2012-2015, Jozsef Bakosi.
+  \brief     Charm++ module interface file for linear array creation
+  \details   Charm++ module interface file for linear array creation. See
+     http://charm.cs.illinois.edu/manuals/html/charm++/manual.html, Sec.
+     Advanced Array Creation. This class does a simple block distribution.
+*/
+//******************************************************************************
+
+module linearmap {
+
+  namespace tk {
+
+    group LinearMap : CkArrayMap {
+      entry LinearMap( int nelem );
+    }
+
+  } // tk::
+
+}

@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.h
   \author    J. Bakosi
-  \date      Mon 18 May 2015 09:08:21 AM MDT
+  \date      Tue 19 May 2015 07:33:44 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Performer advances the Euler equations
   \details   Performer advances the Euler equations. There are a potentially
@@ -72,7 +72,7 @@ class Performer : public CBase_Performer {
                         LinSysMergerProxy& lsmproxy );
 
     //! Migrate constructor
-    Performer( CkMigrateMessage* ) {}
+    explicit Performer( CkMigrateMessage* ) {}
 
     //! Receive matrix row contribution from fellow Performer chares
     void add(

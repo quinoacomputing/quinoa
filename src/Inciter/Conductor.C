@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Conductor.C
   \author    J. Bakosi
-  \date      Mon 18 May 2015 08:22:11 AM MDT
+  \date      Tue 19 May 2015 12:00:05 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Conductor drives the time integration of the Euler equations
   \details   Conductor drives the time integration of the Euler equations.
@@ -15,6 +15,7 @@
 //******************************************************************************
 
 #include <Conductor.h>
+#include <LinearMap.h>
 #include <inciter.decl.h>
 
 extern CProxy_Main mainProxy;
@@ -44,8 +45,16 @@ Conductor::Conductor() :
   // Create linear system merger chare group collecting chear contributions
   m_lsmproxy = LinSysMergerProxy::ckNew( thisProxy, g_npoin );
 
+  // Charm++ map object for custom initial placement of chare array elements
+  tk::CProxy_LinearMap mapproxy = tk::CProxy_LinearMap::ckNew( m_nchare );
+  //CProxy_RRMap mapproxy = CProxy_RRMap::ckNew();      // round robin
+  CkArrayOptions opts( m_nchare );
+  opts.setMap( mapproxy );
+
   // Fire up array of asynchronous performers
-  m_perfproxy = PerfProxy::ckNew( thisProxy, m_lsmproxy, m_nchare );
+  m_perfproxy = PerfProxy::ckNew( thisProxy, m_lsmproxy, opts );
+  //m_perfproxy = PerfProxy::ckNew( thisProxy, m_lsmproxy, m_nchare );
+  m_perfproxy.doneInserting();
 }
 
 void
@@ -72,6 +81,7 @@ Conductor::arrTimestamp(
 //******************************************************************************
 {
   timestamp( stamp, m_arrTimestamp, m_arrTimestampCnt, m_nchare, "chares" );
+  m_lsmproxy.trigger_timestamp_complete();
 }
 
 void
@@ -85,6 +95,7 @@ Conductor::grpTimestamp(
 //******************************************************************************
 {
   timestamp( stamp, m_grpTimestamp, m_grpTimestampCnt, CkNumPes(), "PEs" );
+  m_lsmproxy.trigger_perfstat_complete();
 }
 
 void
