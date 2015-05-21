@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tutsuite.ci
   \author    J. Bakosi
-  \date      Tue 19 May 2015 01:44:31 PM MDT
+  \date      Wed 20 May 2015 02:12:22 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Charm++ module interface file for Template Unit Test suite
   \details   Charm++ module interface file for Template Unit Test suite
@@ -27,6 +27,7 @@ module tutsuite {
   extern module charmchild;
   extern module charmtimer;
   extern module linearmap;
+  extern module unsmeshmap;
   extern module testarray;
 
   include "UnitTest/CmdLine/CmdLine.h";

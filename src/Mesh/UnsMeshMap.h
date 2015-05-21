@@ -1,14 +1,19 @@
 //******************************************************************************
 /*!
-  \file      src/Base/LinearMap.h
+  \file      src/Mesh/UnsMeshMap.h
   \author    J. Bakosi
-  \date      Wed 20 May 2015 01:59:14 PM MDT
+  \date      Wed 20 May 2015 06:41:26 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
-  \brief     Advanced Charm++ array creation with a map in a linear fashion
+  \brief     Advanced Charm++ array creation with a map using an unstructured
+             grid
   \details   Advanced Charm++ array creation refers to various ways arrays can
      be created with the Charm++ runtime system. See
      http://charm.cs.illinois.edu/manuals/html/charm++/manual.html, Sec.
-     Advanced Array Creation. This class does a simple linear distribution.
+     Advanced Array Creation. This class does a distribution that is based on
+     which portion of a distributed sparse matrix resulting from discretization
+     on an unstructured grid residing on a PE should hold a given chare array
+     element. (The one that owns most on-PE rows to minimize off-PE
+     communication.)
 
      Note that to help with performance, it is not advised to do heavy
      computations in the overridden member functions, procNum() and
@@ -33,50 +38,52 @@
      the constructor.
 */
 //******************************************************************************
-#ifndef LinearMap_h
-#define LinearMap_h
+#ifndef UnsMeshMap_h
+#define UnsMeshMap_h
 
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wconversion"
 #endif
 
-#include <linearmap.decl.h>
+#include <unsmeshmap.decl.h>
 
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic pop
 #endif
 
-#include <Exception.h>
-
 namespace tk {
 
-//! Charm++ array map for initial placement of array elements in linear fashion
+//! \brief Charm++ array map for initial placement of array elements using an
+//!   unstructured grid
 //! \details The map object is used by the Charm++ array manager to determine
 //!   the "home" PE of each element. The home PE is the PE upon which the array
 //!   element is initially placed, which will retain responsibility for
 //!   maintaining the location of the element.
-class LinearMap : public CkArrayMap {
+class UnsMeshMap : public CkArrayMap {
 
   public:
     //! Constructor
-    //! \param[in] nelem Total number of array elements
-    explicit LinearMap( int nelem ) :
-      m_chunksize( nelem > CkNumPes() ? nelem/CkNumPes() : 1 )
-    { Assert( nelem > 0, "Number of array elements must be positive" ); }
+    explicit
+    UnsMeshMap( std::size_t npoin,
+                const std::vector< std::vector< std::size_t > >& point );
 
-    //! \brief Return the home processor number for the array element for linear
-    //!   distribution
+    //! \brief Return the home processor number for the array element based on
+    //!   unstructured-mesh-aware distribution computed in the constructor
     int procNum( int, const CkArrayIndex& idx ) override;
 
-    //! Create initial set of array elements based on linear distribution
+    //! \brief Create initial set of array elements based on the
+    //!   unstructured-mesh-aware distribution computed in the constructor
     void populateInitial( int, CkArrayIndex& idx, void *msg, CkArrMgr *mgr )
     override;
 
   private:
-    int m_chunksize;            //!< Number of array elements per PE
+    std::vector< std::size_t > m_pe;    //!< PE assigned to each array element
+
+    //! Check that all PEs create at least a single array element, fix if not
+    void fixPEs();
 };
 
 } // tk::
 
-#endif // LinearMap_h
+#endif // UnsMeshMap_h

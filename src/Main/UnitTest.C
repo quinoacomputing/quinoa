@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/UnitTest.C
   \author    J. Bakosi
-  \date      Tue 19 May 2015 02:22:30 PM MDT
+  \date      Wed 20 May 2015 02:11:38 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     UnitTest's Charm++ main chare and main().
   \details   UnitTest's Charm++ main chare and main(). This file contains
@@ -89,6 +89,7 @@ const int MAX_TESTS_IN_GROUP = 80;
 #include <tests/IO/Mesh.h>
 
 #include <tests/Mesh/DerivedData.h>
+#include <tests/Mesh/UnsMeshMap.h>
 
 //! \brief Charm handle to the main proxy, facilitates call-back to finalize,
 //!    etc., must be in global scope, unique per executable

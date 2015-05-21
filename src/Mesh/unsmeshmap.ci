@@ -1,0 +1,31 @@
+//******************************************************************************
+/*!
+  \file      src/Mesh/unsmeshmap.ci
+  \author    J. Bakosi
+  \date      Tue 19 May 2015 05:55:19 PM MDT
+  \copyright 2012-2015, Jozsef Bakosi.
+  \brief     Charm++ module interface file for unstructured-mesh-aware array
+             creation
+  \details   Charm++ module interface file for unstructured-mesh-aware array
+    creation. See http://charm.cs.illinois.edu/manuals/html/charm++/manual.html,
+    Sec. Advanced Array Creation. This class does a distribution that is based on
+     which portion of a distributed sparse matrix resulting from discretization
+     on an unstructured grid residing on a PE should hold a given chare array
+     element. (The one that owns most on-PE rows to minimize off-PE
+     communication.
+*/
+//******************************************************************************
+
+module unsmeshmap {
+
+  namespace tk {
+
+    group UnsMeshMap : CkArrayMap {
+      entry UnsMeshMap(
+        std::size_t npoint,
+        const std::vector< std::vector< std::size_t > >& point );
+    }
+
+  } // tk::
+
+}
