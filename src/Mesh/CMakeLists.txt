@@ -7,13 +7,10 @@ include(charm)
 add_library(Mesh
             DerivedData.C
             Reorder.C
-            CommMap.C
             STLMesh.C
-            UnsMeshMap.C
 )
 
-addCharmModule( "unsmeshmap" "Mesh" )
-removeWarnings( "DerivedData.C;CommMap.C;UnsMeshMap.C" )
+removeWarnings( "DerivedData.C" )
 
 INSTALL(TARGETS Mesh
   	RUNTIME DESTINATION bin COMPONENT Runtime
