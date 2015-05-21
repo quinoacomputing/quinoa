@@ -1,8 +1,8 @@
 //******************************************************************************
 /*!
-  \file      src/Base/LoadDistributor.h
+  \file      src/LoadBalance/LoadDistributor.h
   \author    J. Bakosi
-  \date      Mon 06 Apr 2015 11:04:31 AM MDT
+  \date      Thu 21 May 2015 09:44:34 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Load distributors and partitioning data types
   \details   Load distributors and partitioning data types. Load distributors
@@ -12,7 +12,7 @@
 #ifndef LoadDistributor_h
 #define LoadDistributor_h
 
-#include <sstream>
+#include <cstdint>
 
 namespace tk {
 

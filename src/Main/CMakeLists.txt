@@ -39,6 +39,7 @@ target_link_libraries(${INCITER_EXECUTABLE}
                       LinSys
                       Inciter
                       InciterControl
+                      LoadBalance
                       ${NEMESIS_LIBRARIES}
                       ${EXODUS_LIBRARIES}
                       ${NETCDF_LIBRARIES}
@@ -117,6 +118,7 @@ target_link_libraries(${UNITTEST_EXECUTABLE}
                       Base
                       IO
                       Mesh
+                      LoadBalance
                       UnitTest
                       UnitTestControl
                       #${SILO_LIBRARY}
@@ -228,6 +230,7 @@ target_link_libraries(${WALKER_EXECUTABLE}
                       IO
                       Mesh      # WALKER SHOULD NOT DEPEND ON MESH
                       Statistics
+                      LoadBalance
                       RNG
                       Walker
                       WalkerControl

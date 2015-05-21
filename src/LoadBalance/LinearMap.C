@@ -1,8 +1,8 @@
 //******************************************************************************
 /*!
-  \file      src/Base/LinearMap.h
+  \file      src/LoadBalance/LinearMap.C
   \author    J. Bakosi
-  \date      Wed 20 May 2015 01:59:14 PM MDT
+  \date      Thu 21 May 2015 09:38:55 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Advanced Charm++ array creation with a map in a linear fashion
   \details   Advanced Charm++ array creation refers to various ways arrays can
@@ -33,50 +33,66 @@
      the constructor.
 */
 //******************************************************************************
-#ifndef LinearMap_h
-#define LinearMap_h
+
+#include <LinearMap.h>
+
+using tk::LinearMap;
+
+int
+LinearMap::procNum( int, const CkArrayIndex& idx )
+//******************************************************************************
+//  Return the home processor number for the array element for linear
+//  distribution
+//! \param[in] idx Charm++ array index object containing the array element index
+//!   to assign a PE to
+//! \return PE assigned
+//! \author J. Bakosi
+//******************************************************************************
+{
+  int elem = *idx.data();       // array element we assign PE for
+  auto pe = elem / m_chunksize;
+  if (pe >= CkNumPes()) pe = CkNumPes()-1;
+
+  Assert( pe < CkNumPes(), "Assigned PE (" + std::to_string(pe) +
+          ") larger than NumPEs (" + std::to_string(CkNumPes()) + ")" );
+
+  return pe;
+}
+
+void
+LinearMap::populateInitial( int, CkArrayIndex& idx, void *msg, CkArrMgr *mgr )
+//******************************************************************************
+// Create initial set of array elements based on linear distribution
+//! \param[in] idx Charm++ array index object containing the number of initial
+//!   array elements to be created
+//! \param[in] msg Charm++ messsage to use for array element creation
+//! \param[in] mgr Array manager to use
+//! \author J. Bakosi
+//******************************************************************************
+{
+  int nelem = *idx.data();      // number of array elements requested
+  if (nelem == 0) return;       // no initial elements requested
+
+  auto lower = CkMyPe() * m_chunksize;
+  auto upper = lower + m_chunksize;
+  auto remainder = nelem % CkNumPes();
+  if (remainder && CkMyPe() == CkNumPes()-1) upper += remainder;
+
+  for (int e=0; e<nelem; ++e)
+    if (e >= lower && e < upper)
+      mgr->insertInitial( e, CkCopyMsg(&msg) );
+
+  mgr->doneInserting();
+  CkFreeMsg( msg );
+}
 
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wconversion"
 #endif
 
-#include <linearmap.decl.h>
+#include <linearmap.def.h>
 
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic pop
 #endif
-
-#include <Exception.h>
-
-namespace tk {
-
-//! Charm++ array map for initial placement of array elements in linear fashion
-//! \details The map object is used by the Charm++ array manager to determine
-//!   the "home" PE of each element. The home PE is the PE upon which the array
-//!   element is initially placed, which will retain responsibility for
-//!   maintaining the location of the element.
-class LinearMap : public CkArrayMap {
-
-  public:
-    //! Constructor
-    //! \param[in] nelem Total number of array elements
-    explicit LinearMap( int nelem ) :
-      m_chunksize( nelem > CkNumPes() ? nelem/CkNumPes() : 1 )
-    { Assert( nelem > 0, "Number of array elements must be positive" ); }
-
-    //! \brief Return the home processor number for the array element for linear
-    //!   distribution
-    int procNum( int, const CkArrayIndex& idx ) override;
-
-    //! Create initial set of array elements based on linear distribution
-    void populateInitial( int, CkArrayIndex& idx, void *msg, CkArrMgr *mgr )
-    override;
-
-  private:
-    int m_chunksize;            //!< Number of array elements per PE
-};
-
-} // tk::
-
-#endif // LinearMap_h

@@ -1,8 +1,8 @@
 //******************************************************************************
 /*!
-  \file      src/Mesh/CommMap.h
+  \file      src/LoadBalance/CommMap.h
   \author    J. Bakosi
-  \date      Fri 01 May 2015 04:00:11 PM MDT
+  \date      Thu 21 May 2015 09:38:25 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Calculation of communication maps for unstructured meshes
   \details   Calculation of communication maps for unstructured meshes.

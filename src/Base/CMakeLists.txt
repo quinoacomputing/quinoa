@@ -8,17 +8,14 @@ add_library(Base
             Exception.C
             ProcessException.C
             ProcessControl.C
-            LoadDistributor.C
             Timer.C
             Reader.C
             Writer.C
-            LinearMap.C
 #            Msg.C
 )
 
 #addCharmModule( "msg" "Base" )
-addCharmModule( "linearmap" "Base" )
-removeWarnings( "ProcessException.C;Timer.C;LinearMap.C")
+removeWarnings( "ProcessException.C;Timer.C")
 
 INSTALL(TARGETS Base
   	RUNTIME DESTINATION bin COMPONENT Runtime
