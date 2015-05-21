@@ -13,18 +13,8 @@
 
 #include <tut/tut.hpp>
 #include <LinearMap.h>
+#include <TestArray.h>
 #include <linearmap.decl.h>
-
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wconversion"
-#endif
-
-#include <testarray.decl.h>
-
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic pop
-#endif
 
 namespace unittest {
 
@@ -51,17 +41,10 @@ LinearMap_group LinearMap( "Base/LinearMap" );
 template<> template<>
 void LinearMap_object::test< 1 >() {
   set_test_name( "ctor doesn't throw on positive nelem" );
-
   tk::CProxy_LinearMap::ckNew( 2 );
 }
 
-//! Charm++ chare array definition for testing arrays
-struct TestArray : CBase_TestArray {
-  explicit TestArray() {}
-  explicit TestArray( CkMigrateMessage* ) {}
-};
-
-//! Test use of LinearMap creating an array with nchare < numpes
+//! Test use of LinearMap creating an array with nchare <= numpes
 template<> template<>
 void LinearMap_object::test< 2 >() {
   int nchare = CkNumPes() > 1 ? CkNumPes()/2 : 1;
@@ -69,7 +52,7 @@ void LinearMap_object::test< 2 >() {
                  + std::to_string(CkNumPes()) + ")" );
 
   // Create linear map chare
-  tk::CProxy_LinearMap map = tk::CProxy_LinearMap( nchare );
+  auto map = tk::CProxy_LinearMap::ckNew( nchare );
 
   // Create array options object for use with linear map chare
   CkArrayOptions opts( nchare );
@@ -90,7 +73,7 @@ void LinearMap_object::test< 3 >() {
                  + std::to_string(CkNumPes()) + ")" );
 
   // Create linear map chare
-  tk::CProxy_LinearMap map = tk::CProxy_LinearMap( nchare );
+  auto map = tk::CProxy_LinearMap::ckNew( nchare );
 
   // Create array options object for use with linear map chare
   CkArrayOptions opts( nchare );

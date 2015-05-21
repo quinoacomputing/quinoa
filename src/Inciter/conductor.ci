@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/conductor.ci
   \author    J. Bakosi
-  \date      Tue 19 May 2015 11:35:14 AM MDT
+  \date      Tue 19 May 2015 02:53:29 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Charm++ module interface file for Conductor
   \details   Charm++ module interface file for Conductor
@@ -12,6 +12,7 @@
 module conductor {
 
   extern module linearmap;
+  extern module unsmeshmap;
 
   include "Types.h";
 

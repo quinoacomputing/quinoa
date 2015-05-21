@@ -162,6 +162,9 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")  # gcc-specific settings
   # Set libstdc++ as the default standard C++ library and allow selection
   setlibstdcxx("libstdc++")
 
+  # Experimental: use the C++14 standard
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1y")
+
   add_compiler_flag("-Wno-literal-suffix")
   add_compiler_flag("-Wno-unused-local-typedefs")
   add_compiler_flag("-Wno-unused-function")
@@ -323,6 +326,7 @@ include_directories(${QUINOA_SOURCE_DIR}
                     ${TPL_DIR}/include/tut
                     ${TPL_DIR}/charm/include
                     ${PROJECT_BINARY_DIR}/Base          # for Charm++ modules
+                    ${PROJECT_BINARY_DIR}/Mesh          # for Charm++ modules
                     ${PROJECT_BINARY_DIR}/Main          # for Charm++ modules
                     ${PROJECT_BINARY_DIR}/Walker        # for Charm++ modules
                     ${PROJECT_BINARY_DIR}/Inciter       # for Charm++ modules

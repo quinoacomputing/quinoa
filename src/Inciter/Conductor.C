@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Conductor.C
   \author    J. Bakosi
-  \date      Tue 19 May 2015 12:00:05 PM MDT
+  \date      Wed 20 May 2015 01:51:36 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Conductor drives the time integration of the Euler equations
   \details   Conductor drives the time integration of the Euler equations.
@@ -15,8 +15,9 @@
 //******************************************************************************
 
 #include <Conductor.h>
-#include <LinearMap.h>
 #include <inciter.decl.h>
+#include <LinearMap.h>
+#include <UnsMeshMap.h>
 
 extern CProxy_Main mainProxy;
 
@@ -24,6 +25,7 @@ namespace inciter {
 
 extern std::size_t g_npoin;
 extern std::vector< std::map< std::size_t, std::vector<std::size_t> > > g_pcomm;
+extern std::vector< std::vector< std::size_t > > g_point;
 
 } // inciter::
 
@@ -46,10 +48,11 @@ Conductor::Conductor() :
   m_lsmproxy = LinSysMergerProxy::ckNew( thisProxy, g_npoin );
 
   // Charm++ map object for custom initial placement of chare array elements
-  tk::CProxy_LinearMap mapproxy = tk::CProxy_LinearMap::ckNew( m_nchare );
-  //CProxy_RRMap mapproxy = CProxy_RRMap::ckNew();      // round robin
+  auto map = tk::CProxy_UnsMeshMap::ckNew( g_npoin, g_point );
+  //auto map = tk::CProxy_LinearMap::ckNew( m_nchare );
+  //auto map = CProxy_RRMap::ckNew();      // round robin
   CkArrayOptions opts( m_nchare );
-  opts.setMap( mapproxy );
+  opts.setMap( map );
 
   // Fire up array of asynchronous performers
   m_perfproxy = PerfProxy::ckNew( thisProxy, m_lsmproxy, opts );
