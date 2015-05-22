@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Writer.C
   \author    J. Bakosi
-  \date      Thu 11 Dec 2014 02:10:01 PM MST
+  \date      Fri 22 May 2015 08:34:04 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Writer base class definition
   \details   Writer base class definition. Writer base serves as a base class
@@ -11,8 +11,12 @@
 */
 //******************************************************************************
 
-#include <Writer.h>
-#include <Exception.h>
+#include <string>
+#include <exception>
+#include <cstdio>
+
+#include "Writer.h"
+#include "Exception.h"
 
 using tk::Writer;
 
