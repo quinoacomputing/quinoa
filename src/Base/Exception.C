@@ -2,21 +2,22 @@
 /*!
   \file      src/Base/Exception.C
   \author    J. Bakosi
-  \date      Sat 28 Feb 2015 10:00:18 PM MST
+  \date      Fri 22 May 2015 08:07:29 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Exception class definition
   \details   Exception class definition
 */
 //******************************************************************************
 
-#include <iostream>
+#include <string>
 #include <sstream>
+#include <type_traits>
 #include <cstdio>
-
+#include <cstddef>
 #include <cxxabi.h>
 #include <execinfo.h>
 
-#include <Exception.h>
+#include "Exception.h"
 
 using tk::Exception;
 

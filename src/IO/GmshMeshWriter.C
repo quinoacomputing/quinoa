@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshMeshWriter.C
   \author    J. Bakosi
-  \date      Mon 20 Apr 2015 06:15:22 AM MDT
+  \date      Fri 22 May 2015 08:12:11 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Gmsh mesh writer class definition
   \details   Gmsh mesh writer class definition. Currently, this class supports
@@ -13,8 +13,9 @@
 #include <iterator>
 #include <iomanip>
 
-#include <GmshMeshWriter.h>
-#include <Exception.h>
+#include "Exception.h"
+#include "StrConvUtil.h"
+#include "GmshMeshWriter.h"
 
 using tk::GmshMeshWriter;
 
