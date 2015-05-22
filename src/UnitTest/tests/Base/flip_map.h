@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/flip_map.h
   \author    J. Bakosi
-  \date      Tue 14 Apr 2015 11:42:56 AM MDT
+  \date      Thu 21 May 2015 09:15:26 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Base/flip_map.h
   \details   Unit tests for Base/flip_map.h
@@ -29,6 +29,7 @@ flip_map_group flip_map( "Base/flip_map" );
 //! Test definitions for group
 
 //! Test tk::flip_pair used to invert a std::pair
+//! \author J. Bakosi
 template<> template<>
 void flip_map_object::test< 1 >() {
   set_test_name( "flip_pair" );
@@ -41,6 +42,7 @@ void flip_map_object::test< 1 >() {
 
 //! Test that tk::flip_map does yield a std::multimap sorted by the input
 //! std::map::value_type
+//! \author J. Bakosi
 template<> template<>
 void flip_map_object::test< 2 >() {
   set_test_name( "flip_map" );

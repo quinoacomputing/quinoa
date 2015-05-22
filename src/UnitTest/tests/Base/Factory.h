@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/Factory.h
   \author    J. Bakosi
-  \date      Sun 17 May 2015 02:59:33 PM MDT
+  \date      Thu 21 May 2015 09:11:54 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Base/Factory.h
   \details   Unit tests for Base/Factory.h
@@ -129,6 +129,7 @@ Factory_group Factory( "Base/Factory" );
 //! Test definitions for group
 
 //! Test if tk::record correctly registers a default child constructor in actory
+//! \author J. Bakosi
 template<> template<>
 void Factory_object::test< 1 >() {
   set_test_name( "record default child ctor in factory" );
@@ -145,6 +146,7 @@ void Factory_object::test< 1 >() {
 }
 
 //! Test if tk::record correctly registers a child constructor in factory
+//! \author J. Bakosi
 template<> template<>
 void Factory_object::test< 2 >() {
   set_test_name( "record child ctor(int) in factory" );
@@ -162,6 +164,7 @@ void Factory_object::test< 2 >() {
 }
 
 //! Test if instantiate can correctly instantiates objects from factory
+//! \author J. Bakosi
 template<> template<>
 void Factory_object::test< 3 >() {
   set_test_name( "instantiate objects from factory" );
@@ -187,6 +190,7 @@ void Factory_object::test< 3 >() {
 //! Test if instantiate correctly throws an exception if key does not exist in
 //! factory (only test in DEBUG mode, RELEASE would result in undefined
 //! behavior)
+//! \author J. Bakosi
 template<> template<>
 void Factory_object::test< 4 >() {
   set_test_name( "instantiate non-existent object from factory" );
@@ -212,6 +216,7 @@ void Factory_object::test< 4 >() {
 
 //! Test if tk::recordModel correctly registers a default child constructor in
 //! value factory
+//! \author J. Bakosi
 template<> template<>
 void Factory_object::test< 5 >() {
   set_test_name( "record default child ctor in value factory" );
@@ -229,6 +234,7 @@ void Factory_object::test< 5 >() {
 }
 
 //! Test if tk::record correctly registers a child constructor in value factory
+//! \author J. Bakosi
 template<> template<>
 void Factory_object::test< 6 >() {
   set_test_name( "record child ctor(int) in value factory" );
@@ -250,6 +256,7 @@ void Factory_object::test< 6 >() {
 //! concept-based polymorphism, used in conjunction with the functions in
 //! Base/Factory. It also provides a simple example of how to use the
 //! functionality tested.
+//! \author J. Bakosi
 template<> template<>
 void Factory_object::test< 7 >() {
   set_test_name( "val-ctor of concept-based polymorphic base" );
@@ -266,6 +273,7 @@ void Factory_object::test< 7 >() {
 //! concept-based polymorphism, used in conjunction with the functions in
 //! Base/Factory. It also provides a simple example of how to use the
 //! functionality tested.
+//! \author J. Bakosi
 template<> template<>
 void Factory_object::test< 8 >() {
   set_test_name( "func-ctor of concept-based polymorphic base" );
@@ -281,6 +289,7 @@ void Factory_object::test< 8 >() {
 //! concept-based polymorphism, used in conjunction with the functions in
 //! Base/Factory. It also provides a simple example of how to use the
 //! functionality tested.
+//! \author J. Bakosi
 template<> template<>
 void Factory_object::test< 9 >() {
   set_test_name( "copy-ctor of concept-based polymorphic base" );
@@ -298,6 +307,7 @@ void Factory_object::test< 9 >() {
 //! concept-based polymorphism, used in conjunction with the functions in
 //! Base/Factory. It also provides a simple example of how to use the
 //! functionality tested.
+//! \author J. Bakosi
 template<> template<>
 void Factory_object::test< 10 >() {
   set_test_name( "move-ctor of concept-based polymorphic base" );
@@ -314,6 +324,7 @@ void Factory_object::test< 10 >() {
 //! concept-based polymorphism, used in conjunction with the functions in
 //! Base/Factory. It also provides a simple example of how to use the
 //! functionality tested.
+//! \author J. Bakosi
 template<> template<>
 void Factory_object::test< 11 >() {
   set_test_name( "copy-assgn of concept-based polymorphic base" );
@@ -332,6 +343,7 @@ void Factory_object::test< 11 >() {
 //! concept-based polymorphism, used in conjunction with the functions in
 //! Base/Factory. It also provides a simple example of how to use the
 //! functionality tested.
+//! \author J. Bakosi
 template<> template<>
 void Factory_object::test< 12 >() {
   set_test_name( "move-assgn of concept-based polymorphic base" );
@@ -448,6 +460,7 @@ using ValueFactory = std::map< int, std::function< VBase() > >;
 //!   these additional tests, and thus if a test such as this is added to the
 //!   suite this number must be updated in UnitTest/TUTSuite.h in
 //!   unittest::TUTSuite::m_migrations.
+//! \author J. Bakosi
 template<> template<>
 void Factory_object::test< 13 >() {
   // This test spawns a new Charm++ chare. The "1" at the end of the test name
@@ -478,6 +491,7 @@ void Factory_object::test< 13 >() {
 //!   these additional tests, and thus if a test such as this is added to the
 //!   suite this number must be updated in UnitTest/TUTSuite.h in
 //!   unittest::TUTSuite::m_migrations.
+//! \author J. Bakosi
 template<> template<>
 void Factory_object::test< 14 >() {
   // This test spawns a new Charm++ chare. The "1" at the end of the test name

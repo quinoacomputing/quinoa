@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/Timer.h
   \author    J. Bakosi
-  \date      Thu 21 May 2015 06:48:20 AM MDT
+  \date      Thu 21 May 2015 09:14:58 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Base/Timer.h
   \details   Unit tests for Base/Timer.h
@@ -39,6 +39,7 @@ Timer_group Timer( "Base/Timer" );
 //! Test definitions for group
 
 //! Test timing a 0.1s duration as float with given precision
+//! \author J. Bakosi
 template<> template<>
 void Timer_object::test< 1 >() {
   set_test_name( "measure 0.1s using dsec() with " + std::to_string(precision) +
@@ -51,6 +52,7 @@ void Timer_object::test< 1 >() {
 }
 
 //! Test timing a 1.0 duration as h:m:s with given precision
+//! \author J. Bakosi
 template<> template<>
 void Timer_object::test< 2 >() {
   set_test_name( "measure 1.0s using hms() with " + std::to_string(precision) +
@@ -69,6 +71,7 @@ void Timer_object::test< 2 >() {
 }
 
 //! Test estimated time elapsed and to accomplishment triggered by term
+//! \author J. Bakosi
 template<> template<>
 void Timer_object::test< 3 >() {
   set_test_name( "ETE and ETA triggered by terminate time" );
@@ -100,6 +103,7 @@ void Timer_object::test< 3 >() {
 }
 
 //! Test estimated time elapsed and to accomplishment triggered by nstep
+//! \author J. Bakosi
 template<> template<>
 void Timer_object::test< 4 >() {
   set_test_name( "ETE and ETA triggered by max number of steps" );
@@ -131,6 +135,7 @@ void Timer_object::test< 4 >() {
 }
 
 //! Test converting a 1.0s duration timed as a float to Timer::Watch
+//! \author J. Bakosi
 template<> template<>
 void Timer_object::test< 5 >() {
   set_test_name( "convert time stamp in float to Watch" );
@@ -182,6 +187,7 @@ struct CharmTimer : CBase_CharmTimer {
 //!   these additional tests, and thus if a test such as this is added to the
 //!   suite this number must be updated in UnitTest/TUTSuite.h in
 //!   unittest::TUTSuite::m_migrations.
+//! \author J. Bakosi
 template<> template<>
 void Timer_object::test< 6 >() {
   // This test spawns a new Charm++ chare. The "1" at the end of the test name

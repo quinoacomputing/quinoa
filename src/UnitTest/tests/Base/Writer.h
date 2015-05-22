@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/Writer.h
   \author    J. Bakosi
-  \date      Tue 14 Apr 2015 11:43:07 AM MDT
+  \date      Thu 21 May 2015 09:15:17 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Base/Writer
   \details   Unit tests for Base/Writer
@@ -39,6 +39,7 @@ Writer_group Writer( "Base/Writer" );
 //! Test definitions for group
 
 //! Test if constructor can open a file
+//! \author J. Bakosi
 template<> template<>
 void Writer_object::test< 1 >() {
   set_test_name( "ctor can open file" );
@@ -50,6 +51,7 @@ void Writer_object::test< 1 >() {
 }
 
 //! Test if constructor does not throw if empty filename is given
+//! \author J. Bakosi
 template<> template<>
 void Writer_object::test< 2 >() {
   set_test_name( "ctor does not throw if filename empty" );
@@ -59,6 +61,7 @@ void Writer_object::test< 2 >() {
 }
 
 //! Test if constructor finds and can open an existing file (the executable)
+//! \author J. Bakosi
 template<> template<>
 void Writer_object::test< 3 >() {
   set_test_name( "non-overridden write() correctly throws" );

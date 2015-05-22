@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/ExceptionMPI.h
   \author    J. Bakosi
-  \date      Tue 14 Apr 2015 11:51:50 AM MDT
+  \date      Thu 21 May 2015 09:11:28 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Base/ExceptionMPI.h
   \details   Unit tests for Base/ExceptionMPI.h
@@ -30,6 +30,7 @@ ExceptionMPI_group ExceptionMPI( "Base/ExceptionMPI" );
 //! Test definitions for group
 
 //! Test that AssertMPI macro throws if condition is false on all ranks
+//! \author J. Bakosi
 template<> template<>
 void ExceptionMPI_object::test< 1 >() {
   set_test_name( "AssertMPI macro throws all false" );
@@ -47,6 +48,7 @@ void ExceptionMPI_object::test< 1 >() {
 }
 
 //! Test that AssertMPI macro does not throw if condition is true on all ranks
+//! \author J. Bakosi
 template<> template<>
 void ExceptionMPI_object::test< 2 >() {
   set_test_name( "AssertMPI macro doesn't throw all true" );
@@ -60,6 +62,7 @@ void ExceptionMPI_object::test< 2 >() {
 }
 
 //! Test that ErrChkMPI macro throws if condition is false on all ranks
+//! \author J. Bakosi
 template<> template<>
 void ExceptionMPI_object::test< 3 >() {
   set_test_name( "ErrChkMPI macro throws all false" );
@@ -74,6 +77,7 @@ void ExceptionMPI_object::test< 3 >() {
 }
 
 //! Test that ErrChkMPI macro does not throw if condition is true on all ranks
+//! \author J. Bakosi
 template<> template<>
 void ExceptionMPI_object::test< 4 >() {
   set_test_name( "ErrChkMPI macro doesn't throw all true" );
@@ -87,6 +91,7 @@ void ExceptionMPI_object::test< 4 >() {
 }
 
 //! Test that ErrChkMPI macro throws if condition is false on the 0th rank
+//! \author J. Bakosi
 template<> template<>
 void ExceptionMPI_object::test< 5 >() {
   set_test_name( "ErrChkMPI macro throws 0th false" );
@@ -103,6 +108,7 @@ void ExceptionMPI_object::test< 5 >() {
 }
 
 //! Test that ErrChkMPI macro throws if condition is true on only the 0th rank
+//! \author J. Bakosi
 template<> template<>
 void ExceptionMPI_object::test< 6 >() {
   set_test_name( "ErrChkMPI macro throws 0th true only" );

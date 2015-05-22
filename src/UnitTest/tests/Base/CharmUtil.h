@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/CharmUtil.h
   \author    J. Bakosi
-  \date      Tue 14 Apr 2015 11:44:49 AM MDT
+  \date      Thu 21 May 2015 09:10:55 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Base/CharmUtil.h
   \details   Unit tests for Base/CharmUtil.h
@@ -33,6 +33,7 @@ CharmUtil_group CharmUtil( "Base/CharmUtil" );
 //! Test definitions for group
 
 //! Test if is_enum_class correctly detects a strongly-typed enum
+//! \author J. Bakosi
 template<> template<>
 void CharmUtil_object::test< 1 >() {
   set_test_name( "is_enum_class detects a strongly-typed enum" );
@@ -43,6 +44,7 @@ void CharmUtil_object::test< 1 >() {
 }
 
 //! Test if is_enum_class correctly detects a C-style enum
+//! \author J. Bakosi
 template<> template<>
 void CharmUtil_object::test< 2 >() {
   set_test_name( "is_enum_class detects a C-style enum" );

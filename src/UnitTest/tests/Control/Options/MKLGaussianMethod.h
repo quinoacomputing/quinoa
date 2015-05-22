@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Control/Options/MKLGaussianMethod.h
   \author    J. Bakosi
-  \date      Tue 14 Apr 2015 11:47:26 AM MDT
+  \date      Thu 21 May 2015 09:17:05 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Control/Options/MKLGaussianMethod
   \details   Unit tests for Control/Options/MKLGaussianMethod
@@ -32,6 +32,7 @@ MKLGaussianMethod_group MKLGaussianMethod( "Control/Options/MKLGaussianMethod" )
 //! Test definitions for group
 
 //! Test that member function param() finds MKL parameter for method type
+//! \author J. Bakosi
 template<> template<>
 void MKLGaussianMethod_object::test< 1 >() {
   set_test_name( "param() finds MKL param" );
@@ -41,6 +42,7 @@ void MKLGaussianMethod_object::test< 1 >() {
 }
 
 //! Test that member function param() throws in DEBUG mode if can't find param
+//! \author J. Bakosi
 template<> template<>
 void MKLGaussianMethod_object::test< 2 >() {
   set_test_name( "param() throws" );
@@ -62,6 +64,7 @@ void MKLGaussianMethod_object::test< 2 >() {
 }
 
 //! Test copy constructor
+//! \author J. Bakosi
 template<> template<>
 void MKLGaussianMethod_object::test< 3 >() {
   set_test_name( "copy constructor" );
@@ -76,6 +79,7 @@ void MKLGaussianMethod_object::test< 3 >() {
 }
 
 //! Test move constructor
+//! \author J. Bakosi
 template<> template<>
 void MKLGaussianMethod_object::test< 4 >() {
   set_test_name( "move constructor" );
@@ -90,6 +94,7 @@ void MKLGaussianMethod_object::test< 4 >() {
 }
 
 //! Test copy assignment
+//! \author J. Bakosi
 template<> template<>
 void MKLGaussianMethod_object::test< 5 >() {
   set_test_name( "copy assignment" );
@@ -102,6 +107,7 @@ void MKLGaussianMethod_object::test< 5 >() {
 }
 
 //! Test move assignment
+//! \author J. Bakosi
 template<> template<>
 void MKLGaussianMethod_object::test< 6 >() {
   set_test_name( "move assignment" );

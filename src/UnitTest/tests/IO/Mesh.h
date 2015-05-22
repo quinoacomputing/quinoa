@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/IO/Mesh.h
   \author    J. Bakosi
-  \date      Mon 20 Apr 2015 09:25:19 AM MDT
+  \date      Thu 21 May 2015 09:19:30 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for unstructured-mesh reader and writers in IO
   \details   Unit tests for unstructured-mesh reader and writers in IO
@@ -185,6 +185,7 @@ Mesh_group Mesh( "IO/Mesh" );
 //! Test definitions for group
 
 //! Write and read Gmsh ascii mesh
+//! \author J. Bakosi
 template<> template<>
 void Mesh_object::test< 1 >() {
   set_test_name( "write/read Gmsh ASCII tet-mesh" );
@@ -192,6 +193,7 @@ void Mesh_object::test< 1 >() {
 }
 
 //! Write and read Gmsh binary mesh
+//! \author J. Bakosi
 template<> template<>
 void Mesh_object::test< 2 >() {
   set_test_name( "write/read Gmsh binary tet-mesh" );
@@ -199,6 +201,7 @@ void Mesh_object::test< 2 >() {
 }
 
 //! Write and read ExodusII mesh
+//! \author J. Bakosi
 template<> template<>
 void Mesh_object::test< 3 >() {
   set_test_name( "write/read ExodusII tet-mesh" );
@@ -206,6 +209,7 @@ void Mesh_object::test< 3 >() {
 }
 
 //! Write and read Netgen mesh
+//! \author J. Bakosi
 template<> template<>
 void Mesh_object::test< 4 >() {
   set_test_name( "write/read Netgen tet-mesh" );

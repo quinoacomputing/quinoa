@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/PUPUtil.h
   \author    J. Bakosi
-  \date      Sun 17 May 2015 01:06:58 PM MDT
+  \date      Thu 21 May 2015 09:12:36 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Base/PUPUtil.h
   \details   Unit tests for Base/PUPUtil.h
@@ -396,6 +396,7 @@ struct Migrated : CBase_Migrated {
 //!   these additional tests, and thus if a test such as this is added to the
 //!   suite this number must be updated in UnitTest/TUTSuite.h in
 //!   unittest::TUTSuite::m_migrations.
+//! \author J. Bakosi
 template<> template<>
 void PUPUtil_object::test< 1 >() {
   // This test spawns a new Charm++ chare. The "1" at the end of the test name
@@ -416,6 +417,7 @@ void PUPUtil_object::test< 1 >() {
 //!   these additional tests, and thus if a test such as this is added to the
 //!   suite this number must be updated in UnitTest/TUTSuite.h in
 //!   unittest::TUTSuite::m_migrations.
+//! \author J. Bakosi
 template<> template<>
 void PUPUtil_object::test< 2 >() {
   // This test spawns a new Charm++ chare. The "1" at the end of the test name
@@ -436,6 +438,7 @@ void PUPUtil_object::test< 2 >() {
 //!   these additional tests, and thus if a test such as this is added to the
 //!   suite this number must be updated in UnitTest/TUTSuite.h in
 //!   unittest::TUTSuite::m_migrations.
+//! \author J. Bakosi
 template<> template<>
 void PUPUtil_object::test< 3 >() {
   // This test spawns a new Charm++ chare. The "1" at the end of the test name
@@ -456,6 +459,7 @@ void PUPUtil_object::test< 3 >() {
 //!   these additional tests, and thus if a test such as this is added to the
 //!   suite this number must be updated in UnitTest/TUTSuite.h in
 //!   unittest::TUTSuite::m_migrations.
+//! \author J. Bakosi
 template<> template<>
 void PUPUtil_object::test< 4 >() {
   // This test spawns a new Charm++ chare. The "1" at the end of the test name
@@ -476,6 +480,7 @@ void PUPUtil_object::test< 4 >() {
 //!   these additional tests, and thus if a test such as this is added to the
 //!   suite this number must be updated in UnitTest/TUTSuite.h in
 //!   unittest::TUTSuite::m_migrations.
+//! \author J. Bakosi
 template<> template<>
 void PUPUtil_object::test< 5 >() {
   // This test spawns a new Charm++ chare. The "1" at the end of the test name
@@ -498,6 +503,7 @@ void PUPUtil_object::test< 5 >() {
 //!   these additional tests, and thus if a test such as this is added to the
 //!   suite this number must be updated in UnitTest/TUTSuite.h in
 //!   unittest::TUTSuite::m_migrations.
+//! \author J. Bakosi
 template<> template<>
 void PUPUtil_object::test< 6 >() {
   // This test spawns a new Charm++ chare. The "1" at the end of the test name
@@ -523,6 +529,7 @@ void PUPUtil_object::test< 6 >() {
 //!   these additional tests, and thus if a test such as this is added to the
 //!   suite this number must be updated in UnitTest/TUTSuite.h in
 //!   unittest::TUTSuite::m_migrations.
+//! \author J. Bakosi
 template<> template<>
 void PUPUtil_object::test< 7 >() {
   // This test spawns a new Charm++ chare. The "1" at the end of the test name
@@ -543,6 +550,7 @@ void PUPUtil_object::test< 7 >() {
 //!   these additional tests, and thus if a test such as this is added to the
 //!   suite this number must be updated in UnitTest/TUTSuite.h in
 //!   unittest::TUTSuite::m_migrations.
+//! \author J. Bakosi
 template<> template<>
 void PUPUtil_object::test< 8 >() {
   // This test spawns a new Charm++ chare. The "1" at the end of the test name
@@ -563,6 +571,7 @@ void PUPUtil_object::test< 8 >() {
 //!   these additional tests, and thus if a test such as this is added to the
 //!   suite this number must be updated in UnitTest/TUTSuite.h in
 //!   unittest::TUTSuite::m_migrations.
+//! \author J. Bakosi
 template<> template<>
 void PUPUtil_object::test< 9 >() {
   // This test spawns a new Charm++ chare. The "1" at the end of the test name
@@ -583,6 +592,7 @@ void PUPUtil_object::test< 9 >() {
 //!   these additional tests, and thus if a test such as this is added to the
 //!   suite this number must be updated in UnitTest/TUTSuite.h in
 //!   unittest::TUTSuite::m_migrations.
+//! \author J. Bakosi
 template<> template<>
 void PUPUtil_object::test< 10 >() {
   // This test spawns a new Charm++ chare. The "1" at the end of the test name
@@ -603,6 +613,7 @@ void PUPUtil_object::test< 10 >() {
 //!   these additional tests, and thus if a test such as this is added to the
 //!   suite this number must be updated in UnitTest/TUTSuite.h in
 //!   unittest::TUTSuite::m_migrations.
+//! \author J. Bakosi
 template<> template<>
 void PUPUtil_object::test< 11 >() {
   // This test spawns a new Charm++ chare. The "1" at the end of the test name

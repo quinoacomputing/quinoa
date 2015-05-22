@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Control/Options/RNG.h
   \author    J. Bakosi
-  \date      Tue 14 Apr 2015 11:48:01 AM MDT
+  \date      Thu 21 May 2015 09:18:40 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Control/Options/RNG
   \details   Unit tests for Control/Options/RNG
@@ -32,6 +32,7 @@ RNG_group RNG( "Control/Options/RNG" );
 //! Test definitions for group
 
 //! Test that member function param() finds RNG parameter for method type
+//! \author J. Bakosi
 template<> template<>
 void RNG_object::test< 1 >() {
   set_test_name( "param() finds RNG parameter" );
@@ -40,6 +41,7 @@ void RNG_object::test< 1 >() {
 }
 
 //! Test that member function param() throws in DEBUG mode if can't find param
+//! \author J. Bakosi
 template<> template<>
 void RNG_object::test< 2 >() {
   set_test_name( "param() throws if can't find" );
@@ -61,6 +63,7 @@ void RNG_object::test< 2 >() {
 }
 
 //! Test copy constructor
+//! \author J. Bakosi
 template<> template<>
 void RNG_object::test< 3 >() {
   set_test_name( "copy constructor" );
@@ -73,6 +76,7 @@ void RNG_object::test< 3 >() {
 }
 
 //! Test move constructor
+//! \author J. Bakosi
 template<> template<>
 void RNG_object::test< 4 >() {
   set_test_name( "move constructor" );
@@ -85,6 +89,7 @@ void RNG_object::test< 4 >() {
 }
 
 //! Test copy assignment
+//! \author J. Bakosi
 template<> template<>
 void RNG_object::test< 5 >() {
   set_test_name( "copy assignment" );
@@ -96,6 +101,7 @@ void RNG_object::test< 5 >() {
 }
 
 //! Test move assignment
+//! \author J. Bakosi
 template<> template<>
 void RNG_object::test< 6 >() {
   set_test_name( "move assignment" );
@@ -106,8 +112,9 @@ void RNG_object::test< 6 >() {
           c.param( tk::ctr::RNGType::RNGSSE_GM31 ) == 2 );
 }
 
-//! Test that member function lib() finds MKL library type for a MKL rng
 #ifdef HAS_MKL
+//! Test that member function lib() finds MKL library type for a MKL rng
+//! \author J. Bakosi
 template<> template<>
 void RNG_object::test< 7 >() {
   set_test_name( "lib() finds MKL library type" );
@@ -117,6 +124,7 @@ void RNG_object::test< 7 >() {
 #endif
 
 //! Test that member function lib() finds RNGSSE library type for a RNGSSE rng
+//! \author J. Bakosi
 template<> template<>
 void RNG_object::test< 8 >() {
   set_test_name( "lib() finds RNGSSE library type" );
@@ -126,6 +134,7 @@ void RNG_object::test< 8 >() {
 }
 
 //! Test that member function supportSeq() returns true for an RNGSSE rng
+//! \author J. Bakosi
 template<> template<>
 void RNG_object::test< 9 >() {
   set_test_name( "supportsSeq() true for RNGSSE" );
@@ -133,10 +142,12 @@ void RNG_object::test< 9 >() {
                  m.supportsSeq( tk::ctr::RNGType::RNGSSE_GM29 ), true );
 }
 
-//! Test that member function supportSeq() returns false for an non-RNGSSE rng
+#ifdef HAS_MKL
+//! \brief Test that member function supportSeq() returns false for an
+//!    non-RNGSSE rng
 //! TODO: enable this once a new rng lib is hooked up (other than the optional
 //! mkl)
-#ifdef HAS_MKL
+//! \author J. Bakosi
 template<> template<>
 void RNG_object::test< 10 >() {
   set_test_name( "supportsSeq() false for non-RNGSSE" );
@@ -145,8 +156,9 @@ void RNG_object::test< 10 >() {
 }
 #endif
 
-//! Test that member function param<>() returns default for non-specified
-//! parameter
+//! \brief Test that member function param<>() returns default for non-specified
+//!   parameter
+//! \author J. Bakosi
 template<> template<>
 void RNG_object::test< 11 >() {
   set_test_name( "param() correctly returns default" );
@@ -158,8 +170,9 @@ void RNG_object::test< 11 >() {
                         ( tk::ctr::RNGType::RNGSSE_GM31, 0U, b ), 0 );
 }
 
-//! Test that member function param<>() returns parameter for specified
-//! parameter
+//! \brief Test that member function param<>() returns parameter for specified
+//!   parameter
+//! \author J. Bakosi
 template<> template<>
 void RNG_object::test< 12 >() {
   set_test_name( "param() returns specified param" );
