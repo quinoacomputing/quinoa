@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Msg.h
   \author    J. Bakosi
-  \date      Thu 11 Dec 2014 08:03:09 AM MST
+  \date      Fri 22 May 2015 08:18:32 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Custom Charm++ message types definitions.
   \details   This file defines some custom Charm++ message types. This is
@@ -13,10 +13,17 @@
 #ifndef Msg_h
 #define Msg_h
 
-#include <boost/tokenizer.hpp>
-#include <msg.decl.h>
+#include <cstddef>
+#include <cstring>
+#include <ostream>
+#include <string>
+#include <vector>
 
-#include <Exception.h>
+#include <boost/tokenizer.hpp>
+#include <boost/token_functions.hpp>
+
+#include "Exception.h"
+#include "msg.decl.h"
 
 namespace tk {
 
