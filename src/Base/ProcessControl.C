@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/ProcessControl.h
   \author    J. Bakosi
-  \date      Tue 24 Mar 2015 02:13:31 PM MDT
+  \date      Fri 22 May 2015 08:21:45 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     POSIX process control wrapper definitions
   \details   POSIX process control wrapper definitions.
@@ -11,6 +11,8 @@
 
 #include <string>
 #include <vector>
+#include <istream>
+#include <type_traits>
 
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic push
@@ -23,8 +25,8 @@
   #pragma GCC diagnostic pop
 #endif
 
-#include <ProcessControl.h>
-#include <Exception.h>
+#include "ProcessControl.h"
+#include "Exception.h"
 
 namespace tk {
 
