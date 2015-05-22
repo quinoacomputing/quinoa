@@ -1,11 +1,11 @@
 //******************************************************************************
 /*!
-  \file      src/UnitTest/tests/Base/LinearMap.h
+  \file      src/UnitTest/tests/LoadBalance/LinearMap.h
   \author    J. Bakosi
-  \date      Tue 19 May 2015 02:17:06 PM MDT
+  \date      Thu 21 May 2015 09:19:43 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
-  \brief     Unit tests for Base/LinearMap
-  \details   Unit tests for Base/LinearMap
+  \brief     Unit tests for LoadBalance/LinearMap
+  \details   Unit tests for LoadBalance/LinearMap
 */
 //******************************************************************************
 #ifndef test_LinearMap_h
@@ -33,11 +33,12 @@ using LinearMap_group =
 using LinearMap_object = LinearMap_group::object;
 
 //! Define test group
-LinearMap_group LinearMap( "Base/LinearMap" );
+LinearMap_group LinearMap( "LoadBalance/LinearMap" );
 
 //! Test definitions for group
 
 //! Test if constructor does not throw on positive number of elements
+//! \author J. Bakosi
 template<> template<>
 void LinearMap_object::test< 1 >() {
   set_test_name( "ctor doesn't throw on positive nelem" );
@@ -45,6 +46,7 @@ void LinearMap_object::test< 1 >() {
 }
 
 //! Test use of LinearMap creating an array with nchare <= numpes
+//! \author J. Bakosi
 template<> template<>
 void LinearMap_object::test< 2 >() {
   int nchare = CkNumPes() > 1 ? CkNumPes()/2 : 1;
@@ -66,6 +68,7 @@ void LinearMap_object::test< 2 >() {
 }
 
 //! Test use of LinearMap creating an array with nchare > numpes
+//! \author J. Bakosi
 template<> template<>
 void LinearMap_object::test< 3 >() {
   int nchare = 2 * CkNumPes();

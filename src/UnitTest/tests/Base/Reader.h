@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/Reader.h
   \author    J. Bakosi
-  \date      Tue 14 Apr 2015 11:43:45 AM MDT
+  \date      Thu 21 May 2015 09:14:21 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Base/Reader
   \details   Unit tests for Base/Reader
@@ -35,6 +35,7 @@ Reader_group Reader( "Base/Reader" );
 //! Test definitions for group
 
 //! Test if constructor finds and can open an existing file (the executable)
+//! \author J. Bakosi
 template<> template<>
 void Reader_object::test< 1 >() {
   set_test_name( "ctor finds and opens executable" );
@@ -44,6 +45,7 @@ void Reader_object::test< 1 >() {
 }
 
 //! Test if constructor throws an exception if empty filename is given
+//! \author J. Bakosi
 template<> template<>
 void Reader_object::test< 2 >() {
   set_test_name( "ctor throws if filename empty" );
@@ -73,6 +75,7 @@ void Reader_object::test< 2 >() {
 }
 
 //! Test if constructor throws exception if file does not exist
+//! \author J. Bakosi
 template<> template<>
 void Reader_object::test< 3 >() {
   set_test_name( "ctor throws if file doesn't exist" );
@@ -96,6 +99,7 @@ void Reader_object::test< 3 >() {
 }
 
 //! Test if constructor throws exception if cannot read from file
+//! \author J. Bakosi
 template<> template<>
 void Reader_object::test< 4 >() {
   set_test_name( "ctor throws if cannot read from file" );
@@ -116,6 +120,7 @@ void Reader_object::test< 4 >() {
 }
 
 //! Test if function firstline() can read a line
+//! \author J. Bakosi
 template<> template<>
 void Reader_object::test< 5 >() {
   set_test_name( "firstline() can read a line" );

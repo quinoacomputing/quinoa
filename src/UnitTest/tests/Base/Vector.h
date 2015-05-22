@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/Vector.h
   \author    J. Bakosi
-  \date      Thu 14 May 2015 02:36:53 PM MDT
+  \date      Thu 21 May 2015 09:15:08 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Base/Vector.h
   \details   Unit tests for Base/Vector.h
@@ -32,6 +32,7 @@ Vector_group Vector( "Base/Vector" );
 //! Test definitions for group
 
 //! Test cross product
+//! \author J. Bakosi
 template<> template<>
 void Vector_object::test< 1 >() {
   set_test_name( "cross product" );
@@ -50,6 +51,7 @@ void Vector_object::test< 1 >() {
 }
 
 //! Test dot product
+//! \author J. Bakosi
 template<> template<>
 void Vector_object::test< 2 >() {
   set_test_name( "dot product" );
@@ -62,6 +64,7 @@ void Vector_object::test< 2 >() {
 }
 
 //! Test triple product
+//! \author J. Bakosi
 template<> template<>
 void Vector_object::test< 3 >() {
   set_test_name( "triple product" );

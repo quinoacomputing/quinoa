@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Control/Control.h
   \author    J. Bakosi
-  \date      Tue 14 Apr 2015 11:46:56 AM MDT
+  \date      Thu 21 May 2015 09:16:37 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Control/Control
   \details   Unit tests for Control/Control
@@ -68,6 +68,7 @@ Control_group Control( "Control/Control" );
 //! Test definitions for group
 
 //! Test set(), const-ref get() at three levels
+//! \author J. Bakosi
 template<> template<>
 void Control_object::test< 1 >() {
   set_test_name( "set(), const-ref get() at three depths" );
@@ -83,6 +84,7 @@ void Control_object::test< 1 >() {
 }
 
 //! Test set(), rvalue get() at three levels
+//! \author J. Bakosi
 template<> template<>
 void Control_object::test< 2 >() {
   set_test_name( "set(), rvalue get() at three depths" );
@@ -98,6 +100,7 @@ void Control_object::test< 2 >() {
 }
 
 //! Test store() at three levels
+//! \author J. Bakosi
 template<> template<>
 void Control_object::test< 3 >() {
   set_test_name( "store() at three depths" );
@@ -113,6 +116,7 @@ void Control_object::test< 3 >() {
 }
 
 //! Test push_back() at three levels
+//! \author J. Bakosi
 template<> template<>
 void Control_object::test< 4 >() {
   set_test_name( "push_back() at three depths" );
@@ -139,6 +143,7 @@ void Control_object::test< 4 >() {
 }
 
 //! Test push_back_back() at three levels
+//! \author J. Bakosi
 template<> template<>
 void Control_object::test< 5 >() {
   set_test_name( "push_back_back() at three depths" );
@@ -170,6 +175,7 @@ void Control_object::test< 5 >() {
 }
 
 //! Test store_back() at three levels
+//! \author J. Bakosi
 template<> template<>
 void Control_object::test< 6 >() {
   set_test_name( "store_back() at three depths" );
@@ -196,6 +202,7 @@ void Control_object::test< 6 >() {
 }
 
 //! Test store_back_back() at three levels
+//! \author J. Bakosi
 template<> template<>
 void Control_object::test< 7 >() {
   set_test_name( "store_back_back() at three depths" );
@@ -227,6 +234,7 @@ void Control_object::test< 7 >() {
 }
 
 //! Test store_back_back_back() at three levels
+//! \author J. Bakosi
 template<> template<>
 void Control_object::test< 8 >() {
   set_test_name( "store_back_back_back() at three depths" );
@@ -261,6 +269,7 @@ void Control_object::test< 8 >() {
 }
 
 //! Test insert() at three levels
+//! \author J. Bakosi
 template<> template<>
 void Control_object::test< 9 >() {
   set_test_name( "insert() at three depths" );
@@ -293,6 +302,7 @@ void Control_object::test< 9 >() {
 }
 
 //! Test insert_field() at three levels
+//! \author J. Bakosi
 template<> template<>
 void Control_object::test< 10 >() {
   set_test_name( "insert_field() at three depths" );
@@ -322,6 +332,7 @@ void Control_object::test< 10 >() {
 }
 
 //! Test insert_opt() at three levels
+//! \author J. Bakosi
 template<> template<>
 void Control_object::test< 11 >() {
   set_test_name( "insert_opt() at three depths" );
@@ -351,6 +362,7 @@ void Control_object::test< 11 >() {
 }
 
 //! Test T convert( str ) feeding garbage
+//! \author J. Bakosi
 template<> template<>
 void Control_object::test< 12 >() {
   set_test_name( "T convert(str) feeding garbage" );
@@ -367,6 +379,7 @@ void Control_object::test< 12 >() {
 }
 
 //! Test T convert( str ) feeding convertible value
+//! \author J. Bakosi
 template<> template<>
 void Control_object::test< 13 >() {
   set_test_name( "T convert(str)" );
@@ -383,6 +396,7 @@ void Control_object::test< 13 >() {
 }
 
 //! Test str convert(T) feeding convertible value
+//! \author J. Bakosi
 template<> template<>
 void Control_object::test< 14 >() {
   set_test_name( "str convert(T)" );

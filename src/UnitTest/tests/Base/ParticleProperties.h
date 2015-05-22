@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/ParticleProperties.h
   \author    J. Bakosi
-  \date      Tue 14 Apr 2015 11:46:05 AM MDT
+  \date      Thu 21 May 2015 09:12:51 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Base/ParticleProperties.h
   \details   Unit tests for Base/ParticleProperties.h
@@ -39,6 +39,7 @@ ParticleProperties_group ParticleProperties( "Base/ParticleProperties" );
 
 //! \brief Test that tk::ParticleProperties' default constructor creates zero
 //!   size array
+//! \author J. Bakosi
 template<> template<>
 void ParticleProperties_object::test< 1 >() {
   set_test_name( "default ctor yields 0-size array" );
@@ -52,6 +53,7 @@ void ParticleProperties_object::test< 1 >() {
 
 //! \brief Test that tk::ParticleProperties' never leaves its underlying array
 //!   pointer uninitialized
+//! \author J. Bakosi
 template<> template<>
 void ParticleProperties_object::test< 2 >() {
   set_test_name( "underlying pointer initialized" );
@@ -65,6 +67,7 @@ void ParticleProperties_object::test< 2 >() {
 
 //! \brief Test that tk::ParticleProperties' non-default constructor creates
 //!   correctly sized arrays
+//! \author J. Bakosi
 template<> template<>
 void ParticleProperties_object::test< 3 >() {
   set_test_name( "ctor yields correct-size array" );
@@ -93,6 +96,7 @@ void ParticleProperties_object::test< 3 >() {
 
 //! \brief Test that tk::ParticleProperties' operator() returns the correct
 //!   value
+//! \author J. Bakosi
 template<> template<>
 void ParticleProperties_object::test< 4 >() {
   set_test_name( "operator() returns correct val" );
@@ -110,6 +114,7 @@ void ParticleProperties_object::test< 4 >() {
 
 //! \brief Test that tk::ParticleProperties' cvar( cptr() ) returns the correct
 //!   value
+//! \author J. Bakosi
 template<> template<>
 void ParticleProperties_object::test< 5 >() {
   set_test_name( "cvar(cptr()) returns correct val" );
@@ -129,6 +134,7 @@ void ParticleProperties_object::test< 5 >() {
 
 //! \brief Test that tk::ParticleProperties' cvar( cptr() ) is equivalent to
 //!    operator()
+//! \author J. Bakosi
 template<> template<>
 void ParticleProperties_object::test< 6 >() {
   set_test_name( "cvar(cptr()) == operator()" );
@@ -147,6 +153,7 @@ void ParticleProperties_object::test< 6 >() {
 }
 
 //! \brief Test that tk::ParticleProperties' major() returns correct string
+//! \author J. Bakosi
 template<> template<>
 void ParticleProperties_object::test< 7 >() {
   set_test_name( "major()" );

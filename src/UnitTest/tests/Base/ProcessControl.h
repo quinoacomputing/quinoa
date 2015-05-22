@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/ProcessControl.h
   \author    J. Bakosi
-  \date      Tue 14 Apr 2015 11:45:29 AM MDT
+  \date      Thu 21 May 2015 09:14:01 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Base/ProcessControl.h
   \details   Unit tests for Base/ProcessControl.h
@@ -30,6 +30,7 @@ ProcessControl_group ProcessControl( "Base/ProcessControl" );
 //! Test definitions for group
 
 //! Attempt to call rm with empty argument 
+//! \author J. Bakosi
 template<> template<>
 void ProcessControl_object::test< 1 >() {
   set_test_name( "rm throws on empty argument" );

@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/UnitTest.C
   \author    J. Bakosi
-  \date      Wed 20 May 2015 02:11:38 PM MDT
+  \date      Thu 21 May 2015 07:38:24 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     UnitTest's Charm++ main chare and main().
   \details   UnitTest's Charm++ main chare and main(). This file contains
@@ -70,10 +70,8 @@ const int MAX_TESTS_IN_GROUP = 80;
 #include <tests/Base/Reader.h>
 #include <tests/Base/StrConvUtil.h>
 #include <tests/Base/Writer.h>
-#include <tests/Base/LoadDistributor.h>
 #include <tests/Base/ProcessControl.h>
 #include <tests/Base/Vector.h>
-#include <tests/Base/LinearMap.h>
 
 #include <tests/Control/Components.h>
 #include <tests/Control/Control.h>
@@ -89,7 +87,10 @@ const int MAX_TESTS_IN_GROUP = 80;
 #include <tests/IO/Mesh.h>
 
 #include <tests/Mesh/DerivedData.h>
-#include <tests/Mesh/UnsMeshMap.h>
+
+#include <tests/LoadBalance/LoadDistributor.h>
+#include <tests/LoadBalance/LinearMap.h>
+#include <tests/LoadBalance/UnsMeshMap.h>
 
 //! \brief Charm handle to the main proxy, facilitates call-back to finalize,
 //!    etc., must be in global scope, unique per executable

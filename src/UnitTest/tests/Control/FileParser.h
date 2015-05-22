@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Control/FileParser.h
   \author    J. Bakosi
-  \date      Tue 14 Apr 2015 11:47:13 AM MDT
+  \date      Thu 21 May 2015 09:16:51 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Control/FileParser
   \details   Unit tests for Control/FileParser
@@ -45,6 +45,7 @@ FileParser_group FileParser( "Control/FileParser" );
 //! Test definitions for group
 
 //! Test if constructor finds and can open an existing file (the executable)
+//! \author J. Bakosi
 template<> template<>
 void FileParser_object::test< 1 >() {
   set_test_name( "ctor finds and opens executable" );
@@ -54,6 +55,7 @@ void FileParser_object::test< 1 >() {
 }
 
 //! Test if constructor throws an exception if empty filename is given
+//! \author J. Bakosi
 template<> template<>
 void FileParser_object::test< 2 >() {
   set_test_name( "ctor throws if filename empty" );
@@ -81,6 +83,7 @@ void FileParser_object::test< 2 >() {
 }
 
 //! Test if constructor throws exception if file does not exist
+//! \author J. Bakosi
 template<> template<>
 void FileParser_object::test< 3 >() {
   set_test_name( "ctor throws if file doesn't exist" );
@@ -102,6 +105,7 @@ void FileParser_object::test< 3 >() {
 }
 
 //! Test if constructor throws exception if cannot read from file
+//! \author J. Bakosi
 template<> template<>
 void FileParser_object::test< 4 >() {
   set_test_name( "ctor throws if cannot read from file" );
@@ -121,6 +125,7 @@ void FileParser_object::test< 4 >() {
 }
 
 //! Test if function diagnostics() throws exception if error occurred
+//! \author J. Bakosi
 template<> template<>
 void FileParser_object::test< 5 >() {
   set_test_name( "diagnostics throws on error" );
@@ -145,6 +150,7 @@ void FileParser_object::test< 5 >() {
 }
 
 //! Test if function diagnostics() does not throw exception if warning occurred
+//! \author J. Bakosi
 template<> template<>
 void FileParser_object::test< 6 >() {
   set_test_name( "diagnostics doesn't throw on warning" );
@@ -163,6 +169,7 @@ void FileParser_object::test< 6 >() {
 }
 
 //! Test if function diagnostics() does not break on empty messages vector
+//! \author J. Bakosi
 template<> template<>
 void FileParser_object::test< 7 >() {
   set_test_name( "diagnostics with no messages" );

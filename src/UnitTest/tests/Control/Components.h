@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Control/Components.h
   \author    J. Bakosi
-  \date      Tue 14 Apr 2015 11:46:29 AM MDT
+  \date      Thu 21 May 2015 09:16:13 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Control/Components
   \details   Unit tests for Control/Components
@@ -67,6 +67,7 @@ Components_group Components( "Control/Components" );
 //! Test definitions for group
 
 //! Test that number of components are correct
+//! \author J. Bakosi
 template<> template<>
 void Components_object::test< 1 >() {
   set_test_name( "number of components" );
@@ -87,6 +88,7 @@ void Components_object::test< 1 >() {
 }
 
 //! Test that number of components are correct
+//! \author J. Bakosi
 template<> template<>
 void Components_object::test< 2 >() {
   set_test_name( "offsets" );
@@ -107,6 +109,7 @@ void Components_object::test< 2 >() {
 }
 
 //! Test the total number of components are correct
+//! \author J. Bakosi
 template<> template<>
 void Components_object::test< 3 >() {
   set_test_name( "total number of components" );
@@ -127,6 +130,7 @@ void Components_object::test< 3 >() {
 }
 
 //! Test that offsetmap builds a linear map of offsets
+//! \author J. Bakosi
 template<> template<>
 void Components_object::test< 4 >() {
   set_test_name( "linear offsetmap" );
