@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/ProcessException.C
   \author    J. Bakosi
-  \date      Wed 08 Apr 2015 07:58:01 AM MDT
+  \date      Fri 22 May 2015 08:24:48 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Process an exception
   \details   This file contains the implementation of processing an exception.
@@ -16,20 +16,23 @@
     separated here.
 */
 //******************************************************************************
+
+#include <exception>
+
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wconversion"
 #endif
 
-#include <charm++.h>
+#include <charm.h>
 #include <mpi.h>
 
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic pop
 #endif
 
-#include <Exception.h>
-#include <ProcessException.h>
+#include "Exception.h"
+#include "ProcessException.h"
 
 namespace tk {
 
