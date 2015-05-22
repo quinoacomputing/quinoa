@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshMeshReader.C
   \author    J. Bakosi
-  \date      Mon 20 Apr 2015 09:30:07 AM MDT
+  \date      Fri 22 May 2015 08:11:20 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Gmsh mesh reader class definition
   \details   Gmsh mesh reader class definition. Currently, this class supports
@@ -14,9 +14,10 @@
 #include <cmath>
 #include <array>
 
-#include <UnsMesh.h>
-#include <GmshMeshReader.h>
-#include <Reorder.h>
+#include "UnsMesh.h"
+#include "GmshMeshReader.h"
+#include "Reorder.h"
+#include "StrConvUtil.h"
 
 using tk::GmshMeshReader;
 

@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Exception.h
   \author    J. Bakosi
-  \date      Sun 08 Mar 2015 01:08:15 PM MDT
+  \date      Fri 22 May 2015 08:10:21 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Exception class declaration
   \details   Exception class declaration. The basic functionality provided by
@@ -19,8 +19,6 @@
 #include <exception>
 #include <cstdlib>
 #include <string>
-
-#include <StrConvUtil.h>
 
 //! Toolkit declarations and definitions for general purpose utilities
 namespace tk {

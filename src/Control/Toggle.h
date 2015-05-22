@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Toggle.h
   \author    J. Bakosi
-  \date      Wed 14 Jan 2015 02:47:03 PM MST
+  \date      Fri 22 May 2015 08:09:44 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Toggle is the base for an Option, doing generic searches
   \details   Toggle is the base for an Option, doing generic searches.
@@ -13,7 +13,8 @@
 
 #include <map>
 
-#include <Exception.h>
+#include "Exception.h"
+#include "StrConvUtil.h"
 
 namespace tk {
 

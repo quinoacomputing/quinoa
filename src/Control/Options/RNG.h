@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Options/RNG.h
   \author    J. Bakosi
-  \date      Thu 19 Mar 2015 11:49:37 AM MDT
+  \date      Fri 22 May 2015 08:09:14 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Random number generator options and associations
   \details   Random number generator options and associations
@@ -15,16 +15,17 @@
 
 #include <boost/mpl/vector/vector30.hpp>
 
-#include <Config.h>
+#include "Config.h"
 
 #ifdef HAS_MKL
 #include <mkl_vsl.h>
 #endif
 
-#include <Toggle.h>
-#include <Keywords.h>
-#include <Options/RNGSSESeqLen.h>
-#include <PUPUtil.h>
+#include "Toggle.h"
+#include "Keywords.h"
+#include "Options/RNGSSESeqLen.h"
+#include "PUPUtil.h"
+#include "StrConvUtil.h"
 
 namespace tk {
 namespace ctr {
