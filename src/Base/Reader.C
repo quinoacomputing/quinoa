@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Reader.C
   \author    J. Bakosi
-  \date      Wed 18 Feb 2015 10:05:34 AM MST
+  \date      Fri 22 May 2015 08:28:23 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Reader class definition
   \details   Reader base class declaration. Reader base servers as a base class
@@ -11,10 +11,12 @@
 */
 //******************************************************************************
 
-#include <iostream>
+#include <cstdio>
+#include <exception>
+#include <string>
 
-#include <Reader.h>
-#include <Exception.h>
+#include "Reader.h"
+#include "Exception.h"
 
 using tk::Reader;
 

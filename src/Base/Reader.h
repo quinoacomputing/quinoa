@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Reader.h
   \author    J. Bakosi
-  \date      Wed 18 Feb 2015 09:54:02 AM MST
+  \date      Fri 22 May 2015 08:27:45 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Reader base class declaration
   \details   Reader base class declaration. Reader base serves as a base class
@@ -15,8 +15,9 @@
 
 #include <fstream>
 #include <vector>
+#include <cstddef>
 
-#include <Exception.h>
+#include "Exception.h"
 
 namespace tk {
 
