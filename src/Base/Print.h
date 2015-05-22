@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Print.h
   \author    J. Bakosi
-  \date      Sat 16 May 2015 02:39:51 PM MDT
+  \date      Thu 21 May 2015 08:58:18 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     General purpose pretty printer functionality
   \details   This file contains general purpose printer functions. Using the
@@ -611,7 +611,7 @@ class Print {
     mutable format m_item_name_value_fmt = format("%s%-30s : %s\n");
     mutable format m_item_name_watch_fmt = format("%s%-65s : %d:%d:%d\n");
     mutable format m_item_name_perf_fmt = format("%s%-65s : %s\n");
-    mutable format m_item_widename_value_fmt = format("%s%-65s : %s\n");
+    mutable format m_item_widename_value_fmt = format("%s%-75s : %s\n");
     mutable format m_part_underline_fmt = format("      %|=68|\n");
     mutable format m_section_underline_fmt = format("%s%s\n");
 
