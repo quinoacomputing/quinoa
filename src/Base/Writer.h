@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Writer.h
   \author    J. Bakosi
-  \date      Thu 11 Dec 2014 02:07:20 PM MST
+  \date      Fri 22 May 2015 08:33:20 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Writer base class declaration
   \details   Writer base class declaration. Writer base serves as a base class
@@ -13,10 +13,9 @@
 #ifndef Writer_h
 #define Writer_h
 
-#include <string>
 #include <fstream>
 
-#include <Exception.h>
+#include "Exception.h"
 
 namespace tk {
 
