@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/StringParser.h
   \author    J. Bakosi
-  \date      Wed 14 Jan 2015 02:30:17 PM MST
+  \date      Fri 29 May 2015 04:14:10 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     String parser base class declaration
   \details   String parser base class declaration. String parser base serves as
@@ -13,9 +13,10 @@
 #ifndef StringParser_h
 #define StringParser_h
 
-#include <string>
+#include <iosfwd>
+#include <vector>
 
-#include <Print.h>
+#include "Print.h"      // IWYU pragma: keep
 
 namespace tk {
 
