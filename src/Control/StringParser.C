@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/StringParser.C
   \author    J. Bakosi
-  \date      Thu 12 Mar 2015 10:06:05 PM MDT
+  \date      Fri 29 May 2015 04:15:00 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     String parser base class definition
   \details   String parser base class definition. String parser base serves as
@@ -13,9 +13,11 @@
 
 #include <vector>
 #include <iostream>
+#include <cstddef>
+#include <string>
 
-#include <StringParser.h>
-#include <Exception.h>
+#include "StringParser.h"
+#include "Exception.h"
 
 using tk::StringParser;
 
