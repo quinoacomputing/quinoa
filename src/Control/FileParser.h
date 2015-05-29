@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/FileParser.h
   \author    J. Bakosi
-  \date      Wed 14 Jan 2015 02:30:26 PM MST
+  \date      Fri 29 May 2015 04:08:09 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     File parser base class declaration
   \details   File parser base class declaration. File parser base serves as a
@@ -14,9 +14,10 @@
 #ifndef FileParser_h
 #define FileParser_h
 
-#include <string>
+#include <iosfwd>
+#include <vector>
 
-#include <Print.h>
+#include "Print.h"      // IWYU pragma: keep
 
 namespace tk {
 

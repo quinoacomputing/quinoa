@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/FileParser.C
   \author    J. Bakosi
-  \date      Sat 11 Apr 2015 07:22:20 AM MDT
+  \date      Fri 29 May 2015 04:08:55 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     File parser base class definition
   \details   File parser base class defintion. File parser base serves as a
@@ -12,12 +12,14 @@
 */
 //******************************************************************************
 
+#include <utility>
 #include <map>
-#include <fstream>
+#include <cstddef>
+#include <string>
 
-#include <FileParser.h>
-#include <Exception.h>
-#include <Reader.h>
+#include "FileParser.h"
+#include "Exception.h"
+#include "Reader.h"
 
 using tk::FileParser;
 
@@ -146,7 +148,7 @@ FileParser::diagnostics( const tk::Print& print,
     print % '\n';
     print % ">>> Line " % l.first % ": '" % e.parsed % "'\n";
     print % ">>>" % std::string( e.dlnum+9, ' ' ) % e.underline % "\n";
-    for (const auto& m : e.msg) print % ">>> " % m % std::endl;
+    for (const auto& m : e.msg) print % ">>> " % m % '\n';
     print % '\n';
   }
 
