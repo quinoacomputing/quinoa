@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/DiffEqStack.C
   \author    J. Bakosi
-  \date      Thu 30 Apr 2015 02:40:40 PM MDT
+  \date      Sat 30 May 2015 10:22:33 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Stack of differential equations
   \details   This file defines class DiffEqStack, which implements various
@@ -16,20 +16,39 @@
 
 #include <boost/mpl/cartesian_product.hpp>
 
-#include <DiffEqStack.h>
-#include <OrnsteinUhlenbeck.h>
-#include <DiagOrnsteinUhlenbeck.h>
-#include <Dirichlet.h>
-#include <GeneralizedDirichlet.h>
-#include <WrightFisher.h>
-#include <Beta.h>
-#include <NumberFractionBeta.h>
-#include <MassFractionBeta.h>
-#include <MixNumberFractionBeta.h>
-#include <MixMassFractionBeta.h>
-#include <SkewNormal.h>
-#include <Gamma.h>
-#include <Factory.h>
+#include "DiffEqStack.h"
+#include "Tags.h"
+#include "Components.h"
+#include "InitPolicy.h"
+#include "Options/RNG.h"
+#include "Walker/Options/CoeffPolicy.h"
+#include "Walker/Options/InitPolicy.h"
+
+#include "Beta.h"
+#include "DiagOrnsteinUhlenbeck.h"
+#include "Dirichlet.h"
+#include "Gamma.h"
+#include "GeneralizedDirichlet.h"
+#include "MassFractionBeta.h"
+#include "MixMassFractionBeta.h"
+#include "MixNumberFractionBeta.h"
+#include "NumberFractionBeta.h"
+#include "OrnsteinUhlenbeck.h"
+#include "SkewNormal.h"
+#include "WrightFisher.h"
+
+#include "BetaCoeffPolicy.h"
+#include "DiagOrnsteinUhlenbeckCoeffPolicy.h"
+#include "DirichletCoeffPolicy.h"
+#include "GammaCoeffPolicy.h"
+#include "GeneralizedDirichletCoeffPolicy.h"
+#include "MassFractionBetaCoeffPolicy.h"
+#include "MixMassFractionBetaCoeffPolicy.h"
+#include "MixNumberFractionBetaCoeffPolicy.h"
+#include "NumberFractionBetaCoeffPolicy.h"
+#include "OrnsteinUhlenbeckCoeffPolicy.h"
+#include "SkewNormalCoeffPolicy.h"
+#include "WrightFisherCoeffPolicy.h"
 
 using walker::DiffEqStack;
 
