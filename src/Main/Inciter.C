@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Inciter.C
   \author    J. Bakosi
-  \date      Fri 15 May 2015 03:59:19 PM MDT
+  \date      Sat 30 May 2015 12:06:09 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Inciter, computational shock hydrodynamics tool, Charm++ main
     chare.
@@ -11,27 +11,41 @@
     equivalent to main() in Charm++-land.
 */
 //******************************************************************************
+
+#include <map>
+#include <vector>
+#include <iostream>
+#include <utility>
+#include <type_traits>
+#include <cstddef>
+
+#include <boost/format.hpp>
+
+#include "Types.h"
+#include "Timer.h"
+#include "Exception.h"
+#include "ProcessException.h"
+#include "HelpFactory.h"
+#include "InciterPrint.h"
+#include "InciterDriver.h"
+#include "InciterSetup.h"
+#include "Inciter/CmdLine/CmdLine.h"
+#include "Inciter/InputDeck/InputDeck.h"
+
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wconversion"
 #endif
 
-#include <mpi.h>
-#include <mpi-interoperate.h>   // for interoperation of MPI and Charm++
-#include <inciter.decl.h>
+#include "mpi.h"
+#include "mpi-interoperate.h"   // for interoperation of MPI and Charm++
+#include "inciter.decl.h"
 
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic pop
 #endif
 
-#include <pup_stl.h>
-
-#include <Config.h>
-#include <InciterPrint.h>
-#include <InciterDriver.h>
-#include <InciterSetup.h>
-#include <ProcessException.h>
-#include <Init.h>
+#include "pup_stl.h"
 
 //! \brief Charm handle to the main proxy, facilitates call-back to finalize,
 //!    etc., must be in global scope, unique per executable
