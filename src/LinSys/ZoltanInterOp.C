@@ -2,28 +2,39 @@
 /*!
   \file      src/LinSys/ZoltanInterOp.C
   \author    J. Bakosi
-  \date      Wed 13 May 2015 10:24:41 PM MDT
+  \date      Sat 30 May 2015 11:49:26 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Interoperation with the Zoltan library
   \details   Interoperation with the Zoltan library, used for static mesh graph
     partitioning.
 */
 //******************************************************************************
+
+#include <string>
+#include <tuple>
+#include <algorithm>
+#include <iterator>
+#include <iosfwd>
+#include <cstdlib>
+#include <cstring>
+
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wconversion"
 #endif
 
-#include <zoltan.h>
+#include "zoltan.h"
 
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic pop
 #endif
 
-#include <ExceptionMPI.h>
-#include <ZoltanInterOp.h>
-#include <DerivedData.h>
-#include <Reorder.h>
+#include "Exception.h"
+#include "UnsMesh.h"
+#include "ExceptionMPI.h"
+#include "ZoltanInterOp.h"
+#include "DerivedData.h"
+#include "Reorder.h"
 
 namespace tk {
 namespace zoltan {
