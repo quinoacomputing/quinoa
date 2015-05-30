@@ -2,28 +2,42 @@
 /*!
   \file      src/Control/RNGTest/CmdLine/Parser.C
   \author    J. Bakosi
-  \date      Fri 13 Mar 2015 12:25:33 PM MDT
+  \date      Sat 30 May 2015 12:15:07 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
-  \brief     RNGTest's comamnd line parser
+  \brief     RNGTest's command line parser
   \details   This file defines the command-line argument parser for the random
     number generator test suite, RNGTest.
 */
 //******************************************************************************
+
+#include <map>
+#include <ostream>
+#include <string>
+#include <type_traits>
+
+#include "pegtl/pegtl.hh"
+
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wconversion"
 #endif
 
-#include <charm++.h>
+#include "charm.h"
 
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic pop
 #endif
 
-#include <Config.h>
-#include <RNGTest/CmdLine/Parser.h>
-#include <RNGTest/CmdLine/Grammar.h>
-#include <RNGTest/InputDeck/InputDeck.h>
+#include "Config.h"
+#include "Exception.h"
+#include "Print.h"
+#include "Keywords.h"
+#include "HelpFactory.h"
+#include "RNGTest/Types.h"
+#include "RNGTest/CmdLine/Parser.h"
+#include "RNGTest/CmdLine/Grammar.h"
+#include "RNGTest/CmdLine/CmdLine.h"
+#include "RNGTest/InputDeck/InputDeck.h"
 
 namespace tk {
 namespace grm {

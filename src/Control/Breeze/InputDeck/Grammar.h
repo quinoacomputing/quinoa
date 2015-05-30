@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Breeze/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Mon 23 Feb 2015 08:46:46 AM MST
+  \date      Fri 29 May 2015 05:17:49 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Breeze's input deck grammar definition
   \details   Breeze's input deck grammar definition. We use the Parsing
@@ -14,7 +14,7 @@
 #ifndef BreezeInputDeckGrammar_h
 #define BreezeInputDeckGrammar_h
 
-#include <Grammar.h>
+#include "CommonGrammar.h"
 #include <PEGTLParsed.h>
 #include <Keywords.h>
 

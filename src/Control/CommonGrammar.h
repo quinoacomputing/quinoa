@@ -1,18 +1,18 @@
 //******************************************************************************
 /*!
-  \file      src/Control/Grammar.h
+  \file      src/Control/CommonGrammar.h
   \author    J. Bakosi
-  \date      Wed 13 May 2015 08:57:34 AM MDT
+  \date      Sat 30 May 2015 12:13:50 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
-  \brief     Generic, low-level grammar
+  \brief     Generic, low-level grammar, re-used by specific grammars
   \details   Generic, low-level grammar. We use the [Parsing Expression Grammar
     Template Library (PEGTL)](https://code.google.com/p/pegtl/wiki/PEGTL0) to
     create the grammar and the associated parser. Credit goes to Colin Hirsch
     (pegtl@cohi.at) for PEGTL.
 */
 //******************************************************************************
-#ifndef Grammar_h
-#define Grammar_h
+#ifndef CommonGrammar_h
+#define CommonGrammar_h
 
 #include <sstream>
 
@@ -25,14 +25,14 @@
 #include <boost/mpl/or.hpp>
 #include <boost/mpl/for_each.hpp>
 
-#include <if.h>
-#include <Exception.h>
-#include <Tags.h>
-#include <StatCtr.h>
-#include <Options/PDFFile.h>
-#include <Options/PDFPolicy.h>
-#include <Options/PDFCentering.h>
-#include <Options/TxtFloatFormat.h>
+#include "if.h"
+#include "Exception.h"
+#include "Tags.h"
+#include "StatCtr.h"
+#include "Options/PDFFile.h"
+#include "Options/PDFPolicy.h"
+#include "Options/PDFCentering.h"
+#include "Options/TxtFloatFormat.h"
 
 namespace tk {
 //! Toolkit general purpose grammar definition
@@ -1555,4 +1555,4 @@ namespace grm {
 } // grm::
 } // tk::
 
-#endif // Grammar_h
+#endif // CommonGrammar_h

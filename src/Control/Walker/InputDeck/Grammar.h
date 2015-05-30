@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Thu 30 Apr 2015 10:47:36 PM MDT
+  \date      Fri 29 May 2015 05:17:10 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Walker's input deck grammar definition
   \details   Walker's input deck grammar definition. We use the [Parsing
@@ -20,7 +20,7 @@
 #include <PEGTLParsed.h>
 #include <Walker/Types.h>
 #include <Keywords.h>
-#include <Grammar.h>
+#include "CommonGrammar.h"
 #include <Walker/Options/InitPolicy.h>
 #include <Walker/Options/CoeffPolicy.h>
 

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/CmdLine/Parser.h
   \author    J. Bakosi
-  \date      Mon 08 Dec 2014 11:31:10 AM MST
+  \date      Fri 29 May 2015 11:59:29 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Walker's command line parser
   \details   Walker's command line parser
@@ -11,9 +11,10 @@
 #ifndef WalkerCmdLineParser_h
 #define WalkerCmdLineParser_h
 
-#include <Print.h>
-#include <StringParser.h>
-#include <Walker/CmdLine/CmdLine.h>
+#include "StringParser.h"
+#include "Walker/CmdLine/CmdLine.h"
+
+namespace tk { class Print; }
 
 namespace walker {
 

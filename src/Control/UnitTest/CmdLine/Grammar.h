@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/UnitTest/CmdLine/Grammar.h
   \author    J. Bakosi
-  \date      Tue 17 Mar 2015 08:45:01 PM MDT
+  \date      Fri 29 May 2015 05:16:37 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     UnitTest's command line grammar definition
   \details   Grammar definition for parsing the command line. We use the Parsing
@@ -14,7 +14,7 @@
 #ifndef UnitTestCmdLineGrammar_h
 #define UnitTestCmdLineGrammar_h
 
-#include <Grammar.h>
+#include "CommonGrammar.h"
 #include <PEGTLParsed.h>
 #include <Keywords.h>
 

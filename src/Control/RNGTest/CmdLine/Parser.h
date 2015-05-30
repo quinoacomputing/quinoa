@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/CmdLine/Parser.h
   \author    J. Bakosi
-  \date      Fri 16 Jan 2015 06:17:27 PM MST
+  \date      Fri 29 May 2015 11:48:36 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     RNGTest's command line parser
   \details   This file declares the command-line argument parser for the random
@@ -12,9 +12,10 @@
 #ifndef RNGTestCmdLineParser_h
 #define RNGTestCmdLineParser_h
 
-#include <Print.h>
-#include <StringParser.h>
-#include <RNGTest/CmdLine/CmdLine.h>
+#include "StringParser.h"
+#include "RNGTest/CmdLine/CmdLine.h"
+
+namespace tk { class Print; }
 
 namespace rngtest {
 

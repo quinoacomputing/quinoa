@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/InputDeck/Parser.h
   \author    J. Bakosi
-  \date      Fri 16 Jan 2015 06:32:26 PM MST
+  \date      Fri 29 May 2015 11:54:41 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Random number generator test suite input deck parser
   \details   This file declares the input deck, i.e., control file, parser for
@@ -12,12 +12,14 @@
 #ifndef RNGTestInputDeckParser_h
 #define RNGTestInputDeckParser_h
 
-#include <FileParser.h>
-#include <Print.h>
-#include <RNGTest/CmdLine/CmdLine.h>
-#include <RNGTest/InputDeck/InputDeck.h>
+#include "FileParser.h"
+#include "RNGTest/CmdLine/CmdLine.h"
+
+namespace tk { class Print; }
 
 namespace rngtest {
+
+namespace ctr { class InputDeck; }
 
 //! \brief Control file parser for RNGTest.
 //! \details This class is used to interface with PEGTL, for the purpose of
