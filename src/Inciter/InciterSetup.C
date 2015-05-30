@@ -2,35 +2,53 @@
 /*!
   \file      src/Inciter/InciterSetup.C
   \author    J. Bakosi
-  \date      Thu 14 May 2015 06:00:10 PM MDT
+  \date      Sat 30 May 2015 10:46:27 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Functions used to setup inciter
   \details   Functions used to setup inciter.
 */
 //******************************************************************************
 
+#include <set>
+#include <string>
+#include <cstdint>
+#include <cstdlib>
+#include <iterator>
+#include <type_traits>
 #include <algorithm>
+
+#include <boost/format.hpp>
+#include <boost/optional.hpp>
+
+#include "Types.h"
+#include "Print.h"
+#include "Init.h"
+#include "Tags.h"
+#include "Exception.h"
+#include "ExceptionMPI.h"
+#include "Keywords.h"
+#include "HelpFactory.h"
+#include "UnsMesh.h"
+#include "InciterSetup.h"
+#include "ExodusIIMeshReader.h"
+#include "LoadDistributor.h"
+#include "ZoltanInterOp.h"
+#include "DerivedData.h"
+#include "CommMap.h"
+#include "Inciter/CmdLine/Parser.h"
+#include "Inciter/InputDeck/Parser.h"
 
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wconversion"
 #endif
 
-#include <mpi.h>
-#include <mpi-interoperate.h>   // for interoperation of MPI and Charm++
+#include "mpi.h"
+#include "mpi-interoperate.h"
 
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic pop
 #endif
-
-#include <Init.h>
-#include <ExceptionMPI.h>
-#include <InciterSetup.h>
-#include <ExodusIIMeshReader.h>
-#include <LoadDistributor.h>
-#include <ZoltanInterOp.h>
-#include <DerivedData.h>
-#include <CommMap.h>
 
 namespace inciter {
 

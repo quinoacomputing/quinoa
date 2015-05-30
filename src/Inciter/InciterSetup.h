@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/InciterSetup.h
   \author    J. Bakosi
-  \date      Tue 12 May 2015 09:27:56 AM MDT
+  \date      Sat 30 May 2015 10:45:37 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Functions used to setup inciter
   \details   Functions used to setup inciter.
@@ -11,12 +11,19 @@
 #ifndef InciterSetup_h
 #define InciterSetup_h
 
-#include <Inciter/CmdLine/Parser.h>
-#include <Inciter/InputDeck/Parser.h>
-#include <Print.h>
-#include <UnsMesh.h>
+#include <vector>
+#include <map>
+#include <cstddef>
+#include <iosfwd>
+#include <utility>
+
+#include "Timer.h"
+
+namespace tk { class Print; }
 
 namespace inciter {
+
+namespace ctr { class InputDeck; class CmdLine; }
 
 // Parse command line
 ctr::CmdLine
