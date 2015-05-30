@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/LinSysMerger.h
   \author    J. Bakosi
-  \date      Mon 18 May 2015 08:05:40 AM MDT
+  \date      Sat 30 May 2015 11:44:33 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Linear system merger
   \details   Linear system merger.
@@ -11,27 +11,28 @@
 #ifndef LinSysMerger_h
 #define LinSysMerger_h
 
-#include <iostream>     // NOT REALLY NEEDED
-#include <numeric>
-#include <limits>
+#include <vector>
+#include <map>
+#include <utility>
+#include <iosfwd>
+#include <cstddef>
 
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wconversion"
 #endif
 
-#include <linsysmerger.decl.h>
+#include "linsysmerger.decl.h"
 
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic pop
 #endif
 
-#include <Types.h>
-#include <Timer.h>
-#include <HypreMatrix.h>
-#include <HypreVector.h>
-#include <Exception.h>
-#include <ContainerUtil.h>
+#include "Types.h"
+#include "Timer.h"
+#include "Exception.h"
+#include "HypreMatrix.h"
+#include "HypreVector.h"
 
 namespace tk {
 
