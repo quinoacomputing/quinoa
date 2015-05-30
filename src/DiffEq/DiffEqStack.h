@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/DiffEqStack.h
   \author    J. Bakosi
-  \date      Thu 30 Apr 2015 02:42:59 PM MDT
+  \date      Sat 30 May 2015 10:21:17 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Stack of differential equations
   \details   This file declares class DiffEqStack, which implements various
@@ -16,17 +16,26 @@
 #ifndef DiffEqStack_h
 #define DiffEqStack_h
 
+#include <map>
+#include <set>
+#include <string>
 #include <vector>
+#include <functional>
+#include <iterator>
+#include <ostream>
+#include <utility>
+#include <cstddef>
 
 #include <boost/mpl/at.hpp>
+#include <boost/mpl/aux_/adl_barrier.hpp>
 
-#include <DiffEq.h>
-#include <Factory.h>
-#include <Tags.h>
-#include <Walker/Options/DiffEq.h>
-#include <Walker/Options/InitPolicy.h>
-#include <Walker/Options/CoeffPolicy.h>
-#include <Walker/InputDeck/InputDeck.h>
+#include "Tags.h"
+#include "Keywords.h"
+#include "Exception.h"
+#include "Factory.h"
+#include "DiffEq.h"
+#include "Walker/Options/DiffEq.h"
+#include "Walker/InputDeck/InputDeck.h"
 
 namespace walker {
 
@@ -126,7 +135,7 @@ class DiffEqStack {
       } else Throw ( "Can't create DiffEq with zero independent variables" );
     }
 
-    /** @name Configuration-querying functions for all SDEs */
+    /** @name Configuration-querying functions for SDEs */
     //! Get information on the Dirichlet SDE
     std::vector< std::pair< std::string, std::string > >
     infoDirichlet( std::map< ctr::DiffEqType, ncomp_t >& cnt ) const;
