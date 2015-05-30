@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/InputDeck/Parser.C
   \author    J. Bakosi
-  \date      Sun 12 Apr 2015 07:23:31 AM MDT
+  \date      Fri 29 May 2015 11:39:03 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Inciter's input deck file parser
   \details   This file declares the input deck, i.e., control file, parser for
@@ -10,8 +10,17 @@
 */
 //******************************************************************************
 
-#include <Inciter/InputDeck/Parser.h>
-#include <Inciter/InputDeck/Grammar.h>
+#include <ostream>
+#include <type_traits>
+
+#include "pegtl/pegtl.hh"
+
+#include "Print.h"
+#include "Tags.h"
+#include "Inciter/Types.h"
+#include "Inciter/InputDeck/InputDeck.h"
+#include "Inciter/InputDeck/Parser.h"
+#include "Inciter/InputDeck/Grammar.h"
 
 namespace tk {
 namespace grm {

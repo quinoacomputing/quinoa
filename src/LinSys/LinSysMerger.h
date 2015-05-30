@@ -70,7 +70,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy > {
     {
       auto remainder = npoin % static_cast<std::size_t>(CkNumPes());
       if (remainder && CkMyPe() == CkNumPes()-1) m_upper += remainder;
-      std::cout << CkMyPe() << ": [" << m_lower << "..." << m_upper << ")\n";
+      //std::cout << CkMyPe() << ": [" << m_lower << "..." << m_upper << ")\n";
       // Create distributed linear system
       create();
       // Activate SDAG waits

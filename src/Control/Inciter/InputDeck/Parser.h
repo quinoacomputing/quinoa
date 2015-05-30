@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/InputDeck/Parser.h
   \author    J. Bakosi
-  \date      Sun 12 Apr 2015 07:22:44 AM MDT
+  \date      Fri 29 May 2015 04:50:26 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Inciter's input deck file parser
   \details   This file declares the input deck, i.e., control file, parser for
@@ -12,12 +12,14 @@
 #ifndef InciterInputDeckParser_h
 #define InciterInputDeckParser_h
 
-#include <FileParser.h>
-#include <Print.h>
-#include <Inciter/CmdLine/CmdLine.h>
-#include <Inciter/InputDeck/InputDeck.h>
+#include "FileParser.h"
+#include "Inciter/CmdLine/CmdLine.h"
+
+namespace tk { class Print; }
 
 namespace inciter {
+
+namespace ctr { class InputDeck; }
 
 //! \brief Control file parser for Inciter.
 //! \details This class is used to interface with PEGTL, for the purpose of

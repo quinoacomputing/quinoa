@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/UnitTest/CmdLine/Parser.h
   \author    J. Bakosi
-  \date      Sun 15 Mar 2015 05:34:12 PM MDT
+  \date      Fri 29 May 2015 11:56:19 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     UnitTest's command line parser
   \details   This file declares the command-line argument parser for the unit
@@ -12,9 +12,10 @@
 #ifndef UnitTestCmdLineParser_h
 #define UnitTestCmdLineParser_h
 
-#include <Print.h>
-#include <StringParser.h>
-#include <UnitTest/CmdLine/CmdLine.h>
+#include "StringParser.h"
+#include "UnitTest/CmdLine/CmdLine.h"
+
+namespace tk { class Print; }
 
 namespace unittest {
 

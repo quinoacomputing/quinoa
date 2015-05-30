@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/InputDeck/Parser.h
   \author    J. Bakosi
-  \date      Fri 16 Jan 2015 12:33:48 PM MST
+  \date      Sat 30 May 2015 12:03:16 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Walker's input deck file parser
   \details   Walker's input deck file parser
@@ -11,10 +11,10 @@
 #ifndef WalkerInputDeckParser_h
 #define WalkerInputDeckParser_h
 
-#include <FileParser.h>
-#include <Print.h>
-#include <Walker/CmdLine/CmdLine.h>
-#include <Walker/InputDeck/InputDeck.h>
+#include "FileParser.h"
+#include "Walker/CmdLine/CmdLine.h"
+
+namespace tk { class Print; }
 
 namespace walker {
 

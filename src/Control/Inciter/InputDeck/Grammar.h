@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Sun 15 Mar 2015 06:43:55 PM MDT
+  \date      Fri 29 May 2015 05:14:54 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Inciter's input deck grammar definition
   \details   Inciter's input deck grammar definition. We use the Parsing
@@ -14,9 +14,10 @@
 #ifndef InciterInputDeckGrammar_h
 #define InciterInputDeckGrammar_h
 
-#include <Grammar.h>
-#include <PEGTLParsed.h>
-#include <Keywords.h>
+#include "CommonGrammar.h"
+#include "PEGTLParsed.h"
+#include "Keywords.h"
+#include "Inciter/InputDeck/InputDeck.h"
 
 namespace inciter {
 

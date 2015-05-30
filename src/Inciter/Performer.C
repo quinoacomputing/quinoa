@@ -64,11 +64,10 @@ Performer::Performer( CProxy_Conductor& hostproxy, LinSysMergerProxy& lsmproxy )
   std::tie( gnode, inpoel ) = initIds( gelem );
   // Read coordinates of owned and received mesh nodes
   auto coord = initCoords( gnode );
-  // Compute consistent mass matrix
-  consistentMass( gnode, inpoel, coord );
-  // Update consistent mass matrix by communicating with fellow chares
-  update( g_ecomm.size() > m_id ? g_ecomm[ m_id ] :
-          std::map< std::size_t, std::vector< std::size_t > >() );
+  // Compute left-hand side of PDE
+  lhs( gnode, inpoel, coord );
+  // Compute righ-hand side of PDE
+  rhs( gnode, inpoel, coord );
   // Output chare mesh and nodal chare id field to file
   writeChareId( inpoel, coord );
   // Send some time stamps to the host
@@ -100,16 +99,15 @@ Performer::initImports()
 }
 
 void
-Performer::consistentMass(
+Performer::lhs(
   const std::vector< std::size_t >& gnode,
   const std::vector< std::size_t >& inpoel,
   const std::array< std::vector< tk::real >, 3 >& coord )
 //******************************************************************************
-// Compute consistent mass matrix
+// Compute left-hand side of PDE
 //! \param[in] gnode Global node ids whose coordinates to read from file
 //! \param[in] inpoel Tetrahedron element connectivity
 //! \param[in] coord Mesh point coordinates
-//! \return Consistent mass matrix
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -153,15 +151,20 @@ Performer::consistentMass(
     mD[D] += 2.0*vol;
   }
 
-  m_timestamp.emplace_back( "Compute consistent mass matrix", t.dsec() );
+  m_timestamp.emplace_back( "Compute left-hand side matrix", t.dsec() );
+
+  // Update left-hand side matrix of PDE by communicating with fellow chares,
+  // and send off our contribution to linear system merger
+  commLhs( g_ecomm.size() > m_id ? g_ecomm[ m_id ] :
+           std::map< std::size_t, std::vector< std::size_t > >() );
 }
 
 void
-Performer::update(
+Performer::commLhs(
   const std::map< std::size_t, std::vector< std::size_t > >& exp )
 //******************************************************************************
 //  Perform the necessary communication among fellow Performers to update the
-//  chare-boundaries for matrix
+//  chare-boundaries for left-hand side matrix of PDE
 //! \param[in] exp Chare export map, see tk::elemCommMaps()
 //! \author J. Bakosi
 //******************************************************************************
@@ -230,6 +233,10 @@ Performer::add(
 
 void
 Performer::contributeLhs()
+//******************************************************************************
+// Contribute our portion of the left-hand side matrix
+//! \author J. Bakosi
+//******************************************************************************
 {
   // Keep only rows owned before send
   for (auto it=begin(m_lhs); it!=end(m_lhs); )
@@ -247,6 +254,96 @@ Performer::contributeLhs()
 //   std::cout << '\n';
 
   m_lsmproxy.ckLocalBranch()->charelhs( m_lhs );
+}
+
+void
+Performer::rhs(
+  const std::vector< std::size_t >& gnode,
+  const std::vector< std::size_t >& inpoel,
+  const std::array< std::vector< tk::real >, 3 >& coord )
+//******************************************************************************
+// Compute right-hand side of PDE
+//! \param[in] gnode Global node ids whose coordinates to read from file
+//! \param[in] inpoel Tetrahedron element connectivity
+//! \param[in] coord Mesh point coordinates
+//! \author J. Bakosi
+//******************************************************************************
+{
+  tk::Timer t;
+
+  for (std::size_t e=0; e<inpoel.size()/4; ++e) {
+    const auto& x = coord[0];
+    const auto& y = coord[1];
+    const auto& z = coord[2];
+    const auto a = inpoel[e*4+0];
+    const auto b = inpoel[e*4+1];
+    const auto c = inpoel[e*4+2];
+    const auto d = inpoel[e*4+3];
+
+    // compute element volume
+    std::array< tk::real, 3 > v1{{ x[b]-x[a], y[b]-y[a], z[b]-z[a] }},
+                              v2{{ x[c]-x[a], y[c]-y[a], z[c]-z[a] }},
+                              v3{{ x[d]-x[a], y[d]-y[a], z[d]-z[a] }};
+    const auto vol = tk::triple( v1, v2, v3 ) / 6.0 / 20.0;
+    const auto A = gnode[a];
+    const auto B = gnode[b];
+    const auto C = gnode[c];
+    const auto D = gnode[d];
+
+    // construct tetrahedron element-level matrices
+
+    // consistent mass
+    std::array< tk::real, 16 > mass;                  // size: nnode*nnode (4*4)
+    // diagonal
+    mass[0*4+0] = mass[1*4+1] = mass[2*4+2] = mass[3*4+3] = 2.0*vol;
+    // off-diagonal
+    mass[0*4+1] = mass[0*4+2] = mass[0*4+3] =
+    mass[1*4+0] = mass[1*4+2] = mass[1*4+3] =
+    mass[2*4+0] = mass[2*4+1] = mass[2*4+3] =
+    mass[3*4+0] = mass[3*4+1] = mass[3*4+2] = vol;
+
+    // prescribed rotational velocity: [ 0.5-y, x-0.5, 0 ]
+    std::array< tk::real, 12 > vel;                   // size: ndim*nnode (3*4)
+    vel[0*4+0] = 0.5-y[a];  vel[1*4+0] = x[a]-0.5;  vel[2*4+0] = 0.0;
+    vel[0*4+1] = 0.5-y[b];  vel[1*4+1] = x[b]-0.5;  vel[2*4+1] = 0.0;
+    vel[0*4+2] = 0.5-y[c];  vel[1*4+2] = x[c]-0.5;  vel[2*4+2] = 0.0;
+    vel[0*4+3] = 0.5-y[d];  vel[1*4+3] = x[d]-0.5;  vel[2*4+3] = 0.0;
+
+    // shape function derivatives
+    std::array< tk::real, 12 > der;                   // size: nnode*ndim (4*3)
+
+    //...
+    //std::array< tk::real, 4 > dh, dl, fh, fl, mh, ml; // size: nnode (4)
+
+//     auto& mA = m_lhs[A];
+//     mA[A] += 2.0*vol;
+//     mA[B] += vol;
+//     mA[C] += vol;
+//     mA[D] += vol;
+//     auto& mB = m_lhs[B];
+//     mB[A] += vol;
+//     mB[B] += 2.0*vol;
+//     mB[C] += vol;
+//     mB[D] += vol;
+//     auto& mC = m_lhs[C];
+//     mC[A] += vol;
+//     mC[B] += vol;
+//     mC[C] += 2.0*vol;
+//     mC[D] += vol;
+//     auto& mD = m_lhs[D];
+//     mD[A] += vol;
+//     mD[B] += vol;
+//     mD[C] += vol;
+//     mD[D] += 2.0*vol;
+
+  }
+
+  m_timestamp.emplace_back( "Compute right-hand side vector", t.dsec() );
+
+//   // Update left-hand side matrix of PDE by communicating with fellow chares,
+//   // and send off our contribution to linear system merger
+//   commLhs( g_ecomm.size() > m_id ? g_ecomm[ m_id ] :
+//            std::map< std::size_t, std::vector< std::size_t > >() );
 }
 
 std::pair< std::vector< std::size_t >, std::vector< std::size_t > >

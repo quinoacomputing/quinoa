@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Keyword.h
   \author    J. Bakosi
-  \date      Thu 12 Mar 2015 12:04:23 PM MDT
+  \date      Fri 29 May 2015 11:18:11 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Generic definition of a keyword
   \details   Generic definition of all keywords - both command-line arguments

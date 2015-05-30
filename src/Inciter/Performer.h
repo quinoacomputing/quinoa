@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.h
   \author    J. Bakosi
-  \date      Tue 19 May 2015 07:33:44 AM MDT
+  \date      Thu 21 May 2015 10:42:05 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Performer advances the Euler equations
   \details   Performer advances the Euler equations. There are a potentially
@@ -90,6 +90,8 @@ class Performer : public CBase_Performer {
     std::map< std::size_t, std::vector< std::size_t > > m_toimport;
     //! Sparse matrix: global mesh point row and column ids, and nonzero value
     std::map< std::size_t, std::map< std::size_t, tk::real > > m_lhs;
+    //! Right-hand side vector: global mesh point row ids and values
+    std::map< std::size_t, tk::real > m_rhs;
     //! Time stamps
     std::vector< std::pair< std::string, tk::real > > m_timestamp;
     std::vector< tk::Timer > m_timer;   //!< Timers
@@ -128,19 +130,25 @@ class Performer : public CBase_Performer {
     writeChareId( const std::vector< std::size_t >& inpoel,
                   const std::array< std::vector< tk::real >, 3 >& coord );
 
-    //! Compute consistent mass matrix
+    //! Compute left-hand side matrix of PDE
     void
-    consistentMass( const std::vector< std::size_t >& gnode,
-                    const std::vector< std::size_t >& inpoel,
-                    const std::array< std::vector< tk::real >, 3 >& coord );
+    lhs( const std::vector< std::size_t >& gnode,
+         const std::vector< std::size_t >& inpoel,
+         const std::array< std::vector< tk::real >, 3 >& coord );
 
     //! \brief Perform the necessary communication among fellow Performers to
-    //!   update the chare-boundaries for matrix
+    //!   update the chare-boundaries for left-hand side matrix of PDE
     void
-    update( const std::map< std::size_t, std::vector< std::size_t > >& exp );
+    commLhs( const std::map< std::size_t, std::vector< std::size_t > >& exp );
 
-    //! Contribute our portion of the left hand side matrix
+    //! Contribute our portion of the left-hand side matrix
     void contributeLhs();
+
+    //! Compute righ-hand side vector of PDE
+    void
+    rhs( const std::vector< std::size_t >& gnode,
+         const std::vector< std::size_t >& inpoel,
+         const std::array< std::vector< tk::real >, 3 >& coord );
 };
 
 } // inciter::

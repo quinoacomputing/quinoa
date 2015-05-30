@@ -2,27 +2,41 @@
 /*!
   \file      src/Control/Walker/CmdLine/Parser.C
   \author    J. Bakosi
-  \date      Fri 13 Mar 2015 08:06:28 AM MDT
+  \date      Sat 30 May 2015 12:15:15 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
-  \brief     Walker's comamnd line parser
-  \details   Walker's comamnd line parser
+  \brief     Walker's command line parser
+  \details   Walker's command line parser
 */
 //******************************************************************************
+
+#include <map>
+#include <ostream>
+#include <string>
+#include <type_traits>
+
+#include "pegtl/pegtl.hh"
+
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wconversion"
 #endif
 
-#include <charm++.h>
+#include "charm.h"
 
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic pop
 #endif
 
-#include <Config.h>
-#include <Walker/CmdLine/Parser.h>
-#include <Walker/CmdLine/Grammar.h>
-#include <Walker/InputDeck/InputDeck.h>
+#include "Print.h"
+#include "Config.h"
+#include "Exception.h"
+#include "HelpFactory.h"
+#include "Keywords.h"
+#include "Walker/Types.h"
+#include "Walker/CmdLine/Parser.h"
+#include "Walker/CmdLine/Grammar.h"
+#include "Walker/CmdLine/CmdLine.h"
+#include "Walker/InputDeck/InputDeck.h"
 
 namespace tk {
 namespace grm {
@@ -79,7 +93,7 @@ CmdLineParser::CmdLineParser( int argc, char** argv,
 
   // Strip command line (and its underlying tagged tuple) from PEGTL instruments
   // and transfer it out
-  cmdline = cmd;
+  cmdline = std::move( cmd );
 
   // If we got here, the parser succeeded
   print.item( "Parsed command line", "success" );

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/MeshConv/CmdLine/Grammar.h
   \author    J. Bakosi
-  \date      Sat 17 Jan 2015 06:54:09 AM MST
+  \date      Fri 29 May 2015 10:32:28 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     MeshConv's command line grammar definition
   \details   Grammar definition for parsing the command line. We use the Parsing
@@ -14,9 +14,9 @@
 #ifndef MeshConvCmdLineGrammar_h
 #define MeshConvCmdLineGrammar_h
 
-#include <Grammar.h>
-#include <PEGTLParsed.h>
-#include <Keywords.h>
+#include "CommonGrammar.h"
+#include "PEGTLParsed.h"
+#include "Keywords.h"
 
 namespace meshconv {
 //! Mesh converter command line grammar definition

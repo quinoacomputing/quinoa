@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RegTest/CmdLine/Parser.h
   \author    J. Bakosi
-  \date      Fri 20 Mar 2015 12:05:49 PM MDT
+  \date      Fri 29 May 2015 11:41:35 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     RegTest's command line parser
   \details   This file declares the command-line argument parser for the
@@ -12,9 +12,10 @@
 #ifndef RegTestCmdLineParser_h
 #define RegTestCmdLineParser_h
 
-#include <Print.h>
-#include <StringParser.h>
-#include <RegTest/CmdLine/CmdLine.h>
+#include "StringParser.h"
+#include "RegTest/CmdLine/CmdLine.h"
+
+namespace tk { class Print; }
 
 namespace regtest {
 

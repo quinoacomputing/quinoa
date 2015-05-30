@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Breeze/InputDeck/Parser.h
   \author    J. Bakosi
-  \date      Mon 23 Feb 2015 08:48:13 AM MST
+  \date      Fri 29 May 2015 05:22:51 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Breeze's input deck file parser
   \details   This file declares the input deck, i.e., control file, parser for
@@ -12,10 +12,10 @@
 #ifndef BreezeInputDeckParser_h
 #define BreezeInputDeckParser_h
 
-#include <FileParser.h>
-#include <Print.h>
-#include <Breeze/CmdLine/CmdLine.h>
-#include <Breeze/InputDeck/InputDeck.h>
+#include "FileParser.h"
+#include "Breeze/CmdLine/CmdLine.h"
+
+namespace tk { class Print; }
 
 namespace inciter {
 

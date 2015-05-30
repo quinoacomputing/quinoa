@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/CmdLine/Grammar.h
   \author    J. Bakosi
-  \date      Mon 23 Feb 2015 08:53:34 AM MST
+  \date      Fri 29 May 2015 10:31:39 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Inciter's command line grammar definition
   \details   Grammar definition for parsing the command line. We use the Parsing
@@ -14,9 +14,9 @@
 #ifndef InciterCmdLineGrammar_h
 #define InciterCmdLineGrammar_h
 
-#include <Grammar.h>
-#include <PEGTLParsed.h>
-#include <Keywords.h>
+#include "CommonGrammar.h"
+#include "PEGTLParsed.h"
+#include "Keywords.h"
 
 namespace inciter {
 //! Inciter command line grammar definition

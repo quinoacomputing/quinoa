@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/CmdLine/Grammar.h
   \author    J. Bakosi
-  \date      Fri 16 Jan 2015 06:15:31 PM MST
+  \date      Fri 29 May 2015 05:17:01 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     RNGTest's command line grammar definition
   \details   Grammar definition for parsing the command line. We use the Parsing
@@ -14,7 +14,7 @@
 #ifndef RNGTestCmdLineGrammar_h
 #define RNGTestCmdLineGrammar_h
 
-#include <Grammar.h>
+#include "CommonGrammar.h"
 #include <PEGTLParsed.h>
 #include <Keywords.h>
 
