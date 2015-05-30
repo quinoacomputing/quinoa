@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/ZoltanInterOp.h
   \author    J. Bakosi
-  \date      Fri 01 May 2015 04:11:00 PM MDT
+  \date      Sat 30 May 2015 11:47:56 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Interoperation with the Zoltan library
   \details   Interoperation with the Zoltan library, used for static mesh
@@ -12,11 +12,16 @@
 #ifndef ZoltanInterOp_h
 #define ZoltanInterOp_h
 
-#include <UnsMesh.h>
-#include <Tags.h>
-#include <TaggedTuple.h>
+#include <vector>
+#include <utility>
+#include <cstddef>
+#include <cstdint>
 
 namespace tk {
+
+class Print;
+class UnsMesh;
+
 //! Interoperation with the Zoltan library, used for static mesh partitioning
 namespace zoltan {
 
