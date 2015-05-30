@@ -2,7 +2,7 @@
 /*!
   \file      src/LoadBalance/LoadDistributor.h
   \author    J. Bakosi
-  \date      Thu 21 May 2015 09:44:34 AM MDT
+  \date      Sat 30 May 2015 12:02:02 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Load distributors and partitioning data types
   \details   Load distributors and partitioning data types. Load distributors
@@ -13,6 +13,8 @@
 #define LoadDistributor_h
 
 #include <cstdint>
+
+#include "Types.h"
 
 namespace tk {
 
