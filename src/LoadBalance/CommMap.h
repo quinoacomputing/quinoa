@@ -2,7 +2,7 @@
 /*!
   \file      src/LoadBalance/CommMap.h
   \author    J. Bakosi
-  \date      Thu 21 May 2015 09:38:25 AM MDT
+  \date      Sat 30 May 2015 11:51:54 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Calculation of communication maps for unstructured meshes
   \details   Calculation of communication maps for unstructured meshes.
@@ -12,10 +12,13 @@
 #define CommMap_h
 
 #include <map>
-
-#include <UnsMesh.h>
+#include <vector>
+#include <cstddef>
+#include <iosfwd>
 
 namespace tk {
+
+class UnsMesh;
 
 //! Compute point-based communication maps
 std::vector< std::map< std::size_t, std::vector< std::size_t > > >

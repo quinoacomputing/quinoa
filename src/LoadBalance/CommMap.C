@@ -2,7 +2,7 @@
 /*!
   \file      src/LoadBalance/CommMap.C
   \author    J. Bakosi
-  \date      Thu 21 May 2015 09:38:05 AM MDT
+  \date      Sat 30 May 2015 11:53:19 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Calculation of communication maps for unstructured meshes
   \details   Calculation of communication maps for unstructured meshes.
@@ -11,9 +11,17 @@
 
 #include <vector>
 #include <set>
+#include <map>
+#include <iosfwd>
+#include <cstddef>
+#include <string>
+#include <type_traits>
+#include <utility>
 
-#include <CommMap.h>
-#include <DerivedData.h>
+#include "CommMap.h"
+#include "DerivedData.h"
+#include "Exception.h"
+#include "UnsMesh.h"
 
 namespace tk {
 
