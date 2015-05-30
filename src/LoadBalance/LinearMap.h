@@ -2,7 +2,7 @@
 /*!
   \file      src/LoadBalance/LinearMap.h
   \author    J. Bakosi
-  \date      Thu 21 May 2015 09:38:42 AM MDT
+  \date      Sat 30 May 2015 11:54:09 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Advanced Charm++ array creation with a map in a linear fashion
   \details   Advanced Charm++ array creation refers to various ways arrays can
@@ -41,13 +41,13 @@
   #pragma GCC diagnostic ignored "-Wconversion"
 #endif
 
-#include <linearmap.decl.h>
+#include "linearmap.decl.h"
 
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic pop
 #endif
 
-#include <Exception.h>
+#include "Exception.h"
 
 namespace tk {
 
