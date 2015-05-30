@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Conductor.C
   \author    J. Bakosi
-  \date      Wed 20 May 2015 01:51:36 PM MDT
+  \date      Sat 30 May 2015 10:33:56 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Conductor drives the time integration of the Euler equations
   \details   Conductor drives the time integration of the Euler equations.
@@ -14,10 +14,14 @@
 */
 //******************************************************************************
 
-#include <Conductor.h>
-#include <inciter.decl.h>
-#include <LinearMap.h>
-#include <UnsMeshMap.h>
+#include <string>
+#include <iostream>
+#include <cstddef>
+
+#include "Conductor.h"
+#include "ContainerUtil.h"
+#include "Inciter/InputDeck/InputDeck.h"
+#include "inciter.decl.h"
 
 extern CProxy_Main mainProxy;
 

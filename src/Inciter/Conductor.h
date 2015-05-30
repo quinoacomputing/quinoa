@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Conductor.h
   \author    J. Bakosi
-  \date      Sat 16 May 2015 02:37:50 PM MDT
+  \date      Sat 30 May 2015 10:34:52 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Conductor drives the time integration of the Euler equations
   \details   Conductor drives the time integration of the Euler equations.
@@ -16,19 +16,26 @@
 #ifndef Conductor_h
 #define Conductor_h
 
+#include <map>
+#include <vector>
+#include <iosfwd>
+#include <utility>
+
+#include "Timer.h"
+#include "Types.h"
+#include "InciterPrint.h"
+#include "Performer.h"
+
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wconversion"
 #endif
 
-#include <conductor.decl.h>
+#include "conductor.decl.h"
 
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic pop
 #endif
-
-#include <InciterPrint.h>
-#include <Performer.h>
 
 namespace inciter {
 
