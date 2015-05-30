@@ -8,12 +8,10 @@
  - Warn on what is set ends up not being used
  - Add logger: Useful? Requirements? Pantheios? Glog? Boost.Log?
  - Operator << for tagged tuple (e.g., for debugging purposes)? See STL 5.1.3
- - Put in error trap if depvars are the same for two SDEs given
  - Using the defaults for an RNG in the rngs - end block should not require
    an 'end', as that is not so user-friendly
- - Add type, default, bounds fields to keyword and possibly others.
- - Add command line help with short and long help on keywords.
- - Add commandline option --version
+ - Add default field to keyword.
+ - Add command-line option --version
  - Trigger parser error on non-existent field-id, besides the existing dependent
    variable.
  - Add to on-screen help: search for a string in any fields instead of only a
@@ -27,8 +25,8 @@
     + Hook up SSE versions
     + Hook up GPU versions
  - Find and add RNG library alternative to MKL and RNGSSE that works with
-   threads: MKL is non-free and RNGSSE does not work on Mac OS (probably due
-   to its assembly code), cuRAND, Random123?
+   threads: MKL is non-free and RNGSSE does not work on Mac OS, cuRAND,
+   Random123?
  - Implement a fall-back RNG (Boost?, STL?) that guaranteed to work everywhere.
    (RNGSSE's assembly does not work on ARM.)
  - Detect architecture. If not x86, don't try to build RNGSSE.
@@ -36,7 +34,9 @@
    control file.
 
 ### Testing
- - Quantify code coverage by tests, e.g., COVTOOL: http://covtool.sourceforge.net
+ - Quantify code coverage by tests, e.g.,
+    + lcov: http://ltp.sourceforge.net/coverage/lcov.php
+    + covtool: http://covtool.sourceforge.net
  - Regression tests with KitWare's CTest, see
    http://www.cmake.org/Wiki/CMake/Testing_With_CTest
  - Test build with optional libraries on/off (all permutations)
@@ -53,7 +53,6 @@
 ### Build
  - Get rid of the optional build of Trilinos/SEACAS (but keep ExodusII) as
    SEACAS is LGPL (but Exodus is BSD)
- - Inquire about a TestU01 commercial license
  - Reduce build deps with ninja build dependency map
  - Explore dynamic libs, precompiled headers
    (https://github.com/ducakar/openzone/ uses pch cmake and clang)
@@ -61,9 +60,9 @@
  - Switch as many TPLs to optional as make sense
  - Echo "all optional libraries found" or what's missing at what path
  - Make executables optional
- - Make children of MonteCarlo optional
  - Make children of SDEs optional
  - Make coefficients policies optional
+ - Make init policies optional
  - Document what is optional
  - Consider safe mode STL for development: -D_GLIBCXX_DEBUG, see STL 6.12.1
  - Setup separate distribution of modules/executables. Via sub-repos? See
@@ -93,7 +92,7 @@
    map<int,vec>, depending on use case, should test and compare performance
 
 ### Documentation
- - Add to-level LICENSE and README (describing how to build tpl, code, and doc)
+ - Add top-level LICENSE and README (describing how to build tpl, code, and doc)
  - Double-check boost modules licenses
  - Clarify TestU01 license with author
  - Find out build prerequisites (i.e., everyting that is linked in) and document
@@ -103,7 +102,6 @@
  - Fill details on TPL page
  - Find alternatives to Doxygen that work better with heavily templated code
  - Add separate page to doxygen on papers with links
- - Add and hook up optional field specifying default expected value to keywords
 
 ### Concepts
  - Add concepts (as they will be in C++17 as comments for now) to all templates.
@@ -167,7 +165,7 @@
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Mon 20 Apr 2015 02:13:13 PM MDT
+<em>Page last updated:</em> Sat 30 May 2015 12:26:47 AM MDT
 <em>Copyright 2012-2015, Jozsef Bakosi.</em>
 </small></div>
 */
