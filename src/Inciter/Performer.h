@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.h
   \author    J. Bakosi
-  \date      Thu 21 May 2015 10:42:05 AM MDT
+  \date      Sat 30 May 2015 11:41:21 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Performer advances the Euler equations
   \details   Performer advances the Euler equations. There are a potentially
@@ -14,32 +14,24 @@
 #ifndef Performer_h
 #define Performer_h
 
-#include <iostream>     // NOT REALLY NEEDED
+#include <array>
+#include <cstddef>
+#include <iosfwd>
+#include <map>
+#include <utility>
+#include <vector>
+
+#include "Timer.h"
+#include "Types.h"
+#include "LinSysMerger.h"
 
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wconversion"
-  #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #endif
 
-#include <inciter.decl.h>
-
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic pop
-#endif
-
-#include <DerivedData.h>
-#include <Inciter/InputDeck/InputDeck.h>
-#include <ExodusIIMeshReader.h>
-#include <ExodusIIMeshWriter.h>
-#include <LinSysMerger.h>
-
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-#endif
-
-#include <performer.decl.h>
+#include "inciter.decl.h"
+#include "performer.decl.h"
 
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic pop

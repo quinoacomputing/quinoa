@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.C
   \author    J. Bakosi
-  \date      Sun 17 May 2015 12:41:37 PM MDT
+  \date      Sat 30 May 2015 11:41:15 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Performer advances the Euler equations
   \details   Performer advances the Euler equations. There are a potentially
@@ -12,20 +12,18 @@
 */
 //******************************************************************************
 
-#include <Performer.h>
+#include <string>
+#include <tuple>
+#include <iterator>
 
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wconversion"
-#endif
-
-#include <performer.def.h>
-
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic pop
-#endif
-
-#include <Vector.h>
+#include "Exception.h"
+#include "Performer.h"
+#include "Vector.h"
+#include "ContainerUtil.h"
+#include "UnsMesh.h"
+#include "ExodusIIMeshReader.h"
+#include "ExodusIIMeshWriter.h"
+#include "Inciter/InputDeck/InputDeck.h"
 
 namespace inciter {
 
@@ -477,3 +475,14 @@ Performer::writeChareId( const std::vector< std::size_t >& inpoel,
 
   m_timestamp.emplace_back( "Write chare id field to file", t.dsec() );
 }
+
+#if defined(__clang__) || defined(__GNUC__)
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wconversion"
+#endif
+
+#include "performer.def.h"
+
+#if defined(__clang__) || defined(__GNUC__)
+  #pragma GCC diagnostic pop
+#endif
