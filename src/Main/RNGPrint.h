@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGPrint.h
   \author    J. Bakosi
-  \date      Wed 28 Jan 2015 12:16:17 PM MST
+  \date      Sun 31 May 2015 06:35:31 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Pretty printer base for pretty printers supporting RNGs
   \details   Pretty printer base for pretty printers supporting RNGs.
@@ -11,9 +11,13 @@
 #ifndef RNGPrint_h
 #define RNGPrint_h
 
-#include <Print.h>
-#include <RNGParam.h>
-#include <Options/RNG.h>
+#include <iostream>
+#include <vector>
+
+#include "Config.h"
+#include "Print.h"
+#include "RNGParam.h"
+#include "Options/RNG.h"
 
 namespace tk {
 
