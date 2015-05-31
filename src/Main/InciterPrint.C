@@ -2,14 +2,17 @@
 /*!
   \file      src/Main/InciterPrint.C
   \author    J. Bakosi
-  \date      Mon 23 Feb 2015 08:59:07 AM MST
+  \date      Sun 31 May 2015 06:18:35 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Inciter-specific pretty printer functionality
   \details   Inciter-specific pretty printer functionality.
 */
 //******************************************************************************
 
-#include <InciterPrint.h>
+#include <boost/algorithm/string/replace.hpp>
+#include <boost/iterator/iterator_traits.hpp>
+
+#include "InciterPrint.h"
 
 using inciter::InciterPrint;
 

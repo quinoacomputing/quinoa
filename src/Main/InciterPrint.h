@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/InciterPrint.h
   \author    J. Bakosi
-  \date      Mon 23 Feb 2015 08:59:22 AM MST
+  \date      Sun 31 May 2015 06:16:53 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Inciter-specific pretty printer functionality
   \details   Inciter-specific pretty printer functionality.
@@ -11,13 +11,15 @@
 #ifndef InciterPrint_h
 #define InciterPrint_h
 
-#include <algorithm>
+#include <iostream>
+#include <string>
 
-#include <boost/algorithm/string/replace.hpp>
+#include <boost/format.hpp>
+#include <boost/optional.hpp>
 
-#include <RNGPrint.h>
-#include <Inciter/Types.h>
-#include <Inciter/InputDeck/InputDeck.h>
+#include "Print.h"
+#include "RNGPrint.h"
+#include "Inciter/InputDeck/InputDeck.h"
 
 namespace inciter {
 
