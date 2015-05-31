@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RegTest.C
   \author    J. Bakosi
-  \date      Sat 11 Apr 2015 07:50:33 AM MDT
+  \date      Sun 31 May 2015 06:30:59 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     RegTest's Charm++ main chare and main().
   \details   RegTest's Charm++ main chare and main(). This file contains
@@ -10,9 +10,21 @@
     land, running the regression test suite.
 */
 //******************************************************************************
-#include <Config.h>
-#include <RegTestPrint.h>
+
+#include <vector>
+#include <utility>
+#include <iostream>
+
+#include <boost/format.hpp>
+
+#include "Print.h"
+#include "Config.h"
+#include "Timer.h"
+#include "Tags.h"
+#include "Init.h"
+#include "RegTestPrint.h"
 #include <RegTestDriver.h>
+#include <RegTest/CmdLine/CmdLine.h>
 #include <RegTest/CmdLine/Parser.h>
 #include <ProcessException.h>
 
@@ -21,13 +33,13 @@
   #pragma GCC diagnostic ignored "-Wconversion"
 #endif
 
-#include <regtest.decl.h>
+#include "charm.h"
+#include "ckmessage.h"
+#include "regtest.decl.h"
 
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic pop
 #endif
-
-#include <Init.h>
 
 //! \brief Charm handle to the main proxy, facilitates call-back to finalize,
 //!    etc., must be in global scope, unique per executable
@@ -141,7 +153,7 @@ struct execute : CBase_execute { execute() { mainProxy.execute(); } };
   #pragma GCC diagnostic ignored "-Wconversion"
 #endif
 
-#include <regtest.def.h>
+#include "regtest.def.h"
 
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic pop
