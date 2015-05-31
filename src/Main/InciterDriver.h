@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/InciterDriver.h
   \author    J. Bakosi
-  \date      Wed 08 Apr 2015 08:53:29 AM MDT
+  \date      Sun 31 May 2015 06:08:35 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Inciter driver
   \details   Inciter driver.
@@ -11,11 +11,9 @@
 #ifndef InciterDriver_h
 #define InciterDriver_h
 
-#include <InciterPrint.h>
-#include <Inciter/CmdLine/CmdLine.h>
-#include <UnsMesh.h>
-
 namespace inciter {
+
+class InciterPrint;
 
 //! Inciter driver used polymorphically with tk::Driver
 class InciterDriver {

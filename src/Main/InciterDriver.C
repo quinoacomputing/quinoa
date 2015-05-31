@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/InciterDriver.C
   \author    J. Bakosi
-  \date      Wed 08 Apr 2015 08:53:08 AM MDT
+  \date      Sun 31 May 2015 06:09:39 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Inciter driver
   \details   Inciter driver.
@@ -13,18 +13,21 @@
   #pragma GCC diagnostic ignored "-Wconversion"
 #endif
 
-#include <performer.decl.h>
+#include "performer.decl.h"
 
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic pop
 #endif
 
-#include <InciterDriver.h>
+#include "InciterDriver.h"
+#include "Inciter/InputDeck/InputDeck.h"
 
 namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
 extern CProxy_Conductor g_ConductorProxy;
+
+class InciterPrint;
 
 } // inciter::
 
