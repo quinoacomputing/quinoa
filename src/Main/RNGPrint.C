@@ -2,14 +2,27 @@
 /*!
   \file      src/Main/RNGPrint.C
   \author    J. Bakosi
-  \date      Wed 28 Jan 2015 12:19:57 PM MST
+  \date      Sun 31 May 2015 06:37:41 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Pretty printer base for pretty printers supporting RNGs
   \details   Pretty printer base for pretty printers supporting RNGs.
 */
 //******************************************************************************
 
-#include <RNGPrint.h>
+#include <map>
+#include <utility>
+
+#include <boost/format.hpp>
+#include <boost/optional.hpp>
+
+#include "Tags.h"
+#include "Print.h"
+#include "RNGParam.h"
+#include "RNGPrint.h"
+#include "Options/RNG.h"
+#include "Options/MKLGaussianMethod.h"
+#include "Options/MKLUniformMethod.h"
+#include "Options/RNGSSESeqLen.h"
 
 using tk::RNGPrint;
 
