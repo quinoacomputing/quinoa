@@ -2,23 +2,30 @@
 /*!
   \file      src/RNGTest/TestU01Stack.C
   \author    J. Bakosi
-  \date      Wed 28 Jan 2015 05:17:24 PM MST
+  \date      Mon 01 Jun 2015 12:45:44 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Stack of TestU01 RNG statistical tests
   \details   Stack of TestU01 RNG statistical tests
 */
 //******************************************************************************
 
-extern "C" {
-  #include <svaria.h>
-  #include <swrite.h>
-  #include <bbattery.h>
-}
+#include <array>
+#include <iterator>
+#include <memory>
+#include <utility>
 
-#include <TestU01Stack.h>
-#include <RNG.h>
-#include <TestU01Wrappers.h>
-#include <RNGTest/InputDeck/InputDeck.h>
+#include "Tags.h"
+#include "Config.h"
+#include "Exception.h"
+#include "TestU01Stack.h"
+#include "TestU01Wrappers.h"
+#include "RNGTest/InputDeck/InputDeck.h"
+
+extern "C" {
+  #include "svaria.h"
+  #include "gofw.h"
+  #include "snpair.h"
+}
 
 namespace rngtest {
 
