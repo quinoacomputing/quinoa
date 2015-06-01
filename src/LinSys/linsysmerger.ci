@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/linsysmerger.ci
   \author    J. Bakosi
-  \date      Tue 19 May 2015 11:46:27 AM MDT
+  \date      Mon 01 Jun 2015 04:26:04 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Charm++ module interface file for merging a linear system
   \details   Charm++ module interface file for merging a linear system
@@ -56,7 +56,8 @@ module linsysmerger {
       entry void wait4lhs() {
         when trigger_lhs_complete() serial {
           m_perfstat.emplace_back( "Communicate/total of lhs matrix",
-            static_cast<tk::real>(m_compts) / (m_ownpts + m_compts) );
+            static_cast<tk::real>(m_compts) /
+            static_cast<tk::real>(m_ownpts+m_compts) );
           m_timestamp.emplace_back( "Communicate lhs matrix",
                                     m_timer[0].dsec() );
           m_timer.clear();
