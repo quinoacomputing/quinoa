@@ -2,15 +2,29 @@
 /*!
   \file      src/Main/UnitTestDriver.C
   \author    J. Bakosi
-  \date      Wed 28 Jan 2015 11:43:48 AM MST
+  \date      Mon 01 Jun 2015 09:31:49 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit test driver
   \details   Unit test driver.
 */
 //******************************************************************************
 
-#include <UnitTestDriver.h>
-#include <TUTSuite.h>
+#include <boost/format.hpp>
+
+#include "UnitTestPrint.h"
+#include "UnitTestDriver.h"
+#include "UnitTest/CmdLine/CmdLine.h"
+
+#if defined(__clang__) || defined(__GNUC__)
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wconversion"
+#endif
+
+#include "tutsuite.decl.h"
+
+#if defined(__clang__) || defined(__GNUC__)
+  #pragma GCC diagnostic pop
+#endif
 
 using unittest::UnitTestDriver;
 

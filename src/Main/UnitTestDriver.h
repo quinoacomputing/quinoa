@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/UnitTestDriver.h
   \author    J. Bakosi
-  \date      Wed 28 Jan 2015 11:43:15 AM MST
+  \date      Mon 01 Jun 2015 09:29:08 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit test driver
   \details   Unit test driver.
@@ -11,10 +11,11 @@
 #ifndef UnitTestDriver_h
 #define UnitTestDriver_h
 
-#include <UnitTestPrint.h>
-#include <UnitTest/CmdLine/CmdLine.h>
+#include "UnitTest/CmdLine/CmdLine.h"
 
 namespace unittest {
+
+class UnitTestPrint;
 
 //! Unit test suite driver used polymorphically with tk::Driver
 class UnitTestDriver {
