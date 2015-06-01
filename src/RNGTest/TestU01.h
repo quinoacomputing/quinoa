@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/TestU01.h
   \author    J. Bakosi
-  \date      Fri 13 Mar 2015 12:27:44 PM MDT
+  \date      Mon 01 Jun 2015 10:59:57 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     TestU01 statistical test
   \details   TestU01 statistical test
@@ -11,19 +11,18 @@
 #ifndef TestU01_h
 #define TestU01_h
 
+#include "TestU01Props.h"
+
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wconversion"
 #endif
 
-#include <charm++.h>
+#include "testu01.decl.h"
 
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic pop
 #endif
-
-#include <testu01.decl.h>
-#include <TestU01Props.h>
 
 namespace rngtest {
 
@@ -63,7 +62,7 @@ class TestU01 : public CBase_TestU01< TestU01Props > {
 #endif
 
 #define CK_TEMPLATES_ONLY
-#include <testu01.def.h>
+#include "testu01.def.h"
 #undef CK_TEMPLATES_ONLY
 
 #if defined(__clang__) || defined(__GNUC__)
