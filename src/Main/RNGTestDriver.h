@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTestDriver.h
   \author    J. Bakosi
-  \date      Wed 28 Jan 2015 11:42:12 AM MST
+  \date      Mon 01 Jun 2015 09:15:01 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Random number generator test suite driver
   \details   Random number generator test suite driver.
@@ -11,11 +11,17 @@
 #ifndef RNGTestDriver_h
 #define RNGTestDriver_h
 
-#include <Battery.h>
-#include <RNGTestPrint.h>
+#include <map>
+#include <functional>
+
+#include "RNGTest/Options/Battery.h"
+#include "RNGTest/CmdLine/CmdLine.h"
 
 //! Everything that contributes to the rngtest executable
 namespace rngtest {
+
+class Battery;
+class RNGTestPrint;
 
 //! Battery factory type
 using BatteryFactory = std::map< ctr::BatteryType, std::function< Battery() > >;
