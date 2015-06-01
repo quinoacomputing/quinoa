@@ -2,15 +2,34 @@
 /*!
   \file      src/RNGTest/SmallCrush.C
   \author    J. Bakosi
-  \date      Wed 28 Jan 2015 05:03:33 PM MST
+  \date      Mon 01 Jun 2015 10:38:25 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Class re-creating the TestU01 library's SmallCrush battery
   \details   Class re-creating the TestU01 library's SmallCrush battery.
 */
 //******************************************************************************
 
-#include <SmallCrush.h>
-#include <TestU01.h>
+#include "Tags.h"
+#include "PUPUtil.h"
+#include "TestU01.h"
+#include "StatTest.h"
+#include "TestStack.h"
+#include "TestU01Props.h"
+#include "TestU01Stack.h"
+#include "SmallCrush.h"
+
+#include "testu01suite.decl.h"
+
+#include "charm.h"
+#include "pup.h"
+#include "pup_stl.h"
+
+#include "gdef.h"
+#include "gofw.h"
+#include "sknuth.h"
+#include "sres.h"
+#include "sstring.h"
+#include "swalk.h"
 
 namespace rngtest {
 

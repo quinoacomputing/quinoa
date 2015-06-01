@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/SmallCrush.h
   \author    J. Bakosi
-  \date      Wed 28 Jan 2015 04:22:47 PM MST
+  \date      Mon 01 Jun 2015 10:37:31 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Class re-creating the TestU01 library's SmallCrush battery
   \details   Class re-creating the TestU01 library's SmallCrush battery.
@@ -11,11 +11,17 @@
 #ifndef SmallCrush_h
 #define SmallCrush_h
 
-#include <Battery.h>
-#include <StatTest.h>
-#include <testu01suite.decl.h>
+#include <vector>
+#include <functional>
+#include <iosfwd>
+
+#include "Options/RNG.h"
+#include "RNGTest/Options/Battery.h"
 
 namespace rngtest {
+
+class CProxy_TestU01Suite;
+class StatTest;
 
 //! Class registering the TestU01 library's SmallCrush battery
 class SmallCrush {

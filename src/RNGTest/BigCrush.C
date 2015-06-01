@@ -2,15 +2,38 @@
 /*!
   \file      src/RNGTest/BigCrush.C
   \author    J. Bakosi
-  \date      Wed 28 Jan 2015 04:45:26 PM MST
+  \date      Mon 01 Jun 2015 10:33:44 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Class re-creating the TestU01 library's BigCrush battery
   \details   Class re-creating the TestU01 library's BigCrush battery.
 */
 //******************************************************************************
 
-#include <BigCrush.h>
-#include <TestU01.h>
+#include "Tags.h"
+#include "TestU01.h"
+#include "StatTest.h"
+#include "BigCrush.h"
+#include "PUPUtil.h"
+#include "TestStack.h"
+#include "TestU01Props.h"
+#include "TestU01Stack.h"
+
+#include "testu01suite.decl.h"
+
+#include "charm.h"
+#include "pup.h"
+#include "pup_stl.h"
+
+#include "gdef.h"
+#include "gofw.h"
+#include "scomp.h"
+#include "sknuth.h"
+#include "smarsa.h"
+#include "snpair.h"
+#include "sres.h"
+#include "sspectral.h"
+#include "sstring.h"
+#include "swalk.h"
 
 namespace rngtest {
 

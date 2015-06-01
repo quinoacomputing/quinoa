@@ -2,15 +2,38 @@
 /*!
   \file      src/RNGTest/Crush.C
   \author    J. Bakosi
-  \date      Wed 28 Jan 2015 04:45:46 PM MST
+  \date      Mon 01 Jun 2015 10:41:29 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Class re-creating the TestU01 library's Crush battery
   \details   Class re-creating the TestU01 library's Crush battery.
 */
 //******************************************************************************
 
-#include <Crush.h>
-#include <TestU01.h>
+#include "Tags.h"
+#include "PUPUtil.h"
+#include "TestU01.h"
+#include "StatTest.h"
+#include "TestStack.h"
+#include "TestU01Props.h"
+#include "TestU01Stack.h"
+#include "Crush.h"
+
+#include "testu01suite.decl.h"
+
+#include "charm.h"
+#include "pup.h"
+#include "pup_stl.h"
+
+#include "gdef.h"
+#include "gofw.h"
+#include "scomp.h"
+#include "sknuth.h"
+#include "smarsa.h"
+#include "snpair.h"
+#include "sres.h"
+#include "sspectral.h"
+#include "sstring.h"
+#include "swalk.h"
 
 namespace rngtest {
 
