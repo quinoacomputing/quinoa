@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/TestU01Suite.C
   \author    J. Bakosi
-  \date      Fri 13 Mar 2015 12:26:22 PM MDT
+  \date      Mon 01 Jun 2015 12:50:50 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     TestU01 random number generator test suite
   \details   This file declares the TestU01 random number generator test suite,
@@ -11,13 +11,22 @@
 */
 //******************************************************************************
 
-#include <TestU01Suite.h>
-#include <TestStack.h>
-#include <RNGTest/Options/Battery.h>
-#include <SmallCrush.h>
-#include <Crush.h>
-#include <BigCrush.h>
-#include <rngtest.decl.h>
+#include <boost/format.hpp>
+
+#include <string>
+#include <iostream>
+#include <cstddef>
+
+#include "Print.h"
+#include "Config.h"
+#include "TestU01Suite.h"
+#include "TestStack.h"
+#include "SmallCrush.h"
+#include "Crush.h"
+#include "BigCrush.h"
+#include "Options/RNG.h"
+#include "RNGTest/Options/Battery.h"
+#include "rngtest.decl.h"
 
 extern CProxy_Main mainProxy;
 
@@ -200,7 +209,7 @@ TestU01Suite::ntest() const
   #pragma GCC diagnostic ignored "-Wconversion"
 #endif
 
-#include <testu01suite.def.h>
+#include "testu01suite.def.h"
 
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic pop

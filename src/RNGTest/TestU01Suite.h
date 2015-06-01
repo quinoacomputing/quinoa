@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/TestU01Suite.h
   \author    J. Bakosi
-  \date      Wed 28 Jan 2015 10:32:06 PM MST
+  \date      Mon 01 Jun 2015 12:49:25 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     TestU01 random number generator test suite
   \details   This file declares the TestU01 random number generator test suite,
@@ -13,13 +13,27 @@
 #ifndef TestU01Suite_h
 #define TestU01Suite_h
 
-extern "C" {
-  #include <swrite.h>
-}
+#include <vector>
+#include <map>
+#include <utility>
+#include <functional>
+#include <iosfwd>
+#include <cstddef>
+#include <type_traits>
 
-#include <StatTest.h>
-#include <RNGTestPrint.h>
-#include <testu01suite.decl.h>
+#include "Tags.h"
+#include "Types.h"
+#include "Exception.h"
+#include "StatTest.h"
+#include "RNGTestPrint.h"
+#include "RNGTest/InputDeck/InputDeck.h"
+#include "RNGTest/Options/Battery.h"
+#include "testu01suite.decl.h"
+
+extern "C" {
+  #include "swrite.h"
+  #include "gdef.h"
+}
 
 namespace rngtest {
 
