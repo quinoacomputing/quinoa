@@ -2,7 +2,7 @@
 /*!
   \file      src/LoadBalance/UnsMeshMap.C
   \author    J. Bakosi
-  \date      Sat 30 May 2015 12:00:56 PM MDT
+  \date      Mon 01 Jun 2015 07:12:40 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Advanced Charm++ array creation with a map using an unstructured
              grid
@@ -38,6 +38,8 @@
      the constructor.
 */
 //******************************************************************************
+
+#include <algorithm>
 
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic push
