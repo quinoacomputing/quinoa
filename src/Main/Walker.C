@@ -2,45 +2,54 @@
 /*!
   \file      src/Main/Walker.C
   \author    J. Bakosi
-  \date      Sat 11 Apr 2015 07:51:51 AM MDT
+  \date      Mon 01 Jun 2015 09:38:32 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Random walker Charm++ main chare
   \details   Random walker Charm++ main chare. This file contains the definition
     of the Charm++ main chare, equivalent to main() in Charm++-land.
 */
 //******************************************************************************
+
+#include <map>
+#include <iostream>
+#include <utility>
+#include <vector>
+
+#include <boost/format.hpp>
+
+#include "Print.h"
+#include "Timer.h"
+#include "Types.h"
+#include "Init.h"
+#include "Config.h"
+#include "Tags.h"
+#include "ProcessException.h"
+#include "RNG.h"
+#include "RNGStack.h"
+#include "DiffEq.h"
+#include "DiffEqStack.h"
+#include "Options/RNG.h"
+#include "WalkerPrint.h"
+#include "WalkerDriver.h"
+#include "Walker/CmdLine/Parser.h"
+#include "Walker/CmdLine/CmdLine.h"
+#include "Walker/InputDeck/InputDeck.h"
+
+#include "charm.h"
+#include "ckmessage.h"
+#include "pup.h"
+
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wconversion"
 #endif
 
-#include <pup_stl.h>
+#include "walker.decl.h"
+#include "distributor.decl.h"
 
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic pop
 #endif
-
-#include <Config.h>
-#include <RNG.h>
-#include <RNGStack.h>
-#include <DiffEqStack.h>
-#include <WalkerPrint.h>
-#include <WalkerDriver.h>
-#include <Walker/CmdLine/Parser.h>
-#include <ProcessException.h>
-
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wconversion"
-#endif
-
-#include <walker.decl.h>
-
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic pop
-#endif
-
-#include <Init.h>
 
 //! \brief Charm handle to the main proxy, facilitates call-back to finalize,
 //!    etc., must be in global scope, unique per executable
@@ -215,7 +224,7 @@ struct execute : CBase_execute { execute() { mainProxy.execute(); } };
   #pragma GCC diagnostic ignored "-Wconversion"
 #endif
 
-#include <walker.def.h>
+#include "walker.def.h"
 
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic pop
