@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.C
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 12:55:04 PM MDT
+  \date      Mon 01 Jun 2015 02:52:59 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Statistics class definition
   \details   This file implements a statistics class that can be used to
@@ -25,7 +25,7 @@
 #include "Exception.h"
 #include "Statistics.h"
 #include "ParticleProperties.h"
-#include "Components.h"
+#include "SystemComponents.h"
 #include "UniPDF.h"
 #include "BiPDF.h"
 #include "TriPDF.h"

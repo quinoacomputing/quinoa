@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/TxtStatWriter.C
   \author    J. Bakosi
-  \date      Wed 08 Apr 2015 09:49:07 PM MDT
+  \date      Mon 01 Jun 2015 02:26:07 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Text statistics writer declaration
   \details   This file declares the ASCII statistics writer class that
@@ -13,7 +13,7 @@
 #include <iostream>
 #include <iomanip>
 
-#include <TxtStatWriter.h>
+#include "TxtStatWriter.h"
 
 using tk::TxtStatWriter;
 

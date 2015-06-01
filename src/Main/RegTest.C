@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RegTest.C
   \author    J. Bakosi
-  \date      Sun 31 May 2015 06:30:59 AM MDT
+  \date      Mon 01 Jun 2015 02:40:26 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     RegTest's Charm++ main chare and main().
   \details   RegTest's Charm++ main chare and main(). This file contains
@@ -23,18 +23,18 @@
 #include "Tags.h"
 #include "Init.h"
 #include "RegTestPrint.h"
-#include <RegTestDriver.h>
-#include <RegTest/CmdLine/CmdLine.h>
-#include <RegTest/CmdLine/Parser.h>
-#include <ProcessException.h>
+#include "RegTestDriver.h"
+#include "RegTest/CmdLine/CmdLine.h"
+#include "RegTest/CmdLine/Parser.h"
+#include "ProcessException.h"
 
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wconversion"
 #endif
 
-#include "charm.h"
-#include "ckmessage.h"
+#include <charm.h>
+#include <ckmessage.h>
 #include "regtest.decl.h"
 
 #if defined(__clang__) || defined(__GNUC__)

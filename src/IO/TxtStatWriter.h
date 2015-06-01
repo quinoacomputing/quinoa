@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/TxtStatWriter.h
   \author    J. Bakosi
-  \date      Wed 08 Apr 2015 09:45:17 PM MDT
+  \date      Mon 01 Jun 2015 02:26:15 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Text statistics writer declaration
   \details   This file declares the ASCII statistics writer class that
@@ -16,10 +16,10 @@
 #include <vector>
 #include <fstream>
 
-#include <Types.h>
-#include <Writer.h>
-#include <Keywords.h>
-#include <Options/TxtFloatFormat.h>
+#include "Types.h"
+#include "Writer.h"
+#include "Keywords.h"
+#include "Options/TxtFloatFormat.h"
 
 namespace tk {
 

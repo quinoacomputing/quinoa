@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RegTest/CmdLine/CmdLine.h
   \author    J. Bakosi
-  \date      Fri 20 Mar 2015 11:36:08 AM MDT
+  \date      Mon 01 Jun 2015 02:15:27 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     RegTest's command line
   \details   This file defines the heterogeneous stack that is used for storing
@@ -18,10 +18,10 @@
 #include <boost/mpl/set.hpp>
 #include <boost/mpl/for_each.hpp>
 
-#include <Control.h>
-#include <HelpFactory.h>
-#include <Keywords.h>
-#include <RegTest/Types.h>
+#include "Control.h"
+#include "HelpFactory.h"
+#include "Keywords.h"
+#include "RegTest/Types.h"
 
 namespace regtest {
 //! RegTest control facilitating user input to internal data transfer

@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/DiffEq.h
   \author    J. Bakosi
-  \date      Thu 30 Apr 2015 03:45:02 PM MDT
+  \date      Mon 01 Jun 2015 02:34:51 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Differential equation
   \details   This file defines a generic differential equation class. The class
@@ -19,10 +19,10 @@
 #include <string>
 #include <functional>
 
-#include <Types.h>
-#include <make_unique.h>
-#include <ParticleProperties.h>
-#include <Statistics.h>
+#include "Types.h"
+#include "Make_unique.h"
+#include "ParticleProperties.h"
+#include "Statistics.h"
 
 namespace walker {
 

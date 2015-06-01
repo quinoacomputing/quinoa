@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/StatTest.h
   \author    J. Bakosi
-  \date      Thu 19 Mar 2015 11:59:56 AM MDT
+  \date      Mon 01 Jun 2015 02:08:53 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Random number generator statistical test
   \details   This file defines a generic random number generator statistical
@@ -30,9 +30,9 @@
   #pragma GCC diagnostic pop
 #endif
 
-#include <make_unique.h>
-#include <CharmUtil.h>
-#include <Options/RNG.h>
+#include "Make_unique.h"
+#include "CharmUtil.h"
+#include "Options/RNG.h"
 
 namespace rngtest {
 

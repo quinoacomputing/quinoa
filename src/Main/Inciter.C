@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Inciter.C
   \author    J. Bakosi
-  \date      Sat 30 May 2015 12:06:09 PM MDT
+  \date      Mon 01 Jun 2015 01:51:21 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Inciter, computational shock hydrodynamics tool, Charm++ main
     chare.
@@ -37,15 +37,14 @@
   #pragma GCC diagnostic ignored "-Wconversion"
 #endif
 
-#include "mpi.h"
-#include "mpi-interoperate.h"   // for interoperation of MPI and Charm++
+#include <mpi.h>
+#include <mpi-interoperate.h>
+#include <pup_stl.h>
 #include "inciter.decl.h"
 
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic pop
 #endif
-
-#include "pup_stl.h"
 
 //! \brief Charm handle to the main proxy, facilitates call-back to finalize,
 //!    etc., must be in global scope, unique per executable
@@ -283,7 +282,7 @@ int main( int argc, char **argv ) {
   #pragma GCC diagnostic ignored "-Wconversion"
 #endif
 
-#include <inciter.def.h>
+#include "inciter.def.h"
 
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic pop

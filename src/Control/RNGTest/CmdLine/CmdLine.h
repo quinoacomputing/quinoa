@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/CmdLine/CmdLine.h
   \author    J. Bakosi
-  \date      Sat 17 Jan 2015 06:50:02 AM MST
+  \date      Mon 01 Jun 2015 02:16:17 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     RNGTest's command line
   \details   This file defines the heterogeneous stack that is used for storing
@@ -18,10 +18,10 @@
 #include <boost/mpl/set.hpp>
 #include <boost/mpl/for_each.hpp>
 
-#include <Control.h>
-#include <HelpFactory.h>
-#include <Keywords.h>
-#include <RNGTest/Types.h>
+#include "Control.h"
+#include "HelpFactory.h"
+#include "Keywords.h"
+#include "RNGTest/Types.h"
 
 namespace rngtest {
 //! RNGTest control facilitating user input to internal data transfer

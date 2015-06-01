@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/HypreMatrix.h
   \author    J. Bakosi
-  \date      Tue 21 Apr 2015 03:40:00 PM MDT
+  \date      Mon 01 Jun 2015 02:12:46 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Hypre IJ matrix class
   \details   Hypre IJ matrix class.
@@ -16,7 +16,7 @@
   #pragma GCC diagnostic ignored "-Wconversion"
 #endif
 
-#include "HYPRE.h"
+#include <HYPRE.h>
 #include <HYPRE_parcsr_ls.h>
 
 #if defined(__clang__) || defined(__GNUC__)

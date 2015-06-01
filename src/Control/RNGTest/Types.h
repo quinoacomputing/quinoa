@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/Types.h
   \author    J. Bakosi
-  \date      Fri 16 Jan 2015 06:07:16 PM MST
+  \date      Mon 01 Jun 2015 02:15:42 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Types for RNGTest's parsers
   \details   Types for RNGTest's parsers. This file defines the components of
@@ -15,11 +15,11 @@
 #ifndef RNGTestTypes_h
 #define RNGTestTypes_h
 
-#include <Tags.h>
-#include <Types.h>
-#include <RNGParam.h>
-#include <RNGTest/Options/Battery.h>
-#include <Options/RNG.h>
+#include "Tags.h"
+#include "Types.h"
+#include "RNGParam.h"
+#include "RNGTest/Options/Battery.h"
+#include "Options/RNG.h"
 
 namespace rngtest {
 namespace ctr {

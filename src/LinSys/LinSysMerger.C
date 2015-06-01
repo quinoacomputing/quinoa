@@ -2,14 +2,14 @@
 /*!
   \file      src/LinSys/LinSysMerger.C
   \author    J. Bakosi
-  \date      Fri 24 Apr 2015 01:22:22 PM MDT
+  \date      Mon 01 Jun 2015 02:12:28 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Linear system merger
   \details   Linear system merger.
 */
 //******************************************************************************
 
-#include <LinSysMerger.h>
+#include "LinSysMerger.h"
 
 // Some compilers (e.g., GNU and Intel) do not find some of the SDAG code
 // generated for Charm++ entry methods defined entirely inside .ci files, such
@@ -20,4 +20,4 @@
 // https://isocpp.org/wiki/faq/templates#separate-template-class-defn-from-decl.
 template class tk::LinSysMerger< inciter::CProxy_Conductor >;
 
-#include <linsysmerger.def.h>
+#include "linsysmerger.def.h"

@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/ExceptionMPI.h
   \author    J. Bakosi
-  \date      Wed 15 Apr 2015 01:44:15 PM MDT
+  \date      Mon 01 Jun 2015 02:09:17 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Exception macros interoperating with MPI
   \details   Exception macros interoperating with MPI.
@@ -22,7 +22,7 @@
   #pragma GCC diagnostic pop
 #endif
 
-#include <Exception.h>
+#include "Exception.h"
 
 namespace tk {
 

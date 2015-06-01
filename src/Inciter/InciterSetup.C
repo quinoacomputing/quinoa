@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/InciterSetup.C
   \author    J. Bakosi
-  \date      Sat 30 May 2015 10:46:27 AM MDT
+  \date      Mon 01 Jun 2015 01:33:11 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Functions used to setup inciter
   \details   Functions used to setup inciter.
@@ -43,8 +43,8 @@
   #pragma GCC diagnostic ignored "-Wconversion"
 #endif
 
-#include "mpi.h"
-#include "mpi-interoperate.h"
+#include <mpi.h>
+#include <mpi-interoperate.h>
 
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic pop

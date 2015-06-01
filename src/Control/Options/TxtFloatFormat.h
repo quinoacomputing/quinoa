@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Options/TxtFloatFormat.h
   \author    J. Bakosi
-  \date      Wed 08 Apr 2015 09:48:00 PM MDT
+  \date      Mon 01 Jun 2015 02:22:53 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Text floating-point output options
   \details   Text floating-point output options
@@ -13,9 +13,9 @@
 
 #include <boost/mpl/vector.hpp>
 
-#include <Toggle.h>
-#include <Keywords.h>
-#include <PUPUtil.h>
+#include "Toggle.h"
+#include "Keywords.h"
+#include "PUPUtil.h"
 
 namespace tk {
 namespace ctr {

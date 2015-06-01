@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Conductor.C
   \author    J. Bakosi
-  \date      Sat 30 May 2015 10:33:56 AM MDT
+  \date      Mon 01 Jun 2015 03:22:12 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Conductor drives the time integration of the Euler equations
   \details   Conductor drives the time integration of the Euler equations.
@@ -201,7 +201,7 @@ Conductor::perfstat( const std::vector< std::pair< std::string, tk::real > >& p,
   #pragma GCC diagnostic ignored "-Wconversion"
 #endif
 
-#include <conductor.def.h>
+#include "conductor.def.h"
 
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic pop

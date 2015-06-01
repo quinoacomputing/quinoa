@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/PUPUtil.h
   \author    J. Bakosi
-  \date      Mon 18 May 2015 08:08:49 AM MDT
+  \date      Mon 01 Jun 2015 02:10:29 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Charm++ Pack/UnPack utilities
   \brief     This file contains some extensions to Charm++'s Pack/UnPack
@@ -28,7 +28,7 @@
   #pragma GCC diagnostic pop
 #endif
 
-#include <CharmUtil.h>
+#include "CharmUtil.h"
 
 //! Extensions to Charm++'s Pack/Unpack routines
 namespace PUP {

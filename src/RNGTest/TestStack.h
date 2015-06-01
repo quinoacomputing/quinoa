@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/TestStack.h
   \author    J. Bakosi
-  \date      Wed 28 Jan 2015 04:29:18 PM MST
+  \date      Mon 01 Jun 2015 02:08:40 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Stack collecting all types of random number generator statistical
      tests
@@ -13,7 +13,7 @@
 #ifndef TestStack_h
 #define TestStack_h
 
-#include <TestU01Stack.h>
+#include "TestU01Stack.h"
 
 namespace rngtest {
 

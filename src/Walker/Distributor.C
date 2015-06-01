@@ -2,7 +2,7 @@
 /*!
   \file      src/Walker/Distributor.C
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 01:28:16 PM MDT
+  \date      Mon 01 Jun 2015 01:42:33 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Distributor drives the time integration of differential equations
   \details   Distributor drives the time integration of differential equations.
@@ -34,7 +34,7 @@
   #pragma GCC diagnostic ignored "-Wconversion"
 #endif
 
-#include "charm.h"
+#include <charm.h>
 
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic pop

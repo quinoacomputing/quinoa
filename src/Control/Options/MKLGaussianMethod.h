@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Options/MKLGaussianMethod.h
   \author    J. Bakosi
-  \date      Thu 22 Jan 2015 07:00:58 AM MST
+  \date      Mon 01 Jun 2015 02:22:04 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Intel MKL Gaussian RNG method options
   \details   Intel MKL Gaussian RNG method options
@@ -17,9 +17,9 @@
 
 #include <mkl_vsl.h>
 
-#include <Toggle.h>
-#include <Keywords.h>
-#include <PUPUtil.h>
+#include "Toggle.h"
+#include "Keywords.h"
+#include "PUPUtil.h"
 
 namespace tk {
 namespace ctr {

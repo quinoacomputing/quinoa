@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Init.h
   \author    J. Bakosi
-  \date      Fri 17 Apr 2015 11:51:57 AM MDT
+  \date      Mon 01 Jun 2015 02:39:19 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Common initialization routines for main() functions for multiple
      exectuables
@@ -19,10 +19,10 @@
 #include <ctime>
 #include <unistd.h>
 
-#include <Config.h>
-#include <Exception.h>
-#include <Print.h>
-#include <Tags.h>
+#include "Config.h"
+#include "Exception.h"
+#include "Print.h"
+#include "Tags.h"
 
 namespace tk {
 

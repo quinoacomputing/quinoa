@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/Options/DiffEq.h
   \author    J. Bakosi
-  \date      Wed 15 Apr 2015 09:21:12 AM MDT
+  \date      Mon 01 Jun 2015 02:14:59 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Differential equation options and associations for inciter
   \details   Differential equation options and associations for inciter
@@ -13,10 +13,10 @@
 
 #include <boost/mpl/vector.hpp>
 
-#include <TaggedTuple.h>
-#include <Toggle.h>
-#include <Keywords.h>
-#include <Inciter/Options/Problem.h>
+#include "TaggedTuple.h"
+#include "Toggle.h"
+#include "Keywords.h"
+#include "Inciter/Options/Problem.h"
 
 namespace inciter {
 namespace ctr {

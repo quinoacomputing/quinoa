@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/DiffEqStack.C
   \author    J. Bakosi
-  \date      Sat 30 May 2015 10:22:33 AM MDT
+  \date      Mon 01 Jun 2015 02:56:03 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Stack of differential equations
   \details   This file defines class DiffEqStack, which implements various
@@ -18,7 +18,7 @@
 
 #include "DiffEqStack.h"
 #include "Tags.h"
-#include "Components.h"
+#include "SystemComponents.h"
 #include "InitPolicy.h"
 #include "Options/RNG.h"
 #include "Walker/Options/CoeffPolicy.h"

@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/PDFWriter.C
   \author    J. Bakosi
-  \date      Mon 20 Apr 2015 09:44:47 AM MDT
+  \date      Mon 01 Jun 2015 02:25:27 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Univariate PDF writer
   \brief     PDF writer class definition
@@ -17,9 +17,9 @@
 #include <exodusII.h>
 #include <ne_nemesisI.h>
 
-#include <PDFWriter.h>
-#include <Exception.h>
-#include <Config.h>
+#include "PDFWriter.h"
+#include "Exception.h"
+#include "Config.h"
 
 using tk::PDFWriter;
 

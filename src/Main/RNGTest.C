@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTest.C
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 09:11:31 AM MDT
+  \date      Mon 01 Jun 2015 01:44:19 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     RNGTest's random number generator test suite's Charm++ main chare.
   \details   RNGTest's random number generator test suite's Charm++ main chare.
@@ -34,9 +34,9 @@
 #include "RNGTest/CmdLine/Parser.h"
 #include "RNGTest/InputDeck/InputDeck.h"
 
-#include "charm.h"
-#include "pup.h"
-#include "ckmessage.h"
+#include <charm.h>
+#include <pup.h>
+#include <ckmessage.h>
 
 #include "rngtest.decl.h"
 
@@ -224,4 +224,4 @@ class Main : public CBase_Main {
 //! \author J. Bakosi
 struct execute : CBase_execute { execute() { mainProxy.execute(); } };
 
-#include <rngtest.def.h>
+#include "rngtest.def.h"

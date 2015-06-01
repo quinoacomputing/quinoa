@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RegTestPrint.h
   \author    J. Bakosi
-  \date      Sun 22 Mar 2015 09:30:43 PM MDT
+  \date      Mon 01 Jun 2015 02:40:10 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     RegTest's pretty printer
   \details   RegTest's pretty printer
@@ -13,9 +13,9 @@
 
 #include <sstream>
 
-#include <Types.h>
-#include <Print.h>
-#include <Exception.h>
+#include "Types.h"
+#include "Print.h"
+#include "Exception.h"
 
 namespace regtest {
 

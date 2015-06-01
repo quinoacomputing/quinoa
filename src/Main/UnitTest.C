@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/UnitTest.C
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 09:27:47 AM MDT
+  \date      Mon 01 Jun 2015 03:20:52 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     UnitTest's Charm++ main chare and main().
   \details   UnitTest's Charm++ main chare and main(). This file contains
@@ -22,6 +22,25 @@
 #include <boost/format.hpp>
 #include <boost/optional.hpp>
 
+#include <tut/tut_result.hpp>
+#include <tut/tut_runner.hpp>
+
+#if defined(__clang__) || defined(__GNUC__)
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wconversion"
+#endif
+
+#include <mpi.h>
+#include <charm.h>
+#include <ckmessage.h>
+#include <pup.h>
+#include <mpi-interoperate.h>
+#include "tutsuite.decl.h"
+
+#if defined(__clang__) || defined(__GNUC__)
+  #pragma GCC diagnostic pop
+#endif
+
 #include "Print.h"
 #include "Timer.h"
 #include "Tags.h"
@@ -35,26 +54,6 @@
 #include "UnitTestPrint.h"
 #include "UnitTestDriver.h"
 #include "UnitTest/CmdLine/Parser.h"
-
-#include "tut/tut_result.hpp"
-#include "tut/tut_runner.hpp"
-
-#include "charm.h"
-#include "ckmessage.h"
-#include "pup.h"
-
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wconversion"
-#endif
-
-#include <mpi.h>
-#include "mpi-interoperate.h"
-#include "tutsuite.decl.h"
-
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic pop
-#endif
 
 #if defined(__clang__)
   #pragma GCC diagnostic push
@@ -78,42 +77,42 @@ const int MAX_TESTS_IN_GROUP = 80;
 } // tut::
 
 // Unit test groups to be tested. Each file defines a different test group.
-#include <tests/Base/flip_map.h>
-#include <tests/Base/make_list.h>
-#include <tests/Base/Timer.h>
-#include <tests/Base/CharmUtil.h>
-#include <tests/Base/Has.h>
-#include <tests/Base/ParticleProperties.h>
-#include <tests/Base/Factory.h>
-#include <tests/Base/Print.h>
-#include <tests/Base/TaggedTuple.h>
-#include <tests/Base/Exception.h>
-#include <tests/Base/ExceptionMPI.h>
-#include <tests/Base/PUPUtil.h>
-#include <tests/Base/Reader.h>
-#include <tests/Base/StrConvUtil.h>
-#include <tests/Base/Writer.h>
-#include <tests/Base/ProcessControl.h>
-#include <tests/Base/Vector.h>
+#include <tests/Base/TestFlip_map.h>
+#include <tests/Base/TestMake_list.h>
+#include <tests/Base/TestTimer.h>
+#include <tests/Base/TestCharmUtil.h>
+#include <tests/Base/TestHas.h>
+#include <tests/Base/TestParticleProperties.h>
+#include <tests/Base/TestFactory.h>
+#include <tests/Base/TestPrint.h>
+#include <tests/Base/TestTaggedTuple.h>
+#include <tests/Base/TestException.h>
+#include <tests/Base/TestExceptionMPI.h>
+#include <tests/Base/TestPUPUtil.h>
+#include <tests/Base/TestReader.h>
+#include <tests/Base/TestStrConvUtil.h>
+#include <tests/Base/TestWriter.h>
+#include <tests/Base/TestProcessControl.h>
+#include <tests/Base/TestVector.h>
 
-#include <tests/Control/Components.h>
-#include <tests/Control/Control.h>
-#include <tests/Control/FileParser.h>
-#include <tests/Control/StringParser.h>
-#include <tests/Control/Toggle.h>
+#include <tests/Control/TestSystemComponents.h>
+#include <tests/Control/TestControl.h>
+#include <tests/Control/TestFileParser.h>
+#include <tests/Control/TestStringParser.h>
+#include <tests/Control/TestToggle.h>
 #ifdef HAS_MKL
-  #include <tests/Control/Options/MKLGaussianMethod.h>
-  #include <tests/Control/Options/MKLUniformMethod.h>
+  #include <tests/Control/Options/TestMKLGaussianMethod.h>
+  #include <tests/Control/Options/TestMKLUniformMethod.h>
 #endif
-#include <tests/Control/Options/RNG.h>
+#include <tests/Control/Options/TestRNG.h>
 
-#include <tests/IO/Mesh.h>
+#include <tests/IO/TestMesh.h>
 
-#include <tests/Mesh/DerivedData.h>
+#include <tests/Mesh/TestDerivedData.h>
 
-#include <tests/LoadBalance/LoadDistributor.h>
-#include <tests/LoadBalance/LinearMap.h>
-#include <tests/LoadBalance/UnsMeshMap.h>
+#include <tests/LoadBalance/TestLoadDistributor.h>
+#include <tests/LoadBalance/TestLinearMap.h>
+#include <tests/LoadBalance/TestUnsMeshMap.h>
 
 //! \brief Charm handle to the main proxy, facilitates call-back to finalize,
 //!    etc., must be in global scope, unique per executable
@@ -384,11 +383,11 @@ int main( int argc, char **argv ) {
   #pragma GCC diagnostic ignored "-Wconversion"
 #endif
 
-#include <charmchild.def.h>
-#include <charmtimer.def.h>
-#include <migrated.def.h>
-#include <testarray.def.h>
-#include <unittest.def.h>
+#include "charmchild.def.h"
+#include "charmtimer.def.h"
+#include "migrated.def.h"
+#include "testarray.def.h"
+#include "unittest.def.h"
 
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic pop

@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/LinSysMerger.h
   \author    J. Bakosi
-  \date      Sat 30 May 2015 11:44:33 AM MDT
+  \date      Mon 01 Jun 2015 03:23:09 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Linear system merger
   \details   Linear system merger.
@@ -283,7 +283,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy > {
 #endif
 
 #define CK_TEMPLATES_ONLY
-#include <linsysmerger.def.h>
+#include "linsysmerger.def.h"
 #undef CK_TEMPLATES_ONLY
 
 #if defined(__clang__) || defined(__GNUC__)

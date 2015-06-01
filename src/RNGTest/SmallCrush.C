@@ -2,12 +2,35 @@
 /*!
   \file      src/RNGTest/SmallCrush.C
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 10:38:25 AM MDT
+  \date      Mon 01 Jun 2015 01:57:15 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Class re-creating the TestU01 library's SmallCrush battery
   \details   Class re-creating the TestU01 library's SmallCrush battery.
 */
 //******************************************************************************
+
+#if defined(__clang__) || defined(__GNUC__)
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wconversion"
+#endif
+
+#include <charm.h>
+#include <pup_stl.h>
+
+#if defined(__clang__) || defined(__GNUC__)
+  #pragma GCC diagnostic pop
+#endif
+
+#include <pup.h>
+
+extern "C" {
+  #include <gdef.h>
+  #include <gofw.h>
+  #include <sknuth.h>
+  #include <sres.h>
+  #include <sstring.h>
+  #include <swalk.h>
+}
 
 #include "Tags.h"
 #include "PUPUtil.h"
@@ -19,17 +42,6 @@
 #include "SmallCrush.h"
 
 #include "testu01suite.decl.h"
-
-#include "charm.h"
-#include "pup.h"
-#include "pup_stl.h"
-
-#include "gdef.h"
-#include "gofw.h"
-#include "sknuth.h"
-#include "sres.h"
-#include "sstring.h"
-#include "swalk.h"
 
 namespace rngtest {
 

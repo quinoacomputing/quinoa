@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Options/MKLUniformMethod.h
   \author    J. Bakosi
-  \date      Thu 22 Jan 2015 07:00:19 AM MST
+  \date      Mon 01 Jun 2015 02:22:24 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Intel MKL uniform RNG method options
   \details   Intel MKL uniform RNG method options
@@ -17,9 +17,9 @@
 
 #include <mkl_vsl.h>
 
-#include <Toggle.h>
-#include <Keywords.h>
-#include <PUPUtil.h>
+#include "Toggle.h"
+#include "Keywords.h"
+#include "PUPUtil.h"
 
 namespace tk {
 namespace ctr {

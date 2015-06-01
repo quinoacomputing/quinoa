@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Walker.C
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 09:38:32 AM MDT
+  \date      Mon 01 Jun 2015 02:04:18 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Random walker Charm++ main chare
   \details   Random walker Charm++ main chare. This file contains the definition
@@ -16,6 +16,19 @@
 #include <vector>
 
 #include <boost/format.hpp>
+
+#if defined(__clang__) || defined(__GNUC__)
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wconversion"
+#endif
+
+#include <charm.h>
+#include <ckmessage.h>
+#include <pup.h>
+
+#if defined(__clang__) || defined(__GNUC__)
+  #pragma GCC diagnostic pop
+#endif
 
 #include "Print.h"
 #include "Timer.h"
@@ -34,10 +47,6 @@
 #include "Walker/CmdLine/Parser.h"
 #include "Walker/CmdLine/CmdLine.h"
 #include "Walker/InputDeck/InputDeck.h"
-
-#include "charm.h"
-#include "ckmessage.h"
-#include "pup.h"
 
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic push

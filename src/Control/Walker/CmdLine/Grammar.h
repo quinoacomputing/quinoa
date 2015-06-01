@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/CmdLine/Grammar.h
   \author    J. Bakosi
-  \date      Fri 29 May 2015 05:17:20 PM MDT
+  \date      Mon 01 Jun 2015 02:17:40 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Walker's command line grammar definition
   \details   Grammar definition for parsing the command line. We use the Parsing
@@ -15,8 +15,8 @@
 #define WalkerCmdLineGrammar_h
 
 #include "CommonGrammar.h"
-#include <PEGTLParsed.h>
-#include <Keywords.h>
+#include "PEGTLParsed.h"
+#include "Keywords.h"
 
 namespace walker {
 //! Walker command line grammar definition

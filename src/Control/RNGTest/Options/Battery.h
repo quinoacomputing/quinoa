@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/Options/Battery.h
   \author    J. Bakosi
-  \date      Wed 21 Jan 2015 08:48:06 AM MST
+  \date      Mon 01 Jun 2015 02:16:56 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Random number generator test suite batteries options
   \details   Random number generator test suite batteries options
@@ -13,9 +13,9 @@
 
 #include <boost/mpl/vector.hpp>
 
-#include <Toggle.h>
-#include <Keywords.h>
-#include <PUPUtil.h>
+#include "Toggle.h"
+#include "Keywords.h"
+#include "PUPUtil.h"
 
 namespace rngtest {
 namespace ctr {

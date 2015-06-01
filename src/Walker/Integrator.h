@@ -2,7 +2,7 @@
 /*!
   \file      src/Walker/Integrator.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 01:16:45 PM MDT
+  \date      Mon 01 Jun 2015 02:54:28 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Integrator advances differential equations
   \details   Integrator advances differential equations. There are a potentially
@@ -23,7 +23,6 @@
 #include "Types.h"
 #include "Tags.h"
 #include "StatCtr.h"
-#include "Components.h"
 #include "DiffEq.h"
 #include "ParticleProperties.h"
 #include "Statistics.h"

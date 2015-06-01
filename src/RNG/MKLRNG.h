@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/MKLRNG.h
   \author    J. Bakosi
-  \date      Fri 01 May 2015 07:29:40 AM MDT
+  \date      Mon 01 Jun 2015 02:40:45 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Interface to Intel MKL VSL random number generators
   \details   Interface to Intel MKL VSL random number generators.
@@ -13,7 +13,7 @@
 
 #include <mkl_vsl_types.h>
 
-#include <Exception.h>
+#include "Exception.h"
 
 namespace tk {
 
