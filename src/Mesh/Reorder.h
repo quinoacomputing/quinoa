@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/Reorder.h
   \author    J. Bakosi
-  \date      Fri 01 May 2015 04:00:11 PM MDT
+  \date      Mon 01 Jun 2015 10:06:58 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Mesh reordering routines for unstructured meshes
   \details   Mesh reordering routines for unstructured meshes.
@@ -12,6 +12,8 @@
 #define Reorder_h
 
 #include <vector>
+#include <utility>
+#include <cstddef>
 
 namespace tk {
 
