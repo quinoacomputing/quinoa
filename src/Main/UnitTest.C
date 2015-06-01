@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/UnitTest.C
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 03:20:52 PM MDT
+  \date      Mon 01 Jun 2015 04:08:45 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     UnitTest's Charm++ main chare and main().
   \details   UnitTest's Charm++ main chare and main(). This file contains
@@ -101,8 +101,9 @@ const int MAX_TESTS_IN_GROUP = 80;
 #include <tests/Control/TestStringParser.h>
 #include <tests/Control/TestToggle.h>
 #ifdef HAS_MKL
-  #include <tests/Control/Options/TestMKLGaussianMethod.h>
   #include <tests/Control/Options/TestMKLUniformMethod.h>
+  #include <tests/Control/Options/TestMKLGaussianMethod.h>
+  #include <tests/Control/Options/TestMKLBetaMethod.h>
 #endif
 #include <tests/Control/Options/TestRNG.h>
 
