@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/DerivedData.h
   \author    J. Bakosi
-  \date      Mon 20 Apr 2015 06:45:11 AM MDT
+  \date      Mon 01 Jun 2015 10:04:57 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Generate data structures derived from unstructured mesh
   \details   Generate data structures derived from the connectivity information
@@ -12,7 +12,9 @@
 #ifndef DerivedData_h
 #define DerivedData_h
 
-#include <UnsMesh.h>
+#include <vector>
+#include <utility>
+#include <cstddef>
 
 namespace tk {
 
