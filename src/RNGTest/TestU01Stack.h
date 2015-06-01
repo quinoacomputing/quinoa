@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/TestU01Stack.h
   \author    J. Bakosi
-  \date      Thu 19 Mar 2015 01:55:54 PM MDT
+  \date      Mon 01 Jun 2015 12:44:09 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Stack of TestU01 RNG statistical tests
   \details   Stack of TestU01 RNG statistical tests
@@ -12,25 +12,31 @@
 #define TestU01Stack_h
 
 #include <vector>
+#include <functional>
+#include <iosfwd>
+#include <map>
+#include <tuple>
+#include <type_traits>
 
 #include <boost/functional/value_factory.hpp>
 
 extern "C" {
-  #include <sres.h>
-  #include <sstring.h>
-  #include <sknuth.h>
-  #include <swalk.h>
-  #include <smarsa.h>
-  #include <snpair.h>
-  #include <scomp.h>
-  #include <sspectral.h>
+  #include "sres.h"
+  #include "sstring.h"
+  #include "sknuth.h"
+  #include "swalk.h"
+  #include "smarsa.h"
+  #include "scomp.h"
+  #include "sspectral.h"
+  #include "unif01.h"
+  #include "snpair.h"
 }
 
-#include <Timer.h>
-#include <StatTest.h>
-#include <TestU01Util.h>
-#include <Tags.h>
-#include <TaggedTuple.h>
+#include "StatTest.h"
+#include "TestU01Util.h"
+#include "Tags.h"
+#include "TaggedTuple.h"
+#include "Options/RNG.h"
 
 namespace rngtest {
 
