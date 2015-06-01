@@ -2,7 +2,7 @@
 /*!
   \file      src/Walker/Distributor.C
   \author    J. Bakosi
-  \date      Thu 30 Apr 2015 11:42:38 AM MDT
+  \date      Mon 01 Jun 2015 01:28:16 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Distributor drives the time integration of differential equations
   \details   Distributor drives the time integration of differential equations.
@@ -14,14 +14,47 @@
 */
 //******************************************************************************
 
-#include <Distributor.h>
-#include <Integrator.h>
-#include <DiffEqStack.h>
-#include <TxtStatWriter.h>
-#include <PDFWriter.h>
-#include <LoadDistributor.h>
-#include <StatCtr.h>
-#include <walker.decl.h>
+#include <list>
+#include <string>
+#include <algorithm>
+#include <functional>
+#include <iomanip>
+#include <iostream>
+#include <iterator>
+#include <limits>
+#include <cmath>
+#include <cstddef>
+#include <sys/sysmacros.h>
+
+#include <boost/format.hpp>
+#include <boost/optional.hpp>
+
+#if defined(__clang__) || defined(__GNUC__)
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wconversion"
+#endif
+
+#include "charm.h"
+
+#if defined(__clang__) || defined(__GNUC__)
+  #pragma GCC diagnostic pop
+#endif
+
+#include "Print.h"
+#include "Tags.h"
+#include "StatCtr.h"
+#include "Exception.h"
+#include "ParticleProperties.h"
+#include "LoadDistributor.h"
+#include "Distributor.h"
+#include "Integrator.h"
+#include "DiffEqStack.h"
+#include "TxtStatWriter.h"
+#include "PDFWriter.h"
+#include "Options/PDFFile.h"
+#include "Options/PDFPolicy.h"
+#include "Walker/InputDeck/InputDeck.h"
+#include "walker.decl.h"
 
 extern CProxy_Main mainProxy;
 
@@ -692,7 +725,7 @@ Distributor::report()
   #pragma GCC diagnostic ignored "-Wconversion"
 #endif
 
-#include <distributor.def.h>
+#include "distributor.def.h"
 
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic pop
