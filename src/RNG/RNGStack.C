@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/RNGStack.C
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 01:47:03 PM MDT
+  \date      Mon 01 Jun 2015 04:22:40 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Stack of random number generators
   \details   This file defines class RNGStack, which implements various
@@ -45,13 +45,13 @@
 #include "Exception.h"
 #include "RNGStack.h"
 #include "RNGSSE.h"
-#include "Options/MKLBetaMethod.h"
-#include "Options/MKLGaussianMethod.h"
-#include "Options/MKLUniformMethod.h"
 #include "Options/RNGSSESeqLen.h"
 
 #ifdef HAS_MKL
   #include "MKLRNG.h"
+  #include "Options/MKLBetaMethod.h"
+  #include "Options/MKLGaussianMethod.h"
+  #include "Options/MKLUniformMethod.h"
 #endif
 
 using tk::RNGStack;
