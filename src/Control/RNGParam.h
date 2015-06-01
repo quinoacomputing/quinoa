@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGParam.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:13:13 PM MDT
+  \date      Mon 01 Jun 2015 04:30:37 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Types for storing parameters of random number generators
   \details   Types for storing parameters of random number generators.
@@ -17,9 +17,9 @@
 #include "Options/RNGSSESeqLen.h"
 
 #ifdef HAS_MKL
-#include "Options/MKLUniformMethod.h"
-#include "Options/MKLGaussianMethod.h"
-#include "Options/MKLBetaMethod.h"
+  #include "Options/MKLUniformMethod.h"
+  #include "Options/MKLGaussianMethod.h"
+  #include "Options/MKLBetaMethod.h"
 #endif
 
 namespace tk {
