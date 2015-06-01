@@ -2,7 +2,7 @@
 /*!
   \file      src/RegTest/RegSuite.C
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 10:18:48 AM MDT
+  \date      Mon 01 Jun 2015 03:22:24 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Regression test suite class definition
   \details   Regression test suite class definition.
@@ -18,15 +18,15 @@
   #pragma GCC diagnostic ignored "-Wconversion"
 #endif
 
-#include "charm++.h"
-#include "charm.h"
+#include <charm++.h>
+#include <charm.h>
 
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic pop
 #endif
 
-#include "pup.h"
-#include "pup_stl.h"
+#include <pup.h>
+#include <pup_stl.h>
 
 #include "Tags.h"
 #include "RegSuite.h"
@@ -207,7 +207,7 @@ RegSuite::assess( const tk::Print& print,
   #pragma GCC diagnostic ignored "-Wconversion"
 #endif
 
-#include <regsuite.def.h>
+#include "regsuite.def.h"
 
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic pop

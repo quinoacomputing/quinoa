@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/UniPDF.h
   \author    J. Bakosi
-  \date      Thu 29 Jan 2015 07:44:14 AM MST
+  \date      Mon 01 Jun 2015 02:08:28 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Univariate PDF estimator
   \details   Univariate PDF estimator. This class can be used to estimate a
@@ -19,8 +19,8 @@
 #include <unordered_map>
 #include <algorithm>
 
-#include <Types.h>
-#include <PUPUtil.h>
+#include "Types.h"
+#include "PUPUtil.h"
 
 namespace tk {
 

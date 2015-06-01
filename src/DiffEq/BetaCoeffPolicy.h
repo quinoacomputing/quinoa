@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/BetaCoeffPolicy.h
   \author    J. Bakosi
-  \date      Thu 30 Apr 2015 09:40:25 AM MDT
+  \date      Mon 01 Jun 2015 02:38:01 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Beta coefficients policies
   \details   This file defines coefficients policy classes for the beta SDE,
@@ -48,8 +48,8 @@
 
 #include <boost/mpl/vector.hpp>
 
-#include <Types.h>
-#include <Walker/Options/CoeffPolicy.h>
+#include "Types.h"
+#include "Walker/Options/CoeffPolicy.h"
 
 namespace walker {
 

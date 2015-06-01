@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Control.h
   \author    J. Bakosi
-  \date      Fri 27 Feb 2015 10:57:30 AM MST
+  \date      Mon 01 Jun 2015 02:19:14 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Control base contains generic accessors to tagged tuple elements
   \details   Control is a slightly more specialized level of a tagged tuple,
@@ -18,8 +18,8 @@
 #include <string>
 #include <sstream>
 
-#include <TaggedTuple.h>
-#include <Exception.h>
+#include "TaggedTuple.h"
+#include "Exception.h"
 
 namespace tk {
 

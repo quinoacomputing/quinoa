@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Wed 15 Apr 2015 09:10:39 AM MDT
+  \date      Mon 01 Jun 2015 02:14:38 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Inciter's input deck definition
   \details   This file defines the heterogeneous stack that is used for storing
@@ -18,9 +18,9 @@
 #include <boost/mpl/set.hpp>
 #include <boost/mpl/for_each.hpp>
 
-#include <Control.h>
-#include <Inciter/CmdLine/CmdLine.h>
-#include <Inciter/Components.h>
+#include "Control.h"
+#include "Inciter/CmdLine/CmdLine.h"
+#include "Inciter/Components.h"
 
 namespace inciter {
 namespace ctr {

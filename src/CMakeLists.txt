@@ -201,7 +201,7 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
   #  2547: path was specified as both a system and non-system include directory
   #  3346: dynamic exception specifications are deprecated
   #  3377: constexpr function return is non-constant
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -diag-disable 7,111,193,304,367,383,411,444,869,981,1418,2282,2415,2547,3346,3377")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -diag-disable 7,111,193,304,367,383,411,444,869,981,1418,2282,2415,2547,3346,3377 ")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -qopt-report=0 -qopt-report-phase=loop,vec -qopt-report-file=stderr")
 
   # Link to thread-safe MPI library
@@ -230,7 +230,7 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
   #       significant bits
   # 2557: comparison between signed and unsigned operands
   # 3280: declaration hides member
-  set(HOSTFILE_FLAGS "-diag-disable 177,181,1572,1599,1720,1944,2259,2557,3280")
+  set(HOSTFILE_FLAGS "-diag-disable 177,181,1572,1599,1720,1944,2259,2557,3280 ")
   # Ignore warnings for linking with a Charm++ module
   set(PARTOF_FLAGS "-Wno-unused-parameter")
 

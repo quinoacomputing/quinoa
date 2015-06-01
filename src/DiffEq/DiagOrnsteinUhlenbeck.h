@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/DiagOrnsteinUhlenbeck.h
   \author    J. Bakosi
-  \date      Thu 30 Apr 2015 10:17:03 PM MDT
+  \date      Mon 01 Jun 2015 02:36:14 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     System of diagonal Ornstein-Uhlenbeck SDEs
   \details   This file implements the time integration of a system of stochastic
@@ -51,9 +51,9 @@
 
 #include <cmath>
 
-#include <InitPolicy.h>
-#include <DiagOrnsteinUhlenbeckCoeffPolicy.h>
-#include <RNG.h>
+#include "InitPolicy.h"
+#include "DiagOrnsteinUhlenbeckCoeffPolicy.h"
+#include "RNG.h"
 
 namespace walker {
 

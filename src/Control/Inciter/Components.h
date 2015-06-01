@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/Components.h
   \author    J. Bakosi
-  \date      Mon 23 Feb 2015 08:01:45 AM MST
+  \date      Mon 01 Jun 2015 02:53:06 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Storage for number of components
   \details   Storage for number of components. This is part of the input deck
@@ -12,7 +12,7 @@
 #ifndef InciterComponents_h
 #define InciterComponents_h
 
-#include <Components.h>
+#include "SystemComponents.h"
 
 namespace inciter {
 namespace ctr {

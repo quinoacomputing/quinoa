@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Sun 18 Jan 2015 06:49:06 AM MST
+  \date      Mon 01 Jun 2015 02:16:27 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Random number generator test suite input deck
   \details   This file defines the heterogeneous stack that is used for storing
@@ -16,8 +16,8 @@
 #include <boost/mpl/set.hpp>
 #include <boost/mpl/for_each.hpp>
 
-#include <Control.h>
-#include <RNGTest/CmdLine/CmdLine.h>
+#include "Control.h"
+#include "RNGTest/CmdLine/CmdLine.h"
 
 namespace rngtest {
 namespace ctr {

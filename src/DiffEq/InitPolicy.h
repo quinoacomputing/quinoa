@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/InitPolicy.h
   \author    J. Bakosi
-  \date      Thu 30 Apr 2015 10:48:15 PM MDT
+  \date      Mon 01 Jun 2015 02:34:26 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Initialization policies
   \details   This file defines initialization policy classes. As opposed to
@@ -50,11 +50,11 @@
 
 #include <boost/mpl/vector.hpp>
 
-#include <Macro.h>
-#include <Types.h>
-#include <ParticleProperties.h>
-#include <Walker/Options/InitPolicy.h>
-#include <RNG.h>
+#include "Macro.h"
+#include "Types.h"
+#include "ParticleProperties.h"
+#include "Walker/Options/InitPolicy.h"
+#include "RNG.h"
 
 namespace walker {
 

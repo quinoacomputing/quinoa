@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/TestArray.h
   \author    J. Bakosi
-  \date      Thu 12 Mar 2015 10:14:36 PM MDT
+  \date      Mon 01 Jun 2015 02:47:25 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Simple test Charm++ array for testing arrays
   \details   Simple test Charm++ array for testing arrays.
@@ -16,7 +16,7 @@
   #pragma GCC diagnostic ignored "-Wconversion"
 #endif
 
-#include <testarray.decl.h>
+#include "testarray.decl.h"
 
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic pop

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/Options/DiffEq.h
   \author    J. Bakosi
-  \date      Thu 30 Apr 2015 09:40:59 AM MDT
+  \date      Mon 01 Jun 2015 02:18:51 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Differential equation options and associations for walker
   \details   Differential equation options and associations for walker
@@ -13,11 +13,11 @@
 
 #include <boost/mpl/vector.hpp>
 
-#include <TaggedTuple.h>
-#include <Toggle.h>
-#include <Keywords.h>
-#include <Walker/Options/InitPolicy.h>
-#include <Walker/Options/CoeffPolicy.h>
+#include "TaggedTuple.h"
+#include "Toggle.h"
+#include "Keywords.h"
+#include "Walker/Options/InitPolicy.h"
+#include "Walker/Options/CoeffPolicy.h"
 
 namespace walker {
 namespace ctr {

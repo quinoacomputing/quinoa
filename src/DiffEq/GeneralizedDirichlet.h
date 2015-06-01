@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/GeneralizedDirichlet.h
   \author    J. Bakosi
-  \date      Thu 30 Apr 2015 10:17:36 PM MDT
+  \date      Mon 01 Jun 2015 02:35:05 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Lochner's generalized Dirichlet SDE
   \details   This file implements the time integration of a system of stochastic
@@ -54,9 +54,9 @@
 #ifndef GeneralizedDirichlet_h
 #define GeneralizedDirichlet_h
 
-#include <InitPolicy.h>
-#include <GeneralizedDirichletCoeffPolicy.h>
-#include <RNG.h>
+#include "InitPolicy.h"
+#include "GeneralizedDirichletCoeffPolicy.h"
+#include "RNG.h"
 
 namespace walker {
 

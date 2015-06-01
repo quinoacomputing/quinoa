@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/ZoltanInterOp.C
   \author    J. Bakosi
-  \date      Sat 30 May 2015 11:49:26 AM MDT
+  \date      Mon 01 Jun 2015 01:38:47 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Interoperation with the Zoltan library
   \details   Interoperation with the Zoltan library, used for static mesh graph
@@ -23,7 +23,7 @@
   #pragma GCC diagnostic ignored "-Wconversion"
 #endif
 
-#include "zoltan.h"
+#include <zoltan.h>
 
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic pop

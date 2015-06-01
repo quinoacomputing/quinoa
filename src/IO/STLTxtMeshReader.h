@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/STLTxtMeshReader.h
   \author    J. Bakosi
-  \date      Sat 14 Mar 2015 06:32:30 AM MDT
+  \date      Mon 01 Jun 2015 02:25:49 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     ASCII STL (STereoLithography) reader class declaration
   \details   ASCII STL (STereoLithographu) reader class declaration.
@@ -13,8 +13,8 @@
 
 #include <iostream>
 
-#include <Reader.h>
-#include <Exception.h>
+#include "Reader.h"
+#include "Exception.h"
 
 class STLMesh;
 

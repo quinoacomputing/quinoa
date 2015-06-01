@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/ParticleProperties.h
   \author    J. Bakosi
-  \date      Fri 27 Feb 2015 10:36:30 AM MST
+  \date      Mon 01 Jun 2015 02:12:16 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     ParticleProperties for storing particle data.
   \details   ParticleProperties for storing particle data with various accessors
@@ -13,11 +13,10 @@
 #ifndef ParticleProperties_h
 #define ParticleProperties_h
 
-#include <make_unique.h>
-
-#include <Types.h>
-#include <Config.h>
-#include <Keywords.h>
+#include "Types.h"
+#include "Make_unique.h"
+#include "Config.h"
+#include "Keywords.h"
 
 namespace tk {
 

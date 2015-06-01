@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/HypreVector.h
   \author    J. Bakosi
-  \date      Mon 11 May 2015 03:19:11 PM MDT
+  \date      Mon 01 Jun 2015 02:12:56 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Hypre IJ vector class
   \details   Hypre IJ vector class.
@@ -16,7 +16,7 @@
   #pragma GCC diagnostic ignored "-Wconversion"
 #endif
 
-#include "HYPRE.h"
+#include <HYPRE.h>
 #include <HYPRE_parcsr_ls.h>
 
 #if defined(__clang__) || defined(__GNUC__)

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Options/MKLBetaMethod.h
   \author    J. Bakosi
-  \date      Thu 30 Apr 2015 12:38:35 PM MDT
+  \date      Mon 01 Jun 2015 02:23:17 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Intel MKL Beta RNG method options
   \details   Intel MKL Beta RNG method options
@@ -17,9 +17,9 @@
 
 #include <mkl_vsl.h>
 
-#include <Toggle.h>
-#include <Keywords.h>
-#include <PUPUtil.h>
+#include "Toggle.h"
+#include "Keywords.h"
+#include "PUPUtil.h"
 
 namespace tk {
 namespace ctr {

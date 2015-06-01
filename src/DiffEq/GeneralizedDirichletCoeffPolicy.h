@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/GeneralizedDirichletCoeffPolicy.h
   \author    J. Bakosi
-  \date      Wed 15 Apr 2015 10:07:03 AM MDT
+  \date      Mon 01 Jun 2015 02:35:36 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Lochner's generalized Dirichlet coefficients policies
   \details   This file defines coefficients policy classes for the generalized
@@ -52,8 +52,8 @@
 
 #include <boost/mpl/vector.hpp>
 
-#include <Types.h>
-#include <Walker/Options/CoeffPolicy.h>
+#include "Types.h"
+#include "Walker/Options/CoeffPolicy.h"
 
 namespace walker {
 

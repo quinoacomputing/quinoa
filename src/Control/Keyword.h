@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Keyword.h
   \author    J. Bakosi
-  \date      Fri 29 May 2015 11:18:11 PM MDT
+  \date      Mon 01 Jun 2015 02:13:51 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Generic definition of a keyword
   \details   Generic definition of all keywords - both command-line arguments
@@ -25,7 +25,7 @@
   #pragma GCC diagnostic pop
 #endif
 
-#include <Has.h>
+#include "Has.h"
 
 namespace kw {
 

@@ -2,12 +2,39 @@
 /*!
   \file      src/RNGTest/Crush.C
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 10:41:29 AM MDT
+  \date      Mon 01 Jun 2015 01:59:07 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Class re-creating the TestU01 library's Crush battery
   \details   Class re-creating the TestU01 library's Crush battery.
 */
 //******************************************************************************
+
+#if defined(__clang__) || defined(__GNUC__)
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wconversion"
+#endif
+
+#include <charm.h>
+#include <pup_stl.h>
+
+#if defined(__clang__) || defined(__GNUC__)
+  #pragma GCC diagnostic pop
+#endif
+
+#include <pup.h>
+
+extern "C" {
+  #include <gdef.h>
+  #include <gofw.h>
+  #include <scomp.h>
+  #include <sknuth.h>
+  #include <smarsa.h>
+  #include <snpair.h>
+  #include <sres.h>
+  #include <sspectral.h>
+  #include <sstring.h>
+  #include <swalk.h>
+}
 
 #include "Tags.h"
 #include "PUPUtil.h"
@@ -19,21 +46,6 @@
 #include "Crush.h"
 
 #include "testu01suite.decl.h"
-
-#include "charm.h"
-#include "pup.h"
-#include "pup_stl.h"
-
-#include "gdef.h"
-#include "gofw.h"
-#include "scomp.h"
-#include "sknuth.h"
-#include "smarsa.h"
-#include "snpair.h"
-#include "sres.h"
-#include "sspectral.h"
-#include "sstring.h"
-#include "swalk.h"
 
 namespace rngtest {
 

@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/TriPDF.h
   \author    J. Bakosi
-  \date      Thu 12 Mar 2015 07:10:01 AM MDT
+  \date      Mon 01 Jun 2015 02:07:32 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Joint trivariate PDF estimator
   \details   Joint trivariate PDF estimator. This class can be used to estimate
@@ -19,8 +19,8 @@
 #include <unordered_map>
 #include <algorithm>
 
-#include <Types.h>
-#include <PUPUtil.h>
+#include "Types.h"
+#include "PUPUtil.h"
 
 namespace tk {
 

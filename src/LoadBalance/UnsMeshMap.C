@@ -2,7 +2,7 @@
 /*!
   \file      src/LoadBalance/UnsMeshMap.C
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 07:12:40 AM MDT
+  \date      Mon 01 Jun 2015 03:36:48 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Advanced Charm++ array creation with a map using an unstructured
              grid
@@ -46,7 +46,7 @@
   #pragma GCC diagnostic ignored "-Wconversion"
 #endif
 
-#include "charm.h"
+#include <charm.h>
 
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic pop
@@ -89,11 +89,12 @@ UnsMeshMap::UnsMeshMap( std::size_t npoin,
   // Find and store the PE with the largest number of points owned by an array
   // element. This is the key (PE) of the largest mapped_type of the element's
   // map, owner[e].
+  using pr = decltype(owner)::value_type::value_type;
   m_pe.resize( owner.size() );
   for (std::size_t e=0; e<owner.size(); ++e) {
     const auto most = std::max_element( begin(owner[e]), end(owner[e]),
-                                        []( const auto& p1, const auto& p2 )
-                                        { return p1.second < p2.second; } );
+                                        []( const pr& p1, const pr& p2 )
+                                          { return p1.second < p2.second; } );
     m_pe[e] = most->first;
   }
 
@@ -131,10 +132,11 @@ UnsMeshMap::fixPEs()
       if (!nkind.count(p)) {    // if PE p has no array elements to create
         // Count up number elements for each PE
         std::map< std::size_t, std::size_t > npe;
+        using pr = decltype(npe)::value_type;
         for (auto q : m_pe) ++npe[q];
         // Find the PE with the most array elements assigned
         const auto most = std::max_element( begin(npe), end(npe),
-                                            []( const auto& p1, const auto& p2 )
+                                            []( const pr& p1, const pr& p2 )
                                             { return p1.second < p2.second; } );
         for (std::size_t q=0; q<m_pe.size(); ++q)
           if (m_pe[q] == most->first) { // first element of the most loaded PE
@@ -208,7 +210,7 @@ UnsMeshMap::populateInitial( int, CkArrayIndex& idx, void *msg, CkArrMgr *mgr )
   #pragma GCC diagnostic ignored "-Wconversion"
 #endif
 
-#include <unsmeshmap.def.h>
+#include "unsmeshmap.def.h"
 
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic pop

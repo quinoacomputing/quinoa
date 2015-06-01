@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/Battery.h
   \author    J. Bakosi
-  \date      Thu 19 Mar 2015 12:00:28 PM MDT
+  \date      Mon 01 Jun 2015 02:09:03 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Random number generator test harness
   \details   This file defines a generic random number generator test harness
@@ -30,9 +30,9 @@
   #pragma GCC diagnostic pop
 #endif
 
-#include <make_unique.h>
-#include <CharmUtil.h>
-#include <Has.h>
+#include "Make_unique.h"
+#include "CharmUtil.h"
+#include "Has.h"
 
 namespace rngtest {
 

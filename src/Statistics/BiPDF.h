@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/BiPDF.h
   \author    J. Bakosi
-  \date      Thu 12 Mar 2015 07:09:12 AM MDT
+  \date      Mon 01 Jun 2015 02:08:13 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Joint bivariate PDF estimator
   \details   Joint bivariate PDF estimator. This class can be used to estimate a
@@ -19,8 +19,8 @@
 #include <unordered_map>
 #include <algorithm>
 
-#include <Types.h>
-#include <PUPUtil.h>
+#include "Types.h"
+#include "PUPUtil.h"
 
 namespace tk {
 

@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/TestU01Stack.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 12:44:09 PM MDT
+  \date      Mon 01 Jun 2015 01:38:34 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Stack of TestU01 RNG statistical tests
   \details   Stack of TestU01 RNG statistical tests
@@ -21,15 +21,15 @@
 #include <boost/functional/value_factory.hpp>
 
 extern "C" {
-  #include "sres.h"
-  #include "sstring.h"
-  #include "sknuth.h"
-  #include "swalk.h"
-  #include "smarsa.h"
-  #include "scomp.h"
-  #include "sspectral.h"
-  #include "unif01.h"
-  #include "snpair.h"
+  #include <sres.h>
+  #include <sstring.h>
+  #include <sknuth.h>
+  #include <swalk.h>
+  #include <smarsa.h>
+  #include <scomp.h>
+  #include <sspectral.h>
+  #include <unif01.h>
+  #include <snpair.h>
 }
 
 #include "StatTest.h"

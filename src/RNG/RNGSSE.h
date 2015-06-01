@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/RNGSSE.h
   \author    J. Bakosi
-  \date      Fri 01 May 2015 07:31:28 AM MDT
+  \date      Mon 01 Jun 2015 02:40:59 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Interface to RNGSSE random number generators
   \details   Interface to RNGSSE random number generators
@@ -13,9 +13,9 @@
 
 #include <cstring>
 
-#include <make_unique.h>
-#include <Exception.h>
-#include <Macro.h>
+#include "Make_unique.h"
+#include "Exception.h"
+#include "Macro.h"
 
 namespace tk {
 

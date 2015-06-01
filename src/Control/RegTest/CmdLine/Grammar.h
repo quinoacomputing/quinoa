@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RegTest/CmdLine/Grammar.h
   \author    J. Bakosi
-  \date      Fri 29 May 2015 05:16:30 PM MDT
+  \date      Mon 01 Jun 2015 02:15:16 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     RegTest's command line grammar definition
   \details   Grammar definition for parsing the command line. We use the Parsing
@@ -15,8 +15,8 @@
 #define RegTestCmdLineGrammar_h
 
 #include "CommonGrammar.h"
-#include <PEGTLParsed.h>
-#include <Keywords.h>
+#include "PEGTLParsed.h"
+#include "Keywords.h"
 
 namespace regtest {
 //! RegTest command line grammar definition

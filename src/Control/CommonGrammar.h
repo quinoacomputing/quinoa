@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/CommonGrammar.h
   \author    J. Bakosi
-  \date      Sat 30 May 2015 12:13:50 AM MDT
+  \date      Mon 01 Jun 2015 02:02:39 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Generic, low-level grammar, re-used by specific grammars
   \details   Generic, low-level grammar. We use the [Parsing Expression Grammar
@@ -25,7 +25,7 @@
 #include <boost/mpl/or.hpp>
 #include <boost/mpl/for_each.hpp>
 
-#include "if.h"
+#include "If.h"
 #include "Exception.h"
 #include "Tags.h"
 #include "StatCtr.h"

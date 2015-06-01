@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Msg.h
   \author    J. Bakosi
-  \date      Fri 22 May 2015 08:18:32 AM MDT
+  \date      Mon 01 Jun 2015 03:22:57 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Custom Charm++ message types definitions.
   \details   This file defines some custom Charm++ message types. This is
@@ -121,7 +121,7 @@ typename Msg::value_type waitfor( const CkFuture& f ) {
 } // tk::
 
 #define CK_TEMPLATES_ONLY
-#include <msg.def.h>
+#include "msg.def.h"
 #undef CK_TEMPLATES_ONLY
 
 #endif // Msg_h

@@ -2,15 +2,15 @@
 /*!
   \file      src/IO/STLTxtMeshReader.C
   \author    J. Bakosi
-  \date      Sat 14 Mar 2015 06:32:59 AM MDT
+  \date      Mon 01 Jun 2015 02:25:38 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     ASCII STL (STereoLithography) reader class definition
   \details   ASCII STL (STereoLithography) reader class definition.
 */
 //******************************************************************************
 
-#include <STLMesh.h>
-#include <STLTxtMeshReader.h>
+#include "STLMesh.h"
+#include "STLTxtMeshReader.h"
 
 using tk::STLTxtMeshReader;
 

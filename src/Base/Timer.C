@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Timer.C
   \author    J. Bakosi
-  \date      Thu 11 Dec 2014 02:02:53 PM MST
+  \date      Mon 01 Jun 2015 02:10:15 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Timer definition
   \details   Timer definition. Timer is a simple class to do timing various
@@ -14,7 +14,7 @@
 
 #include <iostream>
 
-#include <Timer.h>
+#include "Timer.h"
 
 using tk::Timer;
 

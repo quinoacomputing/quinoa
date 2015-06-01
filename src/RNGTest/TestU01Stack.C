@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/TestU01Stack.C
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 12:45:44 PM MDT
+  \date      Mon 01 Jun 2015 01:40:55 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Stack of TestU01 RNG statistical tests
   \details   Stack of TestU01 RNG statistical tests
@@ -22,9 +22,9 @@
 #include "RNGTest/InputDeck/InputDeck.h"
 
 extern "C" {
-  #include "svaria.h"
-  #include "gofw.h"
-  #include "snpair.h"
+  #include <svaria.h>
+  #include <gofw.h>
+  #include <snpair.h>
 }
 
 namespace rngtest {

@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/MixMassFractionBetaCoeffPolicy.h
   \author    J. Bakosi
-  \date      Wed 13 May 2015 11:29:56 AM MDT
+  \date      Mon 01 Jun 2015 02:38:27 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Mix mass-fraction beta SDE coefficients policies
   \details   This file defines coefficients policy classes for the mix
@@ -78,8 +78,8 @@
 
 #include <boost/mpl/vector.hpp>
 
-#include <Types.h>
-#include <Walker/Options/CoeffPolicy.h>
+#include "Types.h"
+#include "Walker/Options/CoeffPolicy.h"
 
 namespace walker {
 
