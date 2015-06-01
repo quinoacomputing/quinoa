@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/STLMesh.h
   \author    J. Bakosi
-  \date      Mon 20 Apr 2015 09:47:08 AM MDT
+  \date      Mon 01 Jun 2015 10:08:32 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     STL (STereoLithography) mesh class declaration
   \details   STL (STereoLithography) mesh class declaration.
@@ -13,8 +13,10 @@
 
 #include <memory>
 #include <string>
+#include <cstddef>
+#include <iosfwd>
 
-#include <Types.h>
+#include "Types.h"
 
 namespace tk {
 
