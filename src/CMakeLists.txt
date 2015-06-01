@@ -2,7 +2,7 @@
 
 cmake_minimum_required(VERSION 2.8.5)
 
-project(QUINOA CXX)
+project(QUINOA C CXX)
 
 set(CMAKE_VERBOSE_MAKEFILE 1)
 
