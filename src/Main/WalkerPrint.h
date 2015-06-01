@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/WalkerPrint.h
   \author    J. Bakosi
-  \date      Fri 24 Apr 2015 06:03:59 PM MDT
+  \date      Mon 01 Jun 2015 09:49:33 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Walker-specific pretty printer functionality
   \details   Walker-specific pretty printer functionality.
@@ -11,18 +11,29 @@
 #ifndef WalkerPrint_h
 #define WalkerPrint_h
 
-#include <algorithm>
+#include <functional>
+#include <iostream>
+#include <map>
+#include <vector>
+#include <string>
+#include <utility>
+#include <cstddef>
 
-#include <boost/algorithm/string/replace.hpp>
+#include <boost/format.hpp>
+#include <boost/optional.hpp>
 
-#include <RNGPrint.h>
-#include <DiffEq.h>
-#include <ContainerUtil.h>
-#include <Walker/Types.h>
-#include <Walker/Options/DiffEq.h>
-#include <Walker/Options/InitPolicy.h>
-#include <Walker/Options/CoeffPolicy.h>
-#include <Walker/InputDeck/InputDeck.h>
+#include "Keywords.h"
+#include "Print.h"
+#include "Types.h"
+#include "Tags.h"
+#include "RNGPrint.h"
+#include "ContainerUtil.h"
+#include "Walker/Options/DiffEq.h"
+#include "Walker/Options/InitPolicy.h"
+#include "Walker/Options/CoeffPolicy.h"
+#include "Walker/InputDeck/InputDeck.h"
+
+namespace tk { namespace ctr { struct Term; } }
 
 namespace walker {
 

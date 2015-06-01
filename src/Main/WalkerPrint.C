@@ -2,15 +2,25 @@
 /*!
   \file      src/Main/WalkerPrint.C
   \author    J. Bakosi
-  \date      Wed 08 Apr 2015 09:48:22 PM MDT
+  \date      Mon 01 Jun 2015 10:01:55 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Walker-specific pretty printer functionality
   \details   Walker-specific pretty printer functionality.
 */
 //******************************************************************************
 
-#include <WalkerPrint.h>
-#include <Walker/Options/DiffEq.h>
+#include <boost/algorithm/string/replace.hpp>
+#include <boost/iterator/iterator_traits.hpp>
+
+#include "Exception.h"
+#include "Tags.h"
+#include "StatCtr.h"
+#include "WalkerPrint.h"
+#include "DiffEq.h"
+#include "Options/PDFCentering.h"
+#include "Options/PDFFile.h"
+#include "Options/PDFPolicy.h"
+#include "Options/TxtFloatFormat.h"
 
 using walker::WalkerPrint;
 
