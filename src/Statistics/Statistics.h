@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.h
   \author    J. Bakosi
-  \date      Thu 19 Mar 2015 06:35:46 AM MDT
+  \date      Mon 01 Jun 2015 12:53:22 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Statistics class declaration
   \details   This file implements a statistics class that can be used to
@@ -59,12 +59,16 @@
 #ifndef Statistics_h
 #define Statistics_h
 
-#include <Types.h>
-#include <ParticleProperties.h>
-#include <UniPDF.h>
-#include <BiPDF.h>
-#include <TriPDF.h>
-#include <Components.h>
+#include <vector>
+#include <cstddef>
+
+#include "Types.h"
+#include "StatCtr.h"
+#include "ParticleProperties.h"
+#include "Components.h"
+#include "UniPDF.h"
+#include "BiPDF.h"
+#include "TriPDF.h"
 
 namespace tk {
 

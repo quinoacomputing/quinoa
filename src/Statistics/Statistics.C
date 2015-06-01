@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.C
   \author    J. Bakosi
-  \date      Thu 19 Mar 2015 07:31:32 AM MDT
+  \date      Mon 01 Jun 2015 12:55:04 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Statistics class definition
   \details   This file implements a statistics class that can be used to
@@ -14,8 +14,21 @@
 */
 //******************************************************************************
 
-#include <Statistics.h>
-#include <flip_map.h>
+#include <map>
+#include <iterator>
+#include <utility>
+#include <algorithm>
+#include <iosfwd>
+#include <cctype>
+
+#include "Types.h"
+#include "Exception.h"
+#include "Statistics.h"
+#include "ParticleProperties.h"
+#include "Components.h"
+#include "UniPDF.h"
+#include "BiPDF.h"
+#include "TriPDF.h"
 
 using tk::Statistics;
 
