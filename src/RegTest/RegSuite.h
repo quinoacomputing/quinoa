@@ -2,7 +2,7 @@
 /*!
   \file      src/RegTest/RegSuite.h
   \author    J. Bakosi
-  \date      Sun 22 Mar 2015 09:19:25 PM MDT
+  \date      Mon 01 Jun 2015 10:13:46 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Regression test suite class declaration
   \details   Regression test suite class declaration.
@@ -11,19 +11,25 @@
 #ifndef RegSuite_h
 #define RegSuite_h
 
-#include <RegTestPrint.h>
-#include <RegTest/CmdLine/CmdLine.h>
+#include <vector>
+#include <iosfwd>
+#include <cstddef>
+
+#include "RegTestPrint.h"
+#include "RegTest/CmdLine/CmdLine.h"
 
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wconversion"
 #endif
 
-#include <regsuite.decl.h>
+#include "regsuite.decl.h"
 
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic pop
 #endif
+
+namespace tk { class Print; }
 
 namespace regtest {
 

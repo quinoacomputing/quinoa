@@ -2,16 +2,37 @@
 /*!
   \file      src/RegTest/RegSuite.C
   \author    J. Bakosi
-  \date      Mon 23 Mar 2015 09:43:21 PM MDT
+  \date      Mon 01 Jun 2015 10:18:48 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Regression test suite class definition
   \details   Regression test suite class definition.
 */
 //******************************************************************************
 
-#include <RegSuite.h>
-#include <Regression.h>
-#include <regtest.decl.h>
+#include <string>
+#include <iostream>
+
+#include <boost/format.hpp>
+#if defined(__clang__) || defined(__GNUC__)
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wconversion"
+#endif
+
+#include "charm++.h"
+#include "charm.h"
+
+#if defined(__clang__) || defined(__GNUC__)
+  #pragma GCC diagnostic pop
+#endif
+
+#include "pup.h"
+#include "pup_stl.h"
+
+#include "Tags.h"
+#include "RegSuite.h"
+#include "Regression.h"
+#include "regression.decl.h"
+#include "regtest.decl.h"
 
 extern CProxy_Main mainProxy;
 
