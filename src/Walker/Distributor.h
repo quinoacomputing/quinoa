@@ -2,7 +2,7 @@
 /*!
   \file      src/Walker/Distributor.h
   \author    J. Bakosi
-  \date      Thu 19 Mar 2015 07:20:23 AM MDT
+  \date      Mon 01 Jun 2015 01:26:04 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Distributor drives the time integration of differential equations
   \details   Distributor drives the time integration of differential equations.
@@ -16,16 +16,30 @@
 #ifndef Distributor_h
 #define Distributor_h
 
-#include <TaggedTuple.h>
-#include <WalkerPrint.h>
-#include <Walker/CmdLine/CmdLine.h>
+#include <vector>
+#include <map>
+#include <iosfwd>
+#include <cstdint>
+
+#include "Types.h"
+#include "Timer.h"
+#include "Tags.h"
+#include "TaggedTuple.h"
+#include "StatCtr.h"
+#include "UniPDF.h"
+#include "BiPDF.h"
+#include "TriPDF.h"
+#include "WalkerPrint.h"
+#include "Walker/CmdLine/CmdLine.h"
 
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wconversion"
 #endif
 
-#include <distributor.decl.h>
+#include "sdag.h"
+#include "integrator.decl.h"
+#include "distributor.decl.h"
 
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic pop
