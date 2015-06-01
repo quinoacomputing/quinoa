@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/Assessment.h
   \author    J. Bakosi
-  \date      Sun 08 Mar 2015 12:25:31 PM MDT
+  \date      Mon 01 Jun 2015 12:57:57 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit test suite assessment
   \details   Unit test suite assessment.
@@ -11,7 +11,11 @@
 #ifndef Assessment_h
 #define Assessment_h
 
-#include <Print.h>
+#include <vector>
+#include <cstddef>
+#include <iosfwd>
+
+namespace tk { class Print; }
 
 namespace unittest {
 
