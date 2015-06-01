@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/DerivedData.C
   \author    J. Bakosi
-  \date      Mon 20 Apr 2015 06:55:05 AM MDT
+  \date      Mon 01 Jun 2015 10:05:31 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Generate data structures derived from unstructured mesh
   \details   Generate data structures derived from the connectivity information
@@ -10,11 +10,15 @@
 */
 //******************************************************************************
 
-#include <algorithm>
 #include <set>
 #include <map>
+#include <iterator>
+#include <algorithm>
+#include <type_traits>
+#include <cstddef>
 
-#include <DerivedData.h>
+#include "Exception.h"                  // for Assert
+#include "DerivedData.h"
 
 namespace tk {
 
