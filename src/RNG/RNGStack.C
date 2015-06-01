@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/RNGStack.C
   \author    J. Bakosi
-  \date      Thu 30 Apr 2015 12:40:08 PM MDT
+  \date      Mon 01 Jun 2015 10:27:22 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Stack of random number generators
   \details   This file defines class RNGStack, which implements various
@@ -14,35 +14,44 @@
 */
 //******************************************************************************
 
-#include <gm19.h>
-#include <gm29.h>
-#include <gm31.h>
-#include <gm55.h>
-#include <gm61.h>
-#include <gq58x1.h>
-#include <gq58x3.h>
-#include <gq58x4.h>
-#include <mt19937.h>
-#include <lfsr113.h>
-#include <mrg32k3a.h>
+#include <iterator>
+#include <utility>
 
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wconversion"
 #endif
 
-#include <charm++.h>
+#include "charm.h"
 
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic pop
 #endif
 
-#include <RNGStack.h>
-#include <Factory.h>
-#include <RNGSSE.h>
+#include "gm19.h"
+#include "gm29.h"
+#include "gm31.h"
+#include "gm55.h"
+#include "gm61.h"
+#include "gq58x1.h"
+#include "gq58x3.h"
+#include "gq58x4.h"
+#include "mt19937.h"
+#include "lfsr113.h"
+#include "mrg32k3a.h"
+
+#include "Tags.h"
+#include "Factory.h"
+#include "Exception.h"
+#include "RNGStack.h"
+#include "RNGSSE.h"
+#include "Options/MKLBetaMethod.h"
+#include "Options/MKLGaussianMethod.h"
+#include "Options/MKLUniformMethod.h"
+#include "Options/RNGSSESeqLen.h"
 
 #ifdef HAS_MKL
-  #include <MKLRNG.h>
+  #include "MKLRNG.h"
 #endif
 
 using tk::RNGStack;
