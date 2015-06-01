@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/TUTTest.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 01:08:51 PM MDT
+  \date      Mon 01 Jun 2015 01:13:35 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Template Unit Test unit test class declaration
   \details   Template Unit Test unit test class declaration.
@@ -10,6 +10,9 @@
 //******************************************************************************
 #ifndef TUTTest_h
 #define TUTTest_h
+
+#include <string>
+#include <iosfwd>
 
 #include "tut/tut.hpp"
 
