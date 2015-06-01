@@ -2,7 +2,7 @@
 /*!
   \file      src/RegTest/Regression.h
   \author    J. Bakosi
-  \date      Thu 02 Apr 2015 03:40:52 PM MDT
+  \date      Mon 01 Jun 2015 10:11:23 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Regression test class declaration
   \details   Regression test class declaration.
@@ -11,6 +11,9 @@
 #ifndef Regression_h
 #define Regression_h
 
+#include <iostream>
+#include <vector>
+
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wconversion"
@@ -18,7 +21,7 @@
 
 #include <pstreams/pstream.h>
 
-#include <regression.decl.h>
+#include "regression.decl.h"
 
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic pop
@@ -54,7 +57,7 @@ class Regression : public CBase_Regression< Proxy > {
 #endif
 
 #define CK_TEMPLATES_ONLY
-#include <regression.def.h>
+#include "regression.def.h"
 #undef CK_TEMPLATES_ONLY
 
 #if defined(__clang__) || defined(__GNUC__)
