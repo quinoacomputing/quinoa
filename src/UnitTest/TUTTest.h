@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/TUTTest.h
   \author    J. Bakosi
-  \date      Thu 12 Mar 2015 10:14:36 PM MDT
+  \date      Mon 01 Jun 2015 01:08:51 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Template Unit Test unit test class declaration
   \details   Template Unit Test unit test class declaration.
@@ -11,14 +11,14 @@
 #ifndef TUTTest_h
 #define TUTTest_h
 
-#include <tut/tut.hpp>
+#include "tut/tut.hpp"
 
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wconversion"
 #endif
 
-#include <tuttest.decl.h>
+#include "tuttest.decl.h"
 
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic pop
@@ -54,7 +54,7 @@ class TUTTest : public CBase_TUTTest< Proxy > {
 #endif
 
 #define CK_TEMPLATES_ONLY
-#include <tuttest.def.h>
+#include "tuttest.def.h"
 #undef CK_TEMPLATES_ONLY
 
 #if defined(__clang__) || defined(__GNUC__)
