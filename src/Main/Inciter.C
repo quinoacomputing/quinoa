@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Inciter.C
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 01:51:21 PM MDT
+  \date      Tue 02 Jun 2015 09:52:33 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Inciter, computational shock hydrodynamics tool, Charm++ main
     chare.
@@ -60,6 +60,8 @@ namespace inciter {
 //! below is global-scope because they must be available to all PEs which could
 //! be on different machines.
 
+//! Command line filled by command line parser, with command line user input
+ctr::CmdLine g_cmdline;
 //! Defaults of input deck, facilitates detection what is set by user
 ctr::InputDeck g_inputdeck_defaults;
 //! Input deck filled by parser, containing all input data
@@ -131,7 +133,7 @@ class Main : public CBase_Main {
     Main( CkArgMsg* msg )
     try :
       // Create pretty printer initializing output streams based on command line
-      m_print( inciter::g_inputdeck.get< tag::cmd, tag::verbose >()
+      m_print( inciter::g_cmdline.get< tag::verbose >()
                  ? std::cout : std::clog ),
       // Create Inciter driver
       m_driver( inciter::InciterDriver( m_print ) ),
@@ -140,10 +142,9 @@ class Main : public CBase_Main {
       // Import, i.e., swallow, timers from the initial MPI portion
       m_timestamp( std::move(inciter::g_timestamp) )
     {
-      const auto& cmdline = inciter::g_inputdeck.get< tag::cmd >();
-      const auto helpcmd = cmdline.get< tag::help >();
-      const auto helpctr = cmdline.get< tag::helpctr >();
-      const auto helpkw = cmdline.get< tag::helpkw >();
+      const auto helpcmd = inciter::g_cmdline.get< tag::help >();
+      const auto helpctr = inciter::g_cmdline.get< tag::helpctr >();
+      const auto helpkw = inciter::g_cmdline.get< tag::helpkw >();
       // Exit if help was requested or exectuable was called without argument
       if (msg->argc == 1 || helpcmd || helpctr || !helpkw.keyword.empty()) {
         CkExit();
@@ -242,18 +243,18 @@ int main( int argc, char **argv ) {
 
   try {
     // Parse command line
-    const auto cmdline = parseCmdLine( argc, argv );
+    parseCmdLine( argc, argv, g_cmdline );
    
     // Instantiate inciter's pretty printer
     InciterPrint
-      iprint( cmdline.get< tag::verbose >() ? std::cout : std::clog );
+      iprint( g_cmdline.get< tag::verbose >() ? std::cout : std::clog );
 
     // Parse input deck, echo info
-    init( cmdline, iprint, g_inputdeck, argc, argv );
+    init( g_cmdline, iprint, g_inputdeck, argc, argv );
 
     // Prepare computational mesh and fill some global-scope data (all given at
     // the top of this file) so that Charm++ chares can access them
-    prepareMesh( cmdline, iprint, g_inputdeck,  // <- const
+    prepareMesh( g_cmdline, iprint, g_inputdeck,  // <- const
                  g_timestamp, g_npoin, g_point, g_element, g_meshfilemap,
                  g_tetinpoel, g_esup, g_pcomm, g_ecomm );
 
