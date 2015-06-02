@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Keywords.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:19:27 PM MDT
+  \date      Tue 02 Jun 2015 10:14:54 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Definition of all keywords
   \details   This file contains the definition of all keywords, including those
@@ -2263,7 +2263,7 @@ struct virtualization_info {
     R"(Set degree of virtualization)"; }
   static std::string longDescription() { return
     R"(This option is used to set the degree of virtualization
-    (over-decomposition). The virtualization parameter, is a real number
+    (over-decomposition). The virtualization parameter is a real number
     between 0.0 and 1.0, inclusive, which controls the degree of
     virtualization or over-decomposition. Independent of the value of
     virtualization the work is approximately evenly distributed among the
