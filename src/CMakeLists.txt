@@ -29,6 +29,9 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     "MinSizeRel" "RelWithDebInfo")
 endif()
 
+# Convert CMAKE_BUILD_TYPE
+string(TOUPPER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE)
+
 # Set build type
 set(BUILD_TYPE ${CMAKE_BUILD_TYPE})
 
@@ -82,6 +85,9 @@ set(WALKER_EXECUTABLE "walker")
 # Get git revision
 include(GetGitRevisionDescription)
 get_git_head_revision(GIT_REFSPEC GIT_SHA1)
+
+# Attempt to find tools required for code coverage and define codecov functions
+include(DetectCodeCoverage)
 
 # Add compiler flags
 include(CheckCXXCompilerFlag)
@@ -337,6 +343,8 @@ include_directories(${QUINOA_SOURCE_DIR}
 )
 
 # Components
+add_subdirectory(Main)
+add_subdirectory(UnitTest)
 add_subdirectory(Base)
 add_subdirectory(Control)
 add_subdirectory(DiffEq)
@@ -345,10 +353,8 @@ add_subdirectory(Inciter)
 add_subdirectory(LoadBalance)
 add_subdirectory(LinSys)
 add_subdirectory(IO)
-add_subdirectory(Main)
 add_subdirectory(Mesh)
 add_subdirectory(RNG)
 add_subdirectory(RNGTest)
 add_subdirectory(Statistics)
-add_subdirectory(UnitTest)
 add_subdirectory(RegTest)
