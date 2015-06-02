@@ -763,33 +763,44 @@ WARN_LOGFILE           =
 # spaces.
 # Note: If this tag is empty the current directory is searched.
 
-INPUT                  = pages/mainpage.dox \
-                         pages/bonker.dox \
-                         pages/breeze.dox \
-                         pages/walker.dox \
-                         pages/rngtest.dox \
-                         pages/unittest.dox \
-                         pages/meshconv.dox \
-                         pages/build.dox \
-                         pages/algorithm.dox \
-                         pages/concurrency.dox \
-                         pages/diffeq.dox \
-                         pages/inhomogeneity.dox \
-                         pages/io.dox \
-                         pages/layout.dox \
-                         pages/logo.dox \
-                         pages/rng.dox \
-                         pages/rngs_input.dox \
-                         pages/statistics_output.dox \
-                         pages/todo.dox \
-                         pages/tpl_licenses.dox \
-                         examples/examples.dox \
-                         examples/walker/Dirichlet.dox \
-                         examples/walker/Generalized_Dirichlet.dox \
-                         examples/rngtest/SmallCrush.dox \
-                         . \
-                         ../src \
-                         ../script
+INPUT                  = \
+  @CMAKE_CURRENT_SOURCE_DIR@/../doc/pages/mainpage.dox \
+  @CMAKE_CURRENT_SOURCE_DIR@/../doc/pages/bonker.dox \
+  @CMAKE_CURRENT_SOURCE_DIR@/../doc/pages/breeze.dox \
+  @CMAKE_CURRENT_SOURCE_DIR@/../doc/pages/walker.dox \
+  @CMAKE_CURRENT_SOURCE_DIR@/../doc/pages/rngtest.dox \
+  @CMAKE_CURRENT_SOURCE_DIR@/../doc/pages/unittest.dox \
+  @CMAKE_CURRENT_SOURCE_DIR@/../doc/pages/meshconv.dox \
+  @CMAKE_CURRENT_SOURCE_DIR@/../doc/pages/build.dox \
+  @CMAKE_CURRENT_SOURCE_DIR@/../doc/pages/algorithm.dox \
+  @CMAKE_CURRENT_SOURCE_DIR@/../doc/pages/concurrency.dox \
+  @CMAKE_CURRENT_SOURCE_DIR@/../doc/pages/diffeq.dox \
+  @CMAKE_CURRENT_SOURCE_DIR@/../doc/pages/inhomogeneity.dox \
+  @CMAKE_CURRENT_SOURCE_DIR@/../doc/pages/io.dox \
+  @CMAKE_CURRENT_SOURCE_DIR@/../doc/pages/layout.dox \
+  @CMAKE_CURRENT_SOURCE_DIR@/../doc/pages/logo.dox \
+  @CMAKE_CURRENT_SOURCE_DIR@/../doc/pages/rng.dox \
+  @CMAKE_CURRENT_SOURCE_DIR@/../doc/pages/rngs_input.dox \
+  @CMAKE_CURRENT_SOURCE_DIR@/../doc/pages/statistics_output.dox \
+  @CMAKE_CURRENT_SOURCE_DIR@/../doc/pages/todo.dox \
+  @CMAKE_CURRENT_SOURCE_DIR@/../doc/pages/tpl_licenses.dox \
+  @CMAKE_CURRENT_SOURCE_DIR@/../doc/examples/examples.dox \
+  @CMAKE_CURRENT_SOURCE_DIR@/../doc/examples/walker/Beta.dox \
+  @CMAKE_CURRENT_SOURCE_DIR@/../doc/examples/walker/DiagOU.dox \
+  @CMAKE_CURRENT_SOURCE_DIR@/../doc/examples/walker/Dirichlet.dox \
+  @CMAKE_CURRENT_SOURCE_DIR@/../doc/examples/walker/Gamma.dox \
+  @CMAKE_CURRENT_SOURCE_DIR@/../doc/examples/walker/Generalized_Dirichlet.dox \
+  @CMAKE_CURRENT_SOURCE_DIR@/../doc/examples/walker/MassFractionBeta.dox \
+  @CMAKE_CURRENT_SOURCE_DIR@/../doc/examples/walker/MixMassFractionBeta.dox \
+  @CMAKE_CURRENT_SOURCE_DIR@/../doc/examples/walker/NumFracBeta.dox \
+  @CMAKE_CURRENT_SOURCE_DIR@/../doc/examples/walker/OU.dox \
+  @CMAKE_CURRENT_SOURCE_DIR@/../doc/examples/walker/Skew-normal.dox \
+  @CMAKE_CURRENT_SOURCE_DIR@/../doc/examples/rngtest/SmallCrush.dox \
+  @CMAKE_CURRENT_SOURCE_DIR@/../doc/examples/rngtest/SmallCrush_all.dox \
+  @CMAKE_CURRENT_SOURCE_DIR@/../doc/examples/rngtest/Crush_all.dox \
+  . \
+  @CMAKE_CURRENT_SOURCE_DIR@/../src/ \
+  @CMAKE_CURRENT_SOURCE_DIR@/../script/
 
 # This tag can be used to specify the character encoding of the source files
 # that doxygen parses. Internally doxygen uses the UTF-8 encoding. Doxygen uses
@@ -892,7 +903,7 @@ EXCLUDE_SYMBOLS        =
 # that contain example code fragments that are included (see the \include
 # command).
 
-EXAMPLE_PATH           = tpl_licenses
+EXAMPLE_PATH           = @CMAKE_CURRENT_SOURCE_DIR@/../doc/tpl_licenses
 
 # If the value of the EXAMPLE_PATH tag contains directories, you can use the
 # EXAMPLE_PATTERNS tag to specify one or more wildcard pattern (like *.cpp and
@@ -912,7 +923,7 @@ EXAMPLE_RECURSIVE      = NO
 # that contain images that are to be included in the documentation (see the
 # \image command).
 
-IMAGE_PATH             = images
+IMAGE_PATH             = @CMAKE_CURRENT_SOURCE_DIR@/../doc/images
 
 # The INPUT_FILTER tag can be used to specify a program that doxygen should
 # invoke to filter for each input file. Doxygen will invoke the filter program
