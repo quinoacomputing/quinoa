@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.C
   \author    J. Bakosi
-  \date      Sat 30 May 2015 11:41:15 AM MDT
+  \date      Mon 01 Jun 2015 09:59:45 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Performer advances the Euler equations
   \details   Performer advances the Euler equations. There are a potentially
@@ -23,6 +23,7 @@
 #include "UnsMesh.h"
 #include "ExodusIIMeshReader.h"
 #include "ExodusIIMeshWriter.h"
+#include "LinSysMerger.h"
 #include "Inciter/InputDeck/InputDeck.h"
 
 namespace inciter {

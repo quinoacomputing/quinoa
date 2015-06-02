@@ -21,6 +21,12 @@ removeWarnings("ZoltanInterOp.C;LinSysMerger.C")
 add_dependencies( "LinSys" "linearmapCharmModule" )
 add_dependencies( "LinSys" "unsmeshmapCharmModule" )
 
+# Add extra dependency of LinSysMerger charm module on Conductor charm module.
+# This is required to make sure conductor.decl.h is generated before
+# linsysmerger.ci is processed, as LinSysMerger is specialized on
+# CProxy_Conductor.
+add_dependencies( "linsysmergerCharmModule" "conductorCharmModule" )
+
 INSTALL(TARGETS LinSys
   	RUNTIME DESTINATION bin COMPONENT Runtime
   	LIBRARY DESTINATION lib COMPONENT Runtime
