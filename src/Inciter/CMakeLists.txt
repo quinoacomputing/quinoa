@@ -20,6 +20,17 @@ removeWarnings( "Conductor.C;Performer.C;InciterSetup.C" )
 # inciter (in Main/Inciter.C).
 add_dependencies( "Inciter" "inciterCharmModule" )
 
+# Add extra dependency of Conductor charm module on charm modules implementing
+# advanced array element placement using maps. This is required since Conductor
+# charm module depends on and uses advanced array element placement maps.
+add_dependencies( "conductorCharmModule" "linearmapCharmModule" )
+add_dependencies( "conductorCharmModule" "unsmeshmapCharmModule" )
+
+# Add extra dependency of Performer charm module on LinSysMerger charm module.
+# This is required to make sure linsysmerger.decl.h is generated before
+# Peformer.h is processed including LinSysMerger.h.
+add_dependencies( "performerCharmModule" "linsysmergerCharmModule" )
+
 INSTALL(TARGETS Inciter
   	RUNTIME DESTINATION bin COMPONENT Runtime
   	LIBRARY DESTINATION lib COMPONENT Runtime
