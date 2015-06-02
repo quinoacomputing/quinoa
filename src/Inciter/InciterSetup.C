@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/InciterSetup.C
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 01:33:11 PM MDT
+  \date      Tue 02 Jun 2015 09:54:56 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Functions used to setup inciter
   \details   Functions used to setup inciter.
@@ -381,12 +381,13 @@ assignMesh(
  }
 }
 
-ctr::CmdLine
-parseCmdLine( int argc, char** argv )
+void
+parseCmdLine( int argc, char** argv, ctr::CmdLine& cmdline )
 //******************************************************************************
 //  Parse command line
 //! \param[in] argc Number of command-line arguments passed to executable
 //! \param[in] argv C-style character array of character arrays (cmd line args)
+//! \param[inout] cmdline Command line data to fill by command line parser
 //! \return Hierarchical tagged tuple containind command line data
 //! \author J. Bakosi
 //******************************************************************************
@@ -397,16 +398,11 @@ parseCmdLine( int argc, char** argv )
   // Create basic pretty printer
   tk::Print print;    // quiet output by default using print, see tk::Print ctor
 
-  // Create hearchical tagged tuple to store data from command line
-  ctr::CmdLine cmdline;
-
   // Parse command line into cmdline
   CmdLineParser cmdParser( argc, argv, print, cmdline, peid );
 
   // Echo help if requested and make sure mandatory command-line args are set
   help( argc, argv, cmdline, print );
-
-  return cmdline;
 }
 
 void
@@ -443,7 +439,8 @@ init( const ctr::CmdLine& cmdline,
   if (peid == 0)
     print.item( "Control file", cmdline.get< tag::io, tag::control >() );
 
-  InputDeckParser inputdeckParser( print, cmdline, inputdeck, peid );
+  // Parse input deck, also store parsed command line in input deck
+  InputDeckParser( print, cmdline, inputdeck, peid );
 
   if (peid == 0) {
     print.item( "Parsed control file", "success" );

@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/InciterSetup.h
   \author    J. Bakosi
-  \date      Sat 30 May 2015 10:45:37 AM MDT
+  \date      Tue 02 Jun 2015 09:49:07 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Functions used to setup inciter
   \details   Functions used to setup inciter.
@@ -26,8 +26,8 @@ namespace inciter {
 namespace ctr { class InputDeck; class CmdLine; }
 
 // Parse command line
-ctr::CmdLine
-parseCmdLine( int argc, char** argv );
+void
+parseCmdLine( int argc, char** argv, ctr::CmdLine& cmdline );
 
 //! Parse command line and input deck, instantiate pretty printer, echo info
 void
