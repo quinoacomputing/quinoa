@@ -37,7 +37,7 @@ Quinoa.
   - Web: http://sourceforge.net/projects/exodusii
   \verbinclude ExodusII_license.txt
 
-\section zoltan_license 9.Zoltan for static load balancing
+\section zoltan_license 9. Zoltan for static load balancing
   - Web: http://www.cs.sandia.gov/Zoltan/Zoltan.html
   \verbinclude Zoltan_license.txt
 
@@ -59,7 +59,7 @@ Quinoa.
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Wed 15 Apr 2015 08:04:24 AM MDT
+<em>Page last updated:</em> Wed 03 Jun 2015 07:22:48 AM MDT
 <em>Copyright 2012-2015, Jozsef Bakosi.</em>
 </small></div>
 */
