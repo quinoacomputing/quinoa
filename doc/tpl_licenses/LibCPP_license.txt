@@ -1,0 +1,16 @@
+License
+
+We intend to keep LLVM perpetually open source and to use a liberal open source license. As a contributor to the project, you agree that any contributions be licensed under the terms of the corresponding subproject. All of the code in LLVM is available under the University of Illinois/NCSA Open Source License, which boils down to this:
+
+ - You can freely distribute LLVM.
+ - You must retain the copyright notice if you redistribute LLVM.
+ - Binaries derived from LLVM must reproduce the copyright notice (e.g. in an included readme file).
+ - You can’t use our names to promote your LLVM derived products.
+ - There’s no warranty on LLVM at all.
+ - We believe this fosters the widest adoption of LLVM because it allows commercial products to be derived from LLVM with few restrictions and without a requirement for making any derived works also open source (i.e. LLVM’s license is not a “copyleft” license like the GPL). We suggest that you read the License if further clarification is needed.
+
+In addition to the UIUC license, the runtime library components of LLVM (compiler_rt, libc++, and libclc) are also licensed under the MIT License, which does not contain the binary redistribution clause. As a user of these runtime libraries, it means that you can choose to use the code under either license (and thus don’t need the binary redistribution clause), and as a contributor to the code that you agree that any contributions to these libraries be licensed under both licenses. We feel that this is important for runtime libraries, because they are implicitly linked into applications and therefore should not subject those applications to the binary redistribution clause. This also means that it is ok to move code from (e.g.) libc++ to the LLVM core without concern, but that code cannot be moved from the LLVM core to libc++ without the copyright owner’s permission.
+
+Note that the LLVM Project does distribute dragonegg, which is GPL. This means that anything “linked” into dragonegg must itself be compatible with the GPL, and must be releasable under the terms of the GPL. This implies that any code linked into dragonegg and distributed to others may be subject to the viral aspects of the GPL (for example, a proprietary code generator linked into dragonegg must be made available under the GPL). This is not a problem for code already distributed under a more liberal license (like the UIUC license), and GPL-containing subprojects are kept in separate SVN repositories whose LICENSE.txt files specifically indicate that they contain GPL code.
+
+We have no plans to change the license of LLVM. If you have questions or comments about the license, please contact the LLVM Developer's Mailing List.
