@@ -29,6 +29,13 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     "MinSizeRel" "RelWithDebInfo")
 endif()
 
+# Determine number of CPUs available
+include(ProcessorCount)
+ProcessorCount(PROCESSOR_COUNT)
+if(PROCESSOR_COUNT EQUAL 0)     # if ncpus could not be determined, assign 1
+  set(PROCESSOR_COUNT "1")
+endif()
+
 # Convert CMAKE_BUILD_TYPE
 string(TOUPPER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE)
 
@@ -81,13 +88,11 @@ set(REGTEST_EXECUTABLE "regtest")
 set(UNITTEST_EXECUTABLE "unittest")
 set(MESHCONV_EXECUTABLE "meshconv")
 set(WALKER_EXECUTABLE "walker")
+set(ALL_EXECUTABLES "${INCITER_EXECUTABLE};${RNGTEST_EXECUTABLE};${REGTEST_EXECUTABLE};${UNITTEST_EXECUTABLE};${MESHCONV_EXECUTABLE};${WALKER_EXECUTABLE}")
 
 # Get git revision
 include(GetGitRevisionDescription)
 get_git_head_revision(GIT_REFSPEC GIT_SHA1)
-
-# Attempt to find tools required for code coverage and define codecov functions
-include(DetectCodeCoverage)
 
 # Add compiler flags
 include(CheckCXXCompilerFlag)
@@ -257,6 +262,25 @@ if(LIBCXX_CPP)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++ -lc++abi")
 endif()
 
+# Attempt to find tools required for code coverage analysis
+include(DetectCodeCoverage)
+
+# Add code coverage target
+if(CODE_COVERAGE)
+  # Set compiler flags to perform code coverage analysis
+  set(CMAKE_CXX_FLAGS
+      "${CMAKE_CXX_FLAGS} -O0 --coverage -fprofile-arcs -ftest-coverage")
+  # Set test runner executable
+  set(testrunner "Main/${UNITTEST_EXECUTABLE}")
+  # Setup code coverage target
+  setup_target_for_coverage(coverage ${testrunner} unittest_coverage
+                            ${PROCESSOR_COUNT} "-v")
+  # Make test_coverage target dependent on all executables
+  add_dependencies( "coverage" ${ALL_EXECUTABLES} )
+  # Output that code coverage has been enabled
+  message(STATUS "Enabling code coverage target 'coverage' for all executables (${ALL_EXECUTABLES}) tested by Main/${UNITTEST_EXECUTABLE} on ${PROCESSOR_COUNT} CPUs, output to ./unittest_coverage/index.html")
+endif()
+
 # Set data layout for particle properties
 # Available options
 set(LAYOUT_VALUES "particle" "equation")
@@ -326,6 +350,7 @@ if(DOXYGEN_FOUND)
                     ${CMAKE_CURRENT_BINARY_DIR}/doc/quinoa.doxy
                     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/doc
                     COMMENT "Generating documentation with Doxygen" VERBATIM)
+  message(STATUS "Add target 'doc' to generate documentation to ./doc/html/index.html")
 endif(DOXYGEN_FOUND)
 
 include_directories(${QUINOA_SOURCE_DIR}
