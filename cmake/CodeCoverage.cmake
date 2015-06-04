@@ -38,14 +38,15 @@ FUNCTION(SETUP_TARGET_FOR_COVERAGE _targetname _testrunner _outputname _ncpus)
             ${CMAKE_BINARY_DIR}
     # Generate HTML report
     COMMAND ${GENHTML} --legend --branch-coverage --demangle-cpp --css-file quinoa.gcov.css --html-prolog quinoa.lcov.prolog --title "${GIT_REFSPEC}:${GIT_SHA1}" -o ${_outputname} ${_outputname}.filtered.info
-    # Replace page titles in generated html to own
-    COMMAND find unittest_coverage -type f -print | xargs file | grep text | cut -f1 -d: | xargs sed -i 's/LCOV - code coverage report/Quinoa unit test code coverage report/g'
+    # Customize page headers in generated html to own
+    COMMAND find ${_outputname} -type f -print | xargs file | grep text | cut -f1 -d: | xargs sed -i 's/LCOV - code coverage report/Quinoa unit test code coverage report/g'
+    COMMAND find ${_outputname} -type f -print | xargs file | grep text | cut -f1 -d: | xargs sed -i 's/<td class="headerItem">Test:<\\/td>/<td class="headerItem">Commit:<\\/td>/g'
     # Cleanup intermediate data
     COMMAND ${CMAKE_COMMAND} -E remove ${_outputname}.base.info ${_outputname}.test.info ${_outputname}.total.info ${_outputname}.filtered.info
     # Set work directory for target
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
     # Echo what is being done
-    COMMENT "Generating code coverage report"
+    COMMENT "Code coverage report"
   )
 
   # Show info where to find the report
