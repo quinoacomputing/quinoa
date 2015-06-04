@@ -1,4 +1,7 @@
+/*!
+  \page      Ninja_license Ninja license
 
+\verbatim
                                  Apache License
                            Version 2.0, January 2010
                         http://www.apache.org/licenses/
@@ -200,3 +203,11 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
+\endverbatim
+
+<hr>
+<div><small>
+<em>Page last updated:</em> Thu 04 Jun 2015 08:07:01 AM MDT
+<em>Copyright 2012-2015, Jozsef Bakosi.</em>
+</small></div>
+*/

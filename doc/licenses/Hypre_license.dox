@@ -1,3 +1,7 @@
+/*!
+  \page      Hypre_license Hypre license
+
+\verbatim
 		  GNU LESSER GENERAL PUBLIC LICENSE
 		       Version 2.1, February 1999
 
@@ -500,5 +504,11 @@ necessary.  Here is a sample; alter the names:
   Ty Coon, President of Vice
 
 That's all there is to it!
+\endverbatim
 
-
+<hr>
+<div><small>
+<em>Page last updated:</em> Thu 04 Jun 2015 08:03:13 AM MDT
+<em>Copyright 2012-2015, Jozsef Bakosi.</em>
+</small></div>
+*/

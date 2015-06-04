@@ -1,4 +1,7 @@
+/*!
+  \page      HDF5_license HDF5 license
 
+\verbatim
 Copyright Notice and License Terms for 
 HDF5 (Hierarchical Data Format 5) Software Library and Utilities
 -----------------------------------------------------------------------------
@@ -88,5 +91,11 @@ and/or accompanying materials:
    those of the United States Government or the University of California, 
    and shall not be used for advertising or product endorsement purposes.
 -----------------------------------------------------------------------------
+\endverbatim
 
-
+<hr>
+<div><small>
+<em>Page last updated:</em> Thu 04 Jun 2015 08:02:36 AM MDT
+<em>Copyright 2012-2015, Jozsef Bakosi.</em>
+</small></div>
+*/

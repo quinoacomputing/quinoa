@@ -1,3 +1,7 @@
+/*!
+  \page      ExodusII_license ExodusII license
+
+\verbatim
 Copyright (c) 2005 Sandia Corporation. Under the terms of Contract
 DE-AC04-94AL85000 with Sandia Corporation, the U.S. Governement
 retains certain rights in this software.
@@ -29,4 +33,11 @@ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
 THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+\endverbatim
 
+<hr>
+<div><small>
+<em>Page last updated:</em> Thu 04 Jun 2015 08:01:39 AM MDT
+<em>Copyright 2012-2015, Jozsef Bakosi.</em>
+</small></div>
+*/

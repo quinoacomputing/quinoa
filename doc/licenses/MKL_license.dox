@@ -1,3 +1,7 @@
+/*!
+  \page      MKL_license MKL license
+
+\verbatim
 IMPORTANT - READ BEFORE COPYING, INSTALLING OR USING.
 
 Do not copy, install, distribute, public display, or use the Materials (as
@@ -519,3 +523,11 @@ and (ii) any claim that any action or proceeding brought in any such court has
 been brought in an inconvenient forum.
 
 * Other names and brands may be claimed as the property of others
+\endverbatim
+
+<hr>
+<div><small>
+<em>Page last updated:</em> Thu 04 Jun 2015 08:15:49 AM MDT
+<em>Copyright 2012-2015, Jozsef Bakosi.</em>
+</small></div>
+*/
