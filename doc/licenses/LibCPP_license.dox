@@ -1,5 +1,7 @@
-License
+/*!
+  \page      LibCPP_license LibC++ license
 
+\verbatim
 We intend to keep LLVM perpetually open source and to use a liberal open source license. As a contributor to the project, you agree that any contributions be licensed under the terms of the corresponding subproject. All of the code in LLVM is available under the University of Illinois/NCSA Open Source License, which boils down to this:
 
  - You can freely distribute LLVM.
@@ -14,3 +16,11 @@ In addition to the UIUC license, the runtime library components of LLVM (compile
 Note that the LLVM Project does distribute dragonegg, which is GPL. This means that anything “linked” into dragonegg must itself be compatible with the GPL, and must be releasable under the terms of the GPL. This implies that any code linked into dragonegg and distributed to others may be subject to the viral aspects of the GPL (for example, a proprietary code generator linked into dragonegg must be made available under the GPL). This is not a problem for code already distributed under a more liberal license (like the UIUC license), and GPL-containing subprojects are kept in separate SVN repositories whose LICENSE.txt files specifically indicate that they contain GPL code.
 
 We have no plans to change the license of LLVM. If you have questions or comments about the license, please contact the LLVM Developer's Mailing List.
+\endverbatim
+
+<hr>
+<div><small>
+<em>Page last updated:</em> Thu 04 Jun 2015 08:05:28 AM MDT
+<em>Copyright 2012-2015, Jozsef Bakosi.</em>
+</small></div>
+*/

@@ -1,3 +1,7 @@
+/*!
+  \page      PEGTL_license PEGTL license
+
+\verbatim
 Copyright (c) 2010 Dr. Colin Hirsch
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
@@ -16,3 +20,11 @@ FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
 COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
 IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+\endverbatim
+
+<hr>
+<div><small>
+<em>Page last updated:</em> Thu 04 Jun 2015 08:07:55 AM MDT
+<em>Copyright 2012-2015, Jozsef Bakosi.</em>
+</small></div>
+*/

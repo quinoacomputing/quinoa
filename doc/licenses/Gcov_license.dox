@@ -1,3 +1,7 @@
+/*!
+  \page      Gcov_license Gcov license
+
+\verbatim
                     GNU GENERAL PUBLIC LICENSE
                        Version 3, 29 June 2007
 
@@ -672,3 +676,11 @@ may consider it more useful to permit linking proprietary applications with
 the library.  If this is what you want to do, use the GNU Lesser General
 Public License instead of this License.  But first, please read
 <http://www.gnu.org/philosophy/why-not-lgpl.html>.
+\endverbatim
+
+<hr>
+<div><small>
+<em>Page last updated:</em> Thu 04 Jun 2015 08:02:08 AM MDT
+<em>Copyright 2012-2015, Jozsef Bakosi.</em>
+</small></div>
+*/

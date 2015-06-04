@@ -1,3 +1,7 @@
+/*!
+  \page      PStreams_license PStreams license
+
+\verbatim
                    GNU LESSER GENERAL PUBLIC LICENSE
                        Version 3, 29 June 2007
 
@@ -163,3 +167,11 @@ whether future versions of the GNU Lesser General Public License shall
 apply, that proxy's public statement of acceptance of any version is
 permanent authorization for you to choose that version for the
 Library.
+\endverbatim
+
+<hr>
+<div><small>
+<em>Page last updated:</em> Thu 04 Jun 2015 08:08:23 AM MDT
+<em>Copyright 2012-2015, Jozsef Bakosi.</em>
+</small></div>
+*/

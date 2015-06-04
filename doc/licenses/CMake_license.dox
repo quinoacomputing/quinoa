@@ -1,3 +1,7 @@
+/*!
+  \page      Cmake_license CMake license
+
+\verbatim
 CMake - Cross Platform Makefile Generator
 Copyright 2000-2014 Kitware, Inc.
 Copyright 2000-2011 Insight Software Consortium
@@ -30,3 +34,11 @@ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
 THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+\endverbatim
+
+<hr>
+<div><small>
+<em>Page last updated:</em> Thu 04 Jun 2015 08:00:09 AM MDT
+<em>Copyright 2012-2015, Jozsef Bakosi.</em>
+</small></div>
+*/

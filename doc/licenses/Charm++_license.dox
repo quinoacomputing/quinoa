@@ -1,5 +1,7 @@
-Charm++/Converse License
+/*!
+  \page      Charm_license Charm++/Converse license
 
+\verbatim
 University of Illinois
 
 University of Illinois
@@ -146,3 +148,11 @@ University of Illinois
 201, N. Goodwin Ave.,
 Urbana, Illinois 61801 USA
 FAX: (217) 265-4035
+\endverbatim
+
+<hr>
+<div><small>
+<em>Page last updated:</em> Thu 04 Jun 2015 07:51:09 AM MDT
+<em>Copyright 2012-2015, Jozsef Bakosi.</em>
+</small></div>
+*/
