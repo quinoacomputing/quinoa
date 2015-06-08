@@ -339,17 +339,13 @@ endif("${isSystemDir}" STREQUAL "-1")
 # add a target to generate API documentation with Doxygen
 find_package(Doxygen)
 if(DOXYGEN_FOUND)
-  file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/../doc/quinoa.css
-            DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/doc)
-  file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/../doc/quinoa_layout.xml
-            DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/doc)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../doc/quinoa.doxy
                  ${CMAKE_CURRENT_BINARY_DIR}/doc/quinoa.doxy @ONLY)
   add_custom_target(doc
                     ${DOXYGEN_EXECUTABLE}
                     ${CMAKE_CURRENT_BINARY_DIR}/doc/quinoa.doxy
                     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/doc
-                    COMMENT "Generating documentation with Doxygen" VERBATIM)
+                    COMMENT "Documentation" VERBATIM)
   message(STATUS "Add target 'doc' to generate documentation to ./doc/html/index.html")
 endif(DOXYGEN_FOUND)
 

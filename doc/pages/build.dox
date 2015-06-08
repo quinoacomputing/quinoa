@@ -1,45 +1,48 @@
 /*!
   \page      build How to build
 
-\section build_quinoa Building Quinoa
-
-__1. Pick compilers:__
+\section build_pick 1. Pick compilers
 
    \verbatim
     $ CC=mpicc CXX=mpic++ FC=mpif90 F77=mpif77 F90=mpif90
    \endverbatim
 
-__2. Build third-party libraries (TPLs) in empty build dir:__
+\section build_tpl 2. Build third-party libraries (TPLs) in empty build dir
 
    \verbatim
     $ cmake <path-to-tpl-dir>
     $ make
    \endverbatim
-   \note Fastest in a non-networked mount, e.g., /tmp.
-   \note If the CMAKE_INSTALL_PREFIX cmake variable in unset, it will default to
+   \note The CMAKE_INSTALL_PREFIX cmake variable defaults to
    <path-to-tpl-dir>/install/<compiler>, which is where the TPLs are installed.
 
-__3. Build Quinoa in empty build dir:__
+\section build_quinoa 3. Build Quinoa in empty build directory
 
    \verbatim
     $ cmake <path-to-src-dir>
     $ make
    \endverbatim
    \note All executables will be in <build>/Main.
-   \note If the TPL_DIR cmake variable is unset, it will default to
+   \note The TPL_DIR cmake variable defaults to
    <path-to-tpl-dir>/install/<compiler>.
 
-\section build_quinoa_doc Building the documentation
+\section build_doc 4. Build the documentation in build directory
 
    \verbatim
-    $ cd <quinoa>/doc
-    $ doxygen quinoa.doxy
+    $ make doc
    \endverbatim
-   \note Point a web browser to <quinoa>/doc/html/index.html.
+   \note Point a web browser to <build>/doc/html/index.html.
+
+\section build_coverage 5. Build code coverage report in build directory
+
+   \verbatim
+    $ make coverage
+   \endverbatim
+   \note Point a web browser to <build>/unittest_coverage/index.html.
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Fri 27 Feb 2015 10:01:40 AM MST
+<em>Page last updated:</em> Mon 08 Jun 2015 07:30:39 AM MDT
 <em>Copyright 2012-2015, Jozsef Bakosi.</em>
 </small></div>
 */
