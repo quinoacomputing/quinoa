@@ -1,129 +1,135 @@
 /*!
-  \page      licenses Third-party libraries and tools licenses
+  \page      licenses Third-party libraries licenses, compilers, and tools
   \tableofcontents
 
 Here are the links to full verbatim texts of the licenses of all third-party
-libraries and tools used by Quinoa. None of the libraries or the tools are
-re-distributed.
+libraries, and the list of compilers and tools used by Quinoa. None of the
+libraries are re-distributed.
 
-\section charm_license 1. The Charm++ Parallel Programming System
+\section tpl_licenses Third-party libraries
+
+\subsection charm_license 1. The Charm++ Parallel Programming System
   - Required
   - Web: http://charm.cs.illinois.edu
   - License: \subpage Charm_license
 
-\section pegtl_license 2. The Parsing Expression Grammar Template Library
+\subsection pegtl_license 2. The Parsing Expression Grammar Template Library
   - Required
   - Web: https://code.google.com/p/pegtl/wiki/PEGTL0
   - License: \subpage PEGTL_license
 
-\section tut_license 3. C++ Template Unit Test Framework
+\subsection tut_license 3. C++ Template Unit Test Framework
   - Required
   - Web: http://tut-framework.sourceforge.net
   - License: \subpage TUT_license
 
-\section boost_license 4. Boost C++ libraries
+\subsection boost_license 4. Boost C++ libraries
   - Required
   - Web: http://www.boost.org
   - License: \subpage Boost_license
 
-\section cartesian_product_license 5. Cartesian product, a Boost MPL algorithm
+\subsection cartesian_product_license 5. Cartesian product, a Boost MPL algorithm
   - Required
-  - Web:  http://www.organicvectory.com/index.php?option=com_content&view=article&id=75:boostmplcartesianproduct&catid=42:boost&Itemid=78
+  - Web: http://tinyurl.com/55wdww
   - License: \subpage Cartesian_Product_license
 
-\section hdf5_license 6. The HDF5 data model
+\subsection hdf5_license 6. The HDF5 data model
   - Required
   - Web: http://www.hdfgroup.org/HDF5
   - License: \subpage HDF5_license
 
-\section netcdf_license 7. The NetCDF (network Common Data Form) data model
+\subsection netcdf_license 7. The NetCDF data model
   - Required
   - Web: http://www.unidata.ucar.edu/downloads/netcdf/index.jsp
   - License: \subpage NetCDF_license
 
-\section exodusii_license 8. ExodusII for storing data for finite element analyses
+\subsection exodusii_license 8. ExodusII for storing data for finite element analyses
   - Required
   - Web: http://sourceforge.net/projects/exodusii
   - License: \subpage ExodusII_license
 
-\section zoltan_license 9. Zoltan for static load balancing
+\subsection zoltan_license 9. Zoltan for static load balancing
   - Required
   - Web: http://www.cs.sandia.gov/Zoltan/Zoltan.html
   - License: \subpage Zoltan_license
 
-\section rngsselib_license 10. RNGSSELIB for random number generation
+\subsection rngsselib_license 10. RNGSSELIB for random number generation
   - Required
   - Web: http://cpc.cs.qub.ac.uk/summaries/AEIT_v2_0.html
   - License: \subpage RNGSSELIB_license
 
-\section testu01_license 11. TestU01 for statistical testing of random number generators
+\subsection testu01_license 11. TestU01 for statistical testing of random number generators
   - Required
   - Web: http://www.iro.umontreal.ca/~simardr/testu01/tu01.html
   - License: \subpage TestU01_license
 
-\section pstreams_license 12. PStreams for POSIX process Control
+\subsection pstreams_license 12. PStreams for POSIX process Control
   - Required
   - Web: http://pstreams.sourceforge.net/
   - License: \subpage PStreams_license
 
-\section hypre_license 13. Hypre for linear solvers and preconditioners
+\subsection hypre_license 13. Hypre for linear solvers and preconditioners
   - Required
   - Web: http://computation.llnl.gov/project/linear_solvers/software.php
   - License: \subpage Hypre_license
 
-\section libstdcpp_license 14. Libstdc++ for standard C++ containers and algorithms
+\subsection libstdcpp_license 14. Libstdc++ for standard C++ containers and algorithms
   - Either libc++ or libstdc++ required
   - Web: https://gcc.gnu.org/libstdc++
   - License: \subpage LibStdCPP_license
 
-\section libcpp_license 15. Libc++ for standard C++ containers and algorithms
+\subsection libcpp_license 15. Libc++ for standard C++ containers and algorithms
   - Either libc++ or libstdc++ required
   - Web: http://libcxx.llvm.org
   - License: \subpage LibCPP_license
 
-\section openmpi_license 16. OpenMPI for the message passing interface
+\subsection openmpi_license 16. OpenMPI for the message passing interface
   - Required
   - Web: http://www.open-mpi.org
   - License: \subpage OpenMPI_license
 
-\section mkl_license 17. Intel Math Kernel Library for BLAS/LAPACK and random number generation
+\subsection mkl_license 17. Intel Math Kernel Library for BLAS/LAPACK and random number generation
   - Optional
   - Web: https://software.intel.com/en-us/intel-mkl
   - License: \subpage MKL_license
 
-\section doxygen_license 18. Doxygen for design, theory, and software API documentation
-  - Optional
+\section compiler_licenses Compilers
+
+\subsection clang_license 1. Clang C++ compiler
+  - Web: http://clang.llvm.org
+
+\subsection gcc_license 2. GNU C++ compiler
+  - Web: https://gcc.gnu.org
+
+\subsection intel_license 3. Intel C++ compiler
+  - Web https://software.intel.com/en-us/c-compilers
+
+\section tools_licenses Tools
+
+\subsection doxygen_license 1. Doxygen for design, theory, and software API documentation
   - Web: http://www.doxygen.org
-  - License: \subpage Doxygen_license
 
-\section cmake_license 19. CMake as a build system
-  - Required
+\subsection cmake_license 2. CMake as a build system
   - Web: http://www.cmake.org
-  - License: \subpage Cmake_license
 
-\section ninja_license 20. Ninja for building
-  - Optional
+\subsection ninja_license 3. Ninja for building
   - Web: https://martine.github.io/ninja
-  - License: \subpage Ninja_license
 
-\section gold_license 21. Gold for linking
-  - Optional
+\subsection gold_license 4. Gold for linking
   - Web: http://www.gnu.org/software/binutils
-  - License: \subpage Binutils_license
 
-\section gcov_license 22. Gcov for unit test coverage analysis
-  - Optional
+\subsection gcov_license 5. Gcov for unit test coverage analysis
   - Web: https://gcc.gnu.org/onlinedocs/gcc/Gcov.html
-  - License: \subpage Gcov_license
 
-\section lcov_license 23. Lcov for unit test coverage analysis report
-  - Optional
+\subsection lcov_license 6. Lcov for unit test coverage analysis report
   - Web: http://ltp.sourceforge.net/coverage/lcov.php
-  - License: \subpage Lcov_license
+
+\subsection git_license 7. Git for source code version control
+  - Web: https://git-scm.com
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Thu 04 Jun 2015 08:12:23 AM MDT
+<em>Page last updated:</em> Mon 08 Jun 2015 08:04:05 AM MDT
 <em>Copyright 2012-2015, Jozsef Bakosi.</em>
 </small></div>
 */
