@@ -1,14 +1,14 @@
 /*!
   \page      layout Particle data layout
 
-Data layout requirements and design
------------------------------------
+\section layout_req Data layout requirements and design
+
 How should the particle properties should be stored in memory? This is the
 single largest chunk of data in a particle-based code. The layout determines how
 the data is accessed and potentially has a first-degree effect on overall
 efficiency.
 
-### Possibilities
+\section layout_possibilities Possibilities
 
 1. __Particle-major__, in which various physical properties, e.g., position,
 velocity, energy, etc., of a single particle are close to each other in memory.
@@ -30,7 +30,7 @@ the algorithm that advances the properties in time applies one equation at a
 time, the equations will access data contiguously in memory as the properties
 are contiguously stored.
 
-### Discussion
+\section layout_discussion Discussion
 
 A property-major storage, case 2 above, seems to be the most efficient at first
 sight, as it stores data, as it is read and written by the equation algorithms,
@@ -55,7 +55,7 @@ depending on the type of equations the most appropriate layout could be
 selected. If such a design is maintanable, there is still a question wether the
 data layout selection should be done at compile-, or run-time.
 
-### Assessment of the Blaze library that offers a similar choice
+\section layout_blaze Assessment of the Blaze library that offers a similar choice
 
 Have looked at https://code.google.com/p/blaze-lib which implements row-, and
 column-major matrix classes based on a template argument. See, e.g.,
@@ -81,7 +81,7 @@ are problematic:
   of a time-integrator for an equation just because the data access is
   different.
 
-### Requirements
+\section layout_requirements Requirements
 
 Is it possible to implement a compile-time configurable data-access policy via a
 thin data-access interface with zero run-time cost, no code-duplication, and in
@@ -154,7 +154,7 @@ discussed above. The implementation is via a thin data-access interface with
 zero run-time cost, no code-duplication, and in a way that is invisible to
 derived equation classes.
 
-### Zero-runtime-cost data-layout wrappers with type-based compile-time dispatch
+\section layout_zerocost Zero-runtime-cost data-layout wrappers with type-based compile-time dispatch
 
 Tags for selecting particle-, or property-major data layout policies:
 
@@ -203,7 +203,7 @@ class Data {
 };
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-### Test of zero-cost
+\section layout_test Test of zero-cost
 
 Add to Dirichlet constructor:
 
@@ -234,7 +234,7 @@ std::cout << m_mix->aa << m_mix->bb;
 All the above so the optimizing compiler cannot entirely optimize the
 assignments of \a aa and \a bb away.
 
-### Debug assembly
+\section layout_debugasm Debug assembly
 Generated DEBUG assembly code of the assignments of \a aa (line 42) and \a bb
 (line 43) in Dirichlet's constructor, with clang -g -S -mllvm
 --x86-asm-syntax=intel, gnu and intel generate very similar code:
@@ -271,7 +271,7 @@ Line 42 translates to register loads and a function call into
 tk::ParticleProperties, while line 43 translates to some integer arithmetic of
 the address and loads.
 
-### Excerpt from the Intel® 64 and IA-32 Architectures Software Developer Manual
+\section layout_excerpt1 Excerpt from the Intel® 64 and IA-32 Architectures Software Developer Manual
 
 > The LEA (load effective address) instruction computes the effective address in
 > memory (offset within a segment) of a source operand and places it in a
@@ -305,7 +305,7 @@ the address and loads.
 > Empty bit positions are cleared. The CF flag is loaded with the last bit
 > shifted out of the operand.
 
-### Optimized assembly
+\section layout_optasm Optimized assembly
 
 Generated RELWITHDEBINFO assembly code of the assignments of \a aa (line 42) and
 \a bb (line 43) in Dirichlet's constructor, with clang -O2 -g DNDEBUG -S -mllvm
@@ -326,7 +326,7 @@ Generated RELWITHDEBINFO assembly code of the assignments of \a aa (line 42) and
 Both lines 42 and 43 translate to very similar SSE loads with pointer
 arithmetic, i.e., line 42 costs the same as line 43.
 
-### Excerpt from the Intel® 64 and IA-32 Architectures Software Developer Manual
+\section layout_excerpt2 Excerpt from the Intel® 64 and IA-32 Architectures Software Developer Manual
 
 > The MOVS instruction moves the string element addressed by the ESI register to
 > the location addressed by the EDI register. The assembler recognizes three
@@ -347,7 +347,7 @@ configurable particle-data-access policy discussed above. The implementation is
 via a thin data-access interface with zero run-time cost, no code-duplication,
 and in a way that is invisible to derived equation classes.
 
-### Control file used for benchmark
+\section layout_input Control file used for benchmark
 We will integrate for the duration of a 100,000 time steps a system of 100
 coupled non-linear stochastic differential equations (SDEs) whose statistically
 stationary solution convergese to the Dirichlet distribution and measure the
@@ -416,7 +416,7 @@ walker
 end
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-### Ptr - Working with raw pointers
+\section layout_ptr Ptr - Working with raw pointers
 
 This algorithm gets the starting raw pointer from which the given particle data
 is (contiguously) accessible in memory and simply adds integers to the address
@@ -449,7 +449,7 @@ void advance(int p, int tid, tk::real dt) override {
 }
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-### Par - Access via particle-major layout policy
+\section layout_par Par - Access via particle-major layout policy
 
 This algorithm accesses particle data via the wrapper class,
 tk::ParticleProperties, in a data-layout-agnostic fashion. Access itself via
@@ -485,7 +485,7 @@ void advance(int p, int tid, tk::real dt) override {
 }
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-### Comparison of the algorithms
+\section layout_comparison Comparison of the algorithms
 
 DEBUG mode is -O0 and does not optimize function calls away for all of three
 compilers tested. RELEASE modes is -O3 and the abstraction is completely
@@ -512,7 +512,7 @@ Total time measured in micro-seconds, run on a Lenovo laptop with Intel Core i7,
        intel/RELEASE |  90059133        |  89892665        | 0.99815 x speedup
        DEBUG/RELEASE | 1.9064 x speedup | 6.7682 x speedup | n/a
 
-### Discussion
+\section layout_discussion Discussion
 
 - As expected, inlining has a significant effect on performance: going from
   DEBUG to RELEASE mode yields a significant speedup with all three compilers,
@@ -525,7 +525,7 @@ Total time measured in micro-seconds, run on a Lenovo laptop with Intel Core i7,
 - Surprisingly, the layout-agnostic access is even a tiny bit faster than the
   layout-dependent algorithm with the intel compiler with -O3.
 
-### Conclusion
+\section layout_conclusion Conclusion
 
 As this is not a significant performance hit, the equation advancement
 algorithms and general particle data access are implemented in a
@@ -536,7 +536,7 @@ For the implementation see the tk::ParticleProperties.
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Tue 03 Feb 2015 10:21:22 AM MST
+<em>Page last updated:</em> Tue 09 Jun 2015 08:33:55 AM MDT
 <em>Copyright 2012-2015, Jozsef Bakosi.</em>
 </small></div>
 */
