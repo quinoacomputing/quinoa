@@ -175,7 +175,8 @@ class Main : public CBase_Main {
       try {
         if (!m_timer.empty()) {
           m_timestamp.emplace_back(
-           "Total Charm++ runtime . . . . . . . . . . . . . . . . . . . . . .",
+           "Total Charm++ runtime . . . . . . . . . . . . . . . . . . . . . . "
+           ". . . . .",
            m_timer[0].hms() );
           m_print.time( "Timers (h:m:s)", m_timestamp );
           m_print.perf( "Performance statistics", m_perf );
@@ -261,7 +262,8 @@ int main( int argc, char **argv ) {
   } catch (...) { tk::processExceptionMPI(); }
 
   g_timestamp.emplace_back(
-    "Total MPI runtime . . . . . . . . . . . . . . . . . . . . . . . .",
+    "Total MPI runtime . . . . . . . . . . . . . . . . . . . . . . . . . . "
+    ". . .",
     mpi.hms() );
 
   // Run Charm++ main chare using the partitioned graph

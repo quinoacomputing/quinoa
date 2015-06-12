@@ -11,10 +11,13 @@
 #ifndef NetgenMeshReader_h
 #define NetgenMeshReader_h
 
+#include <iosfwd>
+
 #include "Reader.h"
-#include "UnsMesh.h"
 
 namespace tk {
+
+class UnsMesh;
 
 //! \brief NetgenMeshReader : tk::Reader
 //! \details Mesh reader class facilitating reading a mesh from a file saved by
@@ -24,21 +27,18 @@ class NetgenMeshReader : public Reader {
 
   public:
     //! Constructor
-    explicit NetgenMeshReader( const std::string filename, UnsMesh& mesh ) :
-      Reader( filename ),
-      m_mesh( mesh ) {}
+    explicit NetgenMeshReader( const std::string filename ) :
+      Reader( filename ) {}
 
     //! Read Netgen mesh
-    void read() override;
+    void readMesh( UnsMesh& mesh );
 
   private:
     //! Read nodes
-    void readNodes();
+    void readNodes( UnsMesh& mesh );
 
     //! Read element connectivity
-    void readElements();
-
-    UnsMesh& m_mesh;                   //!< Mesh object
+    void readElements( UnsMesh& mesh );
 };
 
 } // tk::

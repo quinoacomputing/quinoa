@@ -34,8 +34,8 @@ struct Mesh_common {
   //! \param[in] writer Writer type
   //! \param[in] ascii Boolean selecting ASCII (TEXT) or binary mesh type
   //! \author J. Bakosi
-  void testPureTetMesh( tk::MeshReaderType reader,
-                        tk::MeshWriterType writer,
+  void testPureTetMesh( tk::MeshReader reader,
+                        tk::MeshWriter writer,
                         bool ascii = false )
   {
     // Coordinates for simple tetrahedron-mesh
@@ -100,25 +100,28 @@ struct Mesh_common {
     // attempting to read from an unwritten file below. Also the filenames
     // should differ among the various readers, since the tests can be executed
     // concurrently.
-    if (reader == tk::MeshReaderType::GMSH && ascii) {
+    if (reader == tk::MeshReader::GMSH && ascii) {
 
       filename = "out_gmsh_asc.msh";
-      tk::GmshMeshWriter( filename, outmesh, tk::GmshFileType::ASCII ).write();
+      tk::GmshMeshWriter( filename, tk::GmshFileType::ASCII ).
+        writeMesh( outmesh );
  
-    } else if (reader == tk::MeshReaderType::GMSH && !ascii) {
+    } else if (reader == tk::MeshReader::GMSH && !ascii) {
 
       filename = "out_gmsh_bin.msh";
-      tk::GmshMeshWriter( filename, outmesh, tk::GmshFileType::BINARY ).write();
+      tk::GmshMeshWriter( filename, tk::GmshFileType::BINARY ).
+        writeMesh( outmesh );
 
-    } else if (reader == tk::MeshReaderType::NETGEN) {
+    } else if (reader == tk::MeshReader::NETGEN) {
 
       filename = "out.mesh";
-      tk::NetgenMeshWriter( filename, outmesh ).write();
+      tk::NetgenMeshWriter( filename ).writeMesh( outmesh );
 
-    } else if (reader == tk::MeshReaderType::EXODUSII) {
+    } else if (reader == tk::MeshReader::EXODUSII) {
 
       filename = "out.exo";
-      tk::ExodusIIMeshWriter( filename, outmesh ).write();
+      tk::ExodusIIMeshWriter( filename, tk::ExoWriter::CREATE ).
+        writeMesh( outmesh );
 
     }
 
@@ -126,21 +129,21 @@ struct Mesh_common {
     tk::UnsMesh inmesh;
 
     // Read in mesh just written out
-    if (reader == tk::MeshReaderType::GMSH && ascii) {
+    if (reader == tk::MeshReader::GMSH && ascii) {
 
-      tk::GmshMeshReader( filename, inmesh ).read();
+      tk::GmshMeshReader( filename ).readMesh( inmesh );
  
-    } else if (reader == tk::MeshReaderType::GMSH && !ascii) {
+    } else if (reader == tk::MeshReader::GMSH && !ascii) {
 
-      tk::GmshMeshReader( filename, inmesh ).read();
+      tk::GmshMeshReader( filename ).readMesh( inmesh );
 
-    } else if (reader == tk::MeshReaderType::NETGEN) {
+    } else if (reader == tk::MeshReader::NETGEN) {
 
-      tk::NetgenMeshReader( filename, inmesh ).read();
+      tk::NetgenMeshReader( filename ).readMesh( inmesh );
 
-    } else if (reader == tk::MeshReaderType::EXODUSII) {
+    } else if (reader == tk::MeshReader::EXODUSII) {
 
-      tk::ExodusIIMeshReader( filename, inmesh ).read();
+      tk::ExodusIIMeshReader( filename ).readMesh( inmesh );
 
     }
 
@@ -189,7 +192,7 @@ Mesh_group Mesh( "IO/Mesh" );
 template<> template<>
 void Mesh_object::test< 1 >() {
   set_test_name( "write/read Gmsh ASCII tet-mesh" );
-  testPureTetMesh( tk::MeshReaderType::GMSH, tk::MeshWriterType::GMSH, true );
+  testPureTetMesh( tk::MeshReader::GMSH, tk::MeshWriter::GMSH, true );
 }
 
 //! Write and read Gmsh binary mesh
@@ -197,7 +200,7 @@ void Mesh_object::test< 1 >() {
 template<> template<>
 void Mesh_object::test< 2 >() {
   set_test_name( "write/read Gmsh binary tet-mesh" );
-  testPureTetMesh( tk::MeshReaderType::GMSH, tk::MeshWriterType::GMSH );
+  testPureTetMesh( tk::MeshReader::GMSH, tk::MeshWriter::GMSH );
 }
 
 //! Write and read ExodusII mesh
@@ -205,7 +208,7 @@ void Mesh_object::test< 2 >() {
 template<> template<>
 void Mesh_object::test< 3 >() {
   set_test_name( "write/read ExodusII tet-mesh" );
-  testPureTetMesh( tk::MeshReaderType::EXODUSII, tk::MeshWriterType::EXODUSII );
+  testPureTetMesh( tk::MeshReader::EXODUSII, tk::MeshWriter::EXODUSII );
 }
 
 //! Write and read Netgen mesh
@@ -213,7 +216,7 @@ void Mesh_object::test< 3 >() {
 template<> template<>
 void Mesh_object::test< 4 >() {
   set_test_name( "write/read Netgen tet-mesh" );
-  testPureTetMesh( tk::MeshReaderType::NETGEN, tk::MeshWriterType::NETGEN );
+  testPureTetMesh( tk::MeshReader::NETGEN, tk::MeshWriter::NETGEN );
 }
 
 } // tut::

@@ -9,10 +9,12 @@
 */
 //******************************************************************************
 
+#include <string>
 #include <stdexcept>
 
 #include "MeshFactory.h"
-#include "Factory.h"
+#include "Exception.h"
+#include "Timer.h"
 #include "Reader.h"
 #include "GmshMeshReader.h"
 #include "NetgenMeshReader.h"
@@ -23,7 +25,7 @@
 
 namespace tk {
 
-MeshReaderType
+MeshReader
 detectInput( const std::string& filename )
 //******************************************************************************
 //  Detect input mesh file type
@@ -36,9 +38,9 @@ detectInput( const std::string& filename )
   std::string s( Reader( filename ).firstline().substr(0,3) );
 
   if ( s == "$Me" ) {
-    return MeshReaderType::GMSH;
+    return MeshReader::GMSH;
   } else if ( s == "CDF" || s == "HDF" ) {
-    return MeshReaderType::EXODUSII;
+    return MeshReader::EXODUSII;
   } else {
     try {
       std::stoi(s);    // try to convert to an integer
@@ -50,11 +52,11 @@ detectInput( const std::string& filename )
     // thrown by std::stoi(), but a three-digit integer will always fit into int
 
     // if we got here, the above string-to-integer conversion succeeded
-    return MeshReaderType::NETGEN;
+    return MeshReader::NETGEN;
   }
 }
 
-MeshWriterType
+MeshWriter
 pickOutput( const std::string& filename )
 //******************************************************************************
 //  Determine output mesh file type
@@ -68,11 +70,11 @@ pickOutput( const std::string& filename )
   std::string ext( fn.substr(fn.find_last_of(".") + 1) );
 
   if ( ext == "msh" ) {
-    return MeshWriterType::GMSH;
+    return MeshWriter::GMSH;
   } else if ( ext == "exo" || ext == "h5" ) {
-    return MeshWriterType::EXODUSII;
+    return MeshWriter::EXODUSII;
   } else if ( ext == "mesh" ) {
-    return MeshWriterType::NETGEN;
+    return MeshWriter::NETGEN;
   } else {
     Throw( "Output mesh file type could not be determined from extension of "
            "filename '" + filename + "'; valid extensions are: "
@@ -93,23 +95,21 @@ readUnsMesh( const std::string& filename,
 //! \author J. Bakosi
 //******************************************************************************
 {
-  //! Mesh readers factory
-  std::map< MeshReaderType, std::function<Reader*()> > readers;
-
+  // Read in mesh
+  tk::Timer t;
+ 
   //! Create unstructured mesh to store mesh
   UnsMesh mesh;
 
-  // Register mesh readers
-  record< GmshMeshReader >
-        ( readers, MeshReaderType::GMSH, filename, std::ref(mesh) );
-  record< NetgenMeshReader >
-        ( readers, MeshReaderType::NETGEN, filename, std::ref(mesh) );
-  record< ExodusIIMeshReader >
-        ( readers, MeshReaderType::EXODUSII, filename, std::ref(mesh) );
+  const auto meshtype = detectInput( filename );
 
-  // Read in mesh
-  tk::Timer t;
-  instantiate( readers, detectInput( filename ) )->read();
+  if (meshtype == MeshReader::GMSH)
+    GmshMeshReader( filename ).readMesh( mesh );
+  else if (meshtype == MeshReader::NETGEN)
+    NetgenMeshReader( filename ).readMesh( mesh );
+  else if (meshtype== MeshReader::EXODUSII)
+    ExodusIIMeshReader( filename ).readMesh( mesh );
+
   timestamp = std::make_pair( "Read mesh from file", t.dsec() );
 
   // Return (move out) mesh object
@@ -129,20 +129,17 @@ writeUnsMesh( const std::string& filename,
 //! \author J. Bakosi
 //******************************************************************************
 {
-  //! Mesh writers factory
-  std::map< MeshWriterType, std::function<Writer*()> > writers;
-
-  // Register mesh writers
-  record< GmshMeshWriter >
-        ( writers, MeshWriterType::GMSH, filename, std::ref(mesh) );
-  record< NetgenMeshWriter >
-        ( writers, MeshWriterType::NETGEN, filename, std::ref(mesh) );
-  record< ExodusIIMeshWriter >
-        ( writers, MeshWriterType::EXODUSII, filename, std::ref(mesh) );
-
-  // Write out mesh
   tk::Timer t;
-  instantiate( writers, pickOutput( filename ) )->write();
+
+  const auto meshtype = pickOutput( filename );
+
+  if (meshtype == MeshWriter::GMSH)
+    GmshMeshWriter( filename ).writeMesh( mesh );
+  else if (meshtype == MeshWriter::NETGEN)
+    NetgenMeshWriter( filename ).writeMesh( mesh );
+  else if (meshtype== MeshWriter::EXODUSII)
+    ExodusIIMeshWriter( filename, ExoWriter::CREATE ).writeMesh( mesh );
+
   timestamp = std::make_pair( "Write mesh to file", t.dsec() );
 }
 

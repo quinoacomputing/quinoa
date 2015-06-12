@@ -298,8 +298,8 @@ createHyperGraph( tk::UnsMesh& graph, HGRAPH_DATA& hg )
 
   // Renumber mesh points for better data locality
   std::vector< std::size_t > map, invmap;
-  std::tie( map, invmap ) = tk::renumber( psup );
-  tk::remap( inpoel, map );
+  //std::tie( map, invmap ) = tk::renumber( psup );
+  //tk::remap( inpoel, map );
 
   // Allocate data to store the hypergraph ids. The total number of vertices or
   // neighbors in all the hyperedges of the hypergraph, nhedge = all points

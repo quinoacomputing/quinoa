@@ -203,6 +203,37 @@ void Timer_object::test< 6 >() {
   CProxy_CharmTimer::ckNew( timer );    // fire up Charm++ chare
 }
 
+//! Test querying a timer from a std::map
+//! \author J. Bakosi
+template<> template<>
+void Timer_object::test< 7 >() {
+  set_test_name( "query timer from map" );
+
+  std::map< std::string, tk::Timer > timer;
+  timer[ "some timer" ];// start timing, assign to label
+  usleep( 1000000 );    // in micro-seconds, sleep for 1.0 second
+  const auto t = tk::query( timer, std::string("some timer") );
+
+  ensure_equals( "timer different", t, 1.0, precision );
+}
+
+//! Test that querying timer from a map throws with garbage key
+//! \author J. Bakosi
+template<> template<>
+void Timer_object::test< 8 >() {
+  set_test_name( "query throws with non-existent key" );
+
+  try {
+    std::map< std::string, tk::Timer > timer;
+    timer[ "some timer" ];// start timing, assign to label
+    const auto t = tk::query( timer, std::string("some non-existent timer") );
+    fail( "should throw exception" );
+  }
+  catch ( tk::Exception& e ) {
+    // exception thrown, test ok
+  }
+}
+
 } // tut::
 
 #endif // test_Timer_h

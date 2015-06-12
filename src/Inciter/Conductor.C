@@ -51,17 +51,17 @@ Conductor::Conductor() :
   // Create linear system merger chare group collecting chear contributions
   m_lsmproxy = LinSysMergerProxy::ckNew( thisProxy, g_npoin );
 
-  // Charm++ map object for custom initial placement of chare array elements
-  auto map = tk::CProxy_UnsMeshMap::ckNew( g_npoin, g_point );
-  //auto map = tk::CProxy_LinearMap::ckNew( m_nchare );
-  //auto map = CProxy_RRMap::ckNew();      // round robin
-  CkArrayOptions opts( m_nchare );
-  opts.setMap( map );
+//   // Charm++ map object for custom initial placement of chare array elements
+//   auto map = tk::CProxy_UnsMeshMap::ckNew( g_npoin, g_point );
+//   //auto map = tk::CProxy_LinearMap::ckNew( m_nchare );
+//   //auto map = CProxy_RRMap::ckNew();      // round robin
+//   CkArrayOptions opts( m_nchare );
+//   opts.setMap( map );
 
   // Fire up array of asynchronous performers
-  m_perfproxy = PerfProxy::ckNew( thisProxy, m_lsmproxy, opts );
-  //m_perfproxy = PerfProxy::ckNew( thisProxy, m_lsmproxy, m_nchare );
-  m_perfproxy.doneInserting();
+  //m_perfproxy = PerfProxy::ckNew( thisProxy, m_lsmproxy, opts );
+  m_perfproxy = PerfProxy::ckNew( thisProxy, m_lsmproxy, m_nchare );
+  //m_perfproxy.doneInserting();
 }
 
 void

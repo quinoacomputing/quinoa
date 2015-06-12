@@ -53,9 +53,7 @@ class HypreMatrix {
     //! Set values of matrix
     void set( int nrows, int* ncols, const int* rows, const int* cols,
               const HYPRE_Complex* values )
-    {
-      HYPRE_IJMatrixSetValues( m_A, nrows, ncols, rows, cols, values );
-    }
+    { HYPRE_IJMatrixSetValues( m_A, nrows, ncols, rows, cols, values ); }
 
     //! Assemble matrix
     void assemble() { HYPRE_IJMatrixAssemble( m_A ); }

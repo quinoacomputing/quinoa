@@ -12,15 +12,19 @@
 #ifndef GmshMeshWriter_h
 #define GmshMeshWriter_h
 
-#include <string>
+#include <iosfwd>
+#include <cstddef>
+#include <vector>
 
+#include "Types.h"
 #include "Writer.h"
-#include "UnsMesh.h"
 #include "GmshMeshIO.h"
 
 namespace tk {
 
-//! \brief GmshMeshWriter : Writer
+class UnsMesh;
+
+//! Gmsh mesh writer
 //! \details Mesh writer class facilitating writing a mesh to a file readable by
 //!   the Gmsh mesh generator: http://geuz.org/gmsh.
 class GmshMeshWriter : public Writer {
@@ -28,20 +32,19 @@ class GmshMeshWriter : public Writer {
   public:
     //! Constructor
     explicit GmshMeshWriter( const std::string& filename,
-                             const UnsMesh& mesh,
                              GmshFileType type = GmshFileType::BINARY,
                              tk::real version = 2.2,
                              int datasize = sizeof(double) );
 
     //! Write Gmsh mesh to file
-    void write() override;
+    void writeMesh( const UnsMesh& mesh );
 
   private:
     //! Write "$Nodes--$EndNodes" section
-    void writeNodes();
+    void writeNodes( const UnsMesh& mesh );
 
     //! Write "$Elements--$EndElements" section
-    void writeElements();
+    void writeElements( const UnsMesh& mesh );
 
     //! Write "$PhysicalNames--$EndPhysicalNames" section
     void writePhysicalNames();
@@ -63,7 +66,6 @@ class GmshMeshWriter : public Writer {
                          const std::vector< std::vector< int > >& tag,
                          const std::vector< std::size_t >& inpoel );
 
-    const UnsMesh& m_mesh;              //!< Mesh object
     GmshFileType m_type;                //!< Mesh file type: 0:ASCII, 1:binary
 };
 

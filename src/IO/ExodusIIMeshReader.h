@@ -5,41 +5,42 @@
   \date      Mon 01 Jun 2015 02:24:40 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     ExodusII mesh reader
-  \details   ExodusII mesh reader class declaration. Currently, this is a bare
-     minimum functionality to interface with the ExodusII reader. It only reads
-     3D meshes and only triangle and tetrahedron elements.
+  \details   ExodusII mesh reader class declaration.
 */
 //******************************************************************************
 #ifndef ExodusIIMeshReader_h
 #define ExodusIIMeshReader_h
 
-#include <string>
+#include <cstddef>
+#include <iosfwd>
+#include <vector>
 
-#include "UnsMesh.h"
-#include "Reader.h"
+#include "Types.h"
 
 namespace tk {
 
-//! \brief ExodusIIMeshReader : tk::Reader
-//! \details Mesh reader class facilitating reading a mesh from a file in
-//!   ExodusII format. See also http://sourceforge.net/projects/exodusii.
-class ExodusIIMeshReader : public Reader {
+class UnsMesh;
+
+//! ExodusII mesh-based data reader
+//! \details Mesh reader class facilitating reading from mesh-based field data
+//!   a file in ExodusII format.
+//! \see also http://sourceforge.net/projects/exodusii
+class ExodusIIMeshReader {
 
   public:
     //! Constructor
     explicit ExodusIIMeshReader( const std::string& filename,
-                                 UnsMesh& mesh,
                                  int cpuwordsize = sizeof(double),
                                  int iowordsize = sizeof(double) );
 
     //! Destructor
-    ~ExodusIIMeshReader() noexcept override;
+    ~ExodusIIMeshReader() noexcept;
 
     //! Read ExodusII mesh from file
-    void read() override;
+    void readMesh( UnsMesh& mesh );
 
     //! Read only connectivity graph from file
-    void readGraph();
+    void readGraph( UnsMesh& mesh );
 
     //  Read coordinates of a single mesh node from ExodusII file
     void readNode( std::size_t id,
@@ -49,15 +50,16 @@ class ExodusIIMeshReader : public Reader {
 
   private:
     //! Read ExodusII header
-    void readHeader();
+    void readHeader( UnsMesh& mesh );
 
     //! Read all node coordinates from ExodusII file
-    void readNodes();
+    void readNodes( UnsMesh& mesh );
 
     //! Read all element blocks and connectivity from ExodusII file
-    void readElements();
+    void readElements( UnsMesh& mesh );
 
-    UnsMesh& m_mesh;            //!< Mesh object
+    const std::string m_filename;          //!< File name
+
     int m_inFile;               //!< ExodusII file handle
     std::size_t m_neblk;        //!< Number of element blocks
     std::size_t m_nnode;        //!< Number of nodes
