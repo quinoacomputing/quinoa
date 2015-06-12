@@ -76,8 +76,11 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy > {
       create();
       // Activate SDAG waits
       wait4lhs();
+      wait4rhs();
       wait4hypremat();
-      wait4fill();
+      wait4hyprevec();
+      wait4filllhs();
+      wait4fillrhs();
       wait4asm();
       wait4stat();
     }
@@ -98,7 +101,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy > {
     void charelhs( const std::map< std::size_t,
                                    std::map< std::size_t, tk::real > >& lhs )
     {
-      m_timer.emplace_back();
+      m_timer[ TimerTag::LHS ]; // start measuring merging of lhs
       // Store matrix nonzero values owned and pack those to be exported
       std::map< std::size_t,
                 std::map< std::size_t,
@@ -116,7 +119,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy > {
           m_compts += rowsize;
         }
       }
-// 
+
 //       std::cout << CkMyPe() << ": nrows=" << m_lhs.size() << ", ";
 //       for (const auto& r : m_lhs) {
 //         std::cout << "(" << r.first << ":" << r.second.size() << ") ";
@@ -151,6 +154,36 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy > {
       if (lhscomplete()) trigger_lhs_complete();
     }
 
+    //! Chares contribute their rhs nonzero values
+    //! \note This function does not have to be declared as a Charm++ entry
+    //!   method since it is always called by chares on the same PE.
+    void charerhs( const std::map< std::size_t, tk::real >& rhs ) {
+      m_timer[ TimerTag::RHS ]; // start measuring merging of rhs
+      // Store vector nonzero values owned and pack those to be exported
+      std::map< std::size_t, std::map< std::size_t, tk::real > > exp;
+      for (const auto& r : rhs) {
+        auto gid = r.first;
+        if (gid >= m_lower && gid < m_upper) {  // if own
+          m_rhs[gid] = r.second;
+        } else {
+          auto pe = gid / m_chunksize;
+          if (pe == CkNumPes()) --pe;
+          exp[pe][gid] = r.second;
+        }
+      }
+      // Export non-owned vector values to fellow branches that own them
+      for (const auto& p : exp)
+        Group::thisProxy[ static_cast<int>(p.first) ].addrhs( p.second );
+      // If our portion is complete, we are done
+      if (rhscomplete()) trigger_rhs_complete();
+    }
+
+    //! Receive vector nonzeros from fellow group branches
+    void addrhs( const std::map< std::size_t, tk::real >& rhs ) {
+      for (const auto& r : rhs) m_rhs[ r.first ] = r.second;
+      if (rhscomplete()) trigger_rhs_complete();
+    }
+
   private:
     HostProxy m_host;           //!< Host proxy
     std::size_t m_chunksize;    //!< Number of rows the first npe-1 PE own
@@ -161,15 +194,19 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy > {
     tk::hypre::HypreVector m_x; //!< Hypre vector to store the unknowns
     //! Sparse matrix: global mesh point row and column ids, and nonzero value
     std::map< std::size_t, std::map< std::size_t, tk::real > > m_lhs;
+    //! Right-hand side vector: global mesh point row ids and values
+    std::map< std::size_t, tk::real > m_rhs;
     std::vector< int > m_rows;  //!< Row indices for my PE
     std::vector< int > m_ncols; //!< Number of matrix columns/rows for my PE
     std::vector< int > m_cols;  //!< Matrix column indices for rows for my PE
-    std::vector< tk::real > m_vals;  //!< Matrix nonzero values for my PE
+    std::vector< tk::real > m_mat;  //!< Matrix nonzero values for my PE
+    std::vector< tk::real > m_vec;  //!< Vector nonzero values for my PE
     std::size_t m_ownpts;       //!< Size (in bytes) of owned matrix nonzeros
     std::size_t m_compts;       //!< size (in bytes) of communicated nonzeros
     //! Time stamps
     std::vector< std::pair< std::string, tk::real > > m_timestamp;
-    std::vector< tk::Timer > m_timer;   //!< Timers
+    enum class TimerTag { LHS, RHS };           //!< Timer labels
+    std::map< TimerTag, tk::Timer > m_timer;    //!< Timers
     //! Performance statistics
     std::vector< std::pair< std::string, tk::real > > m_perfstat;
 
@@ -178,6 +215,13 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy > {
       return m_lhs.size() == m_upper-m_lower &&
              m_lhs.cbegin()->first == m_lower &&
              (--m_lhs.cend())->first == m_upper-1;
+    }
+
+    //! Check if our portion of the vector values is complete
+    bool rhscomplete() const {
+      return m_rhs.size() == m_upper-m_lower &&
+             m_rhs.cbegin()->first == m_lower &&
+             (--m_rhs.cend())->first == m_upper-1;
     }
 
     //! Build Hypre data for our portion of the matrix
@@ -191,7 +235,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy > {
         m_ncols.push_back( static_cast< int >( r.second.size() ) );
         for (const auto& c : r.second) {
            m_cols.push_back( static_cast< int >( c.first ) );
-           m_vals.push_back( c.second );
+           m_mat.push_back( c.second );
          }
       }
 
@@ -207,27 +251,59 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy > {
       trigger_hyprelhs_complete();
     }
 
+    //! Build Hypre data for our portion of the vector
+    void hyprerhs() {
+      tk::Timer t;
+      Assert( rhscomplete(),
+              "Values of distributed vector on PE " +
+              std::to_string( CkMyPe() ) + " is incomplete" );
+      for (const auto& r : m_rhs) m_vec.push_back( r.second );
+      m_timestamp.emplace_back( "Build Hypre data for rhs vector", t.dsec() );
+      trigger_hyprerhs_complete();
+    }
+
     //! Set our portion of values of the distributed matrix
     void lhs() {
       tk::Timer t;
-      Assert( m_vals.size() == m_cols.size(),
+      Assert( m_mat.size() == m_cols.size(),
               "Matrix values incomplete on " + std::to_string(CkMyPe()) );
       // Set our portion of the matrix values
       m_A.set( static_cast< int >( m_upper - m_lower ),
                m_ncols.data(),
                m_rows.data(),
                m_cols.data(),
-               m_vals.data() );
+               m_mat.data() );
       m_timestamp.emplace_back( "Fill lhs matrix", t.dsec() );
-      trigger_fill_complete();
+      trigger_filllhs_complete();
+    }
+
+    //! Set our portion of values of the distributed vector
+    void rhs() {
+      tk::Timer t;
+      Assert( m_vec.size() == m_rows.size(),
+              "Vector values incomplete on " + std::to_string(CkMyPe()) );
+      // Set our portion of the vector values
+      m_b.set( static_cast< int >( m_upper - m_lower ),
+               m_rows.data(),
+               m_vec.data() );
+      m_timestamp.emplace_back( "Fill rhs vector", t.dsec() );
+      trigger_fillrhs_complete();
     }
 
     //! Assemble distributed matrix
-    void assemble() {
+    void assemblelhs() {
       tk::Timer t;
       m_A.assemble();
       m_timestamp.emplace_back( "Assemble lhs matrix", t.dsec() );
-      trigger_assembly_complete();
+      trigger_asmlhs_complete();
+    }
+
+    //! Assemble distributed vector
+    void assemblerhs() {
+      tk::Timer t;
+      m_b.assemble();
+      m_timestamp.emplace_back( "Assemble rhs vector", t.dsec() );
+      trigger_asmrhs_complete();
     }
 
     //! Signal back to host that the initialization of the matrix is complete

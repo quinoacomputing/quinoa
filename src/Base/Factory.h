@@ -6,8 +6,8 @@
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Factory utilities
   \details   Factory utilities. The functions defined in this file help
-    interfacing with object factories. For a short introduction on whatfactories
-    are good for, see
+    interfacing with object factories. For a short introduction on what
+    factories are good for, see
     http://www.boost.org/doc/libs/release/libs/functional/factory.
 */
 //******************************************************************************

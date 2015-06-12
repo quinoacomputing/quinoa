@@ -12,16 +12,19 @@
 #ifndef GmshMeshReader_h
 #define GmshMeshReader_h
 
+#include <iosfwd>
 #include <map>
 
+#include "Types.h"
 #include "Reader.h"
-#include "UnsMesh.h"
 #include "GmshMeshIO.h"
 #include "Exception.h"
 
 namespace tk {
 
-//! \brief GmshMeshReader : tk::Reader
+class UnsMesh;
+
+//! Gmsh mesh reader
 //! \details Mesh reader class facilitating reading a mesh from a file saved by
 //!   the Gmsh mesh generator: http://geuz.org/gmsh.
 //! \author J. Bakosi
@@ -29,25 +32,25 @@ class GmshMeshReader : public Reader {
 
   public:
     //! Constructor
-    explicit GmshMeshReader( const std::string filename, UnsMesh& mesh ) :
+    explicit GmshMeshReader( const std::string filename ) :
       Reader(filename),
       m_version( 0.0 ),                        // 0.0: uninitialized
       m_datasize( 0 ),                         //   0: uninitialized
-      m_type( GmshFileType::UNDEFINED ),       //  -1: uninitialized
-      m_mesh( mesh ) {}
+      m_type( GmshFileType::UNDEFINED )        //  -1: uninitialized
+      {}
 
     //! Read Gmsh mesh
-    void read() override;
+    void readMesh( UnsMesh& mesh );
 
   private:
     //! Read mandatory "$MeshFormat--$EndMeshFormat" section
     void readMeshFormat();
 
     //! Read "$Nodes--$EndNodes" section
-    void readNodes();
+    void readNodes( UnsMesh& mesh );
 
     //! Read "$Elements--$EndElements" section
-    void readElements();
+    void readElements( UnsMesh& mesh );
 
     //! Read "$PhysicalNames--$EndPhysicalNames" section
     void readPhysicalNames();
@@ -70,7 +73,6 @@ class GmshMeshReader : public Reader {
     tk::real m_version;                 //!< Mesh version in mesh file
     int m_datasize;                     //!< Data size in mesh file
     GmshFileType m_type;                //!< Mesh file type: 0:ASCII, 1:binary
-    UnsMesh& m_mesh;                    //!< Mesh object
 
     //! \brief Gmsh element types and their corrseponding number of nodes
     //! \details See Gmsh documentation for element ids as keys

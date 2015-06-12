@@ -9,35 +9,42 @@
 */
 //******************************************************************************
 
-#include <limits>
 #include <array>
-#include <cmath>
+#include <istream>
+#include <string>
+#include <vector>
+#include <cstddef>
 
-#include "NetgenMeshReader.h"
+#include "Types.h"
+#include "Exception.h"
+#include "UnsMesh.h"
 #include "Reorder.h"
+#include "NetgenMeshReader.h"
 
 using tk::NetgenMeshReader;
 
 void
-NetgenMeshReader::read()
+NetgenMeshReader::readMesh( UnsMesh& mesh )
 //******************************************************************************
-//  Public interface for reading Netgen mesh
+//  Read Netgen mesh
+//! \param[in] mesh Unstructured mesh object
 //! \author J. Bakosi
 //******************************************************************************
 {
   // Read nodes
-  readNodes();
+  readNodes( mesh );
   // Read elements
-  readElements();
+  readElements( mesh );
 
   // Clear failbit triggered by eof, so close() won't throw a false FAILED_CLOSE
   m_inFile.clear();
 }
 
 void
-NetgenMeshReader::readNodes()
+NetgenMeshReader::readNodes( UnsMesh& mesh )
 //******************************************************************************
 //  Read nodes
+//! \param[in] mesh Unstructured mesh object
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -50,9 +57,9 @@ NetgenMeshReader::readNodes()
   for (int i=0; i<nnode; ++i) {
     tk::real x, y, z;
     m_inFile >> x >> y >> z;
-    m_mesh.x().push_back( x );
-    m_mesh.y().push_back( y );
-    m_mesh.z().push_back( z );
+    mesh.x().push_back( x );
+    mesh.y().push_back( y );
+    mesh.z().push_back( z );
   }
 
   std::string s;
@@ -60,9 +67,10 @@ NetgenMeshReader::readNodes()
 }
 
 void
-NetgenMeshReader::readElements()
+NetgenMeshReader::readElements( UnsMesh& mesh )
 //******************************************************************************
 //  Read element connectivity
+//! \param[in] mesh Unstructured mesh object
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -82,15 +90,15 @@ NetgenMeshReader::readElements()
       std::array< std::size_t, 4 > n;
       // tag n[1-4]
       m_inFile >> tag >> n[3] >> n[0] >> n[1] >> n[2];
-      m_mesh.tettag().push_back( { tag } );
-      m_mesh.tetinpoel().push_back( n[0] );
-      m_mesh.tetinpoel().push_back( n[1] );
-      m_mesh.tetinpoel().push_back( n[2] );
-      m_mesh.tetinpoel().push_back( n[3] );
+      mesh.tettag().push_back( { tag } );
+      mesh.tetinpoel().push_back( n[0] );
+      mesh.tetinpoel().push_back( n[1] );
+      mesh.tetinpoel().push_back( n[2] );
+      mesh.tetinpoel().push_back( n[3] );
     }
 
     // Shift node IDs to start from zero
-    shiftToZero( m_mesh.tetinpoel() );
+    shiftToZero( mesh.tetinpoel() );
   }
 
   // Read in number of triangles
@@ -107,13 +115,13 @@ NetgenMeshReader::readElements()
       std::array< std::size_t, 3 > n;
       // tag n[1-3]
       m_inFile >> tag >> n[0] >> n[1] >> n[2];
-      m_mesh.tritag().push_back( { tag } );
-      m_mesh.triinpoel().push_back( n[0] );
-      m_mesh.triinpoel().push_back( n[1] );
-      m_mesh.triinpoel().push_back( n[2] );
+      mesh.tritag().push_back( { tag } );
+      mesh.triinpoel().push_back( n[0] );
+      mesh.triinpoel().push_back( n[1] );
+      mesh.triinpoel().push_back( n[2] );
     }
 
     // Shift node IDs to start from zero
-    shiftToZero( m_mesh.triinpoel() );
+    shiftToZero( mesh.triinpoel() );
   }
 }

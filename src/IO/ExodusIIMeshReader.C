@@ -11,23 +11,24 @@
 */
 //******************************************************************************
 
-#include <iostream>
-#include <array>
+#include <cstdint>
+#include <cstdio>
+#include <string>
 
 #include <exodusII.h>
 #include <ne_nemesisI.h>
 
 #include "ExodusIIMeshReader.h"
 #include "Exception.h"
+#include "UnsMesh.h"
 #include "Reorder.h"
 
 using tk::ExodusIIMeshReader;
 
 ExodusIIMeshReader::ExodusIIMeshReader( const std::string& filename,
-                                        UnsMesh& mesh,
                                         int cpuwordsize,
                                         int iowordsize ) :
-  Reader( filename ), m_mesh( mesh ), m_inFile( 0 )
+  m_filename( filename ), m_inFile( 0 )
 //******************************************************************************
 //  Constructor: open Exodus II file
 //! \param[in] filename File to open as ExodusII file
@@ -57,32 +58,35 @@ ExodusIIMeshReader::~ExodusIIMeshReader() noexcept
 }
 
 void
-ExodusIIMeshReader::read()
+ExodusIIMeshReader::readMesh( UnsMesh& mesh )
 //******************************************************************************
 //  Read ExodusII mesh file
+//! \param[in] mesh Unstructured mesh object
 //! \author J. Bakosi
 //******************************************************************************
 {
-  readHeader();
-  readElements();
-  readNodes();
+  readHeader( mesh );
+  readElements( mesh );
+  readNodes( mesh );
 }
 
 void
-ExodusIIMeshReader::readGraph()
+ExodusIIMeshReader::readGraph( UnsMesh& mesh )
 //******************************************************************************
 //  Read only connectivity graph from file
+//! \param[in] mesh Unstructured mesh object
 //! \author J. Bakosi
 //******************************************************************************
 {
-  readHeader();
-  readElements();
+  readHeader( mesh );
+  readElements( mesh );
 }
 
 void
-ExodusIIMeshReader::readHeader()
+ExodusIIMeshReader::readHeader( UnsMesh& mesh )
 //******************************************************************************
 //  Read ExodusII header
+//! \param[in] mesh Unstructured mesh object
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -104,22 +108,23 @@ ExodusIIMeshReader::readHeader()
   m_neblk = static_cast< std::size_t >( neblk );
 
   // set mesh graph size
-  m_mesh.size() = m_nnode = static_cast< std::size_t >( nnode );
+  mesh.size() = m_nnode = static_cast< std::size_t >( nnode );
 }
 
 void
-ExodusIIMeshReader::readNodes()
+ExodusIIMeshReader::readNodes( UnsMesh& mesh )
 //******************************************************************************
 //  Read all node coordinates from ExodusII file
+//! \param[in] mesh Unstructured mesh object
 //! \author J. Bakosi
 //******************************************************************************
 {
-  m_mesh.x().resize( m_nnode );
-  m_mesh.y().resize( m_nnode );
-  m_mesh.z().resize( m_nnode );
+  mesh.x().resize( m_nnode );
+  mesh.y().resize( m_nnode );
+  mesh.z().resize( m_nnode );
 
-  ErrChk( ex_get_coord( m_inFile, m_mesh.x().data(), m_mesh.y().data(),
-                        m_mesh.z().data() ) == 0,
+  ErrChk( ex_get_coord( m_inFile, mesh.x().data(), mesh.y().data(),
+                        mesh.z().data() ) == 0,
           "Failed to read coordinates from ExodusII file: " + m_filename );
 }
 
@@ -151,9 +156,10 @@ ExodusIIMeshReader::readNode( std::size_t id,
 }
 
 void
-ExodusIIMeshReader::readElements()
+ExodusIIMeshReader::readElements( UnsMesh& mesh )
 //******************************************************************************
 //  Read element blocks and connectivity from ExodusII file
+//! \param[in] mesh Unstructured mesh object
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -178,30 +184,30 @@ ExodusIIMeshReader::readElements()
     auto connectsize = static_cast< std::size_t >( nel*nnpe );
     if (nnpe == 4) {    // tetrahedra
 
-      m_mesh.tettag().resize( connectsize, { 1 } );
+      mesh.tettag().resize( connectsize, { 1 } );
       std::vector< int > inpoel( connectsize );
       ErrChk(
         ex_get_elem_conn( m_inFile, id[i], inpoel.data() ) == 0,
         "Failed to read " + std::string(eltype) + " element connectivity from "
         "ExodusII file: " + m_filename );
       for (auto n : inpoel)
-        m_mesh.tetinpoel().push_back( static_cast< std::size_t >( n ) );
+        mesh.tetinpoel().push_back( static_cast< std::size_t >( n ) );
 
     } else if (nnpe == 3) {    // triangles
 
-      m_mesh.tritag().resize( connectsize, { 1 } );
+      mesh.tritag().resize( connectsize, { 1 } );
       std::vector< int > inpoel( connectsize );
       ErrChk(
         ex_get_elem_conn( m_inFile, id[i], inpoel.data() ) == 0,
         "Failed to read " + std::string(eltype) + " element connectivity from "
         "ExodusII file: " + m_filename );
       for (auto n : inpoel)
-        m_mesh.triinpoel().push_back( static_cast< std::size_t >( n ) );
+        mesh.triinpoel().push_back( static_cast< std::size_t >( n ) );
 
     }
   }
 
   // Shift node IDs to start from zero
-  shiftToZero( m_mesh.triinpoel() );
-  shiftToZero( m_mesh.tetinpoel() );
+  shiftToZero( mesh.triinpoel() );
+  shiftToZero( mesh.tetinpoel() );
 }

@@ -20,6 +20,7 @@
 #include <boost/format.hpp>
 #include <boost/optional.hpp>
 
+#include "Config.h"
 #include "Types.h"
 #include "Print.h"
 #include "Init.h"
@@ -35,6 +36,7 @@
 #include "ZoltanInterOp.h"
 #include "DerivedData.h"
 #include "CommMap.h"
+#include "Inciter/CmdLine/CmdLine.h"
 #include "Inciter/CmdLine/Parser.h"
 #include "Inciter/InputDeck/Parser.h"
 
@@ -512,8 +514,8 @@ prepareMesh(
   // Read mesh graph from file only on MPI rank 0 and distribute load size
   if (peid == 0) {
     tk::Timer timer;
-    tk::ExodusIIMeshReader er( cmdline.get< tag::io, tag::input >(), graph );
-    er.readGraph();
+    tk::ExodusIIMeshReader er( cmdline.get< tag::io, tag::input >() );
+    er.readGraph( graph );
     timestamp.emplace_back( "Read mesh graph from file", timer.hms() );
     load = graph.tetinpoel().size()/4;
     for (int i=1; i<numpes; ++i)

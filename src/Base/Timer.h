@@ -15,6 +15,7 @@
 #define Timer_h
 
 #include <chrono>
+#include <map>
 
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic push
@@ -28,6 +29,7 @@
 #endif
 
 #include "Types.h"
+#include "Exception.h"
 
 namespace tk {
 
@@ -98,7 +100,23 @@ class Timer {
 };
 
 //! Convert existing time stamp as a real to Watch (global scope)
-Timer::Watch hms( tk::real stamp );
+Timer::Watch
+hms( tk::real stamp );
+
+//! Query timer from timer map
+//! \param[in] timers Timer map
+//! \param[in] t Tag to look for
+//! \return Timer clock state in seconds
+//! \author J. Bakosi
+template< typename Tag >
+tk::real
+query( const std::map< Tag, Timer >& timers, Tag t ) {
+  const auto it = timers.find( t );
+  if (it != timers.end())
+    return it->second.dsec();
+  else
+    Throw( "Can't find timer tag" );
+}
 
 } // tk::
 

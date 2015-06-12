@@ -61,27 +61,6 @@ void Writer_object::test< 2 >() {
   W w( "" );
 }
 
-//! Test if constructor finds and can open an existing file (the executable)
-//! \author J. Bakosi
-template<> template<>
-void Writer_object::test< 3 >() {
-  set_test_name( "non-overridden write() correctly throws" );
-
-  // throws exception if something goes wrong, which Template Unit Test catches
-  W w( "very_little_chance_that_a_file_with_this_name_exists" );
-
-  try {
-    w.write();
-    fail( "should throw exception" );
-  }
-  catch ( tk::Exception& e ) {
-    // exception thrown, test ok
-  }
-
-  // clean up
-  std::remove( "very_little_chance_that_a_file_with_this_name_exists" );
-}
-
 } // tut::
 
 #endif // test_Writer_h

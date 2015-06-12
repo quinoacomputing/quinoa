@@ -25,9 +25,6 @@ namespace tk {
 class Writer {
 
   public:
-    //! Write interface: throw if not redefined and ends up being called.
-    virtual void write() { Throw( "Writer::write() is a no-op" ); }
-
     //! Destructor: Release file handle
     virtual ~Writer() noexcept;
 

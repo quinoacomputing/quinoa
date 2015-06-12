@@ -4,43 +4,62 @@
   \author    J. Bakosi
   \date      Mon 01 Jun 2015 02:24:51 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
-  \brief     ExodusII mesh writer
-  \details   ExodusII mesh writer class definition. Currently, this is a bare
-     minimum functionality to interface with the ExodusII writer. It only writes
-     3D meshes and only triangle and tetrahedron elements.
+  \brief     ExodusII mesh-based data writer
+  \details   ExodusII mesh-based data writer class definition.
 */
 //******************************************************************************
 
-#include <iostream>
+#include <algorithm>
+#include <functional>
+#include <iterator>
+#include <string>
+#include <utility>
+#include <cstdint>
+#include <cstdio>
 
 #include <exodusII.h>
 
-#include "Config.h"
 #include "ExodusIIMeshWriter.h"
 #include "Exception.h"
+#include "UnsMesh.h"
 
 using tk::ExodusIIMeshWriter;
 
 ExodusIIMeshWriter::ExodusIIMeshWriter( const std::string& filename,
-                                        const UnsMesh& mesh,
+                                        ExoWriter mode,
                                         int cpuwordsize,
                                         int iowordsize ) :
-  Writer( filename ), m_filename( filename ), m_mesh( mesh ), m_outFile( 0 )
+  m_filename( filename ), m_outFile( 0 )
 //******************************************************************************
-//  Constructor: create Exodus II file
+//  Constructor: create/open Exodus II file
 //! \param[in] filename File to open as ExodusII file
-//! \param[in] mesh Unstructured mesh object to write data from
+//! \param[in] mode ExodusII writer constructor mode: ExoWriter::CREATE for
+//!   creating a new file, ExoWriter::OPEN for opening an existing file for
+//!   appending
 //! \param[in] cpuwordsize Set CPU word size, see ExodusII documentation
 //! \param[in] iowordsize Set I/O word size, see ExodusII documentation
 //! \author J. Bakosi
 //******************************************************************************
 {
-  m_outFile = ex_create( filename.c_str(),
-                         EX_CLOBBER | EX_LARGE_MODEL,
-                         &cpuwordsize,
-                         &iowordsize );
+  if (mode == ExoWriter::CREATE) {
 
-  ErrChk( m_outFile > 0, "Failed to create ExodusII file: " + filename );
+    m_outFile = ex_create( filename.c_str(),
+                           EX_CLOBBER | EX_LARGE_MODEL,
+                           &cpuwordsize,
+                           &iowordsize );
+
+  } else if (mode == ExoWriter::OPEN) {
+
+    float version;
+    m_outFile = ex_open( filename.c_str(),
+                         EX_WRITE, 
+                         &cpuwordsize,
+                         &iowordsize,
+                         &version );
+
+  } else Throw( "Unknown ExodusII writer constructor mode" );
+
+  ErrChk( m_outFile > 0, "Failed to create/open ExodusII file: " + filename );
 }
 
 ExodusIIMeshWriter::~ExodusIIMeshWriter() noexcept
@@ -55,21 +74,23 @@ ExodusIIMeshWriter::~ExodusIIMeshWriter() noexcept
 }
 
 void
-ExodusIIMeshWriter::write()
+ExodusIIMeshWriter::writeMesh( const UnsMesh& mesh ) const
 //******************************************************************************
 //  Write ExodusII mesh file
+//! \param[in] mesh Unstructured mesh object
 //! \author J. Bakosi
 //******************************************************************************
 {
-  writeHeader();
-  writeNodes();
-  writeElements();
+  writeHeader( mesh );
+  writeNodes( mesh );
+  writeElements( mesh );
 }
 
 void
-ExodusIIMeshWriter::writeHeader()
+ExodusIIMeshWriter::writeHeader( const UnsMesh& mesh ) const
 //******************************************************************************
 //  Write ExodusII header
+//! \param[in] mesh Unstructured mesh object
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -77,37 +98,39 @@ ExodusIIMeshWriter::writeHeader()
     ex_put_init( m_outFile,
                  "Written by Quinoa",
                  3,     // number of dimensions
-                 static_cast< int64_t >( m_mesh.nnode() ),
-                 m_mesh.triinpoel().size()/3 + m_mesh.tetinpoel().size()/4,
-                 static_cast< int64_t >( m_mesh.neblk() ),
+                 static_cast< int64_t >( mesh.nnode() ),
+                 mesh.triinpoel().size()/3 + mesh.tetinpoel().size()/4,
+                 static_cast< int64_t >( mesh.neblk() ),
                  0,     // number of node sets
                  0 ) == 0,
     "Failed to write header to file: " + m_filename );
 }
 
 void
-ExodusIIMeshWriter::writeNodes()
+ExodusIIMeshWriter::writeNodes( const UnsMesh& mesh ) const
 //******************************************************************************
 //  Write node coordinates to ExodusII file
+//! \param[in] mesh Unstructured mesh object
 //! \author J. Bakosi
 //******************************************************************************
 {
-  ErrChk( ex_put_coord( m_outFile, m_mesh.x().data(), m_mesh.y().data(),
-                        m_mesh.z().data() ) == 0,
+  ErrChk( ex_put_coord( m_outFile, mesh.x().data(), mesh.y().data(),
+                        mesh.z().data() ) == 0,
           "Failed to write coordinates to ExodusII file: " + m_filename );
 }
 
 void
-ExodusIIMeshWriter::writeElements()
+ExodusIIMeshWriter::writeElements( const UnsMesh& mesh ) const
 //******************************************************************************
 //  Write element connectivity to ExodusII file
+//! \param[in] mesh Unstructured mesh object
 //! \author J. Bakosi
 //******************************************************************************
 {
   int elclass = 0;
 
-  writeElemBlock( elclass, 3, "TRIANGLES", m_mesh.triinpoel() );
-  writeElemBlock( elclass, 4, "TETRAHEDRA", m_mesh.tetinpoel() );
+  writeElemBlock( elclass, 3, "TRIANGLES", mesh.triinpoel() );
+  writeElemBlock( elclass, 4, "TETRAHEDRA", mesh.tetinpoel() );
 }
 
 void
@@ -115,6 +138,7 @@ ExodusIIMeshWriter::writeElemBlock( int& elclass,
                                     int nnpe,
                                     const std::string& eltype,
                                     const std::vector< std::size_t >& inpoel )
+const
 //******************************************************************************
 //  Write element block to ExodusII file
 //! \param[inout] elclass Count element class ids in file
@@ -153,7 +177,7 @@ ExodusIIMeshWriter::writeElemBlock( int& elclass,
 }
 
 void
-ExodusIIMeshWriter::writeTimeStamp( int it, tk::real time )
+ExodusIIMeshWriter::writeTimeStamp( int it, tk::real time ) const
 //******************************************************************************
 //  Write time stamp to ExodusII file
 //! \param[in] it Iteration number
@@ -167,6 +191,7 @@ ExodusIIMeshWriter::writeTimeStamp( int it, tk::real time )
 
 void
 ExodusIIMeshWriter::writeNodeVarNames( const std::vector< std::string >& nv )
+const
 //******************************************************************************
 //  Write the names of nodal output variables to ExodusII file
 //! \param[in] nv Nodal variable names
@@ -192,6 +217,7 @@ ExodusIIMeshWriter::writeNodeVarNames( const std::vector< std::string >& nv )
 
 void
 ExodusIIMeshWriter::writeElemVarNames( const std::vector< std::string >& ev )
+const
 //******************************************************************************
 //  Write the names of element output variables to ExodusII file
 //! \param[in] ev Elem variable names
@@ -218,7 +244,7 @@ ExodusIIMeshWriter::writeElemVarNames( const std::vector< std::string >& ev )
 void
 ExodusIIMeshWriter::writeNodeScalar( int it,
                                      int varid,
-                                     const std::vector< tk::real >& var )
+                                     const std::vector< tk::real >& var ) const
 //******************************************************************************
 //  Write node scalar field to ExodusII file
 //! \param[in] it Iteration number
@@ -238,7 +264,7 @@ ExodusIIMeshWriter::writeNodeScalar( int it,
 void
 ExodusIIMeshWriter::writeElemScalar( int it,
                                      int varid,
-                                     const std::vector< tk::real >& var )
+                                     const std::vector< tk::real >& var ) const
 //******************************************************************************
 //  Write elem scalar field to ExodusII file
 //! \param[in] it Iteration number

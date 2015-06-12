@@ -52,10 +52,29 @@ void Vector_object::test< 1 >() {
                  result[2], correct_result[2], precision );
 }
 
-//! Test dot product
+//! Test cross product divided by scalar
 //! \author J. Bakosi
 template<> template<>
 void Vector_object::test< 2 >() {
+  set_test_name( "cross product divided by scalar" );
+
+  std::array< tk::real, 3 > v1{{ 3.0, -3.0, 1.0 }},
+                            v2{{ 4.0, 9.0, 2.0 }},
+                            correct_result{{ -7.5, -1.0, 19.5 }};
+
+  const auto result = tk::crossdiv( v1, v2, 2.0 );
+  ensure_equals( "cross product divided by scalar incorrect",
+                 result[0], correct_result[0], precision );
+  ensure_equals( "cross product divided by scalar incorrect",
+                 result[1], correct_result[1], precision );
+  ensure_equals( "cross product divided by scalar incorrect",
+                 result[2], correct_result[2], precision );
+}
+
+//! Test dot product
+//! \author J. Bakosi
+template<> template<>
+void Vector_object::test< 3 >() {
   set_test_name( "dot product" );
 
   std::array< tk::real, 3 > v1{{ 1.0, 2.0, 3.0 }}, v2{{ 4.0, -5.0, 6.0 }};
@@ -68,7 +87,7 @@ void Vector_object::test< 2 >() {
 //! Test triple product
 //! \author J. Bakosi
 template<> template<>
-void Vector_object::test< 3 >() {
+void Vector_object::test< 4 >() {
   set_test_name( "triple product" );
 
   std::array< tk::real, 3 > v1{{ -1.0, 3.0, 3.0 }},

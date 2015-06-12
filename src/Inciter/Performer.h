@@ -20,6 +20,7 @@
 #include <map>
 #include <utility>
 #include <vector>
+#include <cstring>
 
 #include "Timer.h"
 #include "Types.h"
@@ -36,6 +37,8 @@
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic pop
 #endif
+
+namespace tk { class ExodusIIMeshWriter; }
 
 namespace inciter {
 
@@ -67,26 +70,37 @@ class Performer : public CBase_Performer {
     explicit Performer( CkMigrateMessage* ) {}
 
     //! Receive matrix row contribution from fellow Performer chares
-    void add(
+    void addLhs(
       int id,
       const std::map< std::size_t, std::map< std::size_t, tk::real > >& rows );
+
+    //! Receive right-hand side vector contribution from fellow Performer chares
+    void addRhs( int id, const std::map< std::size_t, tk::real >& rows );
 
   private:
     std::size_t m_id;                   //!< Charm++ array id (Base::thisIndex)
     CProxy_Conductor m_hostproxy;       //!< Host proxy
     LinSysMergerProxy m_lsmproxy;       //!< Linear system merger proxy
+    int m_it;                           //!< Iteration count
+    tk::real m_t;                       //!< Physical time
     std::vector< std::size_t > m_point; //!< Global ids of nodes owned
-    //! Import map associating global mesh point ids to chares during import
-    std::map< std::size_t, std::vector< std::size_t > > m_import;
+    std::size_t m_nelem;                //!< Number of owned elements
+    //! Import map associating global mesh point ids to chares during lhs import
+    std::map< std::size_t, std::vector< std::size_t > > m_lhsimport;
+    //! Import map associating global mesh point ids to chares during rhs import
+    std::map< std::size_t, std::vector< std::size_t > > m_rhsimport;
     //! Import map associating global mesh point ids to chares before import
     std::map< std::size_t, std::vector< std::size_t > > m_toimport;
     //! Sparse matrix: global mesh point row and column ids, and nonzero value
     std::map< std::size_t, std::map< std::size_t, tk::real > > m_lhs;
     //! Right-hand side vector: global mesh point row ids and values
     std::map< std::size_t, tk::real > m_rhs;
+    //! Unknown vector: global mesh point row ids and values
+    std::map< std::size_t, tk::real > m_x;
     //! Time stamps
     std::vector< std::pair< std::string, tk::real > > m_timestamp;
-    std::vector< tk::Timer > m_timer;   //!< Timers
+    enum class TimerTag { LHS, RHS, SOL };     //!< Timer labels
+    std::map< TimerTag, tk::Timer > m_timer;   //!< Timers
 
     //! Find out if a point is owned
     bool own( std::size_t gid ) const {
@@ -94,8 +108,11 @@ class Performer : public CBase_Performer {
       return false;
     }
 
-    //! Find out if all chares have contributed we need to import from
-    bool lhscomplete() const { return m_toimport == m_import; }
+    //! Find out if all chares have contributed we need to import lhs parts from
+    bool lhscomplete() const { return m_toimport == m_lhsimport; }
+
+    //! Find out if all chares have contributed we need to import rhs parts from
+    bool rhscomplete() const { return m_toimport == m_rhsimport; }
 
     //! Initialize import map
     void initImports();
@@ -117,10 +134,10 @@ class Performer : public CBase_Performer {
     std::array< std::vector< tk::real >, 3 >
     initCoords( const std::vector< std::size_t >& gnode );
 
-    //! Output chare mesh chare id field to file
+    //! Set initial conditions
     void
-    writeChareId( const std::vector< std::size_t >& inpoel,
-                  const std::array< std::vector< tk::real >, 3 >& coord );
+    ic( const std::vector< std::size_t >& gnode,
+        const std::array< std::vector< tk::real >, 3 >& coord );
 
     //! Compute left-hand side matrix of PDE
     void
@@ -133,14 +150,40 @@ class Performer : public CBase_Performer {
     void
     commLhs( const std::map< std::size_t, std::vector< std::size_t > >& exp );
 
+    //! \brief Perform the necessary communication among fellow Performers to
+    //!   update the chare-boundaries for right-hand side vector of PDE
+    void
+    commRhs( const std::map< std::size_t, std::vector< std::size_t > >& exp );
+
     //! Contribute our portion of the left-hand side matrix
     void contributeLhs();
+
+    //! Contribute our portion of the right-hand side vector
+    void contributeRhs();
 
     //! Compute righ-hand side vector of PDE
     void
     rhs( const std::vector< std::size_t >& gnode,
          const std::vector< std::size_t >& inpoel,
          const std::array< std::vector< tk::real >, 3 >& coord );
+
+    //! Output chare mesh to file
+    void
+    writeMesh( const std::vector< std::size_t >& inpoel,
+               const std::array< std::vector< tk::real >, 3 >& coord );
+
+    //! Output chare mesh chare id field to file
+    void
+    writeChareId( const tk::ExodusIIMeshWriter& ew ) const;
+
+    //! Output solution to file
+    void writeSolution( const tk::ExodusIIMeshWriter& ew ) const;
+
+    //! Output mesh-based fields metadata to file
+    void writeMeta() const;
+
+    //! Output mesh-based fields to file
+    void writeFields();
 };
 
 } // inciter::

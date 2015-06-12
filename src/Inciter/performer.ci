@@ -21,10 +21,13 @@ module performer {
     array [1D] Performer {
       entry Performer( CProxy_Conductor& hostproxy,
                        tk::CProxy_LinSysMerger< CProxy_Conductor >& lsmproxy );
-      entry void add(
+      entry void addLhs(
         int id,
         const std::map< std::size_t,
                         std::map< std::size_t, tk::real > >& rows );
+      entry void addRhs(
+        int id,
+        const std::map< std::size_t, tk::real >& rows );
 
       // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
       // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
@@ -45,14 +48,23 @@ module performer {
       //
 
       entry void wait4mass() {
-        when mass_complete() serial {
-          m_timestamp.emplace_back( "Communicate consistent mass matrix",
-                                    m_timer[0].dsec() );
+        when trigger_lhs_complete() serial {
+          m_timestamp.emplace_back( "Communicate left-hand side matrix",
+                                    tk::query( m_timer, TimerTag::LHS ) );
           contributeLhs();
         }
       };
 
-      entry void mass_complete();
+      entry void wait4rhs() {
+        when trigger_rhs_complete() serial {
+          m_timestamp.emplace_back( "Communicate right-hand side vector",
+                                    tk::query( m_timer, TimerTag::RHS ) );
+          contributeRhs();
+        }
+      };
+
+      entry void trigger_lhs_complete();
+      entry void trigger_rhs_complete();
     };
 
   } // inciter::

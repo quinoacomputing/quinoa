@@ -11,36 +11,34 @@
 #ifndef NetgenMeshWriter_h
 #define NetgenMeshWriter_h
 
-#include <string>
+#include <iosfwd>
 
 #include "Writer.h"
-#include "UnsMesh.h"
 
 namespace tk {
 
-//! \brief NetgenMeshWriter : tk::Writer
-//! Mesh reader class facilitating reading a mesh from a file saved by
-//!   the Netgen mesh generator:
-//!   http://sourceforge.net/apps/mediawiki/netgen-mesher.
+class UnsMesh;
+
+//! Netgen mesh-based writer
+//! \details Mesh reader class facilitating reading a mesh from a file saved by
+//!   the Netgen mesh generator
+//! \see http://sourceforge.net/apps/mediawiki/netgen-mesher
 class NetgenMeshWriter : public Writer {
 
   public:
     //! Constructor
-    explicit NetgenMeshWriter( const std::string filename,
-                               const UnsMesh& mesh )
-      : Writer( filename ), m_mesh( mesh ) {}
+    explicit NetgenMeshWriter( const std::string filename )
+      : Writer( filename ) {}
 
     //! Write Netgen mesh
-    void write() override;
+    void writeMesh( const UnsMesh& mesh );
 
   private:
     //! Write nodes
-    void writeNodes();
+    void writeNodes( const UnsMesh& mesh );
 
     //! Write elements, i.e., connectivity
-    void writeElements();
-
-    const UnsMesh& m_mesh;                   //!< Mesh object
+    void writeElements( const UnsMesh& mesh );
 };
 
 } // tk::

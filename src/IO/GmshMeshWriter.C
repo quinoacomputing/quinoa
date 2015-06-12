@@ -12,23 +12,27 @@
 
 #include <iterator>
 #include <iomanip>
+#include <algorithm>
+#include <cstddef>
+#include <ostream>
+#include <string>
+#include <utility>
 
 #include "Exception.h"
+#include "UnsMesh.h"
 #include "StrConvUtil.h"
 #include "GmshMeshWriter.h"
 
 using tk::GmshMeshWriter;
 
 GmshMeshWriter::GmshMeshWriter( const std::string& filename,
-                                const UnsMesh& mesh,
                                 GmshFileType type,
                                 tk::real version,
                                 int datasize ) :
-  Writer( filename ), m_mesh( mesh ), m_type( type )
+  Writer( filename ), m_type( type )
 //******************************************************************************
 //  Constructor: write mandatory "$MeshFormat" section
 //! \param[in] filename File to open as a Gmsh file
-//! \param[in] mesh Unstructured mesh object to write data from
 //! \param[in] type Gmsh file type: ASCII or binary
 //! \param[in] version Gmsh file version
 //! \param[in] datasize Size of double precision number on machine
@@ -57,49 +61,51 @@ GmshMeshWriter::GmshMeshWriter( const std::string& filename,
 }
 
 void
-GmshMeshWriter::write()
+GmshMeshWriter::writeMesh( const UnsMesh& mesh )
 //******************************************************************************
 //  Write Gmsh mesh file
+//! \param[in] mesh Unstructured mesh object
 //! \author J. Bakosi
 //******************************************************************************
 {
   // Write sections
-  writeNodes();
-  writeElements();
+  writeNodes( mesh );
+  writeElements( mesh );
 }
 
 void
-GmshMeshWriter::writeNodes()
+GmshMeshWriter::writeNodes( const UnsMesh& mesh )
 //******************************************************************************
 //  Write "$Nodes--$EndNodes" section
+//! \param[in] mesh Unstructured mesh object
 //! \author J. Bakosi
 //******************************************************************************
 {
   m_outFile << "$Nodes" << std::endl;
 
   // Write out number of nodes
-  m_outFile << m_mesh.nnode() << std::endl;
+  m_outFile << mesh.nnode() << std::endl;
 
   // Write node ids and coordinates: node-number x-coord y-coord z-coord
   if (isASCII()) {
-    for (std::size_t i=0; i<m_mesh.nnode(); ++i) {
+    for (std::size_t i=0; i<mesh.nnode(); ++i) {
       m_outFile << i+1 << " " << std::setprecision(16)
-                << m_mesh.x()[i] << " "
-                << m_mesh.y()[i] << " "
-                << m_mesh.z()[i] << std::endl;
+                << mesh.x()[i] << " "
+                << mesh.y()[i] << " "
+                << mesh.z()[i] << std::endl;
     }
   } else {
-    for (std::size_t i=0; i<m_mesh.nnode(); ++i) {
+    for (std::size_t i=0; i<mesh.nnode(); ++i) {
       // gmsh likes one-based node ids
       int I = static_cast< int >( i+1 );
       m_outFile.write(
         reinterpret_cast<const char*>(&I), sizeof(int) );
       m_outFile.write(
-        reinterpret_cast<const char*>(&m_mesh.x()[i]), sizeof(double) );
+        reinterpret_cast<const char*>(&mesh.x()[i]), sizeof(double) );
       m_outFile.write(
-        reinterpret_cast<const char*>(&m_mesh.y()[i]), sizeof(double) );
+        reinterpret_cast<const char*>(&mesh.y()[i]), sizeof(double) );
       m_outFile.write(
-        reinterpret_cast<const char*>(&m_mesh.z()[i]), sizeof(double) );
+        reinterpret_cast<const char*>(&mesh.z()[i]), sizeof(double) );
     }
     m_outFile << std::endl;
   }
@@ -108,28 +114,29 @@ GmshMeshWriter::writeNodes()
 }
 
 void
-GmshMeshWriter::writeElements()
+GmshMeshWriter::writeElements( const UnsMesh& mesh )
 //******************************************************************************
 //  Write "$Elements--$EndElements" section
+//! \param[in] mesh Unstructured mesh object
 //! \author J. Bakosi
 //******************************************************************************
 {
   m_outFile << "$Elements" << std::endl;
 
   // Write out number of elements
-  m_outFile << m_mesh.lininpoel().size()/2 +
-               m_mesh.triinpoel().size()/3 +
-               m_mesh.tetinpoel().size()/4
+  m_outFile << mesh.lininpoel().size()/2 +
+               mesh.triinpoel().size()/3 +
+               mesh.tetinpoel().size()/4
             << std::endl;
 
   // Write out line element ids, tags, and connectivity (node list)
-  writeElemBlock( 2, GmshElemType::LIN, m_mesh.lintag(), m_mesh.lininpoel() );
+  writeElemBlock( 2, GmshElemType::LIN, mesh.lintag(), mesh.lininpoel() );
 
   // Write out triangle element ids, tags, and connectivity (node list)
-  writeElemBlock( 3, GmshElemType::TRI, m_mesh.tritag(), m_mesh.triinpoel() );
+  writeElemBlock( 3, GmshElemType::TRI, mesh.tritag(), mesh.triinpoel() );
 
   // Write out terahedron element ids, tags, and connectivity (node list)
-  writeElemBlock( 4, GmshElemType::TET, m_mesh.tettag(), m_mesh.tetinpoel() );
+  writeElemBlock( 4, GmshElemType::TET, mesh.tettag(), mesh.tetinpoel() );
 
   if (isBinary()) m_outFile << std::endl;
   m_outFile << "$EndElements" << std::endl;

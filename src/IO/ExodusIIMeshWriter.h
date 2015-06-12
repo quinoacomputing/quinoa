@@ -4,77 +4,81 @@
   \author    J. Bakosi
   \date      Mon 01 Jun 2015 02:26:01 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
-  \brief     ExodusII mesh writer
-  \details   ExodusII mesh writer class declaration. Currently, this is a bare
-     minimum functionality to interface with the ExodusII writer. It only writes
-     3D meshes and only triangle and tetrahedron elements.
+  \brief     ExodusII mesh-based data writer
+  \details   ExodusII mesh-based data writer class declaration.
 */
 //******************************************************************************
 #ifndef ExodusIIMeshWriter_h
 #define ExodusIIMeshWriter_h
 
-#include <string>
+#include <cstddef>
+#include <iosfwd>
+#include <vector>
 
-#include "UnsMesh.h"
-#include "Writer.h"
+#include "Types.h"
 
 namespace tk {
 
-//! \brief ExodusIIMeshWriter : tk::Writer
-//! \details Mesh reader class facilitating writing a mesh to a file in
-//!   ExodusII format. See also http://sourceforge.net/projects/exodusii.
-class ExodusIIMeshWriter : public Writer {
+class UnsMesh;
+
+//! ExodusII writer constructor modes
+enum class ExoWriter { CREATE, OPEN };
+
+//! ExodusII mesh-based data writer
+//! \details Mesh writer class facilitating writing a mesh and associated
+//!   mesh-based field data to a file in ExodusII format.
+//! \see http://sourceforge.net/projects/exodusii
+class ExodusIIMeshWriter {
 
   public:
-    //! Constructor
+    //! Constructor: create/open ExodusII file
     explicit ExodusIIMeshWriter( const std::string& filename,
-                                 const UnsMesh& mesh,
+                                 ExoWriter mode,
                                  int cpuwordsize = sizeof(double),
                                  int iowordsize = sizeof(double) );
 
     //! Destructor
-    ~ExodusIIMeshWriter() noexcept override;
+    ~ExodusIIMeshWriter() noexcept;
 
     //! Write ExodusII mesh to file
-    void write() override;
+    void writeMesh( const UnsMesh& mesh ) const;
 
     //!  Write time stamp to ExodusII file
-    void writeTimeStamp( int it, tk::real time );
+    void writeTimeStamp( int it, tk::real time ) const;
 
     //! Write the names of nodal output variables to ExodusII file
-    void writeNodeVarNames( const std::vector< std::string >& nv );
+    void writeNodeVarNames( const std::vector< std::string >& nv ) const;
 
     //! Write the names of element output variables to ExodusII file
-    void writeElemVarNames( const std::vector< std::string >& ev );
+    void writeElemVarNames( const std::vector< std::string >& ev ) const;
 
     //!  Write node scalar field to ExodusII file
     void writeNodeScalar( int it,
                           int varid,
-                          const std::vector< tk::real >& var );
+                          const std::vector< tk::real >& var ) const;
 
     //!  Write elem scalar field to ExodusII file
     void writeElemScalar( int it,
                           int varid,
-                          const std::vector< tk::real >& var );
+                          const std::vector< tk::real >& var ) const;
 
   private:
     //! Write ExodusII header
-    void writeHeader();
+    void writeHeader( const UnsMesh& mesh ) const;
 
     //! Write nodes coordinates to ExodusII file
-    void writeNodes();
+    void writeNodes( const UnsMesh& mesh ) const;
 
     //! Write element conectivity to ExodusII file
-    void writeElements();
+    void writeElements( const UnsMesh& mesh ) const;
 
     //! Write element block to ExodusII file
     void writeElemBlock( int& elclass,
                          int nnpe,
                          const std::string& eltype,
-                         const std::vector< std::size_t >& inpoel );
+                         const std::vector< std::size_t >& inpoel ) const;
 
     const std::string m_filename;          //!< File name
-    const UnsMesh& m_mesh;                 //!< Mesh object
     int m_outFile;                         //!< ExodusII file handle
 };
 

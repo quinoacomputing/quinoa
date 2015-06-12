@@ -11,8 +11,13 @@
 //******************************************************************************
 
 #include <limits>
-#include <cmath>
 #include <array>
+#include <cmath>
+#include <cstddef>
+#include <istream>
+#include <string>
+#include <utility>
+#include <vector>
 
 #include "UnsMesh.h"
 #include "GmshMeshReader.h"
@@ -22,9 +27,10 @@
 using tk::GmshMeshReader;
 
 void
-GmshMeshReader::read()
+GmshMeshReader::readMesh( UnsMesh& mesh )
 //******************************************************************************
 //  Public interface for read a Gmsh mesh from file
+//! \param[in] mesh Unstructured mesh object
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -37,9 +43,9 @@ GmshMeshReader::read()
     std::string s;
     getline( m_inFile, s );
     if ( s == "$Nodes" )
-      readNodes();
+      readNodes( mesh );
     else if ( s == "$Elements" )
-      readElements();
+      readElements( mesh );
     else if ( s == "$PhysicalNames" )
       readPhysicalNames();
   }
@@ -102,9 +108,10 @@ GmshMeshReader::readMeshFormat()
 }
 
 void
-GmshMeshReader::readNodes()
+GmshMeshReader::readNodes( UnsMesh& mesh )
 //******************************************************************************
 //  Read "$Nodes--$EndNodes" section
+//! \param[in] mesh Unstructured mesh object
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -128,9 +135,9 @@ GmshMeshReader::readNodes()
       m_inFile.read( reinterpret_cast<char*>(coord.data()), 3*sizeof(double) );
     }
 
-    m_mesh.x().push_back( coord[0] );
-    m_mesh.y().push_back( coord[1] );
-    m_mesh.z().push_back( coord[2] );
+    mesh.x().push_back( coord[0] );
+    mesh.y().push_back( coord[1] );
+    mesh.z().push_back( coord[2] );
   }
   getline( m_inFile, s );  // finish reading the last line
 
@@ -141,9 +148,10 @@ GmshMeshReader::readNodes()
 }
 
 void
-GmshMeshReader::readElements()
+GmshMeshReader::readElements( UnsMesh& mesh )
 //******************************************************************************
 //  Read "$Elements--$EndElements" section
+//! \param[in] mesh Unstructured mesh object
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -198,9 +206,9 @@ GmshMeshReader::readElements()
       }
       // Put in element tags for different types of elements
       switch ( elmtype ) {
-        case GmshElemType::LIN: m_mesh.lintag().push_back( tags ); break;
-        case GmshElemType::TRI: m_mesh.tritag().push_back( tags ); break;
-        case GmshElemType::TET: m_mesh.tettag().push_back( tags ); break;
+        case GmshElemType::LIN: mesh.lintag().push_back( tags ); break;
+        case GmshElemType::TRI: mesh.tritag().push_back( tags ); break;
+        case GmshElemType::TET: mesh.tettag().push_back( tags ); break;
         case GmshElemType::PNT: break;     // ignore 1-node 'point element' type
         default: Throw( std::string("Unsupported element type ") << elmtype <<
                         " in mesh file: " << m_filename );
@@ -224,11 +232,11 @@ GmshMeshReader::readElements()
       // Put in element connectivity for different types of elements
       switch ( elmtype ) {
         case GmshElemType::LIN:
-          for (const auto& j : nodes) m_mesh.lininpoel().push_back( j ); break;
+          for (const auto& j : nodes) mesh.lininpoel().push_back( j ); break;
         case GmshElemType::TRI:
-          for (const auto& j : nodes) m_mesh.triinpoel().push_back( j ); break;
+          for (const auto& j : nodes) mesh.triinpoel().push_back( j ); break;
         case GmshElemType::TET:
-          for (const auto& j : nodes) m_mesh.tetinpoel().push_back( j ); break;
+          for (const auto& j : nodes) mesh.tetinpoel().push_back( j ); break;
         case GmshElemType::PNT:
           break;     // ignore 1-node 'point element' type
         default: Throw( std::string("Unsupported element type ") << elmtype <<
@@ -239,9 +247,9 @@ GmshMeshReader::readElements()
   getline( m_inFile, s );  // finish reading the last line
 
   // Shift node IDs to start from zero (gmsh likes one-based node ids)
-  shiftToZero( m_mesh.lininpoel() );
-  shiftToZero( m_mesh.triinpoel() );
-  shiftToZero( m_mesh.tetinpoel() );
+  shiftToZero( mesh.lininpoel() );
+  shiftToZero( mesh.triinpoel() );
+  shiftToZero( mesh.tetinpoel() );
 
   // Read in end of header: $EndNodes
   getline( m_inFile, s );

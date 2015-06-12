@@ -40,11 +40,10 @@
 #ifndef SkewNormal_h
 #define SkewNormal_h
 
-#include <cmath>
-
 #include "InitPolicy.h"
 #include "SkewNormalCoeffPolicy.h"
 #include "RNG.h"
+#include "Constants.h"
 
 namespace walker {
 
@@ -121,7 +120,7 @@ class SkewNormal {
           tk::real d = 2.0 * m_sigmasq[i] / m_T[i] * dt;
           d = (d > 0.0 ? std::sqrt(d) : 0.0);
           x += - ( x - m_lambda[i] * m_sigmasq[i]
-                       * std::sqrt( 2.0 / pi() )
+                       * std::sqrt( 2.0 / tk::pi<tk::real>() )
                        * std::exp( - m_lambda[i] * m_lambda[i] * x * x / 2.0 )
                        / ( 1.0 + std::erf( m_lambda[i] * x / std::sqrt(2.0) ) )
                    ) / m_T[i] * dt
@@ -144,9 +143,6 @@ class SkewNormal {
 
     //! Coefficients policy
     Coefficients coeff;
-
-    //! Return the value of Pi
-    constexpr tk::real pi() const { return std::atan(1.0) * 4.0; }
 };
 
 } // walker::

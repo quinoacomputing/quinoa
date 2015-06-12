@@ -34,6 +34,7 @@ module linsysmerger {
       entry void addlhs(
         const std::map< std::size_t,
                         std::map< std::size_t, tk::real > >& lhs );
+      entry void addrhs( const std::map< std::size_t, tk::real >& rhs );
 
       // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
       // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
@@ -58,10 +59,17 @@ module linsysmerger {
           m_perfstat.emplace_back( "Communicate/total of lhs matrix",
             static_cast<tk::real>(m_compts) /
             static_cast<tk::real>(m_ownpts+m_compts) );
-          m_timestamp.emplace_back( "Communicate lhs matrix",
-                                    m_timer[0].dsec() );
-          m_timer.clear();
+          m_timestamp.emplace_back( "Merge left-hand side matrix",
+                                    tk::query( m_timer, TimerTag::LHS ) );
           hyprelhs();
+        }
+      };
+
+      entry void wait4rhs() {
+        when trigger_rhs_complete() serial {
+          m_timestamp.emplace_back( "Merge right-hand side vector",
+                                    tk::query( m_timer, TimerTag::RHS ) );
+          hyprerhs();
         }
       };
 
@@ -71,17 +79,31 @@ module linsysmerger {
         }
       };
 
-      entry void wait4fill() {
-        when trigger_fill_complete() serial {
-          assemble();
+      entry void wait4hyprevec() {
+        when trigger_hyprerhs_complete() serial {
+          rhs();
+        }
+      };
+
+      entry void wait4filllhs() {
+        when trigger_filllhs_complete() serial {
+          assemblelhs();
+        }
+      };
+
+      entry void wait4fillrhs() {
+        when trigger_fillrhs_complete() serial {
+          assemblerhs();
         }
       };
 
       entry void wait4asm() {
-        when trigger_assembly_complete() serial {
+        when trigger_asmlhs_complete(), trigger_asmrhs_complete() serial {
           //m_A.print( "hypre_mat" );
           m_host.grpTimestamp( m_timestamp );
           m_host.grpPerfstat( m_perfstat );
+          m_timer.clear();
+          
         }
       };
 
@@ -92,9 +114,13 @@ module linsysmerger {
       };
 
       entry void trigger_lhs_complete();
+      entry void trigger_rhs_complete();
       entry void trigger_hyprelhs_complete();
-      entry void trigger_fill_complete();
-      entry void trigger_assembly_complete();
+      entry void trigger_hyprerhs_complete();
+      entry void trigger_filllhs_complete();
+      entry void trigger_fillrhs_complete();
+      entry void trigger_asmlhs_complete();
+      entry void trigger_asmrhs_complete();
       entry void trigger_timestamp_complete();
       entry void trigger_perfstat_complete();
     };
