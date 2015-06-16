@@ -18,6 +18,7 @@
 // to instantiate registration and delivery of code for the individual
 // specializations. See also
 // https://isocpp.org/wiki/faq/templates#separate-template-class-defn-from-decl.
-template class tk::LinSysMerger< inciter::CProxy_Conductor >;
+template class tk::LinSysMerger< inciter::CProxy_Conductor,
+                                 inciter::CProxy_Performer >;
 
 #include "linsysmerger.def.h"
