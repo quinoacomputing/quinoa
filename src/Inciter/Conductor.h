@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Conductor.h
   \author    J. Bakosi
-  \date      Sat 30 May 2015 10:34:52 AM MDT
+  \date      Sun 14 Jun 2015 09:26:12 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Conductor drives the time integration of the Euler equations
   \details   Conductor drives the time integration of the Euler equations.
@@ -72,8 +72,9 @@ class Conductor : public CBase_Conductor {
       const std::vector< std::pair< std::string, tk::real > >& p );
 
   private:
-    using PerfProxy = CProxy_Performer;
-    using LinSysMergerProxy = tk::CProxy_LinSysMerger< CProxy_Conductor >;
+    using PerformerProxy = CProxy_Performer;
+    using LinSysMergerProxy =
+      tk::CProxy_LinSysMerger< CProxy_Conductor, CProxy_Performer >;
 
     InciterPrint m_print;               //!< Pretty printer
     std::vector< tk::Timer > m_timer;   //!< Timers
@@ -82,7 +83,7 @@ class Conductor : public CBase_Conductor {
     int m_grpTimestampCnt;              //!< Time stamp chare group counter
     int m_arrPerfstatCnt;               //!< Perfstat chare array counter
     int m_grpPerfstatCnt;               //!< Perfstat chare group counter
-    PerfProxy m_perfproxy;              //!< Performer chare array
+    PerformerProxy m_perfproxy;         //!< Performer chare array
     LinSysMergerProxy m_lsmproxy;       //!< Linear system merger chare group
     //! Time stamps merged from chare array elements
     std::map< std::string, std::vector< tk::real > > m_arrTimestamp;

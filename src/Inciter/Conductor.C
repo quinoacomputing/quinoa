@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Conductor.C
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 03:22:12 PM MDT
+  \date      Sat 13 Jun 2015 01:23:02 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Conductor drives the time integration of the Euler equations
   \details   Conductor drives the time integration of the Euler equations.
@@ -59,8 +59,8 @@ Conductor::Conductor() :
 //   opts.setMap( map );
 
   // Fire up array of asynchronous performers
-  //m_perfproxy = PerfProxy::ckNew( thisProxy, m_lsmproxy, opts );
-  m_perfproxy = PerfProxy::ckNew( thisProxy, m_lsmproxy, m_nchare );
+  //m_perfproxy = PerformerProxy::ckNew( thisProxy, m_lsmproxy, opts );
+  m_perfproxy = PerformerProxy::ckNew( thisProxy, m_lsmproxy, m_nchare );
   //m_perfproxy.doneInserting();
 }
 
@@ -88,7 +88,6 @@ Conductor::arrTimestamp(
 //******************************************************************************
 {
   timestamp( stamp, m_arrTimestamp, m_arrTimestampCnt, m_nchare, "chares" );
-  m_lsmproxy.trigger_timestamp_complete();
 }
 
 void
@@ -102,7 +101,7 @@ Conductor::grpTimestamp(
 //******************************************************************************
 {
   timestamp( stamp, m_grpTimestamp, m_grpTimestampCnt, CkNumPes(), "PEs" );
-  m_lsmproxy.trigger_perfstat_complete();
+  m_lsmproxy.trigger_timestamp_complete();
 }
 
 void
@@ -129,6 +128,7 @@ Conductor::grpPerfstat(
 //******************************************************************************
 {
   perfstat( p, m_grpPerfstat, m_grpPerfstatCnt, CkNumPes(), "PEs" );
+  m_lsmproxy.trigger_perfstat_complete();
 }
 
 void

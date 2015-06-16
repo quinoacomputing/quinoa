@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.C
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 09:59:45 PM MDT
+  \date      Sun 14 Jun 2015 10:20:28 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Performer advances the Euler equations
   \details   Performer advances the Euler equations. There are a potentially
@@ -16,7 +16,6 @@
 #include <iterator>
 #include <cmath>
 
-#include "Constants.h"
 #include "Exception.h"
 #include "Performer.h"
 #include "Vector.h"
@@ -56,29 +55,36 @@ Performer::Performer( CProxy_Conductor& hostproxy, LinSysMergerProxy& lsmproxy )
 //******************************************************************************
 {
   // Activate SDAG waits
-  wait4mass();
-  wait4rhs();
+//   wait4lhs();
+//   wait4rhs();
   // Initialize import maps
   initImports();
-  // Take over global mesh element ids of owned elements
-  std::vector< std::size_t > gelem( g_element[ m_id ] );
   // Initialize local->global, global->local node ids, element connectivity
-  std::vector< std::size_t > gnode, inpoel;
-  std::tie( gnode, inpoel ) = initIds( gelem );
+  initIds( g_element[ m_id ] );
   // Read coordinates of owned and received mesh nodes
-  auto coord = initCoords( gnode );
+  initCoords();
   // Output chare mesh to file
-  writeMesh( inpoel, coord );
+  writeMesh();
   // Output mesh-based fields metadata to file
   writeMeta();
+}
+
+void
+Performer::buildSystem()
+//******************************************************************************
+// Build linear system by computing matrix, unknown and rhs vectors
+//! \author J. Bakosi
+//******************************************************************************
+{
   // Set initial conditions
-  ic( gnode, coord );
+  ic();
   // Compute left-hand side of PDE
-  lhs( gnode, inpoel, coord );
+  lhs();
   // Compute righ-hand side of PDE
-  rhs( gnode, inpoel, coord );
+  rhs();
   // Output field data to file
   writeFields();
+m_sol.clear();
   // Send some time stamps to the host
   m_hostproxy.arrTimestamp( m_timestamp );
 }
@@ -98,249 +104,171 @@ Performer::initImports()
           m_toimport[ h ].push_back( p );
     ++h;
   }
-
-//   for (const auto& m : m_toimport) {
-//     std::cout << m_id << " will import from " << m.first << ": ";
-//     for (auto p : m.second)
-//       std::cout << p << " ";
-//     std::cout << '\n';
-//   }
 }
 
 void
-Performer::ic( const std::vector< std::size_t >& gnode,
-               const std::array< std::vector< tk::real >, 3 >& coord )
+Performer::ic()
 //******************************************************************************
 // Set initial conditions
-//! \param[in] gnode Global node ids of owned elements
-//! \param[in] coord Mesh point coordinates
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // Lambda to compute initial conditions for dispersion in simple shear flow
-  auto ansol_shear = [ &coord ]( std::size_t i, tk::real t ){
-    const tk::real X0 = 0.5;           // x position of source
-    const tk::real Y0 = 0.5;            // y position of source
-    const tk::real U0 = 0.5;            // velocity in x direction
-    const tk::real t0 = 2.4;            // initial time
-    const tk::real LAMBDA = 5.0e-4;     // amount of shear, (lambda = du/dy)
-    const tk::real D = 10.0;            // scalar diffusivity
-    const tk::real MASS = 4 * tk::pi<tk::real>() * t0 *
-                          std::sqrt( 1.0 + LAMBDA * LAMBDA * t0 * t0 / 12.0 );
+  for (std::size_t i=0; i<m_gid.size(); ++i)
+    //m_sol[ m_gid[i] ] = ansol_shear( i, 2.4 );
+    m_sol[ m_gid[i] ] = ansol_gauss( i );
 
-    const auto& x = coord[0];
-    const auto& y = coord[1];
-
-    tk::real a = x[i] - X0 - U0*t - 0.5*LAMBDA*y[i]*t;
-    tk::real b = 1.0 + LAMBDA*LAMBDA*t*t/12.0;
-    return MASS * exp( -a*a/(4*D*t*b) - y[i]*y[i]/(4*D*t) )
-                / ( 4.0 * tk::pi<tk::real>() * t * std::sqrt(b) );
-  };
-
-  // Lambda to compute initial conditions representing a joint Gaussian
-  auto ansol_gauss = [ &coord ]( std::size_t i ){
-    const tk::real X0 = 0.5, Y0 = 0.5, Z0 = 0.5;
-    const tk::real v1 = 0.1, v2 = 0.05, v3 = 0.05;
-
-    const auto& x = coord[0];
-    const auto& y = coord[1];
-    const auto& z = coord[2];
-
-    const tk::real rx = x[i]-X0;
-    const tk::real ry = y[i]-Y0;
-    const tk::real rz = z[i]-Z0;
-
-    return std::exp( -0.5 * (rx*rx/v1 + ry*ry/v2 + rz*rz/v3) ) /
-           2.0 / tk::pi<tk::real>() / v1 / v2 / v3;
-  };
-
-  for (std::size_t i=0; i<gnode.size(); ++i)
-    //m_x[ gnode[i] ] = ansol_shear( i, 2.4 );
-    m_x[ gnode[i] ] = ansol_gauss( i );
+  m_lsmproxy.ckLocalBranch()->charesol( thisIndex, m_sol );
 }
 
 void
-Performer::lhs(
-  const std::vector< std::size_t >& gnode,
-  const std::vector< std::size_t >& inpoel,
-  const std::array< std::vector< tk::real >, 3 >& coord )
+Performer::lhs()
 //******************************************************************************
 // Compute left-hand side of PDE
-//! \param[in] gnode Global node ids of owned elements
-//! \param[in] inpoel Tetrahedron element connectivity of owned elements
-//! \param[in] coord Mesh point coordinates
 //! \author J. Bakosi
 //******************************************************************************
 {
   tk::Timer t;
 
-  const auto& x = coord[0];
-  const auto& y = coord[1];
-  const auto& z = coord[2];
+  const auto& x = m_coord[0];
+  const auto& y = m_coord[1];
+  const auto& z = m_coord[2];
 
-  for (std::size_t e=0; e<inpoel.size()/4; ++e) {
-    const auto a = inpoel[e*4+0];
-    const auto b = inpoel[e*4+1];
-    const auto c = inpoel[e*4+2];
-    const auto d = inpoel[e*4+3];
+  for (std::size_t e=0; e<m_inpoel.size()/4; ++e) {
+    const auto a = m_inpoel[e*4+0];
+    const auto b = m_inpoel[e*4+1];
+    const auto c = m_inpoel[e*4+2];
+    const auto d = m_inpoel[e*4+3];
     std::array< tk::real, 3 > ba{{ x[b]-x[a], y[b]-y[a], z[b]-z[a] }},
                               ca{{ x[c]-x[a], y[c]-y[a], z[c]-z[a] }},
                               da{{ x[d]-x[a], y[d]-y[a], z[d]-z[a] }};
     const auto J = tk::triple( ba, ca, da ) / 120.0;
 
-    const auto A = gnode[a];
-    const auto B = gnode[b];
-    const auto C = gnode[c];
-    const auto D = gnode[d];
-    auto& lshA = m_lhs[A];
-    lshA[A] += 2.0*J;
-    lshA[B] += J;
-    lshA[C] += J;
-    lshA[D] += J;
-    auto& lhsB = m_lhs[B];
-    lhsB[A] += J;
-    lhsB[B] += 2.0*J;
-    lhsB[C] += J;
-    lhsB[D] += J;
-    auto& lhsC = m_lhs[C];
-    lhsC[A] += J;
-    lhsC[B] += J;
-    lhsC[C] += 2.0*J;
-    lhsC[D] += J;
-    auto& lhsD = m_lhs[D];
-    lhsD[A] += J;
-    lhsD[B] += J;
-    lhsD[C] += J;
-    lhsD[D] += 2.0*J;
+    const auto A = m_gid[a];
+    const auto B = m_gid[b];
+    const auto C = m_gid[c];
+    const auto D = m_gid[d];
+    auto& lA = m_lhs[A];
+    lA[A] += 2.0*J;
+    lA[B] += J;
+    lA[C] += J;
+    lA[D] += J;
+    auto& lB = m_lhs[B];
+    lB[A] += J;
+    lB[B] += 2.0*J;
+    lB[C] += J;
+    lB[D] += J;
+    auto& lC = m_lhs[C];
+    lC[A] += J;
+    lC[B] += J;
+    lC[C] += 2.0*J;
+    lC[D] += J;
+    auto& lD = m_lhs[D];
+    lD[A] += J;
+    lD[B] += J;
+    lD[C] += J;
+    lD[D] += 2.0*J;
   }
 
   m_timestamp.emplace_back( "Compute left-hand side matrix", t.dsec() );
 
-  // Update left-hand side matrix of PDE by communicating with fellow chares,
-  // and send off our contribution to linear system merger
-  commLhs( g_ecomm.size() > m_id ? g_ecomm[ m_id ] :
-           std::map< std::size_t, std::vector< std::size_t > >() );
-}
-
-void
-Performer::commLhs(
-  const std::map< std::size_t, std::vector< std::size_t > >& exp )
-//******************************************************************************
-//  Perform the necessary communication among fellow Performers to update the
-//  chare-boundaries for left-hand side matrix of PDE
-//! \param[in] exp Chare export map, see tk::elemCommMaps()
-//! \author J. Bakosi
-//******************************************************************************
-{
-  m_timer[ TimerTag::LHS ];  // start timer measuring the communication of lhs
-
-  // Pack matrix values for export
-  std::map< std::size_t,
-            std::map< std::size_t,
-                      std::map< std::size_t, tk::real > > > expmat;
-  for (const auto& c : exp) {
-    auto& e = expmat[ c.first ];
-    for (auto p : c.second) {
-      const auto it = m_lhs.find( p );
-      if (it != m_lhs.end())
-        e.insert( *it );
-      else
-        Throw( "Performer chare " + std::to_string(thisIndex) +
-               " can't find gid " + std::to_string(p) +
-               " to be exported in its part of the lhs matrix" );
-    }
-  }
-
-  if (m_toimport.empty()) trigger_lhs_complete();
-
-  // Export matrix contributions
-  for (const auto& c : expmat)
-    thisProxy[ static_cast<int>(c.first) ].addLhs( thisIndex, c.second );
-}
-
-void
-Performer::addLhs(
-  int id,
-  const std::map< std::size_t, std::map< std::size_t, tk::real > >& rows )
-//******************************************************************************
-// Receive matrix rows contribution from fellow Performer chare
-//! \author J. Bakosi
-//******************************************************************************
-{
-//   std::cout << "import on " << thisIndex << ": ";
-//   for (const auto& r : rows) {
-//     std::cout << "(" << r.first << ") ";
-//     //for (const auto& c : r.second)
-//     //  std::cout << c.first << " ";
-//   }
-//   std::cout << "\n";
-
-  // Add contributions received
-  for (const auto& r : rows) {
-    auto& localrow = m_lhs[ r.first ];
-    m_lhsimport[ static_cast<std::size_t>(id) ].push_back( r.first );
-    for (const auto& c : r.second) localrow[ c.first ] += c.second;
-  }
-
-//   for (const auto& m : m_lhsimport) {
-//     std::cout << m.first << " % ";
-//     for (auto p : m.second)
-//       std::cout << p << " ";
-//     std::cout << '\n';
-//   }
-
-  if (lhscomplete()) trigger_lhs_complete();
-}
-
-void
-Performer::contributeLhs()
-//******************************************************************************
-// Contribute our portion of the left-hand side matrix
-//! \author J. Bakosi
-//******************************************************************************
-{
-  // Keep only rows owned before send
-  for (auto it=begin(m_lhs); it!=end(m_lhs); )
-    if (!own( it->first ))
-      it = m_lhs.erase( it );
-    else
-      ++it;
-
-//   std::cout << thisIndex << ": ";
-//   for (const auto& r : m_lhs) {
-//     std::cout << r.first << ", ";
-//     for (const auto& c : r.second)
-//       std::cout << c.first << " ";
-//   }
-//   std::cout << '\n';
-
   m_lsmproxy.ckLocalBranch()->charelhs( m_lhs );
+
+//   // Update left-hand side matrix of PDE by communicating with fellow chares,
+//   // and send off our contribution to linear system merger
+//   commLhs( g_ecomm.size() > m_id ? g_ecomm[ m_id ] :
+//            std::map< std::size_t, std::vector< std::size_t > >() );
 }
 
+// void
+// Performer::commLhs(
+//   const std::map< std::size_t, std::vector< std::size_t > >& exp )
+// //******************************************************************************
+// //  Perform the necessary communication among fellow Performers to update the
+// //  chare-boundaries for left-hand side matrix of PDE
+// //! \param[in] exp Chare export map, see tk::elemCommMaps()
+// //! \author J. Bakosi
+// //******************************************************************************
+// {
+//   m_timer[ TimerTag::LHS ];  // start timer measuring the communication of lhs
+// 
+//   // Pack matrix values for export
+//   std::map< std::size_t,
+//             std::map< std::size_t,
+//                       std::map< std::size_t, tk::real > > > expmat;
+//   for (const auto& c : exp) {
+//     auto& e = expmat[ c.first ];
+//     for (auto p : c.second) {
+//       const auto it = m_lhs.find( p );
+//       if (it != m_lhs.end())
+//         e.insert( *it );
+//       else
+//         Throw( "Performer chare " + std::to_string(thisIndex) +
+//                " can't find gid " + std::to_string(p) +
+//                " to be exported in its part of the lhs matrix" );
+//     }
+//   }
+// 
+//   if (m_toimport.empty()) trigger_lhs_complete();
+// 
+//   // Export matrix contributions
+//   for (const auto& c : expmat)
+//     thisProxy[ static_cast<int>(c.first) ].addLhs( thisIndex, c.second );
+// }
+// 
+// void
+// Performer::addLhs(
+//   int id,
+//   const std::map< std::size_t, std::map< std::size_t, tk::real > >& rows )
+// //******************************************************************************
+// // Receive matrix rows contribution from fellow Performer chare
+// //! \author J. Bakosi
+// //******************************************************************************
+// {
+//   // Add contributions received
+//   for (const auto& r : rows) {
+//     auto& localrow = m_lhs[ r.first ];
+//     m_lhsimport[ static_cast<std::size_t>(id) ].push_back( r.first );
+//     for (const auto& c : r.second) localrow[ c.first ] += c.second;
+//   }
+// 
+//   if (lhscomplete()) trigger_lhs_complete();
+// }
+// 
+// void
+// Performer::contributeLhs()
+// //******************************************************************************
+// // Contribute our portion of the left-hand side matrix
+// //! \author J. Bakosi
+// //******************************************************************************
+// {
+//   // Keep only rows owned before send
+//   for (auto it=begin(m_lhs); it!=end(m_lhs); )
+//     if (!own( it->first ))
+//       it = m_lhs.erase( it );
+//     else
+//       ++it;
+// 
+//   m_lsmproxy.ckLocalBranch()->charelhs( m_lhs );
+// }
+
 void
-Performer::rhs(
-  const std::vector< std::size_t >& gnode,
-  const std::vector< std::size_t >& inpoel,
-  const std::array< std::vector< tk::real >, 3 >& coord )
+Performer::rhs()
 //******************************************************************************
 // Compute right-hand side of PDE
-//! \param[in] gnode Global node ids of owned elements
-//! \param[in] inpoel Tetrahedron element connectivity of owned elements
-//! \param[in] coord Mesh point coordinates
 //! \author J. Bakosi
 //******************************************************************************
 {
   tk::Timer t;
 
-  const auto& x = coord[0];
-  const auto& y = coord[1];
-  const auto& z = coord[2];
+  const auto& x = m_coord[0];
+  const auto& y = m_coord[1];
+  const auto& z = m_coord[2];
 
-  for (std::size_t e=0; e<inpoel.size()/4; ++e) {
-    const auto a = inpoel[e*4+0];
-    const auto b = inpoel[e*4+1];
-    const auto c = inpoel[e*4+2];
-    const auto d = inpoel[e*4+3];
+  for (std::size_t e=0; e<m_inpoel.size()/4; ++e) {
+    const auto a = m_inpoel[e*4+0];
+    const auto b = m_inpoel[e*4+1];
+    const auto c = m_inpoel[e*4+2];
+    const auto d = m_inpoel[e*4+3];
 
     // compute element Jacobi determinant
     std::array< tk::real, 3 > ba{{ x[b]-x[a], y[b]-y[a], z[b]-z[a] }},
@@ -377,8 +305,8 @@ Performer::rhs(
 
     // add mass contribution to rhs
     for (std::size_t i=0; i<4; ++i) {
-      const auto g = gnode[ inpoel[e*4+i] ];    // global node id
-      const auto& u = m_x[g];                   // ref to unknown at g
+      const auto g = m_gid[ m_inpoel[e*4+i] ];  // global node id
+      const auto& u = m_sol[g];                 // ref to unknown at g
       auto& r = m_rhs[g];                       // ref to rhs at g
       for (std::size_t j=0; j<4; ++j)           // add contribution to rhs
         r += mass[i][j] * u;
@@ -386,21 +314,21 @@ Performer::rhs(
 
     // add advection contribution to rhs
     for (std::size_t i=0; i<4; ++i) {
-      const auto g = gnode[ inpoel[e*4+i] ];    // global node id
+      const auto g = m_gid[ m_inpoel[e*4+i] ];  // global node id
       auto& r = m_rhs[g];                       // ref to rhs at g
       for (std::size_t j=0; j<4; ++j)           // add contribution to rhs
         for (std::size_t k=0; k<3; ++k)
           for (std::size_t l=0; l<4; ++l)
             r += mass[i][j] * vel[k][j] * grad[l][k] *
-                   m_x[ gnode[ inpoel[e*4+l] ] ];
+                   m_sol[ m_gid[ m_inpoel[e*4+l] ] ];
     }
 
     // add diffusion contribution to rhs
     for (std::size_t i=0; i<4; ++i) {
-      const auto g = gnode[ inpoel[e*4+i] ];    // global node id
+      const auto g = m_gid[ m_inpoel[e*4+i] ];  // global node id
       auto& r = m_rhs[g];                       // ref to rhs at g
       for (std::size_t j=0; j<4; ++j) {         // add contribution to rhs
-        const auto& u = m_x[ gnode[ inpoel[e*4+j] ] ];  // ref to unknown
+        const auto& u = m_sol[ m_gid[ m_inpoel[e*4+j] ] ];  // ref to unknown
         for (std::size_t k=0; k<3; ++k)
           r += grad[i][k] * grad[j][k] * u;
       }
@@ -409,119 +337,116 @@ Performer::rhs(
 
   m_timestamp.emplace_back( "Compute right-hand side vector", t.dsec() );
 
-  // Update right-hand side vector of PDE by communicating with fellow chares,
-  // and send off our contribution to linear system merger
-  commRhs( g_ecomm.size() > m_id ? g_ecomm[ m_id ] :
-           std::map< std::size_t, std::vector< std::size_t > >() );
-}
-
-void
-Performer::commRhs(
-  const std::map< std::size_t, std::vector< std::size_t > >& exp )
-//******************************************************************************
-//  Perform the necessary communication among fellow Performers to update the
-//  chare-boundaries for right-hand side vector of PDE
-//! \param[in] exp Chare export map, see tk::elemCommMaps()
-//! \author J. Bakosi
-//******************************************************************************
-{
-  m_timer[ TimerTag::RHS ];  // start timer measuring the communication of rhs
-
-  // Pack vector values for export
-  std::map< std::size_t, std::map< std::size_t, tk::real > > expvec;
-  for (const auto& c : exp) {
-    auto& e = expvec[ c.first ];
-    for (auto p : c.second) {
-      const auto it = m_rhs.find( p );
-      if (it != m_rhs.end())
-        e.insert( *it );
-      else
-        Throw( "Performer chare " + std::to_string(thisIndex) +
-               " can't find gid " + std::to_string(p) +
-               " to be exported in its part of the rhs vector" );
-    }
-  }
-
-  if (m_toimport.empty()) trigger_rhs_complete();
-
-  // Export vector contributions
-  for (const auto& c : expvec)
-    thisProxy[ static_cast<int>(c.first) ].addRhs( thisIndex, c.second );
-}
-
-void
-Performer::addRhs( int id, const std::map< std::size_t, tk::real >& rows )
-//******************************************************************************
-// Receive rhs vector rows contribution from fellow Performer chare
-//! \author J. Bakosi
-//******************************************************************************
-{
-  // Add contributions received
-  for (const auto& r : rows) {
-    m_rhs[ r.first ] += r.second;
-    m_rhsimport[ static_cast<std::size_t>(id) ].push_back( r.first );
-  }
-
-  if (rhscomplete()) trigger_rhs_complete();
-}
-
-void
-Performer::contributeRhs()
-//******************************************************************************
-// Contribute our portion of the right-hand side vector
-//! \author J. Bakosi
-//******************************************************************************
-{
-  // Keep only rows owned before send
-  for (auto it=begin(m_rhs); it!=end(m_rhs); )
-    if (!own( it->first ))
-      it = m_rhs.erase( it );
-    else
-      ++it;
-
   m_lsmproxy.ckLocalBranch()->charerhs( m_rhs );
+
+//   // Update right-hand side vector of PDE by communicating with fellow chares,
+//   // and send off our contribution to linear system merger
+//   commRhs( g_ecomm.size() > m_id ? g_ecomm[ m_id ] :
+//            std::map< std::size_t, std::vector< std::size_t > >() );
 }
 
-std::pair< std::vector< std::size_t >, std::vector< std::size_t > >
+// void
+// Performer::commRhs(
+//   const std::map< std::size_t, std::vector< std::size_t > >& exp )
+// //******************************************************************************
+// //  Perform the necessary communication among fellow Performers to update the
+// //  chare-boundaries for right-hand side vector of PDE
+// //! \param[in] exp Chare export map, see tk::elemCommMaps()
+// //! \author J. Bakosi
+// //******************************************************************************
+// {
+//   m_timer[ TimerTag::RHS ];  // start timer measuring the communication of rhs
+// 
+//   // Pack vector values for export
+//   std::map< std::size_t, std::map< std::size_t, tk::real > > expvec;
+//   for (const auto& c : exp) {
+//     auto& e = expvec[ c.first ];
+//     for (auto p : c.second) {
+//       const auto it = m_rhs.find( p );
+//       if (it != m_rhs.end())
+//         e.insert( *it );
+//       else
+//         Throw( "Performer chare " + std::to_string(thisIndex) +
+//                " can't find gid " + std::to_string(p) +
+//                " to be exported in its part of the rhs vector" );
+//     }
+//   }
+// 
+//   if (m_toimport.empty()) trigger_rhs_complete();
+// 
+//   // Export vector contributions
+//   for (const auto& c : expvec)
+//     thisProxy[ static_cast<int>(c.first) ].addRhs( thisIndex, c.second );
+// }
+// 
+// void
+// Performer::addRhs( int id, const std::map< std::size_t, tk::real >& rows )
+// //******************************************************************************
+// // Receive rhs vector rows contribution from fellow Performer chare
+// //! \author J. Bakosi
+// //******************************************************************************
+// {
+//   // Add contributions received
+//   for (const auto& r : rows) {
+//     m_rhs[ r.first ] += r.second;
+//     m_rhsimport[ static_cast<std::size_t>(id) ].push_back( r.first );
+//   }
+// 
+//   if (rhscomplete()) trigger_rhs_complete();
+// }
+// 
+// void
+// Performer::contributeRhs()
+// //******************************************************************************
+// // Contribute our portion of the right-hand side vector
+// //! \author J. Bakosi
+// //******************************************************************************
+// {
+//   // Keep only rows owned before send
+//   for (auto it=begin(m_rhs); it!=end(m_rhs); )
+//     if (!own( it->first ))
+//       it = m_rhs.erase( it );
+//     else
+//       ++it;
+// 
+//   m_lsmproxy.ckLocalBranch()->charerhs( m_rhs );
+// }
+
+void
 Performer::initIds( const std::vector< std::size_t >& gelem )
 //******************************************************************************
 //! Initialize local->global, global->local node ids, element connectivity
 //! \param[in] gelem Set of unique owned global element ids
-//! \return Unique global node ids of owned elements and tetrahedron element
-//!   connectivity
 //! \author J. Bakosi
 //******************************************************************************
 {
   tk::Timer t;
 
   // Build unique global node ids of owned elements
-  std::vector< std::size_t > gnode;
   for (auto e : gelem) {
-    gnode.push_back( g_tetinpoel[e*4] );
-    gnode.push_back( g_tetinpoel[e*4+1] );
-    gnode.push_back( g_tetinpoel[e*4+2] );
-    gnode.push_back( g_tetinpoel[e*4+3] );
+    m_gid.push_back( g_tetinpoel[e*4] );
+    m_gid.push_back( g_tetinpoel[e*4+1] );
+    m_gid.push_back( g_tetinpoel[e*4+2] );
+    m_gid.push_back( g_tetinpoel[e*4+3] );
   }
-  tk::unique( gnode );
+  tk::unique( m_gid );
+
+  // Send off global row ids to linear system merger
+  m_lsmproxy.ckLocalBranch()->charerow( thisProxy, thisIndex, m_gid );
 
   // Assign local node ids to global node ids
-  const auto lnode = assignLid( gnode );
+  const auto lnode = assignLid( m_gid );
 
   // Generate element connectivity for owned elements using local point ids
-  std::vector< std::size_t > inpoel;
   for (auto e : gelem) {
-    inpoel.push_back( lid( lnode, g_tetinpoel[e*4] ) );
-    inpoel.push_back( lid( lnode, g_tetinpoel[e*4+1] ) );
-    inpoel.push_back( lid( lnode, g_tetinpoel[e*4+2] ) );
-    inpoel.push_back( lid( lnode, g_tetinpoel[e*4+3] ) );
+    m_inpoel.push_back( lid( lnode, g_tetinpoel[e*4] ) );
+    m_inpoel.push_back( lid( lnode, g_tetinpoel[e*4+1] ) );
+    m_inpoel.push_back( lid( lnode, g_tetinpoel[e*4+2] ) );
+    m_inpoel.push_back( lid( lnode, g_tetinpoel[e*4+3] ) );
   }
-
-  // Store number of owned elements
-  m_nelem = inpoel.size() / 4;
 
   m_timestamp.emplace_back( "Initialize mesh point ids, element connectivity",
                             t.dsec() );
-  return { gnode, inpoel };
 }
 
 std::map< std::size_t, std::size_t >
@@ -558,12 +483,10 @@ Performer::lid( const std::map< std::size_t, std::size_t >& lnode,
     Throw( "Can't find global node id " + std::to_string(gid) );
 }
 
-std::array< std::vector< tk::real >, 3 >
-Performer::initCoords( const std::vector< std::size_t >& gnode )
+void
+Performer::initCoords()
 //******************************************************************************
 //  Read coordinates of mesh nodes from file
-//! \param[in] gnode Global node ids of owned elements
-//! \return Mesh point coordinates
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -572,31 +495,44 @@ Performer::initCoords( const std::vector< std::size_t >& gnode )
   tk::ExodusIIMeshReader
     er( g_inputdeck.get< tag::cmd, tag::io, tag::input >() );
 
-  std::vector< tk::real > x, y, z;
+  auto& x = m_coord[0];
+  auto& y = m_coord[1];
+  auto& z = m_coord[2];
   if (!g_meshfilemap.empty())
-    for (auto p : gnode) er.readNode( g_meshfilemap[p], x, y, z );
+    for (auto p : m_gid) er.readNode( g_meshfilemap[p], x, y, z );
   else
-    for (auto p : gnode) er.readNode( p, x, y, z );
+    for (auto p : m_gid) er.readNode( p, x, y, z );
 
   m_timestamp.emplace_back( "Read mesh point coordinates from file", t.dsec() );
-
-  return { { x, y, z } };
 }
 
 void
-Performer::writeMesh( const std::vector< std::size_t >& inpoel,
-                      const std::array< std::vector< tk::real >, 3 >& coord )
+Performer::updateSolution( const std::map< std::size_t, tk::real >& sol )
+//******************************************************************************
+// Update solution vector
+//! \author J. Bakosi
+//******************************************************************************
+{
+  for (const auto& r : sol) m_sol[ r.first ] = r.second;
+
+  if (m_sol.size() == m_gid.size()) {
+    ++m_it;
+    m_t += 1.0;
+    writeFields();
+  }
+}
+
+void
+Performer::writeMesh()
 //******************************************************************************
 // Output chare mesh to file
-//! \param[in] inpoel Tetrahedron element connectivity of owned elements
-//! \param[in] coord Mesh point coordinates
 //! \author J. Bakosi
 //******************************************************************************
 {
   tk::Timer t;
 
   // Create mesh object initializing element connectivity and point coords
-  tk::UnsMesh mesh( inpoel, coord );
+  tk::UnsMesh mesh( m_inpoel, m_coord );
 
   // Create ExodusII writer
   tk::ExodusIIMeshWriter
@@ -619,7 +555,7 @@ Performer::writeChareId( const tk::ExodusIIMeshWriter& ew ) const
 //******************************************************************************
 {
   // Write elem chare id field to mesh
-  std::vector< tk::real > chid( m_nelem, static_cast<tk::real>(m_id) );
+  std::vector< tk::real > chid( m_inpoel.size()/4, static_cast<tk::real>(m_id) );
   ew.writeElemScalar( m_it+1, 1, chid );
 }
 
@@ -631,9 +567,9 @@ Performer::writeSolution( const tk::ExodusIIMeshWriter& ew ) const
 //! \author J. Bakosi
 //******************************************************************************
 {
-  std::vector< tk::real > x;
-  for (const auto& p : m_x) x.push_back( p.second );
-  ew.writeNodeScalar( m_it+1, 1, x );
+  std::vector< tk::real > sol;
+  for (const auto& p : m_sol) sol.push_back( p.second );
+  ew.writeNodeScalar( m_it+1, 1, sol );
 }
 
 void

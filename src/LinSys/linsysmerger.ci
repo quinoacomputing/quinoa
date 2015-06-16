@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/linsysmerger.ci
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 04:26:04 PM MDT
+  \date      Sat 13 Jun 2015 06:45:15 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Charm++ module interface file for merging a linear system
   \details   Charm++ module interface file for merging a linear system
@@ -26,15 +26,17 @@ module linsysmerger {
     // registration and delivery of code for the individual specializations
 
     // Will specialize linear system merger for inciter's Conductor chare
-    chare LinSysMerger< inciter::CProxy_Conductor >;
+    chare LinSysMerger< inciter::CProxy_Conductor, inciter::CProxy_Performer >;
 
-    template< class HostProxy >
+    template< class HostProxy, class WorkerProxy >
     group LinSysMerger {
       entry LinSysMerger( HostProxy& host, std::size_t npoin );
+      entry void addrow( const std::set< std::size_t >& row );
       entry void addlhs(
         const std::map< std::size_t,
                         std::map< std::size_t, tk::real > >& lhs );
       entry void addrhs( const std::map< std::size_t, tk::real >& rhs );
+      entry void addsol( int id, const std::map< std::size_t, tk::real >& sol );
 
       // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
       // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
@@ -54,6 +56,12 @@ module linsysmerger {
       // Control flow is from left to right and top to bottom.
       //
 
+      entry void wait4rows() {
+        when trigger_row_complete() serial {
+          buildSystem();
+        }
+      };
+
       entry void wait4lhs() {
         when trigger_lhs_complete() serial {
           m_perfstat.emplace_back( "Communicate/total of lhs matrix",
@@ -64,7 +72,6 @@ module linsysmerger {
           hyprelhs();
         }
       };
-
       entry void wait4rhs() {
         when trigger_rhs_complete() serial {
           m_timestamp.emplace_back( "Merge right-hand side vector",
@@ -72,55 +79,65 @@ module linsysmerger {
           hyprerhs();
         }
       };
-
-      entry void wait4hypremat() {
-        when trigger_hyprelhs_complete() serial {
-          lhs();
+      entry void wait4sol() {
+        when trigger_sol_complete() serial {
+          m_timestamp.emplace_back( "Merge solution vector",
+                                    tk::query( m_timer, TimerTag::SOL ) );
+          hypresol();
         }
       };
 
-      entry void wait4hyprevec() {
-        when trigger_hyprerhs_complete() serial {
-          rhs();
-        }
+      entry void wait4hyprelhs() {
+        when trigger_hyprelhs_complete() serial { lhs(); }
+      };
+      entry void wait4hyprerhs() {
+        when trigger_hyprerhs_complete() serial { rhs(); }
+      };
+      entry void wait4hypresol() {
+        when trigger_hypresol_complete() serial { sol(); }
       };
 
       entry void wait4filllhs() {
-        when trigger_filllhs_complete() serial {
-          assemblelhs();
-        }
+        when trigger_filllhs_complete() serial { assemblelhs(); }
       };
-
       entry void wait4fillrhs() {
-        when trigger_fillrhs_complete() serial {
-          assemblerhs();
-        }
+        when trigger_fillrhs_complete() serial { assemblerhs(); }
+      };
+      entry void wait4fillsol() {
+        when trigger_fillsol_complete() serial { assemblesol(); }
       };
 
       entry void wait4asm() {
-        when trigger_asmlhs_complete(), trigger_asmrhs_complete() serial {
+        when trigger_asmlhs_complete(),
+             trigger_asmrhs_complete(),
+             trigger_asmsol_complete()
+        serial {
           //m_A.print( "hypre_mat" );
           m_host.grpTimestamp( m_timestamp );
           m_host.grpPerfstat( m_perfstat );
           m_timer.clear();
-          
         }
       };
-
       entry void wait4stat() {
         when trigger_timestamp_complete(), trigger_perfstat_complete() serial {
+          updateSolution();
           init_complete( m_host );
         }
       };
 
+      entry void trigger_row_complete();
       entry void trigger_lhs_complete();
       entry void trigger_rhs_complete();
+      entry void trigger_sol_complete();
       entry void trigger_hyprelhs_complete();
       entry void trigger_hyprerhs_complete();
+      entry void trigger_hypresol_complete();
       entry void trigger_filllhs_complete();
       entry void trigger_fillrhs_complete();
+      entry void trigger_fillsol_complete();
       entry void trigger_asmlhs_complete();
       entry void trigger_asmrhs_complete();
+      entry void trigger_asmsol_complete();
       entry void trigger_timestamp_complete();
       entry void trigger_perfstat_complete();
     };
