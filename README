@@ -1,0 +1,32 @@
+How to build
+
+1. Pick compilers
+
+    $ CC=mpicc CXX=mpic++ FC=mpif90 F77=mpif77 F90=mpif90
+
+2. Build third-party libraries (TPLs) in empty build directory
+
+    $ cmake <path-to-tpl-dir>
+    $ make
+
+The CMAKE_INSTALL_PREFIX cmake variable defaults to <path-to-tpl-dir>/install/<compiler>, which is where the TPLs are installed.
+
+3. Build Quinoa in empty build directory
+
+    $ cmake <path-to-src-dir>
+    $ make
+
+All executables will be in <build>/Main.
+The TPL_DIR cmake variable defaults to <path-to-tpl-dir>/install/<compiler>.
+
+4. Build the documentation in the build directory
+
+    $ make doc
+
+Point a web browser to <build>/doc/html/index.html.
+
+5. Build code coverage report in the build directory
+
+    $ make coverage
+
+Point a web browser to <build>/unittest_coverage/index.html.
