@@ -6,18 +6,7 @@
 Quinoa is a set of computational tools that enable research and numerical
 analysis in fluid dynamics. Quinoa relies on the [Charm++]
 (http://charm.cs.illinois.edu) runtime system that enables concurrent use of
-multiple processors, either on a single machine or a networked set of computers.
-
-<B>Why Charm++?</B> Charm++ consists of libraries and a runtime system. A
-central idea of Charm++ is to enable and facilitate _overdecomposition_:
-computation (data and work-units) is decomposed into a large number of logical
-units mapped to the available processors by the runtime system.
-Overdecomposition allows the runtime system to dynamically adapt the
-computational load monitoring load-imbalance due to software (e.g., particle
-clustering, adaptive refinemement) as well as hardware (e.g., dynamic processor
-frequency scaling, node failure). Charm++ has been actively developed since the
-1990s and is used by several large production codes. Read a one-page summary on
-the stregths of Charm++ at http://charm.cs.uiuc.edu/why.
+multiple processors either on a single machine or a networked set of computers.
 
 \section organization Organization
 Quinoa consists of the following tools:
@@ -36,6 +25,17 @@ Quinoa consists of the following tools:
   \li [<B>unittest</B>](unittest_doc.html) - Unit test suite
   \li [<B>meshconv</B>](meshconv_doc.html) - Mesh file converter
 
+\section whyanother Why another CFD code?
+  \li [<B>Designed for the exascale era</B>](why.html#exascale)
+  \li [<B>Verified and proven to be correct</B>](why.html#correct)
+  \li [<B>Optimized for performance, power, and reliability</B>](why.html#optimized)
+  \li [<B>Advanced computer science outsourced to experts</B>](why.html#outsource)
+  \li [<B>Using a language that can cope with complexity</B>](why.html#language)
+  \li [<B>Highly-valued programmer productivity</B>](why.html#productivity)
+  \li [<B>User and developer friendly</B>](why.html#friendly)
+  \li [<B>Well documented</B>](why.html#documented)
+  \li [<B>Fun to work on</B>](why.html#fun)
+
 \section copyright Copyright
 Copyright 2012-2015, Jozsef Bakosi.
 
@@ -50,7 +50,7 @@ Jozsef Bakosi (jbakosi@lanl.gov)
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Fri 13 Mar 2015 08:39:18 PM MDT
+<em>Page last updated:</em> Wed 10 Jun 2015 10:13:38 PM MDT
 <em>Copyright 2012-2015, Jozsef Bakosi.</em>
 </small></div>
 */

@@ -1,0 +1,212 @@
+/*!
+  \page      why Fundamental concepts
+  \tableofcontents
+
+This page explains how Quinoa differs from most other computational fluid
+dynamics codes and why you should care whether you are a user or a developer.
+This list comprises our core values. All are important. Remove one and the last
+point can no longer be satisfied, which is really the main reason why we are
+doing this.
+
+\image html kattekrab-Mainframe.svg
+\section exascale 1. Designed for the exascale era
+Our target machines are the largest distributed clusters in the world with
+millions of compute cores. Due to unprecedented hardware complexity and features
+such as dynamic frequency scaling, we must assume inhomogeneous performance
+among the parts of the system that may dynamically change in time. Therefore, to
+efficiently use the resources, our programming paradigm must allow asynchronous
+parallel execution. This enables overlapping computation, communication, input,
+and output. Asynchronous programming constitutes a major paradigm shift compared
+to the more traditional bulk-synchronous approach widely applied using the
+message passing paradigm. We believe that the most economic utilization of
+future computer hardware can only be achieved with a paradigm shift from
+bulk-synchronous to fully asynchronous programming. For most computational codes
+this deeply affects the programming style as well as the optimal data layout and
+algorithm structure which therefore would require a complete rewrite.
+
+Quinoa was started from scratch instead of modifying an existing code. The code
+is designed to be fully asynchronous and built on
+[Charm++](http://charm.cs.illinois.edu). Charm++ consists of libraries and a
+runtime system. Instead of message passing, Charm++ is founded on the
+migratable-objects programming model and supported by an adaptive runtime
+system. In Charm++ data and work-units interact via asynchronous function calls
+enabling fully asynchronous programming. Asynchronous programming can be used to
+specify task-parallelism as well as data parallelism in a single application.
+The interacting objects may reside on the same or on a networked compute node
+and may migrate from one to another during computation. Object migration is
+transparent to the application and carried out by the runtime system based on
+real-time load measurement, but if needed can be influenced by the application.
+We believe that only with a runtime system as flexible as provided by Charm++
+can exascale hardware be most effectively utilized. Charm++ is mature, it has
+been actively developed since the 1990s, and is used by several large production
+codes. Read a one-page summary on the strengths of Charm++ at
+http://charm.cs.uiuc.edu/why.
+
+\image html Boton-correcto.svg
+\section correct 2. Verified and proven to be correct
+Nothing is more important than code that works as advertised with no surprises.
+We strive for writing testable code as well as writing tests that cover the code
+to the maximum degree possible. Code coverage is quantified. Untested code is
+assumed to be incorrect until proven otherwise. Only with extensive [positive
+and negative](http://www.dwheeler.com/essays/heartbleed.html) testing can
+developers and users be assured of correctness.
+
+In Quinoa code correctness is verified and quantified using multiple levels of
+testing:
+ - A random number generator test suite subjects generators to stringent
+   statistical tests which enables quantitative ranking of all generators
+   available with respect to their quality and computational cost
+ - A unit test suite with [code coverage](../../unittest_coverage/index.html)
+   analysis is used to test the smallest units of code
+ - A regression test suite with code coverage analysis tests features larger
+   than the smallest units, such as multiple algorithms coupled to solve a
+   differential equation
+ - A ([planned](http://lcamtuf.coredump.cx/afl)) [fuzz
+   test](https://en.wikipedia.org/wiki/Fuzz_testing) suite helps prepare against invalid,
+   unexpected, or random inputs with code coverage analysis
+
+\image html Triangle.svg
+\section optimized 3. Optimized for performance, power, and reliability
+Power consumption is a primary concern in the exascale era. Application
+performance must be measured within power constraints on increasingly complex
+and thus likely less reliable hardware. A computation must optimize and thus
+dynamically adapt to maximize performance constrained by power limits while
+being resilient against hardware failures. This requires revolutionary methods
+with a stronger-than-before integration among hardware features, system
+software, and the application.
+
+Quinoa relies on the [Charm++] (http://charm.cs.illinois.edu) runtime system.
+The central idea of Charm++ is to enable and facilitate _overdecomposition_:
+computation (data and work-units) is decomposed into a large number of logical
+units mapped to available processors. The number of logical units are usually
+larger than the available processors. Overdecomposition allows the runtime
+system to dynamically adapt the computational load monitoring load-imbalance due
+to software (e.g., particle clustering, adaptive refinement) as well as hardware
+(e.g., dynamic processor frequency scaling). The runtime system can also migrate
+data and work-units if it notices (via sensors, cache monitors, etc.) if a
+compute node is about to fail. If a node fails without a warning, the
+application can be restarted from a previously saved checkpoint. Since
+overdecomposition is done without direct reference to physical processors on
+which data and work-units reside, the application can be restarted using a
+number of processors different than that of the checkpoint was saved with.
+Resiliency is provided by the runtime system transparent to the application and
+can save millions of cycles since jobs have to be restarted less frequently due
+to hardware failure.
+
+\image html techie-arsitek.svg
+\section outsource 4. Advanced computer science outsourced to experts
+Hardware complexity is increasing. Simultaneously satisfying all the different
+requirements enumerated here inevitably increases software complexity.
+Attempting to tackle every aspect by the application programmer, as is
+frequently done in a research context, does not scale as more features are
+added. The combination of increasing hardware and software complexity in the
+exascale era leads to an unprecedented degree of specialization among the
+software components as well as their developers. Consistent with "picking the
+right tool for the right job", components of complex software must be outsourced
+to subject-matter experts.
+
+Quinoa's goal is to provide simulation software for scientific and engineering
+purposes. This involves numerically solving the differential and integral
+equations of mathematical physics. Advanced computer science, such as dynamic
+load balancing, object migration, networking, parallel input and output, is
+outsourced to those who make a career out them. Quinoa uses a number of
+[third-party libraries](licenses.html) and application developers closely
+collaborate with the subject-matter experts.
+
+\image html celticknot1.svg
+\section language 5. Using a language that can cope with complexity
+The ultimate measure of the value of a computer language is how it balances
+runtime performance and code complexity. A good language can do a lot for a
+designer and a programmer, as long as its strengths and limitations are clearly
+understood and respected.
+
+Quinoa's main language of choice is C++ for the following reasons.
+
+ - It offers [uncompromising performance](layout.html#layout_comparison)
+
+ - It is statically typed, resulting in earlier error detection, more reliable
+   algorithms, and compiled code that executes quicker
+
+ - It supports [data abstraction](layout.html), enabling the representation of
+   [non-trivial concepts](_diff_eq_2_diff_eq_8h_source.html)
+
+ - It allows programming using more than one programming style, each to its best
+   effect; as such it supports
+   [procedural](_derived_data_8_c_source.html),
+   [object oriented](_diff_eq_2_diff_eq_8h_source.html),
+   [generic](_factory_8h_source.html) as well as
+   [functional](_tagged_tuple_8h_source.html) programming
+
+ - It provides a portable [standard library](http://en.wikipedia.org/wiki/C%2B%2B_Standard_Library) with [guaranteed algorithmic complexity](http://www.sgi.com/tech/stl/complexity.html)
+
+C++, especially [modern C++](http://herbsutter.com/elements-of-modern-c-style/),
+provides the flexibility we need. We use the latest C++14 language standard with
+multiple compilers. This reduces code complexity and improves productivity as
+well as runtime performance.
+
+\image html nicubunu-Tools.svg
+\section productivity 6. Highly-valued programmer productivity
+Due to software complexity the most expensive resource in implementing and
+maintaining computing capability is the developer's time. In a successful
+project programmer productivity must be highly regarded and actively maintained.
+Besides comfortable work environment and an inspiring culture, this involves
+using the best and most versatile software engineering tools available. Only by
+using the latest and the greatest tools are code reuse, extensibility,
+maintainability, and thus productivity maximized.
+
+Quinoa is developed using the latest compiler technology and software
+engineering tools. We believe developers must be skilled not only in their
+expertise, e.g., physics, differential equations, numerical methods, but in
+their tools of trade as well, e.g., the latest software development techniques.
+
+\image html handshake.svg
+\section friendly 7. User and developer friendly
+User experience is [the most important design goal](http://resources.idgenterprise.com/original/AST-0053933_seven_qualities_of_wildly_desirable_software.pdf) of
+desirable software. However, this does not require a graphical user interface.
+Also, expert developers should be able to get started quickly, extend the code
+in a productive manner, and tailor functionality to their or their customer's
+needs.
+
+User input in Quinoa is restricted to command-line arguments and simple-to-read
+text files. The input grammar is versatile and extensible. Parsing is
+outsourced to a library written by experts in that field. Error messages are
+friendly and often suggest a solution. Documentation of command-line and input
+file keywords is directly accessible at the user's fingertips, obtained via
+command-line arguments. New keywords, reflecting new features, are made
+impossible to add without proper in-code documentation. Simulation result
+output is highly customizable.
+
+\image html document.svg
+\section documented 8. Well documented
+Undocumented code is considered legacy code and a major impediment to progress
+and productivity.
+
+Quinoa is well-documented for developers, users, administrators as well as
+auditors. This includes documentation for
+ - theory
+ - software requirements, specification, design, implementation, and interfaces
+ - verification and validation
+ - user examples
+ - source code control history
+ - team collaboration documentation and history
+ - code correctness and quality assurance
+ - legal issues
+
+All documentation is accessible at a single point of entry via any web browser
+with no separate documents to open or print. The documentation is searchable,
+indexable, and looks great on any device, including
+[figures](walker_example_ou.html#walker_example_ou_pdf) and
+[math](_generalized_dirichlet_8h.html#details).
+
+\image html Happy-Penguin.svg
+\section fun 9. Fun to work on
+We believe all the above are equally important in order to make this project fun
+to work on. None of the above can be an afterthought: they must all be
+simultaneously considered at all times and from the outset.
+
+<hr>
+<div><small>
+<em>Page last updated:</em> Fri 12 Jun 2015 06:47:21 AM MDT
+<em>Copyright 2012-2015, Jozsef Bakosi.</em>
+</small></div>
+*/
