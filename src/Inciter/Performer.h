@@ -24,7 +24,6 @@
 
 #include "Types.h"
 #include "Timer.h"
-#include "Constants.h"
 #include "LinSysMerger.h"
 
 #if defined(__clang__) || defined(__GNUC__)
@@ -193,14 +192,14 @@ class Performer : public CBase_Performer {
       const tk::real t0 = 2.4;           // initial time
       const tk::real LAMBDA = 5.0e-4;    // amount of shear, (lambda = du/dy)
       const tk::real D = 10.0;           // scalar diffusivity
-      const tk::real MASS = 4 * tk::pi<tk::real>() * t0 *
+      const tk::real MASS = 4 * M_PI * t0 *
                             std::sqrt( 1.0 + LAMBDA * LAMBDA * t0 * t0 / 12.0 );
       const auto& x = m_coord[0];
       const auto& y = m_coord[1];
       tk::real a = x[i] - X0 - U0*t - 0.5*LAMBDA*y[i]*t;
       tk::real b = 1.0 + LAMBDA*LAMBDA*t*t/12.0;
       return MASS * exp( -a*a/(4*D*t*b) - y[i]*y[i]/(4*D*t) )
-                  / ( 4.0 * tk::pi<tk::real>() * t * std::sqrt(b) );
+                  / ( 4.0 * M_PI * t * std::sqrt(b) );
     };
 
     //! Compute initial conditions representing a joint Gaussian
@@ -215,7 +214,7 @@ class Performer : public CBase_Performer {
       const tk::real ry = y[i]-Y0;
       const tk::real rz = z[i]-Z0;
       return std::exp( -0.5 * (rx*rx/v1 + ry*ry/v2 + rz*rz/v3) ) /
-             2.0 / tk::pi<tk::real>() / v1 / v2 / v3;
+             2.0 / M_PI / v1 / v2 / v3;
     }
 
 };

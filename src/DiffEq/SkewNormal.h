@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/SkewNormal.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:38:49 PM MDT
+  \date      Sat 20 Jun 2015 11:36:02 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     System of skew-normal SDEs
   \details   This file implements the time integration of a system of stochastic
@@ -40,10 +40,11 @@
 #ifndef SkewNormal_h
 #define SkewNormal_h
 
+#include <cmath>
+
 #include "InitPolicy.h"
 #include "SkewNormalCoeffPolicy.h"
 #include "RNG.h"
-#include "Constants.h"
 
 namespace walker {
 
@@ -120,7 +121,7 @@ class SkewNormal {
           tk::real d = 2.0 * m_sigmasq[i] / m_T[i] * dt;
           d = (d > 0.0 ? std::sqrt(d) : 0.0);
           x += - ( x - m_lambda[i] * m_sigmasq[i]
-                       * std::sqrt( 2.0 / tk::pi<tk::real>() )
+                       * std::sqrt( 2.0 / M_PI )
                        * std::exp( - m_lambda[i] * m_lambda[i] * x * x / 2.0 )
                        / ( 1.0 + std::erf( m_lambda[i] * x / std::sqrt(2.0) ) )
                    ) / m_T[i] * dt
