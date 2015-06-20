@@ -15,6 +15,13 @@ FUNCTION(SETUP_TARGET_FOR_COVERAGE _targetname _testrunner _outputname _ncpus)
     MESSAGE(FATAL_ERROR "genhtml not found! Aborting...")
   ENDIF()
 
+  # Set default charmrun path
+  SET(CHARMRUN "Main/charmrun")
+  # Ninja puts chamrun to build dir
+  IF(CMAKE_GENERATOR STREQUAL "Ninja")
+    SET(CHARMRUN "./charmrun")
+  ENDIF()
+
   # Setup code coverage target
   ADD_CUSTOM_TARGET(${_targetname}
     # Cleanup lcov
@@ -22,7 +29,7 @@ FUNCTION(SETUP_TARGET_FOR_COVERAGE _targetname _testrunner _outputname _ncpus)
     # Capture initial state yielding zero coverage baseline
     COMMAND ${LCOV} --capture --initial --directory . --output-file ${_outputname}.base.info
     # Run test suite
-    COMMAND ./charmrun +p${_ncpus} ${_testrunner} ${ARGV4}
+    COMMAND ${CHARMRUN} +p${_ncpus} ${_testrunner} ${ARGV4}
     # Capture lcov counters
     COMMAND ${LCOV} --capture --rc lcov_branch_coverage=1 --directory . --output-file ${_outputname}.test.info
     # Combine trace files
