@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/InciterSetup.C
   \author    J. Bakosi
-  \date      Tue 02 Jun 2015 09:54:56 AM MDT
+  \date      Wed 17 Jun 2015 08:11:48 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Functions used to setup inciter
   \details   Functions used to setup inciter.
@@ -55,14 +55,14 @@
 namespace inciter {
 
 //! Error message to output when the overdecomposition is too large
-std::string over = R"(Overdecomposition of the mesh is too large compared to the
-number of work units computed based on the degree of virtualization desired. As
-a result, there would be at least one work unit with no mesh elements to work
-on, i.e., nothing to do. Solution 1: decrease the virtualization to a lower
-value using the command-line argument '-u'. Solution 2: decrease the number
-processing elements (PEs) using the charmrun command-line argument '+pN' where N
-is the number of PEs, which implicitlyincreases the size (and thus decreases the
-number) of work units.)";
+std::string over = "Overdecomposition of the mesh is too large compared to the"
+"number of work units computed based on the degree of virtualization desired. "
+"As a result, there would be at least one work unit with no mesh elements to "
+"work on, i.e., nothing to do. Solution 1: decrease the virtualization to a "
+"lower value using the command-line argument '-u'. Solution 2: decrease the "
+"number processing elements (PEs) using the charmrun command-line argument "
+"'+pN' where N is the number of PEs, which implicitlyincreases the size (and "
+"thus decreases the number) of work units.";
 
 static void
 help( int argc,
@@ -318,7 +318,7 @@ assignMesh(
 //! \param[in] graph Unstructured mesh graph object reference
 //! \param[in] part Array of chare ownership IDs mapping graph points to
 //!   Charm++ chares, and new->old mesh point id map (new: renumbered, old: as
-//!   in mesh file).
+//!   in mesh file)
 //! \param[inout] inputdeck Input deck object filled during parsing user input
 //! \param[inout] npoin Total number of points in mesh
 //! \param[inout] point Global mesh point ids owned by each chare

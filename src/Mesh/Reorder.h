@@ -27,8 +27,8 @@ remap( std::vector< std::size_t >& id, const std::vector< std::size_t >& newid )
 
 //! Reorder mesh points with the advancing front technique
 std::pair< std::vector< std::size_t >, std::vector< std::size_t > >
-renumber( std::pair< std::vector< std::size_t >,
-                     std::vector< std::size_t > >& psup );
+renumber( const std::pair< std::vector< std::size_t >,
+                           std::vector< std::size_t > >& psup );
 
 } // tk::
 

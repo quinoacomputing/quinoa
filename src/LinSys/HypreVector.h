@@ -34,7 +34,7 @@ class HypreVector {
     void create( std::size_t lower, std::size_t upper ) {
       // Create Hypre IJ vector
       HYPRE_IJVectorCreate( MPI_COMM_WORLD,
-                            static_cast< int >( lower ),
+                            static_cast< int >( lower+1 ),
                             static_cast< int >( upper ),
                             &m_v );
       // Choose parallel CSR format storage
@@ -52,6 +52,10 @@ class HypreVector {
     void set( int nvalues, const int* indices, const HYPRE_Complex* values )
     { HYPRE_IJVectorSetValues( m_v, nvalues, indices, values ); }
 
+    //! Get the local vector
+    void get( int nvalues, const int* indices, HYPRE_Complex* values )
+    { HYPRE_IJVectorGetValues( m_v, nvalues, indices, values ); }
+
     //! Assemble vector
     void assemble() { HYPRE_IJVectorAssemble( m_v ); }
 
@@ -61,6 +65,13 @@ class HypreVector {
     //!   processor id.
     void print( const std::string& filename )
     { HYPRE_IJVectorPrint( m_v, filename.c_str() ); }
+
+    //! Hypre vector accessor
+    HYPRE_ParVector get() const {
+      HYPRE_ParVector v;
+      HYPRE_IJVectorGetObject( m_v, (void**) &v );
+      return v;
+    }
 
   private:
     HYPRE_IJVector m_v;         //!< Hypre IJ vector

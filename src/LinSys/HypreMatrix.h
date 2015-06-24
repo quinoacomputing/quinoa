@@ -34,9 +34,9 @@ class HypreMatrix {
     void create( std::size_t lower, std::size_t upper ) {
       // Create Hypre IJ matrix
       HYPRE_IJMatrixCreate( MPI_COMM_WORLD,
-                            static_cast< int >( lower ),
+                            static_cast< int >( lower+1 ),
                             static_cast< int >( upper ),
-                            static_cast< int >( lower ),
+                            static_cast< int >( lower+1 ),
                             static_cast< int >( upper ),
                             &m_A );
       // Choose parallel CSR format storage
@@ -64,6 +64,13 @@ class HypreMatrix {
     //!   processor id.
     void print( const std::string& filename )
     { HYPRE_IJMatrixPrint( m_A, filename.c_str() ); }
+
+    //! Hypre matrix accessor
+    HYPRE_ParCSRMatrix get() const {
+      HYPRE_ParCSRMatrix m;
+      HYPRE_IJMatrixGetObject( m_A, (void**) &m );
+      return m;
+    }
 
   private:
     HYPRE_IJMatrix m_A;         //!< Hypre IJ matrix

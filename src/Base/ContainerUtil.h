@@ -85,6 +85,27 @@ variance( const std::map< std::string, std::vector< T > >& mapvec,
   return s;
 }
 
+template< typename Key, typename Value >
+typename std::map< Key, Value >::size_type
+lid( const std::map< Key, Value >& map, Key key )
+//******************************************************************************
+//! Find and return value for key in std::map with error handling
+//! \param[in] map Map associating values to keys
+//! \param[in] key
+//! \return Value associated to key in map
+//! \Note This functions should not be instantiated with heavy Key types, as it
+//!   is passed by value.
+//! \author J. Bakosi
+//******************************************************************************
+{
+  const auto it = map.find( key );
+
+  if (it != map.end())
+    return it->second;
+  else
+    Throw( "Can't find key " + std::to_string(key) );
+}
+
 } // tk::
 
 #endif // ContainerUtil_h

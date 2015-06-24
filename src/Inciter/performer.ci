@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/performer.ci
   \author    J. Bakosi
-  \date      Sun 14 Jun 2015 09:35:11 PM MDT
+  \date      Wed 17 Jun 2015 05:46:42 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Charm++ module interface file for Performer
   \details   Charm++ module interface file for Performer
@@ -22,52 +22,9 @@ module performer {
       entry Performer( CProxy_Conductor& hostproxy,
                        tk::CProxy_LinSysMerger< CProxy_Conductor,
                                                 CProxy_Performer >& lsmproxy );
-      entry void buildSystem();
+      entry void setup();
+      entry void init();
       entry void updateSolution( const std::map< std::size_t, tk::real >& sol );
-//       entry void addLhs(
-//         int id,
-//         const std::map< std::size_t,
-//                         std::map< std::size_t, tk::real > >& rows );
-//       entry void addRhs(
-//         int id,
-//         const std::map< std::size_t, tk::real >& rows );
-
-      // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
-      // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
-
-      // High-level overview of the dependency and asynchronous call structure
-      // ---------------------------------------------------------------------
-      //
-      // Directed Acyclic Graph (DAG):        DAG legend:
-      // -----------------------------          WPe  - Query worker PEs
-      //                                        Sys  - Create linear system
-      // WPe -- Pts                             Pts  - Export mesh points
-      //           \                            Init - Initialized
-      // Sys ------ Init
-      //
-      // Interpretation of the above DAG
-      // -------------------------------
-      // Control flow is from left to right and top to bottom.
-      //
-
-//       entry void wait4mass() {
-//         when trigger_lhs_complete() serial {
-//           m_timestamp.emplace_back( "Communicate left-hand side matrix",
-//                                     tk::query( m_timer, TimerTag::LHS ) );
-//           contributeLhs();
-//         }
-//       };
-
-//       entry void wait4rhs() {
-//         when trigger_rhs_complete() serial {
-//           m_timestamp.emplace_back( "Communicate right-hand side vector",
-//                                     tk::query( m_timer, TimerTag::RHS ) );
-//           contributeRhs();
-//         }
-//       };
-
-//      entry void trigger_lhs_complete();
-//       entry void trigger_rhs_complete();
     };
 
   } // inciter::
