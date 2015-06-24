@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.h
   \author    J. Bakosi
-  \date      Sun 14 Jun 2015 09:35:02 PM MDT
+  \date      Sat 20 Jun 2015 11:38:31 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Performer advances the Euler equations
   \details   Performer advances the Euler equations. There are a potentially
@@ -21,6 +21,7 @@
 #include <utility>
 #include <vector>
 #include <cstring>
+#include <cmath>
 
 #include "Types.h"
 #include "Timer.h"
@@ -45,19 +46,6 @@ namespace inciter {
 //! Performer Charm++ chare used to advance the Euler equations in time
 class Performer : public CBase_Performer {
 
-//   #if defined(__clang__) || defined(__GNUC__)
-//     #pragma GCC diagnostic push
-//     #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-//   #endif
-// 
-//   // Include Charm++ SDAG code. See http://charm.cs.illinois.edu/manuals/html/
-//   // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
-//   Performer_SDAG_CODE
-// 
-//   #if defined(__clang__) || defined(__GNUC__)
-//     #pragma GCC diagnostic pop
-//   #endif
-
   private:
     using LinSysMergerProxy =
       tk::CProxy_LinSysMerger< CProxy_Conductor, CProxy_Performer >;
@@ -70,19 +58,14 @@ class Performer : public CBase_Performer {
     //! Migrate constructor
     explicit Performer( CkMigrateMessage* ) {}
 
-    //! Build linear system by computing matrix, unknown and rhs vectors
-    void buildSystem();
+    //! Initialize communication and mesh data
+    void init();
+
+    //! Setup
+    void setup();
 
     //! Update solution vector
     void updateSolution( const std::map< std::size_t, tk::real >& sol );
-
-//     //! Receive matrix row contribution from fellow Performer chares
-//     void addLhs(
-//       int id,
-//       const std::map< std::size_t, std::map< std::size_t, tk::real > >& rows );
-
-//     //! Receive right-hand side vector contribution from fellow Performer chares
-//     void addRhs( int id, const std::map< std::size_t, tk::real >& rows );
 
   private:
     std::size_t m_id;                   //!< Charm++ array id (Base::thisIndex)
@@ -90,6 +73,7 @@ class Performer : public CBase_Performer {
     LinSysMergerProxy m_lsmproxy;       //!< Linear system merger proxy
     int m_it;                           //!< Iteration count
     tk::real m_t;                       //!< Physical time
+    tk::real m_dt;                      //!< Size of time step
     std::vector< std::size_t > m_point; //!< Global ids of nodes owned
     std::vector< std::size_t > m_gid;   //!< Global node ids of owned elements
     std::vector< std::size_t > m_inpoel;//!< Owned element connectivity
@@ -106,7 +90,7 @@ class Performer : public CBase_Performer {
     //! Right-hand side vector: global mesh point row ids and values
     std::map< std::size_t, tk::real > m_rhs;
     //! Unknown/solution vector: global mesh point row ids and values
-    std::map< std::size_t, tk::real > m_sol;
+    std::map< std::size_t, tk::real > m_u, m_uf, m_un;
     //! Time stamps
     std::vector< std::pair< std::string, tk::real > > m_timestamp;
     enum class TimerTag { LHS, RHS, SOL };     //!< Timer labels
@@ -134,11 +118,6 @@ class Performer : public CBase_Performer {
     std::map< std::size_t, std::size_t >
     assignLid( const std::vector< std::size_t >& gid ) const;
 
-    //! Find local for global node id
-    std::size_t
-    lid( const std::map< std::size_t, std::size_t >& lnode, std::size_t gid )
-    const;
-
     //! Read coordinates of mesh nodes given
     void initCoords();
 
@@ -148,24 +127,8 @@ class Performer : public CBase_Performer {
     //! Compute left-hand side matrix of PDE
     void lhs();
 
-//     //! \brief Perform the necessary communication among fellow Performers to
-//     //!   update the chare-boundaries for left-hand side matrix of PDE
-//     void
-//     commLhs( const std::map< std::size_t, std::vector< std::size_t > >& exp );
-
-//     //! \brief Perform the necessary communication among fellow Performers to
-//     //!   update the chare-boundaries for right-hand side vector of PDE
-//     void
-//     commRhs( const std::map< std::size_t, std::vector< std::size_t > >& exp );
-
-//     //! Contribute our portion of the left-hand side matrix
-//     void contributeLhs();
-
-//     //! Contribute our portion of the right-hand side vector
-//     void contributeRhs();
-
     //! Compute righ-hand side vector of PDE
-    void rhs();
+    void rhs( tk::real mult, std::map< std::size_t, tk::real >& unk );
 
     //! Output chare mesh to file
     void writeMesh();
@@ -175,13 +138,14 @@ class Performer : public CBase_Performer {
     writeChareId( const tk::ExodusIIMeshWriter& ew ) const;
 
     //! Output solution to file
-    void writeSolution( const tk::ExodusIIMeshWriter& ew ) const;
+    void writeSolution( const tk::ExodusIIMeshWriter& ew,
+                        const std::map< std::size_t, tk::real >& unk ) const;
 
     //! Output mesh-based fields metadata to file
     void writeMeta() const;
 
     //! Output mesh-based fields to file
-    void writeFields();
+    void writeFields( const std::map< std::size_t, tk::real >& unk );
 
     //! Compute initial conditions for dispersion in simple shear flow
     tk::real

@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/ZoltanInterOp.C
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 01:38:47 PM MDT
+  \date      Wed 17 Jun 2015 08:59:35 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Interoperation with the Zoltan library
   \details   Interoperation with the Zoltan library, used for static mesh graph
@@ -264,14 +264,12 @@ createHyperGraph( tk::UnsMesh& graph, HGRAPH_DATA& hg )
 //  Create hypergraph data structure on MPI rank zero
 //! \param[in] graph Unstructured mesh graph object reference
 //! \param[inout] hg Hypergraph data structure to fill
-//! \return The number of hyperedges in graph and the new->old mesh point map
+//! \return The number of hyperedges in graph, the new->old mesh point map
 //! \warning This function must not be called on MPI ranks other than zero.
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // Get number of points from graph. The total load is taken to be proportional
-  // to the number of points of the graph which is proportional to the number of
-  // unique edges in the graph.
+  // Get number of points from graph.
   const auto npoin = graph.size();
 
   // Create hypergraph data structure based on mesh graph
@@ -293,13 +291,14 @@ createHyperGraph( tk::UnsMesh& graph, HGRAPH_DATA& hg )
 
   // Generate (connectivity graph) points surrounding points of graph
   auto psup = tk::genPsup( inpoel, 4, tk::genEsup( inpoel, 4 ) );
-  auto& psup1 = psup.first;
-  auto& psup2 = psup.second;
 
   // Renumber mesh points for better data locality
   std::vector< std::size_t > map, invmap;
-  //std::tie( map, invmap ) = tk::renumber( psup );
-  //tk::remap( inpoel, map );
+  std::tie( map, invmap ) = tk::renumber( psup );
+  // Remap element connectivity
+  tk::remap( inpoel, map );
+  // Re-generate points surrounding points
+  psup = tk::genPsup( inpoel, 4, tk::genEsup( inpoel, 4 ) );
 
   // Allocate data to store the hypergraph ids. The total number of vertices or
   // neighbors in all the hyperedges of the hypergraph, nhedge = all points
@@ -307,7 +306,7 @@ createHyperGraph( tk::UnsMesh& graph, HGRAPH_DATA& hg )
   // connection to the own point, i.e., in matrix parlance, the main-diagonal.
   // In other words, here we need the number of edges in the graph, independent
   // of direction.
-  auto nhedge = psup1.size() - 1 + npoin;
+  auto nhedge = psup.first.size() - 1 + npoin;
   hg.numAllNbors = static_cast< int >( nhedge );
   hg.nborGID = (ZOLTAN_ID_PTR)malloc(sizeof(ZOLTAN_ID_TYPE) * nhedge);
 
@@ -319,9 +318,9 @@ createHyperGraph( tk::UnsMesh& graph, HGRAPH_DATA& hg )
     hg.nborGID[ hg.nborIndex[p] ] = static_cast< ZOLTAN_ID_TYPE >( p );
     int j = 1;
     // put in neighbor point ids, i.e., off-diagonals
-    for (auto i=psup2[p]+1; i<=psup2[p+1]; ++i, ++j) {
+    for (auto i=psup.second[p]+1; i<=psup.second[p+1]; ++i, ++j) {
       hg.nborGID[ hg.nborIndex[p] + j ] =
-        static_cast< ZOLTAN_ID_TYPE >( psup1[i] );
+        static_cast< ZOLTAN_ID_TYPE >( psup.first[i] );
     }
     hg.nborIndex[p+1] = hg.nborIndex[p] + j;
   }
@@ -374,7 +373,7 @@ partitionMesh( tk::UnsMesh& graph,
 //! \param[in] print Pretty printer
 //! \return Array of chare ownership IDs mapping graph points to concurrent
 //!   async chares, and new->old mesh point id map (new: renumbered, old: as in
-//f   mesh file).
+//!   mesh file)
 //! \details This function uses Zoltan to partition the mesh graph in serial. It
 //!   assumes the mesh graph only exists on MPI rank 0.
 //! \author J. Bakosi

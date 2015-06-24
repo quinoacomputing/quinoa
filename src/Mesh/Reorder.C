@@ -65,12 +65,11 @@ remap( std::vector< std::size_t >& id, const std::vector< std::size_t >& newid )
 }
 
 std::pair< std::vector< std::size_t >, std::vector< std::size_t > >
-renumber( std::pair< std::vector< std::size_t >,
-                     std::vector< std::size_t > >& psup )
+renumber( const std::pair< std::vector< std::size_t >,
+                           std::vector< std::size_t > >& psup )
 //******************************************************************************
 //  Reorder mesh points with the advancing front technique
-//! \param[inout] psup Points surrounding points (used and updated with new
-//!   ordering)
+//! \param[in] psup Points surrounding points
 //! \return Pair of maps between old->new and new->old order
 //! \author J. Bakosi
 //******************************************************************************
@@ -104,9 +103,6 @@ renumber( std::pair< std::vector< std::size_t >,
     }
     hpoin = kpoin;
   }
-
-  // Apply new point ids to points surrounding points
-  remap( psup.first, mapvec );
 
   // Construct new->old id map
   std::size_t i = 0;

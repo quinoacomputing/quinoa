@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/linsysmerger.ci
   \author    J. Bakosi
-  \date      Sat 13 Jun 2015 06:45:15 AM MDT
+  \date      Fri 19 Jun 2015 05:46:40 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Charm++ module interface file for merging a linear system
   \details   Charm++ module interface file for merging a linear system
@@ -31,12 +31,18 @@ module linsysmerger {
     template< class HostProxy, class WorkerProxy >
     group LinSysMerger {
       entry LinSysMerger( HostProxy& host, std::size_t npoin );
-      entry void addrow( const std::set< std::size_t >& row );
-      entry void addlhs(
-        const std::map< std::size_t,
-                        std::map< std::size_t, tk::real > >& lhs );
-      entry void addrhs( const std::map< std::size_t, tk::real >& rhs );
-      entry void addsol( int id, const std::map< std::size_t, tk::real >& sol );
+      entry void addrow( int fromch,
+                         int frompe,
+                         const std::set< std::size_t >& row );
+      entry void recrow();
+      entry void addsol( int fromch,
+                         const std::map< std::size_t, tk::real >& sol );
+      entry void addlhs( int fromch,
+                         const std::map< std::size_t,
+                                     std::map< std::size_t, tk::real > >& lhs );
+      entry void addrhs( int fromch,
+                         const std::map< std::size_t, tk::real >& rhs );
+      entry void rowsreceived();
 
       // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
       // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
@@ -56,29 +62,6 @@ module linsysmerger {
       // Control flow is from left to right and top to bottom.
       //
 
-      entry void wait4rows() {
-        when trigger_row_complete() serial {
-          buildSystem();
-        }
-      };
-
-      entry void wait4lhs() {
-        when trigger_lhs_complete() serial {
-          m_perfstat.emplace_back( "Communicate/total of lhs matrix",
-            static_cast<tk::real>(m_compts) /
-            static_cast<tk::real>(m_ownpts+m_compts) );
-          m_timestamp.emplace_back( "Merge left-hand side matrix",
-                                    tk::query( m_timer, TimerTag::LHS ) );
-          hyprelhs();
-        }
-      };
-      entry void wait4rhs() {
-        when trigger_rhs_complete() serial {
-          m_timestamp.emplace_back( "Merge right-hand side vector",
-                                    tk::query( m_timer, TimerTag::RHS ) );
-          hyprerhs();
-        }
-      };
       entry void wait4sol() {
         when trigger_sol_complete() serial {
           m_timestamp.emplace_back( "Merge solution vector",
@@ -86,46 +69,62 @@ module linsysmerger {
           hypresol();
         }
       };
+      entry void wait4lhs() {
+        when trigger_lhs_complete() serial {
+          m_perfstat.emplace_back( "Communicated/total of lhs matrix",
+            static_cast<tk::real>(m_matcompts) /
+            static_cast<tk::real>(m_matownpts+m_matcompts) );
+          m_timestamp.emplace_back( "Merge left-hand side matrix",
+                                    tk::query( m_timer, TimerTag::LHS ) );
+          hyprelhs();
+        }
+      };
+      entry void wait4rhs() {
+        when trigger_rhs_complete() serial {
+          m_perfstat.emplace_back( "Communicated/total of rhs vector",
+            static_cast<tk::real>(m_veccompts) /
+            static_cast<tk::real>(m_vecownpts+m_veccompts) );
+          m_timestamp.emplace_back( "Merge right-hand side vector",
+                                    tk::query( m_timer, TimerTag::RHS ) );
+          hyprerhs();
+        }
+      };
 
-      entry void wait4hyprelhs() {
-        when trigger_hyprelhs_complete() serial { lhs(); }
-      };
-      entry void wait4hyprerhs() {
-        when trigger_hyprerhs_complete() serial { rhs(); }
-      };
-      entry void wait4hypresol() {
-        when trigger_hypresol_complete() serial { sol(); }
-      };
+      entry void wait4hypresol()
+      { when trigger_hypresol_complete() serial { sol(); } };
+      entry void wait4hyprelhs()
+      { when trigger_hyprelhs_complete() serial { lhs(); } };
+      entry void wait4hyprerhs()
+      { when trigger_hyprerhs_complete() serial { rhs(); } };
 
-      entry void wait4filllhs() {
-        when trigger_filllhs_complete() serial { assemblelhs(); }
-      };
-      entry void wait4fillrhs() {
-        when trigger_fillrhs_complete() serial { assemblerhs(); }
-      };
-      entry void wait4fillsol() {
-        when trigger_fillsol_complete() serial { assemblesol(); }
-      };
+      entry void wait4fillsol()
+      { when trigger_fillsol_complete() serial { assemblesol(); } };
+      entry void wait4filllhs()
+      { when trigger_filllhs_complete() serial { assemblelhs(); } };
+      entry void wait4fillrhs()
+      { when trigger_fillrhs_complete() serial { assemblerhs(); } };
 
       entry void wait4asm() {
-        when trigger_asmlhs_complete(),
-             trigger_asmrhs_complete(),
-             trigger_asmsol_complete()
+        when  trigger_asmsol_complete()
+            , trigger_asmlhs_complete()
+            , trigger_asmrhs_complete()
         serial {
-          //m_A.print( "hypre_mat" );
+          m_A.print( "hypre_mat" );
+          m_b.print( "hypre_b" );
+          m_x.print( "hypre_x" );
           m_host.grpTimestamp( m_timestamp );
           m_host.grpPerfstat( m_perfstat );
           m_timer.clear();
         }
       };
+
       entry void wait4stat() {
         when trigger_timestamp_complete(), trigger_perfstat_complete() serial {
-          updateSolution();
-          init_complete( m_host );
+          solve();
+          signal2host_init_complete( m_host );
         }
       };
 
-      entry void trigger_row_complete();
       entry void trigger_lhs_complete();
       entry void trigger_rhs_complete();
       entry void trigger_sol_complete();
