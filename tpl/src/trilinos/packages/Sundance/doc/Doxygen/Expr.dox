@@ -1,0 +1,199 @@
+/* @HEADER@ */
+# ************************************************************************
+# 
+#                              Sundance
+#                 Copyright (2005) Sandia Corporation
+# 
+# Copyright (year first published) Sandia Corporation.  Under the terms 
+# of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S. Government 
+# retains certain rights in this software.
+# 
+# This library is free software; you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License as
+# published by the Free Software Foundation; either version 2.1 of the
+# License, or (at your option) any later version.
+#  
+# This library is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#                                                                                 
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+# USA                                                                                
+# Questions? Contact Kevin Long (krlong@sandia.gov), 
+# Sandia National Laboratories, Livermore, California, USA
+# 
+# ************************************************************************
+/* @HEADER@ */
+
+namespace SundanceCore
+{
+using namespace SundanceStdFwk;
+
+/*! \page exprs Symbolic Expressions
+
+
+\section expr_lists Lists of Expressions
+
+Expressions can be grouped into lists with an arbitrary structure. Important
+special cases are scalar, vector, and tensor expressions.
+
+\subsection create_lists Creating Lists 
+
+<ul>
+<li> Vector expressions
+\code
+Expr v = List(vx, vy, vz);
+\endcode
+<li> Heterogeneous lists
+\code
+// Form vector {vx, vy, vz}
+Expr v = List(vx, vy, vz);
+Expr q = new TestFunction(new Lagrange(1));
+// Form heterogeneous list {{vx, vy, vz}, q}
+Expr state = List(v, q);
+\endcode
+</ul>
+
+\subsection probe_lists Probing Lists 
+
+<ul>
+<li> Use Expr::size() to find the number of elements at the top level (i.e., first index).
+\code
+// Form vector {vx, vy, vz}
+Expr v = List(vx, vy, vz);
+Expr q = new TestFunction(new Lagrange(1));
+// Form heterogeneous list {{vx, vy, vz}, q}
+Expr state = List(v, q);
+// Check top-level size of state list {{vx, vy, vz}, q}
+int stateSize = state.size(); // returns 2
+\endcode
+<li> Use Expr::totalSize() to find the total number of elements in a list
+\code
+// Check total size of state list
+int totalSize = state.totalSize(); // returns 4
+\endcode
+</ul>
+
+\subsection manip_lists Manipulating Lists 
+
+\section expr_arith Arithmetic Operations 
+
+Arithmetic operations are implemented using overloaded operators
+
+<ul>
+<li> Addition
+\code
+Expr sum = x + y;
+\endcode
+The operands must have identical list structures; otherwise, a runtime
+error is thrown.
+
+<li> Subtraction
+\code
+Expr diff = x - y;
+\endcode
+The operands must have identical list structures; otherwise, a runtime
+error is thrown.
+
+<li> Multiplication
+\code
+Expr product = x * y;
+\endcode
+The operands must have list
+structures such that the product can be interpreted as a
+scalar-vector product or as an inner product between vectors
+or tensors; otherwise, a runtime error is thrown.
+The multiplication operator is also used to
+represent the application of a differential operator.
+
+<li> Division
+\code
+Expr quotient = x / y;
+\endcode
+The denominator must be scalar-valued; otherwise, a runtime error is thrown.
+</ul>
+
+
+\section expr_diffop Arithmetic Operations 
+
+Arithmetic operations are implemented using overloaded operators
+
+\section expr_sub Expression Subtypes 
+
+The user-level expression subtypes are listed below, along with examples of their use.
+<ul>
+<li> UnknownFunction - Represents an unknown function in a finite-element problem.
+Unknown function ctors
+have one mandatory and one optional argument: a BasisFamily (mandatory)
+and a string name (optional). The name is used only for making diagnostic output
+more readable and has no effect on calculations.
+If the name argument is not given, an arbitrary
+function name will be picked.
+
+Unknown functions can be scalar-valued or vector valued. To create a vector-valued unknown
+function, construct with a vector-valued BasisFamily.
+
+Example of creation of a scalar-valued unknown function:
+\code
+Expr u = new UnknownFunction(new Lagrange(1));
+\endcode
+
+Example of creation of a vector-valued unknown function:
+\code
+Expr u = new UnknownFunction(List(new Lagrange(1), new Lagrange(1)));
+\endcode
+
+<li> TestFunction - Represents a test function in a finite-element problem.
+Constructor arguments are identical to those for UnknownFunction.
+
+ *
+Example of creation of a scalar-valued test function:
+\code
+Expr v = new TestFunction(new Lagrange(1));
+\endcode
+
+Example of creation of a vector-valued test function:
+\code
+Expr u = new TestFunction(List(new Lagrange(1), new Lagrange(1)));
+\endcode
+
+<li> Derivative - Represents a spatial derivative operator. The constructor
+takes an integer argument to specify the direction of partial
+differentiation. 
+Spatial derivatives are applied
+using the multiplication operator.
+\code
+// Create a differential operator in the zeroth (x) direction.
+Expr dx = new Derivative(0);
+Expr convect = (u*dx)*u;
+\endcode
+Derivative expressions are scalar valued. However, vector differential operators
+can be created using the List operator. For example,
+\code
+Expr dx = new Derivative(0);
+Expr dy = new Derivative(1);
+Expr grad = List(dx, dy);
+\endcode
+
+<li> CoordExpr - Represents a coordinate functions.
+\code
+Expr x = new CoordExpr(0);
+Expr y = new CoordExpr(1);
+Expr r = sqrt(x*x + y*y);
+\endcode
+Coordinate expressions are scalar valued.
+
+<li> CellDiameterExpr - Represents the diameter of a cell. Cell
+diameters are often used in stabilized methods.
+\code
+Expr h = new CellDiameterExpr();
+Expr streamlineDiffusion = eps*h*h*((u*grad)*v)*((u*grad)*T);
+\endcode
+Cell diameter expressions are scalar valued.
+y</ul>
+
+*/
+}

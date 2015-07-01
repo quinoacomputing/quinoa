@@ -1,0 +1,133 @@
+
+********************************************************************
+*** Algorithm iteration summary output                           ***
+***                                                              ***
+*** Below, a summary table of the SQP iterations is given as     ***
+*** well as a table of the CPU times for each step (if the       ***
+*** option MoochoSolver::algo_timing = true is set).             ***
+********************************************************************
+
+*** Echoing input options ...
+
+begin_options
+
+options_group DecompositionSystemStateStepBuilderStd {
+    null_space_matrix = EXPLICIT;
+    range_space_matrix = ORTHOGONAL;
+}
+
+options_group NLPAlgoConfigMamaJama {
+    line_search_method = FILTER;
+    quasi_newton = BFGS;
+}
+
+options_group NLPSolverClientInterface {
+    calc_conditioning = true;
+    calc_matrix_info_null_space_only = true;
+    calc_matrix_norms = true;
+    feas_tol = 1e-7;
+    journal_output_level = PRINT_ALGORITHM_STEPS;
+    journal_print_digits = 10;
+    max_iter = 20;
+    max_run_time = 2.0;
+    null_space_journal_output_level = PRINT_ITERATION_QUANTITIES;
+    opt_tol = 1e-2;
+}
+
+end_options
+
+
+Allocating workspace_MB = 0.2404 megabytes of temporary workspace for automatic arrays only ...
+
+*** Setting up to run MOOCHO on the NLP using a configuration object of type 'MoochoPack::NLPAlgoConfigMamaJama' ...
+
+*****************************
+*** MoochoSolver::solve() ***
+*****************************
+
+test_nlp = true: Testing the NLP! ...
+
+Testing the supported NLPFirstOrder interface ...
+
+Successful end of testing of the nlp
+
+
+********************************
+*** Start of rSQP Iterations ***
+n = 3005, m = 3000, nz = 59910
+
+ k      f              ||Gf||inf      ||c||inf       ||rGL||inf     quasi-Newton #act   #adds  #drops #qpitr wcfi     ||Ypy||2       ||Zpz||2       ||d||inf       alpha
+ ----   ------------   ------------   ------------   ------------   ------------ ------ ------ ------ ------ ----   ------------   ------------   ------------   ------------
+    0         15.025            0.1        119.973        10.8096    initialized      0      -      -      0  c f        1.19996        110.323         10.286         0.0625
+    1        2.18207       0.742874        69.6825       0.374625        updated      0      -      -      0  c f        1.06215      0.0603318       0.281631              1
+    2       0.615764       0.461355          15.83       0.415546         skiped      0      -      -      0  c f        0.39705      0.0578495      0.0682893              1
+    3       0.386953       0.393147        1.34453       0.392728         skiped      0      -      -      0  c f      0.0382224      0.0530505      0.0241417              1
+    4       0.340244       0.369005      0.0449874       0.369005   damp.updated      0      -      -      0  c f     0.00132495       0.249154       0.111452              1
+    5        0.16575       0.257554     0.00617911       0.257554        updated      1      -      -      1  c f    0.000215694       0.575732       0.257536              1
+    6    4.30785e-09    1.72885e-05     0.00160011    2.42272e-05        updated      4      -      -      4  c f    8.83285e-05    3.94154e-06    2.50836e-06              1
+ ----   ------------   ------------   ------------   ------------   ------------ ------ ------ ------ ------ ----
+    7    3.09226e-10    1.47801e-05    7.94737e-09    1.47801e-05        updated      4      -      -      4  c f     3.1178e-10    1.55104e-06    1.55104e-06
+
+Number of function evaluations:
+-------------------------------
+f(x)  : 18
+c(x)  : 18
+Gf(x) : 9
+Gc(x) : 9
+
+
+************************
+**** Solution Found ****
+
+  total time = 4.73449 sec.
+
+
+**************************************
+*** Algorithm step CPU times (sec) ***
+
+Step names
+----------
+1) "EvalNewPoint"
+2) "QuasiNormalStep"
+3) "ReducedGradient"
+4) "ReducedHessian"
+5) "TangentialStep"
+6) "CalcDFromYPYZPZ"
+7) "CalcReducedGradLagrangian"
+8) "CheckConvergence"
+9) "LineSearch"
+10) Iteration total
+
+            steps 1...10 ->
+
+    iter k         1         2         3         4         5         6         7         8         9        10
+  --------  --------  --------  --------  --------  --------  --------  --------  --------  --------  --------
+         0    0.5849   0.03395  0.000185  0.000504  0.001097  0.000249   7.9e-05  0.000227   0.01038    0.6316
+         1    0.5468   0.03403  0.000172  0.000947  0.000922  0.000282   5.5e-05  0.000179  0.002204    0.5856
+         2     0.547   0.03398  0.000164   8.6e-05  0.000923  0.000289   5.5e-05  0.000171  0.002211    0.5849
+         3    0.5477   0.03399  0.000168   7.6e-05  0.000917  0.000279   5.5e-05    0.0002  0.002192    0.5856
+         4    0.5471     0.034  0.000168  0.000898  0.000909  0.000279   5.5e-05  0.000184  0.002201    0.5858
+         5    0.5511   0.03402  0.000173  0.000844  0.000927   0.00028  0.000256   0.00019  0.002194      0.59
+         6    0.5478   0.03397  0.000169  0.000876  0.000929  0.000281  0.000259  0.000181  0.002201    0.5867
+         7    0.5464   0.03401  0.000177   0.00095  0.000945  0.000277  0.000268  0.000167         0    0.5832
+  --------  --------  --------  --------  --------  --------  --------  --------  --------  --------  --------
+total(sec)     4.419    0.2719  0.001376  0.005181  0.007569  0.002216  0.001082  0.001499   0.02358     4.733
+ av(sec)/k    0.5524   0.03399  0.000172 0.0006476 0.0009461  0.000277 0.0001353 0.0001874  0.002947    0.5917
+  min(sec)    0.5464   0.03395  0.000164   7.6e-05  0.000909  0.000249   5.5e-05  0.000167         0    0.5832
+  max(sec)    0.5849   0.03403  0.000185   0.00095  0.001097  0.000289  0.000268  0.000227   0.01038    0.6316
+   % total     93.36     5.745   0.02907    0.1095    0.1599   0.04682   0.02286   0.03167    0.4982       100
+------------------------------
+total CPU time = 4.733 sec
+
+
+================================================================================
+
+                              TimeMonitor Results
+
+Timer Name    Local time (num calls)    
+================================================================================
+
+*** Statistics for automatic array workspace:
+Number of megabytes of preallocated workspace                = 0.2404
+Number of allocations using preallocated workspace           = 2366
+Number of dynamic allocations beyond preallocated workspace  = 16

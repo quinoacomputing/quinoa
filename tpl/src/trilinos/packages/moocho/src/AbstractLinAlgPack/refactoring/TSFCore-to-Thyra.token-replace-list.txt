@@ -1,0 +1,14 @@
+InnerProductTSFCore           InnerProductThyra
+InnerProductTSFCore           InnerProductThyra
+MatrixOpNonsingTSFCore        MatrixOpNonsingThyra
+MatrixOpNonsingTSFCore        MatrixOpNonsingThyra
+MatrixOpTSFCore               MatrixOpThyra
+MatrixOpTSFCore               MatrixOpThyra
+MultiVectorMutableTSFCore     MultiVectorMutableThyra
+MultiVectorMutableTSFCore     MultiVectorMutableThyra
+VectorMutableTSFCore          VectorMutableThyra
+VectorMutableTSFCore          VectorMutableThyra
+VectorSpaceFactoryTSFCore     VectorSpaceFactoryThyra
+VectorSpaceFactoryTSFCore     VectorSpaceFactoryThyra
+VectorSpaceTSFCore            VectorSpaceThyra
+VectorSpaceTSFCore            VectorSpaceThyra

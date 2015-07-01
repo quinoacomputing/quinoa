@@ -1,0 +1,221 @@
+#!/bin/sh
+
+# This is a script to do a nightly build an test of Mesquite.
+# It generates four output files (see comments for "RESULTS"
+# below.)  The exit value of this script should be one if
+# either mesquite or the CppUnit-tester failed to build, zero
+# otherwise.  Neither the test results nor a failure to build
+# one of the stand-alone test will affect the exit value -- this 
+# is intentional.
+
+  # Location to send result files to.  May be either
+  # a local directory (e.g. NFS share) or a rcp-style
+  # host and path. ([username@]hostname:path).
+REMOTE=$1
+
+  # Name to use to describe this platform
+shift
+PLATFORM_NAME=$1
+if [ "x" = "x$PLATFORM_NAME" ]; then
+  PLATFORM_NAME=`uname`
+fi
+
+  # Base file name for test results.  
+  # Three files are generated : standalone test results,
+  # cppunit regression tests and cppunit unit tests.  The
+  # strings .tests, .regress and .cppunit will be appended
+  # to the RESULTS value to get the filename for the results
+  # of corresponding group of tests.
+BASENAME=${PLATFORM_NAME}.$$
+RESULTS=${BASENAME}.results
+
+  # File to write output of build and tests
+
+  # Echo all commands
+#set -v
+
+LOGFILE=${BASENAME}.log
+
+  # The CppUnit testing application to build -- path relative to mesquite root dir
+UNITTESTER=msq_test
+
+ # Run all this stuff in a sub-shell so the output
+ # can be redirected to a file.
+rm -f ${LOGFILE}
+(
+  # Save the working directory so we can write output files there
+pwd=`pwd`
+
+  # Get rid of old output files
+rm -f ${RESULTS}.tests ${RESULTS}.unit ${RESULTS}.regress
+
+MAKE=make
+
+  # Change to mesquite root directory
+CDPATH=
+MESQUITE=`dirname $0`
+cd $MESQUITE/..
+
+  # Read environment if specified
+if [ -f testSuite/env ]; then
+  source testSuite/env
+fi
+
+  # Echo some useful info for the log file
+echo
+uname -a 
+pwd
+env
+
+
+echo
+echo "********************************************************"
+echo "                      cvs update" 
+echo "********************************************************"
+echo
+
+cvs update || exit 1
+
+echo
+echo "********************************************************"
+echo "                      configure" 
+echo "********************************************************"
+echo
+
+# Generate configure script
+./mkconfigure
+# Check for configure options
+confopt=
+#confopt="--with-exodus --with-tstt"
+if [ -f configure.options ]; then
+  confopt=`cat configure.options`
+fi
+
+./configure $confopt || exit 1
+
+echo
+echo "********************************************************"
+echo "                      make clean" 
+echo "********************************************************"
+echo
+
+$MAKE clean
+
+echo
+echo "********************************************************"
+echo "                          make" 
+echo "********************************************************"
+echo
+
+
+$MAKE || exit 1
+#test -f .libs/libmesquite.a || exit 1
+
+  # for each subdirectory
+ofile="${pwd}/${RESULTS}.tests"
+for test in testSuite/*; do
+    # if it looks like a test
+  if [ -f ${test}/main.cpp ]; then 
+
+    name=`basename ${test}`
+    echo
+    echo "********************************************************"
+    echo "                          ${name}" 
+    echo "********************************************************"
+    echo
+
+      # try to compile it
+    rm -f ${test}/main
+    if (cd $test && $MAKE main); then
+      if test -x ${test}/main; then
+          # and run it
+        if (cd ${test} && ${TESTS_ENVIRONMENT} ./main); then
+            # test completed successfully
+          echo "${name} : succeeded" >> $ofile
+        else
+            # test failed
+          echo "${name} : failed" >> $ofile
+        fi
+      fi
+        # do nothing if make succeeded but no "main"
+        # indicates test not configured
+    else
+        # test failed to build or some other unexpected problem
+      echo "${name} : broken" >> $ofile
+    fi
+  fi
+done
+
+echo
+echo "********************************************************"
+echo "                  make ${UNITTESTER}" 
+echo "********************************************************"
+echo
+
+(
+  cd testSuite/unit
+  $MAKE $UNITTESTER || exit 1
+  test -x $UNITTESTER || exit 1
+) || exit 1
+
+echo
+echo "********************************************************"
+echo "                  CppUnit Unit tests" 
+echo "********************************************************"
+echo
+
+list=`testSuite/unit/$UNITTESTER -l Unit`
+for test in $list; do
+  echo
+  echo "********************************************************"
+  echo "                          ${test}" 
+  echo "********************************************************"
+  echo
+  if (cd testSuite/unit && ${TESTS_ENVIRONMENT} ./$UNITTESTER "$test") ; then
+    result="succeeded"
+  else
+    result="failed"
+  fi
+  echo "$test : $result" >> ${pwd}/${RESULTS}.unit
+done
+
+echo
+echo "********************************************************"
+echo "                CppUnit Regression tests" 
+echo "********************************************************"
+echo
+
+list=`testSuite/unit/$UNITTESTER -l Regression`
+for test in $list; do
+  echo
+  echo "********************************************************"
+  echo "                          ${test}" 
+  echo "********************************************************"
+  echo
+  if (cd testSuite/unit && ${TESTS_ENVIRONMENT} ./$UNITTESTER "$test") ; then
+    result="succeeded"
+  else
+    result="failed"
+  fi
+  echo "$test : $result" >> ${pwd}/${RESULTS}.regress
+done
+
+
+
+
+  # End of subshell - redirect all output to a file
+exit 0
+) > ${LOGFILE} 2>&1
+
+  # Copy files to central machine
+for file in log results.tests results.unit results.regress; do
+  if [ ! -f ${BASENAME}.$file ]; then
+     echo "${BASENAME}.$file : not found"
+  elif [ "x$REMOTE" != "x" ]; then
+      # Try twice.  Don't redirect the output on the second attempt.
+    scp ${BASENAME}.$file ${REMOTE}/${PLATFORM_NAME}.$file > /dev/null 2>&1 || \
+    scp ${BASENAME}.$file ${REMOTE}/${PLATFORM_NAME}.$file
+    rm ${BASENAME}.$file
+  fi
+done
+

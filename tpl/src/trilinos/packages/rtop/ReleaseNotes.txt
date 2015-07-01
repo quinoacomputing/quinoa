@@ -1,0 +1,27 @@
+
+----------------------------------------
+Release Notes for Trilinos Package RTOp
+----------------------------------------
+
+
+Trilinos 11.5:
+--------------
+
+(*) Added better runtime support (not dependent on debug-mode builds) for
+printing the application of RTOps in parallel with the
+RTOpPack::SPMD_apply_op() functions.  This makes parallel debugging much
+easier (for example, involving Thyra).
+
+
+Trilinos 11.0:
+--------------
+
+(*) Dropped deprecated code in Trilinos 10.12 (see general release notes on
+dropping deprecated code).
+
+
+Trilinos 10.0:
+--------------
+
+
+No major changes

@@ -1,0 +1,71 @@
+#
+# Note: all relative paths are relative to package/doc!
+#
+@INCLUDE = Doxyfile.options
+@INCLUDE = rtop/doc/TagFiles # Requires @INCLUDE_PAH=$(TRILINOS_HOME)/packages
+@INCLUDE = epetra/doc/TagFiles
+@INCLUDE = tpetra/doc/TagFiles
+#
+# Package options
+#
+PROJECT_NAME           = "Thyra"
+OUTPUT_DIRECTORY       = .
+#
+# What and how documentation is extracted
+#
+
+#INPUT                  = ./index.doc ./faq.doc ./groups.doc ./dirs.doc \
+#                         ../adapters/epetraext/src \
+
+INPUT                  = ./index.doc \
+                         ./faq.doc \
+                         ./groups.doc \
+                         ./dirs.doc \
+                         ../core/src/interfaces/operator_vector/fundamental \
+                         ../core/src/interfaces/operator_vector/extended \
+                         ../core/src/interfaces/operator_solve/fundamental \
+                         ../core/src/interfaces/operator_solve/extended \
+                         ../core/src/interfaces/nonlinear/model_evaluator/fundamental \
+                         ../core/src/interfaces/nonlinear/solvers/fundamental \
+                         ../core/src/support/operator_vector/client_support \
+                         ../core/src/support/operator_vector/adapter_support \
+                         ../core/src/support/operator_solve/client_support \
+                         ../core/src/support/nonlinear/model_evaluator/client_support \
+                         ../core/src/support/nonlinear/solvers/client_support \
+                         ../adapters/epetra/src \
+                         ../adapters/epetraext/src/model_evaluator \
+                         ../adapters/epetraext/src/transformer \
+                         ../adapters/tpetra/src \
+                         ../core/example/operator_vector/exampleImplicitlyComposedLinearOperators.cpp \
+                         ../core/example/operator_vector/ExampleTridiagSerialLinearOp.hpp \
+                         ../core/example/operator_vector/ExampleTridiagSpmdLinearOp.hpp \
+                         ../core/example/operator_vector/sillyCgSolve.hpp \
+                         ../core/example/operator_vector/sillyPowerMethod.hpp \
+                         ../core/example/operator_vector/sillyModifiedGramSchmidt.hpp \
+                         ../core/example/operator_solve/Thyra_LinearOpWithSolveFactoryExamples.hpp \
+                         ../core/test/nonlinear/models/
+
+# ToDo: Just include ../src/
+
+FILE_PATTERNS          = *.h *c *.hpp *.cpp
+RECURSIVE              = NO
+
+IMAGE_PATH             = ./images \
+                         ../core/src/support/operator_vector/doc/images \
+                         ../core/src/interfaces/operator_vector/fundamental/doc/images
+EXAMPLE_PATH           = ../core/example/operator_vector \
+                         ../core/example/operator_solve \
+                         ../core/test/operator_vector \
+                         ../core/test/operator_solve
+EXCLUDE                = 
+EXCLUDE_PATTERNS       = *.x *.o *.out
+EXAMPLE_PATTERNS       =
+INPUT_FILTER           = 
+ALPHABETICAL_INDEX     = YES
+IGNORE_PREFIX          = 
+#
+# Links to other packages
+#
+GENERATE_TAGFILE       = ../../common/tag_files/Thyra.tag
+ALLEXTERNALS           = NO
+EXTERNAL_GROUPS        = NO

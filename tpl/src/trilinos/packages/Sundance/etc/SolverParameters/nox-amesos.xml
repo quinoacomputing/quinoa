@@ -1,0 +1,15 @@
+<ParameterList>
+  <ParameterList name="NOX Solver">
+    <Parameter name="Nonlinear Solver" type="string" value="Line Search Based"/>
+    <ParameterList name="Line Search">
+      <Parameter name="Method" type="string" value="More'-Thuente"/>
+    </ParameterList>
+    <ParameterList name="Status Test">
+      <Parameter name="Max Iterations" type="int" value="20"/>
+      <Parameter name="Tolerance" type="double" value="1e-8"/>
+    </ParameterList>
+    <ParameterList name="Linear Solver">
+      <Parameter name="Type" type="string" value="Amesos"/>
+    </ParameterList>
+  </ParameterList>
+</ParameterList>

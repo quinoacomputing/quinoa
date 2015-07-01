@@ -1,0 +1,427 @@
+*** Automatically generated options file
+
+begin_options
+
+*** Begin Moocho.opt.MoochoSolver
+
+options_group MoochoSolver {
+*    workspace_MB = -1.0; *** [default]
+*    obj_scale = 1.0; *** [default]
+*    test_nlp = true; *** [default]
+*    test_nlp = false;
+*    console_outputting = true; *** [default]
+*    console_outputting = false;
+*    summary_outputting = true; *** [default]
+*    summary_outputting = false;
+*    journal_outputting = true; *** [default]
+*    journal_outputting = false;
+*    algo_outputting = true; *** [default]
+*    algo_outputting = false;
+*    print_algo = true; *** [default]
+*    print_algo = false;
+*    algo_timing = true; *** [default]
+*    algo_timing = false;
+*    generate_stats_file = true;
+*    generate_stats_file = false; *** [default]
+*    print_opt_grp_not_accessed = true; *** [default]
+*    print_opt_grp_not_accessed = false;
+*    configuration = mama_jama; *** [default]
+*    configuration = interior_point;
+}
+
+options_group NLPSolverClientInterface {
+*    max_iter = 1000;  *** [default]
+*    max_run_time = 1e+10; *** In minutes [default]
+*    opt_tol = 1e-6;  *** [default]
+*    feas_tol = 1e-6;  *** [default]
+*    step_tol = 1e-2;  *** [default]
+*    journal_output_level = PRINT_NOTHING;              * No output to journal from algorithm
+*    journal_output_level = PRINT_BASIC_ALGORITHM_INFO; * O(1) information usually
+*    journal_output_level = PRINT_ALGORITHM_STEPS;      * O(iter) output to journal     [default]
+*    journal_output_level = PRINT_ACTIVE_SET;           * O(iter*nact) output to journal  
+*    journal_output_level = PRINT_VECTORS;              * O(iter*n) output to journal   (lots!)
+*    journal_output_level = PRINT_ITERATION_QUANTITIES; * O(iter*n*m) output to journal (big lots!)
+*    null_space_journal_output_level = DEFAULT;                    * Set to journal_output_level [default]
+*    null_space_journal_output_level = PRINT_ACTIVE_SET;           * O(iter*nact) output to journal  
+*    null_space_journal_output_level = PRINT_VECTORS;              * O(iter*(n-m)) output to journal   (lots!)
+*    null_space_journal_output_level = PRINT_ITERATION_QUANTITIES; * O(iter*(n-m)^2) output to journal (big lots!)
+*    journal_print_digits = 6;  *** [default]
+*    check_results = true;  *** (costly?)
+*    check_results = false; *** [default]
+*    calc_conditioning = true;  *** (costly?)
+*    calc_conditioning = false; *** [default]
+*    calc_matrix_norms = true;  *** (costly?)
+*    calc_matrix_norms = false; *** [default]
+*    calc_matrix_info_null_space_only = true;  *** (costly?)
+*    calc_matrix_info_null_space_only = false; *** [default]
+}
+
+options_group NLPTester {
+*    print_all = true;
+*    print_all = false; *** [default]
+}
+
+options_group VectorSpaceTester {
+*    print_all_tests = true;
+*    print_all_tests = false;
+*    print_vectors = true;
+*    print_vectors = false;
+*    throw_exception = true;
+*    throw_exception = false;
+*    num_random_tests = 4; *** [default]
+*    warning_tol = 1e-14; *** [default]
+*    error_tol   = 1e-10; *** [default]
+}
+
+options_group BasisSystemFactoryStd {
+*    direct_linear_solver = DENSE;   *** Use LAPACK xGETRF()
+*    direct_linear_solver = MA28;    *** Use Harwell MA28 (see options_group DirectSparseSolverMA28)
+*    direct_linear_solver = MA48;    *** Not supported yet
+*    direct_linear_solver = SUPERLU; *** Use SuperLU (see options_group DirectSparseSolverSuperLU)
+}
+
+options_group DirectSparseSolverMA28 {
+*    estimated_fillin_ratio = 10.0; *** [default]
+*    u = 0.1; *** [default]
+*    grow = true;
+*    grow = false; *** [default]
+*    nsrch = 4; *** [default]
+*    lbig = true;
+*    lbig = false; *** [default]
+*    print_ma28_outputs = true;
+*    print_ma28_outputs = false; *** [default]
+*    output_file_name = NONE; *** [default]
+}
+
+*** Moocho.opt.DecompositionSystemStateStepBuilderStd 
+
+options_group IterationPack_Algorithm {
+*   interrupt_file_name = "";             *** Does not check for interrupt file [default]
+*   interrupt_file_name = "interrupt.in"; *** checks for this file in current directory
+}
+
+options_group DecompositionSystemStateStepBuilderStd {
+*** Variable Reduction range/null space decomposition
+*    null_space_matrix = AUTO;         *** Let the solver decide [default]
+*    null_space_matrix = EXPLICIT;     *** Compute and store D = -inv(C)*N explicitly
+*    null_space_matrix = IMPLICIT;     *** Perform operations implicitly with C, N (requires adjoints)
+*    range_space_matrix = AUTO;        *** Let the algorithm decide dynamically [default]
+*    range_space_matrix = COORDINATE;  *** Y = [ I; 0 ] (Cheaper computationally)
+*    range_space_matrix = ORTHOGONAL;  *** Y = [ I; -N'*inv(C') ] (more stable)
+*** Reduced Hessian Approximations
+*    max_dof_quasi_newton_dense = -1; *** [default]
+}
+
+options_group CalcFiniteDiffProd {
+*    fd_method_order = FD_ORDER_ONE;          *** Use O(eps) one sided finite differences
+*    fd_method_order = FD_ORDER_TWO;          *** Use O(eps^2) one sided finite differences
+*    fd_method_order = FD_ORDER_TWO_CENTRAL;  *** Use O(eps^2) two sided central finite differences
+*    fd_method_order = FD_ORDER_TWO_AUTO;     *** Uses FD_ORDER_TWO_CENTRAL or FD_ORDER_TWO
+*    fd_method_order = FD_ORDER_FOUR;         *** Use O(eps^4) one sided finite differences
+*    fd_method_order = FD_ORDER_FOUR_CENTRAL; *** Use O(eps^4) two sided central finite differences
+*    fd_method_order = FD_ORDER_FOUR_AUTO;    *** [default] Use FD_ORDER_FOUR_CENTRAL or FD_ORDER_FOUR
+*    fd_step_select = FD_STEP_ABSOLUTE; *** [default] Use absolute step size fd_step_size
+*    fd_step_select = FD_STEP_RELATIVE; *** Use relative step size fd_step_size * ||x||inf
+*    fd_step_size = -1.0; *** [default] Let the implementation decide
+*    fd_step_size_min = -1.0; *** [default] Let the implementation decide.
+*    fd_step_size_f = -1.0; *** [default] Let the implementation decide
+*    fd_step_size_c = -1.0; *** [default] Let the implementation decide
+*    fd_step_size_h = -1.0; *** [default] Let the implementation decide
+}
+
+options_group EvalNewPointStd {
+*    fd_deriv_testing = FD_DEFAULT; *** [default] Test if check_results==true (see above)
+*    fd_deriv_testing = FD_TEST;    *** Always test
+*    fd_deriv_testing = FD_NO_TEST; *** never test
+*    decomp_sys_testing = DST_DEFAULT; *** [default] Test if check_results==true (see above)
+*    decomp_sys_testing = DST_TEST;    *** Always test
+*    decomp_sys_testing = DST_NO_TEST; *** never test
+*    decomp_sys_testing_print_level = DSPL_USE_GLOBAL;    *** [default] Use the value in journal_print_level (see above).
+*    decomp_sys_testing_print_level = DSPL_LEAVE_DEFAULT; *** Leave whatever setting in already in use.
+}
+
+options_group VariableBoundsTester {
+*    warning_tol   = 1e-10; *** [default]
+*    error_tol     = 1e-5; *** [default]
+}
+
+options_group NLPFirstDerivTester {
+*    fd_testing_method = FD_COMPUTE_ALL; *** Compute all of the derivatives (O(m))
+*    fd_testing_method = FD_DIRECTIONAL; *** [default] Only compute along random directions (O(1))
+*    num_fd_directions = 1;   *** [fd_testing_method == DIRECTIONAL]
+*    num_fd_directions = -1;  *** [fd_testing_method == DIRECTIONAL] Use single direction y=1.0
+*    warning_tol   = 1e-8; *** [default]
+*    warning_tol   = 0.0;  *** Show me all comparisons.
+*    error_tol     = 1e-3; *** [default]
+}
+
+options_group EvalNewPointTailoredApproach {
+*    fd_deriv_testing   = FD_DEFAULT;  *** [default] Test if check_results==true (see above)
+*    fd_deriv_testing   = FD_TEST;    *** Always test
+*    fd_deriv_testing   = FD_NO_TEST; *** never test
+}
+
+options_group NLPDirectTester {
+*    Gf_testing_method = FD_COMPUTE_ALL; *** Compute all of the derivatives (O(n))
+*    Gf_testing_method = FD_DIRECTIONAL; *** [default] Only compute along random directions (O(1))
+*    Gf_warning_tol   = 1e-10;
+*    Gf_error_tol     = 1e-5;
+*    Gc_testing_method = FD_COMPUTE_ALL; *** Compute all of the derivatives (O(n-m))
+*    Gc_testing_method = FD_DIRECTIONAL; *** [default] Only compute along random directions (O(1))
+*    Gc_warning_tol   = 1e-10;
+*    Gc_error_tol     = 1e-5;
+*    num_fd_directions = 1;  *** [testing_method == DIRECTIONAL]
+*    dump_all = true;
+*    dump_all = false; *** [default]
+}
+
+options_group BasisSystemTester {
+*    print_tests = PRINT_NONE;    *** [default]
+*    print_tests = PRINT_BASIC;
+*    print_tests = PRINT_MORE;
+*    print_tests = PRINT_ALL;
+*    dump_all = true;
+*    dump_all = false;          *** [default]
+*    num_random_tests = 1;      *** (+int) Number of sets of random tests to perform
+*    warning_tol   = 1e-15;     *** (+dbl) Warning tolerance
+*    error_tol     = 1e-12;     *** (+dbl) Error tolerance
+}
+
+options_group DecompositionSystemTester {
+*    print_tests = PRINT_NONE;    *** [default]
+*    print_tests = PRINT_BASIC;
+*    print_tests = PRINT_MORE;
+*    print_tests = PRINT_ALL;
+*    dump_all = true;             *** (costly)
+*    dump_all = false;            *** [default]
+*    num_random_tests   = 1;      *** (+int) Number of sets of random test to perform
+*    mult_warning_tol   = 1e-14;  *** (+dbl) Warning tolerance for checking matrix-vector multiplication
+*    mult_error_tol     = 1e-8;   *** (+dbl) Error tolerance for checking matrix-vector multiplication
+*    solve_warning_tol  = 1e-14;  *** (+dbl) Warning tolerance for checking linear solves
+*    solve_error_tol    = 1e-8;   *** (+dbl) Error tolerance for checking linear solves
+}
+
+*** Begin Moocho.opt.NLPAlgoConfigMamaJama
+
+options_group NLPAlgoConfigMamaJama {
+*** Variable Reduction range/null space decomposition
+*    max_basis_cond_change_frac = -1.0;  *** [default]
+*** Reduced Hessian Approximations
+*    exact_reduced_hessian = true; *** Use NLP Hessian info if available
+*    exact_reduced_hessian = false; *** Use quasi_newton [default]
+*    quasi_newton = AUTO;   *** Let solver decide dynamically [default]
+*    quasi_newton = BFGS;   *** Dense BFGS
+*    quasi_newton = LBFGS;  *** Limited memory BFGS
+*    num_lbfgs_updates_stored   = -1; *** [default]
+*    lbfgs_auto_scaling = true;  *** (default)
+*    lbfgs_auto_scaling = false;
+*    hessian_initialization = AUTO;                       *** Let the solver decide dynamically [default]
+*    hessian_initialization = SERIALIZE;                  *** rHL_(0) read from file (see ReducedHessianSerialization)
+*    hessian_initialization = IDENTITY;                   *** rHL_(0) = I
+*    hessian_initialization = FINITE_DIFF_SCALE_IDENTITY; *** rHL_(0) = ||fd|| * I
+*    hessian_initialization = FINITE_DIFF_DIAGONAL;       *** rHL_(0) = diag(max(fd(i),small),i)
+*    hessian_initialization = FINITE_DIFF_DIAGONAL_ABS;   *** rHL_(0) = diag(abs(fd(i))
+*** QP solvers
+*    qp_solver = AUTO;    *** Let the solver decide dynamically
+*    qp_solver = QPKWIK;  *** Primal-dual, active set, QR
+*    qp_solver = QPOPT;   *** Primal, active set, null space, Gill et. al.
+*    qp_solver = QPSOL;   *** Primal, active set, null space, Gill et. al.
+*    qp_solver = QPSCHUR; *** [default] Primal-dual, active set, schur complement 
+*    reinit_hessian_on_qp_fail = true; *** [default]
+*    reinit_hessian_on_qp_fail = false;
+*** Line search methods
+*    line_search_method = AUTO;               *** Let the solver decide dynamically [default]
+*    line_search_method = NONE;               *** Take full steps at every iteration
+*    line_search_method = DIRECT;             *** Use standard Armijo backtracking
+*    line_search_method = 2ND_ORDER_CORRECT;  *** Like DIRECT except computes corrections for
+*                                             *** c(x) before backtracking line search
+*    line_search_method = WATCHDOG;           *** Like DIRECT except uses watchdog type trial steps
+*    line_search_method = FILTER;             *** [default] Use the Filter line search method
+*    merit_function_type = AUTO;              *** [line_search_method != NONE] Let solver decide
+*    merit_function_type = L1;                *** [line_search_method != NONE] phi(x) = f(x) + mu*||c(x)||1
+*    merit_function_type = MODIFIED_L1;       *** [line_search_method != NONE] phi(x) = f(x) + sum(mu(j),|cj(x)|,j)
+*    merit_function_type = MODIFIED_L1_INCR;  *** [line_search_method != NONE] Like MODIFIED_L1 except mu(j) are altered in order to take larger steps
+*    l1_penalty_parameter_update = AUTO;      *** [merit_function_type == L1] let solver decide
+*    l1_penalty_parameter_update = WITH_MULT; *** [merit_function_type == L1] Use Lagrange multipliers to update mu
+*    l1_penalty_parameter_update = MULT_FREE; *** [merit_function_type == L1] Don't use Lagrange multipliers to update mu
+}
+
+options_group ReducedHessianSerialization {
+*   reduced_hessian_input_file_name = "reduced_hessian.in";   *** [default]
+*   reduced_hessian_input_file_name = "";                     *** Does not read from file
+*   reduced_hessian_output_file_name = "reduced_hessian.out"; *** [default]
+*   reduced_hessian_output_file_name = "";                    *** Does not write to file
+}
+
+options_group InitFinDiffReducedHessian {
+*    initialization_method	= SCALE_IDENTITY;
+*    initialization_method	= SCALE_DIAGONAL;
+*    initialization_method	= SCALE_DIAGONAL_ABS;
+*    max_cond			= 1e+1;
+*    min_diag			= 1e-8;
+*    step_scale			= 1e-1;
+}
+
+options_group CheckSkipBFGSUpdateStd {
+*    skip_bfgs_prop_const = 10.0; *** (+dbl)
+}
+
+options_group BFGSUpdate {
+*    rescale_init_identity = true;  *** [default]
+*    rescale_init_identity = false;
+*    use_dampening = true;  *** [default]
+*    use_dampening = false;
+*    secant_testing          = DEFAULT;  *** Test secant condition if check_results==true (see above) [default]
+*    secant_testing          = TEST;     *** Always test secant condition
+*    secant_testing          = NO_TEST;  *** Never test secant condition
+*    secant_warning_tol      = 1e-6; *** [default]
+*    secant_error_tol        = 1e-1; *** [default]
+}
+
+options_group CheckConvergenceStd {
+*    scale_opt_error_by    = SCALE_BY_NORM_2_X;
+*    scale_opt_error_by    = SCALE_BY_NORM_INF_X;
+*    scale_opt_error_by    = SCALE_BY_ONE;        *** [default]
+*    scale_feas_error_by   = SCALE_BY_NORM_2_X;
+*    scale_feas_error_by   = SCALE_BY_NORM_INF_X;
+*    scale_feas_error_by   = SCALE_BY_ONE;        *** [default]
+*    scale_comp_error_by   = SCALE_BY_NORM_2_X;
+*    scale_comp_error_by   = SCALE_BY_NORM_INF_X;
+*    scale_comp_error_by   = SCALE_BY_ONE;        *** [default]
+*    scale_opt_error_by_Gf = true; *** [default]
+*    scale_opt_error_by_Gf = false;
+}
+
+options_group TangentialStepWithInequStd {
+*    warm_start_frac = 0.8; *** [default]
+*    warm_start_frac = 0.0; *** Never do a warm start
+*    warm_start_frac = 1.0; *** Do a warm start as soon a possible
+*    qp_testing = QP_TEST_DEFAULT; *** [default] Test if check_results==true
+*    qp_testing = QP_TEST;         *** Always test
+*    qp_testing = QP_NO_TEST;      *** Never test
+*    primal_feasible_point_error = true; *** [default] Throw exception on PRIMAL_FEASIBLE_POINT
+*    primal_feasible_point_error = false; *** No throw exception on PRIMAL_FEASIBLE_POINT
+*    dual_feasible_point_error = true; *** [default] Throw exception on DUAL_FEASIBLE_POINT
+*    dual_feasible_point_error = false; *** No throw exception on DUAL_FEASIBLE_POINT
+}
+
+options_group QPSolverRelaxedTester {
+*    opt_warning_tol   = 1e-10;  *** [default] Tolerances for optimality conditions
+*    opt_error_tol     = 1e-5;   *** [default]
+*    feas_warning_tol  = 1e-10;  *** [default] Tolerances for feasibility
+*    feas_error_tol    = 1e-5;   *** [default]
+*    comp_warning_tol  = 1e-10;  *** [default] Tolerances for complementarity
+*    comp_error_tol    = 1e-5;   *** [default]
+}
+
+options_group QPSolverRelaxedQPSchur {
+*** Convergence criteria and algorithm control options
+*    max_qp_iter_frac  = 10.0;   *** (+dbl) max_qp_itr = max_qp_itr_frac * (# variables)
+*    bounds_tol        = 1e-10;  *** (+dbl) feasibility tolerance for bound constraints
+*    inequality_tol    = 1e-10;  *** (+dbl) feasibility tolerance for general inequality constraints
+*    equality_tol      = 1e-10;  *** (+dbl) feasibility tolerance for general equality constraints
+*    loose_feas_tol    = 1e-9;   *** (+dbl) (Expert use only)
+*    dual_infeas_tol   = 1e-12;  *** (+dbl) allowable dual infeasibility before reporting an error
+*    huge_primal_step  = 1e+20;  *** (+dbl) value of a near infinite primal step
+*    huge_dual_step    = 1e+20;  *** (+dbl) value of a near infinite dual step
+*    bigM              = 1e+10;  *** (+dbl) value or relaxation penalty in objective
+*    iter_refine_at_solution = true;  *** [default]
+*    iter_refine_at_solution = false;
+*    iter_refine_min_iter = 1; *** [default]
+*    iter_refine_max_iter = 3; *** [default]
+*    iter_refine_opt_tol  = 1e-12; *** [default]
+*    iter_refine_feas_tol = 1e-12; *** [default]
+*    inequality_pick_policy = ADD_BOUNDS_THEN_MOST_VIOLATED_INEQUALITY; *** [default]
+*    inequality_pick_policy = ADD_BOUNDS_THEN_FIRST_VIOLATED_INEQUALITY; *** not supported yet!
+*    inequality_pick_policy = ADD_MOST_VIOLATED_BOUNDS_AND_INEQUALITY;
+*** Warning and error tolerances
+*    warning_tol   = 1e-10;  *** General testing warning tolerance
+*    error_tol     = 1e-5;   *** General testing error tolerance
+*    pivot_warning_tol = 1e-8;  *** [default]
+*    pivot_singular_tol = 1e-11;  *** [default]
+*    pivot_wrong_inertia_tol = 1e-11;  *** [default]
+*** Output control
+*    print_level = USE_INPUT_ARG;  *** [default] Use the input argument to solve_qp(...)
+*    print_level = NO_OUTPUT;
+*    print_level = OUTPUT_BASIC_INFO;
+*    print_level = OUTPUT_ITER_SUMMARY;
+*    print_level = OUTPUT_ITER_STEPS;
+*    print_level = OUTPUT_ACT_SET;
+*    print_level = OUTPUT_ITER_QUANTITIES;
+}
+
+options_group DirectLineSearchArmQuadSQPStep {
+*    slope_frac       = 1.0e-4;
+*    min_frac_step    = 0.1:
+*    max_frac_step    = 0.5;
+*    max_ls_iter      = 20;
+}
+
+options_group LineSearchWatchDog {
+*    opt_kkt_err_threshold	= 1e-3; *** (+dbl)
+*    feas_kkt_err_threshold	= 1e-3; *** (+dbl)
+}
+
+options_group LineSearch2ndOrderCorrect {
+*    newton_olevel = PRINT_USE_DEFAULT;   *** O(?) output [default]
+*    newton_olevel = PRINT_NOTHING;       *** No output
+*    newton_olevel = PRINT_SUMMARY_INFO;  *** O(max_newton_iter) output
+*    newton_olevel = PRINT_STEPS;         *** O(max_newton_iter) output
+*    newton_olevel = PRINT_VECTORS;       *** O(max_newton_iter*n) output
+*    constr_norm_threshold = 1.0; *** [default]
+*    constr_incr_ratio = 10.0; *** [default]
+*    after_k_iter = 0; *** [default]
+*    forced_constr_reduction = LESS_X_D;
+*    forced_constr_reduction = LESS_X; *** [default]
+*    forced_reduct_ratio = 1.0; *** [default]
+*    max_step_ratio = 1.0; *** [default]
+*    max_newton_iter = 3; *** [default]
+}
+
+options_group LineSearchFilter {
+*    gamma_theta      = 1e-5; *** [default]
+*    gamma_f          = 1e-5; *** [default]
+*    f_min            = UNBOUNDED; *** [default]
+*    f_min            = 0.0;       *** If 0 is minimum ...
+*    gamma_alpha      = 5e-2; *** [default]
+*    delta            = 1e-4; *** [default]
+*    s_theta          = 1.1;  *** [default]
+*    s_f              = 2.3;	*** [default]
+*    theta_small_fact = 1e-4; *** [default]
+*    theta_max        = 1e10; *** [default]
+*    eta_f            = 1e-4; *** [default]
+*    back_track_frac  = 0.5;  *** [default]
+}
+
+options_group FeasibilityStepReducedStd {
+*    qp_objective = OBJ_MIN_FULL_STEP;
+*    qp_objective = OBJ_MIN_NULL_SPACE_STEP;
+*    qp_objective = OBJ_RSQP;
+*    qp_testing   = QP_TEST_DEFAULT;
+*    qp_testing   = QP_TEST;
+*    qp_testing   = QP_NO_TEST;
+}
+
+options_group DirectLineSearchArmQuad2ndOrderCorrectNewton {
+*    slope_frac       = 1.0e-4;
+*    min_frac_step    = 0.1:
+*    max_frac_step    = 0.5;
+*    max_ls_iter      = 20;
+}
+
+options_group MeritFuncPenaltyParamUpdate {
+*    small_mu     = 1e-6;
+*    min_mu_ratio = 1e-8
+*    mult_factor  = 7.5e-4;
+*    kkt_near_sol = 1e-1;
+}
+
+options_group MeritFuncModifiedL1LargerSteps {
+*    after_k_iter                  = 3;
+*    obj_increase_threshold        = 1e-4;
+*    max_pos_penalty_increase      = 1.0;
+*    pos_to_neg_penalty_increase   = 1.0;  *** (+dbl)
+*    incr_mult_factor              = 1e-4; *** (+dbl)
+}
+
+end_options

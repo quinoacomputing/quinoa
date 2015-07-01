@@ -1,0 +1,313 @@
+#!/usr/bin/perl
+
+# This is a script to collect nightly build and testing results for
+# mesquite, summarize them and mail the resulting summary to the
+# mesquite-Developers list.
+
+use IO::File;
+use MIME::Lite;
+
+my $debug = 0;
+
+# The first argument to this script should be the directory to search
+# for result files.
+
+#shift(@_);
+$resultsdir = $ARGV[0] ;
+$emailaddr = $ARGV[1] || "kraftche\@cae.wisc.edu";
+chdir $resultsdir || die "'$resultsdir' does not exist!";
+print ("directory: ", $resultsdir, "\n") if ($debug);
+
+# Define a subroutine to read the CppUnit results
+sub cpp_unit_read
+{
+     # Open file
+   my $filename = shift( @_ );
+   my $line;
+   my $results = {};  # reference to an anonymous hash
+   open (HANDLE, "<$filename") || return 0;
+   $line = <HANDLE>;
+   return unless $line =~ /^\*+Tests\s+Run\s*:\s*$/;
+   
+     # Read the list of tests that were run.
+   while ($line = <HANDLE>)
+   {
+      last if $line =~ /^\*+Tests\s+Failed\s*:\s*$/;
+      return unless $line =~ /^(\w+)::\w+/;
+      $results->{$1} = 0;
+   }
+   
+     # Read the list of tests that failed.
+   while ($line = <HANDLE>)
+   {
+      return unless $line =~ /^(\w+)::\w+/;
+      $results->{$1} = 1;
+   }
+   
+   close HANDLE;
+   return $results;
+}
+ 
+# Subroutine to read results file for stand-alone tests
+sub stand_alone_read
+{
+     # Open file
+   my $filename = shift( @_ );
+   my $line;
+   my $results = {};  # reference to an anonymous hash
+   open (HANDLE, "<$filename") || return 0;
+   
+      # Read file
+   while ($line = <HANDLE>)
+   {
+      return 0 unless $line =~ /^([^:]+)\s*:\s*(succeeded|failed|broken)/;
+      my $name = $1;
+      my $result = $2;
+      if ($result eq "succeeded")
+      {
+         $results->{$name} = 0;
+      }
+      elsif ($result eq "failed")
+      {
+         $results->{$name} = 1;
+      }
+      elsif ($result eq "broken")
+      {
+         $results->{$name} = 2;
+      }
+      else
+      {
+         die "Unexpected: '$result' in $filename";
+      }  
+   }
+   
+   close HANDLE;
+   return $results;
+}
+
+# Subroutine to get the maximum length of a list of strings
+sub maxlen
+{
+   my $result = 0;
+   my $string;
+   while ($string = shift( @_ ))
+   {
+      my $len = length $string;
+      $result = $len if ($len > $result);
+   }
+   return $result;
+}
+
+# Given a reference to a hash of hashes, return
+# a reference to an array containing the union
+# of the keys of all the hashes.
+sub keylist
+{
+   my %keyhash;
+   my $hashhashref = shift (@_);
+   foreach $key (keys %$hashhashref)
+   {
+      my $hashref = $hashhashref->{$key};
+      foreach $subkey (keys %$hashref)
+      {
+         $keyhash{$subkey} = 0;
+      }
+   }
+   
+   my $arrayref;
+   @$arrayref = sort keys %keyhash;
+   return $arrayref;
+}
+
+
+# Return a string of '-' characters of the specified length
+sub dashes
+{
+   my $count = shift(@_);
+   my $ascii = ord("-");
+   my @list;
+   while ($count) {
+      push @list, $ascii;
+      --$count;
+   }
+   return pack( "C*", @list);
+}
+   
+
+# Get list of platform names from results files
+
+my %platformhash;
+foreach $file ( <*> )
+{
+   if( $file =~ /^([^.]+)\.log$/ )
+   {
+      $name = $1;
+      @statinfo = stat $file;
+      $mtime = $statinfo[9];
+      $otime = time() - (12*60*60);
+      $platformhash{$name} = $mtime if( $mtime gt $otime );
+   }
+}
+my @platforms = sort keys %platformhash;
+print ("platforms: ", join( " ", @platforms), "\n") if ($debug);
+
+# Read files for each platform
+my %unit, %regress, %stand;
+foreach $file ( <*> )
+{
+   if ( $file =~ /^([^.]+)\.results\.(tests|regress|unit)/ )
+   {
+         # get platform name and test type
+      ($name,$type) = ($1,$2);
+
+         # Skip any result files more than an hour older than
+         # the platform test log
+      @statinfo = stat $file;
+      $mtime = $statinfo[9];
+      
+      print "$name: $platformhash{$name}, ${type}: $mtime\n" if ($debug);
+      next if ($platformhash{$name} > 3600+$mtime);
+      
+         # Read test results from file
+      if ($type eq "tests") {
+         $stand{$name} = stand_alone_read($file);
+      } elsif ($type eq "regress") {
+         $regress{$name} = stand_alone_read($file);
+      } else {
+         $unit{$name} = stand_alone_read($file);
+      }
+   }
+}
+
+# Get big list of all test names
+my $unitnames, $regressnames, $standnames;
+$unitnames = keylist \%unit;
+$regressnames = keylist \%regress;
+$standnames = keylist \%stand;
+
+# Get width for platform column
+my $plen = maxlen(@platforms);
+$plen = 6 if ($plen < 6);
+
+# Create temporary file
+my $file = IO::File->new_tmpfile;
+
+# Write out test results
+foreach $number (1, 2, 3)
+{
+   my $namelist;
+   my $testhash;
+   my $string;
+   
+   if ($number eq 1)
+   {
+      $namelist = $standnames;
+      $testhash = \%stand;
+      $string = "Stand-Alone Tests";
+   }
+   elsif ($number eq 2)
+   {
+      $namelist = $unitnames;
+      $testhash = \%unit;
+      $string = "CppUnit UNIT Tests";
+   }
+   else
+   {
+      $namelist = $regressnames;
+      $testhash = \%regress;
+      $string = "CppUnit REGRESSION";
+   }
+   
+   # Write the header line
+   
+   print ("Tests: ", join(" ", @$namelist), "\n") if ($debug);
+   
+   my $len = maxlen(@$namelist);
+   $len = 18 if ($len lt 18);
+   my $fmtstr1 = "%${len}s";
+   my $fmtstr2 = "  %${plen}s";
+   print $file "\n\n";
+   printf $file $fmtstr1, $string;
+   foreach $platform (@platforms)
+   {
+      printf $file $fmtstr2, $platform;
+   }
+   print $file "\n";
+   print $file dashes($len);
+   foreach $platform (@platforms)
+   {
+      printf $file $fmtstr2, dashes($plen);
+   }
+   print $file "\n";
+
+   # Write results, one test per line
+
+   foreach $test (@$namelist)
+   {
+      printf $file $fmtstr1, $test;
+      foreach $platform (@platforms)
+      {
+         my $hashref = $testhash->{$platform};
+         if (!exists $hashref->{$test}) {
+            printf $file $fmtstr2, "N/A";
+         } else {
+         my $rslt = $hashref->{$test};
+         printf $file $fmtstr2, $rslt == 0 ? "OK" : $rslt == 1 ? "FAIL" : "ERR";
+         }
+      }
+      print $file "\n";
+   }
+}
+
+if ($debug)
+{
+   seek ($file, 0, 0);
+   print while (<$file>);
+   exit 0;
+}
+
+  # Construct the email...
+$message = MIME::Lite->new(
+   From     => $emailaddr,
+   To       => $emailaddr,
+   Subject  => "Mesquite Test Results",
+   Type     => "multipart/mixed"
+   );
+
+  # Body of message from temp file 
+seek $file, 0, 0;
+$message->attach(
+   Type     => "TEXT",
+   FH       => $file,
+   );
+
+  # Attach log files from each platform
+foreach $platform (@platforms)
+{
+   my $name = "${platform}.log";
+   next unless (-f $name);
+   my @statinfo = stat $file;
+   my $mtime = $statinfo[9];
+   my $otime = time() - (12*60*60);
+   next unless( $mtime gt $otime );
+
+   my $type = "TEXT";
+   unless (system( gzip, '-f', $name ))
+   {
+      $name = "${name}.gz";
+      $type = "x-gzip";
+   }
+
+   $message->attach(
+      Type        => $type,
+      Filename    => $name,
+      Path        => $name,
+      Disposition => "attachment",
+   );
+}
+
+  # Send the message
+$message->send;
+
+
+

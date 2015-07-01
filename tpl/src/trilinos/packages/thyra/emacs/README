@@ -1,0 +1,136 @@
+(2010/01/14)
+
+A) Introduction to (X)Emacs C++ styles
+
+Here is defined an (x)emacs style for the recommended Thyra coding style in
+the ./elisp/cpp-thyra-styles.el file.  This coding style is largely based on
+the recommendations in the book "Code Complete", 2nd edition by Steve
+MConnell.  Using this style from within emacs will help to provide consistency
+in the development of Thyra.
+
+In addition to the "thyra" style, there are a number of named styles that can
+be added to the cpp-thyra-styles.el file.  To make a source file automatically
+use a specific named style, just put the following line at the top of each
+such C/C++ file:
+
+  // -*- c-file-style: "thyra" -*-
+
+By adding new named styles and including a single line that specifies the
+style, multiple developers can successfully edit each other's files and use a
+consistent indentation style with little trouble.
+
+You can also set a named style manually by using, for example:
+
+  M-x [return] c-set-stype [return] thyra
+
+Note that if you press the tab key after the second [return], emacs will
+automatically print out the list of the defined named styles, including those
+added by the thyra styles package.
+
+To copy just the file cpp-thyra-styles.el to the directory $HOME/elisp, use
+the script:
+
+  ./copy-emacs-thyra-styles.sh
+
+To import the styles into your emacs initialization file, just add the lines:
+
+  ;; Load custom Thyra C++ styles
+  (add-to-list 'load-path (expand-file-name "~/elisp/"))
+  (require 'cpp-thyra-styles)
+
+To use the "thyra" style as your default style, include the following in your
+emacs initialization file:
+
+  ;; Set my style to the Thyra style!
+  (setq c-set-style "thyra")
+
+If you want to just copy a pre-setup .emacs file that uses this style by
+default, use the script:
+
+  ./copy-emacs-init-file.sh
+
+and it will copy the following files:
+
+ $HOME
+   |
+   |-- .emacs
+   |
+   \-- elisp
+         |
+         \-- cpp-thyra-styles.el
+
+Note that it will overwrite any $HOME/.emacs file that you might already have
+so you might want to move it out of the way before you run this script, just
+in case.
+
+B) Problems with using customized C++ styles
+
+If one looks at the ./elisp/cpp-thyra-styles.el file one will see that a style
+is only added when the editor enters 'cc-mode (i.e. C or C++).  What this
+means is that a user-defined style is not added until a C/C++ file is actually
+opened.  Therefore, this means that one can not simply set the style in one's
+.emacs file using 'c-default-style'.
+
+C) GTags
+
+The program GNU Global tags is a replacement for ctags and etags which is
+still under active development.  Once you produce a GTAGS database file, you
+can search through source code *very* fast.
+
+1) Install the program run:
+
+  $ cd SOME_BASE_DIR
+  $ tar -xzvf THIS_DIR/gnu-global-5.7.7.tar.gz
+  $ cd global-5.7.7
+  $ ./configure && make
+  $ sudo make install
+  
+2) Set up (X)Emacs for using gtags, you must set up your ~/.emacs file with:
+
+;;; Load GNU global
+;;;(require 'gtags)
+(autoload 'gtags-mode "gtags" "" t)
+(setq c-mode-hook
+          '(lambda ()
+              (gtags-mode 1)
+      ))
+
+3) Create (or update) the GTAGS database do:
+
+  $ cd Trilinos
+  $ gtags
+
+4) Using gtags from (X)Emacs:
+
+If you are not already in gtags mode run M-x gtags-mode.
+
+You can see all the gtags commands by running M-x gtags-[TAB]
+
+5) Using gtags from the command-line
+
+The program 'global' can be used to search for tags in source code very
+quickly.  You must be in the base directory of the source code to run
+'global'.
+
+a) Find all locations where symbol is initially defined
+
+  $ global -x -e SYMBOL
+
+  NOTE: This gives the fine name and line number.  Other ouptut formats can be
+  selected with the --format option.
+
+  NOTE: You can pipe this into grep where you can further refine your search.
+
+  NOTE: If you only want to search the local directory and below you can
+  specify -l.
+
+b) Find all locations where a symbol is used
+
+  $ global -sx -g SYMBOL
+
+c) Find all symbols that match a regular expression
+
+  $ global -c -e PARTIAL_SYMBOL
+
+
+

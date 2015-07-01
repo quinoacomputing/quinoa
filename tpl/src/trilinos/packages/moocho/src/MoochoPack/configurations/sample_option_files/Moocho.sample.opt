@@ -1,0 +1,43 @@
+begin_options
+
+options_group NLPSolverClientInterface {
+    max_iter = 20;
+    max_run_time = 2.0; *** In minutes
+    opt_tol = 1e-2;
+    feas_tol = 1e-7;
+*    journal_output_level = PRINT_NOTHING;              * No output to journal from algorithm
+*    journal_output_level = PRINT_BASIC_ALGORITHM_INFO; * O(1) information usually
+    journal_output_level = PRINT_ALGORITHM_STEPS;      * O(iter) output to journal     [default]
+*    journal_output_level = PRINT_ACTIVE_SET;           * O(iter*nact) output to journal  
+*    journal_output_level = PRINT_VECTORS;              * O(iter*n) output to journal   (lots!)
+*    journal_output_level = PRINT_ITERATION_QUANTITIES; * O(iter*n*m) output to journal (big lots!)
+*    null_space_journal_output_level = DEFAULT;                    * Set to journal_output_level [default]
+*    null_space_journal_output_level = PRINT_ACTIVE_SET;           * O(iter*nact) output to journal  
+*    null_space_journal_output_level = PRINT_VECTORS;              * O(iter*(n-m)) output to journal   (lots!)
+    null_space_journal_output_level = PRINT_ITERATION_QUANTITIES; * O(iter*(n-m)^2) output to journal (big lots!)
+    journal_print_digits = 10;
+    calc_conditioning = true;
+    calc_matrix_norms = true;  *** (costly?)
+    calc_matrix_info_null_space_only = true;  *** (costly?)
+}
+
+options_group DecompositionSystemStateStepBuilderStd {
+*    null_space_matrix = AUTO;         *** Let the solver decide [default]
+    null_space_matrix = EXPLICIT;     *** Compute and store D = -inv(C)*N explicitly
+*    null_space_matrix = IMPLICIT;     *** Perform operations implicitly with C, N (requires adjoints)
+*    range_space_matrix = AUTO;        *** Let the algorithm decide dynamically [default]
+*    range_space_matrix = COORDINATE;  *** Y = [ I; 0 ] (Cheaper computationally)
+    range_space_matrix = ORTHOGONAL;  *** Y = [ I; -N'*inv(C') ] (more stable)
+}
+
+options_group NLPAlgoConfigMamaJama {
+*    quasi_newton = AUTO;   *** Let solver decide dynamically [default]
+    quasi_newton = BFGS;   *** Dense BFGS
+*    quasi_newton = LBFGS;  *** Limited memory BFGS
+*    line_search_method = AUTO;               *** Let the solver decide dynamically [default]
+*    line_search_method = NONE;               *** Take full steps at every iteration
+*    line_search_method = DIRECT;             *** Use standard Armijo backtracking
+    line_search_method = FILTER;             *** [default] Use the Filter line search method
+}
+
+end_options

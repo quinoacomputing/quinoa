@@ -1,0 +1,31 @@
+INCLUDE(TribitsSubPackageMacros)
+INCLUDE(TribitsLibraryMacros)
+
+TRIBITS_SUBPACKAGE(Aprepro_lib)
+
+SET(APREPRO_VERSION_MAJOR "3")
+SET(APREPRO_VERSION_MINOR "08")
+SET(APREPRO_VERSION_PATCH "0")
+SET(APREPRO_VERSION "${APREPRO_VERSION_MAJOR}.${APREPRO_VERSION_MINOR}")
+SET(APREPRO_VERSION_FULL "${APREPRO_VERSION}.${APREPRO_VERSION_PATCH}")
+
+INCLUDE_DIRECTORIES(
+  "${CMAKE_CURRENT_SOURCE_DIR}"
+)
+
+SET(HEADERS
+	aprepro.h
+)
+
+SET(SOURCES
+ apr_aprepro.cc apr_util.cc apr_stats.cc apr_init.cc apr_builtin.cc apr_units.cc apr_tokenize.cc
+ apr_scanner.cc  apr_parser.cc 
+)
+
+TRIBITS_ADD_LIBRARY(
+	aprepro_lib
+	HEADERS	${HEADERS}
+	SOURCES ${SOURCES}
+)
+
+TRIBITS_SUBPACKAGE_POSTPROCESS()

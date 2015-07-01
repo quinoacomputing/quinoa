@@ -1,0 +1,1 @@
+trilinosRoot_dir = "../../.."

@@ -1,0 +1,69 @@
+Teuchos::GlobalMPISession::GlobalMPISession(): started serial run
+
+Echoing the command-line:
+
+../thyra/example/NLPThyraEpetraAdvDiffReactOpt/NLPThyraEpetraAdvDiffReactOpt.exe --echo-command-line --help 
+
+Usage: ../thyra/example/NLPThyraEpetraAdvDiffReactOpt/NLPThyraEpetraAdvDiffReactOpt.exe [options]
+  options:
+  --help                                           Prints this help message
+  --pause-for-debugging                            Pauses for user input to allow attaching a debugger
+  --echo-command-line                              Echo the command-line but continue as normal
+  --output-all-front-matter                bool    Set if all front matter is printed to the default FancyOStream or not
+  --output-no-front-matter                         (default: --output-no-front-matter)
+  --output-show-line-prefix                bool    Set if the line prefix matter is printed to the default FancyOStream or not
+  --output-no-show-line-prefix                     (default: --output-no-show-line-prefix)
+  --output-show-tab-count                  bool    Set if the tab count is printed to the default FancyOStream or not
+  --output-no-show-tab-count                       (default: --output-no-show-tab-count)
+  --output-show-proc-rank                  bool    Set if the processor rank is printed to the default FancyOStream or not
+  --output-no-show-proc-rank                       (default: --output-no-show-proc-rank)
+  --output-to-root-rank-only               int     Set which processor (the root) gets the output.  If < 0, then all processors get output.
+                                                   (default: --output-to-root-rank-only=0)
+  --len-x                                  double  Mesh dimension in the x direction (Overridden by --geom-file-base).
+                                                   (default: --len-x=1)
+  --len-y                                  double  Mesh dimension in the y direction (Overridden by --geom-file-base).
+                                                   (default: --len-y=1)
+  --local-nx                               int     Number of local discretization segments in the x direction (Overridden by --geom-file-base).
+                                                   (default: --local-nx=3)
+  --local-ny                               int     Number of local discretization segments in the y direction (Overridden by --geom-file-base).
+                                                   (default: --local-ny=4)
+  --geom-file-base                         string  Base name of geometry file to read the mesh from.
+                                                   (default: --geom-file-base="")
+  --np                                     int     The number of optimization parameters p (If < 0 then all of boundary is used)
+                                                   (default: --np=1)
+  --normalize-basis                        bool    Normalize the basis for the parameters p or not.
+  --no-normalize-basis                             (default: --no-normalize-basis)
+  --beta                                   double  Regularization.
+                                                   (default: --beta=0)
+  --reaction-rate                          double  The rate of the reaction
+                                                   (default: --reaction-rate=1)
+  --x0                                     double  Initial guess for the state.
+                                                   (default: --x0=0)
+  --p0                                     double  Initial guess or nonminal value for optimization parameters.
+                                                   (default: --p0=1)
+  --support-derivatives                    bool    Support derivatives or not.
+  --no-support-derivatives                         (default: --support-derivatives)
+  --linear-solver-params-file              string  Name of an XML file containing parameters for linear solver options to be appended first.
+                                                   (default: --linear-solver-params-file="")
+  --extra-linear-solver-params             string  An XML string containing linear solver parameters to be appended second.
+                                                   (default: --extra-linear-solver-params="")
+  --linear-solver-params-used-file         string  Name of an XML file that can be written with the parameter list after it has been used on completion of this program.
+                                                   (default: --linear-solver-params-used-file="")
+  --moocho-options-file                    string  Set the name of the MOOCHO options file in the OptionsFromStream format.  File is ignored if it does not exist!
+                                                   (default: --moocho-options-file="Moocho.opt")
+  --moocho-extra-options                   string  Extra MOOCHO options specified in the format "OptGrp1{name1=val1,...,namen=valn}:OptGr2{name1=val1,...,namen=valn}:..."
+                                                   (default: --moocho-extra-options="")
+  --moocho-thyra-params-file               string  Name of an XML file containing parameters for linear solver options to be appended first.
+                                                   (default: --moocho-thyra-params-file="")
+  --extra-moocho-thyra-params              string  An XML string containing linear solver parameters to be appended second.
+                                                   (default: --extra-moocho-thyra-params="")
+  --moocho-thyra-params-used-file          string  Name of an XML file that can be written with the parameter list after it has been used on completion of this program.
+                                                   (default: --moocho-thyra-params-used-file="")
+  --q-vec-file                             string  Base file name to read the objective state matching vector q (i.e. ||x-q||_M in the objective).
+                                                   (default: --q-vec-file="")
+  --only-print-moocho-thyra-solver-params  bool    Only print the parameters accepted by MoochoPack::MoochoThyraSolver and stop.
+  --no-print-moocho-thyra-solver-params            (default: --no-print-moocho-thyra-solver-params)
+  --show-doc                               bool    Show MoochoPack::MocohoThyraSolver parameters with documentation or not.
+  --hide-doc                                       (default: --show-doc)
+  --xml-format                             bool    Show MoochoPack::MoochoThyraSolver parameters in XML or human-readable format.
+  --readable-format                                (default: --readable-format)

@@ -1,0 +1,11 @@
+
+
+<ParameterList name="Preconditioner">
+   <Parameter name="Type" type="string" value="Ifpack"/>
+   <Parameter name="Prec Type" type="string" value="ILU"/>
+   <Parameter name="Overlap" type="int" value="1"/>
+   <ParameterList name="Ifpack Settings">
+      <Parameter name="fact: level-of-fill" type="int" value="0"/>
+   </ParameterList> 
+</ParameterList> 
+

@@ -1,0 +1,31 @@
+#
+# Note: all relative paths are relative to package/doc!
+#
+@INCLUDE = Doxyfile.options
+@INCLUDE = teuchos/doc/TagFiles
+#
+# Package options
+#
+PROJECT_NAME           = "MoochoPack: Miscellaneous Utilities for MOOCHO"
+OUTPUT_DIRECTORY       = ../src/MoochoUtilities/doc
+#
+# What and how documentation is extracted
+#
+INPUT                  = ../src/MoochoUtilities/doc/index.doc \
+                         ../src/MoochoUtilities/src
+FILE_PATTERNS          = *.h *c *.hpp *.cpp
+RECURSIVE              = YES
+EXCLUDE                = 
+EXCLUDE_PATTERNS       = *.x *.o *.out
+EXAMPLE_PATH           =
+EXAMPLE_PATTERNS       =
+IMAGE_PATH             =
+INPUT_FILTER           = 
+ALPHABETICAL_INDEX     = YES
+IGNORE_PREFIX          = 
+#
+# Links to other packages
+#
+GENERATE_TAGFILE       = ../../common/tag_files/MoochoUtilities.tag
+ALLEXTERNALS           = NO
+EXTERNAL_GROUPS        = NO

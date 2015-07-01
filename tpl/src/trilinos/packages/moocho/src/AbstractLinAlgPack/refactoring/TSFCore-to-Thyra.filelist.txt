@@ -1,0 +1,17 @@
+InnerProductTSFCore.cpp               InnerProductThyra.cpp
+InnerProductTSFCore.hpp               InnerProductThyra.hpp
+MatrixOpNonsingTSFCore.cpp            MatrixOpNonsingThyra.cpp
+MatrixOpNonsingTSFCore.hpp            MatrixOpNonsingThyra.hpp
+MatrixOpTSFCore.cpp                   MatrixOpThyra.cpp
+MatrixOpTSFCore.hpp                   MatrixOpThyra.hpp
+MultiVectorMutableTSFCore.cpp         MultiVectorMutableThyra.cpp
+MultiVectorMutableTSFCore.cpp         MultiVectorMutableThyra.cpp~
+MultiVectorMutableTSFCore.hpp         MultiVectorMutableThyra.hpp
+TSFCoreAccessors.cpp                  ThyraAccessors.cpp
+TSFCoreAccessors.hpp                  ThyraAccessors.hpp
+VectorMutableTSFCore.cpp              VectorMutableThyra.cpp
+VectorMutableTSFCore.hpp              VectorMutableThyra.hpp
+VectorSpaceFactoryTSFCore.cpp         VectorSpaceFactoryThyra.cpp
+VectorSpaceFactoryTSFCore.hpp         VectorSpaceFactoryThyra.hpp
+VectorSpaceTSFCore.cpp                VectorSpaceThyra.cpp
+VectorSpaceTSFCore.hpp                VectorSpaceThyra.hpp

@@ -1,0 +1,70 @@
+## Optional Dependency on teuchos
+@HAVE_DIDASKO_TEUCHOS_TRUE@include @abs_top_builddir@/../teuchos/Makefile.export.teuchos
+
+## Optional Dependency on Epetra
+@HAVE_DIDASKO_EPETRA_TRUE@include @abs_top_builddir@/../epetra/Makefile.export.epetra
+
+## Optional dependency on triutils
+@HAVE_DIDASKO_TRIUTILS_TRUE@include @abs_top_builddir@/../triutils/Makefile.export.triutils
+
+## Optional dependency on epetraext
+@HAVE_DIDASKO_EPETRAEXT_TRUE@include @abs_top_builddir@/../epetraext/Makefile.export.epetraext
+
+## Optional dependency on nox
+@HAVE_DIDASKO_NOX_TRUE@include @abs_top_builddir@/../nox/Makefile.export.nox
+
+## Optional dependency on belos
+@HAVE_DIDASKO_BELOS_TRUE@include @abs_top_builddir@/../belos/Makefile.export.belos
+
+## Optional dependency on ml
+@HAVE_DIDASKO_ML_TRUE@include @abs_top_builddir@/../ml/Makefile.export.ml
+
+## Optional dependency on amesos
+@HAVE_DIDASKO_AMESOS_TRUE@include @abs_top_builddir@/../amesos/Makefile.export.amesos
+
+## Optional dependency on ifpack
+@HAVE_DIDASKO_IFPACK_TRUE@include @abs_top_builddir@/../ifpack/Makefile.export.ifpack
+
+## Optional dependency on anasazi
+@HAVE_DIDASKO_ANASAZI_TRUE@include @abs_top_builddir@/../anasazi/Makefile.export.anasazi
+
+## Optional dependency on aztecoo
+@HAVE_DIDASKO_AZTECOO_TRUE@include @abs_top_builddir@/../aztecoo/Makefile.export.aztecoo
+
+## Optional dependency on tpetra
+@HAVE_DIDASKO_TPETRA_TRUE@include @abs_top_builddir@/../tpetra/Makefile.export.tpetra
+
+_DIDASKO_INCLUDES = -I@abs_top_builddir@/src -I@abs_top_srcdir@/src \
+   $(NOX_INCLUDES)         \
+   $(BELOS_INCLUDES)       \
+   $(ML_INCLUDES)          \
+   $(ANASAZI_INCLUDES)     \
+   $(IFPACK_INCLUDES)      \
+   $(AMESOS_INCLUDES)      \
+   $(AZTECOO_INCLUDES)     \
+   $(EPETRAEXT_INCLUDES)   \
+   $(TRIUTILS_INCLUDES)    \
+   $(EPETRA_INCLUDES)      \
+   $(TEUCHOS_INCLUDES)     \
+   $(TPETRA_INCLUDES)
+
+_DIDASKO_LIBS = \
+  @LDFLAGS@ \
+  $(NOX_LIBS)         \
+  $(BELOS_LIBS)       \
+  $(ML_LIBS)          \
+  $(ANASAZI_LIBS)     \
+  $(IFPACK_LIBS)      \
+  $(AMESOS_LIBS)      \
+  $(AZTECOO_LIBS)     \
+  $(EPETRAEXT_LIBS)   \
+  $(TRIUTILS_LIBS)    \
+  $(EPETRA_LIBS)      \
+  $(TEUCHOS_LIBS)     \
+  $(TPETRA_LIBS)
+
+@USING_GNUMAKE_TRUE@DIDASKO_INCLUDES  = $(shell @PERL_EXE@ @abs_top_srcdir@/config/strip_dup_incl_paths.pl $(_DIDASKO_INCLUDES))
+@USING_GNUMAKE_TRUE@DIDASKO_LIBS      = $(shell @PERL_EXE@ @abs_top_srcdir@/config/strip_dup_libs.pl $(_DIDASKO_LIBS))
+@USING_GNUMAKE_FALSE@DIDASKO_INCLUDES = $(_DIDASKO_INCLUDES)
+@USING_GNUMAKE_FALSE@DIDASKO_LIBS     = $(_DIDASKO_LIBS)
+

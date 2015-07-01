@@ -1,0 +1,6 @@
+***
+*** This options file should how to setup for full debugging output.
+*** Warning!  This should only be used to debug small problems where
+*** there are just a handfull of variables and constraints.
+***
+

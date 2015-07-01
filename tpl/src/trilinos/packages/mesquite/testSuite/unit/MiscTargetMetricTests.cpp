@@ -1,0 +1,51 @@
+#define TARGET_TEST_GROUP "MiscTargetMetricTests"
+#include "TargetMetricTest.hpp"
+
+using namespace Mesquite;
+
+#include "TSizeNB1.hpp"
+#include "TSizeB1.hpp"
+#include "TSquared.hpp"
+
+#include "TOffset.hpp"
+#include "TPower2.hpp"
+#include "TScale.hpp"
+#include "TSum.hpp"
+
+class TOffset_TSizeNB1_2 : public TOffset
+{
+  public:
+  TSizeNB1 mBase;
+  TOffset_TSizeNB1_2() : TOffset( 2.0, &mBase ) {}
+};
+
+class TPower2_TSizeNB1 : public TPower2
+{
+  public:
+  TSizeNB1 mBase;
+  TPower2_TSizeNB1() : TPower2( &mBase ) {}
+};
+
+class TScale_TSizeNB1_half : public TScale
+{
+  public:
+  TSizeNB1 mBase;
+  TScale_TSizeNB1_half() : TScale( 0.5, &mBase ) {}
+};
+
+class TSum_TSize_TSize : public TSum
+{
+  public:
+  TSizeNB1 mu1;
+  TSizeB1 mu2;
+  TSum_TSize_TSize() : TSum(&mu1,&mu2) {}
+};
+
+
+TEST_NON_QUALITY_METRIC_WITH_HESS( TSquared );
+
+//                           METRIC                NAME    !SHAPE !SIZE !ORIENT BARRIER
+TEST_NAMED_METRIC_WITH_HESS( TOffset_TSizeNB1_2,   TOffset, true, false,  true, false, 2.0 );
+TEST_NAMED_METRIC_WITH_HESS( TPower2_TSizeNB1,     TPower2, true, false,  true, false, 0.0 );
+TEST_NAMED_METRIC_WITH_HESS( TScale_TSizeNB1_half, TScale,  true, false,  true, false, 0.0 );
+TEST_NAMED_METRIC_WITH_HESS( TSum_TSize_TSize,     TSum,    true, false,  true,  true, 0.0 );

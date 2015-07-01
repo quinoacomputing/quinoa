@@ -1,0 +1,7 @@
+This example is meant to be compiled as a stand-alone program using a installed version
+of Trilinos.  The Epetra, TriUtils and Ifpack packages are the only required packages.
+
+Once you have built and installed Trilinos, edit the Makefile so that the location
+of the Trilinos install directory points to your installation.  Then type make.
+
+Reference output for a 4 processor run can be found in the file referenceOutput4procs.

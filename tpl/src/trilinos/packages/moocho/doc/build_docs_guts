@@ -1,0 +1,70 @@
+#!/bin/bash
+
+if [ $TRILINOS_HOME ]; then
+  echo "TRILINOS_HOME has already been set!"
+else
+  echo "TRILINOS_HOME has not been set.  Setting it!"
+  export TRILINOS_HOME=`pwd`/../../..
+fi
+
+echo
+echo "Generating doxygen documentation for moocho/src/MoochoUtilities ..."
+echo
+
+doxygen ../src/MoochoUtilities/doc/Doxyfile
+
+echo
+echo "Generating doxygen documentation for moocho/src/IterationPack ..."
+echo
+
+doxygen ../src/IterationPack/doc/Doxyfile
+
+echo
+echo "Generating doxygen documentation for moocho/src/RTOpPack ..."
+echo
+
+doxygen ../src/RTOpPack/doc/Doxyfile
+
+echo
+echo "Generating doxygen documentation for moocho/src/DenseLinAlgPack ..."
+echo
+
+doxygen ../src/DenseLinAlgPack/doc/Doxyfile
+
+echo
+echo "Generating doxygen documentation for moocho/src/AbstractLinAlgPack ..."
+echo
+
+doxygen ../src/AbstractLinAlgPack/doc/Doxyfile
+
+echo
+echo "Generating doxygen documentation for moocho/src/NLPInterfacePack ..."
+echo
+
+doxygen ../src/NLPInterfacePack/doc/Doxyfile
+
+echo
+echo "Generating doxygen documentation for moocho/src/ConstrainedOptPack ..."
+echo
+
+doxygen ../src/ConstrainedOptPack/doc/Doxyfile
+
+echo
+echo "Generating doxygen documentation for moocho/src/MoochoPack ..."
+echo
+
+doxygen ../src/MoochoPack/doc/Doxyfile
+
+echo
+echo "Generating doxygen documentation for moocho/thyra adapters ..."
+echo
+
+doxygen ../thyra/doc/Doxyfile
+
+echo
+echo "Generating doxygen documentation for all of moocho as a single documentation collection ..."
+echo
+
+doxygen ../browser/doc/Doxyfile
+
+./build_main_page

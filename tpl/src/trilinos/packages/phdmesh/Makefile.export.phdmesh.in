@@ -1,0 +1,23 @@
+## Required Dependency on ThreadPool
+include @abs_top_builddir@/../ThreadPool/Makefile.export.threadpool
+
+#Eventually I can take the second entry out
+_PHDMESH_INCLUDES = -I@abs_top_builddir@/src \
+			-I@abs_top_srcdir@/include \
+			-I@abs_top_srcdir@/include/element \
+			-I@abs_top_srcdir@/include/util \
+			-I@abs_top_srcdir@/include/mesh \
+			-I@abs_top_srcdir@/include/mesh_io \
+			-I@abs_top_srcdir@/include/txblas \
+			$(THREADPOOL_INCLUDES)
+
+_PHDMESH_LIBS     = @LDFLAGS@ $(PTHREAD_LIBS) -L@abs_top_builddir@/src \
+			-lphdmesh_meshio -lphdmesh_mesh -lphdelement_mesh \
+			-lphdmesh_txblas -lphdmesh_util $(THREADPOOL_LIBS) \
+			@LIBS@
+
+@USING_GNUMAKE_TRUE@PHDMESH_INCLUDES  = $(shell @PERL_EXE@ @abs_top_srcdir@/config/strip_dup_incl_paths.pl $(_PHDMESH_INCLUDES))
+@USING_GNUMAKE_TRUE@PHDMESH_LIBS      = $(shell @PERL_EXE@ @abs_top_srcdir@/config/strip_dup_libs.pl $(_PHDMESH_LIBS))
+
+@USING_GNUMAKE_FALSE@PHDMESH_INCLUDES = $(_PHDMESH_INCLUDES)
+@USING_GNUMAKE_FALSE@PHDMESH_LIBS     = $(_PHDMESH_LIBS)

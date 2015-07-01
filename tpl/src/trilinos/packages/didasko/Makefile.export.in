@@ -1,0 +1,79 @@
+@HAVE_DIDASKO_EPETRA_TRUE@EPETRA_INCLUDES= -I$(top_builddir)/../epetra/src -I$(top_srcdir)/../epetra/src
+@HAVE_DIDASKO_EPETRA_TRUE@EPETRA_LIB= $(top_builddir)/../epetra/src/libepetra.a
+
+@HAVE_DIDASKO_EPETRAEXT_TRUE@EPETRAEXT_INCLUDES= -I$(top_builddir)/../epetraext/src -I$(top_srcdir)/../epetraext/src/ -I$(top_srcdir)/../epetraext/src/inout -I$(top_srcdir)/../epetraext/src/transform
+@HAVE_DIDASKO_EPETRAEXT_TRUE@EPETRAEXT_LIB= $(top_builddir)/../epetraext/src/libepetraext.a
+
+@HAVE_DIDASKO_TRIUTILS_TRUE@TRIUTILS_INCLUDES= -I$(top_builddir)/../triutils/src -I$(top_srcdir)/../triutils/src
+@HAVE_DIDASKO_TRIUTILS_TRUE@TRIUTILS_LIB= $(top_builddir)/../triutils/src/libtriutils.a
+
+@HAVE_DIDASKO_AMESOS_TRUE@AMESOS_INCLUDES= -I$(top_builddir)/../amesos/src -I$(top_srcdir)/../amesos/src
+@HAVE_DIDASKO_AMESOS_TRUE@AMESOS_LIB= $(top_builddir)/../amesos/src/libamesos.a
+
+@HAVE_DIDASKO_IFPACK_TRUE@IFPACK_INCLUDES= -I$(top_builddir)/../ifpack/src -I$(top_srcdir)/../ifpack/src
+@HAVE_DIDASKO_IFPACK_TRUE@IFPACK_LIB= $(top_builddir)/../ifpack/src/libifpack.a
+
+@HAVE_DIDASKO_AZTECOO_TRUE@AZTECOO_INCLUDES= -I$(top_builddir)/../aztecoo/src -I$(top_srcdir)/../aztecoo/src
+@HAVE_DIDASKO_AZTECOO_TRUE@AZTECOO_LIB= $(top_builddir)/../aztecoo/src/libaztecoo.a
+
+@HAVE_DIDASKO_ANASAZI_TRUE@ANASAZI_INCLUDES= -I$(top_builddir)/../anasazi/src -I$(top_srcdir)/../anasazi/src
+@HAVE_DIDASKO_ANASAZI_TRUE@ANASAZI_LIB= $(top_builddir)/../anasazi/src/libanasazi.a
+
+@HAVE_DIDASKO_TEUCHOS_TRUE@TEUCHOS_INCLUDES= -I$(top_builddir)/../teuchos/src -I$(top_srcdir)/../teuchos/src
+@HAVE_DIDASKO_TEUCHOS_TRUE@TEUCHOS_LIB= $(top_builddir)/../teuchos/src/libteuchos.a
+
+@HAVE_DIDASKO_ML_TRUE@ML_INCLUDES= -I$(top_builddir)/../ml/src \
+	-I$(top_srcdir)/../ml/src \
+	-I$(top_srcdir)/../ml/src/Include \
+	-I$(top_srcdir)/../ml/src/Coarsen \
+	-I$(top_srcdir)/../ml/src/Comm \
+	-I$(top_srcdir)/../ml/src/FEGrid \
+	-I$(top_srcdir)/../ml/src/Krylov \
+	-I$(top_srcdir)/../ml/src/Main \
+	-I$(top_srcdir)/../ml/src/Operator \
+	-I$(top_srcdir)/../ml/src/Smoother \
+	-I$(top_srcdir)/../ml/src/Utils
+@HAVE_DIDASKO_ML_TRUE@ML_LIB= $(top_builddir)/../ml/src/libml.a
+
+@HAVE_DIDASKO_NOX_TRUE@NOX_INCLUDES= \
+	-I$(top_builddir)/../nox/src  -I$(top_srcdir)/../nox/src \
+	-I$(top_builddir)/../nox/src-epetra  -I$(top_srcdir)/../nox/src-epetra
+@HAVE_DIDASKO_NOX_TRUE@NOX_LIB= \
+ 	$(top_builddir)/../nox/src-epetra/libnoxepetra.a \
+        $(top_builddir)/../nox/src/libnox.a
+
+@HAVE_DIDASKO_TPETRA_TRUE@TPETRA_INCLUDES = \
+	-I$(top_builddir)/../tpetra/src -I$(top_srcdir)/../tpetra/src \
+	-I$(top_srcdir)/../kokkos/src   -I$(top_builddir)/../kokkos/src
+
+@HAVE_DIDASKO_TPETRA_TRUE@TPETRA_LIB = \
+	$(top_builddir)/../tpetra/src/libtpetra.a \
+	$(top_builddir)/../kokkos/src/libkokkos.a \
+
+DIDASKO_INCLUDES=               \
+	-I$(top_builddir)/src   \
+	-I$(top_srcdir)/src     \
+	$(NOX_INCLUDES)         \
+	$(ML_INCLUDES)          \
+	$(ANASAZI_INCLUDES)     \
+	$(IFPACK_INCLUDES)      \
+	$(AMESOS_INCLUDES)      \
+	$(AZTECOO_INCLUDES)     \
+	$(EPETRAEXT_INCLUDES)   \
+	$(TRIUTILS_INCLUDES)    \
+	$(EPETRA_INCLUDES)      \
+	$(TEUCHOS_INCLUDES)     \
+	$(TPETRA_INCLUDES) 
+
+DIDASKO_LIBS=              \
+	$(NOX_LIB)         \
+	$(ML_LIB)          \
+	$(ANASAZI_LIB)     \
+	$(IFPACK_LIB)      \
+	$(AMESOS_LIB)      \
+	$(AZTECOO_LIB)     \
+	$(EPETRAEXT_LIB)   \
+	$(TRIUTILS_LIB)    \
+	$(EPETRA_LIB)      \
+	$(TEUCHOS_LIB)     \
+	$(TPETRA_LIB) 

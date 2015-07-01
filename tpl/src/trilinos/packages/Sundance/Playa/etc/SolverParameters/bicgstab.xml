@@ -1,0 +1,11 @@
+<ParameterList>
+  <ParameterList name="Linear Solver">
+    <Parameter name="Graph Fill" type="int" value="1"/>
+    <Parameter name="Max Iterations" type="int" value="2000"/>
+    <Parameter name="Method" type="string" value="BICGSTAB"/>
+    <Parameter name="Precond" type="string" value="ILUK"/>
+    <Parameter name="Tolerance" type="double" value="1e-12"/>
+    <Parameter name="Type" type="string" value="TSF"/>
+    <Parameter name="Verbosity" type="int" value="4"/>
+  </ParameterList>
+</ParameterList>

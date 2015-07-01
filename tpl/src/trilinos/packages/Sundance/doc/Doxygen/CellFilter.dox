@@ -1,0 +1,148 @@
+/* @HEADER@ */
+# ************************************************************************
+# 
+#                              Sundance
+#                 Copyright (2005) Sandia Corporation
+# 
+# Copyright (year first published) Sandia Corporation.  Under the terms 
+# of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S. Government 
+# retains certain rights in this software.
+# 
+# This library is free software; you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License as
+# published by the Free Software Foundation; either version 2.1 of the
+# License, or (at your option) any later version.
+#  
+# This library is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#                                                                                 
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+# USA                                                                                
+# Questions? Contact Kevin Long (krlong@sandia.gov), 
+# Sandia National Laboratories, Livermore, California, USA
+# 
+# ************************************************************************
+/* @HEADER@ */
+
+namespace SundanceStdFwk
+{
+/*! \page cell_filter Cell Filters
+
+A weak PDE problem is stated in terms of integrals over subsets of a 
+geometric domain. Typically, there will be an integral over the interior
+plus surface terms for the boundary conditions. In other cases such
+as fluid-structure interactions we may apply different weak equations
+on distinct maximal-dimension subsets of the entire domain. There may
+be point forces applied, or in the case of inverse problems, 
+measurements taken at some subset of
+points. In contact problems, the subdomains on which
+constraints are to be applied will be determined as part of the solution.
+It is thus necessary to have a very flexible system for specification
+of geometric regions. 
+
+Any specification of a domain of integration must be able to identify
+on a mesh the set of cells on which a particular integration is to be done.
+In general, then, a specification of a subregion is a specification
+of a <b> filter </b> that can extract from a mesh the 
+subset of cells which satisfies some condition, i.e., those cells
+that "pass through" the filter. The Sundance CellFilter
+object does this job, acting on a Mesh to produce a set of cells.
+Internally, a set of cells will be represented in a number of ways depending
+on the properties of the set; 
+the important thing to understand is that
+the interface to a cell set is an abstract iterator. Thus a CellFilter is
+utlimately an operator, acting on a Mesh, which produces an iterator that
+can sequence through those cells that pass through the filter. Looping
+over cells in system assembly is done using iterators returned by CellFilter
+operations.
+
+
+\section cf_subtype CellFilter Derived Classes
+
+<ul>
+<li> MaximalCellFilter passes all cells of maximal dimension. 
+<li> BoundaryCellFilter passes all cells of dimension \f$D-1\f$
+on the boundary. The boundary cells can be identified topologically
+as those cells of dimension \f$D-1\f$ having only one cofacet.
+<li> DimensionalCellFilter passes all cells of a specified dimension.
+</ul>
+
+\section cf_ops CellFilter Operations
+
+Once we have a CellFilter, we can produce new CellFilters by 
+performing certain operations on it. 
+
+\subsection cf_subset Finding subsets
+ 
+The <tt>CellFilter::subset()</tt> and 
+<tt>CellFilter::labeledSubset()</tt> operators
+produce new CellFilters that pick out a subset of the cells
+satisfying an additional condition given in the argument
+to the subset methods. 
+
+The <tt>subset()</tt> method of CellFilter takes as an argument a
+CellPredicate object. A CellPredicate is an operator that acts on a cell
+and returns a boolean variable. It is described further in the
+section on \ref cf_pred below.
+
+The <tt>labeledSubset()</tt> method of CellFilter takes as an argument
+an integer. Each cell in a Mesh has an optional integer label field, and
+<tt>labeledSubset()</tt> identifies those cells having a given label.
+Most mesh generation programs have the ability to associate labels
+with regions of a solid model. In practice, 
+identifying regions by label is the most
+common method of filtering cells.
+   
+\subsection cf_binary Binary operations
+
+   * Binary operations between filters can also produce new filters. 
+   * Suppose
+   * <tt>a</tt> and <tt>b</tt> are CellFilters whose <tt>getCells()</tt>
+   * methods produce
+   * CellSets \f$\{A\}\f$ and \f$\{B\}\f$, respectively. There exist
+   * operators for the following binary operations:
+   * <ul>
+   * <li> The <b>union</b> operator <tt>a+b.</tt> The result of a union
+   * operation is a filter that will produce the union of the two operand's
+   * cell sets, 
+   * \f[{\tt a+b} \rightarrow \{A\} \cup \{B\}, \f]
+   * i.e., all cells that are in either \f$\{A\}\f$ or \f$\{B\}\f$
+   * <li> The <b>intersection </b> operator <tt>a.intersection(b)</tt> 
+   * The result of an intersection
+   * operation is a filter that will produce the intersection
+   * of the two operand's
+   * cell sets, 
+   * \f[{\tt a.intersection(b)} \rightarrow \{A\} \cap \{B\}, \f]
+   * i.e., all cells that are in both \f$\{A\}\f$ and \f$\{B\}\f$
+   * <li> The <b>exclusion </b> operator <tt>a-b.</tt>  
+   * The result of an exclusion
+   * operation is a filter that will produce the exclusion
+   * (or set difference) of the two operand's
+   * cell sets, 
+   * \f[{\tt a - b} \rightarrow \{A\} \setminus \{B\}, \f]
+   * i.e., all cells that are in \f$\{A\}\f$ but not in \f$\{B\}\f$
+   * </ul>
+   * \code
+   * CellFilter elements = new MaximalCellFilter();
+   * CellFilter leftHalf = elements.subset( x <= 0.0 );
+   * CellFilter topHalf = elements.subset( x >= 0.0 );
+   * CellFilter topLeftQuarter = leftHalf.intersection(topHalf);
+   * CellFilter 
+   * \endcode
+
+
+\section cf_pred CellFilter Predicates
+
+<ul>
+<li> Position-based predicates
+<li> Label-based predicates
+<li> User-defined predicates
+</ul>
+
+
+*/
+}

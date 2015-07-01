@@ -1,0 +1,40 @@
+TOPICS FOR THE CODE REVIEW BEGINNING MAY 19, 2003
+
+Termination Criterion:
+----------------------
+Should we remove the '..._with_int' and '..._with_double' from
+the functions that add criteria to the objects.
+
+Add multiple norms to measure the gradients.
+
+
+MsqMeshEntity
+-------------
+-why do we have get_vertex_index_array() and get_vertex_indices(). 
+Are they both efficient ? Can we remove the inefficient one.
+-Templates might be used instead of one object with an internal switch.
+The trick is in making a list of elements which type is not known 
+at compile time. Would a union including all (templated) element
+types do the trick in that list ?
+
+General code
+------------
+- Scaling issues:
+    o How does Mesquite handles consistently small numbers. 
+      When is a double considered null in Mesquite (say in the gradient).
+- Check proper use of virtual destructors.
+- Check whether to use virtual constructors (clone() function).
+- address the problem of forward class declarations and inlined functions
+  (many functions are not inlined because the header file only uses a 
+   forward declaration of a class used in those functions, in order to 
+   allow compilation of class cross-references. Maybe a solution is
+   to forward declare a class A, define a class B refering to class A,
+   include header file of class A, define class B inlined functions that
+   access member data of class A).
+
+Condition Nb / Mean ratio
+-------------------------
+Make sure they call the same functions in 2D.
+
+
+

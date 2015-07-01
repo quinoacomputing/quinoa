@@ -1,0 +1,65 @@
+/*! \mainpage MOOCHO/Thyra Adapter Software
+
+This doxygen collection documents a set of code that allows MOOCHO to solve
+optimization problems presented as <tt>Thyra::ModelEvaluator</tt> and objects.
+
+There are several different categories of adapter software here:
+
+<ul>
+
+<li><b>AbstractLinAlgPack</b> Adapters: This is software that adapts objects
+supporting the fundamental Thyra ANA operator/vector interfaces and uses them
+to implement the equivalent abstractions in AbstractLinAlgPack.
+
+<b>Warning!</b> This software is likely to be changed radically, and perhaps
+eliminated all together, if and when MOOCHO is refactored to directly use
+Thyra abstractions.
+
+<li><b>NLPInterfacePack</b> Adapters: This software adapts
+<tt>Thyra::ModelEvaluator</tt> objects to implement NLP objects.
+
+  <ul>
+
+  <li><tt>NLPInterfacePack::NLPDirectThyraModelEvaluator</tt> adapts a
+  <tt>Thyra::ModelEvaluator</tt> object to create an
+  <tt>NLPInterfacePack::NLPDirect</tt> object to support
+  direct-sensitivity optimization algorithms.
+
+  <li><tt>NLPInterfacePack::NLPFirstOrderThyraModelEvaluator</tt> adapts a
+  <tt>Thyra::ModelEvaluator</tt> object to create an
+  <tt>NLPInterfacePack::NLPFirstOrder</tt> object to support
+  adjoint-sensitivity (and direct sensitivity) optimization algorithms.
+
+  </ul>
+
+<b>Warning!</b> This software is likely to be changed radically if and when
+NLPInterfacePack is refactored to support a more
+<tt>Thyra::ModelEvaluator</tt> type of interface.
+
+<li><b>MoochoPack</b> Adapters: This software provides facade (see "Design
+Patterns" book) wrapper(s) for <tt>MoochoPack</tt> software to provide extra
+functionality for solving NLPs expressed as <tt>Thyra::ModelEvaluator</tt>
+objects.
+
+  <ul>
+
+  <li><tt>MoochoPack::MoochoThyraSolver</tt> provides a facade around
+  <tt>MoochoPack::MoochoSolver</tt> that allows clients to very easily
+  solve NLPs expressed as <tt>Thyra::ModelEvaluator</tt> objects.  Note
+  that Stratimikos should also be used in addition to this class to
+  provide linear solver capability.
+
+  </ul>
+
+</ul>
+
+\section moocho_thyra_links_sec Links to other documentation collections
+
+<ul>
+
+<li><b><a href="../../../doc/html/index.html">Main MOOCHO Documentation Page</a></b>.
+
+</ul>
+
+*/
+

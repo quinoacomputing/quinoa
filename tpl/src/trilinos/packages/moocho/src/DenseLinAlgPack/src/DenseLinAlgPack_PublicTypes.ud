@@ -1,0 +1,32 @@
+// //////////////////////////////////////////////////////////////
+// DenseLinAlgPack_PublicTypes.ud
+//
+// This is a set of using declarations for the types that DenseLinAlgPack
+// exposes publicly.  A namespace that wants to included these
+// names should use:
+//
+// namespace MyNamespace {
+//     #include "DenseLinAlgPack_PublicTypes.ud"
+// }
+
+using Teuchos::typeName;
+using Teuchos::TypeNameTraits;
+
+typedef DenseLinAlgPack::value_type		value_type;
+typedef DenseLinAlgPack::index_type		index_type;
+typedef DenseLinAlgPack::size_type		size_type;
+
+using DenseLinAlgPack::EOverLap;
+using DenseLinAlgPack::IVector;
+using DenseLinAlgPack::Range1D;
+using DenseLinAlgPack::DVector;
+using DenseLinAlgPack::DVectorSlice;
+using DenseLinAlgPack::VectorExt;
+using DenseLinAlgPack::VectorSliceExt;
+using DenseLinAlgPack::TransVectorSlice;
+using DenseLinAlgPack::DMatrix;
+using DenseLinAlgPack::DMatrixSlice;
+using DenseLinAlgPack::TransGenMatrixSlice;
+using DenseLinAlgPack::DMatrixSliceTriEle;
+using DenseLinAlgPack::DMatrixSliceTri;
+using DenseLinAlgPack::DMatrixSliceSym;

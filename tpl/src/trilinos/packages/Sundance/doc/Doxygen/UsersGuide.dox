@@ -1,0 +1,79 @@
+/* @HEADER@ */
+# ************************************************************************
+# 
+#                              Sundance
+#                 Copyright (2005) Sandia Corporation
+# 
+# Copyright (year first published) Sandia Corporation.  Under the terms 
+# of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S. Government 
+# retains certain rights in this software.
+# 
+# This library is free software; you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License as
+# published by the Free Software Foundation; either version 2.1 of the
+# License, or (at your option) any later version.
+#  
+# This library is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#                                                                                 
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+# USA                                                                                
+# Questions? Contact Kevin Long (krlong@sandia.gov), 
+# Sandia National Laboratories, Livermore, California, USA
+# 
+# ************************************************************************
+/* @HEADER@ */
+
+
+
+/*! \page users_guide Sundance User's Guide
+
+<H2> The Basics </H2>
+
+<ul> 
+<li> \ref fem
+<li> \ref philosophy
+<li> \ref about_code
+<li> \ref memory_mgt
+<li> \ref parallel
+</ul>
+
+<H2> Components for Simulation Setup </H2>
+<ul> 
+<li> \ref mesh_source are used to create, import, or transform discrete geometry
+<li> \ref cell_filter are used to define subregions (e.g., node sets, side sets)
+<li> \ref exprs are used to define equations and boundary conditions
+<li> \ref discretefuncs are used to represent finite-element spaces and fields
+</ul>
+
+<H2> Problem Setup </H2>
+
+<ul> 
+<li> Specification of \ref equations
+<li> Specification of \ref bcs
+<li> Setup and use of \ref linear_problems
+<li> Setup and use of \ref nonlinear_problems
+</ul>
+
+<H2> Solvers </H2>
+<ul>
+<li> \ref linear_solvers 
+<li> \ref nonlinear_solvers 
+</ul>
+
+
+<H2> Examples </H2>
+
+Some example simulators developed in %Sundance
+can be found <A HREF="examples.html"> here </A>
+
+<H2> FAQ </H2>
+<ul>
+<li> \ref field_reading
+</ul>
+
+*/

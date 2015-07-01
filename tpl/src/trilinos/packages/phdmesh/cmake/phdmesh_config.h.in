@@ -1,0 +1,44 @@
+/* src/phdmesh_config.h.in.  Generated from configure.ac by autoheader.  */
+
+/* Define if you want to build export makefiles. */
+#cmakedefine HAVE_EXPORT_MAKEFILES
+
+/* Define to 1 if you have the <inttypes.h> header file. */
+#cmakedefine HAVE_INTTYPES_H
+
+/* define if we want to use MPI */
+#cmakedefine HAVE_MPI
+
+/* Define if want to build phdmesh-tests */
+#cmakedefine HAVE_PHDMESH_TESTS
+
+/* Define if you have POSIX threads libraries and header files. */
+#cmakedefine HAVE_PTHREAD
+
+/* Define to 1 if you have the <sys/stat.h> header file. */
+#cmakedefine HAVE_SYS_STAT_H
+
+/* Define to 1 if you have the <sys/types.h> header file. */
+#cmakedefine HAVE_SYS_TYPES_H
+
+/* Define if want to build tests */
+#cmakedefine HAVE_TESTS
+
+/* Define to 1 if there is no sys/time.h */
+#cmakedefine PHDMESH_NO_SYS_TIME
+
+/* Define to 1 if you have the <unistd.h> header file. */
+#cmakedefine HAVE_UNISTD_H
+
+/* define if pthreads is not available */
+#cmakedefine NO_PTHREADS
+
+/* define if we want to use MPI */
+#cmakedefine PHDMESH_HAS_MPI
+
+/* Define if want to build phdmesh-exodus */
+#cmakedefine PHDMESH_HAS_SNL_EXODUSII
+
+/* Define to the necessary symbol if this constant uses a non-standard name on
+   your system. */
+#cmakedefine PTHREAD_CREATE_JOINABLE

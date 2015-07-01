@@ -1,0 +1,116 @@
+/* @HEADER@ */
+# ************************************************************************
+# 
+#                              Sundance
+#                 Copyright (2005) Sandia Corporation
+# 
+# Copyright (year first published) Sandia Corporation.  Under the terms 
+# of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S. Government 
+# retains certain rights in this software.
+# 
+# This library is free software; you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License as
+# published by the Free Software Foundation; either version 2.1 of the
+# License, or (at your option) any later version.
+#  
+# This library is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#                                                                                 
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+# USA                                                                                
+# Questions? Contact Kevin Long (krlong@sandia.gov), 
+# Sandia National Laboratories, Livermore, California, USA
+# 
+# ************************************************************************
+/* @HEADER@ */
+
+/*! \page limits_page Known Limits
+
+Here is a short listing of some things I know could be improved.
+<br><br>
+Which features have or have not been added to Sundance is largely a function
+of what is needed for my various research projects and those
+of my Sandia collaborators. If you
+need something that isn't there, please contact me; if there is demand
+for something I am more likely to justify to Sandia the effort required
+to add it. And it's open source, so you can always add things yourself!
+
+<H4> Documentation and Diagnostics </h4>
+<ul>
+<li> The documentation is probably incomplet, inackurate, and is very much a
+work in progress trying to keep up with a rapidly-evolving code.
+<li> The error messages are sometimes cryptic, even when translated from the
+original Etruscan. To provide better diagnostics, I'll need to get some sense
+of what kinds of errors people make, which will take some time and pain. 
+</ul>
+
+<H4> Performance </h4>
+<ul>
+<li> Meshes always identify intermediate cells regardless of 
+whether they are needed for a particular discretization. This causes
+an increase in mesh construction time in 3D.
+<li> The system for determining matrix graphs is suboptimal. This won't be 
+important in problems where a single matrix structure is used many times
+(such as a nonlinear problem). 
+</ul>
+
+<H4> Equation and discretization types </h4>
+<ul>
+<li> <tt>Parameter</tt> expressions can't be used as unknowns. 
+<li> Block equations aren't supported.
+<li> The ability to use symbolic expressions in cell filters isn't ready yet.
+<li> All fields must be defined throughout the domain. It is thus not possible
+to define a design variable on a subset of the domain, or to set 
+up a fluid-structure interaction problem. 
+<li> All fields must have the same basis function. Thus, mixed discretizations
+are not allowed.
+</ul>
+Version 1.0 supported all of the features in the above list, so I can
+confidently say it won't be hard to add them. If you have a need for them,
+please let me know.
+
+<H4> Element types </h4>
+<ul>
+<li> You can use any element you like, provided that it is Lagrange order
+one or two. This will change soon: 
+Rob Kirby (U. Chicago) and I have funding to add his very general
+FIAT element-generation code to Sundance in the summer of 2005.
+<li> Simplexes only. Hexes and quads would be easy to add, but I have little
+reason to do so.
+</ul>
+
+<H4> Solvers </h4>
+<ul>
+<li> While the Trilinos solvers are well-tested and robust, the 
+TSF high-level interface to them hasn't been tested extensively, so some
+of the options might not work.
+</ul>
+
+
+<H4> Some more fundamental limitations </H4>
+
+These are features that are quite possible to do in Sundance, 
+would take some significant effort to add. They weren't present in version 1.0,
+and so I probably don't fully understand all the design issues.
+<ul>
+<li> There is no support for <b>multi-domain contact.</b> 
+Most of my research involves problems
+in fluid mechanics, so I've had no need to implement contact. 
+<li> There is no support for <b>non-local boundary conditions.</b> 
+To do non-local
+BCs with Sundance as is, you'd need to go in and hack them into the system
+matrix, using the Sundance DOF map as a guide to where entries should go.
+Note that in many problems such as
+non-reflecting boundaries there is a good local 
+approximation to a nonlocal BC. 
+<li> Sundance doesn't do any static condensation to eliminate internal
+degrees of freedom. 
+</ul>
+
+
+
+*/

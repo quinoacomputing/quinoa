@@ -1,0 +1,90 @@
+/* @HEADER@ */
+# ************************************************************************
+# 
+#                              Sundance
+#                 Copyright (2005) Sandia Corporation
+# 
+# Copyright (year first published) Sandia Corporation.  Under the terms 
+# of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S. Government 
+# retains certain rights in this software.
+# 
+# This library is free software; you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License as
+# published by the Free Software Foundation; either version 2.1 of the
+# License, or (at your option) any later version.
+#  
+# This library is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#                                                                                 
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+# USA                                                                                
+# Questions? Contact Kevin Long (krlong@sandia.gov), 
+# Sandia National Laboratories, Livermore, California, USA
+# 
+# ************************************************************************
+/* @HEADER@ */
+
+namespace SundanceStdFwk
+{
+/*! \page nonlinear_problems Nonlinear Problems
+
+\section create_nonlin Setting up nonlinear problems
+
+Setting up a NonlinearProblem is mostly 
+similar to creating a LinearProblem: one specifies a mesh, equation,
+boundary conditions, test and unknown functions, and a vector type.
+There is, however, one additional argument beyond that required
+for LinearProblem setup: the specification of an initial guess
+for the solution. The initial guess is an expression, and in fact
+<i>must</i> be an expression of subtype DiscreteFunction.    
+
+Procedures for writing multiple equations and for specifying
+equation and function ordering are identical with those for linear problems.
+
+Upon creation, a pointer to your NonlinearProblem should be given 
+to a TSF NonlinearOperator object. For example,
+\code
+NonlinearOperator<double> F = new NonlinearProblem(mesh, eqn, bc, List(vPsi, vOmega),
+                               List(psi, omega), u0, vecType);
+\endcode
+
+\section solve_nonlin Solving nonlinear problems
+
+The NonlinearProblem object itself has no solve() method. Rather, the
+NonlinearOperator is passed as an argument to a nonlinear solver, whose
+solve() method carries out the solve. Sundance has no built-in nonlinear
+solvers; you can, in principle, use any nonlinear solver to drive
+solution of a NonlinearProblem. All the documented examples use
+the NOX package of nonlinear solvers found within Trilinos. See the page on 
+<A HREF="nonlinear_solvers.html"> nonlinear solvers </A> for more
+information on creating NOX solvers for use with Sundance.
+
+\code
+// create a nonlinear problem, wrapping it in a NonlinearOperator object
+NonlinearOperator<double> F 
+        = new NonlinearProblem(mesh, eqn, bc, List(vPsi, vOmega),
+                               List(psi, omega), u0, vecType);
+
+// Read parameters for NOX solver from an XML file
+ParameterXMLFileReader reader("../../examples-tutorial/nox.xml");
+ParameterList noxParams = reader.getParameters();
+
+// create the NOX solver
+NOXSolver solver(noxParams, F);
+
+// do the solve!
+NOX::StatusTest::StatusType status = solver.solve();
+\endcode
+
+
+Note that no solution object is returned. Where, then, is the solution?
+It is written into the expression <tt>u0</tt> that you passed in
+as an initial guess. Because <tt>u0</tt> is an expression, it can be
+reused in other contexts, visualized, and so on.
+*/
+
+}

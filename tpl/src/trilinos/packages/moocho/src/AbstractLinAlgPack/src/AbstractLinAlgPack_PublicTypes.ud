@@ -1,0 +1,151 @@
+// @HEADER
+// ***********************************************************************
+// 
+// Moocho: Multi-functional Object-Oriented arCHitecture for Optimization
+//                  Copyright (2003) Sandia Corporation
+// 
+// Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
+// license for use of this work by or on behalf of the U.S. Government.
+// 
+// This library is free software; you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as
+// published by the Free Software Foundation; either version 2.1 of the
+// License, or (at your option) any later version.
+//  
+// This library is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
+//  
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+// USA
+// Questions? Contact Roscoe A. Bartlett (rabartl@sandia.gov) 
+// 
+// ***********************************************************************
+// @HEADER
+
+// Include the types from DenseLinAlgPack
+#include "DenseLinAlgPack_PublicTypes.ud"
+
+//
+// Main interface library
+//
+
+typedef AbstractLinAlgPack::size_type   size_type;
+typedef AbstractLinAlgPack::value_type  value_type;
+typedef AbstractLinAlgPack::index_type  index_type;
+
+using RangePack::Range1D;
+
+using AbstractLinAlgPack::InnerProduct;
+using AbstractLinAlgPack::VectorSpaceFactory;
+using AbstractLinAlgPack::VectorSpace;
+using AbstractLinAlgPack::Vector;
+using AbstractLinAlgPack::VectorMutable;
+
+using AbstractLinAlgPack::MatrixBase;
+using AbstractLinAlgPack::MatrixOp;
+using AbstractLinAlgPack::MatrixNonsing;
+using AbstractLinAlgPack::MatrixOpNonsing;
+using AbstractLinAlgPack::MatrixSymOp;
+using AbstractLinAlgPack::MatrixSymNonsing;
+using AbstractLinAlgPack::MatrixSymOpNonsing;
+using AbstractLinAlgPack::MatrixSymDiag;
+
+using AbstractLinAlgPack::MultiVector;
+using AbstractLinAlgPack::MultiVectorMutable;
+
+using AbstractLinAlgPack::MatrixSymSecant;
+
+using AbstractLinAlgPack::BasisSystem;
+using AbstractLinAlgPack::BasisSystemPerm;
+using AbstractLinAlgPack::BasisSystemFactory;
+
+using AbstractLinAlgPack::Permutation;
+
+// template classes
+
+using AbstractLinAlgPack::SparseElement;
+using AbstractLinAlgPack::SparseVector;
+using AbstractLinAlgPack::SparseVectorSlice;
+
+// concreate types
+
+using AbstractLinAlgPack::EtaVector;
+using AbstractLinAlgPack::GenPermMatrixSlice;
+using AbstractLinAlgPack::SpVector;
+using AbstractLinAlgPack::SpVectorSlice;
+
+//
+// Tools library
+//
+
+using AbstractLinAlgPack::PermVector;
+
+using AbstractLinAlgPack::MatrixSymInitDiag;
+using AbstractLinAlgPack::MatrixSymDiag;
+
+using AbstractLinAlgPack::BasisSystemComposite;
+using AbstractLinAlgPack::VectorSpaceBlocked;
+using AbstractLinAlgPack::VectorMutableBlocked;
+using AbstractLinAlgPack::MatrixOpSubView;
+using AbstractLinAlgPack::MatrixComposite;
+using AbstractLinAlgPack::MatrixSymIdent;
+using AbstractLinAlgPack::MatrixSymDiagStd;
+using AbstractLinAlgPack::MatrixZero;
+using AbstractLinAlgPack::MatrixPermAggr;
+using AbstractLinAlgPack::MatrixOpNonsingAggr;
+
+using AbstractLinAlgPack::VectorSpaceTester;
+using AbstractLinAlgPack::VectorSpaceTesterSetOptions;
+using AbstractLinAlgPack::MatrixOpNonsingTester;
+using AbstractLinAlgPack::BasisSystemTester;
+using AbstractLinAlgPack::BasisSystemTesterSetOptions;
+
+//
+// Serial interface and implementations libraries
+//
+
+using AbstractLinAlgPack::VectorDenseEncap;
+using AbstractLinAlgPack::VectorDenseMutableEncap;
+using AbstractLinAlgPack::MatrixDenseEncap;
+using AbstractLinAlgPack::MatrixDenseMutableEncap;
+using AbstractLinAlgPack::MatrixDenseSymEncap;
+using AbstractLinAlgPack::MatrixDenseSymMutableEncap;
+using AbstractLinAlgPack::MatrixDenseTriEncap;
+using AbstractLinAlgPack::MatrixOpSerial;
+using AbstractLinAlgPack::MatrixNonsingSerial;
+using AbstractLinAlgPack::MatrixOpNonsingSerial;
+using AbstractLinAlgPack::MatrixSymDenseInitialize;
+using AbstractLinAlgPack::MatrixSymOpSerial;
+using AbstractLinAlgPack::MatrixSymNonsingSerial;
+using AbstractLinAlgPack::MatrixSymOpNonsingSerial;
+using AbstractLinAlgPack::MatrixSymDiagSparse;
+using AbstractLinAlgPack::MatrixLoadSparseElements;
+using AbstractLinAlgPack::MatrixConvertToSparse;
+using AbstractLinAlgPack::MatrixExtractSparseElements;
+using AbstractLinAlgPack::MatrixExtractInvCholFactor;
+using AbstractLinAlgPack::MatrixSymOpGetGMSSymMutable;
+using AbstractLinAlgPack::MatrixSymOpGetGMSSym;
+using AbstractLinAlgPack::MatrixSymAddDelUpdateable;
+using AbstractLinAlgPack::PermutationSerial;
+using AbstractLinAlgPack::VectorSpaceSerial;
+using AbstractLinAlgPack::VectorMutableDense;
+using AbstractLinAlgPack::VectorSparse;
+using AbstractLinAlgPack::MatrixSparseCOORSerial;
+using AbstractLinAlgPack::MatrixSymPosDefCholFactor;
+using AbstractLinAlgPack::MatrixConvertToSparseEncap;
+using AbstractLinAlgPack::MultiVectorMutableDense;
+
+//
+// Serial solvers library
+//
+
+using AbstractLinAlgPack::DirectSparseSolver;
+using AbstractLinAlgPack::DirectSparseSolverMA28;
+using AbstractLinAlgPack::DirectSparseSolverMA48;
+using AbstractLinAlgPack::DirectSparseSolverSuperLU;
+using AbstractLinAlgPack::BasisSystemPermDirectSparse;
+using AbstractLinAlgPack::BasisSystemFactoryStd;

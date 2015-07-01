@@ -1,0 +1,11 @@
+begin_options
+
+options_group NLPSolverClientInterface {
+    max_iter = 10; *** Don't run too long
+    check_results = true;
+}
+options_group TestNLP {
+    test_derivatives = true;
+}
+
+end_options

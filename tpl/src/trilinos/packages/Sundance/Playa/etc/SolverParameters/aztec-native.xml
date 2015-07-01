@@ -1,0 +1,15 @@
+
+
+<ParameterList>
+  <ParameterList name="Linear Solver">
+    <Parameter name="Graph Fill" type="int" value="1"/>
+      <Parameter name="Max Iterations" type="int" value="5000"/>
+      <Parameter name="Method" type="string" value="GMRES"/>
+      <Parameter name="Precond" type="string" value="Domain Decomposition"/>
+      <Parameter name="Subdomain Solver" type="string" value="ILU"/>
+      <Parameter name="Tolerance" type="double" value="1e-12"/>
+      <Parameter name="Type" type="string" value="Aztec"/>
+      <Parameter name="Verbosity" type="int" value="4"/>
+  </ParameterList>
+</ParameterList>
+

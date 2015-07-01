@@ -1,0 +1,40 @@
+# vtk DataFile Version 2.0
+MOAB vtk data file
+ASCII
+DATASET UNSTRUCTURED_GRID
+POINTS 9 float
+1 1 1
+-1 1 1
+-1 -1 1
+1 -1 1
+1 1 -1
+-1 1 -1
+-1 -1 -1
+1 -1 -1
+0 0 0
+CELLS 6 36
+5 0 3 2 1 8
+5 4 7 3 0 8
+5 4 5 6 7 8
+5 5 1 2 6 8
+5 0 1 5 4 8
+5 2 3 7 6 8
+CELL_TYPES 6
+14
+14
+14
+14
+14
+14
+POINT_DATA 9
+SCALARS fixed bit
+LOOKUP_TABLE default
+1
+1
+1
+1
+1
+1
+1
+1
+0

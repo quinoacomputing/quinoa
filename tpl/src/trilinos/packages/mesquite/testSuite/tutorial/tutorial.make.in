@@ -1,0 +1,15 @@
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+libdir = @libdir@
+includedir = @includedir@
+
+CXXFLAGS = -g
+LIBS = -lmesquite
+LDFLAGS = -L$(libdir)
+CPPFLAGS = -I$(includedir)
+
+tutorial: tutorial.cpp
+	$(CXX) -o $@ $< $(CPPFLAGS) $(LDFLAGS) $(LIBS)
+
+clean:
+	rm -f tutorial tutorial.o

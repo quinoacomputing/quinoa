@@ -1,0 +1,48 @@
+Testing Mesquite
+
+  The testSuite for Mesquite contains two types of tests; individual tests that are found in their own descriptive directory with a main.cpp file, and unit tests that require a special utility called CppUnit. Each type is described below. The tests are located in the directory mesquite/testSuite.
+
+1.1  Linux
+
+1.1.1 Using GNU Autotools
+
+   On Linux, after configuring and building Mesquite, at the mesquite directory enter:
+             make check
+    
+  This will build and run all the tests in the testSuite (and even build Mesquite if that hasn't been done). Be sure to watch as the tests go by because there is no results summation at the end.  It should list any errors at the end though.
+
+If there is a problem locating the cppunit libraries, make sure cppunit has be installed.  Refer to the Mesquite Users Guide on how to obtain and install cppunit.
+
+  From the top-level mesquite directory:     
+          
+     $ ./configure --with-cppunit=<cppunit_install_dir>
+     $ make
+     $ make check
+
+1.1.2 Using CMake
+
+  CMake can also be used to configure testing on Linux.  The easiest was is to run the command "cmake-gui" and, when configuring Mesquite, make sure the option "Mesquite_ENABLE_TESTS" is set to "ON".  If you are building Mesquite within the Trilinos framework, "Trilinos_ENABLE_TEST" should be set to "ON" as well.  
+
+   Configure cppunit as described in the Windows section below; (CPPUNIT_LIBRARY will be set to <cppunit_install_dir>/lib/libcppunit.so'). 
+
+After configuring Mesquite, exit CMake and cd to the build directory. (Hopefully you are doing an outside of source build).  
+
+From that directory, enter:
+
+  make
+  ctest
+
+1.2 Windows
+
+   On Windows, the best way to run the unit tests is using CMake and CppUnit.  The tests come in two forms.  Many are stand-alone executables named "main.cpp" and can be run individually be making them the default project and running them from the "Debug" menu.  A lot of the tests are executed through the "msq_test" project.  These tests are written using test harness software known as cppunit. See below for instructions on setting up cppunit and the unit tests.  Though cppunit makes writing and running tests very easy, it makes figuring out which tests are running very difficult.  There are no clues in the output to what order the tests are run and the only way I could figure it out is by opening various test programs in Visual Studio, putting a breakpoint at the beginning, and then run the tests in debug mode to see when the break was hit. 
+
+To configure the running of the unit tests you need a 3rd-party open source unit testing framework called CppUnit that can be found at:
+         http://sourceforge.net/projects/cppunit/files/cppunit/1.12.1/cppunit-1.12.1.tar.gz/download
+
+  Cppunit needs to be built and installed before it can be used.  Follow the instructions included with the download.
+
+Cppunit on Windows:
+  The only way to configure the tests on Windows is via CMake.  In CMake, search for 'cppunit' and set CPPUNIT_INCLUDES to '<cppunit_install_dir>/include', set CPPUNIT_LIBRARY to '<cppunit_install_dir>/lib/cppunit.lib'. Set Mesquite_ENABLE_TEST to ON, and if building a Trilinos version, set Trilinos_ENABLE_TEST" to "ON". Press 'Configure' then 'Generate' to create the make files.  Exit CMake and build Mesquite using Visual Studio C++.  When done building, in the Source Explorer window right click on the 'msq_test' project and select 'Set as StartUp Project'.  From the Debug menu Start the project (with or without Debugging) and the unit tests should execute.
+
+  Note that it will not work to build the unit tests on Windows if Mesquite is built as a DLL.  It must be built as a .lib on Windows because the unit tests reference Mesquite internals that aren't exported from the DLL.  This restriction dates back quite a while and may no longer be true.  If you are bored, you could try building Mesquite with shared libraries and cppunit.  If it works, inform someone on the Mesquite Support Team so they can change these words.
+      
