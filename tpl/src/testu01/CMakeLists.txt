@@ -5,8 +5,8 @@
 # Minimum cmake file for building TestU01.
 #
 # Notes:
-#  * Of the original TestU01 distribution we only build the testu01 and probdist
-#    libraries.
+#  * Of the original TestU01 distribution we only build the testu01, probdist,
+#    and mylib libraries.
 #  * The header files for TestU01 are generated from .tex files during running
 #    make in the original TestU01 distribution preceded by configure. We simply
 #    take over those header files generated and build the libraries with cmake.
@@ -34,7 +34,7 @@ macro (require_compiler_flag flag)
   if(COMPILER_HAS${flag})
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${flag}")
   else()
-    message(FATAL "The compiler must suppoert the -Wno-return-type argument")
+    message(FATAL "The compiler must support the -Wno-return-type argument")
   endif()
 endmacro (require_compiler_flag)
 
@@ -42,16 +42,22 @@ endmacro (require_compiler_flag)
 require_compiler_flag("-Wno-return-type")
 
 file(GLOB PROBDIST_SOURCES "probdist/*.c")
+file(GLOB MYLIB_SOURCES "mylib/*.c")
 file(GLOB TESTU01_SOURCES "testu01/*.c")
 file(GLOB HEADERS "include/*.h")
 
 include_directories(${CMAKE_SOURCE_DIR}/include)
 
 add_library(probdist ${PROBDIST_SOURCES})
+add_library(mylib ${MYLIB_SOURCES})
 add_library(testu01 ${TESTU01_SOURCES})
 
 INSTALL(FILES ${HEADERS} DESTINATION include)
 INSTALL(TARGETS probdist
+        RUNTIME DESTINATION bin COMPONENT Runtime
+        LIBRARY DESTINATION lib COMPONENT Runtime
+        ARCHIVE DESTINATION lib COMPONENT Development)
+INSTALL(TARGETS mylib
         RUNTIME DESTINATION bin COMPONENT Runtime
         LIBRARY DESTINATION lib COMPONENT Runtime
         ARCHIVE DESTINATION lib COMPONENT Development)
