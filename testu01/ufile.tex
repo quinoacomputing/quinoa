@@ -1,0 +1,98 @@
+\defmodule {ufile}
+
+This module allows the implementation of generators in the form of numbers
+read directly from an arbitrary file. No more than one generator of each
+ type in this module can be in use at any given time.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\bigskip
+\hrule
+\code\hide
+/* ufile.h for ANSI C */
+#ifndef UFILE_H
+#define UFILE_H
+\endhide
+#include "unif01.h"
+
+
+unif01_Gen * ufile_CreateReadText (char *fname, long nbuf);
+\endcode
+  \tab  Reads numbers (assumed to be in text format) from input file
+   \texttt{fname}. \index{Generator!read from file}%
+   The numbers must be floating-point numbers in [0, 1), separated by
+   whitespace characters. Numbers in the file can be grouped in any way: 
+   there may be blank lines, some lines may contain many numbers, others
+   only one. The file must contain only valid real numbers, nothing else.
+   The numbers are read in batches of {\tt nbuf} at a time and kept in an array
+   (if {\tt nbuf} is very large, a smaller but still large array will be used
+   instead).
+ \endtab
+\code
+
+
+void ufile_InitReadText (void);
+\endcode
+  \tab Reinitializes the generator obtained from {\tt ufile\_CreateReadText}
+   to the beginning of the file.
+  \endtab
+\code
+
+
+unif01_Gen * ufile_CreateReadBin (char *fname, long nbuf);
+\endcode
+  \tab  Reads numbers from input file \texttt{fname}. This file is assumed
+   to be in binary format. The numbers are read in batches of {\tt 4 nbuf}
+  \texttt{unsigned char}'s at a time, transformed into  {\tt nbuf}  unsigned
+   32-bit integers and kept in an array (if {\tt nbuf} is very large, a
+    smaller but still large array will be used instead).
+   This function is used in order to test (random) 
+   bit sequences kept in a file.
+  \endtab
+\code
+
+
+void ufile_InitReadBin (void);
+\endcode
+  \tab Reinitializes the generator obtained from {\tt ufile\_CreateReadBin}
+   to the beginning of the file.
+  \endtab
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{Clean-up functions}
+\code
+
+void ufile_DeleteReadText (unif01_Gen *);
+\endcode
+  \tab Closes the file and frees the dynamic memory allocated by 
+  \texttt{ufile\_CreateReadText}.
+  \endtab
+\code
+
+
+void ufile_DeleteReadBin (unif01_Gen *);
+\endcode
+  \tab Closes the file and frees the dynamic memory allocated by 
+  \texttt{ufile\_CreateReadBin}.
+  \endtab
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{Useful functions}
+\code
+
+void ufile_Gen2Bin (unif01_Gen *gen, char *fname, double n, int r, int s);
+\endcode
+  \tab Creates the file {\tt fname} containing $n$ random bits using the
+  output of generator {\tt gen}. From each random number 
+  returned by {\tt gen}, the $r$ most significant bits will be dropped
+  and the $s$ following bits will be written to the file until $n$ bits
+  have been written. Restriction: $s \in \{ 8, 16, 24, 32 \}$. 
+  \endtab
+
+\code
+\hide
+#endif
+\endhide
+\endcode

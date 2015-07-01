@@ -1,0 +1,137 @@
+# Package:    TestU01
+# File:       LFSR3.par
+
+# Description:   Parameter values for the LFSR3 generators. 
+#-----------------------------------------------------------------
+
+# Give the name of the family first
+
+LFSR3
+
+
+# For each generator, the following parameters must be given in 
+# the right order on four lines
+#                     LSize
+#                     k1   q1   s1
+#                     k2   q2   s2
+#                     k3   q3   s3
+# where the parameters are the same as in utaus_CreateCombTaus3.
+
+# The following parameters are the results of exhaustive searches. 
+# All are ME-CF, except where mentioned.
+
+
+14
+7   3  3
+4   1  2
+3   1  2
+
+15
+7   1  2      # Not ME:  Somme des ecarts = 1 
+5   2  3
+3   1  1
+
+16
+7   1  3      # Not ME:  Somme des ecarts = 1 
+5   2  3
+4   1  2
+
+17
+7   1  1
+6   1  5
+4   1  2
+
+18
+7   1  5
+6   1  1
+5   2  3
+
+19
+11  2  4
+5   2  2
+3   1  2
+
+20
+9   4  3      # ME but not CF.
+7   1  5
+4   1  1
+
+21
+9   4  3
+7   1  5
+5   2  1
+
+22
+11  2  8
+6   1  4
+5   2  3
+
+23
+11  2  2
+7   1  4
+5   2  3
+
+24
+11  2  7      # ME but not CF
+7   1  2
+6   1  5
+
+25
+11  2  3      # Not ME.  Somme des ecarts = 1
+9   4  1
+5   2  2
+
+26
+10  3  2
+9   4  3
+7   3  1
+
+27
+11  2  2
+9   4  3
+7   3  4
+
+28
+11  2  4
+10  3  7
+ 7  3  3
+
+29
+17  3  4
+ 7  1  2
+ 5  2  3
+
+30
+11  2  3      # Not ME.  Somme des ecarts = 2
+10  3  5
+ 9  4  2
+
+31
+17  3  7
+ 9  4  5
+ 5  2  2
+
+32
+15  1  8      # ME but not CF.
+11  2  3 
+ 6  1  1
+
+33
+17  3  9
+ 9  4  5
+ 7  3  2
+
+34
+17  3  4
+10  3  2
+ 7  1  3
+
+35
+17  3  4
+11  2  6
+ 7  1  5
+
+36
+17  5  8
+10  3  5
+ 9  4  1

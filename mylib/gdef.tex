@@ -1,0 +1,226 @@
+\defmodule {gdef}
+
+Platform-dependent options are defined here.
+These options are used by other modules to decide when 
+platform-dependent functions must be commented out or not.
+Most of these options are set to their true values by the program
+{\it configure} in the installation process. The user may choose
+to set some of them manually.
+\iffalse
+Each option must either be left undefined (i.e., the corresponding
+macro is put to false, using ``\texttt{\#undef}) 
+or can be given its proper value (using ``\texttt{\#define} commands).
+An option can be defined only under certain conditions.
+For example, \texttt{USE\_GMP} can be defined only if GMP
+is available, \texttt{HAVE\_ERF} can be defined only if the Unix \texttt{erf}
+function is available, and so on.
+\fi
+This module also contains a function that prints the current host name.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\code\hide
+/* gdef.h  for ANSI C */
+#ifndef GDEF_H
+#define GDEF_H
+
+#include <gdefconf.h>
+#include <limits.h>
+
+#ifdef HAVE_LONG_LONG
+#define USE_LONGLONG
+#else
+#undef USE_LONGLONG
+#endif
+
+#ifdef HAVE_GMP_H
+#define USE_GMP
+#else
+#undef USE_GMP
+#endif
+\endhide
+\endcode
+
+\guisec{Global macros}
+
+\code
+#define FALSE 0
+#define TRUE 1
+
+typedef int  lebool;
+\endcode
+  \tab Defines the boolean type \texttt{lebool}, whose only possible values are
+  {\tt TRUE} and {\tt FALSE}.
+ \endtab
+\code
+
+
+#ifdef HAVE_STDINT_H
+#include <stdint.h>
+#endif
+
+#ifndef HAVE_UINT32_T
+#if UINT_MAX >= 4294967295UL
+   typedef unsigned int  uint32_t;
+#else
+   typedef unsigned long  uint32_t;
+#endif
+#endif
+
+#ifndef HAVE_UINT8_T
+   typedef unsigned char  uint8_t;
+#endif
+\endcode
+  \tab The 8-bit and 32-bit unsigned integers.
+ \endtab
+\code
+
+
+#define USE_LONGLONG
+\endcode
+  \tab  Define this macro if 64-bit integers are available and ensure that
+  they are defined correctly in the following \texttt{typedef}. Otherwise,
+  undefine this macro.
+ \endtab
+\code
+
+
+#ifdef USE_LONGLONG
+   typedef long long  longlong;
+   typedef unsigned long long  ulonglong;
+#define PRIdLEAST64  "lld"
+#define PRIuLEAST64  "llu"
+#endif
+\endcode
+  \tab  The 64-bit integer types. Note that the 64-bit integers types
+  \texttt{long long} and \texttt{unsigned long long} may exist and be called 
+  by different names.
+  The macros \texttt{PRIdLEAST64} and \texttt{PRIuLEAST64} are defined 
+  in the ISO C99 standard in order to print \emph{signed} 
+  and \emph{unsigned}  64-bit integers, respectively.
+   Define them correctly if they are not already defined, otherwise 
+  comment them out.
+ \endtab
+\hide
+\code
+
+
+#if ULONG_MAX == 4294967295UL
+#define IS_ULONG32
+#endif
+\endcode
+  \tab This macro is defined if type \texttt {unsigned long} has
+  exactly 32 bits, otherwise it is undefined.
+ \endtab
+\endhide
+\code
+
+
+#undef USE_ANSI_CLOCK
+\endcode
+  \tab On a MS-Windows platform,
+   %(when the macro \texttt{HAVE\_WINDOWS\_H} is defined),
+  the MS-Windows function \texttt{GetProcessTimes} will be used to measure
+  the CPU time used by programs (in module \texttt{chrono}).
+
+  On Linux/Unix platforms, if the macro
+  \texttt{USE\_ANSI\_CLOCK} is defined, the timers % in module \texttt{chrono}
+  will call the ANSI C  \texttt{clock} function. However, on systems
+  where the type \texttt{clock\_t} is a 32-bit \texttt{long},
+  the time returned
+  will wrap around to negative values after about 36 minutes.
+  When the macro \texttt{USE\_ANSI\_CLOCK} is undefined, the
+  module \texttt{chrono} gets the CPU time used by a program via an 
+  alternate non-ANSI C timer 
+  based on the POSIX (The Portable Operating System Interface)
+  function \texttt{times}, assuming this function is available. The POSIX
+  standard is described in the IEEE Std 1003.1-2001 document (see 
+  The Open Group web site at
+  \url{http://www.opengroup.org/onlinepubs/007904975/toc.htm}).
+ \endtab
+\code
+
+
+#define DIR_SEPARATOR "/"
+\endcode
+  \tab Used to separate directories in the pathname of a file.
+  It is \texttt{"$/$"} on {Unix-Linux} and most other platforms. 
+  It may have to be set to \texttt{"$\backslash\backslash$"} on some platforms.
+ \endtab
+\code
+
+
+#undef USE_GMP
+\endcode
+  \tab  Define this macro if the GNU multi-precision package GMP
+  is available.  GMP is a portable library written in C for arbitrary
+  precision arithmetic on integers, rational numbers, and floating-point
+  numbers. See the Free Software Foundation web site at
+  \url{http://www.gnu.org/software/gmp/manual}. A few random number
+  generators in library TestU01 use arbitrary large integers, and they
+  have been implemented with GMP functions. If one wants to use GMP, the
+  GMP header file (\texttt{gmp.h}) must be in the  search path 
+  of the C compiler for included files, and the GMP library must be 
+  linked to create executable programs.
+ \endtab
+\code
+
+
+#undef HAVE_MATHEMATICA
+\endcode
+  \tab  Define this macro if the {\em Mathematica\/}
+% \footnote{
+%  {\em Mathematica} is a registered trademark of {\em Wolfram Research,
+%   Inc.} Web address:  \texttt{www.wolfram.com}}
+    software \cite{mWOL96a}
+   and the {\em MathLink} program that allows a C program to call
+   functions from {\em Mathematica} are available and you want to use them.
+   This is used only in module \texttt{usoft} 
+   of library TestU01, where the random number generators from 
+   {\em Mathematica} can be called from a C program for testing with TestU01.
+
+   When a C program uses {\em Mathematica}, it must be compiled with the
+    options
+   \texttt{-I\$MATHINC -L\$MATHLIB -lML}, where 
+   \texttt{\$MATHINC} is the path to the header file \texttt{mathlink.h} and 
+   \texttt{\$MATHLIB} is the path to the {\em MathLink\/} library \texttt{libML.a}.
+   For example, in the environment of our lab, both 
+   \texttt{\$MATHINC} and \texttt{\$MATHLIB} must be set to
+
+   \url{<dir>/mathematica/5.0/linux/AddOns/MathLink/DeveloperKit/Linux/CompilerAdditions}.
+
+  To run a main program named \texttt{tulip} on a Unix/Linux platform
+  that calls {\em  Mathematica} functions, one may use
+ \begin{verse} 
+  \texttt{tulip -linkname 'math -mathlink' -linklaunch}.
+ \end{verse}
+  \endtab
+
+%  \newpage
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{Host machine}
+\code
+
+void gdef_GetHostName (char machine[], int n);
+\endcode
+  \tab Returns in \texttt{machine} the host name. 
+  Will copy at most $n$ characters, so the array \texttt{machine[]}
+  should have a size $\ge n$. This is useful, for example,
+  to get the name of the machine on which a program is running.
+ \hpierre{Does this work on any type of system or only on Linux?}
+ \hrichard{Avec presque tous les syst\`emes Unix ou Linux et ceux qui
+  respectent le standard POSIX.}
+  \endtab
+\code
+
+
+void gdef_WriteHostName (void);
+\endcode
+  \tab Prints the name of the machine on which a program is running.
+   This should work on any Unix or Linux machine.
+  \endtab
+\hide
+\code
+#endif
+\endcode
+\endhide

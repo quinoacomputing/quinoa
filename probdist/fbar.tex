@@ -1,0 +1,371 @@
+\defmodule {fbar}
+
+This module is similar to {\tt fdist}, except that it provides procedures
+to compute or approximate the complementary distribution function of $X$,
+which we define as $\bar F(x) = P[X\ge x]$, instead of $F(x)=P[X\le x]$.
+Note that with our definition of $\bar F$, one has
+$\bar F(x) = 1 - F(x)$ for continuous distributions and
+$\bar F(x) = 1 - F(x-1)$ for discrete distributions over the integers.
+This is non-standard but we find it convenient.
+
+For more details about the specific distributions, 
+see the module {\tt fdist}.
+When $F(x)$ is very close to 1, these procedures generally provide much 
+more precise values of $\bar F(x)$ than using $1-F(x)$ where $F(x)$ is
+computed by a procedure from {\tt fdist}.
+
+
+\bigskip
+\hrule
+\code\hide
+/* fbar.h for ANSI C */
+#ifndef FBAR_H
+#define FBAR_H
+\endhide
+#include "gdef.h"
+#include "fmass.h"
+\endcode
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{Continuous distributions}
+
+\code
+
+double fbar_Unif (double x);
+\endcode
+  \tab
+  Returns $1-x$ for $x \in [0, 1]$, 1 for $x<0$, and 0 for $x>1$.
+  This is the complementary uniform distribution function over $[0, 1]$.
+ \endtab
+\code
+
+
+double fbar_Expon (double x);
+\endcode
+  \tab
+  Returns the complementary exponential distribution:
+  $\bar F(x) = e^{- x}$ for $x>0$, and $=1$ for $x\le 0$.
+%  This is the complementary exponential distribution with mean $\mu$.\\
+%    Restriction: {\tt mu} = $\mu > 0$.
+ \endtab
+\code
+
+
+double fbar_Weibull (double alpha, double x);
+\endcode
+  \tab
+  Returns the complementary standard Weibull distribution function 
+  with shape parameter $\alpha$ \cite{tJOH95a}, defined by 
+  $\bar F(x) = e^{- x^\alpha}$ for $x>0$ and 1 for $x\le 0$.
+  Restriction: $\alpha > 0$.
+ \endtab
+\code
+
+
+double fbar_Logistic (double x);
+\endcode
+  \tab
+  Returns $\bar F(x) = 1/(1 + e^{x})$, the complementary standard 
+  logistic distribution function evaluated at $x$ \cite{tJOH95b}.
+ \endtab
+\code
+
+
+double fbar_Pareto (double c, double x);
+\endcode
+  \tab
+  Returns $\bar F(x) = 1/x^c$ for $x\ge 1$ and 1 for $x\le 1$, 
+  which is the complementary standard Pareto
+  distribution function \cite{tJOH95a}.
+  Restriction: $c > 0$.
+ \endtab
+\code
+
+
+double fbar_Normal1 (double x);
+\endcode
+  \tab  
+  Returns an approximation of $1 - \Phi(x)$, 
+  where $\Phi$ is the standard normal distribution function,
+  with mean 0 and variance 1. 
+  Uses a Chebyshev series giving 16 decimal digits of
+  precision \cite{tSCH78a}.
+ \endtab
+\code
+
+
+double fbar_Normal2 (double x);
+\endcode
+  \tab  
+  Returns an approximation of $1 - \Phi(x)$,  where $\Phi$ is the standard
+  normal distribution function, with mean 0 and variance 1. 
+   Uses Marsaglia's et al \cite{rMAR94b} fast method
+  with tables lookup. Returns 15 decimal digits of precision.
+  This function is approximately 1.3 times faster than {\tt fbar\_Normal1}.
+ \endtab
+\code
+
+
+#ifdef HAVE_ERF
+   double fbar_Normal3 (double x);
+#endif
+\endcode
+  \tab
+  Returns an approximation of $1 - \Phi(x)$, 
+  where $\Phi$ is the standard normal distribution function,
+  with mean 0 and variance 1. 
+  Uses the {\tt erfc} function from the standard Unix C library. The macro
+  {\tt HAVE\_ERF} from {\tt mylib/gdef} must be defined. This function
+  is twice as fast as {\tt fbar\_Normal2}.
+ \endtab
+\code
+
+
+double fbar_BiNormal1 (double x, double y, double rho, int ndig);
+\endcode
+  \tab  
+  Returns the value $u$ of the upper standard bivariate normal distribution,
+  given by
+\begin{eqnarray}
+     u &=&  \frac{1}{2\pi\sqrt{1 - \rho^2}} \int^{\infty}_x
+              \int^{\infty}_y e^{-T} dy\, dx  \label{eq.binormal3} \\[5pt]
+     T &=& \frac{x^2 -2\rho x y + y^2}{2(1-\rho^2)}, \nonumber
+\end{eqnarray}
+  where $\rho = ${ \tt rho} is the correlation between $x$ and $y$, and
+ \texttt{ndig} is the number of decimal digits of accuracy.
+  It calls the function {\tt fdist\_BiNormal1}. The absolute error
+  is expected to be smaller than $10^{-d}$, where $d={}$\texttt{ndig}.
+  Restriction: \texttt{ndig}${} \le 15$.
+ \endtab
+\code
+
+
+double fbar_BiNormal2 (double x, double y, double rho);
+\endcode
+  \tab  
+  Returns the value of the upper standard bivariate normal distribution as 
+  defined in (\ref{eq.binormal3}) above.
+  It calls the function {\tt fdist\_BiNormal2} (see the description in
+   module {\tt fdist}). The function gives
+   an absolute error less than $5 \cdot 10^{-16}$. 
+ \endtab
+\code
+
+
+double fbar_ChiSquare1 (long N, double x);
+\endcode
+  \tab  
+    Returns $\bar F(x)$, the complementary
+   chi-square distribution function with
+   $N$ degrees of freedom.
+  Uses the approximation given in \cite[p.116]{tKEN80a} for $N\le 1000$,
+  and the normal approximation for $N > 1000$. Gives no more than 4
+  decimals of precision for $N > 1000$.
+ \endtab
+\code
+
+
+double fbar_ChiSquare2 (long N, int d, double x);
+\endcode
+  \tab  Returns $\bar F(x)$, the complementary chi-square distribution
+  function with $N$ degrees of freedom, by calling
+  {\tt fbar\_Gamma (N/2, d, x/2)}.
+  The function will do its best to return $d$ decimals
+  digits of precision (but there is no guarantee).
+  Restrictions:  $N>0$ and $0 < d \le 15$.
+ \endtab
+\code
+
+
+double fbar_Gamma (double a, int d, double x);
+\endcode
+  \tab
+  Returns an approximation \cite{tBAT70a} of the complementary {\em gamma\/}
+  distribution function with parameter $a$.
+  The function tries to return $d$ decimals digits of precision.
+%, but there is no guarantee.  
+  For $a$ not too large (e.g., $a \le 1000$),
+  $d$ gives a good idea of the precision attained.
+%% For d = 16, gives at least 13 decimals of precision for $a \le 1000$,
+%% and at least 10 decimals  for $1000 < a \le 100000$.
+   Restrictions:  $a>0$ and  $0 < d \le 15$.
+  \endtab
+\code
+
+
+double fbar_KS1 (long n, double x);
+\endcode
+\tab Returns the complementary Kolmogorov-Smirnov distribution 
+$\bar F(x) = P[D_n \ge x]$ in a form that is more precise in the upper tail,
+using the program described in \cite{LECz09}. 
+It returns at least 10 decimal digits of precision everywhere for all
+ $n \le 400$,
+ at least 6 decimal digits of precision for $400 < n \le 200000$,
+and a few correct digits (1 to 5) for $n > 200000$.
+ Restrictions:  $n\ge 1$ and $0 \le x \le 1$.
+\endtab
+\code
+
+
+double fbar_KSPlus (long n, double x);
+\endcode 
+\tab Returns the complementary Kolmogorov-Smirnov+ distribution 
+$\bar F(x) = P[D_n^+ \ge x]$ in a form that is more precise in the upper
+tail. It should return at least 8 decimal digits of precision everywhere. 
+% It becomes more precise as $x$ or $n$ increase.
+ Restrictions:  $n>0$ and $0 \le x \le 1$.
+\endtab
+\code
+
+
+double fbar_LogNormal (double mu, double sigma, double x);
+
+double fbar_JohnsonSB (double alpha, double beta, double a, double b,
+                       double x);
+
+double fbar_JohnsonSU (double alpha, double beta, double x);
+
+double fbar_CramerMises (long n, double x);
+
+double fbar_WatsonU (long n, double x);
+
+double fbar_WatsonG (long n, double x);
+
+double fbar_AndersonDarling (long n, double x);
+\endcode
+  \tab  Return the complementary distribution function $P[X\ge x]$.
+   See the description of the respective functions in \texttt{fdist}.
+ \endtab
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{Discrete distributions}
+
+\code
+
+double fbar_Geometric (double p, long s);
+\endcode
+  \tab Returns the complementary distribution function of 
+   a geometric random variable $X$ with parameter $p$, 
+   $\bar F(s) = P[X\ge s] = (1-p)^s$ 
+   for $s\ge 0$.
+  Restriction: $0 \le p \le 1$.
+ \endtab
+\code
+
+
+double fbar_Poisson1 (double lambda, long s);
+\endcode
+  \tab  Returns the complementary distribution function $P[X\ge s]$
+   for a Poisson random variable $X$ with parameter $\lambda$.
+   Computes and adds the non-negligible terms in the tail.
+   Restriction: $\lambda > 0$.
+ \endtab
+\code
+
+
+double fbar_Poisson2 (fmass_INFO W, long s);
+\endcode
+ \tab  Returns the complementary Poisson distribution function,
+  using the structure {\tt W} which must have been created previously
+  by calling {\tt fmass\_CreatePoisson} with the desired $\lambda$.
+%  Restriction: only integral values of $s$ are meaningful. 
+ \endtab
+\code
+
+
+double fbar_Binomial2 (fmass_INFO W, long s);
+\endcode
+  \tab  Returns the complementary distribution function $P[X\ge s]$
+  for a binomial random variable $X$,
+  using the structure {\tt W} which must have been created previously
+  by calling {\tt fmass\_CreateBinomial} with the desired values of
+  $n$ and $p$.
+ \endtab
+\code
+
+
+double fbar_NegaBin2 (fmass_INFO W, long s);
+\endcode
+  \tab  Returns the complementary distribution function $P[X\ge s]$
+  for a negative binomial random variable $X$,
+  using the structure {\tt W}
+  which must have been created previously
+  by calling {\tt fmass\_CreateNegaBin} with the desired values of
+  $n$ and $p$.
+ \endtab
+\code
+
+
+double fbar_Scan (long N, double d, long m);
+\endcode
+ \tab Return $P[S_N(d) \ge m]$, where $S_N(d)$ is the scan statistic
+  (see \cite{tGLA89a} and {\tt gofs\_Scan}), defined as 
+  \eq
+    S_N(d) = \sup_{0\le y\le 1-d} \eta[y,\,y+d],     \eqlabel{eq:scan}
+  \endeq
+  where $d$ is a constant in $(0, 1)$,
+  $\eta[y,\,y+d]$ is the number of observations falling inside 
+  the interval $[y, y+d]$, from a sample of $N$ i.i.d.\ $U(0,1)$
+  random variables.
+  One has (see \cite {tAND95b}),
+  \begin {eqnarray}
+   P[S_N(d) \ge m]
+    &\approx& \left({m\over d}-N-1\right) b(m)
+              + 2 \sum_{i=m}^{N} b(i)            \eqlabel{DistScan1} \\[6pt]
+    &\approx& 2(1-\Phi(\theta\kappa)) + \theta\kappa
+              {\exp[-\theta^2\kappa^2 /2] \over d \sqrt{2\pi}}
+                                                 \eqlabel {DistScan2}
+  \end {eqnarray}
+   where $\Phi$ is the standard normal distribution function,
+  \begin {eqnarray*}
+   b(i)    &=& {N \choose i} d^i (1-d)^{N-i}, \\[4pt]
+   \theta  &=& \sqrt{\frac d{1-d}}, \\[4pt]
+   \kappa  &=& \frac m{d \sqrt{N}} - \sqrt{N}.
+  \end {eqnarray*}
+  For $d \le 1/2$, (\ref{DistScan1}) is exact for $m > N/2$,
+  but only an approximation otherwise.
+  The approximation (\ref{DistScan2}) is good when
+  $N d^2$ is large or when $d > 0.3$ and $N>50$.
+  In other cases, this implementation sometimes use the approximation
+  proposed by Glaz \cite{tGLA89a}.
+  For more information, see \cite {tAND95b,tGLA89a,tWAL87a}.
+  The approximation returned by this function is generally good when
+  it is close to 0, but is not very reliable when it exceeds, say, 0.4.
+%%
+\ifdetailed  %%%%%%
+  If $m \le (N + 1)d$, the function returns 1. 
+  Else, if $Nd \le 10$, it returns the approximation given by 
+  Glaz \cite{tGLA89a}.  
+  If $Nd > 10$, it computes (\ref{DistScan2}) or (\ref{DistScan1}) 
+  and returns the result if it does not exceed 0.4, otherwise it computes
+  the approximation from \cite{tGLA89a}, returns it if it is less than 1.0, 
+% inside the interval $(0.4, 1.0)$, 
+  and returns 1.0 otherwise.
+ \hpierre{Even if it 0.40001 in the first approximation, and 0.3999 
+   in the second one?}
+ \hrichard{C'est ce qui est programm\'e. Probablement que dans ce cas,
+   l'approximation est tellement mauvaise que nous avons d\'ecid\'e de
+   retourner 1. On pourrait retourner 0 au lieu??}
+ \hpierre {\c Ca n'a pas de bon sens.  Je ne vois pas pourquoi elle serait
+   ``tellement mauvaise'' dans le cas cit\'e avec 0.3999 et subitement 
+   bonne si la seconde approximation retourne 0.4.
+   Il me semble que dans un tel cas on devrait retourner quelque chose
+   aux alentours de 0.4.
+   Et ce qui est g\^enant c'est qu'en retournant 0 ou 1 comme p-valeur,
+   on croira que l'hypoth\`ese nulle est rejet\'ee!  }
+  The relative error can 
+  reach 10\%\ when $Nd \le 10$ or when the returned value
+  is less than 0.4.  For $m > Nd$ and $Nd > 10$, a returned value 
+  that exceeds $0.4$ should be regarded as unreliable.
+  For $m = 3$, the returned values are totally unreliable.
+  (There may be an error in the original formulae in \cite{tGLA89a}).
+\fi  %%%%  detailed
+  Restrictions: $N \ge 2$  and $d \le 1/2$.\\
+ \endtab
+
+\code
+\hide
+#endif
+\endhide
+\endcode

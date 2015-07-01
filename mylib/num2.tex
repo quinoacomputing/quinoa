@@ -1,0 +1,156 @@
+\defmodule {num2}
+
+This module provides procedures to compute a few numerical
+quantities such as factorials, combinations, Stirling numbers,
+Bessel functions, gamma functions, and so on.
+These functions are more esoteric than those provided by {\tt num}.
+
+\bigskip\hrule
+\code\hide
+/* num2.h for ANSI C */
+
+#ifndef NUM2_H
+#define NUM2_H
+\endhide
+#include "gdef.h"
+#include <math.h>
+\endcode
+
+%%%%%%%%%%%%%%%%%%%%
+\guisec{Prototypes}
+\code
+
+double num2_Factorial (int n);
+\endcode
+ \tab The factorial function. Returns the value of $n!$
+\endtab
+\code
+
+
+double num2_LnFactorial (int n);
+\endcode
+ \tab Returns the value of $\ln (n!)$, the natural logarithm of the
+ factorial of  $n$. Gives at least 16 decimal digits of precision
+  (relative error $< 0.5\times 10^{-15}$)
+\endtab
+\code
+
+
+double num2_Combination (int n, int s);
+\endcode
+  \tab Returns the value of ${n \choose s}$, the number of different combinations
+   of $s$ objects amongst $n$. %  Uses an algorithm that prevents overflows
+  % (when computing factorials), if possible.
+ \endtab
+\code
+
+
+#ifdef HAVE_LGAMMA
+#define num2_LnGamma lgamma
+#else
+   double num2_LnGamma (double x);
+#endif
+\endcode
+  \tab Calculates the natural logarithm of the gamma function  $\Gamma(x)$
+   at {\tt x}. Our {\tt num2\_LnGamma} gives 16 decimal digits
+   of precision, but is implemented only for $x>0$.
+   The function {\tt lgamma} is from the {\tt ISO C99} standard math library.
+  \endtab
+\code
+
+
+double num2_Digamma (double x);
+\endcode
+\tab Returns the value of the logarithmic derivative of the Gamma function
+   $\psi(x) = \Gamma'(x) / \Gamma(x)$.
+\endtab
+\code
+
+
+#ifdef HAVE_LOG1P
+#define num2_log1p log1p
+#else
+   double num2_log1p (double x);
+#endif
+\endcode
+  \tab Returns a value equivalent to {\tt log}$(1 + x)$ accurate also for small
+   $x$. The function {\tt log1p} is from the {\tt ISO C99} standard math library.
+  \endtab
+\code
+
+
+void num2_CalcMatStirling (double *** M, int m, int n);
+\endcode
+ \tab Calculates the Stirling numbers of the second kind,
+ \eq
+   M[i,j] = \left\{\begin{array}{c}j \\ i\end{array}\right\}
+     \quad \mbox { for $0\le i\le m$ and $0\le i\le j\le n$}.
+                                                        \label{Stirling2}
+ \endeq
+  See D. E. Knuth, {\em The Art of Computer Programming\/}, vol.~1,
+  second ed., 1973, Section 1.2.6.
+  The matrix $M$ is the transpose of Knuth's (1973).
+  This procedure allocates memory for the 2-dimensionnal matrix $M$,
+  and fills it with the values of Stirling numbers;
+  the memory should be freed
+  later with the function {\tt num2\_FreeMatStirling}.
+ \endtab
+\code
+
+
+void num2_FreeMatStirling (double *** M, int m);
+\endcode
+  \tab Frees the memory space used by the Stirling matrix created by calling
+  {\tt num2\_CalcMatStirling}. The parameter {\tt m}
+  must be the same as the {\tt m} in  {\tt num2\_CalcMatStirling}.
+  \endtab
+\code
+
+
+double num2_VolumeSphere (double p, int t);
+\endcode
+\tab Calculates the volume $V$ of a sphere of radius 1 in $t$ dimensions
+  using the norm $L_p$, according to the formula
+$$
+       V = \frac{\left[2 \Gamma(1 + 1/p)\right]^t}
+             {\Gamma\left(1 + t/p\right)}, \qquad p > 0,
+$$
+  where $\Gamma$ is the well-known gamma function.
+  The case of the sup norm $L_\infty$ is
+  obtained by choosing $p=0$.
+  Restrictions: $p\ge 0$ and $t\ge 1$.
+  \endtab
+\code
+
+
+double num2_EvalCheby (const double A[], int N, double x);
+\endcode
+\tab Evaluates a series of Chebyshev polynomials $T_j$, at point
+  $x \in [-1, \;1]$, using the method of Clenshaw \cite{mCLE62a},
+   i.e. calculates and  returns
+  $$
+    y = \frac{A_0}2 + \sum_{j=1}^N A_j T_j(x).
+  $$
+\endtab
+\code
+
+
+double num2_BesselK025 (double x);
+\endcode
+\tab Returns the value of $K_{1/4}(x)$, where $K_{\nu}$ is the modified
+  Bessel's
+  function of the second kind.
+  The relative error on the returned value is less than
+  $0.5\times 10^{-6}$ for $x > 10^{-300}$.
+\endtab
+\code
+\hide
+
+#endif
+\endhide
+\endcode
+
+
+
+
+

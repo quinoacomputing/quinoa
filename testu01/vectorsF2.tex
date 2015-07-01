@@ -1,0 +1,594 @@
+\defmodule{vectorsF2}
+This module contains many functions that manipulates vectors and
+ matrices of bits.
+
+\bigskip\hrule
+
+\code\hide
+#ifndef VECTORSF2_H
+#define VECTORSF2_H
+\endhide
+#include "gdef.h"
+\endcode
+\code
+
+#define vectorsF2_WL      32
+\endcode
+ \tab
+Uses computer word of 32 bits.
+ \endtab
+\bigskip
+
+
+
+\guisec{\bf \large Operations on bit vectors}
+
+\code
+
+typedef struct{        
+   int n;
+   unsigned long *vect;
+} BitVect;
+\endcode
+
+ \tab
+The {\tt BitVect} type contains a bit vector of
+ {\tt n}*{\tt vectorsF2\_WL} bits.  Storage space for
+the {\tt BitVect} is allocated with the function {\tt AllocBV()}.
+ \endtab
+\code
+
+
+void AllocBV ( BitVect *A,
+               int l 
+             );
+\endcode
+ \tab
+Function that allocates a {\tt BitVect} of {\tt l} bits.
+ \endtab
+\code
+
+
+void FreeBV ( BitVect *A 
+            );
+\endcode
+ \tab
+Function that frees the space taken by the {\tt BitVect} pointed by {\tt A}.
+ \endtab
+\code
+
+
+void BVCanonic ( BitVect *B, 
+                 int t
+               );
+\endcode
+ \tab
+Function that fills {\tt B} with the $({\tt t}+1)^{\mbox{th}}$ unit vector.
+ \endtab
+\code
+
+
+void AllOnes ( BitVect *B
+             );
+\endcode
+ \tab
+Function that fills the vector {\tt B} with the bit vector (1, 1, 1, 1,.. , 1).
+ \endtab
+\code
+
+
+void Mask ( BitVect *B,
+            int t
+          );
+void InvMask ( BitVect *B,
+               int t
+             );
+\endcode
+ \tab
+The function {\tt Mask()} fills the {\tt BitVect} pointed by {\tt B} with a vector composed of {\tt t} ones followed by zeros.
+The function {\tt InvMask()} fills the{\tt BitVect} pointed by {\tt B} with a vector composed of {\tt t} zeros followed by ones.
+ \endtab
+\code
+
+
+lebool BVisZero ( BitVect *A
+                );
+\endcode
+ \tab
+Function that returns {\tt TRUE} if the {\tt BitVect} pointed by {\tt A} is a zero bit vector.  Returns {\tt FALSE} otherwise.
+\endtab
+\code
+
+
+int ValBitBV ( BitVect *A, 
+               int noBit
+             );                     
+\endcode
+ \tab
+Returns the value of the {\tt noBit}$^{\mbox{th}}$ bit (the indexation goes from left to right and starts at 0) of the
+{\tt BitVect} pointed by {\tt A}.
+ \endtab
+\code
+
+
+void PutBitBV ( BitVect *A,
+                int noBit, 
+                int valBit
+              );           
+\endcode
+ \tab
+Puts the value of the {\tt noBit}$^{\mbox{th}}$ bit of the {\tt BitVect} pointed by {\tt A} 
+to {\tt valBit} which can be 0 or 1 (the indexation goes from left to right and starts at 0).
+ \endtab
+\code
+
+
+void PutBVToZero ( BitVect *A
+                 );
+\endcode                                
+ \tab
+Initializes the {\tt BitVect} pointed by {\tt A} to zero.
+ \endtab
+\code
+
+
+void CopyBV ( BitVect *A, 
+              BitVect *B
+            );
+  \endcode
+ \tab
+Copies the content of {\tt B} into {\tt A} ({\tt A=B}). 
+ \endtab
+\code 
+
+
+void CopyBVPart ( BitVect *A,
+                  BitVect *B,
+                  int l
+                );
+\endcode
+ \tab
+Copies the first {\tt l} bits of {\tt B} into {\tt A}.
+ \endtab
+\code
+
+
+lebool CompareBV ( BitVect *A, 
+                    BitVect *B
+                  ); 
+\endcode
+ \tab
+Compares the content of {\tt B} and {\tt A}.  Returns {\tt TRUE} if it is the same, {\tt FALSE} otherwise.
+ \endtab
+\code
+
+
+void XORBV ( BitVect *A, 
+             BitVect *B, 
+             BitVect *C
+           );
+\endcode
+ \tab
+This function does {\tt A} = {\tt B} \verb1^1 {\tt C}.
+ \endtab
+\code
+
+
+void XOR2BV ( BitVect *A, 
+              BitVect *B, 
+              BitVect *C, 
+              BitVect *D
+            );
+\endcode
+ \tab
+This function does {\tt A} = {\tt B} \verb1^1 {\tt C} \verb1^1 {\tt D}.
+ \endtab
+\code
+
+
+void ANDBV ( BitVect *A, 
+             BitVect *B, 
+             BitVect *C
+           );
+\endcode
+ \tab
+This function does {\tt A} = {\tt B} \& {\tt C}.
+ \endtab
+\code
+
+
+void ANDBVSelf ( BitVect *A, 
+                 BitVect *B
+               );
+\endcode
+ \tab
+This function does {\tt A} = {\tt A} \& {\tt B}.             
+ \endtab
+\code
+
+
+void ANDBVMask ( BitVect *A,
+                 BitVect *B,
+                 int t
+               );
+\endcode
+ \tab
+Applies the mask composed of {\tt t} ones followed by zeros to the bit vector pointed by {\tt B} 
+and puts the result in the bit vector pointed by {\tt A}.
+\endtab
+\code
+
+
+void ANDBVInvMask ( BitVect *A,
+                    BitVect *B,
+                    int t
+                  );
+\endcode
+ \tab
+Applies the mask composed of {\tt t} zeros followed by ones to the bit vector pointed by {\tt B} 
+and puts the result in the bit vector pointed by {\tt A}.
+ \endtab
+\code
+
+
+void XORBVSelf ( BitVect *A, 
+                 BitVect *B
+               );
+\endcode
+ \tab
+This function does {\tt A} = {\tt A} \verb1^1 {\tt B}.             
+ \endtab
+\code
+
+
+void BVLShift ( BitVect *R, 
+                BitVect *A, 
+                int n 
+              );    
+\endcode
+ \tab
+This function does  {\tt R} = {\tt A} $\ll$ {\tt n}.
+ \endtab
+\code
+
+
+void BVRShift ( BitVect *R, 
+                BitVect *A, 
+                int n 
+              );
+\endcode
+ \tab
+This function does  {\tt R} = {\tt A} $\gg$ {\tt n}.
+ \endtab
+\code
+
+
+void BVLShiftSelf ( BitVect *R, 
+                    int n 
+                  );
+\endcode
+ \tab
+This function does  {\tt R} = {\tt R} $\ll$ {\tt n}.
+ \endtab
+\code
+
+
+void BVLS1Self ( BitVect *R 
+               );
+\endcode
+ \tab
+This function does  {\tt R} = {\tt R} $\ll$ {\tt 1}.  
+ \endtab
+\code
+
+
+void BVRShiftSelf ( BitVect *R, 
+                    int n 
+                  );
+\endcode
+ \tab
+This function does  {\tt R} = {\tt R} $\gg$ {\tt n}.
+ \endtab
+\code
+
+
+void InverseBV ( BitVect *A
+               );
+\endcode
+ \tab
+Invert the value of all the bits of {\tt A} (i.e. {\tt A} = \~ {\tt A}).
+ \endtab
+\code
+
+
+void DispBitVect ( BitVect *A, 
+                   int l,
+                   int mathematica
+                 );
+\endcode
+ \tab
+Displays the bit vector {\tt A} on {\tt l} bits only.  If {\tt mathematica} is set to TRUE, then the display will be compatible with
+Mathematica input.
+ \endtab
+\code
+
+
+void RandVect ( BitVect *v
+              );
+\endcode
+ \tab
+Fills the vector {\tt v} with random bits.
+ \endtab
+\code
+
+
+lebool VerifBitsCommuns ( BitVect *ds1, 
+                           BitVect *ds2 
+                         );
+\endcode
+ \tab
+Returns {\tt TRUE} if at least one bit set to 1 in {\tt ds1} is also set to 1 in {\tt ds2}.
+Returns {\tt FALSE} otherwise.
+ \endtab
+
+\guisec{\bf \large Operations on matrices}
+\code
+
+
+typedef struct{
+  BitVect **lignes;
+  int nblignes;
+  int t;
+  int l;
+} Matrix;
+\endcode
+ \tab
+The variable {\tt lignes} contains a 2-dimensional array of {\tt l}-bit vectors ({\tt BitVect}).
+This array has {\tt nblignes} rows and {\tt t} columns. We allocate the storage space for
+the {\tt Matrix} with the function {\tt AllocMat()}.
+ \endtab
+
+\code
+
+
+void AllocMat ( Matrix* m,
+                int nblines,
+                int l,
+                int t
+              );
+\endcode
+ \tab
+Function that allocates a {\tt Matrix} with {\tt nblines} lines and {\tt t*l} columns.
+On each line, the function allocates {\tt t} spaces for {\tt BitVect}s of {\tt l} bits.
+To allocate a simple 32 $\times$ 32 bit matrix, call
+{\tt AllocMat (m,32,32,1)}.  This way of structuring matrices is useful for modules like mecf.
+ \endtab
+
+\code
+
+
+void FreeMat ( Matrix *m
+             );
+\endcode
+ \tab
+Frees the space taken by the matrix pointed by {\tt m}.
+ \endtab
+
+\code
+
+
+void CopyMat ( Matrix *m, 
+               Matrix *ms, 
+               int nl, 
+               int t 
+             );
+\endcode
+ \tab
+Copies the first {\tt t} {\tt BitVect}s of the first {\tt nl} lines of the matrix {\tt ms} into the
+first {\tt t} {\tt BitVect}s of the first {\tt nl} lines of the matrix {\tt m}.
+ \endtab
+
+\code
+
+
+void CopyNTupleMat ( Matrix *m, 
+                     Matrix *ms, 
+                     int nl,
+                     int *colonnes, 
+                     int t 
+                   );
+\endcode
+ \tab
+Copies the ({\tt t}-1) {\tt BitVect}s indicated by the array {\tt colonnes}, plus the first {\tt BitVect}, on each of the
+{\tt nl} first lines of the matrix {\tt ms} to the first {\tt t} {\tt BitVect}s on each of the first {\tt nl}
+lines of the matrix {\tt m}.
+ \endtab
+\code
+
+
+lebool Diag ( Matrix *m, 
+               int kg,                                
+               int t, 
+               int l, 
+               int *gr 
+             );
+\endcode
+ \tab
+Function that Diagonalizes the matrix pointed by {\tt m}.  In fact, it diagonalizes only the sub matrix consisting
+of only the first {\tt kg} lines and the first {\tt l} bits of the first {\tt t} {\tt BitVect}s on each line.
+The function returns {\tt TRUE} if the sub matrix is of full rank {\tt t}*{\tt l}.  In this case, the variable pointed by {\tt gr}
+stays unchanged.  Otherwise, it returns FALSE and the variable pointed by {\tt gr} is changed to the value of {\tt t} for which
+the function would have returned {\tt TRUE}.
+ \endtab
+
+\code
+
+
+int GaussianElimination ( Matrix *m, 
+                          int nblignes,
+                          int l,
+                          int t
+                        );
+\endcode
+ \tab
+Function that returns the rank of a sub matrix pointed by {\tt m}.  This sub matrix is
+composed of the first {\tt nblines} lines and the first {\tt l} bits of the first {\tt t} {\tt BitVect}s on each line.
+ \endtab
+
+\code
+
+
+int CompleteElimination ( Matrix *m, 
+                          int nblignes,
+                          int l,
+                          int t
+                        );
+\endcode
+ \tab
+This function tries to form an identity matrix by elimination. 
+It returns the rank of a sub matrix pointed by {\tt m}.  This sub matrix is
+composed of the first {\tt nblines} lines and the first {\tt l} bits of the first {\tt t} {\tt BitVect}s on each line.
+ \endtab
+
+
+\code
+
+
+int SpecialGaussianElimination ( Matrix *m, 
+                                 int nblignes, 
+                                 int l, 
+                                 int t, 
+                                 int *indices
+                               );
+\endcode
+ \tab
+Function that returns the rank of a sub matrix of the {\tt Matrix} pointed by {\tt m}.  This sub matrix is
+composed of the first {\tt nblines} lines and the first {\tt l} bits of the {\tt BitVect}s 
+indicated by the array {\tt indices}.
+ \endtab
+
+\code
+
+
+void MultMatrixByBV ( BitVect *A,
+                     Matrix *m, 
+                     BitVect *B
+                   );
+\endcode
+ \tab
+Function that puts in the {\tt BitVect} pointed by {\tt A} the product {\bf m} $\times$ {\tt B}.
+ \endtab
+
+\code
+
+
+void TransposeMatrices ( Matrix *T, 
+                         Matrix *M, 
+                         int nblines, 
+                         int t, 
+                         int l
+                       );
+\endcode
+ \tab
+Function that transpose the {\tt t} matrices of dimension {\tt nblines}$\times$
+{\tt l} found in {\tt M} and put the result in {\tt T}.
+ \endtab
+
+\code
+
+
+void ExchangeVect ( Matrix *m, 
+                    int i, 
+                    int j 
+                  );
+\endcode
+ \tab
+Interchange the lines {\tt i} et {\tt j} of the matrix {\tt *m}.
+ \endtab
+
+\code
+
+
+void XorVect ( Matrix *m,    
+               int r, 
+               int s, 
+               int min, 
+               int max
+             );
+\endcode
+ \tab
+Does a exclusive-OR between the {\tt s}$^{\mbox{th}}$ and {\tt r}$^{\mbox{th}}$ line of the matrix {\tt m}
+for the {\tt min}$^{\mbox{th}}$ to the ({\tt max}-1)$^{\mbox{th}}$ {\tt BitVect}s only.  The result is put in
+the {\tt r}$^{\mbox{th}}$ line of the matrix. ({\tt m[r]} = {\tt m[r]} \verb1^1 {\tt m[s]})
+ \endtab
+\code
+
+
+void DispMat ( Matrix *m, 
+               int t, 
+               int l,
+               int nblines,
+               lebool mathematica
+            );
+\endcode
+ \tab
+Displays the sub matrix of {\tt *m} defined by the first {\tt nblines} lines and the first {\tt l} bits of the first
+{\tt t} {\tt BitVect}s.  If {\tt mathematica} is set to TRUE, then the display will be compatible with
+Mathematica input.
+ \endtab
+\code 
+
+
+lebool InverseMatrix ( Matrix *MInv, 
+                        Matrix *M
+                      );
+\endcode
+\tab
+Function that puts in the {\tt Matrix} pointed by {\tt MInv} the inverse of the {\tt Matrix} pointed by {\tt M}.
+The sub matrices of the {\tt Matrix}s pointed by {\tt M} and {\tt MInv} that are considered are the ones composed of 
+the first column of {\tt BitVect}s.
+\endtab
+\code
+
+
+void MultMatrixByMatrix ( Matrix *A, 
+                          Matrix *B,
+                          Matrix *C
+                        );
+\endcode
+\tab
+Function that puts in the {\tt Matrix} pointed to by {\tt A} the result of the
+multiplication of {\tt B} and {\tt C} ($A = B \times C$).
+Only the first submatrices are considered.
+\endtab
+\code
+
+
+void MatrixTwoPow ( Matrix *A, 
+                    Matrix *B,
+                    unsigned int e
+                  );
+\endcode
+\tab
+Function that puts in the {\tt Matrix} pointed to by {\tt A} the {\tt Matrix} 
+{\tt B} raised to the power $2^{e}$ ($A = B^{2^{e}}$).
+\endtab
+\code
+
+#ifdef USE_LONGLONG
+   void MatrixPow (Matrix * A, Matrix * B, longlong e);
+#else
+   void MatrixPow (Matrix * A, Matrix * B, long e);
+#endif
+\endcode
+\tab
+Function that puts in the {\tt Matrix} pointed to by {\tt A} the {\tt Matrix} 
+{\tt B} raised to the power $e$ ($A = B^{e}$). 
+The exponent $e$ can be negative, in which case, the inverse $B^{-1}$
+ will be raised to the power $|e|$.
+\endtab
+\code
+\hide
+#endif
+\endhide
+\endcode

@@ -1,0 +1,165 @@
+\defmodule {utaus}
+
+Implements simple and combined Tausworthe generators using
+the definitions, the initialization methods and the
+ algorithms given in \cite{rLEC94a,rLEC96a}.
+The current implementation is restricted to components whose 
+characteristic polynomial is a {\em trinomial}.  That is,
+for a  simple generator and for each component of a combined
+generator, the basic recurrence has the form % (modulo 2)
+\eq                                               \eqlabel{taus1}
+  x_n = x_{n-r} \oplus x_{n-k} = x_{n-k+q} \oplus x_{n-k},
+\endeq
+with characteristic polynomial $p(x) = x^p + x^q + 1$,
+where $q = k-r$, each $x_n$ is 0 or 1, and $\oplus$ 
+means exclusive-or (i.e., addition modulo 2).
+The output at step $n$ is
+\eq                                               \eqlabel{taus2}
+  u_n = \sum_{j=1}^w x_{ns+j-1} 2^{-j}
+\endeq
+with $w = 32$. 
+To obtain $w < 32$, it suffices to truncate the output.
+The parameters must satisfy the following conditions:
+$0 < 2q < k \le 32$ (except in the case of the {\tt LongTaus} generator
+for which $k$ can take values as high as 64) and $0 < s \le r$.
+In the functions defined below, the $k$ most significant 
+bits of the variable {\tt Y} contain 
+the initial values  $x_0,\dots,x_{k-1}$ (this is the seed).
+They must not be all zero.
+\index{Generator!Tausworthe} \index{Generator!LFSR}%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\bigskip
+\hrule
+\code
+\hide
+/* utaus.h for ANSI C */
+
+#ifndef UTAUS_H
+#define UTAUS_H
+\endhide
+#include "gdef.h"
+#include "unif01.h"
+
+
+unif01_Gen * utaus_CreateTaus (unsigned int k, unsigned int q,
+                               unsigned int s, unsigned int Y);
+\endcode        
+  \tab  Implements a simple Tausworthe generator as described above.
+   Restrictions: $0 < 2q < k \le 32$ and $0 < s \le k-q$.
+  \endtab
+\code
+
+
+unif01_Gen * utaus_CreateTausJ (unsigned int k, unsigned int q,
+                                unsigned int s, unsigned int j,
+                                unsigned int Y);
+\endcode
+  \tab  Implements a Tausworthe generator as in {\tt utaus\_CreateTaus},
+   except that it produces a $j$-decimated sequence.
+   That is, at each call, it skips $j-1$ values in the sequence 
+   defined by (\ref{taus1}--\ref{taus2}) and outputs the next one.
+   The same restrictions as in {\tt utaus\_CreateTaus} apply.
+  \endtab
+\code
+
+
+#ifdef USE_LONGLONG
+   unif01_Gen * utaus_CreateLongTaus (unsigned int k, unsigned int q,
+                                      unsigned int s, ulonglong Y1);
+\endcode
+  \tab    Similar to {\tt utaus\_CreateTaus} but uses
+   64 bits integers for the state of the generator. However, it returns
+   only the 32 most significant bits of each  generated number, after
+   having shifted them 32 bits to the right. 
+   Restrictions: $k \le 64$, $0 < 2q < k$ and $0 < s \le k-q$.
+  \endtab
+\code
+#endif
+
+
+unif01_Gen * utaus_CreateCombTaus2 (
+   unsigned int k1, unsigned int k2, unsigned int q1, unsigned int q2,
+   unsigned int s1, unsigned int s2, unsigned int Y1, unsigned int Y2);
+\endcode
+  \tab  Combines two Tausworthe generators defined as in 
+   {\tt utaus\_CreateTaus}. The combination is via a bitwise exclusive-or,
+   as in \cite{rLEC96a,rTEZ89a,rTEZ91b}.
+   The same restrictions as in  {\tt utaus\_CreateTaus} apply to each of the
+   two components.
+   Also assumes that $k_1\ge k_2$.
+  \endtab
+\code
+
+
+unif01_Gen * utaus_CreateCombTaus3 (
+    unsigned int k1, unsigned int k2, unsigned int k3,
+    unsigned int q1, unsigned int q2, unsigned int q3,
+    unsigned int s1, unsigned int s2, unsigned int s3,
+    unsigned int Y1, unsigned int Y2, unsigned int Y3);
+\endcode
+  \tab  Similar to {\tt utaus\_CreateCombTaus2}, except that 
+   three Tausworthe generators are combined instead of two.
+   Assumes that  $k_1 \ge k_2 \ge k_3$.
+  \endtab
+\code
+
+
+unif01_Gen * utaus_CreateCombTaus3T (
+    unsigned int k1, unsigned int k2, unsigned int k3,
+    unsigned int q1, unsigned int q2, unsigned int q3,
+    unsigned int s1, unsigned int s2, unsigned int s3,
+    unsigned int Y1, unsigned int Y2, unsigned int Y3);
+\endcode
+  \tab  Similar to  {\tt utaus\_CreateCombTaus3}, except that the
+   generator has ``triple'' precision.   Three successive output values 
+   $u_i$ of the combined Tausworthe generator are used to build each 
+   output value $U_i$ (uniform on [0, 1)) of this generator, as follows:
+  $$
+   U_{i} = \left(u_{3i} + \frac{u_{3i+1}}{2^{17}}  + 
+           \frac{u_{3i+2}}{2^{34}}\right) \mod 1.
+  $$
+  \endtab
+
+
+
+\guisec{Clean-up functions}
+\code
+
+void utaus_DeleteGen (unif01_Gen *gen);
+\endcode
+ \tab \DelGen
+ \endtab
+\code
+\hide
+#endif
+\endhide
+\endcode
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{Related generators}
+
+
+For specific Tausworthe generators, see also
+{
+\setlength{\partopsep}{0pt}
+\setlength{\parskip}{0pt}
+\setlength{\topsep}{0pt}
+\setlength{\itemsep}{0pt}
+
+\begin{itemize}
+\item {\tt utezu\_CreateTezLec91}
+\item {\tt utezu\_CreateTez95}
+\end{itemize}
+
+\bigskip
+\begin{itemize}
+\item {\tt ulec\_Createlfsr88}
+\item {\tt ulec\_Createlfsr88T}
+\item {\tt ulec\_Createlfsr113}
+\item {\tt ulec\_Createlfsr258}
+%\item {\tt ulec\_CreateCombTausLCG11}    %  Not a Tausworthe generator.
+%\item {\tt ulec\_CreateCombTausLCG21}
+\end{itemize}
+}

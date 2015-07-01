@@ -1,0 +1,15 @@
+#!/bin/sh
+
+# This script can be used to rebuild the derived configuration files
+# whenever the primary configuration files have been changed or when
+# a new source file is added or removed.
+# This script should not be used by the user compiling the package.
+
+cd include
+./makedef
+cd ..
+libtoolize --copy --force
+aclocal
+autoheader
+automake --add-missing --copy
+autoconf

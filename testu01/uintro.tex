@@ -1,0 +1,336 @@
+\chapter{UNIFORM GENERATORS}
+
+This chapter contains a description of various uniform generators
+already programmed in this library and which were proposed by various 
+authors over the past several years, as well as tools for managing
+and implementing additional types of generators.
+Related generators are regrouped in the same module.
+For example, the linear congruential generators (LCGs) are in module
+{\tt ulcg}, the multiple recursive generators (MRGs) are in {\tt umrg}, 
+the inversive generators in {\tt uinv},
+the cubic generators in {\tt ucubic}, etc.
+We emphasize that the generators provided here are not all recommendable;
+in fact, {\em most of them are not}.
+
+The module {\tt unif01} contains the basic utilities for defining,
+manipulating, filtering, combining, and timing generators.  
+Each generator must be implemented as an 
+object of type {\tt unif01\_Gen}.  To implement one's own generator,
+one should create such an object and define all its fields.
+For each generator, the structure {\tt unif01\_Gen} must contain a 
+function {\tt GetU01} that returns values in the interval $[0,1)$
+and a function {\tt GetBits} that returns a block of 32 bits.  
+Most of the tests in the {\tt s} modules call the generators
+to be tested only indirectly, through the use of the interface 
+functions {\tt unif01\_StripD}, {\tt unif01\_StripL} and  
+{\tt unif01\_StripB}.
+These functions drop the $r$ most significant bits of each random number 
+generated and returns a number built out of the remaining bits.
+
+It is also possible to test one's own or an external generator
+(that is, a generator that is not predefined in TestU01) very easily with
+the help of the functions {\tt unif01\_CreateExternGen01} and
+{\tt unif01\_CreateExternGenBits} (see page \pageref{externgen}
+of this guide), as long as this generator is programmed in C.
+
+Figure~\ref{fig:usegen} gives simple examples of how to use predefined
+generators.  The program creates a LCG with modulus $m = 2^{31}-1$,
+multiplier $a = 16807$, and initial state $s = 12345$,
+generates and adds 100 uniforms produced by this generator,
+prints the sum, and deletes the generator.
+To illustrate the fact that there are different ways of getting the
+uniforms from the generator, we have generated the first 50 by calling
+the {\tt GetU01} function and the next 50 via {\tt unif01\_StripD}.
+These two methods are equivalent.
+The program then instantiates the generator {\tt lfsr113} available in 
+module {\tt ulec}, with the vector $(12345, \ldots, 12345)$ as initial seed,
+generates and prints five integers in the range $\{0,\dots,2^{10}-1\}$
+(i.e., 10-bit integers) obtained by taking five successive output values
+from the generator, stripping out the four most significant bits from 
+each value, and retaining the next 10 bits.
+
+For each public identifier used in programs, it is important to
+include the corresponding header file before using it,
+so as to inform the compiler about the type and signature of functions
+and exported variables. For instance, in the following examples, the header
+files \texttt{unif01.h}, \texttt{ulcg.h} and \texttt{ulec.h} contain the 
+declarations of \texttt{unif01\_Gen}, \texttt{ulcg\_CreateLCG} and 
+\texttt{ulec\_Createlfsr113}, respectively.
+ 
+Other examples on how to use the facilities of module {\tt unif01} are given 
+at the end of its description.
+
+
+\setbox0=\vbox {\hsize = 6.0in
+\smallc
+\verbatiminput{../examples/ex1.c}
+}
+
+\begin{figure}
+\centering
+\myboxit{\box0}
+\caption {Using pre-programmed generators\label {fig:usegen}}
+\end{figure}
+
+
+\iffalse  %%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section {La vitesse des generators}
+
+Les Tableaux \ref{vitesse1}--\ref{vitesse10} donnent une idee 
+du temps d'execution moyen
+par appel (en micro-secondes), pour un certain number de generators
+fournis par the modules {\tt u...}.
+Ces values sont en fait le number de secondes
+requises pour un million $(10^6)$ d'appels, 
+donne ici a une seconde pres.
+La machine utilisee etait un SUN UltraSparc 150.
+%%  80386 avec coprocesseur 80387, tous deux a 16 MHz.
+Pour fins de comparaison, pour un million d'appels a une procedure
+``bidon'' ne faisant rien, dans le m\^eme contexte, il a fallu 0.26 secondes.
+
+\begin{table}[htb] \centering \tt
+\caption {\rm Vitesse moyenne par appel pour the generators 
+          du module ulcg.}
+\label {vitesse1}
+\begin{tabular}{|l|r|c|l|r|}
+\hline
+&&&&\\
+\multicolumn{1}{|c|}{\rm Generator} & $\mu$-sec. && {\rm Generator}
+   & $\mu$-sec.\\
+\hline \hline
+&&&&\\
+ LCG$^1$              &   1.03 && CombLEC2$^2$ &   4.55\\
+ LCG$^2$              &   2.33 && CombLEC2$^3$ &  20.22\\
+ LCG$^3$              &  10.91 && CombLEC3$^2$ &   6.60\\
+ LCGFloat             &   0.80 &&              &  \\
+ BigLCG               &  45.24 && CombWH2$^1$  &   2.49\\
+ LCG2e31              &   0.98 && CombWH2$^2$  &   4.67\\            
+ LCG2e32              &   0.95 && CombWH2$^3$  &  20.40\\            
+ LCG2e31m1HD          &   1.73 && CombWH3$^2$  &   7.25\\          
+ CombLEC2$^1$         &   2.22 &&              &       \\
+&&&&\\
+\hline
+\end{tabular}
+
+\begin {verse}
+ $^1$ : $(m-1)a + c$ representable en {\tt LONGINT} (implantation directe).\\
+ $^2$ : implantation utilisee lorsque $a (m\mod a) < m$.\\
+ $^3$ : implantation utilisee dans the autres cas.\\
+\end {verse}
+\end {table}
+
+\begin{table}[htb] \centering \tt
+\caption {\rm Vitesse moyenne par appel pour the generators 
+              du module umrg.}
+\label {vitesse2}
+\begin{tabular}{|l|r|c|l|r|}
+\hline
+&&&&\\
+\multicolumn{1}{|c|}{\rm Generator} & $\mu$-sec. && {\rm Generator}
+   & $\mu$-sec.\\
+\hline \hline
+&&&&\\
+ MRG$^1$              &  12.36 && MRG$^3$      &   6.35\\
+ MRG$^2$              &   4.13 && C2MRG        &  10.71\\
+ LagFib               &   0.59 &&              &\\
+\hline
+\end{tabular}
+
+\begin {verse}
+ $^1$ : implantation generale.\\
+ $^2$ : implantation plus rapide mentionnee dans {\tt SetMRG}.\\
+ $^3$ : varie selon que $p - d < 32$ ou non et que $d < 32$ ou non.\\
+\end {verse}
+\end {table}
+
+
+\begin{table}[htb] \centering \tt
+\caption {\rm Vitesse moyenne par appel pour the generators du 
+              module utaus.}
+\label {vitesse3}
+\begin{tabular}{|l|r|c|l|r|}
+\hline
+&&&&\\
+\multicolumn{1}{|c|}{\rm Generator} & $\mu$-sec. && {\rm Generator}
+   & $\mu$-sec.\\
+\hline \hline
+&&&&\\
+ Taus                 &   0.69 && CombTaus3    &   1.60\\
+ TausJ                &   3.52 && Tez95        &   1.48\\
+ LongTaus             &   1.07 && TezLec91     &   1.17\\
+ CombTaus2            &   1.17 && Tausme3a     &   1.49\\
+&&&&\\
+\hline
+\end{tabular}
+
+\end {table}
+
+\begin{table}[htb] \centering \tt
+\caption {\rm Vitesse moyenne par appel pour the generators 
+              du module ugfsr.}
+\label {vitesse4}
+\begin{tabular}{|l|r|c|l|r|}
+\hline
+&&&&\\
+\multicolumn{1}{|c|}{\rm Generator} & $\mu$-sec. && {\rm Generator}
+   & $\mu$-sec.\\
+\hline \hline
+&&&&\\
+ GFSR                 &   0.66 && Toot73       &   0.62\\
+ TGFSR                &   0.81 && Fushimi90    &   0.67\\
+ Ripley90             &   0.53 && Kirk81       &   0.65\\
+&&&&\\
+\hline
+\end{tabular}
+
+\end {table}
+
+\begin{table}[htb] \centering \tt
+\caption {\rm Vitesse moyenne par appel pour the generators 
+              du module uinv.}
+\label {vitesse5}
+\begin{tabular}{|l|r|c|l|r|}
+\hline
+&&&&\\
+\multicolumn{1}{|c|}{\rm Generator} & $\mu$-sec. && {\rm Generator}
+   & $\mu$-sec.\\
+\hline \hline
+&&&&\\
+ InvImpl              &  14.18 && InvExpl      &  14.77\\
+ InvImpl2a            &  22.95 && InvExpl2a    &  35.21\\
+ InvImpl2b            &  22.82 && InvExpl2b    &  27.46\\
+ InvMRG               &  23.12 &&              &       \\
+&&&&\\
+\hline
+\end{tabular}
+
+\end {table}
+
+\begin{table}[htb] \centering \tt
+\caption {\rm Vitesse moyenne par appel pour the generators 
+              du module uquad.}
+\label {vitesse6}
+\begin{tabular}{|l|r|c|l|r|}
+\hline
+&&&&\\
+\multicolumn{1}{|c|}{\rm Generator} & $\mu$-sec. && {\rm Generator}
+   & $\mu$-sec.\\
+\hline \hline
+&&&&\\
+ Quadratic            &  13.81 && Quadratic2$^1$&  14.77\\
+ Quadratic2           &   1.63 &&               &       \\
+&&&&\\
+\hline
+\end{tabular}
+
+\begin {verse}
+$^1$ : implantation rapide : e = 32.\\
+\end {verse}
+\end {table}
+
+\begin{table}[htb] \centering \tt
+\caption {\rm Vitesse moyenne par appel pour the generators 
+              du module ulec.}
+\label {vitesse7}
+\begin{tabular}{|l|r|c|l|r|}
+\hline
+&&&&\\
+\multicolumn{1}{|c|}{\rm Generator} & $\mu$-sec. && {\rm Generator}
+   & $\mu$-sec.\\
+\hline \hline
+&&&&\\
+ CombLec88            &   2.98 && CombMRG96       &   5.47\\
+ MRG93                &   3.31 && CombMRG96d      &  11.22\\
+ CombLec88Float       &   1.38 && CombMRG96Float  &   2.60\\
+                      &        && CombMRG96dFloat &   5.13\\
+&&&&\\
+\hline
+\end{tabular}
+
+\end {table}
+
+\begin{table}[htb] \centering \tt
+\caption {\rm Vitesse moyenne par appel pour the generators 
+              du module ucarry.}
+\label {vitesse8a}
+\begin{tabular}{|l|r|c|l|r|}
+\hline
+&&&&\\
+\multicolumn{1}{|c|}{\rm Generator} & $\mu$-sec. && {\rm Generator}
+   & $\mu$-sec.\\
+\hline \hline
+&&&&\\
+ AWC                  &   0.85 && MWC$^1$      &  13.03\\
+ SWC                  &   0.85 && SWC$^1$      &   3.79\\
+&&&&\\
+\hline
+\end{tabular}
+
+\begin {verse} 
+ $^1$ : implantation generale, e = 32.\\
+\end {verse} 
+\end {table}
+
+\begin{table}[htb] \centering \tt
+\caption {\rm Vitesse moyenne par appel pour the generators 
+              du module umarsa.}
+\label {vitesse8}
+\begin{tabular}{|l|r|c|l|r|}
+\hline
+&&&&\\
+\multicolumn{1}{|c|}{\rm Generator} & $\mu$-sec. && {\rm Generator}
+   & $\mu$-sec.\\
+\hline \hline
+&&&&\\
+ KISS                 &   0.76 && Combo        &   1.15\\
+ Marsa90a             &   0.87 && ECG1         &   1.34\\
+ Marsa90b             &   0.83 && ECG2         &   1.31\\
+ Mother0              &   1.77 && ECG3         &   1.39\\
+                       &&& ECG4                &   1.36 \\
+% Mother1$^1$          &   5.95 &&              &       \\
+&&&&\\
+\hline
+\end{tabular}
+\end {table}
+
+\begin{table}[htb] \centering \tt
+\caption {\rm Vitesse moyenne par appel pour the generators 
+              du module unumrec.}
+\label {vitesse9}
+\begin{tabular}{|l|r|c|l|r|}
+\hline
+&&&&\\
+\multicolumn{1}{|c|}{\rm Generator} & $\mu$-sec. && {\rm Generator}
+   & $\mu$-sec.\\
+\hline \hline
+&&&&\\
+ Setran0              &   2.33 &&  Setran2      &   5.25\\
+ Setran1              &   2.91 &&               &       \\
+&&&&\\
+\hline
+\end{tabular}
+
+\end {table}
+
+\begin{table}[htb] \centering \tt
+\caption {\rm Vitesse moyenne par appel pour the generators 
+              des modules uvaria et ufile.}
+\label {vitesse10}
+\begin{tabular}{|l|r|c|l|r|}
+\hline
+&&&&\\
+\multicolumn{1}{|c|}{\rm Generator} & $\mu$-sec. && {\rm Generator}
+   & $\mu$-sec.\\
+\hline \hline
+&&&&\\
+ Tindo                &  64.31 && ACORN        &  75.33\\
+ CSD                  &   6.03 && ReadFile     &  13.82\\
+&&&&\\
+\hline
+\end{tabular}
+
+\end {table}
+
+\fi   %%%%%%%%%%%%%%%%%%%%

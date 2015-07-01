@@ -1,0 +1,1062 @@
+\begin{thebibliography}{100}
+
+\bibitem{rALT88a}
+N.~S. Altman.
+\newblock Bit-wise behavior of random number generators.
+\newblock {\em SIAM Journal on Scientific and Statistical Computing},
+  9(5):941--949, 1988.
+
+\bibitem{tAND95b}
+N.~H. Anderson and D.~M. Titterington.
+\newblock A comparison of two statistics for detecting clustering in one
+  dimension.
+\newblock {\em Journal of Statistical Computation and Simulation}, 53:103--125,
+  1995.
+
+\bibitem{rBAR06a}
+E.~Barker and J.~Kelsey.
+\newblock Recommendation for random number generation using deterministic
+  random bit generators.
+\newblock {SP}-800-90, U.S. DoC/National Institute of Standards and Technology,
+  2006.
+\newblock See \url{http://csrc.nist.gov/publications/nistpubs/}.
+
+\bibitem{mBER84a}
+E.~R. Berlekamp.
+\newblock {\em Algebraic coding theory}.
+\newblock Aegean Park Press, Laguna Hills, CA, USA, 1984.
+
+\bibitem{tBIC83a}
+P.~J. Bickel and L.~Breiman.
+\newblock Sums of functions of nearest neighbor distances, moment bounds, limit
+  theorems and a goodness of fit test.
+\newblock {\em The Annals of Probability}, 11(1):185--214, 1983.
+
+\bibitem{sBRA87a}
+P.~Bratley, B.~L. Fox, and L.~E. Schrage.
+\newblock {\em A Guide to Simulation}.
+\newblock Springer-Verlag, New York, second edition, 1987.
+
+\bibitem{rBRE94a}
+R.~P. Brent.
+\newblock On the periods of generalized fibonacci recurrences.
+\newblock {\em Mathematics of Computation}, 63(207):389--401, 1994.
+
+\bibitem{rBRE04a}
+R.~P. Brent.
+\newblock Note on {M}arsaglia's xorshift random number generators.
+\newblock {\em Journal of Statistical Software}, 11(5):1--4, 2004.
+\newblock See \url{http://www.jstatsoft.org/v11/i05/brent.pdf}.
+
+\bibitem{rCAR90a}
+D.~G. Carta.
+\newblock Two fast implementations of the ``minimal standard'' random number
+  generator.
+\newblock {\em Communications of the ACM}, 33(1):87--88, 1990.
+
+\bibitem{rCAR89a}
+G.~D. Carter.
+\newblock {\em Aspects of Local Linear Complexity}.
+\newblock PhD thesis, University of London, 1989.
+
+\bibitem{rCOD94a}
+P.~D. Coddington.
+\newblock Analysis of random number generators using {M}onte {C}arlo
+  simulation.
+\newblock {\em International Journal of Modern Physics}, C 5:547, 1994.
+
+\bibitem{rCOR99a}
+J.~S. Coron and D.~Naccache.
+\newblock An accurate evaluation of {M}aurer's universal test.
+\newblock In S.~E. Tavares and H.~Meijer, editors, {\em Selected Areas in
+  Cryptography, Proceedings of the 5th Annual International Workshop, SAC'98},
+  volume 1556 of {\em Lecture Notes in Computer Science}, pages 57--71.
+  Springer-Verlag, 1999.
+
+\bibitem{rCOU94a}
+R.~Couture and P.~L'Ecuyer.
+\newblock On the lattice structure of certain linear congruential sequences
+  related to {AWC/SWB} generators.
+\newblock {\em Mathematics of Computation}, 62(206):798--808, 1994.
+
+\bibitem{rCOU95a}
+R.~Couture and P.~L'Ecuyer.
+\newblock Linear recurrences with carry as random number generators.
+\newblock In {\em Proceedings of the 1995 Winter Simulation Conference}, pages
+  263--267, 1995.
+
+\bibitem{rCOU97a}
+R.~Couture and P.~L'Ecuyer.
+\newblock Distribution properties of multiply-with-carry random number
+  generators.
+\newblock {\em Mathematics of Computation}, 66(218):591--607, 1997.
+
+\bibitem{tCRE76a}
+N.~Cressie.
+\newblock On the logarithms of high-order spacings.
+\newblock {\em Biometrika}, 63(2):343--355, 1976.
+
+\bibitem{tCRE79a}
+N.~Cressie.
+\newblock An optimal statistic based on higher-order gaps.
+\newblock {\em Biometrika}, 66:619--627, 1979.
+
+\bibitem{tCRE80a}
+N.~Cressie.
+\newblock Asymptotic distribution of the scan statistic under uniformity.
+\newblock {\em Annals of Probability}, 9:828--840, 1980.
+
+\bibitem{rDAE02a}
+J.~Daemen and V.~Rijmen.
+\newblock {\em The Design of Rijndael}.
+\newblock Springer Verlag, New York, 2002.
+\newblock See \url{http://www.esat.kuleuven.ac.be/~rijmen/rijndael/}.
+
+\bibitem{rDEM90a}
+A.~{De Matteis} and S.~Pagnutti.
+\newblock A class of parallel random number generators.
+\newblock {\em Parallel Computing}, 13:193--198, 1990.
+
+\bibitem{tDEL79a}
+G.~E. del Pino.
+\newblock On the asymptotic distribution of {\it k\/}-spacings with
+  applications to goodness-of-fits tests.
+\newblock {\em Annals of Statistics}, 7:1058--1065, 1979.
+
+\bibitem{rDEN00a}
+L.-Y. Deng and D.~K.~J. Lin.
+\newblock Random number generation for the new century.
+\newblock {\em The American Statistician}, 54(2):145--150, 2000.
+
+\bibitem{rDEN02a}
+L.-Y. Deng and H.~Xu.
+\newblock Design, search, and implementation of high-dimensional, efficient,
+  long-cycle, and portable uniform random variate generator.
+\newblock Technical report, Department of Statistics, University of California
+  at Los Angeles, 2002.
+\newblock Preprint {\#}327.
+
+\bibitem{rDUD81b}
+E.~J. Dudewicz and E.~C. van~der Meulen.
+\newblock Entropy-based tests of uniformity.
+\newblock {\em Journal of the American Statistical Association},
+  76(376):967--974, 1981.
+
+\bibitem{rDUD95a}
+E.~J. Dudewicz, E.~C. van~der Meulen, M.~G. Sri{R}am, and N.~K.~W. Teoh.
+\newblock Entropy-based random number evaluation.
+\newblock {\em American Journal of Mathematical and Management Sciences},
+  15:115--153, 1995.
+
+\bibitem{rDWO01a}
+M.~Dworkin.
+\newblock Recommandations for block cipher modes of operation.
+\newblock {SP} 800-38a, U.S. DoC/National Institute of Standards and
+  Technology, 2001.
+\newblock See \url{http://csrc.nist.gov/CryptoToolkit/modes/}.
+
+\bibitem{rEIC87a}
+J.~Eichenauer and J.~Lehn.
+\newblock On the structure of quadratic congruential sequences.
+\newblock {\em Manuscripta Mathematica}, 58:129--140, 1987.
+
+\bibitem{rEIC92c}
+J.~{Eichenauer-Herrmann}.
+\newblock Inversive congruential pseudorandom numbers: A tutorial.
+\newblock {\em International Statistical Reviews}, 60:167--176, 1992.
+
+\bibitem{rEIC93a}
+J.~{Eichenauer-Herrmann}.
+\newblock Statistical independence of a new class of inversive congruential
+  pseudorandom numbers.
+\newblock {\em Mathematics of Computation}, 60:375--384, 1993.
+
+\bibitem{rEIC95d}
+J.~{Eichenauer-Herrmann}.
+\newblock Modified explicit inversive congruential pseudorandom numbers with
+  power-of-two modulus.
+\newblock {\em Statistics and Computing}, 6:31--36, 1996.
+
+\bibitem{rEIC92d}
+J.~{Eichenauer-Herrmann} and H.~Grothe.
+\newblock A new inversive congruential pseudorandom number generator with power
+  of two modulus.
+\newblock {\em ACM Transactions on Modeling and Computer Simulation},
+  2(1):1--11, 1992.
+
+\bibitem{rEIC97a}
+J.~{Eichenauer-Herrmann} and E.~Herrmann.
+\newblock Compound cubic congruential pseudorandom numbers.
+\newblock {\em Computing}, 59:85--90, 1997.
+
+\bibitem{rEIC97d}
+J.~{Eichenauer-Herrmann}, E.~Herrmann, and S.~Wegenkittl.
+\newblock A survey of quadratic and inversive congruential pseudorandom
+  numbers.
+\newblock In P.~Hellekalek, G.~Larcher, H.~Niederreiter, and P.~Zinterhof,
+  editors, {\em {M}onte {C}arlo and Quasi-{M}onte {C}arlo Methods 1996}, volume
+  127 of {\em Lecture Notes in Statistics}, pages 66--97, New York, 1998.
+  Springer.
+
+\bibitem{rEIC94b}
+J.~{Eichenauer-Herrmann} and K.~Ickstadt.
+\newblock Explicit inversive congruential pseudorandom numbers with power of
+  two modulus.
+\newblock {\em Mathematics of Computation}, 62(206):787--797, 1994.
+
+\bibitem{rEMM97a}
+F.~Emmerich.
+\newblock Equidistribution properties of quadratic congruential pseudorandom
+  numbers.
+\newblock {\em Journal of Computational and Applied Mathematics},
+  79(2):207--214, 1997.
+
+\bibitem{rERD92a}
+E.~D. Erdmann.
+\newblock Empirical tests of binary keystreams.
+\newblock Master's thesis, Department of Mathematics, Royal Holloway and
+  Bedford New College, University of London, 1992.
+
+\bibitem{rFER92a}
+A.~M. Ferrenberg, D.~P. Landau, and Y.~J. Wong.
+\newblock {M}onte {C}arlo simulations: Hidden errors from ``good'' random
+  number generators.
+\newblock {\em Physical Review Letters}, 69(23):3382--3384, 1992.
+
+\bibitem{sFIS78a}
+G.~S. Fishman.
+\newblock {\em Principles of Discrete Event Simulation}.
+\newblock Wiley, New York, 1978.
+
+\bibitem{rFIS90a}
+G.~S. Fishman.
+\newblock Multiplicative congruential random number generators with modulus
+  $2^\beta$: An exhaustive analysis for $\beta=32$ and a partial analysis for
+  $\beta=48$.
+\newblock {\em Mathematics of Computation}, 54(189):331--344, Jan 1990.
+
+\bibitem{sFIS96a}
+G.~S. Fishman.
+\newblock {\em {M}onte {C}arlo: Concepts, Algorithms, and Applications}.
+\newblock Springer Series in Operations Research. Springer-Verlag, New York,
+  1996.
+
+\bibitem{rFIS86a}
+G.~S. Fishman and L.~S. {Moore III}.
+\newblock An exhaustive analysis of multiplicative congruential random number
+  generators with modulus $2^{31}-1$.
+\newblock {\em SIAM Journal on Scientific and Statistical Computing},
+  7(1):24--45, 1986.
+
+\bibitem{rFOG01a}
+A.~Fog.
+\newblock Chaotic random number generators with random cycle lengths.
+\newblock available at \url{http://www.agner.org/random/theory/}, 2001.
+
+\bibitem{tFOL79a}
+A.~F{\"o}ldes.
+\newblock The limit distribution of the length of the longest head run.
+\newblock {\em Period Math. Hung.}, 10(4):301--310, 1979.
+
+\bibitem{rFUS83a}
+M.~Fushimi.
+\newblock Increasing the orders of equidistribution of the leading bits of the
+  {T}ausworthe sequence.
+\newblock {\em Information Processing Letters}, 16:189--192, 1983.
+
+\bibitem{rFUS90a}
+M.~Fushimi.
+\newblock Random number generation with the recursion $x_t = x_{t-3p}\oplus
+  x_{t-3q}$.
+\newblock {\em Journal of Computational and Applied Mathematics}, 31:105--118,
+  1990.
+
+\bibitem{rGOO53a}
+I.~J. Good.
+\newblock The serial test for sampling numbers and other tests for randomness.
+\newblock {\em Proceedings of the Cambridge Philos. Society}, 49:276--284,
+  1953.
+
+\bibitem{tGOR86a}
+L.~Gordon, M.~F. Schilling, and S.~Waterman.
+\newblock An extreme value theory for long head runs.
+\newblock {\em Probability Theory and Related Fields}, 72:279--287, 1986.
+
+\bibitem{rGRA01a}
+J.~Granger-Pich\'e.
+\newblock G\'en\'erateurs pseudo-al\'eatoires combinant des r\'ecurrences
+  lin\'eaires et non lin\'eaires.
+\newblock Master's thesis, D\'epartement d'informatique et de recherche
+  op\'eration\-nelle, Universit\'e de Montr\'eal, 2001.
+
+\bibitem{rGRE55a}
+R.~E. Greenwood.
+\newblock Coupon collector's test for random digits.
+\newblock {\em Math. Tables and other Aids to Computation}, 9:1--5, 224, 229,
+  1955.
+
+\bibitem{pGUI81a}
+L.~J. Guibas and A.~M. Odlyzko.
+\newblock Periods in strings.
+\newblock {\em Journal of Combinatorial Theory, Series A}, 30:19--42, 1981.
+
+\bibitem{tHAL86a}
+P.~Hall.
+\newblock On powerful distributional tests based on sample spacings.
+\newblock {\em Journal of Multivariate Analysis}, 19:201--224, 1986.
+
+\bibitem{rHEL03a}
+P.~Hellekalek and S.~Wegenkittl.
+\newblock Empirical evidence concerning {AES}.
+\newblock {\em ACM Transactions on Modeling and Computer Simulation},
+  13(4):322--333, 2003.
+
+\bibitem{rHOL94a}
+B.~L. Holian, O.~E. Percus, T.~T. Warnock, and P.~A. Whitlock.
+\newblock Pseudorandom number generator for massively parallel
+  molecular-dynamics simulations.
+\newblock {\em Physical Review {E}}, 50(2):1607--1615, 1994.
+
+\bibitem{rHOR93a}
+W.~H{\"o}rmann and G.~Derflinger.
+\newblock A portable random number generator well suited for the rejection
+  method.
+\newblock {\em {ACM} Transactions on Mathematical Software}, 19(4):489--495,
+  1993.
+
+\bibitem{rJAM94a}
+F.~James.
+\newblock {RANLUX}: A {F}ortran implementation of the high-quality pseudorandom
+  number generator of {L}{\"u}scher.
+\newblock {\em Computer Physics Communications}, 79:111--114, 1994.
+
+\bibitem{tJAM89a}
+S.~R. Jammalamadaka, X.~Zhou, and R.~C. Tiwari.
+\newblock Asymptotic efficiencies of spacing tests for goodness of fits.
+\newblock {\em Metrika}, 36:355--377, 1989.
+
+\bibitem{rJEN96a}
+B.~Jenkins.
+\newblock {ISAAC}.
+\newblock In Dieter Gollmann, editor, {\em Fast Software Encryption,
+  Proceedings of the Third International Workshop, Cambridge, UK}, volume 1039
+  of {\em Lecture Notes in Computer Science}, pages 41--49. Springer-Verlag,
+  1996.
+\newblock Available at \url{http://burtleburtle.net/bob/rand/isaacafa.html}.
+
+\bibitem{sKAR91a}
+Z.~A. Karian and E.~J. Dudewicz.
+\newblock {\em Modern Statistical Systems and GPSS Simulation}.
+\newblock Computer Science Press, W. H. Freeman, New York, 1991.
+
+\bibitem{rKEN38a}
+M.~G. Kendall and B.~Babington-Smith.
+\newblock Randomness and other random sampling numbers.
+\newblock {\em Journal of the Royal Statistical Society}, 101:147--166, 1938.
+
+\bibitem{rKEN39a}
+M.~G. Kendall and B.~Babington-Smith.
+\newblock Second paper on random sampling numbers.
+\newblock {\em Journal of the Royal Statistical Society Supplement}, 6:51--61,
+  1939.
+
+\bibitem{rKER37a}
+W.~O. Kermack and A.~G. Kendrick.
+\newblock Tests for randomness in a series of numerical observations.
+\newblock {\em Proc. of the Royal Society of Edinburgh}, 57:228--240, 1937.
+
+\bibitem{rKIR81a}
+S.~Kirkpatrick and E.~Stoll.
+\newblock A very fast shift-register sequence random number generator.
+\newblock {\em Journal of Computational Physics}, 40:517--526, 1981.
+
+\bibitem{iKIR94a}
+P.~Kirschenhofer, H.~Prodinger, and W.~Szpankowski.
+\newblock Digital search trees again revisited: The internal path length
+  perspective.
+\newblock {\em SIAM Journal on Computing}, 23:598--616, 1994.
+
+\bibitem{rKNU81a}
+D.~E. Knuth.
+\newblock {\em The Art of Computer Programming, Volume 2: Seminumerical
+  Algorithms}.
+\newblock Addison-Wesley, Reading, Mass., second edition, 1981.
+
+\bibitem{iKNU97a}
+D.~E. Knuth.
+\newblock {\em The Art of Computer Programming, Vol. 1}.
+\newblock Addison-Wesley, Reading, Mass., third edition, 1997.
+
+\bibitem{rKNU98a}
+D.~E. Knuth.
+\newblock {\em The Art of Computer Programming, Volume 2: Seminumerical
+  Algorithms}.
+\newblock Addison-Wesley, Reading, Mass., third edition, 1998.
+
+\bibitem{rKOC95a}
+C.~Ko{\c{c}}.
+\newblock Recurring-with-carry sequences.
+\newblock {\em Journal of Applied Probability}, 32:966--971, 1995.
+
+\bibitem{tKUO81a}
+M.~Kuo and J.~S. Rao.
+\newblock Limit theory and efficiencies for tests based on higher order
+  spacings.
+\newblock In {\em "Proceedings of the Indian Statistical Institute Golden
+  Jubilee International Conference on Statistics: Applications and New
+  Directions}, pages 333--352. Statistical Publishing Society, Calcuta, 1981.
+
+\bibitem{rLAG93a}
+J.~C. Lagarias.
+\newblock Pseudorandom numbers.
+\newblock {\em Statistical Science}, 8(1):31--39, 1993.
+
+\bibitem{sLAW91a}
+A.~M. Law and W.~D. Kelton.
+\newblock {\em Simulation Modeling and Analysis}.
+\newblock McGraw-Hill, New York, second edition, 1991.
+
+\bibitem{rLEC86a}
+P.~L'Ecuyer.
+\newblock Efficient and portable 32-bit random variate generators.
+\newblock In {\em Proceedings of the 1986 Winter Simulation Conference}, pages
+  275--277, 1986.
+
+\bibitem{rLEC88a}
+P.~L'Ecuyer.
+\newblock Efficient and portable combined random number generators.
+\newblock {\em Communications of the ACM}, 31(6):742--749 and 774, 1988.
+\newblock See also the correspondence in the same journal, 32, 8 (1989)
+  1019--1024.
+
+\bibitem{rLEC90a}
+P.~L'Ecuyer.
+\newblock Random numbers for simulation.
+\newblock {\em Communications of the ACM}, 33(10):85--97, 1990.
+
+\bibitem{rLEC92a}
+P.~L'Ecuyer.
+\newblock Testing random number generators.
+\newblock In {\em Proceedings of the 1992 Winter Simulation Conference}, pages
+  305--313. {IEEE} Press, Dec 1992.
+
+\bibitem{rLEC94a}
+P.~L'Ecuyer.
+\newblock Uniform random number generation.
+\newblock {\em Annals of Operations Research}, 53:77--120, 1994.
+
+\bibitem{rLEC96b}
+P.~L'Ecuyer.
+\newblock Combined multiple recursive random number generators.
+\newblock {\em Operations Research}, 44(5):816--822, 1996.
+
+\bibitem{rLEC96a}
+P.~L'Ecuyer.
+\newblock Maximally equidistributed combined {T}ausworthe generators.
+\newblock {\em Mathematics of Computation}, 65(213):203--213, 1996.
+
+\bibitem{rLEC97h}
+P.~L'Ecuyer.
+\newblock Tests based on sum-functions of spacings for uniform random numbers.
+\newblock {\em Journal of Statistical Computation and Simulation}, 59:251--269,
+  1997.
+
+\bibitem{rLEC98t}
+P.~L'Ecuyer.
+\newblock Random number generators and empirical tests.
+\newblock In P.~Hellekalek, G.~Larcher, H.~Niederreiter, and P.~Zinterhof,
+  editors, {\em {M}onte {C}arlo and Quasi-{M}onte {C}arlo Methods 1996}, volume
+  127 of {\em Lecture Notes in Statistics}, pages 124--138. Springer-Verlag,
+  New York, 1998.
+
+\bibitem{rLEC99b}
+P.~L'Ecuyer.
+\newblock Good parameters and implementations for combined multiple recursive
+  random number generators.
+\newblock {\em Operations Research}, 47(1):159--164, 1999.
+
+\bibitem{rLEC99c}
+P.~L'Ecuyer.
+\newblock Tables of linear congruential generators of different sizes and good
+  lattice structure.
+\newblock {\em Mathematics of Computation}, 68(225):249--260, 1999.
+
+\bibitem{rLEC99a}
+P.~L'Ecuyer.
+\newblock Tables of maximally equidistributed combined {LFSR} generators.
+\newblock {\em Mathematics of Computation}, 68(225):261--269, 1999.
+
+\bibitem{rLEC01d}
+P.~L'Ecuyer.
+\newblock Software for uniform random number generation: Distinguishing the
+  good and the bad.
+\newblock In {\em Proceedings of the 2001 Winter Simulation Conference}, pages
+  95--105, Pistacaway, NJ, 2001. {IEEE} Press.
+
+\bibitem{rLEC97d}
+P.~L'Ecuyer and T.~H. Andres.
+\newblock A random number generator based on the combination of four {LCG}s.
+\newblock {\em Mathematics and Computers in Simulation}, 44:99--107, 1997.
+
+\bibitem{rLEC93a}
+P.~L'Ecuyer, F.~Blouin, and R.~Couture.
+\newblock A search for good multiple recursive random number generators.
+\newblock {\em ACM Transactions on Modeling and Computer Simulation},
+  3(2):87--98, 1993.
+
+\bibitem{rLEC96e}
+P.~L'Ecuyer, A.~Compagner, and J.-F. Cordeau.
+\newblock Entropy tests for random number generators.
+\newblock Manuscript, 1996.
+
+\bibitem{rLEC00c}
+P.~L'Ecuyer, J.-F. Cordeau, and R.~Simard.
+\newblock Close-point spatial tests and their application to random number
+  generators.
+\newblock {\em Operations Research}, 48(2):308--317, 2000.
+
+\bibitem{rLEC94e}
+P.~L'Ecuyer and R.~Couture.
+\newblock An implementation of the lattice and spectral tests for multiple
+  recursive linear random number generators.
+\newblock {\em INFORMS Journal on Computing}, 9(2):206--217, 1997.
+
+\bibitem{rLEC03c}
+P.~L'Ecuyer and J.~Granger-Pich\'e.
+\newblock Combined generators with components from different families.
+\newblock {\em Mathematics and Computers in Simulation}, 62:395--404, 2003.
+
+\bibitem{rLEC98h}
+P.~L'Ecuyer and P.~Hellekalek.
+\newblock Random number generators: Selection criteria and testing.
+\newblock In P.~Hellekalek and G.~Larcher, editors, {\em Random and
+  Quasi-Random Point Sets}, volume 138 of {\em Lecture Notes in Statistics},
+  pages 223--265. Springer-Verlag, New York, 1998.
+
+\bibitem{rLEC99e}
+P.~L'Ecuyer and R.~Simard.
+\newblock Beware of linear congruential generators with multipliers of the form
+  $a = \pm 2^q\pm 2^r$.
+\newblock {\em {ACM} Transactions on Mathematical Software}, 25(3):367--374,
+  1999.
+
+\bibitem{iLEC01m}
+P.~L'Ecuyer and R.~Simard.
+\newblock {\em {MyLib}: A Small Library of Basic Utilities in {ANSI C}}, 2001.
+\newblock Software {user's} guide.
+
+\bibitem{rLEC01a}
+P.~L'Ecuyer and R.~Simard.
+\newblock On the performance of birthday spacings tests for certain families of
+  random number generators.
+\newblock {\em Mathematics and Computers in Simulation}, 55(1--3):131--137,
+  2001.
+
+\bibitem{iLEC01p}
+P.~L'Ecuyer and R.~Simard.
+\newblock {\em {ProbDist}: A Software Library of Probability Distributions and
+  Goodness-of-Fit Statistics in {ANSI C}}, 2001.
+\newblock Software {user's} guide.
+
+\bibitem{rLEC01s}
+P.~L'Ecuyer, R.~Simard, E.~J. Chen, and W.~D. Kelton.
+\newblock An object-oriented random-number package with many long streams and
+  substreams.
+\newblock {\em Operations Research}, 50(6):1073--1075, 2002.
+
+\bibitem{rLEC02c}
+P.~L'Ecuyer, R.~Simard, and S.~Wegenkittl.
+\newblock Sparse serial tests of uniformity for random number generators.
+\newblock {\em {SIAM} Journal on Scientific Computing}, 24(2):652--668, 2002.
+
+\bibitem{rLEC91b}
+P.~L'Ecuyer and S.~Tezuka.
+\newblock Structural properties for two classes of combined random number
+  generators.
+\newblock {\em Mathematics of Computation}, 57(196):735--746, 1991.
+
+\bibitem{rLEC00b}
+P.~L'Ecuyer and R.~Touzin.
+\newblock Fast combined multiple recursive generators with multipliers of the
+  form $a = \pm 2^q \pm 2^r$.
+\newblock In J.~A. Joines, R.~R. Barton, K.~Kang, and P.~A. Fishwick, editors,
+  {\em Proceedings of the 2000 Winter Simulation Conference}, pages 683--689,
+  Pistacaway, NJ, 2000. {IEEE} Press.
+
+\bibitem{rLEE97a}
+H.~Leeb and S.~Wegenkittl.
+\newblock Inversive and linear congruential pseudorandom number generators in
+  empirical tests.
+\newblock {\em ACM Transactions on Modeling and Computer Simulation},
+  7(2):272--286, 1997.
+
+\bibitem{rLEV44a}
+H.~Levene and J.~Wolfowitz.
+\newblock The covariance matrix of runs up and down.
+\newblock {\em The Annals of mathematical statistics}, 15:58--69, 1944.
+
+\bibitem{rLEW69a}
+P.~A.~W. Lewis, A.~S. Goodman, and J.~M. Miller.
+\newblock A pseudo-random number generator for the system/360.
+\newblock {\em {IBM} System's Journal}, 8:136--143, 1969.
+
+\bibitem{rLUS94a}
+M.~L{\"u}scher.
+\newblock A portable high-quality random number generator for lattice field
+  theory simulations.
+\newblock {\em Computer Physics Communications}, 79:100--110, 1994.
+
+\bibitem{rMAR85a}
+G.~Marsaglia.
+\newblock A current view of random number generators.
+\newblock In {\em Computer Science and Statistics, Sixteenth Symposium on the
+  Interface}, pages 3--10, North-Holland, Amsterdam, 1985. Elsevier Science
+  Publishers.
+
+\bibitem{rMAR85c}
+G.~Marsaglia.
+\newblock Note on a proposed test for random number generators.
+\newblock {\em {IEEE} Transactions on Computers}, C-34(8):756--758, 1985.
+
+\bibitem{rMAR93a}
+G.~Marsaglia.
+\newblock Remarks on choosing and implementing random number generators.
+\newblock {\em Communications of the ACM}, 36(7):105--110, 1993.
+
+\bibitem{rMAR96b}
+G.~Marsaglia.
+\newblock {DIEHARD:} a battery of tests of randomness.
+\newblock See \url{http://stat.fsu.edu/~geo/diehard.html}, 1996.
+
+\bibitem{rMAR96a}
+G.~Marsaglia.
+\newblock The {M}arsaglia random number {CDROM} including the {DIEHARD} battery
+  of tests of randomness.
+\newblock See \url{http://stat.fsu.edu/pub/diehard}, 1996.
+
+\bibitem{rMAR97a}
+G.~Marsaglia.
+\newblock A random number generator for {C}.
+\newblock Posted to the electronic billboard \url{sci.math.num-analysis},
+  September 30 1997.
+
+\bibitem{rMAR99a}
+G.~Marsaglia.
+\newblock Random numbers for {C}: The {END}?
+\newblock Posted to the electronic billboard \url{sci.crypt.random-numbers},
+  January 20 1999.
+
+\bibitem{rMAR02a}
+G.~Marsaglia.
+\newblock Good 64-bit {RNG}'s.
+\newblock Posted to the electronic billboard \url{sci.crypt.random-numbers},
+  August 25 2002.
+
+\bibitem{rMAR03a}
+G.~Marsaglia.
+\newblock Xorshift {RNG}s.
+\newblock {\em Journal of Statistical Software}, 8(14):1--6, 2003.
+\newblock See \url{http://www.jstatsoft.org/v08/i14/xorshift.pdf}.
+
+\bibitem{rMAR73a}
+G.~Marsaglia, K.~Ananthanarayanan, and N.~Paul.
+\newblock How to use the {M}c{G}ill {R}andom {N}umber {P}ackage
+  ``{SUPER-DUPER}''.
+\newblock Technical report, School of Computer Science, McGill University,
+  Montreal, Canada, 1973.
+
+\bibitem{rMAR90a}
+G.~Marsaglia, B.~Narasimhan, and A.~Zaman.
+\newblock A random number generator for {PC}'s.
+\newblock {\em Computer Physics Communications}, 60:345--349, 1990.
+
+\bibitem{rMAR02b}
+G.~Marsaglia and W.~W. Tsang.
+\newblock Some difficult-to-pass tests of randomness.
+\newblock {\em Journal of Statistical Software}, 7(3):1--9, 2002.
+\newblock See \url{http://www.jstatsoft.org/v07/i03/tuftests.pdf}.
+
+\bibitem{rMAR85b}
+G.~Marsaglia and L.-H. Tsay.
+\newblock Matrices and the structure of random number sequences.
+\newblock {\em Linear Algebra and its Applications}, 67:147--156, 1985.
+
+\bibitem{rMAR91a}
+G.~Marsaglia and A.~Zaman.
+\newblock A new class of random number generators.
+\newblock {\em The Annals of Applied Probability}, 1:462--480, 1991.
+
+\bibitem{rMAR93c}
+G.~Marsaglia and A.~Zaman.
+\newblock The {KISS} generator.
+\newblock Technical report, Department of Statistics, University of Florida,
+  1993.
+
+\bibitem{rMAR93b}
+G.~Marsaglia and A.~Zaman.
+\newblock Monkey tests for random number generators.
+\newblock {\em Computers Math. Applic.}, 26(9):1--10, 1993.
+
+\bibitem{rMAR90b}
+G.~Marsaglia, A.~Zaman, and W.~W. Tsang.
+\newblock Towards a universal random number generator.
+\newblock {\em Statistics and Probability Letters}, 8:35--39, 1990.
+
+\bibitem{rMAS00a}
+M.~Mascagni and A.~Srinivasan.
+\newblock Algorithm 806: {SPRNG}: A scalable library for pseudorandom number
+  generation.
+\newblock {\em {ACM} Transactions on Mathematical Software}, 26:436--461, 2000.
+
+\bibitem{mMAS69a}
+J.~L. Massey.
+\newblock Shift-register synthesis and {BCH} decoding.
+\newblock {\em IEEE Trans. Inf. Theor}, IT-15:122--127, 1969.
+
+\bibitem{tSPL00a}
+{MathSoft Inc.}
+\newblock {\em S-PLUS 6.0 Guide to Statistics}, volume~2.
+\newblock Data Analysis Division, Seattle, WA, 2000.
+
+\bibitem{rMAT98b}
+M.~Matsumoto.
+\newblock Simple cellular automata as pseudo-random $m$-sequence generators for
+  built-in self test.
+\newblock {\em ACM Transactions on Modeling and Computer Simulation},
+  8(1):31--42, 1998.
+
+\bibitem{rMAT92a}
+M.~Matsumoto and Y.~Kurita.
+\newblock Twisted {GFSR} generators.
+\newblock {\em ACM Transactions on Modeling and Computer Simulation},
+  2(3):179--194, 1992.
+
+\bibitem{rMAT94a}
+M.~Matsumoto and Y.~Kurita.
+\newblock Twisted {GFSR} generators {II}.
+\newblock {\em ACM Transactions on Modeling and Computer Simulation},
+  4(3):254--266, 1994.
+
+\bibitem{rMAT98a}
+M.~Matsumoto and T.~Nishimura.
+\newblock Mersenne twister: A 623-dimensionally equidistributed uniform
+  pseudo-random number generator.
+\newblock {\em ACM Transactions on Modeling and Computer Simulation},
+  8(1):3--30, 1998.
+
+\bibitem{rMAU92a}
+U.~M. Maurer.
+\newblock A universal statistical test for random bit generators.
+\newblock {\em Journal of Cryptology}, 5(2):89--105, 1992.
+
+\bibitem{rMOL04a}
+C.~Moler.
+\newblock {\em Numerical Computing with {MATLAB}}.
+\newblock SIAM, Philadelphia, 2004.
+
+\bibitem{rNIE92b}
+H.~Niederreiter.
+\newblock {\em Random Number Generation and Quasi-{M}onte {C}arlo Methods},
+  volume~63 of {\em SIAM CBMS-NSF Regional Conference Series in Applied
+  Mathematics}.
+\newblock SIAM, Philadelphia, 1992.
+
+\bibitem{rNIS01a}
+NIST.
+\newblock Advanced encryption standard ({AES}).
+\newblock {FIPS}-197, U.S. DoC/National Institute of Standards and Technology,
+  2001.
+\newblock See \url{http://csrc.nist.gov/CryptoToolkit/tkencryption.html}.
+
+\bibitem{rNIS02a}
+{NIST}.
+\newblock Secure hash standard ({SHS}).
+\newblock {FIPS}-186-2, with change notice added in february 2004, U.S.
+  DoC/National Institute of Standards and Technology, 2002.
+\newblock See \url{http://csrc.nist.gov/CryptoToolkit/tkhash.html}.
+
+\bibitem{rPAN04c}
+F.~Panneton and P.~L'Ecuyer.
+\newblock On the xorshift random number generators.
+\newblock {\em {ACM} Transactions on Modeling and Computer Simulation},
+  15(4):346--361, 2005.
+
+\bibitem{rPAR88a}
+S.~K. Park and K.~W. Miller.
+\newblock Random number generators: Good ones are hard to find.
+\newblock {\em Communications of the ACM}, 31(10):1192--1201, 1988.
+
+\bibitem{rPAY69a}
+W.~H. Payne, J.~R. Rabung, and T.~P. Bogyo.
+\newblock Coding the {L}ehmer pseudo-random number generator.
+\newblock {\em Communications of the ACM}, 12:85--86, Feb. 1969.
+
+\bibitem{rPER89a}
+D.~E. Percus and M.~Kalos.
+\newblock Random number generators for {MIMD} parallel processors.
+\newblock {\em Journal of Parallel and Distributed Computation}, 6:477--497,
+  1989.
+
+\bibitem{rPER95a}
+O.~E. Percus and P.~A. Whitlock.
+\newblock Theory and application of {M}arsaglia's monkey test for pseudorandom
+  number generators.
+\newblock {\em ACM Transactions on Modeling and Computer Simulation},
+  5(2):87--100, 1995.
+
+\bibitem{rPRE92b}
+W.~H. Press and S.~A. Teukolsky.
+\newblock {\em Numerical Recipes in C}.
+\newblock Cambridge University Press, Cambridge, 1992.
+
+\bibitem{rPRE92a}
+W.~H. Press and S.~A. Teukolsky.
+\newblock Portable random number generators.
+\newblock {\em Computers in Physics}, 6(5):522--524, 1992.
+
+\bibitem{tGNU03a}
+The~GNU Project.
+\newblock {\em {R}: An Environment for Statistical Computing and Graphics}.
+\newblock The Free Software Foundation, 2003.
+\newblock {V}ersion 1.6.2. See \url{http://www.gnu.org/directory/GNU/R.html}.
+
+\bibitem{tPYK65a}
+R.~Pyke.
+\newblock Spacings.
+\newblock {\em Journal of the Royal Statistical Society, Series B},
+  27:395--449, 1965.
+
+\bibitem{tRAO84a}
+J.~S. Rao and M.~Kuo.
+\newblock Asymptotic results on the greenwood statistic and some of its
+  generalizations.
+\newblock {\em Journal of the Royal Statistical Society, Series B},
+  46:228--237, 1984.
+
+\bibitem{tREA88a}
+T.~R.~C. Read and N.~A.~C. Cressie.
+\newblock {\em Goodness-of-Fit Statistics for Discrete Multivariate Data}.
+\newblock Springer Series in Statistics. Springer-Verlag, New York, 1988.
+
+\bibitem{rREY98a}
+W.~J.~J. Rey.
+\newblock On generating random numbers, with help of $y = [(a + x) sin (b x)]$
+  mod 1.
+\newblock presented at the 22nd European Meeting of Statisticians and the 7th
+  Vilnius Conference on Probability Theory and Mathematical Statistics, August
+  1998.
+
+\bibitem{rRIJ00a}
+V.~Rijmen, A.~Bossel{\ae}rs, and P.~Barreto.
+\newblock Optimised {ANSI C} code for the {R}ijndael cipher (now {AES}), 2000.
+\newblock Public domain software.
+
+\bibitem{rRIP90a}
+B.~D. Ripley.
+\newblock Thoughts on pseudorandom number generators.
+\newblock {\em Journal of Computational and Applied Mathematics}, 31:153--163,
+  1990.
+
+\bibitem{tRIP94a}
+B.~D. Ripley and W.~N. Venables.
+\newblock {\em Modern applied statistics with S-Plus}.
+\newblock Springer-Verlag, New York, 1994.
+
+\bibitem{rRUK01a}
+A.~Rukhin, J.~Soto, J.~Nechvatal, M.~Smid, E.~Barker, S.~Leigh, M.~Levenson,
+  M.~Vangel, D.~Banks, A.~Heckert, J.~Dray, and S.~Vo.
+\newblock A statistical test suite for random and pseudorandom number
+  generators for cryptographic applications.
+\newblock {NIST} special publication 800-22, National Institute of Standards
+  and Technology ({NIST}), Gaithersburg, Maryland, USA, 2001.
+\newblock See \url{http://csrc.nist.gov/rng/}.
+
+\bibitem{rRUK02a}
+A.~L. Rukhin.
+\newblock Distribution of the number of words with a prescribed frequency and
+  tests of randomness.
+\newblock {\em Advances in Applied Probability}, 34(4):775--797, 2002.
+
+\bibitem{iSAS90a}
+SAS.
+\newblock {\em SAS Language: Reference, Version 6}.
+\newblock Cary, North Carolina, first edition, 1990.
+
+\bibitem{rSHC97a}
+L.~N. Shchur, J.~R. Heringa, and H.~W.~J. Bl{\"o}te.
+\newblock Simulation of a directed random-walk model: The effect of
+  pseudo-random number correlations.
+\newblock {\em Physica {A}}, 241:579--592, 1997.
+
+\bibitem{rSHE90a}
+Y.~S. Sherif and R.~G. Dear.
+\newblock Development of a new composite pseudo-random number generator.
+\newblock {\em Microelectronics and Reliability}, 30:545--553, 1990.
+
+\bibitem{rSOT99a}
+J.~Soto.
+\newblock Statistical testing of random number generators.
+\newblock Available at \url{http://csrc.nist.gov/rng/}, 1999.
+
+\bibitem{tSTE66a}
+M.~A. Stephens.
+\newblock Statistics connected with the uniform distribution: Percentage points
+  and application to testing for randomness of directions.
+\newblock {\em Biometrika}, 53:235--240, 1966.
+
+\bibitem{tSTE86a}
+M.~S. Stephens.
+\newblock Tests for the uniform distribution.
+\newblock In R.~B. D'Agostino and M.~S. Stephens, editors, {\em Goodness-of-Fit
+  Techniques}, pages 331--366. Marcel Dekker, New York and Basel, 1986.
+
+\bibitem{rSUL93a}
+S.~J. Sullivan.
+\newblock Another test for randomness.
+\newblock {\em Communications of the ACM}, 36(7):108, 1993.
+
+\bibitem{rTAK96a}
+K.~Takashima.
+\newblock Last visit time tests for pseudorandom numbers.
+\newblock {\em J. Japanese Soc. Comp. Satist.}, 9(1):1--14, 1996.
+
+\bibitem{rTEZ89a}
+S.~Tezuka.
+\newblock Random number generation based on the polynomial arithmetic modulo
+  two.
+\newblock Technical Report RT-0017, IBM Research, Tokyo Research Laboratory,
+  Oct. 1989.
+
+\bibitem{rTEZ95a}
+S.~Tezuka.
+\newblock {\em Uniform Random Numbers: Theory and Practice}.
+\newblock Kluwer Academic Publishers, Norwell, Mass., 1995.
+
+\bibitem{rTEZ91b}
+S.~Tezuka and P.~L'Ecuyer.
+\newblock Efficient and portable combined {T}ausworthe random number
+  generators.
+\newblock {\em ACM Transactions on Modeling and Computer Simulation},
+  1(2):99--112, 1991.
+
+\bibitem{rTEZ93a}
+S.~Tezuka, P.~L'Ecuyer, and R.~Couture.
+\newblock On the add-with-carry and subtract-with-borrow random number
+  generators.
+\newblock {\em ACM Transactions of Modeling and Computer Simulation},
+  3(4):315--331, 1994.
+
+\bibitem{rTIN90a}
+G.~Tindo.
+\newblock {\em Automates Cellulaires; Applications {\`a} la Mod{\'e}lisation de
+  Certains Syst{\`e}mes Discrets et {\`a} la Conception d'une Architecture
+  Parall{\`e}le pour la G{\'e}n{\'e}ration de Suites Pseudo-Al{\'e}atoires}.
+\newblock Dissertation (thesis), Universit{\'e} de Nantes, France, 1990.
+
+\bibitem{rTOM99a}
+M.~Tomassini, M.~Sipper, M.~Zolla, and M.~Perrenoud.
+\newblock Generating high-quality random numbers in parallel by cellular
+  automata.
+\newblock {\em Future Generation of Computer Systems}, 16:291--305, 1999.
+
+\bibitem{rTOO73a}
+J.~P.~R. Tootill, W.~D. Robinson, and D.~J. Eagle.
+\newblock An asymptotically random {T}ausworthe sequence.
+\newblock {\em Journal of the ACM}, 20:469--481, 1973.
+
+\bibitem{rTOU01a}
+R.~Touzin.
+\newblock Des g\'en\'erateurs r\'ecursifs multiples combin\'es rapides avec des
+  coefficients de la forme $\pm 2^{p_1}\pm 2^{p_2}$.
+\newblock Master's thesis, D\'epartement d'informatique et de recherche
+  op\'erationnelle, Universit\'e de Montr\'eal, 2001.
+
+\bibitem{rUGR91a}
+G.~{Ugrin-Sparac}.
+\newblock Stochastic investigations of pseudo-random number generators.
+\newblock {\em Computing}, 46:53--65, 1991.
+
+\bibitem{rVAT94a}
+I.~Vattulainen, T.~Ala-Nissila, and K.~Kankaala.
+\newblock Physical tests for random numbers in simulations.
+\newblock {\em Physical Review Letters}, 73(19):2513--2516, 11 1994.
+
+\bibitem{rVAT95a}
+I.~Vattulainen, T.~Ala-Nissila, and K.~Kankaala.
+\newblock Physical models as tests of randomness.
+\newblock {\em Physical Review {E}}, 52(3):3205--3213, 1995.
+
+\bibitem{tWAL74a}
+S.~R. Wallenstein and J.~I. Naus.
+\newblock Probabilities for the size of largest clusters and smallest
+  intervals.
+\newblock {\em Journal of the American Statistical Society}, 69:690--695, 1974.
+
+\bibitem{rWAN97a}
+M.~Z. Wang.
+\newblock Linear complexity profiles and jump complexity.
+\newblock {\em Information Processing Letters}, 61:165--168, 1997.
+
+\bibitem{rWEY16a}
+H.~Weyl.
+\newblock {\"U}ber die {G}leichverteilung von {Z}ahlen mod. {E}ins.
+\newblock {\em Math. Ann.}, 77:313--352, 1916.
+
+\bibitem{rWIC82a}
+B.~A. Wichmann and I.~D. Hill.
+\newblock An efficient and portable pseudo-random number generator.
+\newblock {\em Applied Statistics}, 31:188--190, 1982.
+\newblock See also corrections and remarks in the same journal by Wichmann and
+  Hill, {\bf 33} (1984) 123; McLeod {\bf 34} (1985) 198--200; Zeisel {\bf 35}
+  (1986) 89.
+
+\bibitem{rWIC87a}
+B.~A. Wichmann and I.~D. Hill.
+\newblock Building a random number generator.
+\newblock {\em Byte}, 12(3):127--128, 1987.
+
+\bibitem{rWIK89a}
+R.~S. Wikramaratna.
+\newblock {ACORN}---a new method for generating sequences of uniformly
+  distributed pseudo-random numbers.
+\newblock {\em Journal of Computational Physics}, 83:16--31, 1989.
+
+\bibitem{rWOL83a}
+S.~Wolfram.
+\newblock Statistical mechanics of cellular automata.
+\newblock {\em Rev. Modern Physics}, 55:601--644, 1983.
+
+\bibitem{rWOL86a}
+S.~Wolfram.
+\newblock Random sequence generation by cellular automata.
+\newblock {\em Advances in Applied Mathematics}, 7:123--169, 1986.
+
+\bibitem{rWOL86b}
+S.~Wolfram.
+\newblock {\em Theory and Applications of Cellular Automata}, volume~1 of {\em
+  Advanced Series on complex systems}.
+\newblock World Scientific Publishing Co., Singapore, 1986.
+
+\bibitem{rWU97a}
+P.-C. Wu.
+\newblock Multiplicative, congruential random number generators with multiplier
+  $\pm 2^{k_1} \pm 2^{k_2}$ and modulus $2^p-1$.
+\newblock {\em {ACM} Transactions on Mathematical Software}, 23(2):255--265,
+  1997.
+
+\bibitem{rZIF98a}
+R.~M. Ziff.
+\newblock Four-tap shift-register-sequence random-number generators.
+\newblock {\em Computers in Physics}, 12(4):385--392, 1998.
+
+\bibitem{iZIV77a}
+J.~Ziv and A.~Lempel.
+\newblock A universal algorithm for sequential data compression.
+\newblock {\em IEEE Trans. on Information Theory}, 23(3):337--343, 1977.
+
+\bibitem{iZIV78a}
+J.~Ziv and A.~Lempel.
+\newblock Compression of individual sequences via variable-rate coding.
+\newblock {\em IEEE Trans. on Information Theory}, 24(5):530--536, 1978.
+
+\end{thebibliography}

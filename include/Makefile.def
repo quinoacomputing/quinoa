@@ -1,0 +1,17 @@
+docdir = ${prefix}/share/TestU01/doc
+MYLIB = ${top_srcdir}/mylib
+PROBDIST = ${top_srcdir}/probdist
+TESTU01 = ${top_srcdir}/testu01
+
+MYLIBHEADERS = gdef.h addstr.h bitset.h chrono.h mystr.h num.h num2.h tables.h util.h
+MYLIBSOURCES = gdef.c addstr.c bitset.c chrono.c mystr.c num.c num2.c tables.c util.c
+MYLIBTEX = $(MYLIB)/gdef.tex $(MYLIB)/addstr.tex $(MYLIB)/bitset.tex $(MYLIB)/chrono.tex $(MYLIB)/mystr.tex $(MYLIB)/num.tex $(MYLIB)/num2.tex $(MYLIB)/tables.tex $(MYLIB)/util.tex
+
+PROBDISTHEADERS = fmass.h fdist.h fbar.h finv.h gofs.h gofw.h statcoll.h wdist.h
+PROBDISTSOURCES = fmass.c fdist.c fbar.c finv.c gofs.c gofw.c statcoll.c wdist.c
+PROBDISTTEX = $(PROBDIST)/fmass.tex $(PROBDIST)/fdist.tex $(PROBDIST)/fbar.tex $(PROBDIST)/finv.tex $(PROBDIST)/gofs.tex $(PROBDIST)/gofw.tex $(PROBDIST)/statcoll.tex $(PROBDIST)/wdist.tex
+
+TESTU01HEADERS = unif01.h ulcg.h umrg.h ucarry.h utaus.h ugfsr.h uinv.h uquad.h ucubic.h ulec.h utezuka.h umarsa.h uweyl.h uknuth.h uwu.h unumrec.h uvaria.h usoft.h ugranger.h ucrypto.h ufile.h udeng.h utouzin.h uautomata.h uxorshift.h ubrent.h rijndael-alg-fst.h tu01_sha1.h scatter.h swrite.h sres.h smultin.h sknuth.h smarsa.h sstring.h svaria.h snpair.h swalk.h sentrop.h sspectral.h scomp.h sspacings.h vectorsF2.h bbattery.h ffam.h fcong.h ffsr.h ftab.h fres.h fcho.h fmultin.h fmarsa.h fknuth.h fwalk.h fstring.h fspectral.h fvaria.h fnpair.h
+TESTU01SOURCES = unif01.c ulcg.c umrg.c ucarry.c utaus.c ugfsr.c uinv.c uquad.c ucubic.c ulec.c utezuka.c umarsa.c uweyl.c uknuth.c uwu.c unumrec.c uvaria.c usoft.c ugranger.c ucrypto.c ufile.c udeng.c utouzin.c uautomata.c uxorshift.c ubrent.c rijndael-alg-fst.c tu01_sha1.c scatter.c swrite.c sres.c smultin.c sknuth.c smarsa.c sstring.c svaria.c snpair.c swalk.c sentrop.c sspectral.c scomp.c sspacings.c vectorsF2.c bbattery.c ffam.c fcong.c ffsr.c ftab.c fres.c fcho.c fmultin.c fmarsa.c fknuth.c fwalk.c fstring.c fspectral.c fvaria.c fnpair.c
+TESTU01TEX = $(TESTU01)/unif01.tex $(TESTU01)/ulcg.tex $(TESTU01)/umrg.tex $(TESTU01)/ucarry.tex $(TESTU01)/utaus.tex $(TESTU01)/ugfsr.tex $(TESTU01)/uinv.tex $(TESTU01)/uquad.tex $(TESTU01)/ucubic.tex $(TESTU01)/ulec.tex $(TESTU01)/utezuka.tex $(TESTU01)/umarsa.tex $(TESTU01)/uweyl.tex $(TESTU01)/uknuth.tex $(TESTU01)/uwu.tex $(TESTU01)/unumrec.tex $(TESTU01)/uvaria.tex $(TESTU01)/usoft.tex $(TESTU01)/ugranger.tex $(TESTU01)/ucrypto.tex $(TESTU01)/ufile.tex $(TESTU01)/udeng.tex $(TESTU01)/utouzin.tex $(TESTU01)/uautomata.tex $(TESTU01)/uxorshift.tex $(TESTU01)/ubrent.tex $(TESTU01)/rijndael-alg-fst.tex $(TESTU01)/tu01_sha1.tex $(TESTU01)/scatter.tex $(TESTU01)/swrite.tex $(TESTU01)/sres.tex $(TESTU01)/smultin.tex $(TESTU01)/sknuth.tex $(TESTU01)/smarsa.tex $(TESTU01)/sstring.tex $(TESTU01)/svaria.tex $(TESTU01)/snpair.tex $(TESTU01)/swalk.tex $(TESTU01)/sentrop.tex $(TESTU01)/sspectral.tex $(TESTU01)/scomp.tex $(TESTU01)/sspacings.tex $(TESTU01)/vectorsF2.tex $(TESTU01)/bbattery.tex $(TESTU01)/ffam.tex $(TESTU01)/fcong.tex $(TESTU01)/ffsr.tex $(TESTU01)/ftab.tex $(TESTU01)/fres.tex $(TESTU01)/fcho.tex $(TESTU01)/fmultin.tex $(TESTU01)/fmarsa.tex $(TESTU01)/fknuth.tex $(TESTU01)/fwalk.tex $(TESTU01)/fstring.tex $(TESTU01)/fspectral.tex $(TESTU01)/fvaria.tex $(TESTU01)/fnpair.tex
+

@@ -1,0 +1,428 @@
+\defmodule {sres}
+
+This module defines common structures used to keep the results of tests
+in the {\tt s} modules. They are useful in tests where the statistics
+obey either a chi-square, a normal or a Poisson distribution or some other
+simple distribution. Some tests require more specialized structures for
+the results and those are defined in the appropriate modules.
+
+The first argument of each testing function is the random number generator 
+to be tested. It must be created by calling the appropriate function
+in one of the module {\tt u}, and deleted when no longer needed.
+The second argument of each testing function is a structure 
+{\tt s\ldots\_Res} that can keep the test results (intermediate and final).
+This is useful if one wishes to do something else with the
+results or the information generated during a test. In that case, one 
+{\it must} call the appropriate {\tt Create} function to create the
+ {\tt s\ldots\_Res} structure. Simply declaring a variable  {\tt
+s\ldots\_Res} and passing its address as the argument will not work.
+That structure must also be deleted when no longer needed.
+The same structure can
+be used to call a test many times with different parameters.
+If one does not want to post-process or use the results after a test,
+it suffices to set the {\tt \ldots\_Res} argument to the {\tt NULL} pointer.
+Then, the structure is created and deleted automatically inside the 
+testing function.
+
+
+\bigskip\hrule
+\code\hide
+/* sres.h  for ANSI C */
+#ifndef SRES_H
+#define SRES_H
+\endhide
+#include "gofw.h"
+#include "statcoll.h"
+\endcode
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\guisec{Basic structure for test results (continuous distribution)}
+
+The detailed results for tests based on very simple continuous
+distributions can be recovered in the structure defined below. In
+ particular, it is used for test statistics which obey a {\em normal\/} law.
+\index{normal results}
+
+\code
+
+typedef struct {
+
+   statcoll_Collector *sVal1, *pVal1;
+\endcode
+ \tabb
+  These collectors contain the values of the test statistic and their
+  $p$-values  (at the first level) for the $N$ replications of the current
+  test. The number $N$ of observations is in {\tt sVal1->NObs} and the
+  observations themselves are in \{{\tt sVal1->V[1], \ldots,
+  sVal1->V[N]}\}. They have been sorted.
+  The corresponding $p$-values are in {\tt pVal1}.
+ \endtabb
+\code
+
+   gofw_TestArray sVal2, pVal2;
+\endcode
+ \tabb
+  These arrays contain the values of the statistics and their $p$-values
+  at the second level. In the case $N=1$, the value of the  statistic at
+  the first level is returned in {\tt sVal2[gofw\_Mean]} and its $p$-value
+  in {\tt pVal2[gofw\_Mean]}.
+ \endtabb
+\code
+
+   char *name;
+\endcode
+ \tabb
+  The name of the test which produced the above results.
+ \endtabb
+\code
+
+} sres_Basic;
+\endcode
+ \tab
+  This is the default basic structure used in the {\tt s} modules
+  to keep the results of tests when the statistic of the tests can take
+  continuous real values. Test results which require many parameters or
+  variables use more complicated structures.
+ \endtab
+\code
+
+
+sres_Basic * sres_CreateBasic (void);
+\endcode
+ \tab 
+  Creates and returns a structure that will hold the results
+  of a simple test. 
+ \endtab
+\code
+
+
+void sres_DeleteBasic (sres_Basic *res);
+\endcode
+ \tab 
+  Frees the memory allocated to {\tt res} by {\tt sres\_CreateBasic}.
+ \endtab
+\code
+
+
+void sres_InitBasic (sres_Basic *res, long N, char *nam);
+\endcode
+ \tab 
+   Initializes the {\tt res} structure, ensures that its
+   collector {\tt sVal1}  can contain up to  {\tt N} values and sets
+   its  {\tt name} field to  {\tt nam}. This function must not be called
+   directly by the user. It has been made public because it is called
+   internally by the tests in different modules.
+ \endtab
+\code
+
+
+void sres_GetNormalSumStat (sres_Basic *res);
+\endcode
+ \tab
+  Computes the sample sum and the sample variance $S^2$ of the $N$ observations in 
+  the collector {\tt res->sVal1}. Then computes the $p$-value of the sum, assuming
+  that it obeys a {\em normal\/} law with mean 0 and variance $N$. Computes also
+  the $p$-value of $(N-1)S^2$, assuming it obeys a {\em chi-square\/} law with 
+  $N-1$ degrees of freedom. The computed values are put in
+  {\tt res->sVal2[gofw\_Sum]}, {\tt res->pVal2[gofw\_Sum]},
+  {\tt res->sVal2[gofw\_Var]} and {\tt res->pVal2[gofw\_Var]}.
+ \endtab
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{Basic structure for test results (discrete distribution)}
+
+The detailed results for tests based on very simple discrete
+distributions can be recovered in the structure defined below.
+
+\code
+
+typedef struct {
+
+   statcoll_Collector *sVal1;
+\endcode
+ \tabb
+  This collector contain the values of the test statistic
+  (at the first level) for the $N$ replications of the current
+  test. The number $N$ of observations is in {\tt sVal1->NObs} and the
+  observations themselves are in \{{\tt sVal1->V[1], \ldots, sVal1->V[N]}\}.
+ \endtabb
+\code
+
+   double sVal2;
+\endcode
+ \tabb
+  The value of the statistic at the second level. It could be the sum,
+  the maximum or another combination of all $s$-values at the first
+  level (in  {\tt sVal1}).
+ \endtabb
+\code
+
+   double pLeft, pRight, pVal2;
+\endcode
+ \tabb
+  These are the left $p$-value, the right $p$-value, and the resulting
+  $p$-value (as computed in function {\tt gofw\_pDisc} of library
+  ProbDist) for the statistic at the second level ({\tt sVal12}).
+ \endtabb
+\code
+
+   char *name;
+\endcode
+ \tabb
+  The name of the test which produced the above results.
+ \endtabb
+\code
+
+} sres_Disc;
+\endcode
+ \tab
+  This structure is used to keep the results of a simple
+  test involving a discrete distribution in the {\tt s} modules.
+ \endtab
+\code
+
+
+sres_Disc * sres_CreateDisc (void);
+\endcode
+ \tab 
+  Creates and returns a structure that will hold the results
+  of a simple test based on a discrete distribution. 
+ \endtab
+\code
+
+
+void sres_DeleteDisc (sres_Disc *res);
+\endcode
+ \tab 
+  Frees the memory allocated to {\tt res} by {\tt sres\_CreateDisc}.
+ \endtab
+\code
+
+
+void sres_InitDisc (sres_Disc *res, long N, char *nam);
+\endcode
+ \tab 
+   Initializes the {\tt res} structure and ensures that its statistical
+   collector {\tt sVal1} can contain up to  {\tt N} statistic values.
+   Also sets its  {\tt name} field to  {\tt nam}. 
+   This function must not be called
+   directly by the user. It has been made public because it is called
+   internally by the tests in different modules.
+ \endtab
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{Structure for chi-square test results}
+
+The detailed results of a chi-square test can be recovered in the
+following  structure.\index{chi-square results}
+
+\code
+
+typedef struct {
+
+   double *NbExp;
+   long *Count;
+   long *Loc;
+   long jmin;
+   long jmax;
+\endcode
+ \tabb
+  {\tt NbExp} and {\tt Count} contain the expected and 
+  observed numbers of observations in each class, respectively. 
+  {\tt Loc} give the classes 
+  redirections which ensure that the expected numbers in each class
+  are large enough to justify the application of the chi-square law.
+  The indices {\tt jmin} and {\tt jmax} are the lowest
+  and highest valid indices for these arrays. In the rare cases where
+  the above arrays are unused, we set {\tt jmax }$< 0$.
+ \endtabb
+\code
+
+   long degFree;
+\endcode
+ \tabb
+  Gives the number of degrees of freedom of the chi-square.
+ \endtabb
+\code
+
+   statcoll_Collector *sVal1, *pVal1;
+\endcode
+ \tabb
+  These collectors contain the values of the test statistic and their
+  $p$-values  (at the first level) for the $N$ replications of the current
+  test. The number $N$ of observations is in {\tt sVal1->NObs} and the
+  observations themselves are in \{{\tt sVal1->V[1], \ldots, sVal1->V[N]}\}.
+   They have been sorted. The corresponding $p$-values are in {\tt pVal1}.
+ \endtabb
+\code
+
+   gofw_TestArray sVal2, pVal2;
+\endcode
+ \tabb
+  These arrays contain the values of the statistics and their $p$-values
+  at the second level. In the case $N=1$, the value of the  statistic at
+  the first level is returned in {\tt sVal2[gofw\_Mean]} and its $p$-value
+  in {\tt pVal2[gofw\_Mean]}.
+ \endtabb
+\code
+
+   char *name;
+\endcode
+ \tabb
+  The name of the test which produced the above results.
+ \endtabb
+\code
+
+} sres_Chi2;
+\endcode
+ \tab
+  This structure is used to keep the results of a chi-square
+  test in the {\tt s} modules.
+ \endtab
+\code
+
+
+sres_Chi2 * sres_CreateChi2 (void);
+\endcode
+ \tab 
+  Creates and returns a structure that will hold the results
+  of a chi-square test. 
+ \endtab
+\code
+
+
+void sres_DeleteChi2 (sres_Chi2 *res);
+\endcode
+ \tab 
+  Frees the memory allocated to {\tt res} by {\tt sres\_CreateChi2}.
+ \endtab
+\code
+
+
+void sres_InitChi2 (sres_Chi2 *res, long N, long jmax, char *nam);
+\endcode
+ \tab 
+   Initializes the {\tt res} structure and ensures that its statistical
+   collector  {\tt sVal1} can contain up to  {\tt N} statistic values
+   while the counters can contain up to  {\tt jmax + 1} classes. Also sets
+   its  {\tt name} field to  {\tt nam}. This function must not be called
+   directly by the user. It has been made public because it is called
+   internally by the tests in different modules.
+ \endtab
+\code
+
+
+void sres_GetChi2SumStat (sres_Chi2 *res);
+\endcode
+ \tab 
+  Computes the sum of the $N$ observations in the collector {\tt res->sVal1}.
+  Then computes the $p$-value of the sum, assuming that it obeys a
+  {\em chi-square\/} law with $N\ell$ degrees of freedom, where $\ell$ is the
+  number of degrees of freedom of the chi-square for each observation.
+  The computed values are put in {\tt res->sVal2[gofw\_Sum]} and
+  {\tt res->pVal2[gofw\_Sum]}.
+ \endtab
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{Structure for Poisson test results}
+
+The detailed results for a Poisson test can be recovered in the 
+following structure.\index{Poisson results}
+
+\code
+
+typedef struct {
+
+   double Lambda, Mu;
+\endcode
+ \tabb
+  The Poisson mean is {\tt Lambda}. When the number of replications
+  $N>1$, {\tt Mu = $N*\;$Lambda} gives the mean of the sum of all 
+  Poisson means for the $N$ replications.
+ \endtabb
+\code
+
+   statcoll_Collector *sVal1;
+\endcode
+ \tabb
+  This collector contain the values of the test statistic
+  (at the first level) for the $N$ replications of the current
+  test. The number $N$ of observations is in {\tt sVal1->NObs} and the
+  observations themselves are in \{{\tt sVal1->V[1], \ldots, sVal1->V[N]}\}.
+ \endtabb
+\code
+
+   double sVal2;
+\endcode
+ \tabb
+  The value of the statistic at the second level
+  (the sum of all Poisson values in  {\tt sVal1}).
+ \endtabb
+\code
+
+   double pLeft, pRight, pVal2;
+\endcode
+ \tabb
+  These are the left $p$-value, the right $p$-value, and the resulting
+  $p$-value (as computed in function {\tt gofw\_pDisc} of library
+  ProbDist) for the Poisson statistic at the second level.
+ \endtabb
+\code
+
+   char *name;
+\endcode
+ \tabb
+  The name of the test which produced the above results.
+ \endtabb
+\code
+
+} sres_Poisson;
+\endcode
+ \tab
+  This structure is used to keep the results of a Poisson
+  test in the {\tt s} modules.
+ \endtab
+\code
+
+
+sres_Poisson * sres_CreatePoisson (void);
+\endcode
+ \tab 
+  Creates and returns a structure that will hold the results
+  of a test based on the Poisson distribution. 
+ \endtab
+\code
+
+
+void sres_DeletePoisson (sres_Poisson *res);
+\endcode
+ \tab 
+  Frees the memory allocated to {\tt res} by {\tt sres\_CreatePoisson}.
+ \endtab
+\code
+
+
+void sres_InitPoisson (sres_Poisson *res, long N, double Lambda, char *nam);
+\endcode
+ \tab 
+   Initializes the {\tt res} structure and ensures that its statistical
+   collector {\tt sVal1} can contain up to  {\tt N} statistic values.
+   Also sets its {\tt Lambda} field to the Poisson mean {\tt Lambda} and
+   its  {\tt name} field to  {\tt nam}. This function must not be called
+   directly by the user. It has been made public because it is called
+   internally by the tests in different modules.
+ \endtab
+
+\code
+\hide
+#endif
+\endhide
+\endcode

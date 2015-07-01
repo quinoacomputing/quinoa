@@ -1,0 +1,49 @@
+\begin {titlepage}
+
+\null 
+\begin {flushright} \it This version: \today \end {flushright}
+
+\vfill
+\begin{center}
+ {\Large\bf TestU01} \\ \ \\
+ {\large\bf A Software Library in ANSI C \\[6pt]
+    for Empirical Testing of Random Number Generators}\\
+\vfill
+{\bf   User's guide, 
+ \ifdetailed  detailed version \else compact version \fi }
+\vfill
+ Pierre L'Ecuyer and Richard Simard \\[10pt]
+D\'epartement d'Informatique et de Recherche Op\'erationnelle \\
+Universit\'e de Montr\'eal \\
+\end{center}
+\vfill
+
+This document describes the software library {\em TestU01}, 
+implemented in the ANSI C language,
+and offering a collection of utilities for the (empirical)
+statistical testing of uniform random number generators (RNG).
+
+The library implements several types of generators in
+generic form, as well as many specific generators proposed in
+the literature or found in widely-used software.
+It provides general implementations of the classical statistical tests
+for random number generators, as well as several others proposed in the
+literature, and some original ones.
+These tests can be applied to the generators predefined in the library
+and to user-defined generators.
+Specific tests suites for either sequences of uniform random numbers
+in $[0,1]$ or bit sequences are also available.
+Basic tools for plotting vectors of points produced by generators
+are provided as well.
+
+Additional software permits one to perform
+systematic studies of the interaction between a specific test
+and the structure of the point sets produced by a given family of RNGs.
+That is, for a given kind of test and a given class of RNGs, 
+to determine how large should be the sample size of the test,
+as a function of the generator's period length, 
+before the generator starts to fail the test systematically.
+
+\vfill
+\end{titlepage}
+

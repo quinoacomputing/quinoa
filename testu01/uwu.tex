@@ -1,0 +1,79 @@
+\defmodule {uwu}
+
+This module collects some generators from Pei-Chi Wu.
+\index{Generator!Wu}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\bigskip
+\hrule
+\code\hide
+/* uwu.h for ANSI C */
+
+#ifndef UWU_H
+#define UWU_H
+\endhide
+#include "gdef.h"
+#include "unif01.h"
+
+
+#ifdef USE_LONGLONG
+   unif01_Gen * uwu_CreateLCGWu61a (longlong s);
+\endcode
+  \tab  Implements a LCG proposed by Wu \cite{rWU97a},
+  with $m= 2^{61}-1$, $a = 2^{30} - 2^{19}$, $c=0$.
+  Uses a fast implementation with shifts rather than
+  multiplications.  
+  It uses 64-bits integers. % which must be available.
+ \endtab
+\code
+
+
+   unif01_Gen * uwu_CreateLCGWu61b (longlong s);
+\endcode
+  \tab   Similar to {\tt uwu\_CreateLCGWu61a},
+   but with  $a = 2^{42} - 2^{31}$. 
+ \endtab
+\code
+#endif
+\endcode
+
+
+
+\guisec{Clean-up functions}
+
+\code
+
+
+void uwu_DeleteGen (unif01_Gen *gen);
+\endcode
+ \tab Frees the dynamic memory used by any generator of this module
+  that does not have an explicit {\tt Delete} function. 
+  This function should be called to clean up a generator object
+  when it is no longer in use.
+ \endtab
+\code
+
+\hide
+#endif
+\endhide
+\endcode
+
+
+\bigskip
+\hrule
+\bigskip
+
+{
+See also
+\bigskip
+
+\setlength{\partopsep}{0pt}
+\setlength{\parskip}{0pt}
+\setlength{\topsep}{0pt}
+\setlength{\itemsep}{0pt}
+
+\begin{itemize}
+\item {\tt ulcg\_CreateLCGWu2}
+\end{itemize}
+}

@@ -1,0 +1,15 @@
+# Package:    TestU01
+# File:       InvImpl2b.par
+# Generator:  uinv_CreateInvImpl2b
+
+# Description:   Parameter values for the InvImpl2b generators.
+#-----------------------------------------------------------------
+
+# Give the name of the family first
+
+InvImpl2b
+
+# Give a1, a2 which will be used for all generators of the family.
+
+
+ 17   13

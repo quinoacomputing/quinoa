@@ -1,0 +1,187 @@
+%  Macros pour usage avec LATEX.  (Pierre L'Ecuyer).
+
+\def\?{\discretionary{}{}{}}  % Same as \- but does not print the - sign
+                              % (useful to hyphenate in math mode).
+\def\From {From }
+\def\mod{{\rm\ mod\ }}        % Modulo.
+\def\MOD{{\rm\ MOD\ }}
+\def\div{{\rm\ div\ }}        % Division entiere.
+\def\DIV{{\rm\ DIV\ }}
+\def\var{{\rm var }}        % Variance.
+\def\Var{{\rm Var }}
+\def\Cov{{\rm Cov }}
+\def\MSE{{\rm MSE }}
+\def\arg{{\rm\ arg}}          % Argument.
+\def\Re{{\rm I\kern-0.2em R}} % Ensemble des nombres reels.
+\def\R{\Re}
+\def\d{{\rm d}}               % Pour les derivees (parfois).
+\def\B{{\rm I\kern-0.2em B}}
+\def\F{{\rm I\kern-0.2em F}}
+\def\FF{{\rm I\kern-0.1em F}}
+\def\N{{\rm I\kern-0.2em N}}  % Ensemble des nombres naturels.
+\def\Z{{\sf Z\kern-0.4em Z}}  % Ensemble des nombres entiers.
+\def\Fbar{\overline F}        % F avec une barre au dessus.
+\def\square{\vrule height6pt width5pt depth1pt}
+     %  Petit rectangle noir pour terminer une preuve de theoreme, etc.
+\def\eqdef {\buildrel \rm def \over =}    % Egal par definition.
+\def\eqas  {\buildrel \rm a.s. \over =}   % Egal a.s.
+\def\eqps  {\buildrel \rm p.s. \over =}   % Egal p.s.
+\def\toas  {\buildrel \rm a.s. \over \to} % ---> a.s.
+\def\tops  {\buildrel \rm p.s. \over \to} % ---> p.s.
+\def\_{{\tt\char'137}}   %  Signe _ ("souligne").
+\def\bs{{\tt\char'134}}  %  Signe \
+\def\tttilde{{\tt\char'176}}  %  Signe ~
+\def\<{$\langle$}        %  Signe <
+\def\>{$\rangle$}        %  Signe >
+\def\q{$\kern1.4em$}     % Space for indentation in slides and programs.
+
+\def\version    {\begin{flushright} \it  Draft Version: \today \end{flushright}}
+\def\workingpaper {\begin{flushright} \it WORKING PAPER. \end{flushright}}
+\def\submitted#1 {\begin{flushright} \it SUBMITTED TO: #1.\end{flushright}}
+
+\def\adrmaison {\begin {verse}
+  Pierre L'Ecuyer\\
+  45 Hampton Gardens\\ Pointe Claire (Qu\'e.) \\ H9S 5B8\\ CANADA \\
+  T\'el.: (514) 426-4029 \end {verse}}
+\def\adrum {\begin {verse}
+  Professeur Pierre L'Ecuyer\\
+  D\'epartement d'I.R.O., Universit\'e de Montr\'eal\\
+  C.P.\ 6128, Succ.\ Centre-Ville, Montr\'eal, H3C 3J7\\ CANADA \\
+  T\'el. : (514) 343-2143 \hspace{1in}
+  FAX    : (514) 343-5834\\
+  e-mail : {\tt lecuyer@IRO.UMontreal.ca}\\
+  url    : {\tt www.iro.umontreal.ca/$\sim$lecuyer} \end {verse}}
+%
+\def\adrsalzburg {\begin {verse}
+  Professor Pierre L'Ecuyer\\
+  Institut f\"ur Mathematik\\ Universit\"at Salzburg\\
+  Hellbrunnerstrasse 34, A-5020 Salzburg, AUSTRIA  \end {verse}}
+\def\adrncsu {\begin {verse}
+  Professor Pierre L'Ecuyer\\
+  Department of Industrial Engineering\\
+  North Carolina State University\\ Box 7906\\
+  Raleigh, North Carolina 27695-7906, U.S.A. \\
+  e-mail : {\tt lecuyer@IRO.UMontreal.ca}\\
+  url    : {\tt www.iro.umontreal.ca/$\sim$lecuyer} \end {verse}}
+%
+\def\adrum0 {\begin {verse}
+  Professeur Pierre L'Ecuyer\\
+  D\'epartement d'I.R.O.\\ Universit\'e de Montr\'eal\\
+  C.P.\ 6128, Succ.\ Centre-Ville\\ Montr\'eal, H3C 3J7\\ CANADA 
+ \end {verse}}
+
+% Redefinition du macro pour les ``footnotes''.
+\catcode`\@=11
+\def\ninepoint{\def\rm{\fam0\ninerm}
+  \textfont0=\ninerm\normalbaselineskip=11pt
+  \setbox\strutbox=\hbox{\vrule height8pt depth 3pt width0pt}%
+  \normalbaselines\rm}
+\def\vfootnote#1{\insert\footins\bgroup\ninepoint
+  \interlinepenalty 100
+  \leftskip=0pt \rightskip=0pt \spaceskip=0pt \xspaceskip=0pt
+  \splittopskip=\ht\strutbox \floatingpenalty = 20000
+  \splitmaxdepth=\dp\strutbox
+  \item{#1}\footstrut\futurelet\next\fo@t}
+
+% Macros pour inserer des bouts de code (programmes).
+% Faire  \code ...  \endcode
+{\obeyspaces\gdef {\ }}
+\def\setverbatim{\def\par{\leavevmode\endgraf}
+            \parskip=0pt\parindent=0pt\obeylines\obeyspaces }
+\chardef\other=12
+\def\ttverbatim{\setverbatim\tt
+       \catcode`\{=\other \catcode`\}=\other \catcode`\_=\other
+       \catcode`\^=\other \catcode`\$=\other \catcode`\%=\other
+       \catcode`\#=\other \catcode`\&=\other \baselineskip=11pt
+       }
+    % Reproduit tel quel ce qui est ecrit, en caracteres \tt.
+    % On doit faire  \begingroup\ttverbatim   ....  \endgroup
+\def\smallttverbatim{\ttverbatim\small\tt}
+\def\code {\vfil\vfilneg\vbox\bgroup\ttverbatim}
+\def\longcode {\vfil\vfilneg\bgroup\ttverbatim}
+\def\smallc {\small\tt\baselineskip=9.5pt}
+\def\footc {\footnotesize\tt\baselineskip=9.0pt}
+\def\smallcode {\code\smallc}
+\let\endcode=\egroup
+\let\vcode=\code
+\let\endvcode=\egroup
+
+%  Definition d'un module ou d'une classe.
+\def\ps@nomark {\def\leftmark{} \def\rightmark{}}
+\def\defmodule#1 {\addcontentsline{toc}{subsection}{#1} \markboth{#1}{#1}
+   \centerline {\LARGE\bf #1}\bigskip \thispagestyle{nomark}}
+\def\defclass#1 {\addcontentsline{toc}{subsection}{#1} \markboth{#1}{#1}
+   \centerline {\LARGE\bf #1}\bigskip \thispagestyle{nomark}}
+%  Lorsqu'on veut cacher certaines choses a l'usager, faire  \hide ... \endhide
+\newif\iffull\fullfalse
+\def\hide{\iffull}
+\let\endhide=\fi
+
+\def\parup{\nobreak\vskip -2pt\nobreak}
+
+\def\tab{\small\dimen9=\parindent\parindent=0pt%
+   \advance\leftskip by 1.5em\parup}
+\def\tabb{\small\dimen9=\parindent\parindent=0pt%
+   \advance\leftskip by 3.0em\parup}
+\def\tabbb{\small\dimen9=\parindent\parindent=0pt%
+   \advance\leftskip by 4.5em\parup}
+\def\endtab{\vskip 0.01pt\advance\leftskip by -1.5em\normalsize%
+   \parindent=\dimen9}
+\def\endtabb{\vskip 0.01pt\advance\leftskip by -3.0em\normalsize%
+   \parindent=\dimen9}
+\def\endtabbb{\vskip 0.01pt\advance\leftskip by -4.5em\normalsize%
+   \parindent=\dimen9}
+
+% Pour mettre quelque chose dans une boite double.
+\def\boxit#1{\vbox{\hrule height1pt
+                   \hbox{\vrule width1pt\kern3pt
+                         \vbox{\kern3pt#1\kern3pt
+                              }\kern3pt\vrule width1pt
+                        }\hrule height1pt }}
+\def\boxr#1{\hfil\vbox{\hrule height1pt
+                       \hbox{\vrule width1pt\kern3pt
+                              \vbox{#1}\hfil
+                              \kern3pt\vrule width1pt
+                             }\hrule height1pt }}
+
+% Synonymes plus courts pour  \begin{equation}, \begin{eqnarray}, etc.
+\def\eq{\equation}  \def\endeq{\endequation}
+\def\eqs{\eqnarray} \def\endeqs{\endeqnarray}
+\def\eqsn{\begin {eqnarray*}} \def\endeqsn{\end{eqnarray*}}
+
+% Proof avec boite alignee a droite a la fin.
+\newenvironment{myproof}{{\em Proof.}}{\hspace*{\fill}$\Box$}
+% \newenvironment{proof}{{\em Proof.}}{\hspace*{\fill}$\Box$}
+
+% Macros (avec switch) pour faire apparaitre les noms des labels dans les eqs.
+% Utiliser \eqlabel au lieu de \label.  Doit laisser un espace apres le }
+% Pour que les etiquettes apparaissent, faire \seeeqlabelstrue  au debut.
+\newif\ifseeeqlabels\seeeqlabelsfalse
+\newbox\eqlab \setbox\eqlab=\hbox {}
+\def\eqlabel#1 {\global\setbox\eqlab=\hbox
+   {\ifseeeqlabels {\rm (#1)} \else {} \fi } \label{#1} }
+\def\@eqnnum {{\rm \box\eqlab \setbox\eqlab=\hbox {} (\theequation)}}
+
+% Comme ci-haut pour \eqlabel, mais pour les noms des autres labels
+% (Theoremes, Propositions, etc.).
+% Utiliser \vislabel au lieu de \label.
+% Pour que les etiquettes apparaissent, faire \seevislabelstrue  au debut.
+\newif\ifseevislabels\seevislabelsfalse
+\def\vislabel#1 {\ifseevislabels {\ \em (#1).\ } \else {} \fi \label{#1} }
+
+% Pour mettre des remarques temporaires.
+\newif\ifREM\REMfalse
+\def\REM#1 {\ifREM  \begin{quote} \small\em #1 \end{quote} \else {\null} \fi }
+
+% Pour avoir "running head" et no. de page en haut de page, faire  \mytwoheads
+% Si on veut la date en haut de chaque page, on fait aussi  \dateheadtrue
+\newif\ifdatehead\dateheadfalse
+\def\mytwoheads {\pagestyle{headings}
+  \topmargin=-0.4in\headheight=0.2in\headsep=0.4in
+  \oddsidemargin=0.2in\evensidemargin=0in
+  \def\@evenhead {{\large\bf\thepage}\quad\leftmark\hfil
+    \ifdatehead\small\it\today\fi}%         Left heading
+  \def\@oddhead {\ifdatehead{\small\it\kern-1em\today}\fi\hfil
+    \rightmark\quad\large\bf\thepage}}%     Right heading
+
+\catcode`\@=12

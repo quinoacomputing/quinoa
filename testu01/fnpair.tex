@@ -1,0 +1,156 @@
+\defmodule {fnpair}
+
+This module applies close-pairs tests from the module {\tt snpair}
+to a family of generators of different sizes.
+
+\bigskip
+\hrule
+\code\hide
+/* fnpair.h  for ANSI C */
+#ifndef FNPAIR_H
+#define FNPAIR_H
+\endhide
+#include "gdef.h"
+#include "ffam.h"
+#include "fres.h"
+#include "fcho.h"
+#include "snpair.h"
+
+
+extern long fnpair_Maxn;
+\endcode
+\tab
+  Upper bound on $n$.
+  When $n$ exceeds its limit value, the test is not done.
+  Default value: $n = 2^{22}$.
+\endtab
+\ifdetailed  %%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{Structure for test results}
+
+The test results for the tests in this module can be recovered
+in the following structure.
+
+\code
+
+typedef struct {
+   ftab_Table *PVal[snpair_StatType_N];
+} fnpair_Res1;
+\endcode
+ \tab
+  Structure for keeping the tables of results of the tests in
+  this module. Depending on the test, not all elements of the array
+  will be meaningful; those elements that are not will be set to
+  the NULL pointer.
+ \endtab
+\code
+
+
+fnpair_Res1 * fnpair_CreateRes1 (void);
+\endcode
+ \tab 
+  Creates and returns a structure that will hold the results
+  of the tests in this module. 
+ \endtab
+\code
+
+
+void fnpair_DeleteRes1 (fnpair_Res1 *res);
+\endcode
+ \tab 
+  Frees the memory allocated by {\tt fnpair\_CreateRes1}.
+ \endtab
+
+\fi    %%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{Choosing the parameter $\mathbf{m}$}
+
+ One may choose to vary the parameter $m$ as a function of the sample size
+in the test {\tt fnpair\_ClosePairs1}. In that case, one must create
+ an appropriate Choose function, pass it as a member of the argument {\tt
+cho} to the test,  and call the test with a negative $m$ to signal that
+this is the case. If one wants to
+ do the test with a fixed $m$, one has but to give the given $m> 0$ as a
+parameter to the test.
+
+\code
+
+
+fcho_Cho *fnpair_CreateM1 (int maxm);
+\endcode
+ \tab 
+  Given the number of replications $N$  and the sample
+  size $n$, the parameter $m$ in {\tt snpair\_Close\-Pairs} will be chosen
+  by the relation
+   $m = \min\left\{{\tt maxm},\sqrt{{n}/\left(4\sqrt{N}\right)}\right\}$.
+  If this method
+  of choosing $m$ is used, then  the returned structure must be passed as
+  the second pointer in the argument {\tt cho} of the test and the
+  argument $m$ of the test  {\tt fnpair\_ClosePairs1} must be negative.
+ \endtab
+\code
+
+
+void fnpair_DeleteM1 (fcho_Cho * cho);
+\endcode
+ \tab 
+  Frees the memory allocated by {\tt fnpair\_CreateM1}.
+ \endtab
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{Applying the tests}
+
+\code
+
+
+void fnpair_ClosePairs1 (ffam_Fam *fam, fnpair_Res1 *res, fcho_Cho2 *cho,
+                         long N, int r, int t, int p, int m,
+                         int Nr, int j1, int j2, int jstep);
+\endcode
+\tab
+ This function calls the test {\tt snpair\_ClosePairs}
+ with parameters $N$ and $r$, in dimension $t$, with $L_p$ norm,
+ sample size $n =$ {\tt cho->Chon->Choose(param, $i$, $j$)}, 
+ for the first {\tt Nr} generators of family {\tt fam}, for $j$ going from
+ {\tt j1} to {\tt j2} by steps of {\tt jstep}. The parameters in {\tt param}
+ were set at the creation of {\tt cho} and $i$ is the lsize of the
+ generator being tested. If $m > 0$, it will be used as is in the test.
+ If  $m < 0$, it will be chosen by $m =$
+  {\tt cho->Chop2->Choose(param, $N$, $n$)}.
+ When $n$ exceeds {\tt fnpair\_Maxn} or $n < 4m^2 N^{1/2}$, the test
+ is not done.
+\endtab
+\code
+
+
+void fnpair_Bickel1 (ffam_Fam *fam, fnpair_Res1 *res, fcho_Cho *cho,
+                     long N, int r, int t, int p, lebool Torus,
+                     int Nr, int j1, int j2, int jstep);
+\endcode
+\tab
+ Similar to {\tt fnpair\_ClosePairs1} but with {\tt snpair\_BickelBreiman}.
+ There is no parameter $m$ in this test.
+\endtab
+\code
+
+
+void fnpair_BitMatch1 (ffam_Fam *fam, fnpair_Res1 *res, fcho_Cho *cho,
+                       long N, int r, int t,
+                       int Nr, int j1, int j2, int jstep);
+\endcode
+\tab
+ Similar to {\tt fnpair\_Bickel1} but with 
+ {\tt snpair\_ClosePairsBitMatch}.
+\endtab
+\code
+\hide
+#endif
+\endhide
+\endcode
+

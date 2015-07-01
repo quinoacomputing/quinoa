@@ -1,0 +1,148 @@
+\defmodule {ffam}
+
+This module provides generic tools used in testing whole families of
+generators. There are many predefined families of generators of the same
+kind (see modules {\tt fcong} and {\tt ffsr} for some examples);
+ their defining parameters are in files kept in directory {\tt param}
+of TestU01. For each generator in a given family, we define a
+size (the period length) and a resolution. We shall define
+the {\it lsize} of a generator as the (rounded) base-2 logarithm of the 
+period length. \emph{Resolution} is a somewhat fuzzy notion.
+If we have a LCG with modulus $m = 2^b$, say, then each output number
+is a multiple of $2^{-b}$ and we say we have $b$ bits of resolution
+in the output.  
+More generally, if the number of \emph{different} output values 
+that can be produced
+by the generator is $n$ (not necessarily a power of 2), we say that
+the ``resolution'' is (approximately) $\lfloor\log_2 n\rfloor$.
+ \index{family of generators}
+
+
+For the predefined families, each generator of the family has been chosen 
+in such a way that its period length (the number of possible states of the
+generator) is very close to a power of 2. Thus, a given test may be applied
+with a variable sample size on generators of the same kind whose size
+varies as successive powers of 2. One may then observe some interactions
+between a test and the structure of the generators of a given kind, and this
+will appear as regularities in the results.
+The user may also define his own family of generators.
+
+\bigskip
+\hrule
+\code\hide
+/* ffam.h  for ANSI C */
+#ifndef FFAM_H
+#define FFAM_H
+\endhide
+#include "unif01.h"
+\endcode
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{Families of generators}
+
+The following structure is used in the {\tt f} modules
+to keep a family of generators upon which tests with variable sample
+sizes are applied. Such a structure must always be created, directly or
+indirectly, before calling a testing function. Usually, this structure will
+be created indirectly by one of the {\tt Create} function in modules
+{\tt fcong} and {\tt ffsr}.
+ 
+\code
+
+
+typedef struct {
+   unif01_Gen **Gen;
+   int *LSize;
+   int *Resol;
+   int Ng;
+   char *name;
+} ffam_Fam;
+\endcode
+\tab  Array element {\tt Gen[i]} is a generator of
+  the family, array element {\tt Resol[i]} gives the (approximate) number
+  of bits of resolution in the output values of generator {\tt Gen[i]}.
+  Array element {\tt LSize[i]} gives the base-2 logarithm of the approximate
+  period length of {\tt Gen[i]}, i.e. if {\tt LSize[i]} $= h$, then
+  {\tt Gen[i]} has a period that is very close to $2^h$. There are {\tt Ng}
+  members in the family (and the size of the above arrays is 
+  {\tt Ng}), so their elements are numbered from $0 \le i \le$ {\tt Ng-1}.
+  The string {\tt name} gives the name of the family.
+\endtab
+\code
+
+
+ffam_Fam * ffam_CreateFam (int Ng, char *name);
+\endcode
+ \tab 
+  Creates and returns a structure to hold a family named 
+  {\tt name} that can contains up to {\tt Ng} generators. 
+ \endtab
+\code
+
+
+void ffam_DeleteFam (ffam_Fam *fam);
+\endcode
+ \tab 
+  Frees the memory allocated to {\tt fam} by {\tt ffam\_CreateFam}.
+ \endtab
+\code
+
+
+void ffam_PrintFam (ffam_Fam *fam);
+\endcode
+ \tab 
+  Prints all the fields of the family {\tt fam}.
+ \endtab
+\code
+
+
+void ffam_ReallocFam (ffam_Fam *fam, int Ng);
+\endcode
+ \tab 
+  Reallocs memory to the three arrays of {\tt fam} so that they can contain
+  up to  {\tt Ng} elements.
+ \endtab
+\code
+
+
+ffam_Fam * ffam_CreateSingle (unif01_Gen *gen, int resol, int i1, int i2);
+\endcode
+ \tab 
+  Creates and returns a structure to hold a family that can contains up
+  to {\tt i2}${} - {}${\tt i1} ${} + {}$ 1 generators. All members of
+  the family will be the same generator {\tt gen} of resolution {\tt resol}.
+  The generator will imitate a family of generators of lsize in
+  {\tt i1} $ \le $ lsize $\le$ {\tt i2}.
+  This is useful, amongst other things, to explore the domain of
+  the approximation error in the distribution function of a test with the
+  help of a high quality generator, or to find out the behaviour of a
+  given generator with respect to a given test as the
+  sample size increases.
+ \endtab
+\code
+
+
+void ffam_DeleteSingle (ffam_Fam *fam);
+\endcode
+ \tab 
+  Frees the memory allocated to {\tt fam} by {\tt ffam\_CreateSingle}.
+ \endtab
+\code
+\hide
+#include <stdio.h>
+
+FILE * ffam_OpenFile (char *filename, char *defaultfile);
+\endcode
+ \tab 
+  Opens a file of parameters describing a family of generators in reading
+  mode. Opens the file {\tt filename} if it exists; otherwise if
+  {\tt filename == NULL}, opens {\tt defaultfile} in the {\tt param}
+  directory.  Otherwise opens {\tt filename} in the  {\tt param}
+  directory.
+ \endtab
+\code
+
+#endif
+\endhide
+\endcode

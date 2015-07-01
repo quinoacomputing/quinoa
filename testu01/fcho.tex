@@ -1,0 +1,186 @@
+\defmodule {fcho}
+
+This module provides tools to choose the value of some parameters of a
+test as a function of the generator's {\it lsize} and other parameters,
+when a sequence of tests is applied to a family of generators.
+The sample size $n$, for example, is normally chosen by the functions
+in this module.
+
+\bigskip
+\hrule
+\code\hide
+/* fcho.h for ANSI C */
+#ifndef FCHO_H
+#define FCHO_H
+\endhide
+\endcode
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{Choosing one parameter}
+
+\code
+
+typedef struct {
+   void *param;
+   double (*Choose) (void *param, long, long);
+   void (*Write) (void *param, long, long);
+   char *name;
+} fcho_Cho;
+\endcode
+ \tab This structure is used to choose and keep some of the parameters of a
+  test (e.g. the sample size) as a function of the {\it lsize} of the
+  generator and some other parameters. The function  {\tt Choose} computes
+  a parameter which appear as
+  argument in a test function from a {\tt s} module which is applied
+  on a family of generators. The parameters of {\tt Choose} itself are kept
+  in {\tt param}. The function  {\tt Write} writes some information about
+  the parameters and the  {\tt Choose} function. The string {\tt name}
+  is the name of the parameter that is computed by {\tt Choose}.
+\endtab
+\code
+
+
+long fcho_ChooseParamL (fcho_Cho *cho, long min, long max, long i, long j);
+\endcode
+\tab This function chooses a  parameter (most often the sample
+size) by calling {\tt  cho->Choose (cho->param, i, j)}. If the chosen
+parameter is smaller than {\tt min} or larger than {\tt max}, the function
+returns $-1$, otherwise it returns the chosen parameter.
+\endtab
+
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{Choosing two parameters}
+\code
+
+typedef struct {
+   fcho_Cho *Chon;
+   fcho_Cho *Chop2;
+} fcho_Cho2;
+\endcode
+ \tab
+ \endtab
+\code
+
+
+fcho_Cho2 * fcho_CreateCho2 (fcho_Cho *Chon, fcho_Cho *Chop2);
+\endcode
+ \tab 
+  This function creates and returns a structure to hold the two
+  sub-structures {\tt Chon} and {\tt Chop2}. It will not create the memory
+  for {\tt Chon} or {\tt Chop2} themselves, which must have been created
+  before. These two are used when choosing the sample size $n$ and another
+  parameter $p2$ in the same test. For some tests, both $n$ and the other
+  parameter can be varied as the sample size; in this case, one of these
+  two arguments may be a NULL pointer. For some other tests, both
+  parameters must be chosen.
+ \endtab
+\code
+
+
+void fcho_DeleteCho2 (fcho_Cho2 *cho);
+\endcode
+ \tab 
+  Frees the memory allocated by {\tt fcho\_CreateCho2}, but not the memory
+  reserved for the two fields {\tt Chon} and {\tt Chop2}.
+ \endtab
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{Choosing the sample size}
+\code
+
+typedef double (*fcho_FuncType) (double);
+\endcode
+\tab
+  This kind of function is used to compute a parameter for a test depending
+  on the {\it lsize} of the generator and the other parameters of the test.
+\endtab
+\code
+
+
+double fcho_Linear (double x);
+\endcode
+\tab
+  Returns $x$.
+\endtab
+\code
+
+
+double fcho_LinearInv (double x);
+\endcode
+\tab
+   Returns $1/x$.
+\endtab
+\code
+
+
+double fcho_2Pow (double x);
+\endcode
+\tab
+   Returns $2^x$.
+\endtab
+\code
+
+
+fcho_Cho * fcho_CreateSampleSize (double a, double b, double c,
+                                  fcho_FuncType F, char *name);
+\endcode
+\tab Creates and returns a structure {\tt fcho\_Cho} which is used normally
+  to compute the sample size of a test. Given the two arguments $i$ and $j$
+  of the {\tt Choose} function in {\tt fcho\_Cho}, the function will return
+  the value of $F(a*i + b*j + c)$. The string {\tt name} is the name of the
+  variable that is being computed by {\tt Choose}. One can choose both
+  {\tt F} and {\tt name} as the {\tt NULL} pointers, in which case these
+  two will be set to
+  default variables {\tt fcho\_2Pow} and ``$n$''. Then the sample size of the
+  test will be chosen as $n = 2^{a*i + b*j + c}$, where $i$ is the  {\it lsize}
+  of the generator being tested.
+\endtab
+\code
+
+
+void fcho_DeleteSampleSize (fcho_Cho *cho);
+\endcode
+\tab Frees the memory allocated by {\tt fcho\_CreateSampleSize}.
+\endtab
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{Choosing the number of bits}
+
+Each generator returns a given number of bits of resolution in its output
+values. The resolution usually increases with the {\it lsize} of the generator.
+It would be meaningless to apply a test that requires
+more bits of resolution than the generator can deliver, since the extra
+bits will be akin to noise.
+
+ Many of the tests depend on the two arguments $r$ and $s$. The argument
+ $r$ is the number of (most significant) bits dropped from each
+random number outputted by the generator, while $s$ is the number of bits
+from each random number that are kept and used in the test.
+
+\code
+
+
+int fcho_Chooses (int r, int s, int resol);
+\endcode
+\tab This function returns the number of bits $s_1$ that are effectively used
+in a test when the test function depends on $s$. {\tt resol} is the 
+resolution of the generator being tested. If $r+s \le {}$ {\tt resol}, then
+the function returns $s$ unchanged. Otherwise, the function returns
+$s_1 = {}${\tt resol} ${} -r$. When $s_1 \le 0$, then obviously the test
+should not be done.
+\endtab
+
+\code
+\hide
+#endif
+\endhide
+\endcode

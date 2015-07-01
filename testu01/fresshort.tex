@@ -1,0 +1,16 @@
+\defmodule {fres}
+
+This module defines common structures used to keep the results of tests
+in the {\tt f} modules. They are described in the detailed version of
+this guide.
+
+
+The argument {\tt res} of each testing function is a structure 
+that can keep the test results, i.e. tables of $p$-values, \ldots.
+This is useful if one wishes to do something else with the
+results or the information generated during a test. 
+If one does not want to post-process or use the results after a test,
+it suffices to set the {\tt res} argument to the {\tt NULL} pointer.
+Then, the structure is created and deleted automatically inside the 
+testing function. In any case, the tables of results will be printed
+automatically on standard output.

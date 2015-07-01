@@ -1,0 +1,245 @@
+\defmodule {sspacings}
+
+This module implements tests based on sum functions of the spacings
+\index{spacings}
+between the sorted observations of a sample of independent uniforms.
+These tests are studied by L'Ecuyer \cite{rLEC97h}.
+
+Let $u_1,\dots,u_n$ be a sample of $n$ uniforms over $(0,1)$, and
+$u_{(1)},\dots, u_{(n)}$ their values sorted by increasing order.
+Define $u_{(0)} = 0$ and $u_{(n+i)} = 1 + u_{(i-1)}$ for $i > 1$.
+For $m<n$, the {\em overlapping spacings of order $m$\/} are 
+ $$ G_{m,i} = U_{(i+m)} - U_{(i)},  \qquad  0\le i\le n. $$
+The general classes of goodness-of-fit statistics considered here are 
+\eq
+   H_{m,n} = \sum_{i=0}^{n-m+1} h (n G_{m,i})               \eqlabel {Hmn}
+\endeq
+and
+\eq
+   H_{m,n}^{(c)} = \sum_{i=0}^n h (n G_{m,i}).              \eqlabel {Hmnc}
+\endeq
+where $h$ is some smooth function.
+Such statistics are discussed, e.g., in 
+\cite{tPYK65a,tKUO81a,tRAO84a,tHAL86a,rLEC97h}.
+The form (\ref{Hmnc}) is a {\em circular\/} version that puts the 
+observations in a circle before computing the spacings.
+
+Under mild assumptions on $h$ and after being properly standardized,
+these statistics are asymptotically normal as $n\to\infty$, 
+either for fixed $m$ or when $m\to\infty$ no faster than $O(n^p)$ 
+for $0 < p < 1$ (see, e.g., \cite{tDEL79a,tHAL86a,tJAM89a,tKUO81a}).
+In this module, they are standardized using the {\em exact\/} mean 
+and variance whenever this is possible.
+
+The functions {\tt sspacings\_AllSpacings} and {\tt sspacings\_AllSpacings2}
+apply several tests of the form (\ref{Hmn}) and (\ref{Hmnc}) simultaneously
+on the same sample. 
+Other functions apply only specific tests.
+
+\resdef
+
+\bigskip
+\hrule
+\code\hide
+/* sspacings.h  for ANSI C */
+#ifndef SSPACINGS_H
+#define SSPACINGS_H
+\endhide
+#include "unif01.h"
+#include "sres.h"
+\endcode
+
+\ifdetailed   %%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{Structure for test results}
+\code
+
+typedef struct {
+
+   sres_Basic **LogCEMu;
+   sres_Basic **LogCAMu;
+   sres_Basic **SquareCEMu;
+   sres_Basic **SquareCAMu;
+\endcode
+ \tabb Arrays keeping the results on the empirical mean.
+   The four different cases are the {\em circular} case with the {\em exact}
+   mean and variance ({\tt LogCE}) and the {\em circular} case with the
+   {\em asymptotic} mean and variance  ({\tt LogCA}) for the logarithms of the
+   spacings, the {\em circular} case with the {\em exact} mean and variance
+    ({\tt SquareCE})  and the {\em circular} case with the {\em asymptotic}
+    mean and variance  ({\tt SquareCA}) for the squares of the spacings.
+ \endtabb
+\code
+
+   double *LogCESig_sVal, *LogCESig_pVal;
+   double *LogCASig_sVal, *LogCASig_pVal;
+   double *SquareCESig_sVal, *SquareCESig_pVal;
+   double *SquareCASig_sVal, *SquareCASig_pVal;
+\endcode
+ \tabb  The $s$-values and the $p$-values of the sum of the
+   second empirical moment over the $N$ replications of the base test.
+   The four different cases are as  described above.
+ \endtabb
+\code
+
+   int imax;
+\endcode
+\tabb
+   The  highest valid index for all the above arrays.
+   The lowest valid index is 0.
+\endtabb
+\code
+
+   char *name;
+\endcode
+ \tabb
+  The name of the test which produced the above results.
+ \endtabb
+\fi  %%%%%%%%%%
+\hide %%%%%%%%%
+\code
+
+   statcoll_Collector ** Collectors;
+   int smax, step;
+\endcode
+ \tabb
+  Work variables used internally.
+ \endtabb
+\endhide %%%%%%%%%
+\ifdetailed   %%%%%%%
+\code
+
+} sspacings_Res;
+\endcode
+ \tab
+  This structure is used to keep the results of the tests in this module.
+ \endtab
+\code
+
+
+sspacings_Res * sspacings_CreateRes (void);
+\endcode
+ \tab 
+  Creates and returns a structure to hold the results of a test.
+ \endtab
+\code
+
+
+void sspacings_DeleteRes (sspacings_Res *res);
+\endcode
+ \tab 
+  Frees the memory allocated by {\tt sspacings\_CreateRes}.
+ \endtab
+\fi  %%%%%%%%%%
+
+%%% \newpage
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{The tests}
+\code
+
+void sspacings_SumLogsSpacings (unif01_Gen *gen, sspacings_Res *res,
+                                long N, long n, int r, int m);
+\endcode
+\tab
+  Applies a test \index{Test!SumLogsSpacings} based on the sum of the
+  logarithms of the \index{spacings!logarithms}
+  spacings of order $m$ in a sample of $n$ uniforms.
+  The test statistic is
+ $$
+  L_{m,n}^{(c)} = \sum_{i=0}^n \ln (n G_{m,i}).
+ $$
+  This is the circular version.
+  Under $\cH_0$, this statistic is approximately normally distributed
+  for large $n$, and exact formulas for $E[L_{m,n}^{(c)}]$ and 
+  $\Var[L_{m,n}^{(c)}]$ are given in \cite{tCRE76a,rLEC97h}.
+%  This function computes $N$ copies of this statistic and  compares
+%  the empirical distribution of the  $N$ values obtained,
+%  standardized, to the law $N(0,1)$.
+\endtab
+\code
+
+
+void sspacings_SumSquaresSpacings (unif01_Gen *gen, sspacings_Res *res,
+                                   long N, long n, int r, int m);
+\endcode
+\tab
+  Similar to {\tt sspacings\_SumLogsSpacings}, except that the test 
+  \index{Test!SumSquaresSpacings} \index{spacings!squares}
+  statistic is the sum of the squares of the spacings of order $m$,
+ $$
+   S_{m,n}^{(c)} = \sum_{i=0}^n (n G_{m,i})^2.
+ $$
+  Under $\cH_0$, it is approximately normally distributed for large $n$.
+  Exact formulas for $E[S_{m,n}^{(c)}]$ and $\Var[S_{m,n}^{(c)}]$ 
+  (as well as for its non-circular version) are given in 
+  \cite{tCRE79a,rLEC97h}.
+\endtab
+\code
+
+
+void sspacings_ScanSpacings (unif01_Gen *gen, sspacings_Res *res,
+                             long N, long n, int r, double d);
+\endcode
+\tab
+%%  \footnote {Pas tout a fait comme dans {\tt CalcScanStat}, 
+%%      ... a verifier.} %%%
+  The test statistic  \index{Test!ScanSpacings}
+  here is the largest number of values $U_{(i)}$ 
+  falling in a window of witdh $d$ when this window scans the 
+  interval $[0,1]$:
+   $$ S(L) = \max_{0\le i\le n} \max \left\{j-i+1
+        \mid j\ge 1 \mbox{ and } U_{(j)}-U_{(i)} \le d\right\}.$$
+  The (discrete) distribution of $S(L)$ has been investigated in
+  \cite{tAND95b,tCRE80a,tWAL74a},
+  and other references given in \cite{tSTE86a}
+  (see also {\tt fbar\_Scan}).
+%  This function computes $N$ copies of this statistic and  compares
+%  the empirical distribution to the theoretical one.
+\endtab
+\code
+
+
+void sspacings_AllSpacings (unif01_Gen *gen, sspacings_Res *res,
+                            long N, long n, int r, int m0, int m1, int d,
+                            int LgEps);
+\endcode
+\tab
+  This function \index{Test!AllSpacings}
+  applies simultaneously different tests based
+  on the statistics defined in  (\ref{Hmn}) and (\ref{Hmnc}),
+  for $h(x) = \ln x$ and $h(x) = x^2$, 
+%  as in {\tt sspacin\_SumLogsSpacings} and
+%  {\tt sspacin\_SumSquaresSpacings},
+  for $m$ varying from $m_0$ to $m_1$ by steps of length $d$.
+  For example, if $(m_0, m_1, d) = (1, 10, 3)$,
+  the tests will be performed for $m = 1, 4, 7, 10$, while if 
+  $(m_0, m_1, d) = (1, 10, 2)$, it will be performed for $m = 1, 3, 5, 7, 9$.
+  If $m_0 = 0$, the program considers all $m$ in $\{1, d, 2d, \dots\}$
+  such that $m\le m_1$.  For example, if $(m_0, m_1, d) = (0, 11, 3)$,
+  the tests will be performed for $m = 1, 3, 6, 9$.
+  When $h(x) = \ln x$, any spacing equal to zero is reset to
+  $\epsilon$, where  $\log_2 \epsilon = -${\tt LgEps}.
+  If the generator being tested returns $b$ bits of precision, it is
+  recommended to choose {\tt LgEps} $ = b+1$.
+\endtab
+\code
+
+
+void sspacings_AllSpacings2 (unif01_Gen *gen, sspacings_Res *res,
+                             long N, long n, int r, int m0, int m1, int d,
+                             int LgEps);
+\endcode
+\tab
+  Similar to  {\tt sspacings\_AllSpacings}, except that only the
+  \index{Test!AllSpacings2}
+  circular versions using the exact mean and variance are applied.
+\endtab
+
+\code
+\hide
+#endif
+\endhide
+\endcode

@@ -1,0 +1,119 @@
+\defmodule{ucubic}
+
+This module implements simple and combined cubic congruential 
+generators, based on recurrences of the form
+\eq
+  x_{n+1} = (a x_n^3 + b x_n^2 + c x_n + d) \mod m,   \eqlabel{cubic}
+\endeq
+with output $u_n = x_n/m$ at step $n$.
+See, e.g., \cite{rEIC97a,rLEC98h}.
+
+Generators based on a linear congruential recurrence, but with
+a cubic output transformation, are also available
+(see {\tt ucubic\_CreateCubicOut}).
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\bigskip
+\hrule
+\code
+\hide
+/* ucubic.h for ANSI C */
+#ifndef UCUBIC_H
+#define UCUBIC_H
+\endhide
+#include "unif01.h"
+
+
+unif01_Gen * ucubic_CreateCubic (long m, long a, long b, long c, long d,
+                                 long s);
+\endcode
+  \tab  Initializes a generator of the form (\ref{cubic}), with
+   initial state $x_0 = s$.
+\index{Generator!cubic}%
+   Depending on the values of the parameters, various implementations 
+   of different speed are used. 
+   In general, this generator is rather slow.  
+   Restrictions: $a$, $b$, $c$, $d$, and $s$ non
+   negative and less than $m$.
+ \endtab
+\code
+
+
+unif01_Gen * ucubic_CreateCubicFloat (long m, long a, long b, long c,
+                                      long d, long s);
+\endcode
+  \tab A floating-point implementation of the same generator as in
+   {\tt ucubic\_CreateCubic}.
+   The implementation depends on the parameter values and is slower
+   when $m(m-1) > 2^{53}$. 
+   The same restrictions as for {\tt ucubic\_CreateCubic} apply.
+   Also assumes that a {\tt double} has at least 53 bits of precision.
+ \endtab
+\code
+
+
+unif01_Gen * ucubic_CreateCubic1 (long m, long a, long s);
+\endcode
+  \tab  Implements a cubic generator which is a special case of  
+   (\ref{cubic}), with recurrence  $x_{n+1} = (a x_n^3 + 1) \mod m$.
+   The  initial state is $x_0 = s$ and the $n$-th generated value 
+   is $u_n = x_n/m$.
+   Restrictions: $a$ and $s$ non negative and less than  $m$.
+ \endtab
+\code
+
+
+unif01_Gen * ucubic_CreateCubic1Float (long m, long a, long s);
+\endcode
+  \tab Floating-point implementation of the same generator as in
+  {\tt ucubic\_CreateCubic1}.  The implementation and restrictions are 
+  similar to those in {\tt ucubic\_CreateCubicFloat}.
+ \endtab
+\code
+
+
+unif01_Gen * ucubic_CreateCombCubic2 (long m1, long m2, long a1, long a2, 
+                                      long s1, long s2);
+\endcode
+  \tab  Implements a generator that combines two cubic components
+   of the same type as in the procedure {\tt ucubic\_CreateCubic1}.
+  The output is
+    $ u_n = (x_{1,n}/m_1 + x_{2,m}/m_2)  \mod 1, $
+   where $x_{1,n}$ and $x_{2,n}$ are the states of the two components
+   at step $n$.
+ \endtab
+\code
+
+
+unif01_Gen * ucubic_CreateCubicOut (long m, long a, long c, long s);
+\endcode
+  \tab Initializes a generator defined by the linear recurrence
+   $x_{n+1} = (a x_n + c) \mod m$, with initial state $x_0 = s$,
+   and with output $u_n = (x_n^3 \mod m) / m$.
+   Restrictions: $a$, $c$ and $s$ non negative and less than  $m$.
+ \endtab
+\code
+
+
+unif01_Gen * ucubic_CreateCubicOutFloat (long m, long a, long c, long s);
+\endcode
+  \tab A floating-point implementation of {\tt ucubic\_CreateCubicOut}.
+  The implementation and restrictions are similar to those in
+  {\tt ucubic\_CreateCubicFloat}.
+ \endtab
+
+
+
+\guisec{Clean-up functions}
+\code
+
+void ucubic_DeleteGen (unif01_Gen *gen);
+\endcode
+ \tab \DelGen
+ \endtab
+\code
+\hide
+#endif
+\endhide
+\endcode

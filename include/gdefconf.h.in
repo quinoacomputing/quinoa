@@ -1,0 +1,29 @@
+/* gdef.h  for ANSI C */
+#ifndef GDEFCONF_H
+#define GDEFCONF_H
+
+#undef HAVE_LEBOOL
+
+#undef HAVE_LONG_LONG
+
+#undef HAVE_ERF
+
+#undef HAVE_RANDOM
+
+#undef HAVE_LGAMMA
+
+#undef HAVE_GMP_H
+
+#undef HAVE_MATHEMATICA
+
+#undef HAVE_SYS_UTSNAME_H
+
+#undef HAVE_UNISTD_H
+
+#undef HAVE_STDINT_H
+
+#undef HAVE_UINT32_T
+
+#undef HAVE_UINT8_T
+
+#endif

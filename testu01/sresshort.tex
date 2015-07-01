@@ -1,0 +1,18 @@
+\defmodule {sres}
+
+This module defines common structures used to keep the results of tests
+in the {\tt s} modules. They are described in the detailed version of
+this guide.
+
+
+The first argument of each testing function is the random number generator 
+to be tested. It must be created by calling the appropriate function
+in one of the module {\tt u}, and deleted when no longer needed.
+The second argument of each testing function is a structure 
+{\tt s\ldots\_Res} that can keep the test results (intermediate and final).
+This is useful if one wishes to do something else with the
+results or the information generated during a test. 
+If one does not want to post-process or use the results after a test,
+it suffices to set the {\tt \ldots\_Res} argument to the {\tt NULL} pointer.
+Then, the structure is created and deleted automatically inside the 
+testing function.

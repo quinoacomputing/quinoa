@@ -1,0 +1,376 @@
+\defmodule {ulcg}
+
+This module implements linear congruential generators (LCGs),
+simple or combined, in generic form.
+The simple LCG is defined by the recurrence
+\eq
+  x_i = (a x_{i-1} + c) \ \mod m,                    \label {lcg}
+\endeq
+and the output at step $i$ is $u_i = x_i / m$.
+Two types of combinations are implemented:
+\index{Generator!linear congruential}%
+the one proposed by L'Ecuyer \cite{rLEC88a}, and the one proposed
+by Wichmann and Hill \cite{rWIC82a}.
+See \cite{rLEC91b} for details.
+Some of the implementations use the GNU multiprecision package GMP. 
+%% (see the web site at \url{http://www.gnu.org/software/gmp/gmp.html}).
+The macro {\tt USE\_GMP} is defined in module {\tt gdef} in directory
+{\tt mylib}.
+
+The following table gives specific parameters taken from
+the literature or from widely available software.
+See also \cite{sFIS96a,rLEC99c} for other LCG parameters.
+Parameters for combined LCGs can be found in
+\cite{rLEC88a,rLEC91b,rLEC97d}.
+
+
+\begin{center} 
+\topcaption {Some specific (popular) LCGs\label {tab:listgen}}
+\tablehead{ \hline \multicolumn{1}{|c}{$m$} & \multicolumn{1}{|c}{$a$} & 
+  \multicolumn{1}{|c}{$c$} & \multicolumn{1}{|c|}{Reference}\\ \hline \hline}
+\begin {supertabular}{|l|r|r|l|}
+ $2^{24}$    & 1140671485 & 12820163 & in Microsoft VisualBasic\\
+ $2^{31}-1$  & 742938285  &    0  & \cite{rFIS86a} \\
+ $2^{31}-1$  & 950706376  &    0  & \cite{rFIS86a} \\
+ $2^{31}-1$  & 630360016  &    0  & \cite{sLAW91a,rPAY69a} \\
+ $2^{31}-1$  & 397204094  &    0  & in SAS \cite{iSAS90a}\\
+ $2^{31}-1$  &     16807  &    0  & \cite{rLEW69a,sBRA87a,sLAW91a,rPAR88a}\\
+ $2^{31}-1$  &     45991  &    0  & \cite{rLEC94e} \\
+             &            &       &  \\
+ $2^{31}$    &     65539  &    0  & RANDU \cite{sKAR91a,sLAW91a} \\
+ $2^{31}$    & 134775813  &    1  & in Turbo Pascal \\
+ $2^{31}$    & 1103515245 & 12345 & {\tt rand()} in BSD ANSI C \\
+ $2^{31}$    & 452807053  &    0  & \cite[URN11]{sKAR91a} \\
+ $2^{32}$    & 1099087573 &    0  & \cite{rFIS90a}\\
+ $2^{32}$    & 4028795517 &    0  & \cite{rFIS90a}\\
+ $2^{32}$    & 663608941  &    0  & \cite[URN13]{sKAR91a}\\
+ $2^{32}$    &     69069  &    0  & component of original SuperDuper \\
+ $2^{32}$    &     69069  &    1  & on VAX/VMS \cite[URN22]{sKAR91a} \\
+ $2^{32}$    & 2147001325 & 715136305  & in BCLP language \\
+             &            &       &  \\
+ $2^{35}$    & $5^{13}$   & 0          & Apple \\
+ $2^{35}$    & $5^{15}$   & 7261067085 & \cite[p.102]{rKNU81a} \\
+ $10^{12}-11$ & 427419669081  &     0  & {\tt rand()} in {Maple 9.5 or earlier}\\
+ $2^{47}-115$ & 71971110957370 &    0  & \cite{rLEC93a} \\
+ $2^{47}-115$ & $-10018789$   &     0  & \cite{rLEC93a} \\
+ $2^{48}$    & 68909602460261 &     0  & \cite{rFIS90a}\\
+ $2^{48}$    &    25214903917 &    11  & Unix's {\tt rand48()}  \\
+ $2^{48}$    & 44485709377909 &     0  & on CRAY system \cite{rDEM90a} \\
+ $2^{59}$    &  $13^{13}$     &     0  & in NAG Fortran/C library  \\
+ $2^{63}-25$ & 2307085864     &     0  & \cite{rLEC93a} \\
+ $2^{64}$    &  $11^{13}$    &\phantom{12345} $c$  &
+            {\tt prng} at Cornell Theory Center \cite{rPER89a} \\
+\hline
+\end {supertabular}
+\end{center} 
+
+
+\bigskip\hrule
+\code
+\hide
+/*  ulcg.h  for ANSI C  */
+
+#ifndef ULCG_H
+#define ULCG_H
+\endhide
+#include "gdef.h"
+#include "unif01.h"
+\endcode
+
+%%%%%%%%%%%%%%%%%%%%
+\guisec{Simple LCGs}
+
+\code
+
+unif01_Gen * ulcg_CreateLCG (long m, long a, long c, long s);
+\endcode
+  \tab  Initializes a LCG of the form (\ref{lcg}).
+   The initial state is $x_0 = s$ and the output at step $i$
+   is $x_i/m$.  The actual implementation
+   depends on the values of $(m, a, c)$.
+   Restrictions: $a$, $c$ and $s$ must be non-negative and
+   less than $m$.
+ \endtab
+\code
+
+
+unif01_Gen * ulcg_CreateLCGFloat (long m, long a, long c, long s);
+\endcode
+ \tab  The same as {\tt ulcg\_CreateLCG}, except that the implementation
+  is in floating-point arithmetic. Valid only if the
+   IEEE floating-point standard is respected (all integers smaller than 
+   $ 2^{53}$ are represented exactly as {\tt double}). 
+  Restrictions : $-m < a < m$, $0 \le c < m$, $-m < s < m$,
+  $|am|+c < 2^{53}$, and $c=0$ when $a < 0$.
+ \endtab
+\code
+
+
+#ifdef USE_GMP
+   unif01_Gen * ulcg_CreateBigLCG (char *m, char *a, char *c, char *s);
+\endcode
+  \tab  The same as {\tt ulcg\_CreateLCG},
+   but using arbitrary large integers. The integers are given as
+   strings of  decimal digits.  The implementation uses GMP.
+   Restrictions: $a$, $c$ and $s$ non negative and less than $m$.
+  \endtab
+\code
+#endif
+
+
+unif01_Gen * ulcg_CreateLCGWu2 (long m, char o1, unsigned int q, char o2, 
+                                unsigned int r, long s);
+\endcode
+  \tab  Implements a LCG of the kind proposed by Wu \cite{rWU97a},
+   and generalized by L'Ecuyer and Simard \cite{rLEC99e}, for which
+   the modulus and multiplier can be written as 
+   $m = 2^e -h$ and $a = \pm 2^q \pm 2^r$.
+\index{Generator!Wu}%
+   The parameters $o1$ and $o2$ can be {\tt '+'} or {\tt '-'};
+   they give the sign in front of $2^q$ and $2^r$, respectively.
+   Uses an implementation proposed in \cite{rLEC99e,rWU97a}, 
+   which uses shifts instead of multiplications.
+   The initial state is $x_0 = s$ and the output at step $i$ is $x_i/m$.
+   We use a fast implementation with shifts instead of multiplications,
+   whenever possible.
+   Restrictions: $0 < s < m$, $m < 2^{31}$, 
+   and the parameters must also satisfy the conditions $h < 2^q$,
+   $h(2^q - (h+1)/{2^{e-q}}) < m$ and  $h < 2^r$,
+     $h(2^r - (h+1)/{2^{e-r}}) < m$.
+ \hpierre{V\'erifier que ce sont exactement les m\^emes conditions et la
+      m\^eme implantation.}
+ \hrichard {L'implantation est tr\`es semblable, mais il y a de petites
+  diff\'erences parce que le programme dans l'article est pour $q=15, r=13$,
+et si ma m\'emoire ne me trompe pas, je ne crois pas qu'il fonctionnera encore
+pour des $q,r < 32$ arbitraires. Les diff\'erences sont des if pour tester
+si un nombre d\'epasse $m$. Quant aux conditions:
+   $h - 2^q + h \left\lfloor {(m - 1)}/{2^{e-q}}\right\rfloor < m$ and
+   $h - 2^r + h \left\lfloor {(m - 1)}/{2^{e-r}}\right\rfloor < m$,
+ je crois qu'elles sont moins contraignantes que celles de l'article.
+These conditions are slightly more general than those given in \cite{rLEC99e}}.
+ \endtab
+\code
+
+
+unif01_Gen * ulcg_CreateLCGPayne (long a, long c, long s);
+\endcode
+  \tab  Same as {\tt ulcg\_CreateLCG}, with the additional restriction that
+   $m=2^{31}-1$.
+\index{Generator!Payne}%
+   Uses the fast implementation proposed by Payne et al. \cite{rPAY69a,rCAR90a}.
+ See also Robin Whittle's WWW page at \url{http://www.firstpr.com.au/dsp/rand31/}.
+  \endtab
+\code
+
+
+unif01_Gen * ulcg_CreateLCG2e31m1HD (long a, long s);
+\endcode
+  \tab  Same as {\tt ulcg\_CreateLCG}, with the additional restrictions that
+   $m=2^{31}-1$, $c=0$ and $1< a < 2^{30}$.
+\index{Generator!H\"ormann-Derflinger}%
+   Uses the specialized implementation proposed
+   by H\"ormann et Derflinger \cite{rHOR93a}.
+  \endtab
+\code
+
+
+unif01_Gen * ulcg_CreateLCG2e31 (long a, long c, long s);
+\endcode
+  \tab  Same as {\tt ulcg\_CreateLCG}, but with
+   $m=2^{31}$.  Uses a specialized implementation.
+  \endtab
+\code
+
+
+unif01_Gen * ulcg_CreateLCG2e32 (unsigned long a, unsigned long c,
+                                 unsigned long s);
+\endcode
+  \tab  Same as {\tt ulcg\_CreateLCG}, but with
+   $m=2^{32}$.  Uses a specialized implementation.
+  \endtab
+\code
+
+
+unif01_Gen * ulcg_CreatePow2LCG (int e, long a, long c, long s);
+\endcode
+  \tab  Implements a LCG as in  {\tt ulcg\_CreateLCG}, but with $m = 2^e$.
+   Restrictions: $a$, $c$ and $s$ non negative and smaller than $m$,
+   and $e \le 31$.
+  \endtab
+\code
+
+
+#ifdef USE_LONGLONG
+unif01_Gen * ulcg_CreateLCG2e48L (ulonglong a, ulonglong c, ulonglong s);
+\endcode
+  \tab A simple LCG of the form $x_{i+1} = (ax_i +c) \bmod 2^{48}$, where
+  $x_0 = s$ is the seed.
+\index{Generator!drand48}%
+  The generator  {\tt drand48} of the SUN 
+  C library is obtained with the parameters
+   $$
+     a = 25214903917, \qquad c = 11.
+   $$
+   Only the 32 most significant bits are kept.
+   Restrictions: $a, c, s < 281474976710656 = 2^{48}$.
+  \endtab
+\code
+
+
+unif01_Gen * ulcg_CreatePow2LCGL (int e, ulonglong a, ulonglong c,
+                                  ulonglong s);
+\endcode
+  \tab  Implements a LCG as in  {\tt ulcg\_CreatePow2LCG}, but with
+   $e \le 64$.   Only the 32 most significant bits are kept.
+  \endtab
+\code
+#endif
+\endcode
+\code
+
+
+#ifdef USE_GMP
+unif01_Gen * ulcg_CreateBigPow2LCG (long e, char *a, char *c, char *s);
+\endcode
+  \tab  Implements the same type of generator as {\tt ulcg\_CreatePow2LCG}, 
+   but using arbitrary large integers. The integers $a$, $c$ and $s$ are
+   given as strings of decimal digits.
+  \endtab
+\code
+#endif
+\endcode
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{Combined LCGs}
+
+\code
+
+unif01_Gen * ulcg_CreateCombLEC2 (long m1, long m2, long a1, long a2,
+                                  long c1, long c2, long s1, long s2);
+\endcode
+ \tab  Combines two LCGs by the method of L'Ecuyer \cite{rLEC88a}.
+   The first LCG has parameters {\tt (m1, a1, c1, s1)} and the
+   second has parameters {\tt (m2, a2, c2, s2)}.
+\index{Generator!L'Ecuyer}%
+   The combination is via $x_i = (s_{i1} - s_{i2}) \mod (m_1-1)$,
+   where $s_{i1}$ are $s_{i2}$ are the states of the two components
+   at step $i$.
+   The output is $u_i = x_i/m_1$ if $x_i\not=0$, and
+   $u_i = (m_1-1)/m_1$ if $x_i=0$.
+   As for {\tt ulcg\_CreateLCG}, the implementation depends on the parameters.
+   The same restrictions as for {\tt ulcg\_CreateLCG} apply to the two components
+   and one must also have {\tt m1 $>$ m2}.
+  \endtab
+\code
+
+
+unif01_Gen * ulcg_CreateCombLEC2Float (long m1, long m2, long a1, long a2,
+                                       long c1, long c2, long s1, long s2);
+\endcode
+  \tab  Floating-point version of {\tt ulcg\_CreateCombLEC2}.
+   Valid only if any positive integer smaller than 
+   $2^{53}$ is represented exactly as a {\tt double}
+   (this holds, e.g., if the IEEE  floating-point standard is respected). 
+   Restrictions:  $a_1m_1+c_1 - a_1 < 2^{53}$ and $a_2m_2+c_2 - a_2< 2^{53}$.
+  \endtab
+\code
+
+
+unif01_Gen * ulcg_CreateCombLEC3 (long m1, long m2, long m3, long a1,
+                                  long a2, long a3, long c1, long c2,
+                                  long c3, long s1, long s2, long s3);
+\endcode
+  \tab  Same as {\tt ulcg\_CreateCombLEC2}, but combines 3 LCGs instead of 2.
+   The combination is via
+    $x_i = (s_{i1} - s_{i2} + s_{i3}) \mod (m_1-1)$,
+   where $s_{i1}$, $s_{i2}$ et $s_{i3}$
+   are the states of the components.
+   One must have {\tt m1 $>$ m2 $>$ m3}.
+  \endtab
+\code
+
+
+unif01_Gen * ulcg_CreateCombWH2 (long m1, long m2, long a1, long a2,
+                                 long c1, long c2, long s1, long s2);
+\endcode
+  \tab  Combines two LCGs as in {\tt ulcg\_CreateCombLEC2}, but using the
+   Wichmann and Hill approach \cite {rWIC82a}:
+\index{Generator!Wichmann-Hill} \label{gen:Wichmann-Hill}%
+   By adding modulo 1 the outputs of the two LCGs.
+   The same restrictions apply.
+  \endtab
+\code
+
+
+unif01_Gen * ulcg_CreateCombWH2Float (long m1, long m2, long a1, long a2,
+                                      long c1, long c2, long s1, long s2);
+\endcode
+  \tab  Floating-point version of {\tt ulcg\_CreateCombWH2}. Valid only if the
+   IEEE  floating-point standard is respected (all integers smaller than 
+   $ 2^{53}$ are represented exactly as {\tt double}). 
+   Restrictions:  $a_1m_1+c_1 - a_1 < 2^{53}$ and $a_2m_2+c_2 - a_2< 2^{53}$.
+  \endtab
+\code
+
+
+unif01_Gen * ulcg_CreateCombWH3 (long m1, long m2, long m3, long a1,
+                                 long a2, long a3, long c1, long c2,
+                                 long c3, long s1, long s2, long s3);
+\endcode
+  \tab  Same as {\tt ulcg\_CreateCombWH2}, but combines three LCGs.
+   The recent version of Excel uses the original Wichmann-Hill combination
+   of three small LCGs \cite {rWIC82a} for its new random number
+   generator (see \texttt{usoft\_CreateExcel2003}
+   on page \pageref{gen:Excel2003} of this guide).
+  \endtab
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{Clean-up functions}
+\code
+
+
+#ifdef USE_GMP
+   void ulcg_DeleteBigLCG (unif01_Gen *gen);
+\endcode
+ \tab  Frees the dynamic memory used by the {\tt BigLCG}
+  generator and allocated by the corresponding {\tt Create} function
+ above.
+ \endtab
+\code
+
+
+   void ulcg_DeleteBigPow2LCG (unif01_Gen *gen);
+\endcode
+ \tab  Frees the dynamic memory used by the {\tt BigPow2LCG}
+  generator and allocated by the corresponding {\tt Create} function
+  above.
+ \endtab
+\code
+#endif
+
+
+void ulcg_DeleteGen (unif01_Gen *gen);
+\endcode
+ \tab Frees the dynamic memory used by any generator of this module
+  that does not have an explicit {\tt Delete} function. 
+  This function should be called to clean up a generator object
+  when it is no longer in use.
+ \endtab
+\code
+\hide
+#endif
+\endhide
+\endcode
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{Other related generators}
+
+
+{ For other specific LCGs, see also
+
+\begin{itemize}
+\item {\tt uwu\_CreateLCGWu61a}
+\item {\tt uwu\_CreateLCGWu61b}
+\end{itemize}
+}

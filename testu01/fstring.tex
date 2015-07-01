@@ -1,0 +1,202 @@
+\defmodule {fstring}
+
+This module applies tests from the module {\tt sstring}
+to a family of generators of different lsizes.
+The results are placed in tables of $p$-values.
+
+\bigskip
+\hrule
+\code\hide
+/* fstring.h for ANSI C */
+#ifndef FSTRING_H
+#define FSTRING_H
+\endhide
+#include "ffam.h"
+#include "fres.h"
+#include "fcho.h"
+
+
+extern long fstring_Maxn, fstring_MaxL;
+\endcode
+\tab
+  Upper bound on $n$ and $L$.
+  A test is called only when $n$ and $L$ do not exceed their limit value.
+  Default values: $n = 2^{22}$ and $L = 2^{20}$.
+\endtab
+
+
+\ifdetailed  %%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{Structures for test results}
+
+\code
+
+typedef struct {
+   fres_Cont *BLen;
+   fres_Disc *GLen;
+} fstring_Res1;
+\endcode
+ \tab  Structure used to keep the results of tests
+  {\tt fstring\_LongHead1}. {\tt GLen} corresponds to the global length
+  over all blocks considered as a single sequence. {\tt BLen} corresponds
+  to one length for each block. 
+ \endtab
+\code
+
+
+fstring_Res1 * fstring_CreateRes1 (void);
+\endcode
+ \tab 
+  Creates and returns a structure that will hold the results
+  of a  {\tt fstring\_LongHead1} test. 
+ \endtab
+\code
+
+
+void fstring_DeleteRes1 (fstring_Res1 *res);
+\endcode
+ \tab 
+  Frees the memory allocated by {\tt fstring\_CreateRes1}.
+ \endtab
+\bigskip\hrule\bigskip
+\code
+
+typedef struct {
+   fres_Cont *NBits;
+   fres_Cont *NRuns;
+} fstring_Res2;
+\endcode
+ \tab  Structure used to keep the results of tests {\tt fstring\_Run1}.
+  The member {\tt NBits} keeps the results for the number of
+   bits, while {\tt NRuns} keeps the results for the number of runs.
+ \endtab
+\code
+
+
+fstring_Res2 * fstring_CreateRes2 (void);
+\endcode
+ \tab 
+  Creates and returns a structure that will hold the results
+  of a  {\tt fstring\_Run1} test. 
+ \endtab
+\code
+
+
+void fstring_DeleteRes2 (fstring_Res2 *res);
+\endcode
+ \tab 
+  Frees the memory allocated by {\tt fstring\_CreateRes2}.
+ \endtab
+
+\fi %%%%%%%%%%%%%%%%%%
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{The tests}
+\code
+
+void fstring_Period1 (ffam_Fam *fam, fres_Cont *res, fcho_Cho *cho,
+                      long N, int r, int s,
+                      int Nr, int j1, int j2, int jstep);
+\endcode
+\tab
+ This function calls the test {\tt sstring\_PeriodsInStrings} with
+ parameters {\tt N}, {\tt r}, {\tt s} and sample size
+ $n =$ {\tt cho->Choose(param, i, j)},
+ for the first {\tt Nr} generators of family {\tt fam}, for $j$ going from
+ {\tt j1} to {\tt j2} by steps of {\tt jstep}. The parameters in {\tt param}
+ were set at the creation of {\tt cho} and $i$ is the lsize of the
+ generator being tested.
+ When $n$ exceeds {\tt fstring\_Maxn}, the test is not run.
+\endtab
+\code
+
+
+void fstring_Run1 (ffam_Fam *fam, fstring_Res2 *res, fcho_Cho *cho,
+                   long N, int r, int s,
+                   int Nr, int j1, int j2, int jstep);
+\endcode
+  \tab Similar to {\tt fstring\_Period1} but with
+ {\tt sstring\_Run}.
+ \endtab
+\code
+
+
+void fstring_AutoCor1 (ffam_Fam *fam, fres_Cont *res, fcho_Cho *cho,
+                       long N, int r, int s, int d,
+                       int Nr, int j1, int j2, int jstep);
+\endcode
+  \tab Similar to {\tt fstring\_Period1} but with
+ {\tt sstring\_AutoCor}.
+ \endtab
+\code
+
+
+void fstring_LongHead1 (ffam_Fam *fam, fstring_Res1 *res, fcho_Cho2 *cho,
+                        long N, long n, int r, int s, long L,
+                        int Nr, int j1, int j2, int jstep);
+\endcode
+  \tab This function calls the test {\tt sstring\_LongestHeadRun} with
+  parameters {\tt N}, {\tt r}, {\tt s} for the first {\tt Nr} generators of
+ family {\tt fam}, for $j$ going from {\tt j1} to {\tt j2} by steps of
+ {\tt jstep}.  If {\tt s} is greater than the resolution of the
+  generator, it will be reset to the resolution of the
+  generator. Either or both of $n$ and $L$ can be varied as
+ the sample size, by passing a negative value as an argument of the
+ function. One must then create the corresponding function
+ {\tt cho->Chon} or {\tt cho->Chop2} before calling the test.
+ One will have either $n = {}$ {\tt cho->Chon->Choose(param, i, j)},
+ or $L = {}$ {\tt cho->Chop2->Choose(param, i, j)} (or both). A positive value
+ for $n$ or $L$ will be used as is by the test.
+ When $n$ exceeds {\tt fstring\_Maxn} or  $L$ exceeds {\tt fstring\_MaxL},
+  the test is not run.
+ \endtab
+\code
+
+
+void fstring_HamWeight1 (ffam_Fam *fam, fres_Cont *res, fcho_Cho2 *cho,
+                         long N, long n, int r, int s, long L,
+                         int Nr, int j1, int j2, int jstep);
+\endcode
+  \tab Similar to {\tt fstring\_LongHead1} but with
+ {\tt sstring\_HammingWeight}.
+ \endtab
+\code
+
+
+void fstring_HamWeight2 (ffam_Fam *fam, fres_Cont *res, fcho_Cho2 *cho,
+                         long N, long n, int r, int s, long L,
+                         int Nr, int j1, int j2, int jstep);
+\endcode
+  \tab Similar to {\tt fstring\_LongHead1} but with
+ {\tt sstring\_HammingWeight2}.
+ \endtab
+\code
+
+
+void fstring_HamCorr1 (ffam_Fam *fam, fres_Cont *res, fcho_Cho2 *cho,
+                       long N, long n, int r, int s, long L,
+                       int Nr, int j1, int j2, int jstep);
+\endcode
+  \tab Similar to {\tt fstring\_LongHead1} but with
+ {\tt sstring\_HammingCorr}.
+ \endtab
+\code
+
+
+void fstring_HamIndep1 (ffam_Fam *fam, fres_Cont *res, fcho_Cho2 *cho,
+                        long N, long n, int r, int s, long L,
+                        int Nr, int j1, int j2, int jstep);
+\endcode
+  \tab Similar to {\tt fstring\_LongHead1} but with
+ {\tt sstring\_HammingIndep}.
+ \endtab
+\code
+
+\hide
+#endif
+\endhide
+\endcode

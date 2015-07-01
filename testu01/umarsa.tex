@@ -1,0 +1,441 @@
+\defmodule {umarsa}
+
+This module implements several generators proposed in different places
+by George Marsaglia and his  co-workers.
+See also the URL site \url{http://stat.fsu.edu/~geo/}.
+In the description of the generators, the symbols $\ll$ stands for
+ the left shift operator, $\gg$ for the right shift operator,
+ and  $\oplus$ for the bitwise exclusive-or operator. In the
+implementations of the generators, multiplications and divisions by powers
+of 2 are implemented with left and right bit shifts.
+\index{Generator!Marsaglia}
+
+\def\OP{\mathop {S}\nolimits}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\bigskip
+\hrule
+\code\hide
+/* umarsa.h for ANSI C */
+#ifndef UMARSA_H
+#define UMARSA_H
+\endhide
+#include "gdef.h"
+#include "unif01.h"
+
+
+unif01_Gen * umarsa_CreateMarsa90a (int y1, int y2, int y3, int z0,
+                                    unsigned int Y0);
+\endcode
+  \tab Implements the combination proposed by Marsaglia, Narasimhan and
+   Zaman \cite{rMAR90a}. Its components are the subtract-with-borrow
+\index{Generator!Marsa90a}%
+   generator (SWB) (see {\tt CreateSWB} in module {\tt ucarry})
+   $X_n = (X_{n-22} - X_{n-43} - C) \mod (2^{32}-5)$
+   where $C$ is the borrow, and the Weyl generator
+   $Y_n = (Y_{n-1} - 362436069) \mod 2^{32}$.
+   The combination is done by subtraction modulo $2^{32}$, i.e.,
+   $Z_n = (X_n - Y_n) \mod 2^{32}$ and the value returned is
+   $u_n = Z_n/2^{32}$.
+   The first 43 values of the generator SWB are initialized by the
+   combination of a 3-lag Fibonacci generator whose recurrence is 
+   $y_n = (y_{n-1}y_{n-2}y_{n-3}) \mod 179$, with a LCG with recurrence 
+   $z_n = (53z_{n-1} + 1) \mod 169$, as
+   follows: the sixth bit of $y_i z_i \mod 64$ is used to fill the seed
+   numbers of the main generator, bit by bit.
+   The parameters {\tt y1}, {\tt y2},  and {\tt y3} are the seeds of the
+    3-lag Fibonacci sequence, while {\tt z0} is the seed of the
+   sequence $z_{n} = (53 z_{n-1} + 1)\mod 169$.  Finally {\tt Y0}
+   is the seed of the  Weyl generator.  Restrictions: $0 < {\tt y1}, 
+   {\tt y2}, {\tt y3} < 179$ and $0 \le {\tt z0} < 169$.
+  \endtab
+\code
+
+
+unif01_Gen * umarsa_CreateRANMAR (int y1, int y2, int y3, int z0);
+\endcode
+  \tab Implements {\it RANMAR}, a combination proposed by Marsaglia,
+ Zaman and Tsang
+\index{Generator!RANMAR}%
+   in \cite{rMAR90b}. Its components are the  lagged-Fibonacci generator
+   $X_n = (X_{n - 97} - X_{n - 33}) \mod 1$, implemented using 24-bit 
+   floating-point numbers,  and the  arithmetic sequence
+   $S_n = (S_{n-1}-k) \mod (2^{24}-3)$.  The first 97 values of the 
+   lagged-Fibonacci generator are initialized in  exactly the same way
+   as the main generator in {\tt umarsa\_CreateMarsa90a}.
+% by the  combination of a
+%   3-lag Fibonacci generator $y_n = y_{n-1}y_{n-2}y_{n-3} \mod 179$ with a 
+%   LCG $z_n = 53z_{n-1} + 1 \mod 169$ as
+%   follows: the sixth bit of $y_iz_i \mod 64$ is used to fill the seed
+%   numbers of the main generator, bit by bit.
+   The parameters
+   {\tt y1}, {\tt y2}, and {\tt y3} are the seeds of the
+   3-lag Fibonacci sequence, while {\tt z0} is the seed of the LCG.
+   This generator has 24 bits of resolution.
+   Restrictions: $0 < {\tt y1}, {\tt y2}, {\tt y3} < 179$ and
+   $0 \le {\tt z0} < 169$.
+  \endtab
+\code
+
+#ifdef USE_LONGLONG
+   unif01_Gen * umarsa_CreateMother0 (unsigned long x1, unsigned long x2,
+      unsigned long x3, unsigned long x4, unsigned long c);
+#endif
+\endcode
+  \tab Marsaglia \cite{rMAR96a} named this generator
+   {\it ``The Mother of all RNG's''}. It is a ``multiply-with-carry''
+\index{Generator!The Mother of all RNG's}%
+   generator  (MWC) whose  recurrence is
+  \begin {eqnarray*}
+    Y &=& 5115\, x_{n-1} + 1776\,  x_{n-2} + 1492\,  x_{n-3} +
+        2111111111\,  x_{n-4} + C, \\
+     x_n &=& Y \mod 2^{32}, \\
+      C &=& Y \, /\,  2^{32},
+  \end {eqnarray*}
+   where $C$ is the carry.
+   The returned value is $x_n / 2^{32}$.
+   The four seeds {\tt x1}, {\tt x2}, {\tt x3} and {\tt x4} are the initial 
+   values of the $x_i$ and {\tt c} is the initial carry.
+   Marsaglia uses ${\tt c} = 0$ as initial value of the carry.
+   Restrictions: $ 0 \le {\tt c} \le 2111119494$
+   (= the sum of the coefficients of the $x_{n}$).
+  \endtab
+\code
+
+
+unif01_Gen * umarsa_CreateCombo (unsigned int x1, unsigned int x2,
+                                 unsigned int y1, unsigned int c);
+\endcode
+  \tab Generator {\em Combo\/} proposed by Marsaglia \cite{rMAR96a}:
+\index{Generator!Combo}%
+  \begin {eqnarray*}
+   x_n &=& (x_{n-1} \, x_{n-2}) \mod 2^{32}, \\
+    y_n &=& 30903 \left(y_{n-1} \mod 2^{16}\right) + y_{n-1}\div 2^{16}.
+  \end {eqnarray*}
+   The output is  $u_n = z_n/2^{32}$ with the
+   combination $z_n = (x_n + y_n) \mod 2^{32}$.
+  Marsaglia uses $c = 0$ as initial value of the carry.
+  Restrictions: $y_1 < 2^{16}$ and $0 \le c \le 30903$.
+  \endtab
+\code
+
+
+unif01_Gen * umarsa_CreateECG1 (unsigned int x1, unsigned int x2,
+                                unsigned int x3);
+\endcode
+  \tab Marsaglia \cite{rMAR96a} named these
+  ``{\em extended congruential\/}'' generators. This one is based on
+  \begin {eqnarray*}
+   x_n &=& (65065 x_{n-1} + 67067 x_{n-2} + 69069 x_{n-3}) \mod (2^{32}-5)
+  \end {eqnarray*}
+  and $u_n = x_n / (2^{32}-5)$.
+\index{Generator!ECG1}%
+  Restrictions: $0 \le x1, x2, x3 < 4294967291$.
+  \endtab
+\code
+
+
+unif01_Gen * umarsa_CreateECG2 (unsigned int x1, unsigned int x2,
+                                unsigned int x3);
+\endcode
+  \tab Generator based on the recurrence
+\index{Generator!ECG2}%
+  \begin {eqnarray*}
+   x_n &=& 2^{10} (x_{n-1} + x_{n-2} + x_{n-3}) \mod (2^{32}-5)
+  \end {eqnarray*}
+  and $u_n = x_n / (2^{32}-5)$.
+  Restrictions: $0 \le x1, x2, x3 < 4294967291$.
+  \endtab
+\code
+
+
+unif01_Gen * umarsa_CreateECG3 (unsigned int x1, unsigned int x2,
+                                unsigned int x3);
+\endcode
+  \tab Generator based on the recurrence
+\index{Generator!ECG3}%
+  \begin {eqnarray*}
+   x_n &=& (2000 x_{n-1} + 1950 x_{n-2} + 1900 x_{n-3}) \mod (2^{32}-209)
+  \end {eqnarray*}
+  and $u_n = x_n / (2^{32}-209)$.
+  Restrictions: $0 \le x1, x2, x3 < 4294967087$.
+  \endtab
+\code
+
+
+unif01_Gen * umarsa_CreateECG4 (unsigned int x1, unsigned int x2,
+                                unsigned int x3);
+\endcode
+\index{Generator!ECG4}%
+  \tab Generator based on the recurrence
+  \begin{eqnarray*}
+   x_n &=& 2^{20} (x_{n-1} + x_{n-2} + x_{n-3}) \mod (2^{32}-209)
+  \end{eqnarray*}
+  and $u_n = x_n / (2^{32}-209)$.
+  Restrictions: $0 \le x1, x2, x3 < 4294967087$.
+  \endtab
+\code
+
+
+unif01_Gen * umarsa_CreateMWC97R (unsigned int x0, unsigned int y0);
+\endcode
+  \tab This generator proposed by Marsaglia in \cite{rMAR97a} concatenates two
+   16-bit multiply-with-carry generators based on the recurrences
+  \begin{eqnarray*}
+    x_{n} &=& 36969 \left(x_{n-1} \mod 2^{16}\right) + x_{n-1}\div 2^{16}, \\
+    y_{n} &=& 18000 \left(y_{n-1} \mod 2^{16}\right) + y_{n-1}\div 2^{16}, \\
+     Z_n &=& \left( 2^{16} x_{n}  + y_{n} \mod 2^{16}\right) \mod 2^{32}.
+  \end{eqnarray*}
+  The 16 upper bits of $x_n$ and  $y_n$ are the carries of the respective
+  equation. The generator returns $Z_n/(2^{32} - 1)$.
+  It has been included as the default generator in the GNU package {\it R}
+\index{Generator!MultiCarry}%
+  under the name {\it Marsaglia-MultiCarry} \cite{tGNU03a}.
+  \endtab
+\code
+
+
+unif01_Gen * umarsa_CreateULTRA (unsigned int s1, unsigned int s2,
+                                 unsigned int s3, unsigned int s4);
+\endcode
+ \tab Implements the {\it ULTRA} generator \cite{rMAR96a}, a combination of a
+   lagged Fibonacci generator (see {\tt CreateLagFib} in module  {\tt umrg})
+\index{Generator!ULTRA}%
+   with a multiply-with-carry generator
+   (see {\tt CreateMWC} in module  {\tt ucarry}),
+   proposed by Marsaglia with his test suite DIEHARD:
+  \begin {eqnarray*}
+   x_n &=& (x_{n-97}\,x_{n-33}) \mod 2^{32}, \\
+   y_{n} &=& 30903\, \left(y_{n-1} \mod 2^{16}\right) + y_{n-1}\div 2^{16}, \\
+   z_n &=& (x_n + y_{n}) \mod 2^{32}.
+  \end {eqnarray*} 
+   The generator returns $z_n/2^{32}$. This agrees with the effective 
+   implementation in DIEHARD which does not agree with its documentation.
+   The four seeds  {\tt s1}, {\tt s2}, {\tt s3} and  {\tt s4} are used in
+   a complicated way to initialize the component generators.
+  \endtab
+\code
+
+
+unif01_Gen * umarsa_CreateSupDup73 (unsigned int x0, unsigned int y0);
+\endcode
+ \tab Implements the original {\it SuperDuper} generator \cite{rMAR73a}, a
+\index{Generator!SuperDuper}\label{gen:SupDup73}%
+   combination of a congruential generator with a shift-register generator:
+  \begin {eqnarray*}
+   x_n &=& 69069\, x_{n-1} \mod 2^{32}, \\
+   t &=& y_{n-1}\oplus \left(y_{n-1} \div 2^{15}\right), \\
+   y_{n} &=& t \oplus \left(2^{17} t \mod 2^{32}\right), \\
+   z_n &=& x_n \oplus y_{n}
+  \end {eqnarray*} 
+   The generator returns $z_n / (2^{32} - 1)$. The seeds {\tt x0} and
+    {\tt y0} initializes the $x_n$ and $y_n$.
+   Restriction: {\tt x0} must be odd.
+  \endtab
+\code
+
+
+unif01_Gen * umarsa_CreateSupDup96Add (unsigned int x0, unsigned int y0,
+                                       unsigned int c);
+\endcode
+ \tab Implements the {\it SuperDuper} generator, an additive  combination of a
+   congruential generator with a shift-register generator, proposed by
+  Marsaglia with his test suite DIEHARD \cite{rMAR96a}:
+\index{Generator!SuperDuper96}\label{gen:SupDup96}%
+  \begin {eqnarray*}
+   x_n &=& (69069\, x_{n-1} + c) \mod 2^{32}, \\
+   t &=& y_{n-1}\oplus (2^{13}y_{n-1}), \\
+   t &=& t \oplus (t \div 2^{17}), \\
+   y_{n} &=& (t \oplus (2^{5}t)) \mod 2^{32}, \\
+   z_n &=& (x_n  + y_n) \mod 2^{32}
+  \end {eqnarray*}
+   The generator returns $z_n/2^{32}$. 
+  This is the uniform generator  (called {\tt randuni})
+  included in {\sc Matlab} that is used to \index{Generator!Matlab-5}%
+  generate normal random variables.
+   Restriction: {\tt c} odd.
+  \endtab
+\code
+
+
+unif01_Gen * umarsa_CreateSupDup96Xor (unsigned int x0, unsigned int y0,
+                                       unsigned int c);
+\endcode
+ \tab Similar to {\tt umarsa\_CreateSupDup96Add} above, except that
+  the combination of the two generators is with a bitwise exclusive-or:
+  $$
+   z_n \  = \ x_n \oplus  y_{n}
+  $$
+  \endtab
+\code
+
+
+#ifdef USE_LONGLONG
+unif01_Gen * umarsa_CreateSupDup64Add (ulonglong x0, ulonglong y0,
+                                       ulonglong a, ulonglong c,
+                                       int s1, int s2, int s3);
+#endif
+\endcode
+ \tab Implements the 64-bit generator {\it supdup64}, an additive
+  combination of
+\index{Generator!supdup64}%
+  a congruential generator with a shift-register generator, proposed by
+  Marsaglia in \cite{rMAR02a}:
+  \begin {eqnarray*}
+   x_n &=& (a\, x_{n-1} + c) \mod 2^{64}, \\
+   t &=& y_{n-1}\oplus \left(2^{s_1}y_{n-1}\right), \\
+   t &=& t \oplus \left(t\div  2^{s_2}\right), \\
+   y_{n} &=& \left(t \oplus \left(2^{s_3} t\right)\right) \mod 2^{64}, \\
+   z_n &=& (x_n + y_{n}) \mod 2^{64}
+  \end {eqnarray*} 
+   The generator returns  $z_n/2^{64}$ using only the 32 most significant
+   bits of $z_n$ and setting the others to 0.
+   In his post, Marsaglia suggests the values $a = 6906969069$,
+   $c=1234567$, $s_1 = 13$, $s_2 = 17$ and $s_3 = 43$.
+   Restrictions: $a = 3 \mod 8$ or $a = 5 \mod 8$.
+  \endtab
+\code
+    
+
+#ifdef USE_LONGLONG
+unif01_Gen * umarsa_CreateSupDup64Xor (ulonglong x0, ulonglong y0,
+                                       ulonglong a, ulonglong c,
+                                       int s1, int s2, int s3);
+#endif
+\endcode
+ \tab Similar to {\tt umarsa\_CreateSupDup64Add} above, except that
+  the combination of the two generators is with a bitwise exclusive-or:
+  $$
+   z_n \  = \ x_n \oplus  y_{n}
+  $$
+  \endtab
+\code
+
+
+unif01_Gen * umarsa_CreateKISS93 (unsigned int x0, unsigned int y0,
+                                  unsigned int z0);
+\endcode
+ \tab Implements the generator {\it KISS}
+ proposed by Marsaglia in \cite{rMAR93c}, 
+\index{Generator!KISS}%
+   which is a combination of a LCG sequence with two 2-shifts register
+   sequences:
+  \begin {eqnarray*}
+   x_n &=& (69069\, x_{n-1} + 23606797) \mod 2^{32}, \\
+   t &=& y_{n-1}\oplus \left(2^{17} y_{n-1}\right), \\
+   y_{n} &=& t \oplus \left(t\div 2^{15}\right) \mod 2^{32}, \\
+   t &=& \left(z_{n-1}\oplus \left(2^{18} z_{n-1}\right)\right) \mod 2^{31},\\
+   z_n &=& t \oplus \left(t \div 2^{13}\right)
+  \end {eqnarray*} 
+   The generator returns
+   $\left((x_n + y_n + z_n) \mod 2^{32}\right) / 2^{32}$.
+   Restrictions: {\tt $0 \le$ z0 $< 2^{31}$}.
+  \endtab
+\code
+ 
+
+unif01_Gen * umarsa_CreateKISS96 (unsigned int x0, unsigned int y0,
+                                  unsigned int z1, unsigned int z2);
+\endcode
+ \tab Implements the generator {\it KISS}
+ proposed by Marsaglia in his test suite
+  DIEHARD \cite{rMAR96a}:
+  \begin {eqnarray*}
+   x_n &=& \left(69069\,x_{n-1} + 1\right) \mod 2^{32}, \\
+   t &=& y_{n-1}\oplus \left(2^{13} y_{n-1}\right), \\
+   t &=& t\oplus \left(t \div 2^{17}\right), \\
+   y_n &=& \left(t\oplus  \left(2^{5} t\right)\right) \mod 2^{32}, \\
+   z_n &=& \left(2z_{n-1}+ z_{n-2} + c_{n-1}\right) \mod 2^{32}, \\
+   c_n &=& (2z_{n-1} + z_{n-2} + c_{n-1}) \div 2^{32},
+  \end {eqnarray*} 
+  where the $x_n$ are a LCG sequence, the $y_n$ are a 3-shifts register
+  sequence, and the $z_n$ are a simple multiply-with-carry sequence
+  with $c_n$ as the carry (see {\tt CreateMWC} in module  {\tt ucarry}).
+  The variable $x_0$ is the seed of the LCG component,  $y_0$ is the seed
+  of the shift register component, and $z_1, z_2$ are the seeds of
+  the  multiply-with-carry sequence. The generator returns
+  $\left((x_n + y_n + z_n) \mod 2^{32}\right) / 2^{32}$.
+  \endtab
+\code
+
+
+unif01_Gen * umarsa_CreateKISS99 (unsigned int x0, unsigned int y0,
+                                  unsigned int z1, unsigned int z2);
+\endcode
+ \tab Implements the generator {\it KISS} proposed by Marsaglia in
+ \cite{rMAR99a}. It is a combination of a LCG, a 3-shifts register generator,
+\index{Generator!KISS}%
+  and two multiply-with-carry generators:
+  \begin {eqnarray*}
+   x_n &=& (69069\,x_{n-1} + 1234567) \mod 2^{32}, \\
+   t &=& y_{n-1}\oplus \left(2^{17} y_{n-1} \right), \\
+   t &=& t\oplus \left(t \div 2^{13}\right), \\
+   y_n &=& \left( t\oplus  \left(2^{5} t \right)\right) \mod 2^{32}, \\
+   Z_n &=& \mbox{as in {\tt umarsa\_CreateMWC97R} above}
+  \end {eqnarray*} 
+   where $x_0$ is the seed of the LCG component, $y_0$ the seed of the
+  3-shifts register component, and $z_1, z_2$ the seeds of the
+  multiply-with-carry generators. The generator returns
+   $\left( ((Z_n \oplus x_n) + y_n) \mod 2^{32}\right)/2^{32}$.
+  \endtab
+\code
+
+
+unif01_Gen * umarsa_Create4LFIB99 (unsigned int T[256]);
+\endcode
+ \tab Implements the 4-lag lagged Fibonacci generator {\it LFIB4} proposed by
+\index{Generator!LFIB4}%
+   Marsaglia in  \cite{rMAR99a}. It uses addition in the form
+   (see also {\tt CreateLagFib} in module  {\tt umrg})
+   $$
+   T_{n} = (T_{n-55} + T_{n-119} + T_{n-179} + T_{n-256}) \mod 2^{32}.
+   $$
+   The generator returns $T_{n}/2^{32}$. Its period is close to
+   $2^{287}$.
+  \endtab
+\code
+
+
+unif01_Gen * umarsa_Create3SHR99 (unsigned int y0);
+\endcode
+ \tab Implements the 3-shift random number generator {\it SHR3} proposed by
+\index{Generator!SHR3}%
+  Marsaglia in \cite{rMAR99a}:
+  \begin {eqnarray*}
+   t &=& y_{n-1}\oplus \left(2^{17} y_{n-1}\right), \\
+   t &=& t\oplus \left(t \div 2^{13}\right), \\
+   y_{n} &=& \left(t \oplus \left(2^{5} t\right)\right) \bmod 2^{32}.
+  \end {eqnarray*} 
+   The generator returns $y_n/2^{32}$ and its period is $2^{32} -1$.
+  \endtab
+\code
+
+
+unif01_Gen * umarsa_CreateSWB99 (unsigned int T[256], int b);
+\endcode
+ \tab Implements the subtract-with-borrow generator {\it SWB}
+\index{Generator!SWB}%
+  proposed by Marsaglia in  \cite{rMAR99a}:
+  \begin {eqnarray*}
+   b_n &=&  I[T_{n-222} < T_{n-237} + b_{n-1}], \\
+   T_{n} &=& \left(T_{n-222} - T_{n-237} - b_{n-1}\right) \bmod 2^{32},
+  \end {eqnarray*} 
+   where $b_n$ is the borrow and $I$ is the indicator function
+   (see {\tt CreateSWB} in module  {\tt ucarry}). 
+  The generator returns $T_{n}/2^{32}$ and its period is close to $2^{7578}$.
+  \endtab
+
+
+
+\guisec{Clean-up functions}
+\code
+
+void umarsa_DeleteGen (unif01_Gen *gen);
+\endcode
+ \tab \DelGen
+ \endtab
+\code
+\hide
+#endif
+\endhide
+\endcode

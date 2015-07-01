@@ -1,0 +1,723 @@
+\chapter {INTRODUCTION}
+
+%%%%%%%%%%%%%
+\section {Design and testing of random number generators}
+
+Random numbers generators (RNGs) are small computer programs whose
+purpose is to produce sequences of numbers that
+{\em seem to behave\/} as if they were generated randomly from 
+a specified probability distribution.
+These numbers are sometimes called {\em pseudorandom numbers}, 
+to underline the fact that they are not truly random.
+Here, we just call them random numbers, with the usual (slight) 
+abuse of language.
+These RNGs are crucial ingredients
+for a whole range of computer usages, such as statistical experiments,
+simulation of stochastic systems, numerical analysis, 
+probabilistic algorithms, cryptology, secure communications,
+computer games, and gambling machines, to name a few.
+
+The numbers must be generated quickly and easily by a
+computer program that is small, simple, and deterministic,
+except for its initial state which can be selected at random.
+% This program, together with the probability distribution of 
+% its initial state, is an RNG.
+In some cases, certain parameters of the generator are also selected
+at random, and can be viewed as part of the state.
+The quality criteria for an RNG may depend on the application.
+For simulation, one usually asks for speed, small memory requirement,
+and good statistical properties.
+For cryptology-related applications and for gambling machines in casinos,
+unpredictability is a crucial requirement for which speed can be
+sacrificed up to a certain point.
+
+% Theoretical analysis
+RNGs should be designed and selected based on a
+solid {\em theoretical\/} analysis of their mathematical structure.
+Here, we suppose that the goal is that the successive output 
+values of the RNG, say $u_0, u_1, u_2, \dots$, 
+imitate independent random variables from the uniform
+distribution over the interval $[0,1]$ (i.i.d.\ $U[0,1]$),
+or over the two-element set $\{0,1\}$ (independent random bits).
+In both cases (independent uniforms or random bits) we shall denote the
+hypothesis of perfect behavior by $\cH_0$.
+These two situations are strongly related, because under the i.i.d.\
+$U[0,1]$ hypothesis, any pre-specified sequence of bits (e.g.,
+the bit sequence formed by taking all successive bits of $u_0$, 
+or every second bit, or the first five bits of each $u_i$, etc.)
+must be a sequence of independent random bits.
+So statistical tests for bit sequences can be used as well 
+(indirectly) for testing the null hypothesis in the first situation.
+In the remainder of this document, unless specified otherwise,
+$\cH_0$ refers to this first situation.
+
+In the $U[0,1]$ case, $\cH_0$ is equivalent to saying that for each 
+integer $t>0$, the vector $(u_{0},\dots,u_{t-1})$ is uniformly
+distributed over the $t$-dimensional unit cube $[0,1]^t$.
+Clearly, this cannot be formally true, because these vectors always 
+take their values only from the {\em finite\/} set $\Psi_t$ of all
+$t$-dimensional vectors of $t$ successive values that can be produced by
+the generator, from all its possible initial states (or seeds).
+The cardinality of this set cannot exceed the number of admissible
+seeds for the RNG.  
+% If the seed is chosen at random,
+Assuming that the seed is chosen at random,
+vectors are actually generated over $\Psi_t$ 
+to approximate the uniform distribution over $[0,1]^t$.
+This suggests that $\Psi_t$ should be very evenly
+distributed over the unit cube.
+Theoretical figures of merit for measuring this uniformity are discussed,
+e.g., in \cite{rLEC98h,rLEC99b,rLEC01a,rNIE92b,rTEZ95a} and the
+references given there.
+
+In the case of a sequence of random bits, the null hypothesis $\cH_0$ 
+cannot be formally true as soon as the length $t$ of the sequence exceeds
+the number $b$ of bits in the generator's state, for the number of 
+distinct sequences of bits that can be produced cannot exceed $2^b$.
+For $b < t$, the fraction of all sequences that can be visited is at most
+$2^{b-t}$.  The goal, then, is to make sure that those sequences
+that can be visited are ``uniformly scattered'' in the set of all $2^t$
+possible sequences, and perhaps hard to distinguish.
+
+% Crypto.
+Cryptologists use different quality criteria for RNGs.
+Their main concern is {\em unpredictability\/} of the forthcoming
+numbers.  Their theoretical analysis of RNGs is usually asymptotic,
+in the framework of computational complexity theory \cite{rKNU98a,rLAG93a}.
+
+% Statistical testing:
+Once an RNG has been designed and implemented, 
+based on some mathematical analysis of its structure, it is usually
+submitted to {\em empirical statistical tests\/} that try to detect
+statistical deficiencies by looking for empirical evidence against
+the hypothesis $\cH_0$ introduced previously.
+A test is defined by a test statistic $Y$, which is a function of a
+finite number of $u_n$'s 
+(or a finite number of bits, in the case of bit generators), 
+whose distribution under $\cH_0$ is known (sometimes approximately).
+The number of different tests that can be defined is infinite and
+these different tests detect different problems with the RNGs.
+There is no universal test or battery of tests that can guarantee,
+when passed, that a given generator is fully reliable for all 
+kinds of simulations.  Passing many tests improves one's
+confidence in the RNG, although it never {\em proves\/} that 
+the RNG is foolproof.
+In fact, no RNG can pass every conceivable statistical test.
+One could say that a {\em bad\/} RNG is one that fails
+{\em simple\/} tests, and a {\em good\/} RNG is one that fails
+only very complicated tests that are extremely hard to find 
+or impractical to run.
+
+Ideally, $Y$ should mimic the random variable of practical interest
+in such a way that a bad structural interference between the RNG and the
+problem will show up in the test.
+But this is rarely practical.
+This cannot be done, for example, for testing RNGs
+for general-purpose software packages.
+
+% Specific statistical tests for RNGs are proposed and studied, e.g., in
+% \cite{rKNU98a,rHEL98s,rLEC99e,rLEC00c,rLEC01a,rLEC02c,%
+% rMAR85a,rMAR96b,rMAS00a,rSOT99a},
+% and other references given there.
+Experience with empirical testing tells us that RNGs with very long
+periods, good structure of their set $\Psi_t$, and based on recurrences
+that are not too simplistic, pass most reasonable tests,
+whereas RNGs with short periods or bad structures are usually easy
+to crack by standard statistical tests.
+The simple structure that makes certain classes of 
+generators very fast is also
+(often) the source of their major statistical deficiencies,
+which sometimes lead to totally wrong simulation results
+\cite{rCOU94a,rLEC02c,rLEC00c,rLEC01a,rLEC01d,rFER92a,rTEZ93a}.
+Practical tools for detecting these deficiencies are needed.  
+Offering a rich variety of empirical tests for doing that is
+the purpose of the {TestU01} library.
+
+Some authors suggest that statistical tests should be used to identify
+and discard what they call {\em bad subsequences\/} from the output
+sequence of random number generators.  
+We do not believe that this is a good idea.
+Such surgical procedures that cut out particular subsequences based on
+statistical test results would tend to remove some of the natural
+variability in the sequence, yielding a sequence that may lack some of
+the randomness properties of typical random sequences.
+Typically, when a generator fails a test decisively (e.g., with a 
+significance level or $p$-value less than $10^{-15}$, for example), 
+it fails in pretty much the same way for all its subsequences 
+of a given length.
+This is because failure typically depends on the structure of the point
+set $\Psi_t$.  There are exceptions, but they are not frequent.
+Moreover, when a generator starts failing a test decisively, the $p$-value
+of the test usually converges to 0 or 1 exponentially fast as a function
+of the sample size when the sample size is increased further.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section {Organization of the library}
+
+The software tools of {TestU01} are organized in four classes of modules:
+those implementing RNGs, those implementing statistical tests, 
+those implementing pre-defined batteries of tests, and those 
+implementing tools for applying tests to entire families of generators.
+The names of the modules in those four classes start with the letters
+{\tt u}, {\tt s}, {\tt b}, and {\tt f}, respectively, and we shall refer 
+to them as the {\tt u}, {\tt s}, {\tt b}, and {\tt f} modules.
+The name of every public identifier (type, variable, function, \dots)
+is prefixed by the name of the module to which it belongs.
+Chapters 2 to 5 of this guide describe these four classes of modules
+and give some examples.
+Some of these modules use definitions and functions from
+the ANSI C libraries MyLib and ProbDist \cite{iLEC01m,iLEC01p}, 
+also developed in our laboratory.
+Several platform-dependent switches are collected in module {\tt gdef}
+of MyLib.  They must be set to appropriate values, compatible with the
+environment in which {TestU01} is running
+(see the installation notes, in file {\tt README}).
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection {The generator implementations}
+
+The module {\tt unif01} provides the basic tools for defining and
+manipulating uniform RNGs.  It contains the type
+{\tt unif01\_Gen}, which implements the definition of an arbitrary RNG
+object. Every RNG intrinsic to this package is of this type.
+Functions are also available to write the current state of a generator,
+to filter its output in different ways (e.g., combining successive
+values in the sequence to produce an output with more bits of precision, 
+or taking non-successive values, or selecting only specific bits from 
+the output, etc.), to combine two or more generators and to test the
+speed of different generators.
+
+One can create an arbitrary number of RNGs of a given kind or of 
+different kinds in the same program,
+with the exception of a few specific RNG's that were programmed directly
+in C by their authors, and which use global variables.
+For the latter, only one copy of a particular generator can be
+in use at any given time, and this is indicated in the documentation of
+these specific RNG's. For example, one could use 3 LCGs with different
+parameters in the same program; each has its own private set of variables
+that does not interfere with the state or the parameters of the other two.
+Additional kinds of generators can be defined by the user if needed, 
+by implementing functions that construct objects of type {\tt unif01\_Gen}.
+% See the module {\tt unif01} for an example.
+
+The other {\tt u} modules implement RNGs and offer functions 
+of the form {\tt u\dots\_Create\dots} that return a generator object
+which can be used as a source of random numbers, and
+ to which tests can be applied.
+A dummy generator that just reads numbers from a file, either in text
+or in binary format,  is also available
+in module {\tt ufile}. There are functions in module {\tt unif01} 
+that makes it very easy for the user to test his own generator or an 
+external generator that is not pre-programmed in TestU01.
+% this is convenient for testing supposedly random bits 
+% produced by physical devices or stored on a compact disk.
+
+It is important to underline that most of the RNG implementations given here
+are {\em not\/} intended for direct use in simulation or other similar
+purposes.  Other RNG packages, based on robust generators and with
+multiple streams and other convenient facilities, have been designed 
+for that \cite{rLEC97d,rLEC01s}.  
+The purpose of the RNG implementations provided here is essentially 
+for empirical testing and experimentation with variants, combinations, etc.
+
+
+\iffalse  %%%%%%%
+Standard linear congruential and multiple recursive linear 
+congruential generators, combined multiple recursive generators,
+additive, subtractive and multiplicative lagged-Fibonacci generators,
+add-with-carry, subtract-with-borrow, and more general ``multiply-with
+carry'' generators, simple Tausworthe generators of
+different flavors based on 3-tap, 5-tap, and multiple-tap linear
+recurrences modulo 2, generalized feedback shift register (GFSR)
+and twisted GFSR generators, including Mersenne twisters,
+different families of nonlinear inversive generators (explicit 
+and implicit), quadratic and cubic congruential generators,
+and Weyl and nested Weyl generators.
+% and the Blum-Blum-Shub (BBS) generators.
+Generators combining two or more of the above, by bitwise exclusive-or
+or by addition modulo 1, are also supported.
+
+Generators used in popular software such as Unix, Excel,
+Visual Basic, Java, Mathematica, S-Plus, etc., and specific generators 
+proposed by different people in the recent years, are available.
+The latter include RNGs proposed by Knuth, Marsaglia, Matsumoto,
+Kurita, Nishimura, Tezuka, L'Ecuyer, Wu, Couture, and their collaborators.
+Generators proposed for security applications, such as
+Isaac (\url{http://burtleburtle.net/bob/rand/isaac.html}), 
+are included as well.
+In the near future, we plan to add other generators originating from
+the world of cryptology
+(see, e.g., the links on the web page {\tt http://csrc.nist.gov/rng/}).
+Finally, a dummy generator that just reads numbers from a file will
+also be available; this is convenient for testing supposedly random bits 
+produced by physical devices or stored on a compact disk.
+\fi  %%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection {The statistical tests}
+
+The statistical tests are implemented in the {\tt s} modules, 
+whose names start by {\tt s}.  
+They all test one of the two null hypotheses $\cH_0$ defined
+previously, using different test statistics.
+To apply a test to a specific generator, the generator must first be
+created by the appropriate {\tt Create} function in a {\tt u} module,
+then it must be passed as a parameter to the function 
+implementing the appropriate test.
+ The test results are printed automatically
+to the standard output, with a level of detail that can be selected 
+by the user (see module {\tt swrite}).
+
+It is also possible to recover information about what has happened 
+in the tests, via data structures specific to each type of test.
+%% (althought this requires a bit of hacking).
+These data stuctures, if they are to be used outside of a test,
+must always be created by calling the appropriate
+{\tt s\ldots\_Create\ldots} function. They 
+%% are global variables in the corresponding modules. They
+ are described only in the {\em detailed\/} version of this
+user's guide. This could be used, for example, to examine or 
+post-process the results of a test.
+There are also a few public functions that do not appear even 
+in the {\em detailed\/} version of this guide. They are hidden since
+they will be useful only when developing new tests or modifying 
+existing ones.
+
+The testing procedures use several functions from the library ProbDist
+\cite{iLEC01p}.  In particular, they use {\tt statcoll} from that library
+to collect statistical observations, and {\tt gofw} to apply the
+goodness-of-fit (GOF) tests.
+
+The module {\tt scatter} does not apply statistical tests per se,
+but permits one to draw scatter plots for vectors of points
+returned by a generator.
+
+\iffalse  %%%%%%%%%%%%%%%
+The tests that will be implemented include those described
+by Knuth \cite{rKNU98a} (serial test, gap test, poker test, 
+coupons collector test, permutation test, run test, max-of-$t$ test,
+collision test), those described by Marsaglia \cite{rMAR85b}
+(overlapping serial test, overlapping pairs with sparse occupancy,
+birthday spacings \cite{rLEC01a}, monkey test, matrix rank),
+the modified test of Savir proposed in \cite{rMAR85c},
+the general {\em power divergence\/} family of tests for overlapping
+and non-overlapping vectors, studied in \cite{rLEC98h,rLEC02c},
+for both the dense and sparse situations
+(this family of tests include chi-square, serial, collision,
+loglikelihood ratio, and entropy tests as special cases),
+tests based on the sum of the transformed spacings between sorted
+observations \cite{rLEC97h},
+tests based on discrete and continuous entropies \cite{rLEC96e},
+tests based on the distance between the closest pairs of points
+in space \cite{rLEC00c},
+the Bickel-Breiman multidimensional test of uniformity \cite{tBIC83a},
+the weight distribution test described in \cite{rMAT94a},
+a generalized collision test proposed by Sullivan \cite{rSUL93a},
+the test of Ugrin-Sparac \cite{rUGR91a},
+the so-called universal test proposed by Maurer \cite{rMAU92a}
+(which we call {\em appearances spacings\/}),
+various independence tests for the Hamming weights of successive
+blocks of bits,
+tests based on the distribution of correlations in bit strings
+studied in \cite{pGUI81a},
+tests based on the linear complexity of sequences \cite{rERD92a}
+and on the Lempel-Ziv complexity,
+empirical spectral tests based on Fourier transforms,
+and several tests based on random walks 
+\cite{rTAK94a,rTAK96a,rVAT94a,rVAT95a}.
+Graphical tools for examining the projections of point sets    
+(or their truncations) from the multidimensional unit hypercube
+to low-dimensional subspaces will be available as well.
+\fi  %%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection {Batteries of tests}
+
+Many users find it convenient to have predefined suites (or batteries) 
+of more or less standard statistical tests, with fixed parameters,
+that can be applied to a given RNG. 
+Different types of tests should be included in such a battery, 
+in order to detect different types of weaknesses in a given generator.
+% There can also be many batteries to cover the different kind of uses 
+% to which random number generators can be applied.
+
+A number of predefined batteries of tests, some oriented towards
+sequences of uniform floating-point numbers in the interval $[0, 1)$,
+others towards sequences of bits, are available in TestU01.
+There are small batteries, that run quickly, and larger 
+(more stringent) batteries that take longer to run. 
+These batteries are implemented in the {\tt b} modules.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection {Tools for testing families of generators}
+
+The {\tt f} modules provide a set of tools, built on top of
+the modules that implement the generator families and the tests,
+designed to perform systematic studies of
+the interaction between certain types of tests and the structure
+of the point sets produced by given families of RNGs.
+Roughly, the idea is to see at which sample size $n_0$ the test starts
+to reject the RNG decisively, as a function of its period length $\rho$.
+In experiments already performed with certain classes of generators
+and specific tests \cite{rLEC98h,rLEC00c,rLEC01a}, 
+the results were often surprisingly regular,
+in the sense that a regression model of the form
+$\log n_0 = a \log\rho + \epsilon$, where $a$ is a constant
+and $\epsilon$ a small noise, fits very well.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section {History and implementation notes}
+
+%  THIS SECTION MUST BE COMPLETED.
+
+{TestU01} started as a Pascal program implementing the tests suggested
+in the 1981 edition of volume 2 of ``The Art of Computer Programming''
+\cite{rKNU81a}. This was around 1985.
+Three or four years later, a Modula-2 implementation was made, in the
+form of a library with a modular design.
+Other tests were added, as well as some generators implemented in
+generic form.  Between 1990 and 2001, new generators and new tests were
+added regularly to the library and a detailed user's guide (in french)
+was kept up to date.  The {\tt f} modules, which contain
+tools for testing entire families of generators, were introduced in 
+1997, while the first author was on sabbatical at the University of 
+Salzburg, Austria.
+In 2001 and 2002, we partially redesigned the library,
+translated it in the C language, 
+and translated the user's guide in english.
+
+These preliminary versions of the library were used for several 
+articles (co)authored by P.\ L'Ecuyer, starting from his 1986 paper
+where he first proposed a combined LCG \cite{rLEC86a}, and including
+\cite{rLEC88a,rLEC92a,rLEC97d,rLEC97h,rLEC98h,rLEC02c,rLEC98t,rLEC99e,%
+rLEC00c,rLEC01a,rLEC03c,rLEC01d}.
+
+\iffalse  %%%%%%%%%%   Most of this is now done.
+The way this library was born and grew up certainly had an important
+influence on its design.  
+Things were added layer after layer along the years.
+Global variables abound, because this is the way things were made
+in the (relatively small) original Pascal and Modula-2 versions,
+partly in the interest of speed and reduced memory utilization.
+Some have been removed in the C version, but others remain.
+It we could afford the luxury of redoing the library entirely from
+scratch tomorrow, the design would certainly be somewhat different,
+probably more objected-oriented (e.g., the functions that set the 
+current generator, in modules {\tt u\ldots}, could return a generator
+object that would be passed as a parameter to testing functions,
+instead of using a global variable for the current generator.
+The tests could also return a pointer to a structure (i.e., an object)
+that contains their detailed results, instead of just writing them
+to the current output).
+This may happen in future versions.
+\fi  %%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section {Other software for testing RNGs}
+
+Another well-known public-domain testing package for RNGs is 
+DIEHARD \cite{rMAR96b}.
+\index{battery of tests!DIEHARD}\index{DIEHARD}%
+It contains a large number of statistical tests.
+However, it has some drawbacks and limitations.
+Firstly, the sequence of tests to be applied to any generator,
+as well as the parameters of these tests (sample size, etc.) are
+fixed in the package.  The sample sizes are moderate;
+all these tests run in a few seconds of CPU time on a desktop computer.
+For example, on a PC with an Athlon XP 2100+ processor at 1733 MHz
+and running Linux, the entire series of tests take approximately 
+12 seconds to run.
+% As a result, they are not really very stringent and the user has
+% little flexibility for changing that.
+Secondly, the package requires that the random numbers to be tested
+are 32-bit integers, placed in a huge file in binary format.
+This file is passed to the testing procedures.
+This setup is not always convenient. 
+Many RNGs produce numbers with less than 32 bits of resolution 
+(e.g., 31 bits is frequent) and DIEHARD does not care for that.
+{TestU01} is more flexible on all these aspects.
+
+The SPRNG library \cite{rMAS00a} is another public-domain software
+that implements the classical tests for RNGs given
+in \cite{rKNU98a}, plus a few others.
+\index{battery of tests!SPRNG}\index{SPRNG}%
+The National Institute of Standards and Technology (NIST), in the USA,
+\index{battery of tests!NIST}\index{NIST tests suite}%
+has implemented a test suite (16 tests) for RNGs, mainly for the
+testing and certification of RNGs used in cryptographic applications
+(see \cite{rSOT99a} and \url{http://csrc.nist.gov/rng/}).
+The ENT test program (\url{http://www.fourmilab.ch/random/})
+\index{battery of tests!ENT}\index{ENT}%
+implements a few elementary tests.
+The Information Security Research Center, in Australia,
+offers a commercial testing package called Crypt-X, 
+\index{battery of tests!Crypt-X}\index{Crypt-X}%
+which contains a test suite designed for stream
+ciphers, block ciphers, and key generators used in cryptology
+(see \url{http://www.isrc.qut.edu.au/resource/cryptx/}).
+The GNU scientific library {\tt gsl}, currently under development
+(see \url{http://sources.redhat.com/gsl/ref/gsl-ref_10.html}),
+implements a large set of well-tested RNGs, but so far no statistical
+test per se.
+
+\iffalse  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section {Examples}
+
+Simple examples of programs using {TestU01} are given here.
+The goal is to give a quick idea of what the library can do and how
+to use it.  
+  \vdots
+
+
+
+Two-level tests:
+
+The software allows also easily two-levels tests:
+one replicates the basic test $N$ times, to obtain $N$
+values of the statistic $T$, after which one compares the empirical
+distribution function $\hat F_N$ of these $N$ values with the
+theoretical distribution function $F$ of statistic $T$ under $\cH_0$.
+This comparison may be done by the use of  different statistics, 
+such as those of Kolmogorov-Smirnov, Watson, or Anderson-Darling
+\cite{tDAR60a,tDUR73a,tSTE70a,tSTE86b}.
+
+The final  result of such a test is the set of significance levels
+of the goodness-of-fit tests between $\hat F_N$ and $F$.
+For example, if $F$ is continuous, one may use, in order to test
+the fit, the Kolmogorov-Smirnov (KS)  statistics:
+\begin {eqnarray*}
+  D_N^+ &=& \sup_{-\infty < t < \infty} \left(\hat F_N(t) - F(t)\right)
+         =  \max_{1\le j\le N} \left(j/N - F(T_{(j)})\right)
+            \qquad\mbox { and}  \\[6pt]
+  D_N^- &=& \sup_{-\infty < t < \infty} \left(F(t) - \hat F_N(t)\right)
+         =  \max_{1\le j\le N} \left(F(T_{(j)}) - (j-1)/N\right).
+\end {eqnarray*}
+Let $d_N^+$ and $d_N^-$ be the values of these statistics,
+then  the  significance levels are
+\begin {eqnarray*}
+  \delta^+ &=& \Pr [D_N^+ \ge d_N^+ \mid \cH_0],\\[4pt]
+  \delta^- &=& \Pr [D_N^- \ge d_N^- \mid \cH_0].
+\end {eqnarray*}
+The software will generally print the values of these statistics
+and their  significance levels.
+For more details, see the modules {\tt gofs, gofw} from the
+library {\bf ProbDist}.
+The generator ``fails'' a test when the value of the significance
+level is deemed much too close to 0 or to 1, which means
+that the deviation obtained is too unlikely under $\cH_0$.
+When the result is unquestionable (for example when $\delta^+ < 10^{-5}$),
+one rejects $\cH_0$ and the generator.
+When the result is open to doubt (for example when $\delta^+ \approx 0.005$),
+one repeats the test (we may increase $n$ or $N$)
+and one rejects $\cH_0$ if suspect values occur consistently.
+% Les tests statistic decrits dans \cite{rLEC88a} ont ete effectues
+% a l'aide d'une version preliminaire de ce logiciel.
+
+Two-levels tests require the generation of a very large number of
+ values, which is generally costly in CPU times. On the other hand,
+this gives a more powerful test and allows the base test to be
+applied many times, on  different sub-sequences, instead of being
+applied once on the whole sequence.  Thus, one will be better able to
+detect the defects of a generator whose behaviour,
+ with respect to a given test, is not too bad if one takes the average
+over the whole sequence, but becomes bad when taken independently
+over shorter sub-sequences. 
+ For example, let us consider the extreme case of a generator
+which generates, in the standard order, the values $i/2^{31}$,
+ for $i=1,2,\dots,2^{31}-1$.
+If we apply a simple test of uniformity over the whole sequence, we
+shall have a perfect fit, while if we apply the same test many times
+over shorter sub-sequences, the fit will be very bad.
+
+Sometimes, the two-level test may be done by simply adding
+the $N$ values of $T$
+and rejecting $\cH_0$ if the sum is too large or too small.
+This is the case, for example, when $T$ obeys (approximately) a normal 
+or a Poisson law, under $\cH_0$.
+For detecting the flaws of random number
+generators, the test based on the sum of the  values of $T$ is usually more
+powerful than the tests comparing $\hat F_N$ and $F$,
+according to our experience.
+
+The module {\tt scatter} allows us to view on a graphics the points
+obtained from a generator (i.e.\ the vectors of $t$ 
+successive values in the sequence of generated values)
+in the $t$-dimensionnal hypercube $[0,1]^t$.
+We may take a slice of the hypercube, and we may
+project the points of this slice onto a 2-dimensionnal face.
+The module {\tt scatter} can create a file ready to be processed by
+ \LaTeX\ or {\tt Gnuplot}, that allow the viewing of this projection.
+In this way, the user may view the lattice structure of a linear
+congruential generator (LCG).
+
+Furthermore, each of the tests described in the  {\tt s...} modules may
+be applied to a whole family of generators of the same
+ type differing by their period. Thus, one may observe some
+ systematic behaviour of a whole family of generators with respect to a
+given test.
+
+Let us consider, for example, a family of  {LCG} defined by
+\begin{eqnarray*}
+   x_i &=& a x_{i-1} \mod m,\\
+   u_i &=& x_i / m,         
+\end{eqnarray*}
+whose modulus is chosen as a prime number
+of the form $2^e - q$, where $q$ is very small, and 
+$a$ is chosen to give the best figure of  merit $M_8$ as in
+ \cite{rLEC99c}. The  figure of merit 
+ $M_8$ characterizes the behaviour of a generator
+with respect to the  spectral test for all dimensions from 1 to 8.
+We apply the  collisions test (see the modules
+{\tt sknuth} and {\tt tknuth}, and \cite{rKNU81a} pp. 68--70), 
+to all members of this 
+ family while varying the sample size $n$ according to the law
+ $n=2^{\alpha\, e + \beta}$. By selecting suitable
+ $\alpha$ and  $\beta$, we  hope to discover a
+ regularity characterizing the failure of the 
+members of this family with respect to this test.
+For example, table~\ref{tab:coll1},  created by the program,
+gives the  expected number of collisions and the
+ observed number of collisions, for 
+$$
+  n = 2^{f + e/2}
+$$
+and a number of cells $k\approx 2^e$, in 2 dimensions.
+Under $\cH_0$, this number of collisions is a random variable $C$ which
+obeys a  Poisson law of mean $\lambda = n^2/(2k)$.
+Table~\ref{tab:coll11} shows the $p$-values (as defined in
+function {\tt gofw\_pDist} of the module {\tt gofw}), always for this
+collisions test.
+In this table, $\epsilon$ stands for a value $< 10^{-15}$.
+
+We see that the generators pass the test for $f=1$, begin to 
+have suspect values  for $f=2$, and fail the test
+systematically for $f \ge 3$. 
+By comparing the  corresponding columns of the table~\ref{tab:coll1}, 
+we see that the observed number of 
+ collisions is much less than the  expected number
+for $f \ge 3$, and this is the reason those generators
+fail the test.
+
+
+\begin {table}
+\begin {center}
+\caption {Some good LCGs with respect to $M_8$}
+\label {tab:lcg1}
+\smallskip 
+\begin {tabular}{|lr|}
+\hline
+\qquad $m$             & $a$ (good LCG)   \\
+\hline
+$2^{10}-3 = 1021$     &  65            \\
+$2^{11}-9 = 2039$     & 995            \\
+ $2^{12}-3 = 4093$    & 209            \\
+ $2^{13}-1 = 8191$    & 884            \\
+ $2^{14}-3 = 16381$   & 572            \\
+ $2^{15}-19 = 32749$  & 219            \\
+ $2^{16}-15 = 65521$  & 17364          \\
+ $2^{17}-1 = 131071$  & 43165          \\
+ $2^{18}-5 = 262139$  & 92717          \\
+ $2^{19}-1 = 524287$  & 283741         \\
+ $2^{20}-3 = 1048573$ & 380985         \\
+ $2^{21}-9 = 2097143$  & 360889         \\
+ $2^{22}-3 = 4194301$  & 914334         \\
+ $2^{23}-15 = 8388593$  & 653276        \\
+ $2^{24}-3 = 16777213$  & 6423135       \\
+ $2^{25}-39 = 33554393$  & 25907312     \\
+ $2^{26}-5 = 67108859$  & 26590841      \\
+ $2^{27}-39 = 134217689$  & 45576512     \\
+ $2^{28}-57 = 268435399$  & 31792125     \\
+ $2^{29}-3 = 536870909$   & 16538103     \\
+ $2^{30}-35 = 1073741789$  & 5122456     \\
+\hline
+\end {tabular}
+\end {center}
+\end {table}
+
+
+\def\eps  {$\quad\epsilon\quad$}
+\def\epsm  {$\quad 1 - \epsilon\quad$}
+
+
+\begin {table}
+\centering
+\caption {Expected number of
+collisions | Observed number of collisions.}
+\label {tab:coll1}
+\smallskip
+\begin {tabular}{|r|@{\extracolsep{10pt}}rr|rr|rr|rr|rr|}
+%% \multicolumn{11}{l}{\makebox[0pt][l]{Expected number of Collisions---Observed number of Collisions}}\\
+\hline
+ $e$& \multicolumn{2}{c|}{$  f=1$} & \multicolumn{2}{c|}{$  f=2$} & \multicolumn{2}{c|}{$  f=3$} & \multicolumn{2}{c|}{$  f=4
+$} & \multicolumn{2}{c|}{$  f=5$}  \\
+\hline
+ 10 &     1.93 &     2 &     7.62 &     2 &    29.39 &    11 &   108.94 &    58 &   376.52 &   570 \\
+ 11 &     1.99 &     1 &     7.81 &     0 &    30.44 &     6 &   115.16 &    17 &   413.38 &   474 \\
+ 12 &     1.96 &     0 &     7.81 &     2 &    30.65 &    13 &   117.87 &    44 &   436.20 &   216 \\
+ 13 &     1.95 &     1 &     7.78 &     2 &    30.71 &    22 &   119.46 &    57 &   452.06 &   211 \\
+ 14 &     1.98 &     1 &     7.90 &     5 &    31.31 &    11 &   122.77 &    52 &   471.77 &   191 \\
+ 15 &     1.99 &     1 &     7.93 &     1 &    31.51 &     7 &   124.27 &    41 &   483.20 &   132 \\
+ 16 &     1.99 &     1 &     7.95 &     0 &    31.65 &     5 &   125.35 &    20 &   491.26 &    75 \\
+ 17 &     1.99 &     0 &     7.97 &     1 &    31.75 &    11 &   126.16 &    23 &   497.29 &   101 \\
+ 18 &     2.00 &     0 &     7.98 &     4 &    31.83 &    15 &   126.66 &    45 &   501.47 &   214 \\
+ 19 &     2.00 &     0 &     7.98 &     1 &    31.89 &     3 &   127.07 &    19 &   504.60 &    61 \\
+ 20 &     2.00 &     0 &     7.99 &     0 &    31.91 &     4 &   127.33 &    14 &   506.69 &    74 \\
+ 21 &     2.00 &     0 &     7.99 &     1 &    31.94 &    12 &   127.55 &    48 &   508.35 &   178 \\
+ 22 &     2.00 &     0 &     7.99 &     3 &    31.96 &    14 &   127.66 &    59 &   509.34 &   220 \\
+ 23 &     2.00 &     0 &     8.00 &     0 &    31.97 &     5 &   127.79 &    16 &   510.22 &    45 \\
+ 24 &     2.00 &     0 &     8.00 &     0 &    31.98 &     1 &   127.83 &    15 &   510.67 &    37 \\
+ 25 &     2.00 &     0 &     8.00 &     3 &    31.98 &     5 &   127.86 &    29 &   510.99 &   133 \\
+ 26 &     2.00 &     2 &     8.00 &     1 &    31.99 &     7 &   127.92 &    24 &   511.33 &    71 \\
+ 27 &     2.00 &     1 &     8.00 &     1 &    31.99 &     7 &   127.95 &    38 &   511.55 &   152 \\
+ 28 &     2.00 &     0 &     8.00 &     3 &    31.99 &    17 &   127.96 &    41 &   511.67 &   193 \\
+ 29 &     2.00 &     1 &     8.00 &     0 &    32.00 &     0 &   127.98 &     8 &   511.78 &    25 \\
+ 30 &     2.00 &     0 &     8.00 &     3 &    32.00 &    10 &   127.98 &    29 &   511.83 &   189 \\
+\hline
+\end {tabular} \\
+\medskip
+\end {table}
+
+
+\begin {table}
+\centering
+\caption {The $p$-values of $C$ for the LCGs, for $t=2$ 
+and $k\approx 2^e$.}
+\label {tab:coll11}
+\smallskip
+\begin {tabular}{|r|@{\extracolsep{10pt}}lllcc|}
+% \multicolumn{6}{l}{\makebox[0pt][l]{Discrete p-value for Collision test}}\\
+\hline
+ $e$& $  f=1$ & $  f=2$ & $  f=3$ & $  f=4$ & $  f=5$  \\
+\hline
+ 10 &          &          &--1E--5 &--1E--12 & \eps     \\
+ 11 &          &--2E--4 &--6E--9 & \epsm    &     1E--6 \\
+ 12 &          &          &--1E--4 & \epsm    & \epsm    \\
+ 13 &          &          &          &--2E--12 & \epsm    \\
+ 14 &          &          &--2E--5 &--1E--14 & \epsm    \\
+ 15 &          &--3E--3 &--9E--8 & \epsm    & \epsm    \\
+ 16 &          &--4E--4 &--6E--9 & \epsm    & \epsm    \\
+ 17 &          &--3E--3 &--2E--5 & \epsm    & \epsm    \\
+ 18 &          &          &--7E--4 & \epsm    & \epsm    \\
+ 19 &          &--3E--3 &--8E--11 & \epsm    & \epsm    \\
+ 20 &          &--3E--4 &--7E--10 & \epsm    & \epsm    \\
+ 21 &          &--3E--3 &--5E--5 & \epsm    & \epsm    \\
+ 22 &          &          &--3E--4 &--9E--12 & \epsm    \\
+ 23 &          &--3E--4 &--4E--9 & \epsm    & \epsm    \\
+ 24 &          &--3E--4 &--4E--13 & \epsm    & \epsm    \\
+ 25 &          &          &--4E--9 & \epsm    & \epsm    \\
+ 26 &          &--3E--3 &--1E--7 & \epsm    & \epsm    \\
+ 27 &          &--3E--3 &--1E--7 & \epsm    & \epsm    \\
+ 28 &          &          &--3E--3 & \epsm    & \epsm    \\
+ 29 &          &--3E--4 &--1E--14 & \epsm    & \epsm    \\
+ 30 &          &          &--6E--6 & \epsm    & \epsm    \\
+\hline
+\end {tabular} \\
+\end {table}
+
+
+\fi  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

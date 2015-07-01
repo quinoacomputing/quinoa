@@ -1,0 +1,884 @@
+\defmodule {unif01}
+
+This module offers basic tools for defining, manipulating, and
+transforming uniform random number generators to which tests are 
+to be applied or which could be used for other purposes.
+Each generator is implemented as a
+structure of type {\tt unif01\_Gen}. 
+Several predefined generators are available in the {\tt u} modules.
+Each such generator must be created by the appropriate 
+{\tt \ldots Create\ldots} function before being used, and should
+be deleted by the corresponding {\tt \ldots Delete\ldots} function
+to free the memory used by the generator when it is no longer needed.
+One can create and use simultaneously any number of generators. 
+These generators are usually passed to functions as pointers to
+objects of type {\tt unif01\_Gen}.
+
+One may call an external generator for testing using the functions in
+this module. See Figure~\ref{prog:ex7} for an example.
+One may also implement one's own generator, by creating a structure of 
+type {\tt unif01\_Gen} and defining all its fields properly.
+See Figure~\ref{fig:my16807} for an illustration.
+
+Each implemented generator returns either a floating-point 
+number in $[0, 1)$ (via its function {\tt GetU01}) 
+or a block of 32 bits (via its function {\tt GetBits}).
+Ideally, these should follow the uniform distribution $(0,1)$
+and $\{0,\dots,2^{32}-1\}$, respectively.
+Most of the tests in the {\tt s} modules actually call the generator
+to be tested only indirectly through the use of one of the interface 
+functions {\tt unif01\_StripD},
+ {\tt unif01\_StripL} and  {\tt unif01\_StripB}.
+These functions drop the $r$ most significant bits of each random number 
+and return a number built out of the remaining bits.
+
+Functions are also provided for adding one or many output {\em filters\/} 
+to a given generator. These functions create another generator
+object which implements a mechanism that automatically
+transforms the output values of the original generator in a specified way.
+One can also combine the outputs of several generators in different ways.
+By using the output of several generators or several substreams of the
+same generator in a round-robin way, one can test the quality of these as 
+examples of parallel generators.
+Finally, tools are provided for measuring the speed of generators
+and adding their output values (for testing purposes).
+
+
+
+%%%%%%%%%%%%%
+\bigskip\hrule
+\code\hide
+/*  unif01.h  for ANSI C  */
+#ifndef UNIF01_H
+#define UNIF01_H
+\endhide
+#include "gdef.h"
+\endcode
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{Basic types}
+\code
+
+typedef struct {
+   void *state;
+   void *param;
+   char *name;
+   double (*GetU01) (void *param, void *state);
+   unsigned long (*GetBits) (void *param, void *state);
+   void (*Write) (void *state);
+} unif01_Gen;
+\endcode
+  \tab Generic random number generator. The function {\tt GetU01}
+   returns a floating-point number in $[0,1)$ while {\tt GetBits}
+   returns a block of 32 bits. If the generator delivers less than 32
+   bits, these bits are left shifted so that the most
+   significant bits are the relevant ones.
+% If the generator returns less than 32 bits of precision, then one must make
+% sure that these bits are the most significant bits of the returned block.
+   The variable {\tt state} keeps the
+   current state of the generator and {\tt param} is the set of
+   specific parameters used in computing the next random number. 
+   The function  {\tt Write} will write the current state of the
+   generator. The string  {\tt name}  describes the current generator,
+   its parameters, and its initial state.
+   In the description of the generators in the u modules, one
+   indicates how the {\tt GetU01} function  gets its value from the
+   generator's recurrence;
+   it is always understood that the {\tt GetBits}  function is
+   equivalent to $2^{32}\,${\tt GetU01}.
+  \endtab
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{Environment variables}
+
+\ifdetailed
+\code
+
+#define unif01_MASK32  0xffffffffUL
+\endcode
+  \tab 32-bit mask.
+ \endtab
+\code
+
+
+#define unif01_NORM32  4294967296.0
+#define unif01_INV32   2.328306436538696289e-10
+\endcode 
+ \tab The constants $2^{32}$ and $1/2^{32}$ respectively: 
+   normalization factors used in many generators to transform
+  a floating-point ``random'' number into a 32-bit integer, or vice-versa.
+ \endtab
+\fi
+
+\code
+
+
+extern lebool unif01_WrLongStateFlag;
+\endcode
+  \tab For generators whose state is a large array, determines whether
+   the state will be written out in full ({\tt TRUE}) or not ({\tt FALSE})
+   in the printouts. The default value is {\tt FALSE}. 
+\hrichard{C'est la seule variable globale qui reste. On pourrait
+  l'\'eliminer en ajoutant un argument \`a unif01\_Gen.Write, qui
+  deviendrait  {\tt Write (void *state, lebool flag).}}
+ \endtab
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{Basic functions}
+
+\code
+
+
+double unif01_StripD (unif01_Gen *gen, int r);
+\endcode
+\tab Makes one call to the generator {\tt gen}, drops the $r$ most
+  significant bits, left-shift the others by $r$ positions, and
+  returns the result, which is a floating-point number in $[0,1)$.
+ More specifically, returns $2^r u \mod 1$, 
+ where $u$ is the output of {\tt gen}.
+ \endtab
+\code
+
+
+long unif01_StripL (unif01_Gen *gen, int r, long d);
+\endcode
+\tab
+ Similar to {\tt unif01\_StripD}, but generates an integer ``uniformly'' over
+ the set $\{0,\dots,d-1\}$, by using the most significant bits of the
+ output of {\tt gen} after having dropped the first $r$ bits.
+ More specifically, returns $\lfloor d (2^r u \mod 1)\rfloor$, 
+ where $u$ is the output of {\tt gen}.
+\endtab
+\code
+
+
+unsigned long unif01_StripB (unif01_Gen *gen, int r, int s);
+\endcode
+\tab
+ Calls the generator {\tt gen}, drops the $r$ most significant bits,
+ and returns the $s$ following bits as an integer in 
+ the set $\{0,\dots,2^s-1\}$.
+\endtab
+\code
+
+
+void unif01_WriteNameGen (unif01_Gen *gen);
+\endcode
+ \tab  Writes the character string {\tt gen->name} that describes the
+  generator.
+ \endtab
+\code
+
+
+void unif01_WriteState (unif01_Gen *gen);
+\endcode
+ \tab  Writes the current state of generator  {\tt gen}.
+ \endtab
+\code
+
+
+void unif01_WrLongStateDef (void);
+\endcode
+ \tab Dummy function used when the state of the current
+   generator is a large array and we do not want to write the full state.
+   Writes the message ``{\tt   Not shown here ... takes too much space}''.
+ \endtab
+\code
+
+
+unif01_Gen * unif01_CreateDummyGen (void);
+\endcode
+\tab  Creates a {\em dummy\/} generator, which does nothing and always
+\index{Generator!dummy}%
+  returns zero. It can be used for instance to measure the overhead of
+  function calls when comparing generator's speeds
+  (see the timing tools below).
+\endtab
+\code
+
+
+void unif01_DeleteDummyGen (unif01_Gen *gen);
+\endcode
+\tab  Frees the dynamic memory used by the dummy generator above.
+\endtab
+\ifdetailed
+\code
+
+
+void unif01_DeleteGen (unif01_Gen *gen); 
+\endcode 
+\tab  Frees the dynamic memory used by a typical generator, for which
+  the state does not contain dynamically allocated arrays. 
+  In this case, the memory
+  is allocated by a {\tt u\ldots\_Create\ldots} function in some
+  {\tt u} module and the present function is called by the corresponding
+  {\tt u\ldots\_Delete\ldots} function in the same {\tt u} module.
+\endtab
+\fi
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{Output filters}
+
+The following describes some filters that can be added to transform 
+the output of a given generator. In each case, a new generator object is
+created that will effectively apply the filter to the original generator.
+One may apply more than one filter at a time on a given generator
+(for example, one may apply the {\tt Double}, the  {\tt Bias}, the 
+ {\tt Trunc} and the {\tt Lac} filters on top of one another). It suffices
+ to create the appropriate filters as described below.  The resulting 
+filtered generator(s) will call the original generator behind the scenes.
+Thus the state of the original generator will evolve as usual, even
+though it is not called directly.\index{filters}
+
+
+The different filters applied on an original generator are not independent
+but are related as the elements of a stack. When they are no longer in use, 
+they must be deleted {\em in the reverse order of their creation}, 
+the original generator being the last one of this group to be deleted. 
+Figure~\ref{fig:prog-filter} illustrates how these facilities can be used.
+
+\code
+
+
+unif01_Gen * unif01_CreateDoubleGen (unif01_Gen *gen, int s);
+\endcode
+ \tab
+ Given a generator {\tt gen}, this function
+\index{Generator!filter!increased precision}%
+ creates and returns a generator with increased precision, such that
+ every call to this new generator
+ corresponds to two successive calls  to the original generator.
+ The method {\tt GetU01} of this doubled generator  returns
+ $(U_1 +  U_2/2^s)$ mod 1, where $U_1$ and $U_2$ are the results of
+ two successive calls  to the method {\tt GetU01} of {\tt gen}. 
+ If the current generator has 31 bits of precision, for example,
+ then one can obtain 53 bits of precision from {\tt GetU01} 
+ by creating this new generator with {\tt s}  between $22$ and $31$.
+% Not true anymore:
+%  The function {\tt GetBits} of this new generator 
+%  will return  $(X_1 +  X_2/2^s)$ mod $2^{32}$,
+%  where $X_1$ and $X_2$ are the results of two successive calls to  the
+%  method  {\tt GetBits} of the original {\tt gen}.
+%  So it may return  more bits of precision, but never more than 32 bits.  
+ \endtab
+\code
+
+
+unif01_Gen * unif01_CreateDoubleGen2 (unif01_Gen *gen, double h);
+\endcode
+ \tab A more general version of {\tt unif01\_CreateDoubleGen} where
+  the method {\tt GetU01} of the double generator  returns
+  $(U_1 +  h U_2)$ mod 1. Restriction: $0 < h < 1$.
+ \endtab
+\code
+
+
+unif01_Gen * unif01_CreateLacGen (unif01_Gen *gen, int k, long I[]);
+\endcode
+ \tab
+  Given an original generator {\tt gen}, this function 
+\index{Generator!filter!lacunary indices}%
+  creates and returns a generator involving lacunary indices, such that
+  successive calls to this new generator
+  will no longer provide successive values from the original
+  generator, but rather selected values as specified by
+  the table {\tt I[0..k-1]}, in a circular fashion.
+  More specifically, if $u_0, u_1, u_2, \dots$ is the sequence
+  produced by the original {\tt gen}, if the table {\tt I[0..k-1]}
+  contains the non-negative integers $i_0, \dots i_{k-1}$ (in increasing
+  order), and if we put $L = i_{k-1}+1$,
+  then the output sequence of the new generator will be:
+   $$ u_{i_0}, u_{i_1}, \dots, u_{i_{k-1}}, u_{L+i_0}, u_{L+i_1},
+      \dots, u_{L+i_{k-1}}, u_{2L+i_0}, u_{2L+i_1}, \dots. $$
+  For example, if  $k=3$ and $I = \{0, 3, 5\}$,
+  the output sequence will be the numbers
+   $$ u_{0}, u_{3}, u_{5}, u_{6}, u_{9}, u_{11}, u_{12}, \dots $$
+  of the original generator.
+  To obtain every $s$-th number produced by the original generator
+  for example (a {\em decimated sequence\/}), one should take
+  $k=1$ and $I = \{s-1\}$.
+%  (note that taking $I = \{0, s\}$ won't work; it would return
+%  $u_0, u_s, u_{s+1}, u_{2s+1}, \dots$).
+ \endtab
+\code
+
+
+unif01_Gen * unif01_CreateLuxGen (unif01_Gen *gen, int k, int L);
+\endcode
+ \tab   Given an original generator {\tt gen}, this function
+\index{Generator!filter!luxury}% 
+  creates and returns a new generator giving the output of the
+  original generator with luxury level $L$: out of every group of $L$
+  random numbers, the first $k$ are kept and the next $L-k$ are skipped.
+ \endtab
+\code
+
+
+unif01_Gen * unif01_CreateBiasGen (unif01_Gen *gen, double a, double p);
+\endcode
+ \tab  Given an original generator {\tt gen}, this function 
+  creates and returns a new generator giving a biased output of the
+  original generator.  The output is biased 
+\index{Generator!filter!biased output}%
+  in such a way that the density becomes
+  constant with total probability $p$ over the interval $[0, a)$, and
+  constant with total probability $1 - p$ over $[a, 1)$ (the two constant
+  densities are different). For example, by choosing $p= 1$ and $a = 0.5$,
+  all the random numbers generated by {\tt GetU01} will fall
+  on the interval $[0,\; 0.5)$. This filter can be used, for example,
+  to study the power of certain statistical tests.
+  Restrictions: $0 < a < 1$ and $0 \le p \le 1$.
+ \endtab
+\code
+
+
+unif01_Gen * unif01_CreateTruncGen (unif01_Gen *gen, int s);
+\endcode
+ \tab   Given an original generator {\tt gen}, this function
+\index{Generator!filter!bit truncated}% 
+  creates and returns a new generator giving the output of the
+  original generator truncated to its $s$ most significant bits.
+ Restriction: $s \le 32$.
+\endtab
+\code
+
+
+unif01_Gen * unif01_CreateBitBlockGen (unif01_Gen *gen, int r, int s,
+                                       int w);
+\endcode
+ \tab  Consider a group of $v \le 32$ successive 32-bit integers
+  outputted by generator {\tt gen}. For each of these, drop the $r$ most
+\index{Generator!filter!blocks of bits}% 
+  significant bits and keep the $s$ following bits numbered
+  $b_{i 1}, b_{i 2}, \ldots, b_{i s}$, starting with the
+  most significant, for $1 \le i \le v$.
+  Make with all these a $v\times s$ matrix of bits, say ${\cal B}$.
+  The generator returned by this function is a filter that builds new 32-bit
+   integers from $v\times w$ submatrices of ${\cal B}$. 
+  The number of columns of the submatrix $w$ must be a power of 2 no larger
+  than 32 and it must be $\le s$. If $w$ does not divide $s$ exactly,
+  the last submatrix of ${\cal B}$ will have less than $w$ columns and
+  will be disregarded.
+
+  If the stream of bits thus obtained from {\tt gen} is
+  $$
+   b_{1 1}, b_{1 2}, \ldots,  b_{1 s},
+   b_{2 1}, b_{2 2}, \ldots,  b_{2 s},
+   \ldots,
+   b_{v 1}, b_{v 2}, \ldots,  b_{v s}, \ldots
+$$
+   then the new integers returned by the filter will be 32-bit integers
+   taken from the rearranged stream of bits so that the first new 
+   number is (its most significant bit being given first)
+  $$
+   b_{1 1}, b_{1 2}, \ldots,  b_{1 w},
+   b_{2 1}, b_{2 2}, \ldots,  b_{2 w},
+   \ldots,
+   b_{v 1}, b_{v 2}, \ldots,  b_{v w},
+$$
+  the second new  number is made of the bits (its most
+  significant bit first)
+  $$
+   b_{1 (w+1)}, b_{1 (w+2)}, \ldots,  b_{1 (2w)},
+   b_{2 (w+1)}, b_{2 (w+2)}, \ldots,  b_{2 (2w)},
+   \ldots,
+   b_{v (w+1)}, b_{v (w+2)}, \ldots,  b_{v (2w)},
+  $$
+  and so on.
+
+  The following examples illustrates how the filter works.
+  If $r$ = 0 and $w = s = 32$, then the filter has no effect,
+  the new integers being the same as those outputted by  {\tt gen}.
+  If $r$ = 0 and $w = s = 1$, then the filter will return integers
+  made only from the most significant bit of the original integers, all 
+  other bits being dropped.
+  If $r$ = 0, $w = 1$ and $ s = 32$, then the filter will return integers
+  made from the columns of ${\cal B}$, i.e., since the rows of ${\cal B}$
+  are made of the original integers, the filter will return the columns
+  of ${\cal B}$ as the new integers. 
+  Restrictions: $r \ge 0$, $0 < s \le 32$ and
+   $w$ in  $\{1, 2, 4, 8, 16, 32\}$.
+ \endtab
+\code
+
+
+void unif01_DeleteDoubleGen (unif01_Gen *gen);
+void unif01_DeleteLacGen    (unif01_Gen *gen);
+void unif01_DeleteLuxGen    (unif01_Gen *gen);
+void unif01_DeleteBiasGen   (unif01_Gen *gen);
+void unif01_DeleteTruncGen  (unif01_Gen *gen);
+void unif01_DeleteBitBlockGen (unif01_Gen *gen);
+\endcode
+ \tab Frees the memory used by the generator created by the corresponding
+ {\tt Create} functions above.
+ \endtab
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{Combining generators}
+
+These functions permit one to define the combination of two, three 
+or more generators. The resulting generator calls
+\index{Generator!combined}\index{combined generators}% 
+the component generators behind the scenes, so it changes their
+state. \emph{The  component generators must not be destroyed as long as the
+ combination generator is in use.}
+One can obtain the combinations of more than three generators by combining
+the generators obtained from combinations of two or three generators.
+%
+\hide
+\code
+
+typedef struct {
+   unif01_Gen *gen1;
+   unif01_Gen *gen2;
+} unif01_Comb2_Param;
+\endcode 
+ \tab This is used for combining two arbitrary generators. It is made
+  public because it would not be possible otherwise to free the dynamic
+  memory used by the two component generators when they are programmed
+  in another module.
+  \endtab
+\endhide
+\code
+
+
+unif01_Gen * unif01_CreateCombAdd2 (unif01_Gen *gen1, unif01_Gen *gen2,
+                                    char *name);
+\endcode
+ \tab  This function creates and returns a generator whose output is the
+ addition of the outputs modulo 1 of the  method {\tt GetU01} of the 
+ two generators {\tt gen1} and {\tt gen2}.
+ The character string {\tt name} may be printed in reports to identify this
+ new combined  generator.
+\index{combined generators!addition}
+ \endtab
+\code
+
+
+unif01_Gen * unif01_CreateCombAdd3 (unif01_Gen *gen1, unif01_Gen *gen2,
+                                    unif01_Gen *gen3, char *name);
+\endcode
+ \tab  Same as {\tt unif01\_CreateCombAdd2}, except that the returned
+  generator is the combination (the addition of the outputs modulo 1 of the
+  method {\tt GetU01}) of the three generators {\tt gen1, gen2} and {\tt gen3}.
+\hrichard{
+  When the combined generator is used to generate random integers, in rare
+  cases, an integer may differ by 1 unit depending on the order of
+   addition of the 3 terms (one from each component). This is due
+   to the last bit (bit 53) of the value returned which may be affected by
+   floating-point numerical errors. Furthermore, the result
+   may be different if the addition is done without function calls
+   (as in the pre-programmed version of Wichmann-Hill for example in
+   {\tt ulcg\_CreateCombWH3}), in  which
+   case, the 2 extra guard bits required by the IEEE-754 standard in
+   floating-point arithmetic operations may give a more exact result.
+}
+ \endtab
+\code
+
+
+unif01_Gen * unif01_CreateCombXor2 (unif01_Gen *gen1, unif01_Gen *gen2,
+                                    char *name);
+\endcode
+ \tab  This function creates and returns a generator whose output is the
+ bitwise {\sl exclusive-or (XOR)\/}  of the outputs of the two generators
+ {\tt gen1} and {\tt gen2}. The character string {\tt name} may be printed
+ in reports to identify this combined generator.
+ \index{combined generators!exclusive or}
+ \endtab
+\code
+
+
+unif01_Gen * unif01_CreateCombXor3 (unif01_Gen *gen1, unif01_Gen *gen2,
+                                    unif01_Gen *gen3, char *name);
+\endcode
+ \tab  Same as {\tt unif01\_CreateCombXor2}, except that the 
+ returned generator is the combination of the three generators
+ {\tt gen1, gen2} and {\tt gen3}.
+ \endtab
+\code
+
+
+void unif01_DeleteCombGen (unif01_Gen *gen);
+\endcode
+ \tab  Frees the memory used by one of the combination generators returned
+  by the  {\tt Create} functions above, but does not delete any of its
+  component generators.
+ \endtab
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{Parallel generators}
+
+ The following functions allow the joining of the output of several generators
+ or of different substreams of the same generator into a single stream of
+ random numbers. This can be used to test for apparent correlations between the
+ output of several generators or several substreams used in parallel.
+ For example, one may want to choose seeds 
+ that are far separated for the same generator, while making sure that 
+ such seed choice is statistically valid and does not introduce unwanted 
+ correlation between the substreams thus defined.
+\code
+
+unif01_Gen * unif01_CreateParallelGen (int k, unif01_Gen *gen[], int L);
+\endcode
+ \tab Creates and returns a generator whose output is obtained in a round-robin
+  way $L$ numbers at a time from each of the $k$ generators \texttt{gen[i]} as 
+  follows: the first $L$ numbers are generated from \texttt{gen[0]}, the next 
+  $L$ numbers are generated from \texttt{gen[1]}, and so on until 
+  $L$ numbers have been generated from \texttt{gen[k-1]}, after which, this whole
+  process is repeated. \emph{It is important that none of the generators} 
+ \texttt{gen[i]} \emph{be destroyed as long as the parallel generator is in use.}
+ \endtab
+\code
+
+
+void unif01_DeleteParallelGen (unif01_Gen *gen);
+\endcode
+ \tab  Frees the memory allocated by the parallel generator returned
+  by the  {\tt Create} function above, but \emph{does not} delete any of its
+  component generators, which is the responsibility of the program that
+  created them.
+ \endtab
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{External generators}
+
+Although  TestU01 implements many generators both in generic and in
+specific forms, it is not possible to implement all those that are in
+existence because there are just too many and new ones are proposed 
+regularly. The typical user would like to test his preferred generator
+with as little complications as possible. The functions below allows one 
+to do just that. As long as the generator is programmed in C, 
+one has but to pass  the function implementing the generator to one of the
+functions below and call some of the tests available in TestU01.
+It is the responsibility of the user to ensure that his generator does not
+violate the conditions described in the functions below. For the
+call in {\tt unif01\_CreateExternGen01}, his generator must return
+floating-point numbers in $[0, 1)$. For the calls in
+ {\tt unif01\_CreateExternGenBitsL} and  {\tt unif01\_CreateExternGenBits},
+ his generator must return an integer in the interval $[0, 2^{32} - 1]$.
+If these conditions are violated, the results of the tests in TestU01 are
+unpredictable. % Similarly, a generator should not be so pathological so as to
+% return the same value at every call. 
+ \index{Generator!user defined} \index{Generator!external}%
+\code
+
+
+unif01_Gen *unif01_CreateExternGen01 (char *name, double (*gen01)(void*,void*),
+                                      unsigned long (*gen01_bits)(void*,void*));
+\endcode
+\tab Implements a pre-existing external generator {\tt gen01} that is
+  not part of TestU01. \label{externgen}
+ It must be a C function taking no argument and returning a {\tt double}
+ in the interval $[0, 1)$. Parameter {\tt name} is the name of the generator.
+ No more than one generator of this type can be in use at a  time. 
+\endtab
+\code
+
+
+unif01_Gen *unif01_CreateExternGenBits (char *name,
+                                        unsigned int (*genB)(void));
+\endcode
+\tab Implements a pre-existing external generator {\tt genB} that is not part
+ of TestU01. It must be a C function taking no argument and returning
+ an integer in the interval $[0, 2^{32} - 1]$.
+ If the generator delivers less than 32 bits of resolution, then these 
+ bits must be left shifted so that the most significant bit is bit 31
+ (counting from 0). Parameter {\tt name} is the name of the generator.
+ No more than one generator of this type can be in use at a  time. 
+ \endtab
+\code
+
+
+unif01_Gen *unif01_CreateExternGenBitsL (char *name,
+                                         unsigned long (*genB)(void));
+\endcode
+\tab Similar to {\tt unif01\_CreateExternGenBits}, but with
+{\tt unsigned long} instead of {\tt unsigned int}. The generator 
+{\tt genB} must also return  an integer in the interval $[0, 2^{32} - 1]$.
+ \endtab
+\code
+
+
+void unif01_DeleteExternGen01 (unif01_Gen * gen);
+void unif01_DeleteExternGenBits (unif01_Gen * gen);
+void unif01_DeleteExternGenBitsL (unif01_Gen * gen);
+\endcode
+ \tab  Frees the memory used by the generator created by the corresponding
+ {\tt Create} functions above.
+ \endtab
+
+
+\bigskip
+As an example, Figure~\ref{prog:ex7}  shows how to apply
+ {\tt SmallCrush}, a small predefined battery of tests (described on page
+ \pageref{bat:SmallCrush}) to the generators {\tt MRG32k3a} and {\tt
+xorshift}, whose code is shown in Figures~\ref{fig:MRG32k3a} and
+ \ref{fig:xorshift}.  One must compile and link the two external
+files with the main program and the TestU01 library.
+The generator {\tt MRG32k3a} returns numbers in (0, 1) and was
+proposed by L'Ecuyer in \cite{rLEC99b}.
+The generator {\tt xorshift} returns 32-bit integers 
+and was proposed by Marsaglia in \cite[page 4]{rMAR03a}.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\setbox0=\vbox {\hsize = 6.2in
+{\smallc
+\verbatiminput{../examples/ex7.c}}
+}
+
+\begin{figure} \centering \myboxit{\box0}
+\caption {Example of a program to test two external generators}
+\label {prog:ex7}
+\end{figure}
+
+
+\setbox1=\vbox {\hsize = 6.2in
+{\smallc
+\verbatiminput{../examples/mrg32k3a.c}}
+}
+
+\begin{figure} \centering \myboxit{\box1}
+\caption {External function for {\tt MRG32k3a}.}
+\label {fig:MRG32k3a}
+\end{figure}
+
+
+\setbox1=\vbox {\hsize = 6.2in
+{\smallc
+\verbatiminput{../examples/xorshift.c}}
+}
+
+\begin{figure} \centering \myboxit{\box1}
+\caption {External function for {\tt xorshift}.}
+\label {fig:xorshift}
+\end{figure}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{Timing devices}
+
+\code
+
+typedef struct {
+   unif01_Gen *gen;
+   long n;
+   double time;
+   double mean;
+   lebool fU01;
+   } unif01_TimerRec;
+\endcode
+ \tab  Structure to memorize the results of speed and sum tests on a given
+   generator. Here, {\tt gen} is the generator,\index{timer}
+   {\tt n} is the number of calls made to the generator,
+   {\tt time} is the total CPU time in seconds, and
+   {\tt mean} is the mean of the {\tt n} output values of the generator.
+   If {\tt fU01} is  {\tt TRUE}, the function {\tt GetU01} of 
+   {\tt gen} is called, otherwise the function  {\tt GetBits} is called.
+ \endtab
+\code
+
+
+void unif01_TimerGen (unif01_Gen *gen, unif01_TimerRec *timer, long n,
+                      lebool fU01);
+\endcode
+ \tab
+ This function computes the CPU time needed to generate
+\index{Generator!speed}\index{Generator!timing}%
+  {\tt n} random numbers with the generator {\tt gen},
+  and returns the result in {\tt timer}. If {\tt fU01} is  {\tt TRUE},
+  the random numbers will be generated by the method {\tt GetU01} of 
+  {\tt gen}, otherwise by the
+  method  {\tt GetBits}.
+ \endtab
+\code
+
+
+void unif01_TimerSumGen (unif01_Gen *gen, unif01_TimerRec *timer, long n,
+                         lebool fU01);
+\endcode
+ \tab
+  Same as {\tt unif01\_TimerGen}, but also adds the {\tt n} random
+  numbers and saves their mean in {\tt timer->mean}.
+ \endtab
+\code
+
+
+void unif01_WriteTimerRec (unif01_TimerRec *timer);
+\endcode
+ \tab
+  Prints the results contained in {\tt timer}, with some information
+  about the generator and the current machine. One should make sure that the
+  generator {\tt gen} in {\tt timer} has not been deleted when
+  calling this function. 
+\hrichard {Ceci m'inqui\`ete un peu, car si
+l'utilisateur appelle cette fonction apr\`es que le g\'en\'erateur 
+ait \'et\'e d\'etruit, il y aura un {\tt segmentation fault}. L'alternative
+serait de r\'eserver un tableau de 50 caract\`eres dans 
+{\tt unif01\_TimerRec} et d'y recopier le nom du g\'en\'erateur, au lieu
+d'avoir le pointeur {\tt gen}.}
+ \endtab
+\code
+
+
+void unif01_TimerGenWr (unif01_Gen *gen, long n, lebool fU01);
+\endcode
+ \tab
+  Equivalent to calling {\tt unif\_TimerGen} followed by 
+  {\tt unif01\_WriteTimerRec}. 
+ \endtab
+\code
+
+
+void unif01_TimerSumGenWr (unif01_Gen *gen, long n, lebool fU01);
+\endcode
+ \tab
+  Equivalent to calling {\tt unif\_TimerSumGen} followed by 
+  {\tt unif01\_WriteTimerRec}. 
+ \endtab
+\code
+\hide
+#endif
+\endhide
+\endcode
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection*{Examples}
+
+We now provide some examples of how to use the facilities of {\tt unif01}.
+Figure~\ref{fig:my16807} gives an example of how to implement one's own
+generator, using all the paraphernalia of TestU01. This is specially
+useful when one wants to implement a generator in generic form with
+one or more parameters.
+ This is a simple LCG with hardcoded parameters $m=2^{31}-1$ 
+and $a = 16807$.\index{Generator!user defined}
+The function {\tt My16807\_U01} will advance the generator's state
+by one step and return a $U(0,1)$ random number $U$ each time it is
+called, whereas {\tt My16807\_Bits} will return the 32 most significant
+bits in the binary representation of $U$.
+The function {\tt CreateMy16807} allocates the memory for the corresponding
+{\tt unif01\_Gen} structure and initializes all its fields.
+
+
+\setbox2=\vbox {\hsize = 6.2in
+{\smallc
+\verbatiminput{../examples/my16807.c}}
+}
+
+\begin{figure} \centering \myboxit{\box2}
+\caption {A user-defined generator, in file {\tt my16807.c}.}
+\label {fig:my16807}
+\end{figure}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Figure~\ref{fig:unif-timing} shows how to use the timing facilities.
+The {\tt main} program first sets the generator {\tt gen} to an LCG
+with modulus $2^{31}-1$, multiplier $a = 16807$, and initial state 12345,
+implemented in floating point. 
+\hrichard {Sur ma machine Linux, le
+   LCG (en entiers) est 12\% plus rapide que la version LCGFloat} 
+(This generator is well known, but certainly {\em not\/} to be recommended;
+its period length of $2^{31}-2$ is much too small.)
+The program calls {\tt unif01\_TimerSumGenWr} which generates 10 million 
+random numbers in $[0, 1)$, computes their mean, and prints the CPU time 
+needed to do that.
+Next, the program deletes this {\tt unif01\_Gen} object and creates a 
+new one, which is actually a user-defined implementation of the same LCG,
+taken from the home-made module {\tt my16807} whose code is shown in
+Figure~\ref{fig:my16807}.
+In this implementation, the parameters have been placed as constants 
+directly into the code.
+Ten million random numbers are generated with this alternative 
+implementation, and the average and CPU time are printed.
+The same procedure is repeated for two additional predefined
+generators taken from modules {\tt ulec}.
+% with period lengths near $2^{191}$ and near $2^{113}$, respectively. 
+Figure~\ref{fig:unif-timing-res} shows the results of this program,
+run on a 2106 MHz computer running Linux, and compiled with {\tt gcc -O2}.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\setbox0=\vbox {\hsize = 6.2in
+{\smallc
+\verbatiminput{../examples/ex3.c}}
+}
+
+\begin{figure} \centering \myboxit{\box0}
+\caption {Example of a program creating and timing generators.}
+\label {fig:unif-timing}
+\end{figure}
+
+
+\setbox1=\vbox {\hsize = 6.2in
+{\smallc
+\verbatiminput{../examples/ex3.res}}
+}
+
+\begin{figure} \centering \myboxit{\box1}
+\caption {Results of the program of Figure~\ref{fig:unif-timing}.}
+\label {fig:unif-timing-res}
+\end{figure}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Figure~\ref{fig:prog-filter} shows how to apply filters to generators
+and how to combine two or more generators by addition modulo 1 or bitwise
+exclusive-or.
+The program starts by creating a simple Tausworthe generator {\tt gen1}
+and it generates 20 values from it.
+It then deletes {\tt gen1}, creates a new copy of it with the same 
+parameters and initial state, and applies a ``lacunary indices'' 
+filter to create a second generator {\tt gen2}.  
+The output sequence of {\tt gen2} will be 
+(in terms of the original sequence numbering)
+$u_3, u_7, u_9, u_{13}, u_{17}, u_{19}, u_{23}, \dots$.
+Next, the program creates a generator {\tt gen3} for which each output value
+is constructed from two successive output values of {\tt gen2},
+generates some values from {\tt gen3} and {\tt gen2}, and deletes them.
+%
+\hpierre{I would like to generate and print 20 numbers from {\tt gen1}, 
+    then reset {\tt gen1} to its initial state, then 
+    generate and print 20 numbers from {\tt gen2}.
+    But there is no public facility to reset a generator to a given state!
+    To implement such facilities, we would have to make public the
+    structure type that represents the state, for each type of generator.
+    Presently, these types are hidden in the .c}
+\hrichard{Peut-\^etre qu'il ne serait pas n\'ecessaire de rendre le type
+ de l'\'etat public. Il faudrait toutefois une fonction {\tt Init} dans 
+ la structure  {\tt unif01\_Gen}.}
+
+After that, the program creates another Tausworthe generator {\tt gen2}
+and a generator {\tt gen3} which is a combination of {\tt gen1} and 
+{\tt gen2} by bitwise exclusive-or.  It generates a few values with
+{\tt gen3} and deletes all the generators.
+
+
+
+\setbox10=\vbox {\hsize = 6.2in
+{\smallc
+\verbatiminput{../examples/ex4.c}}
+}
+
+\begin{figure} \centering \myboxit{\box10}
+\caption{Applying filters and combining generators.}
+\label{fig:prog-filter}
+\end{figure}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

@@ -1,0 +1,446 @@
+\defmodule {gofs}
+
+This module provides tools for computing goodness-of-fit test statistics
+for testing the hypothesis $\cH_0$ that a sample of $N$ observations 
+$V_1,\dots,V_N$ comes from a given univariate probability 
+distribution $F$.
+These test statistics generally measure, in different ways, the
+distance between $F$ and the {\em empirical distribution function\/} 
+(EDF) $\hat F_N$ of $V_1,\dots,V_N$.
+They are also called EDF test statistics.
+The observations $V_i$ are usually transformed into $U_i = F(V_i)$,
+which always satisfy $0\le U_i\le 1$, and which
+follow the $U(0,1)$ distribution under $\cH_0$.
+These observations are also usually sorted.
+Here, $U_{(1)}, \dots, U_{(N)}$ stand for $N$ observations
+$U_1,\dots,U_N$ sorted by increasing order, where $0\le U_i\le 1$.
+
+Procedures for applying certain types of transformations to the
+observations $V_i$ or $U_i$ are also provided.
+This includes the transformation $U_i = F(V_i)$, as well as 
+the power ratio and iterated spacing transformations \cite{tSTE86a}.
+
+
+\bigskip\hrule\medskip
+\code\hide
+/* gofs.h for ANSI C */
+#ifndef GOFS_H
+#define GOFS_H
+\endhide
+#include "bitset.h"       /* From the library mylib */
+#include "fmass.h"
+#include "fdist.h"
+#include "wdist.h"
+\endcode
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{Environment variables}
+
+\code
+
+
+extern double gofs_MinExpected;
+\endcode
+  \tab  Used for the chi-square tests.
+  When a chi-square test statistic is computed, the expected number
+  of observations in each class should be large enough if we want
+  the chi-square test statistic to follow approximately the
+  chi-square distribution.  Larger expected numbers are usually
+  required when these numbers differ between classes \cite{tREA88a}.
+  The function {\tt gofs\_MergeClasses} can be used to regroup classes
+  in order to make sure that the expected number in each class is
+  at least {\tt gofs\_MinExpected}.
+  The default value of this variable is 10.0.
+\iffalse %%%
+  This is for testu01:
+  For some tests, the software will merge
+  classes in such a way that this is always so. For others, an error
+  message will be printed if this not the case (see the {\it restrictions}
+  that apply for the different tests).  
+\fi %%
+ \hpierre {Et si on mettait cette variable en param\`etre \`a
+    {\tt MergeClasses} \`a la place?  Peser le pour et le contre.
+    En fait, dans plusieurs situations, la valeur 10.0 est beaucoup
+    trop \'elev\'ee. }
+ \hrichard {Cette variable est vraiment d'environnement. Depuis des 
+  ann\'ees, on ne l'a jamais vari\'e. Et les fonctions qui l'utilisent
+  sont appel\'ees des douzaines de fois partout. Ce type de variables
+  devrait demeurer environnement.}
+  \endtab
+\ifdetailed  %%%%
+\code
+
+
+extern double gofs_EpsilonAD;
+\endcode
+ \tab When computing the Anderson-Darling statistic $A_N^2$, 
+  all observations $U_i$ are projected to the interval 
+  $[\epsilon,\,1-\epsilon]$ for some $\epsilon > 0$, in order to 
+  avoid numerical overflow when taking the logarithm of $U_i$ or
+  $1-U_i$.  This variable gives the value of $\epsilon$;
+  its default value is {\tt DBL\_EPSILON/2.0}.
+  {\tt DBL\_EPSILON} (from {\tt float.h}) is usually $2^{-52}$.
+ \hpierre {Autre choix possible: cacher cela dans le .c.
+    Mais il ne semble pas y avoir d'avantage \`a faire cela,
+    tandis que le laisser ici peut permettre aux ``experts'' de faire
+    \'eventuellement des exp\'eriences avec le choix de $\epsilon$. }
+ \endtab
+\fi %%%% detailed
+
+\hrichard {Il faut mettre ``{\tt extern}'' parce que sinon 
+  il y aurait autant d'instances de cette variable que d'inclusions
+  de ce fichier *.h dans le programme, ce qui provoquerait une erreur 
+  avec plusieurs compilateurs. 
+  Parmi toutes les conventions des diff\'erents compilateurs pour les 
+  variables externes, celle-ci est la plus propre et est compatible
+  ANSI C. Parmi les 5 conventions utilis\'ees couramment, c'est celle
+  recommand\'ee par Harbison+Steele p. 94.}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{Transforming the observations}
+
+\code
+
+void gofs_ContUnifTransform (double V[], long N, wdist_CFUNC F,
+                             double par[], double U[]);
+\endcode
+\tab  Applies the transformation $U_i = F(V_i)$ to the values in
+  {\tt V[1..N]}, where $F$ is a {\em continuous\/} distribution function 
+  given by {\tt F} and with parameters in {\tt par},
+  and puts the result in {\tt U[1..N]}.
+  If {\tt V} contains random variables from the distribution function
+  {\tt F}, then {\tt U} will contain uniform random variables over $(0,1)$.
+\endtab
+\code
+
+
+void gofs_DiscUnifTransform (double V[], long N, wdist_DFUNC F,
+                             fmass_INFO W, double U[]);
+\endcode
+\tab  Applies the transformation $U_i = F(V_i)$ to the values in
+  {\tt V[1..N]}, where $F$ is a {\em discrete\/} distribution function 
+  specified by {\tt F} and the previously-created structure {\tt W},
+  and puts the result in {\tt U[1..N]}.
+  Note: If {\tt V[1..N]} are the values of random variables with
+  distribution function {\tt F}, then {\tt U[1..N]} will contain 
+  the values of {\em discrete\/} random variables distributed over the
+  set of values taken by {\tt F}, 
+  not uniform random variables over $(0,1)$.
+\hrichard {Devrait probablement \^etre \'elimin\'e. Utilis\'e 1 fois dans
+   smultin, mais pourrait \^etre remplac\'e.}
+\hpierre {Tu as probablement raison.}
+\endtab
+\code
+
+
+void gofs_DiffD (double U[], double D[], long N1, long N2, 
+                 double a, double b);
+\endcode
+ \tab Assumes that the real-valued observations {\tt U[N1..N2]} 
+  are already sorted in increasing order and computes the differences 
+  between the successive observations.
+  The difference {\tt U[i+1] - U[i]} is put in {\tt D[i]} for 
+  {\tt N1 <= i < N2}, whereas {\tt U[N1] - a} is put into {\tt D[N1-1]}
+  and {\tt b - U[N2]} is put into {\tt D[N2]}. 
+  The sizes of the arrays {\tt U} and {\tt D} must be at least {\tt N2+1}.
+\hpierre {ATTENTION:  J'ai chang\'e cette proc\'edure et la suivante
+   pour les rendre plus g\'en\'erales et surtout plus {\em semblables}.
+   Un appel \`a l'ancien {\tt DiffD (U, D, N)} doit se traduire par
+   {\tt DiffD (U, D, 1, N, 0.0, 1.0)}, tandis qu'un appel 
+   \`a l'ancien {\tt DiffL (U, D, N1, N2, L)} doit se traduire par
+   {\tt DiffD (U, D, N1, N2, 0, L+U[N1])}. }
+ \endtab
+\code
+
+
+void gofs_DiffL (long U[], long D[], long N1, long N2, long a, long b);
+
+#ifdef USE_LONGLONG
+void gofs_DiffLL (longlong U[], longlong D[], long N1, long N2,
+                  longlong a, longlong b);
+void gofs_DiffULL (ulonglong U[], ulonglong D[], long N1, long N2,
+                   ulonglong a, ulonglong b);
+#endif
+\endcode
+ \tab Same as {\tt gofs\_DiffD}, but for integer-valued observations.
+ \endtab
+\code
+
+
+void gofs_IterateSpacings (double V[], double S[], long N);
+\endcode
+ \tab Applies one iteration of the {\em iterated spacings\/} 
+   transformation \cite{rKNU98a,tSTE86a}.
+   Assumes that {\tt S[0...N]} contains the {\em spacings\/} 
+   between $N$ real numbers $U_1,\dots,U_N$ in the interval $[0,1]$.
+   These spacings are defined by
+    $$ S_i = U_{(i+1)} - U_{(i)},  \qquad  0\le i\le N, $$
+   where $U_{(0)}=0$, $U_{(N+1)}=1$, and
+   $U_{(1)},\dots,U_{(N)}$,  are the $U_i$ sorted in increasing order.
+%  These $U_i$ do not need to be in the array {\tt V}.
+   These spacings may have been obtained by calling {\tt gofs\_DiffD}.
+   This procedure transforms the spacings into new
+   spacings, by a variant of the  method described
+   in section 11 of \cite {rMAR85a} and also by Stephens \cite{tSTE86a}:
+%  See also Knuth (1998), 3th edition.
+   it sorts $S_0,\dots,S_N$ to obtain
+   $S_{(0)} \le S_{(1)} \le S_{(2)} \le \cdots \le S_{(N)}$,
+   computes the weighted differences
+  \begin {eqnarray*}
+    S_{0}   &=& (N+1) S_{(0)}, \\
+    S_{1}   &=& N (S_{(1)}-S_{(0)}), \\
+    S_{2}   &=& (N-1) (S_{(2)}-S_{(1)}),\\
+            & \vdots& \\
+    S_{N}   &=& S_{(N)}-S_{(N-1)},
+  \end {eqnarray*}
+   and computes $V_i = S_0 + S_1 + \cdots + S_{i-1}$ for $1\le i\le N$.
+   It then returns $S_0,\dots,S_N$ in {\tt S[0..N]} and
+   $V_1,\dots,V_N$ in {\tt V[1..N]}.
+
+  Under the assumption that the $U_i$ are i.i.d.\ $U(0,1)$, the new
+  $S_i$ can be considered as a new set of spacings having the same
+  distribution as the original spacings, and the $V_i$ are a new sample
+  of i.i.d.\ $U(0,1)$ random variables, sorted by increasing order.
+
+  This transformation is useful to detect {\em clustering\/} in a data
+  set: A pair of observations that are close to each other is transformed
+  into an observation close to zero.  A data set with unusually clustered
+  observations is thus transformed to a data set with an 
+  accumulation of observations near zero, which is easily detected by
+  the Anderson-Darling GOF test.
+  \hrichard {Utilis\'e dans \tt snpair}
+ \endtab
+\code
+
+
+void gofs_PowerRatios (double U[], long N);
+\endcode
+ \tab  Applies the {\em power ratios\/} transformation $W$ described
+   in section 8.4 of Stephens \cite{tSTE86a}.
+   Assume that {\tt U[1...N]} contains $N$ real numbers 
+   $U_{(1)},\dots,U_{(N)}$ from the interval $[0,1]$,
+   already sorted in increasing order, and computes the transformations:
+     $$ U'_i = (U_{(i)} / U_{(i+1)})^i, \qquad  i=1,\dots,N,$$
+   with $U_{(N+1)} = 1$.
+   These $U'_i$ are sorted in increasing order and put back in 
+   {\tt U[1...N]}.
+   If the $U_{(i)}$ are i.i.d.\ $U(0,1)$ sorted by increasing order, 
+   then the $U'_i$ are also i.i.d.\ $U(0,1)$.
+
+  This transformation is useful to detect clustering, as explained in
+  {\tt gofs\_IterateSpacings}, except that here a pair of
+  observations close to each other is transformed
+  into an observation close to 1.  
+  An accumulation of observations near 1 is also easily detected by
+  the Anderson-Darling GOF test.
+  \hrichard {Utilis\'e dans \tt snpair}
+ \endtab
+\code
+
+
+void gofs_MergeClasses (double NbExp[], long Loc[],
+                        long *smin, long *smax, long *NbClasses);
+\endcode
+ \tab This function is convenient for regrouping classes before 
+   applying a chi-square test,
+   in the case where the expected number of observations in some of
+   the classes may be too small.
+   It merges classes of observations so that the expected
+   number of observations in each class is at least
+   {\tt gofs\_MinExpected}. Initially, the expected numbers in each class
+   are in {\tt NbExp[*smin...*smax]}.
+   When the function returns, if ${\tt Loc}[s] = j$, this means that class
+   $s$ has been merged with class $j$.
+   In this case, all observations that previously belonged to class $s$ 
+   are redirected to class $j$, 
+   % i.e. considered as if they belong to class $j$,
+   and {\tt NbExp$[s]$} has been added to {\tt NbExp$[j]$}
+   and then set to zero.
+   {\tt NbClasses} gives the final number of classes,
+   {\tt smin} contains the new index of the lowest class, 
+   and {\tt smax} the new index of the highest class.
+ \endtab
+\code
+
+
+void gofs_WriteClasses (double NbExp[], long Loc[], 
+                        long smin, long smax, long NbClasses);
+\endcode
+ \tab  Prints the classes before or after their regrouping by
+  {\tt gofs\_MergeClasses}.
+  The parameters are the same as for the latter function.
+  If {\tt NbClasses > 0}, assumes that {\tt gofs\_MergeClasses} 
+  has already been called to regroup classes 
+% (otherwise {\tt Loc} will be undefined!)}
+  and prints the classes after the regrouping.
+  If {\tt NbClasses <= 0}, prints only the classes before any regrouping.
+ \endtab
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{Computing EDF test statistics}
+
+\code
+
+double gofs_Chi2 (double NbExp[], long Count[], long smin, long smax);
+\endcode
+\tab  Computes and returns the chi-square statistic for the 
+ observations $o_i$ in {\tt Count[smin...smax]}, for which the 
+ corresponding expected values $e_i$ are in {\tt NbExp[smin...smax]}. 
+ Assuming that $i$ goes from 1 to $k$, where $k =$ {\tt smax-smin+1}
+ is the number of classes, the chi-square statistic is defined as
+ \eq
+   X^2 = \sum_{i=1}^k \frac{(o_i - e_i)^2}{e_i}.  \eqlabel{eq:chi-square}
+ \endeq
+ Under the hypothesis that the $e_i$ are the correct expectations and
+ if these $e_i$ are large enough, $X^2$ follows approximately the
+ chi-square distribution with $k-1$ degrees of freedom.
+ If some of the $e_i$ are too small, one can use {\tt gofs\_MergeClasses}
+ to regroup classes.
+\endtab
+\code
+
+
+double gofs_Chi2Equal (double NbExp, long Count[], long smin, long smax);
+\endcode
+\tab  Similar to {\tt gofs\_Chi2}, except that the expected
+  number of observations per class is assumed to be the same for 
+  all classes, and equal to {\tt NbExp}.
+\endtab
+\code
+
+
+long gofs_Scan (double U[], long N, double d);
+\endcode
+ \tab  Computes and returns the scan statistic $S_N(d)$,
+  defined in (\ref{eq:scan}).
+  The $N$ observations in the array {\tt U[1..N]} must be real numbers 
+  in the interval $[0,1]$, sorted in increasing order.
+  (See {\tt fbar\_Scan} for the distribution function of $S_N(d)$).
+ \endtab
+\code
+
+
+double gofs_CramerMises (double U[], long N);
+\endcode
+ \tab  Computes and returns the Cram\'er-von Mises statistic $W_N^2$
+   (see \cite{tDUR73a,tSTE70a,tSTE86b}), defined by
+  \begin {equation}
+     W_N^2 = {1\over 12N} +
+            \sum_{j=1}^N \left(U_{(j)} - {(j-0.5) \over N}\right)^2,
+                                                   \eqlabel {eq:CraMis}
+  \end {equation}
+ assuming that {\tt U[1...N]} contains $U_{(1)},\dots,U_{(N)}$ 
+ sorted in increasing order. 
+ \endtab
+\code
+
+
+double gofs_WatsonG (double U[], long N);
+\endcode
+ \tab  Computes and returns the Watson statistic $G_N$ 
+  (see \cite{tWAT76a,tDAR83a}),  defined by
+ \begin {eqnarray}
+  G_N &=& \sqrt{N} \max_{\rule{0pt}{7pt} 1\le j \le N} \left\{ j/N -
+         U_{(j)} + \overline U_N - 1/2 \right\}   
+                                            \eqlabel {eq:WatsonG} \\[6pt]
+    &=& \sqrt{N}\left (D_N^+ + \overline U_N  - 1/2\right), \nonumber
+ \end {eqnarray}
+  where $\overline U_N$ is the average of the observations $U_{(j)}$,
+  assuming that {\tt U[1...N]} contains the sorted $U_{(1)},\dots,U_{(N)}$.
+ \endtab
+\code
+
+
+double gofs_WatsonU (double U[], long N);
+\endcode
+ \tab  Computes and returns the Watson statistic  $U_N^2$ 
+   (see \cite{tDUR73a,tSTE70a,tSTE86b}),  defined by
+  \begin {eqnarray}
+    W_N^2 &=& {1\over 12N} +
+            \sum_{j=1}^N \left\{U_{(j)} - {(j- 0.5)\over N}\right\}^2, \\
+    U_N^2 &=& W_N^2  - N\left (\overline U_N - 1/2\right)^2.
+                                                   \eqlabel {eq:WatsonU}
+  \end {eqnarray}
+  where $\overline U_N$ is the average of the observations $U_{(j)}$,
+  assuming that {\tt U[1...N]} contains  the sorted $U_{(1)},\dots,U_{(N)}$.
+ \endtab
+\code
+
+
+double gofs_AndersonDarling (double U[], long N);
+\endcode
+ \tab Computes and returns the Anderson-Darling  statistic $A_N^2$
+   (see \cite{tLEW61a,tSTE86b,tAND52a}),  defined by
+  \begin {eqnarray*}
+    A_N^2 &=& -N -{1\over N} \sum_{j=1}^N \left\{ (2j-1)\ln(U_{(j)})
+               + (2N+1-2j) \ln(1-U_{(j)}) \right\},      \eqlabel {eq:Andar}
+  \end {eqnarray*}
+  assuming that {\tt U[1...N]} contains $U_{(1)},\dots,U_{(N)}$.
+ \ifdetailed  %%%%
+  This function uses the environment variable {\tt gofs\_EpsilonAD}.
+ \fi %%%% detailed
+ \endtab
+\code
+
+
+void gofs_KS (double U[], long N, double *DP, double *DM, double *D);
+\endcode
+\tab Computes the Kolmogorov-Smirnov (KS) test statistics 
+ $D_N^+$, $D_N^-$, and $D_N$, defined by
+ \begin {eqnarray}
+  D_N^+ &=& \max_{1\le j\le N} \left(j/N - U_{(j)}\right), 
+                                                    \eqlabel{eq:DNp} \\
+  D_N^- &=& \max_{1\le j\le N} \left(U_{(j)} - (j-1)/N\right), 
+                                                    \eqlabel{eq:DNm} \\
+  D_N   &=& \max\ (D_N^+, D_N^-).                   \eqlabel{eq:DN}
+ \end {eqnarray}
+ and return their values in  {\tt DP, DM}, and {\tt D}, respectively.
+ These statistics compare the empirical distribution of 
+ $U_{(1)},\dots,U_{(N)}$, which are assumed to be in {\tt U[1...N]},
+ with the uniform distribution.
+\hrichard {Pourquoi avoir enlev\'e les calculs des EDF de ce fichier et
+  l'avoir mis dans gofw? On calcule d\'ej\`a toutes les stats EDF 
+  explicitement.}
+\hpierre {Simplement pour \'eviter d'introduire {\tt TestType},
+  {\tt TestArray}, etc. dans ce module, et pouvoir tout cacher 
+  cela ensemble \`a la fin de {\tt gofw}.  Ces choses sont commodes
+  pour Testu01, mais trop sp\'ecialis\'ees et pas trop int\'eressantes
+  pour la plupart des gens. }
+\endtab
+\code
+
+
+void gofs_KSJumpOne (double U[], long N, double a, double *DP, double *DM);
+\endcode
+\tab Compute the KS statistics $D_N^+(a)$ and $D_N^-(a)$ defined in the 
+  description of the function 
+{\tt fdist\_KSPlusJumpOne}, assuming that $F$ is the
+  uniform distribution over $[0,1]$ and that
+  $U_{(1)},\dots,U_{(N)}$ are in {\tt U[1...N]}.
+  Returns the values in {\tt DP} and {\tt DM}.
+ \endtab
+\hide%%%%%
+
+\code
+#if 0
+void gofs_KSJumpsMany (double X[], int N, wdist_CFUNC F, double W[],
+                       double *DP, double *DM, int Detail);
+#endif
+\endcode
+\tab We assume that $X[1...N]$ is already sorted and contains the
+ $N$ empirical observations. We obtain the values of the distribution
+ $U =  F(W, X[i])$ where $F$ is the theoretical
+ distribution which may be discontinuous, and $W$ are the parameters
+ of $F$. If {\tt Detail} $> 0$, the computed values of the
+ distribution will be printed.
+ Returns the values of the KS statistics in {\tt DP} and {\tt DM}.
+ \endtab
+\endhide%%%%%%%%%%%%%%
+
+\code
+\hide
+#endif
+\endhide
+\endcode

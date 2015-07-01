@@ -1,0 +1,246 @@
+\begin{thebibliography}{10}
+
+\bibitem{tAND95b}
+N.~H. Anderson and D.~M. Titterington.
+\newblock A comparison of two statistics for detecting clustering in one
+  dimension.
+\newblock {\em Journal of Statistical Computation and Simulation}, 53:103--125,
+  1995.
+
+\bibitem{tAND52a}
+T.~W. Anderson and D.~A. Darling.
+\newblock Asymptotic theory of certain goodness of fit criteria based on
+  stochastic processes.
+\newblock {\em Annals of Mathematical Statistics}, 23:193--212, 1952.
+
+\bibitem{tBES75a}
+D.~J. Best and D.~E. Roberts.
+\newblock Algorithm {AS} 91: The percentage points of the $\chi^{2}$
+  distribution.
+\newblock {\em Applied Statistics}, 24:385--388, 1975.
+
+\bibitem{tBAT70a}
+G.~P. Bhattacharjee.
+\newblock The incomplete gamma integral.
+\newblock {\em Applied Statistics}, 19:285--287, 1970.
+\newblock AS32.
+
+\bibitem{tBLA76a}
+J.~M. Blair, C.~A. Edwards, and J.~H. Johnson.
+\newblock Rational {C}hebyshev approximations for the inverse of the error
+  function.
+\newblock {\em Mathematics of Computation}, 30:827--830, 1976.
+
+\bibitem{sBRA87a}
+P.~Bratley, B.~L. Fox, and L.~E. Schrage.
+\newblock {\em A Guide to Simulation}.
+\newblock Springer-Verlag, New York, NY, second edition, 1987.
+
+\bibitem{tBRO07a}
+J.~R. Brown and M.~E. Harvey.
+\newblock Rational arithmetic \textsc{{M}athematica} functions to evaluate the
+  one-sided one-sample {K-S} cumulative sample distribution.
+\newblock {\em Journal of Statistical Software}, 19(6):1--32, 2007.
+
+\bibitem{tBRO08a}
+J.~R. Brown and M.~E. Harvey.
+\newblock Rational arithmetic \textsc{{M}athematica} functions to evaluate the
+  two-sided one sample {K-S} cumulative sample distribution.
+\newblock {\em Journal of Statistical Software}, 26(2):1--40, 2008.
+
+\bibitem{tDAR60a}
+D.~A. Darling.
+\newblock On the theorems of {K}olmogorov-{S}mirnov.
+\newblock {\em Theory of Probability and Its Applications}, V(4):356--360,
+  1960.
+
+\bibitem{tDAR83a}
+D.~A. Darling.
+\newblock On the asymptotic distribution of {W}atson's statistic.
+\newblock {\em The Annals of Statistics}, 11(4):1263--1266, 1983.
+
+\bibitem{tDON73a}
+T.~G. Donnelly.
+\newblock Algorithm 462: Bivariate normal distribution.
+\newblock {\em Communications of the ACM}, 16(10):638, 1973.
+
+\bibitem{tDRE89a}
+Z.~Drezner and G.~O. Wesolowsky.
+\newblock On the computation of the bivariate normal integral.
+\newblock {\em Journal of Statistical Computation and Simulation}, 35:101--107,
+  1989.
+
+\bibitem{tDUR73a}
+J.~Durbin.
+\newblock {\em Distribution Theory for Tests Based on the Sample Distribution
+  Function}.
+\newblock SIAM CBMS-NSF Regional Conference Series in Applied Mathematics.
+  SIAM, Philadelphia, PA, 1973.
+
+\bibitem{tGAU64a}
+W.~Gautschi.
+\newblock Algorithm 222: Incomplete beta function ratios.
+\newblock {\em Communications of the ACM}, 7(3):143--144, 1964.
+
+\bibitem{tGAU64b}
+W.~Gautschi.
+\newblock Certification of algorithm 222: Incomplete beta function ratios.
+\newblock {\em Communications of the ACM}, 7(3):244, 1964.
+
+\bibitem{tGEN04a}
+A.~Genz.
+\newblock Numerical computation of rectangular bivariate and trivariate normal
+  and $t$ probabilities.
+\newblock {\em Statistics and Computing}, 14:151--160, 2004.
+\newblock See \url{http://www.math.wsu.edu/faculty/genz/homepage}.
+
+\bibitem{tGLA89a}
+J.~Glaz.
+\newblock Approximations and bounds for the distribution of the scan statistic.
+\newblock {\em Journal of the American Statistical Association}, 84:560--566,
+  1989.
+
+\bibitem{tHIL70a}
+G.~W. Hill.
+\newblock Algorithm 395: Student's $t$-distribution.
+\newblock {\em Communications of the ACM}, 13:617--619, 1970.
+
+\bibitem{tJOH95a}
+N.~L. Johnson, S.~Kotz, and N.~Balakrishnan.
+\newblock {\em Continuous Univariate Distributions}, volume~1.
+\newblock Wiley, 2nd edition, 1994.
+
+\bibitem{tJOH95b}
+N.~L. Johnson, S.~Kotz, and N.~Balakrishnan.
+\newblock {\em Continuous Univariate Distributions}, volume~2.
+\newblock Wiley, 2nd edition, 1995.
+
+\bibitem{tKEN80a}
+W.~J. {Kennedy Jr.} and J.~E. Gentle.
+\newblock {\em Statistical Computing}.
+\newblock Dekker, New York, NY, 1980.
+
+\bibitem{tKNO74a}
+M.~Knott.
+\newblock The distribution of the {C}ram\'er-von {M}ises statistic for small
+  sample sizes.
+\newblock {\em Journal of the Royal Statistical Society B}, 36:430--438, 1974.
+
+\bibitem{rKNU98a}
+D.~E. Knuth.
+\newblock {\em The Art of Computer Programming, Volume 2: Seminumerical
+  Algorithms}.
+\newblock Addison-Wesley, Reading, MA, third edition, 1998.
+
+\bibitem{mLAN73a}
+S.~Lang.
+\newblock {\em Elliptic functions}.
+\newblock Addison-Wesley, Reading, Mass., 1973.
+
+\bibitem{sLAW00a}
+A.~M. Law and W.~D. Kelton.
+\newblock {\em Simulation Modeling and Analysis}.
+\newblock McGraw-Hill, New York, NY, third edition, 2000.
+
+\bibitem{tLEW61a}
+P.~A.~W. Lewis.
+\newblock Distribution of the {A}nderson-{D}arling statistic.
+\newblock {\em Annals of Mathematical Statistics}, 32:1118--1124, 1961.
+
+\bibitem{tMAR78a}
+K.~V. Mardia and P.~J. Zemroch.
+\newblock {\em Tables of the {F} and Related Distributions with Algorithms}.
+\newblock Academic Press, London, 1978.
+
+\bibitem{rMAR85a}
+G.~Marsaglia.
+\newblock A current view of random number generators.
+\newblock In {\em Computer Science and Statistics, Sixteenth Symposium on the
+  Interface}, pages 3--10, North-Holland, Amsterdam, 1985. Elsevier Science
+  Publishers.
+
+\bibitem{tMAR04a}
+G.~Marsaglia and J.~Marsaglia.
+\newblock Evaluating the {A}nderson-{D}arling distribution.
+\newblock {\em Journal of Statistical Software}, 9(2):1--5, 2004.
+\newblock See \url{http://www.jstatsoft.org/v09/i02/}.
+
+\bibitem{tMAR03a}
+G.~Marsaglia, W.~W. Tsang, and J.~Wang.
+\newblock Evaluating {K}olmogorov's distribution.
+\newblock {\em Journal of Statistical Software}, 8(18):1--4, 2003.
+\newblock See \url{http://www.jstatsoft.org/v08/i18/}.
+
+\bibitem{rMAR94b}
+G.~Marsaglia, A.~Zaman, and J.~C.~W. Marsaglia.
+\newblock Rapid evaluation of the inverse normal distribution function.
+\newblock {\em Statistics and Probability Letters}, 19:259--266, 1994.
+
+\bibitem{tPEI68a}
+D.~B. Peizer and J.~W. Pratt.
+\newblock A normal approximation for binomial, {F}, beta, and other common
+  related tail probabilities.
+\newblock {\em Journal of the American Statistical Association}, 63:1416--1456,
+  1968.
+
+\bibitem{tPEL76a}
+W.~Pelz and I.~J. Good.
+\newblock Approximating the lower tail-areas of the {K}olmogorov-{S}mirnov
+  one-sample statistic.
+\newblock {\em Journal of the Royal Statistical Society, Series B},
+  38(2):152--156, 1976.
+
+\bibitem{tPOM74a}
+J.~Pomeranz.
+\newblock Exact cumulative distribution of the {K}olmogorov-{S}mirnov statistic
+  for small samples (algorithm 487).
+\newblock {\em Communications of the ACM}, 17(12):703--704, 1974.
+
+\bibitem{tREA88a}
+T.~R.~C. Read and N.~A.~C. Cressie.
+\newblock {\em Goodness-of-Fit Statistics for Discrete Multivariate Data}.
+\newblock Springer Series in Statistics. Springer-Verlag, New York, NY, 1988.
+
+\bibitem{tSCH78a}
+J.~L. Schonfelder.
+\newblock Chebyshev expansions for the error and related functions.
+\newblock {\em Mathematics of Computation}, 32:1232--1240, 1978.
+
+\bibitem{tSIN88a}
+C.~D. Sinclair and B.~D. Spurr.
+\newblock Approximations to the distribution function of the
+  {A}nderson-{D}arling test statistic.
+\newblock {\em Journal of the American Statistical Association},
+  83(404):1190--1191, 1988.
+
+\bibitem{tSTE70a}
+M.~A. Stephens.
+\newblock Use of the {K}olmogorov-{S}mirnov, {C}ram{\'e}r-{V}on {M}ises and
+  related statistics without extensive tables.
+\newblock {\em Journal of the Royal Statistical Society, Series B},
+  33(1):115--122, 1970.
+
+\bibitem{tSTE86b}
+M.~S. Stephens.
+\newblock Tests based on {EDF} statistics.
+\newblock In R.~B. D'Agostino and M.~S. Stephens, editors, {\em Goodness-of-Fit
+  Techniques}. Marcel Dekker, New York and Basel, 1986.
+
+\bibitem{tSTE86a}
+M.~S. Stephens.
+\newblock Tests for the uniform distribution.
+\newblock In R.~B. D'Agostino and M.~S. Stephens, editors, {\em Goodness-of-Fit
+  Techniques}, pages 331--366. Marcel Dekker, New York and Basel, 1986.
+
+\bibitem{tWAL87a}
+S.~R. Wallenstein and N.~Neff.
+\newblock An approximation for the distribution of the scan statistic.
+\newblock {\em Statistics in Medicine}, 6:197--207, 1987.
+
+\bibitem{tWAT76a}
+G.~S. Watson.
+\newblock Optimal invariant tests for uniformity.
+\newblock In {\em Studies in Probability and Statistics}, pages 121--127. North
+  Holland, Amsterdam, 1976.
+
+\end{thebibliography}

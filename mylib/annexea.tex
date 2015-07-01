@@ -1,0 +1,184 @@
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Obsolete identifiers}
+
+The following identifiers from older versions of {\tt MyLib}
+have been eliminated or replaced.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{util}
+
+\begin{itemize}
+
+\item {\tt util\_Free}
+
+the prototype has changed.
+
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\subsection{num}
+
+\begin{itemize}
+
+\item {\tt num\_MaxLongInt}
+
+use {\tt INT\_MAX} from $<${\tt limits.h}$>$
+
+\item {\tt  num\_MaxLongIntLR}
+
+use  {\tt INT\_MAX from} $<${\tt limits.h}$>$
+
+\item {\tt  num\_LgMaxLongInt1}
+
+Eliminated.
+
+\item {\tt  num\_InvLn2}
+
+Eliminated.
+
+\item {\tt  num\_MaxIntLongReal}
+
+is now called {\tt num\_MaxIntDouble}.
+
+\item {\tt  num\_MaxLongReal}
+
+use  {\tt DBL\_MAX} from $<${\tt float.h}$>$
+
+\item {\tt  num\_MantDig}
+
+use  {\tt DBL\_MANT\_DIG} from $<${\tt float.h}$>$
+
+\item {\tt  num\_hLR}
+
+use  {\tt DBL\_EPSILON/2} from $<${\tt float.h}$>$
+
+\item {\tt  num\_chLR}
+
+use  {\tt 1 - DBL\_EPSILON/2} from $<${\tt float.h}$>$
+
+\item {\tt  num\_jLR}
+
+use  {\tt 0.75*DBL\_EPSILON} from $<${\tt float.h}$>$
+
+
+\item {\tt num\_SCeilLR (x)}
+
+use  {\tt nextafter (x, 1.0)} from $<${\tt math.h}$>$
+
+\item {\tt  num\_Lg}
+
+use  {\tt log2} from $<${\tt math.h}$>$
+
+\item {\tt  num\_ModLR}
+
+use  {\tt fmod} from $<${\tt math.h}$>$
+
+\item {\tt num\_TruncLR}
+
+use  {\tt modf} from $<${\tt math.h}$>$
+
+\item {\tt num\_RoundLR (x)}
+
+use  {\tt floor (x + 0.5)} from $<${\tt math.h}$>$
+
+\item {\tt num\_WriteLR}
+
+is now called {\tt num\_WriteD}.
+
+\item {\tt num\_MultModLI}
+
+is now called {\tt num\_MultModL}
+
+\item {\tt num\_MultModLR}
+
+is now called {\tt num\_MultModD}
+
+\end{itemize}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{num2}
+
+\begin{itemize}
+
+\item {\tt num2\_Combinaison (s, n)} 
+
+replaced by {\tt num2\_Combination (n, s)}.
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{tables}
+
+\begin{itemize}
+
+\item {\tt  tables\_TabLI}
+
+use {\tt long *}
+
+\item {\tt  tables\_TabLR}
+
+use {\tt double *}
+
+\item {\tt  tables\_TabUL, tables\_TabBit}
+
+use {\tt unsigned long *}
+
+
+\item {\tt  tables\_MatLI}
+
+use {\tt long **}
+
+\item {\tt  tables\_MatLR}
+
+use {\tt double **}
+
+\item {\tt  tables\_MatUL, tables\_MatBit}
+
+use {\tt unsigned long **}
+
+\item {\tt  tables\_CreateTab}
+
+use {\tt util\_Calloc}
+
+\item {\tt  tables\_DeleteTab}
+
+use {\tt util\_Free}
+
+\item {\tt  tables\_ResizeTab}
+
+use {\tt util\_Realloc}
+
+\item {\tt  tables\_WriteTabLI}
+
+use {\tt tables\_WriteTabL}
+
+\item {\tt tables\_WriteTabLR }
+
+use {\tt  tables\_WriteTabD}
+
+\item {\tt  tables\_WriteMatrixLI}
+
+use {\tt  tables\_WriteMatrixL}
+
+\item {\tt  tables\_WriteMatrixLR}
+
+use {\tt  tables\_WriteMatrixD}
+
+\item {\tt  tables\_HachageMod}
+
+use {\tt tables\_HashPrime}
+
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

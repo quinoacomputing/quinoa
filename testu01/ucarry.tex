@@ -1,0 +1,250 @@
+\defmodule {ucarry}
+
+Generators based on linear recurrences with carry are implemented 
+in this module.  This includes the 
+{\em add-with-carry\/} (AWC), 
+{\em subtract-with-borrow\/} (SWB), 
+{\em multiply-with-carry\/} (MWC), and
+{\em shift-with-carry} (SWC) generators.
+For the theoretical properties of these generators and other details,
+we refer the reader to \cite{rCOU94a,rCOU95a,rCOU97a,rKOC95a,rTEZ93a}.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\bigskip
+\hrule
+
+\code
+\hide
+/*  ucarry.h  for ANSI C  */
+
+#ifndef UCARRY_H
+#define UCARRY_H
+\endhide
+#include "gdef.h"
+#include "unif01.h"
+
+
+unif01_Gen * ucarry_CreateAWC (unsigned int r, unsigned int s,
+                               unsigned long c, unsigned long m,
+                               unsigned long S[]);
+\endcode
+  \tab Implements the add-with-carry (AWC) generator 
+\index{Generator!add-with-carry}%
+   proposed by  Marsaglia and Zaman \cite{rMAR91a}, based on the
+   recurrence
+  \eqs
+     x_i &=& (x_{i-r} + x_{i-s} + c_{i-1}) \mod m,\\
+     c_i &=& (x_{i-r} + x_{i-s} + c_{i-1}) \div m,
+  \endeqs
+   with output $u_i = x_i/m$.
+   The vector {\tt S[0..k-1]} contains the $k$  initial values
+   $(x_0,\dots,x_{k-1})$, where $k = \max\{r, s\}$, and {\tt c} contains $c_0$.
+   Restrictions: $0 < s$, $0 < r$, $r \not= s$ and $c = 0$ or 1.
+  \endtab
+\code
+
+
+unif01_Gen * ucarry_CreateSWB (unsigned int r, unsigned int s,
+                               unsigned long c, unsigned long m,
+                               unsigned long S[]);
+\endcode
+  \tab Implements the subtract-with-borrow (SWB) generator
+\index{Generator!subtract-with-borrow}\label{gen:SWB}%
+   proposed by Marsaglia and Zaman \cite{rMAR91a}, based on the
+   recurrence
+  \eqs
+     x_i &=& (x_{i-r} - x_{i-s} - c_{i-1}) \mod m,\\[4pt]
+     c_i &=& I[(x_{i-r} - x_{i-s} - c_{i-1}) < 0],
+  \endeqs
+   with output $u_i = x_i/m$, where $I$ is the indicator  function.
+   The vector {\tt S[0..(k-1)]} contains the $k$   initial values
+   $(x_0,\dots,$ $x_{k-1})$, where $k = \max\{r, s\}$, and {\tt c} contains $c_0$.
+%   {\tt Lux} is the luxury level defined as follows:
+%     generate $k$ successive values, then skip
+%    the next  ${\tt Lux} - k$. If ${\tt Lux} \le k$, no value are skipped.
+   Restrictions : $0 < s$, $0 < r$, $r \not= s$ and $c = 0$ or 1.
+  \endtab
+\code
+
+
+unif01_Gen * ucarry_CreateRanlux (unsigned int L, long s);
+\endcode
+  \tab Implements the specific modified SWB generator proposed by
+\index{Generator!Ranlux}
+   L\"uscher \cite{rLUS94a}. This is an adapted version of the 
+   FORTRAN implementation of James \cite{rJAM94a}.
+   The parameter {\tt L} is the luxury level and {\tt s} is the
+   initial state.   Restriction: $24\le L$.
+   The precision of this generator is only 24 bits.
+  \endtab
+\code
+
+
+#ifdef USE_LONGLONG
+   unif01_Gen * ucarry_CreateMWC (unsigned int r, unsigned long c,
+                                  unsigned int w, unsigned long A[],
+                                  unsigned long S[]);
+#endif
+\endcode
+  \tab  Implements the {\em multiply-with-carry\/} (MWC) generator, 
+ defined by \cite{rCOU97a}:
+\eqs
+   x_n &=& (a_1 x_{n-1} + \cdots + a_r x_{n-r} + c_{n-1}) \mod 2^{w};
+                                                        \label {mwcx} \\
+   c_n &=& (a_1 x_{n-1} + \cdots + a_r x_{n-r} + c_{n-1}) \div 2^{w};
+                                                        \label {mwcc} \\
+   u_n &=& x_n /2^w.                                    \label {mwcu}
+\endeqs
+   The array {\tt A[0..(r-1)]} must contain the coefficients 
+   $a_1,\dots, a_r$, \index{Generator!multiply-with-carry}
+   the array {\tt S[0..(r-1)]} gives the initial values
+   $(x_0,\dots,x_{-r+1})$, and {\tt c} gives the value of $c_0$.
+   This implementation uses 64-bit integers and therefore works 
+   only on platforms where these are available.
+   Restrictions: $w \le 32$, $a_i < 2^w$, $x_i < 2^w$,
+   and $c + (2^w -1)(|a_1| + \cdots + |a_r|) < 2^{64}$.
+  \endtab
+\code
+
+
+unif01_Gen * ucarry_CreateMWCFloat (unsigned int r, unsigned long c,
+                                    unsigned int w, unsigned long A[],
+                                    unsigned long S[]);
+\endcode
+  \tab Same as {\tt ucarry\_CreateMWC}, but uses a floating-point 
+   implementation (in {\tt double}).
+   Restrictions: $w \le 32$, $a_i < 2^w$, $x_i < 2^w$,
+   and $c + (2^w -1)(|a_1| + \cdots + |a_r|) < \min\{2^{53}, \ 2^{32+w}\}$.
+  \endtab
+
+
+%
+\hide  %%%%%%%%
+\code
+
+
+#ifdef USE_LONGLONG
+   unif01_Gen * ucarry_CreateMWCfix8r4 (unsigned long c, unsigned long S[]);
+#endif
+\endcode
+ \tab Implements a specific MWC with $k = 8$, $w = 32$,
+   and with 4 (fixed) nonzero $a_i$'s.
+  (The current parameters are temporary.)
+ \endtab
+\code
+
+
+#ifdef USE_LONGLONG
+   unif01_Gen * ucarry_CreateMWCfix8r8 (unsigned long c, unsigned long S[]);
+#endif
+\endcode
+ \tab Implements a specific MWC with $k = 8$, $w = 32$,
+  and with 8 (fixed) nonzero $a_i$'s.
+  (The current parameters are temporary.)
+ \endtab
+\endhide  %%%%%%%%
+\code
+
+
+unif01_Gen * ucarry_CreateMWCfixCouture (unsigned int c,
+                                         unsigned int S[]);
+\endcode
+  \tab Implements the following specific MWC, suggested by
+   Couture and L'Ecuyer \cite{rCOU97a}:
+  \begin {eqnarray*}
+   x_n &=& (14 x_{n-8} + 18 x_{n-7} + 144 x_{n-6} + 1499 x_{n-5}
+        + 2083 x_{n-4}\\
+       & &{} + 5273 x_{n-3} + 10550 x_{n-2} + 45539 x_{n-1} +
+         c_{n-1}) \mod 2^{16}, \\[8pt]
+   c_n &=& (14 x_{n-8} + \cdots + 45539 x_{n-1} + c_{n-1}) \div 2^{16},\\[8pt]
+   u_n &=& \frac {x_{2n}}{2^{\,32}}\; +\; \frac {x_{2n+1}}{2^{\,16}}.
+  \end {eqnarray*}
+   The initial state is in {\tt S[0..7]}, and $c$ is the initial carry.
+   The lowest 16 bits and the highest 16 bits of each $u_n$ come from
+   two successive numbers $x_j$.
+  \endtab
+\code
+
+
+unif01_Gen * ucarry_CreateSWC (unsigned int r, unsigned int h,
+                               unsigned int c, unsigned int w,
+                               unsigned int A[], unsigned int S[]);
+\endcode
+  \tab Implements the shift-with-carry (SWC) generator designed by
+   R.~Couture, based on the recurrence \index{Generator!shift-with-carry}
+  \eqs
+    x_n &=& (a_1 x_{n-1} \oplus \cdots \oplus a_r x_{n-r} \oplus c_{n-1})
+            \mod 2^{w} \\
+    c_n &=& (a_1 x_{n-1} \oplus \cdots \oplus a_r x_{n-r} \oplus c_{n-1})
+            \div 2^{w} \\
+    u_n &=& x_n /2^w,
+  \endeqs
+   The vector $(x_n,\dots,x_{n-r+1},c_n)$ is the state of the generator.
+   The array {\tt A[0..h-1]} contains the polynomials $a_1,\dots, a_r$.
+   Each even element stands for a polynomial number and the next
+   element stands for the corresponding nonzero coefficient number
+   of that polynomial.
+   The vector {\tt S[0..r-1]} gives the  initial values of
+   $(x_0,\dots,x_{-r+1})$ and {\tt c} is the initial carry.
+%   Note: as usual the first element of the vectors {\tt A} 
+%   and {\tt S} must start at index 0. 
+   Restrictions: $0 < r$ and $w \le 32$.
+  \endtab
+\code
+
+
+unif01_Gen * ucarry_CreateMWC1616 (unsigned int a, unsigned int b,
+                                   unsigned int x, unsigned int y);
+\endcode
+  \tab Implements the combined generator of two 16-bit
+   multiply-with-carry generators \cite{rMAR96b}
+\index{Generator!multiply-with-carry!combined}%
+  \eqs
+    x_n &=& (a x_{n-1} + {\tt carx}_{n-1}) \mod 2^{16}, \\
+    {\tt carx}_n &=& (a x_{n-1} + {\tt carx}_{n-1}) \div 2^{16}, \\
+    y_n &=& (b y_{n-1} + {\tt cary}_{n-1}) \mod 2^{16}, \\
+    {\tt cary}_n &=& (b y_{n-1} + {\tt cary}_{n-1}) \div 2^{16}.
+  \endeqs
+   The rightmost 16 bits of the two above product make the new $x$ (or $y$)
+   and the leftmost 16 bits the new carry {\tt carx}  (or {\tt cary}).  
+   The function returns $(x_n \ll 16)+(y_n\ \&\ {\mbox{0xf{f}f{f}}})$;
+   the output is a 32-bit integer, $x_n$ making up its leftmost 16 bits
+   and $y_n$ its rightmost 16 bits.
+  \endtab
+
+
+% \newpage
+\guisec{Clean-up functions}
+
+  These functions should be called to clean up generator objects of this
+  module when they are no longer in use.
+
+\code
+
+
+void ucarry_DeleteAWC (unif01_Gen *gen);
+void ucarry_DeleteSWB (unif01_Gen *gen);
+void ucarry_DeleteRanlux (unif01_Gen *gen);
+void ucarry_DeleteMWC (unif01_Gen *gen);
+void ucarry_DeleteMWCFloat (unif01_Gen *gen);
+void ucarry_DeleteMWCfixCouture (unif01_Gen *gen);
+void ucarry_DeleteSWC (unif01_Gen *gen);
+\endcode
+ \tab Frees the dynamic memory used by the generators of this module,
+  and allocated by the corresponding {\tt Create} function.
+ \endtab
+\code
+
+
+void ucarry_DeleteGen (unif01_Gen *gen);
+\endcode
+ \tab Frees the dynamic memory used by any generator of this module
+  that does not have a specific {\tt Delete} function.
+ \endtab
+\code
+
+\hide
+#endif
+\endhide
+\endcode

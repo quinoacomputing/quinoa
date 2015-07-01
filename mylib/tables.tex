@@ -1,0 +1,170 @@
+\defmodule {tables}
+
+This module provides an implementation of variable-sized arrays (matrices),
+and procedures to manipulate them.
+The advantage is that the size of the array needs not be known
+at compile time; it can be specified only during the program execution.
+There are also procedures to sort arrays,  to
+print  arrays in different formats,
+and a few tools for hashing tables.
+The functions {\tt tables\_CreateMatrix...} and
+{\tt tables\_DeleteMatrix...} manage memory allocation for
+these dynamic matrices.
+
+As an illustration, the following piece of code declares and creates
+a $100\times 500$ table of floating point numbers, assigns a value
+to one table entry, and eventually deletes the table:
+  \begin{verse}{\tt
+    double ** T;\\
+    T = tables\_CreateMatrixD (100, 500);\\
+    T[3][7] = 1.234;\\
+    \dots \\
+    tables\_DeleteMatrixD (\&T);
+  }\end{verse}
+
+%%%%%%%%%%%%%
+\bigskip\hrule
+\code\hide
+/* tables.h for ANSI C */
+#ifndef TABLES_H
+#define TABLES_H
+\endhide
+#include "gdef.h"
+\endcode
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{Printing styles}
+\code
+
+typedef enum {
+   tables_Plain,
+   tables_Mathematica,
+   tables_Matlab
+   } tables_StyleType;
+\endcode
+  \tab Printing styles for matrices.
+  \endtab
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{Functions to create, delete, sort, and print tables}
+\code
+
+long ** tables_CreateMatrixL  (int M, int N);
+unsigned long ** tables_CreateMatrixUL (int M, int N);
+double ** tables_CreateMatrixD  (int M, int N);
+\endcode
+  \tab Allocates contiguous memory for a dynamic 
+  matrix of {\tt M} rows and {\tt N} columns. Returns the base
+  address of the allocated space.
+  \endtab
+\code
+
+
+void tables_DeleteMatrixL  (long *** T);
+void tables_DeleteMatrixUL (unsigned long *** T);
+void tables_DeleteMatrixD  (double *** T);
+\endcode
+  \tab Releases the memory used by the matrix {\tt T}
+  (see {\tt tables\_CreateMatrix}) passed by
+  reference, that is, using the {\tt \&} symbol. 
+  {\tt T} is set to {\tt NULL}.
+  \endtab
+\code
+
+
+void tables_CopyTabL (long T1[], long T2[], int n1, int n2);
+void tables_CopyTabD (double T1[], double T2[], int n1, int n2);
+\endcode
+  \tab Copies {\tt T1[n1..n2]} in {\tt T2[n1..n2]}.
+  \endtab
+\code
+
+
+void tables_QuickSortL (long T[], int n1, int n2);
+void tables_QuickSortD (double T[], int n1, int n2);
+
+#ifdef USE_LONGLONG
+   void tables_QuickSortLL (longlong T[], int n1, int n2);
+   void tables_QuickSortULL (ulonglong T[], int n1, int n2);
+#endif
+\endcode
+ \tab Sort the tables {\tt T[n1..n2]} in increasing order.
+ \endtab
+\code
+
+
+void tables_WriteTabL (long V[], int n1, int n2, int k, int p, char Desc[]);
+
+#ifdef USE_LONGLONG
+   void tables_WriteTabLL (longlong V[], int n1, int n2, int k, int p,
+                           char Desc[]);
+   void tables_WriteTabULL (ulonglong V[], int n1, int n2, int k, int p,
+                            char Desc[]);
+#endif
+\endcode
+ \tab  Write the elements {\tt n1} to {\tt n2} of table {\tt V},
+  {\tt k} per line, {\tt p} positions per element.
+  If  {\tt k} = 1, the index will also be printed. {\tt Desc}
+  contains a description of the table.
+ \endtab
+\code
+
+
+void tables_WriteTabD (double V[], int n1, int n2, int k, int p1, int p2,
+                       int p3, char Desc[]);
+\endcode
+ \tab  Writes the elements {\tt n1} to {\tt n2} of table {\tt V},
+  {\tt k} per line, with at least {\tt p1} positions per element,
+  {\tt p2} digits after the decimal point, and at least  {\tt p3}
+   significant digits.
+   If {\tt k} = 1, the index
+  will also be printed. {\tt Desc} contains a description of the table.
+ \endtab
+\code
+
+
+void tables_WriteMatrixD (double** Mat, int i1, int i2, int j1, int j2,
+                          int w, int p, tables_StyleType style,
+                          char Name[]);
+\endcode
+ \tab Writes the submatrix with lines 
+   {\tt i1} $\le i \le $ {\tt i2} and columns 
+   {\tt j1} $\le j \le $ {\tt j2} of the matrix {\tt Mat} with format
+   {\tt style}. The elements are printed in {\tt w}
+   positions with a precision of {\tt p} digits. {\tt Name} is
+   an identifier for the submatrix.
+  
+   For {\tt Matlab}, the file containing the matrix must have
+   the extension {\tt .m}.
+   For example, if it is named {\tt poil.m}, it will be accessed by the
+   simple call {\tt poil} in {\tt Matlab}.
+   For {\tt Mathematica}, if the file is named {\tt poil},
+   it will be read using {\tt << poil;}.
+ \endtab
+\code
+
+
+void tables_WriteMatrixL (long** Mat, int i1, int i2, int j1, int j2, int w,
+                          tables_StyleType style, char Name[]);
+\endcode
+ \tab Similar to {\tt tables\_WriteMatrixD}.
+ \endtab
+\code
+
+
+long tables_HashPrime (long n, double load);
+\endcode
+  \tab Returns a prime number $M$ to be used as the size 
+   (the number of elements) of a hashing table.
+   $M$ will be such that the load factor $n/M$ do not exceed {\tt load}.
+   If {\tt load} is small, an important part of the table will be unused; that
+   will accelerate searches and insertions.
+   This function uses a small sequence of prime numbers; the real load factor
+   may be significatively smaller than {\tt load} because only a limited
+   number of prime numbers are in the table. In case of failure, returns $-1$.
+ \endtab
+\code\hide
+
+#endif
+\endhide
+\endcode

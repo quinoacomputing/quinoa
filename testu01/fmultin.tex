@@ -1,0 +1,265 @@
+\defmodule {fmultin}
+
+This module applies multinomial tests, from the module {\tt smultin},
+% (the collisions and permutation tests are described in {\tt sknuth})
+to a family of generators of different sizes.
+
+\iffalse  %%%%%%%
+There are different functions to choose the different parameters for the
+ tests. The dimension $t$ and the interval length $d$ are mutually exclusive:
+ we fix one of them and the other will be chosen by the program.
+ Usually, we fix the dimension $t$,
+and the interval $d$ will be chosen by one of the function {\tt Choose\_d}.
+We may also fix the interval $d$, and then one of the function
+ {\tt Choose\_t} will select a value of $t$.
+\fi  %%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\bigskip
+\hrule
+\code\hide
+/* fmultin.h for ANSI C */
+#ifndef FMULTIN_H
+#define FMULTIN_H
+\endhide
+#include "gdef.h"
+#include "ftab.h"
+#include "ffam.h"
+#include "fres.h"
+#include "fcho.h"
+#include "smultin.h"
+
+
+extern long fmultin_Maxn;
+\endcode
+\tab
+  Upper bound on $n$.
+  A test is called only when $n$ does not exceed this value.
+  Default value: $2^{24}$.
+\endtab
+
+\ifdetailed %%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{Structure for test results}
+
+The results of the tests in this module can be recovered
+in the following structure.
+
+\code
+
+typedef struct {
+   smultin_Param *Par;
+   fres_Cont *PowDiv[smultin_MAX_DELTA];
+   fres_Poisson *Coll;
+   fres_Poisson *Empty;
+   fres_Poisson *Balls[1 + smultin_MAXB];
+   ftab_Table *COApprox;
+} fmultin_Res;
+\endcode
+\tab
+  {\tt PowDiv} keeps the results of the Power Divergence tests for each
+  value of $\delta$. The results for the numbers of collisions are kept in
+  {\tt Coll}, for the number of empty cells in {\tt Empty} for the number of
+  cells containing at least $j$ balls in  {\tt Balls[j]}.
+%  {\tt CellRatio} contains the ratio of the actual number of cells
+%  over the desired number of cells (in high dimensions, because of the
+%  discrete nature of the 1-dimensional interval, it is not always
+%  possible to obtain exactly a given number of cells).
+  {\tt COApprox} keeps tag on which approximation is used for the
+  distribution function of the {\tt CollisionOver} test:
+  $N$ is for the normal approximation for the number of collisions,
+  $C$ is for the Poisson approximation for the number of collisions,
+  $V$ is for the Poisson approximation for the number of empty cells, and
+  --- is for the case where it is not known how to compute the distribution.
+\endtab
+\code
+
+
+fmultin_Res * fmultin_CreateRes (smultin_Param *par);
+\endcode
+ \tab 
+  Creates and returns a structure that will hold the results
+  of a  {\tt fmultin} test. 
+ \endtab
+\code
+
+
+void fmultin_DeleteRes (fmultin_Res *res);
+\endcode
+ \tab 
+  Frees the memory allocated by {\tt fmultin\_CreateRes}.
+ \endtab
+
+\fi %%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{Choosing the parameters}
+
+  Given the sample size $n$, the following functions determines
+  how the number of cells $k$ is chosen according to different criteria.
+  This will determine the other varying parameter of the tests besides $n$.
+  The returned structure must be passed as the second member in the
+  argument {\tt cho} of the test, the first member of {\tt cho} being always 
+  the function that chooses the sample size $n$.
+\code
+
+
+fcho_Cho * fmultin_CreateEC_DT (long N, int t, double EC);
+fcho_Cho * fmultin_CreateEC_2HT (long N, int t, double EC);
+fcho_Cho * fmultin_CreateEC_2L (long N, double EC);
+fcho_Cho * fmultin_CreateEC_T (long N, double EC);
+\endcode
+ \tab 
+  Given the number of replications $N$, the sample size $n$, these
+  functions choose the number of cells $k$ so that the expected
+  number of collisions is approximately $EC$, i.e. $EC \approx Nn^2/2k$.
+  Given the dimension $t$, the function {\tt fmultin\_CreateEC\_DT}
+  chooses the one-dimensional interval $d$ so that $k= d^t$, and 
+  {\tt fmultin\_CreateEC\_2HT} chooses $d=2^h$
+  so that $k= 2^{ht}$ ($d$ is a power of 2 with $h$ integer).
+  These two cases apply to the tests {\tt fmultin\_Serial1} and
+  {\tt fmultin\_SerialOver1}.
+  The function {\tt fmultin\_CreateEC\_2L} chooses  $L$ so that $k= 2^L$.
+  This case applies to the tests {\tt fmultin\_SerialBits1} and
+  {\tt fmultin\_SerialBitsOver1}.
+  The function {\tt fmultin\_CreateEC\_T} chooses  $t$ so that $k= t!$.
+  This case applies to the test {\tt fmultin\_Permut1}.
+  % Recommendation: $EC \ge 100$ and $t = 2$.
+ \endtab
+\code
+
+
+void fmultin_DeleteEC (fcho_Cho *cho);
+\endcode
+ \tab 
+  Frees the memory allocated by the create functions
+ {\tt fmultin\_CreateEC...}
+ \endtab
+\code
+
+
+fcho_Cho * fmultin_CreateDens_DT (int t, double R);
+fcho_Cho * fmultin_CreateDens_2HT (int t, double R);
+fcho_Cho * fmultin_CreateDens_2L (double R);
+fcho_Cho * fmultin_CreateDens_T (double R);
+\endcode
+\tab  Similar to {\tt fmultin\_CreateEC...}, but the parameters are chosen
+   so that the density (the number of points per cell) is approximately
+   $R \approx n/k $.
+\endtab
+\code
+
+
+void fmultin_DeleteDens (fcho_Cho *cho);
+\endcode
+ \tab 
+  Frees the memory allocated by {\tt fmultin\_CreateDens...}
+ \endtab
+\code
+
+
+fcho_Cho * fmultin_CreatePer_DT (int t, double R);
+fcho_Cho * fmultin_CreatePer_2HT (int t, double R);
+fcho_Cho * fmultin_CreatePer_2L (double R);
+fcho_Cho * fmultin_CreatePer_T (double R);
+\endcode
+\tab Similar to {\tt fmultin\_CreateEC...}, but the parameters are chosen
+   so that the number of cells $k$ is approximately $R$ times the
+   period length of the generator, i.e., $k \approx R\, 2^{\it lsize}$.
+\endtab
+\code
+
+
+void fmultin_DeletePer (fcho_Cho *cho);
+\endcode
+ \tab 
+  Frees the memory allocated by {\tt fmultin\_CreatePer...}
+ \endtab
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{The tests}
+
+\code
+
+void fmultin_Serial1 (ffam_Fam *fam, smultin_Param *par,
+                      fmultin_Res *res, fcho_Cho2 *cho,
+                      long N, int r, int t, lebool Sparse,
+                      int Nr, int j1, int j2, int jstep);
+\endcode
+\tab
+ Applies the same tests as in {\tt smultin\_Multinomial}
+ with {\tt smultin\_GenerCellSerial},
+ with parameters $N$ and $r$, in 
+  dimension $t$ and with the same parameter {\tt Sparse}, for the
+  first {\tt Nr} generators of family {\tt fam}, for $j$ going from
+  {\tt j1} to {\tt j2} by steps of {\tt jstep}.
+ The sample size $n$ is chosen by the function
+ {\tt cho->Chon} while the number of cells $k$ is chosen by {\tt cho->Chop2}.
+ This last must have been initialized by one of 
+ the method for choosing cells described above.
+ Whenever $n$ exceeds {\tt fmultin\_Maxn} or $k$ exceeds 
+ {\tt smultin\_Maxk}, the test is not run.
+%% \ifdetailed %%%
+%% The results are put in {\tt res->Coll}, 
+%% {\tt res->Empty},  {\tt res->Balls},  {\tt  res->PowDiv}.
+%% \fi  %%%
+\endtab
+\code
+
+
+void fmultin_SerialOver1 (ffam_Fam *fam, smultin_Param *par,
+                          fmultin_Res *res, fcho_Cho2 *cho,
+                          long N, int r, int t, lebool Sparse,
+                          int Nr, int j1, int j2, int jstep);
+\endcode
+\tab
+ Similar to {\tt fmultin\_Serial1}, except that it applies the
+  tests in the function {\tt smultin\_Multi\-no\-mialOver}.
+\endtab
+\code
+
+
+void fmultin_SerialBits1 (ffam_Fam *fam, smultin_Param *par,
+                          fmultin_Res *res, fcho_Cho2 *cho,
+                          long N, int r, int s, lebool Sparse,
+                          int Nr, int j1, int j2, int jstep);
+\endcode
+\tab
+ Similar to {\tt fmultin\_Serial1}, except that it applies the
+ tests in the function {\tt smultin\_Multi\-no\-mialBits}.
+\endtab
+\code
+
+
+void fmultin_SerialBitsOver1 (ffam_Fam *fam, smultin_Param *par,
+                              fmultin_Res *res, fcho_Cho2 *cho,
+                              long N, int r, int s, lebool Sparse,
+                              int Nr, int j1, int j2, int jstep);
+\endcode
+\tab
+ Similar to {\tt fmultin\_SerialBits1}, except that it applies the
+ tests in the function {\tt smultin\_Mul\-ti\-no\-mialBitsOver}.
+\endtab
+\code
+
+
+void fmultin_Permut1 (ffam_Fam *fam, smultin_Param *par,
+                      fmultin_Res *res, fcho_Cho2 *cho,
+                      long N, int r, lebool Sparse,
+                      int Nr, int j1, int j2, int jstep);
+\endcode
+\tab
+ Similar to {\tt fmultin\_Serial1} except that it uses
+ {\tt smultin\_GenerCellPermut} to generate the cell numbers.
+ Here, $d$ is unused and $t$ is chosen as a function of $k$ by $k=t!$.
+\endtab
+
+\code
+\hide
+#endif
+\endhide
+\endcode

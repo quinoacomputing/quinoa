@@ -1,0 +1,52 @@
+#!/bin/sh
+
+rm -f Makefile.def
+
+echo 'docdir = ${prefix}/share/TestU01/doc' >> Makefile.def
+echo 'MYLIB = ${top_srcdir}/mylib' >> Makefile.def
+echo 'PROBDIST = ${top_srcdir}/probdist' >> Makefile.def
+echo 'TESTU01 = ${top_srcdir}/testu01' >> Makefile.def
+echo '' >> Makefile.def
+
+MYLIBMODULES='gdef addstr bitset chrono mystr num num2 tables util'
+
+PROBDISTMODULES='fmass fdist fbar finv gofs gofw statcoll wdist'
+
+TESTU01MODULES='unif01    ulcg      umrg      ucarry    utaus    ugfsr 
+           uinv      uquad     ucubic    ulec      utezuka  umarsa
+           uweyl     uknuth    uwu       unumrec   uvaria   usoft
+           ugranger  ucrypto   ufile     udeng     utouzin  uautomata
+           uxorshift ubrent    rijndael-alg-fst    tu01_sha1
+           scatter   swrite    sres      smultin   sknuth   smarsa
+           sstring   svaria    snpair    swalk     sentrop  sspectral
+           scomp     sspacings vectorsF2 bbattery
+           ffam      fcong     ffsr      ftab      fres     fcho
+           fmultin   fmarsa    fknuth    fwalk     fstring  fspectral
+           fvaria    fnpair'
+
+function writevar() {
+   HEADERS=""
+   TEX=""
+   SOURCES=""
+   for mod in $1; do
+      HEADERS="$HEADERS ${mod}.h"
+      SOURCES="$SOURCES ${mod}.c"
+      TEX="$TEX \$($2)/${mod}.tex"
+   done
+   echo "$2HEADERS =$HEADERS" >> Makefile.def
+   echo "$2SOURCES =$SOURCES" >> Makefile.def
+   echo "$2TEX =$TEX" >> Makefile.def
+   echo '' >> Makefile.def
+   unset HEADERS
+   unset TEX
+   unset SOURCES
+}
+
+writevar "$MYLIBMODULES" 'MYLIB'
+writevar "$PROBDISTMODULES" "PROBDIST"
+writevar "$TESTU01MODULES" "TESTU01"
+
+unset writevar
+unset MYLIBMODULES
+unset PROBDISTMODULES
+unset TESTU01MODULES

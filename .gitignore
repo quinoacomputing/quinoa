@@ -1,0 +1,14 @@
+tcode
+libtool
+*~
+*.log
+*.sw?
+*.o
+*.lo*
+*.Tp*
+*.la
+.libs/
+.deps/
+Makefile
+config.status
+html/

@@ -1,0 +1,171 @@
+\defmodule {statcoll}
+        
+This module contains some basic tools for collecting statistical 
+observations and computing simple statistics on them.
+
+\code
+\hide
+/* statcoll.h  for ANSI C  */
+
+#ifndef STATCOLL_H
+#define STATCOLL_H
+\endhide
+\endcode
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{Collector type}
+
+\code
+
+typedef struct {
+   double *V;
+   long Dim;
+   long NObs;
+   char *Desc;
+} statcoll_Collector;
+\endcode
+ \tab  A collector of real-valued statistical observations.
+  The array {\tt V} has dimensions {\tt Dim + 1} (i.e., elements
+  {\tt V[0]} to {\tt V[Dim]}) and contains {\tt NObs} observations
+  in {\tt V[1]} to {\tt V[NbObs]}.  
+ \hpierre {
+   Je crois que le standard en C est plut\^ot de r\'eserver 
+   {\tt V[0..Dim-1]} et d'y mettre les observations, n'est-ce pas?
+   Il faudra probablement s'y conformer \'eventuellement...
+   Il doit y avoir une structure semblable dans {\tt gsl}; \`a v\'erifier.}
+  The element {\tt V[0]} can be used for special purposes.
+  The character string {\tt Desc} (max.\ 127 characters) contains 
+  the name of the collector (used for printing reports, etc.).
+  A collector is created by calling 
+  {\tt statcoll\_Create} and destroyed by calling {\tt statcoll\_Delete}.
+  Observations are added one at a time by calling {\tt statcoll\_AddObs}.
+ \endtab
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec {Prototypes}
+
+\code
+
+statcoll_Collector * statcoll_Create (long N, const char Desc[]);
+\endcode
+ \tab
+ Creates and returns a collector that can take up to {\tt N} 
+ observations.  Initializes its fields {\tt Dim} to {\tt N}, 
+ {\tt NObs} to 0, {\tt Desc} to {\tt Desc}, and allocates
+ {\tt V[0..Dim]}.  
+ (If {\tt Desc} is too long, the description will be truncated).
+ This function must be called for each new collector
+ {\tt statcoll\_Collector}. One may call {\tt statcoll\_Init} later
+ to reinitialize a collector or to change its dimension.
+ \endtab
+\code
+
+
+statcoll_Collector * statcoll_Delete (statcoll_Collector *S);
+\endcode
+ \tab
+  Releases the space allocated for arrays {\tt V} and {\tt Desc}
+  in this collector, then deletes the collector, and returns the
+  {\tt NULL} pointer.
+\endtab
+\code
+
+
+void statcoll_Init (statcoll_Collector *S, long N);
+\endcode
+ \tab
+ Initializes the collector {\tt S} by setting its observations counter 
+ {\tt NObs} to 0.  Then ensures that its dimension {\tt Dim} 
+ is at least {\tt N} (enlarges the array {\tt V} if needed).
+\endtab
+\code
+
+
+void statcoll_SetDesc (statcoll_Collector *S, const char Desc[]);
+\endcode
+ \tab
+ Set the {\tt Desc} field of collector {\tt S} to {\tt Desc}.
+\endtab
+\code
+
+
+void statcoll_AddObs (statcoll_Collector *S, double x);
+\endcode
+\tab Adds an observation of value {\tt x} to the collector {\tt S}.
+% One must have called {\tt statcoll\_Create} beforehand.
+ If the array {\tt V} is already full ({\tt NObs = Dim}),
+ it will be automatically enlarged ({\tt Dim} will be doubled)
+ to accomodate the new observations.
+\endtab
+\code
+
+
+void statcoll_Write (statcoll_Collector *S, int k, int p1, int p2, int p3);
+\endcode
+ \tab 
+  Writes the observations currently in collector {\tt S},
+  {\tt k} values per line, with at least {\tt p1} positions per
+  value, {\tt p2} digits after the decimal point,
+  and {\tt p3} significant digits.
+ \endtab
+\code
+
+
+double statcoll_Average (statcoll_Collector *S);
+\endcode
+ \tab 
+  Returns the average of the observations currently in collector {\tt S}.
+ \endtab
+\code
+
+
+double statcoll_Variance (statcoll_Collector *S);
+\endcode
+ \tab 
+  Returns the sample variance of the observations currently 
+  in collector {\tt S}, i.e., 
+ \[
+   S_n^2 = \frac{1}{N-1} \sum_{i=1}^N (X_i - \bar X_N)^2,
+ \]
+ where $X_1,\dots,X_N$ are the $N$ observations and $\bar X_N$ their
+ average.
+ \endtab
+\code
+
+
+double statcoll_AutoCovar (statcoll_Collector *S, int k);
+\endcode
+ \tab
+  Returns the sample autocovariance of lag {\tt k} for the 
+  observations currently in collector {\tt S}, i.e., 
+ \[
+   \hat\sigma_k = \frac{1}{N-k} \sum_{i=1}^{N-k} (X_i X_{i+k} - \bar X_N^2),
+ \]
+ where $X_1,\dots,X_N$ are the $N$ observations and $\bar X_N$ their
+ average.
+ \endtab
+\code
+
+
+double statcoll_Covar (statcoll_Collector *S1, statcoll_Collector *S2);
+\endcode
+ \tab
+  Returns the sample covariance between the observations 
+  in collector {\tt S1} and those in collector {\tt S2}, i.e.,
+ \[
+   \frac{1}{N-1} \sum_{i=1}^{N} (X_i Y_i - \bar X_N \bar Y_N),
+ \]
+ where $X_1,\dots,X_N$ are the $N$ observations in {\tt S1}, 
+ $Y_1,\dots,Y_N$ are the $N$ observations in {\tt S2},
+ and $\bar X_N$ and $\bar Y_N$ are their respective averages.
+ The two collectors must contain the same number of observations.
+ \endtab
+\code
+\hide
+#endif
+\endhide
+\endcode
+

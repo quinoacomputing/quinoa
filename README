@@ -1,0 +1,177 @@
+***********************************************************
+
+          TestU01: Testing Random Number Generators
+
+***********************************************************
+
+TestU01 is a package implemented in ANSI C. It is designed to make it
+reasonably simple to perform statistical tests on arbitrary random
+number generators (RNG).
+
+It is copyrighted by Pierre L'Ecuyer.
+
+e-mail:  lecuyer@iro.umontreal.ca
+http://www.iro.umontreal.ca/~lecuyer/
+
+
+---------------------------------------------------------------------------
+DIRECTORY STRUCTURE
+
+-- examples:  program examples showing how to use TestU01.
+
+-- testu01:	 source files and user guide. Contains many random number
+             generators (RNG), some specific, and others in a generic form.
+             It contains also many well-known and not so well-known statistical
+             tests for RNG and predefined batteries of tests for RNG.
+
+-- probdist: source files and user guide. Contains probability distributions
+             and a few methods useful for statistics computations.
+
+-- mylib:	 source files and user guide. Miscelleanous useful tools.
+
+-- include:	 header files
+
+-- param:	 parameter files for family of generators (modules f*).
+
+
+
+
+  
+---------------------------------------------------------------------------
+DOCUMENTATION
+
+The main documentation of this package was written originally in
+Latex format; it has been used to create doc in PDF format. 
+In each of the 3 source directories, there is a file named guide....pdf 
+containing the documentation on the modules in this directory
+and giving a description of the public variables and functions.
+The *.pdf file may be viewed with a PDF reader like Acrobat.
+
+In directory testu01, there is a short and a long version of the
+user guide: guideshorttestu01.pdf and guidelongtestu01.pdf.
+The short version may be sufficient for the typical user.
+The longer version contains more details on functions and types and
+their possible uses.
+
+
+---------------------------------------------------------------------------
+COMPILATION of the Package:
+
+- Before compiling the package, you may have to set some global constants 
+  in file mylib/gdef.tex to their appropriate values if the default values
+  are not accepted by your platform (the mylib/gdef.h will be created
+  automatically).
+
+- All the header files (*.h) of the package will be created automatically 
+  from the corresponding *.tex files when building the package libraries.
+
+
+
+---------------- Note for Windows
+
+The packages MinGW32 and MSYS are required to make TestU01 work on Windows.
+And the configure command must be called with the option --disable-shared
+---------------------------------
+
+
+
+- Call configure (or sh ./configure) to configure the package for your system.
+  Give also the name of the directory where you want to install the libraries
+  and binaries. It is advised to set the install directory completely 
+  separate from the package directory.
+  
+	 ./configure --prefix=<install directory>
+
+  For example, if you want to install it in the directory usr in the
+  user's home directory, call (directory usr MUST EXIST)
+	 ./configure --prefix=$HOME/usr
+
+  If no prefix is given in the configure command above, then the libraries
+  will be installed in the standard directory /usr/local, but only the
+  system administrator has the permissions to do that.
+
+
+- Call
+	make
+  to compile everything and build the libraries.
+
+- Call
+	make install
+  to install the libraries in the chosen directory.
+
+
+---------------------------------------------------------------------------
+DOC
+
+If the installation process has worked without glitch, there will be a
+subdirectory
+   share/TestU01/doc
+in the install directory containing the user guides in pdf format. These guides
+describe all the public functions and public identifiers of the package.
+
+ 
+---------------------------------------------------------------------------
+USAGE
+
+If the installation process has worked without glitch, there will be a
+subdirectory
+   share/TestU01/examples
+containing a few small example programs. In order to compile the small programs,
+the 3 following paths must be added to the environment variables.
+
+LD_LIBRARY_PATH    <install directory>/lib
+LIBRARY_PATH       <install directory>/lib
+C_INCLUDE_PATH     <install directory>/include
+
+[ If the libraries have been installed in /usr/local, it may be
+  necessary for some Unix/Linux systems to redefine these 3 paths.
+  More specifically, the environment variables LD_LIBRARY_PATH and LIBRARY_PATH
+  point to the /usr/local/lib (or /usr/local/lib64 for x86_64) directory. Use
+     echo $LD_LIBRARY_PATH
+     echo $LIBRARY_PATH
+  to get the current library paths, and check that the appropriate directory is
+  included. If it is not included, you need to redefine them as follows. ]
+
+In a c-shell, they can be added or set with
+
+   setenv LD_LIBRARY_PATH <install directory>/lib:${LD_LIBRARY_PATH}
+   setenv LIBRARY_PATH <install directory>/lib:${LIBRARY_PATH}
+   setenv C_INCLUDE_PATH <install directory>/include:${C_INCLUDE_PATH}
+
+or perhaps simply
+
+   setenv LD_LIBRARY_PATH <install directory>/lib
+   setenv LIBRARY_PATH <install directory>/lib
+   setenv C_INCLUDE_PATH <install directory>/include
+
+
+In a Bourne shell, they can be added or set with
+
+   export LD_LIBRARY_PATH=<install directory>/lib:${LD_LIBRARY_PATH}
+   export LIBRARY_PATH=<install directory>/lib:${LIBRARY_PATH}
+   export C_INCLUDE_PATH=<install directory>/include:${C_INCLUDE_PATH}
+
+or perhaps simply
+
+   export LD_LIBRARY_PATH=<install directory>/lib
+   export LIBRARY_PATH=<install directory>/lib
+   export C_INCLUDE_PATH=<install directory>/include
+
+
+Then the small example birth1.c in directory examples can be compiled with
+the C compiler
+
+gcc birth1.c -o birth1 -ltestu01 -lprobdist -lmylib -lm
+
+
+---------------- Note for Windows users -----------------
+For MinGW, the user may have to compile-link as
+
+gcc birth1.c -o birth1.exe -ltestu01 -lprobdist -lmylib -lwsock32
+
+---------------------------------------------------------
+For Cygwin, before running the program, the user may have to set
+
+export PATH=<install directory>/bin:${PATH}
+
+---------------------------------------------------------

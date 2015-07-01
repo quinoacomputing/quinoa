@@ -1,0 +1,414 @@
+\defmodule {smarsa}
+
+Implements the statistical tests suggested by George Marsaglia and his
+collaborators in \cite{rMAR85a} and other places.\index{Marsaglia}
+Some of these tests are special cases of the overlapping versions of the
+tests implemented in module {\tt smultin} and in these cases, the 
+functions here simply call  {\tt smultin\_MultinomialOver}.
+\resdef
+
+
+
+\iffalse  %%%%%
+For all these tests, when $N>1$, we may apply a two-level test 
+over the  $N$ $p$-values obtained at the first level.
+For $N=1$, we simply compute the $p$-value of the first level test;
+$n$ is the sample size of the first level test.
+We also drop the first $r$ bits (the most significant, 
+$r \ge 0$) of each generated random number and apply the tests on
+ the remaining bits.
+\fi  %%%%%
+
+\bigskip\hrule
+
+\code\hide
+/* smarsa.h for ANSI C */
+#ifndef SMARSA_H
+#define SMARSA_H
+\endhide
+#include "unif01.h"
+#include "sres.h"
+\endcode
+
+\ifdetailed  %%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\guisec{Environment variables}
+\code
+
+extern double smarsa_Maxk;
+\endcode
+\tab
+   Maximal value of the number of cells $k = d^t$ in
+   {\tt smarsa\_BirthdaySpacings}.
+   The  default value is set to $2^{64}$ if 64-bit integers are available
+   on this platform (see the constant {\tt USE\_LONGLONG} in module
+   {\tt gdef} of library MyLib), and $2^{53}$ otherwise.
+\endtab
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{Structure for test results}
+
+Depending on the test, the detailed test results can be recovered in the
+structures defined below, or in the common structures defined in module
+ {\tt sres}.
+
+\code
+
+typedef struct {
+   sres_Basic *Bas;
+   sres_Poisson *Pois;
+} smarsa_Res;
+\endcode
+ \tab
+  Structure used to keep the results of the tests
+  {\tt smarsa\_CollisionOver} and  {\tt smarsa\_Opso}.
+  Depending on the approximation, the results will be in either {\tt Bas}
+  or  {\tt Pois}.
+ \endtab
+\code
+
+
+smarsa_Res * smarsa_CreateRes (void);
+\endcode
+ \tab 
+  Creates and returns a structure to hold the results of a test. 
+ \endtab
+\code
+
+
+void smarsa_DeleteRes (smarsa_Res *res);
+\endcode
+ \tab 
+  Frees the memory allocated by {\tt smarsa\_CreateRes}.
+ \endtab
+
+\bigskip\hrule\bigskip
+
+\code
+
+typedef struct {
+   sres_Chi2 *GCD;
+   sres_Chi2 *NumIter;
+} smarsa_Res2;
+\endcode
+ \tab
+  Structure used to keep the results of the test {\tt smarsa\_GCD}.
+  The field {\tt GCD} holds the results for the greatest common divisor and 
+  {\tt NumIter} holds the results for the number of iterations used to
+  find the GCD.
+ \endtab
+\code
+
+
+smarsa_Res2 * smarsa_CreateRes2 (void);
+\endcode
+ \tab 
+  Creates and returns a structure to hold the results of a
+ {\tt smarsa\_GCD} test. 
+ \endtab
+\code
+
+
+void smarsa_DeleteRes2 (smarsa_Res2 *res);
+\endcode
+ \tab 
+  Frees the memory allocated by {\tt smarsa\_CreateRes2}.
+ \endtab
+
+\fi  %%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{The tests}
+\code
+
+
+void smarsa_SerialOver (unif01_Gen *gen, sres_Basic *res,
+                        long N, long n, int r, long d, int t);
+\endcode
+ \tab
+  Implements the {\em overlapping $t$-tuple\/}
+  test\index{Test!SerialOver} described in
+  \cite {rALT88a,rMAR85a}.  
+  It is similar to {\tt sknuth\_Serial}, except that the $n$ vectors 
+  are generated with overlap, as follows.
+  A sequence of uniforms $u_0,\dots,u_{n-1}$ is generated, and the 
+  $n$ points are defined as $(u_0,\dots,u_{t-1})$, $(u_1,\dots,u_t)$,
+   \dots, $(u_{n-1},u_n,u_0,\dots,u_{t-3})$, $(u_n,u_0,\dots,u_{t-2})$. 
+\iffalse %%% 
+ This function generates $n$ points in
+  the unit hypercube in $t$ dimensions, using $t$ successive values
+  returned by the  generator, which will make the
+   components of a vector in $t$ dimensions, the $i$-th generated
+  value being the first component of the $i$-th vector.
+  It generates only $n$ values which form a 
+  circular sequence: for $i > n-t+1$, the last $i-n+t-1$  components
+  of vector $i$ are the first $i-n+t-1$ values.
+  Then it divides the interval $[0,1)$ in $d$ equal segments; this gives
+  a partition of the hypercube $[0,1)^t$ in $k = d^{t}$ cells.
+\fi  %%%
+  This test is a special case of {\tt smultin\_Multino\-mial\-Over},
+  with {\tt Sparse = FALSE} (see also \cite{rLEC02c}).
+%  It corresponds to the dense case of the test, where $n > k = d^t$.
+  Restriction: $n/d^{t} \ge$ {\tt gofs\_MinExpected}.
+ \endtab
+\code
+
+
+void smarsa_CollisionOver (unif01_Gen *gen, smarsa_Res *res,
+                           long N, long n, int r, long d, int t);
+\endcode
+  \tab
+  Similar to the collision test, except\index{Test!CollisionOver}
+  that the vectors are generated
+  with overlap, exactly as in {\tt smarsa\_SerialOver}.
+  This test corresponds to the test {\em overlapping pairs sparse 
+  occupancy\/} (OPSO) test described in \cite {rMAR85a} and studied by 
+  Marsaglia and Zaman \cite{rMAR93a}.
+  Let $\lambda = (n-t+1)/d^t$, called the {\em density}.
+  If $n$ (the number of points) and $d^t$ (the number of cells)
+  are very large and have the same order of magnitude,
+  then,  under $\cH_0$,\index{overlapping pairs sparse occupancy} 
+  the number of collisions $C$ is a random variable which is 
+  approximately normally distributed with mean 
+  $\mu \approx d^t (\lambda - 1 + e^{-\lambda})$
+  (this follows from Theorem 2 of \cite{rPER95a}),
+  and variance $\sigma^2 \approx d^t e^{-\lambda}(1-3e^{-\lambda})$,
+  according to the speculations of \cite{rMAR93a} (see {\tt smultin}).
+  However, Rukhin \cite{rRUK02a} gave a better approximation for the variance as 
+  $\sigma^2 \approx d^t e^{-\lambda}(1-(1+\lambda) e^{-\lambda})$ and this
+  is the formula that is used.
+  When $n \ll d^t$, the number of collisions should be
+  approximately Poisson with mean $\mu$,
+  whereas if $\lambda$ is large enough (e.g., $\lambda> 6$), then the
+  number of empty cells ($d^t - n + C$)
+  should be  approximately Poisson with mean $d^t e^{-\lambda}$.
+  This test is a special case of {\tt smultin\_MultinomialOver}.
+ \endtab
+\code
+
+
+void smarsa_Opso (unif01_Gen *gen, smarsa_Res *res,
+                  long N, int r, int p);
+\endcode
+ \tab
+   Three special cases of {\tt smarsa\_CollisionOver}.
+   Implements the OPSO\index{Test!OPSO}
+   test with the same three sets of parameters
+   as in the examples
+   of \cite{rMAR85a}.\index{overlapping pairs sparse occupancy} 
+   The parameters $(n, d, t)$ are $(2^{21}, 2^{10}, 2)$, 
+   $(2^{22}, 2^{11}, 2)$, 
+   and  $(2^{23}, 2^{11}, 2)$, for $p = 1$, 2, and 3, respectively.
+
+   Restriction: $p\in \{1, 2, 3\}$.
+ \endtab
+\code
+
+
+void smarsa_CAT (unif01_Gen *gen, sres_Poisson *res,
+                 long N, long n, int r, long d, int t, long S[]);
+\endcode
+\tab
+ Applies the {\em CAT test\/}, one of the {\em monkey test\/} proposed by 
+ Marsaglia in \cite{rMAR93b} and analyzed by Percus and Whitlock in 
+ \cite{rPER95a}.\index{Test!CAT}
+ This test is a variation of the collision test with overlapping
+ ({\tt smarsa\_CollisionOver}), except that only {\em one\/} cell is
+ observed. For this reason, this test is typically less powerful than
+ {\tt smarsa\_CollisionOver} unless the target cell happens to be visited 
+ very frequently due to a particular weakness of the generator. 
+ This target cell is specified by the vector {\tt S[0..t-1]}.
+ For each point, the generator provides $t$ integers 
+ $y_0,\dots,y_{t-1}$ in $\{0,\dots,d-1\}$ and the target cell is hit
+ whenever $(y_0, \dots, y_{t-1}) =$ {\tt (S[0],\dots,S[t-1])}. The
+ target cell number should make an aperiodic pattern, i.e., it should not
+ be possible to write it as {\em ABA} where {\em A} is a prefix of the
+ pattern.
+
+ The test generates $n$ numbers (giving $n-t+1$ points with overlapping 
+ coordinates) and computes $Y$, the number of points that hit the target
+  cell. Under $\cH_0$, $Y$ is approximately Poisson with mean
+ $\lambda = (n-t+1)/d^t$,
+ and the sum of all values of $Y$ for the
+ $N$ replications is approximately Poisson with mean $N\lambda$.
+ The test computes this sum and the corresponding $p$-value,
+ using the Poisson distribution.
+ Note: The pair $(N,n)$ may be replaced by $(1, nN)$, as this is equivalent.
+ Normally, $\lambda$ should be larger than 1, 
+ so this corresponds to the dense case, where $n > k$.
+ \endtab
+\code
+
+
+void smarsa_CATBits (unif01_Gen *gen, sres_Poisson *res, long N, long n,
+                     int r, int s, int L, unsigned long Key);
+\endcode
+\tab
+  Similar to {\tt smarsa\_CAT}, except that the cell is generated
+  from a string of bits.\index{Test!CATBits}
+ This test is a variation of the multinomial test on bits with overlapping
+ ({\tt smultin\_MultinomialBitsOver}), except that only {\em one\/} cell is
+ observed (for this reason, this test is typically less powerful than
+ {\tt smultin\_MultinomialBitsOver}). 
+ This target cell is specified by {\tt Key}.
+ Each point is made of $L$ bits and the target cell is hit
+ whenever the $L$ bits are numerically equal to {\tt Key}.
+ The test compares each group of $L$ bits to the key in a sequence of
+ $n$ bits. When the key is not found, one moves 1 bit forward
+  in the sequence. But when the key is found, one jumps $L$ bits forward.
+ The bits of {\tt Key}
+ should make an aperiodic pattern, i.e., it should not
+ be possible to write {\tt Key} (in binary form) as {\em ABA} where
+ {\em A} is a binary prefix of  {\tt Key}.
+
+ The test generates $n$ bits and computes $Y$, the number of points 
+ that hit the target cell.
+ Under $\cH_0$, $Y$ is approximately Poisson with mean
+ $\lambda = (n-L+1)/2^L$, and the sum of all values of $Y$ for the
+ $N$ replications is approximately Poisson with mean $N\lambda$.
+ The test computes this sum and the corresponding $p$-value,
+ using the Poisson distribution.
+ Normally, $\lambda$ should be larger than 1, 
+ so this corresponds to the dense case, where $n > 2^L$.
+ Restrictions: $L \le 32$, $r+s \le 32$, and if $L > s$ then $L \mod s = 0$.
+ \endtab
+\code
+
+
+void smarsa_BirthdaySpacings (unif01_Gen *gen, sres_Poisson *res,
+                              long N, long n, int r, long d, int t, int p);
+\endcode
+ \tab
+   Implements the {\em birthday spacings\/} test proposed in \cite{rMAR85a}
+   and studied further by Knuth \cite{rKNU98a} and 
+   L'Ecuyer and Simard \cite{rLEC01a}.\index{Test!BirthdaySpacings}
+% Results in  L'Ecuyer-Simard's article uses p = 1.
+   This is a variation of the collision test, in which
+   $n$ points are thrown into $k = d^t$ cells in $t$ dimensions as in
+   {\tt smultin\_Multinomial}.
+   The cells are numbered from 0 to $k-1$.
+   To generate a point, $t$ integers $y_0,\dots,y_{t-1}$ in $\{0,\dots,d-1\}$
+   are generated from $t$ successive uniforms.
+   The parameter $p$ decides in which order these $t$ integers are used
+   to determine the cell number: The cell number is 
+   $c = y_0 d^{t-1} + \cdots + y_{t-2} d + y_{t-1}$ if $p=1$ and
+   $c = y_{t-1} d^{t-1} + \cdots + y_{1} d + y_0$ if $p=2$.
+   This corresponds to using {\tt smultin\_GenerCellSerial} for $p=1$
+   and {\tt smultin\_GenerCellSerial2} for $p=2$.
+
+   The points obtained can be viewed as
+   $n$ birth dates in a year of $k$ days \cite {rALT88a,rMAR85a}.
+   Let $I_1 \le I_2\le \cdots \le I_n$ be the $n$ cell numbers obtained,
+   sorted in increasing order. The test computes the differences
+   $I_{j+1} - I_{j}$, for $1\le j < n$,
+   and  count the  number $Y$ of collisions between these differences.
+   Under $\cH_0$, $Y$ is approximately Poisson with mean
+   $\lambda = n^3/(4k)$, and the sum of all values of $Y$ for the
+   $N$ replications (the total number of  collisions) is 
+   approximately Poisson with mean $N\lambda$.
+   The test computes this total number of collisions and computes the
+   corresponding $p$-value using the Poisson distribution.
+   Recommendation: $k$ should be very large and $\lambda$ relatively small.
+   Restrictions: $k \le {}${\tt smarsa\_Maxk},
+%%  $n < \frac12\sqrt{\frac{k}{N}}$;
+   $8 N \lambda \le k^{1/4}$ or $4n \le k^{5/12}/ N^{1/3}$, and
+   $p\in \{1, 2\}$. 
+\richard{Ce test est beaucoup plus sensible pour un tr\`es grand nombre de 
+   cellules avec $n$ grand. Pour $Nn$ constant, choisir $n$ aussi grand que 
+   possible et $N$ petit. Mais on est limit\'e par la valeur maximale d'un entier
+   pour num\'eroter les cases, et aussi par le fait que la densit\'e doit \^etre
+   suffisamment petite pour que l'approximation de Poisson soit valide.}
+ \endtab
+\code
+
+
+void smarsa_MatrixRank (unif01_Gen *gen, sres_Chi2 *res,
+                        long N, long n, int r, int s, int L, int k);
+\endcode
+ \tab
+  Applies the test based on the {\em rank of a random binary matrix\/},
+  as\index{Test!MatrixRank}\index{random binary matrix}
+  suggested in \cite {rMAR85a,rMAR85b}.
+  It fills a $L\times k$  matrix with  random bits  as follows.
+  A sequence of uniforms are generated and $s$ bits are taken from each.
+  The matrix is filled one row at a time, using
+  $\lceil k/s\rceil$ uniforms per row. 
+ \hpierre{Should take blocks of $L$ bits instead, for better uniformity
+    with the other tests.}
+  The test then computes the rank of the matrix 
+  (the number of linearly independent rows).
+  It thus generates $n$ matrices and counts how many
+  there are of each rank. 
+  Finally it  compares this  empirical  distribution
+  with the theoretical distribution of the rank of a random matrix,
+  via a chi-square test, after merging classes if neeeded (as usual).
+  The probability that the rank $R$ of a random matrix is $x$ is given by
+  \begin{eqnarray*}
+   P[R=0] & =& {2^{-Lk}} \\
+   P[R=x] & =& 2^{x(L+k-x)-Lk} \prod_{i=0}^{x-1}
+               { (1-2^{i-L})(1-2^{i-k}) \over 1-2^{i-x} },
+                  \qquad 1 \le x \le \min (L, k).
+  \end{eqnarray*}
+  Restrictions:  $n/2 > $ {\tt gofs\_MinExpected}.  Recommendation: $L = k$.
+  The difference $|L - k|$ should be small, otherwise almost all the
+  probability will be lumped in a single class of the chi-square.
+\hpierre {Il serait bon d'avoir une id\'ee de la valeur de $n$ qu'il
+   faut prendre pour que ce soit raisonnable, en fonction de $k$ et $L$.}
+\hrichard{Le nombre de classes ne d\'epend presque pas de n, mais seulement
+ de la diff\'erence $|L - k|$. Donc n'importe quel n >= 100 fera l'affaire.}
+ \endtab
+\code
+
+
+void smarsa_Savir2 (unif01_Gen *gen, sres_Chi2 *res,
+                    long N, long n, int r, long m, int t);
+\endcode
+ \tab
+  Applies a modified version of the Savir test, as proposed by
+  Marsaglia\index{Test!Savir2} \cite{rMAR85c}.
+  The test generates a random integer $I_1$ uniformly in $\{1,\dots,m\}$,
+  then a random integer $I_2$ uniformly in $\{1,\dots,I_1\}$,
+  then a random integer $I_3$ uniformly in $\{1,\dots,I_2\}$,
+  and so on until $I_t$.
+  It thus generates $n$ values of $I_t$ and compares their empirical
+  distribution with the theoretical one, via a chi-square test.
+  The algorithm given in \cite{rMAR85c} is used to compute the
+  theoretical distribution of $I_t$ under the null hypothesis.
+  Restrictions:   $n/2 > $ {\tt gofs\_MinExpected}.
+  Recommendation: $m \approx 2^t$.
+ \endtab
+\code
+
+
+void smarsa_GCD (unif01_Gen *gen, smarsa_Res2 *res,
+                 long N, long n, int r, int s);
+\endcode
+ \tab Applies the tests based on the greatest common divisor (GCD) between
+\index{Test!GCD}%
+  two random integers in $[1, 2^s]$ as proposed by Marsaglia \cite{rMAR02b}.
+  The first test considers the value of the GCD itself for which the
+  probability that the GCD takes the value $j$ is $P_j = 6/(\pi^2 j^2)$
+  (see \cite{rKNU98a}).
+  A chi-square test is applied on the values obtained.
+  The second test considers the number of iterations needed to find the
+  GCD. The theoretical distribution is unknown and the binomial
+  approximation proposed by Marsaglia has to be corrected by an empirical
+  factor. This second test is not used for the moment and is left as a
+  future project.
+  Restrictions: $n \ge 30$ and $\log_2 n \le 3s/2$.
+% I have set the domain of the approximation error by using the 3 good
+% generators: ugfsr_CreateMT19937_02, ulec_CreateMRG32k3a and
+%    ulec_Createlfsr113. They start failing the test GCD at about the
+% same values of n for a given s, at 2 or 4 times the above limit n.
+% Thus the above restriction.
+ \endtab
+\code
+\hide
+#endif
+\endhide
+\endcode

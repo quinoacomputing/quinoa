@@ -1,0 +1,390 @@
+\chapter {FAMILIES OF GENERATORS}
+
+\def\eps  {$\epsilon\quad$}
+\def\epsm  {--$\epsilon_1\quad$}
+
+The tools described in this chapter are convenient for examining
+systematically the interaction between specific tests
+and certain families of RNGs. 
+The framework is as follows.
+For each family, an RNG of period length near $2^i$ has been selected,
+on the basis on some theoretical criteria
+that depend on the family, for all integers $i$ in some interval
+(from 10 to 40, for example).
+% Here, for several families of RNGs, 
+The parameters of the pre-selected instances are stored in text files
+in directory {\tt param}.
+
+Typically, for a given RNG that fails a test, when the
+sample size of the test is increased, the $p$-value would remain
+``reasonable'' for a while, say  for $n$ up to some 
+threshold $n_0$ (roughly), and will then converges to 0 or 1 exponentially 
+fast as a function of $n$.
+It is interesting to examine the relationship between $n_0$ and $i$.
+The idea is to fit a crude regression model of $n_0$ as a function
+of $i$.  For example, one may consider a model of the form
+\eq
+  \log_2 n_0 = \gamma i + \nu + \delta,
+\endeq
+where $\gamma$ and $\nu$ are constants and $\delta$ represents
+the noise. The result may give an idea of what period length $\rho$
+of the RNG is required, within a given family, to be safe with respect
+to the test that is considered, for a given computer budget.
+
+This methodology has been applied in 
+\cite{rGRA01a,rLEC98h,rLEC00c,rLEC01a,rLEC02c,rLEC03c},
+using an earlier version of the present library,
+and gave surprisingly good results in many cases.
+For full-period LCGs with good spectral test behavior, for example, 
+the relationships $n_0 \approx 16\,\rho^{1/2}$
+for the collision test and $n_0 \approx 16\,\rho^{1/3}$
+for the birthday spacings test have been obtained.
+This means that no LCG is safe with respect to these particular tests
+unless its period length $\rho$ is so large that generating 
+$\rho^{1/3}$ numbers is practically unfeasible.  
+A period length of $2^{48}$ or less, for example, does not satisfy
+this requirement.
+
+
+%%%%%%%%%%%%%%%%%%%%%%
+\paragraph*{Common parameters.} \
+
+
+The first argument of each testing function in the {\tt f} modules 
+is the family {\tt fam} of random number generators to be tested
+(see module {\tt ffam} for details).
+That family must be created by calling the  appropriate function in
+the module {\tt fcong} or {\tt ffsr}, and deleted when no longer needed.
+
+The second argument (the third one in the {\tt fmultin} module)
+of each testing function is a structure {\tt res} that can keep the tables
+ of $p$-values and other results (see module {\tt fres} for details).
+This is useful if one wishes to do something else with the tables of
+results after all tests are ended. If one does not
+want to post-process or use the tables of results after a {\tt f} test,
+it suffices to set the {\tt res} argument to the {\tt NULL} pointer.
+Then, the structure is created and deleted automatically inside the 
+testing function. In any case, the tables of results will be printed
+automatically on standard output.
+
+The third argument (the fourth one in the {\tt fmultin} module)
+of each testing function is a structure 
+{\tt cho} that allows the user to choose varying sample sizes and
+other parameters of the tests as a function of the generators {\it lsize}
+and the fixed parameters (see module {\tt fcho} for details).
+
+For each of these three arguments (except possibly for {\tt res} as
+explained above), one must call the appropriate {\tt Create} function
+before using them, and call the corresponding {\tt Delete} function
+when they are no longer needed.
+
+The last four arguments of each testing function are the integers 
+{\tt Nr, j1, j2} and {\tt jstep}. The test functions will be applied on
+the first {\tt Nr} generators of the family {\tt fam}.
+If there are less than {\tt Nr} generators in the family, then {\tt Nr}
+ will be reset to the number of generators in the tested family.
+ For each of the generator, tests will be
+applied with varying sample sizes determined by the parameter $j$ for
+$j$ varying from {\tt j1} to {\tt j2} by step of {\tt jstep}.
+
+
+
+\begin {table}
+\begin {center}
+\caption {Some good LCGs according to the spectral test in up to
+          dimension 8.}
+\label {tab:lcg1}
+\smallskip 
+\begin {tabular}{|@{\quad}l@{\quad}|@{\quad}r@{\quad}|}
+\hline
+\qquad $m$             & $a$ \\
+\hline
+$2^{10}-3\phantom{0} = 1021$     &     \rule{0pt}{14pt}   65      \\
+$2^{11}-9\phantom{0} = 2039$     & 995            \\
+ $2^{12}-3\phantom{0} = 4093$    & 209            \\
+ $2^{13}-1\phantom{0} = 8191$    & 884            \\
+ $2^{14}-3\phantom{0} = 16381$   & 572            \\
+ $2^{15}-19 = 32749$  & 219            \\
+ $2^{16}-15 = 65521$  & 17364          \\
+ $2^{17}-1\phantom{0} = 131071$  & 43165          \\
+ $2^{18}-5\phantom{0} = 262139$  & 92717          \\
+ $2^{19}-1\phantom{0} = 524287$  & 283741         \\
+ $2^{20}-3\phantom{0} = 1048573$ & 380985         \\
+ $2^{21}-9\phantom{0} = 2097143$  & 360889         \\
+ $2^{22}-3\phantom{0} = 4194301$  & 914334         \\
+ $2^{23}-15 = 8388593$  & 653276        \\
+ $2^{24}-3\phantom{0} = 16777213$  & 6423135       \\
+ $2^{25}-39 = 33554393$  & 25907312     \\
+ $2^{26}-5\phantom{0} = 67108859$  & 26590841      \\
+ $2^{27}-39 = 134217689$  & 45576512     \\
+ $2^{28}-57 = 268435399$  & 31792125     \\
+ $2^{29}-3\phantom{0} = 536870909$   & 16538103     \\
+ $2^{30}-35 = 1073741789$  & 5122456     \\
+\hline
+\end {tabular}
+\end {center}
+\end {table}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\setbox0=\vbox {\hsize = 6.1in
+\smallc
+\verbatiminput{../examples/fcoll.c}
+}
+
+\begin{figure}
+\centering
+\myboxit{\box0}
+\caption {Applying the collision test to a family of LCGs.}
+\label{fig:tmultin}
+\end{figure}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\paragraph*{An example: The collision test applied to a family of LCG's.} \
+
+
+
+For a concrete illustration, Figure~\ref{fig:tmultin} shows 
+a program applying the collision test (see tests {\tt sknuth\_Collision}
+and {\tt smultin\_Multinomial})
+systematically to a family of LCGs. First, the call to
+ {\tt fcong\_CreateLCG} creates the family of generators to which
+the tests are applied; i.e., each generator
+instance has its  parameters predefined in the file {\tt LCGGood.par}.
+These  ``good LCGs'' have prime modulus $m$ (the largest prime less
+ than $2^i$),  full period length $m-1$,
+and perform well in the spectral test for up to dimension 8.
+They are taken from \cite{rLEC99c} and are listed in 
+Table~\ref{tab:lcg1} for $10\le i\le 30$.
+
+
+The following instruction in the program, {\tt smultin\_CreateParam} with
+ {\tt NbDelta = 1} and {\tt ValDelta[0] = -1}, specifies that only
+the collision test will be applied. The {\tt par} parameter in the test
+ could be replaced by the  {\tt NULL} pointer,
+in which case default values would be used and it would not be necessary to
+ create a  {\tt par} structure. The next instruction {\tt fmultin\_CreateRes}
+ creates a structure to hold the results of the test. If one does not want
+ to postprocess the results after all the tests are ended, one
+may also pass a  {\tt NULL} pointer as argument {\tt res} to the test, in
+which case it would not be necessary to create a  {\tt res} structure
+either. The instruction  {\tt fcho\_CreateSampleSize} 
+specifies that the sample size $n$ (the number of points) 
+will be chosen as $n = 2^{i/2 + j}$. 
+The next instruction {\tt fmultin\_CreatePer\_DT} says that 
+the number of cells $k$ will be equal to the period length of the 
+generator tested, and that the relation between $k$, the one-dimensional
+interval $d$, and the dimension  $t$ (here 2) is given by $k=d^t$.
+Then these two ``choose'' functions are set in the structure {\tt cho}
+that will be passed as argument to the test.
+The call {\tt fmultin\_Serial1} launches the series of collision
+tests, with the parameters $N=1$, $r=0$, $t=2$, 
+{\tt Sparse = TRUE}.  LCGs with period lengths near $2^i$ will
+be tested for $i=10,11,\dots,30$, each with sample size $n = 2^{i/2 + j}$
+for $j=1,2,3,4,5$. Finally, all the created structures are deleted to
+free the memory used by each of them.
+
+\input{../examples/fcoll.res1.tex}
+
+Tables~\ref{tab:coll1} and \ref{tab:coll11} give the results
+of this program.
+In Table~\ref{tab:coll1}, for each value of $i$ and $j$, the expected
+number of collisions is given on the left, and the observed number of
+collisions on the right.
+We see that for $j\ge 3$, the observed number of collisions is generally
+much too small (there are exceptions at $j=5$ and $i =$ 10 and 11).
+The $p$-values written in Table~\ref{tab:coll11} are those which fall
+outside the interval $[0.01, 0.99]$, which may be called suspect $p$-values.
+A $p$-value smaller than $10^{-300}$ is noted by $\epsilon$.
+A $p$-value larger than $1 - 10^{-15}$ is noted by $-\epsilon_1$
+($p$-values close to 1 are written as $-p$ instead of $1-p$).
+We see that for $j\ge 3$, the $p$-values in Table~\ref{tab:coll11}
+are very close to 1.
+This means that the two-dimensional points produced by these generators
+are too evenly distributed and the test starts detecting this when the
+sample size reaches $n_0 \approx 2^{i/2 + 3} \approx 8 \sqrt{\rho}$.
+Very clear rejection occurs in all cases for $j=4$, i.e., at sample size
+$n \approx 16 \sqrt{\rho}$.
+
+
+\input{../examples/fcoll.res2.tex}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\paragraph*{Another example: The {birthday spacings} test applied
+  to a family of LCG's.} \
+
+The next example in Figure \ref{tab:fbirth} gives a program applying the 
+{birthday spacings} test (see {\tt smarsa\_BirthdaySpacings}) to a
+family of generators. 
+First the family {\tt LCGPow2} is created by calling
+function {\tt fcong\_CreateLCGPow2}. Each generator of the family
+has its parameters predefined in file {\tt LCGPow2.par}. These generators 
+have been chosen such that their modulus $m$ is exactly equal to a power of 2,
+i.e. $m = 2^i$ for $10 \le i \le 30$, and their multiplier
+gives them a good structure according to the spectral test.
+The sample size of the test (the number of points $n$) is then chosen 
+(by calling {\tt fcho\_CreateSampleSize}) to follow the law $n = 2^{i/3 + j}$, 
+for generator of modulus $m=2^i$. 
+The next instruction {\tt fmarsa\_CreateBirthEC} indicates that, given
+$N=1$ replication of the test and dimension $t=2$, the number of segments $d$
+on the interval $[0, 1)$ will be chosen so that the expected
+number of collisions is (approximately) equal to 1.
+These two ``choose'' functions are set in the structure {\tt cho} by the call
+{\tt fcho\_CreateCho2} and will thus be
+ passed as arguments to the tests.
+Then function {\tt fmarsa\_BirthdayS1} applies the birthday spacings test
+on the 21 selected generators of the family, for $1 \le j \le 5$ and with the 
+other parameters determined by the above functions. After all the tests are
+completed, the following {\tt Delete} functions free the resources used
+by the program.
+
+
+\setbox0=\vbox {\hsize = 6.1in
+\smallc
+\verbatiminput{../examples/fbirth.c}
+}
+
+\begin{figure}
+\centering
+\myboxit{\box0}
+\caption {Applying the birthday spacings test to a family of LCGs.}
+\label{tab:fbirth}
+\end{figure}
+
+
+
+Tables~\ref{tab:birth.res1} and \ref{tab:birth.res2}
+give the results of this program.
+In Table~\ref{tab:birth.res1}, for each value of $i$ and $j$, the expected
+number of collisions is given on the left and the observed number of
+collisions on the right.
+We see that for $j\ge 2$, the observed number of collisions is
+much too large and the more so as $j$ increases.
+The right $p$-values written in Table~\ref{tab:birth.res2} are those which fall
+outside the interval $[0.01, 0.99]$. A $p$-value smaller than $10^{-300}$ 
+is noted by $\epsilon$. For $j = 1$, the number of collisions is close 
+to the expected value and the corresponding $p$-values are in the interval
+$[0.01, 0.99]$. The generators pass the test also for $j \le 1$.
+But for $j\ge 2$, the $p$-values in Table~\ref{tab:birth.res2}
+becomes smaller as $j$ increases.
+The tests signals catastrophic failures of the generators already for $j\ge3$.
+This is because the two-dimensional points produced by these generators
+are too evenly distributed and the test starts detecting this when the
+sample size reaches $n \approx 2^{i/3 + 2}$. % \approx 16 \sqrt{\rho}$.
+These are quite small sample sizes; for example, for the generator
+with $m= 2^{30}$, the tests start to fail for $n$ as small as 4096.
+
+
+\input{../examples/fbirth.res1.tex}
+\input{../examples/fbirth.res2.tex}
+
+
+
+\iffalse   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\begin {table}
+\begin {center}
+\caption {Some good and bad (baby) LCGs}
+\label {tab:lcg1t}
+\smallskip 
+\begin {tabular}{|lrr|}
+\hline
+\qquad $m$             & $a$ (good LCG)  & $a$ (bad LCG)  \\
+\hline
+ $2^{10}-3  = 1021$    &  65             & 127  \\
+ $2^{11}-9  = 2039$    & 995             & 1359 \\
+ $2^{12}-3 = 4093$    & 209             & 5  \\
+ $2^{13}-1 = 8191$    & 884             & 2341 \\
+ $2^{14}-3 = 16381$   & 572             & 2731 \\
+ $2^{15}-19 = 32749$  & 219             & 10 \\
+ $2^{16}-15 = 65521$  & 17364           & 17 \\
+ $2^{17}-1 = 131071$  & 43165           & 68985 \\
+ $2^{18}-5 = 262139$  & 92717           & 203883 \\
+ $2^{19}-1 = 524287$  & 283741          & 458756 \\
+ $2^{20}-3 = 1048573$ & 380985          & 213598 \\
+ $2^{21}-9 = 2097143$  & 360889          & 202947 \\
+ $2^{22}-3 = 4194301$  & 914334          & 4079911 \\
+ $2^{23}-15 = 8388593$  & 653276         & 2696339 \\
+ $2^{24}-3 = 16777213$  & 6423135        & 486293 \\
+ $2^{25}-39 = 33554393$  & 25907312      & 5431467 \\
+ $2^{26}-5 = 67108859$  & 26590841       & 42038579 \\
+ $2^{27}-39 = 134217689$  & 45576512     & 24990322 \\
+ $2^{28}-57 = 268435399$  & 31792125     & 31842465 \\
+ $2^{29}-3 = 536870909$   & 16538103     & 8903330 \\
+ $2^{30}-35 = 1073741789$  & 5122456     & 3930720 \\
+ $2^{31}-1 = 2147483647$  &  1389796     & 868723 \\
+ $2^{32} -5 = 4294967291$ & 1588635695   & 1123161 \\
+ $2^{33}-9 = 8589934583 $ & 7425194315   & 1026767 \\
+ $2^{34}-41 = 17179869143$ & 5295517759  & 10045 \\
+ $2^{35}-31 = 34359738337$ & 3124199165  & 10052 \\
+ $2^{36}-5 = 68719476731$  & 49865143810 & 102254510 \\
+% $2^{37}-25 = 137438953447$ & 76886758244 & 87666368 \\
+% $2^{38}-45  $              & 17838542566 & 1045020214 \\
+% $2^{39}-7   $              & 61992693052 & 809807353 \\
+% $2^{40}-87  $            & 1038914804222 & 87666376 \\
+\hline
+\end {tabular}
+\end {center}
+\end {table}
+
+
+We apply a test to a whole family while varying the sample size $n$
+following a law of the form $n=2^{\alpha\, e + \beta}$. If we happen to
+select suitable $\alpha$ and $\beta$, we may be able to discover a
+ regularity between the sample size and the size (modulus) of the
+generator.
+
+
+Par exemple, la table \ref{tab:coll} montre les $p$-values du test
+de Collisions pour les
+{\tt BadLCG2} en fonction de $n$, pour un nombre de cases $k\approx 2^e$
+en 2 dimensions, et o\`u $\epsilon$ denote une value $< 10^{-15}$.
+ Les values de $n$ sont donnees par
+$$
+n = 2^{\frac e 2 + \nu}.
+$$
+
+
+\begin {table}
+\centering
+\caption {The $p$-values of $C$ for the bad LCGs, for $t=2$ 
+and $k\approx 2^e$.}
+\label {tab:coll}
+\smallskip
+\begin {tabular}{|r|@{\extracolsep{16pt}}lllll|}
+\hline
+ $i$& $\nu=-3$ & $\nu=-2$ & $\nu=-1$ & $\nu=0$ & $\nu=1$  \\
+\hline
+ 14 &          & 4.5E-4   & 7.0E-3   & 3.1E-9  & \eps     \\
+ 15 &          &          & 9.2E-6   & 1.6E-10 & \eps     \\
+ 16 &          & 4.6E-4   & 7.1E-3   & 6.0E-8  & \eps     \\
+ 17 &          & 4.8E-4   &          & 6.0E-8  & \eps     \\
+ 18 &          &          & 7.1E-3   & 3.4E-9  & \eps     \\
+ 19 &          & 4.7E-4   &          & 3.4E-9  & \eps     \\
+ 20 &          &          &          & 1.7E-4  & \eps     \\
+ 21 &          &          &          & 3.4E-9  & \eps     \\
+ 22 &          & 4.8E-4   & 7.2E-3   & 3.2E-13 & \eps     \\
+ 23 &          & 4.8E-4   &          & 1.7E-4  & \eps     \\
+ 24 &          &          & 7.2E-3   & 1.7E-4  & \eps     \\
+ 25 &          &          & 3.0E-4   & 1.0E-6  & \eps     \\
+ 26 &          &          &          & 1.0E-6  & \eps     \\
+ 27 &          &          & 7.2E-3   & 1.4E-5  & \eps     \\
+ 28 &          &          & 7.2E-3   & 6.2E-8  & \eps     \\
+ 29 &          & 4.8E-4   & 7.2E-3   & 1.0E-6  & \eps     \\
+ 30 &          &          & 3.0E-4   & \eps    & \eps     \\
+ 31 &          & 4.8E-4   & 7.2E-3   & 1.8E-3  & \eps     \\
+ 32 &          &          & 9.2E-6   & 6.2E-8  & \eps     \\
+ 33 &          & 4.8E-4   & 7.2E-3   & 1.8E-3  & 2.4E-4 \\
+ 34 &          & 4.8E-4   & 9.2E-6   &         & \eps     \\
+\hline
+\end {tabular}
+\end {table}
+
+
+\fi   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

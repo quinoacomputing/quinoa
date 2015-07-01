@@ -1,0 +1,166 @@
+\defmodule{ucrypto}
+
+This module implements different versions of some random number generators
+proposed or used in the world of cryptology.
+% \richard{Implanter MD5, \ldots}
+%  It implements a generator
+% based on the Rijndael cipher, upon which is based AES,
+% the Advanced Encryption Standard \cite{rDAE02a}.
+% For more details, see
+% \url{http://www.esat.kuleuven.ac.be/~rijmen/rijndael/}.
+
+% Les RNG propos\'es au workshop de NIST en 2004: 
+% \texttt{Hash, HMAC, KHF, cipherOFB, cipherCTR,
+% Dual\_EC, MS}. (2004) \url{http://csrc.nist.gov/CryptoToolkit/tkrng.html}
+\newcommand{\aes}{\textrm{AES}}
+\newcommand{\shaun}{\mbox{\textrm{SHA-1}}}
+\newcommand{\calh}{{H}}
+\newcommand{\cale}{{E}}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\bigskip
+\hrule
+\code\hide
+/*  ucrypto.h  for ANSI C  */
+#ifndef UCRYPTO_H
+#define UCRYPTO_H
+\endhide
+#include "unif01.h"
+
+
+typedef enum {
+   ucrypto_OFB,                 /* Output Feedback mode */
+   ucrypto_CTR,                 /* Counter mode */
+   ucrypto_KTR                  /* Key counter mode */
+   } ucrypto_Mode;
+\endcode
+ \tab  Block modes of operation \cite{rDWO01a} for this module. Given an algorithm
+  (for example, encryption or hashing) used as a generator of random numbers, then
+  the output feedback mode (\texttt{OFB}) uses the result of the last application
+  of the algorithm as input block for the current application. The counter 
+   mode (\texttt{CTR}) applies the algorithm on a counter used as input and 
+  incremented by 1 at each application.  The key counter mode (\texttt{KTR}) 
+  applies the algorithm on the seed with a different key at each application of
+  the algorithm; the key is incremented by 1 before each application.   
+%  It is assumed that the plain text blocks to encrypt are all 0, except for the
+%  first one (\emph{the seed}) which is used for initialization.
+ \endtab
+\code
+
+
+unif01_Gen * ucrypto_CreateAES (unsigned char *Key, int klen,
+                                unsigned char *Seed, ucrypto_Mode mode,
+                                int r, int s);
+\endcode
+\tab Uses the \textit{Advanced Encryption standard} (\aes) as a source of
+\index{Generator!AES}\index{Generator!Rijndael}%
+  random numbers \cite{rDAE02a,rNIS01a,rHEL03a,rBAR06a}, based on the optimized
+  C code for the Rijndael cipher written by V. Rijmen,
+  A. Bossel\ae rs and P. Barreto \cite{rRIJ00a}. \texttt{klen} is the number of
+  bits in the cipher \texttt{Key}, which must be given as an array of $16, 24$
+  or $32$ bytes for a key of 128, 192 or 256 bits, respectively. \texttt{Seed}
+  is the initial state, which must be an array of 16 bytes making in all 128 bits.
+  At each encryption step $j$, the AES encryption algorithm is applied on the
+  input block to obtain a new block of 128 bits (16 bytes). Of these,
+  the first $r$ bytes are dropped and the next $s$ bytes are used to build 32-bit
+  random numbers. Each call to the generator returns a 32-bit random number.
+  For example, if $r=2$ and $s=8$, then the 16 ($8r$) most significant bits of
+  the block are dropped and the next 64 ($8s$) bits are used to make two 32-bit
+  random numbers which will be returned by the next two calls to the
+  generator. Restrictions: \texttt{klen} $\in \{ 128, 192, 256\}$,
+  $0 \le r \le 15$, $1 \le s \le 16$, and  $r + s \le 16$.
+
+  Let $C = \cale(K,T)$ denote the \aes\ encryption operation with key $K$ on
+  plain text $T$ resulting in encrypted text $C$.
+\begin{itemize}
+
+\item  For the \texttt{OFB} mode, each new block of 128 bits $C_j$ is
+  obtained by $C_j = \cale(K,C_{j-1})$, where $C_0 =$ \texttt{Seed}. 
+
+\item The \texttt{CTR} mode uses a 128-bit counter $i$ whose initial value is
+  equal to \texttt{Seed}, and which is incremented
+  by 1 at each encryption step $j$. Each new block of 128 bits
+  $C_j$ is obtained by $C_j = \cale(K,i)$.
+
+\item The \texttt{KTR} mode uses a counter $i$ as the key which is
+  incremented by 1 at each encryption step $j$ as $i \leftarrow i + 1$. 
+  Each new block of 128 bits $C_j$ is obtained by
+  $C_j = \cale(i, \texttt{Seed})$, where the initial value of $i$ is
+ \texttt{Key} viewed as an integer.
+\end{itemize}
+ \endtab
+\code
+
+
+unif01_Gen * ucrypto_CreateSHA1 (unsigned char *Seed, int len,
+                                 ucrypto_Mode mode, int r, int s);
+\endcode
+ \tab Uses the \textit{Secure Hash Algorithm}
+  \shaun\ as a source of random numbers \cite{rNIS02a,rBAR06a}.
+\index{Generator!SHA1}% 
+ \texttt{Seed} is an array of size \texttt{len} used to initialize the
+  generator. At each hashing step $j$, the \shaun\ algorithm is applied on the
+  input block to obtain a hashed string of 160 bits (20 bytes). Of these,
+  the first $r$ bytes are dropped and the next $s$ bytes are used to build 32-bit
+  random numbers. Each call to the generator returns a 32-bit random number.
+  For example, if $r=2$ and $s=8$, then the 16 ($8r$) most significant bits of
+  the 160-bit string are dropped and the next 64 ($8s$) bits are used to make
+  two 32-bit random numbers which will be returned by the next two
+  calls to the generator. Restrictions: \texttt{len} $\le 55$,
+  $0 \le r \le 19$, $1 \le s \le 20$, and  $r + s \le 20$.
+
+ Let $C = \calh(T)$ denote the \shaun\  operation applied on the original text $T$ 
+ hashed to the 160-bit string $C$. (When $T$ is too short, it is padded
+ automatically by the \shaun\  algorithm to have the required block length of 
+ 512 bits.)
+\begin{itemize}
+\item  For the \texttt{OFB} mode, each new block of 160 $C_j$ is
+  obtained by $C_j = \calh(C_{j-1})$, where $C_0 = \calh(\mbox{\texttt{Seed}})$.
+
+\item The \texttt{CTR} mode uses a 440-bit counter $i$ whose initial value is
+  equal to \texttt{Seed}, and which is incremented by 1 at each hashing step $j$.
+  Each new block of 160 bits $C_j$ is obtained by
+  $C_j = \calh(i)$.
+\end{itemize}
+ \endtab
+\code
+
+
+unif01_Gen * ucrypto_CreateISAAC (int flag, unsigned int A[256]);
+\endcode
+  \tab 
+   This is the generator \texttt{ISAAC}
+\index{Generator!ISAAC}%
+   (Indirection, Shift, Accumulate, Add, and Count),
+   proposed and implemented by Bob Jenkins Jr. in \cite{rJEN96a}.
+   The version used here is the one recommended for cryptography,
+   with  \texttt{RANDSIZL = 8}.
+   If \texttt{flag = 0}, the array  \texttt{A} is not used and the initial state
+   is obtained from a complicated initialization procedure used in Jenkins' 
+   implementation. 
+  \richard{In his test program in file \texttt{rand.c}, Jenkins outputs the ISAAC
+   random numbers as \texttt{randrsl[0], randrsl[1], randrsl[2]}, \ldots
+   In TestU01, they are outputted in the order  { \tt randrsl[255], randrsl[254],
+   randrsl[253]}, \ldots, because it is simpler.}
+   If \texttt{flag = 1}, the array \texttt{A} is used and transformed by
+   Jenkins' initialization procedure to obtain the initial state.
+   If \texttt{flag = 2}, the array  \texttt{A} is used as the starting
+   state.  Restriction: \texttt{flag} $\in \{0, 1, 2\}$.
+ \endtab
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{Clean-up functions}
+\code
+
+void ucrypto_DeleteAES (unif01_Gen * gen);
+void ucrypto_DeleteSHA1 (unif01_Gen * gen);
+void ucrypto_DeleteISAAC (unif01_Gen * gen);
+\endcode
+  \tab Frees the dynamic memory used by the generators of this module,
+  and allocated by the corresponding \texttt{Create} function.
+ \endtab
+\code\hide
+#endif
+\endhide\endcode

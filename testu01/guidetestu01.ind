@@ -1,0 +1,311 @@
+\begin{theindex}
+
+  \item Alphabit, 154
+
+  \indexspace
+
+  \item battery of tests
+    \subitem Alphabit, 154
+    \subitem BigCrush, 148
+    \subitem Crush, 144
+    \subitem Crypt-X, 6
+    \subitem DIEHARD, 6, 155
+    \subitem ENT, 6
+    \subitem FIPS-140-2, 157
+    \subitem NIST, 6, 156
+    \subitem PseudoDIEHARD, 155
+    \subitem Rabbit, 152
+    \subitem SmallCrush, 143
+    \subitem SPRNG, 6
+  \item Berlekamp-Massey algorithm, 123
+  \item BigCrush, 148
+
+  \indexspace
+
+  \item cells generation, 97, 102
+  \item collisions, 97
+  \item combined generators, 13
+    \subitem addition, 13
+    \subitem exclusive or, 14
+  \item complexity
+    \subitem linear, 123
+  \item compression, 123
+  \item correlation of bits, 127, 128
+  \item Crush, 144
+  \item Crypt-X, 6
+
+  \indexspace
+
+  \item DIEHARD, 6, 155
+  \item discrete distribution, 88
+
+  \indexspace
+
+  \item ENT, 6
+  \item entropy, 97, 105, 119
+
+  \indexspace
+
+  \item family of generators, 167
+    \subitem congruential, 169
+    \subitem shift-register, 173
+  \item filters, 11
+  \item FIPS-140-2, 157
+  \item Fourier transform, 125
+
+  \indexspace
+
+  \item Generator
+    \subitem ACORN, 84
+    \subitem add-with-carry, 31
+    \subitem AES, 78
+    \subitem CA90(m)', 77
+    \subitem cellular automata, 76
+    \subitem CLCG4, 54
+    \subitem combined, 13
+    \subitem CombLec88, 54
+    \subitem CombMRG96, 54
+    \subitem Combo, 60
+    \subitem cubic, 46
+    \subitem Deng, 73
+    \subitem drand48, 25
+    \subitem dummy, 11
+    \subitem ECG1, 60
+    \subitem ECG2, 60
+    \subitem ECG3, 60
+    \subitem ECG4, 60
+    \subitem Excel, 81
+    \subitem external, 15
+    \subitem filter
+      \subsubitem biased output, 12
+      \subsubitem bit truncated, 12
+      \subsubitem blocks of bits, 12
+      \subsubitem increased precision, 11
+      \subsubitem lacunary indices, 12
+      \subsubitem luxury, 12
+    \subitem Fushimi, 38
+    \subitem Granger-Pich\'e, 69
+    \subitem H\"ormann-Derflinger, 25
+    \subitem inversive, 42
+    \subitem ISAAC, 79
+    \subitem Java, 80
+    \subitem Kirkpatrick-Stoll, 38
+    \subitem KISS, 63
+    \subitem Knuth, 65
+    \subitem L'Ecuyer, 26, 54
+    \subitem L'Ecuyer-Andres, 54
+    \subitem L'Ecuyer-Blouin-Couture, 54
+    \subitem lag-Fibonacci, 28, 29
+    \subitem LFIB4, 64
+    \subitem LFSR, 34
+    \subitem lfsr113, 56
+    \subitem lfsr258, 56
+    \subitem lfsr88, 56
+    \subitem linear congruential, 23
+    \subitem Marsa90a, 59
+    \subitem Marsaglia, 59
+    \subitem Mathematica-Integer, 82
+    \subitem Mathematica-Real, 82
+    \subitem MATLAB, 81
+    \subitem Matlab-5, 62
+    \subitem Mersenne twister, 40
+    \subitem MRG31k3p, 57
+    \subitem MRG32k3a, 55
+    \subitem MRG32k3b, 55
+    \subitem MRG32k5a, 55
+    \subitem MRG32k5b, 56
+    \subitem MRG63k3a, 56
+    \subitem MRG93, 54
+    \subitem MT19937, 40
+    \subitem MultiCarry, 61
+    \subitem multiple recursive, 28
+    \subitem multiply-with-carry, 32
+      \subsubitem combined, 33
+    \subitem Numerical Recipes, 75
+    \subitem Payne, 25
+    \subitem quadratic, 45
+    \subitem Ran0, 75
+    \subitem Ran1, 75
+    \subitem Ran2, 75
+    \subitem ran\_array, 65
+    \subitem ranf\_array, 65
+    \subitem Ranlux, 31
+    \subitem RANMAR, 59
+    \subitem RANROT, 84
+    \subitem read from file, 86
+    \subitem Rey, 84
+    \subitem Rijndael, 78
+    \subitem Ripley, 38
+    \subitem S-PLUS, 80
+    \subitem SHA1, 79
+    \subitem Sherif-Dear, 84
+    \subitem shift-register, 37
+    \subitem shift-with-carry, 32
+    \subitem SHR3, 64
+    \subitem speed, 16
+    \subitem subtract-with-borrow, 31
+    \subitem supdup64, 62
+    \subitem SuperDuper, 61
+    \subitem SuperDuper96, 61
+    \subitem SWB, 64
+    \subitem T800, 39
+    \subitem Tausworthe, 34
+    \subitem Tezuka, 58
+    \subitem The Mother of all RNG's, 59
+    \subitem timing, 16
+    \subitem Tindo, 84
+    \subitem Tootill, 37
+    \subitem Touzin, 67, 68
+    \subitem TT400, 39
+    \subitem TT403, 39
+    \subitem TT775, 40
+    \subitem TT800, 40
+    \subitem ULTRA, 61
+    \subitem Unix random, 80
+    \subitem user defined, 15, 18
+    \subitem VisualBasic, 81
+    \subitem Weyl, 74
+    \subitem Wichmann-Hill, 26, 55, 56, 81
+    \subitem Wu, 24, 72
+    \subitem xor4096d, 52
+    \subitem xor4096i, 52
+    \subitem xor4096l, 52
+    \subitem xor4096r, 53
+    \subitem xor4096s, 51
+    \subitem Xorgen32, 51
+    \subitem Xorgen64, 52
+    \subitem Xorshift, 48, 51
+    \subitem Xorshift13, 50
+    \subitem Xorshift7, 49
+    \subitem Ziff, 38
+  \item goodness-of-fit tests, 89
+
+  \indexspace
+
+  \item Hamming weight, 128
+
+  \indexspace
+
+  \item Lempel-Ziv compression, 124
+  \item loglikelihood, 96
+
+  \indexspace
+
+  \item Marsaglia, 113
+  \item multinomial, 96
+
+  \indexspace
+
+  \item NIST tests suite, 6, 156
+
+  \indexspace
+
+  \item overlapping pairs sparse occupancy, 113
+
+  \indexspace
+
+  \item Pearson, 97
+  \item permutations, 97, 112
+  \item power divergence, 96
+
+  \indexspace
+
+  \item Rabbit, 152
+  \item random binary matrix, 115
+  \item random walk, 120
+
+  \indexspace
+
+  \item scatter plot, 133
+  \item serial, 97
+  \item single-level tests, 88
+  \item SmallCrush, 143
+  \item spacings, 131
+    \subitem logarithms, 131
+    \subitem squares, 132
+  \item spectral, 125
+  \item spectrum, 125
+  \item SPRNG, 6
+
+  \indexspace
+
+  \item Test
+    \subitem AllSpacings, 132
+    \subitem AllSpacings2, 132
+    \subitem AppearanceSpacings, 119
+    \subitem Auto-correlation
+      \subsubitem bit, 130
+      \subsubitem real, 117
+    \subitem AutoCor, 130
+    \subitem BickelBreiman, 109
+    \subitem BirthdaySpacings, 114
+    \subitem CAT, 114
+    \subitem CATBits, 114
+    \subitem ClosePairs, 109
+    \subitem ClosePairsBitMatch, 109
+    \subitem Collision, 112
+    \subitem CollisionArgMax, 118
+    \subitem CollisionOver, 113
+    \subitem CollisionPermut, 112
+    \subitem compression, \see{LempelZiv}{124}
+    \subitem CouponCollector, 111
+    \subitem EntropyDisc, 105
+    \subitem EntropyDiscOver, 105
+    \subitem EntropyDiscOver2, 106
+    \subitem EntropyDM, 106
+    \subitem EntropyDMCirc, 106
+    \subitem Fourier1, 125
+    \subitem Fourier2, 125
+    \subitem Fourier3, 125, 126
+    \subitem Frequency, \see{HammingWeight}{128}
+    \subitem Gap, 111
+    \subitem GCD, 116
+    \subitem HammingCorr, 128
+    \subitem HammingIndep, 128
+    \subitem HammingWeight, 128
+    \subitem HammingWeight2, 128
+    \subitem Independence of bits, 128
+    \subitem LempelZiv, 124
+    \subitem linear complexity, \see{LinearComp}{123}
+    \subitem LinearComp, 123
+    \subitem Longest Run of ones, \see{LongestHeadRun}{127}
+    \subitem LongestHeadRun, 127
+    \subitem MatrixRank, 115
+    \subitem Maurer, \see{Appearance\-Spacings}{119}
+    \subitem Maximum of $t$, 112
+    \subitem Monobit, \see{HammingWeight2}{128}
+    \subitem Multinomial, 103
+    \subitem MultinomialBits, 104
+    \subitem MultinomialBitsOver, 104
+    \subitem MultinomialOver, 104
+    \subitem nearest pairs, 107
+    \subitem OPSO, 113
+    \subitem PeriodsInStrings, 127
+    \subitem Permutation, 110
+    \subitem Poker, 111
+    \subitem RandomWalk1, 120
+    \subitem RandomWalk1a, 121
+    \subitem Run
+      \subsubitem bits, 129
+      \subsubitem reals, 111
+    \subitem RunIndep, 112
+    \subitem SampleCorr, 117
+    \subitem SampleMean, 117
+    \subitem SampleProd, 117
+    \subitem Savir2, 115
+    \subitem ScanSpacings, 132
+    \subitem Serial, 110
+    \subitem SerialOver, 113
+    \subitem SerialSparse, 110
+    \subitem SumCollector, 119
+    \subitem SumLogs, 118
+    \subitem SumLogsSpacings, 131
+    \subitem SumSquaresSpacings, 132
+    \subitem Universal, \see{Appearance\-Spacings}{119}
+    \subitem VarGeoN, 122
+    \subitem VarGeoP, 122
+    \subitem WeightDistrib, 118
+  \item timer, 16
+  \item two-levels tests, 89
+
+\end{theindex}

@@ -1,0 +1,61 @@
+\defmodule {unumrec}
+
+Implements the  generators proposed in
+{\em Numerical Recipes: Portable Random Number Generators\/}
+ \cite{rPRE92a,rPRE92b}.
+\index{Generator!Numerical Recipes}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\bigskip
+\hrule
+\code
+\hide
+/* unumrec.h for ANSI C */
+
+#ifndef UNUMREC_H
+#define UNUMREC_H
+\endhide
+#include "unif01.h"
+
+
+unif01_Gen * unumrec_CreateRan0 (long s);
+\endcode
+  \tab Creates and initializes the generator {\tt Ran0} with the seed $s$. 
+\index{Generator!Ran0}%
+   Restriction: $0 < s < 2^{31}$.
+ \endtab
+\code
+
+
+unif01_Gen * unumrec_CreateRan1 (long s);
+\endcode
+  \tab Creates and initializes the generator {\tt Ran1} with the seed $s$. 
+\index{Generator!Ran1}%
+ Restriction: $0 < s < 2^{31}$.
+ \endtab
+\code
+
+
+unif01_Gen * unumrec_CreateRan2 (long s);
+\endcode 
+  \tab  Creates and initializes the generator {\tt Ran2} with the seed $s$. 
+\index{Generator!Ran2}%
+  Restriction: $0 < s < 2^{31}$.
+ \endtab
+
+
+
+\guisec{Clean-up functions}
+\code
+
+void unumrec_DeleteGen (unif01_Gen *gen);
+\endcode
+ \tab \DelGen
+ \endtab
+\code
+
+\hide
+#endif
+\endhide
+\endcode

@@ -1,0 +1,54 @@
+\documentclass[12pt]{article}
+\usepackage{url}
+\usepackage{amssymb}
+
+\input ../doc/myarticle.sty
+
+\newcommand\cH{\mathcal{H}}
+\newcommand\guisec[1]{\vspace{20pt}
+\noindent\hrulefill\hspace{10pt}{\bf #1}\hspace{10pt}\hrulefill
+\vspace{10pt}\nopagebreak}
+
+\def\pierre#1 {\fbox {\footnote {\ }}\ \footnotetext { From Pierre: #1}}
+\def\richard#1 {\fbox {\footnote {\ }}\ \footnotetext { From Richard: #1}}
+\def\hpierre#1 {}
+\def\hrichard#1 {}
+
+\newif\ifdetailed\detailedfalse
+\newenvironment{detailed}{\protect\ifdetailed }{\protect\fi }
+% \detailedtrue   % For a more detailed user's guide.
+
+% \includeonly {wdist}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{document}
+
+\include {titre}
+
+\pagenumbering{roman}
+\include {copyright}
+\addcontentsline{toc}{subsection}{Copyright}
+\tableofcontents
+\clearpage
+
+\pagenumbering{arabic}
+
+\include {fmass}
+\include {fdist}
+\include {wdist}
+\include {fbar}
+\include {finv}
+\include {gofs}
+\include {gofw}
+\include {statcoll}
+% \appendix
+
+\bibliographystyle {plain}
+\bibliography{stat,random,simul,math}
+\end{document}
+
+
+
+
+
+

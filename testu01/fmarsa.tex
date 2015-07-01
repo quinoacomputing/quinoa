@@ -1,0 +1,175 @@
+\defmodule {fmarsa}
+
+This module applies tests from the module {\tt smarsa}
+to a family of generators of different sizes.
+
+
+\bigskip\hrule
+\code\hide
+/* fmarsa.h for ANSI C */
+#ifndef FMARSA_H
+#define FMARSA_H
+\endhide
+#include "ffam.h"
+#include "fres.h"
+#include "fcho.h"
+
+
+extern long fmarsa_Maxn, fmarsa_MaxL;
+\endcode
+\tab
+  Upper bound on the sample size $n$  in {\tt fmarsa\_BirthdayS1} and on
+  the dimension  $L \times L$ of the matrices in {\tt fmarsa\_MatrixR1}.
+  A test is called only when $n$ and $L$ do not exceed their limit value.
+  Default values: $n = 2^{24}$ and $L = 2^{12}$.
+\endtab
+
+\ifdetailed  %%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{Structure for test results}
+
+The test results for the {\tt fmarsa\_GCD1} test can be recovered
+in the following structure.
+
+\code
+
+typedef struct {
+   fres_Cont *GCD;
+   fres_Cont *NumIter; 
+} fmarsa_Res2;
+\endcode
+ \tab
+  Structure for keeping the tables of results of the tests in
+  {\tt fmarsa\_GCD1}. The field {\tt GCD} holds the results for the
+  greatest common divisor  and {\tt NumIter} holds the results for the
+  number of iterations used to find the GCD.
+  This last field is unused for now.
+ \endtab
+\code
+
+
+fmarsa_Res2 * fmarsa_CreateRes2 (void);
+\endcode
+ \tab 
+  Creates and returns a structure that will hold the results
+  of a  {\tt fmarsa\_GCD1} test. 
+ \endtab
+\code
+
+
+void fmarsa_DeleteRes2 (fmarsa_Res2 *res);
+\endcode
+ \tab 
+  Frees the memory allocated by {\tt fmarsa\_CreateRes2}.
+ \endtab
+
+\fi    %%%%%%%%%%%%%%%
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{Choosing the parameters}
+
+\code
+
+fcho_Cho * fmarsa_CreateBirthEC (long N, int t, double EC);
+\endcode
+ \tab 
+  Given the number of replications $N$, the dimension $t$ and the sample
+  size $n$, the parameter $d$ in {\tt smarsa\_BirthdaySpacings} will be chosen
+  so that the expected number of collisions is approximately $EC$,
+  i.e. $EC = Nn^3/4d^t$.
+  The returned structure must be passed as the second pointer in the
+  argument {\tt cho} of the test.
+ % Recommendation: $EC  = 16$ and $t = 2$.
+ \endtab
+\code
+
+
+void fmarsa_DeleteBirthEC (fcho_Cho *cho);
+\endcode
+ \tab 
+  Frees the memory allocated by {\tt fmarsa\_CreateBirthEC}.
+ \endtab
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{The tests}
+
+\code
+
+void fmarsa_SerialOver1 (void);
+\endcode
+\tab  This is equivalent to calling {\tt fmultin\_SerialOver1} with 
+  {\tt Sparse = FALSE}, {\tt NbDelta = 1}, and {\tt Val\-Delta[0] = 1}.
+\endtab
+\code
+
+
+void fmarsa_CollisionOver1 (void);
+\endcode
+
+\tab This is equivalent to calling {\tt fmultin\_SerialOver1} with 
+  {\tt Sparse = TRUE}, {\tt NbDelta = 1}, and {\tt Val\-Delta[0] = -1}.
+\endtab
+\code
+
+
+void fmarsa_BirthdayS1 (ffam_Fam *fam, fres_Poisson *res, fcho_Cho2 *cho,
+                        long N, int r, int t, int p,
+                        int Nr, int j1, int j2, int jstep);
+\endcode
+\tab  This function calls the test {\tt smarsa\_BirthdaySpacings} with
+  parameters {\tt N}, $n$,  {\tt r}, $d$, {\tt t} and  {\tt p} for the
+  first {\tt Nr} generators of family {\tt fam}, for $j$ going from
+  {\tt j1} to {\tt j2} by steps of {\tt jstep}. The sample  size $n$ and
+  the one-dimensional interval $d$ are chosen from 
+  $n = {}$ {\tt cho->Chon->Choose(param, i, j)} and 
+  $d = {}$ {\tt cho->Chop2->Choose(param, n, 0)}. {\tt Chon} and
+  {\tt Chop2} must have been created before. When $n$ exceeds
+  {\tt fmarsa\_Maxn} or $k = d^t$ exceeds {\tt fmarsa\_Maxk},
+  the test is not run.
+\endtab
+\code
+
+
+void fmarsa_MatrixR1 (ffam_Fam *fam, fres_Cont *res, fcho_Cho2 *cho,
+                      long N, long n, int r, int s, int L,
+                      int Nr, int j1, int j2, int jstep);
+\endcode
+  \tab  This function calls the test {\tt smarsa\_MatrixRank} with
+  parameters {\tt N}, $n$,  {\tt r},  {\tt s}, $L$ for the first {\tt Nr}
+  generators of family {\tt fam}, for $j$ going from {\tt j1} to {\tt j2}
+  by steps of {\tt jstep}. Either or both of $n$ and $L$ can be varied as
+  the sample size, by passing a negative value as an argument of the
+  function. One must then create the corresponding function
+  {\tt cho->Chon} or {\tt cho->Chop2} before calling the test.
+  One will have either $n = {}$ {\tt cho->Chon->Choose(param, i, j)},
+  or $L = {}$ {\tt cho->Chop2->Choose(param, i, j)}. A positive value for
+  $n$ or $L$ will be used as is by the test. When $n$ exceeds
+ {\tt fmarsa\_Maxn} or  $L$ exceeds {\tt fmarsa\_MaxL}, the test is not
+ run. Only square matrices of order $L\times L$ are considered.
+ \endtab
+\code
+
+
+void fmarsa_GCD1 (ffam_Fam *fam, fmarsa_Res2 *res, fcho_Cho *cho,
+                      long N, int r, int s,
+                      int Nr, int j1, int j2, int jstep);
+\endcode
+  \tab  This function calls the test {\tt smarsa\_GCD} with
+  parameters {\tt N}, $n$,  {\tt r},  {\tt s} for sample size $n$ chosen
+  by $n={}$ {\tt cho->Choose(param, i, j)}, for the first {\tt Nr}
+  generators of family {\tt fam}, for $j$ going from {\tt j1} to {\tt j2}
+  by steps of {\tt jstep}. When $n$ exceeds
+ {\tt fmarsa\_Maxn}, the test is not run.
+ \endtab
+\code
+
+\hide
+#endif
+\endhide
+\endcode

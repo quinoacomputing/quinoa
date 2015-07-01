@@ -1,0 +1,53 @@
+# Package:    TestU01
+# File:       LCGPow2.par
+
+# Description:   Parameter values for LCG with a good lattice structure,
+# with the modulus equal to 2^h and period length also equal to 2^h.
+#-----------------------------------------------------------------
+
+# Give the name of the family first
+
+LCGPow2
+
+
+# For each generator, the following parameters must be given in 
+# the right order on the same line
+#                     h   a
+# where m = 2^h, m is the modulus, and a is the multiplier, and
+# the additice constant c = 1.
+
+10     109
+11     37
+12     2117
+13     7517
+14     4661
+15     5125
+16     47989
+17     94941
+18     45005
+19     27949
+20     724765
+21     1386397
+22     2920253
+23     2500717
+24     14672629
+25     22605581
+26     19799485
+27     132354781
+28     245516805
+29     85334093
+30     79762909
+31     37769685
+
+32     2891336453
+33     3766383685
+34     3999037245
+35     23946934451
+36     55839444821                
+37     107609022189
+38     269689778213
+38     297431448197
+40     330169576829
+
+# 48   40596478153731
+# 60   841513432527741947

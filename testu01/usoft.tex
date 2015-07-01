@@ -1,0 +1,352 @@
+\defmodule {usoft}
+
+This module implements (or, in some cases, provides an interface to)
+some random number generators used in popular software products.
+The macros of the form {\tt USE\_\ldots} are defined in module 
+{\tt gdef} in directory {\tt mylib}.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\bigskip
+\hrule
+\code
+\hide
+/* usoft.h for ANSI C */
+
+#ifndef USOFT_H
+#define USOFT_H
+\endhide
+#include "gdef.h"
+#include "unif01.h"
+
+
+unif01_Gen * usoft_CreateSPlus (long S1, long S2);
+\endcode
+  \tab Generator used in the statistical software environment  
+\index{Generator!S-PLUS}%
+    {\em S-PLUS\/} \cite{tRIP94a,tSPL00a}. It is based on Marsaglia's Super-Duper
+   generator of 1973 (see the description of \texttt{SupDup73} on page
+  \pageref{gen:SupDup73} of this guide). See also the Web page at
+  \url{http://www.insightful.com/support/faqdetail.asp?FAQID=166&IsArchive=0}.
+   The generator never returns 0.
+   Restrictions: {\tt $0 <$ S1 $< 2^{31}-1$} and {\tt $0 <$ S2 $< 2^{31}-1$}.
+  \endtab
+\code
+
+
+#ifdef HAVE_RANDOM
+   unif01_Gen * usoft_CreateUnixRandom (unsigned int s);
+#endif
+\endcode
+  \tab 
+  Provides an interface to the set of five additive feedback 
+ \hpierre{C'est shift-register ou bien c'est lagged-Fibonacci?  Clarifier. }
+   random number generators implemented in the function {\tt random()} 
+   in the Unix or Linux {\tt C} library {\tt stdlib}
+\index{Generator!Unix random}%
+   (see the documentation of {\tt random}).
+   It uses a default table of
+      long integers to return successive  pseudo-random  numbers.
+      The size  of  the  state  array  determines  the  period  of the
+     random number generator; increasing  the  state  array  size
+     increases the period.
+  The parameter {\tt s} determines the order of the recurrence.
+  % Remark: There are different versions of this family under
+  % Solaris and Linux;
+  This generator is not part of the standard ANSI C library.
+  Since it uses global variables, no more than one generator
+  of this type can be in use at any given time. 
+  Restrictions: $s \in \{8, 32, 64, 128, 256\}$. 
+ \endtab
+\code
+
+
+#ifdef USE_LONGLONG
+   unif01_Gen * usoft_CreateJava48 (ulonglong s, int jflag);
+#endif
+\endcode
+  \tab  
+  Implements the same generator as the method {\tt nextDouble}, in
+\index{Generator!Java}%
+  class {\tt java.util.Random} of the Java standard library
+  ({\tt {http://java.sun.com/j2se/1.4.2/docs/api/java/util/Random.html}}).
+  It is based on a linear recurrence with period length $2^{48}$,
+  but each output value is constructed by taking
+  two successive values from the linear recurrence, as follows:
+\begin{eqnarray*}
+   x_{i+1} &=& (25214903917\, x_i + 11) \mod 2^{48} \\[6pt]
+   u_i &=& \frac{2^{27}\lfloor x_{2i} / 2^{22} \rfloor
+                    + \lfloor x_{2i+1} / 2^{21}\rfloor}{2^{53}}.
+\end{eqnarray*}
+\iffalse %%%%%%%%%
+or equivalently
+\begin{eqnarray*}
+   u_i &=& \left[(27 << (x_{2i} >> 22)) + (x_{2i+1} >> 21)\right] / 2^{53}.
+\end{eqnarray*} 
+if $<< p$ and $>> p$ represent the left shift and right shift of the
+binary representation by $p$ positions, respectively.
+\fi  %%%%
+\iffalse %%%%   The actual java code is:
+static double Java48 (void) {
+   ulonglong temp;
+   SS = (25214903917ULL * SS + 11) \& m48;
+   /* Keep only the 26 most significant bits of SS; shift 5.  They will */
+   /* make bits [27..52] of the next generated number, counting from 0. */
+   /* 281474972516352 = mask of the 26 most significant bits. */
+   temp = (SS \& 281474972516352ULL) << 5;
+
+   SS = (25214903917ULL * SS + 11) \& m48;
+   /* Keep only the 27 most significant bits of SS; shift 21. They will */
+   /* make bits [0..26] of the next generated number */
+   return (temp + (SS >> 21)) * norm;
+\fi  %%%%
+ Note that the generator {\tt rand48} in the Unix standard library
+ uses exactly the same recurrence, but produces its output simply
+ via $u_i = x_i / 2^{48}$. 
+ If {\tt jflag > 0}, {\tt s} is transformed via
+ ``{\tt s = s\^{}0x5DEECE66D}'' at initialization, as is done in the
+ Java class {\tt Random}; one will then obtain the same numbers as
+ in Java {\tt Random} with the given seed.
+ If {\tt jflag = 0}, {\tt s} is used directly as initial seed.
+ Restriction: $s < 281474976710656$.
+  \endtab
+\hide  %%%%%%%%%%%%%%%%%%%%%
+\code
+
+unif01_Gen * usoft_CreateExcel97 (double r);
+\endcode
+  \tab  
+  An ``approximation'' of the {RAND} generator included in
+% \index{Generator!Excel}%
+  Microsoft Excel 1997, which uses the recurrence
+  (see \url{http://support.microsoft.com/directory}):
+$$
+   u_{i}  = (9821.0\, u_{i-1} + 0.211327) \bmod 1,
+$$
+  where the $u_i$'s are represented in floating point.
+  Its period length depends on the numerical precision used for the 
+  implementation.  This is not stated in the documentation
+  and it is unclear what it is.
+  The earlier versions of  Excel used the default seed $r = 0.5$. 
+  More recent versions use a random seed determined from the 
+  system clock by default.
+  Adding {\tt randomize=0} to the ``Microsoft Excel'' section of the
+  appropriate {\tt .INI} file causes the seed $r$ to be set to 0.5.
+  \endtab
+\endhide  %%%%%%%%%%%%%%%
+\code
+
+
+unif01_Gen * usoft_CreateExcel2003 (int x0, int y0, int z0);
+\endcode
+  \tab  
+  This is the generator implemented by the {RAND} function in
+\index{Generator!Excel} \label{gen:Excel2003}%
+\index{Generator!Wichmann-Hill}%
+  Microsoft Office Excel 2003
+ (see \url{http://support.microsoft.com/default.aspx?scid=kb;en-us;828795}).
+  It uses the Wichmann-Hill generator \cite{rWIC82a,rWIC87a}
+\begin{eqnarray*}
+      x_{i} &=& 170 \, x_{i-1} \bmod 30323 \\
+      y_{i} &=& 172 \, y_{i-1} \bmod 30307 \\
+      z_{i} &=& 171 \, z_{i-1} \bmod 30269 \\[6pt]
+      u_i   &=& \left(\frac{x_i}{30323} + \frac{y_i}{30307} + 
+                    \frac{z_i}{30269}\right) \bmod 1.
+\end{eqnarray*}
+  The Wichmann-Hill generators are described in this guide on page
+  \pageref{gen:Wichmann-Hill}.  The Excel generator is equivalent to the call
+ \texttt{ulcg\_CreateCombWH3 (30323, 30307, 30269, 170, 172, 171,
+   0, 0, 0, x0, y0, z0)}.  The initial seeds are \texttt{x0},
+   \texttt{y0} and  \texttt{z0}.
+ Restrictions: $0 < \texttt{x0} < 30323$,
+ $0 < \texttt{y0} < 30307$ and $0 < \texttt{z0} < 30269$.
+ \endtab
+\code
+
+
+unif01_Gen * usoft_CreateVisualBasic (unsigned long s);
+\endcode
+  \tab  
+  The random number generator included in Microsoft VisualBasic. 
+\index{Generator!VisualBasic}%
+  It is an LCG defined as: 
+$$
+    x_{i}  = (1140671485\,  x_{i-1} + 12820163) \mod 2^{24}; \qquad
+    u_i = x_i / 2^{24}
+$$
+(see {\tt {http://support.microsoft.com/support/kb/articles/Q231/8/47.ASP}}).
+  The parameter {\tt s} gives the seed $x_0$. Note that the multiplier
+  1140671485 in the equation above is equivalent to 16598013, since 
+  $1140671485 \mod 2^{24} = 16598013$.
+  \endtab
+\code
+
+
+#if defined(USE_GMP) && defined(USE_LONGLONG)
+   unif01_Gen * usoft_CreateMaple_9 (longlong s);
+#endif
+\endcode
+  \tab Implements the generator included in {\sc Maple 9.5} and earlier versions.
+  It is a linear congruential generator (see the definition on page \pageref{lcg})
+  with $m=999999999989$, $a=427419669081$ and $c = 0$. The seed is $s$.
+  Restriction: $0 < s < 999999999989$. {\em Note:} {\sc Maple 10} uses the 
+  Mersenne  twister MT19937 as its basic generator
+  (see page \pageref{rng:MT19937} of this guide).  
+  \endtab
+\code
+
+
+#ifdef USE_LONGLONG
+   unif01_Gen * usoft_CreateMATLAB (int i, unsigned int j, int bf,
+                                    double Z[]);
+#endif
+\endcode
+  \tab Implements the basic generator  (function {\tt rand}) included in
+ {\sc MATLAB} \cite{rMOL04a} to generate uniform random numbers.
+  It is \index{Generator!MATLAB}%
+  a combination of the subtract-with-borrow generator
+  (\ref{gen:matlab1}) proposed in \cite{rMAR91a}, where $z$ is an array of 
+ 32 floating-point numbers in $[0, 1)$ and $b$ is a borrow flag, with the
+  Xorshift generator (\ref{gen:matlab2}) described in \cite{rMAR03a}:
+\begin{equation}
+  z_i \  =\   z_{i+20} -  z_{i+5} - b \label{gen:matlab1} 
+\end{equation}
+\begin{equation}
+ \rule{0pt}{14pt} j \mbox{ \^{}= } (j\ll13);\quad  j \mbox{ \^{}= } (j\gg17);
+   \quad  j \mbox{ \^{}= } (j\ll5); \label{gen:matlab2}
+\end{equation}
+%   $j$ \^{}$= (j\ll13);$  $j $ \^{}$= (j\gg17); j $ \^{}$= (j\ll5);$
+%   \texttt{j \^{}= (j<<13);  j  \^{}= (j>>17); j  \^{}= (j<<5);}
+  The  combination is done by taking the bitwise \emph{exclusive-or} of 
+  the bits of the mantissa of $z_i$ with a 52-bit shifted version 
+  of $j$, and this gives the mantissa of the returned number in $[0, 1)$.
+  If \texttt{i}$\; <0$, then \texttt{j},  \texttt{bf}  and \texttt{Z}
+  are unused, and the generator is initialized using the same 
+  procedure as the one described in Cleve Moler's MATLAB
+  $M$-file \texttt{randtx.m}
+  (see \url{http://www.mathworks.com/moler/ncm/randtx.m})
+  when $z$ is empty. If \texttt{i} $\ge 0$, then \texttt{j},  \texttt{bf}
+  and \texttt{Z} are used as initial values for the generator state.
+  If the flag \texttt{bf}$\;=0$, then the initial
+  borrow is set to $b=0$, while if \texttt{bf}$\ \ne 0$, then
+   it is set to  $b=2^{-53}$.
+   Restrictions: \texttt{i}$\; < 32$, \texttt{bf} $\in \{0, 1\}$,
+    and $0 <$ \texttt{Z[i]} $ < 1$.
+
+  Another uniform generator included in {\sc MATLAB} is used to
+  generate normal random variables. It is
+  Marsaglia's additive SuperDuper of 1996, with $c=1234567$, described on page
+   \pageref{gen:SupDup96} of this guide (see {\tt umarsa\_CreateSupDup96Add}).
+  {\sc MATLAB} includes also  the Mersenne twister generator
+  of Matsumoto and Nishimura \cite{rMAT98a} (see {\tt ugfsr\_CreateMT19937}
+  on page \pageref{rng:MT19937} of this guide).
+  \endtab
+\code
+
+
+#ifdef HAVE_MATHEMATICA
+   unif01_Gen * usoft_CreateMathematicaReal (int argc, char * argv[],
+                                             long s);
+#endif
+\endcode
+  \tab This provides an interface to the random number generator
+\index{Generator!Mathematica-Real}%
+  for real numbers in $[0, 1)$ implemented by function ``{\tt Random[ ]}'' of
+  {Mathematica 5} and earlier releases (see the web site of
+  Wolfram Research Inc. at \url{http://www.wolfram.com}). It is a
+  subtract-with-borrow generator (described on page \pageref{gen:SWB}
+   of this guide) of the type proposed by Marsaglia and Zaman
+  in \cite{rMAR91a}, apparently of the form $x_i = (x_{i-8} - x_{i-48} - c) 
+  \bmod 2^{31}$, and each returned number in [0,1) uses two successive numbers
+  of the recurrence to get a double of 53 bits.
+  The parameters {\tt argc} and  {\tt argv} are the usual 
+  arguments of the ``{\tt main}'' function and the parameter 
+  {\tt s} is the initial seed.  The random numbers are
+  generated in batches of $2^{18} = 262144$ numbers, for greater
+  speed. 
+  Since this generator uses file variables, no more than one generator
+  of this type can be in use at any given time. 
+  See the documentation in module {\tt gdef} of MyLib concerning
+  the macro  {\tt HAVE\_MATHEMATICA}.
+% and on how to call {Mathematica} functions from a C program.
+  If the executable program is called, say \texttt{tulip}, then the program 
+  is launched on a Unix/Linux platform by the command
+  \texttt{tulip -linkname 'math -mathlink' -linklaunch}.
+  \endtab
+\code
+
+
+#ifdef HAVE_MATHEMATICA
+   unif01_Gen * usoft_CreateMathematicaInteger (int argc, char * argv[],
+                                                long s);
+#endif
+\endcode
+  \tab    Provides an interface to the random number generator
+\index{Generator!Mathematica-Integer}%
+  for integers in $[0, 2^{30} - 1]$ implemented by function
+   ``{\tt Random[Integer, {$2^{30} - 1$}]}'' of
+  {Mathematica 5} and earlier releases. It is
+  based on a cellular automata with rule 30 proposed by Wolfram
+  \cite{rWOL86a}. See also the documentation of
+  \texttt{usoft\_CreateMathematicaReal} above.
+  \endtab
+
+
+\guisec{Clean-up functions}
+\code
+
+#ifdef USE_LONGLONG
+   void usoft_DeleteMATLAB (unif01_Gen *gen);
+#endif
+\endcode
+ \tab  Frees the dynamic memory used by the {\sc MATLAB}
+  generator and allocated by the corresponding {\tt Create} function
+  above.
+ \endtab
+\code
+
+
+#ifdef HAVE_MATHEMATICA
+   void usoft_DeleteMathematicaReal (unif01_Gen *);
+   void usoft_DeleteMathematicaInteger (unif01_Gen *);
+\endcode
+ \tab  Frees the dynamic memory used by the {\sc Mathematica}
+  generators and allocated by the corresponding {\tt Create} function
+  above.
+ \endtab
+\code
+#endif
+
+
+#ifdef HAVE_RANDOM
+   void usoft_DeleteUnixRandom (unif01_Gen *);
+\endcode
+ \tab  Frees the dynamic memory used by the {\tt UnixRandom}
+  generator and allocated by the corresponding {\tt Create} function
+  above.
+ \endtab
+\code
+#endif
+
+
+#if defined(USE_GMP) && defined(USE_LONGLONG)
+   void usoft_DeleteMaple_9 (unif01_Gen *gen);
+\endcode
+ \tab  Frees the dynamic memory used by the {\sc Maple} generator and 
+ allocated by the corresponding {\tt Create} function above.
+ \endtab
+\code
+#endif
+
+
+void usoft_DeleteGen (unif01_Gen *gen);
+\endcode
+ \tab  Frees the dynamic memory used by any generator of this module
+  that does not have an explicit {\tt Delete} function. 
+  This function should be called to clean up a generator object
+  when it is no longer in use.
+ \endtab
+\code
+\hide
+#endif
+\endhide
+\endcode

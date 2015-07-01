@@ -1,0 +1,221 @@
+\defmodule {num}
+
+This module offers some useful constants and basic tools to 
+manipulate numbers represented in different forms.
+
+\bigskip\hrule
+\code\hide
+/* num.h for ANSI C */
+
+#ifndef NUM_H
+#define NUM_H
+\endhide
+#include "gdef.h"
+\endcode
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{Constants}
+\code
+
+#define num_Pi     3.14159265358979323846
+\endcode
+  \tab The number $\pi$.
+  \endtab
+\code
+
+#define num_ebase  2.7182818284590452354
+\endcode
+  \tab The number $e$.
+  \endtab
+\code
+
+#define num_Rac2   1.41421356237309504880
+\endcode
+  \tab $\sqrt{2}$, the square root of 2.
+  \endtab
+\code
+
+#define num_1Rac2  0.70710678118654752440
+\endcode
+  \tab $1/\sqrt{2}$.
+  \endtab
+\code
+
+#define num_Ln2    0.69314718055994530941
+\endcode
+  \tab $\ln(2)$, the natural logarithm of 2.
+  \endtab
+\code
+
+#define num_1Ln2   1.44269504088896340737
+\endcode
+  \tab $1 / \ln(2)$.
+  \endtab
+\code
+
+#define num_MaxIntDouble   9007199254740992.0
+\endcode
+  \tab Largest integer $n_0 = 2^{53}$ such that all integers
+  $n \le n_0$ are represented  exactly as a {\tt double}.
+  \endtab
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{Precomputed powers}
+\code
+
+#define num_MaxTwoExp   64
+\endcode
+  \tab Powers of 2 up to {\tt num\_MaxTwoExp} are stored exactly 
+  in the array {\tt num\_TwoExp}.
+  \endtab
+\code
+
+extern double num_TwoExp[];   
+\endcode
+  \tab  Contains precomputed powers of 2.
+  One has {\tt num\_TwoExp[i]} $= 2^i$ for $0 \le i \le$ 
+  {\tt num\_MaxTwoExp}.
+\endtab
+\code
+
+#define num_MAXTENNEGPOW   16
+\endcode
+  \tab Negative powers of 10 up to {\tt num\_MAXTENNEGPOW} are stored
+  in the array {\tt num\_TENNEGPOW}.
+  \endtab
+\code
+
+extern double num_TENNEGPOW[];
+\endcode
+ \tab Contains the precomputed negative powers of 10.
+   One has {\tt TENNEGPOW[j]}$ = 10^{-j}$, for $j=0,\ldots,$
+ {\tt num\_MAXTENNEGPOW}.
+\endtab
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{Prototypes}
+\code
+
+#define num_Log2(x) (num_1Ln2 * log(x)) 
+\endcode
+  \tab Gives the logarithm of $x$ in base 2.
+  \endtab
+\code
+
+
+long num_RoundL (double x);
+\endcode
+  \tab Rounds $x$ to the nearest ({\tt long}) integer and returns it.
+  \endtab
+\code
+
+
+double num_RoundD (double x);
+\endcode
+  \tab Rounds $x$ to the nearest ({\tt double}) integer and returns it.
+  \endtab
+\code
+
+
+int num_IsNumber (char S[]);
+\endcode 
+\tab  Returns {\tt 1} if the string {\tt S} begins with a number     
+   (with the possibility of spaces and a $+/-$ sign    
+   before the number). For example, `` + 2'' and ``4hello''
+   return {\tt 1}, while ``$-+2$'' and ``hello'' return
+   {\tt 0}.
+\endtab
+\code
+
+
+void num_IntToStrBase (long k, long b, char S[]);
+\endcode
+  \tab Returns in {\tt S} the string representation of {\tt k} in base
+  {\tt b}.
+  \endtab
+\code
+
+
+void num_Uint2Uchar (unsigned char output[], unsigned int input[], int L);
+\endcode
+  \tab Transforms the $L$ 32-bit integers contained in {\tt input} into
+   $4L$ characters and puts them into {\tt output}. The order is such that 
+  the 8 most significant bits of {\tt input[0]} will be in {\tt output[0]},
+  the 8 least significant bits of {\tt input[0]} will be in {\tt output[3]},
+  and the 8 least significant bits of {\tt input[L-1]} will be in
+   {\tt output[4L-1]}. Array {\tt output} must have at least $4L$ elements.
+  \endtab
+\code
+
+
+void num_WriteD (double x, int i, int j, int k);
+\endcode
+  \tab  Writes {\tt x} to current output.  Uses a total of at least {\tt i}
+   positions (including the sign and point when they appear),
+   {\tt j} digits after the decimal point and at least {\tt k}
+   significant digits.   The number is rounded if necessary.
+   If there is not enough space to print the number in decimal notation
+   with at least {\tt k} significant digits
+   ({\tt j} or {\tt i} is too small), it will be printed in scientific
+   notation with at least {\tt k} significant digits.
+   In that case, {\tt i} is increased if necessary. 
+   Restriction: {\tt j} and {\tt k} must be strictly smaller than {\tt i}.
+ \endtab
+\code
+
+
+void num_WriteBits (unsigned long x, int k);
+\endcode
+ \tab Writes {\tt x} in base 2 in a field of at least
+  $\max\{b, |k|\}$ positions, where $b$ is the number of bits in an
+  {\tt unsigned long}.
+  If $k>0$, the number will be right-justified, otherwise left-justified.
+ \endtab
+\code
+
+
+long num_MultModL (long a, long s, long c, long m);
+\endcode
+\tab  Returns $(as + c) \mod m$.  Uses the decomposition technique
+  of \cite{rLEC91a} to avoid overflow. Supposes that $s < m$.
+\endtab
+\code
+
+
+double num_MultModD (double a, double s, double c, double m);
+\endcode
+ \tab  Returns $(as+c) \mod m$, assuming that
+  $a$, $s$, $c$, and $m$ are all {\em integers\/} less than $2^{35}$ 
+  (represented exactly).
+  Works under the assumption that all positive integers less than 
+  $2^{53}$ are represented exactly in floating-point (in {\tt double}).
+\endtab
+\code
+
+
+long num_InvEuclid (long m, long z);
+\endcode
+ \tab  This function computes the inverse $z^{-1}\bmod m$ by the 
+  modified Euclid algorithm (see \cite[p. 325]{iKNU81a}) and returns
+  the result. If the inverse does not exist, returns 0.
+\endtab
+\code
+
+
+unsigned long num_InvExpon (int E, unsigned long z);
+\endcode
+ \tab
+  This function computes the inverse  $z^{-1} \bmod 2^E$
+  by exponentiation  and returns the result. If the inverse does not
+  exist, returns 0.
+  Restriction: $E$ not larger than the number of bits
+  in an {\tt unsigned long}.
+ \endtab
+
+\code
+\hide
+#endif
+\endhide
+\endcode

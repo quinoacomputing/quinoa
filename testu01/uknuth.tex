@@ -1,0 +1,105 @@
+\defmodule {uknuth}
+
+This module collects generators proposed by Donald E. Knuth. 
+Knuth's code can be found at
+\url{http://www-cs-faculty.stanford.edu/~knuth/programs.html}.
+%% We have copied Knuth's code almost verbatim but were forced
+% to make small changes to make it compatible with this software,
+% and thus we have changed the names of
+% his generators as required by Knuth in his original documentation.
+Since there are global variables in this module, no more than
+one generator of each type  in this module can be in use at any given
+time. \index{Generator!Knuth}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\bigskip
+\hrule
+\code
+\hide
+/* uknuth.h for ANSI C */
+
+#ifndef UKNUTH_H
+#define UKNUTH_H
+\endhide
+#include "unif01.h"
+
+
+unif01_Gen * uknuth_CreateRan_array1 (long s, long A[100]);
+\endcode
+  \tab  Implements the generator {\tt ran\_array} in its first version as
+  appeared on Knuth's web site in 2000. It is
+ \index{Generator!ran\_array}%
+  based on the lagged Fibonacci sequence with
+  subtraction \cite{rKNU98a}, modified via L\"uscher's method.
+  It generates 1009 numbers from the recurrence
+  $$
+   X_j = (X_{j-100} - X_{j-37}) \bmod 2^{30}
+  $$
+  out of which only the first 100 are used and the
+  next 909 are discarded, and this process is repeated.
+  The generator returns $U_j = X_j/2^{30}$. 
+  Gives 30 bits of precision.
+
+  If the seed $s \ge 0$, then Knuth's initialization procedure
+  is performed: it shifts and transforms the bits of $s$  in order to get
+  the 100 numbers that make up the initial state; in that case, 
+  array {\tt A} is unused.
+  If  $s < 0$, then the initial state is taken from the array
+  {\tt A[0..99]}.  This could be convenient for restarting the
+  generator from a previously saved state.
+  Restrictions: $s \le 1073741821$.
+ \endtab
+\code
+
+
+unif01_Gen * uknuth_CreateRan_array2 (long s, long A[100]);
+\endcode
+  \tab 
+   This implements the new version of {\tt ran\_array} with a new
+  initialization procedure as appeared on Knuth's web site in 2002. 
+ \endtab
+\code
+
+
+unif01_Gen * uknuth_CreateRanf_array1 (long s, double B[100]);
+\endcode
+  \tab Similar generator to {\tt ran\_array1} above, but 
+   where the recurrence is 
+   $$
+    U_j = (U_{j-100} + U_{j-37}) \bmod 1
+   $$
+   and is  implemented directly in floating-point arithmetic.
+   This implements the first version of Knuth's 
+    {\tt ranf\_array} as it
+\index{Generator!ranf\_array}%
+   appeared on his web site in 2000. Array {\tt B} contains
+  numbers in [0, 1).
+  \endtab
+\code
+
+
+unif01_Gen * uknuth_CreateRanf_array2 (long s, double B[100]);
+\endcode
+  \tab  This implements  the new version of {\tt ranf\_array} as it
+   appeared on Knuth's web site in 2002. 
+  \endtab
+
+
+\guisec{Clean-up functions}
+\code
+
+void uknuth_DeleteRan_array1  (unif01_Gen *gen);
+void uknuth_DeleteRan_array2  (unif01_Gen *gen);
+void uknuth_DeleteRanf_array1 (unif01_Gen *gen);
+void uknuth_DeleteRanf_array2 (unif01_Gen *gen);
+\endcode
+ \tab Frees the dynamic memory used by the generators of this module,
+  and allocated by the corresponding {\tt Create} function.
+ \endtab
+\code
+
+\hide
+#endif
+\endhide
+\endcode

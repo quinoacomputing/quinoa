@@ -1,0 +1,59 @@
+\defmodule {uquad}
+
+This module implements generators based on quadratic recurrences 
+modulo $m$, of the form
+\eq
+  x_{n+1} = (a x_n^2 + b x_n + c) \mod m,          \eqlabel{quad}
+\endeq
+with output $u_n = x_n/m$ at step $n$.
+See, e.g., \cite{rEIC87a,rEIC97d,rEMM97a,rKNU98a}
+for analyses of such generators.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\bigskip
+\hrule
+\code
+\hide
+/* uquad.h for ANSI C */
+#ifndef UQUAD_H
+#define UQUAD_H
+\endhide
+#include "unif01.h"
+
+
+unif01_Gen * uquad_CreateQuadratic (long m, long a, long b, long c, long s);
+\endcode
+  \tab  Initializes a generator based on recurrence (\ref{quad}),
+   with initial state $x_0 = s$.
+\index{Generator!quadratic}%
+   Depending on the values of the parameters, various implementations 
+   of different speeds are used.  In general, this generator
+   is slow.  Restrictions: $a$, $b$, $c$ and $s$ non
+   negative and less than $m$.
+ \endtab
+\code
+
+
+unif01_Gen * uquad_CreateQuadratic2 (int e, unsigned long a,
+    unsigned long b, unsigned long c, unsigned long s);
+\endcode
+  \tab  Similar to {\tt uquad\_CreateQuadratic}, but with $m=2^e$.
+   Restrictions: $a$, $b$, $c$ and $s$ non negative and
+   less than $2^e$; $e \le 32$ for 32-bit machines,
+   and $e \le 64$ for 64-bit machines.
+ \endtab
+
+
+\guisec{Clean-up functions}
+\code
+
+void uquad_DeleteGen (unif01_Gen *gen);
+\endcode
+ \tab \DelGen
+ \endtab
+\code
+\hide
+#endif
+\endhide
+\endcode

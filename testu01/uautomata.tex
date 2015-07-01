@@ -1,0 +1,160 @@
+\defmodule {uautomata}
+
+This module implements generators based on cellular automata. A cellular
+automaton consists of a $d$-dimensional grid of cells, whose coordinates are 
+the integer points in the \mbox{$d$-dimensional} euclidean lattice
+ ${\cal L} = \mathbb{Z}^d$. Each cell can hold a value taken from a discrete
+ set (for now, only binary values 0 and 1 are implemented).
+The value $x$ at each cell $i$ evolves deterministically with (discrete)
+ time according
+to a set of rules involving the values of its nearest neighbours. For a 
+one-dimensional cellular automaton with neighbourhood of radius $r$, the value
+ of a cell at a given time depends on its value at the previous time
+ step  as well as the values of the $r$ closest cells on
+ the left and  the $r$ closest cells on the right, all at the previous time
+ step. The evolution of cell $i$ can thus be written as
+$$
+   x_i^{(t+1)} = F\left[ x_{i-r}^{(t)},\ \ldots, x_{i}^{(t)},\  \ldots,
+                 \ x_{i+r}^{(t)}\right],
+$$
+where $t$ represents discrete time.
+These rules are applied synchronously to each cell at every time step.
+Here, only uniform cellular automata are considered, for which the rules 
+are identical for all cell.
+See \cite{rWOL86a,rWOL86b,rTOM99a}
+for the theory of  cellular automata.
+
+In the current implementation,
+periodic boundary conditions are imposed on the grid of cells, so that
+ cells on oppposite boundaries are considered adjacent. For example, for a
+one-dimensional grid with $N$ cells, the condition $S_N = S_0$ applies.
+Similarly, a two-dimensional grid is considered as a torus.
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\bigskip
+\hrule
+\code\hide
+/* uautomata.h for ANSI C */
+#ifndef UAUTOMAT_H
+#define UAUTOMAT_H
+\endhide
+#include "unif01.h"
+
+unif01_Gen * uautomata_CreateCA1 (int N, int S[ ], int r, int F[ ],
+                                  int k, int ts, int cs, int rot);
+\endcode
+  \tab  Initializes a generator based on a 1-dimensional boolean uniform
+ cellular automaton made up of $N$ cells, with a rule $F$ of radius $r$,
+ and an initial state $S$. A rule of radius $r$ is such that only the $r$ 
+ nearest neighbors on each side of a cell are involved in determining the
+ value of the cell at the next time step. Thus each cell has $2r+1$ 
+ neighbors, including itself. 
+ The initial value of cell $i$ is given in $S[i]$ and can take
+\index{Generator!cellular automata}%
+ values 0 and 1 only.
+
+ The rule is specified by the $2^{2r + 1}$ elements
+ of array $F$ indexed in standard numerical order, with an entry for
+  every possible neighborhood configuration of states. A given entry is
+ such that at the next time step, cell
+ $i$ takes the value obtained from the rule when the $2r+1$ neighbour cell
+ values are given by the binary representation of $j$. The following
+ table  shows an example of a local rule when $r=1$.
+
+\begin{center}
+\begin{tabular}{|c|c|c|c|c|c|c|c|c|}\hline
+   $j$                   & 7 & 6 & 5 & 4 & 3 & 2 & 1 & 0 \\ \hline
+ $x_{i-1}, x_i, x_{i+1}$
+       & 111 & 110 & 101 & 100 & 011  & 010 & 001 & 000 \\ \hline
+    new $x_i$ & 0 & 0 & 0 & 1 & 1 & 1 & 1 & 0 \\ \hline 
+\end{tabular}
+\end{center}
+
+ Each of the $2^{2r + 1} = 8$ possible sets of values for a cell and its
+ 2 nearest neighbours appear on the middle line, while the lower line
+ gives the  value to be taken
+ by the central cell on the next time step. For this rule, array $F$
+ must have the following form: $F = \{ 0, 1, 1, 1, 1, 0, 0, 0 \}$.
+ In Wolfram's numbering scheme for one-dimensional automata \cite{rWOL86a}
+ and in the litterature, this rule is called rule 30 because the
+ lower line of the table is the binary representation of 30.
+
+ In order to generate random numbers from this automaton, only $k$ cells
+ are used, starting count at the center of the grid. Assuming that
+ the parameters
+ {\tt ts}  and {\tt cs} are 0, then 32 time steps will be used
+ to generate $k$  random integers, the 32 bits of a cell over time
+ making up one random number. For example, if $N=10$ and $k=3$, then only
+ cells 4, 5, 6 will be used to generate random numbers, though
+ all the cells contribute to the evolution of the  cellular automaton.
+
+ The parameters {\tt ts}  and {\tt cs} implements time spacings and cell
+  spacings respectively. Thus only the bits generated at every ${\tt ts} + 1$
+ time step are considered as part of the random sequence, the bits generated
+ at the {\tt ts} successive time steps in-between are disregarded.
+ For example, if  {\tt ts} $=1$, one keeps only the bits at 1 time step out
+ of 2 to build the random numbers. The default value is {\tt ts} $=0$.
+ Similarly, only cells spaced ${\tt cs} + 1$ apart are used to generate random
+ numbers; the output of the {\tt cs} cells
+ in-between is not considered part of the random sequence, though they still
+ contribute to the evolution of the  cellular automaton.
+ For example, if $N=20$, $k=3$ and  {\tt cs} $=2$, then only the bits
+ generated by cells 7, 10, 13 are used to make up the random numbers
+ returned by the cellular automaton. The default value is {\tt cs} $=0$.
+
+ The parameter {\tt rot} indicates a circular shift of the cells at
+ each time step. If {\tt rot} $> 0$, the value of cell $i$ at the end
+ of each time step will become the value of cell ($i+ {\tt rot}) \bmod N$
+ before going to the next time step. If {\tt rot} $< 0$, cell $i$
+ will become the value of cell ($i- {\tt rot}) \bmod N$  instead.
+ There is no shift when {\tt rot} $= 0$.
+
+ Restrictions: $k*({\tt cs} + 1) \le N+ {\tt cs}$. 
+ \endtab
+\code
+
+
+unif01_Gen * uautomata_CreateCA90mp (int m, int S[]);
+\endcode
+ \tab Implements Matsumoto's cellular automaton ${\it CA90(m)'}$
+  (see \cite{rMAT98b}). \index{Generator!CA90(m)'}%
+  It is a uniform boolean one-dimensio\-nal automaton with $m$ cells based on
+  rule 90 (as defined by Wolfram in \cite{rWOL83a}), i.e., the value of a
+  cell at time $t+1$
+  depends only on the state of its two closest neighbors  at time $t$ and
+  is given by $x_i(t+1) = x_{i-1}(t) + x_{i+1}(t) \bmod 2$. There are two
+  extra cells that implements the boundary conditions at both ends.
+  The null boundary condition, $x_0(t) \equiv 0$, is applied permanently
+  at the left end, while the mirror boundary condition,
+  $x_{m+1}(t) = x_{m}(t) $, is applied permanently at the right end.
+  The output is the value of cell $m$. Thus each time step generates
+  one bit of output and 32 time steps generate one 32-bit integer.
+  The initial state of the cells must be given in $S[j]$ for
+  $j = 1, 2, \ldots, m$. Restriction: $S[j] \in \{0, 1 \}$.
+ \endtab
+
+
+\guisec{Clean-up functions}
+
+\code
+
+void uautomata_DeleteCA90mp (unif01_Gen *gen);
+\endcode
+  \tab Frees the dynamic memory allocated by
+   {\tt uautomata\_CreateCA90mp}.
+ \endtab
+\code
+
+
+void uautomata_DeleteGen (unif01_Gen *gen);
+\endcode
+ \tab  Frees the dynamic memory used by any generator of this module
+  that does not have an explicit {\tt Delete} function. 
+  This function should be called when a generator
+  is no longer in use.
+ \endtab
+\code\hide
+#endif
+\endhide\endcode
