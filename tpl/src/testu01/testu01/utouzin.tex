@@ -1,0 +1,157 @@
+\defmodule {utouzin}
+
+This module is an interface to random number generators proposed by
+P. L'Ecuyer and R. Touzin \cite{rTOU01a}.
+They are multiple recursive generators (MRG) or combinations of MRG's
+with coefficients of the form $\pm2^p \pm 2^q$ 
+(see the description of MRG's in module {\tt umrg}). 
+
+
+\bigskip\hrule
+\code\hide
+/*  utouzin.h  for ANSI C */
+#ifndef UTOUZIN_H
+#define UTOUZIN_H
+\endhide
+#include "unif01.h"
+
+
+unif01_Gen * utouzin_CreateMRG00a (long s1, long s2, long s3, long s4,
+                                   long s5);
+\endcode
+  \tab Creates a MRG of order 5 of the form\index{Generator!Touzin}
+$$
+x_n = \left((2 -2^{24})x_{n-1} - 2^{18}x_{n-3} - 2^{4}x_{n-4}
+  + (2^{11} - 1)x_{n-5}\right) \mod m
+$$
+where $ m = 2^{31} - 1$ and $u_n = x_n/m$. The parameters $s$ are the seeds.
+ \endtab
+\code
+
+
+unif01_Gen * utouzin_CreateMRG00b (long s1, long s2, long s3, long s4,
+                                   long s5, long s6);
+\endcode
+  \tab Creates a MRG of order 6 of the form
+$$
+x_n = \left((-2^{21} - 1)x_{n-1} - 2^{12}x_{n-2} + 2^{16}x_{n-3}
+  + 2^{7}x_{n-5} + (1 - 2^{27})x_{n-6}\right) \mod m
+$$
+where $ m = 2^{31} - 1$ and $u_n = x_n/m$. The parameters $s$ are the seeds.
+ \endtab
+\code
+
+
+unif01_Gen * utouzin_CreateMRG00c (long s1, long s2, long s3, long s4,
+                                   long s5, long s6, long s7);
+\endcode
+  \tab Creates a MRG of order 7 of the form
+$$
+x_n = \left(-2^{12}x_{n-1} - 2^{20}x_{n-2} + 2^{14}x_{n-3}
+  + 2^{25}x_{n-5} - 2^{6}x_{n-6} + (2^4 + 1)x_{n-7}\right) \mod m
+$$
+where $ m = 2^{31} - 19$ and $u_n = x_n/m$. The parameters $s$ are the seeds.
+ \endtab
+\code
+
+
+unif01_Gen * utouzin_CreateMRG00d (long s1, long s2, long s3, long s4,
+                                   long s5, long s6, long s7, long s8);
+
+\endcode
+  \tab Creates a MRG of order 8 of the form
+$$
+x_n = \left(-2^{4}x_{n-1} + 2^{15}x_{n-3} - 2^{12}x_{n-4} + 2^{22}x_{n-5} +
+   2^{9}x_{n-6} + 2^{27}x_{n-7} + (2^{18} - 2)x_{n-8}\right) \mod m
+$$
+where $ m = 2^{31} - 1$ and $u_n = x_n/m$. The parameters $s$ are the seeds.
+ \endtab
+\code
+
+
+unif01_Gen * utouzin_CreateMRG00e (long s10, long s11, long s12, 
+                                   long s20, long s21, long s22);
+
+\endcode
+  \tab Creates a combined MRG with two components of order 3 of the form
+\begin{eqnarray*}
+x_n &=& \left(2^{22}x_{n-2}  + (2^{7} + 1)x_{n-3}\right) \mod m_1 \\
+y_n &=& \left(2^{15}y_{n-1}  + (2^{15} + 1)y_{n-3}\right) \mod m_2
+\end{eqnarray*}
+where $m_1 = 2^{31} - 1$, $m_2 = 2^{31} - 21069$,  and $u_n = 
+ \left((x_n - y_n)\mod m_1 \right)/(m_1+1)$ with the exception of the value
+0 which is replaced by $u_n = m_1 /(m_1+1)$.  Thus the generator cannot return
+the values 0 or 1.
+ The parameters $s$ are the seeds.
+ \endtab
+\code
+
+
+unif01_Gen * utouzin_CreateMRG00f (long s10, long s11, long s12, 
+                                   long s20, long s21, long s22);
+\endcode
+  \tab Creates a combined MRG with two components of order 3 of the form
+\begin{eqnarray*}
+x_n &=& \left(2^{14}x_{n-2}  + (-2^{26} + 1)x_{n-3}\right) \mod m_1 \\
+y_n &=& \left(2^{17}y_{n-1}  + 2^{11}y_{n-3}\right) \mod m_2
+\end{eqnarray*}
+where $m_1 = 2^{31} - 1$, $m_2 = 2^{31} - 19$,  and $u_n = 
+ \left((x_n - y_n)\mod m_1 \right)/(m_1+1)$ with the exception of the value
+0 which is replaced by $u_n = m_1 /(m_1+1)$. Thus the generator cannot return
+the values 0 or 1.
+ The parameters $s$ are the seeds.
+ \endtab
+\code
+
+
+unif01_Gen * utouzin_CreateMRG00g (long s10, long s11, long s12, 
+                                   long s20, long s21, long s22,
+                                   long s30, long s31, long s32);
+\endcode
+  \tab Creates a combined MRG with three components of order 3 of the form
+\begin{eqnarray*}
+x_n &=& \left(2^{30} x_{n-1} + (2^{19} - 1) x_{n-3}\right) \mod m_1 \\
+y_n &=& \left(2^{23} y_{n-2} + 2^{19} y_{n-3}\right) \mod m_2 \\
+z_n &=& \left(2^{11} z_{n-1} + 2^{9} z_{n-2} + 2 z_{n-3}\right) \mod m_3
+\end{eqnarray*}
+where $m_1 = 2^{31} - 1$, $m_2 = 2^{31} - 19$,  $m_3 = 2^{31} - 61$
+ and $u_n = \left((x_n - y_n + z_n)\mod m_1 \right)/(m_1+1)$ with the
+ exception of the value 0 which is replaced by $u_n = m_1 /(m_1+1)$. 
+Thus the generator cannot return the values 0 or 1.
+ The parameters $s$ are the seeds.
+ \endtab
+\code
+
+
+unif01_Gen * utouzin_CreateMRG00h (long s10, long s11, long s12, long s13,
+                                   long s20, long s21, long s22, long s23);
+\endcode
+  \tab Creates a combined MRG with two components of order 4 of the form
+\begin{eqnarray*}
+x_n &=& \left(-x_{n-1} - 2^{13}x_{n-2} + (2^{23} + 1)x_{n-4}\right) \mod m_1 \\
+y_n &=& \left(2^{10}y_{n-1}  - 2^{20}y_{n-3} + 2^{7}y_{n-4}\right) \mod m_2
+\end{eqnarray*}
+where $m_1 = 2^{31} - 1$, $m_2 = 2^{31} - 19$,  and $u_n = 
+ \left((x_n - y_n)\mod m_1 \right)/(m_1+1)$ with the exception of the value
+0 which is replaced by $u_n = m_1 /(m_1+1)$. Thus the generator cannot return
+the values 0 or 1.\index{Generator!Touzin}%
+ The parameters $s$ are the seeds.
+ \endtab
+
+
+\guisec{Clean-up functions}
+
+\code
+
+
+void utouzin_DeleteGen (unif01_Gen * gen);
+\endcode
+  \tab Frees the dynamic memory used by any generator of this module.
+%  that does not have an explicit {\tt Delete} function. 
+  This function should be called when a generator
+  is no longer in use.
+ \endtab
+\code\hide
+#endif
+\endhide
+\endcode

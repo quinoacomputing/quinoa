@@ -1,0 +1,40 @@
+# Package:    TestU01
+# File:       InvExpl.par
+# Generator: 
+
+# Description:   Parameter values for the InvExpl generators.
+#-----------------------------------------------------------------
+
+# Give the name of the family first
+
+InvExpl
+
+
+# For each generator, the following parameters must be given in 
+# the right order on the same line
+#	              h   m
+# where h is (very close to) the base-2 logarithm of m, m is the modulus. 
+
+
+10	1021	    
+11	2039	    
+12 	4093	    
+13 	8191	    
+14 	16381	    
+15 	32749	    
+16 	65521	    
+17 	131071	    
+18 	262139	    
+19 	524287	    
+20 	1048573	    
+21 	2097143	    
+22 	4194301	    
+23 	8388593	    
+24 	16777213    
+25 	33554393    
+26 	67108859    
+27 	134217689   
+28 	268435399   
+29 	536870909   
+30 	1073741789  
+31 	2147483647

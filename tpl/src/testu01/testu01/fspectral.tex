@@ -1,0 +1,51 @@
+\defmodule {fspectral}
+
+This module applies spectral tests from the module {\tt sspectral}
+to a family of generators of different sizes.
+
+\bigskip
+\hrule
+\code\hide
+/* fspectral.h  for ANSI C */
+#ifndef FSPECTRAL_H
+#define FSPECTRAL_H
+\endhide
+#include "ffam.h"
+#include "fres.h"
+#include "fcho.h"
+
+
+extern long fspectral_MaxN;
+\endcode
+\tab
+  Upper bound on $N$.
+  When $N$ exceeds its limit value, the tests are not done.
+  Default value: $N = 2^{22}$.
+\endtab
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{The tests}
+
+\code
+void fspectral_Fourier3 (ffam_Fam *fam, fres_Cont *res, fcho_Cho *cho,
+                         int k, int r, int s,
+                         int Nr, int j1, int j2, int jstep);
+\endcode
+\tab
+ This function calls the test {\tt sspectral\_Fourier3} with parameters
+ $N$, {\tt k}, {\tt r}, and {\tt s} for sample size $N$ chosen by
+  $N = {}$ {\tt cho->Choose(param, i, j)},
+ for the first {\tt Nr} generators of family {\tt fam}, for $j$ going from
+ {\tt j1} to {\tt j2} by steps of {\tt jstep}. The parameters in {\tt param}
+ were set at the creation of {\tt cho} and $i$ is the lsize of the
+ generator being tested.
+ When $N$ exceeds {\tt fspectral\_MaxN}, the test is not done.
+\endtab
+
+\code
+\hide
+#endif
+\endhide
+\endcode

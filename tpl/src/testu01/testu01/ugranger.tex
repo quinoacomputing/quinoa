@@ -1,0 +1,189 @@
+\defmodule {ugranger}
+
+This module collects combined generators implemented by
+Jacinthe Granger-Pich\'e for her master thesis. 
+Some of the generators in this module use the GNU multiprecision package GMP. 
+%% (see the web site at \url{http://www.gnu.org/software/gmp/gmp.html}).
+The macro {\tt USE\_GMP} is defined in module {\tt gdef} in directory
+{\tt mylib}. \index{Generator!Granger-Pich\'e}%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\bigskip
+\hrule
+\code\hide
+#ifndef UGRANGER_H
+#define UGRANGER_H
+/* ugranger.h for ANSI C */
+\endhide
+#include "gdef.h"
+#include "unif01.h"
+
+
+unif01_Gen * ugranger_CreateCombLCGInvExpl (
+   long m1, long a1, long c1, long s1, long m2, long a2, long c2);
+\endcode
+ \tab
+   Combines an  LCG of parameters $(m_1, a_1, c_1)$ and initial
+   state $s_1$ with a non-linear explicit  inversive  generator  
+   with parameters $(m_2, a_2, c_2)$. The implementation of the LCG uses either
+   {\tt ulcg\_CreateLCGFloat} or {\tt ulcg\_CreateLCG},
+   depending on the parameters
+   $(m_1, a_1, c_1)$, and the implementation of the inversive generator uses 
+   {\tt uinv\_CreateInvExpl}. The combination is done by adding mod 1 the
+   outputs of the two generators.
+   Restrictions: the same as those for {\tt ulcg\_CreateLCG} and
+   {\tt uinv\_CreateInvExpl}.
+ \endtab
+\code
+
+
+#ifdef USE_GMP
+   unif01_Gen * ugranger_CreateCombBigLCGInvExpl (
+      char *m1, char *a1, char *c1, char *s1, long m2, long a2, long c2);
+\endcode
+ \tab 
+   Same as {\tt ugranger\_CreateCombLCGInvExpl}, but the LCG is implemented 
+   using arbitrary large integers with {\tt ulcg\_CreateBigLCG}.  
+   Restrictions: the same as those for {\tt ulcg\_CreateBigLCG} and
+   {\tt uinv\_CreateInvExpl}.  
+ \endtab
+\code
+#endif
+
+
+unif01_Gen * ugranger_CreateCombLCGCub (
+   long m1, long a1, long c1, long s1, long m2, long a2, long s2);
+\endcode
+ \tab Combines an LCG of parameters $(m_1, a_1, c_1)$ and initial
+   state $s_1$ with a  cubic generator of parameters $(m_2, a_2)$ and
+   initial state $s_2$. The  LCG implementation is either
+   {\tt ulcg\_CreateLCGFloat} or {\tt ulcg\_CreateLCG}, depending on the
+   parameters $(m_1, a_1, c_1)$, and the implementation of the
+   cubic generator is {\tt ucubic\_CreateCubic1Float}.
+   The combination is done by adding mod 1 the outputs of the two generators.
+   Restrictions: the same as those for {\tt ulcg\_CreateLCG} and
+   {\tt ucubic\_CreateCubic1Float}.
+ \endtab
+\code
+
+
+#ifdef USE_GMP
+   unif01_Gen * ugranger_CreateCombBigLCGCub (
+      char *m1, char *a1, char *c1, char *s1, long m2, long a2, long c2);
+\endcode
+ \tab Same as {\tt ugranger\_CreateCombCubLCG}, but the LCG is implemented 
+   using arbitrary large integers with {\tt ulcg\_CreateBigLCG}. 
+   Restrictions: the same as those for {\tt ulcg\_CreateBigLCG} and
+   {\tt ucubic\_CreateCubic1Float}.  
+ \endtab
+\code
+
+ 
+   unif01_Gen * ugranger_CreateCombTausBigLCG (
+      unsigned int k1, unsigned int q1, unsigned int s1, unsigned int SS1,
+      unsigned int k2, unsigned int q2, unsigned int s2, unsigned int SS2,
+      char *m, char *a, char *c, char *SS3);
+\endcode
+ \tab  Combines a Tausworthe generator with two components of parameters 
+  $(k_1, q_1, s_1)$, $(k_2, q_2, s_2)$ and
+  initial states $\mathit{SS1}$, $\mathit{SS2}$ with an LCG of parameters 
+  $(m, a, c)$ and initial state $\mathit{SS3}$. 
+  The combination is done by adding
+  mod 1 the outputs of the LCG and of the combined Tausworthe.
+  The implementation of the  LCG  is the one in
+ {\tt ulcg\_CreateBigLCG}, and the implementation of the 
+  combined  Tausworthe is the one in {\tt utaus\_CreateCombTaus2}.
+  Restrictions:  the same as those for {\tt utaus\_CreateCombTaus2} and
+  {\tt ulcg\_CreateBigLCG}.
+ \endtab
+\code
+#endif
+
+
+unif01_Gen * ugranger_CreateCombTausLCG21xor (
+   unsigned int k1, unsigned int q1, unsigned int s1, unsigned int SS1,
+   unsigned int k2, unsigned int q2, unsigned int s2, unsigned int SS2,
+   long m, long a, long c, long SS3);
+\endcode
+ \tab  Combines a Tausworthe generator with two components of parameters 
+  $(k_1, q_1, s_1)$, $(k_2, q_2, s_2)$ and
+  initial states $\mathit{SS1}$, $\mathit{SS2}$ with an LCG of parameters 
+  $(m, a, c)$ and initial state $\mathit{SS3}$.  The combination is done
+  using a
+  bitwise exclusive-or of the outputs of the two generators.
+  The implementation of the  LCG  is either the one in
+  {\tt ulcg\_CreateLCGFloat} or in {\tt ulcg\_CreateLCG}, 
+  depending on the parameters $(m, a, c)$, and the implementation of the 
+  combined  Tausworthe is the one in {\tt utaus\_CreateCombTaus2}.
+  Restrictions:  the same as those for {\tt utaus\_CreateCombTaus2} and
+  {\tt ulcg\_CreateLCG}.
+ \endtab
+\code 
+
+
+unif01_Gen * ugranger_CreateCombTausCub21xor (
+   unsigned int k1, unsigned int q1, unsigned int s1, unsigned int SS1,
+   unsigned int k2, unsigned int q2, unsigned int s2, unsigned int SS2,
+   long m, long a, long SS3);
+\endcode
+ \tab
+  Combines a Tausworthe generator  with two components  of parameters 
+  $(k_1, q_1, s_1)$, $(k_2, q_2, s_2)$  and
+  initial states $\mathit{SS1}$, $\mathit{SS2}$  with a  cubic generator of
+  parameters $(m, a)$ and  initial state $\mathit{SS3}$. 
+  The combination is done using a
+  bitwise exclusive-or of the outputs of the two generators.
+  The implementation of the  
+  combined  Tausworthe is the one in {\tt utaus\_CreateCombTaus2},
+  and the implementation of the cubic generator
+  is the one in {\tt ucubic\_CreateCubic1Float}.
+  Restrictions: the same as those for  {\tt utaus\_CreateCombTaus2} and 
+  {\tt ucubic\_CreateCubic1Float}.
+ \endtab
+\code
+
+
+unif01_Gen * ugranger_CreateCombTausInvExpl21xor (
+   unsigned int k1, unsigned int q1, unsigned int s1, unsigned int SS1,
+   unsigned int k2, unsigned int q2, unsigned int s2, unsigned int SS2,
+   long m, long a, long c);
+\endcode
+ \tab Combines a Tausworthe generator  with two components of parameters 
+  $(k_1, q_1, s_1)$, $(k_2, q_2, s_2)$ and
+  initial states $\mathit{SS1}$, $\mathit{SS2}$ with an 
+  explicit  inversive  generator
+  of parameters  $(m, a, c)$.  The combination is done  using a
+  bitwise exclusive-or of the outputs of the two generators.
+  The implementation of the  
+  combined  Tausworthe is the one in {\tt utaus\_CreateCombTaus2},
+  and the implementation of the inversive generator
+  is the one in {\tt uinv\_CreateInvExpl}.
+  Restrictions: the same as those for {\tt utaus\_CreateCombTaus2} and
+  {\tt uinv\_CreateInvExpl}.
+ \endtab
+
+
+\guisec{Clean-up functions}
+\code
+
+void ugranger_DeleteCombLCGInvExpl (unif01_Gen *gen);
+void ugranger_DeleteCombLCGCub (unif01_Gen *gen);
+void ugranger_DeleteCombTausLCG21xor (unif01_Gen *gen);
+void ugranger_DeleteCombTausCub21xor (unif01_Gen *gen);
+void ugranger_DeleteCombTausInvExpl21xor (unif01_Gen *gen);
+
+#ifdef USE_GMP
+   void ugranger_DeleteCombBigLCGInvExpl (unif01_Gen *gen);
+   void ugranger_DeleteCombBigLCGCub (unif01_Gen *gen);
+   void ugranger_DeleteCombTausBigLCG (unif01_Gen *gen);
+#endif
+\endcode
+ \tab  Frees the dynamic memory allocated by the corresponding {\tt Create}
+  function of this module.
+ \endtab
+\code
+\hide
+#endif
+\endhide
+\endcode

@@ -1,0 +1,67 @@
+\defmodule {utezuka}
+
+This module collects some generators designed by S.~Tezuka.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\bigskip
+\hrule
+\code
+\hide
+/* utezuka.h for ANSI C */
+
+#ifndef UTEZUKA_H
+#define UTEZUKA_H
+\endhide
+#include "unif01.h"
+
+
+unif01_Gen * utezuka_CreateTezLec91 (unsigned int Y1, unsigned int Y2);
+\endcode
+  \tab  Implements a combined Tausworthe generator constructed
+   by Tezuka and L'Ecuyer \cite{rTEZ91b}, and whose implementation
+   is given in their paper.
+\index{Generator!Tezuka}%
+   The initial values {\tt Y1} and {\tt Y2} must be positive and
+   less than $2^{31}$ and $2^{29}$ respectively.
+  \endtab
+\code
+
+
+unif01_Gen * utezuka_CreateTez95 (unsigned int Y1, unsigned int Y2,
+                                  unsigned int Y3);
+\endcode
+  \tab  Implements the  combined  generator proposed in
+   Figure A.1 of \cite{rTEZ95a}, page 194.
+   The initial values {\tt Y1, Y2, Y3} must be positive and
+   less than $2^{28}$, $2^{29}$ and $2^{31}$
+   respectively.
+  \endtab
+\code
+
+
+unif01_Gen * utezuka_CreateTezMRG95 (unsigned int Y1[5],
+                                     unsigned int Y2[7]);
+\endcode
+  \tab  Implements the  combined  generator proposed in
+   Figure A.2 of \cite{rTEZ95a}, page 195.
+   The initial values of the array elements of {\tt Y1} and {\tt Y2}
+   must be positive and
+   less than $2^{31}$ and $2^{29}$ respectively.
+  \endtab
+
+
+
+\guisec{Clean-up functions}
+
+\code
+
+void utezuka_DeleteGen (unif01_Gen *gen);
+\endcode
+ \tab \DelGen
+ \endtab
+\code
+
+\hide
+#endif
+\endhide
+\endcode

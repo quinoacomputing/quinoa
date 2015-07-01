@@ -1,0 +1,134 @@
+\defmodule {ffsr}
+
+This module operates in the same way as {\tt fcong}
+(see the introduction in module  {\tt fcong}).
+It defines {\em linear feedback shift register\/} (LFSR) generators
+of different period lengths (or number of states) near powers of 2,
+and different kinds such as Tausworthe, GFSR, twisted GFSR (TGFSR),
+and their combinations.
+All these generators are based on linear recurrences modulo 2.
+\index{family of generators!shift-register}%
+
+
+\bigskip
+\hrule
+\code\hide
+/* ffsr.h  for ANSI C */
+#ifndef FFSR_H
+#define FFSR_H
+\endhide
+#include "ffam.h"
+\endcode
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{The families of generators}
+\code
+
+ffam_Fam * ffsr_CreateLFSR1 (char *fname, int i1, int i2, int istep);
+\endcode
+\tab
+ Creates a family of simple LFSR (or Tausworthe) generators whose
+ parameters are defined in file named {\tt fname}. By default, uses a 
+ predefined family of generators with primitive characteristic trinomial of
+ degree $i$ (with period length $2^i-1$) and the best equidistribution 
+ properties within its class.
+ Restrictions: $10 \le i1 \le i2 \le 60$.
+\endtab
+\code
+
+
+ffam_Fam * ffsr_CreateLFSR2 (char *fname, int i1, int i2, int istep);
+\endcode
+\tab Creates a family of combined LFSR generators with two components, whose
+ parameters are defined in file named {\tt fname}. By default, uses a 
+ predefined family  with each component
+ based on a primitive characteristic trinomial.
+ The combination generator has period length near $2^i-1$ and the best
+ possible equidistribution within its class. 
+ Restrictions: $10 \le i1 \le i2 \le 36$.
+\endtab
+\code
+
+
+ffam_Fam * ffsr_CreateLFSR3 (char *fname, int i1, int i2, int istep);
+\endcode
+\tab
+ Creates a family of combined LFSR generators with three components, whose
+ parameters are defined in file named {\tt fname}. By default, uses a 
+ predefined family with each component
+ based on a primitive characteristic trinomial.
+ The combination generator has period length near $2^i-1$ and the best
+ possible equidistribution within its class. 
+ Restrictions: $14 \le i1 \le i2 \le 36$.
+\endtab
+\code
+
+
+ffam_Fam * ffsr_CreateGFSR3 (char *fname, int i1, int i2, int istep);
+\endcode
+\tab
+ Creates a family of generalized feedback shift register (GFSR) generators
+ with primitive characteristic trinomial of degree $i$
+ (period length $2^i-1$) and good equidistribution.
+ ***** NOT YET IMPLEMENTED.
+\endtab
+\code
+
+
+ffam_Fam * ffsr_CreateGFSR5 (char *fname, int i1, int i2, int istep);
+\endcode
+\tab
+ Creates a family of generalized feedback shift register (GFSR) generators
+ with primitive characteristic pentanomial of degree $i$
+ (period length $2^i-1$) and good equidistribution.
+ ***** NOT YET IMPLEMENTED.
+\endtab
+\code
+
+
+ffam_Fam * ffsr_CreateTGFSR1 (char *fname, int i1, int i2, int istep);
+\endcode
+\tab
+ Creates a family of twisted GFSR generators with primitive characteristic
+ trinomial of degree $i$
+ (period length $2^i-1$) and good equidistribution.
+ ***** NOT YET IMPLEMENTED.
+\endtab
+\code
+
+
+ffam_Fam * ffsr_CreateTausLCG2 (char *fname, int i1, int i2, int istep);
+\endcode
+\tab
+ Creates a family of combined generators that adds the outputs of an LCG
+ and an LFSR2, modulo 1, whose parameters are defined in file named
+ {\tt fname}. Each generator is created by calling the function
+  {\tt ulec\_CreateCombTausLCG21}. By default, uses a 
+ predefined family with generators having a period near $2^i$.
+ Restrictions: $20 \le i1 \le i2 \le 62$.
+\endtab
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{Clean-up functions}
+\code
+
+void ffsr_DeleteLFSR1 (ffam_Fam *fam);
+void ffsr_DeleteLFSR2 (ffam_Fam *fam);
+void ffsr_DeleteLFSR3 (ffam_Fam *fam);
+void ffsr_DeleteTausLCG2 (ffam_Fam *fam);
+\endcode
+\tab
+ Frees the dynamic memory allocated to {\tt fam} by the corresponding
+ {\tt Create} function.
+\endtab
+\code
+
+\hide
+#endif
+\endhide
+\endcode

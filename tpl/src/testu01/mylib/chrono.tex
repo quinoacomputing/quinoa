@@ -1,0 +1,155 @@
+\defmodule{chrono}
+
+This module acts as an interface to the system clock to compute the
+CPU time used by parts of a program.
+  Even though the ANSI/ISO macro {\tt CLOCKS\_PER\_SEC = 1000000} 
+  is the number of clock ticks per second for the value
+  returned by the {\tt clock} function (so this function returns the
+  number of microseconds), on some systems where the 32-bit type {\tt long} 
+  is used to measure time, the value returned by {\tt clock}
+  wraps around to negative values after about 36 minutes.
+  On some other systems where time is measured using the 32-bit type
+  {\tt unsigned long}, the clock may wrap around to 0 after about
+   72 minutes.
+  When the macro {\tt USE\_ANSI\_CLOCK} in module {\tt gdef} is undefined, 
+  a non-ANSI-C clock is used. 
+  On Linux-Unix systems, it calls the POSIX
+  function {\tt times} to get the CPU time used by a program.
+\hpierre{Is this true for both Linux and Windows?}
+\hrichard{Je ne crois pas que MicroMou respecte le standard POSIX, qui est
+ sp\'ecifique aux syst\`emes Unix ou Linux.}
+  On a Windows platform (when the macro \texttt{HAVE\_WINDOWS\_H} is defined),
+  the Windows function \texttt{GetProcessTimes} will be used to measure
+  the CPU time used by programs.
+
+
+Every variable of type {\tt chrono\_Chrono} acts as an independent 
+{\em stopwatch}.  Several such stopwatchs can run at any given time.
+An object of type {\tt chrono\_Chrono} must be declared 
+for each of them.
+The function {\tt chrono\_Init} resets the stopwatch to zero,
+{\tt chrono\_Val\/} returns its current reading,
+and {\tt chrono\_Write\/} writes this reading to the current output.
+The returned value includes part of the execution time of the functions
+from module {\tt chrono\/}.
+The {\tt chrono\_TimeFormat} allows one to choose the kind of 
+time units that are used.  
+% When no longer needed, 
+% the stopwatch can be deleted via {\tt chrono\_Delete}.
+
+Below is an example of how the functions may be used.
+A stopwatch named {\tt mytimer} is declared and created.
+After 2.1 seconds of CPU time have been consumed, the stopwatch is read and
+reset. Then, after an additional 330 seconds (or 5.5 minutes) of CPU time
+the stopwatch is read again, printed to the output and deleted.
+%
+ \begin{verse}{\tt
+  double t; \\
+  chrono\_Chrono *mytimer = chrono\_Create (); \\
+\hskip 1.0cm   \vdots 
+\hskip 1.0cm  ({\em suppose 2.1 CPU seconds are used here}.)\\[6pt]
+  t = chrono\_Val (mytimer, chrono\_sec); \qquad   /* Here, t = 2.1 */ \\
+  chrono\_Init (mytimer); \\
+\hskip 1.0cm  \vdots
+\hskip 1.0cm ({\em suppose 330 CPU seconds are used here}.) \\[10pt]
+  t = chrono\_Val (mytimer, chrono\_min); \qquad    /* Here, t = 5.5 */\\
+  chrono\_Write (mytimer, chrono\_hms);  \qquad  /* Prints: 00:05:30.00 */\\
+  chrono\_Delete (mytimer);
+ }\end{verse}
+
+\code
+\iffalse
+/* chrono.h for ANSI C */
+
+#ifndef CHRONO_H
+#define CHRONO_H 
+#include "gdef.h"
+\fi
+\endcode
+
+\newpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{Types}
+\code
+
+typedef struct {
+   unsigned long microsec;
+   unsigned long second;
+   } chrono_Chrono;
+\endcode
+  \tab
+   For every stopwatch needed, the user must declare a variable of
+   this type and initialize it by calling {\tt chrono\_Create}.
+  \endtab
+\code
+
+
+typedef enum {
+   chrono_sec,
+   chrono_min,
+   chrono_hours, 
+   chrono_days,
+   chrono_hms
+   } chrono_TimeFormat;
+\endcode
+ \tab
+  Types of units in which the time on a {\tt chrono\_Chrono} can be 
+  read or printed:
+  in seconds ({\tt sec})), minutes ({\tt min}), hours ({\tt hour}), days
+  ({\tt days}), or in the {\tt HH:MM:SS.xx} format, with hours, 
+  minutes, seconds and hundreths of a second ({\tt hms}).
+ \endtab
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{Timing functions}
+\code
+
+chrono_Chrono * chrono_Create (void);
+\endcode
+  \tab
+   Creates and returns a stopwatch, after initializing it to zero. This
+   function must be called for each new {\tt chrono\_Chrono} used.
+   One may reinitializes it later by calling {\tt chrono\_Init}.
+  \endtab
+\code
+
+
+void chrono_Delete (chrono_Chrono * C);
+\endcode
+  \tab
+   Deletes the stopwatch {\tt C}.
+  \endtab
+\code
+
+
+void chrono_Init (chrono_Chrono * C);
+\endcode
+  \tab
+  Initializes the stopwatch {\tt C} to zero.
+  \endtab
+\code
+
+
+double chrono_Val (chrono_Chrono * C, chrono_TimeFormat Unit);
+\endcode
+  \tab
+  Returns the time used by the program since the last call to
+  {\tt chrono\_Init(C)}. The parameter {\tt Unit} specifies the time unit.
+  Restriction: {\tt Unit = chrono\_hms} is not allowed here; 
+  it will cause an error.
+  \endtab
+\code
+
+
+void chrono_Write (chrono_Chrono * C, chrono_TimeFormat Unit);
+\endcode
+ \tab
+  Prints the CPU time used by the program since its last
+  call to {\tt chrono\_Init(C)}.
+  The parameter {\tt Unit} specifies the time unit.
+ \endtab
+\code
+\iffalse
+#endif
+\fi\endcode

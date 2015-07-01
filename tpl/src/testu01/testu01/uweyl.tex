@@ -1,0 +1,86 @@
+\defmodule{uweyl}
+
+This module implements simple and combined generators based on 
+Weyl sequences, proposed by Holian et al.\ \cite{rHOL94a}.
+\index{Generator!Weyl}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\bigskip
+\hrule
+\code
+\hide
+#ifndef UWEYL_H
+#define UWEYL_H
+/* uweyl.h for ANSI C */
+\endhide
+#include "unif01.h"
+
+
+unif01_Gen * uweyl_CreateWeyl (double alpha, long n0);
+\endcode
+ \tab  Implements a  generator defined by the 
+ Weyl sequence:
+ \eq
+   u_n = n \alpha \mod 1 = (u_{n-1} + \alpha) \mod 1,
+ \endeq
+ where $\alpha = $ {\tt alpha} is a  real number in the interval $(0,1)$.
+ The  initial value of $n$ is {\tt n0}.
+ In theory, if $\alpha$ is irrationnal, this sequence is asymptotically
+ equidistributed over (0,1) \cite {rWEY16a}.
+ However, this is not true for the present 
+%% \hrichard{remplacer par for any computer? Non}
+ implementation, because 
+ $\alpha$ is represented only with finite precision.
+ The implementation is only a rough approximation,
+ valid when $n$ is not too large.
+ Some possible values for $\alpha$ are:
+ \begin {eqnarray*}
+   \sqrt{2} \mod 1 &=&  0.414213562373095 \\
+   \sqrt{3} \mod 1 &=&  0.732050807568877 \\
+   \pi      \mod 1 &=&  0.141592653589793 \\
+   e        \mod 1 &=&  0.718281828459045 \\
+   \gamma          &=&  0.577215664901533 \\
+ \end {eqnarray*}
+ \endtab
+\code
+
+unif01_Gen * uweyl_CreateNWeyl (double alpha, long n0);
+\endcode
+ \tab  Implements a nested Weyl generator, as suggested in \cite{rHOL94a}, 
+ defined by
+ \eq
+   u_n = (n\, (n\alpha \mod 1)) \mod 1,
+ \endeq
+ where {\tt alpha} $= \alpha \in (0,1)$. 
+  The initial value of $n$ is {\tt n0}.
+ \endtab
+\code
+
+
+unif01_Gen * uweyl_CreateSNWeyl (long m, double alpha, long n0);
+\endcode
+ \tab  Implements a nested Weyl generator with
+ ``shuffling'', proposed in \cite{rHOL94a}, and defined by
+ \begin {eqnarray*}
+   \nu_n = m\, (n\, (n \alpha \mod 1) \mod 1) + 1/2,
+       \qquad u_n   = (\nu_n\, (\nu_n \alpha \mod 1)) \mod 1,
+ \end {eqnarray*}
+ where $m$ is a large positive integer and  {\tt alpha} $=\alpha \in (0,1)$.
+ The initial value of $n$ is {\tt n0}.
+ \endtab
+
+
+
+\guisec{Clean-up functions}
+\code
+
+void uweyl_DeleteGen (unif01_Gen *gen);
+\endcode
+ \tab \DelGen
+ \endtab
+\code
+\hide
+#endif
+\endhide
+\endcode

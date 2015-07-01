@@ -1,0 +1,186 @@
+\defmodule {sentrop}
+
+This module implements tests based on discrete and continuous 
+empirical entropies\index{entropy}, defined and studied by
+Dudewicz and van der Meulen  \cite{rDUD81b,rDUD95a}
+and L'Ecuyer, Compagner, and Cordeau \cite{rLEC96e}.
+The tests of \cite{rDUD81b,rDUD95a} are actually superseded by the 
+tests with $\delta=0$ in module {\tt smultin}, where a much better
+approximation is used for the distribution of the test statistic.
+ \resdef
+
+
+\bigskip\hrule
+\code\hide
+/* sentrop.h  for ANSI C */
+#ifndef SENTROP_H
+#define SENTROP_H
+\endhide
+#include "statcoll.h"
+#include "gofw.h"
+#include "unif01.h"
+#include "sres.h"
+\endcode
+
+
+\ifdetailed  %%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{Test results}
+\code
+
+typedef struct {
+
+   long *Count;
+\endcode
+\tabb
+   Block counters used in the tests  {\tt sentrop\_EntropyDisc}, 
+  {\tt sentrop\_EntropyDiscOver}, and {\tt sentrop\_EntropyDiscOver2}.
+\endtabb
+\code
+
+   long jmin;
+   long jmax;
+\endcode
+\tabb
+  Lowest and highest valid indices for array {\tt Count}.
+\endtabb
+\code
+
+   sres_Basic *Bas;
+\endcode
+ \tabb
+  The statistical collectors and the resulting $s$ and $p$-values.
+ \endtabb
+\code
+
+} sentrop_Res;
+\endcode
+ \tab
+  Structure used to keep the results of the tests in this module.
+  For some tests, the array {\tt Count} is unused.
+ \endtab
+\code
+
+
+sentrop_Res * sentrop_CreateRes (void);
+\endcode
+ \tab 
+  Creates and returns a structure that will hold the results of a test.
+ \endtab
+\code
+
+
+void sentrop_DeleteRes (sentrop_Res *res);
+\endcode
+ \tab 
+  Frees the memory allocated by {\tt sentrop\_CreateRes}.
+ \endtab
+\fi   %%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{The tests}
+
+\code
+
+void sentrop_EntropyDisc (unif01_Gen *gen, sentrop_Res *res,
+                          long N, long n, int r, int s, int L);
+\endcode
+\tab
+  Applies\index{Test!EntropyDisc} the entropy-based test
+   proposed in \cite{rLEC96e}.
+  It builds $n$ blocks of $L$ bits by taking $s$-bit strings 
+  (the $s$ most significant bits after dropping the first $r$) from each of
+  $NL/s$ successive output values from the generator, and concatenating
+  these strings.
+  There are $k=2^L$ possible $L$-bit blocks, which can be numbered 
+  from 0 to $k-1$.  Let $X_i$ be the observed frequency of occurrence
+  of the $i$th possibility, for $i=0,\dots,k-1$.
+  The test is based on the {\em empirical entropy\/}
+   $$ T = -\sum_{i = 0}^{k-1} X_i \log_2 X_i, $$
+  whose distribution is approximated by the normal if $n/2^L \le 8$
+  (the sparse case) and by a chi-square distribution if $n/2^L > 8$
+  (the dense case).
+  This test is equivalent to {\tt smultin\_Multino\-mial\-Bits} with the
+  power divergence test statistic, using $\delta=0$ only.
+\iffalse  %%%
+  If $s$ divides $L$, it is equivalent to calling
+  {\tt smultin\_Multinomial} with $d=2^s$, $t= L/s$, and
+  looking at the result for $\delta=0$.  
+\fi  %%%
+  Restrictions: Either $L$ divides $s$ or $s$ divides $L$.
+\endtab
+\code
+
+
+void sentrop_EntropyDiscOver (unif01_Gen *gen, sentrop_Res *res,
+                              long N, long n, int r, int s, int L);
+\endcode
+\tab
+  Applies\index{Test!EntropyDiscOver} an entropy-based test
+  described in \cite{rLEC96e}, similar
+  to {\tt sentrop\_EntropyDisc}, but with overlap of the blocks.
+  It constructs a sequence of $n$ bits, by taking $s$ bits from each 
+  of $n/s$ output values, puts these $n$ bits on a circle,
+  and examines all $n$ blocks of $L$ successive bits on this circle.
+  The test computes the empirical entropy, defined by
+   $$ T = -\sum_{i = 0}^{k-1} X_i \log_2 X_i, $$
+  where the $X_i$ are the observed frequencies of the $L$-bit strings.
+  This test is equivalent to {\tt smultin\_MultinomialBitsOver} with the
+  power divergence test statistic, using $\delta=0$ only.
+%  Note: This is different from {\tt smultin\_MultinomialOver}
+%  unless $s=1$, because here the overlapping is for sequences of {\em bits}.
+
+  For $N>1$, the function also tests the empirical correlation 
+  between pairs of successive values of $T$, as well as the average
+  of these values.  This average is compared with the exact expectation
+  in the cases where it is known.
+  Restrictions:  $r\le 31$, $s\le 31$, $n\le 31$, $L \le n/2$,
+  $n \mod s = 0$, and $N \gg n$. 
+\endtab
+\code
+
+
+void sentrop_EntropyDiscOver2 (unif01_Gen *gen, sentrop_Res *res,
+                               long N, long n, int r, int s, int L);
+\endcode
+\tab
+  A version\index{Test!EntropyDiscOver2}
+  of {\tt sentrop\_EntropyDiscOver} that accepts $n > 31$.
+  For $n > 30$, it tests only the correlation between successive values 
+  of $T$.
+  Restrictions: $L \le 15$, $r \le 31$, $ s \le 31$, $L + s \le 31$,
+  $n \mod s =0$, $\lceil L/s\rceil s \le 31$, and $N \gg n$.
+\endtab
+\code
+
+
+void sentrop_EntropyDM (unif01_Gen *gen, sres_Basic *res,
+                        long N, long n, int r, long m);
+\endcode
+\tab
+  Applies the entropy test\index{Test!EntropyDM}
+  described by Dudewicz and van der Meulen \cite{rDUD81b,rDUD95a}.
+  It uses $n$ successive output values from the generator and computes
+  the empirical entropy $H_{m,n}$ defined in \cite{rDUD81b,rDUD95a},
+  whose theoretical distribution is approximated by a normal distribution.
+\endtab
+\code
+
+
+void sentrop_EntropyDMCirc (unif01_Gen *gen, sres_Basic *res,
+                            long N, long n, int r, long m);
+\endcode
+\tab
+  Similar\index{Test!EntropyDMCirc} to {\tt sentrop\_EntropyDM}, except
+  that  a  circular
+  definition of the $Y_i$'s (defined in \cite{rDUD81b,rDUD95a}) is used. 
+  This function defines $Y_i = Y_{n+i} - 1$ for $i < 1$, and
+  $Y_i = Y_{i-n} + 1$ for $i > n$.
+\endtab
+\code
+\hide
+#endif
+\endhide
+\endcode

@@ -1,0 +1,84 @@
+\defmodule{tcode}
+
+\iffalse
+ Le programme {\tt tcode} permet de produire du code compilable
+\`a partir d'une documentation destin\'ee \`a TEX ou LATEX.
+Il produit un fichier {\tt FOut} destin\'e \`a un compilateur tel que Modula-2
+(ou autre), \`a partir d'un fichier {\tt FIn} re\c cu \`a l'entr\'ee.
+Les noms de ces deux fichiers sont donn\'es par l'usager, avec l'extension,
+lors de l'appel du programme.
+N'appara\^\i tront dans le second fichier que les parties se trouvant entre
+les d\'elimiteurs {\tt\bs{code}} et {\tt\bs{endcode}}.
+Toutes les autres commandes TEX et LATEX, m\^eme \`a l'int\'erieur de ces
+d\'elimiteurs, seront aussi enlev\'ees.
+L'appel se fait sous la forme:
+\fi
+
+
+Program {\tt tcode} makes compilable code from a \TeX\  or \LaTeX\ document. It
+creates a file {\tt FOut} for a compiler like cc (or any other), starting
+from a file {\tt FIn}. The names of these two files must be given by the user,
+with appropriate extension, when calling the program.
+The two file names (with the extension) must be different.
+
+Only the text included between the {\tt\bs{code}} and 
+{\tt\bs{endcode}} delimiters will appear in the second file. Only the following
+\LaTeX\  commands can appear between {\tt\bs{code}} and {\tt\bs{endcode}}:
+
+\begin{verse}
+ {\tt\bs{hide}}, {\tt\bs{endhide}}, {\tt\bs{iffalse}}, {\tt\bs{fi}},
+  {\tt\bs{smallcode}},   {\tt\bs{smallc}}.
+\end{verse}
+
+  Everything else between
+{\tt\bs{code}} and {\tt\bs{endcode}} must be legal code in the 
+output file, apart from two exceptions: the \TeX\  command
+ {\tt\bs{def}\bs{code}}, defining  {\tt\bs{code}} will not start a region
+ of valid code, nor will  {\tt\bs{code}} appearing on a line after a
+ \TeX\  comment character {\tt\%}.
+
+ If one wants code to appear in the compilable file, but
+ be invisible in the {\tt dvi} file obtained from processing the {\tt tex}
+file with \LaTeX, one should put this code between the delimiters
+{\tt\bs{hide}} and {\tt\bs{endhide}}, or between the delimiters
+{\tt\bs{iffalse}} and {\tt\bs{fi}}.
+
+The program is called by:
+
+\begin {center}\tt
+  tcode \ $\langle$FIn$\rangle$ \ $\langle$FOut$\rangle$
+\end {center}
+
+\iffalse
+ Les deux noms de fichiers (avec l'extension) doivent \^etre diff\'erents.
+Par exemple, si le fichier destin\'e \`a \LaTeX\  est {\tt chrono.tex} et
+que l'on veut en extraire le code compilable et placer ce dernier dans
+{\tt chrono.h} (module de d\'efinition), on utilisera la commande:
+\fi
+
+\paragraph{Examples:}
+If one wants
+to extract the   {\it C} code  from the \LaTeX\ file {\tt chrono.tex},
+ and place it in
+the header file {\tt chrono.h}, the following
+ command should be used:
+
+\begin {center}\tt
+  tcode \ chrono.tex \ chrono.h
+\end {center}
+
+To extract {\it Java} code  from the \LaTeX\  file {\tt Event.tex},
+and place it in the file {\tt Event.java}, one must use:
+
+\begin {center}\tt
+  tcode \ Event.tex \ Event.java
+\end {center}
+%
+%To extract the {\it Modula-2} DEFINITION module  from the \LaTeX\  file
+% {\tt BIN.tex},
+%and place it in the file {\tt BIN.def}, one must use:
+%
+%\begin {center}\tt
+%  tcode \ BIN.tex \ BIN.def
+%\end {center}
+%

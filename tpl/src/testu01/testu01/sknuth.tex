@@ -1,0 +1,336 @@
+\defmodule {sknuth}
+
+This module implements the classical statistical tests for RNGs
+described in Knuth's book \cite{rKNU81a}.  
+(They were actually taken from the 1981 edition, and implemented
+some years before the 1998 edition \cite{rKNU98a} appeared.)
+Some of these tests are special cases of the {\em multinomial\/}
+tests described and implemented in module {\tt smultin}.
+In these cases, the functions here simply call the appropriate 
+functions in {\tt smultin}.
+\resdef
+
+\bigskip\hrule
+
+\code\hide
+/* sknuth.h  for ANSI C */
+#ifndef SKNUTH_H
+#define SKNUTH_H
+\endhide
+#include "gdef.h"
+#include "unif01.h"
+#include "sres.h"
+\endcode
+
+
+\ifdetailed  %%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{Structure for test results}
+
+The detailed test results can be recovered in a structure of type
+{\tt sres\_Basic}, {\tt sres\_Chi2} or in one of the structures
+defined in this module, depending on the test.
+
+\code
+
+typedef struct {
+
+   sres_Chi2 *Chi;
+   sres_Basic *Bas;
+
+} sknuth_Res1;
+\endcode
+ \tab
+  Structure for keeping the results of the tests in {\tt sknuth\_MaxOft}.
+  The results for the chi-square test are kept in
+  {\tt Chi}, and for the Anderson-Darling test in  {\tt Bas}.
+ \endtab
+\code
+
+
+sknuth_Res1 * sknuth_CreateRes1 (void);
+\endcode
+ \tab 
+  Creates and returns a structure that will hold the results
+  of a  {\tt sknuth\_MaxOft} test. 
+ \endtab
+\code
+
+
+void sknuth_DeleteRes1 (sknuth_Res1 *res);
+\endcode
+ \tab 
+  Frees the memory allocated by {\tt sknuth\_CreateRes1}.
+ \endtab
+
+\bigskip\hrule\bigskip
+
+\code
+typedef struct {
+
+   sres_Poisson *Pois;
+   sres_Basic *Bas;
+
+} sknuth_Res2;
+\endcode
+ \tab
+  Structure for keeping the results of the tests {\tt sknuth\_Collision}
+  and {\tt sknuth\_CollisionPermut}.
+  The results for the Poisson approximation are kept in
+  {\tt Pois}, and for the normal approximation in  {\tt Bas}.
+ \endtab
+\code
+
+
+sknuth_Res2 * sknuth_CreateRes2 (void);
+\endcode
+ \tab 
+  Creates and returns a structure that will hold the results
+  of a  {\tt sknuth\_Collision} or a {\tt sknuth\_CollisionPermut} test. 
+ \endtab
+\code
+
+
+void sknuth_DeleteRes2 (sknuth_Res2 *res);
+\endcode
+ \tab 
+  Frees the memory allocated by {\tt sknuth\_CreateRes2}.
+ \endtab
+
+
+
+
+\fi %%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{The tests}
+
+\code
+
+void sknuth_Serial (unif01_Gen *gen, sres_Chi2 *res,
+                    long N, long n, int r, long d, int t);
+\endcode
+ \tab
+  Applies\index{Test!Serial} the {\em serial test\/} of uniformity
+  in $t$ dimensions,
+  using a chi-square, as described by Knuth \cite{rKNU98a}, p.62. 
+  It divides the interval $[0,1)$ in $d$ equal segments, thus dividing 
+  the unit hypercube $[0,1)^t$ in $d^{t}$ small hypercubes. 
+  It generates $n$ points ($t$-dimensional vectors) in $[0,1)^t$,
+  using $n$ non-overlapping vectors of $t$ successive output values 
+  from the generator, counts the number of points falling into 
+  each small hypercube, and compares those counts with the expected
+  values via a chi-square test.
+  This test is a special case of {\tt smultin\_Multinomial} with 
+  {\tt Sparse = FALSE} (see \cite{rLEC02c}).
+  It assumes that we are in the {\em dense\/} case, where
+  $n > k = d^t$.
+  Restriction: $n / d^{t}\ge$ {\tt gofs\_MinExpected}.
+ \endtab
+\code
+
+
+void sknuth_SerialSparse (unif01_Gen *gen, sres_Chi2 *res,
+                          long N, long n, int r, long d, int t);
+\endcode
+ \tab
+  Similar\index{Test!SerialSparse}
+   to {\tt sknuth\_Serial}, except that a normal approximation 
+  is used for the distribution of the chi-square statistic.
+  This is valid asymptotically when $n / d^t$ is bounded and
+  $n\to\infty$.
+  The implementation uses a hashing table in order to allow for 
+  larger values of $d^t$.
+  This test is a special case of {\tt smultin\_Multinomial} with
+  {\tt Sparse = TRUE} (see \cite{rLEC02c}). 
+  It corresponds to the sparse case of the serial test, where we assume
+  that $n$ is large and $n \le k = d^t$.
+  Restrictions: $d^t < 2^{53}$ and $d^{t}/n < 2^{31}$.
+ \endtab
+\code
+
+
+void sknuth_Permutation (unif01_Gen *gen, sres_Chi2 *res,
+                         long N, long n, int r, int t);
+\endcode
+ \tab 
+   Applies\index{Test!Permutation}
+   the {\em permutation test\/} (Knuth \cite{rKNU98a}, page 65).
+   It generates $n$ non-overlapping vectors of $t$ values, each vector
+   using $t$ successive values obtained from the generator,
+   and determines to which permutation each vector corresponds
+   (the permutation that would place the values in increasing order).
+   The test counts the number of times each permutation has appeared 
+   and compares these counts with the expected values ($n/t!$) 
+   via a chi-square test.
+   This is a special case of {\tt smultin\_Multinomial} with
+   {\tt Sparse = FALSE} and 
+% a special way of choosing the cell number, that is with
+   {\tt smultin\_Gener\-Cell = smultin\_GenerCellPermut}. 
+   It corresponds to the dense case, where  $n$, 
+   the number of points, should be larger than  $t!$, the number of cells.
+   Restrictions: $n/t! \ge$ {\tt gofs\_MinExpected} and $2 \le t \le 18$.
+ \endtab
+\code
+
+
+void sknuth_Gap (unif01_Gen *gen, sres_Chi2 *res,
+                 long N, long n, int r, double Alpha, double Beta);
+\endcode
+ \tab  Applies\index{Test!Gap}
+   the {\em gap test\/} described by Knuth \cite{rKEN38a,rKEN39a,rKNU98a}.
+   Let $\alpha=$ {\tt Alpha}, $\beta=$ {\tt Beta}, and $p=\beta-\alpha$.
+   The test generates  $n$ values in $[0,1)$ and, for $s=0,1,2,\dots$, 
+   counts the number of times that a sequence of exactly $s$ successive
+   values fall outside the interval $[\alpha,\beta]$
+   (this is the number of {\em gaps\/} of length $s$ between visits to
+   $[\alpha,\beta]$).   It then applies a chi-square test 
+   to compare the expected and observed number of observations for the
+   different values of $s$.
+   Restrictions:  $0\le\alpha < \beta\le 1$.
+ \endtab
+\code
+
+
+void sknuth_SimpPoker (unif01_Gen *gen, sres_Chi2 *res,
+                       long N, long n, int r, int d, int k);
+\endcode
+  \tab  Applies\index{Test!Poker}
+   the simplified {\rm poker test\/} described by
+   Knuth \cite{rKEN38a,rKEN39a,rKNU98a}.
+   It generates $n$ groups of $k$ integers from 0 to $d-1$,
+   by making $nk$ calls to the generator, and for each group it computes
+   the number $s$ of distinct integers in the group.
+\hrichard{Pourquoi ne pas l'appeler simplement Poker test? Dixit Pierre:
+parce qu'il y a un autre test dans Knuth qui est le poker test;
+celui-ci est appel\'e poker test simplifi\'e par Knuth.}
+   It then applies a chi-square test 
+   to compare the expected and observed number of observations for the
+   different values of $s$.
+   Restrictions: $d < 128$ and $k < 128$.
+  \endtab
+\code
+
+
+void sknuth_CouponCollector (unif01_Gen *gen, sres_Chi2 *res,
+                             long N, long n, int r, int d);
+\endcode
+  \tab   Applies the {\em coupon collector test\/} proposed in \cite{rGRE55a}
+    and described in \cite{rKNU98a}. \index{Test!CouponCollector}
+   The test generates a sequence of random integers in $\{0,\dots,d-1\}$,
+   and counts how many must be generated before each of the
+   $d$ possible values appears at least once. 
+   This is repeated $n$ times.  The test counts how many times exactly
+   $s$ integers were needed, for each $s$, and compares these counts
+   with the expected values via a chi-square test.
+   Restriction: $1<d < 62$. If $d$ is too large for a given $n$, there
+   will be only 1 class for the chi-square and the test will not be done.
+ \endtab
+\code
+
+
+void sknuth_Run (unif01_Gen *gen, sres_Chi2 *res,
+                 long N, long n, int r, lebool Up);
+\endcode
+  \tab  Applies\index{Test!Run!reals} the test of increasing
+   or decreasing subsequences ({\em runs up\/} or {\em runs down\/}) 
+   \cite{rKER37a,rLEV44a,rKNU98a}.
+   It measures the lengths of subsequences of successive values in $[0,1)$
+   that are generated in increasing (or decreasing) order. If {\tt Up = TRUE},
+   it considers {\em runs up}, otherwise it considers {\em runs down}.
+   These subsequences are the {\em runs}.
+   The test thus generates $n$ random numbers, counts how many runs of each length 
+   there are after merging all run lengths larger or equal to 6,
+   and computes the statistic $V$ defined in \cite{rKNU98a}, page 67, Eq.\ (10)
+   (the new version of the test incorporating small $O(1/n)$ corrections is used,
+   as described in the 3rd edition of \cite{rKNU98a}).
+   For large $n$, this $V$ should follow approximately the chi-square
+   distribution with 6 degrees of freedom. 
+ \endtab
+\code
+
+
+void sknuth_RunIndep (unif01_Gen *gen, sres_Chi2 *res,
+                      long N, long n, int r, lebool Up);
+\endcode
+  \tab  A simplified\index{Test!RunIndep} version of {\tt sknuth\_Run},
+   where the increasing or decreasing subsequences are independent,
+   as suggested in Exercice 3.3.2--14 of \cite{rKNU98a}, page 77.
+   This test skips one value between any two successive runs.
+   In this case, a run has length $t$ with probability
+   $1/t! - 1/(t+1)!$.  The function merges all values larger 
+   or equal to 6, and applies a chi-square  test.
+ \endtab
+\code
+
+
+void sknuth_MaxOft (unif01_Gen *gen, sknuth_Res1 *res,
+                    long N, long n, int r, int d, int t);
+\endcode
+  \tab  Applies the\index{Test!Maximum of $t$} {\em maximum-of-$t$} test
+   (Knuth \cite{rKNU98a}, page 70).  
+   This test generates $n$ groups of $t$ values in $[0,1)$,
+   computes the maximum $X$ for each group, and then compares the 
+   empirical distribution function of these $n$ values of $X$ with
+   the theoretical distribution function of the maximum, $F(x)=x^t$,
+   via a chi-square test and an Anderson-Darling (AD) test.
+   To apply the chi-square test, the values of $X$ are partitioned 
+   into $d$ categories
+\hrichard{ Ce param\`etre $d$ est-il encore n\'ecessaire (voir
+          MergeClasses)? Oui, selon Pierre, pour plus de flexibilit\'e.}
+   in a way that the expected number in each category, 
+   under $\cH_0$, is exactly $n/d$.  
+  %% Thus, for $i=1,\dots,d$, category $i$ 
+  %%  corresponds to the interval $[((i-1)/d)^{1/t},\, (i/d)^{1/t}]$.
+   For $N > 1$, the empirical distribution of the $p$-values of the 
+   AD test is compared with the AD distribution.
+   Restriction: $n/d \ge$ {\tt gofs\_MinExpected}.
+\endtab
+\code
+
+
+void sknuth_Collision (unif01_Gen *gen, sknuth_Res2 *res,
+                       long N, long n, int r, long d, int t);
+\endcode
+  \tab 
+   Applies\index{Test!Collision} the {\em collision test\/}
+  (Knuth \cite{rKNU98a},  pp.~70--71, and \cite{rLEC02c}).
+   Similar to {\tt sknuth\_Serial}, except that the test computes the
+   number of {\em collisions\/} (the number of times a point hits a cell
+   already occupied) instead of computing the chi-square statistic.
+   This is a special case of {\tt smultin\_Multinomial} with
+   {\tt Sparse = TRUE}.  This test is meaningfull only in the sparse case,
+   with $n$ smaller than $k$.  See the documentation in {\tt smultin}.
+   Restrictions: $d^t < 2^{53}$ (assuming that a {\tt double's} mantissa
+   uses 53 bits of precision) and $d^{t}/n < 2^{31}$.
+  \endtab
+\code
+
+
+void sknuth_CollisionPermut (unif01_Gen *gen, sknuth_Res2 *res,
+                             long N, long n, int r, int t);
+\endcode
+  \tab
+   Similar\index{Test!CollisionPermut} to {\tt sknuth\_Collisions},
+   except that\index{permutations}
+   instead of generating  vectors as in {\tt sknuth\_Serial},
+   it generates permutations as in {\tt sknuth\_Permutation}.
+   It then computes the number of collisions between these permutations.
+   This is a special case of {\tt smultin\_Multinomial} with
+   {\tt Sparse = TRUE} and 
+%  a special way of choosing the cell number, that is with
+  {\tt smultin\_Gener\-Cell = smultin\_GenerCellPermut}. 
+   It corresponds to the sparse case where $n$, the number of points, 
+   should be much smaller than  $t!$, the number of cells. 
+   Restrictions: $2 \le t \le 18 $ and $ t!/n < 2^{31}$.
+  \endtab
+
+\code
+\hide
+#endif
+\endhide
+\endcode
+
+

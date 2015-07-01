@@ -1,0 +1,231 @@
+\defmodule {svaria}
+
+This module implements various tests of uniformity based on
+relatively simple statistics, as well as a few specific tests proposed 
+in the literature. \resdef
+
+
+\bigskip
+\hrule
+\code\hide
+#ifndef SVARIA_H
+#define SVARIA_H
+\endhide
+#include "unif01.h"
+#include "sres.h"
+\endcode
+
+\ifdetailed  %%%%%%%%%%%%%%%%%%%%
+\code
+
+
+extern lebool svaria_Timer;
+\endcode
+ \tab
+   This flag is used only in test  {\tt svaria\_CollisionArgMax}.
+   If it is set to {\tt TRUE}, a timer will measure separately the time to
+   initialize the collision distribution function, and the time for the
+   test proper.
+ \endtab
+
+\fi   %%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{The tests}
+\code
+
+void svaria_SampleMean (unif01_Gen *gen, sres_Basic *res,
+                        long N, long n, int r);
+\endcode
+ \tab
+   This test generates $n$ uniforms $u_1,\dots,u_n$ and computes
+   their average\index{Test!SampleMean}
+    $$ \overline u_n = {1\over n} \sum_{j=1}^n u_j.$$
+   The distribution of the $N$ values of $\overline u_n$ is compared
+   with the exact theoretical distribution
+$$
+   P[n \overline u_n \le z] = \frac 1 {n!}
+      \sum_{j = 0}^{\lfloor z \rfloor} (-1)^j {n \choose j} (z - j)^n,
+     \qquad 0 \le z \le n
+$$
+\hrichard{The current method for computing the theoretical distribution
+  is numerically unstable for $n>60$. This should be changed if possible.}
+   given by Stephens \cite{tSTE66a}
+   for $n < 60$, and to the normal distribution with mean $1/2$
+   and variance $1/(12n)$ for $n\ge 60$.
+ \endtab
+\code
+
+
+void svaria_SampleCorr (unif01_Gen *gen, sres_Basic *res,
+                        long N, long n, int r, int k);
+\endcode
+ \tab
+  This test generates $n$ uniforms $u_1,\dots,u_n$ and
+   computes\index{Test!SampleCorr} \index{Test!Auto-correlation!real} 
+  the empirical autocorrelation \cite{sFIS78a} of lag $k$,
+    $$
+     \hat\rho_k = {1 \over (n-k)} \sum_{j=1}^{n-k} 
+               \left(u_j u_{j+k} - {\textstyle \frac14}\right).
+    $$
+   The empirical distribution
+ \hrichard{Fishman \cite[p.382]{sFIS78a} uses $(u_j - 1/2) ( u_{j+k} - 1/2)$
+  instead.  The difference vanishes rapidly when $n \to\infty$.}
+   of the $N$ values of $\sqrt{12 (n-k)} \hat\rho_k$  
+   is compared with the standard normal distribution,
+   which is its asymptotic theoretical distribution when $n \to\infty$.
+   The approximation is valid only when $n$ is very large.
+   Restriction: $k \ll n$.
+ \endtab
+\code
+
+
+void svaria_SampleProd (unif01_Gen *gen, sres_Basic *res,
+                        long N, long n, int r, int t);
+\endcode
+ \tab
+  This test generates $t n$ uniforms $u_1,\dots,u_{tn}$ and
+  computes\index{Test!SampleProd}
+  the empirical distribution of the products of $n$ nonoverlapping 
+  successive groups of $t$ values, $\{u_{(j-1)t + 1},  u_{(j-1)t + 2},
+  \ldots, u_{jt}: j=1,\dots,n\}$.   
+  For $N=1$, this test is equivalent to calling
+   {\tt svaria\_SumLogs (gen, res, n, t, r)}.
+  This distribution is compared with the theoretical distribution of
+  the product of $t$  independent $U(0,1)$ random variables, given by
+  $$
+  P[U_1U_2\ldots U_t \le x] = F(x) = x \sum_{j=0}^{t-1} \frac {(-\ln x)^j} {j!}
+  $$
+  for $0\le x\le 1$, via an Anderson-Darling (AD) test.
+  For $N > 1$, the empirical distribution of the $p$-values of the 
+  AD test is compared with the AD distribution.
+ \endtab
+\code
+
+
+void svaria_SumLogs (unif01_Gen *gen, sres_Chi2 *res,
+                     long N, long n, int r);
+\endcode
+ \tab
+  This test generates $n$ uniforms, $u_1,\dots,u_n$, and computes
+  \index{Test!SumLogs}
+   $$
+    P = - 2 \sum_{j=1}^n \ln (u_j).
+   $$
+  Under $\cH_0$, $P/2$ is a sum of $n$ i.i.d.\ exponentials of mean 1,
+  so $P$ has the chi-square distribution with $2n$ degrees of freedom
+  (see \cite{tSTE86a}).
+ \endtab
+\code
+
+
+void svaria_WeightDistrib (unif01_Gen *gen, sres_Chi2 *res, long N, long n,
+                           int r, long k, double alpha, double beta);
+\endcode
+ \tab
+  Applies the test proposed by Matsumoto and Kurita \cite{rMAT94a}, page 264. 
+  This test\index{Test!WeightDistrib}
+  generates $k$ uniforms, $u_1,\dots,u_k$, and computes
+    $$ W = \sum_{j=1}^k I[\alpha\le u_j < \beta],$$
+   the number of $u_j$'s falling in the interval $[\alpha,\beta)$.
+   Under $\cH_0$, $W$ is a binomial random variable  with parameters $k$ and
+   $p = \beta-\alpha$.
+   This is repeated $n$ times, thus obtaining $W_1,\dots,W_n$,
+   whose empirical distribution is compared with the binomial
+   distribution via a chi-square test.
+   For the chi-square test, classes (possible values of $W$) are
+   regrouped as needed to ensure that the expected numbers in each 
+   class is larger or equal to {\tt gofs\_MinExpected}.
+%   The function repeats all this $N$ times and compares the $N$ chi-square
+%   values obtained with the chi-square distribution.
+ \endtab
+\code
+
+
+void svaria_CollisionArgMax (unif01_Gen *gen, sres_Chi2 *res,
+                             long N, long n, int r, long k, long m);
+\endcode
+ \tab
+  Applies a generalization of the test proposed by Sullivan \cite{rSUL93a}.
+  This test generates $k$ uniforms, $u_1,\dots,u_k$, and computes
+  \index{Test!CollisionArgMax}
+   $$
+     I = \min \Big\{ i \mid 1\le i\le k \mbox{ and }
+          u_i = \max (u_1,\dots,u_k) \Big\},
+   $$
+  the index of the largest value.
+  It repeats this $n$ times and  counts the number $C$ of collisions
+  among the $n$ values of $I$, which is equal to   
+  $n$ minus the number of distinct values of $I$.
+  If $m > 1$, this is repeated $m$ times and the empirical distribution 
+  of the $m$ values of $C$ is compared with the theoretical distribution of
+  $C$, given in \cite{rKNU98a} (see also {\tt sknuth\_Collisions})
+  by applying a chi-square test.
+%  At the next level, it will repeat all this $N$ times and will compare the
+%  empirical distribution of the $N$ chi-square values obtained 
+%  with the theoretical distribution.
+  For $m=1$, this test is equivalent to the collision test applied by
+  {\tt smultin\_Multinomial} with
+  {\tt smultin\_GenerCell = smultin\_GenerCellMax}.
+  Recommendations: $n \le k$, and either $m=1$ or $m$ 
+  large enough for the chi-square test to make sense.
+ \endtab
+\code
+
+
+void svaria_SumCollector (unif01_Gen *gen, sres_Chi2 *res,
+                          long N, long n, int r, double g);
+\endcode
+ \tab Applies a test\index{Test!SumCollector} proposed by
+  Ugrin-Sparac \cite{rUGR91a}.
+  It generates a sequence of uniforms $u_0,u_1,\dots$ adds them up
+  until their sum exceeds $g$.  It then defines 
+  $J = \min\{\ell\ge 0 : u_0 + \cdots + u_{\ell} > g \}$.
+  This is repeated $n$ times, to obtain $n$ copies of $J$, say
+  $J_1,\dots,J_n$, whose empirical distribution is compared to the
+  theoretical distribution given in \cite{rUGR91a}, by a chi-square test.
+%   It repeats all this $N$ times and  compares the
+%   empirical distribution of the $N$ chi-square values with the theoretical
+%   distribution.
+   Restriction: $1 \le g \le 10$.
+ \endtab
+\code
+
+
+void svaria_AppearanceSpacings (unif01_Gen *gen, sres_Basic *res,
+                               long N, long Q, long K, int r, int s, int L);
+\endcode
+ \tab Applies the ``universal test'' proposed by Maurer \cite{rMAU92a}.
+   The goal of this test is to measure the entropy of a sequence
+   of\index{Test!AppearanceSpacings}\index{entropy}
+    \index{Test!Maurer|see{Appearance\-Spacings}}
+    \index{Test!Universal|see{Appearance\-Spacings}}
+   random  bits (it is somewhat related to the test applied by
+   {\tt sentrop\_EntropyDisc}).
+   The test takes the $s$ most significant bits (after dropping the first
+   $r$) from each uniform, and concatenates these $s$-bit blocks to 
+   construct $Q + K$ blocks of $L$ bits.
+   The first $Q$ blocks are used for the initialization, and
+   the $K$ following blocks serve for the test proper.
+   For each of these $K$ blocks, the function finds the number of blocks
+   generated since the most recent occurrence of the same block in the
+   sequence. If it is generating the $j$-th block and its most recent 
+   occurrence was in block $(j-i)$-th, it sets $A_j = i$;
+   if it is its first occurrence, it sets $A_j = j$.
+   It then computes the average 
+      $$ Y = {1\over K} \sum_{j=Q+1}^{Q+K} \log_2 A_j, $$
+   whose distribution under $\cH_0$ is approximately normal with 
+   mean and variance given in \cite{rMAU92a}. A better formula for the
+   variance was given in \cite{rCOR99a} and that is the one used.
+   The approximation is good only when $Q$ and $K$ are very large.
+   Recommendations: $Q\ge 10 \times 2^{L}$ and $K \gg 2^{L}$.
+   Restrictions: $s \bmod L = 0$ if $s > L$.
+%%  $K\ge 1000 \times 2^{L}$.
+ \endtab
+
+\code
+\hide
+#endif
+\endhide
+\endcode

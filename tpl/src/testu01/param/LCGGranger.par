@@ -1,0 +1,34 @@
+# Package:    TestU01
+# File:       LCGGranger.par
+
+# Description:   Parameter values for the LCG of Jacinthe Granger-Piché.
+# They were chosen so as to give a maximal period for some of the combined
+# generators (with the cubic and possibly others) in her master's thesis.
+#-----------------------------------------------------------------
+
+# Give the name of the family first
+
+LCGGranger
+
+10	1019	     440    
+11	2039	     995    
+12	4079	     212    
+13	8147	     619    
+14	16223	     10730  
+15	32603	     7513   
+16	65267	     16086  
+17	130787	     57113  
+18	262127	     22725  
+19	524243	     882    
+20	1048343	     377158 
+21	2097143	     360889 
+22	4194287	     341585 
+23	8388287	     1869896
+24	16776899	213590
+25	33553799	14704570
+26	67108187	35190319
+27	134217323	912557
+28	268435019	12222884
+29	536870723	10896430
+30	1073740439	2848890
+31	2147483579	3396173

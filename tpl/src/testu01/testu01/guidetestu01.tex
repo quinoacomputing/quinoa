@@ -1,0 +1,171 @@
+%
+%  User's guide for the software library  TestU01
+%
+\documentclass[12pt]{report}
+\usepackage{url}
+\usepackage{makeidx}
+\usepackage{verbatim}
+\usepackage{supertabular}
+
+% The symbols for the complex, the real, the integers, the fields.
+\usepackage{amssymb}
+%% $\mathbb{C, R, N, Z, F}$
+
+\input ../doc/myarticle.sty
+
+\def\myboxit#1{\vbox{\hrule height1pt
+                   \hbox{\vrule width1pt\kern10pt
+                         \vbox{\kern3pt#1\kern3pt
+                              }\kern10pt\vrule width1pt
+                        }\hrule height1pt }}
+
+\makeindex
+
+\def\To {\Rightarrow}
+\def\o {{(o)}}
+\newcommand\cH{\mathcal{H}}
+\def\bv  {{\bf v}}
+\def\bx  {{\bf x}}
+\def\bA  {{\bf A}}
+\def\bI  {{\bf I}}
+\def\bL  {{\bf L}}
+\def\bR  {{\bf R}}
+\def\tpose{^{\sf T}}
+
+\newcommand\guisec[1]{\vspace{20pt}%
+\noindent\hrulefill\hspace{10pt}{\bf #1}\hspace{10pt}\hrulefill%
+\nopagebreak\vspace{10pt}}
+
+\newcommand{\DelGen}{Frees the dynamic memory used by any generator
+  returned by the {\tt Create} functions of this module.
+  This function should be called to clean up any generator object of this
+  module when it is no longer in use.}
+
+\newcommand{\resdef}{The parameter {\tt res} is usually set to the
+ {\tt NULL} pointer.
+However, if one wants to examine or post-process the results after a
+test, then one must explicitly create a  {\tt res} structure.
+\ifdetailed \else
+See the detailed version of this guide for the definition of the
+structures and the relevant instructions.\fi\bigskip}
+
+\newtheorem {theorem}{Theorem}
+\newtheorem {proposition}{Proposition}
+\newtheorem {lemma}{Lemma}
+\newtheorem {corollary}{Corollary}
+\newtheorem {assumption}{Assumption}
+\newtheorem {example}{Example}
+
+% \def\pierre#1 {\fbox {\footnote {\ }}\ \footnotetext { From Pierre: #1}}
+\def\richard#1 {\fbox {\footnote {\ }}\ \footnotetext { From Richard: #1}}
+\def\hpierre#1{}
+\def\hrichard#1{}
+\def\myurl{\url{http://www.iro.umontreal.ca/~lecuyer}}
+\def\mycode{\code}
+\def\myendcode{\endcode}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Switch to get a more/less detailed version of the user's guide.
+
+\newif\ifdetailed\detailedfalse
+\newenvironment{detailed}{\protect\ifdetailed }{\protect\fi }
+% \detailedtrue   % For a more detailed user's guide.
+
+% \includeonly {bbattery}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin {document}
+\include {title}
+
+\pagenumbering{roman}
+\include {copyright}
+\addcontentsline{toc}{chapter}{Copyright}
+\tableofcontents
+\clearpage
+
+\pagenumbering{arabic}
+
+\include {intro}
+\include {uintro}
+\include {unif01}
+\include {ulcg}
+\include {umrg}
+\include {ucarry}
+\include {utaus}
+\include {ugfsr}
+\include {uinv}
+\include {uquad}
+\include {ucubic}
+\include {uxorshift}
+\include {ubrent}
+\include {ulec}
+\include {utezuka}
+\include {umarsa}
+\include {uknuth}
+\include {utouzin}
+\include {ugranger}
+\include {uwu}
+\include {udeng}
+\include {uweyl}
+\include {unumrec}
+\include {uautomata}
+% \include {vectorsF2}
+\include {ucrypto}
+\include {usoft}
+\include {uvaria}
+\include {ufile}
+
+\include {sintro}
+\include {swrite}
+\ifdetailed
+   \include {sres}
+\else
+   \include {sresshort}
+\fi
+\include {smultin}
+\include {sentrop}
+\include {snpair}
+\include {sknuth}
+\include {smarsa}
+\include {svaria}
+\include {swalk}
+\include {scomp}
+\include {sspectral}
+\include {sstring}
+\include {sspacings}
+\include {scatter}
+
+\include {bintro}
+\include {bbattery}
+
+\include {fintro}
+\include {ffam}
+\include {fcong}
+\include {ffsr}
+\include {ftab}
+\ifdetailed
+   \include {fres}
+\else
+   \include {fresshort}
+\fi
+\include {fcho}
+
+\include {fmultin}
+% \include {fsentrop}
+\include {fnpair}
+\include {fknuth}
+\include {fmarsa}
+\include {fvaria}
+\include {fwalk}
+% \include {fcomp}
+\include {fspectral}
+\include {fstring}
+
+
+\bibliographystyle {plain}
+\addcontentsline{toc}{chapter}{BIBLIOGRAPHY}
+\bibliography{random,ift,simul,stat,prob,math}
+\clearpage
+\addcontentsline{toc}{chapter}{INDEX}
+\input{guidetestu01.ind}
+\end {document}

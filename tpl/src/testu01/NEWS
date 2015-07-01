@@ -1,0 +1,197 @@
+============================================================================
+What is new in version TestU01-1.2.2
+------------------------------------
+
+- Module mylib/num2:  new function num2_Digamma, the logarithmic derivative
+   of the Gamma function.
+
+- Module probdist/fdist: better approximations of fdist_Student1 in the tails.
+
+- Module probdist/fdist: new version of fdist_KS1
+
+- Module probdist/fbar: new version of fbar_KS1
+
+- Module testu01/smultin: bug correction in smultin_MultinomialBitsOver. For
+  small L, the wrong statistic was printed.
+
+
+
+============================================================================
+What is new in version TestU01-1.2.2
+------------------------------------
+
+- Changed type boolean into type lebool to avoid conflicts on some platforms
+  where boolean is already defined.
+
+- Module probdist/fbar: better approximations for fbar_ChiSquare, fbar_KSPlus,
+  fbar_KS1
+
+- Module probdist/fdist: better approximations for fdist_KSPlus, fdist_KS1
+
+- Module testu01/ulcg:  the generator ulcg_CreateLCGCarta has been renamed
+  ulcg_CreateLCGPayne.
+
+
+
+============================================================================
+What is new in version TestU01-1.2.1
+------------------------------------
+
+** This version contains only small corrections. It eliminates warnings for
+   extreme values in probability distributions and protects against arguments
+   that could give overflows on some compilers for a few calls to pow and exp
+   functions.
+
+
+
+============================================================================
+What is new in version TestU01-1.2
+------------------------------------
+
+** Module probdist/fdist, fbar: replaced the bivariate normal distribution
+   fdist_BiNormal1 and fbar_BiNormal1 with a better algorithm due to Donnelly.
+
+** Module testu01/unif01: new filter unif01_CreateParallelGen to test parallel
+   generators or multiple streams of a generator.
+
+** Module testu01/ucrypto: new cryptographic generators based on SHA-1 and on AES.
+
+** Module testu01/ubrent: added the new version (2006) of Brent's xorgens RNGs.
+
+** Module testu01/sknuth_Run test:   bug correction:
+   n random numbers are now generated instead of the incorrect n+1 in previous
+   versions. The coefficients of the inverse covariance matrix A have been com-
+   puted with better precision. The new version of the run test in Knuth (3rd ed.)
+   is now used. Thanks to Paul C. Leopardi for these corrections.
+
+
+============================================================================
+What is new in version TestU01-1.1
+------------------------------------
+
+** Module testu01/bbattery: Changed the parameters of 1 birthday spacings test
+   in bbattery_Crush and in bbattery_BigCrush in the case of 32-bit machines.
+
+** Module testu01/u*: Added the modules uxorshift and ubrent implementing some
+   xorshift generators.
+
+
+
+============================================================================
+What is new in version TestU01-1.0
+------------------------------------
+
+** Module testu01/bbattery: Changed the parameters of some tests in 
+   bbattery_Crush and bbattery_BigCrush.
+   Added many new tests in bbattery_BigCrush.
+
+** Module testu01/s*: all tests that use normal or chi-square distributions
+   now have additionnal tests based on the sum of the N replicated statistics.
+   These statistics are calculated in module sres.
+
+** Module testu01/smarsa: renamed the Monkey test as the CAT test, and
+   MonkeyBits test as the CATBits test.
+
+** Module testu01/usoft: Added generators of well-known softwares.
+
+** Module testu01/unif01: Added the luxury filter unif01_CreateLuxGen.
+
+** Module testu01/umrg: umrg_CreateLagFib has one more parameter and is
+   more general than the last version.
+
+** Module testu01/ulec: L'Ecuyer's MRG32k3a is implemented with 64-bit integers
+   in ulec_CreateMRG32k3aL.
+
+** Module testu01/ulcg: Added Payne's et al. fast implementation 
+   ulcg_CreateLCGPayne for linear congruential generator with m = 2^31 - 1.
+
+** Module probdist/fdist, finv: added the symmetrical Beta distribution.
+
+** Module probdist/fdist, fbar, finv: improved some distributions in the
+   far tails.
+
+** Module probdist/fdist, fbar:  added a better approximation of the
+   Gamma distribution for very large parameter.
+
+** Module probdist/fdist, fbar: added the bivariate normal distributions  
+   BiNormal1, BiNormal2
+
+** Module probdist/fmass: added fmass_BinomialTerm3 and fmass_BinomialTerm4.
+
+** Module probdist/gofw: added the values gofw_Var and gofw_Sum in type 
+   gofw_TestType
+
+
+============================================================================
+What is new in version TestU01-0.6.1
+------------------------------------
+
+** Module testu01/bbattery, bbattery_Crush:   bug correction
+   in tests 92 and 94 (sstring_AutoCor with N = 1), the wrong index was 
+   used to access the array of p-values: the printed p-values were meaningless.
+
+** Module testu01/s*.c: now print the number of degrees of freedom with 
+   the results of a test when the statistic obeys a chi-square law.
+   (Thanks to Brian Wichmann and David Hill for this suggestion)
+
+** Module probdist/fdist, fdist_Beta:   bug correction
+   for some values of  p, q ~ 1000, the last elements of the recurrences
+   underflowed and the function returned 0 instead of the correct value.
+
+
+
+============================================================================
+What is new in version TestU01-0.6.0
+------------------------------------
+
+** Module mylib/gdef: Added new macros in gdef.tex and removed some others.
+
+** Module mylib/gdef: Added the macros PRIdLEAST64 and PRIuLEAST64 in 
+gdef.tex and use them in a few files to correctly print 64-bit integers
+(although these macros are part of the new ISO C99 standard).
+
+** Module mylib/chrono.c: Fixed a bug in chrono.c. 
+The chrono timers sometimes returned negative CPU times under Cygwin. 
+The number of clock ticks was put in a 32-bit integer which overflowed. 
+Now a 64-bit integer is used.
+
+-------------------
+** Modules probdist/fmass, fdist, fbar: Compute the Poisson, the binomial
+and some continuous probability distributions with better accuracy far in
+the tails.
+
+** Module probdist/fbar: Added the fbar_LogNormal, fbar_JohnsonSB, 
+fbar_JohnsonSU probability distributions.
+
+** Modules probdist/fdist, finv: Added Marsaglia's et al fast method for 
+the CDF of the normal probability distribution in fdist_Normal4, and his 
+method for the inverse normal distribution in finv_Normal2.
+
+** Module probdist/fdist: Added Marsaglia's Anderson-Darling distribution
+in fdist_AndersonDarling2. 
+
+** Module probdist/finv: Added a fast method for the inversion of the 
+symmetrical beta distribution in finv_BetaSymmetric.
+
+-------------------
+** Module testu01/bbattery: Changed some parameters for some tests in 
+bbattery_SmallCrush, bbattery_Crush, bbattery_BigCrush. Added several new
+tests in bbattery_Crush and bbattery_BigCrush.
+
+** Module testu01/bbattery: Added the functions bbattery_Repeat* that make
+it very easy to repeat one of more tests from the predefined batteries of
+tests.
+
+** Modules testu01/u*: Some predefined generators in the u modules did not
+work correctly on 64-bit machines because they explicitly assume long int 
+of 32 bits. This has been corrected and they should work consistently on 
+all machines.
+
+** Module testu01/umarsa: Added several new generators proposed by George
+Marsaglia.
+
+** Module testu01/unif01: Added two functions that will make it very easy to
+test generators that are not pre-programmed in TestU01:
+unif01_CreateExternGen01 and unif01_CreateExternGenBits.
+
+============================================================================

@@ -1,0 +1,348 @@
+\defmodule {ulec}
+
+This module collects several generators from the papers of
+L'Ecuyer and his co-authors.
+
+%%%%%%%%%%%%%
+\bigskip
+\hrule
+\code
+\hide
+/*  ulec.h  for ANSI C  */
+
+#ifndef ULEC_H
+#define ULEC_H
+\endhide
+#include "gdef.h"
+#include "unif01.h"
+
+
+unif01_Gen * ulec_CreateCombLec88 (long S1, long S2);
+\endcode
+ \tab  Combined generator for 32-bit machines proposed by
+  L'Ecuyer \cite{rLEC88a}, in its original version.
+\index{Generator!L'Ecuyer}\index{Generator!CombLec88}%
+  The integers $S_1$ and $S_2$ are the seed.
+  They must satisfy: $0 < S_1 < 2147483563$ and $0 < S_2 < 2147483399$.
+ \endtab
+\code
+
+
+unif01_Gen * ulec_CreateCombLec88Float (long S1, long S2);
+\endcode
+ \tab  Same generator as {\tt ulec\_CreateCombLec88},
+  but implemented using floating-point arithmetic, as in
+  {\tt ulcg\_CreateLCGFloat}.
+ \endtab
+\code
+
+
+unif01_Gen * ulec_CreateCLCG4 (long S1, long S2, long S3, long S4);
+\endcode
+ \tab  This generator is a combined LCG with four components,
+\index{Generator!L'Ecuyer-Andres}\index{Generator!CLCG4}%
+  with period length near $2^{121}$,
+  proposed by L'Ecuyer and Andres \cite{rLEC97d}.
+ \endtab
+\code
+
+
+unif01_Gen * ulec_CreateCLCG4Float (long S1, long S2, long S3, long S4);
+\endcode
+ \tab  Same generator as {\tt ulec\_CreateCLCG4},
+  but implemented using floating-point arithmetic.
+ \endtab
+\code
+
+
+unif01_Gen * ulec_CreateMRG93 (long S1, long S2, long S3, long S4, long S5);
+\endcode
+ \tab  MRG of order 5, with modulus $m=2^{31}-1$, multipliers
+   $a_1 = 107374182$, $a_2 = a_3 = a_4 = 0$, $a_5 = 104480$,
+   and period length $m^5-1$, proposed by
+  L'Ecuyer, Blouin, and Couture \cite{rLEC93a}, page 97.
+\index{Generator!L'Ecuyer-Blouin-Couture}\index{Generator!MRG93}%
+  The integers {\tt S1} to {\tt S5} are the seed.
+  They must be non-negative and not all zero.
+ \endtab
+\code
+
+
+unif01_Gen * ulec_CreateCombMRG96 (long S11, long S12, long S13, 
+                                   long S21, long S22, long S23);
+\endcode
+ \tab  Combined MRG proposed by L'Ecuyer \cite{rLEC96b}, implemented
+   in integer arithmetic using the {\tt long} type.
+   This generator combines two MRGs of order 3 with distinct prime
+\index{Generator!CombMRG96}%
+   moduli less than $2^{\,31}$.
+   The six parameters of the function make the seed.
+   They must all be non-negative, the first three not all zero,
+   and the last three not all zero.
+ \endtab
+\code
+
+
+unif01_Gen * ulec_CreateCombMRG96Float (long S11, long S12, long S13,
+                                        long S21, long S22, long S23);
+\endcode
+ \tab  Same as {\tt ulec\_CreateCombMRG96}, except that the implementation
+  is in floating-point arithmetic.
+ \endtab
+\code
+
+
+unif01_Gen * ulec_CreateCombMRG96D (long S11, long S12, long S13,
+                                    long S21, long S22, long S23);
+\endcode
+ \tab   Similar to  {\tt ulec\_CreateCombMRG96}, except that the
+   generator has ``double'' precision.   Two successive output values 
+   $u_i$ of the  {\tt ulec\_CreateCombMRG96} generator are used to build each 
+   output value $U_i$ (uniform on [0, 1)) of this generator, as follows:
+  $$
+   U_{i} = \left(u_{2i} + \frac{u_{2i+1}}{2^{\,24}}\right) \mod 1.
+  $$
+ \endtab
+\code
+
+
+unif01_Gen * ulec_CreateCombMRG96FloatD (long S11, long S12, long S13,
+                                         long S21, long S22, long S23);
+\endcode
+ \tab   Similar to  {\tt ulec\_CreateCombMRG96Float}, except that the
+   generator has ``double'' precision.   Two successive output values 
+   $u_i$ of the  {\tt ulec\_CreateCombMRG96Float} generator are used
+   to build each 
+   output value $U_i$ (uniform on [0, 1)) of this generator, as follows:
+  $$
+   U_{i} = \left(u_{2i} + \frac{u_{2i+1}}{2^{\,24}}\right) \mod 1.
+  $$
+ \endtab
+\code
+
+
+unif01_Gen * ulec_CreateMRG32k3a (double x10, double x11, double x12,
+                                  double x20, double x21, double x22);
+\endcode
+ \tab  Implements the combined MRG {\tt MRG32k3a}
+  proposed by L'Ecuyer \cite{rLEC99b}.  
+\index{Generator!MRG32k3a}%
+  Its period length is near $2^{\,191}$.
+  This is a floating-point implementation.
+  The six parameters represent the initial state and must be all
+  {\em integers\/} represented as {\tt double}'s. The first three must
+  be integers in [0, 4294967086] and not all 0. The last three must
+  be integers in [0, 4294944442] and not all 0. 
+ \endtab
+\code
+
+
+unif01_Gen * ulec_CreateMRG32k3aL (long x10, long x11, long x12,
+                                   long x20, long x21, long x22);
+\endcode
+ \tab Same as {\tt MRG32k3a} above, 
+  but implemented assuming 64-bit {\tt long} integers.
+\index{Generator!MRG32k3a}%
+ \endtab
+\code
+
+
+unif01_Gen * ulec_CreateMRG32k3b (double x10, double x11, double x12,
+                                  double x20, double x21, double x22);
+\endcode
+ \tab Similar to {\tt ulec\_CreateMRG32k3a} but implements 
+\index{Generator!Wichmann-Hill}\index{Generator!MRG32k3b}%
+   the Wichmann-Hill variant.
+ \endtab
+\code
+
+
+unif01_Gen * ulec_CreateMRG32k5a (double x10, double x11, double x12,
+                                  double x13, double x14, double x20,
+                                  double x21, double x22, double x23,
+                                  double x24);
+\endcode
+ \tab Implements the combined MRG {\tt MRG32k5a}
+  proposed by L'Ecuyer \cite{rLEC99b}.
+\index{Generator!MRG32k5a}%
+  Its period length is near $2^{\,319}$.
+  This is a floating-point implementation.
+ \endtab
+\code
+
+
+unif01_Gen * ulec_CreateMRG32k5b (double x10, double x11, double x12,
+                                  double x13, double x14, double x20,
+                                  double x21, double x22, double x23,
+                                  double x24);
+\endcode
+ \tab  Similar to {\tt ulec\_CreateMRG32k5b} but implements 
+\index{Generator!MRG32k5b}\index{Generator!Wichmann-Hill}%
+   the Wichmann-Hill variant.
+ \endtab
+\code
+
+
+#ifdef USE_LONGLONG
+unif01_Gen * ulec_CreateMRG63k3a (longlong s10, longlong s11, longlong s12,
+                                  longlong s20, longlong s21, longlong s22);
+\endcode
+ \tab Implements the combined MRG {\tt MRG63k3a}
+  proposed by L'Ecuyer \cite{rLEC99b}.
+\index{Generator!MRG63k3a}%
+  Uses 64-bit integers (see {\tt gdef.h})
+  and works only if that type is fully supported by the compiler.
+ \endtab
+\code
+
+
+unif01_Gen * ulec_CreateMRG63k3b (longlong s10, longlong s11, longlong s12,
+                                  longlong s20, longlong s21, longlong s22);
+\endcode
+ \tab Similar to {\tt ulec\_CreateMRG63k3a} 
+\index{Generator!Wichmann-Hill}%
+   but implements the Wichmann-Hill variant.
+ \endtab
+\code
+#endif
+
+
+unif01_Gen * ulec_Createlfsr88 (unsigned int s1, unsigned int s2,
+                                unsigned int s3);
+\endcode
+ \tab Combined Tausworthe generator proposed by L'Ecuyer \cite{rLEC96a},
+   with period length near $2^{\,88}$. The initial seeds \texttt{s1, s2, s3}
+   must be greater or equal than 2, 8, and 16 respectively.
+\index{Generator!lfsr88}%
+ \endtab
+\code
+
+
+unif01_Gen * ulec_Createlfsr113 (unsigned int s1, unsigned int s2,
+                                 unsigned int s3, unsigned int s4);
+\endcode
+ \tab Combined Tausworthe generator proposed by L'Ecuyer \cite{rLEC99a},
+   with period length near $2^{113}$. Restrictions: the initial seeds 
+\index{Generator!lfsr113}%
+  \texttt{s1, s2, s3, s4}
+   must be greater or equal than 2, 8, 16, and 128 respectively.
+ \endtab
+\code
+
+
+#ifdef USE_LONGLONG
+unif01_Gen * ulec_Createlfsr258 (ulonglong s1, ulonglong s2, ulonglong s3,
+                                 ulonglong s4, ulonglong s5);
+#endif
+\endcode
+ \tab Combined Tausworthe generator proposed by L'Ecuyer \cite{rLEC99a},
+\index{Generator!lfsr258}%
+   with period length near $2^{258}$.
+   This implementation uses 64-bits integers (see {\tt gdef.h}), 
+   and works only with machines and compilers that support them.
+ Restrictions: the initial seeds  \texttt{s1, s2, s3, s4, s5}
+   must be greater or equal than 2, 512, 4096, 131072 and 8388608 respectively.
+ \endtab
+\code
+
+
+unif01_Gen * ulec_CreateCombTausLCG11 (unsigned int k, unsigned  int q, 
+                                       unsigned int s, unsigned S1,
+                                       long m, long a, long c, long S2);
+\endcode
+  \tab  Combines a Tausworthe generator of parameters
+   $(k, q, s)$ and initial state {\tt S1} with an  LCG
+   of parameters $(m, a, c)$ and initial state {\tt S2}.
+   The combination is made via addition  modulo 1 of the outputs
+   of the two generators.
+  \endtab
+\code
+
+
+unif01_Gen * ulec_CreateCombTausLCG21 (unsigned int k1, unsigned int q1,
+                                       unsigned int s1, unsigned int Y1, 
+                                       unsigned int k2, unsigned int q2,
+                                       unsigned int s2, unsigned int Y2, 
+                                       long m, long a, long c, long Y3);
+\endcode
+  \tab  Combines a combined Tausworthe generator with two components
+   of parameters
+   $(k_1, q_1, s_1)$,  $(k_2, q_2, s_2)$ and initial states
+   {\tt Y1, Y2}, with a LCG of parameters
+   $(m, a, c)$ and initial state {\tt Y3}.
+   The combination is made by addition modulo 1 of the outputs 
+   of the two generators.
+  \endtab
+\code
+
+
+unif01_Gen * ulec_CreateMRG31k3p (long x10, long x11, long x12,
+                                  long x20, long x21, long x22);
+\endcode
+ \tab  Implements the combined MRG  with two components of order 3
+  named {\tt MRG31k3p} by L'Ecuyer and Touzin \cite{rLEC00b}.  
+\index{Generator!MRG31k3p}%
+  The two components have parameters $(m$, $a_1$, $a_2$, $a_3)$ equal to
+  $(2^{31} - 1$, $0$, $2^{22}$, $2^7 +1)$ and
+  $(2^{31} - 21069$, $2^{15}$, $0$, $2^{15} +1)$.
+  Its period length is close to $2^{\,185}$ and the six parameters
+  represent the initial state. Restrictions:
+  $0 \le {}$ {\tt x10}, {\tt x11}, {\tt x12} ${} < 2147483647$ and not all 0,
+  and $0 \le {}$ {\tt x20}, {\tt x21}, {\tt x22} ${} < 2147462579$
+  and not all 0.
+ \endtab
+
+\guisec{Clean-up functions}
+
+
+\code
+void ulec_DeleteCombTausLCG11 (unif01_Gen *gen);
+\endcode
+  \tab Frees the dynamic memory allocated by
+   {\tt ulec\_CreateCombTausLCG11}.
+ \endtab
+\code
+
+
+void ulec_DeleteCombTausLCG21 (unif01_Gen *gen);
+\endcode
+  \tab Frees the dynamic memory allocated by
+   {\tt ulec\_CreateCombTausLCG21}.
+ \endtab
+\code
+
+
+void ulec_DeleteGen (unif01_Gen *gen);
+\endcode
+ \tab Frees the dynamic memory used by any generator of this module
+  that does not have an explicit {\tt Delete} function. 
+  This function should be called when a generator
+  is no longer in use.
+ \endtab
+\code   
+\hide
+#endif
+\endhide
+\endcode
+
+
+\iffalse  %%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\bigskip
+\hrule
+\bigskip
+
+{
+See also
+\bigskip
+
+\setlength{\partopsep}{0pt}
+\setlength{\parskip}{0pt}
+\setlength{\topsep}{0pt}
+\setlength{\itemsep}{0pt}
+
+\begin{itemize}
+\item {\tt utezu\_CreateTezLec91}
+\end{itemize}
+}
+\fi  %%%%%%%%%%

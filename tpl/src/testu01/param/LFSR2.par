@@ -1,0 +1,129 @@
+# Package:    TestU01
+# File:       LFSR2.par
+
+# Description:   Parameter values for the LFSR2 generators. 
+#-----------------------------------------------------------------
+
+# Give the name of the family first
+
+LFSR2
+
+
+# For each generator, the following parameters must be given in 
+# the right order on three lines
+#                     LSize
+#                     k1   q1   s1
+#                     k2   q2   s2
+# where the parameters are the same as in utaus_CreateCombTaus2.
+
+# The following parameters are the results of exhaustive searches. 
+# All are ME-CF, except where mentioned.
+
+
+10
+7   1  2
+3   1  1
+
+11
+6   1  1
+5   2  2
+
+12
+7   1  5      # Not ME
+5   2  1
+
+13
+7   1  3
+6   1  4
+
+14
+9   4  3
+5   2  2
+
+15
+11  2  6
+4   1  1
+
+16
+11  2  3
+5   2  2
+
+17
+10  3  5
+7   3  3
+
+18
+11  2  5
+7   1  2
+
+19
+10  3  4
+9   4  2
+
+20
+11  2  8      # Not ME
+9   4  4
+
+21
+11  2  3
+10  3  4
+
+22
+15  4  8
+7   1  6
+
+23
+17  3 10
+6   1  1
+
+24
+17  3  7
+7   1  5      # Not ME
+
+25
+18  7  5
+7   1  4
+
+26
+15  7  4
+11  2  7
+
+27
+17  5 10
+10  3  2
+
+28
+17  3 11      # Not ME
+11  2  8
+
+29
+18  7 10
+11  2  6
+
+30
+21  2 12      # Not ME
+9   4  5
+
+31
+20  3  8      # Only ME, not CF
+11  2  6
+
+32
+17  3 12
+15  4  6
+
+33
+23  5 10      # Only ME, not CF
+10  3  4
+
+34
+23  5  8
+11  2  7
+
+35
+18  7 11
+17  5  8
+
+36
+25  7 14
+11  2  5

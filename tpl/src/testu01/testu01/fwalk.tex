@@ -1,0 +1,126 @@
+\defmodule {fwalk}
+
+This module applies random-walk tests from the module {\tt swalk}
+to a family of generators of different sizes.
+
+\bigskip
+\hrule
+\code\hide
+/* fwalk.h  for ANSI C */
+#ifndef FWALK_H
+#define FWALK_H
+\endhide
+#include "ffam.h"
+#include "fres.h"
+#include "fcho.h"
+
+
+extern long fwalk_Maxn;
+extern long fwalk_MaxL;
+extern double fwalk_MinMu;
+\endcode
+\tab
+  Upper bounds on $n$, $L$ and lower bound on Mu.
+  When $n$, $L$ or Mu exceed their limit value, the tests are not done.
+  Default values: $n = 2^{22}$, $L = 2^{22}$ and Mu ${} = 2^{-22}$.
+\endtab
+
+
+\ifdetailed  %%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{Structure for test results}
+
+This structure is used to keep tables of results for the
+ {\tt fwalk\_RWalk1} test.
+\code
+
+typedef struct {
+   fres_Cont *H;
+   fres_Cont *M;
+   fres_Cont *J;
+   fres_Cont *R;
+   fres_Cont *C;
+} fwalk_Res1;
+\endcode
+ \tab The five statistics {\tt H}, {\tt M}, {\tt J}, {\tt R}, and {\tt C}
+  are defined in the documentation of module {\tt swalk}.
+ \endtab
+\code
+
+
+fwalk_Res1 * fwalk_CreateRes1 (void);
+\endcode
+ \tab 
+  Creates and returns a structure that will hold the results
+  of a {\tt fwalk\_RWalk1} test. 
+ \endtab
+\code
+
+
+void fwalk_DeleteRes1 (fwalk_Res1 *res);
+\endcode
+ \tab 
+  Frees the memory allocated by {\tt fwalk\_CreateRes1}.
+ \endtab
+
+\fi %%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{The tests}
+\code
+
+void fwalk_RWalk1 (ffam_Fam *fam, fwalk_Res1 *res, fcho_Cho2 *cho,
+                   long N, long n, int r, int s, long L,
+                   int Nr, int j1, int j2, int jstep);
+\endcode
+\tab This function calls the test {\tt swalk\_RandomWalk1} with
+  parameters {\tt N}, {\tt n},  {\tt r},  {\tt s}, and {\tt L} for the
+  first {\tt Nr} generators of family {\tt fam}, for $j$ going from
+  {\tt j1} to {\tt j2} by steps of {\tt jstep}. Either or both of  {\tt n}
+  and {\tt L} can be varied as the sample size, by passing a negative value as
+  argument of the function. One must then create the corresponding function
+  {\tt cho->Chon} or {\tt cho->Chop2} before calling the test.
+  One will have either {\tt n} = {\tt cho->Chon->Choose(param, i, j)},
+  or {\tt L} = {\tt cho->Chop2->Choose(param, i, j)} or both. A positive
+  value for {\tt n} or {\tt L} will be used as is by the test. When {\tt n}
+  exceeds {\tt fwalk\_Maxn} or {\tt L} exceeds {\tt fwalk\_MaxL}, 
+  the test is not run.
+\endtab
+\code
+
+
+void fwalk_VarGeoP1 (ffam_Fam *fam, fres_Cont *res, fcho_Cho2 *cho,
+                     long N, long n, int r, double Mu,
+                     int Nr, int j1, int j2, int jstep);
+\endcode
+\tab
+  This function calls the test {\tt swalk\_VarGeoP} with
+  parameters {\tt N, n, r, Mu} for the first {\tt Nr} generators of
+  family {\tt fam}, for $j$ going from {\tt j1} to {\tt j2} by steps of
+  {\tt jstep}. Either or both of $n$ and {\tt Mu} can be varied as
+  the sample size, by passing a negative value as argument of the
+  function. One must then create the corresponding function
+  {\tt cho->Chon} or {\tt cho->Chop2} before calling the test.
+  One will have either $n = {}$ {\tt cho->Chon->Choose(param, i, j)},
+  or  {\tt Mu} = {\tt cho->Chop2->Choose(param, i, j)}. A positive value
+  for $n$ or {\tt Mu} will be used as is by the test. When $n$ exceeds
+  {\tt fwalk\_Maxn} or {\tt Mu} is less than {\tt fwalk\_MinMu},
+  the test is not done.
+\endtab
+\code
+
+
+void fwalk_VarGeoN1 (ffam_Fam *fam, fres_Cont *res, fcho_Cho2 *cho,
+                     long N, long n, int r, double Mu,
+                     int Nr, int j1, int j2, int jstep);
+\endcode
+\tab Similar to {\tt fwalk\_VarGeoP1} but with {\tt swalk\_VarGeoN}.
+\endtab
+
+\code
+\hide 
+#endif
+\endhide
+\endcode

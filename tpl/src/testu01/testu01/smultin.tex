@@ -1,0 +1,1282 @@
+\defmodule {smultin}
+
+Testing the uniformity and independence of a RNG amounts to testing
+that $t$-dimensional vectors $(u_i,\dots,u_{i+t-1})$ of successive 
+output values of the RNG behave like random points uniformly distributed
+over the unit hypercube $[0,1]^t$, for all $t$.
+A natural approach for testing this is to generate such vectors and measure
+(in some way) the uniformity of their distribution in the unit hypercube.
+
+%%%%%%%%%%%%%
+\paragraph*{A class of tests based on the multinomial distribution.} \
+
+One simple way of measuring this uniformity is as follows.\index{multinomial}
+For some integer $d$, partition the interval $[0,1)$ into $d$ equal
+segments.  This determines a partition of $[0,1)^t$ into $k = d^t$
+small hypercubes (or cubic {\em cells\/}) of equal sizes.
+Then, generate $n$ random points in the unit hypercube, using $nt$
+output values from the generator, and let $X_j$ be the number of 
+points falling into cell $j$, for $0\le j\le k-1$.
+Under $\cH_0$, the vector $(X_0,\dots,X_{k-1})$ has the 
+{\em multinomial distribution\/} with parameters $(n,1/k,\dots,1/k)$.
+The next step is to measure how well the observed vector 
+$(X_0,\dots,X_{k-1})$ ``agrees'' with this multinomial distribution.
+For example, if $n \gg k$, the $X_j$'s should not be too far from
+their expected values $E[X_j] = \lambda = n/k$.
+The most popular test statistic in this context is Pearson's 
+chi-square \cite{rKNU98a,sLAW91a,tREA88a}:
+\eq 
+  X^2 = \sum_{j=0}^{k-1} {(X_j - \lambda)^2 \over \lambda} 
+      = -n + {1\over\lambda} \sum_{j=0}^{k-1} X_j^2,
+                                                       \label {eq:X2} 
+\endeq 
+Its distribution under $\cH_0$ is approximately 
+chi-square with $k-1$ degrees of freedom, if $\lambda$ is large enough.
+Other test statistics can be used as well, and some of
+them turn out to be better than the chi-square for detecting 
+deficiencies in typical RNGs.
+
+The present module implements several such tests for the 
+multinomial distribution, and for a variant of it where the points
+are formed by overlapping vectors.
+These tests are described and studied by 
+L'Ecuyer, Simard, and Wegenkittl \cite{rLEC02c}.
+The test statistic has the general form
+\eq
+  Y = \sum_{j=0}^{k-1} f_{n,k} (X_j)                   \label{eq:Y}
+\endeq
+where $f_{n,k}$ is a real-valued function which may depend on $n$ and $k$.
+A subclass is the {\em power divergence\/} statistic\index{power divergence} 
+\eq
+  D_\delta = \sum_{j=0}^{k-1} {\frac2{\delta(1+\delta)}} X_j
+    \left[\left(\frac{X_j}{\lambda}\right)^\delta -1\right],   \label{eq:Ddelta}
+\endeq
+studied in \cite{tREA88a},
+where $\delta > -1$ is a real-valued parameter and
+$\delta=0$ means the limit as $\delta\to 0$.
+One has $D_1 = X^2$ as a special case.
+
+Other choices of $f_{n,k}$ are given in Table~\ref{tab:choosef}.
+In each case, $Y$ is a measure of clustering: It decreases
+when the points are more evenly distributed between the cells.
+The loglikelihood\index{loglikelihood} statistic $G^2$ is also a
+  special case of $D_\delta$
+for $\delta\to 0$ \cite{tREA88a}, and it is related to $H$ via the relation
+$H = \log_2(k) - {G^2 / (2n \ln 2)}$.
+The statistic $N_b$ counts the number of cells that
+contain exactly $b$ points (for $b\ge 0$), $W_b$ is the number of cells that
+contain at least $b$ points (for $b\ge 1$),  %%  We need W_1 2 lines below.
+and $C$ is the number of collisions\index{collisions} 
+(i.e., the number of times a point falls in 
+a cell that already has one or more points in it).
+These statistics are related by $N_0 = k - W_1 = k - n + C$,
+$W_b = N_b + \cdots + N_n$, and $C = W_2 + \cdots + W_n$.
+
+
+\begin{table}[htb]
+\caption {Some choices of $f_{n,k}$ and the corresponding statistics $Y$.}
+\label {tab:choosef}
+\smallskip
+\centering
+\renewcommand {\arraystretch}{1.2}
+\begin{tabular}{|rcc|}
+\hline
+ $Y$        & $f_{n,k}(x)$             &    name  \\
+\hline
+ $D_\delta$ & $2x[(x/\lambda)^\delta-1]/(\delta(1+\delta)) $
+                                       & power divergence \rule{0pt}{16pt}\\
+ $X^2$      & $(x-\lambda)^2/\lambda$  & Pearson \\
+ $G^2$      & $2x\ln(x/\lambda)$       & loglikelihood \\
+ $-H$       & $(x/n)\log_2(x/n)$       & negative entropy \\
+ $N_b$      & $I[x = b]$       & number of cells with exactly $b$ points \\
+ $W_b$      & $I[x \ge b]$     & number of cells with at least $b$ points \\
+ $N_0$      & $I[x = 0]$       & number of empty cells \\
+ $C$        & $(x-1)\,I[x>1]$  & number of collisions \\
+\hline
+\end{tabular}
+\end{table}
+
+
+%%%%%%%%%%%%%
+\paragraph*{How to generate the cell numbers.} \
+
+The\index{entropy}\index{Pearson} 
+ standard way of generating the cell numbers is as described earlier,
+by generating one fresh uniform for each coordinate of each point.
+That is, $nt$ random numbers $u_0,\dots,u_{nt-1}$ are generated and
+the $n$ points are $(u_{ti},\dots,u_{ti+t-1})$, for $i=0,\dots,n-1$.
+This is the {\em non-overlapping serial\/} approach used in the
+classical {\em serial test\/} \cite{rKNU98a}.
+It is the method used by default by the function\index{serial} 
+{\tt smultin\_Multinomial}.
+Here, the points are independent and $(X_0,\dots,X_{k-1})$ has the 
+{\em multinomial distribution\/} as mentioned earlier.
+
+Another way of producing the cell numbers is as follows:
+Generate $nt$ random numbers $u_0,\dots,u_{nt-1}$.
+For $i=0,\dots,n-1$, let $v_{ti} = (u_{ti},\dots,u_{ti+t-1})$, 
+and find which of the $t!$ {\em permutations\/} of $t$ objects would
+reorder the coordinates of $v_{ti}$ in increasing order.\index{permutations}
+Let $k = t!$ number the $t!$ possible permutations from 0 to $k-1$, 
+and let $X_j$ be the number of vectors $v_{ti}$ that are reordered 
+by permutation $j$, for $j = 0,\dots,k-1$.
+Here, since the permutations are independent, $(X_0,\dots,X_{k-1})$ 
+has the multinomial distribution with parameters $(n,1/k,\dots,1/k)$.
+
+Yet another method is to examine which coordinate in each $v_{ti}$ has
+the {\em largest value\/}, and let $X_j$ be the number of vectors $v_{ti}$
+whose largest coordinate is the $j$th.
+In this case, $k=t$ and  $(X_0,\dots,X_{k-1})$ is again 
+multinomially distributed with parameters $(n,1/k,\dots,1/k)$.
+\hpierre {This is what is implemented in {\tt smultin\_GenerCellMax},
+         with $t$ replaced by $td$. }
+  
+To change the method for generating the cells numbers 
+in {\tt smultin\_Multinomial},\index{cells generation}
+it suffices to set the environment variable {\tt smultin\_GenerCell}
+to the appropriate function ({\tt smultin\_GenerCellSerial}, 
+{\tt smultin\_GenerCellPermut}, etc.) or to
+a user-defined function having the same types of parameters and 
+that generates cell numbers uniformly and independently.
+
+It is also possible and often advantageous to generate cell numbers
+that are {\em dependent}.  This is what happens in the
+{\em overlapping serial\/} approach, where only $n$ uniforms 
+$u_0,\dots,u_{n-1}$ are generated; they are placed in a circle
+and each one starts a new vector.  The $n$ points are thus
+defined as $v_0 = (u_0,\dots,u_{t-1})$, $v_1=(u_1,\dots,u_t)$, \dots,
+ $v_{n-t+1} = (u_{n-t+1},\dots,u_n)$, 
+ $v_{n-t+2} = (u_{n-t+2},\dots,u_n,u_0)$, \dots, 
+ $v_{n-1} = (u_{n-1},u_n,u_0,\dots,u_{t-3})$, 
+ $v_n = (u_n,u_0,\dots,u_{t-2})$. 
+These points are dependent, because their coordinates overlap,
+so $(X_0,\dots,X_{k-1})$ is no longer multinomially distributed in
+this case. The function {\tt smultin\_MultinomialOver} uses this approach.
+
+Another set of methods generate the cell numbers from a long string
+of ``random'' bits, which are produced $s$ bits at a time by the RNG.
+Let $k = 2^L$ be the number of cells, for some integer $L$.
+Each cell number is generated by taking $L$ successive bits from 
+the string, either with or without overlap.
+The {\em non-overlapping\/} version requires $nL$ bits
+($\lceil nL/s\rceil$ calls to the generator) whereas the 
+{\em overlapping\/} one requires $n$ bits ($\lceil n/s\rceil$ calls).
+The overlapping version operates similarly as the overlapping serial
+approach described earlier, except that the uniforms $u_j$ are replaced
+by bits.  
+The functions {\tt smultin\_MultinomialBits} and 
+{\tt smultin\_MultinomialBitsOver} implement these tests.
+% They use {\tt smultin\_GenerCellSerialBits}.
+(See also the tests 
+{\tt sentrop\_EntropyDisc} and {\tt sentrop\_EntropyDiscOver}.)
+
+%%%%%%%%%%%%%%%%%%
+\paragraph*{Distribution of $Y$ for the non-overlapping case.} \
+
+We now examine the distribution of the different statistics $Y$ in
+Table~\ref{tab:choosef}, under $\cH_0$, assuming that $(X_0,\dots,X_{k-1})$
+has the multinomial distribution.
+Exact expressions for $E[Y]$ and Var$[Y]$ for this situation are given
+in Eqs.\ (2.1) and (2.2) of \cite{rLEC02c}.
+In fact, one has $E[Y] = k\mu$ where $\mu = E[f_{n,k}(X_j)]$.
+These expressions for the mean and variance are cheap to compute 
+when $\lambda = n/k$ is small
+but become very expensive to compute when $n$ and $\lambda$ are large.
+For the case where $\lambda \gg 1$, approximations with $o(1/n)$
+error are provided in \cite{tREA88a}, page 65.
+
+The following propositions, taken from \cite{rLEC02c}, provide
+approximations for the distribution of $Y$ under various conditions.
+Define $\sigma^2_N = \Var[Y]$, $\sigma^2_C = \Var[Y]/(2(k-1))$, 
+\[
+  Y^{(N)} = {Y - k\mu \over \sigma_N},
+\]
+and 
+\[
+  Y^{(C)} = {Y - k\mu + (k-1)\sigma_C\over\sigma_C}.
+\]
+Observe that $Y^{(N)}$ has mean 0 and variance 1 (the same as a
+standard normal) and that $Y^{(C)}$ has mean $k-1$ and variance $2(k-1)$
+(the same as the chi-square random variable with $k-1$ degrees of freedom).
+Let $\To$ denote convergence in distribution, 
+$N(0,1)$ the standard normal distribution, and $\chi^2(k-1)$ 
+the chi-square distribution with $k-1$ degrees of freedom.
+
+\begin {proposition}
+\label {prop1}
+% \vspace {-8pt}
+For $\delta > -1$, under $\cH_0$.
+\begin {itemize}
+\item[{\rm (i)}]
+{\rm [Dense case]} \
+If $k$ is fixed and $n\to\infty$, $D_{\delta}^{(C)} \To \chi^2(k-1)$.
+%
+\item[{\rm (ii)}]
+{\rm [Sparse case]} \
+If $k\to\infty$, $n\to\infty$, and $n/k \to\lambda_0$ where
+$0<\lambda_0<\infty$, then $D_{\delta}^{(N)} \To N(0,1)$.
+\end {itemize}
+\end {proposition}
+
+The counting variables $N_b$, $W_b$, and $C$ do not obey the
+preceding proposition.
+For example if $k$ is fixed and $n\to\infty$, eventually $N_b$ becomes
+0 and $W_b$ becomes equal to $k$.
+If both $k$ and $n$ are large, then each $X_j$ is approximately 
+Poisson with mean $\lambda$, 
+so $P[X_j = b] \approx e^{-\lambda} \lambda^b/b!$ for $b\ge 0$.
+If $k$ is large and $P[X_j=b]$ is small, $N_b$ is thus approximately
+Poisson with mean
+\eq
+  E[N_b] = {n^b e^{-\lambda} \over k^{b-1} b!}.
+                                                         \label{eq:ENb}
+\endeq
+for $b\ge 0$.  The following proposition is also taken from \cite{rLEC02c}.
+
+\begin {proposition}
+\label {prop2}
+Under $\cH_0$, suppose $k\to\infty$ and $n\to\infty$, 
+and let $\lambda_\infty$,
+$\gamma_0$, and $\lambda_0$ denote positive constants.
+\begin {itemize}
+\item[{\rm (i)}]
+{\rm [Very sparse case]} \
+If $b \ge 2$ and $n^b / (k^{b-1} b!) \to \lambda_\infty$, then
+$W_b \To N_b \To$ {\rm Poisson}$(\lambda_\infty)$.
+For $b=2$, one also has $C \To N_2$.
+%
+\item[{\rm (ii)}]
+For $b=0$, if $n/k - \ln(k) \to \gamma_0$, then
+$N_0 \To$ {\rm Poisson}$(e^{-\gamma_0})$.
+%
+\item[{\rm (iii)}]
+{\rm [Sparse case]} \
+If $k\to\infty$ and $n/k \to\lambda_0 > 0$,
+for $Y = N_b$, $W_b$, or $C$, one has $Y^{(N)} \To N(0,1)$.
+\end {itemize}
+\end {proposition}
+
+ The exact distributions of $C$ and $N_0$ under $\cH_0$
+ (one has $P(C = c) = P(N_0 = k-n+c)$), for the multinomial setup, 
+ can be found in Knuth's book
+ (see \cite {rKNU98a}, page 71), where an algorithm is also given to
+  compute all the non-negligible exact probabilities in time $O(n\log n)$.
+  Computing the exact distribution is very slow
+  when $n$ is large.
+  The probability of having exactly $c$ collisions is given by
+  \eq
+   P[C = c] = \frac{k (k-1) \ldots (k-n+c+1)}{k^n} 
+             \left\{{n \atop n-c }\right\}           \eqlabel{fmass-collis}
+  \endeq
+  where the $\left\{{n \atop k}\right\}$ are the Stirling numbers of
+  the second kind \cite{iKNU97a}.
+  The expected number of collisions is
+  $$
+    \mu_c \eqdef E[C] 
+   = k \left[{\textstyle \frac n k - 1 + \left(1 - \frac1k\right)^n}\right]
+   \approx \frac{n^2}{2k}.
+  $$
+
+  The current implementation of the test based on $C$ uses the following:
+  If $n \le 10^5$, the exact distribution is used,
+  else  if $n/k \le 1$, $C$ is approximated by the Poisson
+  distribution with mean $\mu_c$, 
+  else it is approximated by a normal distribution
+  with the exact mean and standard deviation.
+%  These approximations should give 3 decimal digits of precision for 
+%  the distribution function, except (possibly) far in the lower tail
+%  of the distribution, i.e., when $C\ll \lambda$.
+ For two-level tests, the 
+Poisson approximation for the total number of collisions is used.
+\hpierre {In this case, how are the two-level tests performed?}
+
+
+%%%%%%%%%%%%%%%%%%
+\paragraph*{Distribution of $Y$ for the overlapping serial approach.} \
+
+Let $X_{t,j}^\o$ be the number of overlapping vectors $v_i$,
+$i=0,\dots,n-1$, falling into cell $j$.
+The distributions of the statistics $Y$ are more difficult to analyze
+in this case, because of the more complicated dependence relationship 
+between the $X_{t,j}^\o$.
+
+For $\delta > -1$, let
+\eq
+ D_{\delta,(t)} = \sum_{j=0}^{k-1} {2\over \delta(1+\delta)} X_{t,j}^\o
+          \left[(X_{t,j}^\o/\lambda)^\delta -1\right],  \label{eq:Ddeltat}
+\endeq
+the power divergence statistic for the $t$-dimensional overlapping
+vectors, and define
+\eq
+  \tilde D_{\delta,(t)} = D_{\delta,(t)}-D_{\delta,(t-1)}.
+\endeq
+The following is taken from \cite{rLEC02c}
+(The case $\delta=1$ was proved long ago by Good \cite{rGOO53a}):
+
+\begin {proposition} \null
+{\rm [Dense case]} \ Under $\cH_0$, if $k$ is fixed and $n\to\infty$, 
+$\tilde D_{\delta,(t)} \To \chi^2(d^t-d^{t-1})$.
+\end {proposition}
+
+For the sparse case, where $k,n\to\infty$
+and $n/k \to\lambda_0$ where $0<\lambda_0<\infty$,
+simulation experiments support the conjecture that
+\eq
+ \frac{\tilde D_{1,(t)}^2 - (k-k')}{\sqrt{2(k-k')}} \To N(0,1)
+\endeq
+but this has not been proved.
+
+Marsaglia and Zaman \cite{rMAR93b} speculate that $N_0$ is 
+approximately normal with mean $k e^{-\lambda}$ and variance
+$k e^{-\lambda}(1-3e^{-\lambda})$.
+This approximation is reasonably accurate for $2 \le \lambda\le 5$ 
+(roughly), but no longer makes sense when $\lambda$ is too large or
+close to zero.
+Marsaglia \cite{rMAR85a} calls the test based on $N_0$ with $t=2$ the
+{\em overlapping pairs sparse occupancy\/} (OPSO) test
+(see {\tt smarsa\_CollisionOver} and {\tt smarsa\_Opso}).
+
+Proposition \ref{prop2} (i) and (ii) probably holds in the overlapping
+case as well, but we do not have a formal proof.
+Simulation experiments indicate that the Poisson approximation 
+for $C$ is very accurate for (say) $\lambda < 1/32$, and already
+quite good for $\lambda\le 1$, when $n$ is large.
+
+%%%%%%%%%%%%%%%%
+\paragraph*{Calling the tests.} \
+
+Four functions are available here to launch a test:
+{\tt smultin\_Multinomial} for the case where the cell numbers are
+independent of each other (so we have the multinomial distribution)
+and {\tt smultin\_MultinomialOver} for the case where the cell numbers
+are generated by overlapping $t$-tuples. 
+In each of these two procedures, the type of approximation that is used
+for the distributions of the power divergence statistics is determined
+by the boolean parameter {\tt Sparse}: The normal approximation is used
+when it is true, and the chi-square approximation otherwise. The
+two analog functions for bit tests are {\tt smultin\_MultinomialBits} and
+{\tt smultin\_MultinomialBitsOver}.
+
+
+\iffalse  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Furthermore, we may consider the sparse  case, when the density
+ $n/k$ $\le  1$,  or the dense case when the density $n/k > 1$.
+ We may also generate the  cells number by different methods.
+ If we generate the cells number following the method of the serial test,
+ then the {\sl Multinomial} test will be equivalent to
+ {\tt sknuth\_Serial}, {\tt sknuth\_SerialSparse}, or {\tt smarsa\_SerialOver}
+ (see also {\tt sknuth\_Collision} and  {\tt smarsa\_CollisionOver}).
+ If we generate a cell by generating a permutation number, we get the
+ test {\tt sknuth\_Permutation} (see also {\tt sknuth\_CollisionPermut}). 
+ It is possible to use yet other methods to generate the cells number.
+
+The  Cressie-Read statistic \cite{tREA88a} is  defined by
+\eq
+  2nI^\delta = {2\over \delta(1+\delta)} \sum_{i=1}^k
+              X_i \left[\left(X_i \over n p_i\right)^\delta -1\right],
+                                                       \eqlabel {powdiv}
+\endeq
+ where $(X_1,\dots,X_k) \ge 0$ is a vector of observations.
+
+For $p_i = 1/k$ and $\delta = 1$, the exact mean and variance 
+of ${\cal X}^2 = I^1$ are $\mu = k-1$ and $\sigma^2 = (k-1)(2 - (k-1)/n)$
+(e.g., \cite{tHAL37a,tKOE80a}).  %%%  Haldane (1937) and Koehler 1980.
+For $\delta \not= 0$, we do not have  simple formulae for
+these exact values, but they may be  expressed in terms of expectations
+of functions of Poisson random variables \cite{tKOE80a,tREA88a}.
+For the case $\delta = 0$, \cite{rLEC96e} give expressions
+ computable in $O(n^2)$ for the mean and the variance of
+the entropy $\hat H$.
+
+If $k$ is relatively small with respect to $n$,
+Read and Cressie \cite[p.67]{tREA88a} suggest using a
+version of $2nI^\delta$ corrected for the first two moments,
+obtaining thus  a statistic $2nI^\delta_C$ for which the mean
+and the variance are $k-1 + O(kn^{-3/2})$ and $2(k-1) + O(k^2 n^{-3/2})$,
+respectively, and for which the distribution should be closer to a
+ Chi-square law with $k-1$ degrees of freedom.
+The  corrected statistic is
+$$
+ 2nI^\delta_C = {2nI^\delta - \mu_C \over \sigma_C},
+$$
+where
+\begin {eqnarray*}
+ \mu_C      &=&  (k-1)(1-\sigma) + {\delta-1\over n}\left[
+                 {2-3k+t\over 3} + {(\delta-2)(1-2k+t)\over 4}\right], \\
+ \sigma_C^2 &=&  1 + {1\over 2n(k-1)}\left[ 2 - 2k - k^2 + t  \right.\\[4pt]
+            &&   \hspace{-20pt} + \left. (\delta-1)\left[8 -12k -2k^2 +6t
+                 + (\delta-1)(4 -6k -3k^2 + 5t)/3 \\
+            &&   \hspace{30pt}  + 2(\delta-2)(1-2k+t)\right]\right],\\
+  t         &=&  \sum_{i=1}^k {1\over p_i}.
+\end {eqnarray*}
+
+
+For the case with overlap, let us define this time
+   $\nu = (n-t+1)/d^t$ ($\approx$ the density).
+   If $n$ (the number of balls) and $d^t$ (the number of cells)
+   are very large and of the same order of magnitude,
+   the number of collisions is a random variable obeying approximately
+   a normal law with mean $\mu \approx d^t (\nu - 1 + e^{-\nu})$
+   (this follows from Theorem 2 in \cite{rPER95a}),
+   and variance $\sigma^2 \approx d^t e^{-\nu}(1-3e^{-\nu})$,
+   as conjectured in \cite{rMAR93a}.
+   If $n \ll d^t$, then the number of collisions should be
+   approximately Poisson with mean $\mu$, while if
+   $\nu$ is somewhat large (e.g., $> 6$), then the
+   number of empty cells ($d^t - n + {}$ the number of collisions)
+    should be approximately Poisson  with mean $d^t e^{-\nu}$.
+
+\fi  %%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%% \newpage
+\bigskip\hrule
+\code\hide
+/* smultin.h for ANSI C */
+#ifndef SMULTIN_H
+#define SMULTIN_H
+\endhide
+#include "gdef.h"
+#include "fmass.h"
+#include "statcoll.h"
+#include "gofw.h"
+#include "unif01.h"
+
+
+#define smultin_MAX_DELTA  8
+\endcode
+\tab
+  Maximal number of distinct values of $\delta$ for which the
+  statistic $D_\delta$ can be computed in a single test
+  (with $\delta=-1$ representing the family of collision-type tests).
+\endtab
+\code
+
+
+#define smultin_MAXB  10
+\endcode
+\tab
+  Maximal value of $b$ for which the statistic $W_b$
+  can be computed (see Table \ref{tab:choosef}).
+%, together with their $p$-values.
+% for which we may calculate the
+%  statistics {\tt smultin\_WbUrn} and their $p$-values.
+\endtab
+
+
+% \newpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{Environment variables}
+
+The parameters in {\tt smultin\_Envir} are environment variables that 
+should be fixed once for all and will not normally be changed.
+
+\code
+
+typedef struct {
+
+   double Maxk;
+\endcode
+\tabb
+   Maximal value of $k = d^t$, the number of cells. The default value is 
+   either $2^{63}$ if 64-bit integers are available, or else $2^{53}$,
+   the largest number of cells that can be enumerated by {\tt double's}
+   without loss of precision.
+\endtabb
+\ifdetailed
+\code
+
+   double SeuilHash;
+\endcode
+\tabb
+  When the number of cells $k$ is larger than this threshold and
+  the average number of balls per cell is less than 1,
+  the variable {\tt Hashing} is set to {\tt TRUE} and
+   hashing is used to compute the numbers $X_j$ and the power divergence
+  statistics.
+  In this case, {\tt Count[i]} counts how many $X_j$ are
+  equal to $i$, for $i \ge 0$. 
+  The  default value is {\tt SeuilHash} $= 2^{20}$.
+\endtabb
+\code
+
+   double HashLoad;
+\endcode
+\tabb
+  Maximal load factor when  hashing is used. The number 
+  of cells times {\tt HashLoad} is always larger than the number 
+  of balls. The default value is 0.75. The actual load factor will
+  most often be smaller than this value.
+\endtabb
+\code
+
+   double SeuilEColl;
+\endcode
+\tabb
+  For the two-level collision  tests, if the expected number of
+  collisions for a replication is larger than this value, the statistic
+  {\tt gofw\_Mean} will
+  correspond to a test based on the average number of collisions
+   using the  normal  approximation.  Otherwise, it will
+  correspond to a  test  based on the total number of collisions 
+   using the  Poisson approximation.
+  In both cases, {\tt gofw\_KS} and {\tt gofw\_AD} will
+  correspond to  two-level tests as usual, assuming that the number 
+  of collisions
+  $C$ is a random variable approximatively continuous, which is reasonnable
+  when the normal approximation is valid.
+\endtabb
+\code
+
+   double SeuilCOverDense;
+   double SeuilCOverNorSup;
+   double SeuilCOverNorInf;
+   double SeuilCOverSparse;
+\endcode
+\tabb
+  Thresholds determining the different approximations used for
+  the distribution function in the {\tt CollisionOver} test.
+  Let the density $\nu = n/k$, where $n$ is
+  the number of balls thrown into $k$ cells.
+  When {\tt SeuilCOverNorSup} $< \nu < $
+  {\tt SeuilCOverDense},
+  we use the Poisson approximation for the number of empty cells.
+  When {\tt SeuilCOverNorInf} $< \nu \le $ 
+  {\tt SeuilCOverNorSup}, we use  the
+   normal approximation for the number of collisions.
+   For $ \nu < $ {\tt SeuilCOverSparse},  we use  the
+   Poisson  approximation  for the number of collisions.
+   The  default values are {\tt SeuilCOverDense} = 12,
+  {\tt SeuilCOverNorSup} = 5, {\tt SeuilCOverNorInf} = 2,
+  {\tt SeuilCOverSparse} = 1.
+\endtabb
+\fi
+\code
+
+} smultin_Envir;
+
+
+extern smultin_Envir smultin_env;
+\endcode
+\tab
+   This is the environment variable used to keep the values of the fields
+   described above in {\tt smultin\_Envir}.
+\endtab
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{Functions to generate the cell numbers}
+
+\code
+
+#ifdef USE_LONGLONG
+   typedef ulonglong smultin_CellType;
+#else
+   typedef double smultin_CellType;
+#endif
+\endcode
+  \tab Type used to enumerate cell numbers, either 64-bit integers
+   if they are available, or else  {\tt double's} with a 53-bit mantissa.
+  \endtab
+\code
+
+
+typedef smultin_CellType (*smultin_GenerCellType) (unif01_Gen *, int, int,
+                                                   long);
+\endcode
+  \tab
+   Type of function used to generate a cell number. It returns the cell
+   number.\index{cells generation}
+  \endtab
+\code
+
+
+smultin_CellType smultin_GenerCellSerial (unif01_Gen *gen, int r, int t,
+                                          long d);
+\endcode
+ \tab  Generates and returns a cell number in $\{0,\dots,k-1\}$ for the 
+  multinomial test, with $k = d^t$. The function generates $t$ integers 
+  $y_0,\dots,y_{t-1}$ in $\{0,\dots,d-1\}$, using the most significant 
+  bits of $t$ successive uniforms 
+  (after throwing away their leading $r$ bits).
+  The cell number $c = y_0 d^{t-1} + \cdots + y_{t-2} d + y_{t-1}$
+  is returned.
+ \endtab
+\code
+
+
+smultin_CellType smultin_GenerCellSerial2 (unif01_Gen *gen, int r, int t,
+                                           long d);
+\endcode
+ \tab  Similar to {\tt smultin\_GenerCellSerial}, except that the
+   cell number is   $c = y_{t-1} d^{t-1} + \cdots + y_{1} d + y_0$.
+   This is equivalent to using {\tt smultin\_GenerCellSerial}, 
+   because it only changes the numbering of the cells and the power
+   divergence test statistics do not depend on the numbering.
+ \endtab
+\code
+
+
+smultin_CellType smultin_GenerCellPermut (unif01_Gen *gen, int r, int t,
+                                          long junk);
+\endcode
+ \tab Similar to {\tt smultin\_GenerCellSerial}, except that there are
+  $t!$ cells, corresponding to the $t!$ permutations of $t$ real numbers,
+  The function generates $t$ uniforms and returns the number of the
+  permutation that corresponds to their ordering.
+ \endtab
+\code
+
+
+smultin_CellType smultin_GenerCellMax (unif01_Gen *gen, int r, int t,
+                                       long junk);
+\endcode
+ \tab  Similar to {\tt smultin\_GenerCellSerial}, except that $k=t$
+  and the cell number is the number of the largest coordinate in $v_{ti}$.
+ \endtab
+\hide
+\code
+
+
+smultin_CellType smultin_GenerCellSerialBits (unif01_Gen *gen, int r, int s,
+                                              long L);
+\endcode
+ \tab  Generates a cell number in $\{0,\dots,k-1\}$ for the 
+  multinomial test, from a bit string, where $k = 2^L$. 
+  The function extracts $s$ bits from each call to the RNG 
+  (after throwing away their leading $r$ bits)
+  and concatenates these bits into a long string.
+  Each cell number is generated by taking $L$ successive bits from 
+  the string, say $b_0,\dots,b_{L-1}$.
+% , either with or without overlap.
+  The cell number $c = b_0 2^{L-1} + \cdots + b_{L-2} 2 + b_{L-1}$
+  is returned.
+ \endtab
+\endhide
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{Test parameters having default values}
+\nopagebreak
+
+The parameters in the following global structure {\tt smultin\_Param} 
+often remain the same in a given experiment.
+They can practically be viewed as environment variables.
+To change their default values, one should create a {\tt smultin\_Param}
+structure and pass it as a pointer to the tests. 
+When a {\tt NULL} pointer is passed as argument to a test, the
+default values are used instead.
+
+\code
+
+
+typedef struct {
+
+   int NbDelta;
+   double ValDelta [smultin_MAX_DELTA];
+\endcode
+ \tabb
+  The number of values of $\delta$, and the list of values of $\delta$,
+  for which the multinomial tests are applied (simultaneously)
+  when calling a test.  If {\tt NbDelta} = $m$, then the 
+  tests are applied for the $m$ values $\delta_0,\dots,\delta_{m-1}$
+  which must be given in array {\tt ValDelta[0..m-1]}.
+  The value $\delta = -1$ corresponds to the collision test
+  and the other values of $\delta$ correspond to power divergence tests.
+  The default values are $m=2$, $\delta_0 = -1$, $\delta_1 = 1$.
+ \endtabb
+\code
+
+   smultin_GenerCellType GenerCell;
+\endcode
+\tabb
+  This function is used to generate the cell numbers in the tests.
+  It is one of the function {\tt smultin\_GenerCell} described above.
+  The default value is {\tt smultin\_GenerCellSerial}.
+\endtabb
+\code
+
+   int bmax;
+\endcode
+ \tabb  In the non-overlapping case for $\delta = -1$, in addition to 
+   applying the collision test, the statistic $W_b$ and its $p$-value
+   are computed for $b=0,\dots,${\tt bmax}.
+   For $b=0$, the test is actually based on $N_0$, the number of
+   empty cells.
+   If the value is negative, none of these statistics is computed.
+   The default value is {\tt bmax = -1}.
+%  Setting {\tt bmax} to a larger value permits one to see how many cells
+%  are empty, how many contain exactly one point, how many contain
+%  two points, etc.
+ \endtabb
+\code
+
+} smultin_Param;
+
+
+smultin_Param * smultin_CreateParam (int NbDelta, double ValDelta[],
+                                     smultin_GenerCellType GenerCell,
+                                     int bmax);
+\endcode
+ \tab 
+  Function creating and returning a structure that will hold the 
+  parameters described above.  The parameters have 
+  the same meaning as in the structure {\tt smultin\_Param}.
+ \endtab
+\code
+
+
+void smultin_DeleteParam (smultin_Param *par);
+\endcode
+ \tab 
+  Procedure freeing the memory allocated by {\tt smultin\_CreateParam}.
+ \endtab
+
+\hide
+\code
+
+extern smultin_Param smultin_ParamDefault;
+\endcode
+\endhide
+
+
+
+\ifdetailed  %%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{Test results}
+
+ The following large structure type {\tt smultin\_Res} is used to 
+ keep the intermediate and final results of a test.
+ It contains the counters, the test statistics, their $p$-values,
+ and some quantities related to the theoretical distributions.
+ If one needs these results for post-processing or for any
+ other reason after a test has ended, it suffices to create  a
+ {\tt smultin\_Res} structure by calling the function 
+ {\tt smultin\_CreateRes}  and pass it as a pointer to the tests. 
+ Otherwise, a {\tt NULL} pointer can be passed in place of the {\tt res}
+ argument to the tests.
+
+\code
+
+typedef enum {
+   smultin_CollNotInit,           /* Not initialized */
+   smultin_CollExact,             /* Exact distribution */
+   smultin_CollNormal,            /* Normal approximation */
+   smultin_CollPoissonSparse,     /* Poisson approximation: sparse case */
+   smultin_CollPoissonDense       /* Poisson approximation: dense case */
+} smultin_CollApproxType;
+\endcode
+  \tab
+   Approximation used for the distribution function in the
+       {\tt Collision} and  {\tt CollisionOver} tests.
+  \endtab
+\code
+
+
+typedef struct {
+
+   lebool Hashing;
+\endcode
+\tabb
+  {\tt TRUE} if hashing is used.
+  The value of this variable is chosen for each  test depending on
+   {\tt smultin\_env.SeuilHash}.
+\endtabb
+\code
+
+   smultin_CellType NbCellsTotal;
+\endcode
+\tabb
+   Total number of cells for a test (value of $k$).
+ \endtabb
+\code
+
+   lebool Over;
+\endcode
+\tabb {\tt TRUE} if we are doing the overlapping version of the tests,
+      {\tt FALSE} otherwise.
+\endtabb
+\code
+
+   smultin_CollApproxType CollApprox;
+\endcode
+\tabb Approximation used for the  distribution function in the 
+    {\tt Collision} or {\tt CollisionOver} tests.
+ \endtabb
+\code
+
+   double Mu [smultin_MAX_DELTA];
+   double Sigma [smultin_MAX_DELTA];
+\endcode
+\tabb
+   Theoretical mean and standard deviation (\ref{eq:smultin-mu}) and
+   (\ref{eq:smultin-sigma2}), for each value of {\tt ValDelta[s]}.
+\endtabb
+\code
+
+   double EsEmpty;
+\endcode
+\tabb
+  The expected number of empty cells.
+\endtabb
+\code
+
+   long CountSize;
+   long Count1Size;
+   long *Count;
+   long *Count1;
+   smultin_CellType *Cell;
+   smultin_CellType *Cell1;
+\endcode
+\tabb
+  {\tt CountSize} is the size of array {\tt Count} and
+  {\tt Count1Size} is the size of array {\tt Count1}.  These arrays contain
+  counters keeping track of the number of balls in a cell, numbered
+  by the array index in the case where {\tt Hashing = FALSE}. 
+  If {\tt Hashing = TRUE}, the counter with index $i$ 
+  indicates the number of balls in cell numbered by  {\tt Cell[i]}.
+  {\tt Count1} and  {\tt Cell1} are used in 
+  the {\tt Over} version of the  tests in dimension $t-1$.
+\endtabb
+\code
+
+   long NbSize;
+   long Nb1Size;
+   smultin_CellType *Nb;
+   smultin_CellType *Nb1;
+\endcode
+\tabb
+  {\tt NbSize} is the size of array {\tt Nb} and
+  {\tt Nb1Size} is the size of array {\tt Nb1}.
+  {\tt Nb[i]} is the observed number of cells containing $i$ points.
+  {\tt Nb1[i]} is the observed number of cells  containing $i$ points
+  in dimension $t-1$ (for the {\tt Over} versions of the tests).
+\endtabb
+\code
+
+   smultin_CellType NbCells [smultin_MAXB + 1];
+   double EsCells [smultin_MAXB + 1];
+   smultin_CellType WbCells [smultin_MAXB + 1];
+\endcode
+\tabb
+  The array element {\tt NbCells[i]} is the observed  numbers of 
+  cells containing exactly $i$ points, where the counters are added over
+  {\em all $N$ replications\/} (in contrast with {\tt Nb} and {\tt Nb1}, 
+  which are reinitialized to zero after each replication).
+  The test statistics are the sums of the $N$  Poisson variables
+  over the $N$ replications.
+  {\tt EsCells[i]} and {\tt WbCells[i]} contain the expected number
+  (asymptotically when the density $n/k \rightarrow 0$) and the
+  observed number of cells containing at least $i$ points, for $i\ge 0$,
+  respectively. 
+\endtabb
+\code
+
+   double NbCollisions;
+\endcode
+\tabb
+  Total observed number of collisions, over all $N$ replications.
+ \endtabb
+\code
+
+   statcoll_Collector *Collector [smultin_MAX_DELTA];
+\endcode
+\tabb
+  {\tt Collector[s]} is used to keep the $N$ observations of $Y$ 
+  for the test based on {\tt ValDelta[s]}.
+\endtabb
+\code
+
+   gofw_TestArray sVal2 [smultin_MAX_DELTA];
+   gofw_TestArray pVal2 [smultin_MAX_DELTA];
+\endcode
+ \tabb
+  After a call to a test ({\tt smultin\_Multinomial},
+  {\tt smultin\_MultinomialOver}, etc.) with $N > 1$,
+  the values and the $p$-values of the different statistics (but not
+  {\em Collisions\/}) for {\tt ValDelta [s]} will be found in arrays
+  {\tt sVal2 [s, $\cdot$]} and {\tt pVal2 [s, $\cdot$]}.
+  For $N > 1$, the indices {\tt [s, gofw\_Mean]} and {\tt [s, gofw\_Cor]} 
+  stand for tests based on the empirical mean and correlation
+  of the $N$ observations and their $p$-values are computed by assuming
+  that they are normally distributed.
+  In the cases where $N=1$, {\tt sVal2 [s, gofw\_KSP]} and
+  {\tt pVal2 [s, gofw\_KSP]} will contain
+  the $p$-value of the test at the first level  and the
+  other array elements are unused. 
+  For the collision tests using the Poisson approximation,
+  or using the exact law with $N = 1$,
+  {\tt gofw\_Mean} corresponds to a  test based on the total number of
+  collisions (or empty cells, in the dense case)
+  for the $N$ replications.
+ \endtabb
+\code
+
+   double pCollLeft, pCollRight;
+\endcode
+ \tabb The left and the right $p$-values for the collision test.
+ \endtabb
+\code
+
+   double pColl;
+\endcode
+ \tabb The $p$-value for the collision test.
+ \endtabb
+\code
+
+   double pEmpty;
+\endcode
+\tabb
+  The $p$-value for the number of empty cells.
+\endtabb
+\code
+
+   double pWb [smultin_MAXB + 1];
+\endcode
+ \tabb 
+ The  $p$-values for $W_b$, the number of cells containing at 
+  least $b$ points (see the description of {\tt EsCells} and
+  {\tt  WbCells}).
+ \endtabb
+\fi  %%%%%%%%%%%%%%%%%
+\hide  %%%%%%%%%%
+\code
+
+   int NbDeltaOld;
+\endcode
+\tabb
+   The number of values of $\delta$ of the previous test (see the
+   documentation in {\tt smultin\_Param}). This is necessary to prevent
+   memory leaks and bugs, in case {\tt NbDelta} changes from the previous
+   test with the same variable {\tt res}.
+\endtabb
+\code
+
+   double *TabFj[smultin_MAX_DELTA];
+\endcode
+\tabb If we replicate a test many times, we may keep some complicated 
+  terms in these tables instead of recomputing them every time
+  (depending on the value of {\tt flagTab}).
+\endtabb
+\code
+
+   int nLimit;
+\endcode
+\tabb  The tables {\tt TabFj} are precomputed for elements {\tt
+  [0..nLimit]}.
+\endtabb
+\code
+
+   lebool flagTab;
+\endcode
+\tabb This flag is set to TRUE if we precompute tables of values and keep
+   them in arrays {\tt TabFj}. 
+\endtabb
+\endhide  %%%%%%%%%%%%
+\ifdetailed  %%%%%%%%%%%%%%
+\code
+
+} smultin_Res;
+
+
+smultin_Res * smultin_CreateRes (smultin_Param *par);
+\endcode
+ \tab 
+  Creates and returns a structure to hold the results of a test,
+  based on the parameter values given in the structure {\tt par}.
+  If {\tt par = NULL}, the default parameter values are used 
+  (see the description of {\tt smultin\_Param}). The user may change
+  the parameter values before a test or between tests using the same
+  {\tt smultin\_Res} structure.
+ \endtab
+\code
+
+
+void smultin_DeleteRes (smultin_Res *res);
+\endcode
+ \tab 
+  Recovers the memory allocated to {\tt res} by {\tt smultin\_CreateRes}.
+ \endtab
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{Specialized functions used inside the tests}
+
+These functions are used to compute the theoretical mean, variance,
+and correction factors used in some tests, and to compute individual terms
+of the test statistics.
+
+\code
+
+typedef double (*smultin_MNTermeType) (double, double, long);
+\endcode
+  \tab Represents one term for the different
+   statistics computed by {\tt smultin\_MultinomMuSigma}.
+   The first two arguments are parameters;
+   the third is  the variable of the function, equal for example to the
+   number of points in a cell.  See {\tt smultin\_MNTermeColl,
+   smultin\_MNTermeKhi2, smultin\_MNTermeLogLikhood}, and
+   {\tt smultin\_MNTermePowDiv} below.
+  \endtab
+\code
+
+
+double smultin_MNTermeColl (double, double, long j);
+\endcode
+ \tab Returns $\max(0, j-1)$, the number of collisions in a cell
+  containing $j$ points.
+ \endtab
+\code
+
+
+double smultin_MNTermePowDiv (double Delta, double E, long j);
+\endcode
+ \tab Returns one term of the {\sl power divergence} statistic:
+%  (with $\delta =$ {\tt Delta}):
+  $${2j\over \delta(1+\delta)}
+      \left[\left(j \over E\right)^\delta -1\right].$$
+ \endtab
+\code
+
+double smultin_MNTermeKhi2 (double, double E, long j);
+\endcode
+ \tab Returns one term of the {\em Pearson's chi-square\/} statistic:
+%  (with $E =$ {\tt NbEsp})
+   $ (j - E)^2 / E$.
+ \endtab
+\code
+
+
+double smultin_MNTermeLogLikhood (double, double E, long j);
+\endcode
+ \tab Returns one term of the {\em loglikelihood ratio\/} statistic:
+%  (with $E =$ {\tt NbEsp})
+    $ 2 j\; \ln \left(j / E\right)$.
+ \endtab
+\code
+
+
+void smultin_MultinomMuSigma (long n, double k, double theta1,
+                              double theta2, smultin_MNTermeType F,
+                              double *Mu, double *Sigma);
+\endcode
+ \tab
+  Computes the exact values of the mean $\mu$ and the standard deviation
+  $\sigma$ of a statistic of the form
+%  (with  $T1 = \theta_1$ and $T2 =\theta_2$)
+  $$
+    Y = \sum_{j=0}^{k-1} F(\theta_1, \theta_2, X_j),
+  $$
+  assuming that $(X_0,\ldots, X_{k-1})$
+  obeys a multinomial law with parameters $(n, 1/k, \ldots,$ $1/k)$.
+
+  If we write $F(X)$ for $F(\theta_1,\theta_2, X)$ (to simplify the notation),
+  the values of $\mu$ and $\sigma$ are given by:
+  \begin{eqnarray}
+    k\mu_0 & \eqdef & \mu\ = \ \sum_{x=0}^n {n \choose x}
+      \frac{(k-1)^{n-x}}{k^{n-1}} F(x) \label{eq:smultin-mu}  \\
+   \sigma^2 &=& E\left[\left(\sum_{j=0}^{k-1}\left(F(X_j) - \mu_0 \right)
+     \right)^2 \right]\\[6pt]
+     &=& k E\left[\Big(F(X_0) - \mu_0 \Big)^2 \right] + k(k-1)
+    E\left[\left(F(X_0) - \mu_0 \right) \left(F(X_1) - \mu_0 \right) \right].
+                                              \label{eq:smultin-sigma2}
+  \end{eqnarray}
+\iffalse %%%%
+  We meet such multinomial  vectors in the following context:
+  We throw $n$ balls into $k$ cells, independently and with a
+  uniform probability $1/k$ for each cell, and we define
+  $X_j$ as the number of balls falling into  cell $j$.
+\fi  %%%%
+ \endtab
+\code
+
+void smultin_PowDivMomCorChi (double Delta, long n, double k,
+                              double *MuC, double *SigmaC);
+\endcode
+ \tab
+  Computes and returns the values of $\mu_C = $ {\tt MuC} and
+  $\sigma_C = $ {\tt SigmaC} for the two-moment corrected statistic
+  $D_\delta^{(C)} = (D_\delta - \mu_C) / \sigma_C$,
+  in the cases where we use the approximation by the {\em chi-square\/}
+  distribution.
+  If $\delta \le -1$ (the collision test), this function computes nothing.
+  Here, $n$ is the number of points and $k$ is the number of cells.
+ \endtab
+\code
+
+
+void smultin_PowDivMom (double Delta, long n, double k,
+                        double NbExp, double *Mu, double *Sigma);
+\endcode
+ \tab
+  Compute the mean $\mu = $ {\tt Mu} and the standard deviation $\sigma = $
+  {\tt Sigma} for the  theoretical distribution of the test statistic  for
+  this  $\delta = $ {\tt Delta}.  This  function is called when we use the
+  normal approximation and for the collision test with the normal 
+  approximation.
+  The returned  values are close to the exact values in most cases.
+ \endtab
+
+\fi  %%%%%%%%%%%%%%%%
+
+\ifdetailed  %%%
+
+% \newpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{Distribution for collision test}
+
+This section provides tools to compute the theoretical distribution
+of the number of collisions for the collisions test (the non-overlapping
+case only).
+To use these tools, one must first call {\tt smultin\_CreateCollisions} 
+to create the appropriate structure.  When it is no longer needed, 
+this structure can be deleted by 
+calling {\tt smultin\_DeleteCollisions}.
+
+\code
+
+
+fmass_INFO smultin_CreateCollisions (long n, smultin_CellType k);
+\endcode
+ \tab Creates and returns a structure that contains the mass and
+   distribution functions of the random variable $C$, 
+   the number of collisions when $n$ balls (or points)
+   are thrown at random and independently into $k$ boxes (or cells), each
+   ball having probability $1/k$ of falling into any given box.
+   A collision occurs when a ball falls into a box already occupied 
+   with one or more balls. 
+   Such a structure is needed for calling 
+   {\tt smultin\_FDistCollisions}, {\tt smultin\_FBarCollisions} or
+   {\tt smultin\_CollisionsTerm}. It can be deleted by calling
+   {\tt smultin\_DeleteCollisions}.
+  (The module {\tt fmass} is in library ProbDist.)
+
+ \endtab
+\code
+
+
+void smultin_DeleteCollisions (fmass_INFO W);
+\endcode
+  \tab Deletes the structure {\tt W} created previously 
+   by {\tt smultin\_CreateCollisions}.
+ \endtab
+\code
+
+
+double smultin_FDistCollisions (fmass_INFO W, long c);
+\endcode
+ \tab Returns $P[C\le c]$ for the random variable $C$
+  described in {\tt smultin\_CreateCollisions}, from the structure 
+  {\tt W}, which must have been created previously by calling 
+  {\tt smultin\_CreateCollisions} with the desired $n$ and $k$.
+ \endtab
+\code
+
+
+double smultin_FBarCollisions (fmass_INFO W, long c);
+\endcode
+ \tab  Similar to {\tt smultin\_FDistCollisions}, but returns $P[C\ge c]$.
+\endtab
+\code
+
+
+double smultin_CollisionsTerm (fmass_INFO W, long c);
+\endcode
+ \tab  Similar to {\tt smultin\_FDistCollisions}. Returns an
+   approximation of $P[C = c]$ given in (\ref{fmass-collis}).
+ \endtab
+
+\fi
+
+
+
+% \newpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{The tests}
+
+% \resdef 
+
+\code
+
+void smultin_Multinomial (unif01_Gen *gen, smultin_Param *par,
+   smultin_Res *res, long N, long n, int r, long d, int t, lebool Sparse);
+\endcode
+ \tab
+  This function applies the power divergence
+  test,\index{Test!Multinomial} based on
+%  (corrected for the first two moments)
+  statistic $D_\delta$, for each value of $\delta$ specified in the array
+  {\tt par->ValDelta[0..NbDelta-1]} (where $\delta = -1$
+  corresponds to the collision test, based on $C$).
+  The theoretical distribution of $D_\delta$ (with a two-moment correction)
+  is approximated by a normal if {\tt Sparse = TRUE}, and by a chi-square
+  with $k-1$ degrees of freedom if {\tt Sparse = FALSE}.
+  This function also applies tests based on $W_b$ for 
+  $b=0, 2,\dots, ${\tt par->bmax}.
+  All these tests are applied simultaneously, using the same cell
+  countings. The cell numbers are generated by the function in variable 
+  {\tt par->GenerCell}.
+  By default, it is {\tt smultin\_GenerCellSerial}. 
+  Both {\tt par} or {\tt res} can be set to the {\tt NULL} pointer, in
+  which case these structures are created and deleted internally.
+  It is recommended to have $n/k > 8$ if {\tt Sparse = FALSE},
+  except for $\delta=1$.  
+  If {\tt Sparse = TRUE}, $n$ and $k$ should both  be very large.  
+  Restriction: $k = d^t \le ${ \tt smultin\_Maxk}.
+ \endtab
+\code
+
+
+void smultin_MultinomialOver (unif01_Gen *gen, smultin_Param *par,
+   smultin_Res *res, long N, long n, int r, long d, int t, lebool Sparse);
+\endcode
+ \tab
+  Similar to {\tt smultin\_Multinomial}, but where the $n$ cell
+  numbers are generated using the {\em overlapping serial\/} approach,
+  as described earlier in the paragraph ``How to generate the cell numbers''
+  and used in  {\tt smarsa\_SerialOver}.\index{Test!MultinomialOver}
+%  The $n$ generated values are placed in a circle, and the $n$ $t$-tuples
+%  of successive values are the points.
+ \endtab
+\code
+
+
+void smultin_MultinomialBits (unif01_Gen *gen, smultin_Param *par,
+   smultin_Res *res, long N, long n, int r, int s, int L, lebool Sparse);
+\endcode
+ \tab
+  Similar to {\tt smultin\_Multinomial}, except that the cells are generated
+  from a string of bits obtained by taking {\tt s} bits from each 
+  output value.\index{Test!MultinomialBits}  There are $k = 2^L$ cells
+  and each cell number is determined by taking $L$ successive bits from
+  the string.
+%  The cell numbers are generated via {\tt smultin\_GenerCellSerialBits}.
+% \richard {Non. Quand $L\ge s$, le test appelle {\tt smultin\_Multinomial},
+% et quand $L < s$, on ne peut pas l'utiliser, car on g\'en\`ere plus d'un
+% point avec chaque U01. Cette fonction n'est pas utilis\'ee.}
+  In the case where $L = ts$ for some integer $t$, this test is
+  equivalent to {\tt smultin\_Multinomial} with $d = 2^s$ and $t = L/s$.
+  The present function is to cover the other cases (e.g., if $L < s$).
+  Restrictions:  $L \bmod s = 0$ when $L > s$, and 
+   $s \bmod L = 0$ when $s > L$.
+ \endtab
+\code
+
+
+void smultin_MultinomialBitsOver (unif01_Gen *gen, smultin_Param *par,
+   smultin_Res *res, long N, long n, int r, int s, int L, lebool Sparse);
+\endcode
+ \tab
+  Similar to {\tt smultin\_MultinomialBits}, except that the $n$ cell
+  numbers are generated using the {\em overlapping\/} approach at the 
+  bit level.  The $n$ bits are placed in a circle and each block of $L$
+  successive bits determines a cell number.\index{Test!MultinomialBitsOver}
+  $L$ and $s$ do not have to divide each other.
+ \endtab
+\code
+\hide
+#endif
+\endhide
+\endcode

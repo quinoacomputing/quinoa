@@ -1,0 +1,43 @@
+# Package:    TestU01
+# File:       CombCubic2.par
+
+# Description:   Parameter values for the CombCubic2 generators
+#-----------------------------------------------------------------
+
+# Give the name of the family first
+
+CombCubic2
+
+
+# For each generator, the following parameters must be given in 
+# the right order on the same line
+#              h   m1   m2   a1   a2
+# where h is (very close to) the base-2 logarithm of the period length,
+# m1 and m2 are the moduli, a1 and a2 are the multipliers. 
+
+
+12    59         47       15        7
+13    101        59       61        15
+14    101        83       61        9
+15    251        101      135        61
+16    251        233      135        61
+17    503        251      445        135
+18    503        491      445        277
+19    1019       503      437        445
+20    1019       1013     437        31
+21    2039       1019       243        437
+22    2039       2027       243        349
+23    4091       2039       494        243
+24    4091       4079       494        3757
+25    8147       4091       2410        494
+26    8147       8111       2410        2257
+27    16361      8147       5595        2410
+28    16361      16319       5595        3013
+29    32693      16361       1190        5595
+30    32693      32687       1190        4535
+31    65519      32693       512         1190
+32    65519      65447       512          27076
+33    131063     65519       110230        512
+34    131063     130859       110230        48249
+35    262133     131063       168686        110230
+36    262133     262103       168686        173782

@@ -1,0 +1,72 @@
+\defmodule {udeng}
+
+This module collects some generators from Lih-Yuan Deng and his
+ collaborators.\index{Generator!Deng}%
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\bigskip
+\hrule
+\code\hide
+/* udeng.h for ANSI C */
+
+#ifndef UDENG_H
+#define UDENG_H
+\endhide
+#include "unif01.h"
+\endcode
+\code
+
+
+unif01_Gen * udeng_CreateDL00a (unsigned long m, unsigned long b, int k,
+                                unsigned long S[]);
+\endcode
+  \tab Creates a multiple recursive generator proposed by Deng
+   and Lin \cite{rDEN00a} in the form:
+   $$
+     x_i\ =\ ((m-1)x_{i-1} + b x_{i-k}) \mod m\ =\ 
+           (-x_{i-1} + b x_{i-k}) \mod m.
+   $$
+   The generator returns $u_i = x_i/m$. The initial state 
+   $(x_{-1},\dots,\?x_{-k})$ is in {\tt S[0..(k-1)]}.
+   Restriction: $k \le 128$.
+ \endtab
+\code
+
+
+unif01_Gen * udeng_CreateDX02a (unsigned long m, unsigned long b, int k,
+                                unsigned long S[]);
+\endcode
+  \tab Creates a multiple recursive generator proposed by Deng
+   and Xu \cite{rDEN02a} in the form:
+   $$
+     x_i \ =\ b(x_{i-1} + x_{i-k}) \mod m.
+   $$
+   The generator returns $u_i = x_i/m$. The initial state 
+   $(x_{-1},\dots,\?x_{-k})$ is in {\tt S[0..(k-1)]}.
+   Restriction: $k \le 128$.
+ \endtab
+
+
+
+
+
+\guisec{Clean-up functions}
+
+\code
+
+
+void udeng_DeleteGen (unif01_Gen * gen);
+\endcode
+  \tab Frees the dynamic memory used by any generator of this module
+  that does not have an explicit {\tt Delete} function. 
+  This function should be called when a generator
+  is no longer in use.
+ \endtab
+
+\code
+\hide
+#endif
+\endhide
+\endcode

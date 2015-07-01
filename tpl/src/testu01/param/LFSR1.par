@@ -1,0 +1,73 @@
+# Package:    TestU01
+# File:       LFSR1.par
+
+# Description:   Parameter values for the LFSR1 generators. 
+#-----------------------------------------------------------------
+
+# Give the name of the family first
+
+LFSR1
+
+
+# For each generator, the following parameters must be given in 
+# the right order on the same line
+#                     k   q   s
+# where the parameters are the same as in utaus_CreateTaus.
+
+# The following parameters are the results of exhaustive searches. 
+# When there exists no primitive trinomial of degree k, k has been set to
+# zero. 
+
+
+10  3   4
+11  2   7
+0   0   0
+0   0   0
+0   0   0
+15  4   9
+0   0   0
+17  5   9
+18  7  10
+0   0   0
+20  3  13
+21  2  12
+22  1  13
+23  5  13
+0   0   0
+25  3  16
+0   0   0
+0   0   0
+28  9  16
+29  2  20
+0   0   0
+31  3  12
+0   0   0
+33 13  15
+0   0   0
+35  2  21
+36 11  16
+0   0   0
+0   0   0
+39 14  23
+0   0   0
+41  3  24
+0   0   0
+0   0   0
+0   0   0
+0   0   0
+0   0   0
+47  5  30
+0   0   0
+49 12  27
+0   0   0
+0   0   0
+52 19  31
+0   0   0
+0   0   0
+55 24  21
+0   0   0
+57  7  31
+58 19  35
+0   0   0
+60 11  34
+0   0   0

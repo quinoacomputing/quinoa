@@ -1,0 +1,375 @@
+\chapter{STATISTICAL TESTS}
+
+This chapter describes the different statistical tests available 
+in TestU01 and how they can be applied.
+These tests are organized in different modules, 
+sometimes according to their similarity and
+sometimes according to the author of the book/article from which they
+were taken.   
+Each test looks, in its own way, for empirical evidence against 
+the null hypothesis $\cH_0$ defined in the introduction.
+It computes a test statistic $Y$ whose distribution under $\cH_0$
+is known (or for which a good approximation is available).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+\paragraph*{Single-level tests.} \
+
+A {\em first-order\/} (or {\em single-level\/}) test 
+observes the value of $Y$, say $y$,\index{single-level tests}
+and rejects $\cH_0$ if the {\em $p$-value\/} 
+(or {\em significance level\/})
+ $$ p = P[Y \ge y \mid \cH_0] $$
+is much too close to either 0 or 1.
+If the distribution of $Y$ is [approximately] continuous,
+$p$ is [approximately]
+a $U(0,1)$ random variable under $\cH_0$.
+Sometimes, this $p$ can be viewed as a {\em measure of uniformity},
+in the sense that it will be close to 1 if the generator produces
+its values with excessive uniformity, and close to 0 in the opposite
+situation (see, e.g., the module {\tt smultin}).
+
+In the case where $Y$ has a
+ {\em discrete distribution\/}\index{discrete distribution}
+under $\cH_0$, we distinguish the {\em right $p$-value\/}
+$p_R =  P[Y \ge y \mid \cH_0]$ and the {\em left $p$-value\/}
+$p_L =  P[Y \le y \mid \cH_0]$.  We then define the $p$-value as
+\begin{eqnarray*}
+   p & = & \left\{ 
+ \begin{array}{l@{\qquad}l}
+      p_R, & \mbox{if } p_R <  p_L \\[6pt]
+  1 - p_L, & \mbox{if } p_R \ge p_L \mbox{ and } p_L < 0.5 \\[6pt]
+      0.5  &         \mbox{otherwise.}
+ \end{array}\right.
+\end{eqnarray*} 
+Why such a definition?
+Consider for example a Poisson random variable $Y$ with mean 1
+under $\cH_0$.  If $Y$ takes the value 0, the right $p$-value is
+$p_R =  P[Y \ge 0 \mid \cH_0] = 1$.  In the uniform case, this would
+obviously lead to rejecting $\cH_0$ on the basis that the 
+$p$-value is too close to 1.   
+However, $P[Y = 0 \mid \cH_0] = 1/e \approx 0.368$, so it does not 
+really make sense to reject $\cH_0$ in this case.
+In fact, the left $p$-value here is $p_L = 0.368$, and the $p$-value
+computed with the above definition is $p = 1 - p_L \approx 0.632$.
+Note that if $p_L$ is very small, with this definition, $p$ becomes
+close to 1.
+If the left $p$-value was defined as 
+$p_L = 1 - p_R = P[Y < y \mid \cH_0]$, this would also lead to problems;
+in the example, one would have $p_L = 0$.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+\paragraph*{Two-level tests.} \
+
+In a {\em second-order\/} (or {\em two-level\/}) test, one generates
+$N$ ``independent'' copies of $Y$, say $Y_1,\dots,Y_N$, by replicating
+the first-order test $N$ times.\index{two-levels tests}
+Let $F$ be the theoretical distribution function of $Y$ under $\cH_0$.
+In the case where $F$ is {\em continuous}, the transformed observations
+$U_1 = F(Y_1),\dots, U_N = F(Y_N)$ should behave as i.i.d.\ uniform
+random variables. 
+One way of performing the two-level test is to compare the empirical 
+distribution of these $U_j$'s to the uniform\index{goodness-of-fit tests}
+distribution, via a {\em goodness-of-fit\/} (GOF) test such as 
+those of Kolmogorov-Smirnov, Anderson-Darling, Cr\'amer-von Mises, etc.
+These GOF test statistics are defined in module {\tt gofs} and their 
+$p$-values are computed by the functions of module {\tt gofw}
+(these two modules are in library ProbDist).
+For example, if $d_N^+$ is the sample value taken by the Kolmogorov-Smirnov
+statistic $D_N^+$ (defined in module {\tt gofs}), the corresponding 
+$p$-value at the second level is $\delta^+ = P[D_N^+ > d_N^+ | \cH_0]$.
+Under $\cH_0$, $\delta^+$ has the $U(0,1)$ distribution.
+
+In TestU01, several of these GOF tests can actually be applied 
+simultaneously, and all their $p$-values are reported in the results.
+Those that are too close to 0 or 1 are marked by special indicators
+in the printouts.  %% The symbol {\tt eps} in the printout stands for a
+%%  value smaller than $10^{-15}$.
+The GOF tests that are applied are those that belong to the set
+{\tt gofw\_ActiveTests}.
+This kind of flexibility is sometimes convenient for comparing the
+power of these GOF tests to detect the weaknesses of specific classes
+of generators.
+
+This type of two-level testing procedure has been widely applied for 
+testing RNGs \cite{sFIS96a,rKNU98a,rLEC92a,rLEE97a,rMAR85a}.
+The arguments supporting it are that 
+(i) it sometimes permits one to apply the test with a larger total 
+sample size to increase its power 
+(for example, if the memory size of the computer 
+limits the sample size of a single-level test), and
+(ii) it tests the RNG sequence at the local level, 
+not only at the global level (i.e., there could be very bad behavior 
+over short subsequences, which cancels out when averaging 
+over larger subsequences).
+As an example of this, consider the extreme case of a generator
+whose output values are $i/2^{31}$, for $i=1,2,\dots,2^{31}-1$,
+in this order. 
+A simple test of uniformity over the entire sequence would give
+a perfect fit, whereas the same test applied repeatedly over 
+(disjoint) shorter sub-sequences would easily detect the anomaly.
+
+Another way of performing the test at the second level is to simply add
+the $N$ observations of the first level 
+and reject $\cH_0$ if the sum is too large or too small.
+For the great majority of the tests in this library, the distribution
+of $Y$ is either chi-square, normal, or Poisson.
+In these three cases, the sum $\tilde Y = Y_1 + \cdots + Y_N$ has the
+same type of distribution.  That is, if $Y$ is chi-square with $k$ degrees
+of freedom [resp., normal with mean $\mu$ and variance $\sigma^2$,
+Poisson with mean $\lambda$], $\tilde Y$ is chi-square with $Nk$ degrees
+of freedom [resp., normal with mean $N\mu$ and variance $N^2\sigma^2$,
+Poisson with mean $N\lambda$].
+TestU01 usually 
+\hrichard {Not yet fully implemented everywhere, but will be done very soon.}
+reports the results of the test based on $\tilde Y$ in
+these situations, in addition to the second-order GOF tests specified
+by {\tt gofs\_ActiveTests} (for the Poisson case, where the 
+second-order GOF tests are not valid unless $\lambda$ is large enough
+for the Poisson distribution to be well approximated by a normal,
+only the results of the tests base on $\tilde Y$ are reported).
+
+Our empirical investigations indicate that for a fixed total
+sample size $Nn$, when testing RNGs, a test with $N=1$ is often
+more efficient than the corresponding test with $N > 1$.
+\hrichard{Il y a des tests pour lesquels $N > 1$ est plus sensible 
+  que $N=1$: au moins
+  {\tt sstring\_HammingWeight, sstring\_AutoCor,
+  sstring\_LongestHeadRun, sknuth\_MaxOft}}.
+This means that for typical RNGs, the type of structure found in
+one (reasonably long) subsequence is usually found in (practically)
+all subsequences of the same length.
+In other words, when a RNG started from a
+given seed fails spectacularly a certain test, it usually fails
+that test for {\em most\/} admissible seeds, though
+there are some exceptions.
+In the case where $N > 1$, the test based on $\tilde Y$ is usually
+more powerful than the second-order GOF tests comparing the empirical
+distribution of $F(Y_1),\dots,F(Y_N)$ to the uniform,
+according to our experience.
+
+
+%%%%%%%%%%%%%%%%%%%%
+\paragraph*{Rejecting $\cH_0$.} \
+
+In statistical studies where a limited amount of data is available,
+people sometimes fix the significance level $\alpha$ in advance 
+to arbitrary values such as 0.05 or 0.01,
+and reject $H_0$ if and only if the $p$-value is below $\alpha$.
+However, statisticians often recommend to just report the $p$-value,
+because this provides more information than reporting a ``reject'' or
+``do not reject'' verdict based on a fixed $\alpha$.
+
+When a $p$-value is extremely close to 0 or to 1 (for example,
+if it is less than $10^{-10}$), one can obviously conclude that
+the generator {\em fails\/} the test.
+If the $p$-value is suspicious but failure is not clear enough,
+($p=0.0005$, for example), then the test can be replicated independently 
+until either failure becomes obvious or suspicion disappears 
+(i.e., one finds that the suspect $p$-value was obtained only by chance).
+This approach is possible because there is no limit (other than CPU time)
+on the amount of data that can be produced by a RNG to increase the
+sample size and the power of the test.
+
+%%%%%%%%%%%%%%%%%%%%%%
+\paragraph*{Common parameters and tools.} \
+
+Three parameters, called $N$, $n$, and $r$, are common to all the
+functions that apply a test in the {\tt s} modules.
+The parameter $N$ gives the number of independent replications of the 
+base test, i.e. the number of distinct subsequences on which it is applied,
+and $n$ is the sample size for each replication.
+The parameter $r$ gives the number of bits that are discarded
+from each generated random number.  
+That is, each real-valued random number is multiplied by $2^r$ modulo 1,
+to drop its $r$ most significant bits.
+These three parameters are not re-explained in each test description.
+It is implicit that the first $r$ bits of each uniform are always
+discarded, that the test explained in the function description 
+is always replicated $N$ times, and that a two-level test is applied
+whenever $N > 1$.
+% In many cases, it is best to choose $N=1$ and $n$ as large as possible.
+
+For the tests based on bit strings, another parameter that usually 
+appears is $s$.  It represents the number
+of bits of each uniform that are effectively used by the test.
+That is, when $s$ appears, the test drops the $r$ most significant bits
+and takes the $s$ bits that follow.
+In this case, it is important to make sure that $r+s$ does not exceed
+the number of bits of precision provided by the RNG.
+For example, if the RNG's output is always a multiple of $1/2^{31}$,
+$r+s$ should not exceed 31.
+% There are also other situations (e.g., the tests in {\tt snpair})
+% where the test would detect the discretization error when the sample
+% size is large and the RNG does not return enough bits.
+
+\ifdetailed  %%%
+Modules {\tt swrite} and  {\tt sres}
+provide basic tools used inside the other
+{\tt s} modules, which implement the tests.
+Typical users do not need to use them directly.
+In the majority of cases, it suffices to create the generator
+to be tested and pass it as a parameter to
+the function that applies the desired test.
+The test results are then printed automatically
+to the standard output, with a level of detail that can be modified
+by the user (see module {\tt swrite}).
+\fi  %%%%%
+
+%%%%%%%%%%%%%%%%%%%%
+\paragraph*{Reports.} \
+
+By default, each test prints a report, on standard output,
+giving the name of the test, the name of the tested generator,
+the test parameters, the values of the statistics,
+the significance level of those statistics
+and the CPU time used by the test.
+This report may also contain information specific to a given test.
+
+It is possible to print more or less detailed statistical reports
+by setting one or more of the {\tt lebool} flags defined in module {\tt swrite}. 
+One may wish to see, for example, the value of the test 
+statistic $Y$ for each of the $N$ replications,
+% (usually the values in the statistical collectors),
+the values of the counters, the groupings of the classes, their
+expected and observed numbers for the chi-square test, etc.
+For some of the tests, printing the counters would generate huge reports
+and is not practically useful. For other tests (for example those
+based on a chi-square test), seeing the counters and the classes may be
+enlightening as to why a given generator fails a test.
+It is even possible to have no output at all from any of the {\tt s} 
+modules of TestU01 by setting all the {\tt lebool} flags in module {\tt swrite} 
+ to {\tt FALSE}.
+
+The test functions automatically print the state of the generator
+at the beginning of an experiment and at the end of each test.
+If more than one test are called in a program, the initial state
+of the generator at the beginning of a test will be the final state
+of the generator at the end of the preceding test. This permits one to
+keep track of which segment of the stream of random numbers has been
+used by each test.
+
+A more flexible way of examining detailed information
+about what has happened in the tests, to have a closer look at 
+specific details or perhaps for post-processing the results of the tests,
+is via the {\tt ...\_Res} structures.
+These data structures are specific to each type of test and
+are described explicitly in the detailed version of this guide
+(see also module {\tt sres}).
+Each function implementing a test has a parameter {\tt \ldots\_Res *}
+pointing to a structure that keeps the results.  
+
+Perhaps in the majority of situations, the automatic printout made
+by the testing function suffices and there is no need to 
+examine the {\tt ...\_Res} structure(s) after the test(s).
+In this case, it suffices to pass 
+a {\tt NULL} pointer for the {\tt ...\_Res *} parameter.
+The structure will then be created internally and destroyed automatically
+after the results are printed.
+% , inside the function that applies the test.
+
+
+\ifdetailed %%%%
+
+To examine or process the results of a test after its completion,
+one must create a 
+{\tt \ldots\_Res} structure by calling the appropriate {\tt Create...} 
+function, and pass it as a parameter to the test. Failing to call the
+appropriate {\tt Create...} function before using a {\tt \ldots\_Res} 
+structure will result in a memory fault because each such 
+function creates inner sub-structures used in the tests.
+The same structure can be used for many successive tests of the same type.
+When the structure is no longer needed, it should be destroyed by
+calling the appropriate {\tt Delete} function.
+These structures are explained in the {\em detailed\/} 
+version of this user's guide.
+
+\fi  %%%%
+
+%%%%%%%%%%%%%%%%%%%%
+\paragraph*{Scatter plots.} \
+ 
+There is a  module {\tt scatter} that permits one to plot points produced
+by a  generator in the $t$-dimensional hypercube $[0,1)^t$.
+A rectangular box is defined in this hypercube, and the points lying 
+in this box are projected on a selected two-dimensional subspace
+and placed on a 2-dimensional scatter plot.
+The plot is put in a file ready to be processed by
+\LaTeX\ or {\it Gnuplot}.
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\paragraph*{An example: The birthday spacings tests applied to an LCG.} \
+
+Figure~\ref{fig:progstat} shows how to apply a test to a generator.
+The call to {\tt ulcg\_CreateLCG} creates and initializes the generator
+{\tt gen} to the LCG with modulus $m$ = 2147483647, 
+multiplier $a$ = 397204094, additive constant $c=0$, and initial
+state $x_0 = 12345$.  This LCG is used in the SAS statistical
+ software \cite{iSAS90a}.
+Then the birthday spacings test is applied twice to this generator,
+with $N=1$, $r=0$, in $t=2$ dimensions.
+The sample sizes are $n=10^3$ and $n=10^4$, and the number $d$ of 
+divisions along each coordinate is chosen so that the expected number
+of collisions $\lambda = n^3/(4d^t)$ is 2.5 in the first case and 0.25
+in the second case (the values of $d$ are $10^4$ and $10^6$, respectively).
+Under $\cH_0$, the number of collisions is approximately a Poisson 
+random variable with mean $\lambda$.
+
+
+\setbox0=\vbox {\hsize = 6.0in
+\smallc
+\verbatiminput{../examples/birth1.c}
+}
+
+\begin{figure}[htb] \centering \myboxit{\box0}
+\caption{Applying two birthday spacings tests to a LCG.}
+   \label{fig:progstat}
+\end{figure}
+
+
+The results are in Figure~\ref{fig:resstat}. 
+These results are printed to the standard output, which may be redirected
+to a file if desired.
+%% Here, the symbol {\tt eps} means a $p$-value smaller than $10^{-15}$.
+At sample size $n=10^3$, there are 6 collisions and the $p$-value is 0.04,
+which is not extreme enough to reject $\cH_0$.
+At sample size $n=10^4$, there are 44 collisions and the $p$-value is 
+close to $10^{-81}$ (i.e., if $Y$ is Poisson with mean 0.25, 
+$P[Y\ge 44] < 10^{-81}$).
+The generator fails miserably in this case, with a sample size as
+small as ten thousands.  This test took approximately 0.02 second to run.
+
+
+\ifdetailed  %%%
+
+One may also want to examine or post-process the results of the tests in
+some way. In this case, one would create a {\tt res} structure as shown 
+in the code segment of Figure~\ref{fig:progstat2}, and delete the
+structure when it is no longer needed. By setting the flag
+ {\tt swrite\_Basic} to {\tt FALSE}, no output will be automatically 
+printed by the testing function.
+
+
+
+\setbox0=\vbox {\hsize = 6.0in
+\smallc
+\verbatiminput{../examples/birth2.c}
+}
+
+\begin{figure}[htb] \centering \myboxit{\box0}
+\caption{Two birthday spacings tests and post-processing the results.}
+  \label{fig:progstat2}
+\end{figure}
+
+\fi  %%%
+
+\setbox1=\vbox {\hsize = 6.0in
+\smallc
+\verbatiminput{../examples/birth1.res}
+}
+
+\begin{figure}[ht] \centering \myboxit{\box1}
+\caption{Results of the two birthday spacings tests.
+ \label{fig:resstat} }
+\end{figure}

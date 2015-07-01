@@ -1,0 +1,320 @@
+\defmodule {scatter}
+
+% \newcommand{\Fsc}{$<\!\!F\!\!>$}
+
+This module is useful for producing 2-dimensionnal scatter\index{scatter plot}
+plots of $N$ points obtained from a uniform random number generator.
+The $N$ points are generated in the $t$-dimensional unit hypercube $[0,1]^t$,
+either by taking vectors of $t$ successive output values from the generator,
+or by taking $t$ {\em non-successive\/} values at pre-specified lags.
+The vectors can overlap or not.
+Thus, in the case of successive values for overlapping vectors,
+for instance, $N+t-1$ uniforms are needed.
+
+A rectangular box $R$ is defined in $[0,1]^t$ by defining bounds $L_i < H_i$
+for each coordinate $i$, for $1\le i\le t$. 
+All the points falling outside that box are discarded.
+Two coordinate numbers are selected in $\{1,\dots,t\}$, say 
+$r_x$ and $r_y$, then all the points are projected on the two-dimensional
+subspace determined by these two coordinates, 
+and these projected points are shown on the plot.
+
+The plots can appear directly on the computer screen (using {\it Gnuplot})
+or can be stored in a file, in a format chosen by the user
+(currently, the format is either for \LaTeX\ or for  {\it Gnuplot}).
+Three different functions are available for producing the scatter plots:
+{\tt scatter\_PlotUnif} reads the data in a file,
+{\tt scatter\_PlotUnif1} receives all the data in its parameters, and
+{\tt scatter\_PlotUnifInterac} gets the data interactively from the user.
+
+
+\begin{figure}
+\begin{center}
+\fbox {
+\begin {tabular}{l@{\extracolsep{10mm}}l}
+\\
+     $N$                 &    Number of points \\
+     $t$                 &    Dimension of vectors\\
+     {\it Over}          &    {\tt TRUE} if we want overlapping vectors,
+                              {\tt FALSE} otherwise\\
+     $r_x$    $r_y$      &    Components to be plotted\\
+     $r_1$ $L_{r_1}$ $H_{r_1}$ & Axis number and  bounds for $x_{r_1}$\\
+      \vdots\ \ \ \vdots & \\
+     $t$  $L_t$    $H_t$ &  Dimension and   bounds for $x_t$\\
+     {\it Width  Height}\qquad  &  Physical  dimensions  of plot (in cm)\\
+     {\it Output}        &  Output  format: {\tt latex, gnu\_ps, gnu\_term }\\
+     {\it Precision}     &  Number of decimal digits for the points\\
+     {\it Lacunary}      &    {\tt TRUE} if we want lacunary indices,
+                              {\tt FALSE} otherwise\\
+     $i_1$               &     First lacunary index\\
+      \vdots             &     \vdots \\
+     $i_t$               &     $t$th lacunary index\\
+\\
+\end {tabular}
+}
+\end{center}
+\caption { General format of the data file for {\tt scatter}.}
+\label{formatdon}
+\end{figure}
+
+
+Figure~\ref{formatdon} gives the general format of the data file 
+needed by {\tt scatter\_PlotUnif}.
+This file must have the extension ``{\tt .dat}''.
+%  When the data is read in a file by  {\tt scatter\_ReadData}, 
+The right side (in the figure and in the file) contains optional
+(but useful) comments that are disregarded by the program.
+The values of the variables on the left must appear in the file,
+in the same format.
+There should be no blank line.
+The name of the file is passed as an argument to the function,
+without the ``{\tt .dat}'' extention.
+
+
+The first line contains an integer $N$, the total number 
+of points to generate.
+The second line gives the dimension $t$ of the hypercube.
+In the third line, {\it Over} is a boolean indicating whether 
+the vector coordinates overlap ({\tt TRUE\/}) or not ({\tt FALSE\/}). 
+The next line gives the two coordinate numbers $r_x$ and $r_y$ 
+selected for the plot.
+Each of the following lines contains a coordinate number $r_i$ (an integer
+from 1 to $t$), and the lower and upper boundaries $L_{r_i}$ and $H_{r_i}$ 
+(real) of the box $R$ along the coordinate $x_{r_i}$.
+One must have $0 \le L_i < H_i \le 1$.
+For the coordinates that do not appear here, the boundaries are set to
+0.0 and 1.0 by default.  The last coordinate $(r_i=t)$ must always appear.
+On the next line, {\it Width} and {\it Height} (real) 
+specify the physical dimensions (in {\it cm}) 
+of the rectangle for the plot (on paper).
+The variable {\em Output\/} specifies the format of the output file.
+The values currently allowed are {\tt latex, gnu\_ps, gnu\_term},
+and they correspond to creating a file for \LaTeX, creating a file
+for {\it Gnuplot}, and showing the plot on the screen using  {\it Gnuplot}, 
+respectively. The variable {\em Precision\/} specifies the number of
+decimal digits to be printed for the points coordinates.
+If the boolean variable {\it Lacunary\/} is {\tt FALSE}, 
+the vectors are constructed from successive output values of the 
+generator, and all the lines that follow are discarded.
+If {\it Lacunary\/} is {\tt TRUE}, the $t$ lines that follow must give the 
+values of the $t$ lacunary indices $i_1 < \cdots < i_t$ (integers).
+The points used in the plot are $\{(u_{i_1+n},\dots,u_{i_t+n}),\; 
+n=0,\dots,N-1\}$ in the overlapping case.
+
+As an illustration, suppose the data file is called {\tt dice.dat}. 
+If the output format is {\tt latex}, the output file
+ {\tt dice.tex} will be created by the program.
+  The command {\tt latex dice.tex} can then produce a file
+{\tt dice.dvi} that contains the plot.
+If the output format is {\tt gnu\_ps} or {\tt gnu\_term}, 
+the two files  {\tt dice.gnu} and {\tt dice.gnu.points} are
+created.  The file {\tt dice.gnu} contains a set of gnuplot
+commands to plot the points, which are kept in {\tt dice.gnu.points}. 
+The command {\tt gnuplot dice.gnu} can then produce the scatter plot 
+either on the terminal (if the output format was {\tt gnu\_term}) or 
+in a PostScript file (if the output format was {\tt gnu\_ps}).
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\paragraph* {An example.} \
+%
+Figure \ref{proggraph} gives an example of a small program that creates a
+scatter plot of numbers produced by the random number generator 
+{\tt RAND()} of {Microsoft Excel 1997}. 
+A long sequence of numbers was previously generated by  {Excel} and 
+saved in the ASCII file {\tt excel.pts}.
+In the program, the instruction 
+{\tt gen = ufile\_CreateReadText ("excel.pts")} 
+says that the generator {\tt gen} will now simply reads its
+numbers from that file.
+Then, the instruction {\tt scatter\_PlotUnif (gen, "excel")} 
+calls a function that plots the points after reading the data related
+to the plot in file {\tt excel.dat}.
+Figure \ref{excel.dat} show this data file.
+
+The program will generate $N =$ 1.5 million points $(u_i, u_{i+1})$,
+with overlapping, and show those whose first coordinate is between
+0 and 0.0005.  The output will be in the \LaTeX\ file {\tt excel.tex}.
+Figure \ref{dispers} shows the scatter plot created by  \LaTeX.
+
+The values produced by this generator obey the linear recurrence
+$u_{i}  = (9821.0\, u_{i-1} + 0.211327) \bmod 1$, where the numbers
+$u_i$ are represented with 15 decimal digits of precision.
+This linear relationship shows up very well in the graph: 
+All the points are on equidistant parallel lines with slope 9821.
+This is obviously a bad generator.
+
+
+\setbox1=\vbox {\hsize = 6.2in
+\smallc
+\verbatiminput{../examples/scat.c}
+}
+
+\begin{figure}[ht] \centering \myboxit{\box1}
+\caption{ Example of a program to create a scatter plot.
+\label{proggraph} }
+\end{figure}
+
+
+\setbox2=\vbox {\hsize = 6.2in
+\smallc
+\verbatiminput{../examples/excel.dat}
+}
+
+\begin{figure}[ht] \centering \myboxit{\box2}
+\caption{The data file {\tt excel.dat}.      \label{excel.dat} }
+\end{figure}
+
+
+%%%%%%%%%%%%%%
+\input scatfig.tex           %%%  Graphique pour le generator du VAX.
+
+
+\setbox3=\vbox {\hsize = 6.2in
+\smallc
+\verbatiminput{../examples/scat2.c}
+}
+
+\begin{figure}[ht] \centering \myboxit{\box3}
+\caption{Example, with lacunary indices, for creating a scatter plot.}
+                                                 \label{proggraph2}
+\end{figure}
+
+Figure \ref{proggraph2} shows another example using the 
+random number generator in Microsoft VisualBasic. The example
+shows how to plot a scatter diagram without reading any data file.
+Here, the parameters are passed directly to the function 
+{\tt scatter\_PlotUnif1}.
+We use the hypercube in 3 dimensions, and the 
+ plotting procedure is called for coordinates $x_1$ and $x_{3}$.
+ Since the Lacunary flag is TRUE,
+the procedure will not use every random number generated, but will
+use only those selected by the lacunary indices \{1, 2, 6\}  
+(see the documentation in {\tt unif01\_CreateLacGen}).
+The results will be written in file {\tt bone.tex}.
+
+%%% \newpage %%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\vspace{10mm}
+\bigskip
+\hrule
+\code
+\hide
+/* scatter.h  for ANSI C */
+#ifndef SCATTER_H
+#define SCATTER_H
+\endhide
+#include "gdef.h"
+#include "unif01.h"
+\endcode
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{Types}
+\code
+
+typedef enum {
+   scatter_latex,                 /* Latex format */
+   scatter_gnu_ps,                /* gnuplot format for Postscript file */   
+   scatter_gnu_term               /* Interactive gnuplot format */
+   } scatter_OutputType;
+\endcode
+ \tab
+  Possible formats for the output files containing the plots.
+ \endtab
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{Constant}
+\code
+
+#define scatter_MAXDIM 64
+\endcode
+ \tab
+  Maximal number of dimensions.
+ \endtab
+
+\ifdetailed  %%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{Variables}
+\code
+
+extern long scatter_N;             /* Number of points generated */
+extern long scatter_Nkept;         /* Number of points kept for plot */
+extern int scatter_t;              /* Dimension of points */
+extern lebool scatter_Over;        /* = TRUE: overlapping points */
+extern int scatter_x;
+extern int scatter_y;              /* The 2 coordinates to plot */
+extern double scatter_L [scatter_MAXDIM + 1];
+extern double scatter_H [scatter_MAXDIM + 1];
+                                   /* Lower and upper bounds for coordinates
+                                      of points to plot */
+\endcode
+\code
+extern lebool scatter_Lacunary;    /* = TRUE: lacunary case */
+extern long scatter_LacI [scatter_MAXDIM + 1];  /* Lacunary indices */
+extern double scatter_Width;
+extern double scatter_Height;      /* Physical dimensions (in cm) of plot */
+extern scatter_OutputType scatter_Output;       /* Kind of output */
+\endcode
+
+\fi  %%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{The plotting functions}
+
+\code
+
+void scatter_PlotUnif (unif01_Gen *gen, char *F);
+\endcode
+  \tab Creates a scatter plot, using the generator 
+  {\tt gen} and the parameters $N, t, \ldots$ given in file
+  {\tt F.dat}, in the format specified in Figure~\ref{formatdon}. 
+  (The data file must have the extension {\tt .dat}, but
+  the argument {\tt F} must be the file name without the extension.)
+  The results are written in file {\tt F.tex} or {\tt F.gnu},
+  depending on the value of the field {\tt scatter\_Output} in the
+  data file.
+  For example, the instruction {\tt scatter\_PlotUnif (gen, "dice")} 
+  will read the data in file {\tt dice.dat} and plot the figure using the
+  parameters in this file.
+ \endtab
+\code
+
+
+void scatter_PlotUnif1 (unif01_Gen *gen, long N, int t, lebool Over,
+   int Proj[2], double Lower[], double Upper[], scatter_OutputType Output,
+   int Prec, lebool Lac, long LacI[], char *Name);
+\endcode
+  \tab
+  Similar to  {\tt scatter\_PlotUnif}, except that the data are
+  passed as arguments to the function instead of being read in a file.
+  Here, {\tt N} is the number of points to generate,
+  {\tt t} is the dimension,
+  {\tt Proj[0..1]} are the two values of the coordinates to be projected,
+  {\tt Lower[0..(t-1)]} gives the lower bounds of the values to be considered,
+  {\tt Upper[0..(t-1)]} gives the upper bounds of the values to be considered,
+  {\tt Over} is  {\tt TRUE} iff the coordinates of the  points overlap,
+  {\tt Lac} is  {\tt TRUE} iff we consider lacunary values of the generator,
+  {\tt LacI[0..(t-1)]} gives the {\tt t} lacunary indices,
+  {\tt Name} is the name (without extension) of the output file, and
+  {\tt Prec} is the number of decimal digits required for each written value.
+  The constraints on these values are as explained earlier.
+ \endtab
+\code
+
+
+void scatter_PlotUnifInterac (unif01_Gen *gen);
+\endcode
+  \tab Similar to {\tt scatter\_PlotUnif}, except that the data are
+   given interactively on the terminal.
+ \endtab
+\code
+\hide
+#endif
+\endhide
+\endcode

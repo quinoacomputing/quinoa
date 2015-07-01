@@ -1,0 +1,25 @@
+\begin{thebibliography}{1}
+
+\bibitem{mCLE62a}
+C.~W. Clenshaw.
+\newblock Chebychev series for mathematical functions.
+\newblock National Physical Laboratory Mathematical Tables~5, Her Majesty's
+  Stationery Office, London, 1962.
+
+\bibitem{iKNU81a}
+D.~E. Knuth.
+\newblock {\em The Art of Computer Programming, Vol. 2}.
+\newblock Addison-Wesley, Reading, Mass., second edition, 1981.
+
+\bibitem{rLEC91a}
+P.~L'Ecuyer and S.~C{\^o}t{\'e}.
+\newblock Implementing a random number package with splitting facilities.
+\newblock {\em ACM Transactions on Mathematical Software}, 17(1):98--111, 1991.
+
+\bibitem{mWOL96a}
+S.~Wolfram.
+\newblock {\em The Mathematica Book}.
+\newblock Wolfram Media/Cambridge University Press, Champaign, USA, third
+  edition, 1996.
+
+\end{thebibliography}

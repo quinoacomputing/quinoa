@@ -1,0 +1,257 @@
+\defmodule{umrg}
+
+This module implements {\em multiple recursive generators\/} (MRGs),
+based on a linear recurrence of order $k$, modulo $m$:
+\eq
+   x_n = (a_1 x_{n-1} + \cdots + a_k x_{n-k}) \mod m.    \eqlabel {mrg}
+\endeq
+and whose output is normally $u_n = x_n / m$.
+It implements combined MRGs as well.
+For more details about these generators, see for example
+\cite {rLEC93a,rLEC94a,rLEC96b,rLEC99b,rLEC00b,rNIE92b}.
+
+{\em Lagged-Fibonacci\/} generators are also implemented here.
+These generators are actually MRGs only when the selected operation
+is addition or subtraction.
+Multiplicative lagged-Fibonacci generators, for example, are {\em not\/}
+MRGs, but are implemented here nonetheless.
+
+Some of the generators in this module use the GNU multiprecision package GMP. 
+%% (see the web site at \url{http://www.gnu.org/software/gmp/gmp.html}).
+The macro {\tt USE\_GMP} is defined in module {\tt gdef} in directory
+{\tt mylib}.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\bigskip
+\hrule
+\code
+\hide
+/*  umrg.h  for ANSI C  */
+#ifndef UMRG_H
+#define UMRG_H
+\endhide
+#include "gdef.h"
+#include "unif01.h"
+\endcode
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{Simple MRGs}
+
+\code
+unif01_Gen * umrg_CreateMRG (long m, int k, long A[], long S[]);
+\endcode
+  \tab  Implements a MRG of the form (\ref{mrg}), with
+   $(a_1,\dots,a_k)$ in {\tt A[0..(k-1)]}, initial state
+   $(x_{-1},\dots,\?x_{-k})$ in {\tt S[0..(k-1)]}, and output
+   $u_n = x_n / m$.
+\index{Generator!multiple recursive}%
+   Faster implementations are provided for the special cases
+   $k =2, 3, 5, 7$ when
+   $A[0] > 0, A[k-1] > 0$, and all other $A[i] = 0$.
+%    U_n = \cases { X_n/(m+1)  & si $X_n\not=0$,\cr
+%          \rule{0pt}{16pt}   m/(m+1)    & si $X_n=0$.\cr }
+   Restrictions: $2 \le k$, $|a_i| (m \mod |a_i|) < m$,
+   $-m < a_i < m$, and $-m < x_{-i} < m$, for $i = 1,\dots,k$.
+ \endtab
+\code
+
+
+unif01_Gen * umrg_CreateMRGFloat (long m, int k, long A[], long S[]);
+\endcode
+  \tab Similar to {\tt umrg\_CreateMRG} above, but uses a floating-point
+   implementation, as described in \cite{rLEC99b}.
+   Restrictions: $2 \le k$,
+   $-m < a_i < m$ and $-m < x_{-i} < m$ for $i = 1,\dots,k$, and
+   $m \max (Q^+, -Q^-) < 2^{53}$
+   where $Q^+$ is the sum of the positive coefficients $a_i$ 
+   and $Q^-$ is the sum of the negative coefficients $a_i$.
+ \endtab
+\code
+
+
+#ifdef USE_GMP
+   unif01_Gen * umrg_CreateBigMRG (char *m, int k, char *A[], char *S[]);
+\endcode
+ \tab Similar to {\tt umrg\_CreateMRG} above, except that the modulus,
+   coefficients, and initial state are given as decimal character strings
+   in {\tt m}, {\tt A[0..(k-1)]} and {\tt S[0..(k-1)]}.
+   Restrictions:  $-m < a_i < m$ and $-m < x_{-i} < m$ for $i = 1,\dots,k$.
+ \endtab
+\code
+#endif
+
+
+unif01_Gen * umrg_CreateLagFibFloat (int k, int r, char Op, int Lux,
+                                     unsigned long S[]);
+\endcode
+  \tab Implements a 2-lags Fibonacci generator \cite{rMAR85a,rKNU98a},
+  using a floating-point implementation,  
+\index{Generator!lag-Fibonacci}%
+  with recurrence
+ $$
+    u_n = (u_{n-k} \mbox{ \tt Op } u_{n-r}) \bmod 1,
+ $$
+  where the binary operator {\tt Op} can take the values 
+  {\tt '+'} or {\tt '-'}, which stand for addition and subtraction.
+  The seed vector {\tt S[0..(k-1)]} must contain the first {\tt k} values 
+  $u_{-1},\dots,u_{-k}$.
+% It must have been initialized before calling {\tt umrg\_CreateLagFibFloat}. 
+  The parameter {\tt Lux} gives the {\em luxury level} defined as
+  follows: if {\tt Lux} is larger than $k$, 
+  then for each block of {\tt Lux} successive output values,
+  the first $k$ are used and the next ${\tt Lux} - k$ are skipped.
+  If {\tt Lux} $\le k$, no value is skipped. {\em Note:} for {\tt Op = '-'}, 
+   one may choose either $k < r$ or $k > r$.  For example, the case
+   $k=55$, $r=24$ corresponds to $X_n = (X_{n-55} -  X_{n-24}) \bmod 1$,
+   while the case $k=24$, $r=55$ corresponds to $X_n = (X_{n-24} -  X_{n-55})
+   \bmod 1$.
+  {\em Restrictions:} ${\tt S[i]} < 2^{32}$ and  {\tt Op} $\in$ \{{\tt '+', '-'}\}.
+  \endtab
+\code
+
+
+unif01_Gen * umrg_CreateLagFib (int t, int k, int r, char Op, int Lux,
+                                unsigned long S[]);
+\endcode
+  \tab 
+  Similar to {\tt umrg\_CreateLagFibFloat}, except that the implementation
+  uses $t$-bit integers
+ $$
+    X_n = (X_{n-k} \mbox{ \tt Op }  X_{n-r}) \bmod 2^t.
+ $$
+\index{Generator!lag-Fibonacci}%
+  The parameter {\tt Op} may take one of 
+  the values  \{{\tt '*', '+', '-', 'x'}\}, which stands for multiplication,
+  addition, subtraction, and exclusive-or respectively.
+  Note that the resulting multiplicative lagged-Fibonacci generator
+  is not an MRG. Assume that $k>r$. 
+  If $M$ is a power of 2, say $M = 2^t$, then the maximal period length
+  is $(2^k-1) 2^{t-1}$ for the additive and subtractive cases, 
+  and $(2^k-1) 2^{t-3}$ for the multiplicative case.
+  This maximal period is reached if and only if the characteristic
+  polynomial $f(x) = x^k - x^{k-r} - 1$ is a primitive polynomial
+  modulo 2 (i.e., over the finite field $\mathbb{F}_2$)
+  \cite{rKNU81a,rBRE94a,rCOD94a}. 
+  Pairs of lags $(k,r)$ that give a maximal period can be found in
+  \cite{rMAR85b,rKNU98a,rBRE94a}. {\em Note:} for {\tt Op = '-'}, 
+   one may choose $k < r$ or $k > r$. For example, the case
+   $k=55$, $r=24$ corresponds to $X_n = (X_{n-55} -  X_{n-24}) \bmod 2^t$,
+   while $k=24$, $r=55$ corresponds to $X_n = (X_{n-24} -  X_{n-55}) \bmod 2^t$.
+ \hrichard {Une r\'ef\'erence int\'eressante est: 
+   \url{http://nhse.cs.rice.edu/NHSEreview/RNG/node11.html}.}
+\iffalse  %%%%%%%%
+\begin{center}
+\begin{tabular}{|@{\qquad}c@{\qquad}@{\qquad}c@{\qquad}|}\hline
+    $k$   & $r$   \\ \hline
+   9689 &   4187  \\
+   4423 &   2098  \\ 
+   2281 &   1029  \\ 
+   1279 &    418  \\ 
+    607 &    273  \\ 
+    521 &    168  \\ 
+    250 &    103  \\ 
+    127 &     63  \\ 
+     97 &     33  \\ 
+     55 &     24  \\ 
+     43 &     22  \\ 
+     31 &     13  \\ 
+     24 &     10  \\ 
+     17 &      5  \\ 
+      7 &      3  \\[2pt]
+ \hline
+\end{tabular}
+\end{center}
+\fi  %%%%%
+  Restrictions: $0 < t \le 64$. In the case {\tt Op = '*'},
+  all the $S[i]$ must be odd; if they are not, 1 will be added to the even
+  values.
+\endtab
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{Combined MRGs}
+
+\code
+
+unif01_Gen * umrg_CreateC2MRG (long m1, long m2, int k, long A1[],
+                               long A2[], long S1[], long S2[]);
+\endcode
+ \tab  Implements a generator that combines two MRGs of order $k$.
+   The combination method is by subtracting the states modulo $m_1$
+   and the implementation is the same as in Figure~1 of \cite{rLEC96b}.
+   Restrictions: assumes that $a_{11} = 0$, $a_{12} > 0$, $a_{13} < 0$, 
+   $a_{21} > 0$, $a_{22} = 0$ and $a_{23} < 0$, 
+   $k=3$ and the coefficients must satisfy the conditions
+   $a_{1j} (m_1 \mod a_{1j}) < m_1$ and  $a_{2j} (m_2 \mod a_{2j}) < m_2$.
+ \endtab
+\code
+
+
+#ifdef USE_GMP
+   unif01_Gen * umrg_CreateBigC2MRG (char *m1, char *m2, int k, char *A1[],
+                                     char *A2[], char *S1[], char *S2[]);
+\endcode
+ \tab  Implements a combined generator  obtained from 2 MRGs
+   of order $k$, whose modulus are $m_1$ and $m_2$.
+   The coefficients of the 2 components are given as decimal strings in
+   {\tt  A1[0..(k-1)], A2[0..(k-1)]}, and the initial values
+    are in  {\tt S1[0..(k-1)], S2[0..(k-1)]}, also given as decimal strings.
+   Restrictions are as for {\tt umrg\_CreateMRG}.
+  
+ \endtab
+\code
+#endif
+\endcode
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{Clean-up functions}
+\code
+
+void umrg_DeleteMRG    (unif01_Gen * gen);
+void umrg_DeleteMRGFloat (unif01_Gen * gen);
+void umrg_DeleteLagFib (unif01_Gen * gen);
+void umrg_DeleteLagFibFloat (unif01_Gen * gen);
+void umrg_DeleteC2MRG  (unif01_Gen * gen);
+
+#ifdef USE_GMP
+   void umrg_DeleteBigMRG (unif01_Gen * gen);
+   void umrg_DeleteBigC2MRG (unif01_Gen * gen);
+#endif
+\endcode
+  \tab Frees the dynamic memory used by the generators of this module,
+  and allocated by the corresponding {\tt Create} function.
+ \endtab
+\code
+\hide
+#endif
+\endhide
+\endcode
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{Some related generators}
+{
+\iffalse  %%%%%%%%%
+For other specific MRGs, see also
+
+\begin{itemize}
+\item {\tt uwu\_CreateMRGWuG2}   %% This is still confidential!
+\end{itemize}
+
+\bigskip
+\fi  %%%%%%%%
+
+For some other specific lagged-Fibonacci generators, see also
+
+\begin{itemize}
+\item {\tt uknuth\_CreateRan\_array1}
+\item {\tt uknuth\_CreateRan\_array2}
+\item {\tt uknuth\_CreateRanf\_array1}
+\item {\tt uknuth\_CreateRanf\_array2}
+\end{itemize}
+}

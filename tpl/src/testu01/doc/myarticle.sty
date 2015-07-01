@@ -1,0 +1,44 @@
+%  LATEX ARTICLE DOCUMENT STYLE
+%  Modifications et ajout de macros.    Pierre L'Ecuyer.
+
+\topmargin=-0.5in\oddsidemargin=0pt\topskip=\baselineskip
+\headsep=0pt\headheight=0.5in
+\renewcommand{\topfraction}{.90}
+\renewcommand{\bottomfraction}{.80}
+\renewcommand{\textfraction}{.10}
+\textwidth=6.5 true in\textheight=8.9 true in
+\tolerance=500 \parskip=.1in plus .1in minus .04in
+
+\catcode`\@=11
+%\def\thesection       {\arabic{section}.}
+%\def\thesubsection    {\thesection\arabic{subsection}.}
+%\def\thesubsubsection {\thesubsection\arabic{subsubsection}.}
+%\def\theparagraph     {\thesubsubsection\arabic{paragraph}.}
+%\def\thesubparagraph  {\theparagraph\arabic{subparagraph}.}
+%\def\@thmcounter#1{\noexpand\arabic{#1}.}
+
+\def\fps@figure {hbtp}
+\def\fps@table {hbtp}
+
+\def\thebibliography#1{\section*{References\markboth
+  {REFERENCES}{REFERENCES}}\list
+  {[\arabic{enumi}]}{\settowidth\labelwidth{[#1]}\leftmargin\labelwidth
+    \advance\leftmargin\labelsep\usecounter{enumi}}}
+\def\@citex[#1]#2{\if@filesw\immediate\write\@auxout{\string\citation{#2}}\fi
+  \def\@citea{}\@cite{\@for\@citeb:=#2\do
+    {\@citea\def\@citea{, }\@ifundefined
+       {b@\@citeb}{{\bf ?}\@warning
+       {Citation `\@citeb' on page \thepage \space undefined}}%
+  \hbox{\csname b@\@citeb\endcsname}}}{#1}}
+
+\def\abstract{\if@twocolumn \section*{Abstract}
+ \else \small
+ \begin{center}{\bf ABSTRACT\vspace{-.5em}\vspace{0pt}}\end{center}
+ \quotation\fi}
+
+\def\inc#1{\@partswtrue\edef\@partlist{#1}}
+\catcode`\@=12
+
+\input ../doc/lmac.tex
+
+

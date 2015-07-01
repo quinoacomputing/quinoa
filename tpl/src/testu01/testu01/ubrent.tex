@@ -1,0 +1,208 @@
+\defmodule {ubrent}
+
+This module implements some random number generators proposed by Richard
+  P. Brent (Web pages at \index{Generator!Xorshift}%
+\url{http://web.comlab.ox.ac.uk/oucl/work/richard.brent/}
+and \url{http://wwwmaths.anu.edu.au/~brent/random.html}).
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\bigskip
+\hrule
+\code\hide
+/* ubrent.h for ANSI C */
+#ifndef UBRENT_H
+#define UBRENT_H
+\endhide
+#include "gdef.h"
+#include "unif01.h"
+\endcode
+
+\guisec{The xorgens generators, version 2004}
+\code
+
+unif01_Gen* ubrent_CreateXorgen32 (int r, int s, int a, int b, int c, int d,
+                                   lebool hasWeyl, unsigned int seed);
+\endcode
+  \tab Some fast long-period random number generators \cite{rBRE04a} 
+        generalizing Marsaglia's \textit{Xorshift} RNGs \cite{rMAR03a} 
+ (see page \pageref{marsa-xorshift} of this guide).  The
+   output may be combined with a Weyl generator.
+ % (This is the \textbf{2004 version} of these generators.)
+ The parameters $r, s, a, b,  c, d$ are chosen such that the $n \times n$
+   matrix $T$ defining the recurrence has a minimal polynomial which
+\index{Generator!Xorgen32}%
+      is of degree $n$ and primitive over $\mathbb{F}_2$. 
+The state of the generator is made up of $n= 32 r$ bits.
+The primary recurrence is $x_k = x_{k-r}A + x_{k-s}B$, where matrices
+$A$ and $B$ implement a combination of left and right shifts;
+ in the notation of Marsaglia, $A = (I + L^a)(I + R^b)$ and
+ $B = (I + L^c)(I + R^d)$ with
+ $I$ the identity matrix, $L^a$ a left shift by $a$ bits, 
+and $R^b$ a right shift by $b$ bits. If \texttt{hasWeyl} is \texttt{TRUE},
+then the Weyl combination is added to the output as in Brent original
+code. If it is  \texttt{FALSE}, then no Weyl combination is added;
+ this is useful for testing these \textit{xorgens} by themselves.
+Restrictions: $r > 1$, $0 < s < r$ and $0 < a,b,c,d < 32$,
+and $r$ must be a power of 2.
+%
+The following table gives parameters recommended by Brent
+for the \textit{best} 32-bit generators of this kind
+according to the criteria given in \url{ftp://ftp.comlab.ox.ac.uk/pub/Documents/techpapers/Richard.Brent/random/xortable.txt}.
+\endtab
+%
+\begin {table}
+\centering
+\label {tab:brentparam32}
+\caption {Good parameters for Brent's \texttt{xorgens} generators}
+\begin {tabular}{@{\extracolsep{15pt}}|rrrcccccc|}
+\hline
+    $n$ &  $r$  &   $s$ &   $a$ &  $b$ &  $c$ &  $d$ &  Weight & delta \\ 
+\hline
+ 64  &   2  &  1  &  17  &  14  &  12  &  19  &  \phantom{1}31  &  12 \\
+ 128  &  4  &  3  &  15  &  14  &  12  &  17  &  \phantom{1}55  &  12 \\
+ 256  &  8  &  3  &  18  &  13  &  14  &  15  &  109  &  13 \\
+ 512  &  16  &  1  &  17  &  15  &  13  &  14  &  185  &  13 \\
+ 1024  &  32  &  15  &  19  &  11  &  13  &  16  &  225  &  11 \\
+ 2048  &  64  &  59  &  19  &  12  &  14  &  15  &  213  &  12 \\
+ 4096  &  128  &  95  &  17  &  12  &  13  &  15  &  251  &  12 \\
+% 4224  & 132  &  67 & 15 & 14 & 13 & 18 &  243 &  13 \\
+%  4480  & 140 &   19 & 17 & 13 & 15 & 16 &  251 &   13 \\
+\hline
+\end {tabular}
+\end {table}
+\code
+
+unif01_Gen* ubrent_CreateXor4096s (unsigned int seed);
+\endcode
+  \tab This is the 32-bit generator  \textit{xor4096s} with period
+ $2^{32}(2^{4096}-1)$ proposed by Brent \cite{rBRE04a}.
+%  (This is the \textbf{2004 version} of this generator.)
+ It is a generalization of
+ Marsaglia's \textit{Xorshift} generators \cite{rMAR03a} (see page
+ \pageref{marsa-xorshift} of this guide).
+  The initial seed is \texttt{seed}. This generator corresponds to the more
+general case above with parameters
+$n=4096$,  $r=128$,   $s=95$,  $a=17$,  $b=12$,  $c=13$, $d=15$,
+ Weight $=251$,  delta $=12$.
+\index{Generator!xor4096s}%
+  \endtab
+\code
+
+
+#ifdef USE_LONGLONG
+
+unif01_Gen* ubrent_CreateXorgen64 (int r, int s, int a, int b, int c, int d,
+                                   lebool hasWeyl, ulonglong seed);
+\endcode
+  \tab Similar to \texttt{ubrent\_CreateXorgen32} above but with 64-bit
+  generators. % (This is the \textbf{2004 version} of these generators.)
+  The state of the generator is made up of $n= 64 r$ bits,
+  but only the 32 most significant bits
+  of each generated number are used here.
+\index{Generator!Xorgen64}%
+  Restrictions: $r > 1$, $0 < s < r$ and $0 < a,b,c,d < 64$,
+  and $r$ must be a power of 2.
+The following table gives parameters recommended by Brent
+for the \textit{best} generators of their kind
+according to the criteria given in \url{ftp://ftp.comlab.ox.ac.uk/pub/Documents/techpapers/Richard.Brent/random/xortable.txt}.
+\endtab
+%
+\begin {table}
+\centering
+\label {tab:brentparam64}
+\caption {Good parameters for Brent's \texttt{xorgens} generators}
+\begin {tabular}{@{\extracolsep{15pt}}|rrrcccccc|}
+\hline
+    $n$ &  $r$  &   $s$ &   $a$ &  $b$ &  $c$ &  $d$ &  Weight & delta \\ 
+\hline
+ 128  &  2   & 1  & 33 & 31 & 28 & 29  & 65  & 28 \\ 
+ 256  &  4   & 3  & 37 & 27 & 29 & 33  & 127 & 27 \\
+ 512  &  8   & 1  & 37 & 26 & 29 & 34  & 231 & 26 \\
+ 1024 &  16  & 7  & 34 & 29 & 25 & 31  & 439 & 25 \\
+ 2048 &  32  & 1  & 35 & 27 & 26 & 37  & 745 & 26 \\
+ 4096 &  64  & 53 & 33 & 26 & 27 & 29  & 961 & 26 \\
+% 4224 &  66  & 41 & 33 & 31 & 27 & 29  & 987 & 27 \\
+%  4480 &  70  & 61 & 34 & 29 & 30 & 31  & 951 & 29 \\ 
+\hline
+\end {tabular}
+\end {table}
+\code
+
+
+unif01_Gen* ubrent_CreateXor4096l (ulonglong seed);
+\endcode
+  \tab This is the 64-bit generator  \textit{xor4096l} with period at least
+ $(2^{4096}-1)$ proposed by Brent \cite{rBRE04a}.
+%  (This is the \textbf{2004 version} of this generator.)
+ It is a generalization of Marsaglia's \textit{Xorshift} generators 
+ \cite{rMAR03a} (see page \pageref{marsa-xorshift} of this guide).
+  The initial seed is \texttt{seed}. While Brent's original code returns
+  64-bit numbers, only the 32 most significant bits
+  of each generated number are used here.
+\index{Generator!xor4096l}%
+  \endtab
+\code
+
+
+unif01_Gen* ubrent_CreateXor4096d (ulonglong seed);
+\endcode
+  \tab This is the 53-bit floating-point generator \textit{xor4096d}
+ with period at least $(2^{4096}-1)$ proposed by Brent \cite{rBRE04a}.
+ % (This is the \textbf{2004 version} of this generator.)
+  It is based on \textit{xor4096l} (implemented in \texttt{ubrent\_CreateXor4096l}
+  above) and uses its 53  most significant bits. The initial seed is \texttt{seed}.
+\index{Generator!xor4096d}%
+ \endtab
+\code
+
+#endif
+\endcode
+
+\guisec{The xorgens generators, version 2006}
+\code
+
+unif01_Gen* ubrent_CreateXor4096i (unsigned long seed);
+\endcode
+  \tab This is the % 32-bit (on 32-bit machine) or 64-bit (on 64-bit machine)
+  integer random number generator  \textit{xor4096i} with period at least
+ $(2^{4096}-1)$ proposed by Brent (see 
+  \url{http://wwwmaths.anu.edu.au/~brent/random.html}).  This is the
+   {2006 version} of the generators \textit{xor4096s} and
+  \textit{xor4096l}. It has a different initialization and a slightly 
+  different algorithm from the 2004 version.
+\index{Generator!xor4096i}%
+  \endtab
+\code
+
+
+unif01_Gen* ubrent_CreateXor4096r (unsigned long seed);
+\endcode
+  \tab This is the floating-point generator \textit{xor4096r} proposed by Brent
+  (see \url{http://wwwmaths.anu.edu.au/~brent/random.html}).
+  This is the {2006 version} of the generators \textit{xor4096f} and
+  \textit{xor4096d}. It is based on \textit{xor4096i} implemented in
+  \texttt{ubrent\_CreateXor4096i} above. The initial seed is \texttt{seed}.
+\index{Generator!xor4096r}%
+ \endtab
+
+
+\guisec{Clean-up functions}
+\code
+
+void ubrent_DeleteXorgen32 (unif01_Gen *);
+void ubrent_DeleteXor4096s (unif01_Gen *);
+void ubrent_DeleteXor4096i (unif01_Gen *);
+void ubrent_DeleteXor4096r (unif01_Gen *);
+
+#ifdef USE_LONGLONG
+   void ubrent_DeleteXorgen64 (unif01_Gen *);
+   void ubrent_DeleteXor4096l (unif01_Gen *);
+   void ubrent_DeleteXor4096d (unif01_Gen *);
+#endif
+\endcode
+  \tab Frees the dynamic memory allocated by the corresponding
+  \texttt{Create} functions of this module. \endtab
+\code\hide
+#endif
+\endhide\endcode

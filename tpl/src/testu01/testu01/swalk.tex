@@ -1,0 +1,264 @@
+\defmodule {swalk}
+
+This module implements statistical tests based on discrete random walks
+\index{random walk} over the set $\mathbb{Z}$ of all integers.
+Similar tests are discussed, e.g., by 
+Vattulainen \cite{rVAT94a,rVAT95a} and Takashima \cite{rTAK96a}.
+
+The main function, {\tt swalk\_RandomWalk1}, applies simultaneously
+several tests based on a random walk of length $\ell$ over the 
+integers, for several (even) values of $\ell$.
+The random walk is generated from a bit string produced by the 
+generator by taking $s$ bits per output value.
+Each bit determines one step of the walk: move by 1 to the left
+if the bit is 0 and by 1 to the right if the bit is 1.
+The function {\tt swalk\_RandomWalk1a} implements a variant
+where each move of the walk is determined by taking a linear
+combination modulo 2 (i.e., exclusive-or) of certain bits in the string.
+
+The functions {\tt swalk\_VarGeoP} and {\tt swalk\_VarGeoN} implement
+``random walk'' tests defined in terms of real numbers.
+These tests were proposed in \cite{rSHC97a} and turn out to be special
+cases of the gap test implemented in module {\tt sknuth\_gap}.
+
+\resdef
+
+\bigskip\hrule
+
+\code\hide
+/* swalk.h  for ANSI C */
+#ifndef SWALK_H
+#define SWALK_H
+\endhide
+#include "bitset.h"
+#include "unif01.h"
+#include "sres.h"
+\endcode
+
+
+\ifdetailed   %%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{Types and structures for test results}
+
+The types of test statistics and the types of structures 
+used to store the test results are defined here.
+Several tests are applied simultaneously and the results are stored
+in arrays.
+
+
+\code
+
+typedef struct {
+
+   long L0, L1, L;
+\endcode
+ \tabb Results are kept for all random walks of {\em even} length  {\tt L}
+   for {\tt L0} $\le$  {\tt L} $\le$ {\tt L1}.
+ \endtabb
+\code
+
+   sres_Chi2 **H;
+   sres_Chi2 **M;
+   sres_Chi2 **J;
+   sres_Chi2 **R;
+   sres_Chi2 **C;
+\endcode
+ \tabb {\tt H[i]} contain the results for the {\tt H} statistic
+  in random walks of {\em even} length {\tt L = i + L0} for
+  {\tt 0} $\le$ {\tt i} $\le$ {\tt imax}. Only even values of {\tt i} are
+   meaningfull and we have  {\tt L1 = imax + L0}.
+   Similarly for the {\tt M}, {\tt J}, {\tt R}, and {\tt C} statistics.
+ \endtabb
+\code
+
+   long imax;
+\endcode
+ \tabb Maximal value of the index for the arrays {\tt H}, {\tt M},
+ {\tt J}, {\tt R}, and {\tt C}. The minimal value of the index is 0.
+ \endtabb
+\code
+
+   char *name;
+\endcode
+ \tabb
+  The name of the test which produced the above results.
+ \endtabb
+\code
+
+   void *work;
+\endcode
+ \tabb Work variable used internally.
+ \endtabb
+\code
+
+} swalk_Res;
+\endcode
+ \tab Structure used to keep the results of 
+  the tests {\tt swalk\_RandomWalk1} or  {\tt swalk\_RandomWalk1a}.
+ \endtab
+\code
+
+
+swalk_Res * swalk_CreateRes (void);
+\endcode
+ \tab 
+  Function creating and returning a structure to hold the results
+  of tests {\tt swalk\_RandomWalk1} or  {\tt swalk\_RandomWalk1a}. 
+ \endtab
+\code
+
+
+void swalk_DeleteRes (swalk_Res *res);
+\endcode
+ \tab 
+  Procedure freeing the memory allocated by {\tt swalk\_CreateRes}.
+ \endtab
+
+
+\fi %%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{The tests}
+
+\code
+
+void swalk_RandomWalk1 (unif01_Gen *gen, swalk_Res *res, long N, long n,
+                        int r, int s, long L0, long L1);
+\endcode
+ \tab
+   Applies various tests \index{Test!RandomWalk1}
+   based on a {\em random walk\/} over the 
+   set of integers $\mathbb{Z}$.  The walk starts at 0 and at each step,
+   it moves by one unit to the left with probability 1/2,
+   and by one unit to the right with probability 1/2.
+   The test considers $\ell$-step random walks, for all {\em even\/}
+   integers $\ell$ in the interval $[L_0, L_1]$.
+   It first generates a random walk of length $\ell = L_0$, then adds
+   two steps to obtain a random walk of length $\ell = L_0+2$,
+   then adds two more steps for a walk of length $\ell = L_0+4$,
+   and so on until $\ell = L_1$.
+
+   To generate the moves, the test uses one bit $b_i$ at each step $i$.
+   It takes $s$ bits from each uniform (after dropping the first $r$).
+   So for the entire walk of length $L_1$, it needs $\lceil L_1/s\rceil$
+   uniforms.
+   Let $X_i = 1$ if $b_i = 1$, and $X_i = -1$ if $b_i = 0$.
+   Define also $S_0 = 0$ and
+   $$
+     S_k = \sum_{i=1}^k X_i, \quad k\ge 1.
+   $$
+   The process $\{S_k,\, k\ge 0\}$ is a random walk over the integers.
+   Under $\cH_0$, we have 
+ $$
+    p_{k,y} = P[S_k = y] = \cases { 
+       2^{-k} \pmatrix{ k \cr {(k+y)/2}\cr} & if $k+y$ is even;\cr
+        0 \vphantom{\vrule height14pt}      & if $k+y$ is odd.\cr}
+ $$
+   For $\ell$ even, we define the statistics:
+   \begin {eqnarray*}
+    H   &=& \ell/2 + S_\ell/2 ~=~ \sum_{i=1}^\ell I[X_i = 1], \\
+    M   &=& \max \left\{S_k,\;\; 0\le k\le \ell\right\},\\
+    J   &=& 2 \sum_{k=1}^{\ell/2} I[S_{2k-1} > 0],\\
+    P_y &=& \min \left\{k : S_k = y\right\}, \quad y > 0,\\
+    R   &=& \sum_{k=1}^\ell I[S_k = 0],\\
+    C   &=& \sum_{k=3}^\ell I[S_{k-2} S_{k} < 0],
+   \end {eqnarray*}
+  where $I$ denotes the indicator function.
+  Here, $H$ is the number of steps to the right, 
+  $M$ is the maximum value reached by the walk, 
+  $J$ is the fraction of time spent on the right of the origin,
+  $P_y$ is the first passage time at $y$,
+  $R$ is the number of returns to 0, and
+  $C$ is the number of sign changes.   
+  
+  The test thus generates $n$ random walks and computes the 
+  $n$ values of each of these statistics.
+  It compares the empirical  distribution of these $n$ values with 
+  the corresponding theoretical law, via a chi-square test
+  (regrouping classes if needed).
+
+  The theoretical probabilities for these statistics under $\cH_0$
+  are as follows:
+   \begin {eqnarray*}
+    P[H = k] &=& P[S_\ell = 2k-\ell] ~=~ p_{\ell, 2k-\ell} 
+             ~=~ 2^{-\ell} {\ell \choose k}, \quad 0\le k\le \ell,\\
+    P[M = y] &=& p_{\ell,y} + p_{\ell, y+1}, \quad 
+     0\le y\le \ell,\\
+    P[J = k] &=& p_{k,0}\; p_{\ell-k, 0},   \quad  0\le k\le \ell, \ k
+     \mbox{ even},\\
+    P[P_y = k] &=& (y/k) p_{k,y}, \\
+    P[R = y] &=& p_{\ell-y,y},    \quad 0\le y \le \ell/2,\\
+    P[C = y] &=& 2p_{\ell-1, 2y+1}, \quad 0\le y \le (\ell-1)/2.
+   \end {eqnarray*}
+   The size of the memory used by the  test is approximately
+   ${6L_1(L_1-L_0+1)}/(10^5)$ megabytes.
+   Restrictions: $r+s\le 32$, $L_0$ and $L_1$ even, and $L_0 \le L_1$.
+ \endtab
+\code
+
+
+void swalk_RandomWalk1a (unif01_Gen *gen, swalk_Res *res, long N, long n,
+                         int r, int s, int t, long L, bitset_BitSet C);
+\endcode
+ \tab
+   Applies the same collection of tests \index{Test!RandomWalk1a}
+   as {\tt swalk\_RandomWalk1},
+   except that $\ell$ takes a single value, {\tt L}, and that 
+   the $X_i$'s are defined in a different (more general) way, as follows.
+   The parameter {\tt C} contains a vector of fixed binary coefficients
+   (bits) $c_0,\dots,c_{t-1}$, not all zero.
+   The test generates a long sequence of bits $b_0, b_1, \dots$ and puts
+   $X_i = 1$ if $y_i = c_0 b_i + \dots + c_{t-1} b_{i+t-1}$ 
+  % = \sum_{j=0}^{t-1} c_j b_{i+j}$
+   is odd, $X_i = -1$ otherwise.
+  \hpierre {Ceci utilise $\ell+t-1$ pour une marche al\'eatoire de
+    longueur $\ell$.
+    J'ai regard\'e l'implantation et je ne comprend pas trop ce qui
+    se passe.  C'est loin d'\^etre clair.  Il faut mieux expliquer.}
+  \hpierre {Under what conditions on the $c_j$ are the $X_i$'s 
+    independent under $\cH_0$?  It suffices that the $c_j$'s are not
+    all zero.  Because then, for any two indices $i$ and $j$, $y_i$ 
+    is a sum of bits with at least one bit not included in the sum
+    defining $y_j$, and vice-versa.}
+   Restrictions: $r+s \le 32$, $t \le 31$, and $L$ even.
+ \endtab
+\code
+
+
+void swalk_VarGeoP (unif01_Gen *gen, sres_Chi2 *res,
+                    long N, long n, int r, double Mu);
+\endcode
+ \tab 
+  Applies a test  \index{Test!VarGeoP}
+  based on the length of a certain ``random walk'',
+  proposed by \cite{rSHC97a}.
+  This test turns out to be a special case of the {\em gap test\/} 
+  implemented in {\tt sknuth\_gap}.
+  It generates uniforms until one of these uniforms is larger or equal
+  to {\tt Mu} and counts how many uniforms were needed (the number of steps
+  in the random walk).  
+  This is repeated $n$ times, the number of walks of each length is
+  counted, and a chi-square test is applied to compare these counts
+  to the their expectations under $\cH_0$.
+  Restriction: {\tt Mu} $\in (0, 1)$.
+ \endtab
+\code
+
+
+void swalk_VarGeoN (unif01_Gen *gen, sres_Chi2 *res,
+                    long N, long n, int r, double Mu);
+\endcode
+ \tab 
+  Same as {\tt swalk\_VarGeoP},  \index{Test!VarGeoN} 
+  but with ``larger or equal to
+  {\tt Mu}'' replaced by ``less than {\tt 1 - Mu}''.
+ \endtab
+
+\code
+\hide 
+#endif
+\endhide
+\endcode

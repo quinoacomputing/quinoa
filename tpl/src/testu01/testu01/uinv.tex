@@ -1,0 +1,181 @@
+\defmodule {uinv}
+
+This module implements different types of inversive generators.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\bigskip
+\hrule
+\code
+\hide
+/* uinv.h for ANSI C */
+#ifndef UINV_H
+#define UINV_H
+\endhide
+#include "unif01.h"
+
+
+unif01_Gen * uinv_CreateInvImpl (long m, long a1, long a2, long z0);
+\endcode
+  \tab Implements a nonlinear inversive generator as 
+   defined in \cite{rEIC92c} and \cite[p.93]{rLEC90a}, with
+  \begin{eqnarray*}
+         z_n &=& \left\{ \begin{array}{ll}
+      (a_1 + a_2\cdot z_{n-1}^{-1})\bmod m & \mbox{if $z_{n-1}\not=0$}\\[6pt] 
+       a_1                                       & \mbox{if $z_{n-1} = 0$} 
+    \end{array} \right.\\
+   u_n &=& z_n / m.
+  \end{eqnarray*}
+   The generator computes $z_{n-1}^{-1}$ via the modified
+\index{Generator!inversive}%
+   Euclid algorithm (see \cite{rKNU81a} p.~325).  
+   If $m$ is prime and if $p(x) = x^2 - a_1 x - a_2$ is a
+   primitive polynomial modulo $m$, then the generator has 
+    maximal  period $m$.
+   Restrictions: $0 \le z_0 < m$,
+   $0 < a_1 < m$ and $0 < a_2 < m$.  Furthermore, $m$ must be a prime
+   number, preferably large. %, but inferior to $2^{31}$.
+  \endtab
+\code
+
+
+unif01_Gen * uinv_CreateInvImpl2a (int e, unsigned long a1,
+                                   unsigned long a2, unsigned long z0);
+\endcode
+  \tab Implements a nonlinear inversive generator similar to
+    {\tt uinv\_CreateInvImpl}, but with $m = 2^e$ 
+   (see \cite{rEIC92c} p.~172). 
+   The  domain is limited to odd positive integers since 
+   the inverse modulo $2^e$ of a given $x$ exists only if $x$ is odd.
+   For $e = 31$ or $32$, the generator computes
+   the inverse by exponentiation according to the formula:
+   $x^{-1} = x^{m-1} = x^{(m \div 4) - 1}$.  
+   For $e \le 30$, the inverse is computed via the modified
+   Euclid algorithm (faster than exponentiation,
+   but our implementation of it is only valid in the domain
+   of {\tt long}, i.e. if $m \le 2^{31}-1$). 
+   If $e\ge 3$ and if $a_2-1$ and $a_1-2$ are multiples of 4, 
+   then the period is  maximal and equal to $m/2$.
+   \emph{Restrictions}:  $3 \le e \le 32$; $z_0$, $a_1$ and $a_2$ less than
+   $m$; $z_0$ and $a_2$ must be odd and $a_1$ must be even.
+  \endtab
+\code
+
+
+unif01_Gen * uinv_CreateInvImpl2b (int e, unsigned long a1,
+                                   unsigned long a2, unsigned long z0);
+\endcode
+  \tab Implements a nonlinear inversive generator with $m = 2^e$
+   as described in \cite{rEIC92d}. 
+   The recurrence is:
+     $$ z_n = T(z_{n-1}) $$
+   where
+     $$ T(2^\ell z) = (a_1 + 2^\ell a_2 z^{-1}) \mod 2^e $$
+   whenever $z$ is odd.
+   For $e = 31$ or $32$, the inverse is computed by exponentiation 
+   according to the formula:
+   $x^{-1} = x^{m-1} = x^{(m \div 4) - 1}$.
+   For $e\ge 3$, if $a_2-1$ is a multiple of 4 and if $a_1$ is odd, 
+   then the period is maximal and equal to $m$.
+   \emph{Restrictions}:  $3 \le e \le 32$; $z_0$, $a_1$ and $a_2$ less than
+   $m$ and odd.
+  \endtab
+\code
+
+
+unif01_Gen * uinv_CreateInvExpl (long m, long a, long c);
+\endcode
+  \tab Implements an  {\em explicit\/} nonlinear inversive generator,
+   as described in \cite{rEIC93a} and
+   \cite{rLEC94a} (Section 10.2), with
+    \[ z_n = \left\{ 
+     \begin{array}{ll} 
+       x_n^{-1} & \mbox{si $x_n\not=0$}\\[6pt] 
+       0        & \mbox{si $x_n = 0$} 
+     \end{array} \right. \]
+   where $x_n = (an+c) \mod m$ for $n \ge 0$. 
+   The generator computes 
+   $x_n^{-1}$ by the modified Euclid algorithm (see \cite{rKNU81a}
+   p.~325). The initial state of the generator, $x_0$, is given by
+   $c$.  \emph{Restrictions}: $0 < a < m$, $0 \le c < m$ and $m$ must be a prime
+   number.  In this case, the period has length $m$.
+  \endtab
+\code
+
+
+unif01_Gen * uinv_CreateInvExpl2a (int e, long a, long c);
+\endcode
+  \tab Implements  an  {\em explicit\/} nonlinear inversive generator,
+  similar to {\tt uinv\_CreateInvExpl}, but with
+   $m = 2^e$, as described in \cite{rEIC94b}.
+   \emph{Restrictions}:  $3 \le e \le 32$; $a$ and $c$ less than $m$,
+   $a-2$ multiple of 4 and $c$ odd.
+  \endtab
+\code
+
+
+unif01_Gen * uinv_CreateInvExpl2b (int e, long a, long c);
+\endcode
+  \tab Implements an  {\em explicit modified\/}
+   nonlinear inversive generator, with $m = 2^e$, as proposed 
+   in \cite{rEIC95d}.   The recurrence has the form
+    $$ x_n = n(an + c)^{-1} \mod 2^e; \qquad u_n = x_n 2^{-e}. $$
+   \emph{Restrictions}:  $3 \le e \le 32$, $a < m$, $c < m$, 
+   $a-2$ multiple of 4, and $c$ odd.
+   With these restrictions, the period is equal to $m$.
+  \endtab
+\code
+
+
+unif01_Gen * uinv_CreateInvMRG (long m, int k, long A[], long S[]);
+\endcode
+  \tab  Implements an inversive multiple recursive generator (MRG),
+   based on the recurrence
+    $$ x_n = (a_1 x_{n-1} + \cdots + a_k x_{n-k}) \mod m $$ 
+   as in {\tt umrg\_CreateMRG}, except that the output $u_n$ is 
+   constructed using $x_n^{-1} \mod m$ instead of $x_n$.
+   \emph{Restrictions}: The same restrictions as for {\tt umrg\_CreateMRG}
+   apply here and $m$ must be a prime number.
+  \endtab
+\code
+
+
+unif01_Gen * uinv_CreateInvMRGFloat (long m, int k, long A[], long S[]);
+\endcode
+  \tab  Provides a floating-point implementation of the same generator
+   as in {\tt uinv\_CreateInvMRG}.
+   The implementation is similar to that in {\tt umrg\_CreateMRGFloat}.
+   \emph{Restrictions}: The same restrictions apply here as for
+   {\tt umrg\_CreateMRGFloat} and $m$ must be a prime number.
+  \endtab
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{Clean-up functions}
+\code
+
+void uinv_DeleteInvMRG (unif01_Gen * gen);
+\endcode
+  \tab Frees the dynamic memory allocated by
+   {\tt uinv\_CreateInvMRG}.
+ \endtab
+\code
+
+
+void uinv_DeleteInvMRGFloat (unif01_Gen * gen);
+\endcode
+  \tab Frees the dynamic memory allocated by
+   {\tt uinv\_CreateInvMRGFloat}.
+ \endtab
+\code
+
+
+void uinv_DeleteGen (unif01_Gen * gen);
+\endcode
+  \tab Frees the dynamic memory allocated by the other {\tt Create}
+  functions of this module.
+ \endtab
+\code
+\hide
+#endif
+\endhide
+\endcode

@@ -1,0 +1,280 @@
+\defmodule {ftab}
+
+This module provides tools to manipulate and print tables of $p$-values
+and other results, when statistical tests with different sample sizes are
+applied to a whole family of generators of different sizes or different
+resolutions (or precisions). Each table contains a two-dimensional array of
+values ({\tt Mat}), indexed by $i$ and $j$. The row $i$ of {\tt Mat} is
+associated with a generator of the family that is being tested, while the
+column $j$ is associated with the different sample sizes for the test
+being applied on the generator. Such a table can be created by 
+{\tt ftab\_CreateTable}, printed by {\tt ftab\_PrintTable} or
+{\tt ftab\_PrintTable2}, and deleted by {\tt ftab\_DeleteTable}.
+The function {\tt ftab\_MakeTables} is used to run a series of tests on a
+whole family of generators and to fill up the tables of results.
+
+\bigskip
+\hrule
+\code\hide
+/* ftab.h for ANSI C */
+#ifndef FTAB_H
+#define FTAB_H
+\endhide
+#include "ffam.h"
+#include "unif01.h"
+\endcode
+\code
+\hide
+typedef enum {
+   ftab_NotInit,              /* Uninitialized */
+   ftab_pVal1,                /* One-sided p-value */
+   ftab_pVal2,                /* Two-sided p-value */
+   ftab_pLog10,               /* Logarithm of p-value in base 10 */
+   ftab_pLog2,                /* Logarithm of p-value in base 2 */
+   ftab_Integer,              /* Integer number */
+   ftab_Real,                 /* Real number */
+   ftab_String                /* String */
+} ftab_FormType;
+\endhide
+
+typedef struct {
+   double **Mat;
+   int *LSize;
+   int Nr, Nc;
+   int j1, j2, jstep;
+   ftab_FormType Form;
+   char *Desc;
+   char **Strings;
+   int Ns;
+} ftab_Table;
+\endcode
+ \tab
+  A structure that contains a two-dimensional matrix {\tt Mat} with {\tt Nr}
+  rows and {\tt Nc} columns, used to store the values of statistics, their
+  $p$-values, or some other information depending on the format {\tt Form},
+  though the numbers are always stored as {\tt double}'s.
+  The values are stored in matrix element {\tt Mat[$i$][$j$]} for
+  $0 \le i <$ {\tt Nr} and $0 \le j <$ {\tt Nc}. Row $i$ of {\tt Mat}
+  is associated with a generator of size {\tt LSize[$i$]}. The index $j$ is
+  used to select the different sample sizes of a test for a given
+  generator. The character string {\tt Desc} gives a short description of
+  the table.
+
+  The array {\tt Strings} points to the {\tt Ns} possible messages that can
+  be printed for each element {\tt Mat[$i$][$j$]} when {\tt Form} is {\tt
+  ftab\_String}. In this case, {\tt Mat[$i$][$j$]} is an integer giving the
+  index $s$ of the message {\tt Strings[$s$]} to be printed. When {\tt Form}
+  is not {\tt ftab\_String}, {\tt Strings} is set to the {\tt NULL}
+  pointer.
+  The function {\tt ftab\_CreateTable} creates such a structure.
+ \endtab
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{Functions to manipulate tables}
+\code
+
+ftab_Table *ftab_CreateTable (int Nr, int j1, int j2, int jstep,
+                              char *Desc, ftab_FormType Form, int Ns);
+\endcode
+\tab
+  Creates a structure {\tt ftab\_Table} and its matrix {\tt Mat} so that
+  it can store test results in format {\tt Form} for a family of {\tt Nr}
+  generators. Each generator is subjected to tests with different sample sizes
+  indexed by $j$, with $j$  varying from {\tt j1} to {\tt j2} by step of
+  {\tt jstep}. The function initializes the description of the table to
+  {\tt Desc}. If {\tt Form = ftab\_String}, it also allocate an array of
+  {\tt Ns} pointers of  {\tt char} for the field  {\tt Strings} of the
+  structure.
+\endtab
+\code
+
+
+void ftab_DeleteTable (ftab_Table *T);
+\endcode
+\tab
+   Frees all the memory allocated for {\tt T} and deletes {\tt T}.
+\endtab
+\code
+
+
+void ftab_SetDesc (ftab_Table *T, char *Desc);
+\endcode
+ \tab
+ Sets the {\tt Desc} field of {\tt T} to {\tt Desc}.
+\endtab
+\code
+
+
+void ftab_InitMatrix (ftab_Table *T, double x);
+\endcode
+\tab
+  Initializes all the values in {\tt T->Mat} to {\tt x}.
+\endtab
+\code
+
+
+typedef void (*ftab_CalcType) (ffam_Fam *fam, void *res, void *cho,
+                               void *par, int LSize, int j,
+                               int irow, int icol);
+\endcode 
+ \tab  Type of function called by {\tt ftab\_MakeTables} to fill up
+  the entry ({\tt irow}, {\tt icol}) in one or more tables of results.
+  Typically, it computes $p$-values to be put in the appropriate table.
+  It tests one generator of the family {\tt fam}, using {\tt res} to keep
+  the tables of results, {\tt cho} is used to choose the values of the
+  varying parameters of the test as a function of the generator size
+  {\tt LSize}, of {\tt j} and the other parameters, while {\tt par} holds
+  the fixed parameters of the test.
+  This function is used internally by the tests.
+\endtab
+\code
+
+
+void ftab_MakeTables (ffam_Fam *fam, void *res, void *cho, void *par,
+                      ftab_CalcType Calc, 
+                      int Nr, int j1, int j2, int jstep);
+\endcode
+\tab This function calls {\tt Calc(fam, res, cho, par, LSize, j, irow, icol)}
+  on each of the first {\tt Nr} generators of family {\tt fam}, for
+  {\tt j} going from {\tt j1} to {\tt j2} by step of {\tt jstep} (thus varying
+  the sample size for a given generator). 
+  It uses {\tt res} to keep the tables of results after all the tests have
+  been done on the family,  {\tt cho} is used to choose the values of the
+  varying parameters of the test as a function of the generator size and
+  the other parameters, while {\tt par} holds the fixed parameters of the
+  test. Normally, {\tt Calc} calls a test and places the results
+  (e.g., $p$-values) in the entries of the appropriate tables.
+\endtab
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{Printing the tables}
+\code
+
+typedef enum {
+   ftab_Plain,                /* To print tables in plain text */
+   ftab_Latex                 /* To print tables in Latex format */
+} ftab_StyleType;
+\endcode
+ \tab The possible styles in which the tables of this module can be printed.
+\endtab
+\code
+
+
+extern ftab_StyleType ftab_Style;
+\endcode
+\tab This environment variable determines the style in which all the tables
+  of this module will be printed. The default value is {\tt ftab\_Plain}.
+\endtab
+\mycode
+
+
+typedef enum {
+   ftab_NotInit,              /* Uninitialized */
+   ftab_pVal1,                /* One-sided p-value */
+   ftab_pVal2,                /* Two-sided p-value */
+   ftab_pLog10,               /* Logarithm of p-value in base 10 */
+   ftab_pLog2,                /* Logarithm of p-value in base 2 */
+   ftab_Integer,              /* Integer number */
+   ftab_Real,                 /* Real number */
+   ftab_String                /* String */
+} ftab_FormType;
+\myendcode
+ \tab Possible formats that can be used to print the table entries.
+  An appropriate format must be chosen before printing.
+  Here, {\tt ftab\_pVal1}
+  stands for a one-sided $p$-value (a number in the interval [0, 1]), 
+  printed only when it is near 0; {\tt ftab\_pVal2}  stands for a
+  two-sided $p$-value, printed  when it is near 0 or near 1
+  ($p$-values near 1 are printed as $-p$ instead of $1 -p$).
+  The other formats are self-evident.
+ \endtab
+\code
+
+
+extern double ftab_Suspectp;
+\endcode
+ \tab  Environment variable 
+   used in {\tt ftab\_PrintTable} and  {\tt ftab\_PrintTable2} to determine
+   which $p$-values should be printed in the table.
+   When the format {\tt ftab\_pVal2} is used, only the
+   $p$-values outside the interval [{\tt ftab\_Suspectp},
+    $1 - {}${\tt ftab\_Suspectp}] will be considered suspect and printed.
+   The default value is 0.01. 
+ \endtab
+\code
+
+
+extern int ftab_SuspectLog2p;
+\endcode
+ \tab  Environment variable used in {\tt ftab\_PrintTable}  and 
+   {\tt ftab\_PrintTable2}  to determine which $p$-values should be printed
+   in the table, when using the format {\tt ftab\_pLog2}.
+   If {\tt ftab\_SuspectLog2p} $= \sigma$, the $p$-values
+   outside the interval $[1/{2^\sigma},\, 1-1/{2^\sigma}]$ are
+   considered suspect and are printed.
+   The default value is 6.
+ \endtab
+\code
+
+
+void ftab_PrintTable (ftab_Table *T);
+\endcode
+ \tab
+  Prints the values {\tt T->Mat[$i$][$j$]}, one value of $i$ per line,
+  for $0 \le i < ${ \tt T->Nr} and $0 \le j < ${ \tt T->Nc}.
+
+  If {\tt Form = ftab\_pVal1}, prints the entries as $p$-values for
+  one-sided tests (prints only the ones close to 0, i.e., less than
+  {\tt ftab\_Suspectp}).
+  If {\tt Form = ftab\_pVal2}, prints the entries as $p$-values for
+  two-sided tests (prints only those close to 0 or 1, i.e.,
+  less than {\tt ftab\_Suspectp} or larger than $1 - {}${\tt ftab\_Suspectp}).
+  If the $p$-value $p <$ {\tt ftab\_Suspectp}, then print $p$ as is.
+  unless $p <$ {\tt gofw\_Epsilonp}, in which case {\tt eps} will be printed
+   ({\tt $\backslash$eps} when {\tt ftab\_Latex} style is chosen).
+  If $p > 1 - {}${\tt ftab\_Suspectp}, then print $p-1$.
+  unless $p > 1 - {}$ {\tt gofw\_Epsilonp}, in which case {\tt -eps} will be
+   printed ({\tt $\backslash$epsm} when {\tt ftab\_Latex} style is chosen).
+
+  In the case where {\tt Form = ftab\_pLog10}, 
+  if $p \le $ {\tt ftab\_Suspectp} it prints  Round$(- \log_{10} p)$,
+  else if $p \ge 1 - $ {\tt ftab\_Suspectp} it prints 
+  $-$Round$(- \log_{10} (1-p))$, otherwise it prints nothing.
+  In the case where {\tt Form = ftab\_pLog2}, 
+  if $p \le 2^{-\sigma}$, where $\sigma =$ {\tt ftab\_SuspectLog2p},
+  it prints {\rm Round$( - \log_2 p)$}, else if $p \ge 1 - 1/2^\sigma$
+  it prints $-${\rm  Round$(- \log_2 (1-p))$}, and otherwise it prints
+  nothing. 
+
+  If {\tt Form = ftab\_Integer}, it prints them as (rounded) integers.
+  If {\tt Form = ftab\_Real}, it prints them as {\tt double}'s.
+  If {\tt Form = ftab\_String},  prints  the string 
+  {\tt  T->Strings[s]} where {\tt s = {\rm Round}(T->Mat[i][j])}.
+
+ \endtab
+\code
+
+
+void ftab_PrintTable2 (ftab_Table *T1, ftab_Table *T2, lebool ratioF);
+\endcode
+ \tab
+  Similar to {\tt ftab\_PrintTable}, but prints two tables simultaneously,
+  using two columns for each entry, for purposes of comparison. 
+  If the flag {\tt ratioF} is {\tt TRUE}, it prints the numbers of the
+  first table in a first column, and the ratio of the numbers from the
+  second table over the corresponding numbers from the first table in the
+  second column. This is done for each element of the tables.  
+  If the flag {\tt ratioF} is {\tt FALSE}, the numbers from the second
+  table will be printed as is. 
+ \endtab
+\code
+
+\hide
+#endif
+\endhide
+\endcode

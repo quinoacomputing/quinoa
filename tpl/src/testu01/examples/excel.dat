@@ -1,0 +1,12 @@
+1500000                      Number of points
+2                            Dimension = t
+TRUE                         Overlapping
+1  2                         Components shown
+1  0.0  0.0005               Component and bounds on x1
+2  0.0  1.0                  Component and bounds on xt
+13.0  13.0                   Size of plot in centimeters
+latex                        Output format: latex, gnu_term or gnu_ps
+8                            Precision
+FALSE                        Lacunary
+1                            Lacunary indices
+3                            

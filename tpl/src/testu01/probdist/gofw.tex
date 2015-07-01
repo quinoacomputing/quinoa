@@ -1,0 +1,539 @@
+\defmodule {gofw}
+
+This module contains functions used to print results of GOF
+test statistics (see module {\tt gofs}), or to apply a series of tests
+simultaneously and print the results.
+Strictly speaking, applying several tests simultaneously makes the 
+$p$-values ``invalid'' in the sense that the probability of having 
+{\em at least one\/} $p$-value less than 0.01, say, is larger than 0.01.
+One must therefore be careful with the interpretation of these 
+$p$-values (one could use, e.g., the Bonferroni inequality \cite{sLAW00a}).
+Applying simultaneous tests is convenient in some situations, such as in 
+screening experiments for detecting statistical deficiencies 
+in random number generators.  In that context, rejection of the null
+hypothesis typically occurs with extremely small $p$-values (e.g., less
+than $10^{-15}$), and the interpretation is quite obvious in this case.
+
+% Expliquer rapidement l'histoire des {\em ActiveTests}.
+% (voir plus loin).
+
+The module also provides tools to plot an empirical or
+theoretical distribution function, by creating a data file that
+contains a graphic plot in a format compatible with the software
+specified by the environment variable {\tt gofw\_GraphSoft}.
+
+
+\bigskip\hrule\medskip
+\code\hide
+/* gofw.h for ANSI C */
+#ifndef GOFW_H
+#define GOFW_H
+\endhide
+#include "gdef.h"           /* From the library mylib */
+#include "bitset.h"         /* From the library mylib */
+#include "fdist.h"
+#include "wdist.h"
+#include <stdio.h>
+\endcode
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{Plotting distribution functions}
+
+\code
+
+typedef enum {
+   gofw_Gnuplot,
+   gofw_Mathematica
+   } gofw_GraphType;
+\endcode
+ \tab  Data file formats used for plotting functions or creating graphics.
+ \endtab
+\code
+
+
+extern gofw_GraphType gofw_GraphSoft;
+\endcode
+ \tab Environment variable that selects the type of software to be 
+   used for plotting the graphs of functions.
+   The data files produced by {\tt gofw\_GraphFunc} and 
+   {\tt gofw\_GraphDistUnif} will be in a format suitable 
+   for this selected software.
+   The default value is {\tt gofw\_Gnuplot}.
+   To display a graphic in file {\tt f} using {\tt gnuplot}, for example,
+   one can use the command ``{\tt plot f with steps, x with lines}''
+   in {\tt gnuplot}.
+ \endtab
+\code
+
+
+void gofw_GraphFunc (FILE *f, wdist_CFUNC F, double par[], double a,
+                     double b, int m, int mono, char Desc[]);
+\endcode
+ \tab
+  Prints data to plot the graph of function $F$ over the interval $[a,b]$, 
+  in file {\tt f}.  It is assumed that the parameters of $F$ are in
+  {\tt par}, so that {\tt F(par, x)} returns the value of $F$ at $x$,
+  and that $F$ is either non-decreasing or non-increasing.
+  If {\tt mono} = 1, the procedure will verify that $F$ is non-decreasing;
+  if {\tt mono} = $-1$, it will verify that $F$ is non-increasing. 
+  (This is useful to verify if $F$ is effectively a sensible
+  approximation to a distribution function or its complementary
+  in the given interval.)
+  The string {\tt Desc} should give a short caption for the graphic plot.
+  The procedure computes the $m+1$ points $(x_i,\, F(x_i))$,
+  where $x_i = a + i(b-a)/m$ for $i=0,1,\ldots,m$, and writes these points
+  to file {\tt f} in a format suitable for the 
+  software specified by {\tt gofw\_GraphSoft}.
+  If {\tt f = NULL}, the results are sent to the standard output.
+ \endtab
+\code
+
+
+void gofw_GraphDistUnif (FILE *f, double U[], long N, char Desc[]);
+\endcode
+ \tab  Prints data in file {\tt f} to plot the empirical distribution of
+  $U_{(1)},\dots,U_{(N)}$, which are assumed to be in {\tt U[1...N]},
+  and to compare it with the uniform distribution.
+  The two endpoints $(0, 0)$ and $(1, 1)$ are always printed.
+  The string {\tt Desc} should give a short caption for the graphic plot.
+  The data is printed in a format suitable for the 
+  software specified by {\tt gofw\_GraphSoft}.
+  If {\tt f = NULL}, the results are sent to the standard output.
+ \endtab
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{Computing and printing $p$-values for EDF test statistics}
+
+\code
+
+extern double gofw_Epsilonp;
+extern double gofw_Epsilonp1;
+\endcode
+ \tab  Environment variables used in {\tt gofw\_Writep0} to determine
+   which $p$-values are too close to 0 or 1 to be printed explicitly.
+   If {\tt gofw\_Epsilonp} $= \epsilon$ and
+      {\tt gofw\_Epsilonp1} $= \epsilon_1$, then any $p$-value
+   (sometimes also called significance level) less than $\epsilon$ or larger than
+   $1-\epsilon_1$ is {\em not\/} written explicitly;
+   the program simply writes ``{\tt eps}'' ($p$-values close to 0)
+   or ``{\tt 1 - eps1}'' ($p$-values close to 1).
+   The default values are {\tt gofw\_Epsilonp} $ =10^{-300}$ and
+  {\tt gofw\_Epsilonp1} $= 10^{-15}$.
+  The default value of {\tt gofw\_Epsilonp} is slightly bigger than
+  the minimum normalized positive floating-point number
+ {\tt DBL\_MIN} = $2.2*10^{-308}$ given in the IEEE floating-point standard, 
+  while {\tt gofw\_Epsilonp1} is slightly bigger than
+  {\tt DBL\_EPSILON} = $2.2*10^{-16}$, the  ``machine $\epsilon$''
+  for type {\tt double}.
+ \hpierre{Nouveau.  Utilis\'e seulement dans {\tt gofw\_Writep0}.}
+ \endtab
+\code
+
+
+extern double gofw_Suspectp;
+\endcode
+ \tab  Environment variable used in {\tt gofw\_Writep1} to determine
+   which $p$-values should be marked as suspect when printing test results.
+   If {\tt gofw\_Suspectp} $= \alpha$, then any $p$-value
+   less than $\alpha$ or larger than
+   $1-\alpha$ is considered suspect and is
+   ``singled out'' by {\tt gofw\_Writep1}.
+   The default value is 0.001.
+ \hpierre{Utilis\'e seulement dans {\tt gofw\_Writep1}, mais
+   on ne veut pas la mettre en parametre car utilise souvent et ne
+   change presque jamais. }
+ \endtab
+\code
+
+
+double gofw_pDisc (double pL, double pR);
+\endcode
+\tab  Computes a variant of the $p$-value $p$ whenever a test statistic
+  has a {\em discrete\/} probability distribution.
+  This $p$-value is defined as follows: 
+  \begin{eqnarray*}
+    p_L & = & P[Y \le y] \\
+    p_R & = & P[Y \ge y] \\[6pt]
+    p & = & \left\{ \begin{array}{l@{\qquad}l}
+        p_R, & \mbox{if } p_R <  p_L \\[6pt]
+     1 - p_L, & \mbox{if }
+            p_R \ge p_L \mbox{ and }  p_L < 0.5 \\[6pt]
+              0.5  &         \mbox{otherwise.}
+                    \end{array}  \right.
+  \end{eqnarray*} 
+  The function takes $p_L$ and $p_R$ as input and returns $p$.
+\endtab
+\code
+
+
+void gofw_Writep0 (double p);
+\endcode
+\tab  Prints the $p$-value $p$ of a test, 
+   in the format ``$1-p$'' if $p$ is close to 1, and $p$ otherwise.
+%   Uses the environment variable  {\tt gofw\_Epsilonp} and replaces $p$
+%   by $\epsilon$ when it is too small.
+ \hrichard {Pourquoi ne pas la cacher dans \tt gofw.c?}
+ \hpierre {Quelqu'un pourrait vouloir utiliser un autre format que
+   celui de {\tt gofw\_Writep1}. }
+\endtab
+\code
+
+
+void gofw_Writep1 (double p);
+\endcode
+\tab  Prints the string ``{\tt "p-value of test : }'',
+  then calls {\tt gofw\_Writep0} to print $p$, and adds
+  the marker ``{\tt ****}'' if $p$ is considered suspect
+  (uses the environment variable {\tt gofw\_Suspectp} for this).
+\endtab
+\code
+
+
+void gofw_Writep2 (double x, double p);
+\endcode
+\tab  Prints {\tt x} on the current output line, then goes to the next line
+   and calls {\tt gofw\_Writep1 (p)}.
+  \hpierre {Peut \^etre \`a cacher?}
+\endtab
+\code
+
+
+void gofw_WriteKS0 (long N, double DP, double DM, double D);
+\endcode
+\tab  Computes the $p$-values of the three Kolmogorov-Smirnov statistics
+  $D_N^+$, $D_N^-$, and $D_N$, whose values are in {\tt DP, DM, D},
+  respectively, assuming a sample of size $N$.
+  Then prints these statistics and their $p$-values 
+  using {\tt gofw\_Writep2} for each one.
+ \hrichard {Devrait \^etre \'elimin\'e. Cas particulier de EDF avec les
+     autres CM, AD, Wat, .... Pourquoi traitement de faveur.}
+ \hpierre {Je pr\'ef\`ere laisser ceci pour les gens qui ne veulent pas
+   prendre le temps de comprendre l'id\'ee des ``active tests'', que
+   j'ai d'ailleurs repouss\'es compl\`etement \`a la fin.
+   Les tests de KS sont de loin les plus utilis\'es par les gens
+   pour les lois continues.}
+\endtab
+\code
+
+
+void gofw_WriteKS1 (double V[], long N, wdist_CFUNC F, double par[]);
+\endcode
+\tab Computes the KS test statistics to compare the
+ empirical distribution of the observations in {\tt V[1..N]} 
+ with the theoretical distribution {\tt F}, with parameters in {\tt par},
+ then calls {\tt gofw\_KS0} to compute and print the $p$-values.
+ These tests are valid only if {\tt F} is continuous.
+\endtab
+\code
+
+
+void gofw_WriteKSJumpOne0 (long N, double a, double DP);
+\endcode
+\tab  Similar to {\tt gofw\_KS0}, but for the KS statistic $D_N^+(a)$
+  defined in (\ref{eq:KSPlusJumpOne}).  Writes a header,
+  computes the $p$-value and calls {\tt gofw\_Writep2}.
+\endtab
+\code
+
+
+void gofw_WriteKSJumpOne1 (double V[], long N, 
+                           wdist_CFUNC F, double par[], double a);
+\endcode
+\tab Similar to {\tt gofw\_WriteKS1}, but for $D_N^+(a)$ 
+  defined in (\ref{eq:KSPlusJumpOne}). 
+  Calls {\tt gofw\_WriteKSJumpOne0}.
+\endtab
+\iffalse %%%%%%%
+\code
+#if 0
+
+void gofw_KSJumpsMany0 (double DP, double DM, fdist_FUNC_JUMPS *H);
+\endcode
+\tab
+  Prints the KS  statistics  $D^+$ and $D^-$, as defined in the
+  description of {\tt fdist\_KSPlusJumpsMany} and 
+  {\tt fdist\_KSMinusJumpsMany}, with their $p$-values.
+  We assume that the values of the statistics are in {\tt DP} and {\tt DM},
+  and the discontinuous function {\tt H} is as described in the
+  above distributions.
+\endtab
+\code
+
+
+void gofw_KSJumpsMany2 (statcoll_Collector *S, fdist_FUNC_JUMPS *H,
+                        int Detail);
+
+\endcode
+\tab
+ Compute the Kolmogorov-Smirnov statistics  $D^+$ and $D^-$
+ from the empirical distribution contained in the collector  {\tt S},
+  and  compare them with the discontinuous theoretical distribution
+ {\tt H}; then prints these two statistics and their $p$-values.
+ If  {\tt Detail $> 0$}, prints detailed information
+ about the calculation.
+\endtab
+\code
+
+#endif
+\endcode
+
+\fi %%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec {Applying several tests at once and printing results}
+
+Higher-level tools for applying several EDF goodness-of-fit tests
+simultaneously are offered here.
+The test types available are listed in {\tt gofw\_TestType}.
+The environment variable {\tt gofw\_ActiveTests} specifies which
+tests in this list are to be performed when asking for several 
+simultaneous tests via the functions {\tt gofw\_ActiveTests0}, 
+{\tt gofw\_WriteActiveTests0}, etc.
+
+
+\code
+
+typedef enum {
+   gofw_KSP,                      /* Kolmogorov-Smirnov+        */
+   gofw_KSM,                      /* Kolmogorov-Smirnov-        */
+   gofw_KS,                       /* Kolmogorov-Smirnov         */
+   gofw_AD,                       /* Anderson-Darling           */
+   gofw_CM,                       /* Cramer-vonMises            */
+   gofw_WG,                       /* Watson G                   */
+   gofw_WU,                       /* Watson U                   */
+   gofw_Mean,                     /* Mean                       */
+   gofw_Var,                      /* Variance                   */
+   gofw_Cor,                      /* Correlation                */
+   gofw_Sum,                      /* Sum                        */
+   gofw_NTestTypes                /* Total number of test types */
+   } gofw_TestType;
+\endcode
+ \tab  Types of EDF tests supported by the present modules.
+  Here,  {\tt gofw\_Sum}, {\tt gofw\_Mean}, {\tt gofw\_Var} and {\tt gofw\_Cor}
+  usually represent tests based on the sum, the mean, the variance of the 
+ observations and on the correlation between pairs of successive observations.
+ \hpierre {Est-ce utile que garder ces deux-l\`a dans ce type enum?}
+ \hrichard {N\'ecessaire si l'on veut que les tableaux sVal, pVal,
+  r\'eservent aussi une place pour ces 2. Sinon, il faudrait introduire
+  au moins 4 nouvelles variables globales pour chaque module.}
+%  {\bf Remark:} if {\tt gofw\_TestType} is modified in any way, then the
+%  variable {\tt gofw\_TestNames} must be updated correspondingly.
+ \endtab
+\code
+
+
+typedef double gofw_TestArray [gofw_NTestTypes];
+\endcode
+ \tab Array of values, one for each type of EDF test statistic.
+  Can be used to store the values of these statistics or their
+  $p$-values, for example.
+ \endtab
+\code
+
+
+extern char *gofw_TestNames [gofw_NTestTypes];
+\endcode
+ \tab  Name of each {\tt gofw\_TestType} test. 
+  Could be used for printing the test results, for example.
+%  {\bf Remark:} If the type {\tt gofw\_TestType}
+%  is modified in any way, then {\tt gofw\_TestNames} must be updated
+%  correspondingly.
+ \hpierre{Il me semble que cette liste des noms devrait \^etre juste \`a
+   cot\'e de la liste {\tt gofw\_TestType}.  Est-ce OK comme ceci? }
+ \hrichard {On ne peut pas initialiser les variables extern dans *.h.}
+ \endtab
+\code
+
+
+extern bitset_BitSet gofw_ActiveTests;
+\endcode
+ \tab The set of EDF tests that are to be performed when calling
+  the procedures {\tt gofw\_ActiveTests0}, {\tt gofw\_WriteActiveTests0}, etc.
+  By default, this set contains {\tt gofw\_KSP}, {\tt gofw\_KSM},
+  and {\tt gofw\_AD}.  %, but it can be changed.
+  Note: {\tt gofw\_Sum}, {\tt gofw\_Mean}, {\tt gofw\_Var} and {\tt gofw\_Cor} are 
+  {\em always excluded\/} from this set of active tests.
+ \endtab
+\code
+
+
+void gofw_InitTestArray (gofw_TestArray A, double x);
+\endcode
+ \tab Sets all elements of array $A$ to $x$.
+ \endtab
+\code
+
+
+void gofw_Tests0 (double U[], long N, gofw_TestArray sVal);
+\endcode
+\tab  Computes all EDF test statistics in {\tt gofw\_TestType} (except
+ {\tt gofw\_Mean}, {\tt gofw\_Var} {\tt gofw\_Cor} and  {\tt gofw\_Sum})
+  to compare the empirical 
+  distribution of  $U_{(1)},\dots,U_{(N)}$ with the uniform distribution,
+  assuming that these sorted observations are in {\tt U[1...N]}.
+  If $N > 1$, returns in {\tt sVal[0..7]} the values of the KS
+  statistics $D_N^+$, $D_N^-$ and $D_N$, of the Cram\'er-von Mises 
+  statistic $W_N^2$, Watson's $G_N$ and $U_N^2$, Anderson-Darling's
+  $A_N^2$, and the average of the $U_i$'s, respectively.
+  If $N = 1$, only puts {\tt U[1]} in {\tt sVal[gofw\_Mean]}  
+  and {\tt 1 - U[1]} in {\tt sVal[gofw\_KSP]}.
+  Calling this function is more efficient than computing these statistics
+  separately by calling the corresponding procedures in {\tt gofs}.
+ \hrichard{\'Eliminer, garder seulement Active. On devrait \'eliminer
+  les fonctions qui ont une version active, et enlever le mot Active dans
+  leur nom. Les actives sont d\'etermin\'ees
+  par une variable d'environnement; donc toujours sous-entendu actives.
+  Les non-actives ne sont jamais utilis\'ees.}
+ \hpierre {On ne peut pas les \'eliminer car les {\tt Active...} appellent
+  celles-ci pour calculer toutes les stats d'un seul coup. 
+  Si on trouve qu'elles genent, on peut les cacher, mais je ne crois pas.
+  Devrait peut-etre aller dans gofs, mais je l'ai mis
+  ici pour eviter de definir {\tt gofw\_TestArray}  dans gofs. }
+\endtab
+\code
+
+
+void gofw_Tests1 (double V[], long N, wdist_CFUNC F, double par[],
+                  gofw_TestArray sVal);
+\endcode
+\tab  Similar to {\tt gofw\_Test0}, except that 
+ the observations are in {\tt V[1..N]},
+ not necessarily sorted, and that their empirical
+ distribution is compared with the continuous distribution {\tt F},
+ whose parameters (if any) are in {\tt par}. 
+ \hpierre{ Note: if $N > 1$, the value returned in {\tt sVal[gofs\_Mean]}  
+    is the average of the {\tt U[i] = F(par, V[i])}, not
+    the average of the {\tt V[i]}. }
+% The EDF tests (p-values) are valid only if {\tt F} is continuous.
+ If $N = 1$, only puts {\tt V[1]} in {\tt sVal[gofw\_Mean]}
+ and {\tt 1 - F(par, V[1])} in {\tt sVal[gofw\_KSP]}.
+\endtab
+\code
+
+
+void gofw_ActiveTests0 (double U[], long N, 
+                        gofw_TestArray sVal, gofw_TestArray pVal);
+\endcode
+\tab  Computes the EDF test statistics by calling 
+  {\tt gofw\_Tests0}, then computes the $p$-values of those
+  that currently belong to {\tt gofw\_ActiveTests},
+%   \{{\tt gofw\_KSP, gofw\_KSM, gofw\_KS0, gofw\_CM,
+%  gofw\_WG, gofw\_WU, gofw\_AD}\}.
+  and return these quantities in {\tt sVal} and {\tt pVal}, respectively.
+  Assumes that $U_{(1)},\dots,U_{(N)}$ are in {\tt U[1...N]}
+  and that we want to compare their empirical distribution
+  with the uniform distribution.
+  If $N = 1$, only puts {\tt U[1]} in {\tt sVal[gofw\_Mean]},
+  and {\tt 1 - U[1]} in {\tt sVal[gofw\_KSP], pVal[gofw\_KSP]}, and
+  {\tt pVal[gofw\_Mean]}.
+\endtab
+\code
+
+
+void gofw_ActiveTests1 (double V[], long N, wdist_CFUNC F, double par[],
+                        gofw_TestArray sVal, gofw_TestArray pVal);
+\endcode
+\tab Similar to {\tt gofw\_ActiveTests0},
+ except that the observations are in {\tt V[1..N]},
+ not necessarily sorted, and that we want to compare their empirical
+ distribution with the distribution {\tt F},
+ whose parameters (if any) are in {\tt par}. 
+ The EDF tests are valid only if {\tt F} is continuous.
+ If $N = 1$, only puts {\tt V[1]} in {\tt sVal[gofw\_Mean]},
+ and {\tt 1 - F(par, V[1])} in {\tt sVal[gofw\_KSP], pVal[gofw\_KSP]}, 
+ and {\tt pVal[gofw\_Mean]}.
+ \endtab
+\code
+
+
+void gofw_ActiveTests2 (double V[], double U[], long N, wdist_CFUNC F,
+                        double par[], gofw_TestArray sVal,
+                        gofw_TestArray pVal);
+\endcode
+\tab Similar to {\tt gofw\_ActiveTests1}, but first sorts the {\tt V}
+ and then  returns the $U$   computed from
+$$
+   U[j] = F(\mbox{par}, V[j]), \qquad j=1,\ldots,N
+$$
+  and sorted.
+ \hrichard {Utilis\'e dans tous les tests de testu01.}
+ \endtab
+\code
+
+
+void gofw_WriteActiveTests0 (long N, gofw_TestArray sVal,
+                                     gofw_TestArray pVal);
+\endcode
+\tab  Writes the $p$-values of the {\em active\/} EDF test statistics,
+  which are in {\tt gofw\_ActiveTests}.  It is assumed that the values 
+  of these statistics and their $p$-values are {\em already computed}, 
+  in {\tt sVal} and {\tt pVal}, and that the sample size is $N$.
+  These statistics and $p$-values are printed
+  using {\tt gofw\_Writep2} for each one.
+  If $N=1$, prints only {\tt pVal[gofw\_KSP]} using {\tt gofw\_Writep1}.
+ \hrichard{Utilis\'e souvent dans testu01. ..Test1 jamais utilis\'e.}
+ \hpierre{Je pr\'ef\`ere conserver ...Tests1 quand meme.}
+% \{{\tt statcalc\_KSP, statcalc\_KSM, statcalc\_KS,
+%  statcalc\_WatsonG, statcalc\_WatsonU, statcalc\_CramerMises, 
+%  statcalc\_AndDar}\} and {\tt statcalc\_TestActives}
+\endtab
+\code
+
+
+void gofw_WriteActiveTests1 (double V[], long N, 
+                             wdist_CFUNC F, double par[]);
+\endcode
+\tab This is equivalent to calling 
+ {\tt gofw\_ActiveTests1 (V, N, F, par, sVal, pVal)} followed by
+ {\tt gofw\_WriteActiveTests0 (N, sVal, pVal)}.
+\endtab
+\code
+
+
+void gofw_WriteActiveTests2 (long N, gofw_TestArray sVal,
+                             gofw_TestArray pVal, char Desc[]);
+\endcode
+\tab If $N=1$, prints the string {\tt Desc} followed by the elements
+  {\tt gofw\_Mean} of {\tt sVal} and {\tt pVal}. Otherwise calls
+  {\tt gofw\_WriteActiveTests0 (N, sVal, pVal)}.
+\endtab
+\code
+
+
+void gofw_IterSpacingsTests0 (double U[], long N, int k, 
+                              lebool printval, lebool graph, FILE *f);
+\endcode
+\tab Repeats the following $k$ times:
+  Applies the {\tt gofs\_IterateSpacings} transformation to the
+  $U_{(1)},\dots,U_{(N)}$, assuming that these observations are in 
+  {\tt U[1...N]}, then computes the EDF test statistics and calls
+  {\tt gofw\_ActiveTests0} after each transformation.
+  The function returns the {\em original\/} array {\tt U} (the
+  transformations are applied on a copy of {\tt U}).
+%  If {\tt gofw\_StatsDetail} $>0$, prints all the values.
+%  If {\tt gofw\_GraphicsDetail} $>0$, prints  to file {\tt f}
+%  the values appropriate for drawing graphics.
+  If {\tt printval = TRUE}, prints all the values to the standard output
+  after each iteration.
+  If {\tt graph = TRUE}, calls {\tt gofw\_GraphDistUnif} after each iteration
+  to print to file {\tt f} the data for plotting the distribution
+  function of the $U_i$. 
+\endtab
+\code
+
+
+void gofw_IterPowRatioTests0 (double U[], long N, int k,
+                              lebool printval, lebool graph, FILE *f);
+\endcode
+\tab  Similar to {\tt gofw\_IterSpacingsTest0}, but with the
+  {\tt gofs\_PowerRatios} transformation.
+\endtab
+\code
+\hide
+#endif
+\endhide
+\endcode
+
+

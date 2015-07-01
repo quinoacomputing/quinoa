@@ -1,0 +1,152 @@
+\defmodule {bitset}
+
+This module defines sets of bits and useful operations for such sets.
+Some of these operations are implemented as macros.
+
+\code\hide
+/* bitset.h  for ANSI C */
+#ifndef BITSET_H
+#define BITSET_H
+#include "gdef.h"
+\endhide\endcode
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{Constants}
+\code
+
+extern unsigned long bitset_maskUL[];
+\endcode
+ \tab {\tt bitset\_maskUL[j]} has bit $j$ set to 1 and all other bits set to
+   0. Bit 0 is the least significant bit.
+ \endtab
+\code
+
+
+extern unsigned long bitset_MASK[];
+\endcode
+ \tab {\tt bitset\_MASK[j]} has all the first $j$ bits set to 1 and all other 
+  bits set to 0. Bit 0 is the least significant bit. 
+ \endtab
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{Types}
+\code
+
+typedef unsigned long bitset_BitSet;
+\endcode
+ \tab  Set of bits. Bits are numbered starting from 0 for the least
+  significant bit. If bit $s$ is 1, then element $s$ is a member of 
+  the set, otherwise not.
+ \endtab
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{Macros}
+
+\noindent 
+{\tt bitset\_SetBit (S, b)};
+
+ \tab  Sets bit {\tt b} in set  {\tt S}  to 1.
+ \endtab
+\code
+\hide
+#define bitset_SetBit(S, b) ((S) |= (bitset_maskUL[b]))
+\endhide
+\endcode
+
+\noindent 
+{\tt bitset\_ClearBit (S, b)};
+
+ \tab  Sets bit {\tt b} in set  {\tt S}  to 0.
+ \endtab
+\code
+\hide
+#define bitset_ClearBit(S, b) ((S) &= ~(bitset_maskUL[b]))
+\endhide
+\endcode
+
+\noindent 
+{\tt bitset\_FlipBit (S, b)};
+
+ \tab  Flips bit {\tt b} in set {\tt S}; thus,
+  $0 \rightarrow 1$ and $1 \rightarrow 0$.
+ \endtab
+\code
+\hide
+#define bitset_FlipBit(S, b) ((S) ^= (bitset_maskUL[b]))
+\endhide
+\endcode
+
+\noindent 
+{\tt bitset\_TestBit (S, b)};
+
+ \tab  Returns the value of bit {\tt b} in set {\tt S}.
+ \endtab
+\code
+\hide
+#define bitset_TestBit(S, b)  ((S) & (bitset_maskUL[b]) ? 1 : 0)
+\endhide
+\endcode
+
+\noindent 
+{\tt bitset\_RotateLeft (S, t, r)};
+
+ \tab  Rotates the {\tt t} bits of set {\tt S} by {\tt r} bits to the left.
+  {\tt S} is considered as a {\tt t}-bit number kept
+  in the least significant bits of the equivalent number {\tt S}.
+ \endtab
+\code
+\hide
+#define bitset_RotateLeft(S, t, r) do { \
+   unsigned long v853 = (S) >> ((t) - (r)); \
+   (S) <<= (r);   (S) |= v853;   (S) &= bitset_MASK[t]; \
+   } while (0)
+\endhide
+\endcode
+
+\noindent 
+{\tt bitset\_RotateRight (S, t, r)};
+
+ \tab  Rotates the {\tt t} bits of set {\tt S} by {\tt r} bits to the right.
+  {\tt S} is considered as a {\tt t}-bit number kept
+  in the least significant bits of the equivalent number {\tt S}.
+ \endtab
+\code
+\hide
+#define bitset_RotateRight(S, t, r) do { \
+   unsigned long v972 = (S) >> (r); \
+   (S) <<= ((t) - (r));   (S) |= v972;   (S) &= bitset_MASK[t]; \
+   } while (0)
+\endhide
+\endcode
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{Prototypes}
+\code
+
+bitset_BitSet bitset_Reverse (bitset_BitSet Z, int s);
+\endcode
+\tab Reverses the {\tt s} least significant bits of {\tt Z} considered as a 
+number. Thus, if {\tt s}${}=4$ and {\tt Z}${}=0011$, the returned value is $1100$.
+ \endtab
+\code
+
+
+void bitset_WriteSet (char *desc, bitset_BitSet Z, int s);
+\endcode
+  \tab 
+  Prints the string {\tt desc} (which may be empty), then writes the {\tt
+  s} least significant bits of {\tt Z} considered as an unsigned binary number.
+  This corresponds to the {\tt s} first elements of {\tt Z}.
+ \endtab
+\code
+\hide
+#endif
+\endhide
+\endcode

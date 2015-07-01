@@ -1,0 +1,86 @@
+\defmodule {addstr}
+
+The functions described here are convenient tools for constructing
+character strings that contain a series of numeric parameters, 
+with their values.
+For example, suppose one wishes to put 
+``{\tt LCG with m = 101, a = 12, s = 1}'' in the string {\tt str}, 
+where the actual 
+numbers 101, 12, and 1 must be taken as the values of {\tt long}
+integer variables {\tt m}, {\tt a}, and {\tt s}.  
+This can be achieved by the instructions:
+\vcode
+
+   strcpy (str, "LCG with ");
+   addstr\_Long (str, " m = ", m);
+   addstr\_Long (str, ", a = ", m);
+   addstr\_Long (str, ", s = ", s);
+\endvcode
+
+Each function {\tt addstr\_... (char *to, const char *add, ...)}
+first appends the string {\tt add} to the string {\tt to}, then
+appends to it a character string representation of the number 
+(or array of numbers) specified by its last parameter.
+In the case of an array of numbers (e.g., {\tt addstr\_ArrayLong}),
+the parameter {\tt high} specifies the size of the array, and the
+elements {\tt [0..high-1]} are added to {\tt str}.
+The {\tt ...LONG} versions are for 64-bit integers.
+In all cases, the string {\tt to} should be large enough to accomodate
+what is appended to it.
+
+
+%%%%%%%%%%%%%
+\bigskip\hrule
+\code\hide
+/*  addstr.h  for ANSI C  */
+#ifndef ADDSTR_H
+#define ADDSTR_H
+\endhide
+#include "gdef.h"
+\endcode
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{Prototypes}
+\code
+
+void  addstr_Int (char *to, const char *add, int n);
+
+void  addstr_Uint (char *to, const char *add, unsigned int n);
+
+void  addstr_Long (char *to, const char *add, long n);
+
+void  addstr_Ulong (char *to, const char *add, unsigned long n);
+
+void  addstr_Double (char *to, const char *add, double x);
+
+void  addstr_Char (char *to, const char *add, char c);
+
+void  addstr_Bool (char *to, const char *add, int b);
+\endcode
+\code
+
+#ifdef USE_LONGLONG
+void  addstr_LONG (char *to, const char *add, longlong n);
+
+void  addstr_ULONG (char *to, const char *add, ulonglong n);
+#endif
+\endcode
+\code
+
+void  addstr_ArrayInt (char *to, const char *add, int high, int []);
+
+void  addstr_ArrayUint (char *to, const char *add, int high,
+                        unsigned int []);
+
+void  addstr_ArrayLong (char *to, const char *add, int high, long []);
+
+void  addstr_ArrayUlong (char *to, const char *add, int high,
+                         unsigned long []);
+
+void  addstr_ArrayDouble (char *to, const char *add, int high, double []);
+
+\hide
+#endif
+\endhide
+\endcode
+

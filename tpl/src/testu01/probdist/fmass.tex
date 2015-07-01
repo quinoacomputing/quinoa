@@ -1,0 +1,347 @@
+\defmodule {fmass}
+
+This module provides functions for computing the probability terms
+(or mass function) for some standard discrete distributions.
+
+For certain distributions (e.g., the Poisson, binomial, and negative
+binomial), one can either recompute a probability term each time 
+it is needed, or precompute tables that contain the probability terms
+and the distribution function, and then use these tables whenever a 
+value is needed.  The latter trades memory for speed and is recommended
+especially if the distribution function has to be computed several times
+for the same parameter(s).
+We describe how this works for the Poisson distribution.
+Things work similarly for the other distributions.
+
+To compute a single Poisson probability from scratch, simply use
+ {\tt fmass\_PoissonTerm1}.
+To precompute tables, one must first call {\tt fmass\_CreatePoisson}
+with the desired parameter value $\lambda$ of the Poisson distribution.
+This will precompute and store the non-negligible probability terms
+$f(s)$ (those that exceed {\tt fmass\_Epsilon}) in a table,
+and the cumulative distribution function 
+\[
+  F(x) = \sum_{s=0}^x f(s)
+\]
+for the corresponding values of $x$ in a second table.
+In fact, that second table will contain $F(x)$ when $F(x) \le 1/2$
+and $1-F(x)$ when $F(x) > 1/2$.
+These tables are kept in a structure of type {\tt fmass\_INFO}
+which can be deleted by calling {\tt fmass\_DeletePoisson}.
+\hpierre {Pourquoi pas un seul {\tt fmass\_DeleteInfo} ?}
+Any value of the mass, distribution, complementary distribution,
+or inverse distribution function
+\hrichard {Je n'ai pas programm\'e les distributions inverses discr\`etes}
+ can be obtained from this structure
+by calling {\tt fmass\_Poisson2}, {\tt fdist\_Poisson2},
+{\tt fbar\_Poisson2}, or {\tt finv\_Poisson2}, respectively.
+As a rule of thumb, creating tables and using {\tt fdist\_Poisson2} 
+is faster than just using {\tt fdist\_Poisson1} as soon as two or three
+calls are made to this function, unless $\lambda$ is large.
+(If $\lambda$ is very large, 
+\ifdetailed  %%%
+i.e., exceeds {\tt fmass\_MaxLambdaPoisson}, 
+\fi %%%
+the tables are not created 
+because they would take too much space, and the functions with suffix 
+{\tt \_Poisson2} automatically call those with suffix {\tt \_Poisson1} 
+instead.)
+
+
+\code\hide
+/* fmass.h for ANSI C */
+#ifndef FMASS_H
+#define FMASS_H
+\endhide\endcode
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{Types}
+\code
+
+struct fmass_INFO_T;
+\hide
+/*
+   For better precision in the tails, we keep the cumulative probabilities
+   (F) in cdf[s] for s <= smed (i.e. cdf[s] is the sum off all the probabi-
+   lities pdf[i] for i <= s),
+   and the complementary cumulative probabilities (1 - F) in cdf[s] for
+   s > smed (i.e. cdf[s] is the sum off all the probabilities pdf[i]
+   for i >= s).
+*/ 
+struct fmass_INFO_T {
+   double *cdf;                    /* cumulative probabilities */
+   double *pdf;                    /* probability terms or mass distribution */
+   double *paramR;                 /* real parameters of the distribution */
+   long *paramI;                   /* integer parameters of the distribution */
+   long smin;                      /* pdf[s] = 0 for s < smin */
+   long smax;                      /* pdf[s] = 0 for s > smax */  
+   long smed;                      /* cdf[s] = F(s) for s <= smed, and 
+                                      cdf[s] = bar_F(s) for s > smed */
+};
+\endhide
+typedef struct fmass_INFO_T *fmass_INFO;
+\endcode
+ \tab Type of structure used to store precomputed discrete distributions.
+ \endtab
+
+\newpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\ifdetailed  %%%%%%%
+\guisec{Environment variables}
+
+\code
+
+extern double fmass_Epsilon;
+\endcode
+ \tab Environment variable that determines what probability terms can
+  be considered as negligible when building precomputed tables for
+  probability or mass functions.
+  Probabilities smaller than {\tt fmass\_Epsilon} are
+  are not stored in the {\tt fmass\_INFO} structures created by functions
+  such as {\tt fmass\_CreatePoisson}, etc., but will be computed directly
+  each time they are needed (which should be seldom).
+  The default value is set to $10^{-16}$.
+ \endtab
+\code
+
+extern double fmass_MaxLambdaPoisson;  /* = 100000  */
+
+extern double fmass_MaxnBinomial;      /* = 100000  */
+
+extern double fmass_MaxnNegaBin;       /* = 100000  */
+\endcode
+ \tab The parameter value above which the tables are {\em not\/} 
+  constructed and stored in the {\tt fmass\_INFO} when calling 
+  functions of type {\tt fmass\_Create...}, for each type of distribution.
+  The default values are given to the right of each variable.
+  If this value is exceeded, then the tables are not computed and 
+  any call to a function using that structure is converted automatically 
+  and transparently into a call to the corresponding function that 
+  recomputes everything from scratch 
+  (e.g., a call to {\tt fdist\_Poisson2} is converted into
+  a call to {\tt fdist\_Poisson1}).
+\hrichard{Je pr\'ef\`ererais \'eliminer ces 3 variables parce qu'elles 
+    rendent la compr\'ehension plus difficile et vont provoquer
+    de l'anxi\'et\'e chez la majorit\'e des utilisateurs.}
+\hpierre{Anxiete?  Je ne vois pas pourquoi.
+   Et puis ceci n'apparait que dans la version ``detailed''.
+   Par contre, on pourrait peut-etre remplacer les 3 variables par
+   une seule?  Meme chose pour les Epsilon. }
+ \endtab
+\fi  %%%%%  detailed
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{The Poisson distribution}
+\code
+
+double fmass_PoissonTerm1 (double lambda, long s);
+\endcode
+ \tab  Computes and returns the value of the Poisson probability 
+ \eq
+  f(s) = \frac{e^{-{\lambda}} {\lambda}^s}{s!}    \eqlabel{eq:fmass-poisson}
+ \endeq
+  for $\lambda = {\tt lambda}$. 
+  If one has to call this function several times with the same $\lambda$,
+  where $\lambda$ is not too large, then it is more efficient to use
+  {\tt fmass\_PoissonTerm2}.
+  Restriction: $\lambda > 0$. 
+ \endtab
+\code
+
+
+fmass_INFO fmass_CreatePoisson (double lambda);
+\endcode
+  \tab Creates and returns a structure that contains
+   the mass and distribution functions for the Poisson
+   distribution with parameter {\tt lambda $= \lambda$}, which are
+   computed and stored in dynamic arrays inside that structure.
+   Such a structure is needed for calling {\tt fmass\_PoissonTerm2},
+   {\tt fdist\_Poisson2}, {\tt fbar\_Poisson2}, or {\tt finv\_Poisson2}.
+   It can be deleted by calling the procedure {\tt fmass\_DeletePoisson}.
+  \ifdetailed  %%%%
+   Only probability terms larger than {\tt fmass\_Epsilon} 
+   are kept in the arrays. The other terms are recomputed directly each time
+   they are needed. 
+  \fi  %%%% detailed
+   Restriction:  $\lambda > 0$. 
+ \endtab
+\code
+
+
+void fmass_DeletePoisson (fmass_INFO W);
+\endcode
+ \tab Deletes the structure {\tt W} created previously 
+   by {\tt fmass\_CreatePoisson}.
+ \endtab
+\code
+
+  
+double fmass_PoissonTerm2 (fmass_INFO W, long s);
+\endcode
+ \tab  Returns the Poisson probability (\ref{eq:fmass-poisson})
+  % $f(s) = {e^{-{\lambda}}{\lambda}^s}/s!$
+  from the structure {\tt W}, which must have been created previously
+  by calling {\tt fmass\_CreatePoisson} with the desired $\lambda$.
+ \endtab
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{The binomial distribution}
+\code
+
+
+double fmass_BinomialTerm3 (long n, double p, long s);
+\endcode
+ \tab   Computes and returns the binomial term
+  \eq
+     f(s) = {n \choose s} p^s (1 - p)^{n-s} =
+       \frac {n!}{s!(n-s)!}\; p^s (1 - p)^{n-s},       \eqlabel{eq:fmass-binom3}
+  \endeq
+  where $p$ is an arbitrary real number.
+  In the case where $0 \le p \le 1$, the returned
+  value is a probability term for the binomial distribution.
+  Restriction: $0\le s\le n$.
+ \hpierre{Il serait peut-etre utile d'avoir aussi une version
+   avec seulement $n$ et $p$, pour le cas (fr\'equent) o\`u $p$ est
+   tr\'es proche de 0?}
+  \endtab
+\code
+
+
+double fmass_BinomialTerm1 (long n, double p, double q, long s);
+\endcode
+ \tab Computes and returns the binomial term
+  \eq
+     f(s) = {n \choose s} p^s q^{n-s} =
+       \frac {n!}{s!(n-s)!}\; p^s q^{n-s},       \eqlabel{eq:fmass-binom}
+  \endeq
+  where $p$ and $q$ are arbitrary real numbers.
+  In the case where $0 \le p \le 1$ and $q = 1-p$, the returned
+  value is a probability term for the binomial distribution.
+  Restriction: $0\le s\le n$.
+ \hpierre{Il serait peut-etre utile d'avoir aussi une version
+   avec seulement $n$ et $p$, pour le cas (fr\'equent) o\`u $p$ est
+   tr\'es proche de 0?}
+  \endtab
+\code
+
+
+double fmass_BinomialTerm4 (long n, double p, double p2, long s);
+\endcode
+ \tab   Computes and returns the binomial term
+  \eq
+     f(s) = {n \choose s} p^s (1 - p_2)^{n-s} =
+       \frac {n!}{s!(n-s)!}\; p^s (1 - p_2)^{n-s},       \eqlabel{eq:fmass-binom11}
+  \endeq
+  where $p$ and $p_2$ are real numbers in $[0, 1]$.
+  In the case where $p_2 = p$, the returned
+  value is a probability term for the binomial distribution. If
+  $p_2$ is small, this function is more precise than 
+  {\tt fmass\_BinomialTerm1}.
+  Restriction: $0\le s\le n$.
+  \endtab
+\code
+
+
+fmass_INFO fmass_CreateBinomial (long n, double p, double q);
+\endcode
+  \tab Creates and returns a structure that contains binomial terms
+   (\ref{eq:fmass-binom}) for $0\le s\le n$, and the corresponding 
+   cumulative function.  If $0\le p = 1-q\le 1$, these are the probabilities
+   and the distribution function of a binomial random variable.
+   The values are computed and stored in dynamic arrays.
+   Such a structure is needed for calling {\tt fmass\_BinomialTerm2},
+   {\tt fdist\_Binomial2}, {\tt fbar\_Binomial2}, or {\tt finv\_Binomial2}.
+   It can be deleted by calling {\tt fmass\_DeleteBinomial}.
+   This function is more general than the binomial probability distribution
+    as it computes the binomial terms when $p + q \not= 1$, and
+  even when $p$ or $q$ are negative. However in this case, the cumulative
+  terms will be meaningless and only the mass terms {\tt fmass\_BinomialTerm2}
+  are computed.
+  \ifdetailed %%%
+  Only the terms larger than {\tt fmass\_Epsilon} in absolute value are kept
+  in the arrays. The other terms are recomputed directly each time
+   they are needed.
+  \fi  %%% detailed 
+ \endtab
+\code
+
+
+void fmass_DeleteBinomial (fmass_INFO W);
+\endcode
+ \tab Deletes the structure {\tt W} created previously 
+   by {\tt fmass\_CreateBinomial}.
+ \endtab
+\code
+
+
+double fmass_BinomialTerm2 (fmass_INFO W, long s);
+\endcode
+ \tab Returns the value of the binomial term  (\ref{eq:fmass-binom}) 
+  from the structure {\tt W}, which must have been created previously
+  by {\tt fmass\_CreateBinomial} with the desired parameters.
+ \endtab
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{The negative binomial distribution}
+
+\code
+
+double fmass_NegaBinTerm1 (long n, double p, long s);
+\endcode
+  \tab
+   Computes and returns the value of the negative binomial 
+   probability term 
+   \eq
+    f(s) = {n + s - 1 \choose s} p^n (1 - p)^{s}, 
+                                              \eqlabel{eq:fmass-negbin}
+   \endeq
+   which can be interpreted as the probability of having $s$ failures 
+   before the $n$th success in a sequence of independent Bernoulli trials 
+   with success probability $p$.
+   \ifdetailed %%%
+   When one needs many such $f(s)$ with the same $n$ and $p$, and $n$ is
+   not too large, it is more efficient to use 
+   {\tt fmass\_NegaBinTerm2} instead.
+   \fi %%%  detailed 
+   Restrictions: $n > 0$, $0\le p\le 1$, and $s\ge 0$.
+  \endtab
+\code
+
+
+fmass_INFO fmass_CreateNegaBin (long n, double p);
+\endcode
+  \tab Creates and returns a structure that contains the probability
+   terms (\ref{eq:fmass-negbin}) and the distribution functions for 
+   the negative binomial distribution with parameter $n$ and $p$.
+   Such a structure is needed for calling {\tt fmass\_NegaBinTerm2},
+   {\tt fdist\_NegaBin2}, {\tt fbar\_NegaBin2}, or {\tt finv\_NegaBin2}.
+   It can be deleted by calling {\tt fmass\_DeleteNegaBin}.
+ \ifdetailed %%%
+   Only probability terms larger than {\tt fmass\_Epsilon} 
+   are kept in the arrays. The other terms are recomputed directly each time
+   they are needed. 
+ \fi %%% detailed
+   Restrictions: $0\le p\le 1$ and $n > 0$.
+ \endtab
+\code
+
+
+void fmass_DeleteNegaBin (fmass_INFO W);
+\endcode
+ \tab Deletes the structure {\tt W} created previously 
+   by {\tt fmass\_CreateNegaBin}.
+ \endtab
+\code
+
+  
+double fmass_NegaBinTerm2 (fmass_INFO W, long s);
+\endcode
+ \tab  Returns the negative binomial probability (\ref{eq:fmass-negbin})
+  from the structure {\tt W}, which must have been created previously
+  by calling {\tt fmass\_CreateNegaBin} with the desired parameters.
+ \endtab
+\code
+\hide
+#endif
+\endhide
+\endcode

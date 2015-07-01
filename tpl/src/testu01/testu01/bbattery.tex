@@ -1,0 +1,1127 @@
+\defmodule {bbattery}
+
+This module contains predefined batteries of statistical tests for
+sources of random bits or sequences of uniform random numbers in
+the interval $[0, 1)$.
+\hpierre{The choice of tests and parameters in these batteries is
+        subject to change in the near future,
+        following further experimentations.}
+To test a RNG for general use, one could first apply the
+small and fast battery {\tt SmallCrush}.
+If it passes, one could then apply the more stringent battery
+{\tt Crush}, and finally the yet more time-consuming
+battery {\tt BigCrush}.
+The batteries {\tt Alphabit} and {\tt Rabbit} can be applied on a binary
+file considered as a source of random bits. They can also be applied
+on a programmed generator.  {\tt Alphabit} has been defined primarily to test
+{\it hardware} random bits generators.
+The battery {PseudoDIEHARD} applies most of the tests in
+the well-known {\it DIEHARD\/} suite of Marsaglia \cite{rMAR96b}.
+The battery {\tt FIPS\_140\_2} implements the small suite of tests
+of the {\it FIPS-140-2} standard from NIST.
+
+The batteries described in this module  will write the results of each test
+(on standard output) with a standard level of details (assuming that the
+ boolean switches of module {\tt swrite} have their default values),
+followed by a summary  report of the suspect $p$-values obtained from the
+ specific tests included in the batteries.
+It is also possible to get only the summary report in the output,
+with no detailed output from the tests,
+by setting the boolean switch {\tt swrite\_Basic} to {\tt FALSE}.
+
+Some of the tests compute more than one statistic using the same stream of
+random numbers and these statistics are thus not independent.
+\emph{That is why the number of statistics in the summary reports is larger than
+the number of tests in the description of the batteries.}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\bigskip
+\hrule
+\code\hide
+/* bbattery.h for ANSI C */
+#ifndef BBATTERY_H
+#define BBATTERY_H
+\endhide
+#include "unif01.h"
+
+
+extern int bbattery_NTests;
+\endcode
+  \tab The maximum number of $p$-values in the array {\tt bbattery\_pVal}.
+  For small sample size, some of the tests in the battery may not be done.
+  Furthermore, some of the tests computes more than one statistic and
+  its $p$-value, so {\tt bbattery\_NTests} will usually be larger than
+  the number of tests in the battery.
+  \endtab
+\code
+
+
+extern double bbattery_pVal[];
+\endcode
+  \tab This array keeps the $p$-values resulting from the  battery of tests
+  that is currently applied (or the last one that has been called). It is
+  used by any battery in this module. The $p$-value of the $j$-th test in
+  the battery is kept in {\tt bbattery\_pVal[$j-1$]}, for $1\le j\le $
+  {\tt bbattery\_NTests}.
+%% When a particular test in the battery
+%%   is not done (because the sample size is too small), then the
+%%  corresponding $p$-value is set to $-1$.
+ \endtab
+\code
+
+
+extern char *bbattery_TestNames[];
+\endcode
+  \tab This array keeps the names of each test from  the
+  battery that is currently applied (or the last one that has
+  been called). It is used by any battery in this module.
+  The name of the $j$-th test in the battery is
+   kept in {\tt bbattery\_TestNames[$j-1$]},
+  for $1\le j\le $ {\tt bbattery\_NTests}.
+ \endtab
+
+
+\guisec{The batteries of tests}
+
+\code
+
+void bbattery_SmallCrush (unif01_Gen *gen);
+
+void bbattery_SmallCrushFile (char *filename);
+\endcode
+  \tab  Both functions applies {\tt SmallCrush}, a small and fast battery
+   of tests, to a RNG. The function {\tt bbattery\_Small\-CrushFile} applies
+  {\tt SmallCrush} to a RNG given as a text file of floating-point numbers in
+  $[0, 1)$; the file requires slightly less than 51320000 random numbers.
+   \label{bat:SmallCrush}
+   The file will be rewound to the beginning before each test.
+  \index{SmallCrush}\index{battery of tests!SmallCrush}%
+  Thus  {\tt bbattery\_SmallCrush} applies the tests on one unbroken
+  stream of successive numbers, while {\tt bbattery\_Small\-CrushFile}
+  applies each test on the same sequence of numbers.
+  Some of these tests assume that {\tt gen} returns at least 30 bits of
+  resolution; if this is not the case, then the generator is most likely to
+  fail these particular tests.
+
+  The following tests are applied:
+  \endtab
+  \begin{enumerate}
+  \item {\tt smarsa\_BirthdaySpacings} with $N=1$,  $n=5*10^6$,  $r=0$,
+   $d = 2^{30}$, $t=2$, $p=1$.
+
+  \item {\tt sknuth\_Collision} with $N=1$,  $n=5*10^6$,  $r=0$,
+   $d = 2^{16}$, $t=2$.
+
+  \item {\tt sknuth\_Gap}  with $N=1$,  $n=2*10^5$,  $r=22$, {\tt Alpha} $=0$,
+    {\tt Beta} $=1/256$.
+
+  \item {\tt sknuth\_SimpPoker}  with $N=1$,  $n=4*10^5$,  $r=24$,
+   $d = 64$, $k=64$.
+
+  \item {\tt sknuth\_CouponCollector}  with $N=1$, $n=5*10^5$, $r=26$,
+   $d=16$.
+
+  \item {\tt  sknuth\_MaxOft}  with $N=1$,  $n=2*10^6$,  $r=0$,
+   $d = 10^5$, $t=6$.
+
+  \item {\tt  svaria\_WeightDistrib} with $N=1$, $n=2*10^5$, $r=27$,
+   $k=256$, {\tt Alpha} $=0$,  {\tt Beta} $=1/8$.
+
+  \item {\tt smarsa\_MatrixRank} with $N=1$,  $n=20000$,  $r=20$, $s=10$,
+   $L = k=60$.
+
+  \item {\tt sstring\_HammingIndep} with $N=1$, $n=5*10^5$,  $r=20$, $s=10$,
+   $L = 300$, $d = 0$.
+
+  \item {\tt swalk\_RandomWalk1} with $N=1$, $n=10^6$,  $r=0$, $s=30$,
+   $L_0 = 150$, $L_1=150$.
+
+  \end{enumerate}
+
+\code
+
+
+void bbattery_RepeatSmallCrush (unif01_Gen *gen, int rep[]);
+\endcode
+  \tab This function applies specific tests of {\tt SmallCrush} on
+   generator {\tt gen}. Test numbered $i$ in the enumeration above will
+  be applied {\tt rep[$i$]} times successively on  {\tt gen}. Those tests with
+   {\tt rep[$i$]} = 0 will not be applied. This is useful when a test in
+    {\tt SmallCrush} had a suspect $p$-value, and one wants to reapply the
+  test a few more times to find out whether the generator failed
+  the test or whether the suspect $p$-value was a statistical fluke.
+  Restriction: Array {\tt rep} must have one more element than the
+  number of tests in {\tt SmallCrush}.
+ \endtab
+\bigskip
+
+\hrule
+\code
+
+
+void bbattery_Crush (unif01_Gen *gen);
+\endcode
+  \tab
+  Applies the battery {\tt Crush}, a suite of stringent statistical
+  tests, to the generator {\tt gen}.
+  \index{Crush}\index{battery of tests!Crush}%
+  The battery includes the classical tests described in Knuth \cite{rKNU98a}
+  as well as many other tests. Some of these tests assume that
+  {\tt gen} returns at least 30 bits of resolution; if that
+  is not the case, then the generator will certainly
+  fail these particular tests. One test requires 31 bits of resolution:
+  the {\tt BirthdaySpacings} test with $t=2$.
+  On a PC with an AMD Athlon 64 Processor 4000+
+  of clock speed 2400 MHz running with Red Hat Linux, Crush
+  will require around 1 hour of CPU time. {\tt Crush} uses approximately
+  $2^{35}$ random numbers.
+%%  Some of the tests will require as much as 350 Megs of RAM memory.
+  The following tests are applied: \label{bat:Crush}
+  \endtab
+
+  \begin{enumerate}
+  \item {\tt smarsa\_SerialOver} with $N=1$,  $n=5*10^8$,  $r=0$,
+  $d = 2^{12}$, $t=2$.
+
+  \item {\tt smarsa\_SerialOver} with $N=1$,  $n=3*10^8$,  $r=0$,
+  $d = 2^6$, $t=4$.
+
+  \item {\tt smarsa\_CollisionOver} with $N=10$,  $n=10^7$,  $r=0$,
+  $d = 2^{20}$, $t=2$.
+
+  \item {\tt smarsa\_CollisionOver} with $N=10$,  $n=10^7$,  $r=10$,
+  $d = 2^{20}$,  $t=2$.
+
+  \item {\tt smarsa\_CollisionOver} with $N=10$,  $n=10^7$,  $r=0$,
+  $d = 2^{10}$, $t=4$.
+
+  \item {\tt smarsa\_CollisionOver} with $N=10$,  $n=10^7$,  $r=20$,
+  $d = 2^{10}$,  $t=4$.
+
+  \item {\tt smarsa\_CollisionOver} with $N=10$,  $n=10^7$,  $r=0$,
+  $d = 32$, $t=8$.
+
+  \item {\tt smarsa\_CollisionOver} with $N=10$,  $n=10^7$,  $r=25$,
+  $d = 32$,  $t=8$.
+
+  \item {\tt smarsa\_CollisionOver} with $N=10$,  $n=10^7$,  $r=0$,
+  $d = 4$, $t=20$.
+
+  \item {\tt smarsa\_CollisionOver} with $N=10$,  $n=10^7$,  $r=28$,
+  $d = 4$,  $t=20$.
+
+  \item {\tt smarsa\_BirthdaySpacings}  with $N=5$,  $n=2*10^7$, $r=0$,
+   $d = 2^{31}$, $t=2$, $p=1$.
+
+  \item {\tt smarsa\_BirthdaySpacings}  with $N=5$,  $n=2*10^7$, $r=0$,
+   $d = 2^{21}$, $t=3$, $p=1$.
+
+  \item {\tt smarsa\_BirthdaySpacings}  with $N=5$,  $n=2*10^7$, $r=0$,
+   $d = 2^{16}$, $t=4$, $p=1$.
+
+  \item {\tt smarsa\_BirthdaySpacings}  with $N=3$,  $n=2*10^7$, $r=0$,
+   $d = 2^{9}$, $t=7$, $p=1$.
+
+  \item {\tt smarsa\_BirthdaySpacings}  with $N=3$,  $n=2*10^7$, $r=7$,
+   $d = 2^{9}$, $t=7$, $p=1$.
+
+  \item {\tt smarsa\_BirthdaySpacings}  with $N=3$,  $n=2*10^7$, $r=14$,
+   $d = 2^{8}$, $t=8$, $p=1$.
+
+  \item {\tt smarsa\_BirthdaySpacings}  with $N=3$,  $n=2*10^7$, $r=22$,
+   $d = 2^{8}$, $t=8$, $p=1$.
+
+  \item {\tt snpair\_ClosePairs}  with $N=10$,  $n=2*10^6$, $r=0$, $t=2$,
+   $p=0$,  $m=30$.
+
+  \item {\tt snpair\_ClosePairs}  with $N=10$,  $n=2*10^6$, $r=0$, $t=3$,
+   $p=0$,  $m=30$.
+
+  \item {\tt snpair\_ClosePairs}  with $N=5$,  $n=2*10^6$, $r=0$, $t=7$,
+   $p=0$,  $m=30$.
+
+  \item {\tt snpair\_ClosePairsBitMatch}  with $N=4$,  $n=4*10^6$,
+   $r=0$, $t=2$.
+
+  \item {\tt snpair\_ClosePairsBitMatch}  with $N=2$,  $n=4*10^6$,
+   $r=0$, $t=4$.
+
+  \item {\tt sknuth\_SimpPoker} with $N=1$,  $n=4*10^7$,  $r=0$, $d=16$, $k=16$.
+
+  \item {\tt sknuth\_SimpPoker} with $N=1$,  $n=4*10^7$,  $r=26$, $d=16$, $k=16$.
+
+  \item {\tt sknuth\_SimpPoker} with $N=1$,  $n=10^7$,  $r=0$, $d=64$, $k=64$.
+
+  \item {\tt sknuth\_SimpPoker} with $N=1$,  $n=10^7$,  $r=24$, $d=64$, $k=64$.
+
+  \item {\tt sknuth\_CouponCollector} with $N=1$, $n=4*10^7$, $r=0$, $d=4$.
+
+  \item {\tt sknuth\_CouponCollector} with $N=1$, $n=4*10^7$, $r=28$, $d=4$.
+
+  \item {\tt sknuth\_CouponCollector} with $N=1$, $n=10^7$, $r=0$, $d=16$.
+
+  \item {\tt sknuth\_CouponCollector} with $N=1$, $n=10^7$, $r=26$, $d=16$.
+
+  \item {\tt sknuth\_Gap} with $N=1$, $n=10^8$, $r=0$, {\tt Alpha} $=0$,
+    {\tt Beta} $=1/8$.
+
+  \item {\tt sknuth\_Gap} with $N=1$, $n=10^8$, $r=27$, {\tt Alpha} $=0$,
+    {\tt Beta} $=1/8$.
+
+  \item {\tt sknuth\_Gap} with $N=1$, $n=5*10^6$, $r=0$, {\tt Alpha} $=0$,
+   {\tt Beta} $=1/256$.
+
+  \item {\tt sknuth\_Gap} with $N=1$, $n=5*10^6$, $r=22$, {\tt Alpha} $=0$,
+    {\tt Beta} $=1/256$.
+
+  \item {\tt sknuth\_Run}  with $N=1$, $n=5*10^8$, $r=0$, {\tt Up = TRUE}.
+
+  \item {\tt sknuth\_Run}  with $N=1$, $n=5*10^8$, $r=15$, {\tt Up = FALSE}.
+
+  \item {\tt sknuth\_Permutation} with $N=1$, $n=5*10^7$, $r=0$, $t=10$.
+
+  \item {\tt sknuth\_Permutation} with $N=1$, $n=5*10^7$, $r=15$, $t=10$.
+
+  \item {\tt sknuth\_CollisionPermut} with $N=5$, $n=10^7$, $r=0$, $t=13$.
+
+  \item {\tt sknuth\_CollisionPermut} with $N=5$, $n=10^7$, $r=15$, $t=13$.
+
+  \item {\tt sknuth\_MaxOft} with $N=10$, $n=10^7$, $r=0$, $d=10^5$, $t=5$.
+
+  \item {\tt sknuth\_MaxOft} with $N=5$, $n=10^7$, $r=0$, $d=10^5$, $t=10$.
+
+  \item {\tt sknuth\_MaxOft} with $N=1$, $n=10^7$, $r=0$, $d=10^5$, $t=20$.
+
+  \item {\tt sknuth\_MaxOft} with $N=1$, $n=10^7$, $r=0$, $d=10^5$, $t=30$.
+
+  \item {\tt svaria\_SampleProd} with $N=1$, $n=10^7$, $r=0$, $t=10$.
+
+  \item {\tt svaria\_SampleProd} with $N=1$, $n=10^7$, $r=0$, $t=30$.
+
+  \item {\tt svaria\_SampleMean} with $N=10^7$, $n=20$, $r=0$.
+
+  \item {\tt svaria\_SampleCorr} with $N=1$, $n=5*10^8$, $r=0$, $k=1$.
+
+  \item {\tt svaria\_AppearanceSpacings} with $N=1$,  $Q=10^7$, $K=4*10^8$,
+   $r=0$,  $s=30$, $L=15$.
+
+  \item {\tt svaria\_AppearanceSpacings} with $N=1$,  $Q=10^7$, $K=10^8$,
+   $r=20$,  $s=10$, $L=15$.
+
+  \item {\tt svaria\_WeightDistrib} with $N=1$, $n=2*10^6$, $r=0$, $k=256$,
+   {\tt Alpha} $=0$,  {\tt Beta} $=1/8$.
+
+  \item {\tt svaria\_WeightDistrib} with $N=1$, $n=2*10^6$, $r=8$, $k=256$,
+   {\tt Alpha} $=0$,  {\tt Beta} $=1/8$.
+
+  \item {\tt svaria\_WeightDistrib} with $N=1$, $n=2*10^6$, $r=16$, $k=256$,
+   {\tt Alpha} $=0$,  {\tt Beta} $=1/8$.
+
+  \item {\tt svaria\_WeightDistrib} with $N=1$, $n=2*10^6$, $r=24$, $k=256$,
+   {\tt Alpha} $=0$,  {\tt Beta} $=1/8$.
+
+  \item {\tt svaria\_SumCollector} with $N=1$, $n=2*10^7$, $r=0$,  $g=10$.
+
+  \item {\tt smarsa\_MatrixRank} with $N=1$, $n=10^6$, $r=0$,
+   $s=30$, $L=k=60$.
+
+  \item {\tt smarsa\_MatrixRank} with $N=1$, $n=10^6$, $r=20$,
+   $s=10$, $L=k=60$.
+
+  \item {\tt smarsa\_MatrixRank} with $N=1$, $n=50000$, $r=0$,
+   $s=30$, $L=k=300$.
+
+  \item {\tt smarsa\_MatrixRank} with $N=1$, $n=50000$, $r=20$,
+   $s=10$, $L=k=300$.
+
+  \item {\tt smarsa\_MatrixRank} with $N=1$, $n=2000$, $r=0$,
+   $s=30$, $L=k=1200$.
+
+  \item {\tt smarsa\_MatrixRank} with $N=1$, $n=2000$, $r=20$,
+   $s=10$, $L=k=1200$.
+
+  \item {\tt smarsa\_Savir2} with $N=1$, $n=2*10^7$, $r=0$, $m=2^{20}$, $t=30$.
+
+  \item {\tt smarsa\_GCD} with $N=1$, $n=10^8$, $r=0$, $s=30$.
+
+  \item {\tt smarsa\_GCD} with $N=1$, $n=4*10^7$, $r=10$, $s=20$.
+
+  \item {\tt swalk\_RandomWalk1} with $N=1$, $n=5*10^7$, $r=0$,
+   $s=30$, $L_0=L_1=90$.
+
+  \item {\tt swalk\_RandomWalk1} with $N=1$, $n=10^7$, $r=20$,
+   $s=10$, $L_0=L_1=90$.
+
+  \item {\tt swalk\_RandomWalk1} with $N=1$, $n=5*10^6$, $r=0$,
+   $s=30$, $L_0=L_1=1000$.
+
+  \item {\tt swalk\_RandomWalk1} with $N=1$, $n=10^6$, $r=20$,
+   $s=10$, $L_0=L_1=1000$.
+
+  \item {\tt swalk\_RandomWalk1} with $N=1$, $n=5*10^5$, $r=0$,
+   $s=30$, $L_0=L_1=10000$.
+
+  \item {\tt swalk\_RandomWalk1} with $N=1$, $n=10^5$, $r=20$,
+   $s=10$, $L_0=L_1=10000$.
+
+  \item {\tt scomp\_LinearComp} with $N=1$, $n=120000$, $r=0$, $s=1$.
+
+  \item {\tt scomp\_LinearComp} with $N=1$, $n=120000$, $r=29$, $s=1$.
+
+  \item {\tt scomp\_LempelZiv} with $N=10$, $k=25$, $r=0$, $s=30$.
+
+  \item {\tt sspectral\_Fourier3} with $N=50000$, $k=14$, $r=0$, $s=30$.
+
+  \item {\tt sspectral\_Fourier3} with $N=50000$, $k=14$, $r=20$, $s=10$.
+
+  \item {\tt sstring\_LongestHeadRun} with $N=1$, $n=1000$, $r=0$,
+   $s=30$, $L=10^7$.
+
+  \item {\tt sstring\_LongestHeadRun} with $N=1$, $n=300$, $r=20$,
+   $s=10$, $L=10^7$.
+
+  \item {\tt sstring\_PeriodsInStrings} with $N=1$, $n=3*10^8$, $r=0$,
+   $s=30$.
+
+  \item {\tt sstring\_PeriodsInStrings} with $N=1$, $n=3*10^8$, $r=15$,
+   $s=15$.
+
+  \item {\tt sstring\_HammingWeight2} with $N=100$, $n=10^8$, $r=0$,
+   $s=30$, $L=10^6$.
+
+  \item {\tt sstring\_HammingWeight2} with $N=30$, $n=10^8$, $r=20$,
+   $s=10$, $L=10^6$.
+
+  \item {\tt sstring\_HammingCorr} with $N=1$, $n=5*10^8$, $r=0$,
+   $s=30$, $L=30$.
+
+  \item {\tt sstring\_HammingCorr} with $N=1$, $n=5*10^7$, $r=0$,
+   $s=30$, $L=300$.
+
+  \item {\tt sstring\_HammingCorr} with $N=1$, $n=10^7$, $r=0$,
+   $s=30$, $L=1200$.
+
+  \item {\tt sstring\_HammingIndep} with $N=1$, $n=3*10^8$, $r=0$,
+   $s=30$, $L=30$, $d=0$.
+
+  \item {\tt sstring\_HammingIndep} with $N=1$, $n=10^8$, $r=20$,
+   $s=10$, $L=30$, $d=0$.
+
+  \item {\tt sstring\_HammingIndep} with $N=1$, $n=3*10^7$, $r=0$,
+   $s=30$, $L=300$, $d=0$.
+
+  \item {\tt sstring\_HammingIndep} with $N=1$, $n=10^7$, $r=20$,
+   $s=10$, $L=300$, $d=0$.
+
+  \item {\tt sstring\_HammingIndep} with $N=1$, $n=10^7$, $r=0$,
+   $s=30$, $L=1200$, $d=0$.
+
+  \item {\tt sstring\_HammingIndep} with $N=1$, $n=10^6$, $r=20$,
+   $s=10$, $L=1200$, $d=0$.
+
+  \item {\tt sstring\_Run} with $N=1$, $n=10^9$, $r=0$, $s=30$.
+
+  \item {\tt sstring\_Run} with $N=1$, $n=10^9$, $r=20$, $s=10$.
+
+  \item {\tt sstring\_AutoCor} with $N=10$, $n=10^9$, $r=0$, $s=30$,
+  $d=1$.
+
+  \item {\tt sstring\_AutoCor} with $N=5$, $n=10^9$, $r=20$, $s=10$,
+  $d=1$.
+
+  \item {\tt sstring\_AutoCor} with $N=10$, $n=10^9$, $r=0$, $s=30$,
+  $d=30$.
+
+  \item {\tt sstring\_AutoCor} with $N=5$, $n=10^9$, $r=20$, $s=10$,
+  $d=10$.
+
+\end{enumerate}
+
+\code
+
+
+void bbattery_RepeatCrush (unif01_Gen *gen, int rep[]);
+\endcode
+  \tab Similar to {\tt bbattery\_RepeatSmallCrush} above but applied on
+  {\tt Crush}.
+  \endtab
+\bigskip
+
+\hrule
+\code
+
+
+void bbattery_BigCrush (unif01_Gen *gen);
+\endcode
+  \tab
+  Applies the battery {\tt BigCrush}, a suite of very stringent statistical
+  tests, to the generator {\tt gen}.
+  \index{BigCrush}\index{battery of tests!BigCrush}%
+  Some of these tests assume that {\tt gen} returns at least 30 bits of
+  resolution; if that is not the case, then the generator will certainly
+  fail these particular tests. One test requires 31 bits of resolution:
+  the {\tt BirthdaySpacings} test with $t=2$.
+  On a PC with an AMD Athlon 64 Processor 4000+
+  of clock speed 2400 MHz running with Linux, BigCrush
+  will take around 8 hours of CPU time. {\tt BigCrush} uses close to
+  $2^{38}$ random numbers.
+  The following tests are applied:\label{bat:BigCrush}
+  \endtab
+
+  \begin{enumerate}
+  \item {\tt smarsa\_SerialOver} with $N=1$,  $n=10^9$,  $r=0$,
+  $d = 2^{8}$, $t=3$.
+
+  \item {\tt smarsa\_SerialOver} with $N=1$,  $n=10^9$,  $r=22$,
+  $d = 2^{8}$, $t=3$.
+
+  \item {\tt smarsa\_CollisionOver} with $N=30$,  $n=2*10^7$,  $r=0$,
+  $d = 2^{21}$, $t=2$.
+
+  \item {\tt smarsa\_CollisionOver} with $N=30$,  $n=2*10^7$,  $r=9$,
+  $d = 2^{21}$,  $t=2$.
+
+  \item {\tt smarsa\_CollisionOver} with $N=30$,  $n=2*10^7$,  $r=0$,
+  $d = 2^{14}$, $t=3$.
+
+  \item {\tt smarsa\_CollisionOver} with $N=30$,  $n=2*10^7$,  $r=16$,
+  $d = 2^{14}$,  $t=3$.
+
+  \item {\tt smarsa\_CollisionOver} with $N=30$,  $n=2*10^7$,  $r=0$,
+  $d = 64$, $t=7$.
+
+  \item {\tt smarsa\_CollisionOver} with $N=30$,  $n=2*10^7$,  $r=24$,
+  $d = 64$,  $t=7$.
+
+  \item {\tt smarsa\_CollisionOver} with $N=30$,  $n=2*10^7$,  $r=0$,
+  $d = 8$, $t=14$.
+
+  \item {\tt smarsa\_CollisionOver} with $N=30$,  $n=2*10^7$,  $r=27$,
+  $d = 8$,  $t=14$.
+
+  \item {\tt smarsa\_CollisionOver} with $N=30$,  $n=2*10^7$,  $r=0$,
+  $d =4$,  $t=21$.
+
+  \item {\tt smarsa\_CollisionOver} with $N=30$,  $n=2*10^7$,  $r=28$,
+  $d =4$,  $t=21$.
+
+  \item {\tt smarsa\_BirthdaySpacings}  with $N=100$,  $n=10^7$, $r=0$,
+   $d = 2^{31}$, $t=2$, $p=1$.
+
+  \item {\tt smarsa\_BirthdaySpacings}  with $N=20$,  $n=2*10^7$, $r=0$,
+   $d = 2^{21}$, $t=3$, $p=1$.
+
+  \item {\tt smarsa\_BirthdaySpacings}  with $N=20$,  $n=3*10^7$, $r=14$,
+   $d = 2^{16}$, $t=4$, $p=1$.
+
+  \item {\tt smarsa\_BirthdaySpacings}  with $N=20$,  $n=2*10^7$, $r=0$,
+   $d = 2^{9}$, $t=7$, $p=1$.
+
+  \item {\tt smarsa\_BirthdaySpacings}  with $N=20$,  $n=2*10^7$, $r=7$,
+   $d = 2^{9}$, $t=7$, $p=1$.
+
+  \item {\tt smarsa\_BirthdaySpacings}  with $N=20$,  $n=3*10^7$, $r=14$,
+   $d = 2^{8}$, $t=8$, $p=1$.
+
+  \item {\tt smarsa\_BirthdaySpacings}  with $N=20$,  $n=3*10^7$, $r=22$,
+   $d = 2^{8}$, $t=8$, $p=1$.
+
+  \item {\tt smarsa\_BirthdaySpacings}  with $N=20$,  $n=3*10^7$, $r=0$,
+   $d = 2^{4}$, $t=16$, $p=1$.
+
+  \item {\tt smarsa\_BirthdaySpacings}  with $N=20$,  $n=3*10^7$, $r=26$,
+   $d = 2^{4}$, $t=16$, $p=1$.
+
+  \item {\tt snpair\_ClosePairs}  with $N=30$,  $n=6*10^6$, $r=0$, $t=3$,
+   $p=0$,  $m=30$.
+
+  \item {\tt snpair\_ClosePairs}  with $N=20$,  $n=4*10^6$, $r=0$, $t=5$,
+   $p=0$,  $m=30$.
+
+  \item {\tt snpair\_ClosePairs}  with $N=10$,  $n=3*10^6$, $r=0$, $t=9$,
+   $p=0$,  $m=30$.
+
+  \item {\tt snpair\_ClosePairs}  with $N=5$,  $n=2*10^6$, $r=0$, $t=16$,
+   $p=0$,  $m=30$.
+
+  \item {\tt sknuth\_SimpPoker} with $N=1$,  $n=4*10^8$,  $r=0$, $d=8$, $k=8$.
+
+  \item {\tt sknuth\_SimpPoker} with $N=1$,  $n=4*10^8$,  $r=27$, $d=8$, $k=8$.
+
+  \item {\tt sknuth\_SimpPoker} with $N=1$,  $n=10^8$,  $r=0$, $d=32$, $k=32$.
+
+  \item {\tt sknuth\_SimpPoker} with $N=1$,  $n=10^8$,  $r=25$, $d=32$, $k=32$.
+
+  \item {\tt sknuth\_CouponCollector} with $N=1$, $n=2*10^8$, $r=0$, $d=8$.
+
+  \item {\tt sknuth\_CouponCollector} with $N=1$, $n=2*10^8$, $r=10$, $d=8$.
+
+  \item {\tt sknuth\_CouponCollector} with $N=1$, $n=2*10^8$, $r=20$, $d=8$.
+
+  \item {\tt sknuth\_CouponCollector} with $N=1$, $n=2*10^8$, $r=27$, $d=8$.
+
+  \item {\tt sknuth\_Gap} with $N=1$, $n=5*10^8$, $r=0$, {\tt Alpha} $=0$,
+    {\tt Beta} $=1/16$.
+
+  \item {\tt sknuth\_Gap} with $N=1$, $n=3*10^8$, $r=25$, {\tt Alpha} $=0$,
+    {\tt Beta} $=1/32$.
+
+  \item {\tt sknuth\_Gap} with $N=1$, $n=10^8$, $r=0$, {\tt Alpha} $=0$,
+    {\tt Beta} $=1/128$.
+
+  \item {\tt sknuth\_Gap} with $N=1$, $n=10^7$, $r=20$, {\tt Alpha} $=0$,
+   {\tt Beta} $=1/1024$.
+
+  \item {\tt sknuth\_Run}  with $N=5$, $n=10^9$, $r=0$, {\tt Up = FALSE}.
+
+  \item {\tt sknuth\_Run}  with $N=5$, $n=10^9$, $r=15$, {\tt Up = TRUE}.
+
+  \item {\tt sknuth\_Permutation} with $N=1$, $n=10^9$, $r=0$, $t=3$.
+
+  \item {\tt sknuth\_Permutation} with $N=1$, $n=10^9$, $r=0$, $t=5$.
+
+  \item {\tt sknuth\_Permutation} with $N=1$, $n=5*10^8$, $r=0$, $t=7$.
+
+  \item {\tt sknuth\_Permutation} with $N=1$, $n=5*10^8$, $r=10$, $t=10$.
+
+  \item {\tt sknuth\_CollisionPermut} with $N=20$, $n=2*10^7$, $r=0$, $t=14$.
+
+  \item {\tt sknuth\_CollisionPermut} with $N=20$, $n=2*10^7$, $r=10$, $t=14$.
+
+  \item {\tt sknuth\_MaxOft} with $N=40$, $n=10^7$, $r=0$, $d=10^5$, $t=8$.
+
+  \item {\tt sknuth\_MaxOft} with $N=30$, $n=10^7$, $r=0$, $d=10^5$, $t=16$.
+
+  \item {\tt sknuth\_MaxOft} with $N=20$, $n=10^7$, $r=0$, $d=10^5$, $t=24$.
+
+  \item {\tt sknuth\_MaxOft} with $N=20$, $n=10^7$, $r=0$, $d=10^5$, $t=32$.
+
+  \item {\tt svaria\_SampleProd} with $N=40$, $n=10^7$, $r=0$, $t=8$.
+
+  \item {\tt svaria\_SampleProd} with $N=20$, $n=10^7$, $r=0$, $t=16$.
+
+  \item {\tt svaria\_SampleProd} with $N=20$, $n=10^7$, $r=0$, $t=24$.
+
+  \item {\tt svaria\_SampleMean} with $N=2*10^7$, $n=30$, $r=0$.
+
+  \item {\tt svaria\_SampleMean} with $N=2*10^7$, $n=30$, $r=10$.
+
+  \item {\tt svaria\_SampleCorr} with $N=1$, $n=2*10^9$, $r=0$, $k=1$.
+
+  \item {\tt svaria\_SampleCorr} with $N=1$, $n=2*10^9$, $r=0$, $k=2$.
+
+  \item {\tt svaria\_AppearanceSpacings} with $N=1$,  $Q=10^7$, $K=10^9$,
+   $r=0$,  $s=3$, $L=15$.
+
+  \item {\tt svaria\_AppearanceSpacings} with $N=1$,  $Q=10^7$, $K=10^9$,
+   $r=27$,  $s=3$, $L=15$.
+
+  \item {\tt svaria\_WeightDistrib} with $N=1$, $n=2*10^7$, $r=0$, $k=256$,
+   {\tt Alpha} $=0$,  {\tt Beta} $=1/4$.
+
+  \item {\tt svaria\_WeightDistrib} with $N=1$, $n=2*10^7$, $r=20$, $k=256$,
+   {\tt Alpha} $=0$,  {\tt Beta} $=1/4$.
+
+  \item {\tt svaria\_WeightDistrib} with $N=1$, $n=2*10^7$, $r=28$, $k=256$,
+   {\tt Alpha} $=0$,  {\tt Beta} $=1/4$.
+
+  \item {\tt svaria\_WeightDistrib} with $N=1$, $n=2*10^7$, $r=0$, $k=256$,
+   {\tt Alpha} $=0$,  {\tt Beta} $=1/16$.
+
+  \item {\tt svaria\_WeightDistrib} with $N=1$, $n=2*10^7$, $r=10$, $k=256$,
+   {\tt Alpha} $=0$,  {\tt Beta} $=1/16$.
+
+  \item {\tt svaria\_WeightDistrib} with $N=1$, $n=2*10^7$, $r=26$, $k=256$,
+   {\tt Alpha} $=0$,  {\tt Beta} $=1/16$.
+
+  \item {\tt svaria\_SumCollector} with $N=1$, $n=5*10^8$, $r=0$,  $g=10$.
+
+  \item {\tt smarsa\_MatrixRank} with $N=10$, $n=10^6$, $r=0$,
+   $s=5$, $L=k=30$.
+
+  \item {\tt smarsa\_MatrixRank} with $N=10$, $n=10^6$, $r=25$,
+   $s=5$, $L=k=30$.
+
+  \item {\tt smarsa\_MatrixRank} with $N=1$, $n=5000$, $r=0$,
+   $s=4$, $L=k=1000$.
+
+  \item {\tt smarsa\_MatrixRank} with $N=1$, $n=5000$, $r=26$,
+   $s=4$, $L=k=1000$.
+
+  \item {\tt smarsa\_MatrixRank} with $N=1$, $n=80$, $r=15$,
+   $s=15$, $L=k=5000$.
+
+  \item {\tt smarsa\_MatrixRank} with $N=1$, $n=80$, $r=0$,
+   $s=30$, $L=k=5000$.
+
+  \item {\tt smarsa\_Savir2} with $N=10$, $n=10^7$, $r=10$, $m=2^{20}$, $t=30$.
+
+  \item {\tt smarsa\_GCD} with $N=10$, $n=5*10^7$, $r=0$, $s=30$.
+
+  \item {\tt swalk\_RandomWalk1} with $N=1$, $n=10^8$, $r=0$,
+   $s=5$, $L_0=L_1=50$.
+
+  \item {\tt swalk\_RandomWalk1} with $N=1$, $n=10^8$, $r=25$,
+   $s=5$, $L_0=L_1=50$.
+
+  \item {\tt swalk\_RandomWalk1} with $N=1$, $n=10^7$, $r=0$,
+   $s=10$, $L_0=L_1=1000$.
+
+  \item {\tt swalk\_RandomWalk1} with $N=1$, $n=10^7$, $r=20$,
+   $s=10$, $L_0=L_1=1000$.
+
+  \item {\tt swalk\_RandomWalk1} with $N=1$, $n=10^6$, $r=0$,
+   $s=15$, $L_0=L_1=10000$.
+
+  \item {\tt swalk\_RandomWalk1} with $N=1$, $n=10^6$, $r=15$,
+   $s=15$, $L_0=L_1=10000$.
+
+  \item {\tt scomp\_LinearComp} with $N=1$, $n=400000$, $r=0$, $s=1$.
+
+  \item {\tt scomp\_LinearComp} with $N=1$, $n=400000$, $r=29$, $s=1$.
+
+  \item {\tt scomp\_LempelZiv} with $N=10$, $k=27$, $r=0$, $s=30$.
+
+  \item {\tt scomp\_LempelZiv} with $N=10$, $k=27$, $r=15$, $s=15$.
+
+  \item {\tt sspectral\_Fourier3} with $N=100000$, $r=0$, $s=3$, $k=14$.
+
+  \item {\tt sspectral\_Fourier3} with $N=100000$, $r=27$, $s=3$, $k=14$.
+
+  \item {\tt sstring\_LongestHeadRun} with $N=1$, $n=1000$, $r=0$,
+   $s=3$, $L=10^7$.
+
+  \item {\tt sstring\_LongestHeadRun} with $N=1$, $n=1000$, $r=27$,
+   $s=3$, $L=10^7$.
+
+  \item {\tt sstring\_PeriodsInStrings} with $N=10$, $n=5*10^8$, $r=0$,
+   $s=10$.
+
+  \item {\tt sstring\_PeriodsInStrings} with $N=10$, $n=5*10^8$, $r=20$,
+   $s=10$.
+
+  \item {\tt sstring\_HammingWeight2} with $N=10$, $n=10^9$, $r=0$,
+   $s=3$, $L=10^6$.
+
+  \item {\tt sstring\_HammingWeight2} with $N=10$, $n=10^9$, $r=27$,
+   $s=3$, $L=10^6$.
+
+  \item {\tt sstring\_HammingCorr} with $N=1$, $n=10^9$, $r=10$,
+   $s=10$, $L=30$.
+
+  \item {\tt sstring\_HammingCorr} with $N=1$, $n=10^8$, $r=10$,
+   $s=10$, $L=300$.
+
+  \item {\tt sstring\_HammingCorr} with $N=1$, $n=10^8$, $r=10$,
+   $s=10$, $L=1200$.
+
+  \item {\tt sstring\_HammingIndep} with $N=10$, $n=3*10^7$, $r=0$,
+   $s=3$, $L=30$, $d=0$.
+
+  \item {\tt sstring\_HammingIndep} with $N=10$, $n=3*10^7$, $r=27$,
+   $s=3$, $L=30$, $d=0$.
+
+  \item {\tt sstring\_HammingIndep} with $N=1$, $n=3*10^7$, $r=0$,
+   $s=4$, $L=300$, $d=0$.
+
+  \item {\tt sstring\_HammingIndep} with $N=1$, $n=3*10^7$, $r=26$,
+   $s=4$, $L=300$, $d=0$.
+
+  \item {\tt sstring\_HammingIndep} with $N=1$, $n=10^7$, $r=0$,
+   $s=5$, $L=1200$, $d=0$.
+
+  \item {\tt sstring\_HammingIndep} with $N=1$, $n=10^7$, $r=25$,
+   $s=5$, $L=1200$, $d=0$.
+
+  \item {\tt sstring\_Run}  with $N=1$, $n=2*10^9$, $r=0$, $s=3$.
+
+  \item {\tt sstring\_Run}  with $N=1$, $n=2*10^9$, $r=27$, $s=3$.
+
+  \item {\tt sstring\_AutoCor} with $N=10$, $n=10^9$, $r=0$, $s=3$,
+   $d=1$.
+
+  \item {\tt sstring\_AutoCor} with $N=10$, $n=10^9$, $r=0$, $s=3$,
+   $d=3$.
+
+  \item {\tt sstring\_AutoCor} with $N=10$, $n=10^9$, $r=27$, $s=3$,
+   $d=1$.
+
+  \item {\tt sstring\_AutoCor} with $N=10$, $n=10^9$, $r=27$, $s=3$,
+   $d=3$.
+
+\end{enumerate}
+
+\code
+
+
+void bbattery_RepeatBigCrush (unif01_Gen *gen, int rep[]);
+\endcode
+  \tab Similar to {\tt bbattery\_RepeatSmallCrush} above but applied on
+  {\tt BigCrush}.
+  \endtab
+\bigskip
+
+
+\bigskip
+\hrule
+\code
+
+
+void bbattery_Rabbit (unif01_Gen *gen, double nb);
+\endcode
+  \tab Applies the {\tt Rabbit} battery of tests to the generator {\tt gen}
+   using at most {\tt nb} bits for each test. See the description of the
+   tests in {\tt bbattery\_RabbitFile}.
+  \endtab
+\code
+
+void bbattery_RabbitFile (char *filename, double nb);
+\endcode
+  \tab Applies the {\tt Rabbit} battery of tests to the first {\tt nb}
+   bits (or less, if {\tt nb} is too large) of the binary file
+   {\tt filename}.
+  \index{Rabbit}\index{battery of tests!Rabbit}%
+%  All the following tests are applied on the same sequence of
+%  bits of the file.
+  For each test, the file is reset and the test is applied to the bit
+  stream starting at the beginning of the file. The bits themselves are
+  processed in nearly all the tests as blocks of 32 bits (unsigned
+  integers); the two exceptions are {\tt svaria\_AppearanceSpacings},
+  which uses blocks of 30 bits (and discards the last 2 bits out of
+  each block of 32),
+  and {\tt sstring\_PeriodsInStrings} which uses blocks of 31 bits (and
+  discards 1 bit out of 32).
+  The parameters of each test are chosen automatically as a function of
+  {\tt nb}, in order to make the test reasonably sensitive.
+% Constraints are also set on the parameter $n$, because of memory limitations,
+% in such a way that no test should normally require more than 420 Megs of memory.
+%  Thus  when {\tt nb} is not too large, the number of replications $N$ is
+%   chosen equal to 1, and the sample size $n$ is determined as a function of
+%   {\tt nb}.
+  On a PC with an Athlon processor of clock speed
+  1733 MHz running under Linux,  {\tt Rabbit} will take about 5 seconds to
+  test a stream of $2^{20}$ bits, 90 seconds to test a stream of
+  $2^{25}$ bits, and 28 minutes to test a stream of
+  $2^{30}$ bits.
+  Restriction: {\tt nb} $\ge 500$.
+  \endtab
+
+\begin{enumerate}
+  \item {\tt smultin\_MultinomialBitsOver}
+  \item {\tt snpair\_ClosePairsBitMatch} in $t=2$ dimensions.
+  \item {\tt snpair\_ClosePairsBitMatch} in $t=4$ dimensions.
+  \item {\tt svaria\_AppearanceSpacings}
+  \item {\tt scomp\_LinearComp}
+  \item {\tt scomp\_LempelZiv}
+  \item {\tt sspectral\_Fourier1}
+  \item {\tt sspectral\_Fourier3}
+  \item {\tt sstring\_LongestHeadRun}
+  \item {\tt sstring\_PeriodsInStrings}
+  \item {\tt sstring\_HammingWeight} with blocks of $L = 32$ bits.
+  \item {\tt sstring\_HammingCorr} with blocks of $L = 32$ bits.
+  \item {\tt sstring\_HammingCorr} with blocks of $L = 64$ bits.
+  \item {\tt sstring\_HammingCorr} with blocks of $L = 128$ bits.
+  \item {\tt sstring\_HammingIndep} with blocks of $L = 16$ bits.
+  \item {\tt sstring\_HammingIndep} with blocks of $L = 32$ bits.
+  \item {\tt sstring\_HammingIndep} with blocks of $L = 64$ bits.
+  \item {\tt sstring\_AutoCor} with a lag $d = 1$.
+  \item {\tt sstring\_AutoCor} with a lag $d = 2$.
+  \item {\tt sstring\_Run}
+  \item {\tt smarsa\_MatrixRank} with $32 \times 32$ matrices.
+  \item {\tt smarsa\_MatrixRank} with $320 \times 320$ matrices.
+  \item {\tt smarsa\_MatrixRank} with $1024 \times 1024$ matrices.
+  \item {\tt swalk\_RandomWalk1} with walks of length $L = 128$.
+  \item {\tt swalk\_RandomWalk1} with walks of length $L = 1024$.
+  \item {\tt swalk\_RandomWalk1} with walks of length $L = 10016$.
+\end{enumerate}
+
+\code
+
+void bbattery_RepeatRabbit (unif01_Gen *gen, double nb, int rep[]);
+\endcode
+  \tab Similar to {\tt bbattery\_RepeatSmallCrush} above but applied on
+ {\tt Rabbit}.
+  \endtab
+
+\bigskip
+\hrule
+\code
+
+
+void bbattery_Alphabit (unif01_Gen *gen, double nb, int r, int s);
+\endcode
+  \tab Applies the {\tt Alphabit} battery of tests to the generator {\tt gen}
+   using at most {\tt nb} bits for each test. The bits themselves are
+  processed as blocks of 32 bits (unsigned integers). For each block of
+  32 bits, the $r$ most significant bits are dropped, and the test is
+  applied on the $s$ following bits. If one wants to test all bits of
+  the stream, one should set $r=0$ and $s=32$. If one wants to test only
+  1 bit out of 32, one should set $s=1$.
+   See the description of the tests in {\tt bbattery\_AlphabitFile}.
+  \endtab
+\code
+
+
+void bbattery_AlphabitFile (char *filename, double nb);
+\endcode
+  \tab Applies the {\tt Alphabit} battery of tests to the first {\tt nb}
+   bits (or less, if {\tt nb} is too large) of the binary file
+   {\tt filename}. Unlike the {\tt bbattery\_Alphabit} function above,
+  \index{Alphabit}\index{battery of tests!Alphabit}%
+%%   all the following tests are applied on the same sequence of
+%%  bits of the file, as the binary file is rewound
+  for each test, the file is rewound and the test is applied to the bit
+  stream starting at the beginning of the file.
+  On a PC with an Athlon processor of clock speed 1733 MHz running under
+  Linux,  {\tt Alphabit} takes about 4.2 seconds to test a file of
+  $2^{25}$ bits, and 2.3 minutes to test a file of $2^{30}$ bits.
+
+  {\tt Alphabit} and {\tt AlphabitFile} have been designed primarily to test
+   {\it hardware} random bits generators. The four {\tt MultinomialBitsOver}
+  tests should detect correlations between successive bits by
+   applying a {\tt SerialOver} test to overlapping blocks of $2$, $4$,
+   $8$ and $16$ bits. The {\tt Hamming} tests should detect correlations
+  between the successive bits of overlapping blocks of $16$ and $32$ bits,
+  and the {\tt RandomWalk} tests consider blocks of 64 and 320 bits.
+
+%  Restriction: {\tt nb} $\ge 500$.
+  \endtab
+
+\begin{enumerate}
+  \item {\tt smultin\_MultinomialBitsOver} with $L=2$.
+  \item {\tt smultin\_MultinomialBitsOver} with $L=4$.
+  \item {\tt smultin\_MultinomialBitsOver} with $L=8$.
+  \item {\tt smultin\_MultinomialBitsOver} with $L=16$.
+  \item {\tt sstring\_HammingIndep} with blocks of $L = 16$ bits.
+  \item {\tt sstring\_HammingIndep} with blocks of $L = 32$ bits.
+  \item {\tt sstring\_HammingCorr} with blocks of $L = 32$ bits.
+  \item {\tt swalk\_RandomWalk1} with walks of length $L = 64$.
+  \item {\tt swalk\_RandomWalk1} with walks of length $L = 320$.
+\end{enumerate}
+
+\code
+
+void bbattery_RepeatAlphabit (unif01_Gen *gen, double nb, int r, int s,
+                              int rep[]);
+\endcode
+  \tab Similar to {\tt bbattery\_RepeatSmallCrush} above but applied on
+  {\tt Alphabit}.
+  \endtab
+\code
+
+
+void bbattery_BlockAlphabit (unif01_Gen *gen, double nb, int r, int s);
+void bbattery_BlockAlphabitFile (char *filename, double nb);
+\endcode
+ \tab Apply the {\tt Alphabit} battery of tests repeatedly to the generator
+  {\tt gen} or to the binary file {\tt filename} after reordering the bits
+  as described in the filter {\tt unif01\_CreateBitBlockGen}.
+  {\tt Alphabit} will be applied for the different values of
+   $w \in \{1, 2, 4, 8, 16, 32\}$. If $s <32$, only values of $w \le s$ will
+   be used. Each test uses at most {\tt nb} bits.
+   See the description of the tests in {\tt bbattery\_AlphabitFile}.
+  \endtab
+\code
+
+
+void bbattery_RepeatBlockAlphabit (unif01_Gen *gen, double nb, int r, int s,
+                                   int rep[], int w);
+\endcode
+  \tab Similar to {\tt bbattery\_RepeatSmallCrush} above but applied on
+   {\tt BlockAlphabit}. The parameter $w$ is the one described in
+    {\tt bbattery\_BlockAlphabit}.  Restrictions:
+   $w \in \{1, 2, 4, 8, 16, 32\}$ and $w \le s$.
+  \endtab
+
+
+
+
+\guisec {Other Tests Suites}
+\code
+
+
+void bbattery_pseudoDIEHARD (unif01_Gen *gen);
+\endcode
+  \tab
+ \index{DIEHARD}\index{battery of tests!PseudoDIEHARD}%
+ \index{battery of tests!DIEHARD}%
+  Applies the battery PseudoDIEHARD, which implements most of
+  the tests in the popular battery DIEHARD \cite{rMAR96b}
+  or, in some cases, close approximations to them. \textbf{We do not recommend
+  this battery as it is not very stringent} (we do not know of any generator
+  that passes the batteries \textsc{Crush} and  \textsc{BigCrush}, and
+  fails PseudoDIEHARD, while we have seen the converse for several defective
+  generators). It is included here only for convenience to the user.
+% Some of the tests in DIEHARD however are not implemented in TestU01.
+  The DIEHARD tests and the corresponding tests in  PseudoDIEHARD are:
+  \endtab
+
+\begin{enumerate}
+
+\item The {\bf Birthday Spacings} test. This corresponds
+  to {\tt smarsa\_BirthdaySpacings} with $n=512$, $d=2^{24}$, $t=1$ and
+  $r=0, 1, 2, 3, 4, 5, 6, 7, 8, 9$ successively. The test with each
+ value of $r$ is repeated 500 times and a chi-square test is then applied.
+
+\item The {\bf Overlapping 5-Permutation} test. This test is not
+implemented in TestU01.
+
+\item The {\bf Binary Rank Tests for Matrices}. This corresponds
+ to {\tt smarsa\_MatrixRank}.
+
+\item The {\bf Bitstream} test.  Closely related to
+ {\tt smultin\_MultinomialBitsOver} with  {\tt Delta} $= -1$,
+ $n=2^{21}$, $L=20$.
+
+\item The {\bf OPSO} test. This corresponds to {\tt smarsa\_CollisionOver}
+ with $n=2^{21}$, $d=1024$, $t=2$ and all values of $r$ from 0 to 22.
+
+\item The {\bf OQSO} test. This corresponds to {\tt smarsa\_CollisionOver}
+ with $n=2^{21}$, $d=32$, $t=4$ and all values of $r$ from 0 to 27.
+
+\item The {\bf DNA} test. This corresponds to {\tt smarsa\_CollisionOver}
+ with $n=2^{21}$, $d=4$, $t=10$ and all values of $r$ from 0 to 30.
+
+\item The {\bf Count-the-1's} test is not implemented in TestU01. It is
+a 5-dimensional overlapping version of {\tt sstring\_HammingIndep}.
+
+\item The {\bf Parking Lot} test is not implemented in TestU01.
+
+\item The {\bf Minimum Distance} test. Closely related
+  to {\tt snpair\_ClosePairs}  with
+ $N=100$, $n=8000$, $t=2$, $p=2$, $m=1$.
+
+\item The {\bf 3-D Spheres} test. Closely related
+  to {\tt snpair\_ClosePairs}  with
+ $N=20$, $n=4000$, $t=3$, $p=2$, $m=1$.
+
+\item The {\bf Squeeze} test.  Closely related
+  to {\tt smarsa\_Savir2}.
+
+\item The {\bf Overlapping Sums} test  is not implemented in TestU01.
+
+\item The {\bf Runs} test.  This corresponds to  {\tt sknuth\_Run}.
+
+\item The {\bf Craps} test  is not implemented in TestU01.
+
+\end{enumerate}
+
+
+\bigskip
+\hrule
+
+\paragraph{The NIST test suite}
+
+The NIST (National Institute of Standards and Technology) of the U.S.
+federal government has proposed a statistical test suite \cite{rRUK01a}
+for use in the evaluation of the randomness of bitstreams
+produced by cryptographic random number generators.
+\index{NIST tests suite}\index{battery of tests!NIST}%
+%% A close equivalent to the NIST test suite is the battery
+%%  {\tt sbattery\_myNIST}. It will apply on a generator the tests in the
+%%  NIST test suite that are available in TestU01.
+The test parameters are not predetermined.
+The NIST tests and the equivalent tests in TestU01 are:
+
+\begin{enumerate}
+\item The {\bf Monobit} test. This corresponds to
+ {\tt sstring\_HammingWeight2} with $L = n$.
+% NIST uses a half normal distribution of the random walk W where bit 0 is
+% replaced by -1 and bit 1 by +1. W = s1 + s2 + ...sn.
+% TestU01 uses a chi-square distribution with one degree of freedom
+% for the number of 1 bits.
+
+\item The {\bf Frequency test within a  Block}. Corresponds to
+ {\tt sstring\_HammingWeight2}.
+
+\item The {\bf Runs} test.   Is implemented as {\tt sstring\_Run}.
+
+\item The test for the {\bf Longest Run of Ones in a Block}.
+ Is implemented as the test
+ {\tt sstring\_LongestHeadRun}.
+
+\item The {\bf Binary Matrix rank} test.  Is implemented as
+ {\tt smarsa\_MatrixRank}.
+
+\item The {\bf Discrete Fourier Transform} test.  Is implemented as
+ {\tt sspectral\_Fourier1}.
+
+\item The {\bf Non-overlapping Template Matching} test. Is implemented
+  as the test {\tt smarsa\_CATBits}.
+
+\item The {\bf Overlapping Template Matching} test. This test does not
+exist as such in TestU01, but a similar and more powerful test is
+{\tt smultin\_MultinomialBitsOver}.
+
+\item {\bf Maurer's Universal Statistical} test. This test is implemented as
+ {\tt svaria\_Appear\-anceSpacings}.
+
+\item The {\bf Lempel-Ziv Compression} test.  Is implemented as
+ {\tt scomp\_LempelZiv}.
+
+\item The {\bf Linear Complexity} test. Is implemented as part of
+ {\tt scomp\_LinearComp}.
+
+\item The {\bf Serial} test.  Corresponds to
+ {\tt smultin\_MultinomialBitsOver} with  {\tt Delta} = 1.
+
+\item The {\bf Approximate Entropy} test.  Corresponds to
+ {\tt smultin\_MultinomialBitsOver} with  {\tt Delta} = 0, and to
+ {\tt sentrop\_EntropyDiscOver} or  {\tt sentrop\_EntropyDiscOver2}.
+
+\item The {\bf Cumulative Sums} test. This test is  closely related to the $M$
+ statistic in  {\tt swalk\_RandomWalk1}.
+
+\item The {\bf Random Excursions} test. This test does not
+exist in TestU01, but closely related tests are in
+  {\tt swalk\_RandomWalk1}.
+
+\item The {\bf Random Excursions Variant} test.  This test does not
+exist in TestU01, but a closely related test is based on the $R$ statistic in
+  {\tt swalk\_RandomWalk1}.
+
+\end{enumerate}
+
+
+\bigskip
+\hrule
+\code
+
+
+void bbattery_FIPS_140_2 (unif01_Gen *gen);
+void bbattery_FIPS_140_2File (char *filename);
+\endcode
+\tab
+\index{FIPS-140-2}\index{battery of tests!FIPS-140-2}%
+ These functions apply the four tests described in the NIST document
+ {\sl FIPS PUB 140-2, Security Requirements for Cryptographic Modules},
+ page 35, with exactly the same parameters (see the WEB page at
+  \url{http://csrc.nist.gov/rng/rng6_3.html}).  They report the values
+ of the test statistics and their $p$-values (except for the runs test)
+ and indicate which values fall outside the intervals specified by
+ FIPS-140-2. The first function applies the tests on a generator {\tt gen},
+ and the second applies them on the file of bits {\tt filename}. First,
+ 20000 bits are generated and put in an array, then the tests are applied
+ upon these. The tests applied are:
+\endtab
+
+\begin{enumerate}
+\item The {\bf Monobit} test. This corresponds to
+% {\tt sstring\_HammingWeight2} with $L = n$.
+ {\tt smultin\_MultinomialBits} with $s=32$, $L=1$, $n=20000$.
+
+\item The ``{\bf poker}'' test, which is in fact equivalent to
+ {\tt smultin\_MultinomialBits} with $s=32$, $L=4$, $n=5000$.
+
+\item The {\bf Runs} test, which is related to {\tt sstring\_Run}.
+
+\item The test for the {\bf Longest Run of Ones in a Block},
+ which is implemented as {\tt sstring\_LongestHeadRun}.
+\end{enumerate}
+
+
+\code
+\hide
+#endif
+\endhide
+\endcode

@@ -1,0 +1,307 @@
+\defmodule {fcong}
+
+The functions in this module creates whole families of generators of the same
+kind (such as LCGs, MRGs, inversive, cubic, \ldots), based on recurrences
+modulo some integer $m$, of different period lengths (the number of states) 
+near powers of 2.
+Each {\tt Create} function will return a family of generators whose
+{\it lsize\/} varies from {\tt i1} to  {\tt i2} by step of {\tt
+istep}, and whose parameters are taken from a file.
+The {\it lsize\/} of a generator is defined as the (rounded) base-2 
+logarithm of its period length.
+
+ There are predefined families of each
+kind whose parameters are given in files with extension {\tt .par} in
+directory {\tt param} of TestU01.
+ If the file name in the {\tt Create} functions
+below is set to {\tt NULL}, a default predefined family
+will be used. Otherwise, the given file will be used to set the parameters
+of the generators of a family.
+The members of a predefined family usually have a  {\it lsize\/} equal
+to successive integers in [{\tt i1, i2}].
+\index{family of generators!congruential}%
+
+The user may want to define his own family of generators. If it is closely
+related to one of the predefined family, he may use one of the {\tt Create}
+function in this module to create his family. In that case, his
+parameter file must contain the family parameters in the same order as the
+predefined family of the same kind
+(see the different cases of {\tt fcong\_CreateLCG} below for an example).
+
+More information about each specific kind of generator considered can
+be found by looking at the corresponding function in modules {\tt u\ldots}
+For example, {\tt fcong\_CreateInvImpl2b} implements the same generators
+as in function {\tt uinv\_CreateInvImpl2b}.
+ 
+
+\bigskip
+\hrule
+\code\hide
+/* fcong.h  for ANSI C */
+#ifndef FCONG_H
+#define FCONG_H
+\endhide
+#include "ffam.h"
+\endcode
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{The families of generators}
+
+\code
+
+ffam_Fam * fcong_CreateLCG (char *fname, int i1, int i2, int istep);
+\endcode
+\tab
+ Creates a family of LCG generators whose parameters
+ are defined in file named {\tt fname}, beginning with the first
+ generator whose {\it lsize\/} is {\tt i1}, up to the last generator whose
+ {\it lsize\/} is {\tt i2}, taking every {\tt istep} generator.
+ The predefined LCG files are:
+
+\begin{itemize}
+\item  {\bf LCGGood.par}: the generators have a good lattice structure up to 
+     dimension 8 (at least), with a prime modulus $m$ just below $2^i$ and
+     period $m-1$, for $10 \le i \le 60$. For each $i$, the LCG provided
+     is the one with the best value of $M_8$ in \cite{rLEC99c}.
+     Restrictions: $10 \le i1 \le i2 \le 60$.
+
+ 
+\item  {\bf LCGBad2.par}: Similar to the LCGGood family, but with a lattice 
+     structure that is bad in dimension 2. The figure of merit
+     $S_2$ in dimension 2 is approximately 0.05.
+     Restrictions: $10 \le i1 \le i2 \le 40$.
+
+\item {\bf  LCGWu2.par}: the generators have a good lattice structure as the
+     LCGGood family, but with the restriction that the multiplier is a sum
+     or a difference of two powers of 2, as suggested by P. C. Wu 
+     \cite{rWU97a}. Restrictions: $ 10 \le i1 \le i2 \le 40$.
+
+\item  {\bf LCGGranger.par}: the generators have a good lattice structure up
+     to dimension 8 (at least), with a prime modulus $m$ just below $2^i$,
+     for $10 \le i \le 31$. They were chosen so as to give a
+     maximal period for the combined generators in modules {\tt ugranger}
+     and {\tt tgranger}.
+\end{itemize}
+\endtab
+\code
+
+
+ffam_Fam * fcong_CreateLCGPow2 (char *fname, int i1, int i2, int istep);
+\endcode
+\tab
+ Creates a family of LCG generators whose parameters are defined in file
+ named {\tt fname}. By default, uses a predefined family of generators
+ with a good lattice structure as the  LCGGood family, but with the modulus
+ equal to $2^i$ and period
+ length also equal to $2^i$. (The recurrence has a nonzero constant term.)
+ Restrictions: $10 \le i1 \le i2 \le 40$.
+\endtab
+\code
+
+
+ffam_Fam * fcong_CreateMRG2 (char *fname, int i1, int i2, int istep);
+\endcode
+\tab
+ Creates the family of MRG (multiple-recursive generators) of order 2 whose
+ parameters are defined in  file named {\tt fname}. By default, uses
+ a predefined family of generators with
+ a good lattice structure up to dimension 8 (at least), with a prime
+ modulus $m$ just below $2^{i/2}$ and period length $m^2-1$.
+ The implementation is similar to that of the LCGs.
+ Restrictions: $ 20 \le i1 \le i2 \le 60$.
+\endtab
+\code
+
+
+ffam_Fam * fcong_CreateMRG3 (char *fname, int i1, int i2, int istep);
+\endcode
+\tab
+ Creates the family of MRG of order 3 whose parameters are defined in 
+ file named {\tt fname}.
+ By default, uses a predefined family of generators with
+ a good lattice structure up to dimension 8 (at least), with a prime
+ modulus $m$ just below $2^{i/3}$ and period length $m^3-1$.
+ Restrictions: $ 30 \le i1 \le i2 \le 90$.
+\endtab
+\code
+
+
+ffam_Fam * fcong_CreateCombL2 (char *fname, int i1, int i2, int istep);
+\endcode
+\tab
+ Creates the family of combined LCG with two components,  whose
+ parameters are defined in {\tt fname}.
+ The combination uses the method of L'Ecuyer \cite{rLEC88a}.
+ By default, uses a predefined family of generators
+ with a good lattice structure up to dimension 8 (at least).
+ The components have distinct prime moduli $m_1$ and $m_2$ 
+ just below $2^{i/2}$ and the period length is $(m_1-1)(m_2-1)/2$.
+ The parameters are chosen to get an excellent value of $M_8$
+ where $M_8$ is defined as in \cite{rLEC99c}.
+ Restrictions: $20 \le i1 \le i2 \le 60$.
+\endtab
+\code
+
+
+ffam_Fam * fcong_CreateCombWH2 (char *fname, int i1, int i2, int istep);
+\endcode
+\tab
+ Same as {\tt fcong\_CreateCombL2}, except that the combination is of the
+ Wichmann and Hill type (see \cite{rLEC91b}).
+ Restrictions: $20 \le i1 \le i2 \le 60$.
+\endtab
+\code
+
+
+ffam_Fam * fcong_CreateInvImpl (char *fname, int i1, int i2, int istep);
+\endcode
+\tab
+ Creates the family of implicit inversive generators  whose
+ parameters are defined in {\tt fname}. By default, uses a
+ predefined family of generators with prime modulus $m$
+ slightly below $2^i$ and period length $m$.
+ Restrictions: $10 \le i1 \le i2 \le 30$.
+\endtab
+\code
+
+
+ffam_Fam * fcong_CreateInvImpl2a (char *fname, int i1, int i2, int istep);
+\endcode
+\tab
+ Creates a predefined family of implicit inversive generators whose
+ parameters are fixed, with prime modulus $m$
+ slightly below $2^{i+1}$ and period length $m/2$.
+ Restrictions: $7 \le i1 \le i2 \le 31$.
+\endtab
+\code
+
+
+ffam_Fam * fcong_CreateInvImpl2b (char *fname, int i1, int i2, int istep);
+\endcode
+\tab
+ Creates a predefined family of implicit inversive generators whose
+ parameters are fixed, with prime modulus $m$
+ slightly below $2^i$ and period length $m$.
+ Restrictions: $7 \le i1 \le i2 \le 32$.
+\endtab
+\code
+
+
+ffam_Fam * fcong_CreateInvExpl (char *fname, int i1, int i2, int istep);
+\endcode
+\tab
+ Creates the family of explicit inversive generators  whose
+ parameters are defined in {\tt fname}. By default, uses a
+ predefined family of generators with prime modulus $m$
+ slightly below $2^i$ and period length $m$.
+ Restrictions: $10 \le i1 \le i2 \le 31$.
+\endtab
+\code
+
+
+ffam_Fam * fcong_CreateInvExpl2a (char *fname, int i1, int i2, int istep);
+\endcode
+\tab
+ Creates a predefined family of explicit inversive generators whose
+ parameters are fixed, with prime modulus $m$
+ slightly below $2^i$ and period length $m$.
+ Restrictions: $7 \le i1 \le i2 \le 32$.
+\endtab
+\code
+
+
+ffam_Fam * fcong_CreateInvExpl2b (char *fname, int i1, int i2, int istep);
+\endcode
+\tab
+ Creates a predefined family of explicit inversive generators whose
+ parameters are fixed, with prime modulus $m$
+ slightly below $2^i$ and period length $m$.
+ Restrictions: $7 \le i1 \le i2 \le 32$.
+\endtab
+\code
+
+
+ffam_Fam * fcong_CreateInvMRG2 (char *fname, int i1, int i2, int istep);
+\endcode
+\tab
+ Creates the family of inversive MRG of order 2 whose
+ parameters are defined in  file {\tt fname}. By default, uses
+ a predefined family of generators with a prime modulus $m$
+ just below $2^{i/2}$ and period length $\approx m^2$. 
+ Restrictions: $ 20 \le i1 \le i2 \le 60$.
+\endtab
+\code
+
+
+ffam_Fam * fcong_CreateCubic1 (char *fname, int i1, int i2, int istep);
+\endcode
+\tab
+ Creates the family of cubic congruential generator whose
+ parameters are defined in  file {\tt fname}. By default, uses
+ a predefined family of generators with modulus $m$
+ slightly below $2^i$ and period length $m$.
+ Restrictions: $6 \le i1 \le i2 \le 18$.
+\endtab
+\code
+
+
+ffam_Fam * fcong_CreateCombCubic2 (char *fname, int i1, int i2, int istep);
+\endcode
+\tab
+ Creates the family of combined cubic congruential generators with 2
+ components whose parameters are defined in  file {\tt fname}. By default,
+ uses a predefined family of generators with moduli $m_1$ and $m_2$
+ slightly below $2^{e_1}$ and $2^{e_2}$, where $e_1 + e_2 = i$ and
+ $e_2 = \lfloor i/2\rfloor$. The period length should be near $2^i$.
+ Restrictions: $12 \le i1 \le i2 \le 36$.
+\endtab
+\code
+
+
+ffam_Fam * fcong_CreateCombCubLCG (char *fname, int i1, int i2, int istep);
+\endcode
+\tab
+ Creates the family of combined generators with one component a cubic 
+ congruential and the other component an LCG whose parameters are defined
+ in file {\tt fname}. By default, uses a predefined family of generators
+ with respective moduli of the components $m_1$ and $m_2$ slightly below
+ $2^{e_1}$ and $2^{e_2}$, where $e_1 + e_2 = i$ and $e_2 = \lfloor i/2\rfloor$.
+ Restrictions: $19 \le i1 \le i2 \le 36$.
+\endtab
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{Clean-up functions}
+\code
+
+void fcong_DeleteLCG     (ffam_Fam *fam);
+void fcong_DeleteLCGPow2 (ffam_Fam *fam);
+void fcong_DeleteMRG2    (ffam_Fam *fam);
+void fcong_DeleteMRG3    (ffam_Fam *fam);
+void fcong_DeleteCombL2  (ffam_Fam *fam);
+void fcong_DeleteCombWH2 (ffam_Fam *fam);
+void fcong_DeleteInvImpl   (ffam_Fam *fam);
+void fcong_DeleteInvImpl2a (ffam_Fam *fam);
+void fcong_DeleteInvImpl2b (ffam_Fam *fam);
+void fcong_DeleteInvExpl   (ffam_Fam *fam);
+void fcong_DeleteInvExpl2a (ffam_Fam *fam);
+void fcong_DeleteInvExpl2b (ffam_Fam *fam);
+void fcong_DeleteInvMRG2   (ffam_Fam *fam);
+void fcong_DeleteCubic1    (ffam_Fam *fam);
+void fcong_DeleteCombCubic2  (ffam_Fam *fam);
+void fcong_DeleteCombCubLCG  (ffam_Fam *fam);
+\endcode
+\tab
+ Frees the dynamic memory allocated to {\tt fam} by the corresponding
+ {\tt Create} function.
+\endtab
+
+\code
+
+\hide
+#endif
+\endhide
+\endcode

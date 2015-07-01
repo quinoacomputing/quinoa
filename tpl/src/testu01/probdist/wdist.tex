@@ -1,0 +1,97 @@
+\defmodule {wdist}
+
+This module provides wrappers functions that are needed
+because the parameter of type {\tt wdist\_CFUNC} in {\tt gofw\_ActiveTests1}
+and in {\tt gofs\_ContUnifTransform}, for example, is not type-compatible
+with the distribution functions provided in {\tt fdist}, since the different
+distributions take a different number of arguments.
+\hpierre {This looks like a faulty design.  
+  Could we make it compatible?  Otherwise, perhaps we should put the
+  wrappers in {\tt fdist}.  In C++, we could do that and give them the
+  same names as the functions already in {\tt fdist} (using overloading).}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%
+\bigskip\hrule
+\code\hide
+/* wdist.h for ANSI C */
+#ifndef WDIST_H
+#define WDIST_H
+\endhide
+#include "fmass.h"
+\endcode
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{Types}
+
+\code
+
+typedef double (*wdist_CFUNC) (double [], double);
+\endcode
+  \tab A generic {\em continuous\/} distribution function with an 
+  arbitrary number of parameters given in the first argument.
+  The second argument is the point $x$ at which the function is evaluated.
+ \ifdetailed  %%%%
+  This type is used, among other things, to compute goodness-of-fit
+  test statistics for arbitrary distributions (see module {\tt gofs} and
+  {\tt gofw}).
+ \fi %%% detailed
+ \endtab
+\code
+
+
+typedef double (*wdist_DFUNC) (fmass_INFO, long);
+\endcode
+  \tab A generic {\em discrete\/} distribution function over the set of
+  integers.
+  The first argument contains the parameters of the function and 
+  possibly precomputed tables of values of the function.
+  The second argument is the point $x$ at which the function is evaluated.
+\hrichard {Devrait probablement \^etre \'elimin\'e. Utilis\'e 1 fois dans
+   smultin, mais pourrait \^etre contourn\'e.}
+\hpierre {Je pr\'ef\`ere conserver. }
+ \endtab
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{Wrap-up functions}
+
+\code
+
+double wdist_Normal (double Par[], double x);
+\endcode
+\tab
+  Wrapper function for the {standard normal} distribution, needed
+  for compatibility with the type {\tt wdist\_CFUNC} used as a parameter
+  in certain functions such as {\tt gofw\_ActiveTests1}, etc.
+  Returns $\Phi(x)$, where $\Phi$ is the standard normal distribution
+  function, with mean 0 and variance 1.
+  {\tt Par} is unused.
+\endtab
+\code
+
+
+double wdist_ChiSquare (double Par[], double x);
+\endcode
+\tab
+   Wrapper function for the {chi-square} distribution, similar to
+   {\tt wdist\_Normal}.
+   Returns $P[X \le x]$, where $X$ has the chi-square distribution 
+   with $k$ degrees of freedom.  The value of $k$ must be in {\tt Par[0]}. 
+\endtab
+\code
+
+
+double wdist_Unif (double Par[], double x);
+\endcode
+\tab
+  Wrapper function for the {uniform} distribution.
+  Returns $x$. {\tt Par} is unused.
+\endtab
+\code
+\hide
+#endif
+\endhide
+\endcode

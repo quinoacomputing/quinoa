@@ -1,0 +1,39 @@
+
+# Package:    TestU01
+# File:       CombCubLCG.par
+
+# Description:   Parameter values for combined Cubic1 with LCG
+#-----------------------------------------------------------------
+
+# Give the name of the family first
+
+CombCubLCG
+
+
+# For each generator, the following parameters must be given in 
+# the right order on the same line
+#              h   m1   a1   m2    a2
+# where h is (very close to) the base-2 logarithm of the period length,
+# m1, a1 are the modulus and the multiplier of the LCG generator,
+# m2, a2 are the modulus and the multiplier of the Cubic1 generator.
+ 
+#h        m1      a1      m2     a2
+
+19       1021     65      491    277
+20       1021     65      1013    31
+21       2039     995      1013    31
+22       2039     995      2027    349
+23       4093     209      2027    349
+24       4093     209      4079    3757
+25       8191     884      4079    3757
+26       8191     884      8111    2257
+27       16381     572      8111    2257
+28       16381     572      16319    3013
+29       32749     219      16319    3013
+30       32749     219      32687    4535
+31       65521     17364      32687    4535
+32       65521     17364      65447    27076
+33       131071     43165      65447    27076
+34       131071     43165      130859    48249
+35       262139     92717      130859    48249
+36       262139     92717      262103    173782

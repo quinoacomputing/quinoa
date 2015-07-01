@@ -1,0 +1,369 @@
+\defmodule {ugfsr}
+
+This module implements
+generalized feedback shift register (GFSR) generators,
+twisted GFSR (TGFSR) generators, and  tempered TGFSR generators
+(TTGFSR).
+
+The following table points to some specific generators based 
+on trinomials, taken from  the literature.
+
+\begin {table}[htb]
+\centering
+\label {tab:listgfsr}
+\caption {Some specific GFSRs and TGFSRs}
+\begin {tabular}{|@{\extracolsep{15pt}}rrr|l|l|}
+\hline
+  $k$        &    $r$     &   $\ell$ &  Type  & Reference  \\
+\hline
+\quad  607     &  273    &  23  & GFSR & \cite{rTOO73a,rMAT94a} \\
+ 521     &   32    &   31   & GFSR & \cite{rRIP90a} \\
+ 521     &   32    &   31   & GFSR & \cite{rFUS90a} \\
+ 250     &  103    &  32    & GFSR & \cite{rKIR81a} \\
+ 25      &  7     &  32    & TGFSR  & T800  \cite{rMAT94a} \\
+ 25      &   14    &    32  & TTGFSR & TT400 \cite{rMAT94a} \\
+ 13      &   11    &   31   & TTGFSR & TT403 \cite{rMAT94a} \\
+ 25      &   17    &   31   & TTGFSR & TT775 \cite{rMAT94a} \\
+ 25      &   7     &    32  & TTGFSR & TT800 \cite{rMAT94a} \\
+ 624     &  397    &   32   & TTGFSR & MT19937 \cite{rMAT98a} \\
+\hline
+\end {tabular}
+\end {table}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\bigskip
+\hrule
+\code
+\hide
+/* ugfsr.h for ANSI C */
+
+#ifndef UGFSR_H
+#define UGFSR_H
+\endhide
+#include "unif01.h"
+\endcode
+
+%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{GFSR generators}
+
+\code
+
+unif01_Gen * ugfsr_CreateGFSR3 (unsigned int k, unsigned int r,
+                                unsigned int l, unsigned long S[]);
+\endcode
+  \tab Implements a generator GFSR based on the recurrence
+   \eq
+      x_i = x_{i-r} \oplus x_{i-k}                \eqlabel{GFSR}
+   \endeq
+   where each $x_i$ is a 32-bit vector, $\oplus$ stands for 
+\index{Generator!shift-register}%
+   bitwise addition modulo $2$, and $r < k$.
+   The output at step $i$ is $u_i = \tilde x_i/2^l$, where 
+   $\tilde x_i$ is the integer formed by the first $l$ bits of $x_i$.
+   The array {\tt S[0..(k-1)]} contains the $k$ initial bit vectors
+   $x_0, \dots, x_{k-1}$.
+   Proper initialization techniques for this generator are discussed,
+   e.g., in \cite{rFUS83a} and \cite{rTEZ95a}.
+   Restrictions: $0 < r < k$ and $l \le 32$.
+  \endtab
+\code
+
+
+unif01_Gen * ugfsr_CreateToot73 (unsigned long S[]);
+\endcode
+  \tab Implements the Tausworthe generator
+   of parameters $(k,r,s,l) = (607, 273, 512, 23)$  proposed
+   in \cite{rTOO73a}, under the form of a GFSR.
+   The generator is initialized as in \cite{rTOO73a}
+\index{Generator!Tootill}%
+   from the ``arbitrary'' bits  given in {\tt S[0..k-1]}.
+   This generator is the same as G607 in \cite{rMAT94a}.
+% , whose parameters are $(k, r', l) = (607, 334, 23)$.
+\endtab
+\code
+
+
+unif01_Gen * ugfsr_CreateKirk81 (long s);
+\endcode
+  \tab Implements the GFSR generator proposed by
+   Kirkpatrick and Stoll \cite{rKIR81a}, with their
+\index{Generator!Kirkpatrick-Stoll}%
+   initialization procedure.
+   The parameters are $(k,r,l) = (250, 103, 32)$ and $s$ is the seed. 
+  \endtab
+\code
+
+
+unif01_Gen * ugfsr_CreateRipley90 (long s);
+\endcode
+  \tab Implements the GFSR generator given in the appendix
+   of Ripley \cite{rRIP90a}.
+\index{Generator!Ripley}%
+   It is a GFSR with parameters $(k, r, l) = (521, 32, 31)$.
+   The state of this GFSR is initialized as in \cite{rRIP90a}
+   from a MLCG of modulus $m=2^{31}-1$ and  multiplier
+   $a = 16807$, whose initial state is $s$. The returned value
+   is $y_i/(2^{31} - 1)$.
+  \endtab
+\code
+
+
+unif01_Gen * ugfsr_CreateFushimi (int k, int r, int s);
+\endcode
+  \tab Implements a GFSR generator with $l = 31$, with the 
+\index{Generator!Fushimi}%
+   initialization procedure proposed by Fushimi \cite{rFUS90a},
+   using {\tt s} as a seed to construct the initial state. 
+  \endtab
+\code
+
+
+unif01_Gen * ugfsr_CreateFushimi90 (int s);
+\endcode
+  \tab Implements a specific GFSR generator proposed by
+   Fushimi \cite{rFUS90a}, with parameters $(k,r,l) = (1563, 1467, 31)$
+   and using {\tt s} as a seed to construct the initial state. 
+  \endtab
+\code
+
+
+unif01_Gen * ugfsr_CreateGFSR5 (unsigned int k, unsigned int r1,
+                                unsigned int r2, unsigned int r3,
+                                unsigned int l, unsigned long S[]);
+\endcode
+  \tab Implements a GFSR generator whose characteristic polynomial
+   is a pentanomial, i.e., based on the recurrence
+    $$ x_i = x_{i-r_3} \oplus x_{i-r_2} \oplus x_{i-r_1} \oplus x_{i-k} $$
+   where the $x_i$'s are vectors of 32  bits whose first  $l$
+   bits are used to create the output, as described in
+   {\tt ugfsr\_CreateGFSR3}.    The array {\tt S[0..(k-1)]}
+   contains the $k$ initial bit vectors $x_0, \dots, x_{k-1}$.
+%   The output at step $i$ is $y_i/2^l$ where $y_i$ is the integer which
+%   corresponds to the first $l$ bits of $x_i$. 
+   Restrictions: $1 \le l \le 32$ and $0 < r_3 < r_2 < r_1 < k$.
+  \endtab
+\code
+
+
+unif01_Gen * ugfsr_CreateZiff98 (unsigned long S[]);
+\endcode
+  \tab Implements a specific pentanomial-based GFSR generator proposed 
+\index{Generator!Ziff}%
+  by Ziff \cite{rZIF98a}, with parameters $(k, r_1, r_2, r_3, l) =
+  (9689, 6988, 1586, 471, 32)$.
+  The array {\tt S[0..9688]} must contain the initial state.
+  \endtab
+
+% \newpage
+%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{Twisted GFSR generators}
+
+\code
+
+unif01_Gen * ugfsr_CreateTGFSR (unsigned int k, unsigned int r,
+                                unsigned int l, unsigned long Av,
+                                unsigned long S[]);
+\endcode
+  \tab Implements the original form of TGFSR generator proposed by
+   Matsumoto and Kurita \cite{rMAT92a}.  It is based on the recurrence
+   \eq
+      x_i = x_{i-k} \oplus (x_{i-r} A),
+   \endeq
+   where $k, r, l$ and the $x_i$'s are as in (\ref{GFSR}),
+   and $A$ is a binary matrix of dimension $l \times l$ whose first
+   superdiagonal has all its elements equal to 1, the last
+   row is the vector {\tt Av}, and all other elements are 0.
+   The output at step $i$ is $u_i = \tilde x_i/2^l$, where 
+   $\tilde x_i$ is the integer formed by the first $l$ bits of $x_i$.
+   Matsumoto and Kurita \cite{rMAT94a} later reported deficiencies
+   of this generator.   
+  The array {\tt S[0..(k-1)]} contains the $k$ initial bit vectors
+   $x_0, \dots, x_{k-1}$.
+   Remark:  the notation  
+     $$ x_{i+k} = x_{i-r'} \oplus x_{i}, $$
+   where $r' = k-r$, is used in \cite{rMAT94a}. 
+   In other words, their $r$ correspond to our $k-r$.
+  \endtab
+\code
+
+
+unif01_Gen * ugfsr_CreateT800 (unsigned long S[]);
+\endcode
+  \tab Implements the TGFSR generator T800  proposed by
+\index{Generator!T800}%
+   Matsumoto and Kurita \cite{rMAT94a}, whose  parameters are
+   $(k,r,l) = (25,18,32)$ and {\tt Av = 0x8EBD028}.
+   The array {\tt S[0..(k-1)]} contains the $k$ initial bit vectors
+   $x_0, \dots, x_{k-1}$.
+  \endtab
+\code
+
+
+unif01_Gen * ugfsr_CreateTGFSR2 (unsigned int k, unsigned int r,
+                                 unsigned int l, unsigned int s,
+                                 unsigned int t, unsigned long Av, 
+                                 unsigned long Bv, unsigned long Cv, 
+                                 unsigned long S[]);
+\endcode
+  \tab Implements the generator TGFSR-II proposed by
+   Matsumoto and Kurita \cite{rMAT94a}, based on the same recurrence
+   as their original TGFSR, but where a {\em tempering\/} is
+   added to improve the statistical quality of the output.
+   It is defined by
+   \begin {eqnarray}
+    x_i &=& x_{i-k} \oplus (x_{i-r}A),              \label {tgfsr2a} \\
+    y_i &=& x_i \oplus ((x_i \ll s)\ \&\ b),          \label {tgfsr2b} \\
+    z_i &=& y_i \oplus ((y_i \ll t)\ \&\ c),          \label {tgfsr2c}
+   \end {eqnarray}
+   where $\ll s$ means a left shift by $s$ bits,
+   $\&$ means the bitwise-and operation, and the bit vectors
+   $b$ and $c$ are given by {\tt Bv} and {\tt Cv}.
+   The output $u_i$ is constructed as described in {\tt ugfsr\_CreateTGFSR},
+   but using $z_i$ instead of $x_i$.
+   The array {\tt S[0..(k-1)]} contains the $k$ initial bit vectors
+   $x_0, \dots, x_{k-1}$.
+  \endtab
+\code
+
+
+unif01_Gen * ugfsr_CreateTT400 (unsigned long S[]);
+\endcode
+  \tab Implements the generator TT400  proposed by
+\index{Generator!TT400}%
+   Matsumoto and Kurita \cite{rMAT94a}, whose parameters are
+   ($k,k-r,l) = (25,11,16)$,  $s = 2$, $t = 7$,  
+   {\tt Av = 0xA875} , {\tt Bv = 0x6A68}, {\tt Cv = 0x7500}.
+   The array {\tt S[0..(k-1)]} contains the $k$ initial bit vectors
+   $x_0, \dots, x_{k-1}$.   The returned value is $z_i/(2^{16} - 1)$.
+  \endtab
+\code
+
+
+unif01_Gen * ugfsr_CreateTT403 (unsigned long S[]);
+\endcode
+  \tab Implements the generator TT403  proposed by
+\index{Generator!TT403}%
+   Matsumoto and Kurita \cite{rMAT94a},  whose parameters are
+   ($k,k-r,l) = (13,2,31)$,  $s = 8$, $t = 14$,
+   {\tt Av = 0x6B5ECCF6}, {\tt Bv = 0x102D1200}, {\tt Cv = 0x66E50000}.
+   The array {\tt S[0..(k-1)]} contains the $k$ initial bit vectors
+   $x_0, \dots, x_{k-1}$.
+   The returned value is $z_i/(2^{31} - 1)$. 
+  \endtab
+\code
+
+
+unif01_Gen * ugfsr_CreateTT775 (unsigned long S[]);
+\endcode
+  \tab Implements the generator TT775  proposed by
+\index{Generator!TT775}%
+   Matsumoto and Kurita \cite{rMAT94a},  whose parameters are
+   ($k,k-r,l) = (25,8,31)$,  $s = 6$, $t = 14$, {\tt Av = 0x6C6CB38C}, 
+   {\tt Bv = 0x1ABD5900}, {\tt Cv = 0x776A0000}.   
+   The array {\tt S[0..(k-1)]} contains the $k$ initial bit vectors
+   $x_0, \dots, x_{k-1}$.  The returned value is $z_i/(2^{31} - 1)$. 
+  \endtab
+\code
+
+
+unif01_Gen * ugfsr_CreateTT800 (unsigned long S[]);
+\endcode
+  \tab Implements the generator TT800  proposed by
+\index{Generator!TT800}%
+   Matsumoto and Kurita \cite{rMAT94a},  whose parameters are
+   $(k,r,l) = (25,18,32)$, $s = 7$, $t = 15$, 
+   {\tt Av = 0x8EBFD028}, {\tt Bv = 0x2B5B2500}, {\tt Cv = 0xDB8D0000}.
+   The array {\tt S[0..24]} contains the $k$ initial bit vectors
+   $x_0, \dots, x_{k-1}$.   The returned value is $z_i/2^{32}$. 
+  \endtab
+\code
+
+
+unif01_Gen * ugfsr_CreateTT800M94 (unsigned long S[]);
+\endcode
+  \tab  The original implementation of TT800 provided by 
+  Matsumoto and Kurita \cite{rMAT94a}, in 1994.
+   The array {\tt S[0..24]} contains the $k$ initial bit vectors
+   $x_0, \dots, x_{k-1}$.  The returned value is  $z_i/(2^{32} - 1)$. 
+  \endtab
+\code
+
+
+unif01_Gen * ugfsr_CreateTT800M96 (unsigned long S[]);
+\endcode
+  \tab A second implementation of TT800, provided by Matsumoto 
+  and Kurita in 1996. 
+   The array {\tt S[0..24]} contains the $k$ initial bit vectors
+   $x_0, \dots, x_{k-1}$. The returned value is  $z_i/(2^{32} - 1)$. 
+  \endtab
+\code
+
+
+unif01_Gen * ugfsr_CreateMT19937_98 (unsigned long seed);
+\endcode
+  \tab The original implementation of the Mersenne twister generator
+\index{Generator!MT19937}\index{Generator!Mersenne twister}%
+  of Matsumoto and Nishimura \cite{rMAT98a}. 
+  Its period length is $2^{19937}-1$.
+  The returned value is $z_i/(2^{32} - 1)$. This is the 1998 version.
+  \endtab
+\code
+
+
+unif01_Gen * ugfsr_CreateMT19937_02 (unsigned long seed,
+                                     unsigned long Key[], int len);
+\endcode
+  \tab The 2002 version of the Mersenne twister generator \label{rng:MT19937}
+  of Matsumoto and Nishimura \cite{rMAT98a},  which has a better
+  initialization  procedure than the  original 1998 version.
+  If {\tt len} $ \le 0$ or {\tt Key = NULL}, then  {\tt seed} is used to
+  initialize the state vector. If  {\tt len > 0}, the array {\tt Key} of
+   length  {\tt len} is used instead. 
+   If  {\tt len} is smaller than 624,
+   then each array of 32-bit integers gives distinct initial
+   state vectors. This is useful if one  wants a larger seed space
+   than a single 32-bit word. 
+  \endtab
+
+
+
+
+\guisec{Clean-up functions}
+\code
+
+void ugfsr_DeleteGFSR5 (unif01_Gen * gen);
+\endcode
+  \tab Frees the dynamic memory allocated by
+   {\tt ugfsr\_CreateGFSR5}.
+ \endtab
+\code
+
+
+void ugfsr_DeleteGen (unif01_Gen *gen);
+\endcode
+ \tab  Frees the dynamic memory used by any generator of this module
+  that does not have an explicit {\tt Delete} function. 
+  This function should be called when a generator
+  is no longer in use.
+ \endtab
+\code
+\hide
+#endif
+\endhide
+\endcode
+
+
+\iffalse  %%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\bigskip
+\hrule
+\bigskip
+{
+For other GFSR generators, see also
+
+\begin{itemize}
+\item {\tt uwu\_CreatePentaWuC}     % Encore confidentiel.
+\end{itemize}
+}
+\fi  %%%%

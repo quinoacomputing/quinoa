@@ -1,0 +1,75 @@
+\defmodule {mystr}
+
+This module offers some tools for the manipulation of
+character strings. 
+
+\bigskip\hrule
+\code\iffalse
+/* mystr.h for ANSI C */
+
+#ifndef MYSTR_H
+#define MYSTR_H
+\fi
+
+void mystr_Delete (char S[], unsigned int index, unsigned int len);
+\endcode
+ \tab  Deletes {\tt len} characters from S, starting at position
+ {\tt index}.
+ \endtab
+\code
+
+
+void mystr_Insert (char Res[], char Source[], unsigned int Pos);
+\endcode
+ \tab  Inserts the string {\tt Source} into {\tt Res}, 
+  starting at position {\tt Pos}.
+ \endtab
+\code
+
+
+void mystr_ItemS (char R[], char S[], const char T[], unsigned int N);
+\endcode
+ \tab  Returns in R the N-th substring of S (counting from 0).
+  Substrings are delimited by any character from the set T.
+ \endtab
+\code
+
+
+int mystr_Match (char Source[], char Pattern[]);
+\endcode
+ \tab  Returns {\tt 1} if the string {\tt Source} matches the 
+  string {\tt Pattern}, and {\tt 0} otherwise.
+  The characters ``?'' and ``*'' are recognized as wild characters in the
+  string {\tt Pattern}.
+ \endtab
+\code
+
+
+void mystr_Slice (char R[], char S[], unsigned int P, unsigned int L);
+\endcode
+ \tab  Returns in {\tt R} the substring in {\tt S} beginning at
+  position {\tt P} and of length {\tt L}.
+ \endtab
+\code
+
+
+void mystr_Subst (char Source[], char OldPattern[], char NewPattern[]);
+\endcode
+ \tab  Searches for the string {\tt OldPattern} in the string {\tt Source}, 
+ and replaces its first occurence with {\tt NewPattern}.
+ \endtab
+\code
+
+
+void mystr_Position (char Substring[], char Source[], unsigned int at,
+                     unsigned int * pos, int * found);
+\endcode
+ \tab  Searches for the string {\tt Substring} in the string {\tt Source},
+ starting at position {\tt at}, and returns the position of its first
+ occurence in {\tt pos}.
+ \endtab
+\code
+\iffalse
+
+#endif
+\fi\endcode

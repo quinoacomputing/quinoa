@@ -1,0 +1,323 @@
+\defmodule {finv}
+
+Here one finds procedures to compute or approximate the 
+inverse of certain distribution functions.  
+Each procedure computes $F^{-1}(u) = \inf\{x\in\mathbb{R} : F(x)\ge u\}$,
+where $0\le u\le 1$ and $F$
+is the distribution function of a specific type of random variable.
+These procedures can be used, among other things, to generate
+the corresponding random variables by inversion, by passing a
+$U(0,1)$ random variate as the value of $u$.
+
+Several distributions are only implemented in standardized form here,
+i.e., with the location parameter set to 0 and the scale parameter
+set to 1.  To obtain the inverse for the distribution shifted 
+by $x_0$ and rescaled by a factor $c$, it suffices to multiply the
+returned value by $c$ and add $x_0$.
+
+\bigskip\hrule\medskip
+\code\hide
+/* finv.h for ANSI C */
+
+#ifndef FINV_H
+#define FINV_H
+\endhide
+#include "gdef.h"     /* From the library mylib */
+#include "fmass.h"
+#include "fdist.h"
+#include "wdist.h"
+\endcode
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{Continuous distributions}
+
+\code
+
+double finv_Expon (double u);
+\endcode
+  \tab
+  Returns the inverse of the standard exponential distribution,
+$$
+     F^{-1}(u) = -\ln (1-u), \qquad  0 \le u \le 1.
+$$
+ \endtab
+\code
+
+double finv_Weibull (double alpha, double u);
+\endcode
+  \tab
+  Returns the inverse of the standard Weibull distribution,
+$$
+     F^{-1}(u) = \left(-\ln (1-u) \right)^{1/\alpha}, \qquad  0 \le u \le 1.
+$$
+  Restriction: $\alpha > 0$.
+ \endtab
+\code
+
+
+double finv_ExtremeValue (double u);
+\endcode
+  \tab
+  Returns the inverse of the standard extreme value distribution,
+$$
+     F^{-1}(u) = -\ln (-\ln (u)), \qquad  0 \le u \le 1.
+$$
+ \endtab
+\code
+
+double finv_Logistic (double u);
+\endcode
+  \tab
+  Returns the inverse of the standard logistic distribution,
+$$
+     F^{-1}(u) = \ln  \left(\frac{u}{1-u}\right), \qquad  0 \le u \le 1.
+$$
+ \endtab
+\code
+
+double finv_Pareto (double c, double u);
+\endcode
+  \tab
+  Returns the inverse of the standard Pareto distribution,
+$$
+     F^{-1}(u) = \left(\frac 1 {1 - u}\right)^{1/c}, 
+          \qquad  0 \le u \le 1.
+$$
+  Restriction: $c > 0$.
+ \endtab
+\code
+
+
+double finv_Normal1 (double u);
+\endcode
+  \tab  
+  Returns an approximation of $\Phi^{-1}(u)$, 
+  where $\Phi$ is the standard normal distribution function,
+  with mean 0 and variance 1. 
+  Uses rational Chebyshev approximations giving at least 15 decimal 
+  digits of precision over most of the range \cite{tBLA76a}. 
+  Far in the lower tail ($u < 10 ^{-122}$), the precision decreases slowly 
+  until for $u < 10 ^{-308}$, the function gives only 11 decimal 
+  digits of precision.
+ \endtab
+\code
+
+
+double finv_Normal2 (double u);
+\endcode
+  \tab  
+  Returns an approximation of $\Phi^{-1}(u)$, 
+  where $\Phi$ is the standard normal distribution function, with mean 0 and
+  variance 1. Uses Marsaglia's et al \cite{rMAR94b} method
+  with tables lookup. The method works provided that
+  the processor respects the IEEE-754 floating-point standard. 
+  Returns 6 decimal digits of precision. This function is twice as fast
+  as {\tt finv\_Normal1}.
+ \endtab
+\hide\code
+
+
+double finv_Normal3 (double u);
+\endcode
+  \tab  
+  Returns an approximation of $\Phi^{-1}(u)$, 
+  where $\Phi$ is the standard normal distribution function,
+  with mean 0 and variance 1. 
+  Uses a rational approximation giving at least 7 decimal digits of
+  precision when  $10^{-20} < u < 1 - 10^{-20}$
+  (see \cite{sBRA87a,tKEN80a}). This method is slow.
+ \endtab
+\endhide\code
+
+
+double finv_LogNormal (double mu, double sigma, double u);
+\endcode
+  \tab
+  Returns the inverse of the lognormal distribution,
+$$
+     F^{-1}(u) = e^{\mu + \sigma\Phi^{-1} (u)}, 
+          \qquad  0 \le u \le 1.
+$$
+  Restriction: $\sigma > 0$.
+ \endtab
+\code
+
+
+double finv_JohnsonSB (double alpha, double beta, double a, double b,
+                       double u);
+\endcode
+  \tab
+  Returns the inverse of the Johnson JSB distribution,
+$$
+     F^{-1}(u) = \frac {a + b\,v}{1 + v},
+$$
+ where
+$$ 
+     v = \exp \left({\frac{\Phi^{-1}(u) - \alpha}{\beta}}\right), 
+              \qquad  0 \le u \le 1.
+$$
+ and $\Phi^{-1}$ is the inverse of the standard normal distribution.
+ Restrictions: $\beta>0$ and $a < x < b$.
+ \endtab
+\code
+
+
+double finv_JohnsonSU (double alpha, double beta, double u);
+\endcode
+  \tab
+  Returns the inverse of the Johnson JSU distribution,
+$$
+     F^{-1}(u) = \frac {v - 1/v}{2}
+$$
+  where
+$$
+      v = \exp \left({\frac{\Phi^{-1}(u) - \alpha}{\beta}}\right), 
+          \qquad  0 \le u \le 1.
+$$
+and $\Phi^{-1}$ is the inverse of the standard normal distribution.
+Restriction: $\beta>0$.
+ \endtab
+\code
+
+
+double finv_ChiSquare1 (long k, double u);
+\endcode
+  \tab
+  Returns a quick and dirty approximation of $F^{-1}(u)$, 
+  where $F$ is the chi-square distribution with $k$ degrees of freedom.
+  Uses the approximation given in  Figure L.24 of \cite{sBRA87a}.
+ \endtab
+\code
+
+
+double finv_ChiSquare2 (long k, double u);
+\endcode
+  \tab
+  Returns an approximation of $F^{-1}(u)$, where $F$ is the 
+  chi-square distribution with $k$ degrees of freedom.
+  Uses the approximation given in \cite{tBES75a}
+  and in Figure L.23 of \cite{sBRA87a}. This function is up to
+  20 times slower than {\tt finv\_ChiSquare1}.
+ \endtab
+\code
+
+
+double finv_Student (long n, double u);
+\endcode
+  \tab
+  Returns an approximation of $F^{-1}(u)$, where $F$ is the 
+  {\em Student-$t$\/} distribution function with $n$ degrees of freedom.
+  Uses an approximation giving at least 
+  5 decimal digits of precision when $n \ge 8$ or $n\le 2$, and
+  3 decimal digits of precision when $3\le n \le 7$
+  (see \cite{tHIL70a} and Figure L.28 of \cite{sBRA87a}).
+  \endtab
+\code
+
+
+double finv_BetaSymmetric (double p, double u);
+\endcode
+  \tab
+  Returns a special approximation of $F^{-1}(u)$, where $F(x)$ is the 
+  symmetric {\it beta} distribution with shape parameter $p = q$
+  as defined in (\ref{eq:Fbeta}). Uses four different hypergeometric series 
+  (for the four cases $x$ close to 0 and $p \le 1$,
+     $x$ close to 0 and $p > 1$,  $x$ close to 1/2 and $p \le 1$,
+  and  $x$ close to 1/2 and $p > 1$)
+  to compute the distribution $u = F(x)$,
+  which are then solved by Newton's method for the solution of equations.
+  For $p > 100000$, uses a normal approximation given in \cite{tPEI68a}.
+  Restrictions: $p > 0$ and $0 \le u \le 1$.
+ \endtab
+\code
+
+
+double finv_GenericC (wdist_CFUNC F, double par[], double u, int d,
+                      int detail);
+\endcode
+  \tab
+   Uses binary search to find the inverse of a generic continuous
+   distribution function $F$, evaluated at $u$.
+   The parameters of $F$ (if any) are passed in the array {\tt par}.
+   The returned value has $d$ decimal digits of precision.
+   If {\tt detail > 0}, the procedure will print detailed information
+   about the inversion process.
+   Restrictions: $0 \le u \le 1$ and $d>0$.
+  \endtab
+
+\newpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\guisec{Discrete distributions}
+\hide
+\code
+
+long finv_GenericD1 (fmass_INFO W, double u);
+\endcode
+  \tab
+This function is not finished. Must check that it works for all cases
+and also eliminate some ugliness.
+   Uses binary search to find the inverse of a generic discrete
+   distribution function  evaluated at $u$, and whose values have been
+   precomputed and are kept inside the structure $W$.
+   The procedure  returns an approximation  of $F^{-1}(u)$. \\
+   Restriction: $0 \le u \le 1$.
+  \endtab
+\code
+
+#if 0
+long finv_GenericD2 (wdist_DFUNC F, fmass_INFO W, double u);
+#endif
+\endcode
+  \tab
+   Uses binary search to find the inverse of a generic discrete
+   distribution function $F$, evaluated at $u$.
+   The parameters of $F$ (if any) are passed in the structure {\tt W}.
+   The procedure assumes that the variable {\tt F}
+   contains the distribution function $F$ and returns an approximation 
+   of $F^{-1}(u)$. \\
+  \hpierre{Je ne vois pas trop \`a quoi inverser $\bar F$ peut bien servir.
+    En tous cas, il faut faire bien attention comment on d\'efinit
+    l'inverse dans ce cas. }
+  \hrichard {J'ai enlev\'e le parametre comp}
+   Restriction: $0 \le u \le 1$.
+  \endtab
+\endhide
+\code
+
+
+long finv_Geometric (double p, double u);
+\endcode
+  \tab Returns the inverse of the geometric distribution,
+$$
+   F^{-1}(u) = \left\lfloor \frac{\ln (1 - u)}{\ln (1 - p)}\right\rfloor,
+               \qquad  0 \le u \le 1.
+$$
+  Restriction: $0 \le p \le 1$.
+ \endtab
+\code
+
+\hide
+#if 0
+long finv_Poisson2 (fmass_INFO W, double u);
+\endcode
+ \tab  Returns the inverse of the Poisson distribution function,
+  using the structure {\tt W}, which must have been created previously
+  by calling {\tt fmass\_CreatePoisson} with the desired $\lambda$.
+  Uses binary search.
+ \endtab
+\code
+
+
+long finv_Binomial2 (fmass_INFO W, double u);
+\endcode
+ \tab  Returns the inverse of the binomial distribution function,
+  from the structure {\tt W}, which must have been created previously
+  by calling {\tt fmass\_CreateBinomial} with the desired $n$ and $p$.
+  Uses binary search.
+ \endtab
+\code
+
+#endif
+#endif
+\endhide
+\endcode
