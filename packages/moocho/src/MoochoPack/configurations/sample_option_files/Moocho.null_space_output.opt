@@ -1,0 +1,29 @@
+***
+*** This options file shows how to print out all of the information from the
+*** null space quantities that are computed.  As long as the number of optimization
+*** parameters (i.e. optimization degrees of freedom) is small, then this output and these
+*** options will not be excessively expensive.
+***
+
+begin_options
+
+options_group NLPSolverClientInterface {
+*    journal_output_level = PRINT_NOTHING;              * No output to journal from algorithm
+*    journal_output_level = PRINT_BASIC_ALGORITHM_INFO; * O(1) information usually
+    journal_output_level = PRINT_ALGORITHM_STEPS;      * O(iter) output to journal     [default]
+*    journal_output_level = PRINT_ACTIVE_SET;           * O(iter*nact) output to journal  
+*    journal_output_level = PRINT_VECTORS;              * O(iter*n) output to journal   (lots!)
+*    journal_output_level = PRINT_ITERATION_QUANTITIES; * O(iter*n*m) output to journal (big lots!)
+*    null_space_journal_output_level = DEFAULT;                    * Set to journal_output_level [default]
+*    null_space_journal_output_level = PRINT_ACTIVE_SET;           * O(iter*nact) output to journal  
+*    null_space_journal_output_level = PRINT_VECTORS;              * O(iter*(n-m)) output to journal   (lots!)
+    null_space_journal_output_level = PRINT_ITERATION_QUANTITIES; * O(iter*(n-m)^2) output to journal (big lots!)
+    calc_conditioning = true;  *** (costly?)
+*    calc_conditioning = false; *** (default?)
+    calc_matrix_norms = true;  *** (costly?)
+*    calc_matrix_norms = false; *** (default?)
+    calc_matrix_info_null_space_only = true;  *** (costly?)
+*    calc_matrix_info_null_space_only = false; *** (default?)
+}
+
+end_options

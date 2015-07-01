@@ -1,0 +1,779 @@
+%@HEADER
+% ************************************************************************
+% 
+%          Trilinos: An Object-Oriented Solver Framework
+%              Copyright (2001) Sandia Corporation
+% 
+% Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
+% license for use of this work by or on behalf of the U.S. Government.
+% 
+% This program is free software; you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation; either version 2, or (at your option)
+% any later version.
+%   
+% This program is distributed in the hope that it will be useful, but
+% WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+% General Public License for more details.
+%   
+% You should have received a copy of the GNU General Public License
+% along with this program; if not, write to the Free Software
+% Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+% 
+% Questions? Contact Michael A. Heroux (maherou@sandia.gov)
+% 
+% ************************************************************************
+%@HEADER
+
+\chapter{Iterative Solution of Linear Systems with Belos}
+\label{chap:belos}
+
+\ChapterAuthors{Chris Baker, Michael Heroux, Heidi Thornquist}
+
+\begin{introchapter}
+Several goals motivated the development of the Belos linear solver package: interoperability,
+extensibility, and the capability to use and develop next-generation linear solvers.  The intention 
+of \emph{interoperability} is to ease the use of Belos in a wide range of application environments. 
+To this end, the algorithms written in Belos utilize an abstract interface for operators and vectors, 
+allowing the user to leverage existing linear algebra libraries. The concept of \emph{extensibility} 
+drives development of Belos to allow users to make efficient use of available solvers while
+simultaneously enabling them to easily develop their own code in the Belos framework.
+This is encouraged by promoting code modularization and multiple levels of access to
+solvers and their data.
+
+Another motivation for Belos was the \emph{capability to use and develop
+next-generation linear solvers}.  These \emph{next-generation linear solvers} should
+enable the efficient solution of
+\begin{itemize}
+  \item Single right-hand side systems: $Ax=b$
+  \item Simultaneously solved, multiple right-hand side systems: $AX=B$
+  \item Sequentially solved, multiple right-hand side systems: $AX_i = B_i$, for $i=1,\ldots,t$
+  \item Sequences of multiple right-hand side systems: $A_iX_i=B_i$, for $i=1,\ldots,t$
+\end{itemize}
+where $A \in \mathbb{R}^{n \times n}$, $x,b \in \mathbb{R}^n$, and $X,B \in \mathbb{R}^{n \times k}$.
+
+In this Chapter, we outline the Belos linear solver framework and motivate the design.
+In particular, we present
+\begin{itemize}
+  \item the Belos operator/vector interface (Section~\ref{sec:belos:opvec});
+  \item the Belos linear solver framework (Section~\ref{sec:belos:solver_framework});
+  \item a description of Belos classes (Section~\ref{sec:belos:classes});
+  \item the interface to the Epetra linear algebra package (Section~\ref{sec:belos:epetra});
+  \item an example using Belos for the solution of a linear problem (Section~\ref{sec:belos:example}).
+\end{itemize}
+\end{introchapter}
+
+\section{The Belos Operator/Vector Interface}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\label{sec:belos:opvec}
+
+The Belos linear solver package utilizes abstract interfaces for operators and
+multivectors. This allows users to leverage existing linear algebra libraries and to
+protect previous software investment. Algorithms in Belos are developed at a high-level,
+where the underlying linear algebra objects are opaque. The choice in linear algebra is
+made through templating, and access to the functionality of the underlying objects is
+provided via the traits classes Belos::MultiVecTraits and Belos::OperatorTraits.
+These classes define opaque interfaces, specifying the operations that multivector and
+operator classes must support in order to be used in Belos without exposing low-level
+details of the underlying data structures.
+
+The benefit of using a templated traits class over inheritance is that the latter requires
+the user to derive multivectors and operators from Belos-defined abstract
+base classes. The former, however, defines only local requirements: Belos-defined traits
+classes implemented as user-developed adapters for the chosen multivector and operator
+classes.
+
+Belos::MultiVecTraits provides routines for the creation of multivectors, as well as
+their manipulation. In order to use a specific scalar type and multivector type with
+Belos, there must exist a template specialization of Belos::MultiVecTraits for this
+pair of classes. A full list of methods required by Belos::MultiVecTraits is given in
+Table~\ref{tab:belos:mvt}.
+
+\begin{table}
+\begin{center}
+\begin{tabular}{| p{3.5cm} |  p{2.2cm} || p{8cm} |}
+\hline
+Method name & Args & Description \\
+\hline\hline
+Clone           & $X$, $n$    
+                & Creates a new empty multivector from $X$ containing $n$ columns.  \\\hline
+CloneCopy       & $X$   
+                & Creates a new multivector from $X$ with a copy of all the vectors in $X$ (deep copy). \\\hline
+CloneCopy       & $X$, $index$   
+                & Creates a new multivector from $X$ with only a copy of the $index$ vectors (deep copy). \\\hline
+CloneView       & $X$, $index$ 
+                & Creates a new multivector from $X$ that shares the $index$ vectors from $X$ (shallow copy).  \\\hline
+GetVecLength    & $X$ 
+                & Returns the vector length of the multivector $X$.  \\\hline
+GetNumberVecs   & $X$
+                & Returns the number of vectors in the multivector $X$.  \\\hline
+MvTimesMatAddMv & $X$, $Y$, $\alpha$, $\beta$
+                & Apply a SerialDenseMatrix $M$ to another multivector $X$, $Y \leftarrow \alpha X M + \beta Y$.  \\\hline
+MvAddMv         & $X$, $Y$, $Z$, $\alpha$, $\beta$
+                & Perform $Z \leftarrow \alpha X + \beta Y$.  \\\hline
+MvTransMv       & $X$, $Y$, $\alpha$, $C$
+                & Compute the matrix $C \leftarrow \alpha X^H Y$.  \\\hline
+MvDot           & $X$, $Y$, $d$
+                & Compute the vector $d$ where the components are the individual dot-products of the $i$-th columns of $X$ and $Y$, i.e. $d[i] = X[i]^H Y[i]$.  \\\hline
+MvScale         & $X$, $\alpha$
+                & Scale the columns of the multivector $X$ by $\alpha$. \\\hline
+MvNorm          & $X$, $norm$
+                & Compute the 2-norm of each individual vector of $X$, $norm[i]=\|X[i]\|_2$. \\\hline
+SetBlock        & $X$, $Y$, $index$
+                & Copy the vectors in $X$ to the subset of vectors in $Y$ indicated by $index$. \\\hline
+MvRandom        & $X$
+                & Replace the vectors in $X$ with random vectors.  \\\hline
+MvInit          & $X$, $\alpha$
+                & Replace each element of $X$ with $\alpha$.  \\\hline
+MvPrint         & $X$, $os$
+                & Print the multivector $X$ to an output stream $os$.  \\\hline
+\hline
+\end{tabular}
+\caption{Methods required by Belos::MultiVecTraits interface.}
+\label{tab:belos:mvt}
+\end{center}
+\end{table}
+
+Just as Belos::MultiVecTraits defined the interface required to use a
+multivector class with Belos, Belos::OperatorTraits defines the
+interface required to use the combination of a specific operator class with a
+specific multivector class. This interface defines a single method:
+\begin{verbatim}
+OperatorTraits<ScalarType,MV,OP>::Apply(const OP &Op, const MV &X, MV &Y)
+\end{verbatim}
+This method performs the operation $Y = Op(X)$, where $Op$ is an operator of type
+\verb!OP! and $X$ and $Y$ are multivectors of type \verb!MV!. In order to use the
+combination of \verb!OP! and \verb!MV!, there must be a specialization of
+Belos::OperatorTraits for \verb!ScalarType!, \verb!OP! and \verb!MV!. 
+
+Calling methods of MultiVecTraits and OperatorTraits requires that specializations of
+these traits classes have been implemented for given template arguments.  
+Belos provides the following specializations of these traits classes:
+\begin{itemize}
+  \item Epetra\_MultiVector and Epetra\_Operator (with scalar type double)    
+  \item Thyra::MultiVectorBase and Thyra::LinearOpBase (with arbitrary scalar type) \\
+        This allows Belos to be used with any classes that implement the abstract interfaces provided by the Thyra package.    
+  \item Belos::MultiVec and Belos::Operator (with arbitrary scalar type) \\
+        This allows Belos to be used with any classes that implement the abstract base
+        classes Belos::MultiVec and Belos::Operator.
+\end{itemize}
+
+For user-specified classes that do not match one of the above, specializations of
+MultiVecTraits and OperatorTraits will need to be created by the user for use by Belos.
+Test routines \verb!Belos::TestMultiVecTraits()! and
+\verb!Belos::TestOperatorTraits()! are provided by Belos to help in testing
+user-developed adapters.
+
+
+\section{The Belos Linear Solver Framework}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\label{sec:belos:solver_framework}
+
+The goals of flexibility and efficiency can interfere with the goals of simplicity and
+ease of use. For example, efficient memory use and low-level data access required in
+scientific codes can lead to complicated interfaces and violations of standard
+object-oriented development practices.  In Belos, this problem is addressed by providing a 
+multi-tiered access strategy for linear solver algorithms. Belos users have the choice of 
+interfacing at one of two levels: either working at a high-level with a linear solver 
+manager or working at a low-level directly with an iteration.
+
+Consider as an example the conjugate gradient (CG) iteration. The essence of this iteration 
+can be distilled into the following steps:
+\begin{enumerate}
+  \item apply operator $A$ to current direction vector $p_i$: $Ap_i = A*p_i$
+  \item use $Ap_i$ to compute step length $\alpha_i$: $\alpha_i=\frac{<r_i,r_i>}{<p_i,Ap_i>}$
+  \item use $\alpha_i$ and $p_i$ to compute approximate solution $x_{i+1}$: $x_{i+1}=x_i+\alpha_i*p_i$
+  \item compute new residual $r_{i+1}$ using step length and $Ap_i$: $r_{i+1}=r_i-\alpha_i*Ap_i$
+  \item compute improvement in the step $\beta_i$ using $r_i$ and $r_{i+1}$: $\beta_i=\frac{<r_{i+1},r_{i+1}>}{<r_i,r_i>}$
+  \item use $\beta_i$ and $r_{i+1}$ to compute the new direction vector $p_{i+1}$: $p_i=r_{i+1}+\beta_i*p_i$
+\end{enumerate}
+
+In implementing a CG solver, this iteration repeats until some stopping criterion has 
+been satisfied.  Many valid stopping criteria exist, however, they are distinct from 
+the essential iteration as described above. A user wanting to perform CG iterations could 
+ask the solver to perform these iterations until a user-specified stopping criterion, like
+maximum number of iterations or residual norm, was 
+satisfied.  This allows the user complete control over the stopping criteria and leaves 
+the iteration responsible for a relatively simple bit of state and behavior.
+
+This is the way that Belos has been designed. The iterations (encapsulating an
+iteration kernel and the associated state) are derived classes of the abstract base class
+Belos::Iteration. The goals of this class are three-fold:
+\begin{itemize}
+  \item to define an interface used for checking the status of an iteration by a status test;
+  \item to contain the iteration kernel associated with a particular linear solver;
+  \item to contain the state associated with that iteration.
+\end{itemize}
+
+The status tests, assembled to describe a specific stopping criterion and queried by the 
+iteration, are represented as subclasses of Belos::StatusTest. The
+communication between status test and iteration occurs
+inside of the \verb!iterate()! method provided by each Belos::Iteration. This code
+generally takes the form:
+\begin{verbatim}
+SomeIteration::iterate() {
+  while ( statustest.checkStatus(this) != Passed ) {
+    //
+    // perform iteration kernel
+    //
+  }
+  return;  // return back to caller
+}
+\end{verbatim}
+
+Each Belos::StatusTest provides a method, \verb!checkStatus()!, which through queries to
+the methods provided by Belos::Iteration, determines whether the solver meets the
+criteria defined by that particular status test. After an iteration returns from
+\verb!iterate()!, the caller has the option of accessing the state associated with the
+iteration and re-initializing it with a new state.
+
+While this method of interfacing with the iteration is powerful, it can be tedious.
+This method requires that a user construct a number of support classes, in addition to
+managing calls to \verb!Iteration::iterate()!.  The Belos::SolverManager class was developed to
+address this need. A solver manager is a class that wraps around an iteration,
+providing additional functionality while also handling lower-level interaction with the
+iteration that a user may not wish to handle. Solver managers are intended to be 
+easy to use, while still providing the features and flexibility needed to solve real-world
+linear problems. For example, the Belos::BlockCGSolMgr takes only two
+arguments in its constructor: a Belos::LinearProblem specifying the linear problem
+to be solved and a Teuchos::ParameterList of options specific to this solver manager. The
+solver manager instantiates an iteration, along with the status tests and other support
+classes needed by the iteration. To solve the linear problem, the user simply calls
+the \verb!solve()! method of the solver manager. The solver manager performs repeated
+calls to the \verb!iterate()! method, performs restarts or recycling, and
+places the final solution into the linear problem.
+
+Users therefore have a number of options for computing solutions to linear problems with Belos:
+\begin{itemize}
+  \item use an existing solver manager;\\
+        In this case, the user is limited to the functionality provided by the current linear solvers.
+  \item develop a new solver manager around an existing iteration;\\
+        The user can extend the functionality provided by the iteration, specifying 
+        custom configurations for status tests, orthogonalization, restarting, recycling,
+        etc.
+  \item develop a new iteration/solver manager;\\
+        The user can write an iteration that is not represented in
+        Belos. The user still has the benefit of the support classes provided by 
+        Belos, and the knowledge that the new iteration / solver manager can be easily
+        used by anyone already familiar with Belos.
+\end{itemize}
+
+
+\section{Belos Classes}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\label{sec:belos:classes}
+
+Belos is designed with extensibility in mind, so that users can augment the package with
+any special functionality that they need. However, the released version of Belos
+provides all functionality necessary for solving a wide variety of problems. This section
+lists and briefly describes the current abstract classes found in Belos.  Each subsection 
+also includes information on the derived classes provided by Belos.
+
+\begin{remark}
+Belos makes extensive use of the Teuchos utility classes, especially
+Teuchos::RCP (Section~\ref{sec:teuchos:RCP}) and
+Teuchos::ParameterList (Section~\ref{sec:teuchos:ParameterList}). Users
+are encouraged to become familiar with these classes and their correct
+usage.
+\end{remark}
+
+\subsection{Belos::LinearProblem}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\label{sec:belos:linearproblem}
+
+Belos::LinearProblem is a templated container for the components of a linear problem, 
+as well as the solutions.  Both the linear problem and the linear solver in Belos are 
+templated on the scalar type, the multivector type and the operator type. Before
+declaring a linear problem, users must choose classes to represent these
+entities. Having done so, they can begin to specify the parameters of the
+linear problem using the Belos::LinearProblem \textbf{set} methods:
+\begin{itemize}
+\item \verb!setOperator! - set the operator $A$ for which the solutions will be computed
+\item \verb!setLHS! - set the left-hand side (solution) vector $X$ for the linear problem $A X = B$
+\item \verb!setRHS! - set the right-hand side vector $B$ for the linear problem $A X = B$
+\item \verb!setLeftPrec! - set the left preconditioner for the linear problem
+\item \verb!setRightPrec! - set the right preconditioner for the linear problem
+\item \verb!setHermitian! - specify whether the problem is Hermitian
+\item \verb!setLabel! - specify the label prefix used by the timers in this object
+\end{itemize}
+In addition to these \textbf{set} methods, Belos::LinearProblem defines
+a method \verb!setProblem()! that gives the class the opportunity to perform
+any initialization that may be necessary before the problem is handed off 
+to a linear solver, in addition to verifying that the problem has been adequately defined. 
+
+For each of the \textbf{set} methods listed above, there is a corresponding
+\textbf{get} function. These are the functions used the iterations and solver managers to 
+get necessary information from the linear problem. 
+
+\subsection{Belos::Iteration}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\label{sec:belos:iterativesolver}
+
+The Belos::Iteration class defines the basic interface that must be
+met by any iteration class in Belos. The specific iterations are
+implemented as derived classes of Belos::Iteration.
+Table~\ref{tab:belos:solvers} lists the linear solver currently implemented in
+Belos.  
+
+\begin{table}[htp]
+\begin{center}
+\begin{tabular}{| p{4cm} p{10cm} |}
+\hline
+Solver & Description \\
+\hline
+{\tt CG}               & A basic single-vector CG iteration for SPD linear problems.\\
+{\tt BlockCG}          & A block CG iteration for SPD linear problems. \\
+{\tt BlockGmres}       & A block GMRES iteration for non-Hermitian linear problems. \\
+{\tt BlockFGmres}      & A block flexible GMRES iteration for non-Hermitian linear problems. \\
+{\tt PseudoBlockGmres} & A simultaneous single-vector GMRES iteration for non-Hermitian linear problems. \\
+{\tt GCRODR }          & A deflation, restarted GCRO iteration for non-Hermitian linear problems. \\
+\hline
+\end{tabular}
+\caption{Iterations currently implemented in Belos.}
+\label{tab:belos:solvers}
+\end{center}
+\end{table}
+
+The iteration interface provides two significant types of methods: status methods and
+solver-specific state methods. The status methods are defined by the Belos::Iteration
+abstract base class and represent the information that a generic status test can request
+from any linear solver. A list of these methods is given in
+Table~\ref{tab:belos:genstatusmethods}.
+
+\begin{table}[htp]
+\begin{center}
+\begin{tabular}{| p{4cm} p{10cm} |}
+\hline
+Method & Description \\
+\hline
+{\tt getNumIters}       & Get the current number of iterations. \\
+{\tt resetNumIters}     & Reset the number of iterations. \\
+{\tt getNativeResiduals}& Get the most recent residual norms native to the iteration. \\
+{\tt getCurrentUpdate}  & Get the most recent solution update computed by the iteration. \\
+\hline
+\end{tabular}
+\caption{A list of generic status methods provided by Belos::Iteration.}
+\label{tab:belos:genstatusmethods}
+\end{center}
+\end{table}
+
+The class Belos::Iteration, like Belos::LinearProblem, is templated on the scalar
+type, multivector type and operator type. The options for the iteration are passed in
+through the constructor, defined by Belos::Iteration to have the following form:
+\begin{verbatim}
+Iteration( 
+   const Teuchos::RCP< LinearProblem<ST,MV,OP> > &problem, 
+   const Teuchos::RCP< OutputManager<ST>       > &printer,
+   const Teuchos::RCP< StatusTest<ST,MV,OP>    > &tester,
+   const Teuchos::RCP< OrthoManager<ST,OP>     > &ortho,
+   ParameterList                                 &params  
+ );
+\end{verbatim}
+
+These classes are used as follows:
+\begin{itemize}
+  \item \verb!problem! - the linear problem to be solved; the solver will
+    get the operator and vectors from here; see Section~\ref{sec:belos:linearproblem}.
+  \item \verb!printer! - the output manager dictates verbosity level in addition to 
+    processing output streams; see Section~\ref{sec:belos:printer}.
+  \item \verb!tester! - the status tester dictates when the solver should quit
+    \verb!iterate()! and return to the caller; see Section~\ref{sec:belos:tester}.
+  \item \verb!ortho! - the orthogonalization manager defines the inner product and other
+    concepts related to orthogonality, in addition to performing these computations for 
+    the solver; see Section~\ref{sec:belos:ortho}.
+  \item \verb!params! - the parameter list specifies linear solver-specific options; see the
+    documentation for a list of options support by individual solvers.
+\end{itemize}
+
+An iteration class also specifies a concept of state,
+i.e. the current data associated with the iteration. After declaring an iteration
+object, it is in an uninitialized state. For most iterations, to be
+initialized means to be in a valid state, containing all of the information necessary for
+performing an iteration step. Belos::Iteration provides two methods concerning
+initialization: \verb!isInitialized()! indicates whether the iteration is initialized or not,
+and \verb!initialize()! (with no arguments) instructs the iteration to initialize itself
+using the linear problem.
+
+To ensure that iterations can be used as efficiently as possible, 
+the user needs access to their state. To this end, each iteration provides 
+low-level methods for getting and setting their
+state:
+\begin{itemize}
+  \item \verb!getState()! - returns an iteration-specific structure with read-only pointers to
+    the current state of the iteration.
+  \item \verb!initialize(...)! - accepts an iteration-specific structure enabling the user to
+    initialize the iteration object with a particular state.
+\end{itemize}
+
+The combination of these two methods, along with the flexibility provided by status tests,
+allows the user almost total control over linear solver iterations.
+
+
+\subsection{Belos::SolverManager}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\label{sec:belos:solvermanager}
+
+Using Belos by interfacing directly with the linear solver iterations is extremely powerful, 
+but can be more entailed than necessary. Solver managers provide a way for users to encapsulate 
+specific solving strategies inside of an easy-to-use class. Novice users may prefer to use 
+existing solver managers, while advanced users may prefer to write custom solver managers.
+
+The Belos::SolverManager class provides a parameter list driven interface for solving linear
+systems and, as such, has very few methods.  Only two constructors are supported: a default constructor
+and a constructor accepting a Belos::LinearProblem and a parameter list of solver manager-specific 
+options.  If the default constructor is used, the Belos::LinearProblem and parameter list can be passed 
+in, post-construction, using the methods \verb!setProblem(...)! and \verb!setParameters(...)!, 
+respectively.  It is also possible to get the valid parameters and current parameters from the 
+solver manager by using the methods \verb!getValidParameters()! and \verb!getCurrentParameters()!, 
+respectively.  Most importantly, there is a \verb!solve()! method that takes no arguments and 
+returns either Belos::Converged or Belos::Unconverged.
+Consider the following simple example code:
+\begin{verbatim}
+// create a linear problem
+Teuchos::RCP< Belos::LinearProblem<ScalarType,MV,OP> > problem = ...;
+// create a parameter list
+Teuchos::RCP<Teuchos::ParameterList> params;
+params->set(...);
+// create a solver manager
+Belos::BlockCGSolMgr<ScalarType,MV,OP> CGsolver( problem, params );
+// solve the linear problem
+Belos::ReturnType ret = CGsolver.solve();
+// get the solution from the problem
+Teuchos::RCP< MV > sol = problem->getLHS();
+\end{verbatim}
+
+\begin{remark}
+  Errors in Belos are communicated via exceptions. This is outside the scope of this
+  tutorial; see the Belos documentation for more information.
+\end{remark}
+
+As has been stated before, the goal of the solver manager is to create a linear solver iteration
+object, along with the necessary support objects.  Another purpose of many
+solver managers is to manage and initiate the repeated calls to the underlying iteration's
+\verb!iterate()! method. For linear solver iterations that build a Krylov subspace to some 
+maximum dimension (e.g., BlockGmres, BlockFGmres, etc.), the solver manager will also employ 
+a strategy for restarting the solver when the subspace is full. This is something for which
+multiple approaches are possible. Also, there may be substantial flexibility in creating
+the support classes (e.g., sort manager, status tests) for the solver. An aggressive
+solver manager could even go so far as to construct a preconditioner for the linear
+problem, or switch its solution technique based on convergence behavior. 
+
+These examples are meant to illustrate the flexibility that specific solver managers may
+have in implementing the \verb!solve()! routine. Some of these options might best be
+incorporated into a single solver manager, which takes orders from the user via the
+parameter list. Some of these options may better be contained in
+multiple solver managers, for the sake of code simplicity. It is even possible to write
+solver managers that contain other solvers managers; motivation for something like this
+would be to select the optimal solver manager at runtime based on some expert knowledge,
+or to create a hybrid method which uses the output from one solver manager to
+initialize another one.
+
+\subsection{Belos::StatusTest}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\label{sec:belos:tester}
+
+By this point in the tutorial, the purpose of the Belos::StatusTest should be clear: to
+give the user or solver manager flexibility in stopping the linear solver iterations in
+order to interact directly with the iteration.
+
+Many reasons exist for why a user would want to stop the iteration from continuing:
+\begin{itemize}
+  \item some convergence criterion has been satisfied and it is time to quit;
+  \item some part of the current solution has reached a sufficient accuracy to removed
+    from the iteration;
+  \item the solver has performed a sufficient or excessive number of iterations.
+\end{itemize}
+These are just some commonly seen reasons for ceasing the iteration, and each of these can
+be so varied in implementation/parametrization as to require some abstract mechanism
+controlling the iteration.
+
+The following is a list of Belos-provided status tests:
+\begin{itemize}
+  \item Belos::StatusTestCombo - this status test allows for the boolean combination of
+    other status tests, creating near unlimited potential for complex status tests.
+  \item Belos::StatusTestOutput - this status test acts as a wrapper around another
+    status test, allowing for printing of status information on a call to
+    \verb!checkStatus()!
+  \item Belos::StatusTestMaxIters - this status test monitors the number of iterations
+    performed by the solver; it can be used to halt the solver at some maximum number of iterations
+    or even to require some minimum number of iterations.
+  \item Belos::StatusTestGenResNorm - this status test allows the user to construct one of
+    a family of residual tests to monitor the residual norms of the current iterate.
+  \item Belos::StatusTestImpResNorm - this status test monitors the implicit residual norm
+    (e.g., native residual available through GMRES) and checks for loss of accuracy.
+\end{itemize}
+
+\subsection{Belos::OrthoManager}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\label{sec:belos:ortho}
+
+Orthogonalization and orthonormalization are commonly performed computations in iterative
+linear solvers; in fact, for some linear solvers, they represent the dominant cost.  Different
+scenarios may require different approaches (e.g., Euclidean inner product versus a weighted inner
+product, full versus partial orthogonalization).  Combined with the plethora
+of available methods for performing these computations, Belos has left as much leeway to
+the users as possible.
+
+Orthogonalization of multivectors in Belos is performed by derived classes of
+the abstract class Belos::OrthoManager. This class provides five methods:
+\begin{itemize}
+  \item \verb!innerProd(X,Y,Z)! - performs the inner product defined by the manager.
+  \item \verb!norm(X)! - computes the norm induced by \verb!innerProd()!.
+  \item \verb!project(X,C,Q)! - given an orthonormal basis $Q$, projects $X$ onto to the space perpindicular to
+    $colspan(Q)$, optionally returning the coefficients of $X$ in $Q$.
+  \item \verb!normalize(X,B)! - returns an orthonormal basis for $colspan(X)$, optionally
+    returning the coefficients of $X$ in the computed basis.
+  \item \verb!projectAndNormalize(X,C,B,Q)! - computes an orthonormal basis for subspace
+    \newline
+    $colspan(X) - colspan(Q)$, optionally returning the coefficients of
+    $X$ in $Q$ and the new basis.
+\end{itemize}
+
+It should be noted that a call to \verb!projectAndNormalize()! is not necessarily
+equivalent to a call to \verb!project()! followed by \verb!normalize()!. This follows from
+the fact that, for some orthogonalization managers, a call to \verb!normalize()! may
+augment the column span of a rank-deficient multivector in order to create an orthonormal
+basis with the same number of columns as the input multivector. In this case, the code
+\begin{verbatim}
+orthoMgr.project(X,C,Q);
+orthoMgr.normalize(X,B);
+\end{verbatim}
+\noindent could result in an orthonormal basis $X$ that is not orthogonal to the basis in $Q$.
+
+Belos provides three orthogonalization managers:
+\begin{itemize}
+  \item Belos::DGKSOrthoManager - performs orthogonalization using classical Gram-Schmidt with
+    a possible correction step.
+  \item Belos::ICGSOrthoManager - performs orthogonalization using iterated classical Gram-Schmidt.
+  \item Belos::IMGSOrthoManager - performs orthogonalization using iterated modified Gram-Schmidt.
+\end{itemize}
+
+More information on these orthogonalization managers is available in the Belos
+documentation.
+
+\subsection{Belos::OutputManager}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\label{sec:belos:printer}
+
+The output manager is a concrete class in Belos and exists to provide
+flexibility with regard to the verbosity of the linear solver. The output manager has
+two primary concerns: what output is printed and where the output is printed to.
+When working with the output manager, output is classified into one of the 
+message types from Table~\ref{tab:belos:om}.
+
+\begin{table}
+\begin{center}
+  \begin{tabular}{| p{4cm} p{8cm} |}
+\hline
+Message type & Description \\
+\hline
+{\tt Errors           } & Errors (always printed)  \\
+{\tt Warnings         } & Warning messages   \\
+{\tt IterationDetails } & Approximate eigenvalues, errors   \\
+{\tt OrthoDetails     } & Orthogonalization/orthonormalization checking \\
+{\tt FinalSummary     } & Final computational summary (usually from SolverManager::solve())  \\
+{\tt TimingDetails    } & Timing details  \\
+{\tt StatusTestDetails} & Status test details   \\
+{\tt Debug            } & Debugging information \\
+\hline
+\end{tabular}
+\caption{Message types used by Belos::OutputManager.}
+\label{tab:belos:om}
+\end{center}
+\end{table}
+
+The output manager in Belos provides the following output-related methods:
+\begin{itemize}
+  \item {\tt bool setVerbosity (MsgType type)} - 
+  Set the type of messages we need to print out information for.
+  \item {\tt bool setOStream ( const Teuchos::RCP<std::ostream> \&os )} - 
+  Set the output stream where information should be sent.
+  \item {\tt bool isVerbosity (MsgType type)} - 
+  Find out whether we need to print out information for this message type.
+\item {\tt void  print (MsgType type, const string output)} - 
+  Send output to the output manager.
+\item {\tt ostream \& stream (MsgType type)} - 
+  Create a stream for outputting to.
+\end{itemize}
+
+The output manager is meant to ease some of the difficulty associated with I/O in a
+distributed programming environment. For example, consider some debugging output requiring
+optional computation. For reasons of efficiency, we may want to perform the computation
+only if debugging is requested; i.e., \verb!isVerbosity(Belos::Debug) == true!. However,
+while we need all nodes to enter the code block to perform the computation, we probably
+want only one of them to print the output. For the Belos::OutputManager, the output 
+corresponding to the verbosity level of the manager is sent to the output stream only on 
+the master node; the output for other nodes is neglected.
+
+
+\section{Using the Belos adapter to Epetra}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\label{sec:belos:epetra}
+
+The Epetra package provides the underlying linear algebra foundation for many
+Trilinos solvers.  By using the Belos adapter to Epetra, users not only
+avoid the trouble of implementing their own multivector and operator classes, but
+they also gain the ability to utilize any other Trilinos package which
+recognizes Epetra classes (such as AztecOO, IFPACK, ML, and others).
+
+In order to use the Belos adapter to Epetra, users must include the following
+file:
+\begin{verbatim}
+#include "BelosEpetraAdapter.hpp"
+\end{verbatim}
+This file simply defines specializations of the Belos::MultiVecTraits
+and Belos::Operator\-Traits classes, while also including the Epetra
+header files defining the multivector and operator classes.
+
+Because Epetra makes exclusive use of double precision arithmetic, 
+Epetra\_Operator and Epetra\_MultiVector are used only with 
+scalar type \verb!double!. For brevity, it is useful to declare type definitions
+for these classes:
+\begin{verbatim}
+typedef double ST;
+typedef Epetra_MultiVector MV;
+typedef Epetra_Operator OP;
+\end{verbatim}
+
+\noindent Multivectors will be of type \verb!MV!:
+\begin{verbatim}
+Teuchos::RCP<MV> X 
+   = Teuchos::rcp( new MV(...) );
+\end{verbatim}
+
+\noindent Operators can be any subclass of \verb!OP!, for example, an Epetra\_CrsMatrix:
+\begin{verbatim}
+Teuchos::RCP<OP> A 
+   = Teuchos::rcp( new Epetra_CrsMatrix(...) );
+\end{verbatim}
+
+The Belos interface to Epetra defines a specialization of
+Belos::MultiVecTraits for Epetra\_MultiVector and a
+specialization of Belos::OperatorTraits for Epetra\_Operator
+applied to Epetra\_MultiVector. Therefore, we can now specify a
+linear solver and preconditioner utilizing these computational classes. 
+An example of defining and solving a linear problem using a Belos
+linear solver is given in the next section.
+
+
+\section{Defining and Solving a Linear Problem}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\label{sec:belos:example}
+
+This section gives sample code for solving a symmetric positive definite (SPD)
+linear problem using the block CG solver manager, Belos::BlockCGSolMgr. 
+The example code in this section comes from the Didasko example \TriExe{belos/ex1.cpp}.
+
+The first step in solving a linear problem is to define the problem using the
+Belos::LinearProblem class.  Assume we have chosen classes to represent our scalars, 
+multivectors and operators as \verb!ST!, \verb!MV! and \verb!OP!, respectively. Given an
+operator \verb!A!, a multivector \verb!X! containing the initial guess, and a multivector
+\verb!B! containing the right-hand side, all wrapped in Teuchos::RCP, 
+we would define the linear problem as follows:
+\begin{verbatim}
+Teuchos::RCP< LinearProblem<ST,MV,OP> > myProblem 
+  = Teuchos::rcp( new LinearProblem<ST,MV,OP>(A,X,B) );
+myProblem->setHermitian();
+bool ret = myProblem->setProblem();
+if (ret != true) {
+   // there should be no error in this example :)
+}
+\end{verbatim}
+
+The first line creates a Belos::LinearProblem object and wraps it in a
+Teuchos::\-RCP (Section~\ref{sec:teuchos:RCP}). The second line
+specifies the symmetry of the linear problem. The third line signals that we have
+finished setting up the linear problem. This step must be completed before
+attempting to solve the problem; failure to do so will result in the solver manager
+throwing an exception.
+
+Next, we create a parameter list wrapped in a Teuchos::\-RCP to specify the 
+parameters for the solver manager:
+\begin{verbatim}
+int verb = Belos::Warnings + Belos::Errors 
+         + Belos::FinalSummary + Belos::TimingDetails;
+Teuchos::RCP<Teuchos::ParameterList> myPL;
+myPL->set( "Verbosity", verb );
+myPL->set( "Block Size", 4 );
+myPL->set( "Maximum Iterations", 100 );
+myPL->set( "Convergence Tolerance", 1.0e-8 );
+\end{verbatim}
+
+Here, we have asked for the linear solver to output information regarding errors and
+warnings, as well as to provide a final summary after completing all iterations and
+print the timing information collected during the solve. We have also specified the
+tolerance for convergence testing (used to construct a status test); the block size; 
+and the maximum number of iterations (used to construct a status test).
+This solver manager permits other options as well, affecting the
+block size size as well as the output; see the Belos documentation.
+
+We now have all of the information needed to declare the solver manager and solve the
+problem:
+\begin{verbatim}
+Belos::BlockCGSolMgr<ST,MV,OP> mySolver( myProblem, myPL );
+\end{verbatim}
+The linear problem is solved with the instruction
+\begin{verbatim}
+Belos::ReturnType solverRet = mySolver.solve();
+\end{verbatim}
+
+The return value of the solver indicates whether the algorithm succeeded or not; i.e.,
+whether the requested residual tolerance was achieved in the alotted number of iterations.
+Output from \verb!solve()! routine in this example might look as follows:
+\begin{verbatim}
+Passed.......OR Combination ->
+  OK...........Number of Iterations = 21 < 100
+  Converged....(2-Norm Imp Res Vec) / (2-Norm Res0)
+               residual [ 0 ] = 6.38815e-09 < 1e-08
+               residual [ 1 ] = 9.08579e-09 < 1e-08
+               residual [ 2 ] = 9.26932e-09 < 1e-08
+               residual [ 3 ] = 4.43278e-09 < 1e-08
+
+================================================================================
+
+                              TimeMonitor Results
+
+Timer Name                                Local time (num calls)
+--------------------------------------------------------------------------------
+Belos: Operation Op*x                     0.000583 (22)
+Belos: Operation Prec*x                   0 (0)
+Epetra_CrsMatrix::Multiply(TransA,X,Y)    0.000453 (22)
+Belos: Orthogonalization                  0.006996 (23)
+Belos: BlockCGSolMgr total solve time     0.01208 (1)
+================================================================================
+\end{verbatim}
+
+The solution vector can be retrieved from the linear problem (where they were
+stored by the solver manager) as follows:
+\begin{verbatim}
+  Teuchos::RCP<MV> sol = myProblem->getLHS();
+\end{verbatim}
+Then the residual can be checked using the computed solution, resulting in output
+that should look like:
+\begin{verbatim}
+******************************************************
+           Results (outside of linear solver)
+------------------------------------------------------
+  Linear System         Relative Residual
+------------------------------------------------------
+  1                     6.388147e-09
+  2                     9.085794e-09
+  3                     9.269324e-09
+  4                     4.432775e-09
+******************************************************
+\end{verbatim}
+
+%Four examples are provided with the tutorial:
+%\begin{itemize}
+%\item \TriExe{belos/ex1.cpp}: compute the eigenvectors
+%corresponding to the smallest eigenvalues for a 2D Laplace problem using the block
+%Krylov Schur solver
+%\item \TriExe{belos/ex2.cpp}: solves the problem from \verb!ex1! 
+%using instead the block Davidson linear solver
+%\item \TriExe{belos/ex3.cpp}: uses the block Krylov Schur solver to solve a
+%  non-Hermitian convection-diffusion problem
+%\item \TriExe{belos/ex4.cpp}: uses the LOBPCG solver to solve the 2D Laplacian
+%problem from \verb!ex1!
+%\end{itemize}
+

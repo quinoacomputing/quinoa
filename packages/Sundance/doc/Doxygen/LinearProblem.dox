@@ -1,0 +1,232 @@
+/* @HEADER@ */
+# ************************************************************************
+# 
+#                              Sundance
+#                 Copyright (2005) Sandia Corporation
+# 
+# Copyright (year first published) Sandia Corporation.  Under the terms 
+# of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S. Government 
+# retains certain rights in this software.
+# 
+# This library is free software; you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License as
+# published by the Free Software Foundation; either version 2.1 of the
+# License, or (at your option) any later version.
+#  
+# This library is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#                                                                                 
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+# USA                                                                                
+# Questions? Contact Kevin Long (krlong@sandia.gov), 
+# Sandia National Laboratories, Livermore, California, USA
+# 
+# ************************************************************************
+/* @HEADER@ */
+
+namespace SundanceStdFwk
+{
+/*! \page linear_problems Linear Problems
+
+The information required to specify a linear PDE can be
+aggregated into a LinearProblem object. Aspects of using the LinearProblem
+object are described on this page
+
+<ul>
+<li> \ref eqn_build
+<li> \ref eqn_solve
+<li> \ref eqn_ordering
+<li> \ref eqn_lowlevel
+</ul>
+
+\section eqn_build Creating a Linear Problem
+
+The LinearProblem constructor
+takes six arguments,
+<ul>
+<LI> A Mesh, specifying the discrete geometry on which the problem is to be solved.
+<li> An Expr specifying the weak form of the equations
+<li> An Expr specifying the essential boundary conditions (if any). If the
+problem has no essential boundary conditions, then an empty expression
+should be given for this argument.
+<li> An Expr listing the test functions appearing in the equations. If there
+are multiple test functions, they should be passed through a List
+operator.
+<li> An Expr listing the unknown functions appearing in the equations.
+If there are multiple unknowns, they should be passed through a List
+operator.
+<li> A TSFExtended::VectorType<double> object, specifying the 
+type of low-level linear algebra objects to be used.
+</ul>
+
+\subsection multiple_eqns Specifying Multiple Equations and Unknowns
+
+Sundance can handle an arbitrarily large number of coupled
+weak equations and unknown field variables. Multiple weak equations
+can be written in two equivalent ways: as a List of equations,
+or as a sum of integrals. Because each equation is written
+in terms of its own test function, and the test functions are linearly
+independent, a sum of two weak equations is equivalent to enumerating
+the two equations in a list.
+
+For example, consider solving the coupled system of equations
+\f[
+u_{xx} = v
+\f]
+\f[
+v_{xx} = 1
+\f]
+on \f$\Omega \equiv x \in [0,1]\f$ with boundary conditions
+\f[
+u(0)=u(1)=0
+\f]
+\f[
+v(0)=v(1)=0
+\f]
+The Galerkin weak form of the equation is
+\f[
+\int_\Omega u_x {\hat u}_x + {\hat u} v 
++ \int_\Omega v_x {\hat v}_x + x {\hat v} = 0 \;\; \forall {\hat u}, {\hat v}
+\f]
+We can write the pieces of this weak form in Sundance code as
+\code
+Expr uEqn = Integral(interior, (dx*uHat)*(dx*u) + uHat*v, quad2);
+Expr vEqn = Integral(interior, (dx*vHat)*(dx*v) + x*vHat, quad2);
+\endcode
+and give it to the linear problem as either <tt>uEqn + vEqn</tt>
+or <tt>List(uEqn, vEqn).</tt>
+Likewise, the essential BCs can either be added or listed. Internally,
+a list of equations in transformed into a sum so the difference is
+purely one of taste at the user level. 
+
+\section eqn_solve Solving a Linear Problem 
+
+A LinearProblem assembles the matrix \f$K\f$ and vector \f$f\f$
+that appear in the discrete form of the linear problem
+\f[
+K x = f
+\f]
+To solve this system, a linear solver algorithm is required. 
+See the section on <A HREF="linear_solvers.html"> linear solvers </A>
+for information on setting up linear solvers. 
+
+A linear problem is most easily solved using the <tt>solve()</tt>
+method of LinearProblem, for example,
+\code
+Expr soln = myProb.solve(mySolver);
+\endcode
+where <tt>mySolver</tt> is an object of type TSFExtended::LinearSolver.
+As can be seen, the solution is returned as a Sundance expression
+object, and thus can be used in other equations. 
+
+\subsection eqn_solve_status Checking the Solve Status
+
+After solving, the convergence status of the solver can be obtained
+by calling the LinearProblem::solveStatus() method.
+
+
+\section eqn_ordering Ordering of Equations and Unknowns
+
+The order in which equations and unknowns are written can make a
+difference in the performance of a linear solver, and in keeping with
+the overall design 
+goal of flexibility, Sundance gives you the ability to specify
+this ordering. In order to understand how Sundance's ordering
+specification works, let's look into how Sundance decides unknown and
+equation numbering.
+
+Given a mesh and a set of unknowns, the Sundance discretization engine
+will traverse the mesh one maximal cell at a time and find all
+unknowns associated with that cell and its facets. In a problem with
+multiple unknowns, say velocity, pressure, and temperature, there can
+be more than one unknown associated with a cell; if so, the unknowns
+are assigned in the order that their associated UnknownFunction
+objects are listed in the LinearProblem constructor.  This
+scheme gives us two ways to control the unknown ordering:
+<ul>
+<li> <b>Cell ordering</b> specifies the order in which cells 
+are encountered as the mesh is traversed.
+<li> <b>Function ordering</b> specifies the order in which 
+different functions are listed within a single cell.
+</ul>
+
+\subsection cell_ordering Ordering of Cells
+
+There are low-level hooks for alternate cell orderings in Sundance, however,
+at this point we have only implemented the identity reordering, i.e., 
+no reordering relative to the ordering defined by the mesh.
+
+\subsection func_ordering Ordering of Functions
+
+Function ordering is controlled by the order in which test or unknown
+functions appear in the linear problem constructor. For example, if
+<tt>ux, uy,</tt> and <tt>p</tt> are unknowns we can order them as
+<tt>List(ux, uy, p)</tt>, or as <tt>List(p, ux, uy)</tt> or any of the other
+permutations. A list with the desired ordering is given to the 
+LinearProblem constructor, e.g.,
+\code
+LinearProblem problem(mesh, eqn, bc, List(vx, vy, q), List(ux, uy, p), vecType);
+\endcode
+Notice that the test functions need not have the same ordering as
+their corresponding unknowns: it is possible
+to do a nonsymmetric ordering such as
+\code
+LinearProblem problem(mesh, eqn, bc, List(vx, vy, q), List(p, ux, uy), vecType);
+\endcode
+Nonsymmetric reorderings are often useful in PDE-constrained optimization.
+
+\subsection eqn_block Segregation of Equations and Unknowns into Blocks
+
+Segregation of variables is not yet implemented in this version
+of Sundance.
+
+\section eqn_lowlevel Access to Low-Level Problem Information
+
+Programming with Sundance is usually done at a high level of abstraction;
+however, it is sometimes useful to get low-level information
+about the discrete form of a problem.
+
+\subsection eqn_ops Access to Operators and Vectors
+
+If you want to inspect the system matrix and vector, or want to use them
+for some purpose other than solving a linear system, it is possible
+to do so. 
+The <tt>getOperator()</tt> and <tt>getRHS()</tt> methods of LinearProblem
+return the stiffness matrix and load vector, respectively. They are returned
+as TSF objects. You may sometimes want to access the concrete object
+referenced by a TSF object; if so, refer 
+to the documentation for the TSF adaptors to your
+concrete type for details on how to extract 
+the concrete object, e.g., an EPetra
+matrix, underlying a TSF object.
+
+
+\subsection eqn_tables DOF Maps and Essential BC Markers
+
+The degree-of-freedom (DOF) maps for the row and column spaces
+can be accessed through the rowMap() and colMap() methods of LinearProblem.
+These maps specify how cell and function indices are mapped into
+indices into the matrix and vector.
+This is sometimes useful for low-level debugging, or for making custom
+modifications to your matrix or vector.
+
+The bcRows() method of LinearProblem returns an STL set of all
+rows that are marked as boundary condition rows and processed
+using the replace method described in the page on
+<A HREF="bcs.html"> boundary conditions. </A>
+
+\subsection eqn_makesoln Building a Solution Expression
+
+If you solve the system outside the LinearProblem::solve() method
+but still want to capture the result into a Sundance expression
+object, you can do so by using the LinearProblem::formSolutionExpr()
+method.
+
+
+
+*/
+}

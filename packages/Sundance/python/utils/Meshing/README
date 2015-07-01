@@ -1,0 +1,33 @@
+
+To partition an exodus file joe.exo onto N processors, run
+
+./partitionExo --np=N --i=joe
+
+Note that the .exo suffix on joe.exo has not been included. 
+
+This will write to Triangle format. The files will be 
+
+joe.N.0.ele
+joe.N.0.node
+joe.N.0.par
+joe.N.0.side
+joe.N.1.ele
+joe.N.1.node
+joe.N.1.par
+joe.N.1.side
+... up to ...
+joe.N.{N-1}.ele
+joe.N.{N-1}.node
+joe.N.{N-1}.par
+joe.N.{N-1}.side
+
+Use the TriangleMeshReader reader to create the mesh as follows:
+
+MeshType meshType = new BasicSimplicialMeshType();
+MeshSource meshSrc = new TriangleMeshReader("joe", meshType);
+Mesh mesh = meshSrc.getMesh();
+
+Each processor will automatically read the correct piece of the partitioned mesh.
+
+Requirements:
+You will need chaco, available from http://www.cs.sandia.gov/~bahendr/chaco.html

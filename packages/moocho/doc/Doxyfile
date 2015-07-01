@@ -1,0 +1,53 @@
+#
+# Note: all relative paths are relative to package/doc!
+#
+@INCLUDE = Doxyfile.options
+@INCLUDE=thyra/doc/TagFiles # Requires @INCLUDE_PAH=$(TRILINOS_HOME)/packages
+TAGFILES += \
+  $(TRILINOS_HOME)/packages/common/tag_files/epetra.tag=$(TRILINOS_HOME)/packages/epetra/doc/html \
+  $(TRILINOS_HOME)/packages/common/tag_files/EpetraThyra.tag=$(TRILINOS_HOME)/packages/epetra/thyra/doc/html \
+  $(TRILINOS_HOME)/packages/common/tag_files/epetraext.tag=$(TRILINOS_HOME)/packages/epetraext/doc/html \
+  $(TRILINOS_HOME)/packages/common/tag_files/EpetraExtThyra.tag=$(TRILINOS_HOME)/packages/epetraext/thyra/doc/html \
+  $(TRILINOS_HOME)/packages/common/tag_files/stratimikos.tag=$(TRILINOS_HOME)/packages/stratimikos/doc/html \
+  $(TRILINOS_HOME)/packages/common/tag_files/MoochoUtilities.tag=$(TRILINOS_HOME)/packages/moocho/src/MoochoUtilities/doc/html \
+  $(TRILINOS_HOME)/packages/common/tag_files/IterationPack.tag=$(TRILINOS_HOME)/packages/moocho/src/IterationPack/doc/html \
+  $(TRILINOS_HOME)/packages/common/tag_files/RTOpPack.tag=$(TRILINOS_HOME)/packages/moocho/src/RTOpPack/doc/html \
+  $(TRILINOS_HOME)/packages/common/tag_files/DenseLinAlgPack.tag=$(TRILINOS_HOME)/packages/moocho/src/DenseLinAlgPack/doc/html \
+  $(TRILINOS_HOME)/packages/common/tag_files/AbstractLinAlgPack.tag=$(TRILINOS_HOME)/packages/moocho/src/AbstractLinAlgPack/doc/html \
+  $(TRILINOS_HOME)/packages/common/tag_files/NLPInterfacePack.tag=$(TRILINOS_HOME)/packages/moocho/src/NLPInterfacePack/doc/html \
+  $(TRILINOS_HOME)/packages/common/tag_files/ConstrainedOptPack.tag=$(TRILINOS_HOME)/packages/moocho/src/ConstrainedOptPack/doc/html \
+  $(TRILINOS_HOME)/packages/common/tag_files/MoochoPack.tag=$(TRILINOS_HOME)/packages/moocho/src/MoochoPack/doc/html \
+  $(TRILINOS_HOME)/packages/common/tag_files/MoochoThyra.tag=$(TRILINOS_HOME)/packages/moocho/thyra/doc/html
+# RAB: Note that I could not simply include the tag files from each individual package since
+# this caused doxygen to hang.
+#
+# Package options
+#
+PROJECT_NAME           = "MOOCHO"
+OUTPUT_DIRECTORY       = .
+#
+# What and how documentation is extracted
+#
+INPUT                  = ./index.doc ../example ../thyra/example
+IMAGE_PATH             =
+EXAMPLE_PATH           = ../example/NLPWBCounterExample ../example/NLPWBCounterExample/sample_output \
+                         ../example/ExampleNLPBanded ../example/ExampleNLPBanded/sample_output \
+                         ../thyra/example/NLPThyraEpetraModelEval4DOpt \
+                         ../thyra/example/NLPThyraEpetraAdvDiffReactOpt \
+                         ../src/MoochoPack/configurations/sample_option_files \
+                         ../../stratimikos/example
+EXCLUDE                = 
+EXAMPLE_PATTERNS       =
+INPUT_FILTER           = 
+ALPHABETICAL_INDEX     = YES
+IGNORE_PREFIX          = 
+#
+# Conditional sections
+#
+ENABLED_SECTIONS       = BUILD_HTML
+#
+# Links to other packages
+#
+GENERATE_TAGFILE       = ../../common/tag_files/moocho.tag
+ALLEXTERNALS           = YES
+EXTERNAL_GROUPS        = YES

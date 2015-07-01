@@ -1,0 +1,66 @@
+#-----------------------------------------------------------------------
+#      phdMesh : Parallel Heterogneous Dynamic unstructured Mesh
+#                 Copyright (2007) Sandia Corporation
+#
+#  Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
+#  license for use of this work by or on behalf of the U.S. Government.
+#
+#  This library is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU Lesser General Public License as
+#  published by the Free Software Foundation; either version 2.1 of the
+#  License, or (at your option) any later version.
+#
+#  This library is distributed in the hope that it will be useful, but
+#  WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+#  Lesser General Public License for more details.
+#
+#  You should have received a copy of the GNU Lesser General Public
+#  License along with this library; if not, write to the Free Software
+#  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+#  USA
+#-----------------------------------------------------------------------
+
+TEST_UTIL_EXE = test_util.exe
+
+TEST_UTIL_SRC_DIR = $(PHDMESH_PATH)/tests/util
+
+TEST_UTIL_OBJ_FILES =	\
+	test_array.o	\
+	test_comm_bounds.o	\
+	test_comm.o	\
+	test_comm_all.o	\
+	test_containers.o	\
+	test_octtree.o	\
+	test_util.o
+
+#-----------------------------------------------------------------------
+
+test_util_all : $(TEST_UTIL_EXE)
+
+test_util_run : $(TEST_UTIL_EXE)
+	cp $(TEST_UTIL_SRC_DIR)/test_util.i .
+	$(RUN) ./$(TEST_UTIL_EXE) test_util.i > test_util.log
+
+test_util_clean :
+	rm -f $(TEST_UTIL_EXE) $(TEST_UTIL_OBJ_FILES) test_util.i test_util.log
+
+#-----------------------------------------------------------------------
+
+vpath %.c   $(TEST_UTIL_SRC_DIR)
+vpath %.cpp $(TEST_UTIL_SRC_DIR)
+
+#-----------------------------------------------------------------------
+
+$(TEST_UTIL_OBJ_FILES)	: $(UTIL_INC_DEPS)
+
+$(TEST_UTIL_EXE)	:	\
+			$(TEST_UTIL_OBJ_FILES)	\
+			$(UTIL_LIB)
+	$(LDCXX) $(CXXFLAGS) $(LDFLAGS) -L. -o $@	\
+			$(TEST_UTIL_OBJ_FILES)	\
+			$(UTIL_LIB_LINK)	\
+			$(CXX_LIB_EXT)
+
+#-----------------------------------------------------------------------
+

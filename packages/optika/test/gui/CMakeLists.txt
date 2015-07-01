@@ -1,0 +1,3 @@
+ADD_SUBDIRECTORY(basic)
+ADD_SUBDIRECTORY(datatypes)
+ADD_SUBDIRECTORY(dependencyandexec)

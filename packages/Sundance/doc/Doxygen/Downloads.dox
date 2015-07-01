@@ -1,0 +1,58 @@
+/* @HEADER@ */
+# ************************************************************************
+# 
+#                              Sundance
+#                 Copyright (2005) Sandia Corporation
+# 
+# Copyright (year first published) Sandia Corporation.  Under the terms 
+# of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S. Government 
+# retains certain rights in this software.
+# 
+# This library is free software; you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License as
+# published by the Free Software Foundation; either version 2.1 of the
+# License, or (at your option) any later version.
+#  
+# This library is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#                                                                                 
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+# USA                                                                                
+# Questions? Contact Kevin Long (krlong@sandia.gov), 
+# Sandia National Laboratories, Livermore, California, USA
+# 
+# ************************************************************************
+/* @HEADER@ */
+
+/*! \page downloads_page Downloading Sundance
+
+<H2> Unpacking Sundance </H2>
+
+<ul>
+<li> To unpack Sundance, type
+\code
+tar -zxf sundance-2.x.y.tar.gz
+\endcode
+or
+\code
+gunzip -c sundance-2.x.y.tar.gz | tar -xf -
+\endcode
+where you should replace <tt>2.x.y</tt> with the version number of the file
+you have downloaded.
+</ul>
+
+
+<H2> Version 2.3 </H2>
+
+<ul>
+<li> <A HREF="http://www.math.ttu.edu/~klong/Sundance/sundance-2.3.0.tar.gz"> Sundance 2.3.0 </a> (10 May 2008)
+</ul>
+Version 2.3.0 should be built against
+either the development version of Trilinos, or release 8.0.x of Trilinos.
+
+
+*/

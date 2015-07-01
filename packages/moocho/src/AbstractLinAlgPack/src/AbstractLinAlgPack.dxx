@@ -1,0 +1,282 @@
+/** \mainpage AbstractLinAlgPack: Abstract interfaces to basic linear algebra.
+
+The namespace C++ <tt>AbstractLinAlgPack</tt> contains abstract
+interfaces to linear algebra vectors and matrices and allow an
+application to perform linear algebra operations with these objects
+without needing to know anything about their special properties.  For
+example, a numerical optimization or equation solver algorithm can be
+written in such a way that it can be used with serial, parallel and
+other specialized types of linear algebra libraries and computing
+environments.  The code in <tt>AbstractLinAlgPack</tt> is logically
+broken up into three seperate pieces (and compiled into three separate
+libraries).  <ol>
+
+<li> Fundamental vector and matrix interfaces
+(<tt>\ref libAbstractLinAlgPackItfc_grp "libAbstractLinAlgPackItfc"</tt>):
+This library contains several
+different vector and matrix interfaces and includes the bare minimum
+support software needed for default method implementations.  The
+primary vector interfaces are <tt>\ref AbstractLinAlgPack::Vector
+"Vector"</tt> and <tt>\ref AbstractLinAlgPack::VectorMutable
+"VectorMutable"</tt> (derived from <tt>Vector</tt>).  These vector
+interfaces represent nonmutable and mutable vectors respectively.  The
+basic matrix interface compatible with these vector interfaces is
+<tt>\ref AbstractLinAlgPack::MatrixOp "MatrixOp"</tt>.
+
+This library also contains many different useful vector operations
+that are implemented using the vector interfaces <tt>Vector</tt> and
+<tt>VectorMutable</tt>.  More and more useful vector operations will
+be added to this library as they are needed.  The reason that these
+vector operations are included in this basic interface library is that
+many of the default implementations depend on them.
+
+<li> Auxiliary subclasses and tools based on the fundamental vector
+and matrix interfaces
+(<tt>\ref libAbstractLinAlgPackTools_grp "libAbstractLinAlgPackTools"</tt>):
+The classes and other functions in this library are not fundamental
+and could be recreated by any developer to meet the needs of the
+application.  However, they are included here since it is anticipated
+that they will meet the needs of many different developers.  An
+example of a useful vector subclass is <tt>\ref
+AbstractLinAlgPack::VectorMutableBlocked "VectorMutableBlocked"</tt>.
+This subclass allows a vector object to be constructed out of a set of
+<tt>VectorMutable</tt> objects and allows for great flexibility.  Some
+useful and flexible testing software is also included here that will
+be of great use to any developer.
+
+<li> Adapter subclasses for <tt>TSFCore</tt> objects
+(<tt>\ref libAbstractLinAlgPackTSFCore_grp "libAbstractLinAlgPackTSFCore"</tt>):
+These are simple wrappers for all of the major <tt>AbstractLinAlgPack</tt>
+interfaces classes described above using <tt>TSFCore</tt> objects.
+
+<li> Interfaces for mixed abstract and serial computaitons
+(<tt>\ref libAbstractLinAlgPackSerialItfc_grp "libAbstractLinAlgPackSerialItfc"</tt>):
+This library contains interfaces for exposing and accessing vectors
+and matrices using serial data structures.  For example, the classes
+<tt>VectorDenseEncap</tt> and and <tt>VectorDenseEncapMutable</tt> can
+be used to create nonmutable and mutable <tt>DVectorSlice</tt> views of
+abstract vector objects.  Other interfaces are included for extracting
+dense matrix views and extracting sparse elements.
+
+<li> Implementations for serial linear algebra
+(<tt>\ref libAbstractLinAlgPackSerialImpl_grp "libAbstractLinAlgPackSerialImpl"</tt>):
+This library contains several different implementations of serial matrix
+implementations for dense and sparse matrices.
+
+<li> Interfaces and implementations of direct sparse solvers
+(<tt>\ref libAbstractLinAlgPackSerialSolvers_grp "libAbstractLinAlgPackSerialSolvers"</tt>):
+This library contains basic serial interfaces to direct solvers as well has several
+adapter subclasses the support several popular direct sparse solvers.
+
+</ol>
+
+*/
+//@{
+
+/** \defgroup libAbstractLinAlgPackItfc_grp libAbstractLinAlgPack 
+\brief Fundamental Vector and Matrix Interfaces.
+
+There are several different levels of foundational vector and matrix interfaces
+defined here.
+
+<ul>
+
+<li> Vector interfaces:
+
+Finite-dimensional coordinate vectors are abstracted by the
+interfaces <tt>\ref AbstractLinAlgPack::Vector "Vector"</tt>
+and <tt>\ref AbstractLinAlgPack::VectorMutable "VectorMutable"</tt>.
+Every vector is a member of a vector space.  Vector spaces are represented in software
+as objects with their own abstract interface.  For <tt>VectorMutable</tt>, the
+vector space is represented through the base interface
+<tt>\ref AbstractLinAlgPack::VectorSpace "VectorSpace"</tt>.
+In software terms, a vector space object primarily acts as an
+"Abstract Factory" [Design Patterns, Gamma, et. al., 1995] and derives also from the base interface
+<tt>\ref Teuchos::AbstractFactory "AbstractFactory<VectorMutable>"</tt>.
+In addition to acting as abstact
+factories, vector space objects are responsible for determining the compatibility
+of vector objects which is useful in debugging an application.  Vector spaces
+also provide the definition of the inner product for a vector space.
+
+These finite dimensional coordinate vectors and vector spaces admit a finite dimension
+(i.e. <tt>\ref AbstractLinAlgPack::VectorSpace::dim "VectorSpace::dim()"</tt>) and allow access to
+arbitrary vector elements (i.e.
+<tt>\ref AbstractLinAlgPack::Vector::get_ele "Vector::get_ele(i)"</tt>
+and <tt>\ref AbstractLinAlgPack::VectorMutable::set_ele "VectorMutable::set_ele(i,val)"</tt>).
+While any arbibrary vector
+operation can be implemented if direct access to the individual elements of vectors are granted,
+to do so through virtual function calls on an element-wise basis is unacceptable slow and would
+not even be correct in may environments (i.e. parallel programs).  What is needed is a different
+way to represent and implement vector reduction and transformation operations that puts the client
+(i.e. numerical application developer) in charge while still allowing efficient implementation
+in a variety of environments.
+
+The solution to this problem which has been embraced by these vector interfaces is to adopt a <A HREF="../../RTOpPack/html/index.html">
+specification for user defined vector reduction/transformation operators </A>.  This design is based on
+the "Visitor" design pattern.  A detailed (but slightly out of date) discussion of the underlying design concepts for
+this idea can be found at http://dynopt.cheme.cmu.edu/roscoe/RTOp/doc/RTOp.ps .  These vector interfaces accept 
+operator objects through to the C++ <tt>RTOpPack::RTOp</tt> interface.  The vector interfaces <tt>Vector</tt>
+declares the method <tt>\ref AbstractLinAlgPack::Vector::apply_op "Vector::apply_op(...)"</tt>
+that accepts <tt>RTOp</tt> objects and use them to perform
+the desired reduction/transformation operations.  This method allows great flexibility in how vectors are
+used in an application.  The method <tt>apply_op(...)</tt> can be
+used to allow vector objects to participate as sub-vectors in a larger composite vector (see
+<tt>\ref AbstractLinAlgPack::VectorMutableBlocked "VectorMutableBlocked"</tt>)
+or allow only sub-sets of the elements to participate in vector operatations (see
+<tt>\ref AbstractLinAlgPack::VectorMutableSubView "VectorMutableSubView"</tt>).  All of the other methods that are
+associated with these vector interfaces have default implementations based on <tt>apply_op(...)</tt>
+using default C <tt>RTOp_RTOp</tt> operator classes.  Therefore, to define a very powerful,
+fully functional vector subclass, only two methods must be overridden: 
+<tt>\ref AbstractLinAlgPack::Vector::space "Vector::space()"</tt>
+(which requires defining a concreate <tt>\ref AbstractLinAlgPack::VectorSpace "VectorSpace"</tt> class with two pure virtual methods
+<tt>\ref AbstractLinAlgPack::VectorSpace::dim "VectorSpace::dim()"</tt> and
+<tt>\ref AbstractLinAlgPack::VectorSpace::create_member "VectorSpace::create_member()"</tt>) and
+<tt>\ref AbstractLinAlgPack::Vector::apply_op "Vector::apply_op(...)"</tt>.
+By far the hardest method to implement is <tt>apply_op(...)</tt>.  Compare this
+to most other abstract vector interfaces that require between 20-50 pure virtual methods that most be overridden
+(e.g. 26 methods in <A HREF="http://www.cs.sandia.gov/~mheroux/Trilinos/doc/tsf/doc/html/class_tsf__multivector.html">TSF</A>
+and 56 methods in <A HREF="http://www.trip.caam.rice.edu/txt/hcldoc/html/HCL_Vector_d.html">HCL</A>).
+
+<li> Matrix interfaces:
+
+ToDo: Discuss operator base interfaces.
+
+The base class for finite dimensional, coordinate based matrices is <tt>\ref AbstractLinAlgPack::MatrixBase "MatrixBase"</tt>.
+This base interface contains only dimensionality information for a matrix.  The derived interface
+<tt>\ref AbstractLinAlgPack::MatrixOp "MatrixOp"</tt> contains a whole slew of methods for performing standard
+BLAS-like linear algebra operations with a general, possibly rectangular, possibly rank deficient matrix.  Nearly any abstraction
+that can be though of as a matrix should be able to implement this interface.  A matrix object primarily acts as an operator that
+transforms (linearly) vectors from one vector space to another.
+<tt>\ref AbstractLinAlgPack::MatrixOpNonsing "MatrixOpNonsing"</tt> is a specialization of <tt>MatrixOp</tt>
+for matrices that are square and nonsingular.  This interface adds methods for solving for linear systems involving the matrix.
+While these matrix interfaces meet most of the needs of a numerical algorithm, there are some types of methods that can only
+by implemented by a symmetric matrix.  For example, the operations like <tt>C = b*C + B'*A*B</tt> and <tt>C = b*C + B'*inv(A)*B</tt>
+are only guaranteed to preserve the symmetry of the lhs matrix \a C if the matrix \a A is also symmetric.  To handle these types
+of specialized operations, symmetric matrix interface <tt>\ref AbstractLinAlgPack::MatrixSymOp "MatrixSymOp"</tt> and
+<tt>\ref AbstractLinAlgPack::MatrixSymOpNonsing "MatrixSymOpNonsing"</tt> are also included.  This design makes
+use of multiple inheritance so that all of the logical relationships between matrix types is preserved in the code.  For example,
+a nonsingular symmetric matrix satisfies all of the minimum properties of an unsymmetric nonsingular matrix, so it derived from
+the <tt>MatrixOpNonsing</tt> interface as well as from the <tt>MatrixSymOp</tt> interface.  This is an example
+of where multiple inheritance is needed accuratly model the application domain.
+
+A very specialized type of matrix implementation is one where the rows and/or columns and/or diagonals of a matrix can be
+individualy accessed as a client.  To support these types of matrices in an abstract manner, the interfaces
+<tt>\ref AbstractLinAlgPack::MultiVector "MultiVector"</tt> and <tt>\ref AbstractLinAlgPack::MultiVectorMutable "MultiVectorMutable"</tt>
+are defined.  Since a multi-vector satisfies all of the properties of a matrix, it supports the <tt>MatrixOp</tt> interface.
+Multi-vectors are so critical to the optimal performance of many applications that it is required that every
+<tt>\ref AbstractLinAlgPack::VectorSpace "VectorSpace"</tt> object is required to be able to create multi-vector objects
+in addition to vector objects.
+
+The <tt>MatrixOp</tt> interface assumes that
+matrix-vector multiplication with the original matrix <tt>y = M*x</tt> and its transpose <tt>y = M'*x</tt> can both be performed.
+The basic assumption that the untransposed and transposed operator are both allowed somewhat limits the types of <tt>MatrixOp</tt>
+subclasses that can be correctly and efficiently implemented.  Unlike other interfaces that encourage developers to selectively
+disallow implementations of certain operations, these interfaces assume almost universally that every published method must have
+a correct implementation in the subclass.  There are some race cases where a subclass may refuse to implement a method but in
+general this is not allowed. 
+
+<li> Miscellaneous vector operations.
+
+A set of functions for miscellaneous vector operations based on the RTOp operator classes in 
+<A HREF="../../RTOpStdOpsLib/html/index.html">libRTOpStdOpsLib</A> is declared in AbstractLinAlgPack_VectorStdOps.hpp
+and documented \ref VectorStdOps_grp "here".  As more general vector opeations are needed, they
+will be added to this header file.
+
+</ul>
+
+*/
+
+/** \defgroup libAbstractLinAlgPackTools_grp libAbstractLinAlgPackTools
+\brief Auxiliary Subclasses and Tools.
+
+One particularly useful vector subclass is <tt>\ref AbstractLinAlgPack::VectorMutableBlocked "VectorWithOpComposite"</tt>.
+This vector subclass allows a vector object to be created out of the concatonation of two or more other vector
+objects.  In most situations this is a near optimal implementation of such a composite vector.
+
+A major task in any development effort is testing.  Therefore, included in this library is a default
+testing class for the <tt>\ref AbstractLinAlgPack::VectorSpace "VectorSpace"</tt>,
+<tt>\ref AbstractLinAlgPack::Vector "Vector"</tt> and
+<tt>\ref AbstractLinAlgPack::VectorMutable "VectorMutable"</tt> interfaces called
+<tt>\ref AbstractLinAlgPack::VectorSpaceTester "VectorSpaceTester"</tt>.  This testing class performs some moderately
+though tests and have several options that can change its behavior.  To facilitate setting these options from
+and options file the subclass <tt>\ref AbstractLinAlgPack::VectorSpaceTesterSetOptions "VectorSpaceTesterSetOptions"</tt>
+is included.  When developing new subclasses for the fundamental vector interfaces, this testing class will
+become very familiar to the developers who do the debugging.
+
+*/
+
+/** \defgroup libAbstractLinAlgPackTSFCore_grp libAbstractLinAlgPackTSFCore
+\brief Adapter subclasses for <tt>TSFCore</tt> objects.
+
+<ul>
+<li> Adapter subclasses:
+  <ul>
+  <li><tt>AbstractLinAlgPack::InnerProductTSFCore</tt>: Adapts <em><tt>TSFCore::VectorSpace::scalarProd()</tt></em>
+  <li><tt>AbstractLinAlgPack::VectorSpaceFactoryTSFCore</tt>: Adapts <em><tt>TSFCore::VectorSpaceFactory</tt></em>
+  <li><tt>AbstractLinAlgPack::VectorSpaceTSFCore</tt>: Adapts <em><tt>TSFCore::VectorSpace</tt></em>
+  <li><tt>AbstractLinAlgPack::VectorMutableTSFCore</tt>: Adapts <em><tt>TSFCore::Vector</tt></em>
+  <li><tt>AbstractLinAlgPack::MatrixOpTSFCore</tt>: Adapts <em><tt>TSFCore::LinearOp</tt></em>
+  <li><tt>AbstractLinAlgPack::MultiVectorMutableTSFCore</tt>: Adapts <em><tt>TSFCore::MultiVector</tt></em>
+  <li><tt>AbstractLinAlgPack::MatrixOpNonsingTSFCore</tt>: Adapts <em><tt>TSFCore::LinearOpInvertible</tt></em>
+  </ul>
+</ul>
+
+*/
+
+/** \defgroup libAbstractLinAlgPackSerialItfc_grp libAbstractLinAlgPackSerialItfc
+\brief Interfaces for mixed abstract and serial computaitons.
+
+Blah blah blah ...
+
+*/
+
+/** \defgroup libAbstractLinAlgPackSerialImpl_grp libAbstractLinAlgPackSerialImpl
+\brief Implementations for serial linear algebra.
+
+Blah blah blah ...
+
+*/
+
+/** \defgroup libAbstractLinAlgPackSerialSolvers_grp libAbstractLinAlgPackSerialSolvers
+\brief Interfaces and implementations of direct sparse solvers.
+
+Blah blah blah ...
+
+*/
+
+<li> Classes:
+
+  The classes are divided into several categories.
+
+  <ul>
+  <li> Core abstract interface classes
+    <ul>
+    <li><em><tt>TSFCore::VectorSpace</tt></em>
+    <li><em><tt>TSFCore::Vector</tt></em>
+    <li><em><tt>TSFCore::LinearOp</tt></em>
+    <li><em><tt>TSFCore::MultiVector</tt></em>
+    <li><em><tt>TSFCore::LinearOpInvertible</tt></em>
+    </ul>
+  <li> Supporting abstract interface classes
+    <ul>
+    <li><em><tt>TSFCore::VectorSpaceFactory</tt></em>
+    <li><em><tt>TSFCore::Norm</tt></em>
+    </ul>
+  <li> Basic node support subclasses
+    <ul>
+    <li><em><tt>TSFCore::VectorSpaceSerialBase</tt></em>
+    <li><em><tt>TSFCore::VectorSerialBase</tt></em>
+    </ul>
+  <li> Basic concrete support subclasses
+    <ul>
+    <li><tt>TSFCore::VectorSpaceFactorySerial</tt>
+    <li><tt>TSFCore::VectorSpaceSerial</tt>
+    <li><tt>TSFCore::VectorSerial</tt>
+    <li><tt>TSFCore::MultiVectorCols</tt>
+    </ul>
+  </ul>
+
+
+
+
+//@}

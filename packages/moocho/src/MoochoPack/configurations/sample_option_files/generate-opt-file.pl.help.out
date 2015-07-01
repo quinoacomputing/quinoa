@@ -1,0 +1,9 @@
+
+Use: generate-opt-file.pl [-h] [-s] [-m,-i]
+  -h : Prints this help message
+  -s : Ommits comments form the generated Moocho.opt file
+  -m : Include options for MamaJama (active-set) config (default)
+  -i : Include options for IP config
+
+Perl scipt that generates a MOOCHO options file named "Moocho.opt" in the
+current working directory.

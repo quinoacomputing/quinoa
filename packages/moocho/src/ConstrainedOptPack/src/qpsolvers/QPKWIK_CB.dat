@@ -1,0 +1,5 @@
+C This is a common block for numerical parameters for QPKWIK
+C that are common for all instances of QPKWIK objects
+      
+      DOUBLE PRECISION  ZERO, ONE, SMALL, VSMALL, VLARGE
+      COMMON /QPKWIK_CB/ ZERO,ONE,SMALL,VSMALL,VLARGE

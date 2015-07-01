@@ -1,0 +1,11 @@
+ADD_SUBDIRECTORY(square_mesh)
+ADD_SUBDIRECTORY(PoissonExample)
+ADD_SUBDIRECTORY(CurlLaplacianExample)
+
+IF (${PACKAGE_NAME}_ENABLE_Stratimikos)
+   ADD_SUBDIRECTORY(assembly_engine)
+ENDIF()
+
+IF (${PACKAGE_NAME}_BUILD_SOLVER_DRIVERS_EPETRA)
+   ADD_SUBDIRECTORY(main_driver)
+ENDIF()

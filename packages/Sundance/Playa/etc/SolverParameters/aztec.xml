@@ -1,0 +1,19 @@
+
+<ParameterList>
+  <ParameterList name="Linear Solver">
+    <Parameter name="Max Iterations" type="int" value="500"/>
+    <Parameter name="Method" type="string" value="GMRES"/>
+    <ParameterList name="Preconditioner">
+       <Parameter name="Overlap" type="int" value="1"/>
+       <Parameter name="Type" type="string" value="Ifpack"/>
+       <Parameter name="Prec Type" type="string" value="ILU"/>
+       <ParameterList name="Ifpack Settings">
+         <Parameter name="fact: level-of-fill" type="int" value="1"/>
+       </ParameterList>
+    </ParameterList> 
+    <Parameter name="Tolerance" type="double" value="1e-13"/>
+    <Parameter name="Type" type="string" value="Aztec"/>
+    <Parameter name="Verbosity" type="int" value="2"/>
+  </ParameterList>
+</ParameterList>
+

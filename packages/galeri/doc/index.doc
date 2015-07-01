@@ -1,0 +1,126 @@
+/*!  \mainpage Introduction to Galeri
+
+  \image html galeri.png
+
+The Galeri package is a small Trilinos package, based on Epetra and Teuchos,
+whose aim is to easily generate 
+Epetra_Map, Epetra_CrsMatrix and Epetra_VbrMatrix objects. 
+Galeri offers a set of functionalities that are very close to that of the
+MATLAB's \c gallery() function. Several well know finite difference 
+matrices can be created. Also, Galeri contains a simple finite element code
+that can be used 
+to discretize scalar second order elliptic problems using Galerkin and SUPG
+techniques, on both 2D and 3D unstructured grids.
+
+The main functionalities of this package are:
+- Generation of Epetra_Map objects. See:
+  - For a list of supported maps, see \ref gl_GalleryMaps;
+  - \ref gl_maps_ex.
+- Generation of Epetra_CrsMatrix objects. See:
+  - For a list of supported matrices, \ref gl_GalleryCrsMatrix;
+  - \ref gl_matrices_ex.
+- Discretization of scalar, linear second-order PDE problems using finite
+  element. See:
+  - \ref gl_FiniteElements;
+  - \ref gl_fe_grid;
+  - \ref gl_fe_lapl;
+  - \ref gl_fe_adv.
+- Creation of a VBR matrix and other utilities. See:
+  - \ref gl_Utils.
+- \ref gl_Python.
+
+See also the \ref gl_Copyright, the 
+latest version of the \ref gl_README
+and \ref gl_ChangeLog files.
+
+There is also <A HREF="../../browser/doc/html/index.html">galeri browser
+documentation</A> that allows one to browse through all code and directories
+in the galeri package.
+
+*/
+
+/*!
+<!-- ---------------------------------------------------------------- -->
+\page gl_Python The Python interface
+
+Galeri can be used within PyTrilinos. You need to configure Trilinos with the
+\c --enable-python flag. PyTrilinos requires SWIG and Numeric; check the
+PyTrilinos web page for more details.
+
+Once compiled, the Python module of Galeri (PyGaleri) can be imported as
+
+\verbatim
+>>> from PyTrilinos import Galeri
+\endverbatim
+
+The only difference with respect to the C++ code is that Teuchos
+ParameterList's are replaced by Python's dictionaries. An example of usage is
+as follows.
+
+\verbatim
+>>> from PyTrilinos import Galeri, Epetra, AztecOO
+>>> Comm = Epetra.PyComm()
+>>> List = {"n": 10}
+>>> Map = Galeri.CreateMap("Linear", Comm, List)
+>>> Matrix = Galeri.CreateCrsMatrix("Laplace1D", Map, List);
+>>> LHS = Epetra.Vector(Map); LHS.PutScalar(0.0)
+>>> RHS = Epetra.Vector(Map); RHS.Random()
+>>> Solver AztecOO.AztecOO(Matrix, LHS, RHS);
+>>> Solver.Iterate(1550, 1e-9);
+\endverbatim
+
+The above example creates a linear map, with \c n elements, then a tridiagonal
+matrix, and solves the linear system using AztecOO.
+*/
+
+/*!
+<!-- ---------------------------------------------------------------- -->
+\page gl_Copyright Copyright
+
+\verbatim
+Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
+license for use of this work by or on behalf of the U.S. Government.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+
+1. Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright
+notice, this list of conditions and the following disclaimer in the
+documentation and/or other materials provided with the distribution.
+
+3. Neither the name of the Corporation nor the names of the
+contributors may be used to endorse or promote products derived from
+this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
+EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
+CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+\endverbatim
+*/
+
+/*!
+<!-- ---------------------------------------------------------------- -->
+\page gl_ChangeLog ChangeLog
+
+\include ChangeLog-Galeri
+*/
+
+/*!
+<!-- ---------------------------------------------------------------- -->
+\page gl_README README
+
+\include README-Galeri
+
+*/

@@ -1,0 +1,18 @@
+INCLUDE(TribitsSubPackageMacros)
+INCLUDE(TribitsAddExecutable)
+INCLUDE(TribitsLibraryMacros)
+
+TRIBITS_SUBPACKAGE(Nemspread)
+
+INCLUDE_DIRECTORIES(
+  "${CMAKE_CURRENT_SOURCE_DIR}"
+)
+
+SET(HEADERS "")
+APPEND_GLOB(SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/*.C)
+
+TRIBITS_ADD_EXECUTABLE(nem_spread NOEXEPREFIX NOEXESUFFIX SOURCES ${SOURCES} DEPLIBS exodus nemesis suplib COMM serial mpi)
+install_executable(nem_spread)
+
+TRIBITS_SUBPACKAGE_POSTPROCESS()
+

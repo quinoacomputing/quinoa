@@ -1,0 +1,53 @@
+Teuchos::GlobalMPISession::GlobalMPISession(): started serial run
+
+Echoing the command-line:
+
+../example/ExampleNLPBanded/ExampleNLPBanded.exe --echo-command-line --help 
+
+Usage: ../example/ExampleNLPBanded/ExampleNLPBanded.exe [options]
+  options:
+  --help                           Prints this help message
+  --pause-for-debugging            Pauses for user input to allow attaching a debugger
+  --echo-command-line              Echo the command-line but continue as normal
+  --moocho-options-file    string  Set the name of the MOOCHO options file in the OptionsFromStream format.  File is ignored if it does not exist!
+                                   (default: --moocho-options-file="Moocho.opt")
+  --moocho-extra-options   string  Extra MOOCHO options specified in the format "OptGrp1{name1=val1,...,namen=valn}:OptGr2{name1=val1,...,namen=valn}:..."
+                                   (default: --moocho-extra-options="")
+  --show-options           bool    Show the commandline options or not.
+  --no-show-options                (default: --no-show-options)
+  --nD                     int     Number of dependent variables
+                                   (default: --nD=1)
+  --nI                     int     Number of independent variables
+                                   (default: --nI=1)
+  --bw                     int     Band width of the basis matrix
+                                   (default: --bw=1)
+  --mI                     int     Number of general inequality constriants
+                                   (default: --mI=0)
+  --xo                     double  Initial guess for x
+                                   (default: --xo=1)
+  --xDl                    double  Lower bounds on xD
+                                   (default: --xDl=-1e+50)
+  --xDu                    double  Upper bounds on xD
+                                   (default: --xDu=1e+50)
+  --xIl                    double  Lower bounds on xI
+                                   (default: --xIl=-1e+50)
+  --xIu                    double  Upper bounds on xI
+                                   (default: --xIu=1e+50)
+  --hl                     double  Lower bounds on general inequalities
+                                   (default: --hl=-1e+50)
+  --hu                     double  Upper bounds on general inequalities
+                                   (default: --hu=1e+50)
+  --diag-scal              double  Scaling of the basis diagonal
+                                   (default: --diag-scal=1)
+  --diag-vary              double  Variation of the basis diagonal scaling
+                                   (default: --diag-vary=1)
+  --nlp-selects-basis      bool    Determine if the NLP will select basis
+  --no-nlp-selects-basis           (default: --nlp-selects-basis)
+  --sym-basis              bool    Determine if the basis is symmetric
+  --unsym-basis                    (default: --unsym-basis)
+  --f_offset               double  Constant offset for objective function
+                                   (default: --f_offset=0)
+  --co                     double  Constant term in general equalities
+                                   (default: --co=0)
+  --ignore-constraints     bool    Determine if constraints are ignored or not
+  --no-ignore-constraints          (default: --no-ignore-constraints)

@@ -1,0 +1,165 @@
+\chapter{Mesh Interface}
+\label{append_mesh}
+
+\newcommand{\entrylabel}[1]{
+   {\parbox[b]{\labelwidth-4pt}{\makebox[0pt][l]{\textbf{#1}}\\}}}
+\newenvironment{Desc}
+{\begin{list}{}
+  {
+    \settowidth{\labelwidth}{40pt}
+    \setlength{\leftmargin}{\labelwidth}
+    \setlength{\parsep}{0pt}
+    \setlength{\itemsep}{-4pt}
+    \renewcommand{\makelabel}{\entrylabel}
+  }
+}
+{\end{list}}
+
+\section{Description}
+The \texttt{Mesquite::Mesh} class defines an interface through which Mesquite accesses and updates Mesh data.
+Mesh data is presented to Mesquite as a collection of mesh elements, the vertices used to define those mesh elements, and the
+topological relation between those entities.  The \texttt{Mesquite::Mesh} interface provides methods to query
+the set of elements and corresponding vertices contained in the working set for which Mesquite is to improve the quality.  The interface 
+also includes methods to store arbitrary data on mesh entities similar to that defined in the TSTT Tag interface.
+
+Mesquite does not use, nor does the \texttt{Mesh} interface provide access to,
+relations between elements (such as the faces of a hex or the edges of an element) 
+other than what can be obtained via vertex-to-element adjacencies.
+
+
+\section{Working Set}
+
+The working set is the set of elements for which Mesquite is to improve the quality, and the set of all vertices defining those elements.  
+The following Methods in the \texttt{Mesh} interface provide access to these lists.
+
+\index{get_all_elements@{get\_\-all\_\-elements}!Mesquite::Mesh@{Mesquite::Mesh}}
+\subsection{\setlength{\rightskip}{0pt plus 5cm}virtual void Mesquite::Mesh::get\_\-all\_\-elements (std::vector$<$ElementHandle$>$\& elem\_\-array, {\bf Msq\-Error} \& {\em err})\hspace{0.3cm}{\tt  [pure virtual]}}\label{classMesquite_1_1Mesh_a4}
+
+Fills array with handles for all elements in the working set.
+
+
+\index{get_all_vertices@{get\_\-all\_\-vertices}!Mesquite::Mesh@{Mesquite::Mesh}}
+\subsection{\setlength{\rightskip}{0pt plus 5cm}virtual void Mesquite::Mesh::get\_\-all\_\-vertices (
+std::vector$<$VertexHandle$>$\& {\em vert\_\-array}, {\bf Msq\-Error} \& {\em err})\hspace{0.3cm}{\tt  [pure virtual]}}\label{classMesquite_1_1Mesh_a3}
+
+Fills array with handles for all vertices in the working set.
+
+\index{element_iterator@{element\_\-iterator}!Mesquite::Mesh@{Mesquite::Mesh}}
+\subsection{\setlength{\rightskip}{0pt plus 5cm}virtual Element\-Iterator$\ast$ Mesquite::Mesh::element\_\-iterator ({\bf Msq\-Error} \& {\em err})\hspace{0.3cm}{\tt  [pure virtual]}}\label{classMesquite_1_1Mesh_a6}
+
+This method returns a pointer to an ElementIterator.  The returned ElementIterator should be allocated with the standard ::new operator, as 
+Mesquite will attempt to release the object with the standard ::delete operator.
+
+The ElementIterator object is a mechanism by which Mesquite may iterate over all elements in the working set.  If elements are added or removed from the mesh after obtaining an iterator, the behavior of that iterator is undefined.  The mesh interface implementation is not expected to maintain the validity of existing iterators if entities are added or
+removed from the mesh or the working set.
+
+\index{vertex_iterator@{vertex\_\-iterator}!Mesquite::Mesh@{Mesquite::Mesh}}
+\subsection{\setlength{\rightskip}{0pt plus 5cm}virtual Vertex\-Iterator$\ast$ Mesquite::Mesh::vertex\_\-iterator ({\bf Msq\-Error} \& {\em err})\hspace{0.3cm}{\tt  [pure virtual]}}\label{classMesquite_1_1Mesh_a5}
+
+This method returns a pointer to a VertexIterator.  The returned VertexIterator should be allocated with the standard ::new operator, as 
+Mesquite will attempt to release the object with the standard ::delete operator.
+
+The VertexIterator object is a mechanism by which Mesquite may iterate over all vertices in the working set.  If vertices are added or removed from the mesh after obtaining an iterator, the behavior of that iterator is undefined.  The mesh interface implementation is not expected to maintain the validity of existing iterators if entities are added or removed from the mesh or the working set.
+
+\section{Mesh Topology}
+
+The following methods provide access to topological relations of mesh entities.
+
+\index{elements_get_attached_vertices@{elements\_\-get\_\-attached\_\-vertices}!Mesquite::Mesh@{Mesquite::Mesh}}
+\subsection{\setlength{\rightskip}{0pt plus 5cm}virtual void Mesquite::Mesh::elements\_\-get\_\-attached\_\-vertices (const Element\-Handle $\ast$ {\em elem\_\-handles}, size\_\-t {\em num\_\-elems}, std::vector$<$VertexHandle$>$\& {\em vert\_handles}, std::vector$<$size\_t$>$\& {\em offsets}, {\bf Msq\-Error} \& {\em err})\hspace{0.3cm}{\tt  [pure virtual]}}\label{classMesquite_1_1Mesh_a18}
+
+This method returns a list of vertex handles corresponding to the vertices defining each element in the \char`\"{}elem\_\-handles\char`\"{} array.
+
+The passed back list of vertex handles (\char`\"{}vert\_\-handles\char`\"{}) must have the following properties:
+\begin{enumerate}
+\item The list must be the concatenation of the connectivity list for each input element, in the order those elements are specified
+in the input list of element handles.
+\item The list of vertices for each element must be in the canonical ordering specified in the TSTT mesh interface \cite{tstt}.
+\end{enumerate}
+
+The passed back list of offsets specifies the offset in \char`\"{}vert\_\-handles\char`\"{} at which the connectivity list for
+each element begins.  The list must have the following properties:
+\begin{enumerate}
+\item For an element at position $i$ in the input list of element handles, the value at position $i$ in the offset list
+must be the position in \char`\"{}vert\_\-handles\char`\"{} at which the connectivity for that element begins.
+\item The difference between the value at any position $i+1$ in the list and the value at position $i$ must be the length
+of the connectivity list for the element at position $i$ in the input list of element handles.
+\item Given the preceeding two items, the offset list have a length one greater than the number of input element handles.  
+Further, the first value must always be zero and the last must always be the length of the \char`\"{}vert\_\-handles\char`\"{} list.
+\item Given item 1 in this list and item 2 in the properties of the \char`\"{}vert\_\-handles\char`\"{} list, the
+offset list must contain monotonically increasing values.
+\end{enumerate}
+
+\index{elements_get_topologies@{elements\_\-get\_\-topologies}!Mesquite::Mesh@{Mesquite::Mesh}}
+\subsection{\setlength{\rightskip}{0pt plus 5cm}virtual void Mesquite::Mesh::elements\_\-get\_\-topologies (Element\-Handle $\ast$ {\em element\_\-handle\_\-array}, Entity\-Topology $\ast$ {\em element\_\-topologies}, size\_\-t {\em num\_\-elements}, {\bf Msq\-Error} \& {\em err})\hspace{0.3cm}{\tt  [pure virtual]}}\label{classMesquite_1_1Mesh_a21}
+
+
+Returns the topologies of the given entities. The \char`\"{}entity\_\-topologies\char`\"{} array must be at least \char`\"{}num\_\-elements\char`\"{} in size. 
+
+\index{vertices_get_attached_elements@{vertices\_\-get\_\-attached\_\-elements}!Mesquite::Mesh@{Mesquite::Mesh}}
+\subsection{\setlength{\rightskip}{0pt plus 5cm}virtual void Mesquite::Mesh::vertices\_\-get\_\-attached\_\-elements (const VertexHandle\-Handle $\ast$ {\em vert\_\-handles}, size\_\-t {\em num\_\-verts}, std::vector$<$ElementHandle$>$\& {\em elem\_handles}, std::vector$<$size\_t$>$\& {\em offsets}, {\bf Msq\-Error} \& {\em err})\hspace{0.3cm}{\tt  [pure virtual]}}\label{classMesquite_1_1Mesh_a18}
+
+This method returns, for each vertex in \char`\"{}vert\_\-handles\char`\"{}, the list of elements for which that vertex is contained in the
+connectivity list. 
+
+The passed back list of element handles (\char`\"{}elem\_\-handles\char`\"{}) must have the following properties:
+\begin{enumerate}
+\item The list must be the concatenation of the adjacent element list for each input vertex, in the order those vertices are specified
+in the input list of element handles.
+\item The list of adjacent elements for each vertex may be in an arbitrary order.
+\end{enumerate}
+
+The passed back list of offsets specifies the offset in \char`\"{}elem\_\-handles\char`\"{} at which the adjacency list for
+each vertex begins.  The list must have the following properties:
+\begin{enumerate}
+\item For an vertex at position $i$ in the input list of vertex handles, the value at position $i$ in the offset list
+must be the position in \char`\"{}elem\_\-handles\char`\"{} at which the adjacency for that vertex begins.
+\item The difference between the value at any position $i+1$ in the list and the value at position $i$ must be the length
+of the adjacency list for the vertex at position $i$ in the input list of vertex handles.
+\item Given the preceeding two items, the offset list have a length one greater than the number of input vertex handles.  
+Further, the first value must always be zero and the last must always be the length of the \char`\"{}elem\_\-handles\char`\"{} list.
+\item Given item 1 in this list and item 2 in the properties of the \char`\"{}elem\_\-handles\char`\"{} list, the
+offset list must contain monotonically increasing values.
+\end{enumerate}
+
+\section{Vertex Data}
+
+This section describes methods in the \texttt{Mesh} interface for accessing data associated with vertices.
+
+\index{vertices_get_coordinates@{vertices\_\-get\_\-coordinates}!Mesquite::Mesh@{Mesquite::Mesh}}
+\subsection{\setlength{\rightskip}{0pt plus 5cm}virtual void Mesquite::Mesh::vertices\_\-get\_\-coordinates (const VertexHandle\-Handle $\ast$ {\em vert\_\-handles}, const MsqVertex $\ast$ {\em coordinates}, size\_\-t {\em num\_\-verts}, {\bf Msq\-Error} \& {\em err})\hspace{0.3cm}{\tt  [pure virtual]}}
+
+Query vertex coordinates.
+
+\index{vertex_set_coordinates@{vertex\_\-set\_\-coordinates}!Mesquite::Mesh@{Mesquite::Mesh}}
+\subsection{\setlength{\rightskip}{0pt plus 5cm}virtual void Mesquite::Mesh::vertex\_\-set\_\-coordinates (Vertex\-Handle {\em vertex}, 
+const Vector3D\& {\em coordinates}, {\bf Msq\-Error} \& {\em err})\hspace{0.3cm}{\tt  [pure virtual]}}
+
+Modify the position of a vertex.
+
+\index{vertices_get_fixed_flag@{vertices\_\-get\_\-fixed\_\-flag}!Mesquite::Mesh@{Mesquite::Mesh}}
+\subsection{\setlength{\rightskip}{0pt plus 5cm}virtual bool Mesquite::Mesh::vertices\_\-get\_\-fixed\_\-flag (const VertexHandle\-Handle $\ast$ {\em vert\_\-handles}, const bool $\ast$ fixed\_flag\_array, size\_\-t {\em num\_\-verts}, {\bf Msq\-Error} \& {\em err})\hspace{0.3cm}{\tt  [pure virtual]}}\label{classMesquite_1_1Mesh_a7}
+
+For each vertex in the input list, return a Boolean flag specifying if the vertex is fixed.  Mesquite will not attempt to modify the 
+position of any vertex marked as fixed.
+
+\index{vertex_get_byte@{vertex\_\-get\_\-byte}!Mesquite::Mesh@{Mesquite::Mesh}}
+\subsection{\setlength{\rightskip}{0pt plus 5cm}virtual void Mesquite::Mesh::vertex\_\-get\_\-byte (Vertex\-Handle {\em vertex}, unsigned char $\ast$ {\em byte}, {\bf Msq\-Error} \& {\em err})\hspace{0.3cm}{\tt  [pure virtual]}}\label{classMesquite_1_1Mesh_a13}
+
+
+Retrieve the byte value for the specified vertex or vertices. The byte value is 0 if it has not yet been set via one of the \_\-set\_\-byte() functions. 
+
+This function may be removed as similar functionality is provided via the tag-related methods.
+
+\index{vertex_set_byte@{vertex\_\-set\_\-byte}!Mesquite::Mesh@{Mesquite::Mesh}}
+\subsection{\setlength{\rightskip}{0pt plus 5cm}virtual void Mesquite::Mesh::vertex\_\-set\_\-byte (Vertex\-Handle {\em vertex}, unsigned char {\em byte}, {\bf Msq\-Error} \& {\em err})\hspace{0.3cm}{\tt  [pure virtual]}}\label{classMesquite_1_1Mesh_a11}
+
+
+Each vertex has a byte-sized flag that can be used to store flags. This byte's value is neither set nor used by the mesh implementation. It is intended to be used by {\bf Mesquite} algorithms.  
+
+This function may be removed as similar functionality is provided via the tag-related methods.
+
+\section{Tag Data}
+
+This section describes the methods in the \texttt{Mesh} interface for working with arbitrary data attached to mesh entities.
+

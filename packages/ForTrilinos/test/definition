@@ -1,0 +1,7 @@
+PACKAGE_NAME=ForTrilinos
+
+(FRAMEWORK, INSTALL) {
+    TESTS = ./simpleEpetraOOFortranExample.exe;
+    ARGS = ;
+    COMM = MPI,SERIAL;
+}

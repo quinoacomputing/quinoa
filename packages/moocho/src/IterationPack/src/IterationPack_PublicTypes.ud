@@ -1,0 +1,28 @@
+// //////////////////////////////////////////////////////////////
+// IterationPackPublicTypes.ud
+//
+// This is a set of using declarations for the types that IterationPack
+// exposes publicly.  A namespace that wants to included these
+// names should use:
+//
+// namespace MyNamespace {
+//     #include "IterationPackPublicTypes.ud"
+// }
+
+using Teuchos::typeName;
+using Teuchos::TypeNameTraits;
+
+using IterationPack::EAssocStepType;
+using IterationPack::EDoStepType;
+using IterationPack::EAlgoReturn;
+using IterationPack::InvalidTypeCastException;
+using IterationPack::IterQuantity;
+using IterationPack::IterQuantityAccess;
+using IterationPack::IterQuantityAccessContiguous;
+using IterationPack::IterQuantityAccessDerivedToBase;
+using IterationPack::Algorithm;
+using IterationPack::AlgorithmStep;
+using IterationPack::AlgorithmState;
+using IterationPack::AlgorithmTracker;
+using IterationPack::AlgorithmTrackerComposite;
+using IterationPack::CastIQMember;

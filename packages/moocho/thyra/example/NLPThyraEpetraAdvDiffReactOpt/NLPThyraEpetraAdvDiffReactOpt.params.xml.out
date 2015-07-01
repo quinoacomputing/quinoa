@@ -1,0 +1,99 @@
+Teuchos::GlobalMPISession::GlobalMPISession(): started serial run
+<ParameterList>
+  <ParameterList name="Constraints Finite Difference Settings">
+    <Parameter name="FD Method" type="string" value="order-one"/>
+    <Parameter name="FD Step Length" type="double" value="-1"/>
+    <Parameter name="FD Step Select Type" type="string" value="Absolute"/>
+    <ParameterList name="VerboseObject">
+      <Parameter name="Output File" type="string" value="none"/>
+      <Parameter name="Verbosity Level" type="string" value="default"/>
+    </ParameterList>
+  </ParameterList>
+  <Parameter name="Forward Newton Dampening" type="bool" value="true"/>
+  <Parameter name="Forward Newton Max Iters" type="int" value="20"/>
+  <Parameter name="Forward Newton Max Line Search Iters" type="int" value="20"/>
+  <Parameter name="Forward Newton Tolerance" type="double" value="-1"/>
+  <ParameterList name="Inverse Objective Function Settings">
+    <Parameter name="Local Verbosity Level" type="string" value="default"/>
+    <Parameter name="Observation Index" type="int" value="-1"/>
+    <Parameter name="Observation Multiplier" type="double" value="1"/>
+    <Parameter name="Observation Pass Through" type="bool" value="false"/>
+    <ParameterList name="Observation Target Vector">
+      <Parameter name="Add Scalar" type="double" value="0"/>
+      <Parameter name="Explicit Array" type="string" value="{}"/>
+      <Parameter name="File Name Base" type="string" value=""/>
+      <Parameter name="Scale By" type="double" value="1"/>
+    </ParameterList>
+    <Parameter name="Observation Target as Parameter" type="bool" value="false"/>
+    <ParameterList name="Parameter Base Vector">
+      <Parameter name="Add Scalar" type="double" value="0"/>
+      <Parameter name="Explicit Array" type="string" value="{}"/>
+      <Parameter name="File Name Base" type="string" value=""/>
+      <Parameter name="Scale By" type="double" value="1"/>
+    </ParameterList>
+    <Parameter name="Parameter Multiplier" type="double" value="1e-06"/>
+    <Parameter name="Parameter Subvector Index" type="int" value="0"/>
+    <ParameterList name="VerboseObject">
+      <Parameter name="Output File" type="string" value="none"/>
+      <Parameter name="Verbosity Level" type="string" value="default"/>
+    </ParameterList>
+  </ParameterList>
+  <ParameterList name="Lumped Parameters Settings">
+    <Parameter name="Auto-generate Basis Matrix" type="bool" value="true"/>
+    <Parameter name="Dump Basis Matrix" type="bool" value="false"/>
+    <Parameter name="Ignore Parameter Bounds" type="bool" value="false"/>
+    <Parameter name="Local Verbosity Level" type="string" value="default"/>
+    <Parameter name="Nominal Value is Parameter Base" type="bool" value="true"/>
+    <Parameter name="Number of Basis Columns" type="int" value="1"/>
+    <Parameter name="Parameter Subvector Index" type="int" value="0"/>
+    <ParameterList name="VerboseObject">
+      <Parameter name="Output File" type="string" value="none"/>
+      <Parameter name="Verbosity Level" type="string" value="default"/>
+    </ParameterList>
+  </ParameterList>
+  <Parameter name="NLP Type" type="string" value="First Order"/>
+  <Parameter name="Nonlinearly Eliminate States" type="bool" value="false"/>
+  <ParameterList name="Objective Finite Difference Settings">
+    <Parameter name="FD Method" type="string" value="order-one"/>
+    <Parameter name="FD Step Length" type="double" value="-1"/>
+    <Parameter name="FD Step Select Type" type="string" value="Absolute"/>
+    <ParameterList name="VerboseObject">
+      <Parameter name="Output File" type="string" value="none"/>
+      <Parameter name="Verbosity Level" type="string" value="default"/>
+    </ParameterList>
+  </ParameterList>
+  <Parameter name="Output File Tag" type="string" value=""/>
+  <ParameterList name="Parameter Guess">
+    <Parameter name="Add Scalar" type="double" value="0"/>
+    <Parameter name="Explicit Array" type="string" value="{}"/>
+    <Parameter name="File Name Base" type="string" value=""/>
+    <Parameter name="Scale By" type="double" value="1"/>
+  </ParameterList>
+  <ParameterList name="Parameter Lower Bounds">
+    <Parameter name="Add Scalar" type="double" value="0"/>
+    <Parameter name="Explicit Array" type="string" value="{}"/>
+    <Parameter name="File Name Base" type="string" value=""/>
+    <Parameter name="Scale By" type="double" value="1"/>
+  </ParameterList>
+  <ParameterList name="Parameter Upper Bounds">
+    <Parameter name="Add Scalar" type="double" value="0"/>
+    <Parameter name="Explicit Array" type="string" value="{}"/>
+    <Parameter name="File Name Base" type="string" value=""/>
+    <Parameter name="Scale By" type="double" value="1"/>
+  </ParameterList>
+  <Parameter name="Parameters Solution File Base Name" type="string" value=""/>
+  <Parameter name="Show Model Evaluator Trace" type="bool" value="true"/>
+  <Parameter name="Solve Mode" type="string" value="Optimize"/>
+  <ParameterList name="State Guess">
+    <Parameter name="Add Scalar" type="double" value="0"/>
+    <Parameter name="Explicit Array" type="string" value="{}"/>
+    <Parameter name="File Name Base" type="string" value=""/>
+    <Parameter name="Scale By" type="double" value="1"/>
+  </ParameterList>
+  <Parameter name="State Solution File Base Name" type="string" value=""/>
+  <Parameter name="Use Built-in Inverse Objective Function" type="bool" value="false"/>
+  <Parameter name="Use Finite Differences For Constraints" type="bool" value="false"/>
+  <Parameter name="Use Finite Differences For Objective" type="bool" value="false"/>
+  <Parameter name="Use Parameter Lumping" type="bool" value="false"/>
+</ParameterList>
+

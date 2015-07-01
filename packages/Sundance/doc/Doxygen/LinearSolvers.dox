@@ -1,0 +1,360 @@
+/* @HEADER@ */
+# ************************************************************************
+# 
+#                              Sundance
+#                 Copyright (2005) Sandia Corporation
+# 
+# Copyright (year first published) Sandia Corporation.  Under the terms 
+# of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S. Government 
+# retains certain rights in this software.
+# 
+# This library is free software; you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License as
+# published by the Free Software Foundation; either version 2.1 of the
+# License, or (at your option) any later version.
+#  
+# This library is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#                                                                                 
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+# USA                                                                                
+# Questions? Contact Kevin Long (krlong@sandia.gov), 
+# Sandia National Laboratories, Livermore, California, USA
+# 
+# ************************************************************************
+/* @HEADER@ */
+
+/*! \page linear_solvers Linear Solvers
+
+<ul>
+<li> \ref solve
+<ul>
+<li> \ref build_solver
+<li> \ref writing_xml
+<ul>
+<li> \ref az_example
+<li> \ref tsf_example
+</ul>
+</ul>
+<li> \ref tsf
+<li> \ref az
+<ul> 
+<li> \ref az_opts
+<ul>
+<li> \ref az_solver_opts
+<li> \ref az_params
+</ul>
+<li> \ref az_key
+</ul>
+</ul>
+\section solve Linear Solvers in Sundance
+
+Sundance has no built-in solvers; it uses Trilinos solvers. The simplest
+solvers to use are those that have been wrapped in the Trilinos Solver
+Framework (TSF) interface for solvers, but it is possible
+to use solvers that have not yet been wrapped in the TSF interface.
+You can specify a choice
+of linear solver in several ways:
+<ul>
+<li> Construct a TSF solver from a specification given in an XML file. 
+<li> Construct a TSF solver by direct calls to a solver constructor
+<li> Obtain the system's stiffness matrix and load vector, do
+a <tt>dynamic_cast</tt> to get an object of
+concrete type (such as Epetra) and then
+give them to your favorite solver. With this method, you can use
+any solver compatible with the concrete vector/matrix type created
+by your run.
+</ul>
+This document describes the first of these methods. Note that the solve()
+method of LinearProblem uses only TSF solvers, so in order to use
+that method you must either use a TSF solver or wrap your
+favorite solver in the TSF interface.
+A number of solver types are currently available through the TSF interface.
+There are several "native" TSF solvers, that is, solvers that have
+been implemented directly in terms of TSF objects. Additionally,
+the Aztec solvers are available through TSF. 
+
+In the following sections, we 
+describe how to instantiate any of these solvers from an 
+XML file, and how to write a solver specification in XML.
+
+\subsection build_solver Creating a Solver Object from XML
+
+The TSF LinearSolverBuilder object can create solvers specified
+in terms of a Trilinos ParameterList object. A ParameterList can
+be created in a number of ways, most simply by reading from an XML file.
+The use of these objects is shown in the following code fragment.
+\code
+/* Read the parameters for the linear solver from an XML file */
+ParameterXMLFileReader reader("../../examples-tutorial/bicgstab.xml");
+ParameterList solverParams = reader.getParameters();
+
+LinearSolver<double> linSolver = LinearSolverBuilder::createSolver(solverParams);
+\endcode
+We next show how to write the XML for several solver types.
+
+\subsection writing_xml Writing Solver Parameter Lists in XML
+
+Parameters are represented in XML as a Parameter entity, which
+has fields for a <b>name,</b> a <b>type,</b>
+and a <b>value</b>, for example
+\code
+<Parameter name="Method" type="string" value="GMRES"/>
+\endcode
+Solver parameters types are usually <tt>"string",</tt> <tt>"int",</tt>
+or <tt>"double".</tt> 
+The parameters for a solver should be included in a ParameterList
+object with name "Linear Solver". In XML, this is written as follows.
+\code
+<ParameterList name="Linear Solver">
+   <!-- solver parameters go here -->
+</ParameterList>
+\endcode
+The solver package to be used (e.g., TSF, Aztec) should be specified with the
+<tt>Type</tt> parameter. Don't confuse this with the choice of solver
+<i> algorithm,</i> the specification of which is done in a way that 
+may vary from package to package (in both native TSF and Aztec solvers,
+it is done using the "Method" parameter).
+To use an Aztec solver, one would include
+\code
+<Parameter name="Type" type="string" value="Aztec"/>
+\endcode
+in the parameter list above, or to use a native TSF solver
+one would include
+\code
+<Parameter name="Type" type="string" value="TSF"/>
+\endcode
+
+We now show two examples; the meaning of the parameters in each
+solver specification is described more fully in the sections on
+\ref tsf and \ref az.
+
+\subsubsection az_example Example: Aztec's GMRES with ILU(k) preconditioning
+
+\code
+<ParameterList name="Linear Solver">
+   <Parameter name="Type" type="string" value="Aztec"/>
+   <Parameter name="Method" type="string" value="GMRES"/>
+   <Parameter name="Precond" type="string" value="Domain Decomposition"/>
+   <Parameter name="Subdomain Solver" type="string" value="ILU"/>
+   <Parameter name="Graph Fill" type="int" value="2"/>
+   <Parameter name="Max Iterations" type="int" value="1000"/>
+   <Parameter name="Tolerance" type="double" value="1e-6"/>
+</ParameterList>
+\endcode
+
+\subsubsection tsf_example Example: Native TSF BICGSTAB with ILU(k) preconditioning
+
+\code
+<ParameterList name="Linear Solver">
+   <Parameter name="Type" type="string" value="TSF"/>
+   <Parameter name="Method" type="string" value="BICGSTAB"/>
+   <Parameter name="Graph Fill" type="int" value="1"/>
+   <Parameter name="Max Iterations" type="int" value="800"/>
+   <Parameter name="Precond" type="string" value="ILUK"/>
+   <Parameter name="Tolerance" type="double" value="1e-12"/>
+   <Parameter name="Verbosity" type="int" value="4"/>
+</ParameterList>
+\endcode
+
+
+\section tsf XML Specification of Native TSF Solvers
+
+<ul>
+<li> <b> Solver type </b>
+<ul>
+<li> Parameter name: <tt>"Method"</tt>
+<li> Values: <tt>"BICGSTAB", "GMRES"</tt>
+</ul>
+<li> <b> Preconditioning type </b>
+<ul>
+<li> Parameter name: <tt>"Precond"</tt>
+<li> Values: <tt>"ILUK"</tt>
+</ul>
+<li> <b> Integer parameters </b>
+<ul>
+<li> <tt>"Max Iterations"</tt>
+<li> <tt>"Graph Fill"</tt>
+<li> <tt>"Verbosity"</tt>
+</ul>
+<li> <b> Real parameters </b>
+<ul>
+<li> <tt>"Tolerance"</tt>
+</ul>
+</ul>
+
+
+\section az XML Specification of Aztec Solvers
+
+The Aztec family of solvers is accessible through specification
+by XML parameters. Aztec has many options; below we describe the
+XML parameters used to select amongst those options.
+
+\subsection az_opts Aztec Options
+
+An Aztec solver is specified at runtime through a set of parameters read from
+a block of XML. Each parameter has fields for a <b>name,</b> a <b>type,</b>
+and a <b>value</b>, for example
+\code
+<Parameter name="Method" type="string" value="GMRES"/>
+\endcode
+We can broadly classify Aztec parameters into two types: numerical parameters
+where the value is some number (either integer or real, depending on
+the parameter) and string parameters, where the value is a string chosen
+from a predefined set of options. 
+
+\subsubsection az_solver_opts Aztec Solver Options
+
+This section lists parameters that control the type of solve
+algorithm to be used by Aztec. The name of each parameter is given,
+followed by a list of legal values for that parameter.
+<ul> 
+<li> <b>Selection of solver method</b>
+<ul>
+<li> Parameter name: <tt>"Method"</tt>
+<li> Values: <tt>"CG", "GMRES", "CGS", "TFQMR", "BICGSTAB", "Direct"</tt>
+</ul>
+<li> <b>Selection of preconditioner</b>
+<ul>
+<li> Parameter name: <tt>"Precond"</tt>
+<li> Values: <tt>"None", "Jacobi", "Neumann Series", "Symmetric Gauss-Seidel", 
+"Least-Squares Polynomial", "Domain Decomposition"</tt>
+</ul>
+<li> <b>Subdomain solver for domain decomposition</b>
+<ul>
+<li> Parameter name: <tt>"Subdomain Solver"</tt>
+<li> Values: <tt>"Approximate Sparse LU", "Saad ILUT", "ILU", "RILU",
+"Block ILU", "Incomplete Cholesky"</tt>
+</ul>
+<li> <b>Residual scaling method</b>
+<ul>
+<li> Parameter name: <tt>"Residual Scaling"</tt>
+<li> Values: <tt>"Initial", "RHS", "Matrix", "Solution", "No Scaling"</tt>
+</ul>
+<li> <b>Level of output</b>
+<ul>
+<li> Parameter name: <tt>"Verbosity"</tt>
+<li> Values: <tt>"All", "Silent", "Warnings", "Final Residual"</tt>
+</ul>
+<li> <b>Combination of subdomain results</b>
+<ul>
+<li> Parameter name: <tt>"Overlap Type"</tt>
+<li> Values: <tt>"Standard", "Symmetric"</tt>
+</ul>
+<li> <b>GMRES orthogonalization method</b>
+<ul>
+<li> Parameter name: <tt>"GMRES Orthogonalization"</tt>
+<li> Values: <tt>"Classical Gram-Schmidt", "Modified Gram-Schmidt"</tt>
+</ul>
+<li> <b>Seeding of auxiliary vectors</b>
+<ul>
+<li> Parameter name: <tt>"Auxiliary Vector"</tt>
+<li> Values: <tt>"Residual", "Random"</tt>
+</ul>
+</ul>
+
+\subsubsection az_params Aztec Solver Numerical Parameters
+
+This section lists the parameter names for the integer and double-valued
+parameters that are understood by Aztec. Note that not all parameters
+make sense with all solvers and preconditioners
+
+<ul>
+<li> <b>Integer-valued parameters</b>
+\code
+AZ_reorder            "Reorder ILU" // whether to reorder before ILU factoring
+AZ_keep_info          "Keep Factorization" // whether to preserve factorings between solves
+AZ_graph_fill         "Graph Fill"   // on-processor fill level for incomplete factorizations
+AZ_max_iter           "Max Iterations"  // max iterations for krylov solvers
+AZ_poly_ord           "Polynomial Order"  // order of polynomial precond
+AZ_kspace             "Restart Size" // Size of Krylov subspace to be stored by GMRES
+AZ_overlap            "Overlap"  // off-processor fill level for incomplete factorizations
+\endcode
+<li><b>Real-valued parameters</b>
+\code
+AZ_tol                "Tolerance" // convergence tolerance (see section on scaling)
+AZ_drop               "Drop Tolerance" // tolerance for discarding fill elements in an incomplete factorization
+AZ_ilut_fill          "Fill Ratio"  // maximum fill ratio allowed in an ILUT precond
+AZ_omega              "Damping" // damping factor
+\endcode
+</ul>
+
+\subsubsection az_key Mapping to Aztec macro names
+
+Internally, Aztec represents parameter and option values using
+C preprocessor macro names. To help map between the XML parameter
+names above and parameter and option names as given in the aztec documentation,
+we provide the following table of correspondences between names.
+\code
+AZ_solver             "Method"
+AZ_cg                 "CG"             
+AZ_gmres              "GMRES"          
+AZ_cgs                "CGS"            
+AZ_tfqmr              "TFQMR"          
+AZ_bicgstab           "BICGSTAB"       
+AZ_lu                 "Direct"         
+AZ_precond            "Precond"
+AZ_none               "None"
+AZ_Jacobi             "Jacobi"
+AZ_Neumann            "Neumann Series"
+AZ_sym_GS             "Symmetric Gauss-Seidel"
+AZ_ls                 "Least-Squares Polynomial"
+AZ_dom_decomp         "Domain Decomposition"
+AZ_subdomain_solve    "Subdomain Solver"
+AZ_lu                 "Approximate Sparse LU"
+AZ_ilut               "Saad ILUT"
+AZ_ilu                "ILU"
+AZ_rilu               "RILU"
+AZ_bilu               "Block ILU"
+AZ_icc                "Incomplete Cholesky"
+AZ_reorder            "Reorder ILU"
+AZ_keep_info          "Keep Factorization"
+AZ_graph_fill         "Graph Fill"
+AZ_max_iter           "Max Iterations"
+AZ_poly_ord           "Polynomial Order"
+AZ_kspace             "Restart Size"
+AZ_overlap            "Overlap"
+AZ_tol                "Tolerance"
+AZ_drop               "Drop Tolerance"
+AZ_ilut_fill          "Fill Ratio"
+AZ_omega              "Damping"
+AZ_conv               "Residual Scaling"
+AZ_r0                 "Initial"
+AZ_rhs                "RHS"
+AZ_Anorm              "Matrix"
+AZ_sol                "Solution"
+AZ_noscaled           "No Scaling"
+AZ_output             "Verbosity"
+AZ_all                "All"
+AZ_none               "Silent"
+AZ_warnings           "Warnings"
+AZ_last               "Final Residual"
+AZ_type_overlap       "Overlap Type"
+AZ_standard           "Standard"
+AZ_symmetric          "Symmetric"
+AZ_reorder            "Reorder ILU"
+AZ_keep_info          "Keep Factorization"
+AZ_orthog             "GMRES Orthogonalization"
+AZ_classic            "Classical Gram-Schmidt"
+AZ_modified           "Modified Gram-Schmidt"
+AZ_aux_vec            "Auxiliary Vector"
+AZ_resid              "Residual"
+AZ_rand               "Random"
+AZ_reorder            "Reorder ILU"
+AZ_keep_info          "Keep Factorization"
+AZ_graph_fill         "Graph Fill"
+AZ_max_iter           "Max Iterations"
+AZ_poly_ord           "Polynomial Order"
+AZ_kspace             "Restart Size"
+AZ_overlap            "Overlap"
+AZ_tol                "Tolerance"
+AZ_drop               "Drop Tolerance"
+AZ_ilut_fill          "Fill Ratio"
+AZ_omega              "Damping"
+\endcode
+
+*/

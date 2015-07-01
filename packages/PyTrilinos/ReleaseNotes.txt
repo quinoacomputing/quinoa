@@ -1,0 +1,251 @@
+Release Notes for PyTrilinos 4.10 (Trilinos 11.4)
+=================================================
+
+General
+  * Updated the NumPy interface to properly deal with deprecated
+    code.  If PyTrilinos if compiled an older NumPy, it still works,
+    but if compiled against newer versions of NumPy, the deprecated
+    code is avoided, as are the warnings.
+
+
+Release Notes for PyTrilinos 4.8 (Trilinos 11.2)
+================================================
+
+General
+  * Added STK as an optional dependency of PyTrilinos
+  * Added Pliris as a supported package
+  * Provide better compatibility with external MPI implementations.
+    Specifically, if the user were to "import mpi4py" (for example)
+    prior to importing Teuchos or Epetra, then the Teuchos or Epetra
+    modules will not take responsibility for calling MPI_Finalize().
+  * Fixed some build errors
+
+Epetra module
+  * Priliminary support for Epetra64.  Ultimately, I would like the
+    default behavior to be using 64-bit methods without refering to
+    64-bit method names.
+  * Added PyTrilnos.Epetra.FECrsMatrix InsertGlobalValues method that
+    had been hidden by a %extend SWIG directive.
+
+EpetraExt module
+  * Gave names to EpetraExt template classes.  Using the nameless
+    versions had caused problems with newer versions of SWIG.  This
+    should get rid of the need for a patch distributed with
+    Archlinux.
+  * Added the EpetraExt::CrsMatrix_SubCopy class to
+    PyTrilinos.EpetraExt.
+
+NOX module
+  * Improved NOX support, especially NOX.Epetra.  This should be
+    largely invisible to the user, but I used to have to always import
+    NOX whether the user wanted it or not, due to nested namespace
+    issues.  These issues have been resolved now, and you only import
+    NOX if you specifically request it.
+
+Anasazi module
+  * Added EpetraMultiVecAccessor base class.  Anasazi added this base
+    class, and now the PyTrilinos version supports it as well.
+
+Release Notes for PyTrilinos 4.6 (Trilinos 10.10)
+=================================================
+
+Added support for the use case when Trilinos requests a
+Teuchos::ArrayView<>.  In Python, the user can supply a NumPy array or
+a Python sequence (input arguments only) and PyTrilinos will convert
+it to the necessary ArrayView type automatically.  This currently only
+applies to the Teuchos.Comm classes, but the infrastructure is there
+for future needs.
+
+Changed PyTrilinos string checks to accommodate older Pythons in which
+strings can only be regular strings and newer Pythons in which strings
+can be either unicode or regular strings.
+
+Added experimental support for STK package Percept mesh module.
+
+Release Notes for PyTrilinos 4.6 (Trilinos 10.8)
+================================================
+
+Improved the MPI initialization logic in Teuchos and Epetra modules.
+Previously, both modules would call MPI_Init() when they were imported
+into the python interpretter and register MPI_Finalize() with the
+atexit module (each module did perform checks before executing the
+calls in case the other module beat it to the punch).  Now, each
+module checks to see if MPI_Init() has already been called, and if so,
+it does not register MPI_Finalize() with atexit.  This way, if the
+user initializes MPI ahead of importing Teuchos or Epetra (such as
+with mpi4py, for example), then the user is responsible for
+finalization, and can assume finer control.
+
+Added the Isorropia package, for partitioning Epetra objects.  This
+includes an IsorropiaVisualizer.py script.
+
+This release contains a large number of internal changes mostly not
+visible to end users, except for increased stability and bug fixes.
+One big change is that C++ referenced counted pointers (via the
+Teuchos::RCP class) are now properly handled.  Fixed a couple of bugs
+in the Amesos, AztecOO and EpetraExt wrappers.  Changed the Amesos
+example scripts to follow PyTrilinos coding standards.  Put all C++
+code within the PyTrilinos namespace.  Changed C++ file names to have
+PyTrilinos_ prefix.
+
+Release Notes for PyTrilinos 4.4 (Trilinos 10.4)
+================================================
+
+The logic for determining the prefix for the install directory for PyTrilinos has
+been improved.  Highest precedence is given to the configure variable
+PyTrilinos_INSTALL_PREFIX.  If this is not set by the user, then next
+highest precedence is given to CMAKE_INSTALL_PREFIX.  If this has not
+been set by the user, then the prefix of the python interpreter that
+PyTrilinos is being compiled against is used.
+
+Release Notes for PyTrilinos 4.3 (Trilinos 10.2)
+================================================
+
+PyTrilinos.NOX notes:
+
+  Updated the wrappers so that the Jacobian can be specified using the
+  NOX.Epetra.Interface.Jacobian base class.  To get this to work
+  required that the directorin %typemaps for Epetra_Operator used by
+  NOX.Epetra.Interface.Jacobian be updated to downcast the
+  Epetra_Operator argument to our best guess at the derived class.
+  Such a downcast had already been written for the EpetraExt
+  ModelEvaluator, so code was moved around to make it more generally
+  accessible.  This uncovered a memory management bug that took some
+  time to track down, but the result now is much more stable memory
+  management all-around.
+
+  The new capability is demonstrated in serial in example script
+  exNOX_2DSim.
+
+Release Notes for PyTrilinos 4.2 (Trilinos 10.0)
+================================================
+
+General notes for PyTrilinos:
+
+  * Converted to CMake build system
+
+  * Added const-correctness for char* function arguments.  This
+    improves compatibility with newer gnu compilers.
+
+PyTrilinos.Teuchos notes:
+
+  * LabeledObject and Describable classes converted to director
+    classes so that virtual methods can be overridden in python.
+
+PyTrilinos.EpetraExt notes:
+
+  * Added wrappers for ModelEvaluator and all associated classes
+
+PyTrilinos.Komplex notes:
+
+  * Added Komplex module
+
+PyTrilinos.Pliris notes:
+
+  * Added Pliris module
+
+PyTrilinos.NOX notes:
+
+  * Improved robustness of NOX sub-packages
+
+  * Added wrappers for ModelEvaluatorInterface class
+
+  * Added default builder functions:
+
+    + defaultNonlinearParameters()
+    + defaultGroup()
+    + defaultStatusTest()
+    + defaultSolver()
+
+
+
+Release Notes for PyTrilinos 4.1 (Trilinos 9.0)
+===============================================
+
+General notes for PyTrilinos:
+
+  * Added auto-generated documentation.
+
+  * Standardized and upgraded PyTrilinos module docstrings.
+
+  * Improved exception handling.
+
+  * Fixed problem with patch for numpy 0.9.8 bug; moved fix for python
+    2.5 compatibility into file where it is directly needed.
+
+  * Fixed problem some PyTrilinos modules had interpreting elements of
+    numpy arrays as integers.
+
+  * Added logic to python extension module builds so that compile
+    flags -ansi and -pedantic will be ignored.
+
+  * Fixed some incompatibilities between the generated code from swig
+    version 1.3.35 and earlier versions.
+
+  * Better error checking when a python argument is converted to an
+    array of char* strings.
+
+  * Eliminated certain runtime type information errors by moving to
+    shared laibraries, thus ensuring that no symbols get duplicated.
+
+  * Added C89 compliance.
+
+  * Changed PyTrilinos/__init__.py to alter the python dlopen flags so
+    that symbols are shared across all of the PyTrilinos extension
+    modules.  This fixed many bugs associated with symbols crossing
+    shared library boundaries.
+
+  * Added fixes for installation on Fedora Core.
+
+PyTrilinos.Teuchos notes:
+
+  * Added support for Teuchos::Comm, Teuchos::SerialComm,
+    Teuchos::MpiComm and Teuchos::DefaultComm, including tests.
+
+PyTrilinos.Epetra notes:
+
+  * Added support for the Epetra.Comm Broadcast method with string
+    data, including additions to testEpetra_Comm.py to test the
+    capability.  Since these are in-place, users must use numpy arrays
+    of strings.
+
+  * Some PyTrilinos.Epetra MPI reduction operations were returning
+    garbage.  This was fixed by clearing out those arrays prior to the
+    call.
+
+  * Epetra.Finalize() (called automatically when the Epetra module is
+    destroyed) now checks MPI_Finalized() before calling
+    MPI_Finalize().  This should help it play nice with Teuchos MPI
+    support.
+
+  * Upgraded Epetra.FEVector to reflect its new multivector nature.
+
+  * Fixed Epetra.Vector and Epetra.MultiVector objects so that slices
+    return new Epetra.[Multi]Vector objects with accurate Maps.
+
+PyTrilinos.AztecOO notes:
+
+  * Improved the AztecOO wrappers for better compatibility with older
+    versions of numpy.
+
+  * Fixed exAztecOO_Operator.py, exAztecOO_RowMatrix.py and
+    exAztecOO_BasicRowMatrix.py example scripts so that they work in
+    parallel.
+
+PyTrilinos.ML notes:
+
+  * Updated PyTrilinos.ML to be more robust.
+
+PyTrilinos.NOX notes:
+
+  * Fixed NOX.Solver.myBuildSolver to properly use new Teuchos::Ptr
+    templated class.
+
+PyTrilinos.Anasazi notes:
+
+  * Added MPI support to Anasazi wrappers.
+
+  * Updated PyTrilinos w.r.t. changes in Anasazi::SortManager interface.
+
+  * Added support to Anasazi wrappers for extracting eigenvalues and
+    eigenvectors.

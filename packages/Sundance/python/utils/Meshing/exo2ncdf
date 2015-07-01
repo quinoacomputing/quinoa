@@ -1,0 +1,25 @@
+#!/usr/bin/python
+
+# convert an Exodus file to NCDF
+# 
+# Requires ncdump, which is freely available from www.unidata.ucar.edu
+
+import sys
+import posix
+from sets import Set
+
+args = Set()
+
+for x in sys.argv :
+	args.add(x)
+
+if (len(args)!=2) | ('-h' in args) | ('--h' in args) | ('--help' in args) :
+  print 'usage: exo2ncf <filename>'
+  print 'do not include .exo suffix on filename'
+  print 'output will be written to <filename>.ncdf'
+else :
+  filename = sys.argv[1]
+  posix.system('/usr/local/bin/ncdump %s.exo > %s.ncdf' % (filename,filename))
+  print('wrote output to %s.ncdf' % filename)
+
+

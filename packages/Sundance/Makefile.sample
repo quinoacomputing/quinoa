@@ -1,0 +1,103 @@
+# @HEADER
+# ************************************************************************
+# 
+#                              Sundance
+#                 Copyright (2005) Sandia Corporation
+# 
+# Copyright (year first published) Sandia Corporation.  Under the terms 
+# of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S. Government 
+# retains certain rights in this software.
+# 
+# This library is free software; you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License as
+# published by the Free Software Foundation; either version 2.1 of the
+# License, or (at your option) any later version.
+#  
+# This library is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#                                                                                 
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+# USA                                                                                
+# Questions? Contact Kevin Long (krlong@sandia.gov), 
+# Sandia National Laboratories, Livermore, California, USA
+# 
+# ************************************************************************
+# @HEADER
+
+# ------------------------------------------------------------------------
+#
+# Makefile.sample is an example of a simple makefile that will let
+# a user build a Trilinos-based application in an arbitrary directory.
+# 
+# To use this makefile, you need to do three steps:
+# (1) Copy Makefile.sample to the location of your application source.
+# (2) Edit the definition of TRILINOS_INSTALL_DIR to point to your Trilinos
+#     installation directory. 
+# (3) Edit the definition of EXTRA_OBJS to list names of any object files
+#     required by your application other than that corresponding to the 
+#     application name. 
+#
+# Example: Suppose you are building an application "RANS.exe" whose code is in 
+# three source files: RANS.cpp, TurbulenceModel.cpp, and BC.cpp. You have
+# installed Trilinos in /home/bob/Soft/Trilinos/BUILD. You are building your 
+# application in /home/bob/FlowModels/RANS. You would do the following:
+#
+# (1) copy the file /home/bob/Soft/Trilinos/Makefile.sample 
+#     to /home/bob/FlowModels/RANS/Makefile
+# (2) Edit /home/bob/FlowModels/RANS/Makefile to set
+#     TRILINOS_INSTALL_DIR=/home/bob/Soft/Trilinos/BUILD
+# (3) Edit /home/bob/FlowModels/RANS/Makefile to set 
+#     EXTRA_OBJS = TurbulenceModel.o BC.o
+# (4) Do "make RANS.exe" to build the executable.
+# 
+#
+# ------------------------------------------------------------------------
+
+
+
+
+#--------------------------------------------------------------------------
+# Change the value of TRILINOS_INSTALL_DIR to point to the directory
+# into which you have installed Trilinos. For example, if you have
+# installed into /usr/local/trilinos-3.14.59, change this line to
+#
+# TRILINOS_INSTALL_DIR = /usr/local/trilinos-3.14.59 
+#
+#--------------------------------------------------------------------------
+
+TRILINOS_INSTALL_DIR = $(HOME)/Code/BUILDS/GCC-4.3.2
+
+
+
+
+#--------------------------------------------------------------------------
+# If your application contains more than one source file, list any additional
+# object files in the variable EXTRA_OBJS, e.g.,
+# 
+# EXTRA_OBJS = SomeFile.o SomeOtherFile.o
+# 
+#--------------------------------------------------------------------------
+
+EXTRA_OBJS =
+
+
+#--------------------------------------------------------------------------
+# The remaining lines will not usually need to be changed.  
+#--------------------------------------------------------------------------
+
+
+include $(TRILINOS_INSTALL_DIR)/packages/Sundance/Makefile.export.cmake
+
+SUNDANCE_LIB_PATH = $(TRILINOS_INSTALL_DIR)/lib
+SUNDANCE_INCLUDE_PATH = $(TRILINOS_INSTALL_DIR)/include
+
+%.exe : %.o $(EXTRA_OBJS)
+	$(CXX_COMPILER) -o $@ $(LDFLAGS) $(SUNDANCE_CXX_FLAGS) $< $(EXTRA_OBJS) -L$(SUNDANCE_LIB_PATH) $(SUNDANCE_LIBRARIES) $(SUNDANCE_TPL_LIBRARIES) $(SUNDANCE_EXTRA_LD_FLAGS)
+
+%.o : %.cpp
+	$(CXX_COMPILER) -c -o $@ $(SUNDANCE_CXX_FLAGS) -I$(SUNDANCE_INCLUDE_PATH) $(SUNDANCE_TPL_INCLUDES) $<
+

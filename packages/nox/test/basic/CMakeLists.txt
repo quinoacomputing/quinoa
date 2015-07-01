@@ -1,0 +1,36 @@
+
+INCLUDE(TribitsAddExecutableAndTest)
+
+INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
+
+TRIBITS_ADD_EXECUTABLE_AND_TEST(
+  PrintUtils
+  SOURCES NOXPrintUtils.C
+  COMM serial mpi
+  NUM_MPI_PROCS 1
+  PASS_REGULAR_EXPRESSION "Test passed!"
+  )
+
+TRIBITS_ADD_EXECUTABLE_AND_TEST(
+  SharedObjectTemplate
+  SOURCES NOXSharedObjectTemplate.C
+  COMM serial mpi
+  NUM_MPI_PROCS 1
+  PASS_REGULAR_EXPRESSION "Test passed!"
+  )
+
+TRIBITS_ADD_EXECUTABLE_AND_TEST(
+  FiniteValue
+  SOURCES NOXFiniteValue.C
+  COMM serial mpi
+  NUM_MPI_PROCS 1
+  PASS_REGULAR_EXPRESSION "Test passed!"
+  )
+
+TRIBITS_ADD_EXECUTABLE_AND_TEST(
+  PrePostOperatorVector
+  SOURCES NOX_PrePostOperatorVector.C ${TEUCHOS_STD_UNIT_TEST_MAIN}
+  COMM serial mpi
+  NUM_MPI_PROCS 1
+  XHOSTTYPE Windows Windows_NT
+  )

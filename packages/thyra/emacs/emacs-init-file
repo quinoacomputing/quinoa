@@ -1,0 +1,98 @@
+;;; Emacs initialization file for Roscoe Bartlett (rabartl)
+
+(add-to-list 'load-path (expand-file-name "~/elisp/"))
+
+;;; Load GNU global
+;;;(require 'gtags)
+(autoload 'gtags-mode "gtags" "" t)
+(setq c-mode-hook
+          '(lambda ()
+              (gtags-mode 1)
+      ))
+
+;; Set up the keyboard so the delete key on both the regular keyboard
+;; and the keypad delete the character under the cursor and to the right
+;; under X, instead of the default, backspace behavior.
+(global-set-key [delete] 'delete-char)
+(global-set-key [kp-delete] 'delete-char)
+(global-set-key "\C-v" 'yank)
+
+;; Fix Ctrl+RightArrow and Ctrl+LeftArrow 
+(global-set-key "\M-[1;5C"    'forward-word)      ; Ctrl+right   => forward word 
+(global-set-key "\M-[1;5D"    'backward-word)     ; Ctrl+left    => backward word 
+
+;;; Set up other customizations
+(custom-set-variables
+ '(case-fold-search t)
+ '(column-number-mode t)
+ '(current-language-environment "English")
+ '(fill-column 78)
+ '(column-number-mode t)
+ '(font-lock-auto-fontify t)
+ '(font-lock-maximum-decoration t)
+ '(font-lock-mode t nil (font-lock))
+ '(font-lock-use-colors nil)
+ '(font-lock-use-fonts t)
+ '(global-font-lock-mode t nil (font-lock))
+ '(line-number-mode t)
+ '(load-home-init-file t t)
+ '(make-backup-files nil)
+ '(query-user-mail-address nil)
+ '(require-final-newline t)
+ '(show-paren-mode t nil (paren))
+ '(transient-mark-mode t)
+ '(indent-tabs-mode nil))
+(custom-set-faces
+ '(default ((t (:family "Clean" :size "12pt"))) t))
+
+;; I can't remember what this does?
+(setq minibuffer-max-depth nil)
+
+;; Setup the PSGML mode to indent elements automatically!
+(setq sgml-indent-data t)
+(setq sgml-indent-step 2)
+
+;; Set my style to the Thyra style!
+(require 'cpp-thyra-styles)
+(setq c-set-style "thyra")
+
+;;; Load the C++ function menu
+;;;(require 'cpp-func-menu)
+(setq load-home-init-file t) ; don't load init file from ~/.xemacs/init.el
+
+;;; Customize emacs font colors
+;;;
+;;; To discover what face-type some work is, move cursor over it and do
+;;; 'M-x describe-face'.  That will tell you what the naem is and what to add
+;;; to the list below.  You can see the names of different colors by going in the
+;;; emacs menu to 'Edit'->'Text Properties'->'Display Colors'.  You can see all
+;;; the faces by doing 'M-x list-faces-display' which shows you the names and
+;;; the current colors.  Through this and a lot of experimentation, I arrived at the
+;;; color scheme below which is pretty readable.
+(cond ((fboundp 'global-font-lock-mode)
+  ;; Customize face attributes
+  (setq font-lock-face-attributes
+    ;; Symbol-for-Face Foreground Background Bold Italic Underline
+    '((font-lock-comment-face  "DarkGreen")
+     (font-lock-comment-delimiter-face "DarkGreen")
+     (font-lock-string-face   "Brown")
+     (font-lock-keyword-face  "Blue")
+     (font-lock-preprocessor-face  "DodgerBlue3")
+     (font-lock-constant-face      "Black")
+     (font-lock-function-name-face "Purple")
+     (font-lock-variable-name-face "DarkMagenta")
+     (font-lock-type-face     "DarkOrange4")
+     (font-lock-reference-face     "Black")
+     (minibuffer-prompt     "DarkViolet")
+     (escape-glyph    "DarkViolet")
+     (escape-glyph    "DarkViolet")
+     (link    "DarkViolet")
+     (custom-link    "DarkViolet")
+     (sh-heredoc   "Brown")
+     ))
+  ;; Load the font-lock package.
+  (require 'font-lock)
+  ;; Maximum colors
+  (setq font-lock-maximum-decoration t)
+  ;; Turn on font-lock in all modes that support it
+  (global-font-lock-mode t)))

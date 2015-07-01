@@ -1,0 +1,139 @@
+/* @HEADER@ */
+# ************************************************************************
+# 
+#                              Sundance
+#                 Copyright (2005) Sandia Corporation
+# 
+# Copyright (year first published) Sandia Corporation.  Under the terms 
+# of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S. Government 
+# retains certain rights in this software.
+# 
+# This library is free software; you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License as
+# published by the Free Software Foundation; either version 2.1 of the
+# License, or (at your option) any later version.
+#  
+# This library is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#                                                                              
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+# USA                                                        
+#                
+# Questions? Contact Kevin Long (krlong@sandia.gov), 
+# Sandia National Laboratories, Livermore, California, USA
+# 
+# ************************************************************************
+/* @HEADER@ */
+
+/*! \page conf_trilinos_page Configuring Trilinos for an external build of Sundance
+
+Here we explain how to configure Trilinos for Sundance. The hard part is
+knowing the appropriate arguments for <tt>configure.</tt> If you are
+running on Linux, the easiest
+solution is to copy one of my \ref canned_scripts that call configure.
+
+<ul>
+<li> \ref pytrilinos
+<li> \ref opt_v_debug
+<li> \ref canned_scripts
+<li> \ref conf_packages 
+</ul>
+
+\section pytrilinos Do I need PyTrilinos?
+
+PyTrilinos is not required by PySundance. There is probably no 
+harm in building PyTrilinos, but it is not used by PySundance.
+
+\section opt_v_debug Optimized vs Debug Configurations
+
+Most compilers let you control the level of compile-time optimization used
+and whether to produce annotations required by debuggers. Other compilation
+options you might want to set control the level of warning and diagnostic
+output to be produced during compile time. Such options can be passed to
+the compiler by using the CXXFLAGS argument to configure.
+
+One optional Trilinos configuration 
+flag significantly impacts the behavior of Sundance:
+<ul>
+<LI> <tt>--enable-teuchos-abc</tt> turns on array bounds checking in Teuchos,
+which will check every access to Teuchos <tt>Array</tt> objects for
+bounds errors. This is nice for debugging, but results
+in a <i>serious</i> slowdown of the resulting code and so should probably
+be disabled in production builds.
+</ul>
+
+Typically, I find that Sundance simulators compiled with optimization
+are about 3-5 times faster in matrix assembly than those compiled
+with debugging and array bounds checking. 
+
+It is possible to turn on debugging and optimization simultaneously, but
+(a) compilation will be very slow and very memory-intensive, and 
+(b) the resulting debugging information might be useless because optimizations
+can change sometimes the effective ordering of source lines.
+
+\section canned_scripts Canned Scripts
+
+In the directory Sundance/trilinos-scripts there are several scripts for configuring Trilinos for Sundance on Linux using
+the Gnu compilers. 
+You should be able to use these as a starting point for configuring on
+other platforms.
+
+\section conf_packages Trilinos packages to enable
+
+If you are writing your own configuration script for Trilinos,
+you should always enable the following packages:
+
+<ul>
+<li> Teuchos (utilities)
+<pre>
+--enable-teuchos 
+--enable-teuchos-extended 
+--enable-teuchos-complex 
+--enable-teuchos-expat
+</pre>
+<li> Thyra (abstract interfaces for linear algebra)
+<pre>
+--enable-thyra
+--enable-epetra-thyra
+--enable-amesos-thyra
+--enable-ifpack-thyra
+--enable-aztecoo-thyra
+--enable-ml-thyra
+</pre>
+<li> Epetra (core distributed sparse linear algebra objects)
+<pre>
+--enable-epetra
+</pre>
+<li> Epetraext (various sparse matrix utilities)
+<pre>
+--enable-epetraext
+</pre>
+<li> IFPack (incomplete factorization preconditioners)
+<pre>
+--enable-ifpack
+</pre>
+<li> ML (algebraic multilevel preconditioners)
+<pre>
+--enable-ml
+</pre>
+<li> AztecOO (iterative solvers)
+<pre>
+--enable-aztecoo
+</pre>
+<li> NOX (nonlinear solvers)
+<pre>
+--enable-nox
+</pre>
+<li> Amesos (direct solvers)
+<pre>
+--enable-amesos 
+--enable-amesos-umfpack
+</pre>
+</ul>
+
+
+*/

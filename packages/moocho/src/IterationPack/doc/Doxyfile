@@ -1,0 +1,33 @@
+#
+# Note: all relative paths are relative to package/doc!
+#
+@INCLUDE = Doxyfile.options
+@INCLUDE = teuchos/doc/TagFiles
+TAGFILES += \
+  $(TRILINOS_HOME)/packages/common/tag_files/MoochoUtilities.tag=$(TRILINOS_HOME)/packages/moocho/src/MoochoUtilities/doc/html
+#
+# Package options
+#
+PROJECT_NAME           = "IterationPack: General framework for building iterative algorithms "
+OUTPUT_DIRECTORY       = ../src/IterationPack/doc
+#
+# What and how documentation is extracted
+#
+INPUT                  = ../src/IterationPack/doc/index.doc \
+                         ../src/IterationPack/src
+FILE_PATTERNS          = *.h *c *.hpp *.cpp
+RECURSIVE              = YES
+EXCLUDE                = 
+EXCLUDE_PATTERNS       = *.x *.o *.out
+EXAMPLE_PATH           =
+EXAMPLE_PATTERNS       =
+IMAGE_PATH             =
+INPUT_FILTER           = 
+ALPHABETICAL_INDEX     = YES
+IGNORE_PREFIX          = 
+#
+# Links to other packages
+#
+GENERATE_TAGFILE       = ../../common/tag_files/IterationPack.tag
+ALLEXTERNALS           = NO
+EXTERNAL_GROUPS        = NO

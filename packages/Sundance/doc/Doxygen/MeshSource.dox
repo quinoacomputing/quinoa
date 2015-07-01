@@ -1,0 +1,122 @@
+/* @HEADER@ */
+# ************************************************************************
+# 
+#                              Sundance
+#                 Copyright (2005) Sandia Corporation
+# 
+# Copyright (year first published) Sandia Corporation.  Under the terms 
+# of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S. Government 
+# retains certain rights in this software.
+# 
+# This library is free software; you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License as
+# published by the Free Software Foundation; either version 2.1 of the
+# License, or (at your option) any later version.
+#  
+# This library is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#                                                                                 
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+# USA                                                                                
+# Questions? Contact Kevin Long (krlong@sandia.gov), 
+# Sandia National Laboratories, Livermore, California, USA
+# 
+# ************************************************************************
+/* @HEADER@ */
+
+namespace SundanceStdMesh
+{
+/*! \page mesh_source Mesh Sources and Transformations
+
+\section mesh_basics Sundance Mesh Basics
+
+Sundance solves PDEs on geometric domains that have been discretized
+to meshes. With a few simple exceptions, Sundance does not create
+meshes itself; usually, one will mesh a domain using an external
+meshing program such as
+<A HREF="http://sass1693.sandia.gov/cubit"> Cubit </A>
+or
+<A HREF="http://www-2.cs.cmu.edu/~quake/triangle.html"> Triangle </A>
+and then read the results into Sundance. 
+
+A mesh is represented in Sundance as a Mesh object. A Mesh is
+injected into a Sundance simulation by means of an 
+object called a MeshSource. MeshSource is an abstract, extensible interface
+for mesh readers and mesh generators; several subtypes (listed below)
+have been implemented. Once created, an 
+existing mesh can be transformed
+into another by means of a MeshTransformation object. 
+
+In the following example, we use a MeshSource to read an Exodus file
+and produce a Mesh
+\code
+MeshSource reader = new ExodusNetCDFMeshReader("wing.ncdf");
+Mesh mesh = reader.getMesh();
+\endcode
+
+
+
+\section mesh_reading Mesh Readers
+
+Currently, the following MeshReader subtypes exist
+<ul>
+<li> ExodusNetCDFMeshReader reads Exodus files rendered into NetCDF format.
+<b> Note: </b> not all Exodus features are supported. Currently, we
+support simplicial meshes only and node and side set definitions. 
+<li> TriangleMeshReader reads meshes in Shewchuk's 
+<A HREF="http://www-2.cs.cmu.edu/~quake/triangle.html"> Triangle </A> format,
+with extensions for distributed meshes.
+</ul>
+
+\section mesh_gen Mesh Generators
+
+The internal mesh generation capability of Sundance is used primarily
+for generating test problems and is limited to lines
+and rectangles. 
+<ul>
+<li> PartitionedLineMesher meshes lines in 1D problems. 
+<li> PartitionedRectangleMesher meshes rectangular domains in 2D. 
+</ul>
+Both of these MeshSource subtypes produce structured, uniform meshes
+with a number of elements controlled by constructor arguments.
+Both can produce distributed meshes when Sundance is run in parallel.
+
+Simple 3D regions can be generated from these by extrusion.
+
+\section mesh_trans Mesh Transformations
+
+<ul>
+<li> ExtrusionMeshTransformation extrudes a 2D mesh into 3D
+</ul>
+
+
+\section mesh_par Distributed Meshes
+
+Sundance is a fully parallel code. To do a parallel run, however, one
+must have a distributed mesh. 
+A distributed mesh can be created in one of two ways: by building it
+distributed from the start, or by partitioning an existing mesh. 
+
+\subsection mesh_build_dist Building Distributed Meshes 
+
+As noted above, Sundance's mesh generation capability is limited
+to lines in 1D and rectangular domains in 2D; however, both 
+the PartitionedLineMesher and PartitionedRectangleMesher are able
+to produce distributed meshes. 
+
+\subsection mesh_split Partitioning Meshes
+
+Sundance has no built-in capability for mesh partitioning. As a convenience, 
+we supply several Python scripts for partitioning Triangle and Exodus files,
+and writing the results to a partitioned set of Triangle files. A
+distributed mesh created in this way can then be read in with a
+TriangleMeshReader.
+
+
+
+*/
+}

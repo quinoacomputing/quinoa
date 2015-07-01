@@ -1,0 +1,49 @@
+List of the meshes in .../3D/vtk/... directories and brief descriptions.
+
+cub_fru.vtk:  A mesh generated in Cubit for the cubit test suite,
+slightly modified.  Contains 12,753 vertices and 10,752 HEX elements.
+
+cub_fru_scaled_100.vtk:  This is the same mesh as cub_fru.vtk except
+that everything has been scaled by a factor of 100.
+
+cub_wedge_like.vtk:  This is tet mesh.  The geometry originated in
+a test in the cubit test suite.  It contains 21,156 vertices and
+112,393 TET elements.
+
+cube_hex_2.vtk:
+
+cube_tet_2.vtk:  
+
+hex_2_with_bound.vtk:  Simple eight hex element mesh of 10 by 10
+by 10 brick.  The one free vertex is slightly perturbed from its
+ideal position of (0,0,0).
+
+hex_5_tangled.vtk:  125 element hex mesh with some degenerate or
+nearly degenerate elements.
+
+hex_4by2by2.vtk:  Mesh of box with a 4 by 2 grid on four surfaces and
+a 2 by 2 grid on two surfaces.  The mesh contains 16 hexes and three
+free vertices.
+
+large_box_hex_1000.vtk:  This is a hex mesh with 1000 elements.  It
+is a structured mesh of a box.  The edges of the box are scaled to
+be 10,000 units long.  The interior vertices are slightly perturbed
+from their ideal positions.
+
+par_original_hex_mesh.*.vtk: parallel split mesh of unit box with one
+side pushed in with a bi-quadratic bump; meshed with hexes.  The
+smoothed/expected mesh is in par_smoothed_hex_mesh.*.vtk.
+
+single_hex:  A single hex mesh with no free vertices.
+
+small_box_hex_1000.vtk:  Similar to large_box_hex_1000.  This is
+a hex mesh with 1000 elements.  It is a structured mesh of a box.
+The edges of the box are scaled to be .00001 units long.  The
+interior vertices are slightly perturbed from their ideal positions.
+
+tet_1:  Mesh with 4 tets, 5 vertices, and 1 free vertex.
+
+tet_4_tangled.vtk:  Tet mesh with 408 elems, some of which are
+degenerate or almost degenerate.
+
+tire.vtk

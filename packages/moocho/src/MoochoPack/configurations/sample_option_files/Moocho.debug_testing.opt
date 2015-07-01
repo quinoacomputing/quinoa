@@ -1,0 +1,6 @@
+***
+*** This options file setups up for full debug testing of the
+*** algorithm and the NLP.  This can be used on even the largest
+*** NLPs and should only increase the cost of the algorithm by
+*** a constant factor.
+***

@@ -1,0 +1,259 @@
+INCLUDE(TribitsPackageMacros)
+
+#
+# A) Forward delcare the package so that certain options are also defined for
+# subpackages
+#
+
+TRIBITS_PACKAGE_DECL( Teuchos ENABLE_SHADOWING_WARNINGS CLEANED )
+
+SET(${PACKAGE_NAME}_VERSION "1.5d")
+
+#
+# B) Platform-specific checks
+#
+
+TRIBITS_ADD_DEBUG_OPTION()
+
+TRIBITS_ADD_SHOW_DEPRECATED_WARNINGS_OPTION()
+
+INCLUDE(CheckForAbiDemangle)
+CHECK_FOR_ABI_DEMANGLE(HAVE_GCC_ABI_DEMANGLE)
+
+ASSERT_DEFINED(TPL_ENABLE_BinUtils CMAKE_CXX_COMPILER_ID)
+IF(TPL_ENABLE_BinUtils)
+
+  IF (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    SET(${PACKAGE_NAME}_ENABLE_STACKTRACE_DEFAULT ON)
+  ELSE()
+    SET(${PACKAGE_NAME}_ENABLE_STACKTRACE_DEFAULT OFF)
+  ENDIF()
+
+  TRIBITS_ADD_OPTION_AND_DEFINE(
+    ${PACKAGE_NAME}_ENABLE_STACKTRACE
+    HAVE_TEUCHOS_STACKTRACE
+    "Enable Teuchos to show stack track for GCC (or Intel) on segfaults and uncaught exceptions."
+    ${${PACKAGE_NAME}_ENABLE_STACKTRACE_DEFAULT}
+    )
+  
+  IF (${PACKAGE_NAME}_ENABLE_STACKTRACE)
+    SET(HAVE_TEUCHOS_LINK ON)
+    SET(HAVE_TEUCHOS_BFD ON)
+  ENDIF()
+
+ELSE()
+
+  SET(${PACKAGE_NAME}_ENABLE_STACKTRACE OFF)
+
+ENDIF()
+
+IF (${PACKAGE_NAME}_ENABLE_STACKTRACE)
+  TRIBITS_ADD_OPTION_AND_DEFINE(
+    ${PACKAGE_NAME}_ENABLE_DEFAULT_STACKTRACE
+    HAVE_TEUCHOS_DEFAULT_STACKTRACE
+    "Enable Teuchos expansion of the stacktrace by default when exceptions are caught."
+    ${${PACKAGE_NAME}_ENABLE_DEBUG}
+    )
+ELSE()
+  SET(${PACKAGE_NAME}_ENABLE_DEFAULT_STACKTRACE OFF)
+ENDIF()
+
+ASSERT_DEFINED(${PACKAGE_NAME}Core_ENABLE_Boost)
+IF (${PACKAGE_NAME}Core_ENABLE_Boost)
+  INCLUDE(CheckForBoostIsPolymorphic)
+  CHECK_FOR_BOOST_IS_POLYMORPHIC(HAS_TEUCHOS_BOOST_IS_POLYMORPHIC)
+ENDIF()
+
+ASSERT_DEFINED(${PROJECT_NAME}_ENABLE_${PACKAGE_NAME}Numerics)
+IF (${PROJECT_NAME}_ENABLE_${PACKAGE_NAME}Numerics)
+
+  INCLUDE(CheckBlasFloat)
+  CHECK_BLAS_FLOAT(HAVE_TEUCHOS_BLASFLOAT)
+  IF(NOT HAVE_TEUCHOS_BLASFLOAT)
+    # try apple veclib first
+    IF(CMAKE_HOST_SYSTEM_NAME STREQUAL "Darwin")
+      INCLUDE(CheckBlasFloatAppleVeclibBugfix)
+      CHECK_BLAS_FLOAT_APPLE_VECLIB_BUGFIX(HAVE_TEUCHOS_BLASFLOAT_APPLE_VECLIB_BUGFIX)
+      IF(HAVE_TEUCHOS_BLASFLOAT_APPLE_VECLIB_BUGFIX)
+        GLOBAL_SET(HAVE_TEUCHOS_BLASFLOAT 1)
+      ENDIF()
+    ENDIF()
+    # if veclib failed, general purpose solution
+    IF(NOT HAVE_TEUCHOS_BLASFLOAT)
+      INCLUDE(CheckBlasFloatReturnsDouble)
+      CHECK_BLAS_FLOAT_DOUBLE_RETURN(HAVE_TEUCHOS_BLASFLOAT_DOUBLE_RETURN)
+      IF(HAVE_TEUCHOS_BLASFLOAT_DOUBLE_RETURN)
+        GLOBAL_SET(HAVE_TEUCHOS_BLASFLOAT 1)
+      ENDIF()
+    ENDIF()
+  ENDIF()
+
+  IF (HAVE_TEUCHOS_BLASFLOAT)
+    INCLUDE(CheckSlapy2Problem)
+    CHECK_SLAPY2_PROBLEM(HAVE_SLAPY2_PROBLEM)
+    IF (HAVE_SLAPY2_PROBLEM) 
+      INCLUDE(CheckSlapy2ReturnsDouble)
+      CHECK_SLAPY2_RETURNS_DOUBLE(HAVE_SLAPY2_DOUBLE_RETURN)
+      IF(NOT HAVE_SLAPY2_DOUBLE_RETURN)
+        GLOBAL_SET(HAVE_TEUCHOS_BLASFLOAT OFF)
+        MESSAGE(STATUS "SLAPY2 failure: setting HAVE_TEUCHOS_BLASFLOAT to OFF")
+      ENDIF()
+    ENDIF()
+  ENDIF()
+
+  INCLUDE(CheckLapackLARND)
+  CHECK_LAPACK_LARND(HAVE_TEUCHOS_LAPACKLARND)
+
+ENDIF()
+
+SET( ${PACKAGE_NAME}_ORDINAL_TYPE ptrdiff_t
+  CACHE STRING
+  "Select the data type for Teuchos_Ordinal (Teuchos::Ordinal)." )
+
+TRIBITS_ADD_EXPLICIT_INSTANTIATION_OPTION()
+
+TRIBITS_SET_SS_FOR_DEV_MODE(SS_FOR_DEV_PS_FOR_RELEASE)
+
+TRIBITS_ADD_OPTION_AND_DEFINE(
+  ${PACKAGE_NAME}_ENABLE_COMPLEX
+  HAVE_TEUCHOS_COMPLEX
+  "Enable Teuchos features for complex data type."
+  ${SS_FOR_DEV_PS_FOR_RELEASE}
+  )
+
+TRIBITS_ADD_OPTION_AND_DEFINE(
+  ${PACKAGE_NAME}_ENABLE_LONG_LONG_INT
+  HAVE_TEUCHOS_LONG_LONG_INT
+  "Enable Teuchos features for long long data type."
+  OFF
+  )
+
+IF(WIN32 AND NOT CYGWIN AND NOT ${PACKAGE_NAME}_ENABLE_LONG_LONG_INT)
+  # Can only provide __int64 support if it will not clash with 
+  # long long int (see Trilinos bug 5801).
+  INCLUDE(CheckFor__int64)
+  CHECK_FOR___INT64(HAVE_TEUCHOS___INT64)
+ENDIF()
+
+TRIBITS_ADD_OPTION_AND_DEFINE(
+  ${PACKAGE_NAME}_ENABLE_ABC
+  HAVE_TEUCHOS_ARRAY_BOUNDSCHECK
+  "Enable Teuchos features for array bounds checking."
+  ${${PROJECT_NAME}_ENABLE_DEBUG}
+  )
+
+IF (${PACKAGE_NAME}_ENABLE_COMPLEX)
+
+  INCLUDE(CheckCXXComplexBlasProblem)
+  CHECK_CXX_COMPLEX_BLAS_PROBLEM(HAVE_COMPLEX_BLAS_PROBLEM)
+
+  IF (HAVE_COMPLEX_BLAS_PROBLEM)
+    INCLUDE(CheckCXXComplexBlasProblemCanBeFixed)
+    IF(HAVE_TEUCHOS_BLASFLOAT_APPLE_VECLIB_BUGFIX)
+      CHECK_COMPLEX_BLAS_VECLIB_OKAY(HAVE_VECLIB_COMPLEX_BLAS)
+    ELSE()
+      CHECK_CXX_COMPLEX_BLAS_PROBLEM_CAN_BE_FIXED(HAVE_FIXABLE_COMPLEX_BLAS_PROBLEM)
+    ENDIF()
+  ENDIF()
+  GLOBAL_SET(HAVE_COMPLEX_BLAS 
+             NOT HAVE_COMPLEX_BLAS_PROBLEM OR HAVE_FIXABLE_COMPLEX_BLAS_PROBLEM OR HAVE_VECLIB_COMPLEX_BLAS)
+
+ENDIF()
+
+#
+# C) Set up package-specific options
+#
+
+TRIBITS_ADD_OPTION_AND_DEFINE(
+  ${PACKAGE_NAME}_ENABLE_FLOAT
+  HAVE_TEUCHOS_FLOAT
+  "Enable Teuchos features for float data type."
+  ${SS_FOR_DEV_PS_FOR_RELEASE}
+  )
+
+TRIBITS_ADD_OPTION_AND_DEFINE(
+  ${PACKAGE_NAME}_ENABLE_DEBUG_RCP_NODE_TRACING
+  HAVE_TEUCHOS_DEBUG_RCP_NODE_TRACING
+  "At compile time, enable debug-mode RCP node tracing which can't be turned off."
+  ${${PACKAGE_NAME}_ENABLE_DEBUG}
+  )
+
+TRIBITS_ADD_OPTION_AND_DEFINE(
+  ${PACKAGE_NAME}_ENABLE_EXTENDED
+  HAVE_TEUCHOS_EXTENDED
+  "Enable extended Teuchos features."
+  ON
+  )
+
+TRIBITS_ADD_OPTION_AND_DEFINE(
+  ${PACKAGE_NAME}_ENABLE_C_EXCEPTIONS
+  HAVE_TEUCHOS_C_EXCEPTIONS
+  "Enable support for the C macro TEUCHOS_EXIT(...) to thrown an exception."
+  OFF
+  )
+
+TRIBITS_ADD_OPTION_AND_DEFINE(
+  ${PACKAGE_NAME}_ENABLE_GCC_DEMANGLE
+  HAVE_TEUCHOS_DEMANGLE
+  "Enable Teuchos calls to GCC demangle library function if it exists (see HAVE_TEUCHOS_BLASFLOAT)."
+  ON
+  )
+
+IF (Teuchos_ENABLE_QD)
+  TRIBITS_ADD_OPTION_AND_DEFINE(
+    ${PACKAGE_NAME}_PROMOTE_DOUBLE_VIA_QD
+    HAVE_TEUCHOS_DOUBLE_TO_QD
+    "Instruct Teuchos::ScalarTraits to promote double precision to the double-double of the QD library (see HAVE_TEUCHOS_QD)."
+    NO
+    )
+ENDIF()
+
+IF (Teuchos_ENABLE_ARPREC)
+  TRIBITS_ADD_OPTION_AND_DEFINE(
+    ${PACKAGE_NAME}_PROMOTE_DOUBLE_VIA_ARPREC
+    HAVE_TEUCHOS_DOUBLE_TO_ARPREC
+    "Instruct Teuchos::ScalarTraits to promote double precision to the double-double of the QD library (see HAVE_TEUCHOS_ARPREC)."
+    NO
+    )
+ENDIF()
+
+IF (HAVE_TEUCHOS_DOUBLE_TO_ARPREC AND HAVE_TEUCHOS_DOUBLE_TO_QD) 
+    MESSAGE("Cannot promote double to both ARPREC and QD. Will use ARPREC.")
+    SET(HAVE_TEUCHOS_DOUBLE_TO_QD OFF)
+ENDIF()
+
+#
+# D) Process the subpackages for Teuchos
+#
+
+# For use by other packages as well as Teuchos tests
+GLOBAL_SET(TEUCHOS_STD_UNIT_TEST_MAIN
+  "${PACKAGE_SOURCE_DIR}/core/test/UnitTest/Teuchos_StandardUnitTestMain.cpp")
+
+# For use by other packages as well as Teuchos tests
+IF (${PROJECT_NAME}_ENABLE_TeuchosComm)
+  GLOBAL_SET(TEUCHOS_STD_PARALLEL_UNIT_TEST_MAIN
+    "${PACKAGE_SOURCE_DIR}/comm/test/UnitTesting/Teuchos_StandardParallelUnitTestMain.cpp")
+ENDIF()
+
+TRIBITS_PROCESS_SUBPACKAGES()
+
+TRIBITS_PACKAGE_DEF()
+
+#
+# Exclude files for source package.
+#
+
+TRIBITS_EXCLUDE_AUTOTOOLS_FILES()
+
+TRIBITS_EXCLUDE_FILES(
+  config.h.in
+  doc/images
+  example/config.h.in
+  )
+
+#
+# E) Do standard postprocessing
+#
+
+TRIBITS_PACKAGE_POSTPROCESS()

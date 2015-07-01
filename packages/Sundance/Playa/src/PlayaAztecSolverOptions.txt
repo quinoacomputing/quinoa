@@ -1,0 +1,88 @@
+
+AZ_solver             "Method"
+
+
+AZ_cg                 "CG"
+AZ_gmres              "GMRES"
+AZ_cgs                "CGS"
+AZ_tfqmr              "TFQMR"
+AZ_bicgstab           "BICGSTAB"
+AZ_lu                 "Direct"
+
+AZ_precond            "Precond"
+
+AZ_none               "None"
+AZ_Jacobi             "Jacobi"
+AZ_Neumann            "Neumann Series"
+AZ_sym_GS             "Symmetric Gauss-Seidel"
+AZ_ls                 "Least-Squares Polynomial"
+AZ_dom_decomp         "Domain Decomposition"
+
+
+AZ_subdomain_solve    "Subdomain Solver"
+
+AZ_lu                 "Approximate Sparse LU"
+AZ_ilut               "Saad ILUT"
+AZ_ilu                "ILU"
+AZ_rilu               "RILU"
+AZ_bilu               "Block ILU"
+AZ_icc                "Incomplete Cholesky"
+
+AZ_conv               "Residual Scaling"
+AZ_r0                 "Initial"
+AZ_rhs                "RHS"
+AZ_Anorm              "Matrix"
+AZ_sol                "Solution"
+AZ_noscaled           "No Scaling"
+
+AZ_output             "Verbosity"
+
+AZ_all                "All"
+AZ_none               "Silent"
+AZ_warnings           "Warnings"
+AZ_last               "Final Residual"
+
+
+AZ_graph_fill         "Graph Fill"
+
+AZ_max_iter           "Max Iterations"
+
+AZ_poly_ord           "Polynomial Order"
+
+
+AZ_overlap            "Overlap"
+
+AZ_type_overlap       "Overlap Type"
+
+AZ_standard           "Standard"
+AZ_symmetric          "Symmetric"
+
+AZ_kspace             "Restart Size"
+
+AZ_reorder            "Reorder ILU"
+
+AZ_keep_info          "Keep Factorization"
+
+AZ_orthog             "GMRES Orthogonalization"
+
+AZ_classic            "Classical Gram-Schmidt"
+
+AZ_modified           "Modified Gram-Schmidt"
+
+AZ_aux_vec            "Auxiliary Vector"
+
+AZ_resid              "Residual"
+
+AZ_rand               "Random"
+
+AZ_tol                "Tolerance"
+
+AZ_drop               "Drop Tolerance"
+
+AZ_ilut_fill          "Fill Ratio"
+
+AZ_omega              "Damping"
+
+
+
+

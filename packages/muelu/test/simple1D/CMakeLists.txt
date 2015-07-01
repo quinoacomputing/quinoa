@@ -1,0 +1,62 @@
+INCLUDE(TribitsAddExecutableAndTest)
+
+INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
+INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/../../src)
+INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/../../src/Transfers)
+INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/../../src/Smoothers)
+INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/../../gallery)
+INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/../../adapters/belos)
+
+# first ensure that these cmake boolean variables are defined
+ASSERT_DEFINED(
+  ${PACKAGE_NAME}_ENABLE_Amesos
+  )
+
+ASSERT_DEFINED(
+  ${PACKAGE_NAME}_ENABLE_Amesos2
+  )
+
+# TRIBITS_ADD_EXECUTABLE_AND_TEST(
+#     amesos2
+#     SOURCES amesos2.cpp
+#     ARGS ""
+#     COMM serial mpi
+#     DEPLIBS muelu xpetra
+#   )
+
+
+# TRIBITS_ADD_EXECUTABLE_AND_TEST(
+#     simple1D-mergedSmoo
+#     SOURCES mainMergedSmoo.cpp
+#     ARGS ""
+#     COMM serial mpi
+#     DEPLIBS muelu xpetra
+#   )
+
+IF (${PACKAGE_NAME}_ENABLE_Experimental)
+  # JJH: 9/3/2013 This test is failing.  Until Andrey fixes it, I'm allowing
+  #               it to compile (for coverage) but not run.
+  TRIBITS_ADD_EXECUTABLE(
+    simple1D-Emin
+    SOURCES Emin.cpp
+    COMM serial mpi
+    DEPLIBS muelu xpetra
+    )
+  #TRIBITS_ADD_EXECUTABLE_AND_TEST(
+  #  simple1D-Emin
+  #  SOURCES Emin.cpp
+  #  ARGS ""
+  #  COMM serial mpi
+  #  DEPLIBS muelu xpetra
+  #  )
+ENDIF ()
+
+IF (${PACKAGE_NAME}_ENABLE_Galeri)
+  TRIBITS_ADD_EXECUTABLE_AND_TEST(
+    simple1D-UncoupledAggregation
+    SOURCES simple1D-UncoupledAggregation.cpp
+    ARGS ""
+    COMM serial mpi
+    DEPLIBS muelu xpetra
+    )
+ENDIF()

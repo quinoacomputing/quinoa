@@ -1,0 +1,382 @@
+/* @HEADER@ */
+# ************************************************************************
+# 
+#                              Sundance
+#                 Copyright (2005) Sandia Corporation
+# 
+# Copyright (year first published) Sandia Corporation.  Under the terms 
+# of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S. Government 
+# retains certain rights in this software.
+# 
+# This library is free software; you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License as
+# published by the Free Software Foundation; either version 2.1 of the
+# License, or (at your option) any later version.
+#  
+# This library is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#                                                                                 
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+# USA                                                                                
+# Questions? Contact Kevin Long (krlong@sandia.gov), 
+# Sandia National Laboratories, Livermore, California, USA
+# 
+# ************************************************************************
+/* @HEADER@ */
+
+namespace SundanceStdFwk
+{
+/*! \page bcs Boundary Conditions
+
+There are many ways to apply boundary conditions in a finite element simulation.
+To begin with, the way a boundary condition gets written depends strongly 
+on the way the weak problem
+has been formulated; for instance, boundary conditions will be written quite 
+differently in least-squares formulations than in Galerkin formulations. 
+In this documentation we describe how to apply BCs in a Galerkin
+formulation.
+
+\section bc_where Specifying where a boundary condition gets applied
+
+In %Sundance, geometric subdomains are identified using CellFilter objects. The
+surface on which a BC is to be applied is specified by passing as an argument
+the CellFilter representing that surface. 
+
+\section bc_nonlin Nonlinear Boundary Conditions
+
+Some problems will have nonlinear boundary conditions, for example in radiative heat 
+transfer from a convex surface the heat flux is \f$\sigma T^4\f$ where \f$\sigma\f$ is the
+Stefan-Boltzmann constant. %Sundance requires you to handle nonlinear BCs in the same
+way you handle nonlinear PDEs: by iterative solution of a linearized problem. The
+linearization will depend on the iterative method used. 
+
+It is important to realize that a linear PDE with nonlinear BCs gives
+rise to a nonlinear problem, the linearity of the PDE notwithstanding.
+
+
+\section bc_galerkin BCs for Galerkin and Petrov-Galerkin Formulations
+
+In a Galerkin or Petrov-Galerkin formulation, integration 
+by parts yields boundary
+terms involving a test function and the derivative of an unknown function. 
+The trick to doing BCs is to figure out how to build the BCs into
+this surface term.
+
+\subsection bc_neumann Neumann Boundary Conditions
+
+Neumann BCs specify the value of a normal derivative, or some combination of derivatives,
+along a boundary surface. They arise in problems where a flux has been specified on
+a boundary; for example, a heat flux in heat transfer or a surface traction (momentum 
+flux) in solid mechanics. An important and quite common special case is a homogeneous
+Neumann BC, where the boundary flux is zero; examples are insulating surfaces in heat 
+transfer and free surfaces in solid mechanics. Homogeneous Neumann BCs are often called
+<i> natural BCs</i> in the finite elements literature, and they have a particularly simple
+representation.
+
+
+Writing Neumann BCs in Galerkin formulations is extremely simple. After integration
+by parts, we will have boundary terms involving test functions times derivatives 
+of our unknowns. To apply a Neumann BC, we simply replace the derivatives appearing
+in those boundary terms with their value determined by the BC. Homogeneous Neumann BCs
+are 
+a particularly simple special case because the boundary integrals go to zero, letting
+us satisfy the BC by simply <i>ignoring</i> the boundary integrals on
+those regions! It doesn't
+get much simpler than that. 
+
+\subsection bc_robin Robin Boundary Conditions
+
+Robin BCs, often called boundary conditions of the third kind, specify a
+linear combination of a field value and its normal derivative. Robin BCs
+occur, for example, on a surface from which heat is carried by convection. 
+Robin BCs are handled similarly to Neumann BCs, in that we replace
+the derivative in a surface term with its value computed from the BC; however, with a Robin
+BC we replace the derivative with a linear expression involving the unknown field rather
+than with a known expression. 
+
+\subsection bc_dirichlet Dirichlet Boundary Conditions
+
+Dirichlet boundary conditions specify the value of a field on a boundary segment. 
+Some physical examples are specifying the temperature on a surface 
+that is in contact with a heat bath, or specifying that a viscous fluid ``sticks'' to
+a surface. 
+
+In many cases we can enforce Dirichlet boundary conditions on certain nodes
+or edges
+by replacing the PDE at those entities 
+with an equation representing the Dirichlet BCs.
+This can be done nodewise or weakly over the boundary cell; note that nodewise
+BC application is a special case of weak BC application 
+obtained by using a nodal quadrature rule. A justification of this
+scheme is given below in section \ref bc_details.
+
+In %Sundance we write such a boundary condition using the EssentialBC object.
+The most general constructor for an EssentialBC takes as arguments
+<ul>
+<li> the CellFilter on which the BC is to be applied
+<li> a weak form of the BC.
+<li> a QuadratureFamily 
+</ul>
+
+
+\subsection bc_ex Example: BCs for Laplace's Equation
+
+We now show how to write Neumann, Robin, and Dirichlet boundary conditions
+for the Laplace equation in %Sundance. The equation on the interior of the
+domain is
+\f[
+\nabla^2 u = 0  \; \mathrm{in} \; \Omega.
+\f]
+On the boundary regions \f$\Gamma_N\f$, \f$\Gamma_D\f$, and \f$\Gamma_R\f$
+we have boundary conditions   
+\f[
+\frac{\partial u}{\partial n} = G
+\f]  
+\f[
+u = u_D
+\f]  
+\f[
+\frac{\partial u}{\partial n} = \alpha (u - u_R)
+\f]
+We form a weak equation by multiplying by a test function \f$v\f$ 
+and integrating, giving
+\f[
+- \int_\Omega \nabla v \cdot \nabla u + \int_\Gamma v \frac{\partial u}{\partial n} = 0
+\f]
+which must hold for all \f$v\f$ in a suitable subspace.
+On the Neumann and Robin regions, we can substitute \f$G\f$
+and \f$\alpha (u - u_R)\f$, respectively, for the 
+normal derivative \f$\frac{\partial u}{\partial n}\f$, so that these
+BCs are simply included in the weak form as written. The method for
+applying Dirichlet BCs 
+is described in \ref bc_details. 
+
+
+This equation is written in %Sundance with code such as the following
+\code
+// Define test and unknown functions
+Expr v = new TestFunction(some basis);
+Expr u = new UnknownFunction(some basis);
+
+
+// Define a cell filter for the interior of the region
+CellFilter omega = new MaximalCellFilter();
+
+// Define cell filters for the surfaces on which
+// neumann, robin, and dirichlet are to be applied.
+CellFilter gamma_neumann = [some cell filter definition];
+CellFilter gamma_robin = [some other cell filter definition];
+CellFilter gamma_diri = [yet another cell filter definition];
+
+// Define an expression for the flux on the Neumann surface
+Expr G = [some expression];
+
+// Define expressions for the variables in the Robin BC
+Expr alpha = [some expression];
+Expr u_R = [some other expression];
+
+// Define expressions for the variable in the Dirichlet BC
+Expr u_D = [some expression];
+
+Expr eqn = Integral(omega, (grad*v)*(grad*u)) 
+           + Integral(gamma_neumann, v*G)
+           + Integral(gamma_robin, v*alpha*(u-u_R));
+
+Expr essBC = EssentialBC(gamma_diri, v*(u-u_D));
+\endcode
+
+
+
+\subsubsection bc_details Optional: More about Dirichlet BCs
+
+The replacement scheme for Dirichlet boundary conditions
+described 
+above may seem ad-hoc, however it can be given a sound
+mathematical foundation as a limit of a Robin boundary condition. 
+
+Without loss of generality, 
+we'll use as a model problem the Laplace equation with Dirichlet conditions 
+\f$u=u_0\f$
+on the entire boundary:
+\f[
+\nabla^2 u = 0  \; \mathrm{in} \; \Omega
+\f]
+\f[
+u=u_0 \; \mathrm{on} \; \Gamma.
+\f]
+As usual, we form a weak equation by multiplying by a test function \f$v\f$ 
+and integrating, giving
+\f[
+- \int_\Omega \nabla v \cdot \nabla u + \int_\Gamma v \frac{\partial u}{\partial n} = 0
+\f]
+which must hold for all \f$v\f$ in a suitable subspace.
+We now impose a Robin boundary condition
+\f[
+\epsilon \frac{\partial u}{\partial n} = u - u_0,
+\f]
+which in the limit \f$\epsilon \rightarrow 0\f$ approaches the Dirichlet condition \f$u=u_0\f$.
+With this BC, the weak equation becomes
+\f[
+- \int_\Omega \nabla v \cdot \nabla u 
++ \frac{1}{\epsilon}\int_\Gamma v \left(u - u_0\right) = 0
+\f]
+At this point, we could simply take a small but nonzero \f$\epsilon\f$ and solve the
+problem. This is equivalent to a penalty method for imposing the BC, and unfortunately
+leads to poorly conditioned linear systems. We want to do better, and take the limit
+\f$\epsilon \rightarrow 0\f$ so that the Dirichlet BC is satisfied exactly, 
+yet we also want to avoid ill-conditioning. As we will show, we can often have it both ways, 
+taking the limit without ill-conditioning, but the argument must be developed carefully
+because the way in which that limit is taken is important.
+
+We will discretize the system before taking the limit. We expand \f$u\f$ in a series
+of basis functions,
+\f[
+u(x) = \sum_j u_j \phi_j(x)
+\f]
+and evaluate \ref{Blah} with each member of \f${\phi}\f$ as test functions.
+The discrete equations are
+\f[
+\left[{\bf A} +  \frac{1}{\epsilon} {\bf B}\right] \cdot {\bf u}
+= \frac{1}{\epsilon} {\bf B} \cdot {\bf u}_0
+\f]
+where the matrices are defined as
+\f[
+{\bf A}_{ij} = -\int_\Omega k \nabla\phi_i \cdot \nabla \phi_j
+\f]
+\f[
+{\bf B}_{ij} = \int_{\Gamma} \phi_i \phi_j
+\f]
+At this point we make a critical assumption: that we are using either Lagrange or Serendipity
+basis functions. These basis functions are {\it nodal}, by which we mean we
+can make an association between basis functions and mesh 
+nodes, and then define the basis functions in such a way that the \f$i\f$-th basis
+function \f$\phi_i(x)\f$ is zero at every node but the \f$i\f$-th. Furthermore, these
+basis sets have the important property that {\it 
+only those basis functions \f$\phi_i\f$ associated with nodes on the surface
+\f$\Gamma\f$ have nonzero values on the surface \f$\Gamma\f$.} 
+We can now partition the equations and variables according to 
+whether each row or column is associated
+with a node on \f$\Gamma\f$. Notice that the dangerous denominator appears only in terms involving
+\f$B\f$, whose elements are obtained by integrating over \f$\Gamma\f$. Thus all elements
+of \f${\bf B}\f$
+involving nodes not on \f$\Gamma\f$ are zero. 
+Marking elements associated with \f$\Gamma\f$ with the superscript
+\f$D\f$ and all others with the superscript \f$I\f$, we can write each matrix as a block matrix,
+e.g.,
+\f[
+{\bf A} = \left[
+\begin{array}{cc}
+{\bf A}^{II} & {\bf A}^{ID} \\
+{\bf A}^{DI} & {\bf A}^{DD} 
+\end{array}\right].
+\f]
+In particular, from the argument above we 
+know that all off-boundary elements of \f${\bf B}\f$ are zero,
+\f[
+{\bf B} = \left[
+\begin{array}{cc}
+{\bf 0} & {\bf 0} \\
+{\bf 0} & {\bf B}^{DD} 
+\end{array}
+\right].
+\f]
+With this notation, we can write out the system,
+\f[
+\left[\begin{array}{cc}
+{\bf A}^{II} & {\bf A}^{ID} \\
+{\bf A}^{DI} & {\bf A}^{DD} + \frac{1}{\epsilon} {\bf B}  
+\end{array}
+\right]
+\left[
+\begin{array}{c}
+{\bf u}^I \\ {\bf u}^D
+\end{array}
+\right]
+=
+\left[
+\begin{array}{c}
+{\bf 0} \\ \frac{1}{\epsilon}{\bf B}\cdot {\bf u_0}
+\end{array}
+\right]
+\f]
+Multiplying the second row by $\epsilon$ removes the explosive denominator
+\f[
+\left[
+\begin{array}{cc}
+{\bf A}^{II} & {\bf A}^{ID} \\
+\epsilon {\bf A}^{DI} & \epsilon {\bf A}^{DD} + {\bf B}  
+\end{array}
+\right]
+\left[
+\begin{array}{c}
+{\bf u}^I \\ {\bf u}^D
+\end{array}\right]
+=
+\left[
+\begin{array}{c}
+{\bf 0} \\ {\bf B}\cdot {\bf u_0}
+\end{array}\right]
+\f]
+so that it is safe to take the limit $\epsilon \rightarrow 0$, yielding
+the well-behaved system
+\f[
+\left[
+\begin{array}{cc}
+{\bf A}^{II} & {\bf A}^{ID} \\
+{\bf 0} & {\bf B}  
+\end{array}
+\right]
+\left[
+\begin{array}{c}
+{\bf u}^I \\ {\bf u}^D
+\end{array}\right]
+=
+\left[
+\begin{array}{c}
+{\bf 0} \\ {\bf B}\cdot {\bf u_0}
+\end{array}\right]
+\f]
+
+This entire process can be summarized as such: for surfaces on which Dirichlet BCs apply, 
+we simply <i> replace</i> all equations by the Dirichlet boundary term. The bookkeeping for
+this would be daunting if we had to keep track of off-boundary and on-boundary nodes
+in the equation specification. However,
+in %Sundance the specification that a term is to be handled in this special way via replacement
+(or more precisely via limit and rescaling) is done by putting the term inside an
+EssentialBC object rather than an Integral object. The %Sundance computational
+kernel will figure out which rows get replaced and rescaled. 
+
+\subsection bc_disc Discontinous Dirichlet BCs
+
+It is not uncommon to encounter boundary conditions in which a field is set to a function
+that is discontinuous. An example is the lid-driven cavity problem of fluid mechanics, 
+in which the \f$x\f$-component of velocity is zero along the side walls and nonzero along the
+top lid. The \f$x\f$ velocity is discountinuous at the two top corners, and it is necessary
+to choose a scheme for assigning the boundary value at the points of discontinuity.
+Several ideas suggest themselves:
+
+<ul>
+<li> Pick one of the two boundary conditions and apply it at the corner point.
+<li> Average the two boundary conditions. 
+</ul>
+
+
+\section bc_nonlocal Nonlocal Boundary Conditions
+
+Nonlocal boundary conditions arise naturally in problems such as 
+radiative heat transfer from non-convex surfaces, and can also occur 
+as far-field boundary conditions in acoustics, electromagnetics,
+or fluid mechanics. Nonlocal
+boundary conditions are handled with integral equations, and are
+not supported in the current version of %Sundance.
+
+It is often possible to find a local approximation to a nonlocal
+boundary condition, which will allow you to proceed at the prce
+of introducing some modeling error.
+
+*/
+}

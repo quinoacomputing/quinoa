@@ -1,0 +1,174 @@
+#-----------------------------------------------------------------------
+#	phdMesh : Parallel Heterogneous Dynamic unstructured Mesh
+#               Copyright (2007) Sandia Corporation
+#
+#  Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
+#  license for use of this work by or on behalf of the U.S. Government.
+#
+#  This library is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU Lesser General Public License as
+#  published by the Free Software Foundation; either version 2.1 of the
+#  License, or (at your option) any later version.
+#
+#  This library is distributed in the hope that it will be useful, but
+#  WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+#  Lesser General Public License for more details.
+#
+#  You should have received a copy of the GNU Lesser General Public
+#  License along with this library; if not, write to the Free Software
+#  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+#  USA
+#-----------------------------------------------------------------------
+#  Primary targets:
+#
+#  config	 : test the configuration and produce the config file.
+#  all	    : build configuration and libraries
+#  clean	  : clean build directory
+#  install	: build and install libraries
+#  uninstall      : uninstall everything
+#  tests	  : create and run test executables
+#  tests_clean    : clean up tests
+#
+#-----------------------------------------------------------------------
+#
+#  Input macros:
+#
+#  PHDMESH_PATH	: path to the top level package directory
+#  PHDMESH_INSTALL     : path to where libraries are to be installed
+#  PHDMESH_CONFIG_DEPS : list of configuration files used
+#
+#-----------------------------------------------------------------------
+
+SHELL=/bin/bash
+
+.PHONY : \
+	clean install uninstall	\
+	config	config_clean	config_install config_uninstall	\
+	src_all    src_clean	src_install    src_uninstall	\
+	tests_all  tests_clean  tests_run	\
+	test_util_all   test_util_run   test_util_clean \
+	test_txblas_all test_txblas_run test_txblas_clean	\
+	test_mesh_all   test_mesh_run   test_mesh_clean
+
+#-----------------------------------------------------------------------
+
+PHDMESH_VERSION = 1.2d
+PHDMESH_PACKAGE = phdmesh
+
+all     :	src_all	tests_all ;
+clean   :	config_clean    src_clean     tests_clean ;
+install :	config_install  src_install ;
+tests   :	tests_run ;
+uninstall       :	config_uninstall src_uninstall ;
+phdmesh.tar     :       tar cvf $@ -C $(PHDMESH_PATH) .
+
+#-----------------------------------------------------------------------
+#-----------------------------------------------------------------------
+
+CONFIG_FILE = phdmesh_config.h
+
+$(CONFIG_FILE) : $(MAKEFILE_LIST)
+	@ echo "Regenerating $@ do to changed $?"
+	@ echo COMPILE and LINK:
+	@ echo "  $(CC) $(CFLAGS) $(C_LIB_EXT)"
+	@ echo "  $(CXX) $(CXXFLAGS) $(CXX_LIB_EXT)"
+	@ echo $0 MACROS:
+	@ echo "  HAVE_MPI = ${HAVE_MPI}"
+	@ echo "  NO_PTHREADS = ${NO_PTHREADS}"
+	@ echo "  TPI_NO_SCHED = ${TPI_NO_SCHED}"
+	@ echo "  HAVE_SNL_EXODUSII = ${HAVE_SNL_EXODUSII}"
+	@ echo "  MPICH_SKIP_MPICXX = ${MPICH_SKIP_MPICXX}"
+	@ echo "  LINUX64_WS32_GM = ${LINUX64_WS32_GM}"
+	@ rm -f $@
+	@ touch $@
+	@ printf "#ifndef phdmesh_config_h\n" >> $@
+	@ printf "#define phdmesh_config_h\n" >> $@
+	@ printf "#define PHDMESH_PACKAGE $(PHDMESH_PACKAGE)\n" >> $@
+	@ printf "#define PHDMESH_VERSION $(PHDMESH_VERSION)\n" >> $@
+	@ if [ ${HAVE_MPI} ]; then printf "#define HAVE_MPI\n" >> $@ ; fi
+	@ if [ ${NO_PTHREADS} ]; then printf "#define NO_PTHREADS\n" >> $@ ; fi
+	@ if [ ${TPI_NO_SCHED} ]; then printf "#define TPI_NO_SCHED\n" >> $@ ; fi 
+	@ if [ ${HAVE_SNL_EXODUSII} ]; then printf "#define HAVE_SNL_EXODUSII\n" >> $@ ; fi 
+	@ if [ ${MPICH_SKIP_MPICXX} ]; then printf "#define MPICH_SKIP_MPICXX\n" >> $@ ; fi
+	@ if [ ${LINUX64_WS32_GM} ]; then printf "#define LINUX64_WS32_GM\n" >> $@ ; fi
+	@ printf "#endif\n" >> $(CONFIG_FILE)
+
+config_clean : ; rm -f ${CONFIG_FILE}
+
+config_install : config_all
+	test -n "$(PHDMESH_INSTALL)" && \
+	mkdir -p $(PHDMESH_INSTALL) &&  \
+		cp $(CONFIG_FILE) $(PHDMESH_INSTALL)/$(CONFIG_FILE)
+
+config_uninstall :
+	@ rm -f $(PHDMESH_INSTALL)/$(CONFIG_FILE)
+
+#-----------------------------------------------------------------------
+#-----------------------------------------------------------------------
+
+include \
+	$(PHDMESH_PATH)/tests/util/Make.in      \
+	$(PHDMESH_PATH)/tests/txblas/Make.in    \
+	$(PHDMESH_PATH)/tests/gears/Make.in
+
+tests_all :     \
+	test_util_all   \
+	test_txblas_all \
+	test_mesh_all
+
+
+tests_run :     \
+	test_util_run   \
+	test_txblas_run \
+	test_mesh_run
+
+
+tests_clean :   \
+	test_util_clean \
+	test_txblas_clean	\
+	test_mesh_clean
+
+#-----------------------------------------------------------------------
+#-----------------------------------------------------------------------
+
+PHDMESH_SRC_DIRS =      \
+		$(PHDMESH_PATH)/src/util	\
+		$(PHDMESH_PATH)/src/txblas      \
+		$(PHDMESH_PATH)/src/mesh	\
+		$(PHDMESH_PATH)/src/mesh_io     \
+		$(PHDMESH_PATH)/src/element	\
+		$(PHDMESH_PATH)/src/yaml
+
+include \
+	$(PHDMESH_PATH)/src/util/Make.in	\
+	$(PHDMESH_PATH)/src/txblas/Make.in      \
+	$(PHDMESH_PATH)/src/mesh/Make.in	\
+	$(PHDMESH_PATH)/src/mesh_io/Make.in     \
+	$(PHDMESH_PATH)/src/element/Make.in	\
+	$(PHDMESH_PATH)/src/yaml/Make.in
+
+vpath %.c   $(PHDMESH_SRC_DIRS)
+vpath %.cpp $(PHDMESH_SRC_DIRS)
+
+src_all     :   util_all     txblas_all \
+		mesh_all     mesh_io_all	\
+		element_all  yaml_all ;
+
+src_clean   :   util_clean   txblas_clean	\
+		mesh_clean   mesh_io_clean	\
+		element_clean yaml_clean ;
+
+src_install :   util_install txblas_install     \
+		mesh_install mesh_io_install	\
+		element_install yaml_install ;
+
+src_uninstall : \
+	util_uninstall txblas_uninstall \
+	mesh_uninstall mesh_io_uninstall        \
+	element_uninstall yaml_uninstall ;
+
+#-----------------------------------------------------------------------
+#-----------------------------------------------------------------------
+
+

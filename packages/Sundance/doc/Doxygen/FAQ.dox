@@ -1,0 +1,486 @@
+/* @HEADER@ */
+# ************************************************************************
+# 
+#                              Sundance
+#                 Copyright (2005) Sandia Corporation
+# 
+# Copyright (year first published) Sandia Corporation.  Under the terms 
+# of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S. Government 
+# retains certain rights in this software.
+# 
+# This library is free software; you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License as
+# published by the Free Software Foundation; either version 2.1 of the
+# License, or (at your option) any later version.
+#  
+# This library is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#                                                                                 
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+# USA                                                                                
+# Questions? Contact Kevin Long (krlong@sandia.gov), 
+# Sandia National Laboratories, Livermore, California, USA
+# 
+# ************************************************************************
+/* @HEADER@ */
+
+/*! \page faq_page Frequently Asked Questions (FAQ)
+<ul>
+<li> \ref faq_gen
+<li> \ref faq_perf
+<li> \ref faq_pde
+<li> \ref faq_mesh
+<li> \ref faq_elem
+<li> \ref faq_solvers
+</ul>
+
+<ul>
+
+<li> \ref faq_gen
+
+<ul> 
+<li> \ref faq_gen0
+<li> \ref faq_gen1
+<li> \ref faq_gen2
+<li> \ref faq_gen3
+<li> \ref faq_gen4
+<li> \ref faq_gen5
+<li> \ref faq_gen6
+<li> \ref faq_gen7
+<li> \ref faq_gen8
+<li> \ref faq_gen9
+</ul>
+
+<li> \ref faq_perf
+
+<ul> 
+<li> \ref faq_perf1
+<li> \ref faq_perf2
+<li> \ref faq_perf3
+</ul>
+
+<li> \ref faq_pde
+
+<ul> 
+<li> \ref faq_pde1
+<li> \ref faq_pde2
+<li> \ref faq_pde3
+<li> \ref faq_pde4
+<li> \ref faq_pde5
+<li> \ref faq_pde6
+<li> \ref faq_pde7
+<li> \ref faq_pde8
+</ul>
+
+
+<li> \ref faq_mesh
+
+<ul> 
+<li> \ref faq_mesh1
+<li> \ref faq_mesh2
+<li> \ref faq_mesh3
+<li> \ref faq_mesh4
+<li> \ref faq_mesh5
+</ul>
+
+<li> \ref faq_elem
+
+<ul> 
+<li> \ref faq_elem1
+<li> \ref faq_elem2
+<li> \ref faq_elem3
+<li> \ref faq_elem4
+<li> \ref faq_elem5
+</ul>
+
+<li> \ref faq_solvers
+
+<ul> 
+<li> \ref faq_solvers1
+<li> \ref faq_solvers2
+<li> \ref faq_solvers3
+<li> \ref faq_solvers4
+<li> \ref faq_solvers5
+<li> \ref faq_solvers6
+<li> \ref faq_solvers7
+</ul>
+
+
+
+</ul>
+
+
+
+
+
+\section faq_gen General
+
+\subsection faq_gen0 Is Sundance a parallel code?
+
+Yes. See the sections on \ref parallel and \ref mesh_par for more information
+
+\subsection faq_gen1 On what platform is Sundance developed?
+
+I do essentially all development work on various versions of SuSe Linux, using the
+GCC and Intel compilers. I use the MPICH implementation of MPI.
+
+\subsection faq_gen2 To which platforms has Sundance been ported? 
+
+Sundance is known to run on Linux (using GCC 3.3, 3.4 and Intel compilers), 
+Mac OSX, and Cygwin.
+
+In general, it should run on any reasonable Unix-like environment
+with an ANSI C++ compiler
+and a good implementation of the STL. A general rule is that if you can make
+Trilinos and the STL work on your platform, then 
+Sundance will present no problem.
+
+\subsection faq_gen3 Does it run on Windows?
+
+Yes, but it must be built under Cygwin. 
+
+\subsection faq_gen4 Will you port Sundance to my favorite platform?
+
+Unless you work at Sandia National Laboratories 
+or are one of my external collaborators on algorithmic research projects, I will
+probably not have time to do so.
+I am happy to advise you on doing your own port, however. A general rule 
+is that if you can make
+Trilinos and the STL work on your platform, then Sundance will present no problem.
+
+\subsection faq_gen5 Where does the name "Sundance" come from?
+
+
+The history of the name is that it is
+the title of a short story I happened to read one 
+evening while taking a break from
+writing some of the initial classes
+for my as-yet-anonymous symbolic PDE simulator. 
+The tradition at Sandia
+is to give codes names with a flavor of the American 
+Southwest, and while reading
+the story it occurred to me that Sundance was an appropriate choice of name
+for this code. 
+Other than that, it has no particular significance. I have been unable
+to reverse engineer a useful acronym out of it.
+
+\subsection faq_gen6 Why did you develop Sundance?
+
+Because I am extremely lazy and don't want to spend more than a day's time or
+more than 100 lines of code to develop a simulator for a new problem. 
+Therefore, I spent several years writing
+many thousand lines of code to develop a tool to let me be lazy.
+
+As for why Sandia actually paid me to do such a thing: such a flexible
+code simplifies the use of various advanced algorithms we are developing
+for solvers and optimizers.
+
+\subsection faq_gen7 I need feature X to do my problem, and it's not there. Would you add it for me?
+
+If it's simple, yes, though I may not get to it yesterday. If it's 
+more complex to add, I'll be able to get to it only as time and funding allow.
+
+
+\subsection faq_gen8 I already have a finite-element code, and would like to use Sundance's symbolic capabilities with it. Is this possible?
+
+Probably yes, if your code is flexible enough. The Sundance symbolic engine
+is completely independent of the implementation of the mesh, basis functions,
+fields, and other finite-element issues. The key step for using
+Sundance with your favorite finite-element code is to write an object
+called an evalution mediator (derived from an abstract class called
+an AbstractEvalMediator) that implements several callback methods for
+getting values of field variables from your FE code. 
+
+If you have a mesh class that is more capable
+than my BasicSimplicialMesh mesh subtype, then a particularly useful
+means of interfacing with your code would be to wrap your mesh class
+in the Sundance MeshBase interface, allowing your mesh to be used
+in Sundance simulations.
+
+\subsection faq_gen9 Why do you use the Autotools for configuration?
+
+I detest the autotools -- as a developer, I find them extremely cumbersome
+to work with, and as a user I find them finicky and near-impossible to
+debug when things go wrong --
+but for better or worse they are the <i>de facto</I> standard for configuring
+software on Unix-like systems. In particular, they are used by Trilinos.
+Because Sundance is built on top of Trilinos, using a common
+configuration system was a logical choice. My apologies; I don't 
+like it either.
+
+
+
+
+
+
+\section faq_perf Performance
+
+\subsection faq_perf1 Are you crazy? How can a general-purpose code possibly be efficient?
+
+\subsection faq_perf2 Is Sundance scalable?
+
+\subsection faq_perf3 Does the symbolic processing result in large runtime overhead?
+
+
+
+
+\section faq_pde PDEs 
+
+\subsection faq_pde1 What discretization method does Sundance use?
+
+The method of discretization is determined by a number of factors: the 
+choice of weak formulation of a problem, the choice of basis
+functions for each field, the choice of quadrature rules for integration, 
+and by the choice of stabilization scheme (if any) used.
+
+For example, the Navier-Stokes
+equations of incompressible fluid mechanics can be written in either
+pressure-velocity form or vorticity-streamfunction form, each of which
+leads to different discretization issues. With the pressure-velocity form,
+a naive choice of basis functions will likely lead to an unstable scheme; 
+a suitable combination of bases for velocity and pressure must be used,
+or alternatively, the system can be stabilized by adding certain
+non-physical terms to the equation set.
+
+Sundance allows essentially any choice of weak formulation, and then
+the choice of basis functions and quadrature rules
+is limited by the set that has been implemented
+at this time. 
+
+\subsection faq_pde2 Can I solve problems with more than one unknown field?
+
+Yes.
+
+\subsection faq_pde3 Is Sundance a thermal code, a structures code, a fluids code, or what? Is it static or transient? Is it linear or nonlinear?
+
+Sundance isn't any particular type of simulation code, 
+it is a system of components
+with which one can create a simulation code. It is thus 
+possible to use Sundance
+to write simulators for virtually any kind of PDE for any field of science or
+engineering. It is possible to use Sundance components to write static or dynamic,
+linear or nonlinear, forward or inverse problems.
+
+
+
+See the \ref tutorial for examples of different simulators developed in Sundance.
+
+\subsection faq_pde4 Can I use a stabilized method such as SUPG or Galerkin Least Squares in Sundance? 
+
+Yes; stabilization terms can be represented by the expression language 
+just like any other
+term. There are two ways in which stabilization terms differ
+from the usual terms in weak forms: they include
+mesh-specific information (usually a cell diameter), and they
+drop surface terms that arise during integrations by parts. The cell diameter
+can be represented with a CellDiameterExpr object, and the surface
+terms are left out implicitly.
+
+The tutorial contains an example of 
+<A HREF="PressureStabilizedNS2D_8cpp-example.html"> 
+pressure stabilization of the Navier-Stokes equations.
+</A> 
+
+\subsection faq_pde5 How are boundary conditions handled in Sundance?
+
+See the section on \ref bcs in the online user's guide.
+
+\subsection faq_pde6 Can I specify nonlocal boundary conditions in Sundance?
+
+Not at present, and there are no near-term plans to add this capability. 
+It is often possible to find local approximations to nonlocal BCs.
+
+\subsection faq_pde7 Can I specify nonreflecting boundary conditions in Sundance?
+
+Nonreflecting boundary conditions are, in general, nonlocal and thus cannot
+be implemented exactly in Sundance. There are, however, local 
+approximations to nonreflecting
+boundary conditions and these can be implemented without difficulty. 
+See, for instance, Jin's book on finite elements for electromagnetics.
+
+\subsection faq_pde8 Can I do a contact problem in Sundance?
+
+Most of my work involves fluid mechanics rather than structural mechanics, so
+there is at present no capability for identifying regions of contact between two meshes
+(or two parts of the same mesh) in Sundance.
+
+Contact is an important problem, and if someone at Sandia wants 
+to use Sundance for
+optimizing contact simulations, I will be happy to accept funding to add it.
+However, due to the nature of my own work, I cannot at this time justify the
+effort to do so.
+
+
+
+
+
+
+
+
+\section faq_mesh Mesh issues
+
+\subsection faq_mesh1 Is Sundance a 1D, 2D, or 3D code?
+
+All of the above.
+
+\subsection faq_mesh2 Can Sundance read my favorite mesh file format?
+
+Sundance is not tied to a particular mesh file format. There is an 
+abstract, extensible interface for \ref mesh_reading. To work
+with your favorite mesh file format, one would write a MeshReader subtype
+for that format. Such a reader is typically a couple of hundred lines of
+code, but need be done only once per format. An alternative to writing
+a Sundance MeshReader is to find (or write) a translator from your favorite
+format to one of those currently present in Sundance.
+
+Currently, MeshReaders have been implemented for the Exodus/NetCDF and
+Triangle formats. 
+
+
+\subsection faq_mesh3 What mesh generator does Sundance use?
+
+None, other than trivial meshers for lines and rectangles for use in testing.
+Third-party meshers such as 
+<A HREF="http://sass1693.sandia.gov/cubit"> Cubit </A>
+or
+<A HREF="http://www-2.cs.cmu.edu/~quake/triangle.html"> Triangle </A>
+are better than anything I could write, so I have concentrated on
+reading meshes output from such codes. It is in principle possible to 
+wrap such a mesher and link it into Sundance, but the configuration
+headaches that would entail make it not worth the effort. Thus,
+except for lines and rectangles, Sundance meshes are always read from
+files rather than generated at runtime.
+
+\subsection faq_mesh4 Does Sundance use simplicial or quad/hex meshes?
+
+The mesh interface supports either, but only simplicial elements
+have been implemented. There are no immediate plans to do non-simplicial
+elements.
+
+\subsection faq_mesh5 Does Sundance do adaptive mesh refinement?
+
+Not at present. I have plans to add Philippe Pebay's elegant communication-free
+parallel mesh refinement scheme, but have not yet done so.
+
+
+
+
+
+
+\section faq_elem Element Types
+
+\subsection faq_elem1 What cell types are supported?
+
+Simplicial cells only, in 1, 2, and 3 dimensions.
+
+\subsection faq_elem2 What basis functions are supported?
+
+Currently, Lagrange orders 1 and 2 only. Implementation of more general elements
+through Robert Kirby's 
+<A HREF="http://people.cs.uchicago.edu/~kirby/index.cgi?page=fiat"> FIAT </A>
+code is underway.
+
+
+\subsection faq_elem3 What quadrature rules are supported?
+
+Gaussian quadrature on lines, Gauss/Dunavant quadrature on triangles,
+and Gauss/Xi on tetrahedra. I have implemented
+the rules for triangles and tets by typing in the numbers from the
+papers of Dunavant and Xi, so such rules are not available for arbitrary
+order. If you want to compute, or type in, rules for other orders
+I will be happy to add them to the code.
+
+\subsection faq_elem4 Can I add my own cell type / basis type / quadrature rule?
+
+Please do, though addition of new basis types would best
+be done through Robert Kirby's 
+<A HREF="http://people.cs.uchicago.edu/~kirby/index.cgi?page=fiat"> FIAT </A>
+code, which is a very general system for generating efficient code for
+basis evaluation.
+
+\subsection faq_elem5 Do you have plans to add my favorite cell/basis/quadrature rule?
+
+ Implementation of more general elements
+through Robert Kirby's 
+<A HREF="http://people.cs.uchicago.edu/~kirby/index.cgi?page=fiat"> FIAT </A>
+code is underway.
+
+I have no near-term plans to add non-simplicial meshes. 
+
+
+
+
+
+
+
+
+
+
+\section faq_solvers Solvers
+
+
+\subsection faq_solvers1 What solvers does Sundance use?
+
+Sundance uses the Trilinos family of solvers. Many linear solvers
+are available, both iterative and direct. A number of types
+of preconditioning are available: in particular domain decomposition and
+incomplete factorization through Ifpack, and algebraic multilevel
+through ML. All Trilinos iterative
+solvers and preconditioners are fully parallel. 
+Direct solvers such as Super LU and UMFPACK
+are available through the Amesos package; not all Amesos solvers are
+capable of parallel solves.
+
+For nonlinear solvers, the NOX subpackage of Trilinos is used. Numerous
+options for solver method, update, line search, and convergence 
+checking are available in NOX.
+
+\subsection faq_solvers2 Does Sundance use direct or iterative solvers?
+
+Most solvers in Trilinos are iterative, but direct solvers
+are available through the Amesos package.
+
+\subsection faq_solvers3 Does Sundance use multigrid solvers?
+
+Multilevel solvers are available to Sundance
+through the ML algebraic multilevel package within Trilinos.
+
+\subsection faq_solvers4 Can I use my favorite solver with Sundance?
+
+Trilinos has a fairly extensive set of iterative solvers and preconditioners
+to choose from. If your favorite algorithm isn't there, or if you really
+want to use some particular code you know and trust, it is possible
+to use the TSFCore interfaces to make your solver work with Trilinos.
+ 
+
+\subsection faq_solvers5 Can I use Newton-Krylov methods with Sundance?
+
+\subsection faq_solvers6 Can I do eigenvalue problems with Sundance?
+
+There is no high-level support for setting up eigenvalue problems,
+but it can be done easily nonetheless. 
+The simplest thing to do is to write two "phony"
+linear problems, one for the mass matrix and one for the stiffness matrix, and
+then extract the operators from these problems (see below) and feed them
+to your favorite eigensolver.
+
+
+\subsection faq_solvers7 Can I get access to the stiffness matrix and load vector?
+
+Yes, through the <tt>getOperator()</tt> and <tt>getRHS()</tt>
+methods of LinearProblem, which return the stiffness matrix
+and load vector as Trilinos <tt>LinearOperator<double></tt>
+and <tt>Vector<double></tt> objects. It is then possible to use these
+high-level objects in a representation-independent solver, 
+or to use the <tt>ptr()</tt> method and an appropriate
+<tt>dynamic_cast</tt>
+to extract a reference-counted pointer to 
+the underlying concrete representation and manipulate as
+you will.
+
+
+*/

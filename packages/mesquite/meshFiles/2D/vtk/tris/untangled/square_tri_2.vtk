@@ -1,0 +1,44 @@
+# vtk DataFile Version 2.0
+Mesquite Mesh original_mesh .
+ASCII
+DATASET UNSTRUCTURED_GRID
+POINTS 9 float
+5 -5 5
+5 5 5
+5 0 5
+-5 5 5
+0 5 5
+-5 -5 5
+-5 0 5
+0 -5 5
+2 2 5
+CELLS 8 32
+3 1 4 2 
+3 4 8 2 
+3 3 6 4 
+3 6 8 4 
+3 5 7 6 
+3 7 8 6 
+3 8 7 2 
+3 7 0 2 
+CELL_TYPES 8
+5
+5
+5
+5
+5
+5
+5
+5
+POINT_DATA 9
+SCALARS fixed float
+LOOKUP_TABLE default
+1
+1
+1
+1
+1
+1
+1
+1
+0

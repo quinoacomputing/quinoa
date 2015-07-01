@@ -1,0 +1,4 @@
+<ParameterList>
+  <Parameter name="Solve Mode" type="string" value="Optimize"/>
+  <Parameter name="NLP Type" type="string" value="Direct"/>
+</ParameterList>

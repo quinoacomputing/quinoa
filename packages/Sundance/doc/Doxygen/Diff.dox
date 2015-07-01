@@ -1,0 +1,113 @@
+/* @HEADER@ */
+# ************************************************************************
+# 
+#                              Sundance
+#                 Copyright (2005) Sandia Corporation
+# 
+# Copyright (year first published) Sandia Corporation.  Under the terms 
+# of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S. Government 
+# retains certain rights in this software.
+# 
+# This library is free software; you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License as
+# published by the Free Software Foundation; either version 2.1 of the
+# License, or (at your option) any later version.
+#  
+# This library is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#                                                                                 
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+# USA                                                                                
+# Questions? Contact Kevin Long (krlong@sandia.gov), 
+# Sandia National Laboratories, Livermore, California, USA
+# 
+# ************************************************************************
+/* @HEADER@ */
+
+/*! \page diff_page Differences between Sundance 1.0 and Sundance 2.0
+
+Sundance 2.0 is a complete redesign and rewrite of Sundance. 
+<b> Your version 1.0 codes will not run with version 2.0</b>
+
+
+<h4> Symbolics </h4>
+
+<ul>
+<li> The entire symbolic system has been rewritten to improve performance
+and algorithmic scalability. Version 1.0 symbolic object construction 
+time scaled exponentially with the number of nodes in the expression
+graph. Version 2.0 expression construction and evaluation 
+scales linearly with the
+number of nodes in the expression graph. Expression 
+preprocessing scales (worst case) as the cube of the number of 
+continuous field variables; preprocessing time is generally not noticeable,
+but can be a few seconds in problems (such as discrete ordinate
+rad transfer models) having dozens of continuous field variables.
+<li> The algorithm used inside the symbolic engine is <b>automatic functional
+differentiation,</b> which carries out interleaved functional and spatial
+differentiation in an optimally efficient way. 
+</ul>
+
+<h4> Meshes </h4>
+
+<ul>
+<li> The version 1.0 mesh object has been replaced with an abstract
+interface. An efficient, lightweight implementation for simplices is provided.
+<li> Relative to version 1.0, mesh construction in 3D is an order of 
+magnitude faster.
+</ul>
+
+<h4> Decoupling of symbolics, mesh, and finite-element components </h4>
+
+<ul>
+<li> Sundance 1.0 was a completely integrated design, which simplified
+some things, but made interoperability difficult. In version 2.0, the
+symbolic engine, mesh, and finite-element components have been decoupled.
+The mesh and symbolics are completely independent of one another, 
+and the connection between these two subpackages and the finite-element
+objects (basis functions, etc) is done entirely through abstract
+interfaces.
+In particular, the FE system talks to the mesh through 
+an abstract interfaces, allowing the use of your favorite mesh 
+object; you just need
+to implement the <tt>MeshBase</tt> interface.
+</ul>
+
+
+<H4> Version 1 features not yet ready in version 2 </H4>
+<ul>
+<li> <tt>Parameter</tt> expressions can't be used as unknowns. 
+<li> Block equations aren't supported.
+<li> The ability to use symbolic expressions in cell filters isn't ready yet.
+Use positional cell predicates as illustrated in the examples.
+<li> All fields must be defined throughout the domain. It is thus not possible
+to define a design variable on a subset of the domain, or to set 
+up a fluid-structure interaction problem. 
+<li> All fields must have the same basis function. Thus, mixed discretizations
+are not allowed.
+<li> Simplexes only. Hexes and quads would be easy to add, but I have little
+reason to do so.
+</ul>
+
+<H4> Various changes to the user interface </H4>
+
+<ul>
+<li> v 1.0 <tt>CellSet</tt> has 
+been changed to <tt>CellFilter</tt> which better
+describes the role of that object.
+<li> v 1.0 <tt>StaticLinearProblem</tt> has been changed to 
+<tt>LinearProblem</tt> to save some typing.
+<li> Creation of discrete functions is considerably simplified, particulary
+for vector-valued functions.
+<li> Creation of nonlinear problems is considerably simplified.
+<li> Creation of linear and nonlinear PDE-constrained optimization
+problems is considerably simplified.
+</ul>
+
+
+
+*/

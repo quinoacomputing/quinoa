@@ -1,0 +1,518 @@
+% @HEADER
+% ***********************************************************************
+% 
+%            Trilinos: An Object-Oriented Solver Framework
+%                 Copyright (2001) Sandia Corporation
+% 
+% Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
+% license for use of this work by or on behalf of the U.S. Government.
+% 
+% This library is free software; you can redistribute it and/or modify
+% it under the terms of the GNU Lesser General Public License as
+% published by the Free Software Foundation; either version 2.1 of the
+% License, or (at your option) any later version.
+%  
+% This library is distributed in the hope that it will be useful, but
+% WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+% Lesser General Public License for more details.
+%  
+% You should have received a copy of the GNU Lesser General Public
+% License along with this library; if not, write to the Free Software
+% Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+% USA
+% Questions? Contact Michael A. Heroux (maherou@sandia.gov) 
+% 
+% ***********************************************************************
+% @HEADER
+
+\chapter{Templated Distributed Linear Algebra Objects with Tpetra}
+\label{chap:tpetra}
+
+\ChapterAuthors{Marzio Sala}
+
+\begin{introchapter}
+Tpetra is a package of classes for the construction and use of serial and
+distributed templated linear algebra objects, such as vectors, multi-vectors,
+and matrices. 
+Tpetra is a direct
+descendant of Epetra, and as such it implements the Petra model.  
+It provides capabilites that are very close to that of Epetra, but in a fully
+templated fashion.
+
+This Chapter will:
+\begin{itemize}
+\itemsep=1pt
+\item Briefly introduce the concepts behind the design of Tpetra and
+templated programming (in Section~\ref{sec:tpetra_introduction});
+\item Presents the basic classes (in Section~\ref{sec:tpetra_basic});
+\item Shows how to define and use vectors (in Section~\ref{sec:tpetra_vectors});
+\item Describes the matrix format (in Section~\ref{sec:tpetra_matrices}).
+\end{itemize}
+
+This chapter only gives a broad overview of the Tpetra project; more details
+can be found in~\cite{tpetra_overview} and on the Tpetra web page.
+\end{introchapter}
+
+% -------------------------------------------------------------------------- %
+\section{Introduction}
+\label{sec:tpetra_introduction}
+% -------------------------------------------------------------------------- %
+
+The Epetra package, described in the previous Chapters, has proven to be very
+successful, robust, portable, and efficient. Its only drawback is that it only
+works with double-precision real values and integers. It cannot be used with
+complex or arbitrary-precision data, for example. Therefore, Epetra developers
+decided to create a new package, with most of Epetra's capabilities, and a
+full support for templated programming as well. Two major types are used in
+Tpetra: the {\sl ordinal type} and the {\sl scalar type}\footnote{Actually
+Tpetra is based on two other types, but most users will only make  use of
+ordinal and scalar types. Please consult the Tpetra manual for more
+details.} As the 
+name suggets, the OrdinalType is used to store information on how many of
+something is available. For example,
+this is the datatype for element IDs, or or as a counting type. In Epetra, the
+  OrdinalType is always {\tt int}. In Tpetra, it will most likely be an {\tt
+    int} or {\tt long}. However, it could be any type that is mathematically
+    countable.
+ScalarType is the type of the actual data. In Epetra, this is always {\tt
+  double}; in Tpetra, it can for example be {\tt complex<double>}, or almost
+  any other type. For example, a small $3 \times 3$ matrix can be a valid
+  type.
+
+\begin{remark}
+Changing Epetra to support programming involved quite more than
+simply replace all {\tt int} and {\tt double} instances with {\tt OrdinalType}
+and {\tt ScalarType}; in fact, almost all the Tpetra code is entirely new.
+However, since Tpetra developers reused many design and patterns from Epetra,
+  it will be relatively easy for Epetra users to switch to Tpetra.
+\end{remark}
+
+To use Tpetra, one has to know something about Teuchos; see
+Chapter~\ref{chap:teuchos} for an overview of this package. Although
+internally used for several tasks (the smart pointers, the BLAS kernels, and
+the flops-counting of all objects), Tpetra users mostly have to
+care only about the traits mechanism.
+
+Traits are an important component of any templated code.
+Using arbitary data types requires some care in code writing. Since the actual
+type is not known, it is very important not to make assumptions like {\tt
+  someVar = 5.0}, which may not works for a given data type. 
+  (For example, this operation may not be defined for a type representing a $3
+   \times 3$ matrix.) To solve this problem, a design pattern known as traits
+  is adopted. Tpetra takes advantage of two Teuchos classes, {\tt
+    ScalarTraits} and {\tt OrdinalTraits}, to define traits. Two traits are of
+    particular importance: one and zero. Zero is the mathematical zero, that
+    is, the value such that $x \times 0 = 0 \, \forall x$. One is the unity or
+    identity, that is the value such that $x \times 1 = x \, \forall x$. As
+    long as a type as these two traits defined, and defines the basic
+    operations such as $=, +, -, \times, /$, then this type can be used as
+    {\tt OrdinalType} or {\tt ScalarType}.
+
+% -------------------------------------------------------------------------- %
+\section{A Basic Tpetra Code}
+\label{sec:tpetra_basic}
+% -------------------------------------------------------------------------- %
+
+We now introduce the basic components of a basic Tpetra code. First, we need
+to include the header files:
+\begin{verbatim}
+#include "Tpetra_ConfigDefs.hpp"
+#ifdef TPETRA_MPI
+#include "Tpetra_MpiPlatform.hpp"
+#include "Tpetra_MpiComm.hpp"
+#else
+#include "Tpetra_SerialPlatform.hpp"
+#include "Tpetra_SerialComm.hpp"
+#endif
+#include "Teuchos_ScalarTraits.hpp"
+\end{verbatim}
+Then, we define (using a {\tt typedef} statement) the ordinal type and scalar type:
+\begin{verbatim}
+typedef int OrdinalType;
+typedef double ScalarType;
+\end{verbatim}
+Since the generic assingment \verb!myVar = 0! or \verb!myVar = 1! may not work
+with a given ordinal or scalar type, we must define four variables, containing
+the value zero and one for both ordinal and scalar type; Teuchos::ScalarTraits
+is used for this operation:
+\begin{verbatim}
+OrdinalType const OrdinalZero = Teuchos::ScalarTraits<OrdinalType>::zero();
+OrdinalType const OrdinalOne  = Teuchos::ScalarTraits<OrdinalType>::one();
+
+ScalarType const ScalarZero = Teuchos::ScalarTraits<ScalarType>::zero();
+ScalarType const ScalarOne  = Teuchos::ScalarTraits<ScalarType>::one();
+\end{verbatim}
+At this point, exactly as it was done with Epetra, one has to define a 
+communicator, either serial or parallel:
+\begin{verbatim}
+#ifdef HAVE_MPI
+MPI_Init(&argc,&argv);
+Tpetra::MpiComm<OrdinalType, ScalarType> Comm(MPI_COMM_WORLD);
+#else
+Tpetra::SerialComm<OrdinalType, ScalarType> Comm;
+#endif
+\end{verbatim}
+Parallel communication is done using class Tpetra::Comm, whose
+functionalities are very close to that of the Epetra\_Comm class.  Both
+classes provide
+an insulating layer between the actual communications library used and the
+rest of Tpetra; this makes Epetra and Tpetra codes accessible in serial, MPI
+or shared memory environments.
+
+The most important difference between Epetra and Tpetra communicator class is
+in the nomenclature. Epetra uses the term {\sl processor}, while Tpetra adopts
+the more general {\sl image}. This is because often the same processor runs
+multiple MPI jobs, or vice-versa, several processors may be running a single
+MPI job. Therefore, the term {\sl memory image} defines a running copy of the
+code.
+
+Tpetra::Comm privdes the same collective communication operations that
+Epetra\_Comm does. In additiona, it provudes several point-to-point operations
+that were not part of Epetra\_Comm. Among these new operations, one has for
+example blocking sends and blocking receives.
+
+An example of usage is as follows. First, let us define two working arrays, of
+type {\tt ScalarType} and size 2
+\begin{verbatim}
+OrdinalType size = 2;
+vector<ScalarType> V(size), W(size);
+\end{verbatim}
+The values of {\tt V} can be broadcasted from image 0 with instruction
+\begin{verbatim}
+int RootImage = 0;
+Comm.broadcast(&V[0], size, RootImage);
+\end{verbatim}
+or use {\tt sumAll()} as
+\begin{verbatim}
+Comm.maxAll(&V[0], &W[0], size);
+\end{verbatim}
+Example \TriExe{tpetra/ex1.cpp} shows the usage of Tpetra::Comm objects.
+
+\begin{remark}
+Note that using MPI with Tpetra is not as simple as it is with Epetra. Since
+Epetra is based on {\tt int} and {\tt double} data types, one simply has to
+transmit data using {\tt MPI\_INT} or {\tt MPI\_DOUBLE}. In Tpetra, instead,
+the data type is in principle not known: a data type may not be contiguous in
+memory, or be a user-defined class containing pointers or subclasses. The
+solution adopted by Tpetra developers involves traits. In this tutorial we
+suppose that the scalar type is one among {\tt float}, {\tt double} or {\tt
+  complex<double>}; for more involved types please contact the Tpetra
+  developers.
+\end{remark}
+
+\medskip
+
+Tpetra needs an additional class that does have no equivalence in the Epetra
+world: the
+Tpetra::Plaform class. This class is responsible for creating Comm instances.
+This class is required by the templated approach of Tpetra. In fact, virtual
+member functions and tamplates are mutually exclusive: virtual member
+functions cannot be templated. Or, more precisely, they can be templated at
+the class level, but not at the fuction level. More details on this subject
+can be found in~\cite{tpetra_overview}.
+
+Generally, two platforms must be created: one for OrdinalType's, and the other
+for ScalarType's. The general syntax is:
+\begin{verbatim}
+#ifdef HAVE_MPI
+const Tpetra::MpiPlatform <OrdinalType, OrdinalType>
+  platformE(MPI_COMM_WORLD);
+const Tpetra::MpiPlatform <OrdinalType, ScalarType>
+  platformV(MPI_COMM_WORLD);
+#else
+const Tpetra::SerialPlatform <OrdinalType, OrdinalType> platformE;
+const Tpetra::SerialPlatform <OrdinalType, ScalarType> platformV;
+#endif
+\end{verbatim}
+
+At this point, one can insert any of the snippets later presented. Before
+quitting \verb!main()!, one has to close MPI:
+\begin{verbatim}
+#ifdef HAVE_MPI
+MPI_Finalize() ;
+#endif
+return(EXIT_SUCCESS);
+\end{verbatim}
+
+% -------------------------------------------------------------------------- %
+\section{Spaces}
+\label{sec:tpetra_spaces}
+% -------------------------------------------------------------------------- %
+
+In the Tpetra lingo, a {\sl space} is a set of elements, distributed across
+the available images. The Epetra equivalence are the Epetra\_Map and
+Epetra\_BlockMap. 
+
+Tpetra has three space classes: Tpetra::ElementSpace, Tpetra::ElementBlockSpace,
+  and the Tpetra::VectorSpace.
+
+Tpetra::ElementSpace objects are defined to have elements of size one, while
+variable element sizes are supported by the Tpetra::BlockElementSpace class.
+Tpetra::VectorSpace, instead, serves two purposes. In addition to creating
+Tpetra::Vectors, it acts as an ``insulating'' class between Tpetra::Vector's
+and ElementSpace and BlockElementSpace. Through this mechanism,
+  Tpetra::Vector's can be created and manipulated using one nonambiguous set
+  of vector indices, regardless of if it uses an Tpetra::ElementSpace or a
+  Tpetra::BlockElementSpace for distribution. 
+
+\smallskip
+
+The distribution of elements in a Tpetra::ElementSpace or
+Tpetra::BlockElementSpace can be arbitrary. Perhaps 
+the simplest way to create a space is to specify the global element of
+elements:
+\begin{verbatim}
+OrdinalType length = 10;
+OrdinalType indexBase = OrdinalZero;
+Tpetra::ElementSpace<OrdinalType> 
+        elementSpace(length, indexBase, platformE);
+Tpetra::VectorSpace<OrdinalType, ScalarType> 
+        vectorSpace(elementSpace, platformV);
+\end{verbatim}
+More involved constructors exist as well, and they are not covered here
+because their usage is basically equivalent to that of Epetra\_Map's.
+
+Some methods of Tpetra::ElementSpace are:
+\begin{itemize}
+\itemsep=1pt
+\item {\tt getNumGlobalElements()} returns the number of elements in this
+calling object;
+\item {\tt getNumMyElements()} returns the number of elements belonging to
+the calling image;
+\item {\tt getLID(OrdinalType GID)} returns the local ID of the global 
+ID passed in, or throws exception 1 if not found on the calling image;
+\item {\tt getGID(OrdinalType LID)} returns the global ID of the local 
+ID passed in, or throws exception 2 if not found on the calling image. 
+\item operators \verb!==! and \verb$!=$ can be used to compare two spaces.
+\end{itemize}
+Tpetra::VectorSpace's have similar query methods:
+\begin{itemize}
+\itemsep=1pt
+\item {\tt getNumGlobalEntries()} returns the number of entries in the 
+calling object;
+\item {\tt getNumMyEntries()} return the number of entries belonging to the
+calling image. 
+\item {\tt getLocalIndex(OrdinalType globalIndex)} returns
+the local index for a given global index.
+\item {\tt OrdinalType getGlobalIndex(OrdinalType localIndex)} returns
+the global index for a given local index.
+\item {\tt isMyLocalIndex (OrdinalType localIndex)} returns true if the local
+index value passed in is found on the calling image, returns false if it
+doesn't.
+\item {\tt isMyGlobalIndex(OrdinalType globalIndex)} returns
+true if the global index value passed in is found the calling
+image, returns false if it doesn't. 
+\end{itemize}
+
+
+% -------------------------------------------------------------------------- %
+\section{Creating and Using Vectors}
+\label{sec:tpetra_vectors}
+% -------------------------------------------------------------------------- %
+
+The most basic unit of linear algebra is the vector, implemented by class {\tt
+  Tpetra::Vector}. Vectors can be used to perform many mathematical
+  operations, such as scaling, norms, dot products, and element-wise
+  multiplies. It is also be used in conjunction with anothe Tpetra object,
+{\tt Tpetra::CisMatrix}, described in the Section~\ref{sec:tpetra_matrices}.
+
+Tpetra::Vector is templated on ScalarType for the vector entries, and on
+OrdinalType for the vector indices. A VectorSpace object 
+(described in Section~\ref{sec:tpetra_basic})  is needed for all Vector objects.
+
+ Note that for most of the mathematical methods that set this to the result of
+ an operation on vectors passed as parameters, the this vector can be used as
+ one of the parameters (unless otherwise specified).
+
+Given a {\tt vectorSpace}, a Teptra::Vector is created as
+\begin{verbatim}
+Tpetra::Vector<OrdinalType, ScalarType> v1(vectorSpace);
+\end{verbatim}
+    
+Several methods are available to define the elements of a vector. 
+To set all the elements to the same value, one can do:
+\begin{verbatim}
+v1.setAllToScalar(ScalarOne);
+\end{verbatim}
+Otherwise, by using the \verb![]! operator,
+\begin{verbatim}
+OrdinalType MyLength = elementSpace.getNumMyElements();
+
+for (OrdinalType i = OrdinalZero ; i < MyLength ; ++i)
+   v1[i] = (ScalarType)(10 + i);
+\end{verbatim}
+Note that all Tpetra::Vector entries can only be accessed through their local
+index values.  Global index values can be converted to local indices by using
+the VectorSpace::getLocalIndex method.
+
+Another way is to extract a view of the internally stored data array
+(again, or all locally owned values):
+\begin{verbatim}
+OrdinalType NumMyEntries = v1.getNumMyEntries();
+
+vector<ScalarType*> data(NumMyEntries);
+v1.extractView(&data[0]); 
+                        
+for (OrdinalType i = OrdinalZero ; i < MyLength ; ++i)
+  *(data[i]) = (ScalarType)(100 + i);
+\end{verbatim}
+
+Several methods are associated with a Tpetra::Vector object. For example,
+\newline
+  \verb!scale(ScalarType scalarThis)! scales the current values of the
+  vector, \verb!norm1()! returns the 1-norm, \verb!norm2()! returns the
+  2-norm, \verb!normInf()! the $\infty\-$norm, \verb!minValue()! computes the
+  minumum value of the vector, \verb!maxValue()! the maximum value, and
+  \verb!meanValue()! returns the mean (average) value. Update operations can
+  be performed using method \verb!update()!; for example, $x = \alpha * x +
+  \beta * y$ is computed by
+\begin{verbatim}
+x.update(beta, y, alpha); 
+\end{verbatim}
+while $x = \alpha * x + \beta * y + \gamma z$   by
+\begin{verbatim}
+x.update(beta, y, gamma, y, alpha); 
+\end{verbatim}
+Finally, vectors can be printed as \verb!cout << v1!.
+
+% -------------------------------------------------------------------------- %
+\section{Creating and Using Matrices}
+\label{sec:tpetra_matrices}
+% -------------------------------------------------------------------------- %
+
+In Tpetra, matrices are defined by the Tpetra:;CisMatrix class. This class is
+meant for matrices that are either row- or column-oriented; this property is
+set in the constructor.
+
+Constructing Tpetra::CisMatrix objects is a multi-step process. The basic
+steps are as follows:
+\begin{enumerate}
+\itemsep=1pt
+\item Create a Tpetra::CisMatrix instance, using one of the constructors.
+\item Enter values using the submitEntries methods.
+\item Complete construction by calling fillComplete.
+\end{enumerate}
+We now show these steps for the creationo of a diagonal, 
+distributed matrix. We suppose that {\tt elementSpace} and
+{\tt vectorSpace} are valid Tpetra::ElementSpace and Tpetra::VectorSpace,
+  respectively.
+
+First, if not already available, we need to extract the list of locally owned
+D's from elementSpace,
+\begin{verbatim}
+OrdinalType NumMyElements = elementSpace.getNumMyElements();
+vector<OrdinalType> MyGlobalElements = elementSpace.getMyGlobalElements();
+\end{verbatim}
+Then, we instantiate a Tpetra::CisMatrix object and we insert one element
+at-a-time:
+\begin{verbatim}
+Tpetra::CisMatrix<OrdinalType,ScalarType> matrix(vectorSpace);
+
+for (OrdinalType LID = OrdinalZero ; LID < NumMyElements ; ++LID)
+{
+  OrdinalType GID = MyGlobalElements[LID];
+  // add the diagonal element of value `GID'
+  matrix.submitEntry(Tpetra::Insert, GID, (ScalarType)GID, GID);
+}
+\end{verbatim}
+Method {\tt submitEntry} requires the CombineMode 
+{\tt (Tpetra::Insert}, {\tt Tpetra::Add}, \newline
+{\tt Tpetra::Replace)}, the row (or column) ID, the
+value, and the column (or row) ID of the
+element to be inserted.  Method \verb!submitEntries()! can also be used to
+submit multiple entries with just one function call. The last step is
+performed by calling \verb!matrix.fillComplete()!. Prior
+to calling fillComplete, data is stored in a format optimized for
+easy and efficient insertions/deletions/modifications. It is not a
+very efficient form for doing matvec operations though. After calling
+fillComplete, the data is transformed into a format optimized for
+matvec operations. It is not very efficient at modifying data though.
+So after \verb!fillComplete()! has been called, the matrix should be viewed as
+const, and cannot be modified. Trying to do so will result in an exception being thrown.
+
+\smallskip
+
+Once freezed, a matrix can be queried for
+global number of nonzeros, rows, columns, diagonals, and maximum
+number of entries per row/column are returned with methods
+\verb!getNumGlobalNonzeros()!,
+\verb!getNumGlobalRows()!,
+\verb!getNumGlobalCols()!,
+\newline
+\verb!getNumGlobalDiagonals()!,
+\verb!getGlobalMaxNumEntries()!, respectively. The corresponding local
+information are returned by similar methods with \verb!My! instead of
+\verb!Global!. Other queries only have a global meaning: 
+\verb!isRowOriented()!, \verb!isFillCompleted()!, \verb!normOne()!, 
+  \verb!normInf()!.
+
+\smallskip
+
+To apply the matrix to a vector \verb!x! and get the result in
+\verb!y!, one can simply write 
+\newline
+\verb!matrix.apply(x, y, UseHermitian)!, where
+\verb!UseHermitian! is a boolean variable that can be used to multiply with
+$A$ or $A^H$.
+
+\smallskip
+
+CisMatrix stores data using
+Compressed Index Space Storage. This is a generalization of
+Compressed Row Storage, but allows the matrix to be either
+row-oriented or column oriented. Accordingly, CisMatrix refers to
+data using a generalized vocabulary. The two main terms are the
+primary distribution and the secondary distribution:
+
+In a row-oriented matrix, the primary distribution refers to rows,
+  and the secondary distribution refers to columns. In a
+  column-oriented matrix, the primary distribution refers to columns,
+  and the secondary distribution refers to rows.
+
+  These distributions are specified by Tpetra::VectorSpace objects. If
+  both the primary and secondary distributions are specified at
+  construction, information about the secondary distribution is
+  available from then on. But if only the primary distribution is
+  specified at construction, then CisMatrix will analyze the structure
+  of the matrix and generate a VectorSpace that matches the
+  distribution found in the matrix. Note that this is done when
+  fillComplete is called, and so information about the secondary
+  distribution is not available prior to that.
+
+Other two distributions are indeed used. The domain distribution specifies the
+distribution of the vector to which the matrix will be applied; while the
+range distribution specifies the distribution of the result vector $y = A x$.
+
+% -------------------------------------------------------------------------- %
+\section{Conclusing Remarks}
+\label{sec:tpetra_remarks}
+% -------------------------------------------------------------------------- %
+
+All Tpetra classes that represent a linear algebra object inherit from {\tt
+  Teuchos::CompObject}. The flop count of a CompObject represents the nunmber
+  of floating-point operations that have occurred on the calling image -- it
+  is not a global counter. 
+
+\smallskip
+
+Tpetra also depends on Kokkos for serial kernels, which are now
+separated from the surrounding code, so that more optimized kernels can be
+developed and used without affecting Tpetra. Kokkos routines as purely
+serial; therefore any redistributions needed before or after the computation
+must be handled by Tpetra. 
+Kokkos is a collection of the handful of sparse and dense kernels that
+determine the much of the performance for preconditioned Krylov methods. In
+particular, it contains function class for sparse matrix vector multiplication
+and triangular solves, and also for dense kernels that are not part of the
+standard BLAS.
+
+The classes in this package are written in a way that they can be easily
+customized via inheritance, replacing only the small sections of code that are
+unique for a given platform or architectures. In this way we hope to provide
+optimal implementations of these algorithms for a broad set of platforms from
+scalar microprocessors to vector multiprocessors.
+
+Kokkos is not intended as a user package, but to be incorporated into other
+packages that need high performance kernels. As such, it is not covered in
+this Tutorial.

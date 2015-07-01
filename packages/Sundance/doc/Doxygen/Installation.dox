@@ -1,0 +1,318 @@
+/* @HEADER@ */
+# ************************************************************************
+# 
+#                              Sundance
+#                 Copyright (2005) Sandia Corporation
+# 
+# Copyright (year first published) Sandia Corporation.  Under the terms 
+# of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S. Government 
+# retains certain rights in this software.
+# 
+# This library is free software; you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License as
+# published by the Free Software Foundation; either version 2.1 of the
+# License, or (at your option) any later version.
+#  
+# This library is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#                                                                              
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+# USA                                                        
+#                
+# Questions? Contact Kevin Long (krlong@sandia.gov), 
+# Sandia National Laboratories, Livermore, California, USA
+# 
+# ************************************************************************
+/* @HEADER@ */
+
+/*! \page installation_page Installation
+
+<ul>
+<li> \ref conf_requirements
+<li> \ref conf_doc
+<li> \ref conf_trilinos
+<li> \ref conf_sundance
+<ul> <li> \ref conf_pysundance </ul>
+<li> \ref conf_test
+<li> \ref conf_py_env
+<li> \ref conf_app
+</ul>
+
+\section conf_requirements Requirements 
+
+\subsection conf_sys System Requirements 
+<UL>
+<li> A Linux, Unix, MacOS, or Cygwin system
+<ul><li> Note: PySundance has not been ported to Cygwin </ul>
+<li> A C++ compiler
+<li> A FORTRAN compiler
+</ul>
+
+\subsection conf_soft Software requirements 
+<UL>
+<li> LAPACK and BLAS. Reference implementations are available
+from <A HREF="http://www,netlib.org"> Netlib. </A> Platform-optimized
+implementations are available from many vendors.
+<li> The <A HREF="http://trilinos.sandia.gov/Trilinos"> Trilinos </A> 
+high-performance parallel solver
+components available for free download. You will need to get the
+<B>version 8 release</b> edition of Trilinos, which can be downloaded 
+<A HREF="http://trilinos.sandia.gov/"> 
+here. </A> Please tell them you are a Sundance user.
+Note that many popular solver libraries are available through
+Trilinos interfaces. 
+<li> The Umfpack direct solver library, available from
+<A HREF="http://www.cise.ufl.edu/research/sparse/umfpack/"> UMFPACK. </A> 
+</ul>
+
+\subsection conf_soft_py Additional software requirements for PySundance
+
+<UL>
+<li> Python 2.4 or above, available from 
+<a href="http://www.python.org"> www.python.org </A>
+<li> Swig 1.3.23 or above, available from 
+<a href="http://www.swig.org"> www.swig.org </A>
+</ul>
+
+
+\subsection conf_optional Optional Software
+<UL>
+<li> To enable parallel Sundance you must install an implementation
+of <A HREF="http://www-unix.mcs.anl.gov/mpi/"> MPI. </A> In this
+case, Trilinos should also be built with MPI enabled.
+<li> To enable the use of ExodusII mesh files, you must install the 
+<a href="http://sourceforge.net/projects/exodusii"> exodusII </a>
+and <a href="http://www.unidata.ucar.edu/software/netcdf/"> NetCDF </a>
+libraries.
+</ul>
+
+\subsection conf_doc Building the online documentation
+
+To build the online documentation (i.e., the web pages you're currently
+browsing) go to the <tt>doc</tt> directory of the Sundance distribution and 
+run <tt> make.</tt> For example,
+\code
+<kevin@rusalka:Projects/Sundance> cd doc
+<kevin@rusalka:Projects/Sundance/doc> make
+\endcode
+The documentation will be placed in the <tt>html</tt> subdirectory of
+<tt>doc.</tt> 
+
+
+\subsection conf_trilinos Configuring and Building Trilinos for Sundance 
+
+The installation procedure for Trilinos is well-documented 
+<A HREF="http://Trilinos.sandia.gov/Trilinos/installation_manual.html">
+here, </A>
+however, it may not be obvious which options should be set 
+to work with Sundance. Information on which Trilinos packages should be enabled
+plus sample configuration scripts are found on this page: 
+\ref conf_trilinos_page .
+
+
+\subsection conf_tri_example Example Trilinos Installation 
+
+Here we show an example of installing Trilinos. We will configure it
+for use with Sundance with settings appropriate to debugging.
+
+Trilinos is unpacked into a directory tagged by the minor version number, 
+for example, <tt>trilinos-6.0.18</tt>. The minor version number 6.0.18 appears
+in all examples below; it should of course be changed to the minor version
+number of your Trilinos installation.
+
+It is assumed that you have installed BLAS, LAPACK, and any optional
+libraries such as MPI.
+It is assumed you have downloaded Trilinos and unpacked the source into
+some directory; in this example, we will work in a Trilinos directory
+<tt>$HOME/Software/Math/trilinos-6.0.18.</tt> As is explained in the Trilinos
+installation guide, Trilinos should always be configured and built in a 
+build directory, <b>not</b> in the Trilinos source directory. In this
+example, we work in a build directory 
+<tt>$HOME/Software/Math/trilinos-6.0.18/LINUX-OPT.</tt>
+
+The installation process is listed below for a case where you are using one
+of the \ref canned_scripts on the \ref conf_trilinos_page .
+\code
+<kevin@rusalka:Software/Math/trilinos-6.0.18> mkdir LINUX-OPT 
+<kevin@rusalka:Software/Math/trilinos-6.0.18> cd LINUX-OPT 
+<kevin@rusalka:Software/Math/trilinos-6.0.18/LINUX-OPT> ./sundance-linux-mpi-opt
+<kevin@rusalka:Software/Math/trilinos-6.0.18/LINUX-OPT> make
+<kevin@rusalka:Software/Math/trilinos-6.0.18/LINUX-OPT> make install
+\endcode
+
+The final step puts libraries and headers into the installation directory 
+specified in the configuration script; the sample script used here
+installs into the build directory. Thus in this example, headers and
+libraries are found in the <tt>include</tt> and <tt>lib</tt> subdirectories
+of <tt>HOME/Software/Math/trilinos-6.0.18/LINUX-OPT.</tt> The installation
+directory can be changed with the <tt>--prefix</tt> configure option. 
+
+
+\subsection conf_tri_sun Note on Concurrent Development of Trilinos and Sundance
+
+The default installation behavior updates timestamps on header files
+so that if any Trilinos header file is changed, many Sundance files
+will have to be rebuilt. This is inconvenient for those people
+who use Sundance while doing Trilinos development, for instance solver
+researchers using Sundance as a testbed, because it forces many unnecessary
+rebuilds of the entire Sundance distribution. On some systems,
+timestamps on unchanged files
+can be preserved through installation, so that only those Sundance files
+dependent on those Trilinos files that have actually changed need be rebuilt.
+On Linux, timestamps can be preserved with the <tt>-p</tt> option
+to <tt>install</tt>, which can be imposed by adding the option
+<tt>--with-install="/usr/bin/install -c -p"</tt> to the configure command line.
+This is done in the sample scripts in the Trilinos distribution.
+
+
+\section conf_sundance Configuring Sundance
+
+Once Trilinos is built and installed, we can configure, build, and install
+Sundance. During the Sundance build process, <tt>configure</tt>
+and <tt>make</tt> must
+know where to find headers and libraries for Trilinos. This is
+done through the <tt>--with-trilinos</tt> option to <tt>configure.</tt> With the 
+example Trilinos installation above, you would add 
+<tt>--with-trilinos=+\$\verb+HOME/Software/Math/trilinos-6.0.18/LINUX-OPT</tt>
+to the <tt>configure</tt>
+command line. If you have installed
+Trilinos somewhere else, you should change your 
+<tt>configure</tt> line accordingly.
+
+\subsection conf_pysundance Sundance configuration options
+
+<ul>
+<li> <tt>--with-trilinos=[path to Trilinos installation]</tt>. Specify how to 
+find Trilinos installation.
+<li> <tt>--with-trilinosdatadir=[path to TrilinosData]</tt>. Specify how to find
+mesh files stored in TrilinosData directory.
+<li> <tt>--with-trilinos-version=[8|dev]</tt>. Specify version of Trilinos to build
+against.
+<ul>
+<li> Default value: dev (trilinos development version)
+</ul>
+<li> <tt>--with-exodus</tt>
+<li> <tt>--enable-python</tt>
+<li> <tt>--enable-lowleveltests</tt>
+</ul>
+
+There are several other configure flags for enabling undocumented pre-release features.
+
+\subsection conf_scripts Example configuration 
+
+There are several sample configuration script in the <tt>build-scripts</tt>
+subdirectory of Sundance. All of these scripts make assumptions about where you've
+installed Trilinos: you'll need to edit them so that <tt>--with-trilinos</tt>
+is set appropriately for your system.
+<ul>
+<li> <tt>build-scripts/linux-mpi-debug</tt> configures parallel Sundance
+on Linux with debugging flags set and array bounds checking. 
+<li> <tt>build-scripts/linux-python-mpi-debug</tt> configures 
+parallel Sundance
+on Linux with the Python wrappers and
+with debugging flags set and array bounds checking. 
+<li> <tt>build-scripts/linux-mpi-opt</tt> configures parallel Sundance
+on Linux with compile-time optimization and no debugging information
+or array bounds checking. 
+<li> <tt>build-scripts/linux-python-mpi</tt> configures parallel Sundance
+on Linux with the Python wrappers and
+with compile-time optimization and no debugging information
+or array bounds checking. 
+</ul>
+These scripts can be used as a starting 
+point for other modes of building Sundance. 
+
+An example installation process is listed below. We use the script 
+<t>linux-python-mpi</T> which builds the Python wrappers and parallel
+capabilities using optimized compiler flags.
+\code
+<kevin@rusalka:Projects/Sundance> mkdir LINUX-OPT 
+<kevin@rusalka:Projects/Sundance> cd LINUX-OPT 
+<kevin@rusalka:Projects/Sundance/LINUX-OPT> ../build-scripts/linux-python-mpi
+<kevin@rusalka:Projects/Sundance/LINUX-OPT> make
+<kevin@rusalka:Projects/Sundance/LINUX-OPT> make install
+\endcode
+
+\section conf_test Testing your build
+
+The regression system is currently being ported to the Trilinos test harness,
+and will soon have all the features of that system. In the meantime, you can
+run tests with
+<pre>
+make old-tests        # Runs all tests
+make old-serialtests  # Runs serial tests only
+</pre>
+
+
+\section conf_py_env Setting your environment to run a PySundance simulator
+
+The easiest way to build simulators is with PySundance. You don't need
+to worry about makefiles, all you need to do is install (following the instructions above) and then set your Python path to the installation directory
+for the PySundance shared libraries. The subdirectory name will depend
+on your installation; it will be a subdirectory of python/src/build. 
+For example,
+\code
+<kevin@rusalka> setenv PYTHON_PATH /home/kevin/Projects/Sundance/LINUX-OPT/python/src/build/lib.linux-i686-2.4/PySundance
+\endcode
+You can put this in your .cshrc file to have the path automatically set
+when opening a new shell.
+
+
+\section conf_app Setting up makefiles to develop a C++-based Sundance application
+
+The previous installation steps have configured and built the Sundance
+libraries, tests, and examples. You are probably interested in using Sundance
+to develop your own application, for which you will need to write
+a Makefile that can access the Sundance libraries. 
+
+\subsection conf_app_example A simple application makefile example
+
+A template for a simple
+application makefile is in <tt>Makefile.sample,</tt> found in the root 
+directory of the Sundance distribution. For many Sundance-based 
+applications it will be 
+sufficient to copy this makefile and set one variable:
+<tt>SUNDANCE_INSTALL_DIR,</tt> which should point to the directory where you
+have installed Sundance.
+
+In the following example, you are building the <tt>PostPotentialFlow</tt>
+simulator (described in detail below) in the directory <tt>MyApps.</tt>
+First put the application source (and any other required files such as meshes)
+in your application directory:
+\code
+<kevin@rusalka:MyApps> cp ~/Projects/Sundance/examples-tutorial/PostPotentialFlow.cpp .
+<kevin@rusalka:MyApps> cp ~/Projects/Sundance/examples-tutorial/post.ncdf .
+<kevin@rusalka:MyApps> cp ~/Projects/Sundance/Makefile.sample Makefile
+\endcode
+Now, edit <tt>Makefile</tt> and set <tt>SUNDANCE_INSTALL_DIR</tt>
+to the location
+of your Sundance build. The next step is to build the application:
+\code
+<kevin@rusalka:MyApps> make PostPotentialFlow.exe
+\endcode
+Your application is now ready to run.
+
+If your application requires more than one source file, additional
+objects to be compiled and linked can be specified in the 
+<tt>EXTRA_OBJS</tt> macro. For more complicated application structures,
+see the next section.
+
+\subsection conf_app_ryo Rolling your own application Makefile
+
+If the sample makefile described above is not sufficient for your application,
+you can access the <tt>make</tt> macros for Sundance directly by including
+in your makefile the file <tt>Makefile.export,</tt> which is written
+into your build subdirectory at configure time. This makefile fragment contains
+definitions of the Sundance and Trilinos header and library search paths, 
+compiler options, and so on. If you are rolling your own Makefile, I assume
+you know enough about makefiles to set it up without further instruction 
+from me.
+
+
+
+
+*/

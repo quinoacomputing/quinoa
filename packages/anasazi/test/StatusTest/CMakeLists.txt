@@ -1,0 +1,16 @@
+
+INCLUDE(TribitsAddExecutable)
+INCLUDE(TribitsAddTest)
+INCLUDE(TribitsCopyFilesToBinaryDir)
+
+INCLUDE_DIRECTORIES(REQUIRED_DURING_INSTALLATION_TESTING ${CMAKE_CURRENT_SOURCE_DIR}/../MVOPTester)
+
+TRIBITS_ADD_EXECUTABLE_AND_TEST(
+  StatusTest_test
+  SOURCES cxx_main.cpp
+  COMM serial mpi
+  ARGS
+    "--verbose"
+#    "--debug"
+  STANDARD_PASS_OUTPUT
+  )

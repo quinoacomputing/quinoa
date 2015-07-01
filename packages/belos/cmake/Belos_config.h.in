@@ -1,0 +1,69 @@
+/* Define if want to build with Amesos enabled */
+#cmakedefine HAVE_BELOS_AMESOS
+
+/* Define if want to build with IFPACK enabled */
+#cmakedefine HAVE_BELOS_IFPACK
+
+/* Define if want to build with Epetra enabled */
+#cmakedefine HAVE_BELOS_EPETRA
+
+/* Define if want to build with EpetraExt enabled */
+#cmakedefine HAVE_BELOS_EPETRAEXT
+
+/* Define if want to build with ML enabled */
+#cmakedefine HAVE_BELOS_ML
+
+/* Define if want to build with tpetra enabled */
+#cmakedefine HAVE_BELOS_TPETRA
+
+/* Define whether we want to time Tpetra MultiVector operations */
+#cmakedefine HAVE_BELOS_TPETRA_TIMERS
+
+/* Define if want to build with thyra enabled */
+#cmakedefine HAVE_BELOS_THYRA
+
+/* Define if want to build with triutils enabled */
+#cmakedefine HAVE_BELOS_TRIUTILS
+
+
+/* Define if want to build belos-examples */
+#cmakedefine HAVE_BELOS_EXAMPLES
+
+/* Define if want to build examples */
+#cmakedefine HAVE_EXAMPLES
+
+/* Define if want to build belos-tests */
+#cmakedefine HAVE_BELOS_TESTS
+
+/* Define if want to build tests */
+#cmakedefine HAVE_TESTS
+
+/* define if we want to use MPI */
+#cmakedefine HAVE_MPI
+
+/* define if the compiler supports the mutable keyword */
+#cmakedefine HAVE_MUTABLE
+
+/* define if the compiler implements namespaces */
+#cmakedefine HAVE_NAMESPACES
+
+/* define if the compiler accepts the new for scoping rules */
+#cmakedefine HAVE_NEW_FOR_SCOPING
+
+/* Define if want to build teuchos-complex */
+#cmakedefine HAVE_TEUCHOS_COMPLEX
+
+/* Define if we are building Belos TSQR with TSQR support */
+#cmakedefine HAVE_BELOS_TSQR
+
+/* Define if we are building with Teuchos TimeMonitors enabled */
+#cmakedefine BELOS_TEUCHOS_TIME_MONITOR
+
+/* Define if we are building with experimental code enabled */
+#cmakedefine HAVE_BELOS_EXPERIMENTAL
+
+/* Define to `__inline__' or `__inline' if that's what the C compiler
+   calls it, or to nothing if 'inline' is not supported under any name.  */
+#ifndef __cplusplus
+#cmakedefine inline
+#endif
