@@ -72,7 +72,7 @@ Jozsef Bakosi (jbakosi@lanl.gov)
  2. Build the required third-party libraries (TPLs)
 
    ```
-    $ cd <quinoa>/tpl; mkdir -p build; cd build
+    $ cd <quinoa>/tpl; mkdir build; cd build
     $ cmake ..
     $ make
    ```
