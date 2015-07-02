@@ -89,14 +89,16 @@ Jozsef Bakosi (jbakosi@lanl.gov)
    * All executables will be in <quinoa>/build/Main.
    * The TPL_DIR cmake variable defaults to <quinoa>/tpl/install/<compiler>
 
- 4. Run the unit tests
+## Where to go from here
+
+ 1. Run the unit tests
 
    ```
     $ <quinoa>/build
     $ Main/charmrun +p4 Main/unittest
    ```
 
- 5. Build the documentation
+ 2. Build the documentation
 
    ```
     $ cd <quinoa>/build
@@ -104,10 +106,14 @@ Jozsef Bakosi (jbakosi@lanl.gov)
    ```
    * Point a web browser to <quinoa>/build/doc/html/index.html
 
- 6. Build the code coverage report
+ 3. Build the code coverage report
 
    ```
     $ cd <quinoa>/build
     $ make coverage
    ```
    * Point a web browser to <quinoa>/build/unittest_coverage/index.html
+
+ 4. Check out some examples
+
+   * Point a web browser to <quinoa>/build/doc/html/examples.html
