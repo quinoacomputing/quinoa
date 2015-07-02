@@ -227,6 +227,7 @@ void CkCheckpointMgr::SendRestartCB(CkReductionMsg *m){
 void CkPupROData(PUP::er &p)
 {
 	int _numReadonlies = 0;
+	int _numReadonlyMsgs = 0;
 	if (!p.isUnpacking()) _numReadonlies=_readonlyTable.size();
         p|_numReadonlies;
 	if (p.isUnpacking()) {
@@ -234,6 +235,12 @@ void CkPupROData(PUP::er &p)
 	    CkAbort("You cannot add readonlies and restore from checkpoint...");
 	}
 	for(int i=0;i<_numReadonlies;i++) _readonlyTable[i]->pupData(p);
+	if (!p.isUnpacking()) _numReadonlyMsgs=_readonlyMsgs.size();
+        p|_numReadonlyMsgs;
+	for(int i=0;i<_numReadonlyMsgs; i++){
+		ReadonlyMsgInfo *c = _readonlyMsgs[i];
+		CkPupMessage(p,c->pMsg);
+	}
 }
 
 // handle main chare
@@ -539,6 +546,8 @@ static void checkpointOne(const char* dirname, CkCallback& cb){
 	PUP::toDisk pRO(fRO);
 	int _numPes = CkNumPes();
 	pRO|_numPes;
+	int _numNodes = CkNumNodes();
+	pRO|_numNodes;
 	CkPupROData(pRO);
 	pRO|cb;
 	CmiFclose(fRO);
@@ -617,6 +626,8 @@ void CkRestartMain(const char* dirname, CkArgMsg *args){
 	int _numPes = -1;
 	PUP::fromDisk pRO(fRO);
 	pRO|_numPes;
+	int _numNodes = -1;
+	pRO|_numNodes;
 	CkPupROData(pRO);
 	pRO|cb;
 	CmiFclose(fRO);
@@ -663,7 +674,7 @@ void CkRestartMain(const char* dirname, CkArgMsg *args){
 	// content of the file: numNodeGroups, GroupInfo[numNodeGroups], _nodeGroupTable(PUP'ed), nodegroups(PUP'ed)
 	if(CkMyRank()==0){
                 FILE* fNodeGroups = openCheckpointFile(dirname, "NodeGroups", "rb",
-                                                       (CkNumPes() == _numPes) ? CkMyNode() : 0);
+                                                       (CkNumNodes() == _numNodes) ? CkMyNode() : 0);
                 PUP::fromDisk pNodeGroups(fNodeGroups);
 #if (defined(_FAULT_MLOG_) || defined(_FAULT_CAUSAL_))
         CkPupNodeGroupData(pNodeGroups,true);

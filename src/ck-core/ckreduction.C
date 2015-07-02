@@ -182,7 +182,8 @@ CkReductionMgr::CkReductionMgr(CProxy_CkArrayReductionMgr groupRednMgr)
 #if !GROUP_LEVEL_REDUCTION
   nodeProxy(groupRednMgr),
 #endif
-  thisProxy(thisgroup)
+  thisProxy(thisgroup),
+  isDestroying(false)
 { 
 #ifdef BINOMIAL_TREE
   init_BinomialTree();
@@ -212,6 +213,7 @@ CkReductionMgr::CkReductionMgr(CProxy_CkArrayReductionMgr groupRednMgr)
 }
 
 CkReductionMgr::CkReductionMgr(CkMigrateMessage *m) :CkGroupInitCallback(m)
+                                                    , isDestroying(false)
 {
   numKids = -1;
   redNo=0;
@@ -350,6 +352,9 @@ void CkReductionMgr::contributorDied(contributorInfo *ci)
   // ignore from listener if it is during restart from crash
   if (CkInRestarting()) return;
 #endif
+
+  if (isDestroying) return;
+
   DEBR((AA "Contributor %p(%d) died\n" AB,ci,ci->redNo));
   //We lost a contributor
   gcount--;
@@ -473,7 +478,7 @@ void CkReductionMgr::contributeViaMessage(CkReductionMsg *m){}
 #endif
 
 void CkReductionMgr::checkIsActive() {
-#if (defined(_FAULT_MLOG_) || defined(_FAULT_CAUSAL_))
+#if (defined(_FAULT_MLOG_) || defined(_FAULT_CAUSAL_)) || CMK_MEM_CHECKPOINT
   return;
 #endif
 
@@ -554,7 +559,7 @@ void CkReductionMgr::informParentInactive() {
 *  for the specified red_no
 */
 void CkReductionMgr::sendReductionStartingToKids(int red_no) {
-#if (defined(_FAULT_MLOG_) || defined(_FAULT_CAUSAL_))
+#if (defined(_FAULT_MLOG_) || defined(_FAULT_CAUSAL_)) || CMK_MEM_CHECKPOINT
   for (int k=0;k<treeKids();k++)
   {
     DEBR((AA "Asking child PE %d to start #%d\n" AB,firstKid()+k,redNo));

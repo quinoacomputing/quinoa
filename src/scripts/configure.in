@@ -7,12 +7,13 @@ AC_CONFIG_COMMANDS([config-cleanup],
                    [sed -i -e 's:^#define\s\+PACKAGE://&:' conv-autoconfig.h])
 
 CHARMINC="."
+CHARMBIN="../bin"
 test -r ./conv-config.sh && . ./conv-config.sh
 
 # Decimal representation of Charm++ release line and API revision
 # Increment the last 2 digits when making an API change
 # Increase the first three after branching for a release
-VERSION=60600
+VERSION=60601
 echo $VERSION > ../include/VERSION
 AC_DEFINE_UNQUOTED([CHARM_VERSION], $VERSION, [Charm++ Release/API version number])
 
@@ -1215,6 +1216,22 @@ fi
 mv -f ../include/mpi.h.bak ../include/mpi.h 2>/dev/null
 
 fi
+
+if test "$BUILD_MPI" = "1"
+then
+
+cat > $t <<EOT
+#include <stdio.h>
+#include <mpi.h>
+
+int main (int argc, char** argv) {
+  return 0;
+}
+EOT
+test_cxx "whether macro conflicts occurs due to C++ MPI bindings" "no" "yes" ""
+AC_DEFINE_UNQUOTED(CMK_CXX_MPI_BINDINGS, $strictpass, [Disables conflicting macros.])
+fi
+
 
 ################### Syscalls and Libraries ###################
 
