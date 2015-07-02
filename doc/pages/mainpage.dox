@@ -67,8 +67,8 @@ Jozsef Bakosi (jbakosi@lanl.gov)
    \verbatim
     $ CC=mpicc CXX=mpic++ FC=mpif90 F77=mpif77 F90=mpif90
    \endverbatim
-   \note Currently, MPI is required, use the OpenMPI wrappers
-   \note The underlying C++ compiler must support the C++11 standard
+   - Currently, MPI is required, use the OpenMPI wrappers
+   - The underlying C++ compiler must support the C++11 standard
 
 \subsection build_tpl 2. Build the required third-party libraries (TPLs)
 
@@ -77,8 +77,8 @@ Jozsef Bakosi (jbakosi@lanl.gov)
     $ cmake ..
     $ make
    \endverbatim
-   \note The CMAKE_INSTALL_PREFIX cmake variable defaults to
-   <quinoa>/tpl/install/<compiler>, which is where the TPLs are installed
+   - The CMAKE_INSTALL_PREFIX cmake variable defaults to
+     <quinoa>/tpl/install/<compiler>, which is where the TPLs are installed
 
 \subsection build_quinoa 3. Build Quinoa
 
@@ -87,35 +87,41 @@ Jozsef Bakosi (jbakosi@lanl.gov)
     $ cmake ../src
     $ make
    \endverbatim
-   \note All executables will be in <quinoa>/build/Main
-   \note The TPL_DIR cmake variable defaults to <quinoa>/tpl/install/<compiler>
+   - All executables will be in <quinoa>/build/Main
+   - The TPL_DIR cmake variable defaults to <quinoa>/tpl/install/<compiler>
 
-\subsection build_unit 4. Run the unit tests
+\section build_where Where to go from here
+
+\subsection build_unit 1. Run the unit tests
 
    \verbatim
     $ cd <quinoa>/build
     $ Main/charmrun +p4 Main/unittest
    \endverbatim
 
-\subsection build_doc 5. Build the documentation
+\subsection build_doc 2. Build the documentation
 
    \verbatim
     $ cd <quinoa>/build
     $ make doc
    \endverbatim
-   \note Point a web browser to <quinoa>/build/doc/html/index.html
+   Point a web browser to <quinoa>/build/doc/html/index.html
 
-\subsection build_coverage 6. Build the code coverage report
+\subsection build_coverage 3. Build the code coverage report
 
    \verbatim
     $ cd <quinoa>/build
     $ make coverage
    \endverbatim
-   \note Point a web browser to <quinoa>/build/unittest_coverage/index.html
+   Point a web browser to <quinoa>/build/unittest_coverage/index.html
+
+\subsection build_examples 4. Check out some examples
+
+   Point a web browser to <quinoa>/build/doc/html/examples.html
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Thu 02 Jul 2015 11:54:19 AM MDT
+<em>Page last updated:</em> Thu 02 Jul 2015 02:00:39 PM MDT
 <em>Copyright 2012-2015, Jozsef Bakosi.</em>
 </small></div>
 */
