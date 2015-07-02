@@ -2,10 +2,7 @@
 
 Quinoa is a set of computational tools that enables research and numerical
 analysis in fluid dynamics. At this time it is a test-bed to experiment with
-various algorithms using a fully asynchronous runtime system. Quinoa relies on
-the [Charm++] (http://charm.cs.illinois.edu) runtime system that enables
-concurrent use of multiple processors either on a single machine or a networked
-set of computers.
+various algorithms using a fully asynchronous runtime systems.
 
 ## Organization
 
@@ -90,16 +87,14 @@ Jozsef Bakosi (jbakosi@lanl.gov)
     $ make
    ```
    * All executables will be in <quinoa>/build/Main.
-   * The TPL_DIR cmake variable defaults to
-     <path-to-tpl-dir>/install/<compiler>.
+   * The TPL_DIR cmake variable defaults to <quinoa>/tpl/install/<compiler>
 
  4. Run the unit tests
 
    ```
     $ <quinoa>/build
-    $ Main/charmrun +p4 Main/unittest -v
+    $ Main/charmrun +p4 Main/unittest
    ```
-   * Point a web browser to <quinoa>/build/doc/html/index.html
 
  5. Build the documentation
 

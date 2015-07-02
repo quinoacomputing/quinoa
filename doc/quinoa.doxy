@@ -770,7 +770,6 @@ INPUT                  = \
   @CMAKE_CURRENT_SOURCE_DIR@/../doc/pages/rngtest.dox \
   @CMAKE_CURRENT_SOURCE_DIR@/../doc/pages/unittest.dox \
   @CMAKE_CURRENT_SOURCE_DIR@/../doc/pages/meshconv.dox \
-  @CMAKE_CURRENT_SOURCE_DIR@/../doc/pages/build.dox \
   @CMAKE_CURRENT_SOURCE_DIR@/../doc/pages/algorithm.dox \
   @CMAKE_CURRENT_SOURCE_DIR@/../doc/pages/concurrency.dox \
   @CMAKE_CURRENT_SOURCE_DIR@/../doc/pages/diffeq.dox \
