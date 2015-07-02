@@ -2,13 +2,13 @@
 /*!
   \file      src/Inciter/Performer.h
   \author    J. Bakosi
-  \date      Sat 20 Jun 2015 11:38:31 AM MDT
+  \date      Wed 01 Jul 2015 02:25:09 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
-  \brief     Performer advances the Euler equations
-  \details   Performer advances the Euler equations. There are a potentially
+  \brief     Performer advances a PDE
+  \details   Performer advances a PDE. There are a potentially
     large number of Performer Charm++ chares created by Conductor. Each
     performer gets a chunk of the full load (part of the mesh) and does the
-    same: initializes and advances the Euler equations in time.
+    same: initializes and advances a PDE in time.
 */
 //******************************************************************************
 #ifndef Performer_h
@@ -43,7 +43,7 @@ namespace tk { class ExodusIIMeshWriter; }
 
 namespace inciter {
 
-//! Performer Charm++ chare used to advance the Euler equations in time
+//! Performer Charm++ chare used to advance a PDE in time
 class Performer : public CBase_Performer {
 
   private:

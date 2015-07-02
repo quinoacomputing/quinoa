@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/InciterDriver.C
   \author    J. Bakosi
-  \date      Sun 31 May 2015 06:09:39 AM MDT
+  \date      Wed 01 Jul 2015 02:26:42 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Inciter driver
   \details   Inciter driver.
@@ -50,11 +50,11 @@ InciterDriver::execute() const
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // Instantiate Conductor chare which drives the time-integration of the Euler
-  // equations via several Performer chares. Charm++ chare Conductor fires up
-  // performers. Store proxy handle in global-scope to make it available to
-  // individual Performers so they can call back to Conductor. Since this is
-  // called inside the main chare constructor, the Charm++ runtime system
-  // distributes the handle along with all other global-scope data.
+  // Instantiate Conductor chare which drives the time-integration of a PDE via
+  // several Performer chares. Charm++ chare Conductor fires up performers.
+  // Store proxy handle in global-scope to make it available to individual
+  // Performers so they can call back to Conductor. Since this is called inside
+  // the main chare constructor, the Charm++ runtime system distributes the
+  // handle along with all other global-scope data.
   g_ConductorProxy = CProxy_Conductor::ckNew();
 }

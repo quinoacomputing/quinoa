@@ -766,8 +766,6 @@ WARN_LOGFILE           =
 INPUT                  = \
   @CMAKE_CURRENT_SOURCE_DIR@/../doc/pages/mainpage.dox \
   @CMAKE_CURRENT_SOURCE_DIR@/../doc/pages/why.dox \
-  @CMAKE_CURRENT_SOURCE_DIR@/../doc/pages/bonker.dox \
-  @CMAKE_CURRENT_SOURCE_DIR@/../doc/pages/breeze.dox \
   @CMAKE_CURRENT_SOURCE_DIR@/../doc/pages/walker.dox \
   @CMAKE_CURRENT_SOURCE_DIR@/../doc/pages/rngtest.dox \
   @CMAKE_CURRENT_SOURCE_DIR@/../doc/pages/unittest.dox \
