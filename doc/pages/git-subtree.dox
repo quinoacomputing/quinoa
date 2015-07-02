@@ -1,0 +1,104 @@
+/*!
+  \page      subtree Git subtree with TPLs
+
+Quinoa uses git subtree to work with third-party libraries (TPLs). This allows
+easy update to their new version, records all TPL's history (including branches
+and tags), easily allows contributing upstream, and makes it easy to quickly try
+out development features of a TPL. In addition, only those developers need to
+learn git subtree who expect to contribute to TPLs upstream.
+
+This page explains how to use git subtree to work with third-party libraries
+(TPLs). This setup is only required
+
+ - if you expect to make changes to TPLs (located in <quinoa>/tpl/src) and want
+   to push those changes upstream to the TPL, or
+
+ - if you want to update a TPL to a new version.
+
+Otherwise you do not need this setup.
+
+### Create remote tracking branches pointing to TPLs used via git subtree
+
+These remote tracking branches are not strictly required to use git subtree, but
+make life easier.
+
+   \code{.sh}
+     $ git remote add --tags -f charm http://charm.cs.uiuc.edu/gerrit/charm
+     $ git remote add --tags -f pegtl git@github.com:jbakosi/PEGTL-0.32.git
+     $ git remote add --tags -f tut git@github.com:mrzechonek/tut-framework.git
+     $ git remote add --tags -f boost git@github.com:jbakosi/Boost.git
+     $ git remote add --tags -f cartesian_product git@github.com:jbakosi/BoostMPLCartesianProduct.git
+     $ git remote add --tags -f pstreams git://git.code.sf.net/p/pstreams/code
+     $ git remote add --tags -f hdf5 git@github.com:jbakosi/HDF5.git
+     $ git remote add --tags -f netcdf git@github.com:Unidata/netcdf-c.git
+     $ git remote add --tags -f trilinos git@github.com:trilinos/trilinos.git
+     $ git remote add --tags -f hypre git@github.com:jbakosi/HYPRE.git
+     $ git remote add --tags -f rngsse2 git@github.com:jbakosi/RNGSSE2.git
+     $ git remote add --tags -f testu01 git@github.com:jbakosi/TestU01-threadsafe.git
+   \endcode
+
+### Git subtree commands to initially merge in a set of commits (squashed) from the TPLs
+
+The TPL commit up to which the merge is applied is given by a (remote, i.e., the
+TPL's) branch name, tag, or commit id. Note that these commands have already
+been issued to initially merge in the subtrees. Even if you expect to push
+updates to TPLs, you do not need to run these commands, as these merges have
+already been applied. They are only here for documentation of what and how it
+has been done to set up the subtrees.
+
+   \code{.sh}
+     $ git subtree add --prefix=tpl/src/charm charm v6.6.0 --squash
+     $ git subtree add --prefix=tpl/src/pegtl pegtl master --squash
+     $ git subtree add --prefix=tpl/src/tut tut 2013-12-18 --squash
+     $ git subtree add --prefix=tpl/src/boost boost master --squash
+     $ git subtree add --prefix=tpl/src/cartesian_product cartesian_product master --squash
+     $ git subtree add --prefix=tpl/src/pstreams pstreams RELEASE_0_8_1 --squash
+     $ git subtree add --prefix=tpl/src/hdf5 hdf5 master --squash
+     $ git subtree add --prefix=tpl/src/netcdf netcdf v4.3.2 --squash
+     $ git subtree add --prefix=tpl/src/trilinos trilinos trilinos-release-11-6-1 --squash
+     $ git subtree add --prefix=tpl/src/hypre hypre master --squash
+     $ git subtree add --prefix=tpl/src/rngsse2 rngsse2 master --squash
+     $ git subtree add --prefix=tpl/src/testu01 testu01 master --squash
+   \endcode
+
+### Example git command to pull the latest changes to TPL charm
+
+This is how a TPL is updated to a newer version using git subtree. Here we
+upgrade Charm++ from v6.6.0 to v6.6.1.
+
+   \code{.sh}
+     git fetch charm
+     git subtree pull --prefix=tpl/src/charm charm v6.6.1 --squash
+   \endcode
+
+### Example git command to push changes to TPL testu01 via git subtree
+
+If you have committed changes to any of the TPLs in your local clone (located in
+<quinoa>/tpl/src), then here is an example of how those updates can be pushed
+upstream.
+
+First, verify the changes you are about to push by examining the diff output:
+
+   \code{.cpp}
+    $ git diff testu01/master master:tpl/src/testu01
+   \endcode
+
+If you are happy with the diff, push the changes to the TPL:
+
+   \code{.cpp}
+     $ git subtree push --prefix=tpl/src/testu01 testu01 master
+   \endcode
+
+### Additional info on using git subtree:
+ - https://hpc.uni.lu/blog/2014/understanding-git-subtree
+ - http://getlevelten.com/blog/tom-mccracken/smarter-drupal-projects-projects-management-git-subtree
+ - https://github.com/git/git/blob/master/contrib/subtree/git-subtree.txt
+ - http://blogs.atlassian.com/2013/05/alternatives-to-git-submodule-git-subtree
+ - http://www.codeproject.com/Articles/562949/ManagingplusNestedplusLibrariesplusUsingplustheplu
+
+<hr>
+<div><small>
+<em>Page last updated:</em> Thu 02 Jul 2015 06:14:01 AM MDT
+<em>Copyright 2012-2015, Jozsef Bakosi.</em>
+</small></div>
+*/

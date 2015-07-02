@@ -243,11 +243,9 @@ set_property(DIRECTORY PROPERTY EP_STEP_TARGETS
 ExternalProject_Add(
   charm
   PREFIX charm
-  URL ${PROJECT_SOURCE_DIR}/charm-6.6.0.tar.gz
-  URL_MD5 31e95901b3f7324d52107e6ad000fcc8
   # Move unpacked tarball to install dir and build there
   CONFIGURE_COMMAND ${CMAKE_COMMAND} -E copy_directory
-                    ${PROJECT_BINARY_DIR}/charm/src/charm
+                    ${PROJECT_SOURCE_DIR}/src/charm
                     ${CMAKE_INSTALL_PREFIX}/charm
   # Build in install dir and leave stuff there - no install step
   BINARY_DIR ${CMAKE_INSTALL_PREFIX}/charm
@@ -259,8 +257,8 @@ ExternalProject_Add(
                 --build-shared
                 -j8
                 ${CXXFLAGS}
+  DOWNLOAD_COMMAND ""
   INSTALL_COMMAND ""
-  LOG_DOWNLOAD 1
   LOG_CONFIGURE 1
   LOG_BUILD 1
 )
@@ -271,21 +269,14 @@ ExternalProject_Add(
 ExternalProject_Add(
   pegtl
   PREFIX pegtl
-  URL ${PROJECT_SOURCE_DIR}/pegtl-0.32.tar.gz
-  URL_MD5 b2989e2b38f0a80f197f59ed00c50a81
+  # Header-only, copy include dir over
+  CONFIGURE_COMMAND ${CMAKE_COMMAND} -E copy_directory
+                    ${PROJECT_SOURCE_DIR}/src/pegtl/include
+                    ${CMAKE_INSTALL_PREFIX}/include/pegtl
   CONFIGURE_COMMAND ""
   BUILD_COMMAND ""
   INSTALL_COMMAND ""
-  LOG_DOWNLOAD 1
-)
-# Header-only, copy include dir over
-ExternalProject_Get_Property(pegtl SOURCE_DIR)
-ExternalProject_Add_Step(
-  pegtl copy-source
-  DEPENDEES download
-  COMMAND ${CMAKE_COMMAND} -E copy_directory
-          ${SOURCE_DIR}/include
-          ${CMAKE_INSTALL_PREFIX}/include/pegtl
+  DOWNLOAD_COMMAND ""
 )
 
 #### TUT (Template Unit Test Framework) ########################################
@@ -294,21 +285,14 @@ ExternalProject_Add_Step(
 ExternalProject_Add(
   tut
   PREFIX tut
-  URL ${PROJECT_SOURCE_DIR}/tut-framework-2013-12-18.tar.gz
-  URL_MD5 49ac872ee8d6066fd5ee499b38adbb11
+  # Header-only, copy include dir over
+  CONFIGURE_COMMAND ${CMAKE_COMMAND} -E copy_directory
+                    ${PROJECT_SOURCE_DIR}/src/tut/include
+                    ${CMAKE_INSTALL_PREFIX}/include/tut
   CONFIGURE_COMMAND ""
   BUILD_COMMAND ""
   INSTALL_COMMAND ""
-  LOG_DOWNLOAD 1
-)
-# Header-only, copy include dir over
-ExternalProject_Get_Property(tut SOURCE_DIR)
-ExternalProject_Add_Step(
-  tut copy-source
-  DEPENDEES download
-  COMMAND ${CMAKE_COMMAND} -E copy_directory
-          ${SOURCE_DIR}/include
-          ${CMAKE_INSTALL_PREFIX}/include/tut
+  DOWNLOAD_COMMAND ""
 )
 
 #### Boost ####################################################################
@@ -318,21 +302,14 @@ if (boost)
   ExternalProject_Add(
     boost
     PREFIX boost
-    URL ${PROJECT_SOURCE_DIR}/boost_1_54_0.tar.bz2
-    URL_MD5 15cb8c0803064faef0c4ddf5bc5ca279
+    # Header-only, copy include dir over
+    CONFIGURE_COMMAND ${CMAKE_COMMAND} -E copy_directory
+                      ${PROJECT_SOURCE_DIR}/src/boost
+                      ${CMAKE_INSTALL_PREFIX}/include/
     CONFIGURE_COMMAND ""
     BUILD_COMMAND ""
     INSTALL_COMMAND ""
-    LOG_DOWNLOAD 1
-  )
-  # Header-only, copy include dir over
-  ExternalProject_Get_Property(boost SOURCE_DIR)
-  ExternalProject_Add_Step(
-    boost copy-source
-    DEPENDEES download
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
-            ${SOURCE_DIR}/boost
-            ${CMAKE_INSTALL_PREFIX}/include/boost
+    DOWNLOAD_COMMAND ""
   )
 endif()
 
@@ -342,21 +319,14 @@ endif()
 ExternalProject_Add(
   cartesian_product
   PREFIX cartesian_product
-  URL ${PROJECT_SOURCE_DIR}/boost.mpl.cartesian_product.zip
-  URL_MD5 4bcfbdd61af85548e684198c0ee52b62
+  # Header-only, copy include dir over
+  CONFIGURE_COMMAND ${CMAKE_COMMAND} -E copy_directory
+                    ${PROJECT_SOURCE_DIR}/src/cartesian_product/boost/mpl
+                    ${CMAKE_INSTALL_PREFIX}/include/boost/mpl
   CONFIGURE_COMMAND ""
   BUILD_COMMAND ""
   INSTALL_COMMAND ""
-  LOG_DOWNLOAD 1
-)
-# Header-only, copy include dir over
-ExternalProject_Get_Property(cartesian_product SOURCE_DIR)
-ExternalProject_Add_Step(
-  cartesian_product copy-source
-  DEPENDEES download
-  COMMAND ${CMAKE_COMMAND} -E copy_directory
-          ${SOURCE_DIR}/boost/mpl
-          ${CMAKE_INSTALL_PREFIX}/include/boost/mpl
+  DOWNLOAD_COMMAND ""
 )
 
 #### Pstreams (POSIX Process Control in C++) ###################################
@@ -366,23 +336,13 @@ if (pstreams)
   ExternalProject_Add(
     pstreams
     PREFIX pstreams
-    URL ${PROJECT_SOURCE_DIR}/pstreams-0.8.1.tar.gz
-    URL_MD5 d74bfa3fb292a7a0461cf0b7a240fe0f
-    CONFIGURE_COMMAND ""
-    BUILD_COMMAND ""
+    CONFIGURE_COMMAND ${CMAKE_COMMAND} -E make_directory 
+                      ${CMAKE_INSTALL_PREFIX}/include/pstreams
+    BUILD_COMMAND ${CMAKE_COMMAND} -E copy
+                  ${PROJECT_SOURCE_DIR}/src/pstreams/pstream.h
+                  ${CMAKE_INSTALL_PREFIX}/include/pstreams
     INSTALL_COMMAND ""
-    LOG_DOWNLOAD 1
-  )
-  # Header-only, copy include dir over
-  ExternalProject_Get_Property(pstreams SOURCE_DIR)
-  ExternalProject_Add_Step(
-    pstreams copy-source
-    DEPENDEES download
-    COMMAND ${CMAKE_COMMAND} -E make_directory 
-            ${CMAKE_INSTALL_PREFIX}/include/pstreams
-    COMMAND ${CMAKE_COMMAND} -E copy
-            ${SOURCE_DIR}/pstream.h
-            ${CMAKE_INSTALL_PREFIX}/include/pstreams
+    DOWNLOAD_COMMAND ""
   )
 endif()
 
@@ -392,9 +352,10 @@ if (hdf5ser)
   ExternalProject_Add(
     hdf5ser
     PREFIX hdf5ser
-    URL ${PROJECT_SOURCE_DIR}/hdf5-1.8.13.tar.gz
-    URL_MD5 c03426e9e77d7766944654280b467289
-    CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/hdf5ser/src/hdf5ser/configure
+    DOWNLOAD_COMMAND ${CMAKE_COMMAND} -E copy_directory
+                     ${PROJECT_SOURCE_DIR}/src/hdf5
+                     ${PROJECT_BINARY_DIR}/hdf5ser
+    CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/hdf5ser/configure
                       CC=${UNDERLYING_C_COMPILER}
                       CFLAGS=${CFLAGS}
                       ${PGCPP}
@@ -407,63 +368,6 @@ if (hdf5ser)
   )
 endif()
 
-#### HDF5 parallel #############################################################
-# http://www.hdfgroup.org/HDF5
-#ExternalProject_Add(
-#  hdf5par
-#  PREFIX hdf5par
-#  URL ${PROJECT_SOURCE_DIR}/hdf5-1.8.13.tar.gz
-#  URL_MD5 c03426e9e77d7766944654280b467289
-#  CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/hdf5par/src/hdf5par/configure
-#                    CC=${MPI_C_COMPILER}
-#                    CFLAGS=${CFLAGS}
-#                    --enable-parallel
-#                    --prefix=${CMAKE_INSTALL_PREFIX}/hdf5par
-#  BUILD_IN_SOURCE 1
-#  LOG_DOWNLOAD 1
-#  LOG_CONFIGURE 1
-#  LOG_BUILD 1
-#  LOG_INSTALL 1
-#)
-
-##### H5Part ###################################################################
-## http://vis.lbl.gov/Research/H5Part
-#ExternalProject_Add(
-#  h5part
-#  DEPENDS hdf5ser
-#  PREFIX h5part
-#  URL ${PROJECT_SOURCE_DIR}/H5Part-1.6.6.tar.gz
-#  URL_MD5 327c63d198e38a12565b74cffdf1f9d7
-#  CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/h5part/src/h5part/configure
-#                    CC=${MPI_C_COMPILER}
-#                    CFLAGS=${CFLAGS}
-#                    --enable-parallel
-#                    --with-hdf5=${CMAKE_INSTALL_PREFIX}/hdf5ser
-#                    --prefix=${CMAKE_INSTALL_PREFIX}
-#  BUILD_IN_SOURCE 1
-#  LOG_DOWNLOAD 1
-#  LOG_CONFIGURE 1
-#  LOG_BUILD 1
-#  LOG_INSTALL 1
-#)
-
-#### zlib ######################################################################
-# http://www.zlib.net
-#ExternalProject_Add(
-#  zlib
-#  PREFIX zlib
-#  URL ${PROJECT_SOURCE_DIR}/zlib-1.2.8.tar.gz
-#  URL_MD5 44d667c142d7cda120332623eab69f40
-#  CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/zlib/src/zlib/configure
-#                    --prefix=${CMAKE_INSTALL_PREFIX}
-#  BUILD_COMMAND make CC=${UNDERLYING_C_COMPILER} CFLAGS=${CFLAGS} install
-#  BUILD_IN_SOURCE 1
-#  LOG_DOWNLOAD 1
-#  LOG_CONFIGURE 1
-#  LOG_BUILD 1
-#  LOG_INSTALL 1
-#)
-
 #### NETCDF ####################################################################
 ## http://www.unidata.ucar.edu/downloads/netcdf/index.jsp
 if (netcdf)
@@ -471,9 +375,10 @@ if (netcdf)
     netcdf
     DEPENDS ${hdf5ser}
     PREFIX netcdf
-    URL ${PROJECT_SOURCE_DIR}/netcdf-4.3.2.tar.gz
-    URL_MD5 2fd2365e1fe9685368cd6ab0ada532a0
-    CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/netcdf/src/netcdf/configure
+    DOWNLOAD_COMMAND ${CMAKE_COMMAND} -E copy_directory
+                     ${PROJECT_SOURCE_DIR}/src/netcdf
+                     ${PROJECT_BINARY_DIR}/netcdf
+    CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/netcdf/configure
                       CC=${UNDERLYING_C_COMPILER}
                       CFLAGS=${CFLAGS}
                       ${PGCPP}
@@ -497,8 +402,7 @@ if (exodus OR zoltan)
     trilinos
     DEPENDS ${netcdf}
     PREFIX trilinos
-    URL ${PROJECT_SOURCE_DIR}/trilinos-11.6.1-Source.tar.gz
-    URL_MD5 e933ca40a585c7ba9edfc0f45186aaf7
+    SOURCE_DIR ${PROJECT_SOURCE_DIR}/src/trilinos
     CMAKE_ARGS -D Trilinos_ENABLE_ALL_PACKAGES:BOOL=OFF
                -D Trilinos_ENABLE_Fortran:BOOL=OFF
                -D TPL_ENABLE_MPI:BOOL=ON
@@ -514,7 +418,7 @@ if (exodus OR zoltan)
                -D CMAKE_C_FLAGS:STRING=${CFLAGS}
                -D CMAKE_CXX_FLAGS:STRING=${CXXFLAGS}
                -D CMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX}
-    LOG_DOWNLOAD 1
+    DOWNLOAD_COMMAND ""
     LOG_CONFIGURE 1
     LOG_BUILD 1
     LOG_INSTALL 1
@@ -527,180 +431,17 @@ if (hypre)
   ExternalProject_Add(
     hypre
     PREFIX hypre
-    URL ${PROJECT_SOURCE_DIR}/hypre-2.10.0b.tar.gz
-    URL_MD5 768be38793a35bb5d055905b271f5b8e
-    CONFIGURE_COMMAND ${CMAKE_COMMAND}
-                      -D CMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
-                      -D CMAKE_CXX_COMPILER:PATH=${UNDERLYING_CXX_COMPILER}
-                      -D CMAKE_CXX_FLAGS:STRING=${CXFLAGS}
-                      -D HYPRE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX}
-                      ../hypre/src
-    LOG_DOWNLOAD 1
+    SOURCE_DIR ${PROJECT_SOURCE_DIR}/src/hypre/src
+    CMAKE_ARGS -D CMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
+               -D CMAKE_CXX_COMPILER:PATH=${UNDERLYING_CXX_COMPILER}
+               -D CMAKE_CXX_FLAGS:STRING=${CXFLAGS}
+               -D HYPRE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX}
+    DOWNLOAD_COMMAND ""
     LOG_CONFIGURE 1
     LOG_BUILD 1
     LOG_INSTALL 1
   )
 endif()
-
-##### Silo #####################################################################
-## https://wci.llnl.gov/codes/silo
-#ExternalProject_Add(
-#  silo
-#  DEPENDS hdf5ser
-#  PREFIX silo
-#  URL ${PROJECT_SOURCE_DIR}/silo-4.9.1-bsd.tar.gz
-#  URL_MD5 a66223e1c0e569eb4887df2aae0ab70f
-#  CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/silo/src/silo/configure
-#                    CC=${MPI_C_COMPILER}
-#                    CFLAGS=${CFLAGS}
-#                    ${PGCPP}
-#                    --enable-optimization
-#                    --enable-shared
-#                    --disable-silex
-#                    --with-hdf5=${CMAKE_INSTALL_PREFIX}/hdf5ser/include,${CMAKE_INSTALL_PREFIX}/hdf5ser/lib
-#                    --prefix=${CMAKE_INSTALL_PREFIX}
-#  BUILD_IN_SOURCE 1
-#  LOG_DOWNLOAD 1
-#  LOG_CONFIGURE 1
-#  LOG_BUILD 1
-#  LOG_INSTALL 1
-#)
-
-#### minixml ###################################################################
-# http://www.minixml.org/software.php
-#ExternalProject_Add(
-#  minixml
-#  PREFIX minixml
-#  URL ${PROJECT_SOURCE_DIR}/mxml-2.8.tar.gz
-#  URL_MD5 d85ee6d30de053581242c4a86e79a5d2
-#  CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/minixml/src/minixml/configure
-#                    CC=${UNDERLYING_C_COMPILER}
-#                    CXX=${UNDERLYING_CXX_COMPILER}
-#                    CFLAGS=${CFLAGS}
-#                    CXXFLAGS=${CXXFLAGS}
-#                    --prefix=${CMAKE_INSTALL_PREFIX}
-#  BUILD_IN_SOURCE 1
-#  LOG_DOWNLOAD 1
-#  LOG_CONFIGURE 1
-#  LOG_BUILD 1
-#  LOG_INSTALL 1
-#)
-
-#### bzip2 #####################################################################
-# http://www.bzip.org
-#ExternalProject_Add(
-#  bzip2
-#  PREFIX bzip2
-#  URL ${PROJECT_SOURCE_DIR}/bzip2-1.0.6.tar.gz
-#  URL_MD5 00b516f4704d4a7cb50a1d97e6e8e15b
-#  CONFIGURE_COMMAND ""
-#  BUILD_COMMAND make
-#                CC=${UNDERLYING_C_COMPILER}
-#                CFLAGS=${CFLAGS}
-#                PREFIX=${CMAKE_INSTALL_PREFIX}
-#                install
-#  INSTALL_COMMAND ""
-#  BUILD_IN_SOURCE 1
-#  LOG_DOWNLOAD 1
-#  LOG_CONFIGURE 1
-#  LOG_BUILD 1
-#  LOG_INSTALL 1
-#)
-
-#### szip ######################################################################
-# http://www.hdfgroup.org/ftp/lib-external/szip
-#ExternalProject_Add(
-#  szip
-#  PREFIX szip
-#  URL ${PROJECT_SOURCE_DIR}/szip-2.1.tar.gz
-#  URL_MD5 902f831bcefb69c6b635374424acbead
-#  CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/szip/src/szip/configure
-#                    CC=${UNDERLYING_C_COMPILER}
-#                    CXX=${UNDERLYING_CXX_COMPILER}
-#                    FC=${UNDERLYING_Fortran_COMPILER}
-#                    CFLAGS=${CFLAGS}
-#                    CXXFLAGS=${CXXFLAGS}
-#                    FFLAGS=${FFLAGS}
-#                    --prefix=${CMAKE_INSTALL_PREFIX}
-#  BUILD_IN_SOURCE 1
-#  LOG_DOWNLOAD 1
-#  LOG_CONFIGURE 1
-#  LOG_BUILD 1
-#  LOG_INSTALL 1
-#)
-
-#### ISOBAR ####################################################################
-# http://dx.doi.org/10.1145/2287076.2287086
-#ExternalProject_Add(
-#  isobar
-#  PREFIX isobar
-#  URL ${PROJECT_SOURCE_DIR}/isobar.0.3.0.tgz
-#  URL_MD5 86d123b7028ed238c0e6e49c22e7272c
-#  CONFIGURE_COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_INSTALL_PREFIX}/lib
-#            COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_INSTALL_PREFIX}/include
-#  BUILD_COMMAND make install
-#  INSTALL_COMMAND ${CMAKE_COMMAND} -E copy
-#                  ${PROJECT_BINARY_DIR}/isobar/src/isobar/lib/libisobar.a
-#                  ${CMAKE_INSTALL_PREFIX}/lib
-#          COMMAND ${CMAKE_COMMAND} -E copy
-#                  ${PROJECT_BINARY_DIR}/isobar/src/isobar/include/isobar.h
-#                  ${CMAKE_INSTALL_PREFIX}/include
-#  BUILD_IN_SOURCE 1
-#  LOG_DOWNLOAD 1
-#  LOG_CONFIGURE 1
-#  LOG_BUILD 1
-#  LOG_INSTALL 1
-#)
-
-#### APLOD #####################################################################
-# http://conferences.computer.org/sc/2012/papers/1000a088.pdf
-#ExternalProject_Add(
-#  aplod
-#  PREFIX aplod
-#  URL ${PROJECT_SOURCE_DIR}/aplod.0.1.tar.gz
-#  URL_MD5 3e9749efb42a3d4d3165e884456812bc
-#  CONFIGURE_COMMAND ""
-#  BUILD_COMMAND make CXX=${UNDERLYING_CXX_COMPILER} CXXLAGS=${CXXFLAGS}
-#  INSTALL_COMMAND make install prefix=${CMAKE_INSTALL_PREFIX}
-#  BUILD_IN_SOURCE 1
-#  LOG_DOWNLOAD 1
-#  LOG_CONFIGURE 1
-#  LOG_BUILD 1
-#  LOG_INSTALL 1
-#)
-
-#### ADIOS #####################################################################
-# https://www.olcf.ornl.gov/center-projects/adios
-#ExternalProject_Add(
-#  adios
-#  DEPENDS minixml zlib bzip2 szip isobar aplod hdf5ser hdf5par netcdf
-#  PREFIX adios
-#  URL ${PROJECT_SOURCE_DIR}/adios-1.6.0.tar.gz
-#  URL_MD5 70073584c620b92d7842250ce778847f
-#  CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/adios/src/adios/configure
-#                    CC=${MPI_C_COMPILER}
-#                    CXX=${MPI_CXX_COMPILER}
-#                    CFLAGS=${CFLAGS}
-#                    CXXLAGS=${CXXFLAGS}
-#                    --disable-fortran
-#                    --enable-research-transports
-#                    --enable-skel-timing
-#                    --with-mxml=${CMAKE_INSTALL_PREFIX}
-#                    --with-phdf5=${CMAKE_INSTALL_PREFIX}/hdf5par
-#                    --with-hdf5=${CMAKE_INSTALL_PREFIX}/hdf5ser
-#                    --with-netcdf=${CMAKE_INSTALL_PREFIX}
-#                    --with-zlib=${CMAKE_INSTALL_PREFIX}
-#                    --with-bzip2=${CMAKE_INSTALL_PREFIX}
-#                    --with-szip=${CMAKE_INSTALL_PREFIX}
-#                    --with-isobar=${CMAKE_INSTALL_PREFIX}
-#                    --with-aplod=${CMAKE_INSTALL_PREFIX}
-#                    --prefix=${CMAKE_INSTALL_PREFIX}
-#  BUILD_IN_SOURCE 1
-#  LOG_DOWNLOAD 1
-#  LOG_CONFIGURE 1
-#  LOG_BUILD 1
-#  LOG_INSTALL 1
-#)
 
 #### RNGSSELib2 ################################################################
 # http://cpc.cs.qub.ac.uk/summaries/AEIT_v2_0.html
@@ -708,13 +449,12 @@ endif()
 ExternalProject_Add(
   rngsse2
   PREFIX rngsse2
-  URL ${PROJECT_SOURCE_DIR}/rngsselib_2.tar.gz
-  URL_MD5 dc0db58196dd291a362028545b55e2a9
+  SOURCE_DIR ${PROJECT_SOURCE_DIR}/src/rngsse2
   CMAKE_ARGS -D CMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
              -D CMAKE_CXX_COMPILER:PATH=${UNDERLYING_CXX_COMPILER}
              -D CMAKE_CXX_FLAGS:STRING=${CXFLAGS}
              -D CMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX}
-  LOG_DOWNLOAD 1
+  DOWNLOAD_COMMAND ""
   LOG_CONFIGURE 1
   LOG_BUILD 1
   LOG_INSTALL 1
@@ -726,50 +466,14 @@ ExternalProject_Add(
 ExternalProject_Add(
   testu01
   PREFIX testu01
-  URL ${PROJECT_SOURCE_DIR}/TestU01-1.2.3.tar.gz
-  URL_MD5 dfe63dfce27d1a6114a644f6eb9a23a7
-  CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/testu01/src/testu01/configure
-                    CC=${UNDERLYING_C_COMPILER}
-                    CXX=${UNDERLYING_CXX_COMPILER}
-                    F77=${UNDERLYING_Fortran_COMPILER}
-                    ${PGCPP}
-                    CFLAGS=${CFLAGS}
-                    CPPFLAGS=${CFLAGS}
-                    CXXFLAGS=${CXXFLAGS}
-                    FFLAGS=${FFLAGS}
-                    --prefix=${CMAKE_INSTALL_PREFIX}
-  BUILD_IN_SOURCE 1
+  SOURCE_DIR ${PROJECT_SOURCE_DIR}/src/testu01
+  CMAKE_ARGS -D CMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
+             -D CMAKE_C_COMPILER:PATH=${UNDERLYING_C_COMPILER}
+             -D CMAKE_C_FLAGS:STRING=${CFLAGS}
+             -D CMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX}
+  DOWNLOAD_COMMAND ""
   LOG_DOWNLOAD 1
   LOG_CONFIGURE 1
   LOG_BUILD 1
   LOG_INSTALL 1
 )
-
-#### TestU01-hack ##############################################################
-# http://www.iro.umontreal.ca/~simardr/testu01/tu01.html
-# No need for MPI, use underlying compilers
-# This TPL-build can be used to hack TestU01. ExternalProject_Add will look for
-# the source in SOURCE_DIR and build there. Building with different compilers
-# requires a 'make clean' before this cmake command will be successful. No
-# PREFIX, no URL, no URL_MD5, instead we specify SOURCE_DIR, containing the
-# fork. Changes are tracked in git repo in SOURCE_DIR. Once the hacking is done,
-# create a new tarball and update the above ExternalProject_Add, as that is more
-# automatic for new builds (using different compilers) from scratch.
-#ExternalProject_Add(
-#  testu01
-#  SOURCE_DIR ${PROJECT_SOURCE_DIR}/src/TestU01-1.2.3
-#  CONFIGURE_COMMAND ${PROJECT_SOURCE_DIR}/src/TestU01-1.2.3/configure
-#                    CC=${UNDERLYING_C_COMPILER}
-#                    CXX=${UNDERLYING_CXX_COMPILER}
-#                    F77=${UNDERLYING_Fortran_COMPILER}
-#                    CFLAGS=-Wno-error=return-type
-#                    CPPFLAGS=${CFLAGS}
-#                    CXXFLAGS=${CXXFLAGS}
-#                    FFLAGS=${FFLAGS}
-#                    --prefix=${CMAKE_INSTALL_PREFIX}
-#  BUILD_IN_SOURCE 1
-#  LOG_DOWNLOAD 1
-#  LOG_CONFIGURE 1
-#  LOG_BUILD 1
-#  LOG_INSTALL 1
-#)
