@@ -124,8 +124,9 @@ target_link_libraries(${RNGTEST_EXECUTABLE}
                       RNG
                       RNGTest
                       RNGTestControl
-                      ${TESTU01_PROBDIST_LIBRARY}
                       ${TESTU01_LIBRARY}
+                      ${TESTU01_PROBDIST_LIBRARY}
+                      ${TESTU01_MYLIB_LIBRARY}
                       ${MKL_INTERFACE_LIBRARY}
                       ${MKL_CORE_LIBRARY}
                       ${MKL_SEQUENTIAL_LAYER_LIBRARY}

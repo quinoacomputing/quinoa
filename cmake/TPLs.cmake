@@ -140,19 +140,17 @@ find_library(TESTU01_PROBDIST_LIBRARY
              PATHS ${TPL_DIR}/lib
              NO_DEFAULT_PATH
              REQUIRED)
+set(TESTU01_MYLIB_LIBRARY "NOTFOUND")
+find_library(TESTU01_MYLIB_LIBRARY
+             NAMES mylib
+             PATHS ${TPL_DIR}/lib
+             NO_DEFAULT_PATH
+             REQUIRED)
 
 ##### Silo
 #set(SILO_LIBRARY "NOTFOUND")
 #find_library(SILO_LIBRARY
 #             NAMES siloh5
-#             PATHS ${TPL_DIR}/lib
-#             NO_DEFAULT_PATH
-#             REQUIRED)
-
-
-#set(TESTU01_MYLIB_LIBRARY "NOTFOUND")
-#find_library(TESTU01_MYLIB_LIBRARY
-#             NAMES mylib
 #             PATHS ${TPL_DIR}/lib
 #             NO_DEFAULT_PATH
 #             REQUIRED)
