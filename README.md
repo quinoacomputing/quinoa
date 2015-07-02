@@ -13,7 +13,7 @@ Currently, Quinoa consists of the following tools:
   * unittest - Unit test suite
   * meshconv - Mesh file converter
 
-## Rationale
+## Goals
 
   * Designed for the exascale era
   * Verified and proven to be correct

@@ -17,7 +17,7 @@ Currently, Quinoa consists of the following tools:
   \li [<B>unittest</B>](unittest_doc.html) - Unit test suite
   \li [<B>meshconv</B>](meshconv_doc.html) - Mesh file converter
 
-\section whyanother Rationale
+\section whyanother Goals
   \li [<B>Designed for the exascale era</B>](why.html#exascale)
   \li [<B>Verified and proven to be correct</B>](why.html#correct)
   \li [<B>Optimized for performance, power, and reliability</B>](why.html#optimized)
@@ -121,7 +121,7 @@ Jozsef Bakosi (jbakosi@lanl.gov)
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Thu 02 Jul 2015 02:00:39 PM MDT
+<em>Page last updated:</em> Thu 02 Jul 2015 02:14:09 PM MDT
 <em>Copyright 2012-2015, Jozsef Bakosi.</em>
 </small></div>
 */
