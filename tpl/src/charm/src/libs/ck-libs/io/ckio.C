@@ -24,7 +24,7 @@ using std::string;
 namespace Ck { namespace IO {
     namespace impl {
       CProxy_Director director;
-      Manager *manager;
+      CkpvDeclare(Manager *, manager);
     }
 
 
@@ -34,6 +34,8 @@ namespace Ck { namespace IO {
         CkCallback opened;
         Options opts;
         int fd;
+        CProxy_WriteSession session;
+        CkCallback complete;
 
         FileInfo(string name_, CkCallback opened_, Options opts_)
           : name(name_), opened(opened_), opts(opts_), fd(-1)
@@ -123,9 +125,18 @@ namespace Ck { namespace IO {
 
           CkArrayOptions sessionOpts(numStripes);
           //sessionOpts.setMap(managers);
-          CProxy_WriteSession session =
-            CProxy_WriteSession::ckNew(file, offset, bytes, complete, sessionOpts);
-          ready.send(new SessionReadyMsg(Session(file, bytes, offset, session)));
+          files[file].session =
+            CProxy_WriteSession::ckNew(file, offset, bytes, sessionOpts);
+          CkAssert(files[file].complete.isInvalid());
+          files[file].complete = complete;
+          ready.send(new SessionReadyMsg(Session(file, bytes, offset,
+                                                 files[file].session)));
+        }
+
+        void sessionComplete(FileToken token) {
+          CProxy_CkArray(files[token].session.ckGetArrayID()).ckDestroy();
+          files[token].complete.send();
+          files[token].complete = CkCallback(CkCallback::invalid);
         }
 
         void close(FileToken token, CkCallback closed) {
@@ -142,14 +153,16 @@ namespace Ck { namespace IO {
         Manager()
           : opnum(0)
         {
-          manager = this;
+          CkpvInitialize(Manager*, manager);
+          CkpvAccess(manager) = this;
           thisProxy[CkMyPe()].run();
         }
 
         Manager(CkMigrateMessage *m)
           : CBase_Manager(m)
         {
-          manager = this;
+          CkpvInitialize(Manager*, manager);
+          CkpvAccess(manager) = this;
         }
 
         void pup(PUP::er &p) {
@@ -255,7 +268,7 @@ namespace Ck { namespace IO {
         const FileInfo *file;
         size_t sessionOffset, myOffset;
         size_t sessionBytes, myBytes, myBytesWritten;
-        CkCallback complete;
+        FileToken token;
 
         struct buffer {
           std::vector<char> array;
@@ -283,15 +296,15 @@ namespace Ck { namespace IO {
         map<size_t, struct buffer> bufferMap;
 
       public:
-        WriteSession(FileToken file_, size_t offset_, size_t bytes_, CkCallback complete_)
-          : file(manager->get(file_))
+        WriteSession(FileToken file_, size_t offset_, size_t bytes_)
+          : file(CkpvAccess(manager)->get(file_))
+          , token(file_)
           , sessionOffset(offset_)
           , myOffset((sessionOffset / file->opts.peStripe + thisIndex)
                      * file->opts.peStripe)
           , sessionBytes(bytes_)
           , myBytes(min(file->opts.peStripe, sessionOffset + sessionBytes - myOffset))
           , myBytesWritten(0)
-          , complete(complete_)
         {
           CkAssert(file->fd != -1);
           CkAssert(myOffset >= sessionOffset);
@@ -333,13 +346,20 @@ namespace Ck { namespace IO {
         }
 
         void syncData() {
+          int status;
           CkAssert(bufferMap.size() == 0);
 #if CMK_HAS_FDATASYNC_FUNC
-          if (fdatasync(file->fd) < 0)
-            fatalError("fdatasync failed", file->name);
+          while ((status = fdatasync(file->fd)) < 0) {
+            if (errno != EINTR) {
+              fatalError("fdatasync failed", file->name);
+            }
+          }
 #elif CMK_HAS_FSYNC_FUNC
-          if (fsync(file->fd) < 0)
-            fatalError("fsync failed", file->name);
+          while ((status = fsync(file->fd)) < 0) {
+            if (errno != EINTR) {
+              fatalError("fsync failed", file->name);
+            }
+          }
 #elif defined(_WIN32)
           intptr_t hFile = _get_osfhandle(file->fd);
           if (FlushFileBuffers((HANDLE)hFile) == 0)
@@ -351,8 +371,8 @@ namespace Ck { namespace IO {
 #warning "No file synchronization function available!"
 #endif
 
-          contribute(complete);
-          contribute(CkCallback(CkIndex_CkArray::ckDestroy(), CkGroupID(thisArrayID)));
+          contribute(sizeof(FileToken), &token, CkReduction::max_int,
+                     CkCallback(CkReductionTarget(Director, sessionComplete), director));
         }
 
         void flushBuffer(buffer& buf, size_t bufferOffset) {
@@ -396,7 +416,8 @@ namespace Ck { namespace IO {
     }
 
     void write(Session session, const char *data, size_t bytes, size_t offset) {
-      impl::manager->write(session, data, bytes, offset);
+        using namespace impl;
+        CkpvAccess(manager)->write(session, data, bytes, offset);
     }
 
     void close(File file, CkCallback closed) {

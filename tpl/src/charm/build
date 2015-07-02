@@ -530,20 +530,17 @@ if [ "x_$WINNAME" = "x_win32" -o "x_$WINNAME" = "x_win64" ]
 then
 #Win32/64 version needs special compilers and *copied* (not linked)
 # source files.
-	echo "Copying compilers for $WINNAME into cygwin /bin directory"
-	cp -f $src/$WINNAME/unix2nt* /bin
 	cp $src/win32/system_ln $DESTINATION/tmp
 	cp $src/win32/unistd.h $DESTINATION/tmp
 	echo "Compiling createlink.cpp ..."
-        (cd $src/win32; unix2nt_cc  -c createlink.cpp -o createlink.o -D_WIN32_WINNT=0x0500; unix2nt_cc createlink.o)
+	(cd $src/win32; ../$WINNAME/unix2nt_cc  -c createlink.cpp -o createlink.o -D_WIN32_WINNT=0x0500; ../$WINNAME/unix2nt_cc createlink.o)
+
 	if test ! -x $src/win32/createlink.exe
 	then
 		echo "VC++ is not properly installed!"
 		exit 1
 	fi
-	echo "Copying $src/win32/createlink.exe to /bin directory"
-	cp $src/win32/createlink.exe /bin
-        chmod +x $DESTINATION/tmp/system_ln
+	chmod +x $DESTINATION/tmp/system_ln
 	cp $src/win32/gathertree.local   $DESTINATION/tmp
 	cp $src/win32/gatherflat.local   $DESTINATION/tmp
 else
@@ -672,6 +669,11 @@ then
     echo "CMK_WITH_TAU=\"true\"" >> $ConvSh
 fi
 
+if [ "$PROGRAM" = "ChaNGa" ]
+then
+  #Setting lbuserdata when the build is ChaNGa
+  CONFIG_OPTS="--enable-lbuserdata $CONFIG_OPTS"
+fi
 
 echo $BASEVERSION > $DESTINATION/tmp/.vdir
 echo $BASEVERSION | sed -e 's@-.*@@' > $DESTINATION/tmp/.gdir
