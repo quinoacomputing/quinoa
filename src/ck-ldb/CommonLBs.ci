@@ -1,0 +1,21 @@
+// AUTOMATICALLY GENERATED FILE
+
+module CommonLBs {
+  extern module DummyLB;
+  extern module GreedyLB;
+  extern module CommLB;
+  extern module RandCentLB;
+  extern module RefineLB;
+  extern module RefineCommLB;
+  extern module RotateLB;
+  extern module DistributedLB;
+  extern module HybridLB;
+  extern module ComboCentLB;
+  extern module RefineSwapLB;
+  extern module NeighborLB;
+  extern module OrbLB;
+  extern module BlockLB;
+  extern module GreedyCommLB;
+
+  initnode void initCommonLBs(void);
+};

@@ -1,0 +1,12 @@
+module HybridLB {
+
+extern module LBDatabase;
+extern module HybridBaseLB;
+
+initnode void lbinit(void);
+
+group [migratable] HybridLB: HybridBaseLB {
+  entry void HybridLB(const CkLBOptions &);  
+};
+
+};

@@ -1,0 +1,2 @@
+value=charm.runhigh()
+ck.printclient('python value: '+repr(value))
