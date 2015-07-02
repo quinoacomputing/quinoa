@@ -76,8 +76,8 @@ Jozsef Bakosi (jbakosi@lanl.gov)
     $ cmake ..
     $ make
    ```
-   * The CMAKE_INSTALL_PREFIX cmake variable defaults to
-     <quinoa>/tpl/install/<compiler>, which is where the TPLs are installed
+   * The `CMAKE_INSTALL_PREFIX` cmake variable defaults to
+     `<quinoa>/tpl/install/<compiler>`, which is where the TPLs are installed
 
  3. Build Quinoa
 
@@ -86,15 +86,15 @@ Jozsef Bakosi (jbakosi@lanl.gov)
     $ cmake ../src
     $ make
    ```
-   * All executables will be in <quinoa>/build/Main.
-   * The TPL_DIR cmake variable defaults to <quinoa>/tpl/install/<compiler>
+   * All executables will be in `<quinoa>/build/Main`.
+   * The `TPL_DIR` cmake variable defaults to `<quinoa>/tpl/install/<compiler>`
 
 ## Where to go from here
 
  1. Run the unit tests
 
    ```
-    $ <quinoa>/build
+    $ cd <quinoa>/build
     $ Main/charmrun +p4 Main/unittest
    ```
 
@@ -104,7 +104,7 @@ Jozsef Bakosi (jbakosi@lanl.gov)
     $ cd <quinoa>/build
     $ make doc
    ```
-   * Point a web browser to <quinoa>/build/doc/html/index.html
+   * Point a web browser to `<quinoa>/build/doc/html/index.html`
 
  3. Build the code coverage report
 
@@ -112,8 +112,8 @@ Jozsef Bakosi (jbakosi@lanl.gov)
     $ cd <quinoa>/build
     $ make coverage
    ```
-   * Point a web browser to <quinoa>/build/unittest_coverage/index.html
+   * Point a web browser to `<quinoa>/build/unittest_coverage/index.html`
 
  4. Check out some examples
 
-   * Point a web browser to <quinoa>/build/doc/html/examples.html
+   * Point a web browser to `<quinoa>/build/doc/html/examples.html`
