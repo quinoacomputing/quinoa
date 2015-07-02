@@ -5,10 +5,7 @@
 \section intro What is Quinoa?
 Quinoa is a set of computational tools that enables research and numerical
 analysis in fluid dynamics. At this time it is a test-bed to experiment with
-various algorithms using a fully asynchronous runtime system. Quinoa relies on
-the [Charm++] (http://charm.cs.illinois.edu) runtime system that enables
-concurrent use of multiple processors either on a single machine or a networked
-set of computers.
+various algorithms using a fully asynchronous runtime systems.
 
 \section organization Organization
 Currently, Quinoa consists of the following tools:
@@ -63,9 +60,62 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 \section authors Authors
 Jozsef Bakosi (jbakosi@lanl.gov)
 
+\section build How to build
+
+\subsection build_compilers 1. Pick compilers
+
+   \verbatim
+    $ CC=mpicc CXX=mpic++ FC=mpif90 F77=mpif77 F90=mpif90
+   \endverbatim
+   \note Currently, MPI is required, use the OpenMPI wrappers
+   \note The underlying C++ compiler must support the C++11 standard
+
+\subsection build_tpl 2. Build the required third-party libraries (TPLs)
+
+   \verbatim
+    $ cd <quinoa>/tpl; mkdir build; cd build
+    $ cmake ..
+    $ make
+   \endverbatim
+   \note The CMAKE_INSTALL_PREFIX cmake variable defaults to
+   <quinoa>/tpl/install/<compiler>, which is where the TPLs are installed
+
+\subsection build_quinoa 3. Build Quinoa
+
+   \verbatim
+    $ cd <quinoa>; mkdir build; cd build
+    $ cmake ../src
+    $ make
+   \endverbatim
+   \note All executables will be in <quinoa>/build/Main
+   \note The TPL_DIR cmake variable defaults to <quinoa>/tpl/install/<compiler>
+
+\subsection build_unit 4. Run the unit tests
+
+   \verbatim
+    $ cd <quinoa>/build
+    $ Main/charmrun +p4 Main/unittest
+   \endverbatim
+
+\subsection build_doc 5. Build the documentation
+
+   \verbatim
+    $ cd <quinoa>/build
+    $ make doc
+   \endverbatim
+   \note Point a web browser to <quinoa>/build/doc/html/index.html
+
+\subsection build_coverage 6. Build the code coverage report
+
+   \verbatim
+    $ cd <quinoa>/build
+    $ make coverage
+   \endverbatim
+   \note Point a web browser to <quinoa>/build/unittest_coverage/index.html
+
 <hr>
 <div><small>
-<em>Page last updated:</em> Wed 01 Jul 2015 03:55:55 PM MDT
+<em>Page last updated:</em> Thu 02 Jul 2015 06:35:03 AM MDT
 <em>Copyright 2012-2015, Jozsef Bakosi.</em>
 </small></div>
 */
