@@ -2,10 +2,10 @@
 /*!
   \file      src/Inciter/Conductor.h
   \author    J. Bakosi
-  \date      Thu 18 Jun 2015 09:57:01 PM MDT
+  \date      Wed 01 Jul 2015 02:24:26 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
-  \brief     Conductor drives the time integration of the Euler equations
-  \details   Conductor drives the time integration of the Euler equations.
+  \brief     Conductor drives the time integration of a PDE
+  \details   Conductor drives the time integration of a PDE
     The implementation uses the Charm++ runtime system and is fully asynchronous,
     overlapping computation, communication as well as I/O. The algorithm
     utilizes the structured dagger (SDAG) Charm++ functionality. The high-level
@@ -39,7 +39,7 @@
 
 namespace inciter {
 
-//! Conductor drives the time integration of the Euler equations
+//! Conductor drives the time integration of a PDE
 class Conductor : public CBase_Conductor {
 
   public:

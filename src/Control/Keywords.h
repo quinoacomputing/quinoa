@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Keywords.h
   \author    J. Bakosi
-  \date      Tue 02 Jun 2015 10:14:54 AM MDT
+  \date      Wed 01 Jul 2015 02:25:56 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Definition of all keywords
   \details   This file contains the definition of all keywords, including those
@@ -2378,7 +2378,7 @@ struct inciter_info {
     "Start configuration block for inciter"; }
   static std::string longDescription() { return
     R"(This keyword is used to select inciter. Inciter, is a continuum-realm
-    shock hydrodynamics tool, solving the Euler equation.)";
+    shock hydrodynamics tool, solving a PDE.)";
   }
 };
 using inciter = keyword< inciter_info, i,n,c,i,t,e,r >;

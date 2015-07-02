@@ -4,8 +4,8 @@
 General requirements
 --------------------
 Numerical time integration of ordinary and stochastic differential equations
-(ODEs, SDEs) is probably the single most important ingredient of the
-continuum-realm particle-solver, [breeze](breeze_doc.html). This must be:
+(ODEs, SDEs) is probably the single most important ingredient of a
+continuum-realm particle-solver. This must be:
  - High-performance
  - Easy to maintain
  - The design must scale well with adding new functionality, i.e., adding new
@@ -87,7 +87,7 @@ Questions
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Mon 02 Feb 2015 03:48:20 PM MST
+<em>Page last updated:</em> Wed 01 Jul 2015 02:20:41 PM MDT
 <em>Copyright 2012-2015, Jozsef Bakosi.</em>
 </small></div>
 */

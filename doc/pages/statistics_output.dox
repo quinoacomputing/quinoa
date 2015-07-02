@@ -2,7 +2,8 @@
   \page      statistics_output Statistics output
 
 This pages discusses the available options for extracting statistics from a
-simulation.
+simulation, e.g., from [walker](walker_doc.html). See also some of the [walker
+examples](examples.html#walker_examples).
 
 Supported at this time are ordinary and central statistical moments of
 arbitrary-length products and arbitrary number of 1D, 2D, and 3D probability
@@ -110,7 +111,7 @@ space variables.
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Fri 27 Feb 2015 10:01:04 AM MST
+<em>Page last updated:</em> Wed 01 Jul 2015 02:56:23 PM MDT
 <em>Copyright 2012-2015, Jozsef Bakosi.</em>
 </small></div>
 */

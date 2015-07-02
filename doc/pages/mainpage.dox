@@ -3,29 +3,24 @@
   \image html quinoa.svg
 
 \section intro What is Quinoa?
-Quinoa is a set of computational tools that enable research and numerical
-analysis in fluid dynamics. Quinoa relies on the [Charm++]
-(http://charm.cs.illinois.edu) runtime system that enables concurrent use of
-multiple processors either on a single machine or a networked set of computers.
+Quinoa is a set of computational tools that enables research and numerical
+analysis in fluid dynamics. At this time it is a test-bed to experiment with
+various algorithms using a fully asynchronous runtime system. Quinoa relies on
+the [Charm++] (http://charm.cs.illinois.edu) runtime system that enables
+concurrent use of multiple processors either on a single machine or a networked
+set of computers.
 
 \section organization Organization
-Quinoa consists of the following tools:
-  \li [<B>bonker</B>](bonker_doc.html) - Molecular-realm fluid dynamics
-      solving the [Boltzmann equation]
-      (http://en.wikipedia.org/wiki/Boltzmann_equation)
-  \li [<B>breeze</B>](breeze_doc.html) - Continuum-realm fluid dynamics
-      solving the [Navier-Stokes equation]
-      (http://en.wikipedia.org/wiki/Navier%E2%80%93Stokes_equations)
-  \li [<B>inciter</B>](inciter_doc.html) - Continuum-realm shock hydrodynamics
-      solving the [Euler equation]
-      (http://en.wikipedia.org/wiki/Euler_equations_%28fluid_dynamics%29)
+Currently, Quinoa consists of the following tools:
+  \li [<B>inciter</B>](inciter_doc.html) - Solve a PDE on an unstructured mesh
+      using overdecomposition
   \li [<B>walker</B>](walker_doc.html) - Random walker for stochastic
       differential equations
   \li [<B>rngtest</B>](rngtest_doc.html) - Random number generator test suite
   \li [<B>unittest</B>](unittest_doc.html) - Unit test suite
   \li [<B>meshconv</B>](meshconv_doc.html) - Mesh file converter
 
-\section whyanother Why another CFD code?
+\section whyanother Rationale
   \li [<B>Designed for the exascale era</B>](why.html#exascale)
   \li [<B>Verified and proven to be correct</B>](why.html#correct)
   \li [<B>Optimized for performance, power, and reliability</B>](why.html#optimized)
@@ -36,21 +31,41 @@ Quinoa consists of the following tools:
   \li [<B>Well documented</B>](why.html#documented)
   \li [<B>Fun to work on</B>](why.html#fun)
 
-\section copyright Copyright
-Copyright 2012-2015, Jozsef Bakosi.
-
 \section license License
-License ...
+Copyright (c) 2012-2015, Jozsef Bakosi
+All rights reserved.
 
-\section acknowledgements Acknowledgments
-Acknowledgments ...
+Redistribution and use in source and binary forms, with or without modification,
+are permitted provided that the following conditions are met:
+
+- Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+- Redistributions in binary form must reproduce the above copyright notice, this
+  list of conditions and the following disclaimer in the documentation and/or
+  other materials provided with the distribution.
+
+- Neither the name of test nor the names of its contributors may be used to
+  endorse or promote products derived from this software without specific prior
+  written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 \section authors Authors
 Jozsef Bakosi (jbakosi@lanl.gov)
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Wed 10 Jun 2015 10:13:38 PM MDT
+<em>Page last updated:</em> Wed 01 Jul 2015 03:55:55 PM MDT
 <em>Copyright 2012-2015, Jozsef Bakosi.</em>
 </small></div>
 */
