@@ -1,0 +1,4 @@
+module CkSparseReducer
+{
+  initnode void registerReducers(void);
+};

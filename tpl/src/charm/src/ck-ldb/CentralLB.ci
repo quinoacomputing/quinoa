@@ -1,0 +1,34 @@
+module CentralLB {
+
+extern module BaseLB;
+extern module LBDatabase;
+
+include "CentralLBMsg.h";
+
+readonly CkGroupID loadbalancer;
+
+//message CLBStatsMsg;
+
+initnode void lbinit(void);
+
+group [migratable] CentralLB : BaseLB {
+  entry void CentralLB(const CkLBOptions &);  
+  entry void ProcessAtSync(void);
+  entry void SendStats();
+  entry void ReceiveStats(CkMarshalledCLBStatsMessage data);
+  entry void ReceiveStatsViaTree(CkMarshalledCLBStatsMessage data);
+  entry void ReceiveCounts(CkReductionMsg *);
+  entry void LoadBalance(void);
+  entry [threaded] void t_LoadBalance(void);
+  entry void ResumeClients(int);
+  entry void ResumeClients(CkReductionMsg *);
+  entry void changeFreq(int);
+  entry void ScatterMigrationResults(LBScatterMsg *);
+  entry void ReceiveMigration(LBMigrateMsg*);
+  entry void ReceiveMigration(LBScatterMsg*);
+  entry void ProcessReceiveMigration(CkReductionMsg  *);
+  entry void ProcessMigrationDecision(CkReductionMsg *);
+  entry void MissMigrate(int);
+};
+
+};

@@ -1,0 +1,12 @@
+module taskGraph {
+  message callbackMsg;
+
+  array [Max] taskGraphArray {
+    entry taskGraphArray(CkVec<CkArrayIndex> deps,
+    			 CkPointer<taskGraphSolver> data,
+			 CkCallback returnResults);
+    entry void requestData(CkArrayIndex from);
+    entry void depositData(CkPointer<taskGraphSolver> data);
+    entry void deleteElement();
+  };
+}

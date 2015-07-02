@@ -1,0 +1,1 @@
+-module tcharm -lddt -module comlib -lampi-compat

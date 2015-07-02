@@ -1,0 +1,3 @@
+#!/bin/sh
+CHARMBIN=`dirname $0`
+$CHARMBIN/charmc -language ampif $@

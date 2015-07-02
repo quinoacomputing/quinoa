@@ -1,0 +1,15 @@
+Priority
+MemoryConsumption
+GrainSize
+ComputeDurations
+FlopRate
+NumComputeObjects
+NumMessages
+MessageSizes
+MessageOverhead
+UnnecessarySyncronization
+Concurrency
+PotentialOverlap
+LoadBalancingPeriod
+GPUOffloadedWork
+

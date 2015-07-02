@@ -1,0 +1,6 @@
+#!/bin/sh
+#
+# Just executes all its arguments.
+PATH=.:$PATH
+export PATH
+$*

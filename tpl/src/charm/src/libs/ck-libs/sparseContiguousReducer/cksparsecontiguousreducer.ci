@@ -1,0 +1,4 @@
+module CkSparseContiguousReducer
+{
+  initproc void registerReducers(void);
+};
