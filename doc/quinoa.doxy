@@ -780,7 +780,6 @@ INPUT                  = \
   @CMAKE_CURRENT_SOURCE_DIR@/../doc/pages/rng.dox \
   @CMAKE_CURRENT_SOURCE_DIR@/../doc/pages/rngs_input.dox \
   @CMAKE_CURRENT_SOURCE_DIR@/../doc/pages/statistics_output.dox \
-  @CMAKE_CURRENT_SOURCE_DIR@/../doc/pages/todo.dox \
   @CMAKE_CURRENT_SOURCE_DIR@/../doc/pages/licenses.dox \
   @CMAKE_CURRENT_SOURCE_DIR@/../doc/examples/examples.dox \
   @CMAKE_CURRENT_SOURCE_DIR@/../doc/examples/walker/Beta.dox \
