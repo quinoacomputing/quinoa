@@ -1,7 +1,7 @@
 language: cpp
 
 compiler:
-  - clang
+  - gcc
 
 before_install:
   - sudo apt-get install gfortran openmpi-bin libopenmpi-dev libhdf5-serial-dev libnetcdf-dev libexodusii-dev libpstreams-dev libhypre-dev
