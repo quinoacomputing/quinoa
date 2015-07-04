@@ -16,5 +16,9 @@ before_script:
   - mkdir -p tpl/build
   - cd tpl/build
   - cmake ..
+  - make -sj2
+  - cd ../..
+  - mkdir build
+  - cmake ../src
 
 script: make -sj2
