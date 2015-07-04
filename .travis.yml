@@ -11,4 +11,4 @@ before_script:
   - cd tpl/build
   - cmake ..
 
-script: make
+script: make -sj2
