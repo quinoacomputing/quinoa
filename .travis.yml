@@ -4,7 +4,7 @@ compiler:
   - clang
 
 before_install:
-  - sudo apt-get install gfortran openmpi-bin openmpi-dev libhdf5-dev libnetcdf-def libexodusii-dev libpstreams-dev libhypre-dev
+  - sudo apt-get install gfortran openmpi-bin libopenmpi-dev libhdf5-serial-dev libnetcdf-dev libexodusii-dev libpstreams-dev libhypre-dev
 
 before_script:
   - mkdir build
