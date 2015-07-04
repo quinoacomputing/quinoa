@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/jbakosi/quinoa.svg?branch=master)](https://travis-ci.org/jbakosi/quinoa)
+
 ## What is Quinoa?
 
 Quinoa is a set of computational tools that enables research and numerical
