@@ -6,6 +6,6 @@ compiler:
 before_script:
   - mkdir build
   - cd build
-  - cmake ..
+  - cmake ../tpl
 
 script: make
