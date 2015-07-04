@@ -3,6 +3,9 @@ language: cpp
 compiler:
   - clang
 
+before_install:
+  - sudo apt-get install openmpi-bin openmpi-dev
+
 before_script:
   - mkdir build
   - cd build
