@@ -4,7 +4,15 @@ compiler:
   - gcc
 
 before_install:
-  - sudo apt-get install gfortran openmpi-bin libopenmpi-dev libhdf5-serial-dev libnetcdf-dev libexodusii-dev libpstreams-dev libhypre-dev libboost-all-dev
+  - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
+  - sudo apt-get update
+  - sudo apt-get install gcc-4.8 g++-4.8 gfortran openmpi-bin libopenmpi-dev libhdf5-serial-dev libnetcdf-dev libexodusii-dev libpstreams-dev libhypre-dev libboost-all-dev
+  - sudo update-alternatives --remove-all gcc
+  - sudo update-alternatives --remove-all g++
+  - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.8 20
+  - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.8 20
+  - gcc --version
+  - g++ --version
 
 before_script:
   - mkdir -p tpl/build
