@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/InciterSetup.C
   \author    J. Bakosi
-  \date      Wed 17 Jun 2015 08:11:48 PM MDT
+  \date      Mon 06 Jul 2015 08:54:33 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Functions used to setup inciter
   \details   Functions used to setup inciter.
@@ -519,9 +519,9 @@ prepareMesh(
     timestamp.emplace_back( "Read mesh graph from file", timer.hms() );
     load = graph.tetinpoel().size()/4;
     for (int i=1; i<numpes; ++i)
-      MPI_Send( &load, 1, MPI_UINT64_T, i, load_tag, MPI_COMM_WORLD );
+      MPI_Send( &load, 1, MPI_UNSIGNED, i, load_tag, MPI_COMM_WORLD );
   } else {
-    MPI_Recv( &load, 1, MPI_UINT64_T, 0, load_tag, MPI_COMM_WORLD, &status );
+    MPI_Recv( &load, 1, MPI_UNSIGNED, 0, load_tag, MPI_COMM_WORLD, &status );
   }
 
   // Compute load distribution given total work (load) and user-specified
