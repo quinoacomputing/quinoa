@@ -76,10 +76,10 @@ endif()
 
 target_link_libraries(${INCITER_EXECUTABLE}
                       Base
-                      IO
-                      Mesh
-                      LinSys
                       Inciter
+                      IO
+                      LinSys
+                      Mesh
                       InciterControl
                       LoadBalance
                       ${NEMESIS_LIBRARIES}
