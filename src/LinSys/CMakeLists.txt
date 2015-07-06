@@ -27,6 +27,12 @@ add_dependencies( "LinSys" "unsmeshmapCharmModule" )
 # CProxy_Conductor.
 add_dependencies( "linsysmergerCharmModule" "conductorCharmModule" )
 
+# Add extra dependency of LinSysMerger charm module on Performer charm module.
+# This is required to make sure performer.decl.h is generated before
+# linsysmerger.ci is processed, as LinSysMerger is specialized on
+# CProxy_Performer.
+add_dependencies( "linsysmergerCharmModule" "performerCharmModule" )
+
 INSTALL(TARGETS LinSys
   	RUNTIME DESTINATION bin COMPONENT Runtime
   	LIBRARY DESTINATION lib COMPONENT Runtime

@@ -33,7 +33,6 @@
 #endif
 
 #include "inciter.decl.h"
-#include "performer.decl.h"
 
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic pop
