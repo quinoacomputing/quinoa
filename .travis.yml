@@ -18,10 +18,14 @@ before_script:
   - mkdir -p tpl/build
   - cd tpl/build
   - cmake -D CMAKE_CXX_COMPILER=mpic++ -D CMAKE_C_COMPILER=mpicc -D CMAKE_Fortran_COMPILER=mpif90 ..
-  - make -sj2
-  - cd ../..
-  - mkdir build
-  - cd build
-  - cmake -D CMAKE_CXX_COMPILER=mpic++ -D CMAKE_C_COMPILER=mpicc ../src
+  - make -sj2 charm hypre
+  - cat /home/travis/build/jbakosi/quinoa/tpl/build/hypre/src/hypre-stamp/hypre-build-out.log
+  - cat /home/travis/build/jbakosi/quinoa/tpl/build/hypre/src/hypre-stamp/hypre-build-err.log
+  - cat /home/travis/build/jbakosi/quinoa/tpl/build/charm/src/charm-stamp/charm-build-out.log
+  - cat /home/travis/build/jbakosi/quinoa/tpl/build/charm/src/charm-stamp/charm-build-err.log
+#  - cd ../..
+#  - mkdir build
+#  - cd build
+#  - cmake -D CMAKE_CXX_COMPILER=mpic++ -D CMAKE_C_COMPILER=mpicc ../src
 
 script: make -s

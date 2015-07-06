@@ -238,12 +238,12 @@ endif()
 target_link_libraries(${WALKER_EXECUTABLE}
                       Base
                       DiffEq
-                      IO
-                      Mesh      # WALKER SHOULD NOT DEPEND ON MESH
-                      Statistics
-                      LoadBalance
                       RNG
                       Walker
+                      Statistics
+                      LoadBalance
+                      Mesh      # WALKER SHOULD NOT DEPEND ON MESH
+                      IO
                       WalkerControl
                       ${NEMESIS_LIBRARIES}
                       ${EXODUS_LIBRARIES}
