@@ -1,4 +1,7 @@
 [![Build Status](https://travis-ci.org/jbakosi/quinoa.svg?branch=master)](https://travis-ci.org/jbakosi/quinoa)
+[![Release](https://img.shields.io/github/release/jbakosi/quinoa.svg)](https://github.com/jbakosi/quinoa/releases/latest)
+[![License](https://img.shields.io/github/license/jbakosi/quinoa.svg)](#license)
+[![Issues](https://img.shields.io/github/issues/jbakosi/quinoa.svg)](https://github.com/jbakosi/quinoa/issues)
 
 ## What is Quinoa?
 
