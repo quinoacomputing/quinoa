@@ -26,11 +26,6 @@ add_dependencies( "Inciter" "inciterCharmModule" )
 add_dependencies( "conductorCharmModule" "linearmapCharmModule" )
 add_dependencies( "conductorCharmModule" "unsmeshmapCharmModule" )
 
-# Add extra dependency of Performer charm module on LinSysMerger charm module.
-# This is required to make sure linsysmerger.decl.h is generated before
-# Peformer.h is processed including LinSysMerger.h.
-add_dependencies( "performerCharmModule" "linsysmergerCharmModule" )
-
 INSTALL(TARGETS Inciter
   	RUNTIME DESTINATION bin COMPONENT Runtime
   	LIBRARY DESTINATION lib COMPONENT Runtime
