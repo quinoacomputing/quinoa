@@ -2,126 +2,73 @@
   \mainpage  notitle
   \image html quinoa.svg
 
-\section intro What is Quinoa?
+## What is Quinoa?
+
 Quinoa is a set of computational tools that enables research and numerical
 analysis in fluid dynamics. At this time it is a test-bed to experiment with
 various algorithms using fully asynchronous runtime systems.
 
-\section organization Organization
+## Organization
+
 Currently, Quinoa consists of the following tools:
-  \li [<B>inciter</B>](inciter_doc.html) - Solve a PDE on an unstructured mesh
-      using overdecomposition
-  \li [<B>walker</B>](walker_doc.html) - Random walker for stochastic
-      differential equations
-  \li [<B>rngtest</B>](rngtest_doc.html) - Random number generator test suite
-  \li [<B>unittest</B>](unittest_doc.html) - Unit test suite
-  \li [<B>meshconv</B>](meshconv_doc.html) - Mesh file converter
+  - [<B>inciter</B>](https://jbakosi.github.io/quinoa/inciter_doc.html) - Solve
+    a PDE on an unstructured mesh using overdecomposition
+  - [<B>walker</B>](https://jbakosi.github.io/quinoa/walker_doc.html) - Random
+    walker for stochastic differential equations
+  - [<B>rngtest</B>](https://jbakosi.github.io/quinoa/rngtest_doc.html) - Random number generator test suite
+  - [<B>unittest</B>](https://jbakosi.github.io/quinoa/unittest_doc.html) - Unit test suite
+  - [<B>meshconv</B>](https://jbakosi.github.io/quinoa/meshconv_doc.html) - Mesh file converter
 
-\section whyanother Goals
-  \li [<B>Designed for the exascale era</B>](why.html#exascale)
-  \li [<B>Verified and proven to be correct</B>](why.html#correct)
-  \li [<B>Optimized for performance, power, and reliability</B>](why.html#optimized)
-  \li [<B>Advanced computer science outsourced to experts</B>](why.html#outsource)
-  \li [<B>Using a language that can cope with complexity</B>](why.html#language)
-  \li [<B>Highly-valued programmer productivity</B>](why.html#productivity)
-  \li [<B>User and developer friendly</B>](why.html#friendly)
-  \li [<B>Well documented</B>](why.html#documented)
-  \li [<B>Fun to work on</B>](why.html#fun)
+## Goals
 
-\section license License
-Copyright (c) 2012-2015, Jozsef Bakosi
-All rights reserved.
+  - [<B>Designed for the exascale era</B>](https://jbakosi.github.io/quinoa/why.html#exascale)
+  - [<B>Verified and proven to be correct</B>](https://jbakosi.github.io/quinoa/why.html#correct)
+  - [<B>Optimized for performance, power, and reliability</B>](https://jbakosi.github.io/quinoa/why.html#optimized)
+  - [<B>Advanced computer science outsourced to experts</B>](https://jbakosi.github.io/quinoa/why.html#outsource)
+  - [<B>Using a language that can cope with complexity</B>](https://jbakosi.github.io/quinoa/why.html#language)
+  - [<B>Highly-valued programmer productivity</B>](https://jbakosi.github.io/quinoa/why.html#productivity)
+  - [<B>User and developer friendly</B>](https://jbakosi.github.io/quinoa/why.html#friendly)
+  - [<B>Well documented</B>](https://jbakosi.github.io/quinoa/why.html#documented)
+  - [<B>Fun to work on</B>](https://jbakosi.github.io/quinoa/why.html#fun)
 
-Redistribution and use in source and binary forms, with or without modification,
-are permitted provided that the following conditions are met:
+## License
 
-- Redistributions of source code must retain the above copyright notice, this
-  list of conditions and the following disclaimer.
+See the [LICENSE](https://github.com/jbakosi/quinoa/blob/master/LICENSE).
 
-- Redistributions in binary form must reproduce the above copyright notice, this
-  list of conditions and the following disclaimer in the documentation and/or
-  other materials provided with the distribution.
+## Authors
 
-- Neither the name of test nor the names of its contributors may be used to
-  endorse or promote products derived from this software without specific prior
-  written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
-ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
-ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-\section authors Authors
 Jozsef Bakosi (jbakosi@lanl.gov)
 
-\section build How to build
+## How to build
 
-\subsection build_compilers 1. Pick compilers
+### 1. Pick compilers
 
-   \verbatim
+   \code{.sh}
     $ CC=mpicc CXX=mpic++ FC=mpif90 F77=mpif77 F90=mpif90
-   \endverbatim
+   \endcode
    - Currently, MPI is required, use the OpenMPI wrappers
    - The underlying C++ compiler must support the C++11 standard
 
-\subsection build_tpl 2. Build the required third-party libraries (TPLs)
+### 2. Build the third-party libraries
 
-   \verbatim
+   \code{.sh}
     $ cd <quinoa>/tpl; mkdir build; cd build
     $ cmake ..
     $ make
-   \endverbatim
-   - The CMAKE_INSTALL_PREFIX cmake variable defaults to
-     <quinoa>/tpl/install/<compiler>, which is where the TPLs are installed
+   \endcode
 
-\subsection build_quinoa 3. Build Quinoa
+### 3. Build Quinoa
 
-   \verbatim
+   \code{.sh}
     $ cd <quinoa>; mkdir build; cd build
     $ cmake ../src
     $ make
-   \endverbatim
-   - All executables will be in <quinoa>/build/Main
-   - The TPL_DIR cmake variable defaults to <quinoa>/tpl/install/<compiler>
-
-\section build_where Where to go from here
-
-\subsection build_unit 1. Run the unit tests
-
-   \verbatim
-    $ cd <quinoa>/build
-    $ Main/charmrun +p4 Main/unittest
-   \endverbatim
-
-\subsection build_doc 2. Build the documentation
-
-   \verbatim
-    $ cd <quinoa>/build
-    $ make doc
-   \endverbatim
-   Point a web browser to <quinoa>/build/doc/html/index.html
-
-\subsection build_coverage 3. Build the code coverage report
-
-   \verbatim
-    $ cd <quinoa>/build
-    $ make coverage
-   \endverbatim
-   Point a web browser to <quinoa>/build/unittest_coverage/index.html
-
-\subsection build_examples 4. Check out some examples
-
-   Point a web browser to <quinoa>/build/doc/html/examples.html
+   \endcode
+   - All executables will be in <tt>./Main</tt>
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Thu 02 Jul 2015 02:14:09 PM MDT
+<em>Page last updated:</em> Tue 07 Jul 2015 06:11:09 AM MDT
 <em>Copyright 2012-2015, Jozsef Bakosi.</em>
 </small></div>
 */
