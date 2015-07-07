@@ -3,7 +3,7 @@
   \tableofcontents
 
 \image html kattekrab-Mainframe.svg
-\section exascale 1. Designed for the exascale era
+\section exascale Designed for the exascale era
 Our target machines are the largest distributed clusters in the world with
 millions of compute cores. Due to unprecedented hardware complexity and features
 such as dynamic frequency scaling, we must assume inhomogeneous performance
@@ -37,7 +37,7 @@ codes. Read a one-page summary on the strengths of Charm++ at
 http://charm.cs.uiuc.edu/why.
 
 \image html Boton-correcto.svg
-\section correct 2. Verified and proven to be correct
+\section correct Verified and proven to be correct
 Nothing is more important than code that works as advertised with no surprises.
 We strive for writing testable code as well as writing tests that cover the code
 to the maximum degree possible. Code coverage is quantified. Untested code is
@@ -60,7 +60,7 @@ testing:
    unexpected, or random inputs with code coverage analysis
 
 \image html Triangle.svg
-\section optimized 3. Optimized for performance, power, and reliability
+\section optimized Optimized for performance, power, and reliability
 Power consumption is a primary concern in the exascale era. Application
 performance must be measured within power constraints on increasingly complex
 and thus likely less reliable hardware. A computation must optimize and thus
@@ -88,7 +88,7 @@ can save millions of cycles since jobs have to be restarted less frequently due
 to hardware failure.
 
 \image html techie-arsitek.svg
-\section outsource 4. Advanced computer science outsourced to experts
+\section outsource Advanced computer science outsourced to experts
 Hardware complexity is increasing. Simultaneously satisfying all the different
 requirements enumerated here inevitably increases software complexity.
 Attempting to tackle every aspect by the application programmer, as is
@@ -108,7 +108,7 @@ outsourced to those who make a career out them. Quinoa uses a number of
 collaborate with the subject-matter experts.
 
 \image html celticknot1.svg
-\section language 5. Using a language that can cope with complexity
+\section language Using a language that can cope with complexity
 The ultimate measure of the value of a computer language is how it balances
 runtime performance and code complexity. A good language can do a lot for a
 designer and a programmer, as long as its strengths and limitations are clearly
@@ -139,7 +139,7 @@ multiple compilers. This reduces code complexity and improves productivity as
 well as runtime performance.
 
 \image html nicubunu-Tools.svg
-\section productivity 6. Highly-valued programmer productivity
+\section productivity Highly-valued programmer productivity
 Due to software complexity the most expensive resource in implementing and
 maintaining computing capability is the developer's time. In a successful
 project programmer productivity must be highly regarded and actively maintained.
@@ -154,7 +154,7 @@ expertise, e.g., physics, differential equations, numerical methods, but in
 their tools of trade as well, e.g., the latest software development techniques.
 
 \image html handshake.svg
-\section friendly 7. User and developer friendly
+\section friendly User and developer friendly
 User experience is [the most important design goal](http://resources.idgenterprise.com/original/AST-0053933_seven_qualities_of_wildly_desirable_software.pdf) of
 desirable software. However, this does not require a graphical user interface.
 Also, expert developers should be able to get started quickly, extend the code
@@ -171,7 +171,7 @@ impossible to add without proper in-code documentation. Simulation result
 output is highly customizable.
 
 \image html document.svg
-\section documented 8. Well documented
+\section documented Well documented
 Undocumented code is considered legacy code and a major impediment to progress
 and productivity.
 
@@ -193,14 +193,14 @@ indexable, and looks great on any device, including
 [math](_generalized_dirichlet_8h.html#details).
 
 \image html Happy-Penguin.svg
-\section fun 9. Fun to work on
+\section fun Fun to work on
 We believe all the above are equally important in order to make this project fun
 to work on. None of the above can be an afterthought: they must all be
 simultaneously considered at all times and from the outset.
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Tue 07 Jul 2015 06:29:25 AM MDT
+<em>Page last updated:</em> Tue 07 Jul 2015 06:31:50 AM MDT
 <em>Copyright 2012-2015, Jozsef Bakosi.</em>
 </small></div>
 */
