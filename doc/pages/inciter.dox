@@ -3,9 +3,9 @@
   \image html inciter.svg
 
 Inciter is used to experiment with asynchronous algorithms to numerically solve
-a system of partial differential equation PDE on unstructured meshes using
-overdecomposition. Similar to the rest of Quinoa, inciter also uses the Charm++
-runtime system.
+a system of partial differential equations discretized with unstructured meshes
+using overdecomposition. Similar to the rest of Quinoa, inciter also uses the
+Charm++ runtime system.
 
 Help on command-line parameters
 -------------------------------
@@ -27,7 +27,7 @@ inciter Command-line Parameters:
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Tue 07 Jul 2015 08:28:43 AM MDT
+<em>Page last updated:</em> Tue 07 Jul 2015 11:41:26 AM MDT
 <em>Copyright 2012-2015, Jozsef Bakosi.</em>
 </small></div>
 */
