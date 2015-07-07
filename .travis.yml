@@ -5,7 +5,7 @@ env:
 language: cpp
 
 compiler:
-  - clang
+#  - clang
   - gcc
 
 before_install:
@@ -19,7 +19,7 @@ before_install:
   - sudo apt-get install -y cmake gcc-4.9 g++-4.9 gfortran openmpi-bin libopenmpi-dev libhdf5-serial-dev libnetcdf-dev libexodusii-dev libpstreams-dev libboost-all-dev liblapack-dev liblapacke-dev
   - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.9 20
   - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.9 20
-  - if [ $CXX == "clang++" ]; then source script/build_openmpi.sh; fi
+#  - if [ $CXX == "clang++" ]; then source script/build_openmpi.sh; fi
 
 before_script:
   - mkdir -p tpl/build
