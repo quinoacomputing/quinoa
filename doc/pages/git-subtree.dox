@@ -7,8 +7,8 @@ and tags), easily allows contributing upstream, and makes it easy to quickly try
 out development features of a TPL. In addition, only those developers need to
 learn git subtree who expect to contribute to TPLs upstream.
 
-This page explains how to use git subtree to work with third-party libraries
-(TPLs). This setup is only required
+This page explains how to use git subtree to work with TPLs. This setup is only
+required
 
  - if you expect to make changes to TPLs (located in <quinoa>/tpl/src) and want
    to push those changes upstream to the TPL, or
@@ -98,7 +98,7 @@ If you are happy with the diff, push the changes to the TPL:
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Thu 02 Jul 2015 06:14:01 AM MDT
+<em>Page last updated:</em> Tue 07 Jul 2015 05:01:20 AM MDT
 <em>Copyright 2012-2015, Jozsef Bakosi.</em>
 </small></div>
 */
