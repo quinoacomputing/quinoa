@@ -45,7 +45,7 @@ Jozsef Bakosi (jbakosi@lanl.gov)
 ### 1. Pick compilers
 
    ```
-    $ CC=mpicc CXX=mpic++ FC=mpif90 F77=mpif77 F90=mpif90
+    $ CC=mpicc CXX=mpic++ FC=mpif90
    ```
    - Currently, MPI is required, use the OpenMPI wrappers
    - The underlying C++ compiler must support the C++11 standard
