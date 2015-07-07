@@ -18,6 +18,7 @@ git rm -rf .
 cd -
 ninja doc
 cd doc/html
+touch .nojekyll
 git add .
 git commit -m "Automated documentation build for changeset ${DOC4COMMIT}"
 git push origin gh-pages
