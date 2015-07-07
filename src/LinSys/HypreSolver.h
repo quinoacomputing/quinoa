@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/HypreSolver.h
   \author    J. Bakosi
-  \date      Fri 19 Jun 2015 06:11:25 AM MDT
+  \date      Tue 07 Jul 2015 02:50:45 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Hypre solver class
   \details   Hypre solver class.
@@ -10,6 +10,8 @@
 //******************************************************************************
 #ifndef HypreSolver_h
 #define HypreSolver_h
+
+#include <iostream>
 
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic push
