@@ -1,0 +1,33 @@
+/*!
+  \page      inciter_doc Inciter: Solve a PDE on unstructured meshes
+  \image html meshconv.svg
+
+Inciter is used to experiment with asynchronous algorithms to numerically solve
+a system of partial differential equation PDE on unstructured meshes using
+overdecomposition. Similar to the rest of Quinoa, inciter also uses the Charm++
+runtime system.
+
+Help on command-line parameters
+-------------------------------
+
+As usual, use the \a -h command-line parameter to get on-screen help from an
+executable. Example output, exluding Charm++ command-line parameters:
+\code{.py}
+$ inciter -h
+inciter Command-line Parameters:
+       -c, --control     string Specify the control file name [REQUIRED]
+          -h, --help            Display one-liner help on all command-line arguments
+       -f, --helpctr            Display one-liner help on all control file keywords
+        -H, --helpkw     string Display verbose help on a single keyword
+         -i, --input     string Specify the input file
+        -o, --output     string Specify the output file
+       -v, --verbose            Select verbose screen output
+-u, --virtualization       real Set degree of virtualization
+\endcode
+
+<hr>
+<div><small>
+<em>Page last updated:</em> Tue 07 Jul 2015 06:43:12 AM MDT
+<em>Copyright 2012-2015, Jozsef Bakosi.</em>
+</small></div>
+*/
