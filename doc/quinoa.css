@@ -98,6 +98,12 @@ div.image img[src="walker.svg"]{
   width:  40%;
 }
 
+div.image img[src="inciter.svg"]{
+  height: auto;
+  float:  right;
+  width:  40%;
+}
+
 div.image img[src="all2allcost.svg"]{
   height: auto;
   float:  right;
