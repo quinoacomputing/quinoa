@@ -44,7 +44,7 @@ Jozsef Bakosi (jbakosi@lanl.gov)
 ### 1. Pick compilers
 
    \code{.sh}
-    $ CC=mpicc CXX=mpic++ FC=mpif90 F77=mpif77 F90=mpif90
+    $ CC=mpicc CXX=mpic++ FC=mpif90
    \endcode
    - Currently, MPI is required, use the OpenMPI wrappers
    - The underlying C++ compiler must support the C++11 standard
@@ -68,7 +68,7 @@ Jozsef Bakosi (jbakosi@lanl.gov)
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Tue 07 Jul 2015 06:11:09 AM MDT
+<em>Page last updated:</em> Tue 07 Jul 2015 02:46:04 PM MDT
 <em>Copyright 2012-2015, Jozsef Bakosi.</em>
 </small></div>
 */
