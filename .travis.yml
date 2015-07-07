@@ -30,6 +30,8 @@ before_script:
 script: make -s
 
 after_success:
+  - make coverage
+  - bash <(curl -s https://codecov.io/bash)
   - git clone git@github.com:jbakosi/quinoa.git --branch gh-pages --single-branch doc/html
   - cd doc/html
   - git rm -rf .
