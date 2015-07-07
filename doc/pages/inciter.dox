@@ -1,6 +1,6 @@
 /*!
   \page      inciter_doc Inciter: Solve a PDE on unstructured meshes
-  \image html meshconv.svg
+  \image html inciter.svg
 
 Inciter is used to experiment with asynchronous algorithms to numerically solve
 a system of partial differential equation PDE on unstructured meshes using
@@ -27,7 +27,7 @@ inciter Command-line Parameters:
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Tue 07 Jul 2015 06:43:12 AM MDT
+<em>Page last updated:</em> Tue 07 Jul 2015 08:28:43 AM MDT
 <em>Copyright 2012-2015, Jozsef Bakosi.</em>
 </small></div>
 */
