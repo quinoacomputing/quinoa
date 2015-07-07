@@ -11,7 +11,7 @@ before_install:
   - sudo add-apt-repository -y ppa:robotics/ppa
   - sudo add-apt-repository -y ppa:kalakris/cmake
   - sudo add-apt-repository -y ppa:git-core/ppa
-#  - sudo add-apt-repository -y ppa:techzilla/doxygen-backport
+  - sudo add-apt-repository -y ppa:libreoffice/ppa
   - sudo apt-get update
   - sudo apt-get install -y git cmake gcc-4.9 g++-4.9 gfortran openmpi-bin libopenmpi-dev libhdf5-serial-dev libnetcdf-dev libexodusii-dev libpstreams-dev libboost-all-dev liblapack-dev liblapacke-dev lcov doxygen graphviz
   - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.9 20
