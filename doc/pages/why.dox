@@ -1,12 +1,6 @@
 /*!
-  \page      why Fundamental concepts
+  \page      why Goals
   \tableofcontents
-
-This page explains how Quinoa differs from most other computational fluid
-dynamics codes and why you should care whether you are a user or a developer.
-This list comprises our core values. All are important. Remove one and the last
-point can no longer be satisfied, which is really the main reason why we are
-doing this.
 
 \image html kattekrab-Mainframe.svg
 \section exascale 1. Designed for the exascale era
@@ -206,7 +200,7 @@ simultaneously considered at all times and from the outset.
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Fri 12 Jun 2015 06:47:21 AM MDT
+<em>Page last updated:</em> Tue 07 Jul 2015 06:29:25 AM MDT
 <em>Copyright 2012-2015, Jozsef Bakosi.</em>
 </small></div>
 */
