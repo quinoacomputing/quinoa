@@ -144,8 +144,13 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")  # clang-specific settings
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fcolor-diagnostics")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Qunused-arguments")
 
-  # Set libc++ as the default standard C++ library and allow selection
-  setlibstdcxx("libc++")
+  # Set libc++ as the default standard C++ library and allow selection by
+  # default
+  if (NOT STDLIBCPP)
+    setlibstdcxx("libc++")
+  else()
+    setlibstdcxx(${STDLIBCPP})
+  endif()
 
   # Experimental: use the C++14 standard
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1y")
@@ -170,8 +175,13 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")  # clang-specific settings
 
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")  # gcc-specific settings
 
-  # Set libstdc++ as the default standard C++ library and allow selection
-  setlibstdcxx("libstdc++")
+  # Set libc++ as the default standard C++ library and allow selection by
+  # default
+  if (NOT STDLIBCPP)
+    setlibstdcxx("libstdc++")
+  else()
+    setlibstdcxx(${STDLIBCPP})
+  endif()
 
   # Experimental: use the C++14 standard
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1y")
@@ -223,8 +233,13 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
   add_compiler_flag("-no-inline-max-total-size")
   add_compiler_flag("-no-inline-max-per-routine")
 
-  # Set libstdc++ as the default standard C++ library and allow selection
-  setlibstdcxx("libstdc++")
+  # Set libc++ as the default standard C++ library and allow selection by
+  # default
+  if (NOT STDLIBCPP)
+    setlibstdcxx("libstdc++")
+  else()
+    setlibstdcxx(${STDLIBCPP})
+  endif()
 
   # Suppress the following Intel compiler warnings/remarks for Charm++
   # hostfiles including the Charm-generated .decl.h and .def.h:
@@ -254,8 +269,8 @@ message(STATUS "Charm++ host extra compiler flags: ${HOSTFILE_FLAGS}")
 # Echo Charm++ module extra link flags
 message(STATUS "Charm++ module extra linker flags: ${PARTOF_FLAGS}")
 
-# Set compiler flags for use of libc++ (If nothing is given, libstdc++ is the
-# default thus does not require anything special.)
+# Set compiler flags for use of libc++. If nothing is given, do nothing; gnu
+# and intel will use libstdc++, while clang will use libc++ by default.
 if(LIBCXX_CPP)
    # Use libc++ (http://libcxx.llvm.org)
    # Use libc++abi (http://libcxxabi.llvm.org)

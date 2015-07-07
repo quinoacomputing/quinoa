@@ -90,8 +90,14 @@ include(libstdcxx)
 # Compiler-specific settings
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")  # clang-specific settings
 
-  # Set libc++ as the default standard C++ library and allow selection
-  setlibstdcxx("libc++")
+  # Set libc++ as the default standard C++ library and allow selection by
+  # default
+  if (NOT STDLIBCPP)
+    setlibstdcxx("libc++")
+  else()
+    setlibstdcxx(${STDLIBCPP})
+  endif()
+
   # Don't error out on functions not returning anything even when supposed to,
   # required only by TestU01 
   set(CFLAGS "${CFLAGS} -Wno-error=return-type")
@@ -100,8 +106,13 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")  # gcc-specific settings
 
   # Boost as build toolset wants 'gcc' for the gnu compiler
   set(BOOST_TOOLSET "gcc")
-  # Set libstdc++ as the default standard C++ library and allow selection
-  setlibstdcxx("libstdc++")
+  # Set libc++ as the default standard C++ library and allow selection by
+  # default
+  if (NOT STDLIBCPP)
+    setlibstdcxx("libstdc++")
+  else()
+    setlibstdcxx(${STDLIBCPP})
+  endif()
 
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
 
@@ -109,8 +120,13 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
   set(CFLAGS "${CFLAGS} -mt_mpi")
   set(CXXFLAGS "${CXXFLAGS} -mt_mpi")
   set(FFLAGS "${FFLAGS} -mt_mpi")
-  # Set libstdc++ as the default standard C++ library and allow selection
-  setlibstdcxx("libstdc++")
+  # Set libc++ as the default standard C++ library and allow selection by
+  # default
+  if (NOT STDLIBCPP)
+    setlibstdcxx("libstdc++")
+  else()
+    setlibstdcxx(${STDLIBCPP})
+  endif()
 
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "PGI")  # pgi-specific settings
 
@@ -131,8 +147,8 @@ endif()
 # Set Boost's default build type
 string(TOLOWER ${CMAKE_BUILD_TYPE} BOOST_BUILD_TYPE)
 
-# Set compiler flags for use of libc++ (If nothing is given, do nothing; gnu,
-# intel, and clang will use libstdc++ by default).
+# Set compiler flags for use of libc++. If nothing is given, do nothing; gnu
+# and intel will use libstdc++, while clang will use libc++ by default.
 if(LIBCXX_CPP)
    # Use libc++ (http://libcxx.llvm.org)
    # Use libc++abi (http://libcxxabi.llvm.org)
