@@ -768,6 +768,7 @@ INPUT                  = \
   @CMAKE_CURRENT_SOURCE_DIR@/../doc/pages/concurrency.dox \
   @CMAKE_CURRENT_SOURCE_DIR@/../doc/pages/diffeq.dox \
   @CMAKE_CURRENT_SOURCE_DIR@/../doc/pages/git-subtree.dox \
+  @CMAKE_CURRENT_SOURCE_DIR@/../doc/pages/inciter.dox \
   @CMAKE_CURRENT_SOURCE_DIR@/../doc/pages/inhomogeneity.dox \
   @CMAKE_CURRENT_SOURCE_DIR@/../doc/pages/io.dox \
   @CMAKE_CURRENT_SOURCE_DIR@/../doc/pages/layout.dox \
