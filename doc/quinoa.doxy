@@ -764,23 +764,24 @@ WARN_LOGFILE           =
 # Note: If this tag is empty the current directory is searched.
 
 INPUT                  = \
-  @CMAKE_CURRENT_SOURCE_DIR@/../doc/pages/mainpage.dox \
-  @CMAKE_CURRENT_SOURCE_DIR@/../doc/pages/why.dox \
-  @CMAKE_CURRENT_SOURCE_DIR@/../doc/pages/walker.dox \
-  @CMAKE_CURRENT_SOURCE_DIR@/../doc/pages/rngtest.dox \
-  @CMAKE_CURRENT_SOURCE_DIR@/../doc/pages/unittest.dox \
-  @CMAKE_CURRENT_SOURCE_DIR@/../doc/pages/meshconv.dox \
   @CMAKE_CURRENT_SOURCE_DIR@/../doc/pages/algorithm.dox \
   @CMAKE_CURRENT_SOURCE_DIR@/../doc/pages/concurrency.dox \
   @CMAKE_CURRENT_SOURCE_DIR@/../doc/pages/diffeq.dox \
+  @CMAKE_CURRENT_SOURCE_DIR@/../doc/pages/git-subtree.dox \
   @CMAKE_CURRENT_SOURCE_DIR@/../doc/pages/inhomogeneity.dox \
   @CMAKE_CURRENT_SOURCE_DIR@/../doc/pages/io.dox \
   @CMAKE_CURRENT_SOURCE_DIR@/../doc/pages/layout.dox \
+  @CMAKE_CURRENT_SOURCE_DIR@/../doc/pages/licenses.dox \
   @CMAKE_CURRENT_SOURCE_DIR@/../doc/pages/logo.dox \
+  @CMAKE_CURRENT_SOURCE_DIR@/../doc/pages/mainpage.dox \
+  @CMAKE_CURRENT_SOURCE_DIR@/../doc/pages/meshconv.dox \
   @CMAKE_CURRENT_SOURCE_DIR@/../doc/pages/rng.dox \
   @CMAKE_CURRENT_SOURCE_DIR@/../doc/pages/rngs_input.dox \
+  @CMAKE_CURRENT_SOURCE_DIR@/../doc/pages/rngtest.dox \
   @CMAKE_CURRENT_SOURCE_DIR@/../doc/pages/statistics_output.dox \
-  @CMAKE_CURRENT_SOURCE_DIR@/../doc/pages/licenses.dox \
+  @CMAKE_CURRENT_SOURCE_DIR@/../doc/pages/unittest.dox \
+  @CMAKE_CURRENT_SOURCE_DIR@/../doc/pages/walker.dox \
+  @CMAKE_CURRENT_SOURCE_DIR@/../doc/pages/why.dox \
   @CMAKE_CURRENT_SOURCE_DIR@/../doc/examples/examples.dox \
   @CMAKE_CURRENT_SOURCE_DIR@/../doc/examples/walker/Beta.dox \
   @CMAKE_CURRENT_SOURCE_DIR@/../doc/examples/walker/DiagOU.dox \
