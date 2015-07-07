@@ -17,6 +17,7 @@ cd openmpi-1.8.6
 OPENMPI=$HOME/openmpi
 ./configure --prefix=$OPENMPI FC=gfortran
 make -sj2 install
+cd -
 
 export PATH=$OPENMPI/bin:$PATH
 export LD_LIBRARY_PATH=$OPENMPI/lib:$LD_LIBRARY_PATH
