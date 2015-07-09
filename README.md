@@ -1,11 +1,11 @@
 [![Build Status](https://travis-ci.org/jbakosi/quinoa.svg?branch=master)](https://travis-ci.org/jbakosi/quinoa)
 [![Issues](https://img.shields.io/github/issues/jbakosi/quinoa.svg)](https://github.com/jbakosi/quinoa/issues)
+[![Join the chat at https://gitter.im/jbakosi/quinoa](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/jbakosi/quinoa?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 <!---[![License](https://img.shields.io/github/license/jbakosi/quinoa.svg)](#license)-->
 <!---[![Release](https://img.shields.io/github/release/jbakosi/quinoa.svg)](https://github.com/jbakosi/quinoa/releases/latest)-->
 
 ## What is Quinoa?
-
-[![Join the chat at https://gitter.im/jbakosi/quinoa](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/jbakosi/quinoa?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 Quinoa is a set of computational tools that enables research and numerical
 analysis in fluid dynamics. At this time it is a test-bed to experiment with
