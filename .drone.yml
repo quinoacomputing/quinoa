@@ -3,10 +3,10 @@ image: test
 script:
   - mkdir -p tpl/build
   - cd tpl/build
-  - cmake -D CMAKE_CXX_COMPILER=mpic++ -D CMAKE_C_COMPILER=mpicc -D CMAKE_Fortran_COMPILER=mpif90 -D CMAKE_BUILD_TYPE=$BUILD_TYPE -D STDLIBCPP=libstdc++ ..
+  - cmake -D CMAKE_CXX_COMPILER=mpic++ -D CMAKE_C_COMPILER=mpicc -D CMAKE_Fortran_COMPILER=mpif90 ..
   - make -sj4
   - cd -
   - mkdir build
   - cd build
-  - cmake -D CMAKE_CXX_COMPILER=mpic++ -D CMAKE_C_COMPILER=mpicc -D CMAKE_BUILD_TYPE=$BUILD_TYPE -D STDLIBCPP=libstdc++ ../src
+  - cmake -D CMAKE_CXX_COMPILER=mpic++ -D CMAKE_C_COMPILER=mpicc ../src
   - make -sj4
