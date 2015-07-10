@@ -2,7 +2,7 @@
 /*!
   \file      src/Walker/distributor.ci
   \author    J. Bakosi
-  \date      Fri 10 Jul 2015 11:19:13 AM MDT
+  \date      Fri 10 Jul 2015 03:55:44 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Charm++ module interface file for Distributor
   \details   Charm++ module interface file for Distributor
@@ -41,11 +41,12 @@ module distributor {
       // -----------------------------          AdvP - advance particles
       //                                        OrdM - estimate ordinary moments
       // AdvP -- OrdM -- CenM -- OutS           CenM - estimate central moments
-      //     \       \             |            OrdP - estimate ordinary PDFs
-      //      OrdP    CenP         |            CenP - estimate central PDFs
-      //         \       \         |            OutS - output statistics (mom)
-      //           ------ OutP -- EvT           OutP - output PDFs
-      //                                        EvT  - Evaluate time step
+      //  |  \       \             |            OrdP - estimate ordinary PDFs
+      //  |   OrdP    CenP         |            CenP - estimate central PDFs
+      //   \     \       \         |            OutS - output statistics (mom)
+      //    \      ------ OutP -- EvT           OutP - output PDFs
+      //     \                    /             EvT  - Evaluate time step
+      //       --- NoSt ---------               NoSt - No stats & PDFs
       //
       // Interpretation of the above DAG
       // -------------------------------
@@ -117,6 +118,11 @@ module distributor {
       // output to disk if they all have been estimated and collected, there is
       // a barrier at CenP, but this is overlapped with OrdP, OrdM, CenM, and
       // OutS.
+      //
+      // NoSt in the graph signals a potential shortcut which is activated if
+      // there is no statistics nor PDFs need to be estimated. In that case,
+      // after advancing the particles, control flow just to evaluating the time
+      // step, skipping over several synchronization points.
 
       // SDAG wait-for: wait for ordinary moments to have been estimated
       entry void wait4ord() {
