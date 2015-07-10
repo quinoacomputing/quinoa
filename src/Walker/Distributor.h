@@ -2,7 +2,7 @@
 /*!
   \file      src/Walker/Distributor.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 01:43:08 PM MDT
+  \date      Fri 10 Jul 2015 03:27:21 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Distributor drives the time integration of differential equations
   \details   Distributor drives the time integration of differential equations.
@@ -59,7 +59,7 @@ class Distributor : public CBase_Distributor {
     explicit Distributor( const ctr::CmdLine& cmdline );
 
     //! Finish initialization
-    void init();
+    void init() const;
 
     //! Finish estimation of ordinary moments
     void estimateOrd( const std::vector< tk::real >& ord );
@@ -77,11 +77,12 @@ class Distributor : public CBase_Distributor {
                          const std::vector< tk::BiPDF >& bpdf,
                          const std::vector< tk::TriPDF >& tpdf );
 
-  private:
-    using CProxyInt = CProxy_Integrator< CProxy_Distributor >;
+    //! Charm++ reduction target enabling shortcutting sync points if no stats
+    void nostats();
 
+  private:
     //! Print information at startup
-    void info( uint64_t chunksize, uint64_t remainder ) const;
+    void info( uint64_t chunksize ) const;
 
     //! Compute size of next time step
     tk::real computedt();
@@ -135,8 +136,10 @@ class Distributor : public CBase_Distributor {
                              tag::pdf,  bool > m_output;
 
     uint64_t m_it;                              //!< Iteration count
+    tk::real m_npar;                            //!< Total number of particles
     tk::real m_t;                               //!< Physical time
-    std::vector< CProxyInt > m_proxy;           //!< Integrator proxies
+    bool m_nostat;                              //!< Any stats to estimate?
+    CProxy_Integrator m_proxy;                  //!< Integrator array proxy
     std::vector< tk::Timer > m_timer;           //!< Timers
     std::vector< std::string > m_nameOrdinary;  //!< Ordinary moment names
     std::vector< std::string > m_nameCentral;   //!< Central moment names

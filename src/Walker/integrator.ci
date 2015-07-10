@@ -11,23 +11,12 @@
 
 module integrator {
 
-  // Note that template chare Integrator depends on chare Distributor and in
-  // turn Distributor depends on Integrator (see also the interface file
-  // distributor.ci). This is a mutual dependency and it is made to work with
-  // one of the chares (Integrator) being a template chare. Note: if this
-  // extern module dependency is removed the code does not compile. See also
-  // the Charm++ manual on more information on template chares.
   extern module distributor;
 
   namespace walker {
 
-    // List all possible specializations of templated chare to instantiate
-    // registration and delivery of code for the individual specializations
-    chare Integrator< CProxy_Distributor >;
-
-    template< class Proxy >
-    chare Integrator {
-      entry Integrator( Proxy& proxy,
+    array [1D] Integrator {
+      entry Integrator( CProxy_Distributor& host,
                         uint64_t npar,
                         tk::real dt,
                         uint64_t it,
