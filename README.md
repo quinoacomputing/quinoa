@@ -1,8 +1,9 @@
-[![Build Status](https://travis-ci.org/jbakosi/quinoa.svg?branch=master)](https://travis-ci.org/jbakosi/quinoa)
+[![Travis Build Status](https://travis-ci.org/jbakosi/quinoa.svg?branch=master)](https://travis-ci.org/jbakosi/quinoa)
+[![Drone Build Status](http://bakosi.com:8000/api/badge/github.com/jbakosi/quinoa/status.svg?branch=master)](http://bakosi.com:8000/github.com/jbakosi/quinoa)
 [![Issues](https://img.shields.io/github/issues/jbakosi/quinoa.svg)](https://github.com/jbakosi/quinoa/issues)
 [![Join the chat at https://gitter.im/jbakosi/quinoa](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/jbakosi/quinoa?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![License](https://img.shields.io/github/license/jbakosi/quinoa.svg)](https://github.com/jbakosi/quinoa/blob/master/LICENSE)
 
-<!---[![License](https://img.shields.io/github/license/jbakosi/quinoa.svg)](#license)-->
 <!---[![Release](https://img.shields.io/github/release/jbakosi/quinoa.svg)](https://github.com/jbakosi/quinoa/releases/latest)-->
 
 ## What is Quinoa?
@@ -33,10 +34,6 @@ Currently, Quinoa consists of the following tools:
   - [<B>User and developer friendly</B>](https://jbakosi.github.io/quinoa/why.html#friendly)
   - [<B>Well documented</B>](https://jbakosi.github.io/quinoa/why.html#documented)
   - [<B>Fun to work on</B>](https://jbakosi.github.io/quinoa/why.html#fun)
-
-## License
-
-See the [LICENSE](https://github.com/jbakosi/quinoa/blob/master/LICENSE).
 
 ## Authors
 
