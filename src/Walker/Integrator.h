@@ -47,8 +47,7 @@ extern ctr::InputDeck g_inputdeck;
 extern std::vector< DiffEq > g_diffeqs;
 
 //! Integrator Charm++ chare used to advance differential equations in time
-template< class Proxy >
-class Integrator : public CBase_Integrator< Proxy > {
+class Integrator : public CBase_Integrator {
 
   public:
     //! Constructor
@@ -57,28 +56,44 @@ class Integrator : public CBase_Integrator< Proxy > {
     //! \param[in] dt Size of time step
     //! \param[in] it Iteration count
     //! \param[in] moments Map of statistical moments
-    explicit Integrator( Proxy& proxy,
+    explicit Integrator( CProxy_Distributor& host,
                          uint64_t npar,
                          tk::real dt,
                          uint64_t it,
                          const std::map< tk::ctr::Product, tk::real >& moments )
-      : m_proxy( proxy ),
+      : m_host( host ),
         m_particles( npar, g_inputdeck.get< tag::component >().nprop() ),
         m_stat( m_particles,
                 g_inputdeck.get< tag::component >().offsetmap( 
                   g_inputdeck.depvars() ),
                 g_inputdeck.get< tag::stat >(),
                 g_inputdeck.get< tag::pdf >(),
-                g_inputdeck.get< tag::discr, tag::binsize >() )
+                g_inputdeck.get< tag::discr, tag::binsize >() ),
+        m_nostat( g_inputdeck.get< tag::stat >().empty() &&
+                  g_inputdeck.get< tag::pdf >().empty() ? true : false )
     {
       ic();                 // set initial conditions for all equations
       advance( dt, it, moments );    // start time stepping all equations
     }
 
+    //! Migrate constructor
+    explicit Integrator( CkMigrateMessage* ) :
+      m_stat( m_particles,
+                g_inputdeck.get< tag::component >().offsetmap( 
+                  g_inputdeck.depvars() ),
+                g_inputdeck.get< tag::stat >(),
+                g_inputdeck.get< tag::pdf >(),
+                g_inputdeck.get< tag::discr, tag::binsize >() ) {}
+
     //! Set initial conditions
     void ic() {
       for (const auto& eq : g_diffeqs) eq.initialize( CkMyPe(), m_particles );
-      m_proxy.init();   // signal to host that initialization is complete
+      // Tell the Charm++ runtime system to call back to Distributor::init()
+      // once all Integrator chares have called initialize above. The reduction
+      // is done via creating a callback that invokes the typed reduction
+      // client, where m_host is the proxy on which the reduction target
+      // method, init(), is called upon completion of the reduction.
+      contribute(CkCallback( CkReductionTarget( Distributor, init ), m_host ));
     }
 
     //! Advance all particles owned by this integrator
@@ -90,14 +105,20 @@ class Integrator : public CBase_Integrator< Proxy > {
                   const std::map< tk::ctr::Product, tk::real >& moments )
     {
       //! Advance all equations one step in time
-      if (it < g_inputdeck.get< tag::discr, tag::nstep >())
+      if (it < g_inputdeck.get< tag::discr, tag::nstep >()) {
         for (const auto& e : g_diffeqs)
           e.advance( m_particles, CkMyPe(), dt, moments );
-      // Accumulate sums for ordinary moments (every time step)
-      accumulateOrd();
-      // Accumulate sums for ordinary PDFs at select times
-      if ( !(it % g_inputdeck.get< tag::interval, tag::pdf >()) )
-        accumulateOrdPDF();
+      }
+      if (m_nostat) {   // if no stats to estimate, skip to end of time step
+        contribute(
+          CkCallback( CkReductionTarget( Distributor, nostats ), m_host ) );
+      } else {
+        // Accumulate sums for ordinary moments (every time step)
+        accumulateOrd();
+        // Accumulate sums for ordinary PDFs at select times
+        if ( !(it % g_inputdeck.get< tag::interval, tag::pdf >()) )
+          accumulateOrdPDF();
+      }
     }
 
     // Accumulate sums for ordinary moments
@@ -105,7 +126,7 @@ class Integrator : public CBase_Integrator< Proxy > {
       // Accumulate partial sums for ordinary moments
       m_stat.accumulateOrd();
       // Send accumulated ordinary moments to host for estimation
-      m_proxy.estimateOrd( m_stat.ord() );
+      m_host.estimateOrd( m_stat.ord() );
     }
 
     // Accumulate sums for central moments
@@ -114,7 +135,7 @@ class Integrator : public CBase_Integrator< Proxy > {
       // Accumulate partial sums for central moments
       m_stat.accumulateCen( ord );
       // Send accumulated central moments to host for estimation
-      m_proxy.estimateCen( m_stat.ctr() );
+      m_host.estimateCen( m_stat.ctr() );
     }
 
     // Accumulate sums for ordinary PDFs
@@ -122,7 +143,7 @@ class Integrator : public CBase_Integrator< Proxy > {
       // Accumulate partial sums for ordinary PDFs
       m_stat.accumulateOrdPDF();
       // Send accumulated ordinary PDFs to host for estimation
-      m_proxy.estimateOrdPDF( m_stat.oupdf(), m_stat.obpdf(), m_stat.otpdf() );
+      m_host.estimateOrdPDF( m_stat.oupdf(), m_stat.obpdf(), m_stat.otpdf() );
     }
 
     // Accumulate sums for central PDFs
@@ -131,28 +152,16 @@ class Integrator : public CBase_Integrator< Proxy > {
       // Accumulate partial sums for central PDFs
       m_stat.accumulateCenPDF( ord );
       // Send accumulated central PDFs to host for estimation
-      m_proxy.estimateCenPDF( m_stat.cupdf(), m_stat.cbpdf(), m_stat.ctpdf() );
+      m_host.estimateCenPDF( m_stat.cupdf(), m_stat.cbpdf(), m_stat.ctpdf() );
     }
 
   private:
-    Proxy m_proxy;                      //!< Host proxy
+    CProxy_Distributor m_host;          //!< Host proxy
     tk::ParProps m_particles;           //!< Particle properties
     tk::Statistics m_stat;              //!< Statistics
+    bool m_nostat;                      //!< Any statistics to estimate?
 };
 
 } // walker::
-
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wconversion"
-#endif
-
-#define CK_TEMPLATES_ONLY
-#include "integrator.def.h"
-#undef CK_TEMPLATES_ONLY
-
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic pop
-#endif
 
 #endif // Integrator_h

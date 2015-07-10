@@ -2,7 +2,7 @@
 /*!
   \file      src/Walker/distributor.ci
   \author    J. Bakosi
-  \date      Thu 29 Jan 2015 09:04:20 AM MST
+  \date      Fri 10 Jul 2015 11:19:13 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Charm++ module interface file for Distributor
   \details   Charm++ module interface file for Distributor
@@ -10,15 +10,6 @@
 //******************************************************************************
 
 module distributor {
-
-  // Note that chare Distributor depends on chare Integrator and in turn
-  // Integrator depends on Distributor (see also the interface file
-  // integrator.ci). This is a mutual dependency and it is made to work with one
-  // of the chares (Integrator) being a template chare. Note: if this extern
-  // module dependency is removed, the code still compiles but Charm++ generates
-  // the wrong code yielding segfaults. See also the Charm++ manual on more
-  // information on template chares.
-  extern module integrator;
 
   include "Walker/CmdLine/CmdLine.h";
   include "UniPDF.h";
@@ -29,7 +20,8 @@ module distributor {
 
     chare Distributor {
       entry Distributor( const ctr::CmdLine& cmdline );
-      entry void init();
+      entry [reductiontarget] void init();
+      entry [reductiontarget] void nostats();
       entry void estimateOrd( const std::vector< tk::real >& ord );
       entry void estimateCen( const std::vector< tk::real >& ctr );
       entry void estimateOrdPDF( const std::vector< tk::UniPDF >& updf,
@@ -130,10 +122,10 @@ module distributor {
       entry void wait4ord() {
         when estimateOrdDone() serial {
           // Start accumulating sums for central moments (every time step)
-          for (auto& p : m_proxy) p.accumulateCen( m_ordinary );
+          m_proxy.accumulateCen( m_ordinary );
           // Start accumulating sums for central PDFs at select times
           if ( !(m_it % g_inputdeck.get< tag::interval, tag::pdf >()) )
-            for (auto& p : m_proxy) p.accumulateCenPDF( m_ordinary );
+            m_proxy.accumulateCenPDF( m_ordinary );
         }
       };
 
