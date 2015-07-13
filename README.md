@@ -41,15 +41,15 @@ Jozsef Bakosi (jbakosi@lanl.gov)
 
 ## Get started
 
-### 1. Clone
+### 1. Install prerequisites (debian:testing)
+   ```
+    $ apt-get install git cmake gcc g++ gfortran openmpi-bin libopenmpi-dev libhdf5-serial-dev libnetcdf-dev libexodusii-dev libpstreams-dev libboost-all-dev liblapack-dev liblapacke-dev
+   ```
+
+### 2. Clone
 
    ```
     $ git clone https://github.com/jbakosi/quinoa.git
-   ```
-
-### 2. Install dependencies (debian:testing)
-   ```
-    $ apt-get install git cmake gcc g++ gfortran openmpi-bin libopenmpi-dev libhdf5-serial-dev libnetcdf-dev libexodusii-dev libpstreams-dev libboost-all-dev liblapack-dev liblapacke-dev
    ```
 
 ### 3. Pick compilers

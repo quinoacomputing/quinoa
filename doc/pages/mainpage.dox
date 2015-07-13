@@ -41,16 +41,16 @@ Jozsef Bakosi (jbakosi@lanl.gov)
 
 ## How to build
 
-### 1. Clone
-
-   \code{.sh}
-    $ git clone https://github.com/jbakosi/quinoa.git
-   \endcode
-
-### 2. Install dependencies (debian:testing)
+### 1. Install prerequisites (debian:testing)
 
    \code{.sh}
     $ apt-get install git cmake gcc g++ gfortran openmpi-bin libopenmpi-dev libhdf5-serial-dev libnetcdf-dev libexodusii-dev libpstreams-dev libboost-all-dev liblapack-dev liblapacke-dev
+   \endcode
+
+### 2. Clone
+
+   \code{.sh}
+    $ git clone https://github.com/jbakosi/quinoa.git
    \endcode
 
 ### 3. Pick compilers
@@ -84,7 +84,7 @@ Jozsef Bakosi (jbakosi@lanl.gov)
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Mon 13 Jul 2015 08:25:52 AM MDT
+<em>Page last updated:</em> Mon 13 Jul 2015 08:35:48 AM MDT
 <em>Copyright 2012-2015, Jozsef Bakosi.</em>
 </small></div>
 */
