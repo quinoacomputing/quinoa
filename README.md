@@ -39,9 +39,20 @@ Currently, Quinoa consists of the following tools:
 
 Jozsef Bakosi (jbakosi@lanl.gov)
 
-## How to build
+## Get started
 
-### 1. Pick compilers
+### 1. Clone
+
+   ```
+    $ git clone https://github.com/jbakosi/quinoa.git
+   ```
+
+### 2. Install dependencies (debian:testing)
+   ```
+    $ apt-get install git cmake gcc g++ gfortran openmpi-bin libopenmpi-dev libhdf5-serial-dev libnetcdf-dev libexodusii-dev libpstreams-dev libboost-all-dev liblapack-dev liblapacke-dev
+   ```
+
+### 3. Pick compilers
 
    ```
     $ CC=mpicc CXX=mpic++ FC=mpif90
@@ -49,19 +60,23 @@ Jozsef Bakosi (jbakosi@lanl.gov)
    - Currently, MPI is required, use the OpenMPI wrappers
    - The underlying C++ compiler must support the C++11 standard
 
-### 2. Build the third-party libraries
+### 4. Build the third-party libraries
 
    ```
-    $ cd <quinoa>/tpl; mkdir build; cd build
+    $ cd quinoa/tpl; mkdir build; cd build
     $ cmake ..
     $ make
    ```
 
-### 3. Build Quinoa
+### 5. Build Quinoa
 
    ```
-    $ cd <quinoa>; mkdir build; cd build
+    $ cd quinoa; mkdir build; cd build
     $ cmake ../src
     $ make
    ```
-   - All executables will be in <tt>./Main</tt>
+   - All executables will be in <tt>quinoa/build/Main</tt>
+
+### 6. Contribute
+   - Browse the [documentation](http://jbakosi.github.io/quinoa/index.html)
+   - Check out the issues labeled [help wanted](https://github.com/jbakosi/quinoa/labels/help%20wanted)
