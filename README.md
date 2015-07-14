@@ -41,10 +41,14 @@ Jozsef Bakosi (jbakosi@lanl.gov)
 
 ## Get started
 
-### 1. Install prerequisites (debian:testing)
-   ```
-    $ apt-get install git cmake gcc g++ gfortran openmpi-bin libopenmpi-dev libhdf5-serial-dev libnetcdf-dev libexodusii-dev libpstreams-dev libboost-all-dev liblapack-dev liblapacke-dev
-   ```
+### 1. Install prerequisites
+   Click on the links below for details on how to install the prerequisites for
+   your system:
+   - [debian/testing/gnu](https://github.com/jbakosi/quinoa/blob/master/docker/debian/testing/gnu/alltpl/Dockerfile)
+   - [debian/testing/clang](https://github.com/jbakosi/quinoa/blob/master/docker/debian/testing/clang/alltpl/Dockerfile)
+   - [ubuntu/precise/gnu](https://github.com/jbakosi/quinoa/blob/master/docker/ubuntu/precise/gnu/alltpl/Dockerfile)
+   - [ubuntu/trusty/gnu](https://github.com/jbakosi/quinoa/blob/master/docker/ubuntu/trusty/gnu/alltpl/Dockerfile)
+   - [add yours](https://github.com/jbakosi/quinoa/issues/73)
 
 ### 2. Clone
 
