@@ -5,7 +5,7 @@ MAINTAINER Jozsef Bakosi <jbakosi@lanl.gov>
 RUN apt-get -y update && apt-get install -y wget
 RUN wget -O - http://llvm.org/apt/llvm-snapshot.gpg.key | apt-key add -
 RUN echo "deb http://llvm.org/apt/wheezy/ llvm-toolchain-wheezy main" >> /etc/apt/sources.list
-RUN apt-get -y update && apt-get install -y git cmake clang-3.5 libc++-dev gfortran libhdf5-serial-dev libnetcdf-dev libexodusii-dev libpstreams-dev libboost-all-dev liblapack-dev liblapacke-dev
+RUN apt-get -y update && apt-get install -y git cmake clang-3.5 libc++-dev libc++abi-dev gfortran libhdf5-serial-dev libnetcdf-dev libexodusii-dev libpstreams-dev libboost-all-dev liblapack-dev liblapacke-dev
 
 # Download and build OpenMPI
 ENV OPENMPI=$HOME/openmpi
