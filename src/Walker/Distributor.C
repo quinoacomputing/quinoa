@@ -2,7 +2,7 @@
 /*!
   \file      src/Walker/Distributor.C
   \author    J. Bakosi
-  \date      Tue 02 Jun 2015 10:30:41 AM MDT
+  \date      Wed 15 Jul 2015 08:58:29 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Distributor drives the time integration of differential equations
   \details   Distributor drives the time integration of differential equations.
@@ -29,17 +29,6 @@
 #include <boost/format.hpp>
 #include <boost/optional.hpp>
 
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wconversion"
-#endif
-
-#include <charm.h>
-
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic pop
-#endif
-
 #include "Print.h"
 #include "Tags.h"
 #include "StatCtr.h"
@@ -62,7 +51,7 @@ using walker::Distributor;
 
 Distributor::Distributor( const ctr::CmdLine& cmdline ) :
   m_print( cmdline.get< tag::verbose >() ? std::cout : std::clog ),
-  m_count( 0, 0, 0, 0, 0, 0 ),
+  m_count( 0, 0, 0, 0 ),
   m_output( false, false ),
   m_it( 0 ),
   m_t( 0.0 ),
@@ -104,7 +93,7 @@ Distributor::Distributor( const ctr::CmdLine& cmdline ) :
   m_timer.emplace_back();
 
   // Compute size of initial time step
-  const auto dt = computedt();
+  m_dt = computedt();
 
   // Construct and initialize map of statistical moments
   for (const auto& product : g_inputdeck.get< tag::stat >())
@@ -117,9 +106,12 @@ Distributor::Distributor( const ctr::CmdLine& cmdline ) :
   // Activate SDAG-wait for estimation of PDFs at select times
   if ( !(m_it % g_inputdeck.get< tag::interval, tag::pdf >()) ) wait4pdf();
 
+  // Create statistics merger chare group collecting chare contributions
+  CProxy_Collector collproxy = CProxy_Collector::ckNew( thisProxy );
+
   // Fire up asynchronous differential equation integrators
-  m_proxy =
-    CProxy_Integrator::ckNew( thisProxy, chunksize, dt, m_it, m_moments,
+  m_intproxy =
+    CProxy_Integrator::ckNew( thisProxy, collproxy, chunksize,
                               static_cast<int>( m_count.get< tag::chare >() ) );
 }
 
@@ -235,51 +227,47 @@ Distributor::init() const
 }
 
 void
-Distributor::estimateOrd( const std::vector< tk::real >& ord )
+Distributor::estimateOrd( tk::real* ord, std::size_t n )
 //******************************************************************************
-// Wait for all integrators to finish accumulation of the ordinary moments
-//! \param[in] ord Partially accumulated ordinary moments contributed by caller
+// Estimate ordinary moments
+//! \param[in] ord Ordinary moments (sum) collected over all chares
+//! \param[in] n Number of ordinary moments in array ord
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // Increase number of integrators completing the accumulation of the ordinary
-  // moments
-  ++m_count.get< tag::ordinary >();
+  Assert( n == m_ordinary.size(),
+          "Number of ordinary moments contributed not equal to expected" );
 
   // Add contribution from PE to total sums, i.e., u[i] += v[i] for all i
   for (std::size_t i=0; i<m_ordinary.size(); ++i) m_ordinary[i] += ord[i];
 
-  // Wait for all integrators completing accumulation of ordinary moments
-  if (m_count.get< tag::ordinary >() == m_count.get< tag::chare >()) {
-    // Finish computing moments, i.e., divide sums by the number of samples
-    for (auto& m : m_ordinary) m /= m_npar;
-    // Activate SDAG trigger signaling that ordinary moments have been estimated
-    estimateOrdDone();
-  }
+  // Finish computing moments, i.e., divide sums by the number of samples
+  for (auto& m : m_ordinary) m /= m_npar;
+
+  // Activate SDAG trigger signaling that ordinary moments have been estimated
+  estimateOrdDone();
 }
 
 void
-Distributor::estimateCen( const std::vector< tk::real >& cen )
+Distributor::estimateCen( tk::real* cen, std::size_t n )
 //******************************************************************************
-// Wait for all integrators to finish accumulation of the central moments
-//! \param[in] cen Partially accumulated central moments contributed by caller
+// Estimate ordinary moments
+//! \param[in] cen Central moments (sum) collected over all chares
+//! \param[in] n Number of central moments in array cen
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // Increase number of integrators completing the accumulation of the central
-  // moments
-  ++m_count.get< tag::central >();
+  Assert( n == m_central.size(),
+          "Number of central moments contributed not equal to expected" );
 
   // Add contribution from PE to total sums, i.e., u[i] += v[i] for all i
   for (std::size_t i=0; i<m_central.size(); ++i) m_central[i] += cen[i];
 
-  // Wait for all integrators completing accumulation of central moments
-  if (m_count.get< tag::central >() == m_count.get< tag::chare >()) {
-    // Finish computing moments, i.e., divide sums by the number of samples
-    for (auto& m : m_central) m /= m_npar;
-    // Activate SDAG trigger signaling that central moments have been estimated
-    estimateCenDone();
-  }
+  // Finish computing moments, i.e., divide sums by the number of samples
+  for (auto& m : m_central) m /= m_npar;
+
+  // Activate SDAG trigger signaling that central moments have been estimated
+  estimateCenDone();
 }
 
 void
@@ -595,10 +583,10 @@ Distributor::evaluateTime()
   ++m_it;
 
   // Compute size of next time step
-  const auto dt = computedt();
+  m_dt = computedt();
 
   // Advance physical time
-  m_t += dt;
+  m_t += m_dt;
 
   // Get physical time at which to terminate
   const auto term = g_inputdeck.get< tag::discr, tag::term >();
@@ -624,7 +612,6 @@ Distributor::evaluateTime()
           m_moments[ product ] = m_central[ cen++ ];
 
       // Zero statistics counters and accumulators
-      m_count.get< tag::ordinary >() = m_count.get< tag::central >() = 0;
       std::fill( begin(m_ordinary), end(m_ordinary), 0.0 );
       std::fill( begin(m_central), end(m_central), 0.0 );
 
@@ -648,7 +635,7 @@ Distributor::evaluateTime()
     }
 
     // Continue with next time step with all integrators
-    m_proxy.advance( dt, m_it, m_moments );
+    m_intproxy.advance( m_dt, m_it, m_moments );
 
   } else {
 
@@ -718,7 +705,7 @@ Distributor::report()
     m_print << std::setfill(' ') << std::setw(8) << m_it << "  "
             << std::scientific << std::setprecision(6)
             << std::setw(12) << m_t << "  "
-            << g_inputdeck.get< tag::discr, tag::dt >() << "  "
+            << m_dt << "  "
             << std::setfill('0')
             << std::setw(3) << ete.hrs.count() << ":"
             << std::setw(2) << ete.min.count() << ":"

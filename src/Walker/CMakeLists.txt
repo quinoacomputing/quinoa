@@ -7,12 +7,14 @@ include(charm)
 
 add_library(Walker
             Distributor.C
+            Collector.C
             Integrator.C
 )
 
 addCharmModule( "distributor" "Walker" )
+addCharmModule( "collector" "Walker" )
 addCharmModule( "integrator" "Walker" )
-removeWarnings( "Distributor.C;Integrator.C" )
+removeWarnings( "Distributor.C;Collector.C;Integrator.C" )
 
 # Add extra dependency of Walker on walkerCharmModule. This is required as
 # Walker refers to the main Charm++ proxy defined in the Charm++ module
