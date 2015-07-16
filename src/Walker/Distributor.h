@@ -2,7 +2,7 @@
 /*!
   \file      src/Walker/Distributor.h
   \author    J. Bakosi
-  \date      Fri 10 Jul 2015 03:27:21 PM MDT
+  \date      Wed 15 Jul 2015 08:35:35 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Distributor drives the time integration of differential equations
   \details   Distributor drives the time integration of differential equations.
@@ -58,14 +58,22 @@ class Distributor : public CBase_Distributor {
     //! Constructor
     explicit Distributor( const ctr::CmdLine& cmdline );
 
+    //! \brief Reduction target indicating that all Integrator chares have
+    //!   registered with the statistics merger (collector)
+    //! \details This function is a Charm++ reduction target that is called when
+    //!   all Integrator chares have registered with their local branch of the
+    //!   statistics merger group, Collector. Once this is done, we issue a
+    //!   broadcast to all Itegrator chares to continue with their setup.
+    void registered() { m_intproxy.setup( m_dt, m_it, m_moments ); }
+
     //! Finish initialization
     void init() const;
 
-    //! Finish estimation of ordinary moments
-    void estimateOrd( const std::vector< tk::real >& ord );
+    //! Estimate ordinary moments
+    void estimateOrd( tk::real* ord, std::size_t n );
 
-    //! Finish estimation of central moments
-    void estimateCen( const std::vector< tk::real >& ctr );
+    //! Estimate central moments
+    void estimateCen( tk::real* cen, std::size_t n );
 
     //! Finish estimation of ordinary PDFs
     void estimateOrdPDF( const std::vector< tk::UniPDF >& updf,
@@ -125,8 +133,6 @@ class Distributor : public CBase_Distributor {
 
     //! Counters of integrator chares completing a function
     tk::tuple::tagged_tuple< tag::init,     uint64_t,
-                             tag::ordinary, uint64_t,
-                             tag::central,  uint64_t,
                              tag::ordpdf,   uint64_t,
                              tag::cenpdf,   uint64_t,
                              tag::chare,    uint64_t > m_count;
@@ -138,8 +144,9 @@ class Distributor : public CBase_Distributor {
     uint64_t m_it;                              //!< Iteration count
     tk::real m_npar;                            //!< Total number of particles
     tk::real m_t;                               //!< Physical time
+    tk::real m_dt;                              //!< Physical time step size
     bool m_nostat;                              //!< Any stats to estimate?
-    CProxy_Integrator m_proxy;                  //!< Integrator array proxy
+    CProxy_Integrator m_intproxy;               //!< Integrator array proxy
     std::vector< tk::Timer > m_timer;           //!< Timers
     std::vector< std::string > m_nameOrdinary;  //!< Ordinary moment names
     std::vector< std::string > m_nameCentral;   //!< Central moment names

@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Conductor.C
   \author    J. Bakosi
-  \date      Wed 01 Jul 2015 02:24:39 PM MDT
+  \date      Wed 15 Jul 2015 08:32:13 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Conductor drives the time integration of a PDE
   \details   Conductor drives the time integration of a PDE
@@ -48,7 +48,7 @@ Conductor::Conductor() :
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // Create linear system merger chare group collecting chear contributions
+  // Create linear system merger chare group collecting chare contributions
   m_lsmproxy = LinSysMergerProxy::ckNew( thisProxy, g_npoin );
 
   // Charm++ map object for custom initial placement of chare array elements

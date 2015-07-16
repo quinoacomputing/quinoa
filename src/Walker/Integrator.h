@@ -2,7 +2,7 @@
 /*!
   \file      src/Walker/Integrator.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:54:28 PM MDT
+  \date      Wed 15 Jul 2015 08:56:16 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Integrator advances differential equations
   \details   Integrator advances differential equations. There are a potentially
@@ -25,6 +25,7 @@
 #include "StatCtr.h"
 #include "DiffEq.h"
 #include "ParticleProperties.h"
+#include "SystemComponents.h"
 #include "Statistics.h"
 #include "Walker/InputDeck/InputDeck.h"
 
@@ -33,13 +34,11 @@
   #pragma GCC diagnostic ignored "-Wconversion"
 #endif
 
-#include "walker.decl.h"
+#include "integrator.decl.h"
 
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic pop
 #endif
-
-#include "integrator.decl.h"
 
 namespace walker {
 
@@ -51,30 +50,9 @@ class Integrator : public CBase_Integrator {
 
   public:
     //! Constructor
-    //! \param[in] proxy Host proxy to call back to (here: Distributor)
-    //! \param[in] npar Number of particles this integrator advances
-    //! \param[in] dt Size of time step
-    //! \param[in] it Iteration count
-    //! \param[in] moments Map of statistical moments
-    explicit Integrator( CProxy_Distributor& host,
-                         uint64_t npar,
-                         tk::real dt,
-                         uint64_t it,
-                         const std::map< tk::ctr::Product, tk::real >& moments )
-      : m_host( host ),
-        m_particles( npar, g_inputdeck.get< tag::component >().nprop() ),
-        m_stat( m_particles,
-                g_inputdeck.get< tag::component >().offsetmap( 
-                  g_inputdeck.depvars() ),
-                g_inputdeck.get< tag::stat >(),
-                g_inputdeck.get< tag::pdf >(),
-                g_inputdeck.get< tag::discr, tag::binsize >() ),
-        m_nostat( g_inputdeck.get< tag::stat >().empty() &&
-                  g_inputdeck.get< tag::pdf >().empty() ? true : false )
-    {
-      ic();                 // set initial conditions for all equations
-      advance( dt, it, moments );    // start time stepping all equations
-    }
+    explicit Integrator( CProxy_Distributor& hostproxy,
+                         CProxy_Collector& collproxy,
+                         uint64_t npar );
 
     //! Migrate constructor
     explicit Integrator( CkMigrateMessage* ) :
@@ -85,78 +63,34 @@ class Integrator : public CBase_Integrator {
                 g_inputdeck.get< tag::pdf >(),
                 g_inputdeck.get< tag::discr, tag::binsize >() ) {}
 
+    //! Perform setup: set initial conditions and advance a time step
+    void setup( tk::real dt,
+                 uint64_t it,
+                 const std::map< tk::ctr::Product, tk::real >& moments );
+
     //! Set initial conditions
-    void ic() {
-      for (const auto& eq : g_diffeqs) eq.initialize( CkMyPe(), m_particles );
-      // Tell the Charm++ runtime system to call back to Distributor::init()
-      // once all Integrator chares have called initialize above. The reduction
-      // is done via creating a callback that invokes the typed reduction
-      // client, where m_host is the proxy on which the reduction target
-      // method, init(), is called upon completion of the reduction.
-      contribute(CkCallback( CkReductionTarget( Distributor, init ), m_host ));
-    }
+    void ic();
 
     //! Advance all particles owned by this integrator
-    //! \param[in] dt Size of time step
-    //! \param[in] it Iteration count
-    //! \param[in] moments Map of statistical moments
     void advance( tk::real dt,
                   uint64_t it,
-                  const std::map< tk::ctr::Product, tk::real >& moments )
-    {
-      //! Advance all equations one step in time
-      if (it < g_inputdeck.get< tag::discr, tag::nstep >()) {
-        for (const auto& e : g_diffeqs)
-          e.advance( m_particles, CkMyPe(), dt, moments );
-      }
-      if (m_nostat) {   // if no stats to estimate, skip to end of time step
-        contribute(
-          CkCallback( CkReductionTarget( Distributor, nostats ), m_host ) );
-      } else {
-        // Accumulate sums for ordinary moments (every time step)
-        accumulateOrd();
-        // Accumulate sums for ordinary PDFs at select times
-        if ( !(it % g_inputdeck.get< tag::interval, tag::pdf >()) )
-          accumulateOrdPDF();
-      }
-    }
+                  const std::map< tk::ctr::Product, tk::real >& moments );
 
     // Accumulate sums for ordinary moments
-    void accumulateOrd() {
-      // Accumulate partial sums for ordinary moments
-      m_stat.accumulateOrd();
-      // Send accumulated ordinary moments to host for estimation
-      m_host.estimateOrd( m_stat.ord() );
-    }
+    void accumulateOrd();
 
     // Accumulate sums for central moments
-    //! \param[in] ord Estimated ordinary moments (collected from all PEs)
-    void accumulateCen( const std::vector< tk::real >& ord ) {
-      // Accumulate partial sums for central moments
-      m_stat.accumulateCen( ord );
-      // Send accumulated central moments to host for estimation
-      m_host.estimateCen( m_stat.ctr() );
-    }
+    void accumulateCen( const std::vector< tk::real >& ord );
 
     // Accumulate sums for ordinary PDFs
-    void accumulateOrdPDF() {
-      // Accumulate partial sums for ordinary PDFs
-      m_stat.accumulateOrdPDF();
-      // Send accumulated ordinary PDFs to host for estimation
-      m_host.estimateOrdPDF( m_stat.oupdf(), m_stat.obpdf(), m_stat.otpdf() );
-    }
+    void accumulateOrdPDF();
 
     // Accumulate sums for central PDFs
-    //! \param[in] ord Estimated ordinary moments (collected from all PEs)
-    void accumulateCenPDF( const std::vector< tk::real >& ord ) {
-      // Accumulate partial sums for central PDFs
-      m_stat.accumulateCenPDF( ord );
-      // Send accumulated central PDFs to host for estimation
-      m_host.estimateCenPDF( m_stat.cupdf(), m_stat.cbpdf(), m_stat.ctpdf() );
-    }
+    void accumulateCenPDF( const std::vector< tk::real >& ord );
 
   private:
-    CProxy_Distributor m_host;          //!< Host proxy
+    CProxy_Distributor m_hostproxy;     //!< Host proxy
+    CProxy_Collector m_collproxy;       //!< Collector proxy
     tk::ParProps m_particles;           //!< Particle properties
     tk::Statistics m_stat;              //!< Statistics
     bool m_nostat;                      //!< Any statistics to estimate?
