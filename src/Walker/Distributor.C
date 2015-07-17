@@ -55,8 +55,6 @@ Distributor::Distributor( const ctr::CmdLine& cmdline ) :
   m_output( false, false ),
   m_it( 0 ),
   m_t( 0.0 ),
-  m_nostat( g_inputdeck.get< tag::stat >().empty() &&
-            g_inputdeck.get< tag::pdf >().empty() ? true : false ),
   m_nameOrdinary( g_inputdeck.momentNames( tk::ctr::ordinary ) ),
   m_nameCentral( g_inputdeck.momentNames( tk::ctr::central ) ),
   m_ordinary( m_nameOrdinary.size(), 0.0 ),
@@ -601,7 +599,7 @@ Distributor::evaluateTime()
   if ( std::fabs(m_t - term) > std::numeric_limits< tk::real >::epsilon() &&
        m_it < g_inputdeck.get< tag::discr, tag::nstep >() ) {
 
-    if (!m_nostat) {
+    if (g_inputdeck.stat()) {
       // Update map of statistical moments
       std::size_t ord = 0;
       std::size_t cen = 0;
@@ -656,7 +654,7 @@ Distributor::evaluateTime()
 }
 
 void
-Distributor::nostats()
+Distributor::nostat()
 //******************************************************************************
 //  Charm++ reduction target enabling shortcutting sync points if no stats
 //! \details This reduction target is called if there are no statistics nor PDFs

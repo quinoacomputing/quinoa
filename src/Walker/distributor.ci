@@ -22,7 +22,7 @@ module distributor {
       entry Distributor( const ctr::CmdLine& cmdline );
       entry [reductiontarget] void registered();
       entry [reductiontarget] void init();
-      entry [reductiontarget] void nostats();
+      entry [reductiontarget] void nostat();
       entry [reductiontarget] void estimateOrd( tk::real ord[n], std::size_t n );
       entry [reductiontarget] void estimateCen( tk::real cen[n], std::size_t n );
       entry void estimateOrdPDF( const std::vector< tk::UniPDF >& updf,
@@ -44,14 +44,18 @@ module distributor {
       // AdvP -- OrdM -- CenM -- OutS           CenM - estimate central moments
       //  |  \       \             |            OrdP - estimate ordinary PDFs
       //  |   OrdP    CenP         |            CenP - estimate central PDFs
-      //   \     \       \         |            OutS - output statistics (mom)
-      //    \      ------ OutP -- EvT           OutP - output PDFs
-      //     \                    /             EvT  - Evaluate time step
-      //       --- NoSt ---------               NoSt - No stats & PDFs
+      //   \   | \       \         |            OutS - output statistics (mom)
+      //    \  |   ------ OutP -- EvT           OutP - output PDFs
+      //     \  \                 /             EvT  - Evaluate time step
+      //      \   --- NoP ------ /              NoSt - No stats & nor PDFs
+      //       \                /               NoP  - No PDFs
+      //        ----- NoSt ----
       //
       // Interpretation of the above DAG
       // -------------------------------
-      // Control flow is from left to right and top to bottom.
+      // Control flow is from left to right and top to bottom. In the discussion
+      // below, concentrate first on the first three lines and ignore NoP and
+      // NoSt for the moment - those will be discussed at the very end.
       //
       // After initialization a time step starts by advancing all particles
       // (AdvP, Integrator::advance()). When that's finished (no global
@@ -121,9 +125,22 @@ module distributor {
       // OutS.
       //
       // NoSt in the graph signals a potential shortcut which is activated if
-      // there is no statistics nor PDFs need to be estimated. In that case,
+      // there are no statistics nor PDFs need to be estimated. In that case,
       // after advancing the particles, control flow just to evaluating the time
       // step, skipping over several synchronization points.
+      //
+      // Similar to NoSt, NoP signals a potential shortcut which is activated if
+      // there are no PDFs need to be estimated. This happens when either the
+      // the user did not request any PDF estimation or the interval for
+      // estimating and outputing PDFs is such that at the given time step PDFs
+      // are not estimated. (Estimation of PDFs, especially multi-dimensional
+      // ones, can be quite costly, and thus PDF estimation is recommended only
+      // at certain intervals, i.e., not every time step. If the shortcut is
+      // activated due to no PDF esimation, the control flow in wait4cen() skips
+      // ahead to evaluate time, i.e., finish the time step, after the central
+      // moments (if any) have been estimated. Similarly, of the shortcut is
+      // activated due to no PDF estimation, the control flow in wait4ord()
+      // skips the estimation of central PDFs.
 
       // SDAG wait-for: wait for ordinary moments to have been estimated
       entry void wait4ord() {
@@ -131,8 +148,11 @@ module distributor {
           // Start accumulating sums for central moments (every time step)
           m_intproxy.accumulateCen( m_ordinary );
           // Start accumulating sums for central PDFs at select times
-          if ( !(m_it % g_inputdeck.get< tag::interval, tag::pdf >()) )
+          if ( g_inputdeck.pdf() &&
+               !(m_it % g_inputdeck.get< tag::interval, tag::pdf >()) )
+          {
             m_intproxy.accumulateCenPDF( m_ordinary );
+          }
         }
       };
 
@@ -141,8 +161,9 @@ module distributor {
         when estimateCenDone() serial {
           // Output statistics to file
           outStat();
-          // If PDFs not estimated, evaluate time step and compute new time step
-          if ( m_it % g_inputdeck.get< tag::interval, tag::pdf >() )
+          // If PDFs not estimated, evaluate time step
+          if ( !g_inputdeck.pdf() ||
+                m_it % g_inputdeck.get< tag::interval, tag::pdf >() )
             evaluateTime();
         }
       };
