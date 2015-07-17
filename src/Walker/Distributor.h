@@ -86,7 +86,7 @@ class Distributor : public CBase_Distributor {
                          const std::vector< tk::TriPDF >& tpdf );
 
     //! Charm++ reduction target enabling shortcutting sync points if no stats
-    void nostats();
+    void nostat();
 
   private:
     //! Print information at startup
@@ -145,7 +145,6 @@ class Distributor : public CBase_Distributor {
     tk::real m_npar;                            //!< Total number of particles
     tk::real m_t;                               //!< Physical time
     tk::real m_dt;                              //!< Physical time step size
-    bool m_nostat;                              //!< Any stats to estimate?
     CProxy_Integrator m_intproxy;               //!< Integrator array proxy
     std::vector< tk::Timer > m_timer;           //!< Timers
     std::vector< std::string > m_nameOrdinary;  //!< Ordinary moment names

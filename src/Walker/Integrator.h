@@ -2,7 +2,7 @@
 /*!
   \file      src/Walker/Integrator.h
   \author    J. Bakosi
-  \date      Wed 15 Jul 2015 08:56:16 PM MDT
+  \date      Fri 17 Jul 2015 08:47:05 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Integrator advances differential equations
   \details   Integrator advances differential equations. There are a potentially
@@ -93,7 +93,6 @@ class Integrator : public CBase_Integrator {
     CProxy_Collector m_collproxy;       //!< Collector proxy
     tk::ParProps m_particles;           //!< Particle properties
     tk::Statistics m_stat;              //!< Statistics
-    bool m_nostat;                      //!< Any statistics to estimate?
 };
 
 } // walker::

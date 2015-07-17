@@ -2,7 +2,7 @@
 /*!
   \file      src/Walker/Integrator.C
   \author    J. Bakosi
-  \date      Wed 15 Jul 2015 08:53:22 PM MDT
+  \date      Fri 17 Jul 2015 08:52:29 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Integrator advances differential equations
   \details   Integrator advances differential equations. There are a potentially
@@ -30,9 +30,7 @@ Integrator::Integrator( CProxy_Distributor& hostproxy,
             g_inputdeck.depvars() ),
           g_inputdeck.get< tag::stat >(),
           g_inputdeck.get< tag::pdf >(),
-          g_inputdeck.get< tag::discr, tag::binsize >() ),
-  m_nostat( g_inputdeck.get< tag::stat >().empty() &&
-            g_inputdeck.get< tag::pdf >().empty() ? true : false )
+          g_inputdeck.get< tag::discr, tag::binsize >() )
 //******************************************************************************
 // Constructor
 //! \param[in] hostproxy Host proxy to call back to
@@ -104,14 +102,15 @@ Integrator::advance( tk::real dt,
       e.advance( m_particles, CkMyPe(), dt, moments );
   }
 
-  if (m_nostat) {   // if no stats to estimate, skip to end of time step
+  if (!g_inputdeck.stat()) {// if no stats to estimate, skip to end of time step
     contribute(
-      CkCallback(CkReductionTarget( Distributor, nostats ), m_hostproxy) );
+      CkCallback(CkReductionTarget( Distributor, nostat ), m_hostproxy) );
   } else {
     // Accumulate sums for ordinary moments (every time step)
     accumulateOrd();
     // Accumulate sums for ordinary PDFs at select times
-    if ( !(it % g_inputdeck.get< tag::interval, tag::pdf >()) )
+    if ( g_inputdeck.pdf() &&
+         !(it % g_inputdeck.get< tag::interval, tag::pdf >()) )
       accumulateOrdPDF();
   }
 }
