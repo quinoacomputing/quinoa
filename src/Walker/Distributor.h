@@ -2,7 +2,7 @@
 /*!
   \file      src/Walker/Distributor.h
   \author    J. Bakosi
-  \date      Wed 15 Jul 2015 08:35:35 PM MDT
+  \date      Mon 20 Jul 2015 07:47:52 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Distributor drives the time integration of differential equations
   \details   Distributor drives the time integration of differential equations.
@@ -75,15 +75,11 @@ class Distributor : public CBase_Distributor {
     //! Estimate central moments
     void estimateCen( tk::real* cen, std::size_t n );
 
-    //! Finish estimation of ordinary PDFs
-    void estimateOrdPDF( const std::vector< tk::UniPDF >& updf,
-                         const std::vector< tk::BiPDF >& bpdf,
-                         const std::vector< tk::TriPDF >& tpdf );
+    //! Estimate ordinary PDFs
+    void estimateOrdPDF( CkReductionMsg* msg );
 
     //! Finish estimation of central PDFs
-    void estimateCenPDF( const std::vector< tk::UniPDF >& updf,
-                         const std::vector< tk::BiPDF >& bpdf,
-                         const std::vector< tk::TriPDF >& tpdf );
+    void estimateCenPDF( CkReductionMsg* msg );
 
     //! Charm++ reduction target enabling shortcutting sync points if no stats
     void nostat();
@@ -131,17 +127,12 @@ class Distributor : public CBase_Distributor {
     //! Pretty printer
     WalkerPrint m_print;
 
-    //! Counters of integrator chares completing a function
-    tk::tuple::tagged_tuple< tag::init,     uint64_t,
-                             tag::ordpdf,   uint64_t,
-                             tag::cenpdf,   uint64_t,
-                             tag::chare,    uint64_t > m_count;
-
     //! Output indicators
     tk::tuple::tagged_tuple< tag::stat, bool,
                              tag::pdf,  bool > m_output;
 
     uint64_t m_it;                              //!< Iteration count
+    uint64_t m_nchare;                          //!< Number of chares counter
     tk::real m_npar;                            //!< Total number of particles
     tk::real m_t;                               //!< Physical time
     tk::real m_dt;                              //!< Physical time step size
