@@ -2,7 +2,7 @@
 /*!
   \file      src/Walker/Distributor.C
   \author    J. Bakosi
-  \date      Wed 15 Jul 2015 08:58:29 PM MDT
+  \date      Mon 20 Jul 2015 07:48:36 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Distributor drives the time integration of differential equations
   \details   Distributor drives the time integration of differential equations.
@@ -39,6 +39,7 @@
 #include "Integrator.h"
 #include "DiffEqStack.h"
 #include "TxtStatWriter.h"
+#include "PDFUtil.h"
 #include "PDFWriter.h"
 #include "Options/PDFFile.h"
 #include "Options/PDFPolicy.h"
@@ -51,9 +52,9 @@ using walker::Distributor;
 
 Distributor::Distributor( const ctr::CmdLine& cmdline ) :
   m_print( cmdline.get< tag::verbose >() ? std::cout : std::clog ),
-  m_count( 0, 0, 0, 0 ),
   m_output( false, false ),
   m_it( 0 ),
+  m_nchare( 0 ),
   m_t( 0.0 ),
   m_nameOrdinary( g_inputdeck.momentNames( tk::ctr::ordinary ) ),
   m_nameCentral( g_inputdeck.momentNames( tk::ctr::central ) ),
@@ -68,13 +69,12 @@ Distributor::Distributor( const ctr::CmdLine& cmdline ) :
   // Compute load distribution given total work (= number of particles) and
   // user-specified virtualization
   uint64_t chunksize, remainder;
-  m_count.get< tag::chare >() =
-    tk::linearLoadDistributor(
-       g_inputdeck.get< tag::cmd, tag::virtualization >(),
-       g_inputdeck.get< tag::discr, tag::npar >(),
-       CkNumPes(),
-       chunksize,
-       remainder );
+  m_nchare = tk::linearLoadDistributor(
+               g_inputdeck.get< tag::cmd, tag::virtualization >(),
+               g_inputdeck.get< tag::discr, tag::npar >(),
+               CkNumPes(),
+               chunksize,
+               remainder );
 
   // Compute total number of particles distributed over all workers
   // Note that this number will not necessarily be the same as given by the
@@ -82,7 +82,7 @@ Distributor::Distributor( const ctr::CmdLine& cmdline ) :
   // Charm++ chare array element constructor takes this chunksize argument,
   // which equals the number of particles the array element (worker) will work
   // on.
-  m_npar = static_cast< tk::real >( m_count.get< tag::chare >() * chunksize );
+  m_npar = static_cast< tk::real >( m_nchare * chunksize );
 
   // Print out info on what will be done and how
   info( chunksize );
@@ -110,7 +110,7 @@ Distributor::Distributor( const ctr::CmdLine& cmdline ) :
   // Fire up asynchronous differential equation integrators
   m_intproxy =
     CProxy_Integrator::ckNew( thisProxy, collproxy, chunksize,
-                              static_cast<int>( m_count.get< tag::chare >() ) );
+                              static_cast<int>( m_nchare ) );
 }
 
 void
@@ -178,14 +178,14 @@ Distributor::info( uint64_t chunksize ) const
   m_print.item( "Virtualization [0.0...1.0]",
                 g_inputdeck.get< tag::cmd, tag::virtualization >() );
   m_print.item( "Number of processing elements", CkNumPes() );
-  m_print.item( "Number of work units", m_count.get< tag::chare >() );
-  m_print.item( "User load (no. particles)",
+  m_print.item( "Number of work units", m_nchare );
+  m_print.item( "User load (# of particles)",
                 g_inputdeck.get< tag::discr, tag::npar >() );
   m_print.item( "Chunksize (load per work unit)", chunksize );
-  m_print.item( "Actual load (no. particles)",
-                std::to_string( m_count.get< tag::chare >() * chunksize ) +
+  m_print.item( "Actual load (# of particles)",
+                std::to_string( m_nchare * chunksize ) +
                 " (=" +
-                std::to_string( m_count.get< tag::chare >() ) + "*" +
+                std::to_string( m_nchare ) + "*" +
                 std::to_string( chunksize ) + ")" );
 
   // Print out time integration header
@@ -269,73 +269,33 @@ Distributor::estimateCen( tk::real* cen, std::size_t n )
 }
 
 void
-Distributor::estimateOrdPDF( const std::vector< tk::UniPDF >& updf,
-                             const std::vector< tk::BiPDF >& bpdf,
-                             const std::vector< tk::TriPDF >& tpdf )
+Distributor::estimateOrdPDF( CkReductionMsg* msg )
 //******************************************************************************
-// Wait for all integrators to finish accumulation of ordinary PDFs
-//! \param[in] updf Partially accumulated univariate PDFs contributed by caller
-//! \param[in] bpdf Partially accumulated bivariate PDFs contributed by caller
-//! \param[in] tpdf Partially accumulated trivariate PDFs contributed by caller
+// Estimate ordinary PDFs
+//! \param[in] Serialized tuple of vectors of uni-, bi-, and tri-variate PDFs
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // Increase number of integrators completing the accumulation of ordinary PDFs
-  ++m_count.get< tag::ordpdf >();
+  // Deserialize and merge PDFs
+  std::tie( m_ordupdf, m_ordbpdf, m_ordtpdf ) = tk::merge( msg );
 
-  // Add contribution from PE to total sums
-  std::size_t i = 0;
-  m_ordupdf.resize( updf.size() );
-  for (const auto& p : updf) m_ordupdf[i++].addPDF( p );
-
-  i = 0;
-  m_ordbpdf.resize( bpdf.size() );
-  for (const auto& p : bpdf) m_ordbpdf[i++].addPDF( p );
-
-  i = 0;
-  m_ordtpdf.resize( tpdf.size() );
-  for (const auto& p : tpdf) m_ordtpdf[i++].addPDF( p );
-
-  // Wait for all integrators completing accumulation of ordinary PDFs
-  if (m_count.get< tag::ordpdf >() == m_count.get< tag::chare >()) {
-    // Activate SDAG trigger signaling that ordinary PDFs have been estimated
-    estimateOrdPDFDone();
-  }
+  // Activate SDAG trigger signaling that ordinary PDFs have been estimated
+  estimateOrdPDFDone();
 }
 
 void
-Distributor::estimateCenPDF( const std::vector< tk::UniPDF >& updf,
-                             const std::vector< tk::BiPDF >& bpdf,
-                             const std::vector< tk::TriPDF >& tpdf )
+Distributor::estimateCenPDF( CkReductionMsg* msg )
 //******************************************************************************
-// Wait for all integrators to finish accumulation of central PDFs
-//! \param[in] updf Partially accumulated univariate PDFs contributed by caller
-//! \param[in] bpdf Partially accumulated bivariate PDFs contributed by caller
-//! \param[in] tpdf Partially accumulated trivariate PDFs contributed by caller
+// Estimate central PDFs
+//! \param[in] Serialized tuple of vectors of uni-, bi-, and tri-variate PDFs
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // Increase number of integrators completing the accumulation of PDFs
-  ++m_count.get< tag::cenpdf >();
+  // Deserialize and merge PDFs
+  std::tie( m_cenupdf, m_cenbpdf, m_centpdf ) = tk::merge( msg );
 
-  // Add contribution from PE to total sums
-  std::size_t i = 0;
-  m_cenupdf.resize( updf.size() );
-  for (const auto& p : updf) m_cenupdf[i++].addPDF( p );
-
-  i = 0;
-  m_cenbpdf.resize( bpdf.size() );
-  for (const auto& p : bpdf) m_cenbpdf[i++].addPDF( p );
-
-  i = 0;
-  m_centpdf.resize( tpdf.size() );
-  for (const auto& p : tpdf) m_centpdf[i++].addPDF( p );
-
-  // Wait for all integrators completing accumulation of PDFs
-  if (m_count.get< tag::cenpdf >() == m_count.get< tag::chare >()) {
-    // Activate SDAG trigger signaling that central PDFs have been estimated
-    estimateCenPDFDone();
-  }
+  // Activate SDAG trigger signaling that central PDFs have been estimated
+  estimateCenPDFDone();
 }
 
 void
@@ -621,7 +581,6 @@ Distributor::evaluateTime()
       // Selectively re-activate SDAG-wait for estimation of PDFs for next step
       if ( !(m_it % g_inputdeck.get< tag::interval, tag::pdf >()) ) {
         // Zero PDF counters and accumulators
-        m_count.get< tag::ordpdf >() = m_count.get< tag::cenpdf >() = 0;
         for (auto& p : m_ordupdf) p.zero();
         for (auto& p : m_ordbpdf) p.zero();
         for (auto& p : m_ordtpdf) p.zero();

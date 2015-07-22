@@ -2,7 +2,7 @@
 /*!
   \file      src/Walker/Integrator.C
   \author    J. Bakosi
-  \date      Fri 17 Jul 2015 08:52:29 AM MDT
+  \date      Tue 21 Jul 2015 02:56:04 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Integrator advances differential equations
   \details   Integrator advances differential equations. There are a potentially
@@ -152,7 +152,9 @@ Integrator::accumulateOrdPDF()
   // Accumulate partial sums for ordinary PDFs
   m_stat.accumulateOrdPDF();
   // Send accumulated ordinary PDFs to host for estimation
-  m_hostproxy.estimateOrdPDF( m_stat.oupdf(), m_stat.obpdf(), m_stat.otpdf() );
+  m_collproxy.ckLocalBranch()->chareOrdPDF( m_stat.oupdf(),
+                                            m_stat.obpdf(),
+                                            m_stat.otpdf() );
 }
 
 void
@@ -166,7 +168,9 @@ Integrator::accumulateCenPDF( const std::vector< tk::real >& ord )
   // Accumulate partial sums for central PDFs
   m_stat.accumulateCenPDF( ord );
   // Send accumulated central PDFs to host for estimation
-  m_hostproxy.estimateCenPDF( m_stat.cupdf(), m_stat.cbpdf(), m_stat.ctpdf() );
+  m_collproxy.ckLocalBranch()->chareCenPDF( m_stat.cupdf(),
+                                            m_stat.cbpdf(),
+                                            m_stat.ctpdf() );
 }
 
 #if defined(__clang__) || defined(__GNUC__)
