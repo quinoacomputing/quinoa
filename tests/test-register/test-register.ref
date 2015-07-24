@@ -1,0 +1,582 @@
+processing 'test-register.nd.lhs'|'test-register.nd.rhs'
+trace: ~>active:  rule #1, line 4, cmd = 24592
+trace: ->testNum  line 1, column 2, char-column 5|5
+trace:   strnums: '2'|'-20'
+trace:   ignoring numbers (rule #1, line 4) '2'|'-20'
+trace:   lhs=2, rhs=-20, scl=1, off=0, abs=0, _abs=0, rel=0, _rel=0, dig=0, _dig=0
+trace:   R1=2, R2=-20, R3=22, R4=22, R5=22, R6=11, R7=1.1e+03, R8=2, R9=0.01
+2 0 0 0 0 0 0 0 0 0 0 
+trace:   R11=0 .. R21=0, R10=2
+trace: <-testNum  line 1, column 2, char-column 6|8
+trace: ~>active:  rule #1, line 4, cmd = 24592
+trace: ->testNum  line 2, column 2, char-column 5|5
+trace:   strnums: '4'|'-18'
+trace:   ignoring numbers (rule #1, line 4) '4'|'-18'
+trace:   lhs=4, rhs=-18, scl=1, off=0, abs=0, _abs=0, rel=0, _rel=0, dig=0, _dig=0
+trace:   R1=4, R2=-18, R3=22, R4=22, R5=22, R6=5.5, R7=5.5e+02, R8=4, R9=0.01
+4 2 0 0 0 0 0 0 0 0 0 
+trace:   R11=2 .. R21=0, R10=4
+trace: <-testNum  line 2, column 2, char-column 6|8
+trace: ~>active:  rule #1, line 4, cmd = 24592
+trace: ->testNum  line 3, column 2, char-column 5|5
+trace:   strnums: '6'|'-16'
+trace:   ignoring numbers (rule #1, line 4) '6'|'-16'
+trace:   lhs=6, rhs=-16, scl=1, off=0, abs=0, _abs=0, rel=0, _rel=0, dig=0, _dig=0
+trace:   R1=6, R2=-16, R3=22, R4=22, R5=22, R6=3.7, R7=3.7e+02, R8=6, R9=0.01
+6 4 2 0 0 0 0 0 0 0 0 
+trace:   R11=4 .. R21=0, R10=6
+trace: <-testNum  line 3, column 2, char-column 6|8
+trace: ~>active:  rule #1, line 4, cmd = 24592
+trace: ->testNum  line 4, column 2, char-column 5|5
+trace:   strnums: '8'|'-14'
+trace:   ignoring numbers (rule #1, line 4) '8'|'-14'
+trace:   lhs=8, rhs=-14, scl=1, off=0, abs=0, _abs=0, rel=0, _rel=0, dig=0, _dig=0
+trace:   R1=8, R2=-14, R3=22, R4=22, R5=22, R6=2.8, R7=2.8e+02, R8=8, R9=0.01
+8 6 4 2 0 0 0 0 0 0 0 
+trace:   R11=6 .. R21=0, R10=8
+trace: <-testNum  line 4, column 2, char-column 6|8
+trace: ~>active:  rule #1, line 4, cmd = 24592
+trace: ->testNum  line 5, column 2, char-column 5|5
+trace:   strnums: '10'|'-12'
+trace:   ignoring numbers (rule #1, line 4) '10'|'-12'
+trace:   lhs=10, rhs=-12, scl=1, off=0, abs=0, _abs=0, rel=0, _rel=0, dig=0, _dig=0
+trace:   R1=10, R2=-12, R3=22, R4=22, R5=22, R6=2.2, R7=2.2e+02, R8=10, R9=0.01
+10 8 6 4 2 0 0 0 0 0 0 
+trace:   R11=8 .. R21=0, R10=10
+trace: <-testNum  line 5, column 2, char-column 7|8
+trace: ~>active:  rule #1, line 4, cmd = 24592
+trace: ->testNum  line 6, column 2, char-column 5|5
+trace:   strnums: '12'|'-10'
+trace:   ignoring numbers (rule #1, line 4) '12'|'-10'
+trace:   lhs=12, rhs=-10, scl=1, off=0, abs=0, _abs=0, rel=0, _rel=0, dig=0, _dig=0
+trace:   R1=12, R2=-10, R3=22, R4=22, R5=22, R6=2.2, R7=2.2e+02, R8=10, R9=0.01
+12 10 8 6 4 2 0 0 0 0 0 
+trace:   R11=10 .. R21=0, R10=12
+trace: <-testNum  line 6, column 2, char-column 7|8
+trace: ~>active:  rule #1, line 4, cmd = 24592
+trace: ->testNum  line 7, column 2, char-column 5|5
+trace:   strnums: '14'|'-8'
+trace:   ignoring numbers (rule #1, line 4) '14'|'-8'
+trace:   lhs=14, rhs=-8, scl=1, off=0, abs=0, _abs=0, rel=0, _rel=0, dig=0, _dig=0
+trace:   R1=14, R2=-8, R3=22, R4=22, R5=22, R6=2.8, R7=2.8e+02, R8=8, R9=0.01
+14 12 10 8 6 4 2 0 0 0 0 
+trace:   R11=12 .. R21=0, R10=14
+trace: <-testNum  line 7, column 2, char-column 7|7
+trace: ~>active:  rule #1, line 4, cmd = 24592
+trace: ->testNum  line 8, column 2, char-column 5|5
+trace:   strnums: '16'|'-6'
+trace:   ignoring numbers (rule #1, line 4) '16'|'-6'
+trace:   lhs=16, rhs=-6, scl=1, off=0, abs=0, _abs=0, rel=0, _rel=0, dig=0, _dig=0
+trace:   R1=16, R2=-6, R3=22, R4=22, R5=22, R6=3.7, R7=3.7e+02, R8=6, R9=0.01
+16 14 12 10 8 6 4 2 0 0 0 
+trace:   R11=14 .. R21=0, R10=16
+trace: <-testNum  line 8, column 2, char-column 7|7
+trace: ~>active:  rule #1, line 4, cmd = 24592
+trace: ->testNum  line 9, column 2, char-column 5|5
+trace:   strnums: '18'|'-4'
+trace:   ignoring numbers (rule #1, line 4) '18'|'-4'
+trace:   lhs=18, rhs=-4, scl=1, off=0, abs=0, _abs=0, rel=0, _rel=0, dig=0, _dig=0
+trace:   R1=18, R2=-4, R3=22, R4=22, R5=22, R6=5.5, R7=5.5e+02, R8=4, R9=0.01
+18 16 14 12 10 8 6 4 2 0 0 
+trace:   R11=16 .. R21=0, R10=18
+trace: <-testNum  line 9, column 2, char-column 7|7
+trace: ~>active:  rule #1, line 4, cmd = 24592
+trace: ->testNum  line 10, column 2, char-column 6|6
+trace:   strnums: '20'|'-2'
+trace:   ignoring numbers (rule #1, line 4) '20'|'-2'
+trace:   lhs=20, rhs=-2, scl=1, off=0, abs=0, _abs=0, rel=0, _rel=0, dig=0, _dig=0
+trace:   R1=20, R2=-2, R3=22, R4=22, R5=22, R6=11, R7=1.1e+03, R8=2, R9=0.01
+20 18 16 14 12 10 8 6 4 2 0 
+trace:   R11=18 .. R21=0, R10=20
+trace: <-testNum  line 10, column 2, char-column 8|8
+trace: ~>active:  rule #2, line 5, cmd = 24641
+trace: ->testNum  line 11, column 2, char-column 6|6
+trace:   strnums: '22'|'0'
+trace:   lhs=0, rhs=0, scl=1, off=0, abs=1e-09, _abs=-1e-09, rel=0, _rel=0, dig=0, _dig=0
+trace:   R1=22, R2=0, R3=0, R4=0, R5=0, R6=0, R7=0, R8=1, R9=0.01
+trace:   R11=20 .. R21=0, R10=22
+trace: <-testNum  line 11, column 2, char-column 8|7
+trace: ~>active:  rule #2, line 5, cmd = 24641
+trace: ->testNum  line 12, column 2, char-column 6|6
+trace:   strnums: '24'|'2'
+trace:   lhs=2, rhs=2, scl=1, off=0, abs=1e-09, _abs=-1e-09, rel=0, _rel=0, dig=0, _dig=0
+trace:   R1=24, R2=2, R3=0, R4=0, R5=0, R6=0, R7=0, R8=2, R9=0.01
+trace:   R11=22 .. R21=2, R10=24
+trace: <-testNum  line 12, column 2, char-column 8|7
+trace: ~>active:  rule #2, line 5, cmd = 24641
+trace: ->testNum  line 13, column 2, char-column 6|6
+trace:   strnums: '26'|'4'
+trace:   lhs=4, rhs=4, scl=1, off=0, abs=1e-09, _abs=-1e-09, rel=0, _rel=0, dig=0, _dig=0
+trace:   R1=26, R2=4, R3=0, R4=0, R5=0, R6=0, R7=0, R8=4, R9=0.01
+trace:   R11=24 .. R21=4, R10=26
+trace: <-testNum  line 13, column 2, char-column 8|7
+trace: ~>active:  rule #2, line 5, cmd = 24641
+trace: ->testNum  line 14, column 2, char-column 6|6
+trace:   strnums: '28'|'6'
+trace:   lhs=6, rhs=6, scl=1, off=0, abs=1e-09, _abs=-1e-09, rel=0, _rel=0, dig=0, _dig=0
+trace:   R1=28, R2=6, R3=0, R4=0, R5=0, R6=0, R7=0, R8=6, R9=0.01
+trace:   R11=26 .. R21=6, R10=28
+trace: <-testNum  line 14, column 2, char-column 8|7
+trace: ~>active:  rule #2, line 5, cmd = 24641
+trace: ->testNum  line 15, column 2, char-column 6|6
+trace:   strnums: '30'|'8'
+trace:   lhs=8, rhs=8, scl=1, off=0, abs=1e-09, _abs=-1e-09, rel=0, _rel=0, dig=0, _dig=0
+trace:   R1=30, R2=8, R3=0, R4=0, R5=0, R6=0, R7=0, R8=8, R9=0.01
+trace:   R11=28 .. R21=8, R10=30
+trace: <-testNum  line 15, column 2, char-column 8|7
+trace: ~>active:  rule #2, line 5, cmd = 24641
+trace: ->testNum  line 16, column 2, char-column 6|6
+trace:   strnums: '32'|'10'
+trace:   lhs=10, rhs=10, scl=1, off=0, abs=1e-09, _abs=-1e-09, rel=0, _rel=0, dig=0, _dig=0
+trace:   R1=32, R2=10, R3=0, R4=0, R5=0, R6=0, R7=0, R8=10, R9=0.01
+trace:   R11=30 .. R21=10, R10=32
+trace: <-testNum  line 16, column 2, char-column 8|8
+trace: ~>active:  rule #2, line 5, cmd = 24641
+trace: ->testNum  line 17, column 2, char-column 6|6
+trace:   strnums: '34'|'12'
+trace:   lhs=12, rhs=12, scl=1, off=0, abs=1e-09, _abs=-1e-09, rel=0, _rel=0, dig=0, _dig=0
+trace:   R1=34, R2=12, R3=0, R4=0, R5=0, R6=0, R7=0, R8=12, R9=0.01
+trace:   R11=32 .. R21=12, R10=34
+trace: <-testNum  line 17, column 2, char-column 8|8
+trace: ~>active:  rule #2, line 5, cmd = 24641
+trace: ->testNum  line 18, column 2, char-column 6|6
+trace:   strnums: '36'|'14'
+trace:   lhs=14, rhs=14, scl=1, off=0, abs=1e-09, _abs=-1e-09, rel=0, _rel=0, dig=0, _dig=0
+trace:   R1=36, R2=14, R3=0, R4=0, R5=0, R6=0, R7=0, R8=14, R9=0.01
+trace:   R11=34 .. R21=14, R10=36
+trace: <-testNum  line 18, column 2, char-column 8|8
+trace: ~>active:  rule #2, line 5, cmd = 24641
+trace: ->testNum  line 19, column 2, char-column 6|6
+trace:   strnums: '38'|'16'
+trace:   lhs=16, rhs=16, scl=1, off=0, abs=1e-09, _abs=-1e-09, rel=0, _rel=0, dig=0, _dig=0
+trace:   R1=38, R2=16, R3=0, R4=0, R5=0, R6=0, R7=0, R8=16, R9=0.01
+trace:   R11=36 .. R21=16, R10=38
+trace: <-testNum  line 19, column 2, char-column 8|8
+trace: ~>active:  rule #2, line 5, cmd = 24641
+trace: ->testNum  line 20, column 2, char-column 6|6
+trace:   strnums: '40'|'18'
+trace:   lhs=18, rhs=18, scl=1, off=0, abs=1e-09, _abs=-1e-09, rel=0, _rel=0, dig=0, _dig=0
+trace:   R1=40, R2=18, R3=0, R4=0, R5=0, R6=0, R7=0, R8=18, R9=0.01
+trace:   R11=38 .. R21=18, R10=40
+trace: <-testNum  line 20, column 2, char-column 8|8
+trace: ~>active:  rule #2, line 5, cmd = 24641
+trace: ->testNum  line 21, column 2, char-column 6|6
+trace:   strnums: '42'|'20'
+trace:   lhs=20, rhs=20, scl=1, off=0, abs=1e-09, _abs=-1e-09, rel=0, _rel=0, dig=0, _dig=0
+trace:   R1=42, R2=20, R3=0, R4=0, R5=0, R6=0, R7=0, R8=20, R9=0.01
+trace:   R11=40 .. R21=20, R10=42
+trace: <-testNum  line 21, column 2, char-column 8|8
+trace: ~>active:  rule #2, line 5, cmd = 24641
+trace: ->testNum  line 22, column 2, char-column 6|6
+trace:   strnums: '44'|'22'
+trace:   lhs=22, rhs=22, scl=1, off=0, abs=1e-09, _abs=-1e-09, rel=0, _rel=0, dig=0, _dig=0
+trace:   R1=44, R2=22, R3=0, R4=0, R5=0, R6=0, R7=0, R8=22, R9=0.01
+trace:   R11=42 .. R21=22, R10=44
+trace: <-testNum  line 22, column 2, char-column 8|8
+trace: ~>active:  rule #2, line 5, cmd = 24641
+trace: ->testNum  line 23, column 2, char-column 6|6
+trace:   strnums: '46'|'24'
+trace:   lhs=24, rhs=24, scl=1, off=0, abs=1e-09, _abs=-1e-09, rel=0, _rel=0, dig=0, _dig=0
+trace:   R1=46, R2=24, R3=0, R4=0, R5=0, R6=0, R7=0, R8=24, R9=0.01
+trace:   R11=44 .. R21=24, R10=46
+trace: <-testNum  line 23, column 2, char-column 8|8
+trace: ~>active:  rule #2, line 5, cmd = 24641
+trace: ->testNum  line 24, column 2, char-column 6|6
+trace:   strnums: '48'|'26'
+trace:   lhs=26, rhs=26, scl=1, off=0, abs=1e-09, _abs=-1e-09, rel=0, _rel=0, dig=0, _dig=0
+trace:   R1=48, R2=26, R3=0, R4=0, R5=0, R6=0, R7=0, R8=26, R9=0.01
+trace:   R11=46 .. R21=26, R10=48
+trace: <-testNum  line 24, column 2, char-column 8|8
+trace: ~>active:  rule #2, line 5, cmd = 24641
+trace: ->testNum  line 25, column 2, char-column 6|6
+trace:   strnums: '50'|'28'
+trace:   lhs=28, rhs=28, scl=1, off=0, abs=1e-09, _abs=-1e-09, rel=0, _rel=0, dig=0, _dig=0
+trace:   R1=50, R2=28, R3=0, R4=0, R5=0, R6=0, R7=0, R8=28, R9=0.01
+trace:   R11=48 .. R21=28, R10=50
+trace: <-testNum  line 25, column 2, char-column 8|8
+trace: ~>active:  rule #2, line 5, cmd = 24641
+trace: ->testNum  line 26, column 2, char-column 6|6
+trace:   strnums: '52'|'30'
+trace:   lhs=30, rhs=30, scl=1, off=0, abs=1e-09, _abs=-1e-09, rel=0, _rel=0, dig=0, _dig=0
+trace:   R1=52, R2=30, R3=0, R4=0, R5=0, R6=0, R7=0, R8=30, R9=0.01
+trace:   R11=50 .. R21=30, R10=52
+trace: <-testNum  line 26, column 2, char-column 8|8
+trace: ~>active:  rule #2, line 5, cmd = 24641
+trace: ->testNum  line 27, column 2, char-column 6|6
+trace:   strnums: '54'|'32'
+trace:   lhs=32, rhs=32, scl=1, off=0, abs=1e-09, _abs=-1e-09, rel=0, _rel=0, dig=0, _dig=0
+trace:   R1=54, R2=32, R3=0, R4=0, R5=0, R6=0, R7=0, R8=32, R9=0.01
+trace:   R11=52 .. R21=32, R10=54
+trace: <-testNum  line 27, column 2, char-column 8|8
+trace: ~>active:  rule #2, line 5, cmd = 24641
+trace: ->testNum  line 28, column 2, char-column 6|6
+trace:   strnums: '56'|'34'
+trace:   lhs=34, rhs=34, scl=1, off=0, abs=1e-09, _abs=-1e-09, rel=0, _rel=0, dig=0, _dig=0
+trace:   R1=56, R2=34, R3=0, R4=0, R5=0, R6=0, R7=0, R8=34, R9=0.01
+trace:   R11=54 .. R21=34, R10=56
+trace: <-testNum  line 28, column 2, char-column 8|8
+trace: ~>active:  rule #2, line 5, cmd = 24641
+trace: ->testNum  line 29, column 2, char-column 6|6
+trace:   strnums: '58'|'36'
+trace:   lhs=36, rhs=36, scl=1, off=0, abs=1e-09, _abs=-1e-09, rel=0, _rel=0, dig=0, _dig=0
+trace:   R1=58, R2=36, R3=0, R4=0, R5=0, R6=0, R7=0, R8=36, R9=0.01
+trace:   R11=56 .. R21=36, R10=58
+trace: <-testNum  line 29, column 2, char-column 8|8
+trace: ~>active:  rule #2, line 5, cmd = 24641
+trace: ->testNum  line 30, column 2, char-column 6|6
+trace:   strnums: '60'|'38'
+trace:   lhs=38, rhs=38, scl=1, off=0, abs=1e-09, _abs=-1e-09, rel=0, _rel=0, dig=0, _dig=0
+trace:   R1=60, R2=38, R3=0, R4=0, R5=0, R6=0, R7=0, R8=38, R9=0.01
+trace:   R11=58 .. R21=38, R10=60
+trace: <-testNum  line 30, column 2, char-column 8|8
+trace: ~>active:  rule #2, line 5, cmd = 24641
+trace: ->testNum  line 31, column 2, char-column 6|6
+trace:   strnums: '62'|'40'
+trace:   lhs=40, rhs=40, scl=1, off=0, abs=1e-09, _abs=-1e-09, rel=0, _rel=0, dig=0, _dig=0
+trace:   R1=62, R2=40, R3=0, R4=0, R5=0, R6=0, R7=0, R8=40, R9=0.01
+trace:   R11=60 .. R21=40, R10=62
+trace: <-testNum  line 31, column 2, char-column 8|8
+trace: ~>active:  rule #2, line 5, cmd = 24641
+trace: ->testNum  line 32, column 2, char-column 6|6
+trace:   strnums: '64'|'42'
+trace:   lhs=42, rhs=42, scl=1, off=0, abs=1e-09, _abs=-1e-09, rel=0, _rel=0, dig=0, _dig=0
+trace:   R1=64, R2=42, R3=0, R4=0, R5=0, R6=0, R7=0, R8=42, R9=0.01
+trace:   R11=62 .. R21=42, R10=64
+trace: <-testNum  line 32, column 2, char-column 8|8
+trace: ~>active:  rule #2, line 5, cmd = 24641
+trace: ->testNum  line 33, column 2, char-column 6|6
+trace:   strnums: '66'|'44'
+trace:   lhs=44, rhs=44, scl=1, off=0, abs=1e-09, _abs=-1e-09, rel=0, _rel=0, dig=0, _dig=0
+trace:   R1=66, R2=44, R3=0, R4=0, R5=0, R6=0, R7=0, R8=44, R9=0.01
+trace:   R11=64 .. R21=44, R10=66
+trace: <-testNum  line 33, column 2, char-column 8|8
+trace: ~>active:  rule #2, line 5, cmd = 24641
+trace: ->testNum  line 34, column 2, char-column 6|6
+trace:   strnums: '68'|'46'
+trace:   lhs=46, rhs=46, scl=1, off=0, abs=1e-09, _abs=-1e-09, rel=0, _rel=0, dig=0, _dig=0
+trace:   R1=68, R2=46, R3=0, R4=0, R5=0, R6=0, R7=0, R8=46, R9=0.01
+trace:   R11=66 .. R21=46, R10=68
+trace: <-testNum  line 34, column 2, char-column 8|8
+trace: ~>active:  rule #2, line 5, cmd = 24641
+trace: ->testNum  line 35, column 2, char-column 6|6
+trace:   strnums: '70'|'48'
+trace:   lhs=48, rhs=48, scl=1, off=0, abs=1e-09, _abs=-1e-09, rel=0, _rel=0, dig=0, _dig=0
+trace:   R1=70, R2=48, R3=0, R4=0, R5=0, R6=0, R7=0, R8=48, R9=0.01
+trace:   R11=68 .. R21=48, R10=70
+trace: <-testNum  line 35, column 2, char-column 8|8
+trace: ~>active:  rule #2, line 5, cmd = 24641
+trace: ->testNum  line 36, column 2, char-column 6|6
+trace:   strnums: '72'|'50'
+trace:   lhs=50, rhs=50, scl=1, off=0, abs=1e-09, _abs=-1e-09, rel=0, _rel=0, dig=0, _dig=0
+trace:   R1=72, R2=50, R3=0, R4=0, R5=0, R6=0, R7=0, R8=50, R9=0.01
+trace:   R11=70 .. R21=50, R10=72
+trace: <-testNum  line 36, column 2, char-column 8|8
+trace: ~>active:  rule #2, line 5, cmd = 24641
+trace: ->testNum  line 37, column 2, char-column 6|6
+trace:   strnums: '74'|'52'
+trace:   lhs=52, rhs=52, scl=1, off=0, abs=1e-09, _abs=-1e-09, rel=0, _rel=0, dig=0, _dig=0
+trace:   R1=74, R2=52, R3=0, R4=0, R5=0, R6=0, R7=0, R8=52, R9=0.01
+trace:   R11=72 .. R21=52, R10=74
+trace: <-testNum  line 37, column 2, char-column 8|8
+trace: ~>active:  rule #2, line 5, cmd = 24641
+trace: ->testNum  line 38, column 2, char-column 6|6
+trace:   strnums: '76'|'54'
+trace:   lhs=54, rhs=54, scl=1, off=0, abs=1e-09, _abs=-1e-09, rel=0, _rel=0, dig=0, _dig=0
+trace:   R1=76, R2=54, R3=0, R4=0, R5=0, R6=0, R7=0, R8=54, R9=0.01
+trace:   R11=74 .. R21=54, R10=76
+trace: <-testNum  line 38, column 2, char-column 8|8
+trace: ~>active:  rule #2, line 5, cmd = 24641
+trace: ->testNum  line 39, column 2, char-column 6|6
+trace:   strnums: '78'|'56'
+trace:   lhs=56, rhs=56, scl=1, off=0, abs=1e-09, _abs=-1e-09, rel=0, _rel=0, dig=0, _dig=0
+trace:   R1=78, R2=56, R3=0, R4=0, R5=0, R6=0, R7=0, R8=56, R9=0.01
+trace:   R11=76 .. R21=56, R10=78
+trace: <-testNum  line 39, column 2, char-column 8|8
+trace: ~>active:  rule #2, line 5, cmd = 24641
+trace: ->testNum  line 40, column 2, char-column 6|6
+trace:   strnums: '80'|'58'
+trace:   lhs=58, rhs=58, scl=1, off=0, abs=1e-09, _abs=-1e-09, rel=0, _rel=0, dig=0, _dig=0
+trace:   R1=80, R2=58, R3=0, R4=0, R5=0, R6=0, R7=0, R8=58, R9=0.01
+trace:   R11=78 .. R21=58, R10=80
+trace: <-testNum  line 40, column 2, char-column 8|8
+trace: ~>active:  rule #2, line 5, cmd = 24641
+trace: ->testNum  line 41, column 2, char-column 6|6
+trace:   strnums: '82'|'60'
+trace:   lhs=60, rhs=60, scl=1, off=0, abs=1e-09, _abs=-1e-09, rel=0, _rel=0, dig=0, _dig=0
+trace:   R1=82, R2=60, R3=0, R4=0, R5=0, R6=0, R7=0, R8=60, R9=0.01
+trace:   R11=80 .. R21=60, R10=82
+trace: <-testNum  line 41, column 2, char-column 8|8
+trace: ~>active:  rule #2, line 5, cmd = 24641
+trace: ->testNum  line 42, column 2, char-column 6|6
+trace:   strnums: '84'|'62'
+trace:   lhs=62, rhs=62, scl=1, off=0, abs=1e-09, _abs=-1e-09, rel=0, _rel=0, dig=0, _dig=0
+trace:   R1=84, R2=62, R3=0, R4=0, R5=0, R6=0, R7=0, R8=62, R9=0.01
+trace:   R11=82 .. R21=62, R10=84
+trace: <-testNum  line 42, column 2, char-column 8|8
+trace: ~>active:  rule #2, line 5, cmd = 24641
+trace: ->testNum  line 43, column 2, char-column 6|6
+trace:   strnums: '86'|'64'
+trace:   lhs=64, rhs=64, scl=1, off=0, abs=1e-09, _abs=-1e-09, rel=0, _rel=0, dig=0, _dig=0
+trace:   R1=86, R2=64, R3=0, R4=0, R5=0, R6=0, R7=0, R8=64, R9=0.01
+trace:   R11=84 .. R21=64, R10=86
+trace: <-testNum  line 43, column 2, char-column 8|8
+trace: ~>active:  rule #2, line 5, cmd = 24641
+trace: ->testNum  line 44, column 2, char-column 6|6
+trace:   strnums: '88'|'66'
+trace:   lhs=66, rhs=66, scl=1, off=0, abs=1e-09, _abs=-1e-09, rel=0, _rel=0, dig=0, _dig=0
+trace:   R1=88, R2=66, R3=0, R4=0, R5=0, R6=0, R7=0, R8=66, R9=0.01
+trace:   R11=86 .. R21=66, R10=88
+trace: <-testNum  line 44, column 2, char-column 8|8
+trace: ~>active:  rule #2, line 5, cmd = 24641
+trace: ->testNum  line 45, column 2, char-column 6|6
+trace:   strnums: '90'|'68'
+trace:   lhs=68, rhs=68, scl=1, off=0, abs=1e-09, _abs=-1e-09, rel=0, _rel=0, dig=0, _dig=0
+trace:   R1=90, R2=68, R3=0, R4=0, R5=0, R6=0, R7=0, R8=68, R9=0.01
+trace:   R11=88 .. R21=68, R10=90
+trace: <-testNum  line 45, column 2, char-column 8|8
+trace: ~>active:  rule #2, line 5, cmd = 24641
+trace: ->testNum  line 46, column 2, char-column 6|6
+trace:   strnums: '92'|'70'
+trace:   lhs=70, rhs=70, scl=1, off=0, abs=1e-09, _abs=-1e-09, rel=0, _rel=0, dig=0, _dig=0
+trace:   R1=92, R2=70, R3=0, R4=0, R5=0, R6=0, R7=0, R8=70, R9=0.01
+trace:   R11=90 .. R21=70, R10=92
+trace: <-testNum  line 46, column 2, char-column 8|8
+trace: ~>active:  rule #2, line 5, cmd = 24641
+trace: ->testNum  line 47, column 2, char-column 6|6
+trace:   strnums: '94'|'72'
+trace:   lhs=72, rhs=72, scl=1, off=0, abs=1e-09, _abs=-1e-09, rel=0, _rel=0, dig=0, _dig=0
+trace:   R1=94, R2=72, R3=0, R4=0, R5=0, R6=0, R7=0, R8=72, R9=0.01
+trace:   R11=92 .. R21=72, R10=94
+trace: <-testNum  line 47, column 2, char-column 8|8
+trace: ~>active:  rule #2, line 5, cmd = 24641
+trace: ->testNum  line 48, column 2, char-column 6|6
+trace:   strnums: '96'|'74'
+trace:   lhs=74, rhs=74, scl=1, off=0, abs=1e-09, _abs=-1e-09, rel=0, _rel=0, dig=0, _dig=0
+trace:   R1=96, R2=74, R3=0, R4=0, R5=0, R6=0, R7=0, R8=74, R9=0.01
+trace:   R11=94 .. R21=74, R10=96
+trace: <-testNum  line 48, column 2, char-column 8|8
+trace: ~>active:  rule #2, line 5, cmd = 24641
+trace: ->testNum  line 49, column 2, char-column 6|6
+trace:   strnums: '98'|'76'
+trace:   lhs=76, rhs=76, scl=1, off=0, abs=1e-09, _abs=-1e-09, rel=0, _rel=0, dig=0, _dig=0
+trace:   R1=98, R2=76, R3=0, R4=0, R5=0, R6=0, R7=0, R8=76, R9=0.01
+trace:   R11=96 .. R21=76, R10=98
+trace: <-testNum  line 49, column 2, char-column 8|8
+trace: ~>active:  rule #2, line 5, cmd = 24641
+trace: ->testNum  line 50, column 2, char-column 6|6
+trace:   strnums: '100'|'78'
+trace:   lhs=78, rhs=78, scl=1, off=0, abs=1e-09, _abs=-1e-09, rel=0, _rel=0, dig=0, _dig=0
+trace:   R1=1e+02, R2=78, R3=0, R4=0, R5=0, R6=0, R7=0, R8=78, R9=0.001
+trace:   R11=98 .. R21=78, R10=1e+02
+trace: <-testNum  line 50, column 2, char-column 9|8
+trace: ~>active:  rule #2, line 5, cmd = 24641
+trace: ->testNum  line 51, column 2, char-column 6|6
+trace:   strnums: '102'|'80'
+trace:   lhs=80, rhs=80, scl=1, off=0, abs=1e-09, _abs=-1e-09, rel=0, _rel=0, dig=0, _dig=0
+trace:   R1=1e+02, R2=80, R3=0, R4=0, R5=0, R6=0, R7=0, R8=80, R9=0.001
+trace:   R11=1e+02 .. R21=80, R10=1e+02
+trace: <-testNum  line 51, column 2, char-column 9|8
+trace: ~>active:  rule #2, line 5, cmd = 24641
+trace: ->testNum  line 52, column 2, char-column 6|6
+trace:   strnums: '104'|'82'
+trace:   lhs=82, rhs=82, scl=1, off=0, abs=1e-09, _abs=-1e-09, rel=0, _rel=0, dig=0, _dig=0
+trace:   R1=1e+02, R2=82, R3=0, R4=0, R5=0, R6=0, R7=0, R8=82, R9=0.001
+trace:   R11=1e+02 .. R21=82, R10=1e+02
+trace: <-testNum  line 52, column 2, char-column 9|8
+trace: ~>active:  rule #2, line 5, cmd = 24641
+trace: ->testNum  line 53, column 2, char-column 6|6
+trace:   strnums: '106'|'84'
+trace:   lhs=84, rhs=84, scl=1, off=0, abs=1e-09, _abs=-1e-09, rel=0, _rel=0, dig=0, _dig=0
+trace:   R1=1.1e+02, R2=84, R3=0, R4=0, R5=0, R6=0, R7=0, R8=84, R9=0.001
+trace:   R11=1e+02 .. R21=84, R10=1.1e+02
+trace: <-testNum  line 53, column 2, char-column 9|8
+trace: ~>active:  rule #2, line 5, cmd = 24641
+trace: ->testNum  line 54, column 2, char-column 6|6
+trace:   strnums: '108'|'86'
+trace:   lhs=86, rhs=86, scl=1, off=0, abs=1e-09, _abs=-1e-09, rel=0, _rel=0, dig=0, _dig=0
+trace:   R1=1.1e+02, R2=86, R3=0, R4=0, R5=0, R6=0, R7=0, R8=86, R9=0.001
+trace:   R11=1.1e+02 .. R21=86, R10=1.1e+02
+trace: <-testNum  line 54, column 2, char-column 9|8
+trace: ~>active:  rule #2, line 5, cmd = 24641
+trace: ->testNum  line 55, column 2, char-column 6|6
+trace:   strnums: '110'|'88'
+trace:   lhs=88, rhs=88, scl=1, off=0, abs=1e-09, _abs=-1e-09, rel=0, _rel=0, dig=0, _dig=0
+trace:   R1=1.1e+02, R2=88, R3=0, R4=0, R5=0, R6=0, R7=0, R8=88, R9=0.001
+trace:   R11=1.1e+02 .. R21=88, R10=1.1e+02
+trace: <-testNum  line 55, column 2, char-column 9|8
+trace: ~>active:  rule #2, line 5, cmd = 24641
+trace: ->testNum  line 56, column 2, char-column 6|6
+trace:   strnums: '112'|'90'
+trace:   lhs=90, rhs=90, scl=1, off=0, abs=1e-09, _abs=-1e-09, rel=0, _rel=0, dig=0, _dig=0
+trace:   R1=1.1e+02, R2=90, R3=0, R4=0, R5=0, R6=0, R7=0, R8=90, R9=0.001
+trace:   R11=1.1e+02 .. R21=90, R10=1.1e+02
+trace: <-testNum  line 56, column 2, char-column 9|8
+trace: ~>active:  rule #2, line 5, cmd = 24641
+trace: ->testNum  line 57, column 2, char-column 6|6
+trace:   strnums: '114'|'92'
+trace:   lhs=92, rhs=92, scl=1, off=0, abs=1e-09, _abs=-1e-09, rel=0, _rel=0, dig=0, _dig=0
+trace:   R1=1.1e+02, R2=92, R3=0, R4=0, R5=0, R6=0, R7=0, R8=92, R9=0.001
+trace:   R11=1.1e+02 .. R21=92, R10=1.1e+02
+trace: <-testNum  line 57, column 2, char-column 9|8
+trace: ~>active:  rule #2, line 5, cmd = 24641
+trace: ->testNum  line 58, column 2, char-column 6|6
+trace:   strnums: '116'|'94'
+trace:   lhs=94, rhs=94, scl=1, off=0, abs=1e-09, _abs=-1e-09, rel=0, _rel=0, dig=0, _dig=0
+trace:   R1=1.2e+02, R2=94, R3=0, R4=0, R5=0, R6=0, R7=0, R8=94, R9=0.001
+trace:   R11=1.1e+02 .. R21=94, R10=1.2e+02
+trace: <-testNum  line 58, column 2, char-column 9|8
+trace: ~>active:  rule #2, line 5, cmd = 24641
+trace: ->testNum  line 59, column 2, char-column 6|6
+trace:   strnums: '118'|'96'
+trace:   lhs=96, rhs=96, scl=1, off=0, abs=1e-09, _abs=-1e-09, rel=0, _rel=0, dig=0, _dig=0
+trace:   R1=1.2e+02, R2=96, R3=0, R4=0, R5=0, R6=0, R7=0, R8=96, R9=0.001
+trace:   R11=1.2e+02 .. R21=96, R10=1.2e+02
+trace: <-testNum  line 59, column 2, char-column 9|8
+trace: ~>active:  rule #2, line 5, cmd = 24641
+trace: ->testNum  line 60, column 2, char-column 6|6
+trace:   strnums: '120'|'98'
+trace:   lhs=98, rhs=98, scl=1, off=0, abs=1e-09, _abs=-1e-09, rel=0, _rel=0, dig=0, _dig=0
+trace:   R1=1.2e+02, R2=98, R3=0, R4=0, R5=0, R6=0, R7=0, R8=98, R9=0.001
+trace:   R11=1.2e+02 .. R21=98, R10=1.2e+02
+trace: <-testNum  line 60, column 2, char-column 9|8
+trace: ~>active:  rule #2, line 5, cmd = 24641
+trace: ->testNum  line 61, column 2, char-column 6|6
+trace:   strnums: '122'|'100'
+trace:   lhs=1e+02, rhs=1e+02, scl=1, off=0, abs=1e-09, _abs=-1e-09, rel=0, _rel=0, dig=0, _dig=0
+trace:   R1=1.2e+02, R2=1e+02, R3=0, R4=0, R5=0, R6=0, R7=0, R8=1e+02, R9=0.001
+trace:   R11=1.2e+02 .. R21=1e+02, R10=1.2e+02
+trace: <-testNum  line 61, column 2, char-column 9|9
+trace: ~>active:  rule #2, line 5, cmd = 24641
+trace: ->testNum  line 62, column 2, char-column 6|6
+trace:   strnums: '124'|'102'
+trace:   lhs=1e+02, rhs=1e+02, scl=1, off=0, abs=1e-09, _abs=-1e-09, rel=0, _rel=0, dig=0, _dig=0
+trace:   R1=1.2e+02, R2=1e+02, R3=0, R4=0, R5=0, R6=0, R7=0, R8=1e+02, R9=0.001
+trace:   R11=1.2e+02 .. R21=1e+02, R10=1.2e+02
+trace: <-testNum  line 62, column 2, char-column 9|9
+trace: ~>active:  rule #2, line 5, cmd = 24641
+trace: ->testNum  line 63, column 2, char-column 6|6
+trace:   strnums: '126'|'104'
+trace:   lhs=1e+02, rhs=1e+02, scl=1, off=0, abs=1e-09, _abs=-1e-09, rel=0, _rel=0, dig=0, _dig=0
+trace:   R1=1.3e+02, R2=1e+02, R3=0, R4=0, R5=0, R6=0, R7=0, R8=1e+02, R9=0.001
+trace:   R11=1.2e+02 .. R21=1e+02, R10=1.3e+02
+trace: <-testNum  line 63, column 2, char-column 9|9
+trace: ~>active:  rule #2, line 5, cmd = 24641
+trace: ->testNum  line 64, column 2, char-column 6|6
+trace:   strnums: '128'|'106'
+trace:   lhs=1.1e+02, rhs=1.1e+02, scl=1, off=0, abs=1e-09, _abs=-1e-09, rel=0, _rel=0, dig=0, _dig=0
+trace:   R1=1.3e+02, R2=1.1e+02, R3=0, R4=0, R5=0, R6=0, R7=0, R8=1.1e+02, R9=0.001
+trace:   R11=1.3e+02 .. R21=1.1e+02, R10=1.3e+02
+trace: <-testNum  line 64, column 2, char-column 9|9
+trace: ~>active:  rule #2, line 5, cmd = 24641
+trace: ->testNum  line 65, column 2, char-column 6|6
+trace:   strnums: '130'|'108'
+trace:   lhs=1.1e+02, rhs=1.1e+02, scl=1, off=0, abs=1e-09, _abs=-1e-09, rel=0, _rel=0, dig=0, _dig=0
+trace:   R1=1.3e+02, R2=1.1e+02, R3=0, R4=0, R5=0, R6=0, R7=0, R8=1.1e+02, R9=0.001
+trace:   R11=1.3e+02 .. R21=1.1e+02, R10=1.3e+02
+trace: <-testNum  line 65, column 2, char-column 9|9
+trace: ~>active:  rule #2, line 5, cmd = 24641
+trace: ->testNum  line 66, column 2, char-column 6|6
+trace:   strnums: '132'|'110'
+trace:   lhs=1.1e+02, rhs=1.1e+02, scl=1, off=0, abs=1e-09, _abs=-1e-09, rel=0, _rel=0, dig=0, _dig=0
+trace:   R1=1.3e+02, R2=1.1e+02, R3=0, R4=0, R5=0, R6=0, R7=0, R8=1.1e+02, R9=0.001
+trace:   R11=1.3e+02 .. R21=1.1e+02, R10=1.3e+02
+trace: <-testNum  line 66, column 2, char-column 9|9
+trace: ~>active:  rule #2, line 5, cmd = 24641
+trace: ->testNum  line 67, column 2, char-column 6|6
+trace:   strnums: '134'|'112'
+trace:   lhs=1.1e+02, rhs=1.1e+02, scl=1, off=0, abs=1e-09, _abs=-1e-09, rel=0, _rel=0, dig=0, _dig=0
+trace:   R1=1.3e+02, R2=1.1e+02, R3=0, R4=0, R5=0, R6=0, R7=0, R8=1.1e+02, R9=0.001
+trace:   R11=1.3e+02 .. R21=1.1e+02, R10=1.3e+02
+trace: <-testNum  line 67, column 2, char-column 9|9
+trace: ~>active:  rule #2, line 5, cmd = 24641
+trace: ->testNum  line 68, column 2, char-column 6|6
+trace:   strnums: '136'|'114'
+trace:   lhs=1.1e+02, rhs=1.1e+02, scl=1, off=0, abs=1e-09, _abs=-1e-09, rel=0, _rel=0, dig=0, _dig=0
+trace:   R1=1.4e+02, R2=1.1e+02, R3=0, R4=0, R5=0, R6=0, R7=0, R8=1.1e+02, R9=0.001
+trace:   R11=1.3e+02 .. R21=1.1e+02, R10=1.4e+02
+trace: <-testNum  line 68, column 2, char-column 9|9
+trace: ~>active:  rule #2, line 5, cmd = 24641
+trace: ->testNum  line 69, column 2, char-column 6|6
+trace:   strnums: '138'|'116'
+trace:   lhs=1.2e+02, rhs=1.2e+02, scl=1, off=0, abs=1e-09, _abs=-1e-09, rel=0, _rel=0, dig=0, _dig=0
+trace:   R1=1.4e+02, R2=1.2e+02, R3=0, R4=0, R5=0, R6=0, R7=0, R8=1.2e+02, R9=0.001
+trace:   R11=1.4e+02 .. R21=1.2e+02, R10=1.4e+02
+trace: <-testNum  line 69, column 2, char-column 9|9
+trace: ~>active:  rule #2, line 5, cmd = 24641
+trace: ->testNum  line 70, column 2, char-column 6|6
+trace:   strnums: '140'|'118'
+trace:   lhs=1.2e+02, rhs=1.2e+02, scl=1, off=0, abs=1e-09, _abs=-1e-09, rel=0, _rel=0, dig=0, _dig=0
+trace:   R1=1.4e+02, R2=1.2e+02, R3=0, R4=0, R5=0, R6=0, R7=0, R8=1.2e+02, R9=0.001
+trace:   R11=1.4e+02 .. R21=1.2e+02, R10=1.4e+02
+trace: <-testNum  line 70, column 2, char-column 9|9
+trace: ~>active:  rule #2, line 5, cmd = 24641
+trace: ->testNum  line 71, column 2, char-column 6|6
+trace:   strnums: '142'|'120'
+trace:   lhs=1.2e+02, rhs=1.2e+02, scl=1, off=0, abs=1e-09, _abs=-1e-09, rel=0, _rel=0, dig=0, _dig=0
+trace:   R1=1.4e+02, R2=1.2e+02, R3=0, R4=0, R5=0, R6=0, R7=0, R8=1.2e+02, R9=0.001
+trace:   R11=1.4e+02 .. R21=1.2e+02, R10=1.4e+02
+trace: <-testNum  line 71, column 2, char-column 9|9
+trace: ~>active:  rule #2, line 5, cmd = 24641
+trace: ->testNum  line 72, column 2, char-column 6|6
+trace:   strnums: '144'|'122'
+trace:   lhs=1.2e+02, rhs=1.2e+02, scl=1, off=0, abs=1e-09, _abs=-1e-09, rel=0, _rel=0, dig=0, _dig=0
+trace:   R1=1.4e+02, R2=1.2e+02, R3=0, R4=0, R5=0, R6=0, R7=0, R8=1.2e+02, R9=0.001
+trace:   R11=1.4e+02 .. R21=1.2e+02, R10=1.4e+02
+trace: <-testNum  line 72, column 2, char-column 9|9
+trace: ~>active:  rule #2, line 5, cmd = 24641
+trace: ->testNum  line 73, column 2, char-column 6|6
+trace:   strnums: '146'|'124'
+trace:   lhs=1.2e+02, rhs=1.2e+02, scl=1, off=0, abs=1e-09, _abs=-1e-09, rel=0, _rel=0, dig=0, _dig=0
+trace:   R1=1.5e+02, R2=1.2e+02, R3=0, R4=0, R5=0, R6=0, R7=0, R8=1.2e+02, R9=0.001
+trace:   R11=1.4e+02 .. R21=1.2e+02, R10=1.5e+02
+trace: <-testNum  line 73, column 2, char-column 9|9
+trace: ~>active:  rule #2, line 5, cmd = 24641
+trace: ->testNum  line 74, column 2, char-column 6|6
+trace:   strnums: '148'|'126'
+trace:   lhs=1.3e+02, rhs=1.3e+02, scl=1, off=0, abs=1e-09, _abs=-1e-09, rel=0, _rel=0, dig=0, _dig=0
+trace:   R1=1.5e+02, R2=1.3e+02, R3=0, R4=0, R5=0, R6=0, R7=0, R8=1.3e+02, R9=0.001
+trace:   R11=1.5e+02 .. R21=1.3e+02, R10=1.5e+02
+trace: <-testNum  line 74, column 2, char-column 9|9
+trace: ~>active:  rule #2, line 5, cmd = 24641
+trace: ->testNum  line 75, column 2, char-column 6|6
+trace:   strnums: '150'|'128'
+trace:   lhs=1.3e+02, rhs=1.3e+02, scl=1, off=0, abs=1e-09, _abs=-1e-09, rel=0, _rel=0, dig=0, _dig=0
+trace:   R1=1.5e+02, R2=1.3e+02, R3=0, R4=0, R5=0, R6=0, R7=0, R8=1.3e+02, R9=0.001
+trace:   R11=1.5e+02 .. R21=1.3e+02, R10=1.5e+02
+trace: <-testNum  line 75, column 2, char-column 9|9
+trace: ~>active:  rule #2, line 5, cmd = 24641
+trace: ->testNum  line 76, column 2, char-column 6|6
+trace:   strnums: '152'|'130'
+trace:   lhs=1.3e+02, rhs=1.3e+02, scl=1, off=0, abs=1e-09, _abs=-1e-09, rel=0, _rel=0, dig=0, _dig=0
+trace:   R1=1.5e+02, R2=1.3e+02, R3=0, R4=0, R5=0, R6=0, R7=0, R8=1.3e+02, R9=0.001
+trace:   R11=1.5e+02 .. R21=1.3e+02, R10=1.5e+02
+trace: <-testNum  line 76, column 2, char-column 9|9
+trace: ~>active:  rule #2, line 5, cmd = 24641
+trace: ->testNum  line 77, column 2, char-column 6|6
+trace:   strnums: '154'|'132'
+trace:   lhs=1.3e+02, rhs=1.3e+02, scl=1, off=0, abs=1e-09, _abs=-1e-09, rel=0, _rel=0, dig=0, _dig=0
+trace:   R1=1.5e+02, R2=1.3e+02, R3=0, R4=0, R5=0, R6=0, R7=0, R8=1.3e+02, R9=0.001
+trace:   R11=1.5e+02 .. R21=1.3e+02, R10=1.5e+02
+trace: <-testNum  line 77, column 2, char-column 9|9
+trace: ~>active:  rule #2, line 5, cmd = 24641
+trace: ->testNum  line 78, column 2, char-column 6|6
+trace:   strnums: '156'|'134'
+trace:   lhs=1.3e+02, rhs=1.3e+02, scl=1, off=0, abs=1e-09, _abs=-1e-09, rel=0, _rel=0, dig=0, _dig=0
+trace:   R1=1.6e+02, R2=1.3e+02, R3=0, R4=0, R5=0, R6=0, R7=0, R8=1.3e+02, R9=0.001
+trace:   R11=1.5e+02 .. R21=1.3e+02, R10=1.6e+02
+trace: <-testNum  line 78, column 2, char-column 9|9
+trace: ~>active:  rule #2, line 5, cmd = 24641
+trace: ->testNum  line 79, column 2, char-column 6|6
+trace:   strnums: '158'|'136'
+trace:   lhs=1.4e+02, rhs=1.4e+02, scl=1, off=0, abs=1e-09, _abs=-1e-09, rel=0, _rel=0, dig=0, _dig=0
+trace:   R1=1.6e+02, R2=1.4e+02, R3=0, R4=0, R5=0, R6=0, R7=0, R8=1.4e+02, R9=0.001
+trace:   R11=1.6e+02 .. R21=1.4e+02, R10=1.6e+02
+trace: <-testNum  line 79, column 2, char-column 9|9
+trace: ~>active:  rule #2, line 5, cmd = 24641
+trace: ->testNum  line 80, column 2, char-column 6|6
+trace:   strnums: '160'|'138'
+trace:   lhs=1.4e+02, rhs=1.4e+02, scl=1, off=0, abs=1e-09, _abs=-1e-09, rel=0, _rel=0, dig=0, _dig=0
+trace:   R1=1.6e+02, R2=1.4e+02, R3=0, R4=0, R5=0, R6=0, R7=0, R8=1.4e+02, R9=0.001
+trace:   R11=1.6e+02 .. R21=1.4e+02, R10=1.6e+02
+trace: <-testNum  line 80, column 2, char-column 9|9
+    81 lines have been diffed

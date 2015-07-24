@@ -1,0 +1,32 @@
+# |
+# o---------------------------------------------------------------------o
+# |
+# | Numdiff makefile - C files selection
+# |
+# o---------------------------------------------------------------------o
+# |
+# | Methodical Accelerator Design
+# |
+# | Copyright (c) 2011+ CERN, mad@cern.ch
+# |
+# | For more information, see http://cern.ch/mad/numdiff
+# |
+# o---------------------------------------------------------------------o
+# |
+# | $Id$
+# |
+
+vpath %.h src
+vpath %.c src
+
+CC_DIR := src
+CC_HDR := $(notdir $(wildcard src/*.h))
+CC_SRC := $(notdir $(wildcard src/*.c))
+
+#######################
+# C dependencies (case not automatic!)
+
+ifeq ($(CDEP),)
+endif
+
+# end of makefile
