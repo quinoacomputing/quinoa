@@ -1,0 +1,26 @@
+# |
+# o---------------------------------------------------------------------o
+# |
+# | Numdiff makefile - Libraries settings
+# |
+# o---------------------------------------------------------------------o
+# |
+# | Methodical Accelerator Design
+# |
+# | Copyright (c) 2011+ CERN, mad@cern.ch
+# |
+# | For more information, see http://cern.ch/mad/numdiff
+# |
+# o---------------------------------------------------------------------o
+# |
+# | $Id$
+# |
+
+ifeq ($(OSTYPE),Linux)
+ifeq ($(ARCH),32)
+LDLIBS += -L/usr/lib
+endif
+LDLIBS += -lm
+endif
+
+# end of makefile

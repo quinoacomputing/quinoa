@@ -1,0 +1,59 @@
+# |
+# o---------------------------------------------------------------------o
+# |
+# | Numdiff makefile - Tests
+# |
+# o---------------------------------------------------------------------o
+# |
+# | Methodical Accelerator Design
+# |
+# | Copyright (c) 2011+ CERN, mad@cern.ch
+# |
+# | For more information, see http://cern.ch/mad
+# |
+# o---------------------------------------------------------------------o
+# |
+# | $Id$
+# |
+
+#################################################
+# testsuite
+
+# variables:
+# tests-all  : contains all tests        (includes tests-long)
+# tests-long : contains all long tests   (overlaps tests-all)
+
+# rules (commands):
+# tests      : runs tests-all not in tests-long
+# tests-all  : runs tests-all
+
+# tests order
+tests-all := \
+test-constraint \
+test-register test-register-2
+
+# same order as tests-all, tests that take +10s
+# to know the timing: make tests-all TIMER=time (on Unixes)
+tests-long := 
+
+# tests dependencies
+
+
+# lexicographical order
+tests-to-setup := 
+
+# testsuite titles (attached to first test of the suite, lex. order)
+test-register:        TESTSUITE := Register testsuite
+
+# end of testsuite
+#################################################
+
+# numdiff supported command for tests
+ifndef NUMDIFF
+NUMDIFFCMD := $(firstword $(wildcard $(PROJECT)$(ARCH)$(BINARY_EXT) $(PROJECT)$(BINARY_EXT)))
+NUMDIFF    := $(if $(NUMDIFFCMD),..$/..$/$(NUMDIFFCMD),$(PROJECT)$(ARCH)$(BINARY_EXT))
+endif
+
+TESTCMD = $(NUMDIFF) --noloc $(@F).nd.lhs $(@F).nd.rhs $(@F).nd.cfg
+
+# end of makefile

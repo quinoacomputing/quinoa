@@ -1,0 +1,4 @@
+# Vi: vi:set ft=sh:
+# ignore patterns
+*~
+*.s[wv]?
