@@ -40,8 +40,7 @@ Jozsef Bakosi (jbakosi@lanl.gov)
 ## Get started
 
 ### 1. Install prerequisites
-   Click on the links below for details on how to install the prerequisites for
-   your system.
+   Click on the links below for details on how to install the prerequisites for your system.
    - [debian/testing/gnu](https://github.com/jbakosi/quinoa-docker/blob/master/debian/testing/gnu/alltpl/Dockerfile)
    - [debian/testing/clang](https://github.com/jbakosi/quinoa-docker/blob/master/debian/testing/clang/alltpl/Dockerfile)
    - [ubuntu/precise/gnu](https://github.com/jbakosi/quinoa-docker/blob/master/ubuntu/precise/gnu/alltpl/Dockerfile)
