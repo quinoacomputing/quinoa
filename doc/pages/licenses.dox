@@ -3,8 +3,11 @@
   \tableofcontents
 
 Here are the links to full verbatim texts of the licenses of all third-party
-libraries, and the list of compilers and tools used by Quinoa. None of the
-libraries are re-distributed.
+libraries (TPLs), and the list of compilers and tools used by Quinoa. The [TPL
+sources](https://github.com/jbakosi/quinoa/blob/master/tpl/src) as well as the
+[tools sources](https://github.com/jbakosi/quinoa/blob/master/tool/src) are part
+of the distribution. While the Quinoa executables link to TPLs, they do not link
+to the tools.
 
 \section tpl_licenses Third-party libraries
 
@@ -93,43 +96,46 @@ libraries are re-distributed.
   - Web: https://software.intel.com/en-us/intel-mkl
   - License: \subpage MKL_license
 
-\section compiler_licenses Compilers
+\section compiler_web Compilers
 
-\subsection clang_license 1. Clang C++ compiler
+\subsection clang_web 1. Clang C++ compiler
   - Web: http://clang.llvm.org
 
-\subsection gcc_license 2. GNU C++ compiler
+\subsection gcc_web 2. GNU C++ compiler
   - Web: https://gcc.gnu.org
 
-\subsection intel_license 3. Intel C++ compiler
+\subsection intel_web 3. Intel C++ compiler
   - Web https://software.intel.com/en-us/c-compilers
 
-\section tools_licenses Tools
+\section tools_web Tools
 
-\subsection doxygen_license 1. Doxygen for design, theory, and software API documentation
+\subsection doxygen_web 1. Doxygen for design, theory, and software API documentation
   - Web: http://www.doxygen.org
 
-\subsection cmake_license 2. CMake as a build system
+\subsection cmake_web 2. CMake as a build system
   - Web: http://www.cmake.org
 
-\subsection ninja_license 3. Ninja for building
+\subsection ninja_web 3. Ninja for building
   - Web: https://martine.github.io/ninja
 
-\subsection gold_license 4. Gold for linking
+\subsection gold_web 4. Gold for linking
   - Web: http://www.gnu.org/software/binutils
 
-\subsection gcov_license 5. Gcov for unit test coverage analysis
+\subsection gcov_web 5. Gcov for unit test coverage analysis
   - Web: https://gcc.gnu.org/onlinedocs/gcc/Gcov.html
 
-\subsection lcov_license 6. Lcov for unit test coverage analysis report
+\subsection lcov_web 6. Lcov for unit test coverage analysis report
   - Web: http://ltp.sourceforge.net/coverage/lcov.php
 
-\subsection git_license 7. Git for source code version control
+\subsection git_web 7. Git for source code version control
   - Web: https://git-scm.com
+
+\subsection numdiff_web 8. Numdiff for comparison text files with numerical content
+  - Web: http://svn.cern.ch/guest/madx/trunk/madX/tools/numdiff
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Mon 08 Jun 2015 08:04:05 AM MDT
+<em>Page last updated:</em> Tue 28 Jul 2015 03:05:10 PM MDT
 <em>Copyright 2012-2015, Jozsef Bakosi.</em>
 </small></div>
 */
