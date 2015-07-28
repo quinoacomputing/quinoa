@@ -277,6 +277,15 @@ if(LIBCXX_CPP)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++ -lc++abi")
 endif()
 
+# Set default charmrun path. This is used when generating code coverage and
+# running regression test.
+SET(CHARMRUN "${CMAKE_BINARY_DIR}/Main/charmrun")
+# Ninja puts chamrun to build dir
+IF(CMAKE_GENERATOR STREQUAL "Ninja")
+  SET(CHARMRUN "${CMAKE_BINARY_DIR}/charmrun")
+ENDIF()
+message(STATUS "charmrun executable: ${CHARMRUN}")
+
 # Attempt to find tools required for code coverage analysis
 include(DetectCodeCoverage)
 
@@ -410,3 +419,15 @@ add_subdirectory(RNG)
 add_subdirectory(RNGTest)
 add_subdirectory(Statistics)
 add_subdirectory(RegTest)
+
+# Enable cmake's ctest test suite used for regression testing
+enable_testing()
+
+# Add cmake code describing how to build numdiff
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../tool/src/ndiff
+                 ${CMAKE_BINARY_DIR}/regression/ndiff)
+
+# Include cmake code common to all regression tests
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../regression
+                 ${CMAKE_BINARY_DIR}/regression
+                 EXCLUDE_FROM_ALL)

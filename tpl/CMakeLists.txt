@@ -207,7 +207,7 @@ if (NOT NO_SYSTEM_EXODUS)
   find_package(Exodus)
 endif()
 if(EXODUS_FOUND)
-  #message(STATUS "ExodusII/Nemesis found at ${EXODUS_INCLUDES} (exodus include), ${NEMESIS_INCLUDES} (nemesis include) and at ${EXODUS_LIBRARIES} (exodus lib), ${NEMESIS_LIBRARIES} (nemesis lib) - will not build ours")
+  #message(STATUS "ExodusII/Nemesis libraries found at ${EXODUS_INCLUDES} (exodus include), ${NEMESIS_INCLUDES} (nemesis include) and at ${EXODUS_LIBRARIES} (exodus lib), ${NEMESIS_LIBRARIES} (nemesis lib), Exodiff executable found at ${EXODIFF_EXECUTABLE} - will not build ours")
   set(exodus "")
 else()
   set(exodus "exodus")
@@ -420,19 +420,21 @@ if (exodus OR zoltan)
     PREFIX trilinos
     SOURCE_DIR ${PROJECT_SOURCE_DIR}/src/trilinos
     CMAKE_ARGS -D Trilinos_ENABLE_ALL_PACKAGES:BOOL=OFF
-               -D Trilinos_ENABLE_Fortran:BOOL=OFF
                -D TPL_ENABLE_MPI:BOOL=ON
                -D Trilinos_ENABLE_Zoltan:BOOL=ON
                -D Trilinos_ENABLE_SEACASExodus:BOOL=ON
                -D Trilinos_ENABLE_SEACASNemesis:BOOL=ON
+               -D Trilinos_ENABLE_SEACASExodiff:BOOL=ON
                -D TPL_ENABLE_Netcdf:BOOL=ON
                -D Netcdf_LIBRARY_DIRS:PATH=${netcdf_lib}
                -D TPL_Netcdf_INCLUDE_DIRS:PATH=${netcdf_include}
                -D CMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
                -D CMAKE_C_COMPILER:PATH=${MPI_C_COMPILER}
                -D CMAKE_CXX_COMPILER:PATH=${MPI_CXX_COMPILER}
+               -D CMAKE_Fortran_COMPILER:PATH=${MPI_Fortran_COMPILER}
                -D CMAKE_C_FLAGS:STRING=${CFLAGS}
                -D CMAKE_CXX_FLAGS:STRING=${CXXFLAGS}
+               -D CMAKE_Fortran_FLAGS:STRING=${FFLAGS}
                -D CMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX}
     DOWNLOAD_COMMAND ""
     LOG_CONFIGURE 1

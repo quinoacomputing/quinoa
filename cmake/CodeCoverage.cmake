@@ -1,10 +1,25 @@
-# Add code coverage target
-# Param _targetname The name of new the custom make target
-# Param _testrunner The name of the target which runs the tests.
-# Param _outputname HTML report is generated in _outputname/index.html
-# Param _ncpus Nunmber of CPU cores testrunner should use
-# Optional fourth parameter is passed as arguments to _testrunner. Pass them in
-# list form, e.g.: "-v;-g;group" for -v -g group.
+# ##############################################################################
+# Function to add code coverage target
+#
+# setup_target_for_coverage(<_targetname> <_testrunner> <_outputname> <_ncpus>)
+#
+# Mandatory arguments:
+# --------------------
+#
+# _targetname      The name of new the custom make target
+# _testrunner      The name of the target which runs the tests.
+# _outputname      HTML report is generated in _outputname/index.html
+# _ncpus           Nunmber of CPU cores testrunner should use
+#
+# Optional arguments:
+# -------------------
+#
+# Are recognized. Pass them in list form, e.g.: "-v;-g;group" for passing '-v
+# -g group'.
+#
+# Author: J. Bakosi
+#
+# ##############################################################################
 FUNCTION(SETUP_TARGET_FOR_COVERAGE _targetname _testrunner _outputname _ncpus)
 
   IF(NOT LCOV)
@@ -13,13 +28,6 @@ FUNCTION(SETUP_TARGET_FOR_COVERAGE _targetname _testrunner _outputname _ncpus)
 
   IF(NOT GENHTML)
     MESSAGE(FATAL_ERROR "genhtml not found! Aborting...")
-  ENDIF()
-
-  # Set default charmrun path
-  SET(CHARMRUN "Main/charmrun")
-  # Ninja puts chamrun to build dir
-  IF(CMAKE_GENERATOR STREQUAL "Ninja")
-    SET(CHARMRUN "./charmrun")
   ENDIF()
 
   # Setup code coverage target

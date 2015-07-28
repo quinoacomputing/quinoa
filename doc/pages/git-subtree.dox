@@ -1,23 +1,30 @@
 /*!
-  \page      subtree Git subtree with TPLs
+  \page      subtree Git subtree with TPLs and tools
 
-Quinoa uses git subtree to work with third-party libraries (TPLs). This allows
-easy update to their new version, records all TPL's history (including branches
-and tags), easily allows contributing upstream, and makes it easy to quickly try
-out development features of a TPL. In addition, only those developers need to
-learn git subtree who expect to contribute to TPLs upstream.
+Quinoa uses git subtree to work with third-party libraries (TPLs) and auxiliary
+tools. This allows easy update to their new version, records all TPLs' and
+tools' histories (including branches and tags), easily allows contributing
+upstream, and makes it easy to quickly try out development features of a TPL or
+a tool. In addition, only those developers need to learn git subtree who expect
+to contribute to TPLs or tools upstream.
 
-This page explains how to use git subtree to work with TPLs. This setup is only
-required
+Note that from the viewpoint of git subtree there is no difference between TPLs
+and tools, only that TPLs are imported into directory `tpl' while tools are
+imported into directory `tool`.
 
- - if you expect to make changes to TPLs (located in <quinoa>/tpl/src) and want
-   to push those changes upstream to the TPL, or
+This page explains how to use git subtree to work with TPLs and tools. This
+setup is only required
 
- - if you want to update a TPL to a new version.
+ - if you expect to make changes to
+   [TPLs](https://github.com/jbakosi/quinoa/blob/master/tpl/src) or
+   [tools](https://github.com/jbakosi/quinoa/blob/master/tool/src) and want to
+   push those changes upstream to the TPL or tool, or
+
+ - if you want to update a TPL or a tool to a new version.
 
 Otherwise you do not need this setup.
 
-### Create remote tracking branches pointing to TPLs used via git subtree
+### Create remote tracking branches pointing to TPLs and tools used via git subtree
 
 These remote tracking branches are not strictly required to use git subtree, but
 make life easier.
@@ -35,16 +42,17 @@ make life easier.
      $ git remote add --tags -f hypre git@github.com:jbakosi/HYPRE.git
      $ git remote add --tags -f rngsse2 git@github.com:jbakosi/RNGSSE2.git
      $ git remote add --tags -f testu01 git@github.com:jbakosi/TestU01-threadsafe.git
+     $ git remote add --tags -f ndiff git@github.com:jbakosi/ndiff.git
    \endcode
 
-### Git subtree commands to initially merge in a set of commits (squashed) from the TPLs
+### Git subtree commands to initially merge in a set of commits (squashed) from the TPLs and tools
 
-The TPL commit up to which the merge is applied is given by a (remote, i.e., the
-TPL's) branch name, tag, or commit id. Note that these commands have already
-been issued to initially merge in the subtrees. Even if you expect to push
-updates to TPLs, you do not need to run these commands, as these merges have
-already been applied. They are only here for documentation of what and how it
-has been done to set up the subtrees.
+The TPL or tool commit up to which the merge is applied is given by a (remote,
+i.e., the TPL's or tool's) branch name, tag, or commit id. Note that these
+commands have already been issued to initially merge in the subtrees. Even if
+you expect to push updates to TPLs or tools, you do not need to run these
+commands, as these merges have already been applied. They are only here for
+documentation of what and how it has been done to set up the subtrees.
 
    \code{.sh}
      $ git subtree add --prefix=tpl/src/charm charm v6.6.0 --squash
@@ -59,6 +67,7 @@ has been done to set up the subtrees.
      $ git subtree add --prefix=tpl/src/hypre hypre master --squash
      $ git subtree add --prefix=tpl/src/rngsse2 rngsse2 master --squash
      $ git subtree add --prefix=tpl/src/testu01 testu01 master --squash
+     $ git subtree add --prefix=tool/src/ndiff ndiff master --squash
    \endcode
 
 ### Example git command to pull the latest changes to TPL charm
@@ -98,7 +107,7 @@ If you are happy with the diff, push the changes to the TPL:
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Tue 07 Jul 2015 05:01:20 AM MDT
+<em>Page last updated:</em> Tue 28 Jul 2015 03:10:15 PM MDT
 <em>Copyright 2012-2015, Jozsef Bakosi.</em>
 </small></div>
 */

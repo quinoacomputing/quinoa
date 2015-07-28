@@ -57,7 +57,7 @@ if (NOT NO_SYSTEM_BOOST)
   find_package(Boost REQUIRED)
 endif()
 if(Boost_FOUND)
-  #message(STATUS "Boost at ${Boost_INCLUDE_DIR} (include)")
+  message(STATUS "Boost at ${Boost_INCLUDE_DIR} (include)")
   include_directories(${Boost_INCLUDE_DIR})
 endif()
 
@@ -67,7 +67,7 @@ if (NOT NO_SYSTEM_NETCDF)
   find_package(NetCDF REQUIRED)
 endif()
 if(NETCDF_FOUND)
-  #message(STATUS "NetCDF at ${NETCDF_INCLUDES} (include) and at ${NETCDF_LIBRARIES} (lib)")
+  message(STATUS "NetCDF at ${NETCDF_INCLUDES} (include) and at ${NETCDF_LIBRARIES} (lib)")
 endif()
 
 #### ExodusII/Nemesis library
@@ -76,7 +76,7 @@ if (NOT NO_SYSTEM_EXODUS)
   find_package(Exodus REQUIRED)
 endif()
 if(EXODUS_FOUND)
-  #message(STATUS "ExodusII/Nemesis at ${EXODUS_INCLUDES} (exodus include), ${NEMESIS_INCLUDES} (nemesis include) and at ${EXODUS_LIBRARIES} (exodus lib), ${NEMESIS_LIBRARIES} (nemesis lib)")
+  message(STATUS "ExodusII/Nemesis libraries at ${EXODUS_INCLUDES} (exodus include), ${NEMESIS_INCLUDES} (nemesis include) and at ${EXODUS_LIBRARIES} (exodus lib), ${NEMESIS_LIBRARIES} (nemesis lib), Exodiff executable at ${EXODIFF_EXECUTABLE}")
 endif()
 
 #### Zoltan library
@@ -85,7 +85,7 @@ if (NOT NO_SYSTEM_ZOLTAN)
   find_package(Zoltan REQUIRED)
 endif()
 if(ZOLTAN_FOUND)
-  #message(STATUS "Zoltan found at ${ZOLTAN_INCLUDES} (include) and at ${ZOLTAN_LIBRARIES} (lib)")
+  message(STATUS "Zoltan at ${ZOLTAN_INCLUDES} (include) and at ${ZOLTAN_LIBRARIES} (lib)")
 endif()
 
 #### Hypre library
@@ -94,7 +94,7 @@ if (NOT NO_SYSTEM_HYPRE)
   find_package(Hypre REQUIRED)
 endif()
 if(HYPRE_FOUND)
-  #message(STATUS "Hypre found at ${HYPRE_INCLUDES} (include) and at ${HYPRE_LIBRARIES} (lib)")
+  message(STATUS "Hypre at ${HYPRE_INCLUDES} (include) and at ${HYPRE_LIBRARIES} (lib)")
 endif()
 
 #### BLAS/LAPACK library
