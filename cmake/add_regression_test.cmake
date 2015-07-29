@@ -14,14 +14,10 @@
 # Mandatory arguments:
 # --------------------
 #
-# <test_name>
+# <test_name>      Name of the test. Note that "_PEs{NUMPES}" will be appended
+# to the name. See also argument NUMPES below.
 #
-# Name of the test. Note that "_PEs{NUMPES}" will be appended to the name. See
-# also argument NUMPES below.
-#
-# <executable>
-#
-# Name of the executable to test.
+# <executable>      Name of the executable to test.
 #
 # Optional arguments:
 # -------------------
@@ -43,10 +39,10 @@
 # exodiff.
 #
 # TEXT_BASELINE stat.std      Textual file containing the known good solution.
-# If unspecified, no textuall diff is performed. Default: "".
+# If unspecified, no textual diff is performed. Default: "".
 #
 # TEXT_RESULT stat.txt      Textual file produced by the test to be tested. If
-# unspecified, no textual diff is performed.  Default: "".
+# unspecified, no textual diff is performed. Default: "".
 #
 # TEXT_DIFF_PROG_CONF ndiff.cfg      Textual diff program configuration file.
 # Default: "".
