@@ -1,4 +1,4 @@
-# See regression/CMakeLists.txt for documentation on the arguments to
+# See cmake/add_regression_test.cmake for documentation on the arguments to
 # add_regression_test().
 
 add_regression_test(Dirichlet ${WALKER_EXECUTABLE}
