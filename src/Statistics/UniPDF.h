@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/UniPDF.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:08:28 PM MDT
+  \date      Mon 20 Jul 2015 05:56:53 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Univariate PDF estimator
   \details   Univariate PDF estimator. This class can be used to estimate a
@@ -111,6 +111,21 @@ class UniPDF {
     std::size_t m_nsample;      //!< Number of samples collected
     map_type m_pdf;             //!< Probability density function
 };
+
+//! Output univariate PDF to output stream
+//! \param[inout] os Stream to output to
+//! \param[in] p PDF to output
+//! \return Updated stream
+//! \note Used for debugging.
+//! \author J. Bakosi
+static inline
+std::ostream& operator<< ( std::ostream& os, const tk::UniPDF& p ) {
+  os << p.binsize() << ", " << p.nsample() << ": ";
+  std::map< typename tk::UniPDF::key_type, tk::real >
+    sorted( p.map().begin(), p.map().end() );
+  for (const auto& b : sorted) os << '(' << b.first << ',' << b.second << ") ";
+  return os;
+}
 
 } // tk::
 
