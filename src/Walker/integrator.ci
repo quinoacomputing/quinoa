@@ -2,7 +2,7 @@
 /*!
   \file      src/Walker/integrator.ci
   \author    J. Bakosi
-  \date      Thu 16 Apr 2015 12:07:01 PM MDT
+  \date      Wed 15 Jul 2015 08:20:32 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Charm++ module interface file for Integrator
   \details   Charm++ module interface file for Integrator
@@ -11,25 +11,16 @@
 
 module integrator {
 
-  // Note that template chare Integrator depends on chare Distributor and in
-  // turn Distributor depends on Integrator (see also the interface file
-  // distributor.ci). This is a mutual dependency and it is made to work with
-  // one of the chares (Integrator) being a template chare. Note: if this
-  // extern module dependency is removed the code does not compile. See also
-  // the Charm++ manual on more information on template chares.
   extern module distributor;
+  extern module collector;
 
   namespace walker {
 
-    // List all possible specializations of templated chare to instantiate
-    // registration and delivery of code for the individual specializations
-    chare Integrator< CProxy_Distributor >;
-
-    template< class Proxy >
-    chare Integrator {
-      entry Integrator( Proxy& proxy,
-                        uint64_t npar,
-                        tk::real dt,
+    array [1D] Integrator {
+      entry Integrator( CProxy_Distributor& hostproxy,
+                        CProxy_Collector& collproxy,
+                        uint64_t npar );
+      entry void setup( tk::real dt,
                         uint64_t it,
                         const std::map< tk::ctr::Product, tk::real >& moments );
       entry void advance( tk::real dt,
