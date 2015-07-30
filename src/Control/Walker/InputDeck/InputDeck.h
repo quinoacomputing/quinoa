@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:18:02 PM MDT
+  \date      Fri 17 Jul 2015 08:46:46 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Walker's input deck
   \details   Walker's input deck
@@ -247,6 +247,15 @@ class InputDeck :
       boost::mpl::for_each< ncomps::tags >( depvar( this, vars ) );
       return vars;
     }
+
+    //! Query if there are any statistics or PDFs to estimate
+    //! \return True if there are any statistics or PDFs to estimate
+    bool stat()
+    { return !get< tag::stat >().empty() || !get< tag::pdf >().empty(); }
+
+    //! Query if there are any PDFs to estimate
+    //! \return True if there are any PDFs to estimate
+    bool pdf() { return !get< tag::pdf >().empty(); }
 
     //! Pack/Unpack
     void pup( PUP::er& p ) {

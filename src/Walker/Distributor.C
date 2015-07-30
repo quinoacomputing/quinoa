@@ -2,7 +2,7 @@
 /*!
   \file      src/Walker/Distributor.C
   \author    J. Bakosi
-  \date      Tue 02 Jun 2015 10:30:41 AM MDT
+  \date      Mon 20 Jul 2015 07:48:36 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Distributor drives the time integration of differential equations
   \details   Distributor drives the time integration of differential equations.
@@ -29,17 +29,6 @@
 #include <boost/format.hpp>
 #include <boost/optional.hpp>
 
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wconversion"
-#endif
-
-#include <charm.h>
-
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic pop
-#endif
-
 #include "Print.h"
 #include "Tags.h"
 #include "StatCtr.h"
@@ -50,6 +39,7 @@
 #include "Integrator.h"
 #include "DiffEqStack.h"
 #include "TxtStatWriter.h"
+#include "PDFUtil.h"
 #include "PDFWriter.h"
 #include "Options/PDFFile.h"
 #include "Options/PDFPolicy.h"
@@ -62,9 +52,9 @@ using walker::Distributor;
 
 Distributor::Distributor( const ctr::CmdLine& cmdline ) :
   m_print( cmdline.get< tag::verbose >() ? std::cout : std::clog ),
-  m_count( 0, 0, 0, 0, 0, 0 ),
   m_output( false, false ),
   m_it( 0 ),
+  m_nchare( 0 ),
   m_t( 0.0 ),
   m_nameOrdinary( g_inputdeck.momentNames( tk::ctr::ordinary ) ),
   m_nameCentral( g_inputdeck.momentNames( tk::ctr::central ) ),
@@ -79,22 +69,29 @@ Distributor::Distributor( const ctr::CmdLine& cmdline ) :
   // Compute load distribution given total work (= number of particles) and
   // user-specified virtualization
   uint64_t chunksize, remainder;
-  m_count.get< tag::chare >() =
-    tk::linearLoadDistributor(
-       g_inputdeck.get< tag::cmd, tag::virtualization >(),
-       g_inputdeck.get< tag::discr, tag::npar >(),
-       CkNumPes(),
-       chunksize,
-       remainder );
+  m_nchare = tk::linearLoadDistributor(
+               g_inputdeck.get< tag::cmd, tag::virtualization >(),
+               g_inputdeck.get< tag::discr, tag::npar >(),
+               CkNumPes(),
+               chunksize,
+               remainder );
+
+  // Compute total number of particles distributed over all workers
+  // Note that this number will not necessarily be the same as given by the
+  // user, coming from g_inputdeck.get< tag::discr, tag::npar >(), since each
+  // Charm++ chare array element constructor takes this chunksize argument,
+  // which equals the number of particles the array element (worker) will work
+  // on.
+  m_npar = static_cast< tk::real >( m_nchare * chunksize );
 
   // Print out info on what will be done and how
-  info( chunksize, remainder );
+  info( chunksize );
 
   // Start timer measuring total integration time
   m_timer.emplace_back();
 
   // Compute size of initial time step
-  const auto dt = computedt();
+  m_dt = computedt();
 
   // Construct and initialize map of statistical moments
   for (const auto& product : g_inputdeck.get< tag::stat >())
@@ -107,20 +104,20 @@ Distributor::Distributor( const ctr::CmdLine& cmdline ) :
   // Activate SDAG-wait for estimation of PDFs at select times
   if ( !(m_it % g_inputdeck.get< tag::interval, tag::pdf >()) ) wait4pdf();
 
+  // Create statistics merger chare group collecting chare contributions
+  CProxy_Collector collproxy = CProxy_Collector::ckNew( thisProxy );
+
   // Fire up asynchronous differential equation integrators
-  for (uint64_t i = 1; i < m_count.get< tag::chare >(); ++i)
-    m_proxy.push_back(
-      CProxyInt::ckNew( thisProxy, chunksize, dt, m_it, m_moments ) );
-  m_proxy.push_back(
-    CProxyInt::ckNew( thisProxy, chunksize+remainder, dt, m_it, m_moments ) );
+  m_intproxy =
+    CProxy_Integrator::ckNew( thisProxy, collproxy, chunksize,
+                              static_cast<int>( m_nchare ) );
 }
 
 void
-Distributor::info( uint64_t chunksize, uint64_t remainder ) const
+Distributor::info( uint64_t chunksize ) const
 //******************************************************************************
 //  Print information at startup
 //! \param[in] chunksize Chunk size, see Base/LoadDistribution.h
-//! \param[in] remainder Remainder, see Base/LoadDistribution.h
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -180,14 +177,16 @@ Distributor::info( uint64_t chunksize, uint64_t remainder ) const
   m_print.section( "Load distribution" );
   m_print.item( "Virtualization [0.0...1.0]",
                 g_inputdeck.get< tag::cmd, tag::virtualization >() );
-  m_print.item( "Load (number of particles)",
-                g_inputdeck.get< tag::discr, tag::npar >() );
   m_print.item( "Number of processing elements", CkNumPes() );
-  m_print.item( "Number of work units",
-                std::to_string( m_count.get< tag::chare >() ) + " (" +
-                std::to_string( m_count.get< tag::chare >()-1 ) + "*" +
-                std::to_string( chunksize ) + "+" +
-                std::to_string( chunksize+remainder ) + ")" );
+  m_print.item( "Number of work units", m_nchare );
+  m_print.item( "User load (# of particles)",
+                g_inputdeck.get< tag::discr, tag::npar >() );
+  m_print.item( "Chunksize (load per work unit)", chunksize );
+  m_print.item( "Actual load (# of particles)",
+                std::to_string( m_nchare * chunksize ) +
+                " (=" +
+                std::to_string( m_nchare ) + "*" +
+                std::to_string( chunksize ) + ")" );
 
   // Print out time integration header
   if (g_inputdeck.get< tag::discr, tag::nstep >()) {
@@ -214,138 +213,89 @@ Distributor::computedt()
 }
 
 void
-Distributor::init()
+Distributor::init() const
 //******************************************************************************
-// Wait for all integrators to finish initialization
-//! \author  J. Bakosi
-//******************************************************************************
-{
-  // Increase number of integrators completing initialization
-  ++m_count.get< tag::init >();
-
-  // Wait for all integrators completing initialization
-  if (m_count.get< tag::init >() == m_count.get< tag::chare >())
-    mainProxy.timestamp( "Initial conditions", m_timer[0].dsec() );
-}
-
-void
-Distributor::estimateOrd( const std::vector< tk::real >& ord )
-//******************************************************************************
-// Wait for all integrators to finish accumulation of the ordinary moments
-//! \param[in] ord Partially accumulated ordinary moments contributed by caller
+// Reduction target indicating that all integrators finished initialization
+//! \details Upon calling this Charm++ reduction target, we simply put in a time
+//!   stamp measuring setting the initial conditions.
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // Increase number of integrators completing the accumulation of the ordinary
-  // moments
-  ++m_count.get< tag::ordinary >();
+  mainProxy.timestamp( "Initial conditions", m_timer[0].dsec() );
+}
+
+void
+Distributor::estimateOrd( tk::real* ord, std::size_t n )
+//******************************************************************************
+// Estimate ordinary moments
+//! \param[in] ord Ordinary moments (sum) collected over all chares
+//! \param[in] n Number of ordinary moments in array ord
+//! \author J. Bakosi
+//******************************************************************************
+{
+  Assert( n == m_ordinary.size(),
+          "Number of ordinary moments contributed not equal to expected" );
 
   // Add contribution from PE to total sums, i.e., u[i] += v[i] for all i
   for (std::size_t i=0; i<m_ordinary.size(); ++i) m_ordinary[i] += ord[i];
 
-  // Wait for all integrators completing accumulation of ordinary moments
-  if (m_count.get< tag::ordinary >() == m_count.get< tag::chare >()) {
-    // Finish computing moments, i.e., divide sums by the number of samples
-    for (auto& m : m_ordinary)
-      m /= static_cast<tk::real>( g_inputdeck.get< tag::discr, tag::npar >() );
-    // Activate SDAG trigger signaling that ordinary moments have been estimated
-    estimateOrdDone();
-  }
+  // Finish computing moments, i.e., divide sums by the number of samples
+  for (auto& m : m_ordinary) m /= m_npar;
+
+  // Activate SDAG trigger signaling that ordinary moments have been estimated
+  estimateOrdDone();
 }
 
 void
-Distributor::estimateCen( const std::vector< tk::real >& cen )
+Distributor::estimateCen( tk::real* cen, std::size_t n )
 //******************************************************************************
-// Wait for all integrators to finish accumulation of the central moments
-//! \param[in] cen Partially accumulated central moments contributed by caller
+// Estimate ordinary moments
+//! \param[in] cen Central moments (sum) collected over all chares
+//! \param[in] n Number of central moments in array cen
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // Increase number of integrators completing the accumulation of the central
-  // moments
-  ++m_count.get< tag::central >();
+  Assert( n == m_central.size(),
+          "Number of central moments contributed not equal to expected" );
 
   // Add contribution from PE to total sums, i.e., u[i] += v[i] for all i
   for (std::size_t i=0; i<m_central.size(); ++i) m_central[i] += cen[i];
 
-  // Wait for all integrators completing accumulation of central moments
-  if (m_count.get< tag::central >() == m_count.get< tag::chare >()) {
-    // Finish computing moments, i.e., divide sums by the number of samples
-    for (auto& m : m_central)
-      m /= static_cast<tk::real>( g_inputdeck.get< tag::discr, tag::npar >() );
-    // Activate SDAG trigger signaling that central moments have been estimated
-    estimateCenDone();
-  }
+  // Finish computing moments, i.e., divide sums by the number of samples
+  for (auto& m : m_central) m /= m_npar;
+
+  // Activate SDAG trigger signaling that central moments have been estimated
+  estimateCenDone();
 }
 
 void
-Distributor::estimateOrdPDF( const std::vector< tk::UniPDF >& updf,
-                             const std::vector< tk::BiPDF >& bpdf,
-                             const std::vector< tk::TriPDF >& tpdf )
+Distributor::estimateOrdPDF( CkReductionMsg* msg )
 //******************************************************************************
-// Wait for all integrators to finish accumulation of ordinary PDFs
-//! \param[in] updf Partially accumulated univariate PDFs contributed by caller
-//! \param[in] bpdf Partially accumulated bivariate PDFs contributed by caller
-//! \param[in] tpdf Partially accumulated trivariate PDFs contributed by caller
+// Estimate ordinary PDFs
+//! \param[in] Serialized tuple of vectors of uni-, bi-, and tri-variate PDFs
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // Increase number of integrators completing the accumulation of ordinary PDFs
-  ++m_count.get< tag::ordpdf >();
+  // Deserialize and merge PDFs
+  std::tie( m_ordupdf, m_ordbpdf, m_ordtpdf ) = tk::merge( msg );
 
-  // Add contribution from PE to total sums
-  std::size_t i = 0;
-  m_ordupdf.resize( updf.size() );
-  for (const auto& p : updf) m_ordupdf[i++].addPDF( p );
-
-  i = 0;
-  m_ordbpdf.resize( bpdf.size() );
-  for (const auto& p : bpdf) m_ordbpdf[i++].addPDF( p );
-
-  i = 0;
-  m_ordtpdf.resize( tpdf.size() );
-  for (const auto& p : tpdf) m_ordtpdf[i++].addPDF( p );
-
-  // Wait for all integrators completing accumulation of ordinary PDFs
-  if (m_count.get< tag::ordpdf >() == m_count.get< tag::chare >()) {
-    // Activate SDAG trigger signaling that ordinary PDFs have been estimated
-    estimateOrdPDFDone();
-  }
+  // Activate SDAG trigger signaling that ordinary PDFs have been estimated
+  estimateOrdPDFDone();
 }
 
 void
-Distributor::estimateCenPDF( const std::vector< tk::UniPDF >& updf,
-                             const std::vector< tk::BiPDF >& bpdf,
-                             const std::vector< tk::TriPDF >& tpdf )
+Distributor::estimateCenPDF( CkReductionMsg* msg )
 //******************************************************************************
-// Wait for all integrators to finish accumulation of central PDFs
-//! \param[in] updf Partially accumulated univariate PDFs contributed by caller
-//! \param[in] bpdf Partially accumulated bivariate PDFs contributed by caller
-//! \param[in] tpdf Partially accumulated trivariate PDFs contributed by caller
+// Estimate central PDFs
+//! \param[in] Serialized tuple of vectors of uni-, bi-, and tri-variate PDFs
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // Increase number of integrators completing the accumulation of PDFs
-  ++m_count.get< tag::cenpdf >();
+  // Deserialize and merge PDFs
+  std::tie( m_cenupdf, m_cenbpdf, m_centpdf ) = tk::merge( msg );
 
-  // Add contribution from PE to total sums
-  std::size_t i = 0;
-  m_cenupdf.resize( updf.size() );
-  for (const auto& p : updf) m_cenupdf[i++].addPDF( p );
-
-  i = 0;
-  m_cenbpdf.resize( bpdf.size() );
-  for (const auto& p : bpdf) m_cenbpdf[i++].addPDF( p );
-
-  i = 0;
-  m_centpdf.resize( tpdf.size() );
-  for (const auto& p : tpdf) m_centpdf[i++].addPDF( p );
-
-  // Wait for all integrators completing accumulation of PDFs
-  if (m_count.get< tag::cenpdf >() == m_count.get< tag::chare >()) {
-    // Activate SDAG trigger signaling that central PDFs have been estimated
-    estimateCenPDFDone();
-  }
+  // Activate SDAG trigger signaling that central PDFs have been estimated
+  estimateCenPDFDone();
 }
 
 void
@@ -591,10 +541,10 @@ Distributor::evaluateTime()
   ++m_it;
 
   // Compute size of next time step
-  const auto dt = computedt();
+  m_dt = computedt();
 
   // Advance physical time
-  m_t += dt;
+  m_t += m_dt;
 
   // Get physical time at which to terminate
   const auto term = g_inputdeck.get< tag::discr, tag::term >();
@@ -609,40 +559,40 @@ Distributor::evaluateTime()
   if ( std::fabs(m_t - term) > std::numeric_limits< tk::real >::epsilon() &&
        m_it < g_inputdeck.get< tag::discr, tag::nstep >() ) {
 
-    // Update map of statistical moments
-    std::size_t ord = 0;
-    std::size_t cen = 0;
-    for (const auto& product : g_inputdeck.get< tag::stat >())
-      if (tk::ctr::ordinary( product ))
-        m_moments[ product ] = m_ordinary[ ord++ ];
-      else
-        m_moments[ product ] = m_central[ cen++ ];
+    if (g_inputdeck.stat()) {
+      // Update map of statistical moments
+      std::size_t ord = 0;
+      std::size_t cen = 0;
+      for (const auto& product : g_inputdeck.get< tag::stat >())
+        if (tk::ctr::ordinary( product ))
+          m_moments[ product ] = m_ordinary[ ord++ ];
+        else
+          m_moments[ product ] = m_central[ cen++ ];
 
-    // Zero statistics counters and accumulators
-    m_count.get< tag::ordinary >() = m_count.get< tag::central >() = 0;
-    std::fill( begin(m_ordinary), end(m_ordinary), 0.0 );
-    std::fill( begin(m_central), end(m_central), 0.0 );
+      // Zero statistics counters and accumulators
+      std::fill( begin(m_ordinary), end(m_ordinary), 0.0 );
+      std::fill( begin(m_central), end(m_central), 0.0 );
 
-    // Re-activate SDAG-wait for estimation of ordinary statistics for next step
-    wait4ord();
-    // Re-activate SDAG-wait for estimation of central moments for next step
-    wait4cen();
+      // Re-activate SDAG-wait for estimation of ordinary statistics for next step
+      wait4ord();
+      // Re-activate SDAG-wait for estimation of central moments for next step
+      wait4cen();
 
-    // Selectively re-activate SDAG-wait for estimation of PDFs for next step
-    if ( !(m_it % g_inputdeck.get< tag::interval, tag::pdf >()) ) {
-      // Zero PDF counters and accumulators
-      m_count.get< tag::ordpdf >() = m_count.get< tag::cenpdf >() = 0;
-      for (auto& p : m_ordupdf) p.zero();
-      for (auto& p : m_ordbpdf) p.zero();
-      for (auto& p : m_ordtpdf) p.zero();
-      for (auto& p : m_cenupdf) p.zero();
-      for (auto& p : m_cenbpdf) p.zero();
-      for (auto& p : m_centpdf) p.zero();
-      wait4pdf();
+      // Selectively re-activate SDAG-wait for estimation of PDFs for next step
+      if ( !(m_it % g_inputdeck.get< tag::interval, tag::pdf >()) ) {
+        // Zero PDF counters and accumulators
+        for (auto& p : m_ordupdf) p.zero();
+        for (auto& p : m_ordbpdf) p.zero();
+        for (auto& p : m_ordtpdf) p.zero();
+        for (auto& p : m_cenupdf) p.zero();
+        for (auto& p : m_cenbpdf) p.zero();
+        for (auto& p : m_centpdf) p.zero();
+        wait4pdf();
+      }
     }
 
     // Continue with next time step with all integrators
-    for (auto& p : m_proxy) p.advance( dt, m_it, m_moments );
+    m_intproxy.advance( m_dt, m_it, m_moments );
 
   } else {
 
@@ -660,6 +610,19 @@ Distributor::evaluateTime()
     mainProxy.finalize();
 
   }
+}
+
+void
+Distributor::nostat()
+//******************************************************************************
+//  Charm++ reduction target enabling shortcutting sync points if no stats
+//! \details This reduction target is called if there are no statistics nor PDFs
+//!   to be estimated and thus some synchronization points can be skipped. Upon
+//!   this call we simply finish up the time step as usual.
+//! \author J. Bakosi
+//******************************************************************************
+{
+  evaluateTime();
 }
 
 void
@@ -699,7 +662,7 @@ Distributor::report()
     m_print << std::setfill(' ') << std::setw(8) << m_it << "  "
             << std::scientific << std::setprecision(6)
             << std::setw(12) << m_t << "  "
-            << g_inputdeck.get< tag::discr, tag::dt >() << "  "
+            << m_dt << "  "
             << std::setfill('0')
             << std::setw(3) << ete.hrs.count() << ":"
             << std::setw(2) << ete.min.count() << ":"
