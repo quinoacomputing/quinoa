@@ -16,3 +16,4 @@ include(add_regression_test)
 # Walker regression tests
 add_subdirectory(walker/Dirichlet)
 add_subdirectory(walker/GeneralizedDirichlet)
+add_subdirectory(walker/SkewNormal)
