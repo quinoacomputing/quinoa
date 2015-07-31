@@ -8,6 +8,7 @@ message("  WORKDIR (test run directory)                                : ${WORKD
 message("  CHARMRUN (used to run Charm++ executables)                  : ${CHARMRUN}")
 message("  TEST_EXECUTABLE (executable tested)                         : ${TEST_EXECUTABLE}")
 message("  TEST_EXECUTABLE_ARGS (executable arguments)                 : ${TEST_EXECUTABLE_ARGS}")
+message("  TEST_LABELS (test labels)                                   : ${TEST_LABLES}")
 message("  NUMPES (number of processing elements used for test)        : ${NUMPES}")
 
 message("  TEXT_DIFF_PROG (diff tool used for textual diffs)           : ${TEXT_DIFF_PROG}")
