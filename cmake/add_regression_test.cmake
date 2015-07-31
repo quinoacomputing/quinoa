@@ -116,12 +116,13 @@ function(ADD_REGRESSION_TEST test_name executable)
     endif()
   endforeach()
 
-  # Add the test
+  # Add the test. See test_runner.cmake for documentation of the arguments.
   add_test(NAME ${test_name}
            COMMAND ${CMAKE_COMMAND}
            -DTEST_NAME=${test_name}
            -DWORKDIR=${workdir}
            -DCHARMRUN=${CHARMRUN}
+           -DMPIRUN_BIND_ARGS=${MPIRUN_BIND_ARGS}
            -DTEST_EXECUTABLE=${CMAKE_BINARY_DIR}/Main/${executable}
            -DTEST_EXECUTABLE_ARGS=${ARGUMENTS}
            -DTEST_LABELS=${TEST_LABELS}

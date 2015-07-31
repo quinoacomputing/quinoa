@@ -427,6 +427,10 @@ enable_testing()
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../tool/src/ndiff
                  ${CMAKE_BINARY_DIR}/regression/ndiff)
 
+# Set mpirun arguments controling process binding
+set(MPIRUN_BIND_ARGS "-bind-to none -map-by node")
+message(STATUS "mpirun process binding for ctest: ${MPIRUN_BIND_ARGS}")
+
 # Include cmake code common to all regression tests
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../regression
                  ${CMAKE_BINARY_DIR}/regression
