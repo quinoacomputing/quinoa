@@ -14,37 +14,39 @@
 # Mandatory arguments:
 # --------------------
 #
-# <test_name>      Name of the test. Note that "_PEs{NUMPES}" will be appended
-# to the name. See also argument NUMPES below.
+# <test_name> - Name of the test. Note that "_PEs{NUMPES}" will be appended to
+# the name. See also argument NUMPES below.
 #
-# <executable>      Name of the executable to test.
+# <executable> - Name of the executable to test.
 #
 # Optional arguments:
 # -------------------
 #
-# NUMPES n      The number PEs to pass to charmrun, i.e., +pn. Default: 1.
+# NUMPES n - The number PEs to pass to charmrun, i.e., +pn. Default: 1.
 #
-# INPUTFILES file1 file2 ...      Input files required for the test. This list
-# of files includes files needed for running the test, e.g., control file
+# INPUTFILES file1 file2 ... - Input files required for the test. This list of
+# files includes files needed for running the test, e.g., control file
 # (containing user input), mesh file, etc., as well as file required for
 # evaluating the test, e.g., diff program configuration file. All input files
 # are soft-linked from the source dir to the build dir. Default: "".
 #
-# ARGS arg1 arg2 ...      Arguments to pass to executable tested. Default: "".
+# ARGS arg1 arg2 ... - Arguments to pass to executable tested. Default: "".
 #
-# TEXT_DIFF_PROG txtdiff      Diff program used for textual diffs. Default:
+# LABELS label1 label2 ... - Optional labels associated with the test.
+# Default: "${executable}".
+#
+# TEXT_DIFF_PROG txtdiff - Diff program used for textual diffs. Default:
 # numdiff.
 #
-# BIN_DIFF_PROG bindiff      Diff program used for binary diffs. Default:
-# exodiff.
+# BIN_DIFF_PROG bindiff - Diff program used for binary diffs. Default: exodiff.
 #
-# TEXT_BASELINE stat.std      Textual file containing the known good solution.
-# If unspecified, no textual diff is performed. Default: "".
-#
-# TEXT_RESULT stat.txt      Textual file produced by the test to be tested. If
+# TEXT_BASELINE stat.std - Textual file containing the known good solution. If
 # unspecified, no textual diff is performed. Default: "".
 #
-# TEXT_DIFF_PROG_CONF ndiff.cfg      Textual diff program configuration file.
+# TEXT_RESULT stat.txt - Textual file produced by the test to be tested. If
+# unspecified, no textual diff is performed. Default: "".
+#
+# TEXT_DIFF_PROG_CONF ndiff.cfg - Textual diff program configuration file.
 # Default: "".
 #
 # Author: J. Bakosi
@@ -53,7 +55,7 @@
 function(ADD_REGRESSION_TEST test_name executable)
 
   set(oneValueArgs NUMPES TEXT_DIFF_PROG BIN_DIFF_PROG TEXT_BASELINE TEXT_RESULT TEXT_DIFF_PROG_CONF)
-  set(multiValueArgs INPUTFILES ARGS)
+  set(multiValueArgs INPUTFILES ARGS LABELS)
   cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}"
                         ${ARGN})
 
@@ -66,6 +68,13 @@ function(ADD_REGRESSION_TEST test_name executable)
     set(NUMPES ${ARG_NUMPES})
     list(APPEND test_properties PROCESSORS ${ARG_NUMPES})
   endif()
+  # Add labels to test
+  set(TEST_LABELS ${executable})        # ${executable} is always a label
+  if (ARG_LABELS)
+    list(APPEND TEST_LABELS LABELS ${ARG_LABELS})
+  endif()
+  list(APPEND test_properties LABELS ${TEST_LABELS})
+
   # Set textual diff tool
   set(TEXT_DIFF_PROG ${NDIFF_EXECUTABLE})
   if (ARG_TEXT_DIFF_PROG)
@@ -115,6 +124,7 @@ function(ADD_REGRESSION_TEST test_name executable)
            -DCHARMRUN=${CHARMRUN}
            -DTEST_EXECUTABLE=${CMAKE_BINARY_DIR}/Main/${executable}
            -DTEST_EXECUTABLE_ARGS=${ARGUMENTS}
+           -DTEST_LABELS=${TEST_LABELS}
            -DNUMPES=${NUMPES}
            -DTEXT_DIFF_PROG=${TEXT_DIFF_PROG}
            -DTEXT_DIFF_PROG_ARGS=
