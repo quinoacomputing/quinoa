@@ -50,10 +50,10 @@ testing:
  - A random number generator test suite subjects generators to stringent
    statistical tests which enables quantitative ranking of all generators
    available with respect to their quality and computational cost
- - A unit test suite with [code coverage](../../unittest_coverage/index.html)
+ - A unit test suite with [code coverage](unittest_coverage/index.html)
    analysis is used to test the smallest units of code
  - A regression test suite with
-   [code coverage](../../regression_coverage/index.html) analysis tests features
+   [code coverage](regression_coverage/index.html) analysis tests features
    larger than the smallest units, such as multiple algorithms coupled to solve
    a differential equation
  - A ([planned](http://lcamtuf.coredump.cx/afl)) [fuzz
@@ -201,7 +201,7 @@ simultaneously considered at all times and from the outset.
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Sun 02 Aug 2015 07:28:03 AM MDT
+<em>Page last updated:</em> Sun 02 Aug 2015 10:28:33 PM MDT
 <em>Copyright 2012-2015, Jozsef Bakosi.</em>
 </small></div>
 */
