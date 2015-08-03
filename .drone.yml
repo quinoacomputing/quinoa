@@ -1,4 +1,4 @@
-image: jbakosi/quinoa-docker:debian-testing-gnu-alltpl
+image: jbakosi/quinoa-docker:debian-testing-clang-alltpl
 
 script:
   - mkdir -p tpl/build
@@ -10,5 +10,5 @@ script:
   - cd build
   - cmake -D CMAKE_CXX_COMPILER=mpic++ -D CMAKE_C_COMPILER=mpicc -D CMAKE_BUILD_TYPE=Debug -D STDLIBCPP=libstdc++ ../src
   - make -sj4
-  - Main/charmrun +p4 Main/unittest -v
-  - ctest -j4
+#  - Main/charmrun +p4 Main/unittest -v
+#  - ctest -j4
