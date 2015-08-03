@@ -88,7 +88,7 @@ set(REGTEST_EXECUTABLE "regtest")
 set(UNITTEST_EXECUTABLE "unittest")
 set(MESHCONV_EXECUTABLE "meshconv")
 set(WALKER_EXECUTABLE "walker")
-set(ALL_EXECUTABLES "${INCITER_EXECUTABLE};${RNGTEST_EXECUTABLE};${REGTEST_EXECUTABLE};${UNITTEST_EXECUTABLE};${MESHCONV_EXECUTABLE};${WALKER_EXECUTABLE}")
+set(ALL_QUINOA_EXECUTABLES "${INCITER_EXECUTABLE};${RNGTEST_EXECUTABLE};${REGTEST_EXECUTABLE};${UNITTEST_EXECUTABLE};${MESHCONV_EXECUTABLE};${WALKER_EXECUTABLE}")
 
 # Get git revision
 include(GetGitRevisionDescription)
@@ -289,20 +289,10 @@ message(STATUS "charmrun executable: ${CHARMRUN}")
 # Attempt to find tools required for code coverage analysis
 include(DetectCodeCoverage)
 
-# Add code coverage target
+# Set compiler flags to perform code coverage analysis
 if(CODE_COVERAGE)
-  # Set compiler flags to perform code coverage analysis
   set(CMAKE_CXX_FLAGS
       "${CMAKE_CXX_FLAGS} -O0 --coverage -fprofile-arcs -ftest-coverage")
-  # Set test runner executable
-  set(testrunner "Main/${UNITTEST_EXECUTABLE}")
-  # Setup code coverage target
-  setup_target_for_coverage(coverage ${testrunner} unittest_coverage
-                            ${PROCESSOR_COUNT} "-v")
-  # Make test_coverage target dependent on all executables
-  add_dependencies( "coverage" ${ALL_EXECUTABLES} )
-  # Output that code coverage has been enabled
-  message(STATUS "Enabling code coverage target 'coverage' for all executables (${ALL_EXECUTABLES}) tested by Main/${UNITTEST_EXECUTABLE} on ${PROCESSOR_COUNT} CPUs, output to ./unittest_coverage/index.html")
 endif()
 
 # Set data layout for particle properties
@@ -435,3 +425,22 @@ message(STATUS "mpirun process binding for ctest: ${MPIRUN_BIND_ARGS}")
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../regression
                  ${CMAKE_BINARY_DIR}/regression
                  EXCLUDE_FROM_ALL)
+
+# Setup code coverage for unit tests
+if(CODE_COVERAGE)
+  # Setup test coverage target. Make it dependend on all quinoa executables.
+  setup_target_for_coverage(unittest_coverage unit
+                            ${CHARMRUN}
+                            TESTRUNNER_ARGS
+                            +p${PROCESSOR_COUNT} Main/${UNITTEST_EXECUTABLE} -v
+                            DEPENDS ${ALL_QUINOA_EXECUTABLES})
+endif()
+
+# Setup code coverage for regression tests
+if(CODE_COVERAGE)
+  # Setup test coverage target. Make it dependend on all quinoa executables.
+  setup_target_for_coverage(regression_coverage "regression"
+                            ${CMAKE_CTEST_COMMAND}
+                            TESTRUNNER_ARGS -j${PROCESSOR_COUNT}
+                            DEPENDS ${ALL_QUINOA_EXECUTABLES} numdiff)
+endif()

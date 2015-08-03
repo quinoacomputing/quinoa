@@ -1,26 +1,39 @@
 # ##############################################################################
 # Function to add code coverage target
 #
-# setup_target_for_coverage(<_targetname> <_testrunner> <_outputname> <_ncpus>)
+# setup_target_for_coverage( <targetname> <suite> <testrunner>
+#                            [TESTRUNNER_ARGS ...]
+#                            [DEPENDS dep1 dep2 ... ] )
 #
 # Mandatory arguments:
 # --------------------
 #
-# _targetname      The name of new the custom make target
-# _testrunner      The name of the target which runs the tests.
-# _outputname      HTML report is generated in _outputname/index.html
-# _ncpus           Nunmber of CPU cores testrunner should use
+# targetname - The name of the code coverage target. The HTML report on code
+# coverage is generated at the path ./${targetname}/index.html.
+#
+# suite - Test suite name to be displayed in HTML report title.
+#
+# testrunner - Command line of the test runner.
 #
 # Optional arguments:
 # -------------------
 #
-# Are recognized. Pass them in list form, e.g.: "-v;-g;group" for passing '-v
-# -g group'.
+# TESTRUNNER_ARGS arg1 arg2 ... - Optional arguments to test runner. Pass them
+# in list form, e.g.: "-v;-g;group" for passing '-v -g group'. Default: "".
+#
+# DEPENDS dep1 dep2 ... - Optional dependencies added to test coverage target.
+# Default: "". Here all dependencies should be given that should be covered by
+# the test suite the coverage is being setup for, as well as those that are
+# required for successfully building the tests and the test runner.
 #
 # Author: J. Bakosi
 #
 # ##############################################################################
-FUNCTION(SETUP_TARGET_FOR_COVERAGE _targetname _testrunner _outputname _ncpus)
+FUNCTION(SETUP_TARGET_FOR_COVERAGE targetname suite testrunner)
+
+  set(multiValueArgs TESTRUNNER_ARGS DEPENDS)
+  cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}"
+                        ${ARGN})
 
   IF(NOT LCOV)
     MESSAGE(FATAL_ERROR "lcov not found! Aborting...")
@@ -31,19 +44,19 @@ FUNCTION(SETUP_TARGET_FOR_COVERAGE _targetname _testrunner _outputname _ncpus)
   ENDIF()
 
   # Setup code coverage target
-  ADD_CUSTOM_TARGET(${_targetname}
+  ADD_CUSTOM_TARGET(${targetname}
     # Cleanup lcov
-    ${LCOV} --directory . --zerocounters
+    COMMAND ${LCOV} --directory . --zerocounters
     # Capture initial state yielding zero coverage baseline
-    COMMAND ${LCOV} --capture --initial --directory . --output-file ${_outputname}.base.info
+    COMMAND ${LCOV} --capture --initial --directory . --output-file ${targetname}.base.info
     # Run test suite
-    COMMAND ${CHARMRUN} +p${_ncpus} ${_testrunner} ${ARGV4}
+    COMMAND ${testrunner} ${ARG_TESTRUNNER_ARGS}
     # Capture lcov counters
-    COMMAND ${LCOV} --capture --rc lcov_branch_coverage=1 --directory . --output-file ${_outputname}.test.info
+    COMMAND ${LCOV} --capture --rc lcov_branch_coverage=1 --directory . --output-file ${targetname}.test.info
     # Combine trace files
-    COMMAND ${LCOV} --rc lcov_branch_coverage=1 --add-tracefile ${_outputname}.base.info --add-tracefile ${_outputname}.test.info --output-file ${_outputname}.total.info
+    COMMAND ${LCOV} --rc lcov_branch_coverage=1 --add-tracefile ${targetname}.base.info --add-tracefile ${targetname}.test.info --output-file ${targetname}.total.info
     # Filter out unwanted files
-    COMMAND ${LCOV} --rc lcov_branch_coverage=1 --remove ${_outputname}.total.info 'UnitTest/tests/*' 'c++/*' 'boost/*' 'charm/*' '*.decl.h' '*.def.h' 'openmpi/*' 'pstreams/*' 'pegtl/*' 'tut/*' 'moduleinit*' --output-file ${_outputname}.filtered.info
+    COMMAND ${LCOV} --rc lcov_branch_coverage=1 --remove ${targetname}.total.info 'UnitTest/tests/*' 'c++/*' 'boost/*' 'charm/*' '*.decl.h' '*.def.h' 'openmpi/*' 'pstreams/*' 'pegtl/*' 'tut/*' 'moduleinit*' --output-file ${targetname}.filtered.info
     # Copy over report customization files for genhtml
     COMMAND ${CMAKE_COMMAND} -E copy
             ${CMAKE_SOURCE_DIR}/../doc/quinoa.gcov.css
@@ -52,21 +65,24 @@ FUNCTION(SETUP_TARGET_FOR_COVERAGE _targetname _testrunner _outputname _ncpus)
             ${CMAKE_SOURCE_DIR}/../doc/quinoa.lcov.prolog
             ${CMAKE_BINARY_DIR}
     # Generate HTML report
-    COMMAND ${GENHTML} --legend --branch-coverage --demangle-cpp --css-file quinoa.gcov.css --html-prolog quinoa.lcov.prolog --title "${GIT_REFSPEC}:${GIT_SHA1}" -o ${_outputname} ${_outputname}.filtered.info
+    COMMAND ${GENHTML} --legend --branch-coverage --demangle-cpp --css-file quinoa.gcov.css --html-prolog quinoa.lcov.prolog --title "${GIT_REFSPEC}:${GIT_SHA1}" -o ${targetname} ${targetname}.filtered.info
     # Customize page headers in generated html to own
-    COMMAND find ${_outputname} -type f -print | xargs file | grep text | cut -f1 -d: | xargs sed -i 's/LCOV - code coverage report/Quinoa unit test code coverage report/g'
-    COMMAND find ${_outputname} -type f -print | xargs file | grep text | cut -f1 -d: | xargs sed -i 's/<td class="headerItem">Test:<\\/td>/<td class="headerItem">Commit:<\\/td>/g'
+    COMMAND find ${targetname} -type f -print | xargs file | grep text | cut -f1 -d: | xargs sed -i 's/LCOV - code coverage report/Quinoa ${suite} test code coverage report/g'
+    COMMAND find ${targetname} -type f -print | xargs file | grep text | cut -f1 -d: | xargs sed -i 's/<td class="headerItem">Test:<\\/td>/<td class="headerItem">Commit:<\\/td>/g'
     # Cleanup intermediate data
-    COMMAND ${CMAKE_COMMAND} -E remove ${_outputname}.base.info ${_outputname}.test.info ${_outputname}.total.info ${_outputname}.filtered.info
+    COMMAND ${CMAKE_COMMAND} -E remove ${targetname}.base.info ${targetname}.test.info ${targetname}.total.info ${targetname}.filtered.info
     # Set work directory for target
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
     # Echo what is being done
-    COMMENT "Code coverage report"
+    COMMENT "Quinoa ${suite} test code coverage report"
   )
 
-  # Show info where to find the report
-  ADD_CUSTOM_COMMAND(TARGET ${_targetname} POST_BUILD COMMAND ;
-    COMMENT "Code coverage report at ./${_outputname}/index.html"
-  )
+  # Make test coverage target dependent on optional dependencies passed in using
+  # keyword DEPENDS
+  add_dependencies(${targetname} ${ARG_DEPENDS})
+
+  # Output code coverage target enabled
+  string(REPLACE ";" " " ARGUMENTS "${ARG_TESTRUNNER_ARGS}")
+  message(STATUS "Enabling code coverage target '${targetname}' tested by '${testrunner} ${ARGUMENTS}' dependencies {${ARG_DEPENDS}}, accesst report at ./${targetname}/index.html")
 
 ENDFUNCTION()
