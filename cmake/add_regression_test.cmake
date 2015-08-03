@@ -95,7 +95,7 @@ function(ADD_REGRESSION_TEST test_name executable)
     string(REPLACE ";" " " ARGUMENTS "${ARG_ARGS}")
     string(CONCAT msg "${msg}, args: '${ARGUMENTS}'")
   endif()
-  message(STATUS ${msg})
+  #message(STATUS ${msg})
 
   # Set and create test run directory
   set(workdir ${CMAKE_CURRENT_BINARY_DIR}/${test_name})
