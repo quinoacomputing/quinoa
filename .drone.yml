@@ -1,4 +1,4 @@
-image: jbakosi/quinoa-docker:debian-testing-clang-alltpl
+image: jbakosi/quinoa-docker:debian-testing-gnu-alltpl
 
 script:
   - mkdir -p tpl/build
