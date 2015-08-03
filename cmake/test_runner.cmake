@@ -51,7 +51,7 @@ else() # Test command ran successfully, attempt to do diffs
     execute_process(COMMAND ${text_diff_command} RESULT_VARIABLE ERROR)
     # Check return value from textual diff command
     if(ERROR)
-      message("Textual diff failed to run: '${text_diff_command_string}' returned error code: ${ERROR}")
+      message(FATAL_ERROR "Textual diff failed to run: '${text_diff_command_string}' returned error code: ${ERROR}")
     endif()
 
   endif()

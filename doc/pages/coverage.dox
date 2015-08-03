@@ -1,0 +1,19 @@
+/*!
+  \page      coverage Code coverage reports
+
+In Quinoa code correctness is verified and quantified using
+[multiple levels](\ref correct) of testing. Here are various code coverage
+analysis reports for the current HEAD.
+
+- <a href="../../unittest_coverage/index.html"
+target="_blank">Unit test coverage report</a>
+
+- <a href="../../regression_coverage/index.html"
+target="_blank">Regression test coverage report</a>
+
+<hr>
+<div><small>
+<em>Page last updated:</em> Sun 02 Aug 2015 07:42:27 AM MDT
+<em>Copyright 2012-2015, Jozsef Bakosi.</em>
+</small></div>
+*/
