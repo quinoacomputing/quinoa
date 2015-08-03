@@ -2,7 +2,7 @@
 # 
 # \file      script/update_doc.sh
 # \author    J. Bakosi
-# \date      Tue 07 Jul 2015 06:19:16 AM MDT
+# \date      Sun 02 Aug 2015 08:12:50 PM MDT
 # \copyright 2012-2015, Jozsef Bakosi.
 # \brief     Update documentation and upload to github pages
 # 
@@ -16,6 +16,8 @@ git clone git@github.com:jbakosi/quinoa.git --branch gh-pages --single-branch do
 cd doc/html
 git rm -rf .
 cd -
+ninja unittest_coverage
+ninja regression_coverage
 ninja doc
 cd doc/html
 touch .nojekyll
