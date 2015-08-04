@@ -13,15 +13,17 @@ more detail on the beta SDE, see http://dx.doi.org/10.1080/14685248.2010.510843.
 \section walker_example_mixmassfracbeta_control Control file
 
 \verbatim
+# vim: filetype=sh:
+
 title "Test evolution of some stats in mass fraction mixing"
 
 walker
 
-  #nstep 0      # Max number of time steps
+  #nstep 1      # Max number of time steps
   term  5.0    # Max time
   dt    0.01    # Time step size
-  npar  100000   # Number of particles
-  ttyi  100      # TTY output interval
+  npar  10000   # Number of particles
+  ttyi  10      # TTY output interval
 
   rngs
     mkl_r250
@@ -34,10 +36,10 @@ walker
     ncomp 20
     init jointbeta
     icbeta
-      betapdf 0.2 0.2 0.0 1.0 end       # light = heavy
-      betapdf 0.2 0.8 0.0 1.0 end       # light > heavy
-      betapdf 0.8 0.2 0.0 1.0 end       # light < heavy
-      betapdf 2.0 2.0 0.0 1.0 end
+      betapdf 0.01 0.01 0.0 1.0 end     # light = heavy
+      betapdf 0.2 0.8 0.0 1.0 end       # light < heavy
+      betapdf 0.8 0.2 0.0 1.0 end       # light > heavy
+      betapdf 0.116517612 0.2 0.0 1.0 end # <r^3> approximately 0
       betapdf 2.0 5.0 0.0 1.0 end
     end
 #    init jointdelta
@@ -56,8 +58,10 @@ walker
     S          0.5  0.5  0.5  0.5  0.5 end
     rng mkl_r250
     rho2 1.0 1.0 1.0 1.0 1.0 end
+    #r 2.0 2.0 2.0 2.0 2.0 end
     #r 0.0101 0.0101 0.0101 0.0101 0.0101 end    # low-A
     r 9.0 9.0 9.0 9.0 9.0 end                  # high-A
+    #r 4.0 4.0 4.0 4.0 4.0 end
   end
 
   statistics
@@ -83,8 +87,14 @@ walker
     <y6y11> <y7y12> <y8y13> <y9y14> <y10y15>
     # <RY>
     <Y6Y1> <Y7Y2> <Y8Y3> <Y9Y4> <Y10Y5>
+    # <Rv^2>
+    <Y6y11y11> <Y7y12y12> <Y8y13y13> <Y9y14y14> <Y10y15y15>
+    # <rv^2>
+    <y6y11y11> <y7y12y12> <y8y13y13> <y9y14y14> <y10y15y15>
+    # <v^2>, specific volume variances
+    <y11y11> <y12y12> <y13y13> <y14y14> <y15y15>
 
-#    # stats required for mchomdecay
+#    # additional stats required for mchomdecay
 #    # <R^2>
 #    <Y6Y6> <Y7Y7> <Y8Y8> <Y9Y9> <Y10Y10>
 #    # <YR^2>
@@ -98,7 +108,7 @@ walker
   end
 
   pdfs
-    interval  100
+    interval  1
     filetype  txt
     policy    overwrite
     centering elem
@@ -107,12 +117,12 @@ walker
     p1( Y1 : 5.0e-3 )
     p2( Y2 : 5.0e-3 )
     p3( Y3 : 5.0e-3 )
-#    p4( Y4 : 1.0e-2 )
+    p4( Y4 : 1.0e-2 )
 #    p5( Y5 : 1.0e-2 )
     p6( Y6 : 5.0e-5 )
     p7( Y7 : 5.0e-5 )
     p8( Y8 : 5.0e-5 )
-#    p9( Y9 : 1.0e-2 )
+    p9( Y9 : 1.0e-2 )
 #    p10( Y10 : 1.0e-2 )
   end
 end
@@ -125,15 +135,15 @@ end
 
 \section walker_example_mixmassfracbeta_output Output
 \verbatim
-Running on 8 processors:  Main/walker -v -c ../../tmp/mixmassfracbeta.q -v
-charmrun>  /usr/bin/setarch x86_64 -R  mpirun -np 8  Main/walker -v -c ../../tmp/mixmassfracbeta.q -v
+Running on 8 processors:  Main/walker -v -c ../../tmp/mixmassfracbeta.q
+charmrun>  /usr/bin/setarch x86_64 -R  mpirun -np 8  Main/walker -v -c ../../tmp/mixmassfracbeta.q
 Charm++> Running on MPI version: 3.0
 Charm++> level of thread support used: MPI_THREAD_SINGLE (desired: MPI_THREAD_SINGLE)
 Charm++> Running in non-SMP mode: numPes 8
-Converse/Charm++ Commit ID: 91b9a77
+Converse/Charm++ Commit ID: 63927de
 CharmLB> Load balancer assumes all CPUs are same.
 Charm++> Running on 1 unique compute nodes (8-way SMP).
-Charm++> cpu topology info is gathered in 0.002 seconds.
+Charm++> cpu topology info is gathered in 0.003 seconds.
 
       ,::,`                                                            `.
    .;;;'';;;:                                                          ;;#
@@ -158,8 +168,8 @@ Charm++> cpu topology info is gathered in 0.002 seconds.
                    \__/\  /  (____  /____/__|_ \\___  >__|
                         \/        \/          \/    \/
 
-                                 < ENVIRONMENT >                                
-                                 ------ o ------                          
+                                 < ENVIRONMENT >
+                                 ------ o ------
 
  * Build environment:
  --------------------
@@ -167,27 +177,27 @@ Charm++> cpu topology info is gathered in 0.002 seconds.
      Executable                     : walker
      Version                        : 0.1
      Release                        : LA-CC-XX-XXX
-     Revision                       : 1206ad80adbb2a6f3a2f17d3fc0a1032586f4096
+     Revision                       : f6a3ee4346a62b76e564309672b1bc0b4c310ce2
      CMake build type               : DEBUG
      Asserts                        : on (turn off: CMAKE_BUILD_TYPE=RELEASE)
      Exception trace                : on (turn off: CMAKE_BUILD_TYPE=RELEASE)
      MPI C++ wrapper                : /opt/openmpi/1.8/clang/system/bin/mpicxx
      Underlying C++ compiler        : /usr/bin/clang++-3.5
-     Build date                     : Wed May 13 11:42:14 MDT 2015
+     Build date                     : Tue Aug  4 09:43:41 MDT 2015
 
  * Run-time environment:
  -----------------------
-     Date, time                     : Wed May 13 11:52:46 2015
+     Date, time                     : Tue Aug  4 10:47:39 2015
      Work directory                 : /home/jbakosi/code/quinoa/build/clang
      Executable (rel. to work dir)  : Main/walker
-     Command line arguments         : '-v -c ../../tmp/mixmassfracbeta.q -v'
+     Command line arguments         : '-v -c ../../tmp/mixmassfracbeta.q'
      Output                         : verbose (quiet: omit -v)
      Control file                   : ../../tmp/mixmassfracbeta.q
      Parsed control file            : success
 
 
-                                   < FACTORY >                                  
-                                   ---- o ----                            
+                                   < FACTORY >
+                                   ---- o ----
 
  * Particle properties data layout policy (CMake: LAYOUT):
  ---------------------------------------------------------
@@ -226,8 +236,8 @@ Charm++> cpu topology info is gathered in 0.002 seconds.
      Wright-Fisher                  : i:BDRZ, c:C
 
 
-                                   < PROBLEM >                                  
-                                   ---- o ----                            
+                                   < PROBLEM >
+                                   ---- o ----
 
  * Title: Test evolution of some stats in mass fraction mixing
  -------------------------------------------------------------
@@ -247,10 +257,10 @@ Charm++> cpu topology info is gathered in 0.002 seconds.
      coeff kappa' [5]               : { 1 1 1 1 1 }
      coeff rho2 [5]                 : { 1 1 1 1 1 }
      coeff r [5]                    : { 9 9 9 9 9 }
-     beta pds [comp1]               : { 0.2 0.2 0 1 }
+     beta pds [comp1]               : { 0.01 0.01 0 1 }
      beta pds [comp2]               : { 0.2 0.8 0 1 }
      beta pds [comp3]               : { 0.8 0.2 0 1 }
-     beta pds [comp4]               : { 2 2 0 1 }
+     beta pds [comp4]               : { 0.116518 0.2 0 1 }
      beta pds [comp5]               : { 2 5 0 1 }
 
  * Output filenames:
@@ -266,16 +276,16 @@ Charm++> cpu topology info is gathered in 0.002 seconds.
 
  * Output intervals:
  -------------------
-     TTY                            : 100
+     TTY                            : 10
      Statistics                     : 1
-     PDF                            : 100
+     PDF                            : 1
 
  * Statistical moments and distributions:
  ----------------------------------------
-     Estimated statistical moments  : <Y1> <Y2> <Y3> <Y4> <Y5> <Y6> <Y6Y1> <Y7> <Y7Y2> <Y8> <Y8Y3> <Y9> <Y9Y4> <Y10> <Y10Y5> <Y11> <Y12> <Y13> <Y14> <Y15> <y1y1> <y1y1y1> <y2y2> <y2y2y2> <y3y3> <y3y3y3> <y4y4> <y4y4y4> <y5y5> <y5y5y5> <y6y6> <y6y6y6> <y6y11> <y7y7> <y7y7y7> <y7y12> <y8y8> <y8y8y8> <y8y13> <y9y9> <y9y9y9> <y9y14> <y10y10> <y10y10y10> <y10y15> 
+     Estimated statistical moments  : <Y1> <Y2> <Y3> <Y4> <Y5> <Y6> <Y6Y1> <Y6y11y11> <Y7> <Y7Y2> <Y7y12y12> <Y8> <Y8Y3> <Y8y13y13> <Y9> <Y9Y4> <Y9y14y14> <Y10> <Y10Y5> <Y10y15y15> <Y11> <Y12> <Y13> <Y14> <Y15> <y1y1> <y1y1y1> <y2y2> <y2y2y2> <y3y3> <y3y3y3> <y4y4> <y4y4y4> <y5y5> <y5y5y5> <y6y6> <y6y6y6> <y6y11> <y6y11y11> <y7y7> <y7y7y7> <y7y12> <y7y12y12> <y8y8> <y8y8y8> <y8y13> <y8y13y13> <y9y9> <y9y9y9> <y9y14> <y9y14y14> <y10y10> <y10y10y10> <y10y15> <y10y15y15> <y11y11> <y12y12> <y13y13> <y14y14> <y15y15>
      Stats floating-point format    : scientific
      Stats text precision, digits   : 12
-     Estimated PDFs                 : p1(Y1:0.005) p2(Y2:0.005) p3(Y3:0.005) p6(Y6:5e-05) p7(Y7:5e-05) p8(Y8:5e-05) 
+     Estimated PDFs                 : p1(Y1:0.005) p2(Y2:0.005) p3(Y3:0.005) p4(Y4:0.01) p6(Y6:5e-05) p7(Y7:5e-05) p8(Y8:5e-05) p9(Y9:0.01)
      PDF output file type           : txt
      PDF output file policy         : overwrite
      PDF output file centering      : elem
@@ -285,9 +295,11 @@ Charm++> cpu topology info is gathered in 0.002 seconds.
  * Load distribution:
  --------------------
      Virtualization [0.0...1.0]     : 0
-     Load (number of particles)     : 100000
      Number of processing elements  : 8
-     Number of work units           : 8 (7*12500+12500)
+     Number of work units           : 8
+     User load (# of particles)     : 10000
+     Chunksize (load per work unit) : 1250
+     Actual load (# of particles)   : 10000 (=8*1250)
 
  * Time integration: Differential equations testbed
  --------------------------------------------------
@@ -300,23 +312,67 @@ Charm++> cpu topology info is gathered in 0.002 seconds.
      
       it             t            dt        ETE        ETA   out
  ---------------------------------------------------------------
-     100  1.000000e+00  1.000000e-02  000:00:13  000:00:52  SP
-     200  2.000000e+00  1.000000e-02  000:00:26  000:00:39  SP
-     300  3.000000e+00  1.000000e-02  000:00:39  000:00:26  SP
-     400  4.000000e+00  1.000000e-02  000:00:52  000:00:13  SP
-     500  5.000000e+00  1.000000e-02  000:01:05  000:00:00  SP
+d:0 d:0 d:0 d:0 d:0       10  1.000000e-01  1.000000e-02  000:00:00  000:00:30  SP
+      20  2.000000e-01  1.000000e-02  000:00:01  000:00:29  SP
+      30  3.000000e-01  1.000000e-02  000:00:01  000:00:28  SP
+      40  4.000000e-01  1.000000e-02  000:00:02  000:00:27  SP
+      50  5.000000e-01  1.000000e-02  000:00:03  000:00:27  SP
+      60  6.000000e-01  1.000000e-02  000:00:03  000:00:26  SP
+      70  7.000000e-01  1.000000e-02  000:00:04  000:00:26  SP
+      80  8.000000e-01  1.000000e-02  000:00:04  000:00:25  SP
+      90  9.000000e-01  1.000000e-02  000:00:05  000:00:24  SP
+     100  1.000000e+00  1.000000e-02  000:00:06  000:00:24  SP
+     110  1.100000e+00  1.000000e-02  000:00:06  000:00:23  SP
+     120  1.200000e+00  1.000000e-02  000:00:07  000:00:23  SP
+     130  1.300000e+00  1.000000e-02  000:00:07  000:00:22  SP
+     140  1.400000e+00  1.000000e-02  000:00:08  000:00:22  SP
+     150  1.500000e+00  1.000000e-02  000:00:09  000:00:21  SP
+     160  1.600000e+00  1.000000e-02  000:00:09  000:00:21  SP
+     170  1.700000e+00  1.000000e-02  000:00:10  000:00:20  SP
+     180  1.800000e+00  1.000000e-02  000:00:11  000:00:19  SP
+     190  1.900000e+00  1.000000e-02  000:00:11  000:00:19  SP
+     200  2.000000e+00  1.000000e-02  000:00:12  000:00:19  SP
+     210  2.100000e+00  1.000000e-02  000:00:13  000:00:18  SP
+     220  2.200000e+00  1.000000e-02  000:00:13  000:00:17  SP
+     230  2.300000e+00  1.000000e-02  000:00:14  000:00:17  SP
+     240  2.400000e+00  1.000000e-02  000:00:15  000:00:16  SP
+     250  2.500000e+00  1.000000e-02  000:00:15  000:00:15  SP
+     260  2.600000e+00  1.000000e-02  000:00:16  000:00:15  SP
+     270  2.700000e+00  1.000000e-02  000:00:17  000:00:14  SP
+     280  2.800000e+00  1.000000e-02  000:00:18  000:00:14  SP
+     290  2.900000e+00  1.000000e-02  000:00:18  000:00:13  SP
+     300  3.000000e+00  1.000000e-02  000:00:19  000:00:12  SP
+     310  3.100000e+00  1.000000e-02  000:00:19  000:00:12  SP
+     320  3.200000e+00  1.000000e-02  000:00:20  000:00:11  SP
+     330  3.300000e+00  1.000000e-02  000:00:21  000:00:10  SP
+     340  3.400000e+00  1.000000e-02  000:00:21  000:00:10  SP
+     350  3.500000e+00  1.000000e-02  000:00:22  000:00:09  SP
+     360  3.600000e+00  1.000000e-02  000:00:22  000:00:08  SP
+     370  3.700000e+00  1.000000e-02  000:00:23  000:00:08  SP
+     380  3.800000e+00  1.000000e-02  000:00:23  000:00:07  SP
+     390  3.900000e+00  1.000000e-02  000:00:24  000:00:06  SP
+     400  4.000000e+00  1.000000e-02  000:00:24  000:00:06  SP
+     410  4.100000e+00  1.000000e-02  000:00:25  000:00:05  SP
+     420  4.200000e+00  1.000000e-02  000:00:25  000:00:04  SP
+     430  4.300000e+00  1.000000e-02  000:00:26  000:00:04  SP
+     440  4.400000e+00  1.000000e-02  000:00:26  000:00:03  SP
+     450  4.500000e+00  1.000000e-02  000:00:27  000:00:03  SP
+     460  4.600000e+00  1.000000e-02  000:00:27  000:00:02  SP
+     470  4.700000e+00  1.000000e-02  000:00:28  000:00:01  SP
+     480  4.800000e+00  1.000000e-02  000:00:28  000:00:01  SP
+     490  4.900000e+00  1.000000e-02  000:00:29  000:00:00  SP
+     500  5.000000e+00  1.000000e-02  000:00:29  000:00:00  SP
 
      Normal finish, maximum time reached: 5.000000
 
  * Timers (h:m:s):
  -----------------
-     Migrate global-scope data                                         : 0:0:0
-     Initial conditions                                                : 0:0:0
-     Total runtime                                                     : 0:1:5
-
+     Migrate global-scope data                                                   : 0:0:0
+     Initial conditions                                                          : 0:0:0
+     Total runtime                                                               : 0:0:29
 
 [Partition 0][Node 0] End of program
-d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 
+d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 d:0 
 \endverbatim
 
 \section walker_example_mixmassfracbeta_results Results
@@ -359,33 +415,190 @@ plot "stat.txt" u 2:8 w l t "<R1>", "stat.txt" u 2:10 w l t "<R2>", "stat.txt" u
 # <V>, mean specific volumes
 plot "stat.txt" u 2:18 w l t "<V1>", "stat.txt" u 2:19 w l t "<V2>", "stat.txt" u 2:20 w l t "<V3>", "stat.txt" u 2:21 w l t "<V4>", "stat.txt" u 2:22 w l t "<V5>"
 # <y^2>, mass fraction variances
-plot "stat.txt" u 2:23 w l t "<y1y1>", "stat.txt" u 2:25 w l t "<y2y2>", "stat.txt" u 2:27 w l t "<y3y3>", "stat.txt" u 2:29 w l t "<y4y4>", "stat.txt" u 2:31 w l t "<y5y5>"
+plot "stat.txt" u 2:28 w l t "<y1y1>", "stat.txt" u 2:30 w l t "<y2y2>", "stat.txt" u 2:32 w l t "<y3y3>", "stat.txt" u 2:34 w l t "<y4y4>", "stat.txt" u 2:36 w l t "<y5y5>"
 # <y^3>, mass fraction third moments
-plot "stat.txt" u 2:24 w l t "<y1y1y1>", "stat.txt" u 2:26 w l t "<y2y2y2>", "stat.txt" u 2:28 w l t "<y3y3y3>", "stat.txt" u 2:30 w l t "<y4y4y4>", "stat.txt" u 2:32 w l t "<y5y5y5>"
+plot "stat.txt" u 2:29 w l t "<y1y1y1>", "stat.txt" u 2:31 w l t "<y2y2y2>", "stat.txt" u 2:33 w l t "<y3y3y3>", "stat.txt" u 2:35 w l t "<y4y4y4>", "stat.txt" u 2:37 w l t "<y5y5y5>"
 # <r^2>, density variances
-plot "stat.txt" u 2:33 w l t "<r1r1>", "stat.txt" u 2:36 w l t "<r2r2>", "stat.txt" u 2:39 w l t "<r3r3>", "stat.txt" u 2:42 w l t "<r4r4>", "stat.txt" u 2:45 w l t "<r5r5>"
+plot "stat.txt" u 2:38 w l t "<r1r1>", "stat.txt" u 2:42 w l t "<r2r2>", "stat.txt" u 2:46 w l t "<r3r3>", "stat.txt" u 2:50 w l t "<r4r4>", "stat.txt" u 2:54 w l t "<r5r5>"
 # <r^3>, density third moments
-plot "stat.txt" u 2:34 w l t "<r1r1r1>", "stat.txt" u 2:37 w l t "<r2r2r2>", "stat.txt" u 2:40 w l t "<r3r3r3>", "stat.txt" u 2:43 w l t "<r4r4r4>", "stat.txt" u 2:46 w l t "<r5r5r5>"
+plot "stat.txt" u 2:39 w l t "<r1r1r1>", "stat.txt" u 2:43 w l t "<r2r2r2>", "stat.txt" u 2:47 w l t "<r3r3r3>", "stat.txt" u 2:51 w l t "<r4r4r4>", "stat.txt" u 2:55 w l t "<r5r5r5>"
 # <rv>, density-specific-volume covariances
-plot "stat.txt" u 2:35 w l t "<r1v1>", "stat.txt" u 2:38 w l t "<r2v2>", "stat.txt" u 2:41 w l t "<r3v3>", "stat.txt" u 2:44 w l t "<r4v4>", "stat.txt" u 2:47 w l t "<r5v5>"
+plot "stat.txt" u 2:40 w l t "<r1v1>", "stat.txt" u 2:44 w l t "<r2v2>", "stat.txt" u 2:48 w l t "<r3v3>", "stat.txt" u 2:52 w l t "<r4v4>", "stat.txt" u 2:56 w l t "<r5v5>"
+# <v^2>, specific-volume variances
+plot "stat.txt" u 2:58 w l t "<v1v1>", "stat.txt" u 2:59 w l t "<v2v2>", "stat.txt" u 2:60 w l t "<v3v3>", "stat.txt" u 2:61 w l t "<v4v4>", "stat.txt" u 2:62 w l t "<v5v5>"
 # <RY>
 plot "stat.txt" u 2:9 w l t "<R1Y1>", "stat.txt" u 2:11 w l t "<R2Y2>", "stat.txt" u 2:13 w l t "<R3Y3>", "stat.txt" u 2:15 w l t "<R4Y4>", "stat.txt" u 2:17 w l t "<R5Y5>"
+# <RY>/<R>
+plot "stat.txt" u 2:($9/$8) w l t "<R1Y1>/<R1>", "stat.txt" u 2:($11/$10) w l t "<R2Y2>/<R2>", "stat.txt" u 2:($13/$12) w l t "<R3Y3>/<R3>", "stat.txt" u 2:($15/$14) w l t "<R4Y4>/<R4>", "stat.txt" u 2:($17/$16) w l t "<R5Y5>/<R5>"
+# Normalized <y^2> = <y^2> / ( <Y> (1-<Y>) )
+plot "stat.txt" u 2:($28/$3/(1.0-$3)) w l t "<y1y1>/<Y>/(1-<Y>), light = heavy", "" u 2:($30/$4/(1.0-$4)) w l t "<y1y1>/<Y>/(1-<Y>), light > heavy", "" u 2:($32/$5/(1.0-$5)) w l t "<y1y1>/<Y>/(1-<Y>), light < heavy", "" u 2:($34/$6/(1.0-$6)) w l t "<y1y1>/<Y>/(1-<Y>), <r^3>(t=0) = 0"
+# Normalized <y^2> = <y^2> / ( S (1-S) )
+S = 0.5; plot "stat.txt" u 2:($28/S/(1.0-S)) w l t "<y1y1>/<Y>/(1-<Y>), light = heavy", "" u 2:($30/S/(1.0-S)) w l t "<y1y1>/<Y>/(1-<Y>), light > heavy", "" u 2:($32/S/(1.0-S)) w l t "<y1y1>/<Y>/(1-<Y>), light < heavy", "" u 2:($34/S/(1.0-S)) w l t "<y1y1>/<Y>/(1-<Y>), <r^3>(t=0) = 0"
 
-# For mchomdecay
+y1 = 4.961030229954e-01; y2 = 1.987758126229e-01; y3 = 7.939404938833e-01; y4 = 3.638634671405e-01; plot "stat.txt" u 2:($28/y1/(1.0-y1)) w l t "<y1y1>/<Y>/(1-<Y>), light = heavy", "" u 2:($30/y2/(1.0-y2)) w l t "<y1y1>/<Y>/(1-<Y>), light > heavy", "" u 2:($32/y3/(1.0-y3)) w l t "<y1y1>/<Y>/(1-<Y>), light < heavy", "" u 2:($34/y4/(1.0-y4)) w l t "<y1y1>/<Y>/(1-<Y>), <r^3>(t=0) = 0"
 
-# <R>, mean densities
-plot "stat.txt" u 2:18 w l t "<R1>", "stat.txt" u 2:20 w l t "<R2>", "stat.txt" u 2:22 w l t "<R3>", "stat.txt" u 2:24 w l t "<R4>", "stat.txt" u 2:26 w l t "<R5>"
-# <r^2>, density variances
-plot "stat.txt" u 2:38 w l t "<r1r1>", "stat.txt" u 2:39 w l t "<r2r2>", "stat.txt" u 2:40 w l t "<r3r3>", "stat.txt" u 2:41 w l t "<r4r4>", "stat.txt" u 2:42 w l t "<r5r5>"
-# <R^2>
-plot "stat.txt" u 2:19 w l t "<R1R1>", "stat.txt" u 2:21 w l t "<R2R2>", "stat.txt" u 2:23 w l t "<R3R3>", "stat.txt" u 2:25 w l t "<R4R4>", "stat.txt" u 2:27 w l t "<R5R5>"
-# <y^2>, mass fraction variances
-plot "stat.txt" u 2:33 w l t "<y1y1>", "stat.txt" u 2:34 w l t "<y2y2>", "stat.txt" u 2:35 w l t "<y3y3>", "stat.txt" u 2:36 w l t "<y4y4>", "stat.txt" u 2:37 w l t "<y5y5>"
+# b(1+r)/r/r
+r = 9.0; plot "stat.txt" u 2:(-$40*(1.0+r)/r/r) w l t "b(1+r)/r^2", "" u 2:(-$44*(1.0+r)/r/r) w l t "b(1+r)/r^2", "" u 2:(-$48*(1.0+r)/r/r) w l t "b(1+r)/r^2", "" u 2:(-$52*(1.0+r)/r/r) w l t "b(1+r)/r^2"
+
+# <v^2> ( rho2 / r )^2
+r = 9.0; plot "stat.txt" u 2:($58*(1.0/r)**2.0) w l t "<v^2>(rho2/r)^2", "" u 2:($59*(1.0/r)**2.0) w l t "<v^2>(rho2/r)^2", "" u 2:($60*(1.0/r)**2.0) w l t "<v^2>(rho2/r)^2", "" u 2:($61*(1.0/r)**2.0) w l t "<v^2>(rho2/r)^2"
+
+# <r^2> (1+r)^2 / (rho2 r)^2
+r = 9.0; plot "stat.txt" u 2:($38*(1.0+r)**2.0/r/r) w l t "<rho^2>(1+r)^2/(rho2 r)^2", "" u 2:($42*(1.0+r)**2.0/r/r) w l t "<rho^2>(1+r)^2/(rho2 r)^2", "" u 2:($46*(1.0+r)**2.0/r/r) w l t "<rho^2>(1+r)^2/(rho2 r)^2", "" u 2:($50*(1.0+r)**2.0/r/r) w l t "<rho^2>(1+r)^2/(rho2 r)^2"
+
+
+# Test closure: b = <R>^2<v^2> [1 + <v^2>/<v^2>nm * (rho1rho2/<R>^2 - 1) ] where <v^2>nm = (r/rho_2)^2 <y^2>nm, <y^2>nm = <Y>(1-<Y>), high At
+plot "stat.txt" u 2:(-$40) w l t "b", "stat.txt" u 2:($8*$8*$58*(1.0+$58/9.0/9.0/$3/(1.0+$3)*(0.1/$8/$8-1.0))) w p ps 1.0 pt 7 t "<R>^2<v^2> [1 + <v^2>/<v^2>nm * (rho_1rho_2/<R>^2 - 1) ]"
+plot "stat.txt" u 2:(-$44) w l t "b", "stat.txt" u 2:($9*$9*$59*(1.0+$59/9.0/9.0/$4/(1.0+$4)*(0.1/$9/$9-1.0))) w p ps 1.0 pt 7 t "<R>^2<v^2> [1 + <v^2>/<v^2>nm * (rho1_rho2/<R>^2 - 1) ]"
+plot "stat.txt" u 2:(-$48) w l t "b", "stat.txt" u 2:($10*$10*$60*(1.0+$60/9.0/9.0/$5/(1.0+$5)*(0.1/$10/$10-1.0))) w p ps 1.0 pt 7 t "<R>^2<v^2> [1 + <v^2>/<v^2>nm * (rho_1rho2/<R>^2 - 1) ]"
+plot "stat.txt" u 2:(-$52) w l t "b", "stat.txt" u 2:($11*$11*$61*(1.0+$61/9.0/9.0/$6/(1.0+$6)*(0.1/$11/$11-1.0))) w p ps 1.0 pt 7 t "<R>^2<v^2> [1 + <v^2>/<v^2>nm * (rho_1rho_2/<R>^2 - 1) ]"
+plot "stat.txt" u 2:(-$56) w l t "b", "stat.txt" u 2:($12*$12*$62*(1.0+$62/9.0/9.0/$7/(1.0+$7)*(0.1/$12/$12-1.0))) w p ps 1.0 pt 7 t "<R>^2<v^2> [1 + <v^2>/<v^2>nm * (rho_1rho_2/<R>^2 - 1) ]"
+
+# consistency test: <Rv^2> = b<V> = b(1+b)/<R>
+plot "stat.txt" u 2:23 w l t "<Rv^2>", "stat.txt" u 2:(-$40*$18) w p ps 1.0 pt 7 t "b<V>", "stat.txt" u 2:(-$40*(1.0-$40)/$8) w p ps 1.0 pt 6 t "b(1+b)/<R>"
+plot "stat.txt" u 2:24 w l t "<Rv^2>", "stat.txt" u 2:(-$44*$19) w p ps 1.0 pt 7 t "b<V>", "stat.txt" u 2:(-$44*(1.0-$44)/$10) w p ps 1.0 pt 6 t "b(1+b)/<R>"
+plot "stat.txt" u 2:25 w l t "<Rv^2>", "stat.txt" u 2:(-$48*$20) w p ps 1.0 pt 7 t "b<V>", "stat.txt" u 2:(-$48*(1.0-$48)/$12) w p ps 1.0 pt 6 t "b(1+b)/<R>"
+plot "stat.txt" u 2:26 w l t "<Rv^2>", "stat.txt" u 2:(-$52*$21) w p ps 1.0 pt 7 t "b<V>", "stat.txt" u 2:(-$52*(1.0-$52)/$14) w p ps 1.0 pt 6 t "b(1+b)/<R>"
+plot "stat.txt" u 2:27 w l t "<Rv^2>", "stat.txt" u 2:(-$56*$22) w p ps 1.0 pt 7 t "b<V>", "stat.txt" u 2:(-$56*(1.0-$56)/$16) w p ps 1.0 pt 6 t "b(1+b)/<R>"
+
+# test relative magnitude of <rv^2> compared to <R><v^2>, plot ratio
+plot "stat.txt" u 2:($41/$8/$58) w l t "<rv^2>/<R>/<v^2> light=heavy"
+plot "stat.txt" u 2:($45/$10/$59) w l t "<rv^2>/<R>/<v^2> light > heavy"
+plot "stat.txt" u 2:($49/$12/$60) w l t "<rv^2>/<R>/<v^2> light < heavy"
+plot "stat.txt" u 2:($53/$14/$61) w l t "<rv^2>/<R>/<v^2> <r^3>(t=0) = 0"
+plot "stat.txt" u 2:($57/$16/$62) w l t "<rv^2>/<R>/<v^2>"
+# first four in one plot
+plot "stat.txt" u 2:($41/$8/$58) w l t "<rv^2>/<R>/<v^2> light=heavy", "stat.txt" u 2:($45/$10/$59) w l t "<rv^2>/<R>/<v^2> light > heavy", "stat.txt" u 2:($49/$12/$60) w l t "<rv^2>/<R>/<v^2> light < heavy", "stat.txt" u 2:($53/$14/$61) w l t "<rv^2>/<R>/<v^2> <r^3>(t=0) = 0"
+
+# test closure model for <rv^2> = -r^3/rho_2 * 1/(1+r) * <y^2>/(1+r<RY>/<R>)^2 * [ 1 - 2<RY>/<R> - r(2+r)(<RY>/<R>)^2 ] =approx= <rv^2>nm, r = 9.0 -> high A, r = 0.0101 -> low A
+r = 9.0; plot "stat.txt" u 2:41 w l t "<rv^2>", "" u 2:(-r**3.0/(1.0+r)*$28/(1.0+r*$9/$8)/(1.0+r*$9/$8)*(1.0-2.0*$9/$8-r*(2.0+r)*$9/$8*$9/$8)) w l t "<rv^2>nm light=heavy"
+r = 9.0; plot "stat.txt" u 2:45 w l t "<rv^2>", "" u 2:(-r**3.0/(1.0+r)*$30/(1.0+r*$11/$10)/(1.0+r*$11/$10)*(1.0-2.0*$11/$10-r*(2.0+r)*$11/$10*$11/$10)) w l t "<rv^2>nm light > heavy"
+r = 9.0; plot "stat.txt" u 2:49 w l t "<rv^2>", "" u 2:(-r**3.0/(1.0+r)*$32/(1.0+r*$13/$12)/(1.0+r*$13/$12)*(1.0-2.0*$13/$12-r*(2.0+r)*$13/$12*$13/$12)) w l t "<rv^2>nm light < heavy"
+r = 9.0; plot "stat.txt" u 2:53 w l t "<rv^2>", "" u 2:(-r**3.0/(1.0+r)*$34/(1.0+r*$15/$14)/(1.0+r*$15/$14)*(1.0-2.0*$15/$14-r*(2.0+r)*$15/$14*$15/$14)) w l t "<rv^2>nm <r^3>(t=0) = 0"
+# all in on plot
+r = 9.0; plot "stat.txt" u 2:41 w l t "<rv^2>", "" u 2:(-r**3.0/(1.0+r)*$28/(1.0+r*$9/$8)/(1.0+r*$9/$8)*(1.0-2.0*$9/$8-r*(2.0+r)*$9/$8*$9/$8)) w p pt 7 lt 1 t "<rv^2>nm light=heavy", "" u 2:45 w l lt 2 t "<rv^2>", "" u 2:(-r**3.0/(1.0+r)*$30/(1.0+r*$11/$10)/(1.0+r*$11/$10)*(1.0-2.0*$11/$10-r*(2.0+r)*$11/$10*$11/$10)) w p pt 7 lt 2 t "<rv^2>nm light > heavy", "" u 2:49 w l lt 3 t "<rv^2>", "" u 2:(-r**3.0/(1.0+r)*$32/(1.0+r*$13/$12)/(1.0+r*$13/$12)*(1.0-2.0*$13/$12-r*(2.0+r)*$13/$12*$13/$12)) w p pt 7 lt 3 t "<rv^2>nm light < heavy", "" u 2:53 w l lt 4 t "<rv^2>", "" u 2:(-r**3.0/(1.0+r)*$34/(1.0+r*$15/$14)/(1.0+r*$15/$14)*(1.0-2.0*$15/$14-r*(2.0+r)*$15/$14*$15/$14)) w p pt 7 lt 4 t "<rv^2>nm <r^3>(t=0) = 0"
+
+# test closure model for <rv^2> = -r^3/rho_2 * 1/(1+r) * <y^2>/(1+r<RY>/<R>)^1 * [ 1 - 2<RY>/<R> - r^2(<RY>/<R>)^2 - b*(1+r<RY>/<R>)^2/r ], r = 9.0 -> high A, r = 0.0101 -> low A
+r = 9.0; plot "stat.txt" u 2:41 w l t "<rv^2>", "" u 2:(-r**3.0/(1.0+r)*$28/(1.0+r*$9/$8)*(1.0-2.0*$9/$8-r**2.0*$9/$8*$9/$8+$40*(1.0+r*$9/$8)**2.0/r)) w l t "<rv^2>nm light=heavy"
+r = 9.0; plot "stat.txt" u 2:45 w l t "<rv^2>", "" u 2:(-r**3.0/(1.0+r)*$30/(1.0+r*$11/$10)*(1.0-2.0*$11/$10-r**2.0*$11/$10*$11/$10+$44*(1.0+r*$11/$10)**2.0/r)) w l t "<rv^2>nm light > heavy"
+r = 9.0; plot "stat.txt" u 2:49 w l t "<rv^2>", "" u 2:(-r**3.0/(1.0+r)*$32/(1.0+r*$13/$12)*(1.0-2.0*$13/$12-r**2.0*$13/$12*$13/$12+$48*(1.0+r*$13/$12)**2.0/r)) w l t "<rv^2>nm light < heavy"
+r = 9.0; plot "stat.txt" u 2:53 w l t "<rv^2>", "" u 2:(-r**3.0/(1.0+r)*$34/(1.0+r*$15/$14)*(1.0-2.0*$15/$14-r**2.0*$15/$14*$15/$14+$52*(1.0+r*$15/$14)**2.0/r)) w l t "<rv^2>nm <r^3>(t=0) = 0"
+# all in on plot
+r = 9.0; plot "stat.txt" u 2:41 w l t "<rv^2>", "" u 2:(-r**3.0/(1.0+r)*$28/(1.0+r*$9/$8)*(1.0-2.0*$9/$8-r**2.0*$9/$8*$9/$8+$40*(1.0+r*$9/$8)**2.0/r)) w p pt 7 lt 1 t "<rv^2>nm light=heavy", "" u 2:45 w l lt 2 t "<rv^2>", "" u 2:(-r**3.0/(1.0+r)*$30/(1.0+r*$11/$10)*(1.0-2.0*$11/$10-r**2.0*$11/$10*$11/$10+$44*(1.0+r*$11/$10)**2.0/r)) w p pt 7 lt 2 t "<rv^2>nm light > heavy", "" u 2:49 w l lt 3 t "<rv^2>", "" u 2:(-r**3.0/(1.0+r)*$32/(1.0+r*$13/$12)*(1.0-2.0*$13/$12-r**2.0*$13/$12*$13/$12+$48*(1.0+r*$13/$12)**2.0/r)) w p pt 7 lt 3 t "<rv^2>nm light < heavy", "" u 2:53 w l lt 4 t "<rv^2>", "" u 2:(-r**3.0/(1.0+r)*$34/(1.0+r*$15/$14)*(1.0-2.0*$15/$14-r**2.0*$15/$14*$15/$14+$52*(1.0+r*$15/$14)**2.0/r)) w p pt 7 lt 4 t "<rv^2>nm <r^3>(t=0) = 0"
+
+# test closure model for <rv^2> = -r^3/rho_2 * 1/(1+r) * <y^2>/(1+r<RY>/<R>)^2 * [ 1 - 2<RY>/<R> - r(<RY>/<R>)^2 - b*(1+r<RY>/<R>)/r ], r = 9.0 -> high A, r = 0.0101 -> low A
+r = 9.0; plot "stat.txt" u 2:41 w l t "<rv^2>", "" u 2:(-r**3.0/(1.0+r)*$28/(1.0+r*$9/$8)**2.0*(1.0-2.0*$9/$8-r*$9/$8*$9/$8+$40*(1.0+r*$9/$8)/r)) w l t "<rv^2>nm light=heavy"
+r = 9.0; plot "stat.txt" u 2:45 w l t "<rv^2>", "" u 2:(-r**3.0/(1.0+r)*$30/(1.0+r*$11/$10)**2.0*(1.0-2.0*$11/$10-r*$11/$10*$11/$10+$44*(1.0+r*$11/$10)/r)) w l t "<rv^2>nm light > heavy"
+r = 9.0; plot "stat.txt" u 2:49 w l t "<rv^2>", "" u 2:(-r**3.0/(1.0+r)*$32/(1.0+r*$13/$12)**2.0*(1.0-2.0*$13/$12-r*$13/$12*$13/$12+$48*(1.0+r*$13/$12)/r)) w l t "<rv^2>nm light < heavy"
+r = 9.0; plot "stat.txt" u 2:53 w l t "<rv^2>", "" u 2:(-r**3.0/(1.0+r)*$34/(1.0+r*$15/$14)**2.0*(1.0-2.0*$15/$14-r*$15/$14*$15/$14+$52*(1.0+r*$15/$14)/r)) w l t "<rv^2>nm <r^3>(t=0) = 0"
+# all in on plot
+r = 9.0; plot "stat.txt" u 2:41 w l t "<rv^2>", "" u 2:(-r**3.0/(1.0+r)*$28/(1.0+r*$9/$8)**2.0*(1.0-2.0*$9/$8-r*$9/$8*$9/$8+$40*(1.0+r*$9/$8)/r)) w p pt 7 lt 1 t "<rv^2>nm light=heavy", "" u 2:45 w l lt 2 t "<rv^2>", "" u 2:(-r**3.0/(1.0+r)*$30/(1.0+r*$11/$10)**2.0*(1.0-2.0*$11/$10-r*$11/$10*$11/$10+$44*(1.0+r*$11/$10)/r)) w p pt 7 lt 2 t "<rv^2>nm light > heavy", "" u 2:49 w l lt 3 t "<rv^2>", "" u 2:(-r**3.0/(1.0+r)*$32/(1.0+r*$13/$12)**2.0*(1.0-2.0*$13/$12-r*$13/$12*$13/$12+$48*(1.0+r*$13/$12)/r)) w p pt 7 lt 3 t "<rv^2>nm light < heavy", "" u 2:53 w l lt 4 t "<rv^2>", "" u 2:(-r**3.0/(1.0+r)*$34/(1.0+r*$15/$14)**2.0*(1.0-2.0*$15/$14-r*$15/$14*$15/$14+$52*(1.0+r*$15/$14)/r)) w p pt 7 lt 4 t "<rv^2>nm <r^3>(t=0) = 0"
+
+##### BASE MODEL v1 #####
+# test closure model for <rv^2> = -r^3/rho_2 * 1/(1+r) * <y^2>/(1+r<RY>/<R>)^2 * [ 1 - 2<RY>/<R> - r(<RY>/<R>)^2 - b*(1+r<RY>/<R>)^2/r ], r = 9.0 -> high A, r = 0.0101 -> low A
+##### BASE MODEL v1 #####
+r = 9.0; plot "stat.txt" u 2:41 w l t "<rv^2>", "" u 2:(-r**3.0/(1.0+r)*$28/(1.0+r*$9/$8)**2.0*(1.0-2.0*$9/$8-r*$9/$8*$9/$8+$40*(1.0+r*$9/$8)**2.0/r)) w l t "<rv^2>nm light=heavy"
+r = 9.0; plot "stat.txt" u 2:45 w l t "<rv^2>", "" u 2:(-r**3.0/(1.0+r)*$30/(1.0+r*$11/$10)**2.0*(1.0-2.0*$11/$10-r*$11/$10*$11/$10+$44*(1.0+r*$11/$10)**2.0/r)) w l t "<rv^2>nm light > heavy"
+r = 9.0; plot "stat.txt" u 2:49 w l t "<rv^2>", "" u 2:(-r**3.0/(1.0+r)*$32/(1.0+r*$13/$12)**2.0*(1.0-2.0*$13/$12-r*$13/$12*$13/$12+$48*(1.0+r*$13/$12)**2.0/r)) w l t "<rv^2>nm light < heavy"
+r = 9.0; plot "stat.txt" u 2:53 w l t "<rv^2>", "" u 2:(-r**3.0/(1.0+r)*$34/(1.0+r*$15/$14)**2.0*(1.0-2.0*$15/$14-r*$15/$14*$15/$14+$52*(1.0+r*$15/$14)**2.0/r)) w l t "<rv^2>nm <r^3>(t=0) = 0"
+# all in on plot
+r = 9.0; plot "stat.txt" u 2:41 w l t "<rv^2>", "" u 2:(-r**3.0/(1.0+r)*$28/(1.0+r*$9/$8)**2.0*(1.0-2.0*$9/$8-r*$9/$8*$9/$8+$40*(1.0+r*$9/$8)**2.0/r)) w p pt 7 lt 1 t "<rv^2>nm light=heavy", "" u 2:45 w l lt 2 t "<rv^2>", "" u 2:(-r**3.0/(1.0+r)*$30/(1.0+r*$11/$10)**2.0*(1.0-2.0*$11/$10-r*$11/$10*$11/$10+$44*(1.0+r*$11/$10)**2.0/r)) w p pt 7 lt 2 t "<rv^2>nm light > heavy", "" u 2:49 w l lt 3 t "<rv^2>", "" u 2:(-r**3.0/(1.0+r)*$32/(1.0+r*$13/$12)**2.0*(1.0-2.0*$13/$12-r*$13/$12*$13/$12+$48*(1.0+r*$13/$12)**2.0/r)) w p pt 7 lt 3 t "<rv^2>nm light < heavy", "" u 2:53 w l lt 4 t "<rv^2>", "" u 2:(-r**3.0/(1.0+r)*$34/(1.0+r*$15/$14)**2.0*(1.0-2.0*$15/$14-r*$15/$14*$15/$14+$52*(1.0+r*$15/$14)**2.0/r)) w p pt 7 lt 4 t "<rv^2>nm <r^3>(t=0) = 0"
+
+##### BASE MODEL v1 #####
+# test closure model for <y^2> = b(1+b) / ( <R>^2 (r/rho2)^2 { 1 - r/rho2 <R>/(1+r) [ 1 - 2<RY>/<R> - r(<RY>/<R>)^2 - b/r(1+r<RY>/<R>)^2 ] } )
+##### BASE MODEL v1 #####
+r = 9.0; plot "stat.txt" u 2:28 w l t "<y^2> MC", "" u 2:(-$40*(1.0-$40)/($8**2.0*r**2.0*(1.0-r*$8/(1.0+r)*(1.0-2.0*$9/$8-r*($9/$8)**2.0+$40/r*(1.0+r*$9/$8)**2.0)))) w l t "<y^2> model light=heavy"
+r = 9.0; plot "stat.txt" u 2:30 w l t "<y^2> MC", "" u 2:(-$44*(1.0-$44)/($10**2.0*r**2.0*(1.0-r*$10/(1.0+r)*(1.0-2.0*$11/$10-r*($11/$10)**2.0+$44/r*(1.0+r*$11/$10)**2.0)))) w l t "<y^2> model light > heavy"
+r = 9.0; plot "stat.txt" u 2:32 w l t "<y^2> MC", "" u 2:(-$48*(1.0-$48)/($12**2.0*r**2.0*(1.0-r*$12/(1.0+r)*(1.0-2.0*$13/$12-r*($13/$12)**2.0+$48/r*(1.0+r*$13/$12)**2.0)))) w l t "<y^2> model light < heavy"
+r = 9.0; plot "stat.txt" u 2:34 w l t "<y^2> MC", "" u 2:(-$52*(1.0-$52)/($14**2.0*r**2.0*(1.0-r*$14/(1.0+r)*(1.0-2.0*$15/$14-r*($15/$14)**2.0+$52/r*(1.0+r*$15/$14)**2.0)))) w l t "<y^2> model <r^3>(t=0) = 0"
+# all in on plot
+r = 9.0; plot "stat.txt" u 2:28 w l t "<y^2> MC", "" u 2:(-$40*(1.0-$40)/($8**2.0*r**2.0*(1.0-r*$8/(1.0+r)*(1.0-2.0*$9/$8-r*($9/$8)**2.0+$40/r*(1.0+r*$9/$8)**2.0)))) w p pt 7 lt 1 t "<y^2> model light=heavy", "" u 2:30 w l lt 2 t "<y^2> MC", "" u 2:(-$44*(1.0-$44)/($10**2.0*r**2.0*(1.0-r*$10/(1.0+r)*(1.0-2.0*$11/$10-r*($11/$10)**2.0+$44/r*(1.0+r*$11/$10)**2.0)))) w p pt 7 lt 2 t "<y^2> model light > heavy", "" u 2:32 w l lt 3 t "<y^2> MC", "" u 2:(-$48*(1.0-$48)/($12**2.0*r**2.0*(1.0-r*$12/(1.0+r)*(1.0-2.0*$13/$12-r*($13/$12)**2.0+$48/r*(1.0+r*$13/$12)**2.0)))) w p pt 7 lt 3 t "<y^2> model light < heavy", "" u 2:34 w l lt 4 t "<y^2> MC", "" u 2:(-$52*(1.0-$52)/($14**2.0*r**2.0*(1.0-r*$14/(1.0+r)*(1.0-2.0*$15/$14-r*($15/$14)**2.0+$52/r*(1.0+r*$15/$14)**2.0)))) w p pt 7 lt 4 t "<y^2> model <r^3>(t=0) = 0"
+
+# test linear closure model for <y^2> = (1-thetab)(1+r)<RY>/<R>(1-<RY>/<R>)/(1+r<RY>/<R>)^2 + thetab b(1+b)(1+r<RY>/<R>)^2/r^2, with thetab = 1.0-b/bnm, with bnm = r^2 <RY>/<R> (1-<RY>/<R>) / (1+<RY>/<R>)^2
+# thetab = 1.0+$40/(-r*r*$9/$8*(1.0-$9/$8)/(1.0+r*$9/$8)**2.0)
+r = 9.0; plot "stat.txt" u 2:28 w l t "<y^2> MC", "" u 2:(((1.0-(1.0+$40/(-r*r*$9/$8*(1.0-$9/$8)/(1.0+r*$9/--with-gcc-toolchain$8)**2.0)))*(1.0+r)*$9/$8*(1.0-$9/$8)/(1.0+r*$9/$8)**2.0) + (1.0+$40/(-r*r*$9/$8*(1.0-$9/$8)/(1.0+r*$9/$8)**2.0))*(-$40*(1.0-$40)*(1.0+r*$9/$8)**2.0)/r/r) w l t "<y^2> linear model light=heavy"
+# thetab = 1.0+$44/(-r*r*$11/$10*(1.0-$11/$10)/(1.0+r*$11/$10)**2.0)
+r = 9.0; plot "stat.txt" u 2:30 w l t "<y^2> MC", "" u 2:(((1.0-(1.0+$44/(-r*r*$11/$10*(1.0-$11/$10)/(1.0+r*$11/$10)**2.0)))*(1.0+r)*$11/$10*(1.0-$11/$10)/(1.0+r*$11/$10)**2.0) + (1.0+$44/(-r*r*$11/$10*(1.0-$11/$10)/(1.0+r*$11/$10)**2.0))*(-$44*(1.0-$44)*(1.0+r*$11/$10)**2.0)/r/r) w l t "<y^2> linear model light>heavy"
+# thetab = 1.0+$48/(-r*r*$13/$12*(1.0-$13/$12)/(1.0+r*$13/$12)**2.0)
+r = 9.0; plot "stat.txt" u 2:32 w l t "<y^2> MC", "" u 2:(((1.0-(1.0+$48/(-r*r*$13/$12*(1.0-$13/$12)/(1.0+r*$13/$12)**2.0)))*(1.0+r)*$13/$12*(1.0-$13/$12)/(1.0+r*$13/$12)**2.0) + (1.0+$48/(-r*r*$13/$12*(1.0-$13/$12)/(1.0+r*$13/$12)**2.0))*(-$48*(1.0-$48)*(1.0+r*$13/$12)**2.0)/r/r) w l t "<y^2> linear model light<heavy"
+# thetab = 1.0+$52/(-r*r*$15/$14*(1.0-$15/$14)/(1.0+r*$15/$14)**2.0)
+r = 9.0; plot "stat.txt" u 2:34 w l t "<y^2> MC", "" u 2:(((1.0-(1.0+$52/(-r*r*$15/$14*(1.0-$15/$14)/(1.0+r*$15/$14)**2.0)))*(1.0+r)*$15/$14*(1.0-$15/$14)/(1.0+r*$15/$14)**2.0) + (1.0+$52/(-r*r*$15/$14*(1.0-$15/$14)/(1.0+r*$15/$14)**2.0))*(-$52*(1.0-$52)*(1.0+r*$15/$14)**2.0)/r/r) w l t "<y^2> linear model <r^3>(t=0) = 0"
+
+# Should we model b or <y^2> ?
+# b vs <y^2>
+r = 9.0; set xlabel "<y^2>"; set ylabel "b"; plot "stat.txt" u ($28):(-$40) w l t "light=heavy", "" u ($30):(-$44) w l t "light>heavy", "" u ($32):(-$48) w l t "light<heavy", "" u ($34):(-$52) w l t "<r^3>(t=0) = 0"
+# b/bnm vs <y^2>
+r = 9.0; set xlabel "<y^2>"; set ylabel "b/bnm"; plot "stat.txt" u ($28):(-$40/(r*r*$9/$8*(1.0-$9/$8)/(1.0+r*$9/$8)**2.0)) w l t "light=heavy", "" u ($30):(-$44/(r*r*$11/$10*(1.0-$11/$10)/(1.0+r*$11/$10)**2.0)) w l t "light>heavy", "" u ($32):(-$48/(r*r*$13/$12*(1.0-$13/$12)/(1.0+r*$13/$12)**2.0)) w l t "light<heavy", "" u ($34):(-$52/(r*r*$15/$14*(1.0-$15/$14)/(1.0+r*$15/$14)**2.0)) w l t "<r^3>(t=0) = 0"
+# b/bnm vs <y^2>/<y^2>nm
+r = 9.0; set xlabel "<y^2>/<y^2>nm"; set ylabel "b/bnm"; plot "stat.txt" u ($28/((1.0+r)*$9/$8*(1.0-$9/$8)/(1.0+r*$9/$8)**2.0)):(-$40/(r*r*$9/$8*(1.0-$9/$8)/(1.0+r*$9/$8)**2.0)) w l t "light=heavy", "" u ($30/((1.0+r)*$11/$10*(1.0-$11/$10)/(1.0+r*$11/$10)**2.0)):(-$44/(r*r*$11/$10*(1.0-$11/$10)/(1.0+r*$11/$10)**2.0)) w l t "light>heavy", "" u ($32/((1.0+r)*$13/$12*(1.0-$13/$12)/(1.0+r*$13/$12)**2.0)):(-$48/(r*r*$13/$12*(1.0-$13/$12)/(1.0+r*$13/$12)**2.0)) w l t "light<heavy", "" u ($34/((1.0+r)*$15/$14*(1.0-$15/$14)/(1.0+r*$15/$14)**2.0)):(-$52/(r*r*$15/$14*(1.0-$15/$14)/(1.0+r*$15/$14)**2.0)) w l t "<r^3>(t=0) = 0"
+# Evolution of b/bnm
+r = 9.0; plot "stat.txt" u 2:(-$40/(r*r*$9/$8*(1.0-$9/$8)/(1.0+r*$9/$8)**2.0)) w l t "b/bnm light=heavy", "" u 2:(-$44/(r*r*$11/$10*(1.0-$11/$10)/(1.0+r*$11/$10)**2.0)) w l t "b/bnm light>heavy", "" u 2:(-$48/(r*r*$13/$12*(1.0-$13/$12)/(1.0+r*$13/$12)**2.0)) w l t "b/bnm light<heavy", "" u 2:(-$52/(r*r*$15/$14*(1.0-$15/$14)/(1.0+r*$15/$14)**2.0)) w l t "b/bnm <r^3>(t=0) = 0"
+# Evolution of <y^2>/<y^2>nm
+r = 9.0; plot "stat.txt" u 2:($28/((1.0+r)*$9/$8*(1.0-$9/$8)/(1.0+r*$9/$8)/(1.0+r*$9/$8))) w l t "<y^2>/<y^2>nm light=heavy", "" u 2:($30/((1.0+r)*$11/$10*(1.0-$11/$10)/(1.0+r*$11/$10)/(1.0+r*$11/$10))) w l t "<y^2>/<y^2>nm light>heavy", "" u 2:($32/((1.0+r)*$13/$12*(1.0-$13/$12)/(1.0+r*$13/$12)/(1.0+r*$13/$12))) w l t "<y^2>/<y^2>nm light<heavy", "" u 2:($34/((1.0+r)*$15/$14*(1.0-$15/$14)/(1.0+r*$15/$14)/(1.0+r*$15/$14))) w l t "<y^2>/<y^2>nm <r^3>(t=0) = 0"
+r = 2.0; plot "stat.txt" u 2:($28/((1.0+r)*$9/$8*(1.0-$9/$8)/(1.0+r*$9/$8)/(1.0+r*$9/$8))) w l t "<y^2>/<y^2>nm light=heavy", "" u 2:($30/((1.0+r)*$11/$10*(1.0-$11/$10)/(1.0+r*$11/$10)/(1.0+r*$11/$10))) w l t "<y^2>/<y^2>nm light>heavy", "" u 2:($32/((1.0+r)*$13/$12*(1.0-$13/$12)/(1.0+r*$13/$12)/(1.0+r*$13/$12))) w l t "<y^2>/<y^2>nm light<heavy", "" u 2:($34/((1.0+r)*$15/$14*(1.0-$15/$14)/(1.0+r*$15/$14)/(1.0+r*$15/$14))) w l t "<y^2>/<y^2>nm <r^3>(t=0) = 0"
+# Evolution of <r^2>/<r^2>nm, <r^2>nm=(<R>-rho1)(rho2-<R>), high At: rho1=0.1, low At: rho1=0.99
+r1=0.1; plot "stat.txt" u 2:($38/($8-r1)/(1.0-$8)) w l t "<r^2>/<r^2>nm light=heavy", "" u 2:($42/($10-r1)/(1.0-$10)) w l t "<r^2>/<r^2>nm light>heavy", "" u 2:($46/($12-r1)/(1.0-$12)) w l t "<r^2>/<r^2>nm light<heavy", "stat.txt" u 2:($50/($14-r1)/(1.0-$14)) w l t "<r^2>/<r^2>nm <r^3>(t=0) = 0"
+
+# <y^2>MC vs <y^2>linear_closure_model
+r = 9.0; set xlabel "<y^2>MC"; set ylabel "<y^2>linear_model"; plot "stat.txt" u 28:(((1.0-(1.0+$40/(-r*r*$9/$8*(1.0-$9/$8)/(1.0+r*$9/$8)**2.0)))*(1.0+r)*$9/$8*(1.0-$9/$8)/(1.0+r*$9/$8)**2.0) + (1.0+$40/(-r*r*$9/$8*(1.0-$9/$8)/(1.0+r*$9/$8)**2.0))*(-$40*(1.0-$40)*(1.0+r*$9/$8)**2.0)/r/r) w l t "light=heavy", "" u 30:(((1.0-(1.0+$44/(-r*r*$11/$10*(1.0-$11/$10)/(1.0+r*$11/$10)**2.0)))*(1.0+r)*$11/$10*(1.0-$11/$10)/(1.0+r*$11/$10)**2.0) + (1.0+$44/(-r*r*$11/$10*(1.0-$11/$10)/(1.0+r*$11/$10)**2.0))*(-$44*(1.0-$44)*(1.0+r*$11/$10)**2.0)/r/r) w l lt 2 t "light>heavy", "" u 32:(((1.0-(1.0+$48/(-r*r*$13/$12*(1.0-$13/$12)/(1.0+r*$13/$12)**2.0)))*(1.0+r)*$13/$12*(1.0-$13/$12)/(1.0+r*$13/$12)**2.0) + (1.0+$48/(-r*r*$13/$12*(1.0-$13/$12)/(1.0+r*$13/$12)**2.0))*(-$48*(1.0-$48)*(1.0+r*$13/$12)**2.0)/r/r) w l lt 3 t "light<heavy", "" u 34:(((1.0-(1.0+$52/(-r*r*$15/$14*(1.0-$15/$14)/(1.0+r*$15/$14)**2.0)))*(1.0+r)*$15/$14*(1.0-$15/$14)/(1.0+r*$15/$14)**2.0) + (1.0+$52/(-r*r*$15/$14*(1.0-$15/$14)/(1.0+r*$15/$14)**2.0))*(-$52*(1.0-$52)*(1.0+r*$15/$14)**2.0)/r/r) w l lt 4 t "<r^3>(t=0) = 0"
+
+# <Y>(1-<Y>) / <y^2>nm
+r = 9.0; plot "stat.txt" u 2:($3*(1.0-$3)/((1.0+r)*$9/$8*(1.0-$9/$8)/(1.0+r*$9/$8)/(1.0+r*$9/$8))) w l, "" u 2:($4*(1.0-$4)/((1.0+r)*$11/$10*(1.0-$11/$10)/(1.0+r*$11/$10)/(1.0+r*$11/$10))) w l, "" u 2:($6*(1.0-$6)/((1.0+r)*$13/$12*(1.0-$13/$12)/(1.0+r*$13/$12)/(1.0+r*$13/$12))) w l, "" u 2:($8*(1.0-$8)/((1.0+r)*$15/$14*(1.0-$15/$14)/(1.0+r*$15/$14)/(1.0+r*$15/$14))) w l
+
+##### BASE MODEL v2 #####
+# test closure model for <rv^2> = -r^3/rho_2 * 1/(1+r) * <y^2>/(1+r<RY>/<R>)^2 * [ 1 - (2-r)<RY>/<R> - 3r(<RY>/<R>)^2 - r^2(<RY>/<R>)^3 - b*(1+r<RY>/<R>)^3/r ], r = 9.0 -> high A, r = 0.0101 -> low A
+##### BASE MODEL v2 #####
+r = 9.0; plot "stat.txt" u 2:41 w l t "<rv^2>", "" u 2:(-r**3.0/(1.0+r)*$28/(1.0+r*$9/$8)**2.0*(1.0-(2.0-r)*$9/$8-3.0*r*$9/$8*$9/$8-r*r*($9/$8)**3.0+$40*(1.0+r*$9/$8)**3.0/r)) w l t "<rv^2>nm light=heavy"
+r = 9.0; plot "stat.txt" u 2:45 w l t "<rv^2>", "" u 2:(-r**3.0/(1.0+r)*$30/(1.0+r*$11/$10)**2.0*(1.0-(2.0-r)*$11/$10-3.0*r*$11/$10*$11/$10-r*r*($11/$10)**3.0+$44*(1.0+r*$11/$10)**3.0/r)) w l t "<rv^2>nm light=heavy"
+r = 9.0; plot "stat.txt" u 2:49 w l t "<rv^2>", "" u 2:(-r**3.0/(1.0+r)*$32/(1.0+r*$13/$12)**2.0*(1.0-(2.0-r)*$13/$12-3.0*r*$13/$12*$13/$12-r*r*($13/$12)**3.0+$48*(1.0+r*$13/$12)**3.0/r)) w l t "<rv^2>nm light=heavy"
+r = 9.0; plot "stat.txt" u 2:53 w l t "<rv^2>", "" u 2:(-r**3.0/(1.0+r)*$34/(1.0+r*$15/$14)**2.0*(1.0-(2.0-r)*$15/$14-3.0*r*$15/$14*$15/$14-r*r*($15/$14)**3.0+$52*(1.0+r*$15/$14)**3.0/r)) w l t "<rv^2>nm light=heavy"
+# all in on plot
+r = 9.0; plot "stat.txt" u 2:41 w l t "<rv^2>", "" u 2:(-r**3.0/(1.0+r)*$28/(1.0+r*$9/$8)**2.0*(1.0-(2.0-r)*$9/$8-3.0*r*$9/$8*$9/$8-r*r*($9/$8)**3.0+$40*(1.0+r*$9/$8)**3.0/r)) w p pt 7 lt 1 t "<rv^2>nm light=heavy", "" u 2:45 w l lt 2 t "<rv^2>", "" u 2:(-r**3.0/(1.0+r)*$30/(1.0+r*$11/$10)**2.0*(1.0-(2.0-r)*$11/$10-3.0*r*$11/$10*$11/$10-r*r*($11/$10)**3.0+$44*(1.0+r*$11/$10)**3.0/r)) w p pt 7 lt 2 t "<rv^2>nm light > heavy", "" u 2:49 w l lt 3 t "<rv^2>", "" u 2:(-r**3.0/(1.0+r)*$32/(1.0+r*$13/$12)**2.0*(1.0-(2.0-r)*$13/$12-3.0*r*$13/$12*$13/$12-r*r*($13/$12)**3.0+$48*(1.0+r*$13/$12)**3.0/r)) w p pt 7 lt 3 t "<rv^2>nm light < heavy", "" u 2:53 w l lt 4 t "<rv^2>", "" u 2:(-r**3.0/(1.0+r)*$34/(1.0+r*$15/$14)**2.0*(1.0-(2.0-r)*$15/$14-3.0*r*$15/$14*$15/$14-r*r*($15/$14)**3.0+$52*(1.0+r*$15/$14)**3.0/r)) w p pt 7 lt 4 t "<rv^2>nm <r^3>(t=0) = 0"
+
+##### BASE MODEL v2 #####
+# test closure model for <y^2> = b(1+b) / ( <R>^2 (r/rho2)^2 { 1 - r/rho2 <R>/(1+r) [ 1 - (2-r)<RY>/<R> - 3r(<RY>/<R>)^2 - r^2(<RY>/<R>)^3 - b*(1+r<RY>/<R>)^3/r ] } )
+##### BASE MODEL v2 #####
+r = 9.0; plot "stat.txt" u 2:28 w l t "<y^2> MC", "" u 2:(-$40*(1.0-$40)/($8**2.0*r**2.0*(1.0-r*$8/(1.0+r)*(1.0-(2.0-r)*$9/$8-3.0*r*$9/$8*$9/$8-r*r*($9/$8)**3.0+$40*(1.0+r*$9/$8)**3.0/r)))) w l t "<y^2> model light=heavy"
+r = 9.0; plot "stat.txt" u 2:30 w l t "<y^2> MC", "" u 2:(-$44*(1.0-$44)/($10**2.0*r**2.0*(1.0-r*$10/(1.0+r)*(1.0-(2.0-r)*$11/$10-3.0*r*$11/$10*$11/$10-r*r*($11/$10)**3.0+$44*(1.0+r*$11/$10)**3.0/r)))) w l t "<y^2> model light > heavy"
+r = 9.0; plot "stat.txt" u 2:32 w l t "<y^2> MC", "" u 2:(-$48*(1.0-$48)/($12**2.0*r**2.0*(1.0-r*$12/(1.0+r)*(1.0-(2.0-r)*$13/$12-3.0*r*$13/$12*$13/$12-r*r*($13/$12)**3.0+$48*(1.0+r*$13/$12)**3.0/r)))) w l t "<y^2> model light < heavy"
+r = 9.0; plot "stat.txt" u 2:34 w l t "<y^2> MC", "" u 2:(-$52*(1.0-$52)/($14**2.0*r**2.0*(1.0-r*$14/(1.0+r)*(1.0-(2.0-r)*$15/$14-3.0*r*$15/$14*$15/$14-r*r*($15/$14)**3.0+$52*(1.0+r*$15/$14)**3.0/r)))) w l t "<y^2> model <r^3>(t=0) = 0"
+# all in on plot
+r = 9.0; plot "stat.txt" u 2:28 w l t "<y^2> MC", "" u 2:(-$40*(1.0-$40)/($8**2.0*r**2.0*(1.0-r*$8/(1.0+r)*(1.0-(2.0-r)*$9/$8-3.0*r*$9/$8*$9/$8-r*r*($9/$8)**3.0+$40*(1.0+r*$9/$8)**3.0/r)))) w p pt 7 lt 1 t "<y^2> model light=heavy", "" u 2:30 w l lt 2 t "<y^2> MC", "" u 2:(-$44*(1.0-$44)/($10**2.0*r**2.0*(1.0-r*$10/(1.0+r)*(1.0-(2.0-r)*$11/$10-3.0*r*$11/$10*$11/$10-r*r*($11/$10)**3.0+$44*(1.0+r*$11/$10)**3.0/r)))) w p pt 7 lt 2 t "<y^2> model light > heavy", "" u 2:32 w l lt 3 t "<y^2> MC", "" u 2:(-$48*(1.0-$48)/($12**2.0*r**2.0*(1.0-r*$12/(1.0+r)*(1.0-(2.0-r)*$13/$12-3.0*r*$13/$12*$13/$12-r*r*($13/$12)**3.0+$48*(1.0+r*$13/$12)**3.0/r)))) w p pt 7 lt 3 t "<y^2> model light < heavy", "" u 2:34 w l lt 4 t "<y^2> MC", "" u 2:(-$52*(1.0-$52)/($14**2.0*r**2.0*(1.0-r*$14/(1.0+r)*(1.0-(2.0-r)*$15/$14-3.0*r*$15/$14*$15/$14-r*r*($15/$14)**3.0+$52*(1.0+r*$15/$14)**3.0/r)))) w p pt 7 lt 4 t "<y^2> model <r^3>(t=0) = 0"
+
+##### BASE MODEL v3 #####
+# test closure model for <rv^2> = -r^3/rho_2 * 1/(1+r) * <y^2>/(1+r<RY>/<R>)^2 * [ 1 - (2-r)<RY>/<R> - 3r(<RY>/<R>)^2 - r^2(<RY>/<R>)^3 - r/(1+r)*<y^2>*(1+r<RY>/<R>)^3 ], r = 9.0 -> high A, r = 0.0101 -> low A
+##### BASE MODEL v3 #####
+r = 9.0; plot "stat.txt" u 2:41 w l t "<rv^2>", "" u 2:(-r**3.0/(1.0+r)*$28/(1.0+r*$9/$8)**2.0*(1.0-(2.0-r)*$9/$8-3.0*r*$9/$8*$9/$8-r*r*($9/$8)**3.0-r/(1.0+r)*$28*(1.0+r*$9/$8)**3.0)) w l t "<rv^2>nm light=heavy"
+r = 9.0; plot "stat.txt" u 2:45 w l t "<rv^2>", "" u 2:(-r**3.0/(1.0+r)*$30/(1.0+r*$11/$10)**2.0*(1.0-(2.0-r)*$11/$10-3.0*r*$11/$10*$11/$10-r*r*($11/$10)**3.0-r/(1.0+r)*$30*(1.0+r*$11/$10)**3.0)) w l t "<rv^2>nm light=heavy"
+r = 9.0; plot "stat.txt" u 2:49 w l t "<rv^2>", "" u 2:(-r**3.0/(1.0+r)*$32/(1.0+r*$13/$12)**2.0*(1.0-(2.0-r)*$13/$12-3.0*r*$13/$12*$13/$12-r*r*($13/$12)**3.0-r/(1.0+r)*$32*(1.0+r*$13/$12)**3.0)) w l t "<rv^2>nm light=heavy"
+r = 9.0; plot "stat.txt" u 2:53 w l t "<rv^2>", "" u 2:(-r**3.0/(1.0+r)*$34/(1.0+r*$15/$14)**2.0*(1.0-(2.0-r)*$15/$14-3.0*r*$15/$14*$15/$14-r*r*($15/$14)**3.0-r/(1.0+r)*$34*(1.0+r*$15/$14)**3.0)) w l t "<rv^2>nm light=heavy"
+# all in on plot
+r = 9.0; plot "stat.txt" u 2:41 w l t "<rv^2>", "" u 2:(-r**3.0/(1.0+r)*$28/(1.0+r*$9/$8)**2.0*(1.0-(2.0-r)*$9/$8-3.0*r*$9/$8*$9/$8-r*r*($9/$8)**3.0-r/(1.0+r)*$28*(1.0+r*$9/$8)**3.0)) w p pt 7 lt 1 t "<rv^2>nm light=heavy", "" u 2:45 w l lt 2 t "<rv^2>", "" u 2:(-r**3.0/(1.0+r)*$30/(1.0+r*$11/$10)**2.0*(1.0-(2.0-r)*$11/$10-3.0*r*$11/$10*$11/$10-r*r*($11/$10)**3.0-r/(1.0+r)*$30*(1.0+r*$11/$10)**3.0)) w p pt 7 lt 2 t "<rv^2>nm light > heavy", "" u 2:49 w l lt 3 t "<rv^2>", "" u 2:(-r**3.0/(1.0+r)*$32/(1.0+r*$13/$12)**2.0*(1.0-(2.0-r)*$13/$12-3.0*r*$13/$12*$13/$12-r*r*($13/$12)**3.0-r/(1.0+r)*$32*(1.0+r*$13/$12)**3.0)) w p pt 7 lt 3 t "<rv^2>nm light < heavy", "" u 2:53 w l lt 4 t "<rv^2>", "" u 2:(-r**3.0/(1.0+r)*$34/(1.0+r*$15/$14)**2.0*(1.0-(2.0-r)*$15/$14-3.0*r*$15/$14*$15/$14-r*r*($15/$14)**3.0-r/(1.0+r)*$34*(1.0+r*$15/$14)**3.0)) w p pt 7 lt 4 t "<rv^2>nm <r^3>(t=0) = 0"
+
+##### BASE MODEL v4 #####
+# test closure model for <rv^2> = -(1+r)/rho2 * b/(1+r<RY>/<R>) * [ 1 - (1+r<RY>/<R>)^2*(1+b)/(1+r) ], r = 9.0 -> high A, r = 0.0101 -> low A
+##### BASE MODEL v4 #####
+r = 9.0; plot "stat.txt" u 2:41 w l t "<rv^2>", "" u 2:(-(1.0+r)*(-$40)/(1.0+r*$9/$8)*(1.0-(1.0+r*$9/$8)**2.0/(1.0+r)*(1.0-$40))) w l t "<rv^2>nm light=heavy"
+r = 9.0; plot "stat.txt" u 2:45 w l t "<rv^2>", "" u 2:(-(1.0+r)*(-$44)/(1.0+r*$11/$10)*(1.0-(1.0+r*$11/$10)**2.0/(1.0+r)*(1.0-$44))) w l t "<rv^2>nm light=heavy"
+r = 9.0; plot "stat.txt" u 2:49 w l t "<rv^2>", "" u 2:(-(1.0+r)*(-$48)/(1.0+r*$13/$12)*(1.0-(1.0+r*$13/$12)**2.0/(1.0+r)*(1.0-$48))) w l t "<rv^2>nm light=heavy"
+r = 9.0; plot "stat.txt" u 2:53 w l t "<rv^2>", "" u 2:(-(1.0+r)*(-$52)/(1.0+r*$15/$14)*(1.0-(1.0+r*$15/$14)**2.0/(1.0+r)*(1.0-$52))) w l t "<rv^2>nm light=heavy"
+# all in on plot
+r = 9.0; plot "stat.txt" u 2:41 w l t "<rv^2>", "" u 2:(-(1.0+r)*(-$40)/(1.0+r*$9/$8)*(1.0-(1.0+r*$9/$8)**2.0/(1.0+r)*(1.0-$40))) w p pt 7 lt 1 t "<rv^2>nm light=heavy", "" u 2:45 w l lt 2 t "<rv^2>", "" u 2:(-(1.0+r)*(-$44)/(1.0+r*$11/$10)*(1.0-(1.0+r*$11/$10)**2.0/(1.0+r)*(1.0-$44))) w p pt 7 lt 2 t "<rv^2>nm light > heavy", "" u 2:49 w l lt 3 t "<rv^2>", "" u 2:(-(1.0+r)*(-$48)/(1.0+r*$13/$12)*(1.0-(1.0+r*$13/$12)**2.0/(1.0+r)*(1.0-$48))) w p pt 7 lt 3 t "<rv^2>nm light < heavy", "" u 2:53 w l lt 4 t "<rv^2>", "" u 2:(-(1.0+r)*(-$52)/(1.0+r*$15/$14)*(1.0-(1.0+r*$15/$14)**2.0/(1.0+r)*(1.0-$52))) w p pt 7 lt 4 t "<rv^2>nm <r^3>(t=0) = 0"
+
+##### BASE MODEL v5 #####
+# test closure model for <rv^2> = -r^2/rho2 * <y^2>/(1+r<RY>/<R>) * [ 1 - (1+r<RY>/<R>)^2*(1+b)/(1+r) ], r = 9.0 -> high A, r = 0.0101 -> low A
+##### BASE MODEL v5 #####
+r = 9.0; plot "stat.txt" u 2:41 w l t "<rv^2>", "" u 2:(-r*r*$28/(1.0+r*$9/$8)*(1.0-(1.0+r*$9/$8)**2.0/(1.0+r)*(1.0-$40))) w l t "<rv^2>nm light=heavy"
+r = 9.0; plot "stat.txt" u 2:45 w l t "<rv^2>", "" u 2:(-r*r*$30/(1.0+r*$11/$10)*(1.0-(1.0+r*$11/$10)**2.0/(1.0+r)*(1.0-$44))) w l t "<rv^2>nm light=heavy"
+r = 9.0; plot "stat.txt" u 2:49 w l t "<rv^2>", "" u 2:(-r*r*$32/(1.0+r*$13/$12)*(1.0-(1.0+r*$13/$12)**2.0/(1.0+r)*(1.0-$48))) w l t "<rv^2>nm light=heavy"
+r = 9.0; plot "stat.txt" u 2:53 w l t "<rv^2>", "" u 2:(-r*r*$34/(1.0+r*$15/$14)*(1.0-(1.0+r*$15/$14)**2.0/(1.0+r)*(1.0-$52))) w l t "<rv^2>nm light=heavy"
+# all in on plot
+r = 9.0; plot "stat.txt" u 2:41 w l t "<rv^2>", "" u 2:(-r*r*$28/(1.0+r*$9/$8)*(1.0-(1.0+r*$9/$8)**2.0/(1.0+r)*(1.0-$40))) w p pt 7 lt 1 t "<rv^2>nm light=heavy", "" u 2:45 w l lt 2 t "<rv^2>", "" u 2:(-r*r*$30/(1.0+r*$11/$10)*(1.0-(1.0+r*$11/$10)**2.0/(1.0+r)*(1.0-$44))) w p pt 7 lt 2 t "<rv^2>nm light > heavy", "" u 2:49 w l lt 3 t "<rv^2>", "" u 2:(-r*r*$32/(1.0+r*$13/$12)*(1.0-(1.0+r*$13/$12)**2.0/(1.0+r)*(1.0-$48))) w p pt 7 lt 3 t "<rv^2>nm light < heavy", "" u 2:53 w l lt 4 t "<rv^2>", "" u 2:(-r*r*$34/(1.0+r*$15/$14)*(1.0-(1.0+r*$15/$14)**2.0/(1.0+r)*(1.0-$52))) w p pt 7 lt 4 t "<rv^2>nm <r^3>(t=0) = 0"
 \endverbatim
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Wed 13 May 2015 12:06:32 PM MDT
+<em>Page last updated:</em> Tue 04 Aug 2015 10:52:14 AM MDT
 <em>Copyright 2012-2015, Jozsef Bakosi.</em>
 </small></div>
 */

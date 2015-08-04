@@ -422,6 +422,7 @@ set(MPIRUN_BIND_ARGS "-bind-to none -map-by node")
 message(STATUS "mpirun process binding for ctest: ${MPIRUN_BIND_ARGS}")
 
 # Include cmake code common to all regression tests
+message(STATUS "Adding regression tests ...")
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../regression
                  ${CMAKE_BINARY_DIR}/regression
                  EXCLUDE_FROM_ALL)
