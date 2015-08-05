@@ -82,13 +82,18 @@ execute_process(
 string(REGEX REPLACE "[\r\n]" "" BUILD_DATE "${BUILD_DATE}")
 
 # Set names of executables
-set(INCITER_EXECUTABLE "inciter")
-set(RNGTEST_EXECUTABLE "rngtest")
-set(REGTEST_EXECUTABLE "regtest")
-set(UNITTEST_EXECUTABLE "unittest")
-set(MESHCONV_EXECUTABLE "meshconv")
-set(WALKER_EXECUTABLE "walker")
-set(ALL_QUINOA_EXECUTABLES "${INCITER_EXECUTABLE};${RNGTEST_EXECUTABLE};${REGTEST_EXECUTABLE};${UNITTEST_EXECUTABLE};${MESHCONV_EXECUTABLE};${WALKER_EXECUTABLE}")
+set(INCITER_EXECUTABLE inciter)
+set(RNGTEST_EXECUTABLE rngtest)
+set(MESHCONV_EXECUTABLE meshconv)
+set(WALKER_EXECUTABLE walker)
+set(UNITTEST_EXECUTABLE unittest)
+set(REGTEST_EXECUTABLE regtest)
+
+# Create set of all executables tested. These are the executables that do
+# "interesting things", i.e., excluding unittest but keeping rngtest as that is
+# (to be) regression tested
+set(NONTEST_EXECUTABLES ${INCITER_EXECUTABLE} ${RNGTEST_EXECUTABLE}
+                        ${MESHCONV_EXECUTABLE} ${WALKER_EXECUTABLE})
 
 # Get git revision
 include(GetGitRevisionDescription)
@@ -434,7 +439,8 @@ if(CODE_COVERAGE)
                             ${CHARMRUN}
                             TESTRUNNER_ARGS
                             +p${PROCESSOR_COUNT} Main/${UNITTEST_EXECUTABLE} -v
-                            DEPENDS ${ALL_QUINOA_EXECUTABLES})
+                            DEPENDS ${NONTEST_EXECUTABLES}
+                                    ${UNITTEST_EXECUTABLE})
 endif()
 
 # Setup code coverage for regression tests
@@ -443,5 +449,5 @@ if(CODE_COVERAGE)
   setup_target_for_coverage(regression doc/html regression_coverage
                             ${CMAKE_CTEST_COMMAND}
                             TESTRUNNER_ARGS -j${PROCESSOR_COUNT}
-                            DEPENDS ${ALL_QUINOA_EXECUTABLES} numdiff)
+                            DEPENDS ${NONTEST_EXECUTABLES} numdiff)
 endif()
