@@ -7,8 +7,8 @@
 #                      [ARGS arg1 arg2 ...]
 #                      [TEXT_DIFF_PROG txtdiff]
 #                      [BIN_DIFF_PROG bindiff]
-#                      [TEXT_BASELINE stat.std]
-#                      [TEXT_RESULT stat.txt] )
+#                      [TEXT_BASELINE stat1.std stat2.std ...]
+#                      [TEXT_RESULT stat1.txt stat2.txt] )
 #                      [TEXT_DIFF_PROG_CONF ndiff.cfg]
 #
 # Mandatory arguments:
@@ -40,11 +40,13 @@
 #
 # BIN_DIFF_PROG bindiff - Diff program used for binary diffs. Default: exodiff.
 #
-# TEXT_BASELINE stat.std - Textual file containing the known good solution. If
-# unspecified, no textual diff is performed. Default: "".
+# TEXT_BASELINE stat1.std stat2.std ... - Textual file(s) containing the known
+# good solutions. If empty, no textual diff is performed. Default: "". Note
+# that the number of baseline filenames must equal the number of result files.
 #
-# TEXT_RESULT stat.txt - Textual file produced by the test to be tested. If
-# unspecified, no textual diff is performed. Default: "".
+# TEXT_RESULT stat1.txt stat2.txt ... - Textual file(s) produced by the test to
+# be tested. If empty, no textual diff is performed. Default: "". Note that the
+# number of baseline filenames must equal the number of result files.
 #
 # TEXT_DIFF_PROG_CONF ndiff.cfg - Textual diff program configuration file.
 # Default: "".
@@ -54,8 +56,8 @@
 # ##############################################################################
 function(ADD_REGRESSION_TEST test_name executable)
 
-  set(oneValueArgs NUMPES TEXT_DIFF_PROG BIN_DIFF_PROG TEXT_BASELINE TEXT_RESULT TEXT_DIFF_PROG_CONF)
-  set(multiValueArgs INPUTFILES ARGS LABELS)
+  set(oneValueArgs NUMPES TEXT_DIFF_PROG BIN_DIFF_PROG TEXT_DIFF_PROG_CONF)
+  set(multiValueArgs INPUTFILES ARGS TEXT_BASELINE TEXT_RESULT LABELS)
   cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}"
                         ${ARGN})
 
@@ -88,6 +90,25 @@ function(ADD_REGRESSION_TEST test_name executable)
 
   # Append NUMPES to test name
   set(test_name "${test_name}_pe${NUMPES}")
+
+  # Do sainity check on and prepare to pass as cmake script arguments the
+  # filenames of text baseline(s) and text result(s)
+  if(ARG_TEXT_BASELINE OR ARG_TEXT_RESULT)
+
+    # Make sure the number of result and baseline files are equal
+    list(LENGTH ARG_TEXT_BASELINE nbaseline)
+    list(LENGTH ARG_TEXT_RESULT nresult)
+    if (NOT nbaseline EQUAL nresult)
+      message(FATAL_ERROR
+              "Number of baselines and number of results must be equal.")
+    endif()
+
+    # Convert list to space-separated string for passing as arguments to test
+    # runner cmake script below
+    string(REPLACE ";" " " ARG_TEXT_BASELINE "${ARG_TEXT_BASELINE}")
+    string(REPLACE ";" " " ARG_TEXT_RESULT "${ARG_TEXT_RESULT}")
+
+  endif()
 
   # Construct and echo configuration for test being added
   set(msg "Add regression test ${test_name} for ${executable}")

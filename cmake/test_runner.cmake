@@ -1,6 +1,10 @@
 # Regression test runner using the cmake scripting language. See also
 # http://www.cmake.org/Wiki/CMake/Language_Syntax.
 
+# Covert string to list of file names of text baseline(s) and text result(s)
+string(REPLACE " " ";" TEXT_BASELINE "${TEXT_BASELINE}")
+string(REPLACE " " ";" TEXT_RESULT "${TEXT_RESULT}")
+
 # Print test runner configuration
 message("Test runner configuration:")
 message("  TEST_NAME (name of test)                                    : ${TEST_NAME}")
@@ -12,11 +16,11 @@ message("  TEST_EXECUTABLE_ARGS (executable arguments)                 : ${TEST_
 message("  TEST_LABELS (test labels)                                   : ${TEST_LABLES}")
 message("  NUMPES (number of processing elements used for test)        : ${NUMPES}")
 
-message("  TEXT_DIFF_PROG (diff tool used for textual diffs)           : ${TEXT_DIFF_PROG}")
-message("  TEXT_DIFF_PROG_ARGS (textual diff tool arguments)           : ${TEXT_DIFF_PROG_ARGS}")
-message("  TEXT_DIFF_PROG_CONF (textual diff tool configuration file)  : ${TEXT_DIFF_PROG_CONF}")
-message("  TEXT_BASELINE (textual output known good solution file)     : ${TEXT_BASELINE}")
-message("  TEXT_RESULT (textual output file diffed with good solution) : ${TEXT_RESULT}")
+message("  TEXT_DIFF_PROG (diff tool used for text diffs)              : ${TEXT_DIFF_PROG}")
+message("  TEXT_DIFF_PROG_ARGS (text diff tool arguments)              : ${TEXT_DIFF_PROG_ARGS}")
+message("  TEXT_DIFF_PROG_CONF (text diff tool configuration file)     : ${TEXT_DIFF_PROG_CONF}")
+message("  TEXT_BASELINE (text output known good solution file(s))     : ${TEXT_BASELINE}")
+message("  TEXT_RESULT (text output file(s) diffed with good solution) : ${TEXT_RESULT}")
 
 message("  BIN_DIFF_PROG (diff tool used for binary diffs)             : ${BIN_DIFF_PROG}")
 message("  BIN_DIFF_PROG_ARGS (binary diff tool arguments)             : ${BIN_DIFF_PROG_ARGS}")
@@ -25,7 +29,7 @@ message("  BIN_BASELINE (binary output known good solution file)       : ${BIN_B
 message("  BIN_RESULT (binary output file diffed with good solution)   : ${BIN_RESULT}")
 
 # Remove previous test output (if any)
-message("\nRemoving existing result (if any): ${TEXT_RESULT} ${BIN_RESULT}\n")
+message("\nRemoving existing result(s) (if any): ${TEXT_RESULT} ${BIN_RESULT}\n")
 file(REMOVE ${TEXT_RESULT} ${BIN_RESULT})
 
 # Run the test
@@ -42,18 +46,33 @@ if(ERROR)
 
 else() # Test command ran successfully, attempt to do diffs
 
-  # Do textual diff if both TEXT_BASELINE and TEXT_RESULT have been specified
-  if (TEXT_BASELINE AND TEXT_RESULT)
-    set(text_diff_command ${TEXT_DIFF_PROG} -b -t ${TEST_NAME} ${TEXT_BASELINE}
-                          ${TEXT_RESULT} ${TEXT_DIFF_PROG_CONF})
-    string(REPLACE ";" " " text_diff_command_string "${text_diff_command}")
-    message("\nRunning text diff command: '${text_diff_command_string}'\n")
-    execute_process(COMMAND ${text_diff_command} RESULT_VARIABLE ERROR)
-    # Check return value from textual diff command
-    if(ERROR)
-      message(FATAL_ERROR "Textual diff failed to run: '${text_diff_command_string}' returned error code: ${ERROR}")
+  # Do textual diff(s) if both TEXT_BASELINE and TEXT_RESULT have been specified
+  if(TEXT_BASELINE AND TEXT_RESULT)
+
+    # Make sure the number of result and baseline files are equal
+    list(LENGTH TEXT_BASELINE nbaseline)
+    list(LENGTH TEXT_RESULT nresult)
+    if (NOT nbaseline EQUAL nresult)
+      message(FATAL_ERROR
+              "Number of baselines and number of results must be equal.")
     endif()
 
-  endif()
+    # Do textual diff(s) multiple times diffing matching baseline and result
+    math(EXPR b "0")
+    foreach(baseline IN LISTS TEXT_BASELINE)
+      list(GET TEXT_RESULT ${b} result)
+      set(text_diff_command ${TEXT_DIFF_PROG} -b -t ${TEST_NAME}
+                            ${baseline} ${result} ${TEXT_DIFF_PROG_CONF})
+      string(REPLACE ";" " " text_diff_command_string "${text_diff_command}")
+      message("\nRunning text diff command: '${text_diff_command_string}'\n")
+      execute_process(COMMAND ${text_diff_command} RESULT_VARIABLE ERROR)
+      # Check return value from textual diff command
+      if(ERROR)
+        message(FATAL_ERROR "Textual diff failed to run: '${text_diff_command_string}' returned error code: ${ERROR}")
+      endif(ERROR)
+      math(EXPR b "${b}+1")
+    endforeach(baseline)
+
+  endif(TEXT_BASELINE AND TEXT_RESULT)
 
 endif()
