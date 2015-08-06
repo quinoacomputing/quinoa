@@ -40,3 +40,12 @@ add_regression_test(DiagOrnsteinUhlenbeck_u0.9 ${WALKER_EXECUTABLE}
                     TEXT_BASELINE stat.txt.std
                     TEXT_RESULT stat.txt
                     TEXT_DIFF_PROG_CONF diagou.ndiff.cfg)
+
+add_regression_test(DiagOrnsteinUhlenbeckPDF ${WALKER_EXECUTABLE}
+                    NUMPES 8
+                    INPUTFILES diagou_pdf.q pdf_f2.txt.std diagou_pdf.ndiff.cfg
+                    ARGS -c diagou_pdf.q -v
+                    LABELS verification
+                    TEXT_BASELINE pdf_f2.txt.std
+                    TEXT_RESULT pdf_f2.txt
+                    TEXT_DIFF_PROG_CONF diagou_pdf.ndiff.cfg)
