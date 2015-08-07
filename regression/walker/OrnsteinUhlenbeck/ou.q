@@ -32,14 +32,4 @@ walker
     <R> <rr> <R2> <r2r2> <R3> <r3r3> <r1r2> <r1r3> <r2r3>
   end
 
-  pdfs
-    interval          100
-    filetype          gmshbin
-    policy            overwrite
-    centering         node
-    #format            scientific
-    #precision         4
-    f2( r1 r2 : 2.0e-1 2.0e-1 ) #; -2 2 -2 2 )
-    f3( r1 r2 r3 : 5.0e-1 5.0e-1 5.0e-1 ) #; 0 1 0 1 -0.5 0.5 )
-  end
 end
