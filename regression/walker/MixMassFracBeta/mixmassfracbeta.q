@@ -92,22 +92,4 @@ walker
 #    <Y5Y20Y10Y10Y10>
   end
 
-  pdfs
-    interval  1
-    filetype  txt
-    policy    overwrite
-    centering elem
-    format    scientific
-    precision 4
-    p1( Y1 : 5.0e-3 )
-    p2( Y2 : 5.0e-3 )
-    p3( Y3 : 5.0e-3 )
-    p4( Y4 : 1.0e-2 )
-#    p5( Y5 : 1.0e-2 )
-    p6( Y6 : 5.0e-5 )
-    p7( Y7 : 5.0e-5 )
-    p8( Y8 : 5.0e-5 )
-    p9( Y9 : 1.0e-2 )
-#    p10( Y10 : 1.0e-2 )
-  end
 end

@@ -27,13 +27,4 @@ walker
    <o1o1> <o2o2> <o1o2>
   end
 
-  pdfs
-    interval          500
-    filetype          txt
-    policy            overwrite
-    centering         elem
-    format            scientific
-    precision         4
-    f2( o1 o2 : 5.0e-2 5.0e-2 ) #; -2 2 -2 2 )
-  end
 end

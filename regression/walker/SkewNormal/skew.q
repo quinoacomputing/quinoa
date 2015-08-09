@@ -27,14 +27,4 @@ walker
     <m1m1> <m2m2>
   end
 
-  pdfs
-    interval 10
-    filetype txt
-    policy overwrite
-    centering elem
-    format scientific
-    precision 4
-    p1( M1 : 1.0e-2 )
-    p2( M2 : 1.0e-2 )
-  end
 end

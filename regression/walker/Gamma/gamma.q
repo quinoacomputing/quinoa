@@ -28,14 +28,4 @@ walker
     <l1l1> <l2l2> <l1l2>
   end
 
-  pdfs
-    interval          100
-    filetype          txt
-    policy            overwrite
-    centering         node
-    format            scientific
-    precision         4
-    f( L1 : 2.0e-1 )
-    g( L2 : 2.0e-1 )
-  end
 end
