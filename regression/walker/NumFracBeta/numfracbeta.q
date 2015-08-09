@@ -101,17 +101,4 @@ walker
     <x15x15x15> # 57
   end
 
-  pdfs
-    interval  100
-    filetype  txt
-    policy    overwrite
-    centering elem
-    format    scientific
-    precision 4
-    p1( X1 : 1.0e-2 )
-    p2( X2 : 1.0e-2 )
-    p3( X3 : 1.0e-2 )
-    p4( X4 : 1.0e-2 )
-    p5( X5 : 1.0e-2 )
-  end
 end
