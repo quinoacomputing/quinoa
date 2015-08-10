@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/StatCtr.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 09:59:18 AM MDT
+  \date      Mon 10 Aug 2015 01:35:53 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Types and associated functions to deal with moments and PDFs
   \details   Types and associated functions to deal with statistical moments and
@@ -255,6 +255,8 @@ central( const std::vector< ctr::Term >& vec )
 using Probability = std::vector< Term >;
 
 //! \brief PDF information bundle
+//! \note If the user did not specify extents for a PDF, the corresponding
+//!   extents vector still exists but it is empty.
 //! \author J. Bakosi
 struct PDFInfo {
   const std::string& name;                  //!< PDF identifier, i.e., name
@@ -262,57 +264,55 @@ struct PDFInfo {
   std::vector< std::string > vars;          //!< List of sample space ariables
 };
 
-//! \brief Find sample space variables for a PDF
-//! \details The template argument specifies the number of dimensions of the
-//!   PDF sample space: 1, 2, or 3.
-//! \param[in] pdfs Vector of PDFs to operate on
-//! \param[in] idx Index of the PDF with given sample space dimension 'd' given
-//!    by the template argument
-//! \return Vector of sample variables
-//! \author J. Bakosi
-template< std::size_t d >
-std::vector< std::string >
-vars( const std::vector< Probability >& pdfs, long int idx ) {
-  static_assert( d >= 1 && d <= 3 ,
-                 "Only 1, 2, or 3-dimensional PDFs are supported" );
-  long int n = -1;
-  std::vector< std::string > v;
-  for (const auto& probability : pdfs) {
-    if (probability.size() == d) ++n;
-    if (n == idx) {
-      for (const auto& term : probability)
-        v.push_back( term.var + std::to_string(term.field+1) );
-      return v;
-    }
-  }
-  Throw( "Cannot find PDF." );
-}
-
-//! Find PDF information given the sample space dimension and its index
+//! \brief Find PDF information, see tk::ctr::PDFInfo
+//! \details Find PDF information given the sample space dimension (template
+//!   argument D), ordinary or central PDF (m), and the index within the list of
+//!   matching (based on D and m) PDFs requested (idx)
+//! \note Size of binsizes, names, pdfs, and exts must all be equal
+//! \note idx must be less than the length of binsizes, names, and pdfs
 //! \param[in] binsizes Vector of sample space bin sizes for multiple PDFs
 //! \param[in] names Vector of PDF names
-//! \param[in] exts Vector of sample space extents
+//! \param[in] exts Vector of sample space extents. Note: if the user did not
+//!   specify extents for a PDF, the corresponding extents vector still exists
+//!   but it is empty.
 //! \param[in] pdfs Vector of PDFs
-//! \param[in] idx Index of the PDF with given sample space dimension
+//! \param[in] m ORDINARY or CENTRAL PDF we are looking for
+//! \param[in] idx Index of the PDF within the list of matching (based on D and
+//!   m) PDFs requested
 //! \see walker::Distributor
 //! \author J. Bakosi
-template< std::size_t d >
+template< std::size_t D >
 PDFInfo pdfInfo( const std::vector< std::vector< tk::real > >& binsizes,
                  const std::vector< std::string >& names,
                  const std::vector< std::vector< tk::real > >& exts,
                  const std::vector< Probability >& pdfs,
-                 int idx )
+                 tk::ctr::Moment m,
+                 std::size_t idx )
 {
   Assert( binsizes.size() == names.size(),
-          "Number of binsizes vector and the number of PDF names must equal." );
-  int n = -1;
-  std::size_t i = 0;
+          "Length of binsizes vector and that of PDF names must equal." );
+  Assert( binsizes.size() == pdfs.size(),
+          "Length of binsizes vector and that of PDFs must equal." );
+  Assert( binsizes.size() == exts.size(),
+          "Length of binsizes vector and that of PDF extents must equal." );
+  Assert( binsizes.size() > idx, "Indexing out of bounds." );
+
+  std::size_t i = 0;  // will count all PDFs queried
+  std::size_t n = 0;  // will count PDFs with sample space dimensions and type
+                      // (orindary or central) we are looking for
   for (const auto& bs : binsizes) {
-    if (bs.size() == d) ++n;
-    if (n == idx) return { names[i], exts[i], vars<d>(pdfs,idx) };
+    if ( bs.size() == D &&
+         ((m == Moment::ORDINARY && ordinary(pdfs[i])) ||
+          (m == Moment::CENTRAL && central(pdfs[i]))) ) ++n;
+    if (n == idx+1) {
+      std::vector< std::string > vars;
+      for (const auto& term : pdfs[i])
+        vars.push_back( term.var + std::to_string(term.field+1) );
+      return { names[i], exts[i], std::move(vars) };
+    }
     ++i;
   }
-  Throw( "Cannot find PDF name." );
+  Throw( "Cannot find PDF." );
 }
 
 //! Lookup moment in moments map based on product key

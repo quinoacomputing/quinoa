@@ -2,7 +2,7 @@
 /*!
   \file      src/Walker/Distributor.C
   \author    J. Bakosi
-  \date      Mon 20 Jul 2015 07:48:36 PM MDT
+  \date      Mon 10 Aug 2015 01:34:43 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Distributor drives the time integration of differential equations
   \details   Distributor drives the time integration of differential equations.
@@ -327,19 +327,22 @@ Distributor::outPDF()
 {
   // Output PDFs at selected times
   if ( !(m_it % g_inputdeck.get< tag::interval, tag::pdf >()) ) {
-    auto n = outUniPDF();              // Output univariate PDFs to file(s)
-    n += outBiPDF();                   // Output bivariate PDFs to file(s)
-    n += outTriPDF();                  // Output trivariate PDFs to file(s)
-    if (n) m_output.get< tag::pdf >() = true; // Signal that PDFs were written
+    outUniPDF();                        // Output univariate PDFs to file(s)
+    outBiPDF();                         // Output bivariate PDFs to file(s)
+    outTriPDF();                        // Output trivariate PDFs to file(s)
+    m_output.get< tag::pdf >() = true;  // Signal that PDFs were written
   }
 }
 
 void
-Distributor::writeUniPDF( const tk::UniPDF& p, int& cnt )
+Distributor::writeUniPDF( const tk::UniPDF& p,
+                          tk::ctr::Moment m,
+                          std::size_t idx )
 //******************************************************************************
 // Write univariate PDF to file
 //! \param[in] p Univariate PDF to output
-//! \param[inout] cnt Count up number of PDFs written
+//! \param[in] m ORDINARY or CENTRAL PDF we are writing
+//! \param[in] idx Index of the PDF of all ordinary or central PDFs requested
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -349,7 +352,8 @@ Distributor::writeUniPDF( const tk::UniPDF& p, int& cnt )
                            g_inputdeck.get< tag::cmd, tag::io, tag::pdfnames >(),
                            g_inputdeck.get< tag::discr, tag::extent >(),
                            g_inputdeck.get< tag::pdf >(),
-                           cnt++ );
+                           m,
+                           idx );
 
   // Construct PDF file name: base name + '_' + pdf name
   std::string filename =
@@ -373,11 +377,14 @@ Distributor::writeUniPDF( const tk::UniPDF& p, int& cnt )
 }
 
 void
-Distributor::writeBiPDF( const tk::BiPDF& p, int& cnt )
+Distributor::writeBiPDF( const tk::BiPDF& p,
+                         tk::ctr::Moment m,
+                         std::size_t idx )
 //******************************************************************************
 // Write bivariate PDF to file
 //! \param[in] p Bivariate PDF to output
-//! \param[inout] cnt Count up number of PDFs written
+//! \param[in] m ORDINARY or CENTRAL PDF we are writing
+//! \param[in] idx Index of the PDF of all ordinary or central PDFs requested
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -387,7 +394,8 @@ Distributor::writeBiPDF( const tk::BiPDF& p, int& cnt )
                            g_inputdeck.get< tag::cmd, tag::io, tag::pdfnames >(),
                            g_inputdeck.get< tag::discr, tag::extent >(),
                            g_inputdeck.get< tag::pdf >(),
-                           cnt++ );
+                           m,
+                           idx );
 
   // Construct PDF file name: base name + '_' + pdf name
   std::string filename =
@@ -431,11 +439,14 @@ Distributor::writeBiPDF( const tk::BiPDF& p, int& cnt )
 }
 
 void
-Distributor::writeTriPDF( const tk::TriPDF& p, int& cnt )
+Distributor::writeTriPDF( const tk::TriPDF& p,
+                          tk::ctr::Moment m,
+                          std::size_t idx )
 //******************************************************************************
 // Write trivariate PDF to file
 //! \param[in] p Trivariate PDF to output
-//! \param[inout] cnt Count up number of PDFs written
+//! \param[in] m ORDINARY or CENTRAL PDF we are writing
+//! \param[in] idx Index of the PDF of all ordinary or central PDFs requested
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -445,7 +456,8 @@ Distributor::writeTriPDF( const tk::TriPDF& p, int& cnt )
                            g_inputdeck.get< tag::cmd, tag::io, tag::pdfnames >(),
                            g_inputdeck.get< tag::discr, tag::extent >(),
                            g_inputdeck.get< tag::pdf >(),
-                           cnt++ );
+                           m,
+                           idx );
 
   // Construct PDF file name: base name + '_' + pdf name
   std::string filename =
@@ -488,21 +500,24 @@ Distributor::writeTriPDF( const tk::TriPDF& p, int& cnt )
                         g_inputdeck.get< tag::selected, tag::pdfctr >() );
 }
 
-int
+void
 Distributor::outUniPDF()
 //******************************************************************************
 // Output all requested univariate PDFs to file(s)
-//! \return Number of PDFs written
 //! \author J. Bakosi
 //******************************************************************************
 {
-  int cnt = 0;
-  for (const auto& p : m_ordupdf) writeUniPDF( p, cnt );
-  for (const auto& p : m_cenupdf) writeUniPDF( p, cnt );
-  return cnt;
+  std::size_t idx = 0;
+  for (const auto& p : m_ordupdf) {
+    writeUniPDF( p, tk::ctr::Moment::ORDINARY, idx++ );
+  }
+  idx = 0;
+  for (const auto& p : m_cenupdf) {
+    writeUniPDF( p, tk::ctr::Moment::CENTRAL, idx++ );
+  }
 }
 
-int
+void
 Distributor::outBiPDF()
 //******************************************************************************
 // Output all requested bivariate PDFs to file(s)
@@ -510,13 +525,17 @@ Distributor::outBiPDF()
 //! \author J. Bakosi
 //******************************************************************************
 {
-  int cnt = 0;
-  for (const auto& p : m_ordbpdf) writeBiPDF( p, cnt );
-  for (const auto& p : m_cenbpdf) writeBiPDF( p, cnt );
-  return cnt;
+  std::size_t idx = 0;
+  for (const auto& p : m_ordbpdf) {
+    writeBiPDF( p, tk::ctr::Moment::ORDINARY, idx++ );
+  }
+  idx = 0;
+  for (const auto& p : m_cenbpdf) {
+    writeBiPDF( p, tk::ctr::Moment::CENTRAL, idx++ );
+  }
 }
 
-int
+void
 Distributor::outTriPDF()
 //******************************************************************************
 // Output all requested trivariate PDFs to file(s)
@@ -524,10 +543,14 @@ Distributor::outTriPDF()
 //! \author J. Bakosi
 //******************************************************************************
 {
-  int cnt = 0;
-  for (const auto& p : m_ordtpdf) writeTriPDF( p, cnt );
-  for (const auto& p : m_centpdf) writeTriPDF( p, cnt );
-  return cnt;
+  std::size_t idx = 0;
+  for (const auto& p : m_ordtpdf) {
+    writeTriPDF( p, tk::ctr::Moment::ORDINARY, idx++ );
+  }
+  idx = 0;
+  for (const auto& p : m_centpdf) {
+    writeTriPDF( p, tk::ctr::Moment::CENTRAL, idx++ );
+  }
 }
 
 void

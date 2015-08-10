@@ -2,7 +2,7 @@
 /*!
   \file      src/Walker/Distributor.h
   \author    J. Bakosi
-  \date      Mon 20 Jul 2015 07:47:52 PM MDT
+  \date      Mon 10 Aug 2015 12:10:18 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Distributor drives the time integration of differential equations
   \details   Distributor drives the time integration of differential equations.
@@ -101,25 +101,25 @@ class Distributor : public CBase_Distributor {
     void outStat();
 
     //! Write univariate PDF to file
-    void writeUniPDF( const tk::UniPDF& p, int& cnt );
+    void writeUniPDF( const tk::UniPDF& p, tk::ctr::Moment m, std::size_t idx );
 
     //! Write bivariate PDF to file
-    void writeBiPDF( const tk::BiPDF& p, int& cnt );
+    void writeBiPDF( const tk::BiPDF& p, tk::ctr::Moment m, std::size_t idx );
 
     //! Write trivariate PDF to file
-    void writeTriPDF( const tk::TriPDF& p, int& cnt );
+    void writeTriPDF( const tk::TriPDF& p, tk::ctr::Moment m, std::size_t idx );
 
     //! Output PDFs to file
     void outPDF();
 
     //! Output all requested univariate PDFs to file(s)
-    int outUniPDF();
+    void outUniPDF();
 
     //! Output all requested bivariate PDFs to file(s)
-    int outBiPDF();
+    void outBiPDF();
 
     //! Output all requested trivariate PDFs to file(s)
-    int outTriPDF();
+    void outTriPDF();
 
     //! Evaluate time step, compute new time step size
     void evaluateTime();
