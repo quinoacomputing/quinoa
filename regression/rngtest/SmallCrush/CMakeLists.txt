@@ -7,6 +7,6 @@ add_regression_test(few ${RNGTEST_EXECUTABLE}
                     ARGS -c few.q -v)
 
 add_regression_test(all ${RNGTEST_EXECUTABLE}
-                    NUMPES 8
+                    NUMPES ${PROCESSOR_COUNT}
                     INPUTFILES all.q
                     ARGS -c all.q -v)
