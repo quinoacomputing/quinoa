@@ -32,7 +32,7 @@ walker
     policy            overwrite
     centering         elem
     f1( r1 : 2.0e-1 ; -6.0 6.0 )
-    f2( r1 r2 : 2.0e-1 2.0e-1 )                 # output but unverified
+    f2( R1 R2 : 2.0e-1 2.0e-1 )                 # output but unverified
     f3o( R1 R2 R3 : 5.0e-1 5.0e-1 5.0e-1 )      # output but unverified
     f3c( r1 r2 r3 : 5.0e-1 5.0e-1 5.0e-1 )      # output but unverified
   end
