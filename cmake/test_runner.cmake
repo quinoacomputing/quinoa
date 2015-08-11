@@ -29,8 +29,10 @@ message("  BIN_BASELINE (binary output known good solution file)       : ${BIN_B
 message("  BIN_RESULT (binary output file diffed with good solution)   : ${BIN_RESULT}")
 
 # Remove previous test output (if any)
-message("\nRemoving existing result(s) (if any): ${TEXT_RESULT} ${BIN_RESULT}\n")
-file(REMOVE ${TEXT_RESULT} ${BIN_RESULT})
+if(TEXT_RESULT OR BIN_RESULT)
+  message("\nRemoving existing result(s) (if any): ${TEXT_RESULT} ${BIN_RESULT}\n")
+  file(REMOVE ${TEXT_RESULT} ${BIN_RESULT})
+endif()
 
 # Run the test
 set(test_command ${CHARMRUN} +p${NUMPES} ${MPIRUN_BIND_ARGS}
