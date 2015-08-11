@@ -11,9 +11,12 @@ target="_blank">Unit test coverage report</a>
 - <a href="regression_coverage/index.html"
 target="_blank">Regression test coverage report</a>
 
+- <a href="test_coverage/index.html"
+target="_blank">Full test coverage report</a>
+
 <hr>
 <div><small>
-<em>Page last updated:</em> Sun 02 Aug 2015 09:16:46 PM MDT
+<em>Page last updated:</em> Tue 11 Aug 2015 11:59:46 AM MDT
 <em>Copyright 2012-2015, Jozsef Bakosi.</em>
 </small></div>
 */

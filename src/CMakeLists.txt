@@ -454,3 +454,11 @@ if(CODE_COVERAGE)
                             TESTRUNNER_ARGS -j${PROCESSOR_COUNT}
                             DEPENDS ${NONTEST_EXECUTABLES} numdiff)
 endif()
+
+# Setup code coverage for all individual coverage targets included
+if(CODE_COVERAGE)
+  setup_target_for_all_coverage(all doc/html test_coverage
+                                DEPENDS ${NONTEST_EXECUTABLES}
+                                        ${UNITTEST_EXECUTABLE}
+                                        numdiff)
+endif()
