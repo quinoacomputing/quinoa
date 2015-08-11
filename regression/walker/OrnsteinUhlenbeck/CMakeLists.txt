@@ -40,3 +40,12 @@ add_regression_test(OrnsteinUhlenbeck_u0.9 ${WALKER_EXECUTABLE}
                     TEXT_BASELINE stat.txt.std
                     TEXT_RESULT stat.txt
                     TEXT_DIFF_PROG_CONF ou.ndiff.cfg)
+
+add_regression_test(OrnsteinUhlenbeckPDF ${WALKER_EXECUTABLE}
+                    NUMPES 8
+                    INPUTFILES ou_pdf.q pdf_f1.txt.std ou_pdf.ndiff.cfg
+                    ARGS -c ou_pdf.q -v
+                    LABELS verification
+                    TEXT_BASELINE pdf_f1.txt.std
+                    TEXT_RESULT pdf_f1.txt
+                    TEXT_DIFF_PROG_CONF ou_pdf.ndiff.cfg)
