@@ -164,7 +164,10 @@ function(ADD_REGRESSION_TEST test_name executable)
   # Instruct ctest to check textual diff output against the regular expressions
   # specified. At least one of the regular expressions has to match, otherwise
   # the test will fail.
+  # Pass regular expression for numdiff output
   list(APPEND test_properties PASS_REGULAR_EXPRESSION ".*${test_name}.*PASS")
+  # Pass regular expression for rngtest output (only test successfull run)
+  list(APPEND test_properties PASS_REGULAR_EXPRESSION "Generator quality")
 
   # Set test properties
   set_tests_properties(${test_name} PROPERTIES ${test_properties})
