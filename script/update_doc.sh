@@ -36,6 +36,12 @@ ninja regression_coverage
 mv doc/html/regression_coverage /tmp
 rm * .ninja_* -rf
 
+# Generate full test coverage report, move it to /tmp, and clean
+cmake -G Ninja ../src
+ninja test_coverage
+mv doc/html/test_coverage /tmp
+rm * .ninja_* -rf
+
 # Start out in empty build-dir with a fresh clone of the gh-pages branch
 git clone git@github.com:jbakosi/quinoa.git --branch gh-pages --single-branch doc/html
 cd doc/html
@@ -48,6 +54,7 @@ ninja doc
 cd doc/html
 mv /tmp/unittest_coverage .
 mv /tmp/regression_coverage .
+mv /tmp/test_coverage .
 touch .nojekyll
 git add .
 git commit -m "Automated documentation build for changeset ${DOC4COMMIT}"
