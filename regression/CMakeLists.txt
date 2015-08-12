@@ -8,6 +8,12 @@ set(NDIFF_EXECUTABLE ${CMAKE_BINARY_DIR}/regression/ndiff/numdiff)
 set(EXODIFF_EXECUTABLE ${TPL_DIR}/bin/exodiff)
 set(TEST_RUNNER ${CMAKE_SOURCE_DIR}/../cmake/test_runner.cmake)
 
+# Find gmsh executable
+find_program(GMSH gmsh)
+if(NOT GMSH)
+  message(WARNING "Gmsh not found, meshconv regression tests will not be rigorous")
+endif()
+
 # Include function used to add regression tests
 include(add_regression_test)
 
@@ -26,4 +32,7 @@ add_subdirectory(walker/MassFracBeta)
 add_subdirectory(walker/MixMassFracBeta)
 
 # RNGTest regression tests
-add_subdirectory(rngtest/SmallCrush)
+add_subdirectory(rngtest)
+
+# MeshConv regression tests
+add_subdirectory(meshconv/gmsh_output)

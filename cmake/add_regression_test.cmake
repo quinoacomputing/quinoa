@@ -10,6 +10,9 @@
 #                      [TEXT_BASELINE stat1.std stat2.std ...]
 #                      [TEXT_RESULT stat1.txt stat2.txt] )
 #                      [TEXT_DIFF_PROG_CONF ndiff.cfg]
+#                      [POSTPROCESS_PROG exec]
+#                      [POSTPROCESS_PROG_ARGS arg1 arg2 ...]
+#                      [POSTPROCESS_PROG_OUTPUT file]
 #
 # Mandatory arguments:
 # --------------------
@@ -35,6 +38,15 @@
 # LABELS label1 label2 ... - Optional labels associated with the test.
 # Default: "${executable}".
 #
+# POSTPROCESS_PROG exec - Optional postprocess executable to run after test
+# run. Default: "".
+#
+# POSTPROCESS_PROG_ARGS arg1 arg2 ... - Arguments to pass to POSTPROCESS_PROG.
+# Default: "".
+#
+# POSTPROCESS_PROG_OUTPUT file - Filename to save the results of the
+# postprocessor program. Default: "".
+#
 # TEXT_DIFF_PROG txtdiff - Diff program used for textual diffs. Default:
 # numdiff.
 #
@@ -56,8 +68,10 @@
 # ##############################################################################
 function(ADD_REGRESSION_TEST test_name executable)
 
-  set(oneValueArgs NUMPES TEXT_DIFF_PROG BIN_DIFF_PROG TEXT_DIFF_PROG_CONF)
-  set(multiValueArgs INPUTFILES ARGS TEXT_BASELINE TEXT_RESULT LABELS)
+  set(oneValueArgs NUMPES TEXT_DIFF_PROG BIN_DIFF_PROG TEXT_DIFF_PROG_CONF
+                   POSTPROCESS_PROG POSTPROCESS_PROG_OUTPUT)
+  set(multiValueArgs INPUTFILES ARGS TEXT_BASELINE TEXT_RESULT LABELS
+                     POSTPROCESS_PROG_ARGS)
   cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}"
                         ${ARGN})
 
@@ -110,6 +124,13 @@ function(ADD_REGRESSION_TEST test_name executable)
 
   endif()
 
+  if(ARG_POSTPROCESS_PROG_ARGS)
+    # Convert list to space-separated string for passing as arguments to test
+    # runner cmake script below
+    string(REPLACE ";" " " ARG_POSTPROCESS_PROG_ARGS
+           "${ARG_POSTPROCESS_PROG_ARGS}")
+  endif()
+
   # Construct and echo configuration for test being added
   set(msg "Add regression test ${test_name} for ${executable}")
   if (ARG_ARGS)
@@ -158,15 +179,19 @@ function(ADD_REGRESSION_TEST test_name executable)
            -DBIN_DIFF_PROG_CONFFILE=
            -DBIN_BASELINE=
            -DBIN_RESULT=
+           -DPOSTPROCESS_PROG=${ARG_POSTPROCESS_PROG}
+           -DPOSTPROCESS_PROG_ARGS=${ARG_POSTPROCESS_PROG_ARGS}
+           -DPOSTPROCESS_PROG_OUTPUT=${ARG_POSTPROCESS_PROG_OUTPUT}
            -P ${TEST_RUNNER}
            WORKING_DIRECTORY ${workdir})
 
   # Set test properties and instruct ctest to check textual diff output against
   # the regular expressions specified. At least one of the regular expressions
-  # has to match, otherwise the test will fail. First regular expression: pass
-  # regular expression for numdiff output. 2nd regular expression: pass regular
-  # expression for rngtest output (only test successfull run).
+  # has to match, otherwise the test will fail. Regular expression in list:
+  #  1 - pass regular expression for numdiff output
+  #  2-  pass regular expression for rngtest output (only test successful run)
+  #  3 - pass regular expression for meshconv output (only test successful run)
   set_tests_properties(${test_name} PROPERTIES ${test_properties}
-    PASS_REGULAR_EXPRESSION ".*${test_name}.*PASS;Generator quality")
+    PASS_REGULAR_EXPRESSION ".*${test_name}.*PASS;Generator quality;Total runtime")
 
 endfunction()

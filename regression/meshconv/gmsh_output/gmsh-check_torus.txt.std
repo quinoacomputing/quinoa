@@ -1,0 +1,13 @@
+Info    : Running '/usr/bin/gmsh -check torus.msh' [Gmsh 2.9.3, 1 node, max. 1 thread]
+Info    : Started on Wed Aug 12 10:37:21 2015
+Info    : Reading 'torus.msh'...
+Info    : Mesh is in binary format
+Info    : 1639 vertices
+Info    : Vertex numbering is dense
+Info    : 7986 elements
+Info    : Done reading 'torus.msh'
+Info    : Checking mesh coherence (5406 elements)...
+Info    : Checking for duplicate vertices...
+Info    : Checking for duplicate elements...
+Info    : Done checking mesh coherence
+Info    : Stopped on Wed Aug 12 10:37:21 2015
