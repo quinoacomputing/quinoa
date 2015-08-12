@@ -4,6 +4,8 @@
 # Covert string to list of file names of text baseline(s) and text result(s)
 string(REPLACE " " ";" TEXT_BASELINE "${TEXT_BASELINE}")
 string(REPLACE " " ";" TEXT_RESULT "${TEXT_RESULT}")
+# Covert string to list of postprocess program arguments
+string(REPLACE " " ";" POSTPROCESS_PROG_ARGS "${POSTPROCESS_PROG_ARGS}")
 
 # Print test runner configuration
 message("Test runner configuration:")
@@ -15,6 +17,9 @@ message("  TEST_EXECUTABLE (executable tested)                         : ${TEST_
 message("  TEST_EXECUTABLE_ARGS (executable arguments)                 : ${TEST_EXECUTABLE_ARGS}")
 message("  TEST_LABELS (test labels)                                   : ${TEST_LABLES}")
 message("  NUMPES (number of processing elements used for test)        : ${NUMPES}")
+message("  POSTPROCESS_PROG (executable to run after test)             : ${POSTPROCESS_PROG}")
+message("  POSTPROCESS_PROG_ARGS (postprocess program arguments)       : ${POSTPROCESS_PROG_ARGS}")
+message("  POSTPROCESS_PROG_OUTPUT (postprocess program output file)   : ${POSTPROCESS_PROG_OUTPUT}")
 
 message("  TEXT_DIFF_PROG (diff tool used for text diffs)              : ${TEXT_DIFF_PROG}")
 message("  TEXT_DIFF_PROG_ARGS (text diff tool arguments)              : ${TEXT_DIFF_PROG_ARGS}")
@@ -48,8 +53,26 @@ if(ERROR)
 
 else() # Test command ran successfully, attempt to do diffs
 
-  # Do textual diff(s) if both TEXT_BASELINE and TEXT_RESULT have been specified
-  if(TEXT_BASELINE AND TEXT_RESULT)
+  # Run postprocessor if given
+  if (POSTPROCESS_PROG)
+    set(post_command ${POSTPROCESS_PROG} ${POSTPROCESS_PROG_ARGS})
+    string(REPLACE ";" " " post_command_string "${post_command}")
+    message("\nRunning postprocessor command: '${post_command_string}'\n")
+    execute_process(COMMAND ${post_command} RESULT_VARIABLE ERROR
+                    OUTPUT_FILE ${POSTPROCESS_PROG_OUTPUT})
+    if(ERROR)
+      message(FATAL_ERROR "Postprocessor failed to run: '${post_command_string}' returned error code: ${ERROR}")
+    endif()
+  elseif(POSTPROCESS_PROG_OUTPUT)
+    message(WARNING "Postprocessor not found, but would be required for this test to be rigorous")
+  endif()
+
+  # Do textual diff(s) if
+  #  - both TEXT_BASELINE and TEXT_RESULT have been specified and not not doing
+  #  postprocessing, or
+  #  - both TEXT_BASELINE and TEXT_RESULT have been specified and doing
+  #  postprocessing (and postprocessing program has been found)
+  if( (TEXT_BASELINE AND TEXT_RESULT AND NOT POSTPROCESS_PROG_OUTPUT) OR (TEXT_BASELINE AND TEXT_RESULT AND POSTPROCESS_PROG) )
 
     # Make sure the number of result and baseline files are equal
     list(LENGTH TEXT_BASELINE nbaseline)
@@ -75,6 +98,6 @@ else() # Test command ran successfully, attempt to do diffs
       math(EXPR b "${b}+1")
     endforeach(baseline)
 
-  endif(TEXT_BASELINE AND TEXT_RESULT)
+  endif()
 
 endif()

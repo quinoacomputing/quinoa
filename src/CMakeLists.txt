@@ -38,6 +38,13 @@ ProcessorCount(PROCESSOR_COUNT)
 if(PROCESSOR_COUNT EQUAL 0)     # if ncpus could not be determined, assign 1
   set(PROCESSOR_COUNT "1")
 endif()
+message(STATUS "Found ${PROCESSOR_COUNT} PEs.")
+
+# Define PE count for a long-running parallel regression tests
+math(EXPR ManyPEs "${PROCESSOR_COUNT}")
+if(PROCESSOR_COUNT GREATER 4)
+  math(EXPR ManyPEs "${PROCESSOR_COUNT}/2")
+endif()
 
 # Convert CMAKE_BUILD_TYPE
 string(TOUPPER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE)
