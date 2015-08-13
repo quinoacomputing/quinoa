@@ -223,7 +223,8 @@ function(ADD_REGRESSION_TEST test_name executable)
   #  1 - pass regular expression for numdiff output
   #  2-  pass regular expression for rngtest output (only test successful run)
   #  3 - pass regular expression for exodiff output
+  #  4 - pass regular expression for when postprocessor not available
   set_tests_properties(${test_name} PROPERTIES ${test_properties}
-    PASS_REGULAR_EXPRESSION ".*${test_name}.*PASS;Generator quality;exodiff: Files are the same")
+    PASS_REGULAR_EXPRESSION ".*${test_name}.*PASS;Generator quality;exodiff: Files are the same;would be required for this test to be rigorous")
 
 endfunction()
