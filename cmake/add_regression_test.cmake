@@ -221,10 +221,10 @@ function(ADD_REGRESSION_TEST test_name executable)
   # the regular expressions specified. At least one of the regular expressions
   # has to match, otherwise the test will fail. Regular expression in list:
   #  1 - pass regular expression for numdiff output
-  #  2-  pass regular expression for rngtest output (only test successful run)
-  #  3 - pass regular expression for exodiff output
-  #  4 - pass regular expression for when postprocessor not available
+  #  2,3 - pass regular expression for rngtest output (only test successful run)
+  #  4 - pass regular expression for exodiff output
+  #  5 - pass regular expression for when postprocessor not available
   set_tests_properties(${test_name} PROPERTIES ${test_properties}
-    PASS_REGULAR_EXPRESSION ".*${test_name}.*PASS;Generator quality;exodiff: Files are the same;would be required for this test to be rigorous")
+    PASS_REGULAR_EXPRESSION ".*${test_name}.*PASS;Failed statistics;All tests passed;exodiff: Files are the same;would be required for this test to be rigorous")
 
 endfunction()
