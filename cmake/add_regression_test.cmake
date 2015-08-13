@@ -5,11 +5,15 @@
 #                      [NUMPES n]
 #                      [INPUTFILES file1 file2 ...]
 #                      [ARGS arg1 arg2 ...]
+#                      [LABELS label1 label2 ...]
 #                      [TEXT_DIFF_PROG txtdiff]
-#                      [BIN_DIFF_PROG bindiff]
 #                      [TEXT_BASELINE stat1.std stat2.std ...]
-#                      [TEXT_RESULT stat1.txt stat2.txt] )
+#                      [TEXT_RESULT stat1.txt stat2.txt ...]
 #                      [TEXT_DIFF_PROG_CONF ndiff.cfg]
+#                      [BIN_DIFF_PROG bindiff]
+#                      [BIN_BASELINE stat1.std stat2.std ...]
+#                      [BIN_RESULT stat1.bin stat2.bin ...]
+#                      [BIN_DIFF_PROG_CONF exodiff.cfg]
 #                      [POSTPROCESS_PROG exec]
 #                      [POSTPROCESS_PROG_ARGS arg1 arg2 ...]
 #                      [POSTPROCESS_PROG_OUTPUT file]
@@ -38,19 +42,8 @@
 # LABELS label1 label2 ... - Optional labels associated with the test.
 # Default: "${executable}".
 #
-# POSTPROCESS_PROG exec - Optional postprocess executable to run after test
-# run. Default: "".
-#
-# POSTPROCESS_PROG_ARGS arg1 arg2 ... - Arguments to pass to POSTPROCESS_PROG.
-# Default: "".
-#
-# POSTPROCESS_PROG_OUTPUT file - Filename to save the results of the
-# postprocessor program. Default: "".
-#
 # TEXT_DIFF_PROG txtdiff - Diff program used for textual diffs. Default:
 # numdiff.
-#
-# BIN_DIFF_PROG bindiff - Diff program used for binary diffs. Default: exodiff.
 #
 # TEXT_BASELINE stat1.std stat2.std ... - Textual file(s) containing the known
 # good solutions. If empty, no textual diff is performed. Default: "". Note
@@ -63,15 +56,37 @@
 # TEXT_DIFF_PROG_CONF ndiff.cfg - Textual diff program configuration file.
 # Default: "".
 #
+# BIN_DIFF_PROG bindiff - Diff program used for binary diffs. Default: exodiff.
+#
+# BIN_BASELINE stat1.std stat2.std ... - Binary file(s) containing the known
+# good solutions. If empty, no binary diff is performed. Default: "". Note
+# that the number of baseline filenames must equal the number of result files.
+#
+# BIN_RESULT stat1.bin stat2.bin ... - Binary file(s) produced by the test to
+# be tested. If empty, no binary diff is performed. Default: "". Note that the
+# number of baseline filenames must equal the number of result files.
+#
+# BIN_DIFF_PROG_CONF exodiff.cfg - Binary diff program configuration file.
+# Default: "".
+#
+# POSTPROCESS_PROG exec - Optional postprocess executable to run after test
+# run. Default: "".
+#
+# POSTPROCESS_PROG_ARGS arg1 arg2 ... - Arguments to pass to POSTPROCESS_PROG.
+# Default: "".
+#
+# POSTPROCESS_PROG_OUTPUT file - Filename to save the results of the
+# postprocessor program. Default: "".
+#
 # Author: J. Bakosi
 #
 # ##############################################################################
 function(ADD_REGRESSION_TEST test_name executable)
 
   set(oneValueArgs NUMPES TEXT_DIFF_PROG BIN_DIFF_PROG TEXT_DIFF_PROG_CONF
-                   POSTPROCESS_PROG POSTPROCESS_PROG_OUTPUT)
-  set(multiValueArgs INPUTFILES ARGS TEXT_BASELINE TEXT_RESULT LABELS
-                     POSTPROCESS_PROG_ARGS)
+                   BIN_DIFF_PROG_CONF POSTPROCESS_PROG POSTPROCESS_PROG_OUTPUT)
+  set(multiValueArgs INPUTFILES ARGS TEXT_BASELINE TEXT_RESULT BIN_BASELINE
+                     BIN_RESULT LABELS POSTPROCESS_PROG_ARGS)
   cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}"
                         ${ARGN})
 
@@ -84,12 +99,16 @@ function(ADD_REGRESSION_TEST test_name executable)
     set(NUMPES ${ARG_NUMPES})
     list(APPEND test_properties PROCESSORS ${ARG_NUMPES})
   endif()
+
   # Add labels to test
   set(TEST_LABELS ${executable})        # ${executable} is always a label
   if (ARG_LABELS)
     list(APPEND TEST_LABELS LABELS ${ARG_LABELS})
   endif()
   list(APPEND test_properties LABELS ${TEST_LABELS})
+  # prepare test labels to pass as cmake script arguments
+  list(APPEND ARG_LABELS ${executable})
+  string(REPLACE ";" " " ARG_LABELS "${ARG_LABELS}")
 
   # Set textual diff tool
   set(TEXT_DIFF_PROG ${NDIFF_EXECUTABLE})
@@ -108,20 +127,33 @@ function(ADD_REGRESSION_TEST test_name executable)
   # Do sainity check on and prepare to pass as cmake script arguments the
   # filenames of text baseline(s) and text result(s)
   if(ARG_TEXT_BASELINE OR ARG_TEXT_RESULT)
-
     # Make sure the number of result and baseline files are equal
     list(LENGTH ARG_TEXT_BASELINE nbaseline)
     list(LENGTH ARG_TEXT_RESULT nresult)
     if (NOT nbaseline EQUAL nresult)
       message(FATAL_ERROR
-              "Number of baselines and number of results must be equal.")
+              "Number of text baselines and number of results must be equal.")
     endif()
-
     # Convert list to space-separated string for passing as arguments to test
     # runner cmake script below
     string(REPLACE ";" " " ARG_TEXT_BASELINE "${ARG_TEXT_BASELINE}")
     string(REPLACE ";" " " ARG_TEXT_RESULT "${ARG_TEXT_RESULT}")
+  endif()
 
+  # Do sainity check on and prepare to pass as cmake script arguments the
+  # filenames of binary baseline(s) and binary result(s)
+  if(ARG_BIN_BASELINE OR ARG_BIN_RESULT)
+    # Make sure the number of result and baseline files are equal
+    list(LENGTH ARG_BIN_BASELINE nbaseline)
+    list(LENGTH ARG_BIN_RESULT nresult)
+    if (NOT nbaseline EQUAL nresult)
+      message(FATAL_ERROR
+              "Number of binary baselines and number of results must be equal.")
+    endif()
+    # Convert list to space-separated string for passing as arguments to test
+    # runner cmake script below
+    string(REPLACE ";" " " ARG_BIN_BASELINE "${ARG_BIN_BASELINE}")
+    string(REPLACE ";" " " ARG_BIN_RESULT "${ARG_BIN_RESULT}")
   endif()
 
   if(ARG_POSTPROCESS_PROG_ARGS)
@@ -167,7 +199,7 @@ function(ADD_REGRESSION_TEST test_name executable)
            -DMPIRUN_BIND_ARGS=${MPIRUN_BIND_ARGS}
            -DTEST_EXECUTABLE=${CMAKE_BINARY_DIR}/Main/${executable}
            -DTEST_EXECUTABLE_ARGS=${ARGUMENTS}
-           -DTEST_LABELS=${TEST_LABELS}
+           -DTEST_LABELS=${ARG_LABELS}
            -DNUMPES=${NUMPES}
            -DTEXT_DIFF_PROG=${TEXT_DIFF_PROG}
            -DTEXT_DIFF_PROG_ARGS=
@@ -176,9 +208,9 @@ function(ADD_REGRESSION_TEST test_name executable)
            -DTEXT_RESULT=${ARG_TEXT_RESULT}
            -DBIN_DIFF_PROG=${BIN_DIFF_PROG}
            -DBIN_DIFF_PROG_ARGS=
-           -DBIN_DIFF_PROG_CONFFILE=
-           -DBIN_BASELINE=
-           -DBIN_RESULT=
+           -DBIN_DIFF_PROG_CONF=${ARG_BIN_DIFF_PROG_CONF}
+           -DBIN_BASELINE=${ARG_BIN_BASELINE}
+           -DBIN_RESULT=${ARG_BIN_RESULT}
            -DPOSTPROCESS_PROG=${ARG_POSTPROCESS_PROG}
            -DPOSTPROCESS_PROG_ARGS=${ARG_POSTPROCESS_PROG_ARGS}
            -DPOSTPROCESS_PROG_OUTPUT=${ARG_POSTPROCESS_PROG_OUTPUT}
@@ -190,8 +222,8 @@ function(ADD_REGRESSION_TEST test_name executable)
   # has to match, otherwise the test will fail. Regular expression in list:
   #  1 - pass regular expression for numdiff output
   #  2-  pass regular expression for rngtest output (only test successful run)
-  #  3 - pass regular expression for meshconv output (only test successful run)
+  #  3 - pass regular expression for exodiff output
   set_tests_properties(${test_name} PROPERTIES ${test_properties}
-    PASS_REGULAR_EXPRESSION ".*${test_name}.*PASS;Generator quality;Total runtime")
+    PASS_REGULAR_EXPRESSION ".*${test_name}.*PASS;Generator quality;exodiff: Files are the same")
 
 endfunction()
