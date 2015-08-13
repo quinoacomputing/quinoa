@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/UnsMesh.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:27:31 PM MDT
+  \date      Thu 13 Aug 2015 09:55:27 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     3D unstructured mesh class declaration
   \details   3D unstructured mesh class declaration. This mesh class currently
@@ -137,7 +137,7 @@ class UnsMesh {
 
     //! Number of element blocks accessor
     std::size_t neblk() const noexcept {
-      return !m_lininpoel.empty() + !m_triinpoel.empty() + !m_tetinpoel.empty();
+      return !m_triinpoel.empty() + !m_tetinpoel.empty();
     }
 
     /** @name Line elements connectivity accessors */

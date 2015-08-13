@@ -37,3 +37,4 @@ add_subdirectory(rngtest)
 # MeshConv regression tests
 add_subdirectory(meshconv/gmsh_output)
 add_subdirectory(meshconv/netgen_output)
+add_subdirectory(meshconv/exo_output)

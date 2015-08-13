@@ -4,8 +4,13 @@
 # Covert string to list of file names of text baseline(s) and text result(s)
 string(REPLACE " " ";" TEXT_BASELINE "${TEXT_BASELINE}")
 string(REPLACE " " ";" TEXT_RESULT "${TEXT_RESULT}")
+# Covert string to list of file names of binary baseline(s) and binary result(s)
+string(REPLACE " " ";" BIN_BASELINE "${BIN_BASELINE}")
+string(REPLACE " " ";" BIN_RESULT "${BIN_RESULT}")
 # Covert string to list of postprocess program arguments
 string(REPLACE " " ";" POSTPROCESS_PROG_ARGS "${POSTPROCESS_PROG_ARGS}")
+
+string(REPLACE " " ";" TEST_LABELS "${TEST_LABELS}")
 
 # Print test runner configuration
 message("Test runner configuration:")
@@ -15,7 +20,7 @@ message("  CHARMRUN (used to run Charm++ executables)                  : ${CHARM
 message("  MPIRUN_BIND_ARGS (mpirun process binding)                   : ${MPIRUN_BIND_ARGS}")
 message("  TEST_EXECUTABLE (executable tested)                         : ${TEST_EXECUTABLE}")
 message("  TEST_EXECUTABLE_ARGS (executable arguments)                 : ${TEST_EXECUTABLE_ARGS}")
-message("  TEST_LABELS (test labels)                                   : ${TEST_LABLES}")
+message("  TEST_LABELS (test labels)                                   : ${TEST_LABELS}")
 message("  NUMPES (number of processing elements used for test)        : ${NUMPES}")
 message("  POSTPROCESS_PROG (executable to run after test)             : ${POSTPROCESS_PROG}")
 message("  POSTPROCESS_PROG_ARGS (postprocess program arguments)       : ${POSTPROCESS_PROG_ARGS}")
@@ -68,7 +73,7 @@ else() # Test command ran successfully, attempt to do diffs
   endif()
 
   # Do textual diff(s) if
-  #  - both TEXT_BASELINE and TEXT_RESULT have been specified and not not doing
+  #  - both TEXT_BASELINE and TEXT_RESULT have been specified and not doing
   #  postprocessing, or
   #  - both TEXT_BASELINE and TEXT_RESULT have been specified and doing
   #  postprocessing (and postprocessing program has been found)
@@ -94,6 +99,39 @@ else() # Test command ran successfully, attempt to do diffs
       # Check return value from textual diff command
       if(ERROR)
         message(FATAL_ERROR "Textual diff failed to run: '${text_diff_command_string}' returned error code: ${ERROR}")
+      endif(ERROR)
+      math(EXPR b "${b}+1")
+    endforeach(baseline)
+
+  endif()
+
+  # Do binary diff(s) if
+  #  - both BIN_BASELINE and BIN_RESULT have been specified and not doing
+  #  postprocessing, or
+  #  - both BIN_BASELINE and BIN_RESULT have been specified and doing
+  #  postprocessing (and postprocessing program has been found)
+  if( (BIN_BASELINE AND BIN_RESULT AND NOT POSTPROCESS_PROG_OUTPUT) OR (BIN_BASELINE AND BIN_RESULT AND POSTPROCESS_PROG) )
+
+    # Make sure the number of result and baseline files are equal
+    list(LENGTH BIN_BASELINE nbaseline)
+    list(LENGTH BIN_RESULT nresult)
+    if (NOT nbaseline EQUAL nresult)
+      message(FATAL_ERROR
+              "Number of baselines and number of results must be equal.")
+    endif()
+
+    # Do binary diff(s) multiple times diffing matching baseline and result
+    math(EXPR b "0")
+    foreach(baseline IN LISTS BIN_BASELINE)
+      list(GET BIN_RESULT ${b} result)
+      set(bin_diff_command ${BIN_DIFF_PROG} -f ${BIN_DIFF_PROG_CONF}
+                           ${baseline} ${result})
+      string(REPLACE ";" " " bin_diff_command_string "${bin_diff_command}")
+      message("\nRunning binary diff command: '${bin_diff_command_string}'\n")
+      execute_process(COMMAND ${bin_diff_command} RESULT_VARIABLE ERROR)
+      # Check return value from binary diff command
+      if(ERROR)
+        message(FATAL_ERROR "Binary diff failed to run: '${bin_diff_command_string}' returned error code: ${ERROR}")
       endif(ERROR)
       math(EXPR b "${b}+1")
     endforeach(baseline)

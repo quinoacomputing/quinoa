@@ -38,7 +38,7 @@ ProcessorCount(PROCESSOR_COUNT)
 if(PROCESSOR_COUNT EQUAL 0)     # if ncpus could not be determined, assign 1
   set(PROCESSOR_COUNT "1")
 endif()
-message(STATUS "Found ${PROCESSOR_COUNT} PEs.")
+message(STATUS "Found ${PROCESSOR_COUNT} PEs")
 
 # Define PE count for a long-running parallel regression tests
 math(EXPR ManyPEs "${PROCESSOR_COUNT}")
