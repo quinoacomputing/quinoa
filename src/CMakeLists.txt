@@ -33,10 +33,14 @@ endif()
 message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
 
 # Determine number of CPUs available
-include(ProcessorCount)
-ProcessorCount(PROCESSOR_COUNT)
-if(PROCESSOR_COUNT EQUAL 0)     # if ncpus could not be determined, assign 1
-  set(PROCESSOR_COUNT "1")
+if (DEFINED ENV{SLURM_NPROCS})
+  set(PROCESSOR_COUNT $ENV{SLURM_NPROCS})
+else()
+  include(ProcessorCount)
+  ProcessorCount(PROCESSOR_COUNT)
+  if(PROCESSOR_COUNT EQUAL 0)     # if ncpus could not be determined, assign 1
+    set(PROCESSOR_COUNT "1")
+  endif()
 endif()
 message(STATUS "Found ${PROCESSOR_COUNT} PEs")
 
