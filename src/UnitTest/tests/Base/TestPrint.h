@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/TestPrint.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 03:13:32 PM MDT
+  \date      Tue 18 Aug 2015 07:56:48 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Base/Print.h
   \details   Unit tests for Base/Print.h
@@ -331,18 +331,10 @@ void Print_object::test< 26 >() {
   prv.headerRNGTest();
 }
 
-//! Test that tk::Print::headerRegTest() does not throw an exception
-//! \author J. Bakosi
-template<> template<>
-void Print_object::test< 27 >() {
-  set_test_name( "headerRegTest() does not throw" );
-  prv.headerRegTest();
-}
-
 //! Test that tk::Print::headerUnitTest() does not throw an exception
 //! \author J. Bakosi
 template<> template<>
-void Print_object::test< 28 >() {
+void Print_object::test< 27 >() {
   set_test_name( "headerUnitTest() does not throw" );
   prv.headerUnitTest();
 }
@@ -350,7 +342,7 @@ void Print_object::test< 28 >() {
 //! Test that tk::Print::headerMeshConv() does not throw an exception
 //! \author J. Bakosi
 template<> template<>
-void Print_object::test< 29 >() {
+void Print_object::test< 28 >() {
   set_test_name( "headerMeshConv() does not throw" );
   prv.headerMeshConv();
 }
@@ -358,7 +350,7 @@ void Print_object::test< 29 >() {
 //! Test that tk::Print::headerWalker() does not throw an exception
 //! \author J. Bakosi
 template<> template<>
-void Print_object::test< 30 >() {
+void Print_object::test< 29 >() {
   set_test_name( "headerWalker() does not throw" );
   prv.headerWalker();
 }

@@ -101,7 +101,6 @@ set(RNGTEST_EXECUTABLE rngtest)
 set(MESHCONV_EXECUTABLE meshconv)
 set(WALKER_EXECUTABLE walker)
 set(UNITTEST_EXECUTABLE unittest)
-set(REGTEST_EXECUTABLE regtest)
 
 # Create set of all executables tested. These are the executables that do
 # "interesting things", i.e., excluding unittest but keeping rngtest as that is
@@ -397,7 +396,6 @@ include_directories(${QUINOA_SOURCE_DIR}
                     ${QUINOA_SOURCE_DIR}/RNGTest
                     ${QUINOA_SOURCE_DIR}/Statistics
                     ${QUINOA_SOURCE_DIR}/UnitTest
-                    ${QUINOA_SOURCE_DIR}/RegTest
                     ${TPL_DIR}/include
                     ${TPL_DIR}/include/pegtl
                     ${TPL_DIR}/include/tut
@@ -408,7 +406,6 @@ include_directories(${QUINOA_SOURCE_DIR}
                     ${PROJECT_BINARY_DIR}/Inciter       # for Charm++ modules
                     ${PROJECT_BINARY_DIR}/RNGTest       # for Charm++ modules
                     ${PROJECT_BINARY_DIR}/UnitTest      # for Charm++ modules
-                    ${PROJECT_BINARY_DIR}/RegTest       # for Charm++ modules
                     ${PROJECT_BINARY_DIR}/LinSys        # for Charm++ modules
 )
 
@@ -427,7 +424,6 @@ add_subdirectory(Mesh)
 add_subdirectory(RNG)
 add_subdirectory(RNGTest)
 add_subdirectory(Statistics)
-add_subdirectory(RegTest)
 
 # Enable cmake's ctest test suite used for regression testing
 enable_testing()
