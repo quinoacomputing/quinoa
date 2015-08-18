@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Init.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:39:19 PM MDT
+  \date      Tue 18 Aug 2015 07:57:44 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Common initialization routines for main() functions for multiple
      exectuables
@@ -29,7 +29,6 @@ namespace tk {
 //! Executable types for which an ascii logo is available in tk::Print
 enum class HeaderType : uint8_t { INCITER=0,
                                   RNGTEST,
-                                  REGTEST,
                                   UNITTEST,
                                   MESHCONV,
                                   WALKER };
@@ -91,8 +90,6 @@ static void echoHeader( const Print& print, HeaderType header )
     print.headerInciter();
   else if ( header == HeaderType::RNGTEST )
     print.headerRNGTest();
-  else if ( header == HeaderType::REGTEST )
-    print.headerRegTest();
   else if ( header == HeaderType::UNITTEST )
     print.headerUnitTest();
   else if ( header == HeaderType::MESHCONV )
