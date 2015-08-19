@@ -428,6 +428,7 @@ if (exodus OR zoltan)
                -D TPL_ENABLE_Netcdf:BOOL=ON
                -D Netcdf_LIBRARY_DIRS:PATH=${netcdf_lib}
                -D TPL_Netcdf_INCLUDE_DIRS:PATH=${netcdf_include}
+               -D CMAKE_INSTALL_RPATH:PATH=${CMAKE_INSTALL_PREFIX}/lib
                -D CMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
                -D CMAKE_C_COMPILER:PATH=${MPI_C_COMPILER}
                -D CMAKE_CXX_COMPILER:PATH=${MPI_CXX_COMPILER}
