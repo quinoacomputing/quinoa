@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/ExodusIIMeshWriter.C
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:24:51 PM MDT
+  \date      Tue 18 Aug 2015 02:40:46 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     ExodusII mesh-based data writer
   \details   ExodusII mesh-based data writer class definition.
@@ -41,6 +41,11 @@ ExodusIIMeshWriter::ExodusIIMeshWriter( const std::string& filename,
 //! \author J. Bakosi
 //******************************************************************************
 {
+  // Increase verbosity from ExodusII library in debug mode
+  #ifdef NDEBUG
+  ex_opts( EX_DEBUG | EX_VERBOSE );
+  #endif
+
   if (mode == ExoWriter::CREATE) {
 
     m_outFile = ex_create( filename.c_str(),
@@ -99,7 +104,8 @@ ExodusIIMeshWriter::writeHeader( const UnsMesh& mesh ) const
                  "Written by Quinoa",
                  3,     // number of dimensions
                  static_cast< int64_t >( mesh.nnode() ),
-                 mesh.triinpoel().size()/3 + mesh.tetinpoel().size()/4,
+                 static_cast< int64_t >( mesh.triinpoel().size()/3 +
+                                         mesh.tetinpoel().size()/4 ),
                  static_cast< int64_t >( mesh.neblk() ),
                  0,     // number of node sets
                  0 ) == 0,
@@ -135,7 +141,7 @@ ExodusIIMeshWriter::writeElements( const UnsMesh& mesh ) const
 
 void
 ExodusIIMeshWriter::writeElemBlock( int& elclass,
-                                    int nnpe,
+                                    int64_t nnpe,
                                     const std::string& eltype,
                                     const std::vector< std::size_t >& inpoel )
 const
