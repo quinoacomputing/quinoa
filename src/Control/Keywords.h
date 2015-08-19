@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Keywords.h
   \author    J. Bakosi
-  \date      Wed 01 Jul 2015 02:25:56 PM MDT
+  \date      Wed 19 Aug 2015 09:13:11 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Definition of all keywords
   \details   This file contains the definition of all keywords, including those
@@ -566,7 +566,7 @@ struct cja_accurate_info {
     articles/intel-math-kernel-library-documentation.)";
   }
 };
-using cja_accurate = keyword< cja_info, c,j,a,'_',a,c,c,u,r,a,t,e >;
+using cja_accurate = keyword< cja_accurate_info, c,j,a,'_',a,c,c,u,r,a,t,e >;
 
 struct beta_method_info {
   static std::string name() { return "Beta method"; }
@@ -1736,7 +1736,7 @@ struct spike_info {
     relative probability. See also the help on keyword icdelta.)"; }
   struct expect {
     using type = tk::real;
-    static std::string description() { return "list of even number of reals"; }
+    static std::string description() { return "even reals"; }
   };
 };
 using spike = keyword< spike_info, s,p,i,k,e >;
@@ -1769,7 +1769,7 @@ struct betapdf_info {
     icbeta.)"; }
   struct expect {
     using type = tk::real;
-    static std::string description() { return "exactly 4 reals"; }
+    static std::string description() { return "4 reals"; }
   };
 };
 using betapdf = keyword< betapdf_info, b,e,t,a,p,d,f >;
