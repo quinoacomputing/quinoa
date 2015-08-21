@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/ExodusIIMeshWriter.h
   \author    J. Bakosi
-  \date      Tue 18 Aug 2015 12:33:05 PM MDT
+  \date      Wed 19 Aug 2015 03:35:13 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     ExodusII mesh-based data writer
   \details   ExodusII mesh-based data writer class declaration.
@@ -44,7 +44,7 @@ class ExodusIIMeshWriter {
     void writeMesh( const UnsMesh& mesh ) const;
 
     //!  Write time stamp to ExodusII file
-    void writeTimeStamp( int it, tk::real time ) const;
+    void writeTimeStamp( uint64_t it, tk::real time ) const;
 
     //! Write the names of nodal output variables to ExodusII file
     void writeNodeVarNames( const std::vector< std::string >& nv ) const;
@@ -53,12 +53,12 @@ class ExodusIIMeshWriter {
     void writeElemVarNames( const std::vector< std::string >& ev ) const;
 
     //!  Write node scalar field to ExodusII file
-    void writeNodeScalar( int it,
+    void writeNodeScalar( uint64_t it,
                           int varid,
                           const std::vector< tk::real >& var ) const;
 
     //!  Write elem scalar field to ExodusII file
-    void writeElemScalar( int it,
+    void writeElemScalar( uint64_t it,
                           int varid,
                           const std::vector< tk::real >& var ) const;
 

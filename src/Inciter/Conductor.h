@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Conductor.h
   \author    J. Bakosi
-  \date      Wed 01 Jul 2015 02:24:26 PM MDT
+  \date      Fri 21 Aug 2015 08:56:55 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Conductor drives the time integration of a PDE
   \details   Conductor drives the time integration of a PDE
@@ -63,33 +63,44 @@ class Conductor : public CBase_Conductor {
     //!   all Performer chares to continue with their initialization.
     void rowcomplete() {
       m_lsmproxy.rowsreceived();
-      m_perfproxy.init();
+      m_perfproxy.init( m_dt );
     }
 
-    //! \brief Reduction target indicating that all members of LinSysMerger have
-    //!   finished their portion of initializing the linear system distributed
-    //!   across all PEs
-    void init() const;
+    //! \brief Reduction target indicating that all Performer chares have
+    //!   finished a time step
+    void evaluateTime();
 
-    //! \brief Forward a vector of time stamps from (Performer) chare array to
-    //!   the main proxy
+    //! Collect vector of time stamps from (Performer) chare array
+    //! \param[in] stamp Vector of time stamps contributed    
     void arrTimestamp(
-      const std::vector< std::pair< std::string, tk::real > >& stamp );
+      const std::vector< std::pair< std::string, tk::real > >& stamp )
+    {
+      timestamp( stamp, m_arrTimestamp, m_arrTimestampCnt, m_nchare );
+    }
 
-    //! \brief Forward a vector of time stamps from (LinSysMerger) chare group
-    //!   branches to the main proxy
+    //! Collect vector of time stamps from (LinSysMerger) chare group branches
+    //! \param[in] stamp Vector of time stamps contributed
     void grpTimestamp(
-      const std::vector< std::pair< std::string, tk::real > >& stamp );
+      const std::vector< std::pair< std::string, tk::real > >& stamp )
+    {
+      timestamp( stamp, m_grpTimestamp, m_grpTimestampCnt, CkNumPes() );
+    }
 
-    //! \brief Forward a vector of performance statistics from (Performer) chare
-    //!   array elements to the main proxy
+    //! Collect performance statistics from (Performer) chare array elements
+    //! \param[in] p Vector of performance statistics contributed    
     void arrPerfstat(
-      const std::vector< std::pair< std::string, tk::real > >& p );
+      const std::vector< std::pair< std::string, tk::real > >& p )
+    {
+      perfstat( p, m_arrPerfstat, m_arrPerfstatCnt, m_nchare );
+    }
 
-    //! \brief Forward a vector of performance statistics from (LinSysMerger)
-    //!   chare group branches to the main proxy
+    //! Collect performance statistics from (LinSysMerger) chare group branches
+    //! \param[in] p Vector of performance statistics contributed
     void grpPerfstat(
-      const std::vector< std::pair< std::string, tk::real > >& p );
+      const std::vector< std::pair< std::string, tk::real > >& p )
+    {
+      perfstat( p, m_grpPerfstat, m_grpPerfstatCnt, CkNumPes() );
+    }
 
   private:
     using PerformerProxy = CProxy_Performer;
@@ -99,6 +110,9 @@ class Conductor : public CBase_Conductor {
     InciterPrint m_print;               //!< Pretty printer
     std::vector< tk::Timer > m_timer;   //!< Timers
     int m_nchare;                       //!< Number of performer chares
+    uint64_t m_it;                      //!< Iteration count
+    tk::real m_t;                       //!< Physical time
+    tk::real m_dt;                      //!< Physical time step size
     int m_arrTimestampCnt;              //!< Time stamp chare array counter
     int m_grpTimestampCnt;              //!< Time stamp chare group counter
     int m_arrPerfstatCnt;               //!< Perfstat chare array counter
@@ -113,21 +127,36 @@ class Conductor : public CBase_Conductor {
     std::map< std::string, std::vector< tk::real > > m_arrPerfstat;
     //! Performance statistics merged from chare group elements
     std::map< std::string, std::vector< tk::real > > m_grpPerfstat;
+    //! Output indicators
+    tk::tuple::tagged_tuple< tag::field, bool > m_output;
+
+    //! Compute size of next time step
+    tk::real computedt();
+
+    //! Print information at startup
+    void info() const;
+
+    //! Print out time integration header
+    void header() const;
+
+    //! Print out one-liner report on time step
+    void report();
+
+    //! Send collected timer and performance data to host
+    void finalReport();
 
     //! Collect and compute averages of time stamps contributed by chares
     void timestamp(
       const std::vector< std::pair< std::string, tk::real > >& stamp,
       std::map< std::string, std::vector< tk::real > >& map,
       int& counter,
-      int max,
-      const std::string& of );
+      int max );
 
     //! Collect and compute performance statistics contributed by chares
     void perfstat( const std::vector< std::pair< std::string, tk::real > >& p,
                    std::map< std::string, std::vector< tk::real > >& map,
                    int& counter,
-                   int max,
-                   const std::string& of );
+                   int max );
 };
 
 } // inciter::

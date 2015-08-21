@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/linsysmerger.ci
   \author    J. Bakosi
-  \date      Fri 19 Jun 2015 05:46:40 AM MDT
+  \date      Fri 21 Aug 2015 08:54:24 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Charm++ module interface file for merging a linear system
   \details   Charm++ module interface file for merging a linear system
@@ -105,23 +105,12 @@ module linsysmerger {
       { when trigger_fillrhs_complete() serial { assemblerhs(); } };
 
       entry void wait4asm() {
-        when  trigger_asmsol_complete()
-            , trigger_asmlhs_complete()
-            , trigger_asmrhs_complete()
+        when trigger_asmsol_complete(),
+             trigger_asmlhs_complete(),
+             trigger_asmrhs_complete()
         serial {
-          m_A.print( "hypre_mat" );
-          m_b.print( "hypre_b" );
-          m_x.print( "hypre_x" );
-          m_host.grpTimestamp( m_timestamp );
-          m_host.grpPerfstat( m_perfstat );
-          m_timer.clear();
-        }
-      };
-
-      entry void wait4stat() {
-        when trigger_timestamp_complete(), trigger_perfstat_complete() serial {
           solve();
-          signal2host_init_complete( m_host );
+          sendTimers();
         }
       };
 
@@ -137,8 +126,6 @@ module linsysmerger {
       entry void trigger_asmlhs_complete();
       entry void trigger_asmrhs_complete();
       entry void trigger_asmsol_complete();
-      entry void trigger_timestamp_complete();
-      entry void trigger_perfstat_complete();
     };
 
   } // tk::

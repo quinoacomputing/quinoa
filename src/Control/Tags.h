@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Tags.h
   \author    J. Bakosi
-  \date      Thu 30 Apr 2015 02:09:17 PM MDT
+  \date      Wed 19 Aug 2015 12:41:19 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Tags
   \details   Tags are unique types, used for metaprogramming.
@@ -66,6 +66,7 @@ struct plot {};
 struct glob {};
 struct control {};
 struct stat {};
+struct field {};
 struct atwood {};
 struct b {};
 struct S {};
