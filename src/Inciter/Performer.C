@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.C
   \author    J. Bakosi
-  \date      Wed 01 Jul 2015 02:25:41 PM MDT
+  \date      Thu 20 Aug 2015 11:39:03 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Performer advances a PDE
   \details   Performer advances a PDE. There are a potentially
@@ -38,10 +38,10 @@ using inciter::Performer;
 
 Performer::Performer( CProxy_Conductor& hostproxy, LinSysMergerProxy& lsmproxy )
 : m_id( static_cast< std::size_t >( thisIndex ) ),
-  m_hostproxy( hostproxy ),
-  m_lsmproxy( lsmproxy ),
   m_it( 0 ),
   m_t( 0.0 ),
+  m_hostproxy( hostproxy ),
+  m_lsmproxy( lsmproxy ),
   m_point( g_point[ m_id ] )
 //******************************************************************************
 // Constructor
@@ -82,21 +82,18 @@ Performer::setup()
 }
 
 void
-Performer::init()
+Performer::init( tk::real dt )
 //******************************************************************************
 // Initialize linear system
 //! \author J. Bakosi
 //******************************************************************************
 {
-  m_dt = 1.0e-5;
   // Set initial conditions
   ic();
   // Compute left-hand side of PDE
   lhs();
   // Compute righ-hand side of PDE
-  rhs( 0.5, m_u );
-  // Output field data to file
-  writeFields( m_u );
+  rhs( 0.5, dt, m_u );
   // Send some time stamps to the host
   m_hostproxy.arrTimestamp( m_timestamp );
 }
@@ -187,7 +184,9 @@ Performer::lhs()
 }
 
 void
-Performer::rhs( tk::real mult, std::map< std::size_t, tk::real >& unk )
+Performer::rhs( tk::real mult,
+                tk::real dt,
+                std::map< std::size_t, tk::real >& unk )
 //******************************************************************************
 // Compute right-hand side of PDE
 //! \author J. Bakosi
@@ -259,8 +258,8 @@ Performer::rhs( tk::real mult, std::map< std::size_t, tk::real >& unk )
 //       for (std::size_t j=0; j<4; ++j)           // add contribution to rhs
 //         for (std::size_t k=0; k<3; ++k)
 //           for (std::size_t l=0; l<4; ++l)
-//             r -= mult*m_dt*( mass[i][j] * vel[k][j] * grad[l][k] *
-//                              unk[ m_gid[ m_inpoel[e*4+l] ] ] );
+//             r -= mult*dt*( mass[i][j] * vel[k][j] * grad[l][k] *
+//                            unk[ m_gid[ m_inpoel[e*4+l] ] ] );
 //     }
 // 
 //     // add diffusion contribution to rhs
@@ -270,7 +269,7 @@ Performer::rhs( tk::real mult, std::map< std::size_t, tk::real >& unk )
 //       for (std::size_t j=0; j<4; ++j) {         // add contribution to rhs
 //         const auto& u = unk[ m_gid[ m_inpoel[e*4+j] ] ];  // ref to unknown
 //         for (std::size_t k=0; k<3; ++k)
-//           r -= mult*m_dt*( grad[i][k] * grad[j][k] * u );
+//           r -= mult*dt*( grad[i][k] * grad[j][k] * u );
 //       }
 //     }
   }
@@ -364,10 +363,20 @@ Performer::updateSolution( const std::map< std::size_t, tk::real >& sol )
 {
   for (const auto& r : sol) m_uf[ r.first ] = r.second;
 
+  // If all contributions we own have been received, advance time step
   if (m_uf.size() == m_gid.size()) {
-    ++m_it;
-    m_t += 1.0;
+
     writeFields( m_uf );
+    m_uf.clear();
+
+    // Tell the Charm++ runtime system to call back to Conductor::registered()
+    // once all Performer chares have registered themselves, i.e., checked in,
+    // with their local branch of the linear system merger group, LinSysMerger.
+    // The reduction is done via creating a callback that invokes the typed
+    // reduction client, where m_hostproxy is the proxy on which the reduction
+    // target method, registered(), is called upon completion of the reduction.
+    contribute(
+      CkCallback( CkReductionTarget( Conductor, evaluateTime ), m_hostproxy ) );
   }
 }
 
@@ -462,6 +471,29 @@ Performer::writeFields( const std::map< std::size_t, tk::real >& u )
   writeSolution( ew, u );
 
   m_timestamp.emplace_back( "Write mesh-based fields to file", t.dsec() );
+}
+
+void
+Performer::advance( tk::real dt, uint64_t it, tk::real t )
+//******************************************************************************
+// Advance equations in time
+//! \param[in] dt Size of time step
+//! \param[in] it Iteration count
+//! \param[in] t Physical time
+//! \author J. Bakosi
+//******************************************************************************
+{
+  // Update physical time and iteration count
+  m_t = t;
+  m_it = it;
+
+  // Advance equations one step in time
+
+  // Compute righ-hand side of PDE
+  m_lsmproxy.ckLocalBranch()->enable_wait4rhs();
+
+  rhs( 0.5, dt, m_u );
+
 }
 
 #if defined(__clang__) || defined(__GNUC__)

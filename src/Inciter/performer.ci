@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/performer.ci
   \author    J. Bakosi
-  \date      Wed 17 Jun 2015 05:46:42 AM MDT
+  \date      Thu 20 Aug 2015 07:45:08 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Charm++ module interface file for Performer
   \details   Charm++ module interface file for Performer
@@ -23,8 +23,9 @@ module performer {
                        tk::CProxy_LinSysMerger< CProxy_Conductor,
                                                 CProxy_Performer >& lsmproxy );
       entry void setup();
-      entry void init();
+      entry void init( tk::real dt );
       entry void updateSolution( const std::map< std::size_t, tk::real >& sol );
+      entry void advance( tk::real dt, uint64_t it, tk::real t );
     };
 
   } // inciter::

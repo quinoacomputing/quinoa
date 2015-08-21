@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.h
   \author    J. Bakosi
-  \date      Wed 01 Jul 2015 02:25:09 PM MDT
+  \date      Fri 21 Aug 2015 09:40:39 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Performer advances a PDE
   \details   Performer advances a PDE. There are a potentially
@@ -58,7 +58,7 @@ class Performer : public CBase_Performer {
     explicit Performer( CkMigrateMessage* ) {}
 
     //! Initialize communication and mesh data
-    void init();
+    void init( tk::real dt );
 
     //! Setup
     void setup();
@@ -66,13 +66,15 @@ class Performer : public CBase_Performer {
     //! Update solution vector
     void updateSolution( const std::map< std::size_t, tk::real >& sol );
 
+    //! Advance equations in time
+    void advance( tk::real dt, uint64_t it, tk::real t );
+
   private:
     std::size_t m_id;                   //!< Charm++ array id (Base::thisIndex)
+    uint64_t m_it;                      //!< Iteration count
+    tk::real m_t;                       //!< Physical time
     CProxy_Conductor m_hostproxy;       //!< Host proxy
     LinSysMergerProxy m_lsmproxy;       //!< Linear system merger proxy
-    int m_it;                           //!< Iteration count
-    tk::real m_t;                       //!< Physical time
-    tk::real m_dt;                      //!< Size of time step
     std::vector< std::size_t > m_point; //!< Global ids of nodes owned
     std::vector< std::size_t > m_gid;   //!< Global node ids of owned elements
     std::vector< std::size_t > m_inpoel;//!< Owned element connectivity
@@ -92,8 +94,7 @@ class Performer : public CBase_Performer {
     std::map< std::size_t, tk::real > m_u, m_uf, m_un;
     //! Time stamps
     std::vector< std::pair< std::string, tk::real > > m_timestamp;
-    enum class TimerTag { LHS, RHS, SOL };     //!< Timer labels
-    std::map< TimerTag, tk::Timer > m_timer;   //!< Timers
+    std::vector< tk::Timer > m_timer;   //!< Timers
 
     //! Find out if a point is owned
     bool own( std::size_t gid ) const {
@@ -127,7 +128,9 @@ class Performer : public CBase_Performer {
     void lhs();
 
     //! Compute righ-hand side vector of PDE
-    void rhs( tk::real mult, std::map< std::size_t, tk::real >& unk );
+    void rhs( tk::real mult,
+              tk::real dt,
+              std::map< std::size_t, tk::real >& unk );
 
     //! Output chare mesh to file
     void writeMesh();

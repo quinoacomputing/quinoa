@@ -2,7 +2,7 @@
 /*!
   \file      src/Walker/distributor.ci
   \author    J. Bakosi
-  \date      Mon 20 Jul 2015 07:47:39 PM MDT
+  \date      Wed 19 Aug 2015 11:20:24 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Charm++ module interface file for Distributor
   \details   Charm++ module interface file for Distributor
@@ -146,9 +146,7 @@ module distributor {
           // Start accumulating sums for central PDFs at select times
           if ( g_inputdeck.pdf() &&
                !(m_it % g_inputdeck.get< tag::interval, tag::pdf >()) )
-          {
             m_intproxy.accumulateCenPDF( m_ordinary );
-          }
         }
       };
 

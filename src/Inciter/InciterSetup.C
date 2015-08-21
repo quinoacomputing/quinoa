@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/InciterSetup.C
   \author    J. Bakosi
-  \date      Mon 06 Jul 2015 08:54:33 AM MDT
+  \date      Thu 20 Aug 2015 08:07:06 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Functions used to setup inciter
   \details   Functions used to setup inciter.
@@ -176,6 +176,7 @@ meshinfo( const tk::Print& print,
                 std::to_string( nchare-1 ) + "*" +
                 std::to_string( chunksize ) + "+" +
                 std::to_string( chunksize+remainder ) + ")" );
+    print.endsubsection();
   }
 }
 

@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/HypreSolver.h
   \author    J. Bakosi
-  \date      Tue 07 Jul 2015 02:50:45 PM MDT
+  \date      Thu 20 Aug 2015 09:07:40 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Hypre solver class
   \details   Hypre solver class.
@@ -40,7 +40,7 @@ class HypreSolver {
       HYPRE_PCGSetMaxIter( m_solver, 1000 ); // max iterations
       HYPRE_PCGSetTol( m_solver, 1.0e-7 );   // conv. tolerance
       HYPRE_PCGSetTwoNorm( m_solver, 1);     // use 2-norm as stopping criteria
-      HYPRE_PCGSetPrintLevel( m_solver, 2 ); // print out iteration info
+      HYPRE_PCGSetPrintLevel( m_solver, 1 ); // print out iteration info
       HYPRE_PCGSetLogging( m_solver, 1 );    // for run info
     }
 
@@ -56,8 +56,7 @@ class HypreSolver {
         double resnorm;
         HYPRE_PCGGetNumIterations( m_solver, &niter );
         HYPRE_PCGGetFinalRelativeResidualNorm( m_solver, &resnorm );
-        std::cout << "Iterations = " << niter << std::endl
-                  << "Final relative residual norm = " << resnorm << std::endl;
+        std::cout << "#it = " << niter << ", norm = " << resnorm << std::endl;
       }
     }
 

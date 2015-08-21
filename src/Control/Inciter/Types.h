@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/Types.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:14:14 PM MDT
+  \date      Wed 19 Aug 2015 01:16:14 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Types for Incitier's parsers
   \details   Types for Incitier's parsers. This file defines the components of the
@@ -37,7 +37,8 @@ using discretization = tk::tuple::tagged_tuple<
 
 //! Output intervals storage
 using intervals = tk::tuple::tagged_tuple<
-  tag::tty,  kw::ttyi::info::expect::type        //!< TTY output interval
+  tag::tty,   kw::ttyi::info::expect::type,       //!< TTY output interval
+  tag::field, kw::interval::info::expect::type    //!< Field output interval
 >;
 
 //! IO parameters storage

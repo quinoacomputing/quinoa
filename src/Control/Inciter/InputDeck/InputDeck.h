@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:14:38 PM MDT
+  \date      Wed 19 Aug 2015 01:17:10 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Inciter's input deck definition
   \details   This file defines the heterogeneous stack that is used for storing
@@ -72,6 +72,7 @@ class InputDeck :
       set< tag::discr, tag::dt >( 0.5 );
       // Default intervals
       set< tag::interval, tag::tty >( 1 );
+      set< tag::interval, tag::field >( 1 );
       // Initialize help: fill own keywords
       const auto& ctrinfoFill = tk::ctr::Info( get< tag::cmd, tag::ctrinfo >() );
       boost::mpl::for_each< keywords >( ctrinfoFill );

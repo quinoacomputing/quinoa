@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/LinSysMerger.h
   \author    J. Bakosi
-  \date      Thu 18 Jun 2015 11:33:19 AM MDT
+  \date      Fri 21 Aug 2015 08:53:32 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Linear system merger
   \details   Linear system merger.
@@ -92,7 +92,18 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       wait4filllhs();
       wait4fillrhs();
       wait4asm();
-      wait4stat();
+    }
+
+    //! Re-enable SDAG waits for rebuilding right hand side vector only
+    void enable_wait4rhs() {
+      wait4rhs();
+      wait4hyprerhs();
+      wait4fillrhs();
+      wait4asm();
+      m_rhsimport.clear();
+      m_hypreRhs.clear();
+      trigger_asmsol_complete();
+      trigger_asmlhs_complete();
     }
 
     //! \brief Create linear system, i.e., left-hand side matrix, vector of
@@ -171,7 +182,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
     //! \note This function does not have to be declared as a Charm++ entry
     //!   method since it is always called by chares on the same PE.
     void charesol( int fromch, const std::map< std::size_t, tk::real >& sol ) {
-      m_timer[ TimerTag::SOL ]; // start measuring merging of rhs
+      m_timer[ TimerTag::SOL ]; // start measuring merging of solution vector
       // Store solution vector nonzero values owned and pack those to be
       // exported, also build import map used to test for completion
       std::map< std::size_t, std::map< std::size_t, tk::real > > exp;
@@ -213,7 +224,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
                    const std::map< std::size_t,
                                    std::map< std::size_t, tk::real > >& lhs )
     {
-      m_timer[ TimerTag::LHS ]; // start measuring merging of lhs
+      m_timer[ TimerTag::LHS ]; // start measuring merging of lhs matrix
       // Store matrix nonzero values owned and pack those to be exported, also
       // build import map used to test for completion
       std::map< std::size_t,
@@ -261,7 +272,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
     //! \note This function does not have to be declared as a Charm++ entry
     //!   method since it is always called by chares on the same PE.
     void charerhs( int fromch, const std::map< std::size_t, tk::real >& rhs ) {
-      m_timer[ TimerTag::RHS ]; // start measuring merging of rhs
+      m_timer[ TimerTag::RHS ]; // start measuring merging of rhs vector
       // Store vector nonzero values owned and pack those to be exported
       std::map< std::size_t, std::map< std::size_t, tk::real > > exp;
       for (const auto& r : rhs) {
@@ -555,9 +566,23 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
 
     //! Solve linear system
     void solve() {
+      tk::Timer t;
+      //m_A.print( "hypre_mat" );
+      //m_b.print( "hypre_b" );
+      //m_x.print( "hypre_x" );
       m_solver.solve( m_A, m_b, m_x );
-      m_x.print( "hypre_sol" );
+      m_timestamp.emplace_back( "Solve linear system", t.dsec() );
+      //m_x.print( "hypre_sol" );
       updateSolution();
+    }
+
+    //! Send timers and performance statistics to host for collection
+    void sendTimers() {
+       m_host.grpTimestamp( m_timestamp );
+       m_host.grpPerfstat( m_perfstat );
+       m_timestamp.clear();
+       m_perfstat.clear();
+       m_timer.clear();
     }
 
     /** @name Host signal calls
@@ -570,8 +595,8 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       *   LinSysMerger template. They create Charm++ reduction targets via
       *   creating a callback that invokes the typed reduction client, where
       *   host is the proxy on which the reduction target method, given by the
-      *   string followed by "redn_wrapper_", e.g., init(), is called upon
-      *   completion of the reduction.
+      *   string followed by "redn_wrapper_", e.g., rowcomplete(), is called
+      *   upon completion of the reduction.
       *
       *   Note that we do not use Charm++'s CkReductionTarget macro here,
       *   but instead explicitly generate the code that that macro would
@@ -607,15 +632,6 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       *   Sections "Processor-Aware Chare Collections" and "Chare Arrays".
       * */
     ///@{
-    //! \brief Signal back to host that the initialization of the linear system
-    //!   is complete
-    void signal2host_init_complete( const inciter::CProxy_Conductor& host ) {
-      using inciter::CkIndex_Conductor;
-      Group::contribute(
-        CkCallback( CkIndex_Conductor::redn_wrapper_init(NULL), host )
-      );
-    }
-
     //! \brief Signal back to host that the initialization of the row indices of
     //!   the linear system is complete
     void signal2host_row_complete( const inciter::CProxy_Conductor& host ) {

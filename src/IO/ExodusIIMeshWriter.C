@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/ExodusIIMeshWriter.C
   \author    J. Bakosi
-  \date      Tue 18 Aug 2015 02:40:46 PM MDT
+  \date      Wed 19 Aug 2015 03:35:03 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     ExodusII mesh-based data writer
   \details   ExodusII mesh-based data writer class definition.
@@ -183,7 +183,7 @@ const
 }
 
 void
-ExodusIIMeshWriter::writeTimeStamp( int it, tk::real time ) const
+ExodusIIMeshWriter::writeTimeStamp( uint64_t it, tk::real time ) const
 //******************************************************************************
 //  Write time stamp to ExodusII file
 //! \param[in] it Iteration number
@@ -191,7 +191,7 @@ ExodusIIMeshWriter::writeTimeStamp( int it, tk::real time ) const
 //! \author J. Bakosi
 //******************************************************************************
 {
-  ErrChk( ex_put_time( m_outFile, it, &time ) == 0,
+  ErrChk( ex_put_time( m_outFile, static_cast<int>(it), &time ) == 0,
           "Failed to time stamp to ExodusII file: " + m_filename );
 }
 
@@ -248,7 +248,7 @@ const
 }
 
 void
-ExodusIIMeshWriter::writeNodeScalar( int it,
+ExodusIIMeshWriter::writeNodeScalar( uint64_t it,
                                      int varid,
                                      const std::vector< tk::real >& var ) const
 //******************************************************************************
@@ -260,7 +260,7 @@ ExodusIIMeshWriter::writeNodeScalar( int it,
 //******************************************************************************
 {
   ErrChk( ex_put_nodal_var( m_outFile,
-                            it,
+                            static_cast< int >( it ),
                             varid,
                             static_cast< int64_t >( var.size() ),
                             var.data() ) == 0,
@@ -268,7 +268,7 @@ ExodusIIMeshWriter::writeNodeScalar( int it,
 }
 
 void
-ExodusIIMeshWriter::writeElemScalar( int it,
+ExodusIIMeshWriter::writeElemScalar( uint64_t it,
                                      int varid,
                                      const std::vector< tk::real >& var ) const
 //******************************************************************************
@@ -280,7 +280,7 @@ ExodusIIMeshWriter::writeElemScalar( int it,
 //******************************************************************************
 {
   ErrChk( ex_put_elem_var( m_outFile,
-                           it,
+                           static_cast< int >( it ),
                            varid,
                            1,
                            static_cast< int64_t >( var.size() ),
