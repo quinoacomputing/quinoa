@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/Battery.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:09:03 PM MDT
+  \date      Thu 10 Sep 2015 12:11:44 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Random number generator test harness
   \details   This file defines a generic random number generator test harness
@@ -135,7 +135,7 @@ class Battery {
     template< typename T >
     struct Model : Concept {
       Model( T x ) : data( std::move(x) ) {}
-      Concept* copy() const { return new Model( *this ); }
+      Concept* copy() const override { return new Model( *this ); }
       void evaluate( std::vector< std::vector< std::string > > status )
         override { data.evaluate( status ); }
       void npval( std::size_t n ) override { data.npval( n ); }
