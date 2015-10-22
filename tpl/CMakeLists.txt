@@ -19,6 +19,13 @@ disallow_in_source_builds()
 include(MPICompilers)
 get_mpi_compilers()
 
+include(ProcessorCount)
+ProcessorCount(PROCESSOR_COUNT)
+if(PROCESSOR_COUNT EQUAL 0)     # if ncpus could not be determined, assign 1
+  set(PROCESSOR_COUNT "1")
+endif()
+message(STATUS "Found ${PROCESSOR_COUNT} PEs")
+
 # Set compiler id
 string(TOLOWER "${CMAKE_CXX_COMPILER_ID}" COMP)
 
@@ -271,7 +278,7 @@ ExternalProject_Add(
                 ${CHARM_ARCH}
                 ${CHARM_COMPILER}
                 --build-shared
-                -j8
+                -j${PROCESSOR_COUNT}
                 ${CXXFLAGS}
   DOWNLOAD_COMMAND ""
   INSTALL_COMMAND ""
@@ -453,7 +460,7 @@ if (hypre)
     SOURCE_DIR ${PROJECT_SOURCE_DIR}/src/hypre/src
     CMAKE_ARGS -D CMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
                -D CMAKE_CXX_COMPILER:PATH=${UNDERLYING_CXX_COMPILER}
-               -D CMAKE_CXX_FLAGS:STRING=${CXFLAGS}
+               -D CMAKE_CXX_FLAGS:STRING=${CXXFLAGS}
                -D HYPRE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX}
     DOWNLOAD_COMMAND ""
     LOG_CONFIGURE 1
@@ -471,7 +478,7 @@ ExternalProject_Add(
   SOURCE_DIR ${PROJECT_SOURCE_DIR}/src/rngsse2
   CMAKE_ARGS -D CMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
              -D CMAKE_CXX_COMPILER:PATH=${UNDERLYING_CXX_COMPILER}
-             -D CMAKE_CXX_FLAGS:STRING=${CXFLAGS}
+             -D CMAKE_CXX_FLAGS:STRING=${CXXFLAGS}
              -D CMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX}
   DOWNLOAD_COMMAND ""
   LOG_CONFIGURE 1
