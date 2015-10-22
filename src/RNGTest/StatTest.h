@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/StatTest.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:08:53 PM MDT
+  \date      Thu 10 Sep 2015 12:11:04 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Random number generator statistical test
   \details   This file defines a generic random number generator statistical
@@ -140,7 +140,7 @@ class StatTest {
     template< typename T >
     struct Model : Concept {
       Model( T x ) : data( std::move(x) ) {}
-      Concept* copy() const { return new Model( *this ); }
+      Concept* copy() const override { return new Model( *this ); }
       void npval() override { data.npval(); }
       void names() override { data.names(); }
       void run() override { data.run(); }

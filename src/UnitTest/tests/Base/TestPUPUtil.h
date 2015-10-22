@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/TestPUPUtil.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 03:13:13 PM MDT
+  \date      Mon 07 Sep 2015 08:23:24 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Base/PUPUtil.h
   \details   Unit tests for Base/PUPUtil.h
@@ -336,7 +336,7 @@ struct Migrated : CBase_Migrated {
       ensure( "boost::optional<int> different after migrated: "
               "expected `" + expected + "` actual `" + actual + "`",
               m_boost_optional_int ==
-                charm::BoostOptionalInt{ { boost::none } } );
+                charm::BoostOptionalInt{ boost::none } );
     } catch ( const failure& ex ) {
       tr.result = ex.result();
       tr.exception_typeid = ex.type();
@@ -603,7 +603,7 @@ void PUPUtil_object::test< 10 >() {
   // executes, the suite will hang waiting for that chare to call back.
   set_test_name( "Charm:migrate boost::optional<none> 1" );
 
-  CProxy_Migrated::ckNew( charm::BoostOptionalInt{ { boost::none } } );
+  CProxy_Migrated::ckNew( charm::BoostOptionalInt{ boost::none } );
 }
 
 //! Test Pack/Unpack of tk::tuple::tagged_tuple
