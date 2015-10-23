@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/ExodusIIMeshWriter.C
   \author    J. Bakosi
-  \date      Wed 19 Aug 2015 03:35:03 PM MDT
+  \date      Wed 26 Aug 2015 01:09:41 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     ExodusII mesh-based data writer
   \details   ExodusII mesh-based data writer class definition.
@@ -205,18 +205,18 @@ const
 //******************************************************************************
 {
   ErrChk(
-    ex_put_var_param( m_outFile, "n", static_cast<int>(nv.size()) ) == 0,
+    ex_put_var_param( m_outFile, "n", static_cast< int >( nv.size() ) ) == 0,
     "Failed to write nodal output variable parameters to ExodusII file: " +
     m_filename );
 
   std::vector< const char* > names;
-  std::transform( std::begin(nv), std::end(nv), std::back_inserter(names),
-                  std::mem_fn(&std::string::c_str) );
+  std::transform( std::begin( nv ), std::end( nv ), std::back_inserter( names ),
+                  std::mem_fn( &std::string::c_str ) );
 
   ErrChk( ex_put_var_names( m_outFile,
                             "n",
-                            static_cast<int>(nv.size()),
-                            const_cast<char**>(names.data()) ) == 0,
+                            static_cast< int >( nv.size() ),
+                            const_cast< char** >( names.data() ) ) == 0,
           "Failed to write nodal output variable names to ExodusII file: " +
           m_filename );
 }
@@ -231,18 +231,18 @@ const
 //******************************************************************************
 {
   ErrChk(
-    ex_put_var_param( m_outFile, "e", static_cast<int>(ev.size()) ) == 0,
+    ex_put_var_param( m_outFile, "e", static_cast< int >( ev.size() ) ) == 0,
     "Failed to write element output variable parameters to ExodusII file: " +
     m_filename );
 
   std::vector< const char* > names;
-  std::transform( std::begin(ev), std::end(ev), std::back_inserter(names),
-                  std::mem_fn(&std::string::c_str) );
+  std::transform( std::begin( ev ), std::end( ev ), std::back_inserter( names ),
+                  std::mem_fn( &std::string::c_str ) );
 
   ErrChk( ex_put_var_names( m_outFile,
                             "e",
-                            static_cast<int>(ev.size()),
-                            const_cast<char**>(names.data()) ) == 0,
+                            static_cast< int >( ev.size() ),
+                            const_cast< char** >( names.data() ) ) == 0,
           "Failed to write element output variable names to ExodusII file: " +
           m_filename );
 }

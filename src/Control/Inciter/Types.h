@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/Types.h
   \author    J. Bakosi
-  \date      Wed 19 Aug 2015 01:16:14 PM MDT
+  \date      Wed 26 Aug 2015 03:13:32 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Types for Incitier's parsers
   \details   Types for Incitier's parsers. This file defines the components of the
@@ -32,6 +32,7 @@ using selects = tk::tuple::tagged_tuple<
 using discretization = tk::tuple::tagged_tuple<
   tag::nstep,     kw::nstep::info::expect::type, //!< Number of time steps
   tag::term,      kw::term::info::expect::type,  //!< Time to terminate
+  tag::t0,        kw::t0::info::expect::type,    //!< Starting time
   tag::dt,        kw::dt::info::expect::type     //!< Size of time step
 >;
 

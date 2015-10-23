@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Keywords.h
   \author    J. Bakosi
-  \date      Wed 19 Aug 2015 09:13:11 AM MDT
+  \date      Wed 26 Aug 2015 03:12:54 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Definition of all keywords
   \details   This file contains the definition of all keywords, including those
@@ -1386,6 +1386,21 @@ struct term_info {
 };
 using term = keyword< term_info, t, e, r, m >;
 
+struct t0_info {
+  static std::string name() { return "t0"; }
+  static std::string shortDescription() { return
+    "Set starting non-dimensional time"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify the starting time in a simulation.)";
+  }
+  struct expect {
+    using type = tk::real;
+    static constexpr type lower = 0.0;
+    static std::string description() { return "real"; }
+  };
+};
+using t0 = keyword< t0_info, t,'0' >;
+
 struct dt_info {
   static std::string name() { return "dt"; }
   static std::string shortDescription() { return
@@ -1463,6 +1478,17 @@ struct statistics_info {
   }
 };
 using statistics = keyword< statistics_info, s,t,a,t,i,s,t,i,c,s >;
+
+struct plotvar_info {
+  static std::string name() { return "plotvar"; }
+  static std::string shortDescription() { return
+    "Start of plotvar input block"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to start a block in the input file containing the
+    list and settings of requested field output.)";
+  }
+};
+using plotvar = keyword< plotvar_info, p,l,o,t,v,a,r >;
 
 struct rngs_info {
   static std::string name() { return "rngs"; }

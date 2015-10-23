@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Wed 19 Aug 2015 01:17:10 PM MDT
+  \date      Wed 26 Aug 2015 03:13:51 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Inciter's input deck definition
   \details   This file defines the heterogeneous stack that is used for storing
@@ -51,6 +51,7 @@ class InputDeck :
     using keywords = boost::mpl::set< kw::title,
                                       kw::nstep,
                                       kw::term,
+                                      kw::t0,
                                       kw::dt,
                                       kw::ttyi,
                                       kw::scalar,
@@ -58,6 +59,8 @@ class InputDeck :
                                       kw::shear_diff,
                                       kw::slot_cyl,
                                       kw::problem,
+                                      kw::plotvar,
+                                      kw::interval,
                                       kw::inciter >;
                                      
     //! \brief Constructor: set defaults
@@ -69,6 +72,7 @@ class InputDeck :
       set< tag::discr, tag::nstep >
          ( std::numeric_limits< kw::nstep::info::expect::type >::max() );
       set< tag::discr, tag::term >( 1.0 );
+      set< tag::discr, tag::t0 >( 0.0 );
       set< tag::discr, tag::dt >( 0.5 );
       // Default intervals
       set< tag::interval, tag::tty >( 1 );
