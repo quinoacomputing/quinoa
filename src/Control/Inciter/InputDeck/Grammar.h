@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Fri 29 May 2015 05:14:54 PM MDT
+  \date      Wed 26 Aug 2015 03:14:04 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Inciter's input deck grammar definition
   \details   Inciter's input deck grammar definition. We use the Parsing
@@ -105,6 +105,7 @@ namespace deck {
   struct discretization_parameters :
          pegtl::sor< tk::grm::discr< Stack, use< kw::nstep >, tag::nstep >,
                      tk::grm::discr< Stack, use< kw::term >, tag::term >,
+                     tk::grm::discr< Stack, use< kw::t0 >, tag::t0 >,
                      tk::grm::discr< Stack, use< kw::dt >, tag::dt >,
                      tk::grm::interval< Stack, use< kw::ttyi >, tag::tty > > {};
 
@@ -126,6 +127,16 @@ namespace deck {
   struct equations :
          pegtl::sor< scalar > {};
 
+  //! plotvar ... end block
+  struct plotvar :
+         pegtl::ifmust<
+           tk::grm::readkw< Stack, use< kw::plotvar >::pegtl_string >,
+           tk::grm::block< Stack,
+                           use< kw::end >,
+                           tk::grm::interval< Stack,
+                                              use< kw::interval >,
+                                              tag::field > > > {};
+
   //! 'inciter' block
   struct inciter :
          pegtl::ifmust<
@@ -133,7 +144,8 @@ namespace deck {
            pegtl::sor< tk::grm::block< Stack,
                                        use< kw::end >,
                                        discretization_parameters,
-                                       equations >,
+                                       equations,
+                                       plotvar >,
                        pegtl::apply<
                           tk::grm::error< Stack,
                                           tk::grm::MsgKey::UNFINISHED > > > > {};

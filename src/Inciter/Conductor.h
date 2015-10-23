@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Conductor.h
   \author    J. Bakosi
-  \date      Fri 21 Aug 2015 08:56:55 AM MDT
+  \date      Wed 26 Aug 2015 03:09:05 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Conductor drives the time integration of a PDE
   \details   Conductor drives the time integration of a PDE
@@ -70,6 +70,9 @@ class Conductor : public CBase_Conductor {
     //!   finished a time step
     void evaluateTime();
 
+    //! Normal finish of time stepping
+    void finish();
+
     //! Collect vector of time stamps from (Performer) chare array
     //! \param[in] stamp Vector of time stamps contributed    
     void arrTimestamp(
@@ -113,6 +116,7 @@ class Conductor : public CBase_Conductor {
     uint64_t m_it;                      //!< Iteration count
     tk::real m_t;                       //!< Physical time
     tk::real m_dt;                      //!< Physical time step size
+    uint8_t m_stage;                    //!< Stage in multi-stage time stepping
     int m_arrTimestampCnt;              //!< Time stamp chare array counter
     int m_grpTimestampCnt;              //!< Time stamp chare group counter
     int m_arrPerfstatCnt;               //!< Perfstat chare array counter
@@ -127,8 +131,6 @@ class Conductor : public CBase_Conductor {
     std::map< std::string, std::vector< tk::real > > m_arrPerfstat;
     //! Performance statistics merged from chare group elements
     std::map< std::string, std::vector< tk::real > > m_grpPerfstat;
-    //! Output indicators
-    tk::tuple::tagged_tuple< tag::field, bool > m_output;
 
     //! Compute size of next time step
     tk::real computedt();

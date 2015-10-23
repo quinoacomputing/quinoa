@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Tags.h
   \author    J. Bakosi
-  \date      Wed 19 Aug 2015 12:41:19 PM MDT
+  \date      Wed 26 Aug 2015 03:14:16 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Tags
   \details   Tags are unique types, used for metaprogramming.
@@ -57,6 +57,7 @@ struct coeffpolicy {};
 struct montecarlo {};
 struct nstep {};
 struct term {};
+struct t0 {};
 struct dt {};
 struct npar {};
 struct ncomp {};

@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.C
   \author    J. Bakosi
-  \date      Thu 20 Aug 2015 11:39:03 AM MDT
+  \date      Thu 22 Oct 2015 02:15:38 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Performer advances a PDE
   \details   Performer advances a PDE. There are a potentially
@@ -23,6 +23,8 @@
 #include "LinSysMerger.h"
 #include "Inciter/InputDeck/InputDeck.h"
 
+#include "DerivedData.h"
+
 namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
@@ -39,7 +41,9 @@ using inciter::Performer;
 Performer::Performer( CProxy_Conductor& hostproxy, LinSysMergerProxy& lsmproxy )
 : m_id( static_cast< std::size_t >( thisIndex ) ),
   m_it( 0 ),
-  m_t( 0.0 ),
+  m_itf( 0 ),
+  m_t( g_inputdeck.get< tag::discr, tag::t0 >() ),
+  m_stage( 0 ),
   m_hostproxy( hostproxy ),
   m_lsmproxy( lsmproxy ),
   m_point( g_point[ m_id ] )
@@ -69,8 +73,6 @@ Performer::setup()
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // Initialize import maps
-  initImports();
   // Initialize local->global, global->local node ids, element connectivity
   initIds( g_element[ m_id ] );
   // Read coordinates of owned and received mesh nodes
@@ -90,28 +92,34 @@ Performer::init( tk::real dt )
 {
   // Set initial conditions
   ic();
-  // Compute left-hand side of PDE
-  lhs();
-  // Compute righ-hand side of PDE
-  rhs( 0.5, dt, m_u );
-  // Send some time stamps to the host
-  m_hostproxy.arrTimestamp( m_timestamp );
-}
 
-void
-Performer::initImports()
-//******************************************************************************
-// Initialize import maps by inverting export maps
-//! \author J. Bakosi
-//******************************************************************************
-{
-  std::size_t h = 0;
-  for (const auto& m : g_ecomm) {
-    for (const auto& x : m)
-      if (m_id == x.first)
-        for (auto p : x.second)
-          m_toimport[ h ].push_back( p );
-    ++h;
+  // If the desired max number of time steps is zero or the desired max time is
+  // less than the initial time step size, finish righ away.
+  if ( g_inputdeck.get< tag::discr, tag::nstep >() == 0 ||
+       g_inputdeck.get< tag::discr, tag::t0 >() >
+         g_inputdeck.get< tag::discr, tag::term >() ||
+       g_inputdeck.get< tag::discr, tag::term >() < dt ) {
+
+    // Send time stamps to the host
+    m_hostproxy.arrTimestamp( m_timestamp );
+
+    // Tell the Charm++ runtime system to call back to Conductor::finish(). The
+    // reduction is done via creating a callback that invokes the typed
+    // reduction client, where m_hostproxy is the proxy on which the reduction
+    // target method, evaluateTime(), is called upon completion of the
+    // reduction.
+    contribute(
+      CkCallback( CkReductionTarget( Conductor, finish ), m_hostproxy ) );
+
+  } else {
+
+    // Compute left-hand side of PDE
+    lhs();
+    // Advance PDE in time (start at stage 0)
+    advance( 0, dt, m_it, m_t );
+    // Send time stamps to the host
+    m_hostproxy.arrTimestamp( m_timestamp );
+
   }
 }
 
@@ -123,8 +131,11 @@ Performer::ic()
 //******************************************************************************
 {
   for (std::size_t i=0; i<m_gid.size(); ++i)
-    //m_u[ m_gid[i] ] = ansol_shear( i, 2400.0 );
-    m_u[ m_gid[i] ] = ansol_gauss( i );
+    m_u[ m_gid[i] ] = ansol_shear( i, m_t );
+    //m_u[ m_gid[i] ] = ansol_gauss( i );
+
+  // Output initial conditions to file (it = 1, time = 0.0)
+  writeFields( m_t );
 
   m_lsmproxy.ckLocalBranch()->charesol( thisIndex, m_u );
 }
@@ -142,6 +153,9 @@ Performer::lhs()
   const auto& y = m_coord[1];
   const auto& z = m_coord[2];
 
+  // Sparse matrix: global mesh point row and column ids, and nonzero value
+  std::map< std::size_t, std::map< std::size_t, tk::real > > lhs;
+
   for (std::size_t e=0; e<m_inpoel.size()/4; ++e) {
     const auto a = m_inpoel[e*4+0];
     const auto b = m_inpoel[e*4+1];
@@ -156,22 +170,22 @@ Performer::lhs()
     const auto B = m_gid[b];
     const auto C = m_gid[c];
     const auto D = m_gid[d];
-    auto& lA = m_lhs[A];
+    auto& lA = lhs[A];
     lA[A] += 2.0*J;
     lA[B] += J;
     lA[C] += J;
     lA[D] += J;
-    auto& lB = m_lhs[B];
+    auto& lB = lhs[B];
     lB[A] += J;
     lB[B] += 2.0*J;
     lB[C] += J;
     lB[D] += J;
-    auto& lC = m_lhs[C];
+    auto& lC = lhs[C];
     lC[A] += J;
     lC[B] += J;
     lC[C] += 2.0*J;
     lC[D] += J;
-    auto& lD = m_lhs[D];
+    auto& lD = lhs[D];
     lD[A] += J;
     lD[B] += J;
     lD[C] += J;
@@ -180,15 +194,21 @@ Performer::lhs()
 
   m_timestamp.emplace_back( "Compute left-hand side matrix", t.dsec() );
 
-  m_lsmproxy.ckLocalBranch()->charelhs( thisIndex, m_lhs );
+  m_lsmproxy.ckLocalBranch()->charelhs( thisIndex, lhs );
 }
 
 void
 Performer::rhs( tk::real mult,
                 tk::real dt,
-                std::map< std::size_t, tk::real >& unk )
+                const std::map< std::size_t, tk::real >& sol,
+                std::map< std::size_t, tk::real >& newrhs )
 //******************************************************************************
 // Compute right-hand side of PDE
+//! \param[in] mult Multiplier differentiating the different stages in
+//!    multi-stage time stepping
+//! \param[in] dt Size of time step
+//! \param[in] sol Solution vector at current stage
+//! \param[inout] newrhs Right-hand side vector computed
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -200,8 +220,9 @@ Performer::rhs( tk::real mult,
 
   const tk::real U0 = 0.5;
   const tk::real LAMBDA = 5.0e-4;
+  const tk::real D = 10.0;
 
-  m_rhs.clear();
+  newrhs.clear();
 
   for (std::size_t e=0; e<m_inpoel.size()/4; ++e) {
     const auto a = m_inpoel[e*4+0];
@@ -229,54 +250,57 @@ Performer::rhs( tk::real mult,
 
     // prescribed shear velocity
     std::array< std::array< tk::real, 4 >, 3 > vel;  // ndim*nnode [3][4]
-    vel[0][0] = U0 + LAMBDA * y[a];  vel[1][0] = 0.0;  vel[2][0] = 0.0;
-    vel[0][1] = U0 + LAMBDA * y[b];  vel[1][1] = 0.0;  vel[2][1] = 0.0;
-    vel[0][2] = U0 + LAMBDA * y[c];  vel[1][2] = 0.0;  vel[2][2] = 0.0;
-    vel[0][3] = U0 + LAMBDA * y[d];  vel[1][3] = 0.0;  vel[2][3] = 0.0;
+    vel[0][0] = U0 + LAMBDA*y[a];  vel[1][0] = 0.0;  vel[2][0] = 0.0;
+    vel[0][1] = U0 + LAMBDA*y[b];  vel[1][1] = 0.0;  vel[2][1] = 0.0;
+    vel[0][2] = U0 + LAMBDA*y[c];  vel[1][2] = 0.0;  vel[2][2] = 0.0;
+    vel[0][3] = U0 + LAMBDA*y[d];  vel[1][3] = 0.0;  vel[2][3] = 0.0;
 
     // shape function derivatives
     std::array< std::array< tk::real, 3 >, 4 > grad;  // nnode*ndim [4][3]
     grad[1] = tk::crossdiv( ca, da, J );
-    grad[2] = tk::crossdiv( ba, da, J );
+    grad[2] = tk::crossdiv( da, ba, J );
     grad[3] = tk::crossdiv( ba, ca, J );
     for (std::size_t i=0; i<3; ++i)
       grad[0][i] = -grad[1][i]-grad[2][i]-grad[3][i];
 
-    // add mass contribution to rhs
-    for (std::size_t i=0; i<4; ++i) {
-      const auto g = m_gid[ m_inpoel[e*4+i] ];  // global node id
-      const auto& u = unk[g];                   // ref to unknown at g
-      auto& r = m_rhs[g];                       // ref to rhs at g
-      for (std::size_t j=0; j<4; ++j)           // add contribution to rhs
-        r += mass[i][j] * 1.5;//u;
-    }
+    // solution at nodes at time n
+    std::array< tk::real, 4 > u {{ tk::ref( m_u, m_gid[a] ),
+                                   tk::ref( m_u, m_gid[b] ),
+                                   tk::ref( m_u, m_gid[c] ),
+                                   tk::ref( m_u, m_gid[d] ) }};
+    // solution at nodes at time n (at stage 0) and n+1/2 (at stage 1)
+    std::array< tk::real, 4 > s {{ tk::ref( sol, m_gid[a] ),
+                                   tk::ref( sol, m_gid[b] ),
+                                   tk::ref( sol, m_gid[c] ),
+                                   tk::ref( sol, m_gid[d] ) }};
+    // pointers to rhs at nodes
+    std::array< tk::real*, 4 > r {{ &newrhs[ m_gid[a] ],
+                                    &newrhs[ m_gid[b] ],
+                                    &newrhs[ m_gid[c] ],
+                                    &newrhs[ m_gid[d] ] }};
 
-//     // add advection contribution to rhs
-//     for (std::size_t i=0; i<4; ++i) {
-//       const auto g = m_gid[ m_inpoel[e*4+i] ];  // global node id
-//       auto& r = m_rhs[g];                       // ref to rhs at g
-//       for (std::size_t j=0; j<4; ++j)           // add contribution to rhs
-//         for (std::size_t k=0; k<3; ++k)
-//           for (std::size_t l=0; l<4; ++l)
-//             r -= mult*dt*( mass[i][j] * vel[k][j] * grad[l][k] *
-//                            unk[ m_gid[ m_inpoel[e*4+l] ] ] );
-//     }
-// 
-//     // add diffusion contribution to rhs
-//     for (std::size_t i=0; i<4; ++i) {
-//       const auto g = m_gid[ m_inpoel[e*4+i] ];  // global node id
-//       auto& r = m_rhs[g];                       // ref to rhs at g
-//       for (std::size_t j=0; j<4; ++j) {         // add contribution to rhs
-//         const auto& u = unk[ m_gid[ m_inpoel[e*4+j] ] ];  // ref to unknown
-//         for (std::size_t k=0; k<3; ++k)
-//           r -= mult*dt*( grad[i][k] * grad[j][k] * u );
-//       }
-//     }
+    // add mass contribution to rhs
+    for (std::size_t i=0; i<4; ++i)
+      for (std::size_t j=0; j<4; ++j)
+        *r[i] += mass[i][j] * u[j];
+
+    // add advection contribution to rhs
+    for (std::size_t i=0; i<4; ++i)
+      for (std::size_t j=0; j<4; ++j)
+        for (std::size_t k=0; k<3; ++k)
+          for (std::size_t l=0; l<4; ++l)
+            *r[i] -= mult * dt * mass[i][j] * vel[k][j] * grad[l][k] * s[l];
+
+    // add diffusion contribution to rhs
+    for (std::size_t i=0; i<4; ++i)
+      for (std::size_t j=0; j<4; ++j)
+        for (std::size_t k=0; k<3; ++k)
+          *r[i] -= mult * dt * D * J/6.0 * grad[i][k] * grad[j][k] * s[j];
   }
 
   m_timestamp.emplace_back( "Compute right-hand side vector", t.dsec() );
 
-  m_lsmproxy.ckLocalBranch()->charerhs( thisIndex, m_rhs );
+  m_lsmproxy.ckLocalBranch()->charerhs( thisIndex, newrhs );
 }
 
 void
@@ -303,10 +327,10 @@ Performer::initIds( const std::vector< std::size_t >& gelem )
 
   // Generate element connectivity for owned elements using local point ids
   for (auto e : gelem) {
-    m_inpoel.push_back( tk::lid( lnode, g_tetinpoel[e*4] ) );
-    m_inpoel.push_back( tk::lid( lnode, g_tetinpoel[e*4+1] ) );
-    m_inpoel.push_back( tk::lid( lnode, g_tetinpoel[e*4+2] ) );
-    m_inpoel.push_back( tk::lid( lnode, g_tetinpoel[e*4+3] ) );
+    m_inpoel.push_back( tk::val( lnode, g_tetinpoel[e*4] ) );
+    m_inpoel.push_back( tk::val( lnode, g_tetinpoel[e*4+1] ) );
+    m_inpoel.push_back( tk::val( lnode, g_tetinpoel[e*4+2] ) );
+    m_inpoel.push_back( tk::val( lnode, g_tetinpoel[e*4+3] ) );
   }
 
   // Send off number of columns per row to linear system merger
@@ -355,32 +379,6 @@ Performer::initCoords()
 }
 
 void
-Performer::updateSolution( const std::map< std::size_t, tk::real >& sol )
-//******************************************************************************
-// Update solution vector
-//! \author J. Bakosi
-//******************************************************************************
-{
-  for (const auto& r : sol) m_uf[ r.first ] = r.second;
-
-  // If all contributions we own have been received, advance time step
-  if (m_uf.size() == m_gid.size()) {
-
-    writeFields( m_uf );
-    m_uf.clear();
-
-    // Tell the Charm++ runtime system to call back to Conductor::registered()
-    // once all Performer chares have registered themselves, i.e., checked in,
-    // with their local branch of the linear system merger group, LinSysMerger.
-    // The reduction is done via creating a callback that invokes the typed
-    // reduction client, where m_hostproxy is the proxy on which the reduction
-    // target method, registered(), is called upon completion of the reduction.
-    contribute(
-      CkCallback( CkReductionTarget( Conductor, evaluateTime ), m_hostproxy ) );
-  }
-}
-
-void
 Performer::writeMesh()
 //******************************************************************************
 // Output chare mesh to file
@@ -405,30 +403,37 @@ Performer::writeMesh()
 }
 
 void
-Performer::writeChareId( const tk::ExodusIIMeshWriter& ew ) const
+Performer::writeChareId( const tk::ExodusIIMeshWriter& ew,
+                         uint64_t it ) const
 //******************************************************************************
 // Output chare id field to file
 //! \param[in] ew ExodusII mesh-based writer object
+//! \param[in] it Iteration count
 //! \author J. Bakosi
 //******************************************************************************
 {
   // Write elem chare id field to mesh
   std::vector< tk::real > chid( m_inpoel.size()/4, static_cast<tk::real>(m_id) );
-  ew.writeElemScalar( m_it+1, 1, chid );
+  ew.writeElemScalar( it, 1, chid );
 }
 
 void
 Performer::writeSolution( const tk::ExodusIIMeshWriter& ew,
+                          uint64_t it,
+                          int varid,
                           const std::map< std::size_t, tk::real >& u ) const
 //******************************************************************************
 // Output solution to file
 //! \param[in] ew ExodusII mesh-based writer object
+//! \param[in] it Iteration count
+//! \param[in] varid Exodus variable ID
+//! \param[in] u Field to write
 //! \author J. Bakosi
 //******************************************************************************
 {
   std::vector< tk::real > sol;
   for (const auto& p : u) sol.push_back( p.second );
-  ew.writeNodeScalar( m_it+1, 1, sol );
+  ew.writeNodeScalar( it, varid, sol );
 }
 
 void
@@ -445,17 +450,21 @@ Performer::writeMeta() const
         tk::ExoWriter::OPEN );
 
   ew.writeElemVarNames( { "Chare Id" } );
-  ew.writeNodeVarNames( { "Scalar" } );
+  ew.writeNodeVarNames( { "NumSol", "AnSol" } );
 }
 
 void
-Performer::writeFields( const std::map< std::size_t, tk::real >& u )
+Performer::writeFields( tk::real time )
 //******************************************************************************
 // Output mesh-based fields to file
+//! \param[in] time Physical time
 //! \author J. Bakosi
 //******************************************************************************
 {
   tk::Timer t;
+
+  // Increase field output iteration count
+  ++m_itf;
 
   // Create ExodusII writer
   tk::ExodusIIMeshWriter
@@ -464,36 +473,87 @@ Performer::writeFields( const std::map< std::size_t, tk::real >& u )
         tk::ExoWriter::OPEN );
 
   // Write time stamp
-  ew.writeTimeStamp( m_it+1, m_t );
+  ew.writeTimeStamp( m_itf, time );
 
   // Write mesh-based fields
-  writeChareId( ew );
-  writeSolution( ew, u );
+  writeChareId( ew, m_itf );
+  writeSolution( ew, m_itf, 1, m_u );
+
+  // Analytical solution for this time
+  m_un.clear();
+  for (std::size_t i=0; i<m_gid.size(); ++i)
+    m_un[ m_gid[i] ] = ansol_shear( i, time );
+  writeSolution( ew, m_itf, 2, m_un );
 
   m_timestamp.emplace_back( "Write mesh-based fields to file", t.dsec() );
 }
 
 void
-Performer::advance( tk::real dt, uint64_t it, tk::real t )
+Performer::advance( uint8_t stage, tk::real dt, uint64_t it, tk::real t )
 //******************************************************************************
-// Advance equations in time
+// Advance equations to next stage in multi-stage time stepping
+//! \param[in] stage Stage in multi-stage time stepping
 //! \param[in] dt Size of time step
 //! \param[in] it Iteration count
 //! \param[in] t Physical time
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // Update physical time and iteration count
-  m_t = t;
-  m_it = it;
-
-  // Advance equations one step in time
-
-  // Compute righ-hand side of PDE
+  // Re-enable SDAG waits for rebuilding the right-hand side vector only
   m_lsmproxy.ckLocalBranch()->enable_wait4rhs();
 
-  rhs( 0.5, dt, m_u );
+  // Update local copy of time step stage
+  m_stage = stage;
 
+  // Advance stage in multi-stage time stepping by updating the rhs
+  if (m_stage < 1) {
+
+    rhs( 0.5, dt, m_u, m_uf );
+
+  } else {
+
+    // Update local copy of physical time and iteration count at the final stage
+    m_t = t;
+    m_it = it;
+
+    rhs( 1.0, dt, m_uf, m_un );
+
+  }
+}
+
+void
+Performer::updateSolution( const std::map< std::size_t, tk::real >& sol )
+//******************************************************************************
+// Update solution vector
+//! \author J. Bakosi
+//******************************************************************************
+{
+  // Lambda to tell the Charm++ runtime system to call back to
+  // Conductor::evaluateTime() once all Performer chares have received the
+  // update. The reduction is done via creating a callback that invokes the
+  // typed reduction client, where m_hostproxy is the proxy on which the
+  // reduction target method, evaluateTime(), is called upon completion of the
+  // reduction.
+  auto evaluateTime = [this](){
+    contribute(
+      CkCallback( CkReductionTarget( Conductor, evaluateTime ), m_hostproxy ) );
+  };
+
+  // Receive update of solution vector
+  for (const auto& s : sol) m_ur[ s.first ] = s.second;
+
+  // If all contributions we own have been received, continue by updating a
+  // different solution vector depending on time step stage
+  if (m_ur.size() == m_gid.size()) {
+    if (m_stage < 1) {
+      m_uf = std::move( m_ur );
+    } else {
+      m_u = std::move( m_ur );
+      if (!((m_it+1) % g_inputdeck.get< tag::interval, tag::field >()))
+        writeFields( m_t + g_inputdeck.get< tag::discr, tag::dt >() );
+    }
+    evaluateTime();
+  }
 }
 
 #if defined(__clang__) || defined(__GNUC__)

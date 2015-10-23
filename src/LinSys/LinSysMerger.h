@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/LinSysMerger.h
   \author    J. Bakosi
-  \date      Fri 21 Aug 2015 08:53:32 AM MDT
+  \date      Fri 23 Oct 2015 06:02:20 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Linear system merger
   \details   Linear system merger.
@@ -81,7 +81,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       //std::cout << CkMyPe() << ": [" << m_lower << "..." << m_upper << ")\n";
       // Create distributed linear system
       create();
-      // Activate SDAG waits
+      // Activate SDAG waits for assembling lhs, rhs, and solution
       wait4sol();
       wait4lhs();
       wait4rhs();
@@ -94,30 +94,19 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       wait4asm();
     }
 
-    //! Re-enable SDAG waits for rebuilding right hand side vector only
+    //! Re-enable SDAG waits for rebuilding the right-hand side vector only
+    //! \note This function does not have to be declared as a Charm++ entry
+    //!   method since it is always called by chares on the same PE.
     void enable_wait4rhs() {
       wait4rhs();
       wait4hyprerhs();
       wait4fillrhs();
       wait4asm();
       m_rhsimport.clear();
+      m_rhs.clear();
       m_hypreRhs.clear();
       trigger_asmsol_complete();
       trigger_asmlhs_complete();
-    }
-
-    //! \brief Create linear system, i.e., left-hand side matrix, vector of
-    //!   unknowns, right-hand side vector, solver perform their initialization
-    void create() {
-      tk::Timer t;
-      // Create my PE's lhs matrix distributed across all PEs
-      m_A.create( m_lower, m_upper );
-      // Create my PE's rhs and unknown vectors distributed across all PEs
-      m_b.create( m_lower, m_upper );
-      m_x.create( m_lower, m_upper );
-      // Create linear solver
-      m_solver.create();
-      m_timestamp.emplace_back( "Create distributed linear system", t.dsec() );
     }
 
     //! Chares register on my PE
@@ -371,7 +360,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
     std::vector< tk::real > m_hypreMat;
     //! RHS vector nonzero values for my PE
     std::vector< tk::real > m_hypreRhs;
-    //! Sol vector nonzero values for my PE
+    //! Solution vector nonzero values for my PE
     std::vector< tk::real > m_hypreSol;
     //! Global->local row id map for sending back solution vector parts
     std::map< std::size_t, std::size_t > m_lid;
@@ -387,6 +376,20 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
     std::map< TimerTag, tk::Timer > m_timer;
     //! Performance statistics
     std::vector< std::pair< std::string, tk::real > > m_perfstat;
+
+    //! \brief Create linear system, i.e., left-hand side matrix, vector of
+    //!   unknowns, right-hand side vector, solver perform their initialization
+    void create() {
+      tk::Timer t;
+      // Create my PE's lhs matrix distributed across all PEs
+      m_A.create( m_lower, m_upper );
+      // Create my PE's rhs and unknown vectors distributed across all PEs
+      m_b.create( m_lower, m_upper );
+      m_x.create( m_lower, m_upper );
+      // Create linear solver
+      m_solver.create();
+      m_timestamp.emplace_back( "Create distributed linear system", t.dsec() );
+    }
 
     //! Return processing element for global mesh row id
     //! \param[in] gid Global mesh point (matrix or vector row) id
@@ -430,6 +433,8 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
     bool rhscomplete() const { return m_rhsimport == m_rowimport; }
 
     //! Build Hypre data for our portion of the global row ids
+    //! \note Hypre only likes one-based indexing. Zero-based row indexing fails
+    //!   to update the vector with HYPRE_IJVectorGetValues().
     void hyprerow() {
       for (auto r : m_row) m_hypreRows.push_back( static_cast< int >( r+1 ) );
     }
@@ -450,6 +455,8 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       trigger_hypresol_complete();
     }
     //! Build Hypre data for our portion of the matrix
+    //! \note Hypre only likes one-based indexing. Zero-based row indexing fails
+    //!   to update the vector with HYPRE_IJVectorGetValues().
     void hyprelhs() {
       tk::Timer t;
       Assert( lhscomplete(),
@@ -543,10 +550,12 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
 
     //! Update solution vector in our PE's performers
     void updateSolution() {
+
       // Get solution vector values for our PE
       m_x.get( static_cast< int >( m_upper - m_lower ),
                m_hypreRows.data(),
                m_hypreSol.data() );
+
       // Group solution vector by workers and send each the parts back to
       // workers that own them
       for (const auto& w : m_solimport) {
@@ -554,12 +563,12 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
         for (auto r : w.second) {
           const auto it = m_sol.find( r );
           if (it != end(m_sol))
-            sol.emplace( it->first,
-                         m_hypreSol[ tk::lid(m_lid,it->first) ] );
+            sol.emplace( it->first, m_hypreSol[ tk::val(m_lid,it->first) ] );
           else
             Throw( "Can't find global row id " + std::to_string(r) +
                    " to export in solution vector" );
         }
+
         m_worker[ w.first ].updateSolution( sol );
       }
     }

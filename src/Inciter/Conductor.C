@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Conductor.C
   \author    J. Bakosi
-  \date      Fri 21 Aug 2015 09:05:08 AM MDT
+  \date      Wed 21 Oct 2015 07:58:24 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Conductor drives the time integration of a PDE
   \details   Conductor drives the time integration of a PDE
@@ -40,7 +40,9 @@ Conductor::Conductor() :
   m_timer( 1 ), // start a timer
   m_nchare( static_cast< int >( g_pcomm.empty() ? 1 : g_pcomm.size() ) ),
   m_it( 0 ),
-  m_t( 0.0 ),
+  m_t( g_inputdeck.get< tag::discr, tag::t0 >() ),
+  m_dt( computedt() ),
+  m_stage( 0 ),
   m_arrTimestampCnt( 0 ),
   m_grpTimestampCnt( 0 ),
   m_arrPerfstatCnt( 0 ),
@@ -50,9 +52,6 @@ Conductor::Conductor() :
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // Compute size of initial time step
-  m_dt = computedt();
-
   // Print out info and time stepping header
   info();
 
@@ -95,6 +94,8 @@ Conductor::info() const
   m_print.section( "Discretization parameters" );
   m_print.item( "Number of time steps",
                 g_inputdeck.get< tag::discr, tag::nstep >() );
+  m_print.item( "Start time",
+                g_inputdeck.get< tag::discr, tag::t0 >() );
   m_print.item( "Terminate time",
                 g_inputdeck.get< tag::discr, tag::term >() );
   m_print.item( "Initial time step size",
@@ -194,53 +195,71 @@ Conductor::finalReport()
 }
 
 void
+Conductor::finish()
+//******************************************************************************
+// Normal finish of time stepping
+//! \author J. Bakosi
+//******************************************************************************
+{
+  // Print out reason for stopping
+  const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
+  m_print.endsubsection();
+  if (m_it >= g_inputdeck.get< tag::discr, tag::nstep >())
+     m_print.note( "Normal finish, maximum number of iterations reached: " +
+                   std::to_string( nstep ) );
+   else
+     m_print.note( "Normal finish, maximum time reached: " +
+                   std::to_string( g_inputdeck.get<tag::discr,tag::term>() ) );
+
+  // Send timer and performance data to main proxy and quit
+  finalReport();
+}
+
+void
 Conductor::evaluateTime()
 //******************************************************************************
 // Evaluate time step, compute new time step size, decide if it is time to quit
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // Increase number of iterations taken
-  ++m_it;
+  // Update stage in multi-stage time stepping
+  if (m_stage < 1) {    // if not final stage, continue with next stage
 
-  // Compute size of next time step
-  m_dt = computedt();
+    m_perfproxy.advance( ++m_stage, m_dt, m_it, m_t );
 
-  // Advance physical time
-  m_t += m_dt;
+  } else {              // if final stage, evaluate time
 
-  // Get physical time at which to terminate
-  const auto term = g_inputdeck.get< tag::discr, tag::term >();
+    // Increase number of iterations taken
+    ++m_it;
 
-  // Truncate the size of last time step
-  if (m_t > term) m_t = term;
+    // Compute size of next time step
+    m_dt = computedt();
 
-  // Echo one-liner info on time step
-  report();
+    // Advance physical time
+    m_t += m_dt;
 
-  // Finish if either max iterations or max time reached
-  if ( std::fabs(m_t - term) > std::numeric_limits< tk::real >::epsilon() &&
-       m_it < g_inputdeck.get< tag::discr, tag::nstep >() ) {
-
-    // Continue with next time step with all integrators
-    m_perfproxy.advance( m_dt, m_it, m_t );
-
-  } else {
-
-    // Normal finish, print out reason
+    // Get physical time at which to terminate
     const auto term = g_inputdeck.get< tag::discr, tag::term >();
-    const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
-    m_print.endsubsection();
-    if (m_it >= g_inputdeck.get< tag::discr, tag::nstep >())
-       m_print.note( "Normal finish, maximum number of iterations reached: " +
-                     std::to_string( nstep ) );
-     else
-       m_print.note( "Normal finish, maximum time reached: " +
-                     std::to_string( term ) );
 
-    // Send timer and performance data to main proxy and quit
-    finalReport();
+    // Truncate the size of last time step
+    if (m_t > term) m_t = term;
 
+    // Echo one-liner info on time step
+    report();
+
+    // Finish if either max iterations or max time reached
+    if ( std::fabs(m_t - term) > std::numeric_limits< tk::real >::epsilon() &&
+         m_it < g_inputdeck.get< tag::discr, tag::nstep >() ) {
+
+      // Continue with next time step (at stage 0) with all integrators
+      m_stage = 0;
+      m_perfproxy.advance( m_stage, m_dt, m_it, m_t );
+
+    } else {
+
+      finish();
+
+    }
   }
 }
 
@@ -252,7 +271,7 @@ Conductor::computedt()
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  // Simply return a constant user-defined dt for now
+  // Simply return the constant user-defined initial dt for now
   return g_inputdeck.get< tag::discr, tag::dt >();
 }
 
@@ -269,7 +288,7 @@ Conductor::header() const
     "        dt - time step size\n"
     "       ETE - estimated time elapsed (h:m:s)\n"
     "       ETA - estimated time for accomplishment (h:m:s)\n"
-    "       out - output-saved flags (F: fields)\n",
+    "       out - output-saved flags (F: field)\n",
     "\n      it             t            dt        ETE        ETA   out\n"
       " ---------------------------------------------------------------\n" );
 }
@@ -285,9 +304,13 @@ Conductor::report()
 
     // estimated time elapsed and for accomplishment
     tk::Timer::Watch ete, eta;
-    m_timer[0].eta( g_inputdeck.get< tag::discr, tag::term >(), m_t,
-                    g_inputdeck.get< tag::discr, tag::nstep >(), m_it,
-                    ete, eta );
+    m_timer[0].eta( g_inputdeck.get< tag::discr, tag::term >() -
+                      g_inputdeck.get< tag::discr, tag::t0 >(),
+                    m_t -  g_inputdeck.get< tag::discr, tag::t0 >(),
+                    g_inputdeck.get< tag::discr, tag::nstep >(),
+                    m_it,
+                    ete,
+                    eta );
 
     // Output one-liner
     m_print << std::setfill(' ') << std::setw(8) << m_it << "  "
@@ -303,13 +326,11 @@ Conductor::report()
             << std::setw(2) << eta.sec.count() << "  ";
 
     // Augment one-liner with output indicators
-    if (m_output.get< tag::field >()) m_print << 'F';
+    if (!(m_it % g_inputdeck.get< tag::interval, tag::field >()))
+      m_print << 'F';
 
     m_print << '\n';
   }
-
-  // Reset output indicators
-  m_output.get< tag::field >() = false;
 }
 
 #if defined(__clang__) || defined(__GNUC__)

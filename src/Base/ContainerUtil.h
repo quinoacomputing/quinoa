@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/ContainerUtil.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:10:02 PM MDT
+  \date      Fri 23 Oct 2015 06:06:47 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Various STL container utilities
   \details   Various STL container utilities.
@@ -86,15 +86,15 @@ variance( const std::map< std::string, std::vector< T > >& mapvec,
 }
 
 template< typename Key, typename Value >
-typename std::map< Key, Value >::size_type
-lid( const std::map< Key, Value >& map, Key key )
+Value
+val( const std::map< Key, Value >& map, Key key )
 //******************************************************************************
-//! Find and return value for key in std::map with error handling
+//! Find and return a copy of value for key in std::map with error handling
 //! \param[in] map Map associating values to keys
 //! \param[in] key
-//! \return Value associated to key in map
-//! \Note This functions should not be instantiated with heavy Key types, as it
-//!   is passed by value.
+//! \return A copy of the value associated to the key in map
+//! \Note This function should not be called with heavy Key types, as the key is
+//!    passed by value.
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -104,6 +104,63 @@ lid( const std::map< Key, Value >& map, Key key )
     return it->second;
   else
     Throw( "Can't find key " + std::to_string(key) );
+}
+
+template< typename Key, typename Value >
+const Value&
+ref( const std::map< Key, Value >& map, Key key )
+//******************************************************************************
+//! \brief Find and return a constant reference to value for key in std::map with
+//!   error handling
+//! \param[in] map Map associating values to keys
+//! \param[in] key
+//! \return A constant reference to the value associated to the key in map
+//! \Note This function should not be called with heavy Key types, as the key is
+//!   passed by value.
+//! \author J. Bakosi
+//******************************************************************************
+{
+  const auto it = map.find( key );
+
+  if (it != map.end())
+    return it->second;
+  else
+    Throw( "Can't find key " + std::to_string(key) );
+}
+
+template< typename T >
+std::array< T, 2 >
+extents( const std::vector< T >& vec )
+//******************************************************************************
+//! \brief Return minimum and maximum values of a vector
+//! \param[in] vec Vector whose extents to compute
+//! \return Array of two values with the minimum and maximum values
+//! \Note This function should not be called with heavy T types, as the a copy
+//!   of a std::array< T, 2 > is created and returned.
+//! \author J. Bakosi
+//******************************************************************************
+{
+  auto x = std::minmax_element( begin(vec), end(vec) );
+  return {{ *x.first, *x.second }};
+}
+
+template< typename Key, typename Value >
+std::array< Value, 2 >
+extents( const std::map< Key, Value >& map )
+//******************************************************************************
+//! \brief Find and return minimum and maximum values in std::map
+//! \param[in] map Map whose extents of values to find 
+//! \return Array of two values with the minimum and maximum values in the map
+//! \Note This function should not be called with heavy Value types, as the a
+//!   copy of a std::array< Value, 2 > is created and returned.
+//! \author J. Bakosi
+//******************************************************************************
+{
+  using pair_type = std::pair< const Key, Value >;
+  auto x = std::minmax_element( begin(map), end(map),
+             []( const pair_type& a, const pair_type& b )
+             { return a.second < b.second; } );
+  return {{ x.first->second, x.second->second }};
 }
 
 } // tk::
