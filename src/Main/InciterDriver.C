@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/InciterDriver.C
   \author    J. Bakosi
-  \date      Wed 01 Jul 2015 02:26:42 PM MDT
+  \date      Thu 05 Nov 2015 02:58:07 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Inciter driver
   \details   Inciter driver.
@@ -44,9 +44,16 @@ InciterDriver::InciterDriver( const InciterPrint& print ) : m_print( print )
 }
 
 void
-InciterDriver::execute() const
+InciterDriver::execute(
+  std::size_t npoin,
+  uint64_t nchare,
+  const std::vector< std::vector< std::vector< std::size_t > > >& element )
+const
 //******************************************************************************
 //  Execute: Fire up Conductor, a Charm++ chare that conducts Performers
+//! \param[in] npoin Total number of points in computational mesh
+//! \param[in] nchare Total number of chares
+//! \param[in] element Global mesh element ids owned by each chare
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -56,5 +63,5 @@ InciterDriver::execute() const
   // Performers so they can call back to Conductor. Since this is called inside
   // the main chare constructor, the Charm++ runtime system distributes the
   // handle along with all other global-scope data.
-  g_ConductorProxy = CProxy_Conductor::ckNew();
+  g_ConductorProxy = CProxy_Conductor::ckNew( npoin, nchare, element );
 }

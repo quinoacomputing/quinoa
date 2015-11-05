@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.h
   \author    J. Bakosi
-  \date      Fri 23 Oct 2015 06:02:14 AM MDT
+  \date      Thu 05 Nov 2015 03:06:05 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Performer advances a PDE
   \details   Performer advances a PDE. There are a potentially
@@ -49,22 +49,28 @@ extern ctr::InputDeck g_inputdeck;
 class Performer : public CBase_Performer {
 
   private:
+    using ConductorProxy = CProxy_Conductor;
     using LinSysMergerProxy =
       tk::CProxy_LinSysMerger< CProxy_Conductor, CProxy_Performer >;
+    using SpawnerProxy = CProxy_Spawner< CProxy_Conductor,
+                                         CProxy_Performer,
+                                         LinSysMergerProxy >;
 
   public:
     //! Constructor
-    explicit Performer( CProxy_Conductor& hostproxy,
-                        LinSysMergerProxy& lsmproxy );
+    explicit Performer( int id,
+                        ConductorProxy& conductor,
+                        LinSysMergerProxy& linsysmerger,
+                        SpawnerProxy& spawner );
 
     //! Migrate constructor
     explicit Performer( CkMigrateMessage* ) {}
 
+    //! Receive global element IDs owned and setup
+    void setup( const std::vector< std::size_t >& element );
+
     //! Initialize communication and mesh data
     void init( tk::real dt );
-
-    //! Setup
-    void setup();
 
     //! Update solution vector
     void updateSolution( const std::map< std::size_t, tk::real >& sol );
@@ -73,14 +79,15 @@ class Performer : public CBase_Performer {
     void advance( uint8_t stage, tk::real dt, uint64_t it, tk::real t );
 
   private:
-    std::size_t m_id;                   //!< Charm++ array id (Base::thisIndex)
+    std::size_t m_id;                   //!< Charm++ array id
     uint64_t m_it;                      //!< Iteration count
     uint64_t m_itf;                     //!< Field output iteration count
     tk::real m_t;                       //!< Physical time
     uint8_t m_stage;                    //!< Stage in multi-stage time stepping
-    CProxy_Conductor m_hostproxy;       //!< Host proxy
-    LinSysMergerProxy m_lsmproxy;       //!< Linear system merger proxy
-    std::vector< std::size_t > m_point; //!< Global ids of nodes owned
+    CProxy_Conductor m_conductor;       //!< Conductor proxy
+    LinSysMergerProxy m_linsysmerger;   //!< Linear system merger proxy
+    SpawnerProxy m_spanwer;             //!< Spawner proxy
+    std::vector< std::size_t > m_elem;  //!< Global ids of elements owned
     std::vector< std::size_t > m_gid;   //!< Global node ids of owned elements
     std::vector< std::size_t > m_inpoel;//!< Owned element connectivity
     //! Mesh point coordinates
@@ -90,12 +97,6 @@ class Performer : public CBase_Performer {
     //! Time stamps
     std::vector< std::pair< std::string, tk::real > > m_timestamp;
     std::vector< tk::Timer > m_timer;   //!< Timers
-
-    //! Find out if a point is owned
-    bool own( std::size_t gid ) const {
-      for (auto p : m_point) if (p == gid) return true;
-      return false;
-    }
 
     //! Initialize local->global, global->local node ids, element connectivity
     void initIds( const std::vector< std::size_t >& gelem );

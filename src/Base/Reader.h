@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Reader.h
   \author    J. Bakosi
-  \date      Fri 22 May 2015 08:27:45 AM MDT
+  \date      Tue 03 Nov 2015 03:34:05 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Reader base class declaration
   \details   Reader base class declaration. Reader base serves as a base class
@@ -28,13 +28,17 @@ class Reader {
 
   public:
     //! Constructor: Acquire file handle
-    explicit Reader( const std::string& filename );
+    explicit Reader( const std::string& filename,
+                     std::ios_base::openmode mode = std::ifstream::in );
 
     //! Destructor: Release file handle
     virtual ~Reader() noexcept;
 
-    //! Read interface: throw if not redefined and ends up being called called.
-    virtual void read() { Throw( "Reader::read() is a no-op" ); }
+    //! Unformatted read
+    //! \param[in] data Buffer to read to
+    //! \param[in] count Number of characters to read
+    void read( char* data, std::streamsize count )
+    { m_inFile.read( data, count ); }
 
     //! Return first line (for detection of file type based on header)
     std::string firstline();

@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.C
   \author    J. Bakosi
-  \date      Thu 22 Oct 2015 02:15:38 PM MDT
+  \date      Thu 05 Nov 2015 03:06:19 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Performer advances a PDE
   \details   Performer advances a PDE. There are a potentially
@@ -16,8 +16,10 @@
 
 #include "Performer.h"
 #include "Vector.h"
+#include "Reader.h"
 #include "ContainerUtil.h"
 #include "UnsMesh.h"
+#include "Reorder.h"
 #include "ExodusIIMeshReader.h"
 #include "ExodusIIMeshWriter.h"
 #include "LinSysMerger.h"
@@ -28,53 +30,60 @@
 namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
-extern std::vector< std::size_t > g_tetinpoel;
-extern std::vector< std::size_t > g_meshfilemap;
-extern std::vector< std::vector< std::size_t > > g_point;
-extern std::vector< std::vector< std::size_t > > g_element;
-extern std::vector< std::map< std::size_t, std::vector<std::size_t> > > g_ecomm;
 
 } // inciter::
 
 using inciter::Performer;
 
-Performer::Performer( CProxy_Conductor& hostproxy, LinSysMergerProxy& lsmproxy )
-: m_id( static_cast< std::size_t >( thisIndex ) ),
+Performer::Performer( int id,
+                      ConductorProxy& conductor,
+                      LinSysMergerProxy& linsysmerger,
+                      SpawnerProxy& spawner ) :
+  //m_id( static_cast< std::size_t >( thisIndex ) ),
+  m_id( static_cast< std::size_t >( id ) ),
   m_it( 0 ),
   m_itf( 0 ),
   m_t( g_inputdeck.get< tag::discr, tag::t0 >() ),
   m_stage( 0 ),
-  m_hostproxy( hostproxy ),
-  m_lsmproxy( lsmproxy ),
-  m_point( g_point[ m_id ] )
+  m_conductor( conductor ),
+  m_linsysmerger( linsysmerger ),
+  m_spanwer( spawner )
 //******************************************************************************
 // Constructor
-//! \param[in] hostproxy Host proxy
-//! \param[in] lsmproxy Linear system merger (LinSysMerger) proxy
+//! \param[in] host Host proxy
+//! \param[in] lsm Linear system merger (LinSysMerger) proxy
+//! \param[in] element Global mesh element ids owned by each chare
 //! \author J. Bakosi
 //******************************************************************************
 {
+//   tk::Reader r( std::string("element_chare_") + std::to_string(thisIndex),
+//                 std::ios::in | std::ios::binary );
+//   std::size_t n;
+//   r.read( (char*)&n, sizeof(std::size_t) );
+//   m_elem.resize( n );
+//   auto indexsize = static_cast< std::size_t >(
+//                      sizeof(decltype(m_elem)::value_type) );
+//   r.read( (char*)&m_elem[0],
+//                  static_cast< std::streamsize >( n*indexsize ) );
+
   // Register ourselves with the linear system merger
-  m_lsmproxy.ckLocalBranch()->checkin();
-  // Tell the Charm++ runtime system to call back to Conductor::registered()
-  // once all Performer chares have registered themselves, i.e., checked in,
-  // with their local branch of the linear system merger group, LinSysMerger.
-  // The reduction is done via creating a callback that invokes the typed
-  // reduction client, where m_hostproxy is the proxy on which the reduction
-  // target method, registered(), is called upon completion of the reduction.
-  contribute(
-    CkCallback( CkReductionTarget( Conductor, registered ), m_hostproxy ) );
+  m_linsysmerger.ckLocalBranch()->checkin();
 }
 
 void
-Performer::setup()
+Performer::setup( const std::vector< std::size_t >& element )
 //******************************************************************************
-// Setup
+//  Receive global element IDs owned and setup
+//! \param[in] element Vector global mesh element IDs owned
 //! \author J. Bakosi
 //******************************************************************************
 {
+//std::cout << "setup: " << CkMyPe() << ", " << m_id << ", " << element.size() << '\n';
+
+  // Store global mesh element IDs owned
+  m_elem = element;
   // Initialize local->global, global->local node ids, element connectivity
-  initIds( g_element[ m_id ] );
+  initIds( m_elem );
   // Read coordinates of owned and received mesh nodes
   initCoords();
   // Output chare mesh to file
@@ -90,6 +99,7 @@ Performer::init( tk::real dt )
 //! \author J. Bakosi
 //******************************************************************************
 {
+//std::cout << "init: " << CkMyPe() << ", " << m_id << '\n';
   // Set initial conditions
   ic();
 
@@ -101,15 +111,14 @@ Performer::init( tk::real dt )
        g_inputdeck.get< tag::discr, tag::term >() < dt ) {
 
     // Send time stamps to the host
-    m_hostproxy.arrTimestamp( m_timestamp );
+    m_conductor.arrTimestamp( m_timestamp );
 
     // Tell the Charm++ runtime system to call back to Conductor::finish(). The
     // reduction is done via creating a callback that invokes the typed
-    // reduction client, where m_hostproxy is the proxy on which the reduction
-    // target method, evaluateTime(), is called upon completion of the
-    // reduction.
+    // reduction client, where m_conductor is the proxy on which the reduction
+    // target method, finish(), is called upon completion of the reduction.
     contribute(
-      CkCallback( CkReductionTarget( Conductor, finish ), m_hostproxy ) );
+      CkCallback( CkReductionTarget( Conductor, finish ), m_conductor ) );
 
   } else {
 
@@ -118,7 +127,7 @@ Performer::init( tk::real dt )
     // Advance PDE in time (start at stage 0)
     advance( 0, dt, m_it, m_t );
     // Send time stamps to the host
-    m_hostproxy.arrTimestamp( m_timestamp );
+    m_conductor.arrTimestamp( m_timestamp );
 
   }
 }
@@ -137,7 +146,7 @@ Performer::ic()
   // Output initial conditions to file (it = 1, time = 0.0)
   writeFields( m_t );
 
-  m_lsmproxy.ckLocalBranch()->charesol( thisIndex, m_u );
+  m_linsysmerger.ckLocalBranch()->charesol( static_cast<int>(m_id), m_u );
 }
 
 void
@@ -194,7 +203,7 @@ Performer::lhs()
 
   m_timestamp.emplace_back( "Compute left-hand side matrix", t.dsec() );
 
-  m_lsmproxy.ckLocalBranch()->charelhs( thisIndex, lhs );
+  m_linsysmerger.ckLocalBranch()->charelhs( static_cast<int>(m_id), lhs );
 }
 
 void
@@ -264,15 +273,15 @@ Performer::rhs( tk::real mult,
       grad[0][i] = -grad[1][i]-grad[2][i]-grad[3][i];
 
     // solution at nodes at time n
-    std::array< tk::real, 4 > u {{ tk::ref( m_u, m_gid[a] ),
-                                   tk::ref( m_u, m_gid[b] ),
-                                   tk::ref( m_u, m_gid[c] ),
-                                   tk::ref( m_u, m_gid[d] ) }};
+    std::array< tk::real, 4 > u {{ tk::cref( m_u, m_gid[a] ),
+                                   tk::cref( m_u, m_gid[b] ),
+                                   tk::cref( m_u, m_gid[c] ),
+                                   tk::cref( m_u, m_gid[d] ) }};
     // solution at nodes at time n (at stage 0) and n+1/2 (at stage 1)
-    std::array< tk::real, 4 > s {{ tk::ref( sol, m_gid[a] ),
-                                   tk::ref( sol, m_gid[b] ),
-                                   tk::ref( sol, m_gid[c] ),
-                                   tk::ref( sol, m_gid[d] ) }};
+    std::array< tk::real, 4 > s {{ tk::cref( sol, m_gid[a] ),
+                                   tk::cref( sol, m_gid[b] ),
+                                   tk::cref( sol, m_gid[c] ),
+                                   tk::cref( sol, m_gid[d] ) }};
     // pointers to rhs at nodes
     std::array< tk::real*, 4 > r {{ &newrhs[ m_gid[a] ],
                                     &newrhs[ m_gid[b] ],
@@ -300,7 +309,8 @@ Performer::rhs( tk::real mult,
 
   m_timestamp.emplace_back( "Compute right-hand side vector", t.dsec() );
 
-  m_lsmproxy.ckLocalBranch()->charerhs( thisIndex, newrhs );
+//std::cout << "sendrhs: " << CkMyPe() << ", " << m_id << '\n';
+  m_linsysmerger.ckLocalBranch()->charerhs( static_cast<int>(m_id), newrhs );
 }
 
 void
@@ -313,28 +323,31 @@ Performer::initIds( const std::vector< std::size_t >& gelem )
 {
   tk::Timer t;
 
-  // Build unique global node ids of owned elements
-  for (auto e : gelem) {
-    m_gid.push_back( g_tetinpoel[e*4] );
-    m_gid.push_back( g_tetinpoel[e*4+1] );
-    m_gid.push_back( g_tetinpoel[e*4+2] );
-    m_gid.push_back( g_tetinpoel[e*4+3] );
-  }
+  tk::ExodusIIMeshReader
+    er( g_inputdeck.get< tag::cmd, tag::io, tag::input >() );
+
+  // Read element block IDs from ExodusII file
+  er.readElemBlockIDs();
+
+  std::vector< std::size_t > gtetinpoel;
+
+  // Read global element connectivity of owned tetrahedron elements
+  for (auto e : gelem) er.readElement( e, tk::ExoElemType::TET, gtetinpoel );
+
+  // Make a copy of the tetrahedron element connectivity
+  m_gid = gtetinpoel;
+
+  // Generate a vector that holds only the unique global mesh node ids
   tk::unique( m_gid );
 
   // Assign local node ids to global node ids
   const auto lnode = assignLid( m_gid );
 
   // Generate element connectivity for owned elements using local point ids
-  for (auto e : gelem) {
-    m_inpoel.push_back( tk::val( lnode, g_tetinpoel[e*4] ) );
-    m_inpoel.push_back( tk::val( lnode, g_tetinpoel[e*4+1] ) );
-    m_inpoel.push_back( tk::val( lnode, g_tetinpoel[e*4+2] ) );
-    m_inpoel.push_back( tk::val( lnode, g_tetinpoel[e*4+3] ) );
-  }
+  for (auto p : gtetinpoel) m_inpoel.push_back( tk::val( lnode, p ) );
 
   // Send off number of columns per row to linear system merger
-  m_lsmproxy.ckLocalBranch()->charerow( thisProxy, thisIndex, m_gid );
+  m_linsysmerger.ckLocalBranch()->charerow( thisProxy, static_cast<int>(m_id), m_gid );
 
   m_timestamp.emplace_back( "Initialize mesh point ids, element connectivity",
                             t.dsec() );
@@ -370,10 +383,7 @@ Performer::initCoords()
   auto& x = m_coord[0];
   auto& y = m_coord[1];
   auto& z = m_coord[2];
-  if (!g_meshfilemap.empty())
-    for (auto p : m_gid) er.readNode( g_meshfilemap[p], x, y, z );
-  else
-    for (auto p : m_gid) er.readNode( p, x, y, z );
+  for (auto p : m_gid) er.readNode( p, x, y, z );
 
   m_timestamp.emplace_back( "Read mesh point coordinates from file", t.dsec() );
 }
@@ -499,9 +509,6 @@ Performer::advance( uint8_t stage, tk::real dt, uint64_t it, tk::real t )
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // Re-enable SDAG waits for rebuilding the right-hand side vector only
-  m_lsmproxy.ckLocalBranch()->enable_wait4rhs();
-
   // Update local copy of time step stage
   m_stage = stage;
 
@@ -528,31 +535,37 @@ Performer::updateSolution( const std::map< std::size_t, tk::real >& sol )
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // Lambda to tell the Charm++ runtime system to call back to
-  // Conductor::evaluateTime() once all Performer chares have received the
-  // update. The reduction is done via creating a callback that invokes the
-  // typed reduction client, where m_hostproxy is the proxy on which the
-  // reduction target method, evaluateTime(), is called upon completion of the
-  // reduction.
-  auto evaluateTime = [this](){
-    contribute(
-      CkCallback( CkReductionTarget( Conductor, evaluateTime ), m_hostproxy ) );
-  };
-
   // Receive update of solution vector
   for (const auto& s : sol) m_ur[ s.first ] = s.second;
+
+//std::cout << "UpdateRecvd " << CkMyPe() << ", " << m_id << ", ursize now: " << m_ur.size() << ", when complete: " << m_gid.size() << '\n';
 
   // If all contributions we own have been received, continue by updating a
   // different solution vector depending on time step stage
   if (m_ur.size() == m_gid.size()) {
+
+//std::cout << "allUpdateRecvd " << CkMyPe() << ", " << m_id << '\n';
+
     if (m_stage < 1) {
+
       m_uf = std::move( m_ur );
+
     } else {
+
       m_u = std::move( m_ur );
       if (!((m_it+1) % g_inputdeck.get< tag::interval, tag::field >()))
         writeFields( m_t + g_inputdeck.get< tag::discr, tag::dt >() );
+
     }
-    evaluateTime();
+
+    // Tell the Charm++ runtime system to call back to Conductor::evaluateTime()
+    // once all Performer chares have received the update. The reduction is done
+    // via creating a callback that invokes the typed reduction client, where
+    // m_conductor is the proxy on which the reduction target method,
+    // evaluateTime(), is called upon completion of the reduction.
+    contribute(
+      CkCallback( CkReductionTarget( Conductor, evaluateTime ), m_conductor ) );
+
   }
 }
 

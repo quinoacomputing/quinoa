@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/InciterSetup.h
   \author    J. Bakosi
-  \date      Tue 02 Jun 2015 09:49:07 AM MDT
+  \date      Thu 05 Nov 2015 03:07:42 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Functions used to setup inciter
   \details   Functions used to setup inciter.
@@ -44,14 +44,9 @@ prepareMesh(
   const tk::Print& print,
   const ctr::InputDeck& inputdeck,
   std::vector< std::pair< std::string, tk::Timer::Watch > >& timestamp,
+  uint64_t& nchare,
   std::size_t& npoin,
-  std::vector< std::vector< std::size_t > >& point,
-  std::vector< std::vector< std::size_t > >& element,
-  std::vector< std::size_t >& meshfilemap,
-  std::vector< std::size_t >& tetinpoel,
-  std::pair< std::vector< std::size_t >, std::vector< std::size_t > >& esup,
-  std::vector< std::map< std::size_t, std::vector< std::size_t > > >& pcomm,
-  std::vector< std::map< std::size_t, std::vector< std::size_t > > >& ecomm );
+  std::vector< std::vector< std::vector< std::size_t > > >& element );
 
 } // inciter::
 

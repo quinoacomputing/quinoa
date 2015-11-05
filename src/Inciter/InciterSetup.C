@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/InciterSetup.C
   \author    J. Bakosi
-  \date      Thu 20 Aug 2015 08:07:06 AM MDT
+  \date      Thu 05 Nov 2015 03:07:31 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Functions used to setup inciter
   \details   Functions used to setup inciter.
@@ -205,27 +205,42 @@ poinOwner( std::size_t nchare, const std::vector< std::size_t >& chp )
   return point;
 }
 
-static std::vector< std::vector< std::size_t > >
-elemOwner( std::size_t nchare, const std::vector< std::size_t >& che )
+static std::vector< std::vector< std::vector< std::size_t > > >
+elemOwner( int npe, std::size_t nchare, const std::vector< std::size_t >& che )
 //******************************************************************************
-//! Construct global mesh element ids for each chare
-//! \param[in] nchare Number chares points are partitioned into
+//! Construct global mesh element ids for each chare distributed to PEs
+//! \param[in] nchare Total number chares the mesh points are partitioned into
 //! \param[in] che Chares of elements: array of chare ownership IDs mapping
 //!   graph elements to Charm++ chares. Size: number of elements in mesh graph.
-//! \return Vectors of global mesh element ids owned by each chare
+//! \return Vectors of global mesh element ids owned by each chare distributed
+//!   to PEs
 //! \author J. Bakosi
 //******************************************************************************
 {
-  std::vector< std::vector< std::size_t > > element( nchare );
+  auto numpes = static_cast< std::size_t >( npe );
+  auto chunksize = nchare / numpes;
 
-  for (std::size_t i=0; i<nchare; ++i)              // for all colors
-    for (std::size_t e=0; e<che.size(); ++e )       // for all mesh elements
+  std::vector< std::vector< std::vector< std::size_t > > > element( numpes );
+
+  for (std::size_t i=0; i<nchare; ++i) {        // for all colors
+    auto pe = i / chunksize;                    // compute pe for chare id    
+    if (pe == numpes) --pe;
+    auto& elpe = element[ pe ];                 // address PE's subvec
+    elpe.resize( chunksize );                   // create space for PE's chares
+    for (std::size_t e=0; e<che.size(); ++e )   // for all mesh elements
       if (che[e] == i)
-        element[i].push_back( e );
+        elpe[ i % chunksize ].push_back( e );
+  }
 
-  // This check should always be done, as it can result from incorrect user
-  // input compared to the mesh size and not due to programmer error.
-  for(const auto& c : element) ErrChk( !c.empty(), std::move(over) );
+  // Make sure element vector has the correct dimensions
+  for(const auto& pel : element) {
+    Assert( pel.size() == chunksize,
+            "Global element ID vector has incorrect dimensions" );
+    // This check should always be done, as it can result from incorrect user
+    // input compared to the mesh size and not due to programmer error.
+    for(const auto& c : pel)
+      ErrChk( !c.empty(), std::move(over) );
+  }
 
   return element;
 }
@@ -241,9 +256,9 @@ chElem( std::size_t nchare,
 //! \param[in] nchare Number chares points are partitioned into
 //! \param[in] chp Chares of points: array of chare ownership IDs mapping graph
 //!   points to Charm++ chares. Size: number of points in mesh graph.
-//! \param[inout] tetinpoel Mesh tetrahedron element connectivity
-//! \param[inout] esup Derived data structure, storing elements surrounding
-//!   points in mesh
+//! \param[in] tetinpoel Mesh tetrahedron element connectivity
+//! \param[in] esup Derived data structure, storing elements surrounding points
+//!   in mesh
 //! \details This function constructs the vector che, 'chares of elements'. This
 //!   is the equivalent of chp, 'chares of points', but stores the chare ids of
 //!   mesh elements. The element ownership is computed based on the point
@@ -302,48 +317,33 @@ chElem( std::size_t nchare,
 
 static void
 assignMesh(
+  const tk::Print& print,
   const tk::UnsMesh& graph,
-  const std::pair< std::vector< std::size_t >,
-                   std::vector< std::size_t > >& part,
+  const std::vector< std::size_t >& part,
   const ctr::InputDeck& inputdeck,
   std::size_t& npoin,
-  std::vector< std::vector< std::size_t > >& point,
-  std::vector< std::vector< std::size_t > >& element,
-  std::vector< std::size_t >& meshfilemap,
-  std::vector< std::size_t >& tetinpoel,
-  std::pair< std::vector< std::size_t >, std::vector< std::size_t > >& esup,
-  std::vector< std::map< std::size_t, std::vector< std::size_t > > >& pcomm,
-  std::vector< std::map< std::size_t, std::vector< std::size_t > > >& ecomm )
+  std::vector< std::vector< std::vector< std::size_t > > >& element )
 //******************************************************************************
 //! Assign mesh partitions to Charm++ chares
 //! \param[in] graph Unstructured mesh graph object reference
 //! \param[in] part Array of chare ownership IDs mapping graph points to
-//!   Charm++ chares, and new->old mesh point id map (new: renumbered, old: as
-//!   in mesh file)
+//!   Charm++ chares
 //! \param[inout] inputdeck Input deck object filled during parsing user input
 //! \param[inout] npoin Total number of points in mesh
-//! \param[inout] point Global mesh point ids owned by each chare
 //! \param[inout] element Global mesh element ids owned by each chare
-//! \param[inout] meshfilemap Index map between renumbered mesh point ids and
-//!   those in mesh file
-//! \param[inout] tetinpoel Mesh tetrahedron element connectivity
-//! \param[inout] esup Derived data structure, storing elements surrounding
-//!   points in mesh
-//! \param[inout] pcomm Vector of point-based export maps for all chares (empty
-//!   if nchares=1)
-//! \param[inout] ecomm Vector of elem-based export maps for all chares (empty
-//!   if nchares=1)
 //! \note This function only operates on MPI rank 0, since that is the only rank
 //!   where the input argument 'part' is expected to be non-empty.
 //! \author J. Bakosi
 //******************************************************************************
 {
-  int peid;
+  int peid, numpes;
   MPI_Comm_rank( MPI_COMM_WORLD, &peid );
+  MPI_Comm_size( MPI_COMM_WORLD, &numpes );
 
   if (peid == 0) {
+    print.diagstart( "Assigning mesh partitions to Charm++ chares ..." );
 
-    const auto& chp = part.first;
+    const auto& chp = part;
 
     Assert( chp.size() == graph.size(),
             "Size of ownership array must equal the number of graph nodes" );
@@ -355,32 +355,16 @@ assignMesh(
     auto minmax = std::minmax_element( begin(chp), end(chp) );
     auto nchare = *minmax.second - *minmax.first + 1;
 
-    // Construct and return global mesh point ids for each chare
-    point = poinOwner( nchare, chp );
-
-    // Return index map between renumbered mesh points and those in mesh file
-    meshfilemap = part.second;
-
     // Return element connectivity
-    tetinpoel = graph.tetinpoel();
-
-    // Generate and return elements surrounding points
-    esup = tk::genEsup( tetinpoel, 4 );
+    const auto tetinpoel = graph.tetinpoel();
 
     //! Construct array of chare ownership IDs mapping mesh elements to chares
-    const auto che = chElem( nchare, chp, tetinpoel, esup );
+    const auto che = chElem( nchare, chp, tetinpoel, tk::genEsup(tetinpoel,4) );
 
-    // Construct and return global mesh point ids for each chare
-    element = elemOwner( nchare, che );
+    // Construct and return global mesh element ids for each chare
+    element = elemOwner( numpes, nchare, che );
 
-    // If graph not partitioned, quit leaving communication maps empty
-    if (nchare == 1) return;
-
-    // Compute and return point-based communication maps
-    pcomm = tk::poinCommMaps( graph, chp, tetinpoel, nchare, std::move(over) );
-
-    // Compute and return element-based communication maps
-    ecomm = tk::elemCommMaps( chp, tetinpoel, element, nchare );
+    print.diagend( "done" );
  }
 }
 
@@ -458,14 +442,9 @@ prepareMesh(
   const tk::Print& print,
   const ctr::InputDeck& inputdeck,
   std::vector< std::pair< std::string, tk::Timer::Watch > >& timestamp,
+  uint64_t& nchare,
   std::size_t& npoin,
-  std::vector< std::vector< std::size_t > >& point,
-  std::vector< std::vector< std::size_t > >& element,
-  std::vector< std::size_t >& meshfilemap,
-  std::vector< std::size_t >& tetinpoel,
-  std::pair< std::vector< std::size_t >, std::vector< std::size_t > >& esup,
-  std::vector< std::map< std::size_t, std::vector< std::size_t > > >& pcomm,
-  std::vector< std::map< std::size_t, std::vector< std::size_t > > >& ecomm )
+  std::vector< std::vector< std::vector< std::size_t > > >& element )
 //******************************************************************************
 //! Prepare computational mesh
 //! \param[in] cmdline Command-line stack
@@ -473,17 +452,7 @@ prepareMesh(
 //! \param[in] inputdeck Input deck with inser input
 //! \param[inout] timestamp Time stamps in h:m:s format
 //! \param[inout] npoin Total number of points in mesh
-//! \param[inout] point Global mesh point ids owned by each chare
 //! \param[inout] element Global mesh element ids owned by each chare
-//! \param[inout] meshfilemap Index map between renumbered mesh point ids and
-//!   those in mesh file
-//! \param[inout] tetinpoel Mesh tetrahedron element connectivity
-//! \param[inout] esup Derived data structure, storing elements surrounding
-//!   points in mesh
-//! \param[inout] pcomm Vector of point-based export maps for all chares (empty
-//!   if nchares=1)
-//! \param[inout] ecomm Vector of elem-based export maps for all chares (empty
-//!   if nchares=1)
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -514,6 +483,7 @@ prepareMesh(
 
   // Read mesh graph from file only on MPI rank 0 and distribute load size
   if (peid == 0) {
+    print.diagstart( "Reading mesh graph ..." );
     tk::Timer timer;
     tk::ExodusIIMeshReader er( cmdline.get< tag::io, tag::input >() );
     er.readGraph( graph );
@@ -521,6 +491,7 @@ prepareMesh(
     load = graph.tetinpoel().size()/4;
     for (int i=1; i<numpes; ++i)
       MPI_Send( &load, 1, MPI_UNSIGNED, i, load_tag, MPI_COMM_WORLD );
+    print.diagend( "done" );
   } else {
     MPI_Recv( &load, 1, MPI_UNSIGNED, 0, load_tag, MPI_COMM_WORLD, &status );
   }
@@ -528,7 +499,7 @@ prepareMesh(
   // Compute load distribution given total work (load) and user-specified
   // virtualization
   uint64_t chunksize, remainder;
-  const auto nchare =
+  nchare =
     tk::linearLoadDistributor( cmdline.get< tag::virtualization >(),
                                load, numpes, chunksize, remainder );
 
@@ -538,9 +509,8 @@ prepareMesh(
 
   // Partition graph using Zoltan and assign mesh partitions to Charm++ chares
   tk::Timer t;
-  assignMesh( graph, tk::zoltan::partitionMesh(graph, nchare, print),
-              inputdeck, npoin, point, element, meshfilemap, tetinpoel, esup,
-              pcomm, ecomm );
+  assignMesh( print, graph, tk::zoltan::partitionMesh(graph, nchare, print),
+              inputdeck, npoin, element );
   timestamp.emplace_back( "Partition mesh & assign to Charm++ chares",
                            t.hms() );
 }

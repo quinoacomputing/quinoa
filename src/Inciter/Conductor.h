@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Conductor.h
   \author    J. Bakosi
-  \date      Wed 26 Aug 2015 03:09:05 PM MDT
+  \date      Thu 05 Nov 2015 02:56:49 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Conductor drives the time integration of a PDE
   \details   Conductor drives the time integration of a PDE
@@ -44,16 +44,10 @@ class Conductor : public CBase_Conductor {
 
   public:
     //! Constructor
-    explicit Conductor();
-
-    //! \brief Reduction target indicating that all Performer chares have
-    //!   registered with the linear system merger
-    //! \details This function is a Charm++ reduction target that is called when
-    //!   all Performer chares have registered with their local branch of the
-    //!   linear system merger group, LinSysMerger. Once this is done, we
-    //!   issue a broadcast to all Performer chares to continue with their
-    //!   setup.
-    void registered() { m_perfproxy.setup(); }
+    explicit Conductor(
+      std::size_t npoin,
+      uint64_t nchare,
+      const std::vector< std::vector< std::vector< std::size_t > > >& element );
 
     //! \brief Reduction target indicating that all linear system merger
     //!   branches have done their part of storing and exporting global row ids
@@ -62,13 +56,16 @@ class Conductor : public CBase_Conductor {
     //!   exporting global row ids. Once this is done, we issue a broadcast to
     //!   all Performer chares to continue with their initialization.
     void rowcomplete() {
-      m_lsmproxy.rowsreceived();
-      m_perfproxy.init( m_dt );
+      m_linsysmerger.rowsreceived();
+      m_spawner.init( m_dt );
     }
 
     //! \brief Reduction target indicating that all Performer chares have
-    //!   finished a time step
+    //!   finished a time step and it is time to decide whether to continue
     void evaluateTime();
+
+    //! \brief Reduction target indicating that all ...
+    void advance();
 
     //! Normal finish of time stepping
     void finish();
@@ -106,13 +103,16 @@ class Conductor : public CBase_Conductor {
     }
 
   private:
-    using PerformerProxy = CProxy_Performer;
-    using LinSysMergerProxy =
-      tk::CProxy_LinSysMerger< CProxy_Conductor, CProxy_Performer >;
+    using LinSysMergerProxy = tk::CProxy_LinSysMerger< CProxy_Conductor,
+                                                       CProxy_Performer >;
+    using SpawnerProxy = CProxy_Spawner< CProxy_Conductor,
+                                         CProxy_Performer,
+                                         LinSysMergerProxy >;
 
     InciterPrint m_print;               //!< Pretty printer
     std::vector< tk::Timer > m_timer;   //!< Timers
     int m_nchare;                       //!< Number of performer chares
+    int m_eval;                         //!< EvaluateTime() charge group counter
     uint64_t m_it;                      //!< Iteration count
     tk::real m_t;                       //!< Physical time
     tk::real m_dt;                      //!< Physical time step size
@@ -121,8 +121,8 @@ class Conductor : public CBase_Conductor {
     int m_grpTimestampCnt;              //!< Time stamp chare group counter
     int m_arrPerfstatCnt;               //!< Perfstat chare array counter
     int m_grpPerfstatCnt;               //!< Perfstat chare group counter
-    PerformerProxy m_perfproxy;         //!< Performer chare array
-    LinSysMergerProxy m_lsmproxy;       //!< Linear system merger chare group
+    SpawnerProxy m_spawner;             //!< Spawner group
+    LinSysMergerProxy m_linsysmerger;   //!< Linear system merger chare group
     //! Time stamps merged from chare array elements
     std::map< std::string, std::vector< tk::real > > m_arrTimestamp;
     //! Time stamps merged from chare group elements

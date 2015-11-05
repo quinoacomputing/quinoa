@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Writer.C
   \author    J. Bakosi
-  \date      Fri 22 May 2015 08:34:04 AM MDT
+  \date      Tue 03 Nov 2015 03:24:52 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Writer base class definition
   \details   Writer base class definition. Writer base serves as a base class

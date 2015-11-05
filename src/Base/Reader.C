@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Reader.C
   \author    J. Bakosi
-  \date      Fri 22 May 2015 08:28:23 AM MDT
+  \date      Tue 03 Nov 2015 03:33:50 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Reader class definition
   \details   Reader base class declaration. Reader base servers as a base class
@@ -20,10 +20,13 @@
 
 using tk::Reader;
 
-Reader::Reader( const std::string& filename ) : m_filename( filename )
+Reader::Reader( const std::string& filename, std::ios_base::openmode mode ) :
+  m_filename( filename )
 //******************************************************************************
 //  Constructor: Acquire file handle
 //! \param[in] filename Name of file to open for reading
+//! \param[in] mode Open mode, see
+//!   http://en.cppreference.com/w/cpp/io/ios_base/openmode
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -31,7 +34,7 @@ Reader::Reader( const std::string& filename ) : m_filename( filename )
   Assert( !filename.empty(), "No filename specified" );
 
   // Check if file exists, throw exception if it does not
-  m_inFile.open( filename, std::ifstream::in );
+  m_inFile.open( filename, mode );
   ErrChk( m_inFile.good(), "Failed to open file: " + filename );
 
   // Attempt to read a character, throw if it fails

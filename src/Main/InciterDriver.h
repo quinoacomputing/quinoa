@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/InciterDriver.h
   \author    J. Bakosi
-  \date      Sun 31 May 2015 06:08:35 AM MDT
+  \date      Thu 05 Nov 2015 02:59:57 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Inciter driver
   \details   Inciter driver.
@@ -23,7 +23,11 @@ class InciterDriver {
     explicit InciterDriver( const InciterPrint& print );
 
     //! Execute driver
-    void execute() const;
+    void execute(
+      std::size_t npoin,
+      uint64_t nchare,
+      const std::vector< std::vector< std::vector< std::size_t > > >& gelement )
+    const;
 
   private:
     const InciterPrint& m_print;        //!< Pretty printer

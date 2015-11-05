@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Inciter.C
   \author    J. Bakosi
-  \date      Tue 02 Jun 2015 09:52:33 AM MDT
+  \date      Thu 05 Nov 2015 03:09:54 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Inciter, computational shock hydrodynamics tool, Charm++ main
     chare.
@@ -22,6 +22,7 @@
 #include <boost/format.hpp>
 
 #include "Types.h"
+#include "Writer.h"
 #include "Timer.h"
 #include "Exception.h"
 #include "ProcessException.h"
@@ -66,32 +67,43 @@ ctr::CmdLine g_cmdline;
 ctr::InputDeck g_inputdeck_defaults;
 //! Input deck filled by parser, containing all input data
 ctr::InputDeck g_inputdeck;
-//! Total number of points in mesh
+
+//! \brief Total number of points in computational mesh
+//! \details While this data is declared in global scope (so that Charm++
+//!   chares can access it), it is intentionally NOT declared in the Charm++
+//!   main module interface file for Inciter in Main/inciter.ci, so that the
+//!   Charm++ runtime system does not migrate it across all PEs. This is okay,
+//!   since there is no need for any of the other Charm++ chares, other than the
+//!   main chare below, to access it in the future.
 std::size_t g_npoin;
-//! Derived data structure, storing elements surrounding points in mesh
-std::pair< std::vector< std::size_t >, std::vector< std::size_t > > g_esup;
-//! Mesh tetrahedron element connectivity
-std::vector< std::size_t > g_tetinpoel;
-//! Index map between renumbered mesh point ids and those in mesh file
-//! \note Empty if mesh has not been renumbered.
-std::vector< std::size_t > g_meshfilemap;
-//! Global mesh point ids owned by each chare
-std::vector< std::vector< std::size_t > > g_point;
-//! Global mesh element ids owned by each chare
-std::vector< std::vector< std::size_t > > g_element;
-//! \brief Vector of point-based export maps for all chares (empty if nchares=1)
-std::vector< std::map< std::size_t, std::vector< std::size_t > > > g_pcomm;
-//! \brief Vector of elem-based export maps for all chares (empty if nchares=1)
-std::vector< std::map< std::size_t, std::vector< std::size_t > > > g_ecomm;
+
+//! \brief Total number of chares
+//! \details While this data is declared in global scope (so that Charm++
+//!   chares can access it), it is intentionally NOT declared in the Charm++
+//!   main module interface file for Inciter in Main/inciter.ci, so that the
+//!   Charm++ runtime system does not migrate it across all PEs. This is okay,
+//!   since there is no need for any of the other Charm++ chares, other than the
+//!   main chare below, to access it in the future.
+uint64_t g_nchare;
+
+//! \brief Global mesh element ids created by each PE owned by each chare
+//! \details While this data is declared in global scope (so that Charm++
+//!   chares can access it), it is intentionally NOT declared in the Charm++
+//!   main module interface file for Inciter in Main/inciter.ci, so that the
+//!   Charm++ runtime system does not migrate it across all PEs. This is okay,
+//!   since there is no need for any of the other Charm++ chares, other than the
+//!   main chare below, to access it in the future.
+std::vector< std::vector< std::vector< std::size_t > > > g_element;
+
 //! \brief Time stamps in h:m:s for the initial MPI portion
 //! \details Time stamps collected here are those collected by the initial MPI
 //!   portion and are displayed by the Charm++ main chare at the end. While this
 //!   map of timers is declared in global scope (so that Charm++ chares can
 //!   access it), it is intentionally NOT declared in the Charm++ main module
 //!   interface file for Inciter in Main/inciter.ci, so that the Charm++ runtime
-//!   system does not migrate it across all PEs. This is okay, since since there
-//!   is no need for any of the other Charm++ chares to access it in the future.
-//!   In fact, the main chare grabs it and swallows it right away during its
+//!   system does not migrate it across all PEs. This is okay, since there is no
+//!   need for any of the other Charm++ chares to access it in the future. In
+//!   fact, the main chare grabs it and swallows it right away during its
 //!   constructor for output at the end of the run.
 std::vector< std::pair< std::string, tk::Timer::Watch > > g_timestamp;
 
@@ -159,14 +171,18 @@ class Main : public CBase_Main {
         m_timer.emplace_back();
       }
       delete msg;
+      m_print.diagstart( "Migrating read-only global-scope data ..." );
     } catch (...) { tk::processExceptionCharm(); }
 
     //! Execute driver created and initialized by constructor
     void execute() {
       try {
+        m_print.diagend( "done" );
         m_timestamp.emplace_back( "Migrate Charm++ read-only global-scope data",
                                   m_timer[1].hms());
-        m_driver.execute();
+        m_driver.execute( inciter::g_npoin,
+                          inciter::g_nchare,
+                          inciter::g_element );
       } catch (...) { tk::processExceptionCharm(); }
     }
 
@@ -256,8 +272,7 @@ int main( int argc, char **argv ) {
     // Prepare computational mesh and fill some global-scope data (all given at
     // the top of this file) so that Charm++ chares can access them
     prepareMesh( g_cmdline, iprint, g_inputdeck,  // <- const
-                 g_timestamp, g_npoin, g_point, g_element, g_meshfilemap,
-                 g_tetinpoel, g_esup, g_pcomm, g_ecomm );
+                 g_timestamp, g_nchare, g_npoin, g_element );
 
   } catch (...) { tk::processExceptionMPI(); }
 

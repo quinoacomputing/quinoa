@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/ContainerUtil.h
   \author    J. Bakosi
-  \date      Fri 23 Oct 2015 06:06:47 AM MDT
+  \date      Thu 05 Nov 2015 01:51:29 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Various STL container utilities
   \details   Various STL container utilities.
@@ -86,31 +86,10 @@ variance( const std::map< std::string, std::vector< T > >& mapvec,
 }
 
 template< typename Key, typename Value >
-Value
-val( const std::map< Key, Value >& map, Key key )
-//******************************************************************************
-//! Find and return a copy of value for key in std::map with error handling
-//! \param[in] map Map associating values to keys
-//! \param[in] key
-//! \return A copy of the value associated to the key in map
-//! \Note This function should not be called with heavy Key types, as the key is
-//!    passed by value.
-//! \author J. Bakosi
-//******************************************************************************
-{
-  const auto it = map.find( key );
-
-  if (it != map.end())
-    return it->second;
-  else
-    Throw( "Can't find key " + std::to_string(key) );
-}
-
-template< typename Key, typename Value >
 const Value&
-ref( const std::map< Key, Value >& map, Key key )
+cref( const std::map< Key, Value >& map, Key key )
 //******************************************************************************
-//! \brief Find and return a constant reference to value for key in std::map with
+//! \brief Find and return a constant reference to value for key in std::map
 //!   error handling
 //! \param[in] map Map associating values to keys
 //! \param[in] key
@@ -126,6 +105,39 @@ ref( const std::map< Key, Value >& map, Key key )
     return it->second;
   else
     Throw( "Can't find key " + std::to_string(key) );
+}
+
+template< typename Key, typename Value >
+Value&
+ref( const std::map< Key, Value >& map, Key key )
+//******************************************************************************
+//! \brief Find and return a reference to value for key in std::map error
+//!   handling
+//! \param[in] map Map associating values to keys
+//! \param[in] key
+//! \return A reference to the value associated to the key in map
+//! \Note This function should not be called with heavy Key types, as the key is
+//!   passed by value.
+//! \author J. Bakosi
+//******************************************************************************
+{
+  return const_cast< Value& >( cref(map,key) );
+}
+
+template< typename Key, typename Value >
+Value
+val( const std::map< Key, Value >& map, Key key )
+//******************************************************************************
+//! Find and return a copy of value for key in std::map with error handling
+//! \param[in] map Map associating values to keys
+//! \param[in] key
+//! \return A copy of the value associated to the key in map
+//! \Note This function should not be called with heavy Key types, as the key is
+//!    passed by value.
+//! \author J. Bakosi
+//******************************************************************************
+{
+  return ref(map,key);
 }
 
 template< typename T >
