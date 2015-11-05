@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/MixMassFractionBetaCoeffPolicy.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:38:27 PM MDT
+  \date      Thu 22 Oct 2015 02:11:07 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Mix mass-fraction beta SDE coefficients policies
   \details   This file defines coefficients policy classes for the mix
@@ -242,6 +242,7 @@ class MixMassFracBetaCoeffHomDecay {
       //   r = R - <R>, density fluctuation about its mean,
       // <Y> = mean mass fraction,
       // <R> = mean density,
+      //std::vector< tk::real > M{ 0.5, 0.012, 0.98, 0.37, 0.9 };
       for (ncomp_t c=0; c<ncomp; ++c) {
         tk::real m = lookup( mean(depvar,c), moments );            // <Y>
         tk::real v = lookup( variance(depvar,c), moments );        // <y^2>
@@ -252,6 +253,7 @@ class MixMassFracBetaCoeffHomDecay {
         if (m<1.0e-8 || m>1.0-1.0e-8) m = 0.5;
         if (v<1.0e-8 && v>1.0-1.0e-8) v = 0.5;
         b[c] = bprime[c] * (1.0 - v/m/(1.0-m));
+        //b[c] = bprime[c] * (1.0 - v/M[c]/(1.0-M[c]));
         k[c] = kprime[c] * v;
         //b[c] = 1.0;
         //k[c] = 0.5*v/(m*(1.0-m));

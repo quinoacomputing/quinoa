@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Conductor.C
   \author    J. Bakosi
-  \date      Wed 21 Oct 2015 07:58:24 AM MDT
+  \date      Thu 05 Nov 2015 02:57:35 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Conductor drives the time integration of a PDE
   \details   Conductor drives the time integration of a PDE
@@ -19,26 +19,23 @@
 #include <cstddef>
 
 #include "Conductor.h"
+#include "Spawner.h"
 #include "ContainerUtil.h"
 #include "Inciter/InputDeck/InputDeck.h"
 #include "inciter.decl.h"
 
 extern CProxy_Main mainProxy;
 
-namespace inciter {
-
-extern std::size_t g_npoin;
-extern std::vector< std::map< std::size_t, std::vector<std::size_t> > > g_pcomm;
-extern std::vector< std::vector< std::size_t > > g_point;
-
-} // inciter::
-
 using inciter::Conductor;
 
-Conductor::Conductor() :
+Conductor::Conductor(
+  std::size_t npoin,
+  uint64_t nchare,
+  const std::vector< std::vector< std::vector< std::size_t > > >& element ) :
   m_print( g_inputdeck.get<tag::cmd,tag::verbose>() ? std::cout : std::clog ),
   m_timer( 1 ), // start a timer
-  m_nchare( static_cast< int >( g_pcomm.empty() ? 1 : g_pcomm.size() ) ),
+  m_nchare( static_cast< int >( nchare ) ),
+  m_eval( 0 ),
   m_it( 0 ),
   m_t( g_inputdeck.get< tag::discr, tag::t0 >() ),
   m_dt( computedt() ),
@@ -48,27 +45,26 @@ Conductor::Conductor() :
   m_arrPerfstatCnt( 0 ),
   m_grpPerfstatCnt( 0 )
 //******************************************************************************
-// Constructor
+//  Constructor
+//! \param[in] npoin Total number of points in computational mesh
+//! \param[in] nchare Total number of chares
+//! \param[in] element Global mesh element ids owned by each chare
 //! \author J. Bakosi
 //******************************************************************************
 {
   // Print out info and time stepping header
   info();
 
-  // Create linear system merger chare group collecting chare contributions
-  m_lsmproxy = LinSysMergerProxy::ckNew( thisProxy, g_npoin );
+  // Create linear system merger chare group collecting chare contributions to a
+  // linear system
+  m_linsysmerger = LinSysMergerProxy::ckNew( thisProxy, npoin );
 
-  // Charm++ map object for custom initial placement of chare array elements
-  auto map = tk::CProxy_UnsMeshMap::ckNew( g_npoin, g_point );
-  //auto map = tk::CProxy_LinearMap::ckNew( m_nchare );
-  //auto map = CProxy_RRMap::ckNew();      // round robin
-  CkArrayOptions opts( m_nchare );
-  opts.setMap( map );
+  // Create chare group spawning asynchronous performers
+  m_spawner = SpawnerProxy::ckNew( thisProxy );
 
-  // Fire up array of asynchronous performers
-  m_perfproxy = PerformerProxy::ckNew( thisProxy, m_lsmproxy, opts );
-  //m_perfproxy = PerformerProxy::ckNew( thisProxy, m_lsmproxy, m_nchare );
-  m_perfproxy.doneInserting();
+  for (int p=0; p<CkNumPes(); ++p)
+    m_spawner[ p ].create( m_linsysmerger,
+                           element[ static_cast<std::size_t>(p) ] );
 }
 
 void
@@ -218,14 +214,45 @@ Conductor::finish()
 void
 Conductor::evaluateTime()
 //******************************************************************************
-// Evaluate time step, compute new time step size, decide if it is time to quit
+//  Evaluate time step: decide if it is time to quit
 //! \author J. Bakosi
 //******************************************************************************
+{
+  ++m_eval;
+
+  if ( m_eval == CkNumPes() ) {
+
+    m_eval = 0; // get ready for next time
+
+    // Get physical time at which to terminate
+    const auto term = g_inputdeck.get< tag::discr, tag::term >();
+
+    // if not final stage of time step or if neither max iterations nor max time
+    // reached, will continue
+    if ( (m_stage < 1) || 
+         (std::fabs(m_t - term) > std::numeric_limits< tk::real >::epsilon() &&
+           m_it < g_inputdeck.get< tag::discr, tag::nstep >()) )
+    {
+
+      // Tell all linear system merger group elements to prepare for a new rhs
+      m_linsysmerger.enable_wait4rhs();
+
+    } else {
+
+      finish();
+
+    }
+
+  }
+}
+
+void
+Conductor::advance()
 {
   // Update stage in multi-stage time stepping
   if (m_stage < 1) {    // if not final stage, continue with next stage
 
-    m_perfproxy.advance( ++m_stage, m_dt, m_it, m_t );
+    m_spawner.advance( ++m_stage, m_dt, m_it, m_t );
 
   } else {              // if final stage, evaluate time
 
@@ -247,19 +274,10 @@ Conductor::evaluateTime()
     // Echo one-liner info on time step
     report();
 
-    // Finish if either max iterations or max time reached
-    if ( std::fabs(m_t - term) > std::numeric_limits< tk::real >::epsilon() &&
-         m_it < g_inputdeck.get< tag::discr, tag::nstep >() ) {
+    // Continue with next time step (at stage 0) with all integrators
+    m_stage = 0;
+    m_spawner.advance( m_stage, m_dt, m_it, m_t );
 
-      // Continue with next time step (at stage 0) with all integrators
-      m_stage = 0;
-      m_perfproxy.advance( m_stage, m_dt, m_it, m_t );
-
-    } else {
-
-      finish();
-
-    }
   }
 }
 

@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/ZoltanInterOp.h
   \author    J. Bakosi
-  \date      Sat 30 May 2015 11:47:56 AM MDT
+  \date      Wed 28 Oct 2015 10:50:08 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Interoperation with the Zoltan library
   \details   Interoperation with the Zoltan library, used for static mesh
@@ -26,10 +26,8 @@ class UnsMesh;
 namespace zoltan {
 
 //! Partition mesh using Zoltan's hypergraph algorithm in serial
-std::pair< std::vector< std::size_t >, std::vector< std::size_t > >
-partitionMesh( tk::UnsMesh& graph,
-               uint64_t npart,
-               const tk::Print& print );
+std::vector< std::size_t >
+partitionMesh( tk::UnsMesh& graph, uint64_t npart, const tk::Print& print );
 
 } // zoltan::
 } // tk::

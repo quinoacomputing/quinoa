@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Writer.h
   \author    J. Bakosi
-  \date      Fri 22 May 2015 08:33:20 AM MDT
+  \date      Tue 03 Nov 2015 03:30:53 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Writer base class declaration
   \details   Writer base class declaration. Writer base serves as a base class
@@ -25,14 +25,20 @@ namespace tk {
 class Writer {
 
   public:
-    //! Destructor: Release file handle
-    virtual ~Writer() noexcept;
-
-  protected:
     //! Constructor: Acquire file handle. Protected: designed to be base only.
     explicit Writer( const std::string& filename,
                      std::ios_base::openmode mode = std::ios_base::out );
 
+    //! Destructor: Release file handle
+    virtual ~Writer() noexcept;
+
+    //! Unformatted write
+    //! \param[in] data Buffer to write
+    //! \param[in] count Number of characters to write
+    void write( const char* data, std::streamsize count )
+    { m_outFile.write( data, count ); }
+
+  protected:
     const std::string m_filename;          //!< File name
     mutable std::ofstream m_outFile;       //!< File output stream
 };

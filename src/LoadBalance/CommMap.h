@@ -2,7 +2,7 @@
 /*!
   \file      src/LoadBalance/CommMap.h
   \author    J. Bakosi
-  \date      Sat 30 May 2015 11:51:54 AM MDT
+  \date      Wed 04 Nov 2015 10:21:34 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Calculation of communication maps for unstructured meshes
   \details   Calculation of communication maps for unstructured meshes.
@@ -22,7 +22,7 @@ class UnsMesh;
 
 //! Compute point-based communication maps
 std::vector< std::map< std::size_t, std::vector< std::size_t > > >
-poinCommMaps( const tk::UnsMesh& graph,
+poinCommMaps( std::size_t graphsize,
               const std::vector< std::size_t >& chp,
               const std::vector< std::size_t >& tetinpoel,
               std::size_t nchare,
@@ -30,10 +30,11 @@ poinCommMaps( const tk::UnsMesh& graph,
 
 //! Compute element-based communication maps
 std::vector< std::map< std::size_t, std::vector< std::size_t > > >
-elemCommMaps( const std::vector< std::size_t >& chp,
-              const std::vector< std::size_t >& tetinpoel,
-              const std::vector< std::vector< std::size_t > >& element,
-              std::size_t nchare );
+elemCommMaps(
+  const std::vector< std::size_t >& chp,
+  const std::vector< std::size_t >& tetinpoel,
+  const std::vector< std::vector< std::vector< std::size_t > > >& element,
+  std::size_t nchare );
 
 } // tk::
 

@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/STLTxtMeshReader.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:25:49 PM MDT
+  \date      Wed 04 Nov 2015 08:02:02 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     ASCII STL (STereoLithography) reader class declaration
   \details   ASCII STL (STereoLithographu) reader class declaration.
@@ -29,11 +29,8 @@ class STLTxtMeshReader : public Reader {
     //! Constructor
     explicit STLTxtMeshReader( const std::string filename, STLMesh& mesh );
 
-    //! Destructor, default compiler generated
-    ~STLTxtMeshReader() noexcept override = default;
-
     //! Read ASCII STL mesh
-    void read() override;
+    void readMesh();
 
   private:
     //! \brief ASCII STL keyword with operator>> redefined to do error checking

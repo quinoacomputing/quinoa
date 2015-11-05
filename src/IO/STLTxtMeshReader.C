@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/STLTxtMeshReader.C
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:25:38 PM MDT
+  \date      Wed 04 Nov 2015 08:02:09 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     ASCII STL (STereoLithography) reader class definition
   \details   ASCII STL (STereoLithography) reader class definition.
@@ -28,7 +28,7 @@ STLTxtMeshReader::STLTxtMeshReader( const std::string filename, STLMesh& mesh )
 }
 
 void
-STLTxtMeshReader::read()
+STLTxtMeshReader::readMesh()
 //******************************************************************************
 //  Read ASCII STL mesh
 //! \author J. Bakosi

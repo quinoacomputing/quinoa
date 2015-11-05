@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/LinSysMerger.h
   \author    J. Bakosi
-  \date      Fri 23 Oct 2015 06:02:20 AM MDT
+  \date      Thu 05 Nov 2015 02:20:43 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Linear system merger
   \details   Linear system merger.
@@ -95,8 +95,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
     }
 
     //! Re-enable SDAG waits for rebuilding the right-hand side vector only
-    //! \note This function does not have to be declared as a Charm++ entry
-    //!   method since it is always called by chares on the same PE.
+    //! \note This is a reduction target, why ...
     void enable_wait4rhs() {
       wait4rhs();
       wait4hyprerhs();
@@ -107,6 +106,8 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       m_hypreRhs.clear();
       trigger_asmsol_complete();
       trigger_asmlhs_complete();
+//std::cout << "clear: " << CkMyPe() << '\n';
+      signal2host_wait4rhs_complete( m_host );
     }
 
     //! Chares register on my PE
@@ -124,8 +125,8 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
                    int fromch,
                    const std::vector< std::size_t >& row )
     {
-      // Store worker proxy
-      m_worker = worker;
+      // Store worker proxy associated to chare id
+      m_worker[ fromch ] = worker;
       // Collect ids of workers on my PE
       m_myworker.push_back( fromch );
       // Store rows owned and pack those to be exported, also build import map
@@ -143,15 +144,22 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       m_nperow += exp.size();
       for (const auto& p : exp) {
         auto tope = static_cast< int >( p.first );
-        Group::thisProxy[ tope ].addrow( fromch, CkMyPe(), p.second );
+        Group::thisProxy[ tope ].addrow( worker, fromch, CkMyPe(), p.second );
       }
       if (rowcomplete()) signal2host_row_complete( m_host );
     }
     //! Receive global row ids from fellow group branches
-    //! \param[in] fromch Chare id contrubition coming from
-    //! \param[in] frompe PE contrubition coming from
+    //! \param[in] fromworker Worker proxy contribution coming from
+    //! \param[in] fromch Chare id contribution coming from
+    //! \param[in] frompe PE contribution coming from
     //! \param[in] row Global mesh point (row) indices received
-    void addrow( int fromch, int frompe, const std::set< std::size_t >& row ) {
+    void addrow( WorkerProxy fromworker,
+                 int fromch,
+                 int frompe,
+                 const std::set< std::size_t >& row )
+    {
+      // Store worker proxy associated to chare id
+      m_worker[ fromch ] = fromworker;
       for (auto r : row) {
         m_rowimport[ fromch ].push_back( r );
         m_row.insert( r );
@@ -184,6 +192,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
           exp[ pe(gid) ][ gid ] = r.second;
         }
       }
+//std::cout << "lsm: " << CkMyPe() << ", solrecv from chare array " << fromch << ", solimp_size now: " << m_solimport.size() << ", m_solimport keys: "; for (const auto& i : m_solimport) std::cout << i.first << " "; std::cout << '\n';
       // Export non-owned vector values to fellow branches that own them
       for (const auto& p : exp) {
         auto tope = static_cast< int >( p.first );
@@ -192,7 +201,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       if (solcomplete()) trigger_sol_complete();
     }
     //! Receive solution vector nonzeros from fellow group branches
-    //! \param[in] fromch Chare id contrubition coming from
+    //! \param[in] fromch Chare id contribution coming from
     //! \param[in] sol Portion of the unknown/solution vector contributed,
     //!   containing global row indices and values
     void addsol( int fromch, const std::map< std::size_t, tk::real >& sol ) {
@@ -200,6 +209,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
         m_solimport[ fromch ].push_back( r.first );
         m_sol[ r.first ] = r.second;
       }
+//std::cout << "lsm: " << CkMyPe() << ", solrecv from fellow pe: " << fromch << ", solimp_size now: " << m_solimport.size() << ", solsize: " << sol.size() << ", m_solimport keys: "; for (const auto& i : m_solimport) std::cout << i.first << " "; std::cout << '\n';
       if (solcomplete()) trigger_sol_complete();
     }
 
@@ -240,7 +250,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       if (lhscomplete()) trigger_lhs_complete();
     }
     //! Receive matrix nonzeros from fellow group branches
-    //! \param[in] fromch Chare id contrubition coming from
+    //! \param[in] fromch Chare id contribution coming from
     //! \param[in] lhs Portion of the left-hand side matrix contributed,
     //!   containing global row and column indices and non-zero values
     void addlhs( int fromch,
@@ -275,6 +285,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
           ++m_veccompts;
         }
       }
+//std::cout << "lsm: " << CkMyPe() << ", rhsrecv from chare array " << fromch << ", rhsimp_size now: " << m_rhsimport.size() << ", m_rhsimport keys: "; for (const auto& i : m_rhsimport) std::cout << i.first << " "; std::cout << '\n';
       // Export non-owned vector values to fellow branches that own them
       for (const auto& p : exp) {
         auto tope = static_cast< int >( p.first );
@@ -283,7 +294,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       if (rhscomplete()) trigger_rhs_complete();
     }
     //! Receive right-hand side vector nonzeros from fellow group branches
-    //! \param[in] fromch Chare id contrubition coming from
+    //! \param[in] fromch Chare id contribution coming from
     //! \param[in] rhs Portion of the right-hand side vector contributed,
     //!   containing global row indices and values
     void addrhs( int fromch, const std::map< std::size_t, tk::real >& rhs ) {
@@ -291,6 +302,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
         m_rhsimport[ fromch ].push_back( r.first );
         m_rhs[ r.first ] += r.second;
       }
+//std::cout << "lsm: " << CkMyPe() << ", rhsrecv from fellow pe: " << fromch << ", rhsimp_size now: " << m_rhsimport.size() << ", rhssize: " << rhs.size() << ", m_rhsimport keys: "; for (const auto& i : m_rhsimport) std::cout << i.first << " "; std::cout << '\n';
       if (rhscomplete()) trigger_rhs_complete();
     }
 
@@ -314,12 +326,13 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
 
   private:
     HostProxy m_host;           //!< Host proxy
-    WorkerProxy m_worker;       //!< Worker proxy
     std::size_t m_chunksize;    //!< Number of rows the first npe-1 PE own
     std::size_t m_lower;        //!< Lower index of the global rows on my PE
     std::size_t m_upper;        //!< Upper index of the global rows on my PE
     std::size_t m_nchare;       //!< Number of chares contributing to my PE
     std::size_t m_nperow;       //!< Number of fellow PEs to send row ids to
+    //!< Worker proxies associated to chare ids we receive contributions from
+    std::map< int, WorkerProxy > m_worker;
     //! Ids of workers on my PE
     std::vector< int > m_myworker;
     //! \brief Import map associating a list of global row ids to a worker chare
@@ -569,7 +582,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
                    " to export in solution vector" );
         }
 
-        m_worker[ w.first ].updateSolution( sol );
+        tk::ref( m_worker, w.first ).updateSolution( sol );
       }
     }
 
@@ -647,6 +660,16 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       using inciter::CkIndex_Conductor;
       Group::contribute(
         CkCallback( CkIndex_Conductor::redn_wrapper_rowcomplete(NULL), host )
+      );
+    }
+    ///@}
+    ///@{
+    //! \brief Signal back to host that enabling the SDAG waits for assembling
+    //!    the right-hand side is complete and ready for a new advance in time
+    void signal2host_wait4rhs_complete( const inciter::CProxy_Conductor& host ) {
+      using inciter::CkIndex_Conductor;
+      Group::contribute(
+        CkCallback( CkIndex_Conductor::redn_wrapper_advance(NULL), host )
       );
     }
     ///@}

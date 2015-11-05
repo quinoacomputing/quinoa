@@ -5,7 +5,6 @@ project(LoadBalance CXX)
 include(charm)
 
 add_library(LoadBalance
-            LoadDistributor.C
             CommMap.C
             LinearMap.C
             UnsMeshMap.C

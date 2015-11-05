@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/linsysmerger.ci
   \author    J. Bakosi
-  \date      Fri 21 Aug 2015 08:54:24 AM MDT
+  \date      Thu 05 Nov 2015 01:37:10 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Charm++ module interface file for merging a linear system
   \details   Charm++ module interface file for merging a linear system
@@ -18,20 +18,22 @@ module linsysmerger {
   namespace tk {
 
     // LinSysMerger is templated so that the same code (parameterized by the
-    // type given by the template argument, HostProxy) can be generated for
-    // different types of host proxies. All possible specializations must be
-    // listed below.
+    // type given by the template arguments, HostProxy and WorkerProxy) can be
+    // generated for different types of proxies. All possible specializations
+    // must be listed below to ensure that Charm++ generates corect code.
 
     // List all possible specializations of templated chare to instantiate
     // registration and delivery of code for the individual specializations
 
-    // Will specialize linear system merger for inciter's Conductor chare
+    // Will specialize linear system merger for inciter's Conductor & Performer
     chare LinSysMerger< inciter::CProxy_Conductor, inciter::CProxy_Performer >;
 
     template< class HostProxy, class WorkerProxy >
     group LinSysMerger {
       entry LinSysMerger( HostProxy& host, std::size_t npoin );
-      entry void addrow( int fromch,
+      entry void enable_wait4rhs();
+      entry void addrow( WorkerProxy fromworker,
+                         int fromch,
                          int frompe,
                          const std::set< std::size_t >& row );
       entry void recrow();
@@ -66,6 +68,7 @@ module linsysmerger {
         when trigger_sol_complete() serial {
           m_timestamp.emplace_back( "Merge solution vector",
                                     tk::query( m_timer, TimerTag::SOL ) );
+//std::cout << CkMyPe() << " sol received\n";
           hypresol();
         }
       };
@@ -76,6 +79,7 @@ module linsysmerger {
             static_cast<tk::real>(m_matownpts+m_matcompts) );
           m_timestamp.emplace_back( "Merge left-hand side matrix",
                                     tk::query( m_timer, TimerTag::LHS ) );
+//std::cout << CkMyPe() << " lhs received\n";
           hyprelhs();
         }
       };
@@ -86,6 +90,7 @@ module linsysmerger {
             static_cast<tk::real>(m_vecownpts+m_veccompts) );
           m_timestamp.emplace_back( "Merge right-hand side vector",
                                     tk::query( m_timer, TimerTag::RHS ) );
+//std::cout << CkMyPe() << " rhs received\n";
           hyprerhs();
         }
       };
@@ -109,6 +114,7 @@ module linsysmerger {
              trigger_asmlhs_complete(),
              trigger_asmrhs_complete()
         serial {
+//std::cout << CkMyPe() << " ALL received\n";
           solve();
           sendTimers();
         }

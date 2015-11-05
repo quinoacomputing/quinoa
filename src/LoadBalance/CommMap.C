@@ -2,7 +2,7 @@
 /*!
   \file      src/LoadBalance/CommMap.C
   \author    J. Bakosi
-  \date      Sat 30 May 2015 11:53:19 AM MDT
+  \date      Wed 04 Nov 2015 10:16:33 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Calculation of communication maps for unstructured meshes
   \details   Calculation of communication maps for unstructured meshes.
@@ -26,14 +26,14 @@
 namespace tk {
 
 std::vector< std::map< std::size_t, std::vector< std::size_t > > >
-poinCommMaps( const tk::UnsMesh& graph,
+poinCommMaps( std::size_t graphsize,
               const std::vector< std::size_t >& chp,
               const std::vector< std::size_t >& tetinpoel,
               std::size_t nchare,
               std::string&& toofine )
 //******************************************************************************
 //  Compute point-based communication maps
-//! \param[in] graph Unstructured mesh graph object
+//! \param[in] graphsize Size of unstructured mesh graph object
 //! \param[in] chp Array of chare ownership IDs mapping graph points to
 //!   concurrent async chares
 //! \param[in] tetinpoel Tetrahedra element connectivity
@@ -80,7 +80,7 @@ poinCommMaps( const tk::UnsMesh& graph,
   auto psup = tk::genPsup( tetinpoel, 4, tk::genEsup(tetinpoel,4) );
 
   // Construct point-based export maps
-  for (std::size_t p=0; p<graph.size(); ++p)  // for all mesh points
+  for (std::size_t p=0; p<graphsize; ++p)  // for all mesh points
     for (auto i=psup.second[p]+1; i<=psup.second[p+1]; ++i) {
       auto q = psup.first[i];
       if (chp[p] != chp[q])   // if the point-colors differ, store global id
@@ -128,16 +128,18 @@ poinCommMaps( const tk::UnsMesh& graph,
 }
 
 std::vector< std::map< std::size_t, std::vector< std::size_t > > >
-elemCommMaps( const std::vector< std::size_t >& chp,
-              const std::vector< std::size_t >& tetinpoel,
-              const std::vector< std::vector< std::size_t > >& element,
-              std::size_t nchare )
+elemCommMaps(
+  const std::vector< std::size_t >& chp,
+  const std::vector< std::size_t >& tetinpoel,
+  const std::vector< std::vector< std::vector< std::size_t > > >& element,
+  std::size_t nchare )
 //******************************************************************************
 //! Compute element-based communication maps
 //! \param[in] chp Array of chare ownership IDs mapping graph points to
 //!   concurrent async chares
 //! \param[in] tetinpoel Tetrahedra element connectivity
-//! \param[in] element Global mesh element ids owned by each chare
+//! \param[in] element Global mesh element ids owned by each chare distributed
+//!   to PEs
 //! \param[in] nchare Number of work units (Charm++ chares)
 //! \return Element-based communication map for all chares
 //! \details This is an _element-based_ export map, because it stores the global
@@ -177,13 +179,14 @@ elemCommMaps( const std::vector< std::size_t >& chp,
             std::map< std::size_t, std::set< std::size_t > > > comm;
 
   // Construct element-based export maps
-  for (std::size_t c=0; c<element.size(); ++c)
-    for (auto e : element[c])
-      for (std::size_t n=0; n<4; ++n) {
-        auto p = tetinpoel[e*4+n];
-        if (chp[p] != c)      // if the point-colors differ, store global id
-          comm[ c ][ chp[p] ].insert( p );
-      }
+  for (const auto& pel : element)
+    for (std::size_t c=0; c<pel.size(); ++c)
+      for (auto e : pel[c])
+        for (std::size_t n=0; n<4; ++n) {
+          auto p = tetinpoel[e*4+n];
+          if (chp[p] != c)      // if the point-colors differ, store global id
+            comm[ c ][ chp[p] ].insert( p );
+        }
 
 //   for (const auto& c : comm) {
 //     std::cout << c.first << " -> ";

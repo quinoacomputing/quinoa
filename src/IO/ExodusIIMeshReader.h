@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/ExodusIIMeshReader.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:24:40 PM MDT
+  \date      Thu 29 Oct 2015 03:47:46 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     ExodusII mesh reader
   \details   ExodusII mesh reader class declaration.
@@ -14,12 +14,20 @@
 #include <cstddef>
 #include <iosfwd>
 #include <vector>
+#include <array>
 
 #include "Types.h"
 
 namespace tk {
 
 class UnsMesh;
+
+//! \brief Supported ExodusII mesh cell types
+//! \details This the order in which ExodusIIMeshReader::m_eid stores the
+//!   element block IDs.
+//! \see ExodusIIMeshReader::readElemBlockIDs() and
+//!    ExodusIIMeshReader::readElement
+enum class ExoElemType : int { TET = 0, TRI = 1 };
 
 //! ExodusII mesh-based data reader
 //! \details Mesh reader class facilitating reading from mesh-based field data
@@ -42,14 +50,25 @@ class ExodusIIMeshReader {
     //! Read only connectivity graph from file
     void readGraph( UnsMesh& mesh );
 
-    //  Read coordinates of a single mesh node from ExodusII file
+    //! Read coordinates of a single mesh node from file
     void readNode( std::size_t id,
                    std::vector< tk::real >& x,
                    std::vector< tk::real >& y,
                    std::vector< tk::real >& z );
 
+    //! Read element block IDs from file
+    void readElemBlockIDs();
+
+    //! Read element connectivity of a single mesh cell from file
+    void readElement( std::size_t id,
+                      tk::ExoElemType elemtype,
+                      std::vector< std::size_t >& conn );
+
   private:
-    //! Read ExodusII header
+    //! Read ExodusII header without setting mesh size
+    int readHeader();
+
+    //! Read ExodusII header with setting mesh size
     void readHeader( UnsMesh& mesh );
 
     //! Read all node coordinates from ExodusII file
@@ -60,9 +79,15 @@ class ExodusIIMeshReader {
 
     const std::string m_filename;          //!< File name
 
-    int m_inFile;               //!< ExodusII file handle
-    std::size_t m_neblk;        //!< Number of element blocks
-    std::size_t m_nnode;        //!< Number of nodes
+    //! \brief List of number of nodes per element for different element types
+    //!   supported in the order of tk::ExoElemType
+    const std::array< std::size_t, 2 > m_nnpe {{ 4, 3 }};
+
+    int m_inFile;                       //!< ExodusII file handle
+    std::size_t m_nnode;                //!< Number of nodes
+    std::size_t m_neblk;                //!< Number of element blocks
+    std::vector< int > m_eid;           //!< Element block IDs
+    std::vector< int > m_eidt;          //!< Element block IDs mapped to enum
 };
 
 } // tk::

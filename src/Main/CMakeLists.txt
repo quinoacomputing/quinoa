@@ -207,7 +207,6 @@ target_link_libraries(${WALKER_EXECUTABLE}
                       RNG
                       Walker
                       Statistics
-                      LoadBalance
                       Mesh      # WALKER SHOULD NOT DEPEND ON MESH
                       IO
                       WalkerControl
