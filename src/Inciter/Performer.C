@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.C
   \author    J. Bakosi
-  \date      Thu 05 Nov 2015 03:06:19 PM MST
+  \date      Mon 09 Nov 2015 06:51:09 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Performer advances a PDE
   \details   Performer advances a PDE. There are a potentially
@@ -38,8 +38,8 @@ using inciter::Performer;
 Performer::Performer( int id,
                       ConductorProxy& conductor,
                       LinSysMergerProxy& linsysmerger,
-                      SpawnerProxy& spawner ) :
-  //m_id( static_cast< std::size_t >( thisIndex ) ),
+                      SpawnerProxy& spawner,
+                      const std::vector< std::size_t >& element ) :
   m_id( static_cast< std::size_t >( id ) ),
   m_it( 0 ),
   m_itf( 0 ),
@@ -47,41 +47,32 @@ Performer::Performer( int id,
   m_stage( 0 ),
   m_conductor( conductor ),
   m_linsysmerger( linsysmerger ),
-  m_spanwer( spawner )
+  m_spanwer( spawner ),
+  m_elem( element )
 //******************************************************************************
-// Constructor
+//  Constructor
+//! \param[in] id Charm++ global array id
 //! \param[in] host Host proxy
 //! \param[in] lsm Linear system merger (LinSysMerger) proxy
-//! \param[in] element Global mesh element ids owned by each chare
+//! \param[in] element Vector global mesh element IDs owned
+//! \details Since a Performer chare array is created separately on each PE, the
+//!   chare array index, thisIndex, is a local index. The global index, unknown
+//!   to Charm, is unique across all PEs, stored in m_id.
 //! \author J. Bakosi
 //******************************************************************************
 {
-//   tk::Reader r( std::string("element_chare_") + std::to_string(thisIndex),
-//                 std::ios::in | std::ios::binary );
-//   std::size_t n;
-//   r.read( (char*)&n, sizeof(std::size_t) );
-//   m_elem.resize( n );
-//   auto indexsize = static_cast< std::size_t >(
-//                      sizeof(decltype(m_elem)::value_type) );
-//   r.read( (char*)&m_elem[0],
-//                  static_cast< std::streamsize >( n*indexsize ) );
-
   // Register ourselves with the linear system merger
   m_linsysmerger.ckLocalBranch()->checkin();
 }
 
 void
-Performer::setup( const std::vector< std::size_t >& element )
+Performer::setup()
 //******************************************************************************
-//  Receive global element IDs owned and setup
-//! \param[in] element Vector global mesh element IDs owned
+// Initialize mesh IDs, element connectivity, coordinates
 //! \author J. Bakosi
 //******************************************************************************
 {
-//std::cout << "setup: " << CkMyPe() << ", " << m_id << ", " << element.size() << '\n';
-
-  // Store global mesh element IDs owned
-  m_elem = element;
+//std::cout << "setup: " << CkMyPe() << ", " << m_id << ", " << m_elem.size() << '\n';
   // Initialize local->global, global->local node ids, element connectivity
   initIds( m_elem );
   // Read coordinates of owned and received mesh nodes
@@ -334,38 +325,21 @@ Performer::initIds( const std::vector< std::size_t >& gelem )
   // Read global element connectivity of owned tetrahedron elements
   for (auto e : gelem) er.readElement( e, tk::ExoElemType::TET, gtetinpoel );
 
-  // Make a copy of the tetrahedron element connectivity
-  m_gid = gtetinpoel;
+  m_timestamp.emplace_back( "Read mesh element connectivity from file",
+                            t.dsec() );
 
-  // Generate a vector that holds only the unique global mesh node ids
-  tk::unique( m_gid );
+  tk::Timer t2;
 
-  // Assign local node ids to global node ids
-  const auto lnode = assignLid( m_gid );
-
-  // Generate element connectivity for owned elements using local point ids
-  for (auto p : gtetinpoel) m_inpoel.push_back( tk::val( lnode, p ) );
+  // Generate connectivity graph storing local node ids
+  std::tie( m_inpoel, m_gid ) = tk::global2local( gtetinpoel );
 
   // Send off number of columns per row to linear system merger
-  m_linsysmerger.ckLocalBranch()->charerow( thisProxy, static_cast<int>(m_id), m_gid );
+  m_linsysmerger.ckLocalBranch()->charerow( thisProxy,
+                                            static_cast<int>(m_id),
+                                            m_gid );
 
   m_timestamp.emplace_back( "Initialize mesh point ids, element connectivity",
-                            t.dsec() );
-}
-
-std::map< std::size_t, std::size_t >
-Performer::assignLid( const std::vector< std::size_t >& gid ) const
-//******************************************************************************
-//! Assign local ids to global ids
-//! \param[in] gid
-//! \return Map associating global ids to local ids
-//! \author J. Bakosi
-//******************************************************************************
-{
-  std::map< std::size_t, std::size_t > lid;
-  std::size_t l = 0;
-  for (auto p : gid) lid[p] = l++;
-  return lid;
+                            t2.dsec() );
 }
 
 void

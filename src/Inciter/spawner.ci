@@ -1,0 +1,50 @@
+//******************************************************************************
+/*!
+  \file      src/Inciter/spawner.ci
+  \author    J. Bakosi
+  \date      Tue 10 Nov 2015 08:39:07 AM MST
+  \copyright 2012-2015, Jozsef Bakosi.
+  \brief     Charm++ module interface file for the chare spawner group
+  \details   Charm++ module interface file for the chare spawner group.
+*/
+//******************************************************************************
+
+module spawner {
+
+  extern module conductor;
+
+  include "Types.h";
+
+  namespace inciter {
+
+    // Spawner is templated so that the same code (parameterized by the type
+    // given by the template arguments, HostProxy and WorkerProxy) can be
+    // generated for different types of proxies. All possible specializations
+    // must be listed below to ensure that Charm++ generates corect code.
+
+    // List all possible specializations of templated chare to instantiate
+    // registration and delivery of code for the individual specializations
+
+    // Will specialize spawner for inciter's Conductor and Performer
+    chare Spawner< CProxy_Conductor,
+                   CProxy_Performer,
+                   tk::CProxy_LinSysMerger< CProxy_Conductor,
+                                            CProxy_Performer > >;
+
+    template< class HostProxy, class WorkerProxy, class LinSysMergerProxy >
+    group Spawner {
+      entry Spawner( int nchare, HostProxy& host );
+      //initnode void registerChareElemMapMerger();
+      entry void create( LinSysMergerProxy& lsm );
+      entry void add(
+        int frompe,
+        const std::map< int, std::vector< std::size_t > >& element );
+      entry void recv();
+      entry void setup();
+      entry void init( tk::real dt );
+      entry void advance( uint8_t stage, tk::real dt, uint64_t it, tk::real t );
+    };
+
+  } // inciter::
+
+}

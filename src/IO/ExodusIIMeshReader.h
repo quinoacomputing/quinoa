@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/ExodusIIMeshReader.h
   \author    J. Bakosi
-  \date      Thu 29 Oct 2015 03:47:46 PM MDT
+  \date      Fri 06 Nov 2015 02:21:50 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     ExodusII mesh reader
   \details   ExodusII mesh reader class declaration.
@@ -57,16 +57,19 @@ class ExodusIIMeshReader {
                    std::vector< tk::real >& z );
 
     //! Read element block IDs from file
-    void readElemBlockIDs();
+    std::size_t readElemBlockIDs();
 
     //! Read element connectivity of a single mesh cell from file
     void readElement( std::size_t id,
                       tk::ExoElemType elemtype,
                       std::vector< std::size_t >& conn );
 
+    //!  Return number of elements in a mesh block in the ExodusII file
+    int nel( tk::ExoElemType elemtype );
+
   private:
     //! Read ExodusII header without setting mesh size
-    int readHeader();
+    std::size_t readHeader();
 
     //! Read ExodusII header with setting mesh size
     void readHeader( UnsMesh& mesh );
@@ -88,6 +91,7 @@ class ExodusIIMeshReader {
     std::size_t m_neblk;                //!< Number of element blocks
     std::vector< int > m_eid;           //!< Element block IDs
     std::vector< int > m_eidt;          //!< Element block IDs mapped to enum
+    std::vector< int > m_nel; //!< Nunmber of elements in a block mapped to enum
 };
 
 } // tk::

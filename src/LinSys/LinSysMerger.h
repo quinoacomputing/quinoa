@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/LinSysMerger.h
   \author    J. Bakosi
-  \date      Thu 05 Nov 2015 02:20:43 PM MST
+  \date      Mon 09 Nov 2015 11:06:20 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Linear system merger
   \details   Linear system merger.
@@ -563,7 +563,6 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
 
     //! Update solution vector in our PE's performers
     void updateSolution() {
-
       // Get solution vector values for our PE
       m_x.get( static_cast< int >( m_upper - m_lower ),
                m_hypreRows.data(),

@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/ExodusIIMeshReader.C
   \author    J. Bakosi
-  \date      Wed 04 Nov 2015 08:01:36 AM MST
+  \date      Fri 06 Nov 2015 02:22:52 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     ExodusII mesh reader
   \details   ExodusII mesh reader class definition. Currently, this is a bare
@@ -14,6 +14,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <string>
+#include <numeric>
 
 #include <exodusII.h>
 #include <ne_nemesisI.h>
@@ -28,7 +29,10 @@ using tk::ExodusIIMeshReader;
 ExodusIIMeshReader::ExodusIIMeshReader( const std::string& filename,
                                         int cpuwordsize,
                                         int iowordsize ) :
-  m_filename( filename ), m_inFile( 0 ), m_eidt( m_nnpe.size() )
+  m_filename( filename ),
+  m_inFile( 0 ),
+  m_eidt( m_nnpe.size(), -1 ),
+  m_nel( m_nnpe.size(), -1 )
 //******************************************************************************
 //  Constructor: open Exodus II file
 //! \param[in] filename File to open as ExodusII file
@@ -82,7 +86,7 @@ ExodusIIMeshReader::readGraph( UnsMesh& mesh )
   readElements( mesh );
 }
 
-int
+std::size_t
 ExodusIIMeshReader::readHeader()
 //******************************************************************************
 //  Read ExodusII header without setting mesh size
@@ -107,7 +111,7 @@ ExodusIIMeshReader::readHeader()
 
   m_neblk = static_cast< std::size_t >( neblk );
 
-  return nnode;
+  return static_cast< std::size_t >( nnode );
 }
 
 void
@@ -166,15 +170,16 @@ ExodusIIMeshReader::readNode( std::size_t id,
   z.push_back( pz );
 }
 
-void
+std::size_t
 ExodusIIMeshReader::readElemBlockIDs()
 //******************************************************************************
 //  Read element block IDs from ExodusII file
+//! \return Total number of nodes in mesh
 //! \author J. Bakosi
 //******************************************************************************
 {
   // Read ExodusII file header
-  readHeader();
+  auto nnode = readHeader();
 
   std::vector< int > eid( m_neblk );
 
@@ -197,12 +202,18 @@ ExodusIIMeshReader::readElemBlockIDs()
     // Store ExodusII element block ID
     m_eid.push_back( id );
 
-    // Store ExodusII element block ID mapped to tk::ExoElemType enum
-    if (nnpe == 4)      // tetrahedra
+    // Store ExodusII element block ID mapped to tk::ExoElemType enum, and
+    // number of elements per block mapped to tk::ExoElemType enum
+    if (nnpe == 4) {        // tetrahedra
       m_eidt[ static_cast<std::size_t>(ExoElemType::TET) ] = id;
-    else if (nnpe == 3) // triangles
+      m_nel[ static_cast<std::size_t>(ExoElemType::TET) ] = nel;
+    } else if (nnpe == 3) { // triangles
       m_eidt[ static_cast<std::size_t>(ExoElemType::TRI) ] = id;
+      m_nel[ static_cast<std::size_t>(ExoElemType::TRI) ] = nel;
+    }
   }
+
+  return nnode;
 }
 
 
@@ -268,10 +279,11 @@ ExodusIIMeshReader::readElement( std::size_t id,
 //! \param[in] id Element id whose connectivity to read
 //! \param[in] elemtype Element type
 //! \param[inout] conn Connectivity vector to push to
+//! \note Must be preceded by a call to readElemBlockIDs()
 //! \author J. Bakosi
 //******************************************************************************
 {
-  Assert( m_eidt.size() == m_nnpe.size(),
+  Assert( std::accumulate(begin(m_eidt), end(m_eidt), 0) != -m_nnpe.size(),
           "A call to ExodusIIMeshReader::readElement() must be preceded by a "
           "call to ExodusIIMeshReader::readElemBlockIDs()" );
 
@@ -289,4 +301,21 @@ ExodusIIMeshReader::readElement( std::size_t id,
 
   // Put in element connectivity using zero-based node indexing
   for (auto i : c) conn.push_back( static_cast<std::size_t>(i)-1 );
+}
+
+int
+ExodusIIMeshReader::nel( tk::ExoElemType elemtype )
+//******************************************************************************
+//  Return number of elements in a mesh block in the ExodusII file
+//! \param[in] elemtype Element type
+//! \return Number of elements in elemtype given
+//! \note Must be preceded by a call to readElemBlockIDs()
+//! \author J. Bakosi
+//******************************************************************************
+{
+  Assert( std::accumulate(begin(m_eidt),end(m_eidt),0) != -m_nnpe.size(),
+          "A call to ExodusIIMeshReader::readElement() must be preceded by a "
+          "call to ExodusIIMeshReader::readElemBlockIDs()" );
+
+  return m_nel[ static_cast< std::size_t >( elemtype ) ];
 }

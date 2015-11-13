@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Inciter.C
   \author    J. Bakosi
-  \date      Thu 05 Nov 2015 03:09:54 PM MST
+  \date      Tue 10 Nov 2015 07:47:01 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Inciter, computational shock hydrodynamics tool, Charm++ main
     chare.
@@ -86,14 +86,25 @@ std::size_t g_npoin;
 //!   main chare below, to access it in the future.
 uint64_t g_nchare;
 
-//! \brief Global mesh element ids created by each PE owned by each chare
-//! \details While this data is declared in global scope (so that Charm++
-//!   chares can access it), it is intentionally NOT declared in the Charm++
-//!   main module interface file for Inciter in Main/inciter.ci, so that the
-//!   Charm++ runtime system does not migrate it across all PEs. This is okay,
-//!   since there is no need for any of the other Charm++ chares, other than the
-//!   main chare below, to access it in the future.
-std::vector< std::vector< std::vector< std::size_t > > > g_element;
+//! \brief Global mesh element ids owned by each chare (associated to chare IDs)
+//! \details This data holds different element IDs on different MPI ranks. It
+//!   holds the global mesh element IDs assigned to each Charm++ chare. While
+//!   this data is declared in global scope (so that Charm++ chares can access
+//!   it), it is intentionally NOT declared in the Charm++ main module interface
+//!   file for Inciter in Main/inciter.ci, so that the Charm++ runtime system
+//!   does not migrate it across all PEs. This is intentional, since it will be
+//!   used to initialize elements of a Charm++ group of which a single one is
+//!   created on each PE. This data is generated in the initial MPI portion and
+//!   transfer of this data from the initial MPI portion to the Charm++ portion
+//!   is facilitated by it being in global-scope. While this data could be
+//!   passed down to the point where the consumer Charm++ chare group is fired
+//!   up, that would be the wrong thing to do, because that way a copy of the
+//!   data generated on PE 0 would be sent to each PE by Charm++. Keeping this
+//!   untouched in global scope, i.e., not listing in Main/inciter.ci as
+//!   readonly data, the Charm++ chare group elements, created on different PEs,
+//!   will simply access this data, correctly a different one in their own
+//!   global scope, as intended.
+std::map< int, std::vector< std::size_t > > g_element;
 
 //! \brief Time stamps in h:m:s for the initial MPI portion
 //! \details Time stamps collected here are those collected by the initial MPI
@@ -180,9 +191,7 @@ class Main : public CBase_Main {
         m_print.diagend( "done" );
         m_timestamp.emplace_back( "Migrate Charm++ read-only global-scope data",
                                   m_timer[1].hms());
-        m_driver.execute( inciter::g_npoin,
-                          inciter::g_nchare,
-                          inciter::g_element );
+        m_driver.execute( inciter::g_npoin, inciter::g_nchare );
       } catch (...) { tk::processExceptionCharm(); }
     }
 

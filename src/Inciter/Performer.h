@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.h
   \author    J. Bakosi
-  \date      Thu 05 Nov 2015 03:06:05 PM MST
+  \date      Mon 09 Nov 2015 02:21:49 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Performer advances a PDE
   \details   Performer advances a PDE. There are a potentially
@@ -61,13 +61,18 @@ class Performer : public CBase_Performer {
     explicit Performer( int id,
                         ConductorProxy& conductor,
                         LinSysMergerProxy& linsysmerger,
-                        SpawnerProxy& spawner );
+                        SpawnerProxy& spawner,
+                        const std::vector< std::size_t >& element );
 
     //! Migrate constructor
     explicit Performer( CkMigrateMessage* ) {}
 
-    //! Receive global element IDs owned and setup
-    void setup( const std::vector< std::size_t >& element );
+    //! Initialize mesh IDs, element connectivity, coordinates
+    void setup();
+
+    //! Receive contribution to list of mesh elements owned
+    void add( const std::vector< std::size_t >& elem )
+    { m_elem.insert( end(m_elem), begin(elem), end(elem) ); }
 
     //! Initialize communication and mesh data
     void init( tk::real dt );
@@ -79,7 +84,7 @@ class Performer : public CBase_Performer {
     void advance( uint8_t stage, tk::real dt, uint64_t it, tk::real t );
 
   private:
-    std::size_t m_id;                   //!< Charm++ array id
+    std::size_t m_id;                   //!< Charm++ global array id
     uint64_t m_it;                      //!< Iteration count
     uint64_t m_itf;                     //!< Field output iteration count
     tk::real m_t;                       //!< Physical time
@@ -100,10 +105,6 @@ class Performer : public CBase_Performer {
 
     //! Initialize local->global, global->local node ids, element connectivity
     void initIds( const std::vector< std::size_t >& gelem );
-
-    //! Assign local ids to global ids
-    std::map< std::size_t, std::size_t >
-    assignLid( const std::vector< std::size_t >& gid ) const;
 
     //! Read coordinates of mesh nodes given
     void initCoords();

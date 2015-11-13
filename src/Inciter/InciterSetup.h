@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/InciterSetup.h
   \author    J. Bakosi
-  \date      Thu 05 Nov 2015 03:07:42 PM MST
+  \date      Mon 09 Nov 2015 12:31:38 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Functions used to setup inciter
   \details   Functions used to setup inciter.
@@ -46,7 +46,7 @@ prepareMesh(
   std::vector< std::pair< std::string, tk::Timer::Watch > >& timestamp,
   uint64_t& nchare,
   std::size_t& npoin,
-  std::vector< std::vector< std::vector< std::size_t > > >& element );
+  std::map< int, std::vector< std::size_t > >& element );
 
 } // inciter::
 
