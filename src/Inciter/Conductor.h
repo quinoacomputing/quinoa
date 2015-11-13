@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Conductor.h
   \author    J. Bakosi
-  \date      Thu 05 Nov 2015 02:56:49 PM MST
+  \date      Tue 10 Nov 2015 07:28:18 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Conductor drives the time integration of a PDE
   \details   Conductor drives the time integration of a PDE
@@ -44,10 +44,7 @@ class Conductor : public CBase_Conductor {
 
   public:
     //! Constructor
-    explicit Conductor(
-      std::size_t npoin,
-      uint64_t nchare,
-      const std::vector< std::vector< std::vector< std::size_t > > >& element );
+    explicit Conductor( std::size_t npoin, uint64_t nchare );
 
     //! \brief Reduction target indicating that all linear system merger
     //!   branches have done their part of storing and exporting global row ids
@@ -59,6 +56,8 @@ class Conductor : public CBase_Conductor {
       m_linsysmerger.rowsreceived();
       m_spawner.init( m_dt );
     }
+
+    void created() { m_spawner.setup(); }
 
     //! \brief Reduction target indicating that all Performer chares have
     //!   finished a time step and it is time to decide whether to continue
@@ -136,7 +135,7 @@ class Conductor : public CBase_Conductor {
     tk::real computedt();
 
     //! Print information at startup
-    void info() const;
+    void info();
 
     //! Print out time integration header
     void header() const;

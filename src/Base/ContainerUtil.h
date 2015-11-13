@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/ContainerUtil.h
   \author    J. Bakosi
-  \date      Thu 05 Nov 2015 01:51:29 PM MST
+  \date      Mon 09 Nov 2015 12:39:29 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Various STL container utilities
   \details   Various STL container utilities.
@@ -111,8 +111,7 @@ template< typename Key, typename Value >
 Value&
 ref( const std::map< Key, Value >& map, Key key )
 //******************************************************************************
-//! \brief Find and return a reference to value for key in std::map error
-//!   handling
+//! Find and return a reference to value for key in std::map with error handling
 //! \param[in] map Map associating values to keys
 //! \param[in] key
 //! \return A reference to the value associated to the key in map

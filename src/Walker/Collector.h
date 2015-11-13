@@ -2,7 +2,7 @@
 /*!
   \file      src/Walker/Collector.h
   \author    J. Bakosi
-  \date      Tue 21 Jul 2015 01:08:14 PM MDT
+  \date      Mon 09 Nov 2015 04:19:13 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Charm++ module interface file for collecting contributions from
              Integrators
@@ -67,12 +67,11 @@ class Collector : public CBase_Collector {
     //! \details Since this is a [nodeinit] routine, see collector.ci, the
     //!   Charm++ runtime system executes the routine exactly once on every
     //!   logical node early on in the Charm++ init sequence. Must be static as
-    //!   it is called without and object. See also: Section "Initializations at
+    //!   it is called without an object. See also: Section "Initializations at
     //!   Program Startup" at in the Charm++ manual
     //!   http://charm.cs.illinois.edu/manuals/html/charm++/manual.html.
-    static void registerOrdPDFMerger() {
-      PDFMerger = CkReduction::addReducer( tk::mergePDF );
-    }
+    static void registerOrdPDFMerger()
+    { PDFMerger = CkReduction::addReducer( tk::mergePDF ); }
 
     //! Chares register on my PE
     //! \note This function does not have to be declared as a Charm++ entry

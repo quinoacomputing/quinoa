@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/ZoltanInterOp.C
   \author    J. Bakosi
-  \date      Wed 28 Oct 2015 10:50:01 AM MDT
+  \date      Fri 13 Nov 2015 04:56:05 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Interoperation with the Zoltan library
   \details   Interoperation with the Zoltan library, used for static mesh graph
@@ -259,17 +259,16 @@ get_hypergraph( void *data,
 }
 
 static std::size_t
-createHyperGraph( tk::UnsMesh& graph, HGRAPH_DATA& hg )
+createHyperGraph( const tk::UnsMesh& graph, HGRAPH_DATA& hg )
 //******************************************************************************
-//  Create hypergraph data structure on MPI rank zero
+//  Create hypergraph data structure
 //! \param[in] graph Unstructured mesh graph object reference
 //! \param[inout] hg Hypergraph data structure to fill
 //! \return The number of hyperedges in graph
-//! \warning This function must not be called on MPI ranks other than zero.
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // Get number of points from graph.
+  // Get number of points from graph
   const auto npoin = graph.size();
 
   // Create hypergraph data structure based on mesh graph
@@ -282,15 +281,29 @@ createHyperGraph( tk::UnsMesh& graph, HGRAPH_DATA& hg )
   hg.nborIndex = (int*)
     malloc(sizeof(int) * static_cast<std::size_t>(hg.numMyHEdges + 1));
 
+  // Get tetrahedron mesh graph connectivity
+  const auto& ginpoel = graph.tetinpoel();
+
+  // Make a copy of the tetrahedron element connectivity with global node ids
+  auto gid = ginpoel;
+
+  // Generate a vector that holds only the unique global mesh node ids
+  tk::unique( gid );
+
+  // Assign local node ids to global node ids
+  const auto lnode = tk::assignLid( gid );
+
+  // Generate element connectivity for owned elements using local node ids
+  std::vector< std::size_t > inpoel;
+  for (auto p : ginpoel) inpoel.push_back( tk::val( lnode, p ) );
+
+  // Generate (connectivity graph) points surrounding points of graph storing
+  // local node ids
+  const auto psup = tk::genPsup( inpoel, 4, tk::genEsup( inpoel, 4 ) );
+
   // Assign global point ids
   for (std::size_t i=0; i<static_cast<std::size_t>(hg.numMyVertices); ++i)
-    hg.vtxGID[i] = static_cast< ZOLTAN_ID_TYPE >( i );
-
-  // Get tetrahedron mesh graph connectivity
-  const auto& inpoel = graph.tetinpoel();
-
-  // Generate (connectivity graph) points surrounding points of graph
-  auto psup = tk::genPsup( inpoel, 4, tk::genEsup( inpoel, 4 ) );
+    hg.vtxGID[i] = static_cast< ZOLTAN_ID_TYPE >( gid[i] );
 
   // Allocate data to store the hypergraph ids. The total number of vertices or
   // neighbors in all the hyperedges of the hypergraph, nhedge = all points
@@ -305,14 +318,14 @@ createHyperGraph( tk::UnsMesh& graph, HGRAPH_DATA& hg )
   // Fill up hypergraph edge ids and their indices
   hg.nborIndex[0] = 0;
   for (std::size_t p=0; p<npoin; ++p) {
-    hg.edgeGID[p] = static_cast< ZOLTAN_ID_TYPE >( p+1 );
+    hg.edgeGID[p] = static_cast< ZOLTAN_ID_TYPE >( gid[p]+1 );
     // put in own point id, i.e., main diagonal
-    hg.nborGID[ hg.nborIndex[p] ] = static_cast< ZOLTAN_ID_TYPE >( p );
+    hg.nborGID[ hg.nborIndex[p] ] = static_cast< ZOLTAN_ID_TYPE >( gid[p] );
     int j = 1;
     // put in neighbor point ids, i.e., off-diagonals
     for (auto i=psup.second[p]+1; i<=psup.second[p+1]; ++i, ++j) {
       hg.nborGID[ hg.nborIndex[p] + j ] =
-        static_cast< ZOLTAN_ID_TYPE >( psup.first[i] );
+        static_cast< ZOLTAN_ID_TYPE >( gid[psup.first[i]] );
     }
     hg.nborIndex[p+1] = hg.nborIndex[p] + j;
   }
@@ -355,7 +368,9 @@ destroyHyperGraph( HGRAPH_DATA& hg, std::size_t nhedge )
 }
 
 std::vector< std::size_t >
-partitionMesh( tk::UnsMesh& graph, uint64_t npart, const tk::Print& print )
+partitionMesh( const tk::UnsMesh& graph,
+               uint64_t npart,
+               const tk::Print& print )
 //******************************************************************************
 //  Partition mesh graph using Zoltan's hypergraph algorithm in serial
 //! \param[in] graph Unstructured mesh graph object reference
@@ -363,8 +378,8 @@ partitionMesh( tk::UnsMesh& graph, uint64_t npart, const tk::Print& print )
 //! \param[in] print Pretty printer
 //! \return Array of chare ownership IDs mapping graph points to concurrent
 //!   async chares
-//! \details This function uses Zoltan to partition the mesh graph in serial. It
-//!   assumes the mesh graph only exists on MPI rank 0.
+//! \details This function uses Zoltan to partition the mesh graph in parallel.
+//!   It assumes that the mesh graph is distributed among all the MPI ranks.
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -395,15 +410,13 @@ partitionMesh( tk::UnsMesh& graph, uint64_t npart, const tk::Print& print )
   //Zoltan_Set_Param( zz, "REMAP", "0" );
   Zoltan_Set_Param( zz, "NUM_GLOBAL_PARTS", std::to_string(npart).c_str() );
 
+  if (peid == 0)
+    print.diagstart( "Creating mesh hypergraphs for partitioning ..." );
+
   HGRAPH_DATA hg;
-  std::size_t nhedge = 0;
-  if (peid == 0) {
-    print.diagstart( "Creating mesh hypergraph for partitioning ..." );
-    nhedge = createHyperGraph( graph, hg );
-    print.diagend( "done" );
-  } else {
-    nhedge = emptyHyperGraph( hg );
-  }
+  auto nhedge = createHyperGraph( graph, hg );
+
+  if (peid == 0) print.diagend( "done" );
 
   // Set Zoltan query functions
   Zoltan_Set_Num_Obj_Fn( zz, get_number_of_vertices, &hg );
@@ -446,35 +459,34 @@ partitionMesh( tk::UnsMesh& graph, uint64_t npart, const tk::Print& print )
     Throw( "Zoltan_LB_Partition failed" );
   }
 
-  // Copy over array of chare IDs corresponding to the ownership of all points
-  // in the mesh graph, i.e., the coloring or chare ids for all mesh nodes
+  // Copy over array of chare IDs corresponding to the ownership of points
+  // in our chunk of the mesh graph, i.e., the coloring or chare ids for the
+  // mesh nodes we operated on
   std::vector< std::size_t > chare;
   for (int p=0; p<numExport; ++p )
     chare.push_back( static_cast< std::size_t >( exportToPart[p] ) );
 
-  std::size_t nchare = 1;
-  if (peid == 0) {
-    // Find out the number of partitions created by Zoltan
-    auto minmax = std::minmax_element( begin(chare), end(chare) );
-    nchare = *minmax.second - *minmax.first + 1; 
-
-    ErrChk( npart == nchare,
-      "The number of parts returned from the graph partitioner (" +
-      std::to_string(nchare) + ") does not equal the number of work units "
-      "computed (" + std::to_string(npart) + ") based on the degree of "
-      "virtualization desired. This is an indication of a too large "
-      "overdecomposition. Solution 1: decrease the virtualization to a lower "
-      "value using the command-line arrgument '-u'. Solution 2: decrease the "
-      "number processing elements (PEs) using the charmrun command-line "
-      "argument '+pN' where N is the number of PEs, which implicitly increases "
-      "the size (and thus decreases the number) of work units." );
-  }
-
+//   std::size_t nchare = 1;
 //   if (peid == 0) {
-//     std::cout << "\nchp: ";
-//     for (auto i : chare) std::cout << i << " ";
-//     std::cout << '\n';
+//     // Find out the number of partitions created by Zoltan
+//     auto minmax = std::minmax_element( begin(chare), end(chare) );
+//     nchare = *minmax.second - *minmax.first + 1; 
+// 
+//     ErrChk( npart == nchare,
+//       "The number of parts returned from the graph partitioner (" +
+//       std::to_string(nchare) + ") does not equal the number of work units "
+//       "computed (" + std::to_string(npart) + ") based on the degree of "
+//       "virtualization desired. This is an indication of a too large "
+//       "overdecomposition. Solution 1: decrease the virtualization to a lower "
+//       "value using the command-line arrgument '-u'. Solution 2: decrease the "
+//       "number processing elements (PEs) using the charmrun command-line "
+//       "argument '+pN' where N is the number of PEs, which implicitly increases "
+//       "the size (and thus decreases the number) of work units." );
 //   }
+
+//   std::cout << peid << ": chp: ";
+//   for (auto i : chare) std::cout << i << " ";
+//   std::cout << '\n';
 
   // Free the arrays allocated by Zoltan_LB_Partition
   Zoltan_LB_Free_Part( &importGlobalGids, &importLocalGids, &importProcs,

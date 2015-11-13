@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Mesh/TestDerivedData.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 03:17:00 PM MDT
+  \date      Wed 11 Nov 2015 06:59:38 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Mesh/DerivedData
   \details   Unit tests for Mesh/DerivedData. All unit tests start from simple
@@ -1205,7 +1205,7 @@ void DerivedData_object::test< 29 >() {
   // Generate elements surrounding points
   auto esuel = tk::genEsuel( inpoel, 4, tk::genEsup(inpoel,4) );
 
-  // Generate correct solution for elements surrounding points of elements
+  // Generate correct solution for elements surrounding elements
   std::map< std::size_t, std::vector< std::size_t > > correct_esuel {
     { { 0 }, { 2, 3, 17, 23 } },
     { { 1 }, { 2, 3, 19, 21 } },

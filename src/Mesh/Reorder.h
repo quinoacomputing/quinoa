@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/Reorder.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 10:06:58 AM MDT
+  \date      Tue 10 Nov 2015 01:19:58 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Mesh reordering routines for unstructured meshes
   \details   Mesh reordering routines for unstructured meshes.
@@ -12,13 +12,14 @@
 #define Reorder_h
 
 #include <vector>
+#include <map>
 #include <utility>
 #include <cstddef>
 
 namespace tk {
 
 //! Shift node IDs to start with zero in element connectivity
-void
+std::size_t
 shiftToZero( std::vector< std::size_t >& inpoel );
 
 //! Reorder mesh point ids in a vector given a new order, i.e., index map
@@ -30,6 +31,15 @@ std::pair< std::vector< std::size_t >, std::vector< std::size_t > >
 renumber( const std::pair< std::vector< std::size_t >,
                            std::vector< std::size_t > >& psup );
 
-} // tk::
+//! Assign local ids to global ids
+std::map< std::size_t, std::size_t >
+assignLid( const std::vector< std::size_t >& gid );
+
+//! \brief Generate element connectivity of local node IDs from connectivity of
+//!   global node IDs also returning the mapping between local to global IDs
+std::pair< std::vector< std::size_t >, std::vector< std::size_t > >
+global2local( const std::vector< std::size_t >& ginpoel );
+
+} // ::tk
 
 #endif // Reorder_h

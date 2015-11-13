@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/conductor.ci
   \author    J. Bakosi
-  \date      Thu 05 Nov 2015 02:56:58 PM MST
+  \date      Mon 09 Nov 2015 06:32:21 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Charm++ module interface file for Conductor
   \details   Charm++ module interface file for Conductor
@@ -21,10 +21,8 @@ module conductor {
   namespace inciter {
 
     chare Conductor {
-      entry Conductor(
-        std::size_t npoin,
-        uint64_t nchare,
-        const std::vector< std::vector< std::vector< std::size_t > > >& element );
+      entry Conductor( std::size_t npoin, uint64_t nchare );
+      entry [reductiontarget] void created();
       entry [reductiontarget] void rowcomplete();
       entry [reductiontarget] void evaluateTime();
       entry [reductiontarget] void advance();

@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Conductor.C
   \author    J. Bakosi
-  \date      Thu 05 Nov 2015 02:57:35 PM MST
+  \date      Tue 10 Nov 2015 07:42:24 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Conductor drives the time integration of a PDE
   \details   Conductor drives the time integration of a PDE
@@ -28,10 +28,7 @@ extern CProxy_Main mainProxy;
 
 using inciter::Conductor;
 
-Conductor::Conductor(
-  std::size_t npoin,
-  uint64_t nchare,
-  const std::vector< std::vector< std::vector< std::size_t > > >& element ) :
+Conductor::Conductor( std::size_t npoin, uint64_t nchare ) :
   m_print( g_inputdeck.get<tag::cmd,tag::verbose>() ? std::cout : std::clog ),
   m_timer( 1 ), // start a timer
   m_nchare( static_cast< int >( nchare ) ),
@@ -48,7 +45,6 @@ Conductor::Conductor(
 //  Constructor
 //! \param[in] npoin Total number of points in computational mesh
 //! \param[in] nchare Total number of chares
-//! \param[in] element Global mesh element ids owned by each chare
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -60,15 +56,12 @@ Conductor::Conductor(
   m_linsysmerger = LinSysMergerProxy::ckNew( thisProxy, npoin );
 
   // Create chare group spawning asynchronous performers
-  m_spawner = SpawnerProxy::ckNew( thisProxy );
-
-  for (int p=0; p<CkNumPes(); ++p)
-    m_spawner[ p ].create( m_linsysmerger,
-                           element[ static_cast<std::size_t>(p) ] );
+  m_spawner = SpawnerProxy::ckNew( m_nchare, thisProxy );
+  for (int p=0; p<CkNumPes(); ++p) m_spawner[ p ].create( m_linsysmerger );
 }
 
 void
-Conductor::info() const
+Conductor::info()
 //******************************************************************************
 //  Print information at startup
 //! \author J. Bakosi
@@ -81,11 +74,6 @@ Conductor::info() const
   if ( !g_inputdeck.get< tag::title >().empty() )
     m_print.title( g_inputdeck.get< tag::title >() );
 
-  // Print I/O filenames
-  m_print.section( "Output filenames" );
-  m_print.item( "Field",
-              g_inputdeck.get< tag::cmd, tag::io, tag::output >() + "_<PEid>" );
-
   // Print discretization parameters
   m_print.section( "Discretization parameters" );
   m_print.item( "Number of time steps",
@@ -97,13 +85,23 @@ Conductor::info() const
   m_print.item( "Initial time step size",
                 g_inputdeck.get< tag::discr, tag::dt >() );
 
-  // Print output intervals
-  m_print.section( "Output intervals" );
-  m_print.item( "TTY", g_inputdeck.get< tag::interval, tag::tty>() );
-  m_print.item( "Field", g_inputdeck.get< tag::interval, tag::field >() );
+  // Start time stepping by printing out some info and time integration header
+  if (g_inputdeck.get< tag::discr, tag::nstep >()) {
+ 
+   // Print I/O filenames
+    m_print.section( "Output filenames" );
+    m_print.item( "Field",
+      g_inputdeck.get< tag::cmd, tag::io, tag::output >() + "_<PEid>" );
 
-  // Print out time integration header
-  if (g_inputdeck.get< tag::discr, tag::nstep >()) header();
+    // Print output intervals
+    m_print.section( "Output intervals" );
+    m_print.item( "TTY", g_inputdeck.get< tag::interval, tag::tty>() );
+    m_print.item( "Field", g_inputdeck.get< tag::interval, tag::field >() );
+
+    // Print out time integration header at the beginning of time stepping
+    header();
+
+  } else finish();      // stop if no time stepping requested
 }
 
 void
