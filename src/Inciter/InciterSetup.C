@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/InciterSetup.C
   \author    J. Bakosi
-  \date      Fri 13 Nov 2015 04:53:37 AM MST
+  \date      Fri 13 Nov 2015 06:22:32 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Functions used to setup inciter
   \details   Functions used to setup inciter.
@@ -238,16 +238,10 @@ elemOwner( const std::vector< std::size_t >& che,
   Assert( che.size() == geid.size(), "The size of the global element index and "
           "the chare element arrays must equal" );
 
-  // Extract the unique chare IDs from che
-  auto cid = che;
-  tk::unique( cid );
-
   std::map< int, std::vector< std::size_t > > element;
 
-  for (auto i : cid)                            // for all chare colors
-    for (std::size_t e=0; e<che.size(); ++e)    // for all mesh elements
-      if (che[e] == i)
-        element[ static_cast<int>(i) ].push_back( geid[e] );
+  for (std::size_t e=0; e<che.size(); ++e)
+    element[ static_cast<int>(che[e]) ].push_back( geid[e] );
 
   Assert( !element.empty(),
           "No elements assigned to chares on one of the MPI ranks" );
