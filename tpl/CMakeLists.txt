@@ -178,61 +178,6 @@ else()
   set(boost "boost")
 endif()
 
-# Detect HDF5, exclude if found, build if not
-if (NOT NO_SYSTEM_HDF5)
-  set(ENV{HDF5_ROOT} $ENV{HDF5_DIR})
-  find_package(HDF5)
-endif()
-if(HDF5_FOUND)
-  #message(STATUS "HDF5 found at ${HDF5_INCLUDE_DIRS} (include) and at ${HDF5_LIBRARIES} (libs) - will not build ours")
-  set(hdf5ser "")
-  set(hdf5ser_include "${HDF5_INCLUDE_DIRS}")
-  set(hdf5ser_lib "${HDF5_LIBRARY_DIRS}")
-else()
-  set(hdf5ser "hdf5ser")
-  set(hdf5ser_include "${CMAKE_INSTALL_PREFIX}/hdf5ser/include")
-  set(hdf5ser_lib "${CMAKE_INSTALL_PREFIX}/hdf5ser/lib")
-endif()
-
-# Detect NetCDF, exclude if found, build if not
-if (NOT NO_SYSTEM_NETCDF)
-  find_package(NetCDF)
-endif()
-if(NETCDF_FOUND)
-  #message(STATUS "NetCDF found at ${NETCDF_INCLUDES} (include) and at ${NETCDF_LIBRARIES} (lib) - will not build ours")
-  set(netcdf "")
-  set(netcdf_include "${NETCDF_INCLUDES}")
-  set(netcdf_lib "${NETCDF_LIBRARY_DIRS}")
-else()
-  set(netcdf "netcdf")
-  set(netcdf_include "${CMAKE_INSTALL_PREFIX}/include")
-  set(netcdf_lib "${CMAKE_INSTALL_PREFIX}/lib")
-endif()
-
-# Detect ExodusII, exclude if found, build if not
-if (NOT NO_SYSTEM_EXODUS)
-  find_package(Exodus)
-endif()
-if(EXODUS_FOUND)
-  #message(STATUS "ExodusII/Nemesis libraries found at ${EXODUS_INCLUDES} (exodus include), ${NEMESIS_INCLUDES} (nemesis include) and at ${EXODUS_LIBRARIES} (exodus lib), ${NEMESIS_LIBRARIES} (nemesis lib), Exodiff executable found at ${EXODIFF_EXECUTABLE} - will not build ours")
-  set(exodus "")
-else()
-  set(exodus "exodus")
-  #message(STATUS "ExodusII/Nemesis not found - will build Trilinos")
-endif()
-
-# Detect Zoltan, exclude if found, build if not
-if (NOT NO_SYSTEM_ZOLTAN)
-  find_package(Zoltan)
-endif()
-if(ZOLTAN_FOUND)
-  #message(STATUS "Zoltan found at ${ZOLTAN_INCLUDES} (include) and at ${ZOLTAN_LIBRARIES} (lib) - will not build ours")
-  set(zoltan "")
-else()
-  #message(STATUS "Zoltan not found - will build Trilinos")
-  set(zoltan "zoltan")
-endif()
-
 # Detect PStreams, exclude if found, build if not
 if (NOT NO_SYSTEM_PSTREAMS)
   find_package(PStreams)
@@ -371,85 +316,81 @@ endif()
 
 #### HDF5 serial ###############################################################
 # http://www.hdfgroup.org/HDF5
-if (hdf5ser)
-  ExternalProject_Add(
-    hdf5ser
-    PREFIX hdf5ser
-    DOWNLOAD_COMMAND ${CMAKE_COMMAND} -E copy_directory
-                     ${PROJECT_SOURCE_DIR}/src/hdf5
-                     ${PROJECT_BINARY_DIR}/hdf5ser
-    CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/hdf5ser/configure
-                      CC=${UNDERLYING_C_COMPILER}
-                      CFLAGS=${CFLAGS}
-                      ${PGCPP}
-                      --prefix=${CMAKE_INSTALL_PREFIX}/hdf5ser
-    BUILD_IN_SOURCE 1
-    LOG_DOWNLOAD 1
-    LOG_CONFIGURE 1
-    LOG_BUILD 1
-    LOG_INSTALL 1
-  )
-endif()
+ExternalProject_Add(
+  hdf5
+  PREFIX hdf5
+  DOWNLOAD_COMMAND ${CMAKE_COMMAND} -E copy_directory
+                   ${PROJECT_SOURCE_DIR}/src/hdf5
+                   ${PROJECT_BINARY_DIR}/hdf5
+  CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/hdf5/configure
+                    CC=${MPI_C_COMPILER}
+                    CFLAGS=${CFLAGS}
+                    ${PGCPP}
+                    --enable-parallel
+                    --enable-shared
+                    --prefix=${CMAKE_INSTALL_PREFIX}
+  BUILD_IN_SOURCE 1
+  LOG_DOWNLOAD 1
+  LOG_CONFIGURE 1
+  LOG_BUILD 1
+  LOG_INSTALL 1
+) 
 
 #### NETCDF ####################################################################
 ## http://www.unidata.ucar.edu/downloads/netcdf/index.jsp
-if (netcdf)
-  ExternalProject_Add(
-    netcdf
-    DEPENDS ${hdf5ser}
-    PREFIX netcdf
-    DOWNLOAD_COMMAND ${CMAKE_COMMAND} -E copy_directory
-                     ${PROJECT_SOURCE_DIR}/src/netcdf
-                     ${PROJECT_BINARY_DIR}/netcdf
-    CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/netcdf/configure
-                      CC=${UNDERLYING_C_COMPILER}
-                      CFLAGS=${CFLAGS}
-                      ${PGCPP}
-                      CPPFLAGS=-I${hdf5ser_include}
-                      LDFLAGS=-L${hdf5ser_lib}
-                      --disable-examples
-                      --enable-netcdf4
-                      --prefix=${CMAKE_INSTALL_PREFIX}
-    BUILD_IN_SOURCE 1
-    LOG_DOWNLOAD 1
-    LOG_CONFIGURE 1
-    LOG_BUILD 1
-    LOG_INSTALL 1
-  )
-endif()
+ExternalProject_Add(
+  netcdf
+  DEPENDS hdf5
+  PREFIX netcdf
+  DOWNLOAD_COMMAND ${CMAKE_COMMAND} -E copy_directory
+                   ${PROJECT_SOURCE_DIR}/src/netcdf
+                   ${PROJECT_BINARY_DIR}/netcdf
+  CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/netcdf/configure
+                    CC=${MPI_C_COMPILER}
+                    CFLAGS=${CFLAGS}
+                    ${PGCPP}
+                    CPPFLAGS=-I${CMAKE_INSTALL_PREFIX}/include
+                    LDFLAGS=-L${CMAKE_INSTALL_PREFIX}/lib
+                    --disable-examples
+                    --enable-netcdf4
+                    --prefix=${CMAKE_INSTALL_PREFIX}
+  BUILD_IN_SOURCE 1
+  LOG_DOWNLOAD 1
+  LOG_CONFIGURE 1
+  LOG_BUILD 1
+  LOG_INSTALL 1
+)
 
 ##### Trilinos #################################################################
 ## http://trilinos.sandia.gov
-if (exodus OR zoltan)
-  ExternalProject_Add(
-    trilinos
-    DEPENDS ${netcdf}
-    PREFIX trilinos
-    SOURCE_DIR ${PROJECT_SOURCE_DIR}/src/trilinos
-    CMAKE_ARGS -D Trilinos_ENABLE_ALL_PACKAGES:BOOL=OFF
-               -D TPL_ENABLE_MPI:BOOL=ON
-               -D Trilinos_ENABLE_Zoltan:BOOL=ON
-               -D Trilinos_ENABLE_SEACASExodus:BOOL=ON
-               -D Trilinos_ENABLE_SEACASNemesis:BOOL=ON
-               -D Trilinos_ENABLE_SEACASExodiff:BOOL=ON
-               -D TPL_ENABLE_Netcdf:BOOL=ON
-               -D Netcdf_LIBRARY_DIRS:PATH=${netcdf_lib}
-               -D TPL_Netcdf_INCLUDE_DIRS:PATH=${netcdf_include}
-               -D CMAKE_INSTALL_RPATH:PATH=${CMAKE_INSTALL_PREFIX}/lib
-               -D CMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
-               -D CMAKE_C_COMPILER:PATH=${MPI_C_COMPILER}
-               -D CMAKE_CXX_COMPILER:PATH=${MPI_CXX_COMPILER}
-               -D CMAKE_Fortran_COMPILER:PATH=${MPI_Fortran_COMPILER}
-               -D CMAKE_C_FLAGS:STRING=${CFLAGS}
-               -D CMAKE_CXX_FLAGS:STRING=${CXXFLAGS}
-               -D CMAKE_Fortran_FLAGS:STRING=${FFLAGS}
-               -D CMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX}
-    DOWNLOAD_COMMAND ""
-    LOG_CONFIGURE 1
-    LOG_BUILD 1
-    LOG_INSTALL 1
-  )
-endif()
+ExternalProject_Add(
+  trilinos
+  DEPENDS netcdf
+  PREFIX trilinos
+  SOURCE_DIR ${PROJECT_SOURCE_DIR}/src/trilinos
+  CMAKE_ARGS -D Trilinos_ENABLE_ALL_PACKAGES:BOOL=OFF
+             -D TPL_ENABLE_MPI:BOOL=ON
+             -D Trilinos_ENABLE_Zoltan:BOOL=ON
+             -D Trilinos_ENABLE_SEACASExodus:BOOL=ON
+             -D Trilinos_ENABLE_SEACASNemesis:BOOL=ON
+             -D Trilinos_ENABLE_SEACASExodiff:BOOL=ON
+             -D TPL_ENABLE_Netcdf:BOOL=ON
+             -D Netcdf_LIBRARY_DIRS:PATH=${netcdf_lib}
+             -D TPL_Netcdf_INCLUDE_DIRS:PATH=${netcdf_include}
+             -D CMAKE_INSTALL_RPATH:PATH=${CMAKE_INSTALL_PREFIX}/lib
+             -D CMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
+             -D CMAKE_C_COMPILER:PATH=${MPI_C_COMPILER}
+             -D CMAKE_CXX_COMPILER:PATH=${MPI_CXX_COMPILER}
+             -D CMAKE_Fortran_COMPILER:PATH=${MPI_Fortran_COMPILER}
+             -D CMAKE_C_FLAGS:STRING=${CFLAGS}
+             -D CMAKE_CXX_FLAGS:STRING=${CXXFLAGS}
+             -D CMAKE_Fortran_FLAGS:STRING=${FFLAGS}
+             -D CMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX}
+  DOWNLOAD_COMMAND ""
+  LOG_CONFIGURE 1
+  LOG_BUILD 1
+  LOG_INSTALL 1
+)
 
 #### Hypre #####################################################################
 # http://computation.llnl.gov/project/linear_solvers/software.php
