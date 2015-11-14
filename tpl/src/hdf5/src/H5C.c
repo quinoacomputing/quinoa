@@ -215,10 +215,10 @@ const H5C_class_t epoch_marker_class =
  ***************************************************************************/
 
 static void *
-H5C_epoch_marker_load(H5F_t UNUSED * f,
-                      hid_t UNUSED dxpl_id,
-                      haddr_t UNUSED addr,
-                      void UNUSED * udata)
+H5C_epoch_marker_load(H5F_t H5_ATTR_UNUSED * f,
+                      hid_t H5_ATTR_UNUSED dxpl_id,
+                      haddr_t H5_ATTR_UNUSED addr,
+                      void H5_ATTR_UNUSED * udata)
 {
     void * ret_value = NULL;      /* Return value */
 
@@ -232,12 +232,12 @@ done:
 }
 
 static herr_t
-H5C_epoch_marker_flush(H5F_t UNUSED *f,
-                       hid_t UNUSED dxpl_id,
-                       hbool_t UNUSED dest,
-                       haddr_t UNUSED addr,
-                       void UNUSED *thing,
-		       unsigned UNUSED * flags_ptr)
+H5C_epoch_marker_flush(H5F_t H5_ATTR_UNUSED *f,
+                       hid_t H5_ATTR_UNUSED dxpl_id,
+                       hbool_t H5_ATTR_UNUSED dest,
+                       haddr_t H5_ATTR_UNUSED addr,
+                       void H5_ATTR_UNUSED *thing,
+		       unsigned H5_ATTR_UNUSED * flags_ptr)
 {
     herr_t ret_value = FAIL;      /* Return value */
 
@@ -251,8 +251,8 @@ done:
 }
 
 static herr_t
-H5C_epoch_marker_dest(H5F_t UNUSED * f,
-                      void UNUSED * thing)
+H5C_epoch_marker_dest(H5F_t H5_ATTR_UNUSED * f,
+                      void H5_ATTR_UNUSED * thing)
 {
     herr_t ret_value = FAIL;      /* Return value */
 
@@ -266,9 +266,9 @@ done:
 }
 
 static herr_t
-H5C_epoch_marker_clear(H5F_t UNUSED * f,
-                       void UNUSED * thing,
-                       hbool_t UNUSED dest)
+H5C_epoch_marker_clear(H5F_t H5_ATTR_UNUSED * f,
+                       void H5_ATTR_UNUSED * thing,
+                       hbool_t H5_ATTR_UNUSED dest)
 {
     herr_t ret_value = FAIL;      /* Return value */
 
@@ -282,8 +282,8 @@ done:
 }
 
 static herr_t
-H5C_epoch_marker_notify(H5C_notify_action_t UNUSED action,
-                       void UNUSED * thing)
+H5C_epoch_marker_notify(H5C_notify_action_t H5_ATTR_UNUSED action,
+                       void H5_ATTR_UNUSED * thing)
 {
     herr_t ret_value = FAIL;      /* Return value */
 
@@ -296,9 +296,9 @@ done:
 }
 
 static herr_t
-H5C_epoch_marker_size(const H5F_t UNUSED * f,
-                      const void UNUSED * thing,
-                      size_t UNUSED * size_ptr)
+H5C_epoch_marker_size(const H5F_t H5_ATTR_UNUSED * f,
+                      const void H5_ATTR_UNUSED * thing,
+                      size_t H5_ATTR_UNUSED * size_ptr)
 {
     herr_t ret_value = FAIL;      /* Return value */
 
@@ -1090,8 +1090,8 @@ H5C_create(size_t		      max_cache_size,
     (cache_ptr->resize_ctl).max_increment	= H5C__DEF_AR_MAX_INCREMENT;
 
     (cache_ptr->resize_ctl).flash_incr_mode     = H5C_flash_incr__off;
-    (cache_ptr->resize_ctl).flash_multiple      = 1.0;
-    (cache_ptr->resize_ctl).flash_threshold     = 0.25;
+    (cache_ptr->resize_ctl).flash_multiple      = 1.0f;
+    (cache_ptr->resize_ctl).flash_threshold     = 0.25f;
 
     (cache_ptr->resize_ctl).decr_mode		= H5C_decr__off;
     (cache_ptr->resize_ctl).upper_hr_threshold	= H5C__DEF_AR_UPPER_THRESHHOLD;
@@ -1195,7 +1195,7 @@ H5C_def_auto_resize_rpt_fcn(H5C_t * cache_ptr,
 #ifndef NDEBUG
                             int32_t version,
 #else /* NDEBUG */
-                            int32_t UNUSED version,
+                            int32_t H5_ATTR_UNUSED version,
 #endif /* NDEBUG */
                             double hit_rate,
                             enum H5C_resize_status status,
@@ -2236,7 +2236,7 @@ H5C_get_cache_hit_rate(H5C_t * cache_ptr,
 
     } else {
 
-        *hit_rate_ptr = 0.0;
+        *hit_rate_ptr = 0.0f;
     }
 
 done:
@@ -3994,8 +3994,8 @@ H5C_set_cache_auto_resize_config(H5C_t *cache_ptr,
             break;
 
         case H5C_incr__threshold:
-            if ( ( config_ptr->lower_hr_threshold <= 0.0 ) ||
-                 ( config_ptr->increment <= 1.0 ) ||
+            if ( ( config_ptr->lower_hr_threshold <= (double)0.0f ) ||
+                 ( config_ptr->increment <= (double)1.0f ) ||
                  ( ( config_ptr->apply_max_increment ) &&
                    ( config_ptr->max_increment <= 0 ) ) ) {
 
@@ -4019,8 +4019,8 @@ H5C_set_cache_auto_resize_config(H5C_t *cache_ptr,
             break;
 
         case H5C_decr__threshold:
-            if ( ( config_ptr->upper_hr_threshold >= 1.0 ) ||
-                 ( config_ptr->decrement >= 1.0 ) ||
+            if ( ( config_ptr->upper_hr_threshold >= (double)1.0f ) ||
+                 ( config_ptr->decrement >= (double)1.0f ) ||
                  ( ( config_ptr->apply_max_decrement ) &&
                    ( config_ptr->max_decrement <= 0 ) ) ) {
 
@@ -4030,7 +4030,7 @@ H5C_set_cache_auto_resize_config(H5C_t *cache_ptr,
 
         case H5C_decr__age_out:
             if ( ( ( config_ptr->apply_empty_reserve ) &&
-                   ( config_ptr->empty_reserve >= 1.0 ) ) ||
+                   ( config_ptr->empty_reserve >= (double)1.0f ) ) ||
                  ( ( config_ptr->apply_max_decrement ) &&
                    ( config_ptr->max_decrement <= 0 ) ) ) {
 
@@ -4040,10 +4040,10 @@ H5C_set_cache_auto_resize_config(H5C_t *cache_ptr,
 
         case H5C_decr__age_out_with_threshold:
             if ( ( ( config_ptr->apply_empty_reserve ) &&
-                   ( config_ptr->empty_reserve >= 1.0 ) ) ||
+                   ( config_ptr->empty_reserve >= (double)1.0f ) ) ||
                  ( ( config_ptr->apply_max_decrement ) &&
                    ( config_ptr->max_decrement <= 0 ) ) ||
-                 ( config_ptr->upper_hr_threshold >= 1.0 ) ) {
+                 ( config_ptr->upper_hr_threshold >= (double)1.0f ) ) {
 
                 cache_ptr->size_decrease_possible = FALSE;
             }
@@ -4348,7 +4348,7 @@ H5C_stats(H5C_t * cache_ptr,
           const char *  cache_name,
           hbool_t
 #if !H5C_COLLECT_CACHE_STATS
-          UNUSED
+          H5_ATTR_UNUSED
 #endif /* H5C_COLLECT_CACHE_STATS */
           display_detailed_stats)
 {
@@ -4809,7 +4809,7 @@ H5C_stats__reset(H5C_t * cache_ptr)
 #if H5C_COLLECT_CACHE_STATS
 H5C_stats__reset(H5C_t * cache_ptr)
 #else /* H5C_COLLECT_CACHE_STATS */
-H5C_stats__reset(H5C_t UNUSED * cache_ptr)
+H5C_stats__reset(H5C_t H5_ATTR_UNUSED * cache_ptr)
 #endif /* H5C_COLLECT_CACHE_STATS */
 #endif /* NDEBUG */
 {
@@ -5517,8 +5517,8 @@ H5C_validate_resize_config(H5C_auto_size_ctl_t * config_ptr,
                   "initial_size must be in the interval [min_size, max_size]");
         }
 
-        if ( ( config_ptr->min_clean_fraction < 0.0 ) ||
-             ( config_ptr->min_clean_fraction > 1.0 ) ) {
+        if ( ( config_ptr->min_clean_fraction < (double)0.0f ) ||
+             ( config_ptr->min_clean_fraction > (double)1.0f ) ) {
 
             HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, \
                   "min_clean_fraction must be in the interval [0.0, 1.0]");
@@ -5546,14 +5546,14 @@ H5C_validate_resize_config(H5C_auto_size_ctl_t * config_ptr,
 
         if ( config_ptr->incr_mode == H5C_incr__threshold ) {
 
-            if ( ( config_ptr->lower_hr_threshold < 0.0 ) ||
-                 ( config_ptr->lower_hr_threshold > 1.0 ) ) {
+            if ( ( config_ptr->lower_hr_threshold < (double)0.0f ) ||
+                 ( config_ptr->lower_hr_threshold > (double)1.0f ) ) {
 
                 HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, \
                     "lower_hr_threshold must be in the range [0.0, 1.0]");
             }
 
-            if ( config_ptr->increment < 1.0 ) {
+            if ( config_ptr->increment < (double)1.0f ) {
 
                 HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, \
                             "increment must be greater than or equal to 1.0");
@@ -5578,15 +5578,15 @@ H5C_validate_resize_config(H5C_auto_size_ctl_t * config_ptr,
                 break;
 
             case H5C_flash_incr__add_space:
-                if ( ( config_ptr->flash_multiple < 0.1 ) ||
-                     ( config_ptr->flash_multiple > 10.0 ) ) {
+                if ( ( config_ptr->flash_multiple < (double)0.1f ) ||
+                     ( config_ptr->flash_multiple > (double)10.0f ) ) {
 
                     HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, \
                         "flash_multiple must be in the range [0.1, 10.0]");
                 }
 
-                if ( ( config_ptr->flash_threshold < 0.1 ) ||
-                     ( config_ptr->flash_threshold > 1.0 ) ) {
+                if ( ( config_ptr->flash_threshold < (double)0.1f ) ||
+                     ( config_ptr->flash_threshold > (double)1.0f ) ) {
 
                     HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, \
                            "flash_threshold must be in the range [0.1, 1.0]");
@@ -5614,14 +5614,14 @@ H5C_validate_resize_config(H5C_auto_size_ctl_t * config_ptr,
 
         if ( config_ptr->decr_mode == H5C_decr__threshold ) {
 
-            if ( config_ptr->upper_hr_threshold > 1.0 ) {
+            if ( config_ptr->upper_hr_threshold > (double)1.0f ) {
 
                 HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, \
                             "upper_hr_threshold must be <= 1.0");
             }
 
-            if ( ( config_ptr->decrement > 1.0 ) ||
-                 ( config_ptr->decrement < 0.0 ) ) {
+            if ( ( config_ptr->decrement > (double)1.0f ) ||
+                 ( config_ptr->decrement < (double)0.0f ) ) {
 
                 HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, \
                             "decrement must be in the interval [0.0, 1.0]");
@@ -5656,8 +5656,8 @@ H5C_validate_resize_config(H5C_auto_size_ctl_t * config_ptr,
             }
 
             if ( ( config_ptr->apply_empty_reserve ) &&
-                 ( ( config_ptr->empty_reserve > 1.0 ) ||
-                   ( config_ptr->empty_reserve < 0.0 ) ) ) {
+                 ( ( config_ptr->empty_reserve > (double)1.0f ) ||
+                   ( config_ptr->empty_reserve < (double)0.0f ) ) ) {
 
                 HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, \
                             "empty_reserve must be in the interval [0.0, 1.0]");
@@ -5670,8 +5670,8 @@ H5C_validate_resize_config(H5C_auto_size_ctl_t * config_ptr,
 
         if ( config_ptr->decr_mode == H5C_decr__age_out_with_threshold ) {
 
-            if ( ( config_ptr->upper_hr_threshold > 1.0 ) ||
-                 ( config_ptr->upper_hr_threshold < 0.0 ) ) {
+            if ( ( config_ptr->upper_hr_threshold > (double)1.0f ) ||
+                 ( config_ptr->upper_hr_threshold < (double)0.0f ) ) {
 
                 HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, \
                        "upper_hr_threshold must be in the interval [0.0, 1.0]");
@@ -5757,8 +5757,8 @@ H5C__auto_adjust_cache_size(H5F_t * f,
     HDassert( cache_ptr->magic == H5C__H5C_T_MAGIC );
     HDassert( cache_ptr->cache_accesses >=
               (cache_ptr->resize_ctl).epoch_length );
-    HDassert( 0.0 <= (cache_ptr->resize_ctl).min_clean_fraction );
-    HDassert( (cache_ptr->resize_ctl).min_clean_fraction <= 100.0 );
+    HDassert( (double)0.0f <= (cache_ptr->resize_ctl).min_clean_fraction );
+    HDassert( (cache_ptr->resize_ctl).min_clean_fraction <= (double)100.0f );
 
     if ( !cache_ptr->resize_enabled ) {
 
@@ -5773,7 +5773,7 @@ H5C__auto_adjust_cache_size(H5F_t * f,
         HGOTO_ERROR(H5E_CACHE, H5E_SYSTEM, FAIL, "Can't get hit rate.")
     }
 
-    HDassert( ( 0.0 <= hit_rate ) && ( hit_rate <= 1.0 ) );
+    HDassert( ( (double)0.0f <= hit_rate ) && ( hit_rate <= (double)1.0f ) );
 
     switch ( (cache_ptr->resize_ctl).incr_mode )
     {
@@ -7612,7 +7612,7 @@ H5C_flush_single_entry(H5F_t *	   	   f,
          * otherwise as no file I/O can result.
          */
         if(!clear_only && entry_ptr->is_dirty &&
-                IS_H5FD_MPI(f)) {
+                H5F_HAS_FEATURE(f, H5FD_FEAT_HAS_MPI)) {
             H5P_genplist_t *dxpl;       /* Dataset transfer property list */
             unsigned coll_meta;         /* Collective metadata write flag */
 

@@ -32,7 +32,8 @@ class DataSpace;
     rarely needs them.
 */
 class H5_DLLCPP IdComponent {
-   public:
+    public:
+
 	// Increment reference counter.
 	void incRefCount(const hid_t obj_id) const;
 	void incRefCount() const;
@@ -54,21 +55,27 @@ class H5_DLLCPP IdComponent {
 	// Assignment operator.
 	IdComponent& operator=( const IdComponent& rhs );
 
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
-	// Gets the identifier of this object.
-	virtual hid_t getId () const = 0;
-#endif // DOXYGEN_SHOULD_SKIP_THIS
-
 	// Sets the identifier of this object to a new value.
 	void setId(const hid_t new_id);
+
+	// *** Deprecation warning ***
+	// The following two constructors are no longer appropriate after the
+	// data member "id" had been moved to the sub-classes.
+	// The copy constructor is a noop and is removed in 1.8.15 and the
+	// other will be removed from 1.10 release, and then from 1.8 if its
+	// removal does not raise any problems in two 1.10 releases.
 
 	// Creates an object to hold an HDF5 identifier.
 	IdComponent( const hid_t h5_id );
 
-	// Copy constructor: makes copy of the original IdComponent object.
-	IdComponent( const IdComponent& original );
-
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
+
+	// Copy constructor: makes copy of the original IdComponent object.
+	// IdComponent( const IdComponent& original ); - removed from 1.8.15
+
+	// Gets the identifier of this object.
+	virtual hid_t getId () const = 0;
+
 	// Pure virtual function for there are various H5*close for the
 	// subclasses.
 	virtual void close() = 0;
@@ -85,8 +92,9 @@ class H5_DLLCPP IdComponent {
 	// Destructor
 	virtual ~IdComponent();
 
-   protected:
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
+
+    protected:
 
 	// Default constructor.
 	IdComponent();
@@ -100,6 +108,14 @@ class H5_DLLCPP IdComponent {
 	// Sets the identifier of this object to a new value. - this one
 	// doesn't increment reference count
 	virtual void p_setId(const hid_t new_id) = 0;
+
+	// This flag is used to decide whether H5dont_atexit should be called
+	static bool H5dontAtexit_called;
+
+    private:
+	// This flag indicates whether H5Library::initH5cpp has been called
+	// to register various terminating functions with atexit()
+        static bool H5cppinit;
 
 #endif // DOXYGEN_SHOULD_SKIP_THIS
 

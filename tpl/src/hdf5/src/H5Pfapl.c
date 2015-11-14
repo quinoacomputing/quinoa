@@ -37,17 +37,17 @@
 #include "H5ACprivate.h"	/* Metadata cache			*/
 #include "H5Dprivate.h"		/* Datasets				*/
 #include "H5Eprivate.h"		/* Error handling		  	*/
-#include "H5Fprivate.h"		/* Files		  	*/
+#include "H5Fprivate.h"		/* Files		  	        */
 #include "H5FDprivate.h"	/* File drivers				*/
 #include "H5Iprivate.h"		/* IDs			  		*/
-#include "H5MMprivate.h"        /* Memory Management    */
+#include "H5MMprivate.h"        /* Memory Management                    */
 #include "H5Ppkg.h"		/* Property lists		  	*/
 
 /* Includes needed to set as default file driver */
 #include "H5FDsec2.h"		/* Posix unbuffered I/O	file driver	*/
 #include "H5FDstdio.h"		/* Standard C buffered I/O		*/
 #ifdef H5_HAVE_WINDOWS
-#include "H5FDwindows.h"        /* Windows buffered I/O     */
+#include "H5FDwindows.h"        /* Windows buffered I/O                 */
 #endif
 
 
@@ -169,10 +169,13 @@ static herr_t H5P_file_image_info_close(const char *name, size_t size, void *val
 const H5P_libclass_t H5P_CLS_FACC[1] = {{
     "file access",		/* Class name for debugging     */
     H5P_TYPE_FILE_ACCESS,       /* Class type                   */
-    &H5P_CLS_ROOT_g,		/* Parent class ID              */
-    &H5P_CLS_FILE_ACCESS_g,	/* Pointer to class ID          */
-    &H5P_LST_FILE_ACCESS_g,	/* Pointer to default property list ID */
+
+    &H5P_CLS_ROOT_g,		/* Parent class                 */
+    &H5P_CLS_FILE_ACCESS_g,	/* Pointer to class             */
+    &H5P_CLS_FILE_ACCESS_ID_g,	/* Pointer to class ID          */
+    &H5P_LST_FILE_ACCESS_ID_g,	/* Pointer to default property list ID */
     H5P_facc_reg_prop,		/* Default property registration routine */
+
     H5P_facc_create,		/* Class creation callback      */
     NULL,		        /* Class creation callback info */
     H5P_facc_copy,		/* Class copy callback          */
@@ -351,7 +354,7 @@ done:
  */
 /* ARGSUSED */
 static herr_t
-H5P_facc_create(hid_t fapl_id, void UNUSED *copy_data)
+H5P_facc_create(hid_t fapl_id, void H5_ATTR_UNUSED *copy_data)
 {
     hid_t          driver_id;
     H5P_genplist_t *plist;              /* Property list */
@@ -401,7 +404,7 @@ done:
  */
 /* ARGSUSED */
 static herr_t
-H5P_facc_copy(hid_t dst_fapl_id, hid_t src_fapl_id, void UNUSED *copy_data)
+H5P_facc_copy(hid_t dst_fapl_id, hid_t src_fapl_id, void H5_ATTR_UNUSED *copy_data)
 {
     hid_t          driver_id;
     H5P_genplist_t *src_plist;              /* Source property list */
@@ -452,7 +455,7 @@ done:
  */
 /* ARGSUSED */
 herr_t
-H5P_facc_close(hid_t fapl_id, void UNUSED *close_data)
+H5P_facc_close(hid_t fapl_id, void H5_ATTR_UNUSED *close_data)
 {
     hid_t      driver_id;
     H5P_genplist_t *plist;              /* Property list */
@@ -826,6 +829,7 @@ H5Pget_driver_info(hid_t plist_id)
     void *ret_value;            /* Return value */
 
     FUNC_ENTER_API(NULL)
+    H5TRACE1("*x", "i", plist_id);
 
     if(NULL == (plist = (H5P_genplist_t *)H5I_object_verify(plist_id, H5I_GENPROP_LST)))
         HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, NULL, "not a property list")
@@ -1022,7 +1026,7 @@ done:
  *-------------------------------------------------------------------------
  */
 herr_t
-H5Pset_cache(hid_t plist_id, int UNUSED mdc_nelmts,
+H5Pset_cache(hid_t plist_id, int H5_ATTR_UNUSED mdc_nelmts,
 	     size_t rdcc_nslots, size_t rdcc_nbytes, double rdcc_w0)
 {
     H5P_genplist_t *plist;      /* Property list pointer */
@@ -1033,7 +1037,7 @@ H5Pset_cache(hid_t plist_id, int UNUSED mdc_nelmts,
              rdcc_w0);
 
     /* Check arguments */
-    if(rdcc_w0 < 0.0 || rdcc_w0 > 1.0)
+    if(rdcc_w0 < (double)0.0f || rdcc_w0 > (double)1.0f)
         HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "raw data cache w0 value must be between 0.0 and 1.0 inclusive")
 
     /* Get the plist structure */
@@ -2199,7 +2203,7 @@ done:
  *-------------------------------------------------------------------------
  */
 herr_t
-H5P_file_image_info_del(hid_t UNUSED prop_id, const char UNUSED *name, size_t UNUSED size, void *value)
+H5P_file_image_info_del(hid_t H5_ATTR_UNUSED prop_id, const char H5_ATTR_UNUSED *name, size_t H5_ATTR_UNUSED size, void *value)
 {
     H5FD_file_image_info_t info;        /* Image info struct */
     herr_t ret_value = SUCCEED;         /* Return value */
@@ -2253,7 +2257,7 @@ done:
  *-------------------------------------------------------------------------
  */
 herr_t
-H5P_file_image_info_copy(const char UNUSED *name, size_t UNUSED size, void *value)
+H5P_file_image_info_copy(const char H5_ATTR_UNUSED *name, size_t H5_ATTR_UNUSED size, void *value)
 {
     herr_t ret_value = SUCCEED;         /* Return value */
 
@@ -2328,7 +2332,7 @@ done:
  *-------------------------------------------------------------------------
  */
 herr_t
-H5P_file_image_info_close(const char UNUSED *name, size_t UNUSED size, void *value)
+H5P_file_image_info_close(const char H5_ATTR_UNUSED *name, size_t H5_ATTR_UNUSED size, void *value)
 {
     herr_t ret_value = SUCCEED;         /* Return value */
 
@@ -2382,6 +2386,10 @@ H5Pset_core_write_tracking(hid_t plist_id, hbool_t is_enabled, size_t page_size)
 
     FUNC_ENTER_API(FAIL)
     H5TRACE3("e", "ibz", plist_id, is_enabled, page_size);
+
+    /* The page size cannot be zero */
+    if(page_size == 0)
+        HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "page_size cannot be zero")
 
     /* Get the plist structure */
     if(NULL == (plist = H5P_object_verify(plist_id, H5P_FILE_ACCESS)))

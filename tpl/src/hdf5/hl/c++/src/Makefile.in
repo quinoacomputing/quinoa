@@ -102,13 +102,11 @@ DIST_COMMON = $(top_srcdir)/config/commence.am \
 	$(srcdir)/Makefile.am $(top_srcdir)/bin/mkinstalldirs \
 	$(top_srcdir)/bin/depcomp $(include_HEADERS) \
 	$(top_srcdir)/bin/test-driver
-
-# Shared C++ libraries aren't universally supported.
-@CXX_SHARED_CONDITIONAL_FALSE@am__append_1 = -static
 TESTS =
 subdir = hl/c++/src
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/configure.ac
+am__aclocal_m4_deps = $(top_srcdir)/m4/aclocal_cxx.m4 \
+	$(top_srcdir)/m4/aclocal_fc.m4 $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 mkinstalldirs = $(SHELL) $(top_srcdir)/bin/mkinstalldirs
@@ -407,10 +405,9 @@ AM_CPPFLAGS = @AM_CPPFLAGS@ @H5_CPPFLAGS@ -I$(top_srcdir)/src \
 AM_CXXFLAGS = @AM_CXXFLAGS@ @H5_CXXFLAGS@
 AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
 AM_FCFLAGS = @AM_FCFLAGS@ @H5_FCFLAGS@
-AM_LDFLAGS = @AM_LDFLAGS@ @H5_LDFLAGS@ $(am__append_1)
+AM_LDFLAGS = @AM_LDFLAGS@ @H5_LDFLAGS@
 AM_MAKEFLAGS = @AM_MAKEFLAGS@
 AR = @AR@
-AS = @AS@
 AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
 AUTOMAKE = @AUTOMAKE@
@@ -442,7 +439,6 @@ DIRECT_VFD = @DIRECT_VFD@
 DLLTOOL = @DLLTOOL@
 DSYMUTIL = @DSYMUTIL@
 DUMPBIN = @DUMPBIN@
-DYNAMIC_DIRS = @DYNAMIC_DIRS@
 ECHO_C = @ECHO_C@
 ECHO_N = @ECHO_N@
 ECHO_T = @ECHO_T@
@@ -461,17 +457,14 @@ FCFLAGS_f90 = @FCFLAGS_f90@
 FCLIBS = @FCLIBS@
 FC_VERSION = @FC_VERSION@
 FGREP = @FGREP@
-FILTERS = @FILTERS@
 FSEARCH_DIRS = @FSEARCH_DIRS@
 GREP = @GREP@
 H5_CFLAGS = @H5_CFLAGS@
 H5_CPPFLAGS = @H5_CPPFLAGS@
 H5_CXXFLAGS = @H5_CXXFLAGS@
-H5_CXX_SHARED = @H5_CXX_SHARED@
 H5_FCFLAGS = @H5_FCFLAGS@
 H5_FORTRAN_SHARED = @H5_FORTRAN_SHARED@
 H5_LDFLAGS = @H5_LDFLAGS@
-H5_LONE_COLON = @H5_LONE_COLON@
 H5_VERSION = @H5_VERSION@
 HADDR_T = @HADDR_T@
 HAVE_DMALLOC = @HAVE_DMALLOC@
@@ -494,7 +487,6 @@ INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 INSTRUMENT = @INSTRUMENT@
 INSTRUMENT_LIBRARY = @INSTRUMENT_LIBRARY@
-LARGEFILE = @LARGEFILE@
 LD = @LD@
 LDFLAGS = @LDFLAGS@
 LIBOBJS = @LIBOBJS@
@@ -510,7 +502,6 @@ MAKEINFO = @MAKEINFO@
 MANIFEST_TOOL = @MANIFEST_TOOL@
 MKDIR_P = @MKDIR_P@
 MPE = @MPE@
-MPI_GET_SIZE = @MPI_GET_SIZE@
 NM = @NM@
 NMEDIT = @NMEDIT@
 OBJDUMP = @OBJDUMP@
@@ -536,7 +527,6 @@ R_INTEGER = @R_INTEGER@
 R_LARGE = @R_LARGE@
 SEARCH = @SEARCH@
 SED = @SED@
-SETX = @SETX@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 SIZE_T = @SIZE_T@
@@ -551,10 +541,6 @@ TR = @TR@
 TRACE_API = @TRACE_API@
 UNAME_INFO = @UNAME_INFO@
 USE_FILTER_DEFLATE = @USE_FILTER_DEFLATE@
-USE_FILTER_FLETCHER32 = @USE_FILTER_FLETCHER32@
-USE_FILTER_NBIT = @USE_FILTER_NBIT@
-USE_FILTER_SCALEOFFSET = @USE_FILTER_SCALEOFFSET@
-USE_FILTER_SHUFFLE = @USE_FILTER_SHUFFLE@
 USE_FILTER_SZIP = @USE_FILTER_SZIP@
 USINGMEMCHECKER = @USINGMEMCHECKER@
 VERSION = @VERSION@
@@ -668,20 +654,40 @@ TRACE = perl $(top_srcdir)/bin/trace
 
 # .chkexe files are used to mark tests that have run successfully.
 # .chklog files are output from those tests.
-# *.clog are from the MPE option.
-CHECK_CLEANFILES = *.chkexe *.chklog *.clog
+# *.clog and *.clog2 are from the MPE option.
+CHECK_CLEANFILES = *.chkexe *.chklog *.clog *.clog2
 
 # Add libtool shared library version numbers to the HDF5 library
 # See libtool versioning documentation online.
-LT_VERS_INTERFACE = 8
-LT_VERS_REVISION = 2 
-LT_VERS_AGE = 0
+# After making changes, run bin/reconfigure to update other configure related
+# files like Makefile.in.
+LT_VERS_INTERFACE = 11
+LT_VERS_REVISION = 0
+LT_VERS_AGE = 1
+LT_CXX_VERS_INTERFACE = 11
+LT_CXX_VERS_REVISION = 0
+LT_CXX_VERS_AGE = 0
+LT_F_VERS_INTERFACE = 10
+LT_F_VERS_REVISION = 2
+LT_F_VERS_AGE = 0
+LT_HL_VERS_INTERFACE = 10
+LT_HL_VERS_REVISION = 2
+LT_HL_VERS_AGE = 0
+LT_HL_CXX_VERS_INTERFACE = 11
+LT_HL_CXX_VERS_REVISION = 0
+LT_HL_CXX_VERS_AGE = 0
+LT_HL_F_VERS_INTERFACE = 10
+LT_HL_F_VERS_REVISION = 2
+LT_HL_F_VERS_AGE = 0
+LT_TOOLS_VERS_INTERFACE = 10
+LT_TOOLS_VERS_REVISION = 2
+LT_TOOLS_VERS_AGE = 0
 
 # This is our main target
 lib_LTLIBRARIES = libhdf5_hl_cpp.la
 
 # Add libtool numbers to the HDF5 HL C++ library (from config/lt_vers.am)
-libhdf5_hl_cpp_la_LDFLAGS = -version-info $(LT_VERS_INTERFACE):$(LT_VERS_REVISION):$(LT_VERS_AGE) $(AM_LDFLAGS)
+libhdf5_hl_cpp_la_LDFLAGS = -version-info $(LT_HL_CXX_VERS_INTERFACE):$(LT_HL_CXX_VERS_REVISION):$(LT_HL_CXX_VERS_AGE) $(AM_LDFLAGS)
 
 # Source files for the library
 # At the moment, only the H5PT Packet Table has a C++ API.

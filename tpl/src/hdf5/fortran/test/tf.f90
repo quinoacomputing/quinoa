@@ -29,12 +29,14 @@
 !*****
 MODULE TH5_MISC
 
-  INTEGER, PARAMETER :: dp = SELECTED_REAL_KIND(15, 307)
+  USE TH5_MISC_PROVISIONAL
+
+  IMPLICIT NONE
 
 CONTAINS
 
 !This definition is needed for Windows DLLs
-!DEC$if defined(BUILD_HDF5_DLL)
+!DEC$if defined(BUILD_HDF5_TEST_DLL)
 !DEC$attributes dllexport :: dreal_eq
 !DEC$endif
   LOGICAL FUNCTION dreal_eq(a,b)
@@ -47,7 +49,7 @@ CONTAINS
   END FUNCTION dreal_eq
 
 !This definition is needed for Windows DLLs
-!DEC$if defined(BUILD_HDF5_DLL)
+!DEC$if defined(BUILD_HDF5_TEST_DLL)
 !DEC$attributes dllexport :: verify_real_kind_7
 !DEC$endif
   SUBROUTINE verify_real_kind_7(string,value,correct_value,total_error)
@@ -64,7 +66,7 @@ CONTAINS
   END SUBROUTINE verify_real_kind_7
 
 !This definition is needed for Windows DLLs
-!DEC$if defined(BUILD_HDF5_DLL)
+!DEC$if defined(BUILD_HDF5_TEST_DLL)
 !DEC$attributes dllexport :: write_test_status
 !DEC$endif
   SUBROUTINE write_test_status( test_result, test_title, total_error)
@@ -103,7 +105,7 @@ CONTAINS
 
 
 !This definition is needed for Windows DLLs
-!DEC$if defined(BUILD_HDF5_DLL)
+!DEC$if defined(BUILD_HDF5_TEST_DLL)
 !DEC$attributes dllexport :: check
 !DEC$endif
   SUBROUTINE check(string,error,total_error)
@@ -117,7 +119,7 @@ CONTAINS
   END SUBROUTINE check
 
 !This definition is needed for Windows DLLs
-!DEC$if defined(BUILD_HDF5_DLL)
+!DEC$if defined(BUILD_HDF5_TEST_DLL)
 !DEC$attributes dllexport :: verify
 !DEC$endif
   SUBROUTINE VERIFY(string,value,correct_value,total_error)
@@ -131,7 +133,23 @@ CONTAINS
   END SUBROUTINE verify
 
 !This definition is needed for Windows DLLs
-!DEC$if defined(BUILD_HDF5_DLL)
+!DEC$if defined(BUILD_HDF5_TEST_DLL)
+!DEC$attributes dllexport :: verify_INTEGER_HID_T
+!DEC$endif
+  SUBROUTINE verify_INTEGER_HID_T(string,value,correct_value,total_error)
+    USE HDF5	
+    CHARACTER(LEN=*) :: string
+    INTEGER(HID_T) :: value, correct_value
+    INTEGER :: total_error
+    IF (value .NE. correct_value) THEN
+       total_error=total_error+1
+       WRITE(*,*) "ERROR: INCORRECT VALIDATION ", string
+    ENDIF
+    RETURN
+  END SUBROUTINE verify_INTEGER_HID_T
+
+!This definition is needed for Windows DLLs
+!DEC$if defined(BUILD_HDF5_TEST_DLL)
 !DEC$attributes dllexport :: verify_Fortran_INTEGER_4
 !DEC$endif
   SUBROUTINE verify_Fortran_INTEGER_4(string,value,correct_value,total_error)
@@ -148,7 +166,7 @@ CONTAINS
   END SUBROUTINE verify_Fortran_INTEGER_4
 
 !This definition is needed for Windows DLLs
-!DEC$if defined(BUILD_HDF5_DLL)
+!DEC$if defined(BUILD_HDF5_TEST_DLL)
 !DEC$attributes dllexport :: verifyLogical
 !DEC$endif
   SUBROUTINE verifyLogical(string,value,correct_value,total_error)
@@ -163,7 +181,7 @@ CONTAINS
   END SUBROUTINE verifyLogical
   
 !This definition is needed for Windows DLLs
-!DEC$if defined(BUILD_HDF5_DLL)
+!DEC$if defined(BUILD_HDF5_TEST_DLL)
 !DEC$attributes dllexport :: verifyString
 !DEC$endif
   SUBROUTINE verifyString(string, value,correct_value,total_error)
@@ -201,7 +219,7 @@ CONTAINS
   SUBROUTINE h5_fixname_f(base_name, full_name, fapl, hdferr)
 !
 !This definition is needed for Windows DLLs
-!DEC$if defined(BUILD_HDF5_DLL)
+!DEC$if defined(BUILD_HDF5_TEST_DLL)
 !DEC$attributes dllexport :: h5_fixname_f
 !DEC$endif
     USE H5GLOBAL
@@ -261,7 +279,7 @@ CONTAINS
   SUBROUTINE h5_cleanup_f(base_name, fapl, hdferr)
 !
 !This definition is needed for Windows DLLs
-!DEC$if defined(BUILD_HDF5_DLL)
+!DEC$if defined(BUILD_HDF5_TEST_DLL)
 !DEC$attributes dllexport :: h5_cleanup_f
 !DEC$endif
     USE H5GLOBAL
@@ -313,7 +331,7 @@ CONTAINS
   SUBROUTINE h5_exit_f(status)
 !
 !This definition is needed for Windows DLLs
-!DEC$if defined(BUILD_HDF5_DLL)
+!DEC$if defined(BUILD_HDF5_TEST_DLL)
 !DEC$attributes dllexport :: h5_exit_f
 !DEC$endif
     IMPLICIT NONE
@@ -350,7 +368,7 @@ CONTAINS
   SUBROUTINE h5_env_nocleanup_f(HDF5_NOCLEANUP)
 !
 !This definition is needed for Windows DLLs
-!DEC$if defined(BUILD_HDF5_DLL)
+!DEC$if defined(BUILD_HDF5_TEST_DLL)
 !DEC$attributes dllexport :: h5_env_nocleanup_f
 !DEC$endif
     IMPLICIT NONE

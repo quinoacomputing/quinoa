@@ -69,13 +69,13 @@
 
 /* Metadata cache callbacks */
 static H5O_t *H5O_load(H5F_t *f, hid_t dxpl_id, haddr_t addr, void *udata);
-static herr_t H5O_flush(H5F_t *f, hid_t dxpl_id, hbool_t destroy, haddr_t addr, H5O_t *oh, unsigned UNUSED * flags_ptr);
+static herr_t H5O_flush(H5F_t *f, hid_t dxpl_id, hbool_t destroy, haddr_t addr, H5O_t *oh, unsigned H5_ATTR_UNUSED * flags_ptr);
 static herr_t H5O_dest(H5F_t *f, H5O_t *oh);
 static herr_t H5O_clear(H5F_t *f, H5O_t *oh, hbool_t destroy);
 static herr_t H5O_size(const H5F_t *f, const H5O_t *oh, size_t *size_ptr);
 
 static H5O_chunk_proxy_t *H5O_cache_chk_load(H5F_t *f, hid_t dxpl_id, haddr_t addr, void *udata);
-static herr_t H5O_cache_chk_flush(H5F_t *f, hid_t dxpl_id, hbool_t destroy, haddr_t addr, H5O_chunk_proxy_t *chk_proxy, unsigned UNUSED * flags_ptr);
+static herr_t H5O_cache_chk_flush(H5F_t *f, hid_t dxpl_id, hbool_t destroy, haddr_t addr, H5O_chunk_proxy_t *chk_proxy, unsigned H5_ATTR_UNUSED * flags_ptr);
 static herr_t H5O_cache_chk_dest(H5F_t *f, H5O_chunk_proxy_t *chk_proxy);
 static herr_t H5O_cache_chk_clear(H5F_t *f, H5O_chunk_proxy_t *chk_proxy, hbool_t destroy);
 static herr_t H5O_cache_chk_size(const H5F_t *f, const H5O_chunk_proxy_t *chk_proxy, size_t *size_ptr);
@@ -182,7 +182,7 @@ H5O_load(H5F_t *f, hid_t dxpl_id, haddr_t addr, void *_udata)
         HGOTO_ERROR(H5E_OHDR, H5E_CANTGET, NULL, "unable to determine file size")
 
     /* Compute the size of the speculative object header buffer */
-    H5_ASSIGN_OVERFLOW(spec_read_size, MIN(eoa - addr, H5O_SPEC_READ_SIZE), /* From: */ hsize_t, /* To: */ size_t);
+    H5_CHECKED_ASSIGN(spec_read_size, size_t, MIN(eoa - addr, H5O_SPEC_READ_SIZE), hsize_t);
 
     /* Attempt to speculatively read both object header prefix and first chunk */
     if(H5F_block_read(f, H5FD_MEM_OHDR, addr, spec_read_size, dxpl_id, read_buf) < 0)
@@ -368,7 +368,7 @@ done:
  *-------------------------------------------------------------------------
  */
 static herr_t
-H5O_flush(H5F_t *f, hid_t dxpl_id, hbool_t destroy, haddr_t UNUSED addr, H5O_t *oh, unsigned UNUSED * flags_ptr)
+H5O_flush(H5F_t *f, hid_t dxpl_id, hbool_t destroy, haddr_t H5_ATTR_UNUSED addr, H5O_t *oh, unsigned H5_ATTR_UNUSED * flags_ptr)
 {
     herr_t ret_value = SUCCEED; /* Return value */
 
@@ -646,7 +646,7 @@ done:
  *-------------------------------------------------------------------------
  */
 static herr_t
-H5O_size(const H5F_t UNUSED *f, const H5O_t *oh, size_t *size_ptr)
+H5O_size(const H5F_t H5_ATTR_UNUSED *f, const H5O_t *oh, size_t *size_ptr)
 {
     FUNC_ENTER_NOAPI_NOINIT_NOERR
 
@@ -777,7 +777,7 @@ done:
  */
 static herr_t
 H5O_cache_chk_flush(H5F_t *f, hid_t dxpl_id, hbool_t destroy, haddr_t addr,
-    H5O_chunk_proxy_t *chk_proxy, unsigned UNUSED * flags_ptr)
+    H5O_chunk_proxy_t *chk_proxy, unsigned H5_ATTR_UNUSED * flags_ptr)
 {
     herr_t ret_value = SUCCEED; /* Return value */
 
@@ -948,7 +948,7 @@ done:
  *-------------------------------------------------------------------------
  */
 static herr_t
-H5O_cache_chk_size(const H5F_t UNUSED *f, const H5O_chunk_proxy_t *chk_proxy, size_t *size_ptr)
+H5O_cache_chk_size(const H5F_t H5_ATTR_UNUSED *f, const H5O_chunk_proxy_t *chk_proxy, size_t *size_ptr)
 {
     FUNC_ENTER_NOAPI_NOINIT_NOERR
 
@@ -1130,7 +1130,7 @@ H5O_chunk_deserialize(H5O_t *oh, haddr_t addr, size_t len, const uint8_t *image,
             HGOTO_ERROR(H5E_OHDR, H5E_CANTLOAD, FAIL, "unknown flag for message")
         if((flags & H5O_MSG_FLAG_SHARED) && (flags & H5O_MSG_FLAG_DONTSHARE))
             HGOTO_ERROR(H5E_OHDR, H5E_CANTLOAD, FAIL, "bad flag combination for message")
-        if((flags & H5O_MSG_FLAG_WAS_UNKNOWN) && (flags & H5O_MSG_FLAG_FAIL_IF_UNKNOWN))
+        if((flags & H5O_MSG_FLAG_WAS_UNKNOWN) && (flags & H5O_MSG_FLAG_FAIL_IF_UNKNOWN_AND_OPEN_FOR_WRITE))
             HGOTO_ERROR(H5E_OHDR, H5E_CANTLOAD, FAIL, "bad flag combination for message")
         if((flags & H5O_MSG_FLAG_WAS_UNKNOWN) && !(flags & H5O_MSG_FLAG_MARK_IF_UNKNOWN))
             HGOTO_ERROR(H5E_OHDR, H5E_CANTLOAD, FAIL, "bad flag combination for message")
@@ -1206,7 +1206,8 @@ H5O_chunk_deserialize(H5O_t *oh, haddr_t addr, size_t len, const uint8_t *image,
                 oh->mesg[mesgno].type = H5O_msg_class_g[H5O_UNKNOWN_ID];
 
                 /* Check for "fail if unknown" message flag */
-                if(flags & H5O_MSG_FLAG_FAIL_IF_UNKNOWN)
+                if((udata->file_intent & H5F_ACC_RDWR) && 
+                   (flags & H5O_MSG_FLAG_FAIL_IF_UNKNOWN_AND_OPEN_FOR_WRITE))
                     HGOTO_ERROR(H5E_OHDR, H5E_BADMESG, FAIL, "unknown message with 'fail if unknown' flag found")
                 /* Check for "mark if unknown" message flag, etc. */
                 else if((flags & H5O_MSG_FLAG_MARK_IF_UNKNOWN) &&

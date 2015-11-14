@@ -196,7 +196,7 @@
               -D "TEST_OUTPUT=${resultfile}.out"
               -D "TEST_EXPECT=${resultcode}"
               -D "TEST_REFERENCE=${resultfile}.xml"
-              -P "${HDF5_RESOURCES_DIR}/runTest.cmake"
+              -P "${HDF_RESOURCES_EXT_DIR}/runTest.cmake"
       )
       set_tests_properties (H5DUMP-XML-${resultfile} PROPERTIES DEPENDS "H5DUMP-XML-${resultfile}-clear-objects")
     endif (HDF5_ENABLE_USING_MEMCHECKER)
@@ -410,14 +410,6 @@
 
   ADD_XML_H5_TEST (tempty-dtd.h5 0 --use-dtd tempty.h5)
   ADD_XML_H5_TEST (tempty-dtd-2.h5 0 -u tempty.h5)
-
-  # The lone colon here confuses some systems (Cray X1).  Skip
-  # it if configure detects that this is a problem.
-  set (TESTTYPE "TEST")
-  if (NOT "H5_LONE_COLON")
-    set (TESTTYPE "SKIP")
-  endif (NOT "H5_LONE_COLON")
-  ADD_XML_SKIP_H5_TEST (tempty-nons.h5 0 ${TESTTYPE} -X : tempty.h5)
 
   ADD_XML_H5_TEST (tempty-nons-2.h5 0 --xml-ns=: tempty.h5)
 

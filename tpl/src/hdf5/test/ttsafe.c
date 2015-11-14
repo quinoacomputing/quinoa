@@ -40,81 +40,110 @@
 /* ANY new test needs to have a prototype in ttsafe.h */
 #include "ttsafe.h"
 
-#ifndef H5_HAVE_THREADSAFE
-int main(void)
-{
-    printf("Test skipped because THREADSAFE not enabled\n");
-    return 0;
-}
-#else
 
 #define MAX_NUM_NAME 1000
 #define NAME_OFFSET 6         /* offset for "name<num>" */
 
 /* pre-condition: num must be a non-negative number */
-static int num_digits(int num)
+static unsigned
+num_digits(int num)
 {
-	int i;
+    unsigned u;
 
-	if (num == 0)
-		return 1;
+    if(num == 0)
+        return 1;
 
-	for (i = 0; num > 0; i++)
-		num = num / 10;
+    for(u = 0; num > 0; u++)
+        num = num / 10;
 
-	return i;
+    return u;
+}
+
+/* Test the H5is_library_threadsafe() function */
+void
+tts_is_threadsafe(void)
+{
+    hbool_t is_ts;
+    hbool_t should_be;
+
+#ifdef H5_HAVE_THREADSAFE
+    is_ts = FALSE;
+    should_be = TRUE;
+#else /* H5_HAVE_THREADSAFE */
+    is_ts = TRUE;
+    should_be = FALSE;
+#endif /* H5_HAVE_THREADSAFE */
+
+    if(H5is_library_threadsafe(&is_ts) != SUCCEED)
+            TestErrPrintf("H5_is_library_threadsafe() call failed - test failed\n");
+
+    if(is_ts != should_be)
+            TestErrPrintf("Thread-safety value incorrect - test failed\n");
+
+    return;
 }
 
 /* Routine to generate attribute names for numeric values */
 char *gen_name(int value)
 {
-	char *temp;
-	int i, length;
+    char *temp;
+    unsigned length;
+    int i;
 
-	length = num_digits(MAX_NUM_NAME - 1);
-	temp = (char *)HDmalloc((NAME_OFFSET + length + 1) * sizeof(char));
-	temp = HDstrcpy(temp, "attrib");
-	temp[NAME_OFFSET + length] = '\0';
+    length = num_digits(MAX_NUM_NAME - 1);
+    temp = (char *)HDmalloc(NAME_OFFSET + length + 1);
+    temp = HDstrcpy(temp, "attrib");
+    temp[NAME_OFFSET + length] = '\0';
 
-	for (i = length - 1; i >= 0; i--) {
-		temp[NAME_OFFSET + i] = (char)((int)'0' + value % 10);
-		value = value / 10;
-	}
+    for (i = (int)(length - 1); i >= 0; i--) {
+        temp[NAME_OFFSET + i] = (char)((int)'0' + value % 10);
+        value = value / 10;
+    }
 
-	return temp;
+    return temp;
 }
 
 int main(int argc, char *argv[])
 {
-        /* Initialize testing framework */
-        TestInit(argv[0], NULL, NULL);
 
-        /* Tests are generally arranged from least to most complexity... */
-        AddTest("dcreate", tts_dcreate, cleanup_dcreate, "multi-dataset creation", NULL);
-        AddTest("error", tts_error, cleanup_error, "per-thread error stacks", NULL);
+    /* Initialize testing framework */
+    TestInit(argv[0], NULL, NULL);
+
+    /* Tests are generally arranged from least to most complexity... */
+    AddTest("is_threadsafe", tts_is_threadsafe, NULL, "library threadsafe status", NULL);
+#ifdef H5_HAVE_THREADSAFE
+    AddTest("dcreate", tts_dcreate, cleanup_dcreate, "multi-dataset creation", NULL);
+    AddTest("error", tts_error, cleanup_error, "per-thread error stacks", NULL);
 #ifdef H5_HAVE_PTHREAD_H    
-        /* Thread cancellability only supported with pthreads ... */
-        AddTest("cancel", tts_cancel, cleanup_cancel, "thread cancellation safety test", NULL);
+    /* Thread cancellability only supported with pthreads ... */
+    AddTest("cancel", tts_cancel, cleanup_cancel, "thread cancellation safety test", NULL);
 #endif /* H5_HAVE_PTHREAD_H */
-        AddTest("acreate", tts_acreate, cleanup_acreate, "multi-attribute creation", NULL);
+    AddTest("acreate", tts_acreate, cleanup_acreate, "multi-attribute creation", NULL);
 
-        /* Display testing information */
-        TestInfo(argv[0]);
+#else /* H5_HAVE_THREADSAFE */
 
-        /* Parse command line arguments */
-        TestParseCmdLine(argc,argv);
+    printf("Most thread-safety tests skipped because THREADSAFE not enabled\n");
 
-        /* Perform requested testing */
-        PerformTests();
+#endif /* H5_HAVE_THREADSAFE */
 
-        /* Display test summary, if requested */
-	if (GetTestSummary())
-            TestSummary();
+    /* Display testing information */
+    TestInfo(argv[0]);
 
-        /* Clean up test files, if allowed */
-	if (GetTestCleanup() && !getenv("HDF5_NOCLEANUP"))
-            TestCleanup();
+    /* Parse command line arguments */
+    TestParseCmdLine(argc,argv);
 
-	return GetTestNumErrs();
+    /* Perform requested testing */
+    PerformTests();
+
+    /* Display test summary, if requested */
+    if (GetTestSummary())
+        TestSummary();
+
+    /* Clean up test files, if allowed */
+    if (GetTestCleanup() && !getenv("HDF5_NOCLEANUP"))
+        TestCleanup();
+
+    return GetTestNumErrs();
+
 } /* end main() */
-#endif  /*H5_HAVE_THREADSAFE*/
+

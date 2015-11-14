@@ -103,10 +103,13 @@ static herr_t H5P_fcrt_reg_prop(H5P_genclass_t *pclass);
 const H5P_libclass_t H5P_CLS_FCRT[1] = {{
     "file create",		/* Class name for debugging     */
     H5P_TYPE_FILE_CREATE,       /* Class type                   */
-    &H5P_CLS_GROUP_CREATE_g,	/* Parent class ID              */
-    &H5P_CLS_FILE_CREATE_g,	/* Pointer to class ID          */
-    &H5P_LST_FILE_CREATE_g,	/* Pointer to default property list ID */
+
+    &H5P_CLS_GROUP_CREATE_g,	/* Parent class                 */
+    &H5P_CLS_FILE_CREATE_g,	/* Pointer to class             */
+    &H5P_CLS_FILE_CREATE_ID_g,	/* Pointer to class ID          */
+    &H5P_LST_FILE_CREATE_ID_g,	/* Pointer to default property list ID */
     H5P_fcrt_reg_prop,		/* Default property registration routine */
+
     NULL,		        /* Class creation callback      */
     NULL,		        /* Class creation callback info */
     NULL,			/* Class copy callback          */
@@ -493,6 +496,9 @@ H5Pset_sym_k(hid_t plist_id, unsigned ik, unsigned lk)
 
     /* Set values */
     if (ik > 0) {
+	if((ik * 2) >= HDF5_BTREE_IK_MAX_ENTRIES)
+	    HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "istore IK value exceeds maximum B-tree entries");
+
         if(H5P_get(plist, H5F_CRT_BTREE_RANK_NAME, btree_k) < 0)
             HGOTO_ERROR(H5E_PLIST, H5E_CANTGET, FAIL, "can't get rank for btree interanl nodes");
         btree_k[H5B_SNODE_ID] = ik;
@@ -589,6 +595,9 @@ H5Pset_istore_k(hid_t plist_id, unsigned ik)
     /* Check arguments */
     if (ik == 0)
         HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "istore IK value must be positive");
+
+    if((ik * 2) >= HDF5_BTREE_IK_MAX_ENTRIES)
+        HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "istore IK value exceeds maximum B-tree entries");
 
     /* Get the plist structure */
     if(NULL == (plist = H5P_object_verify(plist_id,H5P_FILE_CREATE)))

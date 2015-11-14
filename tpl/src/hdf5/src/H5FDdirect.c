@@ -83,11 +83,7 @@ typedef struct H5FD_direct_t {
      * identify a file.
      */
     dev_t  device;      /*file device number    */
-#ifdef H5_VMS
-    ino_t  inode[3];    /*file i-node number    */
-#else
     ino_t  inode;      /*file i-node number    */
-#endif /*H5_VMS*/
 #else
     /*
      * On H5_HAVE_WIN32_API the low-order word of a unique identifier associated with the
@@ -509,7 +505,7 @@ H5FD_direct_open(const char *name, unsigned flags, hid_t fapl_id, haddr_t maxadd
         HGOTO_ERROR(H5E_PLIST, H5E_BADVALUE, NULL, "bad VFL driver info")
 
     file->fd = fd;
-    H5_ASSIGN_OVERFLOW(file->eof,sb.st_size,h5_stat_size_t,haddr_t);
+    H5_CHECKED_ASSIGN(file->eof, haddr_t, sb.st_size, h5_stat_size_t);
     file->pos = HADDR_UNDEF;
     file->op = OP_UNKNOWN;
 #ifdef H5_HAVE_WIN32_API
@@ -519,13 +515,7 @@ H5FD_direct_open(const char *name, unsigned flags, hid_t fapl_id, haddr_t maxadd
     file->fileindexlo = fileinfo.nFileIndexLow;
 #else
     file->device = sb.st_dev;
-#ifdef H5_VMS
-    file->inode[0] = sb.st_ino[0];
-    file->inode[1] = sb.st_ino[1];
-    file->inode[2] = sb.st_ino[2];
-#else
     file->inode = sb.st_ino;
-#endif /*H5_VMS*/
 #endif /*H5_HAVE_WIN32_API*/
     file->fa.mboundary = fa->mboundary;
     file->fa.fbsize = fa->fbsize;
@@ -667,13 +657,8 @@ H5FD_direct_cmp(const H5FD_t *_f1, const H5FD_t *_f2)
     if(HDmemcmp(&(f1->device),&(f2->device),sizeof(dev_t))>0) HGOTO_DONE(1)
 #endif /* H5_DEV_T_IS_SCALAR */
 
-#ifndef H5_VMS
     if (f1->inode < f2->inode) HGOTO_DONE(-1)
     if (f1->inode > f2->inode) HGOTO_DONE(1)
-#else
-    if(HDmemcmp(&(f1->inode),&(f2->inode),3*sizeof(ino_t))<0) HGOTO_DONE(-1)
-    if(HDmemcmp(&(f1->inode),&(f2->inode),3*sizeof(ino_t))>0) HGOTO_DONE(1)
-#endif /*H5_VMS*/
 
 #endif
 
@@ -700,7 +685,7 @@ done:
  *-------------------------------------------------------------------------
  */
 static herr_t
-H5FD_direct_query(const H5FD_t UNUSED * _f, unsigned long *flags /* out */)
+H5FD_direct_query(const H5FD_t H5_ATTR_UNUSED * _f, unsigned long *flags /* out */)
 {
     FUNC_ENTER_NOAPI_NOINIT_NOERR
 
@@ -739,7 +724,7 @@ H5FD_direct_query(const H5FD_t UNUSED * _f, unsigned long *flags /* out */)
  *-------------------------------------------------------------------------
  */
 static haddr_t
-H5FD_direct_get_eoa(const H5FD_t *_file, H5FD_mem_t UNUSED type)
+H5FD_direct_get_eoa(const H5FD_t *_file, H5FD_mem_t H5_ATTR_UNUSED type)
 {
     const H5FD_direct_t  *file = (const H5FD_direct_t*)_file;
 
@@ -771,7 +756,7 @@ H5FD_direct_get_eoa(const H5FD_t *_file, H5FD_mem_t UNUSED type)
  *-------------------------------------------------------------------------
  */
 static herr_t
-H5FD_direct_set_eoa(H5FD_t *_file, H5FD_mem_t UNUSED type, haddr_t addr)
+H5FD_direct_set_eoa(H5FD_t *_file, H5FD_mem_t H5_ATTR_UNUSED type, haddr_t addr)
 {
     H5FD_direct_t  *file = (H5FD_direct_t*)_file;
 
@@ -829,7 +814,7 @@ H5FD_direct_get_eof(const H5FD_t *_file)
  *-------------------------------------------------------------------------
  */
 static herr_t
-H5FD_direct_get_handle(H5FD_t *_file, hid_t UNUSED fapl, void** file_handle)
+H5FD_direct_get_handle(H5FD_t *_file, hid_t H5_ATTR_UNUSED fapl, void** file_handle)
 {
     H5FD_direct_t       *file = (H5FD_direct_t *)_file;
     herr_t              ret_value = SUCCEED;
@@ -865,7 +850,7 @@ done:
  *-------------------------------------------------------------------------
  */
 static herr_t
-H5FD_direct_read(H5FD_t *_file, H5FD_mem_t UNUSED type, hid_t UNUSED dxpl_id, haddr_t addr,
+H5FD_direct_read(H5FD_t *_file, H5FD_mem_t H5_ATTR_UNUSED type, hid_t H5_ATTR_UNUSED dxpl_id, haddr_t addr,
          size_t size, void *buf/*out*/)
 {
     H5FD_direct_t  *file = (H5FD_direct_t*)_file;
@@ -890,8 +875,6 @@ H5FD_direct_read(H5FD_t *_file, H5FD_mem_t UNUSED type, hid_t UNUSED dxpl_id, ha
     if (HADDR_UNDEF==addr)
         HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "addr undefined")
     if (REGION_OVERFLOW(addr, size))
-        HGOTO_ERROR(H5E_ARGS, H5E_OVERFLOW, FAIL, "addr overflow")
-    if((addr + size) > file->eoa)
         HGOTO_ERROR(H5E_ARGS, H5E_OVERFLOW, FAIL, "addr overflow")
 
     /* If the system doesn't require data to be aligned, read the data in
@@ -1050,7 +1033,7 @@ done:
  *-------------------------------------------------------------------------
  */
 static herr_t
-H5FD_direct_write(H5FD_t *_file, H5FD_mem_t UNUSED type, hid_t UNUSED dxpl_id, haddr_t addr,
+H5FD_direct_write(H5FD_t *_file, H5FD_mem_t H5_ATTR_UNUSED type, hid_t H5_ATTR_UNUSED dxpl_id, haddr_t addr,
     size_t size, const void *buf)
 {
     H5FD_direct_t  *file = (H5FD_direct_t*)_file;
@@ -1078,8 +1061,6 @@ H5FD_direct_write(H5FD_t *_file, H5FD_mem_t UNUSED type, hid_t UNUSED dxpl_id, h
     if (HADDR_UNDEF==addr)
         HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "addr undefined")
     if (REGION_OVERFLOW(addr, size))
-        HGOTO_ERROR(H5E_ARGS, H5E_OVERFLOW, FAIL, "addr overflow")
-    if (addr+size>file->eoa)
         HGOTO_ERROR(H5E_ARGS, H5E_OVERFLOW, FAIL, "addr overflow")
 
     /* If the system doesn't require data to be aligned, read the data in
@@ -1282,7 +1263,7 @@ done:
  *-------------------------------------------------------------------------
  */
 static herr_t
-H5FD_direct_truncate(H5FD_t *_file, hid_t UNUSED dxpl_id, hbool_t UNUSED closing)
+H5FD_direct_truncate(H5FD_t *_file, hid_t H5_ATTR_UNUSED dxpl_id, hbool_t H5_ATTR_UNUSED closing)
 {
     H5FD_direct_t  *file = (H5FD_direct_t*)_file;
     herr_t        ret_value = SUCCEED;       /* Return value */

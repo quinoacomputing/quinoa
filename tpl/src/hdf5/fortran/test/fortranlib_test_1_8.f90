@@ -58,10 +58,10 @@ PROGRAM fortranlibtest
   ENDIF
   WRITE(*,*)
 
-  ret_total_error = 0
-  CALL file_space("file_space_1_8",cleanup, ret_total_error)
-  CALL write_test_status(ret_total_error, &
-       ' Testing file free space', &
+  CALL h5eset_auto_f(0, ret_total_error)
+  IF(ret_total_error.NE.0) &
+       CALL write_test_status(ret_total_error, &
+       ' h5eset_auto_f', &
        total_error)
 
   ret_total_error = 0
@@ -89,7 +89,7 @@ PROGRAM fortranlibtest
        total_error)
 
   ret_total_error = 0
-  CALL test_h5s_encode(cleanup, ret_total_error)
+  CALL test_h5s_encode(ret_total_error)
   CALL write_test_status(ret_total_error, &
        ' Testing dataspace encoding and decoding', &
        total_error)
@@ -98,6 +98,12 @@ PROGRAM fortranlibtest
   CALL test_scaleoffset(cleanup, ret_total_error )
   CALL write_test_status(ret_total_error, &
        ' Testing scaleoffset filter', &
+       total_error)
+
+  ret_total_error = 0
+  CALL test_genprop_basic_class(ret_total_error )
+  CALL write_test_status(ret_total_error, &
+       ' Testing basic generic property list class creation functionality', &
        total_error)
 
   WRITE(*,*)

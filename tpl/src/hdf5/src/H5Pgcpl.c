@@ -34,7 +34,9 @@
 /***********/
 #include "H5private.h"		/* Generic Functions			*/
 #include "H5Eprivate.h"		/* Error handling		  	*/
+#include "H5Gprivate.h"         /* Groups                               */
 #include "H5Iprivate.h"		/* IDs			  		*/
+#include "H5Oprivate.h"		/* Object headers		  	*/
 #include "H5Ppkg.h"		/* Property lists		  	*/
 
 
@@ -69,10 +71,13 @@ static herr_t H5P__gcrt_reg_prop(H5P_genclass_t *pclass);
 const H5P_libclass_t H5P_CLS_GCRT[1] = {{
     "group create",		/* Class name for debugging     */
     H5P_TYPE_GROUP_CREATE,      /* Class type                   */
-    &H5P_CLS_OBJECT_CREATE_g,	/* Parent class ID              */
-    &H5P_CLS_GROUP_CREATE_g,	/* Pointer to class ID          */
-    &H5P_LST_GROUP_CREATE_g,	/* Pointer to default property list ID */
+
+    &H5P_CLS_OBJECT_CREATE_g,	/* Parent class                 */
+    &H5P_CLS_GROUP_CREATE_g,	/* Pointer to class             */
+    &H5P_CLS_GROUP_CREATE_ID_g,	/* Pointer to class ID          */
+    &H5P_LST_GROUP_CREATE_ID_g,	/* Pointer to default property list ID */
     H5P__gcrt_reg_prop,		/* Default property registration routine */
+
     NULL,		        /* Class creation callback      */
     NULL,		        /* Class creation callback info */
     NULL,			/* Class copy callback          */
@@ -156,7 +161,7 @@ H5Pset_local_heap_size_hint(hid_t plist_id, size_t size_hint)
         HGOTO_ERROR(H5E_PLIST, H5E_CANTGET, FAIL, "can't get group info")
 
     /* Update field */
-    H5_ASSIGN_OVERFLOW(ginfo.lheap_size_hint, size_hint, size_t, uint32_t);
+    H5_CHECKED_ASSIGN(ginfo.lheap_size_hint, uint32_t, size_hint, size_t);
 
     /* Set value */
     if(H5P_set(plist, H5G_CRT_GROUP_INFO_NAME, &ginfo) < 0)

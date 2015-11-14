@@ -92,11 +92,7 @@ typedef struct H5FD_log_t {
      * Windows code further below.
      */
     dev_t           device;         /* file device number   */
-#ifdef H5_VMS
-    ino_t           inode[3];       /* file i-node number   */
-#else
     ino_t           inode;          /* file i-node number   */
-#endif /*H5_VMS*/
 #else
     /* Files in windows are uniquely identified by the volume serial
      * number and the file index (both low and high parts).
@@ -564,7 +560,7 @@ H5FD_log_open(const char *name, unsigned flags, hid_t fapl_id, haddr_t maxaddr)
         HGOTO_ERROR(H5E_RESOURCE, H5E_NOSPACE, NULL, "unable to allocate file struct")
 
     file->fd = fd;
-    H5_ASSIGN_OVERFLOW(file->eof, sb.st_size, h5_stat_size_t, haddr_t);
+    H5_CHECKED_ASSIGN(file->eof, haddr_t, sb.st_size, h5_stat_size_t);
     file->pos = HADDR_UNDEF;
     file->op = OP_UNKNOWN;
 #ifdef H5_HAVE_WIN32_API
@@ -580,14 +576,7 @@ H5FD_log_open(const char *name, unsigned flags, hid_t fapl_id, haddr_t maxaddr)
     file->dwVolumeSerialNumber = fileinfo.dwVolumeSerialNumber;
 #else /* H5_HAVE_WIN32_API */
     file->device = sb.st_dev;
-#ifdef H5_VMS
-    file->inode[0] = sb.st_ino[0];
-    file->inode[1] = sb.st_ino[1];
-    file->inode[2] = sb.st_ino[2];
-#else
     file->inode = sb.st_ino;
-#endif /*H5_VMS*/
-
 #endif /* H5_HAVE_WIN32_API */
 
     /* Retain a copy of the name used to open the file, for possible error reporting */
@@ -850,13 +839,8 @@ H5FD_log_cmp(const H5FD_t *_f1, const H5FD_t *_f2)
     if(HDmemcmp(&(f1->device),&(f2->device),sizeof(dev_t)) > 0) HGOTO_DONE(1)
 #endif /* H5_DEV_T_IS_SCALAR */
 
-#ifndef H5_VMS
     if(f1->inode < f2->inode) HGOTO_DONE(-1)
     if(f1->inode > f2->inode) HGOTO_DONE(1)
-#else
-    if(HDmemcmp(&(f1->inode), &(f2->inode), 3 * sizeof(ino_t)) < 0) HGOTO_DONE(-1)
-    if(HDmemcmp(&(f1->inode), &(f2->inode), 3 * sizeof(ino_t)) > 0) HGOTO_DONE(1)
-#endif /*H5_VMS*/
 
 #endif
 
@@ -917,7 +901,7 @@ H5FD_log_query(const H5FD_t *_file, unsigned long *flags /* out */)
  *-------------------------------------------------------------------------
  */
 static haddr_t
-H5FD_log_alloc(H5FD_t *_file, H5FD_mem_t type, hid_t UNUSED dxpl_id, hsize_t size)
+H5FD_log_alloc(H5FD_t *_file, H5FD_mem_t type, hid_t H5_ATTR_UNUSED dxpl_id, hsize_t size)
 {
     H5FD_log_t	*file = (H5FD_log_t *)_file;
     haddr_t addr;
@@ -972,7 +956,7 @@ H5FD_log_alloc(H5FD_t *_file, H5FD_mem_t type, hid_t UNUSED dxpl_id, hsize_t siz
  *-------------------------------------------------------------------------
  */
 static haddr_t
-H5FD_log_get_eoa(const H5FD_t *_file, H5FD_mem_t UNUSED type)
+H5FD_log_get_eoa(const H5FD_t *_file, H5FD_mem_t H5_ATTR_UNUSED type)
 {
     const H5FD_log_t    *file = (const H5FD_log_t *)_file;
 
@@ -1067,7 +1051,7 @@ H5FD_log_get_eof(const H5FD_t *_file)
  *-------------------------------------------------------------------------
  */
 static herr_t
-H5FD_log_get_handle(H5FD_t *_file, hid_t UNUSED fapl, void **file_handle)
+H5FD_log_get_handle(H5FD_t *_file, hid_t H5_ATTR_UNUSED fapl, void **file_handle)
 {
     H5FD_log_t          *file = (H5FD_log_t *)_file;
     herr_t              ret_value = SUCCEED;
@@ -1101,7 +1085,7 @@ done:
  *-------------------------------------------------------------------------
  */
 static herr_t
-H5FD_log_read(H5FD_t *_file, H5FD_mem_t type, hid_t UNUSED dxpl_id, haddr_t addr,
+H5FD_log_read(H5FD_t *_file, H5FD_mem_t type, hid_t H5_ATTR_UNUSED dxpl_id, haddr_t addr,
             size_t size, void *buf/*out*/)
 {
     H5FD_log_t          *file = (H5FD_log_t *)_file;
@@ -1121,8 +1105,6 @@ H5FD_log_read(H5FD_t *_file, H5FD_mem_t type, hid_t UNUSED dxpl_id, haddr_t addr
     if(!H5F_addr_defined(addr))
         HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "addr undefined, addr = %llu", (unsigned long long)addr)
     if(REGION_OVERFLOW(addr, size))
-        HGOTO_ERROR(H5E_ARGS, H5E_OVERFLOW, FAIL, "addr overflow, addr = %llu", (unsigned long long)addr)
-    if((addr + size) > file->eoa)
         HGOTO_ERROR(H5E_ARGS, H5E_OVERFLOW, FAIL, "addr overflow, addr = %llu", (unsigned long long)addr)
 
     /* Log the I/O information about the read */
@@ -1300,7 +1282,7 @@ done:
  *-------------------------------------------------------------------------
  */
 static herr_t
-H5FD_log_write(H5FD_t *_file, H5FD_mem_t type, hid_t UNUSED dxpl_id, haddr_t addr,
+H5FD_log_write(H5FD_t *_file, H5FD_mem_t type, hid_t H5_ATTR_UNUSED dxpl_id, haddr_t addr,
             size_t size, const void *buf)
 {
     H5FD_log_t          *file = (H5FD_log_t *)_file;
@@ -1328,8 +1310,6 @@ H5FD_log_write(H5FD_t *_file, H5FD_mem_t type, hid_t UNUSED dxpl_id, haddr_t add
         HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "addr undefined, addr = %llu", (unsigned long long)addr)
     if(REGION_OVERFLOW(addr, size))
         HGOTO_ERROR(H5E_ARGS, H5E_OVERFLOW, FAIL, "addr overflow, addr = %llu, size = %llu", (unsigned long long)addr, (unsigned long long)size)
-    if((addr + size) > file->eoa)
-        HGOTO_ERROR(H5E_ARGS, H5E_OVERFLOW, FAIL, "addr overflow, addr = %llu, size = %llu, eoa = %llu", (unsigned long long)addr, (unsigned long long)size, (unsigned long long)file->eoa)
 
     /* Log the I/O information about the write */
     if(file->fa.flags & H5FD_LOG_FILE_WRITE) {
@@ -1502,7 +1482,7 @@ done:
  *-------------------------------------------------------------------------
  */
 static herr_t
-H5FD_log_truncate(H5FD_t *_file, hid_t UNUSED dxpl_id, hbool_t UNUSED closing)
+H5FD_log_truncate(H5FD_t *_file, hid_t H5_ATTR_UNUSED dxpl_id, hbool_t H5_ATTR_UNUSED closing)
 {
     H5FD_log_t  *file = (H5FD_log_t *)_file;
     herr_t      ret_value = SUCCEED;                /* Return value */
@@ -1540,13 +1520,6 @@ H5FD_log_truncate(H5FD_t *_file, hid_t UNUSED dxpl_id, hbool_t UNUSED closing)
         if(0 == bError)
             HGOTO_ERROR(H5E_IO, H5E_SEEKERROR, FAIL, "unable to extend file properly")
 #else /* H5_HAVE_WIN32_API */
-#ifdef H5_VMS
-        /* Reset seek offset to the beginning of the file, so that the file isn't
-         * re-extended later.  This may happen on Open VMS. */
-        if(-1 == HDlseek(file->fd, (HDoff_t)0, SEEK_SET))
-            HSYS_GOTO_ERROR(H5E_IO, H5E_SEEKERROR, FAIL, "unable to seek to proper position")
-#endif
-
         if(-1 == HDftruncate(file->fd, (HDoff_t)file->eoa))
             HSYS_GOTO_ERROR(H5E_IO, H5E_SEEKERROR, FAIL, "unable to extend file properly")
 #endif /* H5_HAVE_WIN32_API */
@@ -1566,3 +1539,4 @@ H5FD_log_truncate(H5FD_t *_file, hid_t UNUSED dxpl_id, hbool_t UNUSED closing)
 done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5FD_log_truncate() */
+

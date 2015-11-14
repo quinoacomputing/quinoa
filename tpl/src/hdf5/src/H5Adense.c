@@ -538,7 +538,7 @@ H5A_dense_insert(H5F_t *f, hid_t dxpl_id, const H5O_ainfo_t *ainfo, H5A_t *attr)
     udata.common.shared_fheap = shared_fheap;
     udata.common.name = attr->shared->name;
     udata.common.name_hash = H5_checksum_lookup3(attr->shared->name, HDstrlen(attr->shared->name), 0);
-    H5_ASSIGN_OVERFLOW(udata.common.flags, mesg_flags, unsigned, uint8_t);
+    H5_CHECKED_ASSIGN(udata.common.flags, uint8_t, mesg_flags, unsigned);
     udata.common.corder = attr->shared->crt_idx;
     udata.common.found_op = NULL;
     udata.common.found_op_data = NULL;
@@ -845,7 +845,7 @@ done:
  *-------------------------------------------------------------------------
  */
 static herr_t
-H5A__dense_copy_fh_cb(const void *obj, size_t UNUSED obj_len, void *_udata)
+H5A__dense_copy_fh_cb(const void *obj, size_t H5_ATTR_UNUSED obj_len, void *_udata)
 {
     H5A_fh_ud_cp_t *udata = (H5A_fh_ud_cp_t *)_udata;       /* User data for fractal heap 'op' callback */
     herr_t ret_value = SUCCEED;   /* Return value */

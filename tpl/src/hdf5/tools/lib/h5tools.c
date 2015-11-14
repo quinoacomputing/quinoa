@@ -54,9 +54,6 @@ unsigned long long packed_data_mask;  /* mask in which packed bits to display */
 
 /* module-scoped variables */
 static int  h5tools_init_g;     /* if h5tools lib has been initialized */
-#ifdef H5_HAVE_PARALLEL
-static int  h5tools_mpi_init_g; /* if MPI_Init() has been called */
-#endif /* H5_HAVE_PARALLEL */
 
 /* Names of VFDs */
 static const char *drivernames[]={
@@ -516,11 +513,14 @@ h5tools_get_fapl(hid_t fapl, const char *driver, unsigned *drivernum)
     }
 #ifdef H5_HAVE_PARALLEL
     else if(!HDstrcmp(driver, drivernames[MPIO_IDX])) {
+        int mpi_initialized, mpi_finalized;
+
         /* MPI-I/O Driver */
-        /* check if MPI has been initialized. */
-        if(!h5tools_mpi_init_g)
-            MPI_Initialized(&h5tools_mpi_init_g);
-        if(h5tools_mpi_init_g) {
+        /* check if MPI is available. */
+        MPI_Initialized(&mpi_initialized);
+        MPI_Finalized(&mpi_finalized);
+
+        if(mpi_initialized && !mpi_finalized) {
             if(H5Pset_fapl_mpio(new_fapl, MPI_COMM_WORLD, MPI_INFO_NULL) < 0)
                 goto error;
             if(drivernum)
@@ -844,18 +844,18 @@ h5tools_simple_prefix(FILE *stream, const h5tool_format_t *info,
        the prefix is printed one indentation level before */
     if (info->pindex) {
         for (i = 0; i < indentlevel - 1; i++) {
-            PUTSTREAM(h5tools_str_fmt(&str, 0, info->line_indent), stream);
+            PUTSTREAM(h5tools_str_fmt(&str, (size_t)0, info->line_indent), stream);
         }
     }
 
     if (elmtno == 0 && secnum == 0 && info->line_1st) {
-        PUTSTREAM(h5tools_str_fmt(&prefix, 0, info->line_1st), stream);
+        PUTSTREAM(h5tools_str_fmt(&prefix, (size_t)0, info->line_1st), stream);
     }
     else if (secnum && info->line_cont) {
-        PUTSTREAM(h5tools_str_fmt(&prefix, 0, info->line_cont), stream);
+        PUTSTREAM(h5tools_str_fmt(&prefix, (size_t)0, info->line_cont), stream);
     }
     else {
-        PUTSTREAM(h5tools_str_fmt(&prefix, 0, info->line_pre), stream);
+        PUTSTREAM(h5tools_str_fmt(&prefix, (size_t)0, info->line_pre), stream);
     }
 
     templength = h5tools_str_len(&prefix);
@@ -863,7 +863,7 @@ h5tools_simple_prefix(FILE *stream, const h5tool_format_t *info,
     for (i = 0; i < indentlevel; i++) {
         /*we already made the indent for the array indices case */
         if (!info->pindex) {
-            PUTSTREAM(h5tools_str_fmt(&prefix, 0, info->line_indent), stream);
+            PUTSTREAM(h5tools_str_fmt(&prefix, (size_t)0, info->line_indent), stream);
             templength += h5tools_str_len(&prefix);
         }
         else {
@@ -937,22 +937,22 @@ h5tools_region_simple_prefix(FILE *stream, const h5tool_format_t *info,
        the prefix is printed one indentation level before */
     if (info->pindex)
         for (i = 0; i < indentlevel - 1; i++) {
-            PUTSTREAM(h5tools_str_fmt(&str, 0, info->line_indent), stream);
+            PUTSTREAM(h5tools_str_fmt(&str, (size_t)0, info->line_indent), stream);
         }
 
     if (elmtno == 0 && secnum == 0 && info->line_1st) {
-        PUTSTREAM(h5tools_str_fmt(&prefix, 0, info->line_1st), stream);
+        PUTSTREAM(h5tools_str_fmt(&prefix, (size_t)0, info->line_1st), stream);
     } else if (secnum && info->line_cont) {
-        PUTSTREAM(h5tools_str_fmt(&prefix, 0, info->line_cont), stream);
+        PUTSTREAM(h5tools_str_fmt(&prefix, (size_t)0, info->line_cont), stream);
     } else
-        PUTSTREAM(h5tools_str_fmt(&prefix, 0, info->line_pre), stream);
+        PUTSTREAM(h5tools_str_fmt(&prefix, (size_t)0, info->line_pre), stream);
 
     templength = h5tools_str_len(&prefix);
 
     for (i = 0; i < indentlevel; i++) {
         /*we already made the indent for the array indices case */
         if (!info->pindex) {
-            PUTSTREAM(h5tools_str_fmt(&prefix, 0, info->line_indent), stream);
+            PUTSTREAM(h5tools_str_fmt(&prefix, (size_t)0, info->line_indent), stream);
             templength += h5tools_str_len(&prefix);
         }
         else {
@@ -1009,7 +1009,7 @@ h5tools_render_element(FILE *stream, const h5tool_format_t *info,
     if (stream == NULL)
         return dimension_break;
 
-    s = h5tools_str_fmt(buffer, 0, "%s");
+    s = h5tools_str_fmt(buffer, (size_t)0, "%s");
 
     /*
      * If the element would split on multiple lines if printed at our
@@ -1163,7 +1163,7 @@ h5tools_render_region_element(FILE *stream, const h5tool_format_t *info,
     int      secnum; /*section sequence number */
     int      multiline; /*datum was multiline  */
 
-    s = h5tools_str_fmt(buffer, 0, "%s");
+    s = h5tools_str_fmt(buffer, (size_t)0, "%s");
 
     /*
      * If the element would split on multiple lines if printed at our

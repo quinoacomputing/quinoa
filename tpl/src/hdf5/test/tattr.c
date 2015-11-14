@@ -97,7 +97,7 @@ int attr_data2[ATTR2_DIM1][ATTR2_DIM2]={{7614,-416},{197814,-3}}; /* Test data f
 #define ATTR3_DIM1	2
 #define ATTR3_DIM2	2
 #define ATTR3_DIM3	2
-double attr_data3[ATTR3_DIM1][ATTR3_DIM2][ATTR3_DIM3]={{{2.3,-26.1},{0.123,-10.0}},{{973.23,-0.91827},{2.0,23.0}}}; /* Test data for 3rd attribute */
+double attr_data3[ATTR3_DIM1][ATTR3_DIM2][ATTR3_DIM3]={{{2.3F,-26.1F}, {0.123F,-10.0F}},{{973.23F,-0.91827F},{2.0F,23.0F}}}; /* Test data for 3rd attribute */
 
 #define ATTR4_NAME  "Attr4"
 #define ATTR4_RANK	2
@@ -113,12 +113,12 @@ struct attr4_struct {
     int i;
     double d;
     char c;
- } attr_data4[ATTR4_DIM1][ATTR4_DIM2]={{{3,-26.1,'d'},{-100000, 0.123,'3'}},
-    {{-23,981724.2,'Q'},{0,2.0,'\n'}}}; /* Test data for 4th attribute */
+ } attr_data4[ATTR4_DIM1][ATTR4_DIM2]={{{3,-26.1F,'d'},{-100000, 0.123F,'3'}},
+    {{-23,981724.2F,'Q'},{0,2.0F,'\n'}}}; /* Test data for 4th attribute */
 
 #define ATTR5_NAME  "Attr5"
 #define ATTR5_RANK	0
-float attr_data5=(float)-5.123;        /* Test data for 5th attribute */
+float attr_data5=-5.123F;        /* Test data for 5th attribute */
 
 #define ATTR6_RANK	3
 #define ATTR6_DIM1	100
@@ -499,7 +499,7 @@ test_attr_flush(hid_t fapl)
         att,            /* Attribute ID */
         spc,            /* Dataspace ID */
         set;            /* Dataset ID */
-    double wdata=3.14159;       /* Data to write */
+    double wdata=3.14159F;       /* Data to write */
     double rdata;       /* Data read in */
     herr_t ret;		/* Generic return value		*/
 
@@ -521,8 +521,8 @@ test_attr_flush(hid_t fapl)
     ret=H5Aread(att, H5T_NATIVE_DOUBLE, &rdata);
     CHECK(ret, FAIL, "H5Awrite");
 
-    if(!DBL_ABS_EQUAL(rdata,0.0))
-        TestErrPrintf("attribute value wrong: rdata=%f, should be %f\n",rdata,0.0);
+    if(!DBL_ABS_EQUAL(rdata,0.0F))
+        TestErrPrintf("attribute value wrong: rdata=%f, should be %f\n",rdata,0.0F);
 
     ret=H5Fflush(fil, H5F_SCOPE_GLOBAL);
     CHECK(ret, FAIL, "H5Fflush");
@@ -530,8 +530,8 @@ test_attr_flush(hid_t fapl)
     ret=H5Aread(att, H5T_NATIVE_DOUBLE, &rdata);
     CHECK(ret, FAIL, "H5Awrite");
 
-    if(!DBL_ABS_EQUAL(rdata,0.0))
-        TestErrPrintf("attribute value wrong: rdata=%f, should be %f\n",rdata,0.0);
+    if(!DBL_ABS_EQUAL(rdata,0.0F))
+        TestErrPrintf("attribute value wrong: rdata=%f, should be %f\n",rdata,0.0F);
 
     ret=H5Awrite(att, H5T_NATIVE_DOUBLE, &wdata);
     CHECK(ret, FAIL, "H5Awrite");
@@ -982,7 +982,7 @@ test_attr_scalar_read(hid_t fapl)
     hid_t	sid;	        /* Dataspace ID			*/
     hid_t	attr;	        /* Attribute ID			*/
     H5S_class_t stype;          /* Dataspace class              */
-    float       rdata = 0.0;    /* Buffer for reading 1st attribute */
+    float       rdata = 0.0F;    /* Buffer for reading 1st attribute */
     H5O_info_t  oinfo;          /* Object info                  */
     herr_t	ret;		/* Generic return value		*/
 
@@ -1388,7 +1388,7 @@ test_attr_mult_read(hid_t fapl)
 **
 ****************************************************************/
 static herr_t
-attr_op1(hid_t UNUSED loc_id, const char *name, const H5A_info_t UNUSED *ainfo,
+attr_op1(hid_t H5_ATTR_UNUSED loc_id, const char *name, const H5A_info_t H5_ATTR_UNUSED *ainfo,
     void *op_data)
 {
     int *count = (int *)op_data;
@@ -3261,12 +3261,12 @@ test_attr_dense_dup_ids(hid_t fcpl, hid_t fapl)
     VERIFY(is_dense, TRUE, "H5O_is_attr_dense_test");
 
     /* Open first attribute for the dataset */
-    attr = H5Aopen_by_idx(dataset, ".", H5_INDEX_NAME, H5_ITER_INC, 4,
+    attr = H5Aopen_by_idx(dataset, ".", H5_INDEX_NAME, H5_ITER_INC, (hsize_t)4,
         H5P_DEFAULT, H5P_DEFAULT);
     CHECK(attr, FAIL, "H5Aopen");
 
     /* Open attribute for the second time */
-    attr2 = H5Aopen_by_idx(dataset, ".", H5_INDEX_NAME, H5_ITER_INC, 4,
+    attr2 = H5Aopen_by_idx(dataset, ".", H5_INDEX_NAME, H5_ITER_INC, (hsize_t)4,
         H5P_DEFAULT, H5P_DEFAULT);
     CHECK(attr, FAIL, "H5Aopen");
 
@@ -3317,13 +3317,13 @@ test_attr_dense_dup_ids(hid_t fcpl, hid_t fapl)
     VERIFY(is_dense, TRUE, "H5O_is_attr_dense_test");
 
     /* Open attribute of the dataset for the first time */
-    attr = H5Aopen_by_idx(dataset, ".", H5_INDEX_NAME, H5_ITER_INC, 2,
+    attr = H5Aopen_by_idx(dataset, ".", H5_INDEX_NAME, H5_ITER_INC, (hsize_t)2,
         H5P_DEFAULT, H5P_DEFAULT);
     CHECK(attr, FAIL, "H5Aopen");
 
     /* Delete a few attributes until the storage switches to compact */
     for(u = max_compact; u >= min_dense - 1; u--) {
-        ret = H5Adelete_by_idx(dataset, ".", H5_INDEX_NAME, H5_ITER_INC, u,
+        ret = H5Adelete_by_idx(dataset, ".", H5_INDEX_NAME, H5_ITER_INC, (hsize_t)u,
             H5P_DEFAULT);
         CHECK(ret, FAIL, "H5Adelete_by_idx");
     }
@@ -3333,7 +3333,7 @@ test_attr_dense_dup_ids(hid_t fcpl, hid_t fapl)
     VERIFY(is_dense, FALSE, "H5O_is_attr_dense_test");
 
     /* Open attribute for the second time */
-    attr2 = H5Aopen_by_idx(dataset, ".", H5_INDEX_NAME, H5_ITER_INC, 2,
+    attr2 = H5Aopen_by_idx(dataset, ".", H5_INDEX_NAME, H5_ITER_INC, (hsize_t)2,
         H5P_DEFAULT, H5P_DEFAULT);
     CHECK(attr, FAIL, "H5Aopen");
 
@@ -3384,7 +3384,7 @@ test_attr_dense_dup_ids(hid_t fcpl, hid_t fapl)
     VERIFY(is_dense, FALSE, "H5O_is_attr_dense_test");
 
     /* Open attribute of the dataset for the first time */
-    attr = H5Aopen_by_idx(dataset, ".", H5_INDEX_NAME, H5_ITER_INC, 3,
+    attr = H5Aopen_by_idx(dataset, ".", H5_INDEX_NAME, H5_ITER_INC, (hsize_t)3,
         H5P_DEFAULT, H5P_DEFAULT);
     CHECK(attr, FAIL, "H5Aopen");
 
@@ -3409,7 +3409,7 @@ test_attr_dense_dup_ids(hid_t fcpl, hid_t fapl)
     VERIFY(is_dense, TRUE, "H5O_is_attr_dense_test");
 
     /* Open attribute for the second time */
-    attr2 = H5Aopen_by_idx(dataset, ".", H5_INDEX_NAME, H5_ITER_INC, 3,
+    attr2 = H5Aopen_by_idx(dataset, ".", H5_INDEX_NAME, H5_ITER_INC, (hsize_t)3,
         H5P_DEFAULT, H5P_DEFAULT);
     CHECK(attr, FAIL, "H5Aopen");
 
@@ -4086,7 +4086,7 @@ test_attr_deprec(hid_t fcpl, hid_t fapl)
 
 
     /* Get number of attributes with bad ID */
-    ret = H5Aget_num_attrs(-1);
+    ret = H5Aget_num_attrs((hid_t)-1);
     VERIFY(ret, FAIL, "H5Aget_num_attrs");
 
     /* Get number of attributes */
@@ -6504,8 +6504,8 @@ attr_iterate1_cb(hid_t loc_id, const char *attr_name, void *_op_data)
  *-------------------------------------------------------------------------
  */
 static int
-attr_iterate2_fail_cb(hid_t UNUSED group_id, const char UNUSED *attr_name,
-    const H5A_info_t UNUSED *info, void UNUSED *_op_data)
+attr_iterate2_fail_cb(hid_t H5_ATTR_UNUSED group_id, const char H5_ATTR_UNUSED *attr_name,
+    const H5A_info_t H5_ATTR_UNUSED *info, void H5_ATTR_UNUSED *_op_data)
 {
     return(H5_ITER_ERROR);
 } /* end attr_iterate2_fail_cb() */
@@ -6859,7 +6859,7 @@ test_attr_iterate2(hbool_t new_format, hid_t fcpl, hid_t fapl)
 
     /* Allocate the "visited link" array */
     iter_info.max_visit = max_compact * 2;
-    visited = HDmalloc(sizeof(hbool_t) * iter_info.max_visit);
+    visited = (hbool_t*)HDmalloc(sizeof(hbool_t) * iter_info.max_visit);
     CHECK(visited, NULL, "HDmalloc");
     iter_info.visited = visited;
 

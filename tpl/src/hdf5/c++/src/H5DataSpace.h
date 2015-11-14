@@ -24,14 +24,20 @@ namespace H5 {
 //! Class DataSpace operates on HDF5 dataspaces.
 class H5_DLLCPP DataSpace : public IdComponent {
    public:
-	// Default DataSpace objects
-	static const DataSpace ALL;
+	///\brief Default DataSpace objects
+	static const DataSpace& ALL;
 
 	// Creates a dataspace object given the space type
 	DataSpace(H5S_class_t type = H5S_SCALAR);
 
 	// Creates a simple dataspace
 	DataSpace(int rank, const hsize_t * dims, const hsize_t * maxdims = NULL);
+
+	// Creates a DataSpace object using an existing dataspace id.
+	DataSpace(const hid_t space_id);
+
+	// Copy constructor: makes a copy of the original DataSpace object.
+	DataSpace(const DataSpace& original);
 
 	// Assignment operator
 	DataSpace& operator=( const DataSpace& rhs );
@@ -109,27 +115,37 @@ class H5_DLLCPP DataSpace : public IdComponent {
 	///\brief Returns this class name.
 	virtual H5std_string fromClass () const { return("DataSpace"); }
 
-	// Creates a DataSpace object using an existing dataspace id.
-	DataSpace(const hid_t space_id);
-
-	// Copy constructor: makes a copy of the original DataSpace object.
-	DataSpace(const DataSpace& original);
-
 	// Gets the dataspace id.
 	virtual hid_t getId() const;
+
+	// Deletes the global constant
+	static void deleteConstants();
 
 	// Destructor: properly terminates access to this dataspace.
 	virtual ~DataSpace();
 
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+
+   protected:
+	// Sets the dataspace id.
+	virtual void p_setId(const hid_t new_id);
+
+#endif // DOXYGEN_SHOULD_SKIP_THIS
+
    private:
 	hid_t id;       // HDF5 dataspace id
 
-   protected:
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
-	// Sets the dataspace id.
-	virtual void p_setId(const hid_t new_id);
-#endif // DOXYGEN_SHOULD_SKIP_THIS
 
+	static DataSpace* ALL_;
+
+	// Creates the global constant
+	static DataSpace* getConstant();
+
+	// Friend function to set DataSpace id.  For library use only.
+	friend void f_DataSpace_setId(DataSpace *dspace, hid_t new_id);
+
+#endif // DOXYGEN_SHOULD_SKIP_THIS
 };
 #ifndef H5_NO_NAMESPACE
 }

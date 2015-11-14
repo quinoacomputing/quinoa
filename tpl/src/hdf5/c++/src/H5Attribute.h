@@ -31,6 +31,16 @@ namespace H5 {
 */
 class H5_DLLCPP Attribute : public AbstractDs, public IdComponent {
    public:
+
+	// Copy constructor: makes a copy of an existing Attribute object.
+	Attribute( const Attribute& original );
+
+	// Default constructor
+	Attribute();
+
+	// Creates a copy of an existing attribute using the attribute id
+	Attribute( const hid_t attr_id );
+
 	// Closes this attribute.
 	virtual void close();
 
@@ -70,24 +80,17 @@ class H5_DLLCPP Attribute : public AbstractDs, public IdComponent {
 	///\brief Returns this class name.
 	virtual H5std_string fromClass () const { return("Attribute"); }
 
-	// Creates a copy of an existing attribute using the attribute id
-	Attribute( const hid_t attr_id );
-
-	// Copy constructor: makes a copy of an existing Attribute object.
-	Attribute( const Attribute& original );
-
-	// Default constructor
-	Attribute();
-
 	// Gets the attribute id.
 	virtual hid_t getId() const;
 
 	// Destructor: properly terminates access to this attribute.
 	virtual ~Attribute();
 
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
    protected:
 	// Sets the attribute id.
 	virtual void p_setId(const hid_t new_id);
+#endif // DOXYGEN_SHOULD_SKIP_THIS
 
    private:
 	hid_t id;	// HDF5 attribute id
@@ -107,6 +110,10 @@ class H5_DLLCPP Attribute : public AbstractDs, public IdComponent {
 
 	// do not inherit H5Object::renameAttr
 	void renameAttr() {}
+
+	// Friend function to set Attribute id.  For library use only.
+	friend void f_Attribute_setId(Attribute* attr, hid_t new_id);
+
 };
 #ifndef H5_NO_NAMESPACE
 }

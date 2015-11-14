@@ -111,7 +111,7 @@ static int H5FD_driver_query(const H5FD_class_t *driver, unsigned long *flags/*o
  * object and the file is closed and re-opened, the 'fileno' value will
  * be different.
  */
-static unsigned long file_serial_no;
+static unsigned long H5FD_file_serial_no_g;
 
 /* File driver ID class */
 static const H5I_class_t H5I_VFL_CLS[1] = {{
@@ -176,7 +176,7 @@ H5FD_init_interface(void)
 	HGOTO_ERROR(H5E_VFL, H5E_CANTINIT, FAIL, "unable to initialize interface")
 
     /* Reset the file serial numbers */
-    file_serial_no = 0;
+    H5FD_file_serial_no_g = 0;
 
 done:
     FUNC_LEAVE_NOAPI(ret_value)
@@ -211,8 +211,8 @@ H5FD_term_interface(void)
     FUNC_ENTER_NOAPI_NOINIT_NOERR
 
     if(H5_interface_initialize_g) {
-	if((n=H5I_nmembers(H5I_VFL))!=0) {
-	    H5I_clear_type(H5I_VFL, FALSE, FALSE);
+	if(H5I_nmembers(H5I_VFL) > 0) {
+	    (void)H5I_clear_type(H5I_VFL, FALSE, FALSE);
 
             /* Reset the VFL drivers, if they've been closed */
             if(H5I_nmembers(H5I_VFL)==0) {
@@ -232,14 +232,21 @@ H5FD_term_interface(void)
                 H5FD_mpio_term();
 #endif /* H5_HAVE_PARALLEL */
             } /* end if */
-	} else {
-	    H5I_dec_type_ref(H5I_VFL);
+
+            n++; /*H5I*/
+	} /* end if */
+        else {
+            /* Destroy the VFL driver id group */
+	    (void)H5I_dec_type_ref(H5I_VFL);
+            n++; /*H5I*/
+
+	    /* Mark closed */
 	    H5_interface_initialize_g = 0;
-	    n = 1; /*H5I*/
-	}
-    }
+	} /* end else */
+    } /* end if */
+
     FUNC_LEAVE_NOAPI(n)
-}
+} /* end H5FD_term_interface() */
 
 
 /*-------------------------------------------------------------------------
@@ -897,6 +904,7 @@ H5FDopen(const char *name, unsigned flags, hid_t fapl_id, haddr_t maxaddr)
     H5FD_t	*ret_value=NULL;
 
     FUNC_ENTER_API(NULL)
+    H5TRACE4("*x", "*sIuia", name, flags, fapl_id, maxaddr);
 
     /* Check arguments */
     if(H5P_DEFAULT == fapl_id)
@@ -1003,11 +1011,11 @@ H5FD_open(const char *name, unsigned flags, hid_t fapl_id, haddr_t maxaddr)
         HGOTO_ERROR(H5E_VFL, H5E_CANTINIT, NULL, "unable to query file driver")
 
     /* Increment the global serial number & assign it to this H5FD_t object */
-    if(++file_serial_no == 0) {
+    if(++H5FD_file_serial_no_g == 0) {
         /* (Just error out if we wrap around for now...) */
         HGOTO_ERROR(H5E_VFL, H5E_CANTINIT, NULL, "unable to get file serial number")
     } /* end if */
-    file->fileno = file_serial_no;
+    file->fileno = H5FD_file_serial_no_g;
 
     /* Start with base address set to 0 */
     /* (This will be changed later, when the superblock is located) */
@@ -1669,15 +1677,14 @@ done:
  * Programmer:	Robb Matzke
  *              Thursday, July 29, 1999
  *
- * Modifications:
- *
  *-------------------------------------------------------------------------
  */
 herr_t
 H5FDread(H5FD_t *file, H5FD_mem_t type, hid_t dxpl_id, haddr_t addr, size_t size,
 	 void *buf/*out*/)
 {
-    herr_t      ret_value = SUCCEED;       /* Return value */
+    H5P_genplist_t *dxpl;               /* DXPL object */
+    herr_t      ret_value = SUCCEED;    /* Return value */
 
     FUNC_ENTER_API(FAIL)
     H5TRACE6("e", "*xMtiazx", file, type, dxpl_id, addr, size, buf);
@@ -1695,9 +1702,13 @@ H5FDread(H5FD_t *file, H5FD_mem_t type, hid_t dxpl_id, haddr_t addr, size_t size
     if(!buf)
 	HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "null result buffer")
 
+    /* Get the DXPL plist object for DXPL ID */
+    if(NULL == (dxpl = (H5P_genplist_t *)H5I_object(dxpl_id)))
+        HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "can't get property list")
+
     /* Do the real work */
     /* (Note compensating for base address addition in internal routine) */
-    if(H5FD_read(file, dxpl_id, type, addr - file->base_addr, size, buf) < 0)
+    if(H5FD_read(file, dxpl, type, addr - file->base_addr, size, buf) < 0)
 	HGOTO_ERROR(H5E_VFL, H5E_READERROR, FAIL, "file read request failed")
 
 done:
@@ -1720,15 +1731,14 @@ done:
  * Programmer:	Robb Matzke
  *              Thursday, July 29, 1999
  *
- * Modifications:
- *
  *-------------------------------------------------------------------------
  */
 herr_t
 H5FDwrite(H5FD_t *file, H5FD_mem_t type, hid_t dxpl_id, haddr_t addr, size_t size,
 	  const void *buf)
 {
-    herr_t      ret_value = SUCCEED;       /* Return value */
+    H5P_genplist_t *dxpl;               /* DXPL object */
+    herr_t      ret_value = SUCCEED;    /* Return value */
 
     FUNC_ENTER_API(FAIL)
     H5TRACE6("e", "*xMtiaz*x", file, type, dxpl_id, addr, size, buf);
@@ -1745,9 +1755,13 @@ H5FDwrite(H5FD_t *file, H5FD_mem_t type, hid_t dxpl_id, haddr_t addr, size_t siz
     if(!buf)
 	HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "null buffer")
 
+    /* Get the DXPL plist object for DXPL ID */
+    if(NULL == (dxpl = (H5P_genplist_t *)H5I_object(dxpl_id)))
+        HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "can't get property list")
+
     /* The real work */
     /* (Note compensating for base address addition in internal routine) */
-    if(H5FD_write(file, dxpl_id, type, addr - file->base_addr, size, buf) < 0)
+    if(H5FD_write(file, dxpl, type, addr - file->base_addr, size, buf) < 0)
 	HGOTO_ERROR(H5E_VFL, H5E_WRITEERROR, FAIL, "file write request failed")
 
 done:
@@ -1844,12 +1858,12 @@ done:
  *-------------------------------------------------------------------------
  */
 herr_t
-H5FDtruncate(H5FD_t *file, hid_t dxpl_id, unsigned closing)
+H5FDtruncate(H5FD_t *file, hid_t dxpl_id, hbool_t closing)
 {
     herr_t ret_value = SUCCEED;       /* Return value */
 
     FUNC_ENTER_API(FAIL)
-    H5TRACE3("e", "*xiIu", file, dxpl_id, closing);
+    H5TRACE3("e", "*xib", file, dxpl_id, closing);
 
     /* Check args */
     if(!file || !file->cls)
@@ -1883,7 +1897,7 @@ done:
  *-------------------------------------------------------------------------
  */
 herr_t
-H5FD_truncate(H5FD_t *file, hid_t dxpl_id, unsigned closing)
+H5FD_truncate(H5FD_t *file, hid_t dxpl_id, hbool_t closing)
 {
     herr_t      ret_value = SUCCEED;       /* Return value */
 
