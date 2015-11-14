@@ -219,7 +219,7 @@ ExternalProject_Add(
   BINARY_DIR ${CMAKE_INSTALL_PREFIX}/charm
   # Build Charm++
   BUILD_COMMAND ${CMAKE_INSTALL_PREFIX}/charm/build
-                msa
+                charm++
                 ${CHARM_ARCH}
                 ${CHARM_COMPILER}
                 --build-shared
