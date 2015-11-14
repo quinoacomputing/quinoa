@@ -1,6 +1,5 @@
 ## Add each new test subdirectory name to the list at the bottom and that's it.
 
-INCLUDE(AddSubdirectories)
 
 INCLUDE_DIRECTORIES(
   ${CMAKE_CURRENT_SOURCE_DIR}

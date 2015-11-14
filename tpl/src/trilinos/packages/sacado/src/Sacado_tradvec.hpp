@@ -19,7 +19,7 @@
 //
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
 // USA
 // Questions? Contact David M. Gay (dmgay@sandia.gov) or Eric T. Phipps
 // (etphipp@sandia.gov).
@@ -39,8 +39,7 @@
 #include "Sacado_tradvec_Traits.hpp"
 
 #include <stddef.h>
-#include <cmath>
-#include <math.h>
+#include <Sacado_cmath.hpp>
 
 #if defined(RAD_DEBUG_BLOCKKEEP) && !defined(HAVE_SACADO_UNINIT)
 #undef RAD_DEBUG_BLOCKKEEP
@@ -300,6 +299,7 @@ T F copy(Ai);
 ADvari {	// implementation of an ADvar
  public:
 	typedef Double value_type;
+        typedef typename ScalarType<value_type>::type scalar_type;
 	typedef IndepADvar<Double> IndepADVar;
 #ifdef RAD_AUTO_AD_Const
 	friend class IndepADvar<Double>;
@@ -1212,7 +1212,7 @@ ADcontext<Double>::Gradcomp()
 #endif /*RAD_AUTO_AD_Const*/
 
 	ADVari::adc.derp_init(1);
-	if ((d = DErp::LastDerp)) {
+	if ((d = DErp::LastDerp) != 0) {
 		*d->b->aval = 1;
 #ifdef RAD_DEBUG
 		if (ADVari::debug_file)
@@ -1253,7 +1253,7 @@ ADcontext<Double>::Weighted_Gradcomp(size_t n, ADVar **V, Double *w)
 
 	ADVari::adc.derp_init(1);
 
-	if ((d = DErp::LastDerp)) {
+	if ((d = DErp::LastDerp) != 0) {
 		for(i = 0; i < n; i++)
 			*V[i]->cv->aval = w[i];
 #ifdef RAD_DEBUG
@@ -1301,7 +1301,7 @@ ADcontext<Double>::Weighted_GradcompVec(size_t n, size_t *np, ADVar ***V, Double
 	if (!n)
 		return;
 
-	if ((d = DErp::LastDerp)) {
+	if ((d = DErp::LastDerp) != 0) {
 		for(i = 0; i < n; i++) {
 			ni = np[i];
 			wi = w[i];

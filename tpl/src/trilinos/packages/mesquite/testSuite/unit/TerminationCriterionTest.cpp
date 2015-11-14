@@ -18,7 +18,7 @@
 
     You should have received a copy of the GNU Lesser General Public License 
     (lgpl.txt) along with this library; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  
     diachin2@llnl.gov, djmelan@sandia.gov, mbrewer@sandia.gov, 
     pknupp@sandia.gov, tleurent@mcs.anl.gov, tmunson@mcs.anl.gov      
@@ -34,21 +34,21 @@ Tests for the TerminationCriterion class..
 
 
 #include "Mesquite.hpp"
-#include "MsqError.hpp"
-#include "Vector3D.hpp"
-#include "OFEvaluator.hpp"
-#include "ObjectiveFunction.hpp"
-#include "PatchData.hpp"
-#include "TerminationCriterion.hpp"
-#include "VertexMover.hpp"
-#include "VertexPatches.hpp"
+#include "Mesquite_MsqError.hpp"
+#include "Mesquite_Vector3D.hpp"
+#include "Mesquite_OFEvaluator.hpp"
+#include "Mesquite_ObjectiveFunction.hpp"
+#include "Mesquite_PatchData.hpp"
+#include "Mesquite_TerminationCriterion.hpp"
+#include "Mesquite_VertexMover.hpp"
+#include "Mesquite_VertexPatches.hpp"
 
 #include "UnitUtil.hpp"
 #include "PatchDataInstances.hpp"
-#include "ArrayMesh.hpp"
-#include "MeshUtil.hpp"
-#include "SimpleStats.hpp"
-#include "InstructionQueue.hpp"
+#include "Mesquite_ArrayMesh.hpp"
+#include "Mesquite_MeshUtil.hpp"
+#include "Mesquite_SimpleStats.hpp"
+#include "Mesquite_InstructionQueue.hpp"
 
 #include <iostream>
 #include <algorithm>

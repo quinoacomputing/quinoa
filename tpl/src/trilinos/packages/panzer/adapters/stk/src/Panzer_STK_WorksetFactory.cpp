@@ -45,7 +45,7 @@
 #include "Panzer_WorksetFactoryBase.hpp"
 #include "Panzer_STK_SetupUtilities.hpp"
 
-namespace panzer_stk {
+namespace panzer_stk_classic {
 
 /** Build sets of boundary condition worksets
   */
@@ -53,19 +53,65 @@ Teuchos::RCP<std::map<unsigned,panzer::Workset> > WorksetFactory::
 getSideWorksets(const panzer::BC & bc,
               const panzer::PhysicsBlock & pb) const
 {
-   return panzer_stk::buildBCWorksets(*mesh_,pb,bc.sidesetID());
+  using Teuchos::RCP;
+  using Teuchos::rcp;
+
+  panzer::WorksetNeeds needs;
+  needs.cellData = pb.cellData();
+
+  const std::map<int,RCP<panzer::IntegrationRule> >& int_rules = pb.getIntegrationRules();
+  for(std::map<int,RCP<panzer::IntegrationRule> >::const_iterator ir_itr = int_rules.begin();
+      ir_itr != int_rules.end(); ++ir_itr)
+    needs.int_rules.push_back(ir_itr->second);
+
+  const std::map<std::string,Teuchos::RCP<panzer::PureBasis> >& bases= pb.getBases();
+  for(std::map<std::string,Teuchos::RCP<panzer::PureBasis> >::const_iterator b_itr = bases.begin();
+      b_itr != bases.end(); ++b_itr)
+    needs.bases.push_back(b_itr->second);
+
+  return getSideWorksets(bc,needs);
+}
+
+Teuchos::RCP<std::map<unsigned,panzer::Workset> > WorksetFactory::
+getSideWorksets(const panzer::BC & bc,
+              const panzer::WorksetNeeds & needs) const
+{
+   return panzer_stk_classic::buildBCWorksets(*mesh_,needs,bc.elementBlockID(),bc.sidesetID());
 }
 
 Teuchos::RCP<std::vector<panzer::Workset> > WorksetFactory::
 getWorksets(const panzer::WorksetDescriptor & worksetDesc,
             const panzer::PhysicsBlock & pb) const
 {
+  using Teuchos::RCP;
+  using Teuchos::rcp;
+
+  panzer::WorksetNeeds needs;
+  needs.cellData = pb.cellData();
+
+  const std::map<int,RCP<panzer::IntegrationRule> >& int_rules = pb.getIntegrationRules();
+  for(std::map<int,RCP<panzer::IntegrationRule> >::const_iterator ir_itr = int_rules.begin();
+      ir_itr != int_rules.end(); ++ir_itr)
+    needs.int_rules.push_back(ir_itr->second);
+
+  const std::map<std::string,Teuchos::RCP<panzer::PureBasis> >& bases= pb.getBases();
+  for(std::map<std::string,Teuchos::RCP<panzer::PureBasis> >::const_iterator b_itr = bases.begin();
+      b_itr != bases.end(); ++b_itr)
+    needs.bases.push_back(b_itr->second);
+
+  return getWorksets(worksetDesc,needs);
+}
+
+Teuchos::RCP<std::vector<panzer::Workset> > WorksetFactory::
+getWorksets(const panzer::WorksetDescriptor & worksetDesc,
+            const panzer::WorksetNeeds & needs) const
+{
   if(!worksetDesc.useSideset()) {
-    return panzer_stk::buildWorksets(*mesh_, pb);
+    return panzer_stk_classic::buildWorksets(*mesh_,worksetDesc.getElementBlock(), needs);
   }
   else if(worksetDesc.useSideset() && worksetDesc.sideAssembly()) {
     // uses cascade by default, each subcell has its own workset
-    return panzer_stk::buildWorksets(*mesh_,pb,worksetDesc.getSideset(),true);
+    return panzer_stk_classic::buildWorksets(*mesh_,needs,worksetDesc.getSideset(),worksetDesc.getElementBlock(),true);
   }
   else {
     TEUCHOS_ASSERT(false);
@@ -74,7 +120,7 @@ getWorksets(const panzer::WorksetDescriptor & worksetDesc,
     // to fix how the assembly process is handled for sidesets 
     /*
     Teuchos::RCP<std::map<unsigned,panzer::Workset> > workset_map =
-      panzer_stk::buildBCWorksets(*mesh_,pb,worksetDesc.getSideset());
+      panzer_stk_classic::buildBCWorksets(*mesh_,pb,worksetDesc.getSideset());
 
     // loop over worksets, adding them to vector
     Teuchos::RCP<std::vector<panzer::Workset> > worksets = Teuchos::rcp(new std::vector<panzer::Workset>);

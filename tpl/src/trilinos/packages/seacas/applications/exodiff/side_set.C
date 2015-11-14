@@ -31,14 +31,15 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // 
 
-#include <iostream>
-#include <cstdlib>
-
-#include "smart_assert.h"
 #include "side_set.h"
-#include "iqsort.h"
-#include "exodusII.h"
-#include "ED_SystemInterface.h"
+#include <cstdlib>                      // for NULL, exit
+#include <iostream>                     // for operator<<, endl, ostream, etc
+#include <vector>                       // for vector
+#include "ED_SystemInterface.h"         // for SystemInterface, interface
+#include "exodusII.h"                   // for ex_set, etc
+#include "iqsort.h"                     // for index_qsort
+#include "smart_assert.h"               // for SMART_ASSERT
+
 
 using namespace std;
 
@@ -46,20 +47,22 @@ template <typename INT>
 Side_Set<INT>::Side_Set()
   : Exo_Entity(),
     num_dist_factors(0),
-    elmts(0),
-    sides(0),
-    sideIndex(0),
-    dist_factors(0)
+    elmts(NULL),
+    sides(NULL),
+    sideIndex(NULL),
+    dfIndex(NULL),
+    dist_factors(NULL)
 { }
 
 template <typename INT>
 Side_Set<INT>::Side_Set(int file_id, size_t id)
   : Exo_Entity(file_id, id),
     num_dist_factors(0),
-    elmts(0),
-    sides(0),
-    sideIndex(0),
-    dist_factors(0)
+    elmts(NULL),
+    sides(NULL),
+    sideIndex(NULL),
+    dfIndex(NULL),
+    dist_factors(NULL)
 {
   SMART_ASSERT((int)id != EX_INVALID_ID);
 }
@@ -68,10 +71,11 @@ template <typename INT>
 Side_Set<INT>::Side_Set(int file_id, size_t id, size_t ns, size_t ndf)
   : Exo_Entity(file_id, id, ns),
     num_dist_factors(ndf),
-    elmts(0),
-    sides(0),
-    sideIndex(0),
-    dist_factors(0)
+    elmts(NULL),
+    sides(NULL),
+    sideIndex(NULL),
+    dfIndex(NULL),
+    dist_factors(NULL)
 {
   SMART_ASSERT(id > 0);
 }
@@ -84,6 +88,7 @@ Side_Set<INT>::~Side_Set()
   delete [] elmts;
   delete [] sides;
   delete [] sideIndex;
+  delete [] dfIndex;
   delete [] dist_factors;
 }
 
@@ -93,17 +98,27 @@ EXOTYPE Side_Set<INT>::exodus_type() const {return EX_SIDE_SET;}
 template <typename INT>
 void Side_Set<INT>::entity_load_params()
 {
-  int err = ex_get_set_param(fileId, EX_SIDE_SET, id_, &numEntity,&num_dist_factors);
+  std::vector<ex_set> sets(1);
+  sets[0].id = id_;
+  sets[0].type = EX_SIDE_SET;
+  sets[0].entry_list = NULL;
+  sets[0].extra_list = NULL;
+  sets[0].distribution_factor_list = NULL;
+
+  int err = ex_get_sets(fileId, 1, &sets[0]);
   
   if (err < 0) {
     std::cout << "ERROR: Failed to get sideset parameters for sideset " << id_
 	      << ". !  Aborting..." << std::endl;
     exit(1);
   }
+
+  numEntity = sets[0].num_entry;
+  num_dist_factors = sets[0].num_distribution_factor;
 }
 
 template <typename INT>
-void Side_Set<INT>::apply_map(const INT *elmt_map)
+ void Side_Set<INT>::apply_map(const INT *elmt_map)
 {
   SMART_ASSERT(elmt_map != NULL);
   if (elmts != NULL) {
@@ -160,6 +175,52 @@ void Side_Set<INT>::load_sides(const INT *elmt_map) const
 }
 
 template <typename INT>
+void Side_Set<INT>::load_df() const
+{
+  if (elmts == NULL)
+    load_sides();
+  
+  if (dist_factors != NULL)
+    return;  // Already loaded.
+  
+  dfIndex = new INT[numEntity+1]; SMART_ASSERT(dfIndex != 0);
+  std::vector<int> count(numEntity);
+
+  // Handle the sierra "universal side set" which only has a single df per face...
+  if (num_dist_factors == numEntity) {
+    for (size_t i=0; i < numEntity; i++) {
+      count[i] = 1;
+    }
+  }
+  else {
+    int err = ex_get_side_set_node_count(fileId, id_, count.data());
+    if (err < 0) {
+      std::cout << "Side_Set::load_df(): ERROR: Failed to read side set node count for sideset "
+		<< id_ << "!  Aborting..." << std::endl;
+      exit(1);
+    }
+  }
+
+  // Convert raw counts to index...
+  INT index = 0;
+  for (size_t i=0; i < numEntity; i++) {
+    dfIndex[i] = index;
+    index += count[i];
+  }
+  dfIndex[numEntity] = index;
+
+  // index value should now equal df count for this sideset...
+  SMART_ASSERT(index == num_dist_factors);
+  dist_factors = new double[index];
+  int err = ex_get_set_dist_fact(fileId, EX_SIDE_SET, id_, dist_factors);
+  if (err < 0) {
+    std::cout << "Side_Set::load_df(): ERROR: Failed to read side set distribution factors for sideset "
+	      << id_ << "!  Aborting..." << std::endl;
+    exit(1);
+  }
+}
+
+template <typename INT>
 const INT* Side_Set<INT>::Elements() const
 {
   load_sides();
@@ -192,11 +253,18 @@ size_t Side_Set<INT>::Side_Index(size_t position) const
 template <typename INT>
 const double* Side_Set<INT>::Distribution_Factors() const
 {
-  if (!dist_factors && num_dist_factors > 0) {
-    dist_factors = new double[num_dist_factors];  SMART_ASSERT(dist_factors != 0);
-    ex_get_set_dist_fact(fileId, EX_SIDE_SET, id_, dist_factors);
-  }
+  if (dist_factors == NULL)
+    load_df();
   return dist_factors;
+}
+
+template <typename INT>
+std::pair<INT,INT> Side_Set<INT>::Distribution_Factor_Range(size_t side) const
+{
+  if (dfIndex == NULL)
+    load_df();
+  size_t side_index = sideIndex[side];
+  return std::make_pair(dfIndex[side_index], dfIndex[side_index+1]);
 }
 
 template <typename INT>

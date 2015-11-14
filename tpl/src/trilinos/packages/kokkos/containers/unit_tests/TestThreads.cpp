@@ -1,13 +1,13 @@
 /*
 //@HEADER
 // ************************************************************************
-//
-//   Kokkos: Manycore Performance-Portable Multidimensional Arrays
-//              Copyright (2012) Sandia Corporation
-//
+// 
+//                        Kokkos v. 2.0
+//              Copyright (2014) Sandia Corporation
+// 
 // Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
 // the U.S. Government retains certain rights in this software.
-//
+// 
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -36,16 +36,18 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 // Questions? Contact  H. Carter Edwards (hcedwar@sandia.gov)
-//
+// 
 // ************************************************************************
 //@HEADER
 */
 
 #include <gtest/gtest.h>
 
-#include <Kokkos_Threads.hpp>
-#include <Kokkos_hwloc.hpp>
+#include <Kokkos_Core.hpp>
 
+#if defined( KOKKOS_HAVE_PTHREAD )
+
+#include <Kokkos_Bitset.hpp>
 #include <Kokkos_UnorderedMap.hpp>
 
 #include <Kokkos_Vector.hpp>
@@ -53,31 +55,35 @@
 
 
 //----------------------------------------------------------------------------
+#include <TestBitset.hpp>
 #include <TestUnorderedMap.hpp>
+#include <TestStaticCrsGraph.hpp>
 
 #include <TestVector.hpp>
 #include <TestDualView.hpp>
+#include <TestSegmentedView.hpp>
 
 namespace Test {
 
-#ifdef KOKKOS_HAVE_PTHREAD
 class threads : public ::testing::Test {
 protected:
   static void SetUpTestCase()
   {
     std::cout << std::setprecision(5) << std::scientific;
 
-    unsigned team_count = 1 ;
-    unsigned threads_per_team = 4 ;
+    unsigned num_threads = 4;
 
-    if ( Kokkos::hwloc::available() ) {
-      team_count = Kokkos::hwloc::get_available_numa_count();
-      threads_per_team = Kokkos::hwloc::get_available_cores_per_numa() *
-                         Kokkos::hwloc::get_available_threads_per_core();
+    if (Kokkos::hwloc::available()) {
+      num_threads = Kokkos::hwloc::get_available_numa_count()
+                    * Kokkos::hwloc::get_available_cores_per_numa()
+                 // * Kokkos::hwloc::get_available_threads_per_core()
+                    ;
+
     }
 
-    Kokkos::Threads::initialize( team_count * threads_per_team );
-    //Kokkos::Threads::initialize( 1);
+    std::cout << "Threads: " << num_threads << std::endl;
+
+    Kokkos::Threads::initialize( num_threads );
   }
 
   static void TearDownTestCase()
@@ -86,10 +92,21 @@ protected:
   }
 };
 
-#define THREADS_INSERT_TEST( name, num_nodes, num_inserts, num_duplicates, repeat )                                \
+TEST_F( threads , staticcrsgraph )
+{
+  TestStaticCrsGraph::run_test_graph< Kokkos::Threads >();
+  TestStaticCrsGraph::run_test_graph2< Kokkos::Threads >();
+}
+
+/*TEST_F( threads, bitset )
+{
+  test_bitset<Kokkos::Threads>();
+}*/
+
+#define THREADS_INSERT_TEST( name, num_nodes, num_inserts, num_duplicates, repeat, near )                                \
   TEST_F( threads, UnorderedMap_insert_##name##_##num_nodes##_##num_inserts##_##num_duplicates##_##repeat##x) {   \
     for (int i=0; i<repeat; ++i)                                                                                \
-      test_insert_##name<Kokkos::Threads>(num_nodes,num_inserts,num_duplicates);                                   \
+      test_insert<Kokkos::Threads>(num_nodes,num_inserts,num_duplicates, near);                                   \
   }
 
 #define THREADS_FAILED_INSERT_TEST( num_nodes, repeat )                            \
@@ -120,14 +137,21 @@ protected:
       test_dualview_combinations<int,Kokkos::Threads>(size);                     \
   }
 
-THREADS_INSERT_TEST(close,100000, 90000, 100, 500)
-THREADS_INSERT_TEST(far,100000, 90000, 100, 500)
+#define THREADS_SEGMENTEDVIEW_TEST( size )                             \
+  TEST_F( threads, segmentedview_##size##x) {       \
+      test_segmented_view<double,Kokkos::Threads>(size);                     \
+  }
+
+
+THREADS_INSERT_TEST(far, 100000, 90000, 100, 500, false)
 THREADS_FAILED_INSERT_TEST( 10000, 1000 )
 THREADS_DEEP_COPY( 10000, 1 )
 
 THREADS_VECTOR_COMBINE_TEST( 10 )
 THREADS_VECTOR_COMBINE_TEST( 3057 )
 THREADS_DUALVIEW_COMBINE_TEST( 10 )
+THREADS_SEGMENTEDVIEW_TEST( 10000 )
+
 
 #undef THREADS_INSERT_TEST
 #undef THREADS_FAILED_INSERT_TEST
@@ -135,8 +159,10 @@ THREADS_DUALVIEW_COMBINE_TEST( 10 )
 #undef THREADS_DEEP_COPY
 #undef THREADS_VECTOR_COMBINE_TEST
 #undef THREADS_DUALVIEW_COMBINE_TEST
+#undef THREADS_SEGMENTEDVIEW_TEST
 
-#endif
 } // namespace Test
 
+
+#endif /* #if defined( KOKKOS_HAVE_PTHREAD ) */
 

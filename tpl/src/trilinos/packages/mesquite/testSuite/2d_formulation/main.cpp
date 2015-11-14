@@ -18,7 +18,7 @@
 
     You should have received a copy of the GNU Lesser General Public License 
     (lgpl.txt) along with this library; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
 
     (2007) kraftche@cae.wisc.edu    
 
@@ -35,21 +35,21 @@
 
 #include "Mesquite.hpp"
 
-#include "PMeanPTemplate.hpp"
-#include "AffineMapMetric.hpp"
-#include "ConjugateGradient.hpp"
-#include "TerminationCriterion.hpp"
-#include "ElementPMeanP.hpp"
-#include "MsqError.hpp"
-#include "TSquared.hpp"
-#include "MeshImpl.hpp"
-#include "PlanarDomain.hpp"
-#include "InstructionQueue.hpp"
-#include "TargetCalculator.hpp"
-#include "MetricWeight.hpp"
-#include "InverseMetricWeight.hpp"
-#include "TargetWriter.hpp"
-#include "WeightReader.hpp"
+#include "Mesquite_PMeanPTemplate.hpp"
+#include "Mesquite_AffineMapMetric.hpp"
+#include "Mesquite_ConjugateGradient.hpp"
+#include "Mesquite_TerminationCriterion.hpp"
+#include "Mesquite_ElementPMeanP.hpp"
+#include "Mesquite_MsqError.hpp"
+#include "Mesquite_TSquared.hpp"
+#include "Mesquite_MeshImpl.hpp"
+#include "Mesquite_PlanarDomain.hpp"
+#include "Mesquite_InstructionQueue.hpp"
+#include "Mesquite_TargetCalculator.hpp"
+#include "Mesquite_MetricWeight.hpp"
+#include "Mesquite_InverseMetricWeight.hpp"
+#include "Mesquite_TargetWriter.hpp"
+#include "Mesquite_WeightReader.hpp"
 
 #include <iostream>
 #include <stdlib.h>

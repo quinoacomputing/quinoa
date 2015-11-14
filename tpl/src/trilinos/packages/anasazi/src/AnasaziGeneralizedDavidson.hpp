@@ -19,7 +19,7 @@
 //
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
 // USA
 // Questions? Contact Michael A. Heroux (maherou@sandia.gov)
 //
@@ -182,7 +182,7 @@ class GeneralizedDavidson : public Eigensolver<ScalarType,MV,OP>
     /*!
      * \brief Initialize solver from state
      */
-    void initialize( GeneralizedDavidsonState<ScalarType,MV> state );
+    void initialize( GeneralizedDavidsonState<ScalarType,MV>& state );
 
     /*!
      * \brief Get number of iterations
@@ -534,7 +534,7 @@ GeneralizedDavidson<ScalarType,MV,OP>::GeneralizedDavidson(
     TEUCHOS_TEST_FOR_EXCEPTION( d_maxSubspaceDim <= 0, std::invalid_argument, "Maximum Subspace Dimension must be positive" );
     TEUCHOS_TEST_FOR_EXCEPTION( d_problem->getNEV()+2 > pl.get<int>("Maximum Subspace Dimension"),
                                 std::invalid_argument, "Maximum Subspace Dimension must be strictly greater than NEV");
-    TEUCHOS_TEST_FOR_EXCEPTION( d_maxSubspaceDim > MVT::GetVecLength(*problem->getInitVec()),
+    TEUCHOS_TEST_FOR_EXCEPTION( d_maxSubspaceDim > MVT::GetGlobalLength(*problem->getInitVec()),
                                 std::invalid_argument, "Maximum Subspace Dimension cannot exceed problem size");
 
 
@@ -703,7 +703,7 @@ void GeneralizedDavidson<ScalarType,MV,OP>::setSize(int blockSize, int maxSubDim
  */
 //---------------------------------------------------------------------------//
 template <class ScalarType, class MV, class OP>
-void GeneralizedDavidson<ScalarType,MV,OP>::initialize( GeneralizedDavidsonState<ScalarType,MV> state )
+void GeneralizedDavidson<ScalarType,MV,OP>::initialize( GeneralizedDavidsonState<ScalarType,MV>& state )
 {
     // If state has nonzero dimension, we initialize from that, otherwise
     //  we'll pick d_blockSize vectors to start with
@@ -1007,30 +1007,48 @@ void GeneralizedDavidson<ScalarType,MV,OP>::sortProblem( int numWanted )
             d_outputMan->stream(Warnings) << "  Problem may not be correctly sorted" << std::endl;
         }
     }
-    else
-    {
-        char getCondNum = 'N'; // no condition number estimates
-        char getQ = 'V';       // keep Schur vectors
-        int subDim;
-        int work_size = d_curDim;
-        std::vector<ScalarType> work(work_size);
-        int iwork_size = 1;
-        int iwork;
-        int info;
+    else {
+      char getCondNum = 'N'; // no condition number estimates
+      char getQ = 'V';       // keep Schur vectors
+      int subDim = 0;
+      int work_size = d_curDim;
+      std::vector<ScalarType> work(work_size);
+      int iwork_size = 1;
+      int iwork = 0;
+      int info = 0;
 
-        Teuchos::LAPACK<int,ScalarType> lapack;
-        lapack.TRSEN( getCondNum, getQ, &sel[0], d_curDim, d_S->values(), d_S->stride(), d_Z->values(), d_Z->stride(),
-                      &d_alphar[0], &d_alphai[0], &subDim, 0, 0, &work[0], work_size, &iwork, iwork_size, &info );
+      Teuchos::LAPACK<int,ScalarType> lapack;
+      lapack.TRSEN (getCondNum, getQ, &sel[0], d_curDim, d_S->values (),
+                    d_S->stride (), d_Z->values (), d_Z->stride (),
+                    &d_alphar[0], &d_alphai[0], &subDim, 0, 0, &work[0],
+                    work_size, &iwork, iwork_size, &info );
 
+      std::fill( d_betar.begin(), d_betar.end(), ST::one() );
 
-        std::fill( d_betar.begin(), d_betar.end(), ST::one() );
+      d_ritzIndexValid = false;
+      d_ritzVectorsValid = false;
 
-        d_ritzIndexValid = false;
-        d_ritzVectorsValid = false;
+      TEUCHOS_TEST_FOR_EXCEPTION(
+        info < 0, std::runtime_error, "Anasazi::GeneralizedDavidson::"
+        "sortProblem: LAPACK routine TRSEN returned error code INFO = "
+        << info << " < 0.  This indicates that argument " << -info
+        << " (counting starts with one) of TRSEN had an illegal value.");
 
-        std::stringstream ss;
-        ss << "Anasazi::GeneralizedDavidson: TRSEN returned error code " << info << std::endl;
-        TEUCHOS_TEST_FOR_EXCEPTION( info!=0, std::runtime_error, ss.str() );
+      // LAPACK's documentation suggests that this should only happen
+      // in the real-arithmetic case, because I only see INFO == 1
+      // possible for DTRSEN, not for ZTRSEN.  Nevertheless, it's
+      // harmless to check regardless.
+      TEUCHOS_TEST_FOR_EXCEPTION(
+        info == 1, std::runtime_error, "Anasazi::GeneralizedDavidson::"
+        "sortProblem: LAPACK routine TRSEN returned error code INFO = 1.  "
+        "This indicates that the reordering failed because some eigenvalues "
+        "are too close to separate (the problem is very ill-conditioned).");
+
+      TEUCHOS_TEST_FOR_EXCEPTION(
+        info > 1, std::logic_error, "Anasazi::GeneralizedDavidson::"
+        "sortProblem: LAPACK routine TRSEN returned error code INFO = "
+        << info << " > 1.  This should not be possible.  It may indicate an "
+        "error either in LAPACK itself, or in Teuchos' LAPACK wrapper.");
     }
 }
 

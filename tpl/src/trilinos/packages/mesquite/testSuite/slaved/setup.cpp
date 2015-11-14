@@ -1,6 +1,6 @@
-#include "MeshImpl.hpp"
-#include "MsqError.hpp"
-#include "MsqVertex.hpp"
+#include "Mesquite_MeshImpl.hpp"
+#include "Mesquite_MsqError.hpp"
+#include "Mesquite_MsqVertex.hpp"
 
 #include <iostream>
 #include <stdlib.h>

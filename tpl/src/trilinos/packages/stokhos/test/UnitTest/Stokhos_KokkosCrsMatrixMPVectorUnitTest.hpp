@@ -42,12 +42,12 @@
 #include "Teuchos_UnitTestHelpers.hpp"
 #include "Stokhos_UnitTestHelpers.hpp"
 
-#include "Stokhos_Sacado_Kokkos.hpp"
+#include "Stokhos_Sacado_Kokkos_MP_Vector.hpp"
 #include "Kokkos_CrsMatrix_MP_Vector.hpp"
+#include "Kokkos_CrsMatrix_MP_Vector_Cuda.hpp"
 
 // For computing DeviceConfig
-#include "Kokkos_hwloc.hpp"
-#include "Kokkos_Cuda.hpp"
+#include "Kokkos_Core.hpp"
 
 // Helper functions
 template< typename IntType >
@@ -197,9 +197,9 @@ buildDiagonalMatrix(typename MatrixType::ordinal_type nrow,
 // Kernel to set diagonal of a matrix to prescribed values
 template <typename MatrixType>
 struct ReplaceDiagonalValuesKernel {
-  typedef typename MatrixType::device_type device_type;
+  typedef typename MatrixType::execution_space execution_space;
   typedef typename MatrixType::size_type size_type;
-  typedef typename MatrixType::scalar_type scalar_type;
+  typedef typename MatrixType::value_type value_type;
   typedef typename MatrixType::ordinal_type ordinal_type;
 
   const MatrixType m_matrix;
@@ -210,7 +210,7 @@ struct ReplaceDiagonalValuesKernel {
   void operator() (const size_type i) const {
     const ordinal_type row = i;
     const ordinal_type col = i;
-    scalar_type val = scalar_type(row);
+    value_type val = value_type(row);
     m_matrix.replaceValues(row, &col, 1, &val, true);
   }
 
@@ -228,12 +228,13 @@ struct ReplaceDiagonalValuesKernel {
       Kokkos::create_mirror_view(matrix.values);
     Kokkos::deep_copy(host_matrix_values, matrix.values);
     const ordinal_type nrow = matrix.numRows();
+    const ordinal_type vec_size = host_matrix_values.sacado_size();
     bool success = true;
     for (ordinal_type row=0; row<nrow; ++row) {
       bool s = compareVecs(host_matrix_values(row),
                            "matrix_values(row)",
-                           scalar_type(row),
-                           "scalar_type(row)",
+                           value_type(vec_size, row),
+                           "value_type(row)",
                            0.0, 0.0, out);
       success = success && s;
     }
@@ -244,9 +245,9 @@ struct ReplaceDiagonalValuesKernel {
 // Kernel to add values to the diagonal of a matrix
 template <typename MatrixType>
 struct AddDiagonalValuesKernel {
-  typedef typename MatrixType::device_type device_type;
+  typedef typename MatrixType::execution_space execution_space;
   typedef typename MatrixType::size_type size_type;
-  typedef typename MatrixType::scalar_type scalar_type;
+  typedef typename MatrixType::value_type value_type;
   typedef typename MatrixType::ordinal_type ordinal_type;
 
   const MatrixType m_matrix;
@@ -257,7 +258,7 @@ struct AddDiagonalValuesKernel {
   void operator() (const size_type i) const {
     const ordinal_type row = i;
     const ordinal_type col = i;
-    scalar_type val = scalar_type(row);
+    value_type val = value_type(row);
     m_matrix.sumIntoValues(row, &col, 1, &val, true);
   }
 
@@ -275,12 +276,13 @@ struct AddDiagonalValuesKernel {
       Kokkos::create_mirror_view(matrix.values);
     Kokkos::deep_copy(host_matrix_values, matrix.values);
     const ordinal_type nrow = matrix.numRows();
+    const ordinal_type vec_size = host_matrix_values.sacado_size();
     bool success = true;
     for (ordinal_type row=0; row<nrow; ++row) {
       bool s = compareVecs(host_matrix_values(row),
                            "matrix_values(row)",
-                           scalar_type(row),
-                           "scalar_type(row)",
+                           value_type(vec_size, row),
+                           "value_type(row)",
                            0.0, 0.0, out);
       success = success && s;
     }
@@ -292,9 +294,9 @@ struct AddDiagonalValuesKernel {
 // adds to the same row (checks atomic really works)
 template <typename MatrixType>
 struct AddDiagonalValuesAtomicKernel {
-  typedef typename MatrixType::device_type device_type;
+  typedef typename MatrixType::execution_space execution_space;
   typedef typename MatrixType::size_type size_type;
-  typedef typename MatrixType::scalar_type scalar_type;
+  typedef typename MatrixType::value_type value_type;
   typedef typename MatrixType::ordinal_type ordinal_type;
 
   const MatrixType m_matrix;
@@ -305,7 +307,7 @@ struct AddDiagonalValuesAtomicKernel {
   void operator() (const size_type i) const {
     const ordinal_type row = 0;
     const ordinal_type col = 0;
-    scalar_type val = scalar_type(i);
+    value_type val = value_type(i);
     m_matrix.sumIntoValues(row, &col, 1, &val, true);
   }
 
@@ -323,13 +325,14 @@ struct AddDiagonalValuesAtomicKernel {
       Kokkos::create_mirror_view(matrix.values);
     Kokkos::deep_copy(host_matrix_values, matrix.values);
     const ordinal_type nrow = matrix.numRows();
+    const ordinal_type vec_size = host_matrix_values.sacado_size();
     bool success = true;
     for (ordinal_type row=0; row<nrow; ++row) {
-      scalar_type val;
+      value_type val;
       if (row == 0)
-        val = scalar_type( nrow*(nrow-1)/2 );
+        val = value_type( vec_size, nrow*(nrow-1)/2 );
       else
-        val = scalar_type(0.0);
+        val = value_type( vec_size, 0.0 );
       bool s = compareVecs(host_matrix_values(row),
                            "matrix_values(row)",
                            val,
@@ -341,13 +344,15 @@ struct AddDiagonalValuesAtomicKernel {
   }
 };
 
-TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL(
-  Kokkos_CrsMatrix_MP, ReplaceValues, Scalar, Ordinal, Device )
+const unsigned VectorSize = 16;  // Currently must be a multiple of 8 based on
+                                 // alignment assumptions for SFS
+
+TEUCHOS_UNIT_TEST_TEMPLATE_1_DECL(
+  Kokkos_CrsMatrix_MP, ReplaceValues, MatrixScalar )
 {
-  const Ordinal VectorSize = 3;
-  typedef Stokhos::StaticFixedStorage<Ordinal,Scalar,VectorSize,Device> Storage;
-  typedef Sacado::MP::Vector<Storage> MatrixScalar;
-  typedef Kokkos::CrsMatrix<MatrixScalar,Ordinal,Device> Matrix;
+  typedef typename MatrixScalar::ordinal_type Ordinal;
+  typedef typename MatrixScalar::execution_space Device;
+  typedef KokkosSparse::CrsMatrix<MatrixScalar,Ordinal,Device> Matrix;
 
   // Build diagonal matrix
   Ordinal nrow = 10;
@@ -361,13 +366,12 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL(
   success = kernel::check(matrix, out);
 }
 
-TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL(
-  Kokkos_CrsMatrix_MP, SumIntoValues, Scalar, Ordinal, Device )
+TEUCHOS_UNIT_TEST_TEMPLATE_1_DECL(
+  Kokkos_CrsMatrix_MP, SumIntoValues, MatrixScalar )
 {
-  const Ordinal VectorSize = 3;
-  typedef Stokhos::StaticFixedStorage<Ordinal,Scalar,VectorSize,Device> Storage;
-  typedef Sacado::MP::Vector<Storage> MatrixScalar;
-  typedef Kokkos::CrsMatrix<MatrixScalar,Ordinal,Device> Matrix;
+  typedef typename MatrixScalar::ordinal_type Ordinal;
+  typedef typename MatrixScalar::execution_space Device;
+  typedef KokkosSparse::CrsMatrix<MatrixScalar,Ordinal,Device> Matrix;
 
   // Build diagonal matrix
   Ordinal nrow = 10;
@@ -381,13 +385,12 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL(
   success = kernel::check(matrix, out);
 }
 
-TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL(
-  Kokkos_CrsMatrix_MP, SumIntoValuesAtomic, Scalar, Ordinal, Device )
+TEUCHOS_UNIT_TEST_TEMPLATE_1_DECL(
+  Kokkos_CrsMatrix_MP, SumIntoValuesAtomic, MatrixScalar )
 {
-  const Ordinal VectorSize = 3;
-  typedef Stokhos::StaticFixedStorage<Ordinal,Scalar,VectorSize,Device> Storage;
-  typedef Sacado::MP::Vector<Storage> MatrixScalar;
-  typedef Kokkos::CrsMatrix<MatrixScalar,Ordinal,Device> Matrix;
+  typedef typename MatrixScalar::ordinal_type Ordinal;
+  typedef typename MatrixScalar::execution_space Device;
+  typedef KokkosSparse::CrsMatrix<MatrixScalar,Ordinal,Device> Matrix;
 
   // Build diagonal matrix
   Ordinal nrow = 10;
@@ -404,17 +407,17 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL(
 template <typename VectorType, typename Multiply>
 bool test_embedded_vector(const typename VectorType::ordinal_type nGrid,
                           const typename VectorType::ordinal_type stoch_length,
-                          Kokkos::DeviceConfig dev_config,
+                          KokkosSparse::DeviceConfig dev_config,
                           Multiply multiply_op,
                           Teuchos::FancyOStream& out)
 {
   typedef typename VectorType::ordinal_type ordinal_type;
   typedef typename VectorType::value_type scalar_type;
   typedef typename VectorType::storage_type storage_type;
-  typedef typename storage_type::device_type device_type;
+  typedef typename storage_type::execution_space execution_space;
   typedef Kokkos::LayoutRight Layout;
-  typedef Kokkos::View< VectorType*, Layout, device_type > block_vector_type;
-  typedef Kokkos::CrsMatrix< VectorType, ordinal_type, device_type > block_matrix_type;
+  typedef Kokkos::View< VectorType*, Layout, execution_space > block_vector_type;
+  typedef KokkosSparse::CrsMatrix< VectorType, ordinal_type, execution_space > block_matrix_type;
   typedef typename block_matrix_type::StaticCrsGraphType matrix_graph_type;
   typedef typename block_matrix_type::values_type matrix_values_type;
 
@@ -433,11 +436,9 @@ bool test_embedded_vector(const typename VectorType::ordinal_type nGrid,
   // Generate input multivector:
 
   block_vector_type x =
-    block_vector_type(Kokkos::allocate_without_initializing,
-                      "x", fem_length, stoch_length);
+    block_vector_type(Kokkos::ViewAllocateWithoutInitializing("x"), fem_length, stoch_length);
   block_vector_type y =
-    block_vector_type(Kokkos::allocate_without_initializing,
-                      "y", fem_length, stoch_length);
+    block_vector_type(Kokkos::ViewAllocateWithoutInitializing("y"), fem_length, stoch_length);
 
   typename block_vector_type::HostMirror hx = Kokkos::create_mirror_view( x );
   typename block_vector_type::HostMirror hy = Kokkos::create_mirror_view( y );
@@ -466,8 +467,7 @@ bool test_embedded_vector(const typename VectorType::ordinal_type nGrid,
       std::string("test crs graph"), fem_graph);
   matrix_values_type matrix_values =
     matrix_values_type(
-      Kokkos::allocate_without_initializing,
-      "matrix", fem_graph_length, stoch_length);
+      Kokkos::ViewAllocateWithoutInitializing("matrix"), fem_graph_length, stoch_length);
   block_matrix_type matrix(
     "block_matrix", fem_length, matrix_values, matrix_graph);
   matrix.dev_config = dev_config;
@@ -538,7 +538,7 @@ struct Kokkos_MV_Multiply_Op {
   void operator() (const Matrix& A,
                    const InputVector& x,
                    OutputVector& y) const {
-    Kokkos::MV_Multiply(y, A, x);
+    KokkosSparse::spmv("N", typename Matrix::value_type(1.0) , A, x, typename Matrix::value_type(0.0), y);
   }
 };
 
@@ -556,13 +556,25 @@ struct Stokhos_MV_Multiply_Op {
 };
 
 typedef Kokkos_MV_Multiply_Op KokkosMultiply;
-typedef Stokhos_MV_Multiply_Op<Stokhos::EnsembleMultiply> EnsembleMultiply;
 typedef Stokhos_MV_Multiply_Op<Stokhos::DefaultMultiply> DefaultMultiply;
 
-#define CRSMATRIX_MP_VECTOR_TESTS_SCALAR_ORDINAL_DEVICE(SCALAR, ORDINAL, DEVICE)\
-TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT(                                   \
-  Kokkos_CrsMatrix_MP, ReplaceValues, SCALAR, ORDINAL, DEVICE )         \
-TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT(                                   \
-  Kokkos_CrsMatrix_MP, SumIntoValues, SCALAR, ORDINAL, DEVICE )         \
-TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT(                                   \
-  Kokkos_CrsMatrix_MP, SumIntoValuesAtomic, SCALAR, ORDINAL, DEVICE )
+#define CRSMATRIX_MP_VECTOR_TESTS_MATRIXSCALAR( SCALAR )                \
+  TEUCHOS_UNIT_TEST_TEMPLATE_1_INSTANT(                                 \
+    Kokkos_CrsMatrix_MP, ReplaceValues, SCALAR )                        \
+  TEUCHOS_UNIT_TEST_TEMPLATE_1_INSTANT(                                 \
+    Kokkos_CrsMatrix_MP, SumIntoValues, SCALAR )                        \
+  TEUCHOS_UNIT_TEST_TEMPLATE_1_INSTANT(                                 \
+    Kokkos_CrsMatrix_MP, SumIntoValuesAtomic, SCALAR )
+
+#define CRSMATRIX_MP_VECTOR_TESTS_STORAGE( STORAGE )                    \
+  typedef Sacado::MP::Vector<STORAGE> MP_Vector_ ## STORAGE;            \
+  CRSMATRIX_MP_VECTOR_TESTS_MATRIXSCALAR( MP_Vector_ ## STORAGE )
+
+#define CRSMATRIX_MP_VECTOR_TESTS_ORDINAL_SCALAR_DEVICE( ORDINAL, SCALAR, DEVICE ) \
+  typedef Stokhos::StaticFixedStorage<ORDINAL,SCALAR,VectorSize,DEVICE> SFS; \
+  typedef Stokhos::DynamicStorage<ORDINAL,SCALAR,DEVICE> DS;            \
+  CRSMATRIX_MP_VECTOR_TESTS_STORAGE( SFS )                              \
+  CRSMATRIX_MP_VECTOR_TESTS_STORAGE( DS )
+
+#define CRSMATRIX_MP_VECTOR_TESTS_DEVICE( DEVICE ) \
+  CRSMATRIX_MP_VECTOR_TESTS_ORDINAL_SCALAR_DEVICE( int, double, DEVICE )

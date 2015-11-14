@@ -54,12 +54,15 @@
 
 void Ifpack_PrintLine()
 {
-  cout << "================================================================================" << endl;
+  std::cout << "================================================================================" << std::endl;
 }
 
 //============================================================================
 void Ifpack_BreakForDebugger(Epetra_Comm& Comm)
 {
+  using std::cout;
+  using std::endl;
+
   char hostname[80];
   char buf[80];
   if (Comm.MyPID()  == 0) cout << "Host and Process Ids for tasks" << endl;
@@ -88,7 +91,7 @@ void Ifpack_BreakForDebugger(Epetra_Comm& Comm)
     printf( "**\n");
     printf( "** Enter a character to continue > "); fflush(stdout);
     char go;
-    scanf("%c",&go);
+    TEUCHOS_ASSERT(scanf("%c",&go) != EOF);
   }
 
   Comm.Barrier();
@@ -100,9 +103,9 @@ Epetra_CrsMatrix* Ifpack_CreateOverlappingCrsMatrix(const Epetra_RowMatrix* Matr
                                                     const int OverlappingLevel)
 {
 
-  if (OverlappingLevel == 0) 
+  if (OverlappingLevel == 0)
     return(0); // All done
-  if (Matrix->Comm().NumProc() == 1) 
+  if (Matrix->Comm().NumProc() == 1)
     return(0); // All done
 
   Epetra_CrsMatrix* OverlappingMatrix;
@@ -130,29 +133,29 @@ Epetra_CrsMatrix* Ifpack_CreateOverlappingCrsMatrix(const Epetra_RowMatrix* Matr
 
 #ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
     if(OverlappingImporter->TargetMap().GlobalIndicesInt()) {
-	  int* MyGlobalElements = OverlappingImporter->TargetMap().MyGlobalElements();
+          int* MyGlobalElements = OverlappingImporter->TargetMap().MyGlobalElements();
       OverlappingMap = new Epetra_Map(-1,NumMyElements,MyGlobalElements,
                                     0, Matrix->Comm());
     }
-	else
+        else
 #endif
 #ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
     if(OverlappingImporter->TargetMap().GlobalIndicesLongLong()) {
       long long* MyGlobalElements = OverlappingImporter->TargetMap().MyGlobalElements64();
       OverlappingMap = new Epetra_Map((long long) -1,NumMyElements,MyGlobalElements,
                                     0, Matrix->Comm());
-	}
-	else
+        }
+        else
 #endif
       throw "Ifpack_CreateOverlappingCrsMatrix: GlobalIndices type unknown";
 
     if (level < OverlappingLevel)
       OverlappingMatrix = new Epetra_CrsMatrix(Copy, *OverlappingMap, 0);
     else
-      // On last iteration, we want to filter out all columns except 
+      // On last iteration, we want to filter out all columns except
       // those that correspond
       // to rows in the graph.  This assures that our matrix is square
-      OverlappingMatrix = new Epetra_CrsMatrix(Copy, *OverlappingMap, 
+      OverlappingMatrix = new Epetra_CrsMatrix(Copy, *OverlappingMap,
                                                *OverlappingMap, 0);
 
     OverlappingMatrix->Import(*OldMatrix, *OverlappingImporter, Insert);
@@ -180,9 +183,9 @@ Epetra_CrsGraph* Ifpack_CreateOverlappingCrsMatrix(const Epetra_CrsGraph* Graph,
                                                    const int OverlappingLevel)
 {
 
-  if (OverlappingLevel == 0) 
+  if (OverlappingLevel == 0)
     return(0); // All done
-  if (Graph->Comm().NumProc() == 1) 
+  if (Graph->Comm().NumProc() == 1)
     return(0); // All done
 
   Epetra_CrsGraph* OverlappingGraph;
@@ -207,14 +210,14 @@ Epetra_CrsGraph* Ifpack_CreateOverlappingCrsMatrix(const Epetra_CrsGraph* Graph,
     if (level < OverlappingLevel)
       OverlappingGraph = new Epetra_CrsGraph(Copy, *OverlappingMap, 0);
     else
-      // On last iteration, we want to filter out all columns except 
+      // On last iteration, we want to filter out all columns except
       // those that correspond
       // to rows in the graph.  This assures that our matrix is square
-      OverlappingGraph = new Epetra_CrsGraph(Copy, *OverlappingMap, 
+      OverlappingGraph = new Epetra_CrsGraph(Copy, *OverlappingMap,
                                           *OverlappingMap, 0);
 
     OverlappingGraph->Import(*OldGraph, *OverlappingImporter, Insert);
-    if (level < OverlappingLevel) 
+    if (level < OverlappingLevel)
       OverlappingGraph->FillComplete(*DomainMap, *RangeMap);
     else {
       // Copy last OverlapImporter because we will use it later
@@ -236,25 +239,28 @@ Epetra_CrsGraph* Ifpack_CreateOverlappingCrsMatrix(const Epetra_CrsGraph* Graph,
 }
 
 //============================================================================
-string Ifpack_toString(const int& x)
+std::string Ifpack_toString(const int& x)
 {
   char s[100];
   sprintf(s, "%d", x);
-  return string(s);
+  return std::string(s);
 }
 
 //============================================================================
-string Ifpack_toString(const double& x)
+std::string Ifpack_toString(const double& x)
 {
   char s[100];
   sprintf(s, "%g", x);
-  return string(s);
+  return std::string(s);
 }
 
 //============================================================================
 int Ifpack_PrintResidual(char* Label, const Epetra_RowMatrix& A,
                          const Epetra_MultiVector& X, const Epetra_MultiVector&Y)
 {
+  using std::cout;
+  using std::endl;
+
   if (X.Comm().MyPID() == 0) {
     cout << "***** " << Label << endl;
   }
@@ -267,6 +273,9 @@ int Ifpack_PrintResidual(char* Label, const Epetra_RowMatrix& A,
 int Ifpack_PrintResidual(const int iter, const Epetra_RowMatrix& A,
                          const Epetra_MultiVector& X, const Epetra_MultiVector&Y)
 {
+  using std::cout;
+  using std::endl;
+
   Epetra_MultiVector RHS(X);
   std::vector<double> Norm2;
   Norm2.resize(X.NumVectors());
@@ -277,7 +286,7 @@ int Ifpack_PrintResidual(const int iter, const Epetra_RowMatrix& A,
   RHS.Norm2(&Norm2[0]);
 
   if (X.Comm().MyPID() == 0) {
-    cout << "***** iter: " << iter << ":  ||Ax - b||_2 = " 
+    cout << "***** iter: " << iter << ":  ||Ax - b||_2 = "
          << Norm2[0] << endl;
   }
 
@@ -289,10 +298,13 @@ int Ifpack_PrintResidual(const int iter, const Epetra_RowMatrix& A,
 // of the input matrix.
 void Ifpack_PrintSparsity_Simple(const Epetra_RowMatrix& A)
 {
+  using std::cout;
+  using std::endl;
+
   int MaxEntries = A.MaxNumEntries();
-  vector<int> Indices(MaxEntries);
-  vector<double> Values(MaxEntries);
-  vector<bool> FullRow(A.NumMyRows());
+  std::vector<int> Indices(MaxEntries);
+  std::vector<double> Values(MaxEntries);
+  std::vector<bool> FullRow(A.NumMyRows());
 
   cout << "+-";
   for (int j = 0 ; j < A.NumMyRows() ; ++j)
@@ -335,8 +347,8 @@ double Ifpack_FrobeniusNorm(const Epetra_RowMatrix& A)
 {
   double MyNorm = 0.0, GlobalNorm;
 
-  vector<int> colInd(A.MaxNumEntries());
-  vector<double> colVal(A.MaxNumEntries());
+  std::vector<int> colInd(A.MaxNumEntries());
+  std::vector<double> colVal(A.MaxNumEntries());
 
   for (int i = 0 ; i < A.NumMyRows() ; ++i) {
 
@@ -363,37 +375,39 @@ static void print()
 template<class T>
 static void print(const char str[], T val)
 {
-  cout.width(30); cout.setf(ios::left);
-  cout << str;
-  cout << " = " << val << endl;
+  std::cout.width(30); std::cout.setf(std::ios::left);
+  std::cout << str;
+  std::cout << " = " << val << std::endl;
 }
 
 template<class T>
 static void print(const char str[], T val, double percentage)
 {
-  cout.width(30); cout.setf(ios::left);
-  cout << str;
-  cout << " = ";
-  cout.width(20); cout.setf(ios::left);
-  cout << val;
-  cout << " ( " << percentage << " %)" << endl;
+  std::cout.width(30); std::cout.setf(std::ios::left);
+  std::cout << str;
+  std::cout << " = ";
+  std::cout.width(20); std::cout.setf(std::ios::left);
+  std::cout << val;
+  std::cout << " ( " << percentage << " %)" << std::endl;
 }
 template<class T>
 static void print(const char str[], T one, T two, T three, bool equal = true)
 {
-  cout.width(30); cout.setf(ios::left);
-  cout << str;
-  if (equal) 
-    cout << " = ";
+  using std::endl;
+
+  std::cout.width(30); std::cout.setf(std::ios::left);
+  std::cout << str;
+  if (equal)
+    std::cout << " = ";
   else
-    cout << "   ";
-  cout.width(15); cout.setf(ios::left);
-  cout << one;
-  cout.width(15); cout.setf(ios::left);
-  cout << two;
-  cout.width(15); cout.setf(ios::left);
-  cout << three;
-  cout << endl;
+    std::cout << "   ";
+  std::cout.width(15); std::cout.setf(std::ios::left);
+  std::cout << one;
+  std::cout.width(15); std::cout.setf(std::ios::left);
+  std::cout << two;
+  std::cout.width(15); std::cout.setf(std::ios::left);
+  std::cout << three;
+  std::cout << endl;
 }
 
 //============================================================================
@@ -419,8 +433,8 @@ int Ifpack_Analyze(const Epetra_RowMatrix& A, const bool Cheap,
 
   bool verbose = (A.Comm().MyPID() == 0);
 
-  GlobalStorage = sizeof(int*) * NumGlobalRows + 
-    sizeof(int) * A.NumGlobalNonzeros64() + 
+  GlobalStorage = sizeof(int*) * NumGlobalRows +
+    sizeof(int) * A.NumGlobalNonzeros64() +
     sizeof(double) * A.NumGlobalNonzeros64();
 
   if (verbose) {
@@ -438,8 +452,8 @@ int Ifpack_Analyze(const Epetra_RowMatrix& A, const bool Cheap,
   long long NumMyEmptyRows = 0, NumGlobalEmptyRows;
   long long NumMyDirichletRows = 0, NumGlobalDirichletRows;
 
-  vector<int> colInd(A.MaxNumEntries());
-  vector<double> colVal(A.MaxNumEntries());
+  std::vector<int> colInd(A.MaxNumEntries());
+  std::vector<double> colVal(A.MaxNumEntries());
 
   Epetra_Vector Diag(A.RowMatrixRowMap());
   Epetra_Vector RowSum(A.RowMatrixRowMap());
@@ -473,9 +487,9 @@ int Ifpack_Analyze(const Epetra_RowMatrix& A, const bool Cheap,
       else
         Diag[i] = v;
 
-      if (GCID < GRID) 
+      if (GCID < GRID)
         MyLowerNonzeros++;
-      else if (GCID > GRID) 
+      else if (GCID > GRID)
         MyUpperNonzeros++;
       long long b = GCID - GRID;
       if (b < 0) b = -b;
@@ -495,7 +509,7 @@ int Ifpack_Analyze(const Epetra_RowMatrix& A, const bool Cheap,
   // ======================== //
   // summing up global values //
   // ======================== //
- 
+
   A.Comm().SumAll(&MyDiagonallyDominant,&GlobalDiagonallyDominant,1);
   A.Comm().SumAll(&MyWeaklyDiagonallyDominant,&GlobalWeaklyDiagonallyDominant,1);
   A.Comm().SumAll(&NumMyActualNonzeros, &NumGlobalActualNonzeros, 1);
@@ -506,7 +520,7 @@ int Ifpack_Analyze(const Epetra_RowMatrix& A, const bool Cheap,
   A.Comm().SumAll(&MyUpperNonzeros, &GlobalUpperNonzeros, 1);
   A.Comm().SumAll(&MyDiagonallyDominant, &GlobalDiagonallyDominant, 1);
   A.Comm().SumAll(&MyWeaklyDiagonallyDominant, &GlobalWeaklyDiagonallyDominant, 1);
- 
+
   double NormOne = A.NormOne();
   double NormInf = A.NormInf();
   double NormF   = Ifpack_FrobeniusNorm(A);
@@ -523,7 +537,7 @@ int Ifpack_Analyze(const Epetra_RowMatrix& A, const bool Cheap,
                100.0 * NumGlobalDirichletRows / NumGlobalRows);
     print<long long>("Diagonally dominant rows", GlobalDiagonallyDominant,
                100.0 * GlobalDiagonallyDominant / NumGlobalRows);
-    print<long long>("Weakly diag. dominant rows", 
+    print<long long>("Weakly diag. dominant rows",
                GlobalWeaklyDiagonallyDominant,
                100.0 * GlobalWeaklyDiagonallyDominant / NumGlobalRows);
     print();
@@ -582,7 +596,7 @@ int Ifpack_Analyze(const Epetra_RowMatrix& A, const bool Cheap,
         }
       }
     }
-	else
+        else
 #endif
 #ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
     if(A.RowMatrixRowMap().GlobalIndicesLongLong()) {
@@ -621,8 +635,8 @@ int Ifpack_Analyze(const Epetra_RowMatrix& A, const bool Cheap,
 
         }
       }
-	}
-	else
+        }
+        else
 #endif
       throw "Ifpack_Analyze: GlobalIndices type unknown";
 
@@ -730,7 +744,7 @@ int Ifpack_Analyze(const Epetra_RowMatrix& A, const bool Cheap,
   if (verbose) {
     print<double>("|A(k,k)|", GlobalMin, GlobalAvg, GlobalMax);
   }
-  
+
   // ============================================== //
   // cycle over all equations for diagonal elements //
   // ============================================== //
@@ -758,7 +772,7 @@ int Ifpack_Analyze(const Epetra_RowMatrix& A, const bool Cheap,
       A.Comm().SumAll(&MyAvg, &GlobalAvg, 1);
       // does not really work fine if the number of global
       // elements is not a multiple of NumPDEEqns
-	  GlobalAvg /= (Diag.GlobalLength64() / NumPDEEqns);
+          GlobalAvg /= (Diag.GlobalLength64() / NumPDEEqns);
 
       if (verbose) {
         char str[80];
@@ -771,7 +785,7 @@ int Ifpack_Analyze(const Epetra_RowMatrix& A, const bool Cheap,
   // ======== //
   // row sums //
   // ======== //
-  
+
   RowSum.MinValue(&GlobalMin);
   RowSum.MaxValue(&GlobalMax);
   RowSum.MeanValue(&GlobalAvg);
@@ -808,7 +822,7 @@ int Ifpack_Analyze(const Epetra_RowMatrix& A, const bool Cheap,
       A.Comm().SumAll(&MyAvg, &GlobalAvg, 1);
       // does not really work fine if the number of global
       // elements is not a multiple of NumPDEEqns
-	  GlobalAvg /= (Diag.GlobalLength64() / NumPDEEqns);
+          GlobalAvg /= (Diag.GlobalLength64() / NumPDEEqns);
 
       if (verbose) {
         char str[80];
@@ -827,6 +841,8 @@ int Ifpack_Analyze(const Epetra_RowMatrix& A, const bool Cheap,
 int Ifpack_AnalyzeVectorElements(const Epetra_Vector& Diagonal,
                                  const bool abs, const int steps)
 {
+  using std::cout;
+  using std::endl;
 
   bool verbose = (Diagonal.Comm().MyPID() == 0);
   double min_val =  DBL_MAX;
@@ -867,10 +883,10 @@ int Ifpack_AnalyzeVectorElements(const Epetra_Vector& Diagonal,
     if (verbose) {
       printf("Elements in [%+7e, %+7e) = %10d ( = %5.2f %%)\n",
              below, above, GlobalBelow,
-			 100.0 * GlobalBelow / Diagonal.GlobalLength64());
+                         100.0 * GlobalBelow / Diagonal.GlobalLength64());
     }
   }
-  
+
   if (verbose) {
     Ifpack_PrintLine();
     cout << endl;
@@ -879,19 +895,21 @@ int Ifpack_AnalyzeVectorElements(const Epetra_Vector& Diagonal,
   return(0);
 }
 
-// ====================================================================== 
+// ======================================================================
 
 int Ifpack_AnalyzeMatrixElements(const Epetra_RowMatrix& A,
                                  const bool abs, const int steps)
 {
+  using std::cout;
+  using std::endl;
 
   bool verbose = (A.Comm().MyPID() == 0);
   double min_val =  DBL_MAX;
   double max_val = -DBL_MAX;
 
-  vector<int>    colInd(A.MaxNumEntries());
-  vector<double> colVal(A.MaxNumEntries());
-  
+  std::vector<int>    colInd(A.MaxNumEntries());
+  std::vector<double> colVal(A.MaxNumEntries());
+
   for (int i = 0 ; i < A.NumMyRows() ; ++i) {
 
     int Nnz;
@@ -953,8 +971,8 @@ int Ifpack_AnalyzeMatrixElements(const Epetra_RowMatrix& A,
   return(0);
 }
 
-// ====================================================================== 
-int Ifpack_PrintSparsity(const Epetra_RowMatrix& A, const char* InputFileName, 
+// ======================================================================
+int Ifpack_PrintSparsity(const Epetra_RowMatrix& A, const char* InputFileName,
                          const int NumPDEEqns)
 {
 
@@ -978,7 +996,7 @@ int Ifpack_PrintSparsity(const Epetra_RowMatrix& A, const char* InputFileName,
   int NumProc;
   char FileName[1024];
   char title[1024];
-  
+
   const Epetra_Comm& Comm = A.Comm();
 
   /* --------------------- execution begins ---------------------- */
@@ -1056,7 +1074,7 @@ int Ifpack_PrintSparsity(const Epetra_RowMatrix& A, const char* InputFileName,
   yt = (botmrgn+siz*nr/m)*u2dot + scfct*frlw/2;
   if (ltit == 0) {
     yt = yt + (ytitof+fnstit*0.70)*u2dot;
-  } 
+  }
   /* add some room to bounding box */
   delt = 10.0;
   xl = xl-delt;
@@ -1083,7 +1101,7 @@ int Ifpack_PrintSparsity(const Epetra_RowMatrix& A, const char* InputFileName,
     fprintf(fp,"%s","%%EndComments\n");
     fprintf(fp,"%s","/cm {72 mul 2.54 div} def\n");
     fprintf(fp,"%s","/mc {72 div 2.54 mul} def\n");
-    fprintf(fp,"%s","/pnum { 72 div 2.54 mul 20 string ");
+    fprintf(fp,"%s","/pnum { 72 div 2.54 mul 20 std::string ");
     fprintf(fp,"%s","cvs print ( ) print} def\n");
     fprintf(fp,"%s","/Cshow {dup stringwidth pop -2 div 0 rmoveto show} def\n");
 
@@ -1100,7 +1118,7 @@ int Ifpack_PrintSparsity(const Epetra_RowMatrix& A, const char* InputFileName,
               lrmrgn,botmrgn);
     }
     fprintf(fp,"%f cm %d div dup scale \n",
-            siz,m);
+            siz, (int) m);
     /* draw a frame around the matrix */
 
     fprintf(fp,"%f setlinewidth\n",
@@ -1108,21 +1126,21 @@ int Ifpack_PrintSparsity(const Epetra_RowMatrix& A, const char* InputFileName,
     fprintf(fp,"%s","newpath\n");
     fprintf(fp,"%s","0 0 moveto ");
     if (square) {
-      printf("------------------- %d\n",m);
+      printf("------------------- %d\n", (int) m);
       fprintf(fp,"%d %d lineto\n",
-              m,0);
+              (int) m, 0);
       fprintf(fp,"%d %d lineto\n",
-              m, m);
+              (int) m, (int) m);
       fprintf(fp,"%d %d lineto\n",
-              0, m);
-    } 
+              0, (int) m);
+    }
     else {
       fprintf(fp,"%d %d lineto\n",
-              nc, 0);
+              (int) nc, 0);
       fprintf(fp,"%d %d lineto\n",
-              nc, nr);
+              (int) nc, (int) nr);
       fprintf(fp,"%d %d lineto\n",
-              0, nr);
+              0, (int) nr);
     }
     fprintf(fp,"%s","closepath stroke\n");
 
@@ -1135,20 +1153,17 @@ int Ifpack_PrintSparsity(const Epetra_RowMatrix& A, const char* InputFileName,
 
     fclose(fp);
   }
-  
+
   int MaxEntries = A.MaxNumEntries();
-  vector<int> Indices(MaxEntries);
-  vector<double> Values(MaxEntries);
+  std::vector<int> Indices(MaxEntries);
+  std::vector<double> Values(MaxEntries);
 
   for (int pid = 0 ; pid < NumProc ; ++pid) {
 
     if (pid == MyPID) {
 
       fp = fopen(FileName,"a");
-      if( fp == NULL ) {
-        fprintf(stderr,"%s","ERROR\n");
-        exit(EXIT_FAILURE);
-      }
+      TEUCHOS_ASSERT(fp != NULL);
 
       for (int i = 0 ; i < NumMyRows ; ++i) {
 
@@ -1166,7 +1181,7 @@ int Ifpack_PrintSparsity(const Epetra_RowMatrix& A, const char* InputFileName,
             grow /= NumPDEEqns;
             gcol /= NumPDEEqns;
             fprintf(fp,"%lld %lld p\n",
-                    gcol, NumGlobalRows - grow - 1); 
+                    gcol, NumGlobalRows - grow - 1);
           }
         }
       }

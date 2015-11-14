@@ -18,7 +18,7 @@
 
     You should have received a copy of the GNU Lesser General Public License 
     (lgpl.txt) along with this library; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  
     diachin2@llnl.gov, djmelan@sandia.gov, mbrewer@sandia.gov, 
     pknupp@sandia.gov, tleurent@mcs.anl.gov, tmunson@mcs.anl.gov      
@@ -35,17 +35,17 @@ Unit testing of various DistanceFromTarget (base *and* concrete classes) functio
 //
 
 #include "Mesquite.hpp"
-#include "PatchData.hpp"
+#include "Mesquite_PatchData.hpp"
 #include "PatchDataInstances.hpp"
 
-#include "ConcreteTargetCalculators.hpp"
-#include "DistanceFromTarget.hpp"
-#include "I_DFT.hpp"
-#include "sI_DFT.hpp"
-#include "RI_DFT.hpp"
-#include "sRI_DFT.hpp"
+#include "Mesquite_ConcreteTargetCalculators.hpp"
+#include "Mesquite_DistanceFromTarget.hpp"
+#include "Mesquite_I_DFT.hpp"
+#include "Mesquite_sI_DFT.hpp"
+#include "Mesquite_RI_DFT.hpp"
+#include "Mesquite_sRI_DFT.hpp"
 
-#include "cppunit/extensions/HelperMacros.h"
+#include "Mesquite_cppunit/extensions/HelperMacros.h"
 
 #include <math.h>
 

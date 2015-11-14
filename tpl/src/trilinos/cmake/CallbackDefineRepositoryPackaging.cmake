@@ -1,21 +1,15 @@
-INCLUDE(TribitsGlobalMacros)
-
 MACRO(TRIBITS_REPOSITORY_DEFINE_PACKAGING)
 
   #MESSAGE("TRIBITS_REPOSITORY_DEFINE_PACKAGING() called for Trilinos!")
  
   # We need to make sure that these excludes only apply to Trilinos, not the global
   # project.
-  IF (PROJECT_NAME STREQUAL Trilinos)
-    GET_FILENAME_COMPONENT(Trilinos_SOURCE_EXCLUDE_DIR ${Trilinos_SOURCE_DIR} PATH)
-  ELSE()
-    SET(Trilinos_SOURCE_EXCLUDE_DIR ${Trilinos_SOURCE_DIR})
-  ENDIF()
+  SET(Trilinos_SOURCE_EXCLUDE_DIR ${Trilinos_SOURCE_DIR})
   #PRINT_VAR(Trilinos_SOURCE_EXCLUDE_DIR)
 
   # Automatically update the version file for sierra
   IF (NOT MSVC)
-    TRIBITS_REPOSITORY_CONFIGURE_VERSION_HEADER_FILE("Trilinos" "."
+    TRIBITS_REPOSITORY_CONFIGURE_VERSION_HEADER_FILE("Trilinos"  "."  FALSE
       ${Trilinos_SOURCE_DIR}/SIERRA/bjam/config_headers/${PROJECT_NAME}_version.h)
   ENDIF()
 
@@ -60,7 +54,6 @@ MACRO(TRIBITS_REPOSITORY_DEFINE_PACKAGING)
     ${Trilinos_SOURCE_EXCLUDE_DIR}/config/
     )
 
-  SET(TRIBITS_CPACK_PACKAGES_TO_NOT_IGNORE ${TRIBITS_CPACK_PACKAGES_TO_NOT_IGNORE}
-    TrilinosFramework)
+  APPEND_SET(TRIBITS_CPACK_PACKAGES_TO_NOT_IGNORE TriBITS)
   
 ENDMACRO()

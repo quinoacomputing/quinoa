@@ -80,6 +80,7 @@ void RivaraMesh::refine()
       refinementSet().pop();
       double maxArea = refinementAreas().top();
       refinementAreas().pop();
+
       next->refine(this, maxArea);
     }
 }
@@ -96,8 +97,8 @@ int RivaraMesh::addNode(const RCP<Node>& node)
 
 
 int RivaraMesh::addVertex(
-  int globalIndex, const Point& x, 
-  int ownerProcID, int label)
+			  int globalIndex, const Point& x, 
+			  int ownerProcID, int label)
 {
   RCP<Node> node = rcp(new Node(globalIndex, x, ownerProcID, label));
   return addNode(node);
@@ -110,42 +111,42 @@ void RivaraMesh::addElement(const RCP<Element>& tri)
 
 
 int RivaraMesh::addElement(
-  int globalIndex, 
-  const Array<int>& vertexGIDs, 
-  int ownerProc,
-  int label)
+			   int globalIndex, 
+			   const Array<int>& vertexGIDs, 
+			   int ownerProc,
+			   int label)
 {
   int lid = elements_.size();
   RCP<Element> elem;
 
   switch(vertexGIDs.size())
-  {
+    {
     case 3:
       elem = rcp(new Element(this, 
-          nodes_[vertexGIDs[0]],
-          nodes_[vertexGIDs[1]],
-          nodes_[vertexGIDs[2]],
-          ownerProc,label));
+			     nodes_[vertexGIDs[0]],
+			     nodes_[vertexGIDs[1]],
+			     nodes_[vertexGIDs[2]],
+			     ownerProc,label));
       break;
     case 4:
       elem = rcp(new Element(this, 
-          nodes_[vertexGIDs[0]],
-          nodes_[vertexGIDs[1]],
-          nodes_[vertexGIDs[2]],
-          nodes_[vertexGIDs[3]],
-          ownerProc,label));
+			     nodes_[vertexGIDs[0]],
+			     nodes_[vertexGIDs[1]],
+			     nodes_[vertexGIDs[2]],
+			     nodes_[vertexGIDs[3]],
+			     ownerProc,label));
       break;
     default:
       TEUCHOS_TEST_FOR_EXCEPT(1);
-  }
+    }
   elements_.append(elem);
   return lid;
   
 }
 
 RCP<Edge> RivaraMesh::tryEdge(const RCP<Node>& a,
-                                          const RCP<Node>& b,
-                                          int& edgeSign)
+			      const RCP<Node>& b,
+			      int& edgeSign)
 {
   int i = a->localIndex();
   int j = b->localIndex();
@@ -175,24 +176,24 @@ RCP<Edge> RivaraMesh::tryEdge(const RCP<Node>& a,
 
 
 RCP<Face> RivaraMesh::tryFace(
-  const RCP<Node>& a,
-  const RCP<Node>& b,
-  const RCP<Node>& c)
+			      const RCP<Node>& a,
+			      const RCP<Node>& b,
+			      const RCP<Node>& c)
 {
   FaceNodes f(a,b,c);
 
   int faceLID;
   if (faceToLIDMap_.containsKey(f))
-  {
-    faceLID = faceToLIDMap_[f];
-  }
+    {
+      faceLID = faceToLIDMap_[f];
+    }
   else
-  {
-    faceLID = faces_.size();
-    RCP<Face> newFace = rcp(new Face(a,b,c));
-    faceToLIDMap_.put(newFace->nodes(), faceLID);
-    faces_.append(newFace);
-  }
+    {
+      faceLID = faces_.size();
+      RCP<Face> newFace = rcp(new Face(a,b,c));
+      faceToLIDMap_.put(newFace->nodes(), faceLID);
+      faces_.append(newFace);
+    }
   
   return faces_[faceLID];
 }
@@ -200,9 +201,9 @@ RCP<Face> RivaraMesh::tryFace(
 
 
 const RCP<Face>& RivaraMesh::getFace(
-  const RCP<Node>& a,
-  const RCP<Node>& b,
-  const RCP<Node>& c) const 
+				     const RCP<Node>& a,
+				     const RCP<Node>& b,
+				     const RCP<Node>& c) const 
 {
   FaceNodes f(a,b,c);
   return faces_[faceToLIDMap_.get(f)];
@@ -212,17 +213,17 @@ const RCP<Face>& RivaraMesh::getFace(
 
 int RivaraMesh::numElements() const 
 {
-	int numLeaves = 0;
+  int numLeaves = 0;
   for (int i=0; i<elements_.length(); i++)
     {
       numLeaves += elements_[i]->numLeaves();
     }
-	return numLeaves;
+  return numLeaves;
 }
 
 int RivaraMesh::spatialDim() const
 {
-	return spatialDim_;
+  return spatialDim_;
 }
 
 

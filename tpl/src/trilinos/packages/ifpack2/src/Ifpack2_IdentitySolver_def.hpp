@@ -44,7 +44,6 @@
 #define IFPACK2_IDENTITY_SOLVER_DEF_HPP
 
 #include "Ifpack2_IdentitySolver_decl.hpp"
-#include "Ifpack2_Condest.hpp"
 
 namespace Ifpack2 {
 
@@ -57,7 +56,9 @@ IdentitySolver (const Teuchos::RCP<const row_matrix_type>& A)
     numInitialize_ (0),
     numCompute_ (0),
     numApply_ (0),
-    condEst_ (-Teuchos::ScalarTraits<magnitude_type>::one ())
+    initializeTime_(0.0),
+    computeTime_(0.0),
+    applyTime_(0.0)
 {
 }
 
@@ -159,23 +160,6 @@ apply (const Tpetra::MultiVector<scalar_type,local_ordinal_type,global_ordinal_t
   ++numApply_;
 }
 
-template<class MatrixType>
-typename IdentitySolver<MatrixType>::magnitude_type
-IdentitySolver<MatrixType>::
-computeCondEst (CondestType CT,
-                local_ordinal_type MaxIters,
-                magnitude_type Tol,
-                const Teuchos::Ptr<const row_matrix_type>& matrix)
-{
-  // Forestall compiler warnings for unused variables.
-  (void) CT;
-  (void) MaxIters;
-  (void) Tol;
-  (void) matrix;
-
-  return -Teuchos::ScalarTraits<magnitude_type>::one ();
-}
-
 template <class MatrixType>
 int IdentitySolver<MatrixType>::getNumInitialize() const {
   return(numInitialize_);
@@ -207,9 +191,32 @@ double IdentitySolver<MatrixType>::getApplyTime() const {
 }
 
 template <class MatrixType>
-std::string IdentitySolver<MatrixType>::description() const
+std::string IdentitySolver<MatrixType>::description () const
 {
-  return std::string("Ifpack2::IdentitySolver");
+  std::ostringstream os;
+
+  // Output is a valid YAML dictionary in flow style.  If you don't
+  // like everything on a single line, you should call describe()
+  // instead.
+  os << "\"Ifpack2::IdentitySolver\": {";
+  if (this->getObjectLabel () != "") {
+    os << "Label: \"" << this->getObjectLabel () << "\", ";
+  }
+  os << "Initialized: " << (isInitialized () ? "true" : "false") << ", "
+     << "Computed: " << (isComputed () ? "true" : "false") << ", ";
+
+  if (matrix_.is_null ()) {
+    os << "Matrix: null";
+  }
+  else {
+    os << "Matrix: not null"
+       << ", Global matrix dimensions: ["
+       << matrix_->getGlobalNumRows () << ", "
+       << matrix_->getGlobalNumCols () << "]";
+  }
+
+  os << "}";
+  return os.str ();
 }
 
 template <class MatrixType>
@@ -217,19 +224,15 @@ void IdentitySolver<MatrixType>::
 describe (Teuchos::FancyOStream& out,
           const Teuchos::EVerbosityLevel verbLevel) const
 {
-  using Teuchos::FancyOStream;
-  using Teuchos::OSTab;
-  using Teuchos::RCP;
-  using Teuchos::rcpFromRef;
   using std::endl;
+  const Teuchos::EVerbosityLevel vl
+    = (verbLevel == Teuchos::VERB_DEFAULT) ? Teuchos::VERB_LOW : verbLevel;
 
-  if (verbLevel != Teuchos::VERB_NONE) {
-    RCP<FancyOStream> outPtr = rcpFromRef (out);
-
+  if (vl != Teuchos::VERB_NONE) {
     // By convention, describe() should always begin with a tab.
-    OSTab tab0 (outPtr);
-    out << "Ifpack2::IdentitySolver:" << endl;
-    OSTab tab1 (outPtr);
+    Teuchos::OSTab tab0 (out);
+    out << "\"Ifpack2::IdentitySolver\":" << endl;
+    Teuchos::OSTab tab1 (out);
     out << "MatrixType: " << Teuchos::TypeNameTraits<MatrixType>::name () << endl;
     out << "numInitialize: " << numInitialize_ << endl;
     out << "numCompute: " << numCompute_ << endl;
@@ -282,5 +285,8 @@ setMatrix (const Teuchos::RCP<const row_matrix_type>& A)
 
 } // namespace Ifpack2
 
-#endif // IFPACK2_IDENTITY_SOLVER_DEF_HPP
+#define IFPACK2_IDENTITYSOLVER_INSTANT(S,LO,GO,N)                            \
+  template class Ifpack2::IdentitySolver< Tpetra::CrsMatrix<S, LO, GO, N> >; \
+  template class Ifpack2::IdentitySolver< Tpetra::RowMatrix<S, LO, GO, N> >;
 
+#endif // IFPACK2_IDENTITY_SOLVER_DEF_HPP

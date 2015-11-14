@@ -18,7 +18,7 @@
 
     You should have received a copy of the GNU Lesser General Public License 
     (lgpl.txt) along with this library; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  
     diachin2@llnl.gov, djmelan@sandia.gov, mbrewer@sandia.gov, 
     pknupp@sandia.gov, tleurent@mcs.anl.gov, tmunson@mcs.anl.gov      
@@ -49,26 +49,26 @@ using std::endl;
 #include <cstdlib>
 
 #include "Mesquite.hpp"
-#include "MeshImpl.hpp"
-#include "MsqError.hpp"
-#include "Vector3D.hpp"
-#include "InstructionQueue.hpp"
-#include "PatchData.hpp"
-#include "TerminationCriterion.hpp"
-#include "QualityAssessor.hpp"
-//#include "QuadLagrangeShape.hpp"
+#include "Mesquite_MeshImpl.hpp"
+#include "Mesquite_MsqError.hpp"
+#include "Mesquite_Vector3D.hpp"
+#include "Mesquite_InstructionQueue.hpp"
+#include "Mesquite_PatchData.hpp"
+#include "Mesquite_TerminationCriterion.hpp"
+#include "Mesquite_QualityAssessor.hpp"
+//#include "Mesquite_QuadLagrangeShape.hpp"
 
 // algorithms
-#include "IdealShapeTarget.hpp"
-#include "TQualityMetric.hpp"
-#include "TInverseMeanRatio.hpp"
-#include "ConditionNumberQualityMetric.hpp"
-#include "LPtoPTemplate.hpp"
-#include "LInfTemplate.hpp"
-#include "SteepestDescent.hpp"
-#include "ConjugateGradient.hpp"
+#include "Mesquite_IdealShapeTarget.hpp"
+#include "Mesquite_TQualityMetric.hpp"
+#include "Mesquite_TInverseMeanRatio.hpp"
+#include "Mesquite_ConditionNumberQualityMetric.hpp"
+#include "Mesquite_LPtoPTemplate.hpp"
+#include "Mesquite_LInfTemplate.hpp"
+#include "Mesquite_SteepestDescent.hpp"
+#include "Mesquite_ConjugateGradient.hpp"
 
-#include "PlanarDomain.hpp"
+#include "Mesquite_PlanarDomain.hpp"
 using namespace Mesquite;
 
 /* This is the input mesh topology

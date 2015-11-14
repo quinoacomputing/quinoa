@@ -18,7 +18,7 @@
 
     You should have received a copy of the GNU Lesser General Public License 
     (lgpl.txt) along with this library; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  
     (2006) kraftche@cae.wisc.edu
    
@@ -31,15 +31,15 @@
  */
 
 #include "Mesquite.hpp"
-#include "TargetWriter.hpp"
-#include "TargetReader.hpp"
-#include "WeightReader.hpp"
-#include "MeshImpl.hpp"
-#include "PatchData.hpp"
-#include "Settings.hpp"
-#include "ElemSampleQM.hpp"
+#include "Mesquite_TargetWriter.hpp"
+#include "Mesquite_TargetReader.hpp"
+#include "Mesquite_WeightReader.hpp"
+#include "Mesquite_MeshImpl.hpp"
+#include "Mesquite_PatchData.hpp"
+#include "Mesquite_Settings.hpp"
+#include "Mesquite_ElemSampleQM.hpp"
 
-#include "cppunit/extensions/HelperMacros.h"
+#include "Mesquite_cppunit/extensions/HelperMacros.h"
 #include "UnitUtil.hpp"
 
 #include <iostream>

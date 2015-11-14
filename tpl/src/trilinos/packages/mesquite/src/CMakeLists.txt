@@ -1,6 +1,5 @@
 IF (NOT ${PROJECT_NAME} STREQUAL "Mesquite")
 
-  INCLUDE(TribitsLibraryMacros)
 
   #
   # A) Package-specific configuration options
@@ -43,10 +42,10 @@ APPEND_SET(HEADERS
   ${CMAKE_CURRENT_BINARY_DIR}/include/mesquite_config.h
   ${CMAKE_CURRENT_BINARY_DIR}/include/mesquite_version.h
   include/Mesquite.hpp
-  include/MeshInterface.hpp
-  include/ParallelMeshInterface.hpp
-  include/ParallelHelperInterface.hpp
-  include/CurveDomain.hpp
+  include/Mesquite_MeshInterface.hpp
+  include/Mesquite_ParallelMeshInterface.hpp
+  include/Mesquite_ParallelHelperInterface.hpp
+  include/Mesquite_CurveDomain.hpp
   )
 
 #
@@ -55,68 +54,68 @@ APPEND_SET(HEADERS
 
 IF (TPL_ENABLE_MPI)
   APPEND_SET(HEADERS
-    Mesh/ParallelHelper.hpp
+    Mesh/Mesquite_ParallelHelper.hpp
     )
 
   APPEND_SET(SOURCES
-    Mesh/ParallelHelper.cpp
+    Mesh/Mesquite_ParallelHelper.cpp
     )
 ELSE()
   APPEND_SET(HEADERS
-    Mesh/ParallelHelperNoMPIStub.hpp
+    Mesh/Mesquite_ParallelHelperNoMPIStub.hpp
     )
 
   APPEND_SET(SOURCES
-    Mesh/ParallelHelperNoMPIStub.cpp
+    Mesh/Mesquite_ParallelHelperNoMPIStub.cpp
     )
 ENDIF()
 
 APPEND_SET(HEADERS
-  Mesh/ArrayMesh.hpp
-  Mesh/ElementPatches.hpp
-  Mesh/ExtraData.hpp
-  Mesh/ExtraDataUser.hpp
-  Mesh/GlobalPatch.hpp
-  Mesh/IdealElements.hpp
-  Mesh/MeshDecorator.hpp
-  Mesh/MeshImpl.hpp
-  Mesh/MeshImplData.hpp
-  Mesh/MeshImplTags.hpp
-  Mesh/MeshUtil.hpp
-  Mesh/MeshWriter.hpp
-  Mesh/MsqFreeVertexIndexIterator.hpp
-  Mesh/MsqMeshEntity.hpp
-  Mesh/MsqVertex.hpp
-  Mesh/ParallelMeshImpl.hpp
-  Mesh/PatchData.hpp
-  Mesh/PatchIterator.hpp
-  Mesh/PatchSet.hpp
-  Mesh/TagVertexMesh.hpp
-  Mesh/TopologyInfo.hpp
-  Mesh/VertexPatches.hpp
+  Mesh/Mesquite_ArrayMesh.hpp
+  Mesh/Mesquite_ElementPatches.hpp
+  Mesh/Mesquite_ExtraData.hpp
+  Mesh/Mesquite_ExtraDataUser.hpp
+  Mesh/Mesquite_GlobalPatch.hpp
+  Mesh/Mesquite_IdealElements.hpp
+  Mesh/Mesquite_MeshDecorator.hpp
+  Mesh/Mesquite_MeshImpl.hpp
+  Mesh/Mesquite_MeshImplData.hpp
+  Mesh/Mesquite_MeshImplTags.hpp
+  Mesh/Mesquite_MeshUtil.hpp
+  Mesh/Mesquite_MeshWriter.hpp
+  Mesh/Mesquite_MsqFreeVertexIndexIterator.hpp
+  Mesh/Mesquite_MsqMeshEntity.hpp
+  Mesh/Mesquite_MsqVertex.hpp
+  Mesh/Mesquite_ParallelMeshImpl.hpp
+  Mesh/Mesquite_PatchData.hpp
+  Mesh/Mesquite_PatchIterator.hpp
+  Mesh/Mesquite_PatchSet.hpp
+  Mesh/Mesquite_TagVertexMesh.hpp
+  Mesh/Mesquite_TopologyInfo.hpp
+  Mesh/Mesquite_VertexPatches.hpp
   )
 
 APPEND_SET(SOURCES
-  Mesh/ArrayMesh.cpp
-  Mesh/ElementPatches.cpp
-  Mesh/ExtraData.cpp
-  Mesh/GlobalPatch.cpp
-  Mesh/IdealElements.cpp
-  Mesh/MeshDecorator.cpp
-  Mesh/MeshImpl.cpp
-  Mesh/MeshImplData.cpp
-  Mesh/MeshImplTags.cpp
-  Mesh/MeshUtil.cpp
-  Mesh/MeshWriter.cpp
-  Mesh/MsqMeshEntity.cpp
-  Mesh/MsqVertex.cpp
-  Mesh/ParallelMeshImpl.cpp
-  Mesh/PatchData.cpp
-  Mesh/PatchIterator.cpp
-  Mesh/PatchSet.cpp
-  Mesh/TagVertexMesh.cpp
-  Mesh/TopologyInfo.cpp
-  Mesh/VertexPatches.cpp
+  Mesh/Mesquite_ArrayMesh.cpp
+  Mesh/Mesquite_ElementPatches.cpp
+  Mesh/Mesquite_ExtraData.cpp
+  Mesh/Mesquite_GlobalPatch.cpp
+  Mesh/Mesquite_IdealElements.cpp
+  Mesh/Mesquite_MeshDecorator.cpp
+  Mesh/Mesquite_MeshImpl.cpp
+  Mesh/Mesquite_MeshImplData.cpp
+  Mesh/Mesquite_MeshImplTags.cpp
+  Mesh/Mesquite_MeshUtil.cpp
+  Mesh/Mesquite_MeshWriter.cpp
+  Mesh/Mesquite_MsqMeshEntity.cpp
+  Mesh/Mesquite_MsqVertex.cpp
+  Mesh/Mesquite_ParallelMeshImpl.cpp
+  Mesh/Mesquite_PatchData.cpp
+  Mesh/Mesquite_PatchIterator.cpp
+  Mesh/Mesquite_PatchSet.cpp
+  Mesh/Mesquite_TagVertexMesh.cpp
+  Mesh/Mesquite_TopologyInfo.cpp
+  Mesh/Mesquite_VertexPatches.cpp
   )
 
 #
@@ -124,22 +123,22 @@ APPEND_SET(SOURCES
 #
 
 APPEND_SET(HEADERS
-  Control/Instruction.hpp
-  Control/InstructionQueue.hpp
-  Control/IQInterface.hpp
-  Control/TerminationCriterion.hpp
-  Control/Settings.hpp
-  Control/SlaveBoundaryVertices.hpp
-  Control/VertexSlaver.hpp 
+  Control/Mesquite_Instruction.hpp
+  Control/Mesquite_InstructionQueue.hpp
+  Control/Mesquite_IQInterface.hpp
+  Control/Mesquite_TerminationCriterion.hpp
+  Control/Mesquite_Settings.hpp
+  Control/Mesquite_SlaveBoundaryVertices.hpp
+  Control/Mesquite_VertexSlaver.hpp 
   )
 
 APPEND_SET(SOURCES
-  Control/Instruction.cpp
-  Control/InstructionQueue.cpp
-  Control/IQInterface.cpp
-  Control/TerminationCriterion.cpp
-  Control/Settings.cpp
-  Control/SlaveBoundaryVertices.cpp 
+  Control/Mesquite_Instruction.cpp
+  Control/Mesquite_InstructionQueue.cpp
+  Control/Mesquite_IQInterface.cpp
+  Control/Mesquite_TerminationCriterion.cpp
+  Control/Mesquite_Settings.cpp
+  Control/Mesquite_SlaveBoundaryVertices.cpp 
   )
 
 
@@ -148,27 +147,27 @@ APPEND_SET(SOURCES
 #
 
 APPEND_SET(HEADERS
-  Wrappers/DeformingDomainWrapper.hpp
-  Wrappers/LaplaceWrapper.hpp
-  Wrappers/ShapeImprovementWrapper.hpp
-  Wrappers/ShapeImprover.hpp
-  Wrappers/SizeAdaptShapeWrapper.hpp
-  Wrappers/PaverMinEdgeLengthWrapper.hpp 
-  Wrappers/UntangleWrapper.hpp 
-  Wrappers/ViscousCFDTetShapeWrapper.hpp 
-  Wrappers/Wrapper.hpp 
+  Wrappers/Mesquite_DeformingDomainWrapper.hpp
+  Wrappers/Mesquite_LaplaceWrapper.hpp
+  Wrappers/Mesquite_ShapeImprovementWrapper.hpp
+  Wrappers/Mesquite_ShapeImprover.hpp
+  Wrappers/Mesquite_SizeAdaptShapeWrapper.hpp
+  Wrappers/Mesquite_PaverMinEdgeLengthWrapper.hpp 
+  Wrappers/Mesquite_UntangleWrapper.hpp 
+  Wrappers/Mesquite_ViscousCFDTetShapeWrapper.hpp 
+  Wrappers/Mesquite_Wrapper.hpp 
   )
 
 APPEND_SET(SOURCES
-  Wrappers/DeformingDomainWrapper.cpp
-  Wrappers/LaplaceWrapper.cpp
-  Wrappers/ShapeImprovementWrapper.cpp
-  Wrappers/ShapeImprover.cpp
-  Wrappers/SizeAdaptShapeWrapper.cpp
-  Wrappers/PaverMinEdgeLengthWrapper.cpp
-  Wrappers/UntangleWrapper.cpp 
-  Wrappers/ViscousCFDTetShapeWrapper.cpp
-  Wrappers/Wrapper.cpp 
+  Wrappers/Mesquite_DeformingDomainWrapper.cpp
+  Wrappers/Mesquite_LaplaceWrapper.cpp
+  Wrappers/Mesquite_ShapeImprovementWrapper.cpp
+  Wrappers/Mesquite_ShapeImprover.cpp
+  Wrappers/Mesquite_SizeAdaptShapeWrapper.cpp
+  Wrappers/Mesquite_PaverMinEdgeLengthWrapper.cpp
+  Wrappers/Mesquite_UntangleWrapper.cpp 
+  Wrappers/Mesquite_ViscousCFDTetShapeWrapper.cpp
+  Wrappers/Mesquite_Wrapper.cpp 
   )
 
 #
@@ -176,15 +175,15 @@ APPEND_SET(SOURCES
 #
 
 APPEND_SET(HEADERS
-  MappingFunction/MappingFunction.hpp
-  MappingFunction/NodeSet.hpp
-  MappingFunction/Sample.hpp
+  MappingFunction/Mesquite_MappingFunction.hpp
+  MappingFunction/Mesquite_NodeSet.hpp
+  MappingFunction/Mesquite_Sample.hpp
   )
 
 APPEND_SET(SOURCES
-  MappingFunction/MappingFunction.cpp
-  MappingFunction/NodeSet.cpp
-  MappingFunction/Sample.cpp
+  MappingFunction/Mesquite_MappingFunction.cpp
+  MappingFunction/Mesquite_NodeSet.cpp
+  MappingFunction/Mesquite_Sample.cpp
   )
 
 #
@@ -192,17 +191,17 @@ APPEND_SET(SOURCES
 #
 
 APPEND_SET(HEADERS
-  MappingFunction/Lagrange/HexLagrangeShape.hpp
-  MappingFunction/Lagrange/QuadLagrangeShape.hpp
-  MappingFunction/Lagrange/TetLagrangeShape.hpp
-  MappingFunction/Lagrange/TriLagrangeShape.hpp 
+  MappingFunction/Lagrange/Mesquite_HexLagrangeShape.hpp
+  MappingFunction/Lagrange/Mesquite_QuadLagrangeShape.hpp
+  MappingFunction/Lagrange/Mesquite_TetLagrangeShape.hpp
+  MappingFunction/Lagrange/Mesquite_TriLagrangeShape.hpp 
   )
 
 APPEND_SET(SOURCES
-  MappingFunction/Lagrange/HexLagrangeShape.cpp
-  MappingFunction/Lagrange/QuadLagrangeShape.cpp
-  MappingFunction/Lagrange/TetLagrangeShape.cpp
-  MappingFunction/Lagrange/TriLagrangeShape.cpp 
+  MappingFunction/Lagrange/Mesquite_HexLagrangeShape.cpp
+  MappingFunction/Lagrange/Mesquite_QuadLagrangeShape.cpp
+  MappingFunction/Lagrange/Mesquite_TetLagrangeShape.cpp
+  MappingFunction/Lagrange/Mesquite_TriLagrangeShape.cpp 
   )
 
 #
@@ -210,21 +209,21 @@ APPEND_SET(SOURCES
 #
 
 APPEND_SET(HEADERS
-  MappingFunction/Linear/LinearHexahedron.hpp
-  MappingFunction/Linear/LinearPrism.hpp
-  MappingFunction/Linear/LinearPyramid.hpp
-  MappingFunction/Linear/LinearQuadrilateral.hpp
-  MappingFunction/Linear/LinearTetrahedron.hpp
-  MappingFunction/Linear/LinearTriangle.hpp 
+  MappingFunction/Linear/Mesquite_LinearHexahedron.hpp
+  MappingFunction/Linear/Mesquite_LinearPrism.hpp
+  MappingFunction/Linear/Mesquite_LinearPyramid.hpp
+  MappingFunction/Linear/Mesquite_LinearQuadrilateral.hpp
+  MappingFunction/Linear/Mesquite_LinearTetrahedron.hpp
+  MappingFunction/Linear/Mesquite_LinearTriangle.hpp 
   )
 
 APPEND_SET(SOURCES
-  MappingFunction/Linear/LinearHexahedron.cpp
-  MappingFunction/Linear/LinearPrism.cpp
-  MappingFunction/Linear/LinearPyramid.cpp
-  MappingFunction/Linear/LinearQuadrilateral.cpp
-  MappingFunction/Linear/LinearTetrahedron.cpp
-  MappingFunction/Linear/LinearTriangle.cpp 
+  MappingFunction/Linear/Mesquite_LinearHexahedron.cpp
+  MappingFunction/Linear/Mesquite_LinearPrism.cpp
+  MappingFunction/Linear/Mesquite_LinearPyramid.cpp
+  MappingFunction/Linear/Mesquite_LinearQuadrilateral.cpp
+  MappingFunction/Linear/Mesquite_LinearTetrahedron.cpp
+  MappingFunction/Linear/Mesquite_LinearTriangle.cpp 
   )
 
 #
@@ -232,65 +231,65 @@ APPEND_SET(SOURCES
 #
 
 APPEND_SET(HEADERS
-  Misc/BoundedCylinderDomain.hpp
-  Misc/Bits.hpp
-  Misc/ConicDomain.hpp
-  Misc/CylinderDomain.hpp
-  Misc/DomainClassifier.hpp
-  Misc/EdgeIterator.hpp
-  Misc/Exponent.hpp
-  Misc/FileTokenizer.hpp
-  Misc/Matrix3D.hpp
-  Misc/MeshDomain1D.hpp
-  Misc/MeshTransform.hpp
-  Misc/MsqDebug.hpp
-  Misc/MsqError.hpp
-  Misc/MsqFPE.hpp
-  Misc/MsqGeomPrim.hpp
-  Misc/MsqHessian.hpp
-  Misc/MsqInterrupt.hpp
-  Misc/MsqMatrix.hpp
-  Misc/MsqTimer.hpp
-  Misc/PlanarDomain.hpp
-  Misc/SimpleStats.hpp
-  Misc/SphericalDomain.hpp
-  Misc/SymMatrix3D.hpp
-  Misc/Vector3D.hpp
-  Misc/VtkTypeInfo.hpp
-  Misc/XYPlanarDomain.hpp
-  Misc/XYRectangle.hpp
+  Misc/Mesquite_BoundedCylinderDomain.hpp
+  Misc/Mesquite_Bits.hpp
+  Misc/Mesquite_ConicDomain.hpp
+  Misc/Mesquite_CylinderDomain.hpp
+  Misc/Mesquite_DomainClassifier.hpp
+  Misc/Mesquite_EdgeIterator.hpp
+  Misc/Mesquite_Exponent.hpp
+  Misc/Mesquite_FileTokenizer.hpp
+  Misc/Mesquite_Matrix3D.hpp
+  Misc/Mesquite_MeshDomain1D.hpp
+  Misc/Mesquite_MeshTransform.hpp
+  Misc/Mesquite_MsqDebug.hpp
+  Misc/Mesquite_MsqError.hpp
+  Misc/Mesquite_MsqFPE.hpp
+  Misc/Mesquite_MsqGeomPrim.hpp
+  Misc/Mesquite_MsqHessian.hpp
+  Misc/Mesquite_MsqInterrupt.hpp
+  Misc/Mesquite_MsqMatrix.hpp
+  Misc/Mesquite_MsqTimer.hpp
+  Misc/Mesquite_PlanarDomain.hpp
+  Misc/Mesquite_SimpleStats.hpp
+  Misc/Mesquite_SphericalDomain.hpp
+  Misc/Mesquite_SymMatrix3D.hpp
+  Misc/Mesquite_Vector3D.hpp
+  Misc/Mesquite_VtkTypeInfo.hpp
+  Misc/Mesquite_XYPlanarDomain.hpp
+  Misc/Mesquite_XYRectangle.hpp
   )
 
 APPEND_SET(SOURCES
-  Misc/BoundedCylinderDomain.cpp
-  Misc/ConicDomain.cpp
-  Misc/CylinderDomain.cpp
-  Misc/DomainClassifier.cpp
-  Misc/DomainUtil.cpp
-  Misc/DomainUtil.hpp
-  Misc/EdgeIterator.cpp
-  Misc/Exponent.cpp
-  Misc/FileTokenizer.cpp
-  Misc/MeshDomain1D.cpp
-  Misc/MeshTransform.cpp
-  Misc/MesquiteVersion.cpp
-  Misc/MsqDebug.cpp
-  Misc/MsqError.cpp
-  Misc/MsqFPE.cpp
-  Misc/MsqGeomPrim.cpp
-  Misc/MsqHessian.cpp
-  Misc/MsqInterrupt.cpp
-  Misc/MsqTimer.cpp
-  Misc/PlanarDomain.cpp
-  Misc/SimpleStats.cpp
-  Misc/SphericalDomain.cpp
-  Misc/Vector3D.cpp
-  Misc/VtkTypeInfo.cpp
-  Misc/XYPlanarDomain.cpp
-  Misc/XYRectangle.cpp
+  Misc/Mesquite_BoundedCylinderDomain.cpp
+  Misc/Mesquite_ConicDomain.cpp
+  Misc/Mesquite_CylinderDomain.cpp
+  Misc/Mesquite_DomainClassifier.cpp
+  Misc/Mesquite_DomainUtil.cpp
+  Misc/Mesquite_DomainUtil.hpp
+  Misc/Mesquite_EdgeIterator.cpp
+  Misc/Mesquite_Exponent.cpp
+  Misc/Mesquite_FileTokenizer.cpp
+  Misc/Mesquite_MeshDomain1D.cpp
+  Misc/Mesquite_MeshTransform.cpp
+  Misc/Mesquite_MesquiteVersion.cpp
+  Misc/Mesquite_MsqDebug.cpp
+  Misc/Mesquite_MsqError.cpp
+  Misc/Mesquite_MsqFPE.cpp
+  Misc/Mesquite_MsqGeomPrim.cpp
+  Misc/Mesquite_MsqHessian.cpp
+  Misc/Mesquite_MsqInterrupt.cpp
+  Misc/Mesquite_MsqTimer.cpp
+  Misc/Mesquite_PlanarDomain.cpp
+  Misc/Mesquite_SimpleStats.cpp
+  Misc/Mesquite_SphericalDomain.cpp
+  Misc/Mesquite_Vector3D.cpp
+  Misc/Mesquite_VtkTypeInfo.cpp
+  Misc/Mesquite_XYPlanarDomain.cpp
+  Misc/Mesquite_XYRectangle.cpp
   )
 IF(IMESH_DEFS OR IGEOM_DEFS OR IREL_DEFS)
-  APPEND_SET(SOURCES Misc/MsqIBase.cpp Misc/MsqIBase.hpp)
+  APPEND_SET(SOURCES Misc/Mesquite_MsqIBase.cpp Misc/Mesquite_MsqIBase.hpp)
 ENDIF()
 
 
@@ -299,37 +298,37 @@ ENDIF()
 #
 
 APPEND_SET(HEADERS
-  ObjectiveFunction/CompositeOFAdd.hpp
-  ObjectiveFunction/CompositeOFMultiply.hpp
-  ObjectiveFunction/CompositeOFScalarAdd.hpp
-  ObjectiveFunction/CompositeOFScalarMultiply.hpp
-  ObjectiveFunction/LInfTemplate.hpp
-  ObjectiveFunction/LPtoPTemplate.hpp
-  ObjectiveFunction/MaxTemplate.hpp
-  ObjectiveFunction/OFEvaluator.hpp
-  ObjectiveFunction/ObjectiveFunction.hpp
-  ObjectiveFunction/ObjectiveFunctionTemplate.hpp
-  ObjectiveFunction/PatchPowerMeanP.hpp
-  ObjectiveFunction/PMeanPTemplate.hpp
-  ObjectiveFunction/StdDevTemplate.hpp
-  ObjectiveFunction/VarianceTemplate.hpp
+  ObjectiveFunction/Mesquite_CompositeOFAdd.hpp
+  ObjectiveFunction/Mesquite_CompositeOFMultiply.hpp
+  ObjectiveFunction/Mesquite_CompositeOFScalarAdd.hpp
+  ObjectiveFunction/Mesquite_CompositeOFScalarMultiply.hpp
+  ObjectiveFunction/Mesquite_LInfTemplate.hpp
+  ObjectiveFunction/Mesquite_LPtoPTemplate.hpp
+  ObjectiveFunction/Mesquite_MaxTemplate.hpp
+  ObjectiveFunction/Mesquite_OFEvaluator.hpp
+  ObjectiveFunction/Mesquite_ObjectiveFunction.hpp
+  ObjectiveFunction/Mesquite_ObjectiveFunctionTemplate.hpp
+  ObjectiveFunction/Mesquite_PatchPowerMeanP.hpp
+  ObjectiveFunction/Mesquite_PMeanPTemplate.hpp
+  ObjectiveFunction/Mesquite_StdDevTemplate.hpp
+  ObjectiveFunction/Mesquite_VarianceTemplate.hpp
   )
 
 APPEND_SET(SOURCES
-  ObjectiveFunction/CompositeOFAdd.cpp
-  ObjectiveFunction/CompositeOFMultiply.cpp
-  ObjectiveFunction/CompositeOFScalarAdd.cpp
-  ObjectiveFunction/CompositeOFScalarMultiply.cpp
-  ObjectiveFunction/LInfTemplate.cpp
-  ObjectiveFunction/LPtoPTemplate.cpp
-  ObjectiveFunction/MaxTemplate.cpp
-  ObjectiveFunction/OFEvaluator.cpp
-  ObjectiveFunction/ObjectiveFunction.cpp
-  ObjectiveFunction/ObjectiveFunctionTemplate.cpp
-  ObjectiveFunction/PatchPowerMeanP.cpp
-  ObjectiveFunction/PMeanPTemplate.cpp
-  ObjectiveFunction/StdDevTemplate.cpp
-  ObjectiveFunction/VarianceTemplate.cpp
+  ObjectiveFunction/Mesquite_CompositeOFAdd.cpp
+  ObjectiveFunction/Mesquite_CompositeOFMultiply.cpp
+  ObjectiveFunction/Mesquite_CompositeOFScalarAdd.cpp
+  ObjectiveFunction/Mesquite_CompositeOFScalarMultiply.cpp
+  ObjectiveFunction/Mesquite_LInfTemplate.cpp
+  ObjectiveFunction/Mesquite_LPtoPTemplate.cpp
+  ObjectiveFunction/Mesquite_MaxTemplate.cpp
+  ObjectiveFunction/Mesquite_OFEvaluator.cpp
+  ObjectiveFunction/Mesquite_ObjectiveFunction.cpp
+  ObjectiveFunction/Mesquite_ObjectiveFunctionTemplate.cpp
+  ObjectiveFunction/Mesquite_PatchPowerMeanP.cpp
+  ObjectiveFunction/Mesquite_PMeanPTemplate.cpp
+  ObjectiveFunction/Mesquite_StdDevTemplate.cpp
+  ObjectiveFunction/Mesquite_VarianceTemplate.cpp
   )
 
 #
@@ -337,11 +336,11 @@ APPEND_SET(SOURCES
 #
 
 APPEND_SET(HEADERS
-  QualityAssessor/QualityAssessor.hpp
+  QualityAssessor/Mesquite_QualityAssessor.hpp
   )
 
 APPEND_SET(SOURCES
-  QualityAssessor/QualityAssessor.cpp
+  QualityAssessor/Mesquite_QualityAssessor.cpp
   )
 
 #
@@ -349,16 +348,16 @@ APPEND_SET(SOURCES
 #
 
 APPEND_SET(HEADERS
-  QualityImprover/NullImprover.hpp
-  QualityImprover/PatchSetUser.hpp
-  QualityImprover/QualityImprover.hpp
-  QualityImprover/VertexMover.hpp
+  QualityImprover/Mesquite_NullImprover.hpp
+  QualityImprover/Mesquite_PatchSetUser.hpp
+  QualityImprover/Mesquite_QualityImprover.hpp
+  QualityImprover/Mesquite_VertexMover.hpp
   )
 
 APPEND_SET(SOURCES
-  QualityImprover/PatchSetUser.cpp
-  QualityImprover/QualityImprover.cpp
-  QualityImprover/VertexMover.cpp
+  QualityImprover/Mesquite_PatchSetUser.cpp
+  QualityImprover/Mesquite_QualityImprover.cpp
+  QualityImprover/Mesquite_VertexMover.cpp
   )
 
 #
@@ -366,23 +365,23 @@ APPEND_SET(SOURCES
 #
 
 APPEND_SET(HEADERS
-  QualityImprover/OptSolvers/ConjugateGradient.hpp
-  QualityImprover/OptSolvers/FeasibleNewton.hpp
-  QualityImprover/OptSolvers/NonSmoothDescent.hpp
-  QualityImprover/OptSolvers/QuasiNewton.hpp
-  QualityImprover/OptSolvers/SteepestDescent.hpp
-  QualityImprover/OptSolvers/NonGradient.hpp
-  QualityImprover/OptSolvers/TrustRegion.hpp
+  QualityImprover/OptSolvers/Mesquite_ConjugateGradient.hpp
+  QualityImprover/OptSolvers/Mesquite_FeasibleNewton.hpp
+  QualityImprover/OptSolvers/Mesquite_NonSmoothDescent.hpp
+  QualityImprover/OptSolvers/Mesquite_QuasiNewton.hpp
+  QualityImprover/OptSolvers/Mesquite_SteepestDescent.hpp
+  QualityImprover/OptSolvers/Mesquite_NonGradient.hpp
+  QualityImprover/OptSolvers/Mesquite_TrustRegion.hpp
   )
 
 APPEND_SET(SOURCES
-  QualityImprover/OptSolvers/ConjugateGradient.cpp
-  QualityImprover/OptSolvers/FeasibleNewton.cpp
-  QualityImprover/OptSolvers/NonSmoothDescent.cpp
-  QualityImprover/OptSolvers/QuasiNewton.cpp
-  QualityImprover/OptSolvers/SteepestDescent.cpp
-  QualityImprover/OptSolvers/NonGradient.cpp
-  QualityImprover/OptSolvers/TrustRegion.cpp
+  QualityImprover/OptSolvers/Mesquite_ConjugateGradient.cpp
+  QualityImprover/OptSolvers/Mesquite_FeasibleNewton.cpp
+  QualityImprover/OptSolvers/Mesquite_NonSmoothDescent.cpp
+  QualityImprover/OptSolvers/Mesquite_QuasiNewton.cpp
+  QualityImprover/OptSolvers/Mesquite_SteepestDescent.cpp
+  QualityImprover/OptSolvers/Mesquite_NonGradient.cpp
+  QualityImprover/OptSolvers/Mesquite_TrustRegion.cpp
   )
 
 #
@@ -390,17 +389,17 @@ APPEND_SET(SOURCES
 #
 
 APPEND_SET(HEADERS
-  QualityImprover/Relaxation/Randomize.hpp
-  QualityImprover/Relaxation/RelaxationSmoother.hpp
-  QualityImprover/Relaxation/LaplacianSmoother.hpp
-  QualityImprover/Relaxation/SmartLaplacianSmoother.hpp
+  QualityImprover/Relaxation/Mesquite_Randomize.hpp
+  QualityImprover/Relaxation/Mesquite_RelaxationSmoother.hpp
+  QualityImprover/Relaxation/Mesquite_LaplacianSmoother.hpp
+  QualityImprover/Relaxation/Mesquite_SmartLaplacianSmoother.hpp
   )
 
 APPEND_SET(SOURCES
-  QualityImprover/Relaxation/Randomize.cpp
-  QualityImprover/Relaxation/RelaxationSmoother.cpp
-  QualityImprover/Relaxation/LaplacianSmoother.cpp
-  QualityImprover/Relaxation/SmartLaplacianSmoother.cpp
+  QualityImprover/Relaxation/Mesquite_Randomize.cpp
+  QualityImprover/Relaxation/Mesquite_RelaxationSmoother.cpp
+  QualityImprover/Relaxation/Mesquite_LaplacianSmoother.cpp
+  QualityImprover/Relaxation/Mesquite_SmartLaplacianSmoother.cpp
   )
 
 #
@@ -408,47 +407,47 @@ APPEND_SET(SOURCES
 #
 
 APPEND_SET(HEADERS
-  QualityMetric/AddQualityMetric.hpp
-  QualityMetric/AveragingQM.hpp
-  QualityMetric/EdgeQM.hpp
-  QualityMetric/ElemSampleQM.hpp
-  QualityMetric/ElementMaxQM.hpp
-  QualityMetric/ElementAvgQM.hpp
-  QualityMetric/ElementPMeanP.hpp
-  QualityMetric/ElementQM.hpp
-  QualityMetric/MultiplyQualityMetric.hpp
-  QualityMetric/Debug/NumericalQM.hpp
-  QualityMetric/Debug/CompareQM.hpp
-  QualityMetric/PMeanPMetric.hpp
-  QualityMetric/PowerQualityMetric.hpp
-  QualityMetric/QualityMetric.hpp
-  QualityMetric/ScalarAddQualityMetric.hpp
-  QualityMetric/ScalarMultiplyQualityMetric.hpp
-  QualityMetric/VertexMaxQM.hpp
-  QualityMetric/VertexPMeanP.hpp
-  QualityMetric/VertexQM.hpp 
+  QualityMetric/Mesquite_AddQualityMetric.hpp
+  QualityMetric/Mesquite_AveragingQM.hpp
+  QualityMetric/Mesquite_EdgeQM.hpp
+  QualityMetric/Mesquite_ElemSampleQM.hpp
+  QualityMetric/Mesquite_ElementMaxQM.hpp
+  QualityMetric/Mesquite_ElementAvgQM.hpp
+  QualityMetric/Mesquite_ElementPMeanP.hpp
+  QualityMetric/Mesquite_ElementQM.hpp
+  QualityMetric/Mesquite_MultiplyQualityMetric.hpp
+  QualityMetric/Debug/Mesquite_NumericalQM.hpp
+  QualityMetric/Debug/Mesquite_CompareQM.hpp
+  QualityMetric/Mesquite_PMeanPMetric.hpp
+  QualityMetric/Mesquite_PowerQualityMetric.hpp
+  QualityMetric/Mesquite_QualityMetric.hpp
+  QualityMetric/Mesquite_ScalarAddQualityMetric.hpp
+  QualityMetric/Mesquite_ScalarMultiplyQualityMetric.hpp
+  QualityMetric/Mesquite_VertexMaxQM.hpp
+  QualityMetric/Mesquite_VertexPMeanP.hpp
+  QualityMetric/Mesquite_VertexQM.hpp 
   )
 
 APPEND_SET(SOURCES
-  QualityMetric/AddQualityMetric.cpp
-  QualityMetric/AveragingQM.cpp
-  QualityMetric/EdgeQM.cpp
-  QualityMetric/ElemSampleQM.cpp
-  QualityMetric/ElementMaxQM.cpp
-  QualityMetric/ElementAvgQM.cpp
-  QualityMetric/ElementPMeanP.cpp
-  QualityMetric/ElementQM.cpp
-  QualityMetric/MultiplyQualityMetric.cpp
-  QualityMetric/Debug/NumericalQM.cpp
-  QualityMetric/Debug/CompareQM.cpp
-  QualityMetric/PMeanPMetric.cpp
-  QualityMetric/PowerQualityMetric.cpp
-  QualityMetric/QualityMetric.cpp
-  QualityMetric/ScalarAddQualityMetric.cpp
-  QualityMetric/ScalarMultiplyQualityMetric.cpp
-  QualityMetric/VertexMaxQM.cpp
-  QualityMetric/VertexPMeanP.cpp
-  QualityMetric/VertexQM.cpp 
+  QualityMetric/Mesquite_AddQualityMetric.cpp
+  QualityMetric/Mesquite_AveragingQM.cpp
+  QualityMetric/Mesquite_EdgeQM.cpp
+  QualityMetric/Mesquite_ElemSampleQM.cpp
+  QualityMetric/Mesquite_ElementMaxQM.cpp
+  QualityMetric/Mesquite_ElementAvgQM.cpp
+  QualityMetric/Mesquite_ElementPMeanP.cpp
+  QualityMetric/Mesquite_ElementQM.cpp
+  QualityMetric/Mesquite_MultiplyQualityMetric.cpp
+  QualityMetric/Debug/Mesquite_NumericalQM.cpp
+  QualityMetric/Debug/Mesquite_CompareQM.cpp
+  QualityMetric/Mesquite_PMeanPMetric.cpp
+  QualityMetric/Mesquite_PowerQualityMetric.cpp
+  QualityMetric/Mesquite_QualityMetric.cpp
+  QualityMetric/Mesquite_ScalarAddQualityMetric.cpp
+  QualityMetric/Mesquite_ScalarMultiplyQualityMetric.cpp
+  QualityMetric/Mesquite_VertexMaxQM.cpp
+  QualityMetric/Mesquite_VertexPMeanP.cpp
+  QualityMetric/Mesquite_VertexQM.cpp 
   )
 
 #
@@ -456,21 +455,21 @@ APPEND_SET(SOURCES
 #
 
 APPEND_SET(HEADERS
-  QualityMetric/Shape/AspectRatioGammaQualityMetric.hpp
-  QualityMetric/Shape/ConditionNumberFunctions.hpp
-  QualityMetric/Shape/ConditionNumberQualityMetric.hpp
-  QualityMetric/Shape/IdealWeightInverseMeanRatio.hpp
-  QualityMetric/Shape/IdealWeightMeanRatio.hpp
-  QualityMetric/Shape/MeanRatioFunctions.hpp
-  QualityMetric/Shape/VertexConditionNumberQualityMetric.hpp
+  QualityMetric/Shape/Mesquite_AspectRatioGammaQualityMetric.hpp
+  QualityMetric/Shape/Mesquite_ConditionNumberFunctions.hpp
+  QualityMetric/Shape/Mesquite_ConditionNumberQualityMetric.hpp
+  QualityMetric/Shape/Mesquite_IdealWeightInverseMeanRatio.hpp
+  QualityMetric/Shape/Mesquite_IdealWeightMeanRatio.hpp
+  QualityMetric/Shape/Mesquite_MeanRatioFunctions.hpp
+  QualityMetric/Shape/Mesquite_VertexConditionNumberQualityMetric.hpp
   )
 
 APPEND_SET(SOURCES
-  QualityMetric/Shape/AspectRatioGammaQualityMetric.cpp
-  QualityMetric/Shape/ConditionNumberQualityMetric.cpp
-  QualityMetric/Shape/IdealWeightInverseMeanRatio.cpp
-  QualityMetric/Shape/IdealWeightMeanRatio.cpp
-  QualityMetric/Shape/VertexConditionNumberQualityMetric.cpp
+  QualityMetric/Shape/Mesquite_AspectRatioGammaQualityMetric.cpp
+  QualityMetric/Shape/Mesquite_ConditionNumberQualityMetric.cpp
+  QualityMetric/Shape/Mesquite_IdealWeightInverseMeanRatio.cpp
+  QualityMetric/Shape/Mesquite_IdealWeightMeanRatio.cpp
+  QualityMetric/Shape/Mesquite_VertexConditionNumberQualityMetric.cpp
   )
 
 #
@@ -478,13 +477,13 @@ APPEND_SET(SOURCES
 #
 
 APPEND_SET(HEADERS
-  QualityMetric/Smoothness/EdgeLengthQualityMetric.hpp
-  QualityMetric/Smoothness/EdgeLengthRangeQualityMetric.hpp
+  QualityMetric/Smoothness/Mesquite_EdgeLengthQualityMetric.hpp
+  QualityMetric/Smoothness/Mesquite_EdgeLengthRangeQualityMetric.hpp
   )
 
 APPEND_SET(SOURCES
-  QualityMetric/Smoothness/EdgeLengthQualityMetric.cpp
-  QualityMetric/Smoothness/EdgeLengthRangeQualityMetric.cpp
+  QualityMetric/Smoothness/Mesquite_EdgeLengthQualityMetric.cpp
+  QualityMetric/Smoothness/Mesquite_EdgeLengthRangeQualityMetric.cpp
   )
 
 #
@@ -492,19 +491,19 @@ APPEND_SET(SOURCES
 #
 
 APPEND_SET(HEADERS
-  QualityMetric/TMP/AffineMapMetric.hpp
-  QualityMetric/TMP/TMPQualityMetric.hpp
-  QualityMetric/TMP/AWQualityMetric.hpp 
-  QualityMetric/TMP/TQualityMetric.hpp 
+  QualityMetric/TMP/Mesquite_AffineMapMetric.hpp
+  QualityMetric/TMP/Mesquite_TMPQualityMetric.hpp
+  QualityMetric/TMP/Mesquite_AWQualityMetric.hpp 
+  QualityMetric/TMP/Mesquite_TQualityMetric.hpp 
   )
 
 APPEND_SET(SOURCES
-  QualityMetric/TMP/AffineMapMetric.cpp
-  QualityMetric/TMP/TargetMetricUtil.cpp
-  QualityMetric/TMP/TargetMetricUtil.hpp
-  QualityMetric/TMP/TMPQualityMetric.cpp 
-  QualityMetric/TMP/AWQualityMetric.cpp 
-  QualityMetric/TMP/TQualityMetric.cpp 
+  QualityMetric/TMP/Mesquite_AffineMapMetric.cpp
+  QualityMetric/TMP/Mesquite_TargetMetricUtil.cpp
+  QualityMetric/TMP/Mesquite_TargetMetricUtil.hpp
+  QualityMetric/TMP/Mesquite_TMPQualityMetric.cpp 
+  QualityMetric/TMP/Mesquite_AWQualityMetric.cpp 
+  QualityMetric/TMP/Mesquite_TQualityMetric.cpp 
   )
 
 #
@@ -512,11 +511,11 @@ APPEND_SET(SOURCES
 #
 
 APPEND_SET(HEADERS
-  QualityMetric/Untangle/UntangleBetaQualityMetric.hpp
+  QualityMetric/Untangle/Mesquite_UntangleBetaQualityMetric.hpp
   )
 
 APPEND_SET(SOURCES
-  QualityMetric/Untangle/UntangleBetaQualityMetric.cpp
+  QualityMetric/Untangle/Mesquite_UntangleBetaQualityMetric.cpp
   )
 
 #
@@ -524,15 +523,15 @@ APPEND_SET(SOURCES
 #
 
 APPEND_SET(HEADERS
-  QualityMetric/Volume/EdgeLengthMetric.hpp
-  QualityMetric/Volume/LocalSizeQualityMetric.hpp
-  QualityMetric/Volume/SizeMetric.hpp
+  QualityMetric/Volume/Mesquite_EdgeLengthMetric.hpp
+  QualityMetric/Volume/Mesquite_LocalSizeQualityMetric.hpp
+  QualityMetric/Volume/Mesquite_SizeMetric.hpp
   )
 
 APPEND_SET(SOURCES
-  QualityMetric/Volume/EdgeLengthMetric.cpp
-  QualityMetric/Volume/LocalSizeQualityMetric.cpp
-  QualityMetric/Volume/SizeMetric.cpp
+  QualityMetric/Volume/Mesquite_EdgeLengthMetric.cpp
+  QualityMetric/Volume/Mesquite_LocalSizeQualityMetric.cpp
+  QualityMetric/Volume/Mesquite_SizeMetric.cpp
   )
 
 
@@ -541,23 +540,23 @@ APPEND_SET(SOURCES
 #
 
 APPEND_SET(HEADERS
-  TargetMetric/AWMetric.hpp
-  TargetMetric/TMetric.hpp
-  TargetMetric/TMetricBarrier.hpp
-  TargetMetric/TMetricNonBarrier.hpp
-  TargetMetric/AWMetricBarrier.hpp
-  TargetMetric/AWMetricNonBarrier.hpp
+  TargetMetric/Mesquite_AWMetric.hpp
+  TargetMetric/Mesquite_TMetric.hpp
+  TargetMetric/Mesquite_TMetricBarrier.hpp
+  TargetMetric/Mesquite_TMetricNonBarrier.hpp
+  TargetMetric/Mesquite_AWMetricBarrier.hpp
+  TargetMetric/Mesquite_AWMetricNonBarrier.hpp
   )
 
 APPEND_SET(SOURCES
-  TargetMetric/TMPCommon.hpp
-  TargetMetric/TMPDerivs.hpp
-  TargetMetric/AWMetric.cpp
-  TargetMetric/TMetric.cpp
-  TargetMetric/TMetricBarrier.cpp
-  TargetMetric/TMetricNonBarrier.cpp
-  TargetMetric/AWMetricBarrier.cpp
-  TargetMetric/AWMetricNonBarrier.cpp
+  TargetMetric/Mesquite_TMPCommon.hpp
+  TargetMetric/Mesquite_TMPDerivs.hpp
+  TargetMetric/Mesquite_AWMetric.cpp
+  TargetMetric/Mesquite_TMetric.cpp
+  TargetMetric/Mesquite_TMetricBarrier.cpp
+  TargetMetric/Mesquite_TMetricNonBarrier.cpp
+  TargetMetric/Mesquite_AWMetricBarrier.cpp
+  TargetMetric/Mesquite_AWMetricNonBarrier.cpp
   )
 
 
@@ -566,23 +565,23 @@ APPEND_SET(SOURCES
 #
 
 APPEND_SET(HEADERS
-  TargetMetric/Misc/InvTransBarrier.hpp
-  TargetMetric/Misc/TMixed.hpp
-  TargetMetric/Misc/TOffset.hpp
-  TargetMetric/Misc/TPower2.hpp
-  TargetMetric/Misc/TScale.hpp
-  TargetMetric/Misc/TSquared.hpp 
-  TargetMetric/Misc/TSum.hpp
+  TargetMetric/Misc/Mesquite_InvTransBarrier.hpp
+  TargetMetric/Misc/Mesquite_TMixed.hpp
+  TargetMetric/Misc/Mesquite_TOffset.hpp
+  TargetMetric/Misc/Mesquite_TPower2.hpp
+  TargetMetric/Misc/Mesquite_TScale.hpp
+  TargetMetric/Misc/Mesquite_TSquared.hpp 
+  TargetMetric/Misc/Mesquite_TSum.hpp
   )
 
 APPEND_SET(SOURCES
-  TargetMetric/Misc/InvTransBarrier.cpp
-  TargetMetric/Misc/TMixed.cpp
-  TargetMetric/Misc/TOffset.cpp
-  TargetMetric/Misc/TPower2.cpp
-  TargetMetric/Misc/TScale.cpp
-  TargetMetric/Misc/TSquared.cpp 
-  TargetMetric/Misc/TSum.cpp
+  TargetMetric/Misc/Mesquite_InvTransBarrier.cpp
+  TargetMetric/Misc/Mesquite_TMixed.cpp
+  TargetMetric/Misc/Mesquite_TOffset.cpp
+  TargetMetric/Misc/Mesquite_TPower2.cpp
+  TargetMetric/Misc/Mesquite_TScale.cpp
+  TargetMetric/Misc/Mesquite_TSquared.cpp 
+  TargetMetric/Misc/Mesquite_TSum.cpp
   )
 
 #
@@ -590,25 +589,25 @@ APPEND_SET(SOURCES
 #
 
 APPEND_SET(HEADERS
-  TargetMetric/Shape/AWShape2DB1.hpp
-  TargetMetric/Shape/AWShape2DNB1.hpp
-  TargetMetric/Shape/AWShape2DNB2.hpp
-  TargetMetric/Shape/TInverseMeanRatio.hpp
-  TargetMetric/Shape/TShape2DNB2.hpp
-  TargetMetric/Shape/TShape3DB2.hpp
-  TargetMetric/Shape/TShapeB1.hpp
-  TargetMetric/Shape/TShapeNB1.hpp 
+  TargetMetric/Shape/Mesquite_AWShape2DB1.hpp
+  TargetMetric/Shape/Mesquite_AWShape2DNB1.hpp
+  TargetMetric/Shape/Mesquite_AWShape2DNB2.hpp
+  TargetMetric/Shape/Mesquite_TInverseMeanRatio.hpp
+  TargetMetric/Shape/Mesquite_TShape2DNB2.hpp
+  TargetMetric/Shape/Mesquite_TShape3DB2.hpp
+  TargetMetric/Shape/Mesquite_TShapeB1.hpp
+  TargetMetric/Shape/Mesquite_TShapeNB1.hpp 
   )
 
 APPEND_SET(SOURCES
-  TargetMetric/Shape/AWShape2DB1.cpp
-  TargetMetric/Shape/AWShape2DNB1.cpp
-  TargetMetric/Shape/AWShape2DNB2.cpp
-  TargetMetric/Shape/TInverseMeanRatio.cpp
-  TargetMetric/Shape/TShape2DNB2.cpp
-  TargetMetric/Shape/TShape3DB2.cpp
-  TargetMetric/Shape/TShapeB1.cpp
-  TargetMetric/Shape/TShapeNB1.cpp 
+  TargetMetric/Shape/Mesquite_AWShape2DB1.cpp
+  TargetMetric/Shape/Mesquite_AWShape2DNB1.cpp
+  TargetMetric/Shape/Mesquite_AWShape2DNB2.cpp
+  TargetMetric/Shape/Mesquite_TInverseMeanRatio.cpp
+  TargetMetric/Shape/Mesquite_TShape2DNB2.cpp
+  TargetMetric/Shape/Mesquite_TShape3DB2.cpp
+  TargetMetric/Shape/Mesquite_TShapeB1.cpp
+  TargetMetric/Shape/Mesquite_TShapeNB1.cpp 
   )
 
 #
@@ -616,19 +615,19 @@ APPEND_SET(SOURCES
 #
 
 APPEND_SET(HEADERS
-  TargetMetric/ShapeOrient/AWShapeOrientNB1.hpp 
-  TargetMetric/ShapeOrient/TShapeOrientB1.hpp 
-  TargetMetric/ShapeOrient/TShapeOrientB2.hpp 
-  TargetMetric/ShapeOrient/TShapeOrientNB1.hpp
-  TargetMetric/ShapeOrient/TShapeOrientNB2.hpp
+  TargetMetric/ShapeOrient/Mesquite_AWShapeOrientNB1.hpp 
+  TargetMetric/ShapeOrient/Mesquite_TShapeOrientB1.hpp 
+  TargetMetric/ShapeOrient/Mesquite_TShapeOrientB2.hpp 
+  TargetMetric/ShapeOrient/Mesquite_TShapeOrientNB1.hpp
+  TargetMetric/ShapeOrient/Mesquite_TShapeOrientNB2.hpp
   )
 
 APPEND_SET(SOURCES
-  TargetMetric/ShapeOrient/AWShapeOrientNB1.cpp 
-  TargetMetric/ShapeOrient/TShapeOrientB1.cpp 
-  TargetMetric/ShapeOrient/TShapeOrientB2.cpp 
-  TargetMetric/ShapeOrient/TShapeOrientNB1.cpp
-  TargetMetric/ShapeOrient/TShapeOrientNB2.cpp
+  TargetMetric/ShapeOrient/Mesquite_AWShapeOrientNB1.cpp 
+  TargetMetric/ShapeOrient/Mesquite_TShapeOrientB1.cpp 
+  TargetMetric/ShapeOrient/Mesquite_TShapeOrientB2.cpp 
+  TargetMetric/ShapeOrient/Mesquite_TShapeOrientNB1.cpp
+  TargetMetric/ShapeOrient/Mesquite_TShapeOrientNB2.cpp
   )
 
 #
@@ -636,29 +635,29 @@ APPEND_SET(SOURCES
 #
 
 APPEND_SET(HEADERS
-  TargetMetric/ShapeSize/AWShapeSizeB1.hpp
-  TargetMetric/ShapeSize/TShapeSize2DB2.hpp
-  TargetMetric/ShapeSize/TShapeSize2DNB1.hpp
-  TargetMetric/ShapeSize/TShapeSize2DNB2.hpp
-  TargetMetric/ShapeSize/TShapeSize3DB2.hpp
-  TargetMetric/ShapeSize/TShapeSize3DB4.hpp
-  TargetMetric/ShapeSize/TShapeSize3DNB1.hpp
-  TargetMetric/ShapeSize/TShapeSizeB1.hpp
-  TargetMetric/ShapeSize/TShapeSizeB3.hpp
-  TargetMetric/ShapeSize/TShapeSizeNB3.hpp
+  TargetMetric/ShapeSize/Mesquite_AWShapeSizeB1.hpp
+  TargetMetric/ShapeSize/Mesquite_TShapeSize2DB2.hpp
+  TargetMetric/ShapeSize/Mesquite_TShapeSize2DNB1.hpp
+  TargetMetric/ShapeSize/Mesquite_TShapeSize2DNB2.hpp
+  TargetMetric/ShapeSize/Mesquite_TShapeSize3DB2.hpp
+  TargetMetric/ShapeSize/Mesquite_TShapeSize3DB4.hpp
+  TargetMetric/ShapeSize/Mesquite_TShapeSize3DNB1.hpp
+  TargetMetric/ShapeSize/Mesquite_TShapeSizeB1.hpp
+  TargetMetric/ShapeSize/Mesquite_TShapeSizeB3.hpp
+  TargetMetric/ShapeSize/Mesquite_TShapeSizeNB3.hpp
   )
 
 APPEND_SET(SOURCES
-  TargetMetric/ShapeSize/AWShapeSizeB1.cpp
-  TargetMetric/ShapeSize/TShapeSize2DB2.cpp
-  TargetMetric/ShapeSize/TShapeSize2DNB1.cpp
-  TargetMetric/ShapeSize/TShapeSize2DNB2.cpp
-  TargetMetric/ShapeSize/TShapeSize3DB2.cpp
-  TargetMetric/ShapeSize/TShapeSize3DB4.cpp
-  TargetMetric/ShapeSize/TShapeSize3DNB1.cpp
-  TargetMetric/ShapeSize/TShapeSizeB1.cpp
-  TargetMetric/ShapeSize/TShapeSizeB3.cpp
-  TargetMetric/ShapeSize/TShapeSizeNB3.cpp
+  TargetMetric/ShapeSize/Mesquite_AWShapeSizeB1.cpp
+  TargetMetric/ShapeSize/Mesquite_TShapeSize2DB2.cpp
+  TargetMetric/ShapeSize/Mesquite_TShapeSize2DNB1.cpp
+  TargetMetric/ShapeSize/Mesquite_TShapeSize2DNB2.cpp
+  TargetMetric/ShapeSize/Mesquite_TShapeSize3DB2.cpp
+  TargetMetric/ShapeSize/Mesquite_TShapeSize3DB4.cpp
+  TargetMetric/ShapeSize/Mesquite_TShapeSize3DNB1.cpp
+  TargetMetric/ShapeSize/Mesquite_TShapeSizeB1.cpp
+  TargetMetric/ShapeSize/Mesquite_TShapeSizeB3.cpp
+  TargetMetric/ShapeSize/Mesquite_TShapeSizeNB3.cpp
   )
 
 #
@@ -666,17 +665,17 @@ APPEND_SET(SOURCES
 #
 
 APPEND_SET(HEADERS
-  TargetMetric/ShapeSizeOrient/AWShapeSizeOrientNB1.hpp
-  TargetMetric/ShapeSizeOrient/TShapeSizeOrientB1.hpp
-  TargetMetric/ShapeSizeOrient/TShapeSizeOrientB2.hpp
-  TargetMetric/ShapeSizeOrient/TShapeSizeOrientNB1.hpp
+  TargetMetric/ShapeSizeOrient/Mesquite_AWShapeSizeOrientNB1.hpp
+  TargetMetric/ShapeSizeOrient/Mesquite_TShapeSizeOrientB1.hpp
+  TargetMetric/ShapeSizeOrient/Mesquite_TShapeSizeOrientB2.hpp
+  TargetMetric/ShapeSizeOrient/Mesquite_TShapeSizeOrientNB1.hpp
   )
 
 APPEND_SET(SOURCES
-  TargetMetric/ShapeSizeOrient/AWShapeSizeOrientNB1.cpp
-  TargetMetric/ShapeSizeOrient/TShapeSizeOrientB1.cpp
-  TargetMetric/ShapeSizeOrient/TShapeSizeOrientB2.cpp
-  TargetMetric/ShapeSizeOrient/TShapeSizeOrientNB1.cpp
+  TargetMetric/ShapeSizeOrient/Mesquite_AWShapeSizeOrientNB1.cpp
+  TargetMetric/ShapeSizeOrient/Mesquite_TShapeSizeOrientB1.cpp
+  TargetMetric/ShapeSizeOrient/Mesquite_TShapeSizeOrientB2.cpp
+  TargetMetric/ShapeSizeOrient/Mesquite_TShapeSizeOrientNB1.cpp
   )
 
 #
@@ -684,19 +683,19 @@ APPEND_SET(SOURCES
 #
 
 APPEND_SET(HEADERS
-  TargetMetric/Size/AWSizeB1.hpp
-  TargetMetric/Size/AWSizeNB1.hpp
-  TargetMetric/Size/TSizeB1.hpp
-  TargetMetric/Size/TSizeNB1.hpp
-  TargetMetric/Size/TTau.hpp
+  TargetMetric/Size/Mesquite_AWSizeB1.hpp
+  TargetMetric/Size/Mesquite_AWSizeNB1.hpp
+  TargetMetric/Size/Mesquite_TSizeB1.hpp
+  TargetMetric/Size/Mesquite_TSizeNB1.hpp
+  TargetMetric/Size/Mesquite_TTau.hpp
   )
 
 APPEND_SET(SOURCES
-  TargetMetric/Size/AWSizeB1.cpp
-  TargetMetric/Size/AWSizeNB1.cpp
-  TargetMetric/Size/TSizeB1.cpp
-  TargetMetric/Size/TSizeNB1.cpp
-  TargetMetric/Size/TTau.cpp
+  TargetMetric/Size/Mesquite_AWSizeB1.cpp
+  TargetMetric/Size/Mesquite_AWSizeNB1.cpp
+  TargetMetric/Size/Mesquite_TSizeB1.cpp
+  TargetMetric/Size/Mesquite_TSizeNB1.cpp
+  TargetMetric/Size/Mesquite_TTau.cpp
   )
 
 #
@@ -704,17 +703,17 @@ APPEND_SET(SOURCES
 #
 
 APPEND_SET(HEADERS
-  TargetMetric/Untangle/AWUntangleBeta.hpp
-  TargetMetric/Untangle/TUntangle1.hpp
-  TargetMetric/Untangle/TUntangleBeta.hpp
-  TargetMetric/Untangle/TUntangleMu.hpp
+  TargetMetric/Untangle/Mesquite_AWUntangleBeta.hpp
+  TargetMetric/Untangle/Mesquite_TUntangle1.hpp
+  TargetMetric/Untangle/Mesquite_TUntangleBeta.hpp
+  TargetMetric/Untangle/Mesquite_TUntangleMu.hpp
   )
 
 APPEND_SET(SOURCES
-  TargetMetric/Untangle/AWUntangleBeta.cpp
-  TargetMetric/Untangle/TUntangle1.cpp
-  TargetMetric/Untangle/TUntangleBeta.cpp
-  TargetMetric/Untangle/TUntangleMu.cpp
+  TargetMetric/Untangle/Mesquite_AWUntangleBeta.cpp
+  TargetMetric/Untangle/Mesquite_TUntangle1.cpp
+  TargetMetric/Untangle/Mesquite_TUntangleBeta.cpp
+  TargetMetric/Untangle/Mesquite_TUntangleMu.cpp
   )
 
 #
@@ -722,45 +721,45 @@ APPEND_SET(SOURCES
 #
 
 APPEND_SET(HEADERS
-  TargetCalculator/CachingTargetCalculator.hpp
-  TargetCalculator/IdealShapeTarget.hpp
-  TargetCalculator/InverseMetricWeight.hpp
-  TargetCalculator/JacobianCalculator.hpp
-  TargetCalculator/LambdaTarget.hpp
-  TargetCalculator/LambdaConstant.hpp
-  TargetCalculator/LVQDTargetCalculator.hpp
-  TargetCalculator/MetricWeight.hpp
-  TargetCalculator/RefMeshTargetCalculator.hpp
-  TargetCalculator/ReferenceMesh.hpp
-  TargetCalculator/RefSizeTargetCalculator.hpp
-  TargetCalculator/RemainingWeight.hpp
-  TargetCalculator/TargetCalculator.hpp
-  TargetCalculator/TargetReader.hpp
-  TargetCalculator/TargetWriter.hpp
-  TargetCalculator/TetDihedralWeight.hpp
-  TargetCalculator/WeightCalculator.hpp
-  TargetCalculator/WeightReader.hpp 
+  TargetCalculator/Mesquite_CachingTargetCalculator.hpp
+  TargetCalculator/Mesquite_IdealShapeTarget.hpp
+  TargetCalculator/Mesquite_InverseMetricWeight.hpp
+  TargetCalculator/Mesquite_JacobianCalculator.hpp
+  TargetCalculator/Mesquite_LambdaTarget.hpp
+  TargetCalculator/Mesquite_LambdaConstant.hpp
+  TargetCalculator/Mesquite_LVQDTargetCalculator.hpp
+  TargetCalculator/Mesquite_MetricWeight.hpp
+  TargetCalculator/Mesquite_RefMeshTargetCalculator.hpp
+  TargetCalculator/Mesquite_ReferenceMesh.hpp
+  TargetCalculator/Mesquite_RefSizeTargetCalculator.hpp
+  TargetCalculator/Mesquite_RemainingWeight.hpp
+  TargetCalculator/Mesquite_TargetCalculator.hpp
+  TargetCalculator/Mesquite_TargetReader.hpp
+  TargetCalculator/Mesquite_TargetWriter.hpp
+  TargetCalculator/Mesquite_TetDihedralWeight.hpp
+  TargetCalculator/Mesquite_WeightCalculator.hpp
+  TargetCalculator/Mesquite_WeightReader.hpp 
   )
 
 APPEND_SET(SOURCES
-  TargetCalculator/CachingTargetCalculator.cpp
-  TargetCalculator/IdealShapeTarget.cpp
-  TargetCalculator/InverseMetricWeight.cpp
-  TargetCalculator/JacobianCalculator.cpp
-  TargetCalculator/LambdaTarget.cpp
-  TargetCalculator/LambdaConstant.cpp
-  TargetCalculator/LVQDTargetCalculator.cpp
-  TargetCalculator/MetricWeight.cpp
-  TargetCalculator/RefMeshTargetCalculator.cpp
-  TargetCalculator/ReferenceMesh.cpp
-  TargetCalculator/RefSizeTargetCalculator.cpp
-  TargetCalculator/RemainingWeight.cpp
-  TargetCalculator/TargetCalculator.cpp
-  TargetCalculator/TargetReader.cpp
-  TargetCalculator/TargetWriter.cpp
-  TargetCalculator/TetDihedralWeight.cpp
-  TargetCalculator/WeightCalculator.cpp
-  TargetCalculator/WeightReader.cpp 
+  TargetCalculator/Mesquite_CachingTargetCalculator.cpp
+  TargetCalculator/Mesquite_IdealShapeTarget.cpp
+  TargetCalculator/Mesquite_InverseMetricWeight.cpp
+  TargetCalculator/Mesquite_JacobianCalculator.cpp
+  TargetCalculator/Mesquite_LambdaTarget.cpp
+  TargetCalculator/Mesquite_LambdaConstant.cpp
+  TargetCalculator/Mesquite_LVQDTargetCalculator.cpp
+  TargetCalculator/Mesquite_MetricWeight.cpp
+  TargetCalculator/Mesquite_RefMeshTargetCalculator.cpp
+  TargetCalculator/Mesquite_ReferenceMesh.cpp
+  TargetCalculator/Mesquite_RefSizeTargetCalculator.cpp
+  TargetCalculator/Mesquite_RemainingWeight.cpp
+  TargetCalculator/Mesquite_TargetCalculator.cpp
+  TargetCalculator/Mesquite_TargetReader.cpp
+  TargetCalculator/Mesquite_TargetWriter.cpp
+  TargetCalculator/Mesquite_TetDihedralWeight.cpp
+  TargetCalculator/Mesquite_WeightCalculator.cpp
+  TargetCalculator/Mesquite_WeightReader.cpp 
   )
 
 #

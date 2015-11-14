@@ -31,20 +31,19 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // 
 
-#include <iostream>
-#include <cstdlib>
-#include <cstring>
-#include <sstream>
-#include <vector>
-#include <string>
-#include <sstream>
-
-#include "stringx.h"
-
-#include "smart_assert.h"
 #include "exo_entity.h"
-#include "exodusII.h"
-#include "util.h"
+#include <sys/types.h>                  // for int64_t
+#include <cstdlib>                      // for exit, NULL
+#include <cstring>                      // for strlen
+#include <iostream>                     // for operator<<, basic_ostream, etc
+#include <string>                       // for string, char_traits, etc
+#include <vector>                       // for vector
+#include "exodusII.h"                   // for ex_get_var, ex_inquire_int, etc
+#include "smart_assert.h"               // for SMART_ASSERT
+#include "stringx.h"                    // for to_lower
+#include "util.h"                       // for TOPTR, free_name_array, etc
+
+
 
 using namespace std;
 
@@ -153,7 +152,11 @@ string Exo_Entity::Load_Results(int time_step, int var_index)
   
   if (fileId < 0) return "ERROR:  Invalid file id!";
   if (id_ == EX_INVALID_ID) return "ERROR:  Must initialize block parameters first!";
-  SMART_ASSERT(var_index >= 0 && var_index < numVars);
+  if (var_index < 0 || var_index >= numVars) {
+    std::cout << "Exo_Entity::Load_Results()  ERROR: var_index is invalid. "
+	      << "Aborting..." << std::endl;
+    exit(1);
+  }
   SMART_ASSERT(time_step >= 1 && time_step <= (int)get_num_timesteps(fileId));
   
   if (time_step != currentStep) {
@@ -253,7 +256,7 @@ string Exo_Entity::Load_Results(int t1, int t2, double proportion, int var_index
 	  
 	  double *results1 = results_[var_index];
 	  for (size_t i=0; i < numEntity; i++) {
-	    results1[i] = proportion * results1[i] + (1.0 - proportion) * results2[i];
+	    results1[i] = (1.0-proportion) * results1[i] + proportion * results2[i];
 	  }
 	}
       }
@@ -269,9 +272,13 @@ string Exo_Entity::Load_Results(int t1, int t2, double proportion, int var_index
 const double* Exo_Entity::Get_Results(int var_index) const
 {
   SMART_ASSERT(Check_State());
-  if (currentStep == 0) return 0;
+  if (currentStep == 0) return NULL;
   SMART_ASSERT(var_index >= 0 && var_index < numVars);
-  return results_[var_index];
+  if (var_index >= 0 && var_index < numVars) {
+    return results_[var_index];
+  } else {
+    return NULL;
+  }
 }
 
 void Exo_Entity::Free_Results()
@@ -377,6 +384,19 @@ int Exo_Entity::Find_Attribute_Index(const std::string &name) const
 
 void Exo_Entity::internal_load_params()
 {
+  int name_size = ex_inquire_int(fileId, EX_INQ_MAX_READ_NAME_LENGTH);
+  {
+    std::vector<char> name(name_size+1);
+    ex_get_name(fileId, exodus_type(), id_, TOPTR(name));
+    if (name[0] != '\0') {
+      name_ = TOPTR(name);
+      to_lower(name_);
+    } else {
+      name_ = short_label();
+      name_ += "_";
+      name_ += to_string(id_);
+    }
+  }
   numVars = get_num_variables(fileId, exodus_type(), label());
   if (numVars) {
     results_ = new double*[numVars];
@@ -389,7 +409,6 @@ void Exo_Entity::internal_load_params()
   if (numAttr) {
     attributes_.resize(numAttr);
 
-    int name_size = ex_inquire_int(fileId, EX_INQ_MAX_READ_NAME_LENGTH);
     char** names = get_name_array(numAttr, name_size);
     int err = ex_get_attr_names(fileId, exodus_type(), id_, names);
     if (err < 0) {

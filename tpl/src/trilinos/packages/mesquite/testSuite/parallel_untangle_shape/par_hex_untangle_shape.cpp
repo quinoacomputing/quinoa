@@ -18,7 +18,7 @@
 
    You should have received a copy of the GNU Lesser General Public License 
    (lgpl.txt) along with this library; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  
    diachin2@llnl.gov, djmelan@sandia.gov, mbrewer@sandia.gov, 
    pknupp@sandia.gov, tleurent@mcs.anl.gov, tmunson@mcs.anl.gov      
@@ -50,45 +50,45 @@ example code shown therein.
 
 #include "meshfiles.h"
 
-#include "MeshImpl.hpp"
-#include "MeshUtil.hpp"
-#include "MsqTimer.hpp"
+#include "Mesquite_MeshImpl.hpp"
+#include "Mesquite_MeshUtil.hpp"
+#include "Mesquite_MsqTimer.hpp"
 #include "Mesquite.hpp"
-#include "MsqError.hpp"
-#include "Vector3D.hpp"
-#include "InstructionQueue.hpp"
-#include "LaplaceWrapper.hpp"
-#include "ShapeImprovementWrapper.hpp"
-#include "UntangleWrapper.hpp"
-#include "PatchData.hpp"
-#include "TerminationCriterion.hpp"
-#include "QualityAssessor.hpp"
+#include "Mesquite_MsqError.hpp"
+#include "Mesquite_Vector3D.hpp"
+#include "Mesquite_InstructionQueue.hpp"
+#include "Mesquite_LaplaceWrapper.hpp"
+#include "Mesquite_ShapeImprovementWrapper.hpp"
+#include "Mesquite_UntangleWrapper.hpp"
+#include "Mesquite_PatchData.hpp"
+#include "Mesquite_TerminationCriterion.hpp"
+#include "Mesquite_QualityAssessor.hpp"
 
 /* Mesquite includes */
-#include "ParallelMeshImpl.hpp"
-#include "ParallelHelper.hpp"
-#include "MsqDebug.hpp"
-#include "Settings.hpp"
-//#include "ShapeImprovementWrapper.hpp"
-//#include "UntangleWrapper.hpp"
+#include "Mesquite_ParallelMeshImpl.hpp"
+#include "Mesquite_ParallelHelper.hpp"
+#include "Mesquite_MsqDebug.hpp"
+#include "Mesquite_Settings.hpp"
+//#include "Mesquite_ShapeImprovementWrapper.hpp"
+//#include "Mesquite_UntangleWrapper.hpp"
 
-#include "IdealWeightInverseMeanRatio.hpp" 
+#include "Mesquite_IdealWeightInverseMeanRatio.hpp" 
 
-#include "UntangleBetaQualityMetric.hpp"
-#include "LPtoPTemplate.hpp"
-#include "ConjugateGradient.hpp"
-#include "SteepestDescent.hpp"
-//#include "FeasibleNewton.hpp"
+#include "Mesquite_UntangleBetaQualityMetric.hpp"
+#include "Mesquite_LPtoPTemplate.hpp"
+#include "Mesquite_ConjugateGradient.hpp"
+#include "Mesquite_SteepestDescent.hpp"
+//#include "Mesquite_FeasibleNewton.hpp"
 
 // algorithms
-#include "Randomize.hpp"
-#include "ConditionNumberQualityMetric.hpp"
-#include "UntangleBetaQualityMetric.hpp"
-#include "LPtoPTemplate.hpp"
-#include "LInfTemplate.hpp"
-#include "SteepestDescent.hpp"
-#include "ConjugateGradient.hpp"
-#include "PlanarDomain.hpp"
+#include "Mesquite_Randomize.hpp"
+#include "Mesquite_ConditionNumberQualityMetric.hpp"
+#include "Mesquite_UntangleBetaQualityMetric.hpp"
+#include "Mesquite_LPtoPTemplate.hpp"
+#include "Mesquite_LInfTemplate.hpp"
+#include "Mesquite_SteepestDescent.hpp"
+#include "Mesquite_ConjugateGradient.hpp"
+#include "Mesquite_PlanarDomain.hpp"
 
 #include <iostream>
 using std::cout;

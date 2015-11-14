@@ -70,13 +70,12 @@ using Teuchos::DefaultComm;
 using Teuchos::Array;
 using Teuchos::ArrayView;
 
-typedef UserInputForTests uinput_t;
-typedef Tpetra::CrsGraph<lno_t, gno_t, node_t> tgraph_t;
-typedef Xpetra::CrsGraph<lno_t, gno_t, node_t> xgraph_t;
+typedef Tpetra::CrsGraph<zlno_t, zgno_t, znode_t> tgraph_t;
+typedef Xpetra::CrsGraph<zlno_t, zgno_t, znode_t> xgraph_t;
 typedef Epetra_CrsGraph egraph_t;
 
-void printGraph(RCP<const Comm<int> > &comm, lno_t nvtx,
-    const gno_t *vtxIds, const lno_t *offsets, const gno_t *edgeIds)
+void printGraph(RCP<const Comm<int> > &comm, zlno_t nvtx,
+    const zgno_t *vtxIds, const zlno_t *offsets, const zgno_t *edgeIds)
 {
   int rank = comm->getRank();
   int nprocs = comm->getSize();
@@ -84,9 +83,9 @@ void printGraph(RCP<const Comm<int> > &comm, lno_t nvtx,
   for (int p=0; p < nprocs; p++){
     if (p == rank){
       std::cout << rank << ":" << std::endl;
-      for (lno_t i=0; i < nvtx; i++){
+      for (zlno_t i=0; i < nvtx; i++){
         std::cout << " vertex " << vtxIds[i] << ": ";
-        for (lno_t j=offsets[i]; j < offsets[i+1]; j++){
+        for (zlno_t j=offsets[i]; j < offsets[i+1]; j++){
           std::cout << edgeIds[j] << " ";
         }
         std::cout << std::endl;
@@ -100,7 +99,9 @@ void printGraph(RCP<const Comm<int> > &comm, lno_t nvtx,
 
 template <typename User>
 int verifyInputAdapter(
-  Zoltan2::XpetraCrsGraphAdapter<User> &ia, tgraph_t &graph)
+  Zoltan2::XpetraCrsGraphAdapter<User> &ia,
+  tgraph_t &graph
+)
 {
   RCP<const Comm<int> > comm = graph.getComm();
   int fail = 0, gfail=0;
@@ -115,15 +116,15 @@ int verifyInputAdapter(
 
   gfail = globalFail(comm, fail);
 
-  const gno_t *vtxIds=NULL, *edgeIds=NULL;
-  const lno_t *offsets=NULL;
+  const zgno_t *vtxIds=NULL, *edgeIds=NULL;
+  const zlno_t *offsets=NULL;
   size_t nvtx=0;
 
   if (!gfail){
 
     nvtx = ia.getLocalNumVertices();
     ia.getVertexIDsView(vtxIds);
-    ia.getEdgeView(offsets, edgeIds);
+    ia.getEdgesView(offsets, edgeIds);
 
     if (nvtx != graph.getNodeNumRows())
       fail = 8;
@@ -150,11 +151,11 @@ int main(int argc, char *argv[])
   // Create an object that can give us test Tpetra, Xpetra
   // and Epetra graphs for testing.
 
-  RCP<uinput_t> uinput;
+  RCP<UserInputForTests> uinput;
 
   try{
     uinput =
-      rcp(new uinput_t(testDataFilePath,std::string("simple"), comm, true));
+      rcp(new UserInputForTests(testDataFilePath,std::string("simple"), comm, true));
   }
   catch(std::exception &e){
     TEST_FAIL_AND_EXIT(*comm, 0, string("input ")+e.what(), 1);
@@ -163,9 +164,8 @@ int main(int argc, char *argv[])
   RCP<tgraph_t> tG;     // original graph (for checking)
   RCP<tgraph_t> newG;   // migrated graph
 
-  tG = uinput->getTpetraCrsGraph();
+  tG = uinput->getUITpetraCrsGraph();
   size_t nvtx = tG->getNodeNumRows();
-  ArrayView<const gno_t> rowGids = tG->getRowMap()->getNodeElementList();
 
   // To test migration in the input adapter we need a Solution
   // object.  The Solution needs an IdentifierMap.
@@ -175,19 +175,18 @@ int main(int argc, char *argv[])
 
   RCP<const Zoltan2::Environment> env = rcp(new Zoltan2::Environment);
 
-  ArrayRCP<const gno_t> gidArray = arcpFromArrayView(rowGids);
-  RCP<const idmap_t> idMap = rcp(new idmap_t(env, comm, gidArray));
-
-  int weightDim = 1;
-
-  zoltan2_partId_t *p = new zoltan2_partId_t [nvtx];
-  memset(p, 0, sizeof(zoltan2_partId_t) * nvtx);
-  ArrayRCP<zoltan2_partId_t> solnParts(p, 0, nvtx, true);
+  int nWeights = 1;
 
   typedef Zoltan2::XpetraCrsGraphAdapter<tgraph_t>  adapter_t;
   typedef Zoltan2::PartitioningSolution<adapter_t> soln_t;
-  soln_t solution(env, comm, idMap, weightDim);
-  solution.setParts(gidArray, solnParts, true);
+  typedef adapter_t::part_t part_t;
+
+  part_t *p = new part_t [nvtx];
+  memset(p, 0, sizeof(part_t) * nvtx);
+  ArrayRCP<part_t> solnParts(p, 0, nvtx, true);
+
+  soln_t solution(env, comm, nWeights);
+  solution.setParts(solnParts);
 
   /////////////////////////////////////////////////////////////
   // User object is Tpetra::CrsGraph
@@ -252,7 +251,7 @@ int main(int argc, char *argv[])
   /////////////////////////////////////////////////////////////
   // User object is Xpetra::CrsGraph
   if (!gfail){
-    RCP<xgraph_t> xG = uinput->getXpetraCrsGraph();
+    RCP<xgraph_t> xG = uinput->getUIXpetraCrsGraph();
     RCP<const xgraph_t> cxG = rcp_const_cast<const xgraph_t>(xG);
     RCP<Zoltan2::XpetraCrsGraphAdapter<xgraph_t> > xGInput;
 
@@ -314,7 +313,7 @@ int main(int argc, char *argv[])
   /////////////////////////////////////////////////////////////
   // User object is Epetra_CrsGraph
   if (!gfail){
-    RCP<egraph_t> eG = uinput->getEpetraCrsGraph();
+    RCP<egraph_t> eG = uinput->getUIEpetraCrsGraph();
     RCP<const egraph_t> ceG = rcp_const_cast<const egraph_t>(eG);
     RCP<Zoltan2::XpetraCrsGraphAdapter<egraph_t> > eGInput;
 

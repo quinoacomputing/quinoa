@@ -1,59 +1,72 @@
 
-
-SET( unit_tests
-     ArrayMeshTest 
-     AspectRatioGammaTest 
+# Tests that are in the following list depend on the nonexistant header file
+# <Mesquite_cppunit/extensions/HelperMacros.h>.
+# TODO ressurect this file, reactivate the tests
+SET(unit_tests_helpermacros
+     AspectRatioGammaTest
      AveragingQMTest
-     AWMetricTest
-     AWQualityMetricTest
      BCDTest
-     BoundedCylinderDomainTest
      CachingTargetTest
-     CircleDomainTest
      CompositeMetricTest
      CompositeOFTest
      ConditionNumberTest
-     ConicDomainTest
-     CylinderDomainTest
-     DomainClassifierTest
      EdgeLengthMetricTest
      EdgeLengthQualityMetricTest
-     ElemSampleQMTest
-     ExtraDataTest
      FileTokenizerTest
-     GeomPrimTest
      HexLagrangeShapeTest
      HigherOrderTest
      IdealElementTest
      IdealTargetTest
      IdealWeightMeanRatioTest
      IdealWeightInverseMeanRatioTest
-     InstructionQueueTest
-     LinearMappingFunctionTest
-     LineDomainTest
-     LVQDTargetTest
-     MappingFunctionTest
      Matrix3DTest
      MeshInterfaceTest
-     MeshImplTest
-     MiscTargetMetricTests
      MsqFreeVertexIndexIteratorTest
      MsqHessianTest
      MsqMatrixTest
      MsqMeshEntityTest
      MsqVertexTest
-     NodeSetTest
      NumericalOFTest
      ObjectiveFunctionTest
      PatchDataTest
-     PatchDataTestNormals
-     PatchSetTest
      PlanarGeometryTest
      PMeanPMetricTest
+     QualityMetricTest
+     SphericalGeometryTest
+     TargetReadWriteTest
+     TerminationCriterionTest
+     TopologyInfoTest
+     UntangleBetaTest
+     Vector3DTest
+     VertexConditionNumberTest
+     VertexCullingRegressionTest
+     )
+
+SET( unit_tests
+     ArrayMeshTest
+     AWMetricTest
+     AWQualityMetricTest
+     BoundedCylinderDomainTest
+     CircleDomainTest
+     ConicDomainTest
+     CylinderDomainTest
+     DomainClassifierTest
+     ElemSampleQMTest
+     ExtraDataTest
+     GeomPrimTest
+     InstructionQueueTest
+     LinearMappingFunctionTest
+     LineDomainTest
+     LVQDTargetTest
+     MappingFunctionTest
+     MeshImplTest
+     MiscTargetMetricTests
+     NodeSetTest
+     PatchDataTestNormals
+     PatchSetTest
      PMeanPTemplateTest
      QuadLagrangeShapeTest
      QualityAssessorTest
-     QualityMetricTest
      ShapeOrientTargetMetricTests
      ShapeSizeOrientTargetMetricTests
      ShapeSizeTargetMetricTests
@@ -61,24 +74,16 @@ SET( unit_tests
      SizeTargetMetricTests
      SlaveBoundaryVerticesTest
      SphericalDomainTest
-     SphericalGeometryTest
      StdDevTemplateTest
      SymMatrix3DTest
      TagVertexMeshTest
      TargetCalculatorTest
-     TargetReadWriteTest
-     TerminationCriterionTest
      TetLagrangeShapeTest
      TriLagrangeShapeTest
-     TopologyInfoTest
      TMPDerivsTest
      TMetricTest
      TQualityMetricTest
-     UntangleBetaTest
      UntangleTargetMetricTests
-     Vector3DTest
-     VertexConditionNumberTest
-     VertexCullingRegressionTest
      VtkTest
      XYRectangleTest )
 

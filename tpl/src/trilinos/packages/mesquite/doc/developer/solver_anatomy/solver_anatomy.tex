@@ -29,7 +29,7 @@ After the Mesquite 1.1 release and before the release of Mesquite version 2.0 (a
 \item Replacing the element-based and vertex-based quality metric dichotomy with the ability to evaluate quality metrics at any local mesh feature.
 \item The introduction of Jacobian-matrix-based target metrics and the evaluation of those metrics at a variety of sample points within a mesh element.
 \item Block coordinate descent solvers.
-\item Initial work towards smoothing of quadratic finite elements.  
+\item Initial work towards smoothing of quadratic finite elements.
 \end{itemize}
 
 The intent of this document is to describe the current design and API for the portions of Mesquite affected by the above changes.  It is the intent of the
@@ -40,7 +40,7 @@ for current developers (both Mesquite developers and those developers using Mesq
 
 A Mesquite quality improver is assembled from instances of the C++ classes representing various components, such as objectve function templates and quality metrics..  Examples of components in Mesquite include the \texttt{FeasibleNewton} solver, the \texttt{JacobianMetric}, and the \texttt{PMeanPTemplate}.  This document is organized beginning with the top-most component, the quality improver, followed by the components required by the quality improver, followed by the subcomponents of those components, and so on.
 
-This document also contains several subsections titled \emph{Future Work}.  These sections are the musings of the author and should not be interpreted as a formal or official plan for future Mesquite changes.   
+This document also contains several subsections titled \emph{Future Work}.  These sections are the musings of the author and should not be interpreted as a formal or official plan for future Mesquite changes.
 
 
 \subsection{UML}
@@ -61,7 +61,7 @@ UML diagrams are used throughout this document.  The UML action diagrams should 
 \end{center}
 \end{figure}
 
-The "has-a" relationship, shown with an open-headed arrow in UML diagrams, indicates a loose single-directional association between two objects, typcially implemented by one object having a pointer to another.  For Mesquite components, this relation usually indicates an association a developer must create during component construction.  Strong associations such as aggregation and composition are not shown in the diagrams in this document.  The "derived" or "implements" relationship, shown with an triangle arrow head in UML diagrams, is implemented using class inheritance in C++.  The class at the base of the arrow is derived from the class at the head of the arrow.  In the context of assembling Mesquite solvers, the base class is often a type of class that may be required by some other component and the derived class is one of several instances of that type that can be used to fulfill the requirement.  
+The "has-a" relationship, shown with an open-headed arrow in UML diagrams, indicates a loose single-directional association between two objects, typcially implemented by one object having a pointer to another.  For Mesquite components, this relation usually indicates an association a developer must create during component construction.  Strong associations such as aggregation and composition are not shown in the diagrams in this document.  The "derived" or "implements" relationship, shown with an triangle arrow head in UML diagrams, is implemented using class inheritance in C++.  The class at the base of the arrow is derived from the class at the head of the arrow.  In the context of assembling Mesquite solvers, the base class is often a type of class that may be required by some other component and the derived class is one of several instances of that type that can be used to fulfill the requirement.
 
 Consider the simple example in Figure \ref{fig:UML-Example}.  All implementations of the \texttt{ObjectiveFunctionTemplate} abstract class, such as \texttt{LPtoPTemplate}, require an instance of a \texttt{QualityMetric}.  This is indicated by the black arrow from \texttt{ObjectiveFunctionTemplate} to \texttt{QualityMetric}.  To create an instance of \texttt{LPtoPTemplate} for use in a solver, one would first have to create a \texttt{QualityMetric} instance.  However, as indicated by the italics in the class name ``QualityMetric'' in the diagram, \texttt{QualityMetric} is an abstract class or interface.  One must create an instance of a class that implements the \texttt{QualityMetric} interface.  Examples of such classes in Figure \ref{fig:UML-Example} are \texttt{IdealWeightInverseMeanRatio} and \texttt{ConditionNumberQualityMetric}.  These are concrete classes (the names are not italicized), so instances of them can be created.  The path of red triangle-headed arrows from each of these classes to \texttt{QualityMetric} indicate that both classes provide the \texttt{QualityMetric} interface.  In summary, one can conclude from Figure \ref{fig:UML-Example} that a quality metric such as   \texttt{IdealWeightInverseMeanRatio} or \texttt{ConditionNumberQualityMetric} must be created and used in the creation of a \texttt{LPtoPTemplate} instance.
 
@@ -126,7 +126,7 @@ All quality improvers in the current Mesquite implementation are subclasses of t
 \caption{Miscellaneous patch configurations.\label{fig:patch-types}}
 \end{figure}
 
-Optimization of mesh in Mesquite is performed on \emph{patches}.  Given a mesh defined by a set of vertices $V$ and elements $E$, a patch is composed of an arbitrary $W \subset V$,  $F={f \in E, Cl(f) \cup W \ne \emptyset}$.  That is, a patch is defined to be some subset of the vertices to optimize and the elements for which the quality is affected by the position of these verices.  In containing elements, the patch implicitly contains all vertices in the closure of those elements.  Any such implicit vertices that are not also in $W$ ($x \in Cl(E), x \notin W$) are referred to as \emph{fixed} (or less accurately as \emph{boundary}) vertices.  This property should not be confused with the global \emph{fixed} property of vertices $v \in V$.  The latter is an input constraint on the mesh, while the former is a property of the temporary patch data structure, not the actual subset of the mesh represented by the patch.   Patches may overlap, may be disjoint, etc.  
+Optimization of mesh in Mesquite is performed on \emph{patches}.  Given a mesh defined by a set of vertices $V$ and elements $E$, a patch is composed of an arbitrary $W \subset V$,  $F={f \in E, Cl(f) \cup W \ne \emptyset}$.  That is, a patch is defined to be some subset of the vertices to optimize and the elements for which the quality is affected by the position of these verices.  In containing elements, the patch implicitly contains all vertices in the closure of those elements.  Any such implicit vertices that are not also in $W$ ($x \in Cl(E), x \notin W$) are referred to as \emph{fixed} (or less accurately as \emph{boundary}) vertices.  This property should not be confused with the global \emph{fixed} property of vertices $v \in V$.  The latter is an input constraint on the mesh, while the former is a property of the temporary patch data structure, not the actual subset of the mesh represented by the patch.   Patches may overlap, may be disjoint, etc.
 
 Vertices are marked as fixed in a patch because the positions of those vertices will not be optimized as part of the optimization of the current patch.  Any vertex that is marked as fixed in the input mesh will always be marked as fixed in any patch it occurs in because the coordinates of such a vertex are by definition never optimized.  A vertex may also be marked as fixed in a patch for other reasons, for exaple if it is not in the set of vertices to optimize with the patch but is in the closure of the elements adjacent to said vertices.  The \emph{fixed} state of a vertex in a patch is a property of the patch.  Such a vertex may not be fixed in other patches, and will not be fixed in at least one other patch unless it is marked as fixed by the application as part of the input mesh.  Global patches are the only case where the fixed state in the patch is the same as the fixed state in the input mesh:  all non-fixed vertices in the input mesh are not marked as fixed in a global patch.
 
@@ -141,7 +141,7 @@ Figure \ref{fig:patch-types} illustrates different patch determination schemes. 
 \end{center}
 \end{figure}
 
-Optimization is subdivided into an outer and an inner loop.  The inner loop is an iterative improvement of the mesh in a patch.  The outer loop is an iteration over all of the patches in the mesh.  Figure \ref{fig:solver-flow} is a simplified UML action diagram for the optimization loop.  
+Optimization is subdivided into an outer and an inner loop.  The inner loop is an iterative improvement of the mesh in a patch.  The outer loop is an iteration over all of the patches in the mesh.  Figure \ref{fig:solver-flow} is a simplified UML action diagram for the optimization loop.
 
 For a simple Laplacian smoother, the patch is always a single free vertex and its adjacent elements.  The inner loop is a single iteration to update the location of that vertex.  The outer loop is a repeated iteration over each vertex in the mesh.
 
@@ -149,7 +149,7 @@ If a patch containing the entire mesh is used, an optimization is said to be a \
 
 \subsubsection{Solvers}
 
-Many of the quality improvers in Mesquite work by minimizing the value of an objective function (see Section \ref{sec:ObjectiveFunction}), where the objective function is a function of the mesh vertex coordinates.   The term \emph{solver} is often used to refer to the portion of the code in the concrete subclass of \texttt{VertexMover} that implements the inner loop of the optimization for quality improvers that optimize an explicit objective-function based (the code that implements the function-minimization algorithm.)  
+Many of the quality improvers in Mesquite work by minimizing the value of an objective function (see Section \ref{sec:ObjectiveFunction}), where the objective function is a function of the mesh vertex coordinates.   The term \emph{solver} is often used to refer to the portion of the code in the concrete subclass of \texttt{VertexMover} that implements the inner loop of the optimization for quality improvers that optimize an explicit objective-function based (the code that implements the function-minimization algorithm.)
 
 The \texttt{FeasibleNewton} and \texttt{ConjugateGradient} implementations are examples of quality improvers that contain solvers.
 
@@ -163,7 +163,7 @@ The \texttt{GlobalPatch} class is the implementation of the \texttt{PatchSet} in
 
 \subsubsection{Laplacian Quality Improvers}
 
-As shown in Figure \ref{fig:qual-improv-class}, the Laplacian quality improvers do not implement the \texttt{PatchSetUser} interface, and therefore do not allow the selection of a patch definition scheme.  Laplacian smoothers always operate on an element-on-vertex patch with a single free vertex.  
+As shown in Figure \ref{fig:qual-improv-class}, the Laplacian quality improvers do not implement the \texttt{PatchSetUser} interface, and therefore do not allow the selection of a patch definition scheme.  Laplacian smoothers always operate on an element-on-vertex patch with a single free vertex.
 
 \subsubsection{Nash Game vs. Block Coordinate Descent}
 
@@ -173,7 +173,7 @@ The selection of Nash vs. BCD algorithms is currently done via the constructors 
 
 \subsubsection{What's New}
 
-Many of the features described in this section are new to the current version of Mesquite.  Mesquite 1.1 was capable of only single-vertex Nash or global optimizations.  It supported neither BCD algorithms nor alternate patch-definition schemes.  
+Many of the features described in this section are new to the current version of Mesquite.  Mesquite 1.1 was capable of only single-vertex Nash or global optimizations.  It supported neither BCD algorithms nor alternate patch-definition schemes.
 
 The \texttt{PatchSetUser} and \texttt{PatchSet} classes were added after the 1.1 release.  In Mesquite 1.1, the API for selecting patch type (single-vertex or global) was provided in the \texttt{QualityImprover} interface, allowing nonsensical code such as requesting a global patch for a Laplacian smoother.  The logic that is now contained in \texttt{VertexPatches} and \texttt{GlobalPatch} was interspersed with the \texttt{PatchData} code for retreiving the defined patch from the \texttt{Mesh} instance.
 
@@ -190,12 +190,12 @@ There is considerable room for improvement in the current organization of qualit
 \item Laplacian smoothers have a meaningless inner termination criterion.  The user may request an inner termination criteria, but that request is silently ignored.  The inner termination criterion is always effectively a iteration count of one.  However, vertex culling criteria, which are currently associated with the inner \texttt{TerminationCriterion} instance, are applicable to Laplacian smoothers.
 \item Global-patch optimizations have a useless and potentially harmful outer termination criterion.  The inner and outer termination criteria are logically equivalent, but iterations in the outer optimization loop are more expensive than inner iterations.
 \item Laplacian smoothers have an associated ObjectiveFunction instance that is not (necessarily) optimized by the smoother.
-\item For best performance, the evaluation of an outer criterion based on objective function value should depend on the choice between Nash and BCD.  The outer criterion objective function value is assumed to evaluated over the entire active mesh, regardless of the choice between Nash and BCD.  The default method for obtaining the value is to evaluate the objective function over the entire mesh.  This solution works for both Nash and BCD, but is grossly inefficient for BCD, where the value over the entire mesh is already known.  
+\item For best performance, the evaluation of an outer criterion based on objective function value should depend on the choice between Nash and BCD.  The outer criterion objective function value is assumed to evaluated over the entire active mesh, regardless of the choice between Nash and BCD.  The default method for obtaining the value is to evaluate the objective function over the entire mesh.  This solution works for both Nash and BCD, but is grossly inefficient for BCD, where the value over the entire mesh is already known.
 \item The previous point is \emph{not} true for a termination criterion based on the gradient of the objective function.  The solver does not know the gradient for the objective function over the entire mesh, only the terms of the gradient that are with respect to free vertices in the current patch.
 \item For a Nash solution, does it make sense to have an outer termination criterion based on an objective function value for the entire mesh?  If so, does it make sense to limit it to the same objective function that is evaluated over the patch in the inner loop?  Pat: ``Termination criterion for Nash should not include a global OF value, but only the value of the OF on the patch.''
 \item If inner and outer termination criteria are separated, the implementation may be inefficient.  However, the different termination criteria groups are logically associated and used by different objects.  Laplacian and global optimizations have only one: either inner or outer.  Other optimizations have two, but the outer is used by the \texttt{VertexMover} class while the inner is used by the solver (e.g. \texttt{FeasibleNewton}.)
 \item The LaplacianSmoother class should be generalized as a RelaxationSmoother,
-allowing for other relaxation schemes depending on metric values or other criteria.  
+allowing for other relaxation schemes depending on metric values or other criteria.
 \end{itemize}
 
 
@@ -210,11 +210,11 @@ allowing for other relaxation schemes depending on metric values or other criter
 \end{center}
 \end{figure}
 
-An objective function is a scalar function of all the vertex coordinates in the active mesh.  The mesh vertex locations are optimized so as to minimize the objective function value.  
+An objective function is a scalar function of all the vertex coordinates in the active mesh.  The mesh vertex locations are optimized so as to minimize the objective function value.
 
 The objective functions implemented in Mesquite can be divided into two general categories: template objective functions and composite objective functions.  Template objective functions have an associated \texttt{QualityMetric} instance and typically implement some kind of averaging scheme.  Composite objective functions modify the values of one or two other objective functions, such as scaling the value or summing two values.
 
-Most solvers in Mesquite also require the gradient of the objective function (the partial derivatives of the objective function with respect to the coordinate values of the free vertices in the patch.)  
+Most solvers in Mesquite also require the gradient of the objective function (the partial derivatives of the objective function with respect to the coordinate values of the free vertices in the patch.)
 
 \label{sec:Hessian} Some quality improvers (currently \texttt{FeasibleNewton}) need to know the Hessian (second partial derivatives) of the objective function.  Only an \texttt{ObjectiveFunction} implementation capable of providing Hessian data may be used with such a solver.  Mesquite provides numerical approximation of objective function gradient values, and of quality metric gradient and Hessian values, but not objective function Hessian values.  Further, Mesquite is capable of working only with Hessians of objective functions that have sparse Hessian matrices.  The Hessian matrix may only contain non-zero terms for vertex pairs that share at least one element.  This limitation is explicit in the implementation of the \texttt{MsqHessian} class, and is implicit in other areas of the code (such as portions of the \texttt{ObjectiveFunction} interface relating to use in a BCD algorithm.)  Some \texttt{ObjectiveFunction} implementations such as \texttt{CompositeOFMultiply} (the product of two other objective function values) and \texttt{StdDevTemplate} have a dense Hessian and therefore cannot be used with solvers requiring a Hessian.
 
@@ -243,12 +243,12 @@ That is, the value of $g(P_0)$ is calculated at the beginning of the inner optim
 
 \subsubsection{Objective Function Derivatives for Block Coordinate Descent}
 
-\texttt{ObjectiveFunction} implementations supporting BCD algorithms are also expected to provide gradient and possibly Hessian data.  In a BCD algorithm, the implementation is expected to supply only the terms of the gradient that are with respect to the free vertices in the current patch.  Similarly, only the Hessian terms that are with respect to only free vertices in the current patch need be provided.  
+\texttt{ObjectiveFunction} implementations supporting BCD algorithms are also expected to provide gradient and possibly Hessian data.  In a BCD algorithm, the implementation is expected to supply only the terms of the gradient that are with respect to the free vertices in the current patch.  Similarly, only the Hessian terms that are with respect to only free vertices in the current patch need be provided.
 
 Given that a patch is guaranteed to contain all elements adjacent to the free vertices (in any context where the gradient or Hessian is required), it is assumed that any objective function capable of meeting the sparseness requirement for the Hessian described in Section \ref{sec:Hessian} will be able to provide gradient and Hessian values for a patch in a BCD context without needing to know any data other than the contents of the current patch and the scalar objective function value for the entire mesh.
 
 Continuing with the algebraic mean example from above:
-\begin{displaymath} 
+\begin{displaymath}
 \nabla f = \frac{1}{n} \nabla g
 \end{displaymath}
 \begin{displaymath}
@@ -270,7 +270,7 @@ The \texttt{ObjectiveFunctionTemplate} is a base class for those objective funct
 
 Existing template-type objective functions from version 1.1 of Mesquite have been updated for the new interface.  These include: \texttt{LPtoPTemplate}, \texttt{LInfTemplate}, and \texttt{MaxTemplate}.  Of these three, support for coordinate descent optimizations was added to \texttt{LPtoPTempalte} only.
 
-The new objective functions \texttt{PMeanPTemplate}, \texttt{StdDevTemplate}, and \texttt{VarianceTemplate} have also been added.  All three of these objective function templates support block coordinate descent optimization.   
+The new objective functions \texttt{PMeanPTemplate}, \texttt{StdDevTemplate}, and \texttt{VarianceTemplate} have also been added.  All three of these objective function templates support block coordinate descent optimization.
 
 The composite objective functions modify one or two existing objective functions (e.g. adding two together).  All composite \texttt{ObjectiveFunction}s support analytical gradients and coordinate descent optimization if the underlying \texttt{ObjectiveFunction}s do.  Similarly, all except \texttt{CompositeOFMultiply} support analytical Hessians as long as their underlying \texttt{ObjectiveFunction}s do.  \texttt{CompositeOFMultiply} does not have a suitably sparse Hessian (see Section \ref{sec:Hessian}).
 
@@ -285,7 +285,7 @@ The \texttt{PMeanPTemplate}, \texttt{StdDevTemplate} and \texttt{VarianceTemplat
 
 \section{QualityMetric}
 
-The \texttt{QualityMetric} class provides a measure of the quality at a local mesh feature, such as an element or a vertex.  Figure \ref{fig:qmclass} is the class diagram for all quality metrics (except the legacy DFT metrics discussed in Section \ref{sec:DFT}) in Mesquite.  The basic interface for the \texttt{QualityMetric} class is shown in Figure \ref{fig:qmiface}. 
+The \texttt{QualityMetric} class provides a measure of the quality at a local mesh feature, such as an element or a vertex.  Figure \ref{fig:qmclass} is the class diagram for all quality metrics (except the legacy DFT metrics discussed in Section \ref{sec:DFT}) in Mesquite.  The basic interface for the \texttt{QualityMetric} class is shown in Figure \ref{fig:qmiface}.
 
 
 \begin{figure}[p]
@@ -304,9 +304,9 @@ There are two classes in Mesquite defining interfaces for averaging quality metr
 
 The \texttt{AveragingQM} class provides the same enumeration of averaging schemes that was defined in \texttt{QualityMetric} in Mesquite 1.1.  The user selects from a list of averaging schemes such as \texttt{LINEAR}, \texttt{RMS}, \texttt{SUM\_SQUARED}, \texttt{MAXIMUM}, \texttt{MAX\_MINUS\_MIN}, etc.  Many metrics that are internally corner-based for non-simplex elements implement this interface, converting such cases to element-based metrics.  Most element-based quality metrics from Mesquite 1.1 are examples of this type of metric.  Some metrics that are internally corner-based or edge-based implement this interface to provide a vertex-based metric by averaging the values around a vertex.  Most of the vertex-based quality metrics from Mesquite 1.1 are examples of this type of metric.  See the \texttt{QualityMetric} class diagram (Figure \ref{fig:qmclass}) for a list of metrics implementing this interface.
 
-The \texttt{PMeanPMetric} accepts a single parameter: the P-value.  The result is a power-mean of a set of values raised to the P power: $\frac{1}{n}\sum_{i=0}^{n-1}\mu_i^p$.  As shown in Figure \ref{fig:qmclass}, this class serves as a base class for two subclasses: \texttt{ElementPMeanP} and \texttt{VertexPMeanP}.  These classes require an instance of a concrete sample-based quality metric to function.  They work as a type of composite metric, converting the sample-based metric to an element-based or vertex-based metric, respectively, by averaging the metric values for the appropriate sample points. 
+The \texttt{PMeanPMetric} accepts a single parameter: the P-value.  The result is a power-mean of a set of values raised to the P power: $\frac{1}{n}\sum_{i=0}^{n-1}\mu_i^p$.  As shown in Figure \ref{fig:qmclass}, this class serves as a base class for two subclasses: \texttt{ElementPMeanP} and \texttt{VertexPMeanP}.  These classes require an instance of a concrete sample-based quality metric to function.  They work as a type of composite metric, converting the sample-based metric to an element-based or vertex-based metric, respectively, by averaging the metric values for the appropriate sample points.
 
-The \texttt{ElementMaxQM} and \texttt{VertexMaxQM} are similar to the \texttt{ElementPMeanP} and \texttt{VertexPMeanP} in that they convert sample-based metrics to element-based or vertex-based metrics.  Unlike the \texttt{*PMeanP} metrics, these metrics return the maximum metric value for the entity.  
+The \texttt{ElementMaxQM} and \texttt{VertexMaxQM} are similar to the \texttt{ElementPMeanP} and \texttt{VertexPMeanP} in that they convert sample-based metrics to element-based or vertex-based metrics.  Unlike the \texttt{*PMeanP} metrics, these metrics return the maximum metric value for the entity.
 
 \subsection{Common Evaluation Points}
 
@@ -336,14 +336,14 @@ A sample-based metric is evaluated at one or more logical sample points within e
 \end{center}
 \end{figure}
 
-As shown in Figure \ref{fig:JacobianMetric}, \texttt{JacobianMetric} class combines the functionality of a \texttt{SamplePoints} instance, a \texttt{TargetMetric2D} and/or a \texttt{TargetMetric3D}, a \texttt{TargetCalculator} and a \texttt{WeightCalculator} for an \texttt{ElemSampleQM} (which is a \texttt{QualityMetric}).  This diagram is a subset of the larger \texttt{QualityMetric} class diagram (Figure \ref{fig:qmclass}.).  
+As shown in Figure \ref{fig:JacobianMetric}, \texttt{JacobianMetric} class combines the functionality of a \texttt{SamplePoints} instance, a \texttt{TargetMetric2D} and/or a \texttt{TargetMetric3D}, a \texttt{TargetCalculator} and a \texttt{WeightCalculator} for an \texttt{ElemSampleQM} (which is a \texttt{QualityMetric}).  This diagram is a subset of the larger \texttt{QualityMetric} class diagram (Figure \ref{fig:qmclass}.).
 
 The \texttt{TargetMetric2D} and \texttt{TargetMetric3D} classes are metrics that compare a pair of 2x2 or 3x3 matrices, respectively.  For surface elements (e.g. triangles or quadrilaterals), the \texttt{JacobianMetric} class constructs a 2x2 matrix by rotating the 3x2 Jacobian of the element into the plane of the target 3x2 matrix.  The \texttt{TargetCalulator} instance provides the 3x3 and/or 3x2 matrices that the matrix metrics compare to the element Jacobian.  The \texttt{WeightCalculator} provides a scalar weight at each sample point that is multiplied with the value of the target metric to produce the quality metric.
 
 The rotation from 3x2 Jacobian to the 2x2 matrix passed to the \texttt{TargetMetric2D} in \texttt{JacobianMetric} discards 3D orientation data for surface elements.  The \texttt{DomainSurfaceOrientation} and \texttt{TargetSurfaceOrientation} classes provide a means to evaluate the relative 3D orientation of surface elements.  They can be combined with a \texttt{JacobianMetric} using a composite quality metric.  The \texttt{DomainSurfaceOrientation} metric compares the local element normal (as provided by the Jacobian) with the normal of the geometric domain at the point closest to the location of the element sample point.  The \texttt{TargetSurfaceOrientation} compares the normals provided by the 3x2 Jacobian matrix and the 3x2 target matrix.
 
 \subsubsection{\texttt{SamplePoints}}
-The \texttt{SamplePoints} class provides a mechanism for an application to specify where in each element the \texttt{JacobianMetric} should be evaluated.  The application may specify any combination of logical sample points: corners, mid-edge, mid-face, and mid-element.  These values may be specified independently for each element topology (triangle, quadrilateral, etc.)  
+The \texttt{SamplePoints} class provides a mechanism for an application to specify where in each element the \texttt{JacobianMetric} should be evaluated.  The application may specify any combination of logical sample points: corners, mid-edge, mid-face, and mid-element.  These values may be specified independently for each element topology (triangle, quadrilateral, etc.)
 
 \begin{figure}[htb]
 \begin{center}
@@ -352,9 +352,9 @@ The \texttt{SamplePoints} class provides a mechanism for an application to speci
 \end{center}
 \end{figure}
 
-The interface for the \texttt{SamplePoints} class is shown in Figure \ref{fig:SamplePoints}.  The first constuctor, by default, initializes an empty \texttt{SamplePoints} instance (no sample points selected for any element topology.)  If that constructor is passed a value of \texttt{true}, then it will initialize with the defaults of one sample point at the center of each simplex and sample points at the corners for other element topologies.  The second constructor can be used to select a common set of logical sample points for all element topologies.  
+The interface for the \texttt{SamplePoints} class is shown in Figure \ref{fig:SamplePoints}.  The first constuctor, by default, initializes an empty \texttt{SamplePoints} instance (no sample points selected for any element topology.)  If that constructor is passed a value of \texttt{true}, then it will initialize with the defaults of one sample point at the center of each simplex and sample points at the corners for other element topologies.  The second constructor can be used to select a common set of logical sample points for all element topologies.
 
-The \texttt{sample\_at} method adds a logical set of points to the sample points for a specific element topology.  The corresponding \texttt{dont\_sample\_at} method removes a set of logical sample points.  The \texttt{will\_sample\_at} can be used to test if a given set of logical sample points will be evaluated for a specific element topology.  Each of these methods accepts two arguments.  The first indicates the element topology (triangle, hexahedron, etc.)  The second argument, \texttt{dimension}, specifies a logical set of sample points by the portion of the element topology that they lie on: 0 for corners, 1 for edges, 2 for mid-face, and 3 for mid-element.  
+The \texttt{sample\_at} method adds a logical set of points to the sample points for a specific element topology.  The corresponding \texttt{dont\_sample\_at} method removes a set of logical sample points.  The \texttt{will\_sample\_at} can be used to test if a given set of logical sample points will be evaluated for a specific element topology.  Each of these methods accepts two arguments.  The first indicates the element topology (triangle, hexahedron, etc.)  The second argument, \texttt{dimension}, specifies a logical set of sample points by the portion of the element topology that they lie on: 0 for corners, 1 for edges, 2 for mid-face, and 3 for mid-element.
 
 In Figure \ref{fig:JacobianMetric}, it can be seen that the \texttt{SamplePoints} instance is associated with the subclasses of \texttt{ElemSampleQM}.  It may at first seem that it would be more logical to associate the \texttt{SamplePoints} instance with the \texttt{ElemSampleQM} because all such metrics are evaluated at sample points.  The reason the design is as shown is that the \texttt{SamplePoints} class provides a mechanism for the application to customize which sample points a metric is evaluated at.  Some metrics that are evaluated at element sample points may only allow a pre-defined set of element sample locations for each element topology.  For example, the legacy DFT metrics (not show, see Section \ref{sec:DFT}) always evaluate at element corners.  As another example; it may eventually be desirable to implement many of the existing element-based metrics as sample-based metrics.  These metrics have one evaluation for simplicies and are evaluated at the corners for other element topologies.  In both examples, the metrics are sample-based but neither allow the application to select which sample points.
 
@@ -383,7 +383,7 @@ where $\vec{x_i}$ is a point in $\mathbf{R}^3$ (i.e. $x_i,y_i,z_i$), $\vec{\xi_i
                       +N_4(\xi,\eta)\vec{x_4}
 \end{displaymath}
 
-A single implementation of the mapping function interface may support multiple elements types of the same topology (e.g. both a 8-node hex and a 20-node hex.)  The \texttt{nodebits} argument to each evaluation function in the interface is passed to specify which higher-order nodes are present in the element.  
+A single implementation of the mapping function interface may support multiple elements types of the same topology (e.g. both a 8-node hex and a 20-node hex.)  The \texttt{nodebits} argument to each evaluation function in the interface is passed to specify which higher-order nodes are present in the element.
 
 The \texttt{coefficients\_at\_*} methods return the values of the mapping function coefficients evaluated at different parameter-space coordinates (the value of the $N_i$ terms for different pre-defined values of $\vec{\xi}$.)  These methods are assumed to pass back a coefficient for each vertex in the element, in the canonical order.
 
@@ -398,7 +398,7 @@ The \texttt{QualityMetric} interface has been generalized to allow metric types 
 
 Mesquite 1.1 had the functionality now provided by \texttt{AveragingQM} as part of the \texttt{QualityMetric} interface.  This was moved into a separate interface so that only the metrics that support this API provide it.  The work on consolidating the code for averaging metric values, gradients, and Hessians that was begun before Mesquite 1.1 was completed as a part of this change.  In the future, it may make sense to transition to a scheme similar to the subclasses of \texttt{PMeanPMetric}, where the existing \texttt{AveragingQM} present themselves as corner-based metrics and a separate class is used to average the metric values.  This would eliminate the need for two separate implementations of the condition number metric (\texttt{ConditionNumberQualityMetric} and \texttt{VertexConditionNumberQualityMetric}).
 
-Complete implementations of analytical gradient and Hessian calculations have been added for all composite metrics.  
+Complete implementations of analytical gradient and Hessian calculations have been added for all composite metrics.
 
 The \texttt{JacobianMetric} class and all supporting functionality (\texttt{MappingFunction}, \texttt{MappingFunctionSet}, \texttt{TargetMetric2D}, \texttt{TargetMetric3D}, \texttt{TargetCalculator}, \texttt{WeightCalculator},
 \texttt{SamplePoints}, etc.) is completely new.  These new capabilities are discussed further in the next section.
@@ -407,8 +407,8 @@ The \texttt{JacobianMetric} class and all supporting functionality (\texttt{Mapp
 \subsection{Future Work}
 
  \texttt{VertexPMeanP} (Section \ref{sec:qmaverage}) currently averages metric values at corners regardless of the sample points (Section \ref{sec:sample-metrics}) that the metric is to be evaluated at.  This should be corrected such that any sample points that are influenced by the coordinates of the vertex are included in the average.
- 
-Some performance gain could most likely be achieved by specializing the current simple implementation of the \texttt{VertexPMeanP} metric for more common P values, similar to the \texttt{PMeanPTempalte} (Section \ref{sec:objfunc_impl}.) 
+
+Some performance gain could most likely be achieved by specializing the current simple implementation of the \texttt{VertexPMeanP} metric for more common P values, similar to the \texttt{PMeanPTempalte} (Section \ref{sec:objfunc_impl}.)
 The entire sample-based metric implementation is in a preliminary state.  Large portions of this functionality remain unimplemented:
 \begin{itemize}
 \item There are no mapping functions for higher-order elements with hexahedral, pyramidal, or prism topologies.
@@ -458,9 +458,9 @@ The \texttt{IdealTargetCalculator} returns the Jacobian of an ideal element at t
 
 The \texttt{LVQDTargetCalculator} combines four other target calculators using an LVQD factorization:
 \begin{displaymath}
-\mathbf{W} = \lambda(\mathbf{W_\lambda}) \times \mathbf{V}(\mathbf{W_V}) \times \mathbf{Q}(\mathbf{W_Q}) \times \mathbf{\Delta}(\mathbf{W_\Delta}) 
+\mathbf{W} = \lambda(\mathbf{W_\lambda}) \times \mathbf{V}(\mathbf{W_V}) \times \mathbf{Q}(\mathbf{W_Q}) \times \mathbf{\Delta}(\mathbf{W_\Delta})
 \end{displaymath}
-The $\lambda$ function returns a the scalar size component of the $\mathbf{W_\lambda}$ term.  The $\mathbf{V}$ function returns the orientation component of the $\mathbf{W_V}$ term.  $\mathbf{Q}(\mathbf{W_Q})$ is the shape component of $\mathbf{W_Q}$.  The $\mathbf{\Delta}$ function returns the aspect ratio component of $\mathbf{W_\Delta}$.  
+The $\lambda$ function returns a the scalar size component of the $\mathbf{W_\lambda}$ term.  The $\mathbf{V}$ function returns the orientation component of the $\mathbf{W_V}$ term.  $\mathbf{Q}(\mathbf{W_Q})$ is the shape component of $\mathbf{W_Q}$.  The $\mathbf{\Delta}$ function returns the aspect ratio component of $\mathbf{W_\Delta}$.
 
 \subsection{Weight Calculators}
 
@@ -485,7 +485,7 @@ Figure \ref{fig:weight-concrete} shows the three concrete \texttt{WeightCalculat
 \end{center}
 \end{figure}
 
-A reference mesh is another mechanism for generating targets for a \texttt{JacobianMetric}.  A reference mesh is a mesh that is topologically identical to the active mesh, differing only in the location of the vertices.  The target for any element in the active mesh is then the Jacobian of the corresponding element in the reference mesh.  The \texttt{RefMeshTargetCalculator} class provides the implementation of this target calculation scheme.  
+A reference mesh is another mechanism for generating targets for a \texttt{JacobianMetric}.  A reference mesh is a mesh that is topologically identical to the active mesh, differing only in the location of the vertices.  The target for any element in the active mesh is then the Jacobian of the corresponding element in the reference mesh.  The \texttt{RefMeshTargetCalculator} class provides the implementation of this target calculation scheme.
 
 \texttt{RefMeshTargetCalculator} uses a class implementing the interface shown in Figure \ref{fig:refmeshiface}.  The single function defined by \texttt{ReferenceMeshInterface} accepts a list of handles for vertices in the \emph{active} mesh and is expected to return the coordinates of the corresponding vertices in the reference mesh.
 
@@ -530,7 +530,7 @@ The \texttt{CachingTargetCalculator} class shown in Figure \ref{fig:cachetarget}
 \end{center}
 \end{figure}
 
-The classes shown in Figure \ref{fig:targetwriter} provide a mechanism for pre-calculating targets and/or weights and storing them as tag data on a mesh.  The targets are stored by associating either or both a \texttt{TargetCalculator} and a \texttt{WeightCalculator} with an instance of the \texttt{TargetWriter} class.  The \texttt{TargetWriter} class implements the \texttt{Instruction} interface, and therefore is expected to be inserted directly in the \texttt{InstructionQueue}.  
+The classes shown in Figure \ref{fig:targetwriter} provide a mechanism for pre-calculating targets and/or weights and storing them as tag data on a mesh.  The targets are stored by associating either or both a \texttt{TargetCalculator} and a \texttt{WeightCalculator} with an instance of the \texttt{TargetWriter} class.  The \texttt{TargetWriter} class implements the \texttt{Instruction} interface, and therefore is expected to be inserted directly in the \texttt{InstructionQueue}.
 
 The targets can be calculated at the beginning of an optimization by placing the \texttt{TargetWriter} first in the \texttt{InstructionQueue} instance.  Alternately, the targets can be calculated and stored for later use by running an instruction queue containing only the \texttt{TargetWriter} instance (and saving the modified mesh to a file if desired.)
 
@@ -554,17 +554,17 @@ The converse of the \texttt{TargetWriter} class (or some other mechanism) should
 The \texttt{LVQDTargetCalculator} implementation should be optimized to eliminate calculating target matrices multiple times when the same target calculator is used for more than one of the LVQD terms.
 
 A general capability to generate target matrices by interpolating on a background mesh should be implemented.  Further, as the targets generated by such a target calculator vary by spatial position rather than a logical relation, the API must be extended to account for this in the calculation of analytical gradient and Hessian data for the metric.
- 
-As all of the current sample-based metrics use a \texttt{WeightCalculator} instance, and as the instance used is in practice often \texttt{UnitWeight}, it may make sense to separate this functionality into a separate composite-type metric.  This new composite metric would accept a sample-based quality metric and a weight calculator, and multiply the metric value at each sample point by the corresponding weight.  This is similar in nature to the \texttt{ScalarMultiplyQualityMetric}, differing only in the fact that the scalar that each metric value is multiplied with is not necessarily the same.  
+
+As all of the current sample-based metrics use a \texttt{WeightCalculator} instance, and as the instance used is in practice often \texttt{UnitWeight}, it may make sense to separate this functionality into a separate composite-type metric.  This new composite metric would accept a sample-based quality metric and a weight calculator, and multiply the metric value at each sample point by the corresponding weight.  This is similar in nature to the \texttt{ScalarMultiplyQualityMetric}, differing only in the fact that the scalar that each metric value is multiplied with is not necessarily the same.
 
 Such a composite metric for incorporating the weight into the metric value would have several advantages.  The need for \texttt{UnitWeight} would be eliminated.  If no weighting is desired, one need simply not use the composite metric that applies the weight.  The need to query the weight separately in multiple metrics that are combined in a composite (e.g. a \texttt{JacobianMetric} and a  \texttt{TargetSurfaceOrientation}) is no longer necessary.  The weight could be applied after the metrics are combined.
 
 \section{Legacy DFT Metrics}
 \label{sec:DFT}
 
-The experimental DFT (distance from target) metrics from Mesquite 1.1 are still present and have been updated to work within the framework of the current design.  The metrics have been updated to present an \texttt{ElemSampleQM} interface, allowing them to be used with averaging metrics such as \texttt{ElementPMeanP}.  
+The experimental DFT (distance from target) metrics from Mesquite 1.1 are still present and have been updated to work within the framework of the current design.  The metrics have been updated to present an \texttt{ElemSampleQM} interface, allowing them to be used with averaging metrics such as \texttt{ElementPMeanP}.
 
-The target calculators for the legacy DFT metrics have also been updated to work within the current framework.  They can be used with all of the utility classes such as target caching, pre-calculated targets, etc.  Further, the \texttt{LVQDTargetCalculator} class can be used with either the new or old target calculators.  The concrete target calculators for the DFT metrics have been renamed such that all class names contain the string ``Corner'' to distinguish them from the newer target calculators.  
+The target calculators for the legacy DFT metrics have also been updated to work within the current framework.  They can be used with all of the utility classes such as target caching, pre-calculated targets, etc.  Further, the \texttt{LVQDTargetCalculator} class can be used with either the new or old target calculators.  The concrete target calculators for the DFT metrics have been renamed such that all class names contain the string ``Corner'' to distinguish them from the newer target calculators.
 
 The multitude of concisely named target calculator subclasses defined in \texttt{ConcreteTargetCalculators.hpp} remain legacy target calculators.  These should not be used with the newer Jacobian-based metrics.
 
@@ -584,29 +584,29 @@ This section walks through two example \texttt{QualityImprover} constructions, d
 
 Figure \ref{fig:qiexample} diagrams an example \texttt{QualityImprover}.  A black, one-headed arrow indicates that the application developer must provide an instance of the pointed-to class to create an instance of the class from which the arrow originates.  Classes with italicized names are abstract classes (interfaces) that cannot be created directly.  To create an instance of such a class, the application developer must create an instance of a concrete subclass .  In the above diagram, a concrete subclass is one with a non-italicized name from which a chain of closed-headed red arrows can be traced to the desired abstract class.
 
-In the example in Figure \ref{fig:qiexample}, the objective is to create an instance of the \texttt{FeasibleNewton} quality improver.  The indirect base class \texttt{QualityImprover} requires two \texttt{TerminationCrierion} instances.   The indirect base class \texttt{VertexMover} requires a \texttt{ObjectiveFunction} instance. These must be created in order to construct the optimizer.  The \texttt{TerminationCriterion} class is concrete, so this dependency can be addressed directly.  
+In the example in Figure \ref{fig:qiexample}, the objective is to create an instance of the \texttt{FeasibleNewton} quality improver.  The indirect base class \texttt{QualityImprover} requires two \texttt{TerminationCrierion} instances.   The indirect base class \texttt{VertexMover} requires a \texttt{ObjectiveFunction} instance. These must be created in order to construct the optimizer.  The \texttt{TerminationCriterion} class is concrete, so this dependency can be addressed directly.
 
-The \texttt{ObjectiveFunction} class is abstract, so it is necessary to find a concrete subclass to instantiate.  The only such class shown in Figure \ref{fig:qiexample} is \texttt{LPtoPTemplate}.  However, the \texttt{ObjectiveFunctionTemplate} base class of \texttt{LPtoPTemplate} requires a \texttt{QualityMetric}, another abstract class.  So a concrete subclass of \texttt{QualityMetric} must be found.  The only such class shown is \texttt{IdealWeightInverseMeanRatio}.  
+The \texttt{ObjectiveFunction} class is abstract, so it is necessary to find a concrete subclass to instantiate.  The only such class shown in Figure \ref{fig:qiexample} is \texttt{LPtoPTemplate}.  However, the \texttt{ObjectiveFunctionTemplate} base class of \texttt{LPtoPTemplate} requires a \texttt{QualityMetric}, another abstract class.  So a concrete subclass of \texttt{QualityMetric} must be found.  The only such class shown is \texttt{IdealWeightInverseMeanRatio}.
 
 Listing \ref{lst:qiexample} shows the source code required to construct the solver depicted in Figure \ref{fig:qiexample}.  The \texttt{IdealWeightInverseMeanRatio} instance is created first at line 1.  It is then used at line 2 to create a \texttt{LPtoPTemplate} instance.  Next the two \texttt{TerminationCriterion} instances are created (line 5), and initialized with the desired criteria (lines 6-11).  The \texttt{LPtoPTemplate} instance is used to create an instance of \texttt{FeasibleNewton} at line 13.  At lines 14 and 15 the two \texttt{TerminationCriterion} instances are attached to the \texttt{FeasibleNewton} instance.  Finally, at line 17 the \texttt{FeasibleNewton} sovler is instructed to use global patches with a call to the \texttt{use\_global\_patch} function provided by the \texttt{PatchSetUser} base class.
 
-\begin{lstlisting}[caption={Example Quality Improver},label={lst:qiexample},numbers=left] 
+\begin{lstlisting}[caption={Example Quality Improver},label={lst:qiexample},numbers=left]
   IdealWeightInverseMeanRatio metric;
   LPtoPTemplate obj_func( 2, &metric );
-  
+
   MsqError err;
   TerminationCriterion inner_term, outer_term;
-  inner_term.add_criterion_type_with_double( 
+  inner_term.add_criterion_type_with_double(
 TerminationCriterion::VERTEX_MOVEMENT_ABSOLUTE, 0.01, err );
-  inner_term.add_criterion_type_with_int( 
+  inner_term.add_criterion_type_with_int(
 TerminationCriterion::CPU_TIME, 60, err );
-  outer_term.add_criterion_type_with_int( 
+  outer_term.add_criterion_type_with_int(
 TerminationCriterion::NUMBER_OF_ITERATES, 1, err );
 
   FeasibleNewton solver( &obj_func );
   solver.set_inner_termination_criterion( &inner_term );
   solver.set_outer_termination_criterion( &outer_term );
-  
+
   solver.use_global_patch();
 \end{lstlisting}
 
@@ -624,11 +624,11 @@ Figure \ref{fig:jacobianex} shows an example quality improver that optimizes a j
 
 Listing \ref{lst:jacobianex} contains the code to create the solver depicted in Figure \ref{fig:jacobianex}.  The \texttt{SamplePoints} instance is created first.  The \texttt{true} value passed to the constructor signals that it should be initialized with the default set of sample points.  The 2D target metric instance is created at line 2 and the weight calculator is created at line 3.  At lines 5-12 a mesh is read into a \texttt{MeshImpl} instance to serve as the reference mesh for the target calculator.  The \texttt{RefMeshTargetCalculator} is created at line 15 using an instance of the \texttt{ReferenceMesh} class created on the previous line.  The \texttt{JacobianMetric} is created from the \texttt{SamplePoints}, \texttt{Target2DShape}, \texttt{UnitWeight} and \texttt{RefMeshTargetCalculator} instances.  The final argument to the \texttt{JacobianMetric} constuctor is \texttt{NULL} as no 3D target metric is provided.  The remainder of the quality improver construction (lines 23-37) is analogous to the one described in Section \ref{sec:ex1}.  The last step (line 39) is to declare a \texttt{MappingFunctionSet} instance.  This is not used during solver construction, but it must be passed to \texttt{InstructionQueue::run} for the \texttt{JacobianMetric} to function.
 
-\begin{lstlisting}[caption={Example Quality Improver with Jacobian-Based Metric},label={lst:jacobianex},numbers=left] 
+\begin{lstlisting}[caption={Example Quality Improver with Jacobian-Based Metric},label={lst:jacobianex},numbers=left]
   SamplePoints samples(true);
   Target2DShape metric_2d;
   UnitWeight weight;
-  
+
   MsqError err;
   MeshImpl ref_mesh_data;
   ref_mesh_data.read_vtk( "refmesh.vtk", err );
@@ -637,32 +637,32 @@ Listing \ref{lst:jacobianex} contains the code to create the solver depicted in 
               << std::endl << err << std::endl;
     exit( 1 );
   }
-  
+
   ReferenceMesh ref_mesh( &ref_mesh_data );
   RefMeshTargetCalculator target( &ref_mesh );
-  
+
   JacobianMetric metric( &samples,
                          &target,
                          &weight,
                          &metric_2d,
                          NULL );
-  
+
   PMeanPTemplate obj_func( 2.0, &metric );
-  
+
   TerminationCriterion inner_term, outer_term;
-  inner_term.add_criterion_type_with_double( 
+  inner_term.add_criterion_type_with_double(
 TerminationCriterion::VERTEX_MOVEMENT_ABSOLUTE, 0.01, err );
-  inner_term.add_criterion_type_with_int( 
+  inner_term.add_criterion_type_with_int(
 TerminationCriterion::CPU_TIME, 60, err );
-  outer_term.add_criterion_type_with_int( 
+  outer_term.add_criterion_type_with_int(
 TerminationCriterion::NUMBER_OF_ITERATES, 1, err );
 
   FeasibleNewton solver( &obj_func );
   solver.set_inner_termination_criterion( &inner_term );
   solver.set_outer_termination_criterion( &outer_term );
-  
+
   solver.use_global_patch();
-  
+
   LinearFunctionSet mapping_functions;
 \end{lstlisting}
 
@@ -679,7 +679,7 @@ This section describes how the setup in the previous section can be modified suc
 
 The source code from Listing \ref{lst:jacobianex} can be modified as follows to introduce element averaging.  The \texttt{JacobianMetric} instance at line 17 is renamed from \texttt{metric} to \texttt{jmetric} and a new \texttt{ElementPMeanP} instance with the name \texttt{metric} is introduced at line 22.  Listing \ref{lst:elempmeanp} shows the modified source code.
 
-\begin{lstlisting}[caption={Averaging Sample-Based Metrics Over Elements},label={lst:elempmeanp},numbers=left,firstnumber=17] 
+\begin{lstlisting}[caption={Averaging Sample-Based Metrics Over Elements},label={lst:elempmeanp},numbers=left,firstnumber=17]
   JacobianMetric jmetric( &samples,
                           &target,
                           &weight,
@@ -697,11 +697,11 @@ Two significant changes were made to the \texttt{PatchData} class since version 
 
 The second change, affecting much more existing Mesquite code, was to re-order vertices in the patch such that all free vertices occur first in the array, followed by all slave vertices\footnote{The ability to represent slave vertices will be used in future capabilities such as smoothing elements with higher-order nodes}, followed by all fixed vertices.  While this does simplify code that iterates over free vertices in a patch, the primary motivation was to remove terms corresponding to fixed vertices from the gradient and Hessian data from an objective function.  The vertex index in the \texttt{PatchData} corresponds to the vertex index in the vector of gradient terms and to the row and column positions in the MsqHessian.  By definition, a non-free vertex is not a free variable in the objective function.  Partial derivatives with respect to constant terms are by definition zero, and of no interest to the optimization.  By moving the free vertices to the beginning of the array in the \texttt{PatchData}, the gradient and Hessian data can be reduced to only those terms that correspond to actual variables in the objective function.
 
-This change removes unnecessary memory allocation (improving cache efficiency), localizes the portion of the vertex coordinate array that is modified during an optimization (again, improving cache efficiency), and is a better fit for the underlying logic of the optimization.  
+This change removes unnecessary memory allocation (improving cache efficiency), localizes the portion of the vertex coordinate array that is modified during an optimization (again, improving cache efficiency), and is a better fit for the underlying logic of the optimization.
 
 One could argue that the number of fixed vertices is small relative to the number of free vertices, as the former is $O(n^2)$ and the latter is $O(n^3)$.  However, this ignores several important factors.  The first is that while the fraction of boundary vertices decreases linearly with increasing mesh size, a quite large mesh is required to make it an insignificant fraction.  For example, for a regular mesh of a cube it can be shown the the ratio of boundary to interior vertices is $\frac{2}{3i}$ where $i$ is the number of intervals.  To make this ratio a still fairly large value of $\frac{1}{10}$ (ten times as many interior as boundary veritces), the mesh must contain approximately 225,000 vertices.  The second relevant factor is that while Mesquite is used with very large meshes, it is typically invoked on subsets of the mesh corresponding to material boundaries.  The final relavant point to consider is that when optimizing subsets of the mesh (patches) during either a BCD or Nash game solution, all the vertices on the boundary of the patch are logically fixed.  A patch containing 225k nodes is much larger than what is typically used in Mesquite.  In the limit of a patch with a single free vertex, this change will reduce the gradient and Hessian data by an order of magnitude.
 
-However, the primary motivation for this change was to add support for \emph{slave} nodes for future handling of quadratic elements.  The higher-order nodes treated as \emph{slave} nodes will greatly outnumber the free vertices in the mesh, regardless of the mesh size.  
+However, the primary motivation for this change was to add support for \emph{slave} nodes for future handling of quadratic elements.  The higher-order nodes treated as \emph{slave} nodes will greatly outnumber the free vertices in the mesh, regardless of the mesh size.
 
 \section{\texttt{ObjectiveFunction} Interface}
 \label{sec:ofiface}
@@ -717,9 +717,9 @@ The interface to the \texttt{ObjectiveFunction} class (Figure \ref{fig:ofiface})
 
 The first argument to each of the \texttt{evaluate*} methods is \texttt{EvalType}.  Passing the \texttt{CALCULATE} value for this term will result in the objective function being evaluated only over the current patch.  This is the mode used for Nash game and global patch optimizations.  Other values, used only during BCD solutions, are discussed below.  Not all \texttt{ObjectiveFunction} implementations support BCD-type algorithms.  Such implementations will return an error condition if the evaluation type is anything other than \texttt{CALCULATE}.
 
-The \texttt{clone} function is expected to return a new \texttt{ObjectiveFunction} instance that is a duplicate of the current instance, including any referenced \texttt{QualityMetrics}, accumulated BCD data, etc.  The \texttt{clear} function is used to reset any accumulated BCD data.  
+The \texttt{clone} function is expected to return a new \texttt{ObjectiveFunction} instance that is a duplicate of the current instance, including any referenced \texttt{QualityMetrics}, accumulated BCD data, etc.  The \texttt{clear} function is used to reset any accumulated BCD data.
 
-The\texttt{ObjectiveFunction} interface declares a pure virtual method named \texttt{initialize\_block\_coordinate\_descent}.  A concrete \texttt{ObjectiveFunction} subclass that supports BCD must provide this method.  The method initializes the value of the the objective function to $f(M_0)$, presumably by iterating over the mesh.   A common implementation of this function is provided in \texttt{ObjectiveFunctionTemplate} for all template objective functions.  Composite objective functions must provide their own implementation (typically by calling the corresponding method on their underlying \texttt{ObjectiveFunction} instance(s).  The way the mesh is iterated over to establish the initial value depends on the type of the \texttt{QualityMetric}, so a common implementation for composite objective functions is not possible.  
+The\texttt{ObjectiveFunction} interface declares a pure virtual method named \texttt{initialize\_block\_coordinate\_descent}.  A concrete \texttt{ObjectiveFunction} subclass that supports BCD must provide this method.  The method initializes the value of the the objective function to $f(M_0)$, presumably by iterating over the mesh.   A common implementation of this function is provided in \texttt{ObjectiveFunctionTemplate} for all template objective functions.  Composite objective functions must provide their own implementation (typically by calling the corresponding method on their underlying \texttt{ObjectiveFunction} instance(s).  The way the mesh is iterated over to establish the initial value depends on the type of the \texttt{QualityMetric}, so a common implementation for composite objective functions is not possible.
 
 \subsection{\texttt{EvalType}}
 \label{sec:EvalType}
@@ -735,7 +735,7 @@ This mode of evaluation is the equivalent of the old Nash-game behavior.  The ob
 
 \item{\texttt{ACCUMULATE}}
 
-An \texttt{ACCUMULATE} evaluation is used in the default implementation of \\ \texttt{initialize\_block\_coordinate\_descent} method provided by the \\ \texttt{ObjectiveFunctionTemplate} class.  The \texttt{ObjectiveFunction} implementation is expected to add the evaluation of the current patch to the total for the overall mesh, including any vertex counts, etc.  That is, the value of $f(M_0)$ is constructed by repeatedly calling the \texttt{evaluate} method with patches containing non-intersecting subsets of $M$.  The definition of a non-intersecting subset is dependent on the type of the \texttt{QualityMetric}.  For example, for an element metric each patch will contain only a single element.  For a vertex metric, each patch will contain a single free vertex and the adjacent elements.  
+An \texttt{ACCUMULATE} evaluation is used in the default implementation of \\ \texttt{initialize\_block\_coordinate\_descent} method provided by the \\ \texttt{ObjectiveFunctionTemplate} class.  The \texttt{ObjectiveFunction} implementation is expected to add the evaluation of the current patch to the total for the overall mesh, including any vertex counts, etc.  That is, the value of $f(M_0)$ is constructed by repeatedly calling the \texttt{evaluate} method with patches containing non-intersecting subsets of $M$.  The definition of a non-intersecting subset is dependent on the type of the \texttt{QualityMetric}.  For example, for an element metric each patch will contain only a single element.  For a vertex metric, each patch will contain a single free vertex and the adjacent elements.
 
 An implementation does not need to support the \texttt{ACCUMULATE} mode in any of the evaluation methods other than the simple \texttt{evaluate}  method.  Further, an implementation need not support it at all if it provides it's own \texttt{initialize\_block\_coordinate\_descent} implementation.
 
@@ -770,7 +770,7 @@ The \texttt{TEMPORARY} evaluation mode returns the same result value to the call
 
 
 
-\begin{lstlisting}[caption={Example of \texttt{EvalType} implementation (algebraic mean).},label={lst:evaltype-pseudo}] 
+\begin{lstlisting}[caption={Example of \texttt{EvalType} implementation (algebraic mean).},label={lst:evaltype-pseudo}]
 bool AlgebraicMean::evaluate( EvalType eval_mode,
                               PatchData& patch,
                               double& result_value,
@@ -780,10 +780,10 @@ bool AlgebraicMean::evaluate( EvalType eval_mode,
     // get value for current patch
   int count;
   double value;
-  bool rval = sum_metric_vals( patch, value, count, err ); 
+  bool rval = sum_metric_vals( patch, value, count, err );
   if (MSQ_CHKERR(err) || !rval)
     return false;
-  
+
     // implement requested evaluation mode
   switch (eval_mode) {
     case CALCULATE: // Nash
@@ -799,7 +799,7 @@ bool AlgebraicMean::evaluate( EvalType eval_mode,
       saved_count = count;
       result_value = accumulated_value/accumulated_count;
       break;
-    case UPDATE: 
+    case UPDATE:
       assert(count == saved_count); // same patch
         // update accumulated value for change in patch
       accumulated_value -= saved_value;
@@ -809,7 +809,7 @@ bool AlgebraicMean::evaluate( EvalType eval_mode,
       saved_value = value;
       result_value = accumulated_value/accumulated_count;
       break;
-    case TEMPORARY:  // result_value same as UPDATE, but 
+    case TEMPORARY:  // result_value same as UPDATE, but
                      // accumulated_value isn't modified
       assert(count == saved_count); // same patch
       result_value = accumulated_value;
@@ -818,7 +818,7 @@ bool AlgebraicMean::evaluate( EvalType eval_mode,
       result_value /= accumulated_count;
       break;
   } // end switch(eval_mode)
-}           
+}
 \end{lstlisting}
 
 \subsection{Numerical Approximation of Gradients}
@@ -829,7 +829,7 @@ The evaluation modes described in section \ref{sec:EvalType} are also used by th
 
 The ability to select between numerical and analytical solutions for objective function gradients has been removed.  It made the API more complicated and confusing for application developers; and it was a source of errors for developers (e.g. failure to set the default correctly for a concrete objective function implementation.)  For the new interface, the \texttt{evaluate\_with\_gradient} is virtual, but not abstract.  The default implementation provided in the \texttt{ObjectiveFunction} base class is the numerical approximation.  \texttt{ObjectiveFunction} implementations that include analytical gradient calculation simply override that function.  Thus the application developer always gets the analytical solution if it is available, and the numerical solution if the analytical one is not available without having to take any action.  For the few cases such as testing where one may need to force numerical approximation, alternate solutions exist. See Appendix \ref{sec:numeric}.
 
-Also, in the Mesquite 1.1 API, a quality metric negate flag was applied automatically for the value-only evaluation method in the \texttt{ObjectiveFunction} base class but individual subclasses were expected to incorporate it for evaluation methods returning derivatives.  This type of inconsistency typically leads to bugs, and was therefore removed.  Further, it was typically handled incorrectly in the case of composite objective functions.  Now, each template objective function is expected to apply the negate flag from it's quality metric, and composite objective function implementations need not be concerned with negation flags. 
+Also, in the Mesquite 1.1 API, a quality metric negate flag was applied automatically for the value-only evaluation method in the \texttt{ObjectiveFunction} base class but individual subclasses were expected to incorporate it for evaluation methods returning derivatives.  This type of inconsistency typically leads to bugs, and was therefore removed.  Further, it was typically handled incorrectly in the case of composite objective functions.  Now, each template objective function is expected to apply the negate flag from it's quality metric, and composite objective function implementations need not be concerned with negation flags.
 
 Support for BCD solutions did not exist in Mesquite 1.1.  Both the changes to the \texttt{ObjectiveFunction} interface and the support in concrete \texttt{ObjectiveFunction} implementations is new.  Further, code was added to utilize the \texttt{ObjectiveFunction} BCD API for more efficient numerical approximation of gradients.
 
@@ -882,12 +882,12 @@ Figure \ref{fig:evalargs} shows an example of the \texttt{index}, \texttt{gradie
 
 $\frac{\delta}{\delta x_7}$ & \hspace{0.2cm} & \hspace{0.2cm} &
 
-$\frac{\delta^2}{\delta x_7^2}         $ & 
-$\frac{\delta^2}{\delta x_7 \delta y_7}$ & 
-$\frac{\delta^2}{\delta x_7 \delta z_7}$ & 
+$\frac{\delta^2}{\delta x_7^2}         $ &
+$\frac{\delta^2}{\delta x_7 \delta y_7}$ &
+$\frac{\delta^2}{\delta x_7 \delta z_7}$ &
 
-$\frac{\delta^2}{\delta x_7 \delta x_6}$ & 
-$\frac{\delta^2}{\delta x_7 \delta y_6}$ & 
+$\frac{\delta^2}{\delta x_7 \delta x_6}$ &
+$\frac{\delta^2}{\delta x_7 \delta y_6}$ &
 $\frac{\delta^2}{\delta x_7 \delta z_6}$ \\
 
 
@@ -895,12 +895,12 @@ $\frac{\delta^2}{\delta x_7 \delta z_6}$ \\
 
 $\frac{\delta}{\delta y_7}$ & \hspace{0.2cm} & \hspace{0.2cm} &
 
-$\frac{\delta^2}{\delta x_7 \delta y_7}$ & 
-$\frac{\delta^2}{\delta y_7^2}         $ & 
-$\frac{\delta^2}{\delta y_7 \delta z_7}$ & 
+$\frac{\delta^2}{\delta x_7 \delta y_7}$ &
+$\frac{\delta^2}{\delta y_7^2}         $ &
+$\frac{\delta^2}{\delta y_7 \delta z_7}$ &
 
-$\frac{\delta^2}{\delta y_7 \delta x_6}$ & 
-$\frac{\delta^2}{\delta y_7 \delta y_6}$ & 
+$\frac{\delta^2}{\delta y_7 \delta x_6}$ &
+$\frac{\delta^2}{\delta y_7 \delta y_6}$ &
 $\frac{\delta^2}{\delta y_7 \delta z_6}$ \\
 
 
@@ -908,12 +908,12 @@ $\frac{\delta^2}{\delta y_7 \delta z_6}$ \\
 
 $\frac{\delta}{\delta z_7}$ & \hspace{0.2cm} & \hspace{0.2cm} &
 
-$\frac{\delta^2}{\delta x_7 \delta z_7}$ & 
-$\frac{\delta^2}{\delta y_7 \delta z_7}$ & 
-$\frac{\delta^2}{\delta z_7^2}         $ & 
+$\frac{\delta^2}{\delta x_7 \delta z_7}$ &
+$\frac{\delta^2}{\delta y_7 \delta z_7}$ &
+$\frac{\delta^2}{\delta z_7^2}         $ &
 
-$\frac{\delta^2}{\delta z_7 \delta x_6}$ & 
-$\frac{\delta^2}{\delta z_7 \delta y_6}$ & 
+$\frac{\delta^2}{\delta z_7 \delta x_6}$ &
+$\frac{\delta^2}{\delta z_7 \delta y_6}$ &
 $\frac{\delta^2}{\delta z_7 \delta z_6}$ \\
 
 \cline{2-2}
@@ -924,11 +924,11 @@ $\frac{\delta^2}{\delta z_7 \delta z_6}$ \\
 
 $\frac{\delta}{\delta x_6}$ & \hspace{0.2cm} & \hspace{0.2cm} &
 
-& & & 
+& & &
 
-$\frac{\delta^2}{\delta x_6^2}         $ & 
-$\frac{\delta^2}{\delta x_6 \delta y_6}$ & 
-$\frac{\delta^2}{\delta x_6 \delta z_6}$ \\ 
+$\frac{\delta^2}{\delta x_6^2}         $ &
+$\frac{\delta^2}{\delta x_6 \delta y_6}$ &
+$\frac{\delta^2}{\delta x_6 \delta z_6}$ \\
 
 
 \hspace{0.2cm} & $6$ & \hspace{0.2cm} & \hspace{0.2cm} &
@@ -937,8 +937,8 @@ $\frac{\delta}{\delta y_6}$ & \hspace{0.2cm} & \hspace{0.2cm} &
 
 & & &
 
-$\frac{\delta^2}{\delta x_6 \delta y_6}$ & 
-$\frac{\delta^2}{\delta y_6^2}         $ & 
+$\frac{\delta^2}{\delta x_6 \delta y_6}$ &
+$\frac{\delta^2}{\delta y_6^2}         $ &
 $\frac{\delta^2}{\delta y_6 \delta z_6}$ \\
 
 \hspace{0.2cm} & & \hspace{0.2cm} & \hspace{0.2cm} &
@@ -947,8 +947,8 @@ $\frac{\delta}{\delta z_6}$ & \hspace{0.2cm} & \hspace{0.2cm} &
 
 & & &
 
-$\frac{\delta^2}{\delta x_6 \delta z_6}$ & 
-$\frac{\delta^2}{\delta y_6 \delta z_6}$ & 
+$\frac{\delta^2}{\delta x_6 \delta z_6}$ &
+$\frac{\delta^2}{\delta y_6 \delta z_6}$ &
 $\frac{\delta^2}{\delta z_6^2}         $  \\
 
 \cline{2-2}
@@ -978,7 +978,7 @@ The evaluation functions provided in the \texttt{QualityMetric} interface pass c
 
 The \texttt{QualityMetric} class provides default implementations of the \texttt{evaluate\_with\_gradient} and \texttt{evaluate\_with\_Hessian} methods that rely on the \texttt{evaluate\_with\_indices} and \texttt{evaluate} methods to generate numeric approximations of the derivatives by perturbing vertex coordinates.  This is currently the only use of the \texttt{evaluate\_with\_indices} method in Mesquite.
 
-The \texttt{get\_metric\_type} function returns either \texttt{ELEMENT\_BASED} or \texttt{VERTEX\_BASED}.  This value is used to determine how to decompose the mesh into patches such that the metric is evaluated at every possible evaluation point exactly once and the patches are as small as possible.  This is used to evaluate the metric over the entire mesh for operations such as quality assessment and initializing a coordinate descent optimization.  A vertex metric will return \texttt{VERTEX\_BASED}.  Element-based metrics, corner-based metrics, metrics that are evaluated at sample points within an element, etc. return \texttt{ELEMENT\_BASED}.  
+The \texttt{get\_metric\_type} function returns either \texttt{ELEMENT\_BASED} or \texttt{VERTEX\_BASED}.  This value is used to determine how to decompose the mesh into patches such that the metric is evaluated at every possible evaluation point exactly once and the patches are as small as possible.  This is used to evaluate the metric over the entire mesh for operations such as quality assessment and initializing a coordinate descent optimization.  A vertex metric will return \texttt{VERTEX\_BASED}.  Element-based metrics, corner-based metrics, metrics that are evaluated at sample points within an element, etc. return \texttt{ELEMENT\_BASED}.
 
 There is no \texttt{EDGE\_BASED} option.  This is because we assume that the mesh does not contain explicit edges, and therefore it is not possible to iterate over all of the edges directly.  An edge-based metric could be implemented using a \texttt{VERTEX\_BASED} patch type.  For evaluation of the metric during normal optimization, all edges adjacent to the free vertices in the patch are evaluated.  For quality assessment and coordinate descent initialization, only the edges in the patch that connect the center vertex to a second vertex with a smaller handle value are evaluated, resulting in all the edges being evaluated exactly once.
 
@@ -989,7 +989,7 @@ The most significant change to the \texttt{QualityMetric} interface was the gene
 \item Metric types other than element-based and vertex-based are possible.
 \item Calling code such as objective functions don't need to worry about testing for every possible metric type and calling the appropriate function.
 \item The interface no longer allows for non-sensical code such as calling \texttt{evaluate\_at\_vertex} on an element-based metric.
-\item A single common implementation of numerical derivative approximation works for all metric types. 
+\item A single common implementation of numerical derivative approximation works for all metric types.
 \end{itemize}
 
 In Mesquite 1.1 and earlier, the caller informed the \texttt{QualityMetric} of the vertices for which it was interested in derivative terms.  This list was always the free vertices the metric depended on (e.g. the free vertices in an element for an element-based metric.)  The information was communicated inconsistently for different functions.  The caller is no longer expected to implicitly know which vertices a metric evaluation depends on.  The metric is now expected to return to the caller the list of free vertices that the metric value was a function of.  Not only is this necessary to make the interface metric-type-agnostic, it also simplifies the implementation of many metrics because it allows the metric to return derivative values in the order most convenient for calculation (Figure \ref{fig:evalargs}.)
@@ -1013,12 +1013,12 @@ This is the normal method of calling the \texttt{evaluate} method, where the imp
 qm->QualityMetric::evaluate( patch, handle, value_out, err );
 \end{lstlisting}
 
-For cases where it is not possible or advisable to modify the call to the \texttt{QualityMetric} or \texttt{ObjectiveFunction}, such as when the calls are made from within existing (non-test) Mesquite code, a wrapper class can be used.  The wrapper class implements it's \texttt{evaluate} methods by calling the same function in the wrapped \texttt{QualityMetric} or \texttt{ObjectiveFunction}.  For any method for which the numerical solution is to be returned, the wrapper just doesn't implement the method, causing the default numerical approximation provided by the base class to be used.  
+For cases where it is not possible or advisable to modify the call to the \texttt{QualityMetric} or \texttt{ObjectiveFunction}, such as when the calls are made from within existing (non-test) Mesquite code, a wrapper class can be used.  The wrapper class implements it's \texttt{evaluate} methods by calling the same function in the wrapped \texttt{QualityMetric} or \texttt{ObjectiveFunction}.  For any method for which the numerical solution is to be returned, the wrapper just doesn't implement the method, causing the default numerical approximation provided by the base class to be used.
 
-Listing \ref{lst:numerical} is an example of this technique.  The class \texttt{NumericalHessianMetric} is delcared at line 3 to implement the \texttt{QualityMetric} interface.  The constructor is declared to accept a pointer to the ``real'' \texttt{QualityMetric} that this class will serve as a wrapper for.  All of the methods in the class are simply defined such that they pass the function call to the underlying, real \texttt{QualityMetric} implementation.  However, as noted in the comment at line 85, the class does not provide an implementation of the \texttt{evaluate\_at\_Hessian} method.  The class will inherit the \texttt{evaluate\_at\_Hessian} from \texttt{QualtiyMetric}, which is a numerical approximation.  
+Listing \ref{lst:numerical} is an example of this technique.  The class \texttt{NumericalHessianMetric} is delcared at line 3 to implement the \texttt{QualityMetric} interface.  The constructor is declared to accept a pointer to the ``real'' \texttt{QualityMetric} that this class will serve as a wrapper for.  All of the methods in the class are simply defined such that they pass the function call to the underlying, real \texttt{QualityMetric} implementation.  However, as noted in the comment at line 85, the class does not provide an implementation of the \texttt{evaluate\_at\_Hessian} method.  The class will inherit the \texttt{evaluate\_at\_Hessian} from \texttt{QualtiyMetric}, which is a numerical approximation.
 
-\begin{lstlisting}[numbers=left,caption={Numerical \texttt{QualityMetric} Wrapper},label={lst:numerical}] 
-// Define a class that uses analytical gradients 
+\begin{lstlisting}[numbers=left,caption={Numerical \texttt{QualityMetric} Wrapper},label={lst:numerical}]
+// Define a class that uses analytical gradients
 // (if they're available) but always uses numerical
 // Hessians
 class NumericalHessianMetric : public QualityMetric
@@ -1026,34 +1026,34 @@ class NumericalHessianMetric : public QualityMetric
 private:
   QualityMetric* realMetric;
 public:
-  
+
   NumericalHessianMetric( QualityMetric* real_metric )
     : realMetric(real_metric)
     {}
-  
+
   MetricType get_metric_type() const
     { return realMetric->get_metric_type(); }
-  
+
   msq_std::get_name() const
-    { return realMetric->get_name() 
+    { return realMetric->get_name()
         + " (Numerical Hessian)"; }
-  
+
   int get_negate_flag() const
     { return realMetric->get_negate_flag(); }
-  
-  void get_evaluations( 
+
+  void get_evaluations(
                 PatchData& pd,
                 msq_std::vector<size_t>& handles,
                 bool free_only,
                 MsqError& err )
   {
-    realMetric->get_evaluations( pd, 
-                                 handles, 
-				 free_only, 
+    realMetric->get_evaluations( pd,
+                                 handles,
+				 free_only,
 				 err );
     MSQ_CHKERR(err);
   }
-  
+
     // call realMetric to get actual value
   bool evaluate( PatchData& pd,
                  size_t handle,
@@ -1064,9 +1064,9 @@ public:
     rval = realMetric->evaluate( pd, handle, value, err );
     return !MSQ_CHKERR(err) && rval;
   }
-  
+
     // call realMetric to get actual value
-  bool evaluate_with_indices( 
+  bool evaluate_with_indices(
                 PatchData& pd,
                 size_t handle,
                 double& value,
@@ -1081,10 +1081,10 @@ public:
                                               err );
     return !MSQ_CHKERR(err) && rval;
   }
-  
-    // call realMetric because we want analytical 
+
+    // call realMetric because we want analytical
     // gradients if realMetric implements that.
-  bool evaluate_with_gradient( 
+  bool evaluate_with_gradient(
                 PatchData& pd,
                 size_t handle,
                 double& value,
@@ -1101,12 +1101,12 @@ public:
                                                err );
     return !MSQ_CHKERR(err) && rval;
   }
-    
-    // NOTE: No evaluate_with_Hessian.  
-    // By not providing an implementation here, the 
-    // default numerical solution from QualityMetric 
-    // will be inherited.  It will use analytical 
-    // gradients in calculating the numerical 
+
+    // NOTE: No evaluate_with_Hessian.
+    // By not providing an implementation here, the
+    // default numerical solution from QualityMetric
+    // will be inherited.  It will use analytical
+    // gradients in calculating the numerical
     // Hessian because it will call the
     // evaluate_with_gradient function above.
 };

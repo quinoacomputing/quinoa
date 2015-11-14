@@ -99,12 +99,8 @@
 
 #include <cmath>
 
-using namespace std;
-/* 2008/11/16: rabartl; ToDo: Above: Get rid of usning std namespace! */
-
 #include <iomanip>
 
-using std::string;
 using std::istream;
 using std::ostream;
 using std::cerr;

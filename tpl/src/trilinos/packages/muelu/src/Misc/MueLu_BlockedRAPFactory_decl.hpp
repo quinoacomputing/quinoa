@@ -46,19 +46,23 @@
 #ifndef MUELU_BLOCKEDRAPFACTORY_DECL_HPP
 #define MUELU_BLOCKEDRAPFACTORY_DECL_HPP
 
+#ifdef HAVE_MUELU_EXPERIMENTAL
+
 #include <Xpetra_Matrix_fwd.hpp>
 #include <Xpetra_CrsMatrix_fwd.hpp>
 #include <Xpetra_CrsMatrixWrap_fwd.hpp>
+#include <Xpetra_BlockedCrsMatrix_fwd.hpp>
 #include <Xpetra_MatrixFactory_fwd.hpp>
 #include <Xpetra_Vector_fwd.hpp>
 #include <Xpetra_VectorFactory_fwd.hpp>
 
 #include "MueLu_ConfigDefs.hpp"
-#include "MueLu_TwoLevelFactoryBase.hpp"
 #include "MueLu_RAPFactory_fwd.hpp"
 
 #include "MueLu_Level_fwd.hpp"
 #include "MueLu_FactoryBase_fwd.hpp"
+#include "MueLu_PerfUtils_fwd.hpp"
+#include "MueLu_TwoLevelFactoryBase.hpp"
 #include "MueLu_Utilities_fwd.hpp"
 
 namespace MueLu {
@@ -66,7 +70,7 @@ namespace MueLu {
     @class BlockedRAPFactory
     @brief Factory for building coarse matrices.
   */
-  template <class Scalar = double, class LocalOrdinal = int, class GlobalOrdinal = LocalOrdinal, class Node = KokkosClassic::DefaultNode::DefaultNodeType, class LocalMatOps = typename KokkosClassic::DefaultKernels<void, LocalOrdinal, Node>::SparseOps>
+  template <class Scalar = double, class LocalOrdinal = int, class GlobalOrdinal = LocalOrdinal, class Node = KokkosClassic::DefaultNode::DefaultNodeType>
   class BlockedRAPFactory : public TwoLevelFactoryBase {
 #undef MUELU_BLOCKEDRAPFACTORY_SHORT
 #include "MueLu_UseShortNames.hpp"
@@ -82,6 +86,8 @@ namespace MueLu {
 
     //! @name Input
     //@{
+
+    RCP<const ParameterList> GetValidParameterList() const;
 
     void DeclareInput(Level &fineLevel, Level &coarseLevel) const;
 
@@ -127,9 +133,6 @@ namespace MueLu {
     //! checks main diagonal entries of (0,0) block. Does not affect entries in (1,1) block!
     static void CheckMainDiagonal(RCP<BlockedCrsMatrix> & bAc, bool repairZeroDiagonals = false);
 
-    //! If true, the action of the restriction operator action is implicitly defined by the transpose of the prolongator.
-    bool implicitTranspose_;
-
     //! If true, perform a basic plausibility check on Ac (default = false)
     //! note, that the repairZeroDiagonals_ flag only is valid for checkAc_ == true
     bool checkAc_;
@@ -151,4 +154,5 @@ namespace MueLu {
 } //namespace MueLu
 
 #define MUELU_BLOCKEDRAPFACTORY_SHORT
+#endif /* HAVE_MUELU_EXPERIMENTAL */
 #endif // MUELU_BLOCKEDRAPFACTORY_DECL_HPP

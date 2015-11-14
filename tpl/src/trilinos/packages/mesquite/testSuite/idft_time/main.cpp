@@ -18,7 +18,7 @@
 
     You should have received a copy of the GNU Lesser General Public License 
     (lgpl.txt) along with this library; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  
     kraftche@cae.wisc.edu     
    
@@ -35,28 +35,28 @@ using std::endl;
 #include <stdlib.h>
 
 #include "Mesquite.hpp"
-#include "MeshImpl.hpp"
-#include "MsqError.hpp"
-#include "InstructionQueue.hpp"
-#include "TerminationCriterion.hpp"
-#include "QualityAssessor.hpp"
-#include "PlanarDomain.hpp"
+#include "Mesquite_MeshImpl.hpp"
+#include "Mesquite_MsqError.hpp"
+#include "Mesquite_InstructionQueue.hpp"
+#include "Mesquite_TerminationCriterion.hpp"
+#include "Mesquite_QualityAssessor.hpp"
+#include "Mesquite_PlanarDomain.hpp"
 
-#include "IdealWeightInverseMeanRatio.hpp"
-#include "ElementPMeanP.hpp"
-#include "TInverseMeanRatio.hpp"
-#include "TQualityMetric.hpp"
-#include "TOffset.hpp"
-#include "TOffset.hpp"
+#include "Mesquite_IdealWeightInverseMeanRatio.hpp"
+#include "Mesquite_ElementPMeanP.hpp"
+#include "Mesquite_TInverseMeanRatio.hpp"
+#include "Mesquite_TQualityMetric.hpp"
+#include "Mesquite_TOffset.hpp"
+#include "Mesquite_TOffset.hpp"
 
-#include "IdealShapeTarget.hpp"
-#include "PMeanPTemplate.hpp"
-#include "SteepestDescent.hpp"
-#include "ConjugateGradient.hpp"
-#include "QuasiNewton.hpp"
+#include "Mesquite_IdealShapeTarget.hpp"
+#include "Mesquite_PMeanPTemplate.hpp"
+#include "Mesquite_SteepestDescent.hpp"
+#include "Mesquite_ConjugateGradient.hpp"
+#include "Mesquite_QuasiNewton.hpp"
 
-#include "MeshWriter.hpp"
-#include "MsqTimer.hpp"
+#include "Mesquite_MeshWriter.hpp"
+#include "Mesquite_MsqTimer.hpp"
 using namespace Mesquite;
 
 const char* DEFAULT_INPUT = MESH_FILES_DIR "2D/vtk/tris/untangled/equil_tri2.vtk";

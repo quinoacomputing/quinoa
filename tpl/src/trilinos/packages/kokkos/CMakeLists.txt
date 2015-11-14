@@ -1,4 +1,3 @@
-INCLUDE(TribitsPackageMacros)
 
 #
 # A) Forward delcare the package so that certain options are also defined for
@@ -16,10 +15,24 @@ TRIBITS_PACKAGE_DECL(Kokkos) # ENABLE_SHADOWING_WARNINGS)
 TRIBITS_ADD_DEBUG_OPTION()
 
 TRIBITS_ADD_OPTION_AND_DEFINE(
+  Kokkos_ENABLE_SIERRA_BUILD
+  KOKKOS_FOR_SIERRA
+  "Configure Kokkos for building within the Sierra build system."
+  OFF
+  )
+
+TRIBITS_ADD_OPTION_AND_DEFINE(
   Kokkos_ENABLE_Cuda
   KOKKOS_HAVE_CUDA
-  "Enable CUDA support in Kokkos (new)."
+  "Enable CUDA support in Kokkos."
   "${TPL_ENABLE_CUDA}"
+  )
+
+TRIBITS_ADD_OPTION_AND_DEFINE(
+  Kokkos_ENABLE_Cuda_UVM
+  KOKKOS_USE_CUDA_UVM
+  "Enable CUDA Unified Virtual Memory support in Kokkos."
+  OFF
   )
 
 TRIBITS_ADD_OPTION_AND_DEFINE(
@@ -33,9 +46,23 @@ TRIBITS_ADD_OPTION_AND_DEFINE(
   Kokkos_ENABLE_OpenMP
   KOKKOS_HAVE_OPENMP
   "Enable OpenMP support in Kokkos."
-  "${Trilinos_ENABLE_OpenMP}"
+  "${${PROJECT_NAME}_ENABLE_OpenMP}"
   )
 
+TRIBITS_ADD_OPTION_AND_DEFINE(
+  Kokkos_ENABLE_QTHREAD
+  KOKKOS_HAVE_QTHREAD
+  "Enable QTHREAD support in Kokkos."
+  "${TPL_ENABLE_QTHREAD}"
+  )
+
+TRIBITS_ADD_OPTION_AND_DEFINE(
+  Kokkos_ENABLE_CXX11
+  KOKKOS_HAVE_CXX11
+  "Enable C++11 support in Kokkos."
+  "${${PROJECT_NAME}_ENABLE_CXX11}"
+  )
+  
 TRIBITS_ADD_OPTION_AND_DEFINE(
   Kokkos_ENABLE_HWLOC
   KOKKOS_HAVE_HWLOC
@@ -51,10 +78,25 @@ TRIBITS_ADD_OPTION_AND_DEFINE(
   )
 
 TRIBITS_ADD_OPTION_AND_DEFINE(
-  Kokkos_ENABLE_BOUNDS_CHECK
-  KOKKOS_EXPRESSION_CHECK
+  Kokkos_ENABLE_Debug_Bounds_Check
+  KOKKOS_ENABLE_DEBUG_BOUNDS_CHECK
   "Enable bounds checking support in Kokkos."
   OFF
+  )
+
+#TRIBITS_ADD_OPTION_AND_DEFINE(
+#  Kokkos_ENABLE_Profiling_Collect_Kernel_Data
+#  KOKKOS_ENABLE_PROFILING_COLLECT_KERNEL_DATA
+#  "Enable profiling support for kernel data collections in Kokkos."
+#  "${${PROJECT_NAME}_ENABLE_KokkosProfiler}"
+#  )
+
+# placeholder for future device...
+TRIBITS_ADD_OPTION_AND_DEFINE(
+  Kokkos_ENABLE_Winthread
+  KOKKOS_HAVE_WINTHREAD
+  "Enable Winthread support in Kokkos."
+  "${TPL_ENABLE_Winthread}"
   )
 
 #------------------------------------------------------------------------------
@@ -74,7 +116,6 @@ TRIBITS_EXCLUDE_AUTOTOOLS_FILES()
 
 TRIBITS_EXCLUDE_FILES(
   classic/doc
-  classic/DistTSQR/doc
   classic/LinAlg/doc/CrsRefactorNotesMay2012
   )
 

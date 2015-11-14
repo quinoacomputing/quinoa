@@ -1,3 +1,5 @@
+#include "apr_builtin.h"
+
 #include <cmath>
 #include <cctype>
 #include <errno.h>
@@ -7,7 +9,11 @@
 #include <ctime>
 #include <cstdio>
 #include <sys/stat.h>
-#include <unistd.h>
+#ifdef _WIN32
+  #include <io.h>
+#else
+  #include <unistd.h>
+#endif
 #include <cstring>
 #include <assert.h>
 #include "aprepro.h"
@@ -48,80 +54,6 @@ extern SEAMS::Aprepro *aprepro;
 #else
 #define LOG1P(x)	std::log(1.0 + (x))
 #endif
-
-double do_acos(double x);
-double do_acosd(double x);
-double do_acosh(double x);
-double do_angle(double x1, double y1, double x2, double y2);
-double do_angled(double x1, double y1, double x2, double y2);
-double do_asin(double x);
-double do_asind(double x);
-double do_asinh(double x);
-double do_atan(double x);
-double do_atan2(double x, double y);
-double do_atan2d(double x, double y);
-double do_atand(double x);
-double do_atanh(double x);
-double do_ceil(double x);
-double do_cos(double x);
-double do_cosd(double x);
-double do_cosh(double x);
-double do_d2r(double x);
-double do_dim(double x, double y);
-double do_dist(double x1, double y1, double x2, double y2);
-double do_exp(double x);
-double do_fabs(double x);
-double do_floor(double x);
-double do_nint(double x);
-double do_fmod(double x, double y);
-double do_hypot(double x, double y);
-double do_int(double x);
-double do_log(double x);
-double do_log10(double x);
-double do_max(double x, double y);
-double do_min(double x, double y);
-double do_r2d(double x);
-double do_rand(double xl, double xh);
-double do_srand(double seed);
-double do_rand_normal(double mean, double stddev);
-double do_rand_lognormal(double mean, double stddev);
-double do_rand_weibull(double alpha, double beta);
-double do_sign(double x, double y);
-double do_sin(double x);
-double do_sind(double x);
-double do_sinh(double x);
-double do_sqrt(double x);
-double do_tan(double x);
-double do_tand(double x);
-double do_tanh(double x);
-double do_polarX(double rad, double ang);
-double do_polarY(double rad, double ang);
-double do_strtod(char *string);
-double do_option(char *option, double value);
-double do_word_count(char *string, char *delm );
-double do_Material(double id, char *type, char *name, char *model, char *code, FILE * yyout);
-double do_lgamma(double val);
-double do_juldayhms(double mon, double day, double year,
-			    double h, double mi, double se);
-double do_julday(double mon, double day, double year);
-double do_log1p(double mag);
-
-const char  *do_execute(char *string);
-const char  *do_getenv(char *string);
-const char  *do_tolower(char *string);
-const char  *do_toupper(char *string);
-const char  *do_tostring(double x);
-const char  *do_output(char *newfile);
-const char  *do_append(char *newfile);
-const char  *do_error(char *error_string);
-const char  *do_get_date(void);
-const char  *do_get_iso_date(void);
-const char  *do_get_time(void);
-const char  *do_get_word(double n, char *string, char *delm);
-const char  *do_file_to_string(char *filename);
-const char  *do_extract(char *string, char *begin, char *end);
-const char  *do_include_path(char *newpath);
-const char  *do_intout(double intval);
 
 /* DO_INT:  Calculate integer nearest to zero from value */
 double do_int(double x)
@@ -697,6 +629,17 @@ double do_atanh(double x)
   x = x / (1.0 - x);
   return (z * LOG1P(x + x));
 }
+
+double do_rows(const array *arr)
+{
+  return arr->rows;
+}
+
+double do_cols(const array *arr)
+{
+  return arr->cols;
+}
+
 /*
   --------------------------STRING FUNCTIONS------------------------
  */
@@ -801,22 +744,18 @@ const char *do_output(char *filename)
       delete output;
     }
 
-    if (aprepro->ap_options.info_msg == true) {
-      std::cerr << "Aprepro: INFO: Output now redirected to original output stream.\n";
-    }
+    aprepro->info("Output now redirected to original output stream.\n");
   }
   else {
     std::ostream* output = new std::ofstream(filename);
     if (output != NULL) {
       aprepro->outputStream.push(output);
 
-      if (aprepro->ap_options.info_msg == true) {
-	std::cerr << "Aprepro: INFO: Output now redirected to file '"
-		  << filename << "'.\n";
-      }
+      aprepro->info("Output now redirected to file'" +
+                    std::string(filename) + "'.\n");
     } else {
-	std::cerr << "Aprepro: ERROR: Could not open output file '"
-		  << filename << "'.\n";
+    aprepro->error("Could not open output file '" +
+                   std::string(filename) + "'.\n", false);
     }
   }
   return (NULL);
@@ -834,22 +773,18 @@ const char *do_append(char *filename)
       delete output;
     }
 
-    if (aprepro->ap_options.info_msg == true) {
-      std::cerr << "Aprepro: INFO: Output now redirected to original output stream.\n";
-    }
+    aprepro->info("Output now redirected to original output stream.\n");
   }
   else {
     std::ofstream* output = new std::ofstream(filename, std::ios_base::app); // Append
     if (output != NULL) {
       aprepro->outputStream.push(output);
 
-      if (aprepro->ap_options.info_msg == true) {
-	std::cerr << "Aprepro: INFO: Output now redirected to file '"
-		  << filename << "'\n";
-      }
+      aprepro->info("Output now redirected to file '" +
+                    std::string(filename) + "'\n");
     } else {
-	std::cerr << "Aprepro: ERROR: Could not open output file '"
-		  << filename << "' for appending.\n";
+      aprepro->error("Could not open output file '" +
+                     std::string(filename) + "' for appending.\n", false);
     }
   }
   return (NULL);
@@ -899,14 +834,14 @@ const char *do_getenv(char *env)
   char *tmp;
   char *ret_string;
   if (env == NULL)
-    return (NULL);
+    return "";
   
   tmp = (char *)getenv(env);
   if (tmp != NULL) {
     new_string(tmp, &ret_string);
     return (ret_string);
   } else {
-    return (NULL);
+    return "";
   }
 }
 
@@ -965,7 +900,8 @@ double do_option(char *option, double value)
   }
 
   else {
-    fprintf(stderr, "Valid arguments to option are: 'warning', 'info', 'debugging', and 'statistics'\n");
+    aprepro->error("Valid arguments to option are: 'warning', 'info', 'debugging', and 'statistics'\n",
+                   false);
   }
   return current;
 }
@@ -1026,6 +962,30 @@ const char *do_notif(double x)
 const char *do_elseif(double x)
 {
   aprepro->lexer->elseif_handler(x);
+  return NULL;
+}
+
+const char *do_str_if(char *string)
+{
+  std::string test(string);
+  aprepro->lexer->if_handler(!test.empty());
+
+  return NULL;
+}
+
+const char *do_str_notif(char* string)
+{
+  std::string test(string);
+  aprepro->lexer->if_handler(test.empty());
+
+  return NULL;
+}
+
+const char*do_str_elseif(char* string)
+{
+  std::string test(string);
+  aprepro->lexer->elseif_handler(!test.empty());
+
   return NULL;
 }
 
@@ -1092,4 +1052,168 @@ const char *do_error (char *error_string)
   /* NOTREACHED */
   return(NULL);
 }
+
+const char *do_print_array(const array *my_array_data)
+{
+  if (my_array_data != NULL) {
+    std::ostringstream lines;
+
+    int rows = my_array_data->rows;
+    int cols = my_array_data->cols;
+
+    int idx=0;
+
+    for (int ir=0; ir < rows; ir++) {
+      if (ir > 0)
+	lines << "\n";
+      lines << "\t";
+      for (int ic=0; ic < cols; ic++) {
+	lines << my_array_data->data[idx++];
+	if (ic < cols-1)
+	  lines << "\t";
+      }
+    }
+    char *ret_string;
+    new_string(lines.str().c_str(), &ret_string);
+    return ret_string;
+  }
+  else {
+    return "";
+  }
+}
+
+const char *do_delete(char *string)
+{
+  aprepro->remove_variable(string);
+
+  return NULL;
+}
+
+array *do_make_array(double rows, double cols)
+{
+  array *array_data = new array(rows, cols);
+  return array_data;
+}
+
+array *do_identity(double size)
+{
+  int i;
+  int isize = size;
+  array *array_data = new array(size,size);
+
+  for (i=0; i < isize; i++) {
+    array_data->data[i*isize+i] = 1.0;
+  }
+  return array_data;
+}
+
+array *do_transpose(const array *a)
+{
+  int i,j;
+  array *array_data = new array(a->cols, a->rows);
+
+  for (i=0; i < a->rows; i++) {
+    for (j=0; j < a->cols; j++) {
+      array_data->data[j*a->rows+i] = a->data[i*a->cols+j];
+    }
+  }
+  return array_data;
+}
+
+array *do_csv_array1(const char *filename)
+{
+  return do_csv_array(filename, 0.0);
+}
+
+array *do_csv_array(const char *filename, double skip)
+{
+  size_t rows_to_skip = (size_t)skip;
+  
+  const char *delim = ",\t ";
+  std::fstream *file = aprepro->open_file(filename, "r");
+  
+  size_t rows = 0;
+  size_t cols = 0;
+
+  std::string line;
+  while (std::getline(*file, line)) {
+    rows++;
+    if (rows > rows_to_skip) {
+      std::vector<std::string> tokens;
+      tokenize(line, delim, tokens);
+      cols = tokens.size() > cols ? tokens.size() : cols;
+    }
+  }
+
+  array *array_data = new array(rows-rows_to_skip, cols);
+
+  /* Read file again storing entries in array_data->data */
+  file->clear();
+  file->seekg(0);
+    
+  int idx = 0;
+  rows = 0;
+  while (std::getline(*file, line)) {
+    if (++rows > rows_to_skip) {
+      std::vector<std::string> tokens;
+      tokenize(line, delim, tokens);
+      for (size_t i=0; i < (size_t)array_data->cols; i++) {
+	if (i < tokens.size()) {
+	  array_data->data[idx++] = atof(tokens[i].c_str());
+	}
+	else {
+	  array_data->data[idx++] = 0.0;
+	}
+      }
+    }
+  }
+  assert(rows - rows_to_skip == (size_t)array_data->rows);
+  return array_data;
+}
+
+array *do_csv_array2(const char *filename, const char *comment)
+{
+  const char *delim = ",\t ";
+  std::fstream *file = aprepro->open_file(filename, "r");
+  
+  size_t rows = 0;
+  size_t cols = 0;
+
+  std::string line;
+  while (std::getline(*file, line)) {
+    if (line[0] != comment[0]) {
+      rows++;
+      std::vector<std::string> tokens;
+      tokenize(line, delim, tokens);
+      cols = tokens.size() > cols ? tokens.size() : cols;
+    }
+  }
+
+  array *array_data = new array(rows, cols);
+
+  /* Read file again storing entries in array_data->data */
+  file->clear();
+  file->seekg(0);
+    
+  int idx = 0;
+  rows = 0;
+  while (std::getline(*file, line)) {
+    if (line[0] != comment[0]) {
+      rows++;
+      std::vector<std::string> tokens;
+      tokenize(line, delim, tokens);
+      for (size_t i=0; i < (size_t)array_data->cols; i++) {
+	if (i < tokens.size()) {
+	  array_data->data[idx++] = atof(tokens[i].c_str());
+	}
+	else {
+	  array_data->data[idx++] = 0.0;
+	}
+      }
+    }
+  }
+  assert((int)rows == array_data->rows);
+  return array_data;
+}
+
 } // namespace SEAMS

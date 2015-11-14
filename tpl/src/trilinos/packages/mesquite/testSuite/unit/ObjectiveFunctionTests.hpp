@@ -18,7 +18,7 @@
 
     You should have received a copy of the GNU Lesser General Public License 
     (lgpl.txt) along with this library; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
 
     (2006) kraftche@cae.wisc.edu    
 
@@ -35,10 +35,10 @@
 
 #include "Mesquite.hpp"
 #include "PatchDataInstances.hpp"
-#include "IdealWeightInverseMeanRatio.hpp"
-#include "ObjectiveFunctionTemplate.hpp"
+#include "Mesquite_IdealWeightInverseMeanRatio.hpp"
+#include "Mesquite_ObjectiveFunctionTemplate.hpp"
 #include "UnitUtil.hpp"
-#include "MsqHessian.hpp"
+#include "Mesquite_MsqHessian.hpp"
 
 #include <memory>
 

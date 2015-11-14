@@ -200,7 +200,7 @@ public:
   // derived
   //! The length of a Playa vector is known only by the vector space it belongs to
   //! We query the vector space and ask its dimension  
-  int length() const;
+  NOX::size_type length() const;
 
   //! Prints out the vector to the specified stream. 
   /*! 

@@ -1,13 +1,13 @@
 
 // @HEADER
 // ***********************************************************************
-// 
+//
 //                      Didasko Tutorial Package
 //                 Copyright (2005) Sandia Corporation
-// 
+//
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -36,7 +36,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 // Questions about Didasko? Contact Marzio Sala (marzio.sala _AT_ gmail.com)
-// 
+//
 // ***********************************************************************
 // @HEADER
 
@@ -66,7 +66,7 @@ int main(int argc, char *argv[])
 #endif
 
   Trilinos_Util::CommandLineParser CLP(argc,argv);
-   
+
   int nx = CLP.Get("-nx", 123);
   int ny = CLP.Get("-ny", 145);
   double tol = CLP.Get("-tol", 1e-12);
@@ -80,7 +80,7 @@ int main(int argc, char *argv[])
   MPI_Finalize();
 #endif
 
-  return(EXIT_SUCCESS);   
+  return(EXIT_SUCCESS);
 }
 
 #else
@@ -98,8 +98,8 @@ int main(int argc, char *argv[])
 #endif
 
   puts("Please configure Didasko with:\n"
-       "--enable-epetra\n"
-       "--enable-triutils");
+      "--enable-epetra\n"
+      "--enable-triutils");
 
 #ifdef HAVE_MPI
   MPI_Finalize();

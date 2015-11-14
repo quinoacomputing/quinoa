@@ -1,4 +1,3 @@
-INCLUDE(TribitsLibraryMacros)
 INCLUDE(TrilinosCreateClientTemplateHeaders)
 
 # Note about the use of wildcard in CMakeLists.txt: CMake dont't know
@@ -33,46 +32,52 @@ INCLUDE_DIRECTORIES(${DIR}/MueCentral)
 INCLUDE_DIRECTORIES(${DIR}/Rebalancing)
 INCLUDE_DIRECTORIES(${DIR}/Smoothers)
 INCLUDE_DIRECTORIES(${DIR}/Transfers/BaseClass)
-INCLUDE_DIRECTORIES(${DIR}/Smoothers/BlockedSmoothers)
-INCLUDE_DIRECTORIES(${DIR}/Transfers/BlockedTransfers)
-INCLUDE_DIRECTORIES(${DIR}/Transfers/Generic)
 IF (${PACKAGE_NAME}_ENABLE_Experimental)
-  INCLUDE_DIRECTORIES(${DIR}/Transfers/Energy-Minimization)
-  INCLUDE_DIRECTORIES(${DIR}/Transfers/Energy-Minimization/Solvers)
-ENDIF ()
+  INCLUDE_DIRECTORIES(${DIR}/Smoothers/BlockedSmoothers)
+  INCLUDE_DIRECTORIES(${DIR}/Transfers/BlockedTransfers)
+ENDIF()
+INCLUDE_DIRECTORIES(${DIR}/Transfers/Generic)
+INCLUDE_DIRECTORIES(${DIR}/Transfers/Energy-Minimization)
+INCLUDE_DIRECTORIES(${DIR}/Transfers/Energy-Minimization/Solvers)
 INCLUDE_DIRECTORIES(${DIR}/Transfers/Geometric-Interpolation)
 INCLUDE_DIRECTORIES(${DIR}/Transfers/Smoothed-Aggregation)
 INCLUDE_DIRECTORIES(${DIR}/Transfers/Petrov-Galerkin-SA)
 INCLUDE_DIRECTORIES(${DIR}/Transfers/User)
+INCLUDE_DIRECTORIES(${DIR}/Transfers/SemiCoarsen)
 INCLUDE_DIRECTORIES(${DIR}/Utils)
 INCLUDE_DIRECTORIES(${DIR}/Utils/ForwardDeclaration)
 if (${PACKAGE_NAME}_ENABLE_Tpetra)
   INCLUDE_DIRECTORIES(${DIR}/../adapters/tpetra)
 ENDIF()
+if (${PACKAGE_NAME}_ENABLE_AmgX)
+  INCLUDE_DIRECTORIES(${DIR}/../adapters/amgx)
+ENDIF()
 
+###############################################
 #The HEADERS variable is the list of headers that will be copied to the install directory during "make install".
 SET(HEADERS "")
 APPEND_GLOB(HEADERS ${BDIR}/${PACKAGE_NAME}_config.hpp)
-APPEND_GLOB(HEADERS ${DIR}/Headers/${PACKAGE_NAME}_ConfigDefs.hpp)
 APPEND_GLOB(HEADERS */*.hpp)
 APPEND_GLOB(HEADERS */*/*.hpp)
 APPEND_GLOB(HEADERS */*/*/*.hpp)
-if (${PACKAGE_NAME}_ENABLE_Tpetra)
-  APPEND_GLOB(HEADERS ${DIR}/../adapters/tpetra/*.hpp)
-ENDIF()
 
+# Remove everything in the interface directory and add it to a list for muelu-interface instead
+# NOTE: Because of the funny way the glob mactros work, the use of two slashses for the APPEND_GLOB is critical
+SET(HEADERS_INTERFACE "")
+APPEND_GLOB(HEADERS_INTERFACE Interface//*.hpp)
+LIST(REMOVE_ITEM HEADERS ${HEADERS_INTERFACE})
+
+
+###############################################
 SET(SOURCES "")
 APPEND_GLOB(SOURCES */*.cpp)
 
 #APPEND_GLOB(SOURCES */*/*.cpp) -> ExplicitInstantiation files must be included only if explicit instantiation is enabled
-APPEND_GLOB(SOURCES Interface/*.cpp)
 APPEND_GLOB(SOURCES Smoothers/BlockedSmoothers/*.cpp)
 APPEND_GLOB(SOURCES Transfers/BaseClass/*.cpp)
 APPEND_GLOB(SOURCES Transfers/BlockedTransfers/*.cpp)
-IF (${PACKAGE_NAME}_ENABLE_Experimental)
-  APPEND_GLOB(SOURCES Transfers/Energy-Minimization/*.cpp)
-  APPEND_GLOB(SOURCES Transfers/Energy-Minimization/Solvers/*.cpp)
-ENDIF ()
+APPEND_GLOB(SOURCES Transfers/Energy-Minimization/*.cpp)
+APPEND_GLOB(SOURCES Transfers/Energy-Minimization/Solvers/*.cpp)
 APPEND_GLOB(SOURCES Transfers/Generic/*.cpp)
 APPEND_GLOB(SOURCES Transfers/Geometric-Interpolation/*.cpp)
 APPEND_GLOB(SOURCES Transfers/Petrov-Galerkin-SA/*.cpp)
@@ -98,14 +103,13 @@ TRILINOS_CREATE_CLIENT_TEMPLATE_HEADERS(${DIR}/Smoothers/BlockedSmoothers NOSIER
 TRILINOS_CREATE_CLIENT_TEMPLATE_HEADERS(${DIR}/Transfers/BaseClass NOSIERRABJAM)
 TRILINOS_CREATE_CLIENT_TEMPLATE_HEADERS(${DIR}/Transfers/BlockedTransfers NOSIERRABJAM)
 TRILINOS_CREATE_CLIENT_TEMPLATE_HEADERS(${DIR}/Transfers/Generic NOSIERRABJAM)
-IF (${PACKAGE_NAME}_ENABLE_Experimental)
-  TRILINOS_CREATE_CLIENT_TEMPLATE_HEADERS(${DIR}/Transfers/Energy-Minimization NOSIERRABJAM)
-  TRILINOS_CREATE_CLIENT_TEMPLATE_HEADERS(${DIR}/Transfers/Energy-Minimization/Solvers NOSIERRABJAM)
-ENDIF ()
+TRILINOS_CREATE_CLIENT_TEMPLATE_HEADERS(${DIR}/Transfers/Energy-Minimization NOSIERRABJAM)
+TRILINOS_CREATE_CLIENT_TEMPLATE_HEADERS(${DIR}/Transfers/Energy-Minimization/Solvers NOSIERRABJAM)
 TRILINOS_CREATE_CLIENT_TEMPLATE_HEADERS(${DIR}/Transfers/Geometric-Interpolation NOSIERRABJAM)
 TRILINOS_CREATE_CLIENT_TEMPLATE_HEADERS(${DIR}/Transfers/Petrov-Galerkin-SA NOSIERRABJAM)
 TRILINOS_CREATE_CLIENT_TEMPLATE_HEADERS(${DIR}/Transfers/Smoothed-Aggregation NOSIERRABJAM)
 TRILINOS_CREATE_CLIENT_TEMPLATE_HEADERS(${DIR}/Transfers/User NOSIERRABJAM)
+TRILINOS_CREATE_CLIENT_TEMPLATE_HEADERS(${DIR}/Transfers/SemiCoarsen NOSIERRABJAM)
 TRILINOS_CREATE_CLIENT_TEMPLATE_HEADERS(${DIR}/Utils NOSIERRABJAM)
 if (${PACKAGE_NAME}_ENABLE_Tpetra)
   TRILINOS_CREATE_CLIENT_TEMPLATE_HEADERS(${DIR}/../adapters/tpetra NOSIERRABJAM)
@@ -120,15 +124,28 @@ IF(${PACKAGE_NAME}_ENABLE_EXPLICIT_INSTANTIATION)
   APPEND_GLOB(SOURCES ${DIR}/Utils/ExplicitInstantiation/*.cpp)
 ENDIF()
 
+# Remove everything in the interface directory and add it to a list for muelu-interface instead
+# NOTE: Because of the funny way the glob mactros work, the use of two slashses for the APPEND_GLOB is critical
+SET(SOURCES_INTERFACE "")
+APPEND_GLOB(SOURCES_INTERFACE Interface//*.cpp)
+IF(${PACKAGE_NAME}_ENABLE_EXPLICIT_INSTANTIATION)
+  APPEND_SET(SOURCES_INTERFACE ${DIR}/Utils/ExplicitInstantiation/MueLu_ParameterListInterpreter.cpp)
+  APPEND_SET(SOURCES_INTERFACE ${DIR}/Utils/ExplicitInstantiation/MueLu_MLParameterListInterpreter.cpp)
+  APPEND_SET(SOURCES_INTERFACE ${DIR}/Utils/ExplicitInstantiation/MueLu_FactoryFactory.cpp)
+  APPEND_SET(SOURCES_INTERFACE ${DIR}/Utils/ExplicitInstantiation/MueLu_AdaptiveSaMLParameterListInterpreter.cpp)
+ENDIF()
+LIST(REMOVE_ITEM SOURCES ${SOURCES_INTERFACE})
+
+
 if (NOT ${PACKAGE_NAME}_ENABLE_Ifpack2)
   LIST(REMOVE_ITEM HEADERS ${DIR}/Smoothers/MueLu_Ifpack2Smoother.hpp)
-  LIST(REMOVE_ITEM SOURCES ${DIR}/Utils/ExplicitInstantiation/MueLu_Ifpack2Smoother.cpp)
-  LIST(REMOVE_ITEM HEADERS ${DIR}/Smoothers/MueLu_SchwarzSmoother.hpp)
-  LIST(REMOVE_ITEM SOURCES ${DIR}/Utils/ExplicitInstantiation/MueLu_SchwarzSmoother.cpp)
+  LIST(REMOVE_ITEM SOURCES
+    ${DIR}/Utils/ExplicitInstantiation/MueLu_Ifpack2Smoother.cpp)
 ENDIF()
 
 if (NOT ${PACKAGE_NAME}_ENABLE_Tpetra)
-  LIST(REMOVE_ITEM SOURCES ${DIR}/Utils/ExplicitInstantiation/MueLu_TpetraOperator.cpp)
+  LIST(REMOVE_ITEM SOURCES
+    ${DIR}/Utils/ExplicitInstantiation/MueLu_TpetraOperator.cpp)
 ENDIF()
 
 
@@ -140,7 +157,6 @@ TRIBITS_ADD_LIBRARY(
   muelu
   HEADERS ${HEADERS}
   SOURCES ${SOURCES}
-  DEPLIBS xpetra xpetra-sup xpetra-ext
   )
 
 # for debugging
@@ -149,8 +165,16 @@ TRIBITS_ADD_LIBRARY(
 #MESSAGE("")
 #MESSAGE("HEADERS = ${HEADERS}")
 #MESSAGE("")
+#MESSAGE("SOURCES = ${SOURCES}")
+
 #MESSAGE("INCLUDE_DIRECTORIES = ")
 #get_directory_property(output INCLUDE_DIRECTORIES)
 #message(STATUS ${output})
-# touch CMakeLists.txt because a new file was created in Utils/ExplicitInstantiation of Utils/ForwardDeclaration
+
+#MESSAGE("")
+#MESSAGE("**************** in muelu src ***********")
+#MESSAGE("")
+#MESSAGE("HEADERS_INTERFACE = ${HEADERS_INTERFACE}")
+#MESSAGE("")
+#MESSAGE("SOURCES_INTERFACE = ${SOURCES_INTERFACE}")
 # touch CMakeLists.txt because a new file was created in Utils/ExplicitInstantiation of Utils/ForwardDeclaration

@@ -18,7 +18,7 @@
 
     You should have received a copy of the GNU Lesser General Public License 
     (lgpl.txt) along with this library; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  
     diachin2@llnl.gov, djmelan@sandia.gov, mbrewer@sandia.gov, 
     pknupp@sandia.gov, tleurent@mcs.anl.gov, tmunson@mcs.anl.gov      
@@ -47,13 +47,13 @@ Unit testing of various functions in the MsqFreeVertexIndexIterator class.
 //
 
 
-#include "MsqFreeVertexIndexIterator.hpp"
+#include "Mesquite_MsqFreeVertexIndexIterator.hpp"
 #include "PatchDataInstances.hpp"
 
 #include <math.h>
 #include <iostream>
 
-#include "cppunit/extensions/HelperMacros.h"
+#include "Mesquite_cppunit/extensions/HelperMacros.h"
 
 using namespace Mesquite;
 using std::cout;

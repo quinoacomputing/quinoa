@@ -1,12 +1,12 @@
 // @HEADER
 // ***********************************************************************
-// 
+//
 //                      Didasko Tutorial Package
 //                 Copyright (2005) Sandia Corporation
-// 
+//
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -35,7 +35,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 // Questions about Didasko? Contact Marzio Sala (marzio.sala _AT_ gmail.com)
-// 
+//
 // ***********************************************************************
 // @HEADER
 
@@ -67,7 +67,7 @@ int main(int argc, char *argv[]) {
   // initialize an Gallery object
   CrsMatrixGallery Gallery("laplace_2d", Comm, false); // CJ TODO FIXME: change for Epetra64
   Gallery.Set("problem_size", 100); //must be a square number
- 
+
   // get pointers to the linear problem, containing matrix, LHS and RHS.
   // if you need to access them, you can for example uncomment the following
   // code:
@@ -78,8 +78,8 @@ int main(int argc, char *argv[]) {
   // NOTE: StartingSolution and RHS are pointers to Gallery's internally stored
   // vectors. Using StartingSolution and RHS, we can verify the residual
   // after the solution of the linear system. However, users may define as well
-  // their own vectors for solution and RHS. 
-  
+  // their own vectors for solution and RHS.
+
   Epetra_LinearProblem* Problem = Gallery.GetLinearProblem();
 
   // initialize Amesos solver:
@@ -92,10 +92,10 @@ int main(int argc, char *argv[]) {
 
   // empty parameter list
   Teuchos::ParameterList List;
-  
+
   // may also try: "Amesos_Umfpack", "Amesos_Lapack", ...
   string SolverType = "Amesos_Klu";
-  
+
   Solver = Amesos_Factory.Create(SolverType, *Problem);
   // Amesos_Factory returns 0 is the selected solver is not
   // available
@@ -106,7 +106,7 @@ int main(int argc, char *argv[]) {
   Solver->NumericFactorization();
   Solver->Solve();
 
-  // verify that residual is really small  
+  // verify that residual is really small
   double residual, diff;
 
   Gallery.ComputeResidual(&residual);
@@ -119,7 +119,7 @@ int main(int argc, char *argv[]) {
 
   // delete Solver
   delete Solver;
-    
+
   if (residual > 1e-5)
     exit(EXIT_FAILURE);
 
@@ -138,10 +138,10 @@ int main(int argc, char *argv[]) {
 int main(int argc, char *argv[])
 {
   puts("Please configure Didasko with:\n"
-       "--enable-epetra\n"
-       "--enable-teuchos\n"
-       "--enable-triutils\n"
-       "--enable-amesos");
+      "--enable-epetra\n"
+      "--enable-teuchos\n"
+      "--enable-triutils\n"
+      "--enable-amesos");
 
   return 0;
 }

@@ -1,5 +1,5 @@
-#include "CylinderDomain.hpp"
-#include "MsqError.hpp"
+#include "Mesquite_CylinderDomain.hpp"
+#include "Mesquite_MsqError.hpp"
 #include <cppunit/extensions/HelperMacros.h>
 
 const double EPSILON = 1e-6;

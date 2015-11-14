@@ -18,7 +18,7 @@
 
     You should have received a copy of the GNU Lesser General Public License 
     (lgpl.txt) along with this library; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
 
     (2009) kraftche@cae.wisc.edu    
 
@@ -31,15 +31,15 @@
  */
 
 #ifdef TEST_OLD_WRAPPER
-#  include "ShapeImprovementWrapper.hpp"
+#  include "Mesquite_ShapeImprovementWrapper.hpp"
 #else
-#  include "ShapeImprover.hpp"
+#  include "Mesquite_ShapeImprover.hpp"
 #endif
-#include "QualityAssessor.hpp"
-#include "MeshImpl.hpp"
-#include "MsqError.hpp"
-#include "PlanarDomain.hpp"
-#include "IdealWeightInverseMeanRatio.hpp"
+#include "Mesquite_QualityAssessor.hpp"
+#include "Mesquite_MeshImpl.hpp"
+#include "Mesquite_MsqError.hpp"
+#include "Mesquite_PlanarDomain.hpp"
+#include "Mesquite_IdealWeightInverseMeanRatio.hpp"
 #include "meshfiles.h"
 
 #include <iostream>

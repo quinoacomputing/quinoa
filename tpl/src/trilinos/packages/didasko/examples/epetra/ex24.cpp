@@ -1,12 +1,12 @@
 // @HEADER
 // ***********************************************************************
-// 
+//
 //                      Didasko Tutorial Package
 //                 Copyright (2005) Sandia Corporation
-// 
+//
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -35,7 +35,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 // Questions about Didasko? Contact Marzio Sala (marzio.sala _AT_ gmail.com)
-// 
+//
 // ***********************************************************************
 // @HEADER
 
@@ -79,25 +79,25 @@ int main(int argc, char *argv[])
   // I define two maps:
   // - MapA has 2 nodes on proc 0, 2 nodes on proc 1
   // - MapB has 4 nodes on proc 0, 0 nodes on proc 1
-  
-  int NumElementsA = 0, NumElementsB = 0;
-  
-  switch( MyPID ) {
-  case 0:
-    NumElementsA = 2;
-    NumElementsB = 4;
-    break;
 
-  case 1:
-    NumElementsA = 2;
-    NumElementsB = 0;
-    break;
+  int NumElementsA = 0, NumElementsB = 0;
+
+  switch( MyPID ) {
+    case 0:
+      NumElementsA = 2;
+      NumElementsB = 4;
+      break;
+
+    case 1:
+      NumElementsA = 2;
+      NumElementsB = 0;
+      break;
   }
- 
+
   Epetra_Map MapA(-1,NumElementsA,0,Comm);
   Epetra_Map MapB(-1,NumElementsB,0,Comm);
 
-  // I create a diagonal matrix Q with RowMap,ColMap distibutions = MapA  
+  // I create a diagonal matrix Q with RowMap,ColMap distibutions = MapA
   Epetra_CrsMatrix Q(Copy,MapA,MapA,1);
 
   int * MyGlobalElementsA = MapA.MyGlobalElements();
@@ -119,21 +119,21 @@ int main(int argc, char *argv[])
 
   // create few vectors on the two maps
   Epetra_Vector VecA(MapA);   Epetra_Vector VecA2(MapA);
-  Epetra_Vector VecB(MapB);   Epetra_Vector VecB2(MapB);  
-  
+  Epetra_Vector VecB(MapB);   Epetra_Vector VecB2(MapB);
+
   VecA.PutScalar(1.0);        VecA2.PutScalar(1.0);
-  VecB.PutScalar(1.0);        VecB2.PutScalar(1.0); 
+  VecB.PutScalar(1.0);        VecB2.PutScalar(1.0);
 
   Q.Multiply(false,VecB,VecB2);
-  
+
   cout << VecB2;
-  
+
 #ifdef HAVE_MPI
   MPI_Finalize();
 #endif
 
   return(EXIT_SUCCESS);
-  
+
 }
 
 #else
@@ -144,7 +144,7 @@ int main(int argc, char *argv[])
 int main(int argc, char *argv[])
 {
   puts("Please configure Didasko with:\n"
-       "--enable-epetra");
+      "--enable-epetra");
 
   return 0;
 }

@@ -265,7 +265,7 @@ public:
   //@{
 
   /** Obtain the vector length of \c mv. */
-  static int GetVecLength( const  _MV & mv )
+  static ptrdiff_t GetGlobalLength( const  _MV & mv )
     {
       TEUCHOS_TEST_FOR_EXCEPT(mv.size() <= 0);
       return mv[0].space().dim(); 

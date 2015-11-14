@@ -18,7 +18,7 @@
 
     You should have received a copy of the GNU Lesser General Public License 
     (lgpl.txt) along with this library; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  
     diachin2@llnl.gov, djmelan@sandia.gov, mbrewer@sandia.gov, 
     pknupp@sandia.gov, tleurent@mcs.anl.gov, tmunson@mcs.anl.gov      
@@ -48,25 +48,25 @@ Regression testing using the vertex culling algorithms.
 #include "meshfiles.h"
 
 #include "PatchDataInstances.hpp"
-#include "cppunit/extensions/HelperMacros.h"
+#include "Mesquite_cppunit/extensions/HelperMacros.h"
 #include <math.h>
 
 #include "Mesquite.hpp"
-#include "MsqError.hpp"
-#include "Vector3D.hpp"
-#include "InstructionQueue.hpp"
-#include "PatchData.hpp"
-#include "QualityAssessor.hpp"
+#include "Mesquite_MsqError.hpp"
+#include "Mesquite_Vector3D.hpp"
+#include "Mesquite_InstructionQueue.hpp"
+#include "Mesquite_PatchData.hpp"
+#include "Mesquite_QualityAssessor.hpp"
 
-#include "EdgeLengthQualityMetric.hpp"
-#include "ConditionNumberQualityMetric.hpp"
-#include "LaplacianSmoother.hpp"
-#include "PlanarDomain.hpp"
-#include "TerminationCriterion.hpp"
-#include "MeshImpl.hpp"
+#include "Mesquite_EdgeLengthQualityMetric.hpp"
+#include "Mesquite_ConditionNumberQualityMetric.hpp"
+#include "Mesquite_LaplacianSmoother.hpp"
+#include "Mesquite_PlanarDomain.hpp"
+#include "Mesquite_TerminationCriterion.hpp"
+#include "Mesquite_MeshImpl.hpp"
 
-#include "IdealWeightInverseMeanRatio.hpp"
-#include "LPtoPTemplate.hpp"
+#include "Mesquite_IdealWeightInverseMeanRatio.hpp"
+#include "Mesquite_LPtoPTemplate.hpp"
 
 #include <iostream>
 using std::cout;

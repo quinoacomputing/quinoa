@@ -50,6 +50,9 @@ using Teuchos::rcp;
 
 #include "Teuchos_DefaultComm.hpp"
 #include "Teuchos_GlobalMPISession.hpp"
+
+#include "Phalanx_KokkosUtilities.hpp"
+
 #include "Panzer_STK_Version.hpp"
 #include "Panzer_STK_config.hpp"
 #include "Panzer_STK_Interface.hpp"
@@ -66,8 +69,8 @@ using Teuchos::rcp;
 
 namespace panzer {
 
-  void getNodeIds(stk::mesh::EntityRank nodeRank,const stk::mesh::Entity * element,
-		  std::vector<stk::mesh::EntityId> & nodeIds);
+  void getNodeIds(stk_classic::mesh::EntityRank nodeRank,const stk_classic::mesh::Entity * element,
+		  std::vector<stk_classic::mesh::EntityId> & nodeIds);
 
   void testInitialzation(const Teuchos::RCP<Teuchos::ParameterList>& ipb,
 			 std::vector<panzer::BC>& bcs);
@@ -75,6 +78,8 @@ namespace panzer {
 
   TEUCHOS_UNIT_TEST(workset_builder, stk_edge)
   {
+    PHX::KokkosDeviceSession session;
+
     RCP<Teuchos::ParameterList> pl = rcp(new Teuchos::ParameterList);
     pl->set("X Blocks",2);
     pl->set("Y Blocks",1);
@@ -88,9 +93,9 @@ namespace panzer {
     int myRank=0;
     MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
 
-    panzer_stk::SquareQuadMeshFactory factory;
+    panzer_stk_classic::SquareQuadMeshFactory factory;
     factory.setParameterList(pl);
-    RCP<panzer_stk::STK_Interface> mesh = factory.buildMesh(MPI_COMM_WORLD);
+    RCP<panzer_stk_classic::STK_Interface> mesh = factory.buildMesh(MPI_COMM_WORLD);
     mesh->writeToExodus("test.exo");
 
     std::vector<std::string> element_blocks;
@@ -132,7 +137,7 @@ namespace panzer {
 
     {
       std::string sideset = "vertical_0";
-      Teuchos::RCP<std::vector<panzer::Workset> > worksets = panzer_stk::buildWorksets(*mesh,
+      Teuchos::RCP<std::vector<panzer::Workset> > worksets = panzer_stk_classic::buildWorksets(*mesh,
                                           *(panzer::findPhysicsBlock(element_blocks[0],physicsBlocks)),
                                           *(panzer::findPhysicsBlock(element_blocks[1],physicsBlocks)),
                                           sideset);
@@ -180,7 +185,7 @@ namespace panzer {
 
     {
       std::string sideset = "vertical_0";
-      Teuchos::RCP<std::vector<panzer::Workset> > worksets = panzer_stk::buildWorksets(*mesh,
+      Teuchos::RCP<std::vector<panzer::Workset> > worksets = panzer_stk_classic::buildWorksets(*mesh,
                                           *(panzer::findPhysicsBlock(element_blocks[1],physicsBlocks)),
                                           *(panzer::findPhysicsBlock(element_blocks[0],physicsBlocks)),
                                           sideset);
@@ -228,12 +233,12 @@ namespace panzer {
     
   }
 
-  void getNodeIds(stk::mesh::EntityRank nodeRank,const stk::mesh::Entity * element,
-		  std::vector<stk::mesh::EntityId> & nodeIds)
+  void getNodeIds(stk_classic::mesh::EntityRank nodeRank,const stk_classic::mesh::Entity * element,
+		  std::vector<stk_classic::mesh::EntityId> & nodeIds)
   {
-    stk::mesh::PairIterRelation nodeRel = element->relations(nodeRank);
+    stk_classic::mesh::PairIterRelation nodeRel = element->relations(nodeRank);
     
-    stk::mesh::PairIterRelation::iterator itr;
+    stk_classic::mesh::PairIterRelation::iterator itr;
     for(itr=nodeRel.begin();itr!=nodeRel.end();++itr) 
       nodeIds.push_back(itr->entity()->identifier());
   }

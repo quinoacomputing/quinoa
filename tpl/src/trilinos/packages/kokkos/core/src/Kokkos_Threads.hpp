@@ -1,13 +1,13 @@
 /*
 //@HEADER
 // ************************************************************************
-//
-//   Kokkos: Manycore Performance-Portable Multidimensional Arrays
-//              Copyright (2012) Sandia Corporation
-//
+// 
+//                        Kokkos v. 2.0
+//              Copyright (2014) Sandia Corporation
+// 
 // Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
 // the U.S. Government retains certain rights in this software.
-//
+// 
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -35,8 +35,8 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-// Questions?  Contact  H. Carter Edwards (hcedwar@sandia.gov)
-//
+// Questions? Contact  H. Carter Edwards (hcedwar@sandia.gov)
+// 
 // ************************************************************************
 //@HEADER
 */
@@ -44,11 +44,17 @@
 #ifndef KOKKOS_THREADS_HPP
 #define KOKKOS_THREADS_HPP
 
+#include <Kokkos_Core_fwd.hpp>
+
+#if defined( KOKKOS_HAVE_PTHREAD )
+
 #include <cstddef>
 #include <iosfwd>
+#include <Kokkos_HostSpace.hpp>
+#include <Kokkos_ScratchSpace.hpp>
 #include <Kokkos_Layout.hpp>
 #include <Kokkos_MemoryTraits.hpp>
-#include <Kokkos_HostSpace.hpp>
+#include <impl/Kokkos_Tags.hpp>
 
 /*--------------------------------------------------------------------------*/
 
@@ -62,17 +68,23 @@ class ThreadsExec ;
 
 namespace Kokkos {
 
-/** \brief  Device for a pool of Pthreads or C11 threads on a CPU. */
+/** \brief  Execution space for a pool of Pthreads or C11 threads on a CPU. */
 class Threads {
 public:
   //! \name Type declarations that all Kokkos devices must provide.
   //@{
-
-  typedef Threads                  device_type ;
+  //! Tag this class as a kokkos execution space
+  typedef Threads                  execution_space ;
   typedef Kokkos::HostSpace        memory_space ;
-  typedef memory_space::size_type  size_type ;
+
+  //! This execution space preferred device_type
+  typedef Kokkos::Device<execution_space,memory_space> device_type;
+
   typedef Kokkos::LayoutRight      array_layout ;
-  typedef Kokkos::Threads          host_mirror_device_type ;
+  typedef memory_space::size_type  size_type ;
+
+  typedef ScratchMemorySpace< Threads >  scratch_memory_space ;
+
 
   //@}
   /*------------------------------------------------------------------------*/
@@ -120,46 +132,9 @@ public:
   static void print_configuration( std::ostream & , const bool detail = false );
 
   //@}
-  //! \name Function for the functor device interface */
-  //@{
-
-  /** \TODO: compiler dependent implementation */
-  inline static void memory_fence() {};
-
-  inline int league_rank() const ;
-  inline int league_size() const ;
-  inline int team_rank() const ;
-  inline int team_size() const ;
-
-  inline void team_barrier();
-
-  /** \brief  Intra-team exclusive prefix sum with team_rank() ordering.
-   *
-   *  The highest rank thread can compute the reduction total as
-   *    reduction_total = dev.team_scan( value ) + value ;
-   */
-  template< typename Type >
-  inline Type team_scan( const Type & value );
-
-  /** \brief  Intra-team exclusive prefix sum with team_rank() ordering
-   *          with intra-team non-deterministic ordering accumulation.
-   *
-   *  The global inter-team accumulation value will, at the end of the
-   *  league's parallel execution, be the scan's total.
-   *  Parallel execution ordering of the league's teams is non-deterministic.
-   *  As such the base value for each team's scan operation is similarly
-   *  non-deterministic.
-   */
-  template< typename TypeLocal , typename TypeGlobal >
-  inline TypeGlobal team_scan( const TypeLocal & value , TypeGlobal * const global_accum );
-
-  inline void * get_shmem( const int size );
-
-  explicit inline Threads( Impl::ThreadsExec & );
-
-  /**@} */
   /*------------------------------------------------------------------------*/
-  //! \name Device-specific functions
+  /*------------------------------------------------------------------------*/
+  //! \name Space-specific functions
   //@{
 
   /** \brief Initialize the device in the "ready to work" state.
@@ -179,43 +154,64 @@ public:
    *  If the 'use_' arguments are not supplied the hwloc is queried
    *  to use all available cores.
    */
-  static void initialize( unsigned threads_count = 1 ,
+  static void initialize( unsigned threads_count = 0 ,
                           unsigned use_numa_count = 0 ,
                           unsigned use_cores_per_numa = 0 ,
                           bool allow_asynchronous_threadpool = false );
 
   static int is_initialized();
 
-  /** \brief  Maximum size of a single thread team.
-   *
-   *  If a parallel_{for,reduce,scan} operation requests a team_size that 
-   *  does not satisfy the condition: 0 == team_max() % team_size
-   *  then some threads will idle.
-   */
-  static unsigned team_max();
+  static Threads & instance( int = 0 );
 
-  static unsigned league_max();
+  //----------------------------------------
+
+  static int thread_pool_size( int depth = 0 );
+#if defined( KOKKOS_ACTIVE_EXECUTION_MEMORY_SPACE_HOST )
+  static int thread_pool_rank();
+#else
+  KOKKOS_INLINE_FUNCTION static int thread_pool_rank() { return 0 ; }
+#endif
+
+  inline static unsigned max_hardware_threads() { return thread_pool_size(0); }
+  KOKKOS_INLINE_FUNCTION static unsigned hardware_thread_id() { return thread_pool_rank(); }
 
   //@}
-  /*------------------------------------------------------------------------*/
-
-private:
-
-  friend class Impl::ThreadsExec ;
-
-  Impl::ThreadsExec & m_exec ;
+  //----------------------------------------
 };
-
-/*--------------------------------------------------------------------------*/
 
 } // namespace Kokkos
 
+/*--------------------------------------------------------------------------*/
+
+namespace Kokkos {
+namespace Impl {
+
+template<>
+struct VerifyExecutionCanAccessMemorySpace
+  < Kokkos::Threads::memory_space
+  , Kokkos::Threads::scratch_memory_space
+  >
+{
+  enum { value = true };
+  inline static void verify( void ) { }
+  inline static void verify( const void * ) { }
+};
+
+} // namespace Impl
+} // namespace Kokkos
+
+/*--------------------------------------------------------------------------*/
+
+#include <Kokkos_ExecPolicy.hpp>
 #include <Kokkos_Parallel.hpp>
 #include <Threads/Kokkos_ThreadsExec.hpp>
+#include <Threads/Kokkos_ThreadsTeam.hpp>
 #include <Threads/Kokkos_Threads_Parallel.hpp>
 
+//----------------------------------------------------------------------------
+//----------------------------------------------------------------------------
+
+#endif /* #if defined( KOKKOS_HAVE_PTHREAD ) */
 #endif /* #define KOKKOS_THREADS_HPP */
 
-//----------------------------------------------------------------------------
-//----------------------------------------------------------------------------
 

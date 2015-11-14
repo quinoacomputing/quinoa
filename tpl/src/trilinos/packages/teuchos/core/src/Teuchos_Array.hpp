@@ -134,9 +134,27 @@ template<typename T> inline
 bool operator>=( const Array<T> &a1, const Array<T> &a2 );
 
 
-/** \brief Memory-safe templated array class that encapsulates std::vector.
+/** \brief Replacement for std::vector that is compatible with
+ *     the Teuchos Memory Management classes.
+ * \tparam T The type of each entry in the array.
+ * \ingroup teuchos_mem_mng_grp
  *
- * ToDo: Finish documentation!
+ * This class implements a one-dimensional array, with a number of
+ * entries specified at run time.  It can be used as a drop-in
+ * replacement for the C++98 version of std::vector<T>.  It also has
+ * functions and methods for interacting with the other Teuchos Memory
+ * Management classes.  For example, you can get a nonpersisting view
+ * of an Array's entries as an ArrayView, or a nonowning (weak)
+ * ArrayRCP.
+ *
+ * If the CMake configuration option Teuchos_ENABLE_DEBUG is ON at
+ * build time, Array will do bounds and iterator checking at run time.
+ * This has a nontrivial run-time cost, so it is off by default, but
+ * you may find it useful for debugging.  Please note that if
+ * debugging is on, the types of Array's iterators change in order to
+ * implement these checks.  Thus, you should always use Array's
+ * typedefs to get the iterator types, and not assume that they are
+ * raw pointers.
  *
  * \section Teuchos_Array_Tuple_sec Tuple Construction
  *
@@ -168,8 +186,6 @@ bool operator>=( const Array<T> &a1, const Array<T> &a2 );
  * expense of the compiler refusing the make implicit conversions in some
  * cases when calling template functions.  Such conversion problems can always
  * be dealt with by using explicit template arguments.
- *
- * \ingroup teuchos_mem_mng_grp
  */
 template<typename T>
 class Array
@@ -212,73 +228,81 @@ public:
   /** \name std::vector typedefs */
   //@{
 
-  /** \brief. */
+  //! The type of indices.
   typedef Teuchos_Ordinal Ordinal;
-  /** \brief . */
+  //! The type of Array sizes and capacities.
   typedef Ordinal size_type;
-  /** \brief . */
+  //! The type of the difference between two size_type values.
   typedef Ordinal difference_type;
-  /** \brief . */
+  //! The type of an entry of the Array; for compatibility with std::vector.
   typedef typename std::vector<T>::value_type value_type;
-  /** \brief . */
+  //! The type of a pointer to T; for compatibility with std::vector.
   typedef typename std::vector<T>::pointer pointer;
-  /** \brief . */
+  //! The type of a const pointer to T; for compatibility with std::vector.
   typedef typename std::vector<T>::const_pointer const_pointer;
-  /** \brief . */
+  //! The type of a reference to T; for compatibility with std::vector.
   typedef typename std::vector<T>::reference reference;
-  /** \brief . */
+  //! The type of a const reference to T; for compatibility with std::vector.
   typedef typename std::vector<T>::const_reference const_reference;
-  /** \brief . */
+  //! The allocator type; for compatibility with std::vector.
   typedef typename std::vector<T>::allocator_type allocator_type;
 
 #ifdef HAVE_TEUCHOS_ARRAY_BOUNDSCHECK
-  /** \brief . */
+  //! The type of a forward iterator.
   typedef ArrayRCP<T> iterator;
-  /** \brief . */
+  //! The type of a const forward iterator.
   typedef ArrayRCP<const T> const_iterator;
-  /** \brief . */
+  //! The type of a reverse iterator.
   typedef std::reverse_iterator<iterator> reverse_iterator;
-  /** \brief . */
+  //! The type of a const reverse iterator.
   typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
 #else
-  /** \brief . */
+  //! The type of a forward iterator.
   typedef typename std::vector<T>::iterator iterator;
-  /** \brief . */
+  //! The type of a const forward iterator.
   typedef typename std::vector<T>::const_iterator const_iterator;
-  /** \brief . */
+  //! The type of a reverse iterator.
   typedef typename std::vector<T>::reverse_iterator reverse_iterator;
-  /** \brief . */
+  //! The type of a const reverse iterator.
   typedef typename std::vector<T>::const_reverse_iterator const_reverse_iterator;
 #endif
 
-
   //@}
-
   /** \name All constructors */
   //@{
 
-  /** \brief . */
+  //! Default constructor; creates an empty Array.
   inline Array();
-  /** \brief . */
+
+  //! Create an array of length n, and fill it with the given value.
   inline explicit Array(size_type n, const value_type& value = value_type());
-  /** \brief . */
+
+  //! Copy constructor (does a deep copy).
   inline Array(const Array<T>& x);
-  /** \brief . */
+
+  //! Create an array, and fill it with values from the given iterator range.
   template<typename InputIterator>
   inline Array(InputIterator first, InputIterator last);
-  /** \brief . */
+
+  //! Create an Array which is a deep copy of the given ArrayView.
   inline Array(const ArrayView<const T>& a);
-  /** \brief . */
+
+  //! Copy constructor from the given Tuple.
   template<int N>
   inline Array(const Tuple<T,N>& t);
-  /** \brief . */
+
+  //! Destructor.
   inline ~Array();
-  /** \brief . */
+
+  //! Assignment operator (does a deep copy).
   inline Array& operator=(const Array<T>& a);
 
   //@}
-
-  /** \name Other std::vector functions */
+  /// \name Other std::vector functions
+  ///
+  /// Array has mostly the same interface as std::vector.  This allows
+  /// use of Array in place of std::vector, for gradual porting to use
+  /// the Teuchos Memory Management classes.
   //@{
 
   /** \brief . */
@@ -351,7 +375,6 @@ public:
   inline void clear();
 
   //@}
-
   /** \name General non-standard functions. */
   //@{
 
@@ -385,11 +408,10 @@ public:
   inline const T* getRawPtr() const;
 
   //@}
-
   /** \name Conversions to and from std::vector. */
   //@{
 
-  /** \brief Copy constructor from an std::vector. */
+  //! Copy constructor from an std::vector (does a deep copy).
   inline Array( const std::vector<T> &v );
 
   /** \brief Explicit copy conversion to an std::vector. */
@@ -1520,6 +1542,15 @@ int Teuchos::hashCode(const Array<T>& array)
   for (int i=0; i<array.length(); i++)
   {
     rtn += hashCode(array[i]);
+  }
+  if (rtn < 0)
+  {
+    /* Convert the largest -ve int to zero and -1 to
+    * std::numeric_limits<int>::max()
+    * */
+    size_t maxIntBeforeWrap = std::numeric_limits<int>::max();
+    maxIntBeforeWrap ++;
+    rtn += maxIntBeforeWrap;
   }
   return rtn;
 }

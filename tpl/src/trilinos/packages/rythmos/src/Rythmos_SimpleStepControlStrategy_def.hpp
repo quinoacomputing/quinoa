@@ -19,7 +19,7 @@
 //
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
 // USA
 // Questions? Contact Todd S. Coffey (tscoffe@sandia.gov)
 //
@@ -173,8 +173,8 @@ void SimpleStepControlStrategy<Scalar>::initialize(
   const StepperBase<Scalar>& stepper)
 {
   using Teuchos::as;
-  typedef Teuchos::ScalarTraits<Scalar> ST;
-  using Thyra::createMember;
+  // typedef Teuchos::ScalarTraits<Scalar> ST; // unused
+  // using Thyra::createMember; // unused
 
   RCP<Teuchos::FancyOStream> out = this->getOStream();
   Teuchos::EVerbosityLevel verbLevel = this->getVerbLevel();
@@ -421,7 +421,7 @@ void SimpleStepControlStrategy<Scalar>::setParameterList(
   RCP<Teuchos::ParameterList> const& paramList)
 {
   using Teuchos::as;
-  typedef Teuchos::ScalarTraits<Scalar> ST;
+  // typedef Teuchos::ScalarTraits<Scalar> ST; // unused
 
   TEUCHOS_TEST_FOR_EXCEPT(paramList == Teuchos::null);
   paramList->validateParameters(*this->getValidParameters(),0);
@@ -503,9 +503,9 @@ SimpleStepControlStrategy<Scalar>::getValidParameters() const
     pl->set(minStepSizeName_, minStepSizeDefault_, "Minimum step size.");
     pl->set(maxStepSizeName_, maxStepSizeDefault_, "Maximum step size.");
     pl->set(stepSizeIncreaseFactorName_, stepSizeIncreaseFactorDefault_,
-	    "Factor used to increase the step size after a successful step.");
+            "Factor used to increase the step size after a successful step.");
     pl->set(stepSizeDecreaseFactorName_, stepSizeDecreaseFactorDefault_,
-	    "Factor used to decrease the step size after a step failure.");
+            "Factor used to decrease the step size after a step failure.");
     pl->set(maxStepFailuresName_, maxStepFailuresDefault_,
       "The maximum number of step failures before exiting with an error.  "
       "The number of failure steps are carried between successful steps.");

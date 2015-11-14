@@ -18,7 +18,7 @@
 
     You should have received a copy of the GNU Lesser General Public License 
     (lgpl.txt) along with this library; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  
     diachin2@llnl.gov, djmelan@sandia.gov, mbrewer@sandia.gov, 
     pknupp@sandia.gov, tleurent@mcs.anl.gov, tmunson@mcs.anl.gov      
@@ -34,13 +34,13 @@ using std::cout;
 
 #ifndef DEBUG
 #  include "Mesquite.hpp"
-#  include "PatchData.hpp"
-#  include "MeshImpl.hpp"
-#  include "MeshInterface.hpp"
-#  include "VertexPatches.hpp"
-#  include "PatchIterator.hpp"
+#  include "Mesquite_PatchData.hpp"
+#  include "Mesquite_MeshImpl.hpp"
+#  include "Mesquite_MeshInterface.hpp"
+#  include "Mesquite_VertexPatches.hpp"
+#  include "Mesquite_PatchIterator.hpp"
 #  include "UnitUtil.hpp"
-#  include "Instruction.hpp"
+#  include "Mesquite_Instruction.hpp"
    using Mesquite::Mesh;
    using Mesquite::MeshImpl;
    using Mesquite::Vector3D;

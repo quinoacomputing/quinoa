@@ -31,23 +31,20 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // 
 
-#include "Tolerance.h"
-#include "smart_assert.h"
-#include "exoII_read.h"
-#include "exo_block.h"
-#include "node_set.h"
-#include "side_set.h"
+#include <stddef.h>                     // for size_t
+#include <cstdio>                       // for sprintf, NULL
+#include <iostream>                     // for operator<<, basic_ostream, etc
+#include <string>                       // for string, char_traits, etc
+#include <vector>                       // for vector
+#include "ED_SystemInterface.h"         // for SystemInterface, interface
+#include "Tolerance.h"                  // for Tolerance, etc
+#include "exo_entity.h"                 // for Exo_Entity, EXOTYPE
 #include "exodusII.h"
-#include "stringx.h"
-#include "ED_SystemInterface.h"
-#include "util.h"
+#include "smart_assert.h"               // for SMART_ASSERT
+#include "stringx.h"                    // for find_string, etc
+#include "util.h"                       // for TOPTR
+template <typename INT> class ExoII_Read;
 
-#include <cstdlib>
-#include <cstdio>
-#include <math.h>
-#include <ctype.h>
-#include <vector>
-#include <string>
 
 using namespace std;
 
@@ -182,11 +179,11 @@ int Create_File(ExoII_Read<INT>& file1, ExoII_Read<INT>& file2,
 	std::cout << "WARNING: Using old definition of floor tolerance. |a-b|<floor.\n\n";
       }
       if (interface.coord_tol.type != IGNORE) {
-	sprintf(buf, "Coordinates will be compared .. tol: %8g (%s), floor: %8g",
+	sprintf(buf, "\nNodal coordinates will be compared .. tol: %8g (%s), floor: %8g",
 		interface.coord_tol.value, interface.coord_tol.typestr(), interface.coord_tol.floor);
 	std::cout << buf << std::endl;
       } else {
-	std::cout << "Locations of nodes will not be compared." << std::endl;
+	std::cout << "\nNodal coordinates will not be compared." << std::endl;
       }
       
       if (interface.time_tol.type != IGNORE) {
@@ -214,6 +211,21 @@ int Create_File(ExoII_Read<INT>& file1, ExoII_Read<INT>& file2,
 
       output_compare_names("Sideset", interface.ss_var_names, interface.ss_var,
 			   file1.Num_SS_Vars(), file2.Num_SS_Vars());
+      if (!interface.ignore_sideset_df &&
+	  interface.ss_df_tol.type != IGNORE &&
+	  file1.Num_Side_Sets() > 0 &&
+	  file2.Num_Side_Sets() > 0) {
+	sprintf(buf, "Sideset Distribution Factors will be compared .. tol: %8g (%s), floor: %8g",
+		interface.ss_df_tol.value, interface.ss_df_tol.typestr(), interface.ss_df_tol.floor);
+	std::cout << buf << std::endl;
+      } else {
+	if (interface.ignore_sideset_df || interface.ss_df_tol.type == IGNORE) {
+	  std::cout << "Sideset Distribution Factors will not be compared.\n";
+	}
+	else {
+	  std::cout << "No Sideset Distribution Factors on either file.\n";
+	}
+      }
     }
   }
 
@@ -256,8 +268,8 @@ int Create_File(ExoII_Read<INT>& file1, ExoII_Read<INT>& file2,
 namespace {
   void output_exodus_names(int file_id, EXOTYPE type, const vector<string> &names)
   {
-    std::vector<char*> vars(names.size());
-    if (names.size() > 0) {
+    if (!names.empty()) {
+      std::vector<char*> vars(names.size());
       for (unsigned i = 0; i < names.size(); ++i) {
 	vars[i] = (char*)(names[i].c_str());
 	SMART_ASSERT(vars[i] != 0);
@@ -269,7 +281,7 @@ namespace {
   void output_compare_names(const char* type, const vector<string> &names, const std::vector<Tolerance> &tol,
 			    int num_vars1, int num_vars2)
   {
-    if (names.size() > 0) {
+    if (!names.empty()) {
       std::cout << type << " variables to be compared:" << std::endl;
       for (unsigned v = 0; v < names.size(); ++v)
 	{
@@ -292,7 +304,7 @@ namespace {
 
   void output_diff_names(const char *type, const vector<string> &names)
   {
-    if (names.size() > 0) {
+    if (!names.empty()) {
       std::cout << type << " variables to be differenced:" << std::endl;
       for (unsigned v = 0; v < names.size(); ++v)
 	std::cout << "\t" << names[v] << std::endl;
@@ -309,7 +321,7 @@ namespace {
     vector<string> x_list;  // exclusion list
     for (unsigned m = 0; m < names.size(); ++m) {
       string name = names[m];  chop_whitespace(name);
-      SMART_ASSERT(name.size() >= 1);
+      SMART_ASSERT(!name.empty());
       if (name[0] == '!')
 	x_list.push_back( extract_token(name, "!") ); // remove "!" & add
     }
@@ -326,7 +338,7 @@ namespace {
 	    } else {
 	      *diff_found = true;
 	      if (!interface.quiet_flag)
-		std::cout << "exodiff: WARNING .. " << type << " variable \"" << name
+		std::cout << "exodiff: WARNING .. The " << type << " variable \"" << name
 			  << "\" is in the first file but not the second." << std::endl;
 	      continue;
 	    }
@@ -348,7 +360,7 @@ namespace {
 	    if (find_string(x_list, name, interface.nocase_var_names) < 0 ) {
 	      *diff_found = true;
 	      if (!interface.quiet_flag)
-		std::cout << "exodiff: WARNING .. " << type << " variable \"" << name
+		std::cout << "exodiff: WARNING .. The " << type << " variable \"" << name
 			  << "\" is in the second file but not the first." << std::endl;
 	      continue;
 	    }
@@ -374,13 +386,13 @@ namespace {
 	else {
 	  *diff_found = true;
 	  if (!interface.quiet_flag)
-	    std::cout << "exodiff: WARNING .. " << type << " variable \"" << name
+	    std::cout << "exodiff: WARNING .. The " << type << " variable \"" << name
 		      << "\" is not in the second file." << std::endl;
 	}
       } else {
 	*diff_found = true;
 	if (!interface.quiet_flag)
-	  std::cout << "exodiff: WARNING .. specified " << type << " variable \"" << name
+	  std::cout << "exodiff: WARNING .. Specified " << type << " variable \"" << name
 		    << "\" is not in the first file." << std::endl;
       }
     }
@@ -393,7 +405,7 @@ namespace {
 			 const vector<string> &var_names1, const vector<string> &var_names2,
 			 std::vector<int> &truth_tab, bool quiet_flag, bool *diff_found)
   {
-    if (names.size() > 0)	{
+    if (!names.empty())	{
       int num_vars = names.size();
       
       truth_tab.resize(num_vars * num_entity);
@@ -402,7 +414,12 @@ namespace {
       
       for (size_t b = 0; b < num_entity; ++b) {
 	Exo_Entity *set1 = file1.Get_Entity_by_Index(type, b);
-	Exo_Entity *set2 = file2.Get_Entity_by_Id(type, set1->Id());
+	Exo_Entity *set2 = NULL;
+	if (interface.by_name)
+	  set2 = file2.Get_Entity_by_Name(type, set1->Name());
+	else
+	  set2 = file2.Get_Entity_by_Id(type, set1->Id());
+
 	if (set2 == NULL) {
 	  *diff_found = true;
 	  std::cout << "exodiff: WARNING " << label << " id " << set1->Id()

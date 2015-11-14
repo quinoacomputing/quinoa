@@ -19,7 +19,7 @@
 //
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
 // USA
 // Questions? Contact Todd S. Coffey (tscoffe@sandia.gov)
 //
@@ -834,7 +834,7 @@ void ImplicitBDFStepperStepControl<Scalar>::setParameterList(
 {
 
   using Teuchos::as;
-  typedef Teuchos::ScalarTraits<Scalar> ST;
+  // typedef Teuchos::ScalarTraits<Scalar> ST; // unused
 
   TEUCHOS_TEST_FOR_EXCEPT(paramList == Teuchos::null);
   paramList->validateParameters(*this->getValidParameters(),0);
@@ -881,7 +881,7 @@ void ImplicitBDFStepperStepControl<Scalar>::setParameterList(
     *out << "stepSizeType = " << stepSizeType_  << std::endl;
     *out << "stopTime_  = " << stopTime_  << std::endl;
     *out << "failStepIfNonlinearSolveFails_ = "
-	 << failStepIfNonlinearSolveFails_  << std::endl;
+         << failStepIfNonlinearSolveFails_  << std::endl;
   }
 
 }
@@ -961,7 +961,7 @@ ImplicitBDFStepperStepControl<Scalar>::getValidParameters() const
       "The final time for time integration.  This may be in conflict with "
       "the Integrator's final time.");
     pl->set<bool>("failStepIfNonlinearSolveFails", false,
-		  "Power user command. Will force the function acceptStep() to return "
+                  "Power user command. Will force the function acceptStep() to return "
       "false even if the LET is acceptable.  Used to run with loose "
       "tolerances but enforce a correct nonlinear solution to the step.");
 

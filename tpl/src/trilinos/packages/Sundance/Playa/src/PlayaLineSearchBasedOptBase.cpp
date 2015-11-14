@@ -98,9 +98,14 @@ OptState LineSearchBasedOptBase::run(const RCP<ObjectiveBase>& obj,
     PLAYA_MSG2(verb(), 
       tab1 << "--------------------------------------------------------------");
     PLAYA_MSG2(verb(), tab1 << description() << " iter " 
-      << setw(5) << state.iter() 
-      << " f=" << setw(14) << state.fCur() << " |grad|=" << setw(14)
-      << state.gradCur().norm2());
+	       << setw(5) << state.iter() 
+	       << " f=" << setw(14) << state.fCur() << " |grad|=" << setw(14)
+	       << state.gradCur().norm2());
+    if (state.iter() > 0)
+      {
+	PLAYA_MSG2(verb(), tab1 << " |step|=" << setw(14) 
+		   << (state.xCur()-state.xPrev()).norm2());
+      }
       
 
     Tabs tab2;

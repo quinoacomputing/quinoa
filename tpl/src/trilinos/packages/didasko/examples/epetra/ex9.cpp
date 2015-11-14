@@ -1,13 +1,13 @@
 
 // @HEADER
 // ***********************************************************************
-// 
+//
 //                      Didasko Tutorial Package
 //                 Copyright (2005) Sandia Corporation
-// 
+//
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -36,7 +36,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 // Questions about Didasko? Contact Marzio Sala (marzio.sala _AT_ gmail.com)
-// 
+//
 // ***********************************************************************
 // @HEADER
 
@@ -87,7 +87,7 @@ int main(int argc, char *argv[]) {
 
   // create a map
   Epetra_Map Map(-1,MyGlobalElements.Length(),
-		 MyGlobalElements.Values(),0, Comm);
+      MyGlobalElements.Values(),0, Comm);
 
   // create a vector based on map
   Epetra_Vector x(Map);
@@ -130,7 +130,7 @@ int main(int argc, char *argv[]) {
 int main(int argc, char *argv[])
 {
   puts("Please configure Didasko with:\n"
-       "--enable-epetra");
+      "--enable-epetra");
 
   return 0;
 }

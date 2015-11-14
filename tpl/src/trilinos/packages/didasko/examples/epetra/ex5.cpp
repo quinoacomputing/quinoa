@@ -1,13 +1,13 @@
 
 // @HEADER
 // ***********************************************************************
-// 
+//
 //                      Didasko Tutorial Package
 //                 Copyright (2005) Sandia Corporation
-// 
+//
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -36,7 +36,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 // Questions about Didasko? Contact Marzio Sala (marzio.sala _AT_ gmail.com)
-// 
+//
 // ***********************************************************************
 // @HEADER
 
@@ -58,13 +58,13 @@
 
 int main(int argc, char *argv[])
 {
-  
+
 #ifdef HAVE_MPI
   MPI_Init(&argc, &argv);
   Epetra_MpiComm Comm(MPI_COMM_WORLD);
 #else
   Epetra_SerialComm Comm;
-#endif  
+#endif
 
   // Total number of elements in the vector
   int NumElements = 5;
@@ -74,7 +74,7 @@ int main(int argc, char *argv[])
 
   // Create x random vector
   Epetra_Vector x(Map);
- 
+
   // get the local size of the vector
   int MyLength = x.MyLength();
 
@@ -91,19 +91,19 @@ int main(int argc, char *argv[])
   x_values = new double[MyLength];
 
   x.ExtractCopy( x_values );
-  for( int i=0 ; i<MyLength ; ++i ) 
+  for( int i=0 ; i<MyLength ; ++i )
     cout << "extracted value[" << i << "] = " << x_values[i] << endl;
 
   int* Indices; Indices = new int[MyLength];
-  
- // now, modify these values
+
+  // now, modify these values
   for( int i=0 ; i<MyLength ; ++i ) {
     x_values[i] *= 10;
     Indices[i] = i;
   }
-  
+
   // note that the modified values do not affect the internal storage
-  // of x. 
+  // of x.
   cout << x;
 
   x.ReplaceMyValues(MyLength, 0, x_values, Indices);
@@ -119,7 +119,7 @@ int main(int argc, char *argv[])
 #endif
 
   return(0);
-  
+
 } /* main */
 
 #else
@@ -130,7 +130,7 @@ int main(int argc, char *argv[])
 int main(int argc, char *argv[])
 {
   puts("Please configure Didasko with:\n"
-       "--enable-epetra");
+      "--enable-epetra");
 
   return 0;
 }

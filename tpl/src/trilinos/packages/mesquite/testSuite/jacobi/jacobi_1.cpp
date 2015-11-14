@@ -5,18 +5,18 @@
   *Create simple quad mesh and test for convergence.
   */
 
-#include "ArrayMesh.hpp"
-#include "PlanarDomain.hpp"
-#include "IdealShapeTarget.hpp"
-#include "TShapeB1.hpp"
-#include "TQualityMetric.hpp"
-#include "PMeanPTemplate.hpp"
-#include "SteepestDescent.hpp"
-#include "TerminationCriterion.hpp"
-#include "InstructionQueue.hpp"
-#include "MsqError.hpp"
-#include "QualityAssessor.hpp"
-#include "MeshWriter.hpp"
+#include "Mesquite_ArrayMesh.hpp"
+#include "Mesquite_PlanarDomain.hpp"
+#include "Mesquite_IdealShapeTarget.hpp"
+#include "Mesquite_TShapeB1.hpp"
+#include "Mesquite_TQualityMetric.hpp"
+#include "Mesquite_PMeanPTemplate.hpp"
+#include "Mesquite_SteepestDescent.hpp"
+#include "Mesquite_TerminationCriterion.hpp"
+#include "Mesquite_InstructionQueue.hpp"
+#include "Mesquite_MsqError.hpp"
+#include "Mesquite_QualityAssessor.hpp"
+#include "Mesquite_MeshWriter.hpp"
 
 #include <stdio.h>
 #include <string.h>

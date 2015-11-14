@@ -49,6 +49,7 @@
 
 #include "Teuchos_RCP.hpp"
 #include "Phalanx_FieldTag.hpp"
+#include "Phalanx_KokkosDeviceTypes.hpp"
 
 namespace PHX {
 
@@ -61,6 +62,8 @@ namespace PHX {
   class Evaluator {
     
   public:
+
+    typedef typename PHX::Device execution_space;
     
     //! Ctor
     Evaluator() {};
@@ -75,7 +78,7 @@ namespace PHX {
 	Once the field manager has allocated all data arrays, this
 	method passes the field manager to the providers to allow each
 	provider to grab and store pointers to the field data arrays.
-	Grabbing the data arrays from the varible manager during an
+	Grabbing the data arrays from the variable manager during an
 	actual call to evaluateFields call is too slow due to the map
 	lookup and FieldTag comparison (which uses a string compare).
 	So lookups on field data are only allowed during this setup

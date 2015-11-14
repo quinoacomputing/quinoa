@@ -1,5 +1,4 @@
 
-INCLUDE(TribitsLibraryMacros)
 
 #
 # A) Package-specific configuration options
@@ -27,10 +26,6 @@ SET_AND_INC_DIRS(DIRPLIRIS ${CMAKE_CURRENT_SOURCE_DIR}/pliris)
 ASSERT_DEFINED(PROJECT_SOURCE_DIR)
 
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR})
-
-APPEND_SET(HEADERS
-  ${CMAKE_CURRENT_BINARY_DIR}/../../../Trilinos_version.h
-  )
 
 # Set headers (for IDEs and installing)
 

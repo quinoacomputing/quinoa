@@ -1,13 +1,12 @@
-
 // @HEADER
 // ***********************************************************************
-// 
+//
 //                      Didasko Tutorial Package
 //                 Copyright (2005) Sandia Corporation
-// 
+//
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -36,7 +35,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 // Questions about Didasko? Contact Marzio Sala (marzio.sala _AT_ gmail.com)
-// 
+//
 // ***********************************************************************
 // @HEADER
 
@@ -63,16 +62,18 @@
 // value, and the sub- and super-diagonal values.
 // ============================================================
 
-class TridiagonalCrsMatrix : public Epetra_CrsMatrix { 
-  
-public:
+class TridiagonalCrsMatrix : public Epetra_CrsMatrix {
 
-  TridiagonalCrsMatrix(const Epetra_Map & Map,
-			      double a,
-			      double diag, double c) :
-    Epetra_CrsMatrix(Copy,Map,3) 
+  public:
+
+    TridiagonalCrsMatrix(
+        const Epetra_Map & Map,
+        double a,
+        double diag,
+        double c
+        ) :
+      Epetra_CrsMatrix(Copy,Map,3)
   {
-
     // global number of rows
     int NumGlobalElements = Map.NumGlobalElements();
     // local number of rows
@@ -84,23 +85,23 @@ public:
     // Add  rows one-at-a-time
     // Need some vectors to help
     // Off diagonal Values will always be -1
-    
+
     double *Values = new double[2];
     Values[0] = a; Values[1] = c;
     int *Indices = new int[2];
     int NumEntries;
-    
+
     for( int i=0 ; i<NumMyElements; ++i ) {
       if (MyGlobalElements[i]==0) {
-	Indices[0] = 1;
-	NumEntries = 1;
+        Indices[0] = 1;
+        NumEntries = 1;
       } else if (MyGlobalElements[i] == NumGlobalElements-1) {
-	Indices[0] = NumGlobalElements-2;
-	NumEntries = 1;
+        Indices[0] = NumGlobalElements-2;
+        NumEntries = 1;
       } else {
-	Indices[0] = MyGlobalElements[i]-1;
-	Indices[1] = MyGlobalElements[i]+1;
-	NumEntries = 2;
+        Indices[0] = MyGlobalElements[i]-1;
+        Indices[1] = MyGlobalElements[i]+1;
+        NumEntries = 2;
       }
       InsertGlobalValues(MyGlobalElements[i], NumEntries, Values, Indices);
       // Put in the diagonal entry
@@ -110,8 +111,10 @@ public:
     // Finish up
     FillComplete();
 
+    delete [] MyGlobalElements;
+    delete [] Values;
+    delete [] Indices;
   }
-  
 };
 
 // =============================================================
@@ -127,17 +130,17 @@ public:
 // Parameters:
 // ----------
 //
-// - Epetra_CrsMatrix  reference to the ditributed CrsMatrix to 
+// - Epetra_CrsMatrix  reference to the ditributed CrsMatrix to
 //                     print out
 // - os                output stream (can be cout)
 //===============================================================
 
 bool CrsMatrixInfo( const Epetra_CrsMatrix & A,
-		    ostream & os ) 
+    ostream & os )
 
 {
 
-  int MyPID = A.Comm().MyPID(); 
+  int MyPID = A.Comm().MyPID();
 
   // take care that matrix is already trasformed
   bool IndicesAreGlobal = A.IndicesAreGlobal();
@@ -181,18 +184,17 @@ bool CrsMatrixInfo( const Epetra_CrsMatrix & A,
   int * Indices = new int[MaxNumEntries];
   double Element, AbsElement; // generic nonzero element and its abs value
   int NumEntries;
-  double * Diagonal = new double [NumMyRows];
+  std::vector<double> Diagonal(NumMyRows);
   // SumOffDiagonal is the sum of absolute values for off-diagonals
-  double * SumOffDiagonal = new double [NumMyRows];  
+  double * SumOffDiagonal = new double [NumMyRows];
   for( Row=0 ;  Row<NumMyRows ; ++Row ) {
     SumOffDiagonal[Row] = 0.0;
   }
   int * IsDiagonallyDominant = new int [NumMyRows];
-  int GlobalRow;
 
   // cycle over all matrix elements
   for( Row=0 ; Row<NumMyRows ; ++Row ) {
-    GlobalRow = A.GRID(Row);
+    // int GlobalRow = A.GRID(Row);
     NzPerRow[Row] = A.NumMyEntries(Row);
     A.ExtractMyRowCopy(Row,NzPerRow[Row],NumEntries,Values,Indices);
     for( Col=0 ; Col<NumEntries ; ++Col ) {
@@ -202,14 +204,15 @@ bool CrsMatrixInfo( const Epetra_CrsMatrix & A,
       if( Element>MyMaxElement ) MyMaxElement = Element;
       if( AbsElement<MyMinAbsElement ) MyMinAbsElement = AbsElement;
       if( AbsElement>MyMaxAbsElement ) MyMaxAbsElement = AbsElement;
-      if( Indices[Col] == Row ) Diagonal[Row] = Element;
+      if( Indices[Col] == Row )
+        Diagonal[Row] = Element;
       else
-	SumOffDiagonal[Row] += abs(Element);
+        SumOffDiagonal[Row] += abs(Element);
       MyFrobeniusNorm += pow(Element,2);
     }
-  }   
+  }
 
-  // analise storage per row 
+  // analise storage per row
   int MyMinNzPerRow( NumMyRows ), MinNzPerRow( NumMyRows );
   int MyMaxNzPerRow( 0 ), MaxNzPerRow( 0 );
 
@@ -224,14 +227,14 @@ bool CrsMatrixInfo( const Epetra_CrsMatrix & A,
   int MyWeakDiagonalDominance( 0 ), WeakDiagonalDominance( 0 );
 
   for( Row=0 ; Row<NumMyRows ; ++Row ) {
-    if( abs(Diagonal[Row])>SumOffDiagonal[Row] ) 
+    if( abs(Diagonal[Row])>SumOffDiagonal[Row] )
       ++MyDiagonalDominance;
-    else if( abs(Diagonal[Row])==SumOffDiagonal[Row] ) 
+    else if( abs(Diagonal[Row])==SumOffDiagonal[Row] )
       ++MyWeakDiagonalDominance;
   }
 
   // reduction operations
-  
+
   A.Comm().SumAll(&MyFrobeniusNorm, &FrobeniusNorm, 1);
   A.Comm().MinAll(&MyMinElement, &MinElement, 1);
   A.Comm().MaxAll(&MyMaxElement, &MaxElement, 1);
@@ -244,12 +247,11 @@ bool CrsMatrixInfo( const Epetra_CrsMatrix & A,
 
   // free memory
 
-  delete Values;
-  delete Indices;
-  delete Diagonal;
-  delete SumOffDiagonal;
-  delete IsDiagonallyDominant;
-  delete NzPerRow;
+  delete[] Values;
+  delete[] Indices;
+  delete[] SumOffDiagonal;
+  delete[] IsDiagonallyDominant;
+  delete[] NzPerRow;
 
   // simply no output for MyPID>0, only proc 0 write on os
   if( MyPID != 0 ) return true;
@@ -263,36 +265,36 @@ bool CrsMatrixInfo( const Epetra_CrsMatrix & A,
   os << "||A||_1               = " << NormOne << endl;
   os << "||A||_F               = " << sqrt(FrobeniusNorm) << endl;
   os << "Number of nonzero diagonal entries = "
-     << NumGlobalDiagonals
-     << "( " << 1.0* NumGlobalDiagonals/NumGlobalRows*100
-     << " %)\n";
-  os << "Nonzero per row : min = " << MinNzPerRow 
-     << " average = " << 1.0*NumGlobalNonzeros/NumGlobalRows
-     << " max = " << MaxNzPerRow << endl; 
-  os << "Maximum number of nonzero elements/row = " 
-     << GlobalMaxNumEntries << endl;
+    << NumGlobalDiagonals
+    << "( " << 1.0* NumGlobalDiagonals/NumGlobalRows*100
+    << " %)\n";
+  os << "Nonzero per row : min = " << MinNzPerRow
+    << " average = " << 1.0*NumGlobalNonzeros/NumGlobalRows
+    << " max = " << MaxNzPerRow << endl;
+  os << "Maximum number of nonzero elements/row = "
+    << GlobalMaxNumEntries << endl;
   os << "min( a_{i,j} )      = " << MinElement << endl;
   os << "max( a_{i,j} )      = " << MaxElement << endl;
   os << "min( abs(a_{i,j}) ) = " << MinAbsElement << endl;
   os << "max( abs(a_{i,j}) ) = " << MaxAbsElement << endl;
-  os << "Number of diagonal dominant rows        = " << DiagonalDominance 
-     << " (" << 100.0*DiagonalDominance/NumGlobalRows << " % of total)\n";
-  os << "Number of weakly diagonal dominant rows = " 
-     << WeakDiagonalDominance 
-     << " (" << 100.0*WeakDiagonalDominance/NumGlobalRows << " % of total)\n";
+  os << "Number of diagonal dominant rows        = " << DiagonalDominance
+    << " (" << 100.0*DiagonalDominance/NumGlobalRows << " % of total)\n";
+  os << "Number of weakly diagonal dominant rows = "
+    << WeakDiagonalDominance
+    << " (" << 100.0*WeakDiagonalDominance/NumGlobalRows << " % of total)\n";
 
   os << "*** Information about the Trilinos storage\n";
   os << "Base Index                 = " << IndexBase << endl;
-  os << "is storage optimized       = " 
-     << ((StorageOptimized==true)?"yes":"no") << endl;
+  os << "is storage optimized       = "
+    << ((StorageOptimized==true)?"yes":"no") << endl;
   os << "are indices global         = "
-     << ((IndicesAreGlobal==true)?"yes":"no") << endl;
-  os << "is matrix lower triangular = " 
-     << ((LowerTriangular==true)?"yes":"no") << endl;
-  os << "is matrix upper triangular = " 
-     << ((UpperTriangular==true)?"yes":"no") << endl;
-  os << "are there diagonal entries = " 
-     <<  ((NoDiagonal==false)?"yes":"no") << endl;
+    << ((IndicesAreGlobal==true)?"yes":"no") << endl;
+  os << "is matrix lower triangular = "
+    << ((LowerTriangular==true)?"yes":"no") << endl;
+  os << "is matrix upper triangular = "
+    << ((UpperTriangular==true)?"yes":"no") << endl;
+  os << "are there diagonal entries = "
+    <<  ((NoDiagonal==false)?"yes":"no") << endl;
 
   return true;
 
@@ -339,9 +341,8 @@ int main(int argc, char *argv[])
 int main(int argc, char *argv[])
 {
   puts("Please configure Didasko with:\n"
-       "--enable-epetra");
+      "--enable-epetra");
 
   return 0;
 }
 #endif
-

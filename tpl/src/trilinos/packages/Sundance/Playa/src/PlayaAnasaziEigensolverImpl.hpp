@@ -236,8 +236,8 @@ inline void AnasaziEigensolver<Scalar>::solve(
      * we know the eigenvalue is real. */
     //evals[i] = sol.Evals[i].realpart;
     // if matrix might not be hermitian
-    ew[i].real() = sol.Evals[i].realpart;
-    ew[i].imag() = sol.Evals[i].imagpart;
+    ew[i].real(sol.Evals[i].realpart);
+    ew[i].imag(sol.Evals[i].imagpart);
   }
 }
 

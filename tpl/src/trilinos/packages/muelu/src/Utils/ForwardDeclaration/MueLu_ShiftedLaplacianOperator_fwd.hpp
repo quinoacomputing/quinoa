@@ -46,11 +46,11 @@
 #ifndef MUELU_SHIFTEDLAPLACIANOPERATOR_FWD_HPP
 #define MUELU_SHIFTEDLAPLACIANOPERATOR_FWD_HPP
 
-
-
+#include "MueLu_ConfigDefs.hpp"
+#if defined(HAVE_MUELU_TPETRA) && defined(HAVE_MUELU_BELOS)
 
 namespace MueLu {
-  template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node, class LocalMatOps>
+  template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
   class ShiftedLaplacianOperator;
 }
 
@@ -58,6 +58,6 @@ namespace MueLu {
 #define MUELU_SHIFTEDLAPLACIANOPERATOR_SHORT
 #endif
 
-
+#endif
 
 #endif // MUELU_SHIFTEDLAPLACIANOPERATOR_FWD_HPP

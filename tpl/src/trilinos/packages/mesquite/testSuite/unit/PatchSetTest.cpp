@@ -18,18 +18,18 @@
 
     You should have received a copy of the GNU Lesser General Public License 
     (lgpl.txt) along with this library; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
 
     (2006) kraftche@cae.wisc.edu    
 
   ***************************************************************** */
 
 #include "Mesquite.hpp"
-#include "VertexPatches.hpp"
-#include "GlobalPatch.hpp"
-#include "MeshInterface.hpp"
-#include "Instruction.hpp"
-#include "MsqError.hpp"
+#include "Mesquite_VertexPatches.hpp"
+#include "Mesquite_GlobalPatch.hpp"
+#include "Mesquite_MeshInterface.hpp"
+#include "Mesquite_Instruction.hpp"
+#include "Mesquite_MsqError.hpp"
 #include "UnitUtil.hpp"
 
 #include <assert.h>

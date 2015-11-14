@@ -18,7 +18,7 @@
 
     You should have received a copy of the GNU Lesser General Public License 
     (lgpl.txt) along with this library; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  
     diachin2@llnl.gov, djmelan@sandia.gov, mbrewer@sandia.gov, 
     pknupp@sandia.gov, tleurent@mcs.anl.gov, tmunson@mcs.anl.gov      
@@ -49,15 +49,15 @@ Unit testing of various functions in the InstructionQueue class.
 
 
 #include "Mesquite.hpp"
-#include "InstructionQueue.hpp"
-#include "QualityAssessor.hpp"
-#include "QualityImprover.hpp"
-#include "IdealWeightInverseMeanRatio.hpp"
-#include "LPtoPTemplate.hpp"
-#include "SteepestDescent.hpp"
-#include "Vector3D.hpp"
-#include "PatchData.hpp"
-#include "VertexSlaver.hpp"
+#include "Mesquite_InstructionQueue.hpp"
+#include "Mesquite_QualityAssessor.hpp"
+#include "Mesquite_QualityImprover.hpp"
+#include "Mesquite_IdealWeightInverseMeanRatio.hpp"
+#include "Mesquite_LPtoPTemplate.hpp"
+#include "Mesquite_SteepestDescent.hpp"
+#include "Mesquite_Vector3D.hpp"
+#include "Mesquite_PatchData.hpp"
+#include "Mesquite_VertexSlaver.hpp"
 
 #include "UnitUtil.hpp"
 

@@ -18,7 +18,7 @@
 
     You should have received a copy of the GNU Lesser General Public License 
     (lgpl.txt) along with this library; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  
     diachin2@llnl.gov, djmelan@sandia.gov, mbrewer@sandia.gov, 
     pknupp@sandia.gov, tleurent@mcs.anl.gov, tmunson@mcs.anl.gov      
@@ -50,11 +50,11 @@ Patches must be allocated and dealocated by the caller.
 #ifndef PatchDataInstances_hpp
 #define PatchDataInstances_hpp
 
-#include "MsqVertex.hpp"
-#include "PatchData.hpp"
-#include "PlanarDomain.hpp"
-#include "IdealElements.hpp"
-#include "TopologyInfo.hpp"
+#include "Mesquite_MsqVertex.hpp"
+#include "Mesquite_PatchData.hpp"
+#include "Mesquite_PlanarDomain.hpp"
+#include "Mesquite_IdealElements.hpp"
+#include "Mesquite_TopologyInfo.hpp"
 
 #include <math.h>
 #include <iostream>

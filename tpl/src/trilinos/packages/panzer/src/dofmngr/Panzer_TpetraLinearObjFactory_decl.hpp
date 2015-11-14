@@ -64,14 +64,14 @@
 #include "Panzer_CloneableEvaluator.hpp"
 #include "Panzer_ThyraObjFactory.hpp"
 
-#include"Kokkos_DefaultNode.hpp"
+#include"Panzer_NodeType.hpp"
 
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_DefaultMpiComm.hpp"
 
 namespace panzer {
 
-template <typename Traits,typename ScalarT,typename LocalOrdinalT,typename GlobalOrdinalT,typename NodeT=KokkosClassic::DefaultNode::DefaultNodeType>
+template <typename Traits,typename ScalarT,typename LocalOrdinalT,typename GlobalOrdinalT,typename NodeT=panzer::TpetraNodeType>
 class TpetraLinearObjFactory : public LinearObjFactory<Traits> 
                              , public ThyraObjFactory<ScalarT> {
 public:
@@ -89,6 +89,12 @@ public:
    virtual ~TpetraLinearObjFactory();
 
 /*************** Linear object factory methods *******************/
+
+   virtual void readVector(const std::string & identifier,LinearObjContainer & loc,int id) const 
+   { TEUCHOS_ASSERT(false); }
+
+   virtual void writeVector(const std::string & identifier,const LinearObjContainer & loc,int id) const
+   { TEUCHOS_ASSERT(false); }
 
    virtual Teuchos::RCP<LinearObjContainer> buildLinearObjContainer() const;
 
@@ -114,7 +120,7 @@ public:
    virtual void adjustForDirichletConditions(const LinearObjContainer & localBCRows,
                                              const LinearObjContainer & globalBCRows,
                                              LinearObjContainer & ghostedObjs,
-                                             bool zeroVectorRows=false) const;
+                                             bool zeroVectorRows=false, bool adjustX=false) const;
 
    /** Adjust a vector by replacing selected rows with the value of the evaluated
      * dirichlet conditions. This is handled through the standard container mechanism.
@@ -134,6 +140,11 @@ public:
    //! Use preconstructed gather evaluators
    template <typename EvalT>
    Teuchos::RCP<panzer::CloneableEvaluator > buildGather() const
+   { return Teuchos::rcp(new GatherSolution_Tpetra<EvalT,Traits,LocalOrdinalT,GlobalOrdinalT,NodeT>(gidProvider_)); }
+
+   //! Use preconstructed gather evaluators
+   template <typename EvalT>
+   Teuchos::RCP<panzer::CloneableEvaluator > buildGatherDomain() const
    { return Teuchos::rcp(new GatherSolution_Tpetra<EvalT,Traits,LocalOrdinalT,GlobalOrdinalT,NodeT>(gidProvider_)); }
 
    //! Use preconstructed gather evaluators
@@ -161,6 +172,13 @@ public:
 
    //! Get a matrix operator
    virtual Teuchos::RCP<Thyra::LinearOpBase<ScalarT> > getThyraMatrix() const;
+
+/*************** Tpetra construction functions *******************/
+
+   Teuchos::RCP<Tpetra::Vector<ScalarT,LocalOrdinalT,GlobalOrdinalT,NodeT> > getGhostedTpetraVector() const;
+   Teuchos::RCP<Tpetra::Vector<ScalarT,LocalOrdinalT,GlobalOrdinalT,NodeT> > getTpetraVector() const;
+   Teuchos::RCP<Tpetra::CrsMatrix<ScalarT,LocalOrdinalT,GlobalOrdinalT,NodeT> > getTpetraMatrix() const;
+   Teuchos::RCP<Tpetra::CrsMatrix<ScalarT,LocalOrdinalT,GlobalOrdinalT,NodeT> > getGhostedTpetraMatrix() const;
 
 /*************** Generic helper functions for container setup *******************/
    
@@ -215,14 +233,18 @@ public:
    //! get exporter for converting an overalapped object to a "normal" object
    virtual const Teuchos::RCP<const Teuchos::Comm<int> > getTeuchosComm() const;
 
+   //! Get the unique global indexer this factory was created with.
+   Teuchos::RCP<const panzer::UniqueGlobalIndexerBase> getUniqueGlobalIndexerBase() const
+   { return gidProvider_; }
+
+   //! Get the unique global indexer this factory was created with.
+   Teuchos::RCP<const panzer::UniqueGlobalIndexerBase> getGlobalIndexer() const
+   { return gidProvider_; }
+
    virtual void beginFill(LinearObjContainer & loc) const;
    virtual void endFill(LinearObjContainer & loc) const;
 
 protected:
-   Teuchos::RCP<Tpetra::Vector<ScalarT,LocalOrdinalT,GlobalOrdinalT,NodeT> > getGhostedTpetraVector() const;
-   Teuchos::RCP<Tpetra::Vector<ScalarT,LocalOrdinalT,GlobalOrdinalT,NodeT> > getTpetraVector() const;
-   Teuchos::RCP<Tpetra::CrsMatrix<ScalarT,LocalOrdinalT,GlobalOrdinalT,NodeT> > getTpetraMatrix() const;
-   Teuchos::RCP<Tpetra::CrsMatrix<ScalarT,LocalOrdinalT,GlobalOrdinalT,NodeT> > getGhostedTpetraMatrix() const;
 
    void ghostToGlobalTpetraVector(const Tpetra::Vector<ScalarT,LocalOrdinalT,GlobalOrdinalT,NodeT> & in,
                                   Tpetra::Vector<ScalarT,LocalOrdinalT,GlobalOrdinalT,NodeT> & out) const;

@@ -44,6 +44,7 @@
 #include "PlayaTabs.hpp"
 #include "SundanceDiscreteFunction.hpp"
 #include "SundanceLagrange.hpp"
+#include "SundanceBubble.hpp"
 #include "SundanceEdgeLocalizedBasis.hpp"
 #include "SundanceDiscreteFuncElement.hpp"
 #include "SundanceHNDoFMapBase.hpp"
@@ -78,7 +79,8 @@ ExprFieldWrapper::ExprFieldWrapper(const Expr& expr)
       indices_.append(tuple(0));
       BasisFamily basis = discreteSpace_.basis()[0];
       const Lagrange* lagr = dynamic_cast<const Lagrange*>(basis.ptr().get());
-      if (lagr != 0 && lagr->order()==0) isPointData_ = false;
+      const Bubble* bub = dynamic_cast<const Bubble*>(basis.ptr().get());
+      if ((lagr != 0 && lagr->order()==0) || bub!=0) isPointData_ = false;
       const EdgeLocalizedBasis* elb = dynamic_cast<const EdgeLocalizedBasis*>(basis.ptr().get());
       if (elb!=0) isPointData_ = false;
       df_ = df->data();
@@ -95,7 +97,8 @@ ExprFieldWrapper::ExprFieldWrapper(const Expr& expr)
       indices_.append(tuple(dfe->myIndex()));
       BasisFamily basis = discreteSpace_.basis()[indices_[index][0]];
       const Lagrange* lagr = dynamic_cast<const Lagrange*>(basis.ptr().get());
-      if (lagr != 0 && lagr->order()==0) isPointData_ = false;      
+      const Bubble* bub = dynamic_cast<const Bubble*>(basis.ptr().get());
+      if ((lagr != 0 && lagr->order()==0) || bub!=0) isPointData_ = false;
       const EdgeLocalizedBasis* elb = dynamic_cast<const EdgeLocalizedBasis*>(basis.ptr().get());
       if (elb!=0) isPointData_ = false;
 

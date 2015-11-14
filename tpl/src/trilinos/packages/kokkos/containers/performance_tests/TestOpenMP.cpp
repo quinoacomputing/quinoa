@@ -1,13 +1,13 @@
 /*
 //@HEADER
 // ************************************************************************
-//
-//   Kokkos: Manycore Performance-Portable Multidimensional Arrays
-//              Copyright (2012) Sandia Corporation
-//
+// 
+//                        Kokkos v. 2.0
+//              Copyright (2014) Sandia Corporation
+// 
 // Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
 // the U.S. Government retains certain rights in this software.
-//
+// 
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -36,26 +36,25 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 // Questions? Contact  H. Carter Edwards (hcedwar@sandia.gov)
-//
+// 
 // ************************************************************************
 //@HEADER
 */
 
 #include <gtest/gtest.h>
 
-// Force OMP atomics
-
-#define KOKKOS_ATOMICS_USE_OMP31
-#include <Kokkos_Atomic.hpp>
-
-#include <Kokkos_OpenMP.hpp>
-#include <Kokkos_hwloc.hpp>
+#include <Kokkos_Core.hpp>
 
 #include <Kokkos_UnorderedMap.hpp>
 
-#include <iomanip>
-
 #include <TestGlobal2LocalIds.hpp>
+#include <TestUnorderedMapPerformance.hpp>
+
+#include <iomanip>
+#include <sstream>
+#include <string>
+#include <fstream>
+
 
 namespace Performance {
 
@@ -65,21 +64,28 @@ protected:
   {
     std::cout << std::setprecision(5) << std::scientific;
 
-    unsigned threads_count = 4 ;
+    unsigned num_threads = 4;
 
-    if ( Kokkos::hwloc::available() ) {
-      threads_count = Kokkos::hwloc::get_available_numa_count() *
-                      Kokkos::hwloc::get_available_cores_per_numa();
+    if (Kokkos::hwloc::available()) {
+      num_threads = Kokkos::hwloc::get_available_numa_count()
+                    * Kokkos::hwloc::get_available_cores_per_numa()
+                    * Kokkos::hwloc::get_available_threads_per_core()
+                    ;
+
     }
 
-    Kokkos::OpenMP::initialize( threads_count );
+    std::cout << "OpenMP: " << num_threads << std::endl;
+
+    Kokkos::OpenMP::initialize( num_threads );
+
+    std::cout << "available threads: " << omp_get_max_threads() << std::endl;
   }
 
   static void TearDownTestCase()
   {
     Kokkos::OpenMP::finalize();
 
-    omp_set_num_threads(0);
+    omp_set_num_threads(1);
 
     ASSERT_EQ( 1 , omp_get_max_threads() );
   }
@@ -91,6 +97,34 @@ TEST_F( openmp, global_2_local)
   std::cout << "size, create, generate, fill, find" << std::endl;
   for (unsigned i=Performance::begin_id_size; i<=Performance::end_id_size; i *= Performance::id_step)
     test_global_to_local_ids<Kokkos::OpenMP>(i);
+}
+
+TEST_F( openmp, unordered_map_performance_near)
+{
+  unsigned num_openmp = 4;
+  if (Kokkos::hwloc::available()) {
+    num_openmp = Kokkos::hwloc::get_available_numa_count() *
+                  Kokkos::hwloc::get_available_cores_per_numa() *
+                  Kokkos::hwloc::get_available_threads_per_core();
+
+  }
+  std::ostringstream base_file_name;
+  base_file_name << "openmp-" << num_openmp << "-near";
+  Perf::run_performance_tests<Kokkos::OpenMP,true>(base_file_name.str());
+}
+
+TEST_F( openmp, unordered_map_performance_far)
+{
+  unsigned num_openmp = 4;
+  if (Kokkos::hwloc::available()) {
+    num_openmp = Kokkos::hwloc::get_available_numa_count() *
+                  Kokkos::hwloc::get_available_cores_per_numa() *
+                  Kokkos::hwloc::get_available_threads_per_core();
+
+  }
+  std::ostringstream base_file_name;
+  base_file_name << "openmp-" << num_openmp << "-far";
+  Perf::run_performance_tests<Kokkos::OpenMP,false>(base_file_name.str());
 }
 
 } // namespace test

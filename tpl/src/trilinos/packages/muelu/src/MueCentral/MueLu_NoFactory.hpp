@@ -46,9 +46,11 @@
 #ifndef MUELU_NOFACTORY_HPP
 #define MUELU_NOFACTORY_HPP
 
-#include "MueLu_ConfigDefs.hpp"
+#include <algorithm>                    // for swap
+#include "Teuchos_RCPDecl.hpp"          // for RCP
+#include "Teuchos_RCP.hpp"              // for RCP::RCP<T>, RCP::operator=, etc
+#include "MueLu_config.hpp"             // for HAVE_MUELU_DEBUG
 #include "MueLu_Exceptions.hpp"
-
 #include "MueLu_FactoryBase.hpp"
 #include "MueLu_Level_fwd.hpp"
 
@@ -98,6 +100,9 @@ namespace MueLu {
     static const NoFactory* get();
 
     //@}
+#ifdef HAVE_MUELU_DEBUG
+    void ResetDebugData() const { }
+#endif
 
   private:
     static RCP<const NoFactory> noFactory_; // static NoFactory instance for user defined "factories"

@@ -1,13 +1,13 @@
 
 // @HEADER
 // ***********************************************************************
-// 
+//
 //                      Didasko Tutorial Package
 //                 Copyright (2005) Sandia Corporation
-// 
+//
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -36,7 +36,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 // Questions about Didasko? Contact Marzio Sala (marzio.sala _AT_ gmail.com)
-// 
+//
 // ***********************************************************************
 // @HEADER
 
@@ -91,8 +91,8 @@ int main(int argc, char *argv[])
   CrsMatrixGallery Gallery("", Comm, false); // CJ TODO FIXME: change for Epetra64
 
   // add default values
-  if( CLP.Has("-problem_type") == false ) CLP.Add("-problem_type", "laplace_2d" ); 
-  if( CLP.Has("-problem_size") == false ) CLP.Add("-problem_size", "100" ); 
+  if( CLP.Has("-problem_type") == false ) CLP.Add("-problem_type", "laplace_2d" );
+  if( CLP.Has("-problem_size") == false ) CLP.Add("-problem_size", "100" );
 
   // initialize the gallery as specified in the command line
   Gallery.Set(CLP);
@@ -100,17 +100,17 @@ int main(int argc, char *argv[])
   // retrive pointers to matrix and linear problem
   Epetra_CrsMatrix * Matrix = Gallery.GetMatrix();
   const Epetra_Map * Map = Gallery.GetMap();
-  
+
   Epetra_LinearProblem * Problem = Gallery.GetLinearProblem();
-  
+
   // Construct a solver object for this problem
   AztecOO solver(*Problem);
 
-  // solve with CG (change is matrix is not symmetric) 
+  // solve with CG (change is matrix is not symmetric)
   solver.SetAztecOption(AZ_solver, AZ_cg);
 
   // ==============================  M L   S E C T I O N  ============================ //
-  
+
   // Create and set an ML multilevel preconditioner
   ML *ml_handle;
 
@@ -136,12 +136,12 @@ int main(int argc, char *argv[])
 
   // generate the hierady
   N_levels = ML_Gen_MGHierarchy_UsingAggregation(ml_handle, 0,
-                                                  ML_INCREASING, agg_object);
+      ML_INCREASING, agg_object);
 
   // Set a symmetric Gauss-Seidel smoother for the MG method (change
   // if the matrix is not symmetric)
   ML_Gen_Smoother_SymGaussSeidel(ml_handle, ML_ALL_LEVELS,
-                                  ML_BOTH, 1, ML_DEFAULT);
+      ML_BOTH, 1, ML_DEFAULT);
 
   // generate solver
   ML_Gen_Solver    (ml_handle, ML_MGV, 0, N_levels-1);
@@ -150,14 +150,14 @@ int main(int argc, char *argv[])
   ML_Epetra::MultiLevelOperator  MLop(ml_handle,Comm,*Map,*Map);
 
   // ===================== E N D    O F  M L   S E C T I O N  ========================= //
-  
+
   // set this operator as preconditioner for AztecOO
   solver.SetPrecOperator(&MLop);
 
   // solve
   solver.Iterate(1550, 1e-12);
 
-  // verify that residual is really small  
+  // verify that residual is really small
   double residual, diff;
 
   Gallery.ComputeResidual(&residual);
@@ -190,12 +190,12 @@ int main(int argc, char *argv[])
 #ifdef HAVE_MPI
   MPI_Init(&argc,&argv);
 #endif
-  
+
   puts("Please configure Didasko with:\n"
-       "--enable-epetra\n"
-       "--enable-ml\n"
-       "--enable-triutils");
-  
+      "--enable-epetra\n"
+      "--enable-ml\n"
+      "--enable-triutils");
+
 #ifdef HAVE_MPI
   MPI_Finalize();
 #endif

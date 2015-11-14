@@ -52,28 +52,35 @@
 
 #include <Teuchos_ParameterList.hpp>
 
+#include <Tpetra_RowMatrix.hpp>
+
 #include <Ifpack2_Chebyshev.hpp>
 #include <Ifpack2_Factory.hpp>
 #include <Ifpack2_Parameters.hpp>
 
+#include <Xpetra_BlockedCrsMatrix.hpp>
+#include <Xpetra_CrsMatrix.hpp>
+#include <Xpetra_CrsMatrixWrap.hpp>
+#include <Xpetra_Matrix.hpp>
 #include <Xpetra_MultiVectorFactory.hpp>
 
 #include "MueLu_Ifpack2Smoother_decl.hpp"
 #include "MueLu_Level.hpp"
+#include "MueLu_FactoryManagerBase.hpp"
 #include "MueLu_Utilities.hpp"
 #include "MueLu_Monitor.hpp"
 
 namespace MueLu {
 
-  template <class Scalar,class LocalOrdinal, class GlobalOrdinal, class Node, class LocalMatOps>
-  Ifpack2Smoother<Scalar, LocalOrdinal, GlobalOrdinal, Node, LocalMatOps>::Ifpack2Smoother(const std::string& type, const Teuchos::ParameterList& paramList, const LO& overlap)
+  template <class Scalar,class LocalOrdinal, class GlobalOrdinal, class Node>
+  Ifpack2Smoother<Scalar, LocalOrdinal, GlobalOrdinal, Node>::Ifpack2Smoother(const std::string& type, const Teuchos::ParameterList& paramList, const LO& overlap)
     : type_(type), overlap_(overlap)
   {
     SetParameterList(paramList);
   }
 
-  template <class Scalar,class LocalOrdinal, class GlobalOrdinal, class Node, class LocalMatOps>
-  void Ifpack2Smoother<Scalar, LocalOrdinal, GlobalOrdinal, Node, LocalMatOps>::SetParameterList(const Teuchos::ParameterList& paramList) {
+  template <class Scalar,class LocalOrdinal, class GlobalOrdinal, class Node>
+  void Ifpack2Smoother<Scalar, LocalOrdinal, GlobalOrdinal, Node>::SetParameterList(const Teuchos::ParameterList& paramList) {
     Factory::SetParameterList(paramList);
 
     if (SmootherPrototype::IsSetup()) {
@@ -83,8 +90,8 @@ namespace MueLu {
     }
   }
 
-  template <class Scalar,class LocalOrdinal, class GlobalOrdinal, class Node, class LocalMatOps>
-  void Ifpack2Smoother<Scalar, LocalOrdinal, GlobalOrdinal, Node, LocalMatOps>::SetPrecParameters(const Teuchos::ParameterList& list) const {
+  template <class Scalar,class LocalOrdinal, class GlobalOrdinal, class Node>
+  void Ifpack2Smoother<Scalar, LocalOrdinal, GlobalOrdinal, Node>::SetPrecParameters(const Teuchos::ParameterList& list) const {
     ParameterList& paramList = const_cast<ParameterList&>(this->GetParameterList());
     paramList.setParameters(list);
 
@@ -92,20 +99,30 @@ namespace MueLu {
 
     prec_->setParameters(*precList);
 
-    paramList.setParameters(*precList);
+    paramList.setParameters(*precList); // what about that??
   }
 
-  template <class Scalar,class LocalOrdinal, class GlobalOrdinal, class Node, class LocalMatOps>
-  void Ifpack2Smoother<Scalar, LocalOrdinal, GlobalOrdinal, Node, LocalMatOps>::DeclareInput(Level &currentLevel) const {
+  template <class Scalar,class LocalOrdinal, class GlobalOrdinal, class Node>
+  void Ifpack2Smoother<Scalar, LocalOrdinal, GlobalOrdinal, Node>::DeclareInput(Level &currentLevel) const {
     this->Input(currentLevel, "A");
+
+    if (type_ == "LINESMOOTHING_BANDED_RELAXATION" ||
+        type_ == "LINESMOOTHING_BANDED RELAXATION" ||
+        type_ == "LINESMOOTHING_BANDEDRELAXATION"  ||
+        type_ == "LINESMOOTHING_BLOCK_RELAXATION"  ||
+        type_ == "LINESMOOTHING_BLOCK RELAXATION"  ||
+        type_ == "LINESMOOTHING_BLOCKRELAXATION") {
+      this->Input(currentLevel, "CoarseNumZLayers");              // necessary for fallback criterion
+      this->Input(currentLevel, "LineDetection_VertLineIds"); // necessary to feed block smoother
+    } // if (type_ == "LINESMOOTHING_BANDEDRELAXATION")
   }
 
-  template <class Scalar,class LocalOrdinal, class GlobalOrdinal, class Node, class LocalMatOps>
-  void Ifpack2Smoother<Scalar, LocalOrdinal, GlobalOrdinal, Node, LocalMatOps>::Setup(Level& currentLevel) {
+  template <class Scalar,class LocalOrdinal, class GlobalOrdinal, class Node>
+  void Ifpack2Smoother<Scalar, LocalOrdinal, GlobalOrdinal, Node>::Setup(Level& currentLevel) {
     FactoryMonitor m(*this, "Setup Smoother", currentLevel);
 
     if (this->IsSetup() == true)
-      this->GetOStream(Warnings0, 0) << "Warning: MueLu::Ifpack2Smoother::Setup(): Setup() has already been called";
+      this->GetOStream(Warnings0) << "MueLu::Ifpack2Smoother::Setup(): Setup() has already been called";
 
     A_ = Factory::Get< RCP<Matrix> >(currentLevel, "A");
 
@@ -113,6 +130,127 @@ namespace MueLu {
     SC negone = -STS::one();
 
     SC lambdaMax = negone;
+
+    // If we are doing "user" partitioning, we assume that what the user
+    // really wants to do is make tiny little subdomains with one row
+    // asssigned to each subdomain. The rows used for these little
+    // subdomains correspond to those in the 2nd block row.  Then,
+    // if we overlap these mini-subdomains, we will do something that
+    // looks like Vanka (grabbing all velocities associated with each
+    // each pressure unknown). In addition, we put all Dirichlet points
+    // as a little mini-domain.
+
+    bool isBlockedMatrix = false;
+    RCP<Matrix> merged2Mat;
+    if (type_ == "SCHWARZ") {
+      ParameterList& paramList = const_cast<ParameterList&>(this->GetParameterList());
+
+      std::string sublistName = "subdomain solver parameters";
+      if (paramList.isSublist(sublistName)) {
+        ParameterList& subList = paramList.sublist(sublistName);
+
+        std::string partName  = "partitioner: type";
+        if (subList.isParameter(partName) && subList.get<std::string>(partName) == "user") {
+          isBlockedMatrix = true;
+
+          RCP<BlockedCrsMatrix> bA = rcp_dynamic_cast<BlockedCrsMatrix>(A_);
+          TEUCHOS_TEST_FOR_EXCEPTION(bA.is_null(), Exceptions::BadCast,
+                                     "Matrix A must be of type BlockedCrsMatrix.");
+
+          size_t numVels = bA->getMatrix(0,0)->getNodeNumRows();
+          size_t numPres = bA->getMatrix(1,0)->getNodeNumRows();
+          size_t numRows = A_->getNodeNumRows();
+
+          ArrayRCP<LocalOrdinal> blockSeeds(numRows, Teuchos::OrdinalTraits<LocalOrdinal>::invalid());
+
+          size_t numBlocks = 0;
+          for (size_t rowOfB = numVels; rowOfB < numVels+numPres; ++rowOfB)
+            blockSeeds[rowOfB] = numBlocks++;
+
+          RCP<BlockedCrsMatrix> bA2 = rcp_dynamic_cast<BlockedCrsMatrix>(A_);
+          TEUCHOS_TEST_FOR_EXCEPTION(bA2.is_null(), Exceptions::BadCast,
+                                     "Matrix A must be of type BlockedCrsMatrix.");
+
+          RCP<CrsMatrix> mergedMat = bA2->Merge();
+          merged2Mat = rcp(new CrsMatrixWrap(mergedMat));
+
+          // Add Dirichlet rows to the list of seeds
+          ArrayRCP<const bool> boundaryNodes;
+          boundaryNodes = Utils::DetectDirichletRows(*merged2Mat, 0.0);
+          bool haveBoundary = false;
+          for (LO i = 0; i < boundaryNodes.size(); i++)
+            if (boundaryNodes[i]) {
+              // FIXME:
+              // 1. would not this [] overlap with some in the previos blockSeed loop?
+              // 2. do we need to distinguish between pressure and velocity Dirichlet b.c.
+              blockSeeds[i] = numBlocks;
+              haveBoundary = true;
+            }
+          if (haveBoundary)
+            numBlocks++;
+
+          subList.set("partitioner: map",         blockSeeds);
+          subList.set("partitioner: local parts", as<int>(numBlocks));
+        }
+      }
+    } // if (type_ == "SCHWARZ")
+
+    if (type_ == "LINESMOOTHING_BANDED_RELAXATION" ||
+        type_ == "LINESMOOTHING_BANDED RELAXATION" ||
+        type_ == "LINESMOOTHING_BANDEDRELAXATION"  ||
+        type_ == "LINESMOOTHING_BLOCK_RELAXATION"  ||
+        type_ == "LINESMOOTHING_BLOCK RELAXATION"  ||
+        type_ == "LINESMOOTHING_BLOCKRELAXATION" ) {
+      ParameterList& myparamList = const_cast<ParameterList&>(this->GetParameterList());
+
+      LO CoarseNumZLayers = Factory::Get<LO>(currentLevel,"CoarseNumZLayers");
+      if (CoarseNumZLayers > 0) {
+        Teuchos::ArrayRCP<LO> TVertLineIdSmoo = Factory::Get< Teuchos::ArrayRCP<LO> >(currentLevel, "LineDetection_VertLineIds");
+
+        // determine number of local parts
+        LO maxPart = 0;
+        for(size_t k = 0; k < Teuchos::as<size_t>(TVertLineIdSmoo.size()); k++) {
+          if(maxPart < TVertLineIdSmoo[k]) maxPart = TVertLineIdSmoo[k];
+        }
+
+        size_t numLocalRows = A_->getNodeNumRows();
+        TEUCHOS_TEST_FOR_EXCEPTION(numLocalRows % TVertLineIdSmoo.size() != 0, Exceptions::RuntimeError, "MueLu::Ifpack2Smoother::Setup(): the number of local nodes is incompatible with the TVertLineIdsSmoo.");
+
+        if (numLocalRows == Teuchos::as<size_t>(TVertLineIdSmoo.size())) {
+          myparamList.set("partitioner: type","user");
+          myparamList.set("partitioner: map",TVertLineIdSmoo);
+          myparamList.set("partitioner: local parts",maxPart+1);
+        } else {
+          // we assume a constant number of DOFs per node
+          size_t numDofsPerNode = numLocalRows / TVertLineIdSmoo.size();
+
+          // Create a new Teuchos::ArrayRCP<LO> of size numLocalRows and fill it with the corresponding information
+          Teuchos::ArrayRCP<LO> partitionerMap(numLocalRows, Teuchos::OrdinalTraits<LocalOrdinal>::invalid());
+          for (size_t blockRow = 0; blockRow < Teuchos::as<size_t>(TVertLineIdSmoo.size()); ++blockRow)
+            for (size_t dof = 0; dof < numDofsPerNode; dof++)
+              partitionerMap[blockRow * numDofsPerNode + dof] = TVertLineIdSmoo[blockRow];
+          myparamList.set("partitioner: type","user");
+          myparamList.set("partitioner: map",partitionerMap);
+          myparamList.set("partitioner: local parts",maxPart + 1);
+        }
+
+        if (type_ == "LINESMOOTHING_BANDED_RELAXATION" ||
+            type_ == "LINESMOOTHING_BANDED RELAXATION" ||
+            type_ == "LINESMOOTHING_BANDEDRELAXATION")
+          type_ = "BANDEDRELAXATION";
+        else
+          type_ = "BLOCKRELAXATION";
+      } else {
+        // line detection failed -> fallback to point-wise relaxation
+        this->GetOStream(Runtime0) << "Line detection failed: fall back to point-wise relaxation" << std::endl;
+        myparamList.remove("partitioner: type",false);
+        myparamList.remove("partitioner: map", false);
+        myparamList.remove("partitioner: local parts",false);
+        type_ = "RELAXATION";
+      }
+
+    } // if (type_ == "LINESMOOTHING_BANDEDRELAXATION")
+
     if (type_ == "CHEBYSHEV") {
       std::string maxEigString   = "chebyshev: max eigenvalue";
       std::string eigRatioString = "chebyshev: ratio eigenvalue";
@@ -121,13 +259,16 @@ namespace MueLu {
 
       // Get/calculate the maximum eigenvalue
       if (paramList.isParameter(maxEigString)) {
-        lambdaMax = paramList.get<SC>(maxEigString);
-        this->GetOStream(Statistics1, 0) << maxEigString << " (cached with smoother parameter list) = " << lambdaMax << std::endl;
+        if (paramList.isType<double>(maxEigString))
+          lambdaMax = paramList.get<double>(maxEigString);
+        else
+          lambdaMax = paramList.get<SC>(maxEigString);
+        this->GetOStream(Statistics1) << maxEigString << " (cached with smoother parameter list) = " << lambdaMax << std::endl;
 
       } else {
         lambdaMax = A_->GetMaxEigenvalueEstimate();
         if (lambdaMax != negone) {
-          this->GetOStream(Statistics1, 0) << maxEigString << " (cached with matrix) = " << lambdaMax << std::endl;
+          this->GetOStream(Statistics1) << maxEigString << " (cached with matrix) = " << lambdaMax << std::endl;
           paramList.set(maxEigString, lambdaMax);
         }
       }
@@ -135,7 +276,13 @@ namespace MueLu {
       // Calculate the eigenvalue ratio
       const SC defaultEigRatio = 20;
 
-      SC ratio = (paramList.isParameter(eigRatioString) ? paramList.get<SC>(eigRatioString) : defaultEigRatio);
+      SC ratio = defaultEigRatio;
+      if (paramList.isParameter(eigRatioString)) {
+        if (paramList.isType<double>(eigRatioString))
+          ratio = paramList.get<double>(eigRatioString);
+        else
+          ratio = paramList.get<SC>(eigRatioString);
+      }
       if (currentLevel.GetLevelID()) {
         // Update ratio to be
         //   ratio = max(number of fine DOFs / number of coarse DOFs, defaultValue)
@@ -150,13 +297,14 @@ namespace MueLu {
           ratio = levelRatio;
       }
 
-      this->GetOStream(Statistics1, 0) << eigRatioString << " (computed) = " << ratio << std::endl;
+      this->GetOStream(Statistics1) << eigRatioString << " (computed) = " << ratio << std::endl;
       paramList.set(eigRatioString, ratio);
     }
 
-    RCP<const Tpetra::CrsMatrix<SC, LO, GO, NO, LMO> > tpA = Utils::Op2NonConstTpetraCrs(A_);
+    RCP<const Tpetra::RowMatrix<SC, LO, GO, NO> > tpA;
+    if (isBlockedMatrix == true) tpA = Utils::Op2NonConstTpetraRow(merged2Mat);
+    else                         tpA = Utils::Op2NonConstTpetraRow(A_);
     prec_ = Ifpack2::Factory::create(type_, tpA, overlap_);
-
     SetPrecParameters();
     prec_->initialize();
     prec_->compute();
@@ -164,22 +312,22 @@ namespace MueLu {
     SmootherPrototype::IsSetup(true);
 
     if (type_ == "CHEBYSHEV" && lambdaMax == negone) {
-      typedef Tpetra::CrsMatrix<SC, LO, GO, NO, LMO> MatrixType;
+      typedef Tpetra::RowMatrix<SC, LO, GO, NO> MatrixType;
 
       Teuchos::RCP<Ifpack2::Chebyshev<MatrixType> > chebyPrec = rcp_dynamic_cast<Ifpack2::Chebyshev<MatrixType> >(prec_);
       if (chebyPrec != Teuchos::null) {
         lambdaMax = chebyPrec->getLambdaMaxForApply();
         A_->SetMaxEigenvalueEstimate(lambdaMax);
-        this->GetOStream(Statistics1, 0) << "chebyshev: max eigenvalue (calculated by Ifpack2)" << " = " << lambdaMax << std::endl;
+        this->GetOStream(Statistics1) << "chebyshev: max eigenvalue (calculated by Ifpack2)" << " = " << lambdaMax << std::endl;
       }
       TEUCHOS_TEST_FOR_EXCEPTION(lambdaMax == negone, Exceptions::RuntimeError, "MueLu::IfpackSmoother::Setup(): no maximum eigenvalue estimate");
     }
 
-    this->GetOStream(Statistics0, 0) << description() << std::endl;
+    this->GetOStream(Statistics0) << description() << std::endl;
   }
 
-  template <class Scalar,class LocalOrdinal, class GlobalOrdinal, class Node, class LocalMatOps>
-  void Ifpack2Smoother<Scalar, LocalOrdinal, GlobalOrdinal, Node, LocalMatOps>::Apply(MultiVector& X, const MultiVector& B, bool InitialGuessIsZero) const {
+  template <class Scalar,class LocalOrdinal, class GlobalOrdinal, class Node>
+  void Ifpack2Smoother<Scalar, LocalOrdinal, GlobalOrdinal, Node>::Apply(MultiVector& X, const MultiVector& B, bool InitialGuessIsZero) const {
     TEUCHOS_TEST_FOR_EXCEPTION(SmootherPrototype::IsSetup() == false, Exceptions::RuntimeError, "MueLu::IfpackSmoother::Apply(): Setup() has not been called");
 
     // Forward the InitialGuessIsZero option to Ifpack2
@@ -195,52 +343,65 @@ namespace MueLu {
     bool supportInitialGuess = false;
     if (type_ == "CHEBYSHEV") {
       paramList.set("chebyshev: zero starting solution", InitialGuessIsZero);
+      SetPrecParameters(paramList);
       supportInitialGuess = true;
 
     } else if (type_ == "RELAXATION") {
       paramList.set("relaxation: zero starting solution", InitialGuessIsZero);
+      SetPrecParameters(paramList);
       supportInitialGuess = true;
 
     } else if (type_ == "KRYLOV") {
       paramList.set("krylov: zero starting solution", InitialGuessIsZero);
+      SetPrecParameters(paramList);
       supportInitialGuess = true;
 
     } else if (type_ == "SCHWARZ") {
-      int overlap = 0;
-      Ifpack2::getParameter(paramList, "schwarz: overlap level", overlap);
-      if (InitialGuessIsZero == true)
-        paramList.set("schwarz: zero starting solution", InitialGuessIsZero);
+      paramList.set("schwarz: zero starting solution", InitialGuessIsZero);
+      //Because additive Schwarz has "delta" semantics, it's sufficient to
+      //toggle only the zero initial guess flag, and not pass in already
+      //set parameters.  If we call SetPrecParameters, the subdomain solver
+      //will be destroyed.
+      prec_->setParameters(paramList);
       supportInitialGuess = true;
     }
 
-    SetPrecParameters(paramList);
+    //TODO JJH 30Apr2014  Calling SetPrecParameters(paramList) when the smoother
+    //is Ifpack2::AdditiveSchwarz::setParameterList() will destroy the subdomain
+    //(aka inner) solver.  This behavior is documented but a departure from what
+    //it previously did, and what other Ifpack2 solvers currently do.  So I have
+    //moved SetPrecParameters(paramList) into the if-else block above.
 
     // Apply
-    if (supportInitialGuess || InitialGuessIsZero) {
-      Tpetra::MultiVector<SC,LO,GO,NO> &tpX = Utils::MV2NonConstTpetraMV(X);
-      Tpetra::MultiVector<SC,LO,GO,NO> const &tpB = Utils::MV2TpetraMV(B);
-      prec_->apply(tpB,tpX);
+    if (InitialGuessIsZero || supportInitialGuess) {
+      Tpetra::MultiVector<SC,LO,GO,NO>&       tpX = Utils::MV2NonConstTpetraMV(X);
+      const Tpetra::MultiVector<SC,LO,GO,NO>& tpB = Utils::MV2TpetraMV(B);
+
+      prec_->apply(tpB, tpX);
 
     } else {
       typedef Teuchos::ScalarTraits<Scalar> TST;
-      RCP<MultiVector> Residual = Utils::Residual(*A_,X,B);
+      RCP<MultiVector> Residual   = Utils::Residual(*A_, X, B);
       RCP<MultiVector> Correction = MultiVectorFactory::Build(A_->getDomainMap(), X.getNumVectors());
-      Tpetra::MultiVector<SC,LO,GO,NO> &tpX = Utils::MV2NonConstTpetraMV(*Correction);
-      Tpetra::MultiVector<SC,LO,GO,NO> const &tpB = Utils::MV2TpetraMV(*Residual);
-      prec_->apply(tpB,tpX);
+
+      Tpetra::MultiVector<SC,LO,GO,NO>&       tpX = Utils::MV2NonConstTpetraMV(*Correction);
+      const Tpetra::MultiVector<SC,LO,GO,NO>& tpB = Utils::MV2TpetraMV(*Residual);
+
+      prec_->apply(tpB, tpX);
+
       X.update(TST::one(), *Correction, TST::one());
     }
   }
 
-  template <class Scalar,class LocalOrdinal, class GlobalOrdinal, class Node, class LocalMatOps>
-  RCP<MueLu::SmootherPrototype<Scalar, LocalOrdinal, GlobalOrdinal, Node, LocalMatOps> > Ifpack2Smoother<Scalar, LocalOrdinal, GlobalOrdinal, Node, LocalMatOps>::Copy() const {
+  template <class Scalar,class LocalOrdinal, class GlobalOrdinal, class Node>
+  RCP<MueLu::SmootherPrototype<Scalar, LocalOrdinal, GlobalOrdinal, Node> > Ifpack2Smoother<Scalar, LocalOrdinal, GlobalOrdinal, Node>::Copy() const {
     RCP<Ifpack2Smoother> smoother = rcp(new Ifpack2Smoother(*this) );
     smoother->SetParameterList(this->GetParameterList());
     return smoother;
   }
 
-  template <class Scalar,class LocalOrdinal, class GlobalOrdinal, class Node, class LocalMatOps>
-  std::string Ifpack2Smoother<Scalar, LocalOrdinal, GlobalOrdinal, Node, LocalMatOps>::description() const {
+  template <class Scalar,class LocalOrdinal, class GlobalOrdinal, class Node>
+  std::string Ifpack2Smoother<Scalar, LocalOrdinal, GlobalOrdinal, Node>::description() const {
     std::ostringstream out;
     if (SmootherPrototype::IsSetup()) {
       out << prec_->description();
@@ -251,8 +412,8 @@ namespace MueLu {
     return out.str();
   }
 
-  template <class Scalar,class LocalOrdinal, class GlobalOrdinal, class Node, class LocalMatOps>
-  void Ifpack2Smoother<Scalar, LocalOrdinal, GlobalOrdinal, Node, LocalMatOps>::print(Teuchos::FancyOStream &out, const VerbLevel verbLevel) const {
+  template <class Scalar,class LocalOrdinal, class GlobalOrdinal, class Node>
+  void Ifpack2Smoother<Scalar, LocalOrdinal, GlobalOrdinal, Node>::print(Teuchos::FancyOStream &out, const VerbLevel verbLevel) const {
     MUELU_DESCRIBE;
 
     if (verbLevel & Parameters0)

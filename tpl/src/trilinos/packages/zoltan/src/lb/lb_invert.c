@@ -151,7 +151,7 @@ int ierr, ret_ierr = ZOLTAN_OK;
   msgtag = 32767;
   ierr = Zoltan_Comm_Create(&comm_plan, num_in, in_procs, zz->Communicator, 
                         msgtag, num_out);
-  if (ierr != ZOLTAN_OK && ierr != ZOLTAN_WARN) {
+  if (ierr != ZOLTAN_OK) {
     sprintf(msg, "Error %s returned from Zoltan_Comm_Create.",
             (ierr == ZOLTAN_MEMERR ? "ZOLTAN_MEMERR" : "ZOLTAN_FATAL"));
     ZOLTAN_PRINT_ERROR(zz->Proc, yo, msg);
@@ -173,10 +173,12 @@ int ierr, ret_ierr = ZOLTAN_OK;
       ret_ierr = ZOLTAN_MEMERR;
       goto End;
     }
-    if (!Zoltan_Special_Malloc(zz,(void **)out_local_ids,*num_out,
-                           ZOLTAN_SPECIAL_MALLOC_LID)) {
-      ret_ierr = ZOLTAN_MEMERR;
-      goto End;
+    if (num_lid_entries) {
+      if (!Zoltan_Special_Malloc(zz,(void **)out_local_ids,*num_out,
+                             ZOLTAN_SPECIAL_MALLOC_LID)) {
+        ret_ierr = ZOLTAN_MEMERR;
+        goto End;
+      }
     }
     if (!Zoltan_Special_Malloc(zz,(void **)out_procs,*num_out,
                            ZOLTAN_SPECIAL_MALLOC_INT)) {
@@ -203,7 +205,7 @@ int ierr, ret_ierr = ZOLTAN_OK;
   ierr = Zoltan_Comm_Do(comm_plan, msgtag2, (char *) in_global_ids, 
                     (int) (sizeof(ZOLTAN_ID_TYPE)*(num_gid_entries)), 
                     (char *) *out_global_ids);
-  if (ierr != ZOLTAN_OK && ierr != ZOLTAN_WARN) {
+  if (ierr != ZOLTAN_OK) {
     sprintf(msg, "Error %s returned from Zoltan_Comm_Do.", 
             (ierr == ZOLTAN_MEMERR ? "ZOLTAN_MEMERR" : "ZOLTAN_FATAL"));
     ZOLTAN_PRINT_ERROR(zz->Proc, yo, msg);
@@ -215,7 +217,7 @@ int ierr, ret_ierr = ZOLTAN_OK;
     ierr = Zoltan_Comm_Do(comm_plan, msgtag2, (char *) in_local_ids, 
                       (int) (sizeof(ZOLTAN_ID_TYPE)*num_lid_entries), 
                       (char *) *out_local_ids);
-    if (ierr != ZOLTAN_OK && ierr != ZOLTAN_WARN) {
+    if (ierr != ZOLTAN_OK) {
       sprintf(msg, "Error %s returned from Zoltan_Comm_Do.", 
               (ierr == ZOLTAN_MEMERR ? "ZOLTAN_MEMERR" : "ZOLTAN_FATAL"));
       ZOLTAN_PRINT_ERROR(zz->Proc, yo, msg);
@@ -230,7 +232,7 @@ int ierr, ret_ierr = ZOLTAN_OK;
     msgtag2--;
     ierr = Zoltan_Comm_Do(comm_plan, msgtag2, (char *) in_to_part, 
                       (int) sizeof(int), (char *) *out_to_part);
-    if (ierr != ZOLTAN_OK && ierr != ZOLTAN_WARN) {
+    if (ierr != ZOLTAN_OK) {
       sprintf(msg, "Error %s returned from Zoltan_Comm_Do.", 
               (ierr == ZOLTAN_MEMERR ? "ZOLTAN_MEMERR" : "ZOLTAN_FATAL"));
       ZOLTAN_PRINT_ERROR(zz->Proc, yo, msg);

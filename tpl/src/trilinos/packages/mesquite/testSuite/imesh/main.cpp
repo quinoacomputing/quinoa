@@ -18,7 +18,7 @@
 
     You should have received a copy of the GNU Lesser General Public License 
     (lgpl.txt) along with this library; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  
     diachin2@llnl.gov, djmelan@sandia.gov, mbrewer@sandia.gov, 
     pknupp@sandia.gov, tleurent@mcs.anl.gov, tmunson@mcs.anl.gov      
@@ -46,29 +46,29 @@ describe main.cpp here
 #include "meshfiles.h"
 
 #include "Mesquite.hpp"
-#include "MsqIMesh.hpp"
-#include "MeshImpl.hpp"
-#include "MsqError.hpp"
-#include "InstructionQueue.hpp"
-#include "TerminationCriterion.hpp"
-#include "QualityAssessor.hpp"
-#include "PlanarDomain.hpp"
-#include "MeshWriter.hpp"
+#include "Mesquite_MsqIMesh.hpp"
+#include "Mesquite_MeshImpl.hpp"
+#include "Mesquite_MsqError.hpp"
+#include "Mesquite_InstructionQueue.hpp"
+#include "Mesquite_TerminationCriterion.hpp"
+#include "Mesquite_QualityAssessor.hpp"
+#include "Mesquite_PlanarDomain.hpp"
+#include "Mesquite_MeshWriter.hpp"
 
 // algorithms
-#include "IdealWeightInverseMeanRatio.hpp"
-#include "EdgeLengthQualityMetric.hpp"
-#include "LPtoPTemplate.hpp"
-#include "FeasibleNewton.hpp"
-#include "ConjugateGradient.hpp"
-#include "SmartLaplacianSmoother.hpp"
+#include "Mesquite_IdealWeightInverseMeanRatio.hpp"
+#include "Mesquite_EdgeLengthQualityMetric.hpp"
+#include "Mesquite_LPtoPTemplate.hpp"
+#include "Mesquite_FeasibleNewton.hpp"
+#include "Mesquite_ConjugateGradient.hpp"
+#include "Mesquite_SmartLaplacianSmoother.hpp"
 
 #include <iostream>
 using std::cerr;
 using std::cout;
 using std::endl;
 
-#include "iBase.h"
+#include "Mesquite_iBase.h"
 
 
 using namespace Mesquite;

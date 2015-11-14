@@ -49,10 +49,11 @@
 #include <Xpetra_Matrix_fwd.hpp>
 
 #include "MueLu_ConfigDefs.hpp"
-#include "MueLu_TwoLevelFactoryBase.hpp"
 #include "MueLu_TransPFactory_fwd.hpp"
 
 #include "MueLu_Level_fwd.hpp"
+#include "MueLu_PerfUtils_fwd.hpp"
+#include "MueLu_TwoLevelFactoryBase.hpp"
 #include "MueLu_Utilities_fwd.hpp"
 
 namespace MueLu {
@@ -65,7 +66,10 @@ namespace MueLu {
     matrix to do the transpose.  This should probably be fixed at some point.
   */
 
-template <class Scalar = double, class LocalOrdinal = int, class GlobalOrdinal = LocalOrdinal, class Node = KokkosClassic::DefaultNode::DefaultNodeType, class LocalMatOps = typename KokkosClassic::DefaultKernels<void,LocalOrdinal,Node>::SparseOps> //TODO: or BlockSparseOp ?
+  template <class Scalar = double,
+            class LocalOrdinal = int,
+            class GlobalOrdinal = LocalOrdinal,
+            class Node = KokkosClassic::DefaultNode::DefaultNodeType>
   class TransPFactory : public TwoLevelFactoryBase {
 #undef MUELU_TRANSPFACTORY_SHORT
 #include "MueLu_UseShortNames.hpp"
@@ -80,7 +84,7 @@ template <class Scalar = double, class LocalOrdinal = int, class GlobalOrdinal =
     //! Destructor.
     virtual ~TransPFactory() { }
 
-    RCP<const ParameterList> GetValidParameterList(const ParameterList& paramList = ParameterList()) const;
+    RCP<const ParameterList> GetValidParameterList() const;
 
     //@}
 

@@ -43,7 +43,7 @@
 #ifndef __PANZER_STK_ScatterCellAvgQuantity_decl_HPP__
 #define __PANZER_STK_ScatterCellAvgQuantity_decl_HPP__
 
-#include "Phalanx_ConfigDefs.hpp"
+#include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_Macros.hpp"
 #include "Phalanx_MDField.hpp"
 
@@ -54,7 +54,7 @@
 
 #include "Panzer_STK_Interface.hpp"
 
-namespace panzer_stk {
+namespace panzer_stk_classic {
 
 /** This class is a scatter operation to the mesh. It
   * takes a set of field names and an integration rule 
@@ -66,14 +66,14 @@ namespace panzer_stk {
   * "Scatter Name" string specifying the name of this evaulator
   * "Field Names" of type this is a comma seperated list of strings,
   * "IR" of type <code>Teuchos::RCP<panzer::IntegrationRule></code> and
-  * "Mesh" of type <code>Teuchos::RCP<const panzer_stk::STK_Interface></code>.
+  * "Mesh" of type <code>Teuchos::RCP<const panzer_stk_classic::STK_Interface></code>.
   */
 PHX_EVALUATOR_CLASS(ScatterCellAvgQuantity)
-  typedef panzer_stk::STK_Interface::SolutionFieldType VariableField; // this is weird, but the correct thing
+  typedef panzer_stk_classic::STK_Interface::SolutionFieldType VariableField; // this is weird, but the correct thing
 
   std::size_t numValues_;
  
-  std::vector< PHX::MDField<ScalarT,panzer::Cell,panzer::Point> > scatterFields_;
+  std::vector< PHX::MDField<const ScalarT,panzer::Cell,panzer::Point> > scatterFields_;
   Teuchos::RCP<STK_Interface> mesh_;
 
   std::vector<VariableField*> stkFields_;

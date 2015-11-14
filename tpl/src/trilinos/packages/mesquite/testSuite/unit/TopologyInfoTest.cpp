@@ -18,7 +18,7 @@
 
     You should have received a copy of the GNU Lesser General Public License 
     (lgpl.txt) along with this library; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  
     kraftche@cae.wisc.edu    
    
@@ -27,11 +27,11 @@
 #include <algorithm>
 #include <iostream>
 using std::cout;
-#include "cppunit/extensions/HelperMacros.h"
+#include "Mesquite_cppunit/extensions/HelperMacros.h"
 
 #include "Mesquite.hpp"
-#include "MsqError.hpp"
-#include "TopologyInfo.hpp"
+#include "Mesquite_MsqError.hpp"
+#include "Mesquite_TopologyInfo.hpp"
 
 using namespace Mesquite;
 

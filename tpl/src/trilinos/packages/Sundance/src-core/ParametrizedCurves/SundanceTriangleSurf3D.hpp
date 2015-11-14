@@ -257,7 +257,11 @@ private:
 			double N = -(B-A)*(A-P);
 			if (::fabs(D) > 1e-10){
 					double t = N/D;
+#ifndef _MSC_VER
 					t = ::fmin(1,::fmax(t,0));
+#else
+					t = std::min<double>(1,std::max<double>(t,0));
+#endif
 					Pr = A + t*(B-A);
 			}
 	}

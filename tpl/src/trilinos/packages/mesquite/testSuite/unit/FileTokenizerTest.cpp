@@ -1,6 +1,6 @@
-#include "FileTokenizer.hpp"
-#include "MsqError.hpp"
-#include "cppunit/extensions/HelperMacros.h"
+#include "Mesquite_FileTokenizer.hpp"
+#include "Mesquite_MsqError.hpp"
+#include "Mesquite_cppunit/extensions/HelperMacros.h"
 #include <assert.h>
 
 #include <iostream>

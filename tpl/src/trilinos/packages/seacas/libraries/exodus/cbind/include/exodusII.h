@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2005 Sandia Corporation. Under the terms of Contract
- * DE-AC04-94AL85000 with Sandia Corporation, the U.S. Governement
+ * DE-AC04-94AL85000 with Sandia Corporation, the U.S. Government
  * retains certain rights in this software.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -45,6 +45,15 @@
 
 #include "netcdf.h"
 
+#if defined(NC_HAVE_META_H)
+#include "netcdf_meta.h"
+#if NC_HAS_PARALLEL
+#ifndef PARALLEL_AWARE_EXODUS
+#define PARALLEL_AWARE_EXODUS
+#endif
+#endif
+#endif
+
 #if defined(PARALLEL_AWARE_EXODUS)
 #include "netcdf_par.h"
 #endif
@@ -58,8 +67,8 @@
 #endif
 
 /* EXODUS II version number */
-#define EX_API_VERS 5.29f
-#define EX_API_VERS_NODOT 529
+#define EX_API_VERS 6.15f
+#define EX_API_VERS_NODOT 615
 #define EX_VERS EX_API_VERS
 #define NEMESIS_API_VERSION		EX_API_VERS
 #define NEMESIS_API_VERSION_NODOT	EX_API_VERS_NODOT
@@ -91,8 +100,8 @@ extern "C" {
    *@{
    */
   /* Modes for ex_open */
-#define EX_READ                 0x0000 /**< ex_open(): open file for reading (default) */
 #define EX_WRITE                0x0001 /**< ex_open(): open existing file for appending. */
+#define EX_READ                 0x0002 /**< ex_open(): open file for reading (default) */
 
 #define EX_NOCLOBBER            0x0004 /**< Don't overwrite existing database, default */
 #define EX_CLOBBER              0x0008 /**< Overwrite existing database if it exists */
@@ -119,7 +128,7 @@ extern "C" {
 
   /* Parallel IO mode flags... */
 #define EX_MPIIO               0x20000
-#define EX_MPIPOSIX            0x40000
+#define EX_MPIPOSIX            0x40000  /**< \deprecated As of libhdf5 1.8.13. */
 #define EX_PNETCDF             0x80000
   
   /*@}*/
@@ -176,7 +185,15 @@ extern "C" {
     EX_INQ_DB_MAX_ALLOWED_NAME_LENGTH  = 48,     /**< inquire size of MAX_NAME_LENGTH dimension on database */
     EX_INQ_DB_MAX_USED_NAME_LENGTH  = 49,     /**< inquire size of MAX_NAME_LENGTH dimension on database */
     EX_INQ_MAX_READ_NAME_LENGTH = 50,     /**< inquire client-specified max size of returned names */
+
     EX_INQ_DB_FLOAT_SIZE = 51,      /**< inquire size of floating-point values stored on database */
+    EX_INQ_NUM_CHILD_GROUPS= 52,     /**< inquire number of groups contained in this (exoid) group */
+    EX_INQ_GROUP_PARENT    = 53,     /**< inquire id of parent of this (exoid) group; returns exoid if at root */
+    EX_INQ_GROUP_ROOT      = 54,     /**< inquire id of root group "/" of this (exoid) group; returns exoid if at root */
+    EX_INQ_GROUP_NAME_LEN  = 55,     /**< inquire length of name of group exoid */
+    EX_INQ_GROUP_NAME      = 56,     /**< inquire name of group exoid. "/" returned for root group */
+    EX_INQ_FULL_GROUP_NAME_LEN = 57, /**< inquire length of full path name of this (exoid) group */
+    EX_INQ_FULL_GROUP_NAME = 58,     /**< inquire full "/"-separated path name of this (exoid) group */
     EX_INQ_INVALID         = -1};
 
   typedef enum ex_inquiry ex_inquiry;
@@ -378,7 +395,12 @@ extern "C" {
 
   EXODUS_EXPORT int ex_create_int (const char *path, int cmode, int *comp_ws, int *io_ws, int my_version);
 
- 
+  EXODUS_EXPORT int ex_create_group (int parent_id, const char *group_name);
+
+  EXODUS_EXPORT int ex_get_group_id(int exoid, const char *group_name, int *group_id);
+
+  EXODUS_EXPORT int ex_get_group_ids(int exoid, int *num_children, int *child_ids);
+  
   EXODUS_EXPORT int ex_get_all_times (int   exoid,
 				      void *time_values);
 
@@ -462,11 +484,6 @@ extern "C" {
 				  ex_entity_type obj_type,
 				  char **names);
 
-  EXODUS_EXPORT int ex_get_nset_var_tab (int  exoid,
-					 int  num_nodesets,
-					 int  num_nset_var,
-					 int *nset_var_tab);
-
   EXODUS_EXPORT int ex_get_n_nodal_var (int   exoid,
 					int   time_step,
 					int   nodal_var_index,
@@ -543,6 +560,11 @@ extern "C" {
 				 int   *comp_ws,
 				 int   *io_ws,
 				 float *version, int my_version);
+  
+  EXODUS_EXPORT int ex_add_attr(int exoid,
+				ex_entity_type obj_type,
+				ex_entity_id   obj_id,
+				int64_t     num_attr_per_entry);
   
   EXODUS_EXPORT int ex_put_attr_param (int   exoid,
 				       ex_entity_type obj_type,
@@ -775,6 +797,14 @@ extern "C" {
 
   EXODUS_EXPORT int ex_put_block_param(int exoid,
 				       const ex_block block);
+
+  EXODUS_EXPORT int ex_get_block_params(int exoid,
+					size_t block_count,
+					struct ex_block **blocks);
+
+  EXODUS_EXPORT int ex_put_block_params(int exoid,
+					size_t block_count,
+					const struct ex_block *blocks);
 
   /*  Write All Edge Face and Element Block Parameters */
   EXODUS_EXPORT int ex_put_concat_all_blocks(int exoid,
@@ -1946,25 +1976,21 @@ ex_put_elem_cmap(int  exoid,	/* NetCDF/Exodus file ID */
     * ======================================================================== */
 
   /* ERROR CODE DEFINITIONS AND STORAGE                                       */
-  extern int exerrval;     /**< shared error return value                */
-  extern int exoptval;     /**< error reporting flag (default is quiet)  */
+  EXODUS_EXPORT int exerrval;     /**< shared error return value                */
+  EXODUS_EXPORT int exoptval;     /**< error reporting flag (default is quiet)  */
 
-  char* ex_name_of_object(ex_entity_type obj_type);
-  ex_entity_type ex_var_type_to_ex_entity_type(char var_type);
+  EXODUS_EXPORT char* ex_name_of_object(ex_entity_type obj_type);
+  EXODUS_EXPORT ex_entity_type ex_var_type_to_ex_entity_type(char var_type);
 
   /* Should be internal use only, but was in external include file for
      nemesis and some codes are using the function
   */
-  int ex_get_idx(int      neid,	 /* NetCDF/Exodus file ID */
+  EXODUS_EXPORT int ex_get_idx(int      neid,	 /* NetCDF/Exodus file ID */
 		 const char *ne_var_name, /* Nemesis index variable name */
 		 int64_t *index,	 /* array of length 2 to hold results */
 		 int      pos		 /* position of this proc/cmap in index */
 		 );
 
-
-#ifdef __cplusplus
-}                               /* close brackets on extern "C" declaration */
-#endif
 
 /**
  * \defgroup ErrorReturnCodes Exodus error return codes - exerrval return values
@@ -1976,10 +2002,16 @@ ex_put_elem_cmap(int  exoid,	/* NetCDF/Exodus file ID */
 #define EX_WRONGFILETYPE 1003   /**< wrong file type for function             */
 #define EX_LOOKUPFAIL    1004   /**< id table lookup failed                   */
 #define EX_BADPARAM      1005   /**< bad parameter passed                     */
+#define EX_INTERNAL      1006   /**< internal logic error                     */
 #define EX_MSG          -1000   /**< message print code - no error implied    */
 #define EX_PRTLASTMSG   -1001   /**< print last error message msg code        */
+#define EX_NOTROOTID    -1002   /**< file id is not the root id; it is a subgroup id */
 #define EX_NULLENTITY   -1006   /**< null entity found                        */
 /* @} */
+
+#ifdef __cplusplus
+}                               /* close brackets on extern "C" declaration */
+#endif
 
 #endif
 

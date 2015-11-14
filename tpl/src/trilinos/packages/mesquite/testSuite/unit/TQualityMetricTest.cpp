@@ -18,7 +18,7 @@
 
     You should have received a copy of the GNU Lesser General Public License 
     (lgpl.txt) along with this library; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
 
     (2010) kraftche@cae.wisc.edu    
 
@@ -31,11 +31,11 @@
  */
 
 #include "Mesquite.hpp"
-#include "TQualityMetric.hpp"
-#include "TInverseMeanRatio.hpp"
-#include "IdealWeightInverseMeanRatio.hpp"
+#include "Mesquite_TQualityMetric.hpp"
+#include "Mesquite_TInverseMeanRatio.hpp"
+#include "Mesquite_IdealWeightInverseMeanRatio.hpp"
 #include "TMPQualityMetricTest.hpp"
-#include "TShapeNB1.hpp"
+#include "Mesquite_TShapeNB1.hpp"
 
 template <> class TMPTypes<TQualityMetric> {
 public:

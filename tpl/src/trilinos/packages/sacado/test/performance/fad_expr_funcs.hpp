@@ -19,7 +19,7 @@
 //  
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
 // USA
 // Questions? Contact David M. Gay (dmgay@sandia.gov) or Eric T. Phipps
 // (etphipp@sandia.gov).
@@ -30,14 +30,8 @@
 #ifndef FAD_EXPR_FUNCS_HPP
 #define FAD_EXPR_FUNCS_HPP
 
-#include "Sacado_MathFunctions.hpp"
-#include "Sacado_Fad_DFad.hpp"
-#include "Sacado_ELRFad_DFad.hpp"
-#include "Sacado_CacheFad_DFad.hpp"
-#include "Sacado_ELRCacheFad_DFad.hpp"
+#include "Sacado.hpp"
 #include "Sacado_Fad_SimpleFad.hpp"
-
-#include "Sacado_ConfigDefs.h"
 
 // ADOL-C includes
 #ifdef HAVE_ADOLC

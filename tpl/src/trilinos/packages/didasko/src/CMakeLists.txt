@@ -3,7 +3,6 @@
 #potentially we could put the latex building logic in here as well at
 #some point.
 
-INCLUDE(TribitsLibraryMacros)
 
 #
 # A) Package-specific configuration options

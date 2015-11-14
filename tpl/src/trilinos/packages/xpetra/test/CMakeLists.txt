@@ -1,6 +1,5 @@
-INCLUDE(AddSubdirectories)
 
-INCLUDE_DIRECTORIES(REQUIRED_DURING_INSTALLATION_TESTING ${CMAKE_CURRENT_SOURCE_DIR})
+TRIBITS_INCLUDE_DIRECTORIES(REQUIRED_DURING_INSTALLATION_TESTING ${CMAKE_CURRENT_SOURCE_DIR})
 
 ADD_SUBDIRECTORIES(
 # Platform
@@ -14,10 +13,6 @@ ADD_SUBDIRECTORIES(
 # Utils
 # CrsGraph
   CrsMatrix
-# BlockCrsGraph
-# BlockMap
-# BlockMultiVector
-# VbrMatrix
 
 # Tests specifically written for Xpetra:
   Matrix

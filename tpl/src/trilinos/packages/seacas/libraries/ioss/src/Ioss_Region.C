@@ -91,15 +91,27 @@ namespace {
     std::vector<T>(container).swap(container);
   }
 
-  void check_for_duplicate_names(const Ioss::Region *region, const std::string &name)
+  void check_for_duplicate_names(const Ioss::Region *region, const Ioss::GroupingEntity *entity)
   {
+    std::string name = entity->name();
     const Ioss::GroupingEntity *old_ge = region->get_entity(name);
 
     if (old_ge != NULL && !(old_ge->type() == Ioss::SIDEBLOCK || old_ge->type() == Ioss::SIDESET)) {
       std::string filename = region->get_database()->get_filename();
       std::ostringstream errmsg;
-      errmsg << "ERROR: There are multiple blocks or sets with the name '"
-          << name << "' defined in the exodus file '" << filename << "'.";
+      int64_t id1 = 0;
+      int64_t id2 = 0;
+      if (entity->property_exists("id")) {
+	id1 = entity->get_property("id").get_int();
+      }
+      if (old_ge->property_exists("id")) {
+	id2 = old_ge->get_property("id").get_int();
+      }
+      errmsg << "ERROR: There are multiple blocks or sets with the same name "
+	     << "defined in the exodus file '" << filename << "'.\n"
+	     << "\tBoth " << entity->type_string() << " " << id1
+	     << " and " << old_ge->type_string() << " " << id2
+	     << " are named '" << name << "'.  All names must be unique.";
       IOSS_ERROR(errmsg);
     }
   }
@@ -162,10 +174,6 @@ namespace Ioss {
     properties.add(Property(this,
 			    "database_name",       Property::STRING));
 
-    if (iodatabase->usage() == Ioss::WRITE_HISTORY &&
-	!(iodatabase->is_input() || iodatabase->open_create_behavior() == Ioss::DB_APPEND)) {
-      Ioss::Utils::generate_history_mesh(this);
-    }
   }
 
   Region::~Region()
@@ -388,6 +396,14 @@ namespace Ioss {
     // cleanup/data checking/manipulations it needs to do.
     if (success) {
       DatabaseIO *db = (DatabaseIO*)get_database();
+
+      if (new_state == STATE_DEFINE_TRANSIENT && db->usage() == Ioss::WRITE_HISTORY &&
+	  !(db->is_input() || db->open_create_behavior() == Ioss::DB_APPEND)) {
+	set_state(STATE_CLOSED);
+	Ioss::Utils::generate_history_mesh(this);
+	set_state(new_state);
+      }
+
       success = db->begin(new_state);
     }
 
@@ -599,12 +615,19 @@ namespace Ioss {
   double Region::begin_state(int state)
   {
     double time = 0.0;
-    if (state > stateCount) {
+    if (get_database()->is_input() && stateCount == 0) {
       std::ostringstream errmsg;
-      errmsg << "ERROR: Requested state does not exist.\n"
+      errmsg << "ERROR: There are no states (time steps) on the input database.\n"
 	     << "       [" << get_database()->get_filename() << "]\n";
       IOSS_ERROR(errmsg);
-    } else if (currentState != -1) {
+    }
+    if (state <= 0 || state > stateCount) {
+      std::ostringstream errmsg;
+      errmsg << "ERROR: Requested state (" << state << ") is invalid.\n"
+	     << "       State must be between 1 and " << stateCount << ".\n"
+	     << "       [" << get_database()->get_filename() << "]\n";
+      IOSS_ERROR(errmsg);
+    } else if (currentState != -1 && !get_database()->is_input()) {
       std::ostringstream errmsg;
       errmsg << "ERROR: State " << currentState
 	     << " was not ended. Can not begin new state.\n"
@@ -655,7 +678,7 @@ namespace Ioss {
 
   bool Region::add(NodeBlock    *node_block)
   {
-    check_for_duplicate_names(this, node_block->name());
+    check_for_duplicate_names(this, node_block);
 
     // Check that region is in correct state for adding entities
     if (get_state() == STATE_DEFINE_MODEL) {
@@ -682,7 +705,7 @@ namespace Ioss {
 
   bool Region::add(ElementBlock *element_block)
   {
-    check_for_duplicate_names(this, element_block->name());
+    check_for_duplicate_names(this, element_block);
 
     // Check that region is in correct state for adding entities
     if (get_state() == STATE_DEFINE_MODEL) {
@@ -729,7 +752,7 @@ namespace Ioss {
 
   bool Region::add(FaceBlock *face_block)
   {
-    check_for_duplicate_names(this, face_block->name());
+    check_for_duplicate_names(this, face_block);
 
     // Check that region is in correct state for adding entities
     if (get_state() == STATE_DEFINE_MODEL) {
@@ -775,7 +798,7 @@ namespace Ioss {
 
   bool Region::add(EdgeBlock *edge_block)
   {
-    check_for_duplicate_names(this, edge_block->name());
+    check_for_duplicate_names(this, edge_block);
 
     // Check that region is in correct state for adding entities
     if (get_state() == STATE_DEFINE_MODEL) {
@@ -821,7 +844,7 @@ namespace Ioss {
 
   bool Region::add(SideSet      *sideset)
   {
-    check_for_duplicate_names(this, sideset->name());
+    check_for_duplicate_names(this, sideset);
     // Check that region is in correct state for adding entities
     if (get_state() == STATE_DEFINE_MODEL) {
       // Add name as alias to itself to simplify later uses...
@@ -835,7 +858,7 @@ namespace Ioss {
 
   bool Region::add(NodeSet      *nodeset)
   {
-    check_for_duplicate_names(this, nodeset->name());
+    check_for_duplicate_names(this, nodeset);
     // Check that region is in correct state for adding entities
     if (get_state() == STATE_DEFINE_MODEL) {
       // Add name as alias to itself to simplify later uses...
@@ -849,7 +872,7 @@ namespace Ioss {
 
   bool Region::add(EdgeSet      *edgeset)
   {
-    check_for_duplicate_names(this, edgeset->name());
+    check_for_duplicate_names(this, edgeset);
     // Check that region is in correct state for adding entities
     if (get_state() == STATE_DEFINE_MODEL) {
       // Add name as alias to itself to simplify later uses...
@@ -863,7 +886,7 @@ namespace Ioss {
 
   bool Region::add(FaceSet      *faceset)
   {
-    check_for_duplicate_names(this, faceset->name());
+    check_for_duplicate_names(this, faceset);
     // Check that region is in correct state for adding entities
     if (get_state() == STATE_DEFINE_MODEL) {
       // Add name as alias to itself to simplify later uses...
@@ -877,7 +900,7 @@ namespace Ioss {
 
   bool Region::add(ElementSet      *elementset)
   {
-    check_for_duplicate_names(this, elementset->name());
+    check_for_duplicate_names(this, elementset);
     // Check that region is in correct state for adding entities
     if (get_state() == STATE_DEFINE_MODEL) {
       // Add name as alias to itself to simplify later uses...
@@ -891,7 +914,7 @@ namespace Ioss {
 
   bool Region::add(CommSet      *commset)
   {
-    check_for_duplicate_names(this, commset->name());
+    check_for_duplicate_names(this, commset);
     // Check that region is in correct state for adding entities
     if (get_state() == STATE_DEFINE_MODEL) {
       // Add name as alias to itself to simplify later uses...

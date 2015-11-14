@@ -60,41 +60,8 @@ namespace Sacado {
 
 namespace Sacado {
 
-  //! Specialization of %Promote to Taylor types
-  template <typename S>
-  class Promote< MP::Vector<S>, MP::Vector<S> > {
-  public:
-
-    typedef MP::Vector<S> type;
-  };
-
   //! Specialization of %Promote to Vector types
-  template <typename R, typename S>
-  class Promote< MP::Vector<S>, R > {
-  public:
-
-    typedef typename ValueType< MP::Vector<S> >::type value_type_l;
-    typedef typename ValueType<R>::type value_type_r;
-    typedef typename Promote<value_type_l,value_type_r>::type value_type;
-    typedef typename S::ordinal_type ordinal_type;
-    typedef typename Sacado::mpl::apply<S,ordinal_type,value_type>::type storage_type;
-
-    typedef MP::Vector<storage_type> type;
-  };
-
-  //! Specialization of %Promote to Vector types
-  template <typename L, typename S>
-  class Promote< L, MP::Vector<S> > {
-  public:
-
-    typedef typename ValueType<L>::type value_type_l;
-    typedef typename ValueType< MP::Vector<S> >::type value_type_r;
-    typedef typename Promote<value_type_l,value_type_r>::type value_type;
-    typedef typename S::ordinal_type ordinal_type;
-    typedef typename Sacado::mpl::apply<S,ordinal_type,value_type>::type storage_type;
-
-    typedef MP::Vector<storage_type> type;
-  };
+  SACADO_AD_PROMOTE_SPEC( MP, Vector )
 
   //! Specialization of %ScalarType to Vector types
   template <typename S>
@@ -117,7 +84,7 @@ namespace Sacado {
   //! Specialization of %IsADType to Vector types
   template <typename S>
   struct IsScalarType< MP::Vector<S> > {
-    static const bool value = false;
+    static const bool value = S::is_static;
   };
 
   //! Specialization of %Value to Vector types
@@ -145,13 +112,19 @@ namespace Sacado {
         StringName<S>::eval() + " >"; }
   };
 
-  //! Specialization of IsEqual to Vector types
+  //! Specialization of %IsEqual to Vector types
   template <typename S>
   struct IsEqual< MP::Vector<S> > {
     static bool eval(const MP::Vector<S>& x,
                      const MP::Vector<S>& y) {
       return x.isEqualTo(y);
     }
+  };
+
+  //! Specialization of %IsStaticallySized to Vector types
+  template <typename S>
+  struct IsStaticallySized< MP::Vector<S> > {
+    static const bool value = S::is_static;
   };
 
 } // namespace Sacado
@@ -162,6 +135,7 @@ namespace Sacado {
 #include "Teuchos_ScalarTraits.hpp"
 #include "Sacado_ETV_ScalarTraitsImp.hpp"
 #include "Teuchos_SerializationTraits.hpp"
+#include "Teuchos_as.hpp"
 
 namespace Teuchos {
 
@@ -195,125 +169,137 @@ namespace Teuchos {
     typedef Sacado::MP::Vector<S> ScalarType;
     typedef typename S::value_type value_type;
     typedef typename S::ordinal_type ordinal_type;
+    typedef Teuchos::ScalarTraits<value_type> TVT;
 
-    typedef typename Teuchos::ScalarTraits<value_type>::magnitudeType value_mag_type;
-    typedef typename Teuchos::ScalarTraits<value_type>::halfPrecision value_half_type;
-    typedef typename Teuchos::ScalarTraits<value_type>::doublePrecision value_double_type;
+    typedef typename TVT::magnitudeType value_mag_type;
+    typedef typename TVT::halfPrecision value_half_type;
+    typedef typename TVT::doublePrecision value_double_type;
 
     typedef typename Sacado::mpl::apply<S,ordinal_type,value_mag_type>::type storage_mag_type;
     typedef typename Sacado::mpl::apply<S,ordinal_type,value_half_type>::type storage_half_type;
     typedef typename Sacado::mpl::apply<S,ordinal_type,value_double_type>::type storage_double_type;
 
-    typedef Sacado::MP::Vector<storage_mag_type> magnitudeType;
-    //typedef value_mag_type magnitudeType;
+    //typedef Sacado::MP::Vector<storage_mag_type> magnitudeType;
+    typedef value_mag_type magnitudeType;
     typedef Sacado::MP::Vector<storage_half_type> halfPrecision;
     typedef Sacado::MP::Vector<storage_double_type> doublePrecision;
 
-    static const bool isComplex = Teuchos::ScalarTraits<value_type>::isComplex;
-    static const bool isOrdinal = Teuchos::ScalarTraits<value_type>::isOrdinal;
-    static const bool isComparable =
-      Teuchos::ScalarTraits<value_type>::isComparable;
-    static const bool hasMachineParameters =
-      Teuchos::ScalarTraits<value_type>::hasMachineParameters;
-    static typename Teuchos::ScalarTraits<value_type>::magnitudeType eps() {
-      return Teuchos::ScalarTraits<value_type>::eps();
-    }
-    static typename Teuchos::ScalarTraits<value_type>::magnitudeType sfmin() {
-      return Teuchos::ScalarTraits<value_type>::sfmin();
-    }
-    static typename Teuchos::ScalarTraits<value_type>::magnitudeType base()  {
-      return Teuchos::ScalarTraits<value_type>::base();
-    }
-    static typename Teuchos::ScalarTraits<value_type>::magnitudeType prec()  {
-      return Teuchos::ScalarTraits<value_type>::prec();
-    }
-    static typename Teuchos::ScalarTraits<value_type>::magnitudeType t()     {
-      return Teuchos::ScalarTraits<value_type>::t();
-    }
-    static typename Teuchos::ScalarTraits<value_type>::magnitudeType rnd()   {
-      return Teuchos::ScalarTraits<value_type>::rnd();
-    }
-    static typename Teuchos::ScalarTraits<value_type>::magnitudeType emin()  {
-      return Teuchos::ScalarTraits<value_type>::emin();
-    }
-    static typename Teuchos::ScalarTraits<value_type>::magnitudeType rmin()  {
-      return Teuchos::ScalarTraits<value_type>::rmin();
-    }
-    static typename Teuchos::ScalarTraits<value_type>::magnitudeType emax()  {
-      return Teuchos::ScalarTraits<value_type>::emax();
-    }
-    static typename Teuchos::ScalarTraits<value_type>::magnitudeType rmax()  {
-      return Teuchos::ScalarTraits<value_type>::rmax();
-    }
+    static const bool isComplex = TVT::isComplex;
+    static const bool isOrdinal = TVT::isOrdinal;
+    static const bool isComparable = TVT::isComparable;
+    static const bool hasMachineParameters = TVT::hasMachineParameters;
+    KOKKOS_INLINE_FUNCTION
+    static value_mag_type eps() { return TVT::eps(); }
+    KOKKOS_INLINE_FUNCTION
+    static value_mag_type sfmin() { return TVT::sfmin(); }
+    KOKKOS_INLINE_FUNCTION
+    static value_mag_type base()  { return TVT::base(); }
+    KOKKOS_INLINE_FUNCTION
+    static value_mag_type prec()  { return TVT::prec(); }
+    KOKKOS_INLINE_FUNCTION
+    static value_mag_type t()     { return TVT::t(); }
+    KOKKOS_INLINE_FUNCTION
+    static value_mag_type rnd()   { return TVT::rnd(); }
+    KOKKOS_INLINE_FUNCTION
+    static value_mag_type emin()  { return TVT::emin(); }
+    KOKKOS_INLINE_FUNCTION
+    static value_mag_type rmin()  { return TVT::rmin(); }
+    KOKKOS_INLINE_FUNCTION
+    static value_mag_type emax()  { return TVT::emax(); }
+    KOKKOS_INLINE_FUNCTION
+    static value_mag_type rmax()  { return TVT::rmax(); }
+    KOKKOS_INLINE_FUNCTION
     static magnitudeType magnitude(const ScalarType& a) {
-      return std::fabs(a);
-      // magnitudeType m = magnitudeType(0.0);
-      // const ordinal_type sz = a.size();
-      // for (ordinal_type i=0; i<sz; ++i)
-      //   m += a.fastAccessCoeff(i)*a.fastAccessCoeff(i);
-      // return std::sqrt(m);
+      //return std::fabs(a);
+      magnitudeType m = magnitudeType(0.0);
+      const ordinal_type sz = a.size();
+      for (ordinal_type i=0; i<sz; ++i) {
+        value_mag_type t = TVT::magnitude(a.fastAccessCoeff(i));
+        m +=t*t;
+      }
+      return std::sqrt(m);
     }
-    static value_type zero()  {
-      return value_type(0.0);
-    }
-    static value_type one()   {
-      return value_type(1.0);
-    }
+    KOKKOS_INLINE_FUNCTION
+    static ScalarType zero()  { return ScalarType(0.0); }
+    KOKKOS_INLINE_FUNCTION
+    static ScalarType one()   { return ScalarType(1.0); }
 
-    // Conjugate is only defined for real derivative components
+    KOKKOS_INLINE_FUNCTION
     static ScalarType conjugate(const ScalarType& x) {
       int sz = x.size();
       ScalarType y(sz, value_type(0.0));
       for (int i=0; i<sz; i++)
-        y.fastAccessCoeff(i) =
-          Teuchos::ScalarTraits<value_type>::conjugate(x.fastAccessCoeff(i));
+        y.fastAccessCoeff(i) = TVT::conjugate(x.fastAccessCoeff(i));
       return y;
     }
 
-    // Real part is only defined for real derivative components
+    KOKKOS_INLINE_FUNCTION
+    static magnitudeType real(const ScalarType& x) {
+      magnitudeType m = magnitudeType(0.0);
+      const ordinal_type sz = x.size();
+      for (ordinal_type i=0; i<sz; ++i) {
+        value_mag_type t = TVT::real(x.fastAccessCoeff(i));
+        m +=t*t;
+      }
+      return std::sqrt(m);
+    }
+
+    KOKKOS_INLINE_FUNCTION
+    static magnitudeType imag(const ScalarType& x) {
+      magnitudeType m = magnitudeType(0.0);
+      const ordinal_type sz = x.size();
+      for (ordinal_type i=0; i<sz; ++i) {
+        value_mag_type t = TVT::imag(x.fastAccessCoeff(i));
+        m +=t*t;
+      }
+      return std::sqrt(m);
+    }
+
+/*
+    KOKKOS_INLINE_FUNCTION
     static ScalarType real(const ScalarType& x) {
       int sz = x.size();
       ScalarType y(sz, value_type(0.0));
       for (int i=0; i<sz; i++)
-        y.fastAccessCoeff(i) =
-          Teuchos::ScalarTraits<value_type>::real(x.fastAccessCoeff(i));
+        y.fastAccessCoeff(i) = TVT::real(x.fastAccessCoeff(i));
       return y;
     }
 
-    // Imaginary part is only defined for real derivative components
+    KOKKOS_INLINE_FUNCTION
     static ScalarType imag(const ScalarType& x) {
       int sz = x.size();
       ScalarType y(sz, value_type(0.0));
       for (int i=0; i<sz; i++)
-        y.fastAccessCoeff(i) =
-          Teuchos::ScalarTraits<value_type>::imag(x.fastAccessCoeff(i));
+        y.fastAccessCoeff(i) = TVT::imag(x.fastAccessCoeff(i));
       return y;
     }
+*/
 
-    static value_type nan() {
-      return Teuchos::ScalarTraits<value_type>::nan();
-    }
+    KOKKOS_INLINE_FUNCTION
+    static value_type nan() { return TVT::nan(); }
+    KOKKOS_INLINE_FUNCTION
     static bool isnaninf(const ScalarType& x) {
       for (int i=0; i<x.size(); i++)
-        if (Teuchos::ScalarTraits<value_type>::isnaninf(x.fastAccessCoeff(i)))
+        if (TVT::isnaninf(x.fastAccessCoeff(i)))
           return true;
       return false;
     }
-    static void seedrandom(unsigned int s) {
-      Teuchos::ScalarTraits<value_type>::seedrandom(s);
-    }
-    static value_type random() {
-      return Teuchos::ScalarTraits<value_type>::random();
-    }
-    static std::string name() {
-      return Sacado::StringName<ScalarType>::eval();
-    }
-    static ScalarType squareroot(const ScalarType& x) {
-      return std::sqrt(x);
-    }
+    KOKKOS_INLINE_FUNCTION
+    static void seedrandom(unsigned int s) { TVT::seedrandom(s); }
+    KOKKOS_INLINE_FUNCTION
+    static ScalarType random() { return ScalarType(TVT::random()); }
+    KOKKOS_INLINE_FUNCTION
+    static const char * name() { return "Sacado::MP::Vector<>"; }
+    KOKKOS_INLINE_FUNCTION
+    static ScalarType squareroot(const ScalarType& x) { return std::sqrt(x); }
+    KOKKOS_INLINE_FUNCTION
     static ScalarType pow(const ScalarType& x, const ScalarType& y) {
       return std::pow(x,y);
     }
+    KOKKOS_INLINE_FUNCTION
+    static ScalarType log(const ScalarType& x) { return std::log(x); }
+    KOKKOS_INLINE_FUNCTION
+    static ScalarType log10(const ScalarType& x) { return std::log10(x); }
   };
 
   //! Specialization of %Teuchos::SerializationTraits
@@ -338,6 +324,55 @@ namespace Teuchos {
                         Ordinal sz = 0) :
       Base(vs, sz) {}
   };
+
+//! Specializations for Teuchos::as<T>
+template<class TypeTo, class StorageFrom>
+class ValueTypeConversionTraits< TypeTo, Sacado::MP::Vector<StorageFrom> > {
+public:
+  typedef Sacado::MP::Vector<StorageFrom> TypeFrom;
+  //! Convert t from a TypeFrom object to a TypeTo object.
+  static TypeTo convert (const TypeFrom& t) {
+    // This default implementation is just an implicit conversion and
+    // may generate compiler warnings on dangerous conversions.
+    return Teuchos::as<TypeTo>(t.coeff(0));
+  }
+
+  //! Convert t from a TypeFrom object to a TypeTo object, with checks for validity.
+  static TypeTo safeConvert (const TypeFrom& t) {
+    // This default implementation is just an implicit conversion and
+    // may generate compiler warnings on dangerous conversions.  No
+    // runtime checking (e.g., for overflow) can be done by default;
+    // only specializations can define meaningful and portable
+    // run-time checks of conversions.
+    return Teuchos::as<TypeTo>(t.coeff(0));
+  }
+};
+
+template<class TypeTo, class ExprFrom>
+class ValueTypeConversionTraits< TypeTo, Sacado::MP::Expr<ExprFrom> > {
+public:
+  typedef Sacado::MP::Expr<ExprFrom> TypeFrom;
+  //! Convert t from a TypeFrom object to a TypeTo object.
+  static TypeTo convert (const TypeFrom& t) {
+    // This default implementation is just an implicit conversion and
+    // may generate compiler warnings on dangerous conversions.
+    return Teuchos::as<TypeTo>(t.derived().coeff(0));
+  }
+
+  //! Convert t from a TypeFrom object to a TypeTo object, with checks for validity.
+  static TypeTo safeConvert (const TypeFrom& t) {
+    // This default implementation is just an implicit conversion and
+    // may generate compiler warnings on dangerous conversions.  No
+    // runtime checking (e.g., for overflow) can be done by default;
+    // only specializations can define meaningful and portable
+    // run-time checks of conversions.
+    return Teuchos::as<TypeTo>(t.derived().coeff(0));
+  }
+};
+
+// Should also do TypeTo, and TypeTo,TypeFrom as MP::Vector, but the real way
+// to fix is to make sure it is never called at all (requires fixing
+// magnitudeType)
 
 }
 #endif // HAVE_SACADO_TEUCHOS

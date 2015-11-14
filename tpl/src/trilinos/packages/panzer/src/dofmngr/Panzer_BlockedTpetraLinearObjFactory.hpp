@@ -75,7 +75,7 @@
 
 namespace panzer {
 
-template <typename Traits,typename ScalarT,typename LocalOrdinalT,typename GlobalOrdinalT,typename NodeT=KokkosClassic::DefaultNode::DefaultNodeType>
+template <typename Traits,typename ScalarT,typename LocalOrdinalT,typename GlobalOrdinalT,typename NodeT=panzer::TpetraNodeType>
 class BlockedTpetraLinearObjFactory : public LinearObjFactory<Traits>
                                     , public ThyraObjFactory<double> {
 public:
@@ -102,6 +102,12 @@ public:
 
 /*************** Linear object factory methods *******************/
 
+   virtual void readVector(const std::string & identifier,LinearObjContainer & loc,int id) const 
+   { TEUCHOS_ASSERT(false); }
+
+   virtual void writeVector(const std::string & identifier,const LinearObjContainer & loc,int id) const
+   { TEUCHOS_ASSERT(false); }
+
    virtual Teuchos::RCP<LinearObjContainer> buildLinearObjContainer() const;
 
    virtual Teuchos::RCP<LinearObjContainer> buildPrimitiveLinearObjContainer() const 
@@ -126,7 +132,7 @@ public:
    virtual void adjustForDirichletConditions(const LinearObjContainer & localBCRows,
                                              const LinearObjContainer & globalBCRows,
                                              LinearObjContainer & ghostedObjs,
-                                             bool zeroVectorRows=false) const;
+                                             bool zeroVectorRows=false, bool adjustX = false) const;
 
    /** Adjust a vector by replacing selected rows with the value of the evaluated
      * dirichlet conditions. This is handled through the standard container mechanism.
@@ -139,11 +145,16 @@ public:
    //! Use preconstructed scatter evaluators
    template <typename EvalT>
    Teuchos::RCP<panzer::CloneableEvaluator> buildScatter() const
-   { return Teuchos::rcp(new ScatterResidual_BlockedTpetra<EvalT,Traits,ScalarT,LocalOrdinalT,GlobalOrdinalT,NodeT>(blockedDOFManager_)); }
+   { return Teuchos::rcp(new ScatterResidual_BlockedTpetra<EvalT,Traits,LocalOrdinalT,GlobalOrdinalT,NodeT>(blockedDOFManager_)); }
 
    //! Use preconstructed gather evaluators
    template <typename EvalT>
    Teuchos::RCP<panzer::CloneableEvaluator > buildGather() const
+   { return Teuchos::rcp(new GatherSolution_BlockedTpetra<EvalT,Traits,ScalarT,LocalOrdinalT,GlobalOrdinalT,NodeT>(blockedDOFManager_)); }
+
+   //! Use preconstructed gather evaluators
+   template <typename EvalT>
+   Teuchos::RCP<panzer::CloneableEvaluator > buildGatherDomain() const
    { return Teuchos::rcp(new GatherSolution_BlockedTpetra<EvalT,Traits,ScalarT,LocalOrdinalT,GlobalOrdinalT,NodeT>(blockedDOFManager_)); }
 
    //! Use preconstructed gather evaluators
@@ -154,12 +165,12 @@ public:
    //! Use preconstructed dirichlet scatter evaluators
    template <typename EvalT>
    Teuchos::RCP<panzer::CloneableEvaluator> buildScatterDirichlet() const
-   { return Teuchos::rcp(new ScatterDirichletResidual_BlockedTpetra<EvalT,Traits,ScalarT,LocalOrdinalT,GlobalOrdinalT,NodeT>(blockedDOFManager_)); }
+   { return Teuchos::rcp(new ScatterDirichletResidual_BlockedTpetra<EvalT,Traits,LocalOrdinalT,GlobalOrdinalT,NodeT>(blockedDOFManager_)); }
 
    //! Use preconstructed initial condition scatter evaluators
    template <typename EvalT>
    Teuchos::RCP<panzer::CloneableEvaluator> buildScatterInitialCondition() const
-   { return Teuchos::rcp(new ScatterInitialCondition_BlockedTpetra<EvalT,Traits,ScalarT,LocalOrdinalT,GlobalOrdinalT,NodeT>(blockedDOFManager_)); }
+   { return Teuchos::rcp(new ScatterInitialCondition_BlockedTpetra<EvalT,Traits,LocalOrdinalT,GlobalOrdinalT,NodeT>(blockedDOFManager_)); }
 
 /*************** Generic helper functions for container setup *******************/
    
@@ -266,6 +277,10 @@ public:
    virtual void beginFill(LinearObjContainer & loc) const;
    virtual void endFill(LinearObjContainer & loc) const;
 
+   //! Get the unique global indexer this factory was created with.
+   Teuchos::RCP<const panzer::UniqueGlobalIndexerBase> getUniqueGlobalIndexerBase() const
+   { return blockProvider_; }
+
 protected:
 /*************** Generic methods/members *******************/
 
@@ -328,7 +343,5 @@ protected:
 };
 
 }
-
-#include "Panzer_BlockedTpetraLinearObjFactory_impl.hpp"
 
 #endif

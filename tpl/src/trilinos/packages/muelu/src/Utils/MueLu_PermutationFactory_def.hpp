@@ -78,24 +78,16 @@
 
 #undef DEBUG_OUTPUT
 
-// MPI helper
-#define sumAll(rcpComm, in, out)                                        \
-    Teuchos::reduceAll(*rcpComm, Teuchos::REDUCE_SUM, in, Teuchos::outArg(out));
-#define minAll(rcpComm, in, out)                                        \
-    Teuchos::reduceAll(*rcpComm, Teuchos::REDUCE_MIN, in, Teuchos::outArg(out));
-#define maxAll(rcpComm, in, out)                                        \
-    Teuchos::reduceAll(*rcpComm, Teuchos::REDUCE_MAX, in, Teuchos::outArg(out));
-
 namespace MueLu {
-template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node, class LocalMatOps>
-PermutationFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node, LocalMatOps>::PermutationFactory()
+template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
+PermutationFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::PermutationFactory()
   { }
 
-template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node, class LocalMatOps>
-PermutationFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node, LocalMatOps>::~PermutationFactory() {}
+template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
+PermutationFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::~PermutationFactory() {}
 
-template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node, class LocalMatOps>
-RCP<const ParameterList> PermutationFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node, LocalMatOps>::GetValidParameterList(const ParameterList& paramList) const {
+template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
+RCP<const ParameterList> PermutationFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::GetValidParameterList() const {
   RCP<ParameterList> validParamList = rcp(new ParameterList());
 
   validParamList->set< RCP<const FactoryBase> >("A", Teuchos::null, "Generating factory of the matrix A to be permuted.");
@@ -108,8 +100,8 @@ RCP<const ParameterList> PermutationFactory<Scalar, LocalOrdinal, GlobalOrdinal,
   return validParamList;
 }
 
-template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node, class LocalMatOps>
-void PermutationFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node, LocalMatOps>::DeclareInput(Level &currentLevel) const {
+template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
+void PermutationFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::DeclareInput(Level &currentLevel) const {
   Input(currentLevel, "A");
 
   const ParameterList & pL = GetParameterList();
@@ -121,8 +113,8 @@ void PermutationFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node, LocalMatOps>:
   }
 }
 
-template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node, class LocalMatOps>
-void PermutationFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node, LocalMatOps>::Build(Level & currentLevel) const {
+template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
+void PermutationFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::Build(Level & currentLevel) const {
   FactoryMonitor m(*this, "Permutation Factory ", currentLevel);
 
   Teuchos::RCP<Matrix> A = Get< Teuchos::RCP<Matrix> > (currentLevel, "A");
@@ -151,7 +143,7 @@ void PermutationFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node, LocalMatOps>:
                                   "`PermutationStrategy' has incorrect value (" << strStrategy << ") in input to PermutationFactory."
                                   << "Check the documentation for a list of valid choices");
 
-  GetOStream(Runtime0, 0) << "Using " << strStrategy << " permutation strategy." << std::endl;
+  GetOStream(Runtime0) << "Using " << strStrategy << " permutation strategy." << std::endl;
 
 }
 

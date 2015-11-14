@@ -74,16 +74,19 @@ namespace Xpetra {
   RCP<const Vector<Scalar, LocalOrdinal, GlobalOrdinal, Node > > toXpetra(RCP<const Tpetra::Vector< Scalar, LocalOrdinal, GlobalOrdinal, Node > > vec);
 
   template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
-  RCP<Vector<Scalar, LocalOrdinal, GlobalOrdinal, Node > > toXpetra(RCP<Tpetra::Vector< Scalar, LocalOrdinal, GlobalOrdinal, Node > > vec);
+  RCP<Vector<Scalar, LocalOrdinal, GlobalOrdinal, Node > >       toXpetra(RCP<Tpetra::Vector< Scalar, LocalOrdinal, GlobalOrdinal, Node > > vec);
 
   //
   //
 
-  template <class Scalar, class LocalOrdinal = int, class GlobalOrdinal = LocalOrdinal, class Node = KokkosClassic::DefaultNode::DefaultNodeType>
+  template <class Scalar = Vector<>::scalar_type,
+            class LocalOrdinal = typename Vector<Scalar>::local_ordinal_type,
+            class GlobalOrdinal = typename Vector<Scalar, LocalOrdinal>::global_ordinal_type,
+            class Node = typename Vector<Scalar, LocalOrdinal, GlobalOrdinal>::node_type>
   class TpetraVector
-    : public virtual Vector<Scalar,LocalOrdinal,GlobalOrdinal,Node>, public TpetraMultiVector<Scalar,LocalOrdinal,GlobalOrdinal,Node>
+    : public virtual Vector<Scalar,LocalOrdinal,GlobalOrdinal,Node>,
+      public TpetraMultiVector<Scalar,LocalOrdinal,GlobalOrdinal,Node>
   {
-    typedef void LocalMatOps;
 #undef XPETRA_TPETRAMULTIVECTOR_SHORT
 #include "Xpetra_UseShortNames.hpp"
 
@@ -198,7 +201,10 @@ namespace Xpetra {
 
   template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
   RCP<Vector<Scalar, LocalOrdinal, GlobalOrdinal, Node > > toXpetra(RCP<Tpetra::Vector< Scalar, LocalOrdinal, GlobalOrdinal, Node > > vec) {
-    return rcp( new TpetraVector<Scalar, LocalOrdinal, GlobalOrdinal, Node>(vec));
+    if (!vec.is_null())
+      return rcp(new TpetraVector<Scalar, LocalOrdinal, GlobalOrdinal, Node>(vec));
+
+    return Teuchos::null;
   }
 
   template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>

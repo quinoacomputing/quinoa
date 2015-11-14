@@ -1,5 +1,3 @@
-INCLUDE(TribitsPackageMacros)
-INCLUDE(TribitsAddOptionAndDefine)
 INCLUDE(CombinedOption)
 
 #
@@ -11,16 +9,45 @@ TRIBITS_PACKAGE(MueLu ENABLE_SHADOWING_WARNINGS)
 #
 # B) Set up package-specific options
 #
+IF ((CMAKE_CXX_COMPILER_ID MATCHES "GNU") AND (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER "4.7"))
+  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-local-typedefs")
+ENDIF()
+
+IF (NOT ${PACKAGE_NAME}_ENABLE_Epetra AND NOT ${PACKAGE_NAME}_ENABLE_Tpetra)
+  MESSAGE(FATAL_ERROR "Neither Epetra nor Tpetra are enabled.  MueLu requires at least one of them to be enabled.")
+ENDIF()
 
 
+# The following Tribits macro sets MueLu_ENABLE_EXPLICIT_INSTANTIATION
+# to be true if Trilinos_ENABLE_EXPLICIT_INSTANTIATION is true.
 TRIBITS_ADD_EXPLICIT_INSTANTIATION_OPTION()
+IF (${PACKAGE_NAME}_ENABLE_EXPLICIT_INSTANTIATION AND NOT ${PACKAGE_NAME}_ENABLE_Tpetra)
+  GLOBAL_SET(${PACKAGE_NAME}_ENABLE_EXPLICIT_INSTANTIATION  OFF)
+  GLOBAL_SET(HAVE_${PACKAGE_NAME_UC}_EXPLICIT_INSTANTIATION OFF)
+  MESSAGE(STATUS "Disabling MueLu explicit template instantation (ETI) because Tpetra is disabled.")
+ENDIF()
 TRIBITS_ADD_DEBUG_OPTION()
 TRIBITS_ADD_SHOW_DEPRECATED_WARNINGS_OPTION()
+
+IF (${PACKAGE_NAME}_ENABLE_Epetra AND NOT ${PACKAGE_NAME}_ENABLE_EpetraExt)
+  MESSAGE(FATAL_ERROR "You have enabled Epetra, but not EpetraExt. MueLu requires that either both are enabled, or both are disabled. Please either disable Epetra, or enable EpetraExt.")
+ENDIF()
 
 # Disable Ifpack2 if Tpetra is off
 IF (NOT ${PACKAGE_NAME}_ENABLE_Tpetra)
   SET(${PACKAGE_NAME}_ENABLE_Ifpack2 OFF)
   GLOBAL_SET(HAVE_${PACKAGE_NAME_UC}_IFPACK2 OFF)
+ENDIF ()
+
+# Enable timer synchronization via barriers
+TRIBITS_ADD_OPTION_AND_DEFINE(
+  ${PACKAGE_NAME}_ENABLE_TIMER_SYNCHRONIZATION
+  HAVE_${PACKAGE_NAME_UC}_TIMER_SYNCHRONIZATION
+  "Enable timer synchronization in MueLu via barriers."
+  NO)
+
+IF (${PACKAGE_NAME}_ENABLE_TIMER_SYNCHRONIZATION)
+  MESSAGE(STATUS "Enabling timer synchronization")
 ENDIF ()
 
 # Enable experimental code
@@ -33,11 +60,26 @@ IF (${PACKAGE_NAME}_ENABLE_Experimental AND NOT Xpetra_ENABLE_Experimental)
   MESSAGE(FATAL_ERROR "Option MueLu_ENABLE_Experimental=ON requires Xpetra_ENABLE_Experimental=ON.")
 ENDIF ()
 
+IF (${PACKAGE_NAME}_ENABLE_Experimental)
+  MESSAGE(STATUS "Enabling MueLu experimental code")
+ENDIF()
+
+# Memory testing
+IF (${PACKAGE_NAME}_ENABLE_MEMORY_TESTING)
+  SET(MUELU_VALGRIND_TESTING YES)
+ELSE()
+  SET(MUELU_VALGRIND_TESTING NO)
+ENDIF()
+
 # Profiling
 TRIBITS_ADD_OPTION_AND_DEFINE(${PACKAGE_NAME}_ENABLE_PROFILING
   HAVE_${PACKAGE_NAME_UC}_PROFILING
   "Enable detailed timing and memory profiling of MueLu."
   OFF)
+
+IF (${PACKAGE_NAME}_ENABLE_PROFILING)
+  MESSAGE(STATUS "Enabling MueLu profiling code")
+ENDIF()
 
 # Profiling (expert users only. There is no TPL for Google Perftools)
 TRIBITS_ADD_OPTION_AND_DEFINE(${PACKAGE_NAME}_ENABLE_GOOGLE_PERFTOOLS
@@ -55,51 +97,75 @@ TRIBITS_ADD_OPTION_AND_DEFINE(${PACKAGE_NAME}_ENABLE_Boost_for_real
 
 # Explicit instantiation options:
 # - MueLu_ENABLE_EXPLICIT_INSTANTIATION
-# - MueLu_INST_DOUBLE_INT_INT         (= ON by default)
-# - MueLu_INST_DOUBLE_INT_LONGLONGINT (= OFF by default. Only works if N by default if Tpetra_ENABLE_EXPLICIT_INSTANTIATION=OFF). Previously, was ON by default if TEUCHOS_ENABLE_LONG_LONG_INT enabled but it does not work if Tpetra_ENABLE_EXPLICIT_INSTANTIATION=ON as Tpetra does not explicitly instantiate on long long int
-# - MueLu_INST_COMPLEX_INT_INT        (= ON by default if TEUCHOS_ENABLE_COMPLEX enabled)       TODO: we also need to check Tpetra_COMPLEX if EI of Tpetra=ON
+# - Enabling/disabling of scalar/ordinal types is controlled by Tpetra
+
 IF(${PACKAGE_NAME}_ENABLE_EXPLICIT_INSTANTIATION)
 
   # <double, int, int>
-  # Examples and tests need at least this one
-  TRIBITS_ADD_OPTION_AND_DEFINE(
-    ${PACKAGE_NAME}_INST_DOUBLE_INT_INT
-    HAVE_${PACKAGE_NAME_UC}_INST_DOUBLE_INT_INT
-    "Enable the use of explicit template instantiation with <double, int, int>."
-    ON
-    )
+  # Examples and tests need at least this one, also if Epetra is enabled
+  IF(Tpetra_INST_DOUBLE AND Tpetra_INST_INT_INT)
+    GLOBAL_SET(${PACKAGE_NAME}_INST_DOUBLE_INT_INT ON)
+    GLOBAL_SET(HAVE_${PACKAGE_NAME_UC}_INST_DOUBLE_INT_INT ON)
+  ELSE()
+    GLOBAL_SET(${PACKAGE_NAME}_INST_DOUBLE_INT_INT OFF)
+    GLOBAL_SET(HAVE_${PACKAGE_NAME_UC}_INST_DOUBLE_INT_INT OFF)
+  ENDIF()
+
   IF(${PACKAGE_NAME}_ENABLE_EXAMPLES OR ${PACKAGE_NAME}_ENABLE_TESTS)
     IF (NOT ${PACKAGE_NAME}_INST_DOUBLE_INT_INT)
-      MESSAGE(FATAL_ERROR "Error: MueLu examples and tests needs explicit template instantation with <double, int, int>. Turn on the option MueLu_INST_DOUBLE_INT_INT or disable examples and tests.")
+      MESSAGE(FATAL_ERROR "Error: MueLu examples and tests needs explicit template instantation with <double, int, int>. Turn on the options Tpetra_INST_DOUBLE and Tpetra_INST_INT_INT or disable examples and tests.")
     ENDIF()
   ENDIF()
 
+  IF(${PACKAGE_NAME}_ENABLE_Epetra)
+    IF (NOT ${PACKAGE_NAME}_INST_DOUBLE_INT_INT)
+      MESSAGE(FATAL_ERROR "Error: MueLu needs explicit template instantation with <double, int, int> when enabling Epetra. Turn on the options Tpetra_INST_DOUBLE and Tpetra_INST_INT_INT or disable Epetra.")
+    ENDIF()
+  ENDIF()
+
+  # <double, int, long>
+  IF(Tpetra_INST_DOUBLE AND Tpetra_INST_INT_LONG)
+    GLOBAL_SET(${PACKAGE_NAME}_INST_DOUBLE_INT_LONGINT ON)
+    GLOBAL_SET(HAVE_${PACKAGE_NAME_UC}_INST_DOUBLE_INT_LONGINT ON)
+  ELSE()
+    GLOBAL_SET(${PACKAGE_NAME}_INST_DOUBLE_INT_LONGINT OFF)
+    GLOBAL_SET(HAVE_${PACKAGE_NAME_UC}_INST_DOUBLE_INT_LONGINT OFF)
+  ENDIF()
+
+
   # <double, int, long long int>
-#  IF(Teuchos_ENABLE_LONG_LONG_INT)
-#    SET(${PACKAGE_NAME}_INST_DOUBLE_INT_LONGLONGINT_DEFAULT ON)
-#  ELSE()
-    SET(${PACKAGE_NAME}_INST_DOUBLE_INT_LONGLONGINT_DEFAULT OFF)
-#  ENDIF()
-  TRIBITS_ADD_OPTION_AND_DEFINE(
-    ${PACKAGE_NAME}_INST_DOUBLE_INT_LONGLONGINT
-    HAVE_${PACKAGE_NAME_UC}_INST_DOUBLE_INT_LONGLONGINT
-    "Enable the use of explicit template instantiation with <double, int, long long int>."
-    ${${PACKAGE_NAME}_INST_DOUBLE_INT_LONGLONGINT_DEFAULT}
-    )
+   IF(Tpetra_INST_DOUBLE AND Tpetra_INST_INT_LONG_LONG)
+    GLOBAL_SET(${PACKAGE_NAME}_INST_DOUBLE_INT_LONGLONGINT ON)
+    GLOBAL_SET(HAVE_${PACKAGE_NAME_UC}_INST_DOUBLE_INT_LONGLONGINT ON)
+  ELSE()
+    GLOBAL_SET(${PACKAGE_NAME}_INST_DOUBLE_INT_LONGLONGINT OFF)
+    GLOBAL_SET(HAVE_${PACKAGE_NAME_UC}_INST_DOUBLE_INT_LONGLONGINT OFF)
+  ENDIF()
 
   # <complex, int, int>
-# Teuchos_ENABLE_COMPLEX is ON by default (in release mode or when SS is enabled) but we don't want MueLu to be instantiated explicitly with complex by default as it is not frequently used.
-#  IF(Teuchos_ENABLE_COMPLEX)
-#    SET(${PACKAGE_NAME}_INST_COMPLEX_INT_INT_DEFAULT ON)
-#  ELSE()
-    SET(${PACKAGE_NAME}_INST_COMPLEX_INT_INT_DEFAULT OFF)
-#  ENDIF()
-  TRIBITS_ADD_OPTION_AND_DEFINE(
-    ${PACKAGE_NAME}_INST_COMPLEX_INT_INT
-    HAVE_${PACKAGE_NAME_UC}_INST_COMPLEX_INT_INT
-    "Enable the use of explicit template instantiation with <complex, int, int>."
-    ${${PACKAGE_NAME}_INST_COMPLEX_INT_INT_DEFAULT}
-    )
+  IF(Tpetra_INST_COMPLEX_DOUBLE AND Tpetra_INST_INT_INT)
+    GLOBAL_SET(${PACKAGE_NAME}_INST_COMPLEX_INT_INT ON)
+    GLOBAL_SET(HAVE_${PACKAGE_NAME_UC}_INST_COMPLEX_INT_INT ON)
+  ELSE()
+    GLOBAL_SET(${PACKAGE_NAME}_INST_COMPLEX_INT_INT OFF)
+    GLOBAL_SET(HAVE_${PACKAGE_NAME_UC}_INST_COMPLEX_INT_INT OFF)
+  ENDIF()
+
+  # <float, int, int>
+  IF(Tpetra_INST_FLOAT AND Tpetra_INST_INT_INT)
+    GLOBAL_SET(${PACKAGE_NAME}_INST_FLOAT_INT_INT ON)
+    GLOBAL_SET(HAVE_${PACKAGE_NAME_UC}_INST_FLOAT_INT_INT ON)
+  ELSE()
+    GLOBAL_SET(${PACKAGE_NAME}_INST_FLOAT_INT_INT OFF)
+    GLOBAL_SET(HAVE_${PACKAGE_NAME_UC}_INST_FLOAT_INT_INT OFF)
+  ENDIF()
+
+  MESSAGE(STATUS "${PACKAGE_NAME} ETI support enabled")
+  MESSAGE(STATUS "<float,   int, int>       : ${${PACKAGE_NAME}_INST_FLOAT_INT_INT}")
+  MESSAGE(STATUS "<double,  int, int>       : ${${PACKAGE_NAME}_INST_DOUBLE_INT_INT}")
+  MESSAGE(STATUS "<double,  int, long>      : ${${PACKAGE_NAME}_INST_DOUBLE_INT_LONGINT}")
+  MESSAGE(STATUS "<double,  int, long long> : ${${PACKAGE_NAME}_INST_DOUBLE_INT_LONGLONGINT}")
+  MESSAGE(STATUS "<complex, int, int>       : ${${PACKAGE_NAME}_INST_COMPLEX_INT_INT}")
 
 ENDIF()
 
@@ -133,10 +199,25 @@ ENDIF ()
 #
 
 ADD_SUBDIRECTORY(src)
+if(TPL_ENABLE_MATLAB)
+  ADD_SUBDIRECTORY(matlab)
+ENDIF()
+ADD_SUBDIRECTORY(src/Interface)
 ADD_SUBDIRECTORY(adapters)
-ADD_SUBDIRECTORY(doc)
+if(TPL_ENABLE_MATLAB)
+  ADD_SUBDIRECTORY(matlab/bin)
+ENDIF()
+
+#address bugzilla bug#6236
+IF (IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/doc
+    AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/doc/CMakeLists.txt)
+  ADD_SUBDIRECTORY(doc)
+ENDIF()
+
+
 
 TRIBITS_ADD_EXAMPLE_DIRECTORIES(example)
+TRIBITS_ADD_EXAMPLE_DIRECTORIES(research)
 TRIBITS_ADD_TEST_DIRECTORIES(test)
 
 #

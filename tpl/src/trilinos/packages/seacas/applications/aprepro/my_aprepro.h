@@ -1,6 +1,6 @@
 /* 
  * Copyright (c) 2006 Sandia Corporation. Under the terms of Contract
- * DE-AC04-94AL85000 with Sandia Corporation, the U.S. Governement
+ * DE-AC04-94AL85000 with Sandia Corporation, the U.S. Government
  * retains certain rights in this software.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -41,6 +41,8 @@
 #include <math.h>
 #include <errno.h>
 
+#include "ap_array.h"
+
 #ifndef EXIT_FAILURE
 # define EXIT_FAILURE 1
 # define EXIT_SUCCESS 0
@@ -59,7 +61,7 @@ extern FILE *yyout;       /* Output file */
 /* Global options */
 struct aprepro_options
 {
-  char comment;
+  char *comment;
   char *include_path;
   
   int end_on_exit;
@@ -71,6 +73,7 @@ struct aprepro_options
   int statistics;
   int interactive;
   int immutable;
+  int one_based_index;
 };
 
 typedef struct aprepro_options aprepro_options;
@@ -89,6 +92,8 @@ struct symrec
     double (*fnctptr)();
     char *svar;
     char *(*strfnct)();
+    array *avar; /* Array Variable */
+    array *(*arrfnct)();
   } value;
   struct symrec *next;
 };

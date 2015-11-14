@@ -47,10 +47,6 @@
 #include "TriKota_ConfigDefs.hpp"
 
 #include "DirectApplicInterface.hpp"
-#include "CommandLineHandler.hpp"
-#include "DakotaStrategy.hpp"
-#include "DakotaModel.hpp"
-#include "ParallelLibrary.hpp"
 #include "ProblemDescDB.hpp"
 
 #include "Piro_Epetra_StokhosMPSolver.hpp"
@@ -93,10 +89,10 @@ protected:
   //int derived_map_if(const Dakota::String& if_name);
 
   //! evaluate the batch of jobs contained in prp_queue
-  void derived_synch(Dakota::PRPQueue& prp_queue);
+  void wait_local_evaluations(Dakota::PRPQueue& prp_queue);
 
-  void derived_synch_nowait(Dakota::PRPQueue& prp_queue) { 
-    derived_synch(prp_queue); 
+  void test_local_evaluations(Dakota::PRPQueue& prp_queue) { 
+    wait_local_evaluations(prp_queue); 
   }
 
   void check_configuration(int max_iterator_concurrency) {}

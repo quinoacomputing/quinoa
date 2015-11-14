@@ -61,6 +61,7 @@
 #include "Teuchos_Array.hpp"
 #include "Teuchos_Tuple.hpp"
 
+#include "Teuchos_FancyOStream.hpp"
 #include <stdexcept>
 #include <cstddef>
 #include <ostream>
@@ -241,10 +242,12 @@ void Piro::SteadyStateSolver<Scalar>::evalConvergedModel(
   using Teuchos::RCP;
   using Teuchos::rcp;
 
+  //int g_size = 0;  // Commenting out since g_size is not used.
   // Solution at convergence is the response at index num_g_
   {
     const RCP<Thyra::VectorBase<Scalar> > gx_out = outArgs.get_g(num_g_);
     if (Teuchos::nonnull(gx_out)) {
+      //g_size = gx_out->space()->dim();
       Thyra::copy(*modelInArgs.get_x(), gx_out.ptr());
     }
   }
@@ -262,7 +265,7 @@ void Piro::SteadyStateSolver<Scalar>::evalConvergedModel(
     // Jacobian
     {
       bool jacobianRequired = false;
-      for (int j = 0; j <= num_g_; ++j) {
+      for (int j = 0; j <= num_g_; ++j) { // resize
         for (int l = 0; l < num_p_; ++l) {
           const Thyra::ModelEvaluatorBase::DerivativeSupport dgdp_support =
             outArgs.supports(Thyra::ModelEvaluatorBase::OUT_ARG_DgDp, j, l);
@@ -424,10 +427,12 @@ void Piro::SteadyStateSolver<Scalar>::evalConvergedModel(
                   *dfdp_mv,
                   minus_dxdp_mv.ptr(),
                   Teuchos::ptr(&defaultSolveCriteria));
-            TEUCHOS_TEST_FOR_EXCEPTION(
-                solveStatus.solveStatus == Thyra::SOLVE_STATUS_UNCONVERGED,
-                std::runtime_error,
-                "Jacobian solver failed to converge");
+
+            //  AGS: Made this a warning instead of exception since it is 'just' post-processing
+            if (solveStatus.solveStatus == Thyra::SOLVE_STATUS_UNCONVERGED)
+              *(Teuchos::VerboseObjectBase::getDefaultOStream() ) <<
+              "\nWARNING: Linear Solver in sensitivity computation failed to fully converge\n"
+              << "         Accuracy of sensitivity calculations is less then requested." << std::endl;
           }
 
           // Solution sensitivities

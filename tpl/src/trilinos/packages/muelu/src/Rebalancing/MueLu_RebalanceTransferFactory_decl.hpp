@@ -56,10 +56,13 @@
 #include "Xpetra_ImportFactory_fwd.hpp"
 
 #include "MueLu_ConfigDefs.hpp"
-#include "MueLu_TwoLevelFactoryBase.hpp"
+
 #include "MueLu_RebalanceTransferFactory_fwd.hpp"
-#include "MueLu_Utilities_fwd.hpp"
+
+#include "MueLu_PerfUtils_fwd.hpp"
+#include "MueLu_TwoLevelFactoryBase.hpp"
 #include "MueLu_Types.hpp"
+#include "MueLu_Utilities_fwd.hpp"
 
 namespace MueLu {
 
@@ -69,7 +72,7 @@ namespace MueLu {
     @ingroup MueLuTransferClasses
   */
 
-  template <class Scalar = double, class LocalOrdinal = int, class GlobalOrdinal = LocalOrdinal, class Node = KokkosClassic::DefaultNode::DefaultNodeType, class LocalMatOps = typename KokkosClassic::DefaultKernels<void,LocalOrdinal,Node>::SparseOps>
+  template <class Scalar = double, class LocalOrdinal = int, class GlobalOrdinal = LocalOrdinal, class Node = KokkosClassic::DefaultNode::DefaultNodeType>
   class RebalanceTransferFactory : public TwoLevelFactoryBase {
 #undef MUELU_REBALANCETRANSFERFACTORY_SHORT
 #include "MueLu_UseShortNames.hpp"
@@ -84,7 +87,7 @@ namespace MueLu {
     //! Destructor.
     virtual ~RebalanceTransferFactory() { }
 
-    RCP<const ParameterList> GetValidParameterList(const ParameterList& paramList = ParameterList()) const;
+    RCP<const ParameterList> GetValidParameterList() const;
 
     //@}
 

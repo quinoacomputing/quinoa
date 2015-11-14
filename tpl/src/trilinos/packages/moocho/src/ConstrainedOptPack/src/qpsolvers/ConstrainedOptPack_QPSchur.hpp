@@ -876,7 +876,7 @@ public:
     /** \brief Map from a constraint or initially fixed variable
      * to a row and column in the schur complement S_bar.
      *
-     * To determine if an initially fixed varible x(i) is now
+     * To determine if an initially fixed variable x(i) is now
      * free call s_map(-i).  If s_map(-i) returns zero then
      * x(i) is still fixed.  Otherwise s_map(-i) returns the
      * row and column in S_bar for this change in the

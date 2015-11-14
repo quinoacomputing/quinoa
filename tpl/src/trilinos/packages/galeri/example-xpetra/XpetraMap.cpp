@@ -57,7 +57,11 @@
 
 #include "Galeri_XpetraMaps.hpp"
 
-using namespace Galeri;
+#ifndef XPETRA_TEST_USE_LONGLONG_GO
+#define GO int
+#else
+#define GO long long
+#endif
 
 int main(int argc, char *argv[]) {
 
@@ -90,17 +94,17 @@ int main(int argc, char *argv[]) {
     // strips, so that the total number of subdomains is comm->getSize() x 1.
     
     // Type of the object
-    string mapType = "Cartesian2D";
+    std::string mapType = "Cartesian2D";
     
     // Container for parameters
     Teuchos::ParameterList galeriList;
-    galeriList.set("nx", 2 * comm->getSize()); 
-    galeriList.set("ny", 2);
-    galeriList.set("mx", comm->getSize());
-    galeriList.set("my", 1);
+    galeriList.set("nx", (GO) 2 * comm->getSize()); 
+    galeriList.set("ny", (GO) 2);
+    galeriList.set("mx", (GO) comm->getSize());
+    galeriList.set("my", (GO) 1);
     
     // Creation of the map
-    RCP< ::Xpetra::Map<int, int, KokkosClassic::DefaultNode::DefaultNodeType> > map = Galeri::Xpetra::CreateMap<int, int, KokkosClassic::DefaultNode::DefaultNodeType>(lib, "Cartesian2D", comm, galeriList);
+    RCP< ::Xpetra::Map<int, GO, KokkosClassic::DefaultNode::DefaultNodeType> > map = Galeri::Xpetra::CreateMap<int, GO, KokkosClassic::DefaultNode::DefaultNodeType>(lib, "Cartesian2D", comm, galeriList);
 
     // Print out the parameters
     cout << galeriList;
@@ -114,16 +118,16 @@ int main(int argc, char *argv[]) {
     // Creates an Xpetra::Map corresponding to a 3D Cartesian grid
     
     // Type of the object
-    string mapType = "Cartesian3D";
+    std::string mapType = "Cartesian3D";
     
     // Container for parameters
     Teuchos::ParameterList galeriList;
-    galeriList.set("nx", 2 * comm->getSize()); 
-    galeriList.set("ny", 2);
-    galeriList.set("nz", 2);
+    galeriList.set("nx", (GO) 2 * comm->getSize()); 
+    galeriList.set("ny", (GO) 2);
+    galeriList.set("nz", (GO) 2);
     
     // Creation of the map
-    RCP< ::Xpetra::Map<int, int, KokkosClassic::DefaultNode::DefaultNodeType> > map = Galeri::Xpetra::CreateMap<int, int, KokkosClassic::DefaultNode::DefaultNodeType>(lib, "Cartesian3D", comm, galeriList);
+    RCP< ::Xpetra::Map<int, GO, KokkosClassic::DefaultNode::DefaultNodeType> > map = Galeri::Xpetra::CreateMap<int, GO, KokkosClassic::DefaultNode::DefaultNodeType>(lib, "Cartesian3D", comm, galeriList);
 
     // Print out the parameters
     cout << galeriList;

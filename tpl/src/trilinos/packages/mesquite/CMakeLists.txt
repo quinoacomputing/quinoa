@@ -19,8 +19,6 @@ IF (NOT DEFINED PROJECT_NAME)
 
 ELSE()
 
-  INCLUDE(TribitsAddOptionAndDefine)
-  INCLUDE(TribitsPackageMacros)
 
   #
   # A) Define the package

@@ -18,7 +18,7 @@
 
     You should have received a copy of the GNU Lesser General Public License 
     (lgpl.txt) along with this library; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  
     diachin2@llnl.gov, djmelan@sandia.gov, mbrewer@sandia.gov, 
     pknupp@sandia.gov, tleurent@mcs.anl.gov, tmunson@mcs.anl.gov      
@@ -36,11 +36,11 @@
   \date   2002-01-17
 */
 
-#include "SmartLaplacianSmoother.hpp"
-#include "LaplacianSmoother.hpp"
-#include "MsqDebug.hpp"
-#include "LInfTemplate.hpp"
-#include "IdealWeightInverseMeanRatio.hpp"
+#include "Mesquite_SmartLaplacianSmoother.hpp"
+#include "Mesquite_LaplacianSmoother.hpp"
+#include "Mesquite_MsqDebug.hpp"
+#include "Mesquite_LInfTemplate.hpp"
+#include "Mesquite_IdealWeightInverseMeanRatio.hpp"
 
 #include <vector>
 using std::vector;

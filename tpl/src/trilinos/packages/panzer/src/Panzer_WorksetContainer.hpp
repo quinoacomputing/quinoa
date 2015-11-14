@@ -47,9 +47,13 @@
 
 #include "Panzer_PhysicsBlock.hpp"
 #include "Panzer_WorksetFactoryBase.hpp"
-#include "Panzer_WorksetDescriptor.hpp"
+#include "Panzer_WorksetDescriptor.hpp" // what the workset is defined over
+#include "Panzer_WorksetNeeds.hpp"      // whats in a workset basis/integration rules
 
 namespace panzer {
+
+// forward declaration
+class UniqueGlobalIndexerBase;
 
 struct SideId {
    SideId(const BC & bc)
@@ -65,8 +69,8 @@ struct SideId {
 struct LessSide {
    bool operator()(const SideId & left, 
                    const SideId  right) const
-   { return   (left.ss_id+"_"+left.eblk_id 
-            < right.ss_id+"_"+right.eblk_id); }
+   { return   (left.ss_id + "_" + left.eblk_id 
+            < right.ss_id + "_" + right.eblk_id); }
 };
 
 /** \brief Class that provides access to worksets on
@@ -131,6 +135,9 @@ public:
    //! Look up an input physics block, throws an exception if it can not be found.
    const PhysicsBlock & lookupPhysicsBlock(const std::string & eBlock) const;
 
+   //! Look up an input physics block, throws an exception if it can not be found.
+   const WorksetNeeds & lookupNeeds(const std::string & eBlock) const;
+
    //! Access to volume worksets
    Teuchos::RCP<std::vector<Workset> > getVolumeWorksets(const std::string & eBlock);
 
@@ -166,18 +173,41 @@ public:
      */
    void allocateSideWorksets(const std::vector<BC> & bcs);
 
+   /** Set the global indexer. This is used solely for accessing the
+     * orientations.
+     */
+   void setGlobalIndexer(const Teuchos::RCP<const panzer::UniqueGlobalIndexerBase> & ugi);
+
 private:
+   /** Set the orientations. Can only be called once, this also sets the internally stored
+     * global indexer. If an exception is raised, saying it wasn't null then this method
+     * has been previously called.
+     */
+   void applyOrientations(const Teuchos::RCP<const panzer::UniqueGlobalIndexerBase> & ugi);
+
+   /** Using the stored global indexer, set the orientations for a volume workset on a
+     * specified element block.
+     */
+   void applyOrientations(const std::string & eBlock,std::vector<Workset> & worksets) const;
+
+   /** Using the stored global indexer, set the orientations for a side workset.
+     */
+   void applyOrientations(const SideId & sideId,std::map<unsigned,Workset> & worksets) const;
+
    // typedef std::map<std::string,Teuchos::RCP<std::vector<Workset> > > VolumeMap;
    typedef boost::unordered_map<WorksetDescriptor,Teuchos::RCP<std::vector<Workset> > > VolumeMap;
    typedef std::map<SideId,Teuchos::RCP<std::map<unsigned,Workset> >,LessSide> SideMap;
 
    Teuchos::RCP<const WorksetFactoryBase> wkstFactory_;      //! How to construct worksets
    std::map<std::string,Teuchos::RCP<PhysicsBlock> > ebToPb_; //! Maps element blocks to input physics block objects
+   std::map<std::string,WorksetNeeds> ebToNeeds_; //! Maps element blocks to input physics block objects
 
    VolumeMap volWorksets_;
    SideMap sideWorksets_;
 
    std::size_t worksetSize_;
+
+   Teuchos::RCP<const panzer::UniqueGlobalIndexerBase> globalIndexer_;
 };
 
 /** Build a map of volume worksets from a list of element blocks. Note that this

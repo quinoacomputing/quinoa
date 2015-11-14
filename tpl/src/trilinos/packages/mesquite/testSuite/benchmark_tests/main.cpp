@@ -18,7 +18,7 @@
 
     You should have received a copy of the GNU Lesser General Public License 
     (lgpl.txt) along with this library; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  
     pknupp@sandia.gov, tleurent@mcs.anl.gov, tmunson@mcs.anl.gov      
    
@@ -49,29 +49,29 @@ using std::endl;
 #include <cstdlib>
 
 #include "Mesquite.hpp"
-#include "MsqError.hpp"
-#include "MeshImpl.hpp"
-#include "Vector3D.hpp"
-#include "InstructionQueue.hpp"
-#include "PatchData.hpp"
-#include "TerminationCriterion.hpp"
-#include "QualityAssessor.hpp"
-#include "PlanarDomain.hpp"
-#include "MsqTimer.hpp"
+#include "Mesquite_MsqError.hpp"
+#include "Mesquite_MeshImpl.hpp"
+#include "Mesquite_Vector3D.hpp"
+#include "Mesquite_InstructionQueue.hpp"
+#include "Mesquite_PatchData.hpp"
+#include "Mesquite_TerminationCriterion.hpp"
+#include "Mesquite_QualityAssessor.hpp"
+#include "Mesquite_PlanarDomain.hpp"
+#include "Mesquite_MsqTimer.hpp"
 
 // algorythms
-#include "LInfTemplate.hpp"
-#include "EdgeLengthQualityMetric.hpp"
-#include "LaplaceWrapper.hpp"
-#include "UntangleWrapper.hpp"
+#include "Mesquite_LInfTemplate.hpp"
+#include "Mesquite_EdgeLengthQualityMetric.hpp"
+#include "Mesquite_LaplaceWrapper.hpp"
+#include "Mesquite_UntangleWrapper.hpp"
 
-#include "ShapeImprover.hpp"
-#include "MsqTimer.hpp"
-#include "SizeAdaptShapeWrapper.hpp"
-#include "SphericalDomain.hpp"
-#include "PaverMinEdgeLengthWrapper.hpp"
-#include "DeformingDomainWrapper.hpp"
-#include "MeshDomain1D.hpp"
+#include "Mesquite_ShapeImprover.hpp"
+#include "Mesquite_MsqTimer.hpp"
+#include "Mesquite_SizeAdaptShapeWrapper.hpp"
+#include "Mesquite_SphericalDomain.hpp"
+#include "Mesquite_PaverMinEdgeLengthWrapper.hpp"
+#include "Mesquite_DeformingDomainWrapper.hpp"
+#include "Mesquite_MeshDomain1D.hpp"
 
 using namespace Mesquite;
 

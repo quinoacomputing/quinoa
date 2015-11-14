@@ -129,8 +129,10 @@ Mesh RefinementTransformation::apply(const Mesh& inputMesh) const
       int rivLID = lidMap[c];
       Element* e = rivMesh->element(rivLID).get();
       double vol = e->volume();
-      double newVol = vol * std::pow(reqErr_/(err+1.0e-12), 0.5*dim);
-///      Out::os() << "c=" << c << " refine by " << newVol/vol << std::endl;
+      double hr = std::pow(reqErr_/(err+1.0e-12), 0.5);
+      double newVol = vol * std::pow(hr, dim);
+      Out::os() << "c=" << c << " refine by vol ratio-" 
+		<< newVol/vol << ", h ratio=" << hr << std::endl;
       if (newVol >= vol) continue;
       rivMesh->refinementSet().push(e);
       rivMesh->refinementAreas().push(newVol);
@@ -249,7 +251,7 @@ Mesh RefinementTransformation::rivaraToMesh(const RCP<RivaraMesh>& rivMesh,
     Array<int> sortedVerts(verts.size());
     sort(verts, sortedVerts);
 
-    Out::os() << tab << "elem LID=" << lid << " verts=" << sortedVerts << endl; 
+    //    Out::os() << tab << "elem LID=" << lid << " verts=" << sortedVerts << endl; 
     /* label edges or faces */
     if (dim==2)
     {
@@ -300,10 +302,10 @@ Mesh RefinementTransformation::rivaraToMesh(const RCP<RivaraMesh>& rivMesh,
         {
           TEUCHOS_TEST_FOR_EXCEPT(true);
         }
-        Out::os() << tab1 << "faceLID=" << faceLIDs[faceNum] << " UFC face num=" 
-                  << faceNum 
-                  << " label = " << faceLabel 
-                  << " parent = " << lid << std::endl;
+	//        Out::os() << tab1 << "faceLID=" << faceLIDs[faceNum] << " UFC face num=" 
+	//                  << faceNum 
+	//        << " label = " << faceLabel 
+	//        << " parent = " << lid << std::endl;
         mesh.setLabel(2, faceLIDs[faceNum], faceLabel);
       }
     }

@@ -1,13 +1,13 @@
 
 // @HEADER
 // ***********************************************************************
-// 
+//
 //                      Didasko Tutorial Package
 //                 Copyright (2005) Sandia Corporation
-// 
+//
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -36,7 +36,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 // Questions about Didasko? Contact Marzio Sala (marzio.sala _AT_ gmail.com)
-// 
+//
 // ***********************************************************************
 // @HEADER
 
@@ -80,14 +80,14 @@ int main(int argc, char *argv[])
   /* this example creates a tridiagonal matrix of type
    *
    *     |  2  -1            |
-   *     | -1   2   -1       | 
+   *     | -1   2   -1       |
    * A = |      ...  ... ... |
    *     |            -1  2  |
    */
-  
+
   // set global dimension to 5, could be any number
   int NumGlobalElements = 5;
-  
+
   // create a linear map
   Epetra_Map Map(NumGlobalElements,0,Comm);
   // local number of rows
@@ -113,8 +113,8 @@ int main(int argc, char *argv[])
 
   for( int i=0 ; i<NumMyElements; ++i ) {
     if (MyGlobalElements[i]==0) {
-	Indices[0] = 1;
-	NumEntries = 1;
+      Indices[0] = 1;
+      NumEntries = 1;
     } else if (MyGlobalElements[i] == NumGlobalElements-1) {
       Indices[0] = NumGlobalElements-2;
       NumEntries = 1;
@@ -127,7 +127,7 @@ int main(int argc, char *argv[])
     // Put in the diagonal entry
     A.InsertGlobalValues(MyGlobalElements[i], 1, &two, MyGlobalElements+i);
   }
-  
+
   // Finish up
   A.FillComplete();
 
@@ -162,7 +162,7 @@ int main(int argc, char *argv[])
 
   // as we wish to use AztecOO to solve the prec step
   // (in a recursive way), we have to define an AztecOO
-  // object. 
+  // object.
   AztecOO P_Solver(P_Problem);
 
   // now, we customize certain parameters
@@ -177,9 +177,9 @@ int main(int argc, char *argv[])
   A_Solver.SetPrecOperator(&P_Operator);
 
   // --- up to here ---
-  
+
   // Finally, we solve the linear system:
-  
+
   int Niters=100;
   A_Solver.SetAztecOption(AZ_kspace, Niters);
   A_Solver.SetAztecOption(AZ_solver, AZ_GMRESR);
@@ -191,7 +191,7 @@ int main(int argc, char *argv[])
 #endif
 
   return 0;
-  
+
 }
 
 #else
@@ -207,16 +207,16 @@ int main(int argc, char *argv[])
 #ifdef HAVE_MPI
   MPI_Init(&argc,&argv);
 #endif
-  
+
   puts("Please configure Didasko with:\n"
-       "--enable-epetra\n"
-       "--enable-triutils\n"
-       "--enable-aztecoo\n");
+      "--enable-epetra\n"
+      "--enable-triutils\n"
+      "--enable-aztecoo\n");
 
 #ifdef HAVE_MPI
   MPI_Finalize();
 #endif
-  
+
   return 0;
 }
 

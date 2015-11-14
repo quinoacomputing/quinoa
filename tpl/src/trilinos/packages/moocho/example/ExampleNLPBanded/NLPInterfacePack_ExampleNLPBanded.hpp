@@ -284,7 +284,7 @@ protected:
     ,const DVectorSlice     *lambdaI_orig
     ,const DVectorSlice     *nu_orig
     ,bool                  is_optimal
-    ) const;
+    );
 
   //@}
   

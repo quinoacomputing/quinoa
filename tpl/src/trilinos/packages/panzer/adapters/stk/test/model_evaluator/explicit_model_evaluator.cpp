@@ -48,7 +48,7 @@
 using Teuchos::RCP;
 using Teuchos::rcp;
 
-#include "Kokkos_DefaultNode.hpp"
+#include "Panzer_NodeType.hpp"
 #include "Teuchos_DefaultComm.hpp"
 #include "Teuchos_GlobalMPISession.hpp"
 #include "Panzer_STK_Version.hpp"
@@ -74,6 +74,8 @@ using Teuchos::rcp;
 #include "Panzer_ExplicitModelEvaluator.hpp"
 
 #include "Stratimikos_DefaultLinearSolverBuilder.hpp"
+
+#include "Phalanx_KokkosUtilities.hpp"
 
 #include "user_app_EquationSetFactory.hpp"
 #include "user_app_ClosureModel_Factory_TemplateBuilder.hpp"
@@ -102,6 +104,8 @@ namespace panzer {
   {
     using Teuchos::RCP;
 
+    PHX::KokkosDeviceSession session;
+
     bool parameter_on = true;
     Teuchos::RCP<panzer::FieldManagerBuilder> fmb;  
     Teuchos::RCP<panzer::ResponseLibrary<panzer::Traits> > rLibrary; 
@@ -121,6 +125,7 @@ namespace panzer {
       typedef panzer::ExplicitModelEvaluator<double> ExpPME;
 
       std::vector<Teuchos::RCP<Teuchos::Array<std::string> > > p_names;
+      std::vector<Teuchos::RCP<Teuchos::Array<double> > > p_values;
       bool build_transient_support = true;
 
       Stratimikos::DefaultLinearSolverBuilder builder;
@@ -128,7 +133,7 @@ namespace panzer {
       builder.setParameterList(validList);
       RCP<const Thyra::LinearOpWithSolveFactoryBase<double> > lowsFactory = builder.createLinearSolveStrategy("Amesos");
     
-      RCP<PME> me = Teuchos::rcp(new PME(fmb,rLibrary,lof,p_names,lowsFactory,gd,build_transient_support,0.0));
+      RCP<PME> me = Teuchos::rcp(new PME(fmb,rLibrary,lof,p_names,p_values,lowsFactory,gd,build_transient_support,0.0));
       RCP<ExpPME> exp_me = Teuchos::rcp(new ExpPME(me,true,false)); // constant mass, use lumped
 
       RCP<VectorType> exp_f, f;
@@ -297,9 +302,9 @@ namespace panzer {
     pl->set("X Elements",4);
     pl->set("Y Elements",4);
     
-    panzer_stk::SquareQuadMeshFactory factory;
+    panzer_stk_classic::SquareQuadMeshFactory factory;
     factory.setParameterList(pl);
-    RCP<panzer_stk::STK_Interface> mesh = factory.buildMesh(MPI_COMM_WORLD);
+    RCP<panzer_stk_classic::STK_Interface> mesh = factory.buildMesh(MPI_COMM_WORLD);
     Teuchos::RCP<const Teuchos::Comm<int> > Comm = Teuchos::DefaultComm<int>::getComm();
     Teuchos::RCP<const Teuchos::MpiComm<int> > mpiComm = Teuchos::rcp_dynamic_cast<const Teuchos::MpiComm<int> >(Comm);
 
@@ -342,8 +347,8 @@ namespace panzer {
     // build worksets
     //////////////////////////////////////////////////////////////
     // build WorksetContainer
-    Teuchos::RCP<panzer_stk::WorksetFactory> wkstFactory 
-       = Teuchos::rcp(new panzer_stk::WorksetFactory(mesh)); // build STK workset factory
+    Teuchos::RCP<panzer_stk_classic::WorksetFactory> wkstFactory 
+       = Teuchos::rcp(new panzer_stk_classic::WorksetFactory(mesh)); // build STK workset factory
     Teuchos::RCP<panzer::WorksetContainer> wkstContainer     // attach it to a workset container (uses lazy evaluation)
        = Teuchos::rcp(new panzer::WorksetContainer(wkstFactory,physicsBlocks,workset_size));
 
@@ -352,7 +357,7 @@ namespace panzer {
  
     // build the connection manager 
     const Teuchos::RCP<panzer::ConnManager<int,int> > 
-      conn_manager = Teuchos::rcp(new panzer_stk::STKConnManager<int>(mesh));
+      conn_manager = Teuchos::rcp(new panzer_stk_classic::STKConnManager<int>(mesh));
 
     panzer::DOFManagerFactory<int,int> globalIndexerFactory;
     RCP<panzer::UniqueGlobalIndexer<int,int> > dofManager 
@@ -375,7 +380,9 @@ namespace panzer {
     Teuchos::ParameterList closure_models("Closure Models");
     if(parameter_on)
        closure_models.sublist("solid").sublist("SOURCE_TEMPERATURE").set<std::string>("Type","Parameter");
-    closure_models.sublist("solid").sublist("SOURCE_TEMPERATURE").set<double>("Value",1.0);
+    else
+      closure_models.sublist("solid").sublist("SOURCE_TEMPERATURE").set<double>("Value",1.0);
+
     closure_models.sublist("solid").sublist("DENSITY").set<double>("Value",1.0);
     closure_models.sublist("solid").sublist("HEAT_CAPACITY").set<double>("Value",1.0);
     closure_models.sublist("ion solid").sublist("SOURCE_ION_TEMPERATURE").set<double>("Value",1.0);

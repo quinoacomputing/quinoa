@@ -19,7 +19,7 @@
 //
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
 // USA
 // Questions? Contact Michael A. Heroux (maherou@sandia.gov)
 //
@@ -239,7 +239,7 @@ namespace Anasazi {
     //@{
 
     //! Obtain the vector length of \c mv.
-    static int GetVecLength( const TMVB & mv )
+    static ptrdiff_t GetGlobalLength( const TMVB & mv )
     { return mv.range()->dim(); }
 
     //! Obtain the number of vectors in \c mv
@@ -493,6 +493,7 @@ namespace Anasazi {
     //@}
 
   };        
+
 
   ///////////////////////////////////////////////////////////////////////// 
   //

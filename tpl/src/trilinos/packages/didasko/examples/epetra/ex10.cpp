@@ -1,13 +1,13 @@
 
 // @HEADER
 // ***********************************************************************
-// 
+//
 //                      Didasko Tutorial Package
 //                 Copyright (2005) Sandia Corporation
-// 
+//
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -36,7 +36,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 // Questions about Didasko? Contact Marzio Sala (marzio.sala _AT_ gmail.com)
-// 
+//
 // ***********************************************************************
 // @HEADER
 
@@ -57,17 +57,17 @@
 
 int main(int argc, char *argv[])
 {
-  
+
 #ifdef HAVE_MPI
   MPI_Init(&argc, &argv);
   Epetra_MpiComm Comm(MPI_COMM_WORLD);
 #else
   Epetra_SerialComm Comm;
-#endif  
+#endif
 
   // declare two dense matrix, whose dimensions are still not specified
   Epetra_SerialDenseMatrix A, B;
-  
+
   // Total number of rows ans columns for dense matrix A
   int NumRowsA = 2, NumColsA = 2;
 
@@ -76,8 +76,8 @@ int main(int argc, char *argv[])
 
   // set the element of A using the () operator.
   // Note that i is the row-index, and j the column-index
-  for( int i=0 ; i<NumRowsA ; ++i ) 
-    for( int j=0 ; j<NumColsA ; ++j ) 
+  for( int i=0 ; i<NumRowsA ; ++i )
+    for( int j=0 ; j<NumColsA ; ++j )
       A(i,j) = i+100*j;
 
   // Epetra_SerialDenseMatrix overloads the << operator
@@ -92,8 +92,8 @@ int main(int argc, char *argv[])
   B.Shape(NumRowsB, NumColsB);
 
   // enter the values of B
-  for( int i=0 ; i<NumRowsB ; ++i ) 
-    for( int j=0 ; j<NumColsB ; ++j ) 
+  for( int i=0 ; i<NumRowsB ; ++i )
+    for( int j=0 ; j<NumColsB ; ++j )
       B(i,j) = 11.0+i+100*j;
 
   cout << B;
@@ -102,7 +102,7 @@ int main(int argc, char *argv[])
   Epetra_SerialDenseMatrix AtimesB;
 
   // same number of rows than A, same columns than B
-  AtimesB.Shape(NumRowsA,NumColsB);  
+  AtimesB.Shape(NumRowsA,NumColsB);
 
   // A * B
   AtimesB.Multiply('N','N',1.0, A, B, 0.0);
@@ -111,7 +111,7 @@ int main(int argc, char *argv[])
 #ifdef HAVE_MPI
   MPI_Finalize();
 #endif
-  
+
 } /* main */
 
 #else
@@ -122,7 +122,7 @@ int main(int argc, char *argv[])
 int main(int argc, char *argv[])
 {
   puts("Please configure Didasko with:\n"
-       "--enable-epetra");
+      "--enable-epetra");
 
   return 0;
 }

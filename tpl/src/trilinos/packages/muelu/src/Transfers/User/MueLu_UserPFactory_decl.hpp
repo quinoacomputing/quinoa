@@ -49,16 +49,17 @@
 #include <Xpetra_MultiVectorFactory_fwd.hpp>
 
 #include "MueLu_ConfigDefs.hpp"
-#include "MueLu_Utilities_fwd.hpp"
+#include "MueLu_PerfUtils_fwd.hpp"
 #include "MueLu_PFactory.hpp"
 #include "MueLu_UserPFactory_fwd.hpp"
+#include "MueLu_Utilities_fwd.hpp"
 #include "MueLu_CoarseMapFactory_fwd.hpp"
 
 #include "MueLu_Level_fwd.hpp"
 
 namespace MueLu {
 
-  template <class Scalar = double, class LocalOrdinal = int, class GlobalOrdinal = LocalOrdinal, class Node = KokkosClassic::DefaultNode::DefaultNodeType, class LocalMatOps = typename KokkosClassic::DefaultKernels<void,LocalOrdinal,Node>::SparseOps> //TODO: or BlockSparseOp ?
+  template <class Scalar = double, class LocalOrdinal = int, class GlobalOrdinal = LocalOrdinal, class Node = KokkosClassic::DefaultNode::DefaultNodeType>
   class UserPFactory : public PFactory {
 #undef MUELU_USERPFACTORY_SHORT
 #include "MueLu_UseShortNames.hpp"
@@ -74,7 +75,7 @@ namespace MueLu {
     virtual ~UserPFactory() { }
     //@}
 
-    RCP<const ParameterList> GetValidParameterList(const ParameterList& paramList = ParameterList()) const;
+    RCP<const ParameterList> GetValidParameterList() const;
 
     //! Input
     //@{

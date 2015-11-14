@@ -33,34 +33,39 @@
 #ifndef IOSS_Ioss_IOUtils_h
 #define IOSS_Ioss_IOUtils_h
 
-#include <Ioss_CodeTypes.h>
+#include <Ioss_CodeTypes.h>             // for IntVector
+#include <stddef.h>                     // for size_t
+#include <stdint.h>                     // for int64_t
+#include <cstdlib>                      // for NULL
+#include <iostream>                     // for ostringstream, etc
+#include <stdexcept>                    // for runtime_error
+#include <string>                       // for string
+#include <vector>                       // for vector
+namespace Ioss { class Field; }
+namespace Ioss { class GroupingEntity; }
+namespace Ioss { class Region; }
+namespace Ioss { class SideBlock; }
 
-#include <string>
 
-#include <iostream>
-#include <vector>
-#include <string>
-#include <sstream>
-#include <stdexcept>
-#include <cstdlib>
 
+#if __cplusplus > 199711L
+#define TOPTR(x) x.data()
+#else
 #define TOPTR(x) (x.empty() ? NULL : &x[0])
+#endif
+
 #define IOSS_ERROR(errmsg) throw std::runtime_error(errmsg.str())
 #define IOSS_WARNING std::cerr
 
 #define ct_assert(e) extern char (*ct_assert(void)) [sizeof(char[1 - 2*!(e)])]
 
 namespace Ioss {
-  class GroupingEntity;
-  class SideBlock;
-  class Region;
-  class Field;
   
   class Utils {
   public:
 
     Utils();
-    ~Utils() {};
+    ~Utils() {}
     
     // Assignment operator
     // Copy constructor
@@ -82,6 +87,11 @@ namespace Ioss {
     static void fixup_name(char *name);
     static void fixup_name(std::string &name);
     
+    /*!
+     * Returns true if the property "omitted" exists on "block"
+     */
+    static bool block_is_omitted(Ioss::GroupingEntity *block);
+
     /*!
      * Process the base element type 'base' which has
      * 'nodes_per_element' nodes and a spatial dimension of 'spatial'

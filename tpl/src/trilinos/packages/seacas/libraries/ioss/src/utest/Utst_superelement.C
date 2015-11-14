@@ -45,9 +45,7 @@
 #undef NDEBUG
 #include <assert.h>
 #include <Ioss_ConcreteVariableType.h>
-#include <exodusII/Ioex_SuperElement.h>
-
-using namespace Ioss;
+#include <exodus/Ioex_SuperElement.h>
 
 int main(int argc, char *argv[])
 {
@@ -55,7 +53,7 @@ int main(int argc, char *argv[])
   MPI_Init(&argc, &argv);
 #endif
 
-  StorageInitializer initialize_storage;
+  Ioss::StorageInitializer initialize_storage;
 
   std::string input_file = std::string(argv[argc-1]);
   if (input_file == "") {

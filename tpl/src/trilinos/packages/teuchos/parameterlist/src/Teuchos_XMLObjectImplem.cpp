@@ -41,6 +41,7 @@
 
 #include "Teuchos_XMLObject.hpp"
 #include "Teuchos_StrUtils.hpp"
+#include <cstring>
 
 using namespace Teuchos;
 
@@ -49,7 +50,7 @@ XMLObjectImplem::XMLObjectImplem(const std::string& tag)
   : tag_(tag), attributes_(), children_(0), content_(0)
 {;}
 
-XMLObjectImplem* XMLObjectImplem::deepCopy() const 
+XMLObjectImplem* XMLObjectImplem::deepCopy() const
 {
   XMLObjectImplem* rtn = new XMLObjectImplem(tag_);
   TEUCHOS_TEST_FOR_EXCEPTION(rtn==0, std::runtime_error, "XMLObjectImplem::deepCopy()");
@@ -85,7 +86,14 @@ void XMLObjectImplem::addContent(const std::string& contentLine)
   content_.append(contentLine);
 }
 
-const XMLObject& XMLObjectImplem::getChild(int i) const 
+void XMLObjectImplem::removeContentLine(const size_t& i)
+{
+  Array<std::string>::iterator pos = content_.begin()+i;
+  // does bound checking within content_.erase if BoundaryChecks are enabled
+  content_.erase(pos);
+}
+
+const XMLObject& XMLObjectImplem::getChild(int i) const
 {
   return children_[i];
 }
@@ -97,8 +105,8 @@ std::string XMLObjectImplem::header(bool strictXML) const
   {
     if (strictXML)
     {
-      rtn += " " 
-	+ (*i).first 
+      rtn += " "
+	+ (*i).first
 	+ "="
 	+ XMLifyAttVal((*i).second);
     }
@@ -107,7 +115,7 @@ std::string XMLObjectImplem::header(bool strictXML) const
       rtn += " " + (*i).first + "=\"" + (*i).second + "\"";
     }
   }
-  
+
   rtn += ">";
   return rtn;
 }
@@ -167,7 +175,7 @@ std::string XMLObjectImplem::XMLifyAttVal(const std::string &attval) {
     }
     else
     {
-      ret.push_back(*i);  
+      ret.push_back(*i);
     }
   }
   ret.push_back(delim);
@@ -182,8 +190,8 @@ std::string XMLObjectImplem::terminatedHeader(bool strictXML) const
   {
     if (strictXML)
     {
-      rtn += " " 
-	+ (*i).first 
+      rtn += " "
+	+ (*i).first
 	+ "="
 	+ XMLifyAttVal((*i).second);
     }
@@ -200,7 +208,7 @@ std::string XMLObjectImplem::terminatedHeader(bool strictXML) const
 std::string XMLObjectImplem::toString() const
 {
   std::string rtn;
-  if (content_.length()==0 && children_.length()==0) 
+  if (content_.length()==0 && children_.length()==0)
   {
     rtn = terminatedHeader() + "\n";
   }
@@ -210,7 +218,7 @@ std::string XMLObjectImplem::toString() const
     bool allBlankContent = true;
     for (int i=0; i<content_.length(); i++)
     {
-      if (!StrUtils::isWhite(content_[i])) 
+      if (!StrUtils::isWhite(content_[i]))
       {
 	allBlankContent=false;
 	break;
@@ -236,7 +244,7 @@ std::string XMLObjectImplem::toString() const
 void XMLObjectImplem::print(std::ostream& os, int indent) const
 {
   for (int i=0; i<indent; i++) os << " ";
-  if (content_.length()==0 && children_.length()==0) 
+  if (content_.length()==0 && children_.length()==0)
   {
     os << terminatedHeader(true) << std::endl;
     return;
@@ -245,7 +253,7 @@ void XMLObjectImplem::print(std::ostream& os, int indent) const
   {
     os << header(true) << std::endl;
     printContent(os, indent+2);
-    
+
     for (int i=0; i<children_.length(); i++)
     {
       children_[i].print(os, indent+2);
@@ -255,7 +263,7 @@ void XMLObjectImplem::print(std::ostream& os, int indent) const
   }
 }
 
-void XMLObjectImplem::printContent(std::ostream& os, int indent) const 
+void XMLObjectImplem::printContent(std::ostream& os, int indent) const
 {
   std::string space = "";
   for (int i=0; i<indent; i++) space += " ";
@@ -263,21 +271,24 @@ void XMLObjectImplem::printContent(std::ostream& os, int indent) const
   bool allBlankContent = true;
   for (int i=0; i<content_.length(); i++)
   {
-    if (!StrUtils::isWhite(content_[i])) 
+    if (!StrUtils::isWhite(content_[i]))
     {
       allBlankContent=false;
       break;
     }
   }
-  
-  if (!allBlankContent) 
+
+  if (!allBlankContent)
   {
-    os << space;
+
     for (int i=0; i<content_.length(); i++)
     {
-      os << content_[i];
+      // remove leading spaces, we will indent
+      std::string s(content_[i]);
+      s.erase(size_t(0), s.find_first_not_of(" \r\t"));
+      if((s.length()>0) && (!StrUtils::isWhite(s)))
+        os << space << s << '\n';
     }
-    os << '\n';
   }
 }
 

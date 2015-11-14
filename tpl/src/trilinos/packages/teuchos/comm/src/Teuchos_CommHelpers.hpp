@@ -83,18 +83,7 @@ enum EReductionType {
  *
  * \relates EReductionType
  */
-inline
-const char* toString( const EReductionType reductType )
-{
-  switch(reductType) {
-    case REDUCE_SUM: return "REDUCE_SUM";
-    case REDUCE_MIN: return "REDUCE_MIN";
-    case REDUCE_MAX: return "REDUCE_MAX";
-    case REDUCE_AND: return "REDUCE_AND";
-    default: TEUCHOS_TEST_FOR_EXCEPT(true);
-  }
-  return 0; // Will never be called
-}
+const char* toString (const EReductionType reductType);
 
 /** \brief Get the process rank.
  *
@@ -1103,38 +1092,51 @@ void ANDValueReductionOp<Ordinal,Packet>::reduce(
 namespace Teuchos {
 
 
-// Not for the general user to use! I am returning a raw ReducionOp* pointer
+// Not for the general user to use! I am returning a raw ReductionOp* pointer
 // to avoid the overhead of using RCP. However, given the use case
 // this is just fine since I can just use std::auto_ptr to make sure things
 // are deleted correctly.
+//
+// NOTE (mfh 08 Feb 2015) std::auto_ptr has been deprecated in C++11.
+// I could either replace it with std::unique_ptr, or just call 'new'
+// and 'delete' manually.  The former is less error prone, but
+// requires checking a macro for whether C++11 is actually enabled.
+// Thus, I've chosen (for now) to rewrite all the code that uses
+// std::auto_ptr, so that it allocates and deletes manually.
 template<typename Ordinal, typename Packet>
 ValueTypeReductionOp<Ordinal,Packet>*
-createOp( const EReductionType reductType )
+createOp (const EReductionType reductType)
 {
   typedef ScalarTraits<Packet> ST;
-  switch(reductType) {
+  switch (reductType) {
     case REDUCE_SUM: {
-      return new SumValueReductionOp<Ordinal,Packet>();
-      break;
+      return new SumValueReductionOp<Ordinal,Packet> ();
     }
     case REDUCE_MIN: {
-      TEUCHOS_TEST_FOR_EXCEPT(!ST::isComparable);
-      return new MinValueReductionOp<Ordinal,Packet>();
-      break;
+      TEUCHOS_TEST_FOR_EXCEPTION(
+        ! ST::isComparable, std::invalid_argument, "Teuchos::createOp"
+        "(EReductionType): The Packet type " << TypeNameTraits<Packet>::name ()
+        << " is not less-than comparable, so it does not make sense to do a "
+        "MIN reduction with it.");
+      return new MinValueReductionOp<Ordinal,Packet> ();
     }
     case REDUCE_MAX: {
-      TEUCHOS_TEST_FOR_EXCEPT(!ST::isComparable);
-      return new MaxValueReductionOp<Ordinal,Packet>();
-      break;
+      TEUCHOS_TEST_FOR_EXCEPTION(
+        ! ST::isComparable, std::invalid_argument, "Teuchos::createOp"
+        "(EReductionType): The Packet type " << TypeNameTraits<Packet>::name ()
+        << " is not less-than comparable, so it does not make sense to do a "
+        "MAX reduction with it.");
+      return new MaxValueReductionOp<Ordinal,Packet> ();
     }
     case REDUCE_AND: {
-      return new ANDValueReductionOp<Ordinal, Packet>();
-      break;
+      return new ANDValueReductionOp<Ordinal, Packet> ();
     }
     default:
-      TEUCHOS_TEST_FOR_EXCEPT(true);
+      TEUCHOS_TEST_FOR_EXCEPTION(
+        true, std::invalid_argument, "Teuchos::createOp(EReductionType): "
+        "Invalid EReductionType value " << reductType << ".  Valid values "
+        "include REDUCE_SUM, REDUCE_MIN, REDUCE_MAX, and REDUCE_AND.");
   }
-  return 0; // Will never be called!
 }
 
 
@@ -1425,15 +1427,29 @@ void Teuchos::reduceAll(
     <<OrdinalTraits<Ordinal>::name()<<","<<TypeNameTraits<Packet>::name()
     <<">( value type, "<<toString(reductType)<<" )"
     );
-  std::auto_ptr<ValueTypeReductionOp<Ordinal,Packet> >
-    reductOp(createOp<Ordinal,Packet>(reductType));
-  reduceAll(comm,*reductOp,count,sendBuffer,globalReducts);
+
+  ValueTypeReductionOp<Ordinal,Packet>* reductOp =
+    createOp<Ordinal, Packet> (reductType);
+  try {
+    reduceAll(comm,*reductOp,count,sendBuffer,globalReducts);
+  }
+  catch (std::exception& e) {
+    delete reductOp;
+    throw e;
+  }
+  delete reductOp;
 }
 
 
 namespace Teuchos {
 
-#ifdef TEUCHOS_HAVE_COMPLEX
+// amb 11 Nov 2014. I am disabling these specializations for
+// now. MPI_C_DOUBLE_COMPLEX is causing a problem in some builds. This code was
+// effectively turned on only yesterday (10 Nov 2014) when TEUCHOS_HAVE_COMPLEX
+// was corrected to be HAVE_TEUCHOS_COMPLEX, so evidently there are no users of
+// these specializations.
+#if 0
+#ifdef HAVE_TEUCHOS_COMPLEX
 // Specialization for Ordinal=int and Packet=std::complex<double>.
 template<>
 TEUCHOSCOMM_LIB_DLL_EXPORT void
@@ -1511,7 +1527,8 @@ isend<int, std::complex<float> > (const ArrayRCP<const std::complex<float> >& se
                                   const int destRank,
                                   const int tag,
                                   const Comm<int>& comm);
-#endif // TEUCHOS_HAVE_COMPLEX
+#endif // HAVE_TEUCHOS_COMPLEX
+#endif // if 0
 
 // Specialization for Ordinal=int and Packet=double.
 template<>
@@ -1591,7 +1608,7 @@ isend<int, float> (const ArrayRCP<const float>& sendBuffer,
                    const int tag,
                    const Comm<int>& comm);
 
-#ifdef TEUCHOS_HAVE_LONG_LONG_INT
+#ifdef HAVE_TEUCHOS_LONG_LONG_INT
 // Specialization for Ordinal=int and Packet=long long.
 template<>
 TEUCHOSCOMM_LIB_DLL_EXPORT void
@@ -1647,7 +1664,63 @@ isend<int, long long> (const ArrayRCP<const long long>& sendBuffer,
                        const int destRank,
                        const int tag,
                        const Comm<int>& comm);
-#endif // TEUCHOS_HAVE_LONG_LONG_INT
+
+// Specialization for Ordinal=int and Packet=unsigned long long.
+template<>
+TEUCHOSCOMM_LIB_DLL_EXPORT void
+gather<int, unsigned long long> (const unsigned long long sendBuf[],
+                                 const int sendCount,
+                                 unsigned long long recvBuf[],
+                                 const int recvCount,
+                                 const int root,
+                                 const Comm<int>& comm);
+template<>
+TEUCHOSCOMM_LIB_DLL_EXPORT void
+gatherv<int, unsigned long long> (const unsigned long long sendBuf[],
+                                  const int sendCount,
+                                  unsigned long long recvBuf[],
+                                  const int recvCounts[],
+                                  const int displs[],
+                                  const int root,
+                                  const Comm<int>& comm);
+template<>
+TEUCHOSCOMM_LIB_DLL_EXPORT void
+reduceAll<int, unsigned long long> (const Comm<int>& comm,
+                                    const EReductionType reductType,
+                                    const int count,
+                                    const unsigned long long sendBuffer[],
+                                    unsigned long long globalReducts[]);
+template<>
+TEUCHOSCOMM_LIB_DLL_EXPORT RCP<CommRequest<int> >
+ireceive<int, unsigned long long> (const Comm<int>& comm,
+                                   const ArrayRCP<unsigned long long>& recvBuffer,
+                                   const int sourceRank);
+template<>
+TEUCHOSCOMM_LIB_DLL_EXPORT RCP<CommRequest<int> >
+ireceive<int, unsigned long long> (const ArrayRCP<unsigned long long> &recvBuffer,
+                                   const int sourceRank,
+                                   const int tag,
+                                   const Comm<int>& comm);
+template<>
+TEUCHOSCOMM_LIB_DLL_EXPORT void
+send<int, unsigned long long> (const Comm<int>& comm,
+                               const int count,
+                               const unsigned long long sendBuffer[],
+                               const int destRank);
+template<>
+TEUCHOSCOMM_LIB_DLL_EXPORT void
+send<int, unsigned long long> (const unsigned long long sendBuffer[],
+                               const int count,
+                               const int destRank,
+                               const int tag,
+                               const Comm<int>& comm);
+template<>
+TEUCHOSCOMM_LIB_DLL_EXPORT RCP<CommRequest<int> >
+isend<int, unsigned long long> (const ArrayRCP<const unsigned long long>& sendBuffer,
+                                const int destRank,
+                                const int tag,
+                                const Comm<int>& comm);
+#endif // HAVE_TEUCHOS_LONG_LONG_INT
 
 // Specialization for Ordinal=int and Packet=long.
 template<>
@@ -1704,6 +1777,62 @@ isend<int, long> (const ArrayRCP<const long>& sendBuffer,
                   const int destRank,
                   const int tag,
                   const Comm<int>& comm);
+
+// Specialization for Ordinal=int and Packet=unsigned long.
+template<>
+TEUCHOSCOMM_LIB_DLL_EXPORT void
+gather<int, unsigned long> (const unsigned long sendBuf[],
+                            const int sendCount,
+                            unsigned long recvBuf[],
+                            const int recvCount,
+                            const int root,
+                            const Comm<int>& comm);
+template<>
+TEUCHOSCOMM_LIB_DLL_EXPORT void
+gatherv<int, unsigned long> (const unsigned long sendBuf[],
+                             const int sendCount,
+                             unsigned long recvBuf[],
+                             const int recvCounts[],
+                             const int displs[],
+                             const int root,
+                             const Comm<int>& comm);
+template<>
+TEUCHOSCOMM_LIB_DLL_EXPORT void
+reduceAll<int, unsigned long> (const Comm<int>& comm,
+                               const EReductionType reductType,
+                               const int count,
+                               const unsigned long sendBuffer[],
+                               unsigned long globalReducts[]);
+template<>
+TEUCHOSCOMM_LIB_DLL_EXPORT RCP<CommRequest<int> >
+ireceive<int, unsigned long> (const Comm<int>& comm,
+                              const ArrayRCP<unsigned long>& recvBuffer,
+                              const int sourceRank);
+template<>
+TEUCHOSCOMM_LIB_DLL_EXPORT RCP<CommRequest<int> >
+ireceive<int, unsigned long> (const ArrayRCP<unsigned long> &recvBuffer,
+                              const int sourceRank,
+                              const int tag,
+                              const Comm<int>& comm);
+template<>
+TEUCHOSCOMM_LIB_DLL_EXPORT void
+send<int, unsigned long> (const Comm<int>& comm,
+                          const int count,
+                          const unsigned long sendBuffer[],
+                          const int destRank);
+template<>
+TEUCHOSCOMM_LIB_DLL_EXPORT void
+send<int, unsigned long> (const unsigned long sendBuffer[],
+                          const int count,
+                          const int destRank,
+                          const int tag,
+                          const Comm<int>& comm);
+template<>
+TEUCHOSCOMM_LIB_DLL_EXPORT RCP<CommRequest<int> >
+isend<int, unsigned long> (const ArrayRCP<const unsigned long>& sendBuffer,
+                           const int destRank,
+                           const int tag,
+                           const Comm<int>& comm);
 
 // Specialization for Ordinal=int and Packet=int.
 template<>
@@ -1771,6 +1900,62 @@ isend<int, int> (const ArrayRCP<const int>& sendBuffer,
                  const int destRank,
                  const int tag,
                  const Comm<int>& comm);
+
+// Specialization for Ordinal=int and Packet=unsigned int.
+template<>
+TEUCHOSCOMM_LIB_DLL_EXPORT void
+gather<int, unsigned int> (const unsigned int sendBuf[],
+                           const int sendCount,
+                           unsigned int recvBuf[],
+                           const int recvCount,
+                           const int root,
+                           const Comm<int>& comm);
+template<>
+TEUCHOSCOMM_LIB_DLL_EXPORT void
+gatherv<int, unsigned int> (const unsigned int sendBuf[],
+                            const int sendCount,
+                            unsigned int recvBuf[],
+                            const int recvCounts[],
+                            const int displs[],
+                            const int root,
+                            const Comm<int>& comm);
+template<>
+TEUCHOSCOMM_LIB_DLL_EXPORT void
+reduceAll<int, unsigned int> (const Comm<int>& comm,
+                              const EReductionType reductType,
+                              const int count,
+                              const unsigned int sendBuffer[],
+                              unsigned int globalReducts[]);
+template<>
+TEUCHOSCOMM_LIB_DLL_EXPORT RCP<CommRequest<int> >
+ireceive<int, unsigned int> (const Comm<int>& comm,
+                             const ArrayRCP<unsigned int>& recvBuffer,
+                             const int sourceRank);
+template<>
+TEUCHOSCOMM_LIB_DLL_EXPORT RCP<CommRequest<int> >
+ireceive<int, unsigned int> (const ArrayRCP<unsigned int> &recvBuffer,
+                             const int sourceRank,
+                             const int tag,
+                             const Comm<int>& comm);
+template<>
+TEUCHOSCOMM_LIB_DLL_EXPORT void
+send<int, unsigned int> (const Comm<int>& comm,
+                         const int count,
+                         const unsigned int sendBuffer[],
+                         const int destRank);
+template<>
+TEUCHOSCOMM_LIB_DLL_EXPORT void
+send<int, unsigned int> (const unsigned int sendBuffer[],
+                         const int count,
+                         const int destRank,
+                         const int tag,
+                         const Comm<int>& comm);
+template<>
+TEUCHOSCOMM_LIB_DLL_EXPORT RCP<CommRequest<int> >
+isend<int, unsigned int> (const ArrayRCP<const unsigned int>& sendBuffer,
+                          const int destRank,
+                          const int tag,
+                          const Comm<int>& comm);
 
 // Specialization for Ordinal=int and Packet=short.
 template<>
@@ -1924,9 +2109,17 @@ void Teuchos::reduceAll(
     <<OrdinalTraits<Ordinal>::name()<<","<<TypeNameTraits<Packet>::name()
     <<">( value type, "<<toString(reductType)<<" )"
     );
-  std::auto_ptr<ValueTypeReductionOp<Ordinal,Packet> >
-    reductOp(createOp<Ordinal,Packet>(reductType));
-  reduceAll(comm,serializer,*reductOp,count,sendBuffer,globalReducts);
+
+  ValueTypeReductionOp<Ordinal,Packet>* reductOp =
+    createOp<Ordinal, Packet> (reductType);
+  try {
+    reduceAll(comm,serializer,*reductOp,count,sendBuffer,globalReducts);
+  }
+  catch (std::exception& e) {
+    delete reductOp;
+    throw e;
+  }
+  delete reductOp;
 }
 
 
@@ -1990,11 +2183,17 @@ void Teuchos::reduceAllAndScatter(
     <<OrdinalTraits<Ordinal>::name()<<","<<TypeNameTraits<Packet>::name()
     <<">( value type, "<<toString(reductType)<<" )"
     );
-  std::auto_ptr<ValueTypeReductionOp<Ordinal,Packet> >
-    reductOp(createOp<Ordinal,Packet>(reductType));
-  reduceAllAndScatter(
-    comm, *reductOp, sendCount, sendBuffer, recvCounts, myGlobalReducts
-    );
+  ValueTypeReductionOp<Ordinal,Packet>* reductOp =
+    createOp<Ordinal, Packet> (reductType);
+  try {
+    reduceAllAndScatter (comm, *reductOp, sendCount, sendBuffer,
+                         recvCounts, myGlobalReducts);
+  }
+  catch (std::exception& e) {
+    delete reductOp;
+    throw e;
+  }
+  delete reductOp;
 }
 
 
@@ -2072,12 +2271,18 @@ void Teuchos::reduceAllAndScatter(
     <<OrdinalTraits<Ordinal>::name()<<","<<TypeNameTraits<Packet>::name()
     <<">( value type, "<<toString(reductType)<<" )"
     );
-  std::auto_ptr<ValueTypeReductionOp<Ordinal,Packet> >
-    reductOp(createOp<Ordinal,Packet>(reductType));
-  reduceAllAndScatter(
-    comm, serializer, *reductOp, sendCount, sendBuffer, recvCounts,
-    myGlobalReducts
-    );
+
+  ValueTypeReductionOp<Ordinal,Packet>* reductOp =
+    createOp<Ordinal, Packet> (reductType);
+  try {
+    reduceAllAndScatter (comm, serializer, *reductOp, sendCount,
+                         sendBuffer, recvCounts, myGlobalReducts);
+  }
+  catch (std::exception& e) {
+    delete reductOp;
+    throw e;
+  }
+  delete reductOp;
 }
 
 
@@ -2116,9 +2321,17 @@ void Teuchos::scan(
     <<OrdinalTraits<Ordinal>::name()<<","<<TypeNameTraits<Packet>::name()
     <<">( value type, "<<toString(reductType)<<" )"
     );
-  std::auto_ptr<ValueTypeReductionOp<Ordinal,Packet> >
-    reductOp(createOp<Ordinal,Packet>(reductType));
-  scan(comm,*reductOp,count,sendBuffer,scanReducts);
+
+  ValueTypeReductionOp<Ordinal,Packet>* reductOp =
+    createOp<Ordinal, Packet> (reductType);
+  try {
+    scan(comm,*reductOp,count,sendBuffer,scanReducts);
+  }
+  catch (std::exception& e) {
+    delete reductOp;
+    throw e;
+  }
+  delete reductOp;
 }
 
 
@@ -2181,9 +2394,17 @@ void Teuchos::scan(
     <<OrdinalTraits<Ordinal>::name()<<","<<TypeNameTraits<Packet>::name()
     <<">( value type, "<<toString(reductType)<<" )"
     );
-  std::auto_ptr<ValueTypeReductionOp<Ordinal,Packet> >
-    reductOp(createOp<Ordinal,Packet>(reductType));
-  scan(comm,serializer,*reductOp,count,sendBuffer,scanReducts);
+
+  ValueTypeReductionOp<Ordinal,Packet>* reductOp =
+    createOp<Ordinal, Packet> (reductType);
+  try {
+    scan(comm,serializer,*reductOp,count,sendBuffer,scanReducts);
+  }
+  catch (std::exception& e) {
+    delete reductOp;
+    throw e;
+  }
+  delete reductOp;
 }
 
 template<typename Ordinal, typename Packet>

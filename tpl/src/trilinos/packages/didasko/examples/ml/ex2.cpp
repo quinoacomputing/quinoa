@@ -1,13 +1,13 @@
 
 // @HEADER
 // ***********************************************************************
-// 
+//
 //                      Didasko Tutorial Package
 //                 Copyright (2005) Sandia Corporation
-// 
+//
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -36,7 +36,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 // Questions about Didasko? Contact Marzio Sala (marzio.sala _AT_ gmail.com)
-// 
+//
 // ***********************************************************************
 // @HEADER
 
@@ -72,14 +72,14 @@ using namespace Trilinos_Util;
 
 int main(int argc, char *argv[])
 {
-  
+
 #ifdef EPETRA_MPI
   MPI_Init(&argc,&argv);
   Epetra_MpiComm Comm(MPI_COMM_WORLD);
 #else
   Epetra_SerialComm Comm;
 #endif
-  
+
   Epetra_Time Time(Comm);
 
   // initialize an Gallery object
@@ -89,35 +89,35 @@ int main(int argc, char *argv[])
   // retrive pointers to matrix and linear problem
   Epetra_RowMatrix * A = Gallery.GetMatrix();
   Epetra_LinearProblem * Problem = Gallery.GetLinearProblem();
-  
+
   // Construct a solver object for this problem
   AztecOO solver(*Problem);
-  
+
   // create the preconditioner object and compute hierarchy
-  ML_Epetra::MultiLevelPreconditioner * MLPrec = 
+  ML_Epetra::MultiLevelPreconditioner * MLPrec =
     new ML_Epetra::MultiLevelPreconditioner(*A, true);
 
   // tell AztecOO to use this preconditioner, then solve
   solver.SetPrecOperator(MLPrec);
- 
+
   solver.SetAztecOption(AZ_solver, AZ_gmres_condnum);
   solver.SetAztecOption(AZ_output, 32);
   solver.SetAztecOption(AZ_kspace, 160);
-   
+
   int Niters = 500;
   solver.Iterate(Niters, 1e-12);
 
   // print out some information about the preconditioner
   if( Comm.MyPID() == 0 ) cout << MLPrec->GetOutputList();
-  
+
   delete MLPrec;
-  
+
   // compute the real residual
 
   double residual, diff;
   Gallery.ComputeResidual(&residual);
   Gallery.ComputeDiffBetweenStartingAndExactSolutions(&diff);
-  
+
   if( Comm.MyPID()==0 ) {
     cout << "||b-Ax||_2 = " << residual << endl;
     cout << "||x_exact - x||_2 = " << diff << endl;
@@ -144,18 +144,18 @@ int main(int argc, char *argv[])
 #ifdef HAVE_MPI
   MPI_Init(&argc,&argv);
 #endif
-  
+
   puts("Please configure Didasko with:\n"
-       "--enable-epetra\n"
-       "--enable-teuchos\n"
-       "--enable-triutils\n"
-       "--enable-aztecoo\n"
-       "--enable-ml");
+      "--enable-epetra\n"
+      "--enable-teuchos\n"
+      "--enable-triutils\n"
+      "--enable-aztecoo\n"
+      "--enable-ml");
 
 #ifdef HAVE_MPI
   MPI_Finalize();
 #endif
-  
+
   return(EXIT_SUCCESS);
 }
 #endif

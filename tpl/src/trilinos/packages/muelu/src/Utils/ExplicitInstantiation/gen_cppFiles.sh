@@ -4,7 +4,7 @@ IFS=$'\n'
 
 classListDir=../ClassList/
 
-for i in LO-GO-NO-LMO SC-LO-GO-NO-LMO SC-LO-GO SC-LO
+for i in LO-GO-NO-LMO SC-LO-GO-NO-LMO SC-LO-GO
   do
 
   classList=$classListDir/$i.classList
@@ -13,7 +13,7 @@ for i in LO-GO-NO-LMO SC-LO-GO-NO-LMO SC-LO-GO SC-LO
   for className in `cat $classList | grep -v ^\# | cut -d "-" -f1 | sed 's/ //'`
     do
 
-    if ! grep -q $className $classListDir/EI-Exceptions.classList
+    if ! grep -q -x $className $classListDir/EI-Exceptions.classList
         then
 
         condition=$(cat $classList | grep "^$className -" | cut -d "-" -f2-)

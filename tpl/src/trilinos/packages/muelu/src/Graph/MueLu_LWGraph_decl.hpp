@@ -66,8 +66,8 @@ namespace MueLu {
    fillComplete.
    TODO handle systems
 */
-  template <class LocalOrdinal  = int, class GlobalOrdinal = LocalOrdinal, class Node = KokkosClassic::DefaultNode::DefaultNodeType, class LocalMatOps = typename KokkosClassic::DefaultKernels<void,LocalOrdinal,Node>::SparseOps>
-  class LWGraph : public MueLu::GraphBase<LocalOrdinal,GlobalOrdinal,Node,LocalMatOps> {
+  template <class LocalOrdinal  = int, class GlobalOrdinal = LocalOrdinal, class Node = KokkosClassic::DefaultNode::DefaultNodeType>
+  class LWGraph : public MueLu::GraphBase<LocalOrdinal,GlobalOrdinal,Node> {
 #undef MUELU_LWGRAPH_SHORT
 #include "MueLu_UseShortNamesOrdinal.hpp"
 
@@ -81,6 +81,12 @@ namespace MueLu {
     {
       minLocalIndex_ = domainMapRef_.getMinLocalIndex();
       maxLocalIndex_ = domainMapRef_.getMaxLocalIndex();
+
+      maxNumRowEntries_ = 0;
+
+      LO nRows = as<LO>(rowPtrs.size()-1);
+      for (LO i = 0; i < nRows; i++)
+        maxNumRowEntries_ = std::max(maxNumRowEntries_, as<size_t>(rowPtrs[i+1] - rowPtrs[i]));
     }
 
     virtual ~LWGraph() {}
@@ -113,6 +119,9 @@ namespace MueLu {
     //! Set boolean array indicating which rows correspond to Dirichlet boundaries.
     void SetBoundaryNodeMap(const ArrayRCP<const bool>& bndry)   { dirichletBoundaries_ = bndry; }
 
+    //! Returns the maximum number of entries across all rows/columns on this node
+    size_t getNodeMaxNumRowEntries () const                      { return maxNumRowEntries_; }
+
     //! Returns map with global ids of boundary nodes.
     const ArrayRCP<const bool> GetBoundaryNodeMap() const        { return dirichletBoundaries_; }
 
@@ -141,7 +150,8 @@ namespace MueLu {
     ArrayRCP<const bool> dirichletBoundaries_;
 
     // local index boundaries (cached from domain map)
-    LO minLocalIndex_, maxLocalIndex_;
+    LO     minLocalIndex_, maxLocalIndex_;
+    size_t maxNumRowEntries_;
   };
 
 } // namespace MueLu

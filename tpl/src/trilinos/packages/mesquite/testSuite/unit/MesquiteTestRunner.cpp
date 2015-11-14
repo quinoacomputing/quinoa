@@ -18,19 +18,19 @@
 
     You should have received a copy of the GNU Lesser General Public License 
     (lgpl.txt) along with this library; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  
     diachin2@llnl.gov, djmelan@sandia.gov, mbrewer@sandia.gov, 
     pknupp@sandia.gov, tleurent@mcs.anl.gov, tmunson@mcs.anl.gov      
    
   ***************************************************************** */
 #include "MesquiteTestRunner.hpp"
-#include "MsqTimer.hpp"
-#include "cppunit/Test.h"
-#include "cppunit/TestSuite.h"
-#include "cppunit/TestResult.h"
-#include "cppunit/TestFailure.h"
-#include "cppunit/Exception.h"
+#include "Mesquite_MsqTimer.hpp"
+#include "Mesquite_cppunit/Test.h"
+#include "Mesquite_cppunit/TestSuite.h"
+#include "Mesquite_cppunit/TestResult.h"
+#include "Mesquite_cppunit/TestFailure.h"
+#include "Mesquite_cppunit/Exception.h"
 
 #include <algorithm>
 

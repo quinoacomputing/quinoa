@@ -74,7 +74,7 @@ namespace Ifpack2 {
 /// represented as a Tpetra::RowMatrix.
 ///
 /// \warning Do not attempt to use this class unless Trilinos was
-///   built with support for the Boost and Cholmod third-party
+///   built with support for the Lemon and Cholmod third-party
 ///   libraries.
 ///
 /// \warning This class will not be installed unless the CMake option
@@ -115,7 +115,7 @@ public:
   //! The type of global indices in the input MatrixType.
   typedef typename MatrixType::global_ordinal_type global_ordinal_type;
 
-  //! The type of the Kokkos Node used by the input MatrixType.
+  //! The Node type used by the input MatrixType.
   typedef typename MatrixType::node_type node_type;
 
   //! The type of the magnitude (absolute value) of a matrix entry.
@@ -246,17 +246,7 @@ public:
   //! \name Mathematical functions
   //@{
 
-  //! Compute and return the estimated condition number.
-  magnitude_type
-  computeCondEst (CondestType CT = Cheap,
-                  local_ordinal_type MaxIters = 1550,
-                  magnitude_type Tol = 1e-9,
-                  const Teuchos::Ptr<const row_matrix_type>& Matrix_in = Teuchos::null);
-
-  //! Returns the computed estimated condition number, or -1.0 if no computed.
-  magnitude_type getCondEst () const { return Condest_; }
-
-  //! Returns the Tpetra::BlockMap object associated with the range of this matrix operator.
+  //! Return the operator's communicator.
   Teuchos::RCP<const Teuchos::Comm<int> > getComm() const;
 
   //! The matrix to be preconditioned.
@@ -366,8 +356,6 @@ private:
 
   magnitude_type Athresh_; //!< Absolute threshold
   magnitude_type Rthresh_; //!< Relative threshold
-  //! Condition number estimate
-  magnitude_type Condest_;
   int Randomize_;
   int NumForests_;
   double KeepDiag_;

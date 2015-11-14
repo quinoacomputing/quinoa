@@ -55,6 +55,13 @@
 #include <iostream>
 #include <fstream>
 
+#if defined(_MSC_VER) && _MSC_VER <= 1700
+static double round(double d)
+{
+  return floor(d + 0.5);
+}
+#endif
+
 using namespace Sundance;
 using Playa::MPIOp;
 using Playa::MPIDataType;
@@ -500,7 +507,11 @@ void TriangleSurf3D::returnIntersectPoints(const Point& start, const Point& end,
 				double minDist = 1e+100, distP;
 				for (int pp = 0 ; pp < nrPoints ; pp++ ){
 					distP = ::sqrt((intP-result[pp])*(intP-result[pp]));
+#ifndef _MSC_VER
 					minDist = ::fmin(minDist,distP);
+#else
+					minDist = std::min<double>(minDist,distP);
+#endif
 				}
 				// ---
 				if ( minDist > 1e-10 )  {
@@ -531,7 +542,11 @@ void TriangleSurf3D::returnIntersectPoints(const Point& start, const Point& end,
 					double minDist = 1e+100, distP;
 					for (int pp = 0 ; pp < nrPoints ; pp++ ){
 						distP = ::sqrt((intP-result[pp])*(intP-result[pp]));
+#ifndef _MSC_VER
 						minDist = ::fmin(minDist,distP);
+#else
+						minDist = std::min<double>(minDist,distP);
+#endif
 					}
 					// ---
 					if ( minDist > 1e-10 )  {
