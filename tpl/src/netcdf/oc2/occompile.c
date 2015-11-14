@@ -16,7 +16,7 @@
 #define TOPLEVEL 1
 
 /* Forward */
-static OCdata* newocdata(OCnode* template);
+static OCdata* newocdata(OCnode* pattern);
 static size_t ocxdrsize(OCtype etype,int isscalar);
 static OCerror occompile1(OCstate*, OCnode*, XXDR*, OCdata**);
 static OCerror occompilerecord(OCstate*, OCnode*, XXDR*, OCdata**);
@@ -112,13 +112,13 @@ occompile1(OCstate* state, OCnode* xnode, XXDR* xxdrs, OCdata** datap)
 
 	    /* allocate space to capture all the element instances */
 	    data->instances = (OCdata**)malloc(nelements*sizeof(OCdata*));
-	    MEMFAIL(data);
+	    MEMGOTO(data->instances,ocstat,fail);
 	    data->ninstances = 0;
 
 	    /* create and fill the element instances */
 	    for(i=0;i<nelements;i++) {
 		OCdata* instance = newocdata(xnode);
-		MEMFAIL(instance);
+		MEMGOTO(instance,ocstat,fail);
 		fset(instance->datamode,OCDT_ELEMENT);
 		data->instances[i] = instance;
 		data->ninstances++;
@@ -168,7 +168,7 @@ occompile1(OCstate* state, OCnode* xnode, XXDR* xxdrs, OCdata** datap)
 	/* extract the content */
 	data->ninstances = nelements;
 	data->instances = (OCdata**)oclistdup(records);
-	MEMFAIL(data);
+	MEMGOTO(data,ocstat,fail);
 	oclistfree(records);	    
 	records = NULL;
         break;
@@ -185,7 +185,14 @@ occompile1(OCstate* state, OCnode* xnode, XXDR* xxdrs, OCdata** datap)
     }
 
 /*ok:*/
-    if(datap) *datap = data;
+    if(datap) {
+	*datap = data;
+	data = NULL;
+    }
+
+    if(data != NULL)
+	ocdata_free(state,data);
+
     return OCTHROW(ocstat);    
 
 fail:
@@ -197,9 +204,10 @@ fail:
 	    ocdata_free(state,(OCdata*)oclistget(records,i));
 	oclistfree(records);
     }
-    if(data != NULL) {
+
+    if(data != NULL)
 	ocdata_free(state,data);
-    }
+
     return OCTHROW(ocstat);
 }
 
@@ -210,13 +218,18 @@ occompilerecord(OCstate* state, OCnode* xnode, XXDR* xxdrs, OCdata** recordp)
     OCdata* record = newocdata(xnode);/* create record record */
     MEMFAIL(record);
     fset(record->datamode,OCDT_RECORD);
-    record->template = xnode;
+    record->pattern = xnode;
     /* capture the current record position */
     record->xdroffset = xxdr_getpos(xxdrs);
     /* Compile the fields of this record */
     ocstat = OCTHROW(occompilefields(state,record,xxdrs,!TOPLEVEL));
     if(ocstat == OC_NOERR) {
-        if(recordp) *recordp = record;
+        if(recordp) {
+	    *recordp = record;
+	    record = NULL;
+	}
+        if(record != NULL)
+	    ocdata_free(state,record);
     }
     return OCTHROW(ocstat);    
 }
@@ -227,7 +240,7 @@ occompilefields(OCstate* state, OCdata* data, XXDR* xxdrs, int istoplevel)
     size_t i;
     OCerror ocstat = OC_NOERR;
     size_t nelements;
-    OCnode* xnode = data->template;
+    OCnode* xnode = data->pattern;
 
     assert(data != NULL);
     nelements = oclistlength(xnode->subnodes);
@@ -278,7 +291,7 @@ occompileatomic(OCstate* state, OCdata* data, XXDR* xxdrs)
     int i;
     off_t nelements,xdrsize;
     unsigned int xxdrcount;
-    OCnode* xnode = data->template;
+    OCnode* xnode = data->pattern;
     int scalar = (xnode->array.rank == 0);
     
     OCASSERT((xnode->octype == OC_Atomic));
@@ -378,13 +391,13 @@ ocdata_free(OCstate* state, OCdata* data)
 }
 
 static OCdata*
-newocdata(OCnode* template)
+newocdata(OCnode* pattern)
 {
     OCdata* data = (OCdata*)calloc(1,sizeof(OCdata));
     MEMCHECK(data,NULL);
     data->header.magic = OCMAGIC;
     data->header.occlass = OC_Data;
-    data->template = template;
+    data->pattern = pattern;
     return data;
 }
 
@@ -437,9 +450,11 @@ ocerrorstring(XXDR* xdrs)
 {
     /* Check to see if the xdrs contains "Error {\n'; assume it is at the beginning of data */
     off_t avail = xxdr_getavail(xdrs);
-    char* data = (char*)malloc((size_t)avail);
+    char* data;
     if(!xxdr_setpos(xdrs,(off_t)0)) return 0;
-    if(!xxdr_opaque(xdrs,data,avail)) return 0;
+    data = (char*)malloc((size_t)avail);
+    MEMCHECK(data,0);    
+    if(!xxdr_opaque(xdrs,data,avail)) {free(data); return 0;}
     /* check for error tag at front */
     if(ocstrncmp(data,tag,sizeof(tag))==0) {
 	char* p;

@@ -1,17 +1,17 @@
 #!/bin/sh
 
-#set -x
+set -e
+
 quiet=0
 leakcheck=0
 timing=0
 
 # Figure our dst server
-SVC=`./nctestserver dts`
-if test "x$SVC" = "x" ; then
-echo "cannot locate test server"
+DTS=`./nctestserver dts ${DTSTESTSERVER}`
+if test "x$DTS" = "x" ; then
+echo "cannot locate test server for dts"
 exit
 fi
-DTS="$SVC/dts"
 
 PARAMS="[log]"
 #PARAMS="${PARAMS}[show=fetch]"
@@ -245,33 +245,28 @@ for i in $WHICHTESTS ; do
   *) echo "Unknown which test: $i" ;;
   esac
 
+rm -f ./.dodsrc ./.ocrc ./.daprc
 cd ${RESULTSDIR}
-rm -f ./.dodsrc
-echo '#DODSRC' >./.dodsrc
 
 for t in ${TESTSET} ; do
   # see if we are using constraints
   #index=`expr index "${t}" ";"`
   
   #echo index: $index
-  
   if [ "$myplatform" = "Darwin" ]; then
-      index=`echo "${t}" | sed -n "s/;.*//p" | wc -c`    
+      index=`echo "${t}" | sed -n "s/;.*//p" | wc -c` 
       if (( $index == 0 )) ; then
 	  constrained=0
       else
 	  constrained=1
       fi
-
   else
-      index=`expr index "${t}" ";"`
-
+      if index=`expr index "${t}" ";"` ; then ignore=1; fi # avoid set -e
       if test "x$index" = "x0" ; then
 	  constrained=0
       else
 	  constrained=1
       fi
-
   fi
 
   if test "x$constrained" = "x0" ; then # No constraint

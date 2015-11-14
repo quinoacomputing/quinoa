@@ -1,36 +1,47 @@
 #!/bin/bash
-#X="-x"
 #NB=1
+DB=1
+#X=-x
+FAST=1
+#CYGWIN=1
+
+FAST=1
+
+#HDF5=1
+#DAP=1
+#PNETCDF=1
+#PAR4=1
 
 if test $# != 0 ; then
 cmds=$@
 fi
 
-HDF5=1
-DAP=1
-#HDF4=1
-#PNETCDF=1
+if test "x$PNETCDF" = x1 -o "x$PAR4" = x1 ; then
+MPIO=1
+fi
 
 #RPC=1
-#PGI=1
+
 #M32=1
 #M64=1
 
 CFLAGS=""
-#CFLAGS="-Wall -Wno-unused-variable -Wno-unused-parameter -Wconversion ${CFLAGS}"
-#CFLAGS="-Wall -Wno-unused-variable -Wno-unused-parameter ${CFLAGS}"
+#CFLAGS="-Wall -Wno-unused-but-set-variable -Wno-unused-variable -Wno-unused-parameter -Wconversion ${CFLAGS}"
+CFLAGS="-Wall -Wno-unused-but-set-variable -Wno-unused-variable -Wno-unused-parameter ${CFLAGS}"
+#CFLAGS="-Wall ${CFLAGS}"
 #CFLAGS="-Wconversion"
 
-PREFIX=/usr/local
 stddir="/usr/local"
+PREFIX=/usr/local
 
-if test "x$cmds" = x ; then
-cmds=""
-#cmds="all"
-#cmds="all check"
-#cmds="all dist"
-#cmds="all distcheck"
-#cmds="$cmds install"
+if test "x${cmds}" = x ; then
+  cmds=""
+else
+for f in $cmds ; do
+  if test "x$f" = "xdistcheck" ; then
+    PREFIX=/tmp/$HOST
+  fi
+done
 fi
 
 # HDF4=>HDF5
@@ -38,13 +49,7 @@ if test "x$HDF4" = x1 ; then
 HDF5=1
 fi
 
-# Test pgi compiler
-if test "x$PGI" = x1 ; then
-PATH="/opt/pgi/linux86/11.1/bin:$PATH"
-CC=pgcc
-else
 CC=gcc
-fi
 
 MALLOC_CHECK=""
 
@@ -61,9 +66,7 @@ case "$HOST" in
 	CFLAGS="-std=c99 $CFLAGS"
 	;;
   spock)
-	if test "x$PGI" = x ; then
   	  CFLAGS="-Wdeclaration-after-statement -Wall $CFLAGS"
-	fi
 	;;
   spike)
 	CFLAGS="-Wall $CFLAGS"
@@ -101,12 +104,6 @@ fi
 
 CXXFLAGS="$CPPFLAGS $CXXFLAGS"
 
-
-if test -z "$NB" ; then
-${MAKE} maintainer-clean >/dev/null 2>&1
-if autoreconf -i --force ; then ok=1; else exit ; fi
-fi
-
 FLAGS="--prefix ${PREFIX}"
 #FLAGS="$FLAGS --disable-f77 --disable-f90"
 #FLAGS="$FLAGS --disable-cxx"
@@ -131,8 +128,37 @@ FLAGS="$FLAGS --enable-dap-auth-tests"
 #FLAGS="$FLAGS --enable-valgrind-tests"
 FLAGS="$FLAGS --enable-jna"
 
-#FLAGS="$FLAGS --disable-shared"
+if test "x$PAR4" != x1 ; then
+FLAGS="$FLAGS --disable-parallel4"
+fi
+
+if test "x$CYGWIN" = x1 ; then
+FLAGS="$FLAGS --enable-workaround"
+fi
+
+if test "x${DB}" = x1 ; then
+FLAGS="$FLAGS --disable-shared"
+else
 FLAGS="$FLAGS --enable-shared"
+fi
+
+#TMP=
+#rm -f ./test_mpi.tmp
+#if test -f $stddir/lib/libhdf5.a ; then
+#  nm $stddir/lib/libhdf5.a | grep mpich_mpi_float$ >./test_mpi.tmp
+#else
+#  if test -f $stddir/lib/libhdf5.so ; then
+#    nm $stddir/lib/libhdf5.so | grep mpich_mpi_float$ >./test_mpi.tmp
+#  fi
+#fi
+#if test -s ./test_mpi.tmp ; then
+#  PAR=1
+#fi
+#rm -f ./test_mpi.tmp
+
+if test "x${PAR}" != x ; then
+FLAGS="$FLAGS --enable-parallel"
+fi
 
 if test "x$HDF5" = "x" ; then
 FLAGS="$FLAGS --disable-netcdf-4"
@@ -143,31 +169,27 @@ fi
 if test "x$DAP" = "x" ; then
 FLAGS="$FLAGS --disable-dap"
 fi
-if test "x$CDMR" = "x1" ; then
-FLAGS="$FLAGS --enable-cdmremote"
-fi
-if test "x$RPC" = "x1" ; then
-FLAGS="$FLAGS --enable-rpc"
+
+if test "x$MPIO" = x1 ; then
+  if test -f /machine/local_mpich2 ; then
+    MPI1=/machine/local_mpich2
+    MPI2=/machine/local_par7
+    MPI3=/machine/local_par
+  else
+    MPI1=/usr/local
+    MPI2=${MPI1}
+    MPI3=${MPI1}
+  fi
+  PATH=${PATH}:${MPI1}/bin
+  CC="${MPI1}/bin/mpicc"
+  CPPFLAGS="-I${MPI2}/include -I${MPI1}/include -I${MPI3}/include"
+  LDFLAGS="-L${MPI2}/lib -L${MPI1}/lib -L${MPI3}/lib"
+  LDLIBS="-lmpich"
+  FLAGS="$FLAGS --enable-pnetcdf"
+  FLAGS="$FLAGS --enable-parallel-tests"
 fi
 
-if test "x$PNETCDF" = x1 ; then
-if test -f /machine/local_mpich2 ; then
-MPI1=/machine/local_mpich2
-MPI2=/machine/local_par7
-MPI3=/machine/local_par
-else
-MPI1=/usr/local
-MPI2=${MPI1}
-MPI3=${MPI1}
-fi
-PATH=${PATH}:${MPI1}/bin
-CC="${MPI1}/bin/mpicc"
-CPPFLAGS="-I${MPI2}/include -I${MPI1}/include -I${MPI3}/include"
-LDFLAGS="-L${MPI2}/lib -L${MPI1}/lib -L${MPI3}/lib"
-LDLIBS="-lmpich -lmpl"
-FLAGS="$FLAGS --enable-pnetcdf"
-FLAGS="$FLAGS --enable-parallel-tests"
-fi
+#FLAGS="${FLAGS} --enable-stdio"
 
 export PATH
 export CC
@@ -181,9 +203,19 @@ export CXXFLAGS
 DISTCHECK_CONFIGURE_FLAGS="$FLAGS"
 export DISTCHECK_CONFIGURE_FLAGS
 
-if test -f Makefile ; then ${MAKE} distclean >/dev/null 2>&1 ; fi
+if test "x$NB" != x -o "x$FAST" = x ; then
+${MAKE} maintainer-clean >/dev/null 2>&1
+fi
+if test -z "$NB" ; then
+  if autoreconf -i --force ; then ok=1; else exit ; fi
+fi
+
+if test -z "$FAST" ; then
+  if test -f Makefile ; then ${MAKE} distclean >/dev/null 2>&1 ; fi
+fi
 sh $X ./configure ${FLAGS}
 for c in $cmds; do
+printenv LD_LIBRARY_PATH
   ${MAKE} ${FORCE} $c
 done
 exit 0

@@ -6,6 +6,13 @@ set -e
 echo ""
 echo "*** Testing ncgen and ncdump for UTF8 support..."
 
+if test "x$builddir" = x ; then
+builddir="."
+fi
+if test "x$srcdir" = x ; then
+srcdir="."
+fi
+
 rm -f utf8.nc utf8.cdl
 echo "*** creating classic offset file with utf8 characters..."
 ../ncgen/ncgen -b -o utf8.nc ${srcdir}/ref_tst_utf8.cdl

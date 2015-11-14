@@ -1,17 +1,19 @@
 /*********************************************************************
  *   Copyright 2010, UCAR/Unidata
- *   See netcdf/COPYRIGHT file for copying and redistribution conditions.
+ *   See netcdf/COPYRIGHT file for copying and redistribuution conditions.
  *   $Header$
  *********************************************************************/
 
+#include "config.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 #include <assert.h>
 
+#include "oc.h"
 #include "ocuri.h"
 
-#define OCURIDEBUG
+#undef OCURIDEBUG
 
 #ifdef OCURIDEBUG
 static int failpoint = 0;
@@ -35,8 +37,23 @@ static int failpoint = 0;
 #define NILLEN(s) ((s)==NULL?0:strlen(s))
 #endif
 
+#ifdef HAVE_STRDUP
 #ifndef nulldup
 #define nulldup(s) ((s)==NULL?NULL:strdup(s))
+#endif
+#endif
+
+#ifndef HAVE_STRDUP
+static char* nulldup(char* s)
+{
+    char* dup = NULL;
+    if(s != NULL) {
+	dup = (char*)malloc(strlen(s)+1);
+	if(dup != NULL)
+	    strcpy(dup,s);
+    }
+    return dup;
+}
 #endif
 
 #define terminate(p) {*(p) = EOFCHAR;}
@@ -54,10 +71,10 @@ int   filelike; /* 1=>this protocol has no host, user+pwd, or port */
 };
 
 /* Allowable character sets for encode */
-static char* fileallow = 
+static char* fileallow =
 "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!#$&'()*+,-./:;=?@_~";
 
-static char* queryallow = 
+static char* queryallow =
 "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!#$&'()*+,-./:;=?@_~";
 
 /* Forward */
@@ -75,6 +92,7 @@ ocuriparse(const char* uri0, OCURI** durip)
     OCURI* duri = NULL;
     char* uri = NULL;
     char* p;
+    char* q;
     struct OC_ProtocolInfo* proto;
     int i,nprotos;
 
@@ -83,8 +101,7 @@ ocuriparse(const char* uri0, OCURI** durip)
     char* host = NULL;
     char* port = NULL;
     char* constraint = NULL;
-    char* user = NULL;
-    char* pwd = NULL;
+    char* userpwd = NULL;
     char* file = NULL;
     char* prefixparams = NULL;
     char* suffixparams = NULL;
@@ -95,7 +112,7 @@ ocuriparse(const char* uri0, OCURI** durip)
     duri = (OCURI*)calloc(1,sizeof(OCURI));
     if(duri == NULL)
 	{THROW(2); goto fail;}
-	
+
     /* save original uri */
     duri->uri = nulldup(uri0);
 
@@ -109,7 +126,7 @@ ocuriparse(const char* uri0, OCURI** durip)
        first char is guaranteed to be '\0' */
 
     duri->strings = uri;
-    uri++; 
+    uri++;
 
     /* dup the incoming url */
     strcpy(uri,uri0);
@@ -119,11 +136,10 @@ ocuriparse(const char* uri0, OCURI** durip)
 	2. remove all '\\' (Temp hack to remove escape characters
                             inserted by Windows or MinGW)
     */
-    for(p=uri;*p;p++) {
-	if(*p == '\\' || *p < ' ')
-	    oclshift1(p); /* compress out */
-    }	
-
+    for(q=uri,p=uri;*p;p++) {
+	if(*p != '\\' && *p >= ' ') /* compress out */
+	    *q++=*p;
+    }
     p = uri;
 
     /* break up the uri string into big chunks: prefixparams, protocol,
@@ -132,24 +148,26 @@ ocuriparse(const char* uri0, OCURI** durip)
 
     /* collect any prefix bracketed parameters */
     if(*p == LBRACKET) {
-	prefixparams = p+1;
-	/* find end of the clientparams; convert LB,RB to ';' */
-        for(;*p;p++) {
+	p++;
+	prefixparams = p;
+	/* find end of the clientparams; convert LB,RB to '&' */
+        for(q=p;*p;p++) {
 	    if(p[0] == RBRACKET && p[1] == LBRACKET) {
-		p[0] = ';';
-		oclshift1(p+1);
+		*q++ = '&';
+		p++;
 	    } else if(p[0] == RBRACKET && p[1] != LBRACKET)
 		break;
+	    else
+		*q++=*p;
 	}
 	if(*p == 0)
 	    {THROW(4); goto fail; /* malformed client params*/}
-        terminate(p); /* nul term the prefixparams (overwrites
-                         the final RBRACKET) */
+        terminate(q); /* nul term the prefixparams */
 	p++; /* move past the final RBRACKET */
     }
 
     /* Tag the protocol */
-    protocol = p;    
+    protocol = p;
     p = strchr(p,':');
     if(!p)
 	{THROW(5); goto fail;}
@@ -162,14 +180,14 @@ ocuriparse(const char* uri0, OCURI** durip)
     for(i=0;i<nprotos;i++) {
         if(strcmp(protocol,legalprotocols[i].name)==0) {
 	    proto = &legalprotocols[i];
-	    break;	    
+	    break;
 	}
     }
     if(proto == NULL)
 	{THROW(6); goto fail; /* illegal protocol*/}
 
     /* skip // */
-    if(p[0] != '/' && p[1] != '/')
+    if(p[0] != '/' || p[1] != '/')
 	{THROW(7); goto fail;}
     p += 2;
 
@@ -195,7 +213,7 @@ ocuriparse(const char* uri0, OCURI** durip)
 	    file = p+1; /* +1 becauseof the shift */
 	}
     }
-    
+
     /* If you shift in the code below, you must reset file beginning */
 
     if(host != NULL) {/* Parse the host section */
@@ -204,14 +222,9 @@ ocuriparse(const char* uri0, OCURI** durip)
         if(p) {
 	    if(p == host)
 		{THROW(9); goto fail; /* we have proto://@ */}
-	    user = host;
+	    userpwd = host;
 	    terminate(p); /* overwrite '@' */
 	    host = p+1; /* start of host ip name */
-	    p = strchr(user,':');
- 	    if(p == NULL)
-		{THROW(10); goto fail; /* malformed */}
-	    terminate(p); /*overwrite colon */
-	    pwd = p+1;
 	}
 
         /* extract host and port */
@@ -246,7 +259,7 @@ ocuriparse(const char* uri0, OCURI** durip)
     p = oclocate(p,"?#");
     if(p != NULL) { /* we have constraint and/or suffixparams */
 	char* fileend = p; /* save the end of the file section */
-	char* constraintend = NULL; 
+	char* constraintend = NULL;
 	if(*p == '?')
             constraint = p+1;
 	else
@@ -276,32 +289,13 @@ ocuriparse(const char* uri0, OCURI** durip)
 	suffixparams = NULL; /* empty suffixparams section */
 
     if(suffixparams != NULL) {
-	/* there really are suffix params; so rebuild the suffix params */
-        p = suffixparams;
-	/* There must be brackets */
-        if(*p != LBRACKET)
-	    {THROW(14); goto fail;}
-	suffixparams++; /* skip leading LBRACKET */
-	p = suffixparams;
-	/* convert RBRACKET LBRACKET to ';' */
-        for(;*p;p++) {
-	    if(p[0] == RBRACKET && p[1] == LBRACKET) {
-	        p[0] = ';';
-		oclshift1(p+1);
-	    } else if(p[0] == RBRACKET && p[1] != LBRACKET) {
-		/* terminate suffixparams */
-		*p = EOFCHAR;
-		break;
-	    }
-	}
 	if(*suffixparams == EOFCHAR)
 	    suffixparams = NULL; /* suffixparams are empty */
     }
 
     /* do last minute empty check */
     if(protocol != NULL && *protocol == EOFCHAR) protocol = NULL;
-    if(user != NULL && *user == EOFCHAR) user = NULL;
-    if(pwd != NULL && *pwd == EOFCHAR) pwd = NULL;
+    if(userpwd != NULL && *userpwd == EOFCHAR) userpwd = NULL;
     if(host != NULL && *host == EOFCHAR) host = NULL;
     if(port != NULL && *port == EOFCHAR) port = NULL;
     if(file != NULL && *file == EOFCHAR) file = NULL;
@@ -309,8 +303,7 @@ ocuriparse(const char* uri0, OCURI** durip)
 
     /* assemble the component pieces */
     duri->protocol = protocol;
-    duri->user = user;
-    duri->password = pwd;
+    duri->userpwd = userpwd;
     duri->host = host;
     duri->port = port;
     duri->file = file;
@@ -322,29 +315,50 @@ ocuriparse(const char* uri0, OCURI** durip)
 	size_t plen = prefixparams ? strlen(prefixparams) : 0;
 	size_t slen = suffixparams ? strlen(suffixparams) : 0;
 	size_t space = plen + slen + 1;
-	/* add 1 for an extra comma if both are defined */
-        space++;
-        duri->params = (char*)malloc(space);
-	duri->params[0] = EOFCHAR; /* so we can use strcat */
+	/* add 1 for an extra ampersand if both are defined */
+    if(plen > 0 && slen > 0) space++;
+    /* Add an extra char for null termination. */
+    duri->params = (char*)malloc(space+1);
+    if(duri->params == NULL)
+      return 0;
+    duri->params[0] = EOFCHAR; /* so we can use strcat */
 	if(plen > 0) {
-            strcat(duri->params,prefixparams);
-	    if(slen > 0)
-		strcat(duri->params,";");
+      strncat(duri->params,prefixparams,space);
+      if(slen > 0)
+		strncat(duri->params,"&",space);
 	}
 	if(slen > 0)
-            strcat(duri->params,suffixparams);
+      strncat(duri->params,suffixparams,space);
     }
 
-#ifdef OCXDEBUG
+#ifdef OCURIDEBUG
 	{
+	int i,nparms;
+	char** p;
         fprintf(stderr,"duri:");
-        fprintf(stderr," params=|%s|",FIX(duri->params));
         fprintf(stderr," protocol=|%s|",FIX(duri->protocol));
         fprintf(stderr," host=|%s|",FIX(duri->host));
         fprintf(stderr," port=|%s|",FIX(duri->port));
         fprintf(stderr," file=|%s|",FIX(duri->file));
         fprintf(stderr," constraint=|%s|",FIX(duri->constraint));
+        fprintf(stderr," params=|%s|",FIX(duri->params));
         fprintf(stderr,"\n");
+	if(duri->paramlist == NULL) {
+	    if(!ocuridecodeparams(duri)) {
+		fprintf(stderr,"DEBUG: param decode failed\n");
+		duri->paramlist = NULL;
+	    }
+	}
+	if(duri->paramlist != NULL) {
+	    for(p=duri->paramlist,nparms=0;*p;p++,nparms++);
+	    nparms = nparms / 2;
+	    fprintf(stderr,"params:");
+	    for(i=0;i<nparms;i++) {
+	        char** pos = duri->paramlist+(i*2);
+	        fprintf(stderr," %s=|%s|",pos[0],pos[1]);
+	    }
+            fprintf(stderr,"\n");
+	}
     }
 #endif
     if(durip != NULL) *durip = duri; else free(duri);
@@ -382,8 +396,8 @@ ocurisetconstraints(OCURI* duri,const char* constraints)
     if(duri->constraint != NULL) free(duri->constraint);
     if(duri->projection != NULL) free(duri->projection);
     if(duri->selection != NULL) free(duri->selection);
-    duri->constraint = NULL;	
-    duri->projection = NULL;	
+    duri->constraint = NULL;
+    duri->projection = NULL;
     duri->selection = NULL;
 
     if(constraints == NULL || strlen(constraints)==0) return;
@@ -438,7 +452,7 @@ ocuribuild(OCURI* duri, const char* prefix, const char* suffix, int flags)
     int withprefixparams = ((flags&OCURIPREFIXPARAMS)!=0
 				&& duri->params != NULL);
     int withuserpwd = ((flags&OCURIUSERPWD)!=0
-	               && duri->user != NULL && duri->password != NULL);
+	               && duri->userpwd != NULL);
     int withconstraints = ((flags&OCURICONSTRAINTS)!=0
 	                   && duri->constraint != NULL);
 #ifdef NEWESCAPE
@@ -449,14 +463,13 @@ ocuribuild(OCURI* duri, const char* prefix, const char* suffix, int flags)
 
     if(prefix != NULL) len += NILLEN(prefix);
     len += (NILLEN(duri->protocol)+NILLEN("://"));
-    if(withuserpwd) {
-	len += (NILLEN(duri->user)+NILLEN(duri->password)+NILLEN(":@"));
-    }
+    if(withuserpwd)
+	len += (NILLEN(duri->userpwd)+NILLEN("@"));
     len += (NILLEN(duri->host));
     if(duri->port != NULL) {
 	len += (NILLEN(":")+NILLEN(duri->port));
     }
-    
+
     tmpfile = duri->file;
     if(encode)
 	tmpfile = ocuriencode(tmpfile,fileallow);
@@ -480,7 +493,7 @@ ocuribuild(OCURI* duri, const char* prefix, const char* suffix, int flags)
 	char** p;
 	if(duri->paramlist == NULL)
 	    if(!ocuridecodeparams(duri))
-		return NULL;		
+		return NULL;
 	for(paramslen=0,nparams=0,p=duri->paramlist;*p;p++) {
 	    nparams++;
 	    paramslen += NILLEN(*p);
@@ -495,7 +508,7 @@ ocuribuild(OCURI* duri, const char* prefix, const char* suffix, int flags)
     }
 
     len += 1; /* null terminator */
-    
+
     newuri = (char*)malloc(len);
     if(newuri == NULL) return NULL;
 
@@ -508,13 +521,11 @@ ocuribuild(OCURI* duri, const char* prefix, const char* suffix, int flags)
 	strcat(newuri,duri->protocol);
     strcat(newuri,"://");
     if(withuserpwd) {
-        strcat(newuri,duri->user);
-        strcat(newuri,":");
-        strcat(newuri,duri->password);	
+        strcat(newuri,duri->userpwd);
         strcat(newuri,"@");
     }
     if(duri->host != NULL) { /* may be null if using file: protocol */
-        strcat(newuri,duri->host);	
+        strcat(newuri,duri->host);
     }
     if(duri->port != NULL) {
         strcat(newuri,":");
@@ -557,62 +568,67 @@ ocappendparams(char* newuri, char** p)
 /*
 In the original url, client parameters are assumed to be one
 or more instances of bracketed pairs: e.g "[...][...]...".
-They may occur either at the front, or suffixed after
-a trailing # character After processing, the list is
-converted to a semicolon separated list of the combination
-of prefix and suffix parameters.
+prefixed to the url. This model has been extended to support
+specification of the parameters as semicolon separated key=value
+pairs in the fragment part of the url.  The fragment part
+starts with a '#' and is the last part of the url.
 
 After the url is parsed, the parameter list
 is converted to a semicolon separated list with all
 whitespace removed.
 In any case, each parameter in turn is assumed to be a
-of the form <name>=<value> or [<name>].
-e.g. [x=y][z][a=b][w].  If the same parameter is specified more
-than once, then the first occurrence is used; this is so
+of the form <name>=<value> or <name>.
+e.g. x=y,z,a=b,w.  If the same parameter is specified more
+than once, then the last occurrence is used; this is so
 that is possible to forcibly override user specified
-parameters by prefixing.  IMPORTANT: client parameter string
+parameters by suffixing.  IMPORTANT: client parameter string
 is assumed to have blanks compressed out.  Returns 1 if parse
-suceeded, 0 otherwise; */
+succeeded, 0 otherwise; */
 
 int
 ocuridecodeparams(OCURI* ocuri)
 {
-    char* cp;
+    char* p;
     int i,c;
     int nparams;
-    char* params;
+    char* params = NULL;
     char** plist;
 
     if(ocuri == NULL) return 0;
     if(ocuri->params == NULL) return 1;
 
-    params = strdup(ocuri->params); /* so we can modify */
+    params = strdup(ocuri->params);
+    if(params == NULL)
+	return 0; /* no memory */
 
-    /* Pass 1 to break string into pieces at the semicolons
+    /* Pass 1:  break string into pieces at the ampersands
        and count # of pairs */
     nparams=0;
-    for(cp=params;(c=*cp);cp++) {
-	if(c == ';') {*cp = EOFCHAR; nparams++;}
+    for(p=params;*p;p++) {
+	c = *p;
+	if(c == '&') {*p = EOFCHAR; nparams++;}
     }
     nparams++; /* for last one */
 
-    /* plist is an env style list */
+    /* plist will be an env style list */
     plist = (char**)calloc(1,sizeof(char*)*(2*nparams+1)); /* +1 for null termination */
-    if(plist == NULL)
+    if(plist == NULL) {
+	free(params);
 	return 0;
+    }
 
     /* Break up each param into a (name,value) pair*/
     /* and insert into the param list */
     /* parameters of the form name name= are converted to name=""*/
-    for(cp=params,i=0;i<nparams;i++) {
-	char* next = cp+strlen(cp)+1; /* save ptr to next pair*/
-	char* vp;
-	/*break up the ith param*/
-	vp = strchr(cp,'=');
-	if(vp != NULL) {*vp = EOFCHAR; vp++;} else {vp = "";}
-	plist[2*i] = nulldup(cp);	
-	plist[2*i+1] = nulldup(vp);
-	cp = next;
+    for(p=params,i=0;i<nparams;i++) {
+      char* next = p+strlen(p)+1; /* save ptr to next pair*/
+      char* vp;
+      /*break up the ith param*/
+      vp = strchr(p,'=');
+      if(vp != NULL) {*vp = EOFCHAR; vp++;} else {vp = "";}
+      plist[2*i] = nulldup(p);
+      plist[2*i+1] = nulldup(vp);
+      p = next;
     }
     plist[2*nparams] = NULL;
     free(params);
@@ -800,7 +816,7 @@ ocuridecodeonly(char* s, char* only)
     char* outptr;
     char* inptr;
     unsigned int c;
-    
+
     if (s == NULL) return NULL;
     if(only == NULL) only = "";
 
@@ -830,4 +846,3 @@ ocuridecodeonly(char* s, char* only)
     *outptr = EOFCHAR;
     return decoded;
 }
-

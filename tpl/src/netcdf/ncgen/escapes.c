@@ -461,13 +461,13 @@ Convert a java name that might possibly
 contain utf8 characters to one that is
 acceptable to the Java compiler.
 Basically this means convert the printables
-using codify (above) equivalent and then escape
+using ccodify (above) equivalent and then escape
 all the utf chars.
 */
 static char*
 jcodify (const char *name)
 {
-    return codify(name);
+    return ccodify(name);
 }
 
 /**************************************************/
@@ -641,7 +641,7 @@ unescapeoct(const char* s)
 
 /*
  * "Un-escapes" valid escape sequences in yystring (read by lex) into the
- * apropriate unescaped characters.  For example, the two character
+ * appropriate unescaped characters.  For example, the two character
  * sequence "\t" in yystring would be converted into a single tab character.
  * On return, termstring is nul terminated.
  * Watch out for embedded nuls and utf-8 characters.

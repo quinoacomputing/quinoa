@@ -1,9 +1,212 @@
-Release Notes {#release_notes}
-===============================
+Release Notes       {#RELEASE_NOTES}
+=============
 
 \brief Release notes file for the netcdf-c package.
 
-This file contains a high-level description of this package's evolution. Releases are in reverse chronological order (most recent first). Note that, as of netcdf 4.2, the netcdf-c++ and netcdf-fortran libraries have been separated into their own libraries.
+This file contains a high-level description of this package's evolution. Releases are in reverse chronological order (most recent first). Note that, as of netcdf 4.2, the `netcdf-c++` and `netcdf-fortran` libraries have been separated into their own libraries.
+
+## 4.4.0 Released TBD
+
+### 4.4.0-RC5 Released - November 11, 2015
+
+* Added a fix for https://github.com/Unidata/netcdf-c/issues/149, which was reported several times in quick succession within an hour of the RC4 release.
+
+### 4.4.0-RC4 Released - November 10, 2015
+
+* Added CDM-5 support via new mode flag called NC_64BIT_DATA (alias NC_CDF5).
+
+	Major kudos to Wei-Keng Liao for all the effort he put into getting this to work.
+
+    This cascaded into a number of other changes.
+  
+    1. Renamed libsrcp5 -> libsrcp because pnetcdf can do parallel io for CDF-1, CDF-2 and CDF-5, not just CDF-5.
+    2. Given #1, then the NC_PNETCDF mode flag becomes a subset of NC_MPIIO, so made NC_PNETCDF an alias for NC_MPII.
+    3. NC_FORMAT_64BIT is now deprecated.  Use NC_FORMAT_64BIT_OFFSET.
+
+Further information regarding the CDF-5 file format specifrication may be found here: http://cucis.ece.northwestern.edu/projects/PnetCDF/CDF-5.html
+
+* Modified configure.ac to provide finer control over parallel
+  support. Specifically, add flags for:
+  
+    1. HDF5_PARALLEL when hdf5 library has parallel enabled
+    2. --disable-parallel4 to be used when we do not want
+     netcdf-4 to use parallelism even if hdf5 has it enabled.
+
+
+* Deprecating various extended format flags.
+
+The various extended format flags of the format `NC_FORMAT_FOO` have been refactored into the form `NC_FORMATX_FOO`.  The old flags still exist but have been marked as deprecated and will be removed at some point.  This was done to avoid confusion between the extended format flags and the format flags `NC_FORMAT_CLASSIC`, `NC_FORMAT_64BIT_OFFSET`, etc.  The mapping of deprecated-to-new flags is as follows:
+
+Deprecated | Replaced with
+-----------|-------------
+NC\_FORMAT\_NC3       | NC\_FORMATX\_NC3
+NC\_FORMAT\_NC\_HDF5  | NC\_FORMATX\_NC\_HDF5
+NC\_FORMAT\_NC4       | NC\_FORMATX\_NC4
+NC\_FORMAT\_NC\_HDF4  | NC\_FORMATX\_NC\_HDF4
+NC\_FORMAT\_PNETCDF   | NC\_FORMATX\_PNETCDF
+NC\_FORMAT\_DAP2      | NC\_FORMATX\_DAP2 
+NC\_FORMAT\_DAP4      | NC\_FORMATX\_DAP4
+NC\_FORMAT\_UNDEFINED | NC\_FORMATX\_UNDEFINED
+
+* Reduced minimum cmake version to `2.8.11` from `2.8.12`. This will allow for cmake use on a broader set of popular linux platforms without having to do a custom cmake install.  See https://github.com/Unidata/netcdf-c/issues/135 for more information.
+
+* The documentation section `The Default Chunking Scheme` has been updated with more information.  This lives in the `guide.dox` file in the `docs/` directory, or can be found online in the appropriate location (typically http://www.unidata.ucar.edu/netcdf/docs), once this release has been published.
+
+### 4.4.0-RC3 2015-10-08
+
+* Addressed an inefficiency in how bytes would be swapped when converting between `LITTLE` and `BIG` ENDIANNESS.  See [NCF-338](https://bugtracking.unidata.ucar.edu/browse/NCF-338) for more information.
+
+* Addressed an issue where an interrupted read on a `POSIX` system would return an error even if errno had been properly set to `EINTR`.  This issue was initially reported by David Knaak at Cray.  More information may be found at [NCF-337](https://bugtracking.unidata.ucar.edu/browse/NCF-337).
+
+* Added a note to the install directions pointing out that parallel make
+cannot be used for 'make check'.
+
+### 4.4.0-RC2 Released 2015-07-09
+
+* Minor bug fixes and cleanup of issues reported with first release candidate.
+
+### 4.4.0-RC1 Released 2015-06-09
+
+* The pre-built Windows binaries are now built using `Visual Studio 2012`, instead of `Visual Studio 2010`.  Source-code compilation remains function with `Visual Studio 2010`, this is just a change in the pre-built binaries.
+
+* Added support for opening in-memory file content. See `include/netcdf_mem.h` for the procedure signature. Basically, it allows one to fill a chunk of memory with the equivalent of some netCDF file and then open it and read from it as if it were any other file. See [NCF-328](https://bugtracking.unidata.ucar.edu/browse/NCF-328) for more information.
+
+* Addressed an issue when reading hdf4 files with explicit little-endian datatypes. This issue was [reported by Tim Burgess at GitHub](https://github.com/Unidata/netcdf-c/issues/113).  See [NCF-332](https://bugtracking.unidata.ucar.edu/browse/NCF-332) for more information.
+
+* Addressed an issue with IBM's `XL C` compiler on AIX and how it handled some calls to malloc.  Also, as suggested by Wolfgang Hayek, developers using this compiler may need to pass `CPPFLAGS=-D_LINUX_SOURCE_COMPAT` to avoid some test failures.
+
+* Addressed an issure in netcdf4 related to specifying an endianness explicitly.  When specifying an endianness for `NC_FLOAT`, the value would appear to not be written to file, if checked with `ncdump -s`.  The issue was more subtle; the value would be written but was not being read from file properly for non-`NC_INT`.  See [GitHub Issue](https://github.com/Unidata/netcdf-c/issues/112) or [NCF-331](https://bugtracking.unidata.ucar.edu/browse/NCF-331) for more information.
+
+* Addressed an issue in netcdf4 on Windows w/DAP related to how byte values were copied with sscanf.  Issue originally reported by Ellen Johnson at Mathworks, see [NCF-330](https://bugtracking.unidata.ucar.edu/browse/NCF-330) for more information.
+
+* Addressed in issue in netcdf4 files on Windows, built with Microsoft Visual Studio, which could result in a memory leak.  See [NCF-329](https://bugtracking.unidata.ucar.edu/browse/NCF-329) for more information.
+
+* Addressed an issue in netcdf4 files where writing unlimited dimensions that were not declared at head of the dimensions list, as reported by Ellen Johnson at Mathworks.  See [NCF-326](https://bugtracking.unidata.ucar.edu/browse/NCF-326) for more information.
+
+* Added an authorization reference document as oc2/ocauth.html.
+
+* Fixed bug resulting in segmentation violation when trying to add a
+  _FillValue attribute to a variable in an existing netCDF-4 file
+  defined without it (thanks to Alexander Barth). See
+  [NCF-187](https://bugtracking.unidata.ucar.edu/browse/NCF-187) for
+  more information.
+
+## 4.3.3.1 Released 2015-02-25
+
+* Fixed a bug related to renaming the attributes of coordinate variables in a subgroup. See [NCF-325](https://bugtracking.unidata.ucar.edu/browse/NCF-325) for more information.
+
+## 4.3.3 Released 2015-02-12
+
+* Fixed bug resulting in error closing a valid netCDF-4 file with a dimension and a non-coordinate variable with the same name. [NCF-324](https://bugtracking.unidata.ucar.edu/browse/NCF-324)
+
+* Enabled previously-disabled shell-script-based tests for Visual Studio when `bash` is detected.
+
+### 4.3.3-rc3 Released 2015-01-14
+
+* Added functionality to make it easier to build `netcdf-fortran` as part of the `netcdf-c` build for *NON-MSVC* builds.  This functionality is enabled at configure time by using the following **Highly Experimental** options:
+
+ * CMake:  `-DENABLE_REMOTE_FORTRAN_BOOTSTRAP=ON`
+ * Autotools: `--enable-remote-fortran-bootstrap`
+
+Details are as follows:
+
+----
+
+Enabling these options creates two new make targets:
+
+*  `build-netcdf-fortran`
+* `install-netcdf-fortran`
+
+Example Work Flow from netcdf-c source directory:
+
+* $ `./configure --enable-remote-fortran-bootstrap --prefix=$HOME/local`
+* $ `make check`
+* $ `make install`
+* $ `make build-netcdf-fortran`
+* $ `make install-netcdf-fortran`
+
+> These make targets are **only** valid after `make install` has been invoked.  This cannot be enforced rigidly in the makefile for reasons we will expand on in the documentation, but in short: `make install` may require sudo, but using sudo will discard environmental variables required when attempting to build netcdf-fortran in this manner.<br><br>
+
+> It is important to note that this is functionality is for *convenience only*. It will remain possible to build `netcdf-c` and `netcdf-fortran` manually.  These make targets should hopefully suffice for the majority of our users, but for corner cases it may still be required of the user to perform a manual build.  [NCF-323](https://bugtracking.unidata.ucar.edu/browse/NCF-323)
+
+----
+
+* Added a failure state if the `m4` utility is not found on non-Windows systems; previously, the build would fail when it reached the point of invoking m4.
+
+* Added an explicit check in the build systems (autotools, cmake) for the CURL-related option `CURLOPT_CHUNK_BGN_FUNCTION`.  This option was introduced in libcurl version `7.21.0`.  On installations which require libcurl and have this version, `CURLOPT_CHUNK_BGN_FUNCTION` will be available. Otherwise, it will not.
+
+* The pnetcdf support was not properly being used to provide mpi parallel io for netcdf-3 classic files. The wrong dispatch table was being used. [NCF-319](https://bugtracking.unidata.ucar.edu/browse/NCF-319)
+
+* In nccopy utility, provided proper default for unlimited dimension in chunk-size specification instead of requiring explicit chunk size. Added associated test. [NCF-321](https://bugtracking.unidata.ucar.edu/browse/NCF-321)
+
+* Fixed documentation typo in FILL_DOUBLE definition in classic format specification grammar. Fixed other typos and inconsistencies in Doxygen version of User Guide.
+
+* For nccopy and ncgen, added numeric options (-3, -4, -6, -7) for output format, to provide less confusing format version specifications than the error-prone equivalent -k options (-k1, -k2, -k3, -k4). The new numeric options are compatible with NCO's mnemonic version options. The old -k numeric options will still be accepted but are deprecated, due to easy confusion between format numbers and format names. [NCF-314](https://bugtracking.unidata.ucar.edu/browse/NCF-314)
+
+* Fixed bug in ncgen. When classic format was in force (k=1 or k=4), the "long" datatype should be treated as int32. Was returning an error. [NCF-318](https://bugtracking.unidata.ucar.edu/browse/NCF-318)
+
+* Fixed bug where if the netCDF-C library is built with the HDF5 library but without the HDF4 library and one attempts to open an HDF4 file, an abort occurs rather than returning a proper error code (NC_ENOTNC). [NCF-317](https://bugtracking.unidata.ucar.edu/browse/NCF-317)
+
+* Added a new option, `NC_EXTRA_DEPS`, for cmake-based builds.  This is analogous to `LIBS` in autotools-based builds.  Example usage:
+
+    $ cmake .. -NC_EXTRA_DEPS="-lcustom_lib"
+
+More details may be found at the Unidata JIRA Dashboard.  [NCF-316](https://bugtracking.unidata.ucar.edu/browse/NCF-316)
+
+
+### 4.3.3-rc2 Released 2014-09-24
+
+* Fixed the code for handling character constants
+  in datalists in ncgen. Two of the problems were:
+  1. It failed on large constants
+  2. It did not handle e.g. var = 'a', 'b', ...
+     in the same way that ncgen3 did.
+  See [NCF-309](https://bugtracking.unidata.ucar.edu/browse/NCF-309).
+
+* Added a new file, `netcdf_meta.h`.  This file is generated automatically at configure time and contains information related to the capabilities of the netcdf library.  This file may be used by projects dependent upon `netcdf` to make decisions during configuration, based on how the `netcdf` library was built.  The macro `NC_HAVE_META_H` is defined in `netcdf.h`.  Paired with judicious use of `ifdef`'s, this macro will indicate to developers whether or not the meta-header file is present. See [NCF-313](https://bugtracking.unidata.ucar.edu/browse/NCF-313).
+
+    > Determining the presence of `netcdf_meta.h` can also be accomplished by methods common to autotools and cmake-based build systems.
+
+* Changed `Doxygen`-generated documentation hosted by Unidata to use more robust server-based searching.
+* Corrected embedded URLs in release notes.
+* Corrected an issue where building with HDF4 support with Visual Studio would fail.
+
+### 4.3.3-rc1 Released 2014-08-25
+
+* Added `CMake`-based export files, contributed by Nico Schlömer. See https://github.com/Unidata/netcdf-c/pull/74.
+
+* Documented that ncgen input can come from standard input.
+
+* Regularized generation of libnetcdf.settings file to make parsing it easier.
+
+* Fixed ncdump bug for char variables with multiple unlimited dimensions and added an associated test.  Now the output CDL properly disambiguates dimension groupings, so that ncgen can generate the original file from the CDL. [NCF-310](https://bugtracking.unidata.ucar.edu/browse/NCF-310)
+
+* Converted the [Manually-maintained FAQ page](http://www.unidata.ucar.edu/software/netcdf/docs/faq.html) into markdown and added it to the `docs/` directory.  This way the html version will be generated when the rest of the documentation is built, the FAQ will be under version control, and it will be in a more visible location, hopefully making it easier to maintain.
+
+* Bumped minimum required version of `cmake` to `2.8.12`.  This was necessitated by the adoption of the new `CMAKE_MACOSX_RPATH` property, for use on OSX.
+
+* Jennifer Adams has requested a reversion in behavior so that all dap requests include a constraint. Problem is caused by change in prefetch where if all variables are requested, then no constraint is generated.  Fix is to always generate a constraint in prefetch.
+  [NCF-308](https://bugtracking.unidata.ucar.edu/browse/NCF-308)
+
+* Added a new option for cmake-based builds, `ENABLE_DOXYGEN_LATEX_OUTPUT`.  On those systems with `make` and `pdflatex`, setting this option **ON** will result in pdf versions of the documentation being built.  This feature is experimental.
+
+* Bumped minimum CMake version to `2.8.9` from `2.8.8` as part of a larger pull request contributed by Nico Schlömer. [Pull Request #64](https://github.com/Unidata/netcdf-c/pull/64)
+
+* Replaced the `NetCDF Library Architecture` image with an updated version from the 2012 NetCDF Workshop slides.
+
+* Fix HDF4 files to support chunking.
+  [NCF-272](https://bugtracking.unidata.ucar.edu/browse/NCF-272)
+
+* NetCDF creates a `libnetcdf.settings` file after configuration now, similar to those generated by `HDF4` and `HDF5`.  It is installed into the same directory as the libraries. [NCF-303](https://bugtracking.unidata.ucar.edu/browse/NCF-303).
+
+
+* Renamed `man4/` directory to `docs/` to make the purpose and contents clearer. See [man4 vs. docs #60](https://github.com/Unidata/netcdf-c/issues/60).
+
+* Removed redundant variable `BUILD_DOCS` from the CMake configuration file.  See the issue at github: [#59](https://github.com/Unidata/netcdf-c/issues/59).
+
+* Added missing documentation templates to `man4/Makefile.am`, to correct an issue when trying to build the local `Doxygen`-generated documentation. This issue was reported by Nico Schlömer and may be viewed on github.  [Releases miss Doxygen files #56](https://github.com/Unidata/netcdf-c/issues/56)
+
+* When the NC_MPIPOSIX flag is given for parallel I/O access and the HDF5 library does not have the MPI-POSIX VFD configured in, the NC_MPIPOSIX flag is transparently aliased to the NC_MPIIO flag within the netCDF-4 library.
 
 ## 4.3.2 Released 2014-04-23
 
@@ -16,8 +219,10 @@ This file contains a high-level description of this package's evolution. Release
 	* `NC_TEST_DROP_SITE` - Specify an alternative Dashboard by URL or IP address.
 
 	* `NC_CTEST_DROP_LOC_PREFIX` - Specify a prefix on the remote webserver relative to the root directory. This lets CTest accommodate dashboards that do not live at the top level of the web server.
-	
+
 * Return an error code on open instead of an assertion violation for truncated file.
+
+* Documented limit on number of Groups per netCDF-4 file (32767).
 
 ### 4.3.2-rc2 Released 2014-04-15
 
@@ -32,7 +237,7 @@ This file contains a high-level description of this package's evolution. Release
 	* `hdf5: 1.8.12`
 	* `zlib: 1.2.8`
 	* `libcurl: 7.35.0`
-	
+
 * Added a separate flag to enable DAP AUTH tests. These tests are disabled by default.  The flags for autotools and CMAKE-based builds are (respectively):
 	* --enable-dap-auth-tests
 	* -DENABLE\_DAP\_AUTH\_TESTS
@@ -56,6 +261,12 @@ This file contains a high-level description of this package's evolution. Release
 * Addressed an issue where `cmake`-based builds would not properly create a `pkg-config` file. This file is now created properly by `cmake`.  [NCF-288](https://bugtracking.unidata.ucar.edu/browse/NCF-288)
 
 * Addressed an issue related to old DAP servers. [NCF-287](https://bugtracking.unidata.ucar.edu/browse/NCF-287)
+
+* Modified nc_{get/put}_vars to no longer use
+  nc_get/put_varm. They now directly use nc_get/put_vara
+  directly. This means that nc_get/put_vars now work
+  properly for user defined types as well as atomic types.
+  [NCF-228] (https://bugtracking.unidata.ucar.edu/browse/NCF-228)
 
 ## 4.3.1.1 Released 2014-02-05
 
@@ -81,7 +292,7 @@ This is a bug-fix-only release for version 4.3.1.
 
 * Addressed an issue reported by Jeff Whitaker regarding `nc_inq_nvars` returning an incorrect number of dimensions (this issue was introduced in 4.3.1-rc5).  Integrated a test contributed by Jeff Whitaker.
 
-* A number of previously-disabled unit tests were reviewed and made active. 
+* A number of previously-disabled unit tests were reviewed and made active.
 
 
 ### 4.3.1-rc5 Released 2013-12-06
@@ -145,7 +356,7 @@ This is a bug-fix-only release for version 4.3.1.
 
 * Modify ncgen to support disambiguating references to
   an enum constant in a data list. [NCF-265]
-  
+
 [NCF-265]:https://bugtracking.unidata.ucar.edu/browse/NCF-265
 
 * Corrected bug in netCDF-4 dimension ID ordering assumptions, resulting in access that works locally but fails through DAP server. [NCF-166]
@@ -178,7 +389,7 @@ This is a bug-fix-only release for version 4.3.1.
 
 * Integrated a fix by Quincey Koziol which addressed a variation of [NCF-250], *Fix issue of netCDF-4 parallel independent access with unlimited dimension hanging*.
 
-[NCF-250]:https://www.unidata.ucar.edu/jira/browse/NCF-250
+[NCF-250]:https://bugtracking.unidata.ucar.edu/browse/NCF-250
 
 * Integrated change contributed by Orion Poplawski which integrated GNUInstallDirs into the netCDF-C CMake system; this will permit systems that install into lib64 (such as Fedora) to `make install` without problem.
 
@@ -186,13 +397,13 @@ This is a bug-fix-only release for version 4.3.1.
 
 ### 4.3.1-rc1 Released 2013-08-09
 
-* Migrated from the netCDF-C `subversion` repository to a publically available GitHub repository available at https://github.com/Unidata/netCDF-C.  This repository may be checked out (cloned) with the following command:
+* Migrated from the netCDF-C `subversion` repository to a publicly available GitHub repository available at https://github.com/Unidata/netCDF-C.  This repository may be checked out (cloned) with the following command:
 
 	$ git clone https://github.com/Unidata/netCDF-C.git
 
 * Note: in this release, it is necessary to generate the `configure` script and makefile templates using `autoreconf` in the root netCDF-C directory.:
-	
-	$ autoreconf -i -f 
+
+	$ autoreconf -i -f
 
 * Added `nc_rename_grp` to allow for group renaming in netCDF-4 files. [NCF-204]
 
@@ -200,15 +411,15 @@ This is a bug-fix-only release for version 4.3.1.
 
 * Added a `NC_HAVE_RENAME_GRP` macro to netcdf.h, [as per a request by Charlie Zender][cz1]. This will allow software compiling against netcdf to easily query whether or not nc\_rename\_grp() is available.
 
-[cz1]: https://www.unidata.ucar.edu/esupport/staff/index.php?_m=tickets&_a=viewticket&ticketid=22442
+[cz1]: https://bugtracking.unidata.ucar.edu/browse/NCF-204
 
 * Added Greg Sjaardema's contributed optimization for the nc4\_find\_dim\_len function in libsrc4/nc4internal.c. The patch eliminates several malloc/free calls that exist in the original coding.
 
 * Added support for dynamic loading, to compliment the dynamic loading support introduced in hdf 1.8.11.  Dynamic loading support depends on libdl, and is enabled as follows: [NCF-258]
 	* autotools-based builds: --enable-dynamic-loading
 	* cmake-based builds: -DENABLE\_DYNAMIC\_LOADING=ON
-	
-[NCF-258]: https://www.unidata.ucar.edu/jira/browse/NCF-258
+
+[NCF-258]: https://bugtracking.unidata.ucar.edu/browse/NCF-258
 
 * Fix issue of netCDF-4 parallel independent access with unlimited dimension hanging.  Extending the size of an unlimited dimension in HDF5 must be a collective operation, so now an error is returned if trying to extend in independent access mode. [NCF-250]
 
@@ -227,140 +438,140 @@ This is a bug-fix-only release for version 4.3.1.
 ## 4.3.0 Released 2013-04-29
 
 * fsync: Changed default in autotools config file; fsync must now be
-explicitely enabled instead of explicitely disabled. [NCF-239]
+explicitly enabled instead of explicitly disabled. [NCF-239]
 
-[NCF-239]: https://www.unidata.ucar.edu/jira/browse/NCF-239
+[NCF-239]: https://bugtracking.unidata.ucar.edu/browse/NCF-239
 
 * Fixed netCDF-4 bug where odometer code for libdap2 mishandled stride \> 1. Bug reported by Ansley Manke. [NCF-249]
 
-[NCF-249]: https://www.unidata.ucar.edu/jira/browse/NCF-249
+[NCF-249]: https://bugtracking.unidata.ucar.edu/browse/NCF-249
 
 * Fixed netCDF-4 bug so netCDF just ignores objects of HDF5 reference type in
 the file, instead of rejecting the file. [NCF-29]
 
-[NCF-29]: https://www.unidata.ucar.edu/jira/browse/NCF-29
+[NCF-29]: https://bugtracking.unidata.ucar.edu/browse/NCF-29
 
 * Fixed netCDF-4 bug with particular order of creation of dimensions,
 coordinate variables, and subgroups resulting in two dimensions with the
 same dimension ID. [NCF-244]
 
-[NCF-244]: https://www.unidata.ucar.edu/jira/browse/NCF-244
+[NCF-244]: https://bugtracking.unidata.ucar.edu/browse/NCF-244
 
 * Fixed netCDF-4 bug with a multidimensional coordinate variable in a
 subgroup getting the wrong dimension IDs for its dimensions. [NCF-247]
 
-[NCF-247]: https://www.unidata.ucar.edu/jira/browse/NCF-247
+[NCF-247]: https://bugtracking.unidata.ucar.edu/browse/NCF-247
 
 * Fixed bug with incorrect fixed-size variable offsets in header getting
 written when schema changed for files created by parallel-netcdf. Thanks
 to Wei-keng Liao for developing and contributing the fix. [NCF-234]
 
-[NCF-234]: https://www.unidata.ucar.edu/jira/browse/NCF-234
+[NCF-234]: https://bugtracking.unidata.ucar.edu/browse/NCF-234
 
 * Fixed bug in handling old servers that do not do proper Grid to
 Structure conversions. [NCF-232]
 
-[NCF-232]: https://www.unidata.ucar.edu/jira/browse/NCF-232
+[NCF-232]: https://bugtracking.unidata.ucar.edu/browse/NCF-232
 
 * Replaced the oc library with oc2.0
 
 * Fix bug with nc\_get\_var1\_uint() not accepting unsigned ints larger
 than 2\*\*31. [NCF-226]
 
-[NCF-226]: https://www.unidata.ucar.edu/jira/browse/NCF-226
+[NCF-226]: https://bugtracking.unidata.ucar.edu/browse/NCF-226
 
 * Fix to convert occurrences of '/' in DAP names to %2f. [NCF-223]
 
-[NCF-223]: https://www.unidata.ucar.edu/jira/browse/NCF-223
+[NCF-223]: https://bugtracking.unidata.ucar.edu/browse/NCF-223
 
 * Fix bug in netCDF-4 with scalar non-coordinate variables with same name
 as dimensions. [NCF-222]
 
-[NCF-222]: https://www.unidata.ucar.edu/jira/browse/NCF-222
+[NCF-222]: https://bugtracking.unidata.ucar.edu/browse/NCF-222
 
 * Fix bug in which calling netCDF-4 functions in which behavior that
 should not depend on order of calls sometimes produces the wrong
 results. [NCF-217]
 
-[NCF-217]: https://www.unidata.ucar.edu/jira/browse/NCF-217
+[NCF-217]: https://bugtracking.unidata.ucar.edu/browse/NCF-217
 
 * Merged in nccopy additions from Martin van Driel to support -g and -v
 options for specifying which groups or variables are to be copied.
 [NCF-216]
 
-[NCF-216]: https://www.unidata.ucar.edu/jira/browse/NCF-216
+[NCF-216]: https://bugtracking.unidata.ucar.edu/browse/NCF-216
 
 * Merged in parallel-netcdf bugs fixes from Greg Sjaardema. [NCF-214]
 
-[NCF-214]: https://www.unidata.ucar.edu/jira/browse/NCF-214
+[NCF-214]: https://bugtracking.unidata.ucar.edu/browse/NCF-214
 
 * Modify ncgen so that if the incoming file has a special attribute, then
 it is used to establish the special property of the netcdf file, but the
 attribute is not included as a real attribute in the file. [NCF-213].
 
-[NCF-213]: https://www.unidata.ucar.edu/jira/browse/NCF-213
+[NCF-213]: https://bugtracking.unidata.ucar.edu/browse/NCF-213
 
 * Added library version info to the user-agent string so that the server
 logs will be more informative. [NCF-210]
 
-[NCF-210]: https://www.unidata.ucar.edu/jira/browse/NCF-210
+[NCF-210]: https://bugtracking.unidata.ucar.edu/browse/NCF-210
 
 * Added work around for bad servers that sometimes sends DAP dataset with
 duplicate field names. [NCF-208]
 
-[NCF-208]: https://www.unidata.ucar.edu/jira/browse/NCF-208
+[NCF-208]: https://bugtracking.unidata.ucar.edu/browse/NCF-208
 
 * Fixed bug with strided access for NC\_STRING type. [NCF-206]
 
-[NCF-206]: https://www.unidata.ucar.edu/jira/browse/NCF-206
+[NCF-206]: https://bugtracking.unidata.ucar.edu/browse/NCF-206
 
 * Prevented adding an invalid \_FillValue attribute to a variable (with
 nonmatching type or multiple values), to avoid later error when any
 record variable is extended. [NCF-190]
 
-[NCF-190]: https://www.unidata.ucar.edu/jira/browse/NCF-190
+[NCF-190]: https://bugtracking.unidata.ucar.edu/browse/NCF-190
 
 * Fix bug in which some uses of vlen within compounds causes HDF5 errors.
 [NCF-155]
 
-[NCF-155]: https://www.unidata.ucar.edu/jira/browse/NCF-155
+[NCF-155]: https://bugtracking.unidata.ucar.edu/browse/NCF-155
 
 * Fixed ncdump bug in display of data values of variables that use
 multiple unlimited dimensions. [NCF-144]
 
-[NCF-144]: https://www.unidata.ucar.edu/jira/browse/NCF-144
+[NCF-144]: https://bugtracking.unidata.ucar.edu/browse/NCF-144
 
 * Fix bug in which interspersing def\_var calls with put\_var calls can
 lead to corrupt metadata in a netCDF file with groups and inherited
 dimensions. [NCF-134]
 
-[NCF-134]: https://www.unidata.ucar.edu/jira/browse/NCF-134
+[NCF-134]: https://bugtracking.unidata.ucar.edu/browse/NCF-134
 
 * Building shared libraries works with DAP and netCDF4 functionality.
 [NCF-205] [NCF-57]
 
-[NCF-205]: https://www.unidata.ucar.edu/jira/browse/NCF-205
-[NCF-57]: https://www.unidata.ucar.edu/jira/browse/NCF-57
+[NCF-205]: https://bugtracking.unidata.ucar.edu/browse/NCF-205
+[NCF-57]: https://bugtracking.unidata.ucar.edu/browse/NCF-57
 
 * 32-and-64-bit builds are working under MinGW on Windows. [NCF-112]
 
-[NCF-112]: https://www.unidata.ucar.edu/jira/browse/NCF-112
+[NCF-112]: https://bugtracking.unidata.ucar.edu/browse/NCF-112
 
 * Config.h for Windows compiles are included in the build. [NCF-98]
 
-[NCF-98]: https://www.unidata.ucar.edu/jira/browse/NCF-98
+[NCF-98]: https://bugtracking.unidata.ucar.edu/browse/NCF-98
 
 * NetCDF-4 dependency on NC\_MAX\_DIMS has been removed. [NCF-71]
 
-[NCF-71]: https://www.unidata.ucar.edu/jira/browse/NCF-71
+[NCF-71]: https://bugtracking.unidata.ucar.edu/browse/NCF-71
 
 * 64-bit DLL's are produced on Windows. [NCF-65]
 
-[NCF-65]: https://www.unidata.ucar.edu/jira/browse/NCF-65
+[NCF-65]: https://bugtracking.unidata.ucar.edu/browse/NCF-65
 
 * DLL Packaging issues are resolved. [NCF-54]
 
-[NCF-54]: https://www.unidata.ucar.edu/jira/browse/NCF-54
+[NCF-54]: https://bugtracking.unidata.ucar.edu/browse/NCF-54
 
 * The CMake build system (with related ctest and cdash systems for
 testing) has been integrated into netCDF-C. This allows for Visual
@@ -485,8 +696,7 @@ call nf-config, ncxx-config, and ncxx4-config for for backward
 compatibility with use of nc-config in current Makefiles. [NCF-165]
 [NCF-179]
 
-* 4.2 Released 2012-03-19 (Note: Jira entries include reference to
-'[NCF-XX]')
+## 4.2.0 2012-05-01
 
 * Completely rebuilt the DAP constraint handling. This primarily affects
 users who specify a DAP constraint as part of their URL. [NCF-120]
@@ -674,7 +884,7 @@ contiguous blocks of memory. [NCF-69]
 
 * Make changes necessary for upgrading to HDF5 1.8.7 [NCF-66]
 
-### 4.1.3-rc1 2011-05-06 
+### 4.1.3-rc1 2011-05-06
 
 * Stop looking for xdr if --disable-dap is used.
 
@@ -947,7 +1157,7 @@ Kent.
 * Fixed some cross-compile problems.
 
 * Rewrote code which placed bogus errors on the HDF5 error stack, trying
-to open non-existant attributes and variables. Now no HDF5 errors are
+to open non-existent attributes and variables. Now no HDF5 errors are
 seen.
 
 * Removed man subdirectory. Now man4 subdirectory is used for all builds.
@@ -981,10 +1191,10 @@ output.
 Turkal).
 
 * Fixed bug in C++ API creating 64-bit offset files. (See
-http://www.unidata.ucar.edu/software/netcdf/docs/known\_problems.html\#cxx\_64-bit.)
+http://www.unidata.ucar.edu/software/netcdf/docs/known_problems.html#cxx_64-bit).
 
 * Fixed bug for variables larger than 4 GB. (See
-http://www.unidata.ucar.edu/software/netcdf/docs/known\_problems.html\#large\_vars\_362.)
+http://www.unidata.ucar.edu/software/netcdf/docs/known_problems.html#large_vars_362).
 
 * Changed the configure.ac to build either 3.6.x or 4.x build from the
 same configure.ac.
@@ -1135,7 +1345,7 @@ configure.
 * Switched to new build system, with automake and libtool. Now shared
 libraries are built (as well as static ones) on platforms which support
 it. For more information about shared libraries, see
-http://www.unidata.ucar.edu/software/netcdf/docs/faq.html\#shared\_intro
+http://www.unidata.ucar.edu/software/netcdf/docs/faq.html#shared_intro
 
 * Fixed ncdump crash that happened when no arguments were used.
 
@@ -1298,7 +1508,7 @@ dimension sizes between 2\^31 and 2\^32 (for byte variables).
 
 * Fixed ncgen to properly handle dimensions between 2\^31 and 2\^32.
 
-### 3.6.0-beta2 
+### 3.6.0-beta2
 
 * Added -v2 (version 2 format with 64-bit offsets) option to
 ncgen, to specify that generated files or generated C/Fortran code
@@ -1316,7 +1526,7 @@ part of the build process. VC++ with managed extensions is required
 
 * Added windows installer files to build windows binary installs.
 
-### 3.6.0-beta1 
+### 3.6.0-beta1
 
 * By incorporating Greg Sjaardema's patch, added support for
 64-bit offset files, which remove many of the restrictions relating to
@@ -1332,7 +1542,7 @@ format testing, and once for 64-bit offset format testing.
 * The implementation of the Fortran-77 interface has been adapted to
 version 4.3 of Burkhard Burow's "cfortran.h".
 
-### 3.6.0-alpha 
+### 3.6.0-alpha
 
 * Added NEC SX specific optimization for NFILL tunable
 parameter in libsrc/putget.c

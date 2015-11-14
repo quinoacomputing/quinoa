@@ -5,6 +5,10 @@
 #include "config.h"
 #include "ncdap.h"
 
+#ifdef _MSC_VER
+#include <crtdbg.h>
+#endif
+
 NCerror
 dapconvert(nc_type srctype, nc_type dsttype, char* memory0, char* value0, size_t count)
 {
@@ -199,12 +203,21 @@ dapcvtattrval(nc_type etype, void* dst, NClist* src)
     char* dstmem = (char*)dst;
 
     for(i=0;i<nvalues;i++) {
+
 	char* s = (char*)nclistget(src,i);
+
 	ok = 0;
 	switch (etype) {
 	case NC_BYTE: {
-	    unsigned char* p = (unsigned char*)dstmem;
-	    ok = sscanf(s,"%hhu",p);
+		char tmp[128];
+		
+		unsigned char* p = (unsigned char*)dstmem;
+#ifdef _MSC_VER
+		ok = sscanf(s,"%hC",p);
+		_ASSERTE(_CrtCheckMemory());
+#else	
+		ok = sscanf(s,"%hhu",p);
+#endif
 	    } break;
 	case NC_CHAR: {
 	    signed char* p = (signed char*)dstmem;
@@ -228,8 +241,13 @@ dapcvtattrval(nc_type etype, void* dst, NClist* src)
 	    } break;
 	case NC_UBYTE: {
 	    unsigned char* p = (unsigned char*)dstmem;
+#ifdef _MSC_VER
+		ok = sscanf(s, "%hc", p);
+		_ASSERTE(_CrtCheckMemory());
+#else
 	    ok = sscanf(s,"%hhu",p);
-	    } break;
+#endif
+		} break;
 	case NC_USHORT: {
 	    unsigned short* p = (unsigned short*)dstmem;
 	    ok = sscanf(s,"%hu",p);
@@ -240,8 +258,12 @@ dapcvtattrval(nc_type etype, void* dst, NClist* src)
 	    } break;
 	case NC_INT64: {
 	    long long* p = (long long*)dstmem;
-	    ok = sscanf(s,"%lld",p);
-	    } break;
+#ifdef _MSC_VER
+		ok = sscanf(s, "%I64d", p);
+#else
+		ok = sscanf(s,"%lld",p);
+#endif
+	} break;
 	case NC_UINT64: {
 	    unsigned long long* p = (unsigned long long*)dstmem;
 	    ok = sscanf(s,"%llu",p);

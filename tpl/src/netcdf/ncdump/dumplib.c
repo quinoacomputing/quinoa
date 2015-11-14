@@ -226,7 +226,7 @@ sbuf_grow(safebuf_t *sb, size_t len) {
 }
 
 /* Copy string s2 to safe buffer, growing if necessary */
-void 
+void
 sbuf_cpy(safebuf_t *sb, const char *s2) {
     size_t s2len;
     assert(SAFEBUF_CHECK(sb));
@@ -238,7 +238,7 @@ sbuf_cpy(safebuf_t *sb, const char *s2) {
 }
 
 /* Concatenate string s2 to end of string in safe buffer, growing if necessary */
-void 
+void
 sbuf_cat(safebuf_t *sb, const char *s2) {
     size_t s2len;
     size_t res;
@@ -253,7 +253,7 @@ sbuf_cat(safebuf_t *sb, const char *s2) {
 
 /* Concatenate string in safebuf s2 to end of string in safebuf s1,
  * growing if necessary */
-void 
+void
 sbuf_catb(safebuf_t *s1, const safebuf_t *s2) {
     size_t s2len;
     size_t res;
@@ -268,7 +268,7 @@ sbuf_catb(safebuf_t *s1, const safebuf_t *s2) {
 }
 
 /* Return length of string in sbuf */
-size_t 
+size_t
 sbuf_len(const safebuf_t *sb) {
     assert(SAFEBUF_CHECK(sb));
     return sb->cl;
@@ -295,19 +295,19 @@ void
 set_formats(int float_digits, int double_digits)
 {
     int res;
-    res = snprintf(float_var_fmt, strlen(float_var_fmt) + 1, "%%.%dg", 
+    res = snprintf(float_var_fmt, strlen(float_var_fmt) + 1, "%%.%dg",
 		   float_digits) + 1;
     assert(res <= sizeof(float_var_fmt));
-    res = snprintf(double_var_fmt, strlen(double_var_fmt) + 1, "%%.%dg", 
+    res = snprintf(double_var_fmt, strlen(double_var_fmt) + 1, "%%.%dg",
 		   double_digits) + 1;
     assert(res <= sizeof(double_var_fmt));
-    res = snprintf(float_att_fmt, strlen(float_att_fmt) + 1, "%%#.%dgf", 
+    res = snprintf(float_att_fmt, strlen(float_att_fmt) + 1, "%%#.%dgf",
 		   float_digits) + 1;
     assert(res <= sizeof(float_att_fmt));
-    res = snprintf(float_attx_fmt, strlen(float_attx_fmt) + 1, "%%#.%dg", 
+    res = snprintf(float_attx_fmt, strlen(float_attx_fmt) + 1, "%%#.%dg",
 		   float_digits) + 1;
     assert(res <= sizeof(float_attx_fmt));
-    res = snprintf(double_att_fmt, strlen(double_att_fmt) + 1, "%%#.%dg", 
+    res = snprintf(double_att_fmt, strlen(double_att_fmt) + 1, "%%#.%dg",
 		   double_digits) + 1;
     assert(res <= sizeof(double_att_fmt));
 }
@@ -324,7 +324,7 @@ has_c_format_att(
 #define C_FMT_NAME	"C_format" /* name of C format attribute */
 #define	MAX_CFMT_LEN	100	/* max length of C format attribute */
     static char cfmt[MAX_CFMT_LEN];
-    
+
     /* we expect nc_inq_att to fail if there is no "C_format" attribute */
     int nc_stat = nc_inq_att(ncid, varid, "C_format", &cfmt_type, &cfmt_len);
 
@@ -333,7 +333,7 @@ has_c_format_att(
 	if (cfmt_type == NC_CHAR && cfmt_len != 0 && cfmt_len < MAX_CFMT_LEN) {
 	    int nc_stat = nc_get_att_text(ncid, varid, "C_format", cfmt);
 	    if(nc_stat != NC_NOERR) {
-		fprintf(stderr, "Getting 'C_format' attribute %s\n", 
+		fprintf(stderr, "Getting 'C_format' attribute %s\n",
 			nc_strerror(nc_stat));
 		(void) fflush(stderr);
 	    }
@@ -344,7 +344,7 @@ has_c_format_att(
     case NC_ENOTATT:
 	break;
     default:
-	fprintf(stderr, "Inquiring about 'C_format' attribute %s\n", 
+	fprintf(stderr, "Inquiring about 'C_format' attribute %s\n",
 		nc_strerror(nc_stat));
 	(void) fflush(stderr);
 	break;
@@ -370,7 +370,6 @@ get_default_fmt(nc_type typeid) {
 	return float_var_fmt;
     case NC_DOUBLE:
 	return double_var_fmt;
-#ifdef USE_NETCDF4
     case NC_UBYTE:
 	return "%u";
     case NC_USHORT:
@@ -383,7 +382,6 @@ get_default_fmt(nc_type typeid) {
 	return "%llu";
     case NC_STRING:
 	return "\"%s\"";
-#endif	/* USE_NETCDF4 */
     default:
 	break;
     }
@@ -413,7 +411,7 @@ get_fmt(
     /* If C_format attribute exists, return it */
     c_format_att = has_c_format_att(ncid, varid);
     if (c_format_att)
-      return c_format_att;    
+      return c_format_att;
     return get_default_fmt(typeid);
 }
 
@@ -434,7 +432,6 @@ prim_type_name(nc_type type)
 	return "float";
       case NC_DOUBLE:
 	return "double";
-#ifdef USE_NETCDF4
       case NC_UBYTE:
 	return "ubyte";
       case NC_USHORT:
@@ -447,7 +444,6 @@ prim_type_name(nc_type type)
 	return "uint64";
       case NC_STRING:
 	return "string";
-#endif /* USE_NETCDF4 */
       default:
 	error("prim_type_name: bad type %d", type);
 	return "bogus";
@@ -455,6 +451,7 @@ prim_type_name(nc_type type)
 }
 
 static int max_type = 0;
+static int max_atomic_type = 0;
 static nctype_t **nctypes = 0;	/* holds all types in a netCDF dataset */
 
 
@@ -486,19 +483,48 @@ count_udtypes(int ncid) {
 }
 #endif /*USE_NETCDF4*/
 
-/* This routine really is intended to return the max typeid */
+/* This routine really is intended to return the max atomic typeid */
 static int
 max_typeid(int ncid) {
-    int maxtypes = NC_DOUBLE; /*ignore NC_NAT?*/
+    int maxtypes = NC_NAT;
+    int maxatomictypes = NC_NAT;
+    int format = 0;
+    int err = NC_NOERR;
+
+    /* get the file type */
+    err = nc_inq_format(ncid,&format);
+    if(err) {
+	fprintf(stderr,"%s: Cannot get file format.\n",nc_strerror(err));
+	return 0;
+    }
+    switch (format) {
+    case NC_FORMAT_CLASSIC:
+    case NC_FORMAT_NETCDF4_CLASSIC:
+    case NC_FORMAT_64BIT_OFFSET:
+        maxatomictypes = (maxtypes = NC_DOUBLE); /*ignore NC_NAT?*/
+	break;
+    case NC_FORMAT_64BIT_DATA:
+	maxatomictypes = (maxtypes = NC_UINT64);
+	break;
+    case NC_FORMAT_NETCDF4:
 #ifdef USE_NETCDF4
-    int nuser = 0;
-    maxtypes = NC_STRING; /* extra netCDF-4 primitive types */
-    maxtypes += 4;		/* user-defined classes */
-    nuser = count_udtypes(ncid);
-    if(nuser > 0) 
-	maxtypes = NC_FIRSTUSERTYPEID + (nuser - 1);
+	{
+        int nuser = 0;
+        maxatomictypes = (maxtypes = NC_STRING); /* extra netCDF-4 primitive types */
+        maxtypes += 4;		/* user-defined classes */
+        nuser = count_udtypes(ncid);
+        if(nuser > 0)
+	    maxtypes = NC_FIRSTUSERTYPEID + (nuser - 1);
+	} break;
+#else
+	/* fallthru */
 #endif
+    default:
+	fprintf(stderr,"Unexpected file format: %d\n",format);
+	return 0;
+    }
     max_type = maxtypes;
+    max_atomic_type = maxatomictypes;
     return maxtypes;
 }
 
@@ -530,39 +556,39 @@ get_typeinfo ( int typeid ) {
 /* } */
 
 
-bool_t 
-ncbyte_val_equals(const nctype_t *this, 
+bool_t
+ncbyte_val_equals(const nctype_t *this,
 		  const void *v1p, const void *v2p) {
     return ( *(signed char* )v1p == *(signed char* )v2p);
 }
 
-bool_t 
-ncchar_val_equals(const nctype_t *this, 
+bool_t
+ncchar_val_equals(const nctype_t *this,
 		  const void *v1p, const void *v2p) {
     return ( *(char* )v1p == *(char* )v2p);
 }
 
-bool_t 
-ncshort_val_equals(const nctype_t *this, 
+bool_t
+ncshort_val_equals(const nctype_t *this,
 		   const void *v1p, const void *v2p) {
     return ( *(short* )v1p == *(short* )v2p);
 }
 
-bool_t 
-ncint_val_equals(const nctype_t *this, 
+bool_t
+ncint_val_equals(const nctype_t *this,
 		 const void *v1p, const void *v2p) {
     return ( *(int* )v1p == *(int* )v2p);
 }
 
 #define absval(x)  ( (x) < 0 ? -(x) : (x) )
 
-/* 
+/*
  * Return ( *(float* )v1p == *(float* )v2p);
  * except use floating epsilon to compare very close vals as equal
  * and handle IEEE NaNs and infinities.
  */
-bool_t 
-ncfloat_val_equals(const nctype_t *this, 
+bool_t
+ncfloat_val_equals(const nctype_t *this,
 		   const void *v1p, const void *v2p) {
     float v1 = *(float* )v1p;
     float v2 = *(float* )v2p;
@@ -577,13 +603,13 @@ ncfloat_val_equals(const nctype_t *this,
     return false;
 }
 
-/* 
+/*
  * Return ( *(double* )v1p == *(double* )v2p);
  * except use floating epsilon to compare very close vals as equal
  * and handle IEEE NaNs and infinities.
  */
-bool_t 
-ncdouble_val_equals(const nctype_t *this, 
+bool_t
+ncdouble_val_equals(const nctype_t *this,
 		    const void *v1p, const void *v2p) {
     double v1 = *(double* )v1p;
     double v2 = *(double* )v2p;
@@ -598,39 +624,38 @@ ncdouble_val_equals(const nctype_t *this,
     return false;
 }
 
-#ifdef USE_NETCDF4
-bool_t 
-ncubyte_val_equals(const nctype_t *this, 
+bool_t
+ncubyte_val_equals(const nctype_t *this,
 		   const void *v1p, const void *v2p) {
     return ( *(unsigned char* )v1p == *(unsigned char* )v2p);
 }
 
-bool_t 
-ncushort_val_equals(const nctype_t *this, 
+bool_t
+ncushort_val_equals(const nctype_t *this,
 		    const void *v1p, const void *v2p) {
     return ( *(unsigned short* )v1p == *(unsigned short* )v2p);
 }
 
-bool_t 
-ncuint_val_equals(const nctype_t *this, 
+bool_t
+ncuint_val_equals(const nctype_t *this,
 		  const void *v1p, const void *v2p) {
     return ( *(unsigned int* )v1p == *(unsigned int* )v2p);
 }
 
-bool_t 
-ncint64_val_equals(const nctype_t *this, 
+bool_t
+ncint64_val_equals(const nctype_t *this,
 		   const void *v1p, const void *v2p) {
     return ( *(long long* )v1p == *(long long* )v2p);
 }
 
-bool_t 
-ncuint64_val_equals(const nctype_t *this, 
+bool_t
+ncuint64_val_equals(const nctype_t *this,
 		    const void *v1p, const void *v2p) {
     return ( *(unsigned long long* )v1p == *(unsigned long long* )v2p);
 }
 
 bool_t
-ncstring_val_equals(const nctype_t *this, 
+ncstring_val_equals(const nctype_t *this,
 		    const void *v1p, const void *v2p) {
     if (NULL == *((char **)v1p) && NULL == *((char **)v2p))
         return(1);
@@ -641,8 +666,9 @@ ncstring_val_equals(const nctype_t *this,
     return (strcmp(*((char **)v1p), *((char **)v2p)) == 0);
 }
 
+#ifdef USE_NETCDF4
 bool_t
-ncopaque_val_equals(const nctype_t *this, 
+ncopaque_val_equals(const nctype_t *this,
 		    const void *v1p, const void *v2p) {
     size_t nbytes = this->size;
     const char *c1p = (const char *) v1p;
@@ -656,7 +682,7 @@ ncopaque_val_equals(const nctype_t *this,
 }
 
 bool_t
-ncvlen_val_equals(const nctype_t *this, 
+ncvlen_val_equals(const nctype_t *this,
 		  const void *v1p, const void *v2p) {
     size_t v1len = ((nc_vlen_t *)v1p)->len;
     size_t v2len = ((nc_vlen_t *)v2p)->len;
@@ -671,7 +697,7 @@ ncvlen_val_equals(const nctype_t *this,
 	const char *v2dat = ((nc_vlen_t *)v2p)->p;
 	size_t i;
 	for(i = 0; i < v1len; i++) {
-	    if (base_val_equals(base_info, (const void *)v1dat, 
+	    if (base_val_equals(base_info, (const void *)v1dat,
 				(const void *)v2dat) != true)
 		return false;
 	    v1dat += base_size;
@@ -684,7 +710,7 @@ ncvlen_val_equals(const nctype_t *this,
 /* Determine if two compound values are equal, by testing eqaulity of
  * each member field. */
 bool_t
-nccomp_val_equals(const nctype_t *this, 
+nccomp_val_equals(const nctype_t *this,
 		  const void *v1p, const void *v2p) {
     int nfields = this->nfields;
     int fidx;			/* field id */
@@ -694,7 +720,7 @@ nccomp_val_equals(const nctype_t *this,
 	nc_type fid = this->fids[fidx];		/* field type id */
 	nctype_t *finfo = get_typeinfo(fid);
 	if(finfo->ranks == 0 || finfo->ranks[fidx] == 0) {
-	    if(! finfo->val_equals(finfo, 
+	    if(! finfo->val_equals(finfo,
 				   (char *)v1p + offset, (char *)v2p + offset))
 		return false;
 	} else {		/* this field is an array */
@@ -707,7 +733,7 @@ nccomp_val_equals(const nctype_t *this,
 		v1elem = (char *)v1elem + finfo->size;
 		v2elem = (char *)v1elem + finfo->size;
 	    }
-	}	    
+	}
     }
     return true;
 }
@@ -821,7 +847,6 @@ ncdouble_typ_tostring(const nctype_t *typ, safebuf_t *sfbf, const void *valp) {
     return sbuf_len(sfbf);
 }
 
-#ifdef USE_NETCDF4
 int
 ncubyte_typ_tostring(const nctype_t *typ, safebuf_t *sfbf, const void *valp) {
     char sout[PRIM_LEN];
@@ -882,7 +907,7 @@ int ncstring_typ_tostring(const nctype_t *typ, safebuf_t *sfbf, const void *valp
         char *sp;
         unsigned char uc;
 
-        slen = 3 + 5 * strlen(cp); /* need "'s around string, and extra space to escape control characters */ 
+        slen = 3 + 5 * strlen(cp); /* need "'s around string, and extra space to escape control characters */
         sout = emalloc(slen);
         sp = sout;
         *sp++ = '"' ;
@@ -896,7 +921,7 @@ int ncstring_typ_tostring(const nctype_t *typ, safebuf_t *sfbf, const void *valp
                 *sp++ = '\\';
                 *sp++ = 'f';
                 break;
-            case '\n':		
+            case '\n':
                 *sp++ = '\\';
                 *sp++ = 'n';
                 break;
@@ -945,6 +970,7 @@ int ncstring_typ_tostring(const nctype_t *typ, safebuf_t *sfbf, const void *valp
     return sbuf_len(sfbf);
 }
 
+#ifdef USE_NETCDF4
 int
 ncenum_typ_tostring(const nctype_t *typ, safebuf_t *sfbf, const void *valp) {
     char symbol[NC_MAX_NAME + 1];
@@ -1010,7 +1036,7 @@ ncopaque_val_as_hex(size_t size, char *sout, const void *valp) {
 /* Convert an opaque value to a string, represented as hexadecimal
  * characters */
 int
-ncopaque_typ_tostring(const nctype_t *typ, safebuf_t *sfbf, 
+ncopaque_typ_tostring(const nctype_t *typ, safebuf_t *sfbf,
 		      const void *valp) {
     char* sout = (char *) emalloc(2 * typ->size + strlen("0X") + 1);
     (void) ncopaque_val_as_hex(typ->size, sout, valp);
@@ -1260,7 +1286,6 @@ double to_double(const ncvar_t *varp, const void *valp) {
     case NC_DOUBLE:
 	dd = *(double *)valp;
 	break;
-#ifdef USE_NETCDF4
     case NC_UBYTE:
 	dd = *(unsigned char *)valp;
 	break;
@@ -1276,7 +1301,6 @@ double to_double(const ncvar_t *varp, const void *valp) {
     case NC_UINT64:
 	dd = *(unsigned long long *)valp;
 	break;
-#endif /* USE_NETCDF4 */
     default:
 	error("to_double: type not numeric primitive");
     }
@@ -1303,7 +1327,6 @@ nctime_val_tostring(const ncvar_t *varp, safebuf_t *sfbf, const void *valp) {
     return sbuf_len(sfbf);
 }
 
-#ifdef USE_NETCDF4
 int
 ncubyte_val_tostring(const ncvar_t *varp, safebuf_t *sfbf, const void *valp) {
     char sout[PRIM_LEN];
@@ -1359,6 +1382,7 @@ ncstring_val_tostring(const ncvar_t *varp, safebuf_t *sfbf, const void *valp) {
     return ncstring_typ_tostring(varp->tinfo, sfbf, valp);
 }
 
+#ifdef USE_NETCDF4
 int
 ncenum_val_tostring(const ncvar_t *varp, safebuf_t *sfbf, const void *valp) {
     return ncenum_typ_tostring(varp->tinfo, sfbf, valp);
@@ -1381,7 +1405,7 @@ int
 nccomp_val_tostring(const ncvar_t *varp, safebuf_t *sfbf, const void *valp) {
     return nccomp_typ_tostring(varp->tinfo, sfbf, valp);
 }
-#endif /* USE_NETCDF4 */
+#endif /*USE_NETCDF4*/
 
 static val_equals_func eq_funcs[] = {
 	ncbyte_val_equals,
@@ -1389,16 +1413,13 @@ static val_equals_func eq_funcs[] = {
 	ncshort_val_equals,
 	ncint_val_equals,
 	ncfloat_val_equals,
-	ncdouble_val_equals
-#ifdef USE_NETCDF4
-,
+	ncdouble_val_equals,
 	ncubyte_val_equals,
 	ncushort_val_equals,
 	ncuint_val_equals,
 	ncint64_val_equals,
 	ncuint64_val_equals,
 	ncstring_val_equals
-#endif /* USE_NETCDF4 */
     };
 
 static typ_tostring_func ts_funcs[] = {
@@ -1407,16 +1428,13 @@ static typ_tostring_func ts_funcs[] = {
 	ncshort_typ_tostring,
 	ncint_typ_tostring,
 	ncfloat_typ_tostring,
-	ncdouble_typ_tostring
-#ifdef USE_NETCDF4
-,
+	ncdouble_typ_tostring,
 	ncubyte_typ_tostring,
 	ncushort_typ_tostring,
 	ncuint_typ_tostring,
 	ncint64_typ_tostring,
 	ncuint64_typ_tostring,
 	ncstring_typ_tostring
-#endif /* USE_NETCDF4 */
     };
 
 
@@ -1430,16 +1448,13 @@ set_tostring_func(ncvar_t *varp) {
 	ncshort_val_tostring,
 	ncint_val_tostring,
 	ncfloat_val_tostring,
-	ncdouble_val_tostring
-#ifdef USE_NETCDF4
-,
+	ncdouble_val_tostring,
 	ncubyte_val_tostring,
 	ncushort_val_tostring,
 	ncuint_val_tostring,
 	ncint64_val_tostring,
 	ncuint64_val_tostring,
 	ncstring_val_tostring
-#endif /* USE_NETCDF4 */
     };
     if(varp->has_timeval && formatting_specs.string_times) {
 	varp->val_tostring = (val_tostring_func) nctime_val_tostring;
@@ -1464,36 +1479,34 @@ set_tostring_func(ncvar_t *varp) {
 	varp->val_tostring = (val_tostring_func) nccomp_val_tostring;
 	break;
     default:
-	error("unrecognized class of user defined type: %d", 
+	error("unrecognized class of user defined type: %d",
 	      varp->tinfo->class);
-    } 
+    }
 #endif /* USE_NETCDF4 */
     return;
 }
 
 
-/* Initialize typelist with primitive types.  For netCDF-3 only need primitive 
-   types. */ 
+/* Initialize typelist with primitive types.  For netCDF-3 only need primitive
+   types. */
 static void
 init_prim_types(int ncid) {
     nctype_t *tp;
     int i;
-    int types[] = {
+    int types[] =
+{
 	NC_BYTE,
 	NC_CHAR,
 	NC_SHORT,
 	NC_INT,
 	NC_FLOAT,
-	NC_DOUBLE
-#ifdef USE_NETCDF4
-,
+	NC_DOUBLE,
 	NC_UBYTE,
 	NC_USHORT,
 	NC_UINT,
 	NC_INT64,
 	NC_UINT64,
 	NC_STRING
-#endif /* USE_NETCDF4 */
     };
     size_t sizes[] = {
 	sizeof(char),
@@ -1501,19 +1514,20 @@ init_prim_types(int ncid) {
 	sizeof(short),
 	sizeof(int),
 	sizeof(float),
-	sizeof(double)
-#ifdef USE_NETCDF4
-,
+	sizeof(double),
 	sizeof(unsigned char),
 	sizeof(unsigned short),
 	sizeof(unsigned int),
 	sizeof(long long),
 	sizeof(unsigned long long),
 	sizeof(char **)
-#endif /* USE_NETCDF4 */
     };
 
+#if 0
     for(i=0; i < sizeof(types)/sizeof(int); i++) {
+#else
+    for(i=0; i < max_atomic_type; i++) {
+#endif
 	tp = (nctype_t *)emalloc(sizeof(nctype_t));
 	tp->ncid = ncid;
 	tp->tid = types[i];
@@ -1541,7 +1555,7 @@ init_prim_types(int ncid) {
  * variables in one group may be declared using types in a
  * different group.  For netCDF-3, this is just the info about
  * primitive types.
- */ 
+ */
 void
 init_types(int ncid) {
 #ifdef USE_NETCDF4
@@ -1573,8 +1587,8 @@ init_types(int ncid) {
 
 	  tinfo = (nctype_t *) emalloc(sizeof(nctype_t));
 
-	  NC_CHECK( nc_inq_user_type(ncid, typeids[t], type_name, &tinfo->size, 
-		                     &tinfo->base_tid, &tinfo->nfields, 
+	  NC_CHECK( nc_inq_user_type(ncid, typeids[t], type_name, &tinfo->size,
+		                     &tinfo->base_tid, &tinfo->nfields,
 				     &tinfo->class) );
 	  tinfo->tid = typeids[t];
 	  tinfo->ncid = ncid;
@@ -1615,7 +1629,7 @@ init_types(int ncid) {
 		  int i;
 		  sides = NULL;
 		  NC_CHECK( nc_inq_compound_field(ncid, tinfo->tid, fidx, NULL,
-						  &offset, &ftype, &rank, 
+						  &offset, &ftype, &rank,
 						  sides) );
 		  if(rank > 0) sides = (int *) emalloc(rank * sizeof(int));
 		  NC_CHECK( nc_inq_compound_field(ncid, tinfo->tid, fidx, NULL,
@@ -1646,7 +1660,7 @@ init_types(int ncid) {
 	      error("bad class: %d", tinfo->class);
 	      break;
 	  }
-	  
+
 	  typeadd(tinfo);
       }
       free(typeids);
@@ -1722,7 +1736,7 @@ iscoordvar(int ncid, int varid)
     }
     NC_CHECK( nc_inq_varname(ncid, varid, varname) );
     NC_CHECK( nc_inq_varndims(ncid, varid, &varndims) );
-   
+
     for (dimid = 0; dimid < ndims; dimid++) {
 	if (strcmp(dims[dimid].name, varname) == 0 && varndims == 1) {
 	    is_coord = 1;
@@ -1745,7 +1759,7 @@ is_user_defined_type(nc_type type) {
 }
 
 
-/* 
+/*
  * Return name of type in user-allocated space, whether built-in
  * primitive type or user-defined type.  Note: name must have enough
  * space allocated to hold type name.
@@ -1764,7 +1778,7 @@ get_type_name(int ncid, nc_type type, char *name)
 #endif /* USE_NETCDF4 */
 }
 
-/* 
+/*
  * Print type name with CDL escapes for special characters.  locid is
  * the id of the group in which the type is referenced, which is
  * needed to determine whether an absolute type name must be printed.
@@ -1814,7 +1828,7 @@ print_type_name(int locid, int typeid) {
 	    }
 	    stat = nc_inq_grp_parent(curlocid, &parent_groupid);
 	} while (stat != NC_ENOGRP && stat != NC_ENOTNC4);
-    
+
 	if (type_inherited == 0) {
 	    char *gname = nctypes[typeid]->grps;
 	    print_name(gname);
@@ -1830,7 +1844,8 @@ print_type_name(int locid, int typeid) {
  * use by is_unlim_dim() function.  If ncid is a subgroup of a netCDF
  * dataset, the table will still be initialized for the whole dataset
  * in which the subgroup resides. */
-static int 
+#ifdef USE_NETCDF4
+static int
 init_is_unlim(int ncid, int **is_unlim_p)
 {
     int num_grps;	 /* total number of groups */
@@ -1840,7 +1855,6 @@ init_is_unlim(int ncid, int **is_unlim_p)
     int igrp;
     int grpid;
 
-#ifdef USE_NETCDF4
     /* if ncid is not root group, find its ancestor root group id */
     int status = nc_inq_grp_parent(ncid, &grpid);
     while(status == NC_NOERR && grpid != ncid) {
@@ -1883,9 +1897,9 @@ init_is_unlim(int ncid, int **is_unlim_p)
 	    free(dimids);
     }
     free(grpids);
-#endif	/*  USE_NETCDF4 */
     return NC_NOERR;
 }
+#endif	/*  USE_NETCDF4 */
 
 /* TODO: make list of these arrays for multiple open datasets, such as
  * the idnode_t lists above.  For now, we just have one of these, for
@@ -1901,9 +1915,10 @@ is_unlim_dim(int ncid, int dimid) {
 #ifdef USE_NETCDF4
     static int *is_unlim = NULL; /* gets allocated by init_is_unlim() */
     if(for_ncid == UNLIM_NOT_INITIALIZED) {
-	NC_CHECK( init_is_unlim(ncid, &is_unlim) );
-	for_ncid = ncid;
+      NC_CHECK(init_is_unlim(ncid, &is_unlim));
+      for_ncid = ncid;
     }
+    assert(is_unlim);
     result = is_unlim[dimid];	/* 0 if fixed, 1 if unlimited size */
 #else
     static int unlimdimid;
@@ -1915,4 +1930,3 @@ is_unlim_dim(int ncid, int dimid) {
 #endif 	 /* USE_NETCDF4 */
     return result;
 }
-

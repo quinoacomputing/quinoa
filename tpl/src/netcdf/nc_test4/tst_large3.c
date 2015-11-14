@@ -2,7 +2,7 @@
  Copyright 2007, UCAR/Unidata
  See COPYRIGHT file for copying and redistribution conditions.
 
- This program (quickly, but not throughly) tests the large file
+ This program (quickly, but not thoroughly) tests the large file
  features. It turns off fill mode to quickly create an 8 gb file, and
  write one value is written, nothing is read.
 
@@ -38,10 +38,6 @@ int
 main(int argc, char **argv)
 {
    char file_name[NC_MAX_NAME + 1];
-
-#ifdef USE_PARALLEL
-   MPI_Init(&argc, &argv);
-#endif
 
     printf("\n*** Testing really large files in netCDF-4/HDF5 format, quickly.\n");
 
@@ -100,9 +96,7 @@ main(int argc, char **argv)
 
     SUMMARIZE_ERR;
 
-#ifdef USE_PARALLEL
-   MPI_Finalize();
-#endif   
+    nc_finalize();
 
     FINAL_RESULTS;
 }

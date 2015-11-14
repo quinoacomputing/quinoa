@@ -12,7 +12,7 @@ dnl
  *	Copyright 1996, University Corporation for Atmospheric Research
  *      See netcdf/COPYRIGHT file for copying and redistribution conditions.
  */
-/* $Id: putget.m4,v 2.79 2010/05/29 22:25:01 russ Exp $ */
+/* $Id: putget.m4 2783 2014-10-26 05:19:35Z wkliao $ */
 
 #include "config.h"
 #include <string.h>
@@ -55,10 +55,10 @@ void
 arrayp(const char *label, size_t count, const size_t *array)
 {
 	(void) fprintf(stderr, "%s", label);
-	(void) fputc('\t',stderr);	
+	(void) fputc('\t',stderr);
 	for(; count > 0; count--, array++)
 		(void) fprintf(stderr," %lu", (unsigned long)*array);
-	(void) fputc('\n',stderr);	
+	(void) fputc('\n',stderr);
 }
 #endif /* ODEBUG */
 
@@ -67,7 +67,7 @@ arrayp(const char *label, size_t count, const size_t *array)
 /*
  * This is tunable parameter.
  * It essentially controls the tradeoff between the number of times
- * memcpy() gets called to copy the external data to fill 
+ * memcpy() gets called to copy the external data to fill
  * a large buffer vs the number of times its called to
  * prepare the external data.
  */
@@ -126,10 +126,15 @@ NCFILL(long, int, X_SIZEOF_INT, NC_FILL_INT)
 NCFILL(float, float, X_SIZEOF_FLOAT, NC_FILL_FLOAT)
 NCFILL(double, double, X_SIZEOF_DOUBLE, NC_FILL_DOUBLE)
 
+NCFILL(uchar,     uchar,     X_SIZEOF_UBYTE,     NC_FILL_UBYTE)
+NCFILL(ushort,    ushort,    X_SIZEOF_USHORT,    NC_FILL_USHORT)
+NCFILL(uint,      uint,      X_SIZEOF_UINT,      NC_FILL_UINT)
+NCFILL(longlong,  longlong,  X_SIZEOF_LONGLONG,  NC_FILL_INT64)
+NCFILL(ulonglong, ulonglong, X_SIZEOF_ULONGLONG, NC_FILL_UINT64)
 
 
 
-/* 
+/*
  * Fill the external space for variable 'varp' values at 'recno' with
  * the appropriate value. If 'varp' is not a record variable, fill the
  * whole thing.  For the special case when 'varp' is the only record
@@ -180,12 +185,12 @@ fill_NC_var(NC3_INFO* ncp, const NC_var *varp, size_t varsize, size_t recno)
 	else
 	{
 		/* use the default */
-		
+
 		assert(xsz % X_ALIGN == 0);
 		assert(xsz <= sizeof(xfillp));
-	
+
 		xp = xfillp;
-	
+
 		switch(varp->type){
 		case NC_BYTE :
 			status = NC_fill_schar(&xp, nelems);
@@ -202,9 +207,24 @@ fill_NC_var(NC3_INFO* ncp, const NC_var *varp, size_t varsize, size_t recno)
 		case NC_FLOAT :
 			status = NC_fill_float(&xp, nelems);
 			break;
-		case NC_DOUBLE : 
+		case NC_DOUBLE :
 			status = NC_fill_double(&xp, nelems);
 			break;
+                case NC_UBYTE :
+                        status = NC_fill_uchar(&xp, nelems);
+                        break;
+                case NC_USHORT :
+                        status = NC_fill_ushort(&xp, nelems);
+                        break;
+                case NC_UINT :
+                        status = NC_fill_uint(&xp, nelems);
+                        break;
+                case NC_INT64 :
+                        status = NC_fill_longlong(&xp, nelems);
+                        break;
+                case NC_UINT64 :
+                        status = NC_fill_ulonglong(&xp, nelems);
+                        break;
 		default :
 			assert("fill_NC_var invalid type" == 0);
 			status = NC_EBADTYPE;
@@ -212,7 +232,7 @@ fill_NC_var(NC3_INFO* ncp, const NC_var *varp, size_t varsize, size_t recno)
 		}
 		if(status != NC_NOERR)
 			return status;
-	
+
 		assert(xp == xfillp + xsz);
 	}
 
@@ -239,7 +259,7 @@ fill_NC_var(NC3_INFO* ncp, const NC_var *varp, size_t varsize, size_t recno)
 		size_t ii;
 
 		status = ncio_get(ncp->nciop, offset, chunksz,
-				 RGN_WRITE, &xp);	
+				 RGN_WRITE, &xp);
 		if(status != NC_NOERR)
 		{
 			return status;
@@ -339,7 +359,7 @@ NCtouchlast(NC3_INFO* ncp, const NC_var *const *varpp, size_t recno)
 {
 	int status = NC_NOERR;
 	const NC_var *varp = NULL;
-	
+
 	{
 	size_t ii = 0;
 	for(; ii < ncp->vars.nelems; ii++, varpp++)
@@ -361,7 +381,7 @@ NCtouchlast(NC3_INFO* ncp, const NC_var *const *varpp, size_t recno)
 
 
 		status = ncio_get(ncp->nciop, offset, varp->xsz,
-				 RGN_WRITE, &xp);	
+				 RGN_WRITE, &xp);
 		if(status != NC_NOERR)
 			return status;
 		(void)memset(xp, 0, varp->xsz);
@@ -374,7 +394,7 @@ NCtouchlast(NC3_INFO* ncp, const NC_var *const *varpp, size_t recno)
 
 /*
  * Ensure that the netcdf file has 'numrecs' records,
- * add records and fill as neccessary.
+ * add records and fill as necessary.
  */
 static int
 NCvnrecs(NC3_INFO* ncp, size_t numrecs)
@@ -401,7 +421,7 @@ NCvnrecs(NC3_INFO* ncp, size_t numrecs)
 #endif
 		/* work-around for non-unique tickets */
 		if (nowserving > myticket && nowserving < myticket + numpe ) {
-			/* get a new ticket ... you've been bypassed */ 
+			/* get a new ticket ... you've been bypassed */
 			/* and handle the unlikely wrap-around effect */
 			myticket = shmem_short_finc(
 				(shmem_t *) ncp->lock + LOCKNUMREC_LOCK,
@@ -436,9 +456,9 @@ NCvnrecs(NC3_INFO* ncp, size_t numrecs)
 		}
 		else
 		{
-		    /* Treat two cases differently: 
+		    /* Treat two cases differently:
 		        - exactly one record variable (no padding)
-                        - multiple record variables (each record padded 
+                        - multiple record variables (each record padded
                           to 4-byte alignment)
 		    */
 		    NC_var **vpp = (NC_var **)ncp->vars.value;
@@ -446,7 +466,7 @@ NCvnrecs(NC3_INFO* ncp, size_t numrecs)
 		    NC_var *recvarp = NULL;	/* last record var */
 		    int numrecvars = 0;
 		    size_t cur_nrecs;
-		    
+
 		    /* determine how many record variables */
 		    for( /*NADA*/; vpp < end; vpp++) {
 			if(IS_RECVAR(*vpp)) {
@@ -454,7 +474,7 @@ NCvnrecs(NC3_INFO* ncp, size_t numrecs)
 			    numrecvars++;
 			}
 		    }
-		    
+
 		    if (numrecvars != 1) { /* usual case */
 			/* Fill each record out to numrecs */
 			while((cur_nrecs = NC_get_numrecs(ncp)) < numrecs)
@@ -485,7 +505,7 @@ NCvnrecs(NC3_INFO* ncp, size_t numrecs)
 			}
 			if(status != NC_NOERR)
 				goto common_return;
-			
+
 		    }
 		}
 
@@ -505,7 +525,7 @@ common_return:
 }
 
 
-/* 
+/*
  * Check whether 'coord' values are valid for the variable.
  */
 static int
@@ -543,7 +563,7 @@ NCcoordck(NC3_INFO* ncp, const NC_var *varp, const size_t *coord)
 		ip = coord;
 		up = varp->shape;
 	}
-	
+
 #ifdef CDEBUG
 fprintf(stderr,"	NCcoordck: coord %ld, count %d, ip %ld\n",
 		coord, varp->ndims, ip );
@@ -566,7 +586,7 @@ fprintf(stderr,"	NCcoordck: ip %p, *ip %ld, up %p, *up %lu\n",
 }
 
 
-/* 
+/*
  * Check whether 'edges' are valid for the variable and 'start'
  */
 /*ARGSUSED*/
@@ -600,7 +620,7 @@ NCedgeck(const NC3_INFO* ncp, const NC_var *varp,
 }
 
 
-/* 
+/*
  * Translate the (variable, coord) pair into a seek index
  */
 static off_t
@@ -624,7 +644,7 @@ NC_varoffset(const NC3_INFO* ncp, const NC_var *varp, const size_t *coord)
 		off_t *up = varp->dsizes +1;
 		const size_t *ip = coord;
 		const off_t *const end = varp->dsizes + varp->ndims;
-		
+
 		if(IS_RECVAR(varp))
 			up++, ip++;
 
@@ -632,10 +652,10 @@ NC_varoffset(const NC3_INFO* ncp, const NC_var *varp, const size_t *coord)
 			lcoord += (off_t)(*up) * (off_t)(*ip);
 
 		lcoord *= varp->xsz;
-		
+
 		if(IS_RECVAR(varp))
 			lcoord += (off_t)(*coord) * ncp->recsize;
-		
+
 		lcoord += varp->begin;
 		return lcoord;
 	}
@@ -672,10 +692,10 @@ putNCvx_$1_$2(NC3_INFO* ncp, const NC_var *varp,
 		size_t nput = ncx_howmany(varp->type, extent);
 
 		int lstatus = ncio_get(ncp->nciop, offset, extent,
-				 RGN_WRITE, &xp);	
+				 RGN_WRITE, &xp);
 		if(lstatus != NC_NOERR)
 			return lstatus;
-		
+
 		lstatus = ncx_putn_$1_$2(&xp, nput, value);
 		if(lstatus != NC_NOERR && status == NC_NOERR)
 		{
@@ -684,7 +704,7 @@ putNCvx_$1_$2(NC3_INFO* ncp, const NC_var *varp,
 		}
 
 		(void) ncio_rel(ncp->nciop, offset,
-				 RGN_MODIFIED);	
+				 RGN_MODIFIED);
 
 		remaining -= extent;
 		if(remaining == 0)
@@ -707,6 +727,9 @@ PUTNCVX(schar, int)
 PUTNCVX(schar, float)
 PUTNCVX(schar, double)
 PUTNCVX(schar, longlong)
+PUTNCVX(schar, ushort)
+PUTNCVX(schar, uint)
+PUTNCVX(schar, ulonglong)
 
 PUTNCVX(short, schar)
 PUTNCVX(short, uchar)
@@ -715,6 +738,9 @@ PUTNCVX(short, int)
 PUTNCVX(short, float)
 PUTNCVX(short, double)
 PUTNCVX(short, longlong)
+PUTNCVX(short, ushort)
+PUTNCVX(short, uint)
+PUTNCVX(short, ulonglong)
 
 PUTNCVX(int, schar)
 PUTNCVX(int, uchar)
@@ -723,6 +749,9 @@ PUTNCVX(int, int)
 PUTNCVX(int, float)
 PUTNCVX(int, double)
 PUTNCVX(int, longlong)
+PUTNCVX(int, ushort)
+PUTNCVX(int, uint)
+PUTNCVX(int, ulonglong)
 
 PUTNCVX(float, schar)
 PUTNCVX(float, uchar)
@@ -731,6 +760,9 @@ PUTNCVX(float, int)
 PUTNCVX(float, float)
 PUTNCVX(float, double)
 PUTNCVX(float, longlong)
+PUTNCVX(float, ushort)
+PUTNCVX(float, uint)
+PUTNCVX(float, ulonglong)
 
 PUTNCVX(double, schar)
 PUTNCVX(double, uchar)
@@ -739,20 +771,64 @@ PUTNCVX(double, int)
 PUTNCVX(double, float)
 PUTNCVX(double, double)
 PUTNCVX(double, longlong)
-
-dnl Following are not currently used
-#ifdef NOTUSED
-PUTNCVX(schar, uint)
-PUTNCVX(schar, ulonglong)
-PUTNCVX(short, uint)
-PUTNCVX(short, ulonglong)
-PUTNCVX(int, uint)
-PUTNCVX(int, ulonglong)
-PUTNCVX(float, uint)
-PUTNCVX(float, ulonglong)
+PUTNCVX(double, ushort)
 PUTNCVX(double, uint)
 PUTNCVX(double, ulonglong)
-#endif /*NOTUSED*/
+
+PUTNCVX(uchar, schar)
+PUTNCVX(uchar, uchar)
+PUTNCVX(uchar, short)
+PUTNCVX(uchar, int)
+PUTNCVX(uchar, float)
+PUTNCVX(uchar, double)
+PUTNCVX(uchar, longlong)
+PUTNCVX(uchar, ushort)
+PUTNCVX(uchar, uint)
+PUTNCVX(uchar, ulonglong)
+
+PUTNCVX(ushort, schar)
+PUTNCVX(ushort, uchar)
+PUTNCVX(ushort, short)
+PUTNCVX(ushort, int)
+PUTNCVX(ushort, float)
+PUTNCVX(ushort, double)
+PUTNCVX(ushort, longlong)
+PUTNCVX(ushort, ushort)
+PUTNCVX(ushort, uint)
+PUTNCVX(ushort, ulonglong)
+
+PUTNCVX(uint, schar)
+PUTNCVX(uint, uchar)
+PUTNCVX(uint, short)
+PUTNCVX(uint, int)
+PUTNCVX(uint, float)
+PUTNCVX(uint, double)
+PUTNCVX(uint, longlong)
+PUTNCVX(uint, ushort)
+PUTNCVX(uint, uint)
+PUTNCVX(uint, ulonglong)
+
+PUTNCVX(longlong, schar)
+PUTNCVX(longlong, uchar)
+PUTNCVX(longlong, short)
+PUTNCVX(longlong, int)
+PUTNCVX(longlong, float)
+PUTNCVX(longlong, double)
+PUTNCVX(longlong, longlong)
+PUTNCVX(longlong, ushort)
+PUTNCVX(longlong, uint)
+PUTNCVX(longlong, ulonglong)
+
+PUTNCVX(ulonglong, schar)
+PUTNCVX(ulonglong, uchar)
+PUTNCVX(ulonglong, short)
+PUTNCVX(ulonglong, int)
+PUTNCVX(ulonglong, float)
+PUTNCVX(ulonglong, double)
+PUTNCVX(ulonglong, longlong)
+PUTNCVX(ulonglong, ushort)
+PUTNCVX(ulonglong, uint)
+PUTNCVX(ulonglong, ulonglong)
 
 dnl
 dnl GETNCVX(XType, Type)
@@ -782,12 +858,12 @@ getNCvx_$1_$2(const NC3_INFO* ncp, const NC_var *varp,
 				 0, (void **)&xp);	/* cast away const */
 		if(lstatus != NC_NOERR)
 			return lstatus;
-		
+
 		lstatus = ncx_getn_$1_$2(&xp, nget, value);
 		if(lstatus != NC_NOERR && status == NC_NOERR)
 			status = lstatus;
 
-		(void) ncio_rel(ncp->nciop, offset, 0);	
+		(void) ncio_rel(ncp->nciop, offset, 0);
 
 		remaining -= extent;
 		if(remaining == 0)
@@ -810,6 +886,8 @@ GETNCVX(schar, double)
 GETNCVX(schar, longlong)
 GETNCVX(schar, uint)
 GETNCVX(schar, ulonglong)
+GETNCVX(schar, uchar)
+GETNCVX(schar, ushort)
 
 GETNCVX(short, schar)
 GETNCVX(short, uchar)
@@ -820,6 +898,7 @@ GETNCVX(short, double)
 GETNCVX(short, longlong)
 GETNCVX(short, uint)
 GETNCVX(short, ulonglong)
+GETNCVX(short, ushort)
 
 GETNCVX(int, schar)
 GETNCVX(int, uchar)
@@ -830,6 +909,7 @@ GETNCVX(int, double)
 GETNCVX(int, longlong)
 GETNCVX(int, uint)
 GETNCVX(int, ulonglong)
+GETNCVX(int, ushort)
 
 GETNCVX(float, schar)
 GETNCVX(float, uchar)
@@ -840,6 +920,7 @@ GETNCVX(float, double)
 GETNCVX(float, longlong)
 GETNCVX(float, uint)
 GETNCVX(float, ulonglong)
+GETNCVX(float, ushort)
 
 GETNCVX(double, schar)
 GETNCVX(double, uchar)
@@ -850,6 +931,62 @@ GETNCVX(double, double)
 GETNCVX(double, longlong)
 GETNCVX(double, uint)
 GETNCVX(double, ulonglong)
+GETNCVX(double, ushort)
+
+GETNCVX(uchar, schar)
+GETNCVX(uchar, uchar)
+GETNCVX(uchar, short)
+GETNCVX(uchar, int)
+GETNCVX(uchar, float)
+GETNCVX(uchar, double)
+GETNCVX(uchar, longlong)
+GETNCVX(uchar, uint)
+GETNCVX(uchar, ulonglong)
+GETNCVX(uchar, ushort)
+
+GETNCVX(ushort, schar)
+GETNCVX(ushort, uchar)
+GETNCVX(ushort, short)
+GETNCVX(ushort, int)
+GETNCVX(ushort, float)
+GETNCVX(ushort, double)
+GETNCVX(ushort, longlong)
+GETNCVX(ushort, uint)
+GETNCVX(ushort, ulonglong)
+GETNCVX(ushort, ushort)
+
+GETNCVX(uint, schar)
+GETNCVX(uint, uchar)
+GETNCVX(uint, short)
+GETNCVX(uint, int)
+GETNCVX(uint, float)
+GETNCVX(uint, double)
+GETNCVX(uint, longlong)
+GETNCVX(uint, uint)
+GETNCVX(uint, ulonglong)
+GETNCVX(uint, ushort)
+
+GETNCVX(longlong, schar)
+GETNCVX(longlong, uchar)
+GETNCVX(longlong, short)
+GETNCVX(longlong, int)
+GETNCVX(longlong, float)
+GETNCVX(longlong, double)
+GETNCVX(longlong, longlong)
+GETNCVX(longlong, uint)
+GETNCVX(longlong, ulonglong)
+GETNCVX(longlong, ushort)
+
+GETNCVX(ulonglong, schar)
+GETNCVX(ulonglong, uchar)
+GETNCVX(ulonglong, short)
+GETNCVX(ulonglong, int)
+GETNCVX(ulonglong, float)
+GETNCVX(ulonglong, double)
+GETNCVX(ulonglong, longlong)
+GETNCVX(ulonglong, uint)
+GETNCVX(ulonglong, ulonglong)
+GETNCVX(ulonglong, ushort)
 
 dnl Following are not currently uses
 #ifdef NOTUSED
@@ -921,7 +1058,7 @@ NCiocount(const NC3_INFO* const ncp, const NC_var *const varp,
 	 * If there is only one dimension and and it is a "record dimension",
 	 *	edp is &edges[1] (out of bounds) and we will return 0;
 	 */
-	assert(shp >= varp->shape + varp->ndims -1 
+	assert(shp >= varp->shape + varp->ndims -1
 		|| *(edp +1) == *(shp +1));
 
 	/* now accumulate max count for a single io operation */
@@ -963,7 +1100,7 @@ set_upper(size_t *upp, /* modified on return */
  * For some ii,
  * upp == &upper[ii]
  * cdp == &coord[ii]
- * 
+ *
  * Running this routine increments *cdp.
  *
  * If after the increment, *cdp is equal to *upp
@@ -971,7 +1108,7 @@ set_upper(size_t *upp, /* modified on return */
  * *cdp is "zeroed" to the starting value and
  * we need to "carry", eg, increment one place to
  * the left.
- * 
+ *
  * TODO: Some architectures hate recursion?
  * 	Reimplement non-recursively.
  */
@@ -984,7 +1121,7 @@ odo1(const size_t *const start, const size_t *const upper,
 	assert(coord <= cdp && cdp <= coord + NC_MAX_VAR_DIMS);
 	assert(upper <= upp && upp <= upper + NC_MAX_VAR_DIMS);
 	assert(upp - upper == cdp - coord);
-	
+
 	assert(*cdp <= *upp);
 
 	(*cdp)++;
@@ -1025,154 +1162,323 @@ readNCv(const NC3_INFO* ncp, const NC_var* varp, const size_t* start,
 {
     int status = NC_NOERR;
     switch (CASE(varp->type,memtype)) {
+
     case CASE(NC_CHAR,NC_CHAR):
     case CASE(NC_CHAR,NC_UBYTE):
-        status = getNCvx_char_char(ncp,varp,start,nelems,(char*)value);
-        break;
-
+        return getNCvx_char_char(ncp,varp,start,nelems,(char*)value);
+	break;
     case CASE(NC_BYTE,NC_BYTE):
+        return getNCvx_schar_schar(ncp,varp,start,nelems,(signed char*)value);
+	break;
     case CASE(NC_BYTE,NC_UBYTE):
-        status = getNCvx_schar_schar(ncp,varp,start,nelems,(signed char*)value);
-        break;
+        return getNCvx_schar_uchar(ncp,varp,start,nelems,(unsigned char*)value);
+	break;
     case CASE(NC_BYTE,NC_SHORT):
-        status = getNCvx_schar_short(ncp,varp,start,nelems,(short*)value);
-        break;
+        return getNCvx_schar_short(ncp,varp,start,nelems,(short*)value);
+	break;
     case CASE(NC_BYTE,NC_INT):
-        status = getNCvx_schar_int(ncp,varp,start,nelems,(int*)value);
-        break;
+        return getNCvx_schar_int(ncp,varp,start,nelems,(int*)value);
+	break;
     case CASE(NC_BYTE,NC_FLOAT):
-        status = getNCvx_schar_float(ncp,varp,start,nelems,(float*)value);
-        break;
+        return getNCvx_schar_float(ncp,varp,start,nelems,(float*)value);
+	break;
     case CASE(NC_BYTE,NC_DOUBLE):
-        status = getNCvx_schar_double(ncp,varp,start,nelems,(double *)value);
-        break;
+        return getNCvx_schar_double(ncp,varp,start,nelems,(double *)value);
+	break;
     case CASE(NC_BYTE,NC_INT64):
-        status = getNCvx_schar_longlong(ncp,varp,start,nelems,(long long*)value);
-        break;
+        return getNCvx_schar_longlong(ncp,varp,start,nelems,(long long*)value);
+	break;
     case CASE(NC_BYTE,NC_UINT):
-        status = getNCvx_schar_uint(ncp,varp,start,nelems,(unsigned int*)value);
-        break;
+        return getNCvx_schar_uint(ncp,varp,start,nelems,(unsigned int*)value);
+	break;
     case CASE(NC_BYTE,NC_UINT64):
-        status = getNCvx_schar_ulonglong(ncp,varp,start,nelems,(unsigned long long*)value);
-        break;
-
+        return getNCvx_schar_ulonglong(ncp,varp,start,nelems,(unsigned long long*)value);
+    	break;
+    case CASE(NC_BYTE,NC_USHORT):
+        return getNCvx_schar_ushort(ncp,varp,start,nelems,(unsigned short*)value);
+	break;
     case CASE(NC_SHORT,NC_BYTE):
-        status = getNCvx_short_schar(ncp,varp,start,nelems,(signed char*)value);
-        break;
+        return getNCvx_short_schar(ncp,varp,start,nelems,(signed char*)value);
+	break;
     case CASE(NC_SHORT,NC_UBYTE):
-        status = getNCvx_short_uchar(ncp,varp,start,nelems,(unsigned char*)value);
-        break;
+        return getNCvx_short_uchar(ncp,varp,start,nelems,(unsigned char*)value);
+	break;
     case CASE(NC_SHORT,NC_SHORT):
-        status = getNCvx_short_short(ncp,varp,start,nelems,(short*)value);
-        break;
+        return getNCvx_short_short(ncp,varp,start,nelems,(short*)value);
+	break;
     case CASE(NC_SHORT,NC_INT):
-        status = getNCvx_short_int(ncp,varp,start,nelems,(int*)value);
-        break;
-    case CASE(NC_SHORT,NC_FLOAT):
-        status = getNCvx_short_float(ncp,varp,start,nelems,(float*)value);
-        break;
+        return getNCvx_short_int(ncp,varp,start,nelems,(int*)value);
+	break; 
+   case CASE(NC_SHORT,NC_FLOAT):
+        return getNCvx_short_float(ncp,varp,start,nelems,(float*)value);
+	break;
     case CASE(NC_SHORT,NC_DOUBLE):
-        status = getNCvx_short_double(ncp,varp,start,nelems,(double*)value);
-        break;
+        return getNCvx_short_double(ncp,varp,start,nelems,(double*)value);
+	break;	
     case CASE(NC_SHORT,NC_INT64):
-        status = getNCvx_short_longlong(ncp,varp,start,nelems,(long long*)value);
-        break;
+        return getNCvx_short_longlong(ncp,varp,start,nelems,(long long*)value);
+   	break;
     case CASE(NC_SHORT,NC_UINT):
-        status = getNCvx_short_uint(ncp,varp,start,nelems,(unsigned int*)value);
-        break;
+        return getNCvx_short_uint(ncp,varp,start,nelems,(unsigned int*)value);
+    	break;
     case CASE(NC_SHORT,NC_UINT64):
-        status = getNCvx_short_ulonglong(ncp,varp,start,nelems,(unsigned long long*)value);
-        break;
-
+        return getNCvx_short_ulonglong(ncp,varp,start,nelems,(unsigned long long*)value);
+	break;
+    case CASE(NC_SHORT,NC_USHORT):
+        return getNCvx_short_ushort(ncp,varp,start,nelems,(unsigned short*)value);
+	break;
 
     case CASE(NC_INT,NC_BYTE):
-        status = getNCvx_int_schar(ncp,varp,start,nelems,(signed char*)value);
-        break;
+        return getNCvx_int_schar(ncp,varp,start,nelems,(signed char*)value);
+	break;
     case CASE(NC_INT,NC_UBYTE):
-        status = getNCvx_int_uchar(ncp,varp,start,nelems,(unsigned char*)value);
-        break;
+        return getNCvx_int_uchar(ncp,varp,start,nelems,(unsigned char*)value);
+	break;
     case CASE(NC_INT,NC_SHORT):
-        status = getNCvx_int_short(ncp,varp,start,nelems,(short*)value);
-        break;
+        return getNCvx_int_short(ncp,varp,start,nelems,(short*)value);
+	break;
     case CASE(NC_INT,NC_INT):
-        status = getNCvx_int_int(ncp,varp,start,nelems,(int*)value);
-        break;
+        return getNCvx_int_int(ncp,varp,start,nelems,(int*)value);
+	break;
     case CASE(NC_INT,NC_FLOAT):
-        status = getNCvx_int_float(ncp,varp,start,nelems,(float*)value);
-        break;
+        return getNCvx_int_float(ncp,varp,start,nelems,(float*)value);
+	break;
     case CASE(NC_INT,NC_DOUBLE):
-        status = getNCvx_int_double(ncp,varp,start,nelems,(double*)value);
-        break;
+        return getNCvx_int_double(ncp,varp,start,nelems,(double*)value);
+	break;
     case CASE(NC_INT,NC_INT64):
-        status = getNCvx_int_longlong(ncp,varp,start,nelems,(long long*)value);
-        break;
+        return getNCvx_int_longlong(ncp,varp,start,nelems,(long long*)value);
+	break;
     case CASE(NC_INT,NC_UINT):
-        status = getNCvx_int_uint(ncp,varp,start,nelems,(unsigned int*)value);
-        break;
+        return getNCvx_int_uint(ncp,varp,start,nelems,(unsigned int*)value);
+	break;
     case CASE(NC_INT,NC_UINT64):
-        status = getNCvx_int_ulonglong(ncp,varp,start,nelems,(unsigned long long*)value);
-        break;
-
+        return getNCvx_int_ulonglong(ncp,varp,start,nelems,(unsigned long long*)value);
+	break;
+    case CASE(NC_INT,NC_USHORT):
+        return getNCvx_int_ushort(ncp,varp,start,nelems,(unsigned short*)value);
+	break;
 
     case CASE(NC_FLOAT,NC_BYTE):
-        status = getNCvx_float_schar(ncp,varp,start,nelems,(signed char*)value);
-        break;
+        return getNCvx_float_schar(ncp,varp,start,nelems,(signed char*)value);
+	break;
     case CASE(NC_FLOAT,NC_UBYTE):
-        status = getNCvx_float_uchar(ncp,varp,start,nelems,(unsigned char*)value);
-        break;
+        return getNCvx_float_uchar(ncp,varp,start,nelems,(unsigned char*)value);
+	break;
     case CASE(NC_FLOAT,NC_SHORT):
-        status = getNCvx_float_short(ncp,varp,start,nelems,(short*)value);
-        break;
+        return getNCvx_float_short(ncp,varp,start,nelems,(short*)value);
+	break;
     case CASE(NC_FLOAT,NC_INT):
-        status = getNCvx_float_int(ncp,varp,start,nelems,(int*)value);
-        break;
+        return getNCvx_float_int(ncp,varp,start,nelems,(int*)value);
+	break;
     case CASE(NC_FLOAT,NC_FLOAT):
-        status = getNCvx_float_float(ncp,varp,start,nelems,(float*)value);
-        break;
+        return getNCvx_float_float(ncp,varp,start,nelems,(float*)value);
+	break;
     case CASE(NC_FLOAT,NC_DOUBLE):
-        status = getNCvx_float_double(ncp,varp,start,nelems,(double*)value);
-        break;
+        return getNCvx_float_double(ncp,varp,start,nelems,(double*)value);
+	break;
     case CASE(NC_FLOAT,NC_INT64):
-        status = getNCvx_float_longlong(ncp,varp,start,nelems,(long long*)value);
-        break;
+        return getNCvx_float_longlong(ncp,varp,start,nelems,(long long*)value);
+	break;
     case CASE(NC_FLOAT,NC_UINT):
-        status = getNCvx_float_uint(ncp,varp,start,nelems,(unsigned int*)value);
-        break;
+        return getNCvx_float_uint(ncp,varp,start,nelems,(unsigned int*)value);
+	break;
     case CASE(NC_FLOAT,NC_UINT64):
-        status = getNCvx_float_ulonglong(ncp,varp,start,nelems,(unsigned long long*)value);
-        break;
-
+        return getNCvx_float_ulonglong(ncp,varp,start,nelems,(unsigned long long*)value);
+	break;
+    case CASE(NC_FLOAT,NC_USHORT):
+        return getNCvx_float_ushort(ncp,varp,start,nelems,(unsigned short*)value);
+	break;
 
     case CASE(NC_DOUBLE,NC_BYTE):
-        status = getNCvx_double_schar(ncp,varp,start,nelems,(signed char*)value);
-        break;
+        return getNCvx_double_schar(ncp,varp,start,nelems,(signed char*)value);
+	break;
     case CASE(NC_DOUBLE,NC_UBYTE):
-        status = getNCvx_double_uchar(ncp,varp,start,nelems,(unsigned char*)value);
-        break;
+        return getNCvx_double_uchar(ncp,varp,start,nelems,(unsigned char*)value);
+	break;
     case CASE(NC_DOUBLE,NC_SHORT):
-        status = getNCvx_double_short(ncp,varp,start,nelems,(short*)value);
-        break;
+        return getNCvx_double_short(ncp,varp,start,nelems,(short*)value);
+	break;
     case CASE(NC_DOUBLE,NC_INT):
-        status = getNCvx_double_int(ncp,varp,start,nelems,(int*)value);
-        break;
+        return getNCvx_double_int(ncp,varp,start,nelems,(int*)value);
+	break;
     case CASE(NC_DOUBLE,NC_FLOAT):
-        status = getNCvx_double_float(ncp,varp,start,nelems,(float*)value);
-        break;
+        return getNCvx_double_float(ncp,varp,start,nelems,(float*)value);
+	break;
     case CASE(NC_DOUBLE,NC_DOUBLE):
-        status = getNCvx_double_double(ncp,varp,start,nelems,(double*)value);
-        break;
+        return getNCvx_double_double(ncp,varp,start,nelems,(double*)value);
+	break;
     case CASE(NC_DOUBLE,NC_INT64):
-        status = getNCvx_double_longlong(ncp,varp,start,nelems,(long long*)value);
-        break;
+        return getNCvx_double_longlong(ncp,varp,start,nelems,(long long*)value);
+	break;
     case CASE(NC_DOUBLE,NC_UINT):
-        status = getNCvx_double_uint(ncp,varp,start,nelems,(unsigned int*)value);
-        break;
+        return getNCvx_double_uint(ncp,varp,start,nelems,(unsigned int*)value);
+	break;
     case CASE(NC_DOUBLE,NC_UINT64):
-        status = getNCvx_double_ulonglong(ncp,varp,start,nelems,(unsigned long long*)value);
-        break;
+        return getNCvx_double_ulonglong(ncp,varp,start,nelems,(unsigned long long*)value);
+	break;
+    case CASE(NC_DOUBLE,NC_USHORT):
+        return getNCvx_double_ushort(ncp,varp,start,nelems,(unsigned short*)value);
+	break;
+
+    case CASE(NC_UBYTE,NC_UBYTE):
+        return getNCvx_uchar_uchar(ncp,varp,start,nelems,(unsigned char*)value);
+	break;
+    case CASE(NC_UBYTE,NC_BYTE):
+        return getNCvx_uchar_schar(ncp,varp,start,nelems,(signed char*)value);
+	break;
+    case CASE(NC_UBYTE,NC_SHORT):
+        return getNCvx_uchar_short(ncp,varp,start,nelems,(short*)value);
+	break;
+    case CASE(NC_UBYTE,NC_INT):
+        return getNCvx_uchar_int(ncp,varp,start,nelems,(int*)value);
+	break;
+    case CASE(NC_UBYTE,NC_FLOAT):
+        return getNCvx_uchar_float(ncp,varp,start,nelems,(float*)value);
+	break;
+    case CASE(NC_UBYTE,NC_DOUBLE):
+        return getNCvx_uchar_double(ncp,varp,start,nelems,(double *)value);
+	break;
+    case CASE(NC_UBYTE,NC_INT64):
+        return getNCvx_uchar_longlong(ncp,varp,start,nelems,(long long*)value);
+	break;
+    case CASE(NC_UBYTE,NC_UINT):
+        return getNCvx_uchar_uint(ncp,varp,start,nelems,(unsigned int*)value);
+	break;
+    case CASE(NC_UBYTE,NC_UINT64):
+        return getNCvx_uchar_ulonglong(ncp,varp,start,nelems,(unsigned long long*)value);
+	break;
+    case CASE(NC_UBYTE,NC_USHORT):
+        return getNCvx_uchar_ushort(ncp,varp,start,nelems,(unsigned short*)value);
+	break;
+
+    case CASE(NC_USHORT,NC_BYTE):
+        return getNCvx_ushort_schar(ncp,varp,start,nelems,(signed char*)value);
+	break;
+    case CASE(NC_USHORT,NC_UBYTE):
+        return getNCvx_ushort_uchar(ncp,varp,start,nelems,(unsigned char*)value);
+	break;
+    case CASE(NC_USHORT,NC_SHORT):
+        return getNCvx_ushort_short(ncp,varp,start,nelems,(short*)value);
+	break;
+    case CASE(NC_USHORT,NC_INT):
+        return getNCvx_ushort_int(ncp,varp,start,nelems,(int*)value);
+	break;
+    case CASE(NC_USHORT,NC_FLOAT):
+        return getNCvx_ushort_float(ncp,varp,start,nelems,(float*)value);
+	break;
+    case CASE(NC_USHORT,NC_DOUBLE):
+        return getNCvx_ushort_double(ncp,varp,start,nelems,(double*)value);
+	break;
+    case CASE(NC_USHORT,NC_INT64):
+        return getNCvx_ushort_longlong(ncp,varp,start,nelems,(long long*)value);
+	break;
+    case CASE(NC_USHORT,NC_UINT):
+        return getNCvx_ushort_uint(ncp,varp,start,nelems,(unsigned int*)value);
+	break;
+    case CASE(NC_USHORT,NC_UINT64):
+        return getNCvx_ushort_ulonglong(ncp,varp,start,nelems,(unsigned long long*)value);
+	break;
+    case CASE(NC_USHORT,NC_USHORT):
+        return getNCvx_ushort_ushort(ncp,varp,start,nelems,(unsigned short*)value);
+	break;
+
+    case CASE(NC_UINT,NC_BYTE):
+        return getNCvx_uint_schar(ncp,varp,start,nelems,(signed char*)value);
+	break;
+    case CASE(NC_UINT,NC_UBYTE):
+        return getNCvx_uint_uchar(ncp,varp,start,nelems,(unsigned char*)value);
+	break;
+    case CASE(NC_UINT,NC_SHORT):
+        return getNCvx_uint_short(ncp,varp,start,nelems,(short*)value);
+	break;
+    case CASE(NC_UINT,NC_INT):
+        return getNCvx_uint_int(ncp,varp,start,nelems,(int*)value);
+	break;
+    case CASE(NC_UINT,NC_FLOAT):
+        return getNCvx_uint_float(ncp,varp,start,nelems,(float*)value);
+	break;
+    case CASE(NC_UINT,NC_DOUBLE):
+        return getNCvx_uint_double(ncp,varp,start,nelems,(double*)value);
+	break;
+    case CASE(NC_UINT,NC_INT64):
+        return getNCvx_uint_longlong(ncp,varp,start,nelems,(long long*)value);
+	break;
+    case CASE(NC_UINT,NC_UINT):
+        return getNCvx_uint_uint(ncp,varp,start,nelems,(unsigned int*)value);
+	break;
+    case CASE(NC_UINT,NC_UINT64):
+        return getNCvx_uint_ulonglong(ncp,varp,start,nelems,(unsigned long long*)value);
+	break;
+    case CASE(NC_UINT,NC_USHORT):
+        return getNCvx_uint_ushort(ncp,varp,start,nelems,(unsigned short*)value);
+	break;
+
+    case CASE(NC_INT64,NC_BYTE):
+        return getNCvx_longlong_schar(ncp,varp,start,nelems,(signed char*)value);
+	break;
+    case CASE(NC_INT64,NC_UBYTE):
+        return getNCvx_longlong_uchar(ncp,varp,start,nelems,(unsigned char*)value);
+	break;
+    case CASE(NC_INT64,NC_SHORT):
+        return getNCvx_longlong_short(ncp,varp,start,nelems,(short*)value);
+	break;
+    case CASE(NC_INT64,NC_INT):
+        return getNCvx_longlong_int(ncp,varp,start,nelems,(int*)value);
+	break;
+    case CASE(NC_INT64,NC_FLOAT):
+        return getNCvx_longlong_float(ncp,varp,start,nelems,(float*)value);
+	break;
+    case CASE(NC_INT64,NC_DOUBLE):
+        return getNCvx_longlong_double(ncp,varp,start,nelems,(double*)value);
+	break;
+    case CASE(NC_INT64,NC_INT64):
+        return getNCvx_longlong_longlong(ncp,varp,start,nelems,(long long*)value);
+	break;
+    case CASE(NC_INT64,NC_UINT):
+        return getNCvx_longlong_uint(ncp,varp,start,nelems,(unsigned int*)value);
+	break;
+    case CASE(NC_INT64,NC_UINT64):
+        return getNCvx_longlong_ulonglong(ncp,varp,start,nelems,(unsigned long long*)value);
+	break;
+    case CASE(NC_INT64,NC_USHORT):
+        return getNCvx_longlong_ushort(ncp,varp,start,nelems,(unsigned short*)value);
+	break;
+
+    case CASE(NC_UINT64,NC_BYTE):
+        return getNCvx_ulonglong_schar(ncp,varp,start,nelems,(signed char*)value);
+	break;
+    case CASE(NC_UINT64,NC_UBYTE):
+        return getNCvx_ulonglong_uchar(ncp,varp,start,nelems,(unsigned char*)value);
+	break;
+    case CASE(NC_UINT64,NC_SHORT):
+        return getNCvx_ulonglong_short(ncp,varp,start,nelems,(short*)value);
+	break;
+    case CASE(NC_UINT64,NC_INT):
+        return getNCvx_ulonglong_int(ncp,varp,start,nelems,(int*)value);
+	break;
+    case CASE(NC_UINT64,NC_FLOAT):
+        return getNCvx_ulonglong_float(ncp,varp,start,nelems,(float*)value);
+	break;
+    case CASE(NC_UINT64,NC_DOUBLE):
+        return getNCvx_ulonglong_double(ncp,varp,start,nelems,(double*)value);
+	break;
+    case CASE(NC_UINT64,NC_INT64):
+        return getNCvx_ulonglong_longlong(ncp,varp,start,nelems,(long long*)value);
+	break;
+    case CASE(NC_UINT64,NC_UINT):
+        return getNCvx_ulonglong_uint(ncp,varp,start,nelems,(unsigned int*)value);
+	break;
+    case CASE(NC_UINT64,NC_UINT64):
+        return getNCvx_ulonglong_ulonglong(ncp,varp,start,nelems,(unsigned long long*)value);
+	break;
+    case CASE(NC_UINT64,NC_USHORT):
+        return getNCvx_ulonglong_ushort(ncp,varp,start,nelems,(unsigned short*)value);
+	break;
 
     default:
 	return NC_EBADTYPE;
+	break;
     }
     return status;
 }
@@ -1184,123 +1490,315 @@ writeNCv(NC3_INFO* ncp, const NC_var* varp, const size_t* start,
 {
     int status = NC_NOERR;
     switch (CASE(varp->type,memtype)) {
+
     case CASE(NC_CHAR,NC_CHAR):
     case CASE(NC_CHAR,NC_UBYTE):
-        status = putNCvx_char_char(ncp,varp,start,nelems,(char*)value);
-        break;
-
+        return putNCvx_char_char(ncp,varp,start,nelems,(char*)value);
+	break;
     case CASE(NC_BYTE,NC_BYTE):
-        status = putNCvx_schar_schar(ncp,varp,start,nelems,(signed char*)value);
-        break;
+        return putNCvx_schar_schar(ncp,varp,start,nelems,(signed char*)value);
+	break;
     case CASE(NC_BYTE,NC_UBYTE):
-        status = putNCvx_schar_uchar(ncp,varp,start,nelems,(unsigned char*)value);
-        break;
+        return putNCvx_schar_uchar(ncp,varp,start,nelems,(unsigned char*)value);
+	break;
     case CASE(NC_BYTE,NC_SHORT):
-        status = putNCvx_schar_short(ncp,varp,start,nelems,(short*)value);
-        break;
+        return putNCvx_schar_short(ncp,varp,start,nelems,(short*)value);
+	break;
     case CASE(NC_BYTE,NC_INT):
-        status = putNCvx_schar_int(ncp,varp,start,nelems,(int*)value);
-        break;
+        return putNCvx_schar_int(ncp,varp,start,nelems,(int*)value);
+	break;
     case CASE(NC_BYTE,NC_FLOAT):
-        status = putNCvx_schar_float(ncp,varp,start,nelems,(float*)value);
-        break;
+        return putNCvx_schar_float(ncp,varp,start,nelems,(float*)value);
+	break;
     case CASE(NC_BYTE,NC_DOUBLE):
-        status = putNCvx_schar_double(ncp,varp,start,nelems,(double *)value);
-        break;
+        return putNCvx_schar_double(ncp,varp,start,nelems,(double *)value);
+	break;
     case CASE(NC_BYTE,NC_INT64):
-        status = putNCvx_schar_longlong(ncp,varp,start,nelems,(long long*)value);
-        break;
-
+        return putNCvx_schar_longlong(ncp,varp,start,nelems,(long long*)value);
+	break;
+    case CASE(NC_BYTE,NC_UINT):
+        return putNCvx_schar_uint(ncp,varp,start,nelems,(unsigned int*)value);
+	break;
+    case CASE(NC_BYTE,NC_UINT64):
+        return putNCvx_schar_ulonglong(ncp,varp,start,nelems,(unsigned long long*)value);
+	break;
+    case CASE(NC_BYTE,NC_USHORT):
+        return putNCvx_schar_ushort(ncp,varp,start,nelems,(unsigned short*)value);
+	break;
     case CASE(NC_SHORT,NC_BYTE):
-        status = putNCvx_short_schar(ncp,varp,start,nelems,(signed char*)value);
-        break;
+        return putNCvx_short_schar(ncp,varp,start,nelems,(signed char*)value);
+	break;
     case CASE(NC_SHORT,NC_UBYTE):
-        status = putNCvx_short_uchar(ncp,varp,start,nelems,(unsigned char*)value);
-        break;
+        return putNCvx_short_uchar(ncp,varp,start,nelems,(unsigned char*)value);
+	break;
     case CASE(NC_SHORT,NC_SHORT):
-        status = putNCvx_short_short(ncp,varp,start,nelems,(short*)value);
-        break;
+        return putNCvx_short_short(ncp,varp,start,nelems,(short*)value);
+	break;
     case CASE(NC_SHORT,NC_INT):
-        status = putNCvx_short_int(ncp,varp,start,nelems,(int*)value);
-        break;
+        return putNCvx_short_int(ncp,varp,start,nelems,(int*)value);
+	break;
     case CASE(NC_SHORT,NC_FLOAT):
-        status = putNCvx_short_float(ncp,varp,start,nelems,(float*)value);
-        break;
+        return putNCvx_short_float(ncp,varp,start,nelems,(float*)value);
+	break;
     case CASE(NC_SHORT,NC_DOUBLE):
-        status = putNCvx_short_double(ncp,varp,start,nelems,(double*)value);
-        break;
+        return putNCvx_short_double(ncp,varp,start,nelems,(double*)value);
+	break;
     case CASE(NC_SHORT,NC_INT64):
-        status = putNCvx_short_longlong(ncp,varp,start,nelems,(long long*)value);
-        break;
-
+        return putNCvx_short_longlong(ncp,varp,start,nelems,(long long*)value);
+	break;
+    case CASE(NC_SHORT,NC_UINT):
+        return putNCvx_short_uint(ncp,varp,start,nelems,(unsigned int*)value);
+	break;
+    case CASE(NC_SHORT,NC_UINT64):
+        return putNCvx_short_ulonglong(ncp,varp,start,nelems,(unsigned long long*)value);
+	break;
+    case CASE(NC_SHORT,NC_USHORT):
+        return putNCvx_short_ushort(ncp,varp,start,nelems,(unsigned short*)value);
+	break;
     case CASE(NC_INT,NC_BYTE):
-        status = putNCvx_int_schar(ncp,varp,start,nelems,(signed char*)value);
-        break;
+        return putNCvx_int_schar(ncp,varp,start,nelems,(signed char*)value);
+	break;
     case CASE(NC_INT,NC_UBYTE):
-        status = putNCvx_int_uchar(ncp,varp,start,nelems,(unsigned char*)value);
-        break;
+        return putNCvx_int_uchar(ncp,varp,start,nelems,(unsigned char*)value);
+	break;
     case CASE(NC_INT,NC_SHORT):
-        status = putNCvx_int_short(ncp,varp,start,nelems,(short*)value);
-        break;
+        return putNCvx_int_short(ncp,varp,start,nelems,(short*)value);
+	break;
     case CASE(NC_INT,NC_INT):
-        status = putNCvx_int_int(ncp,varp,start,nelems,(int*)value);
-        break;
+        return putNCvx_int_int(ncp,varp,start,nelems,(int*)value);
+	break;
     case CASE(NC_INT,NC_FLOAT):
-        status = putNCvx_int_float(ncp,varp,start,nelems,(float*)value);
-        break;
+        return putNCvx_int_float(ncp,varp,start,nelems,(float*)value);
+	break;
     case CASE(NC_INT,NC_DOUBLE):
-        status = putNCvx_int_double(ncp,varp,start,nelems,(double*)value);
-        break;
+        return putNCvx_int_double(ncp,varp,start,nelems,(double*)value);
+	break;
     case CASE(NC_INT,NC_INT64):
-        status = putNCvx_int_longlong(ncp,varp,start,nelems,(long long*)value);
-        break;
-
+        return putNCvx_int_longlong(ncp,varp,start,nelems,(long long*)value);
+	break;
+    case CASE(NC_INT,NC_UINT):
+        return putNCvx_int_uint(ncp,varp,start,nelems,(unsigned int*)value);
+	break;
+    case CASE(NC_INT,NC_UINT64):
+        return putNCvx_int_ulonglong(ncp,varp,start,nelems,(unsigned long long*)value);
+	break;
+    case CASE(NC_INT,NC_USHORT):
+        return putNCvx_int_ushort(ncp,varp,start,nelems,(unsigned short*)value);
+	break;
     case CASE(NC_FLOAT,NC_BYTE):
-        status = putNCvx_float_schar(ncp,varp,start,nelems,(signed char*)value);
-        break;
+        return putNCvx_float_schar(ncp,varp,start,nelems,(signed char*)value);
+	break;
     case CASE(NC_FLOAT,NC_UBYTE):
-        status = putNCvx_float_uchar(ncp,varp,start,nelems,(unsigned char*)value);
-        break;
+        return putNCvx_float_uchar(ncp,varp,start,nelems,(unsigned char*)value);
+	break;
     case CASE(NC_FLOAT,NC_SHORT):
-        status = putNCvx_float_short(ncp,varp,start,nelems,(short*)value);
-        break;
+        return putNCvx_float_short(ncp,varp,start,nelems,(short*)value);
+	break;
     case CASE(NC_FLOAT,NC_INT):
-        status = putNCvx_float_int(ncp,varp,start,nelems,(int*)value);
-        break;
+        return putNCvx_float_int(ncp,varp,start,nelems,(int*)value);
+	break;
     case CASE(NC_FLOAT,NC_FLOAT):
-        status = putNCvx_float_float(ncp,varp,start,nelems,(float*)value);
-        break;
+        return putNCvx_float_float(ncp,varp,start,nelems,(float*)value);
+	break;
     case CASE(NC_FLOAT,NC_DOUBLE):
-        status = putNCvx_float_double(ncp,varp,start,nelems,(double*)value);
-        break;
+        return putNCvx_float_double(ncp,varp,start,nelems,(double*)value);
+	break;
     case CASE(NC_FLOAT,NC_INT64):
-        status = putNCvx_float_longlong(ncp,varp,start,nelems,(long long*)value);
-        break;
-
+        return putNCvx_float_longlong(ncp,varp,start,nelems,(long long*)value);
+	break;
+    case CASE(NC_FLOAT,NC_UINT):
+        return putNCvx_float_uint(ncp,varp,start,nelems,(unsigned int*)value);
+	break;
+    case CASE(NC_FLOAT,NC_UINT64):
+        return putNCvx_float_ulonglong(ncp,varp,start,nelems,(unsigned long long*)value);
+	break;
+    case CASE(NC_FLOAT,NC_USHORT):
+        return putNCvx_float_ushort(ncp,varp,start,nelems,(unsigned short*)value);
+	break;
     case CASE(NC_DOUBLE,NC_BYTE):
-        status = putNCvx_double_schar(ncp,varp,start,nelems,(signed char*)value);
-        break;
+        return putNCvx_double_schar(ncp,varp,start,nelems,(signed char*)value);
+	break;
     case CASE(NC_DOUBLE,NC_UBYTE):
-        status = putNCvx_double_uchar(ncp,varp,start,nelems,(unsigned char*)value);
-        break;
+        return putNCvx_double_uchar(ncp,varp,start,nelems,(unsigned char*)value);
+	break;
     case CASE(NC_DOUBLE,NC_SHORT):
-        status = putNCvx_double_short(ncp,varp,start,nelems,(short*)value);
-        break;
+        return putNCvx_double_short(ncp,varp,start,nelems,(short*)value);
+	break;
     case CASE(NC_DOUBLE,NC_INT):
-        status = putNCvx_double_int(ncp,varp,start,nelems,(int*)value);
-        break;
+        return putNCvx_double_int(ncp,varp,start,nelems,(int*)value);
+	break;
     case CASE(NC_DOUBLE,NC_FLOAT):
-        status = putNCvx_double_float(ncp,varp,start,nelems,(float*)value);
-        break;
+        return putNCvx_double_float(ncp,varp,start,nelems,(float*)value);
+	break;
     case CASE(NC_DOUBLE,NC_DOUBLE):
-        status = putNCvx_double_double(ncp,varp,start,nelems,(double*)value);
-        break;
+        return putNCvx_double_double(ncp,varp,start,nelems,(double*)value);
+	break;
     case CASE(NC_DOUBLE,NC_INT64):
-        status = putNCvx_double_longlong(ncp,varp,start,nelems,(long long*)value);
-        break;
+        return putNCvx_double_longlong(ncp,varp,start,nelems,(long long*)value);
+	break;
+    case CASE(NC_DOUBLE,NC_UINT):
+        return putNCvx_double_uint(ncp,varp,start,nelems,(unsigned int*)value);
+	break;
+    case CASE(NC_DOUBLE,NC_UINT64):
+        return putNCvx_double_ulonglong(ncp,varp,start,nelems,(unsigned long long*)value);
+	break;
+    case CASE(NC_DOUBLE,NC_USHORT):
+        return putNCvx_double_ushort(ncp,varp,start,nelems,(unsigned short*)value);
+	break;
+    case CASE(NC_UBYTE,NC_UBYTE):
+        return putNCvx_uchar_uchar(ncp,varp,start,nelems,(unsigned char*)value);
+	break;
+    case CASE(NC_UBYTE,NC_BYTE):
+        return putNCvx_uchar_schar(ncp,varp,start,nelems,(signed char*)value);
+	break;
+    case CASE(NC_UBYTE,NC_SHORT):
+        return putNCvx_uchar_short(ncp,varp,start,nelems,(short*)value);
+	break;
+    case CASE(NC_UBYTE,NC_INT):
+        return putNCvx_uchar_int(ncp,varp,start,nelems,(int*)value);
+	break;
+    case CASE(NC_UBYTE,NC_FLOAT):
+        return putNCvx_uchar_float(ncp,varp,start,nelems,(float*)value);
+	break;
+    case CASE(NC_UBYTE,NC_DOUBLE):
+        return putNCvx_uchar_double(ncp,varp,start,nelems,(double *)value);
+	break;
+    case CASE(NC_UBYTE,NC_INT64):
+        return putNCvx_uchar_longlong(ncp,varp,start,nelems,(long long*)value);
+	break;
+    case CASE(NC_UBYTE,NC_UINT):
+        return putNCvx_uchar_uint(ncp,varp,start,nelems,(unsigned int*)value);
+	break;
+    case CASE(NC_UBYTE,NC_UINT64):
+        return putNCvx_uchar_ulonglong(ncp,varp,start,nelems,(unsigned long long*)value);
+	break;
+    case CASE(NC_UBYTE,NC_USHORT):
+        return putNCvx_uchar_ushort(ncp,varp,start,nelems,(unsigned short*)value);
+	break;
+    case CASE(NC_USHORT,NC_BYTE):
+        return putNCvx_ushort_schar(ncp,varp,start,nelems,(signed char*)value);
+	break;
+    case CASE(NC_USHORT,NC_UBYTE):
+        return putNCvx_ushort_uchar(ncp,varp,start,nelems,(unsigned char*)value);
+	break;
+    case CASE(NC_USHORT,NC_SHORT):
+        return putNCvx_ushort_short(ncp,varp,start,nelems,(short*)value);
+	break;
+    case CASE(NC_USHORT,NC_INT):
+        return putNCvx_ushort_int(ncp,varp,start,nelems,(int*)value);
+	break;
+    case CASE(NC_USHORT,NC_FLOAT):
+        return putNCvx_ushort_float(ncp,varp,start,nelems,(float*)value);
+	break;
+    case CASE(NC_USHORT,NC_DOUBLE):
+        return putNCvx_ushort_double(ncp,varp,start,nelems,(double*)value);
+	break;
+    case CASE(NC_USHORT,NC_INT64):
+        return putNCvx_ushort_longlong(ncp,varp,start,nelems,(long long*)value);
+	break;
+    case CASE(NC_USHORT,NC_UINT):
+        return putNCvx_ushort_uint(ncp,varp,start,nelems,(unsigned int*)value);
+	break;
+    case CASE(NC_USHORT,NC_UINT64):
+        return putNCvx_ushort_ulonglong(ncp,varp,start,nelems,(unsigned long long*)value);
+	break;
+    case CASE(NC_USHORT,NC_USHORT):
+        return putNCvx_ushort_ushort(ncp,varp,start,nelems,(unsigned short*)value);
+	break;
+    case CASE(NC_UINT,NC_BYTE):
+        return putNCvx_uint_schar(ncp,varp,start,nelems,(signed char*)value);
+	break;
+    case CASE(NC_UINT,NC_UBYTE):
+        return putNCvx_uint_uchar(ncp,varp,start,nelems,(unsigned char*)value);
+	break;
+    case CASE(NC_UINT,NC_SHORT):
+        return putNCvx_uint_short(ncp,varp,start,nelems,(short*)value);
+	break;
+    case CASE(NC_UINT,NC_INT):
+        return putNCvx_uint_int(ncp,varp,start,nelems,(int*)value);
+	break;
+    case CASE(NC_UINT,NC_FLOAT):
+        return putNCvx_uint_float(ncp,varp,start,nelems,(float*)value);
+	break;
+    case CASE(NC_UINT,NC_DOUBLE):
+        return putNCvx_uint_double(ncp,varp,start,nelems,(double*)value);
+	break;
+    case CASE(NC_UINT,NC_INT64):
+        return putNCvx_uint_longlong(ncp,varp,start,nelems,(long long*)value);
+	break;
+    case CASE(NC_UINT,NC_UINT):
+        return putNCvx_uint_uint(ncp,varp,start,nelems,(unsigned int*)value);
+	break;
+    case CASE(NC_UINT,NC_UINT64):
+        return putNCvx_uint_ulonglong(ncp,varp,start,nelems,(unsigned long long*)value);
+	break;
+    case CASE(NC_UINT,NC_USHORT):
+        return putNCvx_uint_ushort(ncp,varp,start,nelems,(unsigned short*)value);
+	break;
+    case CASE(NC_INT64,NC_BYTE):
+        return putNCvx_longlong_schar(ncp,varp,start,nelems,(signed char*)value);
+	break;
+    case CASE(NC_INT64,NC_UBYTE):
+        return putNCvx_longlong_uchar(ncp,varp,start,nelems,(unsigned char*)value);
+	break;
+    case CASE(NC_INT64,NC_SHORT):
+        return putNCvx_longlong_short(ncp,varp,start,nelems,(short*)value);
+	break;
+    case CASE(NC_INT64,NC_INT):
+        return putNCvx_longlong_int(ncp,varp,start,nelems,(int*)value);
+	break;
+    case CASE(NC_INT64,NC_FLOAT):
+        return putNCvx_longlong_float(ncp,varp,start,nelems,(float*)value);
+	break;
+    case CASE(NC_INT64,NC_DOUBLE):
+        return putNCvx_longlong_double(ncp,varp,start,nelems,(double*)value);
+	break;
+    case CASE(NC_INT64,NC_INT64):
+        return putNCvx_longlong_longlong(ncp,varp,start,nelems,(long long*)value);
+	break;
+    case CASE(NC_INT64,NC_UINT):
+        return putNCvx_longlong_uint(ncp,varp,start,nelems,(unsigned int*)value);
+	break;
+    case CASE(NC_INT64,NC_UINT64):
+        return putNCvx_longlong_ulonglong(ncp,varp,start,nelems,(unsigned long long*)value);
+	break;
+    case CASE(NC_INT64,NC_USHORT):
+        return putNCvx_longlong_ushort(ncp,varp,start,nelems,(unsigned short*)value);
+	break;
+    case CASE(NC_UINT64,NC_BYTE):
+        return putNCvx_ulonglong_schar(ncp,varp,start,nelems,(signed char*)value);
+	break;
+    case CASE(NC_UINT64,NC_UBYTE):
+        return putNCvx_ulonglong_uchar(ncp,varp,start,nelems,(unsigned char*)value);
+	break;
+    case CASE(NC_UINT64,NC_SHORT):
+        return putNCvx_ulonglong_short(ncp,varp,start,nelems,(short*)value);
+	break;
+    case CASE(NC_UINT64,NC_INT):
+        return putNCvx_ulonglong_int(ncp,varp,start,nelems,(int*)value);
+	break;
+    case CASE(NC_UINT64,NC_FLOAT):
+        return putNCvx_ulonglong_float(ncp,varp,start,nelems,(float*)value);
+	break;
+    case CASE(NC_UINT64,NC_DOUBLE):
+        return putNCvx_ulonglong_double(ncp,varp,start,nelems,(double*)value);
+	break;
+    case CASE(NC_UINT64,NC_INT64):
+        return putNCvx_ulonglong_longlong(ncp,varp,start,nelems,(long long*)value);
+	break;
+    case CASE(NC_UINT64,NC_UINT):
+        return putNCvx_ulonglong_uint(ncp,varp,start,nelems,(unsigned int*)value);
+	break;
+    case CASE(NC_UINT64,NC_UINT64):
+        return putNCvx_ulonglong_ulonglong(ncp,varp,start,nelems,(unsigned long long*)value);
+	break;
+    case CASE(NC_UINT64,NC_USHORT):
+        return putNCvx_ulonglong_ushort(ncp,varp,start,nelems,(unsigned short*)value);
+	break;
 
     default:
 	return NC_EBADTYPE;
+	break;
     }
     return status;
 }
@@ -1324,7 +1822,7 @@ NC3_get_vara(int ncid, int varid,
     const size_t* edges = edges0; /* so we can modify for special cases */
     size_t modedges[NC_MAX_VAR_DIMS];
 
-    status = NC_check_id(ncid, &nc); 
+    status = NC_check_id(ncid, &nc);
     if(status != NC_NOERR)
         return status;
     nc3 = NC3_DATA(nc);
@@ -1332,15 +1830,15 @@ NC3_get_vara(int ncid, int varid,
     if(NC_indef(nc3))
         return NC_EINDEFINE;
 
-    varp = NC_lookupvar(nc3, varid);
-    if(varp == NULL)
-        return NC_ENOTVAR;
+    status = NC_lookupvar(nc3, varid, &varp);
+    if(status != NC_NOERR)
+        return status;
 
     if(memtype == NC_NAT) memtype=varp->type;
 
     if(memtype == NC_CHAR && varp->type != NC_CHAR)
         return NC_ECHAR;
-    else if(memtype != NC_CHAR && varp->type == NC_CHAR)  
+    else if(memtype != NC_CHAR && varp->type == NC_CHAR)
         return NC_ECHAR;
 
     /* If edges is NULL, then this was called from nc_get_var() */
@@ -1348,7 +1846,7 @@ NC3_get_vara(int ncid, int varid,
 	/* If this is a record variable, then we have to
            substitute the number of records into dimension 0. */
 	if(varp->shape[0] == 0) {
-	    (void*)memcpy((void*)modedges,(void*)varp->shape,
+	    (void)memcpy((void*)modedges,(void*)varp->shape,
                           sizeof(size_t)*varp->ndims);
 	    modedges[0] = NC_get_numrecs(nc3);
 	    edges = modedges;
@@ -1451,7 +1949,7 @@ NC3_put_vara(int ncid, int varid,
     const size_t* edges = edges0; /* so we can modify for special cases */
     size_t modedges[NC_MAX_VAR_DIMS];
 
-    status = NC_check_id(ncid, &nc); 
+    status = NC_check_id(ncid, &nc);
     if(status != NC_NOERR)
         return status;
     nc3 = NC3_DATA(nc);
@@ -1462,15 +1960,16 @@ NC3_put_vara(int ncid, int varid,
     if(NC_indef(nc3))
         return NC_EINDEFINE;
 
-    varp = NC_lookupvar(nc3, varid);
-    if(varp == NULL)
-        return NC_ENOTVAR; /* TODO: lost NC_EGLOBAL */
+    status = NC_lookupvar(nc3, varid, &varp);
+    if(status != NC_NOERR)
+       return status; /*invalid varid */
+
 
     if(memtype == NC_NAT) memtype=varp->type;
 
     if(memtype == NC_CHAR && varp->type != NC_CHAR)
         return NC_ECHAR;
-    else if(memtype != NC_CHAR && varp->type == NC_CHAR)  
+    else if(memtype != NC_CHAR && varp->type == NC_CHAR)
         return NC_ECHAR;
 
     /* Get the size of the memtype */
@@ -1481,7 +1980,7 @@ NC3_put_vara(int ncid, int varid,
 	/* If this is a record variable, then we have to
            substitute the number of records into dimension 0. */
 	if(varp->shape[0] == 0) {
-	    (void*)memcpy((void*)modedges,(void*)varp->shape,
+	    (void)memcpy((void*)modedges,(void*)varp->shape,
                           sizeof(size_t)*varp->ndims);
 	    modedges[0] = NC_get_numrecs(nc3);
 	    edges = modedges;

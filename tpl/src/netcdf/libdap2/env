@@ -1,18 +1,18 @@
+#TOP="/home/dmh/git/netcdf-c"
+TOP="/cygdrive/f/git/netcdf-c"
+
 alias xx="cd ..;make; cd libdap2"
 
 PARMS=""; ARGS=""; CON="" ; CE="";  OCON="" ; VAR=""; SHARP='#'
 alias q0=;alias qq=;alias qv=;alias q=;alias  qh=;alias qqh=;alias qall=;alias qv=;alias qo=;
 
-#TOP="/home/dmh/mach/netcdf-c"
-TOP="/cygdrive/f/git/netcdf-c"
+F="http://remotetest.unidata.ucar.edu/dts/test.01"
 
-F="http://thredds.ucar.edu/thredds/dodsC/grib/NCEP/NAM/CONUS_12km/best"
-#CON="OneD.amp,TwoD.amp,ThreeD.amp"
-
-#VAR=SPEED
-
-#PROG=./ncd
+if test -f ./ncd ; then
+PROG=./ncd
+else
 PROG="$TOP/ncdump/ncdump"
+fi
 
 P=`pwd`
 
@@ -23,9 +23,10 @@ PARMS="log"
 #PARMS="${PARMS}&nocache"
 #PARMS="${PARMS}&wholevar"
 PARMS="${PARMS}&show=fetch"
-PARMS="${PARMS}&noprefetch"
+#PARMS="${PARMS}&noprefetch"
 #PARMS="${PARMS}&prefetch"
 #PARMS="${PARMS}&prefetch=eager"
+PARMS="[log][cache][noprefetch]"
 
 VARGS="--leak-check=full"
 

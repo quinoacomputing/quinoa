@@ -1,5 +1,5 @@
 /** \file 
-The V2 API Funtions.
+The V2 API Functions.
 
 Copyright 1996, University Corporation for Atmospheric Research
 See \ref copyright file for copying and redistribution conditions.
@@ -247,7 +247,6 @@ nc_inq_rec(
     if(status != NC_NOERR)
 	return status;
 
-    *nrecvarsp = 0;
     if (recdimid == -1)
 	return NC_NOERR;
     
@@ -257,6 +256,7 @@ nc_inq_rec(
 
     if (nrecvarsp != NULL)
 	*nrecvarsp = (size_t)nrvars;
+
     if (recvarids != NULL)
 	for (varid = 0; varid < nrvars; varid++)
 	    recvarids[varid] = rvarids[varid];
@@ -864,23 +864,37 @@ ncvarputg(
     const void* value
 )
 {
+	int ndims = 0;
 	if(map == NULL)
 		return ncvarputs(ncid, varid, start, count, stride, value);
 	/* else */
 	{
-	NDIMS_DECL
+	ptrdiff_t *imp=NULL;
+	if (map != NULL) {
+		int ret = NC_NOERR;
+		/* make map[ndims-1] number of elements instead of bytes */
+		int i, el_size;
+		nc_type type;
+		ret = nc_inq_varndims(ncid, varid, &ndims);
+		if(ret) return ret;
+		ret = nc_inq_vartype(ncid, varid, &type);
+		if(ret) return ret;
+				el_size = nctypelen(type);
+		imp = (ptrdiff_t*) malloc(ndims * sizeof(ptrdiff_t));
+		for (i=0; i<ndims; i++) imp[i] = map[i] / el_size;
+	}
+
+	{
 	A_DECL(stp, size_t, ndims, start);
 	A_DECL(cntp, size_t, ndims, count);
 	A_DECL(strdp, ptrdiff_t, ndims, stride);
-	A_DECL(imp, ptrdiff_t, ndims, map);
 	A_INIT(stp, size_t, ndims, start);
 	A_INIT(cntp, size_t, ndims, count);
 	A_INIT(strdp, ptrdiff_t, ndims, stride);
-	A_INIT(imp, ptrdiff_t, ndims, map);
 	{
 	const int status = nc_put_varm(ncid, varid,
 			 stp, cntp, strdp, imp, value);
-	A_FREE(imp);
+	if (imp!=NULL) free(imp);
 	A_FREE(strdp);
 	A_FREE(cntp);
 	A_FREE(stp);
@@ -891,6 +905,7 @@ ncvarputg(
 	}
 	}
 	return 0;
+	}
 	}
 }
 
@@ -906,23 +921,37 @@ ncvargetg(
     void*	value
 )
 {
+	int ndims = 0;
 	if(map == NULL)
 		return ncvargets(ncid, varid, start, count, stride, value);
 	/* else */
 	{
-	NDIMS_DECL
+	ptrdiff_t *imp=NULL;
+	if (map != NULL) {
+		int ret = NC_NOERR;
+		/* make map[ndims-1] number of elements instead of bytes */
+		int i, el_size;
+		nc_type type;
+		ret = nc_inq_varndims(ncid, varid, &ndims);
+		if(ret) return ret;
+		ret = nc_inq_vartype(ncid, varid, &type);
+		if(ret) return ret;
+		el_size = nctypelen(type);
+		imp = (ptrdiff_t*) malloc(ndims * sizeof(ptrdiff_t));
+		for (i=0; i<ndims; i++) imp[i] = map[i] / el_size;
+	}
+
+	{
 	A_DECL(stp, size_t, ndims, start);
 	A_DECL(cntp, size_t, ndims, count);
 	A_DECL(strdp, ptrdiff_t, ndims, stride);
-	A_DECL(imp, ptrdiff_t, ndims, map);
 	A_INIT(stp, size_t, ndims, start);
 	A_INIT(cntp, size_t, ndims, count);
 	A_INIT(strdp, ptrdiff_t, ndims, stride);
-	A_INIT(imp, ptrdiff_t, ndims, map);
 	{
 	const int status = nc_get_varm(ncid, varid,
 			stp, cntp, strdp, imp, value);
-	A_FREE(imp);
+	if (imp!=NULL) free(imp);
 	A_FREE(strdp);
 	A_FREE(cntp);
 	A_FREE(stp);
@@ -933,6 +962,7 @@ ncvargetg(
 	}
 	}
 	return 0;
+	}
 	}
 }
 

@@ -3,7 +3,6 @@
  *	Copyright 1996, University Corporation for Atmospheric Research
  *      See netcdf/COPYRIGHT file for copying and redistribution conditions.
  */
-/* $Id: attr.m4,v 2.39 2010/05/26 18:11:08 dmh Exp $ */
 
 #include "nc3internal.h"
 #include "ncdispatch.h"
@@ -52,6 +51,16 @@ ncx_len_NC_attrV(nc_type type, size_t nelems)
 		return ncx_len_float(nelems);
 	case NC_DOUBLE:
 		return ncx_len_double(nelems);
+	case NC_UBYTE:
+		return ncx_len_ubyte(nelems);
+	case NC_USHORT:
+		return ncx_len_ushort(nelems);
+	case NC_UINT:
+		return ncx_len_uint(nelems);
+	case NC_INT64:
+		return ncx_len_int64(nelems);
+	case NC_UINT64:
+		return ncx_len_uint64(nelems);
 	default:
 	        assert("ncx_len_NC_attr bad type" == 0);
 	}
@@ -113,7 +122,7 @@ new_NC_attr(
 	free(name);
 	if(strp == NULL)
 		return NULL;
-	
+
 	attrp = new_x_NC_attr(strp, type, nelems);
 	if(attrp == NULL)
 	{
@@ -132,7 +141,8 @@ dup_NC_attr(const NC_attr *rattrp)
 		 rattrp->type, rattrp->nelems);
 	if(attrp == NULL)
 		return NULL;
-	(void) memcpy(attrp->xvalue, rattrp->xvalue, rattrp->xsz);
+    if(attrp->xvalue != NULL && rattrp->xvalue != NULL)
+    	(void) memcpy(attrp->xvalue, rattrp->xvalue, rattrp->xsz);
 	return attrp;
 }
 
@@ -174,7 +184,7 @@ void
 free_NC_attrarrayV(NC_attrarray *ncap)
 {
 	assert(ncap != NULL);
-	
+
 	if(ncap->nalloc == 0)
 		return;
 
@@ -263,7 +273,7 @@ incr_NC_attrarray(NC_attrarray *ncap, NC_attr *newelemp)
 			(ncap->nalloc + NC_ARRAY_GROWBY) * sizeof(NC_attr *));
 		if(vp == NULL)
 			return NC_ENOMEM;
-	
+
 		ncap->value = vp;
 		ncap->nalloc += NC_ARRAY_GROWBY;
 	}
@@ -360,7 +370,7 @@ NC_findattr(const NC_attrarray *ncap, const char *uname)
 /*
  * Look up by ncid, varid and name, return NULL if not found
  */
-static int 
+static int
 NC_lookupattr(int ncid,
 	int varid,
 	const char *name, /* attribute name */
@@ -388,7 +398,7 @@ NC_lookupattr(int ncid,
 	if(attrpp != NULL)
 		*attrpp = *tmp;
 
-	return ENOERR;
+	return NC_NOERR;
 }
 
 /* Public */
@@ -422,7 +432,7 @@ NC3_inq_attname(int ncid, int varid, int attnum, char *name)
 }
 
 
-int 
+int
 NC3_inq_attid(int ncid, int varid, const char *name, int *attnump)
 {
 	int status;
@@ -439,7 +449,7 @@ NC3_inq_attid(int ncid, int varid, const char *name, int *attnump)
 	ncap = NC_attrarray0(ncp, varid);
 	if(ncap == NULL)
 		return NC_ENOTVAR;
-	
+
 
 	attrpp = NC_findattr(ncap, name);
 	if(attrpp == NULL)
@@ -575,7 +585,7 @@ NC3_del_att(int ncid, int varid, const char *uname)
 	char *name = (char *)utf8proc_NFC((const unsigned char *)uname);
 	if(name == NULL)
 	    return NC_ENOMEM;
-	
+
 			/* sortof inline NC_findattr() */
 	slen = strlen(name);
 
@@ -627,6 +637,16 @@ ncx_pad_putn_Iuchar(void **xpp, size_t nelems, const uchar *tp, nc_type type)
 		return ncx_putn_float_uchar(xpp, nelems, tp);
 	case NC_DOUBLE:
 		return ncx_putn_double_uchar(xpp, nelems, tp);
+	case NC_UBYTE:
+		return ncx_pad_putn_uchar_uchar(xpp, nelems, tp);
+	case NC_USHORT:
+		return ncx_putn_ushort_uchar(xpp, nelems, tp);
+	case NC_UINT:
+		return ncx_putn_uint_uchar(xpp, nelems, tp);
+	case NC_INT64:
+		return ncx_putn_longlong_uchar(xpp, nelems, tp);
+	case NC_UINT64:
+		return ncx_putn_ulonglong_uchar(xpp, nelems, tp);
 	default:
                 assert("ncx_pad_putn_Iuchar invalid type" == 0);
 	}
@@ -649,6 +669,16 @@ ncx_pad_getn_Iuchar(const void **xpp, size_t nelems, uchar *tp, nc_type type)
 		return ncx_getn_float_uchar(xpp, nelems, tp);
 	case NC_DOUBLE:
 		return ncx_getn_double_uchar(xpp, nelems, tp);
+	case NC_UBYTE:
+		return ncx_pad_getn_uchar_uchar(xpp, nelems, tp);
+	case NC_USHORT:
+		return ncx_getn_ushort_uchar(xpp, nelems, tp);
+	case NC_UINT:
+		return ncx_getn_uint_uchar(xpp, nelems, tp);
+	case NC_INT64:
+		return ncx_getn_longlong_uchar(xpp, nelems, tp);
+	case NC_UINT64:
+		return ncx_getn_ulonglong_uchar(xpp, nelems, tp);
 	default:
 	        assert("ncx_pad_getn_Iuchar invalid type" == 0);
 	}
@@ -672,6 +702,16 @@ ncx_pad_putn_Ischar(void **xpp, size_t nelems, const schar *tp, nc_type type)
 		return ncx_putn_float_schar(xpp, nelems, tp);
 	case NC_DOUBLE:
 		return ncx_putn_double_schar(xpp, nelems, tp);
+	case NC_UBYTE:
+		return ncx_pad_putn_uchar_schar(xpp, nelems, tp);
+	case NC_USHORT:
+		return ncx_putn_ushort_schar(xpp, nelems, tp);
+	case NC_UINT:
+		return ncx_putn_uint_schar(xpp, nelems, tp);
+	case NC_INT64:
+		return ncx_putn_longlong_schar(xpp, nelems, tp);
+	case NC_UINT64:
+		return ncx_putn_ulonglong_schar(xpp, nelems, tp);
 	default:
                 assert("ncx_pad_putn_Ischar invalid type" == 0);
 	}
@@ -694,6 +734,16 @@ ncx_pad_getn_Ischar(const void **xpp, size_t nelems, schar *tp, nc_type type)
 		return ncx_getn_float_schar(xpp, nelems, tp);
 	case NC_DOUBLE:
 		return ncx_getn_double_schar(xpp, nelems, tp);
+	case NC_UBYTE:
+		return ncx_pad_getn_uchar_schar(xpp, nelems, tp);
+	case NC_USHORT:
+		return ncx_getn_ushort_schar(xpp, nelems, tp);
+	case NC_UINT:
+		return ncx_getn_uint_schar(xpp, nelems, tp);
+	case NC_INT64:
+		return ncx_getn_longlong_schar(xpp, nelems, tp);
+	case NC_UINT64:
+		return ncx_getn_ulonglong_schar(xpp, nelems, tp);
 	default:
 	        assert("ncx_pad_getn_Ischar invalid type" == 0);
 	}
@@ -717,6 +767,16 @@ ncx_pad_putn_Ishort(void **xpp, size_t nelems, const short *tp, nc_type type)
 		return ncx_putn_float_short(xpp, nelems, tp);
 	case NC_DOUBLE:
 		return ncx_putn_double_short(xpp, nelems, tp);
+	case NC_UBYTE:
+		return ncx_pad_putn_uchar_short(xpp, nelems, tp);
+	case NC_USHORT:
+		return ncx_putn_ushort_short(xpp, nelems, tp);
+	case NC_UINT:
+		return ncx_putn_uint_short(xpp, nelems, tp);
+	case NC_INT64:
+		return ncx_putn_longlong_short(xpp, nelems, tp);
+	case NC_UINT64:
+		return ncx_putn_ulonglong_short(xpp, nelems, tp);
 	default:
                 assert("ncx_pad_putn_Ishort invalid type" == 0);
 	}
@@ -739,6 +799,16 @@ ncx_pad_getn_Ishort(const void **xpp, size_t nelems, short *tp, nc_type type)
 		return ncx_getn_float_short(xpp, nelems, tp);
 	case NC_DOUBLE:
 		return ncx_getn_double_short(xpp, nelems, tp);
+	case NC_UBYTE:
+		return ncx_pad_getn_uchar_short(xpp, nelems, tp);
+	case NC_USHORT:
+		return ncx_getn_ushort_short(xpp, nelems, tp);
+	case NC_UINT:
+		return ncx_getn_uint_short(xpp, nelems, tp);
+	case NC_INT64:
+		return ncx_getn_longlong_short(xpp, nelems, tp);
+	case NC_UINT64:
+		return ncx_getn_ulonglong_short(xpp, nelems, tp);
 	default:
 	        assert("ncx_pad_getn_Ishort invalid type" == 0);
 	}
@@ -762,6 +832,16 @@ ncx_pad_putn_Iint(void **xpp, size_t nelems, const int *tp, nc_type type)
 		return ncx_putn_float_int(xpp, nelems, tp);
 	case NC_DOUBLE:
 		return ncx_putn_double_int(xpp, nelems, tp);
+	case NC_UBYTE:
+		return ncx_pad_putn_uchar_int(xpp, nelems, tp);
+	case NC_USHORT:
+		return ncx_putn_ushort_int(xpp, nelems, tp);
+	case NC_UINT:
+		return ncx_putn_uint_int(xpp, nelems, tp);
+	case NC_INT64:
+		return ncx_putn_longlong_int(xpp, nelems, tp);
+	case NC_UINT64:
+		return ncx_putn_ulonglong_int(xpp, nelems, tp);
 	default:
                 assert("ncx_pad_putn_Iint invalid type" == 0);
 	}
@@ -784,6 +864,16 @@ ncx_pad_getn_Iint(const void **xpp, size_t nelems, int *tp, nc_type type)
 		return ncx_getn_float_int(xpp, nelems, tp);
 	case NC_DOUBLE:
 		return ncx_getn_double_int(xpp, nelems, tp);
+	case NC_UBYTE:
+		return ncx_pad_getn_uchar_int(xpp, nelems, tp);
+	case NC_USHORT:
+		return ncx_getn_ushort_int(xpp, nelems, tp);
+	case NC_UINT:
+		return ncx_getn_uint_int(xpp, nelems, tp);
+	case NC_INT64:
+		return ncx_getn_longlong_int(xpp, nelems, tp);
+	case NC_UINT64:
+		return ncx_getn_ulonglong_int(xpp, nelems, tp);
 	default:
 	        assert("ncx_pad_getn_Iint invalid type" == 0);
 	}
@@ -807,6 +897,16 @@ ncx_pad_putn_Ifloat(void **xpp, size_t nelems, const float *tp, nc_type type)
 		return ncx_putn_float_float(xpp, nelems, tp);
 	case NC_DOUBLE:
 		return ncx_putn_double_float(xpp, nelems, tp);
+	case NC_UBYTE:
+		return ncx_pad_putn_uchar_float(xpp, nelems, tp);
+	case NC_USHORT:
+		return ncx_putn_ushort_float(xpp, nelems, tp);
+	case NC_UINT:
+		return ncx_putn_uint_float(xpp, nelems, tp);
+	case NC_INT64:
+		return ncx_putn_longlong_float(xpp, nelems, tp);
+	case NC_UINT64:
+		return ncx_putn_ulonglong_float(xpp, nelems, tp);
 	default:
                 assert("ncx_pad_putn_Ifloat invalid type" == 0);
 	}
@@ -829,6 +929,16 @@ ncx_pad_getn_Ifloat(const void **xpp, size_t nelems, float *tp, nc_type type)
 		return ncx_getn_float_float(xpp, nelems, tp);
 	case NC_DOUBLE:
 		return ncx_getn_double_float(xpp, nelems, tp);
+	case NC_UBYTE:
+		return ncx_pad_getn_uchar_float(xpp, nelems, tp);
+	case NC_USHORT:
+		return ncx_getn_ushort_float(xpp, nelems, tp);
+	case NC_UINT:
+		return ncx_getn_uint_float(xpp, nelems, tp);
+	case NC_INT64:
+		return ncx_getn_longlong_float(xpp, nelems, tp);
+	case NC_UINT64:
+		return ncx_getn_ulonglong_float(xpp, nelems, tp);
 	default:
 	        assert("ncx_pad_getn_Ifloat invalid type" == 0);
 	}
@@ -852,6 +962,16 @@ ncx_pad_putn_Idouble(void **xpp, size_t nelems, const double *tp, nc_type type)
 		return ncx_putn_float_double(xpp, nelems, tp);
 	case NC_DOUBLE:
 		return ncx_putn_double_double(xpp, nelems, tp);
+	case NC_UBYTE:
+		return ncx_pad_putn_uchar_double(xpp, nelems, tp);
+	case NC_USHORT:
+		return ncx_putn_ushort_double(xpp, nelems, tp);
+	case NC_UINT:
+		return ncx_putn_uint_double(xpp, nelems, tp);
+	case NC_INT64:
+		return ncx_putn_longlong_double(xpp, nelems, tp);
+	case NC_UINT64:
+		return ncx_putn_ulonglong_double(xpp, nelems, tp);
 	default:
                 assert("ncx_pad_putn_Idouble invalid type" == 0);
 	}
@@ -874,6 +994,16 @@ ncx_pad_getn_Idouble(const void **xpp, size_t nelems, double *tp, nc_type type)
 		return ncx_getn_float_double(xpp, nelems, tp);
 	case NC_DOUBLE:
 		return ncx_getn_double_double(xpp, nelems, tp);
+	case NC_UBYTE:
+		return ncx_pad_getn_uchar_double(xpp, nelems, tp);
+	case NC_USHORT:
+		return ncx_getn_ushort_double(xpp, nelems, tp);
+	case NC_UINT:
+		return ncx_getn_uint_double(xpp, nelems, tp);
+	case NC_INT64:
+		return ncx_getn_longlong_double(xpp, nelems, tp);
+	case NC_UINT64:
+		return ncx_getn_ulonglong_double(xpp, nelems, tp);
 	default:
 	        assert("ncx_pad_getn_Idouble invalid type" == 0);
 	}
@@ -898,6 +1028,16 @@ ncx_pad_putn_Ilong(void **xpp, size_t nelems, const long *tp, nc_type type)
 		return ncx_putn_float_long(xpp, nelems, tp);
 	case NC_DOUBLE:
 		return ncx_putn_double_long(xpp, nelems, tp);
+	case NC_UBYTE:
+		return ncx_pad_putn_uchar_long(xpp, nelems, tp);
+	case NC_USHORT:
+		return ncx_putn_ushort_long(xpp, nelems, tp);
+	case NC_UINT:
+		return ncx_putn_uint_long(xpp, nelems, tp);
+	case NC_INT64:
+		return ncx_putn_longlong_long(xpp, nelems, tp);
+	case NC_UINT64:
+		return ncx_putn_ulonglong_long(xpp, nelems, tp);
 	default:
                 assert("ncx_pad_putn_Ilong invalid type" == 0);
 	}
@@ -920,6 +1060,16 @@ ncx_pad_getn_Ilong(const void **xpp, size_t nelems, long *tp, nc_type type)
 		return ncx_getn_float_long(xpp, nelems, tp);
 	case NC_DOUBLE:
 		return ncx_getn_double_long(xpp, nelems, tp);
+	case NC_UBYTE:
+		return ncx_pad_getn_uchar_long(xpp, nelems, tp);
+	case NC_USHORT:
+		return ncx_getn_ushort_long(xpp, nelems, tp);
+	case NC_UINT:
+		return ncx_getn_uint_long(xpp, nelems, tp);
+	case NC_INT64:
+		return ncx_getn_longlong_long(xpp, nelems, tp);
+	case NC_UINT64:
+		return ncx_getn_ulonglong_long(xpp, nelems, tp);
 	default:
 	        assert("ncx_pad_getn_Ilong invalid type" == 0);
 	}
@@ -944,6 +1094,16 @@ ncx_pad_putn_Ilonglong(void **xpp, size_t nelems, const longlong *tp, nc_type ty
 		return ncx_putn_float_longlong(xpp, nelems, tp);
 	case NC_DOUBLE:
 		return ncx_putn_double_longlong(xpp, nelems, tp);
+	case NC_UBYTE:
+		return ncx_pad_putn_uchar_longlong(xpp, nelems, tp);
+	case NC_USHORT:
+		return ncx_putn_ushort_longlong(xpp, nelems, tp);
+	case NC_UINT:
+		return ncx_putn_uint_longlong(xpp, nelems, tp);
+	case NC_INT64:
+		return ncx_putn_longlong_longlong(xpp, nelems, tp);
+	case NC_UINT64:
+		return ncx_putn_ulonglong_longlong(xpp, nelems, tp);
 	default:
                 assert("ncx_pad_putn_Ilonglong invalid type" == 0);
 	}
@@ -966,8 +1126,213 @@ ncx_pad_getn_Ilonglong(const void **xpp, size_t nelems, longlong *tp, nc_type ty
 		return ncx_getn_float_longlong(xpp, nelems, tp);
 	case NC_DOUBLE:
 		return ncx_getn_double_longlong(xpp, nelems, tp);
+	case NC_UBYTE:
+		return ncx_pad_getn_uchar_longlong(xpp, nelems, tp);
+	case NC_USHORT:
+		return ncx_getn_ushort_longlong(xpp, nelems, tp);
+	case NC_UINT:
+		return ncx_getn_uint_longlong(xpp, nelems, tp);
+	case NC_INT64:
+		return ncx_getn_longlong_longlong(xpp, nelems, tp);
+	case NC_UINT64:
+		return ncx_getn_ulonglong_longlong(xpp, nelems, tp);
 	default:
 	        assert("ncx_pad_getn_Ilonglong invalid type" == 0);
+	}
+	return NC_EBADTYPE;
+}
+
+
+static int
+ncx_pad_putn_Iushort(void **xpp, size_t nelems, const ushort *tp, nc_type type)
+{
+	switch(type) {
+	case NC_CHAR:
+		return NC_ECHAR;
+	case NC_BYTE:
+		return ncx_pad_putn_schar_ushort(xpp, nelems, tp);
+	case NC_SHORT:
+		return ncx_pad_putn_short_ushort(xpp, nelems, tp);
+	case NC_INT:
+		return ncx_putn_int_ushort(xpp, nelems, tp);
+	case NC_FLOAT:
+		return ncx_putn_float_ushort(xpp, nelems, tp);
+	case NC_DOUBLE:
+		return ncx_putn_double_ushort(xpp, nelems, tp);
+	case NC_UBYTE:
+		return ncx_pad_putn_uchar_ushort(xpp, nelems, tp);
+	case NC_USHORT:
+		return ncx_putn_ushort_ushort(xpp, nelems, tp);
+	case NC_UINT:
+		return ncx_putn_uint_ushort(xpp, nelems, tp);
+	case NC_INT64:
+		return ncx_putn_longlong_ushort(xpp, nelems, tp);
+	case NC_UINT64:
+		return ncx_putn_ulonglong_ushort(xpp, nelems, tp);
+	default:
+                assert("ncx_pad_putn_Iushort invalid type" == 0);
+	}
+	return NC_EBADTYPE;
+}
+
+static int
+ncx_pad_getn_Iushort(const void **xpp, size_t nelems, ushort *tp, nc_type type)
+{
+	switch(type) {
+	case NC_CHAR:
+		return NC_ECHAR;
+	case NC_BYTE:
+		return ncx_pad_getn_schar_ushort(xpp, nelems, tp);
+	case NC_SHORT:
+		return ncx_pad_getn_short_ushort(xpp, nelems, tp);
+	case NC_INT:
+		return ncx_getn_int_ushort(xpp, nelems, tp);
+	case NC_FLOAT:
+		return ncx_getn_float_ushort(xpp, nelems, tp);
+	case NC_DOUBLE:
+		return ncx_getn_double_ushort(xpp, nelems, tp);
+	case NC_UBYTE:
+		return ncx_pad_getn_uchar_ushort(xpp, nelems, tp);
+	case NC_USHORT:
+		return ncx_getn_ushort_ushort(xpp, nelems, tp);
+	case NC_UINT:
+		return ncx_getn_uint_ushort(xpp, nelems, tp);
+	case NC_INT64:
+		return ncx_getn_longlong_ushort(xpp, nelems, tp);
+	case NC_UINT64:
+		return ncx_getn_ulonglong_ushort(xpp, nelems, tp);
+	default:
+	        assert("ncx_pad_getn_Iushort invalid type" == 0);
+	}
+	return NC_EBADTYPE;
+}
+
+
+static int
+ncx_pad_putn_Iuint(void **xpp, size_t nelems, const uint *tp, nc_type type)
+{
+	switch(type) {
+	case NC_CHAR:
+		return NC_ECHAR;
+	case NC_BYTE:
+		return ncx_pad_putn_schar_uint(xpp, nelems, tp);
+	case NC_SHORT:
+		return ncx_pad_putn_short_uint(xpp, nelems, tp);
+	case NC_INT:
+		return ncx_putn_int_uint(xpp, nelems, tp);
+	case NC_FLOAT:
+		return ncx_putn_float_uint(xpp, nelems, tp);
+	case NC_DOUBLE:
+		return ncx_putn_double_uint(xpp, nelems, tp);
+	case NC_UBYTE:
+		return ncx_pad_putn_uchar_uint(xpp, nelems, tp);
+	case NC_USHORT:
+		return ncx_putn_ushort_uint(xpp, nelems, tp);
+	case NC_UINT:
+		return ncx_putn_uint_uint(xpp, nelems, tp);
+	case NC_INT64:
+		return ncx_putn_longlong_uint(xpp, nelems, tp);
+	case NC_UINT64:
+		return ncx_putn_ulonglong_uint(xpp, nelems, tp);
+	default:
+                assert("ncx_pad_putn_Iuint invalid type" == 0);
+	}
+	return NC_EBADTYPE;
+}
+
+static int
+ncx_pad_getn_Iuint(const void **xpp, size_t nelems, uint *tp, nc_type type)
+{
+	switch(type) {
+	case NC_CHAR:
+		return NC_ECHAR;
+	case NC_BYTE:
+		return ncx_pad_getn_schar_uint(xpp, nelems, tp);
+	case NC_SHORT:
+		return ncx_pad_getn_short_uint(xpp, nelems, tp);
+	case NC_INT:
+		return ncx_getn_int_uint(xpp, nelems, tp);
+	case NC_FLOAT:
+		return ncx_getn_float_uint(xpp, nelems, tp);
+	case NC_DOUBLE:
+		return ncx_getn_double_uint(xpp, nelems, tp);
+	case NC_UBYTE:
+		return ncx_pad_getn_uchar_uint(xpp, nelems, tp);
+	case NC_USHORT:
+		return ncx_getn_ushort_uint(xpp, nelems, tp);
+	case NC_UINT:
+		return ncx_getn_uint_uint(xpp, nelems, tp);
+	case NC_INT64:
+		return ncx_getn_longlong_uint(xpp, nelems, tp);
+	case NC_UINT64:
+		return ncx_getn_ulonglong_uint(xpp, nelems, tp);
+	default:
+	        assert("ncx_pad_getn_Iuint invalid type" == 0);
+	}
+	return NC_EBADTYPE;
+}
+
+
+static int
+ncx_pad_putn_Iulonglong(void **xpp, size_t nelems, const ulonglong *tp, nc_type type)
+{
+	switch(type) {
+	case NC_CHAR:
+		return NC_ECHAR;
+	case NC_BYTE:
+		return ncx_pad_putn_schar_ulonglong(xpp, nelems, tp);
+	case NC_SHORT:
+		return ncx_pad_putn_short_ulonglong(xpp, nelems, tp);
+	case NC_INT:
+		return ncx_putn_int_ulonglong(xpp, nelems, tp);
+	case NC_FLOAT:
+		return ncx_putn_float_ulonglong(xpp, nelems, tp);
+	case NC_DOUBLE:
+		return ncx_putn_double_ulonglong(xpp, nelems, tp);
+	case NC_UBYTE:
+		return ncx_pad_putn_uchar_ulonglong(xpp, nelems, tp);
+	case NC_USHORT:
+		return ncx_putn_ushort_ulonglong(xpp, nelems, tp);
+	case NC_UINT:
+		return ncx_putn_uint_ulonglong(xpp, nelems, tp);
+	case NC_INT64:
+		return ncx_putn_longlong_ulonglong(xpp, nelems, tp);
+	case NC_UINT64:
+		return ncx_putn_ulonglong_ulonglong(xpp, nelems, tp);
+	default:
+                assert("ncx_pad_putn_Iulonglong invalid type" == 0);
+	}
+	return NC_EBADTYPE;
+}
+
+static int
+ncx_pad_getn_Iulonglong(const void **xpp, size_t nelems, ulonglong *tp, nc_type type)
+{
+	switch(type) {
+	case NC_CHAR:
+		return NC_ECHAR;
+	case NC_BYTE:
+		return ncx_pad_getn_schar_ulonglong(xpp, nelems, tp);
+	case NC_SHORT:
+		return ncx_pad_getn_short_ulonglong(xpp, nelems, tp);
+	case NC_INT:
+		return ncx_getn_int_ulonglong(xpp, nelems, tp);
+	case NC_FLOAT:
+		return ncx_getn_float_ulonglong(xpp, nelems, tp);
+	case NC_DOUBLE:
+		return ncx_getn_double_ulonglong(xpp, nelems, tp);
+	case NC_UBYTE:
+		return ncx_pad_getn_uchar_ulonglong(xpp, nelems, tp);
+	case NC_USHORT:
+		return ncx_getn_ushort_ulonglong(xpp, nelems, tp);
+	case NC_UINT:
+		return ncx_getn_uint_ulonglong(xpp, nelems, tp);
+	case NC_INT64:
+		return ncx_getn_longlong_ulonglong(xpp, nelems, tp);
+	case NC_UINT64:
+		return ncx_getn_ulonglong_ulonglong(xpp, nelems, tp);
+	default:
+	        assert("ncx_pad_getn_Iulonglong invalid type" == 0);
 	}
 	return NC_EBADTYPE;
 }
@@ -996,6 +1361,12 @@ dispatchput(void **xpp, size_t nelems, const void* tp,
         return ncx_pad_putn_Iuchar(xpp,nelems, (uchar *)tp, atype);
     case NC_INT64:
           return ncx_pad_putn_Ilonglong(xpp, nelems, (longlong*)tp, atype);
+    case NC_USHORT:
+          return ncx_pad_putn_Iushort(xpp, nelems, (ushort*)tp, atype);
+    case NC_UINT:
+          return ncx_pad_putn_Iuint(xpp, nelems, (uint*)tp, atype);
+    case NC_UINT64:
+          return ncx_pad_putn_Iulonglong(xpp, nelems, (ulonglong*)tp, atype);
     case NC_NAT:
         return NC_EBADTYPE;
     default:
@@ -1034,7 +1405,7 @@ NC3_put_att(
     if(ncap == NULL)
 	return NC_ENOTVAR;
 
-    status = nc_cktype(type);
+    status = nc3_cktype(nc->mode, type);
     if(status != NC_NOERR)
 	return status;
 
@@ -1060,10 +1431,10 @@ NC3_put_att(
         if(!NC_indef(ncp)) {
 	    const size_t xsz = ncx_len_NC_attrV(type, nelems);
             attrp = *attrpp; /* convenience */
-    
+
 	    if(xsz > attrp->xsz) return NC_ENOTINDEFINE;
 	    /* else, we can reuse existing without redef */
-                    
+
 	    attrp->xsz = xsz;
             attrp->type = type;
             attrp->nelems = nelems;
@@ -1072,7 +1443,7 @@ NC3_put_att(
                 void *xp = attrp->xvalue;
                 status = dispatchput(&xp, nelems, (const void*)value, type, memtype);
             }
-                       
+
             set_NC_hdirty(ncp);
 
             if(NC_doHsync(ncp)) {
@@ -1081,7 +1452,7 @@ NC3_put_att(
                  * N.B.: potentially overrides NC_ERANGE
                  * set by ncx_pad_putn_I$1
                  */
-                if(lstatus != ENOERR) return lstatus;
+                if(lstatus != NC_NOERR) return lstatus;
             }
 
             return status;
@@ -1106,9 +1477,9 @@ NC3_put_att(
     }
 
     if(attrpp != NULL) {
-        assert(old != NULL);
         *attrpp = attrp;
-        free_NC_attr(old);
+	if(old != NULL)
+	        free_NC_attr(old);
     } else {
         const int lstatus = incr_NC_attrarray(ncap, attrp);
         /*
@@ -1165,6 +1536,13 @@ NC3_get_att(
           return ncx_pad_getn_Ilonglong(&xp,attrp->nelems,(longlong*)value,attrp->type);
     case NC_UBYTE: /* Synthetic */
         return ncx_pad_getn_Iuchar(&xp, attrp->nelems , (uchar *)value, attrp->type);
+    case NC_USHORT:
+          return ncx_pad_getn_Iushort(&xp,attrp->nelems,(ushort*)value,attrp->type);
+    case NC_UINT:
+          return ncx_pad_getn_Iuint(&xp,attrp->nelems,(uint*)value,attrp->type);
+    case NC_UINT64:
+          return ncx_pad_getn_Iulonglong(&xp,attrp->nelems,(ulonglong*)value,attrp->type);
+
     case NC_NAT:
         return NC_EBADTYPE;
     default:
@@ -1173,4 +1551,3 @@ NC3_get_att(
     status =  NC_EBADTYPE;
     return status;
 }
-
