@@ -2173,7 +2173,7 @@ H5AC_cache_config_t invalid_configs[NUM_INVALID_CONFIGS] =
     /* long int    epoch_length           = */ 50000,
     /* enum H5C_cache_incr_mode incr_mode = */ H5C_incr__threshold,
     /* double      lower_hr_threshold     = */ 0.9f,
-    /* double      increment              = */ 0.999999999999,
+    /* double      increment              = */ H5_DOUBLE(0.999999999999),
     /* hbool_t     apply_max_increment    = */ TRUE,
     /* size_t      max_increment          = */ (4 * 1024 * 1024),
     /* enum H5C_cache_flash_incr_mode       */
@@ -2532,7 +2532,7 @@ H5AC_cache_config_t invalid_configs[NUM_INVALID_CONFIGS] =
     /* double      flash_threshold        = */ 0.5f,
     /* enum H5C_cache_decr_mode decr_mode = */ H5C_decr__threshold,
     /* double      upper_hr_threshold     = */ 0.999f,
-    /* double      decrement              = */ 1.0000000001,
+    /* double      decrement              = */ H5_DOUBLE(1.0000000001),
     /* hbool_t     apply_max_decrement    = */ TRUE,
     /* size_t      max_decrement          = */ (1 * 1024 * 1024),
     /* int         epochs_before_eviction = */ 3,
@@ -2712,7 +2712,7 @@ H5AC_cache_config_t invalid_configs[NUM_INVALID_CONFIGS] =
     /* size_t      max_decrement          = */ (1 * 1024 * 1024),
     /* int         epochs_before_eviction = */ 3,
     /* hbool_t     apply_empty_reserve    = */ TRUE,
-    /* double      empty_reserve          = */ 1.00000000001,
+    /* double      empty_reserve          = */ H5_DOUBLE(1.00000000001),
     /* int         dirty_bytes_threshold  = */ (256 * 1024),
     /* int	  metadata_write_strategy = */
 				      H5AC__DEFAULT_METADATA_WRITE_STRATEGY
@@ -2776,7 +2776,7 @@ H5AC_cache_config_t invalid_configs[NUM_INVALID_CONFIGS] =
     /* double      flash_multiple         = */ 2.0f,
     /* double      flash_threshold        = */ 0.5f,
     /* enum H5C_cache_decr_mode decr_mode = */ H5C_decr__age_out_with_threshold,
-    /* double      upper_hr_threshold     = */ 1.00000001,
+    /* double      upper_hr_threshold     = */ H5_DOUBLE(1.00000001),
     /* double      decrement              = */ 0.9f,
     /* hbool_t     apply_max_decrement    = */ TRUE,
     /* size_t      max_decrement          = */ (1 * 1024 * 1024),
@@ -3038,7 +3038,7 @@ check_fapl_mdc_api_errs(void)
     if  ( pass ) {
 
         H5E_BEGIN_TRY {
-	    result = H5Pget_mdc_config(-1, &scratch);
+	    result = H5Pget_mdc_config((hid_t)-1, &scratch);
 	} H5E_END_TRY;
 
         if ( result >= 0 ) {
@@ -3109,7 +3109,7 @@ check_fapl_mdc_api_errs(void)
     if ( pass ) {
 
         H5E_BEGIN_TRY {
-            result = H5Pset_mdc_config(-1, &default_config);
+            result = H5Pset_mdc_config((hid_t)-1, &default_config);
         } H5E_END_TRY;
 
         if ( result >= 0 ) {
@@ -3258,7 +3258,7 @@ check_file_mdc_api_errs(void)
 	}
 
         H5E_BEGIN_TRY {
-            result = H5Fget_mdc_config(-1, &scratch);
+            result = H5Fget_mdc_config((hid_t)-1, &scratch);
         } H5E_END_TRY;
 
         if ( result >= 0 ) {
@@ -3317,7 +3317,7 @@ check_file_mdc_api_errs(void)
 	}
 
         H5E_BEGIN_TRY {
-            result = H5Fset_mdc_config(-1, &default_config);
+            result = H5Fset_mdc_config((hid_t)-1, &default_config);
         } H5E_END_TRY;
 
         if ( result >= 0 ) {
@@ -3385,7 +3385,7 @@ check_file_mdc_api_errs(void)
 	}
 
         H5E_BEGIN_TRY {
-            result = H5Fget_mdc_hit_rate(-1, &hit_rate);
+            result = H5Fget_mdc_hit_rate((hid_t)-1, &hit_rate);
         } H5E_END_TRY;
 
         if ( result >= 0 ) {
@@ -3425,7 +3425,7 @@ check_file_mdc_api_errs(void)
 	}
 
         H5E_BEGIN_TRY {
-            result = H5Freset_mdc_hit_rate_stats(-1);
+            result = H5Freset_mdc_hit_rate_stats((hid_t)-1);
         } H5E_END_TRY;
 
         if ( result >= 0 ) {
@@ -3446,7 +3446,7 @@ check_file_mdc_api_errs(void)
 	}
 
         H5E_BEGIN_TRY {
-            result = H5Fget_mdc_size(-1, &max_size, &min_clean_size,
+            result = H5Fget_mdc_size((hid_t)-1, &max_size, &min_clean_size,
                                      &cur_size, &cur_num_entries);
         } H5E_END_TRY;
 

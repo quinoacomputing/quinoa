@@ -1,19 +1,11 @@
-cmake_minimum_required (VERSION 2.8.11)
+cmake_minimum_required (VERSION 3.1.0)
 PROJECT (HDF5_HL C CXX)
 
 #-----------------------------------------------------------------------------
 # Apply Definitions to compiler in this directory and below
 #-----------------------------------------------------------------------------
-add_definitions (${HDF5_EXTRA_C_FLAGS})
+add_definitions (${HDF_EXTRA_C_FLAGS})
 
-#-----------------------------------------------------------------------------
-# Shared Libs
-#-----------------------------------------------------------------------------
-if (BUILD_SHARED_LIBS)
-  set (HL_BUILT_AS_DYNAMIC_LIB 1)
-else (BUILD_SHARED_LIBS)
-  set (HL_BUILT_AS_STATIC_LIB 1)
-endif (BUILD_SHARED_LIBS)
 
 #-----------------------------------------------------------------------------
 # List Source files
@@ -38,7 +30,3 @@ if (NOT HDF5_EXTERNALLY_CONFIGURED)
     add_subdirectory (${HDF5_HL_SOURCE_DIR}/test ${HDF5_HL_BINARY_DIR}/test)
   endif (BUILD_TESTING)
 endif (NOT HDF5_EXTERNALLY_CONFIGURED)
-
-if (HDF5_BUILD_CPP_LIB)
-  add_subdirectory (${HDF5_HL_SOURCE_DIR}/c++ ${HDF5_HL_BINARY_DIR}/c++)
-endif (HDF5_BUILD_CPP_LIB)

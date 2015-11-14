@@ -159,25 +159,30 @@ done:
 int
 H5R_term_interface(void)
 {
-    int	n=0;
+    int	n = 0;
 
     FUNC_ENTER_NOAPI_NOINIT_NOERR
 
     if (H5_interface_initialize_g) {
-	if ((n=H5I_nmembers(H5I_REFERENCE))) {
-	    H5I_clear_type(H5I_REFERENCE, FALSE, FALSE);
-	} else {
+	if(H5I_nmembers(H5I_REFERENCE) > 0) {
+	    (void)H5I_clear_type(H5I_REFERENCE, FALSE, FALSE);
+            n++; /*H5I*/
+	} /* end if */
+        else {
             /* Close deprecated interface */
             n += H5R__term_deprec_interface();
 
-	    H5I_dec_type_ref(H5I_REFERENCE);
+            /* Destroy the reference id group */
+	    (void)H5I_dec_type_ref(H5I_REFERENCE);
+            n++; /*H5I*/
+
+            /* Mark closed */
 	    H5_interface_initialize_g = 0;
-	    n = 1; /*H5I*/
-	}
-    }
+	} /* end else */
+    } /* end if */
 
     FUNC_LEAVE_NOAPI(n)
-}
+} /* end H5R_term_interface() */
 
 
 /*--------------------------------------------------------------------------
@@ -404,6 +409,10 @@ done:
     Currently only set up to work with references to datasets
  EXAMPLES
  REVISION LOG
+
+    M. Scot Breitenfeld
+    3 March 2015
+    Added a check for undefined reference pointer.
 --------------------------------------------------------------------------*/
 static hid_t
 H5R_dereference(H5F_t *file, hid_t dxpl_id, H5R_type_t ref_type, const void *_ref, hbool_t app_ref)
@@ -428,8 +437,10 @@ H5R_dereference(H5F_t *file, hid_t dxpl_id, H5R_type_t ref_type, const void *_re
     switch(ref_type) {
         case H5R_OBJECT:
             oloc.addr = *(const hobj_ref_t *)_ref; /* Only object references currently supported */
-            break;
-
+	    if(!H5F_addr_defined(oloc.addr) || oloc.addr == 0)
+	      HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "Undefined reference pointer")
+	      break;
+            
         case H5R_DATASET_REGION:
         {
             H5HG_t hobjid;  /* Heap object ID */
@@ -440,6 +451,9 @@ H5R_dereference(H5F_t *file, hid_t dxpl_id, H5R_type_t ref_type, const void *_re
             p = (const uint8_t *)_ref;
             H5F_addr_decode(oloc.file, &p, &(hobjid.addr));
             UINT32DECODE(p, hobjid.idx);
+
+            if(!H5F_addr_defined(hobjid.addr) || hobjid.addr == 0)
+	      HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "Undefined reference pointer")
 
             /* Get the dataset region from the heap (allocate inside routine) */
             if(NULL == (buf = (uint8_t *)H5HG_read(oloc.file, dxpl_id, &hobjid, NULL, NULL)))
@@ -575,7 +589,7 @@ H5Rdereference(hid_t id, H5R_type_t ref_type, const void *_ref)
     file = loc.oloc->file;
 
     /* Create reference */
-    if((ret_value = H5R_dereference(file, H5AC_dxpl_id, ref_type, _ref, TRUE)) < 0)
+    if((ret_value = H5R_dereference(file, H5AC_ind_dxpl_id, ref_type, _ref, TRUE)) < 0)
         HGOTO_ERROR(H5E_REFERENCE, H5E_CANTINIT, FAIL, "unable to dereference object")
 
 done:
@@ -991,7 +1005,7 @@ H5Rget_name(hid_t id, H5R_type_t ref_type, const void *_ref, char *name,
     file = loc.oloc->file;
 
     /* Get name */
-    if((ret_value = H5R_get_name(file, H5P_DEFAULT, H5AC_dxpl_id, id, ref_type, _ref, name, size)) < 0)
+    if((ret_value = H5R_get_name(file, H5P_DEFAULT, H5AC_ind_dxpl_id, id, ref_type, _ref, name, size)) < 0)
         HGOTO_ERROR(H5E_REFERENCE, H5E_CANTINIT, FAIL, "unable to determine object path")
 
 done:

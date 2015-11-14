@@ -112,7 +112,8 @@ noinst_PROGRAMS = H5match_types$(EXEEXT) H5fortran_detect$(EXEEXT) \
 TESTS =
 subdir = fortran/src
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/configure.ac
+am__aclocal_m4_deps = $(top_srcdir)/m4/aclocal_cxx.m4 \
+	$(top_srcdir)/m4/aclocal_fc.m4 $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 mkinstalldirs = $(SHELL) $(top_srcdir)/bin/mkinstalldirs
@@ -189,11 +190,11 @@ H5fortran_detect_LDADD = $(LDADD)
 H5match_types_SOURCES = H5match_types.c
 H5match_types_OBJECTS = H5match_types.$(OBJEXT)
 H5match_types_LDADD = $(LDADD)
-am__H5test_kind_SOURCES_DIST = H5test_kind.f90 H5test_kind_SIZEOF.f90
-@FORTRAN_HAVE_SIZEOF_FALSE@am_H5test_kind_OBJECTS =  \
-@FORTRAN_HAVE_SIZEOF_FALSE@	H5test_kind.$(OBJEXT)
-@FORTRAN_HAVE_SIZEOF_TRUE@am_H5test_kind_OBJECTS =  \
-@FORTRAN_HAVE_SIZEOF_TRUE@	H5test_kind_SIZEOF.$(OBJEXT)
+am__H5test_kind_SOURCES_DIST = H5test_kind.f90 H5test_kind_SIZEOF.f90 \
+	H5test_kind_STORAGE_SIZE.f90
+@FORTRAN_HAVE_SIZEOF_FALSE@@FORTRAN_HAVE_STORAGE_SIZE_FALSE@am_H5test_kind_OBJECTS = H5test_kind.$(OBJEXT)
+@FORTRAN_HAVE_SIZEOF_TRUE@@FORTRAN_HAVE_STORAGE_SIZE_FALSE@am_H5test_kind_OBJECTS = H5test_kind_SIZEOF.$(OBJEXT)
+@FORTRAN_HAVE_STORAGE_SIZE_TRUE@am_H5test_kind_OBJECTS = H5test_kind_STORAGE_SIZE.$(OBJEXT)
 H5test_kind_OBJECTS = $(am_H5test_kind_OBJECTS)
 H5test_kind_LDADD = $(LDADD)
 AM_V_P = $(am__v_P_@AM_V@)
@@ -469,7 +470,6 @@ AM_FCFLAGS = @AM_FCFLAGS@ @H5_FCFLAGS@ -I$(top_srcdir)/src \
 AM_LDFLAGS = @AM_LDFLAGS@ @H5_LDFLAGS@ $(am__append_1)
 AM_MAKEFLAGS = @AM_MAKEFLAGS@
 AR = @AR@
-AS = @AS@
 AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
 AUTOMAKE = @AUTOMAKE@
@@ -501,7 +501,6 @@ DIRECT_VFD = @DIRECT_VFD@
 DLLTOOL = @DLLTOOL@
 DSYMUTIL = @DSYMUTIL@
 DUMPBIN = @DUMPBIN@
-DYNAMIC_DIRS = @DYNAMIC_DIRS@
 ECHO_C = @ECHO_C@
 ECHO_N = @ECHO_N@
 ECHO_T = @ECHO_T@
@@ -520,17 +519,14 @@ FCFLAGS_f90 = @FCFLAGS_f90@
 FCLIBS = @FCLIBS@
 FC_VERSION = @FC_VERSION@
 FGREP = @FGREP@
-FILTERS = @FILTERS@
 FSEARCH_DIRS = @FSEARCH_DIRS@
 GREP = @GREP@
 H5_CFLAGS = @H5_CFLAGS@
 H5_CPPFLAGS = @H5_CPPFLAGS@
 H5_CXXFLAGS = @H5_CXXFLAGS@
-H5_CXX_SHARED = @H5_CXX_SHARED@
 H5_FCFLAGS = @H5_FCFLAGS@
 H5_FORTRAN_SHARED = @H5_FORTRAN_SHARED@
 H5_LDFLAGS = @H5_LDFLAGS@
-H5_LONE_COLON = @H5_LONE_COLON@
 H5_VERSION = @H5_VERSION@
 HADDR_T = @HADDR_T@
 HAVE_DMALLOC = @HAVE_DMALLOC@
@@ -553,7 +549,6 @@ INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 INSTRUMENT = @INSTRUMENT@
 INSTRUMENT_LIBRARY = @INSTRUMENT_LIBRARY@
-LARGEFILE = @LARGEFILE@
 LD = @LD@
 LDFLAGS = @LDFLAGS@
 LIBOBJS = @LIBOBJS@
@@ -569,7 +564,6 @@ MAKEINFO = @MAKEINFO@
 MANIFEST_TOOL = @MANIFEST_TOOL@
 MKDIR_P = @MKDIR_P@
 MPE = @MPE@
-MPI_GET_SIZE = @MPI_GET_SIZE@
 NM = @NM@
 NMEDIT = @NMEDIT@
 OBJDUMP = @OBJDUMP@
@@ -595,7 +589,6 @@ R_INTEGER = @R_INTEGER@
 R_LARGE = @R_LARGE@
 SEARCH = @SEARCH@
 SED = @SED@
-SETX = @SETX@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 SIZE_T = @SIZE_T@
@@ -610,10 +603,6 @@ TR = @TR@
 TRACE_API = @TRACE_API@
 UNAME_INFO = @UNAME_INFO@
 USE_FILTER_DEFLATE = @USE_FILTER_DEFLATE@
-USE_FILTER_FLETCHER32 = @USE_FILTER_FLETCHER32@
-USE_FILTER_NBIT = @USE_FILTER_NBIT@
-USE_FILTER_SCALEOFFSET = @USE_FILTER_SCALEOFFSET@
-USE_FILTER_SHUFFLE = @USE_FILTER_SHUFFLE@
 USE_FILTER_SZIP = @USE_FILTER_SZIP@
 USINGMEMCHECKER = @USINGMEMCHECKER@
 VERSION = @VERSION@
@@ -727,21 +716,41 @@ TRACE = perl $(top_srcdir)/bin/trace
 
 # .chkexe files are used to mark tests that have run successfully.
 # .chklog files are output from those tests.
-# *.clog are from the MPE option.
-CHECK_CLEANFILES = *.chkexe *.chklog *.clog
+# *.clog and *.clog2 are from the MPE option.
+CHECK_CLEANFILES = *.chkexe *.chklog *.clog *.clog2
 
 # Add libtool shared library version numbers to the HDF5 library
 # See libtool versioning documentation online.
-LT_VERS_INTERFACE = 8
-LT_VERS_REVISION = 2 
-LT_VERS_AGE = 0
+# After making changes, run bin/reconfigure to update other configure related
+# files like Makefile.in.
+LT_VERS_INTERFACE = 11
+LT_VERS_REVISION = 0
+LT_VERS_AGE = 1
+LT_CXX_VERS_INTERFACE = 11
+LT_CXX_VERS_REVISION = 0
+LT_CXX_VERS_AGE = 0
+LT_F_VERS_INTERFACE = 10
+LT_F_VERS_REVISION = 2
+LT_F_VERS_AGE = 0
+LT_HL_VERS_INTERFACE = 10
+LT_HL_VERS_REVISION = 2
+LT_HL_VERS_AGE = 0
+LT_HL_CXX_VERS_INTERFACE = 11
+LT_HL_CXX_VERS_REVISION = 0
+LT_HL_CXX_VERS_AGE = 0
+LT_HL_F_VERS_INTERFACE = 10
+LT_HL_F_VERS_REVISION = 2
+LT_HL_F_VERS_AGE = 0
+LT_TOOLS_VERS_INTERFACE = 10
+LT_TOOLS_VERS_REVISION = 2
+LT_TOOLS_VERS_AGE = 0
 AM_FCLIBS = $(LIBHDF5)
 
 # This is our main target, the fortran library
 lib_LTLIBRARIES = libhdf5_fortran.la
 
 # Add libtool numbers to the HDF5 Fortran library (from config/lt_vers.am)
-libhdf5_fortran_la_LDFLAGS = -version-info $(LT_VERS_INTERFACE):$(LT_VERS_REVISION):$(LT_VERS_AGE) $(AM_LDFLAGS)
+libhdf5_fortran_la_LDFLAGS = -version-info $(LT_F_VERS_INTERFACE):$(LT_F_VERS_REVISION):$(LT_F_VERS_AGE) $(AM_LDFLAGS)
 @BUILD_PARALLEL_CONDITIONAL_FALSE@PARALLEL_COND_SRC = HDF5.f90
 
 # Include HDF5.f90 if parallel is disabled, HDF5mpiof*  if parallel is enabled
@@ -772,7 +781,7 @@ libhdf5_fortran_la_SOURCES = H5f90global.f90 \
 	  H5Off$(F_STATUS).f90 H5Pff$(F_STATUS).f90 H5Rff$(F_STATUS).f90 H5Tff$(F_STATUS).f90 $(PARALLEL_COND_SRC)
 
 
-# HDF5 Fortran library depends on HDF5 Library.
+# HDF5 Fortran library depends on HDF5 Library. 
 libhdf5_fortran_la_LIBADD = $(LIBHDF5)
 
 # h5fc is generated during configure.
@@ -799,11 +808,12 @@ BUILT_SOURCES = H5f90i_gen.h
 # Automake knows how to build fortran programs if we tell it the source
 # files.
 H5fortran_detect_SOURCES = H5fortran_detect.f90
-@FORTRAN_HAVE_SIZEOF_FALSE@H5test_kind_SOURCES = H5test_kind.f90
+@FORTRAN_HAVE_SIZEOF_FALSE@@FORTRAN_HAVE_STORAGE_SIZE_FALSE@H5test_kind_SOURCES = H5test_kind.f90
+@FORTRAN_HAVE_SIZEOF_TRUE@@FORTRAN_HAVE_STORAGE_SIZE_FALSE@H5test_kind_SOURCES = H5test_kind_SIZEOF.f90
 
 # H5test_kind.f90 is included in the distribution, and Automake knows
 # how to compile a fortran program given its sources.
-@FORTRAN_HAVE_SIZEOF_TRUE@H5test_kind_SOURCES = H5test_kind_SIZEOF.f90
+@FORTRAN_HAVE_STORAGE_SIZE_TRUE@H5test_kind_SOURCES = H5test_kind_STORAGE_SIZE.f90
 
 # Mark this directory as part of the Fortran API
 FORTRAN_API = yes

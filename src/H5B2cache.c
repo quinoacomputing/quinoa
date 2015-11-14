@@ -15,11 +15,11 @@
 
 /*-------------------------------------------------------------------------
  *
- * Created:		H5B2cache.c
- *			Jan 31 2005
- *			Quincey Koziol <koziol@ncsa.uiuc.edu>
+ * Created:     H5B2cache.c
+ *              Jan 31 2005
+ *              Quincey Koziol <koziol@hdfgroup.org>
  *
- * Purpose:		Implement v2 B-tree metadata cache methods.
+ * Purpose:     Implement v2 B-tree metadata cache methods.
  *
  *-------------------------------------------------------------------------
  */
@@ -70,17 +70,17 @@
 
 /* Metadata cache callbacks */
 static H5B2_hdr_t *H5B2__cache_hdr_load(H5F_t *f, hid_t dxpl_id, haddr_t addr, void *udata);
-static herr_t H5B2__cache_hdr_flush(H5F_t *f, hid_t dxpl_id, hbool_t destroy, haddr_t addr, H5B2_hdr_t *hdr, unsigned UNUSED * flags_ptr);
+static herr_t H5B2__cache_hdr_flush(H5F_t *f, hid_t dxpl_id, hbool_t destroy, haddr_t addr, H5B2_hdr_t *hdr, unsigned H5_ATTR_UNUSED * flags_ptr);
 static herr_t H5B2__cache_hdr_dest(H5F_t *f, H5B2_hdr_t *hdr);
 static herr_t H5B2__cache_hdr_clear(H5F_t *f, H5B2_hdr_t *hdr, hbool_t destroy);
 static herr_t H5B2__cache_hdr_size(const H5F_t *f, const H5B2_hdr_t *hdr, size_t *size_ptr);
 static H5B2_internal_t *H5B2__cache_internal_load(H5F_t *f, hid_t dxpl_id, haddr_t addr, void *udata);
-static herr_t H5B2__cache_internal_flush(H5F_t *f, hid_t dxpl_id, hbool_t destroy, haddr_t addr, H5B2_internal_t *i, unsigned UNUSED * flags_ptr);
+static herr_t H5B2__cache_internal_flush(H5F_t *f, hid_t dxpl_id, hbool_t destroy, haddr_t addr, H5B2_internal_t *i, unsigned H5_ATTR_UNUSED * flags_ptr);
 static herr_t H5B2__cache_internal_dest(H5F_t *f, H5B2_internal_t *internal);
 static herr_t H5B2__cache_internal_clear(H5F_t *f, H5B2_internal_t *i, hbool_t destroy);
 static herr_t H5B2__cache_internal_size(const H5F_t *f, const H5B2_internal_t *i, size_t *size_ptr);
 static H5B2_leaf_t *H5B2__cache_leaf_load(H5F_t *f, hid_t dxpl_id, haddr_t addr, void *udata);
-static herr_t H5B2__cache_leaf_flush(H5F_t *f, hid_t dxpl_id, hbool_t destroy, haddr_t addr, H5B2_leaf_t *l, unsigned UNUSED * flags_ptr);
+static herr_t H5B2__cache_leaf_flush(H5F_t *f, hid_t dxpl_id, hbool_t destroy, haddr_t addr, H5B2_leaf_t *l, unsigned H5_ATTR_UNUSED * flags_ptr);
 static herr_t H5B2__cache_leaf_dest(H5F_t *f, H5B2_leaf_t *leaf);
 static herr_t H5B2__cache_leaf_clear(H5F_t *f, H5B2_leaf_t *l, hbool_t destroy);
 static herr_t H5B2__cache_leaf_size(const H5F_t *f, const H5B2_leaf_t *l, size_t *size_ptr);
@@ -171,7 +171,7 @@ H5B2__cache_hdr_load(H5F_t *f, hid_t dxpl_id, haddr_t addr, void *_udata)
 
     /* Allocate new B-tree header and reset cache info */
     if(NULL == (hdr = H5B2_hdr_alloc(udata->f)))
-	HGOTO_ERROR(H5E_BTREE, H5E_CANTALLOC, NULL, "allocation failed for B-tree header")
+        HGOTO_ERROR(H5E_BTREE, H5E_CANTALLOC, NULL, "allocation failed for B-tree header")
 
     /* Wrap the local buffer for serialized header info */
     if(NULL == (wb = H5WB_wrap(hdr_buf, sizeof(hdr_buf))))
@@ -183,7 +183,7 @@ H5B2__cache_hdr_load(H5F_t *f, hid_t dxpl_id, haddr_t addr, void *_udata)
 
     /* Read header from disk */
     if(H5F_block_read(f, H5FD_MEM_BTREE, addr, hdr->hdr_size, dxpl_id, buf) < 0)
-	HGOTO_ERROR(H5E_BTREE, H5E_READERROR, NULL, "can't read B-tree header")
+        HGOTO_ERROR(H5E_BTREE, H5E_READERROR, NULL, "can't read B-tree header")
 
     /* Get temporary pointer to serialized header */
     p = buf;
@@ -200,7 +200,7 @@ H5B2__cache_hdr_load(H5F_t *f, hid_t dxpl_id, haddr_t addr, void *_udata)
     /* B-tree class */
     id = (H5B2_subid_t)*p++;
     if(id >= H5B2_NUM_BTREE_ID)
-	HGOTO_ERROR(H5E_BTREE, H5E_BADTYPE, NULL, "incorrect B-tree type")
+        HGOTO_ERROR(H5E_BTREE, H5E_BADTYPE, NULL, "incorrect B-tree type")
 
     /* Node size (in bytes) */
     UINT32DECODE(p, cparam.node_size);
@@ -231,12 +231,12 @@ H5B2__cache_hdr_load(H5F_t *f, hid_t dxpl_id, haddr_t addr, void *_udata)
 
     /* Verify checksum */
     if(stored_chksum != computed_chksum)
-	HGOTO_ERROR(H5E_BTREE, H5E_BADVALUE, NULL, "incorrect metadata checksum for v2 B-tree header")
+        HGOTO_ERROR(H5E_BTREE, H5E_BADVALUE, NULL, "incorrect metadata checksum for v2 B-tree header")
 
     /* Initialize B-tree header info */
     cparam.cls = H5B2_client_class_g[id];
     if(H5B2_hdr_init(hdr, &cparam, udata->ctx_udata, depth) < 0)
-	HGOTO_ERROR(H5E_BTREE, H5E_CANTINIT, NULL, "can't initialize B-tree header info")
+        HGOTO_ERROR(H5E_BTREE, H5E_CANTINIT, NULL, "can't initialize B-tree header info")
 
     /* Set the B-tree header's address */
     hdr->addr = addr;
@@ -271,7 +271,7 @@ done:
  */
 static herr_t
 H5B2__cache_hdr_flush(H5F_t *f, hid_t dxpl_id, hbool_t destroy, haddr_t addr,
-    H5B2_hdr_t *hdr, unsigned UNUSED * flags_ptr)
+    H5B2_hdr_t *hdr, unsigned H5_ATTR_UNUSED * flags_ptr)
 {
     H5WB_t      *wb = NULL;             /* Wrapped buffer for header data */
     uint8_t     hdr_buf[H5B2_HDR_BUF_SIZE]; /* Buffer for header */
@@ -339,17 +339,17 @@ H5B2__cache_hdr_flush(H5F_t *f, hid_t dxpl_id, hbool_t destroy, haddr_t addr,
         /* Metadata checksum */
         UINT32ENCODE(p, metadata_chksum);
 
-	/* Write the B-tree header. */
+        /* Write the B-tree header. */
         HDassert((size_t)(p - buf) == hdr->hdr_size);
-	if(H5F_block_write(f, H5FD_MEM_BTREE, addr, hdr->hdr_size, dxpl_id, buf) < 0)
-	    HGOTO_ERROR(H5E_BTREE, H5E_CANTFLUSH, FAIL, "unable to save B-tree header to disk")
+        if(H5F_block_write(f, H5FD_MEM_BTREE, addr, hdr->hdr_size, dxpl_id, buf) < 0)
+            HGOTO_ERROR(H5E_BTREE, H5E_CANTFLUSH, FAIL, "unable to save B-tree header to disk")
 
-	hdr->cache_info.is_dirty = FALSE;
+        hdr->cache_info.is_dirty = FALSE;
     } /* end if */
 
     if(destroy)
         if(H5B2__cache_hdr_dest(f, hdr) < 0)
-	    HGOTO_ERROR(H5E_BTREE, H5E_CANTFREE, FAIL, "unable to destroy B-tree header")
+            HGOTO_ERROR(H5E_BTREE, H5E_CANTFREE, FAIL, "unable to destroy B-tree header")
 
 done:
     /* Release resources */
@@ -442,27 +442,28 @@ done:
 
 
 /*-------------------------------------------------------------------------
- * Function:	H5B2__cache_hdr_size
+ * Function:    H5B2__cache_hdr_size
  *
- * Purpose:	Compute the size in bytes of a B-tree header
- *		on disk, and return it in *size_ptr.  On failure,
- *		the value of *size_ptr is undefined.
+ * Purpose:     Compute the size in bytes of a B-tree header
+ *              on disk, and return it in *size_ptr.  On failure,
+ *              the value of *size_ptr is undefined.
  *
- * Return:	Non-negative on success/Negative on failure
+ * Return:      SUCCEED (Can't fail)
  *
- * Programmer:	Quincey Koziol
- *		koziol@ncsa.uiuc.edu
- *		Feb 1 2005
+ * Programmer:  Quincey Koziol
+ *              koziol@hdfgroup.org
+ *              Feb 1 2005
  *
  *-------------------------------------------------------------------------
  */
 static herr_t
-H5B2__cache_hdr_size(const H5F_t UNUSED *f, const H5B2_hdr_t *hdr, size_t *size_ptr)
+H5B2__cache_hdr_size(const H5F_t H5_ATTR_UNUSED *f, const H5B2_hdr_t *hdr, size_t *size_ptr)
 {
     FUNC_ENTER_STATIC_NOERR
 
     /* check arguments */
     HDassert(f);
+    HDassert(hdr);
     HDassert(size_ptr);
 
     /* Set size value */
@@ -516,14 +517,14 @@ H5B2__cache_internal_load(H5F_t *f, hid_t dxpl_id, haddr_t addr, void *_udata)
 
     /* Increment ref. count on B-tree header */
     if(H5B2_hdr_incr(udata->hdr) < 0)
-	HGOTO_ERROR(H5E_BTREE, H5E_CANTINC, NULL, "can't increment ref. count on B-tree header")
+        HGOTO_ERROR(H5E_BTREE, H5E_CANTINC, NULL, "can't increment ref. count on B-tree header")
 
     /* Share B-tree information */
     internal->hdr = udata->hdr;
 
     /* Read header from disk */
     if(H5F_block_read(f, H5FD_MEM_BTREE, addr, udata->hdr->node_size, dxpl_id, udata->hdr->page) < 0)
-	HGOTO_ERROR(H5E_BTREE, H5E_READERROR, NULL, "can't read B-tree internal node")
+        HGOTO_ERROR(H5E_BTREE, H5E_READERROR, NULL, "can't read B-tree internal node")
 
     p = udata->hdr->page;
 
@@ -538,7 +539,7 @@ H5B2__cache_internal_load(H5F_t *f, hid_t dxpl_id, haddr_t addr, void *_udata)
 
     /* B-tree type */
     if(*p++ != (uint8_t)udata->hdr->cls->id)
-	HGOTO_ERROR(H5E_BTREE, H5E_BADTYPE, NULL, "incorrect B-tree type")
+        HGOTO_ERROR(H5E_BTREE, H5E_BADTYPE, NULL, "incorrect B-tree type")
 
     /* Allocate space for the native keys in memory */
     if(NULL == (internal->int_native = (uint8_t *)H5FL_FAC_MALLOC(udata->hdr->node_info[udata->depth].nat_rec_fac)))
@@ -590,7 +591,7 @@ H5B2__cache_internal_load(H5F_t *f, hid_t dxpl_id, haddr_t addr, void *_udata)
 
     /* Verify checksum */
     if(stored_chksum != computed_chksum)
-	HGOTO_ERROR(H5E_BTREE, H5E_BADVALUE, NULL, "incorrect metadata checksum for v2 internal node")
+        HGOTO_ERROR(H5E_BTREE, H5E_BADVALUE, NULL, "incorrect metadata checksum for v2 internal node")
 
     /* Set return value */
     ret_value = internal;
@@ -618,7 +619,7 @@ done:
  *-------------------------------------------------------------------------
  */
 static herr_t
-H5B2__cache_internal_flush(H5F_t *f, hid_t dxpl_id, hbool_t destroy, haddr_t addr, H5B2_internal_t *internal, unsigned UNUSED * flags_ptr)
+H5B2__cache_internal_flush(H5F_t *f, hid_t dxpl_id, hbool_t destroy, haddr_t addr, H5B2_internal_t *internal, unsigned H5_ATTR_UNUSED * flags_ptr)
 {
     herr_t      ret_value = SUCCEED;    /* Return value */
 
@@ -799,7 +800,7 @@ done:
  *-------------------------------------------------------------------------
  */
 static herr_t
-H5B2__cache_internal_size(const H5F_t UNUSED *f, const H5B2_internal_t *internal, size_t *size_ptr)
+H5B2__cache_internal_size(const H5F_t H5_ATTR_UNUSED *f, const H5B2_internal_t *internal, size_t *size_ptr)
 {
     FUNC_ENTER_STATIC_NOERR
 
@@ -830,7 +831,7 @@ H5B2__cache_internal_size(const H5F_t UNUSED *f, const H5B2_internal_t *internal
  *-------------------------------------------------------------------------
  */
 static H5B2_leaf_t *
-H5B2__cache_leaf_load(H5F_t UNUSED *f, hid_t dxpl_id, haddr_t addr, void *_udata)
+H5B2__cache_leaf_load(H5F_t H5_ATTR_UNUSED *f, hid_t dxpl_id, haddr_t addr, void *_udata)
 {
     H5B2_leaf_cache_ud_t *udata = (H5B2_leaf_cache_ud_t *)_udata;
     H5B2_leaf_t		*leaf = NULL;   /* Pointer to lead node loaded */
@@ -850,7 +851,7 @@ H5B2__cache_leaf_load(H5F_t UNUSED *f, hid_t dxpl_id, haddr_t addr, void *_udata
 
     /* Allocate new leaf node and reset cache info */
     if(NULL == (leaf = H5FL_MALLOC(H5B2_leaf_t)))
-	HGOTO_ERROR(H5E_RESOURCE, H5E_NOSPACE, NULL, "memory allocation failed")
+        HGOTO_ERROR(H5E_RESOURCE, H5E_NOSPACE, NULL, "memory allocation failed")
     HDmemset(&leaf->cache_info, 0, sizeof(H5AC_info_t));
 
     /* Set the B-tree header's file context for this operation */
@@ -858,33 +859,33 @@ H5B2__cache_leaf_load(H5F_t UNUSED *f, hid_t dxpl_id, haddr_t addr, void *_udata
 
     /* Increment ref. count on B-tree header */
     if(H5B2_hdr_incr(udata->hdr) < 0)
-	HGOTO_ERROR(H5E_BTREE, H5E_CANTINC, NULL, "can't increment ref. count on B-tree header")
+        HGOTO_ERROR(H5E_BTREE, H5E_CANTINC, NULL, "can't increment ref. count on B-tree header")
 
     /* Share B-tree header information */
     leaf->hdr = udata->hdr;
 
     /* Read header from disk */
     if(H5F_block_read(udata->f, H5FD_MEM_BTREE, addr, udata->hdr->node_size, dxpl_id, udata->hdr->page) < 0)
-	HGOTO_ERROR(H5E_BTREE, H5E_READERROR, NULL, "can't read B-tree leaf node")
+        HGOTO_ERROR(H5E_BTREE, H5E_READERROR, NULL, "can't read B-tree leaf node")
 
     p = udata->hdr->page;
 
     /* Magic number */
     if(HDmemcmp(p, H5B2_LEAF_MAGIC, (size_t)H5_SIZEOF_MAGIC))
-	HGOTO_ERROR(H5E_BTREE, H5E_CANTLOAD, NULL, "wrong B-tree leaf node signature")
+        HGOTO_ERROR(H5E_BTREE, H5E_CANTLOAD, NULL, "wrong B-tree leaf node signature")
     p += H5_SIZEOF_MAGIC;
 
     /* Version */
     if(*p++ != H5B2_LEAF_VERSION)
-	HGOTO_ERROR(H5E_BTREE, H5E_CANTLOAD, NULL, "wrong B-tree leaf node version")
+        HGOTO_ERROR(H5E_BTREE, H5E_CANTLOAD, NULL, "wrong B-tree leaf node version")
 
     /* B-tree type */
     if(*p++ != (uint8_t)udata->hdr->cls->id)
-	HGOTO_ERROR(H5E_BTREE, H5E_CANTLOAD, NULL, "incorrect B-tree type")
+        HGOTO_ERROR(H5E_BTREE, H5E_BADTYPE, NULL, "incorrect B-tree type")
 
     /* Allocate space for the native keys in memory */
     if(NULL == (leaf->leaf_native = (uint8_t *)H5FL_FAC_MALLOC(udata->hdr->node_info[0].nat_rec_fac)))
-	HGOTO_ERROR(H5E_BTREE, H5E_NOSPACE, NULL, "memory allocation failed for B-tree leaf native keys")
+        HGOTO_ERROR(H5E_BTREE, H5E_NOSPACE, NULL, "memory allocation failed for B-tree leaf native keys")
 
     /* Set the number of records in the leaf */
     leaf->nrec = udata->nrec;
@@ -940,7 +941,7 @@ done:
  *-------------------------------------------------------------------------
  */
 static herr_t
-H5B2__cache_leaf_flush(H5F_t *f, hid_t dxpl_id, hbool_t destroy, haddr_t addr, H5B2_leaf_t *leaf, unsigned UNUSED * flags_ptr)
+H5B2__cache_leaf_flush(H5F_t *f, hid_t dxpl_id, hbool_t destroy, haddr_t addr, H5B2_leaf_t *leaf, unsigned H5_ATTR_UNUSED * flags_ptr)
 {
     herr_t      ret_value = SUCCEED;    /* Return value */
 
@@ -1107,7 +1108,7 @@ done:
  *-------------------------------------------------------------------------
  */
 static herr_t
-H5B2__cache_leaf_size(const H5F_t UNUSED *f, const H5B2_leaf_t *leaf, size_t *size_ptr)
+H5B2__cache_leaf_size(const H5F_t H5_ATTR_UNUSED *f, const H5B2_leaf_t *leaf, size_t *size_ptr)
 {
     FUNC_ENTER_STATIC_NOERR
 

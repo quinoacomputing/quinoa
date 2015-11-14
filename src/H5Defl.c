@@ -175,7 +175,7 @@ H5D__efl_construct(H5F_t *f, H5D_t *dset)
     stmp_size = H5S_GET_EXTENT_NPOINTS(dset->shared->space);
     HDassert(stmp_size >= 0);
     tmp_size = (hsize_t)stmp_size * dt_size;
-    H5_ASSIGN_OVERFLOW(dset->shared->layout.storage.u.contig.size, tmp_size, hssize_t, hsize_t);
+    H5_CHECKED_ASSIGN(dset->shared->layout.storage.u.contig.size, hsize_t, tmp_size, hssize_t);
 
     /* Get the sieve buffer size for this dataset */
     dset->shared->cache.contig.sieve_buf_size = H5F_SIEVE_BUF_SIZE(f);
@@ -198,7 +198,7 @@ done:
  *-------------------------------------------------------------------------
  */
 hbool_t
-H5D__efl_is_space_alloc(const H5O_storage_t UNUSED *storage)
+H5D__efl_is_space_alloc(const H5O_storage_t H5_ATTR_UNUSED *storage)
 {
     FUNC_ENTER_PACKAGE_NOERR
 
@@ -223,9 +223,9 @@ H5D__efl_is_space_alloc(const H5O_storage_t UNUSED *storage)
  *-------------------------------------------------------------------------
  */
 static herr_t
-H5D__efl_io_init(const H5D_io_info_t *io_info, const H5D_type_info_t UNUSED *type_info,
-    hsize_t UNUSED nelmts, const H5S_t UNUSED *file_space, const H5S_t UNUSED *mem_space,
-    H5D_chunk_map_t UNUSED *cm)
+H5D__efl_io_init(const H5D_io_info_t *io_info, const H5D_type_info_t H5_ATTR_UNUSED *type_info,
+    hsize_t H5_ATTR_UNUSED nelmts, const H5S_t H5_ATTR_UNUSED *file_space, const H5S_t H5_ATTR_UNUSED *mem_space,
+    H5D_chunk_map_t H5_ATTR_UNUSED *cm)
 {
     FUNC_ENTER_STATIC_NOERR
 

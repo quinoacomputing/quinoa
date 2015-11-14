@@ -49,6 +49,7 @@
       ${HDF5_TOOLS_SRC_DIR}/testfiles/tbin4.ddl
       ${HDF5_TOOLS_SRC_DIR}/testfiles/tbinregR.ddl
       ${HDF5_TOOLS_SRC_DIR}/testfiles/tbigdims.ddl
+      ${HDF5_TOOLS_SRC_DIR}/testfiles/tbitnopaque.ddl
       ${HDF5_TOOLS_SRC_DIR}/testfiles/tboot1.ddl
       ${HDF5_TOOLS_SRC_DIR}/testfiles/tboot2.ddl
       ${HDF5_TOOLS_SRC_DIR}/testfiles/tboot2A.ddl
@@ -204,6 +205,7 @@
       ${HDF5_TOOLS_SRC_DIR}/testfiles/tattrreg.h5
       ${HDF5_TOOLS_SRC_DIR}/testfiles/tbigdims.h5
       ${HDF5_TOOLS_SRC_DIR}/testfiles/tbinary.h5
+      ${HDF5_TOOLS_SRC_DIR}/testfiles/tbitnopaque.h5
       ${HDF5_TOOLS_SRC_DIR}/testfiles/tchar.h5
       ${HDF5_TOOLS_SRC_DIR}/testfiles/tcmpdattrintsize.h5
       ${HDF5_TOOLS_SRC_DIR}/testfiles/tcmpdintarray.h5
@@ -311,7 +313,7 @@
   # copy test files from source dir to test dir
   #
   foreach (tst_h5_file ${HDF5_REFERENCE_TEST_FILES})
-    GET_FILENAME_COMPONENT(fname "${tst_h5_file}" NAME)
+    get_filename_component (fname "${tst_h5_file}" NAME)
     set (dest "${PROJECT_BINARY_DIR}/testfiles/std/${fname}")
     #message (STATUS " Copying ${tst_h5_file}")
     add_custom_command (
@@ -337,7 +339,7 @@
   endforeach (tst_exp_file ${HDF5_REFERENCE_EXP_FILES})
 
   foreach (tst_other_file ${HDF5_REFERENCE_FILES})
-    GET_FILENAME_COMPONENT(fname "${tst_other_file}" NAME)
+    get_filename_component (fname "${tst_other_file}" NAME)
     set (dest "${PROJECT_BINARY_DIR}/testfiles/std/${fname}")
     #message (STATUS " Copying ${tst_other_file}")
     add_custom_command (
@@ -349,7 +351,7 @@
   endforeach (tst_other_file ${HDF5_REFERENCE_FILES})
 
   foreach (tst_error_file ${HDF5_ERROR_REFERENCE_TEST_FILES})
-    GET_FILENAME_COMPONENT(fname "${tst_error_file}" NAME)
+    get_filename_component (fname "${tst_error_file}" NAME)
     set (dest "${PROJECT_BINARY_DIR}/testfiles/std/${fname}")
     #message (STATUS " Copying ${tst_error_file}")
     add_custom_command (
@@ -413,7 +415,7 @@
               -D "TEST_OUTPUT=h5dump-${testname}.out"
               -D "TEST_EXPECT=${resultcode}"
               -D "TEST_REFERENCE=h5dump-${testname}.txt"
-              -P "${HDF5_RESOURCES_DIR}/runTest.cmake"
+              -P "${HDF_RESOURCES_EXT_DIR}/runTest.cmake"
       )
       set_tests_properties (H5DUMP-h5dump-${testname} PROPERTIES DEPENDS "H5DUMP-h5dump-${testname}-clear-objects")
     endif (HDF5_ENABLE_USING_MEMCHECKER)
@@ -459,7 +461,7 @@
               -D "TEST_OUTPUT=${resultfile}.out"
               -D "TEST_EXPECT=${resultcode}"
               -D "TEST_REFERENCE=${resultfile}.ddl"
-              -P "${HDF5_RESOURCES_DIR}/runTest.cmake"
+              -P "${HDF_RESOURCES_EXT_DIR}/runTest.cmake"
       )
       set_tests_properties (H5DUMP-${resultfile} PROPERTIES DEPENDS "H5DUMP-${resultfile}-clear-objects")
     endif (HDF5_ENABLE_USING_MEMCHECKER)
@@ -492,7 +494,7 @@
               -D "TEST_OUTPUT=${resultfile}-N.out"
               -D "TEST_EXPECT=${resultcode}"
               -D "TEST_REFERENCE=${resultfile}.ddl"
-              -P "${HDF5_RESOURCES_DIR}/runTest.cmake"
+              -P "${HDF_RESOURCES_EXT_DIR}/runTest.cmake"
       )
       set_tests_properties (H5DUMP-N-${resultfile} PROPERTIES DEPENDS "H5DUMP-N-${resultfile}-clear-objects")
     endif (HDF5_ENABLE_USING_MEMCHECKER)
@@ -525,7 +527,7 @@
               -D "TEST_OUTPUT=${resultfile}.out"
               -D "TEST_EXPECT=${resultcode}"
               -D "TEST_REFERENCE=${resultfile}.ddl"
-              -P "${HDF5_RESOURCES_DIR}/runTest.cmake"
+              -P "${HDF_RESOURCES_EXT_DIR}/runTest.cmake"
       )
       set_tests_properties (H5DUMP-${resultfile} PROPERTIES DEPENDS "H5DUMP-${resultfile}-clear-objects")
       add_test (
@@ -565,7 +567,7 @@
               -D "TEST_OUTPUT=${resultfile}.out"
               -D "TEST_EXPECT=${resultcode}"
               -D "TEST_REFERENCE=${resultfile}.ddl"
-              -P "${HDF5_RESOURCES_DIR}/runTest.cmake"
+              -P "${HDF_RESOURCES_EXT_DIR}/runTest.cmake"
       )
       set_tests_properties (H5DUMP-${resultfile} PROPERTIES DEPENDS "H5DUMP-${resultfile}-clear-objects")
       add_test (
@@ -627,7 +629,7 @@
               -D "TEST_EXPECT=${resultcode}"
               -D "TEST_REFERENCE=${resultfile}.ddl"
               -D "TEST_MASK_ERROR=true"
-              -P "${HDF5_RESOURCES_DIR}/runTest.cmake"
+              -P "${HDF_RESOURCES_EXT_DIR}/runTest.cmake"
       )
       set_tests_properties (H5DUMP-${resultfile} PROPERTIES DEPENDS "H5DUMP-${resultfile}-clear-objects")
     endif (NOT HDF5_ENABLE_USING_MEMCHECKER)
@@ -652,7 +654,7 @@
               -D "TEST_REFERENCE=${resultfile}.ddl"
               -D "TEST_ERRREF=${resultfile}.err"
               -D "TEST_MASK_ERROR=true"
-              -P "${HDF5_RESOURCES_DIR}/runTest.cmake"
+              -P "${HDF_RESOURCES_EXT_DIR}/runTest.cmake"
       )
       set_tests_properties (H5DUMP-${resultfile} PROPERTIES DEPENDS "H5DUMP-${resultfile}-clear-objects")
     endif (NOT HDF5_ENABLE_USING_MEMCHECKER)
@@ -679,7 +681,7 @@
               -D "TEST_MASK_ERROR=true"
               -D "TEST_ENV_VAR:STRING=${envvar}"
               -D "TEST_ENV_VALUE:STRING=${envval}"
-              -P "${HDF5_RESOURCES_DIR}/runTest.cmake"
+              -P "${HDF_RESOURCES_EXT_DIR}/runTest.cmake"
       )
       set_tests_properties (H5DUMP-${resultfile} PROPERTIES DEPENDS "H5DUMP-${resultfile}-clear-objects")
     endif (NOT HDF5_ENABLE_USING_MEMCHECKER)
@@ -703,7 +705,7 @@
               -D "TEST_OUTPUT=${conffile}.out"
               -D "TEST_EXPECT=${resultcode}"
               -D "TEST_REFERENCE=${conffile}.ddl"
-              -P "${HDF5_RESOURCES_DIR}/runTest.cmake"
+              -P "${HDF_RESOURCES_EXT_DIR}/runTest.cmake"
       )
       set_tests_properties (H5DUMP-IMPORT-${resultfile} PROPERTIES DEPENDS "H5DUMP-IMPORT-${resultfile}-clear-objects")
       add_test (NAME H5DUMP-IMPORT-h5import-${resultfile} COMMAND h5import ${resultfile}.bin -c ${conffile}.out -o ${resultfile}.h5)
@@ -801,6 +803,8 @@
           tbinregR.out.err
           tbigdims.out
           tbigdims.out.err
+          tbitnopaque.out
+          tbitnopaque.out.err
           tboot1.out
           tboot1.out.err
           tboot2.out
@@ -1143,6 +1147,8 @@
   ADD_H5ERR_MASK_TEST (tcomp-3 0 "--enable-error-stack;-t;/#6632;-g;/group2;tcompound.h5")
   # test complicated compound datatype
   ADD_H5_TEST (tcomp-4 0 --enable-error-stack tcompound_complex.h5)
+  # tests for bitfields and opaque data types
+  ADD_H5_TEST (tbitnopaque 0 --enable-error-stack tbitnopaque.h5)
 
   #test for the nested compound type
   ADD_H5_TEST (tnestcomp-1 0 --enable-error-stack tnestedcomp.h5)
@@ -1329,30 +1335,14 @@
     set (USE_FILTER_SZIP "true")
   endif (H5_HAVE_FILTER_SZIP)
 
-  if (H5_HAVE_FILTER_SHUFFLE)
-    set (USE_FILTER_SHUFFLE "true")
-  endif (H5_HAVE_FILTER_SHUFFLE)
-
-  if (H5_HAVE_FILTER_FLETCHER32)
-    set (USE_FILTER_FLETCHER32 "true")
-  endif (H5_HAVE_FILTER_FLETCHER32)
-
-  if (H5_HAVE_FILTER_NBIT)
-    set (USE_FILTER_NBIT "true")
-  endif (H5_HAVE_FILTER_NBIT)
-
-  if (H5_HAVE_FILTER_SCALEOFFSET)
-    set (USE_FILTER_SCALEOFFSET "true")
-  endif (H5_HAVE_FILTER_SCALEOFFSET)
-
-  if (USE_FILTER_DEFLATE AND USE_FILTER_SHUFFLE AND USE_FILTER_FLETCHER32 AND USE_FILTER_NBIT AND USE_FILTER_SCALEOFFSET)
+  if (USE_FILTER_DEFLATE)
     # data read internal filters
     ADD_H5_TEST (treadintfilter 0 --enable-error-stack -d deflate -d shuffle -d fletcher32 -d nbit -d scaleoffset tfilters.h5)
     if (HDF5_ENABLE_SZIP_SUPPORT)
       # data read all filters
       ADD_H5_TEST (treadfilter 0 --enable-error-stack -d all -d szip tfilters.h5)
     endif (HDF5_ENABLE_SZIP_SUPPORT)
-  endif (USE_FILTER_DEFLATE AND USE_FILTER_SHUFFLE AND USE_FILTER_FLETCHER32 AND USE_FILTER_NBIT AND USE_FILTER_SCALEOFFSET)
+  endif (USE_FILTER_DEFLATE)
 
   # test for displaying objects with very long names
   ADD_H5_TEST (tlonglinks 0 --enable-error-stack tlonglinks.h5)

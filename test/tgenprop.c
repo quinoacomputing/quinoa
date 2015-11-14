@@ -47,7 +47,7 @@ int         prop1_def=10;   /* Property 1 default value */
 #define PROP1_DEF_VALUE (&prop1_def)
 
 #define PROP2_NAME     "Property 2"
-float         prop2_def=(float)3.14;   /* Property 2 default value */
+float         prop2_def=3.14F;   /* Property 2 default value */
 #define PROP2_SIZE      sizeof(prop2_def)
 #define PROP2_DEF_VALUE (&prop2_def)
 
@@ -57,7 +57,7 @@ char          prop3_def[10]="Ten chars";   /* Property 3 default value */
 #define PROP3_DEF_VALUE (&prop3_def)
 
 #define PROP4_NAME     "Property 4"
-double          prop4_def=1.41;   /* Property 4 default value */
+double          prop4_def=1.41F;   /* Property 4 default value */
 #define PROP4_SIZE      sizeof(prop4_def)
 #define PROP4_DEF_VALUE (&prop4_def)
 
@@ -385,7 +385,7 @@ test_genprop_cls_crt_cb1(hid_t list_id, void *create_data)
 }
 
 static herr_t
-test_genprop_cls_cpy_cb1(hid_t new_list_id, hid_t UNUSED old_list_id, void *copy_data)
+test_genprop_cls_cpy_cb1(hid_t new_list_id, hid_t H5_ATTR_UNUSED old_list_id, void *copy_data)
 {
     struct {                /* Struct for iterations */
         int count;
@@ -993,7 +993,7 @@ prop_cb_info prop3_cb_info;     /* Callback statistics for property #3 */
 **
 ****************************************************************/
 static herr_t
-test_genprop_cls_cpy_cb2(hid_t new_list_id, hid_t UNUSED old_list_id, void *create_data)
+test_genprop_cls_cpy_cb2(hid_t new_list_id, hid_t H5_ATTR_UNUSED old_list_id, void *create_data)
 {
     struct {                /* Struct for iterations */
         int count;
@@ -1818,7 +1818,7 @@ test_genprop_path(void)
     VERIFY(ret, 1, "H5Pequal");
 
     /* Release the path string */
-    free(path);
+    HDfree(path);
 
     /* Close class */
     ret = H5Pclose_class(cid3);

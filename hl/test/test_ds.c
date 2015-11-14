@@ -29,8 +29,8 @@ static herr_t op_continue(hid_t did, unsigned dim, hid_t dsid, void *visitor_dat
 static herr_t op_stop(hid_t did, unsigned dim, hid_t dsid, void *visitor_data);
 
 /* prototypes */
-static int create_test_file(const char *fileext);
-static int open_test_file(const char *fileext);
+static hid_t create_test_file(const char *fileext);
+static hid_t open_test_file(const char *fileext);
 herr_t create_char_dataset(hid_t fid, const char *dsidx, int fulldims);
 herr_t create_short_dataset(hid_t fid, const char *dsidx, int fulldims);
 herr_t create_int_dataset(hid_t fid, const char *dsidx, int fulldims);
@@ -1105,10 +1105,10 @@ herr_t test_cmp_scalename(hid_t fid, hid_t did, const char *name, const char *sc
     if((dsid = H5Dopen2(fid, name, H5P_DEFAULT)) >= 0) {
         if(H5DSis_attached(did, dsid, idx) == 1) {
             if((name_len=H5DSget_scale_name(dsid,NULL,(size_t)0)) > 0) {
-	        name_out = (char*)HDmalloc(((size_t)name_len+1) * sizeof (char));
+	        name_out = (char*)HDmalloc((name_len+1) * sizeof (char));
                 if(name_out != NULL) {
                     if(H5DSget_scale_name(dsid, name_out, (size_t)name_len+1) >= 0) {
-                        if(HDstrncmp(scalename, name_out, (size_t)name_len)==0) {
+                        if(HDstrcmp(scalename,name_out)==0) {
                             ret_value = SUCCEED;
                         }
                         HDfree(name_out);
@@ -3126,7 +3126,7 @@ static int test_simple(void)
         goto out;
 
     /* allocate a  buffer */
-    name_out = (char*)HDmalloc(((size_t)name_len+1) * sizeof (char));
+    name_out = (char*)HDmalloc((name_len+1) * sizeof (char));
     if(name_out == NULL)
         goto out;
 
@@ -3134,7 +3134,7 @@ static int test_simple(void)
     if(H5DSget_scale_name(dsid, name_out, (size_t)name_len+1) < 0)
         goto out;
 
-    if(HDstrncmp("Latitude set 0",name_out, name_len)!=0)
+    if(HDstrncmp("Latitude set 0",name_out, (size_t)name_len)!=0)
         goto out;
     if(name_out) {
         HDfree(name_out);

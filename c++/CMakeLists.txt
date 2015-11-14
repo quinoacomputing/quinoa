@@ -1,24 +1,15 @@
-cmake_minimum_required (VERSION 2.8.11)
+cmake_minimum_required (VERSION 3.1.0)
 PROJECT (HDF5_CPP)
 
 #-----------------------------------------------------------------------------
 # Apply Definitions to compiler in this directory and below
 #-----------------------------------------------------------------------------
-add_definitions (${HDF5_EXTRA_C_FLAGS})
-
-#-----------------------------------------------------------------------------
-# Shared/Static Libs
-#-----------------------------------------------------------------------------
-if (BUILD_SHARED_LIBS)
-  set (CPP_BUILT_AS_DYNAMIC_LIB 1)
-else (BUILD_SHARED_LIBS)
-  set (CPP_BUILT_AS_STATIC_LIB 1)
-endif (BUILD_SHARED_LIBS)
+add_definitions (${HDF_EXTRA_C_FLAGS})
 
 #-----------------------------------------------------------------------------
 # Generate configure file
 #-----------------------------------------------------------------------------
-configure_file (${HDF5_RESOURCES_DIR}/H5cxx_config.h.in
+configure_file (${HDF_RESOURCES_DIR}/H5cxx_config.h.in
                 ${HDF5_BINARY_DIR}/H5cxx_pubconf.h
 )
 

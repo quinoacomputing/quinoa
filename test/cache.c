@@ -17994,14 +17994,14 @@ check_check_evictions_enabled_err(void)
 hbool_t rpt_fcn_called = FALSE;
 enum H5C_resize_status rpt_status;
 
-static void test_rpt_fcn(UNUSED H5C_t * cache_ptr,
-                  UNUSED int32_t version,
-                  UNUSED double hit_rate,
+static void test_rpt_fcn(H5_ATTR_UNUSED H5C_t * cache_ptr,
+                  H5_ATTR_UNUSED int32_t version,
+                  H5_ATTR_UNUSED double hit_rate,
                   enum H5C_resize_status status,
-                  UNUSED size_t old_max_cache_size,
-                  UNUSED size_t new_max_cache_size,
-                  UNUSED size_t old_min_clean_size,
-                  UNUSED size_t new_min_clean_size)
+                  H5_ATTR_UNUSED size_t old_max_cache_size,
+                  H5_ATTR_UNUSED size_t new_max_cache_size,
+                  H5_ATTR_UNUSED size_t old_min_clean_size,
+                  H5_ATTR_UNUSED size_t new_min_clean_size)
 {
     rpt_fcn_called = TRUE;
     rpt_status = status;
@@ -20324,7 +20324,10 @@ check_auto_cache_resize(void)
 
         auto_size_ctl.decr_mode              = H5C_decr__age_out_with_threshold;
 
-        auto_size_ctl.upper_hr_threshold     = 0.999; /* for ease of testing */
+        /* NOTE: upper_hr_threshold MUST be type double (not float)
+         * or the cache test will fail on 64-bit systems.
+         */
+        auto_size_ctl.upper_hr_threshold     = H5_DOUBLE(0.999); /* for ease of testing */
 
         auto_size_ctl.decrement              = 0.5f;
 
@@ -28337,7 +28340,7 @@ check_auto_cache_resize_aux_fcns(void)
             pass = FALSE;
             failure_mssg = "H5C_get_cache_hit_rate failed.\n";
 
-        } else if ( ! DBL_REL_EQUAL(hit_rate, 0.5, FP_EPSILON) ) { /* i.e. hit_rate != 0.5 */
+        } else if ( ! DBL_REL_EQUAL(hit_rate, 0.5F, FP_EPSILON) ) { /* i.e. hit_rate != 0.5 */
 
             pass = FALSE;
             failure_mssg =

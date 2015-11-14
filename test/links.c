@@ -36,13 +36,8 @@
 /* File for external link test.  Created with gen_udlinks.c */
 #define LINKED_FILE  "be_extlink2.h5"
 
-#ifdef H5_VMS
-#define TMPDIR          "[.tmp]"
-#define TMPDIR2         "[.tmp2]"
-#else /* H5_VMS */
 #define TMPDIR          "tmp/"
 #define TMPDIR2         "tmp2/"
-#endif /* H5_VMS */
 
 /* Symlinks for external link symlink test */
 #define SYMLINK1  TMPDIR "sym1.h5"
@@ -141,7 +136,7 @@ const char *FILENAME[] = {
 #define H5L_DIM1 100
 #define H5L_DIM2 100
 
-#define FILTER_FILESIZE_MAX_FRACTION .9
+#define FILTER_FILESIZE_MAX_FRACTION 0.9F
 
 /* Creation order macros */
 #define CORDER_GROUP_NAME       "corder_group"
@@ -320,7 +315,7 @@ typedef struct {
  * Function:    fix_ext_filename
  *
  * Purpose:     Internal function to append path to file name.  It handles
- *              path name of Unix, Windows, and OpenVMS.
+ *              path name of Unix and Windows.
  *
  * Return:      void
  *
@@ -333,17 +328,8 @@ fix_ext_filename(char *path_name, char *cwd, const char *file_name)
 {
     HDstrcpy(path_name, cwd);
 
-#ifdef H5_VMS
-    if(file_name[0] == '[') {
-        char *tmp = file_name;
-        path_name[strlen(cwd)-1] = '\0';
-        HDstrcat(path_name, ++tmp);
-    } else
-        HDstrcat(path_name, file_name);
-#else
     HDstrcat(path_name, "/");
     HDstrcat(path_name, file_name);
-#endif
 }
 
 
@@ -558,8 +544,8 @@ cklinks(hid_t fapl, hbool_t new_format)
     } /* end if */
     if(H5F_addr_ne(oinfo1.addr, oinfo2.addr)) {
 	H5_FAILED();
-	puts("    Hard link test failed. Link seems not to point to the ");
-	puts("    expected file location.");
+	HDputs("    Hard link test failed. Link seems not to point to the ");
+	HDputs("    expected file location.");
 	TEST_ERROR
     } /* end if */
     if(H5Lexists(file, "d1", H5P_DEFAULT) != TRUE) FAIL_STACK_ERROR
@@ -574,14 +560,14 @@ cklinks(hid_t fapl, hbool_t new_format)
     } /* end if */
     if(H5F_addr_ne(oinfo1.addr, oinfo2.addr)) {
 	H5_FAILED();
-	puts("    Soft link test failed. Link seems not to point to the ");
-	puts("    expected file location.");
+	HDputs("    Soft link test failed. Link seems not to point to the ");
+	HDputs("    expected file location.");
 	TEST_ERROR
     } /* end if */
     if(H5Lget_val(file, "grp1/soft", linkval, sizeof linkval, H5P_DEFAULT) < 0) FAIL_STACK_ERROR
     if(HDstrcmp(linkval, "/d1")) {
 	H5_FAILED();
-	puts("    Soft link test failed. Wrong link value");
+	HDputs("    Soft link test failed. Wrong link value");
 	TEST_ERROR
     } /* end if */
     if(H5Lexists(file, "grp1/soft", H5P_DEFAULT) != TRUE) FAIL_STACK_ERROR
@@ -592,7 +578,7 @@ cklinks(hid_t fapl, hbool_t new_format)
     } H5E_END_TRY;
     if(status >= 0) {
 	H5_FAILED();
-	puts("    H5Oget_info_by_name() should have failed for a dangling link.");
+	HDputs("    H5Oget_info_by_name() should have failed for a dangling link.");
 	TEST_ERROR
     } /* end if */
     if(H5Lget_info(file, "grp1/dangle", &linfo2, H5P_DEFAULT) < 0) FAIL_STACK_ERROR
@@ -608,7 +594,7 @@ cklinks(hid_t fapl, hbool_t new_format)
     } /* end if */
     if(HDstrcmp(linkval, "foobar")) {
 	H5_FAILED();
-	puts("    Dangling link test failed. Wrong link value");
+	HDputs("    Dangling link test failed. Wrong link value");
 	TEST_ERROR
     } /* end if */
     if(H5Lexists(file, "grp1/dangle", H5P_DEFAULT) != TRUE) FAIL_STACK_ERROR
@@ -619,7 +605,7 @@ cklinks(hid_t fapl, hbool_t new_format)
     } H5E_END_TRY;
     if(status >= 0) {
 	H5_FAILED();
-	puts("    H5Oget_info_by_name() should have failed for a recursive link.");
+	HDputs("    H5Oget_info_by_name() should have failed for a recursive link.");
 	TEST_ERROR
     } /* end if */
     if(H5Lget_info(file, "grp1/recursive", &linfo2, H5P_DEFAULT) < 0) FAIL_STACK_ERROR
@@ -635,7 +621,7 @@ cklinks(hid_t fapl, hbool_t new_format)
     } /* end if */
     if(HDstrcmp(linkval, "/grp1/recursive")) {
 	H5_FAILED();
-	puts("   Recursive link test failed. Wrong link value");
+	HDputs("   Recursive link test failed. Wrong link value");
 	TEST_ERROR
     } /* end if */
 
@@ -700,8 +686,8 @@ ck_new_links(hid_t fapl, hbool_t new_format)
     }
     if(H5F_addr_ne(oi_dset.addr, oi_hard1.addr) || H5F_addr_ne(oi_dset.addr, oi_hard2.addr)) {
 	H5_FAILED();
-	puts("    Hard link test failed.  Link seems not to point to the ");
-	puts("    expected file location.");
+	HDputs("    Hard link test failed.  Link seems not to point to the ");
+	HDputs("    expected file location.");
 	TEST_ERROR
     }
 
@@ -905,7 +891,7 @@ toomany(hid_t fapl, hbool_t new_format)
     } H5E_END_TRY;
     if(gid >= 0) {
 	H5_FAILED();
-	puts("    Should have failed for sequence of too many nested links.");
+	HDputs("    Should have failed for sequence of too many nested links.");
 	TEST_ERROR
     } /* end if */
 
@@ -1189,7 +1175,7 @@ test_move(hid_t fapl, hbool_t new_format)
     } H5E_END_TRY;
     if(moved_grp >= 0) {
 	H5_FAILED();
-	puts("    Group still in original location?");
+	HDputs("    Group still in original location?");
 	TEST_ERROR
     } /* end if */
 
@@ -1684,8 +1670,8 @@ test_deprec(hid_t fapl, hbool_t new_format)
 
     if(HDmemcmp(&sb_hard1.objno, sb_hard2.objno, sizeof(sb_hard1.objno))) {
         H5_FAILED();
-        puts("    Hard link test failed.  Link seems not to point to the ");
-        puts("    expected file location.");
+        HDputs("    Hard link test failed.  Link seems not to point to the ");
+        HDputs("    expected file location.");
         TEST_ERROR
     } /* end if */
 
@@ -1695,8 +1681,8 @@ test_deprec(hid_t fapl, hbool_t new_format)
 
     if(HDmemcmp(&sb_hard1.objno, sb_hard2.objno, sizeof(sb_hard1.objno))) {
         H5_FAILED();
-        puts("    Hard link test failed.  Link seems not to point to the ");
-        puts("    expected file location.");
+        HDputs("    Hard link test failed.  Link seems not to point to the ");
+        HDputs("    expected file location.");
         TEST_ERROR
     } /* end if */
 
@@ -1812,19 +1798,19 @@ external_link_root(hid_t fapl, hbool_t new_format)
     if(H5Lget_info(fid, "ext_link", &linfo, H5P_DEFAULT) < 0) goto error;
     if(H5L_TYPE_EXTERNAL != linfo.type) {
 	H5_FAILED();
-	puts("    Unexpected object type - should have been an external link");
+	HDputs("    Unexpected object type - should have been an external link");
 	goto error;
     }
     if(H5Lget_val(fid, "ext_link", objname, sizeof(objname), H5P_DEFAULT) < 0) TEST_ERROR
     if(H5Lunpack_elink_val(objname, linfo.u.val_size, NULL, &file, &path) < 0) TEST_ERROR
     if(HDstrcmp(file, filename1)) {
 	H5_FAILED();
-	puts("    External link file name incorrect");
+	HDputs("    External link file name incorrect");
 	goto error;
     }
     if(HDstrcmp(path, "/")) {
 	H5_FAILED();
-	puts("    External link path incorrect");
+	HDputs("    External link path incorrect");
 	goto error;
     }
 
@@ -1836,19 +1822,19 @@ external_link_root(hid_t fapl, hbool_t new_format)
     if(H5Lget_info(fid, "ext_link", &linfo, H5P_DEFAULT) < 0) goto error;
     if(H5L_TYPE_EXTERNAL != linfo.type) {
 	H5_FAILED();
-	puts("    Unexpected object type - should have been an external link");
+	HDputs("    Unexpected object type - should have been an external link");
 	goto error;
     }
     if(H5Lget_val(fid, "ext_link", objname, sizeof(objname), H5P_DEFAULT) < 0) TEST_ERROR
     if(H5Lunpack_elink_val(objname, linfo.u.val_size, NULL, &file, &path) < 0) TEST_ERROR
     if(HDstrcmp(file, filename1)) {
 	H5_FAILED();
-	puts("    External link file name incorrect");
+	HDputs("    External link file name incorrect");
 	goto error;
     }
     if(HDstrcmp(path, "/")) {
 	H5_FAILED();
-	puts("    External link path incorrect");
+	HDputs("    External link path incorrect");
 	goto error;
     }
 
@@ -2693,7 +2679,7 @@ external_link_dangling(hid_t fapl, hbool_t new_format)
     } H5E_END_TRY;
     if (gid >= 0) {
 	H5_FAILED();
-	puts("    Should have failed for sequence of too many nested links.");
+	HDputs("    Should have failed for sequence of too many nested links.");
 	goto error;
     }
 
@@ -2703,7 +2689,7 @@ external_link_dangling(hid_t fapl, hbool_t new_format)
     } H5E_END_TRY;
     if (gid >= 0) {
 	H5_FAILED();
-	puts("    Should have failed for sequence of too many nested links.");
+	HDputs("    Should have failed for sequence of too many nested links.");
 	goto error;
     }
 
@@ -2713,7 +2699,7 @@ external_link_dangling(hid_t fapl, hbool_t new_format)
     } H5E_END_TRY;
     if (status >= 0) {
         H5_FAILED();
-        puts("    Retreiving name of object by index through dangling file external link should have failed.");
+        HDputs("    Retreiving name of object by index through dangling file external link should have failed.");
     } /* end if */
 
     /* Close root group */
@@ -2810,7 +2796,7 @@ external_link_prefix(hid_t fapl, hbool_t new_format)
     /* should be able to find the target file from pathnames set via H5Pset_elink_prefix() */
     if (gid < 0) {
 	H5_FAILED();
-	puts("    Should have found the file in tmp directory.");
+	HDputs("    Should have found the file in tmp directory.");
 	goto error;
     }
 
@@ -2877,7 +2863,6 @@ external_link_abs_mainpath(hid_t fapl, hbool_t new_format)
      * set up name for main file:
      *	Linux: "/CWD/tmp/extlinks0"
      *  Window: "<cur drive>:/CWD/tmp/extlinks0"
-     *  OpenVMS: "<cur disk>$<partition>:[CWD.tmp]extlinks0"
      */
     fix_ext_filename(tmpname, cwdpath, FILENAME[13]);
     h5_fixname(tmpname, fapl, filename1, sizeof filename1);
@@ -2905,7 +2890,7 @@ external_link_abs_mainpath(hid_t fapl, hbool_t new_format)
     /* should be able to find the target file from absolute path set for main file */
     if(gid < 0) {
 	H5_FAILED();
-	puts("    Should have found the file in tmp directory.");
+	HDputs("    Should have found the file in tmp directory.");
 	goto error;
     }
 
@@ -2991,7 +2976,7 @@ external_link_rel_mainpath(hid_t fapl, hbool_t new_format)
     /* should be able to find the target file from the main file's relative pathname */
     if (gid < 0) {
 	H5_FAILED();
-	puts("    Should have found the file in current working directory");
+	HDputs("    Should have found the file in current working directory");
 	goto error;
     }
 
@@ -3083,7 +3068,7 @@ external_link_cwd(hid_t fapl, hbool_t new_format)
     /* should be able to find the target file from the current working directory */
     if(gid < 0) {
 	H5_FAILED();
-	puts("    Should have found the file in current working directory");
+	HDputs("    Should have found the file in current working directory");
 	goto error;
     }
 
@@ -3179,7 +3164,7 @@ external_link_abstar(hid_t fapl, hbool_t new_format)
     /* should be able to find the target file with abolute path */
     if(gid < 0) {
 	H5_FAILED();
-	puts("    Should have found the file in tmp directory.");
+	HDputs("    Should have found the file in tmp directory.");
 	goto error;
     }
 
@@ -3273,7 +3258,7 @@ external_link_abstar_cur(hid_t fapl, hbool_t new_format)
     /* should be able to find the target file from main file's current working directory */
     if (gid < 0) {
 	H5_FAILED();
-	puts("    Should have found the file in current working directory.");
+	HDputs("    Should have found the file in current working directory.");
 	goto error;
     }
 
@@ -3353,7 +3338,7 @@ external_link_reltar(hid_t fapl, hbool_t new_format)
     /* Open object through external link */
     if((gid = H5Gopen2(fid, "ext_link", H5P_DEFAULT)) < 0) {
 	H5_FAILED();
-	puts("    Should have found the file in tmp directory.");
+	HDputs("    Should have found the file in tmp directory.");
 	goto error;
     } /* end if */
 
@@ -3450,7 +3435,7 @@ external_link_chdir(hid_t fapl, hbool_t new_format)
      */
     if (gid < 0) {
 	H5_FAILED();
-	puts("    Should have found the file in tmp directory.");
+	HDputs("    Should have found the file in tmp directory.");
 	goto error;
     }
 
@@ -3625,7 +3610,7 @@ external_set_elink_fapl1(hid_t fapl, hbool_t new_format)
     /* should succeed in opening the target object A in the current working directory */
     if (oidA < 0) {
 	H5_FAILED();
-	puts("    Should succeed in opening family target file A in current working directory");
+	HDputs("    Should succeed in opening family target file A in current working directory");
 	goto error;
     }
 
@@ -3639,7 +3624,7 @@ external_set_elink_fapl1(hid_t fapl, hbool_t new_format)
     /* should succeed in opening the target object B in the current working directory */
     if (oidB < 0) {
 	H5_FAILED();
-	puts("    Should succeed in opening multi target file B in current working directory");
+	HDputs("    Should succeed in opening multi target file B in current working directory");
 	goto error;
     }
 
@@ -3785,7 +3770,7 @@ external_set_elink_fapl2(hid_t fapl, hbool_t new_format)
     did = H5Dopen2(fid, "ext_link", dapl_id);
     if(did < 0) {
 	H5_FAILED();
-	puts("    Should succeed in opening the target dataset");
+	HDputs("    Should succeed in opening the target dataset");
 	goto error;
     }
 
@@ -4023,10 +4008,6 @@ external_set_elink_acc_flags(hid_t fapl, hbool_t new_format)
     } H5E_END_TRY;
     if(ret != FAIL) TEST_ERROR
     H5E_BEGIN_TRY {
-        ret = H5Pset_elink_acc_flags(gapl, H5F_ACC_DEBUG);
-    } H5E_END_TRY;
-    if(ret != FAIL) TEST_ERROR
-    H5E_BEGIN_TRY {
         ret = H5Pset_elink_acc_flags(gapl, H5F_ACC_CREAT);
     } H5E_END_TRY;
     if(ret != FAIL) TEST_ERROR
@@ -4145,7 +4126,8 @@ external_set_elink_cb(hid_t fapl, hbool_t new_format)
     op_data.target_file = filename2;
     /* Core file driver has issues when used as the member file driver for a family file */
     /* Family file driver cannot be used with family or multi drivers for member files */
-    /* Also disable parallel member drivers, because IS_H5FD_MPI whould report FALSE, causing problems */
+    /* Also disable parallel member drivers, because H5F_HAS_FEATURE(H5FD_FEAT_HAS_MPI) 
+       would report FALSE, causing problems */
     base_driver = H5Pget_driver(fapl);
     op_data.base_fapl = (base_driver == H5FD_FAMILY || base_driver ==  H5FD_MULTI
             || base_driver == H5FD_MPIO || base_driver == H5FD_CORE) ? H5P_DEFAULT : fapl;
@@ -4372,7 +4354,7 @@ external_link_win1(hid_t fapl, hbool_t new_format)
     /* should be able to find the target file via main file's CWD*/
     if(gid < 0) {
 	H5_FAILED();
-	puts("    Should have found the file in CWD.");
+	HDputs("    Should have found the file in CWD.");
 	goto error;
     }
 
@@ -4466,7 +4448,7 @@ external_link_win2(hid_t fapl, hbool_t new_format)
     /* should be able to find the target file directly */
     if(gid < 0) {
 	H5_FAILED();
-	puts("    Should have found the file in tmp.");
+	HDputs("    Should have found the file in tmp.");
 	goto error;
     }
 
@@ -4559,7 +4541,7 @@ external_link_win3(hid_t fapl, hbool_t new_format)
     /* should be able to find the target file directly */
     if (gid < 0) {
 	H5_FAILED();
-	puts("    Should have found the file in tmp.");
+	HDputs("    Should have found the file in tmp.");
 	goto error;
     }
 
@@ -4648,7 +4630,7 @@ external_link_win4(hid_t fapl, hbool_t new_format)
     /* should be able to find the target file via main file's absolute drive/relative path */
     if (gid < 0) {
 	H5_FAILED();
-	puts("    Should have found the file in CWD.");
+	HDputs("    Should have found the file in CWD.");
 	goto error;
     }
 
@@ -4744,7 +4726,7 @@ external_link_win5(hid_t fapl, hbool_t new_format)
     /* should be able to find the target file via main file's rel drive/abs path */
     if(gid < 0) {
 	H5_FAILED();
-	puts("    Should have found the file in CWD.");
+	HDputs("    Should have found the file in CWD.");
 	goto error;
     }
 
@@ -4837,7 +4819,7 @@ external_link_win6(hid_t fapl, hbool_t new_format)
     /* should be able to find the target file via target file's rel path in current drive */
     if (gid < 0) {
 	H5_FAILED();
-	puts("    Should have found the file in tmp.");
+	HDputs("    Should have found the file in tmp.");
 	goto error;
     }
 
@@ -4924,7 +4906,7 @@ external_link_win7(hid_t fapl, hbool_t new_format)
     /* should be able to find the target file via main file's local host/main drive*/
     if(gid < 0) {
         H5_FAILED();
-        puts("    Should have found the file in local host/main drive.");
+        HDputs("    Should have found the file in local host/main drive.");
         goto error;
     }
 
@@ -5016,7 +4998,7 @@ external_link_win8(hid_t fapl, hbool_t new_format)
     /* should be able to find the target file directly */
     if(gid < 0) {
         H5_FAILED();
-        puts("    Should have found the file in tmp.");
+        HDputs("    Should have found the file in tmp.");
         goto error;
     }
 
@@ -5103,7 +5085,7 @@ external_link_win9(hid_t fapl, hbool_t new_format)
     /* should be able to find the target file via main file's local host/main drive*/
     if(gid < 0) {
         H5_FAILED();
-        puts("    Should have found the file in local host/main drive.");
+        HDputs("    Should have found the file in local host/main drive.");
         goto error;
     }
 
@@ -5174,7 +5156,7 @@ external_link_recursive(hid_t fapl, hbool_t new_format)
     } H5E_END_TRY;
     if (gid >= 0) {
 	H5_FAILED();
-	puts("    Should have failed for recursive external links.");
+	HDputs("    Should have failed for recursive external links.");
 	goto error;
     }
 
@@ -5244,7 +5226,7 @@ external_link_query(hid_t fapl, hbool_t new_format)
     if(li.u.val_size != (1 + (HDstrlen(filename2) + 1) + (HDstrlen("/dst") + 1))) TEST_ERROR
     if (H5L_TYPE_EXTERNAL != li.type) {
 	H5_FAILED();
-	puts("    Unexpected link class - should have been an external link");
+	HDputs("    Unexpected link class - should have been an external link");
 	goto error;
     }
 
@@ -5270,7 +5252,7 @@ external_link_query(hid_t fapl, hbool_t new_format)
     if(li.u.val_size != (1 + (HDstrlen(filename2) + 1) + (HDstrlen("/dst") + 1))) TEST_ERROR
     if(H5L_TYPE_EXTERNAL != li.type) {
 	H5_FAILED();
-	puts("    Unexpected link class - should have been an external link");
+	HDputs("    Unexpected link class - should have been an external link");
 	goto error;
     }
 
@@ -5288,7 +5270,7 @@ external_link_query(hid_t fapl, hbool_t new_format)
     if(H5Oget_info_by_name(fid, "src", &oi, H5P_DEFAULT) < 0) FAIL_STACK_ERROR
     if(H5O_TYPE_GROUP != oi.type) {
 	H5_FAILED();
-	puts("    Unexpected object type - should have been a group");
+	HDputs("    Unexpected object type - should have been a group");
 	goto error;
     }
 
@@ -6077,7 +6059,7 @@ external_link_closing(hid_t fapl, hbool_t new_format)
     } H5E_END_TRY
 
     /* Test H5Rcreate */
-    if(H5Rcreate(&obj_ref, fid1, "elink/elink/elink/type1_moved", H5R_OBJECT, (-1)) < 0) TEST_ERROR
+    if(H5Rcreate(&obj_ref, fid1, "elink/elink/elink/type1_moved", H5R_OBJECT, (hid_t)(-1)) < 0) TEST_ERROR
 
     /* Test unlink */
     if(H5Ldelete(fid1, "elink/elink/elink/group1_moved", H5P_DEFAULT) < 0) TEST_ERROR
@@ -6324,7 +6306,6 @@ external_link_strong(hid_t fapl, hbool_t new_format)
     if(H5Gclose(gid2) < 0) TEST_ERROR
     if(H5Fclose(fid2) < 0) TEST_ERROR
 
-
     PASSED();
     return 0;
 
@@ -6529,7 +6510,7 @@ external_symlink(const char *env_h5_drvr, hid_t fapl, hbool_t new_format)
     } /* end if */
     else {
 	SKIPPED();
-	puts("    Current VFD doesn't support POSIX I/O calls");
+	HDputs("    Current VFD doesn't support POSIX I/O calls");
     } /* end else */
 
     return 0;
@@ -6549,7 +6530,7 @@ external_symlink(const char *env_h5_drvr, hid_t fapl, hbool_t new_format)
     return -1;
 #else /* H5_HAVE_SYMLINK */
     SKIPPED();
-    puts("    Current file system or operating system doesn't support symbolic links");
+    HDputs("    Current file system or operating system doesn't support symbolic links");
 
     return 0;
 #endif /* H5_HAVE_SYMLINK */
@@ -6964,7 +6945,6 @@ external_file_cache(hid_t fapl, hbool_t new_format)
     /* Verify that all files are now closed */
     H5F_sfile_assert_num(0);
 
-#ifndef H5_CANNOT_OPEN_TWICE
     /*
      * Test 5: 3 file cycle
      */
@@ -7066,7 +7046,6 @@ external_file_cache(hid_t fapl, hbool_t new_format)
 
     /* Verify that all files are now closed */
     H5F_sfile_assert_num(0);
-#endif /* H5_CANNOT_OPEN_TWICE */
 
     /* Close fapl */
     H5Pclose(my_fapl);
@@ -7341,8 +7320,8 @@ error:
 /* Callback functions for UD hard links. */
 /* UD_hard_create increments the object's reference count */
 static herr_t
-UD_hard_create(const char UNUSED * link_name, hid_t loc_group, const void *udata,
-    size_t udata_size, hid_t UNUSED lcpl_id)
+UD_hard_create(const char H5_ATTR_UNUSED * link_name, hid_t loc_group, const void *udata,
+    size_t udata_size, hid_t H5_ATTR_UNUSED lcpl_id)
 {
     haddr_t addr;
     hid_t target_obj = -1;
@@ -7410,8 +7389,8 @@ done:
 
 /* Traverse a hard link by opening the object */
 static hid_t
-UD_hard_traverse(const char UNUSED *link_name, hid_t cur_group,
-    const void *udata, size_t udata_size, hid_t UNUSED lapl_id)
+UD_hard_traverse(const char H5_ATTR_UNUSED *link_name, hid_t cur_group,
+    const void *udata, size_t udata_size, hid_t H5_ATTR_UNUSED lapl_id)
 {
     haddr_t addr;
     hid_t ret_value = -1;
@@ -7428,7 +7407,7 @@ UD_hard_traverse(const char UNUSED *link_name, hid_t cur_group,
 
 /* UD_hard_delete decrements the object's reference count */
 static herr_t
-UD_hard_delete(const char UNUSED * link_name, hid_t file, const void *udata,
+UD_hard_delete(const char H5_ATTR_UNUSED * link_name, hid_t file, const void *udata,
     size_t udata_size)
 {
     haddr_t addr;
@@ -7588,7 +7567,7 @@ ud_hard_links(hid_t fapl)
     if(li.u.val_size != 0) TEST_ERROR
     if(UD_HARD_TYPE != li.type) {
 	H5_FAILED();
-	puts("    Unexpected link class - should have been a UD hard link");
+	HDputs("    Unexpected link class - should have been a UD hard link");
 	goto error;
     } /* end if */
 
@@ -7646,8 +7625,8 @@ ud_hard_links(hid_t fapl)
  * in the current group named REREG_TARGET_NAME
  */
 static hid_t
-UD_rereg_traverse(const char UNUSED * link_name, hid_t cur_group,
-    const void UNUSED *udata, size_t UNUSED udata_size, hid_t lapl_id)
+UD_rereg_traverse(const char H5_ATTR_UNUSED * link_name, hid_t cur_group,
+    const void H5_ATTR_UNUSED *udata, size_t H5_ATTR_UNUSED udata_size, hid_t lapl_id)
 {
     hid_t ret_value;
 
@@ -8002,7 +7981,7 @@ ud_callbacks(hid_t fapl, hbool_t new_format)
     if(li.u.val_size != 16) TEST_ERROR
     if (UD_CB_TYPE != li.type) {
 	H5_FAILED();
-	puts("    Unexpected link class - should have been a UD hard link");
+	HDputs("    Unexpected link class - should have been a UD hard link");
 	goto error;
     }
 
@@ -8085,8 +8064,8 @@ error:
  *-------------------------------------------------------------------------
  */
 static hid_t
-UD_plist_traverse(const char UNUSED * link_name, hid_t cur_group,
-    const void UNUSED *udata, size_t udata_size, hid_t lapl_id)
+UD_plist_traverse(const char H5_ATTR_UNUSED * link_name, hid_t cur_group,
+    const void H5_ATTR_UNUSED *udata, size_t udata_size, hid_t lapl_id)
 {
     char target[NAME_BUF_SIZE];
     hid_t ret_value;
@@ -8224,8 +8203,8 @@ lapl_udata(hid_t fapl, hbool_t new_format)
  *-------------------------------------------------------------------------
  */
 static herr_t
-UD_cbsucc_create(const char UNUSED * link_name, hid_t UNUSED loc_group,
-    const void *udata, size_t udata_size, hid_t UNUSED lcpl_id)
+UD_cbsucc_create(const char H5_ATTR_UNUSED * link_name, hid_t H5_ATTR_UNUSED loc_group,
+    const void *udata, size_t udata_size, hid_t H5_ATTR_UNUSED lcpl_id)
 {
     /* Check to make sure that this "soft link" has a target */
     if(udata_size < 1 || !udata)
@@ -8235,8 +8214,8 @@ UD_cbsucc_create(const char UNUSED * link_name, hid_t UNUSED loc_group,
 } /* end UD_cbsucc_create() */
 
 static hid_t
-UD_cbsucc_traverse(const char UNUSED *link_name, hid_t cur_group,
-    const void *udata, size_t UNUSED udata_size, hid_t lapl_id)
+UD_cbsucc_traverse(const char H5_ATTR_UNUSED *link_name, hid_t cur_group,
+    const void *udata, size_t H5_ATTR_UNUSED udata_size, hid_t lapl_id)
 {
     const char *target = (const char *)udata;
     hid_t ret_value;
@@ -8253,8 +8232,8 @@ error:
 
 /* Failure callback for when the link is moved or renamed */
 static herr_t
-UD_cbfail_move(const char UNUSED *new_name, hid_t UNUSED new_loc,
-    const void UNUSED *udata, size_t UNUSED udata_size)
+UD_cbfail_move(const char H5_ATTR_UNUSED *new_name, hid_t H5_ATTR_UNUSED new_loc,
+    const void H5_ATTR_UNUSED *udata, size_t H5_ATTR_UNUSED udata_size)
 {
     /* This traversal function will always fail. */
     return -1;
@@ -8262,8 +8241,8 @@ UD_cbfail_move(const char UNUSED *new_name, hid_t UNUSED new_loc,
 
 /* SuccessCallback for when the link is moved or renamed */
 static herr_t
-UD_cbsucc_move(const char UNUSED *new_name, hid_t UNUSED new_loc,
-    const void UNUSED *udata, size_t UNUSED udata_size)
+UD_cbsucc_move(const char H5_ATTR_UNUSED *new_name, hid_t H5_ATTR_UNUSED new_loc,
+    const void H5_ATTR_UNUSED *udata, size_t H5_ATTR_UNUSED udata_size)
 {
     /* This traversal function will always succeed. */
     return 0;
@@ -8271,8 +8250,8 @@ UD_cbsucc_move(const char UNUSED *new_name, hid_t UNUSED new_loc,
 
 /* Callback for when the link is deleted.  Also called during move */
 static herr_t
-UD_cbsucc_delete(const char UNUSED *link_name, hid_t UNUSED file,
-    const void UNUSED *udata, size_t UNUSED udata_size)
+UD_cbsucc_delete(const char H5_ATTR_UNUSED *link_name, hid_t H5_ATTR_UNUSED file,
+    const void H5_ATTR_UNUSED *udata, size_t H5_ATTR_UNUSED udata_size)
 {
     /* This callback will always succeed */
     return 0;
@@ -8280,8 +8259,8 @@ UD_cbsucc_delete(const char UNUSED *link_name, hid_t UNUSED file,
 
 /* Callback for when the link is deleted.  Also called during move */
 static herr_t
-UD_cbfail_delete(const char UNUSED *link_name, hid_t UNUSED file,
-    const void UNUSED *udata, size_t UNUSED udata_size)
+UD_cbfail_delete(const char H5_ATTR_UNUSED *link_name, hid_t H5_ATTR_UNUSED file,
+    const void H5_ATTR_UNUSED *udata, size_t H5_ATTR_UNUSED udata_size)
 {
     /* This traversal function will always fail. */
     /* Note: un-deletable links are in general a very bad idea! */
@@ -8290,8 +8269,8 @@ UD_cbfail_delete(const char UNUSED *link_name, hid_t UNUSED file,
 
 /* Callback for when the link is queried */
 static ssize_t
-UD_cbfail_query(const char UNUSED *link_name, const void UNUSED *udata,
-    size_t UNUSED udata_size, void UNUSED *buf, size_t UNUSED buf_size)
+UD_cbfail_query(const char H5_ATTR_UNUSED *link_name, const void H5_ATTR_UNUSED *udata,
+    size_t H5_ATTR_UNUSED udata_size, void H5_ATTR_UNUSED *buf, size_t H5_ATTR_UNUSED buf_size)
 {
     /* This traversal function will always fail. */
     return -1;
@@ -8299,8 +8278,8 @@ UD_cbfail_query(const char UNUSED *link_name, const void UNUSED *udata,
 
 /* Callback for when the link is queried */
 static ssize_t
-UD_cbfail_on_write_query(const char UNUSED *link_name, const void UNUSED *udata,
-    size_t UNUSED udata_size, void *buf, size_t UNUSED buf_size)
+UD_cbfail_on_write_query(const char H5_ATTR_UNUSED *link_name, const void H5_ATTR_UNUSED *udata,
+    size_t H5_ATTR_UNUSED udata_size, void *buf, size_t H5_ATTR_UNUSED buf_size)
 {
     /* This traversal function will return a buffer size,
      * but will fail when a buffer is passed in ("writing to the buffer"
@@ -8315,8 +8294,8 @@ UD_cbfail_on_write_query(const char UNUSED *link_name, const void UNUSED *udata,
 
 /* Callback for when the link is queried */
 static ssize_t
-UD_cbsucc_query(const char UNUSED *link_name, const void UNUSED *udata,
-    size_t UNUSED udata_size, void *buf, size_t buf_size)
+UD_cbsucc_query(const char H5_ATTR_UNUSED *link_name, const void H5_ATTR_UNUSED *udata,
+    size_t H5_ATTR_UNUSED udata_size, void *buf, size_t buf_size)
 {
     /* This traversal function will return a buffer size,
      * but will fail when a buffer is passed in ("writing to the buffer"
@@ -8650,7 +8629,7 @@ lapl_nlinks(hid_t fapl, hbool_t new_format)
     } H5E_END_TRY;
     if (gid >= 0) {
 	H5_FAILED();
-	puts("    Should have failed for sequence of too many nested links.");
+	HDputs("    Should have failed for sequence of too many nested links.");
 	goto error;
     }
 
@@ -9037,7 +9016,7 @@ error:
  *-------------------------------------------------------------------------
  */
 static int
-visit_link_cb(hid_t UNUSED group_id, const char *name, const H5L_info_t *linfo,
+visit_link_cb(hid_t H5_ATTR_UNUSED group_id, const char *name, const H5L_info_t *linfo,
     void *_op_data)
 {
     lvisit_ud_t *op_data = (lvisit_ud_t *)_op_data;
@@ -9215,7 +9194,7 @@ error:
  *-------------------------------------------------------------------------
  */
 static int
-visit_obj_cb(hid_t UNUSED group_id, const char *name, const H5O_info_t *oinfo,
+visit_obj_cb(hid_t H5_ATTR_UNUSED group_id, const char *name, const H5O_info_t *oinfo,
     void *_op_data)
 {
     ovisit_ud_t *op_data = (ovisit_ud_t *)_op_data;
@@ -9393,7 +9372,7 @@ error:
  *-------------------------------------------------------------------------
  */
 static int
-visit_obj_stop_cb(hid_t UNUSED group_id, const char UNUSED *name, const H5O_info_t UNUSED *oinfo,
+visit_obj_stop_cb(hid_t H5_ATTR_UNUSED group_id, const char H5_ATTR_UNUSED *name, const H5O_info_t H5_ATTR_UNUSED *oinfo,
     void *_op_data)
 {
     unsigned *op_data = (unsigned *)_op_data;
@@ -9519,8 +9498,8 @@ static herr_t link_filter_set_local(hid_t dcpl_id, hid_t type_id, hid_t space_id
 } /* end link_filter_set_local */
 
 static size_t link_filter_filter(unsigned int flags, size_t cd_nelmts,
-    const unsigned int cd_values[], size_t nbytes, size_t UNUSED *buf_size,
-    void UNUSED **buf)
+    const unsigned int cd_values[], size_t nbytes, size_t H5_ATTR_UNUSED *buf_size,
+    void H5_ATTR_UNUSED **buf)
 {
     if(flags & H5Z_FLAG_OPTIONAL || cd_nelmts != 1 || cd_values[0] != 2112)
         return 0;
@@ -10174,7 +10153,7 @@ corder_create_empty(hid_t fapl)
     } H5E_END_TRY;
     if(ret > 0) {
 	H5_FAILED();
-	puts("    H5Pset_link_create_order() should have failed for a creation order index with no tracking.");
+	HDputs("    H5Pset_link_create_order() should have failed for a creation order index with no tracking.");
 	TEST_ERROR
     } /* end if */
 
@@ -11449,6 +11428,12 @@ delete_by_idx(hid_t fapl)
                 } H5E_END_TRY;
                 if(ret >= 0) TEST_ERROR
 
+                /* Check for deletion on non-existing group */
+                H5E_BEGIN_TRY {
+                    ret = H5Ldelete_by_idx(group_id, "None", idx_type, order, (hsize_t)0, H5P_DEFAULT);
+                } H5E_END_TRY;
+                if(ret >= 0) TEST_ERROR
+
                 /* Create several links, up to limit of compact form */
                 for(u = 0; u < max_compact; u++) {
                     hid_t group_id2;	        /* Group ID */
@@ -12014,8 +11999,8 @@ group_iterate_cb(hid_t group_id, const char *link_name, void *_op_data)
  *-------------------------------------------------------------------------
  */
 static int
-link_iterate_fail_cb(hid_t UNUSED group_id, const char UNUSED *link_name,
-    const H5L_info_t UNUSED *info, void UNUSED *_op_data)
+link_iterate_fail_cb(hid_t H5_ATTR_UNUSED group_id, const char H5_ATTR_UNUSED *link_name,
+    const H5L_info_t H5_ATTR_UNUSED *info, void H5_ATTR_UNUSED *_op_data)
 {
     return(H5_ITER_ERROR);
 } /* end link_iterate_fail_cb() */
@@ -12627,13 +12612,13 @@ link_iterate_old_check(hid_t group_id, H5_iter_order_t order,
     /* Check for iteration w/bad location ID */
     skip = 0;
     H5E_BEGIN_TRY {
-        ret = H5Literate((-1), H5_INDEX_NAME, order, &skip, link_iterate_fail_cb, NULL);
+        ret = H5Literate((hid_t)(-1), H5_INDEX_NAME, order, &skip, link_iterate_fail_cb, NULL);
     } H5E_END_TRY;
     if(ret >= 0) TEST_ERROR
 
 #ifndef H5_NO_DEPRECATED_SYMBOLS
     H5E_BEGIN_TRY {
-        ret = H5Giterate((-1), ".", &gskip, group_iterate_old_cb, iter_info);
+        ret = H5Giterate((hid_t)(-1), ".", &gskip, group_iterate_old_cb, iter_info);
     } H5E_END_TRY;
     if(ret >= 0) TEST_ERROR
 #endif /* H5_NO_DEPRECATED_SYMBOLS */
@@ -14604,15 +14589,11 @@ main(void)
                 printf("\n---Testing without external file cache---\n");
             } /* end else */
 
-#ifndef H5_CANNOT_OPEN_TWICE
             nerrors += external_link_root(my_fapl, new_format) < 0 ? 1 : 0;
-#endif /* H5_CANNOT_OPEN_TWICE */
             nerrors += external_link_path(my_fapl, new_format) < 0 ? 1 : 0;
-#ifndef H5_CANNOT_OPEN_TWICE
             nerrors += external_link_self(my_fapl, new_format) < 0 ? 1 : 0;
             nerrors += external_link_pingpong(my_fapl, new_format) < 0 ? 1 : 0;
             nerrors += external_link_toomany(my_fapl, new_format) < 0 ? 1 : 0;
-#endif /* H5_CANNOT_OPEN_TWICE */
             nerrors += external_link_dangling(my_fapl, new_format) < 0 ? 1 : 0;
             nerrors += external_link_recursive(my_fapl, new_format) < 0 ? 1 : 0;
             nerrors += external_link_query(my_fapl, new_format) < 0 ? 1 : 0;
@@ -14620,9 +14601,7 @@ main(void)
             nerrors += external_link_unlink_dense(my_fapl, new_format) < 0 ? 1 : 0;
             nerrors += external_link_move(my_fapl, new_format) < 0 ? 1 : 0;
             nerrors += external_link_ride(my_fapl, new_format) < 0 ? 1 : 0;
-#ifndef H5_CANNOT_OPEN_TWICE
             nerrors += external_link_closing(my_fapl, new_format) < 0 ? 1 : 0;
-#endif /* H5_CANNOT_OPEN_TWICE */
             nerrors += external_link_endian(new_format) < 0 ? 1 : 0;
             nerrors += external_link_strong(my_fapl, new_format) < 0 ? 1 : 0;
 
@@ -14652,9 +14631,7 @@ main(void)
             nerrors += external_symlink(env_h5_drvr, my_fapl, new_format) < 0 ? 1 : 0;
             nerrors += external_copy_invalid_object(my_fapl, new_format) < 0 ? 1 : 0;
             nerrors += external_dont_fail_to_source(my_fapl, new_format) < 0 ? 1 : 0;
-#ifndef H5_CANNOT_OPEN_TWICE
             nerrors += external_open_twice(my_fapl, new_format) < 0 ? 1 : 0;
-#endif /* H5_CANNOT_OPEN_TWICE */
         } /* end for */
 
         /* These tests assume that external links are a form of UD links,
@@ -14678,9 +14655,7 @@ main(void)
         nerrors += obj_visit_by_name(my_fapl, new_format) < 0 ? 1 : 0;
         nerrors += obj_visit_stop(my_fapl, new_format) < 0 ? 1 : 0;
         nerrors += link_filters(my_fapl, new_format) < 0 ? 1 : 0;
-#ifndef H5_CANNOT_OPEN_TWICE
         nerrors += obj_exists(my_fapl, new_format) < 0 ? 1 : 0;
-#endif /* H5_CANNOT_OPEN_TWICE */
 
         /* Keep this test last, it's testing files that are used above */
         /* do not do this for files used by external link tests */
@@ -14730,7 +14705,7 @@ main(void)
     if(nerrors) {
         printf("***** %d LINK TEST%s FAILED! *****\n",
                 nerrors, 1 == nerrors ? "" : "S");
-        exit(1);
+        HDexit(1);
     }
     printf("All link tests passed.\n");
 
@@ -14745,7 +14720,7 @@ main(void)
     return 0;
 
 error:
-    puts("*** TESTS FAILED ***");
+    HDputs("*** TESTS FAILED ***");
     return 1;
 }
 

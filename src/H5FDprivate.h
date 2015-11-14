@@ -24,6 +24,7 @@
 #include "H5FDpublic.h"
 
 /* Private headers needed by this file */
+#include "H5Pprivate.h"		/* Property lists			*/
 
 /*
  * The MPI drivers are needed because there are
@@ -38,14 +39,6 @@
 
 /* Length of filename buffer */
 #define H5FD_MAX_FILENAME_LEN      1024
-
-/* MPI based VFDs */
-#define IS_H5FD_MPIO(f)	/* (H5F_t *f) */				    \
-    (H5FD_MPIO==H5F_DRIVER_ID(f))
-
-/* Single macro to check for all file drivers that use MPI */
-#define IS_H5FD_MPI(file)  \
-        (IS_H5FD_MPIO(file))
 
 #ifdef H5_HAVE_PARALLEL
 /* ======== Temporary data transfer properties ======== */
@@ -112,6 +105,7 @@ struct H5P_genplist_t;
 struct H5F_t;
 
 H5_DLL int H5FD_term_interface(void);
+H5_DLL herr_t H5FD_locate_signature(H5FD_t *file, const H5P_genplist_t *dxpl, haddr_t *sig_addr);
 H5_DLL H5FD_class_t *H5FD_get_class(hid_t id);
 H5_DLL hsize_t H5FD_sb_size(H5FD_t *file);
 H5_DLL herr_t H5FD_sb_encode(H5FD_t *file, char *name/*out*/, uint8_t *buf);
@@ -136,11 +130,11 @@ H5_DLL haddr_t H5FD_get_eof(const H5FD_t *file);
 H5_DLL haddr_t H5FD_get_maxaddr(const H5FD_t *file);
 H5_DLL herr_t H5FD_get_feature_flags(const H5FD_t *file, unsigned long *feature_flags);
 H5_DLL herr_t H5FD_get_fs_type_map(const H5FD_t *file, H5FD_mem_t *type_map);
-H5_DLL herr_t H5FD_read(H5FD_t *file, hid_t dxpl_id, H5FD_mem_t type,
+H5_DLL herr_t H5FD_read(H5FD_t *file, const H5P_genplist_t *dxpl, H5FD_mem_t type,
     haddr_t addr, size_t size, void *buf/*out*/);
-H5_DLL herr_t H5FD_write(H5FD_t *file, hid_t dxpl_id, H5FD_mem_t type,
+H5_DLL herr_t H5FD_write(H5FD_t *file, const H5P_genplist_t *dxpl, H5FD_mem_t type,
     haddr_t addr, size_t size, const void *buf);
-H5_DLL herr_t H5FD_flush(H5FD_t *file, hid_t dxpl_id, hbool_t closing);
+H5_DLL herr_t H5FD_flush(H5FD_t *file, hid_t dxpl_id, unsigned closing);
 H5_DLL herr_t H5FD_truncate(H5FD_t *file, hid_t dxpl_id, hbool_t closing);
 H5_DLL herr_t H5FD_get_fileno(const H5FD_t *file, unsigned long *filenum);
 H5_DLL herr_t H5FD_get_vfd_handle(H5FD_t *file, hid_t fapl, void** file_handle);

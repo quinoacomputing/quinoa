@@ -93,35 +93,28 @@ H5Z_init_interface (void)
 
     FUNC_ENTER_NOAPI_NOINIT
 
+    /* Internal filters */
+    if (H5Z_register (H5Z_SHUFFLE)<0)
+        HGOTO_ERROR (H5E_PLINE, H5E_CANTINIT, FAIL, "unable to register shuffle filter")
+    if (H5Z_register (H5Z_FLETCHER32)<0)
+        HGOTO_ERROR (H5E_PLINE, H5E_CANTINIT, FAIL, "unable to register fletcher32 filter")
+    if (H5Z_register (H5Z_NBIT)<0)
+        HGOTO_ERROR (H5E_PLINE, H5E_CANTINIT, FAIL, "unable to register nbit filter")
+    if (H5Z_register (H5Z_SCALEOFFSET)<0)
+        HGOTO_ERROR (H5E_PLINE, H5E_CANTINIT, FAIL, "unable to register scaleoffset filter")
+
+    /* External filters */
 #ifdef H5_HAVE_FILTER_DEFLATE
     if (H5Z_register (H5Z_DEFLATE)<0)
-	HGOTO_ERROR (H5E_PLINE, H5E_CANTINIT, FAIL, "unable to register deflate filter")
+        HGOTO_ERROR (H5E_PLINE, H5E_CANTINIT, FAIL, "unable to register deflate filter")
 #endif /* H5_HAVE_FILTER_DEFLATE */
-#ifdef H5_HAVE_FILTER_SHUFFLE
-    if (H5Z_register (H5Z_SHUFFLE)<0)
-	HGOTO_ERROR (H5E_PLINE, H5E_CANTINIT, FAIL, "unable to register shuffle filter")
-#endif /* H5_HAVE_FILTER_SHUFFLE */
-#ifdef H5_HAVE_FILTER_FLETCHER32
-    if (H5Z_register (H5Z_FLETCHER32)<0)
-	HGOTO_ERROR (H5E_PLINE, H5E_CANTINIT, FAIL, "unable to register fletcher32 filter")
-#endif /* H5_HAVE_FILTER_FLETCHER32 */
 #ifdef H5_HAVE_FILTER_SZIP
     H5Z_SZIP->encoder_present = SZ_encoder_enabled();
     if (H5Z_register (H5Z_SZIP)<0)
-	HGOTO_ERROR (H5E_PLINE, H5E_CANTINIT, FAIL, "unable to register szip filter")
+        HGOTO_ERROR (H5E_PLINE, H5E_CANTINIT, FAIL, "unable to register szip filter")
 #endif /* H5_HAVE_FILTER_SZIP */
-#ifdef H5_HAVE_FILTER_NBIT
-    if (H5Z_register (H5Z_NBIT)<0)
-        HGOTO_ERROR (H5E_PLINE, H5E_CANTINIT, FAIL, "unable to register nbit filter")
-#endif /* H5_HAVE_FILTER_NBIT */
-#ifdef H5_HAVE_FILTER_SCALEOFFSET
-    if (H5Z_register (H5Z_SCALEOFFSET)<0)
-        HGOTO_ERROR (H5E_PLINE, H5E_CANTINIT, FAIL, "unable to register scaleoffset filter")
-#endif /* H5_HAVE_FILTER_SCALEOFFSET */
 
-#if (defined H5_HAVE_FILTER_DEFLATE | defined H5_HAVE_FILTER_FLETCHER32 | defined H5_HAVE_FILTER_SHUFFLE | defined H5_HAVE_FILTER_SZIP | defined H5_HAVE_FILTER_NBIT | defined H5_HAVE_FILTER_SCALEOFFSET)
 done:
-#endif /* (defined H5_HAVE_FILTER_DEFLATE | defined H5_HAVE_FILTER_FLETCHER32 | defined H5_HAVE_FILTER_SHUFFLE | defined H5_HAVE_FILTER_SZIP | defined H5_HAVE_FILTER_NBIT | defined H5_HAVE_FILTER_SCALEOFFSET) */
     FUNC_LEAVE_NOAPI(ret_value)
 }
 
@@ -408,27 +401,27 @@ done:
  *-------------------------------------------------------------------------
  */
 herr_t
-H5Z_unregister(H5Z_filter_t id)
+H5Z_unregister(H5Z_filter_t filter_id)
 {
-    size_t i;                   /* Local index variable */
+    size_t       filter_index;        /* Local index variable for filter */
     H5Z_object_t object;
-    herr_t ret_value=SUCCEED;   /* Return value */
+    herr_t       ret_value=SUCCEED;   /* Return value */
 
     FUNC_ENTER_NOAPI(FAIL)
 
-    HDassert(id >= 0 && id <= H5Z_FILTER_MAX);
+    HDassert(filter_id>=0 && filter_id<=H5Z_FILTER_MAX);
 
     /* Is the filter already registered? */
-    for (i=0; i<H5Z_table_used_g; i++)
-	if (H5Z_table_g[i].id==id)
+    for (filter_index=0; filter_index<H5Z_table_used_g; filter_index++)
+	if (H5Z_table_g[filter_index].id==filter_id)
             break;
 
     /* Fail if filter not found */
-    if (i>=H5Z_table_used_g)
+    if (filter_index>=H5Z_table_used_g)
         HGOTO_ERROR(H5E_PLINE, H5E_NOTFOUND, FAIL, "filter is not registered")
 
     /* Initialize the structure object for iteration */
-    object.filter_id = id;
+    object.filter_id = filter_id;
     object.found = FALSE;
 
     /* Iterate through all opened datasets, returns a failure if any of them uses the filter */
@@ -451,9 +444,9 @@ H5Z_unregister(H5Z_filter_t id)
 
     /* Remove filter from table */
     /* Don't worry about shrinking table size (for now) */
-    HDmemmove(&H5Z_table_g[i],&H5Z_table_g[i+1],sizeof(H5Z_class2_t)*((H5Z_table_used_g-1)-i));
+    HDmemmove(&H5Z_table_g[filter_index],&H5Z_table_g[filter_index+1],sizeof(H5Z_class2_t)*((H5Z_table_used_g-1)-filter_index));
 #ifdef H5Z_DEBUG
-    HDmemmove(&H5Z_stat_table_g[i],&H5Z_stat_table_g[i+1],sizeof(H5Z_stats_t)*((H5Z_table_used_g-1)-i));
+    HDmemmove(&H5Z_stat_table_g[filter_index],&H5Z_stat_table_g[filter_index+1],sizeof(H5Z_stats_t)*((H5Z_table_used_g-1)-filter_index));
 #endif /* H5Z_DEBUG */
     H5Z_table_used_g--;
 
@@ -508,12 +501,12 @@ done:
  *              FALSE otherwise.
  *
  * Programmer:  Raymond Lu
- *              13 May 2013
+ *              6 May 2013
  *
  *-------------------------------------------------------------------------
  */
 static int
-H5Z__check_unregister_group_cb(void *obj_ptr, hid_t UNUSED obj_id, void *key)
+H5Z__check_unregister_group_cb(void *obj_ptr, hid_t H5_ATTR_UNUSED obj_id, void *key)
 {
     hid_t           ocpl_id = -1;
     H5Z_object_t    *object = (H5Z_object_t *)key;
@@ -566,7 +559,7 @@ done:
  *-------------------------------------------------------------------------
  */
 static int
-H5Z__check_unregister_dset_cb(void *obj_ptr, hid_t UNUSED obj_id, void *key)
+H5Z__check_unregister_dset_cb(void *obj_ptr, hid_t H5_ATTR_UNUSED obj_id, void *key)
 {
     hid_t           ocpl_id = -1;
     H5Z_object_t    *object = (H5Z_object_t *)key;
@@ -612,12 +605,12 @@ done:
  *              FAIL if there is an error
  *
  * Programmer:  Raymond Lu
- *              13 May 2013
+ *              6 May 2013
  *
  *-------------------------------------------------------------------------
  */
 static int
-H5Z__flush_file_cb(void *obj_ptr, hid_t UNUSED obj_id, void UNUSED *key)
+H5Z__flush_file_cb(void *obj_ptr, hid_t H5_ATTR_UNUSED obj_id, void H5_ATTR_UNUSED *key)
 {
     int             ret_value = FALSE;    /* Return value */
 
@@ -635,7 +628,6 @@ H5Z__flush_file_cb(void *obj_ptr, hid_t UNUSED obj_id, void UNUSED *key)
 done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5Z__flush_file_cb() */
-
 
 
 /*-------------------------------------------------------------------------
@@ -851,7 +843,7 @@ H5Z_prepare_prelude_callback_dcpl(hid_t dcpl_id, hid_t type_id, H5Z_prelude_type
                 H5S_t *space;           /* Dataspace describing chunk */
                 size_t u;               /* Local index variable */
 
-                /* Create a data space for a chunk & set the extent */
+                /* Create a dataspace for a chunk & set the extent */
                 for(u = 0; u < dcpl_layout.u.chunk.ndims; u++)
                     chunk_dims[u] = dcpl_layout.u.chunk.dim[u];
                 if(NULL == (space = H5S_create_simple(dcpl_layout.u.chunk.ndims, chunk_dims, NULL)))
@@ -972,7 +964,7 @@ H5Z_can_apply_direct(const H5O_pline_t *pline)
     HDassert(pline->nused > 0);
 
     /* Make "can apply" callbacks for filters in pipeline */
-    if(H5Z_prelude_callback(pline, -1, -1, -1, H5Z_PRELUDE_CAN_APPLY) < 0)
+    if(H5Z_prelude_callback(pline, (hid_t)-1, (hid_t)-1, (hid_t)-1, H5Z_PRELUDE_CAN_APPLY) < 0)
         HGOTO_ERROR(H5E_PLINE, H5E_CANAPPLY, FAIL, "unable to apply filter")
 
 done:
@@ -1009,7 +1001,7 @@ H5Z_set_local_direct(const H5O_pline_t *pline)
     HDassert(pline->nused > 0);
 
     /* Make "set local" callbacks for filters in pipeline */
-    if(H5Z_prelude_callback(pline, -1, -1, -1, H5Z_PRELUDE_SET_LOCAL) < 0)
+    if(H5Z_prelude_callback(pline, (hid_t)-1, (hid_t)-1, (hid_t)-1, H5Z_PRELUDE_SET_LOCAL) < 0)
         HGOTO_ERROR(H5E_PLINE, H5E_SETLOCAL, FAIL, "local filter parameters not set")
 
 done:
@@ -1331,7 +1323,6 @@ H5Z_pipeline(const H5O_pline_t *pline, unsigned flags,
              */
 	    if((fclass_idx = H5Z_find_idx(pline->filter[idx].id)) < 0) {
                 hbool_t issue_error = FALSE;
-#ifndef H5_VMS
 
                     const H5Z_class2_t    *filter_info;
 
@@ -1347,9 +1338,7 @@ H5Z_pipeline(const H5O_pline_t *pline, unsigned flags,
                     } /* end if */
                     else
                         issue_error = TRUE;
-#else /*H5_VMS*/
-                issue_error = TRUE;
-#endif /*H5_VMS*/
+
                 /* Check for error */
                 if(issue_error) {
                     /* Print out the filter name to give more info.  But the name is optional for 
@@ -1493,7 +1482,7 @@ done:
  *              FAIL   - error
  *
  * Programmer:	Raymond Lu
- *              14 May 2013
+ *              26 April 2013
  *
  * Modifications:
  *
@@ -1522,6 +1511,7 @@ H5Z_filter_in_pline(const H5O_pline_t *pline, H5Z_filter_t filter)
 done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5Z_filter_in_pline() */
+
 
 
 /*-------------------------------------------------------------------------

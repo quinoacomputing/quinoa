@@ -669,7 +669,7 @@ test_h5o_plist(void)
     gcpl = H5Gget_create_plist(grp);
     CHECK(gcpl, FAIL, "H5Gget_create_plist");
     tcpl = H5Tget_create_plist(dtype);
-    CHECK(dcpl, FAIL, "H5Tget_create_plist");
+    CHECK(tcpl, FAIL, "H5Tget_create_plist");
     dcpl = H5Dget_create_plist(dset);
     CHECK(dcpl, FAIL, "H5Dget_create_plist");
 
@@ -719,7 +719,7 @@ test_h5o_plist(void)
     gcpl = H5Gget_create_plist(grp);
     CHECK(gcpl, FAIL, "H5Gget_create_plist");
     tcpl = H5Tget_create_plist(dtype);
-    CHECK(dcpl, FAIL, "H5Tget_create_plist");
+    CHECK(tcpl, FAIL, "H5Tget_create_plist");
     dcpl = H5Dget_create_plist(dset);
     CHECK(dcpl, FAIL, "H5Dget_create_plist");
 
@@ -1355,9 +1355,7 @@ test_h5o(void)
     test_h5o_link();            /* Test object link routine */
     test_h5o_comment();         /* Test routines for comment */
     test_h5o_comment_by_name(); /* Test routines for comment by name */
-#ifndef  H5_CANNOT_OPEN_TWICE   /* OpenVMS can't open a file twice */
     test_h5o_getinfo_same_file(); /* Test info for objects in the same file */
-#endif /* H5_CANNOT_OPEN_TWICE */
 } /* test_h5o() */
 
 

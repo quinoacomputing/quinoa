@@ -62,7 +62,7 @@
  * group's B-trees as well as chunked dataset's B-trees - QAK)
  */
 #define H5D_XFER_BTREE_SPLIT_RATIO_SIZE sizeof(double[3])
-#define H5D_XFER_BTREE_SPLIT_RATIO_DEF  {0.1, 0.5, 0.9}
+#define H5D_XFER_BTREE_SPLIT_RATIO_DEF  {0.1F, 0.5F, 0.9F}
 /* Definitions for vlen allocation function property */
 #define H5D_XFER_VLEN_ALLOC_SIZE        sizeof(H5MM_allocate_t)
 #define H5D_XFER_VLEN_ALLOC_DEF         H5D_VLEN_ALLOC
@@ -170,10 +170,13 @@ static herr_t H5P__dxfr_xform_close(const char* name, size_t size, void* value);
 const H5P_libclass_t H5P_CLS_DXFR[1] = {{
     "data transfer",		/* Class name for debugging     */
     H5P_TYPE_DATASET_XFER,      /* Class type                   */
-    &H5P_CLS_ROOT_g,		/* Parent class ID              */
-    &H5P_CLS_DATASET_XFER_g,	/* Pointer to class ID          */
-    &H5P_LST_DATASET_XFER_g,	/* Pointer to default property list ID */
+
+    &H5P_CLS_ROOT_g,		/* Parent class                 */
+    &H5P_CLS_DATASET_XFER_g,	/* Pointer to class             */
+    &H5P_CLS_DATASET_XFER_ID_g,	/* Pointer to class ID          */
+    &H5P_LST_DATASET_XFER_ID_g,	/* Pointer to default property list ID */
     H5P__dxfr_reg_prop,		/* Default property registration routine */
+
     NULL,		        /* Class creation callback      */
     NULL,		        /* Class creation callback info */
     NULL,			/* Class copy callback          */
@@ -382,7 +385,7 @@ done:
  */
 /* ARGSUSED */
 static herr_t
-H5P__dxfr_xform_del(hid_t UNUSED prop_id, const char UNUSED *name, size_t UNUSED size, void *value)
+H5P__dxfr_xform_del(hid_t H5_ATTR_UNUSED prop_id, const char H5_ATTR_UNUSED *name, size_t H5_ATTR_UNUSED size, void *value)
 {
     herr_t ret_value = SUCCEED;         /* Return value */
 
@@ -414,7 +417,7 @@ done:
  */
 /* ARGSUSED */
 static herr_t
-H5P__dxfr_xform_copy(const char UNUSED *name, size_t UNUSED size, void *value)
+H5P__dxfr_xform_copy(const char H5_ATTR_UNUSED *name, size_t H5_ATTR_UNUSED size, void *value)
 {
     herr_t ret_value = SUCCEED;         /* Return value */
 
@@ -444,7 +447,7 @@ done:
  *-------------------------------------------------------------------------
  */
 static int
-H5P__dxfr_xform_cmp(const void *_xform1, const void *_xform2, size_t UNUSED size)
+H5P__dxfr_xform_cmp(const void *_xform1, const void *_xform2, size_t H5_ATTR_UNUSED size)
 {
     const H5Z_data_xform_t * const *xform1 = (const H5Z_data_xform_t * const *)_xform1; /* Create local aliases for values */
     const H5Z_data_xform_t * const *xform2 = (const H5Z_data_xform_t * const *)_xform2; /* Create local aliases for values */
@@ -499,7 +502,7 @@ done:
  */
 /* ARGSUSED */
 static herr_t
-H5P__dxfr_xform_close(const char UNUSED *name, size_t UNUSED size, void *value)
+H5P__dxfr_xform_close(const char H5_ATTR_UNUSED *name, size_t H5_ATTR_UNUSED size, void *value)
 {
     herr_t ret_value = SUCCEED;         /* Return value */
 
