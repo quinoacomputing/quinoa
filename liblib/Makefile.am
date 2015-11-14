@@ -12,12 +12,18 @@ include $(top_srcdir)/lib_flags.am
 # This is our output, the netcdf library the user will install.
 lib_LTLIBRARIES = libnetcdf.la
 
+##
 # These linker flags specify libtool version info.
 # Note: version-info of "9:0:2" results in soname of libnetcdf.so.7 -> libnetcdf.so.7.2.0
-libnetcdf_la_LDFLAGS = -version-info 9:0:2
+# See http://www.gnu.org/software/libtool/manual/libtool.html#Libtool-versioning
+# for information regarding incrementing `-version-info`.
+##
+
+libnetcdf_la_LDFLAGS = -version-info 10:0:3 ${NOUNDEFINED}
+
 libnetcdf_la_CPPFLAGS = ${AM_CPPFLAGS}
-libnetcdf_la_LIBADD = 
-CLEANFILES = 
+libnetcdf_la_LIBADD =
+CLEANFILES =
 
 # Turn on some extra stuff when building a DLL for windows.
 if BUILD_DLL
@@ -37,8 +43,8 @@ libnetcdf_la_LIBADD += ${top_builddir}/libdispatch/libdispatch.la	\
 
 # + pnetcdf
 if USE_PNETCDF
-AM_CPPFLAGS += -I${top_srcdir}/libsrc5
-libnetcdf_la_LIBADD += ${top_builddir}/libsrc5/libnetcdf5.la
+AM_CPPFLAGS += -I${top_srcdir}/libsrcp
+libnetcdf_la_LIBADD += ${top_builddir}/libsrcp/libnetcdfp.la
 endif # USE_PNETCDF
 
 # + dap
@@ -58,13 +64,8 @@ libnetcdf_la_LIBADD += ${top_builddir}/libsrc4/libnetcdf4.la
 # Not ready for prime time yet
 # libnetcdf_la_LIBADD += ${top_builddir}/libdiskless/libdiskless.la
 
-# netcdf4+cdmremote
-if BUILD_CDMREMOTE
-libnetcdf_la_LIBADD += ${top_builddir}/libcdmr/libnccr.la
-endif # BUILD_CDMREMOTE
-
 endif #USE_NETCDF4
 
 # We need at least one source file
-libnetcdf_la_SOURCES = stub.c
+libnetcdf_la_SOURCES = nc_initialize.c
 EXTRA_DIST=CMakeLists.txt 

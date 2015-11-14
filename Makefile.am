@@ -9,13 +9,13 @@
 ACLOCAL_AMFLAGS = -I m4
 
 # These files get added to the distribution.
-EXTRA_DIST = README.md COPYRIGHT INSTALL INSTALL.cmake test_prog.c \
-	lib_flags.am cmake CMakeLists.txt COMPILE.cmake.txt config.h.in.cmake \
-	config.h.in.cmake cmake_uninstall.cmake.in \
-	netcdf-config-version.cmake.in \
-	netcdf-config.cmake.in FixBundle.cmake.in \
-	nc-config.in.cmake RELEASE_NOTES.md CTestCustom.cmake \
-	CTestConfig.cmake.in
+EXTRA_DIST = README.md COPYRIGHT INSTALL.md test_prog.c \
+	lib_flags.am cmake CMakeLists.txt COMPILE.cmake.txt \
+	config.h.cmake.in cmake_uninstall.cmake.in \
+	FixBundle.cmake.in \
+	nc-config.cmake.in RELEASE_NOTES.md CTestCustom.cmake \
+	CTestConfig.cmake.in libnetcdf.settings.in netCDFConfig.cmake.in \
+	CMakeInstallation.cmake
 
 # Doxygen doesn't build nicely in vpath builds.
 # Don't do this; it wipes out any exported values
@@ -25,9 +25,9 @@ pkgconfigdir=$(libdir)/pkgconfig
 pkgconfig_DATA = netcdf.pc
 
 # We need a way to automatically generate INSTALL from
-# man4/install.doc, now that we've switched from texinfo to doxygen.
+# docs/install.doc, now that we've switched from texinfo to doxygen.
 # INSTALL:
-#	non-existent-doxygen-to-text-utility <  man4/install.doc > INSTALL
+#	non-existent-doxygen-to-text-utility <  docs/install.doc > INSTALL
 
 # Does the user want to build the V2 API?
 if BUILD_V2
@@ -64,7 +64,7 @@ endif
 
 # Build pnetcdf
 if USE_PNETCDF
-LIBSRC5 = libsrc5
+LIBSRCP = libsrcp
 endif
 
 # Build UDUNITS?
@@ -84,16 +84,16 @@ endif
 
 # This is the list of subdirs for which Makefiles will be constructed
 # and run. ncgen must come before ncdump, because their tests
-# depend on it. 
+# depend on it.
 SUBDIRS = include $(OCLIB) $(H5_TEST_DIR) libdispatch libsrc		\
-$(LIBSRC4_DIR) $(DAP2) $(LIBCDMR) $(LIBSRC5) liblib  \
+$(LIBSRC4_DIR) $(DAP2) $(LIBCDMR) $(LIBSRCP) liblib  \
 $(NCGEN3) $(NCGEN) $(NCDUMP) \
 $(TESTDIRS) \
-man4 $(EXAMPLES) \
+docs $(EXAMPLES) \
 $(UDUNITS) $(LIBCF)
 
 # Remove these generated files, for a distclean.
-DISTCLEANFILES = VERSION comps.txt test_prog
+DISTCLEANFILES = VERSION comps.txt test_prog libnetcdf.settings
 
 # The nc-config script helps the user build programs with netCDF.
 bin_SCRIPTS = nc-config
@@ -101,6 +101,7 @@ bin_SCRIPTS = nc-config
 # What needs to go in the binrary dist?
 BINFILES = README_BINARIES.txt
 BINFILES += include/netcdf.h share/man/man3/netcdf.3 lib/libnetcdf.a
+BINFILES += libnetcdf.settings
 ZIPBINFILES = ${prefix}/include/netcdf.h ${prefix}/share/man/man3/netcdf.3 ${prefix}/lib/libnetcdf.a
 
 if BUILD_UTILITIES
@@ -116,6 +117,52 @@ lib/libnetcdf.la lib/netcdfdll.def
 ZIPBINFILES += ${prefix}/bin/libnetcdf-7.dll ${prefix}/lib/libnetcdf.dll.a ${prefix}/lib/libnetcdf.a	\
 ${prefix}/lib/libnetcdf.la ${prefix}/lib/netcdfdll.def
 endif # BUILD_DLL
+
+# install libnetcdf.settings in lib directory.
+settingsdir=$(libdir)
+settings_DATA=libnetcdf.settings
+
+####
+# Provide an entry to rebuild all the m4 generated files
+# List of files to create: WARNING leave off the extension
+####
+
+MM4= ./nc_test/test_put ./nc_test/test_get \
+     ./libsrc/netcdf ./libsrc/putget ./libsrc/ncx \
+     ./libsrc/t_ncxx ./libsrc/attr
+
+mm4::
+	for m in ${MM4} ; do \
+	  b=`basename $$m` ; d=`dirname $$m`;\
+	  pushd $$d; m4 -s $${b}.m4 > $${b}.c ; popd; done
+
+
+#####
+# If ENABLE_FORTRAN was turned on,
+# we have new make targets, build-netcdf-fortran and
+# install-netcdf-fortran.
+#####
+
+
+###
+# build-netcdf-fortran
+###
+if BUILD_FORTRAN
+
+build-netcdf-fortran:
+	echo "Downloading and Building NetCDF-Fortran"
+	chmod u+x $(abs_top_builddir)/postinstall.sh
+	sh -c "$(abs_top_builddir)/postinstall.sh -t autotools -a build"
+
+###
+# install-netcdf-fortran
+###
+install-netcdf-fortran:
+	echo "Installing NetCDF-Fortran"
+	chmod u+x $(abs_top_builddir)/postinstall.sh
+	sh -c "$(abs_top_builddir)/postinstall.sh -t autotools -a install"
+
+endif
 
 # At Unidata, package up binaries.
 ftpbin: install
@@ -135,9 +182,16 @@ check_nc_config:
 	$(CC) `./nc-config --cflags` test_prog.c -o test_prog `./nc-config --libs`
 	./test_prog
 
+
 install-data-hook:
+
+# if BUILD_FORTRAN
+#	chmod u+x $(abs_top_builddir)/postinstall.sh
+#	sh -c "$(abs_top_builddir)/postinstall.sh -t autotools"
+#endif
+
 if BUILD_DLL
-	cp liblib/netcdfdll.def ${prefix}/lib
+	cp liblib/netcdfdll.def $(DESTDIR)${prefix}/bin
 endif # BUILD_DLL
 	@echo ''
 	@echo '+-------------------------------------------------------------+'
@@ -165,7 +219,7 @@ endif # BUILD_DLL
 	@echo '| http://www.unidata.ucar.edu/software/netcdf/                |'
 	@echo '|                                                             |'
 	@echo '| NetCDF is developed and maintained at the Unidata Program   |'
-	@echo '| Center. Unidata provides a broad array of data and software |' 
+	@echo '| Center. Unidata provides a broad array of data and software |'
 	@echo '| tools for use in geoscience education and research.         |'
 	@echo '| http://www.unidata.ucar.edu                                 |'
 	@echo '+-------------------------------------------------------------+'

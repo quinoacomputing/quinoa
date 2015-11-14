@@ -9,18 +9,22 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include <assert.h> 
+#include <assert.h>
 #include <netcdf.h>
 #include "generic.h"
 #include "ncgen.h"
 #include "genlib.h"
+
+#ifndef HAVE_STRLCAT
+extern size_t strlcat(char *dst, const char *src, size_t siz);
+#endif
 
 extern int netcdf_flag;
 extern int c_flag;
 extern int fortran_flag;
 
 #define MIN(a,b) (((a) < (b)) ? (a) : (b))
-
+#define MAX(a,b) (((a) > (b)) ? (a) : (b))
 #define fpr    (void) fprintf
 
 
@@ -35,7 +39,7 @@ tztrim(
     )
 {
     char *cp, *ep;
-    
+
     cp = ss;
     if (*cp == '-')
       cp++;
@@ -90,12 +94,12 @@ gen_load_c(
 		    vars[varnum].lname, vars[varnum].lname);
 	    cline(stmnt);
 	}
-	
+
 	/* load variable with data values using static initialization */
 	sprintf(stmnt, "    static %s %s[] = {",
 		ncctype(vars[varnum].type),
 		vars[varnum].lname);
-	
+
 	stmnt_len = strlen(stmnt);
 	switch (vars[varnum].type) {
 	  case NC_CHAR:
@@ -204,7 +208,7 @@ gen_load_c(
 		    (unsigned long)vars[varnum].nrecs, /* number of recs for this variable */
 		    vars[varnum].name);
 	    cline(stmnt);
-	    
+
 	    for (idim = 0; idim < vars[varnum].ndims; idim++) {
 		sprintf(stmnt, "    %s_start[%d] = 0;",
 			vars[varnum].lname,
@@ -220,7 +224,7 @@ gen_load_c(
 		cline(stmnt);
 	    }
 	}
-	
+
 	if (vars[varnum].dims[0] == rec_dim) {
 	    sprintf(stmnt,
 		    "    stat = nc_put_vara_%s(ncid, %s_id, %s_start, %s_count, %s);",
@@ -242,7 +246,7 @@ gen_load_c(
 	sprintf(stmnt, "    static %s %s = ",
 		ncctype(vars[varnum].type),
 		vars[varnum].lname);
-	
+
 	switch (vars[varnum].type) {
 	  case NC_CHAR:
 	    val_string = cstrstr((char *) rec_start, var_len);
@@ -286,7 +290,7 @@ gen_load_c(
     cline("    check_err(stat,__LINE__,__FILE__);");
     cline("   }");
 }
-    
+
 
 /*
  * Add to a partial Fortran statement, checking if it's too long.  If it is too
@@ -302,16 +306,19 @@ fstrcat(
     size_t *slenp			/* pointer to length of source string */
     )
 {
-  
+
   *slenp += strlen(t);
-  
+
   if (*slenp >= FORT_MAX_STMNT) {
     derror("FORTRAN statement too long: %s",s);
     fline(s);
     strncpy(s, t, FORT_MAX_STMNT);
     *slenp = strlen(s);
   } else {
-    strncat(s, t, MIN(strlen(t),FORT_MAX_STMNT-strlen(t)));
+    /* Suppress a coverity-related issue without actually
+       ignoring it in the coverity dashboard. */
+    /* coverity[unsigned_compare] */
+    strncat(s, t, MAX(0,MIN(strlen(t),strlen(s)-(strlen(t)))));
   }
 }
 
@@ -335,7 +342,7 @@ f_var_init(
     size_t stmnt_len;
     char s2[FORT_MAX_STMNT];
     int ival;
-    
+
     /* load variable with data values  */
     sprintf(stmnt, "data %s /",vars[varnum].lname);
     stmnt_len = strlen(stmnt);
@@ -434,7 +441,7 @@ gen_load_fortran(
     } else {
 	v->data_stmnt = fstrstr(rec_start, valnum);
     }
-    
+
     if (v->ndims >0 && v->dims[0] == rec_dim) {
 	return;
     }
@@ -455,7 +462,7 @@ gen_load_fortran(
 		nfftype(v->type), v->lname, char_expr);
 	free(char_expr);
     }
-    
+
     fline(stmnt);
     fline("call check_err(iret)");
 }
@@ -538,7 +545,7 @@ load_netcdf(
 	start[idim] = 0;
 	count[idim] = dims[vars[varnum].dims[idim]].size;
     }
-    
+
     switch (vars[varnum].type) {
       case NC_BYTE:
 	stat = nc_put_vara_schar(ncid, varnum, start, count,

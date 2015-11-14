@@ -8,8 +8,14 @@ Research/Unidata. See \ref copyright file for more info.  */
 #ifdef HAVE_GETOPT_H
 #include <getopt.h>
 #endif
-#ifndef _WIN32
+#ifdef _MSC_VER /* Microsoft Compilers */
+#include <io.h>
+#endif
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+#ifdef HAVE_FCNTL_H
+#include <fcntl.h>
 #endif
 
 #ifdef _MSC_VER
@@ -17,6 +23,10 @@ Research/Unidata. See \ref copyright file for more info.  */
 #include "XGetopt.h"
 int opterr;
 int optind;
+#endif
+
+#ifndef HAVE_SSIZE_T
+typedef int ssize_t;
 #endif
 
 #include <stdlib.h>
@@ -28,6 +38,7 @@ int optind;
 #include <locale.h>
 #endif	/* HAVE_LOCALE_H */
 #include <netcdf.h>
+#include <netcdf_mem.h>
 #include "utils.h"
 #include "nccomps.h"
 #include "nctime0.h"		/* new iso time and calendar stuff */
@@ -37,6 +48,7 @@ int optind;
 #include "indent.h"
 #include "isnan.h"
 #include "cdl.h"
+
 
 #define int64_t long long
 #define uint64_t unsigned long long
@@ -88,15 +100,15 @@ usage(void)
 		   "%s [-c|-h] [-v ...] [[-b|-f] [c|f]] [-l len] [-n name] [-p n[,n]] [-k] [-x] [-s] [-t|-i] [-g ...] [-w] file\n%s",
 		   progname,
 		   USAGE);
-    
+
     (void) fprintf(stderr,
                  "netcdf library version %s\n",
                  nc_inq_libvers());
 }
 
 
-/* 
- * convert pathname of netcdf file into name for cdl unit, by taking 
+/*
+ * convert pathname of netcdf file into name for cdl unit, by taking
  * last component of path and stripping off any extension.
  * DMH: add code to handle OPeNDAP url.
  * DMH: I think this also works for UTF8.
@@ -110,10 +122,10 @@ name_path(const char *path)
 
 #ifdef vms
 #define FILE_DELIMITER ']'
-#endif    
+#endif
 #if defined(WIN32) || defined(msdos)
 #define FILE_DELIMITER '\\'
-#endif    
+#endif
 #ifndef FILE_DELIMITER /* default to unix */
 #define FILE_DELIMITER '/'
 #endif
@@ -136,7 +148,7 @@ name_path(const char *path)
     cp = strrchr(path, FILE_DELIMITER);
     if (cp == 0)		/* no delimiter */
       cp = path;
-    else			/* skip delimeter */
+    else			/* skip delimiter */
       cp++;
     new = (char *) emalloc((unsigned) (strlen(cp)+1));
     (void) strncpy(new, cp, strlen(cp) + 1);	/* copy last component of path */
@@ -162,7 +174,6 @@ prim_type_name(nc_type type)
 	return "float";
       case NC_DOUBLE:
 	return "double";
-#ifdef USE_NETCDF4
       case NC_UBYTE:
 	return "ubyte";
       case NC_USHORT:
@@ -181,7 +192,6 @@ prim_type_name(nc_type type)
 	return "opaque";
       case NC_COMPOUND:
 	return "compound";
-#endif /* USE_NETCDF4 */
       default:
 	error("prim_type_name: bad type %d", type);
 	return "bogus";
@@ -198,7 +208,7 @@ static void
 tztrim(char *ss)
 {
     char *cp, *ep;
-    
+
     cp = ss;
     if (*cp == '-')
       cp++;
@@ -226,8 +236,10 @@ kind_string(int kind)
     switch (kind) {
     case NC_FORMAT_CLASSIC:
 	return "classic";
-    case NC_FORMAT_64BIT:
+    case NC_FORMAT_64BIT_OFFSET:
 	return "64-bit offset";
+    case NC_FORMAT_CDF5:
+	return "cdf5";
     case NC_FORMAT_NETCDF4:
 	return "netCDF-4";
     case NC_FORMAT_NETCDF4_CLASSIC:
@@ -245,28 +257,30 @@ kind_string_extended(int kind, int mode)
 {
     static char text[1024];
     switch (kind) {
-    case NC_FORMAT_NC3:
-	if(mode & NC_64BIT_OFFSET)
+    case NC_FORMATX_NC3:
+	if(mode & NC_CDF5)
+	    snprintf(text,sizeof(text),"%s mode=%08x", "64-bit data",mode);
+	else if(mode & NC_64BIT_OFFSET)
 	    snprintf(text,sizeof(text),"%s mode=%08x", "64-bit offset",mode);
 	else
 	    snprintf(text,sizeof(text),"%s mode=%08x", "classic",mode);
 	break;
-    case NC_FORMAT_NC_HDF5:
+    case NC_FORMATX_NC_HDF5:
 	snprintf(text,sizeof(text),"%s mode=%08x", "HDF5",mode);
-	break;	
-    case NC_FORMAT_NC_HDF4:
+	break;
+    case NC_FORMATX_NC_HDF4:
 	snprintf(text,sizeof(text),"%s mode=%08x", "HDF4",mode);
 	break;
-    case NC_FORMAT_PNETCDF:
+    case NC_FORMATX_PNETCDF:
 	snprintf(text,sizeof(text),"%s mode=%08x", "PNETCDF",mode);
 	break;
-    case NC_FORMAT_DAP2:
+    case NC_FORMATX_DAP2:
 	snprintf(text,sizeof(text),"%s mode=%08x", "DAP2",mode);
 	break;
-    case NC_FORMAT_DAP4:
+    case NC_FORMATX_DAP4:
 	snprintf(text,sizeof(text),"%s mode=%08x", "DAP4",mode);
 	break;
-    case NC_FORMAT_UNDEFINED:
+    case NC_FORMATX_UNDEFINED:
 	snprintf(text,sizeof(text),"%s mode=%08x", "unknown",mode);
 	break;
     default:
@@ -277,17 +291,90 @@ kind_string_extended(int kind, int mode)
     return text;
 }
 
+#ifdef USE_DISKLESS
+static int
+fileopen(const char* path, void** memp, size_t* sizep)
+{
+    int status = NC_NOERR;
+    int fd = -1;
+    int oflags = 0;
+    off_t size = 0;
+    void* mem = NULL;
+    off_t red = 0;
+    char* pos = NULL;
 
-/* 
+    /* Open the file, but make sure we can write it if needed */
+    oflags = O_RDONLY;
+#ifdef O_BINARY
+    oflags |= O_BINARY;
+#endif
+    oflags |= O_EXCL;
+#ifdef vms
+    fd = open(path, oflags, 0, "ctx=stm");
+#else
+    fd  = open(path, oflags);
+#endif
+    if(fd < 0) {
+	status = errno;
+	goto done;
+    }
+    /* get current filesize  = max(|file|,initialize)*/
+    size = lseek(fd,0,SEEK_END);
+    if(size < 0) {status = errno; goto done;}
+    /* move pointer back to beginning of file */
+    (void)lseek(fd,0,SEEK_SET);
+    mem = malloc(size);
+    if(mem == NULL) {status = NC_ENOMEM; goto done;}
+    /* Read the file into memory */
+    /* We need to do multiple reads because there is no
+       guarantee that the amount read will be the full amount */
+    red = size;
+    pos = (char*)mem;
+    while(red > 0) {
+	ssize_t count = read(fd, pos, red);
+	if(count < 0) {status = errno; goto done;}
+        if(count == 0) {status = NC_ENOTNC; goto done;}
+	/* assert(count > 0) */
+	red -= count;
+	pos += count;
+    }
+
+done:
+    if(fd >= 0)
+	(void)close(fd);
+    if(status != NC_NOERR) {
+#ifndef DEBUG
+        fprintf(stderr,"open failed: file=%s err=%d\n",path,status);
+	fflush(stderr);
+#endif
+    }
+    if(status != NC_NOERR && mem != NULL) {
+      free(mem);
+      mem = NULL;
+    } else {
+      if(sizep) *sizep = size;
+      if(memp) {
+        *memp = mem;
+      } else if(mem) {
+        free(mem);
+      }
+
+    }
+
+
+    return status;
+}
+#endif
+
+/*
  * Emit initial line of output for NcML
  */
-static void 
+static void
 pr_initx(int ncid, const char *path)
 {
-    printf("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<netcdf xmlns=\"http://www.unidata.ucar.edu/namespaces/netcdf/ncml-2.2\" location=\"%s\">\n", 
+    printf("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<netcdf xmlns=\"http://www.unidata.ucar.edu/namespaces/netcdf/ncml-2.2\" location=\"%s\">\n",
 	   path);
 }
-
 
 /*
  * Print attribute string, for text attributes.
@@ -318,9 +405,9 @@ pr_att_string(
 	case '\f':
 	    printf ("\\f");
 	    break;
-	case '\n':		
+	case '\n':
 	    /* Only generate linebreaks after embedded newlines for
-	     * classic, 64-bit offset, or classic model files.  For
+	     * classic, 64-bit offset, cdf5, or classic model files.  For
 	     * netCDF-4 files, don't generate linebreaks, because that
 	     * would create an extra string in a list of strings.  */
 	    if (kind != NC_FORMAT_NETCDF4) {
@@ -418,7 +505,7 @@ pr_attx_string(
  * Print list of attribute values, for attributes of primitive types.
  * Attribute values must be printed with explicit type tags for
  * netCDF-3 primitive types, because CDL doesn't require explicit
- * syntax to declare such attribute types.  
+ * syntax to declare such attribute types.
  */
 static void
 pr_att_valgs(
@@ -435,12 +522,12 @@ pr_att_valgs(
     char gps[PRIM_LEN];
     float ff;
     double dd;
-#ifdef USE_NETCDF4
     unsigned char uc;
     unsigned short us;
     unsigned int ui;
     int64_t i64;
     uint64_t ui64;
+#ifdef USE_NETCDF4
     char *stringp;
 #endif /* USE_NETCDF4 */
     char *delim = ", ";	/* delimiter between output values */
@@ -505,7 +592,6 @@ pr_att_valgs(
 		}
 	    }
 	    break;
-#ifdef USE_NETCDF4
 	case NC_UBYTE:
 	    uc = ((unsigned char *) vals)[iel];
 	    printf ("%uUB%s", uc, delim);
@@ -526,6 +612,7 @@ pr_att_valgs(
 	    ui64 = ((uint64_t *) vals)[iel];
 	    printf ("%lluUL%s", ui64, delim);
 	    break;
+#ifdef USE_NETCDF4
 	case NC_STRING:
 	    stringp = ((char **) vals)[iel];
             if(stringp)
@@ -561,11 +648,9 @@ pr_att_valsx(
     float ff;
     double dd;
     int ii;
-#ifdef USE_NETCDF4
     unsigned int ui;
     int64_t i64;
     uint64_t ui64;
-#endif /* USE_NETCDF4 */
 
     attvals[0]='\0';
     if (len == 0)
@@ -583,7 +668,6 @@ pr_att_valsx(
 	    (void) strlcat(attvals, gps, attvalslen);
 	    (void) strlcat(attvals, iel < len-1 ? " " : "", attvalslen);
 	    break;
-#ifdef USE_NETCDF4
 	case NC_UBYTE:
 	case NC_USHORT:
 	case NC_UINT:
@@ -607,7 +691,6 @@ pr_att_valsx(
 	    (void) strlcat(attvals, gps, attvalslen);
 	    (void) strlcat(attvals, iel < len-1 ? " " : "", attvalslen);
 	    break;
-#endif /* USE_NETCDF4 */
 	case NC_FLOAT:
 	    ff = vals[iel];
 	    res = snprintf(gps, PRIM_LEN, float_attx_fmt, ff);
@@ -630,7 +713,7 @@ pr_att_valsx(
     }
 }
 
-/* 
+/*
  * Print a variable attribute
  */
 static void
@@ -643,7 +726,7 @@ pr_att(
     )
 {
     ncatt_t att;			/* attribute */
-	    
+
     NC_CHECK( nc_inq_attname(ncid, varid, ia, att.name) );
     NC_CHECK( nc_inq_att(ncid, varid, att.name, &att.type, &att.len) );
     att.tinfo = get_typeinfo(att.type);
@@ -711,7 +794,7 @@ pr_att(
        int class, i;
        void *data;
 
-       NC_CHECK( nc_inq_user_type(ncid, att.type,  type_name, &type_size, 
+       NC_CHECK( nc_inq_user_type(ncid, att.type,  type_name, &type_size,
 				  &base_nc_type, &nfields, &class));
        switch(class)
        {
@@ -785,7 +868,7 @@ pr_att(
 	       default:
 		   error("enum must have an integer base type: %d", base_nc_type);
 	       }
-	       NC_CHECK( nc_inq_enum_ident(ncid, att.type, value, 
+	       NC_CHECK( nc_inq_enum_ident(ncid, att.type, value,
 					   enum_name));
 /* 	       printf("%s%s", enum_name, i < att.len-1 ? ", " : ""); */
 	       print_name(enum_name);
@@ -822,7 +905,7 @@ pr_att_name(
     print_name(attname);
 }
 
-/* 
+/*
  * Print special _Format global attribute, a virtual attribute not
  * actually stored in the file.
  */
@@ -840,7 +923,7 @@ pr_att_global_format(
 
 
 #ifdef USE_NETCDF4
-/* 
+/*
  * Print special reserved variable attributes, such as _Chunking,
  * _DeflateLevel, ...  These are virtual, not real, attributes
  * generated from the result of inquire calls.  They are of primitive
@@ -949,7 +1032,7 @@ pr_att_specials(
 #endif /* USE_NETCDF4 */
 
 
-/* 
+/*
  * Print a variable attribute for NcML
  */
 static void
@@ -996,10 +1079,10 @@ pr_attx(
     default:
 	att.vals = (double *) emalloc((att.len + 1) * sizeof(double));
 	NC_CHECK( nc_get_att_double(ncid, varid, att.name, att.vals ) );
-	attvalslen = 20*att.len; /* max 20 chars for each value and blank separator */
+	attvalslen = PRIM_LEN * att.len; /* max chars for each value and blank separator */
 	attvals = (char *) emalloc(attvalslen + 1);
 	pr_att_valsx(att.type, att.len, att.vals, attvals, attvalslen);
-	free(att.vals); 
+	free(att.vals);
 	break;
     }
 
@@ -1010,8 +1093,8 @@ pr_attx(
 #endif /* USE_NETCDF4 */
        ) {
 	/* TODO: XML-ish escapes for special chars in names */
-	printf ("%s  <attribute name=\"%s\" value=", 
-		varid != NC_GLOBAL ? "  " : "", 
+	printf ("%s  <attribute name=\"%s\" value=",
+		varid != NC_GLOBAL ? "  " : "",
 		att.name);
 	/* print attvals as a string with XML escapes */
 	pr_attx_string(attvalslen, attvals);
@@ -1019,9 +1102,9 @@ pr_attx(
 	char att_type_name[NC_MAX_NAME + 1];
 	get_type_name(ncid, att.type, att_type_name);
 	/* TODO: print full type name with group prefix, when needed */
-	printf ("%s  <attribute name=\"%s\" type=\"%s\" value=\"", 
-		varid != NC_GLOBAL ? "  " : "", 
-		att.name, 
+	printf ("%s  <attribute name=\"%s\" type=\"%s\" value=\"",
+		varid != NC_GLOBAL ? "  " : "",
+		att.name,
 		att_type_name);
 	printf("%s\"",attvals);
     }
@@ -1080,10 +1163,10 @@ print_enum_type(int ncid, nc_type typeid) {
     char *esc_mn;
     int res;
 
-    NC_CHECK( nc_inq_user_type(ncid, typeid, type_name, &type_size, &base_nc_type, 
+    NC_CHECK( nc_inq_user_type(ncid, typeid, type_name, &type_size, &base_nc_type,
 			       &type_nfields, &type_class) );
 
-    get_type_name(ncid, base_nc_type, base_type_name); 
+    get_type_name(ncid, base_nc_type, base_type_name);
     indent_out();
     esc_btn = escaped_name(base_type_name);
     esc_tn = escaped_name(type_name);
@@ -1107,7 +1190,6 @@ print_enum_type(int ncid, nc_type typeid) {
 	case NC_INT:
 	    memval = *(int *)&data;
 	    break;
-#ifdef USE_NETCDF4
 	case NC_UBYTE:
 	    memval = *(unsigned char *)&data;
 	    break;
@@ -1123,13 +1205,12 @@ print_enum_type(int ncid, nc_type typeid) {
 	case NC_UINT64:
 	    memval = *(uint64_t *)&data;
 	    break;
-#endif /* USE_NETCDF4 */
 	default:
 	    error("Bad base type for enum!");
 	    break;
 	}
 	esc_mn = escaped_name(memname);
-	res = snprintf(safe_buf, SAFE_BUF_LEN, "%s = %lld%s", esc_mn, 
+	res = snprintf(safe_buf, SAFE_BUF_LEN, "%s = %lld%s", esc_mn,
 		       memval, delim);
 	assert(res < SAFE_BUF_LEN);
 	free(esc_mn);
@@ -1141,14 +1222,14 @@ print_enum_type(int ncid, nc_type typeid) {
 /* Print a user-defined type declaration */
 static void
 print_ud_type(int ncid, nc_type typeid) {
-    
+
     char type_name[NC_MAX_NAME + 1];
     char base_type_name[NC_MAX_NAME + 1];
     size_t type_nfields, type_size;
     nc_type base_nc_type;
     int f, type_class;
-    
-    NC_CHECK( nc_inq_user_type(ncid, typeid, type_name, &type_size, &base_nc_type, 
+
+    NC_CHECK( nc_inq_user_type(ncid, typeid, type_name, &type_size, &base_nc_type,
 			       &type_nfields, &type_class) );
     switch(type_class) {
     case NC_VLEN:
@@ -1180,7 +1261,7 @@ print_ud_type(int ncid, nc_type typeid) {
 	    nc_type field_type;
 	    int field_ndims;
 	    int d;
-	    
+
 	    indent_out();
 /* 	    printf("compound %s {\n", type_name); */
 	    printf("compound ");
@@ -1188,8 +1269,8 @@ print_ud_type(int ncid, nc_type typeid) {
 	    printf(" {\n");
 	    for (f = 0; f < type_nfields; f++)
 		{
-		    NC_CHECK( nc_inq_compound_field(ncid, typeid, f, field_name, 
-						    &field_offset, &field_type, 
+		    NC_CHECK( nc_inq_compound_field(ncid, typeid, f, field_name,
+						    &field_offset, &field_type,
 						    &field_ndims, NULL) );
 		    /* TODO: don't bother if field_type_name not needed here */
 		    get_type_name(ncid, field_type, field_type_name);
@@ -1201,8 +1282,8 @@ print_ud_type(int ncid, nc_type typeid) {
 		    print_name(field_name);
 		    if (field_ndims > 0) {
 			int *field_dim_sizes = (int *) emalloc((field_ndims + 1) * sizeof(int));
-			NC_CHECK( nc_inq_compound_field(ncid, typeid, f, NULL, 
-							NULL, NULL, NULL, 
+			NC_CHECK( nc_inq_compound_field(ncid, typeid, f, NULL,
+							NULL, NULL, NULL,
 							field_dim_sizes) );
 			printf("(");
 			for (d = 0; d < field_ndims-1; d++)
@@ -1230,9 +1311,9 @@ get_fill_info(int ncid, int varid, ncvar_t *vp) {
     ncatt_t att;			/* attribute */
     int nc_status;			/* return from netcdf calls */
     void *fillvalp = NULL;
-    
+
     vp->has_fillval = 1; /* by default, but turn off for bytes */
-	    
+
     /* get _FillValue attribute */
     nc_status = nc_inq_att(ncid,varid,_FillValue,&att.type,&att.len);
     fillvalp = emalloc(vp->tinfo->size + 1);
@@ -1262,7 +1343,6 @@ get_fill_info(int ncid, int varid, ncvar_t *vp) {
 	case NC_DOUBLE:
 	    *(double *)fillvalp = NC_FILL_DOUBLE;
 	    break;
-#ifdef USE_NETCDF4
 	case NC_UBYTE:
 	    /* don't do default fill-values for bytes, too risky */
 	    vp->has_fillval = 0;
@@ -1281,6 +1361,7 @@ get_fill_info(int ncid, int varid, ncvar_t *vp) {
 	case NC_UINT64:
 	    *(uint64_t *)fillvalp = NC_FILL_UINT64;
 	    break;
+#ifdef USE_NETCDF4
 	case NC_STRING:
 	    *((char **)fillvalp) = strdup(NC_FILL_STRING);
 	    break;
@@ -1301,7 +1382,7 @@ get_fill_info(int ncid, int varid, ncvar_t *vp) {
  * files can have groups, so recursion will not take place for classic
  * format files.)
  *
- * ncid: id of open file (first call) or group (subsequent recursive calls) 
+ * ncid: id of open file (first call) or group (subsequent recursive calls)
  * path: file path name (first call)
  */
 static void
@@ -1393,7 +1474,7 @@ do_ncdump_rec(int ncid, const char *path)
    /* Find the number of dimids defined in this group. */
    NC_CHECK( nc_inq_ndims(ncid, &ndims_grp) );
    dimids_grp = (int *)emalloc((ndims_grp + 1) * sizeof(int));
-   
+
    /* Find the dimension ids in this group. */
    NC_CHECK( nc_inq_dimids(ncid, 0, dimids_grp, 0) );
 
@@ -1401,7 +1482,7 @@ do_ncdump_rec(int ncid, const char *path)
    NC_CHECK( nc_inq_unlimdims(ncid, &nunlim, NULL) );
    unlimids = (int *)emalloc((nunlim + 1) * sizeof(int));
    NC_CHECK( nc_inq_unlimdims(ncid, &nunlim, unlimids) );
-    
+
    /* For each dimension defined in this group, get and print out info. */
    for (d_grp = 0; d_grp < ndims_grp; d_grp++)
    {
@@ -1414,7 +1495,7 @@ do_ncdump_rec(int ncid, const char *path)
 	  if(dimid == unlimids[uld]) {
 	      is_unlimited = 1;
 	      break;
-	  }	  
+	  }
       }
       stat = nc_inq_dim(ncid, dimid, dims[d_grp].name, &dims[d_grp].size);
       if (stat == NC_EDIMSIZE && SIZEOF_SIZE_T < 8) {
@@ -1428,14 +1509,14 @@ do_ncdump_rec(int ncid, const char *path)
       printf (" = ");
       if(SIZEOF_SIZE_T >= 8) {
 	  if (is_unlimited) {
-	      printf ("UNLIMITED ; // (%lu currently)\n", 
+	      printf ("UNLIMITED ; // (%lu currently)\n",
 		      (unsigned long)dims[d_grp].size);
 	  } else {
 	      printf ("%lu ;\n", (unsigned long)dims[d_grp].size);
 	  }
       } else {			/* 32-bit platform */
 	  if (is_unlimited) {
-	      printf ("UNLIMITED ; // (%u currently)\n", 
+	      printf ("UNLIMITED ; // (%u currently)\n",
 		      (unsigned int)dims[d_grp].size);
 	  } else {
 	      printf ("%u ;\n", (unsigned int)dims[d_grp].size);
@@ -1454,7 +1535,7 @@ do_ncdump_rec(int ncid, const char *path)
       print_name(dims[dimid].name);
       printf (" = ");
       if (dimid == xdimid) {
-	  printf ("UNLIMITED ; // (%u currently)\n", 
+	  printf ("UNLIMITED ; // (%u currently)\n",
 		  (unsigned int)dims[dimid].size);
       } else {
 	  printf ("%u ;\n", (unsigned int)dims[dimid].size);
@@ -1469,14 +1550,14 @@ do_ncdump_rec(int ncid, const char *path)
    /* Because netCDF-4 can have a string attribute with multiple
     * string values, we can't output strings with embedded newlines
     * as what look like multiple strings, as we do for classic and
-    * 64-bit offset files.  So we need to know the output file type
+    * 64-bit offset  and cdf5 files.  So we need to know the output file type
     * to know how to print strings with embedded newlines. */
    NC_CHECK( nc_inq_format(ncid, &kind) );
-       
+
    /* For each var, get and print out info. */
 
    memset((void*)&var,0,sizeof(var));
- 
+
    for (varid = 0; varid < nvars; varid++) {
       NC_CHECK( nc_inq_varndims(ncid, varid, &var.ndims) );
       if(var.dims != NULL) free(var.dims);
@@ -1574,7 +1655,7 @@ do_ncdump_rec(int ncid, const char *path)
    /* output variable data, unless "-h" option specified header only
     * or this group is not in list of groups specified by "-g"
     * option  */
-   if (! formatting_specs.header_only && 
+   if (! formatting_specs.header_only &&
        group_wanted(ncid, formatting_specs.nlgrps, formatting_specs.grpids) ) {
       if (nvars > 0) {
 	  indent_out();
@@ -1650,13 +1731,13 @@ do_ncdump_rec(int ncid, const char *path)
 
       /* See how many groups there are. */
       NC_CHECK( nc_inq_grps(ncid, &numgrps, NULL) );
-      
+
       /* Allocate memory to hold the list of group ids. */
       ncids = emalloc((numgrps + 1) * sizeof(int));
-      
+
       /* Get the list of group ids. */
       NC_CHECK( nc_inq_grps(ncid, NULL, ncids) );
-      
+
       /* Call this function for each group. */
       for (g = 0; g < numgrps; g++)
       {
@@ -1676,7 +1757,7 @@ do_ncdump_rec(int ncid, const char *path)
 	  printf ("\n");
 	  indent_less();
       }
-      
+
       free(ncids);
    }
 #endif /* USE_NETCDF4 */
@@ -1752,10 +1833,10 @@ do_ncdumpx(int ncid, const char *path)
     for (dimid = 0; dimid < ndims; dimid++) {
 	NC_CHECK( nc_inq_dim(ncid, dimid, dims[dimid].name, &dims[dimid].size) );
 	if (dimid == xdimid)
-  	  printf("  <dimension name=\"%s\" length=\"%d\" isUnlimited=\"true\" />\n", 
+  	  printf("  <dimension name=\"%s\" length=\"%d\" isUnlimited=\"true\" />\n",
 		 dims[dimid].name, (int)dims[dimid].size);
 	else
-	  printf ("  <dimension name=\"%s\" length=\"%d\" />\n", 
+	  printf ("  <dimension name=\"%s\" length=\"%d\" />\n",
 		  dims[dimid].name, (int)dims[dimid].size);
     }
 
@@ -1803,7 +1884,7 @@ do_ncdumpx(int ncid, const char *path)
 	}
 	printf ("  </variable>\n");
     }
-    
+
     printf ("</netcdf>\n");
     if (vlist)
 	freeidlist(vlist);
@@ -1927,7 +2008,7 @@ main(int argc, char *argv[])
        exit(EXIT_SUCCESS);
     }
 
-    while ((c = getopt(argc, argv, "b:cd:f:g:hikl:n:p:stv:xwK")) != EOF)
+    while ((c = getopt(argc, argv, "b:cd:f:g:hikl:n:p:stv:xwKX:")) != EOF)
       switch(c) {
 	case 'h':		/* dump header only, no data */
 	  formatting_specs.header_only = true;
@@ -1980,7 +2061,7 @@ main(int argc, char *argv[])
 	  break;
 	case 'g':		/* group names */
 	  /* make list of names of groups specified */
-	  make_lgrps (optarg, &formatting_specs.nlgrps, &formatting_specs.lgrps, 
+	  make_lgrps (optarg, &formatting_specs.nlgrps, &formatting_specs.lgrps,
 			&formatting_specs.grpids);
 	  break;
 	case 'd':		/* specify precision for floats (deprecated, undocumented) */
@@ -2015,13 +2096,23 @@ main(int argc, char *argv[])
         case 'w':		/* with client-side cache for DAP URLs */
 	  formatting_specs.with_cache = true;
 	  break;
+        case 'X':		/* special options */
+	  switch (tolower((int)optarg[0])) {
+	    case 'm':
+	      formatting_specs.xopt_inmemory = 1;
+	      break;
+	    default:
+	      error("invalid value for -X option: %s", optarg);
+	      break;
+	  }
+	  break;
         case '?':
 	  usage();
 	  exit(EXIT_FAILURE);
       }
 
     set_max_len(max_len);
-    
+
     argc -= optind;
     argv += optind;
 
@@ -2036,11 +2127,11 @@ main(int argc, char *argv[])
 
     init_epsilons();
 
-    {		
+    {
 	char *path = strdup(argv[i]);
 	if(!path)
 	    error("out of memory copying argument %s", argv[i]);
-        if (!nameopt) 
+        if (!nameopt)
 	    formatting_specs.name = name_path(path);
 	if (argc > 0) {
 	    int ncid, nc_status;
@@ -2057,7 +2148,16 @@ main(int argc, char *argv[])
 		/* else fall thru and treat like a file path */
 	    }
 #endif /*USE_DAP*/
-	    nc_status = nc_open(path, NC_NOWRITE, &ncid);
+#ifdef USE_DISKLESS
+	    if(formatting_specs.xopt_inmemory) {
+		size_t size = 0;
+		void* mem = NULL;
+		nc_status = fileopen(path,&mem,&size);
+		if(nc_status == NC_NOERR)
+	            nc_status = nc_open_mem(path,NC_DISKLESS|NC_INMEMORY,size,mem,&ncid);
+	    } else
+#endif
+	        nc_status = nc_open(path, NC_NOWRITE, &ncid);
 	    if (nc_status != NC_NOERR) {
 		error("%s: %s", path, nc_strerror(nc_status));
 	    }
@@ -2100,4 +2200,6 @@ main(int argc, char *argv[])
     }
     exit(EXIT_SUCCESS);
 }
-END_OF_MAIN();
+
+
+END_OF_MAIN()

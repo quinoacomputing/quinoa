@@ -402,7 +402,7 @@ static void
 ncio_fileio_init(ncio *const nciop)
 {
 	ncio_ffio *ffp = (ncio_ffio *)nciop->pvt;
-
+p
 	*((ncio_relfunc **)&nciop->rel) = ncio_fileio_rel; /* cast away const */
 	*((ncio_getfunc **)&nciop->get) = ncio_fileio_get; /* cast away const */
 	*((ncio_movefunc **)&nciop->move) = ncio_fileio_move; /* cast away const */
@@ -475,6 +475,7 @@ int
 ncio_create(const char *path, int ioflags,
 	size_t initialsz,
 	off_t igeto, size_t igetsz, size_t *sizehintp,
+	void* parameters,
 	ncio **nciopp, void **const igetvpp)
 {
 	ncio *nciop;
@@ -576,6 +577,7 @@ int
 ncio_open(const char *path,
 	int ioflags,
 	off_t igeto, size_t igetsz, size_t *sizehintp,
+	void* parameters,
 	ncio **nciopp, void **const igetvpp)
 {
 	ncio *nciop;

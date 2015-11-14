@@ -1,7 +1,3 @@
-SET(CMAKE_INCLUDE_CURRENT_DIR ON)
-
-INCLUDE_DIRECTORIES(".")
-
 SET(ncgen_FILES generate.c main.c cdata.c bindata.c genchar.c cvt.c data.c debug.c escapes.c genc.c genbin.c generr.c genlib.c getfill.c odom.c offsets.c semantics.c ncgentab.c dump.c util.c bytebuffer.c list.c genf77.c f77data.c genj.c jdata.c nc_iter.c ConvertUTF.c  )
 
 IF(USE_X_GETOPT)
@@ -10,6 +6,21 @@ ENDIF()
 
 ADD_EXECUTABLE(ncgen ${ncgen_FILES})
 TARGET_LINK_LIBRARIES(ncgen netcdf ${ALL_TLL_LIBS})
+
+####
+# We have to do a little tweaking
+# to remove the Release/ and Debug/ directories
+# in MSVC builds.  This is required to get
+# test scripts to work.
+####
+IF(MSVC)
+  SET_TARGET_PROPERTIES(ncgen PROPERTIES RUNTIME_OUTPUT_DIRECTORY 
+    ${CMAKE_CURRENT_BINARY_DIR})
+  SET_TARGET_PROPERTIES(ncgen PROPERTIES RUNTIME_OUTPUT_DIRECTORY_DEBUG 
+    ${CMAKE_CURRENT_BINARY_DIR})
+  SET_TARGET_PROPERTIES(ncgen PROPERTIES RUNTIME_OUTPUT_DIRECTORY_RELEASE
+    ${CMAKE_CURRENT_BINARY_DIR})
+ENDIF()
 
 INSTALL(TARGETS ncgen DESTINATION bin COMPONENT utilities)
 
@@ -35,6 +46,11 @@ ENDIF()
 SET(CLEANFILES c0.nc c0_64.nc c0_4.nc c0_4c.nc ref_camrun.c)
 SET_DIRECTORY_PROPERTIES(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES "${CLEANFILES}")
 
+# These rules are used if someone wants to rebuild ncgenyy.c or ncgentab.c
+# Otherwise never invoked, but records how to do it.
+# BTW: note that renaming is essential because otherwise
+# autoconf will forcibly delete files of the name *.tab.*
+
 ADD_CUSTOM_COMMAND(
   OUTPUT ncgentab.h
   COMMAND flex -Pncg -B ncgen.l
@@ -49,7 +65,6 @@ ADD_CUSTOM_COMMAND(
   COMMAND mv ncgenyy.c ${CMAKE_CURRENT_SOURCE_DIR}
 
   )
-
 ADD_CUSTOM_TARGET(makeparser DEPENDS ncgentab.h)
 
 ## Specify files to be distributed by 'make dist'

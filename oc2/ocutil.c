@@ -55,7 +55,7 @@ ocstrncmp(const char* s1, const char* s2, size_t len)
 }
 
 
-#ifdef EXTERN_UNUSEd
+#if 0
 void
 makedimlist(OClist* path, OClist* dims)
 {
@@ -87,7 +87,7 @@ ocfreeprojectionclause(OCprojectionclause* clause)
     free(clause);
 }
 
-#ifdef EXTERN_UNUSED
+#if 0
 void
 freeAttributes(OClist* attset)
 {
@@ -107,7 +107,7 @@ freeAttributes(OClist* attset)
 }
 #endif
 
-#ifdef EXTERN_UNUSED
+#if 0
 void
 freeOCnode(OCnode* cdf, int deep)
 {
@@ -385,7 +385,7 @@ ocerrstring(int err)
 	case OC_EDATADDS:
 	    return "OC_EDATADDS: Malformed or unreadable DATADDS";
 	case OC_ERCFILE:
-	    return "OC_ERCFILE: Malformed or unreadable run-time configuration file";
+	    return "OC_ERCFILE: Malformed,  unreadable, or bad value in the run-time configuration file";
 	case OC_ENOFILE:
 	    return "OC_ENOFILE: cannot read content of URL";
 
@@ -598,7 +598,7 @@ occopycat(char* dst, size_t size, size_t n, ...)
     va_list args;
     size_t avail = size - 1;
     int i; 
-    int status = 1; // assume ok
+    int status = 1; /* assume ok */
     char* p = dst;
 
     if(n == 0) {
@@ -642,8 +642,8 @@ int
 occoncat(char* dst, size_t size, size_t n, ...)
 {
     va_list args;
-    int status = 1; // assume ok
-    size_t avail;
+    int status = 1; /* assume ok */
+    size_t avail = 0;
     int i; 
     char* p;
     size_t dstused;
@@ -686,33 +686,28 @@ done:
 
 
 /**
-Wrap mktmp
+Wrap mktmp and return the generated name
 */
 
 int
-ocmktmp(const char* base, char** tmpnamep, int* fdp)
+ocmktmp(const char* base, char** tmpnamep)
 {
     int fd;
-    char* tmpname = NULL;
-    mode_t oldmask;
-    size_t tmpsize = strlen(base)+strlen("XXXXXX") + 1;
-
-    tmpname = (char*)malloc(tmpsize);
-    if(tmpname == NULL) return OC_ENOMEM;
-    if(!occopycat(tmpname,tmpsize,1,base)) {
-	free(tmpname);
+    char tmpname[OCPATHMAX+1];
+    mode_t mask;
+    if(!occopycat(tmpname,sizeof(tmpname)-1,1,base)) {
 	return OC_EOVERRUN;
     }
 #ifdef HAVE_MKSTEMP
-    if(!occoncat(tmpname,tmpsize,1,"XXXXXX")) {
-        free(tmpname);
+    if(!occoncat(tmpname,sizeof(tmpname)-1,1,"XXXXXX")) {
 	return OC_EOVERRUN;
     }
     /* Note Potential problem: old versions of this function
        leave the file in mode 0666 instead of 0600 */
-    oldmask= umask(S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
+
+    mask=umask(0077);
     fd = mkstemp(tmpname);
-    umask(oldmask); /* restore */
+    (void)umask(mask);
 #else /* !HAVE_MKSTEMP */
     /* Need to simulate by using some kind of pseudo-random number */
     {
@@ -720,24 +715,38 @@ ocmktmp(const char* base, char** tmpnamep, int* fdp)
 	char spid[7];
 	if(rno < 0) rno = -rno;
         snprintf(spid,sizeof(spid),"%06d",rno);
-	if(!occoncat(tmpname,tmpsize,1,spid)) {
-            free(tmpname);
+	if(!occoncat(tmpname,sizeof(tmpname)-1,1,spid)) {
 	    return OC_EOVERRUN;
         }
 #if defined(_WIN32) || defined(_WIN64)
-        fd=open(tmpname,O_RDWR|O_BINARY|O_CREAT|O_EXCL|FILE_ATTRIBUTE_TEMPORARY, _S_IREAD|_S_IWRITE);
+        fd=open(tmpname,O_RDWR|O_BINARY|O_CREAT, _S_IREAD|_S_IWRITE);
 #  else
         fd=open(tmpname,O_RDWR|O_CREAT|O_EXCL, S_IRWXU);
 #  endif
     }
 #endif /* !HAVE_MKSTEMP */
     if(fd < 0) {
-       if(tmpname != NULL) free(tmpname);
        return OC_EOPEN;
-    }
-    if(tmpnamep) *tmpnamep = tmpname;    
-    else if(tmpname != NULL) {free(tmpname);}
-    if(fdp) *fdp = fd;
-    else if(fd >= 0) close(fd);
+    } else
+	close(fd);
+    if(tmpnamep) *tmpnamep = strdup(tmpname);
     return OC_NOERR;
+}
+
+/* merge two envv style lists */
+char**
+ocmerge(const char** list1, const char** list2)
+{
+    int l1, l2;
+    char** merge;
+    const char** p;
+    for(l1=0,p=list1;*p;p++) {l1++;}
+    for(l2=0,p=list2;*p;p++) {l2++;}
+    merge = (char**)malloc(sizeof(char*)*(l1+l2+1));
+    if(merge == NULL)
+	return NULL;
+    memcpy(merge,list1,sizeof(char*)*l1);
+    memcpy(merge+l1,list2,sizeof(char*)*l2);
+    merge[l1+l2] = NULL;
+    return merge;    
 }

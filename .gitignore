@@ -1,3 +1,11 @@
+#####
+# End ignored generated files.
+#####
+
+### 'Normal' gitignore files.
+autom4te.cache
+ctest.c
+ctest64.c
 debug.txt
 CTestConfig.cmake
 Vagrantfile
@@ -22,3 +30,4 @@ build-par
 build_llvm
 .vagrant
 Vagrantfile
+netcdf-fortran

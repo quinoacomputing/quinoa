@@ -1,7 +1,3 @@
-SET(CMAKE_INCLUDE_CURRENT_DIR ON)
-
-INCLUDE_DIRECTORIES(".")
-
 SET(ncgen3_FILES main.c load.c escapes.c getfill.c init.c genlib.c ncgentab.c)
 
 FILE(GLOB COPY_FILES ${CMAKE_CURRENT_SOURCE_DIR}/*.nc ${CMAKE_CURRENT_SOURCE_DIR}/*.sh ${CMAKE_CURRENT_SOURCE_DIR}/*.cdl)
@@ -17,13 +13,29 @@ IF(NOT EXISTS ${netCDF_SOURCE_DIR}/ncgen3/ncgentab.c AND NOT EXISTS
     VERBATIM
     )
 ENDIF()
+
 IF(USE_X_GETOPT)
   SET(ncgen3_FILES ${ncgen3_FILES} XGetopt.c)
 ENDIF()
 
 ADD_EXECUTABLE(ncgen3 ${ncgen3_FILES})
-
 TARGET_LINK_LIBRARIES(ncgen3 netcdf ${ALL_TLL_LIBS})
+####
+# We have to do a little tweaking
+# to remove the Release/ and Debug/ directories
+# in MSVC builds.  This is required to get
+# test scripts to work.
+####
+IF(MSVC)
+  SET_TARGET_PROPERTIES(ncgen3 PROPERTIES RUNTIME_OUTPUT_DIRECTORY 
+    ${CMAKE_CURRENT_BINARY_DIR})
+  SET_TARGET_PROPERTIES(ncgen3 PROPERTIES RUNTIME_OUTPUT_DIRECTORY_DEBUG 
+    ${CMAKE_CURRENT_BINARY_DIR})
+  SET_TARGET_PROPERTIES(ncgen3 PROPERTIES RUNTIME_OUTPUT_DIRECTORY_RELEASE
+    ${CMAKE_CURRENT_BINARY_DIR})
+ENDIF()
+
+
 
 IF(ENABLE_TESTS)
   SET(NCGEN3_TESTS run_tests)

@@ -418,36 +418,54 @@ ocdumpmemory(char* memory, size_t len, int xdrencoded, int level)
     }
 }
 
-static int
+static OCerror
 ocreadfile(FILE* file, off_t datastart, char** memp, size_t* lenp)
 {
-    char* mem;
+    char* mem = NULL;
     size_t len;
     long red;
     struct stat stats;
     long pos;
+    OCerror stat = OC_NOERR;
 
     pos = ftell(file);
     fseek(file,0,SEEK_SET);
-    fseek(file,(long)datastart,SEEK_SET);
+    if(fseek(file,(long)datastart,SEEK_SET) < 0) {
+	fprintf(stderr,"ocreadfile: fseek error.\n");
+	stat = OC_ERCFILE;
+	goto done;
+    }
 
-    fstat(fileno(file),&stats);
+    if(fstat(fileno(file),&stats) < 0) {
+	fprintf(stderr,"ocreadfile: fstat error.\n");
+	stat = OC_ERCFILE;
+	goto done;
+    }
     len = stats.st_size;
     len -= datastart;
     
     mem = (char*)calloc(len+1,1);
-    if(mem == NULL) return 0;
+    if(mem == NULL) {stat = OC_ENOMEM; goto done;}
 
     /* Read only the data part */
     red = fread(mem,1,len,file);
     if(red < len) {
 	fprintf(stderr,"ocreadfile: short file\n");
-	return 0;
+	stat = OC_ERCFILE;
+	goto done;
     }	
-    fseek(file,pos,SEEK_SET); /* leave it as we found it*/
-    if(memp) *memp = mem;
-    if(lenp) *lenp = len;
-    return 1;
+    if(fseek(file,pos,SEEK_SET) < 0) {; /* leave it as we found it*/
+        fprintf(stderr,"ocreadfile: fseek error.\n");
+	stat = OC_ERCFILE;
+	goto done;
+    }
+    if(memp) {*memp = mem; mem = NULL;}
+    if(lenp) *lenp = len; 
+
+done:
+    if(mem != NULL)
+	free(mem);
+    return OCTHROW(stat);
 }
 
 void
@@ -478,23 +496,23 @@ void
 ocdumpdata(OCstate* state, OCdata* data, OCbytes* buffer, int frominstance)
 {
     char tmp[1024];
-    OCnode* template = data->template;
+    OCnode* pattern = data->pattern;
     snprintf(tmp,sizeof(tmp),"%lx:",(unsigned long)data);
     ocbytescat(buffer,tmp);
     if(!frominstance) {
         ocbytescat(buffer," node=");
-        ocbytescat(buffer,template->name);
+        ocbytescat(buffer,pattern->name);
     }
     snprintf(tmp,sizeof(tmp)," xdroffset=%ld",(unsigned long)data->xdroffset);
     ocbytescat(buffer,tmp);
-    if(data->template->octype == OC_Atomic) {
+    if(data->pattern->octype == OC_Atomic) {
         snprintf(tmp,sizeof(tmp)," xdrsize=%ld",(unsigned long)data->xdrsize);
         ocbytescat(buffer,tmp);
     }
-    if(iscontainer(template->octype)) {
+    if(ociscontainer(pattern->octype)) {
         snprintf(tmp,sizeof(tmp)," ninstances=%d",(int)data->ninstances);
         ocbytescat(buffer,tmp);
-    } else if(template->etype == OC_String || template->etype == OC_URL) {
+    } else if(pattern->etype == OC_String || pattern->etype == OC_URL) {
         snprintf(tmp,sizeof(tmp)," nstrings=%d",(int)data->nstrings);
         ocbytescat(buffer,tmp);
     }
@@ -519,7 +537,7 @@ void
 ocdumpdatatree(OCstate* state, OCdata* data, OCbytes* buffer, int depth)
 {
     size_t i,rank;
-    OCnode* template;
+    OCnode* pattern;
     char tmp[1024];
     size_t crossproduct;
     int tabstop = 0;
@@ -530,13 +548,13 @@ ocdumpdatatree(OCstate* state, OCdata* data, OCbytes* buffer, int depth)
 	ocbytescat(buffer,header);
     }
 
-    /* get info about the template */
-    template = data->template;
-    rank = template->array.rank;
+    /* get info about the pattern */
+    pattern = data->pattern;
+    rank = pattern->array.rank;
 
     /* get total dimension size */
     if(rank > 0)
-        crossproduct = octotaldimsize(template->array.rank,template->array.sizes);
+        crossproduct = octotaldimsize(pattern->array.rank,pattern->array.sizes);
 
     /* Dump the depth first */
     snprintf(tmp,sizeof(tmp),"[%03d]",depth);
@@ -575,16 +593,16 @@ ocdumpdatatree(OCstate* state, OCdata* data, OCbytes* buffer, int depth)
 
     tabto(tabstops[++tabstop],buffer);
 
-    if(template->octype == OC_Atomic) {
-	typename = octypetoddsstring(template->etype);
+    if(pattern->octype == OC_Atomic) {
+	typename = octypetoddsstring(pattern->etype);
     } else { /*must be container*/
-	typename = octypetoddsstring(template->octype);
+	typename = octypetoddsstring(pattern->octype);
     }
     ocbytescat(buffer,typename);
 
     tabto(tabstops[++tabstop],buffer);
 
-    if(!occopycat(tmp,sizeof(tmp),1,template->name))
+    if(!occopycat(tmp,sizeof(tmp),1,pattern->name))
 	return;
     ocbytescat(buffer,tmp);
 
@@ -608,7 +626,7 @@ ocdumpdatapath(OCstate* state, OCdata* data, OCbytes* buffer)
     OCdata* path[1024];
     char tmp[1024];
     OCdata* pathdata;
-    OCnode* template;
+    OCnode* pattern;
     int isrecord;
 
     path[0] = data;
@@ -620,9 +638,9 @@ ocdumpdatapath(OCstate* state, OCdata* data, OCbytes* buffer)
     /* Path is in reverse order */
     for(i=i-1;i>=0;i--) {
 	pathdata = path[i];
-	template = pathdata->template;
+	pattern = pathdata->pattern;
 	ocbytescat(buffer,"/");
-	ocbytescat(buffer,template->name);
+	ocbytescat(buffer,pattern->name);
 	/* Check the mode of the next step in path */
 	if(i > 0) {
 	    OCdata* next = path[i-1];
@@ -633,31 +651,31 @@ ocdumpdatapath(OCstate* state, OCdata* data, OCbytes* buffer)
 	        ocbytescat(buffer,tmp);
 	    }
 	}
-	if(template->octype == OC_Atomic) {
-	    if(template->array.rank > 0) {
-	        off_t xproduct = octotaldimsize(template->array.rank,template->array.sizes);
+	if(pattern->octype == OC_Atomic) {
+	    if(pattern->array.rank > 0) {
+	        off_t xproduct = octotaldimsize(pattern->array.rank,pattern->array.sizes);
 	        snprintf(tmp,sizeof(tmp),"[0..%lu]",(unsigned long)xproduct-1);
 	        ocbytescat(buffer,tmp);
 	    }
 	}
 	isrecord = 0;
-	if(template->octype == OC_Sequence) {
+	if(pattern->octype == OC_Sequence) {
 	    /* Is this a record or a sequence ? */
 	    isrecord = (fisset(pathdata->datamode,OCDT_RECORD) ? 1 : 0);
 	}
     }
     /* Add suffix to path */
-    if(iscontainer(template->octype)) {
+    if(ociscontainer(pattern->octype)) {
         /* add the container type, except distinguish record and sequence */
 	ocbytescat(buffer,":");
 	if(isrecord)
 	    ocbytescat(buffer,"Record");
 	else
-	    ocbytescat(buffer,octypetoddsstring(template->octype));
-    } else if(isatomic(template->octype)) {
+	    ocbytescat(buffer,octypetoddsstring(pattern->octype));
+    } else if(ocisatomic(pattern->octype)) {
 	/* add the atomic etype */
 	ocbytescat(buffer,":");
-	ocbytescat(buffer,octypetoddsstring(template->etype));
+	ocbytescat(buffer,octypetoddsstring(pattern->etype));
     }
     snprintf(tmp,sizeof(tmp),"->0x%0lx",(unsigned long)pathdata);
     ocbytescat(buffer,tmp);	
