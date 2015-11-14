@@ -1,13 +1,13 @@
 /*
 //@HEADER
 // ************************************************************************
-//
-//   Kokkos: Manycore Performance-Portable Multidimensional Arrays
-//              Copyright (2012) Sandia Corporation
-//
+// 
+//                        Kokkos v. 2.0
+//              Copyright (2014) Sandia Corporation
+// 
 // Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
 // the U.S. Government retains certain rights in this software.
-//
+// 
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -36,7 +36,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 // Questions? Contact  H. Carter Edwards (hcedwar@sandia.gov)
-//
+// 
 // ************************************************************************
 //@HEADER
 */
@@ -51,12 +51,12 @@ namespace Kokkos {
 namespace Impl {
 
 template<>
-struct ViewAssignment< LayoutDefault , LayoutDefault , void >
+struct ViewAssignment< ViewDefault , ViewDefault , void >
 {
-  typedef LayoutDefault Specialize ;
+  typedef ViewDefault Specialize ;
 
   //------------------------------------
-  /** \brief  Compatible value and shape */
+  /** \brief  Compatible value and shape and LayoutLeft/Right to LayoutStride*/
 
   template< class DT , class DL , class DD , class DM ,
             class ST , class SL , class SD , class SM >
@@ -66,744 +66,69 @@ struct ViewAssignment< LayoutDefault , LayoutDefault , void >
                   const typename enable_if<(
                     ViewAssignable< ViewTraits<DT,DL,DD,DM> ,
                                     ViewTraits<ST,SL,SD,SM> >::value
+                    ||
+                    ( ViewAssignable< ViewTraits<DT,DL,DD,DM> ,
+                                      ViewTraits<ST,SL,SD,SM> >::assignable_value
+                      &&
+                      ShapeCompatible< typename ViewTraits<DT,DL,DD,DM>::shape_type ,
+                                       typename ViewTraits<ST,SL,SD,SM>::shape_type >::value
+                      &&
+                      is_same< typename ViewTraits<DT,DL,DD,DM>::array_layout,LayoutStride>::value
+                      && (is_same< typename ViewTraits<ST,SL,SD,SM>::array_layout,LayoutLeft>::value ||
+                          is_same< typename ViewTraits<ST,SL,SD,SM>::array_layout,LayoutRight>::value))
                   )>::type * = 0 )
   {
-    typedef ViewTraits<DT,DL,DD,DM> dst_traits ;
-    typedef typename View<DT,DL,DD,DM,Specialize>::shape_type   shape_type ;
-    typedef typename View<DT,DL,DD,DM,Specialize>::stride_type  stride_type ;
+    dst.m_offset_map.assign( src.m_offset_map );
 
-    ViewTracking< dst_traits >::decrement( dst.m_ptr_on_device );
+    dst.m_management = src.m_management ;
 
-    shape_type::assign( dst.m_shape,
-                        src.m_shape.N0 , src.m_shape.N1 , src.m_shape.N2 , src.m_shape.N3 ,
-                        src.m_shape.N4 , src.m_shape.N5 , src.m_shape.N6 , src.m_shape.N7 );
+    dst.m_ptr_on_device = ViewDataManagement< ViewTraits<DT,DL,DD,DM> >::create_handle( src.m_ptr_on_device, src.m_tracker );
 
-    stride_type::assign( dst.m_stride , src.m_stride.value );
+    dst.m_tracker = src.m_tracker ;
 
-    dst.m_ptr_on_device = src.m_ptr_on_device ;
-
-    Impl::ViewTracking< dst_traits >::increment( dst.m_ptr_on_device );
   }
 
-  //------------------------------------
-  /** \brief  Extract Rank-0 from Rank-1 */
+
+  /** \brief  Assign 1D Strided View to LayoutLeft or LayoutRight if stride[0]==1 */
 
   template< class DT , class DL , class DD , class DM ,
-            class ST , class SL , class SD , class SM >
+            class ST , class SD , class SM >
   KOKKOS_INLINE_FUNCTION
   ViewAssignment(       View<DT,DL,DD,DM,Specialize> & dst ,
-                  const View<ST,SL,SD,SM,Specialize> & src ,
-                  const typename enable_if< (
-                    ViewAssignable< ViewTraits<DT,DL,DD,DM> ,
-                                    ViewTraits<ST,SL,SD,SM> >::assignable_value &&
-                    ( ViewTraits<DT,DL,DD,DM>::rank == 0 ) &&
-                    ( ViewTraits<ST,SL,SD,SM>::rank == 1 )
-                  ), unsigned >::type i0 )
-  {
-    typedef ViewTraits<DT,DL,DD,DM> dst_traits ;
-
-    assert_shape_bounds( src.m_shape , 1 , i0 );
-
-    ViewTracking< dst_traits >::decrement( dst.m_ptr_on_device );
-
-    dst.m_ptr_on_device = src.m_ptr_on_device + i0 ;
-
-    ViewTracking< dst_traits >::increment( dst.m_ptr_on_device );
-  }
-
-  //------------------------------------
-  /** \brief  Extract Rank-0 from Rank-2 */
-
-  template< class DT , class DL , class DD , class DM ,
-            class ST , class SL , class SD , class SM >
-  KOKKOS_INLINE_FUNCTION
-  ViewAssignment(       View<DT,DL,DD,DM,Specialize> & dst ,
-                  const View<ST,SL,SD,SM,Specialize> & src ,
-                  const typename enable_if< (
-                    ViewAssignable< ViewTraits<DT,DL,DD,DM> ,
-                                    ViewTraits<ST,SL,SD,SM> >::assignable_value &&
-                    ( ViewTraits<DT,DL,DD,DM>::rank == 0 ) &&
-                    ( ViewTraits<ST,SL,SD,SM>::rank == 2 )
-                  ), unsigned >::type i0 ,
-                  const unsigned i1 )
-  {
-    typedef ViewTraits<DT,DL,DD,DM> dst_traits ;
-    typedef ViewTraits<ST,SL,SD,SM> src_traits ;
-
-    enum { is_left = is_same< typename src_traits::array_layout , LayoutLeft >::value };
-
-    assert_shape_bounds( src.m_shape , 2 , i0 , i1 );
-
-    ViewTracking< dst_traits >::decrement( dst.m_ptr_on_device );
-
-    if ( is_left ) {
-      dst.m_ptr_on_device = src.m_ptr_on_device + i0 + src.m_stride.value * i1 ;
-    }
-    else {
-      dst.m_ptr_on_device = src.m_ptr_on_device + i1 + i0 * src.m_stride.value ;
-    }
-
-    ViewTracking< dst_traits >::increment( dst.m_ptr_on_device );
-  }
-
-  //------------------------------------
-  /** \brief  Extract Rank-0 from Rank-3 */
-
-  template< class DT , class DL , class DD , class DM ,
-            class ST , class SL , class SD , class SM >
-  KOKKOS_INLINE_FUNCTION
-  ViewAssignment(       View<DT,DL,DD,DM,Specialize> & dst ,
-                  const View<ST,SL,SD,SM,Specialize> & src ,
-                  const typename enable_if< (
-                    ViewAssignable< ViewTraits<DT,DL,DD,DM> ,
-                                    ViewTraits<ST,SL,SD,SM> >::assignable_value &&
-                    ( ViewTraits<DT,DL,DD,DM>::rank == 0 ) &&
-                    ( ViewTraits<ST,SL,SD,SM>::rank == 3 )
-                  ), unsigned >::type i0 ,
-                  const unsigned i1 ,
-                  const unsigned i2 )
-  {
-    typedef ViewTraits<DT,DL,DD,DM> dst_traits ;
-    typedef ViewTraits<ST,SL,SD,SM> src_traits ;
-
-    enum { is_left = is_same< typename src_traits::array_layout , LayoutLeft >::value };
-
-    assert_shape_bounds( src.m_shape, 3, i0, i1, i2 );
-
-    ViewTracking< dst_traits >::decrement( dst.m_ptr_on_device );
-
-    if ( is_left ) {
-      dst.m_ptr_on_device =
-        src.m_ptr_on_device +
-          i0 + src.m_stride.value * (
-          i1 + src.m_shape.N1 * (
-          i2 ));
-    }
-    else {
-      dst.m_ptr_on_device =
-        src.m_ptr_on_device +
-          i2 + src.m_shape.N2 * (
-          i1 ) + i0 * src.m_stride.value ;
-    }
-
-    ViewTracking< dst_traits >::increment( dst.m_ptr_on_device );
-  }
-
-  //------------------------------------
-  /** \brief  Extract Rank-0 from Rank-4 */
-
-  template< class DT , class DL , class DD , class DM ,
-            class ST , class SL , class SD , class SM >
-  KOKKOS_INLINE_FUNCTION
-  ViewAssignment(       View<DT,DL,DD,DM,Specialize> & dst ,
-                  const View<ST,SL,SD,SM,Specialize> & src ,
-                  const typename enable_if< (
-                    ViewAssignable< ViewTraits<DT,DL,DD,DM> ,
-                                    ViewTraits<ST,SL,SD,SM> >::assignable_value &&
-                    ( ViewTraits<DT,DL,DD,DM>::rank == 0 ) &&
-                    ( ViewTraits<ST,SL,SD,SM>::rank == 4 )
-                  ), unsigned >::type i0 ,
-                  const unsigned i1 ,
-                  const unsigned i2 ,
-                  const unsigned i3 )
-  {
-    typedef ViewTraits<DT,DL,DD,DM> dst_traits ;
-    typedef ViewTraits<ST,SL,SD,SM> src_traits ;
-
-    enum { is_left = is_same< typename src_traits::array_layout , LayoutLeft >::value };
-
-    assert_shape_bounds( src.m_shape, 4, i0, i1, i2, i3 );
-
-    ViewTracking< dst_traits >::decrement( dst.m_ptr_on_device );
-
-    if ( is_left ) {
-      dst.m_ptr_on_device =
-        src.m_ptr_on_device +
-          i0 + src.m_stride.value * (
-          i1 + src.m_shape.N1 * (
-          i2 + src.m_shape.N2 * (
-          i3 )));
-    }
-    else {
-      dst.m_ptr_on_device =
-        src.m_ptr_on_device +
-          i3 + src.m_shape.N3 * (
-          i2 + src.m_shape.N2 * (
-          i1 )) + i0 * src.m_stride.value ;
-    }
-
-    ViewTracking< dst_traits >::increment( dst.m_ptr_on_device );
-  }
-
-  //------------------------------------
-  /** \brief  Extract Rank-0 from Rank-5 */
-
-  template< class DT , class DL , class DD , class DM ,
-            class ST , class SL , class SD , class SM >
-  KOKKOS_INLINE_FUNCTION
-  ViewAssignment(       View<DT,DL,DD,DM,Specialize> & dst ,
-                  const View<ST,SL,SD,SM,Specialize> & src ,
-                  const typename enable_if< (
-                    ViewAssignable< ViewTraits<DT,DL,DD,DM> ,
-                                    ViewTraits<ST,SL,SD,SM> >::assignable_value &&
-                    ( ViewTraits<DT,DL,DD,DM>::rank == 0 ) &&
-                    ( ViewTraits<ST,SL,SD,SM>::rank == 5 )
-                  ), unsigned >::type i0 ,
-                  const unsigned i1 ,
-                  const unsigned i2 ,
-                  const unsigned i3 ,
-                  const unsigned i4 )
-  {
-    typedef ViewTraits<DT,DL,DD,DM> dst_traits ;
-    typedef ViewTraits<ST,SL,SD,SM> src_traits ;
-
-    enum { is_left = is_same< typename src_traits::array_layout , LayoutLeft >::value };
-
-    assert_shape_bounds( src.m_shape, 5, i0, i1, i2, i3, i4);
-
-    ViewTracking< dst_traits >::decrement( dst.m_ptr_on_device );
-
-    if ( is_left ) {
-      dst.m_ptr_on_device =
-        src.m_ptr_on_device +
-          i0 + src.m_stride.value * (
-          i1 + src.m_shape.N1 * (
-          i2 + src.m_shape.N2 * (
-          i3 + src.m_shape.N3 * (
-          i4 ))));
-    }
-    else {
-      dst.m_ptr_on_device =
-        src.m_ptr_on_device +
-          i4 + src.m_shape.N4 * (
-          i3 + src.m_shape.N3 * (
-          i2 + src.m_shape.N2 * (
-          i1 ))) + i0 * src.m_stride.value ;
-    }
-
-    ViewTracking< dst_traits >::increment( dst.m_ptr_on_device );
-  }
-
-  //------------------------------------
-  /** \brief  Extract Rank-0 from Rank-6 */
-
-  template< class DT , class DL , class DD , class DM ,
-            class ST , class SL , class SD , class SM >
-  KOKKOS_INLINE_FUNCTION
-  ViewAssignment(       View<DT,DL,DD,DM,Specialize> & dst ,
-                  const View<ST,SL,SD,SM,Specialize> & src ,
-                  const typename enable_if< (
-                    ViewAssignable< ViewTraits<DT,DL,DD,DM> ,
-                                    ViewTraits<ST,SL,SD,SM> >::assignable_value &&
-                    ( ViewTraits<DT,DL,DD,DM>::rank == 0 ) &&
-                    ( ViewTraits<ST,SL,SD,SM>::rank == 6 )
-                  ), unsigned >::type i0 ,
-                  const unsigned i1 ,
-                  const unsigned i2 ,
-                  const unsigned i3 ,
-                  const unsigned i4 ,
-                  const unsigned i5 )
-  {
-    typedef ViewTraits<DT,DL,DD,DM> dst_traits ;
-    typedef ViewTraits<ST,SL,SD,SM> src_traits ;
-
-    enum { is_left = is_same< typename src_traits::array_layout , LayoutLeft >::value };
-
-    assert_shape_bounds( src.m_shape, 6, i0, i1, i2, i3, i4, i5);
-
-    ViewTracking< dst_traits >::decrement( dst.m_ptr_on_device );
-
-    if ( is_left ) {
-      dst.m_ptr_on_device =
-        src.m_ptr_on_device +
-          i0 + src.m_stride.value * (
-          i1 + src.m_shape.N1 * (
-          i2 + src.m_shape.N2 * (
-          i3 + src.m_shape.N3 * (
-          i4 + src.m_shape.N4 * (
-          i5 )))));
-    }
-    else {
-      dst.m_ptr_on_device =
-        src.m_ptr_on_device +
-          i5 + src.m_shape.N5 * (
-          i4 + src.m_shape.N4 * (
-          i3 + src.m_shape.N3 * (
-          i2 + src.m_shape.N2 * (
-          i1 )))) + i0 * src.m_stride.value ;
-    }
-
-    ViewTracking< dst_traits >::increment( dst.m_ptr_on_device );
-  }
-
-  //------------------------------------
-  /** \brief  Extract Rank-0 from Rank-7 */
-
-  template< class DT , class DL , class DD , class DM ,
-            class ST , class SL , class SD , class SM >
-  KOKKOS_INLINE_FUNCTION
-  ViewAssignment(       View<DT,DL,DD,DM,Specialize> & dst ,
-                  const View<ST,SL,SD,SM,Specialize> & src ,
-                  const typename enable_if< (
-                    ViewAssignable< ViewTraits<DT,DL,DD,DM> ,
-                                    ViewTraits<ST,SL,SD,SM> >::assignable_value &&
-                    ( ViewTraits<DT,DL,DD,DM>::rank == 0 ) &&
-                    ( ViewTraits<ST,SL,SD,SM>::rank == 7 )
-                  ), unsigned >::type i0 ,
-                  const unsigned i1 ,
-                  const unsigned i2 ,
-                  const unsigned i3 ,
-                  const unsigned i4 ,
-                  const unsigned i5 ,
-                  const unsigned i6 )
-  {
-    typedef ViewTraits<DT,DL,DD,DM> dst_traits ;
-    typedef ViewTraits<ST,SL,SD,SM> src_traits ;
-
-    enum { is_left = is_same< typename src_traits::array_layout , LayoutLeft >::value };
-
-    assert_shape_bounds( src.m_shape, 7, i0, i1, i2, i3, i4, i5, i6 );
-
-    ViewTracking< dst_traits >::decrement( dst.m_ptr_on_device );
-
-    if ( is_left ) {
-      dst.m_ptr_on_device =
-        src.m_ptr_on_device +
-          i0 + src.m_stride.value * (
-          i1 + src.m_shape.N1 * (
-          i2 + src.m_shape.N2 * (
-          i3 + src.m_shape.N3 * (
-          i4 + src.m_shape.N4 * (
-          i5 + src.m_shape.N5 * (
-          i6 ))))));
-    }
-    else {
-      dst.m_ptr_on_device =
-        src.m_ptr_on_device +
-          i6 + src.m_shape.N6 * (
-          i5 + src.m_shape.N5 * (
-          i4 + src.m_shape.N4 * (
-          i3 + src.m_shape.N3 * (
-          i2 + src.m_shape.N2 * (
-          i1 ))))) + i0 * src.m_stride.value ;
-    }
-
-    ViewTracking< dst_traits >::increment( dst.m_ptr_on_device );
-  }
-
-  //------------------------------------
-  /** \brief  Extract Rank-0 from Rank-8 */
-
-  template< class DT , class DL , class DD , class DM ,
-            class ST , class SL , class SD , class SM >
-  KOKKOS_INLINE_FUNCTION
-  ViewAssignment(       View<DT,DL,DD,DM,Specialize> & dst ,
-                  const View<ST,SL,SD,SM,Specialize> & src ,
-                  const typename enable_if< (
-                    ViewAssignable< ViewTraits<DT,DL,DD,DM> ,
-                                    ViewTraits<ST,SL,SD,SM> >::assignable_value &&
-                    ( ViewTraits<DT,DL,DD,DM>::rank == 0 ) &&
-                    ( ViewTraits<ST,SL,SD,SM>::rank == 8 )
-                  ), unsigned >::type i0 ,
-                  const unsigned i1 ,
-                  const unsigned i2 ,
-                  const unsigned i3 ,
-                  const unsigned i4 ,
-                  const unsigned i5 ,
-                  const unsigned i6 ,
-                  const unsigned i7 )
-  {
-    typedef ViewTraits<DT,DL,DD,DM> dst_traits ;
-    typedef ViewTraits<ST,SL,SD,SM> src_traits ;
-
-    enum { is_left = is_same< typename src_traits::array_layout , LayoutLeft >::value };
-
-    assert_shape_bounds( src.m_shape, 8, i0, i1, i2, i3, i4, i5, i6, i7 );
-
-    ViewTracking< dst_traits >::decrement( dst.m_ptr_on_device );
-
-    if ( is_left ) {
-      dst.m_ptr_on_device =
-        src.m_ptr_on_device +
-          i0 + src.m_stride.value * (
-          i1 + src.m_shape.N1 * (
-          i2 + src.m_shape.N2 * (
-          i3 + src.m_shape.N3 * (
-          i4 + src.m_shape.N4 * (
-          i5 + src.m_shape.N5 * (
-          i6 + src.m_shape.N6 * i7 ))))));
-    }
-    else {
-      dst.m_ptr_on_device =
-        src.m_ptr_on_device +
-          i7 + src.m_shape.N7 * (
-          i6 + src.m_shape.N6 * (
-          i5 + src.m_shape.N5 * (
-          i4 + src.m_shape.N4 * (
-          i3 + src.m_shape.N3 * (
-          i2 + src.m_shape.N2 * (
-          i1 )))))) + i0 * src.m_stride.value ;
-    }
-
-    ViewTracking< dst_traits >::increment( dst.m_ptr_on_device );
-  }
-
-  //------------------------------------
-  /** \brief  Extract Rank-1 array from range of Rank-1 array, either layout */
-  template< class DT , class DL , class DD , class DM ,
-            class ST , class SL , class SD , class SM ,
-            typename iType >
-  KOKKOS_INLINE_FUNCTION
-  ViewAssignment(       View<DT,DL,DD,DM,Specialize> & dst ,
-                  const View<ST,SL,SD,SM,Specialize> & src ,
-                  const std::pair<iType,iType> & range ,
-                  typename enable_if< (
-                    ViewAssignable< ViewTraits<DT,DL,DD,DM> , ViewTraits<ST,SL,SD,SM> >::assignable_value
-                    &&
-                    ( ViewTraits<ST,SL,SD,SM>::rank == 1 )
-                    &&
-                    ( ViewTraits<DT,DL,DD,DM>::rank == 1 )
-                    &&
-                    ( ViewTraits<DT,DL,DD,DM>::rank_dynamic == 1 )
-                  ) >::type * = 0 )
-  {
-    typedef ViewTraits<DT,DL,DD,DM> traits_type ;
-    typedef typename traits_type::shape_type shape_type ;
-
-    ViewTracking< traits_type >::decrement( dst.m_ptr_on_device );
-
-    dst.m_shape.N0      = 0 ;
-    dst.m_ptr_on_device = 0 ;
-
-    if ( range.first < range.second ) {
-      assert_shape_bounds( src.m_shape , 1 , range.first );
-      assert_shape_bounds( src.m_shape , 1 , range.second - 1 );
-
-      dst.m_shape.N0 = range.second - range.first ;
-      dst.m_ptr_on_device = src.m_ptr_on_device + range.first ;
-
-      ViewTracking< traits_type >::increment( dst.m_ptr_on_device );
-    }
-  }
-
-  //------------------------------------
-  /** \brief  Extract Rank-1 array from LayoutLeft Rank-2 array. */
-  template< class DT , class DL , class DD , class DM ,
-            class ST , class SL , class SD , class SM >
-  KOKKOS_INLINE_FUNCTION
-  ViewAssignment(       View<DT,DL,DD,DM,Specialize> & dst ,
-                  const View<ST,SL,SD,SM,Specialize> & src ,
-                  const ALL & ,
-                  const typename enable_if< (
-                    ViewAssignable< ViewTraits<DT,DL,DD,DM> , ViewTraits<ST,SL,SD,SM> >::assignable_value
-                    &&
-                    is_same< typename ViewTraits<ST,SL,SD,SM>::array_layout , LayoutLeft >::value
-                    &&
-                    ( ViewTraits<ST,SL,SD,SM>::rank == 2 )
-                    &&
-                    ( ViewTraits<DT,DL,DD,DM>::rank == 1 )
-                    &&
-                    ( ViewTraits<DT,DL,DD,DM>::rank_dynamic == 1 )
-                  ), unsigned >::type i1 )
-  {
-    typedef ViewTraits<DT,DL,DD,DM> traits_type ;
-
-    ViewTracking< traits_type >::decrement( dst.m_ptr_on_device );
-
-    dst.m_shape.N0      = src.m_shape.N0 ;
-    dst.m_ptr_on_device = src.m_ptr_on_device + src.m_stride.value * i1 ;
-
-    ViewTracking< traits_type >::increment( dst.m_ptr_on_device );
-  }
-
-  //------------------------------------
-  /** \brief  Extract Rank-1 array from LayoutRight Rank-2 array. */
-  template< class DT , class DL , class DD , class DM ,
-            class ST , class SL , class SD , class SM >
-  KOKKOS_INLINE_FUNCTION
-  ViewAssignment(       View<DT,DL,DD,DM,Specialize> & dst ,
-                  const View<ST,SL,SD,SM,Specialize> & src ,
-                  const unsigned i0 ,
-                  const typename enable_if< (
-                    ViewAssignable< ViewTraits<DT,DL,DD,DM> , ViewTraits<ST,SL,SD,SM> >::assignable_value
-                    &&
-                    is_same< typename ViewTraits<ST,SL,SD,SM>::array_layout , LayoutRight >::value
-                    &&
-                    ( ViewTraits<ST,SL,SD,SM>::rank == 2 )
-                    &&
-                    ( ViewTraits<DT,DL,DD,DM>::rank == 1 )
-                    &&
-                    ( ViewTraits<DT,DL,DD,DM>::rank_dynamic == 1 )
-                  ), ALL >::type & )
-  {
-    typedef ViewTraits<DT,DL,DD,DM> traits_type ;
-
-    ViewTracking< traits_type >::decrement( dst.m_ptr_on_device );
-
-    dst.m_shape.N0      = src.m_shape.N1 ;
-    dst.m_ptr_on_device = src.m_ptr_on_device + src.m_stride.value * i0 ;
-
-    ViewTracking< traits_type >::increment( dst.m_ptr_on_device );
-  }
-
-  //------------------------------------
-  /** \brief  Extract Rank-1 array from LayoutLeft Rank-2 array. */
-  template< class DT , class DL , class DD , class DM ,
-            class ST , class SL , class SD , class SM >
-  KOKKOS_INLINE_FUNCTION
-  ViewAssignment(       View<DT,DL,DD,DM,Specialize> & dst ,
-                  const View<ST,SL,SD,SM,Specialize> & src ,
-                  const ALL & ,
-                  const typename enable_if< (
-                    ViewAssignable< ViewTraits<DT,DL,DD,DM> , ViewTraits<ST,SL,SD,SM> >::assignable_value
-                    &&
-                    is_same< typename ViewTraits<ST,SL,SD,SM>::array_layout , LayoutLeft >::value
-                    &&
-                    ( ViewTraits<ST,SL,SD,SM>::rank == 2 )
-                    &&
-                    ( ViewTraits<DT,DL,DD,DM>::rank == 2 )
-                    &&
-                    ( ViewTraits<DT,DL,DD,DM>::rank_dynamic == 2 )
-                  ), unsigned >::type i1 )
-  {
-    typedef ViewTraits<DT,DL,DD,DM> traits_type ;
-
-    ViewTracking< traits_type >::decrement( dst.m_ptr_on_device );
-
-    dst.m_shape.N0      = src.m_shape.N0 ;
-    dst.m_shape.N1      = 1 ;
-    dst.m_ptr_on_device = src.m_ptr_on_device + src.m_stride.value * i1 ;
-    dst.m_stride        = src.m_stride;
-
-    ViewTracking< traits_type >::increment( dst.m_ptr_on_device );
-  }
-
-  //------------------------------------
-  /** \brief  Extract Rank-1 array from LayoutRight Rank-2 array. */
-  template< class DT , class DL , class DD , class DM ,
-            class ST , class SL , class SD , class SM >
-  KOKKOS_INLINE_FUNCTION
-  ViewAssignment(       View<DT,DL,DD,DM,Specialize> & dst ,
-                  const View<ST,SL,SD,SM,Specialize> & src ,
-                  const unsigned i0 ,
-                  const typename enable_if< (
-                    ViewAssignable< ViewTraits<DT,DL,DD,DM> , ViewTraits<ST,SL,SD,SM> >::assignable_value
-                    &&
-                    is_same< typename ViewTraits<ST,SL,SD,SM>::array_layout , LayoutRight >::value
-                    &&
-                    ( ViewTraits<ST,SL,SD,SM>::rank == 2 )
-                    &&
-                    ( ViewTraits<DT,DL,DD,DM>::rank == 2 )
-                    &&
-                    ( ViewTraits<DT,DL,DD,DM>::rank_dynamic == 2 )
-                  ), ALL >::type & )
-  {
-    typedef ViewTraits<DT,DL,DD,DM> traits_type ;
-
-    ViewTracking< traits_type >::decrement( dst.m_ptr_on_device );
-
-    dst.m_shape.N0      = 1 ;
-    dst.m_shape.N1      = src.m_shape.N1 ;
-    dst.m_ptr_on_device = src.m_ptr_on_device + src.m_stride.value * i0 ;
-    dst.m_stride        = src.m_stride;
-
-    ViewTracking< traits_type >::increment( dst.m_ptr_on_device );
-  }
-  //------------------------------------
-  /** \brief  Extract LayoutRight Rank-N array from range of LayoutRight Rank-N array */
-  template< class DT , class DL , class DD , class DM ,
-            class ST , class SL , class SD , class SM ,
-            typename iType >
-  KOKKOS_INLINE_FUNCTION
-  ViewAssignment(       View<DT,DL,DD,DM,Specialize> & dst ,
-                  const View<ST,SL,SD,SM,Specialize> & src ,
-                  const std::pair<iType,iType> & range ,
-                  typename enable_if< (
-                    ViewAssignable< ViewTraits<DT,DL,DD,DM> , ViewTraits<ST,SL,SD,SM> >::value
-                    &&
-                    Impl::is_same< typename ViewTraits<DT,DL,DD,DM>::array_layout , LayoutRight >::value
-                    &&
-                    ( ViewTraits<ST,SL,SD,SM>::rank > 1 )
-                    &&
-                    ( ViewTraits<DT,DL,DD,DM>::rank_dynamic > 0 )
+                  const View<ST,LayoutStride,SD,SM,Specialize> & src ,
+                  const typename enable_if<(
+                    (
+                      ViewAssignable< ViewTraits<DT,DL,DD,DM> ,
+                                    ViewTraits<ST,LayoutStride,SD,SM> >::value
+                      ||
+                      ( ViewAssignable< ViewTraits<DT,DL,DD,DM> ,
+                                      ViewTraits<ST,LayoutStride,SD,SM> >::assignable_value
+                        &&
+                        ShapeCompatible< typename ViewTraits<DT,DL,DD,DM>::shape_type ,
+                                       typename ViewTraits<ST,LayoutStride,SD,SM>::shape_type >::value
+                      )
+                     )
+                     &&
+                      (View<DT,DL,DD,DM,Specialize>::rank==1)
+                     && (is_same< typename ViewTraits<DT,DL,DD,DM>::array_layout,LayoutLeft>::value ||
+                          is_same< typename ViewTraits<DT,DL,DD,DM>::array_layout,LayoutRight>::value)
                   )>::type * = 0 )
   {
-    typedef ViewTraits<DT,DL,DD,DM> traits_type ;
-    typedef typename traits_type::shape_type shape_type ;
-    typedef typename View<DT,DL,DD,DM,Specialize>::stride_type stride_type ;
-
-    ViewTracking< traits_type >::decrement( dst.m_ptr_on_device );
-
-    shape_type ::assign( dst.m_shape, 0, 0, 0, 0, 0, 0, 0, 0 );
-    stride_type::assign( dst.m_stride , 0 );
-    dst.m_ptr_on_device = 0 ;
-
-    if ( range.first < range.second ) {
-      assert_shape_bounds( src.m_shape , 8 , range.first ,      0,0,0,0,0,0,0);
-      assert_shape_bounds( src.m_shape , 8 , range.second - 1 , 0,0,0,0,0,0,0);
-
-      shape_type::assign( dst.m_shape, range.second - range.first ,
-                          src.m_shape.N1 , src.m_shape.N2 , src.m_shape.N3 ,
-                          src.m_shape.N4 , src.m_shape.N5 , src.m_shape.N6 , src.m_shape.N7 );
-
-      stride_type::assign( dst.m_stride , src.m_stride.value );
-
-      dst.m_ptr_on_device = src.m_ptr_on_device + range.first * src.m_stride.value ;
-
-      ViewTracking< traits_type >::increment( dst.m_ptr_on_device );
+    size_t strides[8];
+    src.stride(strides);
+    if(strides[0]!=1) {
+      abort("Trying to assign strided 1D View to LayoutRight or LayoutLeft which is not stride-1");
     }
+    dst.m_offset_map.assign( src.dimension_0(), 0, 0, 0, 0, 0, 0, 0, 0 );
+
+    dst.m_management = src.m_management ;
+
+    dst.m_ptr_on_device = ViewDataManagement< ViewTraits<DT,DL,DD,DM> >::create_handle( src.m_ptr_on_device, src.m_tracker );
+
+    dst.m_tracker = src.m_tracker ;
+
   }
 
-  //------------------------------------
-  /** \brief  Extract rank-2 from rank-2 array */
-  template< class DT , class DL , class DD , class DM ,
-            class ST , class SL , class SD , class SM ,
-            typename iType0 , typename iType1 >
-  KOKKOS_INLINE_FUNCTION
-  ViewAssignment(       View<DT,DL,DD,DM,Specialize> & dst ,
-                  const View<ST,SL,SD,SM,Specialize> & src ,
-                  const std::pair<iType0,iType0> & range0 ,
-                  const std::pair<iType1,iType1> & range1 ,
-                  typename enable_if< (
-                    ViewAssignable< ViewTraits<DT,DL,DD,DM> , ViewTraits<ST,SL,SD,SM> >::value
-                    &&
-                    ViewTraits<DT,DL,DD,DM>::rank == 2
-                    &&
-                    ViewTraits<DT,DL,DD,DM>::rank_dynamic == 2
-                  ) >::type * = 0 )
-  {
-    typedef ViewTraits<DT,DL,DD,DM> traits_type ;
-    typedef typename traits_type::shape_type shape_type ;
-    enum { left = is_same< typename traits_type::array_layout , LayoutLeft >::value };
-
-    ViewTracking< traits_type >::decrement( dst.m_ptr_on_device );
-
-    dst.m_shape.N0      = 0 ;
-    dst.m_shape.N1      = 0 ;
-    dst.m_stride.value  = 0 ;
-    dst.m_ptr_on_device = 0 ;
-
-    if ( range0.first < range0.second && range1.first < range1.second ) {
-      assert_shape_bounds( src.m_shape , 2 , range0.first , range1.first );
-      assert_shape_bounds( src.m_shape , 2 , range0.second - 1 , range1.second - 1 );
-
-      dst.m_shape.N0 = range0.second - range0.first ;
-      dst.m_shape.N1 = range1.second - range1.first ;
-      dst.m_stride   = src.m_stride ;
-
-      if ( left ) {
-        // operator: dst.m_ptr_on_device[ i0 + dst.m_stride * i1 ]
-        dst.m_ptr_on_device = src.m_ptr_on_device + range0.first + dst.m_stride.value * range1.first ;
-      }
-      else {
-        // operator: dst.m_ptr_on_device[ i0 * dst.m_stride + i1 ]
-        dst.m_ptr_on_device = src.m_ptr_on_device + range0.first * dst.m_stride.value + range1.first ;
-      }
-
-      ViewTracking< traits_type >::increment( dst.m_ptr_on_device );
-    }
-  }
-
-  //------------------------------------
-  /** \brief  Extract rank-2 from rank-2 array */
-  template< class DT , class DL , class DD , class DM ,
-            class ST , class SL , class SD , class SM ,
-            typename iType >
-  KOKKOS_INLINE_FUNCTION
-  ViewAssignment(       View<DT,DL,DD,DM,Specialize> & dst ,
-                  const View<ST,SL,SD,SM,Specialize> & src ,
-                  ALL ,
-                  const std::pair<iType,iType> & range1 ,
-                  typename enable_if< (
-                    ViewAssignable< ViewTraits<DT,DL,DD,DM> , ViewTraits<ST,SL,SD,SM> >::value
-                    &&
-                    ViewTraits<DT,DL,DD,DM>::rank == 2
-                    &&
-                    ViewTraits<DT,DL,DD,DM>::rank_dynamic == 2
-                  ) >::type * = 0 )
-  {
-    typedef ViewTraits<DT,DL,DD,DM> traits_type ;
-    typedef typename traits_type::shape_type shape_type ;
-    enum { left = is_same< typename traits_type::array_layout , LayoutLeft >::value };
-
-    ViewTracking< traits_type >::decrement( dst.m_ptr_on_device );
-
-    dst.m_shape.N0      = 0 ;
-    dst.m_shape.N1      = 0 ;
-    dst.m_stride.value  = 0 ;
-    dst.m_ptr_on_device = 0 ;
-
-    if ( range1.first < range1.second ) {
-      assert_shape_bounds( src.m_shape , 2 , 0 , range1.first );
-      assert_shape_bounds( src.m_shape , 2 , src.m_shape.N0 - 1 , range1.second - 1 );
-
-      dst.m_shape.N0 = src.m_shape.N0 ;
-      dst.m_shape.N1 = range1.second - range1.first ;
-      dst.m_stride   = src.m_stride ;
-
-      if ( left ) {
-        // operator: dst.m_ptr_on_device[ i0 + dst.m_stride * i1 ]
-        dst.m_ptr_on_device = src.m_ptr_on_device + dst.m_stride.value * range1.first ;
-      }
-      else {
-        // operator: dst.m_ptr_on_device[ i0 * dst.m_stride + i1 ]
-        dst.m_ptr_on_device = src.m_ptr_on_device + range1.first ;
-      }
-
-
-      ViewTracking< traits_type >::increment( dst.m_ptr_on_device );
-    }
-  }
-
-  //------------------------------------
-  /** \brief  Extract rank-2 from rank-2 array */
-  template< class DT , class DL , class DD , class DM ,
-            class ST , class SL , class SD , class SM ,
-            typename iType >
-  KOKKOS_INLINE_FUNCTION
-  ViewAssignment(       View<DT,DL,DD,DM,Specialize> & dst ,
-                  const View<ST,SL,SD,SM,Specialize> & src ,
-                  const std::pair<iType,iType> & range0 ,
-                  ALL ,
-                  typename enable_if< (
-                    ViewAssignable< ViewTraits<DT,DL,DD,DM> , ViewTraits<ST,SL,SD,SM> >::value
-                    &&
-                    ViewTraits<DT,DL,DD,DM>::rank == 2
-                    &&
-                    ViewTraits<DT,DL,DD,DM>::rank_dynamic == 2
-                  ) >::type * = 0 )
-  {
-    typedef ViewTraits<DT,DL,DD,DM> traits_type ;
-    typedef typename traits_type::shape_type shape_type ;
-    enum { left = is_same< typename traits_type::array_layout , LayoutLeft >::value };
-
-    ViewTracking< traits_type >::decrement( dst.m_ptr_on_device );
-
-    dst.m_shape.N0      = 0 ;
-    dst.m_shape.N1      = 0 ;
-    dst.m_stride.value  = 0 ;
-    dst.m_ptr_on_device = 0 ;
-
-    if ( range0.first < range0.second ) {
-      assert_shape_bounds( src.m_shape , 2 , range0.first , 0 );
-      assert_shape_bounds( src.m_shape , 2 , range0.second - 1 , src.m_shape.N1 - 1 );
-
-      dst.m_shape.N0 = range0.second - range0.first ;
-      dst.m_shape.N1 = src.m_shape.N1 ;
-      dst.m_stride   = src.m_stride ;
-
-      if ( left ) {
-        // operator: dst.m_ptr_on_device[ i0 + dst.m_stride * i1 ]
-        dst.m_ptr_on_device = src.m_ptr_on_device + range0.first ;
-      }
-      else {
-        // operator: dst.m_ptr_on_device[ i0 * dst.m_stride + i1 ]
-        dst.m_ptr_on_device = src.m_ptr_on_device + range0.first * dst.m_stride.value ;
-      }
-
-      ViewTracking< traits_type >::increment( dst.m_ptr_on_device );
-    }
-  }
   //------------------------------------
   /** \brief  Deep copy data from compatible value type, layout, rank, and specialization.
    *          Check the dimensions and allocation lengths at runtime.
@@ -814,8 +139,8 @@ struct ViewAssignment< LayoutDefault , LayoutDefault , void >
   void deep_copy( const View<DT,DL,DD,DM,Specialize> & dst ,
                   const View<ST,SL,SD,SM,Specialize> & src ,
                   const typename Impl::enable_if<(
-                    Impl::is_same< typename ViewTraits<DT,DL,DD,DM>::scalar_type ,
-                                   typename ViewTraits<ST,SL,SD,SM>::non_const_scalar_type >::value
+                    Impl::is_same< typename ViewTraits<DT,DL,DD,DM>::value_type ,
+                                   typename ViewTraits<ST,SL,SD,SM>::non_const_value_type >::value
                     &&
                     Impl::is_same< typename ViewTraits<DT,DL,DD,DM>::array_layout ,
                                    typename ViewTraits<ST,SL,SD,SM>::array_layout >::value
@@ -826,20 +151,724 @@ struct ViewAssignment< LayoutDefault , LayoutDefault , void >
     typedef typename ViewTraits<DT,DL,DD,DM>::memory_space dst_memory_space ;
     typedef typename ViewTraits<ST,SL,SD,SM>::memory_space src_memory_space ;
 
-    if ( dst.m_ptr_on_device != src.m_ptr_on_device ) {
+    if ( dst.ptr_on_device() != src.ptr_on_device() ) {
 
-      Impl::assert_shapes_are_equal( dst.m_shape , src.m_shape );
+      Impl::assert_shapes_are_equal( dst.m_offset_map , src.m_offset_map );
 
-      const size_t nbytes = dst.m_shape.scalar_size * capacity( dst.m_shape , dst.m_stride );
+      const size_t nbytes = dst.m_offset_map.scalar_size * dst.m_offset_map.capacity();
 
-      DeepCopy< dst_memory_space , src_memory_space >( dst.m_ptr_on_device , src.m_ptr_on_device , nbytes );
+      DeepCopy< dst_memory_space , src_memory_space >( dst.ptr_on_device() , src.ptr_on_device() , nbytes );
     }
   }
 };
 
+} /* namespace Impl */
+} /* namespace Kokkos */
+
+//----------------------------------------------------------------------------
 //----------------------------------------------------------------------------
 
+namespace Kokkos {
+namespace Impl {
+
+template< class ExecSpace , class DT , class DL, class DD, class DM, class DS >
+struct ViewDefaultConstruct< ExecSpace , Kokkos::View<DT,DL,DD,DM,DS> , true >
+{
+  Kokkos::View<DT,DL,DD,DM,DS> * const m_ptr ;
+
+  KOKKOS_FORCEINLINE_FUNCTION
+  void operator()( const typename ExecSpace::size_type& i ) const
+    { new(m_ptr+i) Kokkos::View<DT,DL,DD,DM,DS>(); }
+
+  ViewDefaultConstruct( Kokkos::View<DT,DL,DD,DM,DS> * pointer , size_t capacity )
+    : m_ptr( pointer )
+    {
+      Kokkos::RangePolicy< ExecSpace > range( 0 , capacity );
+      parallel_for( range , *this );
+      ExecSpace::fence();
+    }
+};
+
+template< class SrcDataType , class SrcArg1Type , class SrcArg2Type , class SrcArg3Type
+        , class SubArg0_type , class SubArg1_type , class SubArg2_type , class SubArg3_type
+        , class SubArg4_type , class SubArg5_type , class SubArg6_type , class SubArg7_type
+        >
+struct ViewSubview< View< SrcDataType , SrcArg1Type , SrcArg2Type , SrcArg3Type , Impl::ViewDefault >
+                  , SubArg0_type , SubArg1_type , SubArg2_type , SubArg3_type
+                  , SubArg4_type , SubArg5_type , SubArg6_type , SubArg7_type >
+{
+private:
+
+  typedef View< SrcDataType , SrcArg1Type , SrcArg2Type , SrcArg3Type , Impl::ViewDefault >  SrcViewType ;
+
+  enum { V0 = Impl::is_same< SubArg0_type , void >::value ? 1 : 0 };
+  enum { V1 = Impl::is_same< SubArg1_type , void >::value ? 1 : 0 };
+  enum { V2 = Impl::is_same< SubArg2_type , void >::value ? 1 : 0 };
+  enum { V3 = Impl::is_same< SubArg3_type , void >::value ? 1 : 0 };
+  enum { V4 = Impl::is_same< SubArg4_type , void >::value ? 1 : 0 };
+  enum { V5 = Impl::is_same< SubArg5_type , void >::value ? 1 : 0 };
+  enum { V6 = Impl::is_same< SubArg6_type , void >::value ? 1 : 0 };
+  enum { V7 = Impl::is_same< SubArg7_type , void >::value ? 1 : 0 };
+
+  // The source view rank must be equal to the input argument rank
+  // Once a void argument is encountered all subsequent arguments must be void.
+  enum { InputRank =
+    Impl::StaticAssert<( SrcViewType::rank ==
+                         ( V0 ? 0 : (
+                           V1 ? 1 : (
+                           V2 ? 2 : (
+                           V3 ? 3 : (
+                           V4 ? 4 : (
+                           V5 ? 5 : (
+                           V6 ? 6 : (
+                           V7 ? 7 : 8 ))))))) ))
+                       &&
+                       ( SrcViewType::rank ==
+                         ( 8 - ( V0 + V1 + V2 + V3 + V4 + V5 + V6 + V7 ) ) )
+    >::value ? SrcViewType::rank : 0 };
+
+  enum { R0 = Impl::ViewOffsetRange< SubArg0_type >::is_range ? 1 : 0 };
+  enum { R1 = Impl::ViewOffsetRange< SubArg1_type >::is_range ? 1 : 0 };
+  enum { R2 = Impl::ViewOffsetRange< SubArg2_type >::is_range ? 1 : 0 };
+  enum { R3 = Impl::ViewOffsetRange< SubArg3_type >::is_range ? 1 : 0 };
+  enum { R4 = Impl::ViewOffsetRange< SubArg4_type >::is_range ? 1 : 0 };
+  enum { R5 = Impl::ViewOffsetRange< SubArg5_type >::is_range ? 1 : 0 };
+  enum { R6 = Impl::ViewOffsetRange< SubArg6_type >::is_range ? 1 : 0 };
+  enum { R7 = Impl::ViewOffsetRange< SubArg7_type >::is_range ? 1 : 0 };
+
+  enum { OutputRank = unsigned(R0) + unsigned(R1) + unsigned(R2) + unsigned(R3)
+                    + unsigned(R4) + unsigned(R5) + unsigned(R6) + unsigned(R7) };
+
+  // Reverse
+  enum { R0_rev = 0 == InputRank ? 0u : (
+                  1 == InputRank ? unsigned(R0) : (
+                  2 == InputRank ? unsigned(R1) : (
+                  3 == InputRank ? unsigned(R2) : (
+                  4 == InputRank ? unsigned(R3) : (
+                  5 == InputRank ? unsigned(R4) : (
+                  6 == InputRank ? unsigned(R5) : (
+                  7 == InputRank ? unsigned(R6) : unsigned(R7) ))))))) };
+
+  typedef typename SrcViewType::array_layout  SrcViewLayout ;
+
+  // Choose array layout, attempting to preserve original layout if at all possible.
+  typedef typename Impl::if_c<
+     ( // Same Layout IF
+       // OutputRank 0
+       ( OutputRank == 0 )
+       ||
+       // OutputRank 1 or 2, InputLayout Left, Interval 0
+       // because single stride one or second index has a stride.
+       ( OutputRank <= 2 && R0 && Impl::is_same<SrcViewLayout,LayoutLeft>::value )
+       ||
+       // OutputRank 1 or 2, InputLayout Right, Interval [InputRank-1]
+       // because single stride one or second index has a stride.
+       ( OutputRank <= 2 && R0_rev && Impl::is_same<SrcViewLayout,LayoutRight>::value )
+     ), SrcViewLayout , Kokkos::LayoutStride >::type OutputViewLayout ;
+
+  // Choose data type as a purely dynamic rank array to accomodate a runtime range.
+  typedef typename Impl::if_c< OutputRank == 0 , typename SrcViewType::value_type ,
+          typename Impl::if_c< OutputRank == 1 , typename SrcViewType::value_type *,
+          typename Impl::if_c< OutputRank == 2 , typename SrcViewType::value_type **,
+          typename Impl::if_c< OutputRank == 3 , typename SrcViewType::value_type ***,
+          typename Impl::if_c< OutputRank == 4 , typename SrcViewType::value_type ****,
+          typename Impl::if_c< OutputRank == 5 , typename SrcViewType::value_type *****,
+          typename Impl::if_c< OutputRank == 6 , typename SrcViewType::value_type ******,
+          typename Impl::if_c< OutputRank == 7 , typename SrcViewType::value_type *******,
+                                                 typename SrcViewType::value_type ********
+  >::type >::type >::type >::type >::type >::type >::type >::type  OutputData ;
+
+  // Choose space.
+  // If the source view's template arg1 or arg2 is a space then use it,
+  // otherwise use the source view's execution space.
+
+  typedef typename Impl::if_c< Impl::is_space< SrcArg1Type >::value , SrcArg1Type ,
+          typename Impl::if_c< Impl::is_space< SrcArg2Type >::value , SrcArg2Type , typename SrcViewType::device_type
+  >::type >::type OutputSpace ;
+
+public:
+
+  // If keeping the layout then match non-data type arguments
+  // else keep execution space and memory traits.
+  typedef typename
+    Impl::if_c< Impl::is_same< SrcViewLayout , OutputViewLayout >::value
+              , Kokkos::View< OutputData , SrcArg1Type , SrcArg2Type , SrcArg3Type , Impl::ViewDefault >
+              , Kokkos::View< OutputData , OutputViewLayout , OutputSpace
+                            , typename SrcViewType::memory_traits
+                            , Impl::ViewDefault >
+              >::type  type ;
+};
+
 } /* namespace Impl */
+} /* namespace Kokkos */
+
+//----------------------------------------------------------------------------
+//----------------------------------------------------------------------------
+
+namespace Kokkos {
+
+// Construct subview of a Rank 8 view
+template< class DstDataType , class DstArg1Type , class DstArg2Type , class DstArg3Type >
+template< class SrcDataType , class SrcArg1Type , class SrcArg2Type , class SrcArg3Type
+        , class SubArg0_type , class SubArg1_type , class SubArg2_type , class SubArg3_type
+        , class SubArg4_type , class SubArg5_type , class SubArg6_type , class SubArg7_type
+        >
+KOKKOS_INLINE_FUNCTION
+View< DstDataType , DstArg1Type , DstArg2Type , DstArg3Type , Impl::ViewDefault >::
+View( const View< SrcDataType , SrcArg1Type , SrcArg2Type , SrcArg3Type , Impl::ViewDefault > & src
+    , const SubArg0_type & arg0
+    , const SubArg1_type & arg1
+    , const SubArg2_type & arg2
+    , const SubArg3_type & arg3
+    , const SubArg4_type & arg4
+    , const SubArg5_type & arg5
+    , const SubArg6_type & arg6
+    , const SubArg7_type & arg7
+    )
+  : m_ptr_on_device( (typename traits::value_type*) NULL)
+  , m_offset_map()
+  , m_management()
+  , m_tracker()
+{
+  // This constructor can only be used to construct a subview
+  // from the source view.  This type must match the subview type
+  // deduced from the source view and subview arguments.
+
+  typedef Impl::ViewSubview< View< SrcDataType , SrcArg1Type , SrcArg2Type , SrcArg3Type , Impl::ViewDefault >
+                           , SubArg0_type , SubArg1_type , SubArg2_type , SubArg3_type
+                           , SubArg4_type , SubArg5_type , SubArg6_type , SubArg7_type >
+    ViewSubviewDeduction ;
+
+  enum { is_a_valid_subview_constructor =
+    Impl::StaticAssert<
+      Impl::is_same< View , typename ViewSubviewDeduction::type >::value
+    >::value
+  };
+
+  if ( is_a_valid_subview_constructor ) {
+
+    typedef Impl::ViewOffsetRange< SubArg0_type > R0 ;
+    typedef Impl::ViewOffsetRange< SubArg1_type > R1 ;
+    typedef Impl::ViewOffsetRange< SubArg2_type > R2 ;
+    typedef Impl::ViewOffsetRange< SubArg3_type > R3 ;
+    typedef Impl::ViewOffsetRange< SubArg4_type > R4 ;
+    typedef Impl::ViewOffsetRange< SubArg5_type > R5 ;
+    typedef Impl::ViewOffsetRange< SubArg6_type > R6 ;
+    typedef Impl::ViewOffsetRange< SubArg7_type > R7 ;
+
+    // 'assign_subview' returns whether the subview offset_map
+    // introduces noncontiguity in the view.
+    const bool introduce_noncontiguity =
+      m_offset_map.assign_subview( src.m_offset_map
+                                 , R0::dimension( src.m_offset_map.N0 , arg0 )
+                                 , R1::dimension( src.m_offset_map.N1 , arg1 )
+                                 , R2::dimension( src.m_offset_map.N2 , arg2 )
+                                 , R3::dimension( src.m_offset_map.N3 , arg3 )
+                                 , R4::dimension( src.m_offset_map.N4 , arg4 )
+                                 , R5::dimension( src.m_offset_map.N5 , arg5 )
+                                 , R6::dimension( src.m_offset_map.N6 , arg6 )
+                                 , R7::dimension( src.m_offset_map.N7 , arg7 )
+                                 );
+
+    if ( m_offset_map.capacity() ) {
+
+      m_management = src.m_management ;
+
+      if ( introduce_noncontiguity ) m_management.set_noncontiguous();
+
+      m_ptr_on_device = src.m_ptr_on_device +
+                        src.m_offset_map( R0::begin( arg0 )
+                                        , R1::begin( arg1 )
+                                        , R2::begin( arg2 )
+                                        , R3::begin( arg3 )
+                                        , R4::begin( arg4 )
+                                        , R5::begin( arg5 )
+                                        , R6::begin( arg6 )
+                                        , R7::begin( arg7 ) );
+      m_tracker = src.m_tracker ;
+    }
+  }
+}
+
+// Construct subview of a Rank 7 view
+template< class DstDataType , class DstArg1Type , class DstArg2Type , class DstArg3Type >
+template< class SrcDataType , class SrcArg1Type , class SrcArg2Type , class SrcArg3Type
+        , class SubArg0_type , class SubArg1_type , class SubArg2_type , class SubArg3_type
+        , class SubArg4_type , class SubArg5_type , class SubArg6_type
+        >
+KOKKOS_INLINE_FUNCTION
+View< DstDataType , DstArg1Type , DstArg2Type , DstArg3Type , Impl::ViewDefault >::
+View( const View< SrcDataType , SrcArg1Type , SrcArg2Type , SrcArg3Type , Impl::ViewDefault > & src
+    , const SubArg0_type & arg0
+    , const SubArg1_type & arg1
+    , const SubArg2_type & arg2
+    , const SubArg3_type & arg3
+    , const SubArg4_type & arg4
+    , const SubArg5_type & arg5
+    , const SubArg6_type & arg6
+    )
+  : m_ptr_on_device( (typename traits::value_type*) NULL)
+  , m_offset_map()
+  , m_management()
+  , m_tracker()
+{
+  // This constructor can only be used to construct a subview
+  // from the source view.  This type must match the subview type
+  // deduced from the source view and subview arguments.
+
+  typedef Impl::ViewSubview< View< SrcDataType , SrcArg1Type , SrcArg2Type , SrcArg3Type , Impl::ViewDefault >
+                           , SubArg0_type , SubArg1_type , SubArg2_type , SubArg3_type
+                           , SubArg4_type , SubArg5_type , SubArg6_type , void >
+    ViewSubviewDeduction ;
+
+  enum { is_a_valid_subview_constructor =
+    Impl::StaticAssert<
+      Impl::is_same< View , typename ViewSubviewDeduction::type >::value
+    >::value
+  };
+
+  if ( is_a_valid_subview_constructor ) {
+
+    typedef Impl::ViewOffsetRange< SubArg0_type > R0 ;
+    typedef Impl::ViewOffsetRange< SubArg1_type > R1 ;
+    typedef Impl::ViewOffsetRange< SubArg2_type > R2 ;
+    typedef Impl::ViewOffsetRange< SubArg3_type > R3 ;
+    typedef Impl::ViewOffsetRange< SubArg4_type > R4 ;
+    typedef Impl::ViewOffsetRange< SubArg5_type > R5 ;
+    typedef Impl::ViewOffsetRange< SubArg6_type > R6 ;
+
+    // 'assign_subview' returns whether the subview offset_map
+    // introduces noncontiguity in the view.
+    const bool introduce_noncontiguity =
+      m_offset_map.assign_subview( src.m_offset_map
+                                 , R0::dimension( src.m_offset_map.N0 , arg0 )
+                                 , R1::dimension( src.m_offset_map.N1 , arg1 )
+                                 , R2::dimension( src.m_offset_map.N2 , arg2 )
+                                 , R3::dimension( src.m_offset_map.N3 , arg3 )
+                                 , R4::dimension( src.m_offset_map.N4 , arg4 )
+                                 , R5::dimension( src.m_offset_map.N5 , arg5 )
+                                 , R6::dimension( src.m_offset_map.N6 , arg6 )
+                                 , 0
+                                 );
+
+    if ( m_offset_map.capacity() ) {
+
+      m_management = src.m_management ;
+
+      if ( introduce_noncontiguity ) m_management.set_noncontiguous();
+
+      m_ptr_on_device = src.m_ptr_on_device +
+                        src.m_offset_map( R0::begin( arg0 )
+                                        , R1::begin( arg1 )
+                                        , R2::begin( arg2 )
+                                        , R3::begin( arg3 )
+                                        , R4::begin( arg4 )
+                                        , R5::begin( arg5 )
+                                        , R6::begin( arg6 )
+                                        );
+      m_tracker = src.m_tracker ;
+    }
+  }
+}
+
+// Construct subview of a Rank 6 view
+template< class DstDataType , class DstArg1Type , class DstArg2Type , class DstArg3Type >
+template< class SrcDataType , class SrcArg1Type , class SrcArg2Type , class SrcArg3Type
+        , class SubArg0_type , class SubArg1_type , class SubArg2_type , class SubArg3_type
+        , class SubArg4_type , class SubArg5_type
+        >
+KOKKOS_INLINE_FUNCTION
+View< DstDataType , DstArg1Type , DstArg2Type , DstArg3Type , Impl::ViewDefault >::
+View( const View< SrcDataType , SrcArg1Type , SrcArg2Type , SrcArg3Type , Impl::ViewDefault > & src
+    , const SubArg0_type & arg0
+    , const SubArg1_type & arg1
+    , const SubArg2_type & arg2
+    , const SubArg3_type & arg3
+    , const SubArg4_type & arg4
+    , const SubArg5_type & arg5
+    )
+  : m_ptr_on_device( (typename traits::value_type*) NULL)
+  , m_offset_map()
+  , m_management()
+  , m_tracker()
+{
+  // This constructor can only be used to construct a subview
+  // from the source view.  This type must match the subview type
+  // deduced from the source view and subview arguments.
+
+  typedef Impl::ViewSubview< View< SrcDataType , SrcArg1Type , SrcArg2Type , SrcArg3Type , Impl::ViewDefault >
+                           , SubArg0_type , SubArg1_type , SubArg2_type , SubArg3_type
+                           , SubArg4_type , SubArg5_type , void , void >
+    ViewSubviewDeduction ;
+
+  enum { is_a_valid_subview_constructor =
+    Impl::StaticAssert<
+      Impl::is_same< View , typename ViewSubviewDeduction::type >::value
+    >::value
+  };
+
+  if ( is_a_valid_subview_constructor ) {
+
+    typedef Impl::ViewOffsetRange< SubArg0_type > R0 ;
+    typedef Impl::ViewOffsetRange< SubArg1_type > R1 ;
+    typedef Impl::ViewOffsetRange< SubArg2_type > R2 ;
+    typedef Impl::ViewOffsetRange< SubArg3_type > R3 ;
+    typedef Impl::ViewOffsetRange< SubArg4_type > R4 ;
+    typedef Impl::ViewOffsetRange< SubArg5_type > R5 ;
+
+    // 'assign_subview' returns whether the subview offset_map
+    // introduces noncontiguity in the view.
+    const bool introduce_noncontiguity =
+      m_offset_map.assign_subview( src.m_offset_map
+                                 , R0::dimension( src.m_offset_map.N0 , arg0 )
+                                 , R1::dimension( src.m_offset_map.N1 , arg1 )
+                                 , R2::dimension( src.m_offset_map.N2 , arg2 )
+                                 , R3::dimension( src.m_offset_map.N3 , arg3 )
+                                 , R4::dimension( src.m_offset_map.N4 , arg4 )
+                                 , R5::dimension( src.m_offset_map.N5 , arg5 )
+                                 , 0
+                                 , 0
+                                 );
+
+    if ( m_offset_map.capacity() ) {
+
+      m_management = src.m_management ;
+
+      if ( introduce_noncontiguity ) m_management.set_noncontiguous();
+
+      m_ptr_on_device = src.m_ptr_on_device +
+                        src.m_offset_map( R0::begin( arg0 )
+                                        , R1::begin( arg1 )
+                                        , R2::begin( arg2 )
+                                        , R3::begin( arg3 )
+                                        , R4::begin( arg4 )
+                                        , R5::begin( arg5 )
+                                        );
+      m_tracker = src.m_tracker ;
+    }
+  }
+}
+
+// Construct subview of a Rank 5 view
+template< class DstDataType , class DstArg1Type , class DstArg2Type , class DstArg3Type >
+template< class SrcDataType , class SrcArg1Type , class SrcArg2Type , class SrcArg3Type
+        , class SubArg0_type , class SubArg1_type , class SubArg2_type , class SubArg3_type
+        , class SubArg4_type
+        >
+KOKKOS_INLINE_FUNCTION
+View< DstDataType , DstArg1Type , DstArg2Type , DstArg3Type , Impl::ViewDefault >::
+View( const View< SrcDataType , SrcArg1Type , SrcArg2Type , SrcArg3Type , Impl::ViewDefault > & src
+    , const SubArg0_type & arg0
+    , const SubArg1_type & arg1
+    , const SubArg2_type & arg2
+    , const SubArg3_type & arg3
+    , const SubArg4_type & arg4
+    )
+  : m_ptr_on_device( (typename traits::value_type*) NULL)
+  , m_offset_map()
+  , m_management()
+  , m_tracker()
+{
+  // This constructor can only be used to construct a subview
+  // from the source view.  This type must match the subview type
+  // deduced from the source view and subview arguments.
+
+  typedef Impl::ViewSubview< View< SrcDataType , SrcArg1Type , SrcArg2Type , SrcArg3Type , Impl::ViewDefault >
+                           , SubArg0_type , SubArg1_type , SubArg2_type , SubArg3_type
+                           , SubArg4_type , void , void , void >
+    ViewSubviewDeduction ;
+
+  enum { is_a_valid_subview_constructor =
+    Impl::StaticAssert<
+      Impl::is_same< View , typename ViewSubviewDeduction::type >::value
+    >::value
+  };
+
+  if ( is_a_valid_subview_constructor ) {
+
+    typedef Impl::ViewOffsetRange< SubArg0_type > R0 ;
+    typedef Impl::ViewOffsetRange< SubArg1_type > R1 ;
+    typedef Impl::ViewOffsetRange< SubArg2_type > R2 ;
+    typedef Impl::ViewOffsetRange< SubArg3_type > R3 ;
+    typedef Impl::ViewOffsetRange< SubArg4_type > R4 ;
+
+    // 'assign_subview' returns whether the subview offset_map
+    // introduces noncontiguity in the view.
+    const bool introduce_noncontiguity =
+      m_offset_map.assign_subview( src.m_offset_map
+                                 , R0::dimension( src.m_offset_map.N0 , arg0 )
+                                 , R1::dimension( src.m_offset_map.N1 , arg1 )
+                                 , R2::dimension( src.m_offset_map.N2 , arg2 )
+                                 , R3::dimension( src.m_offset_map.N3 , arg3 )
+                                 , R4::dimension( src.m_offset_map.N4 , arg4 )
+                                 , 0
+                                 , 0
+                                 , 0
+                                 );
+
+    if ( m_offset_map.capacity() ) {
+
+      m_management = src.m_management ;
+
+      if ( introduce_noncontiguity ) m_management.set_noncontiguous();
+
+      m_ptr_on_device = src.m_ptr_on_device +
+                        src.m_offset_map( R0::begin( arg0 )
+                                        , R1::begin( arg1 )
+                                        , R2::begin( arg2 )
+                                        , R3::begin( arg3 )
+                                        , R4::begin( arg4 )
+                                        );
+      m_tracker = src.m_tracker ;
+    }
+  }
+}
+
+// Construct subview of a Rank 4 view
+template< class DstDataType , class DstArg1Type , class DstArg2Type , class DstArg3Type >
+template< class SrcDataType , class SrcArg1Type , class SrcArg2Type , class SrcArg3Type
+        , class SubArg0_type , class SubArg1_type , class SubArg2_type , class SubArg3_type
+        >
+KOKKOS_INLINE_FUNCTION
+View< DstDataType , DstArg1Type , DstArg2Type , DstArg3Type , Impl::ViewDefault >::
+View( const View< SrcDataType , SrcArg1Type , SrcArg2Type , SrcArg3Type , Impl::ViewDefault > & src
+    , const SubArg0_type & arg0
+    , const SubArg1_type & arg1
+    , const SubArg2_type & arg2
+    , const SubArg3_type & arg3
+    )
+  : m_ptr_on_device( (typename traits::value_type*) NULL)
+  , m_offset_map()
+  , m_management()
+  , m_tracker()
+{
+  // This constructor can only be used to construct a subview
+  // from the source view.  This type must match the subview type
+  // deduced from the source view and subview arguments.
+
+  typedef Impl::ViewSubview< View< SrcDataType , SrcArg1Type , SrcArg2Type , SrcArg3Type , Impl::ViewDefault >
+                           , SubArg0_type , SubArg1_type , SubArg2_type , SubArg3_type
+                           , void , void , void , void >
+    ViewSubviewDeduction ;
+
+  enum { is_a_valid_subview_constructor =
+    Impl::StaticAssert<
+      Impl::is_same< View , typename ViewSubviewDeduction::type >::value
+    >::value
+  };
+
+  if ( is_a_valid_subview_constructor ) {
+
+    typedef Impl::ViewOffsetRange< SubArg0_type > R0 ;
+    typedef Impl::ViewOffsetRange< SubArg1_type > R1 ;
+    typedef Impl::ViewOffsetRange< SubArg2_type > R2 ;
+    typedef Impl::ViewOffsetRange< SubArg3_type > R3 ;
+
+    // 'assign_subview' returns whether the subview offset_map
+    // introduces noncontiguity in the view.
+    const bool introduce_noncontiguity =
+      m_offset_map.assign_subview( src.m_offset_map
+                                 , R0::dimension( src.m_offset_map.N0 , arg0 )
+                                 , R1::dimension( src.m_offset_map.N1 , arg1 )
+                                 , R2::dimension( src.m_offset_map.N2 , arg2 )
+                                 , R3::dimension( src.m_offset_map.N3 , arg3 )
+                                 , 0
+                                 , 0
+                                 , 0
+                                 , 0
+                                 );
+
+    if ( m_offset_map.capacity() ) {
+
+      m_management = src.m_management ;
+
+      if ( introduce_noncontiguity ) m_management.set_noncontiguous();
+
+      m_ptr_on_device = src.m_ptr_on_device +
+                        src.m_offset_map( R0::begin( arg0 )
+                                        , R1::begin( arg1 )
+                                        , R2::begin( arg2 )
+                                        , R3::begin( arg3 )
+                                        );
+      m_tracker = src.m_tracker ;
+    }
+  }
+}
+
+// Construct subview of a Rank 3 view
+template< class DstDataType , class DstArg1Type , class DstArg2Type , class DstArg3Type >
+template< class SrcDataType , class SrcArg1Type , class SrcArg2Type , class SrcArg3Type
+        , class SubArg0_type , class SubArg1_type , class SubArg2_type
+        >
+KOKKOS_INLINE_FUNCTION
+View< DstDataType , DstArg1Type , DstArg2Type , DstArg3Type , Impl::ViewDefault >::
+View( const View< SrcDataType , SrcArg1Type , SrcArg2Type , SrcArg3Type , Impl::ViewDefault > & src
+    , const SubArg0_type & arg0
+    , const SubArg1_type & arg1
+    , const SubArg2_type & arg2
+    )
+  : m_ptr_on_device( (typename traits::value_type*) NULL)
+  , m_offset_map()
+  , m_management()
+  , m_tracker()
+{
+  // This constructor can only be used to construct a subview
+  // from the source view.  This type must match the subview type
+  // deduced from the source view and subview arguments.
+
+  typedef Impl::ViewSubview< View< SrcDataType , SrcArg1Type , SrcArg2Type , SrcArg3Type , Impl::ViewDefault >
+                           , SubArg0_type , SubArg1_type , SubArg2_type , void , void , void , void , void >
+    ViewSubviewDeduction ;
+
+  enum { is_a_valid_subview_constructor =
+    Impl::StaticAssert<
+      Impl::is_same< View , typename ViewSubviewDeduction::type >::value
+    >::value
+  };
+
+  if ( is_a_valid_subview_constructor ) {
+
+    typedef Impl::ViewOffsetRange< SubArg0_type > R0 ;
+    typedef Impl::ViewOffsetRange< SubArg1_type > R1 ;
+    typedef Impl::ViewOffsetRange< SubArg2_type > R2 ;
+
+    // 'assign_subview' returns whether the subview offset_map
+    // introduces noncontiguity in the view.
+    const bool introduce_noncontiguity =
+      m_offset_map.assign_subview( src.m_offset_map
+                                 , R0::dimension( src.m_offset_map.N0 , arg0 )
+                                 , R1::dimension( src.m_offset_map.N1 , arg1 )
+                                 , R2::dimension( src.m_offset_map.N2 , arg2 )
+                                 , 0 , 0 , 0 , 0 , 0);
+
+    if ( m_offset_map.capacity() ) {
+
+      m_management = src.m_management ;
+
+      if ( introduce_noncontiguity ) m_management.set_noncontiguous();
+
+      m_ptr_on_device = src.m_ptr_on_device +
+                        src.m_offset_map( R0::begin( arg0 )
+                                        , R1::begin( arg1 )
+                                        , R2::begin( arg2 )
+                                        );
+      m_tracker = src.m_tracker ;
+    }
+  }
+}
+
+// Construct subview of a Rank 2 view
+template< class DstDataType , class DstArg1Type , class DstArg2Type , class DstArg3Type >
+template< class SrcDataType , class SrcArg1Type , class SrcArg2Type , class SrcArg3Type
+        , class SubArg0_type , class SubArg1_type
+        >
+KOKKOS_INLINE_FUNCTION
+View< DstDataType , DstArg1Type , DstArg2Type , DstArg3Type , Impl::ViewDefault >::
+View( const View< SrcDataType , SrcArg1Type , SrcArg2Type , SrcArg3Type , Impl::ViewDefault > & src
+    , const SubArg0_type & arg0
+    , const SubArg1_type & arg1
+    )
+  : m_ptr_on_device( (typename traits::value_type*) NULL)
+  , m_offset_map()
+  , m_management()
+  , m_tracker()
+{
+  // This constructor can only be used to construct a subview
+  // from the source view.  This type must match the subview type
+  // deduced from the source view and subview arguments.
+
+  typedef Impl::ViewSubview< View< SrcDataType , SrcArg1Type , SrcArg2Type , SrcArg3Type , Impl::ViewDefault >
+                           , SubArg0_type , SubArg1_type , void , void , void , void , void , void >
+    ViewSubviewDeduction ;
+
+  enum { is_a_valid_subview_constructor =
+    Impl::StaticAssert<
+      Impl::is_same< View , typename ViewSubviewDeduction::type >::value
+    >::value
+  };
+
+  if ( is_a_valid_subview_constructor ) {
+
+    typedef Impl::ViewOffsetRange< SubArg0_type > R0 ;
+    typedef Impl::ViewOffsetRange< SubArg1_type > R1 ;
+
+    // 'assign_subview' returns whether the subview offset_map
+    // introduces noncontiguity in the view.
+    const bool introduce_noncontiguity =
+      m_offset_map.assign_subview( src.m_offset_map
+                                 , R0::dimension( src.m_offset_map.N0 , arg0 )
+                                 , R1::dimension( src.m_offset_map.N1 , arg1 )
+                                 , 0 , 0 , 0 , 0 , 0 , 0 );
+
+    if ( m_offset_map.capacity() ) {
+
+      m_management = src.m_management ;
+
+      if ( introduce_noncontiguity ) m_management.set_noncontiguous();
+
+      m_ptr_on_device = src.m_ptr_on_device +
+                        src.m_offset_map( R0::begin( arg0 )
+                                        , R1::begin( arg1 )
+                                        );
+      m_tracker = src.m_tracker ;
+    }
+  }
+}
+
+// Construct subview of a Rank 1 view
+template< class DstDataType , class DstArg1Type , class DstArg2Type , class DstArg3Type >
+template< class SrcDataType , class SrcArg1Type , class SrcArg2Type , class SrcArg3Type
+        , class SubArg0_type
+        >
+KOKKOS_INLINE_FUNCTION
+View< DstDataType , DstArg1Type , DstArg2Type , DstArg3Type , Impl::ViewDefault >::
+View( const View< SrcDataType , SrcArg1Type , SrcArg2Type , SrcArg3Type , Impl::ViewDefault > & src
+    , const SubArg0_type & arg0
+    )
+  : m_ptr_on_device( (typename traits::value_type*) NULL)
+  , m_offset_map()
+  , m_management()
+  , m_tracker()
+{
+  // This constructor can only be used to construct a subview
+  // from the source view.  This type must match the subview type
+  // deduced from the source view and subview arguments.
+
+  typedef Impl::ViewSubview< View< SrcDataType , SrcArg1Type , SrcArg2Type , SrcArg3Type , Impl::ViewDefault >
+                           , SubArg0_type , void , void , void , void , void , void , void >
+    ViewSubviewDeduction ;
+
+  enum { is_a_valid_subview_constructor =
+    Impl::StaticAssert<
+      Impl::is_same< View , typename ViewSubviewDeduction::type >::value
+    >::value
+  };
+
+  if ( is_a_valid_subview_constructor ) {
+
+    typedef Impl::ViewOffsetRange< SubArg0_type > R0 ;
+
+    // 'assign_subview' returns whether the subview offset_map
+    // introduces noncontiguity in the view.
+    const bool introduce_noncontiguity =
+      m_offset_map.assign_subview( src.m_offset_map
+                                 , R0::dimension( src.m_offset_map.N0 , arg0 )
+                                 , 0 , 0 , 0 , 0 , 0 , 0 , 0 );
+
+    if ( m_offset_map.capacity() ) {
+
+      m_management = src.m_management ;
+
+      if ( introduce_noncontiguity ) m_management.set_noncontiguous();
+
+      m_ptr_on_device = src.m_ptr_on_device +
+                        src.m_offset_map( R0::begin( arg0 )
+                                        );
+      m_tracker = src.m_tracker ;
+    }
+  }
+}
+
 } /* namespace Kokkos */
 
 //----------------------------------------------------------------------------

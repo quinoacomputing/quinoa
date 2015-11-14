@@ -21,14 +21,6 @@
 namespace H5 {
 #endif
 
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
-#define NOTATEXIT       (-10)   // just in case the HDF5 library use more
-	// negative constants. Note: the solution used for the atexit/global
-	// destructors is not reliable, and desperately needs improvement
-	// It is not even working, inifiteloop message still printed when
-	// calling H5close
-#endif // DOXYGEN_SHOULD_SKIP_THIS
-
 /*! \class H5Library
     \brief Class H5Library operates the HDF5 library globably.
 
@@ -38,7 +30,8 @@ namespace H5 {
 class H5_DLLCPP H5Library {
    public:
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
-	static bool need_cleanup; // indicates if H5close should be called
+        static bool need_cleanup; // indicates if H5close should be called
+                             // - unused, will be removed in future releases.
 #endif // DOXYGEN_SHOULD_SKIP_THIS
 
 	// Initializes the HDF5 library.
@@ -65,9 +58,23 @@ class H5_DLLCPP H5Library {
 	static void setFreeListLimits(int reg_global_lim, int reg_list_lim, int
 	arr_global_lim, int arr_list_lim, int blk_global_lim, int blk_list_lim);
 
+        // Initializes C++ library and registers terminating functions at exit.
+	// Only for the library functions, not for user-defined functions.
+        static void initH5cpp(void);
+
+        // Sends request for terminating the HDF5 library.
+        static void termH5cpp(void);
+
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+
    private:
-	// Default constructor - no instance ever created
-	H5Library() {};
+
+        // Default constructor - no instance ever created from outsiders
+        H5Library();
+
+        // Destructor
+        ~H5Library();
+#endif // DOXYGEN_SHOULD_SKIP_THIS
 
 };
 #ifndef H5_NO_NAMESPACE

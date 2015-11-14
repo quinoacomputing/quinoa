@@ -1,12 +1,12 @@
 // @HEADER
 // ***********************************************************************
-// 
+//
 //                      Didasko Tutorial Package
 //                 Copyright (2005) Sandia Corporation
-// 
+//
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -35,7 +35,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 // Questions about Didasko? Contact Marzio Sala (marzio.sala _AT_ gmail.com)
-// 
+//
 // ***********************************************************************
 // @HEADER
 
@@ -80,7 +80,7 @@ int main(int argc, char *argv[]) {
 
   // create a diagonal FE crs matrix (one nonzero per row)
   Epetra_FECrsMatrix A(Copy,Map,1);
-  
+
   // Next, set the matrix entries.
   //
   // Note 1: Matrix entries are only contributed from processor
@@ -88,14 +88,14 @@ int main(int argc, char *argv[]) {
   // Proc 0 fills the entire global matrix. Data that belongs in
   // matrix rows owned by procs 1 .. numprocs-1 gets sent to those
   // processors during the call to 'A.GlobalAssemble()' below.
-  // 
+  //
   // Note 2: We fill the matrix using 'InsertGlobalValues'. An
   // alternative approach that would be more efficient for large
   // matrices in most cases would be to first create and fill a
   // graph (Epetra_FECrsGraph), then construct the matrix with the
   // graph (after calling graph.FillComplete) and fill the matrix
   // using the method 'SumIntoGlobalValues'.
-  // 
+  //
   if( Comm.MyPID() == 0 ) {
     for( int i=0 ; i<NumGlobalElements ; ++i ) {
       int index = i;
@@ -103,11 +103,11 @@ int main(int argc, char *argv[]) {
       A.InsertGlobalValues(1,&index,&value);
     }
   }
-  
+
   A.GlobalAssemble();
 
   cout << A;
-  
+
 #ifdef HAVE_MPI
   MPI_Finalize();
 #endif
@@ -131,7 +131,7 @@ int main(int argc, char *argv[])
 #endif
 
   puts("Please configure Didasko with:\n"
-       "--enable-epetra");
+      "--enable-epetra");
 
 #ifdef HAVE_MPI
   MPI_Finalize();

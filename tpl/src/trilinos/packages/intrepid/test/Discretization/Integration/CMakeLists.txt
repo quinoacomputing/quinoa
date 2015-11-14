@@ -1,5 +1,3 @@
-INCLUDE(TribitsAddExecutableAndTest)
-INCLUDE(TribitsCopyFilesToBinaryDir)
 
 TRIBITS_ADD_EXECUTABLE_AND_TEST(
   Test_01
@@ -222,6 +220,7 @@ TRIBITS_COPY_FILES_TO_BINARY_DIR(IntegrationTestDataCopy
   SOURCE_FILES
     EDGE_integrals.dat
     HEX_integrals.dat
+    PYR_integrals.dat
     QUAD_integrals.dat
     TET_integrals.dat
     TRI_integrals.dat

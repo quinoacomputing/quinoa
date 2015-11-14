@@ -1,13 +1,13 @@
 /*
 //@HEADER
 // ************************************************************************
-//
-//   Kokkos: Manycore Performance-Portable Multidimensional Arrays
-//              Copyright (2012) Sandia Corporation
-//
+// 
+//                        Kokkos v. 2.0
+//              Copyright (2014) Sandia Corporation
+// 
 // Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
 // the U.S. Government retains certain rights in this software.
-//
+// 
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -36,7 +36,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 // Questions? Contact  H. Carter Edwards (hcedwar@sandia.gov)
-//
+// 
 // ************************************************************************
 //@HEADER
 */
@@ -44,6 +44,7 @@
 #ifndef KOKKOS_VIEWSUPPORT_HPP
 #define KOKKOS_VIEWSUPPORT_HPP
 
+#include <Kokkos_ExecPolicy.hpp>
 #include <impl/Kokkos_Shape.hpp>
 
 //----------------------------------------------------------------------------
@@ -61,11 +62,11 @@ struct ViewAssignable
   // Compatible 'const' qualifier
   // Cannot assign managed = unmannaged
   enum { assignable_value =
-    ( is_same< typename ViewLHS::scalar_type ,
-               typename ViewRHS::scalar_type >::value
+    ( is_same< typename ViewLHS::value_type ,
+               typename ViewRHS::value_type >::value
       ||
-      is_same< typename ViewLHS::scalar_type ,
-               typename ViewRHS::const_scalar_type >::value )
+      is_same< typename ViewLHS::value_type ,
+               typename ViewRHS::const_value_type >::value )
     &&
     is_same< typename ViewLHS::memory_space ,
              typename ViewRHS::memory_space >::value
@@ -109,199 +110,134 @@ struct ViewAssignable
 namespace Kokkos {
 namespace Impl {
 
-template< class ShapeType , class LayoutType , class Enable = void >
-class LayoutStride ;
-
-/* Arrays with rank <= 1 have no stride */
-template< class ShapeType , class LayoutType >
-class LayoutStride< ShapeType , LayoutType ,
-                    typename enable_if< ShapeType::rank <= 1 >::type >
-{
-public:
-
-  enum { dynamic = false };
-  enum { value = 0 };
-
-  KOKKOS_INLINE_FUNCTION static
-  void assign( LayoutStride & , const unsigned ) {}
-
-  KOKKOS_INLINE_FUNCTION static
-  void assign_no_padding( LayoutStride & , const ShapeType & ) {}
-
-  KOKKOS_INLINE_FUNCTION static
-  void assign_with_padding( LayoutStride & , const ShapeType & ) {}
-};
-
-/* Array with LayoutLeft and 0 == rank_dynamic have static stride that are is not padded. */
-template< class ShapeType >
-class LayoutStride< ShapeType , LayoutLeft ,
-                    typename enable_if<(
-                      ( 1 <  ShapeType::rank ) &&
-                      ( 0 == ShapeType::rank_dynamic )
-                    )>::type >
-{
-public:
-
-  enum { dynamic = false };
-  enum { value   = ShapeType::N0 };
-
-  KOKKOS_INLINE_FUNCTION static
-  void assign( LayoutStride & , const unsigned ) {}
-
-  KOKKOS_INLINE_FUNCTION static
-  void assign_no_padding( LayoutStride & , const ShapeType & ) {}
-
-  KOKKOS_INLINE_FUNCTION static
-  void assign_with_padding( LayoutStride & , const ShapeType & ) {}
-};
-
-/* Array with LayoutRight and 1 >= rank_dynamic have static stride that is not padded */
-template< class ShapeType >
-class LayoutStride< ShapeType , LayoutRight ,
-                    typename enable_if<(
-                      ( 1 <  ShapeType::rank ) &&
-                      ( 1 >= ShapeType::rank_dynamic )
-                    )>::type >
-{
-public:
-
-  enum { dynamic = false };
-  enum { value   = ShapeType::N1 * ShapeType::N2 * ShapeType::N3 *
-                   ShapeType::N4 * ShapeType::N5 * ShapeType::N6 * ShapeType::N7 };
-
-  KOKKOS_INLINE_FUNCTION static
-  void assign( LayoutStride & , const unsigned ) {}
-
-  KOKKOS_INLINE_FUNCTION static
-  void assign_no_padding( LayoutStride & , const ShapeType & ) {}
-
-  KOKKOS_INLINE_FUNCTION static
-  void assign_with_padding( LayoutStride & , const ShapeType & ) {}
-};
+template< class ExecSpace , class Type , bool Initialize >
+struct ViewDefaultConstruct
+{ ViewDefaultConstruct( Type * , size_t ) {} };
 
 
-/* Otherwise array has runtime stride that is padded. */
-template< class ShapeType , class LayoutType , class Enable >
-class LayoutStride
-{
-public:
-
-  enum { dynamic = true };
-
-  unsigned value ;
-
-  KOKKOS_INLINE_FUNCTION static
-  void assign( LayoutStride & stride , const unsigned n ) { stride.value = n ; }
-
-  KOKKOS_INLINE_FUNCTION static
-  void assign_no_padding( LayoutStride & vs , const ShapeType & sh )
-    {
-      enum { left = is_same< LayoutType , LayoutLeft >::value };
-
-      // Left  layout arrays are aligned on the first dimension.
-      // Right layout arrays are aligned on blocks of the 2-8th dimensions.
-      vs.value = ShapeType::rank <= 1 ? 0 : (
-                 left ? sh.N0
-                      : sh.N1 * sh.N2 * sh.N3 * sh.N4 * sh.N5 * sh.N6 * sh.N7 );
-    }
-
-  KOKKOS_INLINE_FUNCTION static
-  void assign_with_padding( LayoutStride & vs , const ShapeType & sh )
-    {
-      enum { div   = MEMORY_ALIGNMENT / ShapeType::scalar_size };
-      enum { mod   = MEMORY_ALIGNMENT % ShapeType::scalar_size };
-      enum { align = 0 == mod ? div : 0 };
-
-      assign_no_padding( vs , sh );
-
-      if ( align && MEMORY_ALIGNMENT_THRESHOLD * align < vs.value ) {
-
-        const unsigned count_mod = vs.value % ( div ? div : 1 );
-
-        if ( count_mod ) { vs.value += align - count_mod ; }
-      }
-    }
-};
-
-template< class ShapeType , class LayoutType >
-KOKKOS_INLINE_FUNCTION
-size_t capacity( const ShapeType & shape ,
-                 const LayoutStride< ShapeType , LayoutType > & stride )
-{
-  enum { left = is_same< LayoutType , LayoutLeft >::value };
-
-  return ShapeType::rank <= 1 ? size_t(shape.N0) : (
-         left ? size_t( stride.value * shape.N1 * shape.N2 * shape.N3 * shape.N4 * shape.N5 * shape.N6 * shape.N7 )
-              : size_t( stride.value * shape.N0 ));
-}
-
-template< typename iType , class ShapeType , class LayoutType >
-KOKKOS_INLINE_FUNCTION
-void stride( iType * const s , const ShapeType & shape ,
-                               const LayoutStride< ShapeType , LayoutType > & stride )
-{
-  enum { rank = ShapeType::rank };
-  enum { left = is_same< LayoutType , LayoutLeft >::value };
-
-  if ( 0 < rank ) {
-    if ( 1 == rank ) {
-      s[0] = 1 ;
-    }
-    else if ( left ) {
-      s[0] = 1 ;
-      s[1] = stride.value ;
-      if ( 2 < rank ) { s[2] = s[1] * shape.N1 ; }
-      if ( 3 < rank ) { s[3] = s[2] * shape.N2 ; }
-      if ( 4 < rank ) { s[4] = s[3] * shape.N3 ; }
-      if ( 5 < rank ) { s[5] = s[4] * shape.N4 ; }
-      if ( 6 < rank ) { s[6] = s[5] * shape.N5 ; }
-      if ( 7 < rank ) { s[7] = s[6] * shape.N6 ; }
-    }
-    else {
-      s[rank-1] = 1 ;
-      if ( 7 < rank ) { s[6] = s[7] * shape.N7 ; }
-      if ( 6 < rank ) { s[5] = s[6] * shape.N6 ; }
-      if ( 5 < rank ) { s[4] = s[5] * shape.N5 ; }
-      if ( 4 < rank ) { s[3] = s[4] * shape.N4 ; }
-      if ( 3 < rank ) { s[2] = s[3] * shape.N3 ; }
-      if ( 2 < rank ) { s[1] = s[2] * shape.N2 ; }
-      s[0] = stride.value ;
-    }
-  }
-}
-
-} // namespace Impl
-} // namespace Kokkos
-
-//----------------------------------------------------------------------------
-//----------------------------------------------------------------------------
-
-namespace Kokkos {
-namespace Impl {
-
-/** \brief  View tracking increment/decrement only happens when
- *          view memory is managed and executing in the host space.
+/** \brief  ViewDataHandle provides the type of the 'data handle' which the view
+ *          uses to access data with the [] operator. It also provides
+ *          an allocate function and a function to extract a raw ptr from the
+ *          data handle. ViewDataHandle also defines an enum ReferenceAble which
+ *          specifies whether references/pointers to elements can be taken and a
+ *          'return_type' which is what the view operators will give back.
+ *          Specialisation of this object allows three things depending
+ *          on ViewTraits and compiler options:
+ *          (i)   Use special allocator (e.g. huge pages/small pages and pinned memory)
+ *          (ii)  Use special data handle type (e.g. add Cuda Texture Object)
+ *          (iii) Use special access intrinsics (e.g. texture fetch and non-caching loads)
  */
-template< class ViewTraits , class Enable = void >
-struct ViewTracking {
-  KOKKOS_INLINE_FUNCTION static void increment( const void * ) {}
-  KOKKOS_INLINE_FUNCTION static void decrement( const void * ) {}
+template< class StaticViewTraits , class Enable = void >
+struct ViewDataHandle {
+
+  enum { ReturnTypeIsReference = true };
+
+  typedef typename StaticViewTraits::value_type * handle_type;
+  typedef typename StaticViewTraits::value_type & return_type;
+
+  KOKKOS_INLINE_FUNCTION
+  static handle_type create_handle( typename StaticViewTraits::value_type * arg_data_ptr, AllocationTracker const & /*arg_tracker*/ )
+  {
+    return handle_type(arg_data_ptr);
+  }
 };
 
-template< class ViewTraits >
-struct ViewTracking< ViewTraits ,
-                     typename enable_if<(
-                       ViewTraits::is_managed &&
-                       Impl::is_same< HostSpace , ExecutionSpace >::value
-                     )>::type >
-{
-  typedef typename ViewTraits::memory_space memory_space ;
+template< class StaticViewTraits , class Enable = void >
+class ViewDataManagement : public ViewDataHandle< StaticViewTraits > {
+private:
 
-  KOKKOS_INLINE_FUNCTION static void increment( const void * ptr )
-    { memory_space::increment( ptr ); }
+  template< class , class > friend class ViewDataManagement ;
 
-  KOKKOS_INLINE_FUNCTION static void decrement( const void * ptr )
-    { memory_space::decrement( ptr ); }
+  struct PotentiallyManaged  {};
+  struct StaticallyUnmanaged {};
+
+  /* Statically unmanaged if traits or not executing in host-accessible memory space */
+  typedef typename
+    Impl::if_c< StaticViewTraits::is_managed &&
+                Impl::is_same< Kokkos::HostSpace
+                             , Kokkos::Impl::ActiveExecutionMemorySpace >::value
+              , PotentiallyManaged
+              , StaticallyUnmanaged
+              >::type StaticManagementTag ;
+
+  enum { Unmanaged     = 0x01
+       , Noncontiguous = 0x02
+       };
+
+  enum { DefaultTraits = Impl::is_same< StaticManagementTag , StaticallyUnmanaged >::value ? Unmanaged : 0 };
+
+  unsigned m_traits ; ///< Runtime traits
+
+
+  template< class T >
+  inline static
+  unsigned assign( const ViewDataManagement<T> & rhs , const PotentiallyManaged & )
+    { return rhs.m_traits | ( rhs.is_managed() && Kokkos::HostSpace::in_parallel() ? unsigned(Unmanaged) : 0u ); }
+
+  template< class T >
+  KOKKOS_INLINE_FUNCTION static
+  unsigned assign( const ViewDataManagement<T> & rhs , const StaticallyUnmanaged & )
+    { return rhs.m_traits | Unmanaged ; }
+
+public:
+
+  typedef typename ViewDataHandle< StaticViewTraits >::handle_type handle_type;
+
+  KOKKOS_INLINE_FUNCTION
+  ViewDataManagement() : m_traits( DefaultTraits ) {}
+
+  KOKKOS_INLINE_FUNCTION
+  ViewDataManagement( const ViewDataManagement & rhs )
+    : m_traits( assign( rhs , StaticManagementTag() ) ) {}
+
+  KOKKOS_INLINE_FUNCTION
+  ViewDataManagement & operator = ( const ViewDataManagement & rhs )
+    { m_traits = assign( rhs , StaticManagementTag() ); return *this ; }
+
+  template< class SVT >
+  KOKKOS_INLINE_FUNCTION
+  ViewDataManagement( const ViewDataManagement<SVT> & rhs )
+    : m_traits( assign( rhs , StaticManagementTag() ) ) {}
+
+  template< class SVT >
+  KOKKOS_INLINE_FUNCTION
+  ViewDataManagement & operator = ( const ViewDataManagement<SVT> & rhs )
+    { m_traits = assign( rhs , StaticManagementTag() ); return *this ; }
+
+  KOKKOS_INLINE_FUNCTION
+  bool is_managed() const { return ! ( m_traits & Unmanaged ); }
+
+  KOKKOS_INLINE_FUNCTION
+  bool is_contiguous() const { return ! ( m_traits & Noncontiguous ); }
+
+  KOKKOS_INLINE_FUNCTION
+  void set_unmanaged() { m_traits |= Unmanaged ; }
+
+  KOKKOS_INLINE_FUNCTION
+  void set_noncontiguous() { m_traits |= Noncontiguous ; }
+
+  template< bool Initialize >
+  static
+  handle_type allocate(  const std::string & label
+                       , const Impl::ViewOffset< typename StaticViewTraits::shape_type, typename StaticViewTraits::array_layout > & offset_map
+                       , AllocationTracker & tracker
+               )
+    {
+      typedef typename StaticViewTraits::execution_space  execution_space ;
+      typedef typename StaticViewTraits::memory_space     memory_space ;
+      typedef typename StaticViewTraits::value_type       value_type ;
+
+      const size_t count = offset_map.capacity();
+
+      tracker = memory_space::allocate_and_track( label, sizeof(value_type) * count );
+
+      value_type * ptr = reinterpret_cast<value_type *>(tracker.alloc_ptr());
+
+      // Default construct within the view's execution space.
+      (void) ViewDefaultConstruct< execution_space , value_type , Initialize >( ptr , count );
+
+      return ViewDataHandle< StaticViewTraits >::create_handle(ptr, tracker);
+    }
 };
 
 } // namespace Impl
@@ -316,8 +252,7 @@ namespace Impl {
 template< class OutputView , class InputView  , unsigned Rank = OutputView::Rank >
 struct ViewRemap
 {
-  typedef typename OutputView::device_type device_type ;
-  typedef typename device_type::size_type  size_type ;
+  typedef typename OutputView::size_type   size_type ;
 
   const OutputView output ;
   const InputView  input ;
@@ -341,7 +276,9 @@ struct ViewRemap
     , n6( std::min( (size_t)arg_out.dimension_6() , (size_t)arg_in.dimension_6() ) )
     , n7( std::min( (size_t)arg_out.dimension_7() , (size_t)arg_in.dimension_7() ) )
     {
-      parallel_for( n0 , *this );
+      typedef typename OutputView::execution_space execution_space ;
+      Kokkos::RangePolicy< execution_space > range( 0 , n0 );
+      parallel_for( range , *this );
     }
 
   KOKKOS_INLINE_FUNCTION
@@ -376,12 +313,30 @@ struct ViewRemap< OutputView ,  InputView , 0 >
 
 //----------------------------------------------------------------------------
 
-template< class OutputView , unsigned Rank = OutputView::Rank >
+template< class ExecSpace , class Type >
+struct ViewDefaultConstruct< ExecSpace , Type , true >
+{
+  Type * const m_ptr ;
+
+  KOKKOS_FORCEINLINE_FUNCTION
+  void operator()( const typename ExecSpace::size_type& i ) const
+    { m_ptr[i] = Type(); }
+
+  ViewDefaultConstruct( Type * pointer , size_t capacity )
+    : m_ptr( pointer )
+    {
+      Kokkos::RangePolicy< ExecSpace > range( 0 , capacity );
+      parallel_for( range , *this );
+      ExecSpace::fence();
+    }
+};
+
+template< class OutputView , unsigned Rank = OutputView::Rank ,
+          class Enabled = void >
 struct ViewFill
 {
-  typedef typename OutputView::device_type       device_type ;
   typedef typename OutputView::const_value_type  const_value_type ;
-  typedef typename device_type::size_type        size_type ;
+  typedef typename OutputView::size_type         size_type ;
 
   const OutputView output ;
   const_value_type input ;
@@ -389,8 +344,10 @@ struct ViewFill
   ViewFill( const OutputView & arg_out , const_value_type & arg_in )
     : output( arg_out ), input( arg_in )
     {
-      parallel_for( output.dimension_0() , *this );
-      device_type::fence();
+      typedef typename OutputView::execution_space execution_space ;
+      Kokkos::RangePolicy< execution_space > range( 0 , output.dimension_0() );
+      parallel_for( range , *this );
+      execution_space::fence();
     }
 
   KOKKOS_INLINE_FUNCTION
@@ -411,7 +368,6 @@ struct ViewFill
 template< class OutputView >
 struct ViewFill< OutputView , 0 >
 {
-  typedef typename OutputView::device_type       device_type ;
   typedef typename OutputView::const_value_type  const_value_type ;
   typedef typename OutputView::memory_space      dst_space ;
 
@@ -420,6 +376,135 @@ struct ViewFill< OutputView , 0 >
     DeepCopy< dst_space , dst_space >( arg_out.ptr_on_device() , & arg_in ,
                                        sizeof(const_value_type) );
   }
+};
+
+} // namespace Impl
+} // namespace Kokkos
+
+//----------------------------------------------------------------------------
+//----------------------------------------------------------------------------
+
+namespace Kokkos {
+
+struct ViewAllocateWithoutInitializing {
+
+  const std::string label ;
+
+  ViewAllocateWithoutInitializing() : label() {}
+  ViewAllocateWithoutInitializing( const std::string & arg_label ) : label( arg_label ) {}
+  ViewAllocateWithoutInitializing( const char * const  arg_label ) : label( arg_label ) {}
+};
+
+struct ViewAllocate {
+
+  const std::string  label ;
+
+  ViewAllocate() : label() {}
+  ViewAllocate( const std::string & arg_label ) : label( arg_label ) {}
+  ViewAllocate( const char * const  arg_label ) : label( arg_label ) {}
+};
+
+}
+
+namespace Kokkos {
+namespace Impl {
+
+template< class Traits , class AllocationProperties , class Enable = void >
+struct ViewAllocProp : public Kokkos::Impl::false_type {};
+
+template< class Traits >
+struct ViewAllocProp< Traits , Kokkos::ViewAllocate
+  , typename Kokkos::Impl::enable_if<(
+      Traits::is_managed && ! Kokkos::Impl::is_const< typename Traits::value_type >::value
+    )>::type >
+  : public Kokkos::Impl::true_type
+{
+  typedef size_t               size_type ;
+  typedef const ViewAllocate & property_type ;
+
+  enum { Initialize = true };
+  enum { AllowPadding = false };
+
+  inline
+  static const std::string & label( property_type p ) { return p.label ; }
+};
+
+template< class Traits >
+struct ViewAllocProp< Traits , std::string
+  , typename Kokkos::Impl::enable_if<(
+      Traits::is_managed && ! Kokkos::Impl::is_const< typename Traits::value_type >::value
+    )>::type >
+  : public Kokkos::Impl::true_type
+{
+  typedef size_t              size_type ;
+  typedef const std::string & property_type ;
+
+  enum { Initialize = true };
+  enum { AllowPadding = false };
+
+  inline
+  static const std::string & label( property_type s ) { return s ; }
+};
+
+template< class Traits , unsigned N >
+struct ViewAllocProp< Traits , char[N]
+  , typename Kokkos::Impl::enable_if<(
+      Traits::is_managed && ! Kokkos::Impl::is_const< typename Traits::value_type >::value
+    )>::type >
+  : public Kokkos::Impl::true_type
+{
+private:
+  typedef char label_type[N] ;
+public:
+
+  typedef size_t             size_type ;
+  typedef const label_type & property_type ;
+
+  enum { Initialize = true };
+  enum { AllowPadding = false };
+
+  inline
+  static std::string label( property_type s ) { return std::string(s) ; }
+};
+
+template< class Traits >
+struct ViewAllocProp< Traits , Kokkos::ViewAllocateWithoutInitializing
+  , typename Kokkos::Impl::enable_if<(
+      Traits::is_managed && ! Kokkos::Impl::is_const< typename Traits::value_type >::value
+    )>::type >
+  : public Kokkos::Impl::true_type
+{
+  typedef size_t size_type ;
+  typedef const Kokkos::ViewAllocateWithoutInitializing & property_type ;
+
+  enum { Initialize = false };
+  enum { AllowPadding = false };
+
+  inline
+  static std::string label( property_type s ) { return s.label ; }
+};
+
+} // namespace Impl
+} // namespace Kokkos
+
+//----------------------------------------------------------------------------
+//----------------------------------------------------------------------------
+
+namespace Kokkos {
+namespace Impl {
+
+template< class Traits , class PointerProperties , class Enable = void >
+struct ViewRawPointerProp : public Kokkos::Impl::false_type {};
+
+template< class Traits , typename T >
+struct ViewRawPointerProp< Traits , T ,
+  typename Kokkos::Impl::enable_if<(
+    Impl::is_same< T , typename Traits::value_type >::value ||
+    Impl::is_same< T , typename Traits::non_const_value_type >::value
+  )>::type >
+  : public Kokkos::Impl::true_type
+{
+  typedef size_t size_type ;
 };
 
 } // namespace Impl

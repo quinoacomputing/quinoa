@@ -1,13 +1,13 @@
 
 // @HEADER
 // ***********************************************************************
-// 
+//
 //                      Didasko Tutorial Package
 //                 Copyright (2005) Sandia Corporation
-// 
+//
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -36,7 +36,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 // Questions about Didasko? Contact Marzio Sala (marzio.sala _AT_ gmail.com)
-// 
+//
 // ***********************************************************************
 // @HEADER
 
@@ -77,14 +77,14 @@ int main(int argc, char *argv[]) {
   char FileName[] = "../HBMatrices/fidap005.rua";
 
   Epetra_Map * readMap; // Pointers because of Trilinos_Util_ReadHb2Epetra
-  Epetra_CrsMatrix * readA; 
-  Epetra_Vector * readx; 
+  Epetra_CrsMatrix * readA;
+  Epetra_Vector * readx;
   Epetra_Vector * readb;
   Epetra_Vector * readxexact;
-   
+
   // Call routine to read in HB problem
-  Trilinos_Util_ReadHb2Epetra(FileName, Comm, readMap, readA, readx, 
-			      readb, readxexact);
+  Trilinos_Util_ReadHb2Epetra(FileName, Comm, readMap, readA, readx,
+      readb, readxexact);
 
   int NumGlobalElements = readMap->NumGlobalElements();
 
@@ -114,11 +114,11 @@ int main(int argc, char *argv[]) {
 
   if( MyPID==0 ) {
     cout << "Vector redistribute  time (sec) = "
-	 << vectorRedistributeTime<< endl;
+      << vectorRedistributeTime<< endl;
     cout << "Matrix redistribute time (sec) = "
-	 << matrixRedistributeTime << endl;
+      << matrixRedistributeTime << endl;
     cout << "Transform to Local  time (sec) = "
-	 << fillCompleteTime << endl<< endl;
+      << fillCompleteTime << endl<< endl;
   }
 
   delete readA;
@@ -149,8 +149,8 @@ int main(int argc, char *argv[])
 #endif
 
   puts("Please configure Didasko with:\n"
-       "--enable-epetra\n"
-       "--enable-triutils");
+      "--enable-epetra\n"
+      "--enable-triutils");
 
 #ifdef HAVE_MPI
   MPI_Finalize();

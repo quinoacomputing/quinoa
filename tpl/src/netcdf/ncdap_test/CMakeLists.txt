@@ -1,8 +1,3 @@
-SET(CMAKE_INCLUDE_CURRENT_DIR ON)
-
-INCLUDE_DIRECTORIES(".")
-
-
 SET(abs_top_srcdir ${CMAKE_CURRENT_SOURCE_DIR})
 
 remove_definitions(-DDLL_EXPORT)
@@ -10,11 +5,26 @@ add_definitions(-D"TOPSRCDIR=${CMAKE_SOURCE_DIR}")
 
 FILE(GLOB COPY_FILES ${CMAKE_CURRENT_SOURCE_DIR}/*.sh)
 
-FILE(COPY ${COPY_FILES} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/ FILE_PERMISSIONS OWNER_WRITE OWNER_READ OWNER_EXECUTE) 
+FILE(COPY ${COPY_FILES} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/ FILE_PERMISSIONS OWNER_WRITE OWNER_READ OWNER_EXECUTE)
 
 IF(ENABLE_DAP_REMOTE_TESTS)
   ADD_EXECUTABLE(nctestserver nctestserver.c)
   TARGET_LINK_LIBRARIES(nctestserver netcdf ${ALL_TLL_LIBS})
+
+  ####
+  # We have to do a little tweaking
+  # to remove the Release/ and Debug/ directories
+  # in MSVC builds.  This is required to get
+  # test scripts to work.
+  ####
+  IF(MSVC)
+    SET_TARGET_PROPERTIES(nctestserver PROPERTIES RUNTIME_OUTPUT_DIRECTORY
+      ${CMAKE_CURRENT_BINARY_DIR})
+    SET_TARGET_PROPERTIES(nctestserver PROPERTIES RUNTIME_OUTPUT_DIRECTORY_DEBUG
+      ${CMAKE_CURRENT_BINARY_DIR})
+    SET_TARGET_PROPERTIES(nctestserver PROPERTIES RUNTIME_OUTPUT_DIRECTORY_RELEASE
+      ${CMAKE_CURRENT_BINARY_DIR})
+  ENDIF()
 ENDIF()
 
 IF(ENABLE_TESTS)
@@ -23,9 +33,9 @@ IF(ENABLE_TESTS)
   # must be run in a particular order. It is painful but will use macros to help
   # keep it from being too bad.
   # Binary Test Macro
-  
+
   add_sh_test(ncdap tst_ncdap3)
-  
+
   IF(NOT MSVC)
     add_bin_env_test(ncdap t_dap3a)
     add_bin_env_test(ncdap test_cvt)
@@ -39,19 +49,27 @@ IF(ENABLE_TESTS)
     IF(ENABLE_DAP_LONG_TESTS)
       add_sh_test(ncdap tst_longremote3)
     ENDIF()
-    
+    add_sh_test(ncdap testurl)
+
     add_bin_test(ncdap test_nstride_cached)
     add_bin_test(ncdap t_misc)
-    
-    IF(ENABLE_DAP_AUTH_TESTS)
-      add_bin_test(ncdap t_auth)
-    ENDIF()
-    
-    add_bin_test(ncdap test_varm3)
-    
-  ENDIF()
 
+    IF(ENABLE_DAP_AUTH_TESTS)
+##obsolete      add_bin_test(ncdap t_auth)
+      add_sh_test(ncdap testauth)
+    ENDIF()
+
+    add_bin_test(ncdap test_varm3)
+
+    ###
+    # This test relates to NCF-330 in
+    # the Unidata JIRA system.
+    ###
+    #add_bin_test(ncdap t_ncf330)
+
+  ENDIF()
 ENDIF()
+
 ADD_SUBDIRECTORY(testdata3)
 ADD_SUBDIRECTORY(expected3)
 ADD_SUBDIRECTORY(expected4)

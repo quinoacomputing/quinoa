@@ -36,17 +36,67 @@ namespace H5 {
 #endif  // H5_NO_STD
 #endif
 
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+// This DOXYGEN_SHOULD_SKIP_THIS block is a work-around approach to control
+// the order of creation and deletion of the global constants.  See Design Notes
+// in "H5PredType.cpp" for information.
+
+// Initialize a pointer for the constant
+PropList* PropList::DEFAULT_ = 0;
+
 //--------------------------------------------------------------------------
-///\brief	Constant for default property.
+// Function:    PropList::getConstant
+// Purpose:     Creates a PropList object representing the HDF5 constant
+//              H5P_DEFAULT, pointed to by PropList::DEFAULT_.
+// Exception    H5::PropListIException
+// Description
+//              If PropList::DEFAULT_ already points to an allocated object,
+//              throw a PropListIException.  This scenario should not happen.
+// Programmer   Binh-Minh Ribler - 2015
 //--------------------------------------------------------------------------
-const PropList PropList::DEFAULT;
+PropList* PropList::getConstant()
+{
+    // Tell the C library not to clean up, H5Library::termH5cpp will call
+    // H5close - more dependency if use H5Library::dontAtExit()
+    if (!IdComponent::H5dontAtexit_called)
+    {
+        (void) H5dont_atexit();
+        IdComponent::H5dontAtexit_called = true;
+    }
+
+    // If the constant pointer is not allocated, allocate it. Otherwise,
+    // throw because it shouldn't be.
+    if (DEFAULT_ == 0)
+        DEFAULT_ = new PropList(H5P_DEFAULT);
+    else
+        throw PropListIException("PropList::getConstant", "PropList::getConstant is being invoked on an allocated DEFAULT_");
+    return(DEFAULT_);
+}
+
+//--------------------------------------------------------------------------
+// Function:    PropList::deleteConstants
+// Purpose:     Deletes the constant object that PropList::DEFAULT_ points to.
+// Programmer   Binh-Minh Ribler - 2015
+//--------------------------------------------------------------------------
+void PropList::deleteConstants()
+{
+    if (DEFAULT_ != 0)
+        delete DEFAULT_;
+}
+
+//--------------------------------------------------------------------------
+// Purpose	Constant for default property.
+//--------------------------------------------------------------------------
+const PropList& PropList::DEFAULT = *getConstant();
+
+#endif // DOXYGEN_SHOULD_SKIP_THIS
 
 //--------------------------------------------------------------------------
 // Function	Default constructor
 ///\brief	Default constructor: creates a stub property list object.
 // Programmer	Binh-Minh Ribler - 2000
 //--------------------------------------------------------------------------
-PropList::PropList() : IdComponent(), id(0) {}
+PropList::PropList() : IdComponent(), id(H5P_DEFAULT) {}
 
 //--------------------------------------------------------------------------
 // Function:	PropList copy constructor
@@ -54,7 +104,7 @@ PropList::PropList() : IdComponent(), id(0) {}
 ///\param	original - IN: The original property list to copy
 // Programmer	Binh-Minh Ribler - 2000
 //--------------------------------------------------------------------------
-PropList::PropList(const PropList& original) : IdComponent(original)
+PropList::PropList(const PropList& original) : IdComponent()
 {
     id = original.getId();
     incRefCount(); // increment number of references to this id
@@ -74,7 +124,7 @@ PropList::PropList(const PropList& original) : IdComponent(original)
 //--------------------------------------------------------------------------
 PropList::PropList( const hid_t plist_id ) : IdComponent()
 {
-    if (plist_id == 0)
+    if (plist_id <= 0)
 	id = H5P_DEFAULT;
 
     H5I_type_t id_type = H5Iget_type(plist_id);
@@ -258,6 +308,7 @@ void PropList::p_setId(const hid_t new_id)
    // reset object's id to the given id
    id = new_id;
 }
+
 #endif // DOXYGEN_SHOULD_SKIP_THIS
 
 //--------------------------------------------------------------------------
@@ -277,7 +328,7 @@ void PropList::close()
 	    throw PropListIException(inMemFunc("close"), "H5Pclose failed");
 	}
 	// reset the id
-	id = 0;
+	id = H5I_INVALID_HID;
     }
 }
 
@@ -402,6 +453,7 @@ H5std_string PropList::getProperty(const char* name) const
    // Throw exception if H5Pget returns failure
    if (ret_value < 0)
    {
+      delete []prop_strg_C;
       throw PropListIException(inMemFunc("getProperty"), "H5Pget failed");
    }
 

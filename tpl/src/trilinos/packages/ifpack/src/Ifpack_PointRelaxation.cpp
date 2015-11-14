@@ -45,6 +45,7 @@
 #include <cmath>
 #include "Epetra_Operator.h"
 #include "Epetra_CrsMatrix.h"
+#include "Epetra_VbrMatrix.h"
 #include "Epetra_Comm.h"
 #include "Epetra_Map.h"
 #include "Epetra_MultiVector.h"
@@ -74,7 +75,7 @@ Ifpack_PointRelaxation(const Epetra_RowMatrix* Matrix_in) :
   DampingFactor_(1.0),
   UseTranspose_(false),
   Condest_(-1.0),
-  ComputeCondest_(false),
+  /* ComputeCondest_(false), (unused; commented out to avoid build warnings) */
   PrecType_(IFPACK_JACOBI),
   MinDiagonalValue_(0.0),
   NumMyRows_(0),
@@ -95,8 +96,10 @@ Ifpack_PointRelaxation(const Epetra_RowMatrix* Matrix_in) :
 //==============================================================================
 int Ifpack_PointRelaxation::SetParameters(Teuchos::ParameterList& List)
 {
+  using std::cout;
+  using std::endl;
 
-  string PT;
+  std::string PT;
   if (PrecType_ == IFPACK_JACOBI)
     PT = "Jacobi";
   else if (PrecType_ == IFPACK_GS)
@@ -115,13 +118,13 @@ int Ifpack_PointRelaxation::SetParameters(Teuchos::ParameterList& List)
   else {
     IFPACK_CHK_ERR(-2);
   }
-  
+
   NumSweeps_            = List.get("relaxation: sweeps",NumSweeps_);
-  DampingFactor_        = List.get("relaxation: damping factor", 
+  DampingFactor_        = List.get("relaxation: damping factor",
                                    DampingFactor_);
-  MinDiagonalValue_     = List.get("relaxation: min diagonal value", 
+  MinDiagonalValue_     = List.get("relaxation: min diagonal value",
                                    MinDiagonalValue_);
-  ZeroStartingSolution_ = List.get("relaxation: zero starting solution", 
+  ZeroStartingSolution_ = List.get("relaxation: zero starting solution",
                                    ZeroStartingSolution_);
 
   DoBackwardGS_         = List.get("relaxation: backward mode",DoBackwardGS_);
@@ -210,8 +213,11 @@ int Ifpack_PointRelaxation::Compute()
   if (NumSweeps_ == 0) ierr = 1; // Warning: no sweeps performed.
   if (NumSweeps_ < 0)
     IFPACK_CHK_ERR(-2); // at least one application
-  
-  Diagonal_ = Teuchos::rcp( new Epetra_Vector(Matrix().RowMatrixRowMap()) );
+
+  // NOTE: RowMatrixRowMap doesn't work correctly for Epetra_VbrMatrix
+  const Epetra_VbrMatrix * VbrMat = dynamic_cast<const Epetra_VbrMatrix*>(&Matrix());
+  if(VbrMat)  Diagonal_ = Teuchos::rcp( new Epetra_Vector(VbrMat->RowMap()) );
+  else Diagonal_ = Teuchos::rcp( new Epetra_Vector(Matrix().RowMatrixRowMap()) );
 
   if (Diagonal_ == Teuchos::null)
     IFPACK_CHK_ERR(-5);
@@ -219,10 +225,10 @@ int Ifpack_PointRelaxation::Compute()
   IFPACK_CHK_ERR(Matrix().ExtractDiagonalCopy(*Diagonal_));
 
   // Setup for L1 Methods.
-  // Here we add half the value of the off-processor entries in the row, 
+  // Here we add half the value of the off-processor entries in the row,
   // but only if diagonal isn't sufficiently large.
   //
-  // Note: This is only done in the slower-but-more-general "RowMatrix" mode.  
+  // Note: This is only done in the slower-but-more-general "RowMatrix" mode.
   //
   // This follows from Equation (6.5) in:
   // Baker, Falgout, Kolev and Yang.  Multigrid Smoothers for Ultraparallel Computing.
@@ -235,13 +241,13 @@ int Ifpack_PointRelaxation::Compute()
 
     for (int i = 0 ; i < NumMyRows_ ; ++i) {
       IFPACK_CHK_ERR(Matrix_->ExtractMyRowCopy(i, maxLength,NumEntries,
-					       &Values[0], &Indices[0]));
+                                               &Values[0], &Indices[0]));
       double diagonal_boost=0.0;
       for (int k = 0 ; k < NumEntries ; ++k)
-	if(Indices[k] > NumMyRows_)
-	  diagonal_boost+=std::abs(Values[k]/2.0);  
+        if(Indices[k] > NumMyRows_)
+          diagonal_boost+=std::abs(Values[k]/2.0);
       if ((*Diagonal_)[i] < L1Eta_*diagonal_boost)
-	(*Diagonal_)[i]+=diagonal_boost;
+        (*Diagonal_)[i]+=diagonal_boost;
     }
   }
 
@@ -290,8 +296,9 @@ int Ifpack_PointRelaxation::Compute()
 }
 
 //==============================================================================
-ostream& Ifpack_PointRelaxation::Print(ostream & os) const
+std::ostream& Ifpack_PointRelaxation::Print(std::ostream & os) const
 {
+  using std::endl;
 
   double MyMinVal, MyMaxVal;
   double MinVal, MaxVal;
@@ -315,9 +322,9 @@ ostream& Ifpack_PointRelaxation::Print(ostream & os) const
       os << "Type           = Gauss-Seidel" << endl;
     else if (PrecType_ == IFPACK_SGS)
       os << "Type           = symmetric Gauss-Seidel" << endl;
-    if (DoBackwardGS_) 
+    if (DoBackwardGS_)
       os << "Using backward mode (GS only)" << endl;
-    if (ZeroStartingSolution_) 
+    if (ZeroStartingSolution_)
       os << "Using zero starting solution" << endl;
     else
       os << "Using input starting solution" << endl;
@@ -330,17 +337,17 @@ ostream& Ifpack_PointRelaxation::Print(ostream & os) const
     os << endl;
     os << "Phase           # calls   Total Time (s)       Total MFlops     MFlops/s" << endl;
     os << "-----           -------   --------------       ------------     --------" << endl;
-    os << "Initialize()    "   << std::setw(5) << NumInitialize_ 
-       << "  " << std::setw(15) << InitializeTime_ 
+    os << "Initialize()    "   << std::setw(5) << NumInitialize_
+       << "  " << std::setw(15) << InitializeTime_
        << "              0.0              0.0" << endl;
-    os << "Compute()       "   << std::setw(5) << NumCompute_ 
+    os << "Compute()       "   << std::setw(5) << NumCompute_
        << "  " << std::setw(15) << ComputeTime_
        << "  " << std::setw(15) << 1.0e-6 * ComputeFlops_;
     if (ComputeTime_ != 0.0)
       os << "  " << std::setw(15) << 1.0e-6 * ComputeFlops_ / ComputeTime_ << endl;
     else
       os << "  " << std::setw(15) << 0.0 << endl;
-    os << "ApplyInverse()  "   << std::setw(5) << NumApplyInverse_ 
+    os << "ApplyInverse()  "   << std::setw(5) << NumApplyInverse_
        << "  " << std::setw(15) << ApplyInverseTime_
        << "  " << std::setw(15) << 1.0e-6 * ApplyInverseFlops_;
     if (ApplyInverseTime_ != 0.0)
@@ -356,9 +363,9 @@ ostream& Ifpack_PointRelaxation::Print(ostream & os) const
 
 //==============================================================================
 double Ifpack_PointRelaxation::
-Condest(const Ifpack_CondestType CT, 
+Condest(const Ifpack_CondestType CT,
         const int MaxIters, const double Tol,
-	Epetra_RowMatrix* Matrix_in)
+        Epetra_RowMatrix* Matrix_in)
 {
   if (!IsComputed()) // cannot compute right now
     return(-1.0);
@@ -373,14 +380,14 @@ Condest(const Ifpack_CondestType CT,
 //==============================================================================
 void Ifpack_PointRelaxation::SetLabel()
 {
-  string PT;
+  std::string PT;
   if (PrecType_ == IFPACK_JACOBI)
     PT = "Jacobi";
   else if (PrecType_ == IFPACK_GS){
     PT = "GS";
     if(DoBackwardGS_)
       PT = "Backward " + PT;
-  }    
+  }
   else if (PrecType_ == IFPACK_SGS)
     PT = "SGS";
 
@@ -418,11 +425,8 @@ ApplyInverse(const Epetra_MultiVector& X, Epetra_MultiVector& Y) const
     Xcopy = Teuchos::rcp( new Epetra_MultiVector(X) );
   else
     Xcopy = Teuchos::rcp( &X, false );
-    
-  if (ZeroStartingSolution_)
-    Y.PutScalar(0.0);
 
-  // Flops are updated in each of the following. 
+  // Flops are updated in each of the following.
   switch (PrecType_) {
   case IFPACK_JACOBI:
     IFPACK_CHK_ERR(ApplyInverseJacobi(*Xcopy,Y));
@@ -444,21 +448,30 @@ ApplyInverse(const Epetra_MultiVector& X, Epetra_MultiVector& Y) const
 
 //==============================================================================
 // This preconditioner can be much slower than AztecOO and ML versions
-// if the matrix-vector product requires all ExtractMyRowCopy() 
+// if the matrix-vector product requires all ExtractMyRowCopy()
 // (as done through Ifpack_AdditiveSchwarz).
 int Ifpack_PointRelaxation::
 ApplyInverseJacobi(const Epetra_MultiVector& RHS, Epetra_MultiVector& LHS) const
 {
-
   int NumVectors = LHS.NumVectors();
-  Epetra_MultiVector A_times_LHS( LHS.Map(),NumVectors );
 
-  for (int j = 0; j < NumSweeps_ ; j++) {
+  int startIter = 0;
+  if (NumSweeps_ > 0 && ZeroStartingSolution_) {
+    // When we have a zero initial guess, we can skip the first
+    // matrix apply call and zero initialization
+    for (int v = 0; v < NumVectors; v++)
+      IFPACK_CHK_ERR(LHS(v)->Multiply(DampingFactor_, *(RHS(v)), *Diagonal_, 0.0));
 
-    IFPACK_CHK_ERR(Apply(LHS,A_times_LHS));
+    startIter = 1;
+  }
+
+  bool zeroOut = false;
+  Epetra_MultiVector A_times_LHS(LHS.Map(), NumVectors, zeroOut);
+  for (int j = startIter; j < NumSweeps_ ; j++) {
+    IFPACK_CHK_ERR(Apply(LHS, A_times_LHS));
     IFPACK_CHK_ERR(A_times_LHS.Update(1.0,RHS,-1.0));
     for (int v = 0 ; v < NumVectors ; ++v)
-      IFPACK_CHK_ERR(LHS(v)->Multiply(DampingFactor_, *(A_times_LHS(v)), 
+      IFPACK_CHK_ERR(LHS(v)->Multiply(DampingFactor_, *(A_times_LHS(v)),
                                      *Diagonal_, 1.0));
 
   }
@@ -482,6 +495,9 @@ ApplyInverseJacobi(const Epetra_MultiVector& RHS, Epetra_MultiVector& LHS) const
 int Ifpack_PointRelaxation::
 ApplyInverseGS(const Epetra_MultiVector& X, Epetra_MultiVector& Y) const
 {
+  if (ZeroStartingSolution_)
+      Y.PutScalar(0.0);
+
   const Epetra_CrsMatrix* CrsMatrix = dynamic_cast<const Epetra_CrsMatrix*>(&*Matrix_);
   // try to pick the best option; performances may be improved
   // if several sweeps are used.
@@ -507,8 +523,8 @@ ApplyInverseGS_RowMatrix(const Epetra_MultiVector& X, Epetra_MultiVector& Y) con
   int NumVectors = X.NumVectors();
 
   int Length = Matrix().MaxNumEntries();
-  vector<int> Indices(Length);
-  vector<double> Values(Length);
+  std::vector<int> Indices(Length);
+  std::vector<double> Values(Length);
 
   Teuchos::RefCountPtr< Epetra_MultiVector > Y2;
   if (IsParallel_)
@@ -536,34 +552,34 @@ ApplyInverseGS_RowMatrix(const Epetra_MultiVector& X, Epetra_MultiVector& Y) con
       double* y20_ptr = y2_ptr[0];
       double* x0_ptr = x_ptr[0];
 
-      if(!DoBackwardGS_){      
+      if(!DoBackwardGS_){
         /* Forward Mode */
-	for (int ii = 0 ; ii < NumLocalSmoothingIndices_ ; ++ii) {
-	  int i = (!LocalSmoothingIndices_)? ii : LocalSmoothingIndices_[ii];
+        for (int ii = 0 ; ii < NumLocalSmoothingIndices_ ; ++ii) {
+          int i = (!LocalSmoothingIndices_)? ii : LocalSmoothingIndices_[ii];
 
           int NumEntries;
           int col;
           IFPACK_CHK_ERR(Matrix_->ExtractMyRowCopy(i, Length,NumEntries,
                                                    &Values[0], &Indices[0]));
-          
+
           double dtemp = 0.0;
           for (int k = 0 ; k < NumEntries ; ++k) {
-            
+
             col = Indices[k];
             dtemp += Values[k] * y20_ptr[col];
           }
-          
+
           y20_ptr[i] += DampingFactor_ * d_ptr[i] * (x0_ptr[i] - dtemp);
         }
       }
       else {
         /* Backward Mode */
-	for (int ii = NumLocalSmoothingIndices_  - 1 ; ii > -1 ; --ii) {
-	  int i = (!LocalSmoothingIndices_)? ii : LocalSmoothingIndices_[ii];
+        for (int ii = NumLocalSmoothingIndices_  - 1 ; ii > -1 ; --ii) {
+          int i = (!LocalSmoothingIndices_)? ii : LocalSmoothingIndices_[ii];
 
           int NumEntries;
           int col;
-	  (void) col; // Forestall compiler warning for unused variable.
+          (void) col; // Forestall compiler warning for unused variable.
           IFPACK_CHK_ERR(Matrix_->ExtractMyRowCopy(i, Length,NumEntries,
                                                    &Values[0], &Indices[0]));
           double dtemp = 0.0;
@@ -572,11 +588,11 @@ ApplyInverseGS_RowMatrix(const Epetra_MultiVector& X, Epetra_MultiVector& Y) con
             col = Indices[k];
             dtemp += Values[k] * y20_ptr[i];
           }
-          
+
           y20_ptr[i] += DampingFactor_ * d_ptr[i] * (x0_ptr[i] - dtemp);
         }
       }
-      
+
       // using Export() sounded quite expensive
       if (IsParallel_)
         for (int i = 0 ; i < NumMyRows_ ; ++i)
@@ -584,24 +600,24 @@ ApplyInverseGS_RowMatrix(const Epetra_MultiVector& X, Epetra_MultiVector& Y) con
 
     }
     else {
-      if(!DoBackwardGS_){      
+      if(!DoBackwardGS_){
         /* Forward Mode */
         for (int i = 0 ; i < NumMyRows_ ; ++i) {
-          
+
           int NumEntries;
           int col;
           IFPACK_CHK_ERR(Matrix_->ExtractMyRowCopy(i, Length,NumEntries,
                                                    &Values[0], &Indices[0]));
-          
+
           for (int m = 0 ; m < NumVectors ; ++m) {
-            
+
             double dtemp = 0.0;
             for (int k = 0 ; k < NumEntries ; ++k) {
-              
+
               col = Indices[k];
               dtemp += Values[k] * y2_ptr[m][col];
             }
-            
+
             y2_ptr[m][i] += DampingFactor_ * d_ptr[i] * (x_ptr[m][i] - dtemp);
           }
         }
@@ -615,7 +631,7 @@ ApplyInverseGS_RowMatrix(const Epetra_MultiVector& X, Epetra_MultiVector& Y) con
                                                    &Values[0], &Indices[0]));
 
           for (int m = 0 ; m < NumVectors ; ++m) {
-            
+
             double dtemp = 0.0;
             for (int k = 0 ; k < NumEntries ; ++k) {
 
@@ -629,13 +645,13 @@ ApplyInverseGS_RowMatrix(const Epetra_MultiVector& X, Epetra_MultiVector& Y) con
         }
       }
 
-      // using Export() sounded quite expensive   
+      // using Export() sounded quite expensive
       if (IsParallel_)
-        for (int m = 0 ; m < NumVectors ; ++m) 
-	  for (int ii = 0 ; ii < NumLocalSmoothingIndices_ ; ++ii) {
-	    int i = (!LocalSmoothingIndices_)? ii : LocalSmoothingIndices_[ii];
-	    y_ptr[m][i] = y2_ptr[m][i];
-	  }
+        for (int m = 0 ; m < NumVectors ; ++m)
+          for (int ii = 0 ; ii < NumLocalSmoothingIndices_ ; ++ii) {
+            int i = (!LocalSmoothingIndices_)? ii : LocalSmoothingIndices_[ii];
+            y_ptr[m][i] = y2_ptr[m][i];
+          }
     }
   }
 
@@ -667,34 +683,34 @@ ApplyInverseGS_CrsMatrix(const Epetra_CrsMatrix* A, const Epetra_MultiVector& X,
   Y.ExtractView(&y_ptr);
   Y2->ExtractView(&y2_ptr);
   Diagonal_->ExtractView(&d_ptr);
-  
+
   for (int iter = 0 ; iter < NumSweeps_ ; ++iter) {
-    
+
     // only one data exchange per sweep
     if (IsParallel_)
       IFPACK_CHK_ERR(Y2->Import(Y,*Importer_,Insert));
 
-    if(!DoBackwardGS_){  
+    if(!DoBackwardGS_){
       /* Forward Mode */
       for (int ii = 0 ; ii < NumLocalSmoothingIndices_ ; ++ii) {
-	int i = (!LocalSmoothingIndices_)? ii : LocalSmoothingIndices_[ii];
+        int i = (!LocalSmoothingIndices_)? ii : LocalSmoothingIndices_[ii];
 
         int NumEntries;
         int col;
         double diag = d_ptr[i];
-        
+
         IFPACK_CHK_ERR(A->ExtractMyRowView(i, NumEntries, Values, Indices));
-        
+
         for (int m = 0 ; m < NumVectors ; ++m) {
-          
+
           double dtemp = 0.0;
-          
+
           for (int k = 0; k < NumEntries; ++k) {
-            
+
             col = Indices[k];
             dtemp += Values[k] * y2_ptr[m][col];
           }
-          
+
           y2_ptr[m][i] += DampingFactor_ * (x_ptr[m][i] - dtemp) * diag;
         }
       }
@@ -702,35 +718,35 @@ ApplyInverseGS_CrsMatrix(const Epetra_CrsMatrix* A, const Epetra_MultiVector& X,
     else {
       /* Backward Mode */
       for (int ii = NumLocalSmoothingIndices_  - 1 ; ii > -1 ; --ii) {
-	int i = (!LocalSmoothingIndices_)? ii : LocalSmoothingIndices_[ii];
+        int i = (!LocalSmoothingIndices_)? ii : LocalSmoothingIndices_[ii];
 
         int NumEntries;
         int col;
         double diag = d_ptr[i];
-        
+
         IFPACK_CHK_ERR(A->ExtractMyRowView(i, NumEntries, Values, Indices));
-        
+
         for (int m = 0 ; m < NumVectors ; ++m) {
-          
+
           double dtemp = 0.0;
           for (int k = 0; k < NumEntries; ++k) {
-            
+
             col = Indices[k];
             dtemp += Values[k] * y2_ptr[m][col];
           }
-          
+
           y2_ptr[m][i] += DampingFactor_ * (x_ptr[m][i] - dtemp) * diag;
-          
+
         }
       }
     }
-    
+
     if (IsParallel_)
-      for (int m = 0 ; m < NumVectors ; ++m) 
-	for (int ii = 0 ; ii < NumLocalSmoothingIndices_ ; ++ii) {
-	  int i = (!LocalSmoothingIndices_)? ii : LocalSmoothingIndices_[ii];
+      for (int m = 0 ; m < NumVectors ; ++m)
+        for (int ii = 0 ; ii < NumLocalSmoothingIndices_ ; ++ii) {
+          int i = (!LocalSmoothingIndices_)? ii : LocalSmoothingIndices_[ii];
           y_ptr[m][i] = y2_ptr[m][i];
-	}
+        }
   }
 
 #ifdef IFPACK_FLOPCOUNTERS
@@ -767,30 +783,30 @@ ApplyInverseGS_FastCrsMatrix(const Epetra_CrsMatrix* A, const Epetra_MultiVector
   Diagonal_->ExtractView(&d_ptr);
 
   for (int iter = 0 ; iter < NumSweeps_ ; ++iter) {
-    
+
     // only one data exchange per sweep
     if (IsParallel_)
       IFPACK_CHK_ERR(Y2->Import(Y,*Importer_,Insert));
 
-    if(!DoBackwardGS_){  
+    if(!DoBackwardGS_){
       /* Forward Mode */
       for (int i = 0 ; i < NumMyRows_ ; ++i) {
-        
+
         int col;
         double diag = d_ptr[i];
-        
+
         for (int m = 0 ; m < NumVectors ; ++m) {
-          
+
           double dtemp = 0.0;
-          
+
           for (int k = IndexOffset[i] ; k < IndexOffset[i + 1] ; ++k) {
-            
+
             col = Indices[k];
             dtemp += Values[k] * y2_ptr[m][col];
           }
-          
+
           y2_ptr[m][i] += DampingFactor_ * (x_ptr[m][i] - dtemp) * diag;
-        }      
+        }
       }
     }
     else {
@@ -799,7 +815,7 @@ ApplyInverseGS_FastCrsMatrix(const Epetra_CrsMatrix* A, const Epetra_MultiVector
 
         int col;
         double diag = d_ptr[i];
-        
+
         for (int m = 0 ; m < NumVectors ; ++m) {
 
           double dtemp = 0.0;
@@ -814,10 +830,10 @@ ApplyInverseGS_FastCrsMatrix(const Epetra_CrsMatrix* A, const Epetra_MultiVector
         }
       }
     }
-    
+
 
     if (IsParallel_)
-      for (int m = 0 ; m < NumVectors ; ++m) 
+      for (int m = 0 ; m < NumVectors ; ++m)
         for (int i = 0 ; i < NumMyRows_ ; ++i)
           y_ptr[m][i] = y2_ptr[m][i];
   }
@@ -857,41 +873,41 @@ ApplyInverseGS_LocalFastCrsMatrix(const Epetra_CrsMatrix* A, const Epetra_MultiV
   Diagonal_->ExtractView(&d_ptr);
 
   for (int iter = 0 ; iter < NumSweeps_ ; ++iter) {
-    
+
     // only one data exchange per sweep
     if (IsParallel_)
       IFPACK_CHK_ERR(Y2->Import(Y,*Importer_,Insert));
 
-    if(!DoBackwardGS_){  
+    if(!DoBackwardGS_){
       /* Forward Mode */
       for (int ii = 0 ; ii < NumLocalSmoothingIndices_ ; ++ii) {
-	int i=LocalSmoothingIndices_[ii];
+        int i=LocalSmoothingIndices_[ii];
 
         int col;
         double diag = d_ptr[i];
-        
+
         for (int m = 0 ; m < NumVectors ; ++m) {
-          
+
           double dtemp = 0.0;
-          
+
           for (int k = IndexOffset[i] ; k < IndexOffset[i + 1] ; ++k) {
-            
+
             col = Indices[k];
             dtemp += Values[k] * y2_ptr[m][col];
           }
-          
+
           y2_ptr[m][i] += DampingFactor_ * (x_ptr[m][i] - dtemp) * diag;
-        }      
+        }
       }
     }
     else {
       /* Backward Mode */
       for (int ii = NumLocalSmoothingIndices_  - 1 ; ii > -1 ; --ii) {
-	int i=LocalSmoothingIndices_[ii];
+        int i=LocalSmoothingIndices_[ii];
 
         int col;
         double diag = d_ptr[i];
-        
+
         for (int m = 0 ; m < NumVectors ; ++m) {
 
           double dtemp = 0.0;
@@ -906,14 +922,14 @@ ApplyInverseGS_LocalFastCrsMatrix(const Epetra_CrsMatrix* A, const Epetra_MultiV
         }
       }
     }
-    
+
 
     if (IsParallel_)
-      for (int m = 0 ; m < NumVectors ; ++m) 
+      for (int m = 0 ; m < NumVectors ; ++m)
         for (int ii = 0 ; ii < NumLocalSmoothingIndices_ ; ++ii) {
-	  int i=LocalSmoothingIndices_[ii];
+          int i=LocalSmoothingIndices_[ii];
           y_ptr[m][i] = y2_ptr[m][i];
-	}
+        }
   }
 
 #ifdef IFPACK_FLOPCOUNTERS
@@ -927,6 +943,9 @@ ApplyInverseGS_LocalFastCrsMatrix(const Epetra_CrsMatrix* A, const Epetra_MultiV
 int Ifpack_PointRelaxation::
 ApplyInverseSGS(const Epetra_MultiVector& X, Epetra_MultiVector& Y) const
 {
+  if (ZeroStartingSolution_)
+    Y.PutScalar(0.0);
+
   const Epetra_CrsMatrix* CrsMatrix = dynamic_cast<const Epetra_CrsMatrix*>(&*Matrix_);
   // try to pick the best option; performances may be improved
   // if several sweeps are used.
@@ -949,8 +968,8 @@ ApplyInverseSGS_RowMatrix(const Epetra_MultiVector& X, Epetra_MultiVector& Y) co
 {
   int NumVectors = X.NumVectors();
   int Length = Matrix().MaxNumEntries();
-  vector<int> Indices(Length);
-  vector<double> Values(Length);
+  std::vector<int> Indices(Length);
+  std::vector<double> Values(Length);
 
   Teuchos::RefCountPtr< Epetra_MultiVector > Y2;
   if (IsParallel_) {
@@ -964,9 +983,9 @@ ApplyInverseSGS_RowMatrix(const Epetra_MultiVector& X, Epetra_MultiVector& Y) co
   Y.ExtractView(&y_ptr);
   Y2->ExtractView(&y2_ptr);
   Diagonal_->ExtractView(&d_ptr);
-  
+
   for (int iter = 0 ; iter < NumSweeps_ ; ++iter) {
-    
+
     // only one data exchange per sweep
     if (IsParallel_)
       IFPACK_CHK_ERR(Y2->Import(Y,*Importer_,Insert));
@@ -1019,11 +1038,11 @@ ApplyInverseSGS_RowMatrix(const Epetra_MultiVector& X, Epetra_MultiVector& Y) co
     }
 
     if (IsParallel_)
-      for (int m = 0 ; m < NumVectors ; ++m) 
-	for (int ii = 0 ; ii < NumLocalSmoothingIndices_ ; ++ii) {
-	  int i = (!LocalSmoothingIndices_)? ii : LocalSmoothingIndices_[ii];
+      for (int m = 0 ; m < NumVectors ; ++m)
+        for (int ii = 0 ; ii < NumLocalSmoothingIndices_ ; ++ii) {
+          int i = (!LocalSmoothingIndices_)? ii : LocalSmoothingIndices_[ii];
           y_ptr[m][i] = y2_ptr[m][i];
-	}
+        }
   }
 
 #ifdef IFPACK_FLOPCOUNTERS
@@ -1053,9 +1072,9 @@ ApplyInverseSGS_CrsMatrix(const Epetra_CrsMatrix* A, const Epetra_MultiVector& X
   Y.ExtractView(&y_ptr);
   Y2->ExtractView(&y2_ptr);
   Diagonal_->ExtractView(&d_ptr);
-  
+
   for (int iter = 0 ; iter < NumSweeps_ ; ++iter) {
-    
+
     // only one data exchange per sweep
     if (IsParallel_)
       IFPACK_CHK_ERR(Y2->Import(Y,*Importer_,Insert));
@@ -1106,11 +1125,11 @@ ApplyInverseSGS_CrsMatrix(const Epetra_CrsMatrix* A, const Epetra_MultiVector& X
     }
 
     if (IsParallel_)
-      for (int m = 0 ; m < NumVectors ; ++m) 
-	for (int ii = 0 ; ii < NumLocalSmoothingIndices_ ; ++ii) {
-	  int i = (!LocalSmoothingIndices_)? ii : LocalSmoothingIndices_[ii];
+      for (int m = 0 ; m < NumVectors ; ++m)
+        for (int ii = 0 ; ii < NumLocalSmoothingIndices_ ; ++ii) {
+          int i = (!LocalSmoothingIndices_)? ii : LocalSmoothingIndices_[ii];
           y_ptr[m][i] = y2_ptr[m][i];
-	}
+        }
   }
 
 #ifdef IFPACK_FLOPCOUNTERS
@@ -1143,9 +1162,9 @@ ApplyInverseSGS_FastCrsMatrix(const Epetra_CrsMatrix* A, const Epetra_MultiVecto
   Y.ExtractView(&y_ptr);
   Y2->ExtractView(&y2_ptr);
   Diagonal_->ExtractView(&d_ptr);
-  
+
   for (int iter = 0 ; iter < NumSweeps_ ; ++iter) {
-    
+
     // only one data exchange per sweep
     if (IsParallel_)
       IFPACK_CHK_ERR(Y2->Import(Y,*Importer_,Insert));
@@ -1195,7 +1214,7 @@ ApplyInverseSGS_FastCrsMatrix(const Epetra_CrsMatrix* A, const Epetra_MultiVecto
     }
 
     if (IsParallel_)
-      for (int m = 0 ; m < NumVectors ; ++m) 
+      for (int m = 0 ; m < NumVectors ; ++m)
         for (int i = 0 ; i < NumMyRows_ ; ++i)
           y_ptr[m][i] = y2_ptr[m][i];
   }
@@ -1231,9 +1250,9 @@ ApplyInverseSGS_LocalFastCrsMatrix(const Epetra_CrsMatrix* A, const Epetra_Multi
   Y.ExtractView(&y_ptr);
   Y2->ExtractView(&y2_ptr);
   Diagonal_->ExtractView(&d_ptr);
-  
+
   for (int iter = 0 ; iter < NumSweeps_ ; ++iter) {
-    
+
     // only one data exchange per sweep
     if (IsParallel_)
       IFPACK_CHK_ERR(Y2->Import(Y,*Importer_,Insert));
@@ -1285,11 +1304,11 @@ ApplyInverseSGS_LocalFastCrsMatrix(const Epetra_CrsMatrix* A, const Epetra_Multi
     }
 
     if (IsParallel_)
-      for (int m = 0 ; m < NumVectors ; ++m) 
-	for (int ii = 0 ; ii < NumLocalSmoothingIndices_ ; ++ii) {
-	  int i = (!LocalSmoothingIndices_)? ii : LocalSmoothingIndices_[ii];
+      for (int m = 0 ; m < NumVectors ; ++m)
+        for (int ii = 0 ; ii < NumLocalSmoothingIndices_ ; ++ii) {
+          int i = (!LocalSmoothingIndices_)? ii : LocalSmoothingIndices_[ii];
           y_ptr[m][i] = y2_ptr[m][i];
-	}
+        }
   }
 
 #ifdef IFPACK_FLOPCOUNTERS

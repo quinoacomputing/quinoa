@@ -30,8 +30,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <im_exodusII.h>
-#include <im_ne_nemesisI.h>
+#include <pamgen_im_exodusII.h>
+#include <pamgen_im_ne_nemesisI.h>
 #include <create_inline_mesh.h>
 
 #include <pamgen/Iopg_DatabaseIO.h>
@@ -964,7 +964,7 @@ namespace Iopg {
 	      // cases where we don't need to read it, but if we are
 	      // already reading it (to split the sidesets), then use
 	      // the data when we have it.
-	      if (side_map.size() > 0) {
+	      if (!side_map.empty()) {
 		// Set a property indicating which element side
 		// (1-based) all faces in this block are applied to.
 		// If they are not all assigned to the same element
@@ -2020,7 +2020,7 @@ void separate_surface_element_sides(Ioss::IntVector &element,
 				    Iopg::TopologyMap &side_map,
 				    Ioss::SurfaceSplitType split_type)
 {
-  if (element.size() > 0) {
+  if (!element.empty()) {
     Ioss::ElementBlock *block = NULL;
     // Topology of sides in current element block
     const Ioss::ElementTopology *common_ftopo = NULL;

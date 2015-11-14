@@ -55,8 +55,8 @@ namespace Teuchos
 
 class XMLObject;
 
-/** 
- * \brief The XMLObjectImplem class takes care of the low-level implementation 
+/**
+ * \brief The XMLObjectImplem class takes care of the low-level implementation
  details of XMLObject
 */
 class TEUCHOSPARAMETERLIST_LIB_DLL_EXPORT XMLObjectImplem
@@ -83,11 +83,11 @@ public:
   const std::string& getTag() const {return tag_;}
 
   //! Determine whether an attribute exists
-  bool hasAttribute(const std::string& name) const 
+  bool hasAttribute(const std::string& name) const
     {return attributes_.find(name) != attributes_.end();}
 
   //! Look up an attribute by name
-  const std::string& getAttribute(const std::string& name) const 
+  const std::string& getAttribute(const std::string& name) const
     {return (*(attributes_.find(name))).second;}
 
   //! Return the number of children
@@ -101,9 +101,17 @@ public:
 
   //! Get all attributes
   const Map& getAttributes() const {return attributes_;}
-  
+
   //! Look up a content line by index
   const std::string& getContentLine(int i) const {return content_[i];}
+
+  //! Add string at the the end of a content line
+  void appendContentLine(const size_t& i, const std::string &str) {
+    content_[i].append(str);
+  }
+
+  //! Remove content line by index
+  void removeContentLine(const size_t& i);
 
   //!  Print to stream with the given indentation level. Output will be well-formed XML.
   void print(std::ostream& os, int indent) const ;
@@ -124,7 +132,7 @@ private:
 
   //! Print content lines using the given indentation level
   void printContent(std::ostream& os, int indent) const ;
-  
+
   //! Convert attribute value text into well-formed XML
   static std::string XMLifyAttVal(const std::string &attval);
 

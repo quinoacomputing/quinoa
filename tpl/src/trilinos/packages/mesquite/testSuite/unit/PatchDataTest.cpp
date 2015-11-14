@@ -18,7 +18,7 @@
 
     You should have received a copy of the GNU Lesser General Public License 
     (lgpl.txt) along with this library; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  
     diachin2@llnl.gov, djmelan@sandia.gov, mbrewer@sandia.gov, 
     pknupp@sandia.gov, tleurent@mcs.anl.gov, tmunson@mcs.anl.gov      
@@ -45,21 +45,21 @@ Unit testing of various functions in the PatchData class.
 
 
 #include "Mesquite.hpp"
-#include "PatchData.hpp"
+#include "Mesquite_PatchData.hpp"
 #include "PatchDataInstances.hpp"
 #include "UnitUtil.hpp"
-#include "Settings.hpp"
-#include "Instruction.hpp"
+#include "Mesquite_Settings.hpp"
+#include "Mesquite_Instruction.hpp"
 
-#include "ArrayMesh.hpp"
-#include "DomainClassifier.hpp"
-#include "PlanarDomain.hpp"
-#include "MeshDomain1D.hpp"
-#include "MeshDecorator.hpp"
+#include "Mesquite_ArrayMesh.hpp"
+#include "Mesquite_DomainClassifier.hpp"
+#include "Mesquite_PlanarDomain.hpp"
+#include "Mesquite_MeshDomain1D.hpp"
+#include "Mesquite_MeshDecorator.hpp"
 
-//#include "TriLagrangeShape.hpp"
+//#include "Mesquite_TriLagrangeShape.hpp"
 
-#include "cppunit/extensions/HelperMacros.h"
+#include "Mesquite_cppunit/extensions/HelperMacros.h"
 
 #include <algorithm>
 #include <set>

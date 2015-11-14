@@ -41,7 +41,7 @@ computecdfnodesets(NCDAPCOMMON* nccomm, CDFtree* tree)
     NClist* allnodes;
 
     allnodes = tree->nodes;
-    varnodes = nclistnew(); 
+    varnodes = nclistnew();
 
     if(tree->seqnodes == NULL) tree->seqnodes = nclistnew();
     if(tree->gridnodes == NULL) tree->gridnodes = nclistnew();
@@ -140,7 +140,7 @@ fixgrid(NCDAPCOMMON* nccomm, CDFnode* grid)
     CDFnode* array;
 
     glen = nclistlength(grid->subnodes);
-    array = (CDFnode*)nclistget(grid->subnodes,0);	        
+    array = (CDFnode*)nclistget(grid->subnodes,0);
     if(nccomm->controls.flags & (NCF_NC3)) {
         /* Rename grid Array: variable, but leave its oc base name alone */
         nullfree(array->ncbasename);
@@ -298,7 +298,7 @@ NCerror
 sequencecheck(NCDAPCOMMON* nccomm)
 {
     (void)sequencecheckr(nccomm->cdf.ddsroot,
-                          nccomm->cdf.ddsroot->tree->varnodes,NULL);    
+                          nccomm->cdf.ddsroot->tree->varnodes,NULL);
     return NC_NOERR;
 }
 
@@ -384,15 +384,15 @@ Input is
 */
 
 NCerror
-restruct(NCDAPCOMMON* ncc, CDFnode* ddsroot, CDFnode* templateroot, NClist* projections)
+restruct(NCDAPCOMMON* ncc, CDFnode* ddsroot, CDFnode* patternroot, NClist* projections)
 {
     NCerror ncstat = NC_NOERR;
     NClist* repairs = nclistnew();
 
     /* The current restruct assumes that the ddsroot tree
-       has missing grids compared to the template.
+       has missing grids compared to the pattern.
        It is also assumed that order of the nodes
-       in the ddsroot is the same as in the template.
+       in the ddsroot is the same as in the pattern.
     */
     if(ddsroot->tree->restructed) {
       nclistfree(repairs);
@@ -401,13 +401,13 @@ restruct(NCDAPCOMMON* ncc, CDFnode* ddsroot, CDFnode* templateroot, NClist* proj
 
 #ifdef DEBUG
 fprintf(stderr,"restruct: ddsroot=%s\n",dumptree(ddsroot));
-fprintf(stderr,"restruct: templateroot=%s\n",dumptree(templateroot));
+fprintf(stderr,"restruct: patternroot=%s\n",dumptree(patternroot));
 #endif
 
     /* Match roots */
-    if(!simplenodematch(ddsroot,templateroot))
+    if(!simplenodematch(ddsroot,patternroot))
 	ncstat = NC_EDATADDS;
-    else if(!restructr(ncc,ddsroot,templateroot,repairs))
+    else if(!restructr(ncc,ddsroot,patternroot,repairs))
 	ncstat = NC_EDATADDS;
     else if(nclistlength(repairs) > 0) {
 	/* Do the repairs */
@@ -422,8 +422,8 @@ fprintf(stderr,"restruct: templateroot=%s\n",dumptree(templateroot));
 
 /*
 Locate nodes in the tree rooted at node
-that correspond to a single grid field in the template
-when the template is a grid.
+that correspond to a single grid field in the pattern
+when the pattern is a grid.
 Wrap that grid field in a synthesized structure.
 
 The key thing to look for is the case where
@@ -433,17 +433,17 @@ we expected a grid.
 */
 
 static int
-restructr(NCDAPCOMMON* ncc, CDFnode* dxdparent, CDFnode* templateparent, NClist* repairlist)
+restructr(NCDAPCOMMON* ncc, CDFnode* dxdparent, CDFnode* patternparent, NClist* repairlist)
 {
     int index, i, j, match;
 
 #ifdef DEBUG
 fprintf(stderr,"restruct: matched: %s -> %s\n",
-ocfqn(dxdparent->ocnode),ocfqn(templateparent->ocnode));
+ocfqn(dxdparent->ocnode),ocfqn(patternparent->ocnode));
 #endif
 
     /* walk each node child and locate its match
-       in the template's children; recurse on matches,
+       in the pattern's children; recurse on matches,
        non-matches may be nodes needing wrapping.
     */
 
@@ -451,11 +451,11 @@ ocfqn(dxdparent->ocnode),ocfqn(templateparent->ocnode));
         CDFnode* dxdsubnode = (CDFnode*)nclistget(dxdparent->subnodes,index);
 	CDFnode* matchnode = NULL;
 
-	/* Look for a matching template node with same ocname */
-        for(i=0;i<nclistlength(templateparent->subnodes);i++) {
-            CDFnode* templatesubnode = (CDFnode*)nclistget(templateparent->subnodes,i);
-	    if(strcmp(dxdsubnode->ocname,templatesubnode->ocname) == 0) {
-		matchnode = templatesubnode;
+	/* Look for a matching pattern node with same ocname */
+        for(i=0;i<nclistlength(patternparent->subnodes);i++) {
+            CDFnode* patternsubnode = (CDFnode*)nclistget(patternparent->subnodes,i);
+	    if(strcmp(dxdsubnode->ocname,patternsubnode->ocname) == 0) {
+		matchnode = patternsubnode;
 		break;
 	    }
 	}
@@ -465,7 +465,7 @@ ocfqn(dxdsubnode->ocnode),ocfqn(matchnode->ocnode));
 #endif
 	if(simplenodematch(dxdsubnode,matchnode)) {
 	    /* this subnode of the node matches the corresponding
-               node of the template, so it is ok =>
+               node of the pattern, so it is ok =>
                recurse looking for nested mis-matches
             */
 	    if(!restructr(ncc,dxdsubnode,matchnode,repairlist))
@@ -475,11 +475,11 @@ ocfqn(dxdsubnode->ocnode),ocfqn(matchnode->ocnode));
                at all the grids to see if this node matches a field
                in one of the grids
             */
-            for(match=0,i=0;!match && i<nclistlength(templateparent->subnodes);i++) {
-                CDFnode* subtemp = (CDFnode*)nclistget(templateparent->subnodes,i);
+            for(match=0,i=0;!match && i<nclistlength(patternparent->subnodes);i++) {
+                CDFnode* subtemp = (CDFnode*)nclistget(patternparent->subnodes,i);
                 if(subtemp->nctype == NC_Grid) {
 		    /* look inside */
-                    for(j=0;j<nclistlength(templateparent->subnodes);j++) {
+                    for(j=0;j<nclistlength(patternparent->subnodes);j++) {
                         CDFnode* gridfield = (CDFnode*)nclistget(subtemp->subnodes,j);
                         if(simplenodematch(dxdsubnode,gridfield)) {
                             /* We need to do this repair */
@@ -497,7 +497,7 @@ ocfqn(dxdsubnode->ocnode),ocfqn(matchnode->ocnode));
     return 1; /* we matched everything at this level */
 }
 
-/* Wrap the node wrt the template grid or template struct */
+/* Wrap the node wrt the pattern grid or pattern struct */
 
 static NCerror
 repairgrids(NCDAPCOMMON* ncc, NClist* repairlist)
@@ -507,14 +507,14 @@ repairgrids(NCDAPCOMMON* ncc, NClist* repairlist)
     assert(nclistlength(repairlist) % 2 == 0);
     for(i=0;i<nclistlength(repairlist);i+=2) {
 	CDFnode* node = (CDFnode*)nclistget(repairlist,i);
-	CDFnode* template = (CDFnode*)nclistget(repairlist,i+1);
+	CDFnode* pattern = (CDFnode*)nclistget(repairlist,i+1);
 	int index = findin(node->container,node);
-	int tindex = findin(template->container,template);
+	int tindex = findin(pattern->container,pattern);
 	ncstat = structwrap(ncc, node,node->container,index,
-                             template->container,tindex);
+                             pattern->container,tindex);
 #ifdef DEBUG
 fprintf(stderr,"repairgrids: %s -> %s\n",
-ocfqn(node->ocnode),ocfqn(template->ocnode));
+ocfqn(node->ocnode),ocfqn(pattern->ocnode));
 #endif
 
     }
@@ -523,12 +523,12 @@ ocfqn(node->ocnode),ocfqn(template->ocnode));
 
 static NCerror
 structwrap(NCDAPCOMMON* ncc, CDFnode* node, CDFnode* parent, int parentindex,
-                           CDFnode* templategrid, int gridindex)
+                           CDFnode* patterngrid, int gridindex)
 {
     CDFnode* newstruct;
 
-    ASSERT((templategrid->nctype == NC_Grid));
-    newstruct = makenewstruct(ncc, node,templategrid);
+    ASSERT((patterngrid->nctype == NC_Grid));
+    newstruct = makenewstruct(ncc, node,patterngrid);
     if(newstruct == NULL) {return THROW(NC_ENOMEM);}
 
     /* replace the node with the new structure
@@ -556,17 +556,17 @@ findin(CDFnode* parent, CDFnode* child)
    this occurs because some servers (that means you ferret and you thredds!)
    do not adhere to the DAP2 protocol spec.
 */
-  
+
 static CDFnode*
-makenewstruct(NCDAPCOMMON* ncc, CDFnode* node, CDFnode* templatenode)
+makenewstruct(NCDAPCOMMON* ncc, CDFnode* node, CDFnode* patternnode)
 {
-    CDFnode* newstruct = makecdfnode(ncc,templatenode->ocname,OC_Structure,
-                                      templatenode->ocnode, node->container);
+    CDFnode* newstruct = makecdfnode(ncc,patternnode->ocname,OC_Structure,
+                                      patternnode->ocnode, node->container);
     if(newstruct == NULL) return NULL;
     newstruct->nc_virtual = 1;
-    newstruct->ncbasename = nulldup(templatenode->ncbasename);
+    newstruct->ncbasename = nulldup(patternnode->ncbasename);
     newstruct->subnodes = nclistnew();
-    newstruct->template = templatenode;
+    newstruct->pattern = patternnode;
     node->container = newstruct;
     nclistpush(newstruct->subnodes,(void*)node);
     return newstruct;
@@ -599,7 +599,7 @@ mapnodesr(CDFnode* connode, CDFnode* fullnode, int depth)
     NCerror ncstat = NC_NOERR;
 
     ASSERT((simplenodematch(connode,fullnode)));
-    
+
 #ifdef DEBUG
   {
 char* path1 = makecdfpathstring(fullnode,".");
@@ -667,7 +667,7 @@ unmap(CDFnode* root)
     }
 }
 
-/* 
+/*
 Move dimension data from basenodes to nodes
 */
 
@@ -700,7 +700,7 @@ fprintf(stderr,"dimimprint %s/%d -> %s/%d\n",
         for(j=0;j<noderank;j++) {
 	    CDFnode* dim = (CDFnode*)nclistget(node->array.dimset0,j);
 	    CDFnode* basedim = (CDFnode*)nclistget(basenode->array.dimset0,j);
-	    dim->dim.declsize0 = basedim->dim.declsize;	
+	    dim->dim.declsize0 = basedim->dim.declsize;
 #ifdef DEBUG
 fprintf(stderr,"dimimprint: %d: %lu -> %lu\n",i,basedim->dim.declsize,dim->dim.declsize0);
 #endif
@@ -944,6 +944,9 @@ buildcdftree(NCDAPCOMMON* nccomm, OCddsnode ocroot, OCdxd occlass, CDFnode** cdf
     CDFnode* root = NULL;
     CDFtree* tree = (CDFtree*)calloc(1,sizeof(CDFtree));
     NCerror err = NC_NOERR;
+    if(!tree)
+      return OC_ENOMEM;
+
     tree->ocroot = ocroot;
     tree->nodes = nclistnew();
     tree->occlass = occlass;
@@ -956,7 +959,7 @@ buildcdftree(NCDAPCOMMON* nccomm, OCddsnode ocroot, OCdxd occlass, CDFnode** cdf
 	if(cdfrootp) *cdfrootp = root;
     }
     return err;
-}        
+}
 
 static NCerror
 buildcdftreer(NCDAPCOMMON* nccomm, OCddsnode ocnode, CDFnode* container,
@@ -1002,7 +1005,7 @@ buildcdftreer(NCDAPCOMMON* nccomm, OCddsnode ocnode, CDFnode* container,
 	if(tree->root == NULL) {
 	    tree->root = cdfnode;
 	    cdfnode->tree = tree;
-	}		
+	}
 #endif
 	break;
 
@@ -1013,7 +1016,7 @@ buildcdftreer(NCDAPCOMMON* nccomm, OCddsnode ocnode, CDFnode* container,
 	if(tree->root == NULL) {
 	    tree->root = cdfnode;
 	    cdfnode->tree = tree;
-	}		
+	}
 #endif
 	break;
 
@@ -1021,7 +1024,7 @@ buildcdftreer(NCDAPCOMMON* nccomm, OCddsnode ocnode, CDFnode* container,
     default: PANIC1("buildcdftree: unexpect OC node type: %d",(int)octype);
 
     }
-    /* Avoid a rare but perhaps possible null-dereference 
+    /* Avoid a rare but perhaps possible null-dereference
        of cdfnode. Not sure what error to throw, so using
        NC_EDAP: generic DAP error. */
     if(!cdfnode) {
@@ -1040,7 +1043,10 @@ buildcdftreer(NCDAPCOMMON* nccomm, OCddsnode ocnode, CDFnode* container,
 	CDFnode* subnode;
 	oc_dds_ithfield(nccomm->oc.conn,ocnode,i,&ocsubnode);
 	ncerr = buildcdftreer(nccomm,ocsubnode,cdfnode,tree,&subnode);
-	if(ncerr) return ncerr;
+	if(ncerr) {
+	  if(ocname) free(ocname);
+	  return ncerr;
+	}
 	nclistpush(cdfnode->subnodes,(void*)subnode);
     }
     nullfree(ocname);
@@ -1074,7 +1080,7 @@ freecdfroot(CDFnode* root)
 
 /* Free up a single node, but not any
    nodes it points to.
-*/  
+*/
 static void
 free1cdfnode(CDFnode* node)
 {
@@ -1193,7 +1199,7 @@ static void
 defdimensions(OCddsnode ocnode, CDFnode* cdfnode, NCDAPCOMMON* nccomm, CDFtree* tree)
 {
     size_t i,ocrank;
- 
+
     oc_dds_rank(nccomm->oc.conn,ocnode,&ocrank);
     assert(ocrank > 0);
     for(i=0;i<ocrank;i++) {
@@ -1201,7 +1207,7 @@ defdimensions(OCddsnode ocnode, CDFnode* cdfnode, NCDAPCOMMON* nccomm, CDFtree* 
 	OCddsnode ocdim;
 	char* ocname;
 	size_t declsize;
-	
+
 	oc_dds_ithdimension(nccomm->oc.conn,ocnode,i,&ocdim);
 	oc_dimension_properties(nccomm->oc.conn,ocdim,&declsize,&ocname);
 
@@ -1212,9 +1218,8 @@ defdimensions(OCddsnode ocnode, CDFnode* cdfnode, NCDAPCOMMON* nccomm, CDFtree* 
 	/* Initially, constrained and unconstrained are same */
 	cdfdim->dim.declsize = declsize;
 	cdfdim->dim.array = cdfnode;
-	if(cdfnode->array.dimset0 == NULL) 
+	if(cdfnode->array.dimset0 == NULL)
 	    cdfnode->array.dimset0 = nclistnew();
 	nclistpush(cdfnode->array.dimset0,(void*)cdfdim);
-    }    
+    }
 }
-

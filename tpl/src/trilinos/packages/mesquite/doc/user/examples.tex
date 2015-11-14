@@ -6,8 +6,8 @@ In this section, we write a driver code which calls the Mesquite
 library to improve the quality of a test mesh. This tutorial section
 is aimed at giving the user a feel for Mesquite: \emph{this section is not
 where to look for detailed information}. In particular, information
-pertaining to loading a particular mesh format (see Chapter \ref{sec:meshes}), 
-interacting through a particular mesh interface (section \ref{sec:MeshData}), 
+pertaining to loading a particular mesh format (see Chapter \ref{sec:meshes}),
+interacting through a particular mesh interface (section \ref{sec:MeshData}),
 and details of defining geometric domains (see Chapter \ref{sec:geom}) are not
 given in this section.
 
@@ -23,11 +23,11 @@ are described in section \ref{sec:tutDetailedAPI}.
 \label{sec:tutfile}
 
 To create and link a driver code, the Mesquite library must be
-installed per the instructions of section \ref{sec:compiling}. 
-The commands and file names specified in this section are relative 
-to the installed \texttt{testsuite/tutorial} directory.  It 
+installed per the instructions of section \ref{sec:compiling}.
+The commands and file names specified in this section are relative
+to the installed \texttt{testsuite/tutorial} directory.  It
 is assumed that that is the working diretory.
-This tutorial begins with the file \texttt{tutorial.cpp}, 
+This tutorial begins with the file \texttt{tutorial.cpp},
 which contains the following template:
 \begin{verbatim}
 1.  #include "Mesquite_all_headers.hpp"
@@ -44,7 +44,7 @@ which contains the following template:
       }
 
       // new code starts here
-4.    //... 
+4.    //...
 
       return 0;
     }
@@ -56,14 +56,14 @@ The lines labeled 1-3 highlight three basic aspects of using Mesquite;
 \texttt{include/Mesquite\_all\_headers.hpp}
 \end{center} which includes all Mesquite
 headers. Although this is the easiest way to handle the include directives,
-it may slow down compilation of the application.  
-\item All Mesquite classes are part of the \texttt{Mesquite} namespace. 
+it may slow down compilation of the application.
+\item All Mesquite classes are part of the \texttt{Mesquite} namespace.
 
 \item  The \texttt{MsqError} class defines an object type used to communicate
 Mesquite errors to the application.  The calling application must pass
 an instance of the \texttt{MsqError} class or an instance of a subclass of
 \texttt{MsqError} to many Mesquite functions.  The state of the error object
-may be checked by casting the instance ot a Boolean or using it in a 
+may be checked by casting the instance ot a Boolean or using it in a
 Boolean context.  The state is cleared by calling the \texttt{clear} method.
 \item In the sections that follow, we guide the user through the steps
 necessary to smooth a mesh using Mesquite.  All new lines of code to be
@@ -72,7 +72,7 @@ in which they are discussed.
 \end{enumerate}
 
 The code above takes a mesh file name as a command line argument and
-performs no action. We can compile it in the 
+performs no action. We can compile it in the
 (\texttt{examples/}) directory with the command:
 
 \begin{verbatim}
@@ -85,7 +85,7 @@ performs no action. We can compile it in the
 Our next step is to load one of the test meshes distributed with
 Mesquite.  These meshes are distributed in the VTK unstructured mesh
 format, the details of which are given in \cite{VTKbook, VTKuml}. This
-format was chosen because of its readability and ease of use. 
+format was chosen because of its readability and ease of use.
 In this tutorial we use
 the simplest mechanism for loadling a mesh into Mesquite; different
 options are described in Chapter \ref{sec:meshes}.  In particular, to
@@ -96,8 +96,8 @@ adding the following lines to the file template described in
 \ref{sec:tutfile}.
 \begin{verbatim}
   Mesquite::MeshImpl my_mesh;
-  my_mesh.read_vtk(argv[1], err); 
-  if (err) 
+  my_mesh.read_vtk(argv[1], err);
+  if (err)
   {
     std::cout << err << std::endl;
     return 1;
@@ -110,18 +110,18 @@ handle the mixed elements with no additional effort required.
 Mesquite also provides a function to write a mesh
 file in VTK format, given a \texttt{MeshImpl} object:
 \begin{verbatim}
-  my_mesh.write_vtk("original_mesh.vtk",err); 
+  my_mesh.write_vtk("original_mesh.vtk",err);
 \end{verbatim}
 
-Mesquite deals automatically with all types of supported elements 
+Mesquite deals automatically with all types of supported elements
 (triangles, quadrilaterals, tetrahedra, hexahedra, wedges, and pyramids),
-and also hybrid meshes consisting of mixed element types.  
+and also hybrid meshes consisting of mixed element types.
 Some meshes require geometry information as well.  When improving a surface mesh, Mesquite must be provided information
 about surface(s) the mesh is constrained to lie on and the association between
 mesh entities and entities of the geometric domain (surfaces, curves, etc.)
 Because Mesquite is inherently a 3D code, all 2D meshes must specify some
 geometry constraints.  The details
-for general geometric surfaces are explained in Chapter 
+for general geometric surfaces are explained in Chapter
 \ref{sec:geom}. In this section,
 we show how to define the geometry of a 2D planar mesh, specified by a
 point $(x,y,z)$ and a normal. For example, the following defines an xy-plane
@@ -136,14 +136,14 @@ shifted five units in the z-direction:
 \subsection{Improving the Mesh with a Wrapper Class}
 \label{sec:tutWrapper}
 The simplest way to use a Mesquite mesh quality improvement
-procedure is to instantiate one of the wrapper classes described in Chapter 
+procedure is to instantiate one of the wrapper classes described in Chapter
 \ref{sec:wrappers}. Here, we will instantiate the
-\texttt{LaplacianSmoother} wrapper and use it to improve 
+\texttt{LaplacianSmoother} wrapper and use it to improve
 the Mesh we created earlier.  Mesquite can optimize the mesh
 without further input from the user by utilizing preset, default
 values.  If some customization is desired, the wrapper classes also
 allow users to set the most important parameters of the underlying
-algorithms and metrics (see Chapter 
+algorithms and metrics (see Chapter
 \ref{sec:wrappers} for details).
 \begin{verbatim}
 Mesquite::LaplaceWrapper mesh_quality_algorithm;
@@ -153,7 +153,7 @@ mesh_quality_algorithm.run_instructions(&mesh_and_domain, err);
 
 //Should check the error object after the instruction is ran
 // to see whether the instructions were all successful.
-if (err) 
+if (err)
 {
     std::cout << err << std::endl;
     return 1;
@@ -164,14 +164,14 @@ Once the algorithm has been executed using the {\tt run\_instructions} member
 function of the wrapper class, the improved mesh can be written to a new
 file:
 \begin{verbatim}
-  my_mesh.write_vtk("smoothed_mesh.vtk",err); 
+  my_mesh.write_vtk("smoothed_mesh.vtk",err);
 \end{verbatim}
 This completes the code necessary for the simple wrapper example. Once
 the code has successfully compiled by typing the {\tt make} command given in
-section \ref{sec:tutfile}, 
+section \ref{sec:tutfile},
 run it from the tutorial directory \texttt{mesquite/testSuite/tutorial/}
-with a mesh file name as a command line 
-argument by typing: 
+with a mesh file name as a command line
+argument by typing:
 \begin{verbatim}
 ./tutorial ../../meshFiles/2D/quads/untangled/square_quad_10_rand.vtk
 \end{verbatim}
@@ -219,7 +219,7 @@ of square quadrilaterals which have an inverse mean ratio value of 1.0.
 \end{verbatim}
 \begin{figure*}[htbp]
 \begin{center}
-    \includegraphics[height=80mm]{square_rand.eps}
+    \includegraphics[height=80mm]{figures/square_rand}
     \caption{square\_quad\_10\_rand.vtk mesh. The original mesh is on the left, the mesh smoothed with the \texttt{LaplacianSmoother} is shown on the right.}
     \label{fig:square_rand}
 \end{center}
@@ -235,7 +235,7 @@ metric, objective function template, and optimization algorithm by
 instantiating particular instances of each.  For each, various options
 such as numerical or analytical gradient and Hessian evaluations or
 the patch size can be selected.  Furthermore, the user can fine tune
-the optimization algorithm performance by creating and setting the parameters 
+the optimization algorithm performance by creating and setting the parameters
 of the termination criteria.
 %for both inner and outer iterations.
 %mbrewer removed reference to inner and outer iterations.
@@ -253,7 +253,7 @@ steps needed for this approach.  The code segment given below performs
 the same functionality as the wrapper class highlighted in the
 previous section.  The comment lines provide high level documentation;
 the details of each class and the low-level API are not described here.
-%extensively treated in Section 
+%extensively treated in Section
 %\ref{sec:detailedAPI}.
 
 \begin{verbatim}
@@ -262,28 +262,28 @@ the details of each class and the low-level API are not described here.
 
     // sets the objective function template
   LPtoPTemplate obj_func(&inverse_mean_ratio, 2, err);
-  
+
     // creates the optimization procedures
   TrustRegion t_region(&obj_func);
 
     //performs optimization globally
-  t_region.use_global_patch(); 
+  t_region.use_global_patch();
 
-    // creates a termination criterion and 
+    // creates a termination criterion and
     // add it to the optimization procedure
     // outer loop: default behavior: 1 iteration
     // inner loop: stop if gradient norm < eps
   TerminationCriterion tc_inner;
-  tc_inner.add_absolute_gradient_L2_norm( 1e-4 ); 
+  tc_inner.add_absolute_gradient_L2_norm( 1e-4 );
   t_region.set_inner_termination_criterion(&tc_inner);
 
     // creates a quality assessor
   QualityAssessor m_ratio_qa(&inverse_mean_ratio);
     // creates an instruction queue
   InstructionQueue queue;
-  queue.add_quality_assessor(&m_ratio_qa, err); 
-  queue.set_master_quality_improver(&t_region, err); 
-  queue.add_quality_assessor(&m_ratio_qa, err); 
+  queue.add_quality_assessor(&m_ratio_qa, err);
+  queue.set_master_quality_improver(&t_region, err);
+  queue.add_quality_assessor(&m_ratio_qa, err);
 
     // do optimization of the mesh_set
   MeshDomainAssoc mesh_and_domain = MeshDomainAssoc(&my_mesh, &my_mesh_plane);
@@ -292,7 +292,7 @@ the details of each class and the low-level API are not described here.
     std::cout << err << std::endl;
     return 2;
   }
-\end{verbatim} 
+\end{verbatim}
 
 \newpage
 
@@ -317,10 +317,10 @@ thrown.
 
 We can now improve the mesh with the wrapper mentioned in
 \ref{sec:tutWrapper} or the detailed API mentioned in
-\ref{sec:tutDetailedAPI}. 
+\ref{sec:tutDetailedAPI}.
 Because we changed the normal, the driver code must be recompiled;
 otherwise the code and executable are as before.
-Once the code is recompiled, type 
+Once the code is recompiled, type
 \begin{verbatim}
 ./tutorial ../../meshFiles/2D/vtk/quads/tangled/hole_in_square.vtk
 \end{verbatim}
@@ -329,7 +329,7 @@ The smoothed mesh is shown in the right image of figure
 \ref{fig:hole}.
 The vertex locations have been repositioned and significantly improve
 the quality of the mesh, as shown by the onscreen
-quality assessor output:  
+quality assessor output:
 \begin{verbatim}
 ************** QualityAssessor(free only) Summary **************
 
@@ -366,7 +366,7 @@ quality assessor output:
 \end{verbatim}
 \begin{figure*}[htbp]
 \begin{center}
-    \includegraphics[height=80mm]{hole_in_square.eps}
+    \includegraphics[height=80mm]{figures/hole_in_square}
     \caption{hole\_in\_square.vtk mesh. The original mesh is on the left, the mesh smoothed with
     Mesquite is shown on the right.}
     \label{fig:hole}

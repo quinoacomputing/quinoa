@@ -18,7 +18,7 @@
 
     You should have received a copy of the GNU Lesser General Public License 
     (lgpl.txt) along with this library; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
 
     (2007) kraftche@cae.wisc.edu    
 
@@ -31,21 +31,21 @@
  */
 
 #include "Mesquite.hpp"
-#include "MsqError.hpp"
-#include "MeshImpl.hpp"
-#include "XYRectangle.hpp"
+#include "Mesquite_MsqError.hpp"
+#include "Mesquite_MeshImpl.hpp"
+#include "Mesquite_XYRectangle.hpp"
 
-#include "ReferenceMesh.hpp"
-#include "RefMeshTargetCalculator.hpp"
-#include "TShapeB1.hpp"
-#include "TQualityMetric.hpp"
+#include "Mesquite_ReferenceMesh.hpp"
+#include "Mesquite_RefMeshTargetCalculator.hpp"
+#include "Mesquite_TShapeB1.hpp"
+#include "Mesquite_TQualityMetric.hpp"
 
-#include "TerminationCriterion.hpp"
-#include "QualityAssessor.hpp"
-#include "PMeanPTemplate.hpp"
-#include "FeasibleNewton.hpp"
-#include "ConjugateGradient.hpp"
-#include "InstructionQueue.hpp"
+#include "Mesquite_TerminationCriterion.hpp"
+#include "Mesquite_QualityAssessor.hpp"
+#include "Mesquite_PMeanPTemplate.hpp"
+#include "Mesquite_FeasibleNewton.hpp"
+#include "Mesquite_ConjugateGradient.hpp"
+#include "Mesquite_InstructionQueue.hpp"
 
 #include <iostream>
 #include <fstream>

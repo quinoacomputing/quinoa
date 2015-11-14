@@ -1,13 +1,13 @@
 
 // @HEADER
 // ***********************************************************************
-// 
+//
 //                      Didasko Tutorial Package
 //                 Copyright (2005) Sandia Corporation
-// 
+//
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -36,7 +36,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 // Questions about Didasko? Contact Marzio Sala (marzio.sala _AT_ gmail.com)
-// 
+//
 // ***********************************************************************
 // @HEADER
 
@@ -96,21 +96,21 @@ int main(int argc, char *argv[]) {
 #endif
 
   int MyPID = Comm.MyPID();
-  bool verbose = false; 
+  bool verbose = false;
   if (MyPID==0) verbose = true;
 
   // matrix downloaded from MatrixMarket
   char FileName[] = "../HBMatrices/fidap005.rua";
 
   Epetra_Map * readMap; // Pointers because of Trilinos_Util_ReadHb2Epetra
-  Epetra_CrsMatrix * readA; 
-  Epetra_Vector * readx; 
+  Epetra_CrsMatrix * readA;
+  Epetra_Vector * readx;
   Epetra_Vector * readb;
   Epetra_Vector * readxexact;
-   
+
   // Call routine to read in HB problem
-  Trilinos_Util_ReadHb2Epetra(FileName, Comm, readMap, readA, readx, 
-			      readb, readxexact);
+  Trilinos_Util_ReadHb2Epetra(FileName, Comm, readMap, readA, readx,
+      readb, readxexact);
 
   int NumGlobalElements = readMap->NumGlobalElements();
 
@@ -132,22 +132,22 @@ int main(int argc, char *argv[]) {
   xexact.Export(*readxexact, exporter, Add);
 
   A.FillComplete();
-  
+
   delete readA;
   delete readx;
   delete readb;
   delete readxexact;
   delete readMap;
-  
+
   // ============================ //
   // Construct ILU preconditioner //
   // ---------------------------- //
 
-  //  modify those parameters 
+  //  modify those parameters
   int    LevelFill = 1;
   double DropTol = 0.0;
   double Condest;
-  
+
   Ifpack_CrsIct * ICT = NULL;
   ICT = new Ifpack_CrsIct(A,DropTol,LevelFill);
   // Init values from A
@@ -156,42 +156,42 @@ int main(int argc, char *argv[]) {
   ICT->Factor();
   // and now estimate the condition number
   ICT->Condest(false,Condest);
-  
+
   cout << Condest << endl;
-    
+
   if( Comm.MyPID() == 0 ) {
     cout << "Condition number estimate (level-of-fill = "
-	 << LevelFill <<  ") = " << Condest << endl;
+      << LevelFill <<  ") = " << Condest << endl;
   }
 
   // Define label for printing out during the solve phase
-  string label = "Ifpack_CrsIct Preconditioner: LevelFill = " + toString(LevelFill) + 
-                                                 " Overlap = 0"; 
+  string label = "Ifpack_CrsIct Preconditioner: LevelFill = " + toString(LevelFill) +
+    " Overlap = 0";
   ICT->SetLabel(label.c_str());
-  
+
   // Here we create an AztecOO object
   AztecOO solver;
   solver.SetUserMatrix(&A);
   solver.SetLHS(&x);
   solver.SetRHS(&b);
   solver.SetAztecOption(AZ_solver,AZ_cg);
-  
+
   // Here we set the IFPACK preconditioner and specify few parameters
-  
+
   solver.SetPrecOperator(ICT);
 
   int Niters = 1200;
   solver.SetAztecOption(AZ_kspace, Niters);
-  solver.SetAztecOption(AZ_output, 20); 
+  solver.SetAztecOption(AZ_output, 20);
   solver.Iterate(Niters, 5.0e-5);
 
   if (ICT!=0) delete ICT;
-				       
+
 #ifdef HAVE_MPI
   MPI_Finalize() ;
 #endif
 
-return 0 ;
+  return 0 ;
 }
 
 #else

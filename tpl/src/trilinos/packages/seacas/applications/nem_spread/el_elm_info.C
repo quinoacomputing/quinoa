@@ -71,7 +71,7 @@ namespace {
 
   {
 
-    register int i;
+    int i;
 
     ivector += ibegin;
     for (i = ibegin; i < iend; ivector++, i++)
@@ -158,6 +158,28 @@ int elem_info(int info, int ielem_type, int supp)
       case 1:
       case 2:
         answer = 8; break;
+      default:
+        answer = 3; break;
+      }
+      break;
+
+    default:
+      fprintf(stderr, "%sERROR: Unknown quantity\n", yo);
+      exit(1);
+    }
+    break;
+
+  case SHELL9:
+    switch(info) {
+    case NNODES:
+      answer = 9; break;
+    case NDIM:
+      answer = 3; break;
+    case NN_SIDE:
+      switch(supp) {
+      case 1:
+      case 2:
+        answer = 9; break;
       default:
         answer = 3; break;
       }
@@ -716,6 +738,9 @@ int get_type(char string[], int nodes, int num_dim)
 	  break;
 	case 8:
 	  answer = SHELL8;
+	  break;
+	case 9:
+	  answer = SHELL9;
 	  break;
 	default:
 	  fprintf(stderr, "%sERROR: Shell element with %d nodes unknown.\n",

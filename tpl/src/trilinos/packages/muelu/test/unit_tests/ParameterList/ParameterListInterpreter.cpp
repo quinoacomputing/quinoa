@@ -59,6 +59,7 @@ namespace MueLuTests {
 #include "MueLu_UseShortNames.hpp"
 
   typedef std::map<std::string, RCP<const FactoryBase> > FactoryMap; // TODO: remove
+  typedef std::map<std::string, RCP<FactoryManagerBase> > FactoryManagerMap;
 
   TEUCHOS_UNIT_TEST(ParameterListInterpreter, SetParameterList)
   {
@@ -78,7 +79,7 @@ namespace MueLuTests {
     }
 #endif
 
-    RCP<Matrix> A = TestHelpers::TestFactory<SC, LO, GO, NO, LMO>::Build1DPoisson(99);
+    RCP<Matrix> A = TestHelpers::TestFactory<SC, LO, GO, NO>::Build1DPoisson(99);
     RCP<const Teuchos::Comm<int> > comm = TestHelpers::Parameters::getDefaultComm();
 
     ArrayRCP<std::string> fileList = TestHelpers::GetFileList(std::string("ParameterList/ParameterListInterpreter/"), std::string(".xml"));

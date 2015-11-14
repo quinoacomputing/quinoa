@@ -1,12 +1,12 @@
 // @HEADER
 // ***********************************************************************
-// 
+//
 //                      Didasko Tutorial Package
 //                 Copyright (2005) Sandia Corporation
-// 
+//
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -35,13 +35,13 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 // Questions about Didasko? Contact Marzio Sala (marzio.sala _AT_ gmail.com)
-// 
+//
 // ***********************************************************************
 // @HEADER
 
 
 #include "Didasko_config.h"
-#if defined(HAVE_DIDASKO_EPETRA) && defined(HAVE_DIDASKO_EPETRAEXT) 
+#if defined(HAVE_DIDASKO_EPETRA) && defined(HAVE_DIDASKO_EPETRAEXT)
 
 #include "Epetra_ConfigDefs.h"
 #ifdef HAVE_MPI
@@ -57,7 +57,7 @@
 #include "EpetraExt_VectorOut.h"
 #include "EpetraExt_RowMatrixOut.h"
 
-int main(int argc, char *argv[]) 
+int main(int argc, char *argv[])
 {
 #ifdef HAVE_MPI
   MPI_Init(&argc,&argv);
@@ -91,7 +91,7 @@ int main(int argc, char *argv[])
   // 2) use A = mmread('A.mm')
 
   // one can also read from Matrix Market
-  
+
 #ifdef HAVE_MPI
   MPI_Finalize() ;
 #endif
@@ -113,8 +113,8 @@ int main(int argc, char *argv[])
 #endif
 
   puts("Please configure Didasko with:\n"
-       "--enable-epetra\n"
-       "--enable-epetraext\n");
+      "--enable-epetra\n"
+      "--enable-epetraext\n");
 
 #ifdef HAVE_MPI
   MPI_Finalize();

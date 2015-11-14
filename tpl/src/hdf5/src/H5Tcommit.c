@@ -558,7 +558,7 @@ H5Topen2(hid_t loc_id, const char *name, hid_t tapl_id)
     H5O_type_t   obj_type;              /* Type of object at location */
     H5G_loc_t    type_loc;              /* Group object for datatype */
     hbool_t      obj_found = FALSE;     /* Object at 'name' found */
-    hid_t        dxpl_id = H5AC_dxpl_id; /* dxpl to use to open datatype */
+    hid_t        dxpl_id = H5AC_ind_dxpl_id; /* dxpl to use to open datatype */
     hid_t        ret_value = FAIL;      /* Return value */
 
     FUNC_ENTER_API(FAIL)
@@ -651,7 +651,7 @@ H5Tget_create_plist(hid_t dtype_id)
 	HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "not a datatype")
 
     /* Copy the default datatype creation property list */
-    if(NULL == (tcpl_plist = (H5P_genplist_t *)H5I_object(H5P_LST_DATATYPE_CREATE_g)))
+    if(NULL == (tcpl_plist = (H5P_genplist_t *)H5I_object(H5P_LST_DATATYPE_CREATE_ID_g)))
          HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "can't get default creation property list")
     if((new_tcpl_id = H5P_copy_plist(tcpl_plist, TRUE)) < 0)
         HGOTO_ERROR(H5E_DATATYPE, H5E_CANTGET, FAIL, "unable to copy the creation property list")

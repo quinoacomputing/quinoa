@@ -64,8 +64,8 @@ PHX_EVALUATOR_CTOR(PointValues_Evaluator,p)
 }
 
 //**********************************************************************
-template <typename EvalT, typename TraitsT>
-PointValues_Evaluator<EvalT,TraitsT>::PointValues_Evaluator(const Teuchos::RCP<const panzer::PointRule> & pointRule,
+template <typename EvalT, typename TRAITST>
+PointValues_Evaluator<EvalT,TRAITST>::PointValues_Evaluator(const Teuchos::RCP<const panzer::PointRule> & pointRule,
                                                             const Intrepid::FieldContainer<double> & userArray)
 {
   basis_index = 0;
@@ -74,8 +74,8 @@ PointValues_Evaluator<EvalT,TraitsT>::PointValues_Evaluator(const Teuchos::RCP<c
 }
 
 //**********************************************************************
-template <typename EvalT, typename TraitsT>
-PointValues_Evaluator<EvalT,TraitsT>::PointValues_Evaluator(const Teuchos::RCP<const panzer::PointRule> & pointRule,
+template <typename EvalT, typename TRAITST>
+PointValues_Evaluator<EvalT,TRAITST>::PointValues_Evaluator(const Teuchos::RCP<const panzer::PointRule> & pointRule,
                                                             const Teuchos::RCP<const panzer::PureBasis> & pureBasis)
 {
   basis_index = 0;
@@ -84,8 +84,8 @@ PointValues_Evaluator<EvalT,TraitsT>::PointValues_Evaluator(const Teuchos::RCP<c
 }
 
 //**********************************************************************
-template <typename EvalT, typename TraitsT>
-void PointValues_Evaluator<EvalT,TraitsT>::initialize(const Teuchos::RCP<const panzer::PointRule> & pointRule,
+template <typename EvalT, typename TRAITST>
+void PointValues_Evaluator<EvalT,TRAITST>::initialize(const Teuchos::RCP<const panzer::PointRule> & pointRule,
                                                       const Teuchos::Ptr<const Intrepid::FieldContainer<double> > & userArray,
                                                       const Teuchos::RCP<const panzer::PureBasis> & pureBasis)
 {
@@ -137,15 +137,20 @@ PHX_POST_REGISTRATION_SETUP(PointValues_Evaluator,sd,fm)
   this->utils.setFieldData(pointValues.jac_det,fm);
   this->utils.setFieldData(pointValues.point_coords,fm);
 
-  if(useBasisValuesRefArray)
+  if(useBasisValuesRefArray) {
     basis_index = panzer::getPureBasisIndex(basis->name(), (*sd.worksets_)[0]);
+
+    // basis better have coordinates if you want to use them! Assertion to protect
+    // a silent failure.
+    TEUCHOS_ASSERT(basis->supportsBasisCoordinates());
+  }
 }
 
 //**********************************************************************
 PHX_EVALUATE_FIELDS(PointValues_Evaluator,workset)
 { 
   if(useBasisValuesRefArray) {
-    panzer::BasisValues<double,Intrepid::FieldContainer<double> > & basisValues = *workset.bases[basis_index];
+    panzer::BasisValues2<double> & basisValues = *workset.bases[basis_index];
 
     // evaluate the point values (construct jacobians etc...)
     pointValues.evaluateValues(workset.cell_vertex_coordinates,basisValues.basis_coordinates_ref);

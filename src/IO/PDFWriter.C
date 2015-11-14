@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/PDFWriter.C
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:25:27 PM MDT
+  \date      Sat 14 Nov 2015 07:01:38 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Univariate PDF writer
   \brief     PDF writer class definition
@@ -14,7 +14,17 @@
 
 #include <iostream>
 
+#if defined(__clang__) || defined(__GNUC__)
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wconversion"
+#endif
+
 #include <exodusII.h>
+
+#if defined(__clang__) || defined(__GNUC__)
+  #pragma GCC diagnostic pop
+#endif
+
 #include <ne_nemesisI.h>
 
 #include "PDFWriter.h"

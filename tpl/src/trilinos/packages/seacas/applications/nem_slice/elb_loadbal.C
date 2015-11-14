@@ -58,6 +58,7 @@
 #include "elb_groups.h"           // for get_group_info
 #include "elb_loadbal.h"
 #include "elb_util.h"             // for find_inter, etc
+#include "elb_format.h"
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846264338327
@@ -127,7 +128,7 @@ namespace {
   
 #ifdef USE_ZOLTAN
   /* ZOLTAN_RCB partitioning interface */
-  int ZOLTAN_assign(const char *, int, size_t, int *, float *, float *, float *,
+  int ZOLTAN_assign(const char *, int, size_t, int *, float *, float *, float *, int,
 			   int *, int, char **);
 #endif
   void BALANCE_STATS(Machine_Description*, int *, size_t, int *);
@@ -689,10 +690,7 @@ int generate_loadbal(Machine_Description* machine,
         tmp_z     = z_ptr;
         tmp_v2p   = lb->vertex2proc;
 
-	if (problem->local_mech == 1)
-	  FREE_GRAPH = 0;
-	else
-	  FREE_GRAPH = 0;/* Have Chaco to free the adjacency -- not anymore, using vectors*/	  
+	FREE_GRAPH = 0;
 
         for(int cnt = 0; cnt < machine->num_dims; cnt++) 
           tmpdim[cnt] = machine->dim[cnt];
@@ -719,17 +717,17 @@ int generate_loadbal(Machine_Description* machine,
 #ifdef USE_ZOLTAN
       else if (lb->type == ZOLTAN_RCB) {
         flag = ZOLTAN_assign("RCB", totalproc, tmp_nv, tmp_vwgts,
-                             tmp_x, tmp_y, tmp_z, tmp_v2p, argc, argv);
+                             tmp_x, tmp_y, tmp_z, lb->ignore_z, tmp_v2p, argc, argv);
         BALANCE_STATS(machine, tmp_vwgts, tmp_nv, tmp_v2p);
       }
       else if (lb->type == ZOLTAN_RIB) {
         flag = ZOLTAN_assign("RIB", totalproc, tmp_nv, tmp_vwgts,
-                             tmp_x, tmp_y, tmp_z, tmp_v2p, argc, argv);
+                             tmp_x, tmp_y, tmp_z, lb->ignore_z, tmp_v2p, argc, argv);
         BALANCE_STATS(machine, tmp_vwgts, tmp_nv, tmp_v2p);
       }
       else if (lb->type == ZOLTAN_HSFC) {
         flag = ZOLTAN_assign("HSFC", totalproc, tmp_nv, tmp_vwgts,
-                             tmp_x, tmp_y, tmp_z, tmp_v2p, argc, argv);
+                             tmp_x, tmp_y, tmp_z, lb->ignore_z, tmp_v2p, argc, argv);
         BALANCE_STATS(machine, tmp_vwgts, tmp_nv, tmp_v2p);
       }
 #endif
@@ -1065,9 +1063,9 @@ namespace {
 			  Graph_Description<INT>* graph,
 			  int            check_type)
   {
-    INT   *pt_list;
+    INT   *pt_list = NULL;
     size_t nelem;
-    INT   *hold_elem;
+    INT   *hold_elem = NULL;
     size_t nhold;
     size_t count;
     size_t num_found = 0;
@@ -1094,7 +1092,6 @@ namespace {
 	  return 0;
 	}
 
-
 	rows[0] = 1;
 	for(size_t ecnt=1; ecnt < mesh->num_elems; ecnt++) {
 	  ssize_t distance = graph->start[ecnt] - graph->start[ecnt-1] + 1;
@@ -1109,6 +1106,10 @@ namespace {
 	  return 0;
 	}
 
+	for (size_t i=0; i < nedges; i++) {
+	  columns[i] = 0;
+	}
+	
 	size_t ki = 0;
 	size_t kf = 0;
 	for(size_t ecnt=0; ecnt < mesh->num_elems; ecnt++) {
@@ -1123,12 +1124,12 @@ namespace {
 
 	if (components) {
     
-	  printf("There are %lu connected components.\n",components);
+	  printf("There are " ST_ZU " connected components.\n",components);
 	  for(size_t i=0; i <components; i++){
 	    ki = (list_ptr)[i];
 	    kf = (list_ptr)[i+1]-1;
 	    size_t distance = kf - ki + 1;
-	    printf("Connection %lu #elements %lu\n",i+1, distance);
+	    printf("Connection " ST_ZU " #elements " ST_ZU "\n",i+1, distance);
 	  }
 	}
 
@@ -1279,23 +1280,44 @@ namespace {
 
     if(problem->global_mech == 1 || problem->local_mech == 1) {
 
-      pt_list = (INT*)malloc(graph->max_nsur * sizeof(INT));
+      pt_list   = (INT*)malloc(graph->max_nsur * sizeof(INT));
+      if (pt_list == NULL) {
+	Gen_Error(0, "fatal: insufficient memory for pt_list");
+	return 0;
+      }
       hold_elem = (INT*)malloc(graph->max_nsur * sizeof(INT));
-      problems  = (int*)malloc(mesh->num_nodes * sizeof(int));
+      if (hold_elem == NULL) {
+	Gen_Error(0, "fatal: insufficient memory for hold_elem");
+	free(pt_list);
+	return 0;
+      }
 
-      if(!(pt_list) || !(hold_elem) || !(problems))
-	{
-	  Gen_Error(0, "fatal: insufficient memory");
-	  return 0;
-	}
+      problems  = (int*)malloc(mesh->num_nodes * sizeof(int));
+      if (problems == NULL) {
+	Gen_Error(0, "fatal: insufficient memory for problems");
+	free(pt_list);
+	free(hold_elem);
+	return 0;
+      }
 
       int *proc_cnt     = (int*)malloc(machine->num_procs * sizeof(int));
-      INT *local_number = (INT*)malloc(mesh->num_elems * sizeof(INT));
+      if (proc_cnt == NULL) {
+	Gen_Error(0, "fatal: insufficient memory for proc_cnt");
+	free(pt_list);
+	free(hold_elem);
+	free(problems);
+	return 0;
+      }
 
-      if((!(proc_cnt) || !(local_number))) {
-	  Gen_Error(0, "fatal: insufficient memory");
-	  return 0;
-	}
+      INT *local_number = (INT*)malloc(mesh->num_elems * sizeof(INT));
+      if (local_number == NULL) {
+	Gen_Error(0, "fatal: insufficient memory for local_number");
+	free(pt_list);
+	free(hold_elem);
+	free(problems);
+	free(proc_cnt);
+	return 0;
+      }
 
       if(check_type == LOCAL_ISSUES) {
 	for(int pcnt=0; pcnt < machine->num_procs; pcnt++)
@@ -1427,7 +1449,7 @@ namespace {
 
 	      if(check_type == LOCAL_ISSUES) 
 		{
-		  printf("WARNING: On Processor %d Local Element %lu (%s) has a mechanism through Global Node %lu with Local Element %lu (%s)\n", 
+		  printf("WARNING: On Processor %d Local Element " ST_ZU " (%s) has a mechanism through Global Node " ST_ZU " with Local Element " ST_ZU " (%s)\n", 
 			 proc, 
 			 (size_t)local_number[ecnt], 
 			 elem_name_from_enum(etype), 
@@ -1438,7 +1460,7 @@ namespace {
 		}
 	      else 
 		{
-		  printf("WARNING: Element %lu (%s) has a mechanism through Node %lu with Element %lu (%s)\n", 
+		  printf("WARNING: Element " ST_ZU " (%s) has a mechanism through Node " ST_ZU " with Element " ST_ZU " (%s)\n", 
 			 (size_t)ecnt+1, elem_name_from_enum(etype), (size_t)node, (size_t)el2+1, elem_name_from_enum(etype2)); 
 		}
 	      num_found++;
@@ -1454,7 +1476,7 @@ namespace {
       free(local_number);
 
       if(num_found) {
-	printf("Total mechanisms found = %lu\n", num_found);
+	printf("Total mechanisms found = " ST_ZU "\n", num_found);
 	if(check_type == LOCAL_ISSUES) {
 	  if(problem->mech_add_procs == 1) {
 	    machine->num_procs++;
@@ -1489,6 +1511,7 @@ namespace {
     lb->bor_nodes.resize(machine->num_procs);
     lb->ext_nodes.resize(machine->num_procs);
     lb->int_elems.resize(machine->num_procs);
+    lb->bor_elems.resize(machine->num_procs); // Not used in nodal dist.
     lb->ext_procs.resize(machine->num_procs);
 
     time2 = get_time();
@@ -1521,8 +1544,8 @@ namespace {
 	    ** in the external node list for proc_n I need to check
 	    ** only the last element in the current list
 	    */
-	    if((!lb->ext_nodes[proc_n].empty()) ||
-	       (lb->ext_nodes[proc_n][lb->ext_nodes[proc_n].size()-1] != (int)ncnt)) {
+	    if(lb->ext_nodes[proc_n].empty() ||
+	       (lb->ext_nodes[proc_n][lb->ext_nodes[proc_n].size()-1] != (INT)ncnt)) {
 	      lb->ext_nodes[proc_n].push_back(ncnt);
 	      lb->ext_procs[proc_n].push_back(proc);
 	    }
@@ -1579,7 +1602,7 @@ namespace {
     int    dflag;
 
     INT   *pt_list, nelem;
-    INT   *hold_elem;
+    INT   *hold_elem = NULL;
     INT    side_nodes[MAX_SIDE_NODES], mirror_nodes[MAX_SIDE_NODES];
     int    side_cnt;
 
@@ -1607,9 +1630,15 @@ namespace {
 
     /* allocate space to hold info about surounding elements */
     pt_list   = (INT*)malloc(graph->max_nsur * sizeof(INT));
+    if (pt_list == NULL) {
+      Gen_Error(0, "fatal: insufficient memory for pt_list");
+      return 0;
+    }
+
     hold_elem = (INT*)malloc(graph->max_nsur * sizeof(INT));
-    if(!(pt_list) || !(hold_elem)) {
-      Gen_Error(0, "fatal: insufficient memory");
+    if (hold_elem == NULL) {
+      Gen_Error(0, "fatal: insufficient memory for hold_elem");
+      free(pt_list);
       return 0;
     }
 
@@ -1688,7 +1717,7 @@ namespace {
 	    }
 	  }
 	  else {
-	    printf("WARNING: Element = %lu is a DEGENERATE BAR\n", ecnt+1);
+	    printf("WARNING: Element = " ST_ZU " is a DEGENERATE BAR\n", ecnt+1);
 	  }
 	}
 	else { /* Is a hex */
@@ -1767,9 +1796,6 @@ namespace {
 		  }
 		  
 		} else {
-		  if (!dflag) {
-		    fprintf(stderr, "Possible corrupted mesh detected at element %lu, strange connectivity.\n", ecnt);
-		  } 
 		  /* This is the second or later time through this
 		     loop and each time through, there have been two
 		     or more elements that are connected to 'node'
@@ -1800,6 +1826,9 @@ namespace {
 		    }
 		  }
 		  nelem = ncnt3;
+		  if (!dflag && nelem > 2) {
+		    fprintf(stderr, "Possible corrupted mesh detected at element " ST_ZU ", strange connectivity.\n", ecnt);
+		  } 
 		}
 	      }
 	      else { /* nelem == 1 or 0 */
@@ -1920,29 +1949,29 @@ namespace {
 		  sprintf(cmesg,
 			  "Error returned while getting side id for communication map.");
 		  Gen_Error(0, cmesg);
-		  sprintf(cmesg, "Element 1: %lu", (ecnt+1));
+		  sprintf(cmesg, "Element 1: " ST_ZU "", (ecnt+1));
 		  Gen_Error(0, cmesg);
 		  nnodes = get_elem_info(NNODES, etype);
 		  strcpy(cmesg, "connect table:");
 		  for (int i = 0; i < nnodes; i++) {
-		    sprintf(tmpstr, " %lu", (size_t)(mesh->connect[ecnt][i]+1));
+		    sprintf(tmpstr, " " ST_ZU "", (size_t)(mesh->connect[ecnt][i]+1));
 		    strcat(cmesg, tmpstr);
 		  }
 		  Gen_Error(0, cmesg);
-		  sprintf(cmesg, "side id: %lu", (size_t)(nscnt+1));
+		  sprintf(cmesg, "side id: " ST_ZU "", (size_t)(nscnt+1));
 		  Gen_Error(0, cmesg);
 		  strcpy(cmesg, "side nodes:");
 		  for (int i = 0; i < side_cnt; i++) {
-		    sprintf(tmpstr, " %lu", (size_t)(side_nodes[i]+1));
+		    sprintf(tmpstr, " " ST_ZU "", (size_t)(side_nodes[i]+1));
 		    strcat(cmesg, tmpstr);
 		  }
 		  Gen_Error(0, cmesg);
-		  sprintf(cmesg, "Element 2: %lu", (size_t)(elem+1));
+		  sprintf(cmesg, "Element 2: " ST_ZU "", (size_t)(elem+1));
 		  Gen_Error(0, cmesg);
 		  nnodes = get_elem_info(NNODES, etype2);
 		  strcpy(cmesg, "connect table:");
 		  for (int i = 0; i < nnodes; i++) {
-		    sprintf(tmpstr, " %lu", (size_t)(mesh->connect[elem][i]+1));
+		    sprintf(tmpstr, " " ST_ZU "", (size_t)(mesh->connect[elem][i]+1));
 		    strcat(cmesg, tmpstr);
 		  }
 		  Gen_Error(0, cmesg);
@@ -2146,16 +2175,16 @@ namespace {
 			  &fv2, &lv2);
 #if 1
 	  if (lv2-fv2 != lv1-fv1) {
-	    fprintf(stderr, "%lu: %lu to %lu\n", (size_t)pcnt2, (size_t)fv1, (size_t)lv1);
+	    fprintf(stderr, "" ST_ZU ": " ST_ZU " to " ST_ZU "\n", (size_t)pcnt2, (size_t)fv1, (size_t)lv1);
 	    for (i=fv1; i <= lv1; i++)
-	      fprintf(stderr, "%lu: %lu\t%lu\t%lu\t%lu\n", (size_t)i,
+	      fprintf(stderr, "" ST_ZU ": " ST_ZU "\t" ST_ZU "\t" ST_ZU "\t" ST_ZU "\n", (size_t)i,
 		      (size_t)lb->e_cmap_elems[pcnt][i],
 		      (size_t)lb->e_cmap_neigh[pcnt][i],
 		      (size_t)lb->e_cmap_procs[pcnt][i],
 		      (size_t)lb->e_cmap_sides[pcnt][i]);
-	    fprintf(stderr, "%lu: %lu to %lu\n", (size_t)pcnt, (size_t)fv2, (size_t)lv2);
+	    fprintf(stderr, "" ST_ZU ": " ST_ZU " to " ST_ZU "\n", (size_t)pcnt, (size_t)fv2, (size_t)lv2);
 	    for (i=fv2; i <= lv2; i++)
-	      fprintf(stderr, "%lu: %lu\t%lu\t%lu\t%lu\n", (size_t)i,
+	      fprintf(stderr, "" ST_ZU ": " ST_ZU "\t" ST_ZU "\t" ST_ZU "\t" ST_ZU "\n", (size_t)i,
 		      (size_t)lb->e_cmap_elems[pcnt2][i],
 		      (size_t)lb->e_cmap_neigh[pcnt2][i],
 		      (size_t)lb->e_cmap_procs[pcnt2][i],
@@ -2706,6 +2735,7 @@ namespace {
 		    float *x,             /* x-coordinates */
 		    float *y,             /* y-coordinates */
 		    float *z,             /* z-coordinates */
+                    int ignore_z,          /* flag indicating whether to use z-coords*/
 		    int *part,          /* Output:  partition assignments for each element */
 		    int argc,             /* Fields needed by MPI_Init */
 		    char *argv[]          /* Fields needed by MPI_Init */
@@ -2733,16 +2763,11 @@ namespace {
     Zoltan_Data.vwgt = vwgt;
     Zoltan_Data.x = x;
     Zoltan_Data.y = y;
-    Zoltan_Data.z = z;
+    Zoltan_Data.z = (ignore_z ? NULL : z);
 
     /* Initialize Zoltan */
     Zoltan_Initialize(argc, argv, &ver);
     zz = Zoltan_Create(MPI_COMM_WORLD);
-    if (ierr) {
-      fprintf(stderr, "Error returned from Zoltan_Create (%s:%d)\n",
-	      __FILE__, __LINE__);
-      goto End;
-    }
 
     /* Register Callback functions */
     /* Using global Zoltan_Data; could register it here instead as data field. */
@@ -2763,6 +2788,7 @@ namespace {
     Zoltan_Set_Param(zz, "REMAP", "0");
     Zoltan_Set_Param(zz, "RETURN_LISTS", "PARTITION_ASSIGNMENTS");
     if (vwgt) Zoltan_Set_Param(zz, "OBJ_WEIGHT_DIM", "1");
+    if (ignore_z) Zoltan_Set_Param(zz, "RCB_RECTILINEAR_BLOCKS", "1");
 
     /* Call partitioner */
     printf("Using Zoltan version %f, method %s\n", ver, method);
@@ -2777,7 +2803,7 @@ namespace {
 
     /* Sanity check */
     if (ndot != (size_t)znobj) {
-      fprintf(stderr, "Sanity check failed; ndot %lu != znobj %lu.\n", 
+      fprintf(stderr, "Sanity check failed; ndot " ST_ZU " != znobj " ST_ZU ".\n", 
 	      (size_t)ndot, (size_t)znobj);
       goto End;
     }
@@ -2790,8 +2816,10 @@ namespace {
     /* Clean up */
     Zoltan_LB_Free_Part(&zgids, &zlids, &zprocs, &zparts);
     Zoltan_Destroy(&zz);
-    MPI_Finalize();
-    if (ierr) exit(-1);
+    if (ierr) {
+      MPI_Finalize();
+      exit(-1);
+    } 
     return 0;
   }
 #endif

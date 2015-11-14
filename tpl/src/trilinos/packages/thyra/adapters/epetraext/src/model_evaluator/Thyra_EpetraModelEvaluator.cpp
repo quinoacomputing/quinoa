@@ -1,12 +1,12 @@
 // @HEADER
 // ***********************************************************************
-// 
+//
 //    Thyra: Interfaces and Support for Abstract Numerical Algorithms
 //                 Copyright (2004) Sandia Corporation
-// 
+//
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -34,8 +34,8 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-// Questions? Contact Roscoe A. Bartlett (bartlettra@ornl.gov) 
-// 
+// Questions? Contact Roscoe A. Bartlett (bartlettra@ornl.gov)
+//
 // ***********************************************************************
 // @HEADER
 
@@ -93,7 +93,7 @@ get_Epetra_RowMatrix(
 
 
 Teuchos::RCP<Epetra_Operator>
-create_and_assert_W( 
+create_and_assert_W(
   const EpetraExt::ModelEvaluator &epetraModel
   )
 {
@@ -143,7 +143,7 @@ void EpetraModelEvaluator::initialize(
   )
 {
   using Teuchos::implicit_cast;
-  typedef ModelEvaluatorBase MEB;
+  //typedef ModelEvaluatorBase MEB; // unused
   //
   epetraModel_ = epetraModel;
   //
@@ -213,10 +213,10 @@ void EpetraModelEvaluator::setStateVariableScalingVec(
   const RCP<const Epetra_Vector> &stateVariableScalingVec
   )
 {
-  typedef ModelEvaluatorBase MEB;
 #ifdef TEUCHOS_DEBUG
+  typedef ModelEvaluatorBase MEB;
   TEUCHOS_TEST_FOR_EXCEPT( !this->createInArgs().supports(MEB::IN_ARG_x) );
-#endif  
+#endif
   stateVariableScalingVec_ = stateVariableScalingVec.assert_not_null();
   invStateVariableScalingVec_ = Teuchos::null;
   nominalValuesAndBoundsAreUpdated_ = false;
@@ -314,7 +314,7 @@ void EpetraModelEvaluator::setParameterList(
   TEUCHOS_TEST_FOR_EXCEPT(is_null(paramList));
   paramList->validateParameters(*getValidParameters(),0); // Just validate my params
   paramList_ = paramList;
-  const EStateFunctionScaling stateFunctionScaling_old = stateFunctionScaling_; 
+  const EStateFunctionScaling stateFunctionScaling_old = stateFunctionScaling_;
   stateFunctionScaling_ = stateFunctionScalingValidator->getIntegralValue(
     *paramList_, StateFunctionScaling_name, StateFunctionScaling_default
     );
@@ -451,6 +451,16 @@ EpetraModelEvaluator::get_g_space(int j) const
 {
   TEUCHOS_TEST_FOR_EXCEPT( ! ( 0 <= j && j < this->Ng() ) );
   return g_space_[j];
+}
+
+
+Teuchos::ArrayView<const std::string>
+EpetraModelEvaluator::get_g_names(int j) const
+{
+#ifdef TEUCHOS_DEBUG
+  TEUCHOS_ASSERT_IN_RANGE_UPPER_EXCLUSIVE( j, 0, this->Ng() );
+#endif
+  return epetraModel_->get_g_names(j);
 }
 
 
@@ -614,7 +624,7 @@ void EpetraModelEvaluator::evalModelImpl(
       stateFunctionScaling_ != STATE_FUNC_SCALING_NONE
       && is_null(stateFunctionScalingVec_)
       );
-  
+
   typedef Teuchos::VerboseObjectTempState<LinearOpWithSolveFactoryBase<double> > VOTSLOWSF;
   VOTSLOWSF W_factory_outputTempState(W_factory_,out,verbLevel);
 
@@ -628,7 +638,7 @@ void EpetraModelEvaluator::evalModelImpl(
   //
   // B.1) Translate InArgs from Thyra to Epetra objects
   //
-  
+
   if (out.get() && includesVerbLevel(verbLevel,Teuchos::VERB_LOW))
     *out << "\nSetting-up/creating input arguments ...\n";
   timer.start(true);
@@ -652,11 +662,11 @@ void EpetraModelEvaluator::evalModelImpl(
   //
   // B.2) Convert from Thyra to Epetra OutArgs
   //
-  
+
   if (out.get() && includesVerbLevel(verbLevel,Teuchos::VERB_LOW))
     *out << "\nSetting-up/creating output arguments ...\n";
   timer.start(true);
-  
+
   // The unscaled Epetra OutArgs that will be passed to the
   // underlying EpetraExt::ModelEvaluator object
   EME::OutArgs epetraUnscaledOutArgs = epetraModel_->createOutArgs();
@@ -666,7 +676,7 @@ void EpetraModelEvaluator::evalModelImpl(
   RCP<LinearOpBase<double> > W_op;
   RCP<EpetraLinearOp> efwdW;
   RCP<Epetra_Operator> eW;
-  
+
   // Convert from Thyra to Epetra OutArgs and grap some of the intermediate
   // objects accessed along the way that are needed later.
   convertOutArgsFromThyraToEpetra(
@@ -692,7 +702,7 @@ void EpetraModelEvaluator::evalModelImpl(
   //
   // C) Evaluate the underlying EpetraExt model to compute the Epetra outputs
   //
-  
+
   if (out.get() && includesVerbLevel(verbLevel,Teuchos::VERB_LOW))
     *out << "\nEvaluating the Epetra output functions ...\n";
   timer.start(true);
@@ -712,7 +722,7 @@ void EpetraModelEvaluator::evalModelImpl(
   //
   // D.1) Compute the scaling factors if needed
   //
-  
+
   if (out.get() && includesVerbLevel(verbLevel,Teuchos::VERB_LOW))
     *out << "\nCompute scale factors if needed ...\n";
   timer.start(true);
@@ -742,13 +752,15 @@ void EpetraModelEvaluator::evalModelImpl(
     &epetraOutArgs, &allFuncsWhereScaled,
     out.get(), verbLevel
     );
-  TEUCHOS_TEST_FOR_EXCEPTION(
-    !allFuncsWhereScaled, std::logic_error,
-    "Error, we can not currently handle epetra output objects that could not be"
-    " scaled.  Special code will have to be added to handle this (i.e. using"
-    " implicit diagonal and multiplied linear operators to implicitly do"
-    " the scaling."
-    );
+  // AGS: This test precluded use of matrix-free Operators (vs. RowMatrix)
+  if (stateFunctionScaling_ != STATE_FUNC_SCALING_NONE)
+    TEUCHOS_TEST_FOR_EXCEPTION(
+      !allFuncsWhereScaled, std::logic_error,
+      "Error, we can not currently handle epetra output objects that could not be"
+      " scaled.  Special code will have to be added to handle this (i.e. using"
+      " implicit diagonal and multiplied linear operators to implicitly do"
+      " the scaling."
+      );
 
   timer.stop();
   if (out.get() && includesVerbLevel(verbLevel,Teuchos::VERB_LOW))
@@ -781,7 +793,7 @@ void EpetraModelEvaluator::evalModelImpl(
   //
 
   THYRA_MODEL_EVALUATOR_DECORATOR_EVAL_MODEL_END();
-  
+
 }
 
 
@@ -793,7 +805,7 @@ void EpetraModelEvaluator::convertInArgsFromEpetraToThyra(
   ModelEvaluatorBase::InArgs<double> *inArgs
   ) const
 {
-  
+
   using Teuchos::implicit_cast;
   typedef ModelEvaluatorBase MEB;
 
@@ -802,20 +814,32 @@ void EpetraModelEvaluator::convertInArgsFromEpetraToThyra(
   if(inArgs->supports(MEB::IN_ARG_x)) {
     inArgs->set_x( create_Vector( epetraInArgs.get_x(), x_space_ ) );
   }
-  
+
   if(inArgs->supports(MEB::IN_ARG_x_dot)) {
     inArgs->set_x_dot( create_Vector( epetraInArgs.get_x_dot(), x_space_ ) );
+  }
+
+  if(inArgs->supports(MEB::IN_ARG_x_mp)) {
+    inArgs->set_x_mp( epetraInArgs.get_x_mp() );
+  }
+
+  if(inArgs->supports(MEB::IN_ARG_x_dot_mp)) {
+    inArgs->set_x_dot_mp( epetraInArgs.get_x_dot_mp() );
   }
 
   const int l_Np = inArgs->Np();
   for( int l = 0; l < l_Np; ++l ) {
     inArgs->set_p( l, create_Vector( epetraInArgs.get_p(l), p_space_[l] ) );
   }
-  
+  for( int l = 0; l < l_Np; ++l ) {
+    if(inArgs->supports(MEB::IN_ARG_p_mp, l))
+      inArgs->set_p_mp( l, epetraInArgs.get_p_mp(l) );
+  }
+
   if(inArgs->supports(MEB::IN_ARG_t)) {
     inArgs->set_t(epetraInArgs.get_t());
   }
-  
+
 }
 
 
@@ -839,17 +863,32 @@ void EpetraModelEvaluator::convertInArgsFromThyraToEpetra(
     RCP<const Epetra_Vector> e_x_dot = get_Epetra_Vector(*x_map_,x_dot);
     epetraInArgs->set_x_dot(e_x_dot);
   }
+  RCP<const Stokhos::ProductEpetraVector > x_dot_mp;
+  if( inArgs.supports(IN_ARG_x_dot_mp) && (x_dot_mp = inArgs.get_x_dot_mp()).get() ) {
+    epetraInArgs->set_x_dot_mp(x_dot_mp);
+  }
 
   RCP<const VectorBase<double> > x;
   if( inArgs.supports(IN_ARG_x) && (x = inArgs.get_x()).get() ) {
     RCP<const Epetra_Vector> e_x = get_Epetra_Vector(*x_map_,x);
     epetraInArgs->set_x(e_x);
   }
+  RCP<const Stokhos::ProductEpetraVector > x_mp;
+  if( inArgs.supports(IN_ARG_x_mp) && (x_mp = inArgs.get_x_mp()).get() ) {
+    epetraInArgs->set_x_mp(x_mp);
+  }
 
   RCP<const VectorBase<double> > p_l;
   for(int l = 0;  l < inArgs.Np(); ++l ) {
     p_l = inArgs.get_p(l);
     if(p_l.get()) epetraInArgs->set_p(l,get_Epetra_Vector(*p_map_[l],p_l));
+  }
+  RCP<const Stokhos::ProductEpetraVector > p_mp_l;
+  for(int l = 0;  l < inArgs.Np(); ++l ) {
+    if (inArgs.supports(IN_ARG_p_mp,l)) {
+      p_mp_l = inArgs.get_p_mp(l);
+      if(p_mp_l.get()) epetraInArgs->set_p_mp(l,p_mp_l);
+    }
   }
 
 #ifdef HAVE_THYRA_ME_POLYNOMIAL
@@ -861,7 +900,7 @@ void EpetraModelEvaluator::convertInArgsFromThyraToEpetra(
     && (x_dot_poly = inArgs.get_x_dot_poly()).get()
     )
   {
-    RCP<Polynomial<Epetra_Vector> > epetra_x_dot_poly = 
+    RCP<Polynomial<Epetra_Vector> > epetra_x_dot_poly =
       rcp(new Polynomial<Epetra_Vector>(x_dot_poly->degree()));
     for (unsigned int i=0; i<=x_dot_poly->degree(); i++) {
       epetra_ptr = rcp_const_cast<Epetra_Vector>(
@@ -870,14 +909,14 @@ void EpetraModelEvaluator::convertInArgsFromThyraToEpetra(
     }
     epetraInArgs->set_x_dot_poly(epetra_x_dot_poly);
   }
-  
+
   RCP<const Polynomial< VectorBase<double> > > x_poly;
   if(
     inArgs.supports(IN_ARG_x_poly)
     && (x_poly = inArgs.get_x_poly()).get()
     )
   {
-    RCP<Polynomial<Epetra_Vector> > epetra_x_poly = 
+    RCP<Polynomial<Epetra_Vector> > epetra_x_poly =
       rcp(new Polynomial<Epetra_Vector>(x_poly->degree()));
     for (unsigned int i=0; i<=x_poly->degree(); i++) {
       epetra_ptr = rcp_const_cast<Epetra_Vector>(
@@ -891,10 +930,10 @@ void EpetraModelEvaluator::convertInArgsFromThyraToEpetra(
 
   if( inArgs.supports(IN_ARG_t) )
     epetraInArgs->set_t(inArgs.get_t());
-  
+
   if( inArgs.supports(IN_ARG_alpha) )
     epetraInArgs->set_alpha(inArgs.get_alpha());
-  
+
   if( inArgs.supports(IN_ARG_beta) )
     epetraInArgs->set_beta(inArgs.get_beta());
 
@@ -916,7 +955,7 @@ void EpetraModelEvaluator::convertOutArgsFromThyraToEpetra(
   using Teuchos::OSTab;
   using Teuchos::implicit_cast;
   using Thyra::get_Epetra_Vector;
-  typedef EpetraExt::ModelEvaluator EME;
+  //typedef EpetraExt::ModelEvaluator EME; // unused
 
   // Assert input
 #ifdef TEUCHOS_DEBUG
@@ -933,12 +972,15 @@ void EpetraModelEvaluator::convertOutArgsFromThyraToEpetra(
   RCP<Epetra_Operator> &eW = *eW_out;
 
   // f
-  { 
+  {
     RCP<VectorBase<double> > f;
     if( outArgs.supports(OUT_ARG_f) && (f = outArgs.get_f()).get() )
       epetraUnscaledOutArgs.set_f(get_Epetra_Vector(*f_map_,f));
+    RCP<Stokhos::ProductEpetraVector > f_mp;
+    if( outArgs.supports(OUT_ARG_f_mp) && (f_mp = outArgs.get_f_mp()).get() )
+      epetraUnscaledOutArgs.set_f_mp(f_mp);
   }
-    
+
   // g
   {
     RCP<VectorBase<double> > g_j;
@@ -946,8 +988,22 @@ void EpetraModelEvaluator::convertOutArgsFromThyraToEpetra(
       g_j = outArgs.get_g(j);
       if(g_j.get()) epetraUnscaledOutArgs.set_g(j,get_Epetra_Vector(*g_map_[j],g_j));
     }
+    RCP<Stokhos::ProductEpetraVector > g_mp_j;
+    for(int j = 0;  j < outArgs.Ng(); ++j ) {
+      if (outArgs.supports(OUT_ARG_g_mp,j)) {
+        g_mp_j = outArgs.get_g_mp(j);
+        if(g_mp_j.get()) epetraUnscaledOutArgs.set_g_mp(j,g_mp_j);
+      }
+    }
   }
-  
+
+  // W_op
+  {
+    RCP<Stokhos::ProductEpetraOperator > W_mp;
+    if( outArgs.supports(OUT_ARG_W_mp) && (W_mp = outArgs.get_W_mp()).get() )
+      epetraUnscaledOutArgs.set_W_mp(W_mp);
+  }
+
   // W_op
   {
 
@@ -957,7 +1013,7 @@ void EpetraModelEvaluator::convertOutArgsFromThyraToEpetra(
           rcp_dynamic_cast<const EpetraLinearOp>(W_op, true));
       }
     }
-    
+
     if (nonnull(efwdW)) {
       // By the time we get here, if we have an object in efwdW, then it
       // should already be embeadded with an underlying Epetra_Operator object
@@ -966,7 +1022,7 @@ void EpetraModelEvaluator::convertOutArgsFromThyraToEpetra(
       eW = efwdW->epetra_op();
       epetraUnscaledOutArgs.set_W(eW);
     }
-    
+
     // Note: The following derivative objects update in place!
 
   }
@@ -981,6 +1037,14 @@ void EpetraModelEvaluator::convertOutArgsFromThyraToEpetra(
         epetraUnscaledOutArgs.set_DfDp(l,convert(DfDp_l,f_map_,p_map_[l]));
       }
     }
+    MPDerivative DfDp_mp_l;
+    for(int l = 0;  l < outArgs.Np(); ++l ) {
+      if( !outArgs.supports(OUT_ARG_DfDp_mp,l).none()
+        && !(DfDp_mp_l = outArgs.get_DfDp_mp(l)).isEmpty() )
+      {
+        epetraUnscaledOutArgs.set_DfDp_mp(l,convert(DfDp_mp_l,f_map_,p_map_[l]));
+      }
+    }
   }
 
   // DgDx_dot
@@ -993,6 +1057,14 @@ void EpetraModelEvaluator::convertOutArgsFromThyraToEpetra(
         epetraUnscaledOutArgs.set_DgDx_dot(j,convert(DgDx_dot_j,g_map_[j],x_map_));
       }
     }
+    MPDerivative DgDx_dot_mp_j;
+    for(int j = 0;  j < outArgs.Ng(); ++j ) {
+      if( !outArgs.supports(OUT_ARG_DgDx_dot_mp,j).none()
+        && !(DgDx_dot_mp_j = outArgs.get_DgDx_dot_mp(j)).isEmpty() )
+      {
+        epetraUnscaledOutArgs.set_DgDx_dot_mp(j,convert(DgDx_dot_mp_j,g_map_[j],x_map_));
+      }
+    }
   }
 
   // DgDx
@@ -1003,6 +1075,14 @@ void EpetraModelEvaluator::convertOutArgsFromThyraToEpetra(
         && !(DgDx_j = outArgs.get_DgDx(j)).isEmpty() )
       {
         epetraUnscaledOutArgs.set_DgDx(j,convert(DgDx_j,g_map_[j],x_map_));
+      }
+    }
+    MPDerivative DgDx_mp_j;
+    for(int j = 0;  j < outArgs.Ng(); ++j ) {
+      if( !outArgs.supports(OUT_ARG_DgDx_mp,j).none()
+        && !(DgDx_mp_j = outArgs.get_DgDx_mp(j)).isEmpty() )
+      {
+        epetraUnscaledOutArgs.set_DgDx_mp(j,convert(DgDx_mp_j,g_map_[j],x_map_));
       }
     }
   }
@@ -1020,6 +1100,17 @@ void EpetraModelEvaluator::convertOutArgsFromThyraToEpetra(
         }
       }
     }
+    DerivativeSupport DgDp_mp_j_l_support;
+    MPDerivative DgDp_mp_j_l;
+    for (int j = 0;  j < outArgs.Ng(); ++j ) {
+      for (int l = 0;  l < outArgs.Np(); ++l ) {
+        if (!(DgDp_mp_j_l_support = outArgs.supports(OUT_ARG_DgDp_mp,j,l)).none()
+          && !(DgDp_mp_j_l = outArgs.get_DgDp_mp(j,l)).isEmpty() )
+        {
+          epetraUnscaledOutArgs.set_DgDp_mp(j,l,convert(DgDp_mp_j_l,g_map_[j],p_map_[l]));
+        }
+      }
+    }
   }
 
 #ifdef HAVE_THYRA_ME_POLYNOMIAL
@@ -1028,7 +1119,7 @@ void EpetraModelEvaluator::convertOutArgsFromThyraToEpetra(
   RCP<const Teuchos::Polynomial< VectorBase<double> > > f_poly;
   if( outArgs.supports(OUT_ARG_f_poly) && (f_poly = outArgs.get_f_poly()).get() )
   {
-    RCP<Teuchos::Polynomial<Epetra_Vector> > epetra_f_poly = 
+    RCP<Teuchos::Polynomial<Epetra_Vector> > epetra_f_poly =
       Teuchos::rcp(new Teuchos::Polynomial<Epetra_Vector>(f_poly->degree()));
     for (unsigned int i=0; i<=f_poly->degree(); i++) {
       RCP<Epetra_Vector> epetra_ptr
@@ -1051,9 +1142,9 @@ void EpetraModelEvaluator::preEvalScalingSetup(
   const Teuchos::EVerbosityLevel verbLevel
   ) const
 {
-  
+
   typedef EpetraExt::ModelEvaluator EME;
-  
+
 #ifdef TEUCHOS_DEBUG
   TEUCHOS_ASSERT(epetraInArgs_inout);
   TEUCHOS_ASSERT(epetraUnscaledOutArgs_inout);
@@ -1068,7 +1159,7 @@ void EpetraModelEvaluator::preEvalScalingSetup(
     ( stateFunctionScaling_ == STATE_FUNC_SCALING_ROW_SUM )
     &&
     (
-      epetraUnscaledOutArgs.supports(EME::OUT_ARG_f) 
+      epetraUnscaledOutArgs.supports(EME::OUT_ARG_f)
       &&
       epetraUnscaledOutArgs.funcOrDerivesAreSet(EME::OUT_ARG_f)
       )
@@ -1099,7 +1190,7 @@ void EpetraModelEvaluator::preEvalScalingSetup(
     if( epetraInArgs.supports(EME::IN_ARG_alpha) )
       epetraInArgs.set_alpha(0.0);
   }
-  
+
 }
 
 
@@ -1180,10 +1271,10 @@ void EpetraModelEvaluator::finishConvertingOutArgsFromEpetraToThyra(
 {
 
   using Teuchos::rcp_dynamic_cast;
-  typedef EpetraExt::ModelEvaluator EME;
+  //typedef EpetraExt::ModelEvaluator EME; // unused
 
   if (nonnull(efwdW)) {
-    efwdW->setFullyInitialized(true); 
+    efwdW->setFullyInitialized(true);
     // NOTE: Above will directly update W_op also if W.get()==NULL!
   }
 
@@ -1195,7 +1286,7 @@ void EpetraModelEvaluator::finishConvertingOutArgsFromEpetraToThyra(
       rcp_dynamic_cast<EpetraLinearOp>(W_op, true)->setFullyInitialized(true);
     }
   }
-  
+
 }
 
 
@@ -1204,7 +1295,7 @@ void EpetraModelEvaluator::updateNominalValuesAndBounds() const
 
   using Teuchos::rcp;
   using Teuchos::implicit_cast;
-  typedef ModelEvaluatorBase MEB;
+  //typedef ModelEvaluatorBase MEB; // unused
   typedef EpetraExt::ModelEvaluator EME;
 
   if( !nominalValuesAndBoundsAreUpdated_ ) {
@@ -1234,7 +1325,7 @@ void EpetraModelEvaluator::updateNominalValuesAndBounds() const
         epetraInArgsScaling_.set_x(invStateVariableScalingVec_);
       }
     }
-    
+
     // Scale the original variables and bounds
 
     EME::InArgs epetraScaledNominalValues = epetraModel_->createInArgs();
@@ -1292,6 +1383,8 @@ void EpetraModelEvaluator::updateInArgsOutArgs() const
   inArgs.set_Np(epetraInArgs.Np());
   inArgs.setSupports(IN_ARG_x_dot, epetraInArgs.supports(EME::IN_ARG_x_dot));
   inArgs.setSupports(IN_ARG_x, epetraInArgs.supports(EME::IN_ARG_x));
+  inArgs.setSupports(IN_ARG_x_dot_mp, epetraInArgs.supports(EME::IN_ARG_x_dot_mp));
+  inArgs.setSupports(IN_ARG_x_mp, epetraInArgs.supports(EME::IN_ARG_x_mp));
 #ifdef HAVE_THYRA_ME_POLYNOMIAL
   inArgs.setSupports(IN_ARG_x_dot_poly,
     epetraInArgs.supports(EME::IN_ARG_x_dot_poly));
@@ -1300,6 +1393,9 @@ void EpetraModelEvaluator::updateInArgsOutArgs() const
   inArgs.setSupports(IN_ARG_t, epetraInArgs.supports(EME::IN_ARG_t));
   inArgs.setSupports(IN_ARG_alpha, epetraInArgs.supports(EME::IN_ARG_alpha));
   inArgs.setSupports(IN_ARG_beta, epetraInArgs.supports(EME::IN_ARG_beta));
+  for(int l=0; l<l_Np; ++l) {
+    inArgs.setSupports(IN_ARG_p_mp, l, epetraInArgs.supports(EME::IN_ARG_p_mp, l));
+  }
   prototypeInArgs_ = inArgs;
 
   //
@@ -1311,6 +1407,7 @@ void EpetraModelEvaluator::updateInArgsOutArgs() const
   outArgs.set_Np_Ng(l_Np, l_Ng);
   // f
   outArgs.setSupports(OUT_ARG_f, epetraOutArgs.supports(EME::OUT_ARG_f));
+  outArgs.setSupports(OUT_ARG_f_mp, epetraOutArgs.supports(EME::OUT_ARG_f_mp));
   if (outArgs.supports(OUT_ARG_f)) {
     // W_op
     outArgs.setSupports(OUT_ARG_W_op,  epetraOutArgs.supports(EME::OUT_ARG_W));
@@ -1322,6 +1419,14 @@ void EpetraModelEvaluator::updateInArgsOutArgs() const
       if(!outArgs.supports(OUT_ARG_DfDp, l).none())
         outArgs.set_DfDp_properties(l,
           convert(epetraOutArgs.get_DfDp_properties(l)));
+      if (outArgs.supports(OUT_ARG_f_mp))
+      {
+        outArgs.setSupports(OUT_ARG_DfDp_mp, l,
+          convert(epetraOutArgs.supports(EME::OUT_ARG_DfDp_mp, l)));
+        if(!outArgs.supports(OUT_ARG_DfDp_mp, l).none())
+          outArgs.set_DfDp_mp_properties(l,
+            convert(epetraOutArgs.get_DfDp_mp_properties(l)));
+      }
     }
   }
   // DgDx_dot and DgDx
@@ -1338,6 +1443,18 @@ void EpetraModelEvaluator::updateInArgsOutArgs() const
     if(!outArgs.supports(OUT_ARG_DgDx, j).none())
       outArgs.set_DgDx_properties(j,
         convert(epetraOutArgs.get_DgDx_properties(j)));
+    if (inArgs.supports(IN_ARG_x_dot_mp))
+      outArgs.setSupports(OUT_ARG_DgDx_dot_mp, j,
+        convert(epetraOutArgs.supports(EME::OUT_ARG_DgDx_dot_mp, j)));
+    if(!outArgs.supports(OUT_ARG_DgDx_dot_mp, j).none())
+      outArgs.set_DgDx_dot_mp_properties(j,
+        convert(epetraOutArgs.get_DgDx_dot_mp_properties(j)));
+    if (inArgs.supports(IN_ARG_x_mp))
+      outArgs.setSupports(OUT_ARG_DgDx_mp, j,
+        convert(epetraOutArgs.supports(EME::OUT_ARG_DgDx_mp, j)));
+    if(!outArgs.supports(OUT_ARG_DgDx_mp, j).none())
+      outArgs.set_DgDx_mp_properties(j,
+        convert(epetraOutArgs.get_DgDx_mp_properties(j)));
   }
   // DgDp
   for(int j=0; j < l_Ng; ++j) for(int l=0; l < l_Np; ++l) {
@@ -1348,6 +1465,16 @@ void EpetraModelEvaluator::updateInArgsOutArgs() const
     if(!outArgs.supports(OUT_ARG_DgDp, j, l).none())
       outArgs.set_DgDp_properties(j, l,
         convert(epetraOutArgs.get_DgDp_properties(j, l)));
+    const EME::DerivativeSupport epetra_DgDp_mp_j_l_support =
+      epetraOutArgs.supports(EME::OUT_ARG_DgDp_mp, j, l);
+    outArgs.setSupports(OUT_ARG_DgDp_mp, j, l,
+      convert(epetra_DgDp_mp_j_l_support));
+    if(!outArgs.supports(OUT_ARG_DgDp_mp, j, l).none())
+      outArgs.set_DgDp_mp_properties(j, l,
+        convert(epetraOutArgs.get_DgDp_mp_properties(j, l)));
+  }
+  for(int j=0; j<l_Ng; ++j) {
+    outArgs.setSupports(OUT_ARG_g_mp, j, epetraOutArgs.supports(EME::OUT_ARG_g_mp, j));
   }
 #ifdef HAVE_THYRA_ME_POLYNOMIAL
   outArgs.setSupports(OUT_ARG_f_poly,
@@ -1507,4 +1634,27 @@ Thyra::convert(
       );
   }
   return EpetraExt::ModelEvaluator::Derivative();
+}
+EpetraExt::ModelEvaluator::MPDerivative
+Thyra::convert(
+  const ModelEvaluatorBase::MPDerivative &derivative,
+  const RCP<const Epetra_Map> &fnc_map,
+  const RCP<const Epetra_Map> &var_map
+  )
+{
+  typedef ModelEvaluatorBase MEB;
+  if(derivative.getLinearOp().get()) {
+    return EpetraExt::ModelEvaluator::MPDerivative(
+        derivative.getLinearOp()
+      );
+  }
+  else if(derivative.getDerivativeMultiVector().getMultiVector().get()) {
+    return EpetraExt::ModelEvaluator::MPDerivative(
+      EpetraExt::ModelEvaluator::MPDerivativeMultiVector(
+          derivative.getDerivativeMultiVector().getMultiVector()
+        ,convert(derivative.getDerivativeMultiVector().getOrientation())
+        )
+      );
+  }
+  return EpetraExt::ModelEvaluator::MPDerivative();
 }

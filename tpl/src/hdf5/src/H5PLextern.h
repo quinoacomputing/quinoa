@@ -22,54 +22,14 @@
 /* Include HDF5 header */
 #include "hdf5.h"
 
-#ifndef H5_VMS
-
-/*******************/
-/* Public Typedefs */
-/*******************/
-
-/* Plugin type */
-typedef enum H5PL_type_t {
-    H5PL_TYPE_ERROR        = -1,  /*error                    */
-    H5PL_TYPE_FILTER       = 0,   /*filter                   */
-    H5PL_TYPE_NONE         = 1    /*this must be last!       */
-} H5PL_type_t;
-
-
-#ifdef H5_BUILT_AS_DYNAMIC_LIB
-
-  #if defined (hdf5_EXPORTS)
-    /* hdf5 library imports from plugin */
-    #if defined (_MSC_VER)  /* MSVC Compiler Case */
-      #define H5PLUGIN_DLL __declspec(dllimport)
-    #elif (__GNUC__ >= 4)  /* GCC 4.x has support for visibility options */
-      #define H5PLUGIN_DLL __attribute__ ((visibility("default")))
-    #endif
-  #else
-    /* plugins always export */
-    #if defined (_MSC_VER)  /* MSVC Compiler Case */
-      #define H5PLUGIN_DLL __declspec(dllexport)
-    #elif (__GNUC__ >= 4)  /* GCC 4.x has support for visibility options */
-      #define H5PLUGIN_DLL __attribute__ ((visibility("default")))
-    #endif
-  #endif
-
-#elif defined(H5_BUILT_AS_STATIC_LIB)
-  #define H5PLUGIN_DLL
+/* plugins always export */
+#if defined (_MSC_VER)  /* MSVC Compiler Case */
+  #define H5PLUGIN_DLL __declspec(dllexport)
+#elif (__GNUC__ >= 4)  /* GCC 4.x has support for visibility options */
+  #define H5PLUGIN_DLL __attribute__ ((visibility("default")))
 #else
-
-  #if defined(H5_HAVE_WIN32_API)
-    #if defined(_HDF5DLL_)
-      #pragma warning(disable: 4273)  /* Disable the dll linkage warnings */
-      #define H5PLUGIN_DLL __declspec(dllimport)
-    #elif defined(_HDF5USEDLL_)
-      #define H5PLUGIN_DLL __declspec(dllexport)
-    #endif /* _HDF5DLL_ */
-  #else /*H5_HAVE_WIN32_API*/
-    #define H5PLUGIN_DLL
-  #endif /*H5_HAVE_WIN32_API*/
-
-#endif /* H5_BUILT_AS_xxx_LIB */
+  #define H5PLUGIN_DLL
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -81,7 +41,6 @@ H5PLUGIN_DLL const void *H5PLget_plugin_info(void);
 #ifdef __cplusplus
 }
 #endif
-#endif /*H5_VMS*/
 
 #endif /* _H5PLextern_H */
 

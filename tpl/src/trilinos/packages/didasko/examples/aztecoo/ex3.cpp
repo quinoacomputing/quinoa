@@ -1,13 +1,13 @@
 
 // @HEADER
 // ***********************************************************************
-// 
+//
 //                      Didasko Tutorial Package
 //                 Copyright (2005) Sandia Corporation
-// 
+//
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -36,11 +36,11 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 // Questions about Didasko? Contact Marzio Sala (marzio.sala _AT_ gmail.com)
-// 
+//
 // ***********************************************************************
 // @HEADER
 
-// Solve a linear system with AztecOO. 
+// Solve a linear system with AztecOO.
 // The linear system is created using MatrixGallery
 
 #include "Didasko_ConfigDefs.h"
@@ -62,7 +62,7 @@ using namespace Trilinos_Util;
 
 int main(int argc, char *argv[])
 {
-    
+
 #ifdef HAVE_MPI
   MPI_Init(&argc,&argv);
   Epetra_MpiComm Comm(MPI_COMM_WORLD);
@@ -93,21 +93,21 @@ int main(int argc, char *argv[])
   solver.Iterate(1550, 1e-12);
 
   // AztecOO defined a certain number of output parameters, and store them
-  // in a double vector called status. 
+  // in a double vector called status.
   double status[AZ_STATUS_SIZE];
   solver.GetAllAztecStatus(status);
-  
+
   // verify that linear system has been solved as required
   double residual, diff;
 
   Gallery.ComputeResidual(&residual);
   Gallery.ComputeDiffBetweenStartingAndExactSolutions(&diff);
-  
+
   if( Comm.MyPID()==0 ) {
     cout << "||b-Ax||_2 = " << residual << endl;
     cout << "||x_exact - x||_2 = " << diff << endl;
   }
-  
+
 #ifdef HAVE_MPI
   MPI_Finalize();
 #endif
@@ -131,9 +131,9 @@ int main(int argc, char *argv[])
 #endif
 
   puts("Please configure Didasko with:\n"
-       "--enable-epetra\n"
-       "--enable-triutils\n"
-       "--enable-aztecoo\n");
+      "--enable-epetra\n"
+      "--enable-triutils\n"
+      "--enable-aztecoo\n");
 
 #ifdef HAVE_MPI
   MPI_Finalize();

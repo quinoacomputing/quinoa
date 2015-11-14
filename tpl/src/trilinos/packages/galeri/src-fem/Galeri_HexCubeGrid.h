@@ -56,7 +56,6 @@
 #include "Galeri_Workspace.h"
 #include <vector>
 
-using namespace std;
 using namespace Teuchos;
 
 namespace Galeri {
@@ -185,7 +184,7 @@ public:
   }
 
   //! Returns \c GALERI_HEX
-  virtual string ElementType() const
+  virtual std::string ElementType() const
   {
     return("GALERI_HEX");
   }

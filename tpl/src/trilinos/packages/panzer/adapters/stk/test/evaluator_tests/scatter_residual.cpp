@@ -68,6 +68,8 @@ using Teuchos::rcp;
 #include "Panzer_STK_SetupUtilities.hpp"
 #include "Panzer_STKConnManager.hpp"
 
+#include "Phalanx_KokkosUtilities.hpp"
+
 #include "Teuchos_DefaultMpiComm.hpp"
 #include "Teuchos_OpaqueWrapper.hpp"
 
@@ -88,10 +90,12 @@ namespace panzer {
 
   Teuchos::RCP<panzer::PureBasis> buildBasis(std::size_t worksetSize,const std::string & basisName);
   void testInitialization(const Teuchos::RCP<Teuchos::ParameterList>& ipb);
-  Teuchos::RCP<panzer_stk::STK_Interface> buildMesh(int elemX,int elemY);
+  Teuchos::RCP<panzer_stk_classic::STK_Interface> buildMesh(int elemX,int elemY);
 
   TEUCHOS_UNIT_TEST(block_assembly, scatter_solution_residual)
   {
+    PHX::KokkosDeviceSession session;
+
    #ifdef HAVE_MPI
       Teuchos::RCP<Epetra_Comm> eComm = Teuchos::rcp(new Epetra_MpiComm(MPI_COMM_WORLD));
    #else
@@ -105,7 +109,7 @@ namespace panzer {
     const std::string fieldName2_q1 = "V";
     const std::string fieldName_qedge1 = "B";
 
-    Teuchos::RCP<panzer_stk::STK_Interface> mesh = buildMesh(2,2);
+    Teuchos::RCP<panzer_stk_classic::STK_Interface> mesh = buildMesh(2,2);
 
     // build input physics block
     Teuchos::RCP<panzer::PureBasis> basis_q1 = buildBasis(workset_size,"Q1");
@@ -122,11 +126,11 @@ namespace panzer {
     Teuchos::RCP<panzer::PhysicsBlock> physicsBlock = 
       Teuchos::rcp(new PhysicsBlock(ipb,eBlockID,default_int_order,cellData,eqset_factory,gd,false));
 
-    Teuchos::RCP<std::vector<panzer::Workset> > work_sets = panzer_stk::buildWorksets(*mesh,*physicsBlock); 
+    Teuchos::RCP<std::vector<panzer::Workset> > work_sets = panzer_stk_classic::buildWorksets(*mesh,*physicsBlock); 
     TEST_EQUALITY(work_sets->size(),1);
 
     // build connection manager and field manager
-    const Teuchos::RCP<panzer::ConnManager<int,int> > conn_manager = Teuchos::rcp(new panzer_stk::STKConnManager<int>(mesh));
+    const Teuchos::RCP<panzer::ConnManager<int,int> > conn_manager = Teuchos::rcp(new panzer_stk_classic::STKConnManager<int>(mesh));
     RCP<panzer::BlockedDOFManager<int,int> > dofManager = Teuchos::rcp(new panzer::BlockedDOFManager<int,int>(conn_manager,MPI_COMM_WORLD));
 
     dofManager->addField(fieldName1_q1,Teuchos::rcp(new panzer::IntrepidFieldPattern(basis_q1->getIntrepidBasis())));
@@ -245,13 +249,17 @@ namespace panzer {
        fm.registerEvaluator<panzer::Traits::Residual>(evaluator);
     }
 
+    std::vector<PHX::index_size_type> derivative_dimensions;
+    derivative_dimensions.push_back(12);
+    fm.setKokkosExtendedDataTypeDimensions<panzer::Traits::Jacobian>(derivative_dimensions);
+
     panzer::Traits::SetupData sd;
     fm.postRegistrationSetup(sd);
 
-    panzer::GlobalEvaluationDataContainer gedc;
-    gedc.addDataObject("Solution Gather Container",loc);
-    gedc.addDataObject("Residual Scatter Container",loc);
-    fm.preEvaluate<panzer::Traits::Residual>(gedc);
+    panzer::Traits::PreEvalData ped;
+    ped.gedc.addDataObject("Solution Gather Container",loc);
+    ped.gedc.addDataObject("Residual Scatter Container",loc);
+    fm.preEvaluate<panzer::Traits::Residual>(ped);
 
     // run tests
     /////////////////////////////////////////////////////////////
@@ -295,6 +303,8 @@ namespace panzer {
 
   TEUCHOS_UNIT_TEST(block_assembly, scatter_solution_jacobian)
   {
+   PHX::KokkosDeviceSession session;
+
    #ifdef HAVE_MPI
       Teuchos::RCP<Epetra_Comm> eComm = Teuchos::rcp(new Epetra_MpiComm(MPI_COMM_WORLD));
    #else
@@ -308,7 +318,7 @@ namespace panzer {
     const std::string fieldName2_q1 = "V";
     const std::string fieldName_qedge1 = "B";
 
-    Teuchos::RCP<panzer_stk::STK_Interface> mesh = buildMesh(2,2);
+    Teuchos::RCP<panzer_stk_classic::STK_Interface> mesh = buildMesh(2,2);
 
     // build input physics block
     Teuchos::RCP<panzer::PureBasis> basis_q1 = buildBasis(workset_size,"Q1");
@@ -325,11 +335,11 @@ namespace panzer {
     Teuchos::RCP<panzer::PhysicsBlock> physicsBlock = 
       Teuchos::rcp(new PhysicsBlock(ipb,eBlockID,default_int_order,cellData,eqset_factory,gd,false));
 
-    Teuchos::RCP<std::vector<panzer::Workset> > work_sets = panzer_stk::buildWorksets(*mesh,*physicsBlock); 
+    Teuchos::RCP<std::vector<panzer::Workset> > work_sets = panzer_stk_classic::buildWorksets(*mesh,*physicsBlock); 
     TEST_EQUALITY(work_sets->size(),1);
 
     // build connection manager and field manager
-    const Teuchos::RCP<panzer::ConnManager<int,int> > conn_manager = Teuchos::rcp(new panzer_stk::STKConnManager<int>(mesh));
+    const Teuchos::RCP<panzer::ConnManager<int,int> > conn_manager = Teuchos::rcp(new panzer_stk_classic::STKConnManager<int>(mesh));
     RCP<panzer::BlockedDOFManager<int,int> > dofManager = Teuchos::rcp(new panzer::BlockedDOFManager<int,int>(conn_manager,MPI_COMM_WORLD));
 
     dofManager->addField(fieldName1_q1,Teuchos::rcp(new panzer::IntrepidFieldPattern(basis_q1->getIntrepidBasis())));
@@ -449,13 +459,17 @@ namespace panzer {
        fm.registerEvaluator<panzer::Traits::Jacobian>(evaluator);
     }
 
+    std::vector<PHX::index_size_type> derivative_dimensions;
+    derivative_dimensions.push_back(12);
+    fm.setKokkosExtendedDataTypeDimensions<panzer::Traits::Jacobian>(derivative_dimensions);
+
     panzer::Traits::SetupData sd;
     fm.postRegistrationSetup(sd);
 
-    panzer::GlobalEvaluationDataContainer gedc;
-    gedc.addDataObject("Solution Gather Container",loc);
-    gedc.addDataObject("Residual Scatter Container",loc);
-    fm.preEvaluate<panzer::Traits::Jacobian>(gedc);
+    panzer::Traits::PreEvalData ped;
+    ped.gedc.addDataObject("Solution Gather Container",loc);
+    ped.gedc.addDataObject("Residual Scatter Container",loc);
+    fm.preEvaluate<panzer::Traits::Jacobian>(ped);
 
     // run tests
     /////////////////////////////////////////////////////////////
@@ -512,10 +526,10 @@ namespace panzer {
      return Teuchos::rcp(new panzer::PureBasis(basisName,1,cellData)); 
   }
 
-  Teuchos::RCP<panzer_stk::STK_Interface> buildMesh(int elemX,int elemY)
+  Teuchos::RCP<panzer_stk_classic::STK_Interface> buildMesh(int elemX,int elemY)
   {
-    typedef panzer_stk::STK_Interface::SolutionFieldType VariableField;
-    typedef panzer_stk::STK_Interface::VectorFieldType CoordinateField;
+    typedef panzer_stk_classic::STK_Interface::SolutionFieldType VariableField;
+    typedef panzer_stk_classic::STK_Interface::VectorFieldType CoordinateField;
 
     RCP<Teuchos::ParameterList> pl = rcp(new Teuchos::ParameterList);
     pl->set("X Blocks",1);
@@ -523,9 +537,9 @@ namespace panzer {
     pl->set("X Elements",elemX);
     pl->set("Y Elements",elemY);
     
-    panzer_stk::SquareQuadMeshFactory factory;
+    panzer_stk_classic::SquareQuadMeshFactory factory;
     factory.setParameterList(pl);
-    RCP<panzer_stk::STK_Interface> mesh = factory.buildUncommitedMesh(MPI_COMM_WORLD);
+    RCP<panzer_stk_classic::STK_Interface> mesh = factory.buildUncommitedMesh(MPI_COMM_WORLD);
     factory.completeMeshConstruction(*mesh,MPI_COMM_WORLD); 
 
     return mesh;

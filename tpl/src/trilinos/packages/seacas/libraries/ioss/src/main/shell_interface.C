@@ -33,20 +33,16 @@
  * 
  */
 #include "shell_interface.h"
-#include "Ioss_GetLongOpt.h"                 // for GetLongOption, etc
-#include "Ioss_Utils.h"                 // for GetLongOption, etc
+#include <stddef.h>                     // for NULL
+#include <cstdlib>                      // for exit, strtod, EXIT_SUCCESS, etc
+#include <cstring>                      // for strcmp
+#include <iostream>                     // for operator<<, basic_ostream, etc
+#include <string>                       // for string, char_traits
+#include <vector>                       // for vector
+#include "Ioss_GetLongOpt.h"            // for GetLongOption, etc
+#include "Ioss_Utils.h"                 // for Utils
 
-#include <ctype.h>                      // for tolower
-#include <stddef.h>                     // for size_t
-#include <string>                       // for string, basic_string, etc
-#include <utility>                      // for pair, make_pair
-#include <iostream>
-#include <algorithm>
-#include <vector>
 
-#include <limits.h>
-#include <cstdlib>
-#include <cstring>
 
 #define NPOS std::string::npos
 
@@ -77,6 +73,10 @@ void IOShell::Interface::enroll_options()
   options_.enroll("out_type", Ioss::GetLongOption::MandatoryValue,
 		  "Database type for output file: exodus. exodus is the default.",
 		  "exodus");
+
+  options_.enroll("extract_group", Ioss::GetLongOption::MandatoryValue,
+		  "Write the data from the specified group to the output file.\n",
+		  NULL);
 
   options_.enroll("64-bit", Ioss::GetLongOption::NoValue,
 		  "Use 64-bit integers on output database",
@@ -127,7 +127,7 @@ void IOShell::Interface::enroll_options()
 		  NULL);
 
   options_.enroll("linear", Ioss::GetLongOption::NoValue,
-		  "Use the lineary method to decompose the input mesh in a parallel run. "
+		  "Use the linear method to decompose the input mesh in a parallel run. "
 		  "elements in order first n/p to proc 0, next to proc 1.",
 		  NULL);
 
@@ -163,7 +163,7 @@ void IOShell::Interface::enroll_options()
 
   options_.enroll("field_suffix_separator", Ioss::GetLongOption::MandatoryValue,
 		  "Character used to separate a field suffix from the field basename\n"
-		  "\t\t when recognizing vector, tensor fields. Enter '0' for no separaor", "_");
+		  "\t\t when recognizing vector, tensor fields. Enter '0' for no separator", "_");
 
   options_.enroll("surface_split_scheme", Ioss::GetLongOption::MandatoryValue,
 		  "Method used to split sidesets into homogenous blocks\n"
@@ -196,7 +196,7 @@ bool IOShell::Interface::parse_options(int argc, char **argv)
   if (options_.retrieve("help")) {
     options_.usage();
     std::cerr << "\n\tCan also set options via IO_SHELL_OPTIONS environment variable.\n\n";
-    std::cerr << "\n\t->->-> Send email to gdsjaar@sandia.gov for epu support.<-<-<-\n";
+    std::cerr << "\n\t->->-> Send email to gdsjaar@sandia.gov for io_shell support.<-<-<-\n";
     exit(EXIT_SUCCESS);
   }
 
@@ -219,6 +219,13 @@ bool IOShell::Interface::parse_options(int argc, char **argv)
 
   if (options_.retrieve("shuffle")) {
     shuffle = true;
+  }
+
+  {
+    const char *temp = options_.retrieve("compress");
+    if (temp != NULL) {
+      compression_level = std::strtol(temp, NULL, 10);
+    }
   }
 
   if (options_.retrieve("rcb")) {
@@ -287,6 +294,13 @@ bool IOShell::Interface::parse_options(int argc, char **argv)
     const char *temp = options_.retrieve("compose");
     if (temp != NULL) {
       compose_output = Ioss::Utils::lowercase(temp);
+    }
+  }
+
+  {
+    const char *temp = options_.retrieve("extract_group");
+    if (temp != NULL) {
+      groupName = temp;
     }
   }
 

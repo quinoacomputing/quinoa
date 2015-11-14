@@ -680,7 +680,7 @@ int copy_file(char *file_name_in, char *file_name_out, int cmode_out,
 
       /* Get the start and count arrays, and also the increment of the
        * start array zeroth element, the number of read steps, the
-       * lenght of a slice in number of elements, and the count needed
+       * length of a slice in number of elements, and the count needed
        * for the final read, in the cases where the length of the
        * zeroth dimension is not evenly divisible by slow_count. The
        * variable slow_count is the number of elements in the slowest
@@ -868,8 +868,11 @@ main(int argc, char **argv)
 	    {
 	       case NC_FORMAT_CLASSIC:
 		  break;
-	       case NC_FORMAT_64BIT:
+	       case NC_FORMAT_64BIT_OFFSET:
 		  cmode = NC_64BIT_OFFSET;
+		  break;
+	       case NC_FORMAT_CDF5:
+		  cmode = NC_CDF5;
 		  break;
 	       case NC_FORMAT_NETCDF4:
 		  cmode = NC_NETCDF4;
@@ -1005,7 +1008,7 @@ main(int argc, char **argv)
    {
       if (use_par)
       {
-	 printf("Can't use start/count/slice for paralell runs yet!\n");
+	 printf("Can't use start/count/slice for parallel runs yet!\n");
 	 return 2;
       }
    }

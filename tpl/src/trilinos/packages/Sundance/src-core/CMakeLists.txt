@@ -1,5 +1,4 @@
 
-INCLUDE(TribitsLibraryMacros)
 
 #
 # A) Package-specific configuration options
@@ -403,5 +402,5 @@ TRIBITS_ADD_LIBRARY(
   sundanceCore
   HEADERS ${HEADERS}
   SOURCES ${SOURCES}
-  DEPLIBS sundanceUtils sundanceInterop playa
+  DEPLIBS sundanceUtils sundanceInterop sundancePlaya
   )

@@ -42,8 +42,9 @@
 // @HEADER
 
 
-#include "Phalanx_ConfigDefs.hpp"
+#include "Phalanx_config.hpp"
 #include "Phalanx.hpp"
+#include "Phalanx_KokkosUtilities.hpp"
 
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ArrayRCP.hpp"
@@ -57,7 +58,7 @@
 #include "Workset.hpp"
 #include "Traits.hpp"
 #include "FactoryTraits.hpp"
-#ifdef HAVE_MPI
+*#ifdef HAVE_MPI
 #include "Epetra_MpiComm.h"
 #else
 #include "Epetra_SerialComm.h"
@@ -67,7 +68,7 @@
 #include "Epetra_Export.h"
 #include "Epetra_Vector.h"
 #include "Epetra_CrsMatrix.h"
-#include "MeshBuilder.hpp"
+/*#include "MeshBuilder.hpp"
 #include "LinearObjectFactory.hpp"
 
 // Linear solver
@@ -82,7 +83,7 @@
 #endif
 #include "Ifpack.h"
 #include "ml_epetra_preconditioner.h"
-
+*/
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 void printVector(std::string filename_prefix, const Epetra_Vector& vector, 
@@ -90,7 +91,7 @@ void printVector(std::string filename_prefix, const Epetra_Vector& vector,
 {
   std::stringstream ss;
   ss << filename_prefix << "_" << newton_step << ".dat";
-  ofstream file( ss.str().c_str(), ios::out | ios::app );
+  std::ofstream file( ss.str().c_str(), std::ios::out | std::ios::app );
   vector.Print(file);
 }
 
@@ -101,7 +102,7 @@ void printMatrix(std::string filename_prefix, const Epetra_CrsMatrix& matrix,
 {
   std::stringstream ss;
   ss << filename_prefix << "_" << newton_step << ".dat";
-  ofstream file( ss.str().c_str(), ios::out | ios::app );
+  std::ofstream file( ss.str().c_str(), std::ios::out | std::ios::app );
   matrix.Print(file);
 }
 
@@ -182,6 +183,8 @@ int main(int argc, char *argv[])
     
     RCP<Time> total_time = TimeMonitor::getNewTimer("Total Run Time");
     TimeMonitor tm(*total_time);
+
+    PHX::InitializeKokkosDevice();
 
     RCP<Time> residual_eval_time = 
       TimeMonitor::getNewTimer("Residual Evaluation Time");
@@ -281,7 +284,7 @@ int main(int argc, char *argv[])
     // *********************************************************
     // * Build the Newton solver data structures
     // *********************************************************
-
+/*
     // Setup Nonlinear Problem (build Epetra_Vector and Epetra_CrsMatrix)
     // Newton's method: J delta_x = -f
     const std::size_t num_eq = 2;
@@ -289,7 +292,7 @@ int main(int argc, char *argv[])
     LinearObjectFactory lof(mb, comm, num_eq);
 
     if (print_debug_info) {
-      ofstream file("OwnedGraph.dat", ios::out | ios::app);
+      std::ofstream file("OwnedGraph.dat", std::ios::out | std::ios::app);
       Teuchos::basic_FancyOStream<char> p(rcp(&file,false)); 
       p.setShowProcRank(true); 
       p.setProcRankAndSize(comm->MyPID(), comm->NumProc()); 	
@@ -329,7 +332,7 @@ int main(int argc, char *argv[])
 
     // Sets bc for initial guess
     applyBoundaryConditions(1.0, *owned_x, *owned_jac, *owned_f, mb);
-    
+  */  
     // *********************************************************
     // * Build the FieldManager
     // *********************************************************
@@ -484,7 +487,7 @@ int main(int argc, char *argv[])
       applyBoundaryConditions(1.0, *owned_x, *owned_jac, *owned_f, mb);
     }
 
-    // *********************************************************
+/*    // *********************************************************
     // * Build Preconditioner (Ifpack or ML)
     // *********************************************************    
     bool use_ml = true;
@@ -729,7 +732,7 @@ int main(int argc, char *argv[])
       for (std::vector<Element_Linear2D>::iterator cell = cells->begin();
 	   cell != cells->end(); ++cell) {
 	
-	const shards::Array<double,shards::NaturalOrder,Node,Dim>& coords = 
+	const Kokkos::View<double**,PHX::Device> coords = 
 	  cell->nodeCoordinates();
 
 	for (int node=0; node < cell->numNodes(); ++node) {
@@ -741,12 +744,12 @@ int main(int argc, char *argv[])
 
 
       {
-	std::vector< RCP<ofstream> > files; 
+	std::vector< RCP<std::ofstream> > files; 
 	for (std::size_t eq = 0; eq < num_eq; ++eq) {
 	  std::stringstream ost;
 	  ost << "upper_DOF" << eq << "_PID" << comm->MyPID() << ".dat";
 	  files.push_back( rcp(new std::ofstream(ost.str().c_str()), 
-			       ios::out | ios::trunc) );
+			       std::ios::out | std::ios::trunc) );
 	  files[eq]->precision(10);
 	}
 	
@@ -762,12 +765,12 @@ int main(int argc, char *argv[])
       }
 
       {
-	std::vector< RCP<ofstream> > files; 
+	std::vector< RCP<std::ofstream> > files; 
 	for (std::size_t eq = 0; eq < num_eq; ++eq) {
 	  std::stringstream ost;
 	  ost << "lower_DOF" << eq << "_PID" << comm->MyPID() << ".dat";
 	  files.push_back( rcp(new std::ofstream(ost.str().c_str()), 
-			       ios::out | ios::trunc) );
+			       std::ios::out | std::ios::trunc) );
 	  files[eq]->precision(10);
 	}
 	
@@ -795,6 +798,8 @@ int main(int argc, char *argv[])
     TEUCHOS_TEST_FOR_EXCEPTION(num_gmres_iterations != 10, std::runtime_error,
 		       "Incorrect number of GMRES iterations!");
 #endif
+*/
+    PHX::FinalizeKokkosDevice();
 
     // *********************************************************************
     // Finished all testing

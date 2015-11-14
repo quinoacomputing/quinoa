@@ -1,12 +1,12 @@
 // @HEADER
 // ***********************************************************************
-// 
+//
 //                      Didasko Tutorial Package
 //                 Copyright (2005) Sandia Corporation
-// 
+//
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -35,7 +35,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 // Questions about Didasko? Contact Marzio Sala (marzio.sala _AT_ gmail.com)
-// 
+//
 // ***********************************************************************
 // @HEADER
 
@@ -65,7 +65,7 @@ int main(int argc, char *argv[])
 #else
   Epetra_SerialComm Comm;
 #endif
-  
+
   bool verbose = (Comm.MyPID() == 0);
 
   // set global dimension to 5, could be any number
@@ -92,8 +92,8 @@ int main(int argc, char *argv[])
 
   for( int i=0 ; i<NumMyElements; ++i ) {
     if (MyGlobalElements[i]==0) {
-	Indices[0] = 1;
-	NumEntries = 1;
+      Indices[0] = 1;
+      NumEntries = 1;
     } else if (MyGlobalElements[i] == NumGlobalElements-1) {
       Indices[0] = NumGlobalElements-2;
       NumEntries = 1;
@@ -106,12 +106,12 @@ int main(int argc, char *argv[])
     // Put in the diagonal entry
     A.InsertGlobalValues(MyGlobalElements[i], 1, &two, MyGlobalElements+i);
   }
-  
+
   // Finish up
   A.FillComplete();
 
   // ================ CONSTRUCTION OF VECTORS =======================
-  
+
   // build up two distributed vectors q and z, and compute
   // q = A * z
   Epetra_Vector q(A.RowMap());
@@ -121,7 +121,7 @@ int main(int argc, char *argv[])
   z.PutScalar( 1.0 );
 
   // ================ USE OF TIME AND FLOPS =========================
-  
+
   Epetra_Flops counter;
   A.SetFlopCounter(counter);
   Epetra_Time timer(Comm);
@@ -173,7 +173,7 @@ int main(int argc, char *argv[])
 int main(int argc, char *argv[])
 {
   puts("Please configure Didasko with:\n"
-       "--enable-epetra");
+      "--enable-epetra");
 
   return 0;
 }

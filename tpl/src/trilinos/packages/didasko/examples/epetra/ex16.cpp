@@ -1,12 +1,12 @@
 // @HEADER
 // ***********************************************************************
-// 
+//
 //                      Didasko Tutorial Package
 //                 Copyright (2005) Sandia Corporation
-// 
+//
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -35,7 +35,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 // Questions about Didasko? Contact Marzio Sala (marzio.sala _AT_ gmail.com)
-// 
+//
 // ***********************************************************************
 // @HEADER
 
@@ -70,18 +70,18 @@
  * ----------
  *
  * - Epetra_CrsMatrix  reference to vector
- * - Epetra_Map        reference to map 
+ * - Epetra_Map        reference to map
  */
 
 bool Vector2MATLAB( const Epetra_Vector & v,
-		    const Epetra_Map & Map)
+    const Epetra_Map & Map)
 {
-  
-  int MyPID = Map.Comm().MyPID(); 
+
+  int MyPID = Map.Comm().MyPID();
   int NumProc = Map.Comm().NumProc();
   int MyLength = v.MyLength();
   int GlobalLength = v.GlobalLength();
-  
+
   // print out on cout if no filename is provided
 
   // write on file the dimension of the matrix
@@ -90,7 +90,7 @@ bool Vector2MATLAB( const Epetra_Vector & v,
 
   // get update list
   int * MyGlobalElements = Map.MyGlobalElements( );
-  
+
   int Row;
 
   for( int Proc=0 ; Proc<NumProc ; ++Proc ) {
@@ -102,16 +102,16 @@ bool Vector2MATLAB( const Epetra_Vector & v,
       cout << GlobalLength << " elements\n";
 
       for( Row=0 ; Row<MyLength ; ++Row ) {
-	cout << "b(" << MyGlobalElements[Row]
-	     << ") = " << v[Row] << ";\n";
+        cout << "b(" << MyGlobalElements[Row]
+          << ") = " << v[Row] << ";\n";
       }
-      
+
       if( MyPID == NumProc-1  ) {
-	cout << "% End of vector\n";
+        cout << "% End of vector\n";
       }
-      
+
     }
-      
+
     Map.Comm().Barrier();
   }
 
@@ -163,7 +163,7 @@ int main(int argc, char *argv[])
 int main(int argc, char *argv[])
 {
   puts("Please configure Didasko with:\n"
-       "--enable-epetra");
+      "--enable-epetra");
 
   return 0;
 }

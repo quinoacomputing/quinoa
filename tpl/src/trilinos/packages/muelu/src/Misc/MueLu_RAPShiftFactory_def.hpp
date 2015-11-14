@@ -53,17 +53,19 @@
 #include <Xpetra_VectorFactory.hpp>
 
 #include "MueLu_RAPShiftFactory_decl.hpp"
-#include "MueLu_Utilities.hpp"
+
 #include "MueLu_Monitor.hpp"
+#include "MueLu_PerfUtils.hpp"
+#include "MueLu_Utilities.hpp"
 
 namespace MueLu {
 
-  template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node, class LocalMatOps>
-  RAPShiftFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node, LocalMatOps>::RAPShiftFactory()
+  template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
+  RAPShiftFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::RAPShiftFactory()
     : implicitTranspose_(false), checkAc_(false), repairZeroDiagonals_(false) { }
 
-  template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node, class LocalMatOps>
-  void RAPShiftFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node, LocalMatOps>::DeclareInput(Level &fineLevel, Level &coarseLevel) const {
+  template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
+  void RAPShiftFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::DeclareInput(Level &fineLevel, Level &coarseLevel) const {
     if (implicitTranspose_ == false) {
       Input(coarseLevel, "R");
     }
@@ -78,8 +80,8 @@ namespace MueLu {
     }
   }
 
-  template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node, class LocalMatOps>
-  void RAPShiftFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node, LocalMatOps>::Build(Level &fineLevel, Level &coarseLevel) const { // FIXME make fineLevel const
+  template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
+  void RAPShiftFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::Build(Level &fineLevel, Level &coarseLevel) const { // FIXME make fineLevel const
     {
       FactoryMonitor m(*this, "Computing Ac", coarseLevel);
 
@@ -99,8 +101,8 @@ namespace MueLu {
 
       {
         SubFactoryMonitor subM(*this, "MxM: K x P", coarseLevel);
-        KP = Utils::Multiply(*K, false, *P, false, KP, GetOStream(Statistics2, 0));
-        MP = Utils::Multiply(*M, false, *P, false, MP, GetOStream(Statistics2, 0));
+        KP = Utils::Multiply(*K, false, *P, false, KP, GetOStream(Statistics2));
+        MP = Utils::Multiply(*M, false, *P, false, MP, GetOStream(Statistics2));
         Set(coarseLevel, "AP Pattern", KP);
       }
 
@@ -117,20 +119,20 @@ namespace MueLu {
       bool doFillComplete=true;
       if (implicitTranspose_) {
         SubFactoryMonitor m2(*this, "MxM: P' x (KP) (implicit)", coarseLevel);
-        Kc = Utils::Multiply(*P, true, *KP, false, Kc, GetOStream(Statistics2, 0), doFillComplete, doOptimizedStorage);
-        Mc = Utils::Multiply(*P, true, *MP, false, Mc, GetOStream(Statistics2, 0), doFillComplete, doOptimizedStorage);
+        Kc = Utils::Multiply(*P, true, *KP, false, Kc, GetOStream(Statistics2), doFillComplete, doOptimizedStorage);
+        Mc = Utils::Multiply(*P, true, *MP, false, Mc, GetOStream(Statistics2), doFillComplete, doOptimizedStorage);
       }
       else {
         RCP<Matrix> R = Get< RCP<Matrix> >(coarseLevel, "R");
         SubFactoryMonitor m2(*this, "MxM: R x (KP) (explicit)", coarseLevel);
-        Kc = Utils::Multiply(*R, false, *KP, false, Kc, GetOStream(Statistics2, 0), doFillComplete, doOptimizedStorage);
-        Mc = Utils::Multiply(*R, false, *MP, false, Mc, GetOStream(Statistics2, 0), doFillComplete, doOptimizedStorage);
+        Kc = Utils::Multiply(*R, false, *KP, false, Kc, GetOStream(Statistics2), doFillComplete, doOptimizedStorage);
+        Mc = Utils::Multiply(*R, false, *MP, false, Mc, GetOStream(Statistics2), doFillComplete, doOptimizedStorage);
       }
 
       // recombine to get K+shift*M
       int level     = coarseLevel.GetLevelID();
       Scalar shift  = shifts_[level];
-      Utils2::TwoMatrixAdd(*Kc, false, (Scalar) 1.0, *Mc, false, shift, Ac, GetOStream(Statistics2, 0));
+      Utils2::TwoMatrixAdd(*Kc, false, (Scalar) 1.0, *Mc, false, shift, Ac, GetOStream(Statistics2));
       Ac->fillComplete();
 
       if (checkAc_)
@@ -138,7 +140,7 @@ namespace MueLu {
 
       RCP<ParameterList> params = rcp(new ParameterList());;
       params->set("printLoadBalancingInfo", true);
-      GetOStream(Statistics0, 0) << Utils::PrintMatrixInfo(*Ac, "Ac", params);
+      GetOStream(Statistics0) << PerfUtils::PrintMatrixInfo(*Ac, "Ac", params);
 
       Set(coarseLevel, "A", Ac);
       Set(coarseLevel, "K", Kc);
@@ -152,7 +154,7 @@ namespace MueLu {
       // call Build of all user-given transfer factories
       for (std::vector<RCP<const FactoryBase> >::const_iterator it = transferFacts_.begin(); it != transferFacts_.end(); ++it) {
         RCP<const FactoryBase> fac = *it;
-        GetOStream(Runtime0, 0) << "RAPShiftFactory: call transfer factory: " << fac->description() << std::endl;
+        GetOStream(Runtime0) << "RAPShiftFactory: call transfer factory: " << fac->description() << std::endl;
         fac->CallBuild(coarseLevel);
         // AP (11/11/13): I am not sure exactly why we need to call Release, but we do need it to get rid
         // of dangling data for CoordinatesTransferFactory
@@ -161,8 +163,8 @@ namespace MueLu {
     }
   }
 
-  template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node, class LocalMatOps>
-  void RAPShiftFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node, LocalMatOps>::CheckMainDiagonal(RCP<Matrix> & Ac) const {
+  template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
+  void RAPShiftFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::CheckMainDiagonal(RCP<Matrix> & Ac) const {
     // plausibility check: no zeros on diagonal
     LO lZeroDiags = 0;
     RCP<Vector> diagVec = VectorFactory::Build(Ac->getRowMap());
@@ -185,14 +187,14 @@ namespace MueLu {
       const RCP<const Teuchos::Comm<int> > & comm = Ac->getRowMap()->getComm();
       GO lZeroDiagsGO = lZeroDiags; /* LO->GO conversion */
       GO gZeroDiags = 0;
-      sumAll(comm, lZeroDiagsGO, gZeroDiags);
-      if(repairZeroDiagonals_) GetOStream(Warnings0,0) << "RAPShiftFactory (WARNING): repaired " << gZeroDiags << " zeros on main diagonal of Ac." << std::endl;
-      else                     GetOStream(Warnings0,0) << "RAPShiftFactory (WARNING): found "    << gZeroDiags << " zeros on main diagonal of Ac." << std::endl;
+      MueLu_sumAll(comm, lZeroDiagsGO, gZeroDiags);
+      if(repairZeroDiagonals_) GetOStream(Warnings0) << "RAPShiftFactory (WARNING): repaired " << gZeroDiags << " zeros on main diagonal of Ac." << std::endl;
+      else                     GetOStream(Warnings0) << "RAPShiftFactory (WARNING): found "    << gZeroDiags << " zeros on main diagonal of Ac." << std::endl;
     }
   }
 
-  template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node, class LocalMatOps>
-  void RAPShiftFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node, LocalMatOps>::AddTransferFactory(const RCP<const FactoryBase>& factory) {
+  template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
+  void RAPShiftFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::AddTransferFactory(const RCP<const FactoryBase>& factory) {
     // check if it's a TwoLevelFactoryBase based transfer factory
     TEUCHOS_TEST_FOR_EXCEPTION(Teuchos::rcp_dynamic_cast<const TwoLevelFactoryBase>(factory) == Teuchos::null, Exceptions::BadCast, "MueLu::RAPShiftFactory::AddTransferFactory: Transfer factory is not derived from TwoLevelFactoryBase. This is very strange. (Note: you can remove this exception if there's a good reason for)");
     transferFacts_.push_back(factory);

@@ -64,9 +64,11 @@ namespace MueLu {
    This class holds an underlying Xpetra_CrsGraph.
    This class can be considered a facade, as MueLu needs only limited functionality for aggregation.
 */
-  template <class LocalOrdinal  = int, class GlobalOrdinal = LocalOrdinal, class Node = KokkosClassic::DefaultNode::DefaultNodeType, class LocalMatOps = typename KokkosClassic::DefaultKernels<void,LocalOrdinal,Node>::SparseOps>
+  template <class LocalOrdinal = Xpetra::CrsGraph<>::local_ordinal_type,
+            class GlobalOrdinal = typename Xpetra::CrsGraph<LocalOrdinal>::global_ordinal_type,
+            class Node = typename Xpetra::CrsGraph<LocalOrdinal, GlobalOrdinal>::node_type>
   class Graph
-    : public MueLu::GraphBase<LocalOrdinal,GlobalOrdinal,Node,LocalMatOps> { //FIXME  shortnames isn't working
+    : public MueLu::GraphBase<LocalOrdinal,GlobalOrdinal,Node> { //FIXME  shortnames isn't working
 #undef MUELU_GRAPH_SHORT
 #include "MueLu_UseShortNamesOrdinal.hpp"
 
@@ -97,6 +99,9 @@ namespace MueLu {
 
     //! Returns map with local ids of boundary nodes.
     const ArrayRCP<const bool> GetBoundaryNodeMap() const                    { return localDirichletNodes_; }
+
+    //! Returns the maximum number of entries across all rows/columns on this node
+    size_t getNodeMaxNumRowEntries () const                                  { return graph_->getNodeMaxNumRowEntries(); }
 
     //! Return the list of vertices adjacent to the vertex 'v'.
     ArrayView<const LO> getNeighborVertices(LO i) const {

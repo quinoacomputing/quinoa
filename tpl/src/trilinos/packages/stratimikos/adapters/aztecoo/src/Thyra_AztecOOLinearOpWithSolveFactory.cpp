@@ -1,12 +1,12 @@
 // @HEADER
 // ***********************************************************************
-// 
+//
 //         Stratimikos: Thyra-based strategies for linear solvers
 //                Copyright (2006) Sandia Corporation
-// 
+//
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -34,8 +34,8 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-// Questions? Contact Roscoe A. Bartlett (rabartl@sandia.gov) 
-// 
+// Questions? Contact Roscoe A. Bartlett (rabartl@sandia.gov)
+//
 // ***********************************************************************
 // @HEADER
 
@@ -109,6 +109,7 @@ AztecOOLinearOpWithSolveFactory::AztecOOLinearOpWithSolveFactory(
   ,defaultAdjMaxIterations_(MaxIterations_default)
   ,defaultAdjTolerance_(Tolerance_default)
   ,outputEveryRhs_(OutputEveryRhs_default)
+  ,useAztecPrec_(false)
 {
   updateThisValidParamList();
   if(paramList.get())
@@ -401,7 +402,7 @@ AztecOOLinearOpWithSolveFactory::generateAndGetValidParameters()
       );
     fwdSolvePL.set(
       MaxIterations_name,MaxIterations_default
-      ,"The maximum number of iterations the AztecOO solver is allowed to perform." 
+      ,"The maximum number of iterations the AztecOO solver is allowed to perform."
       );
     fwdSolvePL.sublist(
       AztecOO_Settings_name,false
@@ -472,7 +473,7 @@ void AztecOOLinearOpWithSolveFactory::initializeOp_impl(
   TEUCHOS_TEST_FOR_EXCEPT(fwdOpSrc->getOp().get()==NULL);
 #endif
 
-  // 
+  //
   // Determine whether the operators are EpetraLinearOp objects. If so, we're
   // good to go.  If not, we need to wrap it as an Epetra_Operator with some
   // invasive code.
@@ -499,7 +500,7 @@ void AztecOOLinearOpWithSolveFactory::initializeOp_impl(
       approxFwdOp = makeEpetraWrapper(tmpApproxFwdOp);
     }
   }
-  
+
   //
   // Get the AztecOOLinearOpWithSolve object
   //
@@ -622,7 +623,7 @@ void AztecOOLinearOpWithSolveFactory::initializeOp_impl(
         real_trans(epetra_epetraPrecOpTransp)
         );
   }
-  
+
   //
   // Unwrap and get the approximate forward operator to be used to generate a
   // preconditioner
@@ -673,9 +674,9 @@ void AztecOOLinearOpWithSolveFactory::initializeOp_impl(
   this->supportsPreconditionerInputType(PRECONDITIONER_INPUT_TYPE_AS_MATRIX);
   enum ELocalPrecType {
     PT_NONE, PT_AZTEC_FROM_OP, PT_AZTEC_FROM_APPROX_FWD_MATRIX,
-    PT_FROM_PREC_OP
+    PT_FROM_PREC_OP, PT_UPPER_BOUND
   };
-  ELocalPrecType localPrecType;
+  ELocalPrecType localPrecType = PT_UPPER_BOUND;
   if( precUsed.get()==NULL && approxFwdOp.get()==NULL && !useAztecPrec_ ) {
     // No preconditioning at all!
     localPrecType = PT_NONE;
@@ -695,7 +696,13 @@ void AztecOOLinearOpWithSolveFactory::initializeOp_impl(
     // such
     localPrecType = PT_FROM_PREC_OP;
   }
-  
+  TEUCHOS_TEST_FOR_EXCEPTION
+    (localPrecType == PT_UPPER_BOUND, std::logic_error,
+     "AztecOOLinearOpWithSolveFactory::initializeOp_impl(...): "
+     "localPrecType == PT_UPPER_BOUND.  This means that previously, "
+     "this value might have been used uninitialized.  "
+     "Please report this bug to the Stratimikos developers.");
+
   //
   // Determine if aztecOp already contains solvers and if we need to
   // reinitialize or not
@@ -806,7 +813,7 @@ void AztecOOLinearOpWithSolveFactory::initializeOp_impl(
         &*aztecAdjSolver
         );
   }
-  
+
   //
   // Process the forward operator
   //
@@ -841,7 +848,7 @@ void AztecOOLinearOpWithSolveFactory::initializeOp_impl(
   if(
     startingOver
     ||
-    aztec_epetra_epetraFwdOp.get() != aztecFwdSolver->GetUserOperator() 
+    aztec_epetra_epetraFwdOp.get() != aztecFwdSolver->GetUserOperator()
     )
   {
     // Here we will be careful not to reset the forward operator in fears that
@@ -879,7 +886,7 @@ void AztecOOLinearOpWithSolveFactory::initializeOp_impl(
       Teuchos::inOutArg(aztecAdjSolver), Teuchos::POST_DESTROY, false
       );
   }
-  
+
   //
   // Process the preconditioner
   //
@@ -962,22 +969,22 @@ void AztecOOLinearOpWithSolveFactory::initializeOp_impl(
       //
       // Forward solve
       RCP<const Epetra_Operator>
-        epetraOps[]
+        theEpetraOps[]
         = { epetra_epetraPrecOp };
       Teuchos::ETransp
-        epetraOpsTransp[]
+        theEpetraOpsTransp[]
         = { overall_epetra_epetraPrecOpTransp==NOTRANS
             ? Teuchos::NO_TRANS
             : Teuchos::TRANS };
       // Here we must toggle the apply mode since aztecoo applies the
       // preconditioner using ApplyInverse(...)
       PO::EApplyMode
-        epetraOpsApplyMode[]
+        theEpetraOpsApplyMode[]
         = { epetra_epetraPrecOpApplyAs==EPETRA_OP_APPLY_APPLY
             ? PO::APPLY_MODE_APPLY_INVERSE
             : PO::APPLY_MODE_APPLY };
       if(
-        epetraOpsTransp[0] == Teuchos::NO_TRANS
+        theEpetraOpsTransp[0] == Teuchos::NO_TRANS
         &&
         epetra_epetraPrecOpApplyAs==EPETRA_OP_APPLY_APPLY_INVERSE
         )
@@ -985,7 +992,7 @@ void AztecOOLinearOpWithSolveFactory::initializeOp_impl(
         aztec_fwd_epetra_epetraPrecOp = epetra_epetraPrecOp;
       }
       else {
-        aztec_fwd_epetra_epetraPrecOp = rcp(new PO(1,epetraOps,epetraOpsTransp,epetraOpsApplyMode));
+        aztec_fwd_epetra_epetraPrecOp = rcp(new PO(1,theEpetraOps,theEpetraOpsTransp,theEpetraOpsApplyMode));
       }
       aztecFwdSolver->SetPrecOperator(
         const_cast<Epetra_Operator*>(&*aztec_fwd_epetra_epetraPrecOp));
@@ -1000,13 +1007,13 @@ void AztecOOLinearOpWithSolveFactory::initializeOp_impl(
         epetra_epetraPrecOpAdjointSupport == EPETRA_OP_ADJOINT_SUPPORTED
         )
       {
-        epetraOpsTransp[0] = ( 
+        theEpetraOpsTransp[0] = (
           overall_epetra_epetraPrecOpTransp==NOTRANS
           ? Teuchos::TRANS
           : Teuchos::NO_TRANS
           );
         if(
-          epetraOpsTransp[0] == Teuchos::NO_TRANS
+          theEpetraOpsTransp[0] == Teuchos::NO_TRANS
           &&
           epetra_epetraPrecOpApplyAs==EPETRA_OP_APPLY_APPLY_INVERSE
           )
@@ -1015,7 +1022,7 @@ void AztecOOLinearOpWithSolveFactory::initializeOp_impl(
         }
         else {
           aztec_adj_epetra_epetraPrecOp = rcp(
-            new PO(1,epetraOps,epetraOpsTransp,epetraOpsApplyMode));
+            new PO(1,theEpetraOps,theEpetraOpsTransp,theEpetraOpsApplyMode));
         }
         aztecAdjSolver->SetPrecOperator(
           const_cast<Epetra_Operator*>(&*aztec_adj_epetra_epetraPrecOp));
@@ -1033,7 +1040,7 @@ void AztecOOLinearOpWithSolveFactory::initializeOp_impl(
     default:
       TEUCHOS_TEST_FOR_EXCEPT(true);
   }
-  
+
   //
   // Initialize the interal aztec preconditioner
   //

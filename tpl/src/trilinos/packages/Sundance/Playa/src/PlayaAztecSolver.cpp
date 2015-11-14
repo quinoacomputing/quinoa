@@ -221,7 +221,7 @@ SolverState<double> AztecSolver::solve(const LinearOperator<double>& op,
   const Vector<double>& rhs, 
   Vector<double>& soln) const
 {
-  RCP<ostream> out;
+  RCP<std::ostream> out;
   if (verb()==0)
   {
     out = rcp(new oblackholestream());

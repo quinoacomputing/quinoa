@@ -64,7 +64,11 @@
 #error "Requires exodusII version 4.68 or later"
 #endif
 
+#if __cplusplus > 199711L
+#define TOPTR(x) x.data()
+#else
 #define TOPTR(x) (x.empty() ? NULL : &x[0])
+#endif
 
 namespace {
 template <typename T>
@@ -603,7 +607,7 @@ int conjoin(SystemInterface &interface, T /* dummy */, INT /* dummy int */)
 
     if (debug_level & 1)
       std::cerr << time_stamp(tsFormat);
-    if (global_element_map.size() > 0) {
+    if (!global_element_map.empty()) {
       std::vector<INT> global_map(global.count(ELEM));
       for (size_t i=0; i < global.count(ELEM); i++) {
 	global_map[i] = global_element_map[i].first;
@@ -611,7 +615,7 @@ int conjoin(SystemInterface &interface, T /* dummy */, INT /* dummy int */)
       ex_put_elem_num_map(ExodusFile::output(), &global_map[0]);
     }
 
-    T dummy = 0.0;
+    T dummy = 0;
     put_element_blocks(local_mesh, blocks, glob_blocks, dummy);
     get_put_sidesets(local_mesh, sidesets, glob_ssets);
   }				
@@ -621,7 +625,7 @@ int conjoin(SystemInterface &interface, T /* dummy */, INT /* dummy int */)
     if (debug_level & 1)
       std::cerr << time_stamp(tsFormat);
 
-    error += get_put_coordinates(global, part_count, local_mesh, (T)0.0);
+    error += get_put_coordinates(global, part_count, local_mesh, (T)0);
 
     if (debug_level & 1)
       std::cerr << time_stamp(tsFormat);
@@ -874,6 +878,7 @@ int conjoin(SystemInterface &interface, T /* dummy */, INT /* dummy int */)
     if (debug_level & 1)
       std::cerr << time_stamp(tsFormat);
 
+    std::ios::fmtflags f(std::cerr.flags());
     std::cerr << "Step " << std::setw(step_width) << time_step+1 <<  "/" << num_time_steps << ", time "
 	      << std::scientific << std::setprecision(4) << time_val
 	      << " (Part " << std::setw(part_width) << p+1 << "/" << part_count 
@@ -895,6 +900,7 @@ int conjoin(SystemInterface &interface, T /* dummy */, INT /* dummy int */)
     if (debug_level & 1) {
       std::cerr << "\n";
     }
+    std::cerr.flags(f);
   }
 
   /*************************************************************************/
@@ -1056,6 +1062,7 @@ namespace {
 	    if (!approx_equal(x[node],local_x[i]) ||
 		!approx_equal(y[node],local_y[i]) ||
 		!approx_equal(z[node],local_z[i])) {
+	      std::ios::fmtflags f(std::cerr.flags());
 	      std::cerr << "\nWARNING: Node " << node+1
 			<< " has different coordinates in at least two parts.\n"
 			<< "         this may indicate that this id has been reused in the current part.\n"
@@ -1066,6 +1073,7 @@ namespace {
 			<< std::setw(14) << local_x[i] << std::setw(14) << local_y[i] << std::setw(14) << local_z[i]
 			<< " from part " << part << std::endl;
 
+	      std::cerr.flags(f);
 	    }
 	  }
 	}
@@ -1089,6 +1097,7 @@ namespace {
 	  if (x[node] != FILL_VALUE && y[node] != FILL_VALUE) {
 	    if (!approx_equal(x[node],local_x[i]) ||
 		!approx_equal(y[node],local_y[i])) {
+	      std::ios::fmtflags f(std::cerr.flags());
 	      std::cerr << "\nWARNING: Node " << node+1
 			<< " has different coordinates in at least two parts.\n"
 			<< "         this may indicate that this id has been reused in the current part.\n"
@@ -1098,6 +1107,7 @@ namespace {
 			<< "         new value = "
 			<< std::setw(14) << local_x[i] << std::setw(14) << local_y[i]
 			<< " from part " << part << std::endl;
+	      std::cerr.flags(f);
 	    }
 	  }
 	}
@@ -1482,7 +1492,7 @@ namespace {
 
     // The global_element_map may or may not be globally sorted; however, each
     // block is sorted, so if we do the iteration by blocks, we can
-    // use equal_range instead of doing global searches...
+    // use lower_bound instead of doing global searches...
     for (size_t b = 0; b < glob_blocks.size(); b++) {
 
       GElemMapIter gm_begin = global_element_map.begin() + glob_blocks[b].offset_;
@@ -1502,10 +1512,9 @@ namespace {
 	  std::pair<int, size_t> global_element = global_element_numbers[p][boffset+i];
 	  
 	  if (cur_pos == gm_end || *cur_pos != global_element) {
-	    std::pair<GElemMapIter, GElemMapIter> iter =
-	      std::equal_range(gm_begin, gm_end, global_element);
-	    SMART_ASSERT(iter.first != iter.second);
-	    cur_pos = iter.first;
+	    GElemMapIter iter = std::lower_bound(gm_begin, gm_end, global_element);
+	    SMART_ASSERT(iter != gm_end);
+	    cur_pos = iter;
 	  }
 	  size_t element_value = cur_pos - gm_begin;
 	  local_mesh[p].localElementToGlobal[i+boffset] = element_value + glob_blocks[b].offset_;
@@ -1606,7 +1615,7 @@ namespace {
     // sorted and there are no duplicates, we just need to see if the id
     // at global_node_map.size() == global_node_map.size();
     INT max_id = global_node_map[global->nodeCount-1].id;
-    bool is_contiguous = max_id == (int)global_node_map.size();
+    bool is_contiguous = (int64_t)max_id == (int64_t)global_node_map.size();
     std::cerr  << "Node map " << (is_contiguous ? "is" : "is not") << " contiguous.\n";
 
     // Create the map that maps from a local part node to the
@@ -1621,15 +1630,15 @@ namespace {
 	NodeInfo global_node = global_nodes[p][i];
 
 	if (cur_pos == global_node_map.end() || *cur_pos != global_node) {
-	  std::pair<GMapIter, GMapIter> iter = std::equal_range(global_node_map.begin(),
-								global_node_map.end(),
-								global_node);
-	  if (iter.first == iter.second) {
+	  GMapIter iter = std::lower_bound(global_node_map.begin(),
+					   global_node_map.end(),
+					   global_node);
+	  if (iter == global_node_map.end()) {
 	    NodeInfo n = global_node;
 	    std::cerr << n.id << "\t" << n.x << "\t" << n.y << "\t" << n.z << "\n";
-	    SMART_ASSERT(iter.first != iter.second);
+	    SMART_ASSERT(iter != global_node_map.end());
 	  }
-	  cur_pos = iter.first;
+	  cur_pos = iter;
 	}
 	size_t nodal_value = cur_pos - global_node_map.begin();
 	local_mesh[p].localNodeToGlobal[i] = nodal_value;
@@ -2165,12 +2174,16 @@ namespace {
 	  sets[p][i].position_ = gi;
 	  
 	  // Get the parameters for this sideset...
-	  ex_get_set_param (id, EX_SIDE_SET, sets[p][i].id,
-			    &sets[p][i].sideCount,
-			    &sets[p][i].dfCount);
+	  ex_set set;
+	  set.type = EX_SIDE_SET;
+	  set.id = sets[p][i].id;
+	  set.entry_list = NULL;
+	  set.extra_list = NULL;
+	  set.distribution_factor_list = NULL;
+	  ex_get_sets(id, 1, &set);
 
-
-
+	  sets[p][i].sideCount = set.num_entry;
+	  sets[p][i].dfCount = set.num_distribution_factor;
 	  glob_ssets[gi].sideCount += sets[p][i].entity_count();
 	  glob_ssets[gi].dfCount   += sets[p][i].dfCount;
 
@@ -2239,17 +2252,16 @@ namespace {
 	  // its (elem, side, variable) position into the corresponding
 	  // global sideset position...
 
-	  // Try the equal_range searching of elem_side for now.  If
+	  // Try the lower_bound searching of elem_side for now.  If
 	  // inefficient, fix later...
 	  for (size_t p=0; p < part_count; p++) {
 	    sets[p][lss].elemOrderMap.resize(sets[p][lss].sideCount);
 	    for (size_t i=0; i < sets[p][lss].sideCount; i++) {
 	      size_t global_elem = local_mesh[p].localElementToGlobal[sets[p][lss].elems[i]-1]+1;
 	      std::pair<INT,INT> es = std::make_pair((INT)global_elem, (INT)sets[p][lss].sides[i]);
-
-	      std::pair<typename ElemSideMap::iterator, typename ElemSideMap::iterator> iter =
-		std::equal_range(elem_side.begin(), elem_side.end(), es);
-	      size_t pos = iter.first - elem_side.begin();
+	      
+	      typename ElemSideMap::iterator iter = std::lower_bound(elem_side.begin(), elem_side.end(), es);
+	      size_t pos = iter - elem_side.begin();
 	      sets[p][lss].elemOrderMap[i] = pos;
 	    }
 	  }
@@ -2385,7 +2397,7 @@ namespace {
     // has restricted the output of certain variables to certain element
     // blocks. If so, then the truth table is modified to match the
     // users request.
-    if (variable_names.size() == 0)
+    if (variable_names.empty())
       return;
 
     // Check for a non-zero id entry in the variable_names list which
@@ -2622,7 +2634,7 @@ namespace {
 
       int error = strftime(time_string, length, format.c_str(), local_time);
       if (error != 0) {
-        time_string[length-1] = (char)NULL;
+        time_string[length-1] = '\0';
         return std::string(time_string);
       } else {
         return std::string("[ERROR]");

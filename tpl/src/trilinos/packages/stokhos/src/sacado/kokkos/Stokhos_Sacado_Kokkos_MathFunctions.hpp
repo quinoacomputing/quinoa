@@ -42,6 +42,8 @@
 #ifndef STOKHOS_SACADO_KOKKOS_MATHFUNCTIONS_HPP
 #define STOKHOS_SACADO_KOKKOS_MATHFUNCTIONS_HPP
 
+#include <cmath>
+
 #include "Kokkos_Macros.hpp"
 
 #define UNARYFUNC_MACRO(OP,FADOP)                                       \
@@ -56,16 +58,25 @@ namespace Sacado {                                                      \
     FADOP< T >                                                          \
     OP (const Expr<T>&);                                                \
   }                                                                     \
+                                                                        \
+  namespace UQ {                                                        \
+    template <typename S> class PCE;                                    \
+    template <typename S>                                               \
+    KOKKOS_INLINE_FUNCTION                                              \
+    PCE<S> OP (const PCE<S>&);                                          \
+  }                                                                     \
 }                                                                       \
                                                                         \
 namespace std {                                                         \
   using Sacado::MP::OP;                                                 \
+  using Sacado::UQ::OP;                                                 \
 }
 
 UNARYFUNC_MACRO(exp, ExpOp)
 UNARYFUNC_MACRO(log, LogOp)
 UNARYFUNC_MACRO(log10, Log10Op)
 UNARYFUNC_MACRO(sqrt, SqrtOp)
+UNARYFUNC_MACRO(cbrt, CbrtOp)
 UNARYFUNC_MACRO(cos, CosOp)
 UNARYFUNC_MACRO(sin, SinOp)
 UNARYFUNC_MACRO(tan, TanOp)
@@ -108,7 +119,6 @@ namespace Sacado {                                                      \
     OP (const Expr<T>&,                                                 \
         const typename T::value_type&);                                 \
   }                                                                     \
-                                                                        \
 }                                                                       \
                                                                         \
 namespace std {                                                         \
@@ -122,4 +132,53 @@ BINARYFUNC_MACRO(min, MinOp)
 
 #undef BINARYFUNC_MACRO
 
-#endif // STOKHOS_STATIC_ARRAY_TRAITS_HPP
+#define BINARYFUNC_MACRO(OP)                                            \
+namespace Sacado {                                                      \
+                                                                        \
+  namespace UQ {                                                        \
+    template <typename S> class PCE;                                    \
+    template <typename S>                                               \
+    KOKKOS_INLINE_FUNCTION                                              \
+    PCE<S> OP (const PCE<S>&, const PCE<S>&);                           \
+    template <typename S>                                               \
+    KOKKOS_INLINE_FUNCTION                                              \
+    PCE<S> OP (const typename PCE<S>::value_type&, const PCE<S>&);      \
+    template <typename S>                                               \
+    KOKKOS_INLINE_FUNCTION                                              \
+    PCE<S> OP (const PCE<S>&, const typename PCE<S>::value_type&);      \
+  }                                                                     \
+}                                                                       \
+                                                                        \
+namespace std {                                                         \
+  using Sacado::UQ::OP;                                                 \
+}
+
+BINARYFUNC_MACRO(atan2)
+BINARYFUNC_MACRO(pow)
+
+#undef BINARYFUNC_MACRO
+
+#define BINARYFUNC_MACRO(OP)                                            \
+namespace Sacado {                                                      \
+                                                                        \
+  namespace UQ {                                                        \
+    template <typename S> class PCE;                                    \
+    template <typename S>                                               \
+    KOKKOS_INLINE_FUNCTION                                              \
+    PCE<S> OP (const typename S::value_type&, const PCE<S>&);           \
+    template <typename S>                                               \
+    KOKKOS_INLINE_FUNCTION                                              \
+    PCE<S> OP (const PCE<S>&, const typename S::value_type&);           \
+  }                                                                     \
+}                                                                       \
+                                                                        \
+namespace std {                                                         \
+  using Sacado::UQ::OP;                                                 \
+}
+
+BINARYFUNC_MACRO(max)
+BINARYFUNC_MACRO(min)
+
+#undef BINARYFUNC_MACRO
+
+#endif // STOKHOS_SACADO_KOKKOS_MATHFUNCTIONS_HPP

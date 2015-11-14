@@ -3,16 +3,16 @@
 
 using namespace Mesquite;
 
-#include "AWShapeSizeB1.hpp"
-#include "TShapeSize2DB2.hpp"
-#include "TShapeSize2DNB1.hpp"
-#include "TShapeSize2DNB2.hpp"
-#include "TShapeSize3DNB1.hpp"
-#include "TShapeSize3DB2.hpp"
-#include "TShapeSize3DB4.hpp"
-#include "TShapeSizeB1.hpp"
-#include "TShapeSizeB3.hpp"
-#include "TShapeSizeNB3.hpp"
+#include "Mesquite_AWShapeSizeB1.hpp"
+#include "Mesquite_TShapeSize2DB2.hpp"
+#include "Mesquite_TShapeSize2DNB1.hpp"
+#include "Mesquite_TShapeSize2DNB2.hpp"
+#include "Mesquite_TShapeSize3DNB1.hpp"
+#include "Mesquite_TShapeSize3DB2.hpp"
+#include "Mesquite_TShapeSize3DB4.hpp"
+#include "Mesquite_TShapeSizeB1.hpp"
+#include "Mesquite_TShapeSizeB3.hpp"
+#include "Mesquite_TShapeSizeNB3.hpp"
 
 //                            NAME     !SHAPE !SIZE !ORIENT BARRIER
 TEST_METRIC_WITH_GRAD   ( AWShapeSizeB1,  false,false, true,true , 0.0 );

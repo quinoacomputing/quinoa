@@ -52,6 +52,7 @@
 #include "Ifpack_SPARSKIT.h"
 #include "Ifpack_AdditiveSchwarz.h"
 #include "Ifpack_DenseContainer.h"
+#include "Ifpack_TriDiContainer.h"
 #include "Ifpack_SparseContainer.h"
 #ifdef HAVE_IFPACK_AMESOS
 #include "Ifpack_Amesos.h"
@@ -136,6 +137,8 @@ const Ifpack::EPrecType Ifpack::precTypeValues[Ifpack::numPrecTypes] =
   ,KRYLOV
   ,IHSS
   ,SORA
+  ,TRIDI_RELAXATION
+  ,TRIDI_RELAXATION_STAND_ALONE
 };
 
 //==============================================================================
@@ -188,6 +191,8 @@ const char* Ifpack::precTypeNames[Ifpack::numPrecTypes] =
   ,"Krylov"
   ,"IHSS"
   ,"SORa"
+  ,"tridi relaxation"
+  ,"tridi relaxation stand-alone"
 };
 
 //==============================================================================
@@ -207,7 +212,7 @@ const bool Ifpack::supportsUnsymmetric[Ifpack::numPrecTypes] =
   ,true // block relaxation stand-alone (Amesos)
   ,true // block relaxation (Amesos)
   ,true // Amesos
-  ,true // Amesos stand-alone 
+  ,true // Amesos stand-alone
 #endif
   ,false // IC
   ,false // IC stand-alone
@@ -222,7 +227,7 @@ const bool Ifpack::supportsUnsymmetric[Ifpack::numPrecTypes] =
 #endif
 #ifdef HAVE_IFPACK_HIPS
   ,true // HIPS
-#endif  
+#endif
 #ifdef HAVE_HYPRE
   ,true
 #endif
@@ -240,6 +245,8 @@ const bool Ifpack::supportsUnsymmetric[Ifpack::numPrecTypes] =
   ,true  // KRYLOV
   ,true  // IHSS
   ,true  // SORa
+  ,true  // tridi relaxation
+  ,true  // tridi relaxation standalone
 };
 
 //==============================================================================
@@ -323,9 +330,9 @@ Ifpack_Preconditioner* Ifpack::Create(EPrecType PrecType,
       return(new Ifpack_SPARSKIT(Matrix));
 #endif
 #ifdef HAVE_IFPACK_HIPS
-    case HIPS:      
+    case HIPS:
       return(new Ifpack_HIPS(Matrix));
-#endif      
+#endif
 #ifdef HAVE_HYPRE
     case HYPRE:
       return(new Ifpack_Hypre(Matrix));
@@ -337,16 +344,16 @@ Ifpack_Preconditioner* Ifpack::Create(EPrecType PrecType,
 #if defined (HAVE_IFPACK_SUPPORTGRAPH) && defined (HAVE_IFPACK_AMESOS)
     case MSF_AMESOS:
       if (serial && !overrideSerialDefault)
-	return(new Ifpack_SupportGraph<Ifpack_Amesos>(Matrix));
+        return(new Ifpack_SupportGraph<Ifpack_Amesos>(Matrix));
       else
-	return(new Ifpack_AdditiveSchwarz<Ifpack_SupportGraph<Ifpack_Amesos> >(Matrix,Overlap));
+        return(new Ifpack_AdditiveSchwarz<Ifpack_SupportGraph<Ifpack_Amesos> >(Matrix,Overlap));
 #endif
 #ifdef HAVE_IFPACK_SUPPORTGRAPH
     case MSF_IC:
       if (serial && !overrideSerialDefault)
-	return(new Ifpack_SupportGraph<Ifpack_SupportGraph<Ifpack_IC> >(Matrix));
+        return(new Ifpack_SupportGraph<Ifpack_SupportGraph<Ifpack_IC> >(Matrix));
       else
-	return(new Ifpack_AdditiveSchwarz<Ifpack_SupportGraph<Ifpack_IC> >(Matrix,Overlap));
+        return(new Ifpack_AdditiveSchwarz<Ifpack_SupportGraph<Ifpack_IC> >(Matrix,Overlap));
 #endif
     case CHEBYSHEV:
       return(new Ifpack_Chebyshev(Matrix));
@@ -359,21 +366,29 @@ Ifpack_Preconditioner* Ifpack::Create(EPrecType PrecType,
         return(new Ifpack_AdditiveSchwarz<Ifpack_Krylov>(Matrix, Overlap));
 #ifdef HAVE_IFPACK_EPETRAEXT
     case IHSS:
-      return(new Ifpack_IHSS(Matrix));  
+      return(new Ifpack_IHSS(Matrix));
     case SORA:
-      return(new Ifpack_SORa(Matrix));  
+      return(new Ifpack_SORa(Matrix));
 #endif
+    case TRIDI_RELAXATION:
+     if (serial && !overrideSerialDefault)
+      return(new Ifpack_BlockRelaxation<Ifpack_TriDiContainer>(Matrix));
+     else
+      return(new Ifpack_AdditiveSchwarz<
+             Ifpack_BlockRelaxation<Ifpack_TriDiContainer> >(Matrix,Overlap));
+    case TRIDI_RELAXATION_STAND_ALONE:
+      return(new Ifpack_BlockRelaxation<Ifpack_TriDiContainer>(Matrix));
     default:
       TEUCHOS_TEST_FOR_EXCEPT(true);
       // The only way to get here is if some code developer does a cast like
       // (EPrecType)(anyNumber).  You can never get here by passing in a
-      // string value for the preconditioner!
+      // std::string value for the preconditioner!
   } // end switch
   return 0; // This will never ever be executed!
 }
 
 //==============================================================================
-Ifpack_Preconditioner* Ifpack::Create(const string PrecType,
+Ifpack_Preconditioner* Ifpack::Create(const std::string PrecType,
                                       Epetra_RowMatrix* Matrix,
                                       const int Overlap,
                                       bool overrideSerialDefault)
@@ -394,7 +409,7 @@ Ifpack_Preconditioner* Ifpack::Create(const string PrecType,
 
 // ======================================================================
 int Ifpack::SetParameters(int argc, char* argv[],
-                          Teuchos::ParameterList& List, string& PrecType,
+                          Teuchos::ParameterList& List, std::string& PrecType,
                           int& Overlap)
 {
   // THIS FUNCTION IS VERY INCOMPLETE...
@@ -402,13 +417,13 @@ int Ifpack::SetParameters(int argc, char* argv[],
   Teuchos::CommandLineProcessor CLP;
 
   // prec type
-  string ifp_prec_type = "ILU";
+  std::string ifp_prec_type = "ILU";
   CLP.setOption("ifp-prec-type",&ifp_prec_type,"Preconditioner type");
   // overlap among the processors
   int ifp_overlap = 0;
   CLP.setOption("ifp-overlap",&ifp_overlap,"Overlap among processors");
   // relaxation type
-  string ifp_relax_type = "Jacobi";
+  std::string ifp_relax_type = "Jacobi";
   CLP.setOption("ifp-relax-type",&ifp_relax_type,"Relaxation type");
   // sweeps (for relax only)
   int ifp_relax_sweeps = 1;
@@ -419,7 +434,7 @@ int Ifpack::SetParameters(int argc, char* argv[],
   CLP.setOption("ifp-relax-damping",
                 &ifp_relax_damping,"Damping for relaxation");
   // partitioner type (for block relaxation only)
-  string ifp_part_type = "greedy";
+  std::string ifp_part_type = "greedy";
   CLP.setOption("ifp-part-type",&ifp_part_type,"Partitioner type");
   // number of local parts (for block relaxation only)
   int ifp_part_local = 1;

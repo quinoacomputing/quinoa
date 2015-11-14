@@ -302,8 +302,8 @@ dataset_writeInd(void)
     MPI_Comm_rank(MPI_COMM_WORLD,&mpi_rank);
 
     /* allocate memory for data buffer */
-    data_array1 = (DATATYPE *)malloc(dim0*dim1*sizeof(DATATYPE));
-    VRFY((data_array1 != NULL), "data_array1 malloc succeeded");
+    data_array1 = (DATATYPE *)HDmalloc(dim0*dim1*sizeof(DATATYPE));
+    VRFY((data_array1 != NULL), "data_array1 HDmalloc succeeded");
 
     /* ----------------------------------------
      * CREATE AN HDF5 FILE WITH PARALLEL ACCESS
@@ -412,7 +412,7 @@ MPI_Barrier(MPI_COMM_WORLD);
     H5Fclose(fid);
 
     /* release data buffers */
-    if(data_array1) free(data_array1);
+    if(data_array1) HDfree(data_array1);
 }
 
 /* Example of using the parallel HDF5 library to read a dataset */
@@ -447,10 +447,10 @@ dataset_readInd(void)
     MPI_Comm_rank(MPI_COMM_WORLD,&mpi_rank);
 
     /* allocate memory for data buffer */
-    data_array1 = (DATATYPE *)malloc(dim0*dim1*sizeof(DATATYPE));
-    VRFY((data_array1 != NULL), "data_array1 malloc succeeded");
-    data_origin1 = (DATATYPE *)malloc(dim0*dim1*sizeof(DATATYPE));
-    VRFY((data_origin1 != NULL), "data_origin1 malloc succeeded");
+    data_array1 = (DATATYPE *)HDmalloc(dim0*dim1*sizeof(DATATYPE));
+    VRFY((data_array1 != NULL), "data_array1 HDmalloc succeeded");
+    data_origin1 = (DATATYPE *)HDmalloc(dim0*dim1*sizeof(DATATYPE));
+    VRFY((data_origin1 != NULL), "data_origin1 HDmalloc succeeded");
 
     /* setup file access template */
     acc_tpl = create_faccess_plist(comm, info, facc_type);
@@ -520,8 +520,8 @@ dataset_readInd(void)
     H5Fclose(fid);
 
     /* release data buffers */
-    if(data_array1) free(data_array1);
-    if(data_origin1) free(data_origin1);
+    if(data_array1) HDfree(data_array1);
+    if(data_origin1) HDfree(data_origin1);
 }
 
 
@@ -583,8 +583,8 @@ dataset_writeAll(void)
     VRFY((coords != NULL), "coords malloc succeeded");
 
     /* allocate memory for data buffer */
-    data_array1 = (DATATYPE *)malloc(dim0*dim1*sizeof(DATATYPE));
-    VRFY((data_array1 != NULL), "data_array1 malloc succeeded");
+    data_array1 = (DATATYPE *)HDmalloc(dim0*dim1*sizeof(DATATYPE));
+    VRFY((data_array1 != NULL), "data_array1 HDmalloc succeeded");
 
     /* -------------------
      * START AN HDF5 FILE
@@ -1115,10 +1115,10 @@ dataset_readAll(void)
     VRFY((coords != NULL), "coords malloc succeeded");
 
     /* allocate memory for data buffer */
-    data_array1 = (DATATYPE *)malloc(dim0*dim1*sizeof(DATATYPE));
-    VRFY((data_array1 != NULL), "data_array1 malloc succeeded");
-    data_origin1 = (DATATYPE *)malloc(dim0*dim1*sizeof(DATATYPE));
-    VRFY((data_origin1 != NULL), "data_origin1 malloc succeeded");
+    data_array1 = (DATATYPE *)HDmalloc(dim0*dim1*sizeof(DATATYPE));
+    VRFY((data_array1 != NULL), "data_array1 HDmalloc succeeded");
+    data_origin1 = (DATATYPE *)HDmalloc(dim0*dim1*sizeof(DATATYPE));
+    VRFY((data_origin1 != NULL), "data_origin1 HDmalloc succeeded");
 
     /* -------------------
      * OPEN AN HDF5 FILE
@@ -1527,8 +1527,8 @@ extend_writeInd(void)
     chunk_dims[1] = chunkdim1;
 
     /* allocate memory for data buffer */
-    data_array1 = (DATATYPE *)malloc(dim0*dim1*sizeof(DATATYPE));
-    VRFY((data_array1 != NULL), "data_array1 malloc succeeded");
+    data_array1 = (DATATYPE *)HDmalloc(dim0*dim1*sizeof(DATATYPE));
+    VRFY((data_array1 != NULL), "data_array1 HDmalloc succeeded");
 
     /* -------------------
      * START AN HDF5 FILE
@@ -1707,7 +1707,7 @@ extend_writeInd(void)
     H5Fclose(fid);
 
     /* release data buffers */
-    if(data_array1) free(data_array1);
+    if(data_array1) HDfree(data_array1);
 }
 
 /*
@@ -1911,12 +1911,12 @@ extend_readInd(void)
     MPI_Comm_rank(MPI_COMM_WORLD,&mpi_rank);
 
     /* allocate memory for data buffer */
-    data_array1 = (DATATYPE *)malloc(dim0*dim1*sizeof(DATATYPE));
-    VRFY((data_array1 != NULL), "data_array1 malloc succeeded");
-    data_array2 = (DATATYPE *)malloc(dim0*dim1*sizeof(DATATYPE));
-    VRFY((data_array2 != NULL), "data_array2 malloc succeeded");
-    data_origin1 = (DATATYPE *)malloc(dim0*dim1*sizeof(DATATYPE));
-    VRFY((data_origin1 != NULL), "data_origin1 malloc succeeded");
+    data_array1 = (DATATYPE *)HDmalloc(dim0*dim1*sizeof(DATATYPE));
+    VRFY((data_array1 != NULL), "data_array1 HDmalloc succeeded");
+    data_array2 = (DATATYPE *)HDmalloc(dim0*dim1*sizeof(DATATYPE));
+    VRFY((data_array2 != NULL), "data_array2 HDmalloc succeeded");
+    data_origin1 = (DATATYPE *)HDmalloc(dim0*dim1*sizeof(DATATYPE));
+    VRFY((data_origin1 != NULL), "data_origin1 HDmalloc succeeded");
 
     /* -------------------
      * OPEN AN HDF5 FILE
@@ -2039,9 +2039,9 @@ extend_readInd(void)
     H5Fclose(fid);
 
     /* release data buffers */
-    if(data_array1) free(data_array1);
-    if(data_array2) free(data_array2);
-    if(data_origin1) free(data_origin1);
+    if(data_array1) HDfree(data_array1);
+    if(data_array2) HDfree(data_array2);
+    if(data_origin1) HDfree(data_origin1);
 }
 
 /*
@@ -2098,8 +2098,8 @@ extend_writeAll(void)
     chunk_dims[1] = chunkdim1;
 
     /* allocate memory for data buffer */
-    data_array1 = (DATATYPE *)malloc(dim0*dim1*sizeof(DATATYPE));
-    VRFY((data_array1 != NULL), "data_array1 malloc succeeded");
+    data_array1 = (DATATYPE *)HDmalloc(dim0*dim1*sizeof(DATATYPE));
+    VRFY((data_array1 != NULL), "data_array1 HDmalloc succeeded");
 
     /* -------------------
      * START AN HDF5 FILE
@@ -2303,7 +2303,7 @@ extend_writeAll(void)
     H5Fclose(fid);
 
     /* release data buffers */
-    if(data_array1) free(data_array1);
+    if(data_array1) HDfree(data_array1);
 }
 
 /* Example of using the parallel HDF5 library to read an extendible dataset */
@@ -2341,12 +2341,12 @@ extend_readAll(void)
     MPI_Comm_rank(MPI_COMM_WORLD,&mpi_rank);
 
     /* allocate memory for data buffer */
-    data_array1 = (DATATYPE *)malloc(dim0*dim1*sizeof(DATATYPE));
-    VRFY((data_array1 != NULL), "data_array1 malloc succeeded");
-    data_array2 = (DATATYPE *)malloc(dim0*dim1*sizeof(DATATYPE));
-    VRFY((data_array2 != NULL), "data_array2 malloc succeeded");
-    data_origin1 = (DATATYPE *)malloc(dim0*dim1*sizeof(DATATYPE));
-    VRFY((data_origin1 != NULL), "data_origin1 malloc succeeded");
+    data_array1 = (DATATYPE *)HDmalloc(dim0*dim1*sizeof(DATATYPE));
+    VRFY((data_array1 != NULL), "data_array1 HDmalloc succeeded");
+    data_array2 = (DATATYPE *)HDmalloc(dim0*dim1*sizeof(DATATYPE));
+    VRFY((data_array2 != NULL), "data_array2 HDmalloc succeeded");
+    data_origin1 = (DATATYPE *)HDmalloc(dim0*dim1*sizeof(DATATYPE));
+    VRFY((data_origin1 != NULL), "data_origin1 HDmalloc succeeded");
 
     /* -------------------
      * OPEN AN HDF5 FILE
@@ -2493,16 +2493,15 @@ extend_readAll(void)
     H5Fclose(fid);
 
     /* release data buffers */
-    if(data_array1) free(data_array1);
-    if(data_array2) free(data_array2);
-    if(data_origin1) free(data_origin1);
+    if(data_array1) HDfree(data_array1);
+    if(data_array2) HDfree(data_array2);
+    if(data_origin1) HDfree(data_origin1);
 }
 
 /*
  * Example of using the parallel HDF5 library to read a compressed
  * dataset in an HDF5 file with collective parallel access support.
  */
-
 #ifdef H5_HAVE_FILTER_DEFLATE
 void
 compress_readAll(void)
@@ -2534,9 +2533,9 @@ compress_readAll(void)
 
     /* Allocate data buffer */
     data_orig = (DATATYPE *)HDmalloc((size_t)dim*sizeof(DATATYPE));
-    VRFY((data_orig != NULL), "data_origin1 malloc succeeded");
+    VRFY((data_orig != NULL), "data_origin1 HDmalloc succeeded");
     data_read = (DATATYPE *)HDmalloc((size_t)dim*sizeof(DATATYPE));
-    VRFY((data_read != NULL), "data_array1 malloc succeeded");
+    VRFY((data_read != NULL), "data_array1 HDmalloc succeeded");
 
     /* Initialize data buffers */
     for(u=0; u<dim;u++)
@@ -2766,11 +2765,11 @@ none_selection_chunk(void)
     /* allocate memory for data buffer. Only allocate enough buffer for
      * each processor's data. */
     if(mpi_rank) {
-        data_origin = (DATATYPE *)malloc(block[0]*block[1]*sizeof(DATATYPE));
-        VRFY((data_origin != NULL), "data_origin malloc succeeded");
+        data_origin = (DATATYPE *)HDmalloc(block[0]*block[1]*sizeof(DATATYPE));
+        VRFY((data_origin != NULL), "data_origin HDmalloc succeeded");
 
-        data_array = (DATATYPE *)malloc(block[0]*block[1]*sizeof(DATATYPE));
-        VRFY((data_array != NULL), "data_array malloc succeeded");
+        data_array = (DATATYPE *)HDmalloc(block[0]*block[1]*sizeof(DATATYPE));
+        VRFY((data_array != NULL), "data_array HDmalloc succeeded");
 
         /* put some trivial data in the data_array */
         mstart[0] = mstart[1] = 0;
@@ -2867,8 +2866,8 @@ none_selection_chunk(void)
     H5Fclose(fid);
 
     /* release data buffers */
-    if(data_origin) free(data_origin);
-    if(data_array) free(data_array);
+    if(data_origin) HDfree(data_origin);
+    if(data_array) HDfree(data_array);
 }
 
 
@@ -3218,7 +3217,7 @@ test_actual_io_mode(int selection_mode) {
 
     /* Allocate and initialize the buffer */
     buffer = (int *)HDmalloc(sizeof(int) * length);
-    VRFY((buffer != NULL), "malloc of buffer succeeded"); 
+    VRFY((buffer != NULL), "HDmalloc of buffer succeeded"); 
     for(i = 0; i < length; i++) 
         buffer[i] = i;
 
@@ -3451,7 +3450,6 @@ actual_io_mode_tests(void) {
 #define DSET_NOCOLCAUSE "nocolcause"
 #define NELM          2
 #define FILE_EXTERNAL "nocolcause_extern.data"
-#undef H5_HAVE_FILTER_FLETCHER32
 static void 
 test_no_collective_cause_mode(int selection_mode) 
 {
@@ -3487,9 +3485,9 @@ test_no_collective_cause_mode(int selection_mode)
     hid_t       file_space = -1;
     hsize_t     chunk_dims[RANK];
     herr_t      ret;
-#ifdef H5_HAVE_FILTER_FLETCHER32            
+#ifdef LATER /* fletcher32 */
     H5Z_filter_t filter_info;
-#endif    
+#endif /* LATER */
     /* set to global value as default */
     int l_facc_type = facc_type;   
     char message[256];
@@ -3521,7 +3519,7 @@ test_no_collective_cause_mode(int selection_mode)
         is_chunked = 0;
     }
 
-#ifdef H5_HAVE_FILTER_FLETCHER32
+#ifdef LATER /* fletcher32 */
     if (selection_mode & TEST_FILTERS) {
         ret = H5Zfilter_avail(H5Z_FILTER_FLETCHER32);
         VRFY ((ret >=0 ), "Fletcher32 filter is available.\n");
@@ -3532,7 +3530,7 @@ test_no_collective_cause_mode(int selection_mode)
         ret = H5Pset_fletcher32(dcpl);
         VRFY((ret >= 0),"set filter (flecher32) succeeded");
     }
-#endif /* H5_HAVE_FILTER_FLETCHER32 */
+#endif /* LATER */
 
     if (selection_mode & TEST_NOT_SIMPLE_OR_SCALAR_DATASPACES) {
         sid = H5Screate(H5S_NULL);
@@ -3540,9 +3538,16 @@ test_no_collective_cause_mode(int selection_mode)
         is_chunked = 0;
     }
     else {
-        /* Create the basic Space */    
-        dims[0] = dim0;
-        dims[1] = dim1;
+        /* Create the basic Space */
+        /* if this is a compact dataset, create a small dataspace that does not exceed 64K */
+        if (selection_mode & TEST_NOT_CONTIGUOUS_OR_CHUNKED_DATASET_COMPACT) {
+            dims[0] = ROW_FACTOR * 6;
+            dims[1] = COL_FACTOR * 6;
+        }
+        else {
+            dims[0] = dim0;
+            dims[1] = dim1;
+        }
         sid = H5Screate_simple (RANK, dims, NULL);
         VRFY((sid >= 0), "H5Screate_simple succeeded");
     }
@@ -3606,13 +3611,13 @@ test_no_collective_cause_mode(int selection_mode)
         no_collective_cause_global_expected |= H5D_MPIO_NOT_CONTIGUOUS_OR_CHUNKED_DATASET;
     }
 
-#ifdef H5_HAVE_FILTER_FLETCHER32            
+#ifdef LATER /* fletcher32 */
     if (selection_mode & TEST_FILTERS) {
         test_name = "Broken Collective I/O - Filter is required";
         no_collective_cause_local_expected |= H5D_MPIO_FILTERS;
         no_collective_cause_global_expected |= H5D_MPIO_FILTERS;
     }
-#endif /* H5_HAVE_FILTER_FLETCHER32 */
+#endif /* LATER */
 
     if (selection_mode & TEST_COLLECTIVE) {
         test_name = "Broken Collective I/O - Not Broken";
@@ -3645,11 +3650,11 @@ test_no_collective_cause_mode(int selection_mode)
     }
 
     /* Get the number of elements in the selection */
-    length = dim0 * dim1;
+    length = dims[0] * dims[1];
 
     /* Allocate and initialize the buffer */
     buffer = (int *)HDmalloc(sizeof(int) * length);
-    VRFY((buffer != NULL), "malloc of buffer succeeded"); 
+    VRFY((buffer != NULL), "HDmalloc of buffer succeeded"); 
     for(i = 0; i < length; i++) 
         buffer[i] = i;
 
@@ -3801,9 +3806,9 @@ test_no_collective_cause_mode_filter(int selection_mode)
     hid_t       file_space = -1;
     hsize_t     chunk_dims[RANK];
     herr_t      ret;
-#ifdef H5_HAVE_FILTER_FLETCHER32            
+#ifdef LATER /* fletcher32 */
     H5Z_filter_t filter_info;
-#endif    
+#endif /* LATER */
     char message[256];
 
     /* Set up MPI parameters */
@@ -3822,7 +3827,7 @@ test_no_collective_cause_mode_filter(int selection_mode)
     VRFY((dcpl >= 0), "dataset creation plist created successfully");
 
     if (selection_mode == TEST_FILTERS_READ )  {
-#ifdef H5_HAVE_FILTER_FLETCHER32            
+#ifdef LATER /* fletcher32 */
             ret = H5Zfilter_avail(H5Z_FILTER_FLETCHER32);
             VRFY ((ret >=0 ), "Fletcher32 filter is available.\n");
 
@@ -3831,7 +3836,7 @@ test_no_collective_cause_mode_filter(int selection_mode)
 
             ret = H5Pset_fletcher32(dcpl);
             VRFY((ret >= 0),"set filter (flecher32) succeeded");
-#endif /* H5_HAVE_FILTER_FLETCHER32 */
+#endif /* LATER */
     }
     else  {
         VRFY(0, "Unexpected mode, only test for TEST_FILTERS_READ.");
@@ -3869,12 +3874,12 @@ test_no_collective_cause_mode_filter(int selection_mode)
             dcpl, H5P_DEFAULT);
     VRFY((dataset >= 0), "H5Dcreate2() dataset succeeded");
 
-#ifdef H5_HAVE_FILTER_FLETCHER32            
+#ifdef LATER /* fletcher32 */
     /* Set expected cause */
     test_name = "Broken Collective I/O - Filter is required";
     no_collective_cause_local_expected = H5D_MPIO_FILTERS;
     no_collective_cause_global_expected = H5D_MPIO_FILTERS;
-#endif
+#endif /* LATER */
 
     /* Get the file dataspace */
     file_space = H5Dget_space(dataset);
@@ -3889,7 +3894,7 @@ test_no_collective_cause_mode_filter(int selection_mode)
 
     /* Allocate and initialize the buffer */
     buffer = (int *)HDmalloc(sizeof(int) * length);
-    VRFY((buffer != NULL), "malloc of buffer succeeded"); 
+    VRFY((buffer != NULL), "HDmalloc of buffer succeeded"); 
     for(i = 0; i < length; i++) 
         buffer[i] = i;
 
@@ -4003,13 +4008,13 @@ no_collective_cause_tests(void)
     test_no_collective_cause_mode (TEST_NOT_SIMPLE_OR_SCALAR_DATASPACES);
     test_no_collective_cause_mode (TEST_NOT_CONTIGUOUS_OR_CHUNKED_DATASET_COMPACT);
     test_no_collective_cause_mode (TEST_NOT_CONTIGUOUS_OR_CHUNKED_DATASET_EXTERNAL);
-#ifdef H5_HAVE_FILTER_FLETCHER32            
+#ifdef LATER /* fletcher32 */
    /* TODO: use this instead of below TEST_FILTERS_READ when H5Dcreate and 
     * H5Dwrite is ready for mpio + filter feature.
     */
     /* test_no_collective_cause_mode (TEST_FILTERS); */
     test_no_collective_cause_mode_filter (TEST_FILTERS_READ);
-#endif    
+#endif /* LATER */ 
 
     /* 
      * Test combined causes 
@@ -4073,11 +4078,11 @@ dataset_atomicity(void)
 
     buf_size = dim0 * dim1;
     /* allocate memory for data buffer */
-    write_buf = (int *)calloc(buf_size, sizeof(int));
-    VRFY((write_buf != NULL), "write_buf malloc succeeded");
+    write_buf = (int *)HDcalloc(buf_size, sizeof(int));
+    VRFY((write_buf != NULL), "write_buf HDcalloc succeeded");
     /* allocate memory for data buffer */
-    read_buf = (int *)calloc(buf_size, sizeof(int));
-    VRFY((read_buf != NULL), "read_buf malloc succeeded");
+    read_buf = (int *)HDcalloc(buf_size, sizeof(int));
+    VRFY((read_buf != NULL), "read_buf HDcalloc succeeded");
 
     /* setup file access template */
     acc_tpl = create_faccess_plist(comm, info, facc_type);
@@ -4219,19 +4224,19 @@ dataset_atomicity(void)
     VRFY((ret >= 0), "H5D close succeeded");
 
     /* release data buffers */
-    if(write_buf) free(write_buf);
-    if(read_buf) free(read_buf);
+    if(write_buf) HDfree(write_buf);
+    if(read_buf) HDfree(read_buf);
 
     /* open dataset2 (non-contiguous case) */
     dataset2 = H5Dopen2(fid, DATASETNAME6, H5P_DEFAULT);
     VRFY((dataset2 >= 0), "H5Dopen2 succeeded");
 
     /* allocate memory for data buffer */
-    write_buf = (int *)calloc(buf_size, sizeof(int));
-    VRFY((write_buf != NULL), "write_buf malloc succeeded");
+    write_buf = (int *)HDcalloc(buf_size, sizeof(int));
+    VRFY((write_buf != NULL), "write_buf HDcalloc succeeded");
     /* allocate memory for data buffer */
-    read_buf = (int *)calloc(buf_size, sizeof(int));
-    VRFY((read_buf != NULL), "read_buf malloc succeeded");
+    read_buf = (int *)HDcalloc(buf_size, sizeof(int));
+    VRFY((read_buf != NULL), "read_buf HDcalloc succeeded");
 
     for (i=0 ; i<buf_size ; i++) {
         write_buf[i] = 5;
@@ -4341,8 +4346,8 @@ dataset_atomicity(void)
     VRFY((ret >= 0), "H5Sclose succeeded");
 
     /* release data buffers */
-    if(write_buf) free(write_buf);
-    if(read_buf) free(read_buf);
+    if(write_buf) HDfree(write_buf);
+    if(read_buf) HDfree(read_buf);
 
     ret = H5Fclose(fid);
     VRFY((ret >= 0), "H5Fclose succeeded");
@@ -4365,6 +4370,11 @@ test_dense_attr(void)
     hid_t atFileSpace, atid;
     hsize_t atDims[1] = {10000};
     herr_t status;
+    const char *filename;
+
+    /* get filename */
+    filename = (const char *)GetTestParameters();
+    HDassert( filename != NULL );
 
     /* set up MPI parameters */
     MPI_Comm_size(MPI_COMM_WORLD,&mpi_size);
@@ -4376,7 +4386,7 @@ test_dense_attr(void)
     VRFY((status >= 0), "H5Pset_libver_bounds succeeded");
     status = H5Pset_fapl_mpio(fpid, MPI_COMM_WORLD, MPI_INFO_NULL);
     VRFY((status >= 0), "H5Pset_fapl_mpio succeeded");
-    fid = H5Fcreate("ph5Dense.h5", H5F_ACC_TRUNC, H5P_DEFAULT, fpid);
+    fid = H5Fcreate(filename, H5F_ACC_TRUNC, H5P_DEFAULT, fpid);
     VRFY((fid > 0), "H5Fcreate succeeded");
     status = H5Pclose(fpid);
     VRFY((status >= 0), "H5Pclose succeeded");

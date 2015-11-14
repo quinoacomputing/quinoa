@@ -1,12 +1,12 @@
 // @HEADER
 // ***********************************************************************
-// 
+//
 //                      Didasko Tutorial Package
 //                 Copyright (2005) Sandia Corporation
-// 
+//
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -35,7 +35,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 // Questions about Didasko? Contact Marzio Sala (marzio.sala _AT_ gmail.com)
-// 
+//
 // ***********************************************************************
 // @HEADER
 
@@ -59,8 +59,8 @@
 // function declaration
 
 void  get_neighbours( const int i, const int nx, const int ny,
-		      int & left, int & right, 
-		      int & lower, int & upper);
+    int & left, int & right,
+    int & lower, int & upper);
 
 // =========== //
 // main driver //
@@ -83,14 +83,14 @@ int main(int argc, char *argv[])
 
   // create a linear map
   Epetra_Map Map(NumGlobalElements,0,Comm);
-  
+
   // local number of rows
   int NumMyElements = Map.NumMyElements();
   // get update list
   int * MyGlobalElements = Map.MyGlobalElements( );
 
   // Create an integer vector NumNz that is used to build the Petra Matrix.
-  // NumNz[i] is the Number of OFF-DIAGONAL term for the ith global equation 
+  // NumNz[i] is the Number of OFF-DIAGONAL term for the ith global equation
   // on this processor.
   // NOTE: NumNz can be specified to be an interfer, of value 5.
   // However, the procedure here reported is more general, and it is
@@ -98,24 +98,24 @@ int main(int argc, char *argv[])
   // nonzero per row can vary consistently.
 
   int * NumNz = new int[NumMyElements];
-  
+
   double off_left  = -1.0;
   double off_right = -1.0;
   double off_lower = -1.0;
   double off_upper = -1.0;
   double diag      =  4.0;
   int left, right, lower, upper;
-  
+
   for ( int i=0; i<NumMyElements; i++) {
     NumNz[i] = 1;
-    get_neighbours( MyGlobalElements[i], nx, ny, 
-		    left, right, lower, upper); 
+    get_neighbours( MyGlobalElements[i], nx, ny,
+        left, right, lower, upper);
     if( left  != -1 ) ++NumNz[i];
     if( right != -1 ) ++NumNz[i];
     if( lower != -1 ) ++NumNz[i];
     if( upper != -1 ) ++NumNz[i];
   }
-  
+
   // Create a Epetra_Matrix
   // create a CRS matrix
 
@@ -128,12 +128,12 @@ int main(int argc, char *argv[])
 
   for( int i=0 ; i<NumMyElements; ++i ) {
     int NumEntries=0;
-    get_neighbours(  MyGlobalElements[i], nx, ny, 
-		     left, right, lower, upper);
+    get_neighbours(  MyGlobalElements[i], nx, ny,
+        left, right, lower, upper);
     if( left != -1 ) {
-	Indices[NumEntries] = left;
-	Values[NumEntries] = off_left;
-	++NumEntries;
+      Indices[NumEntries] = left;
+      Values[NumEntries] = off_left;
+      ++NumEntries;
     }
     if( right != -1 ) {
       Indices[NumEntries] = right;
@@ -156,39 +156,39 @@ int main(int argc, char *argv[])
     A.InsertGlobalValues(MyGlobalElements[i], 1, &diag, MyGlobalElements+i);
   }
   cout <<  A;
-  
+
 #ifdef HAVE_MPI
   MPI_Finalize();
 #endif
 
-  delete NumNz;
-  
+  delete[] NumNz;
+
   return(EXIT_SUCCESS);
 
 }
 
 void  get_neighbours( const int i, const int nx, const int ny,
-		      int & left, int & right, 
-		      int & lower, int & upper) 
+    int & left, int & right,
+    int & lower, int & upper)
 {
 
   int ix, iy;
   ix = i%nx;
   iy = (i - ix)/nx;
 
-  if( ix == 0 ) 
+  if( ix == 0 )
     left = -1;
-  else 
+  else
     left = i-1;
-  if( ix == nx-1 ) 
+  if( ix == nx-1 )
     right = -1;
   else
     right = i+1;
-  if( iy == 0 ) 
+  if( iy == 0 )
     lower = -1;
   else
     lower = i-nx;
-  if( iy == ny-1 ) 
+  if( iy == ny-1 )
     upper = -1;
   else
     upper = i+nx;
@@ -205,7 +205,7 @@ void  get_neighbours( const int i, const int nx, const int ny,
 int main(int argc, char *argv[])
 {
   puts("Please configure Didasko with:\n"
-       "--enable-epetra");
+      "--enable-epetra");
 
   return 0;
 }

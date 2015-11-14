@@ -5,7 +5,6 @@
 #ifndef DEBUG_H
 #define DEBUG_H
 
-
 #if 0
 #define DAPDEBUG 1
 #define OCDEBUG 1
@@ -73,4 +72,3 @@ extern int dapthrow(int err);
 #define LOG2(level,msg,a1,a2) nclog(level,msg,a1,a2)
 
 #endif /*DEBUG_H*/
-

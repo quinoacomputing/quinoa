@@ -1,12 +1,12 @@
 \chapter{Mesquite Wrapper Descriptions}
 \label{sec:wrappers}
 
-Applications which desire to access Mesquite capabilities without delving 
-into the low-level API can invoke wrappers to perform basic mesh quality 
-improvement tasks that, except for a few user-defined inputs, are fully 
-automatic. The wrappers target classic mesh optimization problems that occur 
+Applications which desire to access Mesquite capabilities without delving
+into the low-level API can invoke wrappers to perform basic mesh quality
+improvement tasks that, except for a few user-defined inputs, are fully
+automatic. The wrappers target classic mesh optimization problems that occur
 repeatedly across many applications. See section 3.1.3 for an example of how
-to invoke a wrapper. 
+to invoke a wrapper.
 This chapter provides a summary of the current Mesquite wrappers. \newline
 
 \noindent Note that the wrappers do not, by themselves, completely define
@@ -17,10 +17,10 @@ and the values of the termination criteria.  \newline
 
 \noindent {\it Name}: LaplaceWrapper \newline
 \noindent {\it Purpose}: Produce a {\it smooth} mesh. \newline
-\noindent {\it Notes}: This is a local patch relaxation-solver. A 'smart' 
-Laplacian solver is also available in Mesquite, but it is not used in this 
+\noindent {\it Notes}: This is a local patch relaxation-solver. A 'smart'
+Laplacian solver is also available in Mesquite, but it is not used in this
 wrapper.  \newline
-\noindent {\it Limitations/assumptions}: No invertibility guarantee. \newline 
+\noindent {\it Limitations/assumptions}: No invertibility guarantee. \newline
 \noindent {\it Input Termination Criterion}: Stop after 10 global iterations. \newline \newline
 
 \noindent Under the Cover: \newline
@@ -68,7 +68,7 @@ wrapper.  \newline
 \end{verbatim}
 \begin{figure*}[htbp]
 \begin{center}
-    \includegraphics[height=75mm]{inverted-hole-1.eps}
+    \includegraphics[height=75mm]{figures/inverted-hole-1}
     \caption{LaplaceWrapper, file: inverted-hole-1.vtk mesh. The original mesh is on the left, the mesh smoothed with the \texttt{LaplacianSmoother} is shown on the right.}
     \label{fig:inverted_hole_1}
 \end{center}
@@ -79,12 +79,12 @@ wrapper.  \newline
 \section{Shape-Improvement} \label{sec:ShapeImprover}
 
 \noindent {\it Name}: ShapeImprover \newline
-\noindent {\it Purpose}: Make the shape of an element as close as possible to 
-that of the ideal/regular element shape. For example, make triangular and 
+\noindent {\it Purpose}: Make the shape of an element as close as possible to
+that of the ideal/regular element shape. For example, make triangular and
 tetrahedral elements equilateral.  The wrapper will use a non-barrier metric on meshes that contain inverted elements
-and will use a barrier metric if the mesh does not contain inverted elements.  The default CPU time limit is 300 seconds.\newline 
+and will use a barrier metric if the mesh does not contain inverted elements.  The default CPU time limit is 300 seconds.\newline
 \noindent {\it Notes}: There is no guarantee that the wrapper will be able to successfully untangle a mesh that contains inverted elements.\newline
-\noindent {\it Limitations/assumptions}:  \newline 
+\noindent {\it Limitations/assumptions}:  \newline
 \noindent {\it Input Termination Criterion}: CPU time limit of 300 seconds or maximum absolute vertex movement of 10 percent of the minimum edge length. \newline \newline
 
 \noindent Under the Cover: \newline
@@ -133,7 +133,7 @@ and will use a barrier metric if the mesh does not contain inverted elements.  T
 
 \begin{figure*}[htbp]
 \begin{center}
-    \includegraphics[height=80mm]{horseshoe-10x4.eps}
+    \includegraphics[height=80mm]{figures/horseshoe-10x4}
     \caption{ShapeImproverWrapper, file: tfi\_horse10x4-12.vtk mesh. The original mesh is on the left, the improved mesh is shown on the right.}
     \label{fig:inverted-hole-1}
 \end{center}
@@ -148,8 +148,8 @@ and will use a barrier metric if the mesh does not contain inverted elements.  T
 element shape or other mesh quality measures.  \newline
 \noindent {\it Notes}: A second optimization to improve element quality
 after untangling is often necessary.  \newline
-\noindent {\it Limitations/assumptions}: There is no guarantee that the optimal mesh computed using this wrapper will, in fact, be untangled.  \newline 
-\noindent {\it Input Termination Criterion}: CPU time limit (not used if input 
+\noindent {\it Limitations/assumptions}: There is no guarantee that the optimal mesh computed using this wrapper will, in fact, be untangled.  \newline
+\noindent {\it Input Termination Criterion}: CPU time limit (not used if input
 value is non-positive) or fraction of mean edge length (default is 0.005).  It
 also terminates if all elements are untangled, such that it should not modify
 an input mesh with no inverted elements. \newline \newline
@@ -202,7 +202,7 @@ an input mesh with no inverted elements. \newline \newline
 
 \begin{figure*}[htbp]
 \begin{center}
-    \includegraphics[height=80mm]{shest_grid32.eps}
+    \includegraphics[height=80mm]{figures/shest_grid32}
     \caption{UntangleWrapper, TShapeSizeNB1 option, file: shest\_grid32.vtk mesh. The original mesh is on the left, the untangled mesh is shown on the right.}
     \label{fig:shest_grid32}
 \end{center}
@@ -213,11 +213,11 @@ an input mesh with no inverted elements. \newline \newline
 \section{Minimum Edge-Length Improvement} \label{sec:PaverMinEdgeLengthWrapper}
 
 \noindent {\it Name}: PaverMinEdgeLengthWrapper \newline
-\noindent {\it Purpose}: Make all the edges in the mesh of equal length while 
-moving toward the ideal shape. Intended for explicit PDE codes whose 
+\noindent {\it Purpose}: Make all the edges in the mesh of equal length while
+moving toward the ideal shape. Intended for explicit PDE codes whose
 time-step limination is governed by the minimum edge-length in the mesh. \newline
 \noindent {\it Notes}: Based on Target-matrix paradigm. \newline
-\noindent {\it Limitations/assumptions}: Initial mesh must be non-inverted. User does not want to preserve or create anisotropic elements. \newline 
+\noindent {\it Limitations/assumptions}: Initial mesh must be non-inverted. User does not want to preserve or create anisotropic elements. \newline
 \noindent {\it Input Termination Criterion}: maximum iterations (default=50), maximum absolute vertex movement \newline \newline
 
 \noindent Under the Cover: \newline
@@ -289,12 +289,12 @@ time-step limination is governed by the minimum edge-length in the mesh. \newlin
 
 \begin{figure*}[htbp]
 \begin{center}
-    \includegraphics[height=100mm]{min-edge-length.eps}
+    \includegraphics[height=100mm]{figures/min-edge-length}
     \caption{PaverMinEdgeLengthWrapper, file: quads\_4by2\_bad.vtk mesh. The original mesh is on the top, the improved mesh is shown on the bottom.}
     \label{fig:min_edge-length}
 \end{center}
 \end{figure*}
- 
+
 \newpage
 
 \section{Improve the Shapes in a Size-adapted Mesh} \label{sec:SizeAdaptShapeWrapper}
@@ -303,9 +303,9 @@ time-step limination is governed by the minimum edge-length in the mesh. \newlin
 \noindent {\it Purpose}: Make the shape of an element as close as possible to that
 of the ideal element shape, {\it while preserving, as much as possible, the size of each element in the mesh}. To be used on isotropic initial meshes that are already size-adapted. \newline
 \noindent {\it Notes}: Based on Target-matrix Paradigm. \newline
-\noindent {\it Limitations/assumptions}: Initial mesh must be non-inverted. 
-User wants to preserve sizes of elements in initial mesh and does not want to preserve or 
-create anisotropic elements.  \newline 
+\noindent {\it Limitations/assumptions}: Initial mesh must be non-inverted.
+User wants to preserve sizes of elements in initial mesh and does not want to preserve or
+create anisotropic elements.  \newline
 \noindent {\it Input Termination Criterion}: maximum iterations (default=50), maximum absolute vertex movement \newline \newline
 
 \noindent Under the Cover: \newline
@@ -377,7 +377,7 @@ create anisotropic elements.  \newline
 
 \begin{figure*}[htbp]
 \begin{center}
-    \includegraphics[height=80mm]{bias-sphere-quads.eps}
+    \includegraphics[height=80mm]{figures/bias-sphere-quads}
     \caption{SizeAdaptShapeWrapper, file: bias-sphere-quads.vtk mesh. The original mesh is on the left, the improved mesh is shown on the right.}
     \label{fig:shest_grid32}
 \end{center}
@@ -388,13 +388,13 @@ create anisotropic elements.  \newline
 \section{Improve Sliver Tets in a Viscous CFD Mesh} \label{sec:ViscousCFDTetShapeWrapper}
 
 \noindent {\it Name}: ViscousCFDTetShapeWrapper \newline
-\noindent {\it Purpose}: Improve the shape of sliver elements in the far-field 
-of a CFD mesh while 
+\noindent {\it Purpose}: Improve the shape of sliver elements in the far-field
+of a CFD mesh while
 preserving an existing layer of sliver elements in the boundary layer. \newline
 \noindent Notes: Based on Target-matrix paradigm.  \newline
-\noindent {\it Limitations/assumptions}: Tetrahedral meshes only.  \newline 
+\noindent {\it Limitations/assumptions}: Tetrahedral meshes only.  \newline
 \noindent {\it Input Termination Criterion}: Iteration Count (default=50) or Maximum Absolution Vertex Movement \newline \newline
- 
+
 \noindent Under the Cover: \newline
 \noindent {\it Hardwired Parameters}: In tradeoff coefficient model. \newline
 \noindent {\it Metric}: Target2DShape+Target2DShapeSizeOrient (or 3D) (or Barrier) \newline
@@ -416,8 +416,8 @@ preserving an existing layer of sliver elements in the boundary layer. \newline
 to guide optimization of mesh moved to deformed geometric domain.  \newline
 \noindent {\it Notes}: Uses a non-barrier metric which means that the
 wrapper could potentially invert/tangle elements.  \newline
-\noindent {\it Limitations/assumptions}:  Application responsible for explicit handling of mesh on geometric curves and points.  Initial mesh before moving to deformed domain must be available.\newline 
-\noindent {\it Input Termination Criterion}: CPU time limit (not used if input 
+\noindent {\it Limitations/assumptions}:  Application responsible for explicit handling of mesh on geometric curves and points.  Initial mesh before moving to deformed domain must be available.\newline
+\noindent {\it Input Termination Criterion}: CPU time limit (not used if input
 value is non-positive) or fraction of mean edge length (default is 0.005). \newline \newline
 
 \noindent Under the Cover: \newline
@@ -472,7 +472,7 @@ value is non-positive) or fraction of mean edge length (default is 0.005). \newl
 
 \begin{figure*}[htbp]
 \begin{center}
-    \includegraphics[height=80mm]{sph-10-zsquare.eps}
+    \includegraphics[height=80mm]{figures/sph-10-zsquare}
     \caption{DeformingDomainWrapper, file: sph-10-zsquare.vtk mesh. The original mesh is on the left, the improved mesh is shown on the right.}
     \label{fig:sph-10-zsquare}
 \end{center}

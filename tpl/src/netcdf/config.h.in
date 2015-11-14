@@ -3,8 +3,8 @@
 /* Define if building universal (internal helper macro) */
 #undef AC_APPLE_UNIVERSAL_BUILD
 
-/* if true, build RPC Client and Server */
-#undef BUILD_RPC
+/* If true, will attempt to download and build netcdf-fortran. */
+#undef BUILD_FORTRAN
 
 /* default file chunk cache nelems. */
 #undef CHUNK_CACHE_NELEMS
@@ -63,6 +63,9 @@
 /* Is CURLINFO_RESPONSE_CODE defined */
 #undef HAVE_CURLINFO_RESPONSE_CODE
 
+/* Is CURLOPT_CHUNK_BGN_FUNCTION defined */
+#undef HAVE_CURLOPT_CHUNK_BGN_FUNCTION
+
 /* Is CURLOPT_KEYPASSWD defined */
 #undef HAVE_CURLOPT_KEYPASSWD
 
@@ -119,6 +122,9 @@
 /* Define to 1 if you have the `gettimeofday' function. */
 #undef HAVE_GETTIMEOFDAY
 
+/* Define to 1 if you have the `H5free_memory' function. */
+#undef HAVE_H5FREE_MEMORY
+
 /* Define to 1 if you have the `H5Pget_fapl_mpio' function. */
 #undef HAVE_H5PGET_FAPL_MPIO
 
@@ -133,6 +139,9 @@
 
 /* Define to 1 if you have the <hdf5.h> header file. */
 #undef HAVE_HDF5_H
+
+/* Define to 1 if the system has the type `int64'. */
+#undef HAVE_INT64
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
@@ -302,17 +311,33 @@
 /* Define to 1 if the system has the type `uchar'. */
 #undef HAVE_UCHAR
 
+/* Define to 1 if the system has the type `uint'. */
+#undef HAVE_UINT
+
+/* Define to 1 if the system has the type `uint64'. */
+#undef HAVE_UINT64
+
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
 
 /* Define to 1 if the system has the type `unsigned long long int'. */
 #undef HAVE_UNSIGNED_LONG_LONG_INT
 
+/* Define to 1 if the system has the type `ushort'. */
+#undef HAVE_USHORT
+
 /* Define to 1 if you have the `vprintf' function. */
 #undef HAVE_VPRINTF
 
 /* Define to 1 if the system has the type `_Bool'. */
 #undef HAVE__BOOL
+
+/* if true, H5free_memory() will be used to free hdf5-allocated memory in
+   nc4file. */
+#undef HDF5_HAS_H5FREE
+
+/* if true, hdf5 has parallelism enabled */
+#undef HDF5_PARALLEL
 
 /* if true, include JNA bug fix */
 #undef JNA
@@ -323,8 +348,7 @@
 /* If true, turn on logging. */
 #undef LOGGING
 
-/* Define to the sub-directory in which libtool stores uninstalled libraries.
-   */
+/* Define to the sub-directory where libtool stores uninstalled libraries. */
 #undef LT_OBJDIR
 
 /* max size of the default per-var chunk cache. */
@@ -384,11 +408,29 @@
 /* The size of `off_t', as computed by sizeof. */
 #undef SIZEOF_OFF_T
 
+/* The size of `ptrdiff_t', as computed by sizeof. */
+#undef SIZEOF_PTRDIFF_T
+
 /* The size of `short', as computed by sizeof. */
 #undef SIZEOF_SHORT
 
 /* The size of `size_t', as computed by sizeof. */
 #undef SIZEOF_SIZE_T
+
+/* The size of `uint', as computed by sizeof. */
+#undef SIZEOF_UINT
+
+/* The size of `unsigned int', as computed by sizeof. */
+#undef SIZEOF_UNSIGNED_INT
+
+/* The size of `unsigned long long', as computed by sizeof. */
+#undef SIZEOF_UNSIGNED_LONG_LONG
+
+/* The size of `unsigned short int', as computed by sizeof. */
+#undef SIZEOF_UNSIGNED_SHORT_INT
+
+/* The size of `ushort', as computed by sizeof. */
+#undef SIZEOF_USHORT
 
 /* If using the C implementation of alloca, define if you know the
    direction of stack growth for your system; otherwise it will be
@@ -406,9 +448,6 @@
 
 /* Define to 1 if you can safely include both <sys/time.h> and <time.h>. */
 #undef TIME_WITH_SYS_TIME
-
-/* if true, build CDMREMOTE Client */
-#undef USE_CDMREMOTE
 
 /* if true, build DAP Client */
 #undef USE_DAP
@@ -441,8 +480,14 @@
 /* if true, build netCDF-4 */
 #undef USE_NETCDF4
 
+/* build the netCDF version 2 API */
+#undef USE_NETCDF_2
+
 /* if true, pnetcdf or parallel netcdf-4 is in use */
 #undef USE_PARALLEL
+
+/* if true, parallel netcdf-4 is in use */
+#undef USE_PARALLEL4
 
 /* if true, compile in parallel netCDF-4 based on MPI/IO */
 #undef USE_PARALLEL_MPIO
@@ -452,6 +497,9 @@
 
 /* if true, parallel netCDF is used */
 #undef USE_PNETCDF
+
+/* if true, use stdio instead of posixio */
+#undef USE_STDIO
 
 /* if true, compile in szip compression in netCDF-4 variables */
 #undef USE_SZIP

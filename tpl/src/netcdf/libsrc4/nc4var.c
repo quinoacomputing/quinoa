@@ -266,8 +266,22 @@ nc4_find_default_chunksizes2(NC_GRP_INFO_T *grp, NC_VAR_INFO_T *var)
 	  var->chunksizes[d] = 1; /* overwritten below, if all dims are unlimited */
       }
    }
-
-   if (var->ndims > 0 && var->ndims == num_unlim) { /* all dims unlimited */
+   /* Special case to avoid 1D vars with unlim dim taking huge amount
+      of space (DEFAULT_CHUNK_SIZE bytes). Instead we limit to about
+      4KB */
+#define DEFAULT_1D_UNLIM_SIZE (4096) /* TODO: make build-time parameter? */
+   if (var->ndims == 1 && num_unlim == 1) {
+       if (DEFAULT_CHUNK_SIZE / type_size <= 0)
+	 suggested_size = 1;
+       else if (DEFAULT_CHUNK_SIZE / type_size > DEFAULT_1D_UNLIM_SIZE)
+	 suggested_size = DEFAULT_1D_UNLIM_SIZE;
+       else
+	 suggested_size = DEFAULT_CHUNK_SIZE / type_size;
+       var->chunksizes[0] = suggested_size / type_size;
+       LOG((4, "%s: name %s dim %d DEFAULT_CHUNK_SIZE %d num_values %f type_size %d "
+	    "chunksize %ld", __func__, var->name, d, DEFAULT_CHUNK_SIZE, num_values, type_size, var->chunksizes[0]));
+   }
+   if (var->ndims > 1 && var->ndims == num_unlim) { /* all dims unlimited */
        suggested_size = pow((double)DEFAULT_CHUNK_SIZE/type_size, 1.0/(double)(var->ndims));
        for (d = 0; d < var->ndims; d++)
        {
@@ -413,7 +427,7 @@ nc_def_var_nc4(int ncid, const char *name, nc_type xtype,
    strcpy(var->name, norm_name);
    var->varid = grp->nvars++;
    var->ndims = ndims;
-   var->dirty = NC_TRUE;
+   var->is_new_var = NC_TRUE;
    
    /* If this is a user-defined type, there is a type_info struct with
     * all the type information. For atomic types, fake up a type_info
@@ -522,7 +536,12 @@ nc_def_var_nc4(int ncid, const char *name, nc_type xtype,
       }
 
       /* Check for unlimited dimension and turn off contiguous storage */
+      /* (unless HDF4 file) */
+#ifdef USE_HDF4
+      if (dim->unlimited && !h5->hdf4)
+#else
       if (dim->unlimited)
+#endif
 	 var->contiguous = NC_FALSE;
 
       /* Track dimensions for variable */
@@ -802,12 +821,17 @@ nc_def_var_extra(int ncid, int varid, int *shuffle, int *deflate,
    NC_DIM_INFO_T *dim;
    int d;
    int retval;
+   nc_bool_t ishdf4 = NC_FALSE; /* Use this to avoid so many ifdefs */
 
    LOG((2, "%s: ncid 0x%x varid %d", __func__, ncid, varid));
 
    /* Find info for this file and group, and set pointer to each. */
    if ((retval = nc4_find_nc_grp_h5(ncid, &nc, &grp, &h5)))
       return retval;
+
+#ifdef USE_HDF4
+   ishdf4 = h5->hdf4;
+#endif
 
    /* Attempting to do any of these things on a netCDF-3 file produces
     * an error. */
@@ -868,7 +892,7 @@ nc_def_var_extra(int ncid, int varid, int *shuffle, int *deflate,
       var->contiguous = NC_FALSE;
    }
 
-   /* Fltcher32 checksum error protection? */
+   /* Fletcher32 checksum error protection? */
    if (fletcher32)
    {
       var->fletcher32 = *fletcher32;
@@ -883,6 +907,7 @@ nc_def_var_extra(int ncid, int varid, int *shuffle, int *deflate,
       if (var->deflate || var->fletcher32 || var->shuffle)
 	 return NC_EINVAL;
       
+     if (!ishdf4) {
       for (d = 0; d < var->ndims; d++)
       {
 	 if ((retval = nc4_find_dim(grp, var->dimids[d], &dim, NULL)))
@@ -890,12 +915,12 @@ nc_def_var_extra(int ncid, int varid, int *shuffle, int *deflate,
 	 if (dim->unlimited)
 	    return NC_EINVAL;
       }
-
       var->contiguous = NC_TRUE;
+    }
    }
 
    /* Chunksizes anyone? */
-   if (contiguous && *contiguous == NC_CHUNKED)
+   if (!ishdf4 && contiguous && *contiguous == NC_CHUNKED)
    {
       var->contiguous = NC_FALSE;
 
@@ -906,6 +931,10 @@ nc_def_var_extra(int ncid, int varid, int *shuffle, int *deflate,
 
 	 if ((retval = check_chunksizes(grp, var, chunksizes)))
 	    return retval;
+	 for (d = 0; d < var->ndims; d++) {
+	    if(var->dim[d]->len > 0 && chunksizes[d] > var->dim[d]->len)
+	       return NC_EBADCHUNK;
+	 }
 
 	 /* Set the chunksizes for this variable. */
 	 for (d = 0; d < var->ndims; d++)
@@ -984,7 +1013,7 @@ NC4_def_var_fletcher32(int ncid, int varid, int fletcher32)
    and before nc_enddef. 
 
    Chunking is required in any dataset with one or more unlimited
-   dimension in HDF5, or any dataset using a filter.
+   dimensions in HDF5, or any dataset using a filter.
 
    Where chunksize is a pointer to an array of size ndims, with the
    chunksize in each dimension. 
@@ -1005,11 +1034,13 @@ nc_inq_var_chunking_ints(int ncid, int varid, int *contiguousp, int *chunksizesp
    NC *nc;
    NC_GRP_INFO_T *grp; 
    NC_VAR_INFO_T *var;
+   NC_HDF5_FILE_INFO_T *h5;
+
    size_t *cs = NULL;
    int i, retval;
 
    /* Find this ncid's file info. */
-   if ((retval = nc4_find_nc_grp_h5(ncid, &nc, &grp, NULL)))
+   if ((retval = nc4_find_nc_grp_h5(ncid, &nc, &grp, &h5)))
       return retval;
    assert(nc);
 
@@ -1050,13 +1081,19 @@ nc_def_var_chunking_ints(int ncid, int varid, int contiguous, int *chunksizesp)
    NC *nc;
    NC_GRP_INFO_T *grp; 
    NC_VAR_INFO_T *var;
+   NC_HDF5_FILE_INFO_T *h5;
    size_t *cs = NULL;
    int i, retval;
 
    /* Find this ncid's file info. */
-   if ((retval = nc4_find_nc_grp_h5(ncid, &nc, &grp, NULL)))
+   if ((retval = nc4_find_nc_grp_h5(ncid, &nc, &grp, &h5)))
       return retval;
    assert(nc);
+
+#ifdef USE_HDF4
+   if(h5->hdf4)
+	return NC_NOERR;
+#endif  
 
    /* Find var cause I need the number of dims. */
    if ((retval = nc4_find_g_var_nc(nc, ncid, varid, &grp, &var)))
@@ -1156,7 +1193,7 @@ NC4_rename_var(int ncid, int varid, const char *name)
    NC *nc;
    NC_GRP_INFO_T *grp; 
    NC_HDF5_FILE_INFO_T *h5;
-   NC_VAR_INFO_T *var;
+   NC_VAR_INFO_T *var, *tmp_var;
    int retval = NC_NOERR;
 
    LOG((2, "%s: ncid 0x%x varid %d name %s", 
@@ -1187,17 +1224,18 @@ NC4_rename_var(int ncid, int varid, const char *name)
    if ((retval = NC_check_name(name)))
       return retval;
 
-   /* Is name in use? */
+   /* Check if name is in use, and retain a pointer to the correct variable */
+   tmp_var = NULL;
    for (var = grp->var; var; var = var->l.next)
+   {
       if (!strncmp(var->name, name, NC_MAX_NAME))
          return NC_ENAMEINUSE;   
-
-   /* Find the var. */
-   for (var = grp->var; var; var = var->l.next)
       if (var->varid == varid)
-         break;
-   if (!var)
+         tmp_var = var;
+   }
+   if (!tmp_var)
       return NC_ENOTVAR;
+   var = tmp_var;
 
    /* If we're not in define mode, new name must be of equal or
       less size, if strict nc3 rules are in effect for this . */
@@ -1259,7 +1297,7 @@ NC4_rename_var(int ncid, int varid, const char *name)
 int
 NC4_var_par_access(int ncid, int varid, int par_access) 
 {
-#ifndef USE_PARALLEL
+#ifndef USE_PARALLEL4
    return NC_ENOPAR;
 #else
    NC *nc; 
@@ -1309,7 +1347,7 @@ NC4_var_par_access(int ncid, int varid, int par_access)
    else
       var->parallel_access = NC_INDEPENDENT;
    return NC_NOERR;
-#endif /* USE_PARALLEL */
+#endif /* USE_PARALLEL4 */
 }
 
 static int

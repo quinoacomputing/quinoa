@@ -19,7 +19,7 @@
 //  
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
 // USA
 // Questions? Contact Michael A. Heroux (maherou@sandia.gov) 
 // 
@@ -442,7 +442,11 @@ int Amesos_Superludist::Factor()
     FactorizationDone_ = true;   // i.e. clean up Superlu data structures in the destructor
 
     ScalePermstructInit(NumGlobalRows_, NumGlobalRows_, &PrivateSuperluData_->ScalePermstruct_);
+#ifdef HAVE_SUPERLUDIST_LUSTRUCTINIT_2ARG
+    LUstructInit(NumGlobalRows_, &PrivateSuperluData_->LUstruct_);
+#else
     LUstructInit(NumGlobalRows_, NumGlobalRows_, &PrivateSuperluData_->LUstruct_);
+#endif
 
     // stick options from ParameterList to options_ structure
     // Here we follow the same order of the SuperLU_dist 2.0 manual (pag 55/56)
@@ -473,8 +477,24 @@ int Amesos_Superludist::Factor()
     else                    PrivateSuperluData_->options_.ReplaceTinyPivot = (yes_no_t)NO;
 
     if( IterRefine_ == "NO" ) PrivateSuperluData_->options_.IterRefine = (IterRefine_t)NO;
-    else if( IterRefine_ == "DOUBLE" ) PrivateSuperluData_->options_.IterRefine = DOUBLE;
-    else if( IterRefine_ == "EXTRA" ) PrivateSuperluData_->options_.IterRefine = EXTRA;
+    else if( IterRefine_ == "DOUBLE" ) {
+      PrivateSuperluData_->options_.IterRefine =
+#ifdef HAVE_SUPERLUDIST_ENUM_NAMESPACE
+        SLU_DOUBLE
+#else
+        DOUBLE
+#endif
+        ;
+    }
+    else if( IterRefine_ == "EXTRA" ) {
+      PrivateSuperluData_->options_.IterRefine =
+#ifdef HAVE_SUPERLUDIST_ENUM_NAMESPACE
+        SLU_EXTRA
+#else
+        EXTRA
+#endif
+        ;
+    }
 
     //  Without the following two lines, SuperLU_DIST cannot be made
     //  quiet.

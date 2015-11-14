@@ -1,9 +1,9 @@
 /* @HEADER@ */
 // ************************************************************************
-// 
+//
 //                             Sundance
 //                 Copyright 2011 Sandia Corporation
-// 
+//
 // Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
 // the U.S. Government retains certain rights in this software.
 //
@@ -35,7 +35,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 // Questions? Contact Kevin Long (kevin.long@ttu.edu)
-// 
+//
 
 /* @HEADER@ */
 
@@ -54,7 +54,7 @@ using namespace Sundance;
 
 
 MeshReaderBase::MeshReaderBase(const ParameterList& params)
-  : MeshSourceBase(params), 
+  : MeshSourceBase(params),
     filename_()
 {
   filename_ = params.get<string>("Filename");
@@ -62,7 +62,7 @@ MeshReaderBase::MeshReaderBase(const ParameterList& params)
 
 
 
-int MeshReaderBase::atoi(const std::string& x) const 
+int MeshReaderBase::atoi(const std::string& x) const
 {
 #ifndef TFLOP
   return std::atoi(x.c_str());
@@ -71,7 +71,7 @@ int MeshReaderBase::atoi(const std::string& x) const
 #endif
 }
 
-double MeshReaderBase::atof(const std::string& x) const 
+double MeshReaderBase::atof(const std::string& x) const
 {
 #ifndef TFLOP
   return std::atof(x.c_str());
@@ -80,14 +80,14 @@ double MeshReaderBase::atof(const std::string& x) const
 #endif
 }
 
-bool MeshReaderBase::isEmptyLine(const std::string& x) const 
+bool MeshReaderBase::isEmptyLine(const std::string& x) const
 {
   return x.length()==0 || StrUtils::isWhite(x);
 }
 
 bool MeshReaderBase::getNextLine(std::istream& is, std::string& line,
                                          Array<string>& tokens,
-                                         char comment) const 
+                                         char comment) const
 {
   bool rtn = false;
   while ((rtn=StrUtils::readLine(is, line)))
@@ -103,7 +103,7 @@ bool MeshReaderBase::getNextLine(std::istream& is, std::string& line,
   return rtn;
 }
 
-RCP<std::ifstream> MeshReaderBase::openFile(const std::string& fname, 
+RCP<std::ifstream> MeshReaderBase::openFile(const std::string& fname,
                                                const std::string& description) const
 {
   std::string f = searchForFile(fname);
@@ -112,7 +112,7 @@ RCP<std::ifstream> MeshReaderBase::openFile(const std::string& fname,
   SUNDANCE_OUT(this->verb() > 2,
                "trying to open " << description << " file " << f);
 
-  TEUCHOS_TEST_FOR_EXCEPTION(rtn.get()==0 || *rtn==0, std::runtime_error, 
+  TEUCHOS_TEST_FOR_EXCEPTION(rtn.get()==0 || ! (*rtn), std::runtime_error,
                      "MeshReaderBase::openFile() unable to open "
                      << description << " file " << f);
 

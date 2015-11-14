@@ -6,6 +6,7 @@
 
 #include "config.h"
 #include <stdio.h>
+#include <stdlib.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -175,10 +176,10 @@ main(
 		    return(1);
 		}
 		(void)strcpy(kind_name, optarg);
-		/* The default kind is kind 1, with 32-bit offsets */
+		/* The default kind is kind 1 (classic), with 32-bit offsets */
 		if (strcmp(kind_name, "1") == 0 || 
 		    strcmp(kind_name, "classic") == 0) {
-		    cmode_modifier = 0;
+		    cmode_modifier |= NC_CLASSIC_MODEL;
 		}
 		/* The 64-bit offset kind (2)  should only be used if actually needed */
 		else if (strcmp(kind_name, "2") == 0 || 
@@ -205,6 +206,7 @@ main(
 		   derror("Invalid format, try classic, 64-bit offset, netCDF-4, or netCDF-4 classic model");
 		   return 2;
 		}
+		free(kind_name);
 	    }
 	  break;
 	case '?':
@@ -240,4 +242,4 @@ main(
 	return 1;
     return 0;
 }
-END_OF_MAIN();
+END_OF_MAIN()

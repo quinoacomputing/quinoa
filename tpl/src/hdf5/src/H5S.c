@@ -145,16 +145,17 @@ H5S_term_interface(void)
     FUNC_ENTER_NOAPI_NOINIT_NOERR
 
     if(H5_interface_initialize_g) {
-	if((n = H5I_nmembers(H5I_DATASPACE))) {
-	    H5I_clear_type(H5I_DATASPACE, FALSE, FALSE);
+	if(H5I_nmembers(H5I_DATASPACE) > 0) {
+	    (void)H5I_clear_type(H5I_DATASPACE, FALSE, FALSE);
+            n++; /*H5I*/
 	} /* end if */
         else {
-	    /* Free data types */
-	    H5I_dec_type_ref(H5I_DATASPACE);
+            /* Destroy the dataspace object id group */
+	    (void)H5I_dec_type_ref(H5I_DATASPACE);
+            n++; /*H5I*/
 
 	    /* Shut down interface */
 	    H5_interface_initialize_g = 0;
-	    n = 1; /*H5I*/
 	} /* end else */
     } /* end if */
 
@@ -189,7 +190,7 @@ H5S_create(H5S_class_t type)
     FUNC_ENTER_NOAPI(NULL)
 
     /* Create a new dataspace */
-    if(NULL == (new_ds = H5FL_MALLOC(H5S_t)))
+    if(NULL == (new_ds = H5FL_CALLOC(H5S_t)))
         HGOTO_ERROR(H5E_RESOURCE, H5E_NOSPACE, NULL, "memory allocation failed")
 
     /* Initialize default dataspace state */
@@ -481,6 +482,12 @@ H5Sextent_copy(hid_t dst_id,hid_t src_id)
     if(H5S_extent_copy(&(dst->extent), &(src->extent), TRUE) < 0)
         HGOTO_ERROR(H5E_DATASPACE, H5E_CANTCOPY, FAIL, "can't copy extent")
 
+    /* If the selection is 'all', update the number of elements selected in the
+     * destination space */
+    if(H5S_SEL_ALL == H5S_GET_SELECT_TYPE(dst))
+        if(H5S_select_all(dst, FALSE) < 0)
+            HGOTO_ERROR(H5E_DATASPACE, H5E_CANTDELETE, FAIL, "can't change selection")
+
 done:
     FUNC_LEAVE_API(ret_value)
 } /* end H5Sextent_copy() */
@@ -507,6 +514,10 @@ H5S_extent_copy(H5S_extent_t *dst, const H5S_extent_t *src, hbool_t copy_max)
     herr_t ret_value = SUCCEED;   /* Return value */
 
     FUNC_ENTER_NOAPI(FAIL)
+
+    /* Release destination extent before we copy over it */
+    if(H5S_extent_release(dst) < 0)
+        HGOTO_ERROR(H5E_DATASPACE, H5E_CANTRELEASE, FAIL, "unable to release dataspace extent")
 
     /* Copy the regular fields */
     dst->type = src->type;
@@ -582,7 +593,7 @@ H5S_copy(const H5S_t *src, hbool_t share_selection, hbool_t copy_max)
 
     FUNC_ENTER_NOAPI(NULL)
 
-    if(NULL == (dst = H5FL_MALLOC(H5S_t)))
+    if(NULL == (dst = H5FL_CALLOC(H5S_t)))
         HGOTO_ERROR(H5E_RESOURCE, H5E_NOSPACE, NULL, "memory allocation failed")
 
     /* Copy the source dataspace's extent */
@@ -1303,8 +1314,7 @@ H5S_set_extent_simple(H5S_t *space, unsigned rank, const hsize_t *dims,
     /* Selection related cleanup */
 
     /* Set offset to zeros */
-    for(u = 0; u < space->extent.rank; u++)
-        space->select.offset[u] = 0;
+    HDmemset(space->select.offset, 0, sizeof(hsize_t) * space->extent.rank);
     space->select.offset_changed = FALSE;
 
     /* If the selection is 'all', update the number of elements selected */
@@ -1510,7 +1520,7 @@ H5S_encode(H5S_t *obj, unsigned char *buf, size_t *nalloc)
     /* Find out the size of buffer needed for selection */
     if((sselect_size = H5S_SELECT_SERIAL_SIZE(obj)) < 0)
 	HGOTO_ERROR(H5E_DATASPACE, H5E_BADSIZE, FAIL, "can't find dataspace selection size")
-    H5_ASSIGN_OVERFLOW(select_size, sselect_size, hssize_t, size_t);
+    H5_CHECKED_ASSIGN(select_size, size_t, sselect_size, hssize_t);
 
     /* Verify the size of buffer.  If it's not big enough, simply return the
      * right size without filling the buffer. */

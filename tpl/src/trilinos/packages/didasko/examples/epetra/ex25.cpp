@@ -1,13 +1,13 @@
 
 // @HEADER
 // ***********************************************************************
-// 
+//
 //                      Didasko Tutorial Package
 //                 Copyright (2005) Sandia Corporation
-// 
+//
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -36,7 +36,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 // Questions about Didasko? Contact Marzio Sala (marzio.sala _AT_ gmail.com)
-// 
+//
 // ***********************************************************************
 // @HEADER
 
@@ -59,107 +59,107 @@
 #include "Epetra_RowMatrix.h"
 #include "Trilinos_Util.h"
 
-class MSRMatrix : public Epetra_Operator 
+class MSRMatrix : public Epetra_Operator
 {
 
-public:
-  
-  // constructor
-  MSRMatrix(Epetra_Map Map, int * bindx, double * val) :
-    bindx_(bindx), 
-    val_(val),
-    Map_(Map)
+  public:
+
+    // constructor
+    MSRMatrix(Epetra_Map Map, int * bindx, double * val) :
+      bindx_(bindx),
+      val_(val),
+      Map_(Map)
   {
   }
 
-  // destructor, nothing to do
-  ~MSRMatrix() 
-  {}
+    // destructor, nothing to do
+    ~MSRMatrix()
+    {}
 
-  // Apply the RowMatrix to a MultiVector
-  int Apply(const Epetra_MultiVector & X, Epetra_MultiVector & Y ) const 
-  {
+    // Apply the RowMatrix to a MultiVector
+    int Apply(const Epetra_MultiVector & X, Epetra_MultiVector & Y ) const
+    {
 
-    int Nrows = bindx_[0]-1;
-    
-    for( int i=0 ; i<Nrows ; i++ ) {
-      // diagonal element
-      for( int vec=0 ; vec<X.NumVectors() ; ++vec ) {
-	Y[vec][i] = val_[i]*X[vec][i];
+      int Nrows = bindx_[0]-1;
+
+      for( int i=0 ; i<Nrows ; i++ ) {
+        // diagonal element
+        for( int vec=0 ; vec<X.NumVectors() ; ++vec ) {
+          Y[vec][i] = val_[i]*X[vec][i];
+        }
+        // off-diagonal elements
+        for( int j=bindx_[i] ; j<bindx_[i+1] ; j++ ) {
+          for( int vec=0 ; vec<X.NumVectors() ; ++vec ) {
+            Y[vec][bindx_[j]] += val_[j]*X[vec][bindx_[j]];
+          }
+        }
       }
-      // off-diagonal elements
-      for( int j=bindx_[i] ; j<bindx_[i+1] ; j++ ) {
-	for( int vec=0 ; vec<X.NumVectors() ; ++vec ) {
-	  Y[vec][bindx_[j]] += val_[j]*X[vec][bindx_[j]];
-	}
-      }
+
+      return 0;
+
+    } /* Apply */
+
+    // other function, required by Epetra_RowMatrix. Here are almost all
+    // void, you may decide to complete the example...
+    int SetUseTranspose( bool UseTranspose)
+    {
+      return(-1); // not implemented
     }
 
-    return 0;
-    
-  } /* Apply */
+    int ApplyInverse( const Epetra_MultiVector & X,
+        Epetra_MultiVector & Y ) const
+    {
+      return(-1); // not implemented
+    }
 
-  // other function, required by Epetra_RowMatrix. Here are almost all
-  // void, you may decide to complete the example...
-  int SetUseTranspose( bool UseTranspose)
-  {
-    return(-1); // not implemented
-  }
+    double NormInf() const
+    {
+      return -1;
+    }
 
-  int ApplyInverse( const Epetra_MultiVector & X,
-                    Epetra_MultiVector & Y ) const
-  {
-    return(-1); // not implemented
-  }
+    const char* Label () const
+    {
+      return "TriDiagonalOperator";
+    }
 
-  double NormInf() const
-  {
-    return -1;
-  }
+    bool UseTranspose() const
+    {
+      return false;
+    }
 
-  const char* Label () const
-  {
-    return "TriDiagonalOperator";
-  }
-
-  bool UseTranspose() const
-  {
-    return false;
-  }
-
-  bool HasNormInf () const
-  {
-    return true;
-  }
+    bool HasNormInf () const
+    {
+      return true;
+    }
 
 
-  const Epetra_Comm & Comm() const
-  {
-    return( Map_.Comm() );
-  }
+    const Epetra_Comm & Comm() const
+    {
+      return( Map_.Comm() );
+    }
 
-  const Epetra_Map & OperatorDomainMap() const
-  {
-    return( Map_ );
-  }
+    const Epetra_Map & OperatorDomainMap() const
+    {
+      return( Map_ );
+    }
 
-  const Epetra_Map & OperatorRangeMap() const
-  {
-    return( Map_ );
-  }
+    const Epetra_Map & OperatorRangeMap() const
+    {
+      return( Map_ );
+    }
 
-private:
+  private:
 
-  int * bindx_;    /* MSR vector for nonzero indices */
-  double * val_;   /* MSR vector for nonzero values */
-  Epetra_Map Map_;
-  
+    int * bindx_;    /* MSR vector for nonzero indices */
+    double * val_;   /* MSR vector for nonzero values */
+    Epetra_Map Map_;
+
 }; /* MSRMatrix class */
-  
+
 // =========== //
 // main driver //
 // ----------- //
-  
+
 int main(int argc, char *argv[])
 {
 
@@ -180,7 +180,7 @@ int main(int argc, char *argv[])
 #endif
     exit(EXIT_SUCCESS);
   }
-    
+
   // process 0 will read an HB matrix, and store it
   // in the MSR format given by the arrays bindx and val
   int N_global;
@@ -188,7 +188,7 @@ int main(int argc, char *argv[])
   double * val = NULL;
   int * bindx = NULL;
   double * x = NULL, * b = NULL, * xexact = NULL;
-  
+
   FILE* fp = fopen("../HBMatrices/fidap005.rua", "r");
   if (fp == 0)
   {
@@ -199,19 +199,19 @@ int main(int argc, char *argv[])
     exit(EXIT_SUCCESS);
   }
   fclose(fp);
-  
+
   Trilinos_Util_read_hb("../HBMatrices/fidap005.rua", 0,
-			&N_global, &N_nonzeros, 
-			&val, &bindx,
-			&x, &b, &xexact);
+      &N_global, &N_nonzeros,
+      &val, &bindx,
+      &x, &b, &xexact);
 
   // assign all the elements to process 0
   // (this code can run ONLY with one process, extensions to more
   // processes will require functions to handle update of ghost nodes)
   Epetra_Map Map(N_global,0,Comm);
-  
+
   MSRMatrix A(Map,bindx,val);
-  
+
   // define two vectors
   Epetra_Vector xxx(Map);
   Epetra_Vector yyy(Map);
@@ -221,7 +221,7 @@ int main(int argc, char *argv[])
   A.Apply(xxx,yyy);
 
   cout << yyy;
-  
+
   double norm2;
   yyy.Norm2(&norm2);
 
@@ -231,7 +231,7 @@ int main(int argc, char *argv[])
   if (val != NULL) free((void*)val);
   if (bindx != NULL) free((void*)bindx);
   if (x != NULL) free((void*)x);
-  if (b != NULL) free((void*)x);
+  if (b != NULL) free((void*)b);
   if (xexact != NULL) free((void*)xexact);;
 
 #ifdef HAVE_MPI
@@ -239,7 +239,7 @@ int main(int argc, char *argv[])
 #endif
 
   return(EXIT_SUCCESS);
-  
+
 } /* main */
 
 #else
@@ -250,8 +250,8 @@ int main(int argc, char *argv[])
 int main(int argc, char *argv[])
 {
   puts("Please configure Didasko with:\n"
-       "--enable-epetra\n"
-       "--enable-triutils");
+      "--enable-epetra\n"
+      "--enable-triutils");
 
   return(0);
 }

@@ -42,7 +42,7 @@
 
 // MP::Vector and Matrix
 #include "Stokhos_Sacado_Kokkos.hpp"
-#include "Kokkos_CrsMatrix.hpp"
+#include "Kokkos_Sparse_CrsMatrix.hpp"
 #include "Kokkos_CrsMatrix_MP_Vector.hpp"
 
 // Compile-time loops
@@ -107,11 +107,11 @@ test_mpvector_spmv(const int ensemble_length,
   typedef StorageType storage_type;
   typedef typename storage_type::value_type value_type;
   typedef typename storage_type::ordinal_type ordinal_type;
-  typedef typename storage_type::device_type device_type;
+  typedef typename storage_type::execution_space execution_space;
   typedef Sacado::MP::Vector<StorageType> VectorType;
   typedef Kokkos::LayoutRight Layout;
-  typedef Kokkos::View< VectorType*, Layout, device_type > vector_type;
-  typedef Kokkos::CrsMatrix< VectorType, ordinal_type, device_type > matrix_type;
+  typedef Kokkos::View< VectorType*, Layout, execution_space > vector_type;
+  typedef Kokkos::CrsMatrix< VectorType, ordinal_type, execution_space > matrix_type;
   typedef typename matrix_type::StaticCrsGraphType matrix_graph_type;
   typedef typename matrix_type::values_type matrix_values_type;
 
@@ -126,23 +126,9 @@ test_mpvector_spmv(const int ensemble_length,
   // Generate input multivector:
 
   vector_type x =
-    vector_type(Kokkos::allocate_without_initializing,
-                "x", fem_length, ensemble_length);
+    vector_type(Kokkos::ViewAllocateWithoutInitializing("x"), fem_length, ensemble_length);
   vector_type y =
-    vector_type(Kokkos::allocate_without_initializing,
-                "y", fem_length, ensemble_length);
-
-  // To do:  Fix it so this works:
-  // Kokkos::deep_copy( x , VectorType(1.0) );
-  Kokkos::View< value_type*, Layout, device_type, Kokkos::MemoryUnmanaged > xx(
-    x.ptr_on_device(), fem_length, ensemble_length);
-  Kokkos::deep_copy( xx , value_type(1.0) );
-
-  // To do:  Fix it so this works:
-  // Kokkos::deep_copy( y , VectorType(0.0) );
-  Kokkos::View< value_type*, Layout, device_type, Kokkos::MemoryUnmanaged > yy(
-    y.ptr_on_device(), fem_length, ensemble_length);
-  Kokkos::deep_copy( yy , value_type(1.0) );
+    vector_type(Kokkos::ViewAllocateWithoutInitializing("y"), fem_length, ensemble_length);
 
   //------------------------------
 
@@ -150,28 +136,37 @@ test_mpvector_spmv(const int ensemble_length,
     Kokkos::create_staticcrsgraph<matrix_graph_type>(
       std::string("test crs graph"), fem_graph);
   matrix_values_type matrix_values =
-    matrix_values_type(Kokkos::allocate_without_initializing,
-                       "matrix", graph_length, ensemble_length);
+    matrix_values_type(Kokkos::ViewAllocateWithoutInitializing("matrix"), graph_length, ensemble_length);
   matrix_type matrix("block_matrix", fem_length, matrix_values, matrix_graph);
   matrix.dev_config = dev_config;
 
-  // To do:  Fix it so this works:
-  // Kokkos::deep_copy( matrix.values , VectorType(1.0) );
-  Kokkos::View< value_type*, device_type, Kokkos::MemoryUnmanaged > MM(
-    matrix.values.ptr_on_device(), graph_length * ensemble_length);
-  Kokkos::deep_copy( MM , value_type(1.0) );
+  //------------------------------
+  // Fill:
+
+  {
+    // The VectorType may be dynamic (with allocated memory)
+    // so cannot pass a VectorType value to the device.
+    // Get an array-of-intrinsic View and fill that view.
+    typename vector_type::array_type xx( x );
+    typename vector_type::array_type yy( y );
+    typename matrix_values_type::array_type mm( matrix_values );
+
+    Kokkos::deep_copy( xx , value_type(1.0) );
+    Kokkos::deep_copy( yy , value_type(1.0) );
+    Kokkos::deep_copy( mm , value_type(1.0) );
+  }
 
   //------------------------------
 
   // One iteration to warm up
   Stokhos::multiply( matrix, x, y, tag );
 
-  device_type::fence();
+  execution_space::fence();
   Kokkos::Impl::Timer clock ;
   for (int iter = 0; iter < iterCount; ++iter) {
     Stokhos::multiply( matrix, x, y, tag );
   }
-  device_type::fence();
+  execution_space::fence();
 
   const double seconds_per_iter = clock.seconds() / ((double) iterCount );
   const double flops = 1.0e-9 * 2.0 * graph_length * ensemble_length;
@@ -194,9 +189,9 @@ test_scalar_spmv(const int ensemble_length,
 {
   typedef ScalarType value_type;
   typedef OrdinalType ordinal_type;
-  typedef Device device_type;
-  typedef Kokkos::View< value_type*, device_type > vector_type;
-  typedef Kokkos::CrsMatrix< value_type, ordinal_type, device_type > matrix_type;
+  typedef Device execution_space;
+  typedef Kokkos::View< value_type*, execution_space > vector_type;
+  typedef Kokkos::CrsMatrix< value_type, ordinal_type, execution_space > matrix_type;
   typedef typename matrix_type::StaticCrsGraphType matrix_graph_type;
   typedef typename matrix_type::values_type matrix_values_type;
 
@@ -213,10 +208,8 @@ test_scalar_spmv(const int ensemble_length,
   std::vector<vector_type> x(ensemble_length);
   std::vector<vector_type> y(ensemble_length);
   for (int e=0; e<ensemble_length; ++e) {
-    x[e] = vector_type(Kokkos::allocate_without_initializing,
-                       "x", fem_length);
-    y[e] = vector_type(Kokkos::allocate_without_initializing,
-                       "y", fem_length);
+    x[e] = vector_type(Kokkos::ViewAllocateWithoutInitializing("x"), fem_length);
+    y[e] = vector_type(Kokkos::ViewAllocateWithoutInitializing("y"), fem_length);
 
     Kokkos::deep_copy( x[e] , value_type(1.0) );
     Kokkos::deep_copy( y[e] , value_type(0.0) );
@@ -230,8 +223,7 @@ test_scalar_spmv(const int ensemble_length,
       Kokkos::create_staticcrsgraph<matrix_graph_type>(
         std::string("test crs graph"), fem_graph);
     matrix_values_type matrix_values =
-      matrix_values_type(Kokkos::allocate_without_initializing,
-                         "matrix", graph_length);
+      matrix_values_type(Kokkos::ViewAllocateWithoutInitializing("matrix"), graph_length);
     matrix[e] = matrix_type("matrix", fem_length, matrix_values, matrix_graph);
 
     Kokkos::deep_copy( matrix[e].values , value_type(1.0) );
@@ -240,18 +232,20 @@ test_scalar_spmv(const int ensemble_length,
   //------------------------------
 
   // One iteration to warm up
-  for (int e=0; e<ensemble_length; ++e) {
-    Kokkos::MV_Multiply( y[e], matrix[e], x[e] );
+  for (int iter = 0; iter < iterCount; ++iter) {
+    for (int e=0; e<ensemble_length; ++e) {
+      KokkosSparse::spmv( "N" , value_type(1.0), matrix[e], x[e] , value_type(0.0), y[e]);
+    }
   }
 
-  device_type::fence();
+  execution_space::fence();
   Kokkos::Impl::Timer clock ;
   for (int iter = 0; iter < iterCount; ++iter) {
     for (int e=0; e<ensemble_length; ++e) {
-      Kokkos::MV_Multiply( y[e], matrix[e], x[e] );
+      KokkosSparse::spmv( "N" , value_type(1.0), matrix[e], x[e] , value_type(0.0), y[e]);
     }
   }
-  device_type::fence();
+  execution_space::fence();
 
   const double seconds_per_iter = clock.seconds() / ((double) iterCount );
   const double flops = 1.0e-9 * 2.0 * graph_length * ensemble_length;
@@ -269,7 +263,7 @@ template <class Storage>
 struct PerformanceDriverOp {
   typedef typename Storage::value_type Scalar;
   typedef typename Storage::ordinal_type Ordinal;
-  typedef typename Storage::device_type Device;
+  typedef typename Storage::execution_space Device;
   const int nGrid, nIter;
   Kokkos::DeviceConfig dev_config;
 
@@ -287,10 +281,6 @@ struct PerformanceDriverOp {
       test_scalar_spmv<Scalar,Ordinal,Device>(
         ensemble, nGrid, nIter, dev_config );
 
-    const std::vector<double> perf_ensemble =
-      test_mpvector_spmv<storage_type>(
-        ensemble, nGrid, nIter, dev_config, Stokhos::EnsembleMultiply() );
-
     const std::vector<double> perf_mpvector =
       test_mpvector_spmv<storage_type>(
         ensemble, nGrid, nIter, dev_config, Stokhos::DefaultMultiply() );
@@ -302,8 +292,6 @@ struct PerformanceDriverOp {
               << perf_scalar[3] << " , "
               << perf_scalar[4] / perf_scalar[4] << " , "
               << perf_scalar[4] << " , "
-              << perf_ensemble[4]/ perf_scalar[4] << " , "
-              << perf_ensemble[4] << " , "
               << perf_mpvector[4]/ perf_scalar[4] << " , "
               << perf_mpvector[4] << " , "
               << std::endl;
@@ -321,12 +309,9 @@ void performance_test_driver( const int nGrid,
             << "\"FEM Size\" , "
             << "\"FEM Graph Size\" , "
             << "\"Ensemble Size\" , "
-            << "\"Total Size\" , "
             << "\"Scalar SpMv Time\" , "
             << "\"Scalar SpMv Speedup\" , "
             << "\"Scalar SpMv GFLOPS\" , "
-            << "\"Ensemble SpMv Speedup\" , "
-            << "\"Ensemble SpMv GFLOPS\" , "
             << "\"MPVector SpMv Speedup\" , "
             << "\"MPVector SpMv GFLOPS\" , "
             << std::endl;

@@ -55,8 +55,8 @@
 static herr_t H5D__write(H5D_t *dataset, hid_t mem_type_id,
     const H5S_t *mem_space, const H5S_t *file_space, hid_t dset_xfer_plist,
     const void *buf);
-static herr_t H5D__pre_write(hid_t dset_id, hid_t mem_type_id, hid_t mem_space_id,
-	 hid_t file_space_id, hid_t dxpl_id, const void *buf);
+static herr_t H5D__pre_write(H5D_t *dset, hbool_t direct_write, hid_t mem_type_id, 
+    const H5S_t *mem_space, const H5S_t *file_space, hid_t dxpl_id, const void *buf);
 
 /* Setup/teardown routines */
 static herr_t H5D__ioinfo_init(H5D_t *dset,
@@ -212,45 +212,16 @@ herr_t
 H5Dwrite(hid_t dset_id, hid_t mem_type_id, hid_t mem_space_id,
 	 hid_t file_space_id, hid_t dxpl_id, const void *buf)
 {
+    H5D_t		   *dset = NULL;
+    H5P_genplist_t 	   *plist;      /* Property list pointer */
+    const H5S_t            *mem_space = NULL;
+    const H5S_t            *file_space = NULL;
+    hbool_t                 direct_write = FALSE;
     herr_t                  ret_value = SUCCEED;  /* Return value */
 
     FUNC_ENTER_API(FAIL)
     H5TRACE6("e", "iiiii*x", dset_id, mem_type_id, mem_space_id, file_space_id,
              dxpl_id, buf);
-
-    if(!dset_id)
-	HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "not a dataset")
-
-    if(H5D__pre_write(dset_id, mem_type_id, mem_space_id, file_space_id, dxpl_id, buf) < 0) 
-	HGOTO_ERROR(H5E_DATASET, H5E_WRITEERROR, FAIL, "can't prepare for writing data")
-
-done:
-    FUNC_LEAVE_API(ret_value)
-} /* end H5Dwrite() */
-
-
-/*-------------------------------------------------------------------------
- * Function:	H5D__pre_write
- *
- * Purpose:	Preparation for writing data.  
- *
- * Return:	Non-negative on success/Negative on failure
- *
- * Programmer:	Raymond Lu
- *		2 November 2012
- *
- *-------------------------------------------------------------------------
- */
-static herr_t
-H5D__pre_write(hid_t dset_id, hid_t mem_type_id, hid_t mem_space_id,
-	 hid_t file_space_id, hid_t dxpl_id, const void *buf)
-{
-    H5D_t		   *dset = NULL;
-    H5P_genplist_t 	   *plist;      /* Property list pointer */
-    hbool_t		    direct_write = FALSE;
-    herr_t                  ret_value = SUCCEED;  /* Return value */
-
-    FUNC_ENTER_STATIC
 
     /* check arguments */
     if(NULL == (dset = (H5D_t *)H5I_object_verify(dset_id, H5I_DATASET)))
@@ -273,15 +244,72 @@ H5D__pre_write(hid_t dset_id, hid_t mem_type_id, hid_t mem_space_id,
     if(H5P_get(plist, H5D_XFER_DIRECT_CHUNK_WRITE_FLAG_NAME, &direct_write) < 0)
         HGOTO_ERROR(H5E_PLIST, H5E_CANTGET, FAIL, "error getting flag for direct chunk write")
 
+    /* Check dataspace selections if this is not a direct write */
+    if(!direct_write) {
+        if(mem_space_id < 0 || file_space_id < 0)
+	    HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "not a dataspace")
+
+	if(H5S_ALL != mem_space_id) {
+	    if(NULL == (mem_space = (const H5S_t *)H5I_object_verify(mem_space_id, H5I_DATASPACE)))
+	        HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "not a dataspace")
+
+	    /* Check for valid selection */
+	    if(H5S_SELECT_VALID(mem_space) != TRUE)
+		HGOTO_ERROR(H5E_DATASPACE, H5E_BADRANGE, FAIL, "memory selection+offset not within extent")
+	} /* end if */
+	if(H5S_ALL != file_space_id) {
+	    if(NULL == (file_space = (const H5S_t *)H5I_object_verify(file_space_id, H5I_DATASPACE)))
+		HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "not a dataspace")
+
+	    /* Check for valid selection */
+	    if(H5S_SELECT_VALID(file_space) != TRUE)
+		HGOTO_ERROR(H5E_DATASPACE, H5E_BADRANGE, FAIL, "file selection+offset not within extent")
+	} /* end if */
+    }
+
+    if(H5D__pre_write(dset, direct_write, mem_type_id, mem_space, file_space, dxpl_id, buf) < 0) 
+	HGOTO_ERROR(H5E_DATASET, H5E_WRITEERROR, FAIL, "can't prepare for writing data")
+
+done:
+    FUNC_LEAVE_API(ret_value)
+} /* end H5Dwrite() */
+
+
+/*-------------------------------------------------------------------------
+ * Function:	H5D__pre_write
+ *
+ * Purpose:	Preparation for writing data.  
+ *
+ * Return:	Non-negative on success/Negative on failure
+ *
+ * Programmer:	Raymond Lu
+ *		2 November 2012
+ *
+ *-------------------------------------------------------------------------
+ */
+static herr_t
+H5D__pre_write(H5D_t *dset, hbool_t direct_write, hid_t mem_type_id, 
+         const H5S_t *mem_space, const H5S_t *file_space, 
+         hid_t dxpl_id, const void *buf)
+{
+    herr_t                  ret_value = SUCCEED;  /* Return value */
+
+    FUNC_ENTER_STATIC
+
     /* Direct chunk write */
     if(direct_write) {
+        H5P_genplist_t *plist;      /* Property list pointer */
         uint32_t direct_filters;
         hsize_t *direct_offset;
         uint32_t direct_datasize;
 	int      ndims = 0;
 	hsize_t  dims[H5O_LAYOUT_NDIMS];
 	hsize_t  internal_offset[H5O_LAYOUT_NDIMS];
-	int      i;
+	unsigned u;
+
+        /* Get the dataset transfer property list */
+        if(NULL == (plist = (H5P_genplist_t *)H5I_object(dxpl_id)))
+            HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "not a dataset transfer property list")
 
         if(H5D_CHUNKED != dset->shared->layout.type)
 	    HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "not a chunked dataset")
@@ -299,16 +327,16 @@ H5D__pre_write(hid_t dset_id, hid_t mem_type_id, hid_t mem_space_id,
 	if((ndims = H5S_get_simple_extent_dims(dset->shared->space, dims, NULL)) < 0)
 	    HGOTO_ERROR(H5E_DATASPACE, H5E_CANTGET, FAIL, "can't retrieve dataspace extent dims")
 
-	for(i = 0; i < ndims; i++) {
+	for(u = 0; u < ndims; u++) {
 	    /* Make sure the offset doesn't exceed the dataset's dimensions */
-            if(direct_offset[i] > dims[i])
+            if(direct_offset[u] > dims[u])
 		HGOTO_ERROR(H5E_DATASPACE, H5E_BADTYPE, FAIL, "offset exceeds dimensions of dataset")
 
             /* Make sure the offset fall right on a chunk's boundary */
-	    if(direct_offset[i] % dset->shared->layout.u.chunk.dim[i])
+	    if(direct_offset[u] % dset->shared->layout.u.chunk.dim[u])
 		HGOTO_ERROR(H5E_DATASPACE, H5E_BADTYPE, FAIL, "offset doesn't fall on chunks's boundary")
 
-	    internal_offset[i] = direct_offset[i]; 
+	    internal_offset[u] = direct_offset[u]; 
 	} /* end for */
 	   
 	/* Terminate the offset with a zero */ 
@@ -319,29 +347,6 @@ H5D__pre_write(hid_t dset_id, hid_t mem_type_id, hid_t mem_space_id,
 	    HGOTO_ERROR(H5E_DATASET, H5E_WRITEERROR, FAIL, "can't write chunk directly")
     } /* end if */
     else {     /* Normal write */
-	const H5S_t *mem_space = NULL;
-	const H5S_t *file_space = NULL;
-
-        if(mem_space_id < 0 || file_space_id < 0)
-	    HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "not a data space")
-
-	if(H5S_ALL != mem_space_id) {
-	    if(NULL == (mem_space = (const H5S_t *)H5I_object_verify(mem_space_id, H5I_DATASPACE)))
-	        HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "not a data space")
-
-	    /* Check for valid selection */
-	    if(H5S_SELECT_VALID(mem_space) != TRUE)
-		HGOTO_ERROR(H5E_DATASPACE, H5E_BADRANGE, FAIL, "memory selection+offset not within extent")
-	} /* end if */
-	if(H5S_ALL != file_space_id) {
-	    if(NULL == (file_space = (const H5S_t *)H5I_object_verify(file_space_id, H5I_DATASPACE)))
-		HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "not a data space")
-
-	    /* Check for valid selection */
-	    if(H5S_SELECT_VALID(file_space) != TRUE)
-		HGOTO_ERROR(H5E_DATASPACE, H5E_BADRANGE, FAIL, "file selection+offset not within extent")
-	} /* end if */
-
         /* write raw data */
         if(H5D__write(dset, mem_type_id, mem_space, file_space, dxpl_id, buf) < 0)
 	    HGOTO_ERROR(H5E_DATASET, H5E_WRITEERROR, FAIL, "can't write data")
@@ -409,7 +414,7 @@ H5D__read(H5D_t *dataset, hid_t mem_type_id, const H5S_t *mem_space,
         mem_space = file_space;
     if((snelmts = H5S_GET_SELECT_NPOINTS(mem_space)) < 0)
 	HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "dst dataspace has invalid selection")
-    H5_ASSIGN_OVERFLOW(nelmts,snelmts,hssize_t,hsize_t);
+    H5_CHECKED_ASSIGN(nelmts, hsize_t, snelmts, hssize_t);
 
     /* Fill the DXPL cache values for later use */
     if(H5D__get_dxpl_cache(dxpl_id, &dxpl_cache) < 0)
@@ -422,7 +427,8 @@ H5D__read(H5D_t *dataset, hid_t mem_type_id, const H5S_t *mem_space,
 
 #ifdef H5_HAVE_PARALLEL
     /* Collective access is not permissible without a MPI based VFD */
-    if(dxpl_cache->xfer_mode == H5FD_MPIO_COLLECTIVE && !IS_H5FD_MPI(dataset->oloc.file))
+    if(dxpl_cache->xfer_mode == H5FD_MPIO_COLLECTIVE && 
+       !(H5F_HAS_FEATURE(dataset->oloc.file, H5FD_FEAT_HAS_MPI)))
         HGOTO_ERROR(H5E_DATASET, H5E_UNSUPPORTED, FAIL, "collective access for MPI-based drivers only")
 #endif /*H5_HAVE_PARALLEL*/
 
@@ -641,7 +647,7 @@ H5D__write(H5D_t *dataset, hid_t mem_type_id, const H5S_t *mem_space,
 
     /* Various MPI based checks */
 #ifdef H5_HAVE_PARALLEL
-    if(IS_H5FD_MPI(dataset->oloc.file)) {
+    if(H5F_HAS_FEATURE(dataset->oloc.file, H5FD_FEAT_HAS_MPI)) {
         /* If MPI based VFD is used, no VL datatype support yet. */
         /* This is because they use the global heap in the file and we don't */
         /* support parallel access of that yet */
@@ -678,7 +684,7 @@ H5D__write(H5D_t *dataset, hid_t mem_type_id, const H5S_t *mem_space,
 
     if((snelmts = H5S_GET_SELECT_NPOINTS(mem_space)) < 0)
 	HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "src dataspace has invalid selection")
-    H5_ASSIGN_OVERFLOW(nelmts, snelmts, hssize_t, hsize_t);
+    H5_CHECKED_ASSIGN(nelmts, hsize_t, snelmts, hssize_t);
 
     /* Make certain that the number of elements in each selection is the same */
     if(nelmts != (hsize_t)H5S_GET_SELECT_NPOINTS(file_space))
@@ -884,7 +890,7 @@ const
 
 #ifdef H5_HAVE_PARALLEL
     /* Determine if the file was opened with an MPI VFD */
-    io_info->using_mpi_vfd = IS_H5FD_MPI(dset->oloc.file);
+    io_info->using_mpi_vfd = H5F_HAS_FEATURE(dset->oloc.file, H5FD_FEAT_HAS_MPI);
 #endif /* H5_HAVE_PARALLEL */
 
     FUNC_LEAVE_NOAPI(SUCCEED)

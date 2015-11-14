@@ -23,6 +23,7 @@
 #include "H5AbstractDs.h"
 #include "H5DxferProp.h"
 #include "H5DataSpace.h"
+#include "H5OcreatProp.h"
 #include "H5DcreatProp.h"
 #include "H5CommonFG.h"
 #include "H5DataType.h"
@@ -159,6 +160,7 @@ H5std_string EnumType::nameOf( void *value, size_t size ) const
    // If H5Tenum_nameof returns a negative value, raise an exception,
    if( ret_value < 0 )
    {
+      delete []name_C;
       throw DataTypeIException("EnumType::nameOf", "H5Tenum_nameof failed");
    }
    // otherwise, create the string to hold the datatype name and return it

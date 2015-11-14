@@ -1,13 +1,13 @@
 
 // @HEADER
 // ***********************************************************************
-// 
+//
 //                      Didasko Tutorial Package
 //                 Copyright (2005) Sandia Corporation
-// 
+//
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -36,7 +36,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 // Questions about Didasko? Contact Marzio Sala (marzio.sala _AT_ gmail.com)
-// 
+//
 // ***********************************************************************
 // @HEADER
 
@@ -80,16 +80,16 @@ int main(int argc, char* argv[])
   My_Matrix.random();             // random numbers
   My_Copy1.putScalar( 1.0 );      // every entry is 1.0
   My_Copy2(1,1) = 10.0;           // individual element access
-  Empty_Matrix = My_Matrix;       // copy My_Matrix to Empty_Matrix 
+  Empty_Matrix = My_Matrix;       // copy My_Matrix to Empty_Matrix
 
   // Basic matrix arithmetic can be performed:
   Teuchos::SerialDenseMatrix<int,double> My_Prod( 3, 2 );
   // Matrix multiplication ( My_Prod = 1.0*My_Matrix*My_Copy^T )
-  My_Prod.multiply( Teuchos::NO_TRANS, Teuchos::TRANS, 
-		    1.0, My_Matrix, My_Copy3, 0.0 );
+  My_Prod.multiply( Teuchos::NO_TRANS, Teuchos::TRANS,
+      1.0, My_Matrix, My_Copy3, 0.0 );
   My_Copy2 += My_Matrix;         // Matrix addition
   My_Copy2.scale( 0.5 );         // Matrix scaling
-  
+
   // The pointer to the array of matrix values can be obtained:
   double *My_Array, *My_Column;
   My_Array = My_Matrix.values();   // pointer to matrix values
@@ -135,7 +135,7 @@ int main(int argc, char *argv[])
 #endif
 
   puts("Please configure Didasko with:\n"
-       "--enable-teuchos");
+      "--enable-teuchos");
 
 #ifdef HAVE_MPI
   MPI_Finalize();

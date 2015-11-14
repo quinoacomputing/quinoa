@@ -1,5 +1,37 @@
-INCLUDE(TribitsLibraryMacros)
-INCLUDE(TribitsAddOptionAndDefine)
+
+TRIBITS_ADD_OPTION_AND_DEFINE(
+  Kokkos_ENABLE_Serial
+  KOKKOS_HAVE_SERIAL
+  "Whether to enable the Kokkos::Serial device.  This device executes \"parallel\" kernels sequentially on a single CPU thread.  It is enabled by default.  If you disable this device, please enable at least one other CPU device, such as Kokkos::OpenMP or Kokkos::Threads."
+  ON
+  )
+
+ASSERT_DEFINED(${PROJECT_NAME}_ENABLE_CXX11)
+ASSERT_DEFINED(${PACKAGE_NAME}_ENABLE_CUDA)
+
+# Kokkos_ENABLE_CXX11_DISPATCH_LAMBDA governs whether Kokkos allows
+# use of lambdas at the outer level of parallel dispatch (that is, as
+# the argument to an outer parallel_for, parallel_reduce, or
+# parallel_scan).  This works with non-CUDA execution spaces if C++11
+# is enabled.  It does not currently work with public releases of
+# CUDA.  If that changes, please change the default here to ON if CUDA
+# and C++11 are ON.
+IF (${PROJECT_NAME}_ENABLE_CXX11)
+  IF (${PACKAGE_NAME}_ENABLE_CUDA)
+    SET(Kokkos_ENABLE_CXX11_DISPATCH_LAMBDA_DEFAULT OFF)
+  ELSE ()
+    SET(Kokkos_ENABLE_CXX11_DISPATCH_LAMBDA_DEFAULT ON)
+  ENDIF ()
+ELSE ()
+  SET(Kokkos_ENABLE_CXX11_DISPATCH_LAMBDA_DEFAULT OFF)
+ENDIF ()
+
+TRIBITS_ADD_OPTION_AND_DEFINE(
+  Kokkos_ENABLE_CXX11_DISPATCH_LAMBDA
+  KOKKOS_HAVE_CXX11_DISPATCH_LAMBDA
+  "Whether Kokkos allows use of lambdas at the outer level of parallel dispatch (that is, as the argument to an outer parallel_for, parallel_reduce, or parallel_scan).  This requires C++11.  It also does not currently work with public releases of CUDA.  As a result, even if C++11 is enabled, this will be OFF by default if CUDA is enabled.  If this option is ON, the macro KOKKOS_HAVE_CXX11_DISPATCH_LAMBDA will be defined.  For compatibility with Kokkos' Makefile build system, it is also possible to define that macro on the command line."
+  ${Kokkos_ENABLE_CXX11_DISPATCH_LAMBDA_DEFAULT}
+  )
 
 TRIBITS_CONFIGURE_FILE(${PACKAGE_NAME}_config.h)
 
@@ -8,7 +40,7 @@ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 
 #-----------------------------------------------------------------------------
 
-SET(TRILINOS_INCDIR ${CMAKE_INSTALL_PREFIX}/${Trilinos_INSTALL_INCLUDE_DIR})
+SET(TRILINOS_INCDIR ${CMAKE_INSTALL_PREFIX}/${${PROJECT_NAME}_INSTALL_INCLUDE_DIR})
 
 #-----------------------------------------------------------------------------
 
@@ -41,41 +73,32 @@ INSTALL(FILES ${HEADERS_THREADS} DESTINATION ${TRILINOS_INCDIR}/Threads/)
 
 #-----------------------------------------------------------------------------
 
-IF(Kokkos_ENABLE_OpenMP)
+FILE(GLOB HEADERS_OPENMP OpenMP/*.hpp)
+FILE(GLOB SOURCES_OPENMP OpenMP/*.cpp)
 
-  FILE(GLOB HEADERS_OPENMP OpenMP/*.hpp)
-  FILE(GLOB SOURCES_OPENMP OpenMP/*.cpp)
+LIST(APPEND HEADERS_PRIVATE ${HEADERS_OPENMP} )
+LIST(APPEND SOURCES         ${SOURCES_OPENMP} )
 
-  LIST(APPEND HEADERS_PRIVATE ${HEADERS_OPENMP} )
-  LIST(APPEND SOURCES         ${SOURCES_OPENMP} )
-
-  INSTALL(FILES ${HEADERS_OPENMP} DESTINATION ${TRILINOS_INCDIR}/OpenMP/)
-
-ENDIF()
+INSTALL(FILES ${HEADERS_OPENMP} DESTINATION ${TRILINOS_INCDIR}/OpenMP/)
 
 #-----------------------------------------------------------------------------
 
-IF(Kokkos_ENABLE_Cuda)
+FILE(GLOB HEADERS_CUDA Cuda/*.hpp)
+FILE(GLOB SOURCES_CUDA Cuda/*.cpp)
 
-  # set nvcc behavior
+LIST(APPEND HEADERS_PRIVATE ${HEADERS_CUDA} )
+LIST(APPEND SOURCES         ${SOURCES_CUDA} )
 
-  SET(CUDA_ATTACH_VS_BUILD_RULE_TO_CUDA_FILE OFF CACHE BOOL "" FORCE )
-  SET(CUDA_PROPAGATE_HOST_FLAGS              OFF CACHE BOOL "" FORCE )
+INSTALL(FILES ${HEADERS_CUDA} DESTINATION ${TRILINOS_INCDIR}/Cuda/)
 
-  FILE(GLOB HEADERS_CUDA Cuda/*.hpp)
-  FILE(GLOB SOURCES_CUDA Cuda/*.cu)
+#-----------------------------------------------------------------------------
+FILE(GLOB HEADERS_QTHREAD Qthread/*.hpp)
+FILE(GLOB SOURCES_QTHREAD Qthread/*.cpp)
 
-  LIST(APPEND HEADERS_PRIVATE ${HEADERS_CUDA} )
+LIST(APPEND HEADERS_PRIVATE ${HEADERS_QTHREAD} )
+LIST(APPEND SOURCES         ${SOURCES_QTHREAD} )
 
-  # Add subpackage include path dependencies for CUDA_COMPILE().
-  CUDA_INCLUDE_DIRECTORIES( ${KokkosTPL_INCLUDE_DIRS} )
-  CUDA_COMPILE(OBJECTS_CUDA ${SOURCES_CUDA})
-
-  LIST(APPEND SOURCES ${OBJECTS_CUDA} )
-
-  INSTALL(FILES ${HEADERS_CUDA} DESTINATION ${TRILINOS_INCDIR}/Cuda/)
-
-ENDIF()
+INSTALL(FILES ${HEADERS_QTHREAD} DESTINATION ${TRILINOS_INCDIR}/Qthread/)
 
 #-----------------------------------------------------------------------------
 

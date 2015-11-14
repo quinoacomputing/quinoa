@@ -18,7 +18,7 @@
 
     You should have received a copy of the GNU Lesser General Public License 
     (lgpl.txt) along with this library; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  
     kraftche@cae.wisc.edu    
    
@@ -41,10 +41,10 @@ using std::string;
 
 
 #include "Mesquite.hpp"
-#include "MsqError.hpp"
-#include "Vector3D.hpp"
-#include "MsqVertex.hpp"
-#include "MsqIMesh.hpp"
+#include "Mesquite_MsqError.hpp"
+#include "Mesquite_Vector3D.hpp"
+#include "Mesquite_MsqVertex.hpp"
+#include "Mesquite_MsqIMesh.hpp"
 #include "UnitUtil.hpp"
 
 using namespace Mesquite;

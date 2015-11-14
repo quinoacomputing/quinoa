@@ -57,7 +57,10 @@
 
 namespace Xpetra {
 
-  template <class Packet, class LocalOrdinal = int, class GlobalOrdinal = LocalOrdinal, class Node = KokkosClassic::DefaultNode::DefaultNodeType>
+  template <class Packet,
+            class LocalOrdinal = Map<>::local_ordinal_type,
+            class GlobalOrdinal = typename Map<LocalOrdinal>::global_ordinal_type,
+            class Node = typename Map<LocalOrdinal, GlobalOrdinal>::node_type>
   class DistObject
     : virtual public Teuchos::Describable
   {
@@ -93,11 +96,11 @@ namespace Xpetra {
     //@{
 
     //! The Map describing the parallel distribution of this object.
-    virtual const Teuchos::RCP< const Map< LocalOrdinal, GlobalOrdinal, Node > >  getMap() const = 0;
+    virtual Teuchos::RCP< const Map< LocalOrdinal, GlobalOrdinal, Node > > getMap() const = 0;
 
     //@}
 
-    //! @name Implementation of \c Teuchos::Describable
+    //! @name Implementation of Teuchos::Describable
     //@{
 
     //! One-line descriptiion of this object.

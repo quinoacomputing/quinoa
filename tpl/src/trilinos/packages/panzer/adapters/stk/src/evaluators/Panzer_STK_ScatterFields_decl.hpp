@@ -43,7 +43,7 @@
 #ifndef __PANZER_STK_ScatterFields_decl_HPP__
 #define __PANZER_STK_ScatterFields_decl_HPP__
 
-#include "Phalanx_ConfigDefs.hpp"
+#include "Phalanx_config.hpp"
 #include "Phalanx_MDField.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
@@ -55,7 +55,7 @@
 #include "Panzer_Traits.hpp"
 #include "Panzer_STK_Interface.hpp"
 
-namespace panzer_stk {
+namespace panzer_stk_classic {
 
 /** This class is a scatter operation to the mesh. It
   * takes a set of field names and basis objects and
@@ -67,14 +67,14 @@ template <typename EvalT,typename TraitsT>
 class ScatterFields : public PHX::EvaluatorWithBaseImpl<TraitsT>,
                       public PHX::EvaluatorDerived<EvalT, TraitsT>  { 
   typedef typename EvalT::ScalarT ScalarT;
-  typedef panzer_stk::STK_Interface::SolutionFieldType VariableField;
+  typedef panzer_stk_classic::STK_Interface::SolutionFieldType VariableField;
 
-  std::vector< PHX::MDField<ScalarT,panzer::Cell,panzer::NODE> > scatterFields_;
+  std::vector< PHX::MDField<const ScalarT,panzer::Cell,panzer::NODE> > scatterFields_;
   Teuchos::RCP<STK_Interface> mesh_;
 
-  std::vector<VariableField*> stkFields_;
-
   std::vector<double> scaling_;
+
+  bool cellFields_;
 
   void initialize(const std::string & scatterName,
                   const Teuchos::RCP<STK_Interface> mesh,

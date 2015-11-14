@@ -19,7 +19,7 @@
 //
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
 // USA
 // Questions? Contact Todd S. Coffey (tscoffe@sandia.gov)
 //
@@ -174,7 +174,7 @@ void FirstOrderErrorStepControlStrategy<Scalar>::initialize(
   const StepperBase<Scalar>& stepper)
 {
   using Teuchos::as;
-  typedef Teuchos::ScalarTraits<Scalar> ST;
+  //typedef Teuchos::ScalarTraits<Scalar> ST; // unused
   using Thyra::createMember;
 
   RCP<Teuchos::FancyOStream> out = this->getOStream();
@@ -441,7 +441,7 @@ void FirstOrderErrorStepControlStrategy<Scalar>::setParameterList(
   RCP<Teuchos::ParameterList> const& paramList)
 {
   using Teuchos::as;
-  typedef Teuchos::ScalarTraits<Scalar> ST;
+  // typedef Teuchos::ScalarTraits<Scalar> ST; // unused
 
   TEUCHOS_TEST_FOR_EXCEPT(paramList == Teuchos::null);
   paramList->validateParameters(*this->getValidParameters(),0);
@@ -533,9 +533,9 @@ FirstOrderErrorStepControlStrategy<Scalar>::getValidParameters() const
     pl->set(minStepSizeName_, minStepSizeDefault_, "Minimum step size.");
     pl->set(maxStepSizeName_, maxStepSizeDefault_, "Maximum step size.");
     pl->set(maxStepSizeIncreaseFactorName_, maxStepSizeIncreaseFactorDefault_,
-	    "The maximum factor to increase the step size after a successful step.");
+            "The maximum factor to increase the step size after a successful step.");
     pl->set(minStepSizeDecreaseFactorName_, minStepSizeDecreaseFactorDefault_,
-	    "The minimum allowable factor to decrease the step size.  If the "
+            "The minimum allowable factor to decrease the step size.  If the "
       "stepSizeFactor_ is below this, the current step is considered a "
       "failure and retried with `" + minStepSizeDecreaseFactorName_ +
       "' applied.");

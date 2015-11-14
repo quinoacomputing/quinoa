@@ -6,7 +6,7 @@
    Unicode names encoded with UTF-8. It is the NETCDF3 equivalent
    of tst_unicode.c
 
-   $Id$
+   $Id: tst_atts.c 2792 2014-10-27 06:02:59Z wkliao $
 */
 
 #include <nc_tests.h>
@@ -454,7 +454,11 @@ create_file()
     int i444_dims[RANK_i444];
 
     /* enter define mode */
+#ifdef TEST_PNETCDF
+    stat = nc_create_par(FILE_NAME, NC_CLOBBER|NC_PNETCDF, MPI_COMM_WORLD, MPI_INFO_NULL, &ncid);
+#else
     stat = nc_create(FILE_NAME, NC_CLOBBER, &ncid);
+#endif
     check_err(stat,__LINE__,__FILE__);
 
     /* define dimensions */
@@ -1191,7 +1195,7 @@ create_file()
 
     /* assign global attributes */
     { /* Gc */
-    stat = nc_put_att_text(ncid, NC_GLOBAL, "Gc", 1, "€");
+    stat = nc_put_att_text(ncid, NC_GLOBAL, "Gc", 1, "\177");
     check_err(stat,__LINE__,__FILE__);
     }
     { /* Gb */
@@ -1293,7 +1297,7 @@ create_file()
     stat = nc_put_var1(ncid, d_id, &zero, d_data);    check_err(stat,__LINE__,__FILE__);
     }
     {
-    char cr_data[2] = "€\177" ;
+    char cr_data[2] = "\177\177" ;
     size_t cr_startset[1] = {0} ;
     size_t cr_countset[1] = {2} ;
     stat = nc_put_vara(ncid, cr_id, cr_startset, cr_countset, cr_data);
@@ -1341,7 +1345,7 @@ create_file()
     }
 
     {
-    char c1_data[1] = "€" ;
+    char c1_data[1] = "\177" ;
     size_t c1_startset[1] = {0} ;
     size_t c1_countset[1] = {1} ;
     stat = nc_put_vara(ncid, c1_id, c1_startset, c1_countset, c1_data);
@@ -1389,7 +1393,7 @@ create_file()
     }
 
     {
-    char c2_data[2] = "€\177" ;
+    char c2_data[2] = "\177\177" ;
     size_t c2_startset[1] = {0} ;
     size_t c2_countset[1] = {2} ;
     stat = nc_put_vara(ncid, c2_id, c2_startset, c2_countset, c2_data);
@@ -1437,7 +1441,7 @@ create_file()
     }
 
     {
-    char c3_data[3] = "€\177A" ;
+    char c3_data[3] = "\177\177A" ;
     size_t c3_startset[1] = {0} ;
     size_t c3_countset[1] = {3} ;
     stat = nc_put_vara(ncid, c3_id, c3_startset, c3_countset, c3_data);
@@ -1485,7 +1489,7 @@ create_file()
     }
 
     {
-    char c4_data[4] = "€\177AZ" ;
+    char c4_data[4] = "\177\177AZ" ;
     size_t c4_startset[1] = {0} ;
     size_t c4_countset[1] = {4} ;
     stat = nc_put_vara(ncid, c4_id, c4_startset, c4_countset, c4_data);
@@ -2342,6 +2346,9 @@ create_file()
 int
 main(int argc, char **argv)
 {
+#ifdef TEST_PNETCDF
+   MPI_Init(&argc, &argv);
+#endif
    printf("\n*** Testing netCDF attributes.\n");
    printf("*** testing attribute renaming for memory leak, like nc_test...");
    {
@@ -2354,7 +2361,11 @@ main(int argc, char **argv)
       char char_data = 'a';
 
       /* Create a file with a var with two atts. */
+#ifdef TEST_PNETCDF
+      if (nc_create_par(FILE_NAME, NC_CLOBBER|NC_PNETCDF, MPI_COMM_WORLD, MPI_INFO_NULL, &ncid)) ERR;
+#else
       if (nc_create(FILE_NAME, NC_NETCDF4|NC_CLASSIC_MODEL|NC_CLOBBER, &ncid)) ERR;
+#endif
       if (nc_def_var(ncid, VAR_NAME, NC_INT, 0, NULL, &varid)) ERR;
       if (nc_put_att(ncid, varid, A1_NAME, NC_CHAR, 1, &char_data)) ERR;
       if (nc_put_att(ncid, varid, B1_NAME, NC_CHAR, 1, &char_data)) ERR;
@@ -2377,9 +2388,15 @@ main(int argc, char **argv)
       {
 	  static const int var_FillValue_atts[] = {42, -99} ;
 	  float var_FillValue_att = -99 ;
+	  int res = 0;
 	  /* This should return error, because attribute has too many values */
-	  if (nc_put_att_int(ncid, varid, "_FillValue", NC_INT, 2, var_FillValue_atts) 
+#if 1
+	  res=nc_put_att_int(ncid, varid, "_FillValue", NC_INT, 2, var_FillValue_atts);
+	  if(res != NC_EINVAL) ERR;
+#else
+	  if ((res=nc_put_att_int(ncid, varid, "_FillValue", NC_INT, 2, var_FillValue_atts))
 	      != NC_EINVAL) ERR;
+#endif
 	  /* This also should return error, because types don't match */
 	  if (nc_put_att_float(ncid, varid, "_FillValue", NC_FLOAT, 1, &var_FillValue_att) 
 	      != NC_EBADTYPE) ERR;
@@ -2390,7 +2407,11 @@ main(int argc, char **argv)
       if (nc_close(ncid)) ERR;
 
       /* Reopen the file and check it. */
+#ifdef TEST_PNETCDF
+      if (nc_open_par(FILE_NAME, NC_WRITE|NC_PNETCDF, MPI_COMM_WORLD, MPI_INFO_NULL, &ncid)) ERR;
+#else
       if (nc_open(FILE_NAME, NC_WRITE, &ncid)) ERR;
+#endif
       if (nc_inq_nvars(ncid, &nvars)) ERR;
       if (nvars != 1) ERR_RET;
       for (v = 0; v < nvars; v++)
@@ -2418,7 +2439,11 @@ main(int argc, char **argv)
       if (create_file()) ERR;
 
       /* Open the file. */
+#ifdef TEST_PNETCDF
+      if (nc_open_par(FILE_NAME, NC_WRITE|NC_PNETCDF, MPI_COMM_WORLD, MPI_INFO_NULL, &ncid)) ERR;
+#else
       if (nc_open(FILE_NAME, NC_WRITE, &ncid)) ERR;
+#endif
       if (nc_redef(ncid)) ERR;
 
       /* Add a global attribute A_NAME. */
@@ -2443,7 +2468,11 @@ main(int argc, char **argv)
       if (nc_close(ncid)) ERR;
 
       /* Reopen the file and check it. */
+#ifdef TEST_PNETCDF
+      if (nc_open_par(FILE_NAME, NC_WRITE|NC_PNETCDF, MPI_COMM_WORLD, MPI_INFO_NULL, &ncid)) ERR;
+#else
       if (nc_open(FILE_NAME, NC_WRITE, &ncid)) ERR;
+#endif
       if (nc_inq_nvars(ncid, &nvars)) ERR;
       if (nvars != NVARS) ERR_RET;
       for (v = 0; v < nvars; v++)
@@ -2459,5 +2488,8 @@ main(int argc, char **argv)
 
    }
    SUMMARIZE_ERR;
+#ifdef TEST_PNETCDF
+   MPI_Finalize();
+#endif
    FINAL_RESULTS;
 }

@@ -1,13 +1,13 @@
 
 // @HEADER
 // ***********************************************************************
-// 
+//
 //                      Didasko Tutorial Package
 //                 Copyright (2005) Sandia Corporation
-// 
+//
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -36,7 +36,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 // Questions about Didasko? Contact Marzio Sala (marzio.sala _AT_ gmail.com)
-// 
+//
 // ***********************************************************************
 // @HEADER
 
@@ -66,14 +66,14 @@ int main(int argc, char* argv[])
   My_Matrix.random();
   My_Vector.random();
 
-  // Perform an LU factorization of this matrix. 
+  // Perform an LU factorization of this matrix.
   int ipiv[4], info;
   char TRANS = 'N';
-  lapack.GETRF( 4, 4, My_Matrix.values(), My_Matrix.stride(), ipiv, &info ); 
-  
+  lapack.GETRF( 4, 4, My_Matrix.values(), My_Matrix.stride(), ipiv, &info );
+
   // Solve the linear system.
-  lapack.GETRS( TRANS, 4, 1, My_Matrix.values(), My_Matrix.stride(), 
-		ipiv, My_Vector.values(), My_Vector.stride(), &info );  
+  lapack.GETRS( TRANS, 4, 1, My_Matrix.values(), My_Matrix.stride(),
+      ipiv, My_Vector.values(), My_Vector.stride(), &info );
 
   // Print out the solution.
   cout << My_Vector << endl;
@@ -96,7 +96,7 @@ int main(int argc, char *argv[])
 #endif
 
   puts("Please configure Didasko with:\n"
-       "--enable-teuchos");
+      "--enable-teuchos");
 
 #ifdef HAVE_MPI
   MPI_Finalize();

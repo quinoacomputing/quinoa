@@ -55,20 +55,6 @@
 #include <sstream>
 #include <string>
 
-/*!  \brief Throw an error for input adapter functions that have been
- *   called by the model but not implemented in the adapter.
- */
-
-#define Z2_THROW_NOT_IMPLEMENTED_ERROR \
-  { \
-    std::ostringstream emsg; \
-    emsg << __FILE__ << "," << __LINE__ \
-         << " error:  " << __func__ << " not implemented in adapter "  \
-         << std::endl; \
-    throw std::runtime_error(emsg.str()); \
-  }
-
-
 /*!  \brief Throw an error returned from outside the Zoltan2 library.
  *
  *   A \c try block that calls another library should be followed
@@ -88,7 +74,7 @@
  *  original runtime, logic or bad_alloc exception gets passed up.
  *  For example, if a runtime_error is caught as a std::exception,
  *  it gets passed up as a std::exception and the \c what() message
- *  is lost. 
+ *  is not lost. 
  */
 
 #define Z2_FORWARD_EXCEPTIONS \
@@ -116,6 +102,39 @@
   throw std::runtime_error(oss.str()); \
   }
 
+/*! \brief Throw an error when wolf experimental code is requested but not compiled.
+ *
+ *  Experimental code must be enabled with CMAKE Option
+ *  -D Zoltan2_ENABLE_Experimental_Wolf:BOOL=ON
+ *  If it is not enabled but it is called, throw an exception.
+ *  The input string mystr is a use-specific message included in the throw
+ *  message.
+ */
+
+#define Z2_THROW_EXPERIMENTAL_WOLF(mystr) \
+  { \
+  std::ostringstream oss; \
+  oss << (mystr) << std::endl \
+      << "To experiment with this software, configure with " \
+      << "-D Zoltan2_ENABLE_Experimental_Wolf:BOOL=ON " \
+      << std::endl; \
+  throw std::runtime_error(oss.str()); \
+  }
+
+/*! \brief Throw an error when code is run on more than one processor
+ *
+ */
+
+#define Z2_THROW_SERIAL(mystr) \
+  { \
+  std::ostringstream oss; \
+  oss << (mystr) << std::endl \
+      << "This algorithm only runs in serial (Comm_Serial or MPI_Comm with worldsize=1). " \
+      << std::endl; \
+  throw std::runtime_error(oss.str()); \
+  }
+
+
 /*! \brief Throw an error when actual value is not equal to expected value.
  *
  *  Check if the two arguments passed are equal and throw a runtime error if
@@ -133,5 +152,15 @@
           throw std::runtime_error(oss.str()); \
       }\
   }
+
+#ifdef _MSC_VER
+#if _MSC_VER >= 1300
+#define __func__zoltan2__  __FUNCTION__
+#else
+#define __func__zoltan2__  "unknown zoltan2 function"
+#endif
+#else
+#define __func__zoltan2__  __func__
+#endif
 
 #endif

@@ -1,13 +1,13 @@
 
 // @HEADER
 // ***********************************************************************
-// 
+//
 //                      Didasko Tutorial Package
 //                 Copyright (2005) Sandia Corporation
-// 
+//
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -36,7 +36,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 // Questions about Didasko? Contact Marzio Sala (marzio.sala _AT_ gmail.com)
-// 
+//
 // ***********************************************************************
 // @HEADER
 
@@ -57,13 +57,13 @@
 
 int main(int argc, char *argv[])
 {
-  
+
 #ifdef HAVE_MPI
   MPI_Init(&argc, &argv);
   Epetra_MpiComm Comm(MPI_COMM_WORLD);
 #else
   Epetra_SerialComm Comm;
-#endif  
+#endif
 
   // Total number of elements in the vector
   int NumElements = 10;
@@ -73,28 +73,28 @@ int main(int argc, char *argv[])
 
   // Create x as a 2-component multi-vector
   Epetra_MultiVector x(Map,2);
- 
+
   // get the local size of the vector
   int MyLength = x.MyLength();
 
   /* First way to define the vector:   */
   /* use the [] operator on the object */
 
-  for( int c=0 ; c<x.NumVectors() ; ++c ) 
+  for( int c=0 ; c<x.NumVectors() ; ++c )
     for( int i=0 ; i<MyLength ; ++i ) x[c][i] = 1.0*i+1000*c;
 
   // need a double pointer because this works with multi-vectors
   double ** pointer;
-  
+
   x.ExtractView( &pointer );
 
-  for( int c=0 ; c<x.NumVectors() ;++c ) 
+  for( int c=0 ; c<x.NumVectors() ;++c )
     for( int i=0 ; i<MyLength ; ++i )
       cout << "on proc " << Comm.MyPID() << ", x["
-	   << i << "] = " << pointer[c][i] << endl;
+        << i << "] = " << pointer[c][i] << endl;
 
   // now modify the values
-  for( int c=0 ; c<x.NumVectors() ;++c ) 
+  for( int c=0 ; c<x.NumVectors() ;++c )
     for( int i=0 ; i<MyLength ; ++i )
       pointer[c][i] *= 10;
 
@@ -105,7 +105,7 @@ int main(int argc, char *argv[])
 #endif
 
   return(0);
-  
+
 } /* main */
 
 #else
@@ -116,7 +116,7 @@ int main(int argc, char *argv[])
 int main(int argc, char *argv[])
 {
   puts("Please configure Didasko with:\n"
-       "--enable-epetra");
+      "--enable-epetra");
 
   return 0;
 }

@@ -42,12 +42,10 @@
 
 #include <CJ_Internals.h>
 
-extern "C" {
 #define NO_NETCDF_2
 #include <netcdf.h>
 #include <exodusII.h>
 #include <exodusII_int.h>
-}
 
 #include <CJ_ExodusEntity.h>
 
@@ -226,7 +224,7 @@ int Excn::Internals::write_meta_data(const Mesh<INT> &mesh,
       }
     }
   	 
-    int name_size = ex_inquire_int(exodusFilePtr, EX_INQ_MAX_READ_NAME_LENGTH);
+    size_t name_size = ex_inquire_int(exodusFilePtr, EX_INQ_MAX_READ_NAME_LENGTH);
     char **names = new char* [max_entity];
     for (size_t i=0; i < max_entity; i++) {
       names[i] = new char [name_size+1];
@@ -244,7 +242,7 @@ int Excn::Internals::write_meta_data(const Mesh<INT> &mesh,
 	  SMART_ASSERT(blocks[i].attributeCount == blocks[i].attributeNames.size());
 	  for (size_t j=0; j < blocks[i].attributeCount; j++) {
 	    std::memset(names[j], '\0', name_size+1);
-	    if (blocks[i].attributeNames[j].size() > 0) {
+	    if (!blocks[i].attributeNames[j].empty()) {
 	      std::strncpy(names[j], blocks[i].attributeNames[j].c_str(),
 			   name_size);
 	      names[j][name_size] = 0;
@@ -289,6 +287,7 @@ int Excn::Internals::put_metadata(const Mesh<INT> &mesh,
   int numdimdim  = 0;
   int numnoddim  = 0;
   int numelemdim = 0;
+  int timedim    = 0;
   int elblkdim   = 0;
   int strdim     = 0;
   int namestrdim = 0;
@@ -357,6 +356,27 @@ int Excn::Internals::put_metadata(const Mesh<INT> &mesh,
 	    "Error: failed to define number of dimensions in file id %d",exodusFilePtr);
     ex_err(routine,errmsg,status);
     return(EX_FATAL);
+  }
+
+  if ((status = nc_def_dim(exodusFilePtr, DIM_TIME, NC_UNLIMITED, &timedim)) != NC_NOERR) {
+    exerrval = status;
+    sprintf(errmsg,
+	    "Error: failed to define time dimension in file id %d", exodusFilePtr);
+    ex_err(routine,errmsg,exerrval);
+    return (EX_FATAL);
+  }
+
+  {
+    int varid = 0;
+    dim[0] = timedim;
+    if ((status = nc_def_var(exodusFilePtr, VAR_WHOLE_TIME, nc_flt_code(exodusFilePtr), 1, dim, &varid)) != NC_NOERR) {
+      exerrval = status;
+      sprintf(errmsg,
+	      "Error: failed to define whole time step variable in file id %d",
+	      exodusFilePtr);
+      ex_err(routine,errmsg,exerrval);
+      return (EX_FATAL);
+    }
   }
 
   if (mesh.nodeCount > 0) {
@@ -616,7 +636,7 @@ int Excn::Internals::put_metadata(const std::vector<Block> &blocks)
 
   int status  = 0; // clear error code
 
-  if (blocks.size() == 0)
+  if (blocks.empty())
     return (EX_NOERR);
 
   // Get number of element blocks defined for this file

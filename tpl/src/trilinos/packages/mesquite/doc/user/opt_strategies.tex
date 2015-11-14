@@ -9,7 +9,7 @@ The mesh can be decomposed into subsets called {\em patches}.  The specifics of 
 \begin{figure}[htb!]
 \begin{center}
 \noindent\makebox[\textwidth]{%
-\includegraphics[width=6.5in]{generalized_optimization}}
+\includegraphics[width=6.5in]{figures/generalized_optimization}}
 \caption{\em Optimization Loop \label{fig:genoptloop}}
 \end{center}
 \end{figure}
@@ -25,10 +25,10 @@ The outer loop(s) are implemented in the {\texttt VertexMover} class.  The inner
 \section{Patches \label{sec:patches}}
 
 
-Mesquite can operate on a decomposition of the mesh into subsets called {\em patches}.  Each patch is optimized individually.  The overall mesh optimization is performed by repeatedly iterating over the set of patches.  Mesquite provides two build-in mesh decompositions\footnote{Mesquite includes an additional decomposition of the mesh into single-element patches which is not suitable for use in optimization.  It is used internally for quality assessment and other purposes}: element-on-vertex patches and a global patch.  
+Mesquite can operate on a decomposition of the mesh into subsets called {\em patches}.  Each patch is optimized individually.  The overall mesh optimization is performed by repeatedly iterating over the set of patches.  Mesquite provides two build-in mesh decompositions\footnote{Mesquite includes an additional decomposition of the mesh into single-element patches which is not suitable for use in optimization.  It is used internally for quality assessment and other purposes}: element-on-vertex patches and a global patch.
 
 \begin{figure}[htb]
-\includegraphics[width=5in]{patches-horiz}
+\includegraphics[width=5in]{figures/patches-horiz}
 \caption{Miscellaneous patch configurations.\label{fig:patch-types}}
 \end{figure}
 
@@ -68,7 +68,7 @@ The \texttt{GlobalPatch} class is the implementation of the \texttt{PatchSet} in
 
 For a global optimization an objective function that measures the quality of the mesh is minimized using a numerical solver.  The coordinates of all of the free vertices in the mesh are the free variables in the optimization.  This is the default mode of operation for most solver-based implementations of the {\texttt QualityImprover} interface.
 
-A global optimization is simplest form of the generalized optimization loop.  In this mode the mesh is ``decomposed'' into a single patch containing the entire mesh.  The outer loops in Figure \ref{fig:genoptloop} are executed only once.  The entire optimization process happens in the inner loop.  For global optimization the outer termination criterion is the default of a single iteration.  The inner termination criterion should be used to terminate the optimization process.  Setting some other outer termination criterion is not prohibited, but will result in a much less efficient optimization process.  There is no logical difference between inner and outer termination criterion, but each iteration of the outer loop begins with a clean solver state which will result in less efficient operation of the solver.  Even steepest descent, the simplest solver, calculates a initial step size based on the previous iteration of the inner loop.  
+A global optimization is simplest form of the generalized optimization loop.  In this mode the mesh is ``decomposed'' into a single patch containing the entire mesh.  The outer loops in Figure \ref{fig:genoptloop} are executed only once.  The entire optimization process happens in the inner loop.  For global optimization the outer termination criterion is the default of a single iteration.  The inner termination criterion should be used to terminate the optimization process.  Setting some other outer termination criterion is not prohibited, but will result in a much less efficient optimization process.  There is no logical difference between inner and outer termination criterion, but each iteration of the outer loop begins with a clean solver state which will result in less efficient operation of the solver.  Even steepest descent, the simplest solver, calculates a initial step size based on the previous iteration of the inner loop.
 
 The listing below shows how global optimization can be selected.
 
@@ -77,7 +77,7 @@ The listing below shows how global optimization can be selected.
 SteepestDescent improver( &objective_function );
 \<improver.use_global_patch();\>
 
-// Set only inner termination criterion for 
+// Set only inner termination criterion for
 // global optimization
 TerminationCriterion inner;
 inner.add_absolute_vertex_movement( 1e-3 );
@@ -102,7 +102,7 @@ Quality improvers that have an explicit \texttt{ObjectiveFunction} may be used w
 SteepestDescent improver( &objective_function );
 \<improver.use_element_on_vertex_patch();\>
 
-// Set inner and outer termination criterion for 
+// Set inner and outer termination criterion for
 // non-global patch
 TerminationCriterion inner, outer;
 outer.add_absolute_vertex_movement( 1e-3 );
@@ -125,7 +125,7 @@ SteepestDescent improver( &objective_function );
 improver.use_element_on_vertex_patch();
 \<improver.do_block_coordinate_descent_optimization();\>
 
-// Set inner and outer termnation criterion for 
+// Set inner and outer termnation criterion for
 // non-global patch
 TerminationCriterion inner, outer;
 outer.add_relative_quality_improvement( 1e-2 );
@@ -148,12 +148,12 @@ queue.run_instructions( &mesh, err );
 SteepestDescent improver( &objective_function );
 improver.use_element_on_vertex_patch();
 
-// The culling criterion is effectively an outer 
-// termination criterion because optimization will 
-// always stop when all patches are culled.  We 
-// must explicitly pass an empty outer termination 
+// The culling criterion is effectively an outer
+// termination criterion because optimization will
+// always stop when all patches are culled.  We
+// must explicitly pass an empty outer termination
 // criterion to replace the default of one iteration.
-// Additional outer termination criteria may also be 
+// Additional outer termination criteria may also be
 // specifed.
 TerminationCriterion inner, outer;
 \<inner.cull_on_absolute_vertex_movement( 1e-3 );\>
@@ -175,7 +175,7 @@ SteepestDescent improver( &objective_function );
 improver.use_element_on_vertex_patch();
 \<improver.do_jacobi_optimization();\>
 
-// Set inner and outer termination criterion for 
+// Set inner and outer termination criterion for
 // non-global patch
 TerminationCriterion inner, outer;
 outer.add_absolute_vertex_movement( 1e-3 );

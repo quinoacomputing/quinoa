@@ -1,12 +1,12 @@
 // @HEADER
 // ***********************************************************************
-// 
+//
 //                      Didasko Tutorial Package
 //                 Copyright (2005) Sandia Corporation
-// 
+//
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -35,7 +35,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 // Questions about Didasko? Contact Marzio Sala (marzio.sala _AT_ gmail.com)
-// 
+//
 // ***********************************************************************
 // @HEADER
 
@@ -63,7 +63,7 @@ int main(int argc, char *argv[])
   Epetra_MpiComm Comm(MPI_COMM_WORLD);
 #else
   Epetra_SerialComm Comm;
-#endif  
+#endif
 
   // Total number of elements in the vector
   int NumElements = 5;
@@ -82,7 +82,9 @@ int main(int argc, char *argv[])
   b.Random();
 
   // minimum, maximum and average of vector
-  double minval, maxval, aveval;
+  double minval = 0.0;
+  double maxval = 0.0;
+  double aveval = 0.0;
   x.MinValue( &minval );
   x.MaxValue( &maxval );
   x.MeanValue( &aveval );
@@ -97,7 +99,7 @@ int main(int argc, char *argv[])
 
   // total number of vectors, local and global dimension
   int NVecs, MySize, GloSize;
-  NVecs = x.NumVectors(); 
+  NVecs = x.NumVectors();
   MySize = x.MyLength();
   GloSize = x.GlobalLength();
   cout << "Number of vectors = " << NVecs << endl;
@@ -120,7 +122,7 @@ int main(int argc, char *argv[])
 int main(int argc, char *argv[])
 {
   puts("Please configure Didasko with:\n"
-       "--enable-epetra");
+      "--enable-epetra");
 
   return 0;
 }

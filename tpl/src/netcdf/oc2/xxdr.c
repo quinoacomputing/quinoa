@@ -53,6 +53,9 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
 
 #ifdef _WIN32
 #include <wchar.h>
@@ -138,7 +141,7 @@ xxdr_uint(XXDR* xdr, unsigned int* ip)
 
 /* get a long long  from underlying stream*/
 int
-xxdr_ulonglong(XXDR* xdr, unsigned long* llp)
+xxdr_ulonglong(XXDR* xdr, unsigned long long* llp)
 {
    /* Pull two units */
    if(!llp) return 0;
@@ -222,8 +225,8 @@ xxdr_skip(XXDR* xdrs, off_t len)
     off_t pos;
     pos = xxdr_getpos(xdrs);
     pos = (pos + len);
-    // Removed the following; pos is unsigned. jhrg 9/30/13
-    // if(pos < 0) pos = 0;
+    /* Removed the following; pos is unsigned. jhrg 9/30/13 */
+    /* if(pos < 0) pos = 0; */
     return xxdr_setpos(xdrs,pos);
 }
 
@@ -352,7 +355,10 @@ xxdr_filecreate(FILE* file, off_t base)
         xdrs->base = base;
         xdrs->pos = 0;
 	xdrs->valid = 0;
-        if(fseek(file,0L,SEEK_END)) return NULL;
+        if(fseek(file,0L,SEEK_END)) {
+	    free(xdrs);
+	    return NULL;
+        }
 	xdrs->length = (off_t)ftell(file);
 	xdrs->length -= xdrs->base;
         xdrs->getbytes = xxdr_filegetbytes;

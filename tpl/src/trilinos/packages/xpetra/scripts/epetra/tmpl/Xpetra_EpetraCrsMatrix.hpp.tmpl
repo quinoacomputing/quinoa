@@ -24,17 +24,14 @@ namespace Xpetra {
     typedef double Scalar;
     typedef int LocalOrdinal;
     typedef int GlobalOrdinal;
-    typedef KokkosClassic::DefaultNode::DefaultNodeType Node;
-    typedef KokkosClassic::DefaultKernels<void,int,Node>::SparseOps LocalMatOps;
+    typedef CrsMatrix<double, int, int>::node_type Node;
 
   public:
 
 $TMPL_PUBLIC_FUNCTIONS
 
-#ifdef HAVE_XPETRA_EXPERIMENTAL
     //! Deep copy constructor
     $TMPL_CLASS(const $TMPL_CLASS& matrix);
-#endif
 
     //! Implements DistObject interface
     //{@

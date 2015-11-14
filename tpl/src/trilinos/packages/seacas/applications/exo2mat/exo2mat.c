@@ -59,16 +59,15 @@
      gmreese. April 1, 2003.
 */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <ctype.h>
-#include <time.h>
-#include <assert.h>
-#include "exodusII.h"
+#include <assert.h>                     // for assert
+#include <stddef.h>                     // for size_t
+#include <stdio.h>                      // for fprintf, printf, sprintf, etc
+#include <stdlib.h>                     // for free, calloc, exit, malloc
+#include <string.h>                     // for strcat, strlen, strcpy, etc
+#include "add_to_log.h"                 // for add_to_log
+#include "exodusII.h"                   // for ex_get_variable_param, etc
+#include "matio.h"                      // for Mat_VarCreate, Mat_VarFree, etc
 
-#include "add_to_log.h"
-#include "matio.h"
 
 #define EXT ".mat"
 int textfile=0;
@@ -79,10 +78,24 @@ mat_t *mat_file=0;  /* file for binary .mat output */
 static char *qainfo[] =
 {
   "exo2mat",
-  "2014/01/03",
+  "2014/01/14",
   "2.02",
 };
 
+
+void usage()
+{
+    printf("exo2mat [options] exodus_file_name.\n");
+    printf("   the exodus_file_name is required (exodusII only).\n");
+    printf("   Options:\n");
+    printf("     -t write a text (.m) file rather than a binary .mat\n");
+    printf("     -o output file name (rather than auto generate)\n");
+    printf("   -v5  output version 5 mat file (default)\n");
+    printf("   -v73 output version 7.3 mat file (hdf5-based)\n");
+    printf(" ** note **\n");
+    printf("Binary files are written by default on all platforms with");
+    printf(" available libraries.\n");
+}
 
 /* put a string into an m file. If the string has
    line feeds, we put it as ints, and use 'char()' to convert it */
@@ -223,7 +236,7 @@ int main (int argc, char *argv[])
 {
 
   char  
-    *str,**str2,*(*qa_records)[4],*line, *oname, *dot, *filename;
+    *str,**str2,*line, *oname, *dot, *filename;
 
   const char* ext=EXT;
 
@@ -231,7 +244,7 @@ int main (int argc, char *argv[])
     i,j,k,n,n1,n2,cpu_word_size,io_word_size,exo_file,err,
     num_axes,num_nodes,num_elements,num_blocks,
     num_side_sets,num_node_sets,num_time_steps,
-    num_qa_lines,num_info_lines,num_global_vars,
+    num_info_lines,num_global_vars,
     num_nodal_vars,num_element_vars,num_nodeset_vars, num_sideset_vars,
     *ids,*iscr,*num_elem_in_block,*junk,
     *elem_list,*side_list,
@@ -242,6 +255,8 @@ int main (int argc, char *argv[])
   float
     exo_version;
 
+  int mat_version = 50;
+  
   double
     *scr,*x,*y,*z;
 
@@ -252,6 +267,23 @@ int main (int argc, char *argv[])
     if ( strcmp(argv[j],"-t")==0){    /* write text file (*.m) */
       del_arg(&argc,argv,j);
       textfile=1;
+      j--;
+      continue;
+    }
+    if ( strcmp(argv[j],"-h")==0){    /* write help info */
+      del_arg(&argc,argv,j);
+      usage();
+      exit(1);
+    }
+    if ( strcmp(argv[j],"-v73")==0){    /* Version 7.3 */
+      del_arg(&argc,argv,j);
+      mat_version = 73;
+      j--;
+      continue;
+    }
+    if ( strcmp(argv[j],"-v5")==0){    /* Version 5 (default) */
+      del_arg(&argc,argv,j);
+      mat_version = 50;
       j--;
       continue;
     }
@@ -278,14 +310,7 @@ int main (int argc, char *argv[])
   
   /* usage message*/
   if(argc != 2){
-    printf("%s [options] exodus_file_name.\n",argv[0]);
-    printf("   the exodus_file_name is required (exodusII only).\n");
-    printf("   Options:\n");
-    printf("     -t write a text (.m) file rather than a binary .mat\n");
-    printf("     -o output file name (rather than auto generate)\n");
-    printf(" ** note **\n");
-    printf("Binary files are written by default on all platforms with");
-    printf(" available libraries.\n");
+    usage();
     exit(1);
   }
 
@@ -312,7 +337,11 @@ int main (int argc, char *argv[])
     }
   }
   else {
-    mat_file = Mat_CreateVer(filename, NULL, MAT_FT_MAT5);
+    if (mat_version == 50) {
+      mat_file = Mat_CreateVer(filename, NULL, MAT_FT_MAT5);
+    } else if (mat_version == 73) {
+      mat_file = Mat_CreateVer(filename, NULL, MAT_FT_MAT73);
+    }
     if (mat_file == NULL) {
       fprintf(stderr,"Unable to create matlab file %s\n",filename);
       exit(1);
@@ -335,17 +364,16 @@ int main (int argc, char *argv[])
 
   /* read database paramters */
   line=(char *) calloc ((MAX_LINE_LENGTH+1),sizeof(char));
-  err = ex_get_init(exo_file,line,
-	&num_axes,&num_nodes,&num_elements,&num_blocks,
-        &num_node_sets,&num_side_sets);
-  num_qa_lines   = ex_inquire_int(exo_file,EX_INQ_QA);
+  ex_get_init(exo_file,line,
+	      &num_axes,&num_nodes,&num_elements,&num_blocks,
+	      &num_node_sets,&num_side_sets);
   num_info_lines = ex_inquire_int(exo_file,EX_INQ_INFO);
   num_time_steps = ex_inquire_int(exo_file,EX_INQ_TIME);
-  err=ex_get_variable_param(exo_file,EX_GLOBAL,&num_global_vars);
-  err=ex_get_variable_param(exo_file,EX_NODAL,&num_nodal_vars);
-  err=ex_get_variable_param(exo_file,EX_ELEM_BLOCK,&num_element_vars);
-  err=ex_get_variable_param(exo_file,EX_NODE_SET,&num_nodeset_vars);
-  err=ex_get_variable_param(exo_file,EX_SIDE_SET,&num_sideset_vars);
+  ex_get_variable_param(exo_file,EX_GLOBAL,&num_global_vars);
+  ex_get_variable_param(exo_file,EX_NODAL,&num_nodal_vars);
+  ex_get_variable_param(exo_file,EX_ELEM_BLOCK,&num_element_vars);
+  ex_get_variable_param(exo_file,EX_NODE_SET,&num_nodeset_vars);
+  ex_get_variable_param(exo_file,EX_SIDE_SET,&num_sideset_vars);
 
 
   /* export paramters */
@@ -377,41 +405,27 @@ int main (int argc, char *argv[])
   /* title */
   PutStr("Title",line);
 
-#if 0
-  /* QA records */
-  if (num_qa_lines > 0 ){
-    qa_records  =(char *(*)[4]) calloc (num_qa_lines*4,sizeof(char **));
-    for (i=0;i<num_qa_lines;i++) 
-      for (j=0;j<4;j++)
-	qa_records[i][j]=(char *) calloc ((MAX_STR_LENGTH+1),sizeof(char));
-    err=ex_get_qa(exo_file,qa_records);
-    str[0]='\0';
-    for (i=0;i<num_qa_lines;i++){
-      for (j=0;j<4;j++)
-	sprintf(str+strlen(str),"%s ",qa_records[i][j]);
-      strcat(str,"\n");
-    }
-    for (i=0;i<num_qa_lines;i++){
-        for (j=0;j<4;j++)
-	  free(qa_records[i][j]);
-    }
-    free(qa_records);
-  }
-
   /* information records */
   if (num_info_lines > 0 ){
-    err = ex_get_info(exo_file,str2);
+    ex_get_info(exo_file,str2);
     str[0]='\0';
-    for (i=0;i<num_info_lines;i++)
-      sprintf(str+strlen(str),"%s\n",str2[i]);
+    for (i=0;i<num_info_lines;i++) {
+      if (strlen(str2[i]) > 0) {
+	strcat(str, str2[i]);
+	strcat(str, "\n");
+      }
+    }
     PutStr("info",str);
     str[0]='\0';
-    for (i=0;i<num_info_lines;i++)
-      if (strncmp(str2[i],"cavi",4)==0)
-	sprintf(str+strlen(str),"%s\n",str2[i]);
+    for (i=0;i<num_info_lines;i++) {
+      if (strlen(str2[i]) > 0 && strncmp(str2[i],"cavi",4)==0) {
+	strcat(str, str2[i]);
+	strcat(str, "\n");
+      }
+    }
     PutStr("cvxp",str);
   }
-#endif
+
   /* nodal coordinates */
   x = (double *) calloc(num_nodes,sizeof(double));
   y = (double *) calloc(num_nodes,sizeof(double));
@@ -419,7 +433,7 @@ int main (int argc, char *argv[])
     z = (double *) calloc(num_nodes,sizeof(double));
   else 
     z = NULL;
-  err = ex_get_coord(exo_file,x,y,z);
+  ex_get_coord(exo_file,x,y,z);
   PutDbl("x0", num_nodes, 1, x);
   PutDbl("y0", num_nodes, 1, y);
   free(x);
@@ -432,12 +446,12 @@ int main (int argc, char *argv[])
    /* side sets */
   if(num_side_sets > 0){
     ids=(int *) calloc(num_side_sets,sizeof(int));
-    err = ex_get_ids(exo_file,EX_SIDE_SET,ids);
+    ex_get_ids(exo_file,EX_SIDE_SET,ids);
     PutInt( "ssids",num_side_sets, 1,ids);
     nsssides = (int *) calloc(num_side_sets,sizeof(int)); /*dgriffi */
     nssdfac  = (int *) calloc(num_side_sets,sizeof(int)); /*dgriffi */
     for (i=0;i<num_side_sets;i++){
-      err = ex_get_set_param(exo_file,EX_SIDE_SET, ids[i],&n1,&n2);
+      ex_get_set_param(exo_file,EX_SIDE_SET, ids[i],&n1,&n2);
       nsssides[i]=n1; /* dgriffi */
       nssdfac[i]=n2;  /* dgriffi */
       /*
@@ -457,7 +471,7 @@ int main (int argc, char *argv[])
          exists, but it works for now */
 
 	junk = (int*) calloc(n1,sizeof(int)); 
-	err = ex_get_side_set_node_count(exo_file,ids[i],junk);
+	ex_get_side_set_node_count(exo_file,ids[i],junk);
 	n2=0; /* n2 will be equal to the total number of nodes in the sideset */
 	for (j=0;j<n1;j++) n2+=junk[j];
 	free(junk);
@@ -465,7 +479,7 @@ int main (int argc, char *argv[])
       }
 	
       iscr = (int *) calloc(n1+n2,sizeof(int));
-      err = ex_get_side_set_node_list(exo_file,ids[i],iscr,iscr+n1);
+      ex_get_side_set_node_list(exo_file,ids[i],iscr,iscr+n1);
       /* number-of-nodes-per-side list */
       sprintf(str,"ssnum%02d",i+1);
       PutInt(str,n1,1,iscr); 
@@ -488,7 +502,7 @@ int main (int argc, char *argv[])
       /* element and side list for side sets (dgriffi) */
       elem_list = (int *) calloc(n1, sizeof(int));
       side_list = (int *) calloc(n1, sizeof(int));
-      err = ex_get_set(exo_file,EX_SIDE_SET,ids[i],elem_list,side_list);
+      ex_get_set(exo_file,EX_SIDE_SET,ids[i],elem_list,side_list);
       sprintf(str,"ssside%02d",i+1);
       PutInt(str,n1,1,side_list);
       sprintf(str,"sselem%02d",i+1);
@@ -508,14 +522,14 @@ int main (int argc, char *argv[])
   /* node sets (section by dgriffi) */
   if(num_node_sets > 0){
     ids=(int *) calloc(num_node_sets,sizeof(int));
-    err = ex_get_ids(exo_file,EX_NODE_SET, ids);
+    ex_get_ids(exo_file,EX_NODE_SET, ids);
     PutInt( "nsids",num_node_sets, 1,ids);
     nnsnodes = (int *) calloc(num_node_sets,sizeof(int)); 
     nnsdfac  = (int *) calloc(num_node_sets,sizeof(int));
     for (i=0;i<num_node_sets;i++){
-      err = ex_get_set_param(exo_file,EX_NODE_SET,ids[i],&n1,&n2);
+      ex_get_set_param(exo_file,EX_NODE_SET,ids[i],&n1,&n2);
       iscr = (int *) calloc(n1,sizeof(int));
-      err = ex_get_node_set(exo_file,ids[i],iscr);
+      ex_get_node_set(exo_file,ids[i],iscr);
       /* nodes list */
       sprintf(str,"nsnod%02d",i+1);
       PutInt(str,n1,1,iscr);
@@ -545,41 +559,45 @@ int main (int argc, char *argv[])
   /* element blocks */
   ids=(int *) calloc(num_blocks,sizeof(int));
   num_elem_in_block=(int *) calloc(num_blocks,sizeof(int));
-  err = ex_get_ids(exo_file,EX_ELEM_BLOCK,ids);
+  ex_get_ids(exo_file,EX_ELEM_BLOCK,ids);
   PutInt( "blkids",num_blocks, 1,ids);
   for (i=0;i<num_blocks;i++) {
-    err = ex_get_elem_block(exo_file,ids[i],str2[i],&n,&n1,&n2);
+    ex_get_elem_block(exo_file,ids[i],str2[i],&n,&n1,&n2);
     num_elem_in_block[i]=n;
     iscr = (int *) calloc(n*n1,sizeof(int));
-    err = ex_get_conn(exo_file,EX_ELEM_BLOCK,ids[i],iscr, NULL, NULL);
+    ex_get_conn(exo_file,EX_ELEM_BLOCK,ids[i],iscr, NULL, NULL);
     sprintf(str,"blk%02d",i+1);
     PutInt(str,n1,n,iscr);
     free(iscr);
   }
   str[0]='\0';
-  for (i=0;i<num_blocks;i++)
-    sprintf(str+strlen(str),"%s\n",str2[i]);
+  for (i=0;i<num_blocks;i++) {
+    strcat(str, str2[i]);
+    strcat(str, "\n");
+  }
   PutStr("blknames",str);  
 
   /* time values */
   if (num_time_steps > 0 ) {
     scr = (double *) calloc (num_time_steps,sizeof(double));
-    err= ex_get_all_times (exo_file,scr);
+    ex_get_all_times (exo_file,scr);
     PutDbl( "time", num_time_steps, 1,scr);
     free(scr); 
   }
 
   /* global variables */
   if (num_global_vars > 0 ) {
-    err = ex_get_variable_names(exo_file,EX_GLOBAL,num_global_vars,str2);
+    ex_get_variable_names(exo_file,EX_GLOBAL,num_global_vars,str2);
     str[0]='\0';
-    for (i=0;i<num_global_vars;i++)
-      sprintf(str+strlen(str),"%s\n",str2[i]);
+    for (i=0;i<num_global_vars;i++) {
+      strcat(str, str2[i]);
+      strcat(str, "\n");
+    }
     PutStr("gnames",str);
     scr = (double *) calloc (num_time_steps,sizeof(double));
     for (i=0;i<num_global_vars;i++){
       sprintf(str,"gvar%02d",i+1);
-      err=ex_get_glob_var_time(exo_file,i+1,1,num_time_steps,scr);
+      ex_get_glob_var_time(exo_file,i+1,1,num_time_steps,scr);
       PutDbl(str,num_time_steps,1,scr);
     }
     free(scr);
@@ -587,16 +605,18 @@ int main (int argc, char *argv[])
 
   /* nodal variables */
   if (num_nodal_vars > 0 ) {
-    err = ex_get_variable_names(exo_file,EX_NODAL,num_nodal_vars,str2);
+    ex_get_variable_names(exo_file,EX_NODAL,num_nodal_vars,str2);
     str[0]='\0';
-    for (i=0;i<num_nodal_vars;i++)
-      sprintf(str+strlen(str),"%s\n",str2[i]);
+    for (i=0;i<num_nodal_vars;i++) {
+      strcat(str, str2[i]);
+      strcat(str, "\n");
+    }
     PutStr("nnames",str);
     scr = (double *) calloc (num_nodes*num_time_steps,sizeof(double));
     for (i=0;i<num_nodal_vars;i++){
       sprintf(str,"nvar%02d",i+1);
       for (j=0;j<num_time_steps;j++)
-	err=ex_get_nodal_var(exo_file,j+1,i+1,num_nodes,
+	ex_get_nodal_var(exo_file,j+1,i+1,num_nodes,
                                   scr+num_nodes*j);
       PutDbl(str,num_nodes,num_time_steps,scr);
     }
@@ -605,10 +625,12 @@ int main (int argc, char *argv[])
 
   /* element variables */
   if (num_element_vars > 0 ) {
-    err = ex_get_variable_names(exo_file,EX_ELEM_BLOCK,num_element_vars,str2);
+    ex_get_variable_names(exo_file,EX_ELEM_BLOCK,num_element_vars,str2);
     str[0]='\0';
-    for (i=0;i<num_element_vars;i++)
-      sprintf(str+strlen(str),"%s\n",str2[i]);
+    for (i=0;i<num_element_vars;i++) {
+      strcat(str, str2[i]);
+      strcat(str, "\n");
+    }
     PutStr("enames",str);
     /* truth table */
     iscr = (int *) calloc(num_element_vars*num_blocks, sizeof(int));

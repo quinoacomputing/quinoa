@@ -59,6 +59,13 @@
 #include "SundanceObjectWithVerbosity.hpp"
 #include "SundanceCollectiveExceptionCheck.hpp"
 
+#ifdef _MSC_VER
+static double log2(double x)
+{  
+    return log(x)/log(2.0);  
+}
+#endif
+
 using namespace Sundance;
 using namespace Teuchos;
 using namespace std;
@@ -934,7 +941,7 @@ void HNMesh3D::addCell(int cellLID , int ownerProc ,
 	     cellLevel_.append( level );
 	     isCellLeaf_.append( true );
 	     refineCell_.append( 0 );
-	     cellsChildren_.append( tuple(1) );
+	     cellsChildren_.append( Teuchos::tuple(1) );
 	     elementOwner_[3].append( (short int)ownerProc );
 		 // calculate if the cell is complete outside the mesh domain
 		 isCellOut_.append( !( meshDomain_.isInsideComputationalDomain(points_[vertexLIDs[0]]) ||
@@ -1992,7 +1999,11 @@ void HNMesh3D::createLeafNumbering_sophisticated(){
 
 	// generate the space filling curve traversal for a given level and unit square
 	// and assign the coarsest cells to processors
+#ifdef _MSC_VER
+	int levelM = ::ceil( std::max<double>( std::max<double>( ::log2(_res_x) , ::log2(_res_y ) ) , ::log2(_res_z ) ) );
+#else
 	int levelM = ::ceil( ::fmax( ::fmax( ::log2(_res_x) , ::log2(_res_y ) ) , ::log2(_res_z ) ) );
+#endif
 	//int unitN = (int)::pow(2, levelM );
 	Array<int> vectX1(8), vectY1(8), vectZ1(8), vectX2(8), vectY2(8), vectZ2(8);
 	vectX1[0] = 0; vectX1[1] = (int)::pow(2,levelM-1); vectX1[2] = 0; vectX1[3] = (int)::pow(2,levelM-1);

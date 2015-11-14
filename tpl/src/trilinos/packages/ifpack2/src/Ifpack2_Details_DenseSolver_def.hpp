@@ -43,9 +43,9 @@
 #ifndef IFPACK2_DETAILS_DENSESOLVER_DEF_HPP
 #define IFPACK2_DETAILS_DENSESOLVER_DEF_HPP
 
-#include "Ifpack2_Condest.hpp"
 #include "Ifpack2_LocalFilter.hpp"
 #include "Teuchos_LAPACK.hpp"
+#include "Ifpack2_Details_DenseSolver.hpp"
 
 #ifdef HAVE_MPI
 #  include <mpi.h>
@@ -168,25 +168,6 @@ DenseSolver<MatrixType, false>::getApplyTime () const {
 
 
 template<class MatrixType>
-typename DenseSolver<MatrixType, false>::magnitude_type
-DenseSolver<MatrixType, false>::
-computeCondEst (CondestType type,
-                local_ordinal_type maxIters,
-                magnitude_type tol,
-                const Teuchos::Ptr<const row_matrix_type>& matrix)
-{
-  return Ifpack2::Condest (*this, type, maxIters, tol, matrix);
-}
-
-
-template<class MatrixType>
-typename DenseSolver<MatrixType, false>::magnitude_type
-DenseSolver<MatrixType, false>::getCondEst () const {
-  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Not implemented");
-}
-
-
-template<class MatrixType>
 Teuchos::RCP<const typename DenseSolver<MatrixType, false>::row_matrix_type>
 DenseSolver<MatrixType, false>::getMatrix () const {
   return A_;
@@ -261,7 +242,7 @@ void DenseSolver<MatrixType, false>::initialize ()
 
     // Make the local filter of the input matrix A.
     if (A_->getComm ()->getSize () > 1) {
-      A_local_ = rcp (new LocalFilter<MatrixType> (A_));
+      A_local_ = rcp (new LocalFilter<row_matrix_type> (A_));
     } else {
       A_local_ = A_;
     }
@@ -401,11 +382,11 @@ applyImpl (const MV& X,
     // with its output.
     RCP<MV> Y_tmp;
     if (beta == STS::zero () && Y.isConstantStride () && alpha == STS::one ()) {
-      Y = X;
+      deep_copy (Y, X);
       Y_tmp = rcpFromRef (Y);
     }
     else {
-      Y_tmp = rcp (new MV (X)); // constructor copies X
+      Y_tmp = rcp (new MV (X, Teuchos::Copy)); // constructor copies X
       if (alpha != STS::one ()) {
         Y_tmp->scale (alpha);
       }
@@ -428,7 +409,7 @@ applyImpl (const MV& X,
       Y.update (alpha, *Y_tmp, beta);
     }
     else if (! Y.isConstantStride ()) {
-      Y = *Y_tmp;
+      deep_copy (Y, *Y_tmp);
     }
   }
 }
@@ -510,17 +491,30 @@ template<class MatrixType>
 std::string
 DenseSolver<MatrixType, false>::description () const
 {
-  std::ostringstream oss;
-  oss << "Ifpack2::Details::DenseSolver: ";
-  oss << "{";
+  std::ostringstream out;
+
+  // Output is a valid YAML dictionary in flow style.  If you don't
+  // like everything on a single line, you should call describe()
+  // instead.
+  out << "\"Ifpack2::Details::DenseSolver\": ";
+  out << "{";
   if (this->getObjectLabel () != "") {
-    oss << "label: " << this->getObjectLabel () << ", ";
+    out << "Label: \"" << this->getObjectLabel () << "\", ";
   }
-  oss << "initialized: " << (isInitialized_ ? "true" : "false")
-      << ", "
-      << "computed: " << (isComputed_ ? "true" : "false")
-      << "}";
-  return oss.str ();
+  out << "Initialized: " << (isInitialized () ? "true" : "false") << ", "
+      << "Computed: " << (isComputed () ? "true" : "false") << ", ";
+
+  if (A_.is_null ()) {
+    out << "Matrix: null";
+  }
+  else {
+    out << "Matrix: not null"
+        << ", Global matrix dimensions: ["
+        << A_->getGlobalNumRows () << ", " << A_->getGlobalNumCols () << "]";
+  }
+
+  out << "}";
+  return out.str ();
 }
 
 
@@ -769,25 +763,6 @@ DenseSolver<MatrixType, true>::getApplyTime () const {
 
 
 template<class MatrixType>
-typename DenseSolver<MatrixType, true>::magnitude_type
-DenseSolver<MatrixType, true>::
-computeCondEst (CondestType CT,
-                local_ordinal_type MaxIters,
-                magnitude_type Tol,
-                const Teuchos::Ptr<const row_matrix_type>& Matrix)
-{
-  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Not implemented");
-}
-
-
-template<class MatrixType>
-typename DenseSolver<MatrixType, true>::magnitude_type
-DenseSolver<MatrixType, true>::getCondEst () const {
-  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Not implemented");
-}
-
-
-template<class MatrixType>
 Teuchos::RCP<const typename DenseSolver<MatrixType, true>::row_matrix_type>
 DenseSolver<MatrixType, true>::getMatrix () const {
   TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Not implemented");
@@ -854,5 +829,9 @@ describe (Teuchos::FancyOStream& out,
 
 } // namespace Details
 } // namespace Ifpack2
+
+#define IFPACK2_DETAILS_DENSESOLVER_INSTANT(S,LO,GO,N)                  \
+  template class Ifpack2::Details::DenseSolver< Tpetra::CrsMatrix<S, LO, GO, N> >; \
+  template class Ifpack2::Details::DenseSolver< Tpetra::RowMatrix<S, LO, GO, N> >;
 
 #endif // IFPACK2_DETAILS_DENSESOLVER_HPP

@@ -86,13 +86,17 @@ namespace panzer {
 
     typedef std::map<unsigned,panzer::Workset> BCFaceWorksetMap;
 
-    FieldManagerBuilder(bool disablePhysicsBlockScatter=false)
-      : disablePhysicsBlockScatter_(disablePhysicsBlockScatter) {}
+    FieldManagerBuilder(bool disablePhysicsBlockScatter=false,bool disablePhysicsBlockGather=false)
+      : disablePhysicsBlockScatter_(disablePhysicsBlockScatter) 
+      , disablePhysicsBlockGather_(disablePhysicsBlockGather) {}
 
     void print(std::ostream& os) const;
 
     bool physicsBlockScatterDisabled() const
     { return disablePhysicsBlockScatter_; }
+
+    bool physicsBlockGatherDisabled() const
+    { return disablePhysicsBlockGather_; }
 
     void setWorksetContainer(const Teuchos::RCP<WorksetContainer> & wc)
     { worksetContainer_ = wc; }
@@ -146,7 +150,8 @@ namespace panzer {
 				  const Teuchos::ParameterList& closure_models,
                                   const LinearObjFactory<panzer::Traits> & lo_factory,
 				  const Teuchos::ParameterList& user_data,
-                                  const GenericEvaluatorFactory & gEvalFact);
+                                  const GenericEvaluatorFactory & gEvalFact,
+                                  bool closureModelByEBlock=false);
 
     /** Build the BC field managers.
       */
@@ -186,6 +191,10 @@ namespace panzer {
                               const LinearObjFactory<panzer::Traits> & lo_factory,
 			      const Teuchos::ParameterList& user_data);
 
+    void setKokkosExtendedDataTypeDimensions(const std::string & eblock, 
+                                             const panzer::UniqueGlobalIndexerBase & globalIndexer,
+                                             PHX::FieldManager<panzer::Traits> & fm) const;
+
     //! Phalanx volume field managers for each element block.
     std::vector< Teuchos::RCP< PHX::FieldManager<panzer::Traits> > >
       phx_volume_field_managers_;
@@ -211,6 +220,11 @@ namespace panzer {
       * newly created field managers.
       */
     bool disablePhysicsBlockScatter_;
+
+    /** Set to false by default, enables/disables physics block scattering in
+      * newly created field managers.
+      */
+    bool disablePhysicsBlockGather_;
   };
 
 std::ostream& operator<<(std::ostream& os, const panzer::FieldManagerBuilder & rfd);

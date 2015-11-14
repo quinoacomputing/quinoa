@@ -18,7 +18,7 @@
 
     You should have received a copy of the GNU Lesser General Public License 
     (lgpl.txt) along with this library; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
 
     (2006) kraftche@cae.wisc.edu    
 
@@ -34,10 +34,10 @@
 #define MSQ_UNIT_UTIL_HPP
 
 #include "Mesquite.hpp"
-#include "Vector3D.hpp"
-#include "Matrix3D.hpp"
-#include "MsqMatrix.hpp"
-#include "MsqError.hpp"
+#include "Mesquite_Vector3D.hpp"
+#include "Mesquite_Matrix3D.hpp"
+#include "Mesquite_MsqMatrix.hpp"
+#include "Mesquite_MsqError.hpp"
 
 #include <string>
 #include <stdio.h>

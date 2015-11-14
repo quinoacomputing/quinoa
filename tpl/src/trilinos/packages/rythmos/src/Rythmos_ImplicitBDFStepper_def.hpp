@@ -19,7 +19,7 @@
 //
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
 // USA
 // Questions? Contact Todd S. Coffey (tscoffe@sandia.gov)
 //
@@ -229,7 +229,7 @@ void ImplicitBDFStepper<Scalar>::setModel(
   const RCP<const Thyra::ModelEvaluator<Scalar> >& model
   )
 {
-  typedef Teuchos::ScalarTraits<Scalar> ST;
+  // typedef Teuchos::ScalarTraits<Scalar> ST; // unused
   TEUCHOS_TEST_FOR_EXCEPT( is_null(model) );
   assertValidModel( *this, *model );
   model_ = model;
@@ -266,7 +266,7 @@ void ImplicitBDFStepper<Scalar>::setInitialCondition(
   )
 {
   typedef Teuchos::ScalarTraits<Scalar> ST;
-  typedef Thyra::ModelEvaluatorBase MEB;
+  // typedef Thyra::ModelEvaluatorBase MEB; // unused
   TEUCHOS_TEST_FOR_EXCEPT(is_null(initialCondition.get_x()));
   TEUCHOS_TEST_FOR_EXCEPT(is_null(initialCondition.get_x_dot()));
   basePoint_ = initialCondition;
@@ -307,7 +307,7 @@ Scalar ImplicitBDFStepper<Scalar>::takeStep(Scalar dt, StepSizeType stepType)
   using Teuchos::as;
   using Teuchos::incrVerbLevel;
   typedef Teuchos::ScalarTraits<Scalar> ST;
-  typedef typename Thyra::ModelEvaluatorBase::InArgs<Scalar>::ScalarMag TScalarMag;
+  // typedef typename Thyra::ModelEvaluatorBase::InArgs<Scalar>::ScalarMag TScalarMag; // unused
   typedef Thyra::NonlinearSolverBase<Scalar> NSB;
   typedef Teuchos::VerboseObjectTempState<NSB> VOTSNSB;
 
@@ -861,7 +861,7 @@ void ImplicitBDFStepper<Scalar>::interpolateSolution_(
   ) const
 {
 
-  typedef std::numeric_limits<Scalar> NL;
+  // typedef std::numeric_limits<Scalar> NL; // unused
   typedef Teuchos::ScalarTraits<Scalar> ST;
 
 #ifdef HAVE_RYTHMOS_DEBUG

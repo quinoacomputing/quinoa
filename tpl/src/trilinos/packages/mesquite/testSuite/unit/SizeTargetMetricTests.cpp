@@ -3,11 +3,11 @@
 
 using namespace Mesquite;
 
-#include "AWSizeNB1.hpp"
-#include "AWSizeB1.hpp"
-#include "TSizeNB1.hpp"
-#include "TSizeB1.hpp"
-#include "TTau.hpp"
+#include "Mesquite_AWSizeNB1.hpp"
+#include "Mesquite_AWSizeB1.hpp"
+#include "Mesquite_TSizeNB1.hpp"
+#include "Mesquite_TSizeB1.hpp"
+#include "Mesquite_TTau.hpp"
 
 
 //                     NAME       !SHAPE !SIZE !ORIENT BARRIER

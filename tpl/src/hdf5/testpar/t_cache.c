@@ -382,12 +382,12 @@ static hbool_t serve_rw_count_reset_request(struct mssg_t * mssg_ptr);
 /* call back functions & related data structures */
 
 static herr_t clear_datum(H5F_t * f, void *  thing, hbool_t dest);
-static herr_t destroy_datum(H5F_t UNUSED * f, void * thing);
-static herr_t flush_datum(H5F_t *f, hid_t UNUSED dxpl_id, hbool_t dest, haddr_t addr,
+static herr_t destroy_datum(H5F_t H5_ATTR_UNUSED * f, void * thing);
+static herr_t flush_datum(H5F_t *f, hid_t H5_ATTR_UNUSED dxpl_id, hbool_t dest, haddr_t addr,
                    void *thing);
-static void * load_datum(H5F_t UNUSED *f, hid_t UNUSED dxpl_id, haddr_t addr,
-                  void UNUSED *udata);
-static herr_t size_datum(H5F_t UNUSED * f, void * thing, size_t * size_ptr);
+static void * load_datum(H5F_t H5_ATTR_UNUSED *f, hid_t H5_ATTR_UNUSED dxpl_id, haddr_t addr,
+                  void H5_ATTR_UNUSED *udata);
+static herr_t size_datum(H5F_t H5_ATTR_UNUSED * f, void * thing, size_t * size_ptr);
 
 #define DATUM_ENTRY_TYPE	H5AC_TEST_ID
 
@@ -2396,7 +2396,7 @@ clear_datum(H5F_t * f,
  *-------------------------------------------------------------------------
  */
 static herr_t
-destroy_datum(H5F_t UNUSED * f,
+destroy_datum(H5F_t H5_ATTR_UNUSED * f,
               void *         thing)
 {
     int idx;
@@ -2445,9 +2445,9 @@ destroy_datum(H5F_t UNUSED * f,
  */
 static herr_t
 flush_datum(H5F_t *f,
-            hid_t UNUSED dxpl_id,
+            hid_t H5_ATTR_UNUSED dxpl_id,
             hbool_t dest,
-            haddr_t UNUSED addr,
+            haddr_t H5_ATTR_UNUSED addr,
             void *thing)
 {
     const char * fcn_name = "flush_datum()";
@@ -2603,10 +2603,10 @@ flush_datum(H5F_t *f,
  */
 
 static void *
-load_datum(H5F_t UNUSED *f,
-           hid_t UNUSED dxpl_id,
+load_datum(H5F_t H5_ATTR_UNUSED *f,
+           hid_t H5_ATTR_UNUSED dxpl_id,
            haddr_t addr,
-           void UNUSED *udata)
+           void H5_ATTR_UNUSED *udata)
 {
     const char * fcn_name = "load_datum()";
     hbool_t success = TRUE;
@@ -2773,7 +2773,7 @@ load_datum(H5F_t UNUSED *f,
  */
 
 static herr_t
-size_datum(H5F_t UNUSED *  f,
+size_datum(H5F_t H5_ATTR_UNUSED *  f,
            void *   thing,
            size_t * size_ptr)
 {
@@ -2847,7 +2847,7 @@ expunge_entry(H5F_t * file_ptr,
 
     if ( nerrors == 0 ) {
 
-        result = H5AC_expunge_entry(file_ptr, -1, &(types[0]),
+        result = H5AC_expunge_entry(file_ptr, (hid_t)-1, &(types[0]),
 			            entry_ptr->header.addr, H5AC__NO_FLAGS_SET);
 
         if ( result < 0 ) {
@@ -4242,7 +4242,6 @@ setup_rand(void)
     unsigned predefined_seeds[3] = {33402, 33505, 33422};
     unsigned seed;
     struct timeval tv;
-    struct timezone tz;
 
     if ( ( use_predefined_seeds ) &&
          ( world_mpi_size == num_predefined_seeds ) ) {
@@ -4258,7 +4257,7 @@ setup_rand(void)
 
     } else {
 
-        if ( HDgettimeofday(&tv, &tz) != 0 ) {
+        if ( HDgettimeofday(&tv, NULL) != 0 ) {
 
             nerrors++;
             if ( verbose ) {

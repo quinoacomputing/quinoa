@@ -19,10 +19,6 @@
 #include "MueLu_Level.hpp"
 #include "MueLu_BaseClass.hpp"
 
-// MPI helper
-#define sumAll(rcpComm, in, out)                                        \
-  Teuchos::reduceAll(*rcpComm, Teuchos::REDUCE_SUM, in, Teuchos::outArg(out));
-
 namespace MueLu {
 
   //! @brief Local permutation strategy
@@ -31,7 +27,10 @@ namespace MueLu {
      only permutations of columns that correspond to DOFs of the same node.
     */
 
-  template<class Scalar = double, class LocalOrdinal = int, class GlobalOrdinal = LocalOrdinal, class Node = KokkosClassic::DefaultNode::DefaultNodeType, class LocalMatOps = typename KokkosClassic::DefaultKernels<void,LocalOrdinal,Node>::sparseOps>
+  template<class Scalar = double,
+           class LocalOrdinal = int,
+           class GlobalOrdinal = LocalOrdinal,
+           class Node = KokkosClassic::DefaultNode::DefaultNodeType>
   class LocalPermutationStrategy : public BaseClass {
 #undef MUELU_LOCALPERMUTATIONSTRATEGY_SHORT
 #include "MueLu_UseShortNames.hpp"

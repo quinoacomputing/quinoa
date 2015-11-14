@@ -1,6 +1,8 @@
+# OCDIR is assumed to have been set
+TST=`if test "x$OCDIR" = x ; then echo "OCDIR not defined"; exit 1 fi`
+TST=`echo "OCDIR=$OCDIR"`
+
 THISDIR=../oc2
-#OCDIR=/home/dmh/svn/oc2.0
-OCDIR=f:/svn/oc2.0
 
 # Make consistent with Makefile.am
 SRC=oc.c \
@@ -11,6 +13,7 @@ ocinternal.c ocnode.c \
 ochttp.c \
 ocrc.c ocread.c ocutil.c \
 ocbytes.c oclist.c ocuri.c oclog.c \
+occurlflags.c \
 xxdr.c
 
 HDRS=oc.h ocx.h \
@@ -18,22 +21,27 @@ dapparselex.h daptab.h \
 occlientparams.h occompile.h occonstraints.h occurlfunctions.h \
 ocdata.h ocdatatypes.h ocdebug.h ocdump.h \
 ocinternal.h ocnode.h \
-ochttp.h ocrc.h ocread.h ocutil.h \
+ochttp.h ocread.h ocutil.h \
 ocbytes.h oclist.h ocuri.h oclog.h \
 xxdr.h
 
-FILES=${HDRS} ${SRC} dap.y
+DOCS=docs/auth.html.in docs/oc.css
+
+MISC=dap.y
+
+FILES=${HDRS} ${SRC} ${MISC} ${DOCS}
 
 all::
 
 makeoc::
 	rm -f ${THISDIR}/*.[chy]
 	for file in ${FILES} ; do \
+	    echo "${OCDIR}/$$file" ; \
 	    f="${OCDIR}/$$file" ; \
 	        base=`basename $$f` ; \
 		cat $$f | tr -d '' >${THISDIR}/$$base; \
 	done
-	rm -f ocdebug.h 
+	rm -f ocdebug.h XGetopt.[ch]
 	sed -e 's|^[#]if 1|#if 0|g' \
 	    < ${OCDIR}/ocdebug.h | tr -d '\r' >./ocdebug.h
 	# This should match the bison command in Makefile.am
@@ -41,7 +49,31 @@ makeoc::
 	bison --debug -d -p dap dap.y
 	mv dap.tab.c daptab.c; mv dap.tab.h daptab.h
 
+changed:
+	${MAKE} -f Make0 NAMEONLY=1 diffoc
+
 diffoc::
+	@if ! test -e ${OCDIR} ; then echo "${OCDIR} not found"; exit ; fi
+	@for file in ${FILES} ; do \
+	    f="${OCDIR}/$$file" ; \
+	    x=`basename $$f|tr -d '' ` ; \
+	    if test "x$${x}" = "xdaptab.c" -o "x$${x}" = "xdaptab.h" ; then echo "ignore: $${x}"; continue; fi ;\
+	    if ! test -e ${THISDIR}/$$x ; then \
+		echo "Missing file: $$x"; \
+	    fi ; \
+	    if test -e ${THISDIR}/$$x -a -e ${OCDIR}/$$x ; then \
+		if ! diff --brief -wBb ${THISDIR}/$$x $$f > /dev/null ; then \
+		  if test "x${NAMEONLY}" = x1 ; then \
+		    echo "$$x" ;\
+		  else \
+		    echo diff -wBb ${THISDIR}/$$x $$f ;\
+		    diff -w ${THISDIR}/$$x $$f ; \
+		  fi; \
+		fi; \
+	    fi; \
+	done
+
+olddiff::
 	if ! test -e ${OCDIR} ; then echo "${OCDIR} not found"; exit ; fi
 	for file in ${FILES} ; do \
 	    f="${OCDIR}/$$file" ; \
@@ -63,4 +95,9 @@ diffoc::
 		diff -w ${THISDIR}/$$x $$f ; \
 		fi; \
 	    fi; \
+	done
+
+backoc::
+	for f in ${FILES} ; do \
+	    cp -f ./$$f ${OCDIR}/$$f ; \
 	done

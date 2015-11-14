@@ -1,13 +1,13 @@
 /*
 //@HEADER
 // ************************************************************************
-//
-//   Kokkos: Manycore Performance-Portable Multidimensional Arrays
-//              Copyright (2012) Sandia Corporation
-//
+// 
+//                        Kokkos v. 2.0
+//              Copyright (2014) Sandia Corporation
+// 
 // Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
 // the U.S. Government retains certain rights in this software.
-//
+// 
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -35,8 +35,8 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-// Questions?  Contact  H. Carter Edwards (hcedwar@sandia.gov)
-//
+// Questions? Contact  H. Carter Edwards (hcedwar@sandia.gov)
+// 
 // ************************************************************************
 //@HEADER
 */
@@ -52,32 +52,60 @@ namespace Kokkos {
 
 #if defined( KOKKOS_ATOMICS_USE_CUDA )
 
-KOKKOS_INLINE_FUNCTION
+__inline__ __device__
 int atomic_compare_exchange( volatile int * const dest, const int compare, const int val)
 { return atomicCAS((int*)dest,compare,val); }
 
-KOKKOS_INLINE_FUNCTION
+__inline__ __device__
 unsigned int atomic_compare_exchange( volatile unsigned int * const dest, const unsigned int compare, const unsigned int val)
 { return atomicCAS((unsigned int*)dest,compare,val); }
 
-KOKKOS_INLINE_FUNCTION
+__inline__ __device__
 unsigned long long int atomic_compare_exchange( volatile unsigned long long int * const dest ,
                                                 const unsigned long long int compare ,
                                                 const unsigned long long int val )
 { return atomicCAS((unsigned long long int*)dest,compare,val); }
 
 template < typename T >
-KOKKOS_INLINE_FUNCTION
-typename Kokkos::Impl::UnionPair<T,int,unsigned long long int>::first_type
-atomic_compare_exchange( volatile T * const dest , const T compare , const T val )
+__inline__ __device__
+T atomic_compare_exchange( volatile T * const dest , const T & compare ,
+  typename Kokkos::Impl::enable_if< sizeof(T) == sizeof(int) , const T & >::type val )
 {
-  typedef Kokkos::Impl::UnionPair<T,int,unsigned long long int> union_type ;
-  typedef typename union_type::second_type int_type ;
+  const int tmp = atomicCAS( (int*) dest , *((int*)&compare) , *((int*)&val) );
+  return *((T*)&tmp);
+}
 
-  return union_type( atomicCAS( (int_type *) union_type::cast( dest ) ,
-                                union_type::cast( compare ) ,
-                                union_type::cast( val ) )
-                   ).first ;
+template < typename T >
+__inline__ __device__
+T atomic_compare_exchange( volatile T * const dest , const T & compare ,
+  typename Kokkos::Impl::enable_if< sizeof(T) != sizeof(int) &&
+                                    sizeof(T) == sizeof(unsigned long long int) , const T & >::type val )
+{
+  typedef unsigned long long int type ;
+  const type tmp = atomicCAS( (type*) dest , *((type*)&compare) , *((type*)&val) );
+  return *((T*)&tmp);
+}
+
+template < typename T >
+__inline__ __device__
+T atomic_compare_exchange( volatile T * const dest , const T & compare ,
+    typename ::Kokkos::Impl::enable_if<
+                  ( sizeof(T) != 4 )
+               && ( sizeof(T) != 8 )
+             , const T >::type& val )
+{
+  T return_val;
+  // This is a way to (hopefully) avoid dead lock in a warp
+  bool done = false;
+  while (! done ) {
+    if( Impl::lock_address_cuda_space( (void*) dest ) ) {
+      return_val = *dest;
+      if( return_val == compare )
+        *dest = val;
+      Impl::unlock_address_cuda_space( (void*) dest );
+    }
+  }
+  return return_val;
 }
 
 //----------------------------------------------------------------------------
@@ -112,18 +140,90 @@ unsigned long atomic_compare_exchange( volatile unsigned long * const dest ,
 
 template < typename T >
 KOKKOS_INLINE_FUNCTION
-typename Kokkos::Impl::UnionPair<T,int,long>::first_type
-atomic_compare_exchange( volatile T * const dest, const T compare, const T val )
+T atomic_compare_exchange( volatile T * const dest, const T & compare,
+  typename Kokkos::Impl::enable_if< sizeof(T) == sizeof(int) , const T & >::type val )
 {
-  typedef Kokkos::Impl::UnionPair<T,int,long> union_type ;
+#ifdef KOKKOS_HAVE_CXX11
+  union U {
+    int i ;
+    T t ;
+    KOKKOS_INLINE_FUNCTION U() {};
+  } tmp ;
+#else
+  union U {
+    int i ;
+    T t ;
+  } tmp ;
+#endif
 
-  return union_type(
-    __sync_val_compare_and_swap( union_type::cast( dest ) ,
-                                 union_type::cast( compare ) ,
-                                 union_type::cast( val ) )
-  ).first ;
+  tmp.i = __sync_val_compare_and_swap( (int*) dest , *((int*)&compare) , *((int*)&val) );
+  return tmp.t ;
 }
 
+template < typename T >
+KOKKOS_INLINE_FUNCTION
+T atomic_compare_exchange( volatile T * const dest, const T & compare,
+  typename Kokkos::Impl::enable_if< sizeof(T) != sizeof(int) &&
+                                    sizeof(T) == sizeof(long) , const T & >::type val )
+{
+#ifdef KOKKOS_HAVE_CXX11
+  union U {
+    long i ;
+    T t ;
+    KOKKOS_INLINE_FUNCTION U() {};
+  } tmp ;
+#else
+  union U {
+    long i ;
+    T t ;
+  } tmp ;
+#endif
+
+  tmp.i = __sync_val_compare_and_swap( (long*) dest , *((long*)&compare) , *((long*)&val) );
+  return tmp.t ;
+}
+
+#ifdef KOKKOS_ENABLE_ASM
+template < typename T >
+KOKKOS_INLINE_FUNCTION
+T atomic_compare_exchange( volatile T * const dest, const T & compare,
+  typename Kokkos::Impl::enable_if< sizeof(T) != sizeof(int) &&
+                                    sizeof(T) != sizeof(long) &&
+                                    sizeof(T) == sizeof(Impl::cas128_t), const T & >::type val )
+{
+  union U {
+    Impl::cas128_t i ;
+    T t ;
+    KOKKOS_INLINE_FUNCTION U() {};
+  } tmp ;
+
+  tmp.i = Impl::cas128( (Impl::cas128_t*) dest , *((Impl::cas128_t*)&compare) , *((Impl::cas128_t*)&val) );
+  return tmp.t ;
+}
+#endif
+
+template < typename T >
+inline
+T atomic_compare_exchange( volatile T * const dest , const T compare ,
+    typename ::Kokkos::Impl::enable_if<
+                  ( sizeof(T) != 4 )
+               && ( sizeof(T) != 8 )
+            #if defined(KOKKOS_ENABLE_ASM)
+               && ( sizeof(T) != 16 )
+            #endif
+             , const T >::type& val )
+{
+  while( !Impl::lock_address_host_space( (void*) dest ) );
+  T return_val = *dest;
+  if( return_val == compare ) {
+    const T tmp = *dest = val;
+    #ifndef KOKKOS_COMPILER_CLANG
+    (void) tmp;
+    #endif
+  }
+  Impl::unlock_address_host_space( (void*) dest );
+  return return_val;
+}
 //----------------------------------------------------------------------------
 
 #elif defined( KOKKOS_ATOMICS_USE_OMP31 )
@@ -143,7 +243,6 @@ T atomic_compare_exchange( volatile T * const dest, const T compare, const T val
 }
 
 #endif
-
 
 template <typename T>
 KOKKOS_INLINE_FUNCTION

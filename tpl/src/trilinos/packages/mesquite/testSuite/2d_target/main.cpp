@@ -18,7 +18,7 @@
 
     You should have received a copy of the GNU Lesser General Public License 
     (lgpl.txt) along with this library; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  
     (2006) kraftche@cae.wisc.edu
    
@@ -36,37 +36,37 @@ using std::ostream;
 using std::auto_ptr;
 #include <ctype.h>
 
-#include "MeshImpl.hpp"
-#include "MsqError.hpp"
-#include "InstructionQueue.hpp"
-#include "TerminationCriterion.hpp"
-#include "QualityAssessor.hpp"
-#include "PMeanPTemplate.hpp"
-#include "PatchPowerMeanP.hpp"
-#include "ConjugateGradient.hpp"
-#include "PlanarDomain.hpp"
-#include "IdealShapeTarget.hpp"
-#include "ConditionNumberQualityMetric.hpp"
-#include "ReferenceMesh.hpp"
-#include "RefMeshTargetCalculator.hpp"
+#include "Mesquite_MeshImpl.hpp"
+#include "Mesquite_MsqError.hpp"
+#include "Mesquite_InstructionQueue.hpp"
+#include "Mesquite_TerminationCriterion.hpp"
+#include "Mesquite_QualityAssessor.hpp"
+#include "Mesquite_PMeanPTemplate.hpp"
+#include "Mesquite_PatchPowerMeanP.hpp"
+#include "Mesquite_ConjugateGradient.hpp"
+#include "Mesquite_PlanarDomain.hpp"
+#include "Mesquite_IdealShapeTarget.hpp"
+#include "Mesquite_ConditionNumberQualityMetric.hpp"
+#include "Mesquite_ReferenceMesh.hpp"
+#include "Mesquite_RefMeshTargetCalculator.hpp"
 
-#include "TQualityMetric.hpp"
-#include "ElementPMeanP.hpp"
-#include "VertexPMeanP.hpp"
+#include "Mesquite_TQualityMetric.hpp"
+#include "Mesquite_ElementPMeanP.hpp"
+#include "Mesquite_VertexPMeanP.hpp"
   
-#include "TSquared.hpp"
-#include "TShapeNB1.hpp"
-#include "TShapeB1.hpp"
-#include "TShapeOrientNB1.hpp"
-#include "TShapeOrientNB2.hpp"
-#include "TShapeOrientB1.hpp"
-#include "TShapeSize2DNB1.hpp"
-#include "TShapeSizeB1.hpp"
-#include "TShapeSize2DB2.hpp"
-#include "TShapeSizeB3.hpp"
-#include "TShapeSizeOrientNB1.hpp"
-#include "TShapeSizeOrientB1.hpp"
-#include "TShapeSizeOrientB2.hpp"
+#include "Mesquite_TSquared.hpp"
+#include "Mesquite_TShapeNB1.hpp"
+#include "Mesquite_TShapeB1.hpp"
+#include "Mesquite_TShapeOrientNB1.hpp"
+#include "Mesquite_TShapeOrientNB2.hpp"
+#include "Mesquite_TShapeOrientB1.hpp"
+#include "Mesquite_TShapeSize2DNB1.hpp"
+#include "Mesquite_TShapeSizeB1.hpp"
+#include "Mesquite_TShapeSize2DB2.hpp"
+#include "Mesquite_TShapeSizeB3.hpp"
+#include "Mesquite_TShapeSizeOrientNB1.hpp"
+#include "Mesquite_TShapeSizeOrientB1.hpp"
+#include "Mesquite_TShapeSizeOrientB2.hpp"
 
 using namespace Mesquite;
 

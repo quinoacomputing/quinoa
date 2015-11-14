@@ -160,6 +160,10 @@
 #include <dirent.h>
 #endif
 
+/* Define the default VFD for this platform.
+ * Since the removal of the Windows VFD, this is sec2 for all platforms.
+ */
+#define H5_DEFAULT_VFD      H5FD_SEC2
 
 #ifdef H5_HAVE_WIN32_API
 /* The following two defines must be before any windows headers are included */
@@ -179,11 +183,22 @@
 
 #endif /*H5_HAVE_WIN32_API*/
 
-/* H5_inline */
-#ifndef H5_inline
-#define H5_inline
-#endif /* H5_inline */
-
+/* Various ways that inline functions can be declared */
+#if defined(H5_HAVE___INLINE__)
+    /* GNU (alternative form) */
+    #define H5_INLINE __inline__
+#elif defined(H5_HAVE___INLINE)
+    /* Visual Studio */
+    #define H5_INLINE __inline
+#elif defined(H5_HAVE_INLINE)
+    /* GNU, C++
+     * Use "inline" as a last resort on the off-chance that there will
+     * be C++ problems.
+     */
+    #define H5_INLINE inline
+#else
+    #define H5_INLINE
+#endif /* inline choices */
 
 #ifndef F_OK
 #   define F_OK  00
@@ -211,10 +226,9 @@
 #define eventa(func_name)   h5_mpe_eventa
 #define eventb(func_name)   h5_mpe_eventb
 #define MPE_LOG_VARS                                                    \
-    static int h5_mpe_eventa = -1;                                      \
-    static int h5_mpe_eventb = -1;                                      \
-    static char p_event_start[128];                                     \
-    static char p_event_end[128];
+    static int eventa(FUNC) = -1;                                       \
+    static int eventb(FUNC) = -1;                                       \
+    char p_event_start[128];
 
 /* Hardwire the color to "red", since that's what all the routines are using
  * now.  In the future, if we want to change that color for a given routine,
@@ -223,19 +237,18 @@
  * color information down to the BEGIN_MPE_LOG macro (which should have a new
  * BEGIN_MPE_LOG_COLOR variant). -QAK
  */
+
 #define BEGIN_MPE_LOG                                                   \
-  if(H5_MPEinit_g) {                                                    \
-    if(h5_mpe_eventa == -1 && h5_mpe_eventb == -1) {                    \
-         const char *p_color = "red";                                   \
-                                                                        \
-         h5_mpe_eventa = MPE_Log_get_event_number();                    \
-         h5_mpe_eventb = MPE_Log_get_event_number();                    \
-         HDsnprintf(p_event_start, sizeof(p_event_start) - 1, "start_%s", FUNC); \
-         HDsnprintf(p_event_end, sizeof(p_event_end) - 1, "end_%s", FUNC); \
-         MPE_Describe_state(h5_mpe_eventa, h5_mpe_eventb, (char *)FUNC, (char *)p_color); \
-    }                                                                   \
-    MPE_Log_event(h5_mpe_eventa, 0, p_event_start);                     \
-  }
+    if (H5_MPEinit_g){                                                  \
+        sprintf(p_event_start, "start %s", FUNC);                       \
+        if (eventa(FUNC) == -1 && eventb(FUNC) == -1) {                 \
+            const char* p_color = "red";                                \
+            eventa(FUNC)=MPE_Log_get_event_number();                    \
+            eventb(FUNC)=MPE_Log_get_event_number();                    \
+            MPE_Describe_state(eventa(FUNC), eventb(FUNC), FUNC, p_color); \
+        }                                                               \
+        MPE_Log_event(eventa(FUNC), 0, p_event_start);                  \
+    }
 
 
 /*------------------------------------------------------------------------
@@ -245,8 +258,8 @@
  * Programmer: Long Wang
  */
 #define FINISH_MPE_LOG                                                  \
-    if(H5_MPEinit_g) {                                                  \
-        MPE_Log_event(h5_mpe_eventb, 0, p_event_end);                   \
+    if (H5_MPEinit_g) {                                                 \
+        MPE_Log_event(eventb(FUNC), 0, FUNC);                           \
     }
 
 #else /* H5_HAVE_MPE */
@@ -274,19 +287,14 @@
 #endif
 
 /*
- * Does the compiler support the __attribute__(()) syntax?  This is how gcc
- * suppresses warnings about unused function arguments.   It's no big deal if
- * we don't.
+ * Does the compiler support the __attribute__(()) syntax?  It's no
+ * big deal if we don't.
  */
 #ifdef __cplusplus
 #   define __attribute__(X)  /*void*/
-#   define UNUSED    /*void*/
 #else /* __cplusplus */
-#ifdef H5_HAVE_ATTRIBUTE
-#   define UNUSED    __attribute__((unused))
-#else
+#ifndef H5_HAVE_ATTRIBUTE
 #   define __attribute__(X)  /*void*/
-#   define UNUSED    /*void*/
 #endif
 #endif /* __cplusplus */
 
@@ -473,6 +481,48 @@
 #  define H5_DEC_ENUM(TYPE,VAR) (VAR)=((TYPE)((VAR)-1))
 #endif
 
+/* Double constant wrapper
+ * 
+ * Quiets gcc warnings from -Wunsuffixed-float-constants.
+ *
+ * This is a really annoying warning since the standard specifies that
+ * constants of type double do NOT get a suffix so there's no way
+ * to specify a constant of type double. To quiet gcc, we specify floating
+ * point constants as type long double and cast to double.
+ *
+ * Note that this macro only needs to be used where using a double
+ * is important. For most code, suffixing constants with F will quiet the
+ * compiler and not produce erroneous code.
+ */
+#define H5_DOUBLE(S) ((double) S ## L)
+
+/*
+ * Methods to compare the equality of floating-point values:
+ *
+ *    1. H5_XXX_ABS_EQUAL - check if the difference is smaller than the
+ *       Epsilon value.  The Epsilon values, FLT_EPSILON, DBL_EPSILON,
+ *       and LDBL_EPSILON, are defined by compiler in float.h.
+ *
+ *    2. H5_XXX_REL_EQUAL - check if the relative difference is smaller than a
+ *       predefined value M.  See if two values are relatively equal.
+ *       It's the developer's responsibility not to pass in the value 0, which
+ *       may cause the equation to fail.
+ */
+#define H5_FLT_ABS_EQUAL(X,Y)       (HDfabsf(X-Y) < FLT_EPSILON)
+#define H5_DBL_ABS_EQUAL(X,Y)       (HDfabs (X-Y) < DBL_EPSILON)
+#define H5_LDBL_ABS_EQUAL(X,Y)      (HDfabsl(X-Y) < LDBL_EPSILON)
+
+#define H5_FLT_REL_EQUAL(X,Y,M)     (HDfabsf((Y-X) / X) < M)
+#define H5_DBL_REL_EQUAL(X,Y,M)     (HDfabs ((Y-X) / X) < M)
+#define H5_LDBL_REL_EQUAL(X,Y,M)    (HDfabsl((Y-X) / X) < M)
+
+/* KiB, MiB, GiB, TiB, EiB - Used in profiling and timing code */
+#define H5_KB (1024.0F)
+#define H5_MB (1024.0F * 1024.0F)
+#define H5_GB (1024.0F * 1024.0F * 1024.0F)
+#define H5_TB (1024.0F * 1024.0F * 1024.0F * 1024.0F)
+#define H5_EB (1024.0F * 1024.0F * 1024.0F * 1024.0F * 1024.0F)
+
 /*
  * Data types and functions for timing certain parts of the library.
  */
@@ -540,6 +590,9 @@ typedef struct {
 #ifndef HDasin
     #define HDasin(X)    asin(X)
 #endif /* HDasin */
+#ifndef HDasprintf
+    #define HDasprintf    asprintf /*varargs*/
+#endif /* HDasprintf */
 #ifndef HDassert
     #define HDassert(X)    assert(X)
 #endif /* HDassert */
@@ -561,9 +614,6 @@ typedef struct {
 #ifndef HDatol
     #define HDatol(S)    atol(S)
 #endif /* HDatol */
-#ifndef HDBSDgettimeofday
-    #define HDBSDgettimeofday(S,P)  BSDgettimeofday(S,P)
-#endif /* HDBSDgettimeofday */
 #ifndef HDbsearch
     #define HDbsearch(K,B,N,Z,F)  bsearch(K,B,N,Z,F)
 #endif /* HDbsearch */
@@ -1075,22 +1125,9 @@ H5_DLL int HDfprintf (FILE *stream, const char *fmt, ...);
 #ifndef HDrealpath
     #define HDrealpath(F1,F2)    realpath(F1,F2)
 #endif /* HDrealloc */
-#ifdef H5_VMS
-    #ifdef __cplusplus
-        extern "C" {
-    #endif /* __cplusplus */
-    int HDremove_all(const char * fname);
-    #ifdef __cplusplus
-        }
-    #endif /* __cplusplus */
-    #ifndef HDremove
-        #define HDremove(S)     HDremove_all(S)
-    #endif /* HDremove */
-#else /* H5_VMS */
-    #ifndef HDremove
-        #define HDremove(S)    remove(S)
-    #endif /* HDremove */
-#endif /*H5_VMS*/
+#ifndef HDremove
+    #define HDremove(S)    remove(S)
+#endif /* HDremove */
 #ifndef HDrename
     #define HDrename(OLD,NEW)  rename(OLD,NEW)
 #endif /* HDrename */
@@ -1474,11 +1511,14 @@ extern char *strdup(const char *s);
 /* Include the generated overflow header file */
 #include "H5overflow.h"
 
-#define H5_ASSIGN_OVERFLOW(dst, src, srctype, dsttype)  \
+/* Assign a variable to one of a different size (think safer dst = (dsttype)src").
+ * The code generated by the macro checks for overflows.
+ */
+#define H5_CHECKED_ASSIGN(dst, dsttype, src, srctype)  \
     H5_GLUE4(ASSIGN_,srctype,_TO_,dsttype)(dst,dsttype,src,srctype)\
 
 #else /* NDEBUG */
-#define H5_ASSIGN_OVERFLOW(dst, src, srctype, dsttype)  \
+#define H5_CHECKED_ASSIGN(dst, dsttype, src, srctype)  \
     (dst) = (dsttype)(src);
 #endif /* NDEBUG */
 
@@ -1504,19 +1544,7 @@ extern char *strdup(const char *s);
         (ptr = slash);                                  \
 }
 
-#elif defined(H5_HAVE_VMS_PATH)
-
-/* OpenVMS pathname: <disk name>$<partition>:[path]<file name>
- *     i.g. SYS$SYSUSERS:[LU.HDF5.SRC]H5system.c */
-#define H5_DIR_SEPC                     ']'
-#define H5_DIR_SEPS                     "]"
-#define H5_CHECK_DELIMITER(SS)             (SS == H5_DIR_SEPC)
-#define H5_CHECK_ABSOLUTE(NAME)            (HDstrrchr(NAME, ':') && HDstrrchr(NAME, '['))
-#define H5_CHECK_ABS_DRIVE(NAME)           (0)
-#define H5_CHECK_ABS_PATH(NAME)            (0)
-#define H5_GET_LAST_DELIMITER(NAME, ptr)   ptr = HDstrrchr(NAME, H5_DIR_SEPC);
-
-#else
+#else /* H5_HAVE_WINDOW_PATH */
 
 #define H5_DIR_SEPC             '/'
 #define H5_DIR_SEPS             "/"
@@ -1526,7 +1554,7 @@ extern char *strdup(const char *s);
 #define H5_CHECK_ABS_PATH(NAME)    (0)
 #define H5_GET_LAST_DELIMITER(NAME, ptr)   ptr = HDstrrchr(NAME, H5_DIR_SEPC);
 
-#endif
+#endif /* H5_HAVE_WINDOW_PATH */
 
 #define   H5_COLON_SEPC  ':'
 
@@ -1688,9 +1716,24 @@ H5_DLL double H5_trace(const double *calltime, const char *func, const char *typ
  *-------------------------------------------------------------------------
  */
 
-/* `S' is the name of a function which is being tested to check if its */
-/*      an API function */
-#define H5_IS_API(S) ('_'!=((const char *)S)[2] && '_'!=((const char *)S)[3] && (!((const char *)S)[4] || '_'!=((const char *)S)[4]))
+/* `S' is the name of a function which is being tested to check if it's
+ *  an API function.
+ *
+ *  BADNESS:
+ *      - Underscore at positions 2 or 3 (0-indexed string). Handles
+ *        H5_ and H5X_.
+ *      - Underscore at position 4 if position 3 is uppercase or a digit.
+ *        Handles H5XY_.
+ */
+#define H5_IS_API(S) (\
+    '_'!=((const char *)S)[2]       /* underscore at position 2     */  \
+    && '_'!=((const char *)S)[3]    /* underscore at position 3     */  \
+    && !(                                       /* NOT              */  \
+        ((const char *)S)[4]                    /* pos 4 exists     */  \
+        && (HDisupper(S[3]) || HDisdigit(S[3])) /* pos 3 dig | uc   */  \
+        && '_'==((const char *)S)[4]            /* pos 4 underscore */  \
+    )\
+)
 
 /* `S' is the name of a function which is being tested to check if it's */
 /*      a public API function */
@@ -1842,7 +1885,7 @@ static herr_t    H5_INTERFACE_INIT_FUNC(void);
 
 /* Local variables for API routines */
 #define FUNC_ENTER_API_VARS                                                   \
-    MPE_LOG_VARS                                                              \
+    MPE_LOG_VARS                                                  \
     H5TRACE_DECL
 
 #define FUNC_ENTER_API_COMMON                         \

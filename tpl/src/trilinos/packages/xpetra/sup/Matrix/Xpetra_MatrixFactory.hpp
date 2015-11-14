@@ -57,8 +57,12 @@
 #include "Xpetra_Exceptions.hpp"
 
 namespace Xpetra {
-
-  template <class Scalar, class LocalOrdinal  = int, class GlobalOrdinal = LocalOrdinal, class Node = KokkosClassic::DefaultNode::DefaultNodeType, class LocalMatOps = typename KokkosClassic::DefaultKernels<Scalar,LocalOrdinal,Node>::SparseOps>
+  template <class Scalar = Matrix<>::scalar_type,
+            class LocalOrdinal = typename Matrix<Scalar>::local_ordinal_type,
+            class GlobalOrdinal =
+              typename Matrix<Scalar, LocalOrdinal>::global_ordinal_type,
+            class Node =
+              typename Matrix<Scalar, LocalOrdinal, GlobalOrdinal>::node_type>
   class MatrixFactory {
 #undef XPETRA_MATRIXFACTORY_SHORT
 #include "Xpetra_UseShortNames.hpp"
@@ -87,6 +91,11 @@ namespace Xpetra {
     //! Constructor specifying (possibly different) number of entries in each row.
     static RCP<Matrix> Build(const RCP<const Map> &rowMap, const ArrayRCP<const size_t> &NumEntriesPerRowToAlloc, ProfileType pftype = Xpetra::DynamicProfile) {
       return rcp( new CrsMatrixWrap(rowMap, NumEntriesPerRowToAlloc, pftype) );
+    }
+
+    //! Constructor specifying graph
+    static RCP<Matrix> Build(const RCP<const CrsGraph>& graph, const RCP<ParameterList>& paramList = Teuchos::null) {
+      return rcp(new CrsMatrixWrap(graph, paramList));
     }
 
     //! Constructor for creating a diagonal Xpetra::Matrix using the entries of a given vector for the diagonal
@@ -132,8 +141,13 @@ namespace Xpetra {
   };
 #define XPETRA_MATRIXFACTORY_SHORT
 
-#ifdef HAVE_XPETRA_EXPERIMENTAL
-  template <class Scalar, class LocalOrdinal  = int, class GlobalOrdinal = LocalOrdinal, class Node = KokkosClassic::DefaultNode::DefaultNodeType, class LocalMatOps = typename KokkosClassic::DefaultKernels<Scalar,LocalOrdinal,Node>::SparseOps>
+
+  template <class Scalar = Matrix<>::scalar_type,
+            class LocalOrdinal = typename Matrix<Scalar>::local_ordinal_type,
+            class GlobalOrdinal =
+              typename Matrix<Scalar, LocalOrdinal>::global_ordinal_type,
+            class Node =
+              typename Matrix<Scalar, LocalOrdinal, GlobalOrdinal>::node_type>
   class MatrixFactory2 {
 #undef XPETRA_MATRIXFACTORY2_SHORT
 #include "Xpetra_UseShortNames.hpp"
@@ -165,7 +179,7 @@ namespace Xpetra {
 
         if (oldTCrsOp != Teuchos::null) {
           RCP<TpetraCrsMatrix> newTCrsOp(new TpetraCrsMatrix(*oldTCrsOp));
-          RCP<CrsMatrixWrap>   newOp    (new CrsMatrixWrap(newTCrsOp));
+          RCP<CrsMatrixWrap>   newOp    (new CrsMatrixWrap(Teuchos::as<RCP<CrsMatrix> >(newTCrsOp)));
 
           return newOp;
         } else {
@@ -181,11 +195,10 @@ namespace Xpetra {
 
   template<>
   class MatrixFactory2<double,int,int> {
-    typedef double                                                             Scalar;
-    typedef int                                                                LocalOrdinal;
-    typedef int                                                                GlobalOrdinal;
-    typedef KokkosClassic::DefaultNode::DefaultNodeType                        Node;
-    typedef KokkosClassic::DefaultKernels<Scalar,LocalOrdinal,Node>::SparseOps LocalMatOps;
+    typedef double                                        Scalar;
+    typedef int                                           LocalOrdinal;
+    typedef int                                           GlobalOrdinal;
+    typedef Matrix<double, int, GlobalOrdinal>::node_type Node;
 #undef XPETRA_MATRIXFACTORY2_SHORT
 #include "Xpetra_UseShortNames.hpp"
 
@@ -195,7 +208,22 @@ namespace Xpetra {
 
 #define XPETRA_MATRIXFACTORY2_SHORT
 
-#endif // ifdef HAVE_XPETRA_EXPERIMENTAL
+#ifdef HAVE_TEUCHOS_LONG_LONG_INT
+  template<>
+  class MatrixFactory2<double,int,long long> {
+    typedef double                                        Scalar;
+    typedef int                                           LocalOrdinal;
+    typedef long long                                     GlobalOrdinal;
+    typedef Matrix<double, int, GlobalOrdinal>::node_type Node;
+#undef XPETRA_MATRIXFACTORY2_SHORT
+#include "Xpetra_UseShortNames.hpp"
+
+  public:
+    static RCP<Matrix> BuildCopy(const RCP<const Matrix> A);
+  };
+#endif // HAVE_TEUCHOS_LONG_LONG_INT
+
+#define XPETRA_MATRIXFACTORY2_SHORT
 
 }
 

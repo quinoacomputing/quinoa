@@ -18,7 +18,7 @@
 
     You should have received a copy of the GNU Lesser General Public License 
     (lgpl.txt) along with this library; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  
     (2006) kraftche@cae.wisc.edu
     (2010) kraftche@cae.wisc.edu
@@ -32,16 +32,16 @@ Unit testing for the TMPQualityMetric class
 */
 
 
-#include "IdealShapeTarget.hpp"
-#include "MsqMatrix.hpp"
+#include "Mesquite_IdealShapeTarget.hpp"
+#include "Mesquite_MsqMatrix.hpp"
 #include "QualityMetricTester.hpp"
-#include "Settings.hpp"
+#include "Mesquite_Settings.hpp"
 #include "UnitUtil.hpp"
-#include "PlanarDomain.hpp"
-#include "PatchData.hpp"
-#include "WeightCalculator.hpp"
-#include "ElementPMeanP.hpp"
-#include "ElemSampleQM.hpp"
+#include "Mesquite_PlanarDomain.hpp"
+#include "Mesquite_PatchData.hpp"
+#include "Mesquite_WeightCalculator.hpp"
+#include "Mesquite_ElementPMeanP.hpp"
+#include "Mesquite_ElemSampleQM.hpp"
 
 #include <iostream>
 

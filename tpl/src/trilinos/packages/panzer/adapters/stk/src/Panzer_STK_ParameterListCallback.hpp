@@ -56,7 +56,7 @@
 #include <vector>
 #include <map>
 
-namespace panzer_stk {
+namespace panzer_stk_classic {
 
 template <typename GO> class STKConnManager;
 
@@ -64,12 +64,12 @@ template <typename GO> class STKConnManager;
   * This particular class is usesd most frequently with an ML preconditioner that
   * requres the nodal coordinates for repartitioning.
   */
-template <typename LocalOrdinalT,typename GlobalOrdinalT,typename Node=KokkosClassic::DefaultNode::DefaultNodeType>
+template <typename LocalOrdinalT,typename GlobalOrdinalT,typename Node=panzer::TpetraNodeType>
 class ParameterListCallback : public Teko::RequestCallback<Teuchos::RCP<Teuchos::ParameterList> > {
 public:
   ParameterListCallback(const std::string & coordFieldName,
                         const std::map<std::string,Teuchos::RCP<const panzer::IntrepidFieldPattern> > & fp,
-                        const Teuchos::RCP<const panzer_stk::STKConnManager<GlobalOrdinalT> > & connManager, 
+                        const Teuchos::RCP<const panzer_stk_classic::STKConnManager<GlobalOrdinalT> > & connManager, 
                         const Teuchos::RCP<const panzer::UniqueGlobalIndexer<LocalOrdinalT,GlobalOrdinalT> > & ugi);
 
    Teuchos::RCP<Teuchos::ParameterList> request(const Teko::RequestMesg & rm);
@@ -109,7 +109,7 @@ private:
 
    std::string coordFieldName_;
    std::map<std::string,Teuchos::RCP<const panzer::IntrepidFieldPattern> > fieldPatterns_;
-   Teuchos::RCP<const panzer_stk::STKConnManager<GlobalOrdinalT> > connManager_;
+   Teuchos::RCP<const panzer_stk_classic::STKConnManager<GlobalOrdinalT> > connManager_;
    Teuchos::RCP<const panzer::UniqueGlobalIndexer<LocalOrdinalT,GlobalOrdinalT> > ugi_;
    bool coordinatesBuilt_;
  

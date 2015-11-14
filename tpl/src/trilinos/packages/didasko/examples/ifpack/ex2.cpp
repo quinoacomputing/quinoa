@@ -1,13 +1,13 @@
 
 // @HEADER
 // ***********************************************************************
-// 
+//
 //                      Didasko Tutorial Package
 //                 Copyright (2005) Sandia Corporation
-// 
+//
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -36,7 +36,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 // Questions about Didasko? Contact Marzio Sala (marzio.sala _AT_ gmail.com)
-// 
+//
 // ***********************************************************************
 // @HEADER
 
@@ -90,24 +90,22 @@ int main(int argc, char *argv[]) {
   Epetra_SerialComm Comm;
 #endif
 
-  int MyPID = Comm.MyPID();
-  bool verbose = false; 
-  if (MyPID==0) verbose = true;
+  //const bool verbose = (Comm.MyPID()==0);
 
   // B E G I N   O F   M A T R I X   C O N S T R U C T I O N
-  
+
   // matrix downloaded from MatrixMarket
   char FileName[] = "../HBMatrices/fidap005.rua";
 
   Epetra_Map * readMap; // Pointers because of Trilinos_Util_ReadHb2Epetra
-  Epetra_CrsMatrix * readA; 
-  Epetra_Vector * readx; 
+  Epetra_CrsMatrix * readA;
+  Epetra_Vector * readx;
   Epetra_Vector * readb;
   Epetra_Vector * readxexact;
-   
+
   // Call routine to read in HB problem
-  Trilinos_Util_ReadHb2Epetra(FileName, Comm, readMap, readA, readx, 
-			      readb, readxexact);
+  Trilinos_Util_ReadHb2Epetra(FileName, Comm, readMap, readA, readx,
+      readb, readxexact);
 
   int NumGlobalElements = readMap->NumGlobalElements();
 
@@ -129,20 +127,20 @@ int main(int argc, char *argv[]) {
   xexact.Export(*readxexact, exporter, Add);
 
   A.FillComplete();
-  
+
   delete readA;
   delete readx;
   delete readb;
   delete readxexact;
   delete readMap;
 
-  // E N D   O F   M A T R I X   C O N S T R U C T I O N  
+  // E N D   O F   M A T R I X   C O N S T R U C T I O N
 
   // ============================= //
   // Construct RILU preconditioner //
   // ---------------=------------- //
 
-  //  modify those parameters 
+  //  modify those parameters
   int    LevelFill = 0;
   int    Overlap = 2;
   double Athresh = 0.0;
@@ -159,12 +157,12 @@ int main(int argc, char *argv[]) {
   if (initerr!=0) cout << Comm << "*ERR* InitValues = " << initerr;
 
   RILU->Factor();
-  
+
   // Define label for printing out during the solve phase
-  string label = "Ifpack_CrsRiluk Preconditioner: LevelFill = " + toString(LevelFill) + 
-                                                 " Overlap = " + toString(Overlap) + 
-                                                 " Athresh = " + toString(Athresh) + 
-                                                 " Rthresh = " + toString(Rthresh); 
+  string label = "Ifpack_CrsRiluk Preconditioner: LevelFill = " + toString(LevelFill) +
+    " Overlap = " + toString(Overlap) +
+    " Athresh = " + toString(Athresh) +
+    " Rthresh = " + toString(Rthresh);
   RILU->SetLabel(label.c_str());
 
   // Here we create an AztecOO object
@@ -174,21 +172,21 @@ int main(int argc, char *argv[]) {
   solver.SetRHS(&b);
 
   // Here we set the IFPACK preconditioner and specify few parameters
-  
+
   solver.SetPrecOperator(RILU);
 
   int Niters = 1200;
-  solver.SetAztecOption(AZ_kspace, Niters); 
+  solver.SetAztecOption(AZ_kspace, Niters);
   solver.Iterate(Niters, 5.0e-6);
 
-  if (RILU!=0) delete RILU;
-  if (Graph!=0) delete Graph;
-				       
+  delete RILU;
+  delete Graph;
+
 #ifdef HAVE_MPI
   MPI_Finalize() ;
 #endif
 
-return 0 ;
+  return 0 ;
 }
 
 #else
@@ -206,9 +204,9 @@ int main(int argc, char *argv[])
 #endif
 
   puts("Please configure Didasko with:\n"
-       "--enable-epetra\n"
-       "--enable-ifpack\n"
-       "--enable-aztecoo");
+      "--enable-epetra\n"
+      "--enable-ifpack\n"
+      "--enable-aztecoo");
 
 #ifdef HAVE_MPI
   MPI_Finalize();

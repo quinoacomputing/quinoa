@@ -9,12 +9,12 @@
 \usepackage{geometry}
 \usepackage{anysize}
 
-\input{config.tex}
+%\input{config.tex}
 
 \pagestyle{empty}
 \setcounter{secnumdepth}{3}
 
-\title{ {\LARGE\bf 
+\title{ {\LARGE\bf
         MESQUITE \\ Mesh Quality Improvement Toolkit \\ \vspace{.5cm} User's Guide\\
 }}
 
@@ -41,7 +41,7 @@ American Fork, UT USA}
 \lstset{language=C++}
 
 % Define a special delimiters \< and \> such that any source
-% code in a listing that is between such delimiters will be 
+% code in a listing that is between such delimiters will be
 % epmhasized.  These delimiters are then used to emphasize
 % differences between versions of source code.
 \lstset{moredelim=[is][\color{blue}]{\\<}{\\>}}
@@ -55,63 +55,63 @@ American Fork, UT USA}
 %\listoftables
 
 % Introduction to Mesquite
-\srcinclude{intro.tex}
+\input{intro.tex}
 
 % Installing Mesquite
-\srcinclude{install.tex}
+\input{install.tex}
 
 % Examples
-\srcinclude{examples.tex}
+\input{examples.tex}
 
 % Getting Mesh Into Mesqite
-\srcinclude{data.tex}
+\input{data.tex}
 
 % Mesquite Features
-\srcinclude{features.tex}
+\input{features.tex}
 
 % Constraining Mesh to a Geometric Domain
-\srcinclude{geom.tex}
+\input{geom.tex}
 
 % Mesquite Wrapper Descriptions
-\srcinclude{wrappers.tex}
+\input{wrappers.tex}
 
 % Optimization strategies (Nash, global, culling, etc.)
-\srcinclude{opt_strategies.tex}
+\input{opt_strategies.tex}
 
 % Constructing custom solvers - part 1
-%\srcinclude{custom.tex}
+%\input{custom.tex}
 
 % TMP
-%\srcinclude{tmp.tex}
+%\input{tmp.tex}
 
 % more TMP stuff
-%\srcinclude{more_tmp.tex}
- 
+%\input{more_tmp.tex}
+
 % debugging solvers
-\srcinclude{debugging.tex}
+\input{debugging.tex}
 
-% Parallel Mesquite 
-\srcinclude{parallel.tex}
+% Parallel Mesquite
+\input{parallel.tex}
 
-%\srcinclude{api.tex}
+%\input{api.tex}
 
-%\srcinclude{extend.tex}
+%\input{extend.tex}
 
-%\srcinclude{trouble.tex}
+%\input{trouble.tex}
 
-%\srcinclude{caveats.tex}
+%\input{caveats.tex}
 
-\srcinclude{support.tex}
+\input{support.tex}
 
 \appendix
 
-\srcinclude{team.tex}
+\input{team.tex}
 
-\srcinclude{ack.tex}
+\input{ack.tex}
 
 
 \bibliographystyle{plain}
-\srcbibliography{mesquite}
+\bibliography{mesquite}
 
 
 \end{document}

@@ -1,13 +1,13 @@
 
 // @HEADER
 // ***********************************************************************
-// 
+//
 //                      Didasko Tutorial Package
 //                 Copyright (2005) Sandia Corporation
-// 
+//
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -36,7 +36,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 // Questions about Didasko? Contact Marzio Sala (marzio.sala _AT_ gmail.com)
-// 
+//
 // ***********************************************************************
 // @HEADER
 
@@ -65,9 +65,9 @@ int main(int argc, char* argv[])
   blas.SCAL( n, alpha, x, 1 );
   int max_idx = blas.IAMAX( n, x, 1 );
   cout<< "The index of the maximum magnitude entry of x[] is the "
-      <<  max_idx <<"-th and x[ " << max_idx-1 << " ] = "<< x[max_idx-1] 
-      << endl;
-  
+    <<  max_idx <<"-th and x[ " << max_idx-1 << " ] = "<< x[max_idx-1]
+    << endl;
+
 #ifdef HAVE_MPI
   MPI_Finalize();
 #endif
@@ -81,7 +81,7 @@ int main(int argc, char* argv[])
 int main(int argc, char *argv[])
 {
   puts("Please configure Didasko with:\n"
-       "--enable-teuchos");
+      "--enable-teuchos");
 
   return 0;
 }

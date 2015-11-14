@@ -49,6 +49,8 @@
 #include "Panzer_UniqueGlobalIndexer.hpp"
 #include "Panzer_PureBasis.hpp"
 #include "Panzer_EpetraLinearObjContainer.hpp"
+#include "Panzer_LOCPair_GlobalEvaluationData.hpp"
+#include "Panzer_EpetraVector_ReadOnly_GlobalEvaluationData.hpp"
 
 #include "Teuchos_FancyOStream.hpp"
 
@@ -59,8 +61,8 @@
 // Specialization: Residual
 // **********************************************************************
 
-template<typename Traits,typename LO,typename GO>
-panzer::GatherSolution_Epetra<panzer::Traits::Residual, Traits,LO,GO>::
+template<typename TRAITS,typename LO,typename GO>
+panzer::GatherSolution_Epetra<panzer::Traits::Residual, TRAITS,LO,GO>::
 GatherSolution_Epetra(
   const Teuchos::RCP<const panzer::UniqueGlobalIndexer<LO,GO> > & indexer,
   const Teuchos::ParameterList& p)
@@ -73,8 +75,12 @@ GatherSolution_Epetra(
 
   indexerNames_ = p.get< Teuchos::RCP< std::vector<std::string> > >("Indexer Names");
 
-  Teuchos::RCP<panzer::PureBasis> basis = 
-    p.get< Teuchos::RCP<panzer::PureBasis> >("Basis");
+  // this is beging to fix the issues with incorrect use of const
+  Teuchos::RCP<const panzer::PureBasis> basis;
+  if(p.isType< Teuchos::RCP<panzer::PureBasis> >("Basis"))
+    basis = p.get< Teuchos::RCP<panzer::PureBasis> >("Basis");
+  else
+    basis = p.get< Teuchos::RCP<const panzer::PureBasis> >("Basis");
 
   gatherFields_.resize(names.size());
   for (std::size_t fd = 0; fd < names.size(); ++fd) {
@@ -89,14 +95,20 @@ GatherSolution_Epetra(
   if (p.isType<std::string>("Global Data Key"))
      globalDataKey_ = p.get<std::string>("Global Data Key");
 
-  this->setName("Gather Solution");
+  // figure out what the first active name is
+  std::string firstName = "<none>";
+  if(names.size()>0)
+    firstName = names[0];
+
+  std::string n = "GatherSolution (Epetra): "+firstName+" ()";
+  this->setName(n);
 }
 
 // **********************************************************************
-template<typename Traits,typename LO,typename GO> 
-void panzer::GatherSolution_Epetra<panzer::Traits::Residual, Traits,LO,GO>::
-postRegistrationSetup(typename Traits::SetupData d, 
-		      PHX::FieldManager<Traits>& fm)
+template<typename TRAITS,typename LO,typename GO> 
+void panzer::GatherSolution_Epetra<panzer::Traits::Residual, TRAITS,LO,GO>::
+postRegistrationSetup(typename TRAITS::SetupData d, 
+		      PHX::FieldManager<TRAITS>& fm)
 {
   TEUCHOS_ASSERT(gatherFields_.size() == indexerNames_->size());
 
@@ -107,6 +119,13 @@ postRegistrationSetup(typename Traits::SetupData d,
     const std::string& fieldName = (*indexerNames_)[fd];
     fieldIds_[fd] = globalIndexer_->getFieldNum(fieldName);
 
+    // this is the error return code, raise the alarm
+    if(fieldIds_[fd]==-1) {
+      TEUCHOS_TEST_FOR_EXCEPTION(true,std::logic_error,
+                                 "GatherSolution_Epetra<Residual>: Could not find field \"" + fieldName + "\" in the global indexer. ");
+         // wouldn't it be nice to print more information???
+    }
+
     // setup the field data object
     this->utils.setFieldData(gatherFields_[fd],fm);
   }
@@ -115,18 +134,48 @@ postRegistrationSetup(typename Traits::SetupData d,
 }
 
 // **********************************************************************
-template<typename Traits,typename LO,typename GO>
-void panzer::GatherSolution_Epetra<panzer::Traits::Residual, Traits,LO,GO>::
-preEvaluate(typename Traits::PreEvalData d)
+template<typename TRAITS,typename LO,typename GO>
+void panzer::GatherSolution_Epetra<panzer::Traits::Residual, TRAITS,LO,GO>::
+preEvaluate(typename TRAITS::PreEvalData d)
 {
-   // extract linear object container
-   epetraContainer_ = Teuchos::rcp_dynamic_cast<EpetraLinearObjContainer>(d.getDataObject(globalDataKey_),true);
+  using Teuchos::RCP;
+  using Teuchos::rcp_dynamic_cast;
+
+  RCP<GlobalEvaluationData> ged = d.gedc.getDataObject(globalDataKey_);
+
+  // try to extract linear object container
+  {
+    RCP<EpetraLinearObjContainer> epetraContainer = rcp_dynamic_cast<EpetraLinearObjContainer>(ged);
+    RCP<LOCPair_GlobalEvaluationData> loc_pair = rcp_dynamic_cast<LOCPair_GlobalEvaluationData>(ged);
+
+    if(loc_pair!=Teuchos::null) {
+      Teuchos::RCP<LinearObjContainer> loc = loc_pair->getGhostedLOC();
+      // extract linear object container
+      epetraContainer = rcp_dynamic_cast<EpetraLinearObjContainer>(loc);
+    }
+
+    if(epetraContainer!=Teuchos::null) {
+      if (useTimeDerivativeSolutionVector_)
+        x_ = epetraContainer->get_dxdt();
+      else
+        x_ = epetraContainer->get_x(); 
+
+      return; // epetraContainer was found
+    }
+  }
+
+  // try to extract an EpetraVector_ReadOnly object (this is the last resort!, it throws if not found)
+  {
+    RCP<EpetraVector_ReadOnly_GlobalEvaluationData> ro_ged = rcp_dynamic_cast<EpetraVector_ReadOnly_GlobalEvaluationData>(ged,true);
+
+    x_ = ro_ged->getGhostedVector_Epetra();
+  }
 }
 
 // **********************************************************************
-template<typename Traits,typename LO,typename GO>
-void panzer::GatherSolution_Epetra<panzer::Traits::Residual, Traits,LO,GO>::
-evaluateFields(typename Traits::EvalData workset)
+template<typename TRAITS,typename LO,typename GO>
+void panzer::GatherSolution_Epetra<panzer::Traits::Residual, TRAITS,LO,GO>::
+evaluateFields(typename TRAITS::EvalData workset)
 { 
    std::vector<int> LIDs;
  
@@ -134,16 +183,20 @@ evaluateFields(typename Traits::EvalData workset)
    std::string blockId = workset.block_id;
    const std::vector<std::size_t> & localCellIds = workset.cell_local_ids;
 
+/*
    Teuchos::RCP<Epetra_Vector> x;
    if (useTimeDerivativeSolutionVector_)
      x = epetraContainer_->get_dxdt();
    else
      x = epetraContainer_->get_x(); 
+*/
  
    // NOTE: A reordering of these loops will likely improve performance
    //       The "getGIDFieldOffsets may be expensive.  However the
    //       "getElementGIDs" can be cheaper. However the lookup for LIDs
    //       may be more expensive!
+
+   Epetra_Vector & x = *x_;
  
    // gather operation for each cell in workset
    for(std::size_t worksetCellIndex=0;worksetCellIndex<localCellIds.size();++worksetCellIndex) {
@@ -160,7 +213,7 @@ evaluateFields(typename Traits::EvalData workset)
          for(std::size_t basis=0;basis<elmtOffset.size();basis++) {
             int offset = elmtOffset[basis];
             int lid = LIDs[offset];
-            (gatherFields_[fieldIndex])(worksetCellIndex,basis) = (*x)[lid];
+            (gatherFields_[fieldIndex])(worksetCellIndex,basis) = x[lid];
          }
       }
    }
@@ -170,8 +223,8 @@ evaluateFields(typename Traits::EvalData workset)
 // Specialization: Tangent
 // **********************************************************************
 
-template<typename Traits,typename LO,typename GO>
-panzer::GatherSolution_Epetra<panzer::Traits::Tangent, Traits,LO,GO>::
+template<typename TRAITS,typename LO,typename GO>
+panzer::GatherSolution_Epetra<panzer::Traits::Tangent, TRAITS,LO,GO>::
 GatherSolution_Epetra(
   const Teuchos::RCP<const panzer::UniqueGlobalIndexer<LO,GO> > & indexer,
   const Teuchos::ParameterList& p)
@@ -184,8 +237,12 @@ GatherSolution_Epetra(
 
   indexerNames_ = p.get< Teuchos::RCP< std::vector<std::string> > >("Indexer Names");
 
-  Teuchos::RCP<panzer::PureBasis> basis = 
-    p.get< Teuchos::RCP<panzer::PureBasis> >("Basis");
+  // this is being to fix the issues with incorrect use of const
+  Teuchos::RCP<const panzer::PureBasis> basis;
+  if(p.isType< Teuchos::RCP<panzer::PureBasis> >("Basis"))
+    basis = p.get< Teuchos::RCP<panzer::PureBasis> >("Basis");
+  else
+    basis = p.get< Teuchos::RCP<const panzer::PureBasis> >("Basis");
 
   gatherFields_.resize(names.size());
   for (std::size_t fd = 0; fd < names.size(); ++fd) {
@@ -200,14 +257,20 @@ GatherSolution_Epetra(
   if (p.isType<std::string>("Global Data Key"))
      globalDataKey_ = p.get<std::string>("Global Data Key");
 
-  this->setName("Gather Solution");
+  // figure out what the first active name is
+  std::string firstName = "<none>";
+  if(names.size()>0)
+    firstName = names[0];
+
+  std::string n = "GatherSolution (Epetra): "+firstName+" ()";
+  this->setName(n);
 }
 
 // **********************************************************************
-template<typename Traits,typename LO,typename GO> 
-void panzer::GatherSolution_Epetra<panzer::Traits::Tangent, Traits,LO,GO>::
-postRegistrationSetup(typename Traits::SetupData d, 
-		      PHX::FieldManager<Traits>& fm)
+template<typename TRAITS,typename LO,typename GO> 
+void panzer::GatherSolution_Epetra<panzer::Traits::Tangent, TRAITS,LO,GO>::
+postRegistrationSetup(typename TRAITS::SetupData d, 
+		      PHX::FieldManager<TRAITS>& fm)
 {
   TEUCHOS_ASSERT(gatherFields_.size() == indexerNames_->size());
 
@@ -218,6 +281,13 @@ postRegistrationSetup(typename Traits::SetupData d,
     const std::string& fieldName = (*indexerNames_)[fd];
     fieldIds_[fd] = globalIndexer_->getFieldNum(fieldName);
 
+    // this is the error return code, raise the alarm
+    if(fieldIds_[fd]==-1) {
+      TEUCHOS_TEST_FOR_EXCEPTION(true,std::logic_error,
+                                 "GatherSolution_Epetra<Tangent>: Could not find field \"" + fieldName + "\" in the global indexer. ");
+         // wouldn't it be nice to print more information???
+    }
+
     // setup the field data object
     this->utils.setFieldData(gatherFields_[fd],fm);
   }
@@ -226,18 +296,48 @@ postRegistrationSetup(typename Traits::SetupData d,
 }
 
 // **********************************************************************
-template<typename Traits,typename LO,typename GO>
-void panzer::GatherSolution_Epetra<panzer::Traits::Tangent, Traits,LO,GO>::
-preEvaluate(typename Traits::PreEvalData d)
+template<typename TRAITS,typename LO,typename GO>
+void panzer::GatherSolution_Epetra<panzer::Traits::Tangent, TRAITS,LO,GO>::
+preEvaluate(typename TRAITS::PreEvalData d)
 {
-   // extract linear object container
-   epetraContainer_ = Teuchos::rcp_dynamic_cast<EpetraLinearObjContainer>(d.getDataObject(globalDataKey_),true);
+  using Teuchos::RCP;
+  using Teuchos::rcp_dynamic_cast;
+
+  RCP<GlobalEvaluationData> ged = d.gedc.getDataObject(globalDataKey_);
+
+  // try to extract linear object container
+  {
+    RCP<EpetraLinearObjContainer> epetraContainer = rcp_dynamic_cast<EpetraLinearObjContainer>(ged);
+    RCP<LOCPair_GlobalEvaluationData> loc_pair = rcp_dynamic_cast<LOCPair_GlobalEvaluationData>(ged);
+
+    if(loc_pair!=Teuchos::null) {
+      Teuchos::RCP<LinearObjContainer> loc = loc_pair->getGhostedLOC();
+      // extract linear object container
+      epetraContainer = rcp_dynamic_cast<EpetraLinearObjContainer>(loc);
+    }
+
+    if(epetraContainer!=Teuchos::null) {
+      if (useTimeDerivativeSolutionVector_)
+        x_ = epetraContainer->get_dxdt();
+      else
+        x_ = epetraContainer->get_x(); 
+
+      return; // epetraContainer was found
+    }
+  }
+
+  // try to extract an EpetraVector_ReadOnly object (this is the last resort!, it throws if not found)
+  {
+    RCP<EpetraVector_ReadOnly_GlobalEvaluationData> ro_ged = rcp_dynamic_cast<EpetraVector_ReadOnly_GlobalEvaluationData>(ged,true);
+
+    x_ = ro_ged->getGhostedVector_Epetra();
+  }
 }
 
 // **********************************************************************
-template<typename Traits,typename LO,typename GO>
-void panzer::GatherSolution_Epetra<panzer::Traits::Tangent, Traits,LO,GO>::
-evaluateFields(typename Traits::EvalData workset)
+template<typename TRAITS,typename LO,typename GO>
+void panzer::GatherSolution_Epetra<panzer::Traits::Tangent, TRAITS,LO,GO>::
+evaluateFields(typename TRAITS::EvalData workset)
 { 
    std::vector<int> LIDs;
  
@@ -245,16 +345,12 @@ evaluateFields(typename Traits::EvalData workset)
    std::string blockId = workset.block_id;
    const std::vector<std::size_t> & localCellIds = workset.cell_local_ids;
 
-   Teuchos::RCP<Epetra_Vector> x;
-   if (useTimeDerivativeSolutionVector_)
-     x = epetraContainer_->get_dxdt();
-   else
-     x = epetraContainer_->get_x(); 
- 
    // NOTE: A reordering of these loops will likely improve performance
    //       The "getGIDFieldOffsets may be expensive.  However the
    //       "getElementGIDs" can be cheaper. However the lookup for LIDs
    //       may be more expensive!
+
+   Epetra_Vector & x = *x_;
  
    // gather operation for each cell in workset
    for(std::size_t worksetCellIndex=0;worksetCellIndex<localCellIds.size();++worksetCellIndex) {
@@ -271,7 +367,7 @@ evaluateFields(typename Traits::EvalData workset)
          for(std::size_t basis=0;basis<elmtOffset.size();basis++) {
             int offset = elmtOffset[basis];
             int lid = LIDs[offset];
-            (gatherFields_[fieldIndex])(worksetCellIndex,basis) = (*x)[lid];
+            (gatherFields_[fieldIndex])(worksetCellIndex,basis) = x[lid];
          }
       }
    }
@@ -281,15 +377,17 @@ evaluateFields(typename Traits::EvalData workset)
 // Specialization: Jacobian
 // **********************************************************************
 
-template<typename Traits,typename LO,typename GO>
-panzer::GatherSolution_Epetra<panzer::Traits::Jacobian, Traits,LO,GO>::
+template<typename TRAITS,typename LO,typename GO>
+panzer::GatherSolution_Epetra<panzer::Traits::Jacobian, TRAITS,LO,GO>::
 GatherSolution_Epetra(
   const Teuchos::RCP<const panzer::UniqueGlobalIndexer<LO,GO> > & indexer,
   const Teuchos::ParameterList& p)
   : globalIndexer_(indexer)
   , useTimeDerivativeSolutionVector_(false)
   , disableSensitivities_(false)
+  , sensitivitiesName_("")
   , globalDataKey_("Solution Gather Container")
+  , gatherSeedIndex_(-1)
 { 
 
   const std::vector<std::string>& names = 
@@ -297,8 +395,13 @@ GatherSolution_Epetra(
 
   indexerNames_ = p.get< Teuchos::RCP< std::vector<std::string> > >("Indexer Names");
 
-  Teuchos::RCP<PHX::DataLayout> dl = 
-    p.get< Teuchos::RCP<panzer::PureBasis> >("Basis")->functional;
+  // this is being to fix the issues with incorrect use of const
+  Teuchos::RCP<const panzer::PureBasis> basis;
+  if(p.isType< Teuchos::RCP<panzer::PureBasis> >("Basis"))
+    basis = p.get< Teuchos::RCP<panzer::PureBasis> >("Basis");
+  else
+    basis = p.get< Teuchos::RCP<const panzer::PureBasis> >("Basis");
+  Teuchos::RCP<PHX::DataLayout> dl = basis->functional;
 
   gatherFields_.resize(names.size());
   for (std::size_t fd = 0; fd < names.size(); ++fd) {
@@ -316,18 +419,35 @@ GatherSolution_Epetra(
   if (p.isType<std::string>("Global Data Key"))
      globalDataKey_ = p.get<std::string>("Global Data Key");
 
+  if (p.isType<int>("Gather Seed Index")) {
+     gatherSeedIndex_ = p.get<int>("Gather Seed Index");
+  }
+
+  if (p.isType<std::string>("Sensitivities Name")) {
+     sensitivitiesName_ = p.get<std::string>("Sensitivities Name");
+  }
+
+  // figure out what the first active name is
+  std::string firstName = "<none>";
+  if(names.size()>0)
+    firstName = names[0];
+
   // print out convenience
-  if(disableSensitivities_)
-     this->setName("Gather Solution (No Sensitivities)");
-  else
-     this->setName("Gather Solution");
+  if(disableSensitivities_) {
+    std::string n = "GatherSolution (Epetra, No Sensitivities): "+firstName+" ()";
+    this->setName(n);
+  }
+  else {
+    std::string n = "GatherSolution (Epetra): "+firstName+" ("+PHX::typeAsString<EvalT>()+") ";
+    this->setName(n);
+  }
 }
 
 // **********************************************************************
-template<typename Traits,typename LO,typename GO> 
-void panzer::GatherSolution_Epetra<panzer::Traits::Jacobian, Traits,LO,GO>::
-postRegistrationSetup(typename Traits::SetupData d, 
-		      PHX::FieldManager<Traits>& fm)
+template<typename TRAITS,typename LO,typename GO> 
+void panzer::GatherSolution_Epetra<panzer::Traits::Jacobian, TRAITS,LO,GO>::
+postRegistrationSetup(typename TRAITS::SetupData d, 
+		      PHX::FieldManager<TRAITS>& fm)
 {
   // globalIndexer_ = d.globalIndexer_;
   TEUCHOS_ASSERT(gatherFields_.size() == indexerNames_->size());
@@ -339,6 +459,13 @@ postRegistrationSetup(typename Traits::SetupData d,
     const std::string& fieldName = (*indexerNames_)[fd];
     fieldIds_[fd] = globalIndexer_->getFieldNum(fieldName);
 
+    // this is the error return code, raise the alarm
+    if(fieldIds_[fd]==-1) {
+      TEUCHOS_TEST_FOR_EXCEPTION(true,std::logic_error,
+                                 "GatherSolution_Epetra<Jacobian>: Could not find field \"" + fieldName + "\" in the global indexer. ");
+         // wouldn't it be nice to print more information???
+    }
+
     // setup the field data object
     this->utils.setFieldData(gatherFields_[fd],fm);
   }
@@ -347,42 +474,88 @@ postRegistrationSetup(typename Traits::SetupData d,
 }
 
 // **********************************************************************
-template<typename Traits,typename LO,typename GO>
-void panzer::GatherSolution_Epetra<panzer::Traits::Jacobian, Traits,LO,GO>::
-preEvaluate(typename Traits::PreEvalData d)
+template<typename TRAITS,typename LO,typename GO>
+void panzer::GatherSolution_Epetra<panzer::Traits::Jacobian, TRAITS,LO,GO>::
+preEvaluate(typename TRAITS::PreEvalData d)
 {
-   // extract linear object container
-   epetraContainer_ = Teuchos::rcp_dynamic_cast<EpetraLinearObjContainer>(d.getDataObject(globalDataKey_),true);
+  using Teuchos::RCP;
+  using Teuchos::rcp_dynamic_cast;
 
-   
+  // manage sensitivities
+  ////////////////////////////////////////////////////////////
+  if(!disableSensitivities_) {
+    if(d.sensitivities_name==sensitivitiesName_)
+      applySensitivities_ = true;
+    else
+      applySensitivities_ = false;
+  } 
+  else 
+    applySensitivities_ = false;
+
+  ////////////////////////////////////////////////////////////
+
+  RCP<GlobalEvaluationData> ged = d.gedc.getDataObject(globalDataKey_);
+
+  // try to extract linear object container
+  {
+    RCP<EpetraLinearObjContainer> epetraContainer = rcp_dynamic_cast<EpetraLinearObjContainer>(ged);
+    RCP<LOCPair_GlobalEvaluationData> loc_pair = rcp_dynamic_cast<LOCPair_GlobalEvaluationData>(ged);
+
+    if(loc_pair!=Teuchos::null) {
+      Teuchos::RCP<LinearObjContainer> loc = loc_pair->getGhostedLOC();
+      // extract linear object container
+      epetraContainer = rcp_dynamic_cast<EpetraLinearObjContainer>(loc);
+    }
+
+    if(epetraContainer!=Teuchos::null) {
+      if (useTimeDerivativeSolutionVector_)
+        x_ = epetraContainer->get_dxdt();
+      else
+        x_ = epetraContainer->get_x(); 
+
+      return; // epetraContainer was found
+    }
+  }
+
+  // try to extract an EpetraVector_ReadOnly object (this is the last resort!, it throws if not found)
+  {
+    RCP<EpetraVector_ReadOnly_GlobalEvaluationData> ro_ged = rcp_dynamic_cast<EpetraVector_ReadOnly_GlobalEvaluationData>(ged,true);
+
+    x_ = ro_ged->getGhostedVector_Epetra();
+  }
 }
 
 // **********************************************************************
-template<typename Traits,typename LO,typename GO>
-void panzer::GatherSolution_Epetra<panzer::Traits::Jacobian, Traits,LO,GO>::
-evaluateFields(typename Traits::EvalData workset)
+template<typename TRAITS,typename LO,typename GO>
+void panzer::GatherSolution_Epetra<panzer::Traits::Jacobian, TRAITS,LO,GO>::
+evaluateFields(typename TRAITS::EvalData workset)
 { 
-   std::vector<int> LIDs;
-
    // for convenience pull out some objects from workset
    std::string blockId = workset.block_id;
    const std::vector<std::size_t> & localCellIds = workset.cell_local_ids;
 
-   Teuchos::RCP<Epetra_Vector> x;
    double seed_value = 0.0;
-   if (useTimeDerivativeSolutionVector_) {
-     x = epetraContainer_->get_dxdt();
-     seed_value = workset.alpha;
+   if(applySensitivities_) {
+     if (useTimeDerivativeSolutionVector_ && gatherSeedIndex_<0) {
+       seed_value = workset.alpha;
+     }
+     else if (gatherSeedIndex_<0) {
+       seed_value = workset.beta;
+     }
+     else if(!useTimeDerivativeSolutionVector_) {
+       seed_value = workset.gather_seeds[gatherSeedIndex_];
+     }
+     else {
+       TEUCHOS_ASSERT(false);
+     }
    }
-   else {
-     x = epetraContainer_->get_x();
-     seed_value = workset.beta;
-   }
+
+   Epetra_Vector & x = *x_;
 
    // turn off sensitivies: this may be faster if we don't expand the term
    // but I suspect not because anywhere it is used the full complement of
    // sensitivies will be needed anyway.
-   if(disableSensitivities_)
+   if(!applySensitivities_)
       seed_value = 0.0;
 
    // NOTE: A reordering of these loops will likely improve performance
@@ -390,26 +563,39 @@ evaluateFields(typename Traits::EvalData workset)
    //       "getElementGIDs" can be cheaper. However the lookup for LIDs
    //       may be more expensive!
 
-   // gather operation for each cell in workset
-   for(std::size_t worksetCellIndex=0;worksetCellIndex<localCellIds.size();++worksetCellIndex) {
-      std::size_t cellLocalId = localCellIds[worksetCellIndex];
+   // loop over the fields to be gathered
+   for(std::size_t fieldIndex=0;
+       fieldIndex<gatherFields_.size();fieldIndex++) {
+      PHX::MDField<ScalarT,Cell,NODE> & field = gatherFields_[fieldIndex];
+      int fieldNum = fieldIds_[fieldIndex];
+      const std::vector<int> & elmtOffset = globalIndexer_->getGIDFieldOffsets(blockId,fieldNum);
 
-      LIDs = globalIndexer_->getElementLIDs(cellLocalId); 
+      // gather operation for each cell in workset
+      for(std::size_t worksetCellIndex=0;worksetCellIndex<localCellIds.size();++worksetCellIndex) {
+         std::size_t cellLocalId = localCellIds[worksetCellIndex];
 
-      // loop over the fields to be gathered
-      for(std::size_t fieldIndex=0;
-          fieldIndex<gatherFields_.size();fieldIndex++) {
-         int fieldNum = fieldIds_[fieldIndex];
-         const std::vector<int> & elmtOffset = globalIndexer_->getGIDFieldOffsets(blockId,fieldNum);
+         const std::vector<int> & LIDs = globalIndexer_->getElementLIDs(cellLocalId); 
 
-         // loop over basis functions and fill the fields
-         for(std::size_t basis=0;basis<elmtOffset.size();basis++) {
-            int offset = elmtOffset[basis];
-            int lid = LIDs[offset];
+         if(!applySensitivities_) {
+           // loop over basis functions and fill the fields
+           for(std::size_t basis=0;basis<elmtOffset.size();basis++) {
+             int offset = elmtOffset[basis];
+             int lid = LIDs[offset];
 
-            // set the value and seed the FAD object
-            (gatherFields_[fieldIndex])(worksetCellIndex,basis) = ScalarT(LIDs.size(), (*x)[lid]);
-            (gatherFields_[fieldIndex])(worksetCellIndex,basis).fastAccessDx(offset) = seed_value;
+             // set the value and seed the FAD object
+             field(worksetCellIndex,basis) = x[lid];
+           }
+         }
+         else {
+           // loop over basis functions and fill the fields
+           for(std::size_t basis=0;basis<elmtOffset.size();basis++) {
+             int offset = elmtOffset[basis];
+             int lid = LIDs[offset];
+
+             // set the value and seed the FAD object
+             field(worksetCellIndex,basis).val() = x[lid];
+             field(worksetCellIndex,basis).fastAccessDx(offset) = seed_value;
+           }
          }
       }
    }

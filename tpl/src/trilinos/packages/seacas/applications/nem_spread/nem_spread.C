@@ -50,6 +50,7 @@
 #include "ps_pario_const.h"             // for Parallel_IO
 #include "rf_allo.h"                    // for safe_free
 #include "rf_io.h"                      // for ExoFile, Debug_Flag, etc
+#include "rf_format.h"
 
 #if defined(__STRICT_ANSI__)
 #include <getopt.h>
@@ -126,7 +127,6 @@ int main(int argc, char *argv[])
 
   /* initialize some variables */
   ExoFile[0]                    = '\0';
-  Exo_LB_File[0]                = '\0';
   Exo_Res_File[0]               = '\0';
   Debug_Flag                    = -1;
 
@@ -227,7 +227,7 @@ int nem_spread(NemSpread<T,INT> &spreader, const char *salsa_cmd_file, int subcy
   /* Local declarations. */
   double start_t, end_t;
 
-  printf("Using %lu byte integers and %lu byte floating point values.\n", sizeof(INT), sizeof(T));
+  printf("Using " ST_ZU " byte integers and " ST_ZU " byte floating point values.\n", sizeof(INT), sizeof(T));
   
   /*
    * Read in the ASCII input file from the front end.
@@ -246,9 +246,6 @@ int nem_spread(NemSpread<T,INT> &spreader, const char *salsa_cmd_file, int subcy
       fprintf(stderr, "%s ERROR: Error in user specified parameters.\n", yo);
       exit(1);
     }
-
-  strcpy(PIO_Info.Scalar_LB_File_Name, Exo_LB_File);
-  strcpy(PIO_Info.Scalar_Exo_File_Name, ExoFile);
 
   /* If debug is on the turn on netCDF/Exodus information as well */
   if(Debug_Flag > 0)

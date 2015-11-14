@@ -50,7 +50,7 @@ libhdf5_la_SOURCES= H5.c H5checksum.c H5dbg.c H5system.c H5timer.c H5trace.c \
         H5Dio.c H5Dlayout.c \
         H5Dmpio.c H5Doh.c H5Dscatgath.c H5Dselect.c H5Dtest.c \
         H5E.c H5Edeprec.c H5Eint.c \
-        H5F.c H5Faccum.c H5Fcwfs.c \
+        H5F.c H5Fint.c H5Faccum.c H5Fcwfs.c \
         H5Fdbg.c H5Fefc.c H5Ffake.c H5Fio.c \
         H5Fmount.c H5Fmpi.c H5Fquery.c \
         H5Fsfile.c H5Fsuper.c H5Fsuper_cache.c H5Ftest.c \
@@ -114,7 +114,7 @@ include_HEADERS = hdf5.h H5api_adpt.h H5overflow.h H5pubconf.h H5public.h H5vers
         H5FDmulti.h H5FDsec2.h  H5FDstdio.h \
         H5Gpublic.h  H5Ipublic.h H5Lpublic.h \
         H5MMpublic.h H5Opublic.h H5Ppublic.h \
-        H5PLextern.h \
+        H5PLextern.h H5PLpublic.h \
         H5Rpublic.h H5Spublic.h \
         H5Tpublic.h H5Zpublic.h
 

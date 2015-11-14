@@ -51,6 +51,9 @@
 /* Define if want to build with petsc enabled */
 /* #undef HAVE_PETSC */
 
+/* Define if want to build with mmm timings enabled */
+/* #undef ENABLE_MMM_TIMINGS */
+
 /* Define if want to build with hypre enabled */
 /* #undef HAVE_HYPRE */
 
@@ -76,3 +79,5 @@
 #define HAVE_MPI
 
 #define EPETRAEXT_DEPRECATED
+#define EPETRAEXT_DEPRECATED_MSG(MSG)
+

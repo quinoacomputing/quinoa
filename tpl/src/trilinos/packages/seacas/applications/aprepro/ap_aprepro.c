@@ -1,6 +1,6 @@
 /* 
  * Copyright 2007 Sandia Corporation. Under the terms of Contract
- * DE-AC04-94AL85000 with Sandia Corporation, the U.S. Governement
+ * DE-AC04-94AL85000 with Sandia Corporation, the U.S. Government
  * retains certain rights in this software.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -47,19 +47,20 @@
 static char *qainfo[] =
 {
   "Aprepro",
-  "Date: 2013/10/23",
-  "Revision: 2.36"
+  "Date: 2015/06/03",
+  "Revision: 3.05"
 };
 
-#include <stdlib.h>
-#include <ctype.h>
-#include "getopt.h"
-#include "my_aprepro.h"
-#include "y.tab.h"
-#include <sys/types.h>
-#include <time.h>
+#include <ctype.h>                      // for isdigit
+#include <stdio.h>                      // for fprintf, stderr, setbuf, etc
+#include <stdlib.h>                     // for NULL, exit, EXIT_SUCCESS, etc
+#include <string.h>                     // for strchr, strrchr, strlen
+#include <time.h>                       // for asctime, localtime, time, etc
+#include "add_to_log.h"                 // for add_to_log
+#include "getopt.h"                     // for getopt_long, option
+#include "my_aprepro.h"                 // for aprepro_options, True, etc
+#include "y.tab.h"                      // for VAR, yyparse, IMMSVAR, etc
 
-#include "add_to_log.h"
 
 aprepro_options ap_options;
 int state_immutable = False;
@@ -69,7 +70,7 @@ int echo = True;
 void initialize_options(aprepro_options *ap_options)
 {
   /* Default value of comment character */
-  ap_options->comment = '$';
+  ap_options->comment = "$";
   ap_options->include_path = NULL;
 
   ap_options->end_on_exit = False;
@@ -81,13 +82,14 @@ void initialize_options(aprepro_options *ap_options)
   ap_options->statistics = False;
   ap_options->interactive = False;
   ap_options->immutable = False;
+  ap_options->one_based_index = False;
 }
 
 extern void add_input_file(char *filename);
 static void usage(void);
 extern void dumpsym(int type, int doInternal);
 extern void pstats(void);
-extern void init_table(char comment);
+extern void init_table(char *comment);
 static void copyright_output(void);
 extern FILE *open_file(char *file, char *mode);
 extern int is_directory(char *filepath);
@@ -124,6 +126,7 @@ int main (int argc, char *argv[])
       {"messages",    NO_ARG, 0, 'M'},
       {"quiet",       NO_ARG, 0, 'q'},
       {"immutable",   NO_ARG, 0, 'X'},
+      {"one_based_index", NO_ARG, 0, '1'},
       {NULL,          NO_ARG, NULL, 0}
     };
 
@@ -141,13 +144,13 @@ int main (int argc, char *argv[])
   initialize_options(&ap_options);
   
   ap_options.end_on_exit = False;
-  while ((c = getopt_long (argc, argv, "c:dDsSvViI:eEwWmMhHCqX",
+  while ((c = getopt_long (argc, argv, "c:dDsSvViI:eEwWmMhHCqX1",
 			   long_options, &option_index)) != EOF)
     {
       switch (c)
 	{
 	case 'c':
-	  ap_options.comment = *optarg;
+	  NEWSTR(optarg, ap_options.comment);
 	  break;
 
 	case 'd':
@@ -209,6 +212,10 @@ int main (int argc, char *argv[])
 	  ap_options.immutable = True;
 	  break;
 
+	case '1':
+	  ap_options.one_based_index = True;
+	  break;
+	  
 	case 'h':
 	case 'H':
 	  usage();
@@ -235,27 +242,36 @@ int main (int argc, char *argv[])
 
     var = argv[optind++];
     val = strchr (var, '=');
-    *val++ = '\0';
-    if (!check_valid_var(var)) {
-      fprintf(stderr, "ERROR: '%s' is not a valid form for a variable; it will not be defined\n", var);
+    if (val == NULL) {
+      fprintf(stderr, "ERROR: '%s' is not a valid form for assiging a variable; it will not be defined\n", var);
     } else {
-      if (strchr(val, '"') != NULL) { /* Should be a string variable */
-	char *pt = strrchr(val, '"');
-	val++;
-	*pt = '\0';
-	if (var[0] == '_')
-	  s = putsym(var, SVAR, 0);
-	else
-	  s = putsym(var, IMMSVAR, 0);
-	NEWSTR(val, s->value.svar);
-      }
-      else {
-	sscanf (val, "%lf", &value);
-	if (var[0] == '_')
-	  s = putsym (var, VAR, 0);
-	else
-	  s = putsym (var, IMMVAR, 0);
-	s->value.var = value;
+      *val++ = '\0';
+      if (!check_valid_var(var)) {
+	fprintf(stderr, "ERROR: '%s' is not a valid form for a variable; it will not be defined\n", var);
+      } else {
+	if (strchr(val, '"') != NULL) { /* Should be a string variable */
+	  char *pt = strrchr(val, '"');
+	  if (pt != NULL) {
+	    val++;
+	    *pt = '\0';
+	    if (var[0] == '_')
+	      s = putsym(var, SVAR, 0);
+	    else
+	      s = putsym(var, IMMSVAR, 0);
+	    NEWSTR(val, s->value.svar);
+	  }
+	  else {
+	    fprintf(stderr, "ERROR: Missing trailing \" in definition of variable '%s'; it will not be defined\n", var);
+	  }
+	}
+	else {
+	  sscanf (val, "%lf", &value);
+	  if (var[0] == '_')
+	    s = putsym (var, VAR, 0);
+	  else
+	    s = putsym (var, IMMVAR, 0);
+	  s->value.var = value;
+	}
       }
     }
   }
@@ -291,9 +307,9 @@ int main (int argc, char *argv[])
   /* NOTE: asc_time includes \n at end of string */
   if (!ap_options.quiet) {
     if (state_immutable) {
-      fprintf (yyout, "%c Aprepro (%s) [immutable mode] %s", ap_options.comment, qainfo[2], asc_time);
+      fprintf (yyout, "%s Aprepro (%s) [immutable mode] %s", ap_options.comment, qainfo[2], asc_time);
     } else {
-      fprintf (yyout, "%c Aprepro (%s) %s", ap_options.comment, qainfo[2], asc_time);
+      fprintf (yyout, "%s Aprepro (%s) %s", ap_options.comment, qainfo[2], asc_time);
     }
   }
 
@@ -328,20 +344,22 @@ usage (void)
   fprintf (stderr,
 	   "\nusage: %s [-dsviehMWCq] [-I path] [-c char] [var=val] filein fileout\n",
 	   myname);
-   ECHO("        --debug or -d: Dump all variables, debug loops/if/endif\n");
-   ECHO("   --statistics or -s: Print hash statistics at end of run     \n");
-   ECHO("      --version or -v: Print version number to stderr          \n");
-   ECHO("--comment or -c  char: Change comment character to 'char'      \n");
-   ECHO("    --immutable or -X: All variables are immutable--cannot be modified\n");
-   ECHO("  --interactive or -i: Interactive use, no buffering           \n");
-   ECHO("      --include or -I: Include file or include path            \n");
-   ECHO("      --exit_on or -e: End when 'Exit|EXIT|exit' entered       \n");
-   ECHO("         --help or -h: Print this list                         \n");
-   ECHO("      --message or -M: Print INFO messages                     \n");
-   ECHO("    --nowarning or -W: Do not print WARN messages	        \n");
-   ECHO("    --copyright or -C: Print copyright message                 \n");
-   ECHO("        --quiet or -q: Do not output version info to stdout    \n");
-   ECHO("              var=val: Assign value 'val' to variable 'var'  \n\n");
+   ECHO("          --debug or -d: Dump all variables, debug loops/if/endif\n");
+   ECHO("     --statistics or -s: Print hash statistics at end of run     \n");
+   ECHO("        --version or -v: Print version number to stderr          \n");
+   ECHO("  --comment or -c  char: Change comment character to 'char'      \n");
+   ECHO("      --immutable or -X: All variables are immutable--cannot be modified\n");
+   ECHO("    --interactive or -i: Interactive use, no buffering           \n");
+   ECHO("        --include or -I: Include file or include path            \n");
+   ECHO("        --exit_on or -e: End when 'Exit|EXIT|exit' entered       \n");
+   ECHO("           --help or -h: Print this list                         \n");
+   ECHO("        --message or -M: Print INFO messages                     \n");
+   ECHO("      --nowarning or -W: Do not print WARN messages	        \n");
+   ECHO("--one_based_index or -1: Array indexing is one-based (default = zero-based)\n");
+   ECHO("      --copyright or -C: Print copyright message                 \n");
+   ECHO("          --quiet or -q: Do not output version info to stdout    \n");
+   ECHO("                var=val: Assign value 'val' to variable 'var'    \n");
+   ECHO("                         Use var=\\\"sval\\\" for a string variable\n\n");
    ECHO("\tEnter {DUMP_FUNC()} for list of functions recognized by aprepro\n");
    ECHO("\tEnter {DUMP_PREVAR()} for list of predefined variables in aprepro\n");
    ECHO("\t->->-> Send email to gdsjaar@sandia.gov for aprepro support.\n\n");
@@ -351,38 +369,38 @@ usage (void)
 static void 
 copyright_output (void)
 {
-  ECHOC("%c -------------------------------------------------------------------------\n");
-  ECHOC("%c Copyright 2007 Sandia Corporation. Under the terms of Contract\n");
-  ECHOC("%c DE-AC04-94AL85000 with Sandia Corporation, the U.S. Governement\n");
-  ECHOC("%c retains certain rights in this software.\n");
-  ECHOC("%c\n");
-  ECHOC("%c Redistribution and use in source and binary forms, with or without\n");
-  ECHOC("%c modification, are permitted provided that the following conditions\n");
-  ECHOC("%c are met:\n");
-  ECHOC("%c\n");
-  ECHOC("%c    * Redistributions of source code must retain the above copyright\n");
-  ECHOC("%c      notice, this list of conditions and the following disclaimer.\n");
-  ECHOC("%c    * Redistributions in binary form must reproduce the above\n");
-  ECHOC("%c      copyright notice, this list of conditions and the following\n");
-  ECHOC("%c      disclaimer in the documentation and/or other materials provided\n");
-  ECHOC("%c      with the distribution.\n");
-  ECHOC("%c    * Neither the name of Sandia Corporation nor the names of its\n");
-  ECHOC("%c      contributors may be used to endorse or promote products derived\n");
-  ECHOC("%c      from this software without specific prior written permission.\n");
-  ECHOC("%c\n");
-  ECHOC("%c THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS\n");
-  ECHOC("%c 'AS IS' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT\n");
-  ECHOC("%c LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR\n");
-  ECHOC("%c A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT\n");
-  ECHOC("%c OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,\n");
-  ECHOC("%c SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT\n");
-  ECHOC("%c LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,\n");
-  ECHOC("%c DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY\n");
-  ECHOC("%c THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT\n");
-  ECHOC("%c (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE\n");
-  ECHOC("%c OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\n");
-  ECHOC("%c -------------------------------------------------------------------------\n");
-  ECHOC("%c\n");
+  ECHOC("%s -------------------------------------------------------------------------\n");
+  ECHOC("%s Copyright 2007 Sandia Corporation. Under the terms of Contract\n");
+  ECHOC("%s DE-AC04-94AL85000 with Sandia Corporation, the U.S. Government\n");
+  ECHOC("%s retains certain rights in this software.\n");
+  ECHOC("%s\n");
+  ECHOC("%s Redistribution and use in source and binary forms, with or without\n");
+  ECHOC("%s modification, are permitted provided that the following conditions\n");
+  ECHOC("%s are met:\n");
+  ECHOC("%s\n");
+  ECHOC("%s    * Redistributions of source code must retain the above copyright\n");
+  ECHOC("%s      notice, this list of conditions and the following disclaimer.\n");
+  ECHOC("%s    * Redistributions in binary form must reproduce the above\n");
+  ECHOC("%s      copyright notice, this list of conditions and the following\n");
+  ECHOC("%s      disclaimer in the documentation and/or other materials provided\n");
+  ECHOC("%s      with the distribution.\n");
+  ECHOC("%s    * Neither the name of Sandia Corporation nor the names of its\n");
+  ECHOC("%s      contributors may be used to endorse or promote products derived\n");
+  ECHOC("%s      from this software without specific prior written permission.\n");
+  ECHOC("%s\n");
+  ECHOC("%s THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS\n");
+  ECHOC("%s 'AS IS' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT\n");
+  ECHOC("%s LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR\n");
+  ECHOC("%s A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT\n");
+  ECHOC("%s OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,\n");
+  ECHOC("%s SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT\n");
+  ECHOC("%s LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,\n");
+  ECHOC("%s DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY\n");
+  ECHOC("%s THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT\n");
+  ECHOC("%s (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE\n");
+  ECHOC("%s OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\n");
+  ECHOC("%s -------------------------------------------------------------------------\n");
+  ECHOC("%s\n");
  } 
  
 /* 

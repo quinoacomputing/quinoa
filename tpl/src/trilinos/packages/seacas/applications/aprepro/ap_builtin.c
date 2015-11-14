@@ -1,6 +1,6 @@
 /* 
  * Copyright 2006 Sandia Corporation. Under the terms of Contract
- * DE-AC04-94AL85000 with Sandia Corporation, the U.S. Governement
+ * DE-AC04-94AL85000 with Sandia Corporation, the U.S. Government
  * retains certain rights in this software.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -70,9 +70,9 @@
 #endif
 
 #if defined(sun)
-#define LOG1P(x)	log1p(x)
+#define LOG1P(x)        log1p(x)
 #else
-#define LOG1P(x)	log(1.0 + (x))
+#define LOG1P(x)        log(1.0 + (x))
 #endif
 
 extern aprepro_options ap_options;
@@ -129,6 +129,8 @@ double do_polarY(double rad, double ang);
 double do_strtod(char *string);
 double do_csvrows(char *string);
 double do_csvcols(char *string);
+double do_rows(array *arr);
+double do_cols(array *arr);
 
 char  *do_getenv(char *string);
 char  *do_tolower(char *string);
@@ -151,7 +153,7 @@ char  *do_extract(char *string, char *begin, char *end);
 double do_Material(double id, char *type, char *name, char *model, char *code, FILE * yyout);
 double do_lgamma(double val);
 double do_juldayhms(double mon, double day, double year,
-			    double h, double mi, double se);
+                            double h, double mi, double se);
 double do_julday(double mon, double day, double year);
 double do_log1p(double mag);
 char  *do_include_path(char *newpath);
@@ -642,7 +644,7 @@ double cof[] =
  -1.231739516, 0.120858003e-2, -0.536382e-5};
 double do_lgamma(double val)
 {
-#define STP	2.50662827465
+#define STP     2.50662827465
   double x, tmp, ser;
   int j;
 
@@ -659,7 +661,7 @@ double do_lgamma(double val)
 }
 
 double do_juldayhms(double mon, double day, double year,
-	      double h, double mi, double se)
+              double h, double mi, double se)
 {
   long m = mon, d = day, y = year;
   long c, ya, j;
@@ -733,6 +735,16 @@ double do_atanh(double x)
   return (z * LOG1P(x + x));
 }
 
+double do_rows(array *arr)
+{
+  return arr->rows;
+}
+
+double do_cols(array *arr)
+{
+  return arr->cols;
+}
+
 double do_csvrows(char * filename)
 {
   size_t len = 0;
@@ -752,11 +764,10 @@ double do_csvrows(char * filename)
 
 double do_csvcols(char * filename)
 {
-  const char *delim = ",";
+  char *delim = ",";
   size_t len = 0;
   char *line = NULL;
 
-  double tempCols = 0;
   double cols = 0;
   FILE *fp = open_file(filename, "r");
 
@@ -827,7 +838,7 @@ char *do_tolower(char *string)
   while (*p != '\0')
     {
       if (isupper((int)*p))
-	*p = tolower((int)*p);
+        *p = tolower((int)*p);
       p++;
     }
   return (string);
@@ -839,7 +850,7 @@ char *do_toupper(char *string)
   while (*p != '\0')
     {
       if (islower((int)*p))
-	*p = toupper((int)*p);
+        *p = toupper((int)*p);
       p++;
     }
   return (string);
@@ -913,28 +924,32 @@ double do_word_count(char *string, char *delm)
 
 char *do_get_word(double n, char *string, char *delm)
 {
-   char *temp, *token, *word;
-   int i;
+  char *temp = NULL;
+  char *token = NULL;
+  char *word = NULL;
+  int i;
 
-    NEWSTR(string, temp);
-    token = strtok(temp,delm);
+  NEWSTR(string, temp);
+  token = strtok(temp,delm);
+  if (token != NULL) {
     if( n == 1 )
-     {
+    {
       NEWSTR(token,word);
       free(temp);
       return(word);
-     }
+    }
     for(i=1; i<n; i++)
-	{
-        if( (token = strtok(NULL,delm)) == NULL )
-	    {
-	        free(temp);
-            return(NULL);
-            }
-	 }
-     NEWSTR(token,word);
-     free(temp);
-     return(word);
+    {
+      if( (token = strtok(NULL,delm)) == NULL )
+      {
+        free(temp);
+        return(NULL);
+      }
+    }
+    NEWSTR(token,word);
+  }
+  free(temp);
+  return(word);
 }
 
 char *do_file_to_string(char *filename)
@@ -965,6 +980,10 @@ char *do_file_to_string(char *filename)
   size = st.st_size+2;
 
   lines = malloc(size * sizeof(char)+1);
+  if (lines == NULL) {
+    perror("Aprepro: ERR: Out of memory in file_to_string function.\n");
+    exit(EXIT_FAILURE);
+  }
   lines[0] = '\0';
   
   fp = open_file(filename, "r");
@@ -976,6 +995,7 @@ char *do_file_to_string(char *filename)
 
   assert(strlen(lines) <= size);
   NEWSTR(lines, ret_string);
+  fclose(fp);
   if (line) free(line);
   if (lines) free(lines);
   return ret_string;
@@ -1009,10 +1029,10 @@ double do_strtod(char *string)
 char *
 do_help(void)
 {
-  char comment = getsym("_C_")->value.svar[0];
-  printf ("\n%c   Enter {DUMP()}        to list defined variables\n", comment);
-  printf ("%c         {DUMP_FUNC()}   to list of all double and string functions\n", comment);
-  printf ("%c         {DUMP_PREVAR()} to list all predefined variables\n", comment);
+  char* comment = getsym("_C_")->value.svar;
+  printf ("\n%s   Enter {DUMP()}        to list defined variables\n", comment);
+  printf ("%s         {DUMP_FUNC()}   to list of all double and string functions\n", comment);
+  printf ("%s         {DUMP_PREVAR()} to list all predefined variables\n", comment);
   return("");
 }
 
@@ -1142,7 +1162,7 @@ char *do_extract(char *string, char *begin, char *end)
 
 char *do_get_csv(char *filename, double row, double col)
 {
-  const char *delim = ",";
+  char *delim = ",";
 
   size_t len = 0;
   char *line = NULL;
@@ -1156,10 +1176,10 @@ char *do_get_csv(char *filename, double row, double col)
     rows++;
     if (rows == row) {
       /* Found the correct row, now get the value at the specified
-	 column */
+         column */
       double num_cols = do_word_count(line, delim);
       if (num_cols  > col) {
-	value = do_get_word(col, line, delim);
+        value = do_get_word(col, line, delim);
       }
       break;
     }
@@ -1168,4 +1188,135 @@ char *do_get_csv(char *filename, double row, double col)
   if (line) free(line);
 
   return value;
+}
+
+char *do_print_array(array *my_array_data)
+{
+  if (my_array_data != NULL) {
+    char *lines = NULL;
+    char *ret_string = NULL; 
+
+    int ir, ic;
+    int rows = my_array_data->rows;
+    int cols = my_array_data->cols;
+    int idx=0;
+
+    symrec *format = getsym("_FORMAT");
+
+    /* Assume a maximum of 32 characters per array entry.
+     * Total space for the array data is then 32*rows*cols
+     */
+    
+    int size = 32 * rows * cols;
+    lines = malloc(size * sizeof(char) + 1);
+    if (lines == NULL) {
+      perror("Aprepro: ERR: Out of memory in print_array function.\n");
+      exit(EXIT_FAILURE);
+    }
+    lines[0] = '\0';
+    
+    for (ir=0; ir < rows; ir++) {
+      if (ir > 0)
+        strcat(lines, "\n");
+      strcat(lines, "\t");
+
+      for (ic=0; ic < cols; ic++) {
+        assert(strlen(lines) <= size);
+        sprintf(&lines[strlen(lines)], format->value.svar, my_array_data->data[idx++]);
+        if (ic < cols-1)
+          strcat(lines, "\t");
+      }
+    }
+    assert(strlen(lines) <= size);
+    NEWSTR(lines, ret_string);
+    if (lines) free(lines);
+    return ret_string;
+  }
+  else {
+    return "";
+  }
+}
+
+array *do_make_array(double rows, double cols)
+{
+  return array_construct(rows, cols);
+}
+
+array *do_identity(double size)
+{
+  int i;
+  int isize = size;
+  array *array_data = array_construct(isize,isize);
+
+  for (i=0; i < isize; i++) {
+    array_data->data[i*isize+i] = 1.0;
+  }
+  return array_data;
+}
+
+array *do_transpose(array *a)
+{
+  int i,j;
+  array *array_data = array_construct(a->cols, a->rows);
+
+  for (i=0; i < a->rows; i++) {
+    for (j=0; j < a->cols; j++) {
+      array_data->data[j*a->rows+i] = a->data[i*a->cols+j];
+    }
+  }
+  return array_data;
+}
+
+array *do_csv_array(char *filename)
+{
+  char *delim = ",";
+  
+  size_t len = 0;
+  char *line = NULL;
+  int rows = 0;
+  int cols = 0;
+  int i=0;
+  int idx=0;
+  
+  FILE *fp = NULL;
+  
+  array *array_data = NULL;
+
+  fp = open_file(filename, "r");
+  while (getline(&line, &len, fp) != -1) {
+    double tempCols = do_word_count(line,   delim);
+    if (tempCols > cols) {
+      cols = tempCols;
+    }
+    rows++;
+  }
+
+  array_data = array_construct(rows, cols);
+
+  /* Read file again storing entries in array_data->data */
+  rewind(fp);
+    
+  idx = 0;
+  rows = 0;
+  while (getline(&line, &len, fp) != -1) {
+    for (i=0; i < array_data->cols; i++) {
+      char *tmp = i==0 ? line : NULL;
+      char *token = strtok(tmp, delim);
+      assert(token != NULL);
+      array_data->data[idx++] = atof(token);
+    }
+    rows++;
+  }
+  assert(rows == array_data->rows);
+
+  fclose(fp);
+  if (line) free(line);
+
+  /* dump_csv(array_data); */
+  return array_data;
+}
+
+char *do_allocate_csv(char *filename)
+{
+  return "";
 }

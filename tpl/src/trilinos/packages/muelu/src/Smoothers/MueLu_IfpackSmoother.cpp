@@ -108,12 +108,22 @@ namespace MueLu {
 
   void IfpackSmoother::DeclareInput(Level &currentLevel) const {
     this->Input(currentLevel, "A");
+
+    if (type_ == "LINESMOOTHING_BANDED_RELAXATION" ||
+        type_ == "LINESMOOTHING_BANDED RELAXATION" ||
+        type_ == "LINESMOOTHING_BANDEDRELAXATION"  ||
+        type_ == "LINESMOOTHING_BLOCK_RELAXATION"  ||
+        type_ == "LINESMOOTHING_BLOCK RELAXATION"  ||
+        type_ == "LINESMOOTHING_BLOCKRELAXATION") {
+      this->Input(currentLevel, "CoarseNumZLayers");              // necessary for fallback criterion
+      this->Input(currentLevel, "LineDetection_VertLineIds"); // necessary to feed block smoother
+    } // if (type_ == "LINESMOOTHING_BANDEDRELAXATION")
   }
 
   void IfpackSmoother::Setup(Level &currentLevel) {
     FactoryMonitor m(*this, "Setup Smoother", currentLevel);
     if (SmootherPrototype::IsSetup() == true)
-      GetOStream(Warnings0, 0) << "Warning: MueLu::IfpackSmoother::Setup(): Setup() has already been called";
+      GetOStream(Warnings0) << "MueLu::IfpackSmoother::Setup(): Setup() has already been called";
 
     A_ = Factory::Get< RCP<Matrix> >(currentLevel, "A");
 
@@ -124,13 +134,13 @@ namespace MueLu {
 
       try {
         lambdaMax = Teuchos::getValue<Scalar>(this->GetParameter(maxEigString));
-        this->GetOStream(Statistics1, 0) << maxEigString << " (cached with smoother parameter list) = " << lambdaMax << std::endl;
+        this->GetOStream(Statistics1) << maxEigString << " (cached with smoother parameter list) = " << lambdaMax << std::endl;
 
       } catch (Teuchos::Exceptions::InvalidParameterName) {
         lambdaMax = A_->GetMaxEigenvalueEstimate();
 
         if (lambdaMax != -1.0) {
-          this->GetOStream(Statistics1, 0) << maxEigString << " (cached with matrix) = " << lambdaMax << std::endl;
+          this->GetOStream(Statistics1) << maxEigString << " (cached with matrix) = " << lambdaMax << std::endl;
           this->SetParameter(maxEigString, ParameterEntry(lambdaMax));
         }
       }
@@ -157,10 +167,66 @@ namespace MueLu {
 
         ratio = std::max(ratio, as<Scalar>(nRowsFine)/nRowsCoarse);
 
-        this->GetOStream(Statistics1, 0) << eigRatioString << " (computed) = " << ratio << std::endl;
+        this->GetOStream(Statistics1) << eigRatioString << " (computed) = " << ratio << std::endl;
         this->SetParameter(eigRatioString, ParameterEntry(ratio));
       }
-    }
+    } // if (type_ == "Chebyshev")
+
+    if (type_ == "LINESMOOTHING_BANDED_RELAXATION" ||
+        type_ == "LINESMOOTHING_BANDED RELAXATION" ||
+        type_ == "LINESMOOTHING_BANDEDRELAXATION"  ||
+        type_ == "LINESMOOTHING_BLOCK_RELAXATION"  ||
+        type_ == "LINESMOOTHING_BLOCK RELAXATION"  ||
+        type_ == "LINESMOOTHING_BLOCKRELAXATION" ) {
+      ParameterList& myparamList = const_cast<ParameterList&>(this->GetParameterList());
+
+      LO CoarseNumZLayers = Factory::Get<LO>(currentLevel,"CoarseNumZLayers");
+      if (CoarseNumZLayers > 0) {
+        Teuchos::ArrayRCP<LO> TVertLineIdSmoo = Factory::Get< Teuchos::ArrayRCP<LO> >(currentLevel, "LineDetection_VertLineIds");
+
+        // determine number of local parts
+        LO maxPart = 0;
+        for(size_t k = 0; k < Teuchos::as<size_t>(TVertLineIdSmoo.size()); k++) {
+          if(maxPart < TVertLineIdSmoo[k]) maxPart = TVertLineIdSmoo[k];
+        }
+
+        size_t numLocalRows = A_->getNodeNumRows();
+        TEUCHOS_TEST_FOR_EXCEPTION(numLocalRows % TVertLineIdSmoo.size() != 0, Exceptions::RuntimeError, "MueLu::Ifpack2Smoother::Setup(): the number of local nodes is incompatible with the TVertLineIdsSmoo.");
+
+        if (numLocalRows == Teuchos::as<size_t>(TVertLineIdSmoo.size())) {
+          myparamList.set("partitioner: type","user");
+          myparamList.set("partitioner: map",&(TVertLineIdSmoo[0]));
+          myparamList.set("partitioner: local parts",maxPart+1);
+        } else {
+          // we assume a constant number of DOFs per node
+          size_t numDofsPerNode = numLocalRows / TVertLineIdSmoo.size();
+
+          // Create a new Teuchos::ArrayRCP<LO> of size numLocalRows and fill it with the corresponding information
+          Teuchos::ArrayRCP<LO> partitionerMap(numLocalRows, Teuchos::OrdinalTraits<LocalOrdinal>::invalid());
+          for (size_t blockRow = 0; blockRow < Teuchos::as<size_t>(TVertLineIdSmoo.size()); ++blockRow)
+            for (size_t dof = 0; dof < numDofsPerNode; dof++)
+              partitionerMap[blockRow * numDofsPerNode + dof] = TVertLineIdSmoo[blockRow];
+          myparamList.set("partitioner: type","user");
+          myparamList.set("partitioner: map",&(partitionerMap[0]));
+          myparamList.set("partitioner: local parts",maxPart + 1);
+        }
+
+        if (type_ == "LINESMOOTHING_BANDED_RELAXATION" ||
+            type_ == "LINESMOOTHING_BANDED RELAXATION" ||
+            type_ == "LINESMOOTHING_BANDEDRELAXATION")
+          type_ = "block relaxation";
+        else
+          type_ = "block relaxation";
+      } else {
+        // line detection failed -> fallback to point-wise relaxation
+        this->GetOStream(Runtime0) << "Line detection failed: fall back to point-wise relaxation" << std::endl;
+        myparamList.remove("partitioner: type",false);
+        myparamList.remove("partitioner: map", false);
+        myparamList.remove("partitioner: local parts",false);
+        type_ = "point relaxation stand-alone";
+      }
+
+    } // if (type_ == "LINESMOOTHING_BANDEDRELAXATION")
 
     RCP<Epetra_CrsMatrix> epA = Utils::Op2NonConstEpetraCrs(A_);
 
@@ -177,39 +243,47 @@ namespace MueLu {
       if (chebyPrec != Teuchos::null) {
         lambdaMax = chebyPrec->GetLambdaMax();
         A_->SetMaxEigenvalueEstimate(lambdaMax);
-        this->GetOStream(Statistics1, 0) << "chebyshev: max eigenvalue (calculated by Ifpack)" << " = " << lambdaMax << std::endl;
+        this->GetOStream(Statistics1) << "chebyshev: max eigenvalue (calculated by Ifpack)" << " = " << lambdaMax << std::endl;
       }
       TEUCHOS_TEST_FOR_EXCEPTION(lambdaMax == -1.0, Exceptions::RuntimeError, "MueLu::IfpackSmoother::Setup(): no maximum eigenvalue estimate");
     }
 
-    this->GetOStream(Statistics0, 0) << description() << std::endl;
+    this->GetOStream(Statistics0) << description() << std::endl;
   }
 
   void IfpackSmoother::Apply(MultiVector& X, const MultiVector& B, bool InitialGuessIsZero) const {
     TEUCHOS_TEST_FOR_EXCEPTION(SmootherPrototype::IsSetup() == false, Exceptions::RuntimeError, "MueLu::IfpackSmoother::Apply(): Setup() has not been called");
 
     // Forward the InitialGuessIsZero option to Ifpack
-    Teuchos::ParameterList  paramList;
-    if (type_ == "Chebyshev")
+    Teuchos::ParameterList paramList;
+    bool supportInitialGuess = false;
+    if (type_ == "Chebyshev") {
       paramList.set("chebyshev: zero starting solution",  InitialGuessIsZero);
+      supportInitialGuess = true;
 
-    else if (type_ == "point relaxation stand-alone")
+    } else if (type_ == "point relaxation stand-alone") {
       paramList.set("relaxation: zero starting solution", InitialGuessIsZero);
+      supportInitialGuess = true;
+    }
 
     SetPrecParameters(paramList);
 
     // Apply
-    if (InitialGuessIsZero) {
+    if (InitialGuessIsZero || supportInitialGuess) {
       Epetra_MultiVector&       epX = Utils::MV2NonConstEpetraMV(X);
       const Epetra_MultiVector& epB = Utils::MV2EpetraMV(B);
+
       prec_->ApplyInverse(epB, epX);
 
     } else {
-      RCP<MultiVector> Residual = Utils::Residual(*A_,X,B);
+      RCP<MultiVector> Residual   = Utils::Residual(*A_, X, B);
       RCP<MultiVector> Correction = MultiVectorFactory::Build(A_->getDomainMap(), X.getNumVectors());
+
       Epetra_MultiVector&       epX = Utils::MV2NonConstEpetraMV(*Correction);
       const Epetra_MultiVector& epB = Utils::MV2EpetraMV(*Residual);
+
       prec_->ApplyInverse(epB, epX);
+
       X.update(1.0, *Correction, 1.0);
     }
   }
@@ -222,8 +296,14 @@ namespace MueLu {
 
   std::string IfpackSmoother::description() const {
     std::ostringstream out;
-    out << SmootherPrototype::description();
-    out << "{type = " << type_ << "}";
+    // The check "GetVerbLevel() == Test" is to avoid
+    // failures in the EasyInterface test.
+    if (prec_ == Teuchos::null || GetVerbLevel() == Test) {
+      out << SmootherPrototype::description();
+      out << "{type = " << type_ << "}";
+    } else {
+      out << prec_->Label();
+    }
     return out.str();
   }
 

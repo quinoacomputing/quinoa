@@ -61,43 +61,6 @@ using std::vector;
     An example of the use of the RCB algorithm to partition coordinate data.
 */
 
-// Zoltan2 is templated.  What data types will we use for
-// scalars (coordinate values and weights), for local ids, and
-// for global ids?
-//
-// If Zoltan2 was compiled with explicit instantiation, we will
-// use the library's data types.  These macros are defined
-// in Zoltan2_config.h.
-
-#ifdef HAVE_ZOLTAN2_INST_FLOAT_INT_LONG
-typedef float scalar_t;
-typedef int localId_t;
-typedef long globalId_t;
-#else
-  #ifdef HAVE_ZOLTAN2_INST_DOUBLE_INT_LONG
-  typedef double scalar_t;
-  typedef int localId_t;
-  typedef long globalId_t;
-  #else
-    #ifdef HAVE_ZOLTAN2_INST_FLOAT_INT_INT
-    typedef float scalar_t;
-    typedef int localId_t;
-    typedef int globalId_t;
-    #else
-      #ifdef HAVE_ZOLTAN2_INST_DOUBLE_INT_INT
-      typedef double scalar_t;
-      typedef int localId_t;
-      typedef int globalId_t;
-      #else
-      typedef float scalar_t;
-      typedef int localId_t;
-      typedef int globalId_t;
-      #endif
-    #endif
-  #endif
-#endif
-
-
 int main(int argc, char *argv[])
 {
 #ifdef HAVE_ZOLTAN2_MPI                   
@@ -109,11 +72,19 @@ int main(int argc, char *argv[])
   int rank=0, nprocs=1;
 #endif
 
-  // TODO explain
+  typedef double scalar_t;
+  typedef int localId_t;
+#ifdef HAVE_ZOLTAN2_LONG_LONG_INT
+  typedef long long globalId_t;
+#else
+  typedef int globalId_t;
+#endif
+
   typedef Zoltan2::BasicUserTypes<scalar_t, globalId_t, localId_t, globalId_t> myTypes;
 
   // TODO explain
   typedef Zoltan2::BasicVectorAdapter<myTypes> inputAdapter_t;
+  typedef inputAdapter_t::part_t part_t;
 
   ///////////////////////////////////////////////////////////////////////
   // Create input data.
@@ -176,14 +147,8 @@ int main(int argc, char *argv[])
 
   // Create a Zoltan2 partitioning problem
 
-#ifdef HAVE_ZOLTAN2_MPI                   
-  Zoltan2::PartitioningProblem<inputAdapter_t> *problem1 = 
-           new Zoltan2::PartitioningProblem<inputAdapter_t>(&ia1, &params, 
-                                                            MPI_COMM_WORLD);
-#else
   Zoltan2::PartitioningProblem<inputAdapter_t> *problem1 =
            new Zoltan2::PartitioningProblem<inputAdapter_t>(&ia1, &params);
-#endif
    
   // Solve the problem
 
@@ -195,7 +160,7 @@ int main(int argc, char *argv[])
     problem1->printMetrics(cout);
 
   if (rank == 0){
-    scalar_t imb = problem1->getImbalance();
+    scalar_t imb = problem1->getWeightImbalance();
     if (imb <= tolerance)
       std::cout << "pass: " << imb << std::endl;
     else
@@ -205,7 +170,7 @@ int main(int argc, char *argv[])
    
   ///////////////////////////////////////////////////////////////////////
   ///////////////////////////////////////////////////////////////////////
-  // Try a problem with weights (1 dimension)
+  // Try a problem with weights 
   ///////////////////////////////////////////////////////////////////////
   ///////////////////////////////////////////////////////////////////////
 
@@ -234,14 +199,8 @@ int main(int argc, char *argv[])
 
   // Create a Zoltan2 partitioning problem
 
-#ifdef HAVE_ZOLTAN2_MPI                   
-  Zoltan2::PartitioningProblem<inputAdapter_t> *problem2 = 
-           new Zoltan2::PartitioningProblem<inputAdapter_t>(&ia2, &params,
-                                                            MPI_COMM_WORLD);
-#else
   Zoltan2::PartitioningProblem<inputAdapter_t> *problem2 =
            new Zoltan2::PartitioningProblem<inputAdapter_t>(&ia2, &params);
-#endif
 
   // Solve the problem
 
@@ -253,7 +212,7 @@ int main(int argc, char *argv[])
     problem2->printMetrics(cout);
 
   if (rank == 0){
-    scalar_t imb = problem2->getImbalance();
+    scalar_t imb = problem2->getWeightImbalance();
     if (imb <= tolerance)
       std::cout << "pass: " << imb << std::endl;
     else
@@ -282,9 +241,9 @@ int main(int argc, char *argv[])
   srand(rank);
 
   for (size_t i=0; i < localCount*3; i+=3){
-    weights[i] = 1.0 + rank / nprocs;      // weight dimension 1
-    weights[i+1] = rank<nprocs/2 ? 1 : 2;  // weight dimension 2
-    weights[i+2] = rand()/RAND_MAX +.5;    // weight dimension 3
+    weights[i] = 1.0 + rank / nprocs;      // weight idx 1
+    weights[i+1] = rank<nprocs/2 ? 1 : 2;  // weight idx 2
+    weights[i+2] = rand()/RAND_MAX +.5;    // weight idx 3
   }
 
   // Create a Zoltan2 input adapter with these weights.
@@ -303,14 +262,8 @@ int main(int argc, char *argv[])
 
   // Create a Zoltan2 partitioning problem.
 
-#ifdef HAVE_ZOLTAN2_MPI                   
-  Zoltan2::PartitioningProblem<inputAdapter_t> *problem3 = 
-           new Zoltan2::PartitioningProblem<inputAdapter_t>(&ia3, &params,
-                                                            MPI_COMM_WORLD);
-#else
   Zoltan2::PartitioningProblem<inputAdapter_t> *problem3 =
            new Zoltan2::PartitioningProblem<inputAdapter_t>(&ia3, &params);
-#endif
 
   // Solve the problem
 
@@ -322,7 +275,7 @@ int main(int argc, char *argv[])
     problem3->printMetrics(cout);
 
   if (rank == 0){
-    scalar_t imb = problem3->getImbalance();
+    scalar_t imb = problem3->getWeightImbalance();
     if (imb <= tolerance)
       std::cout << "pass: " << imb << std::endl;
     else
@@ -340,7 +293,7 @@ int main(int argc, char *argv[])
   problem3->solve(dataHasChanged);    
   if (rank == 0){
     problem3->printMetrics(cout);
-    scalar_t imb = problem3->getImbalance();
+    scalar_t imb = problem3->getWeightImbalance();
     if (imb <= tolerance)
       std::cout << "pass: " << imb << std::endl;
     else
@@ -353,7 +306,7 @@ int main(int argc, char *argv[])
   problem3->solve(dataHasChanged);    
   if (rank == 0){
     problem3->printMetrics(cout);
-    scalar_t imb = problem3->getImbalance();
+    scalar_t imb = problem3->getWeightImbalance();
     if (imb <= tolerance)
       std::cout << "pass: " << imb << std::endl;
     else
@@ -382,8 +335,8 @@ int main(int argc, char *argv[])
 
   problem1->resetParameters(&params);
 
-  zoltan2_partId_t *partIds = new zoltan2_partId_t [2];
-  scalar_t *partSizes = new scalar_t [2];
+  part_t partIds[2];
+  scalar_t partSizes[2];
 
   partIds[0] = rank*2;    partSizes[0] = 0;
   partIds[1] = rank*2+1;  partSizes[1] = 1;
@@ -405,7 +358,7 @@ int main(int argc, char *argv[])
 
   // Check it.  Part sizes should all be odd.
 
-  const zoltan2_partId_t *partAssignments = solution4.getPartList();
+  const part_t *partAssignments = solution4.getPartListView();
 
   int numInEmptyParts = 0;
   for (size_t i=0; i < localCount; i++){
@@ -422,18 +375,13 @@ int main(int argc, char *argv[])
     problem1->printMetrics(cout);
 
   if (rank == 0){
-    scalar_t imb = problem1->getImbalance();
+    scalar_t imb = problem1->getWeightImbalance();
     if (imb <= tolerance)
       std::cout << "pass: " << imb << std::endl;
     else
       std::cout << "fail: " << imb << std::endl;
     std::cout << std::endl;
   }
-
-  delete [] partIds;
-  partIds = NULL;
-  delete [] partSizes;
-  partSizes = NULL;
 
   if (coords)
     delete [] coords;

@@ -74,7 +74,7 @@ namespace Playa
     /** A call to right() results in an error for a left precond. */
     virtual LinearOperator<Scalar> right() const
     {
-      TEUCHOS_TEST_FOR_EXCEPTION(true, logic_error, "right() called for a "
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "right() called for a "
                          "preconditioner known to be a left precond");
       return LinearOperator<Scalar>();
     }

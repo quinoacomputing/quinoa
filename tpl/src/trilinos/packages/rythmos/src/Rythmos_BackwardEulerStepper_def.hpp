@@ -19,7 +19,7 @@
 //
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
 // USA
 // Questions? Contact Todd S. Coffey (tscoffe@sandia.gov)
 //
@@ -304,7 +304,7 @@ void BackwardEulerStepper<Scalar>::setInitialCondition(
 {
 
   typedef Teuchos::ScalarTraits<Scalar> ST;
-  typedef Thyra::ModelEvaluatorBase MEB;
+  // typedef Thyra::ModelEvaluatorBase MEB; // unused
 
   basePoint_ = initialCondition;
 
@@ -531,7 +531,6 @@ Scalar BackwardEulerStepper<Scalar>::takeStep(Scalar dt,
 
   {
 
-    typedef ScalarTraits<Scalar> ST;
     typedef ScalarTraits<ScalarMag> SMT;
 
     Teuchos::OSTab tab(out);
@@ -589,7 +588,7 @@ template<class Scalar>
 const StepStatus<Scalar> BackwardEulerStepper<Scalar>::getStepStatus() const
 {
 
-  typedef Teuchos::ScalarTraits<Scalar> ST;
+  // typedef Teuchos::ScalarTraits<Scalar> ST; // unused
 
   StepStatus<Scalar> stepStatus; // Defaults to unknown status
 
@@ -1124,7 +1123,7 @@ template<class Scalar>
 void BackwardEulerStepper<Scalar>::obtainPredictor_()
 {
   using Teuchos::as;
-  typedef Teuchos::ScalarTraits<Scalar> ST;
+  // typedef Teuchos::ScalarTraits<Scalar> ST; // unused
 
   if (!isInitialized_) return;
 

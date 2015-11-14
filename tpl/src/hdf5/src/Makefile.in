@@ -109,7 +109,8 @@ noinst_PROGRAMS = H5detect$(EXEEXT) H5make_libsettings$(EXEEXT)
 TESTS =
 subdir = src
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/configure.ac
+am__aclocal_m4_deps = $(top_srcdir)/m4/aclocal_cxx.m4 \
+	$(top_srcdir)/m4/aclocal_fc.m4 $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 mkinstalldirs = $(SHELL) $(top_srcdir)/bin/mkinstalldirs
@@ -155,9 +156,9 @@ am_libhdf5_la_OBJECTS = H5.lo H5checksum.lo H5dbg.lo H5system.lo \
 	H5Dbtree.lo H5Dchunk.lo H5Dcompact.lo H5Dcontig.lo H5Ddbg.lo \
 	H5Ddeprec.lo H5Defl.lo H5Dfill.lo H5Dint.lo H5Dio.lo \
 	H5Dlayout.lo H5Dmpio.lo H5Doh.lo H5Dscatgath.lo H5Dselect.lo \
-	H5Dtest.lo H5E.lo H5Edeprec.lo H5Eint.lo H5F.lo H5Faccum.lo \
-	H5Fcwfs.lo H5Fdbg.lo H5Fefc.lo H5Ffake.lo H5Fio.lo H5Fmount.lo \
-	H5Fmpi.lo H5Fquery.lo H5Fsfile.lo H5Fsuper.lo \
+	H5Dtest.lo H5E.lo H5Edeprec.lo H5Eint.lo H5F.lo H5Fint.lo \
+	H5Faccum.lo H5Fcwfs.lo H5Fdbg.lo H5Fefc.lo H5Ffake.lo H5Fio.lo \
+	H5Fmount.lo H5Fmpi.lo H5Fquery.lo H5Fsfile.lo H5Fsuper.lo \
 	H5Fsuper_cache.lo H5Ftest.lo H5FD.lo H5FDcore.lo H5FDdirect.lo \
 	H5FDfamily.lo H5FDint.lo H5FDlog.lo H5FDmpi.lo H5FDmpio.lo \
 	H5FDmulti.lo H5FDsec2.lo H5FDspace.lo H5FDstdio.lo H5FL.lo \
@@ -464,7 +465,6 @@ AM_FCFLAGS = @AM_FCFLAGS@ @H5_FCFLAGS@
 AM_LDFLAGS = @AM_LDFLAGS@ @H5_LDFLAGS@
 AM_MAKEFLAGS = @AM_MAKEFLAGS@
 AR = @AR@
-AS = @AS@
 AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
 AUTOMAKE = @AUTOMAKE@
@@ -496,7 +496,6 @@ DIRECT_VFD = @DIRECT_VFD@
 DLLTOOL = @DLLTOOL@
 DSYMUTIL = @DSYMUTIL@
 DUMPBIN = @DUMPBIN@
-DYNAMIC_DIRS = @DYNAMIC_DIRS@
 ECHO_C = @ECHO_C@
 ECHO_N = @ECHO_N@
 ECHO_T = @ECHO_T@
@@ -515,17 +514,14 @@ FCFLAGS_f90 = @FCFLAGS_f90@
 FCLIBS = @FCLIBS@
 FC_VERSION = @FC_VERSION@
 FGREP = @FGREP@
-FILTERS = @FILTERS@
 FSEARCH_DIRS = @FSEARCH_DIRS@
 GREP = @GREP@
 H5_CFLAGS = @H5_CFLAGS@
 H5_CPPFLAGS = @H5_CPPFLAGS@
 H5_CXXFLAGS = @H5_CXXFLAGS@
-H5_CXX_SHARED = @H5_CXX_SHARED@
 H5_FCFLAGS = @H5_FCFLAGS@
 H5_FORTRAN_SHARED = @H5_FORTRAN_SHARED@
 H5_LDFLAGS = @H5_LDFLAGS@
-H5_LONE_COLON = @H5_LONE_COLON@
 H5_VERSION = @H5_VERSION@
 HADDR_T = @HADDR_T@
 HAVE_DMALLOC = @HAVE_DMALLOC@
@@ -548,7 +544,6 @@ INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 INSTRUMENT = @INSTRUMENT@
 INSTRUMENT_LIBRARY = @INSTRUMENT_LIBRARY@
-LARGEFILE = @LARGEFILE@
 LD = @LD@
 LDFLAGS = @LDFLAGS@
 LIBOBJS = @LIBOBJS@
@@ -564,7 +559,6 @@ MAKEINFO = @MAKEINFO@
 MANIFEST_TOOL = @MANIFEST_TOOL@
 MKDIR_P = @MKDIR_P@
 MPE = @MPE@
-MPI_GET_SIZE = @MPI_GET_SIZE@
 NM = @NM@
 NMEDIT = @NMEDIT@
 OBJDUMP = @OBJDUMP@
@@ -590,7 +584,6 @@ R_INTEGER = @R_INTEGER@
 R_LARGE = @R_LARGE@
 SEARCH = @SEARCH@
 SED = @SED@
-SETX = @SETX@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 SIZE_T = @SIZE_T@
@@ -605,10 +598,6 @@ TR = @TR@
 TRACE_API = @TRACE_API@
 UNAME_INFO = @UNAME_INFO@
 USE_FILTER_DEFLATE = @USE_FILTER_DEFLATE@
-USE_FILTER_FLETCHER32 = @USE_FILTER_FLETCHER32@
-USE_FILTER_NBIT = @USE_FILTER_NBIT@
-USE_FILTER_SCALEOFFSET = @USE_FILTER_SCALEOFFSET@
-USE_FILTER_SHUFFLE = @USE_FILTER_SHUFFLE@
 USE_FILTER_SZIP = @USE_FILTER_SZIP@
 USINGMEMCHECKER = @USINGMEMCHECKER@
 VERSION = @VERSION@
@@ -722,14 +711,34 @@ TRACE = perl $(top_srcdir)/bin/trace
 
 # .chkexe files are used to mark tests that have run successfully.
 # .chklog files are output from those tests.
-# *.clog are from the MPE option.
-CHECK_CLEANFILES = *.chkexe *.chklog *.clog
+# *.clog and *.clog2 are from the MPE option.
+CHECK_CLEANFILES = *.chkexe *.chklog *.clog *.clog2
 
 # Add libtool shared library version numbers to the HDF5 library
 # See libtool versioning documentation online.
-LT_VERS_INTERFACE = 8
-LT_VERS_REVISION = 2 
-LT_VERS_AGE = 0
+# After making changes, run bin/reconfigure to update other configure related
+# files like Makefile.in.
+LT_VERS_INTERFACE = 11
+LT_VERS_REVISION = 0
+LT_VERS_AGE = 1
+LT_CXX_VERS_INTERFACE = 11
+LT_CXX_VERS_REVISION = 0
+LT_CXX_VERS_AGE = 0
+LT_F_VERS_INTERFACE = 10
+LT_F_VERS_REVISION = 2
+LT_F_VERS_AGE = 0
+LT_HL_VERS_INTERFACE = 10
+LT_HL_VERS_REVISION = 2
+LT_HL_VERS_AGE = 0
+LT_HL_CXX_VERS_INTERFACE = 11
+LT_HL_CXX_VERS_REVISION = 0
+LT_HL_CXX_VERS_AGE = 0
+LT_HL_F_VERS_INTERFACE = 10
+LT_HL_F_VERS_REVISION = 2
+LT_HL_F_VERS_AGE = 0
+LT_TOOLS_VERS_INTERFACE = 10
+LT_TOOLS_VERS_REVISION = 2
+LT_TOOLS_VERS_AGE = 0
 
 # Our main target, the HDF5 library
 lib_LTLIBRARIES = libhdf5.la
@@ -753,7 +762,7 @@ libhdf5_la_SOURCES = H5.c H5checksum.c H5dbg.c H5system.c H5timer.c H5trace.c \
         H5Dio.c H5Dlayout.c \
         H5Dmpio.c H5Doh.c H5Dscatgath.c H5Dselect.c H5Dtest.c \
         H5E.c H5Edeprec.c H5Eint.c \
-        H5F.c H5Faccum.c H5Fcwfs.c \
+        H5F.c H5Fint.c H5Faccum.c H5Fcwfs.c \
         H5Fdbg.c H5Fefc.c H5Ffake.c H5Fio.c \
         H5Fmount.c H5Fmpi.c H5Fquery.c \
         H5Fsfile.c H5Fsuper.c H5Fsuper_cache.c H5Ftest.c \
@@ -817,7 +826,7 @@ include_HEADERS = hdf5.h H5api_adpt.h H5overflow.h H5pubconf.h H5public.h H5vers
         H5FDmulti.h H5FDsec2.h  H5FDstdio.h \
         H5Gpublic.h  H5Ipublic.h H5Lpublic.h \
         H5MMpublic.h H5Opublic.h H5Ppublic.h \
-        H5PLextern.h \
+        H5PLextern.h H5PLpublic.h \
         H5Rpublic.h H5Spublic.h \
         H5Tpublic.h H5Zpublic.h
 
@@ -1026,6 +1035,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/H5Fdbg.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/H5Fefc.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/H5Ffake.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/H5Fint.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/H5Fio.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/H5Fmount.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/H5Fmpi.Plo@am__quote@

@@ -1,13 +1,13 @@
 /*
 //@HEADER
 // ************************************************************************
-//
-//   Kokkos: Manycore Performance-Portable Multidimensional Arrays
-//              Copyright (2012) Sandia Corporation
-//
+// 
+//                        Kokkos v. 2.0
+//              Copyright (2014) Sandia Corporation
+// 
 // Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
 // the U.S. Government retains certain rights in this software.
-//
+// 
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -36,21 +36,26 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 // Questions? Contact  H. Carter Edwards (hcedwar@sandia.gov)
-//
+// 
 // ************************************************************************
 //@HEADER
 */
 
 #include <gtest/gtest.h>
 
-#include <Kokkos_Threads.hpp>
-#include <Kokkos_hwloc.hpp>
+#include <Kokkos_Core.hpp>
 
 #include <Kokkos_UnorderedMap.hpp>
 
 #include <iomanip>
 
 #include <TestGlobal2LocalIds.hpp>
+#include <TestUnorderedMapPerformance.hpp>
+
+#include <iomanip>
+#include <sstream>
+#include <string>
+#include <fstream>
 
 namespace Performance {
 
@@ -60,16 +65,18 @@ protected:
   {
     std::cout << std::setprecision(5) << std::scientific;
 
-    unsigned team_count = 1 ;
-    unsigned threads_per_team = 4 ;
+    unsigned num_threads = 4;
+
     if (Kokkos::hwloc::available()) {
-      team_count       = Kokkos::hwloc::get_available_numa_count();
-      threads_per_team = Kokkos::hwloc::get_available_cores_per_numa();
+      num_threads = Kokkos::hwloc::get_available_numa_count() *
+                    Kokkos::hwloc::get_available_cores_per_numa() *
+                    Kokkos::hwloc::get_available_threads_per_core();
+
     }
 
-    std::cout << "Threads: " << team_count << "x" << threads_per_team << std::endl;
+    std::cout << "Threads: " << num_threads << std::endl;
 
-    Kokkos::Threads::initialize( team_count * threads_per_team );
+    Kokkos::Threads::initialize( num_threads );
   }
 
   static void TearDownTestCase()
@@ -84,6 +91,34 @@ TEST_F( threads, global_2_local)
   std::cout << "size, create, generate, fill, find" << std::endl;
   for (unsigned i=Performance::begin_id_size; i<=Performance::end_id_size; i *= Performance::id_step)
     test_global_to_local_ids<Kokkos::Threads>(i);
+}
+
+TEST_F( threads, unordered_map_performance_near)
+{
+  unsigned num_threads = 4;
+  if (Kokkos::hwloc::available()) {
+    num_threads = Kokkos::hwloc::get_available_numa_count() *
+                  Kokkos::hwloc::get_available_cores_per_numa() *
+                  Kokkos::hwloc::get_available_threads_per_core();
+
+  }
+  std::ostringstream base_file_name;
+  base_file_name << "threads-" << num_threads << "-near";
+  Perf::run_performance_tests<Kokkos::Threads,true>(base_file_name.str());
+}
+
+TEST_F( threads, unordered_map_performance_far)
+{
+  unsigned num_threads = 4;
+  if (Kokkos::hwloc::available()) {
+    num_threads = Kokkos::hwloc::get_available_numa_count() *
+                  Kokkos::hwloc::get_available_cores_per_numa() *
+                  Kokkos::hwloc::get_available_threads_per_core();
+
+  }
+  std::ostringstream base_file_name;
+  base_file_name << "threads-" << num_threads << "-far";
+  Perf::run_performance_tests<Kokkos::Threads,false>(base_file_name.str());
 }
 
 } // namespace Performance

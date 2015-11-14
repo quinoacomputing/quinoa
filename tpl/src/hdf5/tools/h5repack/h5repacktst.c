@@ -441,8 +441,6 @@ int main (void)
 
     TESTING("    addding shuffle filter");
 
-#ifdef H5_HAVE_FILTER_SHUFFLE
-
     /*-------------------------------------------------------------------------
     * test an individual object option
     *-------------------------------------------------------------------------
@@ -464,9 +462,6 @@ int main (void)
         GOERROR;
 
     PASSED();
-#else
-    SKIPPED();
-#endif
 
     /*-------------------------------------------------------------------------
     * test all objects option
@@ -474,8 +469,6 @@ int main (void)
     */
 
     TESTING("    addding shuffle filter to all");
-
-#ifdef H5_HAVE_FILTER_SHUFFLE
 
     if (h5repack_init (&pack_options, 0) < 0)
         GOERROR;
@@ -493,13 +486,9 @@ int main (void)
         GOERROR;
 
     PASSED();
-#else
-    SKIPPED();
-#endif
+
 
     TESTING("    adding checksum filter");
-
-#ifdef H5_HAVE_FILTER_FLETCHER32
 
     /*-------------------------------------------------------------------------
     * test an individual object option
@@ -522,9 +511,6 @@ int main (void)
         GOERROR;
 
     PASSED();
-#else
-    SKIPPED();
-#endif
 
     /*-------------------------------------------------------------------------
     * test all objects option
@@ -533,8 +519,6 @@ int main (void)
 
 
     TESTING("    adding checksum filter to all");
-
-#ifdef H5_HAVE_FILTER_FLETCHER32
 
     if (h5repack_init (&pack_options, 0) < 0)
         GOERROR;
@@ -552,9 +536,6 @@ int main (void)
         GOERROR;
 
     PASSED();
-#else
-    SKIPPED();
-#endif
 
 
     TESTING("    filter queue fletcher, shuffle, deflate, szip");
@@ -568,16 +549,10 @@ int main (void)
         GOERROR;
     if (h5repack_addlayout("dset1:CHUNK 20x10",&pack_options) < 0)
         GOERROR;
-
-#if defined (H5_HAVE_FILTER_FLETCHER32)
     if (h5repack_addfilter("dset1:FLET",&pack_options) < 0)
         GOERROR;
-#endif
-
-#ifdef H5_HAVE_FILTER_SHUFFLE
     if (h5repack_addfilter("dset1:SHUF",&pack_options) < 0)
         GOERROR;
-#endif
 
 #if defined (H5_HAVE_FILTER_SZIP)
     if (szip_can_encode) {
@@ -1032,7 +1007,6 @@ int main (void)
 
     TESTING("    copy of shuffle filter");
 
-#ifdef H5_HAVE_FILTER_SHUFFLE
     if (h5repack_init (&pack_options, 0) < 0)
         GOERROR;
     if (h5repack(FNAME9,FNAME9OUT,&pack_options) < 0)
@@ -1045,13 +1019,10 @@ int main (void)
         GOERROR;
 
     PASSED();
-#else
-    SKIPPED();
-#endif
+
 
     TESTING("    removing shuffle filter");
 
-#ifdef H5_HAVE_FILTER_SHUFFLE
     if (h5repack_init (&pack_options, 0) < 0)
         GOERROR;
     if (h5repack_addfilter("dset_shuffle:NONE",&pack_options) < 0)
@@ -1066,13 +1037,10 @@ int main (void)
         GOERROR;
 
     PASSED();
-#else
-    SKIPPED();
-#endif
+
 
     TESTING("    copy of fletcher filter");
 
-#ifdef H5_HAVE_FILTER_FLETCHER32
     if (h5repack_init (&pack_options, 0) < 0)
         GOERROR;
     if (h5repack(FNAME10,FNAME10OUT,&pack_options) < 0)
@@ -1085,13 +1053,10 @@ int main (void)
         GOERROR;
 
     PASSED();
-#else
-    SKIPPED();
-#endif
+
 
     TESTING("    removing fletcher filter");
 
-#ifdef H5_HAVE_FILTER_FLETCHER32
     if (h5repack_init (&pack_options, 0) < 0)
         GOERROR;
     if (h5repack_addfilter("dset_fletcher32:NONE",&pack_options) < 0)
@@ -1106,14 +1071,10 @@ int main (void)
         GOERROR;
 
     PASSED();
-#else
-    SKIPPED();
-#endif
 
 
     TESTING("    copy of nbit filter");
 
-#ifdef H5_HAVE_FILTER_NBIT
     if (h5repack_init (&pack_options, 0) < 0)
         GOERROR;
     if (h5repack(FNAME12,FNAME12OUT,&pack_options) < 0)
@@ -1126,13 +1087,10 @@ int main (void)
         GOERROR;
 
     PASSED();
-#else
-    SKIPPED();
-#endif
+
 
     TESTING("    removing nbit filter");
 
-#ifdef H5_HAVE_FILTER_NBIT
     if (h5repack_init (&pack_options, 0) < 0)
         GOERROR;
     if (h5repack_addfilter("dset_nbit:NONE",&pack_options) < 0)
@@ -1147,14 +1105,10 @@ int main (void)
         GOERROR;
 
     PASSED();
-#else
-    SKIPPED();
-#endif
 
 
     TESTING("    adding nbit filter");
 
-#ifdef H5_HAVE_FILTER_NBIT
     if (h5repack_init (&pack_options, 0) < 0)
         GOERROR;
     if (h5repack_addfilter("dset_int31:NBIT",&pack_options) < 0)
@@ -1169,14 +1123,10 @@ int main (void)
         GOERROR;
 
     PASSED();
-#else
-    SKIPPED();
-#endif
 
 
     TESTING("    copy of scaleoffset filter");
 
-#ifdef H5_HAVE_FILTER_SCALEOFFSET
     if (h5repack_init (&pack_options, 0) < 0)
         GOERROR;
     if (h5repack(FNAME13,FNAME13OUT,&pack_options) < 0)
@@ -1189,13 +1139,10 @@ int main (void)
         GOERROR;
 
     PASSED();
-#else
-    SKIPPED();
-#endif
+
 
     TESTING("    removing scaleoffset filter");
 
-#ifdef H5_HAVE_FILTER_SCALEOFFSET
     if (h5repack_init (&pack_options, 0) < 0)
         GOERROR;
     if (h5repack_addfilter("dset_scaleoffset:NONE",&pack_options) < 0)
@@ -1210,14 +1157,10 @@ int main (void)
         GOERROR;
 
     PASSED();
-#else
-    SKIPPED();
-#endif
 
 
     TESTING("    adding scaleoffset filter");
 
-#ifdef H5_HAVE_FILTER_SCALEOFFSET
     if (h5repack_init (&pack_options, 0) < 0)
         GOERROR;
     if (h5repack_addfilter("dset_none:SOFF=31,IN",&pack_options) < 0)
@@ -1232,10 +1175,6 @@ int main (void)
         GOERROR;
 
     PASSED();
-#else
-    SKIPPED();
-#endif
-
 
 
     /*-------------------------------------------------------------------------
@@ -1251,9 +1190,7 @@ int main (void)
 
     TESTING("    filter conversion from deflate to szip");
 
-#if defined (H5_HAVE_FILTER_SZIP) \
-    && defined (H5_HAVE_FILTER_DEFLATE) \
-    && defined (H5_HAVE_FILTER_FLETCHER32) && defined (H5_HAVE_FILTER_SHUFFLE)
+#if defined (H5_HAVE_FILTER_SZIP) && defined (H5_HAVE_FILTER_DEFLATE)
 
     if (szip_can_encode) {
         if (h5repack_init (&pack_options, 0) < 0)
@@ -1279,9 +1216,7 @@ int main (void)
 
     TESTING("    filter conversion from szip to deflate");
 
-#if defined (H5_HAVE_FILTER_SZIP) \
-    && defined (H5_HAVE_FILTER_DEFLATE) \
-    && defined (H5_HAVE_FILTER_FLETCHER32) && defined (H5_HAVE_FILTER_SHUFFLE)
+#if defined (H5_HAVE_FILTER_SZIP) && defined (H5_HAVE_FILTER_DEFLATE)
 
     if (szip_can_encode) {
         if (h5repack_init (&pack_options, 0) < 0)
@@ -1313,8 +1248,7 @@ int main (void)
 
     TESTING("    removing all filters");
 
-#if defined (H5_HAVE_FILTER_SZIP) && defined (H5_HAVE_FILTER_DEFLATE) \
-    && defined (H5_HAVE_FILTER_FLETCHER32) && defined (H5_HAVE_FILTER_SHUFFLE)
+#if defined (H5_HAVE_FILTER_SZIP) && defined (H5_HAVE_FILTER_DEFLATE)
 
     if (h5repack_init (&pack_options, 0) < 0)
         GOERROR;
@@ -1420,7 +1354,7 @@ int main (void)
 
     TESTING("    several global filters");
 
-#if defined (H5_HAVE_FILTER_DEFLATE) && defined (H5_HAVE_FILTER_SHUFFLE)
+#if defined (H5_HAVE_FILTER_DEFLATE)
 
     if (h5repack_init (&pack_options, 0) < 0)
         GOERROR;
@@ -2271,7 +2205,7 @@ int make_deflate(hid_t loc_id)
 
     /* create a reference to the dataset, test second seeep of file for references */
 
-    if (H5Rcreate(&bufref[0],loc_id,"dset_deflate",H5R_OBJECT,-1) < 0)
+    if (H5Rcreate(&bufref[0],loc_id,"dset_deflate",H5R_OBJECT,(hid_t)-1) < 0)
         goto out;
     if (write_dset(loc_id,1,dims1r,"ref",H5T_STD_REF_OBJ,bufref) < 0)
         goto out;
@@ -2336,13 +2270,12 @@ int make_shuffle(hid_t loc_id)
     * shuffle
     *-------------------------------------------------------------------------
     */
-#if defined (H5_HAVE_FILTER_SHUFFLE)
+
     /* set the shuffle filter */
     if (H5Pset_shuffle(dcpl) < 0)
         goto out;
     if (make_dset(loc_id,"dset_shuffle",sid,dcpl,buf) < 0)
         goto out;
-#endif
 
 
     /*-------------------------------------------------------------------------
@@ -2403,7 +2336,7 @@ int make_fletcher32(hid_t loc_id)
     * fletcher32
     *-------------------------------------------------------------------------
     */
-#if defined (H5_HAVE_FILTER_FLETCHER32)
+
     /* remove the filters from the dcpl */
     if (H5Premove_filter(dcpl,H5Z_FILTER_ALL) < 0)
         goto out;
@@ -2412,7 +2345,6 @@ int make_fletcher32(hid_t loc_id)
         goto out;
     if (make_dset(loc_id,"dset_fletcher32",sid,dcpl,buf) < 0)
         goto out;
-#endif
 
     /*-------------------------------------------------------------------------
     * close space and dcpl
@@ -2477,7 +2409,6 @@ int make_nbit(hid_t loc_id)
         goto out;
     }
 
-#if defined H5_HAVE_FILTER_NBIT
     /* remove the filters from the dcpl */
     if(H5Premove_filter(dcpl, H5Z_FILTER_ALL) < 0)
     {
@@ -2511,7 +2442,6 @@ int make_nbit(hid_t loc_id)
         goto out;
     }
     H5Dclose(dsid);
-#endif
 
     /*-------------------------------------------------------------------------
     * close
@@ -2573,7 +2503,6 @@ int make_scaleoffset(hid_t loc_id)
 
     dtid = H5Tcopy(H5T_NATIVE_INT);
 
-#if defined (H5_HAVE_FILTER_SCALEOFFSET)
     /* remove the filters from the dcpl */
     if(H5Premove_filter(dcpl, H5Z_FILTER_ALL) < 0) {
         H5Tclose(dtid);
@@ -2602,7 +2531,6 @@ int make_scaleoffset(hid_t loc_id)
     }
     H5Tclose(dtid);
     H5Dclose(dsid);
-#endif
 
     /*-------------------------------------------------------------------------
     * close space and dcpl
@@ -2636,10 +2564,8 @@ int make_all_filters(hid_t loc_id)
 {
     hid_t    dcpl; /* dataset creation property list */
     hid_t    sid;  /* dataspace ID */
-#if defined (H5_HAVE_FILTER_NBIT)
     hid_t    dtid;
     hid_t    dsid;
-#endif /* H5_HAVE_FILTER_NBIT */
 #if defined (H5_HAVE_FILTER_SZIP)
     unsigned szip_options_mask=H5_SZIP_ALLOW_K13_OPTION_MASK|H5_SZIP_NN_OPTION_MASK;
     unsigned szip_pixels_per_block=8;
@@ -2669,17 +2595,13 @@ int make_all_filters(hid_t loc_id)
     if (H5Pset_chunk(dcpl, RANK, chunk_dims) < 0)
         goto out;
 
-#if defined (H5_HAVE_FILTER_SHUFFLE)
     /* set the shuffle filter */
     if (H5Pset_shuffle(dcpl) < 0)
         goto out;
-#endif
 
-#if defined (H5_HAVE_FILTER_FLETCHER32)
     /* set the checksum filter */
     if (H5Pset_fletcher32(dcpl) < 0)
         goto out;
-#endif
 
 #if defined (H5_HAVE_FILTER_SZIP)
     if (h5tools_can_encode(H5Z_FILTER_SZIP) == 1)
@@ -2705,7 +2627,6 @@ int make_all_filters(hid_t loc_id)
     if (make_dset(loc_id,"dset_all",sid,dcpl,buf) < 0)
         goto out;
 
-#if defined (H5_HAVE_FILTER_FLETCHER32)
     /* remove the filters from the dcpl */
     if (H5Premove_filter(dcpl,H5Z_FILTER_ALL) < 0)
         goto out;
@@ -2714,7 +2635,6 @@ int make_all_filters(hid_t loc_id)
         goto out;
     if (make_dset(loc_id,"dset_fletcher32",sid,dcpl,buf) < 0)
         goto out;
-#endif
 
 
     /* Make sure encoding is enabled */
@@ -2736,7 +2656,6 @@ int make_all_filters(hid_t loc_id)
 #endif
 
 
-#if defined (H5_HAVE_FILTER_SHUFFLE)
     /* remove the filters from the dcpl */
     if (H5Premove_filter(dcpl,H5Z_FILTER_ALL) < 0)
         goto out;
@@ -2745,7 +2664,6 @@ int make_all_filters(hid_t loc_id)
         goto out;
     if (make_dset(loc_id,"dset_shuffle",sid,dcpl,buf) < 0)
         goto out;
-#endif
 
 
 #if defined (H5_HAVE_FILTER_DEFLATE)
@@ -2761,7 +2679,6 @@ int make_all_filters(hid_t loc_id)
 
 
 
-#if defined (H5_HAVE_FILTER_NBIT)
     /* remove the filters from the dcpl */
     if (H5Premove_filter(dcpl, H5Z_FILTER_ALL) < 0)
         goto out;
@@ -2782,8 +2699,6 @@ int make_all_filters(hid_t loc_id)
         return -1;
     if(H5Dclose(dsid) < 0)
         return -1;
-#endif
-
 
     if(H5Sclose(sid) < 0)
         goto out;
@@ -3322,7 +3237,7 @@ int make_big(hid_t loc_id)
         goto out;
 
     /* initialize buffer to 0  */
-    buf=(signed  char *) calloc( nelmts, size);
+    buf=(signed  char *) HDcalloc( nelmts, size);
 
     if (H5Sselect_hyperslab (f_sid,H5S_SELECT_SET,hs_start,NULL,hs_size, NULL) < 0)
         goto out;
@@ -3769,7 +3684,7 @@ int write_dset_in(hid_t loc_id,
     buf4[1]=0;
     if (dset_name)
     {
-        if (H5Rcreate(&buf4[0],file_id,dset_name,H5R_OBJECT,-1) < 0)
+        if (H5Rcreate(&buf4[0],file_id,dset_name,H5R_OBJECT,(hid_t)-1) < 0)
             goto out;
         if (write_dset(loc_id,1,dims1r,"refobj",H5T_STD_REF_OBJ,buf4) < 0)
             goto out;
@@ -3803,10 +3718,10 @@ int write_dset_in(hid_t loc_id,
     /* Allocate and initialize VL dataset to write */
 
     buf5[0].len = 1;
-    buf5[0].p = malloc( 1 * sizeof(int));
+    buf5[0].p = HDmalloc( 1 * sizeof(int));
     ((int *)buf5[0].p)[0]=1;
     buf5[1].len = 2;
-    buf5[1].p = malloc( 2 * sizeof(int));
+    buf5[1].p = HDmalloc( 2 * sizeof(int));
     ((int *)buf5[1].p)[0] = 2;
     ((int *)buf5[1].p)[1] = 3;
 
@@ -3865,7 +3780,7 @@ int write_dset_in(hid_t loc_id,
 
         /* allocate and initialize array data to write */
         size = ( TEST_BUFSIZE / sizeof(double) + 1 ) * sizeof(double);
-        dbuf = (double*)malloc( size );
+        dbuf = (double*)HDmalloc( size );
         if (NULL == dbuf)
         {
             printf ("\nError: Cannot allocate memory for \"arrayd\" data buffer size %dMB.\n", (int) size / 1000000 );
@@ -4004,7 +3919,7 @@ int write_dset_in(hid_t loc_id,
     /* Create references to dataset */
     if (dset_name)
     {
-        if (H5Rcreate(&buf42[0][0], file_id, dset_name, H5R_OBJECT, -1) < 0)
+        if (H5Rcreate(&buf42[0][0], file_id, dset_name, H5R_OBJECT, (hid_t)-1) < 0)
             goto out;
         if (write_dset(loc_id, 2, dims2r, "refobj2D", H5T_STD_REF_OBJ, buf42) < 0)
             goto out;
@@ -4039,7 +3954,7 @@ int write_dset_in(hid_t loc_id,
         {
             int l;
 
-            buf52[i][j].p = malloc((i + 1) * sizeof(int));
+            buf52[i][j].p = HDmalloc((i + 1) * sizeof(int));
             buf52[i][j].len = (size_t)(i + 1);
             for(l = 0; l < i + 1; l++)
             {
@@ -4223,7 +4138,7 @@ int write_dset_in(hid_t loc_id,
     /* Create references to dataset */
     if (dset_name)
     {
-        if (H5Rcreate(&buf43[0][0][0], file_id, dset_name, H5R_OBJECT, -1) < 0)
+        if (H5Rcreate(&buf43[0][0][0], file_id, dset_name, H5R_OBJECT, (hid_t)-1) < 0)
             goto out;
         if (write_dset(loc_id, 3, dims3r, "refobj3D", H5T_STD_REF_OBJ, buf43) < 0)
             goto out;
@@ -4260,7 +4175,7 @@ int write_dset_in(hid_t loc_id,
             {
                 int l;
 
-                buf53[i][j][k].p = malloc((i + 1) * sizeof(int));
+                buf53[i][j][k].p = HDmalloc((i + 1) * sizeof(int));
                 buf53[i][j][k].len = (size_t)(i + 1);
                 for(l = 0; l < i + 1; l++)
                 {
@@ -4390,8 +4305,8 @@ int make_dset_reg_ref(hid_t loc_id)
     int             retval = -1;  /* return value */
 
     /* Allocate write & read buffers */
-    wbuf = (hdset_reg_ref_t *)calloc(sizeof(hdset_reg_ref_t), (size_t)SPACE1_DIM1);
-    dwbuf = (int *)malloc(sizeof(int) * SPACE2_DIM1 * SPACE2_DIM2);
+    wbuf = (hdset_reg_ref_t *)HDcalloc(sizeof(hdset_reg_ref_t), (size_t)SPACE1_DIM1);
+    dwbuf = (int *)HDmalloc(sizeof(int) * SPACE2_DIM1 * SPACE2_DIM2);
 
     /* Create dataspace for datasets */
     if ((sid2 = H5Screate_simple(SPACE2_RANK, dims2, NULL)) < 0)
@@ -4681,9 +4596,9 @@ int write_attr_in(hid_t loc_id,
     /* object references ( H5R_OBJECT  */
     if (dset_name)
     {
-        if (H5Rcreate(&buf4[0],fid,dset_name,H5R_OBJECT,-1) < 0)
+        if (H5Rcreate(&buf4[0],fid,dset_name,H5R_OBJECT,(hid_t)-1) < 0)
             goto out;
-        if (H5Rcreate(&buf4[1],fid,dset_name,H5R_OBJECT,-1) < 0)
+        if (H5Rcreate(&buf4[1],fid,dset_name,H5R_OBJECT,(hid_t)-1) < 0)
             goto out;
         if (make_attr(loc_id,1,dims,"reference",H5T_STD_REF_OBJ,buf4) < 0)
             goto out;
@@ -4731,10 +4646,10 @@ int write_attr_in(hid_t loc_id,
     /* Allocate and initialize VL dataset to write */
 
     buf5[0].len = 1;
-    buf5[0].p = malloc( 1 * sizeof(int));
+    buf5[0].p = HDmalloc( 1 * sizeof(int));
     ((int *)buf5[0].p)[0]=1;
     buf5[1].len = 2;
-    buf5[1].p = malloc(2 * sizeof(int));
+    buf5[1].p = HDmalloc(2 * sizeof(int));
     ((int *)buf5[1].p)[0] = 2;
     ((int *)buf5[1].p)[1] = 3;
 
@@ -4995,7 +4910,7 @@ int write_attr_in(hid_t loc_id,
         {
             for (j = 0; j < 2; j++)
             {
-                if (H5Rcreate(&buf42[i][j],fid,dset_name,H5R_OBJECT,-1) < 0)
+                if (H5Rcreate(&buf42[i][j],fid,dset_name,H5R_OBJECT,(hid_t)-1) < 0)
                     goto out;
             }
         }
@@ -5051,7 +4966,7 @@ int write_attr_in(hid_t loc_id,
         for (j = 0; j < 2; j++)
         {
             int l;
-            buf52[i][j].p = malloc((i + 1) * sizeof(int));
+            buf52[i][j].p = HDmalloc((i + 1) * sizeof(int));
             buf52[i][j].len = (size_t)(i + 1);
             for (l = 0; l < i + 1; l++)
                 if (make_diffs)((int *)buf52[i][j].p)[l] = 0;
@@ -5430,7 +5345,7 @@ int write_attr_in(hid_t loc_id,
             for (j = 0; j < 3; j++)
             {
                 for (k = 0; k < 2; k++)
-                    if (H5Rcreate(&buf43[i][j][k],fid,dset_name,H5R_OBJECT,-1) < 0)
+                    if (H5Rcreate(&buf43[i][j][k],fid,dset_name,H5R_OBJECT,(hid_t)-1) < 0)
                         goto out;
             }
         }
@@ -5517,7 +5432,7 @@ int write_attr_in(hid_t loc_id,
             for (k = 0; k < 2; k++)
             {
                 int l;
-                buf53[i][j][k].p = malloc((i + 1) * sizeof(int));
+                buf53[i][j][k].p = HDmalloc((i + 1) * sizeof(int));
                 buf53[i][j][k].len = (size_t)i + 1;
                 for (l = 0; l < i + 1; l++)
                     if (make_diffs)
@@ -5939,7 +5854,7 @@ static herr_t add_attr_with_objref(hid_t file_id, hid_t obj_id)
      * add attribute with obj ref type
      */    
     /* ref to dset */
-    status = H5Rcreate(&data_attr_objref[0],file_id,NAME_OBJ_DS1,H5R_OBJECT,-1);
+    status = H5Rcreate(&data_attr_objref[0],file_id,NAME_OBJ_DS1,H5R_OBJECT,(hid_t)-1);
     if (status < 0)
     {
         fprintf(stderr, "Error: %s %d> H5Rcreate failed.\n", FUNC, __LINE__);
@@ -5948,7 +5863,7 @@ static herr_t add_attr_with_objref(hid_t file_id, hid_t obj_id)
     }
 
     /* ref to group */
-    status = H5Rcreate(&data_attr_objref[1],file_id,NAME_OBJ_GRP,H5R_OBJECT,-1);
+    status = H5Rcreate(&data_attr_objref[1],file_id,NAME_OBJ_GRP,H5R_OBJECT,(hid_t)-1);
     if (status < 0)
     {
         fprintf(stderr, "Error: %s %d> H5Rcreate failed.\n", FUNC, __LINE__);
@@ -5957,7 +5872,7 @@ static herr_t add_attr_with_objref(hid_t file_id, hid_t obj_id)
     }
 
     /* ref to datatype */
-    status = H5Rcreate(&data_attr_objref[2],file_id,NAME_OBJ_NDTYPE,H5R_OBJECT,-1);
+    status = H5Rcreate(&data_attr_objref[2],file_id,NAME_OBJ_NDTYPE,H5R_OBJECT,(hid_t)-1);
     if (status < 0)
     {
         fprintf(stderr, "Error: %s %d> H5Rcreate failed.\n", FUNC, __LINE__);
@@ -6210,7 +6125,7 @@ static herr_t gen_obj_ref(hid_t loc_id)
      * Passing -1 as reference is an object.*/
 
     /* obj ref to dataset */
-    status = H5Rcreate (&objref_buf[0], loc_id, NAME_OBJ_DS1, H5R_OBJECT, -1);
+    status = H5Rcreate (&objref_buf[0], loc_id, NAME_OBJ_DS1, H5R_OBJECT, (hid_t)-1);
     if (status < 0)
     {
         fprintf(stderr, "Error: %s %d> H5Rcreate failed.\n", FUNC, __LINE__);
@@ -6219,7 +6134,7 @@ static herr_t gen_obj_ref(hid_t loc_id)
     }
 
     /* obj ref to group */
-    status = H5Rcreate (&objref_buf[1], loc_id, NAME_OBJ_GRP, H5R_OBJECT, -1);
+    status = H5Rcreate (&objref_buf[1], loc_id, NAME_OBJ_GRP, H5R_OBJECT, (hid_t)-1);
     if (status < 0)
     {
         fprintf(stderr, "Error: %s %d> H5Rcreate failed.\n", FUNC, __LINE__);
@@ -6228,7 +6143,7 @@ static herr_t gen_obj_ref(hid_t loc_id)
     }
 
     /* obj ref to named-datatype */
-    status = H5Rcreate (&objref_buf[2], loc_id, NAME_OBJ_NDTYPE, H5R_OBJECT, -1);
+    status = H5Rcreate (&objref_buf[2], loc_id, NAME_OBJ_NDTYPE, H5R_OBJECT, (hid_t)-1);
     if (status < 0)
     {
         fprintf(stderr, "Error: %s %d> H5Rcreate failed.\n", FUNC, __LINE__);
@@ -6650,7 +6565,7 @@ static herr_t make_complex_attr_references(hid_t loc_id)
      * Create the object references into compound type
      */
      /* references to dataset */
-    status = H5Rcreate (&(comp_objref_data[0].val_objref), loc_id, NAME_OBJ_DS1, H5R_OBJECT,-1);
+    status = H5Rcreate (&(comp_objref_data[0].val_objref), loc_id, NAME_OBJ_DS1, H5R_OBJECT,(hid_t)-1);
     if (status < 0)
     {
         fprintf(stderr, "Error: %s %d> H5Rcreate failed.\n", FUNC, __LINE__);
@@ -6660,7 +6575,7 @@ static herr_t make_complex_attr_references(hid_t loc_id)
     comp_objref_data[0].val_int = 0;
 
      /* references to group */
-    status = H5Rcreate (&(comp_objref_data[1].val_objref), loc_id, NAME_OBJ_GRP, H5R_OBJECT,-1);
+    status = H5Rcreate (&(comp_objref_data[1].val_objref), loc_id, NAME_OBJ_GRP, H5R_OBJECT,(hid_t)-1);
     if (status < 0)
     {
         fprintf(stderr, "Error: %s %d> H5Rcreate failed.\n", FUNC, __LINE__);
@@ -6670,7 +6585,7 @@ static herr_t make_complex_attr_references(hid_t loc_id)
     comp_objref_data[1].val_int = 10;
 
      /* references to datatype */
-    status = H5Rcreate (&(comp_objref_data[2].val_objref), loc_id, NAME_OBJ_NDTYPE, H5R_OBJECT,-1);
+    status = H5Rcreate (&(comp_objref_data[2].val_objref), loc_id, NAME_OBJ_NDTYPE, H5R_OBJECT,(hid_t)-1);
     if (status < 0)
     {
         fprintf(stderr, "Error: %s %d> H5Rcreate failed.\n", FUNC, __LINE__);
@@ -6743,17 +6658,17 @@ static herr_t make_complex_attr_references(hid_t loc_id)
      * prepare vlen data
      */
      vlen_objref_data[0].len = LEN0_VLEN_OBJREF;
-     vlen_objref_data[0].p = malloc (vlen_objref_data[0].len * sizeof(hobj_ref_t));
+     vlen_objref_data[0].p = HDmalloc (vlen_objref_data[0].len * sizeof(hobj_ref_t));
      vlen_objref_data[1].len = LEN1_VLEN_OBJREF;
-     vlen_objref_data[1].p = malloc (vlen_objref_data[1].len * sizeof(hobj_ref_t));
+     vlen_objref_data[1].p = HDmalloc (vlen_objref_data[1].len * sizeof(hobj_ref_t));
      vlen_objref_data[2].len = LEN2_VLEN_OBJREF;
-     vlen_objref_data[2].p = malloc (vlen_objref_data[2].len * sizeof(hobj_ref_t));
+     vlen_objref_data[2].p = HDmalloc (vlen_objref_data[2].len * sizeof(hobj_ref_t));
 
      /* 
       * create obj references 
       */
      /* reference to dataset */
-     status = H5Rcreate (&((hobj_ref_t*)vlen_objref_data[0].p)[0], loc_id, NAME_OBJ_DS1, H5R_OBJECT, -1);
+     status = H5Rcreate (&((hobj_ref_t*)vlen_objref_data[0].p)[0], loc_id, NAME_OBJ_DS1, H5R_OBJECT, (hid_t)-1);
     if (status < 0)
     {
         fprintf(stderr, "Error: %s %d> H5Rcreate failed.\n", FUNC, __LINE__);
@@ -6761,7 +6676,7 @@ static herr_t make_complex_attr_references(hid_t loc_id)
         goto out;
     }
      /* reference to group */
-     status = H5Rcreate (&((hobj_ref_t*)vlen_objref_data[1].p)[0], loc_id, NAME_OBJ_GRP, H5R_OBJECT, -1); 
+     status = H5Rcreate (&((hobj_ref_t*)vlen_objref_data[1].p)[0], loc_id, NAME_OBJ_GRP, H5R_OBJECT, (hid_t)-1); 
     if (status < 0)
     {
         fprintf(stderr, "Error: %s %d> H5Rcreate failed.\n", FUNC, __LINE__);
@@ -6769,7 +6684,7 @@ static herr_t make_complex_attr_references(hid_t loc_id)
         goto out;
     }
      /* reference to datatype */
-     status = H5Rcreate (&((hobj_ref_t*)vlen_objref_data[2].p)[0], loc_id, NAME_OBJ_NDTYPE, H5R_OBJECT, -1);
+     status = H5Rcreate (&((hobj_ref_t*)vlen_objref_data[2].p)[0], loc_id, NAME_OBJ_NDTYPE, H5R_OBJECT, (hid_t)-1);
     if (status < 0)
     {
         fprintf(stderr, "Error: %s %d> H5Rcreate failed.\n", FUNC, __LINE__);
@@ -6812,7 +6727,7 @@ static herr_t make_complex_attr_references(hid_t loc_id)
      * prepare vlen data
      */
     vlen_regref_data[0].len = LEN0_VLEN_REGREF;
-    vlen_regref_data[0].p = malloc (vlen_regref_data[0].len * sizeof(hdset_reg_ref_t));
+    vlen_regref_data[0].p = HDmalloc (vlen_regref_data[0].len * sizeof(hdset_reg_ref_t));
 
     /*
      * create region reference 

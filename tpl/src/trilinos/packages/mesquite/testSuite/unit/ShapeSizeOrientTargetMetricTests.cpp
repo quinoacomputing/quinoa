@@ -3,10 +3,10 @@
 
 using namespace Mesquite;
 
-#include "AWShapeSizeOrientNB1.hpp"
-#include "TShapeSizeOrientB1.hpp"
-#include "TShapeSizeOrientB2.hpp"
-#include "TShapeSizeOrientNB1.hpp"
+#include "Mesquite_AWShapeSizeOrientNB1.hpp"
+#include "Mesquite_TShapeSizeOrientB1.hpp"
+#include "Mesquite_TShapeSizeOrientB2.hpp"
+#include "Mesquite_TShapeSizeOrientNB1.hpp"
 
 //                            NAME     !SHAPE !SIZE !ORIENT BARRIER
 TEST_METRIC_WITH_HESS( AWShapeSizeOrientNB1,false,false,false,false, 0.0 );

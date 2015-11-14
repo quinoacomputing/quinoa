@@ -1,5 +1,4 @@
 
-INCLUDE(TribitsLibraryMacros)
 
 #
 # A) Package-specific configuration options
@@ -18,10 +17,6 @@ SET(HEADERS "")
 SET(SOURCES "")
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR})
-
-SET(HEADERS ${HEADERS}
-  ${CMAKE_CURRENT_BINARY_DIR}/../src-utils/SundanceConfig.h
-  )
 
 #
 # Stubs files

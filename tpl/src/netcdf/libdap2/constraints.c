@@ -1,16 +1,16 @@
 /*********************************************************************
  *   Copyright 1993, UCAR/Unidata
- *   See netcdf/COPYRIGHT file for copying and redistribution conditions.
+ *   See netcdf/COPYRIGHT filey for copying and redistribution conditions.
  *********************************************************************/
 
 #include "ncdap.h"
-#include "dapdump.h"
 #include "dapdump.h"
 #include "dceparselex.h"
 
 static void completesegments(NClist* fullpath, NClist* segments);
 static NCerror qualifyprojectionnames(DCEprojection* proj);
 static NCerror qualifyprojectionsizes(DCEprojection* proj);
+static NCerror qualifyprojectionnames(DCEprojection* proj);
 static NCerror matchpartialname(NClist* nodes, NClist* segments, CDFnode** nodep);
 static int matchsuffix(NClist* matchpath, NClist* segments);
 static int iscontainer(CDFnode* node);
@@ -18,13 +18,13 @@ static DCEprojection* projectify(CDFnode* field, DCEprojection* container);
 static int slicematch(NClist* seglist1, NClist* seglist2);
 
 /* Parse incoming url constraints, if any,
-   to check for syntactic correctness */ 
+   to check for syntactic correctness */
 NCerror
-parsedapconstraints(NCDAPCOMMON* dapcomm, char* constraints,
+dapparsedapconstraints(NCDAPCOMMON* dapcomm, char* constraints,
 		    DCEconstraint* dceconstraint)
 {
     NCerror ncstat = NC_NOERR;
-    char* errmsg;
+    char* errmsg = NULL;
 
     ASSERT(dceconstraint != NULL);
     nclistclear(dceconstraint->projections);
@@ -32,11 +32,12 @@ parsedapconstraints(NCDAPCOMMON* dapcomm, char* constraints,
 
     ncstat = dapceparse(constraints,dceconstraint,&errmsg);
     if(ncstat) {
-	nclog(NCLOGWARN,"DCE constraint parse failure: %s",errmsg);
-	nullfree(errmsg);
-        nclistclear(dceconstraint->projections);
-        nclistclear(dceconstraint->selections);
+      nclog(NCLOGWARN,"DCE constraint parse failure: %s",errmsg);
+      nclistclear(dceconstraint->projections);
+      nclistclear(dceconstraint->selections);
     }
+    /* errmsg is freed whether ncstat or not. */
+    nullfree(errmsg);
     return ncstat;
 }
 
@@ -50,7 +51,7 @@ parsedapconstraints(NCDAPCOMMON* dapcomm, char* constraints,
 */
 
 NCerror
-mapconstraints(DCEconstraint* constraint,
+dapmapconstraints(DCEconstraint* constraint,
 		CDFnode* root)
 {
     int i;
@@ -62,7 +63,7 @@ mapconstraints(DCEconstraint* constraint,
     for(i=0;i<nclistlength(dceprojections);i++) {
 	CDFnode* cdfmatch = NULL;
 	DCEprojection* proj = (DCEprojection*)nclistget(dceprojections,i);
-	if(proj->discrim != CES_VAR) continue; // ignore functions
+	if(proj->discrim != CES_VAR) continue; /* ignore functions */
 	ncstat = matchpartialname(nodes,proj->var->segments,&cdfmatch);
 	if(ncstat) goto done;
 	/* Cross links */
@@ -81,23 +82,23 @@ done:
     3. selection path
 */
 NCerror
-qualifyconstraints(DCEconstraint* constraint)
+dapqualifyconstraints(DCEconstraint* constraint)
 {
     NCerror ncstat = NC_NOERR;
     int i;
 #ifdef DEBUG
-fprintf(stderr,"qualifyconstraints.before: %s\n",
+fprintf(stderr,"ncqualifyconstraints.before: %s\n",
 		dumpconstraint(constraint));
 #endif
     if(constraint != NULL) {
-        for(i=0;i<nclistlength(constraint->projections);i++) {  
+        for(i=0;i<nclistlength(constraint->projections);i++) {
             DCEprojection* p = (DCEprojection*)nclistget(constraint->projections,i);
             ncstat = qualifyprojectionnames(p);
             ncstat = qualifyprojectionsizes(p);
         }
     }
 #ifdef DEBUG
-fprintf(stderr,"qualifyconstraints.after: %s\n",
+fprintf(stderr,"ncqualifyconstraints.after: %s\n",
 		dumpconstraint(constraint));
 #endif
     return ncstat;
@@ -257,7 +258,7 @@ matchpartialname(NClist* nodes, NClist* segments, CDFnode** nodep)
           )
 	    continue;
 	nclistpush(namematches,(void*)node);
-    }    
+    }
     if(nclistlength(namematches)==0) {
         nclog(NCLOGERR,"No match for projection name: %s",lastseg->name);
         ncstat = NC_EDDS;
@@ -302,14 +303,14 @@ matchnode->ncfullname,dumpsegments(segments));
 		minpath = nclistlength(matchpath);
 		minnode = candidate;
 	    } else if(nclistlength(matchpath) == minpath) {
-	        nmin++;		
+	        nmin++;
 	    } else if(nclistlength(matchpath) < minpath) {
 		minpath = nclistlength(matchpath);
 		minnode = candidate;
 		nmin = 1;
 	    }
 	} /*for*/
-	if(minnode == NULL || nmin > 1) {	
+	if(minnode == NULL || nmin > 1) {
 	    nclog(NCLOGERR,"Ambiguous match for projection name: %s",
 			lastseg->name);
             ncstat = NC_EDDS;
@@ -372,36 +373,12 @@ matchsuffix(NClist* matchpath, NClist* segments)
    return 1; /* all segs matched */
 }
 
-
-/* Convert a DCEprojection instance into a string
-   that can be used with the url
-*/
-
-char*
-buildprojectionstring(NClist* projections)
-{
-    return dcebuildprojectionstring(projections);
-}
-
-char*
-buildselectionstring(NClist* selections)
-{
-    return dcebuildselectionstring(selections);
-}
-
-char*
-buildconstraintstring(DCEconstraint* constraints)
-{
-    return dcebuildconstraintstring(constraints);
-}
-
-
 /* Given the arguments to vara
    construct a corresponding projection
    with any pseudo dimensions removed
 */
 NCerror
-buildvaraprojection(CDFnode* var,
+dapbuildvaraprojection(CDFnode* var,
 		     const size_t* startp, const size_t* countp, const ptrdiff_t* stridep,
 		     DCEprojection** projectionp)
 {
@@ -418,7 +395,6 @@ buildvaraprojection(CDFnode* var,
        in the path, including pseudo-dims
     */
     ncstat = dapvar2projection(var,&projection);
-
 
 #ifdef DEBUG
 fprintf(stderr,"buildvaraprojection: skeleton: %s\n",dumpprojection(projection));
@@ -467,7 +443,7 @@ fprintf(stderr,"buildvaraprojection3: final: projection=%s\n",
 }
 
 int
-iswholeslice(DCEslice* slice, CDFnode* dim)
+dapiswholeslice(DCEslice* slice, CDFnode* dim)
 {
     if(slice->first != 0 || slice->stride != 1) return 0;
     if(dim != NULL) {
@@ -481,12 +457,12 @@ iswholeslice(DCEslice* slice, CDFnode* dim)
 }
 
 int
-iswholesegment(DCEsegment* seg)
+dapiswholesegment(DCEsegment* seg)
 {
     int i,whole;
     NClist* dimset = NULL;
     unsigned int rank;
-    
+
     if(seg->rank == 0) return 1;
     if(!seg->slicesdefined) return 0;
     if(seg->annotation == NULL) return 0;
@@ -495,34 +471,34 @@ iswholesegment(DCEsegment* seg)
     whole = 1; /* assume so */
     for(i=0;i<rank;i++) {
 	CDFnode* dim = (CDFnode*)nclistget(dimset,i);
-	if(!iswholeslice(&seg->slices[i],dim)) {whole = 0; break;}	
+	if(!dapiswholeslice(&seg->slices[i],dim)) {whole = 0; break;}
     }
     return whole;
 }
 
 int
-iswholeprojection(DCEprojection* proj)
+dapiswholeprojection(DCEprojection* proj)
 {
     int i,whole;
-    
+
     ASSERT((proj->discrim == CES_VAR));
 
     whole = 1; /* assume so */
     for(i=0;i<nclistlength(proj->var->segments);i++) {
         DCEsegment* segment = (DCEsegment*)nclistget(proj->var->segments,i);
-	if(!iswholesegment(segment)) {whole = 0; break;}	
+	if(!dapiswholesegment(segment)) {whole = 0; break;}
     }
     return whole;
 }
 
 int
-iswholeconstraint(DCEconstraint* con)
+dapiswholeconstraint(DCEconstraint* con)
 {
     int i;
     if(con == NULL) return 1;
     if(con->projections != NULL) {
 	for(i=0;i<nclistlength(con->projections);i++) {
-	 if(!iswholeprojection((DCEprojection*)nclistget(con->projections,i)))
+	 if(!dapiswholeprojection((DCEprojection*)nclistget(con->projections,i)))
 	    return 0;
 	}
     }
@@ -546,7 +522,7 @@ The term "expanded" means
 */
 
 NCerror
-fixprojections(NClist* list)
+dapfixprojections(NClist* list)
 {
     int i,j,k;
     NCerror ncstat = NC_NOERR;
@@ -575,9 +551,9 @@ fprintf(stderr,"fixprojection: list = %s\n",dumpprojections(list));
 		nclog(NCLOGWARN,"Malformed projection: same variable with different slicing");
 	    }
 	    /* remove p32 */
-	    nclistset(list,j,(void*)NULL);	    
-	    dcefree((DCEnode*)p2);	    
-	}	
+	    nclistset(list,j,(void*)NULL);
+	    dcefree((DCEnode*)p2);
+	}
     }
 
     /* Step 2: remove containers when a field is also present */
@@ -596,7 +572,7 @@ fprintf(stderr,"fixprojection: list = %s\n",dumpprojections(list));
 	    for(k=0;k<nclistlength(tmp);k++) {
 		void* candidate = (void*)nclistget(tmp,k);
 	        if(candidate == p1->var->annotation) {
-		    nclistset(list,i,(void*)NULL);	    
+		    nclistset(list,i,(void*)NULL);
 	            dcefree((DCEnode*)p1);
 		    goto next;
 		}
@@ -632,7 +608,7 @@ next:   continue;
 		/* Convert field node to a proper constraint */
 		DCEprojection* proj = projectify(field,container);
 		nclistpush(list,(void*)proj);
-	    }	    
+	    }
             /* reclaim the container */
 	    dcefree((DCEnode*)container);
 	}
@@ -642,8 +618,8 @@ next:   continue;
     for(i=nclistlength(list)-1;i>=0;i--) {
         DCEprojection* target = (DCEprojection*)nclistget(list,i);
 	if(target == NULL)
-	    nclistremove(list,i);	
-    }	
+	    nclistremove(list,i);
+    }
 
 done:
 #ifdef DEBUG
@@ -718,7 +694,7 @@ dapvar2projection(CDFnode* var, DCEprojection** projectionp)
     DCEprojection* projection = NULL;
     int dimindex;
 
-    /* Collect the nodes needed to construct the projection segments */    
+    /* Collect the nodes needed to construct the projection segments */
     collectnodepath(var,path,!WITHDATASET);
 
     segments = nclistnew();
@@ -749,7 +725,7 @@ dapvar2projection(CDFnode* var, DCEprojection** projectionp)
 	dimindex += localrank;
 	nclistpush(segments,(void*)segment);
     }
-    
+
     projection = (DCEprojection*)dcecreate(CES_PROJECT);
     projection->discrim = CES_VAR;
     projection->var = (DCEvar*)dcecreate(CES_VAR);
@@ -765,7 +741,7 @@ fprintf(stderr,"dapvar2projection: projection=%s\n",
     if(ncstat) dcefree((DCEnode*)projection);
     else if(projectionp) *projectionp = projection;
     return ncstat;
-}    
+}
 
 /*
 Given a set of projections and a projection
@@ -798,7 +774,7 @@ fprintf(stderr,"restrictprojection.before: constraints=|%s| vara=|%s|\n",
     }
     if(result == NULL) {
 	result = (DCEprojection*)dceclone((DCEnode*)var); /* use only the var projection */
- 	goto done;	
+ 	goto done;
     }
     result = (DCEprojection*)dceclone((DCEnode*)result); /* so we can modify */
 
@@ -809,7 +785,7 @@ fprintf(stderr,"restrictprojection.choice: base=|%s| add=|%s|\n",
     /* We need to merge the projection from the projection list
        with the var projection
     */
-    ncstat = dcemergeprojections(result,var); /* result will be modified */    
+    ncstat = dcemergeprojections(result,var); /* result will be modified */
 
 done:
     if(resultp) *resultp = result;
@@ -865,7 +841,7 @@ fprintf(stderr,"dapshiftprojection.after: %s\n",dumpprojection(projection));
    of the input constraint.
 */
 NCerror
-computeprojectedvars(NCDAPCOMMON* dapcomm, DCEconstraint* constraint)
+dapcomputeprojectedvars(NCDAPCOMMON* dapcomm, DCEconstraint* constraint)
 {
     NCerror ncstat = NC_NOERR;
     NClist* vars = NULL;
@@ -884,11 +860,11 @@ computeprojectedvars(NCDAPCOMMON* dapcomm, DCEconstraint* constraint)
 	CDFnode* node;
 	DCEprojection* proj = (DCEprojection*)nclistget(constraint->projections,i);
 	if(proj->discrim == CES_FCN) continue; /* ignore these */
-	node = (CDFnode*)proj->var->annotation;	
+	node = (CDFnode*)proj->var->annotation;
 	if(!nclistcontains(vars,(void*)node)) {
 	    nclistpush(vars,(void*)node);
 	}
-    }    
+    }
 
 done:
     return ncstat;

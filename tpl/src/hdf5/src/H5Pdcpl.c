@@ -129,10 +129,13 @@ static int H5P__dcrt_ext_file_list_cmp(const void *value1, const void *value2, s
 const H5P_libclass_t H5P_CLS_DCRT[1] = {{
     "dataset create",		/* Class name for debugging     */
     H5P_TYPE_DATASET_CREATE,    /* Class type                   */
-    &H5P_CLS_OBJECT_CREATE_g,	/* Parent class ID              */
-    &H5P_CLS_DATASET_CREATE_g,	/* Pointer to class ID          */
-    &H5P_LST_DATASET_CREATE_g,	/* Pointer to default property list ID */
+
+    &H5P_CLS_OBJECT_CREATE_g,	/* Parent class                 */
+    &H5P_CLS_DATASET_CREATE_g,	/* Pointer to class             */
+    &H5P_CLS_DATASET_CREATE_ID_g,	/* Pointer to class ID          */
+    &H5P_LST_DATASET_CREATE_ID_g,	/* Pointer to default property list ID */
     H5P__dcrt_reg_prop,		/* Default property registration routine */
+
     NULL,		        /* Class creation callback      */
     NULL,		        /* Class creation callback info */
     H5P__dcrt_copy,		/* Class copy callback          */
@@ -223,7 +226,7 @@ done:
  */
 /* ARGSUSED */
 static herr_t
-H5P__dcrt_copy(hid_t dst_plist_id, hid_t src_plist_id, void UNUSED *copy_data)
+H5P__dcrt_copy(hid_t dst_plist_id, hid_t src_plist_id, void H5_ATTR_UNUSED *copy_data)
 {
     H5O_fill_t     src_fill, dst_fill;          /* Source & destination fill values */
     H5O_efl_t      src_efl, dst_efl;            /* Source & destination external file lists */
@@ -337,7 +340,7 @@ done:
  */
 /* ARGSUSED */
 static herr_t
-H5P__dcrt_close(hid_t dcpl_id, void UNUSED *close_data)
+H5P__dcrt_close(hid_t dcpl_id, void H5_ATTR_UNUSED *close_data)
 {
     H5O_fill_t      fill;               /* Fill value */
     H5O_efl_t       efl;                /* External file list */
@@ -385,7 +388,7 @@ done:
  *-------------------------------------------------------------------------
  */
 static int
-H5P__dcrt_layout_cmp(const void *_layout1, const void *_layout2, size_t UNUSED size)
+H5P__dcrt_layout_cmp(const void *_layout1, const void *_layout2, size_t H5_ATTR_UNUSED size)
 {
     const H5O_layout_t *layout1 = (const H5O_layout_t *)_layout1,     /* Create local aliases for values */
         *layout2 = (const H5O_layout_t *)_layout2;
@@ -455,7 +458,7 @@ done:
  *-------------------------------------------------------------------------
  */
 int
-H5P_fill_value_cmp(const void *_fill1, const void *_fill2, size_t UNUSED size)
+H5P_fill_value_cmp(const void *_fill1, const void *_fill2, size_t H5_ATTR_UNUSED size)
 {
     const H5O_fill_t *fill1 = (const H5O_fill_t *)_fill1,     /* Create local aliases for values */
         *fill2 = (const H5O_fill_t *)_fill2;
@@ -517,7 +520,7 @@ done:
  *-------------------------------------------------------------------------
  */
 static int
-H5P__dcrt_ext_file_list_cmp(const void *_efl1, const void *_efl2, size_t UNUSED size)
+H5P__dcrt_ext_file_list_cmp(const void *_efl1, const void *_efl2, size_t H5_ATTR_UNUSED size)
 {
     const H5O_efl_t *efl1 = (const H5O_efl_t *)_efl1,     /* Create local aliases for values */
         *efl2 = (const H5O_efl_t *)_efl2;
@@ -1502,7 +1505,7 @@ done:
  *-------------------------------------------------------------------------
  */
 herr_t
-H5P_get_fill_value(H5P_genplist_t *plist, H5T_t *type, void *value/*out*/,
+H5P_get_fill_value(H5P_genplist_t *plist, const H5T_t *type, void *value/*out*/,
     hid_t dxpl_id)
 {
     H5O_fill_t          fill;                   /* Fill value to retrieve */

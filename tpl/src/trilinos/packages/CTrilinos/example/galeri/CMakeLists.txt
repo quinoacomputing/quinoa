@@ -1,6 +1,4 @@
 
-INCLUDE(TribitsAddExecutableAndTest)
-INCLUDE(AddSubdirectories)
 
 TRIBITS_ADD_EXECUTABLE_AND_TEST(
   example_Galeri_LinearProblem

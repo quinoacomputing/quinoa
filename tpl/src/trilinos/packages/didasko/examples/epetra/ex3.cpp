@@ -1,13 +1,13 @@
 
 // @HEADER
 // ***********************************************************************
-// 
+//
 //                      Didasko Tutorial Package
 //                 Copyright (2005) Sandia Corporation
-// 
+//
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -36,7 +36,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 // Questions about Didasko? Contact Marzio Sala (marzio.sala _AT_ gmail.com)
-// 
+//
 // ***********************************************************************
 // @HEADER
 
@@ -73,7 +73,7 @@ int main(int argc, char *argv[]) {
 #endif
     return(0);
   }
-    
+
   int NumGlobalElements=5;   // global dimension of the problem
   int MyElements = 0;        // local dimension of the problem
   int *MyGlobalElements = 0; // local-to-global map
@@ -83,30 +83,30 @@ int main(int argc, char *argv[]) {
     cerr << "This code must be run with 2 processes\n";
     exit( EXIT_FAILURE );
   }
-  
+
   // hardwired number of local elements and local-to-global map
   switch( MyPID ) {
-  case 0:
-    MyElements = 2;
-    MyGlobalElements = new int[MyElements];
-    MyGlobalElements[0] = 0;
-    MyGlobalElements[1] = 1;
-    break;
-  case 1:
-    MyElements = 3;
-    MyGlobalElements = new int[MyElements];
-    MyGlobalElements[0] = 2;
-    MyGlobalElements[1] = 3;
-    MyGlobalElements[2] = 4;
-    break;
+    case 0:
+      MyElements = 2;
+      MyGlobalElements = new int[MyElements];
+      MyGlobalElements[0] = 0;
+      MyGlobalElements[1] = 1;
+      break;
+    case 1:
+      MyElements = 3;
+      MyGlobalElements = new int[MyElements];
+      MyGlobalElements[0] = 2;
+      MyGlobalElements[1] = 3;
+      MyGlobalElements[2] = 4;
+      break;
   }
 
   Epetra_Map Map(NumGlobalElements,MyElements,MyGlobalElements,0,Comm);
-  
+
   cout << Map;
 
-  delete MyGlobalElements;
-  
+  delete[] MyGlobalElements;
+
 #ifdef HAVE_MPI
   MPI_Finalize();
 #endif
@@ -123,7 +123,7 @@ int main(int argc, char *argv[]) {
 int main(int argc, char *argv[])
 {
   puts("Please configure Didasko with:\n"
-       "--enable-epetra");
+      "--enable-epetra");
 
   return 0;
 }

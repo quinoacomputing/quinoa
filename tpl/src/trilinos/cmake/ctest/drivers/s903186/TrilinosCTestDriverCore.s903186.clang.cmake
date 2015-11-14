@@ -81,18 +81,18 @@ MACRO(TRILINOS_SYSTEM_SPECIFIC_CTEST_DRIVER)
     "-DCMAKE_BUILD_TYPE:STRING=${BUILD_TYPE}"
     "-DTrilinos_ENABLE_Fortran=OFF"
     "-DTrilinos_ENABLE_DEPENCENCY_UNIT_TESTS:BOOL=OFF"
-    "-DBoost_INCLUDE_DIRS:FILEPATH=/Users/trilinos/tpl/gcc/boost-1.49.0"
+    "-DBoost_INCLUDE_DIRS:FILEPATH=/Volumes/SnowLeopardOSX/Users/trilinos/tpl/gcc/boost-1.49.0"
     "-DTrilinos_ENABLE_TriKota:BOOL=OFF"
     "-DCMAKE_VERBOSE_MAKEFILE:BOOL=TRUE"
-    "-DSuperLU_INCLUDE_DIRS:PATH=/Users/trilinos/tpl/gcc/SuperLU_4.3/SRC"
-    "-DSuperLU_LIBRARY_DIRS:PATH=/Users/trilinos/tpl/gcc/SuperLU_4.3/lib"
+    "-DSuperLU_INCLUDE_DIRS:PATH=/Volumes/SnowLeopardOSX/Users/trilinos/tpl/gcc/SuperLU_4.3/SRC"
+    "-DSuperLU_LIBRARY_DIRS:PATH=/Volumes/SnowLeopardOSX/Users/trilinos/tpl/gcc/SuperLU_4.3/lib"
     "-DSuperLU_LIBRARY_NAMES:STRING=superlu_4.3"
     "-DTPL_ENABLE_Matio=OFF"
     "-DTPL_ENABLE_SuperLU=ON"
     "-DIntrepid_ENABLE_DEBUG_INF_CHECK=OFF"
     )
 
-  SET_DEFAULT(COMPILER_VERSION "Clang-3.0")
+  SET_DEFAULT(COMPILER_VERSION "Clang-3.3")
   
   IF (COMM_TYPE STREQUAL MPI)
     SET(TPL_ENABLE_MPI ON)
@@ -100,15 +100,15 @@ MACRO(TRILINOS_SYSTEM_SPECIFIC_CTEST_DRIVER)
     SET( EXTRA_SYSTEM_CONFIGURE_OPTIONS
       ${EXTRA_SYSTEM_CONFIGURE_OPTIONS}
       "-DTPL_ENABLE_MPI:BOOL=ON"
-      "-DMPI_BASE_DIR:PATH=/Users/trilinos/bin/clang-openmpi-1.4.5"
+      "-DMPI_BASE_DIR:PATH=/Users/trilinos/compilers/clang/openmpi_1.6.5_clang_3.3"
       )
   
   ELSE()
   
     SET( EXTRA_SYSTEM_CONFIGURE_OPTIONS
       ${EXTRA_SYSTEM_CONFIGURE_OPTIONS}
-      "-DCMAKE_CXX_COMPILER:FILEPATH=/Users/trilinos/bin/clang-3.0/bin/clang++"
-      "-DCMAKE_C_COMPILER:FILEPATH=/Users/trilinos/bin/clang-3.0/bin/clang"
+      "-DCMAKE_CXX_COMPILER:FILEPATH=/usr/bin/clang++"
+      "-DCMAKE_C_COMPILER:FILEPATH=/usr/bin/clang"
       )
   
   ENDIF()

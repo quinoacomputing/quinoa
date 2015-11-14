@@ -1,12 +1,12 @@
 // @HEADER
 // ***********************************************************************
-// 
+//
 //                      Didasko Tutorial Package
 //                 Copyright (2005) Sandia Corporation
-// 
+//
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -35,14 +35,14 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 // Questions about Didasko? Contact Marzio Sala (marzio.sala _AT_ gmail.com)
-// 
+//
 // ***********************************************************************
 // @HEADER
 
 // Construct a VBR matrix of type
 //
 //     |  *   *            |
-//     |      *    *       | 
+//     |      *    *       |
 // A = |           ... ... |
 //     |                *  |
 //
@@ -76,10 +76,10 @@ int main(int argc, char *argv[]) {
 
   // set global dimension to 5, could be any number
   int NumGlobalElements = 5;
-  
+
   // create a linear map
   Epetra_Map Map(NumGlobalElements,0,Comm);
-  
+
   // local number of rows
   int NumMyElements = Map.NumMyElements();
   // get update list
@@ -92,36 +92,36 @@ int main(int argc, char *argv[]) {
   // dimension i+1 (don't run this code with too many nodes...). The
   // dimension of each block row is recordered in ElementSizeList.
   // Here ElementSizeList is declared as Epetra_IntSerialDenseVector,
-  // but an int array is fine as well. 
+  // but an int array is fine as well.
   // max_blk keeps trace of the max block dimension
-  
+
   int max_blk = 0;
-  
+
   for( int i=0 ; i<NumMyElements ; ++i ) {
     ElementSizeList[i] = 1+MyGlobalElements[i];
     if( ElementSizeList[i] > max_blk ) max_blk =  ElementSizeList[i];
   }
-  
+
   // create a block map based on the already declared point map
   // (used to determine NumMyElements and MyGlobalElements).
   // The same point map can be used for more block maps,
   // just change the input value of ElementSizeList
   Epetra_BlockMap BlockMap(NumGlobalElements,NumMyElements,
-			   MyGlobalElements, 
-			   ElementSizeList.Values(),0,Comm);
+      MyGlobalElements,
+      ElementSizeList.Values(),0,Comm);
 
   // create a VBR matrix based on BlockMap
   Epetra_VbrMatrix A(Copy, BlockMap,2);
 
   int MaxBlockSize = max_blk * max_blk*100;
-  
+
   int Indices[2];
   double* Values; Values = new double[MaxBlockSize];
 
-  // cycle over all the local rows. 
-  
+  // cycle over all the local rows.
+
   for( int i=0 ; i<NumMyElements ; ++i ) {
-    
+
     // get GID of local row
     int GlobalNode = MyGlobalElements[i];
     // all lines but the last one will have to nonzero block-elements
@@ -136,7 +136,7 @@ int main(int argc, char *argv[]) {
     // This required two more instructions, one to start this
     // process (BeginInsertGlobalValues), and another one to
     // commit the end of submissions (EndSubmitEntries).
-    
+
     A.BeginInsertGlobalValues(GlobalNode, NumEntries, Indices);
     // insert diagonal
     int BlockRows = ElementSizeList[i];
@@ -148,10 +148,10 @@ int main(int argc, char *argv[]) {
     if( GlobalNode != NumGlobalElements-1 ) {
       int BlockCols = BlockRows+1;
       for( int k=0 ; k<BlockRows * BlockCols ; ++k )
-	Values[k] = 1.0*i;
+        Values[k] = 1.0*i;
       A.SubmitBlockEntry(Values,BlockRows,BlockRows,BlockCols);
     }
-    
+
     A.EndSubmitEntries();
   }
 
@@ -177,7 +177,7 @@ int main(int argc, char *argv[]) {
 int main(int argc, char *argv[])
 {
   puts("Please configure Didasko with:\n"
-       "--enable-epetra");
+      "--enable-epetra");
 
   return 0;
 }

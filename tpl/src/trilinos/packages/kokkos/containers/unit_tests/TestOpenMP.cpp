@@ -1,13 +1,13 @@
 /*
 //@HEADER
 // ************************************************************************
-//
-//   Kokkos: Manycore Performance-Portable Multidimensional Arrays
-//              Copyright (2012) Sandia Corporation
-//
+// 
+//                        Kokkos v. 2.0
+//              Copyright (2014) Sandia Corporation
+// 
 // Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
 // the U.S. Government retains certain rights in this software.
-//
+// 
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -36,30 +36,27 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 // Questions? Contact  H. Carter Edwards (hcedwar@sandia.gov)
-//
+// 
 // ************************************************************************
 //@HEADER
 */
 
 #include <gtest/gtest.h>
 
-#include <KokkosCore_config.h>
+#include <Kokkos_Core.hpp>
 
-// To force use of OMP atomics instead of intrinsics
-// #define KOKKOS_ATOMICS_USE_OMP31
-
-#include <Kokkos_Atomic.hpp>
-
-#include <Kokkos_OpenMP.hpp>
-#include <Kokkos_hwloc.hpp>
-
+#include <Kokkos_Bitset.hpp>
 #include <Kokkos_UnorderedMap.hpp>
 #include <Kokkos_Vector.hpp>
 
 //----------------------------------------------------------------------------
+#include <TestBitset.hpp>
 #include <TestUnorderedMap.hpp>
+#include <TestStaticCrsGraph.hpp>
 #include <TestVector.hpp>
 #include <TestDualView.hpp>
+#include <TestSegmentedView.hpp>
+#include <TestComplex.hpp>
 
 #include <iomanip>
 
@@ -85,17 +82,29 @@ protected:
   static void TearDownTestCase()
   {
     Kokkos::OpenMP::finalize();
-
-    omp_set_num_threads(0);
-
-    ASSERT_EQ( 1 , omp_get_max_threads() );
   }
 };
 
-#define OPENMP_INSERT_TEST( name, num_nodes, num_inserts, num_duplicates, repeat )                                \
+TEST_F( openmp, complex )
+{
+  testComplex<Kokkos::OpenMP> ();
+}
+
+TEST_F( openmp, bitset )
+{
+  test_bitset<Kokkos::OpenMP>();
+}
+
+TEST_F( openmp , staticcrsgraph )
+{
+  TestStaticCrsGraph::run_test_graph< Kokkos::OpenMP >();
+  TestStaticCrsGraph::run_test_graph2< Kokkos::OpenMP >();
+}
+
+#define OPENMP_INSERT_TEST( name, num_nodes, num_inserts, num_duplicates, repeat, near )                                \
   TEST_F( openmp, UnorderedMap_insert_##name##_##num_nodes##_##num_inserts##_##num_duplicates##_##repeat##x) {   \
-    for (int i=0; i<repeat; ++i)                                                                                  \
-      test_insert_##name<Kokkos::OpenMP>(num_nodes,num_inserts,num_duplicates);                                   \
+    for (int i=0; i<repeat; ++i)                                                                                \
+      test_insert<Kokkos::OpenMP>(num_nodes,num_inserts,num_duplicates, near);                                   \
   }
 
 #define OPENMP_FAILED_INSERT_TEST( num_nodes, repeat )                         \
@@ -126,13 +135,20 @@ protected:
       test_dualview_combinations<int,Kokkos::OpenMP>(size);                     \
   }
 
-OPENMP_INSERT_TEST(close,               100000, 90000, 100, 500)
-OPENMP_INSERT_TEST(far,                 100000, 90000, 100, 500)
+#define OPENMP_SEGMENTEDVIEW_TEST( size )                             \
+  TEST_F( openmp, segmentedview_##size##x) {       \
+      test_segmented_view<double,Kokkos::OpenMP>(size);                     \
+  }
+
+OPENMP_INSERT_TEST(close, 100000, 90000, 100, 500, true)
+OPENMP_INSERT_TEST(far, 100000, 90000, 100, 500, false)
 OPENMP_FAILED_INSERT_TEST( 10000, 1000 )
 OPENMP_DEEP_COPY( 10000, 1 )
+
 OPENMP_VECTOR_COMBINE_TEST( 10 )
 OPENMP_VECTOR_COMBINE_TEST( 3057 )
 OPENMP_DUALVIEW_COMBINE_TEST( 10 )
+OPENMP_SEGMENTEDVIEW_TEST( 10000 )
 
 #undef OPENMP_INSERT_TEST
 #undef OPENMP_FAILED_INSERT_TEST
@@ -140,6 +156,7 @@ OPENMP_DUALVIEW_COMBINE_TEST( 10 )
 #undef OPENMP_DEEP_COPY
 #undef OPENMP_VECTOR_COMBINE_TEST
 #undef OPENMP_DUALVIEW_COMBINE_TEST
+#undef OPENMP_SEGMENTEDVIEW_TEST
 #endif
 } // namespace test
 

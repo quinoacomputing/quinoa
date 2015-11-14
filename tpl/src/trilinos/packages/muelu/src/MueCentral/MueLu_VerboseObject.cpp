@@ -57,8 +57,9 @@
 
 namespace MueLu {
 
-  VerboseObject::VerboseObject()
-    : verbLevel_(NotSpecified) // = use global verbose level by default
+  VerboseObject::VerboseObject():
+    verbLevel_(NotSpecified), // = use global verbose level by default
+    numProcs_(0)
   {
     // Note: using MPI_COMM_RANK is bad idea (because a subcommunicator may be used to run MueLu)
     // Belos have the same problem in the class BelosOutputManager.
@@ -71,38 +72,67 @@ namespace MueLu {
     procRank_ = 0;
 #ifdef HAVE_MPI
     int mpiStarted = 0; MPI_Initialized(&mpiStarted);
-    if (mpiStarted)     MPI_Comm_rank(MPI_COMM_WORLD, &procRank_);
+    if (mpiStarted)     {
+      MPI_Comm_rank(MPI_COMM_WORLD, &procRank_);
+      MPI_Comm_size(MPI_COMM_WORLD, &numProcs_);
+    }
 #endif
+
+    // When Teuchos::VerboseObject is constructed, its default OStream is set to output only to processor 0.
+    // We have another machinery in place to decide when to output, so by default we want to always print.
+    static RCP<Teuchos::FancyOStream> defaultOStream;
+    if (defaultOStream.get() == NULL) {
+      defaultOStream = Teuchos::fancyOStream(rcpFromRef(std::cout));
+      defaultOStream->setOutputToRootOnly(-1);
+
+      setDefaultOStream(defaultOStream);
+    }
   }
 
   VerboseObject::~VerboseObject() { }
 
   VerbLevel VerboseObject::GetVerbLevel() const {
-    if (verbLevel_ != NotSpecified)
-      return verbLevel_;
-    //     else if ()
-    else
-      return globalVerbLevel_;
+    return (verbLevel_ != NotSpecified ?  verbLevel_ : globalVerbLevel_);
   }
 
-  void VerboseObject::SetVerbLevel(const VerbLevel verbLevel) { verbLevel_ = verbLevel; }
+  void VerboseObject::SetVerbLevel(const VerbLevel verbLevel) {
+    verbLevel_ = verbLevel;
+  }
 
-  int VerboseObject::GetProcRankVerbose() const { return procRank_; }
+  int VerboseObject::GetProcRankVerbose() const {
+    return procRank_;
+  }
+
+  int VerboseObject::SetProcRankVerbose(int procRank) const {
+    int oldRank = procRank_;
+    procRank_ = procRank;
+    getOStream()->setProcRankAndSize(procRank_, numProcs_);
+
+    return oldRank;
+  }
 
   bool VerboseObject::IsPrint(MsgType type, int thisProcRankOnly) const {
     return ((type & GetVerbLevel()) && (thisProcRankOnly < 0 || procRank_ == thisProcRankOnly));
   }
 
   Teuchos::FancyOStream & VerboseObject::GetOStream(MsgType type, int thisProcRankOnly) const {
-    return (IsPrint(type, thisProcRankOnly)) ? *getOStream() : *blackHole_;
+    if (!IsPrint(type, thisProcRankOnly))
+      return *blackHole_;
+
+    Teuchos::FancyOStream& os = *getOStream();
+    if (!(type & ((Extreme | Test) ^ Warnings)))
+      os << "\n******* WARNING *******" << std::endl;
+
+    return os;
   }
 
-  Teuchos::FancyOStream & VerboseObject::GetBlackHole() const { return *blackHole_; }
-
-  RCP<Teuchos::FancyOStream> VerboseObject::blackHole_ = Teuchos::getFancyOStream(rcp(new Teuchos::oblackholestream()));
+  Teuchos::FancyOStream& VerboseObject::GetBlackHole() const {
+    return *blackHole_;
+  }
 
   void VerboseObject::SetDefaultVerbLevel(const VerbLevel defaultVerbLevel) {
-    TEUCHOS_TEST_FOR_EXCEPTION(defaultVerbLevel == NotSpecified, Exceptions::RuntimeError, "MueLu::VerboseObject::GetVerbLevel(): global verbose level cannot be 'NotSpecified'.");
+    TEUCHOS_TEST_FOR_EXCEPTION(defaultVerbLevel == NotSpecified, Exceptions::RuntimeError,
+                               "MueLu::VerboseObject::GetVerbLevel(): global verbose level cannot be 'NotSpecified'.");
     globalVerbLevel_ = defaultVerbLevel;
   }
 
@@ -111,5 +141,7 @@ namespace MueLu {
   }
 
   VerbLevel VerboseObject::globalVerbLevel_ = High; // Default global verbose level.
+
+  RCP<Teuchos::FancyOStream> VerboseObject::blackHole_ = Teuchos::getFancyOStream(rcp(new Teuchos::oblackholestream()));
 
 } // namespace MueLu

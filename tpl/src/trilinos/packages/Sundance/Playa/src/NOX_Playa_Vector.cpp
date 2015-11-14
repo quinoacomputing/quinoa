@@ -350,7 +350,7 @@ double NOX::NOXPlaya::Vector::dot(const NOX::NOXPlaya::Vector& y) const
   return x.dot(y.x);
 }
 
-int NOX::NOXPlaya::Vector::length() const
+NOX::size_type NOX::NOXPlaya::Vector::length() const
 {
   return (x.space()).dim();
 }

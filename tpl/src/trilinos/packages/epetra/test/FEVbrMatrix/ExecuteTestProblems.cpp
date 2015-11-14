@@ -1,9 +1,9 @@
 //@HEADER
 // ************************************************************************
-// 
-//               Epetra: Linear Algebra Services Package 
+//
+//               Epetra: Linear Algebra Services Package
 //                 Copyright 2011 Sandia Corporation
-// 
+//
 // Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
 // the U.S. Government retains certain rights in this software.
 //
@@ -34,8 +34,8 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-// Questions? Contact Michael A. Heroux (maherou@sandia.gov) 
-// 
+// Questions? Contact Michael A. Heroux (maherou@sandia.gov)
+//
 // ************************************************************************
 //@HEADER
 
@@ -90,7 +90,8 @@ int quad1(const Epetra_Map& map, bool verbose)
 
   int numMyNodes = myLastNode - myFirstNode + 1;
   int* myNodes = new int[numMyNodes];
-  int i, j, ierr;
+  int i, j;
+  int ierr = 0;
   for(i=0; i<numMyNodes; ++i) {
     myNodes[i] = myFirstNode + i;
   }
@@ -99,7 +100,7 @@ int quad1(const Epetra_Map& map, bool verbose)
   int indexBase = 0;
 
   Epetra_BlockMap blkMap(-1, numMyNodes, myNodes, dofPerNode,
-			 indexBase, Comm);
+                         indexBase, Comm);
 
   int rowLengths = 3; //each element-matrix will have 4 block-columns.
                       //the rows of the assembled matrix will be longer than
@@ -119,7 +120,7 @@ int quad1(const Epetra_Map& map, bool verbose)
   int len = elemMatrixDim*elemMatrixDim;
   double* elemMatrix = new double[len];
 
-  //In an actual finite-element problem, we would calculate and fill 
+  //In an actual finite-element problem, we would calculate and fill
   //meaningful element stiffness matrices. But for this simple matrix assembly
   //test, we're just going to fill our element matrix with 1.0's. This will
   //make it easy to see whether the matrix is correct after it's assembled.
@@ -143,14 +144,14 @@ int quad1(const Epetra_Map& map, bool verbose)
   for(i=0; i<nodesPerElem; ++i) {
     int blkrow = myFirstNode+i;
     EPETRA_TEST_ERR( A.BeginInsertGlobalValues(blkrow, nodesPerElem, elemNodes),
-		    ierr);
+                    ierr);
 
     for(j=0; j<nodesPerElem; ++j) {
       for(int ii=0; ii<dofPerNode*dofPerNode; ii++) {
         blockEntry[ii] = blkrow+elemNodes[j];
       }
       EPETRA_TEST_ERR( A.SubmitBlockEntry( blockEntry, dofPerNode,
-					  dofPerNode, dofPerNode), ierr);
+                                          dofPerNode, dofPerNode), ierr);
     }
 
     int err = A.EndSubmitEntries();
@@ -174,7 +175,7 @@ int quad1(const Epetra_Map& map, bool verbose)
 
   if (numMyRows != correct_numMyRows) {
     cout << "proc " << localProc << ", numMyRows("<<numMyRows<<") doesn't match"
-	 << " correct_numMyRows("<<correct_numMyRows<<")."<<endl;
+         << " correct_numMyRows("<<correct_numMyRows<<")."<<endl;
     return(-1);
   }
 
@@ -196,7 +197,7 @@ int quad1(const Epetra_Map& map, bool verbose)
 
   if (numMyNonzeros != correct_numMyNonzeros) {
     cout << "proc " << localProc << ", numMyNonzeros(" << numMyNonzeros
-	 <<") != correct_numMyNonzeros("<<correct_numMyNonzeros<<")"<<endl;
+         <<") != correct_numMyNonzeros("<<correct_numMyNonzeros<<")"<<endl;
     return(-1);
   }
 
@@ -252,7 +253,8 @@ int quad2(const Epetra_Map& map, bool verbose)
 
   int numMyNodes = myLastNode - myFirstNode + 1;
   int* myNodes = new int[numMyNodes];
-  int i, j, ierr;
+  int i, j;
+  int ierr = 0;
   for(i=0; i<numMyNodes; ++i) {
     myNodes[i] = myFirstNode + i;
   }
@@ -261,7 +263,7 @@ int quad2(const Epetra_Map& map, bool verbose)
   int indexBase = 0;
 
   Epetra_BlockMap blkMap(-1, numMyNodes, myNodes, dofPerNode,
-			 indexBase, Comm);
+                         indexBase, Comm);
 
   int rowLengths = 4; //each element-matrix will have 4 block-columns.
                       //the rows of the assembled matrix will be longer than
@@ -280,7 +282,7 @@ int quad2(const Epetra_Map& map, bool verbose)
   int len = elemMatrixDim*elemMatrixDim;
   double* elemMatrix = new double[len];
 
-  //In an actual finite-element problem, we would calculate and fill 
+  //In an actual finite-element problem, we would calculate and fill
   //meaningful element stiffness matrices. But for this simple matrix assembly
   //test, we're just going to fill our element matrix with 1.0's. This will
   //make it easy to see whether the matrix is correct after it's assembled.
@@ -309,17 +311,17 @@ int quad2(const Epetra_Map& map, bool verbose)
 
       int blkrow = firstNode+i;
       EPETRA_TEST_ERR( A.BeginInsertGlobalValues(blkrow, nodesPerElem, elemNodes),
-		       ierr);
+                       ierr);
 
       for(j=0; j<nodesPerElem; ++j) {
-	EPETRA_TEST_ERR( A.SubmitBlockEntry( blockEntry, dofPerNode,
-					     dofPerNode, dofPerNode), ierr);
+        EPETRA_TEST_ERR( A.SubmitBlockEntry( blockEntry, dofPerNode,
+                                             dofPerNode, dofPerNode), ierr);
       }
 
       int this_err = A.EndSubmitEntries();
       if (this_err < 0) {
-	cerr << "error in quad2, A.EndSubmitEntries(): " << this_err << endl;
-	return(this_err);
+        cerr << "error in quad2, A.EndSubmitEntries(): " << this_err << endl;
+        return(this_err);
       }
     }
 
@@ -360,13 +362,13 @@ int MultiVectorTests(const Epetra_Map & Map, int NumVectors, bool verbose)
 {
   const Epetra_Comm & Comm = Map.Comm();
   int ierr = 0, i, j;
-  
+
   /* get number of processors and the name of this processor */
-  
+
   int MyPID   = Comm.MyPID();
-  
+
   // Construct FEVbrMatrix
-  
+
   if (verbose && MyPID==0) cout << "constructing Epetra_FEVbrMatrix" << endl;
 
   //
@@ -378,7 +380,7 @@ int MultiVectorTests(const Epetra_Map & Map, int NumVectors, bool verbose)
   int rowLengths = 3;
 
   Epetra_FEVbrMatrix A(Copy, Map, rowLengths);
- 
+
   if (verbose && MyPID==0) {
     cout << "calling A.InsertGlobalValues with 1-D data array"<<endl;
   }
@@ -465,7 +467,7 @@ int MultiVectorTests(const Epetra_Map & Map, int NumVectors, bool verbose)
 }
 
 int four_quads(const Epetra_Comm& Comm, bool preconstruct_graph, bool verbose)
-{   
+{
   if (verbose) {
     cout << "******************* four_quads ***********************"<<endl;
   }
@@ -494,9 +496,9 @@ int four_quads(const Epetra_Comm& Comm, bool preconstruct_graph, bool verbose)
   //Depending on the number of processors being used, the locations of the
   //specific matrix positions (in terms of which processor owns them) will vary.
   //
-  
+
   int numProcs = Comm.NumProc();
-  
+
   int numNodes = 9;
   int numElems = 4;
   int numNodesPerElem = 4;
@@ -589,17 +591,17 @@ int four_quads(const Epetra_Comm& Comm, bool preconstruct_graph, bool verbose)
 
     for(j=0; j<numNodesPerElem; ++j) {
       if (preconstruct_graph) {
-	err = A->BeginSumIntoGlobalValues(nodes[j], numNodesPerElem, nodes);
-	if (err<0) return(err);
+        err = A->BeginSumIntoGlobalValues(nodes[j], numNodesPerElem, nodes);
+        if (err<0) return(err);
       }
       else {
-	err = A->BeginInsertGlobalValues(nodes[j], numNodesPerElem, nodes);
-	if (err<0) return(err);
+        err = A->BeginInsertGlobalValues(nodes[j], numNodesPerElem, nodes);
+        if (err<0) return(err);
       }
-    
+
       for(k=0; k<numNodesPerElem; ++k) {
-	err = A->SubmitBlockEntry(values_1d, blockSize, blockSize, blockSize);
-	if (err<0) return(err);
+        err = A->SubmitBlockEntry(values_1d, blockSize, blockSize, blockSize);
+        if (err<0) return(err);
       }
 
       err = A->EndSubmitEntries();
@@ -664,7 +666,7 @@ int four_quads(const Epetra_Comm& Comm, bool preconstruct_graph, bool verbose)
   if (map.MyGID(0)) {
     int lid = map.LID(0);
     EPETRA_CHK_ERR( A->ExtractMyRowCopy(lid, len, numIndices,
-					values, indices) );
+                                        values, indices) );
     if (numIndices != 4) {
       return(-1);
     }
@@ -681,7 +683,7 @@ int four_quads(const Epetra_Comm& Comm, bool preconstruct_graph, bool verbose)
   if (map.MyGID(4)) {
     int lid = map.LID(4);
     EPETRA_CHK_ERR( A->ExtractMyRowCopy(lid, len, numIndices,
-					values, indices) );
+                                        values, indices) );
 
     if (numIndices != 9) {
       return(-4);
@@ -689,12 +691,12 @@ int four_quads(const Epetra_Comm& Comm, bool preconstruct_graph, bool verbose)
     int lcid = A->LCID(4);
 //     if (indices[lcid] != 4) {
 //       cout << "ERROR: indices[4] ("<<indices[4]<<") should be "
-// 	   <<A->LCID(4)<<endl;
+//         <<A->LCID(4)<<endl;
 //       return(-5);
 //     }
     if (values[lcid] != 4.0*numProcs) {
       cout << "ERROR: values["<<lcid<<"] ("<<values[lcid]<<") should be "
-	   <<4*numProcs<<endl;
+           <<4*numProcs<<endl;
       return(-6);
     }
   }

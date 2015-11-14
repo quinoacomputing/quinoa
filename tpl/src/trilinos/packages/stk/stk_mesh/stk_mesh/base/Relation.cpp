@@ -1,129 +1,116 @@
-/*------------------------------------------------------------------------*/
-/*                 Copyright 2010 Sandia Corporation.                     */
-/*  Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive   */
-/*  license for use of this work by or on behalf of the U.S. Government.  */
-/*  Export of this program may require a license from the                 */
-/*  United States Government.                                             */
-/*------------------------------------------------------------------------*/
+// Copyright (c) 2013, Sandia Corporation.
+// Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
+// the U.S. Government retains certain rights in this software.
+// 
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
+// 
+//     * Redistributions of source code must retain the above copyright
+//       notice, this list of conditions and the following disclaimer.
+// 
+//     * Redistributions in binary form must reproduce the above
+//       copyright notice, this list of conditions and the following
+//       disclaimer in the documentation and/or other materials provided
+//       with the distribution.
+// 
+//     * Neither the name of Sandia Corporation nor the names of its
+//       contributors may be used to endorse or promote products derived
+//       from this software without specific prior written permission.
+// 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+// 
 
-#include <stdexcept>
-#include <iostream>
-#include <sstream>
-#include <algorithm>
-
-#include <stk_mesh/base/MetaData.hpp>
-#include <stk_mesh/base/BulkData.hpp>
-#include <stk_mesh/base/Entity.hpp>
-#include <stk_mesh/base/Bucket.hpp>
 #include <stk_mesh/base/Relation.hpp>
-#include <stk_mesh/base/FieldData.hpp>
+#include <stddef.h>                     // for NULL
+#include <iostream>                     // for operator<<, basic_ostream, etc
+#include <stk_mesh/base/Bucket.hpp>     // for Bucket
+#include <stk_mesh/base/BulkData.hpp>   // for BulkData, get_connectivity
+#include <stk_mesh/base/Entity.hpp>     // for Entity
+#include <stk_mesh/base/MetaData.hpp>   // for MetaData
+#include <utility>                      // for pair
+#include "stk_mesh/base/ConnectivityMap.hpp"  // for ConnectivityMap
+#include "stk_mesh/base/Part.hpp"       // for Part, insert_ordinal, etc
+#include "stk_mesh/base/Types.hpp"      // for EntityRank, OrdinalVector, etc
+#include <stk_mesh/baseImpl/MeshImplUtils.hpp>
+#include "stk_topology/topology.hpp"    // for topology, etc
+#include "stk_util/environment/ReportHandler.hpp"  // for ThrowAssertMsg, etc
+
 
 namespace stk {
 namespace mesh {
+
+
+Relation::RawRelationType & Relation::RawRelationType::operator =(const Relation::RawRelationType & rhs)
+{
+    value = rhs.value;
+    return *this;
+}
 
 //----------------------------------------------------------------------
 
 std::ostream &
 operator << ( std::ostream & s , const Relation & rel )
 {
-  Entity * const e = rel.entity();
+  Entity const e = rel.entity();
 
-  if ( e ) {
-    const MetaData & meta_data = MetaData::get(*e);
-    s << "[" << rel.identifier() << "]->" ;
-    print_entity_key( s , meta_data , e->key() );
-  }
-  else {
-    s << "[" << rel.identifier() << "]->" << rel.entity_rank();
-  }
+  s << "[" << rel.relation_ordinal() << "]->(" << rel.entity_rank()
+    << ", " << e.local_offset() << ")";
 
   return s ;
 }
 
-//----------------------------------------------------------------------
-
-Relation::Relation( Entity & entity , RelationIdentifier identifier )
-  : m_raw_relation( Relation::raw_relation_id( entity.entity_rank() , identifier ) ),
-    m_target_entity( & entity )
-{
-#ifdef SIERRA_MIGRATION
-  setRelationType(INVALID);
-#endif
-}
-
-bool Relation::operator < ( const Relation & rhs ) const
-{
-  bool result = false;
-
-#ifdef SIERRA_MIGRATION
-  if (entity_rank() != rhs.entity_rank()) {
-    result = entity_rank() < rhs.entity_rank();
-  }
-  else if (getRelationType() != rhs.getRelationType()) {
-    result = getRelationType() < rhs.getRelationType();
-  }
-  else if (identifier() != rhs.identifier()) {
-    result = identifier() < rhs.identifier();
-  }
-#else
-  if ( m_raw_relation.value != rhs.m_raw_relation.value ) {
-    result = m_raw_relation.value < rhs.m_raw_relation.value ;
-  }
-#endif
-  else {
-    const EntityKey lhs_key = m_target_entity     ? m_target_entity->key()     : EntityKey();
-    const EntityKey rhs_key = rhs.m_target_entity ? rhs.m_target_entity->key() : EntityKey();
-    result = lhs_key < rhs_key ;
-  }
-  return result ;
-}
-
-//----------------------------------------------------------------------
-
-#ifdef SIERRA_MIGRATION
-
-Relation::Relation(Entity *obj, const unsigned relation_type, const unsigned ordinal, const unsigned orient)
-  :
-  m_raw_relation( Relation::raw_relation_id( obj->entity_rank(), ordinal )),
-  m_attribute( (relation_type << fmwk_orientation_digits) | orient ),
-  m_target_entity(obj)
-{
-  ThrowAssertMsg( orient <= fmwk_orientation_mask,
-                  "orientation " << orient << " exceeds maximum allowed value");
-}
-
-void Relation::setMeshObj(Entity *object)
-{
-  if (object != NULL) {
-    m_raw_relation = Relation::raw_relation_id( object->entity_rank(), identifier() );
-  }
-  m_target_entity = object;
-}
-
-#endif
-
 namespace {
 
 void get_entities_through_relations(
-  PairIterRelation rel ,
-  const std::vector<Entity*>::const_iterator i_beg ,
-  const std::vector<Entity*>::const_iterator i_end ,
-  std::vector<Entity*> & entities_related )
+  const BulkData &mesh,
+  Entity const *rels_begin,
+  Entity const *rels_end,
+  const std::vector<Entity>::const_iterator i_beg ,
+  const std::vector<Entity>::const_iterator i_end ,
+  std::vector<Entity> & entities_related )
 {
-  for ( ; rel.first != rel.second ; ++rel.first ) {
-
+  EntityVector temp_entities;
+  Entity const* irels_j = NULL;
+  int num_conn = 0;
+  for (Entity const *rels_left = rels_begin ; rels_left != rels_end ; ++rels_left )
+  {
     // Do all input entities have a relation to this entity ?
 
-    Entity * const e = rel.first->entity();
+    Entity const e = *rels_left;
+    EntityRank erank = mesh.entity_rank(e);
 
-    std::vector<Entity*>::const_iterator i = i_beg ;
-
-    for ( ; i != i_end ; ++i ) {
-      PairIterRelation r = (*i)->relations();
-      while ( r.first != r.second && e != r.first->entity() ) {
-        ++r.first ;
+    std::vector<Entity>::const_iterator i = i_beg ;
+    for ( ; i != i_end ; ++i )
+    {
+      if (mesh.connectivity_map().valid(mesh.entity_rank(*i), erank)) {
+        num_conn = mesh.num_connectivity(*i, erank);
+        irels_j  = mesh.begin(*i, erank);
       }
-      if ( r.first == r.second ) { break ; }
+      else {
+        num_conn = get_connectivity(mesh, *i, erank, temp_entities);
+        irels_j  = &*temp_entities.begin();
+      }
+
+      Entity const *irels_end = irels_j + num_conn;
+
+      while ( irels_j != irels_end && e != *irels_j) {
+        ++irels_j ;
+      }
+      if ( irels_j == irels_end ) {
+        // Entity *i does not have a relation to Entity e.
+        break ;
+      }
     }
 
     if ( i == i_end ) {
@@ -132,175 +119,117 @@ void get_entities_through_relations(
   }
 }
 
-inline
-void insert_part_and_supersets(OrdinalVector& induced_parts,
-                               Part& part,
-                               bool include_supersets)
-{
-  insert_ordinal( induced_parts , part.mesh_meta_data_ordinal() );
-
-  // In order to preserve superset/subset consistency we should add supersets of
-  // induced parts to the induced part lists. Unfortunately, this opens up an ambiguity
-  // where, when a relation is removed, we cannot know if an unranked superset
-  // part should be removed.
-  if (include_supersets) {
-    const PartVector & supersets = part.supersets();
-    for (PartVector::const_iterator itr = supersets.begin(), end = supersets.end(); itr != end; ++itr) {
-      insert_ordinal( induced_parts, (*itr)->mesh_meta_data_ordinal() );
-    }
-  }
-}
-
-}
+} // namespace
 
 void get_entities_through_relations(
-  const std::vector<Entity*> & entities ,
-        std::vector<Entity*> & entities_related )
+  const BulkData &mesh,
+  const std::vector<Entity> & entities ,
+        std::vector<Entity> & entities_related )
 {
   entities_related.clear();
 
   if ( ! entities.empty() ) {
-          std::vector<Entity*>::const_iterator i = entities.begin();
-    const std::vector<Entity*>::const_iterator j = entities.end();
+          std::vector<Entity>::const_iterator i = entities.begin();
+    const std::vector<Entity>::const_iterator j = entities.end();
 
-    PairIterRelation rel = (*i)->relations(); ++i ;
+    const Bucket &ibucket = mesh.bucket(*i);
+    const Ordinal &ibordinal = mesh.bucket_ordinal(*i);
+    const EntityRank end_rank = static_cast<EntityRank>(mesh.mesh_meta_data().entity_rank_count());
 
-    get_entities_through_relations( rel , i , j , entities_related );
+    std::vector<Entity>::const_iterator next_i = i + 1;
+    EntityVector temp_entities;
+    Entity const* rels_begin = NULL;
+    int num_conn = 0;
+    for (EntityRank rank = stk::topology::BEGIN_RANK; rank < end_rank; ++rank)
+    {
+      if (mesh.connectivity_map().valid(ibucket.entity_rank(), rank)) {
+        num_conn   = mesh.num_connectivity(ibucket[ibordinal], rank);
+        rels_begin = mesh.begin(ibucket[ibordinal], rank);
+      }
+      else {
+        num_conn   = get_connectivity(mesh, ibucket[ibordinal], rank, temp_entities);
+        rels_begin = &*temp_entities.begin();
+      }
+
+      get_entities_through_relations(mesh, rels_begin, rels_begin + num_conn, next_i, j,
+                                     entities_related);
+    }
   }
 }
 
 void get_entities_through_relations(
-  const std::vector<Entity*> & entities ,
-        unsigned               entities_related_rank ,
-        std::vector<Entity*> & entities_related )
+  const BulkData& mesh,
+  const std::vector<Entity> & entities ,
+        EntityRank              entities_related_rank ,
+        std::vector<Entity> & entities_related )
 {
   entities_related.clear();
 
   if ( ! entities.empty() ) {
-          std::vector<Entity*>::const_iterator i = entities.begin();
-    const std::vector<Entity*>::const_iterator j = entities.end();
 
-    PairIterRelation rel = (*i)->relations( entities_related_rank ); ++i ;
+          std::vector<Entity>::const_iterator i = entities.begin();
+    const std::vector<Entity>::const_iterator j = entities.end();
 
-    get_entities_through_relations( rel , i , j , entities_related );
-  }
-}
-
-//----------------------------------------------------------------------
-
-/** \brief  Query if a member entity of the given entity type
- *          has an induced membership.
- */
-bool membership_is_induced( const Part & part , unsigned entity_rank )
-{
-  const MetaData & meta = MetaData::get(part);
-
-  const bool induced_by_type =
-     entity_rank < part.primary_entity_rank() &&
-                   part.primary_entity_rank() < meta.entity_rank_count() ;
-
-  const bool induced_by_stencil =
-    ! part.relations().empty() &&
-      part.relations().begin()->m_target == & part ;
-
-  return induced_by_type || induced_by_stencil ;
-}
-
-//----------------------------------------------------------------------
-
-void induced_part_membership( Part & part ,
-                              unsigned entity_rank_from ,
-                              unsigned entity_rank_to ,
-                              RelationIdentifier relation_identifier ,
-                              OrdinalVector & induced_parts,
-                              bool include_supersets)
-{
-  if ( entity_rank_to < entity_rank_from &&
-       part.primary_entity_rank() == entity_rank_from ) {
-
-    // Direct relationship:
-
-    insert_part_and_supersets( induced_parts , part, include_supersets );
-
-    // Stencil relationship where 'part' is the root:
-    // The 'target' should not have subsets or supersets.
-
-    const std::vector<PartRelation> & part_rel = part.relations();
-
-    for ( std::vector<PartRelation>::const_iterator
-          j = part_rel.begin() ; j != part_rel.end() ; ++j ) {
-
-      if ( & part == j->m_root &&
-           0 <= (* j->m_function)( entity_rank_from , entity_rank_to ,
-                                   relation_identifier ) ) {
-        insert_part_and_supersets( induced_parts , * j->m_target, include_supersets );
-      }
+    EntityVector temp_entities;
+    Entity const* rel_entities = NULL;
+    int num_rels = 0;
+    if (mesh.connectivity_map().valid(mesh.entity_rank(*i), entities_related_rank)) {
+      num_rels     = mesh.num_connectivity(*i, entities_related_rank);
+      rel_entities = mesh.begin(*i, entities_related_rank);
     }
-  }
-}
-
-//----------------------------------------------------------------------
-//  What are this entity's part memberships that can be deduced from
-//  this entity's relationship.  Can only trust 'entity_from' to be
-//  accurate if it is owned by the local process.
-
-void induced_part_membership( const Entity           & entity_from ,
-                              const OrdinalVector       & omit ,
-                                    unsigned           entity_rank_to ,
-                                    RelationIdentifier relation_identifier ,
-                                    OrdinalVector       & induced_parts,
-                                    bool include_supersets)
-{
-  const Bucket   & bucket_from    = entity_from.bucket();
-  const BulkData & mesh           = BulkData::get(bucket_from);
-  const unsigned local_proc_rank  = mesh.parallel_rank();
-  const unsigned entity_rank_from = entity_from.entity_rank();
-
-  // Only induce parts for normal (not back) relations. Can only trust
-  // 'entity_from' to be accurate if it is owned by the local process.
-  if ( entity_rank_to < entity_rank_from &&
-       local_proc_rank == entity_from.owner_rank() ) {
-    const PartVector & all_parts   = mesh.mesh_meta_data().get_parts();
-
-    const std::pair<const unsigned *, const unsigned *>
-      bucket_superset_ordinals = bucket_from.superset_part_ordinals();
-
-    OrdinalVector::const_iterator omit_begin = omit.begin(),
-                                  omit_end   = omit.end();
-
-    // Contributions of the 'from' entity:
-    for ( const unsigned * i = bucket_superset_ordinals.first ;
-                           i != bucket_superset_ordinals.second ; ++i ) {
-      ThrowAssertMsg( *i < all_parts.size(), "Index " << *i << " out of bounds" );
-      Part & part = * all_parts[*i] ;
-
-      if ( part.primary_entity_rank() == entity_rank_from && ! contains_ordinal( omit_begin, omit_end , *i )) {
-        induced_part_membership( part,
-                                 entity_rank_from ,
-                                 entity_rank_to ,
-                                 relation_identifier ,
-                                 induced_parts,
-                                 include_supersets);
-      }
+    else {
+      num_rels    = get_connectivity(mesh, *i, entities_related_rank, temp_entities);
+      rel_entities = &*temp_entities.begin();
     }
+
+    ++i;
+    get_entities_through_relations(mesh, rel_entities, rel_entities + num_rels, i, j, entities_related);
   }
 }
 
 //----------------------------------------------------------------------
 
-void induced_part_membership( const Entity     & entity ,
-                              const OrdinalVector & omit ,
-                                    OrdinalVector & induced_parts,
-                                    bool include_supersets)
-{
-  for ( PairIterRelation
-        rel = entity.relations() ; ! rel.empty() ; ++rel ) {
 
-    induced_part_membership( * rel->entity() , omit ,
-                             entity.entity_rank() ,
-                             rel->identifier() ,
-                             induced_parts,
-                             include_supersets);
+void get_part_ordinals_to_induce_on_lower_ranks_except_for_omits(const BulkData       & mesh,
+                             const Entity           entity_from,
+                             const OrdinalVector  & omit,
+                                   EntityRank       entity_rank_to,
+                                   OrdinalVector  & induced_parts)
+{
+    impl::get_part_ordinals_to_induce_on_lower_ranks_except_for_omits(mesh,entity_from,omit,entity_rank_to,induced_parts);
+}
+
+
+//----------------------------------------------------------------------
+
+void induced_part_membership(const BulkData& mesh,
+                             const Entity entity ,
+                             const OrdinalVector & omit ,
+                                   OrdinalVector & induced_parts)
+{
+  ThrowAssertMsg(mesh.is_valid(entity), "BulkData at " << &mesh << " does not know Entity" << entity.local_offset());
+
+  const EntityRank e_rank = mesh.entity_rank(entity);
+  const EntityRank end_rank = static_cast<EntityRank>(mesh.mesh_meta_data().entity_rank_count());
+
+  EntityVector temp_entities;
+  Entity const* rels = NULL;
+  int num_rels = 0;
+  for (EntityRank irank = static_cast<EntityRank>(e_rank + 1); irank < end_rank; ++irank)
+  {
+    if (mesh.connectivity_map().valid(e_rank, irank)) {
+      num_rels = mesh.num_connectivity(entity, irank);
+      rels     = mesh.begin(entity, irank);
+    }
+    else {
+      num_rels = get_connectivity(mesh, entity, irank, temp_entities);
+      rels     = &*temp_entities.begin();
+    }
+
+    for (int j = 0; j < num_rels; ++j)
+    {
+      impl::get_part_ordinals_to_induce_on_lower_ranks_except_for_omits(mesh, rels[j], omit, e_rank, induced_parts);
+    }
   }
 }
 

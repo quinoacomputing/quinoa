@@ -362,7 +362,7 @@ typedef struct H5D_chunk_map_t {
 } H5D_chunk_map_t;
 
 /* Cached information about a particular chunk */
-typedef struct H5D_chunk_cached_t{
+typedef struct H5D_chunk_cached_t {
     hbool_t     valid;                          /*whether cache info is valid*/
     hsize_t	offset[H5O_LAYOUT_NDIMS];	/*logical offset to start*/
     uint32_t	nbytes;				/*size of stored data	*/
@@ -537,8 +537,6 @@ H5_DLL herr_t H5D__alloc_storage(const H5D_t *dset, hid_t dxpl_id, H5D_time_allo
     hbool_t full_overwrite, hsize_t old_dim[]);
 H5_DLL herr_t H5D__get_storage_size(H5D_t *dset, hid_t dxpl_id, hsize_t *storage_size);
 H5_DLL haddr_t H5D__get_offset(const H5D_t *dset);
-H5_DLL herr_t H5D__iterate(void *buf, hid_t type_id, const H5S_t *space,
-    H5D_operator_t op, void *operator_data);
 H5_DLL void *H5D__vlen_get_buf_size_alloc(size_t size, void *info);
 H5_DLL herr_t H5D__vlen_get_buf_size(void *elem, hid_t type_id, unsigned ndim,
     const hsize_t *point, void *op_data);

@@ -19,7 +19,7 @@
 //
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
 // USA
 // Questions? Contact Michael A. Heroux (maherou@sandia.gov)
 //
@@ -127,7 +127,6 @@ namespace Anasazi {
     typedef Teuchos::ScalarTraits<Scalar> SCT;
     typedef Teuchos::ScalarTraits<magnitude_type> SCTM;
     typedef MultiVecTraits<Scalar, MV> MVT;
-    typedef MultiVecTraitsExt<Scalar, MV> MVText;
     typedef typename MVT::tsqr_adaptor_type tsqr_adaptor_type;
 
   public:
@@ -800,7 +799,7 @@ namespace Anasazi {
     // troubles, you may consider modifying the code below to
     // reallocate Q_ for every X that comes in.  
     if (Q_.is_null() || 
-        MVText::GetGlobalLength(*Q_) != MVText::GetGlobalLength(X) ||
+        MVT::GetGlobalLength(*Q_) != MVT::GetGlobalLength(X) ||
         numCols > MVT::GetNumberVecs (*Q_)) {
       Q_ = MVT::Clone (X, numCols);
     }
