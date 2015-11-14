@@ -67,6 +67,7 @@ public:
   typedef typename std::set<Key, Compare>::reverse_iterator reverse_iterator;
   typedef typename std::set<Key, Compare>::const_reverse_iterator const_reverse_iterator;
 
+  typedef typename std::set<Key, Compare>::value_type value_type;
   typedef typename std::set<Key, Compare>::size_type size_type;
   typedef typename std::set<Key, Compare>::pointer pointer;
   typedef typename std::set<Key, Compare>::const_pointer const_pointer;

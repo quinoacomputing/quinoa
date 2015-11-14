@@ -57,7 +57,7 @@
 #ifndef GALERI_XPETRAMAPS_HPP
 #define GALERI_XPETRAMAPS_HPP
 
-#include <string.h>
+#include <string>
 
 #include <Teuchos_RCP.hpp>
 #include <Teuchos_Comm.hpp>
@@ -65,9 +65,7 @@
 
 #include "Galeri_ConfigDefs.h"
 
-#include "Galeri_XpetraCartesian1D.hpp"
-#include "Galeri_XpetraCartesian2D.hpp"
-#include "Galeri_XpetraCartesian3D.hpp"
+#include "Galeri_XpetraCartesian.hpp"
 
 #ifdef HAVE_GALERI_XPETRA
 #include <Xpetra_ConfigDefs.hpp>
@@ -113,21 +111,50 @@ namespace Galeri {
 
     using Teuchos::RCP;
 
+#ifdef HAVE_XPETRA_EPETRA
+
+    template <class LocalOrdinal, class GlobalOrdinal> struct privateCreateMapEpetra {
+      static RCP< ::Xpetra::Map<LocalOrdinal, GlobalOrdinal, KokkosClassic::DefaultNode::DefaultNodeType> > CreateMap(const std::string & mapType, const Teuchos::RCP<const Teuchos::Comm<int> > & comm, Teuchos::ParameterList & list) {
+         throw "Galeri::Xpetra::privateCreateMapEpetra: no default implementation";
+      }
+    };
+
+#ifndef XPETRA_EPETRA_NO_32BIT_GLOBAL_INDICES
+    template <> struct privateCreateMapEpetra<int, int> {
+      static RCP< ::Xpetra::Map<int, int, KokkosClassic::DefaultNode::DefaultNodeType> > CreateMap(const std::string & mapType, const Teuchos::RCP<const Teuchos::Comm<int> > & comm, Teuchos::ParameterList & list) {
+        return Galeri::Xpetra::CreateMap<int, int, ::Xpetra::EpetraMapT<int> >(mapType, comm, list);
+      }
+    };
+#endif
+
+#ifndef XPETRA_EPETRA_NO_64BIT_GLOBAL_INDICES
+    template <> struct privateCreateMapEpetra<int, long long> {
+      static RCP< ::Xpetra::Map<int, long long, KokkosClassic::DefaultNode::DefaultNodeType> > CreateMap(const std::string & mapType, const Teuchos::RCP<const Teuchos::Comm<int> > & comm, Teuchos::ParameterList & list) {
+        return Galeri::Xpetra::CreateMap<int, long long, ::Xpetra::EpetraMapT<long long> >(mapType, comm, list);
+      }
+    };
+#endif
+
+#endif
+
 #ifdef HAVE_GALERI_XPETRA
     //! Map creation function (for Xpetra::Map with UnderlyingLib parameter)
     template <class LocalOrdinal, class GlobalOrdinal, class Node>
     RCP< ::Xpetra::Map<LocalOrdinal, GlobalOrdinal, Node> > CreateMap(::Xpetra::UnderlyingLib lib, const std::string & mapType, const Teuchos::RCP<const Teuchos::Comm<int> > & comm, Teuchos::ParameterList & list) {
 #ifdef HAVE_XPETRA_TPETRA
       if (lib == ::Xpetra::UseTpetra)
-        return CreateMap< ::Xpetra::TpetraMap<LocalOrdinal, GlobalOrdinal, Node> >(mapType, comm, list);
+        return CreateMap<LocalOrdinal, GlobalOrdinal, ::Xpetra::TpetraMap<LocalOrdinal, GlobalOrdinal, Node> >(mapType, comm, list);
 #endif
-      XPETRA_FACTORY_ERROR_IF_EPETRA(lib);
+#ifdef HAVE_XPETRA_EPETRA
+      if (lib == ::Xpetra::UseEpetra)
+        return privateCreateMapEpetra<LocalOrdinal, GlobalOrdinal>::CreateMap(mapType, comm, list);
+#endif
       XPETRA_FACTORY_END;
     }
 
+#ifndef XPETRA_EPETRA_NO_32BIT_GLOBAL_INDICES
     //! Map creation function (for Xpetra::Map with UnderlyingLib parameter)
-    template <>
-    RCP< ::Xpetra::Map<int, int, KokkosClassic::DefaultNode::DefaultNodeType> > CreateMap<int, int, KokkosClassic::DefaultNode::DefaultNodeType>(::Xpetra::UnderlyingLib lib, const std::string & mapType, const Teuchos::RCP<const Teuchos::Comm<int> > & comm, Teuchos::ParameterList & list) {
+    RCP< ::Xpetra::Map<int, int, KokkosClassic::DefaultNode::DefaultNodeType> > CreateMap(::Xpetra::UnderlyingLib lib, const std::string & mapType, const Teuchos::RCP<const Teuchos::Comm<int> > & comm, Teuchos::ParameterList & list) {
 
       typedef int LocalOrdinal;
       typedef int GlobalOrdinal;
@@ -135,28 +162,50 @@ namespace Galeri {
 
 #ifdef HAVE_XPETRA_TPETRA
       if (lib == ::Xpetra::UseTpetra)
-        return CreateMap<int, int, ::Xpetra::TpetraMap<LocalOrdinal, GlobalOrdinal, Node> >(mapType, comm, list);
+        return CreateMap<int, GlobalOrdinal, ::Xpetra::TpetraMap<LocalOrdinal, GlobalOrdinal, Node> >(mapType, comm, list);
 #endif
 #ifdef HAVE_XPETRA_EPETRA
       if (lib == ::Xpetra::UseEpetra)
-        return CreateMap<int, int, ::Xpetra::EpetraMap>(mapType, comm, list);
+        return CreateMap<int, GlobalOrdinal, ::Xpetra::EpetraMapT<GlobalOrdinal> >(mapType, comm, list);
 #endif
       XPETRA_FACTORY_END;
     }
+#endif // XPETRA_EPETRA_NO_32BIT_GLOBAL_INDICES
+
+#ifndef XPETRA_EPETRA_NO_64BIT_GLOBAL_INDICES
+    //! Map creation function (for Xpetra::Map with UnderlyingLib parameter)
+    RCP< ::Xpetra::Map<int, long long, KokkosClassic::DefaultNode::DefaultNodeType> > CreateMap64(::Xpetra::UnderlyingLib lib, const std::string & mapType, const Teuchos::RCP<const Teuchos::Comm<int> > & comm, Teuchos::ParameterList & list) {
+
+      typedef int LocalOrdinal;
+      typedef long long GlobalOrdinal;
+      typedef KokkosClassic::DefaultNode::DefaultNodeType Node;
+
+#ifdef HAVE_XPETRA_TPETRA
+      if (lib == ::Xpetra::UseTpetra)
+        return CreateMap<int, GlobalOrdinal, ::Xpetra::TpetraMap<LocalOrdinal, GlobalOrdinal, Node> >(mapType, comm, list);
+#endif
+#ifdef HAVE_XPETRA_EPETRA
+      if (lib == ::Xpetra::UseEpetra)
+        return CreateMap<int, GlobalOrdinal, ::Xpetra::EpetraMapT<GlobalOrdinal> >(mapType, comm, list);
+#endif
+      XPETRA_FACTORY_END;
+    }
+#endif // XPETRA_EPETRA_NO_64BIT_GLOBAL_INDICES
 #endif // HAVE_GALERI_XPETRA
 
 
   template <class LocalOrdinal, class GlobalOrdinal, class Map>
   RCP<Map> CreateMap(const std::string & mapType, const Teuchos::RCP<const Teuchos::Comm<int> > & comm, Teuchos::ParameterList & list) {
     GlobalOrdinal n = -1, nx = -1, ny = -1, nz = -1, mx = -1, my = -1, mz = -1;
+
     // Get matrix dimensions
     if (list.isParameter("n"))  n  = list.get<GlobalOrdinal>("n");
     if (list.isParameter("nx")) nx = list.get<GlobalOrdinal>("nx");
     if (list.isParameter("ny")) ny = list.get<GlobalOrdinal>("ny");
     if (list.isParameter("nz")) nz = list.get<GlobalOrdinal>("nz");
-    if (list.isParameter("mx")) nz = list.get<GlobalOrdinal>("mx");
-    if (list.isParameter("my")) nz = list.get<GlobalOrdinal>("my");
-    if (list.isParameter("mz")) nz = list.get<GlobalOrdinal>("mz");
+    if (list.isParameter("mx")) mx = list.get<GlobalOrdinal>("mx");
+    if (list.isParameter("my")) my = list.get<GlobalOrdinal>("my");
+    if (list.isParameter("mz")) mz = list.get<GlobalOrdinal>("mz");
 
     if (mapType == "Cartesian1D") {
       if (nx == -1) {

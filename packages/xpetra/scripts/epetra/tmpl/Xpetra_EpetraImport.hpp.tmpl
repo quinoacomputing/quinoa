@@ -22,13 +22,16 @@ namespace Xpetra {
 
     typedef int LocalOrdinal;
     typedef int GlobalOrdinal;
-    typedef KokkosClassic::DefaultNode::DefaultNodeType Node;
+    typedef Import<int, int>::node_type Node;
     //! The specialization of Map used by this class.
     typedef Map<LocalOrdinal,GlobalOrdinal,Node> map_type;
 
   public:
 
 $TMPL_PUBLIC_FUNCTIONS
+
+    //! List of entries in the target Map to receive from other processes.
+    ArrayView< const LocalOrdinal > getRemotePIDs() const;
 
     //! @name Xpetra specific
     //@{

@@ -170,7 +170,7 @@ ostream& operator<<(std::ostream& os, const Sundance::SpatialDerivSpecifier& sds
 /** \relates SpatialDerivSpecifier */
 ostream& operator<<(std::ostream& os, const Sundance::SpatialDerivType& sdt)
 {
-  static Array<string> names = tuple<string>("Identity", "Partial", "Normal", "Divergence");
+  static Array<string> names = Teuchos::tuple<string>("Identity", "Partial", "Normal", "Divergence");
   os << names[sdt];
   return os;
 }

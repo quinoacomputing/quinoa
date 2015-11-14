@@ -1,12 +1,12 @@
 // @HEADER
 // ***********************************************************************
-// 
+//
 //         Stratimikos: Thyra-based strategies for linear solvers
 //                Copyright (2006) Sandia Corporation
-// 
+//
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -34,8 +34,8 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-// Questions? Contact Roscoe A. Bartlett (rabartl@sandia.gov) 
-// 
+// Questions? Contact Roscoe A. Bartlett (rabartl@sandia.gov)
+//
 // ***********************************************************************
 // @HEADER
 
@@ -51,7 +51,8 @@
 
 namespace {
 
-
+#if 0
+// unused implementation detail internal to this file
 inline
 Teuchos::ETransp convert( Thyra::EOpTransp trans_in )
 {
@@ -68,6 +69,7 @@ Teuchos::ETransp convert( Thyra::EOpTransp trans_in )
   }
   return trans_out;
 }
+#endif // 0
 
 
 // This class sets some solve instance specific state and then sets it back to
@@ -76,7 +78,7 @@ Teuchos::ETransp convert( Thyra::EOpTransp trans_in )
 // is thrown.
 class SetAztecSolveState {
 public:
-  SetAztecSolveState( 
+  SetAztecSolveState(
     const Teuchos::RCP<AztecOO> &aztecSolver,
     const Teuchos::RCP<Teuchos::FancyOStream> &fancyOStream,
     const Teuchos::EVerbosityLevel verbLevel,
@@ -93,15 +95,16 @@ private:
 };
 
 
-SetAztecSolveState::SetAztecSolveState( 
+SetAztecSolveState::SetAztecSolveState(
   const Teuchos::RCP<AztecOO> &aztecSolver,
   const Teuchos::RCP<Teuchos::FancyOStream> &fancyOStream,
   const Teuchos::EVerbosityLevel verbLevel,
   const Thyra::SolveMeasureType &solveMeasureType
   )
   :aztecSolver_(aztecSolver.assert_not_null())
+  ,outputFrequency_(0)
 {
-  
+
   // Output state
   verbLevel_ = verbLevel;
   if ( Teuchos::VERB_NONE != verbLevel_ ) {
@@ -162,7 +165,7 @@ SetAztecSolveState::SetAztecSolveState(
 
 SetAztecSolveState::~SetAztecSolveState()
 {
-      
+
   // Output state
   if ( Teuchos::VERB_NONE != verbLevel_ ) {
     if (!is_null(fancyOStream_)) {
@@ -177,7 +180,7 @@ SetAztecSolveState::~SetAztecSolveState()
 
   // Convergence test
   aztecSolver_->SetAztecOption(AZ_conv,convergenceTest_);
-      
+
 }
 
 
@@ -688,7 +691,7 @@ AztecOOLinearOpWithSolve::solveImpl(
     timer.stop();
 
     //
-    // Scale the solution 
+    // Scale the solution
     // (Originally, this was at the end of the loop after all columns had been
     // processed. It's moved here because we need to do it before copying the
     // solution back into a Thyra vector. - KL
@@ -724,7 +727,7 @@ AztecOOLinearOpWithSolve::solveImpl(
     oss << "  Total time = " << timer.totalElapsedTime() << " sec.";
     if (out.get() && static_cast<int>(verbLevel) > static_cast<int>(Teuchos::VERB_NONE) && outputEveryRhs())
       Teuchos::OSTab(out).o() << "j="<<j<<": " << oss.str() << "\n";
-    
+
     solveStatus.achievedTol = TEUCHOS_MAX(solveStatus.achievedTol, achievedTol);
     // Note, achieveTol may actually be greater than tol due to ill conditioning and roundoff!
 
@@ -749,7 +752,7 @@ AztecOOLinearOpWithSolve::solveImpl(
   }
 
   aztecSolver->UnsetLHSRHS();
-  
+
   //
   // Release the Epetra_MultiVector views of X and B
   //
@@ -802,4 +805,4 @@ AztecOOLinearOpWithSolve::solveImpl(
 }
 
 
-}	// end namespace Thyra
+}       // end namespace Thyra

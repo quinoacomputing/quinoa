@@ -18,7 +18,7 @@
 
     You should have received a copy of the GNU Lesser General Public License 
     (lgpl.txt) along with this library; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  
     diachin2@llnl.gov, djmelan@sandia.gov, mbrewer@sandia.gov, 
     pknupp@sandia.gov, tleurent@mcs.anl.gov, tmunson@mcs.anl.gov      
@@ -31,30 +31,30 @@
  */
 #include "meshfiles.h"
 #include "Mesquite.hpp"
-#include "MeshImpl.hpp"
-#include "MsqError.hpp"
-#include "InstructionQueue.hpp"
-#include "TerminationCriterion.hpp"
-#include "QualityAssessor.hpp"
-#include "PlanarDomain.hpp"
-#include "XYPlanarDomain.hpp"
-#include "MeshInterface.hpp"
+#include "Mesquite_MeshImpl.hpp"
+#include "Mesquite_MsqError.hpp"
+#include "Mesquite_InstructionQueue.hpp"
+#include "Mesquite_TerminationCriterion.hpp"
+#include "Mesquite_QualityAssessor.hpp"
+#include "Mesquite_PlanarDomain.hpp"
+#include "Mesquite_XYPlanarDomain.hpp"
+#include "Mesquite_MeshInterface.hpp"
 
-#include "TShapeNB1.hpp"   
-#include "TShapeB1.hpp"
-#include "TQualityMetric.hpp"    
-#include "IdealShapeTarget.hpp"
-#include "MaxTemplate.hpp"
-#include "PMeanPTemplate.hpp"
-#include "ElementMaxQM.hpp"
-#include "ElementAvgQM.hpp"
-#include "ElementPMeanP.hpp"
-#include "ElemSampleQM.hpp"
-#include "TargetCalculator.hpp"   
-#include "PMeanPTemplate.hpp"
-#include "LPtoPTemplate.hpp"
-#include "ElementPMeanP.hpp"
-#include "NonGradient.hpp"   
+#include "Mesquite_TShapeNB1.hpp"   
+#include "Mesquite_TShapeB1.hpp"
+#include "Mesquite_TQualityMetric.hpp"    
+#include "Mesquite_IdealShapeTarget.hpp"
+#include "Mesquite_MaxTemplate.hpp"
+#include "Mesquite_PMeanPTemplate.hpp"
+#include "Mesquite_ElementMaxQM.hpp"
+#include "Mesquite_ElementAvgQM.hpp"
+#include "Mesquite_ElementPMeanP.hpp"
+#include "Mesquite_ElemSampleQM.hpp"
+#include "Mesquite_TargetCalculator.hpp"   
+#include "Mesquite_PMeanPTemplate.hpp"
+#include "Mesquite_LPtoPTemplate.hpp"
+#include "Mesquite_ElementPMeanP.hpp"
+#include "Mesquite_NonGradient.hpp"   
 
 using namespace Mesquite;
 

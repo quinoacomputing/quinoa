@@ -18,7 +18,7 @@
 
     You should have received a copy of the GNU Lesser General Public License 
     (lgpl.txt) along with this library; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
 
     (2006) kraftche@cae.wisc.edu    
 
@@ -31,12 +31,12 @@
  */
 
 #include "Mesquite.hpp"
-#include "TagVertexMesh.hpp"
-#include "MsqError.hpp"
+#include "Mesquite_TagVertexMesh.hpp"
+#include "Mesquite_MsqError.hpp"
 #include "UnitUtil.hpp"
-#include "MeshImpl.hpp"
-#include "MsqVertex.hpp"
-#include "InstructionQueue.hpp"
+#include "Mesquite_MeshImpl.hpp"
+#include "Mesquite_MsqVertex.hpp"
+#include "Mesquite_InstructionQueue.hpp"
 #include <cppunit/extensions/HelperMacros.h>
 #include <stdio.h>
 

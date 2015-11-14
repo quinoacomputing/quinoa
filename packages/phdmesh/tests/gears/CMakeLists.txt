@@ -1,5 +1,4 @@
  
-INCLUDE(TribitsAddExecutableAndTest)
  
 TRIBITS_ADD_EXECUTABLE(
   test_mesh

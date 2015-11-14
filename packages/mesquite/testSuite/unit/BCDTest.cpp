@@ -18,7 +18,7 @@
 
     You should have received a copy of the GNU Lesser General Public License 
     (lgpl.txt) along with this library; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
 
     (2006) kraftche@cae.wisc.edu    
 
@@ -31,19 +31,19 @@
  */
 
 #include "Mesquite.hpp"
-#include "LPtoPTemplate.hpp"
-#include "PMeanPTemplate.hpp"
-#include "IdealWeightInverseMeanRatio.hpp"
-#include "InstructionQueue.hpp"
-#include "FeasibleNewton.hpp"
-#include "ConjugateGradient.hpp"
-#include "MeshImpl.hpp"
-#include "QualityAssessor.hpp"
-#include "TerminationCriterion.hpp"
+#include "Mesquite_LPtoPTemplate.hpp"
+#include "Mesquite_PMeanPTemplate.hpp"
+#include "Mesquite_IdealWeightInverseMeanRatio.hpp"
+#include "Mesquite_InstructionQueue.hpp"
+#include "Mesquite_FeasibleNewton.hpp"
+#include "Mesquite_ConjugateGradient.hpp"
+#include "Mesquite_MeshImpl.hpp"
+#include "Mesquite_QualityAssessor.hpp"
+#include "Mesquite_TerminationCriterion.hpp"
 
 #include "UnitUtil.hpp"
 #include "meshfiles.h"
-#include "cppunit/extensions/HelperMacros.h"
+#include "Mesquite_cppunit/extensions/HelperMacros.h"
 #include <iostream>
 #include <vector>
 #include <string>

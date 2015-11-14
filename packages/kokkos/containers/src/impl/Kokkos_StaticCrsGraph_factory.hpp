@@ -1,13 +1,13 @@
 /*
 //@HEADER
 // ************************************************************************
-//
-//   Kokkos: Manycore Performance-Portable Multidimensional Arrays
-//              Copyright (2012) Sandia Corporation
-//
+// 
+//                        Kokkos v. 2.0
+//              Copyright (2014) Sandia Corporation
+// 
 // Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
 // the U.S. Government retains certain rights in this software.
-//
+// 
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -36,7 +36,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 // Questions? Contact  H. Carter Edwards (hcedwar@sandia.gov)
-//
+// 
 // ************************************************************************
 //@HEADER
 */
@@ -64,7 +64,7 @@ typename StaticCrsGraph< DataType , Arg1Type , Arg2Type , SizeType >::HostMirror
 create_mirror( const StaticCrsGraph<DataType,Arg1Type,Arg2Type,SizeType > & view )
 {
   // Force copy:
-  typedef Impl::ViewAssignment< Impl::LayoutDefault > alloc ;
+  //typedef Impl::ViewAssignment< Impl::ViewDefault > alloc ; // unused
   typedef StaticCrsGraph< DataType , Arg1Type , Arg2Type , SizeType >  staticcrsgraph_type ;
 
   typename staticcrsgraph_type::HostMirror               tmp ;
@@ -104,13 +104,13 @@ create_staticcrsgraph( const std::string & label ,
                  const std::vector< InputSizeType > & input )
 {
   typedef StaticCrsGraphType                  output_type ;
-  typedef std::vector< InputSizeType >  input_type ;
+  //typedef std::vector< InputSizeType >  input_type ; // unused
 
   typedef typename output_type::entries_type   entries_type ;
 
   typedef View< typename output_type::size_type [] ,
                 typename output_type::array_layout ,
-                typename output_type::device_type > work_type ;
+                typename output_type::execution_space > work_type ;
 
   output_type output ;
 
@@ -147,18 +147,15 @@ typename StaticCrsGraphType::staticcrsgraph_type
 create_staticcrsgraph( const std::string & label ,
                  const std::vector< std::vector< InputSizeType > > & input )
 {
-  typedef StaticCrsGraphType                                output_type ;
-  typedef std::vector< std::vector< InputSizeType > > input_type ;
-  typedef typename output_type::entries_type          entries_type ;
-  typedef typename output_type::size_type             size_type ;
+  typedef StaticCrsGraphType                  output_type ;
+  typedef typename output_type::entries_type  entries_type ;
 
-  typedef typename
-    Impl::assert_shape_is_rank_one< typename entries_type::shape_type >::type
-      ok_rank ;
+  static_assert( entries_type::rank == 1
+               , "Graph entries view must be rank one" );
 
   typedef View< typename output_type::size_type [] ,
                 typename output_type::array_layout ,
-                typename output_type::device_type > work_type ;
+                typename output_type::execution_space > work_type ;
 
   output_type output ;
 

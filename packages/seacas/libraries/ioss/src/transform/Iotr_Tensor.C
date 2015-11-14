@@ -65,6 +65,8 @@ namespace Iotr {
 
   Tensor::Tensor(const std::string& type)
   {
+    type_ = INVALID;
+    
     if (type == "trace")
       type_ = TRACE;
     else if (type == "deviator")
@@ -150,7 +152,10 @@ namespace Iotr {
     case INVARIANTS:
       success = false;
       break;
+    default:
+      success = false;
     }
+
     return success;
   }
 }

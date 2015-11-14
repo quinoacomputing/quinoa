@@ -2,24 +2,25 @@ AdaptiveSaMLParameterListInterpreter
 AggregationExportFactory
 AmalgamationFactory
 Amesos2Smoother - #if defined(HAVE_MUELU_TPETRA) && defined(HAVE_MUELU_AMESOS2)
+AMGXOperator - #if defined(HAVE_MUELU_EXPERIMENTAL) && defined(HAVE_MUELU_AMGX)
 AlgebraicPermutationStrategy
-BlockedCoarseMapFactory
-BlockedGaussSeidelSmoother
-BlockedPFactory
-BlockedRAPFactory
+BlockedCoarseMapFactory - #ifdef HAVE_MUELU_EXPERIMENTAL
+BlockedDirectSolver - #ifdef HAVE_MUELU_EXPERIMENTAL
+BlockedGaussSeidelSmoother - #ifdef HAVE_MUELU_EXPERIMENTAL
+BlockedPFactory - #ifdef HAVE_MUELU_EXPERIMENTAL
+BlockedRAPFactory - #ifdef HAVE_MUELU_EXPERIMENTAL
 BrickAggregationFactory
-BraessSarazinSmoother
-CGSolver - #ifdef HAVE_MUELU_EXPERIMENTAL
+BraessSarazinSmoother - #ifdef HAVE_MUELU_EXPERIMENTAL
+CGSolver
 CoalesceDropFactory
 CoarseMapFactory
-Constraint - #ifdef HAVE_MUELU_EXPERIMENTAL
-ConstraintFactory - #ifdef HAVE_MUELU_EXPERIMENTAL
+Constraint
+ConstraintFactory
 CoordinatesTransferFactory
 CoupledRBMFactory
 DemoFactory
 DirectSolver
-EasyParameterListInterpreter
-EminPFactory - #ifdef HAVE_MUELU_EXPERIMENTAL
+EminPFactory
 FactoryFactory
 FactoryManager
 FakeSmootherPrototype
@@ -29,15 +30,19 @@ Hierarchy
 HierarchyManager
 HierarchyFactory
 Ifpack2Smoother - #if defined(HAVE_MUELU_TPETRA) && defined(HAVE_MUELU_IFPACK2)
+IndefBlockedDiagonalSmoother - #ifdef HAVE_MUELU_EXPERIMENTAL
+LineDetectionFactory
 LocalPermutationStrategy
 MapTransferFactory
+MergedBlockedMatrixFactory - #ifdef HAVE_MUELU_EXPERIMENTAL
 MergedSmoother
 MLParameterListInterpreter
 MultiVectorTransferFactory
 NullspaceFactory
-NullspacePresmoothFactory - #ifdef HAVE_MUELU_EXPERIMENTAL
+NullspacePresmoothFactory
 ParameterListInterpreter
-PatternFactory - #ifdef HAVE_MUELU_EXPERIMENTAL
+PatternFactory
+PerfUtils
 PermutationFactory
 PermutingSmoother
 PgPFactory
@@ -47,28 +52,33 @@ ProjectorSmoother
 RAPFactory
 RAPShiftFactory
 RebalanceAcFactory
-RebalanceBlockAcFactory
-RebalanceBlockInterpolationFactory
-RebalanceBlockRestrictionFactory
+RebalanceBlockAcFactory - #ifdef HAVE_MUELU_EXPERIMENTAL
+RebalanceBlockInterpolationFactory - #ifdef HAVE_MUELU_EXPERIMENTAL
+RebalanceBlockRestrictionFactory - #ifdef HAVE_MUELU_EXPERIMENTAL
 RebalanceTransferFactory
+RefMaxwell - #if defined(HAVE_MUELU_TPETRA) && defined(HAVE_MUELU_IFPACK2)
 RepartitionFactory - #ifdef HAVE_MPI
 RigidBodyModeFactory
 SaPFactory
-SchurComplementFactory
-SchwarzSmoother - #if defined(HAVE_MUELU_TPETRA) && defined(HAVE_MUELU_AMESOS2) && defined(HAVE_MUELU_IFPACK2)
-ShiftedLaplacian
-ShiftedLaplacianOperator
-SimpleSmoother
+SchurComplementFactory - #ifdef HAVE_MUELU_EXPERIMENTAL
+ShiftedLaplacian - #if defined(HAVE_MUELU_TPETRA) && defined(HAVE_MUELU_IFPACK2) && defined(HAVE_MUELU_BELOS)
+ShiftedLaplacianOperator - #if defined(HAVE_MUELU_TPETRA) && defined(HAVE_MUELU_BELOS)
+SimpleSmoother - #ifdef HAVE_MUELU_EXPERIMENTAL
 Smoother
 SmootherBase
 SmootherFactory
 SmootherPrototype
 SolverBase
-SteepestDescentSolver - #ifdef HAVE_MUELU_EXPERIMENTAL
-SubBlockAFactory
+SteepestDescentSolver
+SubBlockAFactory - #ifdef HAVE_MUELU_EXPERIMENTAL
 TentativePFactory
 ThresholdAFilterFactory
+ToggleCoordinatesTransferFactory
+TogglePFactory
 TpetraOperator
 TransPFactory
 TrilinosSmoother
 UserPFactory
+SemiCoarsenPFactory
+UzawaSmoother - #ifdef HAVE_MUELU_EXPERIMENTAL
+Zoltan2Interface - #if defined(HAVE_MUELU_ZOLTAN2) && defined(HAVE_MPI)

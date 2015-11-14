@@ -18,7 +18,7 @@
 
     You should have received a copy of the GNU Lesser General Public License 
     (lgpl.txt) along with this library; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  
     diachin2@llnl.gov, djmelan@sandia.gov, mbrewer@sandia.gov, 
     pknupp@sandia.gov, tleurent@mcs.anl.gov, tmunson@mcs.anl.gov      
@@ -49,33 +49,33 @@ SimplifiedGeometryEngine.
 #include "meshfiles.h"
 
 #include "PatchDataInstances.hpp"
-#include "cppunit/extensions/HelperMacros.h"
+#include "Mesquite_cppunit/extensions/HelperMacros.h"
 #include <math.h>
 
 #include "Mesquite.hpp"
-#include "MsqError.hpp"
-#include "InstructionQueue.hpp"
-#include "PatchData.hpp"
-//#include "StoppingCriterion.hpp"
-#include "QualityAssessor.hpp"
+#include "Mesquite_MsqError.hpp"
+#include "Mesquite_InstructionQueue.hpp"
+#include "Mesquite_PatchData.hpp"
+//#include "Mesquite_StoppingCriterion.hpp"
+#include "Mesquite_QualityAssessor.hpp"
 
-#include "ConditionNumberQualityMetric.hpp"
-#include "LPtoPTemplate.hpp"
-#include "EdgeLengthQualityMetric.hpp"
-#include "LaplacianSmoother.hpp"
-#include "LInfTemplate.hpp"
-#include "SteepestDescent.hpp"
-#include "ConjugateGradient.hpp"
-#include "AspectRatioGammaQualityMetric.hpp"
-#include "UntangleBetaQualityMetric.hpp"
-#include "MultiplyQualityMetric.hpp"
-#include "PlanarDomain.hpp"
+#include "Mesquite_ConditionNumberQualityMetric.hpp"
+#include "Mesquite_LPtoPTemplate.hpp"
+#include "Mesquite_EdgeLengthQualityMetric.hpp"
+#include "Mesquite_LaplacianSmoother.hpp"
+#include "Mesquite_LInfTemplate.hpp"
+#include "Mesquite_SteepestDescent.hpp"
+#include "Mesquite_ConjugateGradient.hpp"
+#include "Mesquite_AspectRatioGammaQualityMetric.hpp"
+#include "Mesquite_UntangleBetaQualityMetric.hpp"
+#include "Mesquite_MultiplyQualityMetric.hpp"
+#include "Mesquite_PlanarDomain.hpp"
 
-#include "MsqFPE.hpp"
+#include "Mesquite_MsqFPE.hpp"
 
 #include "UnitUtil.hpp"
 
-#include "MeshImpl.hpp"
+#include "Mesquite_MeshImpl.hpp"
 #include <iostream>
 using std::cout;
 using std::endl;

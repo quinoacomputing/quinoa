@@ -1,5 +1,4 @@
 
-INCLUDE(TribitsAddExecutableAndTest)
 
 # Disabled because Ifpack_CrsIct has been removed from Ifpack.
 #TRIBITS_ADD_EXECUTABLE(

@@ -110,8 +110,12 @@ namespace MueLu {
     \endcode
   */
 
-  template <class Scalar = double, class LocalOrdinal = int, class GlobalOrdinal = LocalOrdinal, class Node = KokkosClassic::DefaultNode::DefaultNodeType, class LocalMatOps = typename KokkosClassic::DefaultKernels<void,LocalOrdinal,Node>::SparseOps> //TODO: or BlockSparseOp ?
-  class BlockedGaussSeidelSmoother : public SmootherPrototype<Scalar,LocalOrdinal,GlobalOrdinal,Node,LocalMatOps>
+  template <class Scalar = SmootherPrototype<>::scalar_type,
+            class LocalOrdinal = typename SmootherPrototype<Scalar>::local_ordinal_type,
+            class GlobalOrdinal = typename SmootherPrototype<Scalar, LocalOrdinal>::global_ordinal_type,
+            class Node = typename SmootherPrototype<Scalar, LocalOrdinal, GlobalOrdinal>::node_type>
+  class BlockedGaussSeidelSmoother :
+    public SmootherPrototype<Scalar,LocalOrdinal,GlobalOrdinal,Node>
   {
     typedef Xpetra::MapExtractor<Scalar, LocalOrdinal, GlobalOrdinal, Node> MapExtractorClass;
 
@@ -125,7 +129,7 @@ namespace MueLu {
 
     /*! @brief Constructor
     */
-    BlockedGaussSeidelSmoother(const LocalOrdinal sweeps = 1, const Scalar omega = 1.0);
+    BlockedGaussSeidelSmoother();
 
     //! Destructor
     virtual ~BlockedGaussSeidelSmoother();
@@ -133,12 +137,16 @@ namespace MueLu {
 
     //! Input
     //@{
+    RCP<const ParameterList> GetValidParameterList() const;
 
     void DeclareInput(Level &currentLevel) const;
 
-
     //! Add a factory manager
-    void AddFactoryManager(RCP<const FactoryManagerBase> FactManager);
+    //void AddFactoryManager(RCP<const FactoryManagerBase> FactManager);
+
+    //! Add a factory manager at a specific position
+    void AddFactoryManager(RCP<const FactoryManagerBase> FactManager, int pos);
+
 
     //@}
 
@@ -185,10 +193,6 @@ namespace MueLu {
 
     //! vector of smoother/solver factories
     std::vector<Teuchos::RCP<const SmootherBase> > Inverse_;
-
-    //! BGS parameters
-    const LocalOrdinal nSweeps_;       // < ! BGS sweeps
-    const Scalar omega_;               // < ! relaxation parameter
 
     //! A Factory
     RCP<FactoryBase> AFact_;

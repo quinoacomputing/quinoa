@@ -2,8 +2,8 @@
 //@HEADER
 // ************************************************************************
 // 
-//   Kokkos: Manycore Performance-Portable Multidimensional Arrays
-//              Copyright (2012) Sandia Corporation
+//                        Kokkos v. 2.0
+//              Copyright (2014) Sandia Corporation
 // 
 // Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
 // the U.S. Government retains certain rights in this software.
@@ -35,7 +35,7 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-// Questions? Contact  H. Carter Edwards (hcedwar@sandia.gov) 
+// Questions? Contact  H. Carter Edwards (hcedwar@sandia.gov)
 // 
 // ************************************************************************
 //@HEADER
@@ -59,29 +59,29 @@ namespace Impl {
  *  It is presumed that the data type can be mapped down to a multidimensional
  *  array of an intrinsic scalar numerical type (double, float, int, ... ).
  *  The 'value_type' of an array may be an embedded aggregate type such
- *  as a fixed length array 'Array<T,N>'.  In this case the 'scalar_type'
- *  is 'T' and the 'value_type' is 'Array<T,N>' to enable data layout 
- *  according to shape and scalar_type AND data access by value_type.
+ *  as a fixed length array 'Array<T,N>'.
+ *  In this case the 'array_intrinsic_type' represents the
+ *  underlying array of intrinsic scalar numerical type.
  *
  *  The embedded aggregate type must have an AnalyzeShape specialization
  *  to map it down to a shape and intrinsic scalar numerical type.
  */
-
 template< class T >
 struct AnalyzeShape : public Shape< sizeof(T) , 0 >
 {
+  typedef void specialize ;
+
   typedef Shape< sizeof(T), 0 >  shape ;
 
-  typedef       T  scalar_type ;
-  typedef       T  array_type ;
+  typedef       T  array_intrinsic_type ;
   typedef       T  value_type ;
   typedef       T  type ;
-  typedef const T  const_scalar_type ;
-  typedef const T  const_array_type ;
+
+  typedef const T  const_array_intrinsic_type ;
   typedef const T  const_value_type ;
   typedef const T  const_type ;
-  typedef       T  non_const_scalar_type ;
-  typedef       T  non_const_array_type ;
+
+  typedef       T  non_const_array_intrinsic_type ;
   typedef       T  non_const_value_type ;
   typedef       T  non_const_type ;
 };
@@ -89,18 +89,17 @@ struct AnalyzeShape : public Shape< sizeof(T) , 0 >
 template<>
 struct AnalyzeShape<void> : public Shape< 0 , 0 >
 {
+  typedef void specialize ;
+
   typedef Shape< 0 , 0 >  shape ;
 
-  typedef       void  scalar_type ;
-  typedef       void  array_type ;
+  typedef       void  array_intrinsic_type ;
   typedef       void  value_type ;
   typedef       void  type ;
-  typedef const void  const_scalar_type ;
-  typedef const void  const_array_type ;
+  typedef const void  const_array_intrinsic_type ;
   typedef const void  const_value_type ;
   typedef const void  const_type ;
-  typedef       void  non_const_scalar_type ;
-  typedef       void  non_const_array_type ;
+  typedef       void  non_const_array_intrinsic_type ;
   typedef       void  non_const_value_type ;
   typedef       void  non_const_type ;
 };
@@ -112,22 +111,21 @@ private:
   typedef AnalyzeShape<T> nested ;
 public:
 
+  typedef typename nested::specialize specialize ;
+
   typedef typename nested::shape shape ;
 
-  typedef typename nested::const_scalar_type scalar_type ;
-  typedef typename nested::const_array_type  array_type ;
-  typedef typename nested::const_value_type  value_type ;
-  typedef typename nested::const_type        type ;
+  typedef typename nested::const_array_intrinsic_type  array_intrinsic_type ;
+  typedef typename nested::const_value_type            value_type ;
+  typedef typename nested::const_type                  type ;
 
-  typedef typename nested::const_scalar_type const_scalar_type ;
-  typedef typename nested::const_array_type  const_array_type ;
-  typedef typename nested::const_value_type  const_value_type ;
-  typedef typename nested::const_type        const_type ;
+  typedef typename nested::const_array_intrinsic_type  const_array_intrinsic_type ;
+  typedef typename nested::const_value_type            const_value_type ;
+  typedef typename nested::const_type                  const_type ;
 
-  typedef typename nested::non_const_scalar_type non_const_scalar_type ;
-  typedef typename nested::non_const_array_type  non_const_array_type ;
-  typedef typename nested::non_const_value_type  non_const_value_type ;
-  typedef typename nested::non_const_type        non_const_type ;
+  typedef typename nested::non_const_array_intrinsic_type  non_const_array_intrinsic_type ;
+  typedef typename nested::non_const_value_type            non_const_value_type ;
+  typedef typename nested::non_const_type                  non_const_type ;
 };
 
 template< class T >
@@ -138,22 +136,21 @@ private:
   typedef AnalyzeShape<T> nested ;
 public:
 
+  typedef typename nested::specialize specialize ;
+
   typedef typename ShapeInsert< typename nested::shape , 0 >::type shape ;
 
-  typedef typename nested::scalar_type  scalar_type ;
-  typedef typename nested::array_type * array_type ;
-  typedef typename nested::value_type   value_type ;
-  typedef typename nested::type       * type ;
+  typedef typename nested::array_intrinsic_type * array_intrinsic_type ;
+  typedef typename nested::value_type             value_type ;
+  typedef typename nested::type                 * type ;
 
-  typedef typename nested::const_scalar_type  const_scalar_type ;
-  typedef typename nested::const_array_type * const_array_type ;
-  typedef typename nested::const_value_type   const_value_type ;
-  typedef typename nested::const_type       * const_type ;
+  typedef typename nested::const_array_intrinsic_type * const_array_intrinsic_type ;
+  typedef typename nested::const_value_type             const_value_type ;
+  typedef typename nested::const_type                 * const_type ;
 
-  typedef typename nested::non_const_scalar_type  non_const_scalar_type ;
-  typedef typename nested::non_const_array_type * non_const_array_type ;
-  typedef typename nested::non_const_value_type   non_const_value_type ;
-  typedef typename nested::non_const_type       * non_const_type ;
+  typedef typename nested::non_const_array_intrinsic_type * non_const_array_intrinsic_type ;
+  typedef typename nested::non_const_value_type             non_const_value_type ;
+  typedef typename nested::non_const_type                 * non_const_type ;
 };
 
 template< class T >
@@ -164,22 +161,21 @@ private:
   typedef AnalyzeShape<T> nested ;
 public:
 
+  typedef typename nested::specialize specialize ;
+
   typedef typename ShapeInsert< typename nested::shape , 0 >::type shape ;
 
-  typedef typename nested::scalar_type scalar_type ;
-  typedef typename nested::array_type  array_type [] ;
-  typedef typename nested::value_type  value_type ;
-  typedef typename nested::type        type [] ;
+  typedef typename nested::array_intrinsic_type  array_intrinsic_type [] ;
+  typedef typename nested::value_type            value_type ;
+  typedef typename nested::type                  type [] ;
 
-  typedef typename nested::const_scalar_type const_scalar_type ;
-  typedef typename nested::const_array_type  const_array_type [] ;
-  typedef typename nested::const_value_type  const_value_type ;
-  typedef typename nested::const_type        const_type [] ;
+  typedef typename nested::const_array_intrinsic_type  const_array_intrinsic_type [] ;
+  typedef typename nested::const_value_type            const_value_type ;
+  typedef typename nested::const_type                  const_type [] ;
 
-  typedef typename nested::non_const_scalar_type non_const_scalar_type ;
-  typedef typename nested::non_const_array_type  non_const_array_type [] ;
-  typedef typename nested::non_const_value_type  non_const_value_type ;
-  typedef typename nested::non_const_type        non_const_type [] ;
+  typedef typename nested::non_const_array_intrinsic_type  non_const_array_intrinsic_type [] ;
+  typedef typename nested::non_const_value_type            non_const_value_type ;
+  typedef typename nested::non_const_type                  non_const_type [] ;
 };
 
 template< class T >
@@ -190,22 +186,21 @@ private:
   typedef AnalyzeShape< const T > nested ;
 public:
 
+  typedef typename nested::specialize specialize ;
+
   typedef typename ShapeInsert< typename nested::shape , 0 >::type shape ;
 
-  typedef typename nested::scalar_type scalar_type ;
-  typedef typename nested::array_type  array_type [] ;
-  typedef typename nested::value_type  value_type ;
-  typedef typename nested::type        type [] ;
+  typedef typename nested::array_intrinsic_type  array_intrinsic_type [] ;
+  typedef typename nested::value_type            value_type ;
+  typedef typename nested::type                  type [] ;
 
-  typedef typename nested::const_scalar_type const_scalar_type ;
-  typedef typename nested::const_array_type  const_array_type [] ;
-  typedef typename nested::const_value_type  const_value_type ;
-  typedef typename nested::const_type        const_type [] ;
+  typedef typename nested::const_array_intrinsic_type  const_array_intrinsic_type [] ;
+  typedef typename nested::const_value_type            const_value_type ;
+  typedef typename nested::const_type                  const_type [] ;
 
-  typedef typename nested::non_const_scalar_type non_const_scalar_type ;
-  typedef typename nested::non_const_array_type  non_const_array_type [] ;
-  typedef typename nested::non_const_value_type  non_const_value_type ;
-  typedef typename nested::non_const_type        non_const_type [] ;
+  typedef typename nested::non_const_array_intrinsic_type  non_const_array_intrinsic_type [] ;
+  typedef typename nested::non_const_value_type            non_const_value_type ;
+  typedef typename nested::non_const_type                  non_const_type [] ;
 };
 
 template< class T , unsigned N >
@@ -216,22 +211,21 @@ private:
   typedef AnalyzeShape<T> nested ;
 public:
 
+  typedef typename nested::specialize specialize ;
+
   typedef typename ShapeInsert< typename nested::shape , N >::type shape ;
 
-  typedef typename nested::scalar_type scalar_type ;
-  typedef typename nested::array_type  array_type [N] ;
-  typedef typename nested::value_type  value_type ;
-  typedef typename nested::type        type [N] ;
+  typedef typename nested::array_intrinsic_type  array_intrinsic_type [N] ;
+  typedef typename nested::value_type            value_type ;
+  typedef typename nested::type                  type [N] ;
 
-  typedef typename nested::const_scalar_type const_scalar_type ;
-  typedef typename nested::const_array_type  const_array_type [N] ;
-  typedef typename nested::const_value_type  const_value_type ;
-  typedef typename nested::const_type        const_type [N] ;
+  typedef typename nested::const_array_intrinsic_type  const_array_intrinsic_type [N] ;
+  typedef typename nested::const_value_type            const_value_type ;
+  typedef typename nested::const_type                  const_type [N] ;
 
-  typedef typename nested::non_const_scalar_type non_const_scalar_type ;
-  typedef typename nested::non_const_array_type  non_const_array_type [N] ;
-  typedef typename nested::non_const_value_type  non_const_value_type ;
-  typedef typename nested::non_const_type        non_const_type [N] ;
+  typedef typename nested::non_const_array_intrinsic_type  non_const_array_intrinsic_type [N] ;
+  typedef typename nested::non_const_value_type            non_const_value_type ;
+  typedef typename nested::non_const_type                  non_const_type [N] ;
 };
 
 template< class T , unsigned N >
@@ -242,22 +236,21 @@ private:
   typedef AnalyzeShape< const T > nested ;
 public:
 
+  typedef typename nested::specialize specialize ;
+
   typedef typename ShapeInsert< typename nested::shape , N >::type shape ;
 
-  typedef typename nested::scalar_type scalar_type ;
-  typedef typename nested::array_type  array_type [N] ;
-  typedef typename nested::value_type  value_type ;
-  typedef typename nested::type        type [N] ;
+  typedef typename nested::array_intrinsic_type  array_intrinsic_type [N] ;
+  typedef typename nested::value_type            value_type ;
+  typedef typename nested::type                  type [N] ;
 
-  typedef typename nested::const_scalar_type const_scalar_type ;
-  typedef typename nested::const_array_type  const_array_type [N] ;
-  typedef typename nested::const_value_type  const_value_type ;
-  typedef typename nested::const_type        const_type [N] ;
+  typedef typename nested::const_array_intrinsic_type  const_array_intrinsic_type [N] ;
+  typedef typename nested::const_value_type            const_value_type ;
+  typedef typename nested::const_type                  const_type [N] ;
 
-  typedef typename nested::non_const_scalar_type non_const_scalar_type ;
-  typedef typename nested::non_const_array_type  non_const_array_type [N] ;
-  typedef typename nested::non_const_value_type  non_const_value_type ;
-  typedef typename nested::non_const_type        non_const_type [N] ;
+  typedef typename nested::non_const_array_intrinsic_type  non_const_array_intrinsic_type [N] ;
+  typedef typename nested::non_const_value_type            non_const_value_type ;
+  typedef typename nested::non_const_type                  non_const_type [N] ;
 };
 
 } // namespace Impl

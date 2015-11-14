@@ -2,8 +2,8 @@
 //@HEADER
 // ************************************************************************
 // 
-//   Kokkos: Manycore Performance-Portable Multidimensional Arrays
-//              Copyright (2012) Sandia Corporation
+//                        Kokkos v. 2.0
+//              Copyright (2014) Sandia Corporation
 // 
 // Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
 // the U.S. Government retains certain rights in this software.
@@ -35,7 +35,7 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-// Questions? Contact  H. Carter Edwards (hcedwar@sandia.gov) 
+// Questions? Contact  H. Carter Edwards (hcedwar@sandia.gov)
 // 
 // ************************************************************************
 //@HEADER
@@ -46,11 +46,13 @@
 
 //----------------------------------------------------------------------------
 //----------------------------------------------------------------------------
+#include "Kokkos_Macros.hpp"
+#if defined( __CUDACC__ ) && defined( __CUDA_ARCH__ ) && defined( KOKKOS_HAVE_CUDA )
 
-#if defined( __CUDACC__ ) && defined( __CUDA_ARCH__ )
+#include <cuda.h>
 
 #if ! defined( CUDA_VERSION ) || ( CUDA_VERSION < 4010 )
-#errof "Cuda version 4.1 or greater required"
+#error "Cuda version 4.1 or greater required"
 #endif
 
 #if ( __CUDA_ARCH__ < 200 )
@@ -70,10 +72,12 @@ extern __device__ void __assertfail(
 }
 
 namespace Kokkos {
+namespace Impl {
 
 __device__ inline
 void cuda_abort( const char * const message )
 {
+#ifndef __APPLE__
   const char empty[] = "" ;
 
   __assertfail( (const void *) message ,
@@ -81,18 +85,32 @@ void cuda_abort( const char * const message )
                 (unsigned int) 0 ,
                 (const void *) empty ,
                 sizeof(char) );
+#endif
 }
 
+} // namespace Impl
 } // namespace Kokkos
 
 #else
 
 namespace Kokkos {
+namespace Impl {
 KOKKOS_INLINE_FUNCTION
 void cuda_abort( const char * const ) {}
 }
+}
 
 #endif /* #if defined( __CUDACC__ ) && defined( __CUDA_ARCH__ ) */
+
+//----------------------------------------------------------------------------
+//----------------------------------------------------------------------------
+
+#if defined( KOKKOS_ACTIVE_EXECUTION_MEMORY_SPACE_CUDA )
+namespace Kokkos {
+__device__ inline
+void abort( const char * const message ) { Kokkos::Impl::cuda_abort(message); }
+}
+#endif /* defined( KOKKOS_ACTIVE_EXECUTION_MEMORY_SPACE_CUDA ) */
 
 //----------------------------------------------------------------------------
 //----------------------------------------------------------------------------

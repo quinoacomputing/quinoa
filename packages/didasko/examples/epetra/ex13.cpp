@@ -1,13 +1,13 @@
 
 // @HEADER
 // ***********************************************************************
-// 
+//
 //                      Didasko Tutorial Package
 //                 Copyright (2005) Sandia Corporation
-// 
+//
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -36,7 +36,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 // Questions about Didasko? Contact Marzio Sala (marzio.sala _AT_ gmail.com)
-// 
+//
 // ***********************************************************************
 // @HEADER
 
@@ -78,7 +78,7 @@
 
 // function declaration
 void compute_loc_matrix( double *x_triangle, double *y_triangle,
-			 Epetra_SerialDenseMatrix &Ke );
+    Epetra_SerialDenseMatrix &Ke );
 int find( const int list[], const int length, const int index);
 
 // main driver
@@ -112,33 +112,33 @@ int main(int argc, char *argv[])
 
   switch( MyPID ) {
 
-  case 0:
-    NumMyElements = 3;
-    NumMyExternalElements = 2;
-    NumMyTotalElements = NumMyElements + NumMyExternalElements;
-    FE_NumMyElements = 3;
+    case 0:
+      NumMyElements = 3;
+      NumMyExternalElements = 2;
+      NumMyTotalElements = NumMyElements + NumMyExternalElements;
+      FE_NumMyElements = 3;
 
-    MyGlobalElements = new int[NumMyTotalElements];
-    MyGlobalElements[0] = 0;
-    MyGlobalElements[1] = 4;
-    MyGlobalElements[2] = 3;
-    MyGlobalElements[3] = 1;
-    MyGlobalElements[4] = 5;
+      MyGlobalElements = new int[NumMyTotalElements];
+      MyGlobalElements[0] = 0;
+      MyGlobalElements[1] = 4;
+      MyGlobalElements[2] = 3;
+      MyGlobalElements[3] = 1;
+      MyGlobalElements[4] = 5;
 
-    break;
-  case 1:
-    NumMyElements = 3;
-    NumMyExternalElements = 2;
-    NumMyTotalElements = NumMyElements + NumMyExternalElements;
-    FE_NumMyElements = 3;
+      break;
+    case 1:
+      NumMyElements = 3;
+      NumMyExternalElements = 2;
+      NumMyTotalElements = NumMyElements + NumMyExternalElements;
+      FE_NumMyElements = 3;
 
-    MyGlobalElements = new int[NumMyTotalElements];
-    MyGlobalElements[0] = 1;
-    MyGlobalElements[1] = 2;
-    MyGlobalElements[2] = 5;
-    MyGlobalElements[3] = 0;
-    MyGlobalElements[4] = 4;
-    break;
+      MyGlobalElements = new int[NumMyTotalElements];
+      MyGlobalElements[0] = 1;
+      MyGlobalElements[1] = 2;
+      MyGlobalElements[2] = 5;
+      MyGlobalElements[3] = 0;
+      MyGlobalElements[4] = 4;
+      break;
 
   }
 
@@ -151,40 +151,40 @@ int main(int argc, char *argv[])
 
   switch( MyPID ) {
 
-  case 0:
-    T.Shape(3,FE_NumMyElements);
+    case 0:
+      T.Shape(3,FE_NumMyElements);
 
-    // fill x-coordinates
-    CoordX_noExt[0] = 0.0; 
-    CoordX_noExt[1] = 1.0; 
-    CoordX_noExt[2] = 0.0;
-    // fill y-coordinates
-    CoordY_noExt[0] = 0.0; 
-    CoordY_noExt[1] = 1.0; 
-    CoordY_noExt[2] = 1.0;
-    // fill connectivity
-    T(0,0) = 0; T(0,1) = 4; T(0,2) = 3;
-    T(1,0) = 0; T(1,1) = 1; T(1,2) = 4;
-    T(2,0) = 4; T(2,1) = 1; T(2,2) = 5;
-    break;
-    
-  case 1:
+      // fill x-coordinates
+      CoordX_noExt[0] = 0.0;
+      CoordX_noExt[1] = 1.0;
+      CoordX_noExt[2] = 0.0;
+      // fill y-coordinates
+      CoordY_noExt[0] = 0.0;
+      CoordY_noExt[1] = 1.0;
+      CoordY_noExt[2] = 1.0;
+      // fill connectivity
+      T(0,0) = 0; T(0,1) = 4; T(0,2) = 3;
+      T(1,0) = 0; T(1,1) = 1; T(1,2) = 4;
+      T(2,0) = 4; T(2,1) = 1; T(2,2) = 5;
+      break;
 
-    T.Shape(3,FE_NumMyElements);
+    case 1:
 
-    // fill x-coordinates
-    CoordX_noExt[0] = 1.0; 
-    CoordX_noExt[1] = 2.0; 
-    CoordX_noExt[2] = 2.0;
-    // fill y-coordinates
-    CoordY_noExt[0] = 0.0; 
-    CoordY_noExt[1] = 0.0; 
-    CoordY_noExt[2] = 1.0;
-    // fill connectivity
-    T(0,0) = 0; T(0,1) = 1; T(0,2) = 4;
-    T(1,0) = 1; T(1,1) = 5; T(1,2) = 4;
-    T(2,0) = 1; T(2,1) = 2; T(2,2) = 5;
-    break;
+      T.Shape(3,FE_NumMyElements);
+
+      // fill x-coordinates
+      CoordX_noExt[0] = 1.0;
+      CoordX_noExt[1] = 2.0;
+      CoordX_noExt[2] = 2.0;
+      // fill y-coordinates
+      CoordY_noExt[0] = 0.0;
+      CoordY_noExt[1] = 0.0;
+      CoordY_noExt[2] = 1.0;
+      // fill connectivity
+      T(0,0) = 0; T(0,1) = 1; T(0,2) = 4;
+      T(1,0) = 1; T(1,1) = 5; T(1,2) = 4;
+      T(2,0) = 1; T(2,1) = 2; T(2,2) = 5;
+      break;
   }
 
   // - - - - - - - - - - - - - - - - - - - - //
@@ -193,7 +193,7 @@ int main(int argc, char *argv[])
 
   // build target map to exchange the valus of external nodes
   Epetra_Map TargetMap(-1,NumMyTotalElements,
-			  MyGlobalElements, 0, Comm);
+      MyGlobalElements, 0, Comm);
   // !@# rename Map -> SourceMap ?????
   Epetra_Import Importer(TargetMap,Map);
   Epetra_Vector CoordX(TargetMap);
@@ -201,7 +201,7 @@ int main(int argc, char *argv[])
 
   CoordX.Import(CoordX_noExt,Importer,Insert);
   CoordY.Import(CoordY_noExt,Importer,Insert);
- 
+
   // now CoordX_noExt and CoordY_noExt are no longer required
   // NOTE: better to construct CoordX and CoordY as MultiVector
 
@@ -218,7 +218,7 @@ int main(int argc, char *argv[])
   int Element, MyRow, GlobalRow, GlobalCol, i, j, k;
   Epetra_IntSerialDenseMatrix Struct; // temp to create the matrix connectivity
   Struct.Shape(NumMyElements,MaxNnzRow);
-  for( i=0 ; i<NumMyElements ; ++i ) 
+  for( i=0 ; i<NumMyElements ; ++i )
     for( j=0 ; j<MaxNnzRow ; ++j )
       Struct(i,j) = -1;
 
@@ -230,24 +230,24 @@ int main(int argc, char *argv[])
       GlobalRow = T(Element,i);
       MyRow = A.LRID(GlobalRow);
       if( MyRow != -1 ) { // only rows stored on this proc
-	// cycle over the columns
-	for( j=0 ; j<3 ; ++j ) {
-	  // get the global number only of this column
-	  GlobalCol = T(Element,j);
-	  // look if GlobalCol was already put in Struct
-	  for( k=0 ; k<MaxNnzRow ; ++k ) {
-	    if( Struct(MyRow,k) == GlobalCol ||
-		Struct(MyRow,k) == -1 ) break; 
-	  }
-	  if( Struct(MyRow,k) == -1 ) { // new entry
-	    Struct(MyRow,k) = GlobalCol;
-	  } else if( Struct(MyRow,k) != GlobalCol ) {
-	    // maybe not enough space has beenn allocated
-	    cerr << "ERROR: not enough space for element "
-		 << GlobalRow << "," << GlobalCol << endl;
-	    return( 0 );
-	  }
-	}
+        // cycle over the columns
+        for( j=0 ; j<3 ; ++j ) {
+          // get the global number only of this column
+          GlobalCol = T(Element,j);
+          // look if GlobalCol was already put in Struct
+          for( k=0 ; k<MaxNnzRow ; ++k ) {
+            if( Struct(MyRow,k) == GlobalCol ||
+                Struct(MyRow,k) == -1 ) break;
+          }
+          if( Struct(MyRow,k) == -1 ) { // new entry
+            Struct(MyRow,k) = GlobalCol;
+          } else if( Struct(MyRow,k) != GlobalCol ) {
+            // maybe not enough space has beenn allocated
+            cerr << "ERROR: not enough space for element "
+              << GlobalRow << "," << GlobalCol << endl;
+            return( 0 );
+          }
+        }
       }
     }
   }
@@ -264,7 +264,7 @@ int main(int argc, char *argv[])
       Indices[Length] = Struct(Row,j);
       Length++;
     }
-    GlobalRow = MyGlobalElements[Row];    
+    GlobalRow = MyGlobalElements[Row];
     A.InsertGlobalValues(GlobalRow, Length, Values, Indices);
   }
 
@@ -273,10 +273,10 @@ int main(int argc, char *argv[])
     for( int i=0 ; i<3 ; ++i ) {
       int global = T(Element,i);
       int local = find(MyGlobalElements,NumMyTotalElements,
-			global);
+          global);
       if( global == -1 ) {
-	cerr << "ERROR\n";
-	return( EXIT_FAILURE );
+        cerr << "ERROR\n";
+        return( EXIT_FAILURE );
       }
       T(Element,i) = local;
     }
@@ -301,12 +301,12 @@ int main(int argc, char *argv[])
     // get the spatial coordinate of each local node
     for( int i=0 ; i<3 ; ++i ) {
       MyRow = T(Element,i);
-      y_triangle[i] = CoordX[MyRow]; 
-      x_triangle[i] = CoordY[MyRow]; 
+      y_triangle[i] = CoordX[MyRow];
+      x_triangle[i] = CoordY[MyRow];
     }
     // compute the local matrix for Element
 
-    compute_loc_matrix( x_triangle, y_triangle,Ke ); 
+    compute_loc_matrix( x_triangle, y_triangle,Ke );
 
     // insert it in the global one
     // cycle over each row
@@ -314,12 +314,12 @@ int main(int argc, char *argv[])
       // get the global and local number of this row
       MyRow = T(Element,i);
       if( MyRow < NumMyElements ) {
-	for( int j=0 ; j<3 ; ++j ) {
-	  // get global column number
-	  GlobalRow = MyGlobalElements[MyRow];
-	  GlobalCol = MyGlobalElements[T(Element,j)];
-	  A.SumIntoGlobalValues(GlobalRow,1,&(Ke(i,j)),&GlobalCol);
-	}
+        for( int j=0 ; j<3 ; ++j ) {
+          // get global column number
+          GlobalRow = MyGlobalElements[MyRow];
+          GlobalCol = MyGlobalElements[T(Element,j)];
+          A.SumIntoGlobalValues(GlobalRow,1,&(Ke(i,j)),&GlobalCol);
+        }
       }
     }
   }
@@ -336,9 +336,9 @@ int main(int argc, char *argv[])
   // Solution can be obtained using Aztecoo
 
   // free memory before leaving
-  delete MyGlobalElements;
-  delete Indices;
-  delete Values;
+  delete[] MyGlobalElements;
+  delete[] Indices;
+  delete[] Values;
 
 #ifdef HAVE_MPI
   MPI_Finalize();
@@ -348,7 +348,7 @@ int main(int argc, char *argv[])
 
 } /* main */
 
-int find( const int list[], const int length, const int index) 
+int find( const int list[], const int length, const int index)
 {
 
   int pos=-1;
@@ -363,9 +363,9 @@ int find( const int list[], const int length, const int index)
 } /* find */
 
 void compute_loc_matrix( double *x_triangle, double *y_triangle,
-			 Epetra_SerialDenseMatrix & Ke ) 
+    Epetra_SerialDenseMatrix & Ke )
 {
-  
+
   int    ii, jj;
   double det_J;
   double xa, ya, xb, yb, xc, yc;
@@ -390,7 +390,7 @@ void compute_loc_matrix( double *x_triangle, double *y_triangle,
   det_J = (xb-xa)*(yc-ya)-(xc-xa)*(yb-ya);
   det_J = 2*det_J;
   if( det_J<0 ) det_J *=-1;
-  
+
   for (ii = 0; ii < 3; ii++) {
     for (jj = 0; jj < 3; jj++) {
       Ke(ii,jj) = Ke(ii,jj) / det_J;
@@ -409,7 +409,7 @@ void compute_loc_matrix( double *x_triangle, double *y_triangle,
 int main(int argc, char *argv[])
 {
   puts("Please configure Didasko with:\n"
-       "--enable-epetra");
+      "--enable-epetra");
 
   return 0;
 }

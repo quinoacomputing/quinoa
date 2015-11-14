@@ -115,7 +115,7 @@ Teuchos::ParameterList Ifpack_GetValidParameters()
 
   // Additive Schwarz preconditioner
   List.set("schwarz: compute condest", true);
-  List.set("schwarz: combine mode", "Zero"); // use string mode for this
+  List.set("schwarz: combine mode", "Zero"); // use std::string mode for this
   List.set("schwarz: reordering type", "none");
   List.set("schwarz: filter singletons", false);
 
@@ -130,6 +130,16 @@ Teuchos::ParameterList Ifpack_GetValidParameters()
 
   // Ifpack_METISPartitioner.h
   List.set("partitioner: use symmetric graph", true);
+
+  // Krylov smoother
+  List.set("krylov: iterations",(int)5);
+  List.set("krylov: tolerance",(double)0.001);
+  List.set("krylov: solver",(int)1);
+  List.set("krylov: preconditioner",(int)0);
+  List.set("krylov: number of sweeps",(int)1);
+  List.set("krylov: block size",(int)1);
+  List.set("krylov: damping parameter",(double)1.0);
+  List.set("krylov: zero starting solution",true);
 
   return(List);
 }

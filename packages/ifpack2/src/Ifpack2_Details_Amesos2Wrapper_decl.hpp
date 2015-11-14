@@ -55,7 +55,7 @@
 #include <Ifpack2_Preconditioner.hpp>
 #include <Ifpack2_Details_CanChangeMatrix.hpp>
 
-#if defined(HAVE_IFPACK2_EXPERIMENTAL) && defined(HAVE_IFPACK2_AMESOS2)
+#ifdef HAVE_IFPACK2_AMESOS2
 #include <Amesos2_config.h>
 #include <Amesos2.hpp>
 
@@ -70,39 +70,28 @@ namespace Details {
 /// @brief Wrapper class for direct solvers in Amesos2.
 /// \tparam MatrixType A specialization of Tpetra::CrsMatrix.
 ///
-/// This class computes a sparse direct factorization of a local
-/// matrix using Amesos2.
-///
-/// The "local matrix" is the square diagonal block of the matrix
-/// owned by the calling process.  Thus, if the input matrix is
-/// distributed over multiple MPI processes, this preconditioner is
-/// equivalent to nonoverlapping additive Schwarz domain decomposition
-/// over the MPI processes, with Amesos2 as the subdomain Wrapper on
-/// each process.
+/// This class computes a sparse factorization of the input
+/// matrix A using Amesos2.  The apply() method solves linear
+/// system(s) using that factorization.  As with all Ifpack2
+/// preconditioners, initialize() computes the symbolic factorization,
+/// and compute() computes the numeric factorization.
 ///
 /// \warning This class is an implementation detail of Ifpack2.  Users
 ///   must not rely on this class.  It may go away or its interface
 ///   may change at any time.
 ///
-/// \warning (mfh 10 Dec 2013) I strongly object to the need for this
-///   class.  I will leave it in place because users need a way to
-///   specify a sparse direct solver as a subdomain solver for
-///   AdditiveSchwarz and SupportGraph.  It should be removed as soon
-///   as we have a Stratimikos-like central factory solution for
-///   solvers in the Tpetra-based solver stack.
-///
 /// \warning \c MatrixType <i>must</i> be a specialization of
 ///   Tpetra::CrsMatrix.  It may <i>not</i> just be a specialization
-///   of Tpetra::RowMatrix.  This is a requirement of the interface of
-///   Amesos2.
+///   of Tpetra::RowMatrix.  This requirement comes from Amesos2's
+///   Tpetra adapter.
 ///
-/// \note This class does <i>not</i> apply a LocalFilter to the input
-///   matrix A.  This is unnecessary for subdomain solvers in
-///   AdditiveSchwarz, because AdditiveSchwarz already applies a
-///   LocalFilter to the matrix it passes to its subdomain solver.
-///   Furthermore, some Amesos2 sparse factorizations do support MPI
-///   parallelism, so it is reasonable to leave this option open to
-///   users, rather than forcing a LocalFilter.
+/// \warning This class creates a local filter.  In particular, if the matrix
+///   is not a true Tpetra::CrsMatrix, this class will perform a deep copy to produce
+///   a CrsMatrix.  This will happen, for example, if you are doing additive Schwarz
+///   with nonzero overlap, and apply Amesos2 as the subdomain solve.  This deep copy
+///   is required by Amesos2, and is in addition to any data copying that Amesos2 may
+///   do internally to satisfy TPL storage formats.
+///
 template<class MatrixType>
 class Amesos2Wrapper :
     virtual public Ifpack2::Preconditioner<typename MatrixType::scalar_type,
@@ -121,36 +110,17 @@ public:
   //! The type of the entries of the input MatrixType.
   typedef typename MatrixType::scalar_type scalar_type;
 
-  //! Preserved only for backwards compatibility.  Please use "scalar_type".
-  TEUCHOS_DEPRECATED typedef typename MatrixType::scalar_type Scalar;
-
-
   //! The type of local indices in the input MatrixType.
   typedef typename MatrixType::local_ordinal_type local_ordinal_type;
-
-  //! Preserved only for backwards compatibility.  Please use "local_ordinal_type".
-  TEUCHOS_DEPRECATED typedef typename MatrixType::local_ordinal_type LocalOrdinal;
-
 
   //! The type of global indices in the input MatrixType.
   typedef typename MatrixType::global_ordinal_type global_ordinal_type;
 
-  //! Preserved only for backwards compatibility.  Please use "global_ordinal_type".
-  TEUCHOS_DEPRECATED typedef typename MatrixType::global_ordinal_type GlobalOrdinal;
-
-
-  //! The type of the Kokkos Node used by the input MatrixType.
+  //! The Node type used by the input MatrixType.
   typedef typename MatrixType::node_type node_type;
-
-  //! Preserved only for backwards compatibility.  Please use "node_type".
-  TEUCHOS_DEPRECATED typedef typename MatrixType::node_type Node;
-
 
   //! The type of the magnitude (absolute value) of a matrix entry.
   typedef typename Teuchos::ScalarTraits<scalar_type>::magnitudeType magnitude_type;
-
-  //! Preserved only for backwards compatibility.  Please use "magnitude_type".
-  TEUCHOS_DEPRECATED typedef typename Teuchos::ScalarTraits<scalar_type>::magnitudeType magnitudeType;
 
   //! Type of the Tpetra::RowMatrix specialization that this class uses.
   typedef Tpetra::RowMatrix<scalar_type,
@@ -162,6 +132,12 @@ public:
   typedef Tpetra::Map<local_ordinal_type,
                       global_ordinal_type,
                       node_type> map_type;
+
+  //! Type of the Tpetra::CrsMatrix specialization that this class uses.
+  typedef Tpetra::CrsMatrix<scalar_type,
+                            local_ordinal_type,
+                            global_ordinal_type,
+                            node_type> crs_matrix_type;
   //@}
   //! \name Constructors and destructor
   //@{
@@ -288,28 +264,6 @@ public:
   //! \name Mathematical functions
   //@{
 
-  /// \brief Compute the condition number estimate and return its value.
-  ///
-  /// \warning This method is DEPRECATED.  It was inherited from
-  ///   Ifpack, and Ifpack never clearly stated what this method
-  ///   computes.  Furthermore, Ifpack's method just estimates the
-  ///   condition number of the matrix A, and ignores the
-  ///   preconditioner -- which is probably not what users thought it
-  ///   did.  If there is sufficient interest, we might reintroduce
-  ///   this method with a different meaning and a better algorithm.
-  virtual magnitude_type TEUCHOS_DEPRECATED
-  computeCondEst (CondestType CT = Cheap,
-                  local_ordinal_type MaxIters = 1550,
-                  magnitude_type Tol = 1e-9,
-                  const Teuchos::Ptr<const Tpetra::RowMatrix<scalar_type,local_ordinal_type,global_ordinal_type,node_type> >& Matrix_in = Teuchos::null);
-
-  /// \brief Return the computed condition number estimate, or -1 if not computed.
-  ///
-  /// \warning This method is DEPRECATED.  See warning for computeCondEst().
-  virtual magnitude_type TEUCHOS_DEPRECATED getCondEst () const {
-    return Condest_;
-  }
-
   //! The input matrix's communicator.
   Teuchos::RCP<const Teuchos::Comm<int> > getComm () const;
 
@@ -363,21 +317,42 @@ private:
   Amesos2Wrapper<MatrixType>& operator= (const Amesos2Wrapper<MatrixType>& RHS);
 
   //! Amesos2 solver; it contains the factorization of the matrix A_.
-  Teuchos::RCP<Amesos2::Solver<MatrixType, MV> > amesos2solver_;
+  Teuchos::RCP<Amesos2::Solver<crs_matrix_type, MV> > amesos2solver_;
 
-  //! The matrix to be preconditioned.
-  Teuchos::RCP<const MatrixType> A_;
+  /// \brief Return A, wrapped in a LocalFilter, if necessary.
+  ///
+  /// "If necessary" means that if A is already a LocalFilter, or if
+  /// its communicator only has one process, then we don't need to
+  /// wrap it, so we just return A.
+  static Teuchos::RCP<const row_matrix_type>
+  makeLocalFilter (const Teuchos::RCP<const row_matrix_type>& A);
+
+  //! The (original) input matrix to be preconditioned.
+  //Teuchos::RCP<const MatrixType> A_;
+  Teuchos::RCP<const row_matrix_type> A_;
+
+  /// \brief The matrix used to compute the Amesos2 preconditioner.
+  ///
+  /// If A_local (the local filter of the original input matrix) is a
+  /// Tpetra::CrsMatrix, then this is just A_local.  Otherwise, this
+  /// class reserves the right for A_local_crs_ to be a copy of
+  /// A_local.  This is because the current adapters in Amesos2
+  /// only accept a Tpetra::CrsMatrix.  That may change
+  /// in the future.
+  Teuchos::RCP<const crs_matrix_type> A_local_crs_;
 
   //@}
   // \name Parameters (set by setParameters())
   //@{
 
+  //! Caches parameters passed into setParameters
+  //! if the concrete inner preconditioner doesn't exist yet.
+  Teuchos::RCP<const Teuchos::ParameterList> parameterList_;
+
   //@}
   // \name Other internal data
   //@{
 
-  //! Condition number estimate (DEPRECATED; DO NOT USE)
-  magnitude_type Condest_;
   //! Total time in seconds for all successful calls to initialize().
   double InitializeTime_;
   //! Total time in seconds for all successful calls to compute().
@@ -394,6 +369,9 @@ private:
   bool IsInitialized_;
   //! \c true if \c this object has been computed
   bool IsComputed_;
+  //! @brief The name of the solver in Amesos2 to use.
+  //! See the Amesos2 documentation for valid names.
+  std::string SolverName_;
   //@}
 }; // class Amesos2Wrapper
 

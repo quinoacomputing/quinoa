@@ -1,12 +1,12 @@
 // @HEADER
 // ***********************************************************************
-// 
+//
 //                      Didasko Tutorial Package
 //                 Copyright (2005) Sandia Corporation
-// 
+//
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -35,7 +35,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 // Questions about Didasko? Contact Marzio Sala (marzio.sala _AT_ gmail.com)
-// 
+//
 // ***********************************************************************
 // @HEADER
 
@@ -62,15 +62,14 @@
 // value, and the sub- and super-diagonal values.
 // ============================================================
 
-class TridiagonalCrsMatrix : public Epetra_CrsMatrix { 
-  
-public:
-  TridiagonalCrsMatrix(const Epetra_Map & Map,
-			      double a,
-			      double diag, double c) :
-    Epetra_CrsMatrix(Copy,Map,3) 
-  {
+class TridiagonalCrsMatrix : public Epetra_CrsMatrix {
 
+  public:
+    TridiagonalCrsMatrix(const Epetra_Map & Map,
+        double a,
+        double diag, double c) :
+      Epetra_CrsMatrix(Copy,Map,3)
+  {
     // global number of rows
     int NumGlobalElements = Map.NumGlobalElements();
     // local number of rows
@@ -82,23 +81,23 @@ public:
     // Add  rows one-at-a-time
     // Need some vectors to help
     // Off diagonal Values will always be -1
-    
+
     double *Values = new double[2];
     Values[0] = a; Values[1] = c;
     int *Indices = new int[2];
     int NumEntries;
-    
+
     for( int i=0 ; i<NumMyElements; ++i ) {
       if (MyGlobalElements[i]==0) {
-	Indices[0] = 1;
-	NumEntries = 1;
+        Indices[0] = 1;
+        NumEntries = 1;
       } else if (MyGlobalElements[i] == NumGlobalElements-1) {
-	Indices[0] = NumGlobalElements-2;
-	NumEntries = 1;
+        Indices[0] = NumGlobalElements-2;
+        NumEntries = 1;
       } else {
-	Indices[0] = MyGlobalElements[i]-1;
-	Indices[1] = MyGlobalElements[i]+1;
-	NumEntries = 2;
+        Indices[0] = MyGlobalElements[i]-1;
+        Indices[1] = MyGlobalElements[i]+1;
+        NumEntries = 2;
       }
       InsertGlobalValues(MyGlobalElements[i], NumEntries, Values, Indices);
       // Put in the diagonal entry
@@ -106,8 +105,11 @@ public:
     }
 
     FillComplete();
+    delete[] MyGlobalElements;
+    delete[] Values;
+    delete[] Indices;
   }
-  
+
 };
 
 /* ======== ================ *
@@ -126,20 +128,20 @@ public:
  * Parameters:
  * ----------
  *
- * - Epetra_CrsMatrix  reference to the ditributed CrsMatrix to 
+ * - Epetra_CrsMatrix  reference to the ditributed CrsMatrix to
  *                     print out
  */
 
-bool CrsMatrix2MATLAB( const Epetra_CrsMatrix & A ) 
+bool CrsMatrix2MATLAB( const Epetra_CrsMatrix & A )
 
 {
 
-  int MyPID = A.Comm().MyPID(); 
+  int MyPID = A.Comm().MyPID();
   int NumProc = A.Comm().NumProc();
 
   // work only on transformed matrices;
   if( A.IndicesAreLocal() == false ) {
-    if( MyPID == 0 ) { 
+    if( MyPID == 0 ) {
       cerr << "ERROR in "<< __FILE__ << ", line " << __LINE__ << endl;
       cerr << "Function CrsMatrix2MATLAB accepts\n";
       cerr << "transformed matrices ONLY. Please call A.FillComplete()\n";
@@ -162,7 +164,7 @@ bool CrsMatrix2MATLAB( const Epetra_CrsMatrix & A )
   // print out on cout if no filename is provided
 
   int IndexBase = A.IndexBase(); // MATLAB start from 0
-  if( IndexBase == 0 ) IndexBase = 1; 
+  if( IndexBase == 0 ) IndexBase = 1;
 
   // write on file the dimension of the matrix
 
@@ -182,26 +184,26 @@ bool CrsMatrix2MATLAB( const Epetra_CrsMatrix & A )
 
       // cycle over all local rows to find out nonzero elements
       for( int MyRow=0 ; MyRow<NumMyRows ; ++MyRow ) {
-	
-	GlobalRow = A.GRID(MyRow);
-	
-	NumNzRow = A.NumMyEntries(MyRow);
-	double *Values = new double[NumNzRow];
-	int *Indices = new int[NumNzRow];
-	
-	A.ExtractMyRowCopy(MyRow, NumNzRow, 
-			   NumEntries, Values, Indices);
-	// print out the elements with MATLAB syntax
-	for( int j=0 ; j<NumEntries ; ++j ) {
-	  cout << "A(" << GlobalRow  + IndexBase 
-	       << "," << A.GCID(Indices[j]) + IndexBase
-	       << ") = " << Values[j] << ";\n";
-	}
-	
-	delete Values;
-	delete Indices;
+
+        GlobalRow = A.GRID(MyRow);
+
+        NumNzRow = A.NumMyEntries(MyRow);
+        double *Values = new double[NumNzRow];
+        int *Indices = new int[NumNzRow];
+
+        A.ExtractMyRowCopy(MyRow, NumNzRow,
+            NumEntries, Values, Indices);
+        // print out the elements with MATLAB syntax
+        for( int j=0 ; j<NumEntries ; ++j ) {
+          cout << "A(" << GlobalRow  + IndexBase
+            << "," << A.GCID(Indices[j]) + IndexBase
+            << ") = " << Values[j] << ";\n";
+        }
+
+        delete[] Values;
+        delete[] Indices;
       }
-      
+
     }
     A.Comm().Barrier();
     if( MyPID == 0 ) {
@@ -231,7 +233,7 @@ int main(int argc, char *argv[]) {
 
   // define a linear map
   Epetra_Map Map(NumGlobalElements,0,Comm);
-  
+
   // create the matrix
   TridiagonalCrsMatrix A( Map, -1.0, 2.0, -1.0);
 
@@ -254,7 +256,7 @@ int main(int argc, char *argv[]) {
 int main(int argc, char *argv[])
 {
   puts("Please configure Didasko with:\n"
-       "--enable-epetra");
+      "--enable-epetra");
 
   return 0;
 }

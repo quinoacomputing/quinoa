@@ -47,13 +47,11 @@
 #define XPETRA_MATRIXFACTORY_FWD_HPP
 
 namespace Xpetra {
-  template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node, class LocalMatOps>
+  template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
   class MatrixFactory;
 
-#ifdef HAVE_XPETRA_EXPERIMENTAL
-  template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node, class LocalMatOps>
+  template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
   class MatrixFactory2;
-#endif
 }
 
 #ifndef XPETRA_MATRIXFACTORY_SHORT

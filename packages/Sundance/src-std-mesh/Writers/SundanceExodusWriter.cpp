@@ -372,7 +372,7 @@ void ExodusWriter::writeFields(int exoid,
       }
       else
       {
-        funcToNSMap.put(f[j], tuple(i));
+        funcToNSMap.put(f[j], Teuchos::tuple(i));
       }
     }
   }
@@ -469,7 +469,7 @@ void ExodusWriter::writeFields(int exoid,
     for (int i=0; i<nNodalFuncs; i++)
     {
       int f = omnipresentNodalFuncs[i];
-      pointScalarFields()[f]->getDataBatch(0, nodeID, tuple(f), funcVals);
+      pointScalarFields()[f]->getDataBatch(0, nodeID, Teuchos::tuple(f), funcVals);
       int t = 1;
       int numNodes = funcVals.size();
       ierr = ex_put_nodal_var(exoid, t, i+1, numNodes, &(funcVals[0]));
@@ -484,7 +484,7 @@ void ExodusWriter::writeFields(int exoid,
       for (int s=0; s<ns.size(); s++)
       {
         const Array<int>& nodes = *(nodesForNodeset[ns[s]]);
-        pointScalarFields()[fid]->getDataBatch(0, nodes, tuple(fid), funcVals);
+        pointScalarFields()[fid]->getDataBatch(0, nodes, Teuchos::tuple(fid), funcVals);
         int t = 1;
         int numNodes = funcVals.size();
         int id = nsID[ns[s]];
@@ -507,7 +507,7 @@ void ExodusWriter::writeFields(int exoid,
     for (int i=0; i<nElemFuncs; i++)
     {
       int f = omnipresentElemFuncs[i];
-      cellScalarFields()[f]->getDataBatch(dim, elemID, tuple(f), funcVals);
+      cellScalarFields()[f]->getDataBatch(dim, elemID, Teuchos::tuple(f), funcVals);
       int t = 1;
       int numElems = funcVals.size();
       ierr = ex_put_elem_var(exoid, t, i+1, 1, numElems, &(funcVals[0]));

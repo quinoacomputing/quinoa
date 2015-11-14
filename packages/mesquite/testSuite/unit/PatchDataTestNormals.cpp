@@ -1,9 +1,9 @@
 
 
 #include "Mesquite.hpp"
-#include "PatchData.hpp"
-#include "SphericalDomain.hpp"
-#include "BoundedCylinderDomain.hpp"
+#include "Mesquite_PatchData.hpp"
+#include "Mesquite_SphericalDomain.hpp"
+#include "Mesquite_BoundedCylinderDomain.hpp"
 #include <cppunit/extensions/HelperMacros.h>
 #include <iostream>
 

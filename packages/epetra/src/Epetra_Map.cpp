@@ -1,10 +1,10 @@
 
 //@HEADER
 // ************************************************************************
-// 
-//               Epetra: Linear Algebra Services Package 
+//
+//               Epetra: Linear Algebra Services Package
 //                 Copyright 2011 Sandia Corporation
-// 
+//
 // Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
 // the U.S. Government retains certain rights in this software.
 //
@@ -35,8 +35,8 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-// Questions? Contact Michael A. Heroux (maherou@sandia.gov) 
-// 
+// Questions? Contact Michael A. Heroux (maherou@sandia.gov)
+//
 // ************************************************************************
 //@HEADER
 
@@ -127,8 +127,8 @@ Epetra_Map::Epetra_Map(long long numGlobalElements, int numMyElements,
 Epetra_Map::Epetra_Map(int numGlobalElements, int numMyElements,
                        const int * myGlobalElements,
                        int indexBase, const Epetra_Comm& comm,
-		       bool UserIsDistributedGlobal,
-		       int UserMinAllGID, int UserMaxAllGID)
+                       bool UserIsDistributedGlobal,
+                       int UserMinAllGID, int UserMaxAllGID)
   : Epetra_BlockMap(numGlobalElements, numMyElements, myGlobalElements, 1, indexBase, comm, UserIsDistributedGlobal, UserMinAllGID, UserMaxAllGID) // Map is just a special case of BlockMap
 {
   SetLabel("Epetra::Map");
@@ -138,8 +138,8 @@ Epetra_Map::Epetra_Map(int numGlobalElements, int numMyElements,
 Epetra_Map::Epetra_Map(long long numGlobalElements, int numMyElements,
                        const long long * myGlobalElements,
                        int indexBase, const Epetra_Comm& comm,
-		       bool UserIsDistributedGlobal,
-		       long long UserMinAllGID, long long UserMaxAllGID)
+                       bool UserIsDistributedGlobal,
+                       long long UserMinAllGID, long long UserMaxAllGID)
   : Epetra_BlockMap(numGlobalElements, numMyElements, myGlobalElements, 1, indexBase, comm, UserIsDistributedGlobal, UserMinAllGID, UserMaxAllGID) // Map is just a special case of BlockMap
 {
   SetLabel("Epetra::Map");
@@ -147,8 +147,8 @@ Epetra_Map::Epetra_Map(long long numGlobalElements, int numMyElements,
 Epetra_Map::Epetra_Map(long long numGlobalElements, int numMyElements,
                        const long long * myGlobalElements,
                        long long indexBase, const Epetra_Comm& comm,
-		       bool UserIsDistributedGlobal,
-		       long long UserMinAllGID, long long UserMaxAllGID)
+                       bool UserIsDistributedGlobal,
+                       long long UserMinAllGID, long long UserMaxAllGID)
   : Epetra_BlockMap(numGlobalElements, numMyElements, myGlobalElements, 1, indexBase, comm, UserIsDistributedGlobal, UserMinAllGID, UserMaxAllGID) // Map is just a special case of BlockMap
 {
   SetLabel("Epetra::Map");
@@ -176,13 +176,13 @@ Epetra_Map & Epetra_Map::operator= (const Epetra_Map& map)
 }
 
 //=============================================================================
-Epetra_Map * Epetra_Map::RemoveEmptyProcesses() const 
-{  
+Epetra_Map * Epetra_Map::RemoveEmptyProcesses() const
+{
 #ifdef HAVE_MPI
   const Epetra_MpiComm * MpiComm = dynamic_cast<const Epetra_MpiComm*>(&Comm());
 
   // If the Comm isn't MPI, just treat this as a copy constructor
-  if(!MpiComm) return new Epetra_Map(*this);      
+  if(!MpiComm) return new Epetra_Map(*this);
 
   MPI_Comm NewComm,MyMPIComm = MpiComm->Comm();
 
@@ -210,7 +210,7 @@ Epetra_Map * Epetra_Map::RemoveEmptyProcesses() const
 
     // Get rid of the old BlockMapData, now make a new one from scratch...
     NewMap->CleanupData();
-    if(GlobalIndicesInt()) { 
+    if(GlobalIndicesInt()) {
 #ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
       NewMap->BlockMapData_ = new Epetra_BlockMapData(NumGlobalElements(),0,IndexBase(),*NewEpetraComm,false);
 #endif
@@ -271,12 +271,12 @@ Epetra_Map * Epetra_Map::RemoveEmptyProcesses() const
   }
 #else
     // MPI isn't compiled, so just treat this as a copy constructor
-    return new Epetra_Map(*this);      
+    return new Epetra_Map(*this);
 #endif
 }
 
 //=============================================================================
-Epetra_Map* Epetra_Map::ReplaceCommWithSubset(const Epetra_Comm * Comm) const
+Epetra_Map* Epetra_Map::ReplaceCommWithSubset(const Epetra_Comm * theComm) const
 {
   // mfh 26 Mar 2013: The lazy way to do this is simply to recreate
   // the Map by calling its ordinary public constructor, using the
@@ -284,9 +284,10 @@ Epetra_Map* Epetra_Map::ReplaceCommWithSubset(const Epetra_Comm * Comm) const
   // the new communicator, which in the common case only includes a
   // small number of processes.
   Epetra_Map * NewMap=0;
-  
-  // Create the Map to return (unless Comm is zero, in which case we return zero).
-  if(Comm) {
+
+  // Create the Map to return (unless theComm is NULL, in which case
+  // we return zero).
+  if(theComm) {
     // Map requires that the index base equal the global min GID.
     // Figuring out the global min GID requires a reduction over all
     // processes in the new communicator.  It could be that some (or
@@ -300,19 +301,19 @@ Epetra_Map* Epetra_Map::ReplaceCommWithSubset(const Epetra_Comm * Comm) const
 
 #ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
     if(GlobalIndicesInt()) {
-      int MyMin, IndexBase;
+      int MyMin, theIndexBase;
       MyMin  = NumMyElements() > 0 ? MinMyGID() : MaxAllGID();
-      Comm->MinAll(&MyMin,&IndexBase,1);
-      NewMap = new Epetra_Map(-1,NumMyElements(),MyGlobalElements(),IndexBase,*Comm);
+      theComm->MinAll(&MyMin,&theIndexBase,1);
+      NewMap = new Epetra_Map(-1,NumMyElements(),MyGlobalElements(),theIndexBase,*theComm);
     }
     else
 #endif
 #ifndef EPETRA_NO_64BIT_GLOBAL_INDICES
     if(GlobalIndicesLongLong()) {
-      long long MyMin, IndexBase;
+      long long MyMin, theIndexBase;
       MyMin = NumMyElements() > 0 ? MinMyGID64() : MaxAllGID64();
-      Comm->MinAll(&MyMin,&IndexBase,1);
-      NewMap = new Epetra_Map(-1,NumMyElements(),MyGlobalElements64(),IndexBase,*Comm);
+      theComm->MinAll(&MyMin,&theIndexBase,1);
+      NewMap = new Epetra_Map(-1,NumMyElements(),MyGlobalElements64(),theIndexBase,*theComm);
     }
     else
 #endif

@@ -18,7 +18,7 @@
 
     You should have received a copy of the GNU Lesser General Public License 
     (lgpl.txt) along with this library; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
 
     (2010) kraftche@cae.wisc.edu    
 
@@ -31,18 +31,18 @@
 #include "meshfiles.h"
 
 #include "Mesquite.hpp"
-#include "MsqIGeom.hpp"
-#include "MeshImpl.hpp"
-#include "MsqError.hpp"
-#include "ShapeImprovementWrapper.hpp"
-#include "MsqVertex.hpp"
-#include "QualityAssessor.hpp"
-#include "SphericalDomain.hpp"
+#include "Mesquite_MsqIGeom.hpp"
+#include "Mesquite_MeshImpl.hpp"
+#include "Mesquite_MsqError.hpp"
+#include "Mesquite_ShapeImprovementWrapper.hpp"
+#include "Mesquite_MsqVertex.hpp"
+#include "Mesquite_QualityAssessor.hpp"
+#include "Mesquite_SphericalDomain.hpp"
 
 #include <memory>
 #include <iostream>
 
-#include "MsqIBase.hpp"
+#include "Mesquite_MsqIBase.hpp"
 
 using namespace Mesquite;
 

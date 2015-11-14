@@ -11,8 +11,8 @@
 #include "MueLu_IsorropiaInterface_decl.hpp"
 
 #include <Teuchos_Utils.hpp>
-#include <Teuchos_DefaultMpiComm.hpp> //TODO: fwd decl.
-#include <Teuchos_OpaqueWrapper.hpp>  //TODO: fwd decl.
+//#include <Teuchos_DefaultMpiComm.hpp> //TODO: fwd decl.
+//#include <Teuchos_OpaqueWrapper.hpp>  //TODO: fwd decl.
 
 #include <Xpetra_MapFactory.hpp>
 #include <Xpetra_CrsGraphFactory.hpp>
@@ -46,36 +46,35 @@
 
 namespace MueLu {
 
- template <class LocalOrdinal, class GlobalOrdinal, class Node, class LocalMatOps>
- RCP<const ParameterList> IsorropiaInterface<LocalOrdinal, GlobalOrdinal, Node, LocalMatOps>::GetValidParameterList(const ParameterList& paramList) const {
+ template <class LocalOrdinal, class GlobalOrdinal, class Node>
+ RCP<const ParameterList> IsorropiaInterface<LocalOrdinal, GlobalOrdinal, Node>::GetValidParameterList() const {
     RCP<ParameterList> validParamList = rcp(new ParameterList());
 
     validParamList->set< RCP<const FactoryBase> >("A",                    Teuchos::null, "Factory of the matrix A");
     validParamList->set< RCP<const FactoryBase> >("UnAmalgamationInfo",   Teuchos::null, "Generating factory of UnAmalgamationInfo");
-    validParamList->set< RCP<const FactoryBase> >("number of partitions", Teuchos::null, "(advanced) Factory computing the number of partition.");
 
     return validParamList;
   }
 
 
-  template <class LocalOrdinal, class GlobalOrdinal, class Node, class LocalMatOps>
-  void IsorropiaInterface<LocalOrdinal, GlobalOrdinal, Node, LocalMatOps>::DeclareInput(Level & currentLevel) const {
+  template <class LocalOrdinal, class GlobalOrdinal, class Node>
+  void IsorropiaInterface<LocalOrdinal, GlobalOrdinal, Node>::DeclareInput(Level & currentLevel) const {
     Input(currentLevel, "A");
     Input(currentLevel, "UnAmalgamationInfo");
-    Input(currentLevel, "number of partitions");
-  } //DeclareInput()
+  }
 
-  template <class LocalOrdinal, class GlobalOrdinal, class Node, class LocalMatOps>
-  void IsorropiaInterface<LocalOrdinal, GlobalOrdinal, Node, LocalMatOps>::Build(Level &level) const {
+  template <class LocalOrdinal, class GlobalOrdinal, class Node>
+  void IsorropiaInterface<LocalOrdinal, GlobalOrdinal, Node>::Build(Level& level) const {
     FactoryMonitor m(*this, "Build", level);
 
-    RCP<Matrix>      A             = Get< RCP<Matrix> >     (level, "A");
-    GO               numPartitions = Get<GO>                (level, "number of partitions");
+    RCP<Matrix> A                  = Get< RCP<Matrix> >(level, "A");
+    RCP<AmalgamationInfo> amalInfo = Get< RCP<AmalgamationInfo> >(level, "UnAmalgamationInfo");
+    GO          numParts           = level.Get<GO>("number of partitions");
 
-    RCP<const Map> rowMap        = A->getRowMap();
+    RCP<const Map> rowMap = A->getRowMap();
     RCP<const Map> colMap = A->getColMap();
 
-    if (numPartitions == 1) {
+    if (numParts == 1) {
       // Running on one processor, so decomposition is the trivial one, all zeros.
       RCP<Xpetra::Vector<GO, LO, GO, NO> > decomposition = Xpetra::VectorFactory<GO, LO, GO, NO>::Build(rowMap, true);
       //Set(level, "Partition", decomposition);
@@ -125,29 +124,15 @@ namespace MueLu {
       GetOStream(Statistics0, -1) << "IsorropiaInterface::Build():" << " found blockdim=" << blockdim << " from strided maps (blockid=" << blockid << ", strided block size=" << stridedblocksize << "). offset=" << offset << std::endl;
     } else GetOStream(Statistics0, -1) << "IsorropiaInterface::Build(): no striding information available. Use blockdim=1 with offset=0" << std::endl;
 
-    // 2) build (un)amalgamation information
-    //    prepare generation of nodeRowMap (of amalgamated matrix)
-    RCP<AmalgamationInfo> amalInfo = Get< RCP<AmalgamationInfo> >(level, "UnAmalgamationInfo");
-    RCP<std::map<GO,std::vector<GO> > > nodegid2dofgids = amalInfo->GetGlobalAmalgamationParams();
-    RCP<std::vector<GO> > gNodeIds = amalInfo->GetNodeGIDVector();
-    GO cnt_amalRows = amalInfo->GetNumberOfNodes();
-
-    // inter processor communication: sum up number of block ids
-    GO num_blockids = 0;
-    Teuchos::reduceAll<int,GO>(*(A->getRowMap()->getComm()),Teuchos::REDUCE_SUM, cnt_amalRows, Teuchos::ptr(&num_blockids) );
-    GetOStream(Statistics0, -1) << "IsorropiaInterface::SetupAmalgamationData()" << " # of amalgamated blocks=" << num_blockids << std::endl;
-
-    // 3) generate row map for amalgamated matrix (graph of A)
+    // 2) get row map for amalgamated matrix (graph of A)
     //    with same distribution over all procs as row map of A
+    RCP<const Map> nodeMap = amalInfo->getNodeRowMap();
+    GetOStream(Statistics0) << "IsorropiaInterface:Build(): nodeMap " << nodeMap->getNodeNumElements() << "/" << nodeMap->getGlobalNumElements() << " elements" << std::endl;
 
-    Teuchos::ArrayRCP<GO> arr_gNodeIds = Teuchos::arcp( gNodeIds );
-    Teuchos::RCP<Map> nodeMap = MapFactory::Build(A->getRowMap()->lib(), num_blockids, arr_gNodeIds(), indexBase, A->getRowMap()->getComm()); // note: nodeMap has same indexBase as row map of A (=dof map)
-    GetOStream(Statistics0, -1) << "IsorropiaInterface: nodeMap " << nodeMap->getNodeNumElements() << "/" << nodeMap->getGlobalNumElements() << " local/global elements" << std::endl;
-
-    // 4) create graph of amalgamated matrix
+    // 3) create graph of amalgamated matrix
     RCP<CrsGraph> crsGraph = CrsGraphFactory::Build(nodeMap, 10, Xpetra::DynamicProfile);
 
-    // 5) do amalgamation. generate graph of amalgamated matrix
+    // 4) do amalgamation. generate graph of amalgamated matrix
     for(LO row=0; row<Teuchos::as<LO>(A->getRowMap()->getNodeNumElements()); row++) {
       // get global DOF id
       GO grid = rowMap->getGlobalElement(row);
@@ -159,12 +144,10 @@ namespace MueLu {
       Teuchos::ArrayView<const LO> indices;
       Teuchos::ArrayView<const SC> vals;
       A->getLocalRowView(row, indices, vals);
-      //TEUCHOS_TEST_FOR_EXCEPTION(Teuchos::as<size_t>(indices.size()) != nnz, Exceptions::RuntimeError, "MueLu::CoalesceFactory::Amalgamate: number of nonzeros not equal to number of indices? Error.");
 
       RCP<std::vector<GO> > cnodeIds = Teuchos::rcp(new std::vector<GO>);  // global column block ids
       LO realnnz = 0;
       for(LO col=0; col<Teuchos::as<LO>(nnz); col++) {
-        //TEUCHOS_TEST_FOR_EXCEPTION(A->getColMap()->isNodeLocalElement(indices[col])==false,Exceptions::RuntimeError, "MueLu::CoalesceFactory::Amalgamate: Problem with columns. Error.");
         GO gcid = colMap->getGlobalElement(indices[col]); // global column id
 
         if(vals[col]!=0.0) {
@@ -176,7 +159,6 @@ namespace MueLu {
 
       Teuchos::ArrayRCP<GO> arr_cnodeIds = Teuchos::arcp( cnodeIds );
 
-      //TEUCHOS_TEST_FOR_EXCEPTION(crsGraph->getRowMap()->isNodeGlobalElement(nodeId)==false,Exceptions::RuntimeError, "MueLu::CoalesceFactory::Amalgamate: global row id does not belong to current proc. Error.");
       if(arr_cnodeIds.size() > 0 )
         crsGraph->insertGlobalIndices(nodeId, arr_cnodeIds());
     }
@@ -188,9 +170,7 @@ namespace MueLu {
 
     // prepare parameter list for Isorropia
     Teuchos::ParameterList paramlist;
-    std::stringstream ss; ss << numPartitions;
-    paramlist.set("NUM PARTS",ss.str());
-
+    paramlist.set("NUM PARTS", toString(numParts));
 
     /*STRUCTURALLY SYMMETRIC [NO/yes] (is symmetrization required?)
     PARTITIONING METHOD [block/cyclic/random/rcb/rib/hsfc/graph/HYPERGRAPH]
@@ -232,10 +212,10 @@ namespace MueLu {
 #ifdef HAVE_MUELU_TPETRA
 #ifdef HAVE_MUELU_INST_DOUBLE_INT_INT
 
-    RCP< Xpetra::TpetraCrsGraph<LO, GO, Node, LocalMatOps> > tpCrsGraph = Teuchos::rcp_dynamic_cast<Xpetra::TpetraCrsGraph<LO, GO, Node, LocalMatOps> >(crsGraph);
+    RCP< Xpetra::TpetraCrsGraph<LO, GO, Node> > tpCrsGraph = Teuchos::rcp_dynamic_cast<Xpetra::TpetraCrsGraph<LO, GO, Node> >(crsGraph);
     if(tpCrsGraph != Teuchos::null) {
 #ifdef HAVE_ISORROPIA_TPETRA
-      RCP< const Tpetra::CrsGraph<LocalOrdinal, GlobalOrdinal, Node, LocalMatOps> > tpetraCrsGraph = tpCrsGraph->getTpetra_CrsGraph();
+      RCP< const Tpetra::CrsGraph<LocalOrdinal, GlobalOrdinal, Node> > tpetraCrsGraph = tpCrsGraph->getTpetra_CrsGraph();
       RCP<Isorropia::Tpetra::Partitioner<Node> > isoPart = rcp(new Isorropia::Tpetra::Partitioner<Node>(tpetraCrsGraph, paramlist));
 
       int size = 0;

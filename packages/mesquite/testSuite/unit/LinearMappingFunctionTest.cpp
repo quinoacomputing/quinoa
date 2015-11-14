@@ -18,7 +18,7 @@
 
     You should have received a copy of the GNU Lesser General Public License 
     (lgpl.txt) along with this library; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
 
     (2006) kraftche@cae.wisc.edu    
 
@@ -31,17 +31,17 @@
  */
 
 #include "Mesquite.hpp"
-#include "MappingFunction.hpp"
-#include "LinearHexahedron.hpp"
-#include "LinearQuadrilateral.hpp"
-#include "LinearTetrahedron.hpp"
-#include "LinearTriangle.hpp"
-#include "LinearPrism.hpp"
-#include "LinearPyramid.hpp"
-#include "TopologyInfo.hpp"
-#include "MsqError.hpp"
-#include "JacobianCalculator.hpp"
-#include "IdealElements.hpp"
+#include "Mesquite_MappingFunction.hpp"
+#include "Mesquite_LinearHexahedron.hpp"
+#include "Mesquite_LinearQuadrilateral.hpp"
+#include "Mesquite_LinearTetrahedron.hpp"
+#include "Mesquite_LinearTriangle.hpp"
+#include "Mesquite_LinearPrism.hpp"
+#include "Mesquite_LinearPyramid.hpp"
+#include "Mesquite_TopologyInfo.hpp"
+#include "Mesquite_MsqError.hpp"
+#include "Mesquite_JacobianCalculator.hpp"
+#include "Mesquite_IdealElements.hpp"
 
 #include "UnitUtil.hpp"
 

@@ -45,6 +45,8 @@
 #include <Teuchos_RCP.hpp>
 #include <Teuchos_TimeMonitor.hpp>
 
+#include "Phalanx_KokkosUtilities.hpp"
+
 #include "Phalanx_FieldManager.hpp"
 
 #include "Panzer_Traits.hpp"
@@ -134,6 +136,8 @@ namespace panzer {
 
   TEUCHOS_UNIT_TEST(physics_block, getDOFNames)
   {
+    PHX::KokkosDeviceSession session;
+
     Teuchos::RCP<panzer::PhysicsBlock> physics_block = 
       panzer_test_utils::createPhysicsBlock();
 
@@ -146,6 +150,8 @@ namespace panzer {
 
   TEUCHOS_UNIT_TEST(physics_block, getProvidedDOFs)
   {
+    PHX::KokkosDeviceSession session;
+
     Teuchos::RCP<panzer::PhysicsBlock> physics_block = 
       panzer_test_utils::createPhysicsBlock();
 
@@ -163,6 +169,8 @@ namespace panzer {
 
   TEUCHOS_UNIT_TEST(physics_block, getBases)
   {
+    PHX::KokkosDeviceSession session;
+
     Teuchos::RCP<panzer::PhysicsBlock> physics_block = 
       panzer_test_utils::createPhysicsBlock();
 
@@ -178,6 +186,8 @@ namespace panzer {
 
   TEUCHOS_UNIT_TEST(physics_block, getBaseCellTopology)
   {
+    PHX::KokkosDeviceSession session;
+
     Teuchos::RCP<panzer::PhysicsBlock> physics_block = 
       panzer_test_utils::createPhysicsBlock();
     
@@ -186,6 +196,8 @@ namespace panzer {
 
   TEUCHOS_UNIT_TEST(physics_block, physicsBlockID)
   {
+    PHX::KokkosDeviceSession session;
+
     Teuchos::RCP<panzer::PhysicsBlock> physics_block = 
       panzer_test_utils::createPhysicsBlock();
 
@@ -194,6 +206,8 @@ namespace panzer {
 
   TEUCHOS_UNIT_TEST(physics_block, getCellData)
   {
+    PHX::KokkosDeviceSession session;
+
     Teuchos::RCP<panzer::PhysicsBlock> physics_block = 
       panzer_test_utils::createPhysicsBlock();
 
@@ -203,6 +217,8 @@ namespace panzer {
 
   TEUCHOS_UNIT_TEST(physics_block, nontemplate_evaluator_builders)
   {
+    PHX::KokkosDeviceSession session;
+
     Teuchos::RCP<panzer::UniqueGlobalIndexer<int,int> > ugi 
           = Teuchos::rcp(new panzer::unit_test::UniqueGlobalIndexer(0,1));
     Teuchos::RCP<const Epetra_Comm> comm = Teuchos::rcp(new Epetra_MpiComm(MPI_COMM_WORLD));
@@ -217,7 +233,7 @@ namespace panzer {
 
     physics_block->buildAndRegisterEquationSetEvaluators(fm, user_data);
     physics_block->buildAndRegisterGatherAndOrientationEvaluators(fm, elof, user_data);
-    physics_block->buildAndRegisterDOFProjectionsToIPEvaluators(fm, user_data);
+    physics_block->buildAndRegisterDOFProjectionsToIPEvaluators(fm, Teuchos::null, user_data);
     physics_block->buildAndRegisterScatterEvaluators(fm, elof, user_data);
 
     Teuchos::RCP<panzer::ClosureModelFactory_TemplateManager<panzer::Traits> > factory =
@@ -230,6 +246,8 @@ namespace panzer {
 
   TEUCHOS_UNIT_TEST(physics_block, elementBlockID)
   {
+    PHX::KokkosDeviceSession session;
+
 
     Teuchos::RCP<panzer::PhysicsBlock> physics_block = 
       panzer_test_utils::createPhysicsBlock();
@@ -240,6 +258,8 @@ namespace panzer {
 
   TEUCHOS_UNIT_TEST(physics_block, templated_evaluator_builders)
   {
+    PHX::KokkosDeviceSession session;
+
     Teuchos::RCP<panzer::UniqueGlobalIndexer<int,int> > ugi 
           = Teuchos::rcp(new panzer::unit_test::UniqueGlobalIndexer(0,1));
     Teuchos::RCP<const Epetra_Comm> comm = Teuchos::rcp(new Epetra_MpiComm(MPI_COMM_WORLD));
@@ -258,8 +278,8 @@ namespace panzer {
     physics_block->buildAndRegisterGatherAndOrientationEvaluatorsForType<panzer::Traits::Residual>(fm, elof, user_data);
     physics_block->buildAndRegisterGatherAndOrientationEvaluatorsForType<panzer::Traits::Jacobian>(fm, elof, user_data);
 
-    physics_block->buildAndRegisterDOFProjectionsToIPEvaluatorsForType<panzer::Traits::Residual>(fm, user_data);
-    physics_block->buildAndRegisterDOFProjectionsToIPEvaluatorsForType<panzer::Traits::Jacobian>(fm, user_data);
+    physics_block->buildAndRegisterDOFProjectionsToIPEvaluatorsForType<panzer::Traits::Residual>(fm, Teuchos::null, user_data);
+    physics_block->buildAndRegisterDOFProjectionsToIPEvaluatorsForType<panzer::Traits::Jacobian>(fm, Teuchos::null, user_data);
 
     physics_block->buildAndRegisterScatterEvaluatorsForType<panzer::Traits::Residual>(fm, elof, user_data);
     physics_block->buildAndRegisterScatterEvaluatorsForType<panzer::Traits::Jacobian>(fm, elof, user_data);

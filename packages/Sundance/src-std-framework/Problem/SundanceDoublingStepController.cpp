@@ -247,7 +247,7 @@ bool DoublingStepController::run() const
       << eventHandler_->eventTime());
   }
   PLAYA_ROOT_MSG1(verb, tab0 << "==================================================================");
-
+  return true;
 }
 
 

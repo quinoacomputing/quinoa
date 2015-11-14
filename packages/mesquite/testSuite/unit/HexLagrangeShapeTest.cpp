@@ -18,7 +18,7 @@
 
     You should have received a copy of the GNU Lesser General Public License 
     (lgpl.txt) along with this library; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  
     (2010) kraftche@cae.wisc.edu
    
@@ -31,11 +31,11 @@
  */
 
 #include "Mesquite.hpp"
-#include "HexLagrangeShape.hpp"
-#include "TopologyInfo.hpp"
-#include "MsqError.hpp"
-#include "IdealElements.hpp"
-#include "JacobianCalculator.hpp"
+#include "Mesquite_HexLagrangeShape.hpp"
+#include "Mesquite_TopologyInfo.hpp"
+#include "Mesquite_MsqError.hpp"
+#include "Mesquite_IdealElements.hpp"
+#include "Mesquite_JacobianCalculator.hpp"
 
 #include "UnitUtil.hpp"
 

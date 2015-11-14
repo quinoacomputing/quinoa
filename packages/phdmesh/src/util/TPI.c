@@ -17,7 +17,7 @@
 /*                                                                        */
 /*  You should have received a copy of the GNU Lesser General Public      */
 /*  License along with this library; if not, write to the Free Software   */
-/*  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307   */
+/*  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301   */
 /*  USA                                                                   */
 /*------------------------------------------------------------------------*/
 /**
@@ -28,6 +28,9 @@
 #include <phdmesh_config.h>
 #include <util/TPI.h>
 
+#ifdef _MSC_VER
+#include <malloc.h>
+#endif
 /*--------------------------------------------------------------------*/
 /*--------------------------------------------------------------------*/
 
@@ -572,8 +575,11 @@ int TPI_Run( TPI_parallel_subprogram routine ,
 
       const int number_locks = pool->m_number_locks ;
 
+#ifdef _MSC_VER
+      int* lock = (int*) malloc(number_locks * sizeof(int));
+#else
       int lock[ number_locks ];
-
+#endif
       int nlocks = 0 ;
 
       while ( nlocks < number_locks && ! result ) {
@@ -584,6 +590,10 @@ int TPI_Run( TPI_parallel_subprogram routine ,
       if ( ! result ) {
         if ( number <= 0 ) { number = 1 ; }
 
+#ifdef _MSC_VER
+		{
+#endif
+
         ThreadWork work = { lock , number_locks , number , 0 };
 
         pool->m_work_size = number ;
@@ -593,7 +603,14 @@ int TPI_Run( TPI_parallel_subprogram routine ,
           (*routine)( routine_data , & work );
         }
         pool->m_work_size = 0 ;
+
+#ifdef _MSC_VER
+		}
+#endif
       }
+#ifdef _MSC_VER
+	  free(lock);
+#endif
     }
   }
 

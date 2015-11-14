@@ -56,12 +56,16 @@
 
 namespace Xpetra {
 
-  template <class LocalOrdinal, class GlobalOrdinal = LocalOrdinal, class Node = KokkosClassic::DefaultNode::DefaultNodeType>
+  template <class LocalOrdinal = Map<>::local_ordinal_type,
+            class GlobalOrdinal = typename Map<LocalOrdinal>::global_ordinal_type,
+            class Node = typename Map<LocalOrdinal, GlobalOrdinal>::node_type>
   class Export
     : public Teuchos::Describable
   {
-
   public:
+    typedef LocalOrdinal local_ordinal_type;
+    typedef GlobalOrdinal global_ordinal_type;
+    typedef Node node_type;
 
     //! @name Constructor/Destructor Methods
     //@{
@@ -102,10 +106,10 @@ namespace Xpetra {
     virtual ArrayView< const int > getExportPIDs() const = 0;
 
     //! The source Map used to construct this Export.
-    virtual const RCP< const Map< LocalOrdinal, GlobalOrdinal, Node > >  getSourceMap() const = 0;
+    virtual Teuchos::RCP< const Map< LocalOrdinal, GlobalOrdinal, Node > > getSourceMap() const = 0;
 
     //! The target Map used to construct this Export.
-    virtual const RCP< const Map< LocalOrdinal, GlobalOrdinal, Node > >  getTargetMap() const = 0;
+    virtual Teuchos::RCP< const Map< LocalOrdinal, GlobalOrdinal, Node > > getTargetMap() const = 0;
 
     //@}
 

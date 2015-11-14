@@ -43,7 +43,7 @@
 #ifndef __Panzer_ReorderADValues_Evaluator_decl_hpp__
 #define __Panzer_ReorderADValues_Evaluator_decl_hpp__
 
-#include "Phalanx_ConfigDefs.hpp"
+#include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_Macros.hpp"
 #include "Phalanx_MDField.hpp"
 
@@ -64,10 +64,10 @@ class UniqueGlobalIndexerBase;
     This is neccessary primarily when gathering with one unique global indexer    
     and scattering with a second unique global indexer.
 */
-template<typename EvalT, typename Traits> 
+template<typename EvalT, typename TRAITS> 
 class ReorderADValues_Evaluator  
-  : public PHX::EvaluatorWithBaseImpl<Traits>,
-    public PHX::EvaluatorDerived<EvalT, Traits> {
+  : public PHX::EvaluatorWithBaseImpl<TRAITS>,
+    public PHX::EvaluatorDerived<EvalT, TRAITS> {
 public:
   typedef typename EvalT::ScalarT ScalarT;
 
@@ -78,9 +78,18 @@ public:
                             const UniqueGlobalIndexerBase & indexerSrc,
                             const UniqueGlobalIndexerBase & indexerDest);
 
-  void postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& vm);
+  ReorderADValues_Evaluator(const std::string & outPrefix,
+                            const std::vector<std::string> & inFieldNames,
+                            const std::vector<std::string> & inDOFs,
+                            const std::vector<std::string> & outDOFs,
+                            const std::vector<Teuchos::RCP<PHX::DataLayout> > & fieldLayouts,
+                            const std::string & elementBlock,
+                            const UniqueGlobalIndexerBase & indexerSrc,
+                            const UniqueGlobalIndexerBase & indexerDest);
 
-  void evaluateFields(typename Traits::EvalData d);
+  void postRegistrationSetup(typename TRAITS::SetupData d, PHX::FieldManager<TRAITS>& vm);
+
+  void evaluateFields(typename TRAITS::EvalData d);
 
 private:
   // fields to be modified
@@ -100,10 +109,10 @@ private:
 // **************************************************************
 // Jacobian 
 // **************************************************************
-template<typename Traits>
-class ReorderADValues_Evaluator<panzer::Traits::Jacobian,Traits>  
-  : public PHX::EvaluatorWithBaseImpl<Traits>,
-    public PHX::EvaluatorDerived<panzer::Traits::Jacobian, Traits> {
+template<typename TRAITS>
+class ReorderADValues_Evaluator<typename TRAITS::Jacobian,TRAITS>  
+  : public PHX::EvaluatorWithBaseImpl<TRAITS>,
+    public PHX::EvaluatorDerived<typename TRAITS::Jacobian, TRAITS> {
   
 public:
 
@@ -113,16 +122,32 @@ public:
                             const std::string & elementBlock,
                             const UniqueGlobalIndexerBase & indexerSrc,
                             const UniqueGlobalIndexerBase & indexerDest);
-  
-  void postRegistrationSetup(typename Traits::SetupData d,
-			     PHX::FieldManager<Traits>& vm);
 
-  void evaluateFields(typename Traits::EvalData workset);
+  ReorderADValues_Evaluator(const std::string & outPrefix,
+                            const std::vector<std::string> & inFieldNames,
+                            const std::vector<std::string> & inDOFs,
+                            const std::vector<std::string> & outDOFs,
+                            const std::vector<Teuchos::RCP<PHX::DataLayout> > & fieldLayouts,
+                            const std::string & elementBlock,
+                            const UniqueGlobalIndexerBase & indexerSrc,
+                            const UniqueGlobalIndexerBase & indexerDest);
+  
+  void postRegistrationSetup(typename TRAITS::SetupData d,
+			     PHX::FieldManager<TRAITS>& vm);
+
+  void evaluateFields(typename TRAITS::EvalData workset);
   
 private:
-  typedef typename panzer::Traits::Jacobian::ScalarT ScalarT;
+  typedef typename TRAITS::Jacobian::ScalarT ScalarT;
 
   void buildSrcToDestMap(const std::string & elementBlock,
+                         const UniqueGlobalIndexerBase & indexerSrc,
+                         const UniqueGlobalIndexerBase & indexerDest);
+
+  // Build a source to destination map using all the pairs
+  // of field numers in the <code>fieldNumberMaps</code>
+  void buildSrcToDestMap(const std::string & elementBlock,
+                         const std::map<int,int> & fieldNumberMaps,
                          const UniqueGlobalIndexerBase & indexerSrc,
                          const UniqueGlobalIndexerBase & indexerDest);
 

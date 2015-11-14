@@ -1,5 +1,3 @@
-INCLUDE(TribitsAddExecutable)
-INCLUDE(TribitsCopyFilesToBinaryDir)
 
 TRIBITS_ADD_EXECUTABLE(
   BasicXMLExample

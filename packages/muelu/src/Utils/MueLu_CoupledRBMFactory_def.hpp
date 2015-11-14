@@ -56,11 +56,11 @@
 
 namespace MueLu {
 
-  template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node, class LocalMatOps>
-  CoupledRBMFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node, LocalMatOps>::~CoupledRBMFactory() {}
+  template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
+  CoupledRBMFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::~CoupledRBMFactory() {}
 
-  template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node, class LocalMatOps>
-  void CoupledRBMFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node, LocalMatOps>::DeclareInput(Level &currentLevel) const {
+  template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
+  void CoupledRBMFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::DeclareInput(Level &currentLevel) const {
     if (currentLevel.IsAvailable(nspName_, NoFactory::get()) == false && currentLevel.GetLevelID() == 0) {
       Input(currentLevel, "A");
       //Input(currentLevel,"Coordinates");
@@ -70,19 +70,19 @@ namespace MueLu {
     }
   }
 
-  template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node, class LocalMatOps>
-  void CoupledRBMFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node, LocalMatOps>::Build(Level &currentLevel) const {
+  template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
+  void CoupledRBMFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::Build(Level &currentLevel) const {
     FactoryMonitor m(*this, "Structural acoustics nullspace factory", currentLevel);
     RCP<MultiVector> nullspace;
     if (currentLevel.GetLevelID() == 0) {
       if (currentLevel.IsAvailable(nspName_, NoFactory::get())) {
         nullspace = currentLevel.Get< RCP<MultiVector> >(nspName_, NoFactory::get());
-        GetOStream(Runtime1, 0) << "Use user-given rigid body modes " << nspName_ << ": nullspace dimension=" << nullspace->getNumVectors() << " nullspace length=" << nullspace->getGlobalLength() << std::endl;
+        GetOStream(Runtime1) << "Use user-given rigid body modes " << nspName_ << ": nullspace dimension=" << nullspace->getNumVectors() << " nullspace length=" << nullspace->getGlobalLength() << std::endl;
       }
       else {
         RCP<Matrix> A = Get< RCP<Matrix> >(currentLevel, "A");
         RCP<MultiVector> Coords = Get< RCP<MultiVector> >(currentLevel,"Coordinates");
-        GetOStream(Runtime1, 0) << "Generating nullspace for structural acoustics: dimension = " << numPDEs_ << std::endl;
+        GetOStream(Runtime1) << "Generating nullspace for structural acoustics: dimension = " << numPDEs_ << std::endl;
         RCP<const Map> xmap=A->getDomainMap();
         nullspace = MultiVectorFactory::Build(xmap, 6);
         Scalar zero = (Scalar) 0.0;
@@ -147,9 +147,9 @@ namespace MueLu {
     Set(currentLevel, "Nullspace", nullspace);
   }
 
-  template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node, class LocalMatOps>
-      void CoupledRBMFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node, LocalMatOps>::BuildRBM(RCP<Matrix>& A, RCP<MultiVector>& Coords, RCP<MultiVector>& nullspace) const {
-        GetOStream(Runtime1, 0) << "Generating nullspace for structural acoustics: dimension = " << numPDEs_ << std::endl;
+  template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
+      void CoupledRBMFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::BuildRBM(RCP<Matrix>& A, RCP<MultiVector>& Coords, RCP<MultiVector>& nullspace) const {
+        GetOStream(Runtime1) << "Generating nullspace for structural acoustics: dimension = " << numPDEs_ << std::endl;
         RCP<const Map> xmap=A->getDomainMap();
         nullspace = MultiVectorFactory::Build(xmap, 6);
         Scalar zero = (Scalar) 0.0;

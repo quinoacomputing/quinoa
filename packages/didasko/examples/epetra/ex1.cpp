@@ -1,12 +1,12 @@
 // @HEADER
 // ***********************************************************************
-// 
+//
 //                      Didasko Tutorial Package
 //                 Copyright (2005) Sandia Corporation
-// 
+//
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -35,7 +35,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 // Questions about Didasko? Contact Marzio Sala (marzio.sala _AT_ gmail.com)
-// 
+//
 // ***********************************************************************
 // @HEADER
 
@@ -68,41 +68,41 @@ int main(int argc, char *argv[])
 
   // get the proc ID of this process
   int MyPID = Comm.MyPID();
-  
+
   // get the total number of processes
   int NumProc = Comm.NumProc();
-  
+
   // output some information to std output
   cout << Comm << endl;
-  
+
   // ======================== //
   // now some basic MPI calls //
   // ------------------------ //
-  
+
   int    ivalue;
   double dvalue, dvalue2;
   double* dvalues;  dvalues  = new double[NumProc];
   double* dvalues2; dvalues2 = new double[NumProc];
   int root = 0;
-  
+
   // equivalent to MPI_Barrier
-  
+
   Comm.Barrier();
-   
+
   if (MyPID == root) dvalue = 12.0;
 
   // On input, the root processor contains the list of values
   // (in this case, a single value). On exit, all processes will
   // have he same list of values. Note that all values must be allocated
   // vefore the broadcast
-  
+
   // equivalent to  MPI_Broadcast
-    
+
   Comm.Broadcast(&dvalue, 1, root);
 
   // as before, but with integer values. As C++ can bind to the appropriate
   // interface based on argument typing, the type of data is not required.
-  
+
   Comm.Broadcast(&ivalue, 1, root);
 
   // equivalent MPI_Allgather
@@ -122,24 +122,24 @@ int main(int argc, char *argv[])
   // equiavant to MPI_Scan with MPI_SUM
 
   dvalue = 1.0 * MyPID;
-  
+
   Comm.ScanSum(&dvalue, &dvalue2, 1);
 
   cout << "On proc " << MyPID << " dvalue2  = " << dvalue2 << endl;
-  
+
   delete[] dvalues;
   delete[] dvalues2;
 
   // ======================= //
   // Finalize MPI and return //
   // ----------------------- //
-    
+
 #ifdef HAVE_MPI
   MPI_Finalize();
 #endif
 
   return( EXIT_SUCCESS );
-  
+
 } /* main */
 
 #else
@@ -157,7 +157,7 @@ int main(int argc, char *argv[])
 #endif
 
   puts("Please configure Didasko with:\n"
-       "--enable-epetra");
+      "--enable-epetra");
 
 #ifdef HAVE_MPI
   MPI_Finalize();

@@ -1,7 +1,3 @@
-
-INCLUDE(TribitsAddExecutableAndTest)
-INCLUDE(TribitsCopyFilesToBinaryDir)
-
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/)
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/utils)
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/../../src)
@@ -20,8 +16,8 @@ SET(SOURCES "")
 
 APPEND_SET(SOURCES
   Aggregates.cpp
-  BlockedPFactory.cpp
   CoalesceDropFactory.cpp
+  CoarseMapFactory.cpp
 # CoupledAggregationFactory.cpp
   GenericRFactory.cpp
   Hierarchy.cpp
@@ -32,7 +28,7 @@ APPEND_SET(SOURCES
   MultiVectorTransferFactory.cpp
   ParameterList/CreateSublists.cpp
   ParameterList/FactoryFactory.cpp
-# ParameterList/MLParameterListInterpreter.cpp
+  ParameterList/MLParameterListInterpreter.cpp
   ParameterList/ParameterListInterpreter.cpp
   PermutedTransferFactory.cpp
   PgPFactory.cpp
@@ -40,13 +36,20 @@ APPEND_SET(SOURCES
   SaPFactory.cpp
   Smoothers/SmootherFactory.cpp
   Smoothers/MueLu_TestHelpersSmoothers.cpp
-  SubBlockAFactory.cpp
   TentativePFactory.cpp
   ThresholdAFilterFactory.cpp
   TransPFactory.cpp
   Utilities
   VariableContainer.cpp
 )
+
+IF (${PACKAGE_NAME}_ENABLE_Experimental)
+  APPEND_SET(SOURCES
+    BlockedCoarseMapFactory.cpp
+    BlockedPFactory.cpp
+    SubBlockAFactory.cpp
+  )
+ENDIF()
 
 ### Tests that require other Trilinos packages
 
@@ -64,7 +67,6 @@ ASSERT_DEFINED(
   )
 IF (${PACKAGE_NAME}_ENABLE_Tpetra)
   APPEND_SET(SOURCES Adapters/TpetraOperatorAdapter.cpp)
-  APPEND_SET(SOURCES Adapters/CreatePreconditioner.cpp)
 ENDIF()
 
 IF (${PACKAGE_NAME}_ENABLE_Tpetra AND ${PACKAGE_NAME}_ENABLE_Ifpack2)
@@ -83,6 +85,10 @@ IF (${PACKAGE_NAME}_ENABLE_Tpetra AND ${PACKAGE_NAME}_ENABLE_Amesos2)
   APPEND_SET(SOURCES Smoothers/Amesos2Smoother.cpp)
 ENDIF()
 
+IF (${PACKAGE_NAME}_ENABLE_Tpetra AND ${PACKAGE_NAME}_ENABLE_AmgX)
+  APPEND_SET(SOURCES Adapters/AmgxOperatorAdapter.cpp)
+ENDIF()
+
 IF (${PACKAGE_NAME}_ENABLE_Belos)
   APPEND_SET(SOURCES Adapters/BelosAdapters.cpp)
 ENDIF()
@@ -92,6 +98,21 @@ IF (${PACKAGE_NAME}_ENABLE_Zoltan AND TPL_ENABLE_MPI)
               Repartition.cpp
               #PermutedTransferFactory.cpp  # TODO CHECK ME!
   )
+
+  TRIBITS_COPY_FILES_TO_BINARY_DIR(MueLu_Repartition_cp
+    SOURCE_DIR ${MueLu_SOURCE_DIR}/test/unit_tests/
+    SOURCE_FILES testCoordinates.xml
+  )
+ENDIF()
+
+IF ((${PACKAGE_NAME}_ENABLE_Epetra AND ${PACKAGE_NAME}_ENABLE_EpetraExt AND ${PACKAGE_NAME}_ENABLE_Ifpack AND ${PACKAGE_NAME}_ENABLE_Amesos) OR
+    (${PACKAGE_NAME}_ENABLE_Tpetra AND ${PACKAGE_NAME}_ENABLE_Ifpack2 AND ${PACKAGE_NAME}_ENABLE_Amesos2))
+  APPEND_SET(SOURCES Adapters/CreatePreconditioner.cpp)
+
+  TRIBITS_COPY_FILES_TO_BINARY_DIR(UnitTestsCreatePreconditioner_cp
+    SOURCE_DIR ${MueLu_SOURCE_DIR}/test/unit_tests/Adapters
+    SOURCE_FILES test.xml testReuse.xml testWithRebalance.xml testPDE.xml testPDE1.xml
+    )
 ENDIF()
 
 IF (${PACKAGE_NAME}_ENABLE_Galeri) #TMP
@@ -99,7 +120,6 @@ IF (${PACKAGE_NAME}_ENABLE_Galeri) #TMP
     UnitTests
     SOURCES ${SOURCES}
     COMM serial mpi
-    DEPLIBS muelu muelu-adapters xpetra
     )
 
   IF (${PACKAGE_NAME}_ENABLE_Epetra AND ${PACKAGE_NAME}_ENABLE_EpetraExt
@@ -126,11 +146,6 @@ IF (${PACKAGE_NAME}_ENABLE_Galeri) #TMP
   ENDIF()
 
   IF (${PACKAGE_NAME}_ENABLE_Tpetra AND ${PACKAGE_NAME}_ENABLE_Ifpack2 AND ${PACKAGE_NAME}_ENABLE_Amesos2)
-
-    TRIBITS_COPY_FILES_TO_BINARY_DIR(UnitTestsTpetra_cp
-      SOURCE_DIR ${MueLu_SOURCE_DIR}/test/unit_tests/Adapters
-      SOURCE_FILES test.xml testWithRebalance.xml testPDE.xml
-      )
 
     TRIBITS_ADD_TEST(
       UnitTests

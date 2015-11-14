@@ -18,7 +18,7 @@
 
     You should have received a copy of the GNU Lesser General Public License 
     (lgpl.txt) along with this library; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
 
     (2009) kraftche@cae.wisc.edu    
 
@@ -43,11 +43,11 @@ using std::endl;
 #include <algorithm>
 
 #include "Mesquite.hpp"
-#include "MsqError.hpp"
-#include "MeshImpl.hpp"
-#include "SizeAdaptShapeWrapper.hpp"
-#include "SphericalDomain.hpp"
-#include "MsqVertex.hpp"
+#include "Mesquite_MsqError.hpp"
+#include "Mesquite_MeshImpl.hpp"
+#include "Mesquite_SizeAdaptShapeWrapper.hpp"
+#include "Mesquite_SphericalDomain.hpp"
+#include "Mesquite_MsqVertex.hpp"
 
 using namespace Mesquite;
 

@@ -53,6 +53,9 @@ using Teuchos::rcp;
 
 #include "Teuchos_DefaultComm.hpp"
 #include "Teuchos_GlobalMPISession.hpp"
+
+#include "Phalanx_KokkosUtilities.hpp"
+
 #include "Panzer_STK_Version.hpp"
 #include "Panzer_STK_config.hpp"
 #include "Panzer_STK_Interface.hpp"
@@ -67,7 +70,6 @@ using Teuchos::rcp;
 #include "Panzer_AssemblyEngine_TemplateManager.hpp"
 #include "Panzer_AssemblyEngine_TemplateBuilder.hpp"
 #include "Panzer_EpetraLinearObjFactory.hpp"
-#include "Panzer_DOFManagerFEI.hpp"
 #include "Panzer_DOFManagerFactory.hpp"
 #include "Panzer_GlobalData.hpp"
 #include "Panzer_STK_SetupUtilities.hpp"
@@ -90,23 +92,6 @@ using Teuchos::rcp;
 
 #include "Stratimikos_DefaultLinearSolverBuilder.hpp"
 
-void pause_to_attach()
-{
-   MPI_Comm mpicomm = MPI_COMM_WORLD;
-   Teuchos::RCP<Teuchos::Comm<int> > comm = Teuchos::createMpiComm<int>(
-         Teuchos::rcp(new Teuchos::OpaqueWrapper<MPI_Comm>(mpicomm)));
-   Teuchos::FancyOStream out(Teuchos::rcpFromRef(std::cout));
-   out.setShowProcRank(true);
-   out.setOutputToRootOnly(-1);
-
-   out << "PID = " << getpid();
-
-   if (comm->getRank() == 0)
-      getchar();
-   comm->barrier();
-}
-
-
 void testInitialzation(const Teuchos::RCP<Teuchos::ParameterList>& ipb,
 		       std::vector<panzer::BC>& bcs);
 
@@ -117,20 +102,20 @@ int main(int argc,char * argv[])
    using panzer::StrPureBasisPair;
    using panzer::StrPureBasisComp;
 
+   PHX::InitializeKokkosDevice();
+
    Teuchos::GlobalMPISession mpiSession(&argc,&argv);
    RCP<Epetra_Comm> Comm = Teuchos::rcp(new Epetra_MpiComm(MPI_COMM_WORLD));
    Teuchos::FancyOStream out(Teuchos::rcpFromRef(std::cout));
    out.setOutputToRootOnly(0);
    out.setShowProcRank(true);
 
-   // pause_to_attach();
-
    // variable declarations
    ////////////////////////////////////////////////////
 
    // factory definitions
    Teuchos::RCP<user_app::MyFactory> eqset_factory = Teuchos::rcp(new user_app::MyFactory);
-   panzer_stk::SquareQuadMeshFactory mesh_factory;
+   panzer_stk_classic::SquareQuadMeshFactory mesh_factory;
    user_app::BCFactory bc_factory;
 
    // other declarations
@@ -138,7 +123,7 @@ int main(int argc,char * argv[])
    Teuchos::RCP<panzer::FieldManagerBuilder> fmb = 
          Teuchos::rcp(new panzer::FieldManagerBuilder);
 
-   RCP<panzer_stk::STK_Interface> mesh;
+   RCP<panzer_stk_classic::STK_Interface> mesh;
 
    // construction of uncommitted (no elements) mesh 
    ////////////////////////////////////////////////////////
@@ -218,8 +203,8 @@ int main(int argc,char * argv[])
    // build worksets
    out << "BUILD WORKSETS" << std::endl;
 
-   Teuchos::RCP<panzer_stk::WorksetFactory> wkstFactory
-      = Teuchos::rcp(new panzer_stk::WorksetFactory(mesh)); // build STK workset factory
+   Teuchos::RCP<panzer_stk_classic::WorksetFactory> wkstFactory
+      = Teuchos::rcp(new panzer_stk_classic::WorksetFactory(mesh)); // build STK workset factory
    Teuchos::RCP<panzer::WorksetContainer> wkstContainer     // attach it to a workset container (uses lazy evaluation)
       = Teuchos::rcp(new panzer::WorksetContainer(wkstFactory,physicsBlocks,workset_size));
 
@@ -237,7 +222,7 @@ int main(int argc,char * argv[])
    out << "BUILD CONN MANAGER" << std::endl;
    // build the connection manager 
    const Teuchos::RCP<panzer::ConnManager<int,int> > 
-     conn_manager = Teuchos::rcp(new panzer_stk::STKConnManager<int>(mesh));
+     conn_manager = Teuchos::rcp(new panzer_stk_classic::STKConnManager<int>(mesh));
 
    panzer::DOFManagerFactory<int,int> globalIndexerFactory;
    RCP<panzer::UniqueGlobalIndexer<int,int> > dofManager 
@@ -340,8 +325,10 @@ int main(int argc,char * argv[])
    // redistribute solution vector
    linObjFactory->globalToGhostContainer(*container,*ghostCont,panzer::EpetraLinearObjContainer::X | panzer::EpetraLinearObjContainer::DxDt); 
 
-   panzer_stk::write_solution_data(*dofManager,*mesh,*ghostCont->get_x());
+   panzer_stk_classic::write_solution_data(*dofManager,*mesh,*ghostCont->get_x());
    mesh->writeToExodus("output.exo");
+
+   PHX::FinalizeKokkosDevice();
 
    return 0;
 }

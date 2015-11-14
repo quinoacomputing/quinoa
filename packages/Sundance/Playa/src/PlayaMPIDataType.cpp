@@ -48,7 +48,10 @@
 #include "Teuchos_TypeNameTraits.hpp"
 namespace Teuchos
 {
+// MPI_Datatype is typedef int in MPICH, so avoid duplicate instantiation
+#if !defined(MPICH) && !defined(MPICH2)
   TEUCHOS_TYPE_NAME_TRAITS_BUILTIN_TYPE_SPECIALIZATION(MPI_Datatype);
+#endif
 } // namespace Teuchos
 #endif
 

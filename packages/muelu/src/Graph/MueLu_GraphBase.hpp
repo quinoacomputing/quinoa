@@ -61,7 +61,9 @@ namespace MueLu {
 
    Pure virtual base class for MueLu representations of graphs.
 */
-  template <class LocalOrdinal  = int, class GlobalOrdinal = LocalOrdinal, class Node = KokkosClassic::DefaultNode::DefaultNodeType, class LocalMatOps = typename KokkosClassic::DefaultKernels<void,LocalOrdinal,Node>::SparseOps>
+  template <class LocalOrdinal = int,
+            class GlobalOrdinal = LocalOrdinal,
+            class Node = KokkosClassic::DefaultNode::DefaultNodeType>
   class GraphBase
     : public BaseClass {
 #undef MUELU_GRAPHBASE_SHORT
@@ -87,9 +89,11 @@ namespace MueLu {
     //! Return number of edges owned by the calling node.
     virtual size_t GetNodeNumEdges()    const = 0;
 
-    virtual void SetBoundaryNodeMap(const ArrayRCP<const bool > & boundaryArray) = 0;
+    virtual void   SetBoundaryNodeMap(const ArrayRCP<const bool > & boundaryArray) = 0;
 
-    virtual const ArrayRCP<const bool > GetBoundaryNodeMap() const = 0;
+    virtual size_t getNodeMaxNumRowEntries() const = 0;
+
+    virtual const ArrayRCP<const bool> GetBoundaryNodeMap() const = 0;
 
     //FIXME is this necessary?
     //! Return number of global edges in the graph.

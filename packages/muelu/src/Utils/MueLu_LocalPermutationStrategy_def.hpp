@@ -22,8 +22,8 @@
 
 namespace MueLu {
 
-  template<class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node, class LocalMatOps>
-  void LocalPermutationStrategy<Scalar, LocalOrdinal, GlobalOrdinal, Node, LocalMatOps>::BuildPermutations(size_t nDofsPerNode) const {
+  template<class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
+  void LocalPermutationStrategy<Scalar, LocalOrdinal, GlobalOrdinal, Node>::BuildPermutations(size_t nDofsPerNode) const {
 
     permWidth_ = nDofsPerNode;
 
@@ -47,8 +47,8 @@ namespace MueLu {
     } while (std::next_permutation(cs.begin(),cs.end()));
   }
 
-  template<class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node, class LocalMatOps>
-  void LocalPermutationStrategy<Scalar, LocalOrdinal, GlobalOrdinal, Node, LocalMatOps>::BuildPermutation(const Teuchos::RCP<Matrix> & A, const Teuchos::RCP<const Map> permRowMap, Level & currentLevel, const FactoryBase* genFactory) const {
+  template<class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
+  void LocalPermutationStrategy<Scalar, LocalOrdinal, GlobalOrdinal, Node>::BuildPermutation(const Teuchos::RCP<Matrix> & A, const Teuchos::RCP<const Map> permRowMap, Level & currentLevel, const FactoryBase* genFactory) const {
 #ifndef HAVE_MUELU_INST_COMPLEX_INT_INT // TODO remove this -> check scalar = std::complex
     size_t nDofsPerNode = 1;
     if (A->IsView("stridedMaps")) {
@@ -190,7 +190,7 @@ namespace MueLu {
       p = RowColPairs.erase(p);
     }
 
-    if(RowColPairs.size()>0) GetOStream(Warnings0,0) << "MueLu::LocalPermutationStrategy: There are Row/col pairs left!" << std::endl;
+    if(RowColPairs.size()>0) GetOStream(Warnings0) << "MueLu::LocalPermutationStrategy: There are Row/col pairs left!" << std::endl;
 
     // Qperm should be fine
     // build matrices
@@ -214,22 +214,22 @@ namespace MueLu {
 
     /*for(size_t row=0; row<permPTmatrix->getNodeNumRows(); row++) {
       if(permPTmatrix->getNumEntriesInLocalRow(row) != 1)
-        GetOStream(Warnings0,0) <<"#entries in row " << row << " of permPTmatrix is " << permPTmatrix->getNumEntriesInLocalRow(row) << std::endl;
+        GetOStream(Warnings0) <<"#entries in row " << row << " of permPTmatrix is " << permPTmatrix->getNumEntriesInLocalRow(row) << std::endl;
       if(permPmatrix->getNumEntriesInLocalRow(row) != 1)
-        GetOStream(Warnings0,0) <<"#entries in row " << row << " of permPmatrix is " << permPmatrix->getNumEntriesInLocalRow(row) << std::endl;
+        GetOStream(Warnings0) <<"#entries in row " << row << " of permPmatrix is " << permPmatrix->getNumEntriesInLocalRow(row) << std::endl;
       if(permQTmatrix->getNumEntriesInLocalRow(row) != 1)
-        GetOStream(Warnings0,0) <<"#entries in row " << row << " of permQmatrix is " << permQTmatrix->getNumEntriesInLocalRow(row) << std::endl;
+        GetOStream(Warnings0) <<"#entries in row " << row << " of permQmatrix is " << permQTmatrix->getNumEntriesInLocalRow(row) << std::endl;
     }*/
 
     // build permP * A * permQT
-    Teuchos::RCP<Matrix> ApermQt = Utils::Multiply(*A, false, *permQTmatrix, false, GetOStream(Statistics2,0),true,true);
-    Teuchos::RCP<Matrix> permPApermQt = Utils::Multiply(*permPmatrix, false, *ApermQt, false, GetOStream(Statistics2,0),true,true);
+    Teuchos::RCP<Matrix> ApermQt = Utils::Multiply(*A, false, *permQTmatrix, false, GetOStream(Statistics2),true,true);
+    Teuchos::RCP<Matrix> permPApermQt = Utils::Multiply(*permPmatrix, false, *ApermQt, false, GetOStream(Statistics2),true,true);
 
     /*
-    MueLu::Utils<Scalar, LocalOrdinal, GlobalOrdinal, Node, LocalMatOps>::Write("A.mat", *A);
-    MueLu::Utils<Scalar, LocalOrdinal, GlobalOrdinal, Node, LocalMatOps>::Write("permP.mat", *permPmatrix);
-    MueLu::Utils<Scalar, LocalOrdinal, GlobalOrdinal, Node, LocalMatOps>::Write("permQt.mat", *permQTmatrix);
-    MueLu::Utils<Scalar, LocalOrdinal, GlobalOrdinal, Node, LocalMatOps>::Write("permPApermQt.mat", *permPApermQt);
+    MueLu::Utils<Scalar, LocalOrdinal, GlobalOrdinal, Node>::Write("A.mat", *A);
+    MueLu::Utils<Scalar, LocalOrdinal, GlobalOrdinal, Node>::Write("permP.mat", *permPmatrix);
+    MueLu::Utils<Scalar, LocalOrdinal, GlobalOrdinal, Node>::Write("permQt.mat", *permQTmatrix);
+    MueLu::Utils<Scalar, LocalOrdinal, GlobalOrdinal, Node>::Write("permPApermQt.mat", *permPApermQt);
     */
     // build scaling matrix
     Teuchos::RCP<Vector> diagVec = VectorFactory::Build(permPApermQt->getRowMap(),true);
@@ -245,15 +245,15 @@ namespace MueLu {
       else {
         invDiagVecData[i] = 1.0;
         lCntZeroDiagonals++;
-        //GetOStream(Statistics0,0) << "MueLu::LocalPermutationStrategy: found zero on diagonal in row " << i << std::endl;
+        //GetOStream(Statistics0) << "MueLu::LocalPermutationStrategy: found zero on diagonal in row " << i << std::endl;
       }
     }
 
 #if 0
     GO gCntZeroDiagonals  = 0;
     GO glCntZeroDiagonals = Teuchos::as<GlobalOrdinal>(lCntZeroDiagonals);  /* LO->GO conversion */
-    sumAll(comm,glCntZeroDiagonals,gCntZeroDiagonals);
-    GetOStream(Statistics0,0) << "MueLu::LocalPermutationStrategy: found " << gCntZeroDiagonals << " zeros on diagonal" << std::endl;
+    MueLu_sumAll(comm,glCntZeroDiagonals,gCntZeroDiagonals);
+    GetOStream(Statistics0) << "MueLu::LocalPermutationStrategy: found " << gCntZeroDiagonals << " zeros on diagonal" << std::endl;
 #endif
 
     Teuchos::RCP<CrsMatrixWrap> diagScalingOp = Teuchos::rcp(new CrsMatrixWrap(permPApermQt->getRowMap(),1,Xpetra::StaticProfile));
@@ -265,7 +265,7 @@ namespace MueLu {
     }
     diagScalingOp->fillComplete();
 
-    Teuchos::RCP<Matrix> scaledA = Utils::Multiply(*diagScalingOp, false, *permPApermQt, false, GetOStream(Statistics2,0), true, true);
+    Teuchos::RCP<Matrix> scaledA = Utils::Multiply(*diagScalingOp, false, *permPApermQt, false, GetOStream(Statistics2), true, true);
     currentLevel.Set("A", Teuchos::rcp_dynamic_cast<Matrix>(scaledA), genFactory);
 
     currentLevel.Set("permA", Teuchos::rcp_dynamic_cast<Matrix>(permPApermQt), genFactory);
@@ -287,7 +287,7 @@ namespace MueLu {
     }
 
     // sum up all entries in multipleColRequests over all processors
-    sumAll(diagPVec->getMap()->getComm(), lNumRowPermutations, gNumRowPermutations);
+    MueLu_sumAll(diagPVec->getMap()->getComm(), lNumRowPermutations, gNumRowPermutations);
 
     //// count column permutations
     // count zeros on diagonal in Q^T -> number of column permutations
@@ -303,23 +303,21 @@ namespace MueLu {
     }
 
     // sum up all entries in multipleColRequests over all processors
-    sumAll(diagQTVec->getMap()->getComm(), lNumColPermutations, gNumColPermutations);
+    MueLu_sumAll(diagQTVec->getMap()->getComm(), lNumColPermutations, gNumColPermutations);
 
     currentLevel.Set("#RowPermutations", gNumRowPermutations, genFactory/*this*/);
     currentLevel.Set("#ColPermutations", gNumColPermutations, genFactory/*this*/);
     currentLevel.Set("#WideRangeRowPermutations", 0, genFactory/*this*/);
     currentLevel.Set("#WideRangeColPermutations", 0, genFactory/*this*/);
 
-    GetOStream(Statistics0, 0) << "#Row    permutations/max possible permutations: " << gNumRowPermutations << "/" << diagPVec->getMap()->getGlobalNumElements() << std::endl;
-    GetOStream(Statistics0, 0) << "#Column permutations/max possible permutations: " << gNumColPermutations << "/" << diagQTVec->getMap()->getGlobalNumElements() << std::endl;
+    GetOStream(Statistics0) << "#Row    permutations/max possible permutations: " << gNumRowPermutations << "/" << diagPVec->getMap()->getGlobalNumElements() << std::endl;
+    GetOStream(Statistics0) << "#Column permutations/max possible permutations: " << gNumColPermutations << "/" << diagQTVec->getMap()->getGlobalNumElements() << std::endl;
 
-#else
-#warning PermutationFactory not compiling/working for Scalar==complex.
 #endif // #ifndef HAVE_MUELU_INST_COMPLEX_INT_INT
   }
 
-  template<class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node, class LocalMatOps>
-  GlobalOrdinal LocalPermutationStrategy<Scalar, LocalOrdinal, GlobalOrdinal, Node, LocalMatOps>::getGlobalDofId(const Teuchos::RCP<Matrix> & A, LocalOrdinal localNodeId, LocalOrdinal localDof) const {
+  template<class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
+  GlobalOrdinal LocalPermutationStrategy<Scalar, LocalOrdinal, GlobalOrdinal, Node>::getGlobalDofId(const Teuchos::RCP<Matrix> & A, LocalOrdinal localNodeId, LocalOrdinal localDof) const {
     size_t nDofsPerNode = 1;
     if (A->IsView("stridedMaps")) {
       Teuchos::RCP<const Map> permRowMapStrided = A->getRowMap("stridedMaps");
@@ -331,8 +329,8 @@ namespace MueLu {
     return A->getRowMap()->getGlobalElement(localDofId);
   }
 
-  template<class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node, class LocalMatOps>
-  GlobalOrdinal LocalPermutationStrategy<Scalar, LocalOrdinal, GlobalOrdinal, Node, LocalMatOps>::globalDofId2globalNodeId( const Teuchos::RCP<Matrix> & A, GlobalOrdinal grid ) const {
+  template<class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
+  GlobalOrdinal LocalPermutationStrategy<Scalar, LocalOrdinal, GlobalOrdinal, Node>::globalDofId2globalNodeId( const Teuchos::RCP<Matrix> & A, GlobalOrdinal grid ) const {
     size_t nDofsPerNode = 1;
     if (A->IsView("stridedMaps")) {
       Teuchos::RCP<const Map> permRowMapStrided = A->getRowMap("stridedMaps");

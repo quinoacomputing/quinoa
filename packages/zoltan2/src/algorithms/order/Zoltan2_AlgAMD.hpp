@@ -44,12 +44,13 @@
 // @HEADER
 
 /*! \file Zoltan2_AlgAMD.hpp
-    \brief The AMD ordering algorithm.
+    \brief The AMD ordering algorithm uses SuiteSparse.
 */
 
 #ifndef _ZOLTAN2_ALGAMD_HPP_
 #define _ZOLTAN2_ALGAMD_HPP_
 
+#include <Zoltan2_Algorithm.hpp>
 #include <Zoltan2_GraphModel.hpp>
 #include <Zoltan2_OrderingSolution.hpp>
 
@@ -98,18 +99,25 @@ class AMDTraits<long>
 namespace Zoltan2{
 
 template <typename Adapter>
-class AlgAMD
+class AlgAMD : public Algorithm<Adapter>
 {
+    private:
+
+    const RCP<GraphModel<Adapter> > model;
+    const RCP<Teuchos::ParameterList> pl;
+    const RCP<Teuchos::Comm<int> > comm;
+      
     public:
 
-    AlgAMD()
-    {
-    }
+    AlgAMD(
+      const RCP<GraphModel<Adapter> > &model__,
+      const RCP<Teuchos::ParameterList> &pl__,
+      const RCP<Teuchos::Comm<int> > &comm__
+    ) : model(model__), pl(pl__), comm(comm__)
+    { }
 
-    int order ( const RCP<GraphModel<Adapter> > &model,
-    const RCP<OrderingSolution<typename Adapter::gid_t,
-    typename Adapter::lno_t> > &solution, const RCP<Teuchos::ParameterList> &pl,
-    const RCP<Teuchos::Comm<int> > &comm )
+    int order(const RCP<OrderingSolution<typename Adapter::zgid_t,
+                                         typename Adapter::lno_t> > &solution)
     {
 #ifndef HAVE_ZOLTAN2_AMD
   throw std::runtime_error(
@@ -117,31 +125,19 @@ class AlgAMD
         "Please set CMake flag Zoltan2_ENABLE_AMD:BOOL=ON.");
 #else
       typedef typename Adapter::lno_t lno_t;
-      typedef typename Adapter::gno_t gno_t;
-      typedef typename Adapter::gid_t gid_t;
       typedef typename Adapter::scalar_t scalar_t;
 
       int ierr= 0;
 
-      if (comm->getSize() != 1)
-      {
-          throw std::runtime_error(
-            "ERROR: AMD requested with distributed matrix.\n"
-            "This feature is not supported yet. Please use a local matrix.");
-      }
-
       const size_t nVtx = model->getLocalNumVertices();
 
       //cout << "Local num vertices" << nVtx << endl;
-      ArrayView<const gno_t> edgeIds;
-      ArrayView<const int> procIds;
+      ArrayView<const lno_t> edgeIds;
       ArrayView<const lno_t> offsets;
       ArrayView<StridedData<lno_t, scalar_t> > wgts;
 
-      //const size_t nEdgs = model->getEdgeList( edgeIds,
-      //                      procIds, offsets, wgts);
-      // TODO: Should use the local graph
-      model->getEdgeList( edgeIds, procIds, offsets, wgts);
+      // wgts are ignored in AMD
+      model->getLocalEdgeList( edgeIds, offsets, wgts);
 
       AMDTraits<lno_t> AMDobj;
       double Control[AMD_CONTROL];
@@ -157,7 +153,7 @@ class AlgAMD
                              edgeIds.getRawPtr(), perm, Control, Info);
 
       if (result != AMD_OK && result != AMD_OK_BUT_JUMBLED)
-          ierr = -1; // TODO: Change return value to lno_t
+          ierr = -1;
 
       solution->setHavePerm(true);
       return ierr;

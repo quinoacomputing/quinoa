@@ -18,7 +18,7 @@
 
     You should have received a copy of the GNU Lesser General Public License 
     (lgpl.txt) along with this library; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
 
     (2010) kraftche@cae.wisc.edu    
 
@@ -31,13 +31,13 @@
  */
 
 #include "Mesquite.hpp"
-#include "DeformingDomainWrapper.hpp"
-#include "MeshImpl.hpp"
-#include "MsqError.hpp"
-#include "MeshDomain1D.hpp"
-#include "PlanarDomain.hpp"
-#include "QualityAssessor.hpp"
-#include "MsqVertex.hpp"
+#include "Mesquite_DeformingDomainWrapper.hpp"
+#include "Mesquite_MeshImpl.hpp"
+#include "Mesquite_MsqError.hpp"
+#include "Mesquite_MeshDomain1D.hpp"
+#include "Mesquite_PlanarDomain.hpp"
+#include "Mesquite_QualityAssessor.hpp"
+#include "Mesquite_MsqVertex.hpp"
 
 #include <iostream>
 #include <cstdlib>

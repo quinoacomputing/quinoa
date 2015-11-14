@@ -53,6 +53,11 @@
 #ifndef MUELU_MAPTRANSFERFACTORY_DECL_HPP_
 #define MUELU_MAPTRANSFERFACTORY_DECL_HPP_
 
+#include <Xpetra_Map_fwd.hpp>
+#include <Xpetra_MapFactory_fwd.hpp>
+#include <Xpetra_Matrix_fwd.hpp>
+
+
 #include "MueLu_ConfigDefs.hpp"
 #include "MueLu_TwoLevelFactoryBase.hpp"
 
@@ -68,7 +73,7 @@ namespace MueLu {
 
   */
 
-  template <class Scalar = double, class LocalOrdinal = int, class GlobalOrdinal = LocalOrdinal, class Node = KokkosClassic::DefaultNode::DefaultNodeType, class LocalMatOps = typename KokkosClassic::DefaultKernels<void,LocalOrdinal,Node>::SparseOps>
+  template <class Scalar = double, class LocalOrdinal = int, class GlobalOrdinal = LocalOrdinal, class Node = KokkosClassic::DefaultNode::DefaultNodeType>
   class MapTransferFactory : public TwoLevelFactoryBase {
 #undef MUELU_MAPTRANSFERFACTORY_SHORT
     #include "MueLu_UseShortNames.hpp"
@@ -78,16 +83,18 @@ namespace MueLu {
     //@{
 
     //! Constructor.
-    MapTransferFactory(std::string mapName, Teuchos::RCP<const FactoryBase> mapFact = Teuchos::null);
+    MapTransferFactory();
 
     //! Destructor.
     virtual ~MapTransferFactory() {}
+
+    RCP<const ParameterList> GetValidParameterList() const;
     //@}
 
     //! Input
     //@{
 
-    void DeclareInput(Level &fineLevel, Level &coarseLevel) const;
+    void DeclareInput(Level& fineLevel, Level& coarseLevel) const;
 
     //@}
 
@@ -95,14 +102,14 @@ namespace MueLu {
     //! @name Build methods.
 
     //! Build an object with this factory.
-    void Build(Level &fineLevel, Level &coarseLevel) const;
+    void Build(Level& fineLevel, Level& coarseLevel) const;
 
     //@}
 
   private:
 
-    std::string              mapName_;   ///< name of input and output variable
-    RCP<const FactoryBase>   mapFact_;   ///< generating factory of input variable
+    //std::string              mapName_;      ///< name of input and output variable
+    mutable RCP<const FactoryBase>   mapFact_;      ///< generating factory of input variable
 
   }; // class MapTransferFactory
 

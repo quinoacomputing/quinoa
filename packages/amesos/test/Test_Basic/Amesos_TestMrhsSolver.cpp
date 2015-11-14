@@ -19,7 +19,7 @@
 //  
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
 // USA
 // Questions? Contact Michael A. Heroux (maherou@sandia.gov) 
 // 
@@ -432,6 +432,7 @@ int Amesos_TestMrhsSolver( Epetra_Comm &Comm, char *matrix_file, int numsolves,
 	}
 
       }
+      factor = false;
 #endif
 #ifdef HAVE_AMESOS_SLUS
     } else if ( SparseSolver == SuperLU ) { 
@@ -457,6 +458,7 @@ int Amesos_TestMrhsSolver( Epetra_Comm &Comm, char *matrix_file, int numsolves,
 	}
 
       }
+      factor = false;
 #endif
 #ifdef HAVE_AMESOS_KLU
     } else if ( SparseSolver == KLU ) { 
@@ -496,7 +498,7 @@ int Amesos_TestMrhsSolver( Epetra_Comm &Comm, char *matrix_file, int numsolves,
 	    }
 	  }
       }
-
+      factor = false;
 #endif
 #ifdef HAVE_AMESOS_LAPACK
     } else if ( SparseSolver == LAPACK ) { 
@@ -525,6 +527,7 @@ int Amesos_TestMrhsSolver( Epetra_Comm &Comm, char *matrix_file, int numsolves,
 	}
 
       }
+      factor = false;
 #endif
 #ifdef HAVE_AMESOS_TAUCS
     } else if ( SparseSolver == TAUCS ) { 
@@ -671,6 +674,7 @@ int Amesos_TestMrhsSolver( Epetra_Comm &Comm, char *matrix_file, int numsolves,
 	}
 
       }
+      factor = false;
 #endif
 #ifdef HAVE_AMESOS_SUPERLUDIST
     } else if ( SparseSolver == SUPERLUDIST ) { 

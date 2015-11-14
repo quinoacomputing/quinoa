@@ -1,12 +1,12 @@
 // @HEADER
 // ***********************************************************************
-// 
+//
 //                      Didasko Tutorial Package
 //                 Copyright (2005) Sandia Corporation
-// 
+//
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -35,12 +35,12 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 // Questions about Didasko? Contact Marzio Sala (marzio.sala _AT_ gmail.com)
-// 
+//
 // ***********************************************************************
 // @HEADER
 
 // Solve a 2D Laplacian problem
-// This example builds the matrix and solves it with AztecOO. 
+// This example builds the matrix and solves it with AztecOO.
 
 #include "Didasko_ConfigDefs.h"
 #if defined(HAVE_DIDASKO_EPETRA) && defined(HAVE_DIDASKO_AZTECOO)
@@ -59,8 +59,8 @@
 
 // external function
 void  get_neighbours( const int i, const int nx, const int ny,
-		      int & left, int & right, 
-		      int & lower, int & upper);
+    int & left, int & right,
+    int & lower, int & upper);
 
 // =========== //
 // main driver //
@@ -83,7 +83,7 @@ int main(int argc, char *argv[])
 
   // create a linear map
   Epetra_Map Map(NumGlobalElements,0,Comm);
-  
+
   // local number of rows
   int NumMyElements = Map.NumMyElements();
   // get update list
@@ -91,7 +91,7 @@ int main(int argc, char *argv[])
   Map.MyGlobalElements( MyGlobalElements );
 
   // Create a Epetra_Matrix with 5 nonzero per rows
-  
+
   Epetra_CrsMatrix A(Copy,Map,5);
 
   // Add  rows one-at-a-time
@@ -101,15 +101,15 @@ int main(int argc, char *argv[])
   int Indices[4];
   int left, right, lower, upper;
   double diag = 4.0;
-  
+
   for( int i=0 ; i<NumMyElements; ++i ) {
     int NumEntries=0;
-    get_neighbours(  MyGlobalElements[i], nx, ny, 
-		     left, right, lower, upper);
+    get_neighbours(  MyGlobalElements[i], nx, ny,
+        left, right, lower, upper);
     if( left != -1 ) {
-	Indices[NumEntries] = left;
-	Values[NumEntries] = -1.0;
-	++NumEntries;
+      Indices[NumEntries] = left;
+      Values[NumEntries] = -1.0;
+      ++NumEntries;
     }
     if( right != -1 ) {
       Indices[NumEntries] = right;
@@ -131,7 +131,7 @@ int main(int argc, char *argv[])
     // Put in the diagonal entry
     A.InsertGlobalValues(MyGlobalElements[i], 1, &diag, MyGlobalElements+i);
   }
-  
+
   // Finish up
   A.FillComplete();
 
@@ -141,24 +141,24 @@ int main(int argc, char *argv[])
   b.PutScalar(1.0);
 
   // ==================== AZTECOO INTERFACE ======================
-  
+
   // create linear problem
   Epetra_LinearProblem Problem(&A,&x,&b);
   // create AztecOO instance
   AztecOO Solver(Problem);
 
   Solver.SetAztecOption( AZ_precond, AZ_Jacobi );
-  
+
   Solver.Iterate(1000,1E-9);
 
   // ==================== END OF AZTECOO INTERFACE ================
-  
+
   if( Comm.MyPID() == 0 ) {
-    cout << "Solver performed " << Solver.NumIters() 
-	 << "iterations.\n";
+    cout << "Solver performed " << Solver.NumIters()
+      << "iterations.\n";
     cout << "Norm of the true residual = " << Solver.TrueResidual() << endl;
   }
-  
+
 #ifdef HAVE_MPI
   MPI_Finalize();
 #endif
@@ -172,27 +172,27 @@ int main(int argc, char *argv[])
 /****************************************************************************/
 
 void  get_neighbours( const int i, const int nx, const int ny,
-		      int & left, int & right, 
-		      int & lower, int & upper) 
+    int & left, int & right,
+    int & lower, int & upper)
 {
 
   int ix, iy;
   ix = i%nx;
   iy = (i - ix)/nx;
 
-  if( ix == 0 ) 
+  if( ix == 0 )
     left = -1;
-  else 
+  else
     left = i-1;
-  if( ix == nx-1 ) 
+  if( ix == nx-1 )
     right = -1;
   else
     right = i+1;
-  if( iy == 0 ) 
+  if( iy == 0 )
     lower = -1;
   else
     lower = i-nx;
-  if( iy == ny-1 ) 
+  if( iy == ny-1 )
     upper = -1;
   else
     upper = i+nx;
@@ -216,8 +216,8 @@ int main(int argc, char *argv[])
 #endif
 
   puts("Please configure Didasko with:\n"
-       "--enable-epetra\n"
-       "--enable-aztecoo");
+      "--enable-epetra\n"
+      "--enable-aztecoo");
 
 #ifdef HAVE_MPI
   MPI_Finalize();

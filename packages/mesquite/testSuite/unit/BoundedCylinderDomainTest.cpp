@@ -1,7 +1,7 @@
-#include "BoundedCylinderDomain.hpp"
-#include "MsqError.hpp"
-#include "MeshImpl.hpp"
-#include "MsqVertex.hpp"
+#include "Mesquite_BoundedCylinderDomain.hpp"
+#include "Mesquite_MsqError.hpp"
+#include "Mesquite_MeshImpl.hpp"
+#include "Mesquite_MsqVertex.hpp"
 #include <cppunit/extensions/HelperMacros.h>
 #include <vector>
 #include <algorithm>

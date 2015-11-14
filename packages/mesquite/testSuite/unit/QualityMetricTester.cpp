@@ -18,20 +18,20 @@
 
     You should have received a copy of the GNU Lesser General Public License 
     (lgpl.txt) along with this library; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  
     (2006) kraftche@cae.wisc.edu
    
   ***************************************************************** */
 
 #include "QualityMetricTester.hpp"
-#include "PatchData.hpp"
-#include "QualityMetric.hpp"
-#include "IdealElements.hpp"
+#include "Mesquite_PatchData.hpp"
+#include "Mesquite_QualityMetric.hpp"
+#include "Mesquite_IdealElements.hpp"
 #include "UnitUtil.hpp"
-#include "ElemSampleQM.hpp"
-#include "TopologyInfo.hpp"
-#include "EdgeQM.hpp"
+#include "Mesquite_ElemSampleQM.hpp"
+#include "Mesquite_TopologyInfo.hpp"
+#include "Mesquite_EdgeQM.hpp"
 
 #include <cppunit/extensions/HelperMacros.h>
 

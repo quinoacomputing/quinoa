@@ -71,6 +71,9 @@ public:
   typedef typename Teuchos::ScalarTraits<scalar_type>::magnitudeType magnitude_type;
   typedef Tpetra::RowMatrix<scalar_type, local_ordinal_type,
                             global_ordinal_type, node_type> row_matrix_type;
+
+  typedef typename row_matrix_type::mag_type mag_type;
+
   //@}
   //! \name Constructors and destructor
   //@{
@@ -88,10 +91,6 @@ public:
   OverlappingRowMatrix (const Teuchos::RCP<const row_matrix_type>& A,
                         const int overlapLevel);
 
-  //! Subdomain constructor (NOT CURRENTLY IMPLEMENTED).
-  OverlappingRowMatrix (const Teuchos::RCP<const row_matrix_type>& A,
-                        const int overlapLevel,
-                        const int subdomainID);
   //! Destructor
   ~OverlappingRowMatrix ();
 
@@ -102,7 +101,7 @@ public:
   //! The communicator over which the matrix is distributed.
   virtual Teuchos::RCP<const Teuchos::Comm<int> > getComm() const;
 
-  //! The matrix's Kokkos Node instance.
+  //! The matrix's Node instance.
   virtual Teuchos::RCP<node_type> getNode() const;
 
   //! The Map that describes the distribution of rows over processes.
@@ -315,7 +314,7 @@ public:
   /** Computes and returns the Frobenius norm of the matrix, defined as:
       \f$ \|A\|_F = \sqrt{\sum_{i,j} \|\a_{ij}\|^2} \f$
   */
-  virtual typename Teuchos::ScalarTraits<scalar_type>::magnitudeType
+  virtual mag_type
   getFrobeniusNorm () const;
 
   //! \brief Computes the operator-multivector application.
@@ -351,6 +350,8 @@ public:
 
   void describe(Teuchos::FancyOStream &out, const Teuchos::EVerbosityLevel verbLevel) const;
 
+  virtual Teuchos::RCP<const row_matrix_type> getUnderlyingMatrix() const;
+
 private:
   typedef Tpetra::Map<local_ordinal_type, global_ordinal_type, node_type> map_type;
   typedef Tpetra::Import<local_ordinal_type, global_ordinal_type, node_type> import_type;
@@ -365,10 +366,6 @@ private:
   Tpetra::global_size_t NumGlobalNonzeros_;
   size_t MaxNumEntries_;
   int OverlapLevel_;
-
-  // Subcommunicator stuff
-  bool UseSubComm_;
-  int subdomainID_;
 
   // Wrapper matrix objects
   Teuchos::RCP<const map_type> RowMap_;

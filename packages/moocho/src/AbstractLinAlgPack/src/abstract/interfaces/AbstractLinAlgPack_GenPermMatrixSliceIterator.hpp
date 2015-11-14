@@ -157,7 +157,7 @@ void swap( row_col_value_type<T>& v1, row_col_value_type<T>& v2 )
 template< class T >
 class row_col_iterator
 #if defined(_WINDOWS) || defined(_INTEL_CXX) || defined(_PG_CXX) 
-  : public std::iterator< std::random_access_iterator_tag, external_row_col_value_type<T>, ptrdiff_t >
+  : public std::iterator< std::random_access_iterator_tag, row_col_value_type<T>, ptrdiff_t >
 #endif
 {
 public:
@@ -166,7 +166,7 @@ public:
   /** \brief . */
   typedef	std::random_access_iterator_tag	iterator_category;
   /** \brief . */
-  typedef	external_row_col_value_type<T>	value_type;
+  typedef	row_col_value_type<T>	value_type;
   /** \brief . */
   typedef row_col_value_type<T>&			reference;
   /** \brief . */

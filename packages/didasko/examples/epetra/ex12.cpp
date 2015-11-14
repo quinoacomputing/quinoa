@@ -1,13 +1,13 @@
 
 // @HEADER
 // ***********************************************************************
-// 
+//
 //                      Didasko Tutorial Package
 //                 Copyright (2005) Sandia Corporation
-// 
+//
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -36,14 +36,14 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 // Questions about Didasko? Contact Marzio Sala (marzio.sala _AT_ gmail.com)
-// 
+//
 // ***********************************************************************
 // @HEADER
 
 // this example creates a tridiagonal matrix of type
 //
 //     |  2  -1            |
-//     | -1   2   -1       | 
+//     | -1   2   -1       |
 // A = |      ...  ... ... |
 //     |            -1  2  |
 
@@ -73,18 +73,18 @@ int main(int argc, char *argv[])
 
   // set global dimension of the matrix to 5, could be any number
   int NumGlobalElements = 5;
-  
+
   // create a map
   Epetra_Map Map(NumGlobalElements,0,Comm);
-  
+
   // local number of rows
   int NumMyElements = Map.NumMyElements();
-  
+
   // get update list
   int * MyGlobalElements = Map.MyGlobalElements( );
 
   // Create an integer vector NumNz that is used to build the Petra Matrix.
-  // NumNz[i] is the Number of OFF-DIAGONAL term for the ith global equation 
+  // NumNz[i] is the Number of OFF-DIAGONAL term for the ith global equation
   // on this processor
 
   int * NumNz = new int[NumMyElements];
@@ -101,7 +101,7 @@ int main(int argc, char *argv[])
   // Create a Epetra_Matrix
   Epetra_CrsMatrix A(Copy,Map,NumNz);
   // (NOTE: constructor `Epetra_CrsMatrix A(Copy,Map,3);' was ok too.)
-  
+
   // Add  rows one-at-a-time
   // Need some vectors to help
   // Off diagonal Values will always be -1, diagonal term 2
@@ -114,8 +114,8 @@ int main(int argc, char *argv[])
 
   for( int i=0 ; i<NumMyElements; ++i ) {
     if (MyGlobalElements[i]==0) {
-	Indices[0] = 1;
-	NumEntries = 1;
+      Indices[0] = 1;
+      NumEntries = 1;
     } else if (MyGlobalElements[i] == NumGlobalElements-1) {
       Indices[0] = NumGlobalElements-2;
       NumEntries = 1;
@@ -128,7 +128,7 @@ int main(int argc, char *argv[])
     // Put in the diagonal entry
     A.InsertGlobalValues(MyGlobalElements[i], 1, &two, MyGlobalElements+i);
   }
-  
+
   // Finish up, trasforming the matrix entries into local numbering,
   // to optimize data transfert during matrix-vector products
   A.FillComplete();
@@ -146,15 +146,15 @@ int main(int argc, char *argv[])
   double dotProduct;
   z.Dot( q, &dotProduct );
 
-  if( Comm.MyPID() == 0 ) 
+  if( Comm.MyPID() == 0 )
     cout << "q dot z = " << dotProduct << endl;
 
 #ifdef HAVE_MPI
   MPI_Finalize();
 #endif
 
-  delete NumNz;
-  
+  delete[] NumNz;
+
   return( EXIT_SUCCESS );
 
 } /* main */
@@ -167,7 +167,7 @@ int main(int argc, char *argv[])
 int main(int argc, char *argv[])
 {
   puts("Please configure Didasko with:\n"
-       "--enable-epetra");
+      "--enable-epetra");
 
   return 0;
 }

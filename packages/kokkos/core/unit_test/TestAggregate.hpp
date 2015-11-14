@@ -1,13 +1,13 @@
 /*
 //@HEADER
 // ************************************************************************
-//
-//   Kokkos: Manycore Performance-Portable Multidimensional Arrays
-//              Copyright (2012) Sandia Corporation
-//
+// 
+//                        Kokkos v. 2.0
+//              Copyright (2014) Sandia Corporation
+// 
 // Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
 // the U.S. Government retains certain rights in this software.
-//
+// 
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -36,10 +36,13 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 // Questions? Contact  H. Carter Edwards (hcedwar@sandia.gov)
-//
+// 
 // ************************************************************************
 //@HEADER
 */
+
+#ifndef TEST_AGGREGATE_HPP
+#define TEST_AGGREGATE_HPP
 
 #include <gtest/gtest.h>
 
@@ -49,9 +52,9 @@
 
 /*--------------------------------------------------------------------------*/
 
-#if 0
-
 namespace Test {
+
+struct EmbedArray {};
 
 struct ArrayProxyContiguous {};
 struct ArrayProxyStrided {};
@@ -63,12 +66,17 @@ template< typename T >
 struct Array<T,0,ArrayProxyContiguous>
 {
 public:
+  typedef T value_type ;
+
   enum { StaticLength = 0 };
   T * const value ;
   const unsigned count ;
+
+  KOKKOS_INLINE_FUNCTION
   Array( T * v , unsigned n ) : value(v), count(n) {}
 
   template< class Proxy >
+  KOKKOS_INLINE_FUNCTION
   Array & operator = ( const Array<T,0,Proxy> & rhs ) { return *this ; }
 };
 
@@ -76,11 +84,16 @@ template< typename T , unsigned N >
 struct Array<T,N,ArrayProxyContiguous>
 {
 public:
+  typedef T value_type ;
+
   enum { StaticLength = N };
   T * const value ;
+
+  KOKKOS_INLINE_FUNCTION
   Array( T * v , unsigned ) : value(v) {}
 
   template< class Proxy >
+  KOKKOS_INLINE_FUNCTION
   Array & operator = ( const Array<T,N,Proxy> & rhs ) { return *this ; }
 };
 
@@ -88,12 +101,17 @@ template< typename T , unsigned N >
 struct Array<T,N,ArrayProxyStrided>
 {
 public:
+  typedef T value_type ;
+
   enum { StaticLength = N };
   T * const value ;
   const unsigned stride ;
+
+  KOKKOS_INLINE_FUNCTION
   Array( T * v , unsigned , unsigned s ) : value(v), stride(s) {}
 
   template< class Proxy >
+  KOKKOS_INLINE_FUNCTION
   Array & operator = ( const Array<T,N,Proxy> & rhs ) { return *this ; }
 };
 
@@ -101,13 +119,18 @@ template< typename T >
 struct Array<T,0,ArrayProxyStrided>
 {
 public:
+  typedef T value_type ;
+
   enum { StaticLength = 0 };
   T * const value ;
   const unsigned count ;
   const unsigned stride ;
+
+  KOKKOS_INLINE_FUNCTION
   Array( T * v , unsigned n , unsigned s ) : value(v), count(n), stride(s) {}
 
   template< class Proxy >
+  KOKKOS_INLINE_FUNCTION
   Array & operator = ( const Array<T,0,Proxy> & rhs ) { return *this ; }
 };
 
@@ -115,31 +138,40 @@ template< typename T >
 struct Array<T,0,void>
 {
 public:
+  typedef T value_type ;
+
   enum { StaticLength = 0 };
   T * value ;
   const unsigned count ;
 
+  KOKKOS_INLINE_FUNCTION
+  Array() : value(0) , count(0) {}
+
   template< unsigned N , class Proxy >
-  Array & operator = ( const Array<T,N,Proxy> & rhs ) { return *this ; }
+  KOKKOS_INLINE_FUNCTION
+  Array( const Array<T,N,Proxy> & rhs ) : value(rhs.value), count(N) {}
 };
 
 template< typename T , unsigned N >
 struct Array<T,N,void>
 {
 public:
+  typedef T value_type ;
+
   enum { StaticLength = N };
   T value[N] ;
 
   template< class Proxy >
-  Array & operator = ( const Array<T,N,Proxy> & rhs ) { return *this ; }
+  KOKKOS_INLINE_FUNCTION
+  Array & operator = ( const Array<T,N,Proxy> & ) { return *this ; }
 };
-
-struct LayoutEmbedArray {};
 
 } // namespace Test
 
 /*--------------------------------------------------------------------------*/
 /*--------------------------------------------------------------------------*/
+
+#if ! defined( KOKKOS_USING_EXPERIMENTAL_VIEW )
 
 namespace Kokkos {
 namespace Impl {
@@ -152,22 +184,21 @@ private:
   typedef AnalyzeShape< T > nested ;
 public:
 
+  typedef Test::EmbedArray specialize ;
+
   typedef typename ShapeInsert< typename nested::shape , N >::type shape ;
 
-  typedef typename nested::scalar_type  scalar_type ;
-  typedef typename nested::array_type   array_type[ N ];
+  typedef typename nested::array_intrinsic_type   array_intrinsic_type[ N ];
   typedef Test::Array< T , N >          value_type ;
   typedef Test::Array< T , N >          type ;
 
-  typedef const scalar_type const_scalar_type ;
-  typedef const array_type  const_array_type ;
+  typedef const array_intrinsic_type  const_array_intrinsic_type ;
   typedef const value_type  const_value_type ;
   typedef const type        const_type ;
 
-  typedef typename nested::non_const_scalar_type   non_const_scalar_type ;
-  typedef typename nested::non_const_array_type    non_const_array_type[ N ];
-  typedef Test::Array< non_const_scalar_type , N > non_const_value_type ;
-  typedef Test::Array< non_const_scalar_type , N > non_const_type ;
+  typedef typename nested::non_const_array_intrinsic_type          non_const_array_intrinsic_type[ N ];
+  typedef Test::Array< typename nested::non_const_value_type , N > non_const_value_type ;
+  typedef Test::Array< typename nested::non_const_value_type , N > non_const_type ;
 };
 
 template< typename T >
@@ -178,66 +209,45 @@ private:
   typedef AnalyzeShape< T > nested ;
 public:
 
+  typedef Test::EmbedArray specialize ;
+
   typedef typename ShapeInsert< typename nested::shape , 0 >::type shape ;
 
-  typedef typename nested::scalar_type  scalar_type ;
-  typedef typename nested::array_type * array_type ;
+  typedef typename nested::array_intrinsic_type * array_intrinsic_type ;
   typedef Test::Array< T , 0 >          value_type ;
   typedef Test::Array< T , 0 >          type ;
 
-  typedef const scalar_type const_scalar_type ;
-  typedef const array_type  const_array_type ;
+  typedef const array_intrinsic_type  const_array_intrinsic_type ;
   typedef const value_type  const_value_type ;
   typedef const type        const_type ;
 
-  typedef typename nested::non_const_scalar_type   non_const_scalar_type ;
-  typedef typename nested::non_const_array_type  * non_const_array_type ;
-  typedef Test::Array< non_const_scalar_type , 0 > non_const_value_type ;
-  typedef Test::Array< non_const_scalar_type , 0 > non_const_type ;
+  typedef typename nested::non_const_array_intrinsic_type  * non_const_array_intrinsic_type ;
+  typedef Test::Array< typename nested::non_const_value_type , 0 > non_const_value_type ;
+  typedef Test::Array< typename nested::non_const_value_type , 0 > non_const_type ;
 };
 
 /*--------------------------------------------------------------------------*/
 
-template< typename ScalarType , unsigned Count ,
-          class Rank , class RankDynamic ,
-          class MemorySpace , class MemoryTraits >
-struct ViewSpecialize< ScalarType ,
-                       Test::Array< ScalarType , Count > ,
-                       LayoutLeft , Rank , RankDynamic ,
-                       MemorySpace , MemoryTraits >
-{ typedef Test::LayoutEmbedArray type ; };
+template< class ValueType , class MemorySpace , class MemoryTraits >
+struct ViewSpecialize< ValueType
+                     , Test::EmbedArray
+                     , LayoutLeft
+                     , MemorySpace
+                     , MemoryTraits >
+{ typedef Test::EmbedArray type ; };
 
-template< typename ScalarType , unsigned Count ,
-          class Rank , class RankDynamic ,
-          class MemorySpace , class MemoryTraits >
-struct ViewSpecialize< ScalarType ,
-                       Test::Array< ScalarType , Count > ,
-                       LayoutRight , Rank , RankDynamic ,
-                       MemorySpace , MemoryTraits >
-{ typedef Test::LayoutEmbedArray type ; };
-
-template< typename ScalarType , unsigned Count ,
-          class Rank , class RankDynamic ,
-          class MemorySpace , class MemoryTraits >
-struct ViewSpecialize< const ScalarType ,
-                       const Test::Array< ScalarType , Count > ,
-                       LayoutLeft , Rank , RankDynamic ,
-                       MemorySpace , MemoryTraits >
-{ typedef Test::LayoutEmbedArray type ; };
-
-template< typename ScalarType , unsigned Count ,
-          class Rank , class RankDynamic ,
-          class MemorySpace , class MemoryTraits >
-struct ViewSpecialize< const ScalarType ,
-                       const Test::Array< ScalarType , Count > ,
-                       LayoutRight , Rank , RankDynamic ,
-                       MemorySpace , MemoryTraits >
-{ typedef Test::LayoutEmbedArray type ; };
+template< class ValueType , class MemorySpace , class MemoryTraits >
+struct ViewSpecialize< ValueType
+                     , Test::EmbedArray
+                     , LayoutRight
+                     , MemorySpace
+                     , MemoryTraits >
+{ typedef Test::EmbedArray type ; };
 
 /*--------------------------------------------------------------------------*/
 
 template<>
-struct ViewAssignment< Test::LayoutEmbedArray , Test::LayoutEmbedArray , void >
+struct ViewAssignment< Test::EmbedArray , Test::EmbedArray , void >
 {
   //------------------------------------
   /** \brief  Compatible value and shape */
@@ -245,64 +255,39 @@ struct ViewAssignment< Test::LayoutEmbedArray , Test::LayoutEmbedArray , void >
   template< class DT , class DL , class DD , class DM ,
             class ST , class SL , class SD , class SM >
   KOKKOS_INLINE_FUNCTION
-  ViewAssignment(       View<DT,DL,DD,DM,Test::LayoutEmbedArray> & dst
-                , const View<ST,SL,SD,SM,Test::LayoutEmbedArray> & src
+  ViewAssignment(       View<DT,DL,DD,DM,Test::EmbedArray> & dst
+                , const View<ST,SL,SD,SM,Test::EmbedArray> & src
                 , const typename enable_if<(
                     ViewAssignable< ViewTraits<DT,DL,DD,DM> ,
                                     ViewTraits<ST,SL,SD,SM> >::value
                     )>::type * = 0
                   )
   {
-    typedef ViewTraits<DT,DL,DD,DM> dst_traits ;
-    typedef typename View<DT,DL,DD,DM,LayoutDefault>::shape_type   shape_type ;
-    typedef typename View<DT,DL,DD,DM,LayoutDefault>::stride_type  stride_type ;
-
-    ViewTracking< dst_traits >::decrement( dst.m_ptr_on_device );
-
-    shape_type::assign( dst.m_shape,
-                        src.m_shape.N0 , src.m_shape.N1 , src.m_shape.N2 , src.m_shape.N3 ,
-                        src.m_shape.N4 , src.m_shape.N5 , src.m_shape.N6 , src.m_shape.N7 );
-
-    stride_type::assign( dst.m_stride , src.m_stride.value );
+    dst.m_offset_map.assign( src.m_offset_map );
 
     dst.m_ptr_on_device = src.m_ptr_on_device ;
 
-    Impl::ViewTracking< dst_traits >::increment( dst.m_ptr_on_device );
+    dst.m_tracker = src.m_tracker;
   }
 };
 
 template<>
-struct ViewAssignment< LayoutDefault , Test::LayoutEmbedArray , void >
+struct ViewAssignment< ViewDefault , Test::EmbedArray , void >
 {
   //------------------------------------
   /** \brief  Compatible value and shape */
 
-  template< class DT , class DL , class DD , class DM ,
-            class ST , class SL , class SD , class SM >
+  template< class ST , class SL , class SD , class SM >
   KOKKOS_INLINE_FUNCTION
-  ViewAssignment(       View<DT,DL,DD,DM,LayoutDefault> & dst
-                , const View<ST,SL,SD,SM,Test::LayoutEmbedArray> & src
-                , const typename enable_if<(
-                    ViewAssignable< ViewTraits<DT,DL,DD,DM> ,
-                                    ViewTraits<ST,SL,SD,SM> >::value
-                    )>::type * = 0
-                  )
+  ViewAssignment( typename View<ST,SL,SD,SM,Test::EmbedArray>::array_type & dst
+                , const View<ST,SL,SD,SM,Test::EmbedArray> & src
+                )
   {
-    typedef ViewTraits<DT,DL,DD,DM> dst_traits ;
-    typedef typename View<DT,DL,DD,DM,LayoutDefault>::shape_type   shape_type ;
-    typedef typename View<DT,DL,DD,DM,LayoutDefault>::stride_type  stride_type ;
-
-    ViewTracking< dst_traits >::decrement( dst.m_ptr_on_device );
-
-    shape_type::assign( dst.m_shape,
-                        src.m_shape.N0 , src.m_shape.N1 , src.m_shape.N2 , src.m_shape.N3 ,
-                        src.m_shape.N4 , src.m_shape.N5 , src.m_shape.N6 , src.m_shape.N7 );
-
-    stride_type::assign( dst.m_stride , src.m_stride.value );
+    dst.m_offset_map.assign( src.m_offset_map );
 
     dst.m_ptr_on_device = src.m_ptr_on_device ;
 
-    Impl::ViewTracking< dst_traits >::increment( dst.m_ptr_on_device );
+    dst.m_tracker = src.m_tracker;
   }
 };
 
@@ -319,7 +304,7 @@ template< class DataType ,
           class Arg1Type ,
           class Arg2Type ,
           class Arg3Type >
-class View< DataType , Arg1Type , Arg2Type , Arg3Type , Test::LayoutEmbedArray >
+class View< DataType , Arg1Type , Arg2Type , Arg3Type , Test::EmbedArray >
   : public ViewTraits< DataType , Arg1Type , Arg2Type, Arg3Type >
 {
 public:
@@ -334,33 +319,38 @@ private:
   // Assignment of compatible subview requirement:
   template< class , class , class > friend struct Impl::ViewAssignment ;
 
-  typedef Impl::LayoutStride< typename traits::shape_type ,
-                              typename traits::array_layout > stride_type ;
+  typedef Impl::ViewOffset< typename traits::shape_type ,
+                            typename traits::array_layout > offset_map_type ;
 
-  typename traits::scalar_type * m_ptr_on_device ;
-  typename traits::shape_type    m_shape ;
-  stride_type                    m_stride ;
+  typedef Impl::ViewDataManagement< traits > view_data_management ;
+
+  // traits::value_type = Test::Array< T , N >
+
+  typename traits::value_type::value_type * m_ptr_on_device ;
+  offset_map_type                           m_offset_map ;
+  view_data_management                      m_management ;
+  Impl::AllocationTracker                   m_tracker ;
 
 public:
 
-  typedef View< typename traits::array_type ,
+  typedef View< typename traits::array_intrinsic_type ,
                 typename traits::array_layout ,
-                typename traits::device_type ,
+                typename traits::execution_space ,
                 typename traits::memory_traits > array_type ;
 
   typedef View< typename traits::non_const_data_type ,
                 typename traits::array_layout ,
-                typename traits::device_type ,
+                typename traits::execution_space ,
                 typename traits::memory_traits > non_const_type ;
 
   typedef View< typename traits::const_data_type ,
                 typename traits::array_layout ,
-                typename traits::device_type ,
+                typename traits::execution_space ,
                 typename traits::memory_traits > const_type ;
 
   typedef View< typename traits::non_const_data_type ,
                 typename traits::array_layout ,
-                typename traits::device_type::host_mirror_device_type ,
+                typename traits::host_mirror_space ,
                 void > HostMirror ;
 
   //------------------------------------
@@ -368,53 +358,58 @@ public:
 
   enum { Rank = traits::rank - 1 };
 
-  KOKKOS_INLINE_FUNCTION typename traits::shape_type shape() const { return m_shape ; }
-  KOKKOS_INLINE_FUNCTION typename traits::size_type dimension_0() const { return m_shape.N0 ; }
-  KOKKOS_INLINE_FUNCTION typename traits::size_type dimension_1() const { return m_shape.N1 ; }
-  KOKKOS_INLINE_FUNCTION typename traits::size_type dimension_2() const { return m_shape.N2 ; }
-  KOKKOS_INLINE_FUNCTION typename traits::size_type dimension_3() const { return m_shape.N3 ; }
-  KOKKOS_INLINE_FUNCTION typename traits::size_type dimension_4() const { return m_shape.N4 ; }
-  KOKKOS_INLINE_FUNCTION typename traits::size_type dimension_5() const { return m_shape.N5 ; }
-  KOKKOS_INLINE_FUNCTION typename traits::size_type dimension_6() const { return m_shape.N6 ; }
-  KOKKOS_INLINE_FUNCTION typename traits::size_type dimension_7() const { return m_shape.N7 ; }
+  KOKKOS_INLINE_FUNCTION typename traits::shape_type shape() const { return m_offset_map ; }
+  KOKKOS_INLINE_FUNCTION typename traits::size_type dimension_0() const { return m_offset_map.N0 ; }
+  KOKKOS_INLINE_FUNCTION typename traits::size_type dimension_1() const { return m_offset_map.N1 ; }
+  KOKKOS_INLINE_FUNCTION typename traits::size_type dimension_2() const { return m_offset_map.N2 ; }
+  KOKKOS_INLINE_FUNCTION typename traits::size_type dimension_3() const { return m_offset_map.N3 ; }
+  KOKKOS_INLINE_FUNCTION typename traits::size_type dimension_4() const { return m_offset_map.N4 ; }
+  KOKKOS_INLINE_FUNCTION typename traits::size_type dimension_5() const { return m_offset_map.N5 ; }
+  KOKKOS_INLINE_FUNCTION typename traits::size_type dimension_6() const { return m_offset_map.N6 ; }
+  KOKKOS_INLINE_FUNCTION typename traits::size_type dimension_7() const { return m_offset_map.N7 ; }
   KOKKOS_INLINE_FUNCTION typename traits::size_type size() const
   {
-    return   m_shape.N0
-           * m_shape.N1
-           * m_shape.N2
-           * m_shape.N3
-           * m_shape.N4
-           * m_shape.N5
-           * m_shape.N6
-           * m_shape.N7
+    return   m_offset_map.N0
+           * m_offset_map.N1
+           * m_offset_map.N2
+           * m_offset_map.N3
+           * m_offset_map.N4
+           * m_offset_map.N5
+           * m_offset_map.N6
+           * m_offset_map.N7
            ;
   }
 
   template< typename iType >
   KOKKOS_INLINE_FUNCTION
   typename traits::size_type dimension( const iType & i ) const
-    { return Impl::dimension( m_shape , i ); }
+    { return Impl::dimension( m_offset_map , i ); }
 
   //------------------------------------
   // Destructor, constructors, assignment operators:
 
   KOKKOS_INLINE_FUNCTION
-  ~View() { Impl::ViewTracking< traits >::decrement( m_ptr_on_device ); }
+  ~View() {}
 
   KOKKOS_INLINE_FUNCTION
-  View() : m_ptr_on_device(0)
-    {
-      traits::shape_type::assign(m_shape,0,0,0,0,0,0,0,0);
-      stride_type::assign(m_stride,0);
-    }
+  View()
+    : m_ptr_on_device(0)
+    , m_offset_map()
+    , m_management()
+    , m_tracker()
+  { m_offset_map.assing(0,0,0,0,0,0,0,0); }
 
   KOKKOS_INLINE_FUNCTION
-  View( const View & rhs ) : m_ptr_on_device(0)
-    {
-      (void) Impl::ViewAssignment<
-        typename traits::specialize ,
-        typename traits::specialize >( *this , rhs );
-    }
+  View( const View & rhs )
+    : m_ptr_on_device(0)
+    , m_offset_map()
+    , m_management()
+    , m_tracker()
+  {
+    (void) Impl::ViewAssignment<
+      typename traits::specialize ,
+      typename traits::specialize >( *this , rhs );
+  }
 
   KOKKOS_INLINE_FUNCTION
   View & operator = ( const View & rhs )
@@ -432,10 +427,13 @@ public:
   KOKKOS_INLINE_FUNCTION
   View( const View<RT,RL,RD,RM,RS> & rhs )
     : m_ptr_on_device(0)
-    {
-      (void) Impl::ViewAssignment<
-        typename traits::specialize , RS >( *this , rhs );
-    }
+    , m_offset_map()
+    , m_management()
+    , m_tracker()
+  {
+    (void) Impl::ViewAssignment<
+      typename traits::specialize , RS >( *this , rhs );
+  }
 
   template< class RT , class RL , class RD , class RM , class RS >
   KOKKOS_INLINE_FUNCTION
@@ -449,14 +447,10 @@ public:
   //------------------------------------
   // Allocation of a managed view with possible alignment padding.
 
-  typedef Impl::if_c< traits::is_managed ,
-                      std::string ,
-                      Impl::ViewError::allocation_constructor_requires_managed >
-   if_allocation_constructor ;
-
+  template< class AllocationProperties >
   explicit inline
-  View( const typename if_allocation_constructor::type & label ,
-        const size_t n0 = 0 ,
+  View( const AllocationProperties & prop ,
+        const typename Impl::ViewAllocProp< traits , AllocationProperties >::size_type n0 = 0 ,
         const size_t n1 = 0 ,
         const size_t n2 = 0 ,
         const size_t n3 = 0 ,
@@ -465,58 +459,31 @@ public:
         const size_t n6 = 0 ,
         const size_t n7 = 0 )
     : m_ptr_on_device(0)
-    {
-      typedef typename traits::device_type   device_type ;
-      typedef typename traits::memory_space  memory_space ;
-      typedef typename traits::shape_type    shape_type ;
-      typedef typename traits::scalar_type   scalar_type ;
+    , m_offset_map()
+    , m_management()
+    , m_tracker()
+  {
+    typedef Impl::ViewAllocProp< traits , AllocationProperties > Alloc ;
 
-      shape_type ::assign( m_shape, n0, n1, n2, n3, n4, n5, n6, n7 );
-      stride_type::assign_with_padding( m_stride , m_shape );
+    typedef typename traits::memory_space  memory_space ;
+    typedef typename traits::value_type::value_type   scalar_type ;
 
-      m_ptr_on_device = (scalar_type *)
-        memory_space::allocate( if_allocation_constructor::select( label ) ,
-                                typeid(scalar_type) ,
-                                sizeof(scalar_type) ,
-                                Impl::capacity( m_shape , m_stride ) );
+    m_offset_map.assign( n0, n1, n2, n3, n4, n5, n6, n7 );
+    m_offset_map.set_padding();
 
-      Impl::ViewFill< View > init( *this , typename traits::value_type() );
-    }
+    m_tracker = memory_space::allocate_and_track( Alloc::label( prop ), sizeof(scalar_type) * m_offset_map.capacity() );
 
-  explicit inline
-  View( const AllocateWithoutInitializing & ,
-        const typename if_allocation_constructor::type & label ,
-        const size_t n0 = 0 ,
-        const size_t n1 = 0 ,
-        const size_t n2 = 0 ,
-        const size_t n3 = 0 ,
-        const size_t n4 = 0 ,
-        const size_t n5 = 0 ,
-        const size_t n6 = 0 ,
-        const size_t n7 = 0 )
-    : m_ptr_on_device(0)
-    {
-      typedef typename traits::device_type   device_type ;
-      typedef typename traits::memory_space  memory_space ;
-      typedef typename traits::shape_type    shape_type ;
-      typedef typename traits::scalar_type   scalar_type ;
+    m_ptr_on_device = reinterpret_cast<scalar_type *>(m_tracker.alloc_ptr());
 
-      shape_type ::assign( m_shape, n0, n1, n2, n3, n4, n5, n6, n7 );
-      stride_type::assign_with_padding( m_stride , m_shape );
-
-      m_ptr_on_device = (scalar_type *)
-        memory_space::allocate( if_allocation_constructor::select( label ) ,
-                                typeid(scalar_type) ,
-                                sizeof(scalar_type) ,
-                                Impl::capacity( m_shape , m_stride ) );
-    }
+    (void) Impl::ViewDefaultConstruct< typename traits::execution_space , scalar_type , Alloc::Initialize >( m_ptr_on_device , m_offset_map.capacity() );
+  }
 
   //------------------------------------
   // Assign an unmanaged View from pointer, can be called in functors.
   // No alignment padding is performed.
 
   typedef Impl::if_c< ! traits::is_managed ,
-                      typename traits::scalar_type * ,
+                      typename traits::value_type::value_type * ,
                       Impl::ViewError::user_pointer_constructor_requires_unmanaged >
     if_user_pointer_constructor ;
 
@@ -530,21 +497,20 @@ public:
         const size_t n6 = 0 ,
         const size_t n7 = 0 )
     : m_ptr_on_device(0)
-    {
-      typedef typename traits::shape_type   shape_type ;
-      typedef typename traits::scalar_type  scalar_type ;
-
-      shape_type ::assign( m_shape, n0, n1, n2, n3, n4, n5, n6, n7 );
-      stride_type::assign_no_padding( m_stride , m_shape );
-
-      m_ptr_on_device = if_user_pointer_constructor::select( ptr );
-    }
+    , m_offset_map()
+    , m_management()
+    , m_tracker()
+  {
+    m_offset_map.assign( n0, n1, n2, n3, n4, n5, n6, n7 );
+    m_ptr_on_device = if_user_pointer_constructor::select( ptr );
+    m_management.set_unmanaged();
+  }
 
   //------------------------------------
   // Assign unmanaged View to portion of Device shared memory
 
   typedef Impl::if_c< ! traits::is_managed ,
-                      typename traits::device_type ,
+                      typename traits::execution_space ,
                       Impl::ViewError::device_shmem_constructor_requires_unmanaged >
       if_device_shmem_constructor ;
 
@@ -559,25 +525,26 @@ public:
         const unsigned n6 = 0 ,
         const unsigned n7 = 0 )
     : m_ptr_on_device(0)
-    {
-      typedef typename traits::shape_type   shape_type ;
-      typedef typename traits::scalar_type  scalar_type ;
+    , m_offset_map()
+    , m_management()
+    , m_tracker()
+  {
+    typedef typename traits::value_type::value_type   scalar_type ;
 
-      enum { align = 8 };
-      enum { mask  = align - 1 };
+    enum { align = 8 };
+    enum { mask  = align - 1 };
 
-      shape_type::assign( m_shape, n0, n1, n2, n3, n4, n5, n6, n7 );
-      stride_type::assign_no_padding( m_stride , m_shape );
+    typedef Impl::if_c< ! traits::is_managed ,
+                        scalar_type * ,
+                        Impl::ViewError::device_shmem_constructor_requires_unmanaged >
+      if_device_shmem_pointer ;
 
-      typedef Impl::if_c< ! traits::is_managed ,
-                          scalar_type * ,
-                          Impl::ViewError::device_shmem_constructor_requires_unmanaged >
-        if_device_shmem_pointer ;
+    m_offset_map.assign( n0, n1, n2, n3, n4, n5, n6, n7 );
 
-      // Select the first argument:
-      m_ptr_on_device = if_device_shmem_pointer::select(
-       (scalar_type *) dev.get_shmem( unsigned( sizeof(scalar_type) * Impl::capacity( m_shape , m_stride ) + unsigned(mask) ) & ~unsigned(mask) ) );
-    }
+    // Select the first argument:
+    m_ptr_on_device = if_device_shmem_pointer::select(
+     (scalar_type *) dev.get_shmem( unsigned( sizeof(scalar_type) * m_offset_map.capacity() + unsigned(mask) ) & ~unsigned(mask) ) );
+  }
 
   static inline
   unsigned shmem_size( const unsigned n0 = 0 ,
@@ -592,16 +559,13 @@ public:
     enum { align = 8 };
     enum { mask  = align - 1 };
 
-    typedef typename traits::shape_type   shape_type ;
-    typedef typename traits::scalar_type  scalar_type ;
+    typedef typename traits::value_type::value_type   scalar_type ;
 
-    shape_type  shape ;
-    stride_type stride ;
+    offset_map_type offset_map ;
 
-    traits::shape_type::assign( shape, n0, n1, n2, n3, n4, n5, n6, n7 );
-    stride_type::assign_no_padding( stride , shape );
+    offset_map.assign( n0, n1, n2, n3, n4, n5, n6, n7 );
 
-    return unsigned( sizeof(scalar_type) * Impl::capacity( shape , stride ) + unsigned(mask) ) & ~unsigned(mask) ;
+    return unsigned( sizeof(scalar_type) * offset_map.capacity() + unsigned(mask) ) & ~unsigned(mask) ;
   }
 
   //------------------------------------
@@ -613,17 +577,19 @@ public:
   //------------------------------------
   // LayoutLeft, rank 2:
 
-  typedef Test::Array< typename traits::scalar_type , traits::value_type::StaticLength , Test::ArrayProxyStrided > LeftValue ;
+  typedef Test::Array< typename traits::value_type::value_type ,
+                       traits::value_type::StaticLength ,
+                       Test::ArrayProxyStrided > LeftValue ;
 
   template< typename iType0 >
   KOKKOS_INLINE_FUNCTION
   typename Impl::ViewEnableArrayOper< LeftValue , traits, LayoutLeft, 2, iType0 >::type
     operator[] ( const iType0 & i0 ) const
     {
-      KOKKOS_ASSERT_SHAPE_BOUNDS_2( m_shape, i0, 0 );
+      KOKKOS_ASSERT_SHAPE_BOUNDS_2( m_offset_map, i0, 0 );
       KOKKOS_RESTRICT_EXECUTION_TO_DATA( typename traits::memory_space , m_ptr_on_device );
 
-      return LeftValue( m_ptr_on_device + i0 , m_shape.N1 , m_stride );
+      return LeftValue( m_ptr_on_device + i0 , m_offset_map.N1 , m_offset_map.S0 );
     }
 
   template< typename iType0 >
@@ -631,10 +597,10 @@ public:
   typename Impl::ViewEnableArrayOper< LeftValue , traits, LayoutLeft, 2, iType0 >::type
     operator() ( const iType0 & i0 ) const
     {
-      KOKKOS_ASSERT_SHAPE_BOUNDS_2( m_shape, i0, 0 );
+      KOKKOS_ASSERT_SHAPE_BOUNDS_2( m_offset_map, i0, 0 );
       KOKKOS_RESTRICT_EXECUTION_TO_DATA( typename traits::memory_space , m_ptr_on_device );
 
-      return LeftValue( m_ptr_on_device + i0 , m_shape.N1 , m_stride );
+      return LeftValue( m_ptr_on_device + i0 , m_offset_map.N1 , m_offset_map.S0 );
     }
 
   template< typename iType0 >
@@ -643,26 +609,28 @@ public:
     at( const iType0 & i0 , const int , const int , const int ,
         const int , const int , const int , const int ) const
     {
-      KOKKOS_ASSERT_SHAPE_BOUNDS_2( m_shape, i0, 0 );
+      KOKKOS_ASSERT_SHAPE_BOUNDS_2( m_offset_map, i0, 0 );
       KOKKOS_RESTRICT_EXECUTION_TO_DATA( typename traits::memory_space , m_ptr_on_device );
 
-      return LeftValue( m_ptr_on_device + i0 , m_shape.N1 , m_stride );
+      return LeftValue( m_ptr_on_device + i0 , m_offset_map.N1 , m_offset_map.S0 );
     }
 
   //------------------------------------
   // LayoutRight, rank 2:
 
-  typedef Test::Array< typename traits::scalar_type , traits::value_type::StaticLength , Test::ArrayProxyContiguous > RightValue ;
+  typedef Test::Array< typename traits::value_type::value_type ,
+                       traits::value_type::StaticLength ,
+                       Test::ArrayProxyContiguous > RightValue ;
 
   template< typename iType0 >
   KOKKOS_INLINE_FUNCTION
   typename Impl::ViewEnableArrayOper< RightValue , traits, LayoutRight, 2, iType0 >::type
     operator[] ( const iType0 & i0 ) const
     {
-      KOKKOS_ASSERT_SHAPE_BOUNDS_2( m_shape, i0, 0 );
+      KOKKOS_ASSERT_SHAPE_BOUNDS_2( m_offset_map, i0, 0 );
       KOKKOS_RESTRICT_EXECUTION_TO_DATA( typename traits::memory_space , m_ptr_on_device );
 
-      return RightValue( m_ptr_on_device + i0 , m_shape.N1 );
+      return RightValue( m_ptr_on_device + i0 , m_offset_map.N1 );
     }
 
   template< typename iType0 >
@@ -670,10 +638,10 @@ public:
   typename Impl::ViewEnableArrayOper< RightValue , traits, LayoutRight, 2, iType0 >::type
     operator() ( const iType0 & i0 ) const
     {
-      KOKKOS_ASSERT_SHAPE_BOUNDS_2( m_shape, i0, 0 );
+      KOKKOS_ASSERT_SHAPE_BOUNDS_2( m_offset_map, i0, 0 );
       KOKKOS_RESTRICT_EXECUTION_TO_DATA( typename traits::memory_space , m_ptr_on_device );
 
-      return RightValue( m_ptr_on_device + i0 , m_shape.N1 );
+      return RightValue( m_ptr_on_device + i0 , m_offset_map.N1 );
     }
 
   template< typename iType0 >
@@ -682,10 +650,10 @@ public:
     at( const iType0 & i0 , const int , const int , const int ,
         const int , const int , const int , const int ) const
     {
-      KOKKOS_ASSERT_SHAPE_BOUNDS_2( m_shape, i0, 0 );
+      KOKKOS_ASSERT_SHAPE_BOUNDS_2( m_offset_map, i0, 0 );
       KOKKOS_RESTRICT_EXECUTION_TO_DATA( typename traits::memory_space , m_ptr_on_device );
 
-      return RightValue( m_ptr_on_device + i0 , m_shape.N1 );
+      return RightValue( m_ptr_on_device + i0 , m_offset_map.N1 );
     }
 
   //------------------------------------
@@ -693,23 +661,23 @@ public:
   // These methods are specific to specialization of a view.
 
   KOKKOS_INLINE_FUNCTION
-  typename traits::scalar_type * ptr_on_device() const { return m_ptr_on_device ; }
+  typename traits::value_type::value_type * ptr_on_device() const { return m_ptr_on_device ; }
 
   // Stride of physical storage, dimensioned to at least Rank
   template< typename iType >
   KOKKOS_INLINE_FUNCTION
   void stride( iType * const s ) const
-  { Impl::stride( s , m_shape , m_stride ); }
+    { m_offset_map.stride( s ); }
 
   // Count of contiguously allocated data members including padding.
   KOKKOS_INLINE_FUNCTION
   typename traits::size_type capacity() const
-  { return Impl::capacity( m_shape , m_stride ); }
+    { return m_offset_map.capacity(); }
 };
 
 } // namespace Kokkos
 
-#endif
+#endif /* #if ! defined( KOKKOS_USING_EXPERIMENTAL_VIEW ) */
 
 /*--------------------------------------------------------------------------*/
 /*--------------------------------------------------------------------------*/
@@ -719,12 +687,14 @@ namespace Test {
 template< class DeviceType >
 int TestViewAggregate()
 {
-#if 0
+
+#if ! defined( KOKKOS_USING_EXPERIMENTAL_VIEW )
+
   typedef Kokkos::View< Test::Array<double,32> * , DeviceType > a32_type ;
-  typedef Kokkos::View< double *[32] , DeviceType > a32_base_type ;
+  typedef typename a32_type::array_type a32_base_type ;
 
   typedef Kokkos::View< Test::Array<double> * , DeviceType > a0_type ;
-  typedef Kokkos::View< double ** , DeviceType > a0_base_type ;
+  typedef typename a0_type::array_type a0_base_type ;
 
   a32_type      a32("a32",100);
   a32_base_type a32_base ;
@@ -735,12 +705,12 @@ int TestViewAggregate()
   a32_base = a32 ;
   a0_base = a0 ;
 
-  typename a32_type::array_type a32_array = a32 ;
-  typename a0_type::array_type  a0_array = a32 ;
-#endif
+#endif /* #if ! defined( KOKKOS_USING_EXPERIMENTAL_VIEW ) */
 
   return 0 ;
 }
 
 }
 
+
+#endif /* #ifndef TEST_AGGREGATE_HPP */

@@ -18,7 +18,7 @@
 
     You should have received a copy of the GNU Lesser General Public License 
     (lgpl.txt) along with this library; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  
     (2006) kraftche@cae.wisc.edu
    
@@ -31,16 +31,16 @@
  */
 
 #include "Mesquite.hpp"
-#include "IdealShapeTarget.hpp"
-#include "MsqError.hpp"
-#include "Vector3D.hpp"
-#include "PatchData.hpp"
-#include "PlanarDomain.hpp"
-#include "MappingFunction.hpp"
-#include "Settings.hpp"
-#include "IdealElements.hpp"
-#include "ElemSampleQM.hpp"
-#include "cppunit/extensions/HelperMacros.h"
+#include "Mesquite_IdealShapeTarget.hpp"
+#include "Mesquite_MsqError.hpp"
+#include "Mesquite_Vector3D.hpp"
+#include "Mesquite_PatchData.hpp"
+#include "Mesquite_PlanarDomain.hpp"
+#include "Mesquite_MappingFunction.hpp"
+#include "Mesquite_Settings.hpp"
+#include "Mesquite_IdealElements.hpp"
+#include "Mesquite_ElemSampleQM.hpp"
+#include "Mesquite_cppunit/extensions/HelperMacros.h"
 #include "UnitUtil.hpp"
 
 using namespace Mesquite;

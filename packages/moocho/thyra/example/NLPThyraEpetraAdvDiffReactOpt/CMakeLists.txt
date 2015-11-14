@@ -1,11 +1,9 @@
-INCLUDE(TribitsAddExecutableAndTest)
-INCLUDE(TribitsCopyFilesToBinaryDir)
 
 
 SET(EPETRAEXT_GLPAPP_DIR ${PACKAGE_SOURCE_DIR}/../epetraext/example/model_evaluator/GLpApp)
 
 
-INCLUDE_DIRECTORIES(
+TRIBITS_INCLUDE_DIRECTORIES(
   REQUIRED_DURING_INSTALLATION_TESTING 
   ${PACKAGE_SOURCE_DIR}/../thyra/example/operator_vector
   ${EPETRAEXT_GLPAPP_DIR}

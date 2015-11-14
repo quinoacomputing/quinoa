@@ -1,13 +1,13 @@
 
 // @HEADER
 // ***********************************************************************
-// 
+//
 //                      Didasko Tutorial Package
 //                 Copyright (2005) Sandia Corporation
-// 
+//
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -36,7 +36,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 // Questions about Didasko? Contact Marzio Sala (marzio.sala _AT_ gmail.com)
-// 
+//
 // ***********************************************************************
 // @HEADER
 
@@ -48,12 +48,12 @@
 
 #include "Teuchos_RCP.hpp"
 
-class A { 
- public: 
-   A() {}
-   virtual ~A(){} 
-   virtual void f(){} 
-};   
+class A {
+  public:
+    A() {}
+    virtual ~A(){}
+    virtual void f(){}
+};
 class B1 : virtual public A {};
 class B2 : virtual public A {};
 class C : public B1, public B2 {};
@@ -75,9 +75,9 @@ int main(int argc, char* argv[])
   // Create a reference-counted pointer of const type A.
   RCP<const A>       ca_ptr = rcp(new A);
   // Create a const reference-counted pointer of non-const type A.
-  const RCP<A>       a_cptr = rcp(new A); 
+  const RCP<A>       a_cptr = rcp(new A);
   // Create a const reference-counted pointer of const type A.
-  const RCP<const A> ca_cptr = rcp(new A); 
+  const RCP<const A> ca_cptr = rcp(new A);
 
   // Perform implicit conversions between a derived class and its base class.
   RCP<B1> b1_ptr  = rcp(new B1);
@@ -85,25 +85,25 @@ int main(int argc, char* argv[])
 
   /* Other non-implicit type conversions like static, dynamic, or const casts
      can be taken care of by non-member template functions.
-  */
+     */
   RCP<const C> c_ptr = rcp(new C);
   // Implicit cast from C to B2.
-  RCP<const B2> b2_ptr = c_ptr;                              
+  RCP<const B2> b2_ptr = c_ptr;
   // Safe cast, type-checked, from C to A.
-  RCP<const A> ca_ptr1 = rcp_dynamic_cast<const A>(c_ptr); 
+  RCP<const A> ca_ptr1 = rcp_dynamic_cast<const A>(c_ptr);
   // Unsafe cast, non-type-checked, from C to A.
-  RCP<const A> ca_ptr2 = rcp_static_cast<const A>(c_ptr);  
+  RCP<const A> ca_ptr2 = rcp_static_cast<const A>(c_ptr);
   // Cast away const from B2.
-  RCP<B2>       nc_b2_ptr = rcp_const_cast<B2>(b2_ptr);           
+  RCP<B2>       nc_b2_ptr = rcp_const_cast<B2>(b2_ptr);
 
   /* Using a reference-counted pointer is very similar to using a raw C++ pointer.  Some
      of the operations that are common to both are:
-  */
+     */
   RCP<A>
     a_ptr2 = rcp(new A), // Initialize reference-counted pointers.
-    a_ptr3 = rcp(new A); // ""
+           a_ptr3 = rcp(new A); // ""
   A  *ra_ptr2 = new A,    // Initialize non-reference counted pointers.
-    *ra_ptr3 = new A;    // ""
+     *ra_ptr3 = new A;    // ""
   a_ptr2 = rcp(ra_ptr3);  // Assign from a raw pointer (only do this once!)
   a_ptr3 = a_ptr1;        // Assign one smart pointer to another.
   a_ptr2 = rcp(ra_ptr2);  // Assign from a raw pointer (only do this once!)
@@ -134,7 +134,7 @@ int main(int argc, char *argv[])
 #endif
 
   puts("Please configure Didasko with:\n"
-       "--enable-teuchos");
+      "--enable-teuchos");
 
 #ifdef HAVE_MPI
   MPI_Finalize();

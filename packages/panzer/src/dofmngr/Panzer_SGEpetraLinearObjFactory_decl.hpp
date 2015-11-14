@@ -86,6 +86,12 @@ public:
 
 /*************** Linear object factory methods *******************/
 
+   virtual void readVector(const std::string & identifier,LinearObjContainer & loc,int id) const 
+   { TEUCHOS_ASSERT(false); }
+
+   virtual void writeVector(const std::string & identifier,const LinearObjContainer & loc,int id) const
+   { TEUCHOS_ASSERT(false); }
+
    virtual Teuchos::RCP<LinearObjContainer> buildLinearObjContainer() const;
    virtual Teuchos::RCP<LinearObjContainer> buildPrimitiveLinearObjContainer() const;
 
@@ -106,7 +112,7 @@ public:
    virtual void adjustForDirichletConditions(const LinearObjContainer & localBCRows,
                                              const LinearObjContainer & globalBCRows,
                                              LinearObjContainer & ghostedObjs,
-                                             bool zeroVectorRows=false) const;
+                                             bool zeroVectorRows=false, bool adjustX=false) const;
 
    /** Adjust a vector by replacing selected rows with the value of the evaluated
      * dirichlet conditions. This is handled through the standard container mechanism.
@@ -180,6 +186,10 @@ public:
 
    //! get the block map needed by Stokhos to describe the parallel layout of the SG unknowns
    Teuchos::RCP<const Epetra_Map> getSGBlockMap() const;
+
+   //! Get the unique global indexer this factory was created with.
+   Teuchos::RCP<const panzer::UniqueGlobalIndexerBase> getUniqueGlobalIndexerBase() const
+   { return epetraFact_->getUniqueGlobalIndexerBase(); }
 
 protected:
 

@@ -45,17 +45,27 @@
 
 #include "Stokhos_TpetraCrsMatrixMPVectorUnitTest.hpp"
 
-#include "Kokkos_SerialNode.hpp"
+#include "Kokkos_Core.hpp"
+#include "KokkosCompat_ClassicNodeAPI_Wrapper.hpp"
 
-// Instantiate test for serial node
-using KokkosClassic::SerialNode;
-CRSMATRIX_MP_VECTOR_TESTS_SLGN( double, int, int, SerialNode )
+// Instantiate tests for serial node
+typedef Kokkos::Compat::KokkosDeviceWrapperNode<Kokkos::Serial> SerialWrapperNode;
+CRSMATRIX_MP_VECTOR_TESTS_N( SerialWrapperNode )
 
 int main( int argc, char* argv[] ) {
   Teuchos::GlobalMPISession mpiSession(&argc, &argv);
 
+  Kokkos::global_sacado_mp_vector_size = VectorSize;
+
+  // Initialize serial
+  Kokkos::Serial::initialize();
+
   // Run tests
+  Teuchos::UnitTestRepository::setGloballyReduceTestResult(true);
   int ret = Teuchos::UnitTestRepository::runUnitTestsFromMain(argc, argv);
+
+  // Finish up
+  Kokkos::Serial::finalize();
 
   return ret;
 }

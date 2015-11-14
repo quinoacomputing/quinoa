@@ -18,7 +18,7 @@
 
     You should have received a copy of the GNU Lesser General Public License 
     (lgpl.txt) along with this library; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
 
     (2007) kraftche@cae.wisc.edu    
 
@@ -31,20 +31,20 @@
  */
 
 #include "Mesquite.hpp"
-#include "QualityAssessor.hpp"
-#include "AspectRatioGammaQualityMetric.hpp"
-#include "LocalSizeQualityMetric.hpp"
-#include "ConditionNumberQualityMetric.hpp"
-#include "TShapeNB1.hpp"
-#include "IdealShapeTarget.hpp"
-#include "TQualityMetric.hpp"
-#include "PlanarDomain.hpp"
-#include "Settings.hpp"
-#include "MeshImpl.hpp"
-#include "PatchData.hpp"
-#include "MsqMeshEntity.hpp"
-#include "ArrayMesh.hpp"
-#include "InstructionQueue.hpp"
+#include "Mesquite_QualityAssessor.hpp"
+#include "Mesquite_AspectRatioGammaQualityMetric.hpp"
+#include "Mesquite_LocalSizeQualityMetric.hpp"
+#include "Mesquite_ConditionNumberQualityMetric.hpp"
+#include "Mesquite_TShapeNB1.hpp"
+#include "Mesquite_IdealShapeTarget.hpp"
+#include "Mesquite_TQualityMetric.hpp"
+#include "Mesquite_PlanarDomain.hpp"
+#include "Mesquite_Settings.hpp"
+#include "Mesquite_MeshImpl.hpp"
+#include "Mesquite_PatchData.hpp"
+#include "Mesquite_MsqMeshEntity.hpp"
+#include "Mesquite_ArrayMesh.hpp"
+#include "Mesquite_InstructionQueue.hpp"
 
 #include "UnitUtil.hpp"
 

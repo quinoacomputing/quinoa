@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2005 Sandia Corporation. Under the terms of Contract
- * DE-AC04-94AL85000 with Sandia Corporation, the U.S. Governement
+ * DE-AC04-94AL85000 with Sandia Corporation, the U.S. Government
  * retains certain rights in this software.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -47,10 +47,12 @@
 *
 *****************************************************************************/
 
-#include "exodusII.h"
-#include "exodusII_int.h"
-#include <assert.h>
-#include <stdlib.h>
+#include <assert.h>                     // for assert
+#include <stdio.h>                      // for sprintf
+#include <stdlib.h>                     // for free, malloc
+#include "exodusII.h"                   // for ex_err, exerrval, etc
+#include "exodusII_int.h"               // for EX_FATAL, etc
+#include "netcdf.h"                     // for NC_NOERR, nc_def_var, etc
 
 /*!
  * defines the number of node and element maps. It is more efficient
@@ -290,6 +292,13 @@ int ex_put_map_param (int   exoid,
     {
       int maxset = num_node_maps > num_elem_maps ? num_node_maps : num_elem_maps;
       int *invalid_ids = malloc(maxset*sizeof(int));
+      if (invalid_ids == NULL) {
+	exerrval = EX_MEMFAIL;
+	sprintf(errmsg,
+		"Error: failed to allocate memory for invalid id storage in file id %d", exoid);
+	ex_err("ex_put_map_param",errmsg,exerrval);
+	return (EX_FATAL);
+      }
       for (i=0; i < maxset; i++) {
 	invalid_ids[i] = EX_INVALID_ID;
       }

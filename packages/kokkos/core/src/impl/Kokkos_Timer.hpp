@@ -2,8 +2,8 @@
 //@HEADER
 // ************************************************************************
 // 
-//   Kokkos: Manycore Performance-Portable Multidimensional Arrays
-//              Copyright (2012) Sandia Corporation
+//                        Kokkos v. 2.0
+//              Copyright (2014) Sandia Corporation
 // 
 // Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
 // the U.S. Government retains certain rights in this software.
@@ -35,7 +35,7 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-// Questions? Contact  H. Carter Edwards (hcedwar@sandia.gov) 
+// Questions? Contact  H. Carter Edwards (hcedwar@sandia.gov)
 // 
 // ************************************************************************
 //@HEADER
@@ -76,7 +76,7 @@ public:
   inline
   void reset() {
     #ifdef KOKKOS_USE_LIBRT
-	  clock_gettime(&m_old);
+	  clock_gettime(CLOCK_REALTIME, &m_old);
     #else
 	  gettimeofday( & m_old , ((struct timezone *) NULL ) );
     #endif
@@ -93,7 +93,7 @@ public:
   {
     #ifdef KOKKOS_USE_LIBRT
       struct timespec m_new;
-      clock_gettime(&m_new);
+      clock_gettime(CLOCK_REALTIME, &m_new);
 
       return ( (double) ( m_new.tv_sec  - m_old.tv_sec ) ) +
              ( (double) ( m_new.tv_nsec - m_old.tv_nsec ) * 1.0e-9 );

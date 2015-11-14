@@ -18,7 +18,7 @@
 
     You should have received a copy of the GNU Lesser General Public License 
     (lgpl.txt) along with this library; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  
     diachin2@llnl.gov, djmelan@sandia.gov, mbrewer@sandia.gov, 
     pknupp@sandia.gov, tleurent@mcs.anl.gov, tmunson@mcs.anl.gov      
@@ -49,14 +49,14 @@ Unit testing of the uploading of VTK format into AOMD.
 
 
 #include "Mesquite.hpp"
-#include "MeshSet.hpp"
-#include "PatchData.hpp"
+#include "Mesquite_MeshSet.hpp"
+#include "Mesquite_PatchData.hpp"
 
-#include "TSTT_Base.h"
-#include "MsqTSTTImpl.hpp"
+#include "Mesquite_TSTT_Base.h"
+#include "Mesquite_MsqTSTTImpl.hpp"
 
-#include "cppunit/extensions/HelperMacros.h"
-#include "cppunit/SignalException.h"
+#include "Mesquite_cppunit/extensions/HelperMacros.h"
+#include "Mesquite_cppunit/SignalException.h"
 
 #include <list>
 #include <iterator>

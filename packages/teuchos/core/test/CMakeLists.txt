@@ -1,8 +1,5 @@
-
-INCLUDE(TribitsAddExecutableAndTest)
-INCLUDE(AddSubdirectories)
-
 ADD_SUBDIRECTORIES(
+  Allocator
   CommandLineProcessor
   Containers
   CWrapperSupport

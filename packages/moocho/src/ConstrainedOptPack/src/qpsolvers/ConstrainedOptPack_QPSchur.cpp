@@ -2939,7 +2939,7 @@ QPSchur::ESolveReturn QPSchur::qp_algo(
   value_type				dual_infeas_scale = 1.0;	// Scaling for determining if a
                   // Lagrange multiplier is near degenerate.
   bool					return_to_init_fixed = false;	// True if the constraint being added
-                  // to the active set is a varible returning to its orginally
+                  // to the active set is a variable returning to its orginally
                                   // fixed variable bound.
   bool                    using_iter_refinement = false; // Will be set to true if instability detected
 

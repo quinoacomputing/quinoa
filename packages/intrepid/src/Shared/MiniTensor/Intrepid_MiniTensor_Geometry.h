@@ -143,6 +143,7 @@ normal(Vector<T, N> const & p0,
 /// Given 3 points p0, p1, p2 that define a plane
 /// determine if point p is in the same side of the normal
 /// to the plane as defined by the right hand rule.
+/// If a tolrance is given, use that as criterion for minimal distance.
 ///
 template<typename T, Index N>
 bool
@@ -150,7 +151,8 @@ in_normal_side(
     Vector<T, N> const & p,
     Vector<T, N> const & p0,
     Vector<T, N> const & p1,
-    Vector<T, N> const & p2);
+    Vector<T, N> const & p2,
+    T const tolerance = 0);
 
 ///
 /// Given two iterators to a container of points,
@@ -193,6 +195,7 @@ random_in_box(
 ///
 /// Given 4 points p0, p1, p2, p3 that define a tetrahedron
 /// determine if point p is inside it.
+/// If a tolrance is given, use that as criterion for minimal distance.
 ///
 template<typename T, Index N>
 bool
@@ -201,12 +204,14 @@ in_tetrahedron(
     Vector<T, N> const & p0,
     Vector<T, N> const & p1,
     Vector<T, N> const & p2,
-    Vector<T, N> const & p3);
+    Vector<T, N> const & p3,
+    T const tolerance = 0);
 
 ///
 /// Given 8 points that define a hexahedron
 /// determine if point p is inside it.
 /// Assumption: faces are planar
+/// If a tolrance is given, use that as criterion for minimal distance.
 ///
 template<typename T, Index N>
 bool
@@ -219,7 +224,8 @@ in_hexahedron(
     Vector<T, N> const & p4,
     Vector<T, N> const & p5,
     Vector<T, N> const & p6,
-    Vector<T, N> const & p7);
+    Vector<T, N> const & p7,
+    T const tolerance = 0);
 
 ///
 /// Closest point
@@ -362,17 +368,26 @@ public:
   void
   operator()(Vector<T, dimension_const<N, 2>::value> const & parameters);
 
+  Vector<T, N>
+  get_normal(Vector<T, dimension_const<N, 2>::value> const & parameters) const;
+
   T
   get_minimum() const {return minimum_;}
 
   T
   get_maximum() const {return maximum_;}
 
-  Vector<T, N>
+  Vector<T, 2>
   get_arg_minimum() const {return arg_minimum_;}
 
-  Vector<T, N>
+  Vector<T, 2>
   get_arg_maximum() const {return arg_maximum_;}
+
+  Vector<T, N>
+  get_normal_minimum() const {return get_normal(arg_minimum_);}
+
+  Vector<T, N>
+  get_normal_maximum() const {return get_normal(arg_maximum_);}
 
 private:
 
@@ -382,13 +397,13 @@ private:
   T
   minimum_;
 
-  Vector<T, N>
+  Vector<T, 2>
   arg_minimum_;
 
   T
   maximum_;
 
-  Vector<T, N>
+  Vector<T, 2>
   arg_maximum_;
 };
 
@@ -402,6 +417,9 @@ public:
 
   StereographicParametrization(Tensor4<T, N> const & A);
 
+  Vector<T, N>
+  get_normal(Vector<T, dimension_const<N, 2>::value> const & parameters) const;
+
   void
   operator()(Vector<T, dimension_const<N, 2>::value> const & parameters);
 
@@ -411,11 +429,17 @@ public:
   T
   get_maximum() const {return maximum_;}
 
-  Vector<T, N>
+  Vector<T, 2>
   get_arg_minimum() const {return arg_minimum_;}
 
-  Vector<T, N>
+  Vector<T, 2>
   get_arg_maximum() const {return arg_maximum_;}
+
+  Vector<T, N>
+  get_normal_minimum() const {return get_normal(arg_minimum_);}
+
+  Vector<T, N>
+  get_normal_maximum() const {return get_normal(arg_maximum_);}
 
 private:
 
@@ -425,13 +449,13 @@ private:
   T
   minimum_;
 
-  Vector<T, N>
+  Vector<T, 2>
   arg_minimum_;
 
   T
   maximum_;
 
-  Vector<T, N>
+  Vector<T, 2>
   arg_maximum_;
 };
 
@@ -448,11 +472,11 @@ public:
   ///
   ProjectiveParametrization(Tensor4<T, N> const & A);
 
-  ///
-  ///
-  ///
   void
-  operator()(Vector<T, dimension_const<N, 4>::value> const & parameters);
+  operator()(Vector<T, dimension_const<N, 3>::value> const & parameters);
+
+  Vector<T, N>
+  get_normal(Vector<T, dimension_const<N, 3>::value> const & parameters) const;
 
   T
   get_minimum() const {return minimum_;}
@@ -460,11 +484,17 @@ public:
   T
   get_maximum() const {return maximum_;}
 
-  Vector<T, N>
+  Vector<T, 3>
   get_arg_minimum() const {return arg_minimum_;}
 
-  Vector<T, N>
+  Vector<T, 3>
   get_arg_maximum() const {return arg_maximum_;}
+
+  Vector<T, N>
+  get_normal_minimum() const {return get_normal(arg_minimum_);}
+
+  Vector<T, N>
+  get_normal_maximum() const {return get_normal(arg_maximum_);}
 
 private:
 
@@ -474,13 +504,13 @@ private:
   T
   minimum_;
 
-  Vector<T, N>
+  Vector<T, 3>
   arg_minimum_;
 
   T
   maximum_;
 
-  Vector<T, N>
+  Vector<T, 3>
   arg_maximum_;
 };
 
@@ -503,17 +533,26 @@ public:
   void
   operator()(Vector<T, dimension_const<N, 2>::value> const & parameters);
 
+  Vector<T, N>
+  get_normal(Vector<T, dimension_const<N, 2>::value> const & parameters) const;
+
   T
   get_minimum() const {return minimum_;}
 
   T
   get_maximum() const {return maximum_;}
 
-  Vector<T, N>
+  Vector<T, 2>
   get_arg_minimum() const {return arg_minimum_;}
 
-  Vector<T, N>
+  Vector<T, 2>
   get_arg_maximum() const {return arg_maximum_;}
+
+  Vector<T, N>
+  get_normal_minimum() const {return get_normal(arg_minimum_);}
+
+  Vector<T, N>
+  get_normal_maximum() const {return get_normal(arg_maximum_);}
 
 private:
 
@@ -523,13 +562,13 @@ private:
   T
   minimum_;
 
-  Vector<T, N>
+  Vector<T, 2>
   arg_minimum_;
 
   T
   maximum_;
 
-  Vector<T, N>
+  Vector<T, 2>
   arg_maximum_;
 };
 
@@ -546,17 +585,26 @@ public:
   void
   operator()(Vector<T, dimension_const<N, 3>::value> const & parameters);
 
+  Vector<T, N>
+  get_normal(Vector<T, dimension_const<N, 3>::value> const & parameters) const;
+
   T
   get_minimum() const {return minimum_;}
 
   T
   get_maximum() const {return maximum_;}
 
-  Vector<T, N>
+  Vector<T, 3>
   get_arg_minimum() const {return arg_minimum_;}
 
-  Vector<T, N>
+  Vector<T, 3>
   get_arg_maximum() const {return arg_maximum_;}
+
+  Vector<T, N>
+  get_normal_minimum() const {return get_normal(arg_minimum_);}
+
+  Vector<T, N>
+  get_normal_maximum() const {return get_normal(arg_maximum_);}
 
 private:
 
@@ -566,13 +614,13 @@ private:
   T
   minimum_;
 
-  Vector<T, N>
+  Vector<T, 3>
   arg_minimum_;
 
   T
   maximum_;
 
-  Vector<T, N>
+  Vector<T, 3>
   arg_maximum_;
 };
 

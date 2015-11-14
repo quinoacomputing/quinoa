@@ -55,8 +55,7 @@ OverlappingRowMatrix<MatrixType>::
 OverlappingRowMatrix (const Teuchos::RCP<const row_matrix_type>& A,
                       const int overlapLevel) :
   A_ (A),
-  OverlapLevel_ (overlapLevel),
-  UseSubComm_ (false)
+  OverlapLevel_ (overlapLevel)
 {
   using Teuchos::RCP;
   using Teuchos::rcp;
@@ -222,19 +221,6 @@ OverlappingRowMatrix (const Teuchos::RCP<const row_matrix_type>& A,
   // Resize temp arrays
   Indices_.resize (MaxNumEntries_);
   Values_.resize (MaxNumEntries_);
-}
-
-
-template<class MatrixType>
-OverlappingRowMatrix<MatrixType>::
-OverlappingRowMatrix (const Teuchos::RCP<const row_matrix_type>& A,
-                      const int overlapLevel,
-                      const int subdomainID)
-{
-  //FIXME
-  TEUCHOS_TEST_FOR_EXCEPTION(
-    true, std::logic_error,
-    "Ifpack2::OverlappingRowMatrix: Subdomain code not implemented yet.");
 }
 
 
@@ -556,7 +542,7 @@ rightScale (const Tpetra::Vector<scalar_type, local_ordinal_type, global_ordinal
 
 
 template<class MatrixType>
-typename Teuchos::ScalarTraits<typename MatrixType::scalar_type>::magnitudeType
+typename OverlappingRowMatrix<MatrixType>::mag_type
 OverlappingRowMatrix<MatrixType>::getFrobeniusNorm () const
 {
   throw std::runtime_error("Ifpack2::OverlappingRowMatrix does not support getFrobeniusNorm.");
@@ -576,8 +562,13 @@ apply (const Tpetra::MultiVector<scalar_type,local_ordinal_type,global_ordinal_t
   using Teuchos::as;
   typedef scalar_type RangeScalar;
   typedef scalar_type DomainScalar;
-
   typedef Teuchos::ScalarTraits<RangeScalar> STRS;
+
+  TEUCHOS_TEST_FOR_EXCEPTION(
+    alpha != Teuchos::ScalarTraits<scalar_type>::one () ||
+    beta != Teuchos::ScalarTraits<scalar_type>::zero (), std::logic_error,
+    "Ifpack2::ReorderFilter::apply is only implemented for alpha = 1 and "
+    "beta = 0.  You set alpha = " << alpha << " and beta = " << beta << ".");
   TEUCHOS_TEST_FOR_EXCEPTION(
     X.getNumVectors() != Y.getNumVectors(), std::runtime_error,
     "Ifpack2::OverlappingRowMatrix::apply: The input X and the output Y must "
@@ -586,9 +577,9 @@ apply (const Tpetra::MultiVector<scalar_type,local_ordinal_type,global_ordinal_t
     << ".");
 
   // FIXME (mfh 13 July 2013) This would be a good candidate for a
-  // Kokkos local parallel operator implementation.  That would
-  // obviate the need for getting views of the data and make the code
-  // below a lot simpler.
+  // local parallel operator implementation.  That would obviate the
+  // need for getting views of the data and make the code below a lot
+  // simpler.
 
   const RangeScalar zero = STRS::zero ();
   ArrayRCP<ArrayRCP<const DomainScalar> > x_ptr = X.get2dView();
@@ -891,7 +882,17 @@ void OverlappingRowMatrix<MatrixType>::describe(Teuchos::FancyOStream &out,
     }
 }
 
+template<class MatrixType>
+Teuchos::RCP<const Tpetra::RowMatrix<typename MatrixType::scalar_type, typename MatrixType::local_ordinal_type, typename MatrixType::global_ordinal_type, typename MatrixType::node_type> >
+OverlappingRowMatrix<MatrixType>::getUnderlyingMatrix() const
+{
+  return A_;
+}
+
 
 } // namespace Ifpack2
+
+#define IFPACK2_OVERLAPPINGROWMATRIX_INSTANT(S,LO,GO,N)                 \
+  template class Ifpack2::OverlappingRowMatrix< Tpetra::CrsMatrix<S, LO, GO, N> >;
 
 #endif // IFPACK2_OVERLAPPINGROWMATRIX_DEF_HPP

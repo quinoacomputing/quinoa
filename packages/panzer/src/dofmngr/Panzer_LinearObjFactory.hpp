@@ -43,8 +43,6 @@
 #ifndef __Panzer_LinearObjFactory_hpp__
 #define __Panzer_LinearObjFactory_hpp__
 
-#include <map>
-
 #include "Phalanx_TemplateManager.hpp"
 #include "Phalanx_Evaluator.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
@@ -54,10 +52,12 @@
 
 #include "Teuchos_DefaultMpiComm.hpp"
 
-#include "boost/mpl/placeholders.hpp"
-using namespace boost::mpl::placeholders;
+// #include "boost/mpl/placeholders.hpp"
+// using namespace boost::mpl::placeholders;
 
 namespace panzer {
+
+class UniqueGlobalIndexerBase; // forward declaration
 
 /** Abstract factory that builds the linear algebra 
   * objects required for the assembly including the 
@@ -80,6 +80,7 @@ namespace panzer {
       \code
          template <typename EvalT> Teuchos::RCP<panzer::CloneableEvaluator> buildScatter() const;
          template <typename EvalT> Teuchos::RCP<panzer::CloneableEvaluator> buildGather() const;
+         template <typename EvalT> Teuchos::RCP<panzer::CloneableEvaluator> buildGatherDomain() const;
          template <typename EvalT> Teuchos::RCP<panzer::CloneableEvaluator> buildGatherOrientation() const;
          template <typename EvalT> Teuchos::RCP<panzer::CloneableEvaluator> buildScatterDirichlet() const;
          template <typename EvalT> Teuchos::RCP<panzer::CloneableEvaluator> buildScatterInitialCondition() const;
@@ -89,6 +90,7 @@ namespace panzer {
   * function which takes a parameter list). The cloned evaluators will be the ones
   * actually returned from the 
      <code>buildGather(const Teuchos::ParameterList & pl) const</code>,
+     <code>buildGatherDomain(const Teuchos::ParameterList & pl) const</code>,
      <code>buildGatherOrientation(const Teuchos::ParameterList & pl) const</code>,
      <code>buildScatter(const Teuchos::ParameterList & pl) const</code>, or
      <code>buildScatterDirichlet(const Teuchos::ParameterList & pl) const</code>
@@ -110,6 +112,7 @@ public:
       \code
          template <typename EvalT> Teuchos::RCP<panzer::CloneableEvaluator> buildScatter() const;
          template <typename EvalT> Teuchos::RCP<panzer::CloneableEvaluator> buildGather() const;
+         template <typename EvalT> Teuchos::RCP<panzer::CloneableEvaluator> buildGatherDomain() const;
          template <typename EvalT> Teuchos::RCP<panzer::CloneableEvaluator> buildGatherOrientation() const;
          template <typename EvalT> Teuchos::RCP<panzer::CloneableEvaluator> buildScatterDirichlet() const;
          template <typename EvalT> Teuchos::RCP<panzer::CloneableEvaluator> buildScatterInitialCondition() const;
@@ -117,6 +120,22 @@ public:
       */
     template <typename BuilderT>
     void buildGatherScatterEvaluators(const BuilderT & builder);
+
+   /** Read in a vector from a file. Fill a particular vector in the linear object container.
+     *
+     * \param[in] identifier Key for specifying which file(s) to read
+     * \param[in] loc Linear object container to fill with the vector
+     * \param[in] id Id for the field to be filled
+     */
+    virtual void readVector(const std::string & identifier,LinearObjContainer & loc,int id) const = 0;
+
+   /** Write in a vector from a file. Fill a particular vector in the linear object container.
+     *
+     * \param[in] identifier Key for specifying which file(s) to read
+     * \param[in] loc Linear object container to fill with the vector
+     * \param[in] id Id for the field to be filled
+     */
+    virtual void writeVector(const std::string & identifier,const LinearObjContainer & loc,int id) const = 0;
 
    /** Build a container with all the neccessary linear algebra objects. This is
      * the non-ghosted version.
@@ -194,7 +213,7 @@ public:
    virtual void adjustForDirichletConditions(const LinearObjContainer & localBCRows,
                                              const LinearObjContainer & globalBCRows,
                                              LinearObjContainer & ghostedObjs,
-                                             bool zeroVectorRows=false) const = 0;
+                                             bool zeroVectorRows=false, bool adjustX=false) const = 0;
 
    /** Adjust a vector by replacing selected rows with the value of the evaluated
      * dirichlet conditions. This is handled through the standard container mechanism.
@@ -223,6 +242,11 @@ public:
 
    //! Use preconstructed gather evaluators
    template <typename EvalT>
+   Teuchos::RCP<PHX::Evaluator<Traits> > buildGatherDomain(const Teuchos::ParameterList & pl) const
+   { return Teuchos::rcp_dynamic_cast<PHX::Evaluator<Traits> >(gatherDomainManager_->template getAsBase<EvalT>()->clone(pl)); }
+
+   //! Use preconstructed gather evaluators
+   template <typename EvalT>
    Teuchos::RCP<PHX::Evaluator<Traits> > buildGatherOrientation(const Teuchos::ParameterList & pl) const
    { return Teuchos::rcp_dynamic_cast<PHX::Evaluator<Traits> >(gatherOrientManager_->template getAsBase<EvalT>()->clone(pl)); }
 
@@ -235,6 +259,9 @@ public:
    template <typename EvalT>
    Teuchos::RCP<PHX::Evaluator<Traits> > buildScatterInitialCondition(const Teuchos::ParameterList & pl) const
    { return Teuchos::rcp_dynamic_cast<PHX::Evaluator<Traits> >(scatterInitialConditionManager_->template getAsBase<EvalT>()->clone(pl)); }
+
+   //! Get the global indexer object associated with this factory
+   virtual Teuchos::RCP<const panzer::UniqueGlobalIndexerBase> getUniqueGlobalIndexerBase() const = 0;
 
    virtual void beginFill(LinearObjContainer & loc) const {}
    virtual void endFill(LinearObjContainer & loc) const {}
@@ -250,6 +277,7 @@ private:
    Teuchos::RCP<Evaluator_TemplateManager> scatterDirichletManager_;
    Teuchos::RCP<Evaluator_TemplateManager> scatterInitialConditionManager_;
    Teuchos::RCP<Evaluator_TemplateManager> gatherManager_;
+   Teuchos::RCP<Evaluator_TemplateManager> gatherDomainManager_;
    Teuchos::RCP<Evaluator_TemplateManager> gatherOrientManager_;
 
    template <typename BuilderT>
@@ -297,6 +325,17 @@ private:
    };
 
    template <typename BuilderT>
+   struct GatherDomain_Builder {
+      Teuchos::RCP<const BuilderT> builder_;
+
+      GatherDomain_Builder(const Teuchos::RCP<const BuilderT> & builder) 
+         : builder_(builder) {}
+     
+      template <typename EvalT> Teuchos::RCP<panzer::CloneableEvaluator> build() const 
+      { return builder_->template buildGatherDomain<EvalT>(); }
+   };
+
+   template <typename BuilderT>
    struct GatherOrientation_Builder {
       Teuchos::RCP<const BuilderT> builder_;
 
@@ -327,6 +366,9 @@ buildGatherScatterEvaluators(const BuilderT & builder)
 
    gatherManager_ = Teuchos::rcp(new Evaluator_TemplateManager);
    gatherManager_->buildObjects(Gather_Builder<BuilderT>(rcpFromRef(builder)));
+
+   gatherDomainManager_ = Teuchos::rcp(new Evaluator_TemplateManager);
+   gatherDomainManager_->buildObjects(GatherDomain_Builder<BuilderT>(rcpFromRef(builder)));
 
    gatherOrientManager_ = Teuchos::rcp(new Evaluator_TemplateManager);
    gatherOrientManager_->buildObjects(GatherOrientation_Builder<BuilderT>(rcpFromRef(builder)));

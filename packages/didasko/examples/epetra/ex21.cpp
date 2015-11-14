@@ -1,12 +1,12 @@
 // @HEADER
 // ***********************************************************************
-// 
+//
 //                      Didasko Tutorial Package
 //                 Copyright (2005) Sandia Corporation
-// 
+//
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -35,7 +35,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 // Questions about Didasko? Contact Marzio Sala (marzio.sala _AT_ gmail.com)
-// 
+//
 // ***********************************************************************
 // @HEADER
 
@@ -61,113 +61,113 @@
 // TriDiagonal Operator //
 // -------------------- //
 
-class TriDiagonalOperator : public Epetra_Operator 
+class TriDiagonalOperator : public Epetra_Operator
 {
 
-public:
-  
-  // constructor
-  TriDiagonalOperator( double diag_minus_one,
-		       double diag,
-		       double diag_plus_one,
-		       Epetra_Map & Map) :
-    Map_(Map),
-    diag_minus_one_(diag_minus_one),
-    diag_(diag),
-    diag_plus_one_(diag_plus_one)
+  public:
+
+    // constructor
+    TriDiagonalOperator( double diag_minus_one,
+        double diag,
+        double diag_plus_one,
+        Epetra_Map & Map) :
+      Map_(Map),
+      diag_minus_one_(diag_minus_one),
+      diag_(diag),
+      diag_plus_one_(diag_plus_one)
   {}
 
-  // application of the tridiagonal operator
-  int Apply( const Epetra_MultiVector & X,
-	     Epetra_MultiVector & Y ) const
-  {
-    int Length = X.MyLength();
-    
-    // maybe some error checks on MultiVector Lenghts
-    // for the future...
-    
-    for( int vec=0 ; vec<X.NumVectors() ; ++vec ) {
-      
-      // one-dimensional problems here
-      if( Length == 1 ) {
-	Y[vec][0] = diag_ * X[vec][0];
-	break;
-      }
-      
-      // more general case (Lenght >= 2)
+    // application of the tridiagonal operator
+    int Apply( const Epetra_MultiVector & X,
+        Epetra_MultiVector & Y ) const
+    {
+      int Length = X.MyLength();
 
-      // first row
-      Y[vec][0] = diag_ * X[vec][0] + diag_plus_one_ * X[vec][1];
-      
-      // intermediate rows
-      for( int i=1 ; i<Length-1 ; ++i ) {
-	Y[vec][i] = diag_ * X[vec][i] + diag_plus_one_ * X[vec][i+1]
-	  + diag_minus_one_ * X[vec][i-1];
+      // maybe some error checks on MultiVector Lenghts
+      // for the future...
+
+      for( int vec=0 ; vec<X.NumVectors() ; ++vec ) {
+
+        // one-dimensional problems here
+        if( Length == 1 ) {
+          Y[vec][0] = diag_ * X[vec][0];
+          break;
+        }
+
+        // more general case (Lenght >= 2)
+
+        // first row
+        Y[vec][0] = diag_ * X[vec][0] + diag_plus_one_ * X[vec][1];
+
+        // intermediate rows
+        for( int i=1 ; i<Length-1 ; ++i ) {
+          Y[vec][i] = diag_ * X[vec][i] + diag_plus_one_ * X[vec][i+1]
+            + diag_minus_one_ * X[vec][i-1];
+        }
+        // final row
+        Y[vec][Length-1] = diag_ * X[vec][Length-1]
+          + diag_minus_one_ * X[vec][Length-2];
       }
-      // final row
-      Y[vec][Length-1] = diag_ * X[vec][Length-1]
-	+ diag_minus_one_ * X[vec][Length-2];
+
+      return true;
     }
-    
-    return true;
-  }
 
-  // other function
-  int SetUseTranspose( bool UseTranspose) 
-  {
-    return(-1); // not implemented
-  }
+    // other function
+    int SetUseTranspose( bool UseTranspose)
+    {
+      return(-1); // not implemented
+    }
 
-  int ApplyInverse( const Epetra_MultiVector & X,
-		    Epetra_MultiVector & Y ) const
-  {
-    return(-1); // not implemented
-  }
+    int ApplyInverse( const Epetra_MultiVector & X,
+        Epetra_MultiVector & Y ) const
+    {
+      return(-1); // not implemented
+    }
 
-  double NormInf() const
-  {
-    return(abs(diag_) + abs(diag_minus_one_) + abs(diag_plus_one_));
-  }
+    double NormInf() const
+    {
+      return(abs(diag_) + abs(diag_minus_one_) + abs(diag_plus_one_));
+    }
 
-  const char * Label () const
-  {
-    return("TriDiagonalOperator");
-  }
+    const char * Label () const
+    {
+      return("TriDiagonalOperator");
+    }
 
-  bool UseTranspose() const
-  {
-    return(false);
-  }
+    bool UseTranspose() const
+    {
+      return(false);
+    }
 
-  bool HasNormInf () const
-  {
-    return(true);
-  }
-  
-  
-  const Epetra_Comm & Comm() const
-  {
-    return(Map_.Comm());
-  }
+    bool HasNormInf () const
+    {
+      return(true);
+    }
 
-  const Epetra_Map & OperatorDomainMap() const
-  {
-    return(Map_);
-  }
-  
-  const Epetra_Map & OperatorRangeMap() const
-  {
-    return(Map_);
-  }
 
-  
-private:
+    const Epetra_Comm & Comm() const
+    {
+      return(Map_.Comm());
+    }
 
-  Epetra_Map Map_;
-  double diag_minus_one_;   // value in the sub-diagonal
-  double diag_;             // value in the diagonal
-  double diag_plus_one_;    // value in the super-diagonal
-  
+    const Epetra_Map & OperatorDomainMap() const
+    {
+      return(Map_);
+    }
+
+    const Epetra_Map & OperatorRangeMap() const
+    {
+      return(Map_);
+    }
+
+
+  private:
+
+    Epetra_Map Map_;
+    double diag_minus_one_;   // value in the sub-diagonal
+    double diag_;             // value in the diagonal
+    double diag_plus_one_;    // value in the super-diagonal
+
 };
 
 // =========== //
@@ -186,14 +186,14 @@ int main(int argc, char *argv[]) {
   if( Comm.NumProc() != 1 ) {
     if( Comm.MyPID() == 0 ) {
       cerr << "This is mono-process example\n"
-	   << "Please run with one processo only\n";
+        << "Please run with one processo only\n";
     }
 #ifdef HAVE_MPI
     MPI_Finalize();
 #endif
     exit(EXIT_SUCCESS);
   }
-  
+
   // global dimension of the problem, could be any positive number
   int NumGlobalElements( 5 );
 
@@ -204,7 +204,7 @@ int main(int argc, char *argv[]) {
   Epetra_Vector x(Map);
   Epetra_Vector y(Map);
   x.PutScalar(1.0);
-  
+
   // define a linear operator, as previously defined in class
   // TriDiagonalOperator
 
@@ -214,7 +214,7 @@ int main(int argc, char *argv[]) {
 
   cout << x;
   cout << y;
-  
+
 #ifdef HAVE_MPI
   MPI_Finalize();
 #endif
@@ -231,7 +231,7 @@ int main(int argc, char *argv[]) {
 int main(int argc, char *argv[])
 {
   puts("Please configure Didasko with:\n"
-       "--enable-epetra");
+      "--enable-epetra");
 
   return 0;
 }

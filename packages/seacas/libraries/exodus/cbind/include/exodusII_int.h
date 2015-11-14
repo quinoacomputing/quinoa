@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2005 Sandia Corporation. Under the terms of Contract
- * DE-AC04-94AL85000 with Sandia Corporation, the U.S. Governement
+ * DE-AC04-94AL85000 with Sandia Corporation, the U.S. Government
  * retains certain rights in this software.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -42,7 +42,15 @@
 #define EXODUS_II_INT_HDR
 
 #include "netcdf.h"
+#if defined(NC_HAVE_META_H)
+#include "netcdf_meta.h"
+#endif
+
+#ifdef _WIN32
+#define PRId64 "I64d"
+#else
 #include <inttypes.h>
+#endif
 
 #ifndef __APPLE__
 #if defined __STDC__ || defined __cplusplus
@@ -63,45 +71,20 @@
 
 #include <stdio.h>
 
-/* A format string for outputting size_t ... */
-#if 0
-#if (defined(__STDC__) && defined(__STDC_VERSION__))
-# if (__STDC__ && __STDC_VERSION__ >= 199901L)
-# define PRIoSIZE "zo"
-# define PRIuSIZE "zu"
-# define PRIxSIZE "zx"
-# define PRIXSIZE "zX"
-# endif
-#else
-/* ULLONG_MAX is defined in my wrapper if 64-bit integer extensions
-are detected, even if it's not a C99 compiler. */
-# if defined(ULLONG_MAX) && (SIZE_MAX == ULLONG_MAX)
-# define PRIoSIZE "llo"
-# define PRIuSIZE "llu"
-# define PRIxSIZE "llx"
-# define PRIXSIZE "llX"
-# elif (SIZE_MAX == ULONG_MAX)
-# define PRIoSIZE "lo"
-# define PRIuSIZE "lu"
-# define PRIxSIZE "lx"
-# define PRIXSIZE "lX"
-# elif (SIZE_MAX == UINT_MAX)
-# define PRIoSIZE "o"
-# define PRIuSIZE "u"
-# define PRIxSIZE "x"
-# define PRIXSIZE "X"
-# elif (SIZE_MAX == USHRT_MAX)
-# define PRIoSIZE "ho"
-# define PRIuSIZE "hu"
-# define PRIxSIZE "hx"
-# define PRIXSIZE "hX"
-# else
-# error "Platform not supported"
-# endif
-#endif
+#ifdef __cplusplus
+extern "C" {
 #endif
 
-#define ST_ZU "lu"
+/* A format string for outputting size_t ... */
+#if defined(__STDC_VERSION__)
+#  if (__STDC_VERSION__ >= 199901L)
+#    define ST_ZU   "zu"
+#  else
+#    define ST_ZU   "lu"
+#  endif
+#else
+#  define ST_ZU   "lu"
+#endif
 
 #define MAX_VAR_NAME_LENGTH     32   /**< Internal use only */
 
@@ -120,6 +103,10 @@ are detected, even if it's not a C99 compiler. */
 #define EX_FATAL        -1      /* fatal error flag def                     */
 #define EX_NOERR         0      /* no error flag def                        */
 #define EX_WARN          1      /* warning flag def                         */
+
+/* Used to map between root (file id) and group ids when using groups */
+#define EX_FILE_ID_MASK (0xffff0000) /* Must match FILE_ID_MASK in netcdf nc4internal.h */
+#define EX_GRP_ID_MASK  (0x0000ffff) /* Must match GRP_ID_MASK in netcdf nc4internal.h */
 
 /*
  * This file contains defined constants that are used internally in the
@@ -631,6 +618,8 @@ struct ex_file_item {
   unsigned int          shuffle:1;               /* 1 true, 0 false */                   
   unsigned int          file_type:2;             /* 0 - classic, 1 -- 64 bit classic, 2 --netcdf4,  3 --netcdf4 classic */
   unsigned int          is_parallel:1;            /* 1 true, 0 false */
+  unsigned int          is_mpiio:1;               /* 1 true, 0 false */
+  unsigned int          is_pnetcdf:1;             /* 1 true, 0 false */
   struct ex_file_item*     next;
 };
 
@@ -673,7 +662,8 @@ char* ex_dim_num_objects(ex_entity_type obj_type);
 char* ex_name_var_of_object( ex_entity_type, int, int );
 char* ex_name_of_map( ex_entity_type, int );
 
-int ex_conv_ini  (int exoid, int* comp_wordsize, int* io_wordsize, int file_wordsize, int int64_status, int is_parallel);
+int ex_conv_ini  (int exoid, int* comp_wordsize, int* io_wordsize, int file_wordsize, int int64_status,
+		  int is_parallel, int is_mpiio, int is_pnetcdf);
 void ex_conv_exit  (int exoid);
 
 nc_type nc_flt_code  (int exoid);
@@ -726,6 +716,11 @@ int  ex_leavedef(int neid, 		/* NemesisI file ID         */
 		 const char *func_name	/* Name of calling function */
 		 );
 
+int ex_int_get_block_param(int exoid,
+			   ex_entity_id id,
+			   int ndim, 
+			   struct elem_blk_parm *elem_blk_parm);
+
 int ex_get_file_type(int neid,	/* NetCDF/Exodus file ID */
 		     char *ftype	/* Nemesis file type */
 		     );
@@ -764,4 +759,9 @@ int ne_id_lkup(int            neid,		/* NetCDF/Exodus file ID */
    */
   extern int ex_default_max_name_length; 
 				    
+  void *ex_safe_free(void *array);
+#ifdef __cplusplus
+}
+#endif
+
 #endif

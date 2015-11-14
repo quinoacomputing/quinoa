@@ -68,11 +68,12 @@ SET(CTEST_TEST_TYPE Nightly)
 
 SET(Trilinos_ENABLE_SECONDARY_STABLE_CODE ON)
 
-SET(Trilinos_PACKAGES FEApp Mesquite Didasko MOOCHO Moertel NOX RBGen Stratimikos ML Komplex Ifpack Pamgen Amesos Galeri AztecOO Pliris OptiPack EpetraExt Triutils GlobiPack Shards Zoltan Kokkos RTOp ThreadPool TrilinosFramework)
+SET(Trilinos_PACKAGES FEApp Mesquite Didasko MOOCHO Moertel NOX RBGen Stratimikos ML Komplex Ifpack Pamgen Amesos Galeri AztecOO Pliris OptiPack EpetraExt Triutils GlobiPack Shards Zoltan Kokkos RTOp ThreadPool TriBITS)
 
 SET( EXTRA_EXCLUDE_PACKAGES Rythmos Piro Panzer PyTrilinos)
 
 SET( EXTRA_CONFIGURE_OPTIONS
+  "-DTrilinos_ENABLE_CXX11=OFF"
   "-DTrilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON"
   "-DTrilinos_DATA_DIR:STRING=$ENV{TRILINOSDATADIRECTORY}"
   "-DTrilinos_ENABLE_Rythmos:BOOL=OFF"

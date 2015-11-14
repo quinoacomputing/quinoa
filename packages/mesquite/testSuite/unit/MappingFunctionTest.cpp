@@ -18,7 +18,7 @@
 
     You should have received a copy of the GNU Lesser General Public License 
     (lgpl.txt) along with this library; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
 
     (2009) kraftche@cae.wisc.edu    
 
@@ -32,10 +32,10 @@
 
 #include "Mesquite.hpp"
 #include "UnitUtil.hpp"
-#include "LinearTetrahedron.hpp"
-#include "LinearTriangle.hpp"
-#include "PatchData.hpp"
-#include "IdealElements.hpp"
+#include "Mesquite_LinearTetrahedron.hpp"
+#include "Mesquite_LinearTriangle.hpp"
+#include "Mesquite_PatchData.hpp"
+#include "Mesquite_IdealElements.hpp"
 #include <algorithm>
 
 using namespace Mesquite;

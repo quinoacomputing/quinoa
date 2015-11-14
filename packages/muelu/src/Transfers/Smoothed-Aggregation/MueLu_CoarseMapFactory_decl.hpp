@@ -78,10 +78,14 @@ namespace MueLu {
       Per default stridedBlockId_ is -1 and the number of nullspace vectors (from "Nullspace") is used.
       Otherwise the block size is calculated using the striding information.
 
+      For each level we can declare an own offset value for the global id's of the prolongator domain map
+      by setting the "Domain GID offsets" parameter. If the number of entries in that list is smaller than
+      the number of levels we use the default offset 0 for the remaining coarse levels.
+
      @ingroup MueLuTransferClasses
   */
 
-  template <class Scalar = double, class LocalOrdinal = int, class GlobalOrdinal = LocalOrdinal, class Node = KokkosClassic::DefaultNode::DefaultNodeType, class LocalMatOps = typename KokkosClassic::DefaultKernels<void,LocalOrdinal,Node>::SparseOps>
+  template <class Scalar = double, class LocalOrdinal = int, class GlobalOrdinal = LocalOrdinal, class Node = KokkosClassic::DefaultNode::DefaultNodeType>
   class CoarseMapFactory : public SingleLevelFactoryBase {
 #undef MUELU_COARSEMAPFACTORY_SHORT
 #include "MueLu_UseShortNames.hpp"
@@ -97,7 +101,7 @@ namespace MueLu {
     //! Destructor
     virtual ~CoarseMapFactory();
 
-    RCP<const ParameterList> GetValidParameterList(const ParameterList& paramList = ParameterList()) const;
+    RCP<const ParameterList> GetValidParameterList() const;
 
     //@}
 
@@ -139,51 +143,41 @@ namespace MueLu {
 
     //! @name Get/Set functions
 
-    /*! @brief setDomainMapOffset
-     sets offset for domain map DOF Gids in tentative prolongation operator.
-     offset must not be smaller than zero. Note: Direct solvers (Amesos/Amesos2) are not properly working with offset > 0.
-     */
-    virtual void setDomainMapOffset(GlobalOrdinal offset);
-
-    /*! @brief getDomainMapOffset
-     * returns offset of the domain DOF map (=coarse map).
-     */
-    virtual GlobalOrdinal getDomainMapOffset() const;
-
     /*! @brief getStridingData
      * returns vector with size of striding blocks in the domain DOF map (= coarse map).
      * e.g. for 2 velocity dofs and 1 pressure dof the vector is (2,1)
      */
-    virtual std::vector<size_t> getStridingData() { return stridingInfo_; }
+    virtual std::vector<size_t> getStridingData() const { return stridingInfo_; }
 
     /*! @brief setStridingData
      * set striding vector for the domain DOF map (= coarse map),
      * e.g. (2,1) for 2 velocity dofs and 1 pressure dof
      */
-    virtual void setStridingData(std::vector<size_t> stridingInfo) { stridingInfo_ = stridingInfo; }
+    virtual void setStridingData(std::vector<size_t> stridingInfo);
 
     /*! @brief getStridedBlockId
      * returns strided block id for the domain DOF map of Ptent (= coarse map)
      * or -1 if full strided map is stored in the domain map of Ptent (= coarse map)
      */
-    virtual LocalOrdinal getStridedBlockId() { return stridedBlockId_; }
+    virtual LocalOrdinal getStridedBlockId() const {
+      const ParameterList & pL = GetParameterList();
+      return pL.get<LocalOrdinal>("Strided block id");
+    }
 
     /*! @brief setStridedBlockId
      * set strided block id for the domain DOF map of Ptent (= coarse map)
      * or -1 if full strided map is stored in the domain map of Ptent (= coarse map)
      */
     virtual void setStridedBlockId(LocalOrdinal stridedBlockId) {
-      stridedBlockId_ = stridedBlockId;
+      SetParameter("Strided block id", ParameterEntry(stridedBlockId));
     }
 
     //@}
 
   protected:
 
-    GlobalOrdinal domainGidOffset_; //! offset for domain gids (coarse gids) of tentative prolongator  (default = 0). The GIDs for the domain dofs of Ptent start with domainGidOffset, are contiguous and distributed equally over the procs (unless some reordering is done).
-
     mutable std::vector<size_t> stridingInfo_;   // vector with size of strided blocks (dofs)
-    LocalOrdinal stridedBlockId_;        // member variable denoting which dofs are stored in map
+    //LocalOrdinal stridedBlockId_;        // member variable denoting which dofs are stored in map
                                          // stridedBlock == -1: the full map (with all strided block dofs)
                                          // stridedBlock >  -1: only dofs of strided block with index "stridedBlockId" are stored in this map
 

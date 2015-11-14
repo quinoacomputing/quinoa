@@ -44,15 +44,15 @@
 #define IFPACK2_ILUT_DEF_HPP
 
 // disable clang warnings
-#ifdef __clang__
+#if defined (__clang__) && !defined (__INTEL_COMPILER)
 #pragma clang system_header
 #endif
 
 #include <Ifpack2_Heap.hpp>
-#include <Ifpack2_Condest.hpp>
 #include <Ifpack2_LocalFilter.hpp>
 #include <Ifpack2_Parameters.hpp>
 #include <Tpetra_CrsMatrix_def.hpp>
+#include <Ifpack2_ILUT.hpp>
 
 #include <Teuchos_Time.hpp>
 #include <Teuchos_TypeNameTraits.hpp>
@@ -122,7 +122,6 @@ ILUT<MatrixType>::ILUT (const Teuchos::RCP<const row_matrix_type>& A) :
   RelaxValue_ (Teuchos::ScalarTraits<magnitude_type>::zero ()),
   LevelOfFill_ (1),
   DropTolerance_ (ilutDefaultDropTolerance<scalar_type> ()),
-  Condest_ (-Teuchos::ScalarTraits<magnitude_type>::one ()),
   InitializeTime_ (0.0),
   ComputeTime_ (0.0),
   ApplyTime_ (0.0),
@@ -362,46 +361,29 @@ size_t ILUT<MatrixType>::getNodeNumEntries () const {
 
 
 template<class MatrixType>
-typename ILUT<MatrixType>::magnitude_type
-ILUT<MatrixType>::
-computeCondEst (CondestType CT,
-                local_ordinal_type MaxIters,
-                magnitude_type Tol,
-                const Teuchos::Ptr<const row_matrix_type>& matrix)
-{
-  if (! isComputed ()) {
-    return -STM::one ();
-  }
-  // NOTE: this is computing the *local* condest
-  if (Condest_ == -STM::one ()) {
-    Condest_ = Ifpack2::Condest(*this, CT, MaxIters, Tol, matrix);
-  }
-  return Condest_;
-}
-
-
-template<class MatrixType>
 void ILUT<MatrixType>::setMatrix (const Teuchos::RCP<const row_matrix_type>& A)
 {
-  // Check in serial or one-process mode if the matrix is square.
-  TEUCHOS_TEST_FOR_EXCEPTION(
-    ! A.is_null () && A->getComm ()->getSize () == 1 &&
-    A->getNodeNumRows () != A->getNodeNumCols (),
-    std::runtime_error, "Ifpack2::ILUT::setMatrix: If A's communicator only "
-    "contains one process, then A must be square.  Instead, you provided a "
-    "matrix A with " << A->getNodeNumRows () << " rows and "
-    << A->getNodeNumCols () << " columns.");
+  if (A.getRawPtr () != A_.getRawPtr ()) {
+    // Check in serial or one-process mode if the matrix is square.
+    TEUCHOS_TEST_FOR_EXCEPTION(
+      ! A.is_null () && A->getComm ()->getSize () == 1 &&
+      A->getNodeNumRows () != A->getNodeNumCols (),
+      std::runtime_error, "Ifpack2::ILUT::setMatrix: If A's communicator only "
+      "contains one process, then A must be square.  Instead, you provided a "
+      "matrix A with " << A->getNodeNumRows () << " rows and "
+      << A->getNodeNumCols () << " columns.");
 
-  // It's legal for A to be null; in that case, you may not call
-  // initialize() until calling setMatrix() with a nonnull input.
-  // Regardless, setting the matrix invalidates any previous
-  // factorization.
-  IsInitialized_ = false;
-  IsComputed_ = false;
-  A_local_ = Teuchos::null;
-  L_ = Teuchos::null;
-  U_ = Teuchos::null;
-  A_ = A;
+    // It's legal for A to be null; in that case, you may not call
+    // initialize() until calling setMatrix() with a nonnull input.
+    // Regardless, setting the matrix invalidates any previous
+    // factorization.
+    IsInitialized_ = false;
+    IsComputed_ = false;
+    A_local_ = Teuchos::null;
+    L_ = Teuchos::null;
+    U_ = Teuchos::null;
+    A_ = A;
+  }
 }
 
 
@@ -691,9 +673,9 @@ void ILUT<MatrixType>::compute ()
         pattern[L_vals_heap[j]] = UNUSED;
       }
 
-      // L has a one on the diagonal, but we don't explicitly store it.
-      // If we don't store it, then the Tpetra/Kokkos kernel which performs
-      // the triangular solve can assume a unit diagonal, take a short-cut
+      // L has a one on the diagonal, but we don't explicitly store
+      // it.  If we don't store it, then the kernel which performs the
+      // triangular solve can assume a unit diagonal, take a short-cut
       // and perform faster.
 
       L_->insertLocalValues (row_i, tmp_idx (), tmpv ());
@@ -835,7 +817,7 @@ apply (const Tpetra::MultiVector<scalar_type, local_ordinal_type, global_ordinal
     // when computing the output.  Otherwise, alias X_temp to X.
     RCP<const MV> X_temp;
     if (X.getLocalMV ().getValues () == Y.getLocalMV ().getValues ()) {
-      X_temp = rcp (new MV (X));
+      X_temp = rcp (new MV (X, Teuchos::Copy));
     } else {
       X_temp = rcpFromRef (X);
     }
@@ -870,30 +852,33 @@ apply (const Tpetra::MultiVector<scalar_type, local_ordinal_type, global_ordinal
 
 
 template <class MatrixType>
-std::string ILUT<MatrixType>::description() const {
-  using Teuchos::TypeNameTraits;
+std::string ILUT<MatrixType>::description () const
+{
   std::ostringstream os;
 
-  os << "Ifpack2::ILUT : {"
-     << "Initialized: " << (isInitialized () ? "true" : "false")
-     << ", "
-     << "Computed: " << (isComputed () ? "true" : "false")
-     << ", "
-     << "Number of rows: " << A_->getGlobalNumRows ()
-     << ", "
-     << "Number of columns: " << A_->getGlobalNumCols ()
-     << ", "
-     << "Level of fill: " << getLevelOfFill()
-     << ", "
-     << "Absolute threshold: " << getAbsoluteThreshold()
-     << ", "
-     << "Relative threshold: " << getRelativeThreshold()
-     << ", "
-     << "Relax value: " << getRelaxValue();
-  if (isComputed())
-    os << ", nnz = " << getGlobalNumEntries();
+  // Output is a valid YAML dictionary in flow style.  If you don't
+  // like everything on a single line, you should call describe()
+  // instead.
+  os << "\"Ifpack2::ILUT\": {";
+  os << "Initialized: " << (isInitialized () ? "true" : "false") << ", "
+     << "Computed: " << (isComputed () ? "true" : "false") << ", ";
+
+  os << "Level-of-fill: " << getLevelOfFill() << ", "
+     << "absolute threshold: " << getAbsoluteThreshold() << ", "
+     << "relative threshold: " << getRelativeThreshold() << ", "
+     << "relaxation value: " << getRelaxValue() << ", ";
+
+  if (A_.is_null ()) {
+    os << "Matrix: null";
+  }
+  else {
+    os << "Global matrix dimensions: ["
+       << A_->getGlobalNumRows () << ", " << A_->getGlobalNumCols () << "]"
+       << ", Global nnz: " << A_->getGlobalNumEntries();
+  }
+
   os << "}";
-  return os.str();
+  return os.str ();
 }
 
 
@@ -915,11 +900,12 @@ describe (Teuchos::FancyOStream& out,
   using Teuchos::VERB_HIGH;
   using Teuchos::VERB_EXTREME;
 
-  const Teuchos::EVerbosityLevel vl = (verbLevel == VERB_DEFAULT) ? VERB_LOW : verbLevel;
+  const Teuchos::EVerbosityLevel vl =
+    (verbLevel == VERB_DEFAULT) ? VERB_LOW : verbLevel;
   OSTab tab0 (out);
 
   if (vl > VERB_NONE) {
-    out << "Ifpack2::ILUT:" << endl;
+    out << "\"Ifpack2::ILUT\":" << endl;
     OSTab tab1 (out);
     out << "MatrixType: " << TypeNameTraits<MatrixType>::name () << endl;
     if (this->getObjectLabel () != "") {
@@ -940,8 +926,10 @@ describe (Teuchos::FancyOStream& out,
       const double nnzToRows =
         (double) getGlobalNumEntries () / (double) U_->getGlobalNumRows ();
 
-      out << "Dimensions of L: (" << L_->getGlobalNumRows () << "," << L_->getGlobalNumRows () << ")" << endl
-          << "Dimensions of U: (" << U_->getGlobalNumRows () << "," << U_->getGlobalNumRows () << ")" << endl
+      out << "Dimensions of L: [" << L_->getGlobalNumRows () << ", "
+          << L_->getGlobalNumRows () << "]" << endl
+          << "Dimensions of U: [" << U_->getGlobalNumRows () << ", "
+          << U_->getGlobalNumRows () << "]" << endl
           << "Number of nonzeros in factors: " << getGlobalNumEntries () << endl
           << "Fill fraction of factors over A: " << fillFraction << endl
           << "Ratio of nonzeros to rows: " << nnzToRows << endl;
@@ -964,7 +952,7 @@ Teuchos::RCP<const typename ILUT<MatrixType>::row_matrix_type>
 ILUT<MatrixType>::makeLocalFilter (const Teuchos::RCP<const row_matrix_type>& A)
 {
   if (A->getComm ()->getSize () > 1) {
-    return Teuchos::rcp (new LocalFilter<MatrixType> (A));
+    return Teuchos::rcp (new LocalFilter<row_matrix_type> (A));
   } else {
     return A;
   }
@@ -972,5 +960,14 @@ ILUT<MatrixType>::makeLocalFilter (const Teuchos::RCP<const row_matrix_type>& A)
 
 }//namespace Ifpack2
 
-#endif /* IFPACK2_ILUT_DEF_HPP */
 
+// FIXME (mfh 16 Sep 2014) We should really only use RowMatrix here!
+// There's no need to instantiate for CrsMatrix too.  All Ifpack2
+// preconditioners can and should do dynamic casts if they need a type
+// more specific than RowMatrix.
+
+#define IFPACK2_ILUT_INSTANT(S,LO,GO,N) \
+  template class Ifpack2::ILUT< Tpetra::RowMatrix<S, LO, GO, N> >; \
+  template class Ifpack2::ILUT< Tpetra::CrsMatrix<S, LO, GO, N> >;
+
+#endif /* IFPACK2_ILUT_DEF_HPP */

@@ -65,7 +65,7 @@ Element quality metrics is calculated in one of  four ways:
 \begin{enumerate}
 \item As the average of the quality values of the underlying sample points.  A single quality value is calculated for each element.  This functionality is provided by the ElementAvgQM class.
 \item As the maximum of the quality values of the underlying sample points for each element.  A single quality value is calculated for each element.  This functionality is provide by the ElementMaxQM class.
-\item For target-based metrics (any metric derived from the TMPQualityMetric class or TMetric class used in conjuntion with the TQualityMetric class),  a quality value is produced for each element sample point.  For example, a quadrangle has four sample points, one at each corner, therefore four quality values per element will be produced for a quadrangle when using a target-based metric. 
+\item For target-based metrics (any metric derived from the TMPQualityMetric class or TMetric class used in conjuntion with the TQualityMetric class),  a quality value is produced for each element sample point.  For example, a quadrangle has four sample points, one at each corner, therefore four quality values per element will be produced for a quadrangle when using a target-based metric.
 \item All other metrics derived from the QualityMetric class that are not one of the above metrics will have one quality metric value per element.  Sample points are not used.
 \end{enumerate}
 
@@ -98,7 +98,7 @@ Element quality metrics is calculated in one of  four ways:
         1.18        2.23      2.28262     2.33533        3.77    0.693433
 
      Number of statistics = 32
-     Metric = TSquared 
+     Metric = TSquared
 
 
    TSquared histogram:
@@ -128,7 +128,7 @@ This class computes the Aspect Ratio Gamma metric for two- and three-diminsional
 
 \subsubsection{ConditionNumberQualityMetric}
 
-  Computes the condition number of given element. 
+  Computes the condition number of given element.
 
      The metric does not use the sample point functionality or the compute\_weighted\_jacobian.  It evaluates the metric at  the element vertices, and uses the isotropic ideal element. It does require a feasible region, and the metric needs to be minimized
 
@@ -141,7 +141,7 @@ The metric does not use the sample point functionality or the compute\_weighted\
 \subsubsection{IdealWeightMeanRatio}
 
 Computes the mean ratio quality metric of given element.
-     
+
  The metric does not use the sample point functionality or the     compute\_weighted\_jacobian.  It evaluates the metric at the element vertices, and uses the isotropic ideal element.  It does require a feasible region, and the metric needs to be maximized.
 
 \subsection{TMP Quality Metrics}
@@ -150,18 +150,18 @@ Computes the mean ratio quality metric of given element.
 
 Compares targets to affine map to ideal element.
 
-A quality metric defined using 2D and 3D target metrics, where the active (A) matrix is an affine map to the ideal, unit-side element.  
+A quality metric defined using 2D and 3D target metrics, where the active (A) matrix is an affine map to the ideal, unit-side element.
 
 \subsubsection{AWQualityMetric}
 
 Compares targets to mapping function Jacobian matrices
- 
+
  A quality metric defined using 2D and 3D target metrics, where the active (A) matrix compared to the target by the underlying metrics is the Jacobian matrix of the mapping function at a given sample point.  For surface elements, A is rotated to align the normal with W, such that both matrices can be reduced from 3x2 to 2x2.
 
 \subsubsection{TMPQualityMetric}
 
 Compare targets to mapping function Jacobian matrices
- 
+
  Base class for various TMP QualityMetric implementations.
 
 \subsubsection{TQualityMetric}
@@ -175,7 +175,7 @@ A quality metric defined using 2D and 3D target metrics, where the active (A) ma
 \subsubsection{UntangleBetaQualityMetric}
 
   The untangle beta quality metric.
-       
+
   Given a scalar value beta and local signed element volume alpha\_i, define delta\_i to be alpha\_i minus beta.  The Untangle beta value is then defined as square root of the sum over sample points of the absolute value of delta\_i minus delta\_i, difference squared. That is, the root mean square of the difference, abs(delta\_i) minus delta\_i.
 
 The constructor defaults to RMS AveragingMethod and ELEMENT\_VERTICES evaluationMode.  The default beta value is .05.
@@ -183,10 +183,10 @@ The constructor defaults to RMS AveragingMethod and ELEMENT\_VERTICES evaluation
 \subsection{Volume Quality Metrics}
 
 \subsubsection{LocalSizeQualityMetric}
-       
+
   Computes the local size metric for a given vertex.
-       
-  LocalSizeQualityMetric is a vertex based metric which computes the corner volume (or area) for the element corners attached to a given element.  Then these volumes (or areas) are averaged together.  The default averaging method is QualityMetric::RMS. 
+
+  LocalSizeQualityMetric is a vertex based metric which computes the corner volume (or area) for the element corners attached to a given element.  Then these volumes (or areas) are averaged together.  The default averaging method is QualityMetric::RMS.
 
 \subsubsection{SizeMetric}
 
@@ -326,7 +326,7 @@ When executed, the above code will send its output to std::cout.
 \clearpage
 \subsection{Common-scale Histograms output example}
 
-The following is the output created by the code shown in Section \ref{sec:creating_histograms}.  It consists of the initial and optimal QualityAssessor Summaries followed by the initial and optimal common scale histograms. 
+The following is the output created by the code shown in Section \ref{sec:creating_histograms}.  It consists of the initial and optimal QualityAssessor Summaries followed by the initial and optimal common scale histograms.
 
 \begin{verbatim}
 ************** QualityAssessor(free only) Summary **************
@@ -426,7 +426,7 @@ minimum     average     rms         maximum     std.dev.
 
 Mesquite contains a mechanism to send status and debug messages to an output stream (e.g. {\texttt stdout} or {\texttt std::cout}).  On Unix-like systems that use a configure/make autotools system debug output is enabled using the "--enable-debug" option on the configure command. This option enables Mesquite's debug capabilities but does not enable any actual debug output messages.  Output messages are controlled by flags specified using the "--enable-debug-output" option on the configure command.  This two step approach is used so that in release builds the debug output feature can be disabled so that turning on debug flags in a released version has no effect.
 
-  Debug messages are grouped into logical categories identified by an integer number.  For example, debug flag 1 refers to warnings, debug flag 2 is used for status information about the outer optimization loop, and debug flag 3 is used for status of the inner optimization loop. The command to turn on all three flags would be: "./configure --enable-debug-output=1,2,3".  When specifying debug flags using the "--enable-debug-output", the "--enable-debug" flag is implied and need not be supplied. The CMake utility can also be used to enable debug output by setting the "Trillinos\_ENABLE\_DEBUG" option to "ON". As with the configure command, debug output is only enabled with no flags having been set. CMake options do not support setting of the output message flags so, when configuring Mesquite with CMake, these flags must be specified using the techniques described below. 
+  Debug messages are grouped into logical categories identified by an integer number.  For example, debug flag 1 refers to warnings, debug flag 2 is used for status information about the outer optimization loop, and debug flag 3 is used for status of the inner optimization loop. The command to turn on all three flags would be: "./configure --enable-debug-output=1,2,3".  When specifying debug flags using the "--enable-debug-output", the "--enable-debug" flag is implied and need not be supplied. The CMake utility can also be used to enable debug output by setting the "Trillinos\_ENABLE\_DEBUG" option to "ON". As with the configure command, debug output is only enabled with no flags having been set. CMake options do not support setting of the output message flags so, when configuring Mesquite with CMake, these flags must be specified using the techniques described below.
 
 Debug flags can be controlled through a variety of means.  The {\texttt --enable-debug-output} configure option can be specified with a comma-separated list of integer values to specify which debug groups should be enabled by default.  An application may call the {\texttt MsqDebug::enable(unsigned)} and {\texttt MsqDebug::disable(unsigned)} functions to enable or disable debug message groups.  Debug message groups may also be controlled with the environmental variables {\texttt MESQUITE\_DEBUG} and {\texttt MESQUITE\_NO\_DEBUG}.	Each should have a comma-separated list of integer values as its argument.  The variables enable and disable, respectively, the corresponding debug message groups.
 
@@ -486,7 +486,7 @@ plot 'plot.gpt' using 1:3 with linespoints \
 
 \begin{figure}[htb!]
 \begin{center}
-\includegraphics[width=5in]{iterplot}
+\includegraphics[width=5in]{figures/iterplot}
 \caption{\em Convergence Plot \label{fig:iterplot}}
 \end{center}
 \end{figure}
@@ -515,7 +515,7 @@ Figure \ref{fig:meshgpt} is the result of plotting the mesh contained in {\textt
 
 \begin{figure}[htb!]
 \begin{center}
-\includegraphics[width=4in]{mesh_gpt}
+\includegraphics[width=4in]{figures/mesh_gpt}
 \caption{\em GNU Plot of 2D Quadratic Triangles \label{fig:meshgpt}}
 \end{center}
 \end{figure}
@@ -524,7 +524,7 @@ As mentioned in the previous section, the VTK file format can be used with a var
 
 \begin{figure}[htb!]
 \begin{center}
-\includegraphics[width=4in]{mesh_vtk}
+\includegraphics[width=4in]{figures/mesh_vtk}
 \caption{\em Paraview plot of 2D Quadratic Triangles \label{fig:meshvtk}}
 \end{center}
 \end{figure}
@@ -536,7 +536,7 @@ E(u) = \frac{1}{2}u(u-1)V_1 + (1-u^2)V_2 + \frac{1}{2}u(u+1)V_3
 
 \begin{figure}[htb!]
 \begin{center}
-\includegraphics[width=4in]{mesh}
+\includegraphics[width=4in]{figures/mesh}
 \caption{\em Encapsulated PostScript of 2D Quadratic Triangles \label{fig:mesh}}
 \end{center}
 \end{figure}
@@ -549,7 +549,7 @@ The {\texttt QualityAssessor} class has the ability to store mesh quality values
 
 \begin{figure}[htb!]
 \begin{center}
-\includegraphics[width=5in]{meshqual}
+\includegraphics[width=5in]{figures/meshqual}
 \caption{\em Paraview Plot Coloring Elements by Quality Metric Value \label{fig:meshqual}}
 \end{center}
 \end{figure}
@@ -577,7 +577,7 @@ mesh.write_vtk( "meshqual.vtk", err );
 
 \begin{figure}[htb!]
 \begin{center}
-\includegraphics[width=3in]{meshqual3d}
+\includegraphics[width=3in]{figures/meshqual3d}
 \caption{\em Paraview Plot Showing Inverted Elements \label{fig:meshqual3d}}
 \end{center}
 \end{figure}

@@ -52,7 +52,7 @@
 #include "MueLu_LeftoverAggregationAlgorithm_decl.hpp"
 
 #include "MueLu_Aggregates_decl.hpp" // MUELU_UNASSIGNED macro
-#include "MueLu_Utilities_decl.hpp"  // sumAll macro
+#include "MueLu_Utilities_decl.hpp"  // MueLu_sumAll macro
 #include "MueLu_GraphBase.hpp"
 #include "MueLu_CoupledAggregationCommHelper.hpp"
 #include "MueLu_Exceptions.hpp"
@@ -60,14 +60,14 @@
 
 namespace MueLu {
 
-  template <class LocalOrdinal, class GlobalOrdinal, class Node, class LocalMatOps>
-  LeftoverAggregationAlgorithm<LocalOrdinal, GlobalOrdinal, Node, LocalMatOps>::LeftoverAggregationAlgorithm():
+  template <class LocalOrdinal, class GlobalOrdinal, class Node>
+  LeftoverAggregationAlgorithm<LocalOrdinal, GlobalOrdinal, Node>::LeftoverAggregationAlgorithm():
     phase3AggCreation_(.5),
     minNodesPerAggregate_(1)
   { }
 
-  template <class LocalOrdinal, class GlobalOrdinal, class Node, class LocalMatOps>
-  void LeftoverAggregationAlgorithm<LocalOrdinal, GlobalOrdinal, Node, LocalMatOps>::AggregateLeftovers(GraphBase const &graph, Aggregates &aggregates) const {
+  template <class LocalOrdinal, class GlobalOrdinal, class Node>
+  void LeftoverAggregationAlgorithm<LocalOrdinal, GlobalOrdinal, Node>::AggregateLeftovers(GraphBase const &graph, Aggregates &aggregates) const {
     Monitor m(*this, "AggregateLeftovers");
 
     my_size_t nVertices = graph.GetNodeNumVertices();
@@ -80,7 +80,7 @@ namespace MueLu {
     const RCP<const Map> nonUniqueMap = aggregates.GetMap(); //column map of underlying graph
     const RCP<const Map> uniqueMap    = graph.GetDomainMap();
 
-    MueLu::CoupledAggregationCommHelper<LO,GO,NO,LMO> myWidget(uniqueMap, nonUniqueMap);
+    MueLu::CoupledAggregationCommHelper<LO,GO,NO> myWidget(uniqueMap, nonUniqueMap);
 
     //TODO JJH We want to skip this call
     RCP<Xpetra::Vector<double,LO,GO,NO> > distWeights = Xpetra::VectorFactory<double,LO,GO,NO>::Build(nonUniqueMap);
@@ -150,10 +150,10 @@ namespace MueLu {
           phase_one_aggregated++;
       }
 
-      sumAll(graph.GetComm(), phase_one_aggregated, total_phase_one_aggregated);
+      MueLu_sumAll(graph.GetComm(), phase_one_aggregated, total_phase_one_aggregated);
 
       GO local_nVertices = nVertices, total_nVertices = 0;
-      sumAll(graph.GetComm(), local_nVertices, total_nVertices);
+      MueLu_sumAll(graph.GetComm(), local_nVertices, total_nVertices);
 
       /* Among unaggregated points, see if we can make a reasonable size    */
       /* aggregate out of it. We do this by looking at neighbors and seeing */
@@ -210,14 +210,14 @@ namespace MueLu {
       GO Nphase1_agg = nAggregates;
       GO total_aggs;
 
-      sumAll(graph.GetComm(), Nphase1_agg, total_aggs);
+      MueLu_sumAll(graph.GetComm(), Nphase1_agg, total_aggs);
 
-      GetOStream(Statistics1, 0) << "Phase 1 - nodes aggregated = " << total_phase_one_aggregated << std::endl;
-      GetOStream(Statistics1, 0) << "Phase 1 - total aggregates = " << total_aggs << std::endl;
+      GetOStream(Statistics1) << "Phase 1 - nodes aggregated = " << total_phase_one_aggregated << std::endl;
+      GetOStream(Statistics1) << "Phase 1 - total aggregates = " << total_aggs << std::endl;
 
       GO i = nAggregates - Nphase1_agg;
-      { GO ii; sumAll(graph.GetComm(),i,ii); i = ii; }
-      GetOStream(Statistics1, 0) << "Phase 3 - additional aggregates = " << i << std::endl;
+      { GO ii; MueLu_sumAll(graph.GetComm(),i,ii); i = ii; }
+      GetOStream(Statistics1) << "Phase 3 - additional aggregates = " << i << std::endl;
     }
 
     // Determine vertices that are not shared by setting Temp to all ones
@@ -249,10 +249,10 @@ namespace MueLu {
     double nAggregatesTarget;
     nAggregatesTarget = ((double)  uniqueMap->getGlobalNumElements())* (((double) uniqueMap->getGlobalNumElements())/ ((double) graph.GetGlobalNumEdges()));
 
-    GO nAggregatesLocal=nAggregates, nAggregatesGlobal; sumAll(graph.GetComm(), nAggregatesLocal, nAggregatesGlobal);
+    GO nAggregatesLocal=nAggregates, nAggregatesGlobal; MueLu_sumAll(graph.GetComm(), nAggregatesLocal, nAggregatesGlobal);
 
-    LO minNAggs; minAll(graph.GetComm(), nAggregates, minNAggs);
-    LO maxNAggs; maxAll(graph.GetComm(), nAggregates, maxNAggs);
+    LO minNAggs; MueLu_minAll(graph.GetComm(), nAggregates, minNAggs);
+    LO maxNAggs; MueLu_maxAll(graph.GetComm(), nAggregates, maxNAggs);
 
     //
     // Only do this phase if things look really bad. THIS
@@ -347,7 +347,7 @@ namespace MueLu {
         myWidget.ArbitrateAndCommunicate(*distWeights, aggregates, true);
         // All tentatively assigned vertices are now definitive
         nAggregatesLocal=nAggregates;
-        sumAll(graph.GetComm(), nAggregatesLocal, nAggregatesGlobal);
+        MueLu_sumAll(graph.GetComm(), nAggregatesLocal, nAggregatesGlobal);
 
         // check that there are no aggregates sizes below minNodesPerAggregate
 
@@ -659,19 +659,19 @@ namespace MueLu {
     myWidget.ArbitrateAndCommunicate(*distWeights, aggregates, false);
 
     if (IsPrint(Statistics1)) {
-      GO total_Nsingle=0;   sumAll(graph.GetComm(), (GO)Nsingle,     total_Nsingle);
-      GO total_Nleftover=0; sumAll(graph.GetComm(), (GO)Nleftover,   total_Nleftover);
-      // GO total_aggs;        sumAll(graph.GetComm(), (GO)nAggregates, total_aggs);
-      // GetOStream(Statistics1, 0) << "Phase 6 - total aggregates = " << total_aggs << std::endl;
-      GetOStream(Statistics1, 0) << "Phase 6 - leftovers = " << total_Nleftover << " and singletons = " << total_Nsingle << std::endl;
+      GO total_Nsingle=0;   MueLu_sumAll(graph.GetComm(), (GO)Nsingle,     total_Nsingle);
+      GO total_Nleftover=0; MueLu_sumAll(graph.GetComm(), (GO)Nleftover,   total_Nleftover);
+      // GO total_aggs;        MueLu_sumAll(graph.GetComm(), (GO)nAggregates, total_aggs);
+      // GetOStream(Statistics1) << "Phase 6 - total aggregates = " << total_aggs << std::endl;
+      GetOStream(Statistics1) << "Phase 6 - leftovers = " << total_Nleftover << " and singletons = " << total_Nsingle << std::endl;
     }
 
     aggregates.SetNumAggregates(nAggregates);
 
   } //AggregateLeftovers
 
-  template <class LocalOrdinal, class GlobalOrdinal, class Node, class LocalMatOps>
-  void LeftoverAggregationAlgorithm<LocalOrdinal, GlobalOrdinal, Node, LocalMatOps>::RootCandidates(my_size_t nVertices,
+  template <class LocalOrdinal, class GlobalOrdinal, class Node>
+  void LeftoverAggregationAlgorithm<LocalOrdinal, GlobalOrdinal, Node>::RootCandidates(my_size_t nVertices,
   ArrayView<const LO> & vertex2AggId, GraphBase const &graph,
                       ArrayRCP<LO> &candidates, my_size_t &nCandidates, global_size_t &nCandidatesGlobal) const
   {
@@ -693,13 +693,13 @@ namespace MueLu {
       }
     }
 
-    sumAll(graph.GetComm(), (GO)nCandidates, nCandidatesGlobal);
+    MueLu_sumAll(graph.GetComm(), (GO)nCandidates, nCandidatesGlobal);
 
   } //RootCandidates
 
-  template <class LocalOrdinal, class GlobalOrdinal, class Node, class LocalMatOps>
-  int LeftoverAggregationAlgorithm<LocalOrdinal, GlobalOrdinal, Node, LocalMatOps>::RemoveSmallAggs(Aggregates& aggregates, int min_size,
-                      RCP<Xpetra::Vector<double,LO,GO,NO> > & distWeights, const MueLu::CoupledAggregationCommHelper<LO,GO,NO,LMO> & myWidget) const {
+  template <class LocalOrdinal, class GlobalOrdinal, class Node>
+  int LeftoverAggregationAlgorithm<LocalOrdinal, GlobalOrdinal, Node>::RemoveSmallAggs(Aggregates& aggregates, int min_size,
+                      RCP<Xpetra::Vector<double,LO,GO,NO> > & distWeights, const MueLu::CoupledAggregationCommHelper<LO,GO,NO> & myWidget) const {
     int myPid = aggregates.GetMap()->getComm()->getRank();
 
     LO nAggregates = aggregates.GetNumAggregates();

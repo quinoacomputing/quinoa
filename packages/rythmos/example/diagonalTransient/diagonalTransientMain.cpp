@@ -20,7 +20,7 @@
 //
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
 // USA
 // Questions? Contact Todd S. Coffey (tscoffe@sandia.gov)
 //
@@ -100,7 +100,7 @@ int main(int argc, char *argv[])
 
   using std::endl;
   typedef double Scalar;
-  typedef double ScalarMag;
+  // typedef double ScalarMag; // unused
   using Teuchos::describe;
   using Teuchos::RCP;
   using Teuchos::rcp;
@@ -111,7 +111,7 @@ int main(int argc, char *argv[])
   using Teuchos::CommandLineProcessor;
   typedef Teuchos::ParameterList::PrintOptions PLPrintOptions;
   typedef Thyra::ModelEvaluatorBase MEB;
-  typedef Thyra::DefaultMultiVectorProductVectorSpace<Scalar> DMVPVS;
+  // typedef Thyra::DefaultMultiVectorProductVectorSpace<Scalar> DMVPVS; // unused
   using Thyra::productVectorBase;
 
   bool result, success = true;

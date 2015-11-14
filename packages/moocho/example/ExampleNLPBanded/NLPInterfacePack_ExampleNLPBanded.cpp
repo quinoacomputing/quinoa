@@ -368,7 +368,7 @@ void ExampleNLPBanded::imp_report_orig_final_solution(
   ,const DVectorSlice     *lambdaI_orig
   ,const DVectorSlice     *nu_orig
   ,bool                   is_optimal
-  ) const
+  )
 {
   // ToDo: Do something with the final soltuion?
 }

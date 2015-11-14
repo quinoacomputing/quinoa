@@ -18,7 +18,7 @@
 
     You should have received a copy of the GNU Lesser General Public License 
     (lgpl.txt) along with this library; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
 
     (2010) kraftche@cae.wisc.edu    
 
@@ -32,13 +32,13 @@
  */
 
 #include "UnitUtil.hpp"
-#include "MsqError.hpp"
-#include "MsqMatrix.hpp"
+#include "Mesquite_MsqError.hpp"
+#include "Mesquite_MsqMatrix.hpp"
 
-#include "TMetric.hpp"
-#include "TMetricBarrier.hpp"
-#include "AWMetric.hpp"
-#include "AWMetricBarrier.hpp"
+#include "Mesquite_TMetric.hpp"
+#include "Mesquite_TMetricBarrier.hpp"
+#include "Mesquite_AWMetric.hpp"
+#include "Mesquite_AWMetricBarrier.hpp"
 
 // NOTE: Caller must define TARGET_TEST_GROUP to be a quoted string,
 //       typically the base file name of the file containing the 

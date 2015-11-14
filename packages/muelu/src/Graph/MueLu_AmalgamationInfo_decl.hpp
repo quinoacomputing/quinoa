@@ -71,14 +71,13 @@ namespace MueLu {
   @class AmalgamationInfo
   @brief minimal container class for storing amalgamation information
 
-
-  stores map of global node id on current processor to global DOFs ids on current processor
-  nodegid2dofgids_
-
-  that is used for unamalgamation
+  Helps create a mapping between global node id on current processor to global DOFs ids on
+  current processor.  That mapping is used for unamalgamation.
 */
 
-  template <class LocalOrdinal  = int, class GlobalOrdinal = LocalOrdinal, class Node = KokkosClassic::DefaultNode::DefaultNodeType, class LocalMatOps = typename KokkosClassic::DefaultKernels<void,LocalOrdinal,Node>::SparseOps>
+  template <class LocalOrdinal = int,
+            class GlobalOrdinal = LocalOrdinal,
+            class Node = KokkosClassic::DefaultNode::DefaultNodeType>
   class AmalgamationInfo
     : public BaseClass {
 #undef MUELU_AMALGAMATIONINFO_SHORT
@@ -86,11 +85,24 @@ namespace MueLu {
 
   public:
 
-    AmalgamationInfo(RCP<std::map<GlobalOrdinal,std::vector<GlobalOrdinal> > > nodegid2dofgids,
-                     RCP<std::vector<GlobalOrdinal> > nodegids) {
-      nodegid2dofgids_ = nodegid2dofgids;
-      gNodeIds_        = nodegids;
-    }
+    AmalgamationInfo(RCP<Array<LO> > rowTranslation,
+                     RCP<Array<LO> > colTranslation,
+                     RCP<const Map> nodeRowMap,
+                     RCP<const Map> nodeColMap,
+                     RCP< const Xpetra::Map<LocalOrdinal, GlobalOrdinal, Node> > const &columnMap,
+                     LO fullblocksize, GO offset, LO blockid, LO nStridedOffset, LO stridedblocksize) :
+                     rowTranslation_(rowTranslation),
+                     colTranslation_(colTranslation),
+                     nodeRowMap_(nodeRowMap),
+                     nodeColMap_(nodeColMap),
+                     columnMap_(columnMap),
+                     fullblocksize_(fullblocksize),
+                     offset_(offset),
+                     blockid_(blockid),
+                     nStridedOffset_(nStridedOffset),
+                     stridedblocksize_(stridedblocksize),
+                     indexBase_(columnMap->getIndexBase())
+    {}
 
     virtual ~AmalgamationInfo() {}
 
@@ -102,32 +114,73 @@ namespace MueLu {
     //void describe(Teuchos::FancyOStream &out, const VerbLevel verbLevel = Default) const;;
     void print(Teuchos::FancyOStream &out, const VerbLevel verbLevel = Default) const;
 
-    RCP<std::map<GlobalOrdinal,std::vector<GlobalOrdinal> > > GetGlobalAmalgamationParams() const   { return nodegid2dofgids_; }
-    RCP<std::vector<GlobalOrdinal> >                          GetNodeGIDVector() const              { return gNodeIds_; }
-    GlobalOrdinal                                             GetNumberOfNodes() const              { return gNodeIds_.is_null() ? 0 : gNodeIds_->size(); }
+    RCP<const Map> getNodeRowMap() const { return nodeRowMap_; } //! < returns the node row map for the graph
+    RCP<const Map> getNodeColMap() const { return nodeColMap_; } //! < returns the node column map for the graph
+
+    /* @brief Translation arrays
+     *
+     * Returns translation arrays providing local node ids given local dof ids built from either
+     * the non-overlapping (unique) row map or the overlapping (non-unique) column map.
+     * The getColTranslation routine, e.g., is used for the MergeRows routine in CoalesceDropFactory.
+     */
+    //@{
+    RCP<Array<LO> > getRowTranslation() const { return rowTranslation_; }
+    RCP<Array<LO> > getColTranslation() const { return colTranslation_; }
+    //@}
 
     /*! @brief UnamalgamateAggregates
 
        Puts all dofs for aggregate \c i in aggToRowMap[\c i].  Also calculate aggregate sizes.
     */
     void UnamalgamateAggregates(const Aggregates& aggregates, Teuchos::ArrayRCP<LocalOrdinal>& aggStart, Teuchos::ArrayRCP<GlobalOrdinal>& aggToRowMap) const;
+    void UnamalgamateAggregatesLO(const Aggregates& aggregates, Teuchos::ArrayRCP<LocalOrdinal>& aggStart, Teuchos::ArrayRCP<LO>& aggToRowMap) const;
 
     /*! @brief ComputeUnamalgamatedImportDofMap
      * build overlapping dof row map from aggregates needed for overlapping null space
      */
     Teuchos::RCP< Xpetra::Map<LocalOrdinal, GlobalOrdinal, Node> > ComputeUnamalgamatedImportDofMap(const Aggregates& aggregates) const;
 
+    /*! @brief ComputeGlobalDOF
+     * return global dof id associated with global node id gNodeID and dof index k
+     *
+     * @param (GO): global node id
+     * @param (LO): local dof index within node
+     * @return (GO): global dof id
+     */
+    GO ComputeGlobalDOF(GO const &gNodeID, LO const &k=0) const;
+
+    /*! Access routines */
+    
+    /// returns offset of global dof ids
+    GO GlobalOffset() { return offset_; }
+    
   private:
 
     //! @name amalgamation information variables
     //@{
 
-    // map of global node id on current processor to global DOFs ids on current processor
-    RCP<std::map<GlobalOrdinal,std::vector<GlobalOrdinal> > > nodegid2dofgids_; //< used for building overlapping ImportDofMap
+    // arrays containing local node ids given local dof ids
+    RCP<Array<LO> > rowTranslation_;
+    RCP<Array<LO> > colTranslation_;
 
-    // contains global node ids on current proc (used by CoalesceDropFactory to build nodeMap)
-    RCP<std::vector<GlobalOrdinal> > gNodeIds_;
+    // node row and column map of graph (built from row and column map of A)
+    RCP<const Map> nodeRowMap_;
+    RCP<const Map> nodeColMap_;
 
+    //! @brief DOF map (really column map of A)
+    // keep an RCP on the column map to make sure that the map is still valid when it is used
+    Teuchos::RCP< const Xpetra::Map<LocalOrdinal, GlobalOrdinal, Node> > columnMap_;
+
+    //@}
+
+    //! @name Strided map information.
+    //@{
+    LO fullblocksize_;
+    GO offset_;
+    LO blockid_;
+    LO nStridedOffset_;
+    LO stridedblocksize_;
+    GO indexBase_;
     //@}
 
   };

@@ -52,6 +52,8 @@
 #ifndef MUELU_REBALANCEBLOCKACFACTORY_DECL_HPP_
 #define MUELU_REBALANCEBLOCKACFACTORY_DECL_HPP_
 
+#ifdef HAVE_MUELU_EXPERIMENTAL
+
 #include <Xpetra_Matrix_fwd.hpp>
 #include <Xpetra_CrsMatrix_fwd.hpp>
 #include <Xpetra_CrsMatrixWrap_fwd.hpp>
@@ -59,29 +61,24 @@
 #include <Xpetra_Vector_fwd.hpp>
 #include <Xpetra_VectorFactory_fwd.hpp>
 #include <Xpetra_MapExtractor_fwd.hpp>
-//#include <Xpetra_MapExtractorFactory_fwd.hpp> // TODO file is missing
 
 #include "MueLu_ConfigDefs.hpp"
-#include "MueLu_TwoLevelFactoryBase.hpp"
 #include "MueLu_RebalanceBlockAcFactory_fwd.hpp"
 
-#include "MueLu_Level_fwd.hpp"
-#include "MueLu_RAPFactory_fwd.hpp"
 #include "MueLu_FactoryBase_fwd.hpp"
-#include "MueLu_Utilities_fwd.hpp"
 #include "MueLu_FactoryManager_fwd.hpp"
+#include "MueLu_Level_fwd.hpp"
+#include "MueLu_PerfUtils_fwd.hpp"
+#include "MueLu_RAPFactory_fwd.hpp"
+#include "MueLu_TwoLevelFactoryBase.hpp"
 #include "MueLu_Types.hpp"
-
-// MPI helper
-#define sumAll(rcpComm, in, out)                                        \
-  Teuchos::reduceAll(*rcpComm, Teuchos::REDUCE_SUM, in, Teuchos::outArg(out));
 
 namespace MueLu {
   /*!
     @class RebalanceAcFactory
     @brief Factory for building coarse matrices.
   */
-  template <class Scalar = double, class LocalOrdinal = int, class GlobalOrdinal = LocalOrdinal, class Node = KokkosClassic::DefaultNode::DefaultNodeType, class LocalMatOps = typename KokkosClassic::DefaultKernels<void, LocalOrdinal, Node>::SparseOps>
+  template <class Scalar = double, class LocalOrdinal = int, class GlobalOrdinal = LocalOrdinal, class Node = KokkosClassic::DefaultNode::DefaultNodeType>
   class RebalanceBlockAcFactory : public TwoLevelFactoryBase {
 #undef MUELU_REBALANCEBLOCKACFACTORY_SHORT
 #include "MueLu_UseShortNames.hpp"
@@ -96,7 +93,7 @@ namespace MueLu {
 
     virtual ~RebalanceBlockAcFactory() { }
 
-    RCP<const ParameterList> GetValidParameterList(const ParameterList& paramList = ParameterList()) const;
+    RCP<const ParameterList> GetValidParameterList() const;
     //@}
 
     //! @name Input
@@ -138,5 +135,5 @@ namespace MueLu {
 } //namespace MueLu
 
 #define MUELU_REBALANCEBLOCKACFACTORY_SHORT
-
+#endif /* HAVE_MUELU_EXPERIMENTAL */
 #endif /* MUELU_REBALANCEBLOCKACFACTORY_DECL_HPP_ */

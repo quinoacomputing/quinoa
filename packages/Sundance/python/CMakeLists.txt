@@ -1,6 +1,5 @@
 
 
-INCLUDE(TribitsLibraryMacros)
 
 # Simple wrapper interface generator (SWIG) is required
 FIND_PACKAGE(SWIG 1.3.29 REQUIRED)

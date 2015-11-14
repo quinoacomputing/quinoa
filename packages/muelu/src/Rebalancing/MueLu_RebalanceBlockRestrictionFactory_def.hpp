@@ -46,6 +46,8 @@
 #ifndef MUELU_REBALANCEBLOCKRESTRICTIONFACTORY_DEF_HPP_
 #define MUELU_REBALANCEBLOCKRESTRICTIONFACTORY_DEF_HPP_
 
+#ifdef HAVE_MUELU_EXPERIMENTAL
+
 #include <Teuchos_Tuple.hpp>
 
 #include "Xpetra_Vector.hpp"
@@ -62,31 +64,31 @@
 #include <Xpetra_ImportFactory.hpp>
 
 #include "MueLu_RebalanceBlockRestrictionFactory_decl.hpp"
-#include "MueLu_Utilities.hpp"
+
 #include "MueLu_HierarchyHelpers.hpp"
 #include "MueLu_FactoryManagerBase.hpp"
-
 #include "MueLu_Level.hpp"
 #include "MueLu_Monitor.hpp"
+#include "MueLu_PerfUtils.hpp"
 
 namespace MueLu {
 
-template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node, class LocalMatOps>
-RCP<const ParameterList> RebalanceBlockRestrictionFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node, LocalMatOps>::GetValidParameterList(const ParameterList& paramList) const {
+template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
+RCP<const ParameterList> RebalanceBlockRestrictionFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::GetValidParameterList() const {
   RCP<ParameterList> validParamList = rcp(new ParameterList());
 
-  validParamList->set< RCP<const FactoryBase> >("R",              Teuchos::null, "Factory of the restriction operator that need to be rebalanced (only used if type=Restriction)");
+  validParamList->set< RCP<const FactoryBase> >("R", Teuchos::null, "Factory of the restriction operator that need to be rebalanced (only used if type=Restriction)");
 
   return validParamList;
 }
 
-template <class Scalar,class LocalOrdinal, class GlobalOrdinal, class Node, class LocalMatOps>
-void RebalanceBlockRestrictionFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node, LocalMatOps>::AddFactoryManager(RCP<const FactoryManagerBase> FactManager) {
+template <class Scalar,class LocalOrdinal, class GlobalOrdinal, class Node>
+void RebalanceBlockRestrictionFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::AddFactoryManager(RCP<const FactoryManagerBase> FactManager) {
   FactManager_.push_back(FactManager);
 }
 
-template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node, class LocalMatOps>
-void RebalanceBlockRestrictionFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node, LocalMatOps>::DeclareInput(Level &fineLevel, Level &coarseLevel) const {
+template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
+void RebalanceBlockRestrictionFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::DeclareInput(Level &fineLevel, Level &coarseLevel) const {
   Input(coarseLevel, "R");
 
   std::vector<Teuchos::RCP<const FactoryManagerBase> >::const_iterator it;
@@ -99,8 +101,8 @@ void RebalanceBlockRestrictionFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node,
   }
 }
 
-template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node, class LocalMatOps>
-void RebalanceBlockRestrictionFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node, LocalMatOps>::Build(Level &fineLevel, Level &coarseLevel) const {
+template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
+void RebalanceBlockRestrictionFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::Build(Level &fineLevel, Level &coarseLevel) const {
   FactoryMonitor m(*this, "Build", coarseLevel);
   //const Teuchos::ParameterList & pL = GetParameterList();
 
@@ -109,7 +111,8 @@ void RebalanceBlockRestrictionFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node,
   Teuchos::RCP<Matrix> originalTransferOp = Teuchos::null;
   originalTransferOp = Get< RCP<Matrix> >(coarseLevel, "R");
 
-  RCP<Xpetra::BlockedCrsMatrix<Scalar, LocalOrdinal, GlobalOrdinal, Node, LocalMatOps> > bOriginalTransferOp = Teuchos::rcp_dynamic_cast<Xpetra::BlockedCrsMatrix<Scalar, LocalOrdinal, GlobalOrdinal, Node, LocalMatOps> >(originalTransferOp);
+  RCP<Xpetra::BlockedCrsMatrix<Scalar, LocalOrdinal, GlobalOrdinal, Node> > bOriginalTransferOp =
+    Teuchos::rcp_dynamic_cast<Xpetra::BlockedCrsMatrix<Scalar, LocalOrdinal, GlobalOrdinal, Node> >(originalTransferOp);
   TEUCHOS_TEST_FOR_EXCEPTION(bOriginalTransferOp==Teuchos::null, Exceptions::BadCast, "MueLu::RebalanceBlockTransferFactory::Build: input matrix P or R is not of type BlockedCrsMatrix! error.");
 
   // plausibility check
@@ -157,13 +160,13 @@ void RebalanceBlockRestrictionFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node,
       RCP<ParameterList> params = rcp(new ParameterList());
       params->set("printLoadBalancingInfo", true);
       std::stringstream ss2; ss2 << "R(" << curBlockId << "," << curBlockId << ") rebalanced:";
-      GetOStream(Statistics0, 0) << Utils::PrintMatrixInfo(*rebRii, ss2.str(), params);
+      GetOStream(Statistics0) << PerfUtils::PrintMatrixInfo(*rebRii, ss2.str(), params);
     } else {
       rebRii = Rii;
       RCP<ParameterList> params = rcp(new ParameterList());
       params->set("printLoadBalancingInfo", true);
       std::stringstream ss2; ss2 << "R(" << curBlockId << "," << curBlockId << ") not rebalanced:";
-      GetOStream(Statistics0, 0) << Utils::PrintMatrixInfo(*rebRii, ss2.str(), params);
+      GetOStream(Statistics0) << PerfUtils::PrintMatrixInfo(*rebRii, ss2.str(), params);
     }
 
     // fix striding information for rebalanced diagonal block rebRii
@@ -237,7 +240,7 @@ void RebalanceBlockRestrictionFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node,
       permutedNullspace->doImport(*nullspace, *rebalanceImporter, Xpetra::INSERT);
 
       // TODO think about this
-      //if (pL.get<bool>("useSubcomm") == true) // TODO either useSubcomm is enabled everywhere or nowhere
+      //if (pL.get<bool>("repartition: use subcommunicators") == true) // TODO either useSubcomm is enabled everywhere or nowhere
       //permutedNullspace->replaceMap(permutedNullspace->getMap()->removeEmptyProcesses());
 
       coarseLevel.Set<RCP<MultiVector> >("Nullspace", permutedNullspace, (*it)->GetFactory("Nullspace").get());
@@ -259,7 +262,7 @@ void RebalanceBlockRestrictionFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node,
 
   // check this
   RCP<const Xpetra::MapExtractor<Scalar, LocalOrdinal, GlobalOrdinal, Node> > rangeRMapExtractor = bOriginalTransferOp->getRangeMapExtractor(); // original map extractor
-  Teuchos::ArrayView<GO> fullRangeMapGIDs(&fullRangeMapVector[0],fullRangeMapVector.size());
+  Teuchos::ArrayView<GO> fullRangeMapGIDs(fullRangeMapVector.size() ? &fullRangeMapVector[0] : 0,fullRangeMapVector.size());
   Teuchos::RCP<const StridedMap> stridedRgFullMap = Teuchos::rcp_dynamic_cast<const StridedMap>(rangeRMapExtractor->getFullMap());
   Teuchos::RCP<const Map > fullRangeMap = Teuchos::null;
   if(stridedRgFullMap != Teuchos::null) {
@@ -285,7 +288,7 @@ void RebalanceBlockRestrictionFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node,
   }
 
   RCP<const Xpetra::MapExtractor<Scalar, LocalOrdinal, GlobalOrdinal, Node> > domainAMapExtractor = bOriginalTransferOp->getDomainMapExtractor();
-  Teuchos::ArrayView<GO> fullDomainMapGIDs(&fullDomainMapVector[0],fullDomainMapVector.size());
+  Teuchos::ArrayView<GO> fullDomainMapGIDs(fullDomainMapVector.size() ? &fullDomainMapVector[0] : 0,fullDomainMapVector.size());
   Teuchos::RCP<const StridedMap> stridedDoFullMap = Teuchos::rcp_dynamic_cast<const StridedMap>(domainAMapExtractor->getFullMap());
   Teuchos::RCP<const Map > fullDomainMap = Teuchos::null;
   if(stridedDoFullMap != Teuchos::null) {
@@ -333,4 +336,5 @@ void RebalanceBlockRestrictionFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node,
 
 } // namespace MueLu
 
+#endif /* HAVE_MUELU_EXPERIMENTAL */
 #endif /* MUELU_REBALANCEBLOCKRESTRICTIONFACTORY_DEF_HPP_ */

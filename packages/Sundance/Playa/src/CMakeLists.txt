@@ -1,5 +1,4 @@
 
-INCLUDE(TribitsLibraryMacros)
 
 #
 # A) Package-specific configuration options
@@ -308,7 +307,7 @@ ENDIF()
 PRINT_VAR(DEPLIBS)
 
 TRIBITS_ADD_LIBRARY(
-  playa
+  sundancePlaya
   HEADERS ${HEADERS}
   SOURCES ${SOURCES}
   )

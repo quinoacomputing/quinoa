@@ -45,6 +45,7 @@
 #include "SundanceRivaraNode.hpp"
 #include "SundanceRivaraMesh.hpp"
 #include "SundanceOut.hpp"
+#include "PlayaTabs.hpp"
 
 
 
@@ -139,9 +140,13 @@ bool Element::hasHangingNode() const
 
 void Element::refine(RivaraMesh* mesh, double maxArea)
 {
+  Tabs tab0;
+  //  std::cout << tab0 << "refining element " << this->showNodes() << std::endl;
   /* if have children, refine the children */
   if (hasChildren())
     {
+      Tabs tab1;
+      //  std::cout << tab0 << "refining children" << std::endl;
       dynamic_cast<Element*>(left())->refine(mesh, maxArea);
       dynamic_cast<Element*>(right())->refine(mesh, maxArea);
       return;
@@ -150,15 +155,11 @@ void Element::refine(RivaraMesh* mesh, double maxArea)
 
   /* We will not need to refine if there is no hanging node and if
    * the area is already small enough */
-  if (!hasHangingNode() && volume() < maxArea)
+  if (!hasHangingNode() && (volume() < maxArea || maxArea < 0.0))
     {
+      //      std::cout << tab0 << "nothing to do" << endl;
       return;
     }
-  if (!hasHangingNode() && maxArea < 0.0)
-    {
-      return;
-    }
-
   /* --- If we're to this point, we need to refine --- */
 
   
