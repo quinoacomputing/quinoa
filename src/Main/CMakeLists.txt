@@ -39,10 +39,7 @@ target_link_libraries(${UNITTEST_EXECUTABLE}
                       UnitTest
                       UnitTestControl
                       #${SILO_LIBRARY}
-                      ${NEMESIS_LIBRARIES}
-                      ${EXODUS_LIBRARIES}
-                      ${NETCDF_LIBRARIES}
-                      ${ZOLTAN_LIBRARIES}
+                      ${Trilinos_LIBRARIES}
 )
 
 # Add custom dependencies for UnitTest's main Charm++ module
@@ -82,11 +79,7 @@ target_link_libraries(${INCITER_EXECUTABLE}
                       Mesh
                       InciterControl
                       LoadBalance
-                      ${NEMESIS_LIBRARIES}
-                      ${EXODUS_LIBRARIES}
-                      ${NETCDF_LIBRARIES}
-                      ${HDF5_LIBRARY}
-                      ${ZOLTAN_LIBRARIES}
+                      ${Trilinos_LIBRARIES}
                       ${HYPRE_LIBRARIES}
 )
 
@@ -167,9 +160,7 @@ target_link_libraries(${MESHCONV_EXECUTABLE}
                       Mesh
                       MeshConvControl
                       #${SILO_LIBRARY}
-                      ${NEMESIS_LIBRARIES}
-                      ${EXODUS_LIBRARIES}
-                      ${NETCDF_LIBRARIES}
+                      ${Trilinos_LIBRARIES}
 )
 
 # Add custom dependencies for MeshConv's main Charm++ module
@@ -210,10 +201,7 @@ target_link_libraries(${WALKER_EXECUTABLE}
                       Mesh      # WALKER SHOULD NOT DEPEND ON MESH
                       IO
                       WalkerControl
-                      ${NEMESIS_LIBRARIES}
-                      ${EXODUS_LIBRARIES}
-                      ${NETCDF_LIBRARIES}
-                      ${HDF5_LIBRARY}
+                      ${Trilinos_LIBRARIES}
                       ${LAPACKE_LIB}
                       ${LAPACK_LIBRARIES}
                       ${MKL_INTERFACE_LIBRARY}

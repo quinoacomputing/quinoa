@@ -75,6 +75,10 @@ else()
   message(FATAL_ERROR "Third-party library dir '${TPL_DIR}' is not specified")
 endif()
 
+# Add TPL_DIR/include to modules directory for TPLs that provide cmake
+# FIND_PACKAGE code, such as Trilinos
+SET(CMAKE_PREFIX_PATH ${TPL_DIR} ${CMAKE_PREFIX_PATH})
+
 # Find MPI and get its underlying compilers
 include(MPICompilers)
 get_mpi_compilers()
