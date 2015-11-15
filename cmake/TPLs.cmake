@@ -61,32 +61,20 @@ if(Boost_FOUND)
   include_directories(${Boost_INCLUDE_DIR})
 endif()
 
-#### NetCDF library
-if (NOT NO_SYSTEM_NETCDF)
-  set(NETCDF_ROOT ${TPL_DIR}) # prefer ours
-  find_package(NetCDF REQUIRED)
-endif()
-if(NETCDF_FOUND)
-  message(STATUS "NetCDF at ${NETCDF_INCLUDES} (include) and at ${NETCDF_LIBRARIES} (lib)")
-endif()
-
-#### ExodusII/Nemesis library
-if (NOT NO_SYSTEM_EXODUS)
-  set(EXODUS_ROOT ${TPL_DIR}) # prefer ours
-  find_package(Exodus REQUIRED)
-endif()
-if(EXODUS_FOUND)
-  message(STATUS "ExodusII/Nemesis libraries at ${EXODUS_INCLUDES} (exodus include), ${NEMESIS_INCLUDES} (nemesis include) and at ${EXODUS_LIBRARIES} (exodus lib), ${NEMESIS_LIBRARIES} (nemesis lib), Exodiff executable at ${EXODIFF_EXECUTABLE}")
-endif()
-
-#### Zoltan library
-if (NOT NO_SYSTEM_ZOLTAN)
-  set(ZOLTAN_ROOT ${TPL_DIR}) # prefer ours
-  find_package(Zoltan REQUIRED)
-endif()
-if(ZOLTAN_FOUND)
-  message(STATUS "Zoltan at ${ZOLTAN_INCLUDES} (include) and at ${ZOLTAN_LIBRARIES} (lib)")
-endif()
+#### Trilinos
+FIND_PACKAGE(Trilinos REQUIRED)
+MESSAGE(STATUS "Found Trilinos:")
+MESSAGE(STATUS " * Trilinos_DIR = ${Trilinos_DIR}")
+MESSAGE(STATUS " * Trilinos_VERSION = ${Trilinos_VERSION}")
+MESSAGE(STATUS " * Trilinos_PACKAGE_LIST = ${Trilinos_PACKAGE_LIST}")
+#MESSAGE(STATUS " * Trilinos_LIBRARIES = ${Trilinos_LIBRARIES}")
+#MESSAGE(STATUS " * Trilinos_INCLUDE_DIRS = ${Trilinos_INCLUDE_DIRS}")
+#MESSAGE(STATUS " * Trilinos_LIBRARY_DIRS = ${Trilinos_LIBRARY_DIRS}")
+#MESSAGE(STATUS " * Trilinos_TPL_LIST = ${Trilinos_TPL_LIST}")
+#MESSAGE(STATUS " * Trilinos_TPL_INCLUDE_DIRS = ${Trilinos_TPL_INCLUDE_DIRS}")
+#MESSAGE(STATUS " * Trilinos_TPL_LIBRARIES = ${Trilinos_TPL_LIBRARIES}")
+#MESSAGE(STATUS " * Trilinos_TPL_LIBRARY_DIRS = ${Trilinos_TPL_LIBRARY_DIRS}")
+#MESSAGE(STATUS " * Trilinos_BUILD_SHARED_LIBS = ${Trilinos_BUILD_SHARED_LIBS}")
 
 #### Hypre library
 if (NOT NO_SYSTEM_HYPRE)
@@ -97,7 +85,7 @@ if(HYPRE_FOUND)
   message(STATUS "Hypre at ${HYPRE_INCLUDES} (include) and at ${HYPRE_LIBRARIES} (lib)")
 endif()
 
-#### BLAS/LAPACK library
+#### BLAS/LAPACK library with LAPACKE C-interface
 if (HAS_MKL)    # prefer Intel's MKL's BLAS/LAPACK if MKL is available
   message(STATUS "Found BLAS/LAPACK: ${MKL_INTERFACE_LIBRARY};${MKL_CORE_LIBRARY};${MKL_SEQUENTIAL_LAYER_LIBRARY} using via MKL's C-interface")
 else()
