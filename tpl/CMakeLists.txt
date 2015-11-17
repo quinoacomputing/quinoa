@@ -370,7 +370,6 @@ ExternalProject_Add(
   SOURCE_DIR ${PROJECT_SOURCE_DIR}/src/trilinos
   CMAKE_ARGS -D Trilinos_ENABLE_ALL_PACKAGES:BOOL=OFF
              -D TPL_ENABLE_MPI:BOOL=ON
-             -D Trilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON
              -D Trilinos_ENABLE_Zoltan2:BOOL=ON
              -D Zoltan2_ENABLE_Experimental:BOOL=ON
              -D Trilinos_ENABLE_SEACASExodus:BOOL=ON
