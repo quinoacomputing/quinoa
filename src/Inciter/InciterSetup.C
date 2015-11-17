@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/InciterSetup.C
   \author    J. Bakosi
-  \date      Fri 13 Nov 2015 06:22:32 AM MST
+  \date      Mon 16 Nov 2015 03:46:22 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Functions used to setup inciter
   \details   Functions used to setup inciter.
@@ -130,7 +130,7 @@ help( int argc,
              ( inpalias ? " or '-" + *inpalias + " <filename>'" : "" ) + '.' );
 }
 
-static void
+static std::size_t
 meshinfo( const tk::Print& print,
           const tk::UnsMesh& graph,
           std::size_t npoin,
@@ -148,6 +148,7 @@ meshinfo( const tk::Print& print,
 //! \param[in] remainder Remainder, see Base/LoadDistribution.h
 //! \param[in] nchare Number of work units (Charm++ chares)
 //! \param[in] virtualization Degree of virtualization
+//! \return Total number of elements in mesh (aggregated across all MPI ranks)
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -194,6 +195,8 @@ meshinfo( const tk::Print& print,
                 std::to_string( chunksize+remainder ) + ")" );
     print.endsubsection();
   }
+
+  return nelem;
 }
 
 static std::vector< std::vector< std::size_t > >
@@ -327,7 +330,7 @@ static void
 assignMesh(
   const tk::Print& print,
   const tk::UnsMesh& graph,
-  const std::vector< std::size_t >& chp,
+  const std::vector< std::size_t >& che,
   const ctr::InputDeck& inputdeck,
   std::vector< std::size_t > geid,
   std::map< int, std::vector< std::size_t > >& element )
@@ -335,17 +338,16 @@ assignMesh(
 //! Assign mesh partitions to Charm++ chares
 //! \param[in] print Pretty printer
 //! \param[in] graph Unstructured mesh graph object reference
-//! \param[in] chp Array of chare ownership IDs mapping graph points to Charm++
-//!   chares
+//! \param[in] che Array of chare ownership IDs mapping graph elements to
+//!   Charm++ chares
 //! \param[in] inputdeck Input deck object filled during parsing user input
 //! \param[in] geid List of global element ids for this MPI rank
 //! \param[inout] element Global mesh element ids owned by each chare
-//! \details On each MPI rank the input vector chp holds the chare IDs (i.e.,
-//!   colors) for each mesh point after graph partitioning. Based on this
-//!   information and the mesh graph connectivity in graph.tetinpoel this
-//!   function assigns chare IDs to mesh elements, returned in the map of
-//!   vectors, element. The return is a map of vectors, storing the global
-//!   mesh element IDs associated to chare IDs (on this MPI rank).
+//! \details On each MPI rank the input vector che holds the chare IDs (i.e.,
+//!   colors) for each mesh element after graph partitioning. Based on this
+//!   information this function assigns chare IDs to mesh elements, returned in
+//!   the map of vectors, element. The return is a map of vectors, storing the
+//!   global mesh element IDs associated to chare IDs (on this MPI rank).
 //! \note This function operates on all MPI ranks, working on different chunks
 //!   of the mesh.
 //! \author J. Bakosi
@@ -357,12 +359,12 @@ assignMesh(
   if (peid == 0)
     print.diagstart( "Assigning mesh partitions to Charm++ chares ..." );
 
-  Assert( chp.size() == graph.size(),
+  Assert( che.size() == graph.tetinpoel().size()/4,
           "Size of ownership array on " + std::to_string(peid) + " does not "
-          "equal the number of graph nodes" );
+          "equal the number of graph elements" );
 
   //! Construct array of chare ownership IDs mapping mesh elements to chares
-  const auto che = chElem( chp, graph.tetinpoel() );
+  //const auto che = chElem( chp, graph.tetinpoel() );
 
 //   std::cout << peid << ": che: ";
 //   for (auto e : che) std::cout << e << " ";
@@ -488,7 +490,7 @@ prepareMesh(
   tk::Timer timer;
   if (peid == 0)
     print.diagstart( "Reading mesh graph on " + std::to_string( numpes ) +
-                     " PEs ..." );
+                     " PE(s) ..." );
 
   tk::ExodusIIMeshReader er( cmdline.get< tag::io, tag::input >() );
   npoin = er.readElemBlockIDs();
@@ -501,13 +503,27 @@ prepareMesh(
   // Read our chunk of tetrahedron element connectivity from file and also store
   // the list of global element indices for our chunk of the mesh
   std::vector< std::size_t > tetinpoel, geid;
+  std::array< std::vector< tk::real >, 3 > ecoord;
+  auto& ex = ecoord[0];
+  auto& ey = ecoord[1];
+  auto& ez = ecoord[2];
   for (int e=start; e<end; ++e) {
     er.readElement( static_cast< std::size_t >( e ),
                     tk::ExoElemType::TET,
                     tetinpoel );
+
+    std::vector< tk::real > x, y, z;
+    er.readNode( tetinpoel[tetinpoel.size()-4], x, y, z );
+    er.readNode( tetinpoel[tetinpoel.size()-3], x, y, z );
+    er.readNode( tetinpoel[tetinpoel.size()-2], x, y, z );
+    er.readNode( tetinpoel[tetinpoel.size()-1], x, y, z );
+    ex.push_back( (x[0]+x[1]+x[2]+x[3])/4.0 );
+    ey.push_back( (y[0]+y[1]+y[2]+y[3])/4.0 );
+    ez.push_back( (z[0]+z[1]+z[2]+z[3])/4.0 );
+
     geid.push_back( static_cast< std::size_t >( e ) );
   }
-  
+
   // Create empty unstructured mesh object initializing only connectivity, so we
   // call it a graph instead of a mesh; note that tetinpoel is moved
   tk::UnsMesh graph( std::move( tetinpoel ) );
@@ -527,12 +543,13 @@ prepareMesh(
                                       load, numpes, chunksize, remainder );
 
   // Print out info on mesh and load distribution
-  meshinfo( print, graph, npoin, load, chunksize, remainder, nchare,
-            cmdline.get< tag::virtualization >() );
+  auto nelem = meshinfo( print, graph, npoin, load, chunksize, remainder,
+                         nchare, cmdline.get< tag::virtualization >() );
 
   // Partition graph using Zoltan and assign mesh partitions to Charm++ chares
   tk::Timer t;
-  assignMesh( print, graph, tk::zoltan::partitionMesh(graph,nchare,print),
+  assignMesh( print, graph,
+              tk::zoltan::partitionMesh( graph, ecoord, geid, nelem, nchare, print ),
               inputdeck, geid, element );
   timestamp.emplace_back( "Partition mesh & assign to Charm++ chares",
                            t.hms() );
