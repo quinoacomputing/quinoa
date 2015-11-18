@@ -16,7 +16,7 @@ Help on command-line parameters
 -------------------------------
 
 As usual, use the \a -h command-line parameter to get on-screen help from an
-executable. Example output, exluding Charm++ command-line parameters:
+executable. Example output, excluding Charm++ command-line parameters:
 \code{.py}
 $ unittest -h
 unittest Command-line Parameters:
@@ -27,7 +27,7 @@ unittest Command-line Parameters:
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Tue 03 Feb 2015 09:07:02 AM MST
+<em>Page last updated:</em> Wed 18 Nov 2015 10:01:24 AM MST
 <em>Copyright 2012-2015, Jozsef Bakosi.</em>
 </small></div>
 */
