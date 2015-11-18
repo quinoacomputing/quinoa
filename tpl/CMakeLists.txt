@@ -231,6 +231,86 @@ ExternalProject_Add(
   LOG_BUILD 1
 )
 
+#### HDF5 serial ###############################################################
+# http://www.hdfgroup.org/HDF5
+ExternalProject_Add(
+  hdf5
+  PREFIX hdf5
+  DOWNLOAD_COMMAND ${CMAKE_COMMAND} -E copy_directory
+                   ${PROJECT_SOURCE_DIR}/src/hdf5
+                   ${PROJECT_BINARY_DIR}/hdf5
+  CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/hdf5/configure
+                    CC=${MPI_C_COMPILER}
+                    CFLAGS=${CFLAGS}
+                    ${PGCPP}
+                    --enable-parallel
+                    --enable-shared
+                    --prefix=${CMAKE_INSTALL_PREFIX}
+  BUILD_IN_SOURCE 1
+  LOG_DOWNLOAD 1
+  LOG_CONFIGURE 1
+  LOG_BUILD 1
+  LOG_INSTALL 1
+) 
+
+#### NETCDF ####################################################################
+## http://www.unidata.ucar.edu/downloads/netcdf/index.jsp
+ExternalProject_Add(
+  netcdf
+  DEPENDS hdf5
+  PREFIX netcdf
+  DOWNLOAD_COMMAND ${CMAKE_COMMAND} -E copy_directory
+                   ${PROJECT_SOURCE_DIR}/src/netcdf
+                   ${PROJECT_BINARY_DIR}/netcdf
+  CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/netcdf/configure
+                    CC=${MPI_C_COMPILER}
+                    CFLAGS=${CFLAGS}
+                    ${PGCPP}
+                    CPPFLAGS=-I${CMAKE_INSTALL_PREFIX}/include
+                    LDFLAGS=-L${CMAKE_INSTALL_PREFIX}/lib
+                    --disable-examples
+                    --enable-netcdf4
+                    --prefix=${CMAKE_INSTALL_PREFIX}
+  BUILD_IN_SOURCE 1
+  LOG_DOWNLOAD 1
+  LOG_CONFIGURE 1
+  LOG_BUILD 1
+  LOG_INSTALL 1
+)
+
+##### Trilinos #################################################################
+## http://trilinos.sandia.gov
+ExternalProject_Add(
+  trilinos
+  DEPENDS netcdf
+  PREFIX trilinos
+  SOURCE_DIR ${PROJECT_SOURCE_DIR}/src/trilinos
+  CMAKE_ARGS -D Trilinos_ENABLE_ALL_PACKAGES:BOOL=OFF
+             -D TPL_ENABLE_MPI:BOOL=ON
+             -D Trilinos_ENABLE_Zoltan2:BOOL=ON
+             -D Zoltan2_ENABLE_Experimental:BOOL=ON
+             -D Trilinos_ENABLE_SEACASExodus:BOOL=ON
+             -D Trilinos_ENABLE_SEACASNemesis:BOOL=ON
+             -D Trilinos_ENABLE_SEACASExodiff:BOOL=ON
+             -D Trilinos_ENABLE_DEBUG=OFF
+             -D TPL_ENABLE_Netcdf:BOOL=ON
+             -D Netcdf_LIBRARY_DIRS:PATH=${netcdf_lib}
+             -D TPL_Netcdf_INCLUDE_DIRS:PATH=${netcdf_include}
+             -D CMAKE_INSTALL_RPATH:PATH=${CMAKE_INSTALL_PREFIX}/lib
+             -D CMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
+             -D CMAKE_C_COMPILER:PATH=${MPI_C_COMPILER}
+             -D CMAKE_CXX_COMPILER:PATH=${MPI_CXX_COMPILER}
+             -D CMAKE_Fortran_COMPILER:PATH=${MPI_Fortran_COMPILER}
+             -D CMAKE_C_FLAGS:STRING=${CFLAGS}
+             -D CMAKE_CXX_FLAGS:STRING=${CXXFLAGS}
+             -D CMAKE_Fortran_FLAGS:STRING=${FFLAGS}
+             -D CMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX}
+  DOWNLOAD_COMMAND ""
+  LOG_CONFIGURE 1
+  LOG_BUILD 1
+  LOG_INSTALL 1
+)
+
 #### PEGTL (Parsing Expression Grammar Template Library) #######################
 # https://code.google.com/p/pegtl/wiki/PEGTL0
 # Header only
@@ -313,85 +393,6 @@ if (pstreams)
     DOWNLOAD_COMMAND ""
   )
 endif()
-
-#### HDF5 serial ###############################################################
-# http://www.hdfgroup.org/HDF5
-ExternalProject_Add(
-  hdf5
-  PREFIX hdf5
-  DOWNLOAD_COMMAND ${CMAKE_COMMAND} -E copy_directory
-                   ${PROJECT_SOURCE_DIR}/src/hdf5
-                   ${PROJECT_BINARY_DIR}/hdf5
-  CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/hdf5/configure
-                    CC=${MPI_C_COMPILER}
-                    CFLAGS=${CFLAGS}
-                    ${PGCPP}
-                    --enable-parallel
-                    --enable-shared
-                    --prefix=${CMAKE_INSTALL_PREFIX}
-  BUILD_IN_SOURCE 1
-  LOG_DOWNLOAD 1
-  LOG_CONFIGURE 1
-  LOG_BUILD 1
-  LOG_INSTALL 1
-) 
-
-#### NETCDF ####################################################################
-## http://www.unidata.ucar.edu/downloads/netcdf/index.jsp
-ExternalProject_Add(
-  netcdf
-  DEPENDS hdf5
-  PREFIX netcdf
-  DOWNLOAD_COMMAND ${CMAKE_COMMAND} -E copy_directory
-                   ${PROJECT_SOURCE_DIR}/src/netcdf
-                   ${PROJECT_BINARY_DIR}/netcdf
-  CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/netcdf/configure
-                    CC=${MPI_C_COMPILER}
-                    CFLAGS=${CFLAGS}
-                    ${PGCPP}
-                    CPPFLAGS=-I${CMAKE_INSTALL_PREFIX}/include
-                    LDFLAGS=-L${CMAKE_INSTALL_PREFIX}/lib
-                    --disable-examples
-                    --enable-netcdf4
-                    --prefix=${CMAKE_INSTALL_PREFIX}
-  BUILD_IN_SOURCE 1
-  LOG_DOWNLOAD 1
-  LOG_CONFIGURE 1
-  LOG_BUILD 1
-  LOG_INSTALL 1
-)
-
-##### Trilinos #################################################################
-## http://trilinos.sandia.gov
-ExternalProject_Add(
-  trilinos
-  DEPENDS netcdf
-  PREFIX trilinos
-  SOURCE_DIR ${PROJECT_SOURCE_DIR}/src/trilinos
-  CMAKE_ARGS -D Trilinos_ENABLE_ALL_PACKAGES:BOOL=OFF
-             -D TPL_ENABLE_MPI:BOOL=ON
-             -D Trilinos_ENABLE_Zoltan2:BOOL=ON
-             -D Zoltan2_ENABLE_Experimental:BOOL=ON
-             -D Trilinos_ENABLE_SEACASExodus:BOOL=ON
-             -D Trilinos_ENABLE_SEACASNemesis:BOOL=ON
-             -D Trilinos_ENABLE_SEACASExodiff:BOOL=ON
-             -D TPL_ENABLE_Netcdf:BOOL=ON
-             -D Netcdf_LIBRARY_DIRS:PATH=${netcdf_lib}
-             -D TPL_Netcdf_INCLUDE_DIRS:PATH=${netcdf_include}
-             -D CMAKE_INSTALL_RPATH:PATH=${CMAKE_INSTALL_PREFIX}/lib
-             -D CMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
-             -D CMAKE_C_COMPILER:PATH=${MPI_C_COMPILER}
-             -D CMAKE_CXX_COMPILER:PATH=${MPI_CXX_COMPILER}
-             -D CMAKE_Fortran_COMPILER:PATH=${MPI_Fortran_COMPILER}
-             -D CMAKE_C_FLAGS:STRING=${CFLAGS}
-             -D CMAKE_CXX_FLAGS:STRING=${CXXFLAGS}
-             -D CMAKE_Fortran_FLAGS:STRING=${FFLAGS}
-             -D CMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX}
-  DOWNLOAD_COMMAND ""
-  LOG_CONFIGURE 1
-  LOG_BUILD 1
-  LOG_INSTALL 1
-)
 
 #### Hypre #####################################################################
 # http://computation.llnl.gov/project/linear_solvers/software.php
