@@ -261,8 +261,11 @@ ExternalProject_Add(
                     ${PGCPP}
                     CPPFLAGS=-I${CMAKE_INSTALL_PREFIX}/include
                     LDFLAGS=-L${CMAKE_INSTALL_PREFIX}/lib
-                    --disable-examples
                     --enable-netcdf4
+                    --disable-examples
+                    --disable-fsync
+                    --disable-dap
+                    --disable-cdmremote
                     --prefix=${CMAKE_INSTALL_PREFIX}
   BUILD_IN_SOURCE 1
   LOG_DOWNLOAD 1
@@ -285,6 +288,7 @@ ExternalProject_Add(
              -D Trilinos_ENABLE_SEACASExodus:BOOL=ON
              -D Trilinos_ENABLE_SEACASNemesis:BOOL=ON
              -D Trilinos_ENABLE_SEACASExodiff:BOOL=ON
+             -D Trilinos_ENABLE_SECONDARY_STABLE_CODE:BOOL=ON
              -D Trilinos_ENABLE_DEBUG=OFF
              -D TPL_ENABLE_Netcdf:BOOL=ON
              -D Netcdf_LIBRARY_DIRS:PATH=${netcdf_lib}
