@@ -51,6 +51,7 @@
 
 #include <Xpetra_Matrix.hpp>
 #include <Xpetra_MatrixFactory.hpp>
+#include <Xpetra_MatrixMatrix.hpp>
 #include <Xpetra_Vector.hpp>
 #include <Xpetra_VectorFactory.hpp>
 
@@ -60,7 +61,7 @@
 #include "MueLu_Monitor.hpp"
 #include "MueLu_PerfUtils.hpp"
 #include "MueLu_RAPFactory_decl.hpp"
-#include "MueLu_Utilities.hpp"
+//#include "MueLu_Utilities.hpp"
 
 namespace MueLu {
 
@@ -101,6 +102,8 @@ namespace MueLu {
     // call DeclareInput of all user-given transfer factories
     for (std::vector<RCP<const FactoryBase> >::const_iterator it = transferFacts_.begin(); it != transferFacts_.end(); ++it)
       (*it)->CallDeclareInput(coarseLevel);
+
+    hasDeclaredInput_ = true;
   }
 
   template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
@@ -109,6 +112,9 @@ namespace MueLu {
       FactoryMonitor m(*this, "Computing Ac", coarseLevel);
       std::ostringstream levelstr;
       levelstr << coarseLevel.GetLevelID();
+
+      TEUCHOS_TEST_FOR_EXCEPTION(hasDeclaredInput_==false, Exceptions::RuntimeError,
+                                 "MueLu::RAPFactory::Build(): CallDeclareInput has not been called before Build!");
 
       // Set "Keeps" from params
       const Teuchos::ParameterList& pL = GetParameterList();
@@ -130,7 +136,7 @@ namespace MueLu {
       {
         SubFactoryMonitor subM(*this, "MxM: A x P", coarseLevel);
 
-        AP = Utils::Multiply(*A, false, *P, false, AP, GetOStream(Statistics2),true,true,std::string("MueLu::A*P-")+levelstr.str());
+        AP = Xpetra::MatrixMatrix<Scalar, LocalOrdinal, GlobalOrdinal, Node>::Multiply(*A, false, *P, false, AP, GetOStream(Statistics2),true,true,std::string("MueLu::A*P-")+levelstr.str());
       }
       if (pL.get<bool>("Keep AP Pattern"))
         Set(coarseLevel, "AP Pattern", AP);
@@ -145,21 +151,22 @@ namespace MueLu {
         Ac->SetMaxEigenvalueEstimate(-Teuchos::ScalarTraits<SC>::one());
       }
 
-      // If we do not modify matrix later, allow optimization of storage.
+      // Allow optimization of storage.
       // This is necessary for new faster Epetra MM kernels.
-      bool doOptimizeStorage = !pL.get<bool>("RepairMainDiagonal");
+      // Seems to work with matrix modifications to repair diagonal entries.
+      bool doOptimizeStorage = true; //!pL.get<bool>("RepairMainDiagonal");
 
       const bool doTranspose    = true;
       const bool doFillComplete = true;
       if (pL.get<bool>("transpose: use implicit") == true) {
         SubFactoryMonitor m2(*this, "MxM: P' x (AP) (implicit)", coarseLevel);
-        Ac = Utils::Multiply(*P,  doTranspose, *AP, !doTranspose, Ac, GetOStream(Statistics2), doFillComplete, doOptimizeStorage,std::string("MueLu::R*(AP)-implicit-")+levelstr.str());
+        Ac = Xpetra::MatrixMatrix<Scalar, LocalOrdinal, GlobalOrdinal, Node>::Multiply(*P,  doTranspose, *AP, !doTranspose, Ac, GetOStream(Statistics2), doFillComplete, doOptimizeStorage,std::string("MueLu::R*(AP)-implicit-")+levelstr.str());
 
       } else {
         RCP<Matrix> R = Get< RCP<Matrix> >(coarseLevel, "R");
 
         SubFactoryMonitor m2(*this, "MxM: R x (AP) (explicit)", coarseLevel);
-        Ac = Utils::Multiply(*R, !doTranspose, *AP, !doTranspose, Ac, GetOStream(Statistics2), doFillComplete, doOptimizeStorage,std::string("MueLu::R*(AP)-explicit-")+levelstr.str());
+        Ac = Xpetra::MatrixMatrix<Scalar, LocalOrdinal, GlobalOrdinal, Node>::Multiply(*R, !doTranspose, *AP, !doTranspose, Ac, GetOStream(Statistics2), doFillComplete, doOptimizeStorage,std::string("MueLu::R*(AP)-explicit-")+levelstr.str());
       }
 
       CheckRepairMainDiagonal(Ac);
@@ -254,7 +261,8 @@ namespace MueLu {
       //
       // It would be nice to add the entries to the original matrix Ac. But then we would have to use
       // insertLocalValues. However we cannot add new entries for local column indices that do not exist in the column map
-      // of Ac (at least Epetra is not able to do this).
+      // of Ac (at least Epetra is not able to do this). With Tpetra it is also not possible to add new entries after the
+      // FillComplete call with a static map, since the column map already exists and the diagonal entries are completely missing.
       //
       // Here we build a diagonal matrix with zeros on the diagonal and ones on the diagonal for the rows where Ac has empty rows
       // We have to build a new matrix to be able to use insertGlobalValues. Then we add the original matrix Ac to our new block
@@ -262,8 +270,7 @@ namespace MueLu {
       // This is very inefficient.
       //
       // If you know something better, please let me know.
-      RCP<Matrix> fixDiagMatrix = Teuchos::null;
-      fixDiagMatrix = MatrixFactory::Build(rowMap, 1);
+      RCP<Matrix> fixDiagMatrix = MatrixFactory::Build(rowMap, 1);
       for (size_t r = 0; r < rowMap->getNodeNumElements(); r++) {
         if (diagVal[r] == zero) {
           GO grid = rowMap->getGlobalElement(r);
@@ -274,23 +281,26 @@ namespace MueLu {
       }
       {
         Teuchos::TimeMonitor m1(*Teuchos::TimeMonitor::getNewTimer("CheckRepairMainDiagonal: fillComplete1"));
+        if(rowMap->lib() == Xpetra::UseTpetra) Ac->resumeFill(); // TODO needed for refactored Tpetra because of the isFillActive flag???
         Ac->fillComplete(p);
       }
-
-      MueLu::Utils2<Scalar, LocalOrdinal, GlobalOrdinal, Node>::TwoMatrixAdd(*Ac, false, 1.0, *fixDiagMatrix, 1.0);
+      Xpetra::MatrixMatrix<Scalar, LocalOrdinal, GlobalOrdinal, Node>::TwoMatrixAdd(*Ac, false, 1.0, *fixDiagMatrix, 1.0);
       if (Ac->IsView("stridedMaps"))
         fixDiagMatrix->CreateView("stridedMaps", Ac);
 
       Ac = Teuchos::null;     // free singular coarse level matrix
       Ac = fixDiagMatrix;     // set fixed non-singular coarse level matrix
-    }
 
-    // call fillComplete with optimized storage option set to true
-    // This is necessary for new faster Epetra MM kernels.
-    {
-      Teuchos::TimeMonitor m1(*Teuchos::TimeMonitor::getNewTimer("CheckRepairMainDiagonal: fillComplete2"));
-      Ac->fillComplete(p);
-    }
+      // call fillComplete with optimized storage option set to true
+      // This is necessary for new faster Epetra MM kernels.
+      {
+        Teuchos::TimeMonitor m1(*Teuchos::TimeMonitor::getNewTimer("CheckRepairMainDiagonal: fillComplete2"));
+        if(rowMap->lib() == Xpetra::UseTpetra) Ac->resumeFill(); // TODO needed for refactored Tpetra because of the isFillActive flag???
+        Ac->fillComplete(p);
+      }
+    } // end repair
+
+
 
     // print some output
     if (IsPrint(Warnings0))

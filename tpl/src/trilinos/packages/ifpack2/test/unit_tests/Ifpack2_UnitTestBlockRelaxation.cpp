@@ -111,11 +111,13 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL(Ifpack2BlockRelaxation, Test0, Scalar, LocalOr
   global_size_t num_rows_per_proc = 5;
 
   typedef Tpetra::CrsMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> CRS;
-  typedef Ifpack2::ILUT< Tpetra::CrsMatrix<Scalar,LocalOrdinal,LocalOrdinal,Node>    > ILUTlo;
+  typedef Tpetra::RowMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> ROW;
+  typedef Ifpack2::ILUT< Tpetra::RowMatrix<Scalar,LocalOrdinal,LocalOrdinal,Node>    > ILUTlo;
 
-  const Teuchos::RCP<const Tpetra::Map<LocalOrdinal,GlobalOrdinal,Node> > rowmap = tif_utest::create_tpetra_map<LocalOrdinal,GlobalOrdinal,Node>(num_rows_per_proc);
-  Teuchos::RCP<const CRS > crsmatrix = tif_utest::create_test_matrix<Scalar,LocalOrdinal,GlobalOrdinal,Node>(rowmap);
-  Ifpack2::BlockRelaxation<CRS, Ifpack2::SparseContainer<CRS,ILUTlo> > prec(crsmatrix);
+  const Teuchos::RCP<const Tpetra::Map<LocalOrdinal,GlobalOrdinal,Node> > rowmap =
+    tif_utest::create_tpetra_map<LocalOrdinal,GlobalOrdinal,Node>(num_rows_per_proc);
+  Teuchos::RCP<const CRS> crsmatrix = tif_utest::create_test_matrix<Scalar,LocalOrdinal,GlobalOrdinal,Node>(rowmap);
+  Ifpack2::BlockRelaxation<ROW, Ifpack2::SparseContainer<ROW, ILUTlo> > prec(crsmatrix);
 
   Teuchos::ParameterList params;
   params.set("relaxation: type", "Jacobi");
@@ -171,11 +173,12 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL(Ifpack2BlockRelaxation, Test1, Scalar, LocalOr
   global_size_t num_rows_per_proc = 5;
 
   typedef Tpetra::CrsMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> CRS;
-  typedef Ifpack2::ILUT< Tpetra::CrsMatrix<Scalar,LocalOrdinal,LocalOrdinal,Node>    > ILUTlo;
+  typedef Tpetra::RowMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> ROW;
+  typedef Ifpack2::ILUT<ROW> ILUTlo;
 
   const Teuchos::RCP<const Tpetra::Map<LocalOrdinal,GlobalOrdinal,Node> > rowmap = tif_utest::create_tpetra_map<LocalOrdinal,GlobalOrdinal,Node>(num_rows_per_proc);
-  Teuchos::RCP<const CRS > crsmatrix = tif_utest::create_test_matrix<Scalar,LocalOrdinal,GlobalOrdinal,Node>(rowmap);
-  Ifpack2::BlockRelaxation<CRS, Ifpack2::SparseContainer<CRS,ILUTlo> > prec(crsmatrix);
+  Teuchos::RCP<const CRS> crsmatrix = tif_utest::create_test_matrix<Scalar,LocalOrdinal,GlobalOrdinal,Node>(rowmap);
+  Ifpack2::BlockRelaxation<ROW, Ifpack2::SparseContainer<ROW, ILUTlo> > prec(crsmatrix);
 
   Teuchos::ParameterList params;
   params.set("relaxation: type", "Jacobi");
@@ -200,22 +203,27 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL(Ifpack2BlockRelaxation, Test1, Scalar, LocalOr
 }
 
 // Test apply() with x != y  but x and y pointing to the same memory location.
-// Tpetra Multivector public constructors are always copying input data so it is harder to reach such case than with Ifpack/Epetra.
-// Nevertheless, it is still possible to create two different Tpetra vectors pointing to the same memory location by using MultiVector::subView().
+// It is possible to create two different Tpetra vectors pointing to the same memory location by using MultiVector::subView().
 // I can't imagine anyone trying to do this but... in this case, apply() need also to create internally an auxiliary vector, Xcopy.
-TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL(Ifpack2BlockRelaxation, Test2, Scalar, LocalOrdinal, GlobalOrdinal)
+TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL(Ifpack2BlockRelaxation, Test2, Scalar, LO, GO)
 {
-  std::string version = Ifpack2::Version();
-  out << "Ifpack2::Version(): " << version << std::endl;
+  typedef Tpetra::Map<LO,GO,Node> map_type;
+  typedef Tpetra::CrsMatrix<Scalar,LO,GO,Node> CRS;
+  typedef Tpetra::RowMatrix<Scalar,LO,GO,Node> ROW;
+  typedef Tpetra::MultiVector<Scalar,LO,GO,Node> MV;
+  typedef Ifpack2::ILUT<ROW> ILUTlo;
+  using Teuchos::RCP;
+  using std::endl;
+
+  out << "Ifpack2::BlockRelaxation Test2" << endl;
+
+  const Scalar one = Teuchos::ScalarTraits<Scalar>::one ();
+  const Scalar two = one + one;
 
   global_size_t num_rows_per_proc = 5;
-
-  typedef Tpetra::CrsMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> CRS;
-  typedef Ifpack2::ILUT< Tpetra::CrsMatrix<Scalar,LocalOrdinal,LocalOrdinal,Node>    > ILUTlo;
-
-  const Teuchos::RCP<const Tpetra::Map<LocalOrdinal,GlobalOrdinal,Node> > rowmap = tif_utest::create_tpetra_map<LocalOrdinal,GlobalOrdinal,Node>(num_rows_per_proc);
-  Teuchos::RCP<const CRS > crsmatrix = tif_utest::create_test_matrix<Scalar,LocalOrdinal,GlobalOrdinal,Node>(rowmap);
-  Ifpack2::BlockRelaxation<CRS, Ifpack2::SparseContainer<CRS,ILUTlo> > prec(crsmatrix);
+  RCP<const map_type> rowmap = tif_utest::create_tpetra_map<LO,GO,Node> (num_rows_per_proc);
+  RCP<const CRS> crsmatrix = tif_utest::create_test_matrix<Scalar,LO,GO,Node> (rowmap);
+  Ifpack2::BlockRelaxation<ROW, Ifpack2::SparseContainer<ROW, ILUTlo> > prec (crsmatrix);
 
   Teuchos::ParameterList params;
   params.set("relaxation: type", "Jacobi");
@@ -226,22 +234,39 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL(Ifpack2BlockRelaxation, Test2, Scalar, LocalOr
   prec.initialize();
   prec.compute();
 
-  Tpetra::MultiVector<Scalar,LocalOrdinal,GlobalOrdinal,Node> y(rowmap,2);
-  y.putScalar(1);
-  Teuchos::RCP<const Tpetra::MultiVector<Scalar,LocalOrdinal,GlobalOrdinal,Node> > xrcp = y.subView(Teuchos::Range1D(0,1));
-  const Tpetra::MultiVector<Scalar,LocalOrdinal,GlobalOrdinal,Node> & x = *xrcp;
+  MV y (rowmap,2);
+  y.putScalar (one);
+  RCP<MV> xrcp = y.subViewNonConst (Teuchos::Range1D (0, 1));
+  MV x = *xrcp;
 
   TEST_INEQUALITY(&x, &y);                                               // vector x and y are different
-  TEST_EQUALITY(&(x.get2dView()[0][0]), &(y.get2dView()[0][0]));         // vector x and y are pointing to the same memory location (such test only works if num of local elements != 0)
-  TEST_EQUALITY(x.getLocalMV().getValues(), y.getLocalMV().getValues()); // another way to test if x and y are pointing to the same memory location
+  x.template sync<Kokkos::HostSpace> ();
+  y.template sync<Kokkos::HostSpace> ();
+  auto x_lcl_host = x.template getLocalView<Kokkos::HostSpace> ();
+  auto y_lcl_host = x.template getLocalView<Kokkos::HostSpace> ();
+  TEST_EQUALITY( x_lcl_host.ptr_on_device (), y_lcl_host.ptr_on_device () ); // vector x and y are pointing to the same memory location (such test only works if num of local elements != 0)
 
   prec.apply(x, y);
 
   //y should be full of 0.5's now.
   {
-    Teuchos::ArrayRCP<const Scalar> yview = y.get1dView();
-    Teuchos::ArrayRCP<Scalar> halfs(num_rows_per_proc*2, 0.5);
-    TEST_COMPARE_FLOATING_ARRAYS(yview, halfs(), Teuchos::ScalarTraits<Scalar>::eps());
+    MV y_diff (y.getMap (), y.getNumVectors ());
+    y_diff.putScalar (one / two);
+
+    typedef typename MV::device_type device_type;
+    typedef typename MV::mag_type mag_type;
+    typedef Kokkos::View<mag_type*, device_type> norms_type;
+    norms_type y_norms ("y_norms", y.getNumVectors ());
+
+    y_diff.update (one, y, -one);
+    y_diff.normInf (y_norms);
+
+    auto y_norms_host = Kokkos::create_mirror_view (y_norms);
+    Kokkos::deep_copy (y_norms_host, y_norms);
+
+    for (size_t j = 0; j < y.getNumVectors (); ++j) {
+      TEST_EQUALITY( y_norms_host(0), Kokkos::Details::ArithTraits<mag_type>::zero () );
+    }
   }
 }
 
@@ -257,8 +282,9 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL(Ifpack2BlockRelaxation, TriDi, Scalar, LocalOr
   global_size_t num_rows_per_proc = 5;
 
   typedef Tpetra::CrsMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> CRS;
+  typedef Tpetra::RowMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> ROW;
   typedef Tpetra::Vector<Scalar,LocalOrdinal,GlobalOrdinal,Node> Vector;
-  typedef Ifpack2::TriDiContainer<CRS,Scalar> TriDi;
+  typedef Ifpack2::TriDiContainer<ROW,Scalar> TriDi;
 
   const Teuchos::RCP<const Tpetra::Map<LocalOrdinal,GlobalOrdinal,Node> > rowmap = tif_utest::create_tpetra_map<LocalOrdinal,GlobalOrdinal,Node>(num_rows_per_proc);
   Teuchos::RCP<const CRS > crsmatrix = tif_utest::create_test_matrix_variable_blocking<Scalar,LocalOrdinal,GlobalOrdinal,Node>(rowmap);
@@ -280,7 +306,7 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL(Ifpack2BlockRelaxation, TriDi, Scalar, LocalOr
   ilist.set("relaxation: sweeps",1);
   ilist.set("relaxation: type","Gauss-Seidel");
 
-  Ifpack2::BlockRelaxation<CRS,TriDi> TDRelax(crsmatrix);
+  Ifpack2::BlockRelaxation<ROW,TriDi> TDRelax(crsmatrix);
 
   TDRelax.setParameters(ilist);
   TDRelax.initialize();
@@ -298,8 +324,9 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL(Ifpack2BlockRelaxation, BandedContainer, Scala
   global_size_t num_rows_per_proc = 5;
 
   typedef Tpetra::CrsMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> CRS;
+  typedef Tpetra::RowMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> ROW;
   typedef Tpetra::Vector<Scalar,LocalOrdinal,GlobalOrdinal,Node> Vector;
-  typedef Ifpack2::BandedContainer<CRS,Scalar> BandedContainer;
+  typedef Ifpack2::BandedContainer<ROW, Scalar> BandedContainer;
 
   const Teuchos::RCP<const Tpetra::Map<LocalOrdinal,GlobalOrdinal,Node> > rowmap = tif_utest::create_tpetra_map<LocalOrdinal,GlobalOrdinal,Node>(num_rows_per_proc);
   Teuchos::RCP<const CRS > crsmatrix = tif_utest::create_test_matrix_variable_banded<Scalar,LocalOrdinal,GlobalOrdinal,Node>(rowmap);
@@ -321,7 +348,7 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL(Ifpack2BlockRelaxation, BandedContainer, Scala
   ilist.set("relaxation: sweeps",1);
   ilist.set("relaxation: type","Gauss-Seidel");
 
-  Ifpack2::BlockRelaxation<CRS,BandedContainer> TDRelax(crsmatrix);
+  Ifpack2::BlockRelaxation<ROW, BandedContainer> TDRelax(crsmatrix);
 
   TDRelax.setParameters(ilist);
   TDRelax.initialize();
@@ -340,8 +367,9 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL(Ifpack2BlockRelaxation, BlockedBandedContainer
   global_size_t num_rows_per_proc = 5;
 
   typedef Tpetra::CrsMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> CRS;
+  typedef Tpetra::RowMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> ROW;
   typedef Tpetra::Vector<Scalar,LocalOrdinal,GlobalOrdinal,Node> Vector;
-  typedef Ifpack2::BandedContainer<CRS,Scalar> BandedContainer;
+  typedef Ifpack2::BandedContainer<ROW, Scalar> BandedContainer;
 
   const Teuchos::RCP<const Tpetra::Map<LocalOrdinal,GlobalOrdinal,Node> > rowmap = tif_utest::create_tpetra_map<LocalOrdinal,GlobalOrdinal,Node>(num_rows_per_proc);
   Teuchos::RCP<const CRS > crsmatrix = tif_utest::create_test_matrix_banded_variable_blocking<Scalar,LocalOrdinal,GlobalOrdinal,Node>(rowmap);
@@ -363,7 +391,7 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL(Ifpack2BlockRelaxation, BlockedBandedContainer
   ilist.set("relaxation: sweeps",1);
   ilist.set("relaxation: type","Gauss-Seidel");
 
-  Ifpack2::BlockRelaxation<CRS,BandedContainer> TDRelax(crsmatrix);
+  Ifpack2::BlockRelaxation<ROW, BandedContainer> TDRelax(crsmatrix);
 
   TDRelax.setParameters(ilist);
   TDRelax.initialize();
@@ -382,9 +410,10 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL(Ifpack2BlockRelaxation, LinePartition, Scalar,
 
   //typedef Tpetra::RowGraph<LocalOrdinal,GlobalOrdinal,Node> RG;
   typedef Tpetra::CrsMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> CRS;
+  typedef Tpetra::RowMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> ROW;
   typedef Tpetra::Vector<Scalar,LocalOrdinal,GlobalOrdinal,Node> Vector;
   typedef Tpetra::MultiVector<Scalar,LocalOrdinal,GlobalOrdinal,Node> MultiVector;
-  typedef Ifpack2::TriDiContainer<CRS,Scalar> TriDi;
+  typedef Ifpack2::TriDiContainer<ROW,Scalar> TriDi;
 
   const Teuchos::RCP<const Tpetra::Map<LocalOrdinal,GlobalOrdinal,Node> > rowmap = tif_utest::create_tpetra_map<LocalOrdinal,GlobalOrdinal,Node>(num_rows_per_proc);
   Teuchos::RCP<const CRS > crsmatrix = tif_utest::create_test_matrix_variable_blocking<Scalar,LocalOrdinal,GlobalOrdinal,Node>(rowmap);
@@ -414,7 +443,7 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL(Ifpack2BlockRelaxation, LinePartition, Scalar,
   ilist.set("relaxation: sweeps",1);
   ilist.set("relaxation: type","Gauss-Seidel");
 
-  Ifpack2::BlockRelaxation<CRS,TriDi> TDRelax(crsmatrix);
+  Ifpack2::BlockRelaxation<ROW,TriDi> TDRelax(crsmatrix);
 
   TDRelax.setParameters(ilist);
   TDRelax.initialize();

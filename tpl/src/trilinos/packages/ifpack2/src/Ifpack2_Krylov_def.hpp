@@ -43,7 +43,23 @@
 #ifndef IFPACK2_KRYLOV_DEF_HPP
 #define IFPACK2_KRYLOV_DEF_HPP
 
-#include "Ifpack2_Krylov_decl.hpp"
+#include "Ifpack2_Chebyshev.hpp"
+#include "Ifpack2_Heap.hpp"
+#include "Ifpack2_ILUT.hpp"
+#include "Ifpack2_Parameters.hpp"
+#include "Ifpack2_Relaxation.hpp"
+#include "Ifpack2_RILUK.hpp"
+
+#include "BelosBlockGmresSolMgr.hpp"
+#include "BelosBlockCGSolMgr.hpp"
+
+#include "Teuchos_Assert.hpp"
+#include "Teuchos_Time.hpp"
+
+#include <iostream>
+#include <sstream>
+#include <cmath>
+
 
 namespace Ifpack2 {
 
@@ -340,16 +356,16 @@ void Krylov<MatrixType>::initialize ()
       // no preconditioner
     }
     else if (PreconditionerType_==1) {
-      ifpack2_prec_=rcp (new Relaxation<MatrixType> (A_));
+      ifpack2_prec_=rcp (new Relaxation<row_matrix_type> (A_));
     }
     else if (PreconditionerType_==2) {
-      ifpack2_prec_=rcp (new ILUT<MatrixType> (A_));
+      ifpack2_prec_=rcp (new ILUT<row_matrix_type> (A_));
     }
     else if (PreconditionerType_==3) {
-      ifpack2_prec_ = rcp (new RILUK<MatrixType> (A_));
+      ifpack2_prec_ = rcp (new RILUK<row_matrix_type> (A_));
     }
     else if (PreconditionerType_==4) {
-      ifpack2_prec_ = rcp (new Chebyshev<MatrixType> (A_));
+      ifpack2_prec_ = rcp (new Chebyshev<row_matrix_type> (A_));
     }
     if (PreconditionerType_>0) {
       ifpack2_prec_->initialize();
@@ -447,10 +463,14 @@ apply (const Tpetra::MultiVector<typename MatrixType::scalar_type,
     // If X and Y are pointing to the same memory location,
     // we need to create an auxiliary vector, Xcopy
     RCP<const MV> Xcopy;
-    if (X.getLocalMV ().getValues () == Y.getLocalMV ().getValues ()) {
-      Xcopy = rcp (new MV (X, Teuchos::Copy));
-    } else {
-      Xcopy = rcpFromRef (X);
+    {
+      auto X_lcl_host = X.template getLocalView<Kokkos::HostSpace> ();
+      auto Y_lcl_host = Y.template getLocalView<Kokkos::HostSpace> ();
+      if (X_lcl_host.ptr_on_device () == Y_lcl_host.ptr_on_device ()) {
+        Xcopy = rcp (new MV (X, Teuchos::Copy));
+      } else {
+        Xcopy = rcpFromRef (X);
+      }
     }
 
     RCP<MV> Ycopy = rcpFromRef (Y);
@@ -537,7 +557,6 @@ describe (Teuchos::FancyOStream &out,
 
 } // namespace Ifpack2
 
-// FIXME (mfh 16 Sep 2014) We should really only use RowMatrix here!
 // There's no need to instantiate for CrsMatrix too.  All Ifpack2
 // preconditioners can and should do dynamic casts if they need a type
 // more specific than RowMatrix.
@@ -548,7 +567,6 @@ describe (Teuchos::FancyOStream &out,
 // (which would necessitate reinitializing the Krylov solver).
 
 #define IFPACK2_KRYLOV_INSTANT(S,LO,GO,N) \
-  template class Ifpack2::Krylov< Tpetra::RowMatrix<S, LO, GO, N> >; \
-  template class Ifpack2::Krylov< Tpetra::CrsMatrix<S, LO, GO, N> >;
+  template class Ifpack2::Krylov< Tpetra::RowMatrix<S, LO, GO, N> >;
 
 #endif /* IFPACK2_KRYLOV_DEF_HPP */

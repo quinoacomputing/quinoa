@@ -167,6 +167,16 @@ public:
     std::size_t getOwnedElementCount() const
     { return ownedElementCount_; }
 
+    /** If element <code>el</code> has a pair across an interface, set
+      * <code>el_other</code> to that element and return true; otherwise, return
+      * false and do not modify <code>el_other</code>.
+      */
+    virtual bool getElementAcrossInterface(const LocalOrdinal& el, LocalOrdinal& el_other) const;
+
+    /** Return whether getElementAcrossInterface will ever return true.
+      */
+    virtual bool hasElementsAcrossInterface() const { return hasElementsAcrossInterface_; }
+
 protected:
    /** Apply periodic boundary conditions associated with the mesh object.
      *
@@ -175,6 +185,7 @@ protected:
      */
    void applyPeriodicBCs( const panzer::FieldPattern & fp, GlobalOrdinal nodeOffset, GlobalOrdinal edgeOffset, 
                                                            GlobalOrdinal faceOffset, GlobalOrdinal cellOffset);
+   void applyInterfaceConditions();
 
    void buildLocalElementMapping();
    void clearLocalElementMapping();
@@ -204,6 +215,9 @@ protected:
    std::vector<GlobalOrdinal> connectivity_; // Connectivity
 
    std::size_t ownedElementCount_;
+
+   std::map<LocalOrdinal,LocalOrdinal> elmtToInterfaceElmt_;
+   bool hasElementsAcrossInterface_;
 };
 
 }

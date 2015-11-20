@@ -60,6 +60,7 @@
 
 #include <TestViewAPI.hpp>
 #include <TestViewSubview.hpp>
+#include <TestViewOfClass.hpp>
 #include <TestAtomic.hpp>
 
 #include <TestReduce.hpp>
@@ -151,6 +152,11 @@ TEST_F( threads, view_impl) {
 
 TEST_F( threads, view_api) {
   TestViewAPI< double , Kokkos::Threads >();
+}
+
+TEST_F( threads , view_nested_view )
+{
+  ::Test::view_nested_view< Kokkos::Threads >();
 }
 
 TEST_F( threads, view_subview_auto_1d_left ) {
@@ -387,7 +393,7 @@ TEST_F( threads , template_meta_functions )
 
 //----------------------------------------------------------------------------
 
-#if defined( KOKKOS_HAVE_CXX11 ) && defined( KOKKOS_HAVE_DEFAULT_DEVICE_TYPE_THREADS )
+#if defined( KOKKOS_HAVE_DEFAULT_DEVICE_TYPE_THREADS )
 TEST_F( threads , cxx11 )
 {
   if ( Kokkos::Impl::is_same< Kokkos::DefaultExecutionSpace , Kokkos::Threads >::value ) {
@@ -397,14 +403,12 @@ TEST_F( threads , cxx11 )
     ASSERT_TRUE( ( TestCXX11::Test< Kokkos::Threads >(4) ) );
   }
 }
-#endif
-
-#if defined (KOKKOS_HAVE_CXX11)
 
 TEST_F( threads , reduction_deduction )
 {
   TestCXX11::test_reduction_deduction< Kokkos::Threads >();
 }
+#endif /* #if defined( KOKKOS_HAVE_DEFAULT_DEVICE_TYPE_THREADS ) */
 
 TEST_F( threads , team_vector )
 {
@@ -421,8 +425,6 @@ TEST_F( threads , team_vector )
   ASSERT_TRUE( ( TestTeamVector::Test< Kokkos::Threads >(10) ) );
 }
 
-#endif
-
 TEST_F( threads , task_policy )
 {
   TestTaskPolicy::test_task_dep< Kokkos::Threads >( 10 );
@@ -430,13 +432,10 @@ TEST_F( threads , task_policy )
   for ( long i = 0 ; i < 35 ; ++i ) TestTaskPolicy::test_fib2< Kokkos::Threads >(i);
 }
 
-#if defined( KOKKOS_HAVE_CXX11 )
 TEST_F( threads , task_team )
 {
   TestTaskPolicy::test_task_team< Kokkos::Threads >(1000);
 }
-#endif
-
 
 } // namespace Test
 

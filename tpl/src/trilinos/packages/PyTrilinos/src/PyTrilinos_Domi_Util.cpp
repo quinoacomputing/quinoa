@@ -103,7 +103,15 @@ convertToMDComm(const Teuchos::RCP< const Teuchos::Comm< int > > teuchosComm,
   }
 
   // Return the result
-  return Teuchos::rcp(new Domi::MDComm(teuchosComm, commDims, periodic));
+  try
+  {
+    return Teuchos::rcp(new Domi::MDComm(teuchosComm, commDims, periodic));
+  }
+  catch (Domi::InvalidArgument & e)
+  {
+    PyErr_SetString(PyExc_ValueError, e.what());
+    throw PythonException();
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -166,15 +174,28 @@ convertToMDMap(const Teuchos::RCP< const Teuchos::Comm< int > > teuchosComm,
       Domi::C_ORDER : Domi::FORTRAN_ORDER;
 
   // Return the result
-  return Teuchos::rcp(new Domi::MDMap<>(mdComm,
-                                        myGlobalBounds,
-                                        padding,
-                                        layout));
+  try
+  {
+    return Teuchos::rcp(new Domi::MDMap<>(mdComm,
+                                          myGlobalBounds,
+                                          padding,
+                                          layout));
+  }
+  catch (Domi::InvalidArgument & e)
+  {
+    PyErr_SetString(PyExc_ValueError, e.what());
+    throw PythonException();
+  }
+  catch (Domi::MDMapNoncontiguousError & e)
+  {
+    PyErr_SetString(PyExc_RuntimeError, e.what());
+    throw PythonException();
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////
 
-PyObject * convertToDimData(const Teuchos::RCP< const Domi::MDMap<> > mdMap)
+PyObject * convertToDimData(const Teuchos::RCP< const Domi::MDMap<> > & mdMap)
 {
   Py_ssize_t numDims = mdMap->numDims();
   PyObject * dimData = PyTuple_New(numDims);

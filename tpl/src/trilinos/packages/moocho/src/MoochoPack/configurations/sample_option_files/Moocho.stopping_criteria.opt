@@ -1,6 +1,0 @@
-***
-*** This options file shows how to setup different stopping criteria.
-*** Note that stopping criteria and tolerances are very much problem
-*** dependent and need to be chosen carefully based on the properties
-*** of the problem at hand
-***

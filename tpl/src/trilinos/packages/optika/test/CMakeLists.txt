@@ -1,2 +1,0 @@
-ADD_SUBDIRECTORY(gui)
-ADD_SUBDIRECTORY(unit_tests)

@@ -53,6 +53,10 @@
 typedef Xpetra::CrsMatrix<Scalar, LocalOrdinal, GlobalOrdinal, Node> CrsMatrix;
 #endif
 
+#ifdef XPETRA_ITERATOROPS_SHORT
+typedef Xpetra::IteratorOps<Scalar, LocalOrdinal, GlobalOrdinal, Node> IteratorOps;
+#endif
+
 #ifdef XPETRA_VECTOR_SHORT
 typedef Xpetra::Vector<Scalar, LocalOrdinal, GlobalOrdinal, Node> Vector;
 #endif
@@ -65,6 +69,10 @@ typedef Xpetra::MultiVector<Scalar, LocalOrdinal, GlobalOrdinal, Node> MultiVect
 typedef Xpetra::Matrix<Scalar, LocalOrdinal, GlobalOrdinal, Node> Matrix;
 #endif
 
+#ifdef XPETRA_MATRIXMATRIX_SHORT
+typedef Xpetra::MatrixMatrix<Scalar, LocalOrdinal, GlobalOrdinal, Node> MatrixMatrix;
+#endif
+
 #ifdef XPETRA_OPERATOR_SHORT
 typedef Xpetra::Operator<Scalar, LocalOrdinal, GlobalOrdinal, Node> Operator;
 #endif
@@ -75,6 +83,12 @@ typedef Xpetra::TpetraOperator<Scalar, LocalOrdinal, GlobalOrdinal, Node> Tpetra
 
 #ifdef XPETRA_BLOCKEDCRSMATRIX_SHORT
 typedef Xpetra::BlockedCrsMatrix<Scalar, LocalOrdinal, GlobalOrdinal, Node> BlockedCrsMatrix;
+#endif
+
+#ifdef HAVE_XPETRA_THYRA
+#ifdef XPETRA_THYRAUTILS_SHORT
+typedef Xpetra::ThyraUtils<Scalar, LocalOrdinal, GlobalOrdinal, Node> ThyraUtils;
+#endif
 #endif
 
 #ifdef XPETRA_CRSMATRIXWRAP_SHORT

@@ -1,6 +1,0 @@
-***
-*** This options file explicitly sets up use for the orthogonal decomposition.
-*** We also explicitly setup for an explicit null space matrix which means that
-*** inv(C)*N is computed explicitly (which is the most efficient thing to do
-*** when using this decomposition).
-***

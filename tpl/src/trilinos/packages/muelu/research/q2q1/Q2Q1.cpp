@@ -61,7 +61,7 @@
 
 #ifdef HAVE_MUELU_STRATIMIKOS
 #include <Stratimikos_DefaultLinearSolverBuilder.hpp>
-#include <Stratimikos_MueluTpetraHelpers.hpp>
+#include <Stratimikos_MueLuHelpers.hpp>
 #endif
 
 #ifdef HAVE_MUELU_TEKO
@@ -93,6 +93,11 @@
 #include <Thyra_VectorBase.hpp>
 #include <Thyra_VectorStdOps.hpp>
 
+#include <BelosConfigDefs.hpp>
+#include <BelosLinearProblem.hpp>
+#include <BelosSolverFactory.hpp>
+#include <BelosTpetraAdapter.hpp>
+
 #include <Xpetra_MapFactory.hpp>
 
 #include "MueLu_UseDefaultTypes.hpp"
@@ -114,8 +119,6 @@ ReadBinary(const std::string& fileName, const Teuchos::RCP<const Teuchos::Comm<i
   ifs.read(reinterpret_cast<char*>(&m),   sizeof(m));
   ifs.read(reinterpret_cast<char*>(&n),   sizeof(n));
   ifs.read(reinterpret_cast<char*>(&nnz), sizeof(nnz));
-
-  int myRank = comm->getRank();
 
   typedef Tpetra::Map      <LO,GO,NO>       tMap;
   typedef Tpetra::CrsMatrix<SC,LO,GO,NO>    tCrsMatrix;
@@ -189,7 +192,7 @@ int main(int argc, char *argv[]) {
     Xpetra::Parameters xpetraParameters(clp);
 
     // configure problem
-    std::string prefix = "./Q2Q1_17x17_";    clp.setOption("prefix",     &prefix,        "prefix for data files");
+    std::string prefix = "./Q2Q1_9x9_";      clp.setOption("prefix",     &prefix,        "prefix for data files");
 
     // configure run
     std::string xmlFileName  = "driver.xml"; clp.setOption("xml",        &xmlFileName,   "read parameters from a file [default = 'driver.xml']");
@@ -272,7 +275,7 @@ int main(int argc, char *argv[]) {
     BelosList.sublist("VerboseObject").set("Verbosity Level", "low"); // this is needed, as otherwise Stratimikos ignores Belos output
 
     ParameterList& GmresDetails = BelosList.sublist("Solver Types").sublist("Block GMRES");
-    GmresDetails.set("Maximum Iterations",      20);
+    GmresDetails.set("Maximum Iterations",      100);
     GmresDetails.set("Convergence Tolerance",   1e-12);
     GmresDetails.set("Verbosity",               Belos::Errors + Belos::Warnings + Belos::StatusTestDetails);
     GmresDetails.set("Output Frequency",        1);
@@ -299,7 +302,8 @@ int main(int argc, char *argv[]) {
 
     Stratimikos::DefaultLinearSolverBuilder linearSolverBuilder;
 
-    Thyra::addMueLuToStratimikosBuilder(linearSolverBuilder);
+    //Thyra::addMueLuToStratimikosBuilder(linearSolverBuilder);
+    Stratimikos::enableMueLu(linearSolverBuilder);
     Stratimikos::enableMueLuTpetraQ2Q1<LO,GO,NO>(linearSolverBuilder, "MueLu-TpetraQ2Q1");
 
     linearSolverBuilder.setParameterList(stratimikosList);
@@ -314,7 +318,7 @@ int main(int argc, char *argv[]) {
     RCP<const tMap> fullMap = Utils::Map2TpetraMap(*(MapFactory::createUniformContigMap(Xpetra::UseTpetra, numElem, comm)));
 
     RCP<tOperator> A;
-    if (!!binary)
+    if (!binary)
       A = Reader<tCrsMatrix>::readSparseFile((prefix + "BigA.mm").c_str(), fullMap, fullMap, fullMap, fullMap, true, true, false);
     else
       A = ReadBinary<SC,LO,GO,NO>((prefix + "BigA.dat").c_str(), comm);

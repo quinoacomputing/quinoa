@@ -44,6 +44,18 @@
 #ifndef KOKKOS_VIEWTILELEFT_HPP
 #define KOKKOS_VIEWTILELEFT_HPP
 
+#include <impl/KokkosExp_ViewTile.hpp>
+
+#if defined( KOKKOS_USING_EXPERIMENTAL_VIEW )
+
+namespace Kokkos {
+
+using Kokkos::Experimental::tile_subview ;
+
+}
+
+#else
+
 //----------------------------------------------------------------------------
 //----------------------------------------------------------------------------
 
@@ -67,8 +79,8 @@ struct ViewOffset< ShapeType
                                             )>::type >
   : public ShapeType
 {
-  enum { SHIFT_0 = Impl::power_of_two<N0>::value };
-  enum { SHIFT_1 = Impl::power_of_two<N1>::value };
+  enum { SHIFT_0 = Impl::integral_power_of_two(N0) };
+  enum { SHIFT_1 = Impl::integral_power_of_two(N1) };
   enum { MASK_0  = N0 - 1 };
   enum { MASK_1  = N1 - 1 };
 
@@ -190,6 +202,8 @@ tile_subview( const View<T**,LayoutTileLeft<N0,N1,true>,A2,A3,Impl::ViewDefault>
 
 //----------------------------------------------------------------------------
 //----------------------------------------------------------------------------
+
+#endif
 
 #endif /* #ifndef KOKKOS_VIEWTILELEFT_HPP */
 

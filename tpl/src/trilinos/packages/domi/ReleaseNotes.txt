@@ -1,21 +1,27 @@
-Release Notes for Domi for Trilinos 12.2
+Release Notes for Domi for Trilinos 12.4
 ========================================
 
-Primary changes to the Domi package for Trilinos 12.2 release are:
+Various bug fixes:
+------------------
+  * Fixed a bug where a periodic axis under a serial build would not
+    update communication padding.  The parallel version uses MPI
+    capabilities to do this, so a serial-only capability had to be
+    added for this corner case.
 
-* Input arguments that come in the form of const Domi::MDArrayView<
-  int > have been changed to be const-correct, i.e., they are now
-  const Domi::MDArrayView< const int >.  This allowed for more logical
-  wrappers in PyTrilinos.
+  * Fixed a test that was doing a dynamic type comparison to be more
+    robust.
 
-* A new Domi::DefaultNode class has been added.  If Tpetra is enabled,
-  it uses the Tpetra default node.  If Tpetra is not enabled, it uses
-  the serial wrapper node from Teuchos.
+  * Fixed some minor bugs in the MDVector getTpetraMultiVector()
+    method.
 
-* Domi's required dependencies have been simplified, to Teuchos,
-  Kokkos, and TeuchosKokkosCompat.  Optional dependencies are Epetra,
-  TpetraClassic, and TpetraCore.
+  * The MDArrayView size() method was made const, as it should be
 
+Created serial tests
+--------------------
+  * Domi does not provide much in the way of unique capabilities if it
+    is compiled in serial.  Nevertheless, all tests that run on 1
+    processor were updated to run under a serial build of Trilinos as
+    well.
 
 Release Notes for Domi for Trilinos 12.0
 ========================================

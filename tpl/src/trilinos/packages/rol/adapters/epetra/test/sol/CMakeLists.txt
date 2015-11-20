@@ -5,7 +5,7 @@ IF(${PROJECT_NAME}_ENABLE_Epetra)
     EpetraBatchManagerInterface
     SOURCES test_01.cpp
     ARGS PrintItAll
-    NUM_MPI_PROCS 4
+    COMM serial mpi
     PASS_REGULAR_EXPRESSION "TEST PASSED"
     ADD_DIR_TO_NAME
     )

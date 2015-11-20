@@ -1,6 +1,0 @@
-<ParameterList>
-  <Parameter name="NLP Type" type="string" value="Direct"/>
-  <Parameter name="Show Model Evaluator Trace" type="bool" value="0"/>
-  <Parameter name="Parameters Solution File Base Name" type="string" value="p.out"/>
-  <Parameter name="State Solution File Base Name" type="string" value="x.out"/>
-</ParameterList>

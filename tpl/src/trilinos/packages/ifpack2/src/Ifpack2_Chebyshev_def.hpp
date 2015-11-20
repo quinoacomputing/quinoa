@@ -43,9 +43,12 @@
 #ifndef IFPACK2_CHEBYSHEV_DEF_HPP
 #define IFPACK2_CHEBYSHEV_DEF_HPP
 
-#include <Ifpack2_Parameters.hpp>
-#include <Ifpack2_Chebyshev.hpp>
-#include <Teuchos_TimeMonitor.hpp>
+#include "Ifpack2_Parameters.hpp"
+#include "Teuchos_TimeMonitor.hpp"
+#include "Tpetra_CrsMatrix.hpp"
+#include <iostream>
+#include <sstream>
+
 
 namespace Ifpack2 {
 
@@ -115,10 +118,15 @@ getMatrix() const {
 
 
 template<class MatrixType>
-Teuchos::RCP<const MatrixType>
+Teuchos::RCP<const Tpetra::CrsMatrix<typename MatrixType::scalar_type,
+                                     typename MatrixType::local_ordinal_type,
+                                     typename MatrixType::global_ordinal_type,
+                                     typename MatrixType::node_type> >
 Chebyshev<MatrixType>::
 getCrsMatrix() const {
-  return Teuchos::rcp_dynamic_cast<const MatrixType> (impl_.getMatrix ());
+  typedef Tpetra::CrsMatrix<scalar_type, local_ordinal_type,
+    global_ordinal_type, node_type> crs_matrix_type;
+  return Teuchos::rcp_dynamic_cast<const crs_matrix_type> (impl_.getMatrix ());
 }
 
 
@@ -465,12 +473,15 @@ applyImpl (const MV& X,
   // optimize for it by caching X_copy.
   RCP<const MV> X_copy;
   bool copiedInput = false;
-  if (X.getLocalMV ().getValues () == Y.getLocalMV ().getValues ()) {
-    X_copy = rcp (new MV (X, Teuchos::Copy));
-    copiedInput = true;
-  }
-  else {
-    X_copy = rcpFromRef (X);
+  {
+    auto X_lcl_host = X.template getLocalView<Kokkos::HostSpace> ();
+    auto Y_lcl_host = Y.template getLocalView<Kokkos::HostSpace> ();
+    if (X_lcl_host.ptr_on_device () == Y_lcl_host.ptr_on_device ()) {
+      X_copy = rcp (new MV (X, Teuchos::Copy));
+      copiedInput = true;
+    } else {
+      X_copy = rcpFromRef (X);
+    }
   }
 
   // If alpha != 1, fold alpha into (a deep copy of) X.
@@ -506,7 +517,6 @@ typename MatrixType::scalar_type Chebyshev<MatrixType>::getLambdaMaxForApply () 
 }//namespace Ifpack2
 
 #define IFPACK2_CHEBYSHEV_INSTANT(S,LO,GO,N)                            \
-  template class Ifpack2::Chebyshev< Tpetra::CrsMatrix<S, LO, GO, N> >; \
   template class Ifpack2::Chebyshev< Tpetra::RowMatrix<S, LO, GO, N> >;
 
 #endif // IFPACK2_CHEBYSHEV_DEF_HPP

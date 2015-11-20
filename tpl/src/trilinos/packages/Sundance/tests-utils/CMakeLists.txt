@@ -1,5 +1,0 @@
-
-ADD_SUBDIRECTORY(Functors)
-
-ADD_SUBDIRECTORY(Combinatorics)
-

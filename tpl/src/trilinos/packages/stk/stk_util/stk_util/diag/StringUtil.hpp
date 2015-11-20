@@ -373,7 +373,13 @@ std::string to_string(const float &r, int precision = 4);
  *			<b>r</b>.
  */
 template <typename T>
-std::string to_string(const T &t);
+inline std::string
+to_string( const T &		t)
+{
+  std::ostringstream os;
+  os << t;
+  return os.str();
+}
 
 /**
  * @brief Function <b>demangle</b> returns the demangled C++ symbol from the mangled
@@ -905,6 +911,20 @@ void convertCharArrayToStringVector(int numArgs, const char** charArray, std::ve
         stringVector[i] = std::string(charArray[i]);
     }
 }
+
+inline
+std::string join(const std::string & delimeter, const std::vector<std::string> & strings) {
+    std::ostringstream output;
+    const size_t numStrings = strings.size();
+    for (size_t i=0 ; i<numStrings ; ++i) {
+        output << strings[i];
+        if (i < numStrings-1) {
+            output << delimeter;
+        }
+    }
+    return output.str();
+}
+
 
 } // namespace sierra
 

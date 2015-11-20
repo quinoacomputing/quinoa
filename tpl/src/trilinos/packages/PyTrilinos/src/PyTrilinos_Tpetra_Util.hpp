@@ -43,6 +43,9 @@
 #ifndef PYTRILINOS_TPETRA_UTIL_HPP
 #define PYTRILINOS_TPETRA_UTIL_HPP
 
+// Standard includes
+#include <string.h>
+
 // Include the Python prototypes
 #include "Python.h"
 
@@ -50,15 +53,14 @@
 #define NO_IMPORT_ARRAY
 #include "numpy_include.hpp"
 
-// PyTrilinos include
+// PyTrilinos includes
 #include "PyTrilinos_config.h"
 #include "PyTrilinos_NumPy_Util.hpp"
 
 // Teuchos includes
 #include "Teuchos_RCP.hpp"
 
-// Epetra includes
-//#include "Tpetra_BlockMap.hpp"
+// Tpetra includes
 #include "Tpetra_Map.hpp"
 #include "Tpetra_MultiVector.hpp"
 
@@ -66,8 +68,6 @@
 
 namespace PyTrilinos
 {
-
-////////////////////////////////////////////////////////////
 
 // Given a Tpetra::Map, return a Python dimension data object, which
 // is a tuple of Python dimension data dictionaries that describe the
@@ -77,21 +77,9 @@ namespace PyTrilinos
 // Tpetra::Map with variable element sizes is currently not supported
 // and results in an error.
 PyObject *
-convertTpetraMapToDimData(const Tpetra::Map< long, long > & tm,
-                          int   extraDim=1);
-
-////////////////////////////////////////////////////////////
-
-// Given a Tpetra::BlockMap, return a Python dimension data object,
-// which is a tuple of Python dimension data dictionaries that
-// describe the Tpetra::BlockMap, consistent with the DistArray
-// Protocol.  The extraDim argument is to allow for the multiple
-// vectors of a Tpetra::MultiVector.  If an error occurs, return NULL.
-// Note that a Tpetra::BlockMap with variable element sizes is
-// currently not supported and results in an error.
-// PyObject *
-// convertTpetraBlockMapToDimData(const Tpetra::BlockMap< long, long > & tbm,
-//                                int   extraDim=1);
+convertToDimData(const Teuchos::RCP< const Tpetra::Map< PYTRILINOS_LOCAL_ORD,
+                                                        PYTRILINOS_GLOBAL_ORD > > & tm,
+                 int   extraDim=1);
 
 ////////////////////////////////////////////////////////////
 
@@ -99,7 +87,9 @@ convertTpetraMapToDimData(const Tpetra::Map< long, long > & tm,
 // with the DistArray Protocol.  If an error occurs, return NULL.
 template< class Scalar >
 PyObject *
-convertTpetraMultiVectorToDAP(const Tpetra::MultiVector< Scalar > & tmv);
+convertToDistArray(const Tpetra::MultiVector< Scalar,
+                                              PYTRILINOS_LOCAL_ORD,
+                                              PYTRILINOS_GLOBAL_ORD > & tmv);
 
 ////////////////////////////////////////////////////////////////////////
 // *** Implementations ***
@@ -107,20 +97,26 @@ convertTpetraMultiVectorToDAP(const Tpetra::MultiVector< Scalar > & tmv);
 
 template< class Scalar >
 PyObject *
-convertTpetraMultiVectorToDAP(const Tpetra::MultiVector< Scalar > & tmv)
+convertToDistArray(const Tpetra::MultiVector< Scalar,
+                                              PYTRILINOS_LOCAL_ORD,
+                                              PYTRILINOS_GLOBAL_ORD > & tmv)
 {
   // Initialization
-  PyObject   * dap      = NULL;
-  PyObject   * dim_data = NULL;
-  PyObject   * dim_dict = NULL;
-  PyObject   * size     = NULL;
-  PyObject   * buffer   = NULL;
-  Py_ssize_t   ndim     = 1;
+  PyObject   * dap       = NULL;
+  PyObject   * dim_data  = NULL;
+  PyObject   * dim_dict  = NULL;
+  PyObject   * dist_type = NULL;
+  PyObject   * start     = NULL;
+  PyObject   * stop      = NULL;
+  PyObject   * indices   = NULL;
+  PyObject   * buffer    = NULL;
+  Py_ssize_t   ndim      = 1;
   npy_intp     dims[3];
-  Teuchos::ArrayRCP< Scalar > data;
+  Teuchos::ArrayRCP< const Scalar > data;
 
-  // Get the underlying Tpetra::Map< long, long >
-  Teuchos::RCP< const Tpetra::Map< long, long > > tm = tmv.getMap();
+  // Get the underlying Tpetra::Map< PYTRILINOS_LOCAL_ORD, PYTRILINOS_GLOBAL_ORD >
+  Teuchos::RCP< const Tpetra::Map< PYTRILINOS_LOCAL_ORD,
+                                   PYTRILINOS_GLOBAL_ORD > > tm = tmv.getMap();
 
   // Allocate the DistArray Protocol object and set the version key
   // value
@@ -133,8 +129,7 @@ convertTpetraMultiVectorToDAP(const Tpetra::MultiVector< Scalar > & tmv)
   // Get the Dimension Data and the number of dimensions.  If the
   // underlying Tpetra::BlockMap has variable element sizes, an error
   // will be detected here.
-  dim_data = convertTpetraBlockMapToDimData(*tm,
-                                            tmv.getNumVectors());
+  dim_data = convertToDimData(tm, tmv.getNumVectors());
   if (!dim_data) goto fail;
   ndim = PyTuple_Size(dim_data);
 
@@ -149,12 +144,33 @@ convertTpetraMultiVectorToDAP(const Tpetra::MultiVector< Scalar > & tmv)
   {
     dim_dict = PyTuple_GetItem(dim_data, i);
     if (!dim_dict) goto fail;
-    size = PyDict_GetItemString(dim_dict, "size");
-    if (!size) goto fail;
-    dims[i] = PyInt_AsLong(size);
-    if (PyErr_Occurred()) goto fail;
+    dist_type = PyDict_GetItemString(dim_dict, "dist_type");
+    if (!dist_type) goto fail;
+    if (strcmp(PyString_AsString(dist_type), "b") == 0)
+    {
+      start = PyDict_GetItemString(dim_dict, "start");
+      if (!start) goto fail;
+      stop = PyDict_GetItemString(dim_dict, "stop");
+      if (!stop) goto fail;
+      dims[i] = PyInt_AsLong(stop) - PyInt_AsLong(start);
+      if (PyErr_Occurred()) goto fail;
+    }
+    else if (strcmp(PyString_AsString(dist_type), "u") == 0)
+    {
+      indices = PyDict_GetItemString(dim_dict, "indices");
+      if (!indices) goto fail;
+      dims[i] = PyArray_DIM((PyArrayObject*)indices,0);
+      if (PyErr_Occurred()) goto fail;
+    }
+    else
+    {
+      PyErr_Format(PyExc_ValueError,
+                   "Unsupported distribution type '%s'",
+                   PyString_AsString(dist_type));
+      goto fail;
+    }
   }
-  data = tmv.getDataNonConst();
+  data = tmv.getData(0);
   buffer = PyArray_SimpleNewFromData(ndim,
                                      dims,
                                      NumPy_TypeCode< Scalar >(),
