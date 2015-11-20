@@ -247,9 +247,6 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -diag-disable 7,111,193,304,367,383,411,444,869,981,1418,2282,2415,2547,3346,3377 ")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -qopt-report=0 -qopt-report-phase=loop,vec -qopt-report-file=stderr")
 
-  # Link to thread-safe MPI library
-  add_compiler_flag("-mt_mpi")
-
   # No limit on inlining
   add_compiler_flag("-no-inline-max-size")
   add_compiler_flag("-no-inline-max-total-size")

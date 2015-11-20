@@ -97,8 +97,7 @@ include(libstdcxx)
 # Compiler-specific settings
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")  # clang-specific settings
 
-  # Set libc++ as the default standard C++ library and allow selection by
-  # default
+  # Set the default standard C++ library and allow selection by default
   if (NOT STDLIBCPP)
     setlibstdcxx("libc++")
   else()
@@ -113,8 +112,7 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")  # gcc-specific settings
 
   # Boost as build toolset wants 'gcc' for the gnu compiler
   set(BOOST_TOOLSET "gcc")
-  # Set libc++ as the default standard C++ library and allow selection by
-  # default
+  # Set the default standard C++ library and allow selection by default
   if (NOT STDLIBCPP)
     setlibstdcxx("libstdc++")
   else()
@@ -123,12 +121,7 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")  # gcc-specific settings
 
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
 
-  # Link to thread-safe MPI libraries, needed for Intel MPI
-  set(CFLAGS "${CFLAGS} -mt_mpi")
-  set(CXXFLAGS "${CXXFLAGS} -mt_mpi")
-  set(FFLAGS "${FFLAGS} -mt_mpi")
-  # Set libc++ as the default standard C++ library and allow selection by
-  # default
+  # Set the default standard C++ library and allow selection by default
   if (NOT STDLIBCPP)
     setlibstdcxx("libstdc++")
   else()
