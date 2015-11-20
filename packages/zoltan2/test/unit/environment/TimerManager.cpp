@@ -66,8 +66,6 @@ using Zoltan2::MACRO_TIMERS;
 using Zoltan2::MICRO_TIMERS;
 using Zoltan2::BOTH_TIMERS;
 
-typedef Zoltan2::BasicUserTypes<zscalar_t, zzgid_t, zlno_t, zgno_t> myTypes_t;
-typedef Zoltan2::BasicIdentifierAdapter<myTypes_t> inputAdapter_t;
 
 static void sleep_wrap(unsigned int seconds)
 {
@@ -111,7 +109,9 @@ int main(int argc, char *argv[])
   pl.set("timer_type" , "both_timers");
   std::vector<const zscalar_t * >weights;
   std::vector<int> strides;
-  Array<zzgid_t> someIds(10,1);
+  Array<zgno_t> someIds(10,1);
+  typedef Zoltan2::BasicUserTypes<zscalar_t, zlno_t, zgno_t> myTypes_t;
+  typedef Zoltan2::BasicIdentifierAdapter<myTypes_t> inputAdapter_t;
   inputAdapter_t ia(10, someIds.getRawPtr(), weights, strides);
 
 #ifdef HAVE_ZOLTAN2_MPI

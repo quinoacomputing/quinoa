@@ -1,6 +1,0 @@
-#if 0
-/* DO NOT INCLUDE ANY CONFIG-DEPENDENT MACROS HERE! */
-#endif
-
-#define BREAKLINE ;
-

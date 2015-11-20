@@ -1,6 +1,0 @@
-***
-*** This options file shows how to setup MOOCHO so that it can
-*** be interupted while it is running and have it stop gracefully.
-*** This is the case when the program is being run in batch mode
-*** where Cntl+C can not be used.
-***

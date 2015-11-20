@@ -20,6 +20,7 @@
 #include <Xpetra_ExportFactory.hpp>
 #include <Xpetra_Import.hpp>
 #include <Xpetra_ImportFactory.hpp>
+#include <Xpetra_MatrixMatrix.hpp>
 
 #include "MueLu_Utilities.hpp"
 #include "MueLu_AlgebraicPermutationStrategy_decl.hpp"
@@ -71,9 +72,9 @@ namespace MueLu {
     Scalar norm1 = 0.0;
     Scalar maxVal = 0.0;
     for (size_t j = 0; j < Teuchos::as<size_t>(indices.size()); j++) {
-      norm1 += std::abs(vals[j]);
-      if(std::abs(vals[j]) > maxVal) {
-        maxVal = std::abs(vals[j]);
+      norm1 += Teuchos::ScalarTraits<Scalar>::magnitude(vals[j]);
+      if(Teuchos::ScalarTraits<Scalar>::magnitude(vals[j]) > maxVal) {
+        maxVal = Teuchos::ScalarTraits<Scalar>::magnitude(vals[j]);
         gMaxValIdx = A->getColMap()->getGlobalElement(indices[j]);
       }
     }
@@ -101,14 +102,14 @@ namespace MueLu {
     Scalar norm1 = 0.0;
     Scalar maxVal = 0.0;
     for (size_t j = 0; j < Teuchos::as<size_t>(indices.size()); j++) {
-      norm1 += std::abs(vals[j]);
-      if(std::abs(vals[j]) > maxVal) {
-        maxVal = std::abs(vals[j]);
+      norm1 += Teuchos::ScalarTraits<Scalar>::magnitude(vals[j]);
+      if(Teuchos::ScalarTraits<Scalar>::magnitude(vals[j]) > maxVal) {
+        maxVal = Teuchos::ScalarTraits<Scalar>::magnitude(vals[j]);
         gMaxValIdx = A->getColMap()->getGlobalElement(indices[j]);
       }
     }
 
-    if(std::abs(maxVal) > 0.0) { // keep only max Entries \neq 0.0
+    if(Teuchos::ScalarTraits<Scalar>::magnitude(maxVal) > 0.0) { // keep only max Entries \neq 0.0
       permutedDiagCandidates.push_back(std::make_pair(grow,gMaxValIdx));
       Weights.push_back(maxVal/(norm1*Teuchos::as<Scalar>(nnz)));
     } else {
@@ -603,8 +604,8 @@ namespace MueLu {
   }
 
   // build permP * A * permQT
-  Teuchos::RCP<Matrix> ApermQt = Utils::Multiply(*A, false, *permQTmatrix, false, GetOStream(Statistics2));
-  Teuchos::RCP<Matrix> permPApermQt = Utils::Multiply(*permPmatrix, false, *ApermQt, false, GetOStream(Statistics2));
+  Teuchos::RCP<Matrix> ApermQt = Xpetra::MatrixMatrix<Scalar, LocalOrdinal, GlobalOrdinal, Node>::Multiply(*A, false, *permQTmatrix, false, GetOStream(Statistics2));
+  Teuchos::RCP<Matrix> permPApermQt = Xpetra::MatrixMatrix<Scalar, LocalOrdinal, GlobalOrdinal, Node>::Multiply(*permPmatrix, false, *ApermQt, false, GetOStream(Statistics2));
 
   /*
   MueLu::Utils<Scalar, LocalOrdinal, GlobalOrdinal, Node>::Write("A.mat", *A);
@@ -637,7 +638,7 @@ namespace MueLu {
   }
   diagScalingOp->fillComplete();
 
-  Teuchos::RCP<Matrix> scaledA = Utils::Multiply(*diagScalingOp, false, *permPApermQt, false, GetOStream(Statistics2));
+  Teuchos::RCP<Matrix> scaledA = Xpetra::MatrixMatrix<Scalar, LocalOrdinal, GlobalOrdinal, Node>::Multiply(*diagScalingOp, false, *permPApermQt, false, GetOStream(Statistics2));
   currentLevel.Set("A", Teuchos::rcp_dynamic_cast<Matrix>(scaledA), genFactory/*this*/);
 
   currentLevel.Set("permA", Teuchos::rcp_dynamic_cast<Matrix>(permPApermQt), genFactory/*this*/);  // TODO careful with this!!!

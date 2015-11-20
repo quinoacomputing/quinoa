@@ -1,8 +1,0 @@
-#!/bin/sh -e
-
-test -d config_aux || mkdir config_aux
-aclocal -I m4 
-autoheader
-libtoolize -f 
-automake -a -f
-autoconf -f

@@ -1,7 +1,0 @@
-#{r=2}
-brick x 6 y 6 z 10
-frustum z 10 rad 2 top {r}
-subtr 2 from 1
-surf 11 size 1 scheme pave
-mesh surf 11
-save as 'block-w-hole-{r}.cub'

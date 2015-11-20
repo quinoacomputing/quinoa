@@ -1,8 +1,0 @@
-% Set locations to search for graphics files
-\graphicspath{{@builddir@/}{@srcdir@/}}
-
-% Define custom macro 'srcinclude' to include from srcdir
-\newcommand{\srcinclude}[1]{\input{@srcdir@/#1}}
-
-% Define custom macro 'srcbibliography' to include from srcdir
-\newcommand{\srcbibliography}[1]{\bibliography{@srcdir@/#1}}

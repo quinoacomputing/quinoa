@@ -1,5 +1,0 @@
-#!/bin/sh
-
-etags src/*.cpp src/*.hpp tests/*/*.cpp
-
-

@@ -1,8 +1,0 @@
-/** @name Dense Linear Algebra.
- * @memo Single DOC++ collection.
- */
-//@{
-  //@Include: BLAS_Cpp.dxx
-  //@Include: DenseLinAlgPack.dxx
-  //@Include: LinAlgOpPack.dxx
-//@}

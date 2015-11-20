@@ -45,16 +45,22 @@
 /// \file Tpetra_Experimental_BlockView.hpp
 /// \brief Declaration and definition of LittleBlock and LittleVector
 
-#include <Tpetra_ConfigDefs.hpp>
-#include <Teuchos_ScalarTraits.hpp>
-#include <Teuchos_LAPACK.hpp>
+#include "Tpetra_ConfigDefs.hpp"
+#include "Teuchos_ScalarTraits.hpp"
+#include "Teuchos_LAPACK.hpp"
+#ifdef HAVE_TPETRA_INST_FLOAT128
+#  include "Teuchos_BLAS.hpp"
+#endif // HAVE_TPETRA_INST_FLOAT128
 
-#ifdef TPETRA_HAVE_KOKKOS_REFACTOR
-#  include <Kokkos_ArithTraits.hpp>
-#  include <Kokkos_Complex.hpp>
-#endif // TPETRA_HAVE_KOKKOS_REFACTOR
+#include "Kokkos_ArithTraits.hpp"
+#include "Kokkos_Complex.hpp"
 
-namespace { // anonymous
+#ifdef HAVE_TPETRA_INST_FLOAT128
+#  include "Teuchos_Details_Lapack128.hpp"
+#endif // HAVE_TPETRA_INST_FLOAT128
+
+namespace Tpetra {
+namespace Details {
 
   /// \brief Return the Teuchos::LAPACK specialization corresponding
   ///   to the given Scalar type.
@@ -71,18 +77,26 @@ namespace { // anonymous
     typedef Teuchos::LAPACK<int, Scalar> lapack_type;
   };
 
-#ifdef TPETRA_HAVE_KOKKOS_REFACTOR
   template<class T>
   struct GetLapackType<Kokkos::complex<T> > {
     typedef std::complex<T> lapack_scalar_type;
     typedef Teuchos::LAPACK<int, std::complex<T> > lapack_type;
   };
-#endif // TPETRA_HAVE_KOKKOS_REFACTOR
 
-} // namespace (anonymous)
+#ifdef HAVE_TPETRA_INST_FLOAT128
+  template<>
+  struct GetLapackType<__float128> {
+    typedef __float128 lapack_scalar_type;
+    // Use the Lapack128 class we declared above to implement the
+    // linear algebra operations needed for small dense blocks and
+    // vectors.
+    typedef Teuchos::Details::Lapack128 lapack_type;
+  };
+#endif // HAVE_TPETRA_INST_FLOAT128
 
-//#include "Teuchos_LAPACK_wrappers.hpp"
-//extern "C" {int DGETRF_F77(const int *, const int *, double *, const int*, int *, int*);}
+} // namespace Details
+} // namespace Tpetra
+
 
 namespace Tpetra {
 
@@ -117,18 +131,10 @@ template<class Scalar, class LO>
 class LittleBlock {
 public:
   typedef Scalar scalar_type;
-#ifdef TPETRA_HAVE_KOKKOS_REFACTOR
   typedef typename Kokkos::Details::ArithTraits<Scalar>::val_type impl_scalar_type;
-#else
-  typedef Scalar impl_scalar_type;
-#endif // TPETRA_HAVE_KOKKOS_REFACTOR
 
 private:
-#ifdef TPETRA_HAVE_KOKKOS_REFACTOR
   typedef Kokkos::Details::ArithTraits<impl_scalar_type> STS;
-#else
-  typedef Teuchos::ScalarTraits<impl_scalar_type> STS;
-#endif // TPETRA_HAVE_KOKKOS_REFACTOR
 
 public:
   /// \brief Constructor
@@ -146,7 +152,6 @@ public:
     strideY_ (strideY)
   {}
 
-#ifdef TPETRA_HAVE_KOKKOS_REFACTOR
   /// \brief Constructor that takes an \c impl_scalar_type pointer.
   ///
   /// \param A [in] Pointer to the block's entries, as
@@ -169,23 +174,16 @@ public:
                const LO blockSize,
                const LO strideX,
                const LO strideY,
-#  ifdef KOKKOS_HAVE_CXX11
                typename std::enable_if<
                  ! std::is_same<Scalar, T>::value &&
                  std::is_convertible<Scalar, T>::value &&
                  sizeof (Scalar) == sizeof (T),
-#  else
-               typename Kokkos::Impl::enable_if<
-                 ! Kokkos::Impl::is_same<Scalar, T>::value &&
-                 sizeof (Scalar) == sizeof (T),
-#  endif // KOKKOS_HAVE_CXX11
                int*>::type ignoreMe = NULL) :
     A_ (reinterpret_cast<impl_scalar_type*> (A)),
     blockSize_ (blockSize),
     strideX_ (strideX),
     strideY_ (strideY)
   {}
-#endif // TPETRA_HAVE_KOKKOS_REFACTOR
 
   //! The block size (number of rows, and number of columns).
   LO getBlockSize () const {
@@ -269,8 +267,8 @@ public:
 
   void factorize (int* ipiv, int & info)
   {
-    typedef typename GetLapackType<Scalar>::lapack_scalar_type LST;
-    typedef typename GetLapackType<Scalar>::lapack_type lapack_type;
+    typedef typename Tpetra::Details::GetLapackType<Scalar>::lapack_scalar_type LST;
+    typedef typename Tpetra::Details::GetLapackType<Scalar>::lapack_type lapack_type;
 
     LST* const A_raw = reinterpret_cast<LST*> (A_);
     lapack_type lapack;
@@ -283,8 +281,8 @@ public:
   template<class LittleVectorType>
   void solve (LittleVectorType & X, const int* ipiv) const
   {
-    typedef typename GetLapackType<Scalar>::lapack_scalar_type LST;
-    typedef typename GetLapackType<Scalar>::lapack_type lapack_type;
+    typedef typename Tpetra::Details::GetLapackType<Scalar>::lapack_scalar_type LST;
+    typedef typename Tpetra::Details::GetLapackType<Scalar>::lapack_type lapack_type;
 
     // FIXME (mfh 03 Jan 2015) Check using enable_if that Scalar can
     // be safely converted to LST.
@@ -327,18 +325,10 @@ template<class Scalar, class LO>
 class LittleVector {
 public:
   typedef Scalar scalar_type;
-#ifdef TPETRA_HAVE_KOKKOS_REFACTOR
   typedef typename Kokkos::Details::ArithTraits<Scalar>::val_type impl_scalar_type;
-#else
-  typedef Scalar impl_scalar_type;
-#endif // TPETRA_HAVE_KOKKOS_REFACTOR
 
 private:
-#ifdef TPETRA_HAVE_KOKKOS_REFACTOR
   typedef Kokkos::Details::ArithTraits<impl_scalar_type> STS;
-#else
-  typedef Teuchos::ScalarTraits<impl_scalar_type> STS;
-#endif // TPETRA_HAVE_KOKKOS_REFACTOR
 
 public:
   /// \brief Constructor
@@ -351,7 +341,6 @@ public:
     strideX_ (stride)
   {}
 
-#ifdef TPETRA_HAVE_KOKKOS_REFACTOR
   /// \brief Constructor that takes an \c impl_scalar_type pointer.
   ///
   /// \param A [in] Pointer to the vector's entries, as
@@ -372,22 +361,15 @@ public:
   LittleVector (T* const A,
                 const LO blockSize,
                 const LO stride,
-#  ifdef KOKKOS_HAVE_CXX11
                 typename std::enable_if<
                   ! std::is_same<Scalar, T>::value &&
                   std::is_convertible<Scalar, T>::value &&
                   sizeof (Scalar) == sizeof (T),
-#  else
-                typename Kokkos::Impl::enable_if<
-                  ! Kokkos::Impl::is_same<Scalar, T>::value &&
-                  sizeof (Scalar) == sizeof (T),
-#  endif // KOKKOS_HAVE_CXX11
                 int*>::type ignoreMe = NULL) :
     A_ (reinterpret_cast<impl_scalar_type*> (A)),
     blockSize_ (blockSize),
     strideX_ (stride)
   {}
-#endif // TPETRA_HAVE_KOKKOS_REFACTOR
 
   //! Pointer to the block's entries.
   Scalar* getRawPtr () const {

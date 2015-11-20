@@ -1,8 +1,0 @@
-These are input files for the perl script runnlps.pl.
-
-general_config1 : Most of the major MamaJama options are varied which
-should be performed for all NLP types and sizes.
-
-general_config2 : Varies linesearch options not varied above.
-
-...

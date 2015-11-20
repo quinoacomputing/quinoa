@@ -151,6 +151,25 @@ FOREACH(comp ${PDOLLAR}{COMPONENTS_LIST})
    ENDIF()
 ENDFOREACH()
 
+# Resolve absolute paths and remove duplicate paths
+# for LIBRARY_DIRS and INCLUDE_DIRS
+# This reduces stress on regular expressions later
+SET(short_dirs)
+FOREACH(dir ${PDOLLAR}{${PROJECT_NAME}_INCLUDE_DIRS})
+  GET_FILENAME_COMPONENT(dir_abs ${PDOLLAR}{dir} ABSOLUTE)
+  LIST(APPEND short_dirs ${PDOLLAR}{dir_abs})
+ENDFOREACH()
+LIST(REMOVE_DUPLICATES short_dirs)
+SET(${PROJECT_NAME}_INCLUDE_DIRS ${PDOLLAR}{short_dirs})
+
+SET(short_dirs)
+FOREACH(dir ${PDOLLAR}{${PROJECT_NAME}_LIBRARY_DIRS})
+  GET_FILENAME_COMPONENT(dir_abs ${PDOLLAR}{dir} ABSOLUTE)
+  LIST(APPEND short_dirs ${PDOLLAR}{dir_abs})
+ENDFOREACH()
+LIST(REMOVE_DUPLICATES short_dirs)
+SET(${PROJECT_NAME}_LIBRARY_DIRS ${PDOLLAR}{short_dirs})
+
 ## ---------------------------------------------------------------------------
 ## MPI specific variables
 ##   These variables are provided to make it easier to get the mpi libraries
@@ -163,6 +182,15 @@ SET(${PROJECT_NAME}_MPI_INCLUDE_DIRS "${TPL_MPI_INCLUDE_DIRS}")
 SET(${PROJECT_NAME}_MPI_EXEC "${MPI_EXEC}")
 SET(${PROJECT_NAME}_MPI_EXEC_MAX_NUMPROCS "${MPI_EXEC_MAX_NUMPROCS}")
 SET(${PROJECT_NAME}_MPI_EXEC_NUMPROCS_FLAG "${MPI_EXEC_NUMPROCS_FLAG}")
+
+## ---------------------------------------------------------------------------
+## Compiler vendor identifications
+## ---------------------------------------------------------------------------
+SET(${PROJECT_NAME}_SYSTEM_NAME "${CMAKE_SYSTEM_NAME}")
+SET(${PROJECT_NAME}_CXX_COMPILER_ID "${CMAKE_CXX_COMPILER_ID}")
+SET(${PROJECT_NAME}_C_COMPILER_ID "${CMAKE_C_COMPILER_ID}")
+SET(${PROJECT_NAME}_Fortran_COMPILER_ID "${CMAKE_Fortran_COMPILER_ID}")
+SET(${PROJECT_NAME}_Fortran_IMPLICIT_LINK_LIBRARIES "${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}")
 
 ## ---------------------------------------------------------------------------
 ## Set useful general variables 

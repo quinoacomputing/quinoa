@@ -1,1 +1,0 @@
---echo-command-line --nD=3000 --bw=10 --diag-scal=1e+3 --nI=5 --xIl=1e-5 --xo=0.1

@@ -1,6 +1,5 @@
-#ifndef MUELU_CONFIG_H
-#define MUELU_CONFIG_H
-
+#ifndef MUELU_CONFIG_HPP
+#define MUELU_CONFIG_HPP
 
 /* Options */
 
@@ -8,7 +7,7 @@
 
 /* #undef HAVE_MUELU_DEBUG */
 
-#define HAVE_MUELU_EXPLICIT_INSTANTIATION
+/* #undef HAVE_MUELU_EXPLICIT_INSTANTIATION */
 
 /* #undef HAVE_MUELU_PROFILING */
 
@@ -17,6 +16,8 @@
 /* #undef HAVE_MUELU_EXPERIMENTAL */
 
 /* #undef HAVE_MUELU_BOOST_FOR_REAL */
+
+/* #undef HAVE_MUELU_KOKKOS_REFACTOR */
 
 /* Optional Dependencies */
 
@@ -62,4 +63,17 @@
 
 /* #undef HAVE_MUELU_MATLAB */
 
-#endif
+/* #undef HAVE_MUELU_AMGX */
+
+/* #undef HAVE_MUELU_CGAL */
+
+/*  
+ If deprecated warnings are on, and the compiler supports them, then
+ define MUELU_DEPRECATED to emit deprecated warnings.  Otherwise,
+ give it an empty definition.
+*/
+#define MUELU_DEPRECATED
+#define MUELU_DEPRECATED_MSG(MSG)
+
+
+#endif /* MUELU_CONFIG_HPP */

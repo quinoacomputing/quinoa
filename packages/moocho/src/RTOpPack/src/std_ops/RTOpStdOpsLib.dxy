@@ -1,9 +1,0 @@
-/** \mainpage RTOpStdOpsLib: Standard RTOp operator classes in C.
-
-This library (<tt><b>libRTOpStdOpsLib</b></tt>) is just an aggregation of some useful RTOp
-reduction/transforamtion operator classes implemented in C.
-
-See the <A HREF="files.html">Files List</A> for a listing of these
-operator classes.
-
-*/

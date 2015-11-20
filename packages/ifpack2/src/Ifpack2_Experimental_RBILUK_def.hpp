@@ -60,7 +60,8 @@ namespace Experimental {
 template<class MatrixType>
 RBILUK<MatrixType>::RBILUK (const Teuchos::RCP<const row_matrix_type>& Matrix_in)
   : RILUK<row_matrix_type>(Teuchos::rcp_dynamic_cast<const row_matrix_type>(Matrix_in) ),
-    A_(Matrix_in)
+    A_(Matrix_in),
+    A_block_(Teuchos::rcp_dynamic_cast<const block_crs_matrix_type>(Matrix_in))
 {}
 
 template<class MatrixType>
@@ -385,11 +386,10 @@ void RBILUK<MatrixType>::compute ()
     initialize (); // Don't count this in the compute() time
   }
 
-  typedef typename GetLapackType<impl_scalar_type>::lapack_scalar_type LST;
-  typedef typename GetLapackType<impl_scalar_type>::lapack_type lapack_type;
+  typedef typename Tpetra::Details::GetLapackType<impl_scalar_type>::lapack_scalar_type LST;
+  typedef typename Tpetra::Details::GetLapackType<impl_scalar_type>::lapack_type lapack_type;
 
   lapack_type lapack;
-
 
   Teuchos::Time timer ("RBILUK::compute");
   { // Start timing
@@ -781,9 +781,12 @@ std::string RBILUK<MatrixType>::description () const
 
 } // namespace Ifpack2
 
+// FIXME (mfh 26 Aug 2015) We only need to do instantiation for
+// MatrixType = Tpetra::RowMatrix.  Conversions to BlockCrsMatrix are
+// handled internally via dynamic cast.
+
 #define IFPACK2_EXPERIMENTAL_RBILUK_INSTANT(S,LO,GO,N)                            \
   template class Ifpack2::Experimental::RBILUK< Tpetra::Experimental::BlockCrsMatrix<S, LO, GO, N> >; \
-  template class Ifpack2::Experimental::RBILUK< Tpetra::RowMatrix<S, LO, GO, N> >; \
-  template class Ifpack2::Experimental::RBILUK< Tpetra::CrsMatrix<S, LO, GO, N> >;
+  template class Ifpack2::Experimental::RBILUK< Tpetra::RowMatrix<S, LO, GO, N> >;
 
 #endif

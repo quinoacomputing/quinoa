@@ -1,8 +1,0 @@
-
-<ParameterList name="Preconditioner">
-  <Parameter name="Type" type="string" value="ML"/>
-  <Parameter name="Problem Type" type="string" value="SA"/>
-  <ParameterList name="ML Settings">
-     <Parameter name="output" type="int" value="10"/>
-  </ParameterList>
-</ParameterList> 

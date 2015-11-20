@@ -54,7 +54,7 @@
 //! \file Zoltan2_AlgParMA.hpp
 //! \brief interface to the ParMA library
 //  
-//  This first design creates an apf mesh to run the ParMA algorithms on. The
+//  This design creates an apf mesh to run the ParMA algorithms on. The
 //  final solution is determined by changes from beginning to end of the mesh.
 //  This approach allows development closer to that of PUMI setup but at the 
 //  cost of creating an extra mesh representation.
@@ -67,6 +67,7 @@
 //  VtxEdgeElm   - Balances targeting vertex, edge, and element imbalance
 //  Ghost        - Balances using ghost element aware diffusion      
 //  Shape        - Optimizes shape of parts by increasing the size of small part boundaries
+//  Centroid     - Balances using centroid diffusion
 //////////////////////////////////////////////////////////////////////////////
 
 #ifndef HAVE_ZOLTAN2_PARMA
@@ -123,7 +124,6 @@ private:
   typedef typename Adapter::part_t part_t;
   typedef typename Adapter::user_t user_t;
   typedef typename Adapter::userCoord_t userCoord_t;
-  typedef typename Adapter::zgid_t zgid_t;
 
   const RCP<const Environment> env;
   const RCP<const Comm<int> > problemComm;
@@ -132,7 +132,7 @@ private:
   apf::Mesh2* m;
   apf::Numbering* gids;
   apf::Numbering* origin_part_ids;
-  std::map<zgid_t, lno_t> mapping_elm_gids_index;
+  std::map<gno_t, lno_t> mapping_elm_gids_index;
 
   MPI_Comm mpicomm;
   bool pcu_outside;
@@ -144,9 +144,11 @@ private:
       mpicomm = MPI_COMM_WORLD;  // taken from siMPI
 #   endif
   }
-
+  // provides conversion from an APF entity dimension to a Zoltan2 entity type
   enum MeshEntityType entityAPFtoZ2(int dimension) const {return static_cast<MeshEntityType>(dimension);}
 
+  //provides a conversion from the Zoltan2 topology type to and APF type
+  //  throws an error on topology types not supported by APF
   enum apf::Mesh::Type topologyZ2toAPF(enum EntityTopologyType ttype) const {
     if (ttype==POINT)
       return apf::Mesh::VERTEX;
@@ -169,20 +171,39 @@ private:
     
   }
 
+  //Sets the weights of each entity in dimension 'dim' to those provided by the mesh adapter
+  //sets all weights in the mesh adapter but currently only one is considered by ParMA
   void setEntWeights(int dim, apf::MeshTag* tag) {
-    apf::MeshIterator* itr = m->begin(dim);
-    apf::MeshEntity* ent;
-    double w = 1.0;
-    while ((ent= m->iterate(itr)))  {
-      m->setDoubleTag(ent,tag,&w);
-      assert(m->hasTag(ent,tag));
+    MeshEntityType etype = entityAPFtoZ2(dim);
+    for (int i=0;i<m->getTagSize(tag);i++) {
+      apf::MeshIterator* itr = m->begin(dim);
+      apf::MeshEntity* ent;
+      const scalar_t* ws=NULL;
+      int stride;
+      if (i<adapter->getNumWeightsPerOf(etype)) 
+        adapter->getWeightsViewOf(etype,ws,stride,i);
+      int j=0;
+      while ((ent= m->iterate(itr)))  {
+        double w = 1.0;
+        if (ws!=NULL)
+          w = static_cast<double>(ws[j]);
+        m->setDoubleTag(ent,tag,&w);
+        j++;
+      }
+      m->end(itr);
     }
-    m->end(itr);
-   
   }
   
+  //Helper function to set the weights of each dimension needed by the specific parma algorithm
   apf::MeshTag* setWeights(bool vtx, bool edge, bool elm) {
-    apf::MeshTag* tag = m->createDoubleTag("parma_weight",1);
+    int num_ws=1;
+    if (vtx)
+      num_ws = std::max(num_ws,adapter->getNumWeightsPerOf(MESH_VERTEX));
+    if (edge)
+      num_ws = std::max(num_ws,adapter->getNumWeightsPerOf(MESH_EDGE));
+    if (elm) 
+      num_ws = std::max(num_ws,adapter->getNumWeightsPerOf(entityAPFtoZ2(m->getDimension())));
+    apf::MeshTag* tag = m->createDoubleTag("parma_weight",num_ws);
     if (vtx)
       setEntWeights(0,tag);
     if (edge)
@@ -194,14 +215,8 @@ private:
   }
 
 
-  //APF Mesh construction helper functions
-  void constructVerts(const zgid_t* conn, lno_t num_adj, apf::GlobalToVert& result) {
-    apf::ModelEntity* interior = m->findModelEntity(m->getDimension(), 0);
-    for (lno_t i=0;i<num_adj;i++) 
-      if ( ! result.count(conn[i])) 
-        result[conn[i]] = m->createVert_(interior);
-  }
-  void constructElements(const zgid_t* conn, lno_t nelem, const lno_t* offsets, 
+  //APF Mesh construction helper functions modified and placed here to support arbitrary entity types
+  void constructElements(const gno_t* conn, lno_t nelem, const lno_t* offsets, 
                          const EntityTopologyType* tops, apf::GlobalToVert& globalToVert)
   {
     apf::ModelEntity* interior = m->findModelEntity(m->getDimension(), 0);
@@ -361,6 +376,8 @@ public:
     setMPIComm(problemComm__);
    
     //Setup PCU communications
+    //If PCU was already initialized outside (EX: for the APFMeshAdapter) 
+    // we don't initialize it again.
     pcu_outside=false;
     if (!PCU_Comm_Initialized())
       PCU_Comm_Init();
@@ -368,14 +385,23 @@ public:
       pcu_outside=true;
     PCU_Switch_Comm(mpicomm);
 
+    //Find the mesh dimension based on if there are any regions or faces in the part
+    // an all reduce is needed in case one part is empty (Ex: after hypergraph partitioning)
     int dim;
-    if (adapter->getGlobalNumOf(MESH_REGION)>0)
+    if (adapter->getLocalNumOf(MESH_REGION)>0)
       dim=3;
-    else if (adapter->getGlobalNumOf(MESH_FACE)>0)
+    else if (adapter->getLocalNumOf(MESH_FACE)>0)
       dim=2;
     else
+      dim=0;
+    PCU_Max_Ints(&dim,1);
+    if (dim<2)
       throw std::runtime_error("ParMA neeeds faces or region information");
-
+    
+    //GFD Currently not allowing ParMA to balance non element primary types
+    if (dim!=adapter->getPrimaryEntityType())
+      throw std::runtime_error("ParMA only supports balancing primary type==mesh element");
+    
     //Create empty apf mesh
     gmi_register_null();
     gmi_model* g = gmi_load(".null");
@@ -384,10 +410,13 @@ public:
 
     //Get entity topology types
     const EntityTopologyType* tops;
-    adapter->getTopologyViewOf(primary_type,tops);
+    try {
+      adapter->getTopologyViewOf(primary_type,tops);
+    }
+    Z2_FORWARD_EXCEPTIONS
     
     //Get element global ids and part ids
-    const zgid_t* element_gids;
+    const gno_t* element_gids;
     const part_t* part_ids;
     adapter->getIDsViewOf(primary_type,element_gids);
     adapter->getPartsView(part_ids);
@@ -395,21 +424,21 @@ public:
       mapping_elm_gids_index[element_gids[i]] = i;
     
     //get vertex global ids
-    const zgid_t* vertex_gids;
+    const gno_t* vertex_gids;
     adapter->getIDsViewOf(MESH_VERTEX,vertex_gids);
     
-    
     //Get vertex coordinates
-    const scalar_t ** vertex_coords = new const scalar_t*[dim];
-    int* strides = new int[dim];
-    for (int i=0;i<dim;i++)
+    int c_dim = adapter->getDimension();
+    const scalar_t ** vertex_coords = new const scalar_t*[c_dim];
+    int* strides = new int[c_dim];
+    for (int i=0;i<c_dim;i++)
       adapter->getCoordinatesViewOf(MESH_VERTEX,vertex_coords[i],strides[i],i);
 
     //Get first adjacencies from elements to vertices
     if (!adapter->availAdjs(primary_type,MESH_VERTEX))
       throw "APF needs adjacency information from elements to vertices";
     const lno_t* offsets;
-    const zgid_t* adjacent_vertex_gids;
+    const gno_t* adjacent_vertex_gids;
     adapter->getAdjsView(primary_type, MESH_VERTEX,offsets,adjacent_vertex_gids);
     
     //build the apf mesh
@@ -418,16 +447,16 @@ public:
     for (size_t i=0;i<adapter->getLocalNumOf(MESH_VERTEX);i++) {
       apf::MeshEntity* vtx = m->createVert_(interior);
       scalar_t temp_coords[3];
-      for (int k=0;k<dim;k++) 
+      for (int k=0;k<c_dim&&k<3;k++) 
 	temp_coords[k] = vertex_coords[k][i*strides[k]];
 
-      for (int k=dim;k<3;k++)
+      for (int k=c_dim;k<3;k++)
 	temp_coords[k] = 0;  
       apf::Vector3 point(temp_coords[0],temp_coords[1],temp_coords[2]);    
       m->setPoint(vtx,0,point);
       vertex_mapping[vertex_gids[i]] = vtx;
     }
-    //constructVerts(adjacent_vertex_gids, offsets[adapter->getLocalNumOf(primary_type)],vertex_mapping);
+    //Call modified helper functions to build the mesh from element to vertex adjacency
     constructElements(adjacent_vertex_gids, adapter->getLocalNumOf(primary_type), offsets, tops, vertex_mapping);
     constructResidence(vertex_mapping);
     constructRemotes(vertex_mapping);
@@ -435,7 +464,8 @@ public:
     m->acceptChanges();
     
     
-    //Setup numberings
+    //Setup numberings of global ids and original part ids
+    // for use after ParMA is run
     apf::FieldShape* s = apf::getConstant(dim);
     gids = apf::createNumbering(m,"global_ids",s,1);
     origin_part_ids = apf::createNumbering(m,"origin",s,1);
@@ -456,7 +486,8 @@ public:
     apf::deriveMdsModel(m);
     m->acceptChanges();
     m->verify();
-    //cleanup
+
+    //cleanup temp storage
     delete [] vertex_coords;
     delete [] strides;
   }
@@ -470,30 +501,30 @@ void AlgParMA<Adapter>::partition(
   const RCP<PartitioningSolution<Adapter> > &solution
 )
 {
-  //Get paramters
+  //Get parameters
   std::string alg_name = "VtxElm";
   double imbalance = 1.1;
-  double step = .1;
+  double step = .5;
   int ghost_layers=3;
   int ghost_bridge=m->getDimension()-1;
  
+  //Get the parameters for ParMA
   const Teuchos::ParameterList &pl = env->getParameters();
   try {
     const Teuchos::ParameterList &ppl = pl.sublist("parma_parameters");
     for (ParameterList::ConstIterator iter =  ppl.begin();
 	 iter != ppl.end(); iter++) {
       const std::string &zname = pl.name(iter);
-      // Convert the value to a string to pass to Zoltan
       if (zname == "parma_method") {
-	std::string &zval = pl.entry(iter).getValue(&zval);
+	std::string zval = pl.entry(iter).getValue(&zval);
 	alg_name = zval;
       }
       else if (zname == "step_size") {
-	double &zval = pl.entry(iter).getValue(&zval);
+	double zval = pl.entry(iter).getValue(&zval);
 	step = zval;
       }
       else if (zname=="ghost_layers" || zname=="ghost_bridge") {
-	int &zval = pl.entry(iter).getValue(&zval);
+	int zval = pl.entry(iter).getValue(&zval);
 	if (zname=="ghost_layers")
 	  ghost_layers = zval;
 	else
@@ -510,9 +541,11 @@ void AlgParMA<Adapter>::partition(
     imbalance = pe2->getValue<double>(&imbalance);
   }
 
+  //booleans for which dimensions need weights
   bool weightVertex,weightEdge,weightElement;
   weightVertex=weightEdge=weightElement=false;
 
+  //Build the selected balancer
   apf::Balancer* balancer;
   const int verbose = 1;
   if (alg_name=="Vertex") {
@@ -539,10 +572,15 @@ void AlgParMA<Adapter>::partition(
     balancer = Parma_MakeShapeOptimizer(m,step,verbose);
     weightElement=true;
   }
+  else if (alg_name=="Centroid") {
+    balancer = Parma_MakeCentroidDiffuser(m,step,verbose);
+    weightElement=true;
+  }
   else  {
-    //Should be caught by the validator
     throw std::runtime_error("No such parma method defined");
   }
+  
+  //build the weights
   apf::MeshTag* weights = setWeights(weightVertex,weightEdge,weightElement);
 
   //balance the apf mesh
@@ -561,16 +599,18 @@ void AlgParMA<Adapter>::partition(
   while ((ent=m->iterate(itr))) {
     if (m->isOwned(ent)) {
       part_t target_part_id = apf::getNumber(origin_part_ids,ent,0,0);
-      zgid_t element_gid = apf::getNumber(gids,ent,0,0);
+      gno_t element_gid = apf::getNumber(gids,ent,0,0);
       PCU_COMM_PACK(target_part_id,element_gid);
     }
   }
   m->end(itr);
+
   //Send information off
   PCU_Comm_Send();
+
   //Unpack information and set new part ids
   while (PCU_Comm_Receive()) {
-    zgid_t global_id;
+    gno_t global_id;
     PCU_COMM_UNPACK(global_id);
     lno_t local_id = mapping_elm_gids_index[global_id];
     part_t new_part_id = PCU_Comm_Sender();
@@ -586,6 +626,7 @@ void AlgParMA<Adapter>::partition(
   m->destroyTag(weights);
   m->destroyNative();
   apf::destroyMesh(m);
+  //only free PCU if it isn't being used outside
   if (!pcu_outside)
     PCU_Comm_Free();
 }

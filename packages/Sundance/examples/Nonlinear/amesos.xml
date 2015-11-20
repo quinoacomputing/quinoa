@@ -1,6 +1,0 @@
-<ParameterList>
-  <ParameterList name="Linear Solver">
-    <Parameter name="Type" type="string" value="Amesos"/>
-    <Parameter name="Verbosity" type="int" value="0"/>
-  </ParameterList>
-</ParameterList>

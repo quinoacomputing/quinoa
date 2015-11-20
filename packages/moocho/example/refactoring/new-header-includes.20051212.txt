@@ -1,9 +1,0 @@
-ExampleNLPBanded.hpp           NLPInterfacePack_ExampleNLPBanded.hpp
-exampleNLPDiagSetup.hpp        AbstractLinAlgPack_exampleNLPDiagSetup.hpp
-ExampleNLPDirect.hpp           NLPInterfacePack_ExampleNLPDirect.hpp
-ExampleNLPDirectRun.hpp        NLPInterfacePack_ExampleNLPDirectRun.hpp
-ExampleNLPObjGrad.hpp          NLPInterfacePack_ExampleNLPObjGrad.hpp
-ExampleBasisSystem.hpp         NLPInterfacePack_ExampleBasisSystem.hpp
-ExampleNLPFirstOrder.hpp       NLPInterfacePack_ExampleNLPFirstOrder.hpp
-ExampleNLPFirstOrderRun.hpp    NLPInterfacePack_ExampleNLPFirstOrderRun.hpp
-NLPWBCounterExample.hpp        NLPInterfacePack_NLPWBCounterExample.hpp
