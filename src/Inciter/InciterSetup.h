@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/InciterSetup.h
   \author    J. Bakosi
-  \date      Mon 09 Nov 2015 12:31:38 PM MST
+  \date      Thu 19 Nov 2015 09:48:32 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Functions used to setup inciter
   \details   Functions used to setup inciter.
@@ -18,12 +18,13 @@
 #include <utility>
 
 #include "Timer.h"
+#include "InciterPrint.h"
+#include "Inciter/InputDeck/InputDeck.h"
+#include "Inciter/CmdLine/CmdLine.h"
 
 namespace tk { class Print; }
 
 namespace inciter {
-
-namespace ctr { class InputDeck; class CmdLine; }
 
 // Parse command line
 void
@@ -38,15 +39,13 @@ init( const ctr::CmdLine& cmdline,
       char** argv );
 
 //! Prepare computational mesh
-void
+std::map< int, std::vector< std::size_t > >
 prepareMesh(
-  const ctr::CmdLine& cmdline,
-  const tk::Print& print,
   const ctr::InputDeck& inputdeck,
+  const InciterPrint& print,
   std::vector< std::pair< std::string, tk::Timer::Watch > >& timestamp,
   uint64_t& nchare,
-  std::size_t& npoin,
-  std::map< int, std::vector< std::size_t > >& element );
+  std::size_t& npoin );
 
 } // inciter::
 

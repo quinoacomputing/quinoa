@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/Reorder.C
   \author    J. Bakosi
-  \date      Sun 08 Nov 2015 01:17:51 PM MST
+  \date      Fri 20 Nov 2015 06:20:04 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Mesh reordering routines for unstructured meshes
   \details   Mesh reordering routines for unstructured meshes.
@@ -154,7 +154,7 @@ global2local( const std::vector< std::size_t >& ginpoel )
 
   // Generate element connectivity using local node ids
   std::vector< std::size_t > inpoel;
-  for (auto p : ginpoel) inpoel.push_back( tk::val( lnode, p ) );
+  for (auto p : ginpoel) inpoel.push_back( tk::val_find( lnode, p ) );
 
   // Return element connectivty with local node IDs
   return { inpoel, gid };

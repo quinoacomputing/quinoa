@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Inciter.C
   \author    J. Bakosi
-  \date      Tue 10 Nov 2015 07:47:01 AM MST
+  \date      Fri 20 Nov 2015 06:36:55 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Inciter, computational shock hydrodynamics tool, Charm++ main
     chare.
@@ -280,8 +280,8 @@ int main( int argc, char **argv ) {
 
     // Prepare computational mesh and fill some global-scope data (all given at
     // the top of this file) so that Charm++ chares can access them
-    prepareMesh( g_cmdline, iprint, g_inputdeck,  // <- const
-                 g_timestamp, g_nchare, g_npoin, g_element );
+    g_element = prepareMesh( g_inputdeck, iprint,  // <- cref
+                             g_timestamp, g_nchare, g_npoin ); // <- ref
 
   } catch (...) { tk::processExceptionMPI(); }
 

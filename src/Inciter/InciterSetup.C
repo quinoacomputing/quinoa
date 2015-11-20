@@ -2,27 +2,28 @@
 /*!
   \file      src/Inciter/InciterSetup.C
   \author    J. Bakosi
-  \date      Mon 16 Nov 2015 03:46:22 PM MST
+  \date      Fri 20 Nov 2015 06:19:36 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Functions used to setup inciter
   \details   Functions used to setup inciter.
 */
 //******************************************************************************
 
-#include <set>
 #include <string>
 #include <cstdint>
 #include <cstdlib>
 #include <iterator>
 #include <type_traits>
 #include <algorithm>
+#include <numeric>
+#include <unordered_map>
 
 #include <boost/format.hpp>
 #include <boost/optional.hpp>
 
 #include "Config.h"
 #include "Types.h"
-#include "Print.h"
+#include "InciterPrint.h"
 #include "Init.h"
 #include "Tags.h"
 #include "Exception.h"
@@ -40,6 +41,7 @@
 #include "Inciter/CmdLine/CmdLine.h"
 #include "Inciter/CmdLine/Parser.h"
 #include "Inciter/InputDeck/Parser.h"
+#include "Options/PartitioningAlgorithm.h"
 
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic push
@@ -131,14 +133,14 @@ help( int argc,
 }
 
 static std::size_t
-meshinfo( const tk::Print& print,
+meshinfo( const ctr::InputDeck& inputdeck,
+          const InciterPrint& print,
           const tk::UnsMesh& graph,
           std::size_t npoin,
           uint64_t load,
           uint64_t chunksize,
           uint64_t remainder,
-          uint64_t nchare,
-          tk::real virtualization )
+          uint64_t nchare )
 //******************************************************************************
 //! Print information on mesh graph and load distribution
 //! \param[in] print Pretty printer
@@ -147,7 +149,6 @@ meshinfo( const tk::Print& print,
 //! \param[in] chunksize Chunk size, see Base/LoadDistribution.h
 //! \param[in] remainder Remainder, see Base/LoadDistribution.h
 //! \param[in] nchare Number of work units (Charm++ chares)
-//! \param[in] virtualization Degree of virtualization
 //! \return Total number of elements in mesh (aggregated across all MPI ranks)
 //! \author J. Bakosi
 //******************************************************************************
@@ -185,7 +186,8 @@ meshinfo( const tk::Print& print,
 
     // Print out info on load distribution
     print.section( "Load distribution" );
-    print.item( "Virtualization [0.0...1.0]", virtualization );
+    print.item( "Virtualization [0.0...1.0]",
+                inputdeck.get< tag::cmd, tag::virtualization >() );
     print.item( "Load (number of tetrahedra)", load );
     print.item( "Number of processing elements", numpes );
     print.item( "Number of work units",
@@ -193,6 +195,12 @@ meshinfo( const tk::Print& print,
                 std::to_string( nchare-1 ) + "*" +
                 std::to_string( chunksize ) + "+" +
                 std::to_string( chunksize+remainder ) + ")" );
+    print.endsubsection();
+
+    // Print out mesh partitioning configuration
+    print.section( "Initial mesh partitioning" );
+    print.Item< tk::ctr::PartitioningAlgorithm,
+                tag::selected, tag::partitioner >();
     print.endsubsection();
   }
 
@@ -226,7 +234,7 @@ poinOwner( std::size_t nchare, const std::vector< std::size_t >& chp )
 
 static std::map< int, std::vector< std::size_t > >
 elemOwner( const std::vector< std::size_t >& che,
-           const std::vector< std::size_t > geid )
+           const std::vector< std::size_t >& geid )
 //******************************************************************************
 //! Construct global mesh element ids for each chare
 //! \param[in] che Chares of elements: array of chare ownership IDs mapping
@@ -326,60 +334,6 @@ chElem( const std::vector< std::size_t >& chp,
   return che;
 }
 
-static void
-assignMesh(
-  const tk::Print& print,
-  const tk::UnsMesh& graph,
-  const std::vector< std::size_t >& che,
-  const ctr::InputDeck& inputdeck,
-  std::vector< std::size_t > geid,
-  std::map< int, std::vector< std::size_t > >& element )
-//******************************************************************************
-//! Assign mesh partitions to Charm++ chares
-//! \param[in] print Pretty printer
-//! \param[in] graph Unstructured mesh graph object reference
-//! \param[in] che Array of chare ownership IDs mapping graph elements to
-//!   Charm++ chares
-//! \param[in] inputdeck Input deck object filled during parsing user input
-//! \param[in] geid List of global element ids for this MPI rank
-//! \param[inout] element Global mesh element ids owned by each chare
-//! \details On each MPI rank the input vector che holds the chare IDs (i.e.,
-//!   colors) for each mesh element after graph partitioning. Based on this
-//!   information this function assigns chare IDs to mesh elements, returned in
-//!   the map of vectors, element. The return is a map of vectors, storing the
-//!   global mesh element IDs associated to chare IDs (on this MPI rank).
-//! \note This function operates on all MPI ranks, working on different chunks
-//!   of the mesh.
-//! \author J. Bakosi
-//******************************************************************************
-{
-  int peid;
-  MPI_Comm_rank( MPI_COMM_WORLD, &peid );
-
-  if (peid == 0)
-    print.diagstart( "Assigning mesh partitions to Charm++ chares ..." );
-
-  Assert( che.size() == graph.tetinpoel().size()/4,
-          "Size of ownership array on " + std::to_string(peid) + " does not "
-          "equal the number of graph elements" );
-
-  //! Construct array of chare ownership IDs mapping mesh elements to chares
-  //const auto che = chElem( chp, graph.tetinpoel() );
-
-//   std::cout << peid << ": che: ";
-//   for (auto e : che) std::cout << e << " ";
-//   std::cout << '\n';
-
-  // Construct and return global mesh element ids for each chare
-  element = elemOwner( che, geid );
-
-//   std::cout << peid << ": element.size = " << element.size() << '\n';
-//   for (const auto& chare : element) for (auto i : chare) std::cout << i << " ";
-//   std::cout << '\n';
-
-  if (peid == 0) print.diagend( "done" );
-}
-
 void
 parseCmdLine( int argc, char** argv, ctr::CmdLine& cmdline )
 //******************************************************************************
@@ -448,23 +402,20 @@ init( const ctr::CmdLine& cmdline,
   }
 }
 
-void
+std::map< int, std::vector< std::size_t > >
 prepareMesh(
-  const ctr::CmdLine& cmdline,
-  const tk::Print& print,
   const ctr::InputDeck& inputdeck,
+  const InciterPrint& print,
   std::vector< std::pair< std::string, tk::Timer::Watch > >& timestamp,
   uint64_t& nchare,
-  std::size_t& npoin,
-  std::map< int, std::vector< std::size_t > >& element )
+  std::size_t& npoin )
 //******************************************************************************
 //! Prepare computational mesh
-//! \param[in] cmdline Command-line stack
-//! \param[in] print Pretty printer
 //! \param[in] inputdeck Input deck with inser input
+//! \param[in] print Pretty printer
 //! \param[inout] timestamp Time stamps in h:m:s format
 //! \param[inout] npoin Total number of points in mesh
-//! \param[inout] element Global mesh element ids owned by each chare
+//! \return Global mesh element ids owned by each chare
 //! \details The load is taken to be proportional to the number of elements of
 //!   the mesh which is proportional to the number of points as well as the
 //!   number of unique edges in the mesh. For a typical mesh of tetrahedra
@@ -489,39 +440,62 @@ prepareMesh(
   // Read mesh graph from file, a chunk on each MPI rank 
   tk::Timer timer;
   if (peid == 0)
-    print.diagstart( "Reading mesh graph on " + std::to_string( numpes ) +
-                     " PE(s) ..." );
+    print.diagstart( "Reading mesh graph ..." );
 
+  const auto& cmdline = inputdeck.get< tag::cmd >();
+
+  // Get number of mesh points and number of tetrahedron elements in input file
   tk::ExodusIIMeshReader er( cmdline.get< tag::io, tag::input >() );
   npoin = er.readElemBlockIDs();
-  // Get number of tetrahedron elements in input file
   auto nel = er.nel( tk::ExoElemType::TET );
-  auto chunk = nel / numpes;
-  auto start = peid * chunk;
-  auto end = start+chunk;
-  if (peid == numpes-1) end += nel % numpes;
+
   // Read our chunk of tetrahedron element connectivity from file and also store
   // the list of global element indices for our chunk of the mesh
-  std::vector< std::size_t > tetinpoel, geid;
-  std::array< std::vector< tk::real >, 3 > ecoord;
-  auto& ex = ecoord[0];
-  auto& ey = ecoord[1];
-  auto& ez = ecoord[2];
-  for (int e=start; e<end; ++e) {
-    er.readElement( static_cast< std::size_t >( e ),
-                    tk::ExoElemType::TET,
-                    tetinpoel );
+  auto chunk = nel / numpes;
+  auto from = peid * chunk;
+  auto till = from+chunk;
+  if (peid == numpes-1) till += nel % numpes;
+  std::vector< std::size_t > tetinpoel;
+  std::array< std::size_t, 2 > ext = { { static_cast<std::size_t>(from),
+                                         static_cast<std::size_t>(till) } };
+  er.readElements( ext, tk::ExoElemType::TET, tetinpoel );
+  std::vector< std::size_t > geid( static_cast<std::size_t>(till-from) );
+  std::iota( begin(geid), end(geid), from );
 
-    std::vector< tk::real > x, y, z;
-    er.readNode( tetinpoel[tetinpoel.size()-4], x, y, z );
-    er.readNode( tetinpoel[tetinpoel.size()-3], x, y, z );
-    er.readNode( tetinpoel[tetinpoel.size()-2], x, y, z );
-    er.readNode( tetinpoel[tetinpoel.size()-1], x, y, z );
-    ex.push_back( (x[0]+x[1]+x[2]+x[3])/4.0 );
-    ey.push_back( (y[0]+y[1]+y[2]+y[3])/4.0 );
-    ez.push_back( (z[0]+z[1]+z[2]+z[3])/4.0 );
+  if (peid == 0) print.diagend( "done" );
 
-    geid.push_back( static_cast< std::size_t >( e ) );
+  // If geometric partitioner is selected, compute element centroid coordinates
+  std::array< std::vector< tk::real >, 3 > centroid;
+  const auto algorithm = inputdeck.get< tag::selected, tag::partitioner >();
+  if ( algorithm == tk::ctr::PartitioningAlgorithmType::RCB ||
+       algorithm == tk::ctr::PartitioningAlgorithmType::RIB )
+  {
+    if (peid == 0)
+      print.diagstart("Reading mesh nodes and computing element centroids ...");
+    // Collect global node ids of elements of this rank
+    auto gid = tetinpoel;
+    tk::unique( gid );
+    // Read node coordinates of mesh elements (of this rank) from file
+    auto coord = er.readNodes( tk::extents(gid) );
+    // Make room for element centroid coordinates
+    auto& cx = centroid[0];
+    auto& cy = centroid[1];
+    auto& cz = centroid[2];
+    auto num = tetinpoel.size()/4;
+    cx.resize( num );
+    cy.resize( num );
+    cz.resize( num );
+    // Compute element centroids for our chunk of the mesh elements
+    for (std::size_t e=0; e<num; ++e) {
+      const auto& a = tk::cref_find( coord, tetinpoel[e*4+0] );
+      const auto& b = tk::cref_find( coord, tetinpoel[e*4+1] );
+      const auto& c = tk::cref_find( coord, tetinpoel[e*4+2] );
+      const auto& d = tk::cref_find( coord, tetinpoel[e*4+3] );
+      cx[e] = (a[0] + b[0] + c[0] + d[0]) / 4.0;
+      cy[e] = (a[1] + b[1] + c[1] + d[1]) / 4.0;
+      cz[e] = (a[2] + b[2] + c[2] + d[2]) / 4.0;
+    }
+    if (peid == 0) print.diagend( "done" );
   }
 
   // Create empty unstructured mesh object initializing only connectivity, so we
@@ -533,8 +507,7 @@ prepareMesh(
   uint64_t load = 0;
   MPI_Allreduce( &peload, &load, 1, MPI_UNSIGNED, MPI_SUM, MPI_COMM_WORLD );
 
-  if (peid == 0) print.diagend( "done" );
-  timestamp.emplace_back( "Read mesh graph from file", timer.hms() );
+  timestamp.emplace_back( "Read mesh from file", timer.hms() );
 
   // Compute load distribution given total work (load) and user-specified
   // virtualization
@@ -543,16 +516,29 @@ prepareMesh(
                                       load, numpes, chunksize, remainder );
 
   // Print out info on mesh and load distribution
-  auto nelem = meshinfo( print, graph, npoin, load, chunksize, remainder,
-                         nchare, cmdline.get< tag::virtualization >() );
+  auto nelem = meshinfo( inputdeck, print, graph, npoin, load, chunksize,
+                         remainder, nchare );
 
   // Partition graph using Zoltan and assign mesh partitions to Charm++ chares
   tk::Timer t;
-  assignMesh( print, graph,
-              tk::zoltan::partitionMesh( graph, ecoord, geid, nelem, nchare, print ),
-              inputdeck, geid, element );
+  if (peid == 0)
+    print.diagstart( "Partitioning mesh & assigning to Charm++ chares..." );
+
+  const auto che =
+    tk::zoltan::geomPartMesh( algorithm, centroid, geid, nelem,
+                              graph.tetinpoel().size()/4, nchare );
+
+  Assert( che.size() == graph.tetinpoel().size()/4, "Size of ownership array "
+          "does not equal the number of graph elements" );
+
+  // Construct and return global mesh element ids for each chare
+  auto element = elemOwner( che, geid );
+
+  if (peid == 0) print.diagend( "done" );
   timestamp.emplace_back( "Partition mesh & assign to Charm++ chares",
                            t.hms() );
+
+  return element;
 }
 
 } // inciter::

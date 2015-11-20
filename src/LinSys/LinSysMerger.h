@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/LinSysMerger.h
   \author    J. Bakosi
-  \date      Mon 09 Nov 2015 11:06:20 AM MST
+  \date      Fri 20 Nov 2015 06:18:23 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Linear system merger
   \details   Linear system merger.
@@ -575,13 +575,13 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
         for (auto r : w.second) {
           const auto it = m_sol.find( r );
           if (it != end(m_sol))
-            sol.emplace( it->first, m_hypreSol[ tk::val(m_lid,it->first) ] );
+            sol.emplace( it->first, m_hypreSol[tk::val_find(m_lid,it->first)] );
           else
             Throw( "Can't find global row id " + std::to_string(r) +
                    " to export in solution vector" );
         }
 
-        tk::ref( m_worker, w.first ).updateSolution( sol );
+        tk::ref_find( m_worker, w.first ).updateSolution( sol );
       }
     }
 

@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/ContainerUtil.h
   \author    J. Bakosi
-  \date      Mon 09 Nov 2015 12:39:29 PM MST
+  \date      Fri 20 Nov 2015 06:26:41 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Various STL container utilities
   \details   Various STL container utilities.
@@ -85,12 +85,12 @@ variance( const std::map< std::string, std::vector< T > >& mapvec,
   return s;
 }
 
-template< typename Key, typename Value >
-const Value&
-cref( const std::map< Key, Value >& map, Key key )
+template< typename Container >
+auto cref_find( const Container& map, typename Container::key_type key ) ->
+  const typename Container::mapped_type&
 //******************************************************************************
-//! \brief Find and return a constant reference to value for key in std::map
-//!   error handling
+//! \brief Find and return a constant reference to value for key in container
+//!   that provides a find() member function with error handling
 //! \param[in] map Map associating values to keys
 //! \param[in] key
 //! \return A constant reference to the value associated to the key in map
@@ -101,17 +101,18 @@ cref( const std::map< Key, Value >& map, Key key )
 {
   const auto it = map.find( key );
 
-  if (it != map.end())
+  if (it != end(map))
     return it->second;
   else
     Throw( "Can't find key " + std::to_string(key) );
 }
 
-template< typename Key, typename Value >
-Value&
-ref( const std::map< Key, Value >& map, Key key )
+template< typename Container >
+auto ref_find( const Container& map, typename Container::key_type key ) ->
+  typename Container::mapped_type&
 //******************************************************************************
-//! Find and return a reference to value for key in std::map with error handling
+//! \brief Find and return a reference to value for key in a container that
+//!   provides a find() member function with error handling
 //! \param[in] map Map associating values to keys
 //! \param[in] key
 //! \return A reference to the value associated to the key in map
@@ -120,14 +121,15 @@ ref( const std::map< Key, Value >& map, Key key )
 //! \author J. Bakosi
 //******************************************************************************
 {
-  return const_cast< Value& >( cref(map,key) );
+  return const_cast< typename Container::mapped_type& >( cref_find(map,key) );
 }
 
-template< typename Key, typename Value >
-Value
-val( const std::map< Key, Value >& map, Key key )
+template< typename Container >
+auto val_find( const Container& map, typename Container::key_type key ) ->
+  typename Container::mapped_type
 //******************************************************************************
-//! Find and return a copy of value for key in std::map with error handling
+//! Find and return a copy of value for key in a container that provides a
+//!   find() member function with error handling
 //! \param[in] map Map associating values to keys
 //! \param[in] key
 //! \return A copy of the value associated to the key in map
@@ -136,7 +138,7 @@ val( const std::map< Key, Value >& map, Key key )
 //! \author J. Bakosi
 //******************************************************************************
 {
-  return ref(map,key);
+  return cref_find( map, key );
 }
 
 template< typename T >

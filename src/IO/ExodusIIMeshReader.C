@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/ExodusIIMeshReader.C
   \author    J. Bakosi
-  \date      Sat 14 Nov 2015 07:19:52 AM MST
+  \date      Thu 19 Nov 2015 03:18:28 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     ExodusII mesh reader
   \details   ExodusII mesh reader class definition. Currently, this is a bare
@@ -15,6 +15,7 @@
 #include <cstdio>
 #include <string>
 #include <numeric>
+#include <unordered_map>
 
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic push
@@ -80,8 +81,8 @@ ExodusIIMeshReader::readMesh( UnsMesh& mesh )
 //******************************************************************************
 {
   readHeader( mesh );
-  readElements( mesh );
-  readNodes( mesh );
+  readAllElements( mesh );
+  readAllNodes( mesh );
 }
 
 void
@@ -93,7 +94,7 @@ ExodusIIMeshReader::readGraph( UnsMesh& mesh )
 //******************************************************************************
 {
   readHeader( mesh );
-  readElements( mesh );
+  readAllElements( mesh );
 }
 
 std::size_t
@@ -137,7 +138,7 @@ ExodusIIMeshReader::readHeader( UnsMesh& mesh )
 }
 
 void
-ExodusIIMeshReader::readNodes( UnsMesh& mesh )
+ExodusIIMeshReader::readAllNodes( UnsMesh& mesh ) const
 //******************************************************************************
 //  Read all node coordinates from ExodusII file
 //! \param[in] mesh Unstructured mesh object
@@ -153,31 +154,30 @@ ExodusIIMeshReader::readNodes( UnsMesh& mesh )
           "Failed to read coordinates from ExodusII file: " + m_filename );
 }
 
-void
-ExodusIIMeshReader::readNode( std::size_t id,
-                              std::vector< tk::real >& x,
-                              std::vector< tk::real >& y,
-                              std::vector< tk::real >& z )
+std::unordered_map< std::size_t, std::array< tk::real, 3 > >
+ExodusIIMeshReader::readNodes( const std::array< std::size_t, 2 >& ext ) const
 //******************************************************************************
-//  Read coordinates of a single mesh node from ExodusII file
-//! \param[in] id Node id whose coordinates to read
-//! \param[inout] x Vector of x coordinates to push to
-//! \param[inout] y Vector of y coordinates to push to
-//! \param[inout] z Vector of z coordinates to push to
+//  Read coordinates of a number of mesh nodes from ExodusII file
+//! \param[in] ext Extents of node ids whose coordinates to read
+//! \param[inout] coord Unordered map of node coordinates associated to ids
 //! \author J. Bakosi
 //******************************************************************************
 {
-  tk::real px, py, pz;
+  auto num = ext[1] - ext[0] + 1;
+  std::vector< tk::real > px( num ), py( num ), pz( num );
 
   ErrChk(
     ne_get_n_coord(
-      m_inFile, static_cast<int64_t>(id)+1, 1, &px, &py, &pz) == 0,
-      "Failed to read coordinates of node " + std::to_string( id ) +
-      " from ExodusII file: " + m_filename );
+      m_inFile, static_cast<int64_t>(ext[0])+1, static_cast<int64_t>(num),
+      px.data(), py.data(), pz.data() ) == 0,
+      "Failed to read coordinates of nodes [" + std::to_string(ext[0]) +
+      "..." + std::to_string(ext[1]) + "] from ExodusII file: " +
+      m_filename );
 
-  x.push_back( px );
-  y.push_back( py );
-  z.push_back( pz );
+  std::unordered_map< std::size_t, std::array< tk::real, 3 > > coord;
+  for (std::size_t p=0; p<num; ++p)
+    coord.emplace( ext[0]+p, std::array<tk::real,3>{{px[p],py[p],pz[p]}} );
+  return coord;
 }
 
 std::size_t
@@ -228,10 +228,10 @@ ExodusIIMeshReader::readElemBlockIDs()
 
 
 void
-ExodusIIMeshReader::readElements( UnsMesh& mesh )
+ExodusIIMeshReader::readAllElements( UnsMesh& mesh )
 //******************************************************************************
-//  Read element blocks and connectivity from ExodusII file
-//! \param[in] mesh Unstructured mesh object
+//  Read all element blocks and mesh connectivity from ExodusII file
+//! \param[inout] mesh Unstructured mesh object to store mesh in
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -283,7 +283,7 @@ ExodusIIMeshReader::readElements( UnsMesh& mesh )
 void
 ExodusIIMeshReader::readElement( std::size_t id,
                                  tk::ExoElemType elemtype,
-                                 std::vector< std::size_t >& conn )
+                                 std::vector< std::size_t >& conn ) const
 //******************************************************************************
 //  Read element connectivity of a single mesh cell from ExodusII file
 //! \param[in] id Element id whose connectivity to read
@@ -313,8 +313,45 @@ ExodusIIMeshReader::readElement( std::size_t id,
   for (auto i : c) conn.push_back( static_cast<std::size_t>(i)-1 );
 }
 
+void
+ExodusIIMeshReader::readElements( const std::array< std::size_t, 2 >& extent,
+                                  tk::ExoElemType elemtype,
+                                  std::vector< std::size_t >& conn ) const
+//******************************************************************************
+//  Read element connectivity of a single mesh cell from ExodusII file
+//! \param[in] extent Extents of element ids whose connectivity to read
+//! \param[in] elemtype Element type
+//! \param[inout] conn Connectivity vector to push to
+//! \note Must be preceded by a call to readElemBlockIDs()
+//! \author J. Bakosi
+//******************************************************************************
+{
+  Assert( std::accumulate(begin(m_eidt), end(m_eidt), 0) != -m_nnpe.size(),
+          "A call to ExodusIIMeshReader::readElement() must be preceded by a "
+          "call to ExodusIIMeshReader::readElemBlockIDs()" );
+
+  auto bid = static_cast< std::size_t >( elemtype );
+
+  auto num = extent[1] - extent[0];
+
+  std::vector< int > c( num * m_nnpe[bid] );
+
+  // Read element connectivity from file
+  ErrChk(
+    ne_get_n_elem_conn(
+      m_inFile, m_eidt[bid], static_cast<int64_t>(extent[0])+1,
+      static_cast<int64_t>(num), c.data() ) == 0,
+      "Failed to read element connectivity of elements [" +
+      std::to_string(extent[0]) + "..." + std::to_string(extent[1]) +
+      "] from block " + std::to_string(m_eidt[bid]) + " from ExodusII file: " +
+      m_filename );
+
+  // Put in element connectivity using zero-based node indexing
+  for (auto i : c) conn.push_back( static_cast<std::size_t>(i)-1 );
+}
+
 int
-ExodusIIMeshReader::nel( tk::ExoElemType elemtype )
+ExodusIIMeshReader::nel( tk::ExoElemType elemtype ) const
 //******************************************************************************
 //  Return number of elements in a mesh block in the ExodusII file
 //! \param[in] elemtype Element type
