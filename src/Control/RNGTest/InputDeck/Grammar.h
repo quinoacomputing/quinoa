@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:16:44 PM MDT
+  \date      Tue 17 Nov 2015 12:16:23 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Random number generator test suite grammar definition
   \details   Random number generator test suite input deck grammar definition.
@@ -57,7 +57,7 @@ namespace deck {
 
   // RNGTest's InputDeck actions
 
-  //! \brief Pput option in state at position given by tags
+  //! \brief Put option in state at position given by tags
   //! \details This is simply a wrapper around tk::grm::store_option passing the
   //!    stack defaults.
   //! \author J. Bakosi

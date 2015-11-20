@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/Types.h
   \author    J. Bakosi
-  \date      Wed 26 Aug 2015 03:13:32 PM MDT
+  \date      Tue 17 Nov 2015 12:01:07 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Types for Incitier's parsers
   \details   Types for Incitier's parsers. This file defines the components of the
@@ -18,6 +18,7 @@
 #include "Types.h"
 #include "Inciter/Options/DiffEq.h"
 #include "Inciter/Options/Problem.h"
+#include "Options/PartitioningAlgorithm.h"
 #include "PUPUtil.h"
 
 namespace inciter {
@@ -25,7 +26,8 @@ namespace ctr {
 
 //! Storage of selected options
 using selects = tk::tuple::tagged_tuple<
-  tag::diffeq,       std::vector< ctr::DiffEqType >  //!< Differential eqs
+  tag::diffeq,       std::vector< ctr::DiffEqType >,    //!< Differential eqs
+  tag::partitioner,  tk::ctr::PartitioningAlgorithmType //!< Mesh partitioner
 >;
 
 //! Discretization parameters storage

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Keywords.h
   \author    J. Bakosi
-  \date      Wed 26 Aug 2015 03:12:54 PM MDT
+  \date      Thu 19 Nov 2015 03:59:19 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Definition of all keywords
   \details   This file contains the definition of all keywords, including those
@@ -2473,6 +2473,73 @@ struct problem_info {
   };
 };
 using problem = keyword< problem_info, p,r,o,b,l,e,m >;
+
+struct rcb_info {
+  static std::string name() { return "recursive coordinate bisection"; }
+  static std::string shortDescription() { return
+    "Select recursive coordinate bisection mesh partitioner"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the recursive coordinate bisection (RCB)
+    mesh partitioner. RCB is a geometry-based partitioner used to distribute an
+    input mesh among processing elements. See
+    Control/Options/PartitioningAlgorithm.h for other valid options.)"; }
+};
+using rcb = keyword< rcb_info, r,c,b >;
+
+struct rib_info {
+  static std::string name() { return "recursive inertial bisection"; }
+  static std::string shortDescription() { return
+    "Select recursive inertial bisection mesh partitioner"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the recursive inertial bisection (RIB)
+    mesh partitioner. RIB is a geometry-based partitioner used to distribute an
+    input mesh among processing elements. See
+    Control/Options/PartitioningAlgorithm.h for other valid options.)"; }
+};
+using rib = keyword< rib_info, r,i,b >;
+
+struct phg_info {
+  static std::string name() { return "hypergraph"; }
+  static std::string shortDescription() { return
+    "Select hypergraph mesh partitioner"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the hypergraph (HG)
+    mesh partitioner. HG is a graph-based partitioner used to distribute an
+    input mesh among processing elements. See
+    Control/Options/PartitioningAlgorithm.h for other valid options.)"; }
+};
+using phg = keyword< phg_info, h,g >;
+
+struct algorithm_info {
+  static std::string name() { return "algorithm"; }
+  static std::string shortDescription() { return
+    "Select mesh partitioning algorithm"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select a mesh partitioning algorithm. See
+    Control/Options/PartitioningAlgorithm.h for valid options.)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+    static std::string choices() {
+      return '\'' + rcb::string() + "\' | \'"
+                  + rib::string() + "\' | \'"
+                  + phg::string() + '\'';
+    }
+  };
+};
+using algorithm = keyword< algorithm_info, a,l,g,o,r,i,t,h,m >;
+
+struct partitioning_info {
+  static std::string name() { return "partitioning"; }
+  static std::string shortDescription() { return
+    "Start configuration block for mesh partitioning"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to introduce a partitioning ... end block, used to
+    specify the configuration for mesh partitioning. Keywords allowed
+    in a partitioning ... end block: )" + std::string("\'")
+    + rcb::string() + "\'.";
+  }
+};
+using partitioning = keyword< partitioning_info, p,a,r,t,i,t,i,o,n,i,n,g >;
 
 ////////// NOT YET FULLY DOCUMENTED //////////
 

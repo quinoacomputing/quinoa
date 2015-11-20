@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.C
   \author    J. Bakosi
-  \date      Mon 09 Nov 2015 06:51:09 PM MST
+  \date      Fri 20 Nov 2015 06:19:01 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Performer advances a PDE
   \details   Performer advances a PDE. There are a potentially
@@ -264,15 +264,15 @@ Performer::rhs( tk::real mult,
       grad[0][i] = -grad[1][i]-grad[2][i]-grad[3][i];
 
     // solution at nodes at time n
-    std::array< tk::real, 4 > u {{ tk::cref( m_u, m_gid[a] ),
-                                   tk::cref( m_u, m_gid[b] ),
-                                   tk::cref( m_u, m_gid[c] ),
-                                   tk::cref( m_u, m_gid[d] ) }};
+    std::array< tk::real, 4 > u {{ tk::cref_find( m_u, m_gid[a] ),
+                                   tk::cref_find( m_u, m_gid[b] ),
+                                   tk::cref_find( m_u, m_gid[c] ),
+                                   tk::cref_find( m_u, m_gid[d] ) }};
     // solution at nodes at time n (at stage 0) and n+1/2 (at stage 1)
-    std::array< tk::real, 4 > s {{ tk::cref( sol, m_gid[a] ),
-                                   tk::cref( sol, m_gid[b] ),
-                                   tk::cref( sol, m_gid[c] ),
-                                   tk::cref( sol, m_gid[d] ) }};
+    std::array< tk::real, 4 > s {{ tk::cref_find( sol, m_gid[a] ),
+                                   tk::cref_find( sol, m_gid[b] ),
+                                   tk::cref_find( sol, m_gid[c] ),
+                                   tk::cref_find( sol, m_gid[d] ) }};
     // pointers to rhs at nodes
     std::array< tk::real*, 4 > r {{ &newrhs[ m_gid[a] ],
                                     &newrhs[ m_gid[b] ],

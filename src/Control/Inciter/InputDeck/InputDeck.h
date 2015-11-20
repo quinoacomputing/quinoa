@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Wed 26 Aug 2015 03:13:51 PM MDT
+  \date      Thu 19 Nov 2015 04:00:11 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Inciter's input deck definition
   \details   This file defines the heterogeneous stack that is used for storing
@@ -61,6 +61,11 @@ class InputDeck :
                                       kw::problem,
                                       kw::plotvar,
                                       kw::interval,
+                                      kw::partitioning,
+                                      kw::algorithm,
+                                      kw::rcb,
+                                      kw::rib,
+                                      kw::phg,
                                       kw::inciter >;
                                      
     //! \brief Constructor: set defaults

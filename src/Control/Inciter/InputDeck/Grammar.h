@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Wed 26 Aug 2015 03:14:04 PM MDT
+  \date      Tue 17 Nov 2015 01:02:12 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Inciter's input deck grammar definition
   \details   Inciter's input deck grammar definition. We use the Parsing
@@ -79,6 +79,18 @@ namespace deck {
     }
   };
 
+  //! \brief Put option in state at position given by tags
+  //! \details This is simply a wrapper around tk::grm::store_option passing the
+  //!    stack defaults.
+  //! \author J. Bakosi
+  template< class Option, typename... tags >
+  struct store_option : pegtl::action_base< store_option< Option, tags... > > {
+    static void apply( const std::string& value, Stack& stack ) {
+      tk::grm::store_option< Stack, use, Option, ctr::InputDeck, tags... >
+                           ( stack, value, g_inputdeck_defaults );
+    }
+  };
+
   // Inciter's InputDeck grammar
 
   //! scan and store_back equation keyword and option
@@ -123,6 +135,20 @@ namespace deck {
                                             tag::problem > >,
            check_errors< tag::scalar > > {};
 
+  //! partitioning ... end block
+  struct partitioning :
+         pegtl::ifmust<
+           tk::grm::readkw< Stack, use< kw::partitioning >::pegtl_string >,
+           tk::grm::block< Stack,
+                           use< kw::end >,
+                           tk::grm::process<
+                             Stack,
+                             use< kw::algorithm >,
+                             store_option< tk::ctr::PartitioningAlgorithm,
+                                           tag::selected,
+                                           tag::partitioner >,
+                             pegtl::alpha > > > {};
+
   //! equation types
   struct equations :
          pegtl::sor< scalar > {};
@@ -145,6 +171,7 @@ namespace deck {
                                        use< kw::end >,
                                        discretization_parameters,
                                        equations,
+                                       partitioning,
                                        plotvar >,
                        pegtl::apply<
                           tk::grm::error< Stack,

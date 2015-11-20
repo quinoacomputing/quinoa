@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/InciterPrint.h
   \author    J. Bakosi
-  \date      Sun 31 May 2015 06:16:53 AM MDT
+  \date      Tue 17 Nov 2015 01:06:42 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Inciter-specific pretty printer functionality
   \details   Inciter-specific pretty printer functionality.
@@ -39,47 +39,44 @@ class InciterPrint : public tk::RNGPrint {
                            std::ostream& qstr = std::cout ) :
       RNGPrint( str, qstr ) {}
 
-    //! Print control option: 'group : option' only if differs from its default
-    template< typename Option, typename... tags >
-    void Section() const {
-      if (g_inputdeck.get< tags... >() !=
-            g_inputdeck_defaults.get< tags... >() ) {
-        Option opt;
-        auto& group = opt.group();
-        auto& value = opt.name( g_inputdeck.get< tags... >() );
-        m_stream << m_section_title_value_fmt % m_section_indent
-                                              % m_section_bullet
-                                              % group
-                                              % value;
-        m_stream << m_section_underline_fmt
-                    % m_section_indent
-                    % std::string( m_section_indent.size() + 3 +
-                                   group.size() + value.size(), '-' );
-      }
-    }
+//     //! Print control option: 'group : option' only if differs from its default
+//     template< typename Option, typename... tags >
+//     void Section() const {
+//       if (g_inputdeck.get< tags... >() !=
+//             g_inputdeck_defaults.get< tags... >() ) {
+//         Option opt;
+//         auto& group = opt.group();
+//         auto& value = opt.name( g_inputdeck.get< tags... >() );
+//         m_stream << m_section_title_value_fmt % m_section_indent
+//                                               % m_section_bullet
+//                                               % group
+//                                               % value;
+//         m_stream << m_section_underline_fmt
+//                     % m_section_indent
+//                     % std::string( m_section_indent.size() + 3 +
+//                                    group.size() + value.size(), '-' );
+//       }
+//     }
+// 
+//     //! Print item: 'name : value' only if differs from its default
+//     //! \param[in] name Name of item
+//     //! \author J. Bakosi
+//     template< typename... tags >
+//     void Item( const std::string& name ) const {
+//       if (g_inputdeck.get< tags... >() !=
+//             g_inputdeck_defaults.get< tags... >() )
+//         m_stream << m_item_name_value_fmt
+//                     % m_item_indent % name % g_inputdeck.get<tags...>();
+//     }
 
-    //! Print item: 'name : value' only if differs from its default
-    //! \param[in] name Name of item
-    //! \author J. Bakosi
-    template< typename... tags >
-    void Item( const std::string& name ) const {
-      if (g_inputdeck.get< tags... >() !=
-            g_inputdeck_defaults.get< tags... >() )
-        m_stream << m_item_name_value_fmt
-                    % m_item_indent % name % g_inputdeck.get<tags...>();
-    }
-
-    //! Print control option: 'group : option' only if differs from its default
+    //! Print control option: 'group : option'
     //! \author J. Bakosi
     template< typename Option, typename... tags >
     void Item() const {
-      if (g_inputdeck.get< tags... >() !=
-            g_inputdeck_defaults.get< tags... >() ) {
-        Option opt;
-        m_stream << m_item_name_value_fmt
-                    % m_item_indent % opt.group()
-                    % opt.name( g_inputdeck.get< tags... >() );
-      }
+      Option opt;
+      m_stream << m_item_name_value_fmt
+                  % m_item_indent % opt.group()
+                  % opt.name( g_inputdeck.get< tags... >() );
     }
 
     //! Print time integration header
