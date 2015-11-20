@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/ZoltanInterOp.C
   \author    J. Bakosi
-  \date      Thu 19 Nov 2015 10:12:42 PM MST
+  \date      Fri 20 Nov 2015 11:05:48 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Interoperation with the Zoltan library
   \details   Interoperation with the Zoltan library, used for static mesh graph
@@ -23,7 +23,6 @@
   #pragma GCC diagnostic ignored "-Wconversion"
 #endif
 
-//#include <zoltan.h>
 #include <Zoltan2_MeshAdapter.hpp>
 #include <Zoltan2_PartitioningProblem.hpp>
 
@@ -56,31 +55,23 @@ class GeometricMeshElemAdapter : public Zoltan2::MeshAdapter< User > {
     using EntityTopologyType = Zoltan2::EntityTopologyType;
 
   public:
+    using gno_t = typename Zoltan2::InputTraits< User >::gno_t;
     using scalar_t = typename Zoltan2::InputTraits< User >::scalar_t;
-    using zgid_t = typename Zoltan2::InputTraits< User >::zgid_t;
     using base_adapter_t = Zoltan2::MeshAdapter< User >;
 
     //! Constructor
-    //! \param[in] Nelem Total number of elements in mesh across all ranks
     //! \param[in] nelem Number of elements in mesh graph on this rank
     //! \param[in] centroid Mesh element coordinates (centroids)
     //! \param[in] elemid Mesh element global IDs
     GeometricMeshElemAdapter(
-      std::size_t Nelem,
       std::size_t nelem,
       const std::array< std::vector< tk::real >, 3 >& centroid,
       const std::vector< std::size_t >& elemid )
-    : m_Nelem( Nelem ),
-      m_nelem( nelem ),
+    : m_nelem( nelem ),
       m_topology( EntityTopologyType::TETRAHEDRON ),
       m_centroid( centroid ),
       m_elemid( elemid )
     {}
-
-    //! Returns the global number of mesh entities
-    //! \return Global (aggregate) number of mesh elements across all ranks
-    std::size_t getGlobalNumOf( MeshEntityType etype ) const override
-    { return m_Nelem; }
 
     //! Returns the number of mesh entities on this rank
     //! \return Number of mesh elements on this rank
@@ -89,7 +80,7 @@ class GeometricMeshElemAdapter : public Zoltan2::MeshAdapter< User > {
 
     //! Provide a pointer to this rank's identifiers
     //! \param[inout] Ids Pointer to the list of global element Ids on this rank
-    void getIDsViewOf( MeshEntityType etype, const zgid_t*& Ids) const override
+    void getIDsViewOf( MeshEntityType etype, const gno_t*& Ids) const override
     { Ids = m_elemid.data(); }
 
     //! Provide a pointer to the entity topology types
@@ -121,7 +112,6 @@ class GeometricMeshElemAdapter : public Zoltan2::MeshAdapter< User > {
     }
 
   private:
-    const std::size_t m_Nelem;           //!< Total number of elements in graph
     const std::size_t m_nelem;           //!< Number of elements on this rank
     const EntityTopologyType m_topology; //!< Mesh element topology types
     //! Mesh element coordinates (centroids)
@@ -134,7 +124,6 @@ std::vector< std::size_t >
 geomPartMesh( tk::ctr::PartitioningAlgorithmType algorithm,
               const std::array< std::vector< tk::real >, 3 >& centroid,
               const std::vector< std::size_t >& elemid,
-              std::size_t Nelem,
               std::size_t nelem,
               uint64_t npart )
 //******************************************************************************
@@ -142,8 +131,6 @@ geomPartMesh( tk::ctr::PartitioningAlgorithmType algorithm,
 //! \param[in] algorithm Partitioning algorithm type
 //! \param[in] centroid Mesh element coordinates
 //! \param[in] elemid Global mesh element ids
-//! \parampin] Nelem Total number of elements in mesh (aggregated across all MPI
-//!   ranks)
 //! \parampin] nelem Number of elements in mesh (on this MPI rank)
 //! \param[in] npart Number of desired graph partitions
 //! \return Array of chare ownership IDs mapping graph points to concurrent
@@ -173,11 +160,11 @@ geomPartMesh( tk::ctr::PartitioningAlgorithmType algorithm,
   //  * 4th argument 'gno' (global number): is the integral data type used by
   //    Zoltan2 to represent global indices and global counts
   using ZoltanTypes =
-    Zoltan2::BasicUserTypes< tk::real, std::size_t, std::size_t, std::size_t >;
+    Zoltan2::BasicUserTypes< tk::real, std::size_t, std::size_t >;
 
   // Create mesh adapter for Zoltan for mesh element partitioning
   using InciterZoltanAdapter = GeometricMeshElemAdapter< ZoltanTypes >;
-  InciterZoltanAdapter adapter( Nelem, nelem, centroid, elemid );
+  InciterZoltanAdapter adapter( nelem, centroid, elemid );
 
   // Create Zoltan2 partitioning problem using our mesh input adapter
   Zoltan2::PartitioningProblem< InciterZoltanAdapter >

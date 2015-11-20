@@ -152,7 +152,7 @@ string(TOLOWER ${CMAKE_BUILD_TYPE} BOOST_BUILD_TYPE)
 if(LIBCXX_CPP)
    # Use libc++ (http://libcxx.llvm.org)
    # Use libc++abi (http://libcxxabi.llvm.org)
-   set(CXXFLAGS "${CXXFLAGS} -stdlib=libc++ -lc++abi")
+   set(CXXFLAGS "${CXXFLAGS} -stdlib=libc++")
 endif()
 
 # Get compiler flags (CFLAGS, CXXFLAGS, FFLAGS) independent of CMAKE_BUILD_TYPE
