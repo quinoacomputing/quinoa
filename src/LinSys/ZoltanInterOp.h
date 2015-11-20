@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/ZoltanInterOp.h
   \author    J. Bakosi
-  \date      Thu 19 Nov 2015 09:51:18 PM MST
+  \date      Fri 20 Nov 2015 10:57:58 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Interoperation with the Zoltan library
   \details   Interoperation with the Zoltan library, used for static mesh
@@ -32,7 +32,6 @@ std::vector< std::size_t >
 geomPartMesh( tk::ctr::PartitioningAlgorithmType algorithm,
               const std::array< std::vector< tk::real >, 3 >& elemcoord,
               const std::vector< std::size_t >& elemid,
-              std::size_t Nelem,
               std::size_t nelem,
               uint64_t npart );
 

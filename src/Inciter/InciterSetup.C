@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/InciterSetup.C
   \author    J. Bakosi
-  \date      Fri 20 Nov 2015 06:19:36 AM MST
+  \date      Fri 20 Nov 2015 10:58:46 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Functions used to setup inciter
   \details   Functions used to setup inciter.
@@ -132,7 +132,7 @@ help( int argc,
              ( inpalias ? " or '-" + *inpalias + " <filename>'" : "" ) + '.' );
 }
 
-static std::size_t
+static void
 meshinfo( const ctr::InputDeck& inputdeck,
           const InciterPrint& print,
           const tk::UnsMesh& graph,
@@ -203,8 +203,6 @@ meshinfo( const ctr::InputDeck& inputdeck,
                 tag::selected, tag::partitioner >();
     print.endsubsection();
   }
-
-  return nelem;
 }
 
 static std::vector< std::vector< std::size_t > >
@@ -516,8 +514,7 @@ prepareMesh(
                                       load, numpes, chunksize, remainder );
 
   // Print out info on mesh and load distribution
-  auto nelem = meshinfo( inputdeck, print, graph, npoin, load, chunksize,
-                         remainder, nchare );
+  meshinfo( inputdeck, print, graph, npoin, load, chunksize, remainder, nchare );
 
   // Partition graph using Zoltan and assign mesh partitions to Charm++ chares
   tk::Timer t;
@@ -525,7 +522,7 @@ prepareMesh(
     print.diagstart( "Partitioning mesh & assigning to Charm++ chares..." );
 
   const auto che =
-    tk::zoltan::geomPartMesh( algorithm, centroid, geid, nelem,
+    tk::zoltan::geomPartMesh( algorithm, centroid, geid,
                               graph.tetinpoel().size()/4, nchare );
 
   Assert( che.size() == graph.tetinpoel().size()/4, "Size of ownership array "
