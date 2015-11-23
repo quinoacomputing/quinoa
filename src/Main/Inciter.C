@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Inciter.C
   \author    J. Bakosi
-  \date      Fri 20 Nov 2015 06:36:55 AM MST
+  \date      Sat 21 Nov 2015 02:57:58 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Inciter, computational shock hydrodynamics tool, Charm++ main
     chare.
@@ -12,7 +12,7 @@
 */
 //******************************************************************************
 
-#include <map>
+#include <unordered_map>
 #include <vector>
 #include <iostream>
 #include <utility>
@@ -104,7 +104,7 @@ uint64_t g_nchare;
 //!   readonly data, the Charm++ chare group elements, created on different PEs,
 //!   will simply access this data, correctly a different one in their own
 //!   global scope, as intended.
-std::map< int, std::vector< std::size_t > > g_element;
+std::unordered_map< int, std::vector< std::size_t > > g_element;
 
 //! \brief Time stamps in h:m:s for the initial MPI portion
 //! \details Time stamps collected here are those collected by the initial MPI

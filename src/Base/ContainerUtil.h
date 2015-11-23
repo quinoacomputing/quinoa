@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/ContainerUtil.h
   \author    J. Bakosi
-  \date      Fri 20 Nov 2015 06:26:41 AM MST
+  \date      Mon 23 Nov 2015 08:53:56 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Various STL container utilities
   \details   Various STL container utilities.
@@ -101,10 +101,7 @@ auto cref_find( const Container& map, typename Container::key_type key ) ->
 {
   const auto it = map.find( key );
 
-  if (it != end(map))
-    return it->second;
-  else
-    Throw( "Can't find key " + std::to_string(key) );
+  if (it != end(map)) return it->second; else Throw( "Can't find key" );
 }
 
 template< typename Container >

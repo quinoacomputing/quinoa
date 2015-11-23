@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.C
   \author    J. Bakosi
-  \date      Fri 20 Nov 2015 06:19:01 AM MST
+  \date      Sat 21 Nov 2015 05:43:18 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Performer advances a PDE
   \details   Performer advances a PDE. There are a potentially
@@ -84,6 +84,45 @@ Performer::setup()
 }
 
 void
+Performer::initIds( const std::vector< std::size_t >& gelem )
+//******************************************************************************
+//! Initialize local->global, global->local node ids, element connectivity
+//! \param[in] gelem Set of unique owned global element ids
+//! \author J. Bakosi
+//******************************************************************************
+{
+  tk::Timer t;
+
+  tk::ExodusIIMeshReader
+    er( g_inputdeck.get< tag::cmd, tag::io, tag::input >() );
+
+  // Read element block IDs from ExodusII file
+  er.readElemBlockIDs();
+
+  std::vector< std::size_t > gtetinpoel;
+
+  // Read global element connectivity of owned tetrahedron elements
+  for (auto e : gelem) er.readElement( e, tk::ExoElemType::TET, gtetinpoel );
+
+  m_timestamp.emplace_back( "Read mesh element connectivity from file",
+                            t.dsec() );
+
+  tk::Timer t2;
+
+  // Generate connectivity graph storing local node ids
+  std::tie( m_inpoel, m_gid ) = tk::global2local( gtetinpoel );
+
+  // Send off number of columns per row to linear system merger
+  m_linsysmerger.ckLocalBranch()->charerow( thisProxy,
+                                            static_cast<int>(m_id),
+                                            thisIndex,
+                                            m_gid );
+
+  m_timestamp.emplace_back( "Initialize mesh point ids, element connectivity",
+                            t2.dsec() );
+}
+
+void
 Performer::init( tk::real dt )
 //******************************************************************************
 // Initialize linear system
@@ -94,33 +133,17 @@ Performer::init( tk::real dt )
   // Set initial conditions
   ic();
 
-  // If the desired max number of time steps is zero or the desired max time is
-  // less than the initial time step size, finish righ away.
-  if ( g_inputdeck.get< tag::discr, tag::nstep >() == 0 ||
-       g_inputdeck.get< tag::discr, tag::t0 >() >
-         g_inputdeck.get< tag::discr, tag::term >() ||
-       g_inputdeck.get< tag::discr, tag::term >() < dt ) {
+  // Call back to Conductor::initcomplete(), signaling that the initialization
+  // is complete and we are now starting time stepping
+  contribute(
+      CkCallback( CkReductionTarget( Conductor, initcomplete ), m_conductor ) );
 
-    // Send time stamps to the host
-    m_conductor.arrTimestamp( m_timestamp );
-
-    // Tell the Charm++ runtime system to call back to Conductor::finish(). The
-    // reduction is done via creating a callback that invokes the typed
-    // reduction client, where m_conductor is the proxy on which the reduction
-    // target method, finish(), is called upon completion of the reduction.
-    contribute(
-      CkCallback( CkReductionTarget( Conductor, finish ), m_conductor ) );
-
-  } else {
-
-    // Compute left-hand side of PDE
-    lhs();
-    // Advance PDE in time (start at stage 0)
-    advance( 0, dt, m_it, m_t );
-    // Send time stamps to the host
-    m_conductor.arrTimestamp( m_timestamp );
-
-  }
+  // Compute left-hand side of PDE
+  lhs();
+  // Advance PDE in time (start at stage 0)
+  advance( 0, dt, m_it, m_t );
+  // Send time stamps to the host
+  m_conductor.arrTimestamp( m_timestamp );
 }
 
 void
@@ -302,44 +325,6 @@ Performer::rhs( tk::real mult,
 
 //std::cout << "sendrhs: " << CkMyPe() << ", " << m_id << '\n';
   m_linsysmerger.ckLocalBranch()->charerhs( static_cast<int>(m_id), newrhs );
-}
-
-void
-Performer::initIds( const std::vector< std::size_t >& gelem )
-//******************************************************************************
-//! Initialize local->global, global->local node ids, element connectivity
-//! \param[in] gelem Set of unique owned global element ids
-//! \author J. Bakosi
-//******************************************************************************
-{
-  tk::Timer t;
-
-  tk::ExodusIIMeshReader
-    er( g_inputdeck.get< tag::cmd, tag::io, tag::input >() );
-
-  // Read element block IDs from ExodusII file
-  er.readElemBlockIDs();
-
-  std::vector< std::size_t > gtetinpoel;
-
-  // Read global element connectivity of owned tetrahedron elements
-  for (auto e : gelem) er.readElement( e, tk::ExoElemType::TET, gtetinpoel );
-
-  m_timestamp.emplace_back( "Read mesh element connectivity from file",
-                            t.dsec() );
-
-  tk::Timer t2;
-
-  // Generate connectivity graph storing local node ids
-  std::tie( m_inpoel, m_gid ) = tk::global2local( gtetinpoel );
-
-  // Send off number of columns per row to linear system merger
-  m_linsysmerger.ckLocalBranch()->charerow( thisProxy,
-                                            static_cast<int>(m_id),
-                                            m_gid );
-
-  m_timestamp.emplace_back( "Initialize mesh point ids, element connectivity",
-                            t2.dsec() );
 }
 
 void
@@ -531,6 +516,8 @@ Performer::updateSolution( const std::map< std::size_t, tk::real >& sol )
         writeFields( m_t + g_inputdeck.get< tag::discr, tag::dt >() );
 
     }
+
+    m_ur.clear();
 
     // Tell the Charm++ runtime system to call back to Conductor::evaluateTime()
     // once all Performer chares have received the update. The reduction is done

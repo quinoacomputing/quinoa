@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Conductor.h
   \author    J. Bakosi
-  \date      Tue 10 Nov 2015 07:28:18 AM MST
+  \date      Mon 23 Nov 2015 08:46:35 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Conductor drives the time integration of a PDE
   \details   Conductor drives the time integration of a PDE
@@ -46,18 +46,18 @@ class Conductor : public CBase_Conductor {
     //! Constructor
     explicit Conductor( std::size_t npoin, uint64_t nchare );
 
+    //! \brief Reduction target indicating that all Spawner chare groups have
+    //!   finished creating their Charm++ Performer worker chare array elements
+    //!   (initializing their mesh element ids they will work on)
+    void created();
+
     //! \brief Reduction target indicating that all linear system merger
     //!   branches have done their part of storing and exporting global row ids
-    //! \details This function is a Charm++ reduction target that is called when
-    //!   all linear system merger branches have done their part of storing and
-    //!   exporting global row ids. Once this is done, we issue a broadcast to
-    //!   all Performer chares to continue with their initialization.
-    void rowcomplete() {
-      m_linsysmerger.rowsreceived();
-      m_spawner.init( m_dt );
-    }
+    void rowcomplete();
 
-    void created() { m_spawner.setup(); }
+    //! \brief Reduction target indicating that all Performer chares have
+    //!   finished their initialization step
+    void initcomplete();
 
     //! \brief Reduction target indicating that all Performer chares have
     //!   finished a time step and it is time to decide whether to continue
@@ -73,33 +73,25 @@ class Conductor : public CBase_Conductor {
     //! \param[in] stamp Vector of time stamps contributed    
     void arrTimestamp(
       const std::vector< std::pair< std::string, tk::real > >& stamp )
-    {
-      timestamp( stamp, m_arrTimestamp, m_arrTimestampCnt, m_nchare );
-    }
+    { timestamp( stamp, m_arrTimestamp, m_arrTimestampCnt, m_nchare ); }
 
     //! Collect vector of time stamps from (LinSysMerger) chare group branches
     //! \param[in] stamp Vector of time stamps contributed
     void grpTimestamp(
       const std::vector< std::pair< std::string, tk::real > >& stamp )
-    {
-      timestamp( stamp, m_grpTimestamp, m_grpTimestampCnt, CkNumPes() );
-    }
+    { timestamp( stamp, m_grpTimestamp, m_grpTimestampCnt, CkNumPes() ); }
 
     //! Collect performance statistics from (Performer) chare array elements
     //! \param[in] p Vector of performance statistics contributed    
     void arrPerfstat(
       const std::vector< std::pair< std::string, tk::real > >& p )
-    {
-      perfstat( p, m_arrPerfstat, m_arrPerfstatCnt, m_nchare );
-    }
+    { perfstat( p, m_arrPerfstat, m_arrPerfstatCnt, m_nchare ); }
 
     //! Collect performance statistics from (LinSysMerger) chare group branches
     //! \param[in] p Vector of performance statistics contributed
     void grpPerfstat(
       const std::vector< std::pair< std::string, tk::real > >& p )
-    {
-      perfstat( p, m_grpPerfstat, m_grpPerfstatCnt, CkNumPes() );
-    }
+    { perfstat( p, m_grpPerfstat, m_grpPerfstatCnt, CkNumPes() ); }
 
   private:
     using LinSysMergerProxy = tk::CProxy_LinSysMerger< CProxy_Conductor,
@@ -109,9 +101,9 @@ class Conductor : public CBase_Conductor {
                                          LinSysMergerProxy >;
 
     InciterPrint m_print;               //!< Pretty printer
-    std::vector< tk::Timer > m_timer;   //!< Timers
     int m_nchare;                       //!< Number of performer chares
     int m_eval;                         //!< EvaluateTime() charge group counter
+    int m_init;                         //!< initcomplete() charge group counter
     uint64_t m_it;                      //!< Iteration count
     tk::real m_t;                       //!< Physical time
     tk::real m_dt;                      //!< Physical time step size
@@ -130,15 +122,16 @@ class Conductor : public CBase_Conductor {
     std::map< std::string, std::vector< tk::real > > m_arrPerfstat;
     //! Performance statistics merged from chare group elements
     std::map< std::string, std::vector< tk::real > > m_grpPerfstat;
+    //! Timer labels
+    enum class TimerTag { CREATE, SETUP, INITIALIZE, TIMESTEP };
+    //! Timers
+    std::map< TimerTag, tk::Timer > m_timer;
 
     //! Compute size of next time step
     tk::real computedt();
 
-    //! Print information at startup
-    void info();
-
     //! Print out time integration header
-    void header() const;
+    void header();
 
     //! Print out one-liner report on time step
     void report();

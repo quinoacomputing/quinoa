@@ -2,12 +2,15 @@
 /*!
   \file      src/Main/InciterDriver.C
   \author    J. Bakosi
-  \date      Sun 08 Nov 2015 01:03:21 PM MST
+  \date      Sat 21 Nov 2015 03:06:11 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Inciter driver
   \details   Inciter driver.
 */
 //******************************************************************************
+
+#include <unordered_map>
+
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wconversion"

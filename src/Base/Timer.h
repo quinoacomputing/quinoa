@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Timer.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:10:20 PM MDT
+  \date      Mon 23 Nov 2015 08:27:42 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Timer declaration
   \details   Timer declaration. Timer is a simple class to do timing various
@@ -65,6 +65,9 @@ class Timer {
 
     //! Constructor: initialize clock to current time stamp.
     explicit Timer() : m_start( clock::now() ) {}
+
+    //! Zero timer
+    void zero() { m_start = clock::now(); } 
 
     //! Query time in second since the constructor call.
     //! \return Time elapsed between start and stop as a real number

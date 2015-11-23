@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/InciterSetup.h
   \author    J. Bakosi
-  \date      Thu 19 Nov 2015 09:48:32 PM MST
+  \date      Sat 21 Nov 2015 02:58:22 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Functions used to setup inciter
   \details   Functions used to setup inciter.
@@ -12,7 +12,7 @@
 #define InciterSetup_h
 
 #include <vector>
-#include <map>
+#include <unordered_map>
 #include <cstddef>
 #include <iosfwd>
 #include <utility>
@@ -39,7 +39,7 @@ init( const ctr::CmdLine& cmdline,
       char** argv );
 
 //! Prepare computational mesh
-std::map< int, std::vector< std::size_t > >
+std::unordered_map< int, std::vector< std::size_t > >
 prepareMesh(
   const ctr::InputDeck& inputdeck,
   const InciterPrint& print,

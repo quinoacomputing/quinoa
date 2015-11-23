@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Conductor.C
   \author    J. Bakosi
-  \date      Tue 10 Nov 2015 07:42:24 AM MST
+  \date      Mon 23 Nov 2015 09:02:24 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Conductor drives the time integration of a PDE
   \details   Conductor drives the time integration of a PDE
@@ -30,9 +30,9 @@ using inciter::Conductor;
 
 Conductor::Conductor( std::size_t npoin, uint64_t nchare ) :
   m_print( g_inputdeck.get<tag::cmd,tag::verbose>() ? std::cout : std::clog ),
-  m_timer( 1 ), // start a timer
   m_nchare( static_cast< int >( nchare ) ),
   m_eval( 0 ),
+  m_init( 0 ),
   m_it( 0 ),
   m_t( g_inputdeck.get< tag::discr, tag::t0 >() ),
   m_dt( computedt() ),
@@ -48,25 +48,6 @@ Conductor::Conductor( std::size_t npoin, uint64_t nchare ) :
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // Print out info and time stepping header
-  info();
-
-  // Create linear system merger chare group collecting chare contributions to a
-  // linear system
-  m_linsysmerger = LinSysMergerProxy::ckNew( thisProxy, npoin );
-
-  // Create chare group spawning asynchronous performers
-  m_spawner = SpawnerProxy::ckNew( m_nchare, thisProxy );
-  for (int p=0; p<CkNumPes(); ++p) m_spawner[ p ].create( m_linsysmerger );
-}
-
-void
-Conductor::info()
-//******************************************************************************
-//  Print information at startup
-//! \author J. Bakosi
-//******************************************************************************
-{
   // Print out information on problem
   m_print.part( "Problem" );
 
@@ -76,18 +57,20 @@ Conductor::info()
 
   // Print discretization parameters
   m_print.section( "Discretization parameters" );
-  m_print.item( "Number of time steps",
-                g_inputdeck.get< tag::discr, tag::nstep >() );
-  m_print.item( "Start time",
-                g_inputdeck.get< tag::discr, tag::t0 >() );
-  m_print.item( "Terminate time",
-                g_inputdeck.get< tag::discr, tag::term >() );
-  m_print.item( "Initial time step size",
-                g_inputdeck.get< tag::discr, tag::dt >() );
+  const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
+  const auto t0 = g_inputdeck.get< tag::discr, tag::t0 >();
+  const auto term = g_inputdeck.get< tag::discr, tag::term >();
+  const auto dt = g_inputdeck.get< tag::discr, tag::dt >();
+  m_print.item( "Number of time steps", nstep );
+  m_print.item( "Start time", t0 );
+  m_print.item( "Terminate time", term );
+  m_print.item( "Initial time step size", dt );
+  // If the desired max number of time steps is larger than zero, and the
+  // termination time is larger than the initial time, and the initial time step
+  // is smaller than the duration of the time to be simulated, we have work to
+  // do, otherwise, finish right away
+  if ( nstep != 0 && term > t0 && dt < term-t0 ) {
 
-  // Start time stepping by printing out some info and time integration header
-  if (g_inputdeck.get< tag::discr, tag::nstep >()) {
- 
    // Print I/O filenames
     m_print.section( "Output filenames" );
     m_print.item( "Field",
@@ -97,9 +80,19 @@ Conductor::info()
     m_print.section( "Output intervals" );
     m_print.item( "TTY", g_inputdeck.get< tag::interval, tag::tty>() );
     m_print.item( "Field", g_inputdeck.get< tag::interval, tag::field >() );
+    m_print.endsubsection();
 
-    // Print out time integration header at the beginning of time stepping
-    header();
+    // Create linear system merger chare group collecting chare contributions to
+    // a linear system
+    m_linsysmerger = LinSysMergerProxy::ckNew( thisProxy, npoin );
+
+    m_print.diagstart( "Creating workers ..." );
+
+    m_timer[ TimerTag::CREATE ].zero();
+
+    // Create chare group spawning asynchronous performers
+    m_spawner = SpawnerProxy::ckNew( m_nchare, thisProxy );
+    for (int p=0; p<CkNumPes(); ++p) m_spawner[ p ].create( m_linsysmerger );
 
   } else finish();      // stop if no time stepping requested
 }
@@ -189,24 +182,63 @@ Conductor::finalReport()
 }
 
 void
-Conductor::finish()
+Conductor::created()
 //******************************************************************************
-// Normal finish of time stepping
+// Reduction target indicating that all Spawner chare groups have finished
+// creating their Charm++ Performer worker chare array elements (initializing
+// their mesh element ids they will work on)
+//! \details Once this is done on all PE, indicated by entering this
+//!   function, we issue a broadcast to all Spawners (on PEs) to issue their
+//!   workers to start setup.
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // Print out reason for stopping
-  const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
-  m_print.endsubsection();
-  if (m_it >= g_inputdeck.get< tag::discr, tag::nstep >())
-     m_print.note( "Normal finish, maximum number of iterations reached: " +
-                   std::to_string( nstep ) );
-   else
-     m_print.note( "Normal finish, maximum time reached: " +
-                   std::to_string( g_inputdeck.get<tag::discr,tag::term>() ) );
+  mainProxy.timestamp( "Create " + std::to_string(m_nchare) + " workers",
+                       tk::query(m_timer, TimerTag::CREATE) );
+  m_print.diagend( "done" );
+  m_print.diagstart( "Setting up workers ..." );
+  m_timer[ TimerTag::SETUP ].zero();
+  m_spawner.setup();
+}
 
-  // Send timer and performance data to main proxy and quit
-  finalReport();
+void
+Conductor::rowcomplete()
+//******************************************************************************
+// Reduction target indicating that all linear system merger branches have done
+// their part of storing and exporting global row ids
+//! \details This function is a Charm++ reduction target that is called when
+//!   all linear system merger branches have done their part of storing and
+//!   exporting global row ids. Once this is done, we issue a broadcast to
+//!   all Spawners and thus implicitly all Performer chares to continue with
+//!   the initialization step.
+//! \author J. Bakosi
+//******************************************************************************
+{
+  mainProxy.timestamp( "Setup " + std::to_string(m_nchare) + " workers",
+                       tk::query(m_timer, TimerTag::SETUP) );
+  m_linsysmerger.rowsreceived();
+  m_print.diagend( "done" );
+  m_print.diagstart( "Initializing workers ..." );
+  m_timer[ TimerTag::INITIALIZE ].zero();
+  m_spawner.init( m_dt );
+}
+
+void
+Conductor::initcomplete()
+//******************************************************************************
+//  Reduction target indicating that all Performer chares have finished their
+//  initialization step and have already continued with start time stepping
+//! \author J. Bakosi
+//******************************************************************************
+{
+  if ( ++m_init == CkNumPes() ) {
+    mainProxy.timestamp( "Initialize " + std::to_string(m_nchare) + " workers",
+                         tk::query(m_timer, TimerTag::INITIALIZE) );
+    m_init = 0; // get ready for next time
+    m_print.diagend( "done" );
+    m_print.diagstart( "Starting time stepping ...\n" );
+    header();   // print out time integration header
+  }
 }
 
 void
@@ -216,36 +248,29 @@ Conductor::evaluateTime()
 //! \author J. Bakosi
 //******************************************************************************
 {
-  ++m_eval;
-
-  if ( m_eval == CkNumPes() ) {
-
+  if ( ++m_eval == CkNumPes() ) {
     m_eval = 0; // get ready for next time
-
     // Get physical time at which to terminate
     const auto term = g_inputdeck.get< tag::discr, tag::term >();
-
+    const auto eps = std::numeric_limits< tk::real >::epsilon();
+    const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
     // if not final stage of time step or if neither max iterations nor max time
-    // reached, will continue
-    if ( (m_stage < 1) || 
-         (std::fabs(m_t - term) > std::numeric_limits< tk::real >::epsilon() &&
-           m_it < g_inputdeck.get< tag::discr, tag::nstep >()) )
-    {
-
-      // Tell all linear system merger group elements to prepare for a new rhs
+    // reached, will continue by telling all linear system merger group elements
+    // to prepare for a new rhs, otherwise, finish
+    if ( m_stage < 1 || (std::fabs(m_t-term) > eps && m_it < nstep) )
       m_linsysmerger.enable_wait4rhs();
-
-    } else {
-
+    else
       finish();
-
-    }
-
   }
 }
 
 void
 Conductor::advance()
+//******************************************************************************
+//  Reduction target indicating that all Performer chares have finished their
+//  initialization step
+//! \author J. Bakosi
+//******************************************************************************
 {
   // Update stage in multi-stage time stepping
   if (m_stage < 1) {    // if not final stage, continue with next stage
@@ -292,7 +317,28 @@ Conductor::computedt()
 }
 
 void
-Conductor::header() const
+Conductor::finish()
+//******************************************************************************
+// Normal finish of time stepping
+//! \author J. Bakosi
+//******************************************************************************
+{
+  // Print out reason for stopping
+  const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
+  m_print.endsubsection();
+  if (m_it >= g_inputdeck.get< tag::discr, tag::nstep >())
+     m_print.note( "Normal finish, maximum number of iterations reached: " +
+                   std::to_string( nstep ) );
+   else
+     m_print.note( "Normal finish, maximum time reached: " +
+                   std::to_string( g_inputdeck.get<tag::discr,tag::term>() ) );
+
+  // Send timer and performance data to main proxy and quit
+  finalReport();
+}
+
+void
+Conductor::header()
 //******************************************************************************
 // Print out time integration header
 //! \author J. Bakosi
@@ -307,6 +353,7 @@ Conductor::header() const
     "       out - output-saved flags (F: field)\n",
     "\n      it             t            dt        ETE        ETA   out\n"
       " ---------------------------------------------------------------\n" );
+  m_timer[ TimerTag::TIMESTEP ].zero();
 }
 
 void
@@ -318,15 +365,16 @@ Conductor::report()
 {
   if (!(m_it % g_inputdeck.get< tag::interval, tag::tty >())) {
 
-    // estimated time elapsed and for accomplishment
+    // estimate time elapsed and time for accomplishment
     tk::Timer::Watch ete, eta;
-    m_timer[0].eta( g_inputdeck.get< tag::discr, tag::term >() -
-                      g_inputdeck.get< tag::discr, tag::t0 >(),
-                    m_t -  g_inputdeck.get< tag::discr, tag::t0 >(),
-                    g_inputdeck.get< tag::discr, tag::nstep >(),
-                    m_it,
-                    ete,
-                    eta );
+    const auto& timer = tk::cref_find( m_timer, TimerTag::TIMESTEP );
+    timer.eta( g_inputdeck.get< tag::discr, tag::term >() -
+                 g_inputdeck.get< tag::discr, tag::t0 >(),
+               m_t -  g_inputdeck.get< tag::discr, tag::t0 >(),
+               g_inputdeck.get< tag::discr, tag::nstep >(),
+               m_it,
+               ete,
+               eta );
 
     // Output one-liner
     m_print << std::setfill(' ') << std::setw(8) << m_it << "  "
