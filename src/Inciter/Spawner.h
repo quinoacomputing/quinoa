@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Spawner.h
   \author    J. Bakosi
-  \date      Tue 10 Nov 2015 08:56:18 AM MST
+  \date      Sat 21 Nov 2015 03:03:41 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Charm++ chare spawner group
   \details   Charm++ chare spawner group.
@@ -11,9 +11,11 @@
 #ifndef Spawner_h
 #define Spawner_h
 
+#include <unordered_map>
 #include <iostream>     // NOT NEEDED!
 
 #include "Exception.h"
+#include "PUPUtil.h"
 
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic push
@@ -28,20 +30,16 @@
 
 namespace inciter {
 
-extern std::map< int, std::vector< std::size_t > > g_element;
-
-//! Charm++ chare element map merger reducer
-static CkReduction::reducerType ChareElemMapMerger;
+extern std::unordered_map< int, std::vector< std::size_t > > g_element;
 
 //! Spawner Charm++ chare group class
 //! \details Instantiations of Spawner comprise a processor aware Charm++ chare
 //!   group. When instantiated, a new object is created on each PE and not more
 //!   (as opposed to individual chares or chare array object elements). The
 //!   group's elements are used to spawn chare objects on every PE. See also the
-//!   Charm++ interface file spawner.ci. The class is templated on the host as
-//!   well as the work proxy so that the same code (parameterized by the
-//!   template arguments) can be generated for interacting with different types
-//!   of Charm++ proxies.
+//!   Charm++ interface file spawner.ci. The class is templated on classes so
+//!   that the same code (parameterized by the template arguments) can be
+//!   generated for interacting with different types of Charm++ proxies.
 //! \see http://charm.cs.illinois.edu/manuals/html/charm++/manual.html
 //! \author J. Bakosi
 template< class HostProxy, class WorkerProxy, class LinSysMergerProxy >
@@ -100,7 +98,8 @@ class Spawner : public CBase_Spawner< HostProxy,
       // Construct export map associating those map values (mesh element indices
       // associated to chare IDs) owned by chares we do not create, i.e.,
       // created by fellow PEs
-      std::map< int, std::map< int, std::vector< std::size_t > > > exp;
+      std::unordered_map< int,
+        std::unordered_map< int, std::vector< std::size_t > > > exp;
       for (const auto& c : g_element) exp[ pe(c.first) ].insert( c );
       // Export chare IDs and element IDs we do not own to fellow PEs
       m_npe = exp.size();
@@ -114,7 +113,7 @@ class Spawner : public CBase_Spawner< HostProxy,
     //!   global, i.e., unique across all PEs, we compute the local chare array
     //!   element index here and add the list of element IDs to the chare.
     void add( int frompe,
-              const std::map< int, std::vector< std::size_t > >& element )
+          const std::unordered_map< int, std::vector< std::size_t > >& element )
     {
       for (const auto& c : element) {
         Assert( pe(c.first) == CkMyPe(), "PE " + std::to_string(CkMyPe()) +

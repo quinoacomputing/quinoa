@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/InciterSetup.C
   \author    J. Bakosi
-  \date      Fri 20 Nov 2015 10:58:46 AM MST
+  \date      Sat 21 Nov 2015 02:59:23 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Functions used to setup inciter
   \details   Functions used to setup inciter.
@@ -230,7 +230,7 @@ poinOwner( std::size_t nchare, const std::vector< std::size_t >& chp )
   return point;
 }
 
-static std::map< int, std::vector< std::size_t > >
+static std::unordered_map< int, std::vector< std::size_t > >
 elemOwner( const std::vector< std::size_t >& che,
            const std::vector< std::size_t >& geid )
 //******************************************************************************
@@ -247,7 +247,7 @@ elemOwner( const std::vector< std::size_t >& che,
   Assert( che.size() == geid.size(), "The size of the global element index and "
           "the chare element arrays must equal" );
 
-  std::map< int, std::vector< std::size_t > > element;
+  std::unordered_map< int, std::vector< std::size_t > > element;
 
   for (std::size_t e=0; e<che.size(); ++e)
     element[ static_cast<int>(che[e]) ].push_back( geid[e] );
@@ -400,7 +400,7 @@ init( const ctr::CmdLine& cmdline,
   }
 }
 
-std::map< int, std::vector< std::size_t > >
+std::unordered_map< int, std::vector< std::size_t > >
 prepareMesh(
   const ctr::InputDeck& inputdeck,
   const InciterPrint& print,

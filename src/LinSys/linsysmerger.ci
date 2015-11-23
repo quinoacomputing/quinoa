@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/linsysmerger.ci
   \author    J. Bakosi
-  \date      Thu 05 Nov 2015 01:37:10 PM MST
+  \date      Sat 21 Nov 2015 05:25:06 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Charm++ module interface file for merging a linear system
   \details   Charm++ module interface file for merging a linear system
@@ -33,16 +33,17 @@ module linsysmerger {
       entry LinSysMerger( HostProxy& host, std::size_t npoin );
       entry void enable_wait4rhs();
       entry void addrow( WorkerProxy fromworker,
-                         int fromch,
+                         int chgid,
+                         int chlid,
                          int frompe,
                          const std::set< std::size_t >& row );
       entry void recrow();
-      entry void addsol( int fromch,
+      entry void addsol( int chgid,
                          const std::map< std::size_t, tk::real >& sol );
-      entry void addlhs( int fromch,
+      entry void addlhs( int chgid,
                          const std::map< std::size_t,
                                      std::map< std::size_t, tk::real > >& lhs );
-      entry void addrhs( int fromch,
+      entry void addrhs( int chgid,
                          const std::map< std::size_t, tk::real >& rhs );
       entry void rowsreceived();
 
