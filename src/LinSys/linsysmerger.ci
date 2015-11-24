@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/linsysmerger.ci
   \author    J. Bakosi
-  \date      Sat 21 Nov 2015 05:25:06 PM MST
+  \date      Mon 23 Nov 2015 09:24:04 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Charm++ module interface file for merging a linear system
   \details   Charm++ module interface file for merging a linear system
@@ -69,29 +69,20 @@ module linsysmerger {
         when trigger_sol_complete() serial {
           m_timestamp.emplace_back( "Merge solution vector",
                                     tk::query( m_timer, TimerTag::SOL ) );
-//std::cout << CkMyPe() << " sol received\n";
           hypresol();
         }
       };
       entry void wait4lhs() {
         when trigger_lhs_complete() serial {
-          m_perfstat.emplace_back( "Communicated/total of lhs matrix",
-            static_cast<tk::real>(m_matcompts) /
-            static_cast<tk::real>(m_matownpts+m_matcompts) );
           m_timestamp.emplace_back( "Merge left-hand side matrix",
                                     tk::query( m_timer, TimerTag::LHS ) );
-//std::cout << CkMyPe() << " lhs received\n";
           hyprelhs();
         }
       };
       entry void wait4rhs() {
         when trigger_rhs_complete() serial {
-          m_perfstat.emplace_back( "Communicated/total of rhs vector",
-            static_cast<tk::real>(m_veccompts) /
-            static_cast<tk::real>(m_vecownpts+m_veccompts) );
           m_timestamp.emplace_back( "Merge right-hand side vector",
                                     tk::query( m_timer, TimerTag::RHS ) );
-//std::cout << CkMyPe() << " rhs received\n";
           hyprerhs();
         }
       };
@@ -115,7 +106,6 @@ module linsysmerger {
              trigger_asmlhs_complete(),
              trigger_asmrhs_complete()
         serial {
-//std::cout << CkMyPe() << " ALL received\n";
           solve();
           sendTimers();
         }
