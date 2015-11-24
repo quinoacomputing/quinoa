@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/LinSysMerger.h
   \author    J. Bakosi
-  \date      Sat 21 Nov 2015 05:22:26 PM MST
+  \date      Mon 23 Nov 2015 09:25:45 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Linear system merger
   \details   Linear system merger.
@@ -72,14 +72,11 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       m_upper( m_lower + m_chunksize ),
       m_nchare( 0 ),
       m_nperow( 0 ),
-      m_matownpts( 0 ),
-      m_matcompts( 0 ),
-      m_vecownpts( 0 ),
-      m_veccompts( 0 )
+      m_ownpts( 0 ),
+      m_compts( 0 )
     {
       auto remainder = npoin % static_cast<std::size_t>(CkNumPes());
       if (remainder && CkMyPe() == CkNumPes()-1) m_upper += remainder;
-      //std::cout << CkMyPe() << ": [" << m_lower << "..." << m_upper << ")\n";
       // Create distributed linear system
       create();
       // Activate SDAG waits for assembling lhs, rhs, and solution
@@ -96,7 +93,6 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
     }
 
     //! Re-enable SDAG waits for rebuilding the right-hand side vector only
-    //! \note This is a reduction target, why ...
     void enable_wait4rhs() {
       wait4rhs();
       wait4hyprerhs();
@@ -107,7 +103,6 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       m_hypreRhs.clear();
       trigger_asmsol_complete();
       trigger_asmlhs_complete();
-//std::cout << "clear: " << CkMyPe() << '\n';
       signal2host_wait4rhs_complete( m_host );
     }
 
@@ -139,8 +134,10 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
         if (gid >= m_lower && gid < m_upper) {  // if own
           m_rowimport[ chgid ].push_back( gid );
           m_row.insert( gid );
+          ++m_ownpts;
         } else {
           exp[ pe(gid) ].insert( gid );
+          ++m_compts;
         }
       }
       // Export non-owned parts to fellow branches that own them
@@ -198,7 +195,6 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
           exp[ pe(gid) ][ gid ] = r.second;
         }
       }
-//std::cout << "lsm: " << CkMyPe() << ", solrecv from chare array " << chgid << ", solimp_size now: " << m_solimport.size() << ", m_solimport keys: "; for (const auto& i : m_solimport) std::cout << i.first << " "; std::cout << '\n';
       // Export non-owned vector values to fellow branches that own them
       for (const auto& p : exp) {
         auto tope = static_cast< int >( p.first );
@@ -215,7 +211,6 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
         m_solimport[ chgid ].push_back( r.first );
         m_sol[ r.first ] = r.second;
       }
-//std::cout << "lsm: " << CkMyPe() << ", solrecv from fellow pe: " << chgid << ", solimp_size now: " << m_solimport.size() << ", solsize: " << sol.size() << ", m_solimport keys: "; for (const auto& i : m_solimport) std::cout << i.first << " "; std::cout << '\n';
       if (solcomplete()) trigger_sol_complete();
     }
 
@@ -236,16 +231,13 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
                 std::map< std::size_t,
                           std::map< std::size_t, tk::real > > > exp;
       for (const auto& r : lhs) {
-        auto rowsize = r.second.size() * sizeof( decltype(exp)::value_type );
         auto gid = r.first;
         if (gid >= m_lower && gid < m_upper) {  // if own
           m_lhsimport[ chgid ].push_back( gid );
           auto& row = m_lhs[gid];
           for (const auto& c : r.second) row[ c.first ] += c.second;
-          m_matownpts += rowsize;
         } else {
           exp[ pe(gid) ][ gid ] = r.second;
-          m_matcompts += rowsize;
         }
       }
       // Export non-owned matrix rows values to fellow branches that own them
@@ -285,13 +277,10 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
         if (gid >= m_lower && gid < m_upper) {  // if own
           m_rhsimport[ chgid ].push_back( gid );
           m_rhs[gid] += r.second;
-          ++m_vecownpts;
         } else {
           exp[ pe(gid) ][ gid ] = r.second;
-          ++m_veccompts;
         }
       }
-//std::cout << "lsm: " << CkMyPe() << ", rhsrecv from chare array " << chgid << ", rhsimp_size now: " << m_rhsimport.size() << ", m_rhsimport keys: "; for (const auto& i : m_rhsimport) std::cout << i.first << " "; std::cout << '\n';
       // Export non-owned vector values to fellow branches that own them
       for (const auto& p : exp) {
         auto tope = static_cast< int >( p.first );
@@ -308,7 +297,6 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
         m_rhsimport[ chgid ].push_back( r.first );
         m_rhs[ r.first ] += r.second;
       }
-//std::cout << "lsm: " << CkMyPe() << ", rhsrecv from fellow pe: " << chgid << ", rhsimp_size now: " << m_rhsimport.size() << ", rhssize: " << rhs.size() << ", m_rhsimport keys: "; for (const auto& i : m_rhsimport) std::cout << i.first << " "; std::cout << '\n';
       if (rhscomplete()) trigger_rhs_complete();
     }
 
@@ -384,10 +372,8 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
     std::vector< tk::real > m_hypreSol;
     //! Global->local row id map for sending back solution vector parts
     std::map< std::size_t, std::size_t > m_lid;
-    std::size_t m_matownpts;    //!< Size (in bytes) of owned matrix nonzeros
-    std::size_t m_matcompts;    //!< size (in bytes) of communicated matrix
-    std::size_t m_vecownpts;    //!< Size (in bytes) of owned vector nonzeros
-    std::size_t m_veccompts;    //!< size (in bytes) of communicated vector
+    std::size_t m_ownpts;    //!< Number of owned rows
+    std::size_t m_compts;    //!< Number of communicated rows
     //! Time stamps
     std::vector< std::pair< std::string, tk::real > > m_timestamp;
     //! Timer labels
@@ -577,7 +563,6 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
 
       // Group solution vector by workers and send each the parts back to
       // workers that own them
-      //std::cout << CkMyPe() << ": " << m_worker.size() << '\n';
       for (const auto& w : m_solimport) {
         std::map< std::size_t, tk::real > sol;
         for (auto r : w.second) {
@@ -665,6 +650,9 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
     //! \brief Signal back to host that the initialization of the row indices of
     //!   the linear system is complete
     void signal2host_row_complete( const inciter::CProxy_Conductor& host ) {
+      m_perfstat.emplace_back( "Communicated/total rows",
+                               static_cast<tk::real>(m_compts) /
+                               static_cast<tk::real>(m_ownpts+m_compts) );
       using inciter::CkIndex_Conductor;
       Group::contribute(
         CkCallback( CkIndex_Conductor::redn_wrapper_rowcomplete(NULL), host )

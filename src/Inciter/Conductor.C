@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Conductor.C
   \author    J. Bakosi
-  \date      Mon 23 Nov 2015 09:02:24 AM MST
+  \date      Mon 23 Nov 2015 02:28:55 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Conductor drives the time integration of a PDE
   \details   Conductor drives the time integration of a PDE
@@ -193,7 +193,8 @@ Conductor::created()
 //! \author J. Bakosi
 //******************************************************************************
 {
-  mainProxy.timestamp( "Create " + std::to_string(m_nchare) + " workers",
+  mainProxy.timestamp( "Create " + std::to_string(m_nchare) + " workers on " +
+                       std::to_string(CkNumPes()) + " PEs",
                        tk::query(m_timer, TimerTag::CREATE) );
   m_print.diagend( "done" );
   m_print.diagstart( "Setting up workers ..." );
@@ -214,7 +215,8 @@ Conductor::rowcomplete()
 //! \author J. Bakosi
 //******************************************************************************
 {
-  mainProxy.timestamp( "Setup " + std::to_string(m_nchare) + " workers",
+  mainProxy.timestamp( "Setup " + std::to_string(m_nchare) + " workers on " +
+                       std::to_string(CkNumPes()) + " PEs",
                        tk::query(m_timer, TimerTag::SETUP) );
   m_linsysmerger.rowsreceived();
   m_print.diagend( "done" );
@@ -232,7 +234,8 @@ Conductor::initcomplete()
 //******************************************************************************
 {
   if ( ++m_init == CkNumPes() ) {
-    mainProxy.timestamp( "Initialize " + std::to_string(m_nchare) + " workers",
+    mainProxy.timestamp( "Initialize " + std::to_string(m_nchare) + " workers "
+                         "on " + std::to_string(CkNumPes()) + " PEs",
                          tk::query(m_timer, TimerTag::INITIALIZE) );
     m_init = 0; // get ready for next time
     m_print.diagend( "done" );

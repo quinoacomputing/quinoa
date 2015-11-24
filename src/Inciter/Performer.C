@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.C
   \author    J. Bakosi
-  \date      Sat 21 Nov 2015 05:43:18 PM MST
+  \date      Mon 23 Nov 2015 09:08:25 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Performer advances a PDE
   \details   Performer advances a PDE. There are a potentially
@@ -72,7 +72,6 @@ Performer::setup()
 //! \author J. Bakosi
 //******************************************************************************
 {
-//std::cout << "setup: " << CkMyPe() << ", " << m_id << ", " << m_elem.size() << '\n';
   // Initialize local->global, global->local node ids, element connectivity
   initIds( m_elem );
   // Read coordinates of owned and received mesh nodes
@@ -129,7 +128,6 @@ Performer::init( tk::real dt )
 //! \author J. Bakosi
 //******************************************************************************
 {
-//std::cout << "init: " << CkMyPe() << ", " << m_id << '\n';
   // Set initial conditions
   ic();
 
@@ -140,9 +138,9 @@ Performer::init( tk::real dt )
 
   // Compute left-hand side of PDE
   lhs();
-  // Advance PDE in time (start at stage 0)
+  // Start advancing PDE in time at time step stage 0
   advance( 0, dt, m_it, m_t );
-  // Send time stamps to the host
+  // Send time stamps to host
   m_conductor.arrTimestamp( m_timestamp );
 }
 
@@ -323,7 +321,6 @@ Performer::rhs( tk::real mult,
 
   m_timestamp.emplace_back( "Compute right-hand side vector", t.dsec() );
 
-//std::cout << "sendrhs: " << CkMyPe() << ", " << m_id << '\n';
   m_linsysmerger.ckLocalBranch()->charerhs( static_cast<int>(m_id), newrhs );
 }
 
@@ -497,28 +494,19 @@ Performer::updateSolution( const std::map< std::size_t, tk::real >& sol )
   // Receive update of solution vector
   for (const auto& s : sol) m_ur[ s.first ] = s.second;
 
-//std::cout << "UpdateRecvd " << CkMyPe() << ", " << m_id << ", ursize now: " << m_ur.size() << ", when complete: " << m_gid.size() << '\n';
-
   // If all contributions we own have been received, continue by updating a
   // different solution vector depending on time step stage
   if (m_ur.size() == m_gid.size()) {
 
-//std::cout << "allUpdateRecvd " << CkMyPe() << ", " << m_id << '\n';
-
     if (m_stage < 1) {
-
       m_uf = std::move( m_ur );
-
     } else {
-
       m_u = std::move( m_ur );
       if (!((m_it+1) % g_inputdeck.get< tag::interval, tag::field >()))
         writeFields( m_t + g_inputdeck.get< tag::discr, tag::dt >() );
-
     }
 
     m_ur.clear();
-
     // Tell the Charm++ runtime system to call back to Conductor::evaluateTime()
     // once all Performer chares have received the update. The reduction is done
     // via creating a callback that invokes the typed reduction client, where
