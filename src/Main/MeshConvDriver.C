@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/MeshConvDriver.C
   \author    J. Bakosi
-  \date      Sun 31 May 2015 06:26:20 AM MDT
+  \date      Tue 24 Nov 2015 11:33:32 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Mesh converter driver
   \details   Mesh converter driver.
@@ -33,6 +33,8 @@ extern CProxy_Main mainProxy;
 
 MeshConvDriver::MeshConvDriver( const tk::Print& print,
                                 const ctr::CmdLine& cmdline )
+  : m_print( print ),
+    m_reorder( cmdline.get< tag::reorder >() )
 //******************************************************************************
 //  Constructor
 //! \param[in] print Pretty printer
@@ -54,8 +56,17 @@ MeshConvDriver::execute() const
 //! \author J. Bakosi
 //******************************************************************************
 {
-  std::pair< std::string, tk::real > rtime, wtime;
-  tk::writeUnsMesh( m_output, tk::readUnsMesh(m_input,rtime), wtime );
-  mainProxy.timestamp( { rtime, wtime } );
+  m_print.endsubsection();
+
+  std::vector< std::pair< std::string, tk::real > > times( 1 );
+
+  auto wtimes = tk::writeUnsMesh( m_print,
+                                  m_output,
+                                  tk::readUnsMesh( m_print, m_input, times[0] ),
+                                  m_reorder );
+
+  times.insert( end(times), begin(wtimes), end(wtimes) );
+  mainProxy.timestamp( times );
+
   mainProxy.finalize();
 }

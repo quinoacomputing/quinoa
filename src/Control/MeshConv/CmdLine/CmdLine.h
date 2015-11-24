@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/MeshConv/CmdLine/CmdLine.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:17:08 PM MDT
+  \date      Tue 24 Nov 2015 08:19:55 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     MeshConv's command line definition
   \details   This file defines the heterogeneous stack that is used for storing
@@ -37,6 +37,7 @@ class CmdLine :
   public tk::Control< // tag        type
                       tag::io,      ios,
                       tag::verbose, bool,
+                      tag::reorder, bool,
                       tag::help,    bool,
                       tag::helpctr, bool,
                       tag::cmdinfo, tk::ctr::HelpFactory,
@@ -51,6 +52,7 @@ class CmdLine :
                                     , kw::helpkw
                                     , kw::input
                                     , kw::output
+                                    , kw::reorder
                                     >;
 
     //! \brief Constructor: set defaults.
@@ -64,6 +66,7 @@ class CmdLine :
     //! \see walker::ctr::CmdLine
     CmdLine( tk::ctr::HelpFactory ctrnfo = tk::ctr::HelpFactory() ) {
       set< tag::verbose >( false ); // Use quiet output by default
+      set< tag::reorder >( false ); // Do not reorder by default
       // Initialize help: fill from own keywords
       boost::mpl::for_each< keywords >( tk::ctr::Info( get< tag::cmdinfo >() ) );
     }
@@ -76,6 +79,7 @@ class CmdLine :
     void pup( PUP::er& p ) {
       tk::Control< tag::io,       ios,
                    tag::verbose,  bool,
+                   tag::reorder,  bool,
                    tag::help,     bool,
                    tag::helpctr,  bool,
                    tag::cmdinfo,  tk::ctr::HelpFactory,
