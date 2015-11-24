@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/MeshConv/CmdLine/Grammar.h
   \author    J. Bakosi
-  \date      Fri 29 May 2015 10:32:28 PM MDT
+  \date      Tue 24 Nov 2015 12:01:52 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     MeshConv's command line grammar definition
   \details   Grammar definition for parsing the command line. We use the Parsing
@@ -47,6 +47,12 @@ namespace cmd {
                                       use< kw::verbose >,
                                       tag::verbose > {};
 
+  //! brief Match and set reorder switch (i.e., reorder mesh nodes or not)
+  struct reorder :
+         tk::grm::process_cmd_switch< Stack,
+                                      use< kw::reorder >,
+                                      tag::reorder > {};
+
   //! \brief Match and set io parameter
   template< typename keyword, typename io_tag >
   struct io :
@@ -70,6 +76,7 @@ namespace cmd {
   //! \brief Match all command line keywords
   struct keywords :
          pegtl::sor< verbose,
+                     reorder,
                      help,
                      helpkw,
                      io< use< kw::input >, tag::input >,

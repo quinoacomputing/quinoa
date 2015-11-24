@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/MeshFactory.C
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:25:08 PM MDT
+  \date      Tue 24 Nov 2015 12:04:42 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unstructured mesh reader and writer factory
   \details   Unstructured mesh reader and writer factory.
@@ -22,6 +22,8 @@
 #include "NetgenMeshWriter.h"
 #include "GmshMeshWriter.h"
 #include "ExodusIIMeshWriter.h"
+#include "DerivedData.h"
+#include "Reorder.h"
 
 namespace tk {
 
@@ -84,10 +86,12 @@ pickOutput( const std::string& filename )
 }
 
 UnsMesh
-readUnsMesh( const std::string& filename,
+readUnsMesh( const tk::Print& print,
+             const std::string& filename,
              std::pair< std::string, tk::real >& timestamp )
 //******************************************************************************
 //  Read unstructured mesh from file
+//! \param[in] print Pretty printer
 //! \param[in] filename Filename to read mesh from
 //! \param[out] timestamp A time stamp consisting of a timer label (a string),
 //!   and a time state (a tk::real in seconds) measuring the mesh read time
@@ -95,6 +99,8 @@ readUnsMesh( const std::string& filename,
 //! \author J. Bakosi
 //******************************************************************************
 {
+  print.diagstart( "Reading mesh from file ..." );
+
   // Read in mesh
   tk::Timer t;
  
@@ -112,24 +118,48 @@ readUnsMesh( const std::string& filename,
 
   timestamp = std::make_pair( "Read mesh from file", t.dsec() );
 
+  print.diagend( "done" );
+
   // Return (move out) mesh object
   return mesh;
 }
 
-void
-writeUnsMesh( const std::string& filename,
+std::vector< std::pair< std::string, tk::real > >
+writeUnsMesh( const tk::Print& print,
+              const std::string& filename,
               const UnsMesh& mesh,
-              std::pair< std::string, tk::real >& timestamp )
+              bool reorder )
 //******************************************************************************
 //  Write unstructured mesh to file
+//! \param[in] print Pretty printer
 //! \param[in] filename Filename to write mesh to
 //! \param[in] mesh Unstructured mesh object to write from
-//! \param[out] timestamp A time stamp consisting of a timer label (a string),
-//!   and a time state (a tk::real in seconds) measuring the mesh write time
+//! \param[in] reorder Whether to also reorder mesh nodes
+//! \return Vector of time stamps consisting of a timer label (a string), and a
+//!   time state (a tk::real in seconds) measuring the renumber and the mesh
+//!   write time
 //! \author J. Bakosi
 //******************************************************************************
 {
+  std::vector< std::pair< std::string, tk::real > > times;
+
   tk::Timer t;
+
+  if (reorder) {
+    print.diagstart( "Reordering mesh nodes ..." );
+
+    auto inpoel = mesh.tetinpoel();
+    const auto psup = tk::genPsup( inpoel, 4, tk::genEsup( inpoel, 4 ) );
+    std::vector< std::size_t > map, invmap;
+    std::tie( map, invmap ) = tk::renumber( psup );
+    tk::remap( inpoel, map );
+
+    print.diagend( "done" );
+    times.emplace_back( "Renumber mesh", t.dsec() );
+    t.zero();
+  }
+
+  print.diagstart( "Writing mesh to file ..." );
 
   const auto meshtype = pickOutput( filename );
 
@@ -140,7 +170,10 @@ writeUnsMesh( const std::string& filename,
   else if (meshtype== MeshWriter::EXODUSII)
     ExodusIIMeshWriter( filename, ExoWriter::CREATE ).writeMesh( mesh );
 
-  timestamp = std::make_pair( "Write mesh to file", t.dsec() );
+  print.diagend( "done" );
+  times.emplace_back( "Write mesh to file", t.dsec() );
+
+  return times;
 }
 
 } // tk::

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Keywords.h
   \author    J. Bakosi
-  \date      Thu 19 Nov 2015 03:59:19 PM MST
+  \date      Tue 24 Nov 2015 08:45:34 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Definition of all keywords
   \details   This file contains the definition of all keywords, including those
@@ -29,7 +29,7 @@
     instantiating an object and thus available at compile-time.
 
     The definition of an '*_info' struct _requires_ at least the name, short,
-    and long descriptions, defined by member functions _name(),
+    and long descriptions, defined by member functions _name()_,
     _shortDescription()_, and _longDescription()_, respectively. Everything else
     is optional. However, when adding a new keyword it is highly recommended to
     define all of the _optional_ members if they make sense for the given
@@ -71,8 +71,8 @@
         // for control-file keywords, which is intentional. Command-line
         // arguments are a lot less than control file keywords and are more
         // frequently typed by the user. Thus command-line argument aliases are
-        // user-friendly. There are many control file keywords and aliases only
-        // cause confusion. Defining an alias for a command-line argument
+        // user-friendly. There are many control file keywords and aliases would
+        // only cause confusion. Defining an alias for a command-line argument
         // enables the command-line parser to match on '--longer_keyword' as
         // well as on '-c'. Depending on whether the alias typedef is defined
         // for a keyword or not, the correct grammar is automatically generated
@@ -2376,6 +2376,21 @@ struct output_info {
   };
 };
 using output = keyword< output_info, o,u,t,p,u,t >;
+
+struct reorder_info {
+  static std::string name() { return "reorder"; }
+  static std::string shortDescription() { return "Reorder mesh nodes"; }
+  static std::string longDescription() { return
+    R"(This option is used to instruct the mesh converter to not only convert
+    but also reorder the mesh nodes using the advancing front technique.)";
+  }
+  using alias = Alias< r >;
+  struct expect {
+    using type = std::string;
+    static std::string description() { return "string"; }
+  };
+};
+using reorder = keyword< reorder_info, r,e,o,r,d,e,r >;
 
 struct group_info {
   static std::string name() { return "group"; }

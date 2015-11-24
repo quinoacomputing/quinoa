@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/MeshConv/Types.h
   \author    J. Bakosi
-  \date      Fri 29 May 2015 05:38:58 PM MDT
+  \date      Tue 24 Nov 2015 08:18:52 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Types for MeshConv's parsers
   \details   Types for UnitTest's parsers. This file defines the components of
@@ -23,8 +23,8 @@ namespace ctr {
 
 //! IO parameters storage
 using ios = tk::tuple::tagged_tuple<
-  tag::input,       std::string,  //!< Input filename
-  tag::output,      std::string   //!< Output filename
+  tag::input,           std::string,    //!< Input filename
+  tag::output,          std::string     //!< Output filename
 >;
 
 //! PEGTL location type to use throughout all of MeshConv's parsers

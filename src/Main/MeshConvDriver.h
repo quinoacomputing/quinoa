@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/MeshConvDriver.h
   \author    J. Bakosi
-  \date      Sun 31 May 2015 06:24:58 AM MDT
+  \date      Tue 24 Nov 2015 08:54:57 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Mesh converter driver
   \details   Mesh converter driver.
@@ -32,6 +32,8 @@ class MeshConvDriver {
     void execute() const;
 
   private:
+    const tk::Print& m_print;           //!< Pretty printer
+    const bool m_reorder;               //!< Whether to also reorder mesh nodes
     std::string m_input;                //!< Input file name
     std::string m_output;               //!< Output file name
 };
