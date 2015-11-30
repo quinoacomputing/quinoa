@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/spawner.ci
   \author    J. Bakosi
-  \date      Sat 21 Nov 2015 03:03:06 PM MST
+  \date      Tue 24 Nov 2015 03:04:55 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Charm++ module interface file for the chare spawner group
   \details   Charm++ module interface file for the chare spawner group.
@@ -34,7 +34,6 @@ module spawner {
     template< class HostProxy, class WorkerProxy, class LinSysMergerProxy >
     group Spawner {
       entry Spawner( int nchare, HostProxy& host );
-      //initnode void registerChareElemMapMerger();
       entry void create( LinSysMergerProxy& lsm );
       entry void add(
         int frompe,
