@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/InputDeck/Parser.h
   \author    J. Bakosi
-  \date      Fri 29 May 2015 04:50:26 PM MDT
+  \date      Mon 30 Nov 2015 12:44:03 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Inciter's input deck file parser
   \details   This file declares the input deck, i.e., control file, parser for
@@ -19,8 +19,6 @@ namespace tk { class Print; }
 
 namespace inciter {
 
-namespace ctr { class InputDeck; }
-
 //! \brief Control file parser for Inciter.
 //! \details This class is used to interface with PEGTL, for the purpose of
 //!   parsing the control file for the computational shock hydrodynamics tool,
@@ -31,8 +29,7 @@ class InputDeckParser : public tk::FileParser {
     //! Constructor
     explicit InputDeckParser( const tk::Print& print,
                               const ctr::CmdLine& cmdline,
-                              ctr::InputDeck& inputdeck,
-                              int peid );
+                              ctr::InputDeck& inputdeck );
 };
 
 } // namespace inciter

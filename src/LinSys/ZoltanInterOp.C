@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/ZoltanInterOp.C
   \author    J. Bakosi
-  \date      Fri 20 Nov 2015 11:05:48 AM MST
+  \date      Tue 01 Dec 2015 09:32:49 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Interoperation with the Zoltan library
   \details   Interoperation with the Zoltan library, used for static mesh graph
@@ -125,7 +125,7 @@ geomPartMesh( tk::ctr::PartitioningAlgorithmType algorithm,
               const std::array< std::vector< tk::real >, 3 >& centroid,
               const std::vector< std::size_t >& elemid,
               std::size_t nelem,
-              uint64_t npart )
+              int npart )
 //******************************************************************************
 //  Partition mesh using Zoltan2 with a geometric partitioner, such as RCB, RIB
 //! \param[in] algorithm Partitioning algorithm type

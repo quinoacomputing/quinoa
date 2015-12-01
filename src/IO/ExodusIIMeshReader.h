@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/ExodusIIMeshReader.h
   \author    J. Bakosi
-  \date      Thu 19 Nov 2015 03:18:33 PM MST
+  \date      Tue 01 Dec 2015 08:49:45 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     ExodusII mesh reader
   \details   ExodusII mesh reader class declaration.
@@ -96,10 +96,10 @@ class ExodusIIMeshReader {
     //!  Return number of elements in a mesh block in the ExodusII file
     int nel( tk::ExoElemType elemtype ) const;
 
-  private:
     //! Read ExodusII header without setting mesh size
     std::size_t readHeader();
 
+  private:
     //! Read ExodusII header with setting mesh size
     void readHeader( UnsMesh& mesh );
 

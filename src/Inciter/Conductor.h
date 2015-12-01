@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Conductor.h
   \author    J. Bakosi
-  \date      Mon 23 Nov 2015 08:46:35 AM MST
+  \date      Tue 01 Dec 2015 09:17:11 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Conductor drives the time integration of a PDE
   \details   Conductor drives the time integration of a PDE
@@ -24,6 +24,7 @@
 #include "Timer.h"
 #include "Types.h"
 #include "InciterPrint.h"
+#include "Partitioner.h"
 #include "Performer.h"
 
 #if defined(__clang__) || defined(__GNUC__)
@@ -44,7 +45,20 @@ class Conductor : public CBase_Conductor {
 
   public:
     //! Constructor
-    explicit Conductor( std::size_t npoin, uint64_t nchare );
+    explicit Conductor();
+
+    //! \brief Reduction target indicating that all Partitioner chare groups
+    //!   have finished reading their part of the computational mesh graph
+    void load( uint64_t nelem );
+
+    //! \brief Reduction target indicating that all Partitioner chare groups
+    //!   have finished setting up the necessary data structures for
+    //!   partitioning the computational mesh
+    void partition();
+
+    //! \brief Reduction target indicating that all Partitioner chare groups
+    //!   have finished partitioning the computational mesh
+    void partitioned();
 
     //! \brief Reduction target indicating that all Spawner chare groups have
     //!   finished creating their Charm++ Performer worker chare array elements
@@ -94,6 +108,7 @@ class Conductor : public CBase_Conductor {
     { perfstat( p, m_grpPerfstat, m_grpPerfstatCnt, CkNumPes() ); }
 
   private:
+    using PartitionerProxy = CProxy_Partitioner< CProxy_Conductor >;
     using LinSysMergerProxy = tk::CProxy_LinSysMerger< CProxy_Conductor,
                                                        CProxy_Performer >;
     using SpawnerProxy = CProxy_Spawner< CProxy_Conductor,
@@ -112,6 +127,7 @@ class Conductor : public CBase_Conductor {
     int m_grpTimestampCnt;              //!< Time stamp chare group counter
     int m_arrPerfstatCnt;               //!< Perfstat chare array counter
     int m_grpPerfstatCnt;               //!< Perfstat chare group counter
+    PartitionerProxy m_partitioner;     //!< Partitioner group
     SpawnerProxy m_spawner;             //!< Spawner group
     LinSysMergerProxy m_linsysmerger;   //!< Linear system merger chare group
     //! Time stamps merged from chare array elements
@@ -123,7 +139,11 @@ class Conductor : public CBase_Conductor {
     //! Performance statistics merged from chare group elements
     std::map< std::string, std::vector< tk::real > > m_grpPerfstat;
     //! Timer labels
-    enum class TimerTag { CREATE, SETUP, INITIALIZE, TIMESTEP };
+    enum class TimerTag { MESH,
+                          CREATE,
+                          SETUP,
+                          INITIALIZE,
+                          TIMESTEP };
     //! Timers
     std::map< TimerTag, tk::Timer > m_timer;
 

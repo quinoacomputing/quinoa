@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/CmdLine/Parser.C
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 01:42:11 PM MDT
+  \date      Mon 30 Nov 2015 12:24:07 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Walker's command line parser
   \details   Walker's command line parser
@@ -59,7 +59,11 @@ CmdLineParser::CmdLineParser( int argc, char** argv,
                               ctr::CmdLine& cmdline ) :
   StringParser( argc, argv )
 //******************************************************************************
-//  Contructor: parse command line
+//  Contructor: parse the command line for Walker
+//! \param[in] argc Number of C-style character arrays in argv
+//! \param[in] argv C-style character array of character arrays
+//! \param[in] print Pretty printer
+//! \param[inout] cmdline Command-line stack where data is stored from parsing
 //! \author  J. Bakosi
 //******************************************************************************
 {

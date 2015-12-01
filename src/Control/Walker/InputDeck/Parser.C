@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/InputDeck/Parser.C
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 01:42:24 PM MDT
+  \date      Mon 30 Nov 2015 12:45:31 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Walker's input deck file parser
   \details   Walker's input deck file parser
@@ -39,6 +39,9 @@ InputDeckParser::InputDeckParser( const tk::Print& print,
   FileParser( cmdline.get< tag::io, tag::control >() )
 //******************************************************************************
 //  Constructor
+//! \param[in] print Pretty printer
+//! \param[in] cmdline Command line stack
+//! \param[inout] inputdeck Input deck stack where data is stored during parsing
 //! \author  J. Bakosi
 //******************************************************************************
 {
@@ -49,7 +52,15 @@ InputDeckParser::InputDeckParser( const tk::Print& print,
   // InputDeck and has location() used during parse
   deck::PEGTLInputDeck id( input, cmdline );
 
-  // Reset parser's output stream to that of print's
+  // Reset parser's output stream to that of print's. This is so that mild
+  // warnings emitted during parsing can be output using the pretty printer.
+  // Usually, errors and warnings are simply accumulated during parsing and
+  // printed during diagnostics after the parser has finished. Howver, in some
+  // special cases we can provide a more user-friendly message right during
+  // parsing since there is more information available to construct a more
+  // sensible message. This is done in e.g., tk::grm::store_option. Resetting
+  // the global g_print, to that of passed in as the constructor argument allows
+  // not to have to create a new pretty printer, but use the existing one.
   tk::grm::g_print.reset( print.save() );
 
   // Parse input file by populating the underlying tagged tuple:

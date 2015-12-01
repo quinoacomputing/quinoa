@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/InciterDriver.C
   \author    J. Bakosi
-  \date      Sat 21 Nov 2015 03:06:11 PM MST
+  \date      Tue 01 Dec 2015 09:22:59 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Inciter driver
   \details   Inciter driver.
@@ -10,6 +10,12 @@
 //******************************************************************************
 
 #include <unordered_map>
+
+#include "InciterPrint.h"
+#include "InciterDriver.h"
+#include "Inciter/InputDeck/Parser.h"
+#include "Inciter/CmdLine/CmdLine.h"
+#include "Inciter/InputDeck/InputDeck.h"
 
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic push
@@ -22,44 +28,44 @@
   #pragma GCC diagnostic pop
 #endif
 
-#include "InciterDriver.h"
-#include "Inciter/InputDeck/InputDeck.h"
-
 namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
-extern CProxy_Conductor g_ConductorProxy;
-
-class InciterPrint;
 
 } // inciter::
 
 using inciter::InciterDriver;
 
-InciterDriver::InciterDriver( const InciterPrint& print ) : m_print( print )
+InciterDriver::InciterDriver( const InciterPrint& print,
+                              const ctr::CmdLine& cmdline ) :
+  m_print( print )
 //******************************************************************************
 //  Constructor
 //! \param[in] print Pretty printer
+//! \param[in] cmdline Command line object storing data parsed from the command
+//!   line arguments
 //! \author J. Bakosi
 //******************************************************************************
 {
   // All global-scope data to be migrated to all PEs initialized here (if any)
+
+  // Parse input deck into g_inputdeck
+  m_print.item( "Control file", cmdline.get< tag::io, tag::control >() );  
+  InputDeckParser inputdeckParser( m_print, cmdline, g_inputdeck );
+  m_print.item( "Parsed control file", "success" );  
+  m_print.endpart();
 }
 
 void
-InciterDriver::execute( std::size_t npoin, uint64_t nchare ) const
+InciterDriver::execute() const
 //******************************************************************************
-//  Execute: Fire up Conductor, a Charm++ chare that conducts Performers
-//! \param[in] npoin Total number of points in computational mesh
-//! \param[in] nchare Total number of chares
+//  Run inciter
 //! \author J. Bakosi
 //******************************************************************************
 {
   // Instantiate Conductor chare which drives the time-integration of a PDE via
   // several Performer chares. Charm++ chare Conductor fires up performers.
   // Store proxy handle in global-scope to make it available to individual
-  // Performers so they can call back to Conductor. Since this is called inside
-  // the main chare constructor, the Charm++ runtime system distributes the
-  // handle along with all other global-scope data.
-  g_ConductorProxy = CProxy_Conductor::ckNew( npoin, nchare );
+  // Performers so they can call back to Conductor.
+  CProxy_Conductor::ckNew();
 }

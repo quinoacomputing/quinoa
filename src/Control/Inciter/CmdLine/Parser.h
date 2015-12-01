@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/CmdLine/Parser.h
   \author    J. Bakosi
-  \date      Fri 29 May 2015 11:36:28 PM MDT
+  \date      Tue 01 Dec 2015 10:43:37 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Inciter's command line parser
   \details   This file declares the command-line argument parser for the
@@ -28,11 +28,9 @@ class CmdLineParser : public tk::StringParser {
 
   public:
     //! Constructor
-    explicit CmdLineParser( int argc,
-                            char** argv,
+    explicit CmdLineParser( int argc, char** argv,
                             const tk::Print& print,
-                            ctr::CmdLine& cmdline,
-                            int peid );
+                            ctr::CmdLine& cmdline );
 };
 
 } // inciter::

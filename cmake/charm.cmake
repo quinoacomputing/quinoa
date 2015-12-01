@@ -28,7 +28,7 @@ function(addCharmModule MODULE PARTOF)
   set_property(TARGET ${PARTOF} APPEND_STRING PROPERTY LINK_FLAGS ${PARTOF_FLAGS})
 
   # Echo status on adding Charm++ module
-  message(STATUS "Charm++ module ${MODULE}.ci linking to ${CMAKE_CURRENT_SOURCE_DIR}/${PARTOF}")
+  #message(STATUS "Charm++ module ${MODULE}.ci linking to ${CMAKE_CURRENT_SOURCE_DIR}/${PARTOF}")
 
 endfunction(addCharmModule)
 

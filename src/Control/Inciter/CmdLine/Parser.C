@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/CmdLine/Parser.C
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 01:38:58 PM MDT
+  \date      Tue 01 Dec 2015 10:42:18 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Inciter's command line parser
   \details   This file defines the command-line argument parser for the
@@ -16,7 +16,22 @@
 
 #include <pegtl/pegtl.hh>
 
+#if defined(__clang__) || defined(__GNUC__)
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wconversion"
+#endif
+
+#include <charm.h>
+
+#if defined(__clang__) || defined(__GNUC__)
+  #pragma GCC diagnostic pop
+#endif
+
 #include "Print.h"
+#include "Config.h"
+#include "Exception.h"
+#include "HelpFactory.h"
+#include "Keywords.h"
 #include "Inciter/Types.h"
 #include "Inciter/CmdLine/Parser.h"
 #include "Inciter/CmdLine/Grammar.h"
@@ -39,18 +54,15 @@ extern ctr::InputDeck g_inputdeck;
 
 using inciter::CmdLineParser;
 
-CmdLineParser::CmdLineParser( int argc,
-                              char** argv,
+CmdLineParser::CmdLineParser( int argc, char** argv,
                               const tk::Print& print,
-                              ctr::CmdLine& cmdline,
-                              int peid ) :
+                              ctr::CmdLine& cmdline ) :
   StringParser( argc, argv )
 //******************************************************************************
 //  Contructor: parse the command line for Inciter
 //! \param[in] argc Number of C-style character arrays in argv
 //! \param[in] argv C-style character array of character arrays
 //! \param[in] print Pretty printer
-//! \param[in] peid Processing element id (warnings will only be printed on 0)
 //! \param[inout] cmdline Command-line stack where data is stored from parsing
 //! \author  J. Bakosi
 //******************************************************************************
@@ -72,7 +84,7 @@ CmdLineParser::CmdLineParser( int argc,
   // sensible message. This is done in e.g., tk::grm::store_option. Resetting
   // the global g_print, to that of passed in as the constructor argument allows
   // not to have to create a new pretty printer, but use the existing one.
-  if (peid == 0) tk::grm::g_print.reset( print.save() );
+  tk::grm::g_print.reset( print.save() );
 
   // Parse command line string by populating the underlying tagged tuple:
   // basic_parse() below gives debug info during parsing, use it for debugging
@@ -81,9 +93,46 @@ CmdLineParser::CmdLineParser( int argc,
   pegtl::dummy_parse< cmd::read_string >( input, cmd );
 
   // Echo errors and warnings accumulated during parsing
-  if (peid == 0) diagnostics( print, cmd.get< tag::error >() );
+  diagnostics( print, cmd.get< tag::error >() );
 
   // Strip command line (and its underlying tagged tuple) from PEGTL instruments
   // and transfer it out
   cmdline = std::move( cmd );
+
+  // If we got here, the parser succeeded
+  print.item( "Parsed command line", "success" );
+
+  // Print out help on all command-line arguments if the executable was invoked
+  // without arguments or the help was requested
+  const auto helpcmd = cmdline.get< tag::help >();
+  if (argc == 1 || helpcmd)
+    print.help< tk::QUIET >( INCITER_EXECUTABLE, cmdline.get< tag::cmdinfo >(),
+                             "Command-line Parameters:", "-" );
+
+  // Print out help on all control file keywords if they were requested
+  const auto helpctr = cmdline.get< tag::helpctr >();
+  if (helpctr)
+    print.help< tk::QUIET >( INCITER_EXECUTABLE, cmdline.get< tag::ctrinfo >(),
+                             "Control File Keywords:" );
+
+  // Print out verbose help for a single keyword if requested
+  const auto helpkw = cmdline.get< tag::helpkw >();
+  if (!helpkw.keyword.empty())
+    print.helpkw< tk::QUIET >( INCITER_EXECUTABLE, helpkw );
+
+  // Immediately exit if any help was output or was called without any argument
+  if (argc == 1 || helpcmd || helpctr || !helpkw.keyword.empty()) CkExit();
+
+  // Make sure mandatory arguments are set
+  auto ctralias = kw::control().alias();
+  ErrChk( !(cmdline.get< tag::io, tag::control >().empty()),
+          "Mandatory control file not specified. "
+          "Use '--" + kw::control().string() + " <filename>'" +
+          ( ctralias ? " or '-" + *ctralias + " <filename>'" : "" ) + '.' );
+
+  auto inpalias = kw::input().alias();
+  ErrChk( !(cmdline.get< tag::io, tag::input >().empty()),
+          "Mandatory input file not specified. "
+          "Use '--" + kw::input().string() + " <filename>'" +
+          ( inpalias ? " or '-" + *inpalias + " <filename>'" : "" ) + '.' );
 }

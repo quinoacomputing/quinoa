@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/InciterDriver.h
   \author    J. Bakosi
-  \date      Sun 08 Nov 2015 01:03:04 PM MST
+  \date      Tue 01 Dec 2015 09:23:26 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Inciter driver
   \details   Inciter driver.
@@ -10,6 +10,8 @@
 //******************************************************************************
 #ifndef InciterDriver_h
 #define InciterDriver_h
+
+#include "Inciter/CmdLine/CmdLine.h"
 
 namespace inciter {
 
@@ -20,10 +22,11 @@ class InciterDriver {
 
   public:
     //! Constructor
-    explicit InciterDriver( const InciterPrint& print );
+    explicit InciterDriver( const InciterPrint& print,
+                            const ctr::CmdLine& cmdline );
 
     //! Execute driver
-    void execute( std::size_t npoin, uint64_t nchare ) const;
+    void execute() const;
 
   private:
     const InciterPrint& m_print;        //!< Pretty printer
