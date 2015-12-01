@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.C
   \author    J. Bakosi
-  \date      Mon 23 Nov 2015 09:08:25 PM MST
+  \date      Tue 01 Dec 2015 07:42:55 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Performer advances a PDE
   \details   Performer advances a PDE. There are a potentially
@@ -24,7 +24,6 @@
 #include "ExodusIIMeshWriter.h"
 #include "LinSysMerger.h"
 #include "Inciter/InputDeck/InputDeck.h"
-
 #include "DerivedData.h"
 
 namespace inciter {

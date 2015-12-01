@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Conductor.C
   \author    J. Bakosi
-  \date      Mon 23 Nov 2015 02:28:55 PM MST
+  \date      Tue 01 Dec 2015 10:02:04 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Conductor drives the time integration of a PDE
   \details   Conductor drives the time integration of a PDE
@@ -21,6 +21,7 @@
 #include "Conductor.h"
 #include "Spawner.h"
 #include "ContainerUtil.h"
+#include "LoadDistributor.h"
 #include "Inciter/InputDeck/InputDeck.h"
 #include "inciter.decl.h"
 
@@ -28,9 +29,8 @@ extern CProxy_Main mainProxy;
 
 using inciter::Conductor;
 
-Conductor::Conductor( std::size_t npoin, uint64_t nchare ) :
+Conductor::Conductor() :
   m_print( g_inputdeck.get<tag::cmd,tag::verbose>() ? std::cout : std::clog ),
-  m_nchare( static_cast< int >( nchare ) ),
   m_eval( 0 ),
   m_init( 0 ),
   m_it( 0 ),
@@ -43,8 +43,6 @@ Conductor::Conductor( std::size_t npoin, uint64_t nchare ) :
   m_grpPerfstatCnt( 0 )
 //******************************************************************************
 //  Constructor
-//! \param[in] npoin Total number of points in computational mesh
-//! \param[in] nchare Total number of chares
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -65,16 +63,17 @@ Conductor::Conductor( std::size_t npoin, uint64_t nchare ) :
   m_print.item( "Start time", t0 );
   m_print.item( "Terminate time", term );
   m_print.item( "Initial time step size", dt );
+
   // If the desired max number of time steps is larger than zero, and the
   // termination time is larger than the initial time, and the initial time step
   // is smaller than the duration of the time to be simulated, we have work to
   // do, otherwise, finish right away
   if ( nstep != 0 && term > t0 && dt < term-t0 ) {
 
-   // Print I/O filenames
+    // Print I/O filenames
     m_print.section( "Output filenames" );
-    m_print.item( "Field",
-      g_inputdeck.get< tag::cmd, tag::io, tag::output >() + "_<PEid>" );
+    m_print.item( "Field", g_inputdeck.get< tag::cmd, tag::io, tag::output >()
+                           + "_<PEid>" );
 
     // Print output intervals
     m_print.section( "Output intervals" );
@@ -82,19 +81,102 @@ Conductor::Conductor( std::size_t npoin, uint64_t nchare ) :
     m_print.item( "Field", g_inputdeck.get< tag::interval, tag::field >() );
     m_print.endsubsection();
 
-    // Create linear system merger chare group collecting chare contributions to
-    // a linear system
-    m_linsysmerger = LinSysMergerProxy::ckNew( thisProxy, npoin );
-
-    m_print.diagstart( "Creating workers ..." );
-
-    m_timer[ TimerTag::CREATE ].zero();
-
-    // Create chare group spawning asynchronous performers
-    m_spawner = SpawnerProxy::ckNew( m_nchare, thisProxy );
-    for (int p=0; p<CkNumPes(); ++p) m_spawner[ p ].create( m_linsysmerger );
+    // Fire up mesh partitioner Charm++ chare group and start partitiioning mesh
+    m_print.diagstart( "Reading mesh graph ..." );
+    m_timer[ TimerTag::MESH ];
+    m_partitioner = PartitionerProxy::ckNew( thisProxy );
 
   } else finish();      // stop if no time stepping requested
+}
+
+void
+Conductor::load( uint64_t nelem )
+//******************************************************************************
+// Reduction target indicating that all Partitioner chare groups have finished
+// reading their part of the computational mesh graph
+//! \param[in] nelem Total number of mesh elements
+//! \author J. Bakosi
+//******************************************************************************
+{
+  mainProxy.timestamp( "Read mesh graph from file",
+                       tk::query(m_timer,TimerTag::MESH) );
+  m_print.diagend( "done" );
+
+  // Compute load distribution given total work (nelem) and user-specified
+  // virtualization
+  uint64_t chunksize, remainder;
+  m_nchare = static_cast<int>(
+               tk::linearLoadDistributor(
+                 g_inputdeck.get< tag::cmd, tag::virtualization >(),
+                 nelem, CkNumPes(), chunksize, remainder ) );
+
+  // Print out mesh graph stats
+  m_print.section( "Input mesh graph statistics" );
+  m_print.item( "Number of tetrahedra", nelem );
+  tk::ExodusIIMeshReader er(g_inputdeck.get< tag::cmd, tag::io, tag::input >());
+  auto npoin = er.readHeader();
+  m_print.item( "Number of nodes", npoin );
+
+  // Print out info on load distribution
+  m_print.section( "Load distribution" );
+  m_print.item( "Virtualization [0.0...1.0]",
+                g_inputdeck.get< tag::cmd, tag::virtualization >() );
+  m_print.item( "Load (number of tetrahedra)", nelem );
+  m_print.item( "Number of processing elements", CkNumPes() );
+  m_print.item( "Number of work units",
+                std::to_string( m_nchare ) + " (" +
+                std::to_string( m_nchare-1 ) + "*" +
+                std::to_string( chunksize ) + "+" +
+                std::to_string( chunksize+remainder ) + ")" );
+
+  // Print out mesh partitioning configuration
+  m_print.section( "Initial mesh partitioning" );
+  m_print.Item< tk::ctr::PartitioningAlgorithm,
+                tag::selected, tag::partitioner >();
+  m_print.endsubsection();
+}
+
+void
+Conductor::partition()
+//******************************************************************************
+// Reduction target indicating that all Partitioner chare groups have finished
+// setting up the necessary data structures for partitioning the computational
+// mesh
+//! \author J. Bakosi
+//******************************************************************************
+{
+  mainProxy.timestamp( "Setup mesh for partitioning",
+                       tk::query(m_timer,TimerTag::MESH) );
+  m_timer[ TimerTag::MESH ].zero();
+  m_partitioner.partition( m_nchare );
+}
+
+void
+Conductor::partitioned()
+//******************************************************************************
+// Reduction target indicating that all Partitioner chare groups have finished
+// partitioning the computational mesh
+//! \details Once this is done on all PEs, indicated by entering this
+//!   function, we continue by creating the linear system merger and spawner
+//!   groups
+//! \author J. Bakosi
+//******************************************************************************
+{
+  mainProxy.timestamp( "Partition mesh", tk::query(m_timer,TimerTag::MESH) );
+
+  // Create linear system merger chare group collecting chare contributions to
+  // a linear system
+  tk::ExodusIIMeshReader er(g_inputdeck.get< tag::cmd, tag::io, tag::input >());
+  auto npoin = er.readHeader();
+  m_linsysmerger = LinSysMergerProxy::ckNew( thisProxy, npoin );
+
+  m_print.diagstart( "Creating workers ..." );
+
+  m_timer[ TimerTag::CREATE ];
+
+  // Create chare group spawning asynchronous performers
+  m_spawner = SpawnerProxy::ckNew( m_nchare, thisProxy );
+  for (int p=0; p<CkNumPes(); ++p) m_spawner[ p ].create( m_linsysmerger );
 }
 
 void
@@ -198,7 +280,7 @@ Conductor::created()
                        tk::query(m_timer, TimerTag::CREATE) );
   m_print.diagend( "done" );
   m_print.diagstart( "Setting up workers ..." );
-  m_timer[ TimerTag::SETUP ].zero();
+  m_timer[ TimerTag::SETUP ];
   m_spawner.setup();
 }
 
@@ -221,7 +303,7 @@ Conductor::rowcomplete()
   m_linsysmerger.rowsreceived();
   m_print.diagend( "done" );
   m_print.diagstart( "Initializing workers ..." );
-  m_timer[ TimerTag::INITIALIZE ].zero();
+  m_timer[ TimerTag::INITIALIZE ];
   m_spawner.init( m_dt );
 }
 
@@ -356,7 +438,7 @@ Conductor::header()
     "       out - output-saved flags (F: field)\n",
     "\n      it             t            dt        ETE        ETA   out\n"
       " ---------------------------------------------------------------\n" );
-  m_timer[ TimerTag::TIMESTEP ].zero();
+  m_timer[ TimerTag::TIMESTEP ];
 }
 
 void

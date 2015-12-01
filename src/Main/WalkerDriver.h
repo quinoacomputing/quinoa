@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/WalkerDriver.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 09:40:31 AM MDT
+  \date      Mon 30 Nov 2015 12:34:32 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     WalkerDriver that drives Walker
   \details   WalkerDriver that drives Walker
@@ -30,7 +30,7 @@ class WalkerDriver {
     void execute() const {}
 
   private:
-    const WalkerPrint& m_print;
+    const WalkerPrint& m_print;        //!< Pretty printer
 };
 
 } // walker::

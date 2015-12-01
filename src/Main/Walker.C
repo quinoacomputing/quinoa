@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Walker.C
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:04:18 PM MDT
+  \date      Mon 30 Nov 2015 12:09:51 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Random walker Charm++ main chare
   \details   Random walker Charm++ main chare. This file contains the definition
@@ -169,7 +169,8 @@ class Main : public CBase_Main {
                           tk::HeaderType::WALKER,
                           WALKER_EXECUTABLE,
                           m_print ) ),
-      m_timer(1)        // Start new timer measuring the total runtime
+      // Start new timer measuring the total runtime
+      m_timer(1)
     {
       delete msg;
       mainProxy = thisProxy;

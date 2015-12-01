@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/InputDeck/Parser.C
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 01:39:08 PM MDT
+  \date      Mon 30 Nov 2015 12:45:28 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Inciter's input deck file parser
   \details   This file declares the input deck, i.e., control file, parser for
@@ -34,15 +34,13 @@ using inciter::InputDeckParser;
 
 InputDeckParser::InputDeckParser( const tk::Print& print,
                                   const ctr::CmdLine& cmdline,
-                                  ctr::InputDeck& inputdeck,
-                                  int peid ) :
+                                  ctr::InputDeck& inputdeck ) :
   FileParser( cmdline.get< tag::io, tag::control >() )
 //******************************************************************************
 //  Constructor
 //! \param[in] print Pretty printer
 //! \param[in] cmdline Command line stack
 //! \param[inout] inputdeck Input deck stack where data is stored during parsing
-//! \param[in] peid Processing element id (warnings will only be printed on 0)
 //! \author  J. Bakosi
 //******************************************************************************
 {
@@ -62,7 +60,7 @@ InputDeckParser::InputDeckParser( const tk::Print& print,
   // sensible message. This is done in e.g., tk::grm::store_option. Resetting
   // the global g_print, to that of passed in as the constructor argument allows
   // not to have to create a new pretty printer, but use the existing one.
-  if (peid == 0) tk::grm::g_print.reset( print.save() );
+  tk::grm::g_print.reset( print.save() );
 
   // Parse control file by populating the underlying tagged tuple:
   // basic_parse() below gives debug info during parsing, use it for debugging
@@ -71,7 +69,7 @@ InputDeckParser::InputDeckParser( const tk::Print& print,
   pegtl::dummy_parse< deck::read_file >( input, id );
 
   // Echo errors and warnings accumulated during parsing
-  if (peid == 0) diagnostics( print, id.get< tag::error >() );
+  diagnostics( print, id.get< tag::error >() );
 
   // Strip input deck (and its underlying tagged tuple) from PEGTL instruments
   // and transfer it out

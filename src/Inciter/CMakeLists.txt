@@ -8,25 +8,26 @@ include(charm)
 add_library(Inciter
             Conductor.C
             Performer.C
+            Partitioner.C
             Spawner.C
-            InciterSetup.C
 )
 
 addCharmModule( "conductor" "Inciter" )
 addCharmModule( "performer" "Inciter" )
+addCharmModule( "partitioner" "Inciter" )
 addCharmModule( "spawner" "Inciter" )
-removeWarnings( "Conductor.C;Performer.C;Spawner.C;InciterSetup.C" )
+removeWarnings( "Conductor.C;Performer.C;Spawner.C;Partitioner.C" )
 
 # Add extra dependency of Inciter on inciterCharmModule. This is required as
 # Inciter refers to the main Charm++ proxy defined in the Charm++ module
 # inciter (in Main/Inciter.C).
 add_dependencies( "Inciter" "inciterCharmModule" )
 
-# Add extra dependency of Conductor charm module on charm modules implementing
-# advanced array element placement using maps. This is required since Conductor
-# charm module depends on and uses advanced array element placement maps.
-add_dependencies( "conductorCharmModule" "linearmapCharmModule" )
-add_dependencies( "conductorCharmModule" "unsmeshmapCharmModule" )
+## Add extra dependency of Conductor charm module on charm modules implementing
+## advanced array element placement using maps. This is required since Conductor
+## charm module depends on and uses advanced array element placement maps.
+#add_dependencies( "conductorCharmModule" "linearmapCharmModule" )
+#add_dependencies( "conductorCharmModule" "unsmeshmapCharmModule" )
 
 # Add extra dependency of Inciter on LinSysMerger charm module. This is required
 # so that linsysmerger.decl.h and linsysmerger.def.h are generated before

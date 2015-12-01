@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/inciter.ci
   \author    J. Bakosi
-  \date      Thu 05 Nov 2015 03:04:46 PM MST
+  \date      Mon 30 Nov 2015 12:07:57 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Charm++ module interface file for inciter
   \details   Charm++ module interface file for the computational shock
@@ -22,7 +22,6 @@ mainmodule inciter {
   namespace inciter {
 
     // Order important
-    readonly ctr::CmdLine g_cmdline;
     readonly ctr::InputDeck g_inputdeck_defaults;
     readonly ctr::InputDeck g_inputdeck;
 

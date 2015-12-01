@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Inciter.C
   \author    J. Bakosi
-  \date      Sat 21 Nov 2015 02:57:58 PM MST
+  \date      Tue 01 Dec 2015 10:54:24 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Inciter, computational shock hydrodynamics tool, Charm++ main
     chare.
@@ -15,21 +15,16 @@
 #include <unordered_map>
 #include <vector>
 #include <iostream>
-#include <utility>
-#include <type_traits>
-#include <cstddef>
-
-#include <boost/format.hpp>
 
 #include "Types.h"
-#include "Writer.h"
+#include "Init.h"
+#include "Config.h"
 #include "Timer.h"
 #include "Exception.h"
 #include "ProcessException.h"
-#include "HelpFactory.h"
 #include "InciterPrint.h"
 #include "InciterDriver.h"
-#include "InciterSetup.h"
+#include "Inciter/CmdLine/Parser.h"
 #include "Inciter/CmdLine/CmdLine.h"
 #include "Inciter/InputDeck/InputDeck.h"
 
@@ -38,9 +33,6 @@
   #pragma GCC diagnostic ignored "-Wconversion"
 #endif
 
-#include <mpi.h>
-#include <mpi-interoperate.h>
-#include <pup_stl.h>
 #include "inciter.decl.h"
 
 #if defined(__clang__) || defined(__GNUC__)
@@ -61,30 +53,10 @@ namespace inciter {
 //! below is global-scope because they must be available to all PEs which could
 //! be on different machines.
 
-//! Command line filled by command line parser, with command line user input
-ctr::CmdLine g_cmdline;
 //! Defaults of input deck, facilitates detection what is set by user
 ctr::InputDeck g_inputdeck_defaults;
 //! Input deck filled by parser, containing all input data
 ctr::InputDeck g_inputdeck;
-
-//! \brief Total number of points in computational mesh
-//! \details While this data is declared in global scope (so that Charm++
-//!   chares can access it), it is intentionally NOT declared in the Charm++
-//!   main module interface file for Inciter in Main/inciter.ci, so that the
-//!   Charm++ runtime system does not migrate it across all PEs. This is okay,
-//!   since there is no need for any of the other Charm++ chares, other than the
-//!   main chare below, to access it in the future.
-std::size_t g_npoin;
-
-//! \brief Total number of chares
-//! \details While this data is declared in global scope (so that Charm++
-//!   chares can access it), it is intentionally NOT declared in the Charm++
-//!   main module interface file for Inciter in Main/inciter.ci, so that the
-//!   Charm++ runtime system does not migrate it across all PEs. This is okay,
-//!   since there is no need for any of the other Charm++ chares, other than the
-//!   main chare below, to access it in the future.
-uint64_t g_nchare;
 
 //! \brief Global mesh element ids owned by each chare (associated to chare IDs)
 //! \details This data holds different element IDs on different MPI ranks. It
@@ -105,22 +77,6 @@ uint64_t g_nchare;
 //!   will simply access this data, correctly a different one in their own
 //!   global scope, as intended.
 std::unordered_map< int, std::vector< std::size_t > > g_element;
-
-//! \brief Time stamps in h:m:s for the initial MPI portion
-//! \details Time stamps collected here are those collected by the initial MPI
-//!   portion and are displayed by the Charm++ main chare at the end. While this
-//!   map of timers is declared in global scope (so that Charm++ chares can
-//!   access it), it is intentionally NOT declared in the Charm++ main module
-//!   interface file for Inciter in Main/inciter.ci, so that the Charm++ runtime
-//!   system does not migrate it across all PEs. This is okay, since there is no
-//!   need for any of the other Charm++ chares to access it in the future. In
-//!   fact, the main chare grabs it and swallows it right away during its
-//!   constructor for output at the end of the run.
-std::vector< std::pair< std::string, tk::Timer::Watch > > g_timestamp;
-
-//! Conductor Charm++ proxy facilitating call-back to Conductor by the
-//! individual performers
-CProxy_Conductor g_ConductorProxy;
 
 } // inciter::
 
@@ -155,43 +111,36 @@ class Main : public CBase_Main {
     //! \see http://charm.cs.illinois.edu/manuals/html/charm++/manual.html
     Main( CkArgMsg* msg )
     try :
+      // Parse command line into m_cmdline using default simple pretty printer
+      m_cmdParser( msg->argc, msg->argv, tk::Print(), m_cmdline ),
       // Create pretty printer initializing output streams based on command line
-      m_print( inciter::g_cmdline.get< tag::verbose >()
-                 ? std::cout : std::clog ),
+      m_print( m_cmdline.get< tag::verbose >() ? std::cout : std::clog ),
       // Create Inciter driver
-      m_driver( inciter::InciterDriver( m_print ) ),
+      m_driver( tk::Main< inciter::InciterDriver >
+                        ( msg->argc, msg->argv,
+                          m_cmdline,
+                          tk::HeaderType::INCITER,
+                          INCITER_EXECUTABLE,
+                          m_print ) ),
       // Start new timer measuring the total runtime
-      m_timer(1),
-      // Import, i.e., swallow, timers from the initial MPI portion
-      m_timestamp( std::move(inciter::g_timestamp) )
+      m_timer(1)
     {
-      const auto helpcmd = inciter::g_cmdline.get< tag::help >();
-      const auto helpctr = inciter::g_cmdline.get< tag::helpctr >();
-      const auto helpkw = inciter::g_cmdline.get< tag::helpkw >();
-      // Exit if help was requested or exectuable was called without argument
-      if (msg->argc == 1 || helpcmd || helpctr || !helpkw.keyword.empty()) {
-        CkExit();
-      } else {  // business as usual
-        mainProxy = thisProxy;
-        // Fire up an asynchronous execute object, which when created at some
-        // future point in time will call back to this->execute(). This is
-        // necessary so that this->execute() can access already migrated
-        // global-scope data.
-        CProxy_execute::ckNew();
-        // Start new timer measuring the migration of global-scope data
-        m_timer.emplace_back();
-      }
       delete msg;
-      m_print.diagstart( "Migrating read-only global-scope data ..." );
+      mainProxy = thisProxy;
+      // Fire up an asynchronous execute object, which when created at some
+      // future point in time will call back to this->execute(). This is
+      // necessary so that this->execute() can access already migrated
+      // global-scope data.
+      CProxy_execute::ckNew();
+      // Start new timer measuring the migration of global-scope data
+      m_timer.emplace_back();
     } catch (...) { tk::processExceptionCharm(); }
 
     //! Execute driver created and initialized by constructor
     void execute() {
       try {
-        m_print.diagend( "done" );
-        m_timestamp.emplace_back( "Migrate Charm++ read-only global-scope data",
-                                  m_timer[1].hms());
-        m_driver.execute( inciter::g_npoin, inciter::g_nchare );
+        m_timestamp.emplace_back("Migrate global-scope data", m_timer[1].hms());
+        m_driver.execute();
       } catch (...) { tk::processExceptionCharm(); }
     }
 
@@ -199,10 +148,7 @@ class Main : public CBase_Main {
     void finalize() {
       try {
         if (!m_timer.empty()) {
-          m_timestamp.emplace_back(
-           "Total Charm++ runtime . . . . . . . . . . . . . . . . . . . . . . "
-           ". . . . .",
-           m_timer[0].hms() );
+          m_timestamp.emplace_back( "Total runtime", m_timer[0].hms() );
           m_print.time( "Timers (h:m:s)", m_timestamp );
           m_print.perf( "Performance statistics", m_perf );
           m_print.endpart();
@@ -233,9 +179,11 @@ class Main : public CBase_Main {
     { for (const auto& s : p) perfstat( s.first, s.second ); }
 
   private:
-    inciter::InciterPrint m_print;                    //!< Pretty printer
-    inciter::InciterDriver m_driver;                  //!< Driver
-    std::vector< tk::Timer > m_timer;                 //!< Timers
+    inciter::ctr::CmdLine m_cmdline;            //!< Command line
+    inciter::CmdLineParser m_cmdParser;         //!< Command line parser
+    inciter::InciterPrint m_print;              //!< Pretty printer
+    inciter::InciterDriver m_driver;            //!< Driver
+    std::vector< tk::Timer > m_timer;           //!< Timers
 
     //! Time stamps in h:m:s with labels
     std::vector< std::pair< std::string, tk::Timer::Watch > > m_timestamp;
@@ -250,59 +198,6 @@ class Main : public CBase_Main {
 //!    after the main chare constructor has finished.
 //! \author J. Bakosi
 struct execute : CBase_execute { execute() { mainProxy.execute(); } };
-
-//! \brief Inciter main()
-//! \details Inciter does have a main() function so that Zoltan, an MPI library,
-//!   can partition the mesh. Then we initialize the Charm++ runtime system and
-//!   do a calculation. This is necessary, since MPI_Init() is a bit adamant
-//!   about capturing resources it wants and hence it has to be called before
-//!   Charm is initialized.
-//! \author J. Bakosi
-int main( int argc, char **argv ) {
-
-  using namespace inciter;
-
-  tk::Timer mpi;        // start timing the MPI portion
-
-  // Initialize MPI
-  MPI_Init( &argc, &argv );
-
-  try {
-    // Parse command line
-    parseCmdLine( argc, argv, g_cmdline );
-   
-    // Instantiate inciter's pretty printer
-    InciterPrint
-      iprint( g_cmdline.get< tag::verbose >() ? std::cout : std::clog );
-
-    // Parse input deck, echo info
-    init( g_cmdline, iprint, g_inputdeck, argc, argv );
-
-    // Prepare computational mesh and fill some global-scope data (all given at
-    // the top of this file) so that Charm++ chares can access them
-    g_element = prepareMesh( g_inputdeck, iprint,  // <- cref
-                             g_timestamp, g_nchare, g_npoin ); // <- ref
-
-  } catch (...) { tk::processExceptionMPI(); }
-
-  g_timestamp.emplace_back(
-    "Total MPI runtime . . . . . . . . . . . . . . . . . . . . . . . . . . "
-    ". . .",
-    mpi.hms() );
-
-  // Run Charm++ main chare using the partitioned graph
-  CharmLibInit( MPI_COMM_WORLD, argc, argv );
-  //MPI_Barrier( MPI_COMM_WORLD );
-  // ...
-  //MPI_Barrier( MPI_COMM_WORLD );
-  CharmLibExit();
-
-  // Finalize MPI
-  MPI_Barrier( MPI_COMM_WORLD );
-  MPI_Finalize();
-
-  return tk::ErrCode::SUCCESS;
-}
 
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic push
