@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Conductor.h
   \author    J. Bakosi
-  \date      Tue 01 Dec 2015 09:17:11 AM MST
+  \date      Wed 02 Dec 2015 09:03:21 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Conductor drives the time integration of a PDE
   \details   Conductor drives the time integration of a PDE
@@ -48,17 +48,23 @@ class Conductor : public CBase_Conductor {
     explicit Conductor();
 
     //! \brief Reduction target indicating that all Partitioner chare groups
-    //!   have finished reading their part of the computational mesh graph
+    //!   have finished reading their part of the computational mesh graph and
+    //!   we are ready to compute the computational load
     void load( uint64_t nelem );
 
     //! \brief Reduction target indicating that all Partitioner chare groups
     //!   have finished setting up the necessary data structures for
-    //!   partitioning the computational mesh
+    //!   partitioning the computational mesh and we are ready for partitioning
     void partition();
 
     //! \brief Reduction target indicating that all Partitioner chare groups
-    //!   have finished partitioning the computational mesh
-    void partitioned();
+    //!   have finished distributing the mesh element IDs after partitioning and
+    //!   we ready to start reordering mesh node IDs
+    void reorder();
+
+    //! \brief Reduction target indicating that all Partitioner chare groups
+    //!   have finished preparing the computational mesh
+    void prepared();
 
     //! \brief Reduction target indicating that all Spawner chare groups have
     //!   finished creating their Charm++ Performer worker chare array elements

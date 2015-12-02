@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Conductor.C
   \author    J. Bakosi
-  \date      Tue 01 Dec 2015 10:02:04 AM MST
+  \date      Wed 02 Dec 2015 09:03:10 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Conductor drives the time integration of a PDE
   \details   Conductor drives the time integration of a PDE
@@ -93,8 +93,9 @@ void
 Conductor::load( uint64_t nelem )
 //******************************************************************************
 // Reduction target indicating that all Partitioner chare groups have finished
-// reading their part of the computational mesh graph
-//! \param[in] nelem Total number of mesh elements
+// reading their part of the computational mesh graph and we are ready to
+// compute the computational load
+//! \param[in] nelem Total number of mesh elements (summed across all PEs)
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -141,7 +142,7 @@ Conductor::partition()
 //******************************************************************************
 // Reduction target indicating that all Partitioner chare groups have finished
 // setting up the necessary data structures for partitioning the computational
-// mesh
+// mesh and we are ready for partitioning
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -152,17 +153,33 @@ Conductor::partition()
 }
 
 void
-Conductor::partitioned()
+Conductor::reorder()
 //******************************************************************************
 // Reduction target indicating that all Partitioner chare groups have finished
-// partitioning the computational mesh
-//! \details Once this is done on all PEs, indicated by entering this
-//!   function, we continue by creating the linear system merger and spawner
-//!   groups
+// distributing mesh element IDs after partitioning and we are ready to start
+// reordering mesh node IDs
 //! \author J. Bakosi
 //******************************************************************************
 {
-  mainProxy.timestamp( "Partition mesh", tk::query(m_timer,TimerTag::MESH) );
+  mainProxy.timestamp( "Distribute mesh elements",
+                       tk::query(m_timer,TimerTag::MESH) );
+  m_timer[ TimerTag::MESH ].zero();
+  m_partitioner.reorder();
+}
+
+void
+Conductor::prepared()
+//******************************************************************************
+// Reduction target indicating that all Partitioner chare groups have finished
+// preparing the computational mesh
+//! \details Once this is done on all PEs, indicated by entering this
+//!   function, we continue by creating the linear system merger and spawner
+//!   groups that will setup the integration of PDE(s)
+//! \author J. Bakosi
+//******************************************************************************
+{
+  mainProxy.timestamp( "Partition, distribute, reorder mesh",
+                       tk::query(m_timer,TimerTag::MESH) );
 
   // Create linear system merger chare group collecting chare contributions to
   // a linear system
