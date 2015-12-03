@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Conductor.C
   \author    J. Bakosi
-  \date      Wed 02 Dec 2015 09:03:10 AM MST
+  \date      Thu 03 Dec 2015 01:38:30 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Conductor drives the time integration of a PDE
   \details   Conductor drives the time integration of a PDE
@@ -31,6 +31,7 @@ using inciter::Conductor;
 
 Conductor::Conductor() :
   m_print( g_inputdeck.get<tag::cmd,tag::verbose>() ? std::cout : std::clog ),
+  m_prepared( 0 ),
   m_eval( 0 ),
   m_init( 0 ),
   m_it( 0 ),
@@ -99,7 +100,7 @@ Conductor::load( uint64_t nelem )
 //! \author J. Bakosi
 //******************************************************************************
 {
-  mainProxy.timestamp( "Read mesh graph from file",
+  mainProxy.timestamp( "Distributed-read of mesh graph from file",
                        tk::query(m_timer,TimerTag::MESH) );
   m_print.diagend( "done" );
 
@@ -148,52 +149,93 @@ Conductor::partition()
 {
   mainProxy.timestamp( "Setup mesh for partitioning",
                        tk::query(m_timer,TimerTag::MESH) );
+  m_print.diagstart( "Partitioning and distributing mesh ..." );
   m_timer[ TimerTag::MESH ].zero();
   m_partitioner.partition( m_nchare );
 }
 
 void
-Conductor::reorder()
+Conductor::readOwnedGraph()
 //******************************************************************************
 // Reduction target indicating that all Partitioner chare groups have finished
 // distributing mesh element IDs after partitioning and we are ready to start
-// reordering mesh node IDs
+// reordering mesh node IDs whose first step is reading the mesh graph
+// connectivity (i.e., the global node IDs) owned on each PE
 //! \author J. Bakosi
 //******************************************************************************
 {
-  mainProxy.timestamp( "Distribute mesh elements",
+  m_print.diagend( "done" );
+  mainProxy.timestamp( "Partition & distribute mesh elements",
                        tk::query(m_timer,TimerTag::MESH) );
   m_timer[ TimerTag::MESH ].zero();
-  m_partitioner.reorder();
+  m_partitioner.readOwnedGraph();
 }
 
 void
-Conductor::prepared()
+Conductor::reorder( int pe )
 //******************************************************************************
-// Reduction target indicating that all Partitioner chare groups have finished
-// preparing the computational mesh
-//! \details Once this is done on all PEs, indicated by entering this
-//!   function, we continue by creating the linear system merger and spawner
-//!   groups that will setup the integration of PDE(s)
+// Start reordering mesh node IDs owned on each PE
+//! \param[in] pe PE that called us, indicating readiness for a new order
+//! \details This function must be only called from PE 0, hence the argument
 //! \author J. Bakosi
 //******************************************************************************
 {
-  mainProxy.timestamp( "Partition, distribute, reorder mesh",
+  Assert( pe == 0, "Reordering must start with PE 0" );
+  mainProxy.timestamp( "Distributed-read of owned mesh graph from file",
                        tk::query(m_timer,TimerTag::MESH) );
+  m_timer[ TimerTag::MESH ].zero();
+  m_print.diagstart( "Reordering mesh nodes ..." );
+  m_partitioner[0].reorder( {} );       // start with empty map
+}
 
-  // Create linear system merger chare group collecting chare contributions to
-  // a linear system
-  tk::ExodusIIMeshReader er(g_inputdeck.get< tag::cmd, tag::io, tag::input >());
-  auto npoin = er.readHeader();
-  m_linsysmerger = LinSysMergerProxy::ckNew( thisProxy, npoin );
+void
+Conductor::prepared(
+  int pe,
+  std::unordered_map< int, std::vector< std::size_t > >& conn,
+  std::unordered_map< int,
+    std::unordered_map< std::size_t, std::size_t > >& chcid )
+//******************************************************************************
+// Charm++ entry method inidicating that all Partitioner chare groups have
+// finished preparing the computational mesh
+//! \param[in] pe PE contribution coming from
+//! \param[in] conn Reordered global mesh connectivity, i.e., node IDs, the
+//!   caller PE's chares contribute to in a linear system associated to global
+//!   chare IDs it owns
+//! \param[in] chcid Map associating old node IDs (as in file) to new node IDs
+//!   (as in producing contiguous-row-id linear system contributions) on a PE
+//!   categorized by chare IDs
+//! \details Once this is done, we continue by creating the linear system merger
+//!  and spawner groups that will setup the integration of PDE(s)
+//! \author J. Bakosi
+//******************************************************************************
+{
+  // Store connectivity arriving from PE
+  m_conn[ pe ] = std::move( conn );
+  // Store old->new node ID map arriving from PE
+  m_chcid[ pe ] = std::move( chcid );
 
-  m_print.diagstart( "Creating workers ..." );
+  // When every PE has finished with the mesh node ID reordering, continue
+  if ( ++m_prepared == CkNumPes() ) {
+    m_print.diagend( "done" );
+    mainProxy.timestamp( "Reorder mesh", tk::query(m_timer,TimerTag::MESH) );
 
-  m_timer[ TimerTag::CREATE ];
+    // Create linear system merger chare group collecting chare contributions to
+    // a linear system
+    tk::ExodusIIMeshReader er(g_inputdeck.get< tag::cmd, tag::io, tag::input >());
+    auto npoin = er.readHeader();
+    m_linsysmerger = LinSysMergerProxy::ckNew( thisProxy, npoin );
 
-  // Create chare group spawning asynchronous performers
-  m_spawner = SpawnerProxy::ckNew( m_nchare, thisProxy );
-  for (int p=0; p<CkNumPes(); ++p) m_spawner[ p ].create( m_linsysmerger );
+    m_print.diagstart( "Creating workers ..." );
+
+    m_timer[ TimerTag::CREATE ];
+
+    // Create chare group spawning asynchronous performers
+    m_spawner = SpawnerProxy::ckNew( m_nchare, thisProxy );
+    for (int p=0; p<CkNumPes(); ++p)
+      m_spawner[p].create( m_linsysmerger,
+                           tk::cref_find( m_conn, p ),
+                           tk::cref_find( m_chcid, p ) );
+  }
 }
 
 void

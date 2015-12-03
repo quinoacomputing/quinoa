@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.C
   \author    J. Bakosi
-  \date      Tue 01 Dec 2015 07:42:55 AM MST
+  \date      Thu 03 Dec 2015 02:54:18 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Performer advances a PDE
   \details   Performer advances a PDE. There are a potentially
@@ -34,11 +34,14 @@ extern ctr::InputDeck g_inputdeck;
 
 using inciter::Performer;
 
-Performer::Performer( int id,
-                      ConductorProxy& conductor,
-                      LinSysMergerProxy& linsysmerger,
-                      SpawnerProxy& spawner,
-                      const std::vector< std::size_t >& element ) :
+Performer::Performer(
+  int id,
+  ConductorProxy& conductor,
+  LinSysMergerProxy& linsysmerger,
+  SpawnerProxy& spawner,
+  const std::vector< std::size_t >& conn,
+  const std::unordered_map< std::size_t, std::size_t >& cid )
+:
   m_id( static_cast< std::size_t >( id ) ),
   m_it( 0 ),
   m_itf( 0 ),
@@ -47,13 +50,16 @@ Performer::Performer( int id,
   m_conductor( conductor ),
   m_linsysmerger( linsysmerger ),
   m_spanwer( spawner ),
-  m_elem( element )
+  m_conn( conn ),
+  m_cid( cid )
 //******************************************************************************
 //  Constructor
 //! \param[in] id Charm++ global array id
 //! \param[in] host Host proxy
 //! \param[in] lsm Linear system merger (LinSysMerger) proxy
-//! \param[in] element Vector global mesh element IDs owned
+//! \param[in] conn Vector of mesh element connectivity owned (global IDs)
+//! \param[in] cid Map associating old node IDs (as in file) to new node IDs (as
+//!   in producing contiguous-row-id linear system contributions)
 //! \details Since a Performer chare array is created separately on each PE, the
 //!   chare array index, thisIndex, is a local index. The global index, unknown
 //!   to Charm, is unique across all PEs, stored in m_id.
@@ -72,7 +78,7 @@ Performer::setup()
 //******************************************************************************
 {
   // Initialize local->global, global->local node ids, element connectivity
-  initIds( m_elem );
+  initIds( m_conn );
   // Read coordinates of owned and received mesh nodes
   initCoords();
   // Output chare mesh to file
@@ -85,30 +91,18 @@ void
 Performer::initIds( const std::vector< std::size_t >& gelem )
 //******************************************************************************
 //! Initialize local->global, global->local node ids, element connectivity
-//! \param[in] gelem Set of unique owned global element ids
+//! \param[in] gelem Set of unique owned global ids
 //! \author J. Bakosi
 //******************************************************************************
 {
   tk::Timer t;
 
-  tk::ExodusIIMeshReader
-    er( g_inputdeck.get< tag::cmd, tag::io, tag::input >() );
-
-  // Read element block IDs from ExodusII file
-  er.readElemBlockIDs();
-
-  std::vector< std::size_t > gtetinpoel;
-
-  // Read global element connectivity of owned tetrahedron elements
-  for (auto e : gelem) er.readElement( e, tk::ExoElemType::TET, gtetinpoel );
-
-  m_timestamp.emplace_back( "Read mesh element connectivity from file",
-                            t.dsec() );
-
-  tk::Timer t2;
+// std::cout << CkMyPe() << ", " << thisIndex << ": ";
+// for (auto p : gelem) std::cout << p << ' ';
+// std::cout << std::endl;
 
   // Generate connectivity graph storing local node ids
-  std::tie( m_inpoel, m_gid ) = tk::global2local( gtetinpoel );
+  std::tie( m_inpoel, m_gid ) = tk::global2local( gelem );
 
   // Send off number of columns per row to linear system merger
   m_linsysmerger.ckLocalBranch()->charerow( thisProxy,
@@ -117,7 +111,7 @@ Performer::initIds( const std::vector< std::size_t >& gelem )
                                             m_gid );
 
   m_timestamp.emplace_back( "Initialize mesh point ids, element connectivity",
-                            t2.dsec() );
+                            t.dsec() );
 }
 
 void
@@ -338,7 +332,7 @@ Performer::initCoords()
   auto& x = m_coord[0];
   auto& y = m_coord[1];
   auto& z = m_coord[2];
-  for (auto p : m_gid) er.readNode( p, x, y, z );
+  for (auto p : m_gid) er.readNode( tk::val_find(m_cid,p), x, y, z );
 
   m_timestamp.emplace_back( "Read mesh point coordinates from file", t.dsec() );
 }

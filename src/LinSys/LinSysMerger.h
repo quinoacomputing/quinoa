@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/LinSysMerger.h
   \author    J. Bakosi
-  \date      Mon 23 Nov 2015 09:25:45 PM MST
+  \date      Thu 03 Dec 2015 02:43:43 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Linear system merger
   \details   Linear system merger.
@@ -75,6 +75,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       m_ownpts( 0 ),
       m_compts( 0 )
     {
+std::cout << CkMyPe() << ": " << m_lower << "..." << m_upper << std::endl;
       auto remainder = npoin % static_cast<std::size_t>(CkNumPes());
       if (remainder && CkMyPe() == CkNumPes()-1) m_upper += remainder;
       // Create distributed linear system
@@ -650,6 +651,8 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
     //! \brief Signal back to host that the initialization of the row indices of
     //!   the linear system is complete
     void signal2host_row_complete( const inciter::CProxy_Conductor& host ) {
+tk::real r = static_cast<tk::real>(m_compts)/(m_ownpts+m_compts);
+std::cout << CkMyPe() << " c/(o+c) = " << r << '\n';
       m_perfstat.emplace_back( "Communicated/total rows",
                                static_cast<tk::real>(m_compts) /
                                static_cast<tk::real>(m_ownpts+m_compts) );

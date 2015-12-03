@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/partitioner.ci
   \author    J. Bakosi
-  \date      Wed 02 Dec 2015 09:06:42 AM MST
+  \date      Wed 02 Dec 2015 11:00:33 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Charm++ module interface file for the chare partitioner group
   \details   Charm++ module interface file for the chare partitioner group used
@@ -34,7 +34,8 @@ module partitioner {
       entry void add( int frompe,
             const std::unordered_map< int, std::vector< std::size_t > >& elem );
       entry void recv();
-      entry void reorder();
+      entry void readOwnedGraph();
+      entry void reorder( std::unordered_map< std::size_t, std::size_t >& map );
     };
 
   } // inciter::

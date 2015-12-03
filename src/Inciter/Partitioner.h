@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Partitioner.h
   \author    J. Bakosi
-  \date      Wed 02 Dec 2015 09:42:45 AM MST
+  \date      Thu 03 Dec 2015 02:48:35 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Charm++ chare partitioner group used to perform mesh partitioning
   \details   Charm++ chare partitioner group used to parform mesh partitioning.
@@ -53,18 +53,19 @@ class Partitioner : public CBase_Partitioner< HostProxy > {
   public:
     //! Constructor
     //! \param[in] hostproxy Host Charm++ proxy we are being called from
-    Partitioner( HostProxy& host ) : m_host( host ), m_npe( 0 ) {
-      // Create ExodusII mesh reader
-      tk::ExodusIIMeshReader
-        er( g_inputdeck.get< tag::cmd, tag::io, tag::input >() );
+    Partitioner( HostProxy& host ) :
+      m_host( host ),
+      m_npe( 0 ),
+      m_er( g_inputdeck.get< tag::cmd, tag::io, tag::input >() )
+    {
       // Read our chunk of the mesh graph from file
-      readGraph( er );
+      readGraph();
       // If a geometric partitioner is selected, compute element centroid
       // coordinates
       const auto alg = g_inputdeck.get< tag::selected, tag::partitioner >();
       if ( alg == tk::ctr::PartitioningAlgorithmType::RCB ||
            alg == tk::ctr::PartitioningAlgorithmType::RIB )
-        computeCentroids( er );
+        computeCentroids();
       else
         signal2host_setup_complete( m_host );
     }
@@ -87,17 +88,72 @@ class Partitioner : public CBase_Partitioner< HostProxy > {
       distribute();
     }
 
-    //! Reorder global mesh node IDs
-    void reorder() {
+    //! Read our mesh connectivity to prepare for reordering
+    void readOwnedGraph() {
+      // Make sure we are not fed garbage
       int chunksize, mynchare;
       std::tie( chunksize, mynchare ) = chareDistribution();
       Assert(m_elem.size() == mynchare, "Global mesh element ids associated "
              "to chares on PE " + std::to_string( CkMyPe() ) + " is incomplete");
 
-//       for (const auto& c : m_elem)
-//         std::cout << CkMyPe() << ": " << c.first << ", " << c.second.size() << std::endl;
+      // Read connectivity (node IDs) of elements our chares operate on
+      for (auto& c : m_elem) {
+        std::vector< std::size_t > id;
+        for (auto e : c.second) {
+          m_er.readElement( e, tk::ExoElemType::TET, id );
+        }
+        // Since we are done with the element ids of chare c.first, we overwrite
+        // the element ids with a copy of the element connectivity, i.e., node
+        // IDs, just read. This will be remapped to the new node ID order after
+        // reordering and will contain our main result of the reordering.
+        c.second.clear();
+        c.second.insert( end(c.second), begin(id), end(id) );
+        m_id.insert( end(m_id), begin(id), end(id) );
+        id.clear();
+      }
+      // Make node ids unique, these need reordering on our PE
+      tk::unique( m_id );
+      // Call back to host indicating that we are ready for a new order
+      if (CkMyPe() == 0) m_host.reorder( 0 );
+    }
 
-      signal2host_reordering_complete( m_host );
+    //! Reorder global mesh node IDs
+    //! \param[in] map Old-node-id-new-node-id map constructed by PEs before me
+    void reorder( std::unordered_map< std::size_t, std::size_t >& map ) {
+      // Map associating old node IDs (as in file) to new node IDs (as in
+      // producing contiguous-row-id linear system contributions)
+      std::unordered_map< std::size_t, std::size_t > cid;
+      // Reorder our chunk of mesh node IDs
+      auto n = map.size();
+      for (auto& p : m_id) {
+        auto o = p;             // save old id
+        const auto it = map.find( p );
+        if (it != end(map)) {   // if old global id has already been assigned
+          p = it->second;       //   use its new id
+        } else {                // if not
+          map[ p ] = n;         //   assign new id to old id, and
+          p = n++;              //   use it (reorder)
+        }
+        // Construct map associating old to new IDs
+        cid[ p ] = o;
+      }
+      // If we are not the last PE, continue with the next PE forwarding the
+      // node id map accumulated by us and all PEs before us
+      if (CkMyPe() < CkNumPes()-1) Group::thisProxy[ CkMyPe()+1 ].reorder(map);
+      // Update our chare ID map to now contain the new global node IDs
+      for (auto& c : m_elem) for (auto& e : c.second) e = tk::val_find(map,e);
+      // Construct maps associating old node IDs (as in file) to new node IDs
+      // (as in producing contiguous-row-id linear system contributions)
+      // associated to chare IDs (outer key) based on flat map, cid, that is not
+      // categorized by chares
+      std::unordered_map< int,
+        std::unordered_map< std::size_t, std::size_t > > chcid;
+      for (const auto& c : m_elem) {
+        auto& m = chcid[ c.first ];
+        for (auto p : c.second) m[p] = tk::val_find(cid,p);
+      }
+      // Send back result to host
+      m_host.prepared( CkMyPe(), m_elem, chcid );
     }
 
   private:
@@ -105,6 +161,8 @@ class Partitioner : public CBase_Partitioner< HostProxy > {
     HostProxy m_host;
     //! Number of fellow PEs to send elem IDs to
     std::size_t m_npe;
+    //! ExodusII mesh reader
+    tk::ExodusIIMeshReader m_er;
     //! Tetrtahedron element connectivity of our chunk of the mesh
     std::vector< std::size_t > m_tetinpoel;
     //! Global element IDs we read (our chunk of the mesh)
@@ -116,15 +174,20 @@ class Partitioner : public CBase_Partitioner< HostProxy > {
     //! \brief Global mesh element ids associated to chare IDs on this PE
     //!   resulting from partitioning
     std::unordered_map< int, std::vector< std::size_t > > m_partelem;
-    //! Global mesh element ids associated to chares owned by this PE
+    //! \brief Global mesh element or node ids associated to chares owned
+    //! \details Before reordering this map stores (old) global mesh element IDs
+    //!   corresponding to the ordering as in the mesh file. After reordering it
+    //!   stores the (new) global node IDs the chares contribute to.
     std::unordered_map< int, std::vector< std::size_t > > m_elem;
+    //! \brief Unique global node IDs chares on our PE will contribute to in a
+    //!   linear system
+    std::vector< std::size_t > m_id;
 
     //! Read mesh graph from file, a chunk by each PE group
-    void readGraph( tk::ExodusIIMeshReader& er )
-    {
+    void readGraph() {
       // Get number of mesh points and number of tetrahedron elements in file
-      er.readElemBlockIDs();
-      auto nel = er.nel( tk::ExoElemType::TET );
+      m_er.readElemBlockIDs();
+      auto nel = m_er.nel( tk::ExoElemType::TET );
       // Read our chunk of tetrahedron element connectivity from file and also
       // store the list of global element indices for our chunk of the mesh
       auto chunk = nel / CkNumPes();
@@ -133,19 +196,18 @@ class Partitioner : public CBase_Partitioner< HostProxy > {
       if (CkMyPe() == CkNumPes()-1) till += nel % CkNumPes();
       std::array< std::size_t, 2 > ext = { { static_cast<std::size_t>(from),
                                              static_cast<std::size_t>(till) } };
-      er.readElements( ext, tk::ExoElemType::TET, m_tetinpoel );
+      m_er.readElements( ext, tk::ExoElemType::TET, m_tetinpoel );
       m_gelemid.resize( static_cast<std::size_t>(till-from) );
       std::iota( begin(m_gelemid), end(m_gelemid), from );
       signal2host_graph_complete( m_host, m_tetinpoel.size()/4 );
     }
 
     // Compute element centroid coordinates
-    void computeCentroids( tk::ExodusIIMeshReader& er )
-    {
+    void computeCentroids() {
       auto gid = m_tetinpoel;
       tk::unique( gid );
       // Read node coordinates of our chunk of the mesh elements from file
-      auto coord = er.readNodes( tk::extents(gid) );
+      auto coord = m_er.readNodes( tk::extents(gid) );
       // Make room for element centroid coordinates
       auto& cx = m_centroid[0];
       auto& cy = m_centroid[1];
@@ -220,8 +282,8 @@ class Partitioner : public CBase_Partitioner< HostProxy > {
       int chunksize, mynchare;
       std::tie( chunksize, mynchare ) = chareDistribution();
       for (int c=0; c<mynchare; ++c) {
-        auto cid = CkMyPe() * chunksize + c;  // compute owned chare ID
-        const auto it = m_partelem.find(cid); // attempt to find its elements
+        auto chid = CkMyPe() * chunksize + c; // compute owned chare ID
+        const auto it = m_partelem.find(chid);// attempt to find its elements
         if (it != end(m_partelem)) {          // if found
           m_elem.insert( *it );               // move over owned key-value pairs
           m_partelem.erase( it );             // remove chare ID and elements
@@ -249,7 +311,11 @@ class Partitioner : public CBase_Partitioner< HostProxy > {
         Assert( pe(c.first) == CkMyPe(), "PE " + std::to_string(CkMyPe()) +
                 " received a chareid-elemidx-vector pair whose chare it does"
                 " not own" );
-        m_elem[ c.first ] = c.second;
+//         Assert( m_elem.find(c.first) == end(m_elem), "PE " +
+//                 std::to_string(CkMyPe()) + " already has element IDs for chare "
+//                 + std::to_string(c.first) );
+        auto& e = m_elem[ c.first ];
+        e.insert( end(e), begin(c.second), end(c.second) );
       }
       Group::thisProxy[ frompe ].recv();
     }
@@ -298,12 +364,8 @@ class Partitioner : public CBase_Partitioner< HostProxy > {
     //!   mesh element IDs after partitioning
     void signal2host_distribution_complete( const CProxy_Conductor& host ) {
       Group::contribute(
-        CkCallback(CkIndex_Conductor::redn_wrapper_reorder(NULL), m_host ));
-    }
-    //! Signal back to host that we have done our part of reordering the mesh
-    void signal2host_reordering_complete( const CProxy_Conductor& host ) {
-      Group::contribute(
-        CkCallback(CkIndex_Conductor::redn_wrapper_prepared(NULL), m_host ));
+        CkCallback( CkIndex_Conductor::redn_wrapper_readOwnedGraph(NULL),
+                    m_host ) );
     }
 };
 
