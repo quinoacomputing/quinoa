@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.h
   \author    J. Bakosi
-  \date      Mon 09 Nov 2015 02:21:49 PM MST
+  \date      Thu 03 Dec 2015 01:43:26 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Performer advances a PDE
   \details   Performer advances a PDE. There are a potentially
@@ -58,21 +58,19 @@ class Performer : public CBase_Performer {
 
   public:
     //! Constructor
-    explicit Performer( int id,
-                        ConductorProxy& conductor,
-                        LinSysMergerProxy& linsysmerger,
-                        SpawnerProxy& spawner,
-                        const std::vector< std::size_t >& element );
+    explicit
+      Performer( int id,
+                 ConductorProxy& conductor,
+                 LinSysMergerProxy& linsysmerger,
+                 SpawnerProxy& spawner,
+                 const std::vector< std::size_t >& conn,
+                 const std::unordered_map< std::size_t, std::size_t >& cid );
 
     //! Migrate constructor
     explicit Performer( CkMigrateMessage* ) {}
 
     //! Initialize mesh IDs, element connectivity, coordinates
     void setup();
-
-    //! Receive contribution to list of mesh elements owned
-    void add( const std::vector< std::size_t >& elem )
-    { m_elem.insert( end(m_elem), begin(elem), end(elem) ); }
 
     //! Initialize communication and mesh data
     void init( tk::real dt );
@@ -92,9 +90,12 @@ class Performer : public CBase_Performer {
     CProxy_Conductor m_conductor;       //!< Conductor proxy
     LinSysMergerProxy m_linsysmerger;   //!< Linear system merger proxy
     SpawnerProxy m_spanwer;             //!< Spawner proxy
-    std::vector< std::size_t > m_elem;  //!< Global ids of elements owned
+    std::vector< std::size_t > m_conn;  //!< Element connectivity (global IDs)
+    //! \brief Map associating old node IDs (as in file) to new node IDs (as in
+    //!   producing contiguous-row-id linear system contributions)
+    std::unordered_map< std::size_t, std::size_t > m_cid;
+    std::vector< std::size_t > m_inpoel;//!< Element connectivity (local IDs)
     std::vector< std::size_t > m_gid;   //!< Global node ids of owned elements
-    std::vector< std::size_t > m_inpoel;//!< Owned element connectivity
     //! Mesh point coordinates
     std::array< std::vector< tk::real >, 3 > m_coord;
     //! Unknown/solution vector: global mesh point row ids and values

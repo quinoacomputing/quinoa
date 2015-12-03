@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Conductor.h
   \author    J. Bakosi
-  \date      Wed 02 Dec 2015 09:03:21 AM MST
+  \date      Thu 03 Dec 2015 11:54:43 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Conductor drives the time integration of a PDE
   \details   Conductor drives the time integration of a PDE
@@ -59,12 +59,20 @@ class Conductor : public CBase_Conductor {
 
     //! \brief Reduction target indicating that all Partitioner chare groups
     //!   have finished distributing the mesh element IDs after partitioning and
-    //!   we ready to start reordering mesh node IDs
-    void reorder();
+    //!   we ready to start reordering mesh node IDs whose first step is reading
+    //!   the mesh graph connectivity (i.e., the global node IDs) owned on each
+    //!   PE
+    void readOwnedGraph();
 
-    //! \brief Reduction target indicating that all Partitioner chare groups
-    //!   have finished preparing the computational mesh
-    void prepared();
+    //! Reorder mesh node IDs owned on each PE
+    void reorder( int pe );
+
+    //! \brief Charm++ entry method inidicating that all Partitioner chare
+    //!  groups have finished preparing the computational mesh
+    void prepared( int pe,
+                   std::unordered_map< int, std::vector< std::size_t > >& conn,
+                   std::unordered_map< int,
+                     std::unordered_map< std::size_t, std::size_t > >& chcid );
 
     //! \brief Reduction target indicating that all Spawner chare groups have
     //!   finished creating their Charm++ Performer worker chare array elements
@@ -123,6 +131,7 @@ class Conductor : public CBase_Conductor {
 
     InciterPrint m_print;               //!< Pretty printer
     int m_nchare;                       //!< Number of performer chares
+    int m_prepared;                     //!< perpared() chare group counter
     int m_eval;                         //!< EvaluateTime() charge group counter
     int m_init;                         //!< initcomplete() charge group counter
     uint64_t m_it;                      //!< Iteration count
@@ -136,6 +145,17 @@ class Conductor : public CBase_Conductor {
     PartitionerProxy m_partitioner;     //!< Partitioner group
     SpawnerProxy m_spawner;             //!< Spawner group
     LinSysMergerProxy m_linsysmerger;   //!< Linear system merger chare group
+    //! \brief  Reordered global mesh connectivity, i.e., node IDs, all PEs
+    //!   (outer key) with their chares (inner key) contribute to in a linear
+    //!   system
+    std::unordered_map< int,
+      std::unordered_map< int, std::vector< std::size_t > > > m_conn;
+    //! \brief Map associating old node IDs (as in file) to new node IDs (as
+    //!   in producing contiguous-row-id linear system contributions)
+    //!   categorized by chare IDs (middle key) associated to PEs (outer key)
+    std::unordered_map< int,
+      std::unordered_map< int,
+        std::unordered_map< std::size_t, std::size_t > > > m_chcid;
     //! Time stamps merged from chare array elements
     std::map< std::string, std::vector< tk::real > > m_arrTimestamp;
     //! Time stamps merged from chare group elements
