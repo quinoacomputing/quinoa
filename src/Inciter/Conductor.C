@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Conductor.C
   \author    J. Bakosi
-  \date      Thu 03 Dec 2015 01:38:30 PM MST
+  \date      Wed 09 Dec 2015 08:26:33 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Conductor drives the time integration of a PDE
   \details   Conductor drives the time integration of a PDE
@@ -32,6 +32,7 @@ using inciter::Conductor;
 Conductor::Conductor() :
   m_print( g_inputdeck.get<tag::cmd,tag::verbose>() ? std::cout : std::clog ),
   m_prepared( 0 ),
+  m_costed( 0 ),
   m_eval( 0 ),
   m_init( 0 ),
   m_it( 0 ),
@@ -191,8 +192,8 @@ Conductor::reorder( int pe )
 void
 Conductor::prepared(
   int pe,
-  std::unordered_map< int, std::vector< std::size_t > >& conn,
-  std::unordered_map< int,
+  const std::unordered_map< int, std::vector< std::size_t > >& conn,
+  const std::unordered_map< int,
     std::unordered_map< std::size_t, std::size_t > >& chcid )
 //******************************************************************************
 // Charm++ entry method inidicating that all Partitioner chare groups have
@@ -204,38 +205,175 @@ Conductor::prepared(
 //! \param[in] chcid Map associating old node IDs (as in file) to new node IDs
 //!   (as in producing contiguous-row-id linear system contributions) on a PE
 //!   categorized by chare IDs
-//! \details Once this is done, we continue by creating the linear system merger
-//!  and spawner groups that will setup the integration of PDE(s)
+//! \details Once this is done, we continue by optimizing communication costs
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // Store connectivity arriving from PE
-  m_conn[ pe ] = std::move( conn );
-  // Store old->new node ID map arriving from PE
-  m_chcid[ pe ] = std::move( chcid );
+  m_conn[ pe ] = conn;          // store connectivity arriving from PE
+  m_chcid[ pe ] = chcid;        // store old->new node ID map arriving from PE
 
   // When every PE has finished with the mesh node ID reordering, continue
   if ( ++m_prepared == CkNumPes() ) {
     m_print.diagend( "done" );
     mainProxy.timestamp( "Reorder mesh", tk::query(m_timer,TimerTag::MESH) );
-
-    // Create linear system merger chare group collecting chare contributions to
-    // a linear system
-    tk::ExodusIIMeshReader er(g_inputdeck.get< tag::cmd, tag::io, tag::input >());
-    auto npoin = er.readHeader();
-    m_linsysmerger = LinSysMergerProxy::ckNew( thisProxy, npoin );
-
-    m_print.diagstart( "Creating workers ..." );
-
-    m_timer[ TimerTag::CREATE ];
-
-    // Create chare group spawning asynchronous performers
-    m_spawner = SpawnerProxy::ckNew( m_nchare, thisProxy );
-    for (int p=0; p<CkNumPes(); ++p)
-      m_spawner[p].create( m_linsysmerger,
-                           tk::cref_find( m_conn, p ),
-                           tk::cref_find( m_chcid, p ) );
+    computeCost();
   }
+}
+
+void
+Conductor::computeCost()
+//******************************************************************************
+// Query communication cost of linear system merge
+//! \author J. Bakosi
+//******************************************************************************
+{
+  Assert( m_chcid.size() == CkNumPes(), "Size of node ID map must equal the "
+          "number PEs, " + std::to_string(CkNumPes()) );
+
+  // Compute global row IDs at which the linear system will have a PE boundary.
+  // We simply find the largest node ID assigned on each PE by the reordering
+  // and use that as the upper global row index. While this rarely results in
+  // equal number of rows assigned to PEs, potentially resulting in some
+  // load-imbalance, it yields a pretty good division reducing communication
+  // costs during the assembly of the linear system, which is more important
+  // than a slight (FLOP) load imbalance. What we store in the map below is the
+  // lower and upper global row indices associated to a PE. Note that we could
+  // store this information in a simple vector of dividers, since the upper
+  // index for PE 1 is the same as the lower index for PE 2, etc., however, we
+  // store both indices associated to PEs as that allows computing costs
+  // individually for a single PE, or a selected number of PEs, and in a not
+  // necessarily ordered fashion (think: asynchronous). Below we build the upper
+  // indices and then the lower indices for all PEs.
+  m_div[0] = { 0, 0 };
+  for (const auto& p : m_chcid) {
+    // Find upper row index for PE. This is the largest row index across all
+    // chares on a PE.
+    using pair_type = std::pair< const std::size_t, std::size_t >;
+    std::size_t upper = 0;
+    for (const auto& chmap : p.second) {
+      auto x = std::max_element( begin(chmap.second), end(chmap.second),
+                 []( const pair_type& a, const pair_type& b )
+                 { return a.first < b.first; } );
+      if (x->first > upper) upper = x->first;
+    }
+    // Associate upper row index to PE
+    m_div[ p.first ].second = upper;
+  }
+
+  Assert( m_div.size() == CkNumPes(), "Size of divisions map must equal the "
+          "number PEs, " + std::to_string(CkNumPes()) );
+
+  // Put in lower indices to all PEs
+  for (auto& p : m_div)
+    if (p.first > 0) p.second.first = tk::cref_find(m_div,p.first-1).second;
+
+  // Instruct all PEs to compute their communication cost of merging the linear
+  // system for all the divisions just computed for all PEs
+  query( m_div );
+}
+
+void
+Conductor::query(
+  const std::map< int, std::pair< std::size_t, std::size_t > >& div )
+//******************************************************************************
+// Start a round of estimation by querying the communication costs from PEs
+//! \param[in] div A map associating lower and upper global row IDs to PEs
+//! \note The number of entries in div must be less than or equal the number of
+//!   PEs we are running on. We interrogate as many PEs for the cost as many
+//!   entries div has.
+//! \author J. Bakosi
+//******************************************************************************
+{
+  Assert( div.size() == CkNumPes(), "Size of divisions map must equal the "
+          "number PEs, " + std::to_string(CkNumPes()) );
+
+  // Instruct PEs to compute their communication cost of merging the linear
+  // system for the division passed in
+  for (const auto& d : div)
+    m_partitioner[ d.first ].cost( d.second.first, d.second.second );
+}
+
+void
+Conductor::costed( int pe, tk::real cost )
+//******************************************************************************
+// Receive and estimate overall communication cost of merging the linear system
+//! \param[in] pe PE cost estimate coming from
+//! \param[in] cost Communication cost associated to caller PE. The cost is a
+//!   real number between 0 and 1, defined as the number of mesh points the PE
+//!   does not own, i.e., needs to send to some other PE, divided by the total
+//!   number of points the PE contributes to. The lower the better.
+//! \author J. Bakosi
+//******************************************************************************
+{
+  // Store cost associated to PE
+  m_cost[ pe ] = cost;
+
+  // If every PE has costed the communication cost, compute overall cost based
+  // on the average and standard deviation of the cost across all PEs. The
+  // average gives an idea of the average communication cost across all PEs,
+  // while the standard deviation gives an idea on the expected load imbalance.
+  if (++m_costed == CkNumPes()) {
+
+    Assert( m_cost.size() == CkNumPes(), "Size of cost map must equal the "
+            "number PEs, " + std::to_string(CkNumPes()) );
+
+    // Estimate communication cost across all PEs
+    auto stat = estimate( m_cost );
+    m_print.diagstart( "Communication cost of linear system assembly: avg = " +
+                       std::to_string(stat.first) + ", std = " +
+                       std::to_string(stat.second) + '\n' );
+
+    createWorkers();
+  }
+}
+
+std::pair< tk::real, tk::real >
+Conductor::estimate( const std::map< int, tk::real >& cost )
+//******************************************************************************
+// Estimate communication cost across all PEs
+//! \param[in] cost Map associating cost to PEs
+//! \return Average and standard deviation of communication cost across all PEs
+//! \author J. Bakosi
+//******************************************************************************
+{
+  std::pair< tk::real, tk::real > s( { 0.0, 0.0 } );
+
+  // Compute average communication cost across all PEs
+  for (const auto& p : cost) s.first += p.second;
+  s.first /= static_cast< tk::real >( cost.size() );
+
+  // Compute standard deviation of the communication cost across all PEs
+  for (const auto& p : cost)
+    s.second += (p.second - s.first) * (p.second - s.first);
+  s.second = std::sqrt( s.second / static_cast<tk::real>(cost.size()) );
+
+  return s;
+}
+
+void
+Conductor::createWorkers()
+//******************************************************************************
+// Create linear system merger group and worker chares
+//! \author J. Bakosi
+//******************************************************************************
+{
+  // Create linear system merger chare group. m_div contains the dividers
+  // (global mesh point indices) at which the linear system assembly is divided
+  // among PEs. However, Hypre and thus LinSysMerger expects exclusive upper
+  // indices, so we increase the last one by one.
+  ++std::prev(m_div.end())->second.second;
+  m_linsysmerger = LinSysMergerProxy::ckNew( thisProxy, m_div );
+
+  m_print.diagstart( "Creating workers ..." );
+
+  m_timer[ TimerTag::CREATE ];
+
+  // Create chare group spawning asynchronous performers
+  m_spawner = SpawnerProxy::ckNew( m_nchare, thisProxy );
+  for (int p=0; p<CkNumPes(); ++p)
+    m_spawner[p].create( m_linsysmerger,
+                         tk::cref_find( m_conn, p ),
+                         tk::cref_find( m_chcid, p ) );
 }
 
 void

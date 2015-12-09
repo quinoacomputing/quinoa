@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/LinSysMerger.h
   \author    J. Bakosi
-  \date      Thu 03 Dec 2015 02:43:43 PM MST
+  \date      Wed 09 Dec 2015 08:58:13 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Linear system merger
   \details   Linear system merger.
@@ -64,20 +64,21 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
   public:
     //! Constructor
     //! \param[in] host Charm++ host proxy
-    //! \param[in] npoin Total number of mesh points
-    LinSysMerger( HostProxy& host, std::size_t npoin ) :
+    //! \param[in] div Lower and upper global row indices associated to a PE.
+    //!   These are the divisions at which the linear system is divided at along
+    //!   PE boundaries.
+    LinSysMerger(
+      HostProxy& host,
+      const std::map< int, std::pair< std::size_t, std::size_t > >& div )
+    :
       m_host( host ),
-      m_chunksize( npoin / static_cast<std::size_t>(CkNumPes()) ),
-      m_lower( static_cast<std::size_t>(CkMyPe()) * m_chunksize ),
-      m_upper( m_lower + m_chunksize ),
+      m_lower( tk::cref_find(div,CkMyPe()).first ),
+      m_upper( tk::cref_find(div,CkMyPe()).second ),
       m_nchare( 0 ),
-      m_nperow( 0 ),
-      m_ownpts( 0 ),
-      m_compts( 0 )
+      m_nperow( 0 )
     {
-std::cout << CkMyPe() << ": " << m_lower << "..." << m_upper << std::endl;
-      auto remainder = npoin % static_cast<std::size_t>(CkNumPes());
-      if (remainder && CkMyPe() == CkNumPes()-1) m_upper += remainder;
+      // Invert and store PE-division map
+      for (const auto& p : div) m_div[ p.second ] = p.first;
       // Create distributed linear system
       create();
       // Activate SDAG waits for assembling lhs, rhs, and solution
@@ -130,16 +131,12 @@ std::cout << CkMyPe() << ": " << m_lower << "..." << m_upper << std::endl;
       m_myworker.push_back( chgid );
       // Store rows owned and pack those to be exported, also build import map
       // used to test for completion
-      std::map< std::size_t, std::set< std::size_t > > exp;
+      std::map< int, std::set< std::size_t > > exp;
       for (auto gid : row) {
         if (gid >= m_lower && gid < m_upper) {  // if own
           m_rowimport[ chgid ].push_back( gid );
           m_row.insert( gid );
-          ++m_ownpts;
-        } else {
-          exp[ pe(gid) ].insert( gid );
-          ++m_compts;
-        }
+        } else exp[ pe(gid) ].insert( gid );
       }
       // Export non-owned parts to fellow branches that own them
       m_nperow += exp.size();
@@ -186,7 +183,7 @@ std::cout << CkMyPe() << ": " << m_lower << "..." << m_upper << std::endl;
       m_timer[ TimerTag::SOL ]; // start measuring merging of solution vector
       // Store solution vector nonzero values owned and pack those to be
       // exported, also build import map used to test for completion
-      std::map< std::size_t, std::map< std::size_t, tk::real > > exp;
+      std::map< int, std::map< std::size_t, tk::real > > exp;
       for (const auto& r : sol) {
         auto gid = r.first;
         if (gid >= m_lower && gid < m_upper) {  // if own
@@ -228,9 +225,8 @@ std::cout << CkMyPe() << ": " << m_lower << "..." << m_upper << std::endl;
       m_timer[ TimerTag::LHS ]; // start measuring merging of lhs matrix
       // Store matrix nonzero values owned and pack those to be exported, also
       // build import map used to test for completion
-      std::map< std::size_t,
-                std::map< std::size_t,
-                          std::map< std::size_t, tk::real > > > exp;
+      std::map< int, std::map< std::size_t,
+                               std::map< std::size_t, tk::real > > > exp;
       for (const auto& r : lhs) {
         auto gid = r.first;
         if (gid >= m_lower && gid < m_upper) {  // if own
@@ -272,7 +268,7 @@ std::cout << CkMyPe() << ": " << m_lower << "..." << m_upper << std::endl;
     void charerhs( int chgid, const std::map< std::size_t, tk::real >& rhs ) {
       m_timer[ TimerTag::RHS ]; // start measuring merging of rhs vector
       // Store vector nonzero values owned and pack those to be exported
-      std::map< std::size_t, std::map< std::size_t, tk::real > > exp;
+      std::map< int, std::map< std::size_t, tk::real > > exp;
       for (const auto& r : rhs) {
         auto gid = r.first;
         if (gid >= m_lower && gid < m_upper) {  // if own
@@ -321,7 +317,6 @@ std::cout << CkMyPe() << ": " << m_lower << "..." << m_upper << std::endl;
 
   private:
     HostProxy m_host;           //!< Host proxy
-    std::size_t m_chunksize;    //!< Number of rows the first npe-1 PE own
     std::size_t m_lower;        //!< Lower index of the global rows on my PE
     std::size_t m_upper;        //!< Upper index of the global rows on my PE
     std::size_t m_nchare;       //!< Number of chares contributing to my PE
@@ -373,8 +368,6 @@ std::cout << CkMyPe() << ": " << m_lower << "..." << m_upper << std::endl;
     std::vector< tk::real > m_hypreSol;
     //! Global->local row id map for sending back solution vector parts
     std::map< std::size_t, std::size_t > m_lid;
-    std::size_t m_ownpts;    //!< Number of owned rows
-    std::size_t m_compts;    //!< Number of communicated rows
     //! Time stamps
     std::vector< std::pair< std::string, tk::real > > m_timestamp;
     //! Timer labels
@@ -383,6 +376,16 @@ std::cout << CkMyPe() << ": " << m_lower << "..." << m_upper << std::endl;
     std::map< TimerTag, tk::Timer > m_timer;
     //! Performance statistics
     std::vector< std::pair< std::string, tk::real > > m_perfstat;
+    //! \brief PEs associated to lower and upper global row indices
+    //! \details These are the divisions at which the linear system is divided
+    //!   along PE boundaries.
+    std::map< std::pair< std::size_t, std::size_t >, int > m_div;
+    //! \brief PEs associated to global mesh point indices
+    //! \details This is used to cache the PE associated to mesh nodes
+    //!   communicated, so that a quicker-than-linear-cost search can be used to
+    //!   find the PE for a communicated mesh node after the node is in the
+    //!   cache.
+    std::map< std::size_t, int > m_pe;
 
     //! \brief Create linear system, i.e., left-hand side matrix, vector of
     //!   unknowns, right-hand side vector, solver perform their initialization
@@ -400,10 +403,21 @@ std::cout << CkMyPe() << ": " << m_lower << "..." << m_upper << std::endl;
 
     //! Return processing element for global mesh row id
     //! \param[in] gid Global mesh point (matrix or vector row) id
+    //! \details First we attempt to the point index in the cache. If that
+    //!   fails, we resort to a linear search across the division map. Once the
+    //!   PE is found, we store it in the cache, so next time the search is
+    //!   quicker. This procedure must find the PE for the id.
     //! \return PE that owns global row id
-    std::size_t pe( std::size_t gid ) {
-      auto pe = gid / m_chunksize;
-      if (pe == CkNumPes()) --pe;
+    int pe( std::size_t gid ) {
+      int pe = -1;
+      auto it = m_pe.find( gid );
+      if (it != end(m_pe))
+        pe = it->second;
+      else
+        for (const auto& p : m_div)
+          if (gid >= p.first.first && gid < p.first.second)
+            pe = m_pe[ gid ] = p.second;
+      Assert( pe >= 0, "PE not found for node id " + std::to_string(gid) );
       return pe;
     }
 
@@ -651,11 +665,6 @@ std::cout << CkMyPe() << ": " << m_lower << "..." << m_upper << std::endl;
     //! \brief Signal back to host that the initialization of the row indices of
     //!   the linear system is complete
     void signal2host_row_complete( const inciter::CProxy_Conductor& host ) {
-tk::real r = static_cast<tk::real>(m_compts)/(m_ownpts+m_compts);
-std::cout << CkMyPe() << " c/(o+c) = " << r << '\n';
-      m_perfstat.emplace_back( "Communicated/total rows",
-                               static_cast<tk::real>(m_compts) /
-                               static_cast<tk::real>(m_ownpts+m_compts) );
       using inciter::CkIndex_Conductor;
       Group::contribute(
         CkCallback( CkIndex_Conductor::redn_wrapper_rowcomplete(NULL), host )

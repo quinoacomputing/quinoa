@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Conductor.h
   \author    J. Bakosi
-  \date      Thu 03 Dec 2015 11:54:43 AM MST
+  \date      Wed 09 Dec 2015 08:22:56 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Conductor drives the time integration of a PDE
   \details   Conductor drives the time integration of a PDE
@@ -69,10 +69,19 @@ class Conductor : public CBase_Conductor {
 
     //! \brief Charm++ entry method inidicating that all Partitioner chare
     //!  groups have finished preparing the computational mesh
-    void prepared( int pe,
-                   std::unordered_map< int, std::vector< std::size_t > >& conn,
-                   std::unordered_map< int,
-                     std::unordered_map< std::size_t, std::size_t > >& chcid );
+    void prepared(
+      int pe,
+      const std::unordered_map< int, std::vector< std::size_t > >& conn,
+      const std::unordered_map< int,
+              std::unordered_map< std::size_t, std::size_t > >& chcid );
+
+    //! Start a round of estimation by querying the communication costs from PEs
+    void query(
+      const std::map< int, std::pair< std::size_t, std::size_t > >& div );
+
+    //! \brief Receive and estimate overall communication cost of merging the
+    //!   linear system
+    void costed( int pe, tk::real c );
 
     //! \brief Reduction target indicating that all Spawner chare groups have
     //!   finished creating their Charm++ Performer worker chare array elements
@@ -132,6 +141,7 @@ class Conductor : public CBase_Conductor {
     InciterPrint m_print;               //!< Pretty printer
     int m_nchare;                       //!< Number of performer chares
     int m_prepared;                     //!< perpared() chare group counter
+    std::size_t m_costed;               //!< costed() chare group counter
     int m_eval;                         //!< EvaluateTime() charge group counter
     int m_init;                         //!< initcomplete() charge group counter
     uint64_t m_it;                      //!< Iteration count
@@ -156,6 +166,12 @@ class Conductor : public CBase_Conductor {
     std::unordered_map< int,
       std::unordered_map< int,
         std::unordered_map< std::size_t, std::size_t > > > m_chcid;
+    //! \brief Lower and upper global row indices associated to a PE
+    //! \details These are the divisions at which the linear system is divided
+    //!   at along PE boundaries.
+    std::map< int, std::pair< std::size_t, std::size_t > > m_div;
+    //! Communication cost for merging the linear system associated to PE
+    std::map< int, tk::real > m_cost;
     //! Time stamps merged from chare array elements
     std::map< std::string, std::vector< tk::real > > m_arrTimestamp;
     //! Time stamps merged from chare group elements
@@ -172,6 +188,16 @@ class Conductor : public CBase_Conductor {
                           TIMESTEP };
     //! Timers
     std::map< TimerTag, tk::Timer > m_timer;
+
+    //! Query communication cost after mesh reordering
+    void computeCost();
+
+    //! Estimate communication cost across all PEs
+    std::pair< tk::real, tk::real >
+    estimate( const std::map< int, tk::real >& cost );
+
+    //! Create linear system merger group and worker chares
+    void createWorkers();
 
     //! Compute size of next time step
     tk::real computedt();
