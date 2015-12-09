@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Partitioner.h
   \author    J. Bakosi
-  \date      Wed 09 Dec 2015 08:56:35 AM MST
+  \date      Wed 09 Dec 2015 09:05:42 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Charm++ chare partitioner group used to perform mesh partitioning
   \details   Charm++ chare partitioner group used to parform mesh partitioning.
@@ -273,19 +273,19 @@ class Partitioner : public CBase_Partitioner< HostProxy > {
       // input compared to the mesh size and not due to programmer error.
       for(const auto& c : element)
         ErrChk( !c.second.empty(),
-                R"(Overdecomposition of the mesh is too large compared to the
-                   number of work units computed based on the degree of
-                   virtualization desired. As a result, there would be at least
-                   one work unit with no mesh elements to work on, i.e., nothing
-                   to do. Solution 1: decrease the virtualization to a lower
-                   value using the command-line argument '-u'. Solution 2:
-                   decrease the number processing elements (PEs) using the
-                   charmrun command-line argument '+pN' where N is the number of
-                   PEs, which implicitly increases the size (and thus decreases
-                   the number) of work units.)" );
+                "Overdecomposition of the mesh is too large compared to the "
+                "number of work units computed based on the degree of "
+                "virtualization desired. As a result, there would be at least "
+                "one work unit with no mesh elements to work on, i.e., nothing "
+                "to do. Solution 1: decrease the virtualization to a lower "
+                "value using the command-line argument '-u'. Solution 2: "
+                "decrease the number processing elements (PEs) using the "
+                "charmrun command-line argument '+pN' where N is the number of "
+                "PEs, which implicitly increases the size (and thus decreases "
+                "the number) of work units.)" );
 
       return element;
-    } 
+    }
 
     //! Distribute global mesh element IDs to their owner PEs
     //! \details Chare ids are distributed to PEs in a linear continguous order
