@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/ZoltanInterOp.C
   \author    J. Bakosi
-  \date      Tue 01 Dec 2015 09:32:49 AM MST
+  \date      Wed 09 Dec 2015 12:18:55 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Interoperation with the Zoltan library
   \details   Interoperation with the Zoltan library, used for static mesh graph
@@ -112,8 +112,10 @@ class GeometricMeshElemAdapter : public Zoltan2::MeshAdapter< User > {
     }
 
   private:
-    const std::size_t m_nelem;           //!< Number of elements on this rank
-    const EntityTopologyType m_topology; //!< Mesh element topology types
+    //! Number of elements on this rank
+    const std::size_t m_nelem;
+    //! Mesh element topology types
+    const EntityTopologyType m_topology;
     //! Mesh element coordinates (centroids)
     const std::array< std::vector< tk::real >, 3 >& m_centroid;
     //! Global mesh element ids
@@ -149,16 +151,14 @@ geomPartMesh( tk::ctr::PartitioningAlgorithmType algorithm,
   // Define types for Zoltan2
   //  * 1st argument, 'scalar': the data type for element values, weights and
   //    coordinates
-  //  * 2nd argument, 'gid' (global id): is the data type used by the
-  //    application for global Ids. If the application's global Id data type is
-  //    a Teuchos Ordinal, then gid and gno can the same. Otherwise, the
-  //    application global Ids will be mapped to Teuchos Ordinals for use by
-  //    Zoltan2 internally. (Teuchos Ordinals are those data types for which
-  //    traits are defined in Teuchos_OrdinalTraits.hpp.)
-  //  * 3rd argument, 'lno' (local number): the integral data type used by the
-  //    application and by Zoltan2 for local indices and local counts
-  //  * 4th argument 'gno' (global number): is the integral data type used by
-  //    Zoltan2 to represent global indices and global counts
+  //  * 2nd argument, 'lno' (local number): the integral data type used by
+  //    the application, i.e, quinoa, and by Zoltan2 for local indices and local
+  //    counts
+  //  * 3rd argument 'gno' (global number): is the integral data type used by
+  //    the application, i.e., quinoa, and Zoltan2 to represent global
+  //    identifiers and global counts
+  // See also
+  // <tpl>/src/trilinos/packages/zoltan2/src/input/Zoltan2_InputTraits.hpp
   using ZoltanTypes =
     Zoltan2::BasicUserTypes< tk::real, std::size_t, std::size_t >;
 
