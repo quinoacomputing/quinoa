@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Print.h
   \author    J. Bakosi
-  \date      Wed 28 Oct 2015 08:52:50 AM MDT
+  \date      Tue 08 Dec 2015 05:04:22 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     General purpose pretty printer functionality
   \details   This file contains general purpose printer functions. Using the
@@ -581,8 +581,8 @@ class Print {
     mutable format m_subsection_title_fmt = format("%s%c %s >\n");
     mutable format m_list_item_fmt = format("%s%-30s\n");
     mutable format m_note_fmt = format("%s%-30s\n");
-    mutable format m_diag_start_fmt = format("Quinoa> %s ");
-    mutable format m_diag_end_fmt = format("%s\n");
+    mutable format m_diag_start_fmt = format("Quinoa> %s");
+    mutable format m_diag_end_fmt = format(" %s\n");
     mutable format m_help_title_fmt = format("\n%s %s\n");
     mutable format m_help_item_fmt = format("%20s%11s %s\n");
     mutable format m_helpkw_cmd_title_fmt =

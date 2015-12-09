@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Partitioner.h
   \author    J. Bakosi
-  \date      Thu 03 Dec 2015 02:48:35 PM MST
+  \date      Wed 09 Dec 2015 08:56:35 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Charm++ chare partitioner group used to perform mesh partitioning
   \details   Charm++ chare partitioner group used to parform mesh partitioning.
@@ -156,6 +156,21 @@ class Partitioner : public CBase_Partitioner< HostProxy > {
       m_host.prepared( CkMyPe(), m_elem, chcid );
     }
 
+    //! Compute communication cost of linear system merging for our PE
+    //! \param[in] lower Lower global row ID of linear system this PE works on
+    //! \param[in] upper Upper global row ID of linear system this PE works on
+    //! \param[in] stage Stage of the communication cost estimation
+    //! \details  The cost is a real number between 0 and 1, defined as the
+    //!   number of mesh points we do not own, i.e., need to send to some other
+    //!   PE, divided by the total number of points we contribute to. The lower
+    //!   the better.
+    void cost( std::size_t lower, std::size_t upper ) {
+      std::size_t ownpts = 0, compts = 0;
+      for (auto p : m_id) if (p >= lower && p < upper) ++ownpts; else ++compts;
+      m_host.costed( CkMyPe(), static_cast<tk::real>(compts) /
+                                 static_cast<tk::real>(ownpts + compts) );
+    }
+
   private:
     //! Host proxy
     HostProxy m_host;
@@ -163,6 +178,8 @@ class Partitioner : public CBase_Partitioner< HostProxy > {
     std::size_t m_npe;
     //! ExodusII mesh reader
     tk::ExodusIIMeshReader m_er;
+    //! Total number of nodes in mesh
+    std::size_t m_nnode;
     //! Tetrtahedron element connectivity of our chunk of the mesh
     std::vector< std::size_t > m_tetinpoel;
     //! Global element IDs we read (our chunk of the mesh)
@@ -186,7 +203,7 @@ class Partitioner : public CBase_Partitioner< HostProxy > {
     //! Read mesh graph from file, a chunk by each PE group
     void readGraph() {
       // Get number of mesh points and number of tetrahedron elements in file
-      m_er.readElemBlockIDs();
+      m_nnode = m_er.readElemBlockIDs();
       auto nel = m_er.nel( tk::ExoElemType::TET );
       // Read our chunk of tetrahedron element connectivity from file and also
       // store the list of global element indices for our chunk of the mesh
@@ -311,9 +328,6 @@ class Partitioner : public CBase_Partitioner< HostProxy > {
         Assert( pe(c.first) == CkMyPe(), "PE " + std::to_string(CkMyPe()) +
                 " received a chareid-elemidx-vector pair whose chare it does"
                 " not own" );
-//         Assert( m_elem.find(c.first) == end(m_elem), "PE " +
-//                 std::to_string(CkMyPe()) + " already has element IDs for chare "
-//                 + std::to_string(c.first) );
         auto& e = m_elem[ c.first ];
         e.insert( end(e), begin(c.second), end(c.second) );
       }
@@ -328,8 +342,12 @@ class Partitioner : public CBase_Partitioner< HostProxy > {
 
   private:
 
-    std::pair< int, int >
-    chareDistribution() const {
+    //! Compute chare distribution
+    //! \return Chunksize, i.e., number of chares per all PEs except the last
+    //!   one, and the number of chares for my PE
+    //! \details This computes a simple contiguous chare distribution across
+    //!   PEs.
+    std::pair< int, int > chareDistribution() const {
       auto chunksize = m_nchare / CkNumPes();
       auto mynchare = chunksize;
       if (CkMyPe() == CkNumPes()-1) mynchare += m_nchare % CkNumPes();
@@ -342,6 +360,8 @@ class Partitioner : public CBase_Partitioner< HostProxy > {
     //! Return processing element for chare id
     //! \param[in] id Chare id
     //! \return PE that creates the chare
+    //! \details This is computed based on a simple contiguous linear
+    //!   distribution of chare ids to PEs.
     int pe( int id ) const {
       auto pe = id / (m_nchare / CkNumPes());
       if (pe == CkNumPes()) --pe;
