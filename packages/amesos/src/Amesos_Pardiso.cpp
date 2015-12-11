@@ -257,12 +257,11 @@ int Amesos_Pardiso::PerformSymbolicFactorization()
 {
   ResetTimer();
 
-  int error = 0;
-
   if (Comm().MyPID() == 0) 
   {
     // at this point only read unsym matrix
     mtype_ = 11; 
+    int error = 0;
     int solver = 0;
 
     // ============================================================== //
@@ -301,18 +300,10 @@ int Amesos_Pardiso::PerformSymbolicFactorization()
                        &n, &aa_[0], &ia_[0], &ja_[0], &idum, &nrhs_,
                        iparm_, &msglvl_, &ddum, &ddum, &error, dparm_);
 #endif
+    AMESOS_CHK_ERR(CheckError(error));
   }
 
   SymFactTime_ = AddTime("Total symbolic factorization time", SymFactTime_);
-
-  // Any failure should be sent to all other processors.
-  Comm().Broadcast( &error, 1, 0 );
-  if ( error ) {
-    if (Comm().MyPID() == 0) {
-      AMESOS_CHK_ERR(CheckError(error));
-    } else
-      return error;
-  }
 
   return 0;
 }
@@ -322,11 +313,10 @@ int Amesos_Pardiso::PerformNumericFactorization( )
 {
   ResetTimer();
 
-  int error = 0;
-
   if (Comm().MyPID() == 0) 
   {
     int phase = 22;
+    int error;
     int n = SerialMatrix().NumMyRows();
     int idum;
     double ddum;
@@ -340,18 +330,11 @@ int Amesos_Pardiso::PerformNumericFactorization( )
                        &n, &aa_[0], &ia_[0], &ja_[0], &idum, &nrhs_,
                        iparm_, &msglvl_, &ddum, &ddum, &error, dparm_);
 #endif
+
+    AMESOS_CHK_ERR(CheckError(error));
   }
 
   NumFactTime_ = AddTime("Total numeric factorization time", NumFactTime_);
- 
-  // Any failure should be sent to all other processors.
-  Comm().Broadcast( &error, 1, 0 );
-  if ( error ) {
-    if (Comm().MyPID() == 0) {
-      AMESOS_CHK_ERR(CheckError(error));
-    } else
-      return error;
-  }
 
   return 0;
 }
@@ -471,8 +454,6 @@ int Amesos_Pardiso::Solve()
 
   ResetTimer();
 
-  int error = 0;
-
   if (Comm().MyPID() == 0) 
   {
     double* SerialXValues;
@@ -484,6 +465,7 @@ int Amesos_Pardiso::Solve()
     // FIXME: check LDA
     AMESOS_CHK_ERR(SerialB->ExtractView(&SerialBValues,&LDA));
 
+    int error;
     int idum = 0;
     int n = SerialMatrix().NumMyRows();
     int phase = 33;
@@ -504,18 +486,10 @@ int Amesos_Pardiso::Solve()
                        SerialXValues + i * n,
                        &error, dparm_);
 #endif
+    AMESOS_CHK_ERR(CheckError(error));
   }
 
   SolveTime_ = AddTime("Total solve time", SolveTime_);
-
-  // Any failure should be sent to all other processors.
-  Comm().Broadcast( &error, 1, 0 );
-  if ( error ) {
-    if (Comm().MyPID() == 0) {
-      AMESOS_CHK_ERR(CheckError(error));
-    } else
-      return error;
-  }
 
   //  Copy X back to the original vector
 
