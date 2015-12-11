@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Partitioner.h
   \author    J. Bakosi
-  \date      Fri 11 Dec 2015 12:14:53 PM MST
+  \date      Fri 11 Dec 2015 12:49:28 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Charm++ chare partitioner group used to perform mesh partitioning
   \details   Charm++ chare partitioner group used to parform mesh partitioning.
@@ -33,7 +33,6 @@
 namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
-extern std::unordered_map< int, std::vector< std::size_t > > g_element;
 
 //! Partitioner Charm++ chare group class
 //! \details Instantiations of Partitioner comprise a processor aware Charm++
@@ -80,12 +79,10 @@ class Partitioner : public CBase_Partitioner< HostProxy > {
                                                  m_gelemid,
                                                  m_tetinpoel.size()/4,
                                                  nchare );
-      Assert( che.size() == m_tetinpoel.size()/4, "Size of ownership array "
-              "does not equal the number of mesh graph elements" );
+      Assert( che.size() == m_gelemid.size(), "Size of ownership array does "
+              "not equal the number of mesh graph elements" );
       // Construct global mesh element ids for each chare
-      m_partelem = elemOwner( che );
-      g_element = m_partelem;
-      distribute();
+      distribute( elemOwner(che) );
     }
 
     //! Read our mesh connectivity to prepare for reordering
@@ -93,15 +90,14 @@ class Partitioner : public CBase_Partitioner< HostProxy > {
       // Make sure we are not fed garbage
       int chunksize, mynchare;
       std::tie( chunksize, mynchare ) = chareDistribution();
-      Assert(m_elem.size() == mynchare, "Global mesh element ids associated "
-             "to chares on PE " + std::to_string( CkMyPe() ) + " is incomplete");
+      Assert( m_elem.size() == mynchare, "Global mesh element ids associated "
+              "to chares on PE " + std::to_string( CkMyPe() ) + " is "
+              "incomplete" );
 
       // Read connectivity (node IDs) of elements our chares operate on
       for (auto& c : m_elem) {
         std::vector< std::size_t > id;
-        for (auto e : c.second) {
-          m_er.readElement( e, tk::ExoElemType::TET, id );
-        }
+        for (auto e : c.second) m_er.readElement( e, tk::ExoElemType::TET, id );
         // Since we are done with the element ids of chare c.first, we overwrite
         // the element ids with a copy of the element connectivity, i.e., node
         // IDs, just read. This will be remapped to the new node ID order after
@@ -188,9 +184,6 @@ class Partitioner : public CBase_Partitioner< HostProxy > {
     std::array< std::vector< tk::real >, 3 > m_centroid;
     //! Total number of chares across all PEs
     int m_nchare;
-    //! \brief Global mesh element ids associated to chare IDs on this PE
-    //!   resulting from partitioning
-    std::unordered_map< int, std::vector< std::size_t > > m_partelem;
     //! \brief Global mesh element or node ids associated to chares owned
     //! \details Before reordering this map stores (old) global mesh element IDs
     //!   corresponding to the ordering as in the mesh file. After reordering it
@@ -209,14 +202,14 @@ class Partitioner : public CBase_Partitioner< HostProxy > {
       // store the list of global element indices for our chunk of the mesh
       auto chunk = nel / CkNumPes();
       auto from = CkMyPe() * chunk;
-      auto till = from+chunk;
+      auto till = from + chunk;
       if (CkMyPe() == CkNumPes()-1) till += nel % CkNumPes();
       std::array< std::size_t, 2 > ext = { { static_cast<std::size_t>(from),
                                              static_cast<std::size_t>(till) } };
       m_er.readElements( ext, tk::ExoElemType::TET, m_tetinpoel );
       m_gelemid.resize( static_cast<std::size_t>(till-from) );
       std::iota( begin(m_gelemid), end(m_gelemid), from );
-      signal2host_graph_complete( m_host, m_tetinpoel.size()/4 );
+      signal2host_graph_complete( m_host, m_gelemid.size() );
     }
 
     // Compute element centroid coordinates
@@ -266,8 +259,8 @@ class Partitioner : public CBase_Partitioner< HostProxy > {
       for (std::size_t e=0; e<che.size(); ++e)
         element[ static_cast<int>(che[e]) ].push_back( m_gelemid[e] );
 
-      Assert( !element.empty(),
-              "No elements assigned to chares on one of the MPI ranks" );
+      Assert( !element.empty(), "No elements assigned to chares on PE " +
+              std::to_string(CkMyPe()) );
 
       // This check should always be done, as it can result from incorrect user
       // input compared to the mesh size and not due to programmer error.
@@ -288,6 +281,8 @@ class Partitioner : public CBase_Partitioner< HostProxy > {
     }
 
     //! Distribute global mesh element IDs to their owner PEs
+    //! \param[in] elem Global mesh element ids associated to chare IDs on this
+    //!   PE resulting from partitioning. Note that the data is moved in.
     //! \details Chare ids are distributed to PEs in a linear continguous order
     //!   with the last PE taking the remainder if the number of PEs is not
     //!   divisible by the number chares. For example, if nchare=7 and npes=3,
@@ -295,22 +290,25 @@ class Partitioner : public CBase_Partitioner< HostProxy > {
     //!   As a result of this distribution, all PEs will have in their m_elem
     //!   map filled with the global mesh elements IDs associated to the Charm++
     //!   chare IDs each PE owns.
-    void distribute() {
+    void distribute(
+           std::unordered_map< int, std::vector< std::size_t > >&& elem )
+    {
       int chunksize, mynchare;
       std::tie( chunksize, mynchare ) = chareDistribution();
       for (int c=0; c<mynchare; ++c) {
         auto chid = CkMyPe() * chunksize + c; // compute owned chare ID
-        const auto it = m_partelem.find(chid);// attempt to find its elements
-        if (it != end(m_partelem)) {          // if found
+        const auto it = elem.find(chid);      // attempt to find its elements
+        if (it != end(elem)) {                // if found
           m_elem.insert( *it );               // move over owned key-value pairs
-          m_partelem.erase( it );             // remove chare ID and elements
+          elem.erase( it );                   // remove chare ID and elements
         }
+        Assert( elem.find(chid) == end(elem), "Not all owned elem IDs stored" );
       }
       // Construct export map associating those map entries (mesh element
       // indices associated to chare IDs) owned by chares we do not own
       std::unordered_map< int,
         std::unordered_map< int, std::vector< std::size_t > > > exp;
-      for (const auto& c : m_partelem) exp[ pe(c.first) ].insert( c );
+      for (auto&& c : elem) exp[ pe(c.first) ].insert( std::move(c) );
       // Export chare IDs and element IDs we do not own to fellow PEs
       m_npe = exp.size();
       for (const auto& p : exp)
@@ -363,9 +361,10 @@ class Partitioner : public CBase_Partitioner< HostProxy > {
     //! \details This is computed based on a simple contiguous linear
     //!   distribution of chare ids to PEs.
     int pe( int id ) const {
-      auto pe = id / (m_nchare / CkNumPes());
-      if (pe >= CkNumPes()) pe = CkNumPes()-1;
-      return pe;
+      auto p = id / (m_nchare / CkNumPes());
+      if (p >= CkNumPes()) p = CkNumPes()-1;
+      Assert( p < CkNumPes(), "Assigning to nonexistent PE" );
+      return p;
     }
 
     //! Signal back to host that we have done our part of reading the mesh graph
