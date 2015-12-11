@@ -47,7 +47,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "zoltan_dd_const.h"
+#include "DD.h"
 
 
 #ifdef __cplusplus

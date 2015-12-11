@@ -1,7 +1,7 @@
 // @HEADER
 // ************************************************************************
 //
-//                           Intrepid2 Package
+//                           Intrepid Package
 //                 Copyright (2007) Sandia Corporation
 //
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -39,13 +39,13 @@
 // ************************************************************************
 // @HEADER
 
-#if !defined(Intrepid2_MiniTensor_TensorBase_t_h)
-#define Intrepid2_MiniTensor_TensorBase_t_h
+#if !defined(Intrepid_MiniTensor_TensorBase_t_h)
+#define Intrepid_MiniTensor_TensorBase_t_h
 
 namespace Intrepid2 {
 
 // Placeholder for now.
 
-} // namespace Intrepid
+} // namespace Intrepid2
 
-#endif // Intrepid2_MiniTensor_TensorBase_t_h
+#endif // Intrepid_MiniTensor_TensorBase_t_h

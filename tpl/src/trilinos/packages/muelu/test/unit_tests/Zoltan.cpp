@@ -43,26 +43,26 @@
 // ***********************************************************************
 //
 // @HEADER
-#include <Teuchos_UnitTestHarness.hpp>
-#include <MueLu_TestHelpers.hpp>
-#include <MueLu_Version.hpp>
+#include "Teuchos_UnitTestHarness.hpp"
+#include "MueLu_TestHelpers.hpp"
+#include "MueLu_Version.hpp"
 
-#include <MueLu_UseDefaultTypes.hpp>
+#include "MueLu_UseDefaultTypes.hpp"
 
-#include <MueLu_ZoltanInterface.hpp>
+#include "MueLu_ZoltanInterface.hpp"
 
-#include <Galeri_XpetraUtils.hpp>
+#include "Galeri_XpetraUtils.hpp"
 
-#include <Xpetra_MultiVectorFactory.hpp>
-#include <Xpetra_ExportFactory.hpp>
+#include "Xpetra_MultiVectorFactory.hpp"
+#include "Xpetra_ExportFactory.hpp"
 
 namespace MueLuTests {
 
-  TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(Zoltan, Constructor, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#include "MueLu_UseShortNames.hpp"
+
+  TEUCHOS_UNIT_TEST(Zoltan, Constructor)
   {
-#   include <MueLu_UseShortNames.hpp>
-    MUELU_TESTING_SET_OSTREAM;
-    MUELU_TESTING_LIMIT_EPETRA_SCOPE(Scalar,GlobalOrdinal,Node);
+
     out << "version: " << MueLu::Version() << std::endl;
 
     RCP<const Teuchos::Comm<int> > comm = TestHelpers::Parameters::getDefaultComm();
@@ -71,11 +71,10 @@ namespace MueLuTests {
 
   } //Constructor
 
-  TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(Zoltan, Build, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+  TEUCHOS_UNIT_TEST(Zoltan, Build)
   {
-#   include <MueLu_UseShortNames.hpp>
-    MUELU_TESTING_SET_OSTREAM;
-    MUELU_TESTING_LIMIT_EPETRA_SCOPE(Scalar,GlobalOrdinal,Node);
+    typedef Teuchos::ScalarTraits<Scalar> ST;
+
     out << "version: " << MueLu::Version() << std::endl;
     out << std::endl;
     out << "This tests that the partitioning produced by Zoltan is \"reasonable\" for a matrix" << std::endl;
@@ -83,7 +82,6 @@ namespace MueLuTests {
     out << "for up to 5 processors.  The results are the number of nonzeros in the local matrix" << std::endl;
     out << "once the Zoltan repartitioning has been applied." << std::endl;
     out << "The results can be viewed in Paraview by enabling code guarded by the macro MUELU_VISUALIZE_REPARTITIONING" << std::endl;
-    typedef Teuchos::ScalarTraits<Scalar> ST;
 
     RCP<const Teuchos::Comm<int> > comm = TestHelpers::Parameters::getDefaultComm();
 
@@ -97,8 +95,8 @@ namespace MueLuTests {
     Level level;
     RCP<FactoryManagerBase> factoryHandler = rcp(new FactoryManager());
     level.SetFactoryManager(factoryHandler);
-    GO nx=7;
-    GO ny=nx;
+    int nx=7;
+    int ny=nx;
     GO numGlobalElements = nx*ny;
     size_t maxEntriesPerRow=30;
 
@@ -114,15 +112,12 @@ namespace MueLuTests {
     ST::seedrandom(666*comm->getRank());
     RCP<Xpetra::Vector<LO,LO,GO,NO> > entriesPerRow = Xpetra::VectorFactory<LO,LO,GO,NO>::Build(map,false);
     Teuchos::ArrayRCP<LO> eprData = entriesPerRow->getDataNonConst(0);
-    for (typename Teuchos::ArrayRCP<LO>::iterator i=eprData.begin(); i!=eprData.end(); ++i) {
-      *i = (LO)(std::floor(((Teuchos::ScalarTraits<double>::random()+1)*0.5*maxEntriesPerRow)+1));
+    for (Teuchos::ArrayRCP<LO>::iterator i=eprData.begin(); i!=eprData.end(); ++i) {
+      *i = (LO)(std::floor(((ST::random()+1)*0.5*maxEntriesPerRow)+1));
     }
 
     RCP<Teuchos::FancyOStream> fos = Teuchos::fancyOStream(Teuchos::rcpFromRef(std::cout));
     fos->setOutputToRootOnly(-1);
-
-    GO zero = Teuchos::OrdinalTraits<GO>::zero();
-    GO one = Teuchos::OrdinalTraits<GO>::one();
 
     Teuchos::Array<Scalar> vals(maxEntriesPerRow);
     Teuchos::Array<GO> cols(maxEntriesPerRow);
@@ -132,7 +127,7 @@ namespace MueLuTests {
       //stick in ones for values
       for (LO j=0; j< eprData[i]; ++j) vals[j] = ST::one();
       //figure out valid column indices
-      GO start = std::max(myGlobalElements[i]-eprData[i]+one,zero);
+      GO start = std::max(myGlobalElements[i]-eprData[i]+1,0);
       for (LO j=0; j< eprData[i]; ++j) cols[j] = start+j;
       A->insertGlobalValues(myGlobalElements[i], iv, av);
     }
@@ -145,11 +140,10 @@ namespace MueLuTests {
     Teuchos::ParameterList list;
     list.set("nx",nx);
     list.set("ny",ny);
-    typedef Xpetra::MultiVector<double, LocalOrdinal, GlobalOrdinal, Node> double_multivector_type;
-    RCP<double_multivector_type> XYZ = Galeri::Xpetra::Utils::CreateCartesianCoordinates<double,LO,GO,Map,double_multivector_type>("2D",rowMap,list);
+    RCP<MultiVector> XYZ = Galeri::Xpetra::Utils::CreateCartesianCoordinates<SC,LO,GO,Map,MultiVector>("2D",rowMap,list);
     level.Set("Coordinates",XYZ);
 
-    GO numPartitions = comm->getSize();
+    LO numPartitions = comm->getSize();
     level.Set("number of partitions",numPartitions);
     RCP<ZoltanInterface> zoltan = rcp(new ZoltanInterface());
     //zoltan->SetNumberOfPartitions(numPartitions);
@@ -177,7 +171,7 @@ namespace MueLuTests {
 
     //For the local rows in each partition, tally up the number of nonzeros.  This is what
     //Zoltan should be load-balancing.
-    Teuchos::ArrayRCP<LO> lpvData = localPartsVec->getDataNonConst(0);
+    Teuchos::ArrayRCP<GO> lpvData = localPartsVec->getDataNonConst(0);
     Teuchos::ArrayRCP<const GO> decompData = decomposition->getData(0);
     for (size_t i=0; i<decomposition->getLocalLength();++i) {
       Teuchos::ArrayView<const LO> c;
@@ -255,8 +249,8 @@ namespace MueLuTests {
     //
     //Now write everything to a comma-separate list that ParaView can grok
     //
-    Teuchos::ArrayRCP<const double> X = XYZ->getData(0);
-    Teuchos::ArrayRCP<const double> Y = XYZ->getData(1);
+    Teuchos::ArrayRCP<const Scalar> X = XYZ->getData(0);
+    Teuchos::ArrayRCP<const Scalar> Y = XYZ->getData(1);
     Teuchos::ArrayRCP<const GO> D = decomposition->getData(0);
     RCP<std::ofstream> outFile;
     std::string fileName = "zoltanResults.csv";
@@ -297,14 +291,11 @@ namespace MueLuTests {
   } //Build
 
 #ifdef DISABLED // JG: FIXME: coordinates format
-  TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(Zoltan, Build3PDEs, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+  TEUCHOS_UNIT_TEST(Zoltan, Build3PDEs)
   {
 
     typedef Teuchos::ScalarTraits<Scalar> ST;
 
-#   include <MueLu_UseShortNames.hpp>
-    MUELU_TESTING_SET_OSTREAM;
-    MUELU_TESTING_LIMIT_EPETRA_SCOPE(Scalar,GlobalOrdinal,Node);
     out << "version: " << MueLu::Version() << std::endl;
     out << std::endl;
     out << "This tests that the partitioning produced by Zoltan is \"reasonable\" for a matrix" << std::endl;
@@ -548,8 +539,8 @@ namespace MueLuTests {
     //
     //Now write everything to a comma-separate list that ParaView can grok
     //
-    Teuchos::ArrayRCP<const double> X = XYZ->getData(0);
-    Teuchos::ArrayRCP<const double> Y = XYZ->getData(1);
+    Teuchos::ArrayRCP<const Scalar> X = XYZ->getData(0);
+    Teuchos::ArrayRCP<const Scalar> Y = XYZ->getData(1);
     Teuchos::ArrayRCP<const GO> D = decomposition->getData(0);
     RCP<std::ofstream> outFile;
     std::string fileName = "zoltanResults.csv";
@@ -596,10 +587,5 @@ namespace MueLuTests {
   } //Build3PDEs
 #endif // TMP
 
-#define MUELU_ETI_GROUP(SC,LO,GO,NO) \
-  TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(Zoltan,Constructor,SC,LO,GO,NO) \
-  TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(Zoltan,Build,SC,LO,GO,NO)
-
-#include <MueLu_ETI_4arg.hpp>
 
 }//namespace MueLuTests

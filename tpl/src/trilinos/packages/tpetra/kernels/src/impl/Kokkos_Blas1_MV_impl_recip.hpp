@@ -309,21 +309,25 @@ template<> \
 struct Reciprocal<Kokkos::View<SCALAR**, \
                                LAYOUT, \
                                Kokkos::Device<EXEC_SPACE, MEM_SPACE>, \
-                               Kokkos::MemoryTraits<Kokkos::Unmanaged> >, \
+                               Kokkos::MemoryTraits<Kokkos::Unmanaged>, \
+                               Kokkos::Impl::ViewDefault>, \
                   Kokkos::View<const SCALAR**, \
                                LAYOUT, \
                                Kokkos::Device<EXEC_SPACE, MEM_SPACE>, \
-                               Kokkos::MemoryTraits<Kokkos::Unmanaged> >, \
+                               Kokkos::MemoryTraits<Kokkos::Unmanaged>, \
+                               Kokkos::Impl::ViewDefault>, \
                   2> \
 { \
   typedef Kokkos::View<SCALAR**, \
                        LAYOUT, \
                        Kokkos::Device<EXEC_SPACE, MEM_SPACE>, \
-                       Kokkos::MemoryTraits<Kokkos::Unmanaged> > RMV; \
+                       Kokkos::MemoryTraits<Kokkos::Unmanaged>, \
+                       Kokkos::Impl::ViewDefault> RMV; \
   typedef Kokkos::View<const SCALAR**, \
                        LAYOUT, \
                        Kokkos::Device<EXEC_SPACE, MEM_SPACE>, \
-                       Kokkos::MemoryTraits<Kokkos::Unmanaged> > XMV; \
+                       Kokkos::MemoryTraits<Kokkos::Unmanaged>, \
+                       Kokkos::Impl::ViewDefault> XMV; \
   typedef XMV::size_type size_type; \
  \
   static void reciprocal (const RMV& R, const XMV& X); \
@@ -374,11 +378,13 @@ void \
 Reciprocal<Kokkos::View<SCALAR**, \
                         LAYOUT, \
                         Kokkos::Device<EXEC_SPACE, MEM_SPACE>, \
-                        Kokkos::MemoryTraits<Kokkos::Unmanaged> >, \
+                        Kokkos::MemoryTraits<Kokkos::Unmanaged>, \
+                        Kokkos::Impl::ViewDefault>, \
            Kokkos::View<const SCALAR**, \
                         LAYOUT, \
                         Kokkos::Device<EXEC_SPACE, MEM_SPACE>, \
-                        Kokkos::MemoryTraits<Kokkos::Unmanaged> >, \
+                        Kokkos::MemoryTraits<Kokkos::Unmanaged>, \
+                        Kokkos::Impl::ViewDefault>, \
            2>:: \
 reciprocal (const RMV& R, const XMV& X) \
 { \

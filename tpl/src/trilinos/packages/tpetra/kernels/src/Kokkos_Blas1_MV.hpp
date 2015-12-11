@@ -177,7 +177,8 @@ dot (const RV& R, const XMV& X, const YMV& Y,
       typename RV::non_const_value_type* >::type,
     typename RV::array_layout,
     typename RV::device_type,
-    Kokkos::MemoryTraits<Kokkos::Unmanaged> > RV_Internal;
+    Kokkos::MemoryTraits<Kokkos::Unmanaged>,
+    typename RV::specialize> RV_Internal;
   typedef Kokkos::View<
     typename Kokkos::Impl::if_c<
       XMV::rank == 1,
@@ -185,7 +186,8 @@ dot (const RV& R, const XMV& X, const YMV& Y,
       typename XMV::const_value_type** >::type,
     typename XMV::array_layout,
     typename XMV::device_type,
-    Kokkos::MemoryTraits<Kokkos::Unmanaged> > XMV_Internal;
+    Kokkos::MemoryTraits<Kokkos::Unmanaged>,
+    typename XMV::specialize> XMV_Internal;
   typedef Kokkos::View<
     typename Kokkos::Impl::if_c<
       YMV::rank == 1,
@@ -193,7 +195,8 @@ dot (const RV& R, const XMV& X, const YMV& Y,
       typename YMV::const_value_type** >::type,
     typename YMV::array_layout,
     typename YMV::device_type,
-    Kokkos::MemoryTraits<Kokkos::Unmanaged> > YMV_Internal;
+    Kokkos::MemoryTraits<Kokkos::Unmanaged>,
+    typename YMV::specialize> YMV_Internal;
 
   RV_Internal R_internal = R;
   XMV_Internal X_internal = X;
@@ -241,7 +244,8 @@ fill (const XMV& X, const typename XMV::non_const_value_type& val)
       typename XMV::non_const_value_type** >::type,
     typename XMV::array_layout,
     typename XMV::device_type,
-    Kokkos::MemoryTraits<Kokkos::Unmanaged> > XMV_Internal;
+    Kokkos::MemoryTraits<Kokkos::Unmanaged>,
+    typename XMV::specialize> XMV_Internal;
 
   XMV_Internal X_internal = X;
   Impl::Fill<XMV_Internal>::fill (X_internal, val);
@@ -290,7 +294,8 @@ nrm2_squared (const RV& R, const XMV& X)
       typename RV::non_const_value_type* >::type,
     typename RV::array_layout,
     typename RV::device_type,
-    Kokkos::MemoryTraits<Kokkos::Unmanaged> > RV_Internal;
+    Kokkos::MemoryTraits<Kokkos::Unmanaged>,
+    typename RV::specialize> RV_Internal;
   typedef Kokkos::View<
     typename Kokkos::Impl::if_c<
       XMV::rank == 1,
@@ -298,7 +303,8 @@ nrm2_squared (const RV& R, const XMV& X)
       typename XMV::const_value_type** >::type,
     typename XMV::array_layout,
     typename XMV::device_type,
-    Kokkos::MemoryTraits<Kokkos::Unmanaged> > XMV_Internal;
+    Kokkos::MemoryTraits<Kokkos::Unmanaged>,
+    typename XMV::specialize> XMV_Internal;
 
   RV_Internal R_internal = R;
   XMV_Internal X_internal = X;
@@ -359,7 +365,8 @@ nrm1 (const RV& R, const XMV& X)
       typename RV::non_const_value_type* >::type,
     typename RV::array_layout,
     typename RV::device_type,
-    Kokkos::MemoryTraits<Kokkos::Unmanaged> > RV_Internal;
+    Kokkos::MemoryTraits<Kokkos::Unmanaged>,
+    typename RV::specialize> RV_Internal;
   typedef Kokkos::View<
     typename Kokkos::Impl::if_c<
       XMV::rank == 1,
@@ -367,7 +374,8 @@ nrm1 (const RV& R, const XMV& X)
       typename XMV::const_value_type** >::type,
     typename XMV::array_layout,
     typename XMV::device_type,
-    Kokkos::MemoryTraits<Kokkos::Unmanaged> > XMV_Internal;
+    Kokkos::MemoryTraits<Kokkos::Unmanaged>,
+    typename XMV::specialize> XMV_Internal;
 
   RV_Internal R_internal = R;
   XMV_Internal X_internal = X;
@@ -427,7 +435,8 @@ nrmInf (const RV& R, const XMV& X)
       typename RV::non_const_value_type* >::type,
     typename RV::array_layout,
     typename RV::device_type,
-    Kokkos::MemoryTraits<Kokkos::Unmanaged> > RV_Internal;
+    Kokkos::MemoryTraits<Kokkos::Unmanaged>,
+    typename RV::specialize> RV_Internal;
   typedef Kokkos::View<
     typename Kokkos::Impl::if_c<
       XMV::rank == 1,
@@ -435,7 +444,8 @@ nrmInf (const RV& R, const XMV& X)
       typename XMV::const_value_type** >::type,
     typename XMV::array_layout,
     typename XMV::device_type,
-    Kokkos::MemoryTraits<Kokkos::Unmanaged> > XMV_Internal;
+    Kokkos::MemoryTraits<Kokkos::Unmanaged>,
+    typename XMV::specialize> XMV_Internal;
 
   RV_Internal R_internal = R;
   XMV_Internal X_internal = X;
@@ -469,7 +479,8 @@ struct GetInternalTypeForAxpby<T, true> {
   typedef Kokkos::View<typename T::const_value_type*,
                        typename T::array_layout,
                        typename T::device_type,
-                       Kokkos::MemoryTraits<Kokkos::Unmanaged> > type;
+                       Kokkos::MemoryTraits<Kokkos::Unmanaged>,
+                       typename T::specialize> type;
 };
 
   // typedef typename Kokkos::Impl::if_c<
@@ -477,7 +488,8 @@ struct GetInternalTypeForAxpby<T, true> {
   //   Kokkos::View<typename BV::const_value_type*,
   //     typename BV::array_layout,
   //     typename BV::device_type,
-  //     Kokkos::MemoryTraits<Kokkos::Unmanaged> >, // use the unmanaged version of BV,
+  //     Kokkos::MemoryTraits<Kokkos::Unmanaged>,
+  //     typename BV::specialize>, // use the unmanaged version of BV,
   //   BV >::type BV_Internal; // else just use BV.
 
 } // namespace (anonymous)
@@ -523,7 +535,8 @@ axpby (const AV& a, const XMV& X, const BV& b, const YMV& Y)
       typename XMV::const_value_type** >::type,
     typename XMV::array_layout,
     typename XMV::device_type,
-    Kokkos::MemoryTraits<Kokkos::Unmanaged> > XMV_Internal;
+    Kokkos::MemoryTraits<Kokkos::Unmanaged>,
+    typename XMV::specialize> XMV_Internal;
   typedef typename GetInternalTypeForAxpby<
     BV, Kokkos::Impl::is_view<BV>::value>::type BV_Internal;
   typedef Kokkos::View<
@@ -533,7 +546,8 @@ axpby (const AV& a, const XMV& X, const BV& b, const YMV& Y)
       typename YMV::non_const_value_type** >::type,
     typename YMV::array_layout,
     typename YMV::device_type,
-    Kokkos::MemoryTraits<Kokkos::Unmanaged> > YMV_Internal;
+    Kokkos::MemoryTraits<Kokkos::Unmanaged>,
+    typename YMV::specialize> YMV_Internal;
 
   AV_Internal  a_internal = a;
   XMV_Internal X_internal = X;
@@ -594,7 +608,8 @@ scal (const RMV& R, const AV& a, const XMV& X)
       typename RMV::non_const_value_type** >::type,
     typename RMV::array_layout,
     typename RMV::device_type,
-    Kokkos::MemoryTraits<Kokkos::Unmanaged> > RMV_Internal;
+    Kokkos::MemoryTraits<Kokkos::Unmanaged>,
+    typename RMV::specialize> RMV_Internal;
   typedef typename GetInternalTypeForAxpby<
     AV, Kokkos::Impl::is_view<AV>::value>::type AV_Internal;
   typedef Kokkos::View<
@@ -604,7 +619,8 @@ scal (const RMV& R, const AV& a, const XMV& X)
       typename XMV::non_const_value_type** >::type,
     typename XMV::array_layout,
     typename XMV::device_type,
-    Kokkos::MemoryTraits<Kokkos::Unmanaged> > XMV_Internal;
+    Kokkos::MemoryTraits<Kokkos::Unmanaged>,
+    typename XMV::specialize> XMV_Internal;
 
   RMV_Internal R_internal = R;
   AV_Internal  a_internal = a;
@@ -670,7 +686,8 @@ abs (const RMV& R, const XMV& X)
       typename RMV::non_const_value_type** >::type,
     typename RMV::array_layout,
     typename RMV::device_type,
-    Kokkos::MemoryTraits<Kokkos::Unmanaged> > RMV_Internal;
+    Kokkos::MemoryTraits<Kokkos::Unmanaged>,
+    typename RMV::specialize> RMV_Internal;
   typedef Kokkos::View<
     typename Kokkos::Impl::if_c<
       XMV::rank == 1,
@@ -678,7 +695,8 @@ abs (const RMV& R, const XMV& X)
       typename XMV::non_const_value_type** >::type,
     typename XMV::array_layout,
     typename XMV::device_type,
-    Kokkos::MemoryTraits<Kokkos::Unmanaged> > XMV_Internal;
+    Kokkos::MemoryTraits<Kokkos::Unmanaged>,
+    typename XMV::specialize> XMV_Internal;
 
   RMV_Internal R_internal = R;
   XMV_Internal X_internal = X;
@@ -752,7 +770,8 @@ update (const typename XMV::non_const_value_type& alpha, const XMV& X,
       typename XMV::const_value_type** >::type,
     typename XMV::array_layout,
     typename XMV::device_type,
-    Kokkos::MemoryTraits<Kokkos::Unmanaged> > XMV_Internal;
+    Kokkos::MemoryTraits<Kokkos::Unmanaged>,
+    typename XMV::specialize> XMV_Internal;
 
   typedef Kokkos::View<
     typename Kokkos::Impl::if_c<
@@ -761,7 +780,8 @@ update (const typename XMV::non_const_value_type& alpha, const XMV& X,
       typename YMV::const_value_type** >::type,
     typename YMV::array_layout,
     typename YMV::device_type,
-    Kokkos::MemoryTraits<Kokkos::Unmanaged> > YMV_Internal;
+    Kokkos::MemoryTraits<Kokkos::Unmanaged>,
+    typename YMV::specialize> YMV_Internal;
 
   typedef Kokkos::View<
     typename Kokkos::Impl::if_c<
@@ -770,7 +790,8 @@ update (const typename XMV::non_const_value_type& alpha, const XMV& X,
       typename ZMV::non_const_value_type** >::type,
     typename ZMV::array_layout,
     typename ZMV::device_type,
-    Kokkos::MemoryTraits<Kokkos::Unmanaged> > ZMV_Internal;
+    Kokkos::MemoryTraits<Kokkos::Unmanaged>,
+    typename ZMV::specialize> ZMV_Internal;
 
   XMV_Internal X_internal = X;
   YMV_Internal Y_internal = Y;
@@ -833,7 +854,8 @@ reciprocal (const RMV& R, const XMV& X)
       typename RMV::non_const_value_type** >::type,
     typename RMV::array_layout,
     typename RMV::device_type,
-    Kokkos::MemoryTraits<Kokkos::Unmanaged> > RMV_Internal;
+    Kokkos::MemoryTraits<Kokkos::Unmanaged>,
+    typename RMV::specialize> RMV_Internal;
   typedef Kokkos::View<
     typename Kokkos::Impl::if_c<
       XMV::rank == 1,
@@ -841,7 +863,8 @@ reciprocal (const RMV& R, const XMV& X)
       typename XMV::non_const_value_type** >::type,
     typename XMV::array_layout,
     typename XMV::device_type,
-    Kokkos::MemoryTraits<Kokkos::Unmanaged> > XMV_Internal;
+    Kokkos::MemoryTraits<Kokkos::Unmanaged>,
+    typename XMV::specialize> XMV_Internal;
 
   RMV_Internal R_internal = R;
   XMV_Internal X_internal = X;
@@ -893,7 +916,8 @@ sum (const RV& R, const XMV& X)
       typename RV::non_const_value_type* >::type,
     typename RV::array_layout,
     typename RV::device_type,
-    Kokkos::MemoryTraits<Kokkos::Unmanaged> > RV_Internal;
+    Kokkos::MemoryTraits<Kokkos::Unmanaged>,
+    typename RV::specialize> RV_Internal;
 
   typedef Kokkos::View<
     typename Kokkos::Impl::if_c<
@@ -902,7 +926,8 @@ sum (const RV& R, const XMV& X)
       typename XMV::const_value_type** >::type,
     typename XMV::array_layout,
     typename XMV::device_type,
-    Kokkos::MemoryTraits<Kokkos::Unmanaged> > XMV_Internal;
+    Kokkos::MemoryTraits<Kokkos::Unmanaged>,
+    typename XMV::specialize> XMV_Internal;
 
   RV_Internal R_internal = R;
   XMV_Internal X_internal = X;
@@ -964,7 +989,8 @@ nrm2w_squared (const RV& R, const XMV& X, const XMV& W)
       typename RV::non_const_value_type* >::type,
     typename RV::array_layout,
     typename RV::device_type,
-    Kokkos::MemoryTraits<Kokkos::Unmanaged> > RV_Internal;
+    Kokkos::MemoryTraits<Kokkos::Unmanaged>,
+    typename RV::specialize> RV_Internal;
 
   typedef Kokkos::View<
     typename Kokkos::Impl::if_c<
@@ -973,7 +999,8 @@ nrm2w_squared (const RV& R, const XMV& X, const XMV& W)
       typename XMV::const_value_type** >::type,
     typename XMV::array_layout,
     typename XMV::device_type,
-    Kokkos::MemoryTraits<Kokkos::Unmanaged> > XMV_Internal;
+    Kokkos::MemoryTraits<Kokkos::Unmanaged>,
+    typename XMV::specialize> XMV_Internal;
 
   RV_Internal R_internal = R;
   XMV_Internal X_internal = X;
@@ -1035,12 +1062,14 @@ mult (typename CMV::const_value_type& c,
       typename CMV::non_const_value_type** >::type,
     typename CMV::array_layout,
     typename CMV::device_type,
-    Kokkos::MemoryTraits<Kokkos::Unmanaged> > CMV_Internal;
+    Kokkos::MemoryTraits<Kokkos::Unmanaged>,
+    typename CMV::specialize> CMV_Internal;
   typedef Kokkos::View<
     typename AV::const_value_type*,
     typename AV::array_layout,
     typename AV::device_type,
-    Kokkos::MemoryTraits<Kokkos::Unmanaged> > AV_Internal;
+    Kokkos::MemoryTraits<Kokkos::Unmanaged>,
+    typename AV::specialize> AV_Internal;
   typedef Kokkos::View<
     typename Kokkos::Impl::if_c<
       BMV::rank == 1,
@@ -1048,7 +1077,8 @@ mult (typename CMV::const_value_type& c,
       typename BMV::const_value_type** >::type,
     typename BMV::array_layout,
     typename BMV::device_type,
-    Kokkos::MemoryTraits<Kokkos::Unmanaged> > BMV_Internal;
+    Kokkos::MemoryTraits<Kokkos::Unmanaged>,
+    typename BMV::specialize> BMV_Internal;
 
   CMV_Internal C_internal = C;
   AV_Internal A_internal = A;

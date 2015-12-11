@@ -46,8 +46,4 @@
 #ifndef FAKEKOKKOS_CONFIGDEFS_H
 #define FAKEKOKKOS_CONFIGDEFS_H
 
-#ifndef HAVE_XPETRA_TPETRA
-#include "Kokkos_SerialNode.hpp"
-#endif
-
 #endif

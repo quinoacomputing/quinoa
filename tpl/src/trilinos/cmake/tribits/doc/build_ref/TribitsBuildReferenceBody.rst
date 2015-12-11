@@ -1208,43 +1208,37 @@ the test was not added (i.e. due to the test's ``COMM``, ``NUM_MPI_PROCS``,
 ``CATEGORIES``, ``HOST``, ``XHOST``, ``HOSTTYPE``, or ``XHOSTTYPE``
 arguments).
 
-.. _DART_TESTING_TIMEOUT:
-
 Setting test timeouts at configure time
 ---------------------------------------
 
-A maximum default time limit for all the tests can be set at configure time
-using the cache variable::
+A maximum default time limit for any single test can be set at configure time
+by setting::
 
   -D DART_TESTING_TIMEOUT=<maxSeconds>
 
 where ``<maxSeconds>`` is the number of wall-clock seconds.  By default there
-is no timeout limit set so it is a good idea to set some limit just so tests
-don't hang and run forever.  For example, when an MPI program has a defect, it
-can easily hang forever until it is manually killed.  If killed, CTest will
-kill all of this child processes correctly.
+is no timeout limit so it is a good idea to set some limit just so tests don't
+hang and run forever.  When an MPI code has a defect, it can easily hang
+forever until it is manually killed.  If killed, CTest will kill all of this
+child processes correctly.
 
 NOTES:
 
 * Be careful not set the timeout too low since if a machine becomes loaded
   tests can take longer to run and may result in timeouts that would not
   otherwise occur.
-* Individual tests may have there timeout limit set on a test-by-test basis
-  internally in the project's ``CMakeLists.txt`` files (see the ``TIMEOUT``
+* Individual tests can have there timeout limit increased on a test-by-test
+  basis internally in the project's CMakeLists.txt files (see the ``TIMEOUT``
   argument for ``TRIBITS_ADD_TEST()`` and ``TRIBITS_ADD_ADVANCED_TEST()``).
-  When this is the case, the global timeout set with ``DART_TESTING_TIMEOUT``
-  has no impact on these individually set test timeouts.  To affect individual
-  test timeouts set on a test-by-test basis, use
-  `<Project>_SCALE_TEST_TIMEOUT_TESTING_TIMEOUT`_.
-* To set or override the default global test timeout limit at runtime, see
-  `Overridding test timeouts`_.
+* To set or override the test timeout limit at runtime, see `Overridding test
+  timeouts`_.
 
 .. _<Project>_SCALE_TEST_TIMEOUT_TESTING_TIMEOUT:
 
 Scaling test timeouts at configure time
 ---------------------------------------
 
-The global default test timeout `DART_TESTING_TIMEOUT`_ as well as all of the
+The global default test timeout ``DART_TESTING_TIMEOUT`` as well as all of the
 timeouts for the individual tests that have their own timeout set (through the
 ``TIMEOUT`` argument for each individual test) can be scaled by a constant
 factor ``<testTimeoutScaleFactor>`` by configuring with::
@@ -1257,10 +1251,8 @@ be fractional number like ``1.5``.
 This feature is generally used to compensate for slower machines or overloaded
 test machines and therefore only scaling factors greater than 1 are to be
 used.  The primary use case for this feature is to add large scale factors
-(e.g. ``40`` to ``100``) to compensate for running tests using valgrind (see
-`Running memory checking`_) but this can also be used for debug-mode builds
-that create tests which run more slowly than for full release-mode optimized
-builds.
+(e.g. ``40`` to ``100``) to compensate for running test using valgrind (see
+`Running memory checking`_).
 
 NOTES:
 
@@ -1271,11 +1263,9 @@ NOTES:
 * Only the first fractional digit is used so ``1.57`` is truncated to ``1.5``
   before scaling the test timeouts.
 
-* The cache value of the variable `DART_TESTING_TIMEOUT`_ is not changed in
-  the ``CMakeCache.txt`` file.  Only the value of ``TimeOut`` written into the
-  ``DartConfiguration.tcl`` file (which is directly read by ``ctest``) will be
-  scaled.  (This ensures that running configure over and over again will not
-  increase ``DART_TESTING_TIMEOUT`` each time.)
+* The cache value of the variable ``DART_TESTING_TIMEOUT`` is not changed in
+  the CMake cache file.  Only the value of the timeout written into the
+  DartConfiguration.tcl file will be scaled.
 
 
 Enabling support for coverage testing
@@ -1797,14 +1787,12 @@ shown working directory and run the shown command.
 Overridding test timeouts
 -------------------------
 
-The configured glboal test timeout described in ``Setting test timeouts at
-configure time`` can be overridden on the CTest command-line as::
+The configured test timeout described in ``Setting test timeouts at configure
+time`` can be overridden on the CTest command-line as::
 
   $ ctest --timeout <maxSeconds>
 
-This will override the configured cache variable `DART_TESTING_TIMEOUT`_.
-However, this will **not** override the test timesouts set on individual tests
-on a test-by-test basis!
+This will override the configured cache variable ``DART_TESTING_TIMEOUT``.
 
 **WARNING:** Do not try to use ``--timeout=<maxSeconds>`` or CTest will just
 ignore the argument!
@@ -2050,108 +2038,73 @@ There are a number of options that you can set in the environment to control
 what this script does.  This set of options can be found by doing::
 
   $ grep 'SET_DEFAULT_AND_FROM_ENV(' \
-      $TRIBITS_DIR/ctest_driver/TribitsCTestDriverCore.cmake
+      <Project>/cmake/tribits/ctest/TribitsCTestDriverCore.cmake
 
-Currently, the variables can be set include::
+Currently, this options includes::
 
-  SET_DEFAULT_AND_FROM_ENV(<Project>_IGNORE_MISSING_EXTRA_REPOSITORIES ...)
-  SET_DEFAULT_AND_FROM_ENV(<Project>_PRE_REPOSITORIES ...)
-  SET_DEFAULT_AND_FROM_ENV(<Project>_EXTRA_REPOSITORIES ...)
-  SET_DEFAULT_AND_FROM_ENV(CTEST_SOURCE_NAME <Project>)
-  SET_DEFAULT_AND_FROM_ENV(CTEST_CONFIGURATION_UNIT_TESTING OFF)
-  SET_DEFAULT_AND_FROM_ENV(CTEST_TEST_TYPE Experimental)
-  SET_DEFAULT_AND_FROM_ENV(<Project>_TRACK "${<Project>_TRACK_DEFAULT}")
-  SET_DEFAULT_AND_FROM_ENV(CTEST_SITE ${CTEST_SITE_DEFAULT})
-  SET_DEFAULT_AND_FROM_ENV(CTEST_DASHBOARD_ROOT "")
-  SET_DEFAULT_AND_FROM_ENV(BUILD_TYPE NONE)
-  SET_DEFAULT_AND_FROM_ENV(<Project>_VERBOSE_CONFIGURE OFF)
+  SET_DEFAULT_AND_FROM_ENV( CTEST_TEST_TYPE Nightly )
+  SET_DEFAULT_AND_FROM_ENV(<Project>_TRACK "")
+  SET_DEFAULT_AND_FROM_ENV( CTEST_SITE ${CTEST_SITE_DEFAULT} )
+  SET_DEFAULT_AND_FROM_ENV( CTEST_DASHBOARD_ROOT "" )
+  SET_DEFAULT_AND_FROM_ENV( BUILD_TYPE NONE )
   SET_DEFAULT_AND_FROM_ENV(COMPILER_VERSION UNKNOWN)
-  SET_DEFAULT_AND_FROM_ENV(CTEST_BUILD_NAME
-  SET_DEFAULT_AND_FROM_ENV(CTEST_START_WITH_EMPTY_BINARY_DIRECTORY TRUE)
-  SET_DEFAULT_AND_FROM_ENV(CTEST_WIPE_CACHE TRUE)
-  SET_DEFAULT_AND_FROM_ENV(CTEST_CMAKE_GENERATOR ${DEFAULT_GENERATOR})
-  SET_DEFAULT_AND_FROM_ENV(CTEST_DO_UPDATES TRUE)
-  SET_DEFAULT_AND_FROM_ENV(CTEST_GENERATE_DEPS_XML_OUTPUT_FILE FALSE)
-  SET_DEFAULT_AND_FROM_ENV(CTEST_UPDATE_ARGS "")
-  SET_DEFAULT_AND_FROM_ENV(CTEST_UPDATE_OPTIONS "")
-  SET_DEFAULT_AND_FROM_ENV(CTEST_BUILD_FLAGS "-j2")
-  SET_DEFAULT_AND_FROM_ENV(CTEST_BUILD_FLAGS "")
-  SET_DEFAULT_AND_FROM_ENV(CTEST_DO_BUILD TRUE)
-  SET_DEFAULT_AND_FROM_ENV(CTEST_DO_TEST TRUE)
-  SET_DEFAULT_AND_FROM_ENV(MPI_EXEC_MAX_NUMPROCS 0)
-  SET_DEFAULT_AND_FROM_ENV(CTEST_PARALLEL_LEVEL 1)
-  SET_DEFAULT_AND_FROM_ENV(<Project>_WARNINGS_AS_ERRORS_FLAGS "")
-  SET_DEFAULT_AND_FROM_ENV(CTEST_DO_COVERAGE_TESTING FALSE)
-  SET_DEFAULT_AND_FROM_ENV(CTEST_COVERAGE_COMMAND gcov)
-  SET_DEFAULT_AND_FROM_ENV(CTEST_DO_MEMORY_TESTING FALSE)
-  SET_DEFAULT_AND_FROM_ENV(CTEST_MEMORYCHECK_COMMAND
-    "${CTEST_MEMORYCHECK_COMMAND_DEFAULT}")
-  SET_DEFAULT_AND_FROM_ENV(CTEST_MEMORYCHECK_COMMAND_OPTIONS "")
-  SET_DEFAULT_AND_FROM_ENV(CTEST_GENERATE_OUTER_DEPS_XML_OUTPUT_FILE TRUE)
-  SET_DEFAULT_AND_FROM_ENV(CTEST_SUBMIT_CDASH_SUBPROJECTS_DEPS_FILE TRUE)
-  SET_DEFAULT_AND_FROM_ENV(CTEST_DO_SUBMIT TRUE)
-  SET_DEFAULT_AND_FROM_ENV(<Project>_ENABLE_SECONDARY_TESTED_CODE OFF)
-  SET_DEFAULT_AND_FROM_ENV(<Project>_ENABLE_SECONDARY_STABLE_CODE OFF)
-  SET_DEFAULT_AND_FROM_ENV(<Project>_ADDITIONAL_PACKAGES "")
-  SET_DEFAULT_AND_FROM_ENV(<Project>_EXCLUDE_PACKAGES "")
-  SET_DEFAULT_AND_FROM_ENV(<Project>_BRANCH "${<Project>_BRANCH_DEFAULT}")
-  SET_DEFAULT_AND_FROM_ENV(<Project>_ENABLE_DEVELOPMENT_MODE
-    "${<Project>_ENABLE_DEVELOPMENT_MODE_DEFAULT}")
-  SET_DEFAULT_AND_FROM_ENV(<Project>_REPOSITORY_LOCATION ...)
-  SET_DEFAULT_AND_FROM_ENV(<Project>_PACKAGES "")
-  SET_DEFAULT_AND_FROM_ENV(<Project>_EXTRAREPOS_FILE ...)
-  SET_DEFAULT_AND_FROM_ENV(<Project>_ENABLE_KNOWN_EXTERNAL_REPOS_TYPE ...)
-  SET_DEFAULT_AND_FROM_ENV(CTEST_ENABLE_MODIFIED_PACKAGES_ONLY OFF)
-  SET_DEFAULT_AND_FROM_ENV(CTEST_EXPLICITLY_ENABLE_IMPLICITLY_ENABLED_PACKAGES ...)
-  SET_DEFAULT_AND_FROM_ENV(<Project>_DISABLE_ENABLED_FORWARD_DEP_PACKAGES ...)
-  SET_DEFAULT_AND_FROM_ENV(TRIBITS_2ND_CTEST_DROP_SITE "")
-  SET_DEFAULT_AND_FROM_ENV(TRIBITS_2ND_CTEST_DROP_LOCATION "")
-  SET_DEFAULT_AND_FROM_ENV(CTEST_DEPENDENCY_HANDLING_UNIT_TESTING FALSE)
-  SET_DEFAULT_AND_FROM_ENV(CTEST_UPDATE_RETURN_VAL 0)
-  SET_DEFAULT_AND_FROM_ENV(<Project>_SOURCE_DIRECTORY ${CTEST_SOURCE_DIRECTORY})
-  SET_DEFAULT_AND_FROM_ENV(CTEST_DROP_SITE_COVERAGE ...)
-  SET_DEFAULT_AND_FROM_ENV(CTEST_DROP_LOCATION_COVERAGE ...)
+  SET_DEFAULT_AND_FROM_ENV( CTEST_BUILD_NAME
+  SET_DEFAULT_AND_FROM_ENV( CTEST_START_WITH_EMPTY_BINARY_DIRECTORY TRUE )
+  SET_DEFAULT_AND_FROM_ENV( CTEST_WIPE_CACHE TRUE )
+  SET_DEFAULT_AND_FROM_ENV( CTEST_CMAKE_GENERATOR ${DEFAULT_GENERATOR})
+  SET_DEFAULT_AND_FROM_ENV( CTEST_DO_UPDATES TRUE )
+  SET_DEFAULT_AND_FROM_ENV( CTEST_GENERATE_DEPS_XML_OUTPUT_FILE FALSE )
+  SET_DEFAULT_AND_FROM_ENV( CTEST_UPDATE_ARGS "")
+  SET_DEFAULT_AND_FROM_ENV( CTEST_UPDATE_OPTIONS "")
+  SET_DEFAULT_AND_FROM_ENV( CTEST_BUILD_FLAGS "-j2")
+  SET_DEFAULT_AND_FROM_ENV( CTEST_DO_BUILD TRUE )
+  SET_DEFAULT_AND_FROM_ENV( CTEST_DO_TEST TRUE )
+  SET_DEFAULT_AND_FROM_ENV( MPI_EXEC_MAX_NUMPROCS 4 )
+  SET_DEFAULT_AND_FROM_ENV( CTEST_PARALLEL_LEVEL 1 )
+  SET_DEFAULT_AND_FROM_ENV( <Project>_WARNINGS_AS_ERRORS_FLAGS "" )
+  SET_DEFAULT_AND_FROM_ENV( CTEST_DO_COVERAGE_TESTING FALSE )
+  SET_DEFAULT_AND_FROM_ENV( CTEST_COVERAGE_COMMAND gcov )
+  SET_DEFAULT_AND_FROM_ENV( CTEST_DO_MEMORY_TESTING FALSE )
+  SET_DEFAULT_AND_FROM_ENV( CTEST_MEMORYCHECK_COMMAND /usr/local/valgrind )
+  SET_DEFAULT_AND_FROM_ENV( CTEST_MEMORYCHECK_COMMAND_OPTIONS "" )
+  SET_DEFAULT_AND_FROM_ENV( CTEST_DO_SUBMIT TRUE )
+  SET_DEFAULT_AND_FROM_ENV( <Project>_ENABLE_SECONDARY_TESTED_CODE OFF )
+  SET_DEFAULT_AND_FROM_ENV( <Project>_ADDITIONAL_PACKAGES "" )
+  SET_DEFAULT_AND_FROM_ENV( <Project>_EXCLUDE_PACKAGES "" )
+  SET_DEFAULT_AND_FROM_ENV( <Project>_BRANCH "" )
+  SET_DEFAULT_AND_FROM_ENV( <Project>_REPOSITORY_LOCATION "software.sandia.gov:/space/git/${CTEST_SOURCE_NAME}" )
+  SET_DEFAULT_AND_FROM_ENV( <Project>_PACKAGES "${<Project>_PACKAGES_DEFAULT}" )
+  SET_DEFAULT_AND_FROM_ENV( CTEST_SELECT_MODIFIED_PACKAGES_ONLY OFF )
 
-For details on what all of these options do, look at the file
-``TribitsCTestDriverCore.cmake`` (more detailed documentation will come in
-time).  The value of all of these variables is printed out when the ``make
-dashboard`` target is run.  From there, one can change and tweak these
-options.  To see the defaults, just run with ``CTEST_DO_SUBMIT=FALSE`` and one
-can see the values used without actually doing the submit.  Just grep for the
-names of the variables in the STDOUT for ``make dashboard``.
-
-For an example of variables one might want to tweak, to run an experimental
-build and in the process change the build, use::
+For example, to run an experimental build and in the process change the build
+name and the options to pass to 'make', use::
 
   $ env CTEST_BUILD_NAME=MyBuild make dashboard
 
 After this finishes running, look for the build 'MyBuild' (or whatever build
-name you used above) in the <Project> CDash dashboard (the CDash URL is
-printed at the end of STDOUT).
+name you used above) in the <Project> CDash dashboard.
 
-It is useful to set ``CTEST_BUILD_NAME`` to some unique name to make it easier
-to find your results in the CDash dashboard.
+It is useful to set CTEST_BUILD_NAME to some unique name to make it easier to
+find your results in the CDash dashboard.
 
-A number of the defaults set in ``TribitsCTestDriverCore.cmake`` are
-overridden from ``experimental_build_test.cmake`` (such as
-``CTEST_TEST_TYPE=Experimental``) so you will want to look at
-``experimental_build_test.cmake`` to see how these are changed.  The script
-``experimental_build_test.cmake`` sets reasonable values for these options in
-order to use the `make dashboard` target in iterative development for
-experimental builds.
+A number of the defaults set in TribitsCTestDriverCore.cmake are overridden
+from experimental_build_test.cmake (such as CTEST_TEST_TYPE=Experimental) so
+you will want to look at experimental_build_test.cmake to see how these are
+changed.  The script experimental_build_test.cmake sets reasonable values for
+these options in order to use the 'make dashboard' target in iterative
+development for experimental builds.
 
-The target ``dashboard`` is not directly related to the built-in CMake targets
+The target 'dashboard' is not directly related to the built-in CMake targets
 'Experimental*' that run standard dashboards with CTest without the custom
-package-by-package driver in ``TribitsCTestDriverCore.cmake``.  The
-package-by-package extended CTest driver is more appropriate for the
-TriBITS-based project <Project>.
+package-by-package driver in TribitsCTestDriverCore.cmake.  The
+package-by-package extended CTest driver is more appropriate for <Project>.
 
-Once you configure with ``-D<Project>_ENABLE_COVERAGE_TESTING=ON``, the
-environment variable ``CTEST_DO_COVERAGE_TESTING=TRUE`` is automatically set
-by the target 'dashboard' so you don't have to set this yourself.
+Once you configure with -D<Project>_ENABLE_COVERAGE_TESTING=ON, the
+environment variable CTEST_DO_COVERAGE_TESTING=TRUE is automatically set by
+the target 'dashboard' so you don't have to set this yourself.
 
 Doing a memory check with Valgrind requires that you set
-``CTEST_DO_MEMORY_TESTING=TRUE`` with the 'env' command as::
+CTEST_DO_MEMORY_TESTING=TRUE with the 'env' command as::
 
   $ env CTEST_DO_MEMORY_TESTING=TRUE make dashboard
 
@@ -2166,46 +2119,10 @@ with::
      ... --suppressions=<abs-path-to-supp-fileN>" \
     make dashboard
 
-The CMake cache variable ``<Project>_DASHBOARD_CTEST_ARGS`` can be set on the
+The CMake cache variable <Project>_DASHBOARD_CTEST_ARGS can be set on the
 cmake configure line in order to pass additional arguments to 'ctest -S' when
 invoking the package-by-package CTest driver.  For example::
 
   -D <Project>_DASHBOARD_CTEST_ARGS="-VV"
 
 will set verbose output with CTest.
-
-.. _TRIBITS_2ND_CTEST_DROP_SITE:
-.. _TRIBITS_2ND_CTEST_DROP_LOCATION:
-
-Also note that one can submit results to a second CDash site as well by
-setting::
-
-  $ env TRIBITS_2ND_CTEST_DROP_SITE=<second-site> \
-    TRIBITS_2ND_CTEST_DROP_LOCATION=<second-location> \
-    ... \
-    make dashboard
-
-If left the same as ``CTEST_DROP_SITE`` or ``CTEST_DROP_LOCATION``, then
-``TRIBITS_2ND_CTEST_DROP_SITE`` and ``TRIBITS_2ND_CTEST_DROP_LOCATION`` can be
-left empty "" and the defaults will be used.  However, the user must set at
-least one of these variables to non-empty in order to trigger the second
-submit.  For example, to submit to an experimental CDash site on the same
-machine, one would run::
-
-  $ env TRIBITS_2ND_CTEST_DROP_LOCATION="/testing/cdash/submit.php?project=<Project>" \
-    ... \
-    make dashboard
-
-and ``TRIBITS_2ND_CTEST_DROP_SITE`` would be used for ``CTEST_DROP_SITE``.
-This is a common use case when upgrading to a new CDash installation or
-testing new features for CDash before impacting the existing CDash site.
-
-Note that if one kills the ``make dashboard`` target before it completes, then
-one must reconfigure from scratch in order to get the build directory back
-into the same state before the command was run.  This is because the
-``dashboard`` target must first reconfigure the project with no enabled
-packages before it does the package-by-package configure/build/test/submit
-which enables each package one at a time.  After the package-by-package
-configure/build/test/submit cycles are complete, then the project is
-reconfigured with the original set of package enables and returning to the
-original configure state.

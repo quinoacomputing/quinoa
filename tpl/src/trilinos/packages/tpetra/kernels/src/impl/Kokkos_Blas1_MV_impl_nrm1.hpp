@@ -316,21 +316,25 @@ template<> \
 struct Nrm1_MV<Kokkos::View<Kokkos::Details::InnerProductSpaceTraits<SCALAR>::mag_type*, \
                             EXEC_SPACE::array_layout, \
                             Kokkos::Device<EXEC_SPACE, MEM_SPACE>, \
-                            Kokkos::MemoryTraits<Kokkos::Unmanaged> >, \
+                            Kokkos::MemoryTraits<Kokkos::Unmanaged>, \
+                            Kokkos::Impl::ViewDefault>, \
                Kokkos::View<const SCALAR**, \
                             LAYOUT, \
                             Kokkos::Device<EXEC_SPACE, MEM_SPACE>, \
-                            Kokkos::MemoryTraits<Kokkos::Unmanaged> >, \
+                            Kokkos::MemoryTraits<Kokkos::Unmanaged>, \
+                            Kokkos::Impl::ViewDefault>, \
                2> \
 { \
   typedef Kokkos::View<Kokkos::Details::InnerProductSpaceTraits<SCALAR>::mag_type*, \
                        EXEC_SPACE::array_layout, \
                        Kokkos::Device<EXEC_SPACE, MEM_SPACE>, \
-                       Kokkos::MemoryTraits<Kokkos::Unmanaged> > RV; \
+                       Kokkos::MemoryTraits<Kokkos::Unmanaged>, \
+                       Kokkos::Impl::ViewDefault> RV; \
   typedef Kokkos::View<const SCALAR**, \
                        LAYOUT, \
                        Kokkos::Device<EXEC_SPACE, MEM_SPACE>, \
-                       Kokkos::MemoryTraits<Kokkos::Unmanaged> > XMV; \
+                       Kokkos::MemoryTraits<Kokkos::Unmanaged>, \
+                       Kokkos::Impl::ViewDefault> XMV; \
   static void nrm1 (const RV& r, const XMV& X); \
 };
 
@@ -379,11 +383,13 @@ void \
 Nrm1_MV<Kokkos::View<Kokkos::Details::InnerProductSpaceTraits<SCALAR>::mag_type*, \
                      EXEC_SPACE::array_layout, \
                      Kokkos::Device<EXEC_SPACE, MEM_SPACE>, \
-                     Kokkos::MemoryTraits<Kokkos::Unmanaged> >, \
+                     Kokkos::MemoryTraits<Kokkos::Unmanaged>, \
+                     Kokkos::Impl::ViewDefault>, \
         Kokkos::View<const SCALAR**, \
                      LAYOUT, \
                      Kokkos::Device<EXEC_SPACE, MEM_SPACE>, \
-                     Kokkos::MemoryTraits<Kokkos::Unmanaged> >, \
+                     Kokkos::MemoryTraits<Kokkos::Unmanaged>, \
+                     Kokkos::Impl::ViewDefault>, \
         2>:: \
 nrm1 (const RV& r, const XMV& X) \
 { \

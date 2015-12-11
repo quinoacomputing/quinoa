@@ -218,9 +218,10 @@ void AlltoAllv(const Comm<int> &comm,
 
 
 
+#ifdef HAVE_ZOLTAN2_LONG_LONG
+
 /* \brief Specialization for unsigned long long
  */
-#ifdef HAVE_TPETRA_INT_LONG_LONG
 template <>
 void AlltoAllv(const Comm<int> &comm,
               const Environment &env,
@@ -240,8 +241,8 @@ void AlltoAllv(const Comm<int> &comm,
 
   recvBuf = arcp_reinterpret_cast<unsigned long long>(newRecvBuf);
 }
-#endif
 
+#endif
 
 /* \brief Specialization for unsigned short
  */

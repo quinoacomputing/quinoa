@@ -1,7 +1,7 @@
 // @HEADER
 // ************************************************************************
 //
-//                           Intrepid2 Package
+//                           Intrepid Package
 //                 Copyright (2007) Sandia Corporation
 //
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -39,8 +39,8 @@
 // ************************************************************************
 // @HEADER
 
-#if !defined(Intrepid2_MiniTensor_Vector_t_h)
-#define Intrepid2_MiniTensor_Vector_t_h
+#if !defined(Intrepid_MiniTensor_Vector_t_h)
+#define Intrepid_MiniTensor_Vector_t_h
 
 namespace Intrepid2 {
 
@@ -50,9 +50,9 @@ namespace Intrepid2 {
 // \param is input stream
 // \return is input stream
 //
-template<typename T, Index N,  typename ES>
+template<typename T, Index N>
 std::istream &
-operator>>(std::istream & is, Vector<T, N, ES> & u)
+operator>>(std::istream & is, Vector<T, N> & u)
 {
   Index const
   dimension = u.get_dimension();
@@ -70,9 +70,9 @@ operator>>(std::istream & is, Vector<T, N, ES> & u)
 // \param os output stream
 // \return os output stream
 //
-template<typename T, Index N,  typename ES>
+template<typename T, Index N>
 std::ostream &
-operator<<(std::ostream & os, Vector<T, N, ES> const & u)
+operator<<(std::ostream & os, Vector<T, N> const & u)
 {
   Index const
   dimension = u.get_dimension();
@@ -92,6 +92,6 @@ operator<<(std::ostream & os, Vector<T, N, ES> const & u)
   return os;
 }
 
-} // namespace Intrepid
+} // namespace Intrepid2
 
-#endif // Intrepid2_MiniTensor_Vector_t_h
+#endif // Intrepid_MiniTensor_Vector_t_h

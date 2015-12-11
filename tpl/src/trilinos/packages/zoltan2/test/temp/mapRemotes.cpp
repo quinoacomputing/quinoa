@@ -13,10 +13,9 @@
 #include <iostream>
 
 using Teuchos::arcp;
-typedef Tpetra::Map<> map_t;
-typedef map_t::local_ordinal_type lno_t;
-typedef map_t::global_ordinal_type gno_t;
-
+typedef int lno_t;
+typedef int gno_t;
+typedef Tpetra::Map<lno_t, gno_t> map_t;
 
 /////////////////////////////////////////////////////////////////////
 int searchIt(const map_t &myMap, const std::string &myName)
@@ -29,9 +28,9 @@ int searchIt(const map_t &myMap, const std::string &myName)
   for (size_t i = 0; i < myMap.getNodeNumElements(); i++)
     std::cout << myMap.getGlobalElement(i) << " ";
   std::cout << std::endl;
-
+ 
   // Memory for Gids for which to search
-  size_t nSearch = 6;
+  size_t nSearch = 6; 
   Teuchos::ArrayRCP<gno_t> searchGids = arcp(new gno_t[nSearch],
                                              0, nSearch, true);
   Teuchos::ArrayRCP<int> searchRemoteRanks = arcp(new int[nSearch],
@@ -45,9 +44,9 @@ int searchIt(const map_t &myMap, const std::string &myName)
                            searchRemoteRanks(), searchRemoteLids());
 
   for (size_t i = 0; i < nSearch; i++) {
-    std::cout << me << " " << myName
+    std::cout << me << " " << myName 
                     << " NoDuplicates:  GID " << searchGids[i]
-                    << " RANK " << searchRemoteRanks[i]
+                    << " RANK " << searchRemoteRanks[i] 
                     << " LID " << searchRemoteLids[i]
                     << (searchRemoteRanks[i] == -1 ? "  BAD!" : " ")
                     << std::endl;
@@ -60,9 +59,9 @@ int searchIt(const map_t &myMap, const std::string &myName)
                            searchRemoteRanks(), searchRemoteLids());
 
   for (size_t i = 0; i < nSearch; i++) {
-    std::cout << me << " " << myName
+    std::cout << me << " " << myName 
                     << " WithDuplicates:  GID " << searchGids[i]
-                    << " RANK " << searchRemoteRanks[i]
+                    << " RANK " << searchRemoteRanks[i] 
                     << " LID " << searchRemoteLids[i]
                     << (searchRemoteRanks[i] == -1 ? "  BAD!" : " ")
                     << std::endl;

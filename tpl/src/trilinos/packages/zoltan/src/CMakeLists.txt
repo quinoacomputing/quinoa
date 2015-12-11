@@ -63,7 +63,6 @@ APPEND_SET(HEADERS
   include/zoltan_timer_cpp.h
   include/zoltan_timer.h
   include/zoltan_dd.h
-  Utilities/DDirectory/zoltan_dd_const.h
   include/zoltan_dd_cpp.h
   include/zoltan_mem.h
   include/zoltan_eval.h
@@ -466,6 +465,7 @@ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/Utilities/shared)
 
 APPEND_SET(NOINSTALLHEADERS
   Utilities/Communication/comm.h
+  Utilities/DDirectory/DD.h
   Utilities/DDirectory/DD_Memory.h
   Utilities/Timer/timer.h
   Utilities/shared/zoltan_util.h

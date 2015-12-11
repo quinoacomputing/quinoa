@@ -51,13 +51,13 @@
 #include "Phalanx_EvaluationContainer_Base.hpp"
 #include "Phalanx_FieldTag.hpp"
 #include "Phalanx_Evaluator.hpp"
-#include "Phalanx_any.hpp"
-#include <unordered_map>
+#include <boost/any.hpp>
+#include <boost/unordered_map.hpp>
 #include <string>
 
 namespace PHX {
 
-  /*! \brief Container that holds all data associated with an evaluation type.
+  /*! \brief Container that holds all data associated with a scalar type.
 
 
   */
@@ -76,7 +76,7 @@ namespace PHX {
     void 
     registerEvaluator(const Teuchos::RCP<PHX::Evaluator<Traits> >& p);
 
-    PHX::any getFieldData(const PHX::FieldTag& f);
+    boost::any getFieldData(const PHX::FieldTag& f);
 
     void postRegistrationSetup(typename Traits::SetupData d,
 			       PHX::FieldManager<Traits>& fm);
@@ -102,7 +102,7 @@ namespace PHX {
 
     bool post_registration_setup_called_;
 
-    std::unordered_map<std::string,PHX::any> fields_;
+    boost::unordered_map<std::string,boost::any> fields_;
 
     std::vector<PHX::index_size_type> kokkos_extended_data_type_dimensions_;
   };

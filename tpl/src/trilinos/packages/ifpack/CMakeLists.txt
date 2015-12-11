@@ -29,15 +29,9 @@ TRIBITS_ADD_OPTION_AND_DEFINE(${PACKAGE_NAME}_ENABLE_DYNAMIC_FACTORY
   "Enable usage of the Ifpack_DynamicFactory class."
   OFF )
 
-# Enable Ifpack's HYPRE interface.  This requires the HYPRE TPL
-# (set TPL_ENABLE_HYPRE=ON and point Trilinos to the HYPRE header 
-# files and libraries).
-ASSERT_DEFINED(${PACKAGE_NAME}_ENABLE_HYPRE)
-IF (${PACKAGE_NAME}_ENABLE_HYPRE)
-  SET (HAVE_IFPACK_HYPRE ON)
-ELSE ()
-  SET (HAVE_IFPACK_HYPRE OFF)
-ENDIF ()
+#Adding a define for when the TPL Metis is enabled.
+#This replaces an option that was reusing an existing name.
+SET(HAVE_HYPRE "${${PACKAGE_NAME}_ENABLE_HYPRE}")
 
 TRIBITS_ADD_OPTION_AND_DEFINE(${PACKAGE_NAME}_ENABLE_Euclid
   HAVE_EUCLID

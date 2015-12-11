@@ -121,12 +121,8 @@ namespace MueLuTests {
 
     if (lib == Xpetra::UseEpetra) {
 #if defined(HAVE_MUELU_EPETRA) && defined(HAVE_MUELU_IFPACK)
-#if defined(HAVE_MUELU_SERIAL)
       ifpackList.set("relaxation: type", "symmetric Gauss-Seidel");
-      smooProto = MueLu::GetIfpackSmoother<SC,LO,GO,NO>("point relaxation stand-alone", ifpackList);
-#else
-      throw(MueLu::Exceptions::RuntimeError("gimmeGaussSeidelProto: IfpackSmoother only available with SerialNode."));
-#endif
+      smooProto = rcp( new IfpackSmoother("point relaxation stand-alone",ifpackList) );
 #endif
     } else if (lib == Xpetra::UseTpetra) {
 #if defined(HAVE_MUELU_TPETRA) && defined(HAVE_MUELU_IFPACK2)
@@ -145,14 +141,11 @@ namespace MueLuTests {
     RCP<SmootherPrototype> coarseProto;
     if (lib == Xpetra::UseEpetra) {
 #if defined(HAVE_MUELU_EPETRA) && defined(HAVE_MUELU_AMESOS)
-#if defined(HAVE_MUELU_SERIAL)
       if (rank == 0) std::cout << "CoarseGrid: AMESOS" << std::endl;
       Teuchos::ParameterList amesosList;
       amesosList.set("PrintTiming",true);
-      coarseProto = MueLu::GetAmesosSmoother<SC,LO,GO,NO>("Amesos_Klu", amesosList);
-#else
-      throw(MueLu::Exceptions::RuntimeError("gimmeGaussSeidelProto: AmesosSmoother only available with SerialNode."));
-#endif
+      coarseProto = rcp( new AmesosSmoother("Amesos_Klu",amesosList) );
+      //#elif
 #endif
     } else if (lib == Xpetra::UseTpetra) {
       if (coarseSolver=="amesos2") {
@@ -236,7 +229,7 @@ int main(int argc, char *argv[]) {
     std::string coarseSolver="ifpack2";
     // std::string coarseSolver="amesos2";
     int pauseForDebugger=0;
-    clp.setOption("nSmoothers",&nSmoothers,"number of Gauss-Seidel smoothers in the MergedSmoothers");
+    clp.setOption("nSmoothers",&nSmoothers,"number of Gauss-Seidel smoothers in the MergedSmootehrs");
     clp.setOption("maxLevels",&maxLevels,"maximum number of levels allowed. If 1, then a MergedSmoother is used on the coarse grid");
     clp.setOption("its",&its,"number of multigrid cycles");
     clp.setOption("coarseSolver",&coarseSolver,"amesos2 or ifpack2 (Tpetra specific. Ignored for Epetra)");
@@ -260,7 +253,7 @@ int main(int argc, char *argv[]) {
     }
 
     if (pauseForDebugger) {
-      Utilities::PauseForDebugger();
+      Utils::PauseForDebugger();
     }
 
     /**********************************************************************************/

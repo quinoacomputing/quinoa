@@ -175,7 +175,7 @@ int main(int argc, char *argv[]) {
       int nIts = 9;
       H.Iterate(*B, *X, nIts);
 
-      ST::magnitudeType residualNorms = Utilities::ResidualNorm(*A1, *X, *B)[0];
+      ST::magnitudeType residualNorms = Utils::ResidualNorm(*A1, *X, *B)[0];
       if (comm->getRank() == 0)
         std::cout << "||Residual|| = " << residualNorms << std::endl;
     }
@@ -184,8 +184,8 @@ int main(int argc, char *argv[]) {
     // Second solve
     //
 
-    std::cout << "Status of the preconditioner between runs:" << std::endl;
-    H.print(*getFancyOStream(Teuchos::rcpFromRef(std::cout)), MueLu::High);
+    cout << "Status of the preconditioner between runs:" << std::endl;
+    H.print(*getFancyOStream(Teuchos::rcpFromRef(cout)), MueLu::High);
 
     // Change the problem
     RCP<Level> finestLevel = H.GetLevel(0);
@@ -210,7 +210,7 @@ int main(int argc, char *argv[]) {
       int nIts = 9;
       H.Iterate(*B, *X, nIts);
 
-      ST::magnitudeType residualNorms = Utilities::ResidualNorm(*A2, *X, *B)[0];
+      ST::magnitudeType residualNorms = Utils::ResidualNorm(*A2, *X, *B)[0];
       if (comm->getRank() == 0)
         std::cout << "||Residual|| = " << residualNorms << std::endl;
     }
@@ -232,8 +232,8 @@ int main(int argc, char *argv[]) {
       H.Delete("AP Pattern", M.GetFactory("A").get());
     }
 
-    std::cout << "Status of the preconditioner at the end:" << std::endl;
-    H.print(*getFancyOStream(Teuchos::rcpFromRef(std::cout)), MueLu::High);
+    cout << "Status of the preconditioner at the end:" << std::endl;
+    H.print(*getFancyOStream(Teuchos::rcpFromRef(cout)), MueLu::High);
 
     success = true;
   }

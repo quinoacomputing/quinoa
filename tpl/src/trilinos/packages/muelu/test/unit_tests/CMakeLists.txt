@@ -5,8 +5,8 @@ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/../../src/Transfers)
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/../../src/Transfers/BlockedTransfers)
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/../../src/Smoothers)
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/../../src/Smoothers/BlockedSmoothers)
+INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/../../gallery)
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/../../adapters)
-INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/Smoothers)
 
 #INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR}/)
 
@@ -26,13 +26,16 @@ APPEND_SET(SOURCES
   MueLu_UnitTests.cpp
   MueLu_TestHelpers.cpp
   MultiVectorTransferFactory.cpp
+  ParameterList/CreateSublists.cpp
   ParameterList/FactoryFactory.cpp
+  ParameterList/MLParameterListInterpreter.cpp
   ParameterList/ParameterListInterpreter.cpp
   PermutedTransferFactory.cpp
   PgPFactory.cpp
   RAPFactory.cpp
   SaPFactory.cpp
   Smoothers/SmootherFactory.cpp
+  Smoothers/MueLu_TestHelpersSmoothers.cpp
   TentativePFactory.cpp
   ThresholdAFilterFactory.cpp
   TransPFactory.cpp
@@ -40,14 +43,7 @@ APPEND_SET(SOURCES
   VariableContainer.cpp
 )
 
-IF (${PACKAGE_NAME}_ENABLE_Epetra)
-APPEND_SET(SOURCES
-  ParameterList/MLParameterListInterpreter.cpp
-  ParameterList/CreateSublists.cpp
-)
-ENDIF()
-
-IF (${PACKAGE_NAME}_ENABLE_Experimental AND Tpetra_INST_INT_INT)
+IF (${PACKAGE_NAME}_ENABLE_Experimental)
   APPEND_SET(SOURCES
     BlockedCoarseMapFactory.cpp
     BlockedPFactory.cpp
@@ -97,7 +93,7 @@ IF (${PACKAGE_NAME}_ENABLE_Tpetra AND ${PACKAGE_NAME}_ENABLE_AmgX)
     )
 ENDIF()
 
-IF (${PACKAGE_NAME}_ENABLE_Belos AND TPETRA_INST_INT_INT)
+IF (${PACKAGE_NAME}_ENABLE_Belos)
   APPEND_SET(SOURCES Adapters/BelosAdapters.cpp)
 ENDIF()
 
@@ -114,7 +110,7 @@ IF (${PACKAGE_NAME}_ENABLE_Zoltan AND TPL_ENABLE_MPI)
 ENDIF()
 
 IF ((${PACKAGE_NAME}_ENABLE_Epetra AND ${PACKAGE_NAME}_ENABLE_EpetraExt AND ${PACKAGE_NAME}_ENABLE_Ifpack AND ${PACKAGE_NAME}_ENABLE_Amesos) OR
-    (${PACKAGE_NAME}_ENABLE_Tpetra AND TPETRA_INST_INT_INT AND ${PACKAGE_NAME}_ENABLE_Ifpack2 AND ${PACKAGE_NAME}_ENABLE_Amesos2))
+    (${PACKAGE_NAME}_ENABLE_Tpetra AND ${PACKAGE_NAME}_ENABLE_Ifpack2 AND ${PACKAGE_NAME}_ENABLE_Amesos2))
   APPEND_SET(SOURCES Adapters/CreatePreconditioner.cpp)
 
   TRIBITS_COPY_FILES_TO_BINARY_DIR(UnitTestsCreatePreconditioner_cp
@@ -130,7 +126,8 @@ IF (${PACKAGE_NAME}_ENABLE_Galeri) #TMP
     COMM serial mpi
     )
 
-  IF (${PACKAGE_NAME}_ENABLE_Epetra AND ${PACKAGE_NAME}_ENABLE_EpetraExt)
+  IF (${PACKAGE_NAME}_ENABLE_Epetra AND ${PACKAGE_NAME}_ENABLE_EpetraExt
+      AND ${PACKAGE_NAME}_ENABLE_Ifpack  AND ${PACKAGE_NAME}_ENABLE_Amesos)
 
     TRIBITS_ADD_TEST(
       UnitTests
@@ -152,7 +149,7 @@ IF (${PACKAGE_NAME}_ENABLE_Galeri) #TMP
 
   ENDIF()
 
-  IF (${PACKAGE_NAME}_ENABLE_Tpetra)
+  IF (${PACKAGE_NAME}_ENABLE_Tpetra AND ${PACKAGE_NAME}_ENABLE_Ifpack2 AND ${PACKAGE_NAME}_ENABLE_Amesos2)
 
     TRIBITS_ADD_TEST(
       UnitTests
@@ -177,8 +174,6 @@ IF (${PACKAGE_NAME}_ENABLE_Galeri) #TMP
 ENDIF() # Galeri TMP
 
 ADD_SUBDIRECTORY(ParameterList/FactoryFactory/)
-IF (${PACKAGE_NAME}_ENABLE_Epetra)
-  ADD_SUBDIRECTORY(ParameterList/MLParameterListInterpreter/)
-  ADD_SUBDIRECTORY(ParameterList/ParameterListInterpreter/)
-  ADD_SUBDIRECTORY(ParameterList/CreateSublists/)
-ENDIF()
+ADD_SUBDIRECTORY(ParameterList/MLParameterListInterpreter/)
+ADD_SUBDIRECTORY(ParameterList/ParameterListInterpreter/)
+ADD_SUBDIRECTORY(ParameterList/CreateSublists/)

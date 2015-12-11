@@ -90,8 +90,6 @@
 #include "Tpetra_Experimental_BlockCrsMatrix.hpp"
 #endif
 
-#include <MueLu_TestHelpers_Common.hpp>
-
 namespace MueLuTests {
   using Teuchos::RCP;
   using Teuchos::rcp;
@@ -158,7 +156,7 @@ namespace MueLuTests {
         if (lib == Xpetra::NotSpecified)
           lib = TestHelpers::Parameters::getLib();
 
-        GO nx,ny,nz;
+        int nx,ny,nz; //global_size_t
         nx = ny = nz = 5;
         nx = matrixList.get("nx",nx);
         ny = matrixList.get("ny",ny);
@@ -303,7 +301,7 @@ namespace MueLuTests {
 
       // Create a 1D Poisson matrix with the specified number of rows
       // nx: global number of rows
-      static RCP<Matrix> Build1DPoisson(GO nx, Xpetra::UnderlyingLib lib=Xpetra::NotSpecified) { //global_size_t
+      static RCP<Matrix> Build1DPoisson(int nx, Xpetra::UnderlyingLib lib=Xpetra::NotSpecified) { //global_size_t
         Teuchos::ParameterList matrixList;
         matrixList.set("nx", nx);
         matrixList.set("matrixType","Laplace1D");
@@ -314,7 +312,7 @@ namespace MueLuTests {
       // Create a 2D Poisson matrix with the specified number of rows
       // nx: global number of rows
       // ny: global number of rows
-      static RCP<Matrix> Build2DPoisson(GO nx, GO ny=-1, Xpetra::UnderlyingLib lib=Xpetra::NotSpecified) { //global_size_t
+      static RCP<Matrix> Build2DPoisson(int nx, int ny=-1, Xpetra::UnderlyingLib lib=Xpetra::NotSpecified) { //global_size_t
         Teuchos::ParameterList matrixList;
         if (ny==-1) ny=nx;
         matrixList.set("nx", nx);
@@ -341,9 +339,6 @@ namespace MueLuTests {
         RCP<const Xpetra::CrsGraph<LO,GO,NO> > Graph = FirstMatrix->getCrsGraph();
 
 #if defined(HAVE_MUELU_TPETRA)
-        // TAW: Oct 11 2015: The following code only works if GO=LO=int is enabled in Tpetra
-        //                   The computeDiagonalGraph routine is not contained in the Xpetra::CrsMatrix interface!
-#ifdef HAVE_MUELU_TPETRA_INST_INT_INT
         // Thanks for the code, Travis!
         int blocksize = 3;
         RCP<const Xpetra::TpetraCrsGraph<LO,GO,NO> > TGraph = rcp_dynamic_cast<const Xpetra::TpetraCrsGraph<LO,GO,NO> >(Graph);
@@ -373,7 +368,6 @@ namespace MueLuTests {
 
         RCP<Xpetra::CrsMatrix<SC,LO,GO,NO> > temp = rcp(new Xpetra::TpetraBlockCrsMatrix<SC,LO,GO,NO>(bcrsmatrix));
         Op = rcp(new Xpetra::CrsMatrixWrap<SC,LO,GO,NO>(temp));
-#endif
 #endif
         return Op;
      } // BuildMatrix()
@@ -408,14 +402,15 @@ namespace MueLuTests {
 #endif
       }
 
+#if defined(HAVE_MUELU_EPETRA) && defined(HAVE_MUELU_IFPACK)
       static RCP<SmootherPrototype> createSmootherPrototype(const std::string& type="Gauss-Seidel", LO sweeps=1) {
-        std::string ifpackType = "RELAXATION";
         Teuchos::ParameterList  ifpackList;
         ifpackList.set("relaxation: type", type);
         ifpackList.set("relaxation: sweeps", (LO) sweeps);
         ifpackList.set("relaxation: damping factor", (SC) 1.0);
-        return Teuchos::rcp( new TrilinosSmoother(ifpackType, ifpackList) );
+        return rcp( new IfpackSmoother("point relaxation stand-alone",ifpackList) );
       }
+#endif
 
     }; // class Factory
 
@@ -431,10 +426,7 @@ namespace MueLuTests {
 
 // Macro to skip a test when UnderlyingLib==Epetra or Tpetra
 #define MUELU_TEST_ONLY_FOR(UnderlyingLib) \
-  if (TestHelpers::Parameters::getLib() != UnderlyingLib) { \
-    out << "Skipping test for " << ((TestHelpers::Parameters::getLib()==Xpetra::UseEpetra) ? "Epetra" : "Tpetra") << std::endl; \
-    return; \
-  }
+  if (TestHelpers::Parameters::getLib() == UnderlyingLib)
 
 // Macro to skip a test when Epetra is used with Ordinal != int
 #define MUELU_TEST_EPETRA_ONLY_FOR_INT(LocalOrdinal, GlobalOrdinal) \
@@ -444,6 +436,11 @@ namespace MueLuTests {
 #define MUELU_TEST_EPETRA_ONLY_FOR_DOUBLE_AND_INT(Scalar, LocalOrdinal, GlobalOrdinal) \
   if (!(TestHelpers::Parameters::getLib() == Xpetra::UseEpetra && Teuchos::ScalarTraits<Scalar>::name() != string("double"))) \
     MUELU_TEST_EPETRA_ONLY_FOR_INT(LocalOrdinal, GlobalOrdinal)
+
+
+
+
+
 
 //
 

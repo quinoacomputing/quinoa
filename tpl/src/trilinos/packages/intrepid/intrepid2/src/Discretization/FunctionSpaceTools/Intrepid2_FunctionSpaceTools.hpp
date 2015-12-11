@@ -46,8 +46,8 @@
     \author Created by P. Bochev and D. Ridzal.
 */
 
-#ifndef INTREPID2_FUNCTIONSPACETOOLS_HPP
-#define INTREPID2_FUNCTIONSPACETOOLS_HPP
+#ifndef INTREPID_FUNCTIONSPACETOOLS_HPP
+#define INTREPID_FUNCTIONSPACETOOLS_HPP
 
 #include "Intrepid2_ConfigDefs.hpp"
 #include "Intrepid2_ArrayTools.hpp"
@@ -55,7 +55,7 @@
 #include "Intrepid2_FieldContainer.hpp"
 #include "Intrepid2_CellTools.hpp"
 
-#include <Intrepid2_KokkosRank.hpp>
+#include <KokkosRank.hpp>
 
 
 namespace Intrepid2 {

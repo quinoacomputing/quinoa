@@ -56,15 +56,15 @@ IF (${PACKAGE_NAME}_ENABLE_Tpetra)
 
    APPEND_SET(HEADERS
      tpetra/MueLu_CreateTpetraPreconditioner.hpp
+     tpetra/MueLu_RefMaxwell_decl.hpp
+     tpetra/MueLu_RefMaxwell_def.hpp
      tpetra/MueLu_TpetraOperator_decl.hpp
      tpetra/MueLu_TpetraOperator_def.hpp
    )
 
-   IF (${PACKAGE_NAME}_ENABLE_Belos AND TPETRA_INST_INT_INT)
+   IF (${PACKAGE_NAME}_ENABLE_Belos)
 
      APPEND_SET(HEADERS
-       tpetra/MueLu_RefMaxwell_decl.hpp
-       tpetra/MueLu_RefMaxwell_def.hpp
        tpetra/MueLu_ShiftedLaplacian_decl.hpp
        tpetra/MueLu_ShiftedLaplacian_def.hpp
        tpetra/MueLu_ShiftedLaplacianOperator_decl.hpp
@@ -76,14 +76,6 @@ IF (${PACKAGE_NAME}_ENABLE_Tpetra)
    TRILINOS_CREATE_CLIENT_TEMPLATE_HEADERS(${DIR})
 
 ENDIF()
-
-#
-# Xpetra
-#
-SET_AND_INC_DIRS(DIR ${CMAKE_CURRENT_SOURCE_DIR}/xpetra)
-APPEND_SET(HEADERS
-  ${CMAKE_CURRENT_SOURCE_DIR}/xpetra/MueLu_XpetraOperator_decl.hpp
-)
 
 #
 # Stratimikos
@@ -101,9 +93,6 @@ IF (${PACKAGE_NAME}_ENABLE_Stratimikos)
     ${DIR}/Thyra_MueLuPreconditionerFactory_decl.hpp
     ${DIR}/Thyra_MueLuPreconditionerFactory_def.hpp
     ${DIR}/Thyra_MueLuPreconditionerFactory.hpp
-    ${DIR}/Thyra_XpetraLinearOp_decl.hpp
-    ${DIR}/Thyra_XpetraLinearOp_def.hpp
-    ${DIR}/Thyra_XpetraLinearOp.hpp
     )
 
   # Tpetra specific extensions
@@ -156,19 +145,17 @@ ENDFUNCTION(MUELUADAPTERS_PROCESS_ETI_TEMPLATE)
 
 SET(MUELUADAPTERS_ETI_CPP_SOURCES "")
 IF(${PACKAGE_NAME}_ENABLE_EXPLICIT_INSTANTIATION)
-  # Set the list of classes in MueLu adapters that are templated
+  # Set the list of classes in MueLu adapters that aretemplated
   # on <Scalar, LO, GO, Node> for which we want to do ETI using this system.
-  GLOBAL_SET(MUELUADAPTERS_ETI_CLASSES  )
-  IF (${PACKAGE_NAME}_ENABLE_Belos AND TPETRA_INST_INT_INT)
-    APPEND_SET(MUELUADAPTERS_ETI_CLASSES
-      MueLu::RefMaxwell
-      )
-  ENDIF()
+  GLOBAL_SET(MUELUADAPTERS_ETI_CLASSES
+    MueLu::RefMaxwell
+    )
   IF (${PACKAGE_NAME}_ENABLE_Stratimikos)
     APPEND_GLOBAL_SET(MUELUADAPTERS_ETI_CLASSES
       Thyra::MueLuPreconditionerFactory
     )
   ENDIF()
+
 
   # Set the list of classes in MueLu adapters that are templated on <LO, GO, Node> for
   # which we want to do ETI using this system.

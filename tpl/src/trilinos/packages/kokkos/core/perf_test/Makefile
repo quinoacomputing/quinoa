@@ -1,6 +1,6 @@
 KOKKOS_PATH = ../..
 
-GTEST_PATH = ../../tpls/gtest
+GTEST_PATH = ../../TPL/gtest
 
 vpath %.cpp ${KOKKOS_PATH}/core/perf_test
 

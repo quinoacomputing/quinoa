@@ -84,12 +84,8 @@ struct ViewAssignment< ViewDefault , ViewDefault , void >
 
     dst.m_ptr_on_device = ViewDataManagement< ViewTraits<DT,DL,DD,DM> >::create_handle( src.m_ptr_on_device, src.m_tracker );
 
-    if( dst.is_managed )
-      dst.m_tracker = src.m_tracker ;
-    else {
-      dst.m_tracker = AllocationTracker();
-      dst.m_management.set_unmanaged();
-    }
+    dst.m_tracker = src.m_tracker ;
+
   }
 
 
@@ -121,7 +117,7 @@ struct ViewAssignment< ViewDefault , ViewDefault , void >
     size_t strides[8];
     src.stride(strides);
     if(strides[0]!=1) {
-      Kokkos::abort("Trying to assign strided 1D View to LayoutRight or LayoutLeft which is not stride-1");
+      abort("Trying to assign strided 1D View to LayoutRight or LayoutLeft which is not stride-1");
     }
     dst.m_offset_map.assign( src.dimension_0(), 0, 0, 0, 0, 0, 0, 0, 0 );
 
@@ -129,12 +125,8 @@ struct ViewAssignment< ViewDefault , ViewDefault , void >
 
     dst.m_ptr_on_device = ViewDataManagement< ViewTraits<DT,DL,DD,DM> >::create_handle( src.m_ptr_on_device, src.m_tracker );
 
-    if( dst.is_managed )
-      dst.m_tracker = src.m_tracker ;
-    else {
-      dst.m_tracker = AllocationTracker();
-      dst.m_management.set_unmanaged();
-    }
+    dst.m_tracker = src.m_tracker ;
+
   }
 
   //------------------------------------

@@ -134,6 +134,7 @@ private:
   const RCP<const Environment> env_;
   const RCP<const Comm<int> > comm_;
   ArrayRCP<const gno_t> gids_;
+  ArrayRCP<const gno_t> gidsConst_;
   int nUserWeights_;
   ArrayRCP<input_t> weights_;
 };
@@ -146,7 +147,7 @@ template <typename Adapter>
     const RCP<const Comm<int> > &comm,
     modelFlag_t &modelFlags):
       numGlobalIdentifiers_(), env_(env), comm_(comm),
-      gids_(), nUserWeights_(0), weights_()
+      gids_(), gidsConst_(), nUserWeights_(0), weights_()
 {
   // Get the local and global problem size
   size_t nLocalIds = ia->getLocalNumIDs();
@@ -192,6 +193,8 @@ template <typename Adapter>
       }
     }
   }
+
+  gidsConst_ = arcp_const_cast<const gno_t>(gids_);
 
   env_->memory("After construction of identifier model");
 }

@@ -48,7 +48,8 @@
 #include "Teuchos_Assert.hpp"
 #include "Sacado_mpl_size.hpp"
 #include "Sacado_mpl_find.hpp"
-#include "Phalanx_any.hpp"
+#include "boost/mpl/at.hpp"
+#include "boost/any.hpp"
 #include "Phalanx_EvaluationContainer_TemplateBuilder.hpp"
 #include <sstream>
 
@@ -80,7 +81,7 @@ void PHX::FieldManager<Traits>::
 getFieldData(PHX::MDField<DataT,Tag0,Tag1,Tag2,Tag3,Tag4,
 	     Tag5,Tag6,Tag7>& f)
 {
-  PHX::any a = m_eval_containers.template
+  boost::any a = m_eval_containers.template
     getAsObject<EvalT>()->getFieldData(f.fieldTag());
 
   f.setFieldData(a);
@@ -96,7 +97,7 @@ void PHX::FieldManager<Traits>::
 getFieldData(PHX::MDField<const DataT,Tag0,Tag1,Tag2,Tag3,Tag4,
 	     Tag5,Tag6,Tag7>& f)
 {
-  PHX::any a = m_eval_containers.template
+  boost::any a = m_eval_containers.template
     getAsObject<EvalT>()->getFieldData(f.fieldTag());
 
   f.setFieldData(a);
@@ -167,6 +168,12 @@ inline
 void PHX::FieldManager<Traits>::
 postRegistrationSetupForType(typename Traits::SetupData d)
 {
+//   std::size_t index = 
+//     Sacado::mpl::find<typename Traits::EvalTypes,EvalT>::value;
+  // boost equivalent of above statement:
+  //unsigned index = 
+  //  boost::mpl::find<typename Traits::EvalTypes,EvalT>::type::pos::value;
+
   m_eval_containers.template getAsObject<EvalT>()->
     postRegistrationSetup(d, *this);
 }

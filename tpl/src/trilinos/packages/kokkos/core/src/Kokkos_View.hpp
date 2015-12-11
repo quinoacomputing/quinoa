@@ -47,11 +47,10 @@
 #include <type_traits>
 #include <string>
 #include <Kokkos_Core_fwd.hpp>
-
-#if ! defined( KOKKOS_USING_EXPERIMENTAL_VIEW )
-
 #include <Kokkos_HostSpace.hpp>
 #include <Kokkos_MemoryTraits.hpp>
+
+#if ! defined( KOKKOS_USING_EXPERIMENTAL_VIEW )
 
 #include <impl/Kokkos_StaticAssert.hpp>
 #include <impl/Kokkos_Traits.hpp>
@@ -445,14 +444,14 @@ template< class DataType ,
             typename ViewTraits<DataType,Arg1Type,Arg2Type,Arg3Type>::specialize >
 class View ;
 
+namespace Impl {
+
 template< class C >
-struct is_view : public Impl::bool_< false > {};
+struct is_view : public bool_< false > {};
 
 template< class D , class A1 , class A2 , class A3 , class S >
-struct is_view< View< D , A1 , A2 , A3 , S > > : public Impl::bool_< true > {};
+struct is_view< View< D , A1 , A2 , A3 , S > > : public bool_< true > {};
 
-namespace Impl {
-using Kokkos::is_view ;
 }
 
 //----------------------------------------------------------------------------
@@ -1854,8 +1853,6 @@ void resize( View<T,L,D,M,S> & v ,
 
   Impl::ViewRemap< view_type , view_type >( v_resized , v );
 
-  view_type::execution_space::fence();
-
   v = v_resized ;
 }
 
@@ -2099,9 +2096,26 @@ struct ALL { KOKKOS_INLINE_FUNCTION ALL(){} };
 //----------------------------------------------------------------------------
 //----------------------------------------------------------------------------
 
-#endif /* #if ! defined( KOKKOS_USING_EXPERIMENTAL_VIEW ) */
+#include <KokkosExp_View.hpp>
+
+#else
+
+// Must define before includng <impl/Kokkos_ViewOffset.hpp>
+namespace Kokkos {
+namespace Experimental {
+namespace Impl {
+struct ALL_t ;
+}
+}
+using ALL = Experimental::Impl::ALL_t ;
+}
+
+#include <impl/Kokkos_ViewOffset.hpp>
+#include <impl/Kokkos_ViewSupport.hpp>
 
 #include <KokkosExp_View.hpp>
+
+#endif /* #if defined( KOKKOS_USING_EXPERIMENTAL_VIEW ) */
 
 //----------------------------------------------------------------------------
 //----------------------------------------------------------------------------

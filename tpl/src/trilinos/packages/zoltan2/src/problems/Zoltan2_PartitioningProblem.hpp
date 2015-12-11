@@ -53,7 +53,7 @@
 #include <Zoltan2_Problem.hpp>
 #include <Zoltan2_PartitioningAlgorithms.hpp>
 #include <Zoltan2_PartitioningSolution.hpp>
-#include <Zoltan2_EvaluatePartition.hpp>
+#include <Zoltan2_PartitioningSolutionQuality.hpp>
 #include <Zoltan2_GraphModel.hpp>
 #include <Zoltan2_IdentifierModel.hpp>
 #include <Zoltan2_IntegerRangeList.hpp>
@@ -120,7 +120,8 @@ public:
       graphFlags_(), idFlags_(), coordFlags_(), algName_(),
       numberOfWeights_(), partIds_(), partSizes_(), 
       numberOfCriteria_(), levelNumberParts_(), hierarchical_(false), 
-      metricsRequested_(false), metrics_(), graphMetrics_()
+      metricsRequested_(false), graphMetricsRequested_(false), metrics_(),
+      graphMetrics_()
   {
     for(int i=0;i<MAX_NUM_MODEL_TYPES;i++) modelAvail_[i]=false;
     initializeProblem();
@@ -136,7 +137,8 @@ public:
       numberOfWeights_(), 
       partIds_(), partSizes_(), numberOfCriteria_(), 
       levelNumberParts_(), hierarchical_(false), 
-      metricsRequested_(false), metrics_(), graphMetrics_()
+      metricsRequested_(false), graphMetricsRequested_(false), metrics_(),
+      graphMetrics_()
   {
     for(int i=0;i<MAX_NUM_MODEL_TYPES;i++) modelAvail_[i]=false;
     initializeProblem();
@@ -152,7 +154,8 @@ public:
       numberOfWeights_(), 
       partIds_(), partSizes_(), numberOfCriteria_(), 
       levelNumberParts_(), hierarchical_(false), 
-      metricsRequested_(false), metrics_(), graphMetrics_()
+      metricsRequested_(false), graphMetricsRequested_(false), metrics_(),
+      graphMetrics_()
   {
     for(int i=0;i<MAX_NUM_MODEL_TYPES;i++) modelAvail_[i]=false;
     initializeProblem();
@@ -241,18 +244,6 @@ public:
       os << "No metrics available." << std::endl;
     else
       metrics_->printMetrics(os);
-  };
-
-  /*! \brief Print the array of metrics
-   *   \param os the output stream for the report.
-   *   Metrics were only computed if user requested
-   *   metrics with a parameter.
-   */
-  void printGraphMetrics(std::ostream &os) const {
-    if (graphMetrics_.is_null())
-      os << "No metrics available." << std::endl;
-    else
-      graphMetrics_->printGraphMetrics(os);
   };
 
   /*! \brief Set or reset relative sizes for the parts that Zoltan2 will create.
@@ -399,8 +390,9 @@ private:
   // Did the user request metrics?
 
   bool metricsRequested_;
-  RCP<const EvaluatePartition<Adapter> > metrics_;
-  RCP<const EvaluatePartition<Adapter> > graphMetrics_;
+  bool graphMetricsRequested_;
+  RCP<const PartitioningSolutionQuality<Adapter> > metrics_;
+  RCP<const GraphPartitioningSolutionQuality<Adapter> > graphMetrics_;
 };
 ////////////////////////////////////////////////////////////////////////
 
@@ -558,11 +550,6 @@ void PartitioningProblem<Adapter>::solve(bool updateInputData)
                                             problemComm_,
                                             this->graphModel_));
     }
-    else if (algName_ == std::string("pulp")) {
-      this->algorithm_ = rcp(new AlgPuLP<Adapter>(this->envConst_,
-                                            problemComm_,
-                                            this->baseInputAdapter_));
-    }
     else if (algName_ == std::string("block")) {
       this->algorithm_ = rcp(new AlgBlock<Adapter>(this->envConst_,
                                          problemComm_, this->identifierModel_));
@@ -637,43 +624,36 @@ void PartitioningProblem<Adapter>::solve(bool updateInputData)
 
   if (metricsRequested_){
     typedef PartitioningSolution<Adapter> ps_t;
-    typedef EvaluatePartition<Adapter> psq_t;
-    typedef StridedData<lno_t, scalar_t> input_t;
+    typedef PartitioningSolutionQuality<Adapter> psq_t;
 
     psq_t *quality = NULL;
     RCP<const ps_t> solutionConst = rcp_const_cast<const ps_t>(solution_);
 
-    if (inputType_ == GraphAdapterType ||
-	inputType_ == MatrixAdapterType ||
-	inputType_ == MeshAdapterType){
-
-      try{
-	quality = new psq_t(this->envConst_, problemCommConst_,
-			    this->inputAdapter_,solutionConst,GraphModelType);
-      }
-      Z2_FORWARD_EXCEPTIONS
-
-      psq_t *graphQuality = NULL;
-
-      try{
-	graphQuality = new psq_t(this->envConst_, problemCommConst_,
-				 this->baseInputAdapter_, solutionConst, 
-				 this->graphModel_);
-      }
-      Z2_FORWARD_EXCEPTIONS
-
-      graphMetrics_ = rcp(graphQuality);
-    } else {
-
-      try{
-	quality = new psq_t(this->envConst_, problemCommConst_,
-			    this->inputAdapter_, solutionConst,
-			    IdentifierModelType);
-      }
-      Z2_FORWARD_EXCEPTIONS
+    try{
+      quality = new psq_t(this->envConst_, problemCommConst_,
+                          this->inputAdapter_, solutionConst);
     }
+    Z2_FORWARD_EXCEPTIONS
 
     metrics_ = rcp(quality);
+  }
+
+  if (graphMetricsRequested_ && (algName_ == std::string("scotch") ||
+				 algName_ == std::string("parmetis"))){
+    typedef PartitioningSolution<Adapter> ps_t;
+    typedef GraphPartitioningSolutionQuality<Adapter> gpsq_t;
+
+    gpsq_t *quality = NULL;
+    RCP<const ps_t> solutionConst = rcp_const_cast<const ps_t>(solution_);
+
+    try{
+      quality = new gpsq_t(this->envConst_, problemCommConst_,
+                          this->graphModel_, this->inputAdapter_,
+                          solutionConst);
+    }
+    Z2_FORWARD_EXCEPTIONS
+
+    graphMetrics_ = rcp(quality);
   }
 
   this->env_->debug(DETAILED_STATUS, "Exiting solve");
@@ -824,10 +804,6 @@ void PartitioningProblem<Adapter>::createPartitioningProblem(bool newData)
       removeSelfEdges = true;
       needConsecutiveGlobalIds = true;
     }
-    else if (algorithm == std::string("pulp"))
-    {
-      algName_ = algorithm;
-    }
     else if (algorithm == std::string("patoh") ||
              algorithm == std::string("phg"))
     {
@@ -889,18 +865,10 @@ void PartitioningProblem<Adapter>::createPartitioningProblem(bool newData)
       removeSelfEdges = true;
       needConsecutiveGlobalIds = true;
 #else
-#ifdef HAVE_ZOLTAN2_PULP
-      // TODO: XtraPuLP
-      //if (problemComm_->getSize() > 1)
-      //  algName_ = std::string("xtrapulp"); 
-      //else
-      algName_ = std::string("pulp");
-#else
       if (problemComm_->getSize() > 1)
         algName_ = std::string("phg"); 
       else
         algName_ = std::string("patoh"); 
-#endif
 #endif
 #endif
     }

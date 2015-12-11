@@ -85,10 +85,8 @@ namespace Stratimikos {
   }
 
 #if defined(HAVE_MUELU_EXPERIMENTAL) && defined(HAVE_MUELU_TEKO)
-#if 0
   // Dynamically register MueLu Tpetra adapters in Stratimikos
   void enableMueLuTpetraQ2Q1(DefaultLinearSolverBuilder &builder, const std::string &stratName = "MueLu");
-#endif
 
   // Dynamically register MueLu Tpetra adapters in Stratimikos
   // Note: No Scalar template argument is available because Stratimikos

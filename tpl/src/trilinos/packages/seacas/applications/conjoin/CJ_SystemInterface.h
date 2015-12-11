@@ -76,6 +76,8 @@ namespace Excn {
 
     private:
       void enroll_options();
+      bool decompose_filename(const std::string &cs);
+      void parse_exclude(const char *list);
 
       GetLongOption options_; //!< Options parsing
   

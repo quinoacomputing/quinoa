@@ -171,9 +171,11 @@ namespace {
       // generate problem
       LO nEle = 6;
       const RCP<const MapClass> map = MapFactoryClass::Build(lib, nEle, 0, comm);
-      // TODO get rid of this...
-      //#ifndef XPETRA_TEST_USE_LONGLONG_GO
-      const RCP<const Xpetra::EpetraMapT<GO, Node> > XepMap = Teuchos::rcp_dynamic_cast<const Xpetra::EpetraMapT<GO, Node> >(map);
+#ifndef XPETRA_TEST_USE_LONGLONG_GO
+      const RCP<const Xpetra::EpetraMap> XepMap = Teuchos::rcp_dynamic_cast<const Xpetra::EpetraMap>(map);
+#else
+      const RCP<const Xpetra::EpetraMap64> XepMap = Teuchos::rcp_dynamic_cast<const Xpetra::EpetraMap64>(map);
+#endif
       /////////////////////////////////////// transform Xpetra::Map objects to Epetra
       // this is needed for AztecOO
       const Teuchos::RCP<const Epetra_Map> epMap = Teuchos::rcpFromRef(XepMap->getEpetra_Map());
@@ -205,12 +207,12 @@ namespace {
       /////////////////////////////////////// transform Epetra objects to Xpetra (needed for MueLu)
 
       // build Xpetra objects from Epetra_CrsMatrix objects
-      Teuchos::RCP<Xpetra::CrsMatrix<Scalar,LO,GO,Node> > xAmat = Teuchos::rcp(new Xpetra::EpetraCrsMatrixT<GO,Node>(epA));
-      Teuchos::RCP<Xpetra::CrsMatrix<Scalar,LO,GO,Node> > xBmat = Teuchos::rcp(new Xpetra::EpetraCrsMatrixT<GO,Node>(epB));
-      Teuchos::RCP<Xpetra::CrsMatrix<Scalar,LO,GO,Node> > xABmat = Teuchos::rcp(new Xpetra::EpetraCrsMatrixT<GO,Node>(epAB));
-      Teuchos::RCP<Xpetra::CrsMatrix<Scalar,LO,GO,Node> > xAtBmat = Teuchos::rcp(new Xpetra::EpetraCrsMatrixT<GO,Node>(epAtB));
-      Teuchos::RCP<Xpetra::CrsMatrix<Scalar,LO,GO,Node> > xABtmat = Teuchos::rcp(new Xpetra::EpetraCrsMatrixT<GO,Node>(epABt));
-      Teuchos::RCP<Xpetra::CrsMatrix<Scalar,LO,GO,Node> > xAtBtmat = Teuchos::rcp(new Xpetra::EpetraCrsMatrixT<GO,Node>(epAtBt));
+      Teuchos::RCP<Xpetra::CrsMatrix<Scalar,LO,GO,Node> > xAmat = Teuchos::rcp(new Xpetra::EpetraCrsMatrixT<GO>(epA));
+      Teuchos::RCP<Xpetra::CrsMatrix<Scalar,LO,GO,Node> > xBmat = Teuchos::rcp(new Xpetra::EpetraCrsMatrixT<GO>(epB));
+      Teuchos::RCP<Xpetra::CrsMatrix<Scalar,LO,GO,Node> > xABmat = Teuchos::rcp(new Xpetra::EpetraCrsMatrixT<GO>(epAB));
+      Teuchos::RCP<Xpetra::CrsMatrix<Scalar,LO,GO,Node> > xAtBmat = Teuchos::rcp(new Xpetra::EpetraCrsMatrixT<GO>(epAtB));
+      Teuchos::RCP<Xpetra::CrsMatrix<Scalar,LO,GO,Node> > xABtmat = Teuchos::rcp(new Xpetra::EpetraCrsMatrixT<GO>(epABt));
+      Teuchos::RCP<Xpetra::CrsMatrix<Scalar,LO,GO,Node> > xAtBtmat = Teuchos::rcp(new Xpetra::EpetraCrsMatrixT<GO>(epAtBt));
 
       Teuchos::RCP<Xpetra::Matrix<Scalar,LO,GO,Node> > xA = Teuchos::rcp(new Xpetra::CrsMatrixWrap<Scalar,LO,GO,Node>(xAmat));
       Teuchos::RCP<Xpetra::Matrix<Scalar,LO,GO,Node> > xB = Teuchos::rcp(new Xpetra::CrsMatrixWrap<Scalar,LO,GO,Node>(xBmat));
@@ -361,9 +363,7 @@ namespace {
   typedef KokkosClassic::DefaultNode::DefaultNodeType DefaultNodeType;
 
 #ifndef XPETRA_TEST_USE_LONGLONG_GO
-#ifdef XPETRA_TPETRA_INST_INT_INT
   UNIT_TEST_GROUP_ORDINAL(double, int, int, DefaultNodeType)
-#endif
 #else
   typedef long long LongLongInt;
   UNIT_TEST_GROUP_ORDINAL(double, int, LongLongInt, DefaultNodeType)

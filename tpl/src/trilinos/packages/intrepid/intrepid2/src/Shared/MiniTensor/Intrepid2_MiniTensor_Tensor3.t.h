@@ -1,7 +1,7 @@
 // @HEADER
 // ************************************************************************
 //
-//                           Intrepid2 Package
+//                           Intrepid Package
 //                 Copyright (2007) Sandia Corporation
 //
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -39,25 +39,24 @@
 // ************************************************************************
 // @HEADER
 
-#if !defined(Intrepid2_MiniTensor_Tensor3_t_h)
-#define Intrepid2_MiniTensor_Tensor3_t_h
+#if !defined(Intrepid_MiniTensor_Tensor3_t_h)
+#define Intrepid_MiniTensor_Tensor3_t_h
 
 namespace Intrepid2 {
 
 //
 // \return \f$ B = A : u := B_i = A_{ijk} u_{jk} \f$
 //
-template<typename S, typename T, Index N,  typename ES>
-KOKKOS_INLINE_FUNCTION
-Vector<typename Promote<S, T>::type, N, ES>
-dotdot(Tensor3<T, N, ES> const & A, Tensor<S, N, ES> const & u)
+template<typename S, typename T, Index N>
+Vector<typename Promote<S, T>::type, N>
+dotdot(Tensor3<T, N> const & A, Tensor<S, N> const & u)
 {
   Index const
   dimension = A.get_dimension();
 
   assert(u.get_dimension() == dimension);
 
-  Vector<typename Promote<S, T>::type, N, ES>
+  Vector<typename Promote<S, T>::type, N>
   B(dimension);
 
   for (Index i = 0; i < dimension; ++i) {
@@ -79,17 +78,16 @@ dotdot(Tensor3<T, N, ES> const & A, Tensor<S, N, ES> const & u)
 //
 // \return \f$ B = A \cdot u := B_{ij} = A_{ijp} u_p \f$
 //
-template<typename S, typename T, Index N,  typename ES>
-KOKKOS_INLINE_FUNCTION
-Tensor<typename Promote<S, T>::type, N, ES>
-dot(Tensor3<T, N, ES> const & A, Vector<S, N, ES> const & u)
+template<typename S, typename T, Index N>
+Tensor<typename Promote<S, T>::type, N>
+dot(Tensor3<T, N> const & A, Vector<S, N> const & u)
 {
   Index const
   dimension = A.get_dimension();
 
   assert(u.get_dimension() == dimension);
 
-  Tensor<typename Promote<S, T>::type, N, ES>
+  Tensor<typename Promote<S, T>::type, N>
   B(N);
 
   for (Index i = 0; i < dimension; ++i) {
@@ -111,17 +109,16 @@ dot(Tensor3<T, N, ES> const & A, Vector<S, N, ES> const & u)
 //
 // \return \f$ B = u \cdot A := B_{ij} = u_p A{pij} \f$
 //
-template<typename S, typename T, Index N,  typename ES>
-KOKKOS_INLINE_FUNCTION
-Tensor<typename Promote<S, T>::type, N, ES>
-dot(Vector<S, N, ES> const & u, Tensor3<T, N, ES> const & A)
+template<typename S, typename T, Index N>
+Tensor<typename Promote<S, T>::type, N>
+dot(Vector<S, N> const & u, Tensor3<T, N> const & A)
 {
   Index const
   dimension = A.get_dimension();
 
   assert(u.get_dimension() == dimension);
 
-  Tensor<typename Promote<S, T>::type, N, ES>
+  Tensor<typename Promote<S, T>::type, N>
   B(dimension);
 
   for (Index i = 0; i < dimension; ++i) {
@@ -144,17 +141,16 @@ dot(Vector<S, N, ES> const & u, Tensor3<T, N, ES> const & A)
 //
 // \return \f$ B = A \cdot u := B_{ij} = A_{ipj} u_p \f$
 //
-template<typename S, typename T, Index N,  typename ES>
-KOKKOS_INLINE_FUNCTION
-Tensor<typename Promote<S, T>::type, N, ES>
-dot2(Tensor3<T, N, ES> const & A, Vector<S, N, ES> const & u)
+template<typename S, typename T, Index N>
+Tensor<typename Promote<S, T>::type, N>
+dot2(Tensor3<T, N> const & A, Vector<S, N> const & u)
 {
   Index const
   dimension = A.get_dimension();
 
   assert(u.get_dimension() == dimension);
 
-  Tensor<typename Promote<S, T>::type, N, ES>
+  Tensor<typename Promote<S, T>::type, N>
   B(dimension);
 
   for (Index i = 0; i < dimension; ++i) {
@@ -176,10 +172,9 @@ dot2(Tensor3<T, N, ES> const & A, Vector<S, N, ES> const & u)
 //
 // \return \f$ B = u \cdot A := B_{ij} = u_p A_{ipj} \f$
 //
-template<typename S, typename T, Index N,  typename ES>
-KOKKOS_INLINE_FUNCTION
-Tensor<typename Promote<S, T>::type, N, ES>
-dot2(Vector<S, N, ES> const & u, Tensor3<T, N, ES> const & A)
+template<typename S, typename T, Index N>
+Tensor<typename Promote<S, T>::type, N>
+dot2(Vector<S, N> const & u, Tensor3<T, N> const & A)
 {
   return dot2(A, u);
 }
@@ -187,17 +182,16 @@ dot2(Vector<S, N, ES> const & u, Tensor3<T, N, ES> const & A)
 ///
 /// \return \f$ C = A \cdot B := C_{ijk} = A_{ijp} B_{pk} \f$
 ///
-template<typename S, typename T, Index N,  typename ES>
-KOKKOS_INLINE_FUNCTION
-Tensor3<typename Promote<S, T>::type, N, ES>
-dot(Tensor3<T, N, ES> const & A, Tensor<S, N, ES> const & B)
+template<typename S, typename T, Index N>
+Tensor3<typename Promote<S, T>::type, N>
+dot(Tensor3<T, N> const & A, Tensor<S, N> const & B)
 {
   Index const
   dimension = A.get_dimension();
 
   assert(B.get_dimension() == dimension);
 
-  Tensor3<typename Promote<S, T>::type, N, ES>
+  Tensor3<typename Promote<S, T>::type, N>
   C(dimension);
 
   for (Index i = 0; i < dimension; ++i) {
@@ -221,17 +215,16 @@ dot(Tensor3<T, N, ES> const & A, Tensor<S, N, ES> const & B)
 ///
 /// \return \f$ C = A \cdot B := C_{ijk} = A_{ip} B_{pjk} \f$
 ///
-template<typename S, typename T, Index N,  typename ES>
-KOKKOS_INLINE_FUNCTION
-Tensor3<typename Promote<S, T>::type, N, ES>
-dot(Tensor<S, N, ES> const & A, Tensor3<T, N, ES> const & B)
+template<typename S, typename T, Index N>
+Tensor3<typename Promote<S, T>::type, N>
+dot(Tensor<S, N> const & A, Tensor3<T, N> const & B)
 {
   Index const
   dimension = A.get_dimension();
 
   assert(B.get_dimension() == dimension);
 
-  Tensor3<typename Promote<S, T>::type, N, ES>
+  Tensor3<typename Promote<S, T>::type, N>
   C(dimension);
 
   for (Index i = 0; i < dimension; ++i) {
@@ -255,17 +248,16 @@ dot(Tensor<S, N, ES> const & A, Tensor3<T, N, ES> const & B)
 ///
 /// \return \f$ C = A \cdot B := C_{ijk} = A_{ipj} B_{pk} \f$
 ///
-template<typename S, typename T, Index N,  typename ES>
-KOKKOS_INLINE_FUNCTION
-Tensor3<typename Promote<S, T>::type, N, ES>
-dot2(Tensor3<T, N, ES> const & A, Tensor<S, N, ES> const & B)
+template<typename S, typename T, Index N>
+Tensor3<typename Promote<S, T>::type, N>
+dot2(Tensor3<T, N> const & A, Tensor<S, N> const & B)
 {
   Index const
   dimension = A.get_dimension();
 
   assert(B.get_dimension() == dimension);
 
-  Tensor3<typename Promote<S, T>::type, N, ES>
+  Tensor3<typename Promote<S, T>::type, N>
   C(dimension);
 
   for (Index i = 0; i < dimension; ++i) {
@@ -290,17 +282,16 @@ dot2(Tensor3<T, N, ES> const & A, Tensor<S, N, ES> const & B)
 ///
 /// \return \f$ C = A \cdot B := C_{ijk} = A_{ip} B_{jpk} \f$
 ///
-template<typename S, typename T, Index N,  typename ES>
-KOKKOS_INLINE_FUNCTION
-Tensor3<typename Promote<S, T>::type, N, ES>
-dot2(Tensor<S, N, ES> const & A, Tensor3<T, N, ES> const & B)
+template<typename S, typename T, Index N>
+Tensor3<typename Promote<S, T>::type, N>
+dot2(Tensor<S, N> const & A, Tensor3<T, N> const & B)
 {
   Index const
   dimension = A.get_dimension();
 
   assert(B.get_dimension() == dimension);
 
-  Tensor3<typename Promote<S, T>::type, N, ES>
+  Tensor3<typename Promote<S, T>::type, N>
   C(dimension);
 
   for (Index i = 0; i < dimension; ++i) {
@@ -328,9 +319,9 @@ dot2(Tensor<S, N, ES> const & A, Tensor3<T, N, ES> const & B)
 // \param is input stream
 // \return is input stream
 //
-template<typename T, Index N,  typename ES>
+template<typename T, Index N>
 std::istream &
-operator>>(std::istream & is, Tensor3<T, N, ES> & A)
+operator>>(std::istream & is, Tensor3<T, N> & A)
 {
   Index const
   dimension = A.get_dimension();
@@ -352,9 +343,9 @@ operator>>(std::istream & is, Tensor3<T, N, ES> & A)
 // \param os output stream
 // \return os output stream
 //
-template<typename T, Index N,  typename ES>
+template<typename T, Index N>
 std::ostream &
-operator<<(std::ostream & os, Tensor3<T, N, ES> const & A)
+operator<<(std::ostream & os, Tensor3<T, N> const & A)
 {
   Index const
   dimension = A.get_dimension();
@@ -387,6 +378,6 @@ operator<<(std::ostream & os, Tensor3<T, N, ES> const & A)
   return os;
 }
 
-} // namespace Intrepid
+} // namespace Intrepid2
 
-#endif // Intrepid2_MiniTensor_Tensor3_t_h
+#endif // Intrepid_MiniTensor_Tensor3_t_h

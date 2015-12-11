@@ -58,15 +58,13 @@
 
 namespace MueLu {
 
-  template <class Node>
-  IfpackSmoother<Node>::IfpackSmoother(std::string const & type, Teuchos::ParameterList const & paramList, LO const &overlap)
+  IfpackSmoother::IfpackSmoother(std::string const & type, Teuchos::ParameterList const & paramList, LO const &overlap)
     : type_(type), overlap_(overlap)
   {
     SetParameterList(paramList);
   }
 
-  template <class Node>
-  void IfpackSmoother<Node>::SetParameterList(const Teuchos::ParameterList& paramList) {
+  void IfpackSmoother::SetParameterList(const Teuchos::ParameterList& paramList) {
     Factory::SetParameterList(paramList);
 
     if (SmootherPrototype::IsSetup()) {
@@ -76,8 +74,7 @@ namespace MueLu {
     }
   }
 
-  template <class Node>
-  void IfpackSmoother<Node>::SetPrecParameters(const Teuchos::ParameterList& list) const {
+  void IfpackSmoother::SetPrecParameters(const Teuchos::ParameterList& list) const {
     ParameterList& paramList = const_cast<ParameterList&>(this->GetParameterList());
     paramList.setParameters(list);
 
@@ -109,8 +106,7 @@ namespace MueLu {
     // Ifpack2 does not have this problem, as it does not populate the list with new entries
   }
 
-  template <class Node>
-  void IfpackSmoother<Node>::DeclareInput(Level &currentLevel) const {
+  void IfpackSmoother::DeclareInput(Level &currentLevel) const {
     this->Input(currentLevel, "A");
 
     if (type_ == "LINESMOOTHING_BANDED_RELAXATION" ||
@@ -124,11 +120,10 @@ namespace MueLu {
     } // if (type_ == "LINESMOOTHING_BANDEDRELAXATION")
   }
 
-  template <class Node>
-  void IfpackSmoother<Node>::Setup(Level &currentLevel) {
+  void IfpackSmoother::Setup(Level &currentLevel) {
     FactoryMonitor m(*this, "Setup Smoother", currentLevel);
     if (SmootherPrototype::IsSetup() == true)
-      this->GetOStream(Warnings0) << "MueLu::IfpackSmoother::Setup(): Setup() has already been called";
+      GetOStream(Warnings0) << "MueLu::IfpackSmoother::Setup(): Setup() has already been called";
 
     A_ = Factory::Get< RCP<Matrix> >(currentLevel, "A");
 
@@ -233,7 +228,7 @@ namespace MueLu {
 
     } // if (type_ == "LINESMOOTHING_BANDEDRELAXATION")
 
-    RCP<Epetra_CrsMatrix> epA = Utilities::Op2NonConstEpetraCrs(A_);
+    RCP<Epetra_CrsMatrix> epA = Utils::Op2NonConstEpetraCrs(A_);
 
     Ifpack factory;
     prec_ = rcp(factory.Create(type_, &(*epA), overlap_));
@@ -256,8 +251,7 @@ namespace MueLu {
     this->GetOStream(Statistics0) << description() << std::endl;
   }
 
-  template <class Node>
-  void IfpackSmoother<Node>::Apply(MultiVector& X, const MultiVector& B, bool InitialGuessIsZero) const {
+  void IfpackSmoother::Apply(MultiVector& X, const MultiVector& B, bool InitialGuessIsZero) const {
     TEUCHOS_TEST_FOR_EXCEPTION(SmootherPrototype::IsSetup() == false, Exceptions::RuntimeError, "MueLu::IfpackSmoother::Apply(): Setup() has not been called");
 
     // Forward the InitialGuessIsZero option to Ifpack
@@ -276,17 +270,17 @@ namespace MueLu {
 
     // Apply
     if (InitialGuessIsZero || supportInitialGuess) {
-      Epetra_MultiVector&       epX = Utilities::MV2NonConstEpetraMV(X);
-      const Epetra_MultiVector& epB = Utilities::MV2EpetraMV(B);
+      Epetra_MultiVector&       epX = Utils::MV2NonConstEpetraMV(X);
+      const Epetra_MultiVector& epB = Utils::MV2EpetraMV(B);
 
       prec_->ApplyInverse(epB, epX);
 
     } else {
-      RCP<MultiVector> Residual   = Utilities::Residual(*A_, X, B);
+      RCP<MultiVector> Residual   = Utils::Residual(*A_, X, B);
       RCP<MultiVector> Correction = MultiVectorFactory::Build(A_->getDomainMap(), X.getNumVectors());
 
-      Epetra_MultiVector&       epX = Utilities::MV2NonConstEpetraMV(*Correction);
-      const Epetra_MultiVector& epB = Utilities::MV2EpetraMV(*Residual);
+      Epetra_MultiVector&       epX = Utils::MV2NonConstEpetraMV(*Correction);
+      const Epetra_MultiVector& epB = Utils::MV2EpetraMV(*Residual);
 
       prec_->ApplyInverse(epB, epX);
 
@@ -294,19 +288,17 @@ namespace MueLu {
     }
   }
 
-  template <class Node>
-  RCP<MueLu::SmootherPrototype<double, int, int, Node> > IfpackSmoother<Node>::Copy() const {
-    RCP<IfpackSmoother<Node> > smoother = rcp(new IfpackSmoother<Node>(*this) );
+  RCP<MueLu::SmootherPrototype<double, int, int> > IfpackSmoother::Copy() const {
+    RCP<IfpackSmoother> smoother = rcp(new IfpackSmoother(*this) );
     smoother->SetParameterList(this->GetParameterList());
-    return Teuchos::rcp_dynamic_cast<MueLu::SmootherPrototype<double, int, int, Node> >(smoother);
+    return smoother;
   }
 
-  template <class Node>
-  std::string IfpackSmoother<Node>::description() const {
+  std::string IfpackSmoother::description() const {
     std::ostringstream out;
     // The check "GetVerbLevel() == Test" is to avoid
     // failures in the EasyInterface test.
-    if (prec_ == Teuchos::null || this->GetVerbLevel() == Test) {
+    if (prec_ == Teuchos::null || GetVerbLevel() == Test) {
       out << SmootherPrototype::description();
       out << "{type = " << type_ << "}";
     } else {
@@ -315,8 +307,7 @@ namespace MueLu {
     return out.str();
   }
 
-  template <class Node>
-  void IfpackSmoother<Node>::print(Teuchos::FancyOStream &out, const VerbLevel verbLevel) const {
+  void IfpackSmoother::print(Teuchos::FancyOStream &out, const VerbLevel verbLevel) const {
     MUELU_DESCRIBE;
 
     if (verbLevel & Parameters0)
@@ -344,25 +335,5 @@ namespace MueLu {
   }
 
 } // namespace MueLu
-
-// ETI
-// The IfpackSmoother is only templated on the Node, since it is an Epetra only object
-// Therefore we do not need the full ETI instantiations as we do for the other MueLu
-// objects which are instantiated on all template parameters.
-#if defined(HAVE_MUELU_SERIAL)
-template class MueLu::IfpackSmoother<Kokkos::Compat::KokkosSerialWrapperNode >;
-#endif
-
-//#if defined(HAVE_MUELU_PTHREAD)
-//template class MueLu::IfpackSmoother<Kokkos::Compat::KokkosThreadsWrapperNode >;
-//#endif
-
-//#if defined(HAVE_MUELU_OPENMP)
-//template class MueLu::IfpackSmoother<Kokkos::Compat::KokkosOpenMPWrapperNode >;
-//#endif
-
-//#if defined(HAVE_MUELU_CUDA)
-//template class MueLu::IfpackSmoother<Kokkos::Compat::KokkosCudaWrapperNode >;
-//#endif
 
 #endif

@@ -46,80 +46,80 @@
     \author Created by P. Bochev and D. Ridzal.
  */
 
-#ifndef INTREPID2_INTREPID2_TYPES_HPP
-#define INTREPID2_INTREPID2_TYPES_HPP
+#ifndef INTREPID2_INTREPID_TYPES_HPP
+#define INTREPID2_INTREPID_TYPES_HPP
 
 #ifdef  HAVE_INTREPID_DEBUG
-#define INTREPID2_VALIDATE( A )  A
+#define INTREPID_VALIDATE( A )  A
 #else
-#define INTREPID2_VALIDATE( A ) /* empty */
+#define INTREPID_VALIDATE( A ) /* empty */
 #endif
 
 #include <Teuchos_ScalarTraits.hpp>
 
-/** \def    INTREPID2_MAX_ORDER
+/** \def    INTREPID_MAX_ORDER
     \brief  The maximum reconstruction order.
  */
-#define INTREPID2_MAX_ORDER 10
+#define INTREPID_MAX_ORDER 10
 
-/** \def    INTREPID2_MAX_INTEGRATION_POINTS
+/** \def    INTREPID_MAX_INTEGRATION_POINTS
     \brief  The maximum number of integration points for direct cubature rules.
  */
-#define INTREPID2_MAX_INTEGRATION_POINTS 1001
+#define INTREPID_MAX_INTEGRATION_POINTS 1001
 
-/** \def    INTREPID2_MAX_CUBATURE_DEGREE_EDGE
+/** \def    INTREPID_MAX_CUBATURE_DEGREE_EDGE
     \brief  The maximum degree of the polynomial that can be integrated exactly by
             a direct edge rule.
  */
-#define INTREPID2_MAX_CUBATURE_DEGREE_EDGE 61
+#define INTREPID_MAX_CUBATURE_DEGREE_EDGE 61
 
-/** \def    INTREPID2_MAX_CUBATURE_DEGREE_TRI
+/** \def    INTREPID_MAX_CUBATURE_DEGREE_TRI
     \brief  The maximum degree of the polynomial that can be integrated exactly by
             a direct triangle rule.
  */
-#define INTREPID2_MAX_CUBATURE_DEGREE_TRI 20
+#define INTREPID_MAX_CUBATURE_DEGREE_TRI 20
 
-/** \def    INTREPID2_MAX_CUBATURE_DEGREE_TET
+/** \def    INTREPID_MAX_CUBATURE_DEGREE_TET
     \brief  The maximum degree of the polynomial that can be integrated exactly by
             a direct tetrahedron rule.
  */
-#define INTREPID2_MAX_CUBATURE_DEGREE_TET 20
+#define INTREPID_MAX_CUBATURE_DEGREE_TET 20
 
-/** \def    INTREPID2_MAX_CUBATURE_DEGREE_PYR
+/** \def    INTREPID_MAX_CUBATURE_DEGREE_PYR
     \brief  The maximum degree of the polynomial that can be integrated exactly by
             a direct pyramid rule.
  */
-#define INTREPID2_MAX_CUBATURE_DEGREE_PYR 11
+#define INTREPID_MAX_CUBATURE_DEGREE_PYR 11
 
-/** \def    INTREPID2_MAX_DIMENSION
+/** \def    INTREPID_MAX_DIMENSION
     \brief  The maximum ambient space dimension.
  */
-#define INTREPID2_MAX_DIMENSION 3
+#define INTREPID_MAX_DIMENSION 3
 
-/** \def    INTREPID2_MAX_NEWTON 
+/** \def    INTREPID_MAX_NEWTON 
     \brief  Maximum number of Newton iterations used internally in methods such as computing the
             action of the inverse reference to physical cell map.
  */
-#define INTREPID2_MAX_NEWTON 15
+#define INTREPID_MAX_NEWTON 15
 
-/** \def    INTREPID2_MAX_DERIVATIVE
+/** \def    INTREPID_MAX_DERIVATIVE
     \brief  Maximum order of derivatives allowed in intrepid
 */
-#define INTREPID2_MAX_DERIVATIVE 10
+#define INTREPID_MAX_DERIVATIVE 10
 
 namespace Intrepid2 {
   
   /** \brief  Platform-dependent machine epsilon. 
    */
-  static const double INTREPID2_EPSILON   = std::abs(Teuchos::ScalarTraits<double>::eps());
+  static const double INTREPID_EPSILON   = std::abs(Teuchos::ScalarTraits<double>::eps());
     
   /** \brief  Tolerance for various cell inclusion tests
    */
-  static const double INTREPID2_THRESHOLD = 10.0 * INTREPID2_EPSILON;
+  static const double INTREPID_THRESHOLD = 10.0 * INTREPID_EPSILON;
   
   /** \brief  General purpose tolerance in, e.g., internal Newton's method to invert ref to phys maps
    */
-  static const double INTREPID_TOL       = 10.0* INTREPID2_THRESHOLD;
+  static const double INTREPID_TOL       = 10.0* INTREPID_THRESHOLD;
 
   /** \enum   Intrepid2::ECoordinates
       \brief  Enumeration of coordinate systems for geometrical entities (cells, points).
@@ -511,11 +511,11 @@ namespace Intrepid2 {
     
     /** \brief  Array with the (X,Y,Z) coordinates of the cubature points.
      */
-    double            points_[INTREPID2_MAX_INTEGRATION_POINTS][INTREPID2_MAX_DIMENSION];
+    double            points_[INTREPID_MAX_INTEGRATION_POINTS][INTREPID_MAX_DIMENSION];
     
     /** \brief  Array with the associated cubature weights.
      */
-    double            weights_[INTREPID2_MAX_INTEGRATION_POINTS];
+    double            weights_[INTREPID_MAX_INTEGRATION_POINTS];
     
   };
 

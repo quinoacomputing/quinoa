@@ -251,12 +251,6 @@ namespace Belos {
      *   right-hand sides, this controls whether output shows residual
      *   norms for all the right-hand sides, or just the current
      *   maximum residual norm over all right-hand sides.
-     *		\param pl [in] ParameterList with construction information
-     *			\htmlonly
-     *			<iframe src="belos_PseudoBlockGmres.xml" width=100% scrolling="no" frameborder="0">
-     *			</iframe>
-     *			<hr />
-     *			\endhtmlonly
      */
     PseudoBlockGmresSolMgr( const Teuchos::RCP<LinearProblem<ScalarType,MV,OP> > &problem,
                             const Teuchos::RCP<Teuchos::ParameterList> &pl );
@@ -503,7 +497,6 @@ namespace Belos {
     static const int defQuorum_default_;
     static const std::string impResScale_default_;
     static const std::string expResScale_default_;
-    static const MagnitudeType resScaleFactor_default_;
     static const std::string label_default_;
     static const std::string orthoType_default_;
     static const Teuchos::RCP<std::ostream> outputStream_default_;
@@ -515,7 +508,6 @@ namespace Belos {
     bool showMaxResNormOnly_;
     std::string orthoType_;
     std::string impResScale_, expResScale_;
-    MagnitudeType resScaleFactor_;
 
     // Timers.
     std::string label_;
@@ -568,9 +560,6 @@ template<class ScalarType, class MV, class OP>
 const std::string PseudoBlockGmresSolMgr<ScalarType,MV,OP>::expResScale_default_ = "Norm of Initial Residual";
 
 template<class ScalarType, class MV, class OP>
-const typename PseudoBlockGmresSolMgr<ScalarType,MV,OP>::MagnitudeType PseudoBlockGmresSolMgr<ScalarType,MV,OP>::resScaleFactor_default_ = 1.0;
-
-template<class ScalarType, class MV, class OP>
 const std::string PseudoBlockGmresSolMgr<ScalarType,MV,OP>::label_default_ = "Belos";
 
 template<class ScalarType, class MV, class OP>
@@ -600,7 +589,6 @@ PseudoBlockGmresSolMgr<ScalarType,MV,OP>::PseudoBlockGmresSolMgr() :
   orthoType_(orthoType_default_),
   impResScale_(impResScale_default_),
   expResScale_(expResScale_default_),
-  resScaleFactor_(resScaleFactor_default_),
   label_(label_default_),
   isSet_(false),
   isSTSet_(false),
@@ -631,7 +619,6 @@ PseudoBlockGmresSolMgr (const Teuchos::RCP<LinearProblem<ScalarType,MV,OP> > &pr
   orthoType_(orthoType_default_),
   impResScale_(impResScale_default_),
   expResScale_(expResScale_default_),
-  resScaleFactor_(resScaleFactor_default_),
   label_(label_default_),
   isSet_(false),
   isSTSet_(false),
@@ -867,43 +854,6 @@ setParameters (const Teuchos::RCP<Teuchos::ParameterList>& params)
       expConvTest_->setTolerance (convtol_);
     }
   }
-  
-  // Grab the user defined residual scaling
-  bool userDefinedResidualScalingUpdated = false;
-  if (params->isParameter ("User Defined Residual Scaling")) {
-    const MagnitudeType tempResScaleFactor = 
-      Teuchos::getParameter<MagnitudeType> (*params, "User Defined Residual Scaling");
-    
-    // Only update the scaling if it's different.
-    if (resScaleFactor_ != tempResScaleFactor) {
-      resScaleFactor_ = tempResScaleFactor;
-      userDefinedResidualScalingUpdated = true;
-    }
-    
-    if(userDefinedResidualScalingUpdated)
-    {
-      if (! params->isParameter ("Implicit Residual Scaling") && ! impConvTest_.is_null ()) {
-        try {
-          if(impResScale_ == "User Provided")
-            impConvTest_->defineScaleForm (Belos::UserProvided, Belos::TwoNorm, resScaleFactor_);
-        }
-        catch (std::exception& e) {
-          // Make sure the convergence test gets constructed again.
-          isSTSet_ = false;
-        }
-      }  
-      if (! params->isParameter ("Explicit Residual Scaling") && ! expConvTest_.is_null ()) {
-        try {
-          if(expResScale_ == "User Provided")
-            expConvTest_->defineScaleForm (Belos::UserProvided, Belos::TwoNorm, resScaleFactor_);
-        }
-        catch (std::exception& e) {
-          // Make sure the convergence test gets constructed again.
-          isSTSet_ = false;
-        }
-      }
-    }
-  }
 
   // Check for a change in scaling, if so we need to build new residual tests.
   if (params->isParameter ("Implicit Residual Scaling")) {
@@ -919,24 +869,7 @@ setParameters (const Teuchos::RCP<Teuchos::ParameterList>& params)
       params_->set ("Implicit Residual Scaling", impResScale_);
       if (! impConvTest_.is_null ()) {
         try {
-          if(impResScale_ == "User Provided")
-            impConvTest_->defineScaleForm (impResScaleType, Belos::TwoNorm, resScaleFactor_);
-          else
-            impConvTest_->defineScaleForm (impResScaleType, Belos::TwoNorm);
-        }
-        catch (std::exception& e) {
-          // Make sure the convergence test gets constructed again.
-          isSTSet_ = false;
-        }
-      }
-    }
-    else if (userDefinedResidualScalingUpdated) {
-      Belos::ScaleType impResScaleType = convertStringToScaleType (impResScale_);
-      
-      if (! impConvTest_.is_null ()) {
-        try {
-          if(impResScale_ == "User Provided")
-            impConvTest_->defineScaleForm (impResScaleType, Belos::TwoNorm, resScaleFactor_);
+          impConvTest_->defineScaleForm (impResScaleType, Belos::TwoNorm);
         }
         catch (std::exception& e) {
           // Make sure the convergence test gets constructed again.
@@ -959,24 +892,7 @@ setParameters (const Teuchos::RCP<Teuchos::ParameterList>& params)
       params_->set ("Explicit Residual Scaling", expResScale_);
       if (! expConvTest_.is_null ()) {
         try {
-          if(expResScale_ == "User Provided")
-            expConvTest_->defineScaleForm (expResScaleType, Belos::TwoNorm, resScaleFactor_);
-          else
-            expConvTest_->defineScaleForm (expResScaleType, Belos::TwoNorm);
-        }
-        catch (std::exception& e) {
-          // Make sure the convergence test gets constructed again.
-          isSTSet_ = false;
-        }
-      }
-    }
-    else if (userDefinedResidualScalingUpdated) {
-      Belos::ScaleType expResScaleType = convertStringToScaleType (expResScale_);
-      
-      if (! expConvTest_.is_null ()) {
-        try {
-          if(expResScale_ == "User Provided")
-            expConvTest_->defineScaleForm (expResScaleType, Belos::TwoNorm, resScaleFactor_);
+          expConvTest_->defineScaleForm (expResScaleType, Belos::TwoNorm);
         }
         catch (std::exception& e) {
           // Make sure the convergence test gets constructed again.
@@ -1178,11 +1094,7 @@ bool PseudoBlockGmresSolMgr<ScalarType,MV,OP>::checkStatusTest() {
     // Implicit residual test, using the native residual to determine if convergence was achieved.
     Teuchos::RCP<StatusTestGenResNorm_t> tmpImpConvTest =
       Teuchos::rcp( new StatusTestGenResNorm_t( convtol_, defQuorum_ ) );
-    if(impResScale_ == "User Provided")
-      tmpImpConvTest->defineScaleForm( convertStringToScaleType(impResScale_), Belos::TwoNorm, resScaleFactor_ );
-    else
-      tmpImpConvTest->defineScaleForm( convertStringToScaleType(impResScale_), Belos::TwoNorm );
-
+    tmpImpConvTest->defineScaleForm( convertStringToScaleType(impResScale_), Belos::TwoNorm );
     tmpImpConvTest->setShowMaxResNormOnly( showMaxResNormOnly_ );
     impConvTest_ = tmpImpConvTest;
 
@@ -1190,10 +1102,7 @@ bool PseudoBlockGmresSolMgr<ScalarType,MV,OP>::checkStatusTest() {
     Teuchos::RCP<StatusTestGenResNorm_t> tmpExpConvTest =
       Teuchos::rcp( new StatusTestGenResNorm_t( convtol_, defQuorum_ ) );
     tmpExpConvTest->defineResForm( StatusTestGenResNorm_t::Explicit, Belos::TwoNorm );
-    if(expResScale_ == "User Provided")
-      tmpExpConvTest->defineScaleForm( convertStringToScaleType(expResScale_), Belos::TwoNorm, resScaleFactor_ );
-    else
-      tmpExpConvTest->defineScaleForm( convertStringToScaleType(expResScale_), Belos::TwoNorm );     
+    tmpExpConvTest->defineScaleForm( convertStringToScaleType(expResScale_), Belos::TwoNorm );
     tmpExpConvTest->setShowMaxResNormOnly( showMaxResNormOnly_ );
     expConvTest_ = tmpExpConvTest;
 
@@ -1206,10 +1115,7 @@ bool PseudoBlockGmresSolMgr<ScalarType,MV,OP>::checkStatusTest() {
     // Use test that checks for loss of accuracy.
     Teuchos::RCP<StatusTestImpResNorm_t> tmpImpConvTest =
       Teuchos::rcp( new StatusTestImpResNorm_t( convtol_, defQuorum_ ) );
-    if(impResScale_ == "User Provided")
-      tmpImpConvTest->defineScaleForm( convertStringToScaleType(impResScale_), Belos::TwoNorm, resScaleFactor_ );
-    else
-      tmpImpConvTest->defineScaleForm( convertStringToScaleType(impResScale_), Belos::TwoNorm );     
+    tmpImpConvTest->defineScaleForm( convertStringToScaleType(impResScale_), Belos::TwoNorm );
     tmpImpConvTest->setShowMaxResNormOnly( showMaxResNormOnly_ );
     impConvTest_ = tmpImpConvTest;
 

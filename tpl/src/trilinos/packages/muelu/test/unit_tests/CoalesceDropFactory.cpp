@@ -43,22 +43,22 @@
 // ***********************************************************************
 //
 // @HEADER
-#include <Teuchos_UnitTestHarness.hpp>
-#include <MueLu_TestHelpers.hpp>
-#include <MueLu_Version.hpp>
+#include "Teuchos_UnitTestHarness.hpp"
+#include "MueLu_TestHelpers.hpp"
+#include "MueLu_Version.hpp"
 
-#include <MueLu_CoalesceDropFactory.hpp>
-#include <MueLu_PreDropFunctionConstVal.hpp>
-#include <MueLu_Graph.hpp>
+#include "MueLu_CoalesceDropFactory.hpp"
+#include "MueLu_PreDropFunctionConstVal.hpp"
+#include "MueLu_Graph.hpp"
+
+#include "MueLu_UseDefaultTypes.hpp"
 
 namespace MueLuTests {
 
+#include "MueLu_UseShortNames.hpp"
 
-  TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(CoalesceDropFactory, Constructor, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+  TEUCHOS_UNIT_TEST(CoalesceDropFactory, Constructor)
   {
-#   include <MueLu_UseShortNames.hpp>
-    MUELU_TESTING_SET_OSTREAM;
-    MUELU_TESTING_LIMIT_EPETRA_SCOPE(Scalar,GlobalOrdinal,Node);
     out << "version: " << MueLu::Version() << std::endl;
 
     RCP<CoalesceDropFactory> coalesceDropFact = rcp(new CoalesceDropFactory());
@@ -66,11 +66,8 @@ namespace MueLuTests {
 
   } //Constructor
 
-  TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(CoalesceDropFactory, Build, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+  TEUCHOS_UNIT_TEST(CoalesceDropFactory, Build)
   {
-#   include <MueLu_UseShortNames.hpp>
-    MUELU_TESTING_SET_OSTREAM;
-    MUELU_TESTING_LIMIT_EPETRA_SCOPE(Scalar,GlobalOrdinal,Node);
     out << "version: " << MueLu::Version() << std::endl;
 
     RCP<const Teuchos::Comm<int> > comm = Parameters::getDefaultComm();
@@ -106,11 +103,8 @@ namespace MueLuTests {
   } //Build
 
   // TODO remove this
-  TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(CoalesceDropFactory, PreDrop, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+  TEUCHOS_UNIT_TEST(CoalesceDropFactory, PreDrop)
   {
-#   include <MueLu_UseShortNames.hpp>
-    MUELU_TESTING_SET_OSTREAM;
-    MUELU_TESTING_LIMIT_EPETRA_SCOPE(Scalar,GlobalOrdinal,Node);
     out << "version: " << MueLu::Version() << std::endl;
 
     Level fineLevel;
@@ -138,13 +132,10 @@ namespace MueLuTests {
 
   } //PreDrop
 
-  TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(CoalesceDropFactory, AmalgamationBasic, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+  TEUCHOS_UNIT_TEST(CoalesceDropFactory, AmalgamationBasic)
   {
     // unit test for block size 3.
     // lightweight wrap = false
-#   include <MueLu_UseShortNames.hpp>
-    MUELU_TESTING_SET_OSTREAM;
-    MUELU_TESTING_LIMIT_EPETRA_SCOPE(Scalar,GlobalOrdinal,Node);
     out << "version: " << MueLu::Version() << std::endl;
 
     RCP<const Teuchos::Comm<int> > comm = Parameters::getDefaultComm();
@@ -217,13 +208,10 @@ namespace MueLuTests {
     TEST_EQUALITY(Teuchos::as<bool>(myDomainMap->getNodeNumElements()==1), true);
   } // AmalgamationBasic
 
-  TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(CoalesceDropFactory, AmalgamationStrided, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+  TEUCHOS_UNIT_TEST(CoalesceDropFactory, AmalgamationStrided)
   {
     // unit test for block size 3 using a strided map
     // lightweight wrap = false
-#   include <MueLu_UseShortNames.hpp>
-    MUELU_TESTING_SET_OSTREAM;
-    MUELU_TESTING_LIMIT_EPETRA_SCOPE(Scalar,GlobalOrdinal,Node);
     out << "version: " << MueLu::Version() << std::endl;
 
     RCP<const Teuchos::Comm<int> > comm = Parameters::getDefaultComm();
@@ -315,13 +303,10 @@ namespace MueLuTests {
     TEST_EQUALITY(Teuchos::as<bool>(myDomainMap->getNodeNumElements()==1), true);
   } // AmalgamationStrided
 
-  TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(CoalesceDropFactory, AmalgamationStrided2, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+  TEUCHOS_UNIT_TEST(CoalesceDropFactory, AmalgamationStrided2)
   {
     // unit test for block size 3 = (2,1). wrap block 0
     // lightweight wrap = false
-#   include <MueLu_UseShortNames.hpp>
-    MUELU_TESTING_SET_OSTREAM;
-    MUELU_TESTING_LIMIT_EPETRA_SCOPE(Scalar,GlobalOrdinal,Node);
     out << "version: " << MueLu::Version() << std::endl;
 
     RCP<const Teuchos::Comm<int> > comm = Parameters::getDefaultComm();
@@ -421,13 +406,10 @@ namespace MueLuTests {
     TEST_EQUALITY(Teuchos::as<bool>(myDomainMap->getNodeNumElements()==1), true);
   } // AmalgamationStrided2
 
-  TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(CoalesceDropFactory, AmalgamationStridedOffset, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+  TEUCHOS_UNIT_TEST(CoalesceDropFactory, AmalgamationStridedOffset)
   {
     // unit test for block size 9 = (2,3,4). wrap block 1.
     // lightweight wrap = false
-#   include <MueLu_UseShortNames.hpp>
-    MUELU_TESTING_SET_OSTREAM;
-    MUELU_TESTING_LIMIT_EPETRA_SCOPE(Scalar,GlobalOrdinal,Node);
     out << "version: " << MueLu::Version() << std::endl;
 
     RCP<const Teuchos::Comm<int> > comm = Parameters::getDefaultComm();
@@ -529,13 +511,10 @@ namespace MueLuTests {
     TEST_EQUALITY(Teuchos::as<bool>(myDomainMap->getNodeNumElements()==1), true);
   } // AmalgamationStridedOffset
 
-  TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(CoalesceDropFactory, AmalgamationLightweight, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+  TEUCHOS_UNIT_TEST(CoalesceDropFactory, AmalgamationLightweight)
   {
     // unit test for block size 3
     // lightweight wrap = true
-#   include <MueLu_UseShortNames.hpp>
-    MUELU_TESTING_SET_OSTREAM;
-    MUELU_TESTING_LIMIT_EPETRA_SCOPE(Scalar,GlobalOrdinal,Node);
     out << "version: " << MueLu::Version() << std::endl;
 
     RCP<const Teuchos::Comm<int> > comm = Parameters::getDefaultComm();
@@ -609,14 +588,11 @@ namespace MueLuTests {
     TEST_EQUALITY(Teuchos::as<bool>(myDomainMap->getNodeNumElements()==1), true);
   } // AmalgamationLightweight
 
-  TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(CoalesceDropFactory, AmalgamationLightweightDrop, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+  TEUCHOS_UNIT_TEST(CoalesceDropFactory, AmalgamationLightweightDrop)
   {
     // unit test for block size 1
     // lightweight wrap = true
     // drop small values
-#   include <MueLu_UseShortNames.hpp>
-    MUELU_TESTING_SET_OSTREAM;
-    MUELU_TESTING_LIMIT_EPETRA_SCOPE(Scalar,GlobalOrdinal,Node);
     out << "version: " << MueLu::Version() << std::endl;
 
     RCP<const Teuchos::Comm<int> > comm = Parameters::getDefaultComm();
@@ -670,13 +646,10 @@ namespace MueLuTests {
     TEST_EQUALITY(Teuchos::as<bool>(myDomainMap->getNodeNumElements()==3), true);
   } // AmalgamationLightweightDrop
 
-  TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(CoalesceDropFactory, AmalgamationStridedLW, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+  TEUCHOS_UNIT_TEST(CoalesceDropFactory, AmalgamationStridedLW)
   {
     // unit test for block size 3 using a strided map
     // lightweight wrap = true
-#   include <MueLu_UseShortNames.hpp>
-    MUELU_TESTING_SET_OSTREAM;
-    MUELU_TESTING_LIMIT_EPETRA_SCOPE(Scalar,GlobalOrdinal,Node);
     out << "version: " << MueLu::Version() << std::endl;
 
     RCP<const Teuchos::Comm<int> > comm = Parameters::getDefaultComm();
@@ -769,13 +742,10 @@ namespace MueLuTests {
     TEST_EQUALITY(Teuchos::as<bool>(myDomainMap->getNodeNumElements()==1), true);
   } // AmalgamationStridedLW
 
-  TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(CoalesceDropFactory, AmalgamationStrided2LW, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+  TEUCHOS_UNIT_TEST(CoalesceDropFactory, AmalgamationStrided2LW)
   {
     // unit test for block size 3 = (2,1). wrap block 0
     // lightweight wrap = true
-#   include <MueLu_UseShortNames.hpp>
-    MUELU_TESTING_SET_OSTREAM;
-    MUELU_TESTING_LIMIT_EPETRA_SCOPE(Scalar,GlobalOrdinal,Node);
     out << "version: " << MueLu::Version() << std::endl;
 
     RCP<const Teuchos::Comm<int> > comm = Parameters::getDefaultComm();
@@ -876,13 +846,10 @@ namespace MueLuTests {
     TEST_EQUALITY(Teuchos::as<bool>(myDomainMap->getNodeNumElements()==1), true);
   } // AmalgamationStrided2LW
 
-  TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(CoalesceDropFactory, AmalgamationStridedOffsetLW, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+  TEUCHOS_UNIT_TEST(CoalesceDropFactory, AmalgamationStridedOffsetLW)
   {
     // unit test for block size 9 = (2,3,4). wrap block 1.
     // lightweight wrap = true
-#   include <MueLu_UseShortNames.hpp>
-    MUELU_TESTING_SET_OSTREAM;
-    MUELU_TESTING_LIMIT_EPETRA_SCOPE(Scalar,GlobalOrdinal,Node);
     out << "version: " << MueLu::Version() << std::endl;
 
     RCP<const Teuchos::Comm<int> > comm = Parameters::getDefaultComm();
@@ -977,14 +944,11 @@ namespace MueLuTests {
     TEST_EQUALITY(Teuchos::as<bool>(myDomainMap->getNodeNumElements()==1), true);
   } // AmalgamationStridedOffsetLW
 
-  TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(CoalesceDropFactory, AmalgamationDroppingLW, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+  TEUCHOS_UNIT_TEST(CoalesceDropFactory, AmalgamationDroppingLW)
   {
     // unit test for block size 3 = (3)
     // drop small entries
     // lightweight wrap = true
-#   include <MueLu_UseShortNames.hpp>
-    MUELU_TESTING_SET_OSTREAM;
-    MUELU_TESTING_LIMIT_EPETRA_SCOPE(Scalar,GlobalOrdinal,Node);
     out << "version: " << MueLu::Version() << std::endl;
 
     RCP<const Teuchos::Comm<int> > comm = Parameters::getDefaultComm();
@@ -1040,14 +1004,11 @@ namespace MueLuTests {
 
   } // AmalgamationDroppingLW
 
-  TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(CoalesceDropFactory, AmalgamationStridedOffsetDropping2LW, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+  TEUCHOS_UNIT_TEST(CoalesceDropFactory, AmalgamationStridedOffsetDropping2LW)
   {
     // unit test for block size 9 = (2,3,4). wrap block 1.
     // drop small entries
     // lightweight wrap = true
-#   include <MueLu_UseShortNames.hpp>
-    MUELU_TESTING_SET_OSTREAM;
-    MUELU_TESTING_LIMIT_EPETRA_SCOPE(Scalar,GlobalOrdinal,Node);
     out << "version: " << MueLu::Version() << std::endl;
 
     RCP<const Teuchos::Comm<int> > comm = Parameters::getDefaultComm();
@@ -1139,24 +1100,6 @@ namespace MueLuTests {
     TEST_EQUALITY(myDomainMap->getGlobalNumElements(),Teuchos::as<size_t>(comm->getSize()));
     TEST_EQUALITY(Teuchos::as<bool>(myDomainMap->getNodeNumElements()==1), true);
   } // AmalgamationStridedOffsetDropping2LW
-
-#define MUELU_ETI_GROUP(SC,LO,GO,Node) \
-      TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(CoalesceDropFactory,Constructor,SC,LO,GO,Node) \
-      TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(CoalesceDropFactory,Build,SC,LO,GO,Node) \
-      TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(CoalesceDropFactory,PreDrop,SC,LO,GO,Node) \
-      TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(CoalesceDropFactory,AmalgamationBasic,SC,LO,GO,Node) \
-      TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(CoalesceDropFactory,AmalgamationStrided,SC,LO,GO,Node) \
-      TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(CoalesceDropFactory,AmalgamationStrided2,SC,LO,GO,Node) \
-      TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(CoalesceDropFactory,AmalgamationStridedOffset,SC,LO,GO,Node) \
-      TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(CoalesceDropFactory,AmalgamationLightweight,SC,LO,GO,Node) \
-      TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(CoalesceDropFactory,AmalgamationLightweightDrop,SC,LO,GO,Node) \
-      TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(CoalesceDropFactory,AmalgamationStridedLW,SC,LO,GO,Node) \
-      TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(CoalesceDropFactory,AmalgamationStrided2LW,SC,LO,GO,Node) \
-      TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(CoalesceDropFactory,AmalgamationStridedOffsetLW,SC,LO,GO,Node) \
-      TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(CoalesceDropFactory,AmalgamationDroppingLW,SC,LO,GO,Node) \
-      TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(CoalesceDropFactory,AmalgamationStridedOffsetDropping2LW,SC,LO,GO,Node)
-
-#include <MueLu_ETI_4arg.hpp>
 
 } // namespace MueLuTests
 

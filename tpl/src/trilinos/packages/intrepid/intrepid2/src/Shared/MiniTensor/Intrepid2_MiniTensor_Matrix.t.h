@@ -1,7 +1,7 @@
 // @HEADER
 // ************************************************************************
 //
-//                           Intrepid2 Package
+//                           Intrepid Package
 //                 Copyright (2007) Sandia Corporation
 //
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -39,17 +39,17 @@
 // ************************************************************************
 // @HEADER
 
-#if !defined(Intrepid2_MiniTensor_Matrix_t_h)
-#define Intrepid2_MiniTensor_Matrix_t_h
+#if !defined(Intrepid_MiniTensor_Matrix_t_h)
+#define Intrepid_MiniTensor_Matrix_t_h
 
 namespace Intrepid2 {
 
 //
 // Matrix input
 //
-template<typename T, Index M, Index N,  typename ES>
+template<typename T, Index M, Index N>
 std::istream &
-operator>>(std::istream & is, Matrix<T, M, N, ES> & A)
+operator>>(std::istream & is, Matrix<T, M, N> & A)
 {
   Index const
   num_rows = A.get_num_rows();
@@ -69,9 +69,9 @@ operator>>(std::istream & is, Matrix<T, M, N, ES> & A)
 //
 // Matrix output
 //
-template<typename T, Index M, Index N,  typename ES>
+template<typename T, Index M, Index N>
 std::ostream &
-operator<<(std::ostream & os, Matrix<T, M, N, ES> const & A)
+operator<<(std::ostream & os, Matrix<T, M, N> const & A)
 {
   Index const
   num_rows = A.get_num_rows();
@@ -102,6 +102,6 @@ operator<<(std::ostream & os, Matrix<T, M, N, ES> const & A)
   return os;
 }
 
-} // namespace Intrepid
+} // namespace Intrepid2
 
-#endif // Intrepid2_MiniTensor_Matrix_t_h
+#endif // Intrepid_MiniTensor_Matrix_t_h

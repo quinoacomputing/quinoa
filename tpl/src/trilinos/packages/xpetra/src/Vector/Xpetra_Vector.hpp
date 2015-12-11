@@ -73,6 +73,7 @@ namespace Xpetra {
     using MultiVector< Scalar, LocalOrdinal, GlobalOrdinal, Node >::norm1;        // overloading, not hiding
     using MultiVector< Scalar, LocalOrdinal, GlobalOrdinal, Node >::norm2;        // overloading, not hiding
     using MultiVector< Scalar, LocalOrdinal, GlobalOrdinal, Node >::normInf;      // overloading, not hiding
+    using MultiVector< Scalar, LocalOrdinal, GlobalOrdinal, Node >::normWeighted; // overloading, not hiding
     using MultiVector< Scalar, LocalOrdinal, GlobalOrdinal, Node >::meanValue;    // overloading, not hiding
     using MultiVector< Scalar, LocalOrdinal, GlobalOrdinal, Node >::replaceGlobalValue; // overloading, not hiding
     using MultiVector< Scalar, LocalOrdinal, GlobalOrdinal, Node >::sumIntoGlobalValue; // overloading, not hiding
@@ -148,6 +149,9 @@ namespace Xpetra {
     //! Compute Inf-norm of this Vector.
     virtual typename Teuchos::ScalarTraits< Scalar >::magnitudeType normInf() const = 0;
 
+    //! Compute Weighted 2-norm (RMS Norm) of this Vector.
+    virtual typename Teuchos::ScalarTraits< Scalar >::magnitudeType normWeighted(const Vector< Scalar, LocalOrdinal, GlobalOrdinal, Node > &weights) const = 0;
+
     //! Compute mean (average) value of this Vector.
     virtual Scalar meanValue() const = 0;
 
@@ -165,6 +169,7 @@ namespace Xpetra {
     //@}
 
   }; // Vector class
+
 } // Xpetra namespace
 
 #define XPETRA_VECTOR_SHORT

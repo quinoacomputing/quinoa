@@ -4,14 +4,12 @@ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR})
 
 ADD_SUBDIRECTORY(AdditiveSchwarzRILUK)
 
-IF (Tpetra_INST_DOUBLE)
-  TRIBITS_ADD_EXECUTABLE(
-    tif_belos
-    SOURCES belos_solve.cpp
-    )
-ENDIF()
+TRIBITS_ADD_EXECUTABLE(
+  tif_belos
+  SOURCES belos_solve.cpp
+)
 
-IF(Ifpack2_ENABLE_QD AND Tpetra_INST_INT_INT)
+IF(Ifpack2_ENABLE_QD)
   TRIBITS_ADD_EXECUTABLE(
     tif_extprec_belos
     SOURCES belos_extprec_solve.cpp

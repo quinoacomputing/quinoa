@@ -44,12 +44,12 @@
 // @HEADER
 //
 // Test the following:
-//         EvaluatePartition class
+//         PartitioningSolutionQuality class
 //         MetricValues class
 //         Metric related namespace methods
 
 
-#include <Zoltan2_EvaluatePartition.hpp>
+#include <Zoltan2_PartitioningSolutionQuality.hpp>
 #include <Zoltan2_TestHelpers.hpp>
 #include <Zoltan2_BasicIdentifierAdapter.hpp>
 #include <stdlib.h>
@@ -100,7 +100,7 @@ void doTest(RCP<const Comm<int> > comm, int numLocalObj,
 {
   typedef Zoltan2::BasicUserTypes<zscalar_t, zlno_t, zgno_t> user_t;
   typedef Zoltan2::BasicIdentifierAdapter<user_t> idInput_t;
-  typedef Zoltan2::EvaluatePartition<idInput_t> quality_t;
+  typedef Zoltan2::PartitioningSolutionQuality<idInput_t> quality_t;
   typedef idInput_t::part_t part_t;
 
   int rank = comm->getRank();

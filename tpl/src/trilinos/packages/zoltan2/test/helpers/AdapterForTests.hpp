@@ -55,17 +55,14 @@
 #include <UserInputForTests.hpp>
 
 #include <Zoltan2_PartitioningProblem.hpp>
-#include <Zoltan2_EvaluatePartition.hpp>
+#include <Zoltan2_PartitioningSolutionQuality.hpp>
 
 #include <Zoltan2_BasicIdentifierAdapter.hpp>
 #include <Zoltan2_XpetraCrsGraphAdapter.hpp>
 #include <Zoltan2_XpetraCrsMatrixAdapter.hpp>
 #include <Zoltan2_XpetraMultiVectorAdapter.hpp>
 #include <Zoltan2_BasicVectorAdapter.hpp>
-
-#ifdef HAVE_ZOLTAN2_PAMGEN
 #include <Zoltan2_PamgenMeshAdapter.hpp>
-#endif
 
 #include <Teuchos_DefaultComm.hpp>
 #include <Teuchos_XMLObject.hpp>
@@ -111,14 +108,7 @@ public:
   typedef Zoltan2::XpetraCrsGraphAdapter<tcrsGraph_t, tMVector_t> xcrsGraph_adapter;
   typedef Zoltan2::XpetraCrsMatrixAdapter<tcrsMatrix_t, tMVector_t> xcrsMatrix_adapter;
   typedef Zoltan2::BasicVectorAdapter<tMVector_t> basic_vector_adapter;
-
-#ifdef HAVE_ZOLTAN2_PAMGEN
   typedef Zoltan2::PamgenMeshAdapter<tMVector_t> pamgen_adapter_t;
-#else
-  // This typedef exists only to satisfy the compiler.
-  // PamgenMeshAdapter cannot be used when Trilinos is not built with Pamgen
-  typedef Zoltan2::BasicVectorAdapter<tMVector_t> pamgen_adapter_t;
-#endif
   
   /*! \brief A class method for constructing an input adapter
    *   defind in a parameter list.
@@ -265,8 +255,8 @@ AdapterForTests::base_adapter_t * AdapterForTests::getAdapterForInput(UserInputF
 
 
 AdapterForTests::base_adapter_t * AdapterForTests::getBasicIdentiferAdapterForInput(UserInputForTests *uinput,
-    const ParameterList &pList,
-    const RCP<const Comm<int> > &comm)
+                                                                                    const ParameterList &pList,
+                                                                                    const RCP<const Comm<int> > &comm)
 {
   
   if(!pList.isParameter("data type"))
@@ -279,8 +269,7 @@ AdapterForTests::base_adapter_t * AdapterForTests::getBasicIdentiferAdapterForIn
   
   if (!uinput->hasInputDataType(input_type))
   {
-    std::cerr << "Input type: " + input_type + " unavailable or misspelled."
-              << std::endl; // bad type
+    std::cerr << "Input type:" + input_type + ", is unavailable or misspelled." << std::endl; // bad type
     return nullptr;
   }
   
@@ -391,10 +380,9 @@ AdapterForTests::base_adapter_t * AdapterForTests::getBasicIdentiferAdapterForIn
 }
 
 
-AdapterForTests::base_adapter_t * AdapterForTests::getXpetraMVAdapterForInput(
-  UserInputForTests *uinput,
-  const ParameterList &pList,
-  const RCP<const Comm<int> > &comm)
+AdapterForTests::base_adapter_t * AdapterForTests::getXpetraMVAdapterForInput(UserInputForTests *uinput,
+                                                                              const ParameterList &pList,
+                                                                              const RCP<const Comm<int> > &comm)
 {
   AdapterForTests::base_adapter_t * adapter = nullptr;
 
@@ -407,8 +395,7 @@ AdapterForTests::base_adapter_t * AdapterForTests::getXpetraMVAdapterForInput(
   string input_type = pList.get<string>("data type");
   if (!uinput->hasInputDataType(input_type))
   {
-    std::cerr << "Input type:" + input_type + ", unavailable or misspelled."
-              << std::endl; // bad type
+    std::cerr << "Input type:" + input_type + ", unavailable or misspelled." << std::endl; // bad type
     return adapter;
   }
   
@@ -482,10 +469,9 @@ AdapterForTests::base_adapter_t * AdapterForTests::getXpetraMVAdapterForInput(
 }
 
 
-AdapterForTests::base_adapter_t * AdapterForTests::getXpetraCrsGraphAdapterForInput(
-  UserInputForTests *uinput,
-  const ParameterList &pList,
-  const RCP<const Comm<int> > &comm)
+AdapterForTests::base_adapter_t * AdapterForTests::getXpetraCrsGraphAdapterForInput(UserInputForTests *uinput,
+                                                                                    const ParameterList &pList,
+                                                                                    const RCP<const Comm<int> > &comm)
 {
   
   AdapterForTests::base_adapter_t * adapter = nullptr;
@@ -499,8 +485,7 @@ AdapterForTests::base_adapter_t * AdapterForTests::getXpetraCrsGraphAdapterForIn
   string input_type = pList.get<string>("data type");
   if (!uinput->hasInputDataType(input_type))
   {
-    std::cerr << "Input type: " + input_type + ", unavailable or misspelled." 
-              << std::endl; // bad type
+    std::cerr << "Input type:" + input_type + ", unavailable or misspelled." << std::endl; // bad type
     return adapter;
   }
   
@@ -611,8 +596,7 @@ AdapterForTests::base_adapter_t * AdapterForTests::getXpetraCrsGraphAdapterForIn
     std::cerr << "Input data chosen not compatible with "
               << "XpetraCrsGraph adapter." << std::endl;
     return adapter;
-  }
-  else if (uinput->hasUICoordinates()) {
+  }else{
     // make the coordinate adapter
     // get an adapter for the coordinates
     // need to make a copy of the plist and change the vector type
@@ -631,15 +615,15 @@ AdapterForTests::base_adapter_t * AdapterForTests::getXpetraCrsGraphAdapterForIn
     
     // set the coordinate adapter
     reinterpret_cast<AdapterForTests::xcrsGraph_adapter *>(adapter)->setCoordinateInput(reinterpret_cast<AdapterForTests::xpetra_mv_adapter *>(ca));
+    return adapter;
   }
-  return adapter;
+  
 }
 
 
-AdapterForTests::base_adapter_t * AdapterForTests::getXpetraCrsMatrixAdapterForInput(
-  UserInputForTests *uinput,
-  const ParameterList &pList,
-  const RCP<const Comm<int> > &comm)
+AdapterForTests::base_adapter_t * AdapterForTests::getXpetraCrsMatrixAdapterForInput(UserInputForTests *uinput,
+                                                                                     const ParameterList &pList,
+                                                                                     const RCP<const Comm<int> > &comm)
 {
   AdapterForTests::base_adapter_t * adapter = nullptr;
 
@@ -652,8 +636,7 @@ AdapterForTests::base_adapter_t * AdapterForTests::getXpetraCrsMatrixAdapterForI
   string input_type = pList.get<string>("data type");
   if (!uinput->hasInputDataType(input_type))
   {
-    std::cerr << "Input type:" + input_type + ", unavailable or misspelled."
-              << std::endl; // bad type
+    std::cerr << "Input type:" + input_type + ", unavailable or misspelled." << std::endl; // bad type
     return adapter;
   }
   
@@ -748,8 +731,8 @@ AdapterForTests::base_adapter_t * AdapterForTests::getXpetraCrsMatrixAdapterForI
     std::cerr << "Input data chosen not compatible with "
               << "XpetraCrsMatrix adapter." << std::endl;
     return adapter;
-  }
-  else if (uinput->hasUICoordinates()) {
+  }else{
+    
     // make the coordinate adapter
     // get an adapter for the coordinates
     // need to make a copy of the plist and change the vector type
@@ -767,15 +750,15 @@ AdapterForTests::base_adapter_t * AdapterForTests::getXpetraCrsMatrixAdapterForI
     
     // set the coordinate adapter
     reinterpret_cast<AdapterForTests::xcrsMatrix_adapter *>(adapter)->setCoordinateInput(reinterpret_cast<AdapterForTests::xpetra_mv_adapter *>(ca));
+    return adapter;
   }
-  return adapter;
+  
 }
 
 
-AdapterForTests::base_adapter_t * AdapterForTests::getBasicVectorAdapterForInput(
-  UserInputForTests *uinput,
-  const ParameterList &pList,
-  const RCP<const Comm<int> > &comm)
+AdapterForTests::base_adapter_t * AdapterForTests::getBasicVectorAdapterForInput(UserInputForTests *uinput,
+                                                                                 const ParameterList &pList,
+                                                                                 const RCP<const Comm<int> > &comm)
 {
   
   AdapterForTests::basic_vector_adapter * ia = nullptr; // pointer for basic vector adapter
@@ -789,8 +772,7 @@ AdapterForTests::base_adapter_t * AdapterForTests::getBasicVectorAdapterForInput
   string input_type = pList.get<string>("data type");
   if (!uinput->hasInputDataType(input_type))
   {
-    std::cerr << "Input type:" + input_type + ", unavailable or misspelled."
-              << std::endl; // bad type
+    std::cerr << "Input type:" + input_type + ", unavailable or misspelled." << std::endl; // bad type
     return nullptr;
   }
   
@@ -1161,7 +1143,6 @@ AdapterForTests::getPamgenMeshAdapterForInput(UserInputForTests *uinput,
                                               const ParameterList &pList,
                                               const RCP<const Comm<int> > &comm)
 {
-#ifdef HAVE_ZOLTAN2_PAMGEN
   pamgen_adapter_t * ia = nullptr; // pointer for basic vector adapter
   if(uinput->hasPamgenMesh())
   {
@@ -1174,15 +1155,10 @@ AdapterForTests::getPamgenMeshAdapterForInput(UserInputForTests *uinput,
 //        ia->print(0);
     }
   }else{
-    std::cerr << "Pamgen mesh is unavailable for PamgenMeshAdapter!"
-              << std::endl;
+    std::cerr << "Pamgen mesh is unavailable for PamgenMeshAdapter!" << std::endl;
   }
   
   return  reinterpret_cast<AdapterForTests::base_adapter_t *>(ia);
-#else
-  throw std::runtime_error("Pamgen input requested but Trilinos is not "
-                           "built with Pamgen");
-#endif
 }
 #endif
 

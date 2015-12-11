@@ -47,8 +47,8 @@
 #define XPETRA_EPETRAMAP_FWD_HPP
 
 namespace Xpetra {
-  template<class GO, class NO> class EpetraMapT;
-  typedef EpetraMapT<int, typename Xpetra::Map<int, int>::node_type> EpetraMap;
+  template<class GO> class EpetraMapT;
+  typedef EpetraMapT<int> EpetraMap;
 }
 
 #ifndef XPETRA_EPETRAMAP_SHORT

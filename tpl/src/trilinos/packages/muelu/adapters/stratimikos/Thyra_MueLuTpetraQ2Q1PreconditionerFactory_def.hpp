@@ -63,12 +63,11 @@
 
 #include <Teko_Utilities.hpp>
 
-#include <Xpetra_BlockedCrsMatrix.hpp>
-#include <Xpetra_CrsMatrixWrap.hpp>
-#include <Xpetra_IO.hpp>
-#include <Xpetra_MapExtractorFactory.hpp>
 #include <Xpetra_Matrix.hpp>
 #include <Xpetra_MatrixMatrix.hpp>
+#include <Xpetra_CrsMatrixWrap.hpp>
+#include <Xpetra_MapExtractorFactory.hpp>
+#include <Xpetra_BlockedCrsMatrix.hpp>
 
 #include "MueLu.hpp"
 
@@ -274,36 +273,37 @@ namespace Thyra {
   {
     using Teuchos::null;
 
-    typedef Tpetra::CrsMatrix           <SC,LO,GO,NO> TP_Crs;
-    typedef Tpetra::Operator            <SC,LO,GO,NO> TP_Op;
+    typedef Tpetra::CrsMatrix           <SC,int,int>  TP_Crs;
+    typedef Tpetra::Operator            <SC,int,int>  TP_Op;
 
     typedef Xpetra::BlockedCrsMatrix    <SC,LO,GO,NO> BlockedCrsMatrix;
     typedef Xpetra::CrsMatrix           <SC,LO,GO,NO> CrsMatrix;
     typedef Xpetra::CrsMatrixWrap       <SC,LO,GO,NO> CrsMatrixWrap;
     typedef Xpetra::MapExtractorFactory <SC,LO,GO,NO> MapExtractorFactory;
     typedef Xpetra::MapExtractor        <SC,LO,GO,NO> MapExtractor;
-    typedef Xpetra::Map                    <LO,GO,NO> Map;
+    typedef Xpetra::Map                 <LO,GO,NO>    Map;
     typedef Xpetra::MapExtractor        <SC,LO,GO,NO> MapExtractor;
     typedef Xpetra::MapExtractorFactory <SC,LO,GO,NO> MapExtractorFactory;
-    typedef Xpetra::MapFactory             <LO,GO,NO> MapFactory;
+    typedef Xpetra::MapFactory          <LO,GO,NO>    MapFactory;
     typedef Xpetra::Matrix              <SC,LO,GO,NO> Matrix;
     typedef Xpetra::MatrixFactory       <SC,LO,GO,NO> MatrixFactory;
-    typedef Xpetra::StridedMapFactory      <LO,GO,NO> StridedMapFactory;
+    typedef Xpetra::StridedMapFactory   <LO,GO,NO>    StridedMapFactory;
 
     typedef MueLu::Hierarchy            <SC,LO,GO,NO> Hierarchy;
+    typedef MueLu::Utils                <SC,LO,GO,NO> Utils;
 
     const RCP<const Teuchos::Comm<int> > comm = velCoords->getMap()->getComm();
 
     // Pull out Tpetra matrices
-    RCP<Thyra::LinearOpBase<SC> > ThNonConstA11     = rcp_const_cast<Thyra::LinearOpBase<double> >(thA11);
-    RCP<Thyra::LinearOpBase<SC> > ThNonConstA21     = rcp_const_cast<Thyra::LinearOpBase<double> >(thA21);
-    RCP<Thyra::LinearOpBase<SC> > ThNonConstA12     = rcp_const_cast<Thyra::LinearOpBase<double> >(thA12);
-    RCP<Thyra::LinearOpBase<SC> > ThNonConstA11_9Pt = rcp_const_cast<Thyra::LinearOpBase<double> >(thA11_9Pt);
+    RCP<Thyra::LinearOpBase<double> > ThNonConstA11     = rcp_const_cast<Thyra::LinearOpBase<double> >(thA11);
+    RCP<Thyra::LinearOpBase<double> > ThNonConstA21     = rcp_const_cast<Thyra::LinearOpBase<double> >(thA21);
+    RCP<Thyra::LinearOpBase<double> > ThNonConstA12     = rcp_const_cast<Thyra::LinearOpBase<double> >(thA12);
+    RCP<Thyra::LinearOpBase<double> > ThNonConstA11_9Pt = rcp_const_cast<Thyra::LinearOpBase<double> >(thA11_9Pt);
 
-    RCP<TP_Op>  TpetA11     = Thyra::TpetraOperatorVectorExtraction<SC,LO,GO,NO>::getTpetraOperator(ThNonConstA11);
-    RCP<TP_Op>  TpetA21     = Thyra::TpetraOperatorVectorExtraction<SC,LO,GO,NO>::getTpetraOperator(ThNonConstA21);
-    RCP<TP_Op>  TpetA12     = Thyra::TpetraOperatorVectorExtraction<SC,LO,GO,NO>::getTpetraOperator(ThNonConstA12);
-    RCP<TP_Op>  TpetA11_9Pt = Thyra::TpetraOperatorVectorExtraction<SC,LO,GO,NO>::getTpetraOperator(ThNonConstA11_9Pt);
+    RCP<TP_Op>  TpetA11     = Thyra::TpetraOperatorVectorExtraction<SC,int>::getTpetraOperator(ThNonConstA11);
+    RCP<TP_Op>  TpetA21     = Thyra::TpetraOperatorVectorExtraction<SC,int>::getTpetraOperator(ThNonConstA21);
+    RCP<TP_Op>  TpetA12     = Thyra::TpetraOperatorVectorExtraction<SC,int>::getTpetraOperator(ThNonConstA12);
+    RCP<TP_Op>  TpetA11_9Pt = Thyra::TpetraOperatorVectorExtraction<SC,int>::getTpetraOperator(ThNonConstA11_9Pt);
 
     RCP<TP_Crs> TpetCrsA11      = rcp_dynamic_cast<TP_Crs>(TpetA11);
     RCP<TP_Crs> TpetCrsA21      = rcp_dynamic_cast<TP_Crs>(TpetA21);
@@ -489,7 +489,7 @@ namespace Thyra {
     H->Keep("Ptent", M.GetFactory("Ptent").get());
     H->Setup(M, 0, MUELU_GPD("max levels", int, 3));
 
-#if 0
+#if 1
     for (int i = 1; i < H->GetNumLevels(); i++) {
       RCP<Matrix>           P     = H->GetLevel(i)->template Get<RCP<Matrix> >("P");
       RCP<BlockedCrsMatrix> Pcrs  = rcp_dynamic_cast<BlockedCrsMatrix>(P);
@@ -498,8 +498,8 @@ namespace Thyra {
       RCP<CrsMatrix>        Pvcrs = Pcrs->getMatrix(0,0);
       RCP<Matrix>           Pv    = rcp(new CrsMatrixWrap(Pvcrs));
 
-      Xpetra::IO<SC,LO,GO,NO>::Write("Pp_l" + MueLu::toString(i) + ".mm", *Pp);
-      Xpetra::IO<SC,LO,GO,NO>::Write("Pv_l" + MueLu::toString(i) + ".mm", *Pv);
+      Utils::Write("Pp_l" + MueLu::toString(i) + ".mm", *Pp);
+      Utils::Write("Pv_l" + MueLu::toString(i) + ".mm", *Pv);
     }
 #endif
 
@@ -787,13 +787,11 @@ namespace Thyra {
 
     } else if (type == "braess-sarazin") {
       // Define smoother/solver for BraessSarazin
-      SC   omega   = MUELU_GPD("bs: omega",     double, 1.0);
-      bool lumping = MUELU_GPD("bs: lumping",   bool,   false);
+      SC omega = MUELU_GPD("bs: omega", double, 1.0);
 
       RCP<SchurComplementFactory> schurFact = rcp(new SchurComplementFactory());
-      schurFact->SetParameter("omega",      ParameterEntry(omega));
-      schurFact->SetParameter("lumping",    ParameterEntry(lumping));
-      schurFact->SetFactory  ("A",          MueLu::NoFactory::getRCP());
+      schurFact->SetParameter("omega",  ParameterEntry(omega));
+      schurFact->SetFactory  ("A",      MueLu::NoFactory::getRCP());
 
       // Schur complement solver
       RCP<SmootherPrototype> schurSmootherPrototype;
@@ -819,7 +817,6 @@ namespace Thyra {
 
       smootherPrototype = rcp(new BraessSarazinSmoother());
       smootherPrototype->SetParameter("Sweeps",         ParameterEntry(MUELU_GPD("bs: sweeps", int, 1)));
-      smootherPrototype->SetParameter("lumping",        ParameterEntry(lumping));
       smootherPrototype->SetParameter("Damping factor", ParameterEntry(omega));
       rcp_dynamic_cast<BraessSarazinSmoother>(smootherPrototype)->AddFactoryManager(braessManager, 0);   // set temporary factory manager in BraessSarazin smoother
     }

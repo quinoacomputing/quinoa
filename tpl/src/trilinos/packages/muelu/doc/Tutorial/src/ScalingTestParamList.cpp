@@ -49,9 +49,6 @@
 
 #include <Teuchos_XMLParameterListHelpers.hpp>
 
-#include <Kokkos_DefaultNode.hpp> // For Epetra only runs this points to FakeKokkos in Xpetra
-
-#include "Xpetra_ConfigDefs.hpp"
 #include <Xpetra_MultiVectorFactory.hpp>
 #include <Xpetra_ImportFactory.hpp>
 
@@ -69,6 +66,7 @@
 
 #include <MueLu_Utilities.hpp>
 
+#include <MueLu_UseDefaultTypes.hpp>
 #include <MueLu_MutuallyExclusiveTime.hpp>
 
 #ifdef HAVE_MUELU_BELOS
@@ -80,12 +78,6 @@
 #include <BelosXpetraAdapter.hpp>     // => This header defines Belos::XpetraOp
 #include <BelosMueLuAdapter.hpp>      // => This header defines Belos::MueLuOp
 #endif
-
-// Define default data types
-typedef double Scalar;
-typedef int LocalOrdinal;
-typedef int GlobalOrdinal;
-typedef KokkosClassic::DefaultNode::DefaultNodeType Node;
 
 int main(int argc, char *argv[]) {
 #include <MueLu_UseShortNames.hpp>

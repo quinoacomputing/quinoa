@@ -76,7 +76,7 @@ int main(int argc, char* argv[]) {
   int ierr = -1;
   try {
     // Note: the command line parameter --linAlgebra= is taken into account.
-    // Xpetra parameters are added to the Teuchos::CommandLineProcessor of Teuchos::UnitTestRepository in MueLu_TestHelpers_kokkos.cpp
+    // Xpetra parameters are added to the Teuchos::CommandLineProcessor of Teuchos::UnitTestRepository in MueLu_TestHelpers.cpp
 
 #ifdef ParallelDebug
     RCP<const Teuchos::Comm<int> > comm = Teuchos::DefaultComm<int>::getComm();
@@ -114,6 +114,8 @@ int main(int argc, char* argv[]) {
     success = true;
   }
   TEUCHOS_STANDARD_CATCH_STATEMENTS(verbose, std::cerr, success);
+
+  Kokkos::finalize();
 
   return (success ? ierr : EXIT_FAILURE);
 }

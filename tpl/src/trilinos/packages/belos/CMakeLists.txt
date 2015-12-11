@@ -101,7 +101,6 @@ SET(${PACKAGE_NAME}_EXPERIMENTAL_SOURCES "")
 ######################################################################
 
 ADD_SUBDIRECTORY(src)
-ADD_SUBDIRECTORY(doc)
 
 TRIBITS_ADD_TEST_DIRECTORIES(test)
 

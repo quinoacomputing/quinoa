@@ -45,7 +45,6 @@
 #define KOKKOS_ARRAY
 
 #include <type_traits>
-#include <algorithm>
 #include <limits>
 
 namespace Kokkos {

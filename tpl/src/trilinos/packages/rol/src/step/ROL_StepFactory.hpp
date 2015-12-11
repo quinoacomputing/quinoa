@@ -57,7 +57,6 @@
 #include "ROL_AugmentedLagrangianStep.hpp"
 #include "ROL_MoreauYosidaPenaltyStep.hpp"
 #include "ROL_BundleStep.hpp"
-#include "ROL_InteriorPointStep.hpp"
 
 namespace ROL {
 
@@ -77,7 +76,6 @@ namespace ROL {
         case STEP_MOREAUYOSIDAPENALTY: return Teuchos::rcp( new MoreauYosidaPenaltyStep<Real>(parlist) );
         case STEP_PRIMALDUALACTIVESET: return Teuchos::rcp( new PrimalDualActiveSetStep<Real>(parlist) );
         case STEP_TRUSTREGION:         return Teuchos::rcp( new TrustRegionStep<Real>(parlist) );
-        case STEP_INTERIORPOINT:       return Teuchos::rcp( new InteriorPointStep<Real>(parlist) ); 
         default:                       return Teuchos::null;
       }
     }

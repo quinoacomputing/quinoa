@@ -323,11 +323,13 @@ namespace {
       mvOrig1.randomize();
       mvOrig2.randomize();
       //
-      Array<Mag> nOrig2(numVecs), nOrig1(numVecs), nOrigI(numVecs);
+      Array<Mag> nOrig2(numVecs), nOrig1(numVecs), nOrigI(numVecs), nOrigW(numVecs), nOrigW1(numVecs);
       Array<Scalar> meansOrig(numVecs), dotsOrig(numView);
       mvOrig1.norm1(nOrig1());
       mvOrig1.norm2(nOrig2());
       mvOrig1.normInf(nOrigI());
+      mvOrig1.normWeighted(mvWeights,nOrigW());
+      mvOrig1.normWeighted(*mvW1,nOrigW1());
       mvOrig1.meanValue(meansOrig());
       for (size_t j=0; j < numView; ++j) {
         RCP<const V> v1 = mvOrig1.getVector(inView1[j]),
@@ -337,17 +339,21 @@ namespace {
       // create the views, compute and test
       RCP<      MV> mvView1 = mvOrig1.subViewNonConst(inView1);
       RCP<const MV> mvView2 = mvOrig2.subView(inView2);
-      Array<Mag> nView2(numView), nView1(numView), nViewI(numView);
+      Array<Mag> nView2(numView), nView1(numView), nViewI(numView), nViewW(numView), nViewW1(numView);
       Array<Scalar> meansView(numView), dotsView(numView);
       mvView1->norm1(nView1());
       mvView1->norm2(nView2());
       mvView1->normInf(nViewI());
+      mvView1->normWeighted(*mvSubWeights,nViewW());
+      mvView1->normWeighted(*mvW1,nViewW1());
       mvView1->meanValue(meansView());
       mvView1->dot( *mvView2, dotsView() );
       for (size_t j=0; j < numView; ++j) {
         TEST_FLOATING_EQUALITY(nOrig1[inView1[j]],  nView1[j],  tol);
         TEST_FLOATING_EQUALITY(nOrig2[inView1[j]],  nView2[j],  tol);
         TEST_FLOATING_EQUALITY(nOrigI[inView1[j]],  nViewI[j],  tol);
+        TEST_FLOATING_EQUALITY(nOrigW[inView1[j]],  nViewW[j],  tol);
+        TEST_FLOATING_EQUALITY(nOrigW1[inView1[j]], nViewW1[j], tol);
         TEST_FLOATING_EQUALITY(meansOrig[inView1[j]], meansView[j], tol);
         TEST_FLOATING_EQUALITY(dotsOrig[j], dotsView[j], tol);
       }
@@ -1852,28 +1858,18 @@ namespace {
   ////
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL( MultiVector, ZeroScaleUpdate, LO , GO , Scalar , Node )
   {
-    typedef Teuchos::ScalarTraits<Scalar> STS;
+    RCP<Node> node = getNode<Node>();
     typedef typename ScalarTraits<Scalar>::magnitudeType Mag;
     typedef Tpetra::MultiVector<Scalar,LO,GO,Node> MV;
-    typedef Tpetra::global_size_t GST;
-
-    const GST INVALID = Teuchos::OrdinalTraits<GST>::invalid ();
-    const Mag M0 = ScalarTraits<Mag>::zero ();
-
-    const Scalar zero = STS::zero ();
-    const Scalar one = STS::one ();
-    const Scalar two = one + one;
-    const Scalar four = two + two;
-
+    const global_size_t INVALID = OrdinalTraits<global_size_t>::invalid();
+    const Mag M0 = ScalarTraits<Mag>::zero();
+    // get a comm and node
     RCP<const Comm<int> > comm = getDefaultComm();
-    RCP<Node> node = getNode<Node>();
-
     // create a Map
     const size_t numLocal = 2;
     const size_t numVectors = 2;
     const size_t LDA = 2;
-    RCP<const Map<LO, GO, Node> > map =
-      createContigMapWithNode<LO, GO, Node> (INVALID, numLocal, comm, node);
+    RCP<const Map<LO,GO,Node> > map = createContigMapWithNode<LO,GO>(INVALID,numLocal,comm,node);
     Array<Scalar> values(6);
     // values = {1, 1, 2, 2, 4, 4}
     // values(0,4) = {1, 1, 2, 2} = [1 2]
@@ -1884,17 +1880,16 @@ namespace {
     // has values .5 of a multivector B constructed from the second
     // then 2*A - B = 0
     // we test both scale(), both update(), and norm()
-    values[0] = one;
-    values[1] = one;
-    values[2] = two;
-    values[3] = two;
-    values[4] = four;
-    values[5] = four;
-    MV A (map, values (0,4), LDA, numVectors);
-    MV B (map, values (2,4), LDA, numVectors);
-    Array<Mag> norms (numVectors);
-    Array<Mag> zeros (numVectors);
-    std::fill (zeros.begin (), zeros.end (), M0);
+    values[0] = as<Scalar>(1);
+    values[1] = as<Scalar>(1);
+    values[2] = as<Scalar>(2);
+    values[3] = as<Scalar>(2);
+    values[4] = as<Scalar>(4);
+    values[5] = as<Scalar>(4);
+    MV A(map,values(0,4),LDA,numVectors),
+       B(map,values(2,4),LDA,numVectors);
+    Array<Mag> norms(numVectors), zeros(numVectors);
+    std::fill(zeros.begin(),zeros.end(),M0);
     //
     //      [.... ....]
     // A == [ones ones]
@@ -1908,37 +1903,38 @@ namespace {
     //   scale it by 2 in situ
     //   check that it equals B: subtraction in situ
     {
-      MV A2 (A, Teuchos::Copy);
-      A2.scale (two);
-      A2.update (-one, B, one);
-      A2.norm1 (norms);
+      MV A2(createCopy(A));
+      A2.scale(as<Scalar>(2));
+      A2.update(as<Scalar>(-1),B,as<Scalar>(1));
+      A2.norm1(norms);
       TEST_COMPARE_FLOATING_ARRAYS(norms,zeros,M0);
     }
     //   set A2 = A
     //   check that it equals B: scale,subtraction in situ
     {
-      MV A2 (A, Teuchos::Copy);
-      A2.update (-one, B, two);
-      A2.norm1 (norms);
+      MV A2(createCopy(A));
+
+      A2.update(as<Scalar>(-1),B,as<Scalar>(2));
+      A2.norm1(norms);
       TEST_COMPARE_FLOATING_ARRAYS(norms,zeros,M0);
     }
     //   set C random
     //   set it to zero by combination with A,B
     {
-      MV C (map, numVectors);
-      C.randomize ();
-      C.update (-one, B, two, A, zero);
-      C.norm1 (norms);
+      MV C(map,numVectors);
+      C.randomize();
+      C.update(as<Scalar>(-1),B,as<Scalar>(2),A,as<Scalar>(0));
+      C.norm1(norms);
       TEST_COMPARE_FLOATING_ARRAYS(norms,zeros,M0);
     }
     //   set C random
     //   scale it ex-situ
     //   check that it equals B: subtraction in situ
     {
-      MV C (map, numVectors);
-      C.scale (two, A);
-      C.update (one, B, -one);
-      C.norm1 (norms);
+      MV C(map,numVectors);
+      C.scale(as<Scalar>(2),A);
+      C.update(as<Scalar>(1),B,as<Scalar>(-1));
+      C.norm1(norms);
       TEST_COMPARE_FLOATING_ARRAYS(norms,zeros,M0);
     }
   }
@@ -2788,6 +2784,60 @@ namespace {
 
 
   ////
+  TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL( MultiVector, NormWeighted, LO , GO , Scalar , Node )
+  {
+    RCP<Node> node = getNode<Node>();
+    typedef Tpetra::MultiVector<Scalar,LO,GO,Node> MV;
+    typedef typename ScalarTraits<Scalar>::magnitudeType Mag;
+    const global_size_t INVALID = OrdinalTraits<global_size_t>::invalid();
+    const Mag tol = errorTolSlack * testingTol<Scalar>();
+    // get a comm and node
+    RCP<const Comm<int> > comm = getDefaultComm();
+    const int numImages = comm->getSize();
+    // create a Map
+    const size_t numLocal = 13;
+    const size_t numVectors = 7;
+    RCP<const Map<LO,GO,Node> > map = createContigMapWithNode<LO,GO>(INVALID,numLocal,comm,node);
+    MV    mvec(map,numVectors),
+       weights(map,numVectors),
+       weight1(map,1);
+    // randomize the multivector
+    mvec.randomize();
+    // set the weights
+    Array<Scalar> wvec(numVectors);
+    Scalar w1 = ScalarTraits<Scalar>::random();
+    for (size_t j=0; j < numVectors; ++j) {
+      wvec[j] = ScalarTraits<Scalar>::random();
+    }
+    weights.putScalar(ScalarTraits<Scalar>::one());
+    weights.scale(wvec());
+    weight1.putScalar(w1);
+    // take norms
+    Array<Mag> normsW(numVectors), normsW1(numVectors);
+    Array<Scalar> dots(numVectors);
+    mvec.dot(mvec,dots());
+    mvec.normWeighted(weights,normsW());
+    mvec.normWeighted(weight1,normsW1());
+    {
+      Mag vnrm = mvec.getVector(0)->normWeighted(*weight1.getVector(0));
+      TEST_FLOATING_EQUALITY( vnrm, normsW1[0], tol );
+    }
+    for (size_t j=0; j < numVectors; ++j) {
+      Mag ww = ScalarTraits<Scalar>::real( ScalarTraits<Scalar>::conjugate(wvec[j]) * wvec[j] );
+      Mag expnorm = ScalarTraits<Mag>::squareroot(
+                      ScalarTraits<Scalar>::real(dots[j]) / (as<Mag>(numImages * numLocal) * ww)
+                    );
+      Mag ww1 = ScalarTraits<Scalar>::real( ScalarTraits<Scalar>::conjugate(w1) * w1 );
+      Mag expnorm1 = ScalarTraits<Mag>::squareroot(
+                       ScalarTraits<Scalar>::real(dots[j]) / (as<Mag>(numImages * numLocal) * ww1)
+                     );
+      TEST_FLOATING_EQUALITY( expnorm, normsW[j], tol );
+      TEST_FLOATING_EQUALITY( expnorm1, normsW1[j], tol );
+    }
+  }
+
+
+  ////
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL( MultiVector, BadCombinations, LO , GO , Scalar , Node )
   {
     RCP<Node> node = getNode<Node>();
@@ -2831,6 +2881,8 @@ namespace {
     TEST_THROW(m1n2.update(rnd,m1n2_2,rnd,m1n1  ,rnd), std::runtime_error);                                 // B incompat
     TEST_THROW(m1n2.update(rnd,m1n1  ,rnd,m1n1  ,rnd), std::runtime_error);                                 // A,B incompat
     TEST_THROW(m1n2.update(rnd,m1n1  ,rnd,m1n1  ,rnd), std::runtime_error);                                 // A,B incompat
+    TEST_THROW(m1n1.normWeighted(m1n2,norms()), std::runtime_error);        // normWeighted
+    TEST_THROW(m1n2.normWeighted(m2n2,norms()), std::runtime_error);
     TEST_THROW(m1n2.reciprocal(m1n1), std::runtime_error);                  // reciprocal
     TEST_THROW(m1n2.reciprocal(m2n2), std::runtime_error);
   }
@@ -3319,7 +3371,7 @@ namespace {
     // differ even in the finite field Z_2.)
     typename dual_view_type::t_host X_lcl_h = X_lcl.template view<HMS> ();
     X_lcl.template modify<HMS> ();
-    Kokkos::deep_copy (X_lcl_h, ONE);
+    Kokkos::Impl::ViewFill<typename dual_view_type::t_host> (X_lcl_h, ONE);
     X_lcl.template sync<DMS> ();
 
     // Now compute the inf-norms of the columns of X.  (We want a
@@ -3379,7 +3431,7 @@ namespace {
     // Modify the Kokkos::DualView's data on the host.
     typename dual_view_type::t_host X_lcl_h = X_lcl.template view<HMS> ();
     X_lcl.template modify<HMS> ();
-    Kokkos::deep_copy (X_lcl_h, ONE);
+    Kokkos::Impl::ViewFill<typename dual_view_type::t_host> (X_lcl_h, ONE);
     X_lcl.template sync<DMS> ();
 
     // Make sure that the DualView actually sync'd.
@@ -3421,7 +3473,7 @@ namespace {
     // for variety, we do this on the device, not on the host.
     typename dual_view_type::t_dev X_lcl_d = X_lcl.template view<DMS> ();
     X_lcl.template modify<DMS> ();
-    Kokkos::deep_copy (X_lcl_d, TWO);
+    Kokkos::Impl::ViewFill<typename dual_view_type::t_dev> (X_lcl_d, TWO);
     X_lcl.template sync<HMS> ();
 
     // Make sure that the DualView actually sync'd.
@@ -3503,7 +3555,7 @@ namespace {
     typename dual_view_type::t_dev X_lcl ("X_lcl", numLclRows, numVecs);
 
     // Modify the Kokkos::View's data.
-    Kokkos::deep_copy (X_lcl, ONE);
+    Kokkos::Impl::ViewFill<typename dual_view_type::t_dev> (X_lcl, ONE);
 
     // Hand off the Kokkos::View to a Tpetra::MultiVector.
     const GST INVALID = Teuchos::OrdinalTraits<GST>::invalid ();
@@ -3527,7 +3579,7 @@ namespace {
     // Now change the values in X_lcl.  X_gbl should see them.  Be
     // sure to tell X_gbl that we want to modify its data on device.
     X_gbl.template modify<DMS> ();
-    Kokkos::deep_copy (X_lcl, TWO);
+    Kokkos::Impl::ViewFill<typename dual_view_type::t_dev> (X_lcl, TWO);
 
     // Tpetra::MultiVector::normInf _should_ either read from the most
     // recently modified memory space, or do a sync to device first.
@@ -3550,7 +3602,7 @@ namespace {
       X_gbl.template getLocalView<HMS> ();
     X_gbl.template modify<HMS> ();
 
-    Kokkos::deep_copy (X_host, THREE);
+    Kokkos::Impl::ViewFill<typename dual_view_type::t_host> (X_host, THREE);
     X_gbl.template sync<DMS> ();
 
     // FIXME (mfh 01 Mar 2015) We avoid writing a separate functor to
@@ -4192,6 +4244,7 @@ namespace {
       TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( MultiVector, CountNorm1        , LO, GO, SCALAR, NODE ) \
       TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( MultiVector, CountNormInf      , LO, GO, SCALAR, NODE ) \
       TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( MultiVector, Norm2             , LO, GO, SCALAR, NODE ) \
+      TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( MultiVector, NormWeighted      , LO, GO, SCALAR, NODE ) \
       TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( MultiVector, CopyView          , LO, GO, SCALAR, NODE ) \
       TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( MultiVector, OffsetView        , LO, GO, SCALAR, NODE ) \
       TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( MultiVector, ZeroScaleUpdate   , LO, GO, SCALAR, NODE ) \

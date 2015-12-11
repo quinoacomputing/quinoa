@@ -125,9 +125,6 @@ namespace ROL {
    */ 
   static const double ROL_OVERFLOW  = std::abs(Teuchos::ScalarTraits<double>::rmax());
 
-  static const double ROL_INF  = 0.1*ROL_OVERFLOW;
-  static const double ROL_NINF = -ROL_INF;
-
   /** \brief  Platform-dependent minimum double.
    */ 
   static const double ROL_UNDERFLOW  = std::abs(Teuchos::ScalarTraits<double>::rmin());
@@ -164,7 +161,6 @@ namespace ROL {
     STEP_MOREAUYOSIDAPENALTY,
     STEP_PRIMALDUALACTIVESET,
     STEP_TRUSTREGION,
-    STEP_INTERIORPOINT,
     STEP_LAST
   };
 
@@ -178,7 +174,6 @@ namespace ROL {
       case STEP_MOREAUYOSIDAPENALTY: retString = "Moreau-Yosida Penalty";  break;
       case STEP_PRIMALDUALACTIVESET: retString = "Primal Dual Active Set"; break;
       case STEP_TRUSTREGION:         retString = "Trust Region";           break;
-      case STEP_INTERIORPOINT:       retString = "Interior Point";         break;
       case STEP_LAST:                retString = "Last Type (Dummy)";      break;
       default:                       retString = "INVALID EStep";
     }
@@ -197,8 +192,7 @@ namespace ROL {
             (ls == STEP_LINESEARCH) ||
             (ls == STEP_MOREAUYOSIDAPENALTY) ||
             (ls == STEP_PRIMALDUALACTIVESET) ||
-            (ls == STEP_TRUSTREGION) || 
-            (ls == STEP_INTERIORPOINT) ) ;
+            (ls == STEP_TRUSTREGION) );
   }
 
   inline EStep & operator++(EStep &type) {
@@ -460,7 +454,6 @@ namespace ROL {
   enum EKrylov{
     KRYLOV_CG = 0,
     KRYLOV_CR,
-    KRYLOV_GMRES,
     KRYLOV_USERDEFINED,
     KRYLOV_LAST
   };
@@ -470,7 +463,6 @@ namespace ROL {
     switch(tr) {
       case KRYLOV_CG:          retString = "Conjugate Gradients"; break;
       case KRYLOV_CR:          retString = "Conjugate Residuals"; break;
-      case KRYLOV_GMRES:       retString = "GMRES";               break;
       case KRYLOV_USERDEFINED: retString = "User Defined";        break;
       case KRYLOV_LAST:        retString = "Last Type (Dummy)";   break;
       default:                 retString = "INVALID EKrylov";
@@ -486,7 +478,6 @@ namespace ROL {
   inline int isValidKrylov(EKrylov d){
     return( (d == KRYLOV_CG)      ||
             (d == KRYLOV_CR)      ||
-            (d == KRYLOV_GMRES)   ||
             (d == KRYLOV_USERDEFINED) );
   }
 

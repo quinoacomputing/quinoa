@@ -4,7 +4,7 @@
 #include "Phalanx_KokkosDeviceTypes.hpp"
 #include "Phalanx_KokkosViewFactory.hpp"
 #include "Phalanx_TypeStrings.hpp"
-#include "Phalanx_any.hpp"
+#include <boost/any.hpp>
 #include <string>
 #include <typeinfo>
 
@@ -13,13 +13,13 @@ namespace PHX {
   template<typename EvalT>
   class KokkosViewFactoryFunctor {
     
-    std::unordered_map<std::string,PHX::any>& fields_;
+    boost::unordered_map<std::string,boost::any>& fields_;
     const PHX::FieldTag& tag_;
     const std::vector<PHX::index_size_type> extended_dimensions_;
     
   public:
     
-    KokkosViewFactoryFunctor(std::unordered_map<std::string,PHX::any>& fields,
+    KokkosViewFactoryFunctor(boost::unordered_map<std::string,boost::any>& fields,
 			     const PHX::FieldTag& tag,
 			     const std::vector<PHX::index_size_type>& extended_dimensions) :
       fields_(fields),

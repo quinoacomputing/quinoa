@@ -385,29 +385,35 @@ template<> \
 struct Mult<Kokkos::View<SCALAR**, \
                          LAYOUT, \
                          Kokkos::Device<EXEC_SPACE, MEM_SPACE>, \
-                         Kokkos::MemoryTraits<Kokkos::Unmanaged> >, \
+                         Kokkos::MemoryTraits<Kokkos::Unmanaged>, \
+                         Kokkos::Impl::ViewDefault>, \
             Kokkos::View<const SCALAR*, \
                          LAYOUT, \
                          Kokkos::Device<EXEC_SPACE, MEM_SPACE>, \
-                         Kokkos::MemoryTraits<Kokkos::Unmanaged> >, \
+                         Kokkos::MemoryTraits<Kokkos::Unmanaged>, \
+                         Kokkos::Impl::ViewDefault>, \
             Kokkos::View<const SCALAR**, \
                          LAYOUT, \
                          Kokkos::Device<EXEC_SPACE, MEM_SPACE>, \
-                         Kokkos::MemoryTraits<Kokkos::Unmanaged> >, \
+                         Kokkos::MemoryTraits<Kokkos::Unmanaged>, \
+                         Kokkos::Impl::ViewDefault>, \
             2> \
 { \
   typedef Kokkos::View<SCALAR**, \
                        LAYOUT, \
                        Kokkos::Device<EXEC_SPACE, MEM_SPACE>, \
-                       Kokkos::MemoryTraits<Kokkos::Unmanaged> > CMV; \
+                       Kokkos::MemoryTraits<Kokkos::Unmanaged>, \
+                       Kokkos::Impl::ViewDefault> CMV; \
   typedef Kokkos::View<const SCALAR*, \
                        LAYOUT, \
                        Kokkos::Device<EXEC_SPACE, MEM_SPACE>, \
-                       Kokkos::MemoryTraits<Kokkos::Unmanaged> > AV; \
+                       Kokkos::MemoryTraits<Kokkos::Unmanaged>, \
+                       Kokkos::Impl::ViewDefault> AV; \
   typedef Kokkos::View<const SCALAR**, \
                        LAYOUT, \
                        Kokkos::Device<EXEC_SPACE, MEM_SPACE>, \
-                       Kokkos::MemoryTraits<Kokkos::Unmanaged> > BMV; \
+                       Kokkos::MemoryTraits<Kokkos::Unmanaged>, \
+                       Kokkos::Impl::ViewDefault> BMV; \
  \
   static void \
   mult (CMV::const_value_type& c, \
@@ -465,15 +471,18 @@ void \
 Mult<Kokkos::View<SCALAR**, \
                   LAYOUT, \
                   Kokkos::Device<EXEC_SPACE, MEM_SPACE>, \
-                  Kokkos::MemoryTraits<Kokkos::Unmanaged> >, \
+                  Kokkos::MemoryTraits<Kokkos::Unmanaged>, \
+                  Kokkos::Impl::ViewDefault>, \
      Kokkos::View<const SCALAR*, \
                   LAYOUT, \
                   Kokkos::Device<EXEC_SPACE, MEM_SPACE>, \
-                  Kokkos::MemoryTraits<Kokkos::Unmanaged> >, \
+                  Kokkos::MemoryTraits<Kokkos::Unmanaged>, \
+                  Kokkos::Impl::ViewDefault>, \
      Kokkos::View<const SCALAR**, \
                   LAYOUT, \
                   Kokkos::Device<EXEC_SPACE, MEM_SPACE>, \
-                  Kokkos::MemoryTraits<Kokkos::Unmanaged> >, \
+                  Kokkos::MemoryTraits<Kokkos::Unmanaged>, \
+                  Kokkos::Impl::ViewDefault>, \
      2>:: \
 mult (CMV::const_value_type& c, \
       const CMV& C, \

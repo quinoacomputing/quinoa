@@ -15,20 +15,13 @@ TRIBITS_PACKAGE(Galeri)
 #
 # C) Add the libraries, tests, and examples
 #
-IF (NOT ${PACKAGE_NAME}_ENABLE_Epetra AND NOT ${PACKAGE_NAME}_ENABLE_Tpetra)
-  MESSAGE(FATAL_ERROR "Neither Epetra nor Tpetra is enabled.  Galeri requires at least one of them to be enabled.")
-ENDIF()
 
-IF (${PACKAGE_NAME}_ENABLE_Epetra)
-  ADD_SUBDIRECTORY(src-epetra)
-ENDIF()
+ADD_SUBDIRECTORY(src)
 
 #this dir only had "EXTRA_DIST" files in it
 #ADD_SUBDIRECTORY(src-fem)  
 
-IF (${PACKAGE_NAME}_ENABLE_Xpetra)
-  ADD_SUBDIRECTORY(src-xpetra)
-ENDIF()
+ADD_SUBDIRECTORY(src-xpetra)
 
 
 TRIBITS_ADD_TEST_DIRECTORIES(test)

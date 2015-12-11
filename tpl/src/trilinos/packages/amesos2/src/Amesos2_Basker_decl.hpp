@@ -58,9 +58,6 @@
 #include "Amesos2_Basker_FunctionMap.hpp"
 
 
-//Note:  We got an error while being a class variable and mutable.  Need to comeback and fix!!
-
-
 namespace Amesos2 {
 
 
@@ -82,10 +79,7 @@ public:
   /// Name of this solver interface.
   static const char* name;      // declaration. Initialization outside.
 
-
   typedef Basker<Matrix,Vector>                                       type;
-
-
   typedef SolverCore<Amesos2::Basker,Matrix,Vector>             super_type;
 
   // Since typedef's are not inheritted, go grab them
@@ -175,8 +169,9 @@ private:
   bool loadA_impl(EPhase current_phase);
 
 
+  /*Handle for Basker object*/
+  mutable ::Basker::Basker<local_ordinal_type,slu_type> basker;
 
-  int num_threads;
 
   // The following Arrays are persisting storage arrays for A, X, and B
   /// Stores the values of the nonzero entries for Basker
@@ -190,26 +185,6 @@ private:
   mutable Teuchos::Array<slu_type> xvals_;  local_ordinal_type ldx_;
   /// Persisting 1D store for B
   mutable Teuchos::Array<slu_type> bvals_;  local_ordinal_type ldb_;
-
-
-
-
-    /*Handle for Basker object*/
-#ifdef SHYLUBASKER
-
-#ifdef HAVE_AMESOS2_KOKKOS
-  //#pragma message("HAVE SHYLUBASKER AND KOKKOS")
-  typedef Kokkos::OpenMP Exe_Space;
-   ::BaskerNS::Basker<local_ordinal_type,slu_type,Exe_Space>  *basker;
-#else
-     #pragma message("HAVE SHYLUBASKER AND NOT KOKKOS! ERROR")
-#endif
-
-#else
-  mutable ::Basker::Basker<local_ordinal_type,slu_type> basker;
-#endif
-
-
 
 };                              // End class Basker
 

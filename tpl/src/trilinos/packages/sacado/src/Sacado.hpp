@@ -87,10 +87,6 @@
 #include "Sacado_ELRCacheFad_SLFad.hpp"
 
 // Kokkos::View specialization for Sacado AD classes
-#if defined( KOKKOS_USING_EXPERIMENTAL_VIEW )
-#include "KokkosExp_View_Fad.hpp"
-#else
 #include "Kokkos_View_Fad.hpp"
-#endif
 
 #endif // SACADO_KOKKOS_HPP

@@ -150,13 +150,6 @@ bool& loc_printRCPNodeStatisticsOnExit()
 }
 
 
-bool& loc_printActiveRcpNodesOnExit()
-{
-  static bool s_loc_printActiveRcpNodesOnExit = true;
-  return s_loc_printActiveRcpNodesOnExit;
-}
-
-
 //
 // Other helper functions
 //
@@ -348,18 +341,6 @@ void RCPNodeTracer::setPrintRCPNodeStatisticsOnExit(
 bool RCPNodeTracer::getPrintRCPNodeStatisticsOnExit()
 {
   return loc_printRCPNodeStatisticsOnExit();
-}
-
-
-void RCPNodeTracer::setPrintActiveRcpNodesOnExit(bool printActiveRcpNodesOnExit)
-{
-  loc_printActiveRcpNodesOnExit() = printActiveRcpNodesOnExit;
-}
-
-
-bool RCPNodeTracer::getPrintActiveRcpNodesOnExit()
-{
-  return loc_printActiveRcpNodesOnExit();
 }
 
 
@@ -661,9 +642,7 @@ ActiveRCPNodesSetup::~ActiveRCPNodesSetup()
     {
       RCPNodeTracer::printRCPNodeStatistics(rcpNodeStatistics, std::cout);
     }
-    if (RCPNodeTracer::getPrintActiveRcpNodesOnExit()) {
-      RCPNodeTracer::printActiveRCPNodes(std::cerr);
-    }
+    RCPNodeTracer::printActiveRCPNodes(std::cerr);
     delete rcp_node_list();
     rcp_node_list() = 0;
   }

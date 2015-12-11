@@ -112,6 +112,7 @@ Kokkos::initialize();
   int endThrowNumber = beginThrowNumber + numTotalExceptions;
 #endif
 
+  typedef TensorProductSpaceTools tpst; 
 
   *outStream \
   << "\n"
@@ -121,7 +122,6 @@ Kokkos::initialize();
 
   try{
 #ifdef HAVE_INTREPID_DEBUG
-    typedef TensorProductSpaceTools tpst;
     FieldContainer<double> a_2_2(2,2);
     FieldContainer<double> a_2(2);
     FieldContainer<double> a_4(4);

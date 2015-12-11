@@ -70,6 +70,9 @@ void TpetraVectorSpace<Scalar,LocalOrdinal,GlobalOrdinal,Node>::initialize(
 {
   comm_ = convertTpetraToThyraComm(tpetraMap->getComm());
   tpetraMap_ = tpetraMap;
+  localSubDim_ = tpetraMap->getNodeNumElements();
+  numProc_ = comm_->getSize();
+  procRank_ = comm_->getRank();
   this->updateState(tpetraMap->getGlobalNumElements(),
     !tpetraMap->isDistributed());
 }
@@ -119,11 +122,7 @@ bool TpetraVectorSpace<Scalar,LocalOrdinal,GlobalOrdinal,Node>::hasInCoreView(
 {
   const Range1D rng = full_range(rng_in,0,this->dim()-1);
   const Ordinal l_localOffset = this->localOffset();
-
-  const Ordinal localSubDim = tpetraMap_.is_null () ?
-    static_cast<Ordinal> (0) : tpetraMap_->getNodeNumElements ();
-
-  return ( l_localOffset<=rng.lbound() && rng.ubound()<l_localOffset+localSubDim );
+  return ( l_localOffset<=rng.lbound() && rng.ubound()<l_localOffset+localSubDim_ );
 }
 
 
@@ -162,8 +161,7 @@ TpetraVectorSpace<Scalar,LocalOrdinal,GlobalOrdinal,Node>::getComm() const
 template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
 Ordinal TpetraVectorSpace<Scalar,LocalOrdinal,GlobalOrdinal,Node>::localSubDim() const
 {
-  return tpetraMap_.is_null () ? static_cast<Ordinal> (0) :
-    static_cast<Ordinal> (tpetraMap_->getNodeNumElements ());
+  return localSubDim_;
 }
 
 // private
@@ -171,6 +169,7 @@ Ordinal TpetraVectorSpace<Scalar,LocalOrdinal,GlobalOrdinal,Node>::localSubDim()
 
 template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
 TpetraVectorSpace<Scalar,LocalOrdinal,GlobalOrdinal,Node>::TpetraVectorSpace()
+  :localSubDim_(-1), numProc_(-1), procRank_(-1)
 {
   // The base classes should automatically default initialize to a safe
   // uninitialized state.

@@ -139,7 +139,7 @@ private:
 
   void setMPIComm(const RCP<const Comm<int> > &problemComm__) {
 #   ifdef HAVE_ZOLTAN2_MPI
-      mpicomm = Teuchos::getRawMpiComm(*problemComm__);
+      mpicomm = TeuchosConst2MPI(problemComm__);
 #   else
       mpicomm = MPI_COMM_WORLD;  // taken from siMPI
 #   endif

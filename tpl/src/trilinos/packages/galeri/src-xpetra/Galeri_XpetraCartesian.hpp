@@ -54,6 +54,7 @@
 #include <Teuchos_ArrayView.hpp>
 
 #include "Galeri_Exception.h"
+#include "Galeri_Utils.h"
 #include "Galeri_MapTraits.hpp"
 #include "Galeri_XpetraUtils.hpp"
 

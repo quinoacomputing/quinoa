@@ -50,6 +50,7 @@
 */
 
 #include "Zoltan2_config.h"
+#ifdef HAVE_ZOLTAN2_ZOLTAN
 #include <zoltan.h>
 
 #include <Zoltan2_Util.hpp>
@@ -765,3 +766,12 @@ int main(int argc, char *argv[])
 
   return 0;
 }
+
+#else
+#include <iostream>
+int main(int argc, char *argv[])
+{
+  std::cout << "Test did not run due to faulty configuration." << std::endl;
+  std::cout << "FAIL" << std::endl;
+}
+#endif

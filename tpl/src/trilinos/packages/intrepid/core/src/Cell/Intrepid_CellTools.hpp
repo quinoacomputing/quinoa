@@ -84,7 +84,7 @@
 #include "Teuchos_Assert.hpp"
 #include "Teuchos_RCP.hpp"
 
-#include <Intrepid_KokkosRank.hpp>
+#include <KokkosRank.hpp>
 #ifdef HAVE_INTREPID_KOKKOSCORE
 #include "Kokkos_Core.hpp"
 #endif
@@ -380,12 +380,6 @@ template<class ArrayJac, class ArrayPoint, class ArrayCell, bool typecheck>
                             const shards::CellTopology & cellTopo,
                             const int &                  whichCell = -1);
     
-    template<class ArrayJac, class ArrayPoint, class ArrayCell>
-    static void setJacobian(ArrayJac &                   jacobian,
-                            const ArrayPoint &           points,
-                            const ArrayCell  &           cellWorkset,
-                            const Teuchos::RCP< Basis< Scalar, FieldContainer<Scalar> > > HGRAD_Basis,
-                            const int &                  whichCell = -1);
   
     
     /** \brief  Computes the inverse of the Jacobian matrix \e DF of the reference-to-physical frame map \e F.
@@ -495,13 +489,6 @@ template<class ArrayJac, class ArrayPoint, class ArrayCell, bool typecheck>
                                    const ArrayRefPoint &         refPoints,
                                    const ArrayCell     &         cellWorkset,
                                    const shards::CellTopology &  cellTopo,
-                                   const int &                   whichCell = -1);
-    
-    template<class ArrayPhysPoint, class ArrayRefPoint, class ArrayCell>
-    static void mapToPhysicalFrame(ArrayPhysPoint      &         physPoints,
-                                   const ArrayRefPoint &         refPoints,
-                                   const ArrayCell     &         cellWorkset,
-                                   const Teuchos::RCP< Basis< Scalar, FieldContainer<Scalar> > > HGRAD_Basis,
                                    const int &                   whichCell = -1);
                                    
      /** \brief  Computes \e F, the reference-to-physical frame map.
@@ -635,13 +622,6 @@ template<class ArrayJac, class ArrayPoint, class ArrayCell, bool typecheck>
                                     const int &                   whichCell = -1);
     
     
-    template<class ArrayRefPoint, class ArrayPhysPoint, class ArrayCell>
-    static void mapToReferenceFrame(ArrayRefPoint        &        refPoints,
-                                    const ArrayPhysPoint &        physPoints,
-                                    const ArrayCell      &        cellWorkset,
-                                    const Teuchos::RCP< Basis< Scalar, FieldContainer<Scalar> > > HGRAD_Basis,
-                                    const int &                   whichCell = -1);
-    
     
     /** \brief  Computation of \f$ F^{-1}_{c} \f$, the inverse of the reference-to-physical frame map
                 using user-supplied initial guess. 
@@ -694,14 +674,6 @@ template<class ArrayJac, class ArrayPoint, class ArrayCell, bool typecheck>
                                              const ArrayPhysPoint &        physPoints,
                                              const ArrayCell      &        cellWorkset,
                                              const shards::CellTopology &  cellTopo,
-                                             const int &                   whichCell = -1);
-    
-    template<class ArrayRefPoint, class ArrayInitGuess, class ArrayPhysPoint, class ArrayCell>
-    static void mapToReferenceFrameInitGuess(ArrayRefPoint        &        refPoints,
-                                             const ArrayInitGuess &        initGuess,
-                                             const ArrayPhysPoint &        physPoints,
-                                             const ArrayCell      &        cellWorkset,
-                                             const Teuchos::RCP< Basis< Scalar, FieldContainer<Scalar> > > HGRAD_Basis,
                                              const int &                   whichCell = -1);
     
 

@@ -82,6 +82,11 @@ public:
 
         return side;
     }
+
+    std::vector<stk::mesh::EntityId> get_copy_of_all_ids() const
+    {
+        return m_suggested_side_ids;
+    }
 };
 
 #endif
