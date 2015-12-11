@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Partitioner.h
   \author    J. Bakosi
-  \date      Wed 09 Dec 2015 09:05:42 AM MST
+  \date      Fri 11 Dec 2015 12:14:53 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Charm++ chare partitioner group used to perform mesh partitioning
   \details   Charm++ chare partitioner group used to parform mesh partitioning.
@@ -364,7 +364,7 @@ class Partitioner : public CBase_Partitioner< HostProxy > {
     //!   distribution of chare ids to PEs.
     int pe( int id ) const {
       auto pe = id / (m_nchare / CkNumPes());
-      if (pe == CkNumPes()) --pe;
+      if (pe >= CkNumPes()) pe = CkNumPes()-1;
       return pe;
     }
 
