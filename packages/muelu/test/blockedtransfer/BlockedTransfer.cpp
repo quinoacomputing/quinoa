@@ -108,8 +108,7 @@
 //
 typedef double Scalar;
 typedef int    LocalOrdinal;
-// FIXME
-// #ifdef HAVE_TEUCHOS_LONG_LONG_INT
+// #ifdef HAVE_XPETRA_INT_LONG_LONG
 // typedef long long int GlobalOrdinal;
 // #else
 typedef int GlobalOrdinal;
@@ -204,7 +203,7 @@ int main(int argc, char *argv[]) {
     out->setOutputToRootOnly(0);
     *out << MueLu::MemUtils::PrintMemoryUsage() << std::endl;
 
-    //#ifndef HAVE_TEUCHOS_LONG_LONG_INT
+    //#ifndef HAVE_XPETRA_INT_LONG_LONG
     *out << "Warning: scaling test was not compiled with long long int support" << std::endl;
     //#endif
 
@@ -270,7 +269,7 @@ int main(int argc, char *argv[]) {
       Op22->describe(*out,Teuchos::VERB_EXTREME);*/
 
     // build blocked operator
-    Teuchos::RCP<Xpetra::BlockedCrsMatrix<Scalar,LO,GO,Node> > bOp = Teuchos::rcp(new Xpetra::BlockedCrsMatrix<Scalar,LO,GO>(mapExtractor,mapExtractor,10));
+    Teuchos::RCP<Xpetra::BlockedCrsMatrix<Scalar,LO,GO,Node> > bOp = Teuchos::rcp(new Xpetra::BlockedCrsMatrix<Scalar,LO,GO,Node>(mapExtractor,mapExtractor,10));
 
     Teuchos::RCP<Xpetra::CrsMatrix<Scalar,LO,GO,Node> > crsMat11 = Op11->getCrsMatrix();
     Teuchos::RCP<Xpetra::CrsMatrix<Scalar,LO,GO,Node> > crsMat22 = Op22->getCrsMatrix();

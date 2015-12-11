@@ -367,10 +367,20 @@ public:
   static void setPrintRCPNodeStatisticsOnExit(
     bool printRCPNodeStatisticsOnExit);
 
-  /** \brief Reteurn if RCPNode usage statistics will be printed when the
+  /** \brief Return if RCPNode usage statistics will be printed when the
    * program ends or not.
    */
   static bool getPrintRCPNodeStatisticsOnExit();
+
+  /** \brief Set if printActiveRCPNodes() is called on exit from the
+   * program.
+   */
+  static void setPrintActiveRcpNodesOnExit(bool printActiveRcpNodesOnExit);
+
+  /** \brief Return if printActiveRCPNodes() is called on exit from the
+   * program.
+   */
+  static bool getPrintActiveRcpNodesOnExit();
 
   /** \brief Print the list of currently active RCP nodes.
    *
@@ -380,11 +390,12 @@ public:
    * program.
    *
    * When the macro <tt>TEUCHOS_SHOW_ACTIVE_REFCOUNTPTR_NODE_TRACE</tt> is
-   * defined this function will get called automatically after the program ends
-   * and all of the local and global RCP objects have been destroyed.  If any
-   * RCP nodes are printed at that time, then this is an indication that there
-   * may be some circular references that will caused memory leaks.  You memory
-   * checking tool such as valgrind or purify should complain about this!
+   * defined this function will get called automatically after the program
+   * ends by default and all of the local and global RCP objects have been
+   * destroyed.  If any RCP nodes are printed at that time, then this is an
+   * indication that there may be some circular references that will caused
+   * memory leaks.  You memory checking tool such as valgrind or purify should
+   * complain about this!
    */
   static void printActiveRCPNodes(std::ostream &out);
 
@@ -968,7 +979,17 @@ private:
 inline
 std::ostream& operator<<(std::ostream& out, const RCPNodeHandle& node)
 {
-  return (out << node.node_ptr());
+  // mfh 15 Sep 2015: Make sure that NULL pointers print consistently.
+  // Clang 3.5 likes to print an empty string in that case, while GCC
+  // prints 0.  Thus, we test if the pointer is NULL and print 0 in
+  // that case.  This is important for MueLu tests, which compare
+  // string print-outs.
+  if (node.node_ptr () == NULL) {
+    out << "0";
+  } else {
+    out << node.node_ptr ();
+  }
+  return out;
 }
 
 

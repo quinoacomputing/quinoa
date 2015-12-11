@@ -62,6 +62,7 @@ setMatrix (const Teuchos::RCP<const row_matrix_type>& A)
     Partitioner_ = Teuchos::null;
     Importer_ = Teuchos::null;
     W_ = Teuchos::null;
+    hasBlockCrsMatrix_ = false;
 
     if (! A.is_null ()) {
       IsParallel_ = (A->getRowMap ()->getComm ()->getSize () > 1);
@@ -101,18 +102,15 @@ BlockRelaxation (const Teuchos::RCP<const row_matrix_type>& A)
   ApplyFlops_ (0.0),
   NumMyRows_ (0),
   NumGlobalRows_ (0),
-  NumGlobalNonzeros_ (0)
-{
-  TEUCHOS_TEST_FOR_EXCEPTION(
-    A_.is_null (), std::invalid_argument,
-    Teuchos::typeName(*this) << "::BlockRelaxation(): input matrix is null.");
-}
+  NumGlobalNonzeros_ (0),
+  hasBlockCrsMatrix_ (false)
+{}
 
-//==========================================================================
 template<class MatrixType,class ContainerType>
-BlockRelaxation<MatrixType,ContainerType>::~BlockRelaxation() {}
+BlockRelaxation<MatrixType,ContainerType>::
+~BlockRelaxation ()
+{}
 
-//==========================================================================
 template<class MatrixType,class ContainerType>
 void
 BlockRelaxation<MatrixType,ContainerType>::
@@ -145,7 +143,8 @@ setParameters (const Teuchos::ParameterList& List)
   else {
     TEUCHOS_TEST_FOR_EXCEPTION(
       true, std::invalid_argument, "Ifpack2::BlockRelaxation::setParameters: "
-      "Invalid parameter value \"" << PT << "\" for parameter \"relaxation: type\".");
+      "Invalid parameter value \"" << PT << "\" for parameter \"relaxation: "
+      "type\".");
   }
 
   Ifpack2::getParameter (List, "relaxation: sweeps",NumSweeps_);
@@ -168,104 +167,132 @@ setParameters (const Teuchos::ParameterList& List)
   // NTS: Sanity check to be removed at a later date when Backward mode is enabled
   TEUCHOS_TEST_FOR_EXCEPTION(
     DoBackwardGS_, std::runtime_error,
-    "Ifpack2::BlockRelaxation:setParameters: \"relaxation: backward mode\" == "
-    "true is not supported yet.");
+    "Ifpack2::BlockRelaxation:setParameters: Setting the \"relaxation: "
+    "backward mode\" parameter to true is not yet supported.");
 
   // copy the list as each subblock's constructor will
   // require it later
   List_ = List;
 }
 
-//==========================================================================
 template<class MatrixType,class ContainerType>
 Teuchos::RCP<const Teuchos::Comm<int> >
-BlockRelaxation<MatrixType,ContainerType>::getComm() const{
-  return A_->getComm();
+BlockRelaxation<MatrixType,ContainerType>::getComm () const
+{
+  TEUCHOS_TEST_FOR_EXCEPTION
+    (A_.is_null (), std::runtime_error, "Ifpack2::BlockRelaxation::getComm: "
+     "The matrix is null.  You must call setMatrix() with a nonnull matrix "
+     "before you may call this method.");
+  return A_->getComm ();
 }
 
-//==========================================================================
 template<class MatrixType,class ContainerType>
 Teuchos::RCP<const Tpetra::RowMatrix<typename MatrixType::scalar_type,
                                      typename MatrixType::local_ordinal_type,
                                      typename MatrixType::global_ordinal_type,
                                      typename MatrixType::node_type> >
-BlockRelaxation<MatrixType,ContainerType>::getMatrix() const {
-  return(A_);
+BlockRelaxation<MatrixType,ContainerType>::getMatrix () const {
+  return A_;
 }
 
-//==========================================================================
 template<class MatrixType,class ContainerType>
 Teuchos::RCP<const Tpetra::Map<typename MatrixType::local_ordinal_type,
                                typename MatrixType::global_ordinal_type,
                                typename MatrixType::node_type> >
-BlockRelaxation<MatrixType,ContainerType>::getDomainMap() const {
-  return A_->getDomainMap();
+BlockRelaxation<MatrixType,ContainerType>::
+getDomainMap () const
+{
+  TEUCHOS_TEST_FOR_EXCEPTION
+    (A_.is_null (), std::runtime_error, "Ifpack2::BlockRelaxation::"
+     "getDomainMap: The matrix is null.  You must call setMatrix() with a "
+     "nonnull matrix before you may call this method.");
+  return A_->getDomainMap ();
 }
 
-//==========================================================================
 template<class MatrixType,class ContainerType>
 Teuchos::RCP<const Tpetra::Map<typename MatrixType::local_ordinal_type,
                                typename MatrixType::global_ordinal_type,
                                typename MatrixType::node_type> >
-BlockRelaxation<MatrixType,ContainerType>::getRangeMap() const {
-  return A_->getRangeMap();
+BlockRelaxation<MatrixType,ContainerType>::
+getRangeMap () const
+{
+  TEUCHOS_TEST_FOR_EXCEPTION
+    (A_.is_null (), std::runtime_error, "Ifpack2::BlockRelaxation::"
+     "getRangeMap: The matrix is null.  You must call setMatrix() with a "
+     "nonnull matrix before you may call this method.");
+  return A_->getRangeMap ();
 }
 
-//==========================================================================
 template<class MatrixType,class ContainerType>
-bool BlockRelaxation<MatrixType,ContainerType>::hasTransposeApply() const {
+bool
+BlockRelaxation<MatrixType,ContainerType>::
+hasTransposeApply () const {
   return true;
 }
 
-//==========================================================================
 template<class MatrixType,class ContainerType>
-int BlockRelaxation<MatrixType,ContainerType>::getNumInitialize() const {
-  return(NumInitialize_);
+int
+BlockRelaxation<MatrixType,ContainerType>::
+getNumInitialize () const {
+  return NumInitialize_;
 }
 
-//==========================================================================
 template<class MatrixType,class ContainerType>
-int BlockRelaxation<MatrixType,ContainerType>::getNumCompute() const {
-  return(NumCompute_);
+int
+BlockRelaxation<MatrixType,ContainerType>::
+getNumCompute () const
+{
+  return NumCompute_;
 }
 
-//==========================================================================
 template<class MatrixType,class ContainerType>
-int BlockRelaxation<MatrixType,ContainerType>::getNumApply() const {
-  return(NumApply_);
+int
+BlockRelaxation<MatrixType,ContainerType>::
+getNumApply () const
+{
+  return NumApply_;
 }
 
-//==========================================================================
 template<class MatrixType,class ContainerType>
-double BlockRelaxation<MatrixType,ContainerType>::getInitializeTime() const {
-  return(InitializeTime_);
+double
+BlockRelaxation<MatrixType,ContainerType>::
+getInitializeTime () const
+{
+  return InitializeTime_;
 }
 
-//==========================================================================
 template<class MatrixType,class ContainerType>
-double BlockRelaxation<MatrixType,ContainerType>::getComputeTime() const {
-  return(ComputeTime_);
+double
+BlockRelaxation<MatrixType,ContainerType>::
+getComputeTime () const
+{
+  return ComputeTime_;
 }
 
-//==========================================================================
 template<class MatrixType,class ContainerType>
-double BlockRelaxation<MatrixType,ContainerType>::getApplyTime() const {
-  return(ApplyTime_);
+double
+BlockRelaxation<MatrixType,ContainerType>::
+getApplyTime () const
+{
+  return ApplyTime_;
 }
 
-//==========================================================================
 template<class MatrixType,class ContainerType>
-double BlockRelaxation<MatrixType,ContainerType>::getComputeFlops() const {
-  return(ComputeFlops_);
+double
+BlockRelaxation<MatrixType,ContainerType>::
+getComputeFlops () const
+{
+  return ComputeFlops_;
 }
 
-//==========================================================================
 template<class MatrixType,class ContainerType>
-double BlockRelaxation<MatrixType,ContainerType>::getApplyFlops() const {
+double
+BlockRelaxation<MatrixType,ContainerType>::
+getApplyFlops () const
+{
   return ApplyFlops_;
 }
 
-//==========================================================================
 template<class MatrixType,class ContainerType>
 void
 BlockRelaxation<MatrixType,ContainerType>::
@@ -281,6 +308,11 @@ apply (const Tpetra::MultiVector<typename MatrixType::scalar_type,
        scalar_type alpha,
        scalar_type beta) const
 {
+  TEUCHOS_TEST_FOR_EXCEPTION
+    (A_.is_null (), std::runtime_error, "Ifpack2::BlockRelaxation::apply: "
+     "The matrix is null.  You must call setMatrix() with a nonnull matrix, "
+     "then call initialize() and compute() (in that order), before you may "
+     "call this method.");
   TEUCHOS_TEST_FOR_EXCEPTION(
     ! isComputed (), std::runtime_error, "Ifpack2::BlockRelaxation::apply: "
     "isComputed() must be true prior to calling apply.");
@@ -307,10 +339,14 @@ apply (const Tpetra::MultiVector<typename MatrixType::scalar_type,
   // If X and Y are pointing to the same memory location,
   // we need to create an auxiliary vector, Xcopy
   Teuchos::RCP<const MV> X_copy;
-  if (X.getLocalMV ().getValues () == Y.getLocalMV ().getValues ()) {
-    X_copy = Teuchos::rcp (new MV (X, Teuchos::Copy));
-  } else {
-    X_copy = Teuchos::rcpFromRef (X);
+  {
+    auto X_lcl_host = X.template getLocalView<Kokkos::HostSpace> ();
+    auto Y_lcl_host = Y.template getLocalView<Kokkos::HostSpace> ();
+    if (X_lcl_host.ptr_on_device () == Y_lcl_host.ptr_on_device ()) {
+      X_copy = rcp (new MV (X, Teuchos::Copy));
+    } else {
+      X_copy = rcpFromRef (X);
+    }
   }
 
   if (ZeroStartingSolution_) {
@@ -329,7 +365,13 @@ apply (const Tpetra::MultiVector<typename MatrixType::scalar_type,
     ApplyInverseSGS(*X_copy,Y);
     break;
   default:
-    throw std::runtime_error("Ifpack2::BlockRelaxation::apply internal logic error.");
+    TEUCHOS_TEST_FOR_EXCEPTION
+      (true, std::logic_error, "Ifpack2::BlockRelaxation::apply: Invalid "
+       "PrecType_ enum value " << PrecType_ << ".  Valid values are Ifpack2::"
+       "Details::JACOBI = " << Ifpack2::Details::JACOBI << ", Ifpack2::Details"
+       "::GS = " << Ifpack2::Details::GS << ", and Ifpack2::Details::SGS = "
+       << Ifpack2::Details::SGS << ".  Please report this bug to the Ifpack2 "
+       "developers.");
   }
 
   ++NumApply_;
@@ -337,32 +379,45 @@ apply (const Tpetra::MultiVector<typename MatrixType::scalar_type,
   ApplyTime_ += Time_->totalElapsedTime();
 }
 
-//==========================================================================
 template<class MatrixType,class ContainerType>
-void BlockRelaxation<MatrixType,ContainerType>::applyMat(
-          const Tpetra::MultiVector<typename MatrixType::scalar_type,
+void
+BlockRelaxation<MatrixType,ContainerType>::
+applyMat (const Tpetra::MultiVector<typename MatrixType::scalar_type,
                                     typename MatrixType::local_ordinal_type,
                                     typename MatrixType::global_ordinal_type,
                                     typename MatrixType::node_type>& X,
-                Tpetra::MultiVector<typename MatrixType::scalar_type,
-                                    typename MatrixType::local_ordinal_type,
-                                    typename MatrixType::global_ordinal_type,
-                                    typename MatrixType::node_type>& Y,
-             Teuchos::ETransp mode) const
+          Tpetra::MultiVector<typename MatrixType::scalar_type,
+                             typename MatrixType::local_ordinal_type,
+                             typename MatrixType::global_ordinal_type,
+                             typename MatrixType::node_type>& Y,
+          Teuchos::ETransp mode) const
 {
-  TEUCHOS_TEST_FOR_EXCEPTION(isComputed() == false, std::runtime_error,
-     "Ifpack2::BlockRelaxation::applyMat() ERROR: isComputed() must be true prior to calling applyMat().");
-  TEUCHOS_TEST_FOR_EXCEPTION(X.getNumVectors() != Y.getNumVectors(), std::runtime_error,
-     "Ifpack2::BlockRelaxation::applyMat() ERROR: X.getNumVectors() != Y.getNumVectors().");
   A_->apply (X, Y, mode);
 }
 
-//==========================================================================
 template<class MatrixType,class ContainerType>
-void BlockRelaxation<MatrixType,ContainerType>::initialize() {
+void
+BlockRelaxation<MatrixType,ContainerType>::
+initialize ()
+{
   using Teuchos::rcp;
   typedef Tpetra::RowGraph<local_ordinal_type, global_ordinal_type, node_type>
     row_graph_type;
+
+  TEUCHOS_TEST_FOR_EXCEPTION
+    (A_.is_null (), std::runtime_error, "Ifpack2::BlockRelaxation::initialize: "
+     "The matrix is null.  You must call setMatrix() with a nonnull matrix "
+     "before you may call this method.");
+
+  // Check whether we have a BlockCrsMatrix
+  Teuchos::RCP<const block_crs_matrix_type> A_bcrs =
+    Teuchos::rcp_dynamic_cast<const block_crs_matrix_type> (A_);
+  if (A_bcrs.is_null ()) {
+    hasBlockCrsMatrix_ = false;
+  }
+  else {
+    hasBlockCrsMatrix_ = true;
+  }
 
   IsInitialized_ = false;
   Time_->start (true);
@@ -387,8 +442,10 @@ void BlockRelaxation<MatrixType,ContainerType>::initialize() {
   } else {
     // We should have checked for this in setParameters(), so it's a
     // logic_error, not an invalid_argument or runtime_error.
-    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-      "Ifpack2::BlockRelaxation::initialize, invalid partitioner type.");
+    TEUCHOS_TEST_FOR_EXCEPTION
+      (true, std::logic_error, "Ifpack2::BlockRelaxation::initialize: Unknown "
+       "partitioner type " << PartitionerType_ << ".  Valid values are "
+       "\"linear\", \"line\", and \"user\".");
   }
 
   // need to partition the graph of A
@@ -413,9 +470,82 @@ void BlockRelaxation<MatrixType,ContainerType>::initialize() {
   IsInitialized_ = true;
 }
 
-//==========================================================================
+
 template<class MatrixType,class ContainerType>
-void BlockRelaxation<MatrixType,ContainerType>::compute()
+void
+BlockRelaxation<MatrixType,ContainerType>::
+computeBlockCrs ()
+{
+  typedef Tpetra::Map<local_ordinal_type,global_ordinal_type,node_type>     map_type;
+  typedef Tpetra::Import<local_ordinal_type,global_ordinal_type, node_type> import_type;
+  using Teuchos::RCP;
+  using Teuchos::rcp;
+  using Teuchos::Array;
+  using Teuchos::ArrayView;
+
+  Time_->start (true);
+
+  // reset values
+  IsComputed_ = false;
+
+  // Extract the submatrices
+  ExtractSubmatrices ();
+
+  // Compute the weight vector if we're doing overlapped Jacobi (and
+  // only if we're doing overlapped Jacobi).
+  TEUCHOS_TEST_FOR_EXCEPTION
+    (PrecType_ == Ifpack2::Details::JACOBI && OverlapLevel_ > 0, std::runtime_error,
+     "Ifpack2::BlockRelaxation::computeBlockCrs: "
+     "We do not support overlapped Jacobi yet for Tpetra::BlockCrsMatrix.  Sorry!");
+
+  // We need to import data from external processors. Here I create a
+  // Tpetra::Import object if needed (stealing from A_ if possible)
+  // Marzio's comment:
+  // Note that I am doing some strange stuff to set the components of Y
+  // from Y2 (to save some time).
+  //
+  if (IsParallel_ && (PrecType_ == Ifpack2::Details::GS ||
+                      PrecType_ == Ifpack2::Details::SGS)) {
+    // Get the block size
+    RCP<const block_crs_matrix_type> A_bcrs =
+      Teuchos::rcp_dynamic_cast<const block_crs_matrix_type> (A_);
+    int bs = A_bcrs->getBlockSize();
+
+    // Get the maps describing the block data
+    // Each "element" is actually a block of numbers
+    RCP<const map_type> oldDomainMap = A_->getDomainMap();
+    RCP<const map_type> oldColMap = A_->getColMap();
+
+    // Because A is a block CRS matrix, import will not do what you think it does
+    // We have to construct the correct maps for it
+    global_size_t numGlobalElements = oldColMap->getGlobalNumElements()*bs;
+    global_ordinal_type indexBase = oldColMap->getIndexBase();
+    RCP<const Teuchos::Comm<int> >comm = oldColMap->getComm();
+    ArrayView<const global_ordinal_type> oldColElements = oldColMap->getNodeElementList();
+    Array<global_ordinal_type> newColElements(bs*oldColElements.size());
+
+    for(int i=0; i<oldColElements.size(); i++) {
+      for(int j=0; j<bs; j++) {
+        newColElements[i*bs+j] = oldColElements[i]*bs+j;
+      }
+    }
+    RCP<map_type> colMap = rcp(new map_type(numGlobalElements,newColElements,indexBase,comm));
+
+    // Create the importer
+    Importer_ = rcp (new import_type (oldDomainMap, colMap));
+  }
+
+  ++NumCompute_;
+  Time_->stop ();
+  ComputeTime_ += Time_->totalElapsedTime();
+  IsComputed_ = true;
+}
+
+
+template<class MatrixType,class ContainerType>
+void
+BlockRelaxation<MatrixType,ContainerType>::
+compute ()
 {
   using Teuchos::rcp;
   typedef Tpetra::Vector<scalar_type,
@@ -423,14 +553,26 @@ void BlockRelaxation<MatrixType,ContainerType>::compute()
   typedef Tpetra::Import<local_ordinal_type,
     global_ordinal_type, node_type> import_type;
 
+  TEUCHOS_TEST_FOR_EXCEPTION
+    (A_.is_null (), std::runtime_error, "Ifpack2::BlockRelaxation::compute: "
+     "The matrix is null.  You must call setMatrix() with a nonnull matrix, "
+     "then call initialize(), before you may call this method.");
+
   // We should have checked for this in setParameters(), so it's a
   // logic_error, not an invalid_argument or runtime_error.
-  TEUCHOS_TEST_FOR_EXCEPTION(NumSweeps_ < 0, std::logic_error,
-    "Ifpack2::BlockRelaxation::compute, NumSweeps_ must be >= 0");
+  TEUCHOS_TEST_FOR_EXCEPTION
+    (NumSweeps_ < 0, std::logic_error, "Ifpack2::BlockRelaxation::compute: "
+     "NumSweeps_ = " << NumSweeps_ << " < 0.");
 
   if (! isInitialized ()) {
     initialize ();
   }
+
+  if (hasBlockCrsMatrix_) {
+    computeBlockCrs ();
+    return;
+  }
+
   Time_->start (true);
 
   // reset values
@@ -478,21 +620,17 @@ void BlockRelaxation<MatrixType,ContainerType>::compute()
   IsComputed_ = true;
 }
 
-//==============================================================================
 template<class MatrixType,class ContainerType>
-void BlockRelaxation<MatrixType,ContainerType>::ExtractSubmatrices()
+void
+BlockRelaxation<MatrixType,ContainerType>::
+ExtractSubmatrices ()
 {
-  typedef Tpetra::Vector<scalar_type, local_ordinal_type,
-                         global_ordinal_type, node_type> vec_type;
-  TEUCHOS_TEST_FOR_EXCEPTION(
-    Partitioner_.is_null (), std::runtime_error,
-    "Ifpack2::BlockRelaxation::ExtractSubmatrices: Partitioner object is null.");
+  TEUCHOS_TEST_FOR_EXCEPTION
+    (Partitioner_.is_null (), std::runtime_error, "Ifpack2::BlockRelaxation::"
+     "ExtractSubmatrices: Partitioner object is null.");
 
   NumLocalBlocks_ = Partitioner_->numLocalParts ();
   Containers_.resize (NumLocalBlocks_);
-  vec_type D (A_->getRowMap ());
-  A_->getLocalDiagCopy (D);
-  DiagRCP = D.getData ();
 
   for (local_ordinal_type i = 0; i < NumLocalBlocks_; ++i) {
     const size_t numRows = Partitioner_->numRowsInPart (i);
@@ -502,7 +640,7 @@ void BlockRelaxation<MatrixType,ContainerType>::ExtractSubmatrices()
     for (size_t j = 0; j < numRows; ++j) {
       localRows[j] = (*Partitioner_) (i,j);
     }
-    if(numRows>1) { // only do for non-singletons
+    if(numRows>1 || hasBlockCrsMatrix_) { // only do for non-singletons
       Containers_[i] = Teuchos::rcp (new ContainerType (A_, localRows ()));
       Containers_[i]->setParameters (List_);
       Containers_[i]->initialize ();
@@ -511,11 +649,10 @@ void BlockRelaxation<MatrixType,ContainerType>::ExtractSubmatrices()
   }
 }
 
-
-
-//==========================================================================
 template<class MatrixType,class ContainerType>
-void BlockRelaxation<MatrixType,ContainerType>::ApplyInverseJacobi (const MV& X, MV& Y) const
+void
+BlockRelaxation<MatrixType,ContainerType>::
+ApplyInverseJacobi (const MV& X, MV& Y) const
 {
   const size_t NumVectors = X.getNumVectors ();
   MV AY (Y.getMap (), NumVectors);
@@ -539,10 +676,10 @@ void BlockRelaxation<MatrixType,ContainerType>::ApplyInverseJacobi (const MV& X,
 
 }
 
-
-//==========================================================================
 template<class MatrixType,class ContainerType>
-void BlockRelaxation<MatrixType,ContainerType>::DoJacobi(const MV& X, MV& Y) const
+void
+BlockRelaxation<MatrixType,ContainerType>::
+DoJacobi (const MV& X, MV& Y) const
 {
   const size_t NumVectors = X.getNumVectors ();
   const scalar_type one = STS::one ();
@@ -552,14 +689,15 @@ void BlockRelaxation<MatrixType,ContainerType>::DoJacobi(const MV& X, MV& Y) con
     // Non-overlapping Jacobi
     for (local_ordinal_type i = 0; i < NumLocalBlocks_; ++i) {
       // may happen that a partition is empty
-      if( Partitioner_->numRowsInPart (i) != 1 ) {
+      if( Partitioner_->numRowsInPart (i) != 1 || hasBlockCrsMatrix_) {
         if(Containers_[i]->getNumRows () == 0 ) continue;
         Containers_[i]->apply (X, Y, Teuchos::NO_TRANS, DampingFactor_, one);
         ApplyFlops_ += NumVectors * 2 * NumGlobalRows_;
       }
       else { // singleton, can't access Containers_[i] as it was never filled and may be null.
         local_ordinal_type LRID  = (*Partitioner_)(i,0);  // by definition, a singleton 1 row in block.
-        Teuchos::ArrayView< const scalar_type > Diag   = DiagRCP();
+        getMatDiag();
+        Teuchos::ArrayRCP< const scalar_type > Diag   = DiagRCP_->getData();
         scalar_type d = Diag[LRID];
         for(unsigned int nv = 0;nv < NumVectors ; ++nv ) {
           Teuchos::ArrayRCP< const scalar_type > xRCP = X.getData(nv);
@@ -594,9 +732,9 @@ void BlockRelaxation<MatrixType,ContainerType>::DoJacobi(const MV& X, MV& Y) con
   }
 }
 
-//==========================================================================
 template<class MatrixType,class ContainerType>
-void BlockRelaxation<MatrixType,ContainerType>::
+void
+BlockRelaxation<MatrixType,ContainerType>::
 ApplyInverseGS (const MV& X, MV& Y) const
 {
   MV Xcopy (X, Teuchos::Copy);
@@ -608,10 +746,9 @@ ApplyInverseGS (const MV& X, MV& Y) const
   }
 }
 
-
-//==============================================================================
 template<class MatrixType,class ContainerType>
-void BlockRelaxation<MatrixType,ContainerType>::
+void
+BlockRelaxation<MatrixType,ContainerType>::
 DoGaussSeidel (MV& X, MV& Y) const
 {
   using Teuchos::Array;
@@ -628,8 +765,17 @@ DoGaussSeidel (MV& X, MV& Y) const
   const size_t NumVectors = X.getNumVectors();
   Array<scalar_type> Values;
   Array<local_ordinal_type> Indices;
-  Values.resize (Length);
   Indices.resize (Length);
+
+  if(hasBlockCrsMatrix_)
+  {
+    Teuchos::RCP<const block_crs_matrix_type> A_bcrs =
+      Teuchos::rcp_dynamic_cast<const block_crs_matrix_type> (A_);
+    int bs = A_bcrs->getBlockSize();
+    Values.resize (bs*bs*Length);
+  }
+  else
+    Values.resize (Length);
 
   // an additonal vector is needed by parallel computations
   // (note that applications through Ifpack2_AdditiveSchwarz
@@ -656,7 +802,7 @@ DoGaussSeidel (MV& X, MV& Y) const
   if (IsParallel_)  Y2->doImport(Y,*Importer_,Tpetra::INSERT);
 
   for (local_ordinal_type i = 0; i < NumLocalBlocks_; ++i) {
-    if( Partitioner_->numRowsInPart (i) != 1 ) {
+    if( Partitioner_->numRowsInPart (i) != 1 || hasBlockCrsMatrix_) {
       if (Containers_[i]->getNumRows () == 0) continue;
       // update from previous block
       ArrayView<const local_ordinal_type> localRows =
@@ -672,13 +818,37 @@ DoGaussSeidel (MV& X, MV& Y) const
           ArrayView<scalar_type>      y2_local = (y2_ptr())[m]();
           ArrayView<scalar_type>       r_local = (residual_ptr())[m]();
 
-          r_local[LID] = x_local[LID];
-          for (size_t k = 0; k < NumEntries; ++k) {
-            const local_ordinal_type col = Indices[k];
-            r_local[LID] -= Values[k] * y2_local[col];
+          if(hasBlockCrsMatrix_) {
+            Teuchos::RCP<const block_crs_matrix_type> A_bcrs =
+                  Teuchos::rcp_dynamic_cast<const block_crs_matrix_type> (A_);
+            int bs = A_bcrs->getBlockSize();
+            for (int localR = 0; localR < bs; localR++)
+              r_local[LID*bs+localR] = x_local[LID*bs+localR];
+            for (size_t k = 0; k < NumEntries; ++k) {
+              const local_ordinal_type col = Indices[k];
+              for (int localR = 0; localR < bs; localR++) {
+                for(int localC = 0; localC < bs; localC++) {
+//                  std::cerr << "r[" << LID*bs+localR << "] -= Values["
+//                            << k*bs*bs+localR+localC*bs << "] * y2["
+//                            << col*bs+localC << "]\n";
+                  r_local[LID*bs+localR] -= Values[k*bs*bs+localR+localC*bs] * y2_local[col*bs+localC];
+                }
+              }
+            }
+          }
+          else {
+            r_local[LID] = x_local[LID];
+            for (size_t k = 0; k < NumEntries; ++k) {
+              const local_ordinal_type col = Indices[k];
+              r_local[LID] -= Values[k] * y2_local[col];
+            }
           }
         }
       }
+
+//      Teuchos::RCP<Teuchos::FancyOStream> wrappedStream = Teuchos::getFancyOStream (Teuchos::rcpFromRef (std::cout));
+//      Residual.describe (*wrappedStream, Teuchos::VERB_EXTREME);
+
       // solve with this block
       //
       // Note: I'm abusing the ordering information, knowing that X/Y
@@ -688,13 +858,16 @@ DoGaussSeidel (MV& X, MV& Y) const
       Containers_[i]->apply (Residual, *Y2, Teuchos::NO_TRANS,
                              DampingFactor_,one);
 
+//      Y2->describe (*wrappedStream, Teuchos::VERB_EXTREME);
+
       // operations for all getrow's
       ApplyFlops_ += NumVectors * (2 * NumGlobalNonzeros_ + 2 * NumGlobalRows_);
     }
     else {       // singleton, can't access Containers_[i] as it was never filled and may be null.
       // a singleton calculation is exact, all residuals should be zero.
       local_ordinal_type LRID  = (*Partitioner_)(i,0);  // by definition, a singleton 1 row in block.
-      Teuchos::ArrayView< const scalar_type > Diag   = DiagRCP();
+      getMatDiag();
+      Teuchos::ArrayRCP< const scalar_type > Diag   = DiagRCP_->getData();
       scalar_type d = Diag[LRID];
       ArrayRCP<ArrayRCP<scalar_type> >          y2_ptr2 = Y2->get2dViewNonConst();
       for(unsigned int nv = 0;nv < NumVectors ; ++nv ) {
@@ -709,17 +882,30 @@ DoGaussSeidel (MV& X, MV& Y) const
   // Attention: this is delicate... Not all combinations
   // of Y2 and Y will always work (tough for ML it should be ok)
   if (IsParallel_) {
-    for (size_t m = 0; m < NumVectors; ++m) {
-      ArrayView<scalar_type> y2_local = (y2_ptr())[m]();
-      ArrayView<scalar_type> y_local = (y_ptr())[m]();
-      for (size_t i = 0; i < NumMyRows_; ++i) {
-        y_local[i] = y2_local[i];
+    if(hasBlockCrsMatrix_) {
+      Teuchos::RCP<const block_crs_matrix_type> A_bcrs =
+            Teuchos::rcp_dynamic_cast<const block_crs_matrix_type> (A_);
+      int bs = A_bcrs->getBlockSize();
+      for (size_t m = 0; m < NumVectors; ++m) {
+        ArrayView<scalar_type> y2_local = (y2_ptr())[m]();
+        ArrayView<scalar_type> y_local = (y_ptr())[m]();
+        for (size_t i = 0; i < NumMyRows_*bs; ++i) {
+          y_local[i] = y2_local[i];
+        }
+      }
+    }
+    else {
+      for (size_t m = 0; m < NumVectors; ++m) {
+        ArrayView<scalar_type> y2_local = (y2_ptr())[m]();
+        ArrayView<scalar_type> y_local = (y_ptr())[m]();
+        for (size_t i = 0; i < NumMyRows_; ++i) {
+          y_local[i] = y2_local[i];
+        }
       }
     }
   }
 }
 
-//==========================================================================
 template<class MatrixType,class ContainerType>
 void
 BlockRelaxation<MatrixType,ContainerType>::
@@ -734,10 +920,10 @@ ApplyInverseSGS (const MV& X, MV& Y) const
   }
 }
 
-//==========================================================================
 template<class MatrixType,class ContainerType>
 void
-BlockRelaxation<MatrixType,ContainerType>::DoSGS (MV& X, MV& Y) const
+BlockRelaxation<MatrixType,ContainerType>::
+DoSGS (MV& X, MV& Y) const
 {
   using Teuchos::Array;
   using Teuchos::ArrayRCP;
@@ -751,8 +937,17 @@ BlockRelaxation<MatrixType,ContainerType>::DoSGS (MV& X, MV& Y) const
   const size_t NumVectors = X.getNumVectors();
   Array<scalar_type> Values;
   Array<local_ordinal_type> Indices;
-  Values.resize(Length);
   Indices.resize(Length);
+
+  if(hasBlockCrsMatrix_)
+  {
+    Teuchos::RCP<const block_crs_matrix_type> A_bcrs =
+      Teuchos::rcp_dynamic_cast<const block_crs_matrix_type> (A_);
+    int bs = A_bcrs->getBlockSize();
+    Values.resize (bs*bs*Length);
+  }
+  else
+    Values.resize (Length);
 
   // an additonal vector is needed by parallel computations
   // (note that applications through Ifpack2_AdditiveSchwarz
@@ -782,7 +977,7 @@ BlockRelaxation<MatrixType,ContainerType>::DoSGS (MV& X, MV& Y) const
 
   // Forward Sweep
   for (local_ordinal_type i = 0; i < NumLocalBlocks_; ++i) {
-    if( Partitioner_->numRowsInPart (i) != 1 ) {
+    if( Partitioner_->numRowsInPart (i) != 1 || hasBlockCrsMatrix_) {
       if (Containers_[i]->getNumRows () == 0) {
         continue; // Skip empty partitions
       }
@@ -800,10 +995,27 @@ BlockRelaxation<MatrixType,ContainerType>::DoSGS (MV& X, MV& Y) const
           ArrayView<scalar_type>      y2_local = (y2_ptr())[m]();
           ArrayView<scalar_type>       r_local = (residual_ptr())[m]();
 
-          r_local[LID] = x_local[LID];
-          for (size_t k = 0 ; k < NumEntries ; k++) {
-            local_ordinal_type col = Indices[k];
-            r_local[LID] -= Values[k] * y2_local[col];
+          if(hasBlockCrsMatrix_) {
+            Teuchos::RCP<const block_crs_matrix_type> A_bcrs =
+                  Teuchos::rcp_dynamic_cast<const block_crs_matrix_type> (A_);
+            int bs = A_bcrs->getBlockSize();
+            for (int localR = 0; localR < bs; localR++)
+              r_local[LID*bs+localR] = x_local[LID*bs+localR];
+            for (size_t k = 0; k < NumEntries; ++k) {
+              const local_ordinal_type col = Indices[k];
+              for (int localR = 0; localR < bs; localR++) {
+                for(int localC = 0; localC < bs; localC++) {
+                  r_local[LID*bs+localR] -= Values[k*bs*bs+localR+localC*bs] * y2_local[col*bs+localC];
+                }
+              }
+            }
+          }
+          else {
+            r_local[LID] = x_local[LID];
+            for (size_t k = 0 ; k < NumEntries ; k++) {
+              local_ordinal_type col = Indices[k];
+              r_local[LID] -= Values[k] * y2_local[col];
+            }
           }
         }
       }
@@ -822,7 +1034,8 @@ BlockRelaxation<MatrixType,ContainerType>::DoSGS (MV& X, MV& Y) const
     }
     else { // singleton, can't access Containers_[i] as it was never filled and may be null.
       local_ordinal_type LRID  = (*Partitioner_)(i,0);  // by definition, a singleton 1 row in block.
-      Teuchos::ArrayView< const scalar_type > Diag   = DiagRCP();
+      getMatDiag();
+      Teuchos::ArrayRCP< const scalar_type > Diag   = DiagRCP_->getData();
       scalar_type d = Diag[LRID];
       for(unsigned int nv = 0;nv < NumVectors ; ++nv ) {
         Teuchos::ArrayRCP< const scalar_type > xRCP = X.getData(nv);
@@ -843,7 +1056,7 @@ BlockRelaxation<MatrixType,ContainerType>::DoSGS (MV& X, MV& Y) const
   // i--" will loop forever if local_ordinal_type is unsigned, because
   // unsigned integers are (trivially) always nonnegative.
   for (local_ordinal_type i = NumLocalBlocks_; i > 0; --i) {
-    if( Partitioner_->numRowsInPart (i) != 1 ) {
+    if( hasBlockCrsMatrix_ || Partitioner_->numRowsInPart (i) != 1 ) {
       if (Containers_[i-1]->getNumRows () == 0) continue;
 
       // update from previous block
@@ -860,10 +1073,27 @@ BlockRelaxation<MatrixType,ContainerType>::DoSGS (MV& X, MV& Y) const
           ArrayView<scalar_type>      y2_local = (y2_ptr())[m]();
           ArrayView<scalar_type>       r_local = (residual_ptr())[m]();
 
-          r_local [LID] = x_local[LID];
-          for (size_t k = 0; k < NumEntries; ++k)  {
-            local_ordinal_type col = Indices[k];
-            r_local[LID] -= Values[k] * y2_local[col];
+          if(hasBlockCrsMatrix_) {
+            Teuchos::RCP<const block_crs_matrix_type> A_bcrs =
+                  Teuchos::rcp_dynamic_cast<const block_crs_matrix_type> (A_);
+            int bs = A_bcrs->getBlockSize();
+            for (int localR = 0; localR < bs; localR++)
+              r_local[LID*bs+localR] = x_local[LID*bs+localR];
+            for (size_t k = 0; k < NumEntries; ++k) {
+              const local_ordinal_type col = Indices[k];
+              for (int localR = 0; localR < bs; localR++) {
+                for(int localC = 0; localC < bs; localC++) {
+                  r_local[LID*bs+localR] -= Values[k*bs*bs+localR+localC*bs] * y2_local[col*bs+localC];
+                }
+              }
+            }
+          }
+          else {
+            r_local [LID] = x_local[LID];
+            for (size_t k = 0; k < NumEntries; ++k)  {
+              local_ordinal_type col = Indices[k];
+              r_local[LID] -= Values[k] * y2_local[col];
+            }
           }
         }
       }
@@ -886,18 +1116,34 @@ BlockRelaxation<MatrixType,ContainerType>::DoSGS (MV& X, MV& Y) const
   // Attention: this is delicate... Not all combinations
   // of Y2 and Y will always work (though for ML it should be ok)
   if (IsParallel_) {
-    for (size_t m = 0; m < NumVectors; ++m) {
-      ArrayView<scalar_type>       y_local = (y_ptr())[m]();
-      ArrayView<scalar_type>      y2_local = (y2_ptr())[m]();
-      for (size_t i = 0 ; i < NumMyRows_ ; ++i) {
-        y_local[i] = y2_local[i];
+    if(hasBlockCrsMatrix_) {
+      Teuchos::RCP<const block_crs_matrix_type> A_bcrs =
+            Teuchos::rcp_dynamic_cast<const block_crs_matrix_type> (A_);
+      int bs = A_bcrs->getBlockSize();
+      for (size_t m = 0; m < NumVectors; ++m) {
+        ArrayView<scalar_type> y2_local = (y2_ptr())[m]();
+        ArrayView<scalar_type> y_local = (y_ptr())[m]();
+        for (size_t i = 0; i < NumMyRows_*bs; ++i) {
+          y_local[i] = y2_local[i];
+        }
+      }
+    }
+    else {
+      for (size_t m = 0; m < NumVectors; ++m) {
+        ArrayView<scalar_type> y2_local = (y2_ptr())[m]();
+        ArrayView<scalar_type> y_local = (y_ptr())[m]();
+        for (size_t i = 0; i < NumMyRows_; ++i) {
+          y_local[i] = y2_local[i];
+        }
       }
     }
   }
 }
 
 template<class MatrixType, class ContainerType>
-std::string BlockRelaxation<MatrixType,ContainerType>::description () const
+std::string
+BlockRelaxation<MatrixType,ContainerType>::
+description () const
 {
   std::ostringstream out;
 
@@ -940,10 +1186,11 @@ std::string BlockRelaxation<MatrixType,ContainerType>::description () const
   return out.str();
 }
 
-
 template<class MatrixType,class ContainerType>
-void BlockRelaxation<MatrixType,ContainerType>::
-describe (Teuchos::FancyOStream &out, const Teuchos::EVerbosityLevel verbLevel) const
+void
+BlockRelaxation<MatrixType,ContainerType>::
+describe (Teuchos::FancyOStream& out,
+          const Teuchos::EVerbosityLevel verbLevel) const
 {
   using std::endl;
   using std::setw;
@@ -1013,6 +1260,18 @@ describe (Teuchos::FancyOStream &out, const Teuchos::EVerbosityLevel verbLevel) 
   }
 }
 
+
+template<class MatrixType,class ContainerType>
+void
+BlockRelaxation<MatrixType,ContainerType>::getMatDiag () const
+{
+  // TODO amk: Is this map correct for BlockCRSMatrix?
+  if(DiagRCP_ == Teuchos::null) {
+    DiagRCP_ = Teuchos::rcp(new vector_type(A_->getDomainMap ()));
+    A_->getLocalDiagCopy (*DiagRCP_);
+  }
+}
+
 }//namespace Ifpack2
 
 
@@ -1025,7 +1284,6 @@ describe (Teuchos::FancyOStream &out, const Teuchos::EVerbosityLevel verbLevel) 
 #include "Ifpack2_BandedContainer_decl.hpp"
 #include "Ifpack2_ILUT_decl.hpp"
 
-// FIXME (mfh 16 Sep 2014) We should really only use RowMatrix here!
 // There's no need to instantiate for CrsMatrix too.  All Ifpack2
 // preconditioners can and should do dynamic casts if they need a type
 // more specific than RowMatrix.
@@ -1054,32 +1312,7 @@ describe (Teuchos::FancyOStream &out, const Teuchos::EVerbosityLevel verbLevel) 
     Tpetra::RowMatrix<S, LO, GO, N>, \
     Ifpack2::BandedContainer<        \
       Tpetra::RowMatrix<S, LO, GO, N>, \
-      S > >; \
-  template \
-  class Ifpack2::BlockRelaxation<      \
-    Tpetra::CrsMatrix<S, LO, GO, N>, \
-    Ifpack2::SparseContainer<       \
-      Tpetra::CrsMatrix<S, LO, GO, N>, \
-      Ifpack2::ILUT< ::Tpetra::CrsMatrix<S,LO,GO,N> > > >; \
-  template \
-  class Ifpack2::BlockRelaxation<      \
-    Tpetra::CrsMatrix<S, LO, GO, N>, \
-    Ifpack2::DenseContainer<        \
-      Tpetra::CrsMatrix<S, LO, GO, N>, \
-      S > >; \
-  template \
-  class Ifpack2::BlockRelaxation<      \
-    Tpetra::CrsMatrix<S, LO, GO, N>, \
-    Ifpack2::TriDiContainer<        \
-      Tpetra::CrsMatrix<S, LO, GO, N>, \
-      S > >; \
-  template \
-  class Ifpack2::BlockRelaxation<      \
-    Tpetra::CrsMatrix<S, LO, GO, N>, \
-    Ifpack2::BandedContainer<        \
-      Tpetra::CrsMatrix<S, LO, GO, N>, \
       S > >;
-
 
 #endif // HAVE_IFPACK2_EXPLICIT_INSTANTIATION
 

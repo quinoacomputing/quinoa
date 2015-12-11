@@ -214,11 +214,11 @@ int main(int argc, char *argv[]) {
     // Print relative residual norm
     //
 
-    Teuchos::ScalarTraits<SC>::magnitudeType residualNorms = Utils::ResidualNorm(*A, *X, *B)[0];
+    Teuchos::ScalarTraits<SC>::magnitudeType residualNorms = Utilities::ResidualNorm(*A, *X, *B)[0];
     if (comm->getRank() == 0) {
-      std::ios::fmtflags f(cout.flags());
+      std::ios::fmtflags f(std::cout.flags());
       std::cout << "||Residual|| = " << std::setiosflags(std::ios::fixed) << std::setprecision(20) << residualNorms << std::endl;
-       cout.flags(f);
+       std::cout.flags(f);
     }
 
     success = true;

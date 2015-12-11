@@ -226,6 +226,8 @@ void test_left_0()
   typedef Kokkos::View< int [2][3][4][5][2][3][4][5] , Kokkos::LayoutLeft , Space >
     view_static_8_type ;
 
+  if(Kokkos::Impl::VerifyExecutionCanAccessMemorySpace<Kokkos::HostSpace,Space>::value) {
+
   view_static_8_type  x_static_8("x_static_left_8");
 
   ASSERT_TRUE( x_static_8.is_contiguous() );
@@ -278,6 +280,8 @@ void test_left_0()
   for ( int i3 = 0 ; i3 < (int) sx4.dimension_3() ; ++i3 ) {
     ASSERT_TRUE( & sx4(i0,i1,i2,i3) == & x_static_8(0,0+i0, 1,1+i1, 1,0+i2, 2,2+i3) );
   }
+
+  }
 }
 
 template< class Space >
@@ -285,6 +289,8 @@ void test_left_1()
 {
   typedef Kokkos::View< int ****[2][3][4][5] , Kokkos::LayoutLeft , Space >
     view_type ;
+
+  if(Kokkos::Impl::VerifyExecutionCanAccessMemorySpace<Kokkos::HostSpace,Space>::value) {
 
   view_type  x8("x_left_8",2,3,4,5);
 
@@ -338,12 +344,16 @@ void test_left_1()
   for ( int i3 = 0 ; i3 < (int) sx4.dimension_3() ; ++i3 ) {
     ASSERT_TRUE( & sx4(i0,i1,i2,i3) == & x8(0,0+i0, 1,1+i1, 1,0+i2, 2,2+i3) );
   }
+
+  }
 }
 
 template< class Space >
 void test_left_2()
 {
   typedef Kokkos::View< int **** , Kokkos::LayoutLeft , Space > view_type ;
+
+  if(Kokkos::Impl::VerifyExecutionCanAccessMemorySpace<Kokkos::HostSpace,Space>::value) {
 
   view_type  x4("x4",2,3,4,5);
 
@@ -398,12 +408,16 @@ void test_left_2()
   for ( int i3 = 0 ; i3 < (int) sx4.dimension_3() ; ++i3 ) {
     ASSERT_TRUE( & sx4(i0,i1,i2,i3) == & x4( 1+i0, 1+i1, 0+i2, 2+i3 ) );
   }
+
+  }
 }
 
 template< class Space >
 void test_left_3()
 {
   typedef Kokkos::View< int ** , Kokkos::LayoutLeft , Space > view_type ;
+
+  if(Kokkos::Impl::VerifyExecutionCanAccessMemorySpace<Kokkos::HostSpace,Space>::value) {
 
   view_type  xm("x4",10,5);
 
@@ -451,6 +465,8 @@ void test_left_3()
 
   ASSERT_TRUE( x2_n2.dimension_0() == xm.dimension_0() );
   ASSERT_TRUE( x2_n2.dimension_1() == 0 );
+
+  }
 }
 
 //----------------------------------------------------------------------------
@@ -461,6 +477,8 @@ void test_right_0()
   typedef Kokkos::View< int [2][3][4][5][2][3][4][5] , Kokkos::LayoutRight , Space >
     view_static_8_type ;
 
+  if(Kokkos::Impl::VerifyExecutionCanAccessMemorySpace<Kokkos::HostSpace,Space>::value) {
+
   view_static_8_type  x_static_8("x_static_right_8");
 
   Kokkos::View<int,Kokkos::LayoutRight,Space> x0 = Kokkos::subview( x_static_8 , 0, 0, 0, 0, 0, 0, 0, 0 );
@@ -470,6 +488,7 @@ void test_right_0()
   Kokkos::View<int*,Kokkos::LayoutRight,Space> x1 =
     Kokkos::subview( x_static_8, 0, 1, 2, 3, 0, 1, 2, Kokkos::pair<int,int>(1,3) );
 
+  ASSERT_TRUE( x1.dimension_0() == 2 );
   ASSERT_TRUE( & x1(0) == & x_static_8(0,1,2,3,0,1,2,1) );
   ASSERT_TRUE( & x1(1) == & x_static_8(0,1,2,3,0,1,2,2) );
 
@@ -477,6 +496,8 @@ void test_right_0()
     Kokkos::subview( x_static_8, 0, 1, 2, Kokkos::pair<int,int>(1,3)
                                , 0, 1, 2, Kokkos::pair<int,int>(1,3) );
 
+  ASSERT_TRUE( x2.dimension_0() == 2 );
+  ASSERT_TRUE( x2.dimension_1() == 2 );
   ASSERT_TRUE( & x2(0,0) == & x_static_8(0,1,2,1,0,1,2,1) );
   ASSERT_TRUE( & x2(1,0) == & x_static_8(0,1,2,2,0,1,2,1) );
   ASSERT_TRUE( & x2(0,1) == & x_static_8(0,1,2,1,0,1,2,2) );
@@ -487,6 +508,8 @@ void test_right_0()
     Kokkos::subview( x_static_8, 1, Kokkos::pair<int,int>(0,2), 2, 3
                                , Kokkos::pair<int,int>(0,2), 1, 2, 3 );
 
+  ASSERT_TRUE( sx2.dimension_0() == 2 );
+  ASSERT_TRUE( sx2.dimension_1() == 2 );
   ASSERT_TRUE( & sx2(0,0) == & x_static_8(1,0,2,3,0,1,2,3) );
   ASSERT_TRUE( & sx2(1,0) == & x_static_8(1,1,2,3,0,1,2,3) );
   ASSERT_TRUE( & sx2(0,1) == & x_static_8(1,0,2,3,1,1,2,3) );
@@ -499,11 +522,17 @@ void test_right_0()
                                , 2, Kokkos::pair<int,int>(2,4) /* of [5] */
                    );
 
+  ASSERT_TRUE( sx4.dimension_0() == 2 );
+  ASSERT_TRUE( sx4.dimension_1() == 2 );
+  ASSERT_TRUE( sx4.dimension_2() == 2 );
+  ASSERT_TRUE( sx4.dimension_3() == 2 );
   for ( int i0 = 0 ; i0 < (int) sx4.dimension_0() ; ++i0 )
   for ( int i1 = 0 ; i1 < (int) sx4.dimension_1() ; ++i1 )
   for ( int i2 = 0 ; i2 < (int) sx4.dimension_2() ; ++i2 )
   for ( int i3 = 0 ; i3 < (int) sx4.dimension_3() ; ++i3 ) {
     ASSERT_TRUE( & sx4(i0,i1,i2,i3) == & x_static_8(0, 0+i0, 1, 1+i1, 1, 0+i2, 2, 2+i3) );
+  }
+
   }
 }
 
@@ -512,6 +541,8 @@ void test_right_1()
 {
   typedef Kokkos::View< int ****[2][3][4][5] , Kokkos::LayoutRight , Space >
     view_type ;
+
+  if(Kokkos::Impl::VerifyExecutionCanAccessMemorySpace<Kokkos::HostSpace,Space>::value) {
 
   view_type  x8("x_right_8",2,3,4,5);
 
@@ -557,12 +588,16 @@ void test_right_1()
   for ( int i3 = 0 ; i3 < (int) sx4.dimension_3() ; ++i3 ) {
     ASSERT_TRUE( & sx4(i0,i1,i2,i3) == & x8(0,0+i0, 1,1+i1, 1,0+i2, 2,2+i3) );
   }
+
+  }
 }
 
 template< class Space >
 void test_right_3()
 {
   typedef Kokkos::View< int ** , Kokkos::LayoutRight , Space > view_type ;
+
+  if(Kokkos::Impl::VerifyExecutionCanAccessMemorySpace<Kokkos::HostSpace,Space>::value) {
 
   view_type  xm("x4",10,5);
 
@@ -610,6 +645,8 @@ void test_right_3()
 
   ASSERT_TRUE( x2_n2.dimension_0() == xm.dimension_0() );
   ASSERT_TRUE( x2_n2.dimension_1() == 0 );
+
+  }
 }
 
 //----------------------------------------------------------------------------

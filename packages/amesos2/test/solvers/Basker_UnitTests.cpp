@@ -65,6 +65,11 @@
 //#include "Amesos2_Basker_decl.hpp"
 //#include "Amesos2_Basker_def.hpp"
 
+//#ifdef SHYLUBASKER
+//#pragma message("FLAG EXISTS")
+//#endif
+
+
 namespace {
 
   using std::cout;
@@ -119,8 +124,8 @@ namespace {
     clp.setOption("filedir",&filedir,"Directory of matrix files.");
     clp.addOutputSetupOptions(true);
     clp.setOption("test-mpi", "test-serial", &testMpi,
-		  "Test MPI by default or force serial test.  In a serial build,"
-		  " this option is ignored and a serial comm is always used." );
+                  "Test MPI by default or force serial test.  In a serial build,"
+                  " this option is ignored and a serial comm is always used." );
   }
 
   RCP<const Comm<int> > getDefaultComm()
@@ -303,6 +308,8 @@ namespace {
 
     Xhat->randomize();
     Xhat->describe(*(getDefaultOStream()), Teuchos::VERB_EXTREME);
+    X->describe(*(getDefaultOStream()), Teuchos::VERB_EXTREME);
+    B->describe(*(getDefaultOStream()), Teuchos::VERB_EXTREME);
 
 
     // Solve A*Xhat = B for Xhat using the Bakser solver
@@ -413,8 +420,8 @@ namespace {
 
     for( it = xValues.begin(); it != xValues.end(); ++it ){
       if( rngmap->isNodeGlobalElement( (*it).first ) ){
-	out << "replacing global row " << (*it).first << " with " << (*it).second << std::endl;
-	X->replaceGlobalValue( (*it).first, 0, (*it).second );
+        out << "replacing global row " << (*it).first << " with " << (*it).second << std::endl;
+        X->replaceGlobalValue( (*it).first, 0, (*it).second );
       }
     }
 
@@ -429,8 +436,8 @@ namespace {
 
     for( it = bValues.begin(); it != bValues.end(); ++it ){
       if( rngmap->isNodeGlobalElement( (*it).first ) ){
-	out << "replacing global row " << (*it).first << " with " << (*it).second << std::endl;
-	B->replaceGlobalValue( (*it).first, 0, (*it).second );
+        out << "replacing global row " << (*it).first << " with " << (*it).second << std::endl;
+        B->replaceGlobalValue( (*it).first, 0, (*it).second );
       }
     }
 
@@ -557,42 +564,47 @@ namespace {
   /*
    * Instantiations
    */
-#ifdef HAVE_TEUCHOS_COMPLEX
-#  define UNIT_TEST_GROUP_ORDINAL_COMPLEX_SCALAR(LO, GO, SCALAR)	\
+
+#if defined(HAVE_TEUCHOS_COMPLEX) && !defined(SHYLUBASKER)
+  //#ifndef SHYLUBASKER
+#pragma message("T COMPLEX");
+
+#  define UNIT_TEST_GROUP_ORDINAL_COMPLEX_SCALAR(LO, GO, SCALAR)        \
   typedef std::complex<SCALAR>  Complex##SCALAR;                        \
   TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT( Basker, Initialization, Complex##SCALAR, LO, GO ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT( Basker, SymbolicFactorization, Complex##SCALAR, LO, GO ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT( Basker, NumericFactorization, Complex##SCALAR, LO, GO ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT( Basker, ComplexSolve, SCALAR, LO, GO) \
   TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT( Basker, ComplexSolve2, SCALAR, LO, GO)
-  
+
 #  ifdef HAVE_TPETRA_INST_COMPLEX_FLOAT
 #  define UNIT_TEST_GROUP_ORDINAL_COMPLEX_FLOAT(LO, GO) \
   UNIT_TEST_GROUP_ORDINAL_COMPLEX_SCALAR(LO, GO, float)
 #  else
 #  define UNIT_TEST_GROUP_ORDINAL_COMPLEX_FLOAT(LO, GO)
-#  endif
+#  endif//end have complex_flox
 
 #  ifdef HAVE_TPETRA_INST_COMPLEX_DOUBLE
 #  define UNIT_TEST_GROUP_ORDINAL_COMPLEX_DOUBLE(LO, GO)        \
   UNIT_TEST_GROUP_ORDINAL_COMPLEX_SCALAR(LO, GO, double)
 #  else
 #  define UNIT_TEST_GROUP_ORDINAL_COMPLEX_DOUBLE(LO, GO)
-#  endif
-
+#  endif//end complex_double
+       //#endif //SHYLUBASKER
 #else  // !(defined HAVE_TEUCHOS_COMPLEX
 #  define UNIT_TEST_GROUP_ORDINAL_COMPLEX_FLOAT(LO, GO)
 #  define UNIT_TEST_GROUP_ORDINAL_COMPLEX_DOUBLE(LO, GO)
 #endif
+  //#endif
 
 #ifdef HAVE_TPETRA_INST_FLOAT
-#  define UNIT_TEST_GROUP_ORDINAL_FLOAT( LO, GO )	\
+#  define UNIT_TEST_GROUP_ORDINAL_FLOAT( LO, GO )       \
   UNIT_TEST_GROUP_ORDINAL_SCALAR( LO, GO, float )
 #else
 #  define UNIT_TEST_GROUP_ORDINAL_FLOAT( LO, GO )
 #endif
 #ifdef HAVE_TPETRA_INST_DOUBLE
-#  define UNIT_TEST_GROUP_ORDINAL_DOUBLE( LO, GO )	\
+#  define UNIT_TEST_GROUP_ORDINAL_DOUBLE( LO, GO )      \
   UNIT_TEST_GROUP_ORDINAL_SCALAR( LO, GO, double )
 #else
 #  define UNIT_TEST_GROUP_ORDINAL_DOUBLE( LO, GO )
@@ -603,38 +615,59 @@ namespace {
   // #define FAST_DEVELOPMENT_UNIT_TEST_BUILD
   //TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT( KLU2, SolveTrans, SCALAR, LO, GO )
 
+#ifdef SHYLUBASKER
+
+#define UNIT_TEST_GROUP_ORDINAL_SCALAR( LO, GO, SCALAR )                \
+  TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT( Basker, NumericFactorization, SCALAR, LO, GO ) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT( Basker, Solve, SCALAR, LO, GO )
+
+
+
+
+#else
+
 #define UNIT_TEST_GROUP_ORDINAL_SCALAR( LO, GO, SCALAR )                \
   TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT( Basker, Initialization, SCALAR, LO, GO ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT( Basker, SymbolicFactorization, SCALAR, LO, GO ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT( Basker, NumericFactorization, SCALAR, LO, GO ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT( Basker, Solve, SCALAR, LO, GO )
 
+#endif
 
 #define UNIT_TEST_GROUP_ORDINAL( ORDINAL )              \
   UNIT_TEST_GROUP_ORDINAL_ORDINAL( ORDINAL, ORDINAL )
 
 #ifdef FAST_DEVELOPMENT_UNIT_TEST_BUILD
-#  define UNIT_TEST_GROUP_ORDINAL_ORDINAL( LO, GO )	\
+#  define UNIT_TEST_GROUP_ORDINAL_ORDINAL( LO, GO )     \
   UNIT_TEST_GROUP_ORDINAL_SCALAR( LO, GO, double)       \
   UNIT_TEST_GROUP_ORDINAL(int)
 
 #else // not FAST_DEVELOPMENT_UNIT_TEST_BUILD
 
-#  define UNIT_TEST_GROUP_ORDINAL_ORDINAL( LO, GO )	\
-  UNIT_TEST_GROUP_ORDINAL_FLOAT(LO, GO)			\
-  UNIT_TEST_GROUP_ORDINAL_DOUBLE(LO, GO)		\
+#  define UNIT_TEST_GROUP_ORDINAL_ORDINAL( LO, GO )     \
+  UNIT_TEST_GROUP_ORDINAL_FLOAT(LO, GO)                 \
+  UNIT_TEST_GROUP_ORDINAL_DOUBLE(LO, GO)                \
   UNIT_TEST_GROUP_ORDINAL_COMPLEX_DOUBLE(LO,GO)
 
+  //Add JDB (10-19-215)
+#ifndef HAVE_AMESOS2_EXPLICIT_INSTANTIATION
   UNIT_TEST_GROUP_ORDINAL(int)
-
-#  ifndef HAVE_AMESOS2_EXPLICIT_INSTANTIATION
   typedef long int LongInt;
   UNIT_TEST_GROUP_ORDINAL_ORDINAL( int, LongInt )
-#    ifdef HAVE_TEUCHOS_LONG_LONG_INT
+  #ifdef HAVE_TPETRA_INT_LONG_LONG
   typedef long long int LongLongInt;
   UNIT_TEST_GROUP_ORDINAL_ORDINAL( int, LongLongInt )
-#    endif
-#  endif  // EXPL-INST
+  #endif
+#else  //ETI
+  #ifdef HAVE_TPETRA_INST_INT_INT
+  UNIT_TEST_GROUP_ORDINAL(int)
+  #endif
+  #ifdef HAVE_TPETRA_INST_INT_LONG
+  typedef long int LongInt;
+  UNIT_TEST_GROUP_ORDINAL_ORDINAL(int,LongInt)
+  #endif
+#endif  // EXPL-INST
+
 
 #endif // FAST_DEVELOPMENT_UNIT_TEST_BUILD
 

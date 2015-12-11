@@ -18,6 +18,8 @@
 
 #cmakedefine HAVE_MUELU_BOOST_FOR_REAL
 
+#cmakedefine HAVE_MUELU_KOKKOS_REFACTOR
+
 /* Optional Dependencies */
 
 #cmakedefine HAVE_MUELU_AMESOS
@@ -48,6 +50,9 @@
 
 #cmakedefine HAVE_MUELU_TPETRA
 
+/* Whether Tpetra is enabled with LocalOrdinal = int and GlobalOrdinal = int */
+#cmakedefine HAVE_MUELU_TPETRA_INST_INT_INT
+
 #cmakedefine HAVE_MUELU_STRATIMIKOS
 
 #cmakedefine HAVE_MUELU_ZOLTAN
@@ -63,4 +68,20 @@
 #cmakedefine HAVE_MUELU_MATLAB
 
 #cmakedefine HAVE_MUELU_AMGX
+
+#cmakedefine HAVE_MUELU_CGAL
+
+/* Flags for active Tpetra nodes if Tpetra is enabled */
+#cmakedefine HAVE_MUELU_SERIAL
+#cmakedefine HAVE_MUELU_PTHREAD
+#cmakedefine HAVE_MUELU_OPENMP
+#cmakedefine HAVE_MUELU_CUDA
+
+/*  
+ If deprecated warnings are on, and the compiler supports them, then
+ define MUELU_DEPRECATED to emit deprecated warnings.  Otherwise,
+ give it an empty definition.
+*/
+@MUELU_DEPRECATED_DECLARATIONS@
+
 #endif /* MUELU_CONFIG_HPP */

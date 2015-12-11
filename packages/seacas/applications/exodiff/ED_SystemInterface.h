@@ -56,7 +56,6 @@ class SystemInterface
   
   void Parse_Command_File();
   void Set_Max_Names(int size);
-  void allocateNames();
   
   // Program parameters.
   bool quiet_flag;        // By default, warnings and other info is produced
@@ -91,7 +90,8 @@ class SystemInterface
   bool show_unmatched;       // Show elements not matched in partial mode
   bool noSymmetricNameCheck; // By default, the second file's variable
   bool allowNameMismatch;    // By default, name in 1st db must be in second also.
-  bool doNorms;
+  bool doL2Norm;
+  bool doL1Norm;
   bool pedantic;             // Be most picky on what is different (not fully picky yet)
   
   bool interpolating;        // Interpolate times on file2 to match times on file1;

@@ -57,6 +57,7 @@ namespace ROL {
 template<class Real>
 class TruncatedCG : public TrustRegion<Real> {
 private:
+  Teuchos::RCP<Vector<Real> > primalVector_;
 
   Teuchos::RCP<Vector<Real> > s_;
   Teuchos::RCP<Vector<Real> > g_;
@@ -75,13 +76,16 @@ public:
   // Constructor
   TruncatedCG( Teuchos::ParameterList &parlist ) : TrustRegion<Real>(parlist), pRed_(0.0) {
     // Unravel Parameter List
-    maxit_ = parlist.get("Maximum Number of Krylov Iterations", 20);
-    tol1_  = parlist.get("Absolute Krylov Tolerance",           1.e-4);
-    tol2_  = parlist.get("Relative Krylov Tolerance",           1.e-2);
+    maxit_ = parlist.sublist("General").sublist("Krylov").get("Iteration Limit",20);
+    tol1_  = parlist.sublist("General").sublist("Krylov").get("Absolute Tolerance",1.e-4);
+    tol2_  = parlist.sublist("General").sublist("Krylov").get("Relative Tolerance",1.e-2);
   }
 
   void initialize( const Vector<Real> &x, const Vector<Real> &s, const Vector<Real> &g) {
     TrustRegion<Real>::initialize(x,s,g);
+
+    primalVector_ = x.clone();
+
     s_ = s.clone();
     g_ = g.clone();
     v_ = s.clone();
@@ -94,31 +98,31 @@ public:
     Real tol = std::sqrt(ROL_EPSILON);
     const Real gtol = std::min(tol1_,tol2_*gnorm);
 
-    // Old and New Step Vectors
-    s.zero(); 
-    snorm = 0.0;
-    Real snorm2  = 0.0;
-    s_->zero();
-    Real s1norm2 = 0.0;
-
     // Gradient Vector
     g_->set(grad);
     Real normg = gnorm;
     if ( pObj.isConActivated() ) {
-      pObj.pruneActive(*g_,grad,x);
+      primalVector_->set(grad.dual());
+      pObj.pruneActive(*primalVector_,grad.dual(),x);
+      g_->set(primalVector_->dual());
       normg = g_->norm();
     }
 
+    // Old and New Step Vectors
+    s.zero(); s_->zero();
+    snorm = 0.0;
+    Real snorm2  = 0.0, s1norm2 = 0.0;
+
     // Preconditioned Gradient Vector
     //pObj.precond(*v,*g,x,tol);
-    pObj.reducedPrecond(*v_,*g_,x,grad,x,tol);
+    pObj.reducedPrecond(*v_,*g_,x,grad.dual(),x,tol);
 
     // Basis Vector
-    p_->set(*v_); 
+    p_->set(*v_);
     p_->scale(-1.0);
     Real pnorm2 = v_->dot(g_->dual());
 
-    iter        = 0; 
+    iter        = 0;
     iflag       = 0;
     Real kappa  = 0.0;
     Real beta   = 0.0; 
@@ -131,7 +135,7 @@ public:
 
     for (iter = 0; iter < maxit_; iter++) {
       //pObj.hessVec(*Hp,*p,x,tol);
-      pObj.reducedHessVec(*Hp_,*p_,x,grad,x,tol);
+      pObj.reducedHessVec(*Hp_,*p_,x,grad.dual(),x,tol);
 
       kappa = p_->dot(Hp_->dual());
       if (kappa <= 0.0) {
@@ -165,7 +169,7 @@ public:
       }
 
       //pObj.precond(*v,*g,x,tol);
-      pObj.reducedPrecond(*v_,*g_,x,grad,x,tol);
+      pObj.reducedPrecond(*v_,*g_,x,grad.dual(),x,tol);
       tmp   = gv; 
       gv    = v_->dot(g_->dual());
       beta  = gv/tmp;    

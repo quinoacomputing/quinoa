@@ -53,11 +53,9 @@
 #include "Phalanx_config.hpp"
 #include "Phalanx_Print_Utilities.hpp"
 
-#ifdef Phalanx_ENABLE_Intrepid
-#include "Intrepid_config.h" // for HAVE_INTREPID_KOKKOSCORE define
-#ifdef HAVE_INTREPID_KOKKOSCORE
-#include "KokkosRank.hpp"
-#endif
+#ifdef Phalanx_ENABLE_IntrepidIntrepid2
+#include "Intrepid2_config.h" // for HAVE_INTREPID_KOKKOSCORE define
+#include "Intrepid2_KokkosRank.hpp"
 #endif
 
 //**********************************************************************
@@ -380,26 +378,26 @@ template<typename DataT,
 	 typename Tag0,typename Tag1, typename Tag2, typename Tag3,
 	 typename Tag4,typename Tag5, typename Tag6, typename Tag7>
 void PHX::MDField<DataT,Tag0,Tag1,Tag2,Tag3,Tag4,Tag5,Tag6,Tag7>::
-setFieldData(const boost::any& a)
+setFieldData(const PHX::any& a)
 { 
 #if defined( PHX_DEBUG) && !defined (__CUDA_ARCH__ )
   TEUCHOS_TEST_FOR_EXCEPTION(!m_tag_set, std::logic_error, m_field_tag_error_msg);
   m_data_set = true;
 #endif
 
-  // Boost any object is always the non-const data type.  To correctly
-  // cast the boost any object to the Kokkos::View, need to pull the
-  // const off the scalar type if this MDField has a const scalar type.
+  // any object is always the non-const data type.  To correctly cast
+  // the any object to the Kokkos::View, need to pull the const off
+  // the scalar type if this MDField has a const scalar type.
   typedef Kokkos::View<typename array_type::non_const_array_intrinsic_type,PHX::Device> non_const_view;
   try {
-    non_const_view tmp = boost::any_cast<non_const_view>(a);
+    non_const_view tmp = PHX::any_cast<non_const_view>(a);
     m_field_data = tmp;
   }
   catch (std::exception& e) {
-    std::cout << "\n\nError in compiletime PHX::MDField::setFieldData() in boost::any_cast. Tried to cast the field \"" 
+    std::cout << "\n\nError in compiletime PHX::MDField::setFieldData() in PHX::any_cast. Tried to cast the field \"" 
 	      << this->fieldTag().name()  << "\" with the identifier \"" << this->fieldTag().identifier() 
 	      << "\" to a type of \"" << Teuchos::demangleName(typeid(non_const_view).name()) 
-	      << "\" from a boost::any object containing a type of \"" 
+	      << "\" from a PHX::any object containing a type of \"" 
 	      << Teuchos::demangleName(a.type().name()) << "\"." << std::endl;
     throw;
   }
@@ -821,7 +819,7 @@ unsigned PHX::getSacadoSize(const Kokkos::View<T,L,D,M,Kokkos::Impl::ViewSpecial
 //**********************************************************************
 template<typename DataT>
 void PHX::MDField<DataT,void,void,void,void,void,void,void,void>::
-setFieldData(const boost::any& a)
+setFieldData(const PHX::any& a)
 { 
 #if defined( PHX_DEBUG) && !defined (__CUDA_ARCH__ )
   TEUCHOS_TEST_FOR_EXCEPTION(!m_tag_set, std::logic_error, m_field_tag_error_msg);
@@ -850,14 +848,14 @@ setFieldData(const boost::any& a)
   try {
 
     if (m_tag.dataLayout().rank() == 1) {
-      m_field_data1 = boost::any_cast<non_const_view1>(a);
+      m_field_data1 = PHX::any_cast<non_const_view1>(a);
       m_field_oned_view = array_oned_type(m_field_data1.ptr_on_device(),m_field_data1.size(),PHX::getSacadoSize(m_field_data1));
       m_dimension_rank_size(0) = m_field_data1.dimension_0();
       m_dimension_rank_size(7) = 1;
       m_dimension_rank_size(8) = m_field_data1.size();
     }
     else if (m_tag.dataLayout().rank() == 2) {
-      m_field_data2 = boost::any_cast<non_const_view2>(a);
+      m_field_data2 = PHX::any_cast<non_const_view2>(a);
       m_field_oned_view = array_oned_type(m_field_data2.ptr_on_device(),m_field_data2.size(),PHX::getSacadoSize(m_field_data2));
       m_dimension_rank_size(0) = m_field_data2.dimension_0();
       m_dimension_rank_size(1) = m_field_data2.dimension_1();
@@ -865,7 +863,7 @@ setFieldData(const boost::any& a)
       m_dimension_rank_size(8) = m_field_data2.size();
     }
     else if (m_tag.dataLayout().rank() == 3) {
-      m_field_data3 = boost::any_cast<non_const_view3>(a);
+      m_field_data3 = PHX::any_cast<non_const_view3>(a);
       m_field_oned_view = array_oned_type(m_field_data3.ptr_on_device(),m_field_data3.size(),PHX::getSacadoSize(m_field_data3));
       m_dimension_rank_size(0) = m_field_data3.dimension_0();
       m_dimension_rank_size(1) = m_field_data3.dimension_1();
@@ -874,7 +872,7 @@ setFieldData(const boost::any& a)
       m_dimension_rank_size(8) = m_field_data3.size();
     }
     else if (m_tag.dataLayout().rank() == 4) {
-      m_field_data4 = boost::any_cast<non_const_view4>(a);
+      m_field_data4 = PHX::any_cast<non_const_view4>(a);
       m_field_oned_view = array_oned_type(m_field_data4.ptr_on_device(),m_field_data4.size(),PHX::getSacadoSize(m_field_data4));
       m_dimension_rank_size(0) = m_field_data4.dimension_0();
       m_dimension_rank_size(1) = m_field_data4.dimension_1();
@@ -884,7 +882,7 @@ setFieldData(const boost::any& a)
       m_dimension_rank_size(8) = m_field_data4.size();
     }
     else if (m_tag.dataLayout().rank() == 5) {
-      m_field_data5 = boost::any_cast<non_const_view5>(a);
+      m_field_data5 = PHX::any_cast<non_const_view5>(a);
       m_field_oned_view = array_oned_type(m_field_data5.ptr_on_device(),m_field_data5.size(),PHX::getSacadoSize(m_field_data5));
       m_dimension_rank_size(0) = m_field_data5.dimension_0();
       m_dimension_rank_size(1) = m_field_data5.dimension_1();
@@ -895,7 +893,7 @@ setFieldData(const boost::any& a)
       m_dimension_rank_size(8) = m_field_data5.size();
     }
     else if (m_tag.dataLayout().rank() == 6) {
-      m_field_data6 = boost::any_cast<non_const_view6>(a);
+      m_field_data6 = PHX::any_cast<non_const_view6>(a);
       m_field_oned_view = array_oned_type(m_field_data6.ptr_on_device(),m_field_data6.size(),PHX::getSacadoSize(m_field_data6));
       m_dimension_rank_size(0) = m_field_data6.dimension_0();
       m_dimension_rank_size(1) = m_field_data6.dimension_1();
@@ -907,7 +905,7 @@ setFieldData(const boost::any& a)
       m_dimension_rank_size(8) = m_field_data6.size();
     }
     else if (m_tag.dataLayout().rank() == 7) {
-      m_field_data7 = boost::any_cast<non_const_view7>(a);
+      m_field_data7 = PHX::any_cast<non_const_view7>(a);
       m_field_oned_view = array_oned_type(m_field_data7.ptr_on_device(),m_field_data7.size(),PHX::getSacadoSize(m_field_data7));
       m_dimension_rank_size(0) = m_field_data7.dimension_0();
       m_dimension_rank_size(1) = m_field_data7.dimension_1();
@@ -946,10 +944,10 @@ setFieldData(const boost::any& a)
     else if (m_tag.dataLayout().rank() == 7)
       type_cast_name = Teuchos::demangleName(typeid(non_const_view7).name());
 
-    std::cout << "\n\nError in runtime PHX::MDField::setFieldData() in boost::any_cast. Tried to cast the field \"" 
+    std::cout << "\n\nError in runtime PHX::MDField::setFieldData() in PHX::any_cast. Tried to cast the field \"" 
 	      << this->fieldTag().name()  << "\" with the identifier \"" << this->fieldTag().identifier() 
 	      << "\" to a type of \"" << type_cast_name
-	      << "\" from a boost::any object containing a type of \"" 
+	      << "\" from a PHX::any object containing a type of \"" 
 	      << Teuchos::demangleName(a.type().name()) << "\"." << std::endl;
     throw;
   }
@@ -1041,46 +1039,52 @@ PHX::MDField<DataT,void,void,void,void,void,void,void,void>::
 V_Multiply(const MDFieldType& source)
 {
   if (m_tag.dataLayout().rank() == 1){
-   for (int ind1=0; ind1<m_tag.dataLayout().dimension(0); ind1++)
+    Kokkos::parallel_for( m_tag.dataLayout().dimension(0), KOKKOS_LAMBDA (const int ind1){
       m_field_data1(ind1) = m_field_data1(ind1)*source(ind1);
+    });
   }
   else if (m_tag.dataLayout().rank() == 2){
-   for (int ind1=0; ind1<m_tag.dataLayout().dimension(0); ind1++)
+    Kokkos::parallel_for( m_tag.dataLayout().dimension(0), KOKKOS_LAMBDA (const int ind1){
       for (int ind2=0; ind2<m_tag.dataLayout().dimension(1); ind2++)
         m_field_data2(ind1,ind2) = m_field_data2(ind1,ind2)*source(ind1,ind2);
+    });
   }
   else if (m_tag.dataLayout().rank() == 3){
-   for (int ind1=0; ind1<m_tag.dataLayout().dimension(0); ind1++)
+    Kokkos::parallel_for( m_tag.dataLayout().dimension(0), KOKKOS_LAMBDA (const int ind1){
       for (int ind2=0; ind2<m_tag.dataLayout().dimension(1); ind2++)
          for (int ind3=0; ind3<m_tag.dataLayout().dimension(2); ind3++)
             m_field_data3(ind1,ind2,ind3) = m_field_data3(ind1,ind2,ind3)*source(ind1,ind2,ind3);
+    });
   }
   else if (m_tag.dataLayout().rank() == 4){
-   for (int ind1=0; ind1<m_tag.dataLayout().dimension(0); ind1++)
+    Kokkos::parallel_for( m_tag.dataLayout().dimension(0), KOKKOS_LAMBDA (const int ind1){
       for (int ind2=0; ind2<m_tag.dataLayout().dimension(1); ind2++)
          for (int ind3=0; ind3<m_tag.dataLayout().dimension(2); ind3++)
             for (int ind4=0; ind4<m_tag.dataLayout().dimension(3); ind4++)
                 m_field_data4(ind1,ind2,ind3,ind4) = m_field_data4(ind1,ind2,ind3,ind4)*source(ind1,ind2,ind3,ind4);
+    });
   }
   else if (m_tag.dataLayout().rank() == 5){
-   for (int ind1=0; ind1<m_tag.dataLayout().dimension(0); ind1++)
+    Kokkos::parallel_for( m_tag.dataLayout().dimension(0), KOKKOS_LAMBDA (const int ind1){
       for (int ind2=0; ind2<m_tag.dataLayout().dimension(1); ind2++)
          for (int ind3=0; ind3<m_tag.dataLayout().dimension(2); ind3++)
             for (int ind4=0; ind4<m_tag.dataLayout().dimension(3); ind4++)
                 for (int ind5=0; ind5<m_tag.dataLayout().dimension(4); ind5++)
                    m_field_data5(ind1,ind2,ind3,ind4,ind5) = m_field_data5(ind1,ind2,ind3,ind4,ind5)*source(ind1,ind2,ind3,ind4,ind5);
+    });
   }
   else if (m_tag.dataLayout().rank() == 6){
-   for (int ind1=0; ind1<m_tag.dataLayout().dimension(0); ind1++)
+    Kokkos::parallel_for( m_tag.dataLayout().dimension(0), KOKKOS_LAMBDA (const int ind1){
       for (int ind2=0; ind2<m_tag.dataLayout().dimension(1); ind2++)
          for (int ind3=0; ind3<m_tag.dataLayout().dimension(2); ind3++)
             for (int ind4=0; ind4<m_tag.dataLayout().dimension(3); ind4++)
                 for (int ind5=0; ind5<m_tag.dataLayout().dimension(4); ind5++)
                    for (int ind6=0; ind6<m_tag.dataLayout().dimension(5); ind6++)
                       m_field_data6(ind1,ind2,ind3,ind4,ind5,ind6) = m_field_data6(ind1,ind2,ind3,ind4,ind5,ind6)*source(ind1,ind2,ind3,ind4,ind5,ind6);
+    });
   }
   else if (m_tag.dataLayout().rank() == 7){
-   for (int ind1=0; ind1<m_tag.dataLayout().dimension(0); ind1++)
+    Kokkos::parallel_for( m_tag.dataLayout().dimension(0), KOKKOS_LAMBDA (const int ind1){
       for (int ind2=0; ind2<m_tag.dataLayout().dimension(1); ind2++)
          for (int ind3=0; ind3<m_tag.dataLayout().dimension(2); ind3++)
             for (int ind4=0; ind4<m_tag.dataLayout().dimension(3); ind4++)
@@ -1088,6 +1092,7 @@ V_Multiply(const MDFieldType& source)
                    for (int ind6=0; ind6<m_tag.dataLayout().dimension(5); ind6++)
                       for (int ind7=0; ind7<m_tag.dataLayout().dimension(6); ind7++)
                           m_field_data7(ind1,ind2,ind3,ind4,ind5,ind6,ind7) = m_field_data7(ind1,ind2,ind3,ind4,ind5,ind6,ind7)*source(ind1,ind2,ind3,ind4,ind5,ind6,ind7);
+    });
   }
 }
 
@@ -1135,9 +1140,12 @@ std::ostream& PHX::operator<<(std::ostream& os,
 
 //template<class A>
 //struct Rank{static const int value = -1;};
-#ifdef HAVE_INTREPID_KOKKOSCORE
-#ifdef Phalanx_ENABLE_Intrepid
+#ifdef Phalanx_ENABLE_IntrepidIntrepid2
 
+#include "Intrepid2_config.h" // for HAVE_INTREPID_KOKKOSCORE define
+#include "Intrepid2_KokkosRank.hpp"
+
+namespace Intrepid2 {
 template<typename DataT,
          typename Tag0,typename Tag1, typename Tag2, typename Tag3,
          typename Tag4,typename Tag5, typename Tag6, typename Tag7>
@@ -1197,9 +1205,9 @@ struct Return_Type < PHX::MDField<DataT>, ScalarT> {
  typedef typename PHX::MDFieldTypeTraits<typename PHX::MDField<DataT>::array_type>::return_type return_type;
  typedef typename PHX::MDFieldTypeTraits<typename PHX::MDField<DataT>::array_type>::return_type const_return_type;
  };
+}
 
-#endif
-#endif
+#endif // Phalanx_ENABLE_IntrepidIntrepid2
 //********************************************************************************************
 
 

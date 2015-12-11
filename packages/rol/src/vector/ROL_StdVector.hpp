@@ -59,6 +59,8 @@ namespace ROL {
 template <class Real, class Element=Real>
 class StdVector : public Vector<Real> {
 
+  typedef typename std::vector<Real>::size_type uint;
+
 private:
 
   Teuchos::RCP<std::vector<Element> >  std_vec_;
@@ -76,25 +78,34 @@ public:
   void plus( const Vector<Real> &x ) {
     const StdVector &ex = Teuchos::dyn_cast<const StdVector>(x);
     const std::vector<Element>& xval = *ex.getVector();
-    unsigned dimension  = std_vec_->size();
-    for (unsigned i=0; i<dimension; i++) {
+    uint dim  = std_vec_->size();
+    for (uint i=0; i<dim; i++) {
       (*std_vec_)[i] += xval[i];
     }
   }
 
+  void axpy( const Real alpha, const Vector<Real> &x ) {
+    const StdVector &ex = Teuchos::dyn_cast<const StdVector>(x);
+    const std::vector<Element>& xval = *ex.getVector();
+    uint dim  = std_vec_->size();
+    for (uint i=0; i<dim; i++) {
+      (*std_vec_)[i] += alpha*xval[i];
+    }
+  }
+
   void scale( const Real alpha ) {
-    unsigned dimension = std_vec_->size();
-    for (unsigned i=0; i<dimension; i++) {
+    uint dim = std_vec_->size();
+    for (uint i=0; i<dim; i++) {
       (*std_vec_)[i] *= alpha;
     }
   }
 
-  Real dot( const Vector<Real> &x ) const {
+  virtual Real dot( const Vector<Real> &x ) const {
     const StdVector & ex = Teuchos::dyn_cast<const StdVector>(x);
     const std::vector<Element>& xval = *ex.getVector();
-    unsigned dimension  = std_vec_->size();
+    uint dim  = std_vec_->size();
     Real val = 0;
-    for (unsigned i=0; i<dimension; i++) {
+    for (uint i=0; i<dim; i++) {
       val += (*std_vec_)[i]*xval[i];
     }
     return val;
@@ -106,7 +117,7 @@ public:
     return val;
   }
 
-  Teuchos::RCP<Vector<Real> > clone() const {
+  virtual Teuchos::RCP<Vector<Real> > clone() const {
     return Teuchos::rcp( new StdVector( Teuchos::rcp(new std::vector<Element>(std_vec_->size())) ));
   }
 
@@ -125,24 +136,40 @@ public:
   }
 
   int dimension() const {
-    return std_vec_->size();
+    return static_cast<int>(std_vec_->size());
   }
-  
+
+  void applyUnary( const Elementwise::UnaryFunction<Real> &f ) {
+    uint dim  = std_vec_->size();
+    for(uint i=0; i<dim; ++i) {
+      (*std_vec_)[i] = f.apply((*std_vec_)[i]);
+    }
+  }
+
+  void applyBinary( const Elementwise::BinaryFunction<Real> &f, const Vector<Real> &x ) {
+    const StdVector & ex = Teuchos::dyn_cast<const StdVector>(x);
+    const std::vector<Element>& xval = *ex.getVector();
+    uint dim  = std_vec_->size();
+    for (uint i=0; i<dim; i++) {
+      (*std_vec_)[i] = f.apply((*std_vec_)[i],xval[i]);
+    }
+
+  }
+
+  Real reduce( const Elementwise::ReductionOp<Real> &r ) const {
+    Real result = r.initialValue();
+    uint dim  = std_vec_->size();
+    for(uint i=0; i<dim; ++i) {
+      r.reduce((*std_vec_)[i],result);
+    }
+    return result;
+  }
+
+
 }; // class StdVector
 
-namespace StdVector_Helper {
 
-template<class Real>
-Teuchos::RCP<const std::vector<Real> > constDownCast( const Vector<Real> &x ) {
-  return (Teuchos::dyn_cast<const StdVector<Real> >(x)).getVector();
-}
 
-template<class Real>
-Teuchos::RCP<std::vector<Real> > downCast( Vector<Real> &x ) {
-  return (Teuchos::dyn_cast<StdVector<Real> >(x)).getVector();
-}
-
-} // namespace StdVector_Helper
 
 } // namespace ROL
 

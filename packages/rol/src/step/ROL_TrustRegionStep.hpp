@@ -44,8 +44,8 @@
 #ifndef ROL_TRUSTREGIONSTEP_H
 #define ROL_TRUSTREGIONSTEP_H
 
-#include "ROL_Types.hpp"
 #include "ROL_Step.hpp"
+#include "ROL_Types.hpp"
 #include "ROL_Secant.hpp"
 #include "ROL_TrustRegion.hpp"
 #include <sstream>
@@ -228,20 +228,6 @@ private:
     }
   }
 
-  void TrustRegionFactory(Teuchos::ParameterList &parlist) {
-    switch(etr_) {
-      case TRUSTREGION_DOGLEG:
-        trustRegion_ = Teuchos::rcp(new DogLeg<Real>(parlist)); break;
-      case TRUSTREGION_DOUBLEDOGLEG:
-        trustRegion_ = Teuchos::rcp(new DoubleDogLeg<Real>(parlist)); break;
-      case TRUSTREGION_TRUNCATEDCG:
-        trustRegion_ = Teuchos::rcp(new TruncatedCG<Real>(parlist)); break;
-      case TRUSTREGION_CAUCHYPOINT: 
-      default:
-        trustRegion_ = Teuchos::rcp(new CauchyPoint<Real>(parlist)); break;
-    }
-  }
-
 public:
 
   virtual ~TrustRegionStep() {}
@@ -253,45 +239,46 @@ public:
 
       @param[in]     parlist    is a parameter list containing algorithmic specifications
   */
-  TrustRegionStep( Teuchos::ParameterList & parlist ) : Step<Real>() {
+  TrustRegionStep( Teuchos::ParameterList & parlist )
+    : Step<Real>(),
+      secant_(Teuchos::null), trustRegion_(Teuchos::null),
+      xnew_(Teuchos::null), xold_(Teuchos::null), gp_(Teuchos::null),
+      etr_(TRUSTREGION_DOGLEG), esec_(SECANT_LBFGS),
+      useSecantHessVec_(false), useSecantPrecond_(false),
+      useProjectedGrad_(false),
+      TRflag_(0), TR_nfval_(0), TR_ngrad_(0),
+      CGflag_(0), CGiter_(0),
+      delMax_(1.e4),
+      alpha_init_(1.), max_fval_(20),
+      scale0_(1.), scale1_(1.),
+      softUp_(false), scaleEps_(1.) {
     Teuchos::RCP<StepState<Real> > step_state = Step<Real>::getState();
-
-    // Enumerations
-    etr_   = StringToETrustRegion(parlist.get("Trust-Region Subproblem Solver Type","Cauchy Point"));  
-    esec_  = StringToESecant(parlist.get("Secant Type","Limited-Memory BFGS"));
-    // Secant Information
-    useSecantPrecond_ = parlist.get("Use Secant Preconditioning", false);
-    useSecantHessVec_ = parlist.get("Use Secant Hessian-Times-A-Vector", false);
     // Trust-Region Parameters
-    step_state->searchSize = parlist.get("Initial Trust-Region Radius", -1.0);
-    delMax_                = parlist.get("Maximum Trust-Region Radius", 1000.0);
+    step_state->searchSize = parlist.sublist("Step").sublist("Trust Region").get("Initial Radius", -1.0);
+    delMax_                = parlist.sublist("Step").sublist("Trust Region").get("Maximum Radius", 1000.0);
     // Inexactness Information
     useInexact_.clear();
-    useInexact_.push_back(parlist.get("Use Inexact Objective Function", false));
-    useInexact_.push_back(parlist.get("Use Inexact Gradient", false));
-    useInexact_.push_back(parlist.get("Use Inexact Hessian-Times-A-Vector", false));
-    scale0_ = parlist.get("Gradient Update Tolerance Scaling",1.e-1);
-    scale1_ = parlist.get("Gradient Update Relative Tolerance",2.0);     
-     
+    useInexact_.push_back(parlist.sublist("General").get("Inexact Objective Function", false));
+    useInexact_.push_back(parlist.sublist("General").get("Inexact Gradient", false));
+    useInexact_.push_back(parlist.sublist("General").get("Inexact Hessian-Times-A-Vector", false));
+    // Trust-Region Inexactness Parameters
+    scale0_ = parlist.sublist("Step").sublist("Trust Region").sublist("Inexact").sublist("Gradient").get("Tolerance Scaling",1.e-1);
+    scale1_ = parlist.sublist("Step").sublist("Trust Region").sublist("Inexact").sublist("Gradient").get("Relative Tolerance",2.0); 
     // Initialize Trust Region Subproblem Solver Object
-    useProjectedGrad_ = parlist.get("Use Projected Gradient Criticality Measure", false);
-    max_fval_         = parlist.get("Maximum Number of Function Evaluations", 20);
-    alpha_init_       = parlist.get("Initial Linesearch Parameter", 1.0);
-    TrustRegionFactory(parlist);
-
-    // Secant Parameters
-    secant_ = Teuchos::null;
-    if ( useSecantPrecond_ || useSecantHessVec_ ) {
-      int L      = parlist.get("Maximum Secant Storage",10);
-      int BBtype = parlist.get("Barzilai-Borwein Type",1);
-      secant_ = getSecant<Real>(esec_,L,BBtype);
-    }
-
+    etr_  = StringToETrustRegion(parlist.sublist("Step").sublist("Trust Region").get("Subproblem Solver","Dogleg"));  
+    useProjectedGrad_ = parlist.sublist("General").get("Projected Gradient Criticality Measure", false);
+    max_fval_         = parlist.sublist("Step").sublist("Line Search").get("Function Evaluation Limit", 20);
+    alpha_init_       = parlist.sublist("Step").sublist("Line Search").get("Initial Step Size", 1.0);
+    trustRegion_ = TrustRegionFactory<Real>(parlist);
+    // Secant Object
+    esec_ = StringToESecant(parlist.sublist("General").sublist("Secant").get("Type","Limited-Memory BFGS"));
+    useSecantPrecond_ = parlist.sublist("General").sublist("Secant").get("Use as Preconditioner", false);
+    useSecantHessVec_ = parlist.sublist("General").sublist("Secant").get("Use as Hessian", false);
+    secant_ = SecantFactory<Real>(parlist);
     // Changing Objective Functions
-    softUp_ = parlist.get("Variable Objective Function",false);
-
+    softUp_ = parlist.sublist("General").get("Variable Objective Function",false);
     // Scale for epsilon active sets
-    scaleEps_ = parlist.get("Scale for Epsilon Active Sets",1.0);
+    scaleEps_ = parlist.sublist("General").get("Scale for Epsilon Active Sets",1.0);
   }
 
   /** \brief Constructor.
@@ -304,37 +291,49 @@ public:
       @param[in]     parlist    is a parameter list containing algorithmic specifications
   */
   TrustRegionStep( Teuchos::RCP<Secant<Real> > &secant, Teuchos::ParameterList &parlist ) 
-    : Step<Real>(), secant_(secant) {
+    : Step<Real>(),
+      secant_(secant), trustRegion_(Teuchos::null),
+      xnew_(Teuchos::null), xold_(Teuchos::null), gp_(Teuchos::null),
+      etr_(TRUSTREGION_DOGLEG), esec_(SECANT_USERDEFINED),
+      useSecantHessVec_(false), useSecantPrecond_(false),
+      useProjectedGrad_(false),
+      TRflag_(0), TR_nfval_(0), TR_ngrad_(0),
+      CGflag_(0), CGiter_(0),
+      delMax_(1.e4),
+      alpha_init_(1.), max_fval_(20),
+      scale0_(1.), scale1_(1.),
+      softUp_(false), scaleEps_(1.) {
     Teuchos::RCP<StepState<Real> > step_state = Step<Real>::getState();
-
-    // Enumerations
-    etr_   = StringToETrustRegion(parlist.get("Trust-Region Subproblem Solver Type","Cauchy Point"));  
-    esec_  = StringToESecant(parlist.get("Secant Type","Limited-Memory BFGS"));
-    // Secant Information
-    useSecantPrecond_ = parlist.get("Use Secant Preconditioning", false);
-    useSecantHessVec_ = parlist.get("Use Secant Hessian-Times-A-Vector", false);
     // Trust-Region Parameters
-    step_state->searchSize = parlist.get("Initial Trust-Region Radius", -1.0);
-    delMax_                = parlist.get("Maximum Trust-Region Radius", 1000.0);
+    step_state->searchSize = parlist.sublist("Step").sublist("Trust Region").get("Initial Radius", -1.0);
+    delMax_                = parlist.sublist("Step").sublist("Trust Region").get("Maximum Radius", 1000.0);
     // Inexactness Information
     useInexact_.clear();
-    useInexact_.push_back(parlist.get("Use Inexact Objective Function", false));
-    useInexact_.push_back(parlist.get("Use Inexact Gradient", false));
-    useInexact_.push_back(parlist.get("Use Inexact Hessian-Times-A-Vector", false));
-    scale0_ = parlist.get("Gradient Update Tolerance Scaling",1.e-1);
-    scale1_ = parlist.get("Gradient Update Relative Tolerance",2.0);     
-
+    useInexact_.push_back(parlist.sublist("General").get("Inexact Objective Function", false));
+    useInexact_.push_back(parlist.sublist("General").get("Inexact Gradient", false));
+    useInexact_.push_back(parlist.sublist("General").get("Inexact Hessian-Times-A-Vector", false));
+    // Trust-Region Inexactness Parameters
+    scale0_ = parlist.sublist("Step").sublist("Trust Region").sublist("Inexact").sublist("Gradient").get("Tolerance Scaling",1.e-1);
+    scale1_ = parlist.sublist("Step").sublist("Trust Region").sublist("Inexact").sublist("Gradient").get("Relative Tolerance",2.0); 
     // Initialize Trust Region Subproblem Solver Object
-    useProjectedGrad_ = parlist.get("Use Projected Gradient Criticality Measure", false);
-    max_fval_         = parlist.get("Maximum Number of Function Evaluations", 20);
-    alpha_init_       = parlist.get("Initial Linesearch Parameter", 1.0);
-    TrustRegionFactory(parlist);
-
+    etr_  = StringToETrustRegion(parlist.sublist("Step").sublist("Trust Region").get("Subproblem Solver","Dogleg"));  
+    useProjectedGrad_ = parlist.sublist("General").get("Projected Gradient Criticality Measure", false);
+    max_fval_         = parlist.sublist("Step").sublist("Line Search").get("Function Evaluation Limit", 20);
+    alpha_init_       = parlist.sublist("Step").sublist("Line Search").get("Initial Step Size", 1.0);
+    trustRegion_ = TrustRegionFactory<Real>(parlist);
+    // Secant Object
+    useSecantPrecond_ = parlist.sublist("General").sublist("Secant").get("Use as Preconditioner", false);
+    useSecantHessVec_ = parlist.sublist("General").sublist("Secant").get("Use as Hessian", false);
+    if ( secant_ == Teuchos::null ) {
+      Teuchos::ParameterList Slist;
+      Slist.sublist("General").sublist("Secant").set("Type","Limited-Memory BFGS");
+      Slist.sublist("General").sublist("Secant").set("Maximum Storage",10);
+      secant_ = SecantFactory<Real>(Slist);
+    }
     // Changing Objective Functions
-    softUp_ = parlist.get("Variable Objective Function",false);
-
+    softUp_ = parlist.sublist("General").get("Variable Objective Function",false);
     // Scale for epsilon active sets
-    scaleEps_ = parlist.get("Scale for Epsilon Active Sets",1.0);
+    scaleEps_ = parlist.sublist("General").get("Scale for Epsilon Active Sets",1.0);
   }
 
   /** \brief Initialize step.
@@ -363,10 +362,7 @@ public:
       xnew_ = x.clone();
       xold_ = x.clone();
     }
- 
-    if ( con.isActivated() || secant_ != Teuchos::null ) {
-      gp_ = g.clone();
-    }
+    gp_ = g.clone();
 
     // Update approximate gradient and approximate objective function.
     obj.update(x,true,algo_state.iter);    
@@ -374,6 +370,19 @@ public:
     algo_state.snorm = 1.e10;
     algo_state.value = obj.value(x,ftol); 
     algo_state.nfval++;
+
+    // Try to apply inverse Hessian
+    if ( !useSecantHessVec_ &&
+        (etr_ == TRUSTREGION_DOGLEG || etr_ == TRUSTREGION_DOUBLEDOGLEG) ) {
+      try {
+        Teuchos::RCP<Vector<Real> > v  = g.clone();
+        Teuchos::RCP<Vector<Real> > hv = x.clone();
+        obj.invHessVec(*hv,*v,x,htol);
+      }
+      catch (std::exception &e) {
+        useSecantHessVec_ = true;
+      }
+    }
 
     // Evaluate Objective Function at Cauchy Point
     if ( step_state->searchSize <= 0.0 ) {
@@ -524,7 +533,7 @@ public:
         // Compute new objective value
         if ( softUp_ ) {
           obj.update(*xnew_);
-        } 
+        }
         else {
           obj.update(*xnew_,true,algo_state.iter);
         }
@@ -538,7 +547,7 @@ public:
           xnew_->axpy(-alpha*alpha_init_,gp_->dual());
           con.project(*xnew_);
           if ( softUp_ ) {
-            obj.update(*xnew_);
+            obj.update(*xnew_,false,algo_state.iter);
           }
           else {
             obj.update(*xnew_,true,algo_state.iter);
@@ -554,16 +563,15 @@ public:
         // Store objective function and iteration information
         fnew = ftmp;
         x.set(*xnew_);
-        if ( softUp_ ) {
-          obj.update(x,true,algo_state.iter);
-          fnew = pObj.value(x,tol);
-          algo_state.nfval++;
+      }
+      else {
+        if (softUp_) {
+          pObj.update(x,true,algo_state.iter);
         }
-        algo_state.value = fnew; 
       }
 
       // Store previous gradient for secant update
-      if ( secant_ != Teuchos::null ) {
+      if ( useSecantHessVec_ || useSecantPrecond_ ) {
         gp_->set(*(state->gradientVec));
       }
 
@@ -571,7 +579,7 @@ public:
       updateGradient(x,obj,con,algo_state);
 
       // Update secant information
-      if ( secant_ != Teuchos::null ) {
+      if ( useSecantHessVec_ || useSecantPrecond_ ) {
         if ( con.isActivated() ) { // Compute new constrained step
           xnew_->set(x);
           xnew_->axpy(-1.0,*xold_);
@@ -585,6 +593,15 @@ public:
       // Update algorithm state
       (algo_state.iterateVec)->set(x);
     }
+    else { // Step was rejected
+      if ( softUp_ ) {
+        obj.update(x,true,algo_state.iter);
+        fnew = pObj.value(x,tol);
+        algo_state.nfval++;
+        algo_state.value = fnew; 
+      }
+    }
+
   }
 
   /** \brief Print iterate header.

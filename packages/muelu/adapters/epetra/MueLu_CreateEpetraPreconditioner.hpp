@@ -17,17 +17,17 @@
 #include <MueLu_Utilities.hpp>
 #include <MueLu_HierarchyHelpers.hpp>
 
-//! @file MueLu_CreateEpetraPreconditioner.hpp
-
+//! @file
+//! @brief Various adapters that will create a MueLu preconditioner that is an Epetra_Operator.
+#if defined(HAVE_MUELU_EPETRA) and defined(HAVE_MUELU_SERIAL)
 namespace MueLu {
 
-  /*! \fn CreateEpetraPreconditioner
+  /*!
     @brief Helper function to create a MueLu preconditioner that can be used by Epetra.
-
-    Given a Epetra matrix, this function returns a constructed MueLu preconditioner.
-
+    @ingroup MueLuAdapters
+    Given a EpetraCrs_Matrix, this function returns a constructed MueLu preconditioner.
     @param[in] inA Matrix
-    @param[in] paramList Parameter list
+    @param[in] paramListIn Parameter list
     @param[in] inCoords (optional) Coordinates.  The first vector is x, the second (if necessary) y, the third (if necessary) z.
     @param[in] inNullspace (optional) Near nullspace of the matrix.
     */
@@ -41,7 +41,7 @@ namespace MueLu {
     typedef double                                                              SC;
     typedef int                                                                 LO;
     typedef int                                                                 GO;
-    typedef KokkosClassic::DefaultNode::DefaultNodeType                         NO;
+    typedef Kokkos::Compat::KokkosSerialWrapperNode                             NO;
 
     using   Teuchos::ParameterList;
 
@@ -122,11 +122,10 @@ namespace MueLu {
     return rcp(new EpetraOperator(H));
   }
 
-  /*! \fn CreateEpetraPreconditioner
+  /*!
     @brief Helper function to create a MueLu preconditioner that can be used by Epetra.
-
-    Given a Epetra matrix, this function returns a constructed MueLu preconditioner.
-
+    @ingroup MueLuAdapters
+    Given a Epetra_CrsMatrix, this function returns a constructed MueLu preconditioner.
     @param[in] inA Matrix
     @param[in] inCoords (optional) Coordinates.  The first vector is x, the second (if necessary) y, the third (if necessary) z.
     @param[in] inNullspace (optional) Near nullspace of the matrix.
@@ -139,11 +138,10 @@ namespace MueLu {
     return CreateEpetraPreconditioner(inA, paramList, inCoords, inNullspace);
   }
 
-  /*! \fn CreateEpetraPreconditioner
+  /*!
     @brief Helper function to create a MueLu preconditioner that can be used by Epetra.
-
-    Given a Epetra matrix, this function returns a constructed MueLu preconditioner.
-
+    @ingroup MueLuAdapters
+    Given a Epetra_CrsMatrix, this function returns a constructed MueLu preconditioner.
     @param[in] inA Matrix
     @param[in] xmlFileName XML file containing MueLu options
     @param[in] inCoords (optional) Coordinates.  The first vector is x, the second (if necessary) y, the third (if necessary) z.
@@ -165,7 +163,7 @@ namespace MueLu {
     typedef double                                                              SC;
     typedef int                                                                 LO;
     typedef int                                                                 GO;
-    typedef KokkosClassic::DefaultNode::DefaultNodeType                         NO;
+    typedef Kokkos::Compat::KokkosSerialWrapperNode                             NO;
 
     typedef Xpetra::Matrix<SC,LO,GO,NO>     Matrix;
     typedef Xpetra::Operator<SC,LO,GO,NO>   Operator;
@@ -194,5 +192,6 @@ namespace MueLu {
   }
 
 } //namespace
+#endif // HAVE_MUELU_SERIAL and HAVE_MUELU_EPETRA
 
 #endif //ifndef MUELU_CREATE_EPETRA_PRECONDITIONER_HPP

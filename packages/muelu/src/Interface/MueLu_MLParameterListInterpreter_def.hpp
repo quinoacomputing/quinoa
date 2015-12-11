@@ -110,8 +110,22 @@
 namespace MueLu {
 
   template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
-  MLParameterListInterpreter<Scalar, LocalOrdinal, GlobalOrdinal, Node>::MLParameterListInterpreter(Teuchos::ParameterList & paramList, std::vector<RCP<FactoryBase> > factoryList) : nullspace_(NULL), TransferFacts_(factoryList), blksize_(1) {
-    SetParameterList(paramList);
+  MLParameterListInterpreter<Scalar, LocalOrdinal, GlobalOrdinal, Node>::MLParameterListInterpreter(Teuchos::ParameterList & paramList, Teuchos::RCP<const Teuchos::Comm<int> > comm, std::vector<RCP<FactoryBase> > factoryList) : nullspace_(NULL), xcoord_(NULL), ycoord_(NULL), zcoord_(NULL),TransferFacts_(factoryList), blksize_(1) {
+
+    if(paramList.isParameter("xml parameter file")){
+      std::string filename = paramList.get("xml parameter file","");
+      if(filename.length()!=0) {
+        if(comm.is_null()) throw Exceptions::RuntimeError("xml parameter file requires a valid comm");
+        Teuchos::ParameterList paramList2 = paramList;
+        Teuchos::updateParametersFromXmlFileAndBroadcast(filename, Teuchos::Ptr<Teuchos::ParameterList>(&paramList2),*comm);
+	paramList2.remove("xml parameter file");
+        SetParameterList(paramList2);
+      }
+      else
+        SetParameterList(paramList);
+    }
+    else
+      SetParameterList(paramList);
   }
 
   template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
@@ -155,7 +169,10 @@ namespace MueLu {
 
     MUELU_READ_PARAM(paramList, "RAP: fix diagonal",                       bool,               false,       bFixDiagonal); // This is a MueLu specific extension that does not exist in ML
 
-
+    MUELU_READ_PARAM(paramList, "x-coordinates",                        double*,                NULL,       xcoord);
+    MUELU_READ_PARAM(paramList, "y-coordinates",                        double*,                NULL,       ycoord);
+    MUELU_READ_PARAM(paramList, "z-coordinates",                        double*,                NULL,       zcoord);
+    
 
     //
     // Move smoothers/aggregation/coarse parameters to sublists
@@ -268,7 +285,7 @@ namespace MueLu {
     } else if (agg_damping != 0.0 && bEnergyMinimization == false) {
       // smoothed aggregation (SA-AMG)
       RCP<SaPFactory> SaPFact =  rcp( new SaPFactory() );
-      SaPFact->SetDampingFactor(agg_damping);
+      SaPFact->SetParameter("sa: damping factor", ParameterEntry(agg_damping));
       PFact  = SaPFact;
       RFact  = rcp( new TransPFactory() );
     } else if (bEnergyMinimization == true) {
@@ -304,21 +321,21 @@ namespace MueLu {
       // define rebalancing factory for coarse matrix
       Teuchos::RCP<MueLu::AmalgamationFactory<SC, LO, GO, NO> > rebAmalgFact = Teuchos::rcp(new MueLu::AmalgamationFactory<SC, LO, GO, NO>());
       rebAmalgFact->SetFactory("A", AcFact);
-      
+
       MUELU_READ_PARAM(paramList, "repartition: max min ratio",            double,                 1.3,       maxminratio);
       MUELU_READ_PARAM(paramList, "repartition: min per proc",                int,                 512,       minperproc);
-      
+
       // create "Partition"
       Teuchos::RCP<MueLu::IsorropiaInterface<LO, GO, NO> > isoInterface = Teuchos::rcp(new MueLu::IsorropiaInterface<LO, GO, NO>());
       isoInterface->SetFactory("A", AcFact);
       isoInterface->SetFactory("UnAmalgamationInfo", rebAmalgFact);
-      
+
       // create "Partition" by unamalgamtion
       Teuchos::RCP<MueLu::RepartitionInterface<LO, GO, NO> > repInterface = Teuchos::rcp(new MueLu::RepartitionInterface<LO, GO, NO>());
       repInterface->SetFactory("A", AcFact);
       repInterface->SetFactory("AmalgamatedPartition", isoInterface);
       //repInterface->SetFactory("UnAmalgamationInfo", rebAmalgFact); // not necessary?
-      
+
       // Repartitioning (creates "Importer" from "Partition")
       RepartitionFact = Teuchos::rcp(new RepartitionFactory());
       {
@@ -329,19 +346,19 @@ namespace MueLu {
       }
       RepartitionFact->SetFactory("A", AcFact);
       RepartitionFact->SetFactory("Partition", repInterface);
-      
+
       // Reordering of the transfer operators
       RebalancedPFact = Teuchos::rcp(new RebalanceTransferFactory());
       RebalancedPFact->SetParameter("type", Teuchos::ParameterEntry(std::string("Interpolation")));
       RebalancedPFact->SetFactory("P", PFact);
       RebalancedPFact->SetFactory("Nullspace", PtentFact);
       RebalancedPFact->SetFactory("Importer",    RepartitionFact);
-      
+
       RebalancedRFact = Teuchos::rcp(new RebalanceTransferFactory());
       RebalancedRFact->SetParameter("type", Teuchos::ParameterEntry(std::string("Restriction")));
       RebalancedRFact->SetFactory("R", RFact);
       RebalancedRFact->SetFactory("Importer",    RepartitionFact);
-            
+
       // Compute Ac from rebalanced P and R
       RebalancedAFact = Teuchos::rcp(new RebalanceAcFactory());
       RebalancedAFact->SetFactory("A", AcFact);
@@ -371,6 +388,14 @@ namespace MueLu {
 
     Teuchos::RCP<NullspaceFactory> nspFact = Teuchos::rcp(new NullspaceFactory("Nullspace"));
     nspFact->SetFactory("Nullspace", PtentFact);
+
+
+    // Stash coordinates
+    xcoord_ = xcoord;
+    ycoord_ = ycoord;
+    zcoord_ = zcoord;
+
+
 
     //
     // Hierarchy + FactoryManager
@@ -480,6 +505,41 @@ namespace MueLu {
         fineLevel->Set("Nullspace", nullspace);
       }
     }
+
+    // Do the same for coordinates
+    size_t num_coords = 0;
+    double * coordPTR[3];
+    if(xcoord_) {
+      coordPTR[0] = xcoord_; 
+      num_coords++;
+      if(ycoord_) {
+	coordPTR[1] = ycoord_; 
+	num_coords++;
+	if(zcoord_) {
+	  coordPTR[2] = zcoord_;
+	  num_coords++;
+	}
+      }
+    }
+    if(num_coords){
+      Teuchos::RCP<Level> fineLevel = H.GetLevel(0);
+      Teuchos::RCP<Operator> Op = fineLevel->Get<RCP<Operator> >("A");
+      Teuchos::RCP<Matrix>   A  = rcp_dynamic_cast<Matrix>(Op);
+      if (!A.is_null()) {
+        const Teuchos::RCP<const Map> rowMap = fineLevel->Get< RCP<Matrix> >("A")->getRowMap();
+        Teuchos::RCP<MultiVector> coordinates = MultiVectorFactory::Build(rowMap, num_coords, true);
+
+        for ( size_t i=0; i < num_coords; i++) {
+          Teuchos::ArrayRCP<Scalar> coordsi  = coordinates->getDataNonConst(i);
+          const size_t              myLength = coordinates->getLocalLength();
+          for (size_t j = 0; j < myLength; j++) {
+            coordsi[j] = coordPTR[0][j];
+          }
+        }
+        fineLevel->Set("Coordinates",coordinates);
+      }
+    }
+
     HierarchyManager::SetupHierarchy(H);
   }
 
@@ -535,12 +595,17 @@ namespace MueLu {
       smooProto = rcp( new TrilinosSmoother(ifpackType, smootherParamList, 0) );
       smooProto->SetFactory("A", AFact);
 
-    } else if (type == "Chebyshev") {
+    } else if (type == "Chebyshev" || type == "MLS") {
 
       ifpackType = "CHEBYSHEV";
 
       MUELU_COPY_PARAM(paramList, "smoother: sweeps",          int, 2,     smootherParamList, "chebyshev: degree");
-      MUELU_COPY_PARAM(paramList, "smoother: Chebyshev alpha", double, 20, smootherParamList, "chebyshev: ratio eigenvalue");
+      if(paramList.isParameter("smoother: MLS alpha")) {
+        MUELU_COPY_PARAM(paramList, "smoother: MLS alpha", double, 20, smootherParamList, "chebyshev: ratio eigenvalue");
+      } else {
+        MUELU_COPY_PARAM(paramList, "smoother: Chebyshev alpha", double, 20, smootherParamList, "chebyshev: ratio eigenvalue");
+      }
+
 
       smooProto = rcp( new TrilinosSmoother(ifpackType, smootherParamList, 0) );
       smooProto->SetFactory("A", AFact);

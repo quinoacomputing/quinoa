@@ -48,7 +48,6 @@
 #define USE_HESSVEC 1
 
 #include "ROL_TestObjectives.hpp"
-#include "ROL_PrimalDualActiveSetStep.hpp"
 #include "ROL_Algorithm.hpp"
 #include "Teuchos_oblackholestream.hpp"
 #include "Teuchos_GlobalMPISession.hpp"
@@ -79,23 +78,17 @@ int main(int argc, char *argv[]) {
 
     std::string filename = "input.xml";
     Teuchos::RCP<Teuchos::ParameterList> parlist = Teuchos::rcp( new Teuchos::ParameterList() );
-    Teuchos::updateParametersFromXmlFile( filename, Teuchos::Ptr<Teuchos::ParameterList>(&*parlist) );
-    parlist->set("Use Inexact Hessian-Times-A-Vector",true);
+    Teuchos::updateParametersFromXmlFile( filename, parlist.ptr() );
+    parlist->sublist("General").set("Inexact Hessian-Times-A-Vector",true);
 #if USE_HESSVEC
-    parlist->set("Use Inexact Hessian-Times-A-Vector",false);
+    parlist->sublist("General").set("Inexact Hessian-Times-A-Vector",false);
 #endif
 
-    // Define Status Test
-    RealT gtol = parlist->get("Gradient Tolerance",1.e-6);
-    RealT stol = parlist->get("Step Tolerance",1.e-12);
-    int maxit  = parlist->get("Maximum Number of Iterations",100);
-    ROL::StatusTest<RealT> status(gtol,stol,maxit);
-
     // Krylov parameters.
-    parlist->set("Krylov Method",                          "Conjugate Residuals");
-    parlist->set("Absolute Krylov Tolerance",              1.e-8);
-    parlist->set("Relative Krylov Tolerance",              1.e-4);
-    parlist->set("Maximum Number of Krylov Iterations",    50);
+    parlist->sublist("General").sublist("Krylov").set("Type", "Conjugate Residuals");
+    parlist->sublist("General").sublist("Krylov").set("Absolute Tolerance", 1.e-8);
+    parlist->sublist("General").sublist("Krylov").set("Relative Tolerance", 1.e-4);
+    parlist->sublist("General").sublist("Krylov").set("Iteration Limit", 50);
 
     for ( ROL::ETestOptProblem prob = ROL::TESTOPTPROBLEM_HS1; prob < ROL::TESTOPTPROBLEM_LAST; prob++ ) { 
       if ( prob != ROL::TESTOPTPROBLEM_HS5 ) {
@@ -106,107 +99,81 @@ int main(int argc, char *argv[]) {
           case ROL::TESTOPTPROBLEM_HS3:
           case ROL::TESTOPTPROBLEM_HS4:
           case ROL::TESTOPTPROBLEM_HS45:
-            parlist->set("PDAS Relative Step Tolerance",           1.e-10);
-            parlist->set("PDAS Relative Gradient Tolerance",       1.e-8);
-            parlist->set("PDAS Maximum Number of Iterations",      1);
-            parlist->set("PDAS Dual Scaling",                      1.e8);
+            parlist->sublist("Step").sublist("Primal Dual Active Set").set("Relative Step Tolerance",1.e-10);
+            parlist->sublist("Step").sublist("Primal Dual Active Set").set("Relative Gradient Tolerance",1.e-8);
+            parlist->sublist("Step").sublist("Primal Dual Active Set").set("Iteration Limit",1);
+            parlist->sublist("Step").sublist("Primal Dual Active Set").set("Dual Scaling",1.e8);
             break;
           case ROL::TESTOPTPROBLEM_HS5:
-            parlist->set("PDAS Relative Step Tolerance",           1.e-10);
-            parlist->set("PDAS Relative Gradient Tolerance",       1.e-8);
-            parlist->set("PDAS Maximum Number of Iterations",      10);
-            parlist->set("PDAS Dual Scaling",                      1.e-2);
+            parlist->sublist("Step").sublist("Primal Dual Active Set").set("Relative Step Tolerance",1.e-10);
+            parlist->sublist("Step").sublist("Primal Dual Active Set").set("Relative Gradient Tolerance",1.e-8);
+            parlist->sublist("Step").sublist("Primal Dual Active Set").set("Iteration Limit",10);
+            parlist->sublist("Step").sublist("Primal Dual Active Set").set("Dual Scaling",1.e-2);
             break;
           case ROL::TESTOPTPROBLEM_HS25:
-            parlist->set("PDAS Relative Step Tolerance",           1.e-10);
-            parlist->set("PDAS Relative Gradient Tolerance",       1.e-8);
-            parlist->set("PDAS Maximum Number of Iterations",      10);
-            parlist->set("PDAS Dual Scaling",                      1.e10);
+            parlist->sublist("Step").sublist("Primal Dual Active Set").set("Relative Step Tolerance",1.e-10);
+            parlist->sublist("Step").sublist("Primal Dual Active Set").set("Relative Gradient Tolerance",1.e-8);
+            parlist->sublist("Step").sublist("Primal Dual Active Set").set("Iteration Limit",10);
+            parlist->sublist("Step").sublist("Primal Dual Active Set").set("Dual Scaling",1.e10);
             break;
           case ROL::TESTOPTPROBLEM_HS38:
-            parlist->set("PDAS Relative Step Tolerance",           1.e-10);
-            parlist->set("PDAS Relative Gradient Tolerance",       1.e-8);
-            parlist->set("PDAS Maximum Number of Iterations",      1);
-            parlist->set("PDAS Dual Scaling",                      1.e-3);
+            parlist->sublist("Step").sublist("Primal Dual Active Set").set("Relative Step Tolerance",1.e-10);
+            parlist->sublist("Step").sublist("Primal Dual Active Set").set("Relative Gradient Tolerance",1.e-8);
+            parlist->sublist("Step").sublist("Primal Dual Active Set").set("Iteration Limit",1);
+            parlist->sublist("Step").sublist("Primal Dual Active Set").set("Dual Scaling",1.e-3);
             break;
           case ROL::TESTOPTPROBLEM_BVP:
-            parlist->set("PDAS Relative Step Tolerance",           1.e-10);
-            parlist->set("PDAS Relative Gradient Tolerance",       1.e-8);
-            parlist->set("PDAS Maximum Number of Iterations",      1);
-            parlist->set("PDAS Dual Scaling",                      1.e0);
+            parlist->sublist("Step").sublist("Primal Dual Active Set").set("Relative Step Tolerance",1.e-10);
+            parlist->sublist("Step").sublist("Primal Dual Active Set").set("Relative Gradient Tolerance",1.e-8);
+            parlist->sublist("Step").sublist("Primal Dual Active Set").set("Iteration Limit",1);
+            parlist->sublist("Step").sublist("Primal Dual Active Set").set("Dual Scaling",1.e0);
             break;
           case ROL::TESTOPTPROBLEM_LAST: break;
         }
-        *outStream << "\n\n" << ROL:: ETestOptProblemToString(prob)  << "\n\n";
-  
-        // Initial Guess Vector 
-        Teuchos::RCP<std::vector<RealT> > x0_rcp = Teuchos::rcp( new std::vector<RealT> );
-        ROL::StdVector<RealT> x0(x0_rcp);
-  
-        // Exact Solution Vector
-        Teuchos::RCP<std::vector<RealT> > z_rcp  = Teuchos::rcp( new std::vector<RealT> );
-        ROL::StdVector<RealT> z(z_rcp);
+        *outStream << std::endl << std::endl << ROL:: ETestOptProblemToString(prob)  << std::endl << std::endl;
   
         // Get Objective Function
-        Teuchos::RCP<ROL::Objective<RealT> >       obj = Teuchos::null;
-        Teuchos::RCP<ROL::BoundConstraint<RealT> > con = Teuchos::null;
+        Teuchos::RCP<ROL::Vector<RealT> > x0, z;
+        Teuchos::RCP<ROL::Objective<RealT> > obj;
+        Teuchos::RCP<ROL::BoundConstraint<RealT> > con;
         ROL::getTestObjectives<RealT>(obj,con,x0,z,prob);
+        Teuchos::RCP<ROL::Vector<RealT> > x = x0->clone();
   
         // Get Dimension of Problem
-        int dim = 
-          Teuchos::rcp_const_cast<std::vector<RealT> >(
-            (Teuchos::dyn_cast<ROL::StdVector<RealT> >(x0)).getVector())->size();
-        parlist->set("Maximum Number of Krylov Iterations", 2*dim);
-  
-        // Check Derivatives
-        //Teuchos::RCP<std::vector<RealT> > d_rcp = Teuchos::rcp( new std::vector<RealT> (dim, 1.0) );
-        //ROL::StdVector<RealT> d(d_rcp);
-        //obj->checkGradient(x0,d);
-        //obj->checkHessVec(x0,d);
-  
-        // Iteration Vector
-        Teuchos::RCP<std::vector<RealT> > x_rcp = Teuchos::rcp( new std::vector<RealT> (dim, 0.0) );
-        ROL::StdVector<RealT> x(x_rcp);
-        x.set(x0);
+        int dim = x0->dimension(); 
+        parlist->sublist("General").sublist("Krylov").set("Iteration Limit", 2*dim);
   
         // Error Vector
-        Teuchos::RCP<std::vector<RealT> > e_rcp = Teuchos::rcp( new std::vector<RealT> (dim, 0.0) );
-        ROL::StdVector<RealT> e(e_rcp);
-        e.zero();
-  
-        // Define Step
-        ROL::PrimalDualActiveSetStep<RealT> step(*parlist);
+        Teuchos::RCP<ROL::Vector<RealT> > e = x0->clone();
+        e->zero();
         
         // Define Algorithm
-        ROL::DefaultAlgorithm<RealT> algo(step,status,false);
+        ROL::Algorithm<RealT> algo("Primal Dual Active Set",*parlist,false);
   
         // Run Algorithm
-        x.set(x0);
-        std::vector<std::string> output = algo.run(x, *obj, *con);
-        for ( unsigned i = 0; i < output.size(); i++ ) {
-          *outStream << output[i];
-        }
+        x->set(*x0);
+        algo.run(*x, *obj, *con, true, *outStream);
   
         // Compute Error
-        e.set(x);
-        e.axpy(-1.0,z);
-        *outStream << "\nNorm of Error: " << e.norm() << "\n";
+        e->set(*x);
+        e->axpy(-1.0,*z);
+        *outStream << std::endl << "Norm of Error: " << e->norm() << std::endl;
   
         // Update error flag
         Teuchos::RCP<const ROL::AlgorithmState<RealT> > state = algo.getState();
-        errorFlag += ((e.norm() < std::max(1.e-6*z.norm(),1.e-8) || (state->gnorm < gtol)) ? 0 : 1);
+        errorFlag += ((e->norm() < std::max(1.e-6*z->norm(),1.e-8) || (state->gnorm < 1.e-6)) ? 0 : 1);
       }
     }
   }
   catch (std::logic_error err) {
-    *outStream << err.what() << "\n";
+    *outStream << err.what() << std::endl;
     errorFlag = -1000;
   }; // end try
 
   if (errorFlag != 0)
-    std::cout << "End Result: TEST FAILED\n";
+    std::cout << "End Result: TEST FAILED" << std::endl;
   else
-    std::cout << "End Result: TEST PASSED\n";
+    std::cout << "End Result: TEST PASSED" << std::endl;
 
   return 0;
 

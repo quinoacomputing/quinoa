@@ -71,7 +71,6 @@ using Teuchos::DefaultComm;
 
 typedef Tpetra::CrsMatrix<zscalar_t, zlno_t, zgno_t, znode_t> tmatrix_t;
 typedef Xpetra::CrsMatrix<zscalar_t, zlno_t, zgno_t, znode_t> xmatrix_t;
-typedef Epetra_CrsMatrix ematrix_t;
 
 void printMatrix(RCP<const Comm<int> > &comm, zlno_t nrows,
     const zgno_t *rowIds, const zlno_t *offsets, const zgno_t *colIds)
@@ -165,15 +164,11 @@ int main(int argc, char *argv[])
   tM = uinput->getUITpetraCrsMatrix();
   size_t nrows = tM->getNodeNumRows();
 
-  // To test migration in the input adapter we need a Solution
-  // object.  The Solution needs an IdentifierMap.
-
-  typedef Zoltan2::IdentifierMap<tmatrix_t> idmap_t;
+  // To test migration in the input adapter we need a Solution object. 
 
   RCP<const Zoltan2::Environment> env = rcp(new Zoltan2::Environment);
 
   int nWeights = 1;
-
 
   typedef Zoltan2::XpetraCrsMatrixAdapter<tmatrix_t> adapter_t;
   typedef Zoltan2::PartitioningSolution<adapter_t> soln_t;
@@ -312,6 +307,7 @@ int main(int argc, char *argv[])
 #ifdef HAVE_EPETRA_DATA_TYPES
   /////////////////////////////////////////////////////////////
   // User object is Epetra_CrsMatrix
+  typedef Epetra_CrsMatrix ematrix_t;
   if (!gfail){ 
     RCP<ematrix_t> eM = uinput->getUIEpetraCrsMatrix();
     RCP<const ematrix_t> ceM = rcp_const_cast<const ematrix_t>(eM);

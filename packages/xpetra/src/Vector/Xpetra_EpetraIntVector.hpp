@@ -59,14 +59,13 @@
 
 namespace Xpetra {
 
-  template<class EpetraGlobalOrdinal>
+  template<class EpetraGlobalOrdinal, class Node>
   class EpetraIntVectorT
-    : public Vector<int,int,EpetraGlobalOrdinal>
+    : public Vector<int,int,EpetraGlobalOrdinal, Node>
   {
     typedef int Scalar;
     typedef int LocalOrdinal;
     typedef EpetraGlobalOrdinal GlobalOrdinal;
-    typedef KokkosClassic::DefaultNode::DefaultNodeType Node;
 
   public:
 
@@ -76,7 +75,7 @@ namespace Xpetra {
     //! Sets all vector entries to zero.
     explicit EpetraIntVectorT(const Teuchos::RCP<const Map<LocalOrdinal, GlobalOrdinal, Node> > &map, bool zeroOut=true)
     {
-      XPETRA_RCP_DYNAMIC_CAST(const EpetraMapT<GlobalOrdinal>, map, eMap, "Xpetra::EpetraCrsMatrixT constructors only accept Xpetra::EpetraMapT as input arguments.");
+      XPETRA_RCP_DYNAMIC_CAST(const EpetraMapT<GlobalOrdinal COMMA Node>, map, eMap, "Xpetra::EpetraCrsMatrixT constructors only accept Xpetra::EpetraMapT as input arguments.");
       vec_ = rcp(new Epetra_IntVector(eMap->getEpetra_BlockMap(), zeroOut));
     }
 
@@ -99,9 +98,6 @@ namespace Xpetra {
 
     //! Compute Inf-norm of this Vector.
     Teuchos::ScalarTraits<int>::magnitudeType normInf() const;
-
-    //! Compute Weighted 2-norm (RMS Norm) of this Vector.
-    Teuchos::ScalarTraits<int>::magnitudeType normWeighted(const Vector<Scalar, LocalOrdinal, GlobalOrdinal, Node> &weights) const;
 
     //! Compute mean (average) value of this Vector.
     int meanValue() const;
@@ -189,9 +185,6 @@ namespace Xpetra {
     //! Compute Inf-norm of each vector in multi-vector.
     void normInf(const Teuchos::ArrayView<Teuchos::ScalarTraits<int>::magnitudeType> &norms) const;
 
-    //! Compute Weighted 2-norm (RMS Norm) of each vector in multi-vector.
-    void normWeighted(const MultiVector<int,int,GlobalOrdinal,Node> &weights, const Teuchos::ArrayView<Teuchos::ScalarTraits<int>::magnitudeType> &norms) const;
-
     //! Compute mean (average) value of each vector in multi-vector.
     void meanValue(const Teuchos::ArrayView<int> &means) const;
 
@@ -255,50 +248,84 @@ namespace Xpetra {
     }
 
     // Implementing DistObject
-    Teuchos::RCP<const Map<int, GlobalOrdinal> > getMap () const {
+    Teuchos::RCP<const Map<int, GlobalOrdinal, Node> > getMap () const {
       RCP<const Epetra_BlockMap> map = rcp(new Epetra_BlockMap(vec_->Map()));
-      return rcp (new Xpetra::EpetraMapT<GlobalOrdinal>(map));
+      return rcp (new Xpetra::EpetraMapT<GlobalOrdinal, Node>(map));
     }
 
     void
-    doImport (const DistObject<int, int, GlobalOrdinal> &source,
-              const Import<int, GlobalOrdinal> &importer, CombineMode CM);
+    doImport (const DistObject<int, int, GlobalOrdinal, Node> &source,
+              const Import<int, GlobalOrdinal, Node> &importer, CombineMode CM);
 
     void
-    doExport (const DistObject<int, int, GlobalOrdinal> &dest,
-              const Import<int, GlobalOrdinal>& importer, CombineMode CM);
+    doExport (const DistObject<int, int, GlobalOrdinal, Node> &dest,
+              const Import<int, GlobalOrdinal, Node>& importer, CombineMode CM);
 
     void
-    doImport (const DistObject<int, int, GlobalOrdinal> &source,
-              const Export<int, GlobalOrdinal>& exporter, CombineMode CM);
+    doImport (const DistObject<int, int, GlobalOrdinal, Node> &source,
+              const Export<int, GlobalOrdinal, Node>& exporter, CombineMode CM);
 
     void
-    doExport (const DistObject<int, int, GlobalOrdinal> &dest,
-              const Export<int, GlobalOrdinal>& exporter, CombineMode CM);
+    doExport (const DistObject<int, int, GlobalOrdinal, Node> &dest,
+              const Export<int, GlobalOrdinal, Node>& exporter, CombineMode CM);
 
-    void replaceMap(const RCP<const Map<int, GlobalOrdinal> >& map) {
+    void replaceMap(const RCP<const Map<int, GlobalOrdinal, Node> >& map) {
       // do nothing
     }
+
+
+    //! @name Xpetra specific
+    //@{
+#ifdef HAVE_XPETRA_KOKKOS_REFACTOR
+    typedef typename Xpetra::MultiVector<Scalar, LocalOrdinal, GlobalOrdinal, Node>::dual_view_type dual_view_type;
+
+    typename dual_view_type::t_host_um getHostLocalView () const {
+      throw std::runtime_error("EpetraIntVector does not support device views! Must be implemented extra...");
+      typename dual_view_type::t_host_um ret;
+      return ret;
+    }
+
+    typename dual_view_type::t_dev_um getDeviceLocalView() const {
+      throw std::runtime_error("Epetra does not support device views!");
+      typename dual_view_type::t_dev_um ret;
+      return ret; // make compiler happy
+    }
+
+    /// \brief Return an unmanaged non-const view of the local data on a specific device.
+    /// \tparam TargetDeviceType The Kokkos Device type whose data to return.
+    ///
+    /// \warning DO NOT USE THIS FUNCTION! There is no reason why you are working directly
+    ///          with the Xpetra::EpetraIntVector object. To write a code which is independent
+    ///          from the underlying linear algebra package you should always use the abstract class,
+    ///          i.e. Xpetra::Vector!
+    ///
+    /// \warning Be aware that the view on the vector data is non-persisting, i.e.
+    ///          only valid as long as the vector does not run of scope!
+    template<class TargetDeviceType>
+    typename Kokkos::Impl::if_c<
+      Kokkos::Impl::is_same<
+        typename dual_view_type::t_dev_um::execution_space::memory_space,
+        typename TargetDeviceType::memory_space>::value,
+        typename dual_view_type::t_dev_um,
+        typename dual_view_type::t_host_um>::type
+    getLocalView () const {
+      return this->MultiVector< Scalar, LocalOrdinal, GlobalOrdinal, Node >::template getLocalView<TargetDeviceType>();
+    }
+#endif
+
+    //@}
 
   protected:
     /// \brief Implementation of the assignment operator (operator=);
     ///   does a deep copy.
     virtual void
-    assign (const MultiVector<Scalar, LocalOrdinal, GlobalOrdinal>& rhs);
+    assign (const MultiVector<Scalar, LocalOrdinal, GlobalOrdinal, Node>& rhs);
 
   private:
     //! The Epetra_IntVector which this class wraps.
     RCP< Epetra_IntVector > vec_;
 
   }; // class EpetraIntVectorT
-
-#ifndef XPETRA_EPETRA_NO_32BIT_GLOBAL_INDICES
-  typedef EpetraIntVectorT<int> EpetraIntVector;
-#endif
-
-#ifndef XPETRA_EPETRA_NO_64BIT_GLOBAL_INDICES
-  typedef EpetraIntVectorT<long long> EpetraIntVector64;
-#endif
 
 } // namespace Xpetra
 

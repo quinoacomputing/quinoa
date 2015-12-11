@@ -78,8 +78,8 @@ using Teuchos::RCP;
 /*                     Typedefs                          */
 /*********************************************************/
 //Tpetra typedefs
-typedef Tpetra::DefaultPlatform::DefaultPlatformType            Platform;
-typedef Tpetra::MultiVector<double, int, int>     tMVector_t;
+typedef Tpetra::DefaultPlatform::DefaultPlatformType Platform;
+typedef Tpetra::MultiVector<double>                  tMVector_t;
 
 
 
@@ -97,10 +97,10 @@ int main(int narg, char *arg[]) {
   int numProcs = CommT->getSize();
 
   if (me == 0){
-  cout 
-    << "====================================================================\n" 
-    << "|                                                                  |\n" 
-    << "|          Example: Partition Pamgen Hexahedral Mesh               |\n" 
+  cout
+    << "====================================================================\n"
+    << "|                                                                  |\n"
+    << "|          Example: Partition Pamgen Hexahedral Mesh               |\n"
     << "|                                                                  |\n"
     << "|  Questions? Contact  Karen Devine      (kddevin@sandia.gov),     |\n"
     << "|                      Erik Boman        (egboman@sandia.gov),     |\n"
@@ -138,7 +138,7 @@ int main(int narg, char *arg[]) {
   cmdp.setOption("xmlfile", &xmlMeshInFileName,
                  "XML file with PamGen specifications");
   cmdp.setOption("action", &action,
-                 "Method to use:  mj, scotch, zoltan_rcb, zoltan_hg, "
+                 "Method to use:  mj, scotch, zoltan_rcb, zoltan_hg, hg_ghost, "
                  "parma or color");
   cmdp.setOption("nparts", &nParts,
                  "Number of parts to create");
@@ -152,7 +152,7 @@ int main(int narg, char *arg[]) {
       cout << "\nReading parameter list from the XML file \""
                 <<xmlMeshInFileName<<"\" ...\n\n";
     }
-    Teuchos::updateParametersFromXmlFile(xmlMeshInFileName, 
+    Teuchos::updateParametersFromXmlFile(xmlMeshInFileName,
                                          Teuchos::inoutArg(inputMeshList));
     if (me == 0) {
       inputMeshList.print(cout,2,true,true);
@@ -161,7 +161,7 @@ int main(int narg, char *arg[]) {
   }
   else {
     cout << "Cannot read input file: " << xmlMeshInFileName << "\n";
-    return 0;
+    return 5;
   }
 
   // Get pamgen mesh definition
@@ -215,6 +215,7 @@ int main(int narg, char *arg[]) {
     params.set("num_global_parts", nParts);
     params.set("partitioning_approach", "partition");
     params.set("algorithm", "scotch");
+    params.set("compute_metrics","yes");
   }
   else if (action == "zoltan_rcb") {
     do_partitioning = true;
@@ -235,6 +236,20 @@ int main(int narg, char *arg[]) {
     zparams.set("LB_METHOD","phg");
     zparams.set("FINAL_OUTPUT", "1");
   }
+  else if (action=="hg_ghost") {
+    do_partitioning = true;
+    params.set("debug_level", "no_status");
+    params.set("imbalance_tolerance", 1.1);
+    params.set("algorithm", "zoltan");
+    params.set("num_global_parts", nParts);
+    params.set("hypergraph_model_type","ghosting");
+    params.set("ghost_layers",2);
+    Teuchos::ParameterList &zparams = params.sublist("zoltan_parameters",false);
+    zparams.set("LB_METHOD","HYPERGRAPH");
+    zparams.set("LB_APPROACH","PARTITION");
+    zparams.set("PHG_EDGE_SIZE_THRESHOLD", "1.0");
+  }
+
   else if (action == "parma") {
     do_partitioning = true;
     params.set("debug_level", "basic_status");
@@ -254,13 +269,14 @@ int main(int narg, char *arg[]) {
     params.set("compute_metrics","yes");
 
   }
-  
+
   else if (action == "color") {
     params.set("debug_level", "verbose_detailed_status");
     params.set("debug_output_file", "kdd");
     params.set("debug_procs", "all");
   }
 
+  if(me == 0) cout << "Action: " << action << endl;
   // create Partitioning problem
   if (do_partitioning) {
     if (me == 0) cout << "Creating partitioning problem ... \n\n";
@@ -272,7 +288,12 @@ int main(int narg, char *arg[]) {
 
     problem.solve();
 
-    if (me) problem.printMetrics(cout);
+    if (me) {
+      problem.printMetrics(cout);
+
+      if (action == "scotch")
+        problem.printGraphMetrics(cout);
+    }
   }
   else {
     if (me == 0) cout << "Creating coloring problem ... \n\n";

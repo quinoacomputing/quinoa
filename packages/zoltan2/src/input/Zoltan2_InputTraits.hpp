@@ -55,8 +55,12 @@
 #include <Tpetra_CrsMatrix.hpp>
 #include <Tpetra_RowMatrix.hpp>
 #include <Tpetra_CrsGraph.hpp>
+
+#ifdef HAVE_ZOLTAN2_EPETRA
 #include <Epetra_CrsMatrix.h>
 #include <Epetra_CrsGraph.h>
+#endif
+
 #include <Xpetra_CrsMatrix.hpp>
 #include <Xpetra_RowMatrix.hpp>
 #include <Xpetra_TpetraRowMatrix.hpp>
@@ -80,6 +84,7 @@ typedef int default_part_t;  // Restrictions in MPI interface will make it
                              // long long, since we use part_t for ranks
                              // and we sometimes broadcast arrays whose
                              // size has type part_t.
+                             // part_t must be a signed data type.
 
 // Until Kokkos node types are supported, use default
 typedef Tpetra::Map<>::node_type default_node_t;
@@ -121,13 +126,11 @@ typedef Tpetra::Map<>::node_type default_node_t;
  * In particular, the BasicUserTypes template parameters are:
 
     \li \c scalar is the data type for element values, weights and coordinates.
-    \li \c gid (global id) is the data type used by the application for global Ids.  If the application's global Id data type is a Teuchos Ordinal, then \c gid and \c gno can the same.  Otherwise, the application global Ids will be mapped to Teuchos Ordinals for use by Zoltan2 internally.  (Teuchos Ordinals are those data types for which traits are defined in Teuchos_OrdinalTraits.hpp.)
     \li \c lno (local number) is the integral data type used by the application and by Zoltan2 for local indices and local counts.
-    \li \c gno (global number) is the integral data type used by Zoltan2 to represent global indices and global counts.
+    \li \c gno (global number) is the integral data type used by the application and Zoltan2 to represent global identifiers and global counts.
  */
 
-template <typename scalar=double, typename gid=int,
-          typename lno=int, typename gno=int>
+template <typename scalar=double, typename lno=int, typename gno=int>
 class BasicUserTypes{
 };
 
@@ -182,14 +185,6 @@ struct InputTraits {
    */
   typedef default_gno_t gno_t;
 
-  /*! \brief The data type that the user uses for global Identifiers.
-   *
-   *   In most cases this is the same as the \c gno_t.  However if a
-   *   user uses Ids that are not Teuchos Ordinals, such as
-   *   pair<int, int> then this is different.
-   */
-  typedef default_gno_t zgid_t;
-
   /*! \brief The data type to represent part numbers.
    */
   typedef default_part_t part_t;
@@ -207,15 +202,13 @@ struct InputTraits {
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 
 template <typename Scalar,
-          typename GID,
           typename LNO,
           typename GNO>
-struct InputTraits<BasicUserTypes<Scalar, GID, LNO, GNO> >
+struct InputTraits<BasicUserTypes<Scalar, LNO, GNO> >
 {
   typedef Scalar        scalar_t;
   typedef LNO lno_t;
   typedef GNO gno_t;
-  typedef GID zgid_t;
   typedef Zoltan2::default_part_t  part_t;
   typedef Zoltan2::default_node_t node_t;
   static inline std::string name() {return "BasicUserTypes";}
@@ -230,7 +223,6 @@ struct InputTraits<Xpetra::CrsMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> >
   typedef Scalar        scalar_t;
   typedef LocalOrdinal  lno_t;
   typedef GlobalOrdinal gno_t;
-  typedef GlobalOrdinal zgid_t;
   typedef Zoltan2::default_part_t  part_t;
   typedef Node          node_t;
   static inline std::string name() {return "Xpetra::CrsMatrix";}
@@ -245,23 +237,23 @@ struct InputTraits<Tpetra::CrsMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> >
   typedef Scalar        scalar_t;
   typedef LocalOrdinal  lno_t;
   typedef GlobalOrdinal gno_t;
-  typedef GlobalOrdinal zgid_t;
   typedef Zoltan2::default_part_t  part_t;
   typedef Node          node_t;
   static inline std::string name() {return "Tpetra::CrsMatrix";}
 };
 
+#ifdef HAVE_ZOLTAN2_EPETRA
 template < >
 struct InputTraits<Epetra_CrsMatrix>
 {
   typedef double scalar_t;
   typedef int lno_t;
   typedef int gno_t;
-  typedef int zgid_t;
   typedef Zoltan2::default_part_t  part_t;
   typedef Zoltan2::default_node_t node_t;
   static inline std::string name() {return "Epetra_CrsMatrix";}
 };
+#endif
 
 template <typename Scalar,
           typename LocalOrdinal,
@@ -272,7 +264,6 @@ struct InputTraits<Xpetra::RowMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> >
   typedef Scalar        scalar_t;
   typedef LocalOrdinal  lno_t;
   typedef GlobalOrdinal gno_t;
-  typedef GlobalOrdinal zgid_t;
   typedef Zoltan2::default_part_t  part_t;
   typedef Node          node_t;
   static inline std::string name() {return "Xpetra::RowMatrix";}
@@ -287,7 +278,6 @@ struct InputTraits<Tpetra::RowMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> >
   typedef Scalar        scalar_t;
   typedef LocalOrdinal  lno_t;
   typedef GlobalOrdinal gno_t;
-  typedef GlobalOrdinal zgid_t;
   typedef Zoltan2::default_part_t  part_t;
   typedef Node          node_t;
   static inline std::string name() {return "Tpetra::RowMatrix";}
@@ -301,7 +291,6 @@ struct InputTraits<Xpetra::CrsGraph<LocalOrdinal,GlobalOrdinal,Node> >
   typedef default_scalar_t scalar_t;
   typedef LocalOrdinal  lno_t;
   typedef GlobalOrdinal gno_t;
-  typedef GlobalOrdinal zgid_t;
   typedef Zoltan2::default_part_t  part_t;
   typedef Node          node_t;
   static inline std::string name() {return "Xpetra::CrsGraph";}
@@ -315,23 +304,23 @@ struct InputTraits<Tpetra::CrsGraph<LocalOrdinal,GlobalOrdinal,Node> >
   typedef default_scalar_t scalar_t;
   typedef LocalOrdinal  lno_t;
   typedef GlobalOrdinal gno_t;
-  typedef GlobalOrdinal zgid_t;
   typedef Zoltan2::default_part_t  part_t;
   typedef Node          node_t;
   static inline std::string name() {return "Tpetra::CrsGraph";}
 };
 
+#ifdef HAVE_ZOLTAN2_EPETRA
 template < >
 struct InputTraits<Epetra_CrsGraph>
 {
   typedef double scalar_t;
   typedef int   lno_t;
   typedef int   gno_t;
-  typedef int   zgid_t;
   typedef Zoltan2::default_part_t  part_t;
   typedef Zoltan2::default_node_t node_t;
   static inline std::string name() {return "Epetra_CrsGraph";}
 };
+#endif
 
 template <typename Scalar,
           typename LocalOrdinal,
@@ -342,7 +331,6 @@ struct InputTraits<Xpetra::Vector<Scalar,LocalOrdinal,GlobalOrdinal,Node> >
   typedef Scalar        scalar_t;
   typedef LocalOrdinal  lno_t;
   typedef GlobalOrdinal gno_t;
-  typedef GlobalOrdinal zgid_t;
   typedef Zoltan2::default_part_t  part_t;
   typedef Node          node_t;
   static inline std::string name() {return "Xpetra::Vector";}
@@ -360,23 +348,23 @@ struct InputTraits<Tpetra::Vector<Scalar,LocalOrdinal,GlobalOrdinal,Node> >
   typedef Scalar        scalar_t;
   typedef LocalOrdinal  lno_t;
   typedef GlobalOrdinal gno_t;
-  typedef GlobalOrdinal zgid_t;
   typedef Zoltan2::default_part_t  part_t;
   typedef Node          node_t;
   static inline std::string name() {return "Tpetra::Vector";}
 };
 
+#ifdef HAVE_ZOLTAN2_EPETRA
 template < >
 struct InputTraits<Epetra_Vector>
 {
   typedef double scalar_t;
   typedef int   lno_t;
   typedef int   gno_t;
-  typedef int   zgid_t;
   typedef Zoltan2::default_part_t  part_t;
   typedef Zoltan2::default_node_t node_t;
   static inline std::string name() {return "Epetra_Vector";}
 };
+#endif
 
 template <typename Scalar,
           typename LocalOrdinal,
@@ -387,7 +375,6 @@ struct InputTraits<Xpetra::MultiVector<Scalar,LocalOrdinal,GlobalOrdinal,Node> >
   typedef Scalar        scalar_t;
   typedef LocalOrdinal  lno_t;
   typedef GlobalOrdinal gno_t;
-  typedef GlobalOrdinal zgid_t;
   typedef Zoltan2::default_part_t  part_t;
   typedef Node          node_t;
   static inline std::string name() {return "Xpetra::MultiVector";}
@@ -402,23 +389,23 @@ struct InputTraits<Tpetra::MultiVector<Scalar,LocalOrdinal,GlobalOrdinal,Node> >
   typedef Scalar        scalar_t;
   typedef LocalOrdinal  lno_t;
   typedef GlobalOrdinal gno_t;
-  typedef GlobalOrdinal zgid_t;
   typedef Zoltan2::default_part_t  part_t;
   typedef Node          node_t;
   static inline std::string name() {return "Tpetra::MultiVector";}
 };
 
+#ifdef HAVE_ZOLTAN2_EPETRA
 template < >
 struct InputTraits<Epetra_MultiVector>
 {
   typedef double scalar_t;
   typedef int   lno_t;
   typedef int   gno_t;
-  typedef int   zgid_t;
   typedef Zoltan2::default_part_t  part_t;
   typedef Zoltan2::default_node_t node_t;
   static inline std::string name() {return "Epetra_MultiVector";}
 };
+#endif
 
 #endif // DOXYGEN_SHOULD_SKIP_THIS
 

@@ -52,7 +52,6 @@
 
 #include <Zoltan2_TestHelpers.hpp>
 
-#ifdef HAVE_ZOLTAN2_ZOLTAN
 #include <zoltan.h>
 #include <Teuchos_CommandLineProcessor.hpp>
 
@@ -66,7 +65,7 @@
 #include <Zoltan2_PartitioningSolution.hpp>
 #include <Zoltan2_PartitioningProblem.hpp>
 #include <GeometricGenerator.hpp>
-#include <Zoltan2_PartitioningSolutionQuality.hpp>
+#include <Zoltan2_EvaluatePartition.hpp>
 using namespace std;
 using std::vector;
 using std::cout;
@@ -142,7 +141,7 @@ int getDim(void *data, int *ierr)
 }
 
 void getObjList(void *data, int numGid, int numLid,
-  zzgid_t * gids, zzgid_t * lids, 
+  zgno_t * gids, zgno_t * lids, 
   int num_wgts, float *obj_wgts, int *ierr)
 {
   *ierr = 0;
@@ -150,12 +149,12 @@ void getObjList(void *data, int numGid, int numLid,
   const zgno_t *ids = coordinates->getMap()->getNodeElementList().getRawPtr();
   zgno_t *idsNonConst = const_cast<zgno_t *>(ids);
 
-  if (sizeof(zzgid_t) == sizeof(zgno_t)){
-    memcpy(gids, idsNonConst, sizeof(zzgid_t) * localLen);
+  if (sizeof(zgno_t) == sizeof(zgno_t)){
+    memcpy(gids, idsNonConst, sizeof(zgno_t) * localLen);
   }
   else{
     for (size_t i=0; i < localLen; i++)
-      gids[i] = static_cast<zzgid_t>(idsNonConst[i]);
+      gids[i] = static_cast<zgno_t>(idsNonConst[i]);
   }
 
   if (num_wgts > 0){
@@ -167,7 +166,7 @@ void getObjList(void *data, int numGid, int numLid,
 }
 
 void getCoords(void *data, int numGid, int numLid,
-  int numObj, zzgid_t * gids, zzgid_t * lids,
+  int numObj, zgno_t * gids, zgno_t * lids,
   int dim, double *coords, int *ierr)
 {
   // I know that Zoltan asks for coordinates in gid order.
@@ -673,8 +672,8 @@ int main(int argc, char *argv[])
   Zoltan_Set_Geom_Multi_Fn(zz, getCoords, NULL);
 
   int changes, numGidEntries, numLidEntries, numImport, numExport;
-  zzgid_t * importGlobalGids, * importLocalGids;
-  zzgid_t * exportGlobalGids, * exportLocalGids;
+  zgno_t * importGlobalGids, * importLocalGids;
+  zgno_t * exportGlobalGids, * exportLocalGids;
   int *importProcs, *importToPart, *exportProcs, *exportToPart;
 
   MEMORY_CHECK(doMemory && rank==0, "Before Zoltan_LB_Partition");
@@ -710,12 +709,3 @@ int main(int argc, char *argv[])
 
   return 0;
 }
-
-#else
-#include <iostream>
-int main(int argc, char *argv[])
-{
-  std::cout << "Test did not run due to faulty configuration." << std::endl;
-  std::cout << "FAIL" << std::endl;
-}
-#endif

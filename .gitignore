@@ -17,8 +17,8 @@ doxygen_objdb_*.tmp
 # Trilinos extra repos
 /TriBITS/
 /preCopyrightTrilinos/
-/DrekarBase/
-/DrekarResearch/
+/DrekarBase
+/DrekarResearch
 /LIMEExt/
 /TerminalApplication/
 /DataTransferKit/
@@ -105,6 +105,10 @@ packages/tpetra/doc/MatrixMatrixReport/matmatreport.pdf
 packages/tpetra/doc/MatrixMatrixReport/tpetraDevData/*pdf
 packages/tpetra/doc/MatrixMatrixReport/allMatsData/*pdf
 packages/tpetra/doc/MatrixMatrixReport/atransData/*pdf
+
+packages/muelu/doc/UsersGuide/mueluguide.lof
+packages/muelu/doc/UsersGuide/mueluguide.lot
+packages/muelu/doc/UsersGuide/mueluguide.pdf
 
 rsync.*
 .project

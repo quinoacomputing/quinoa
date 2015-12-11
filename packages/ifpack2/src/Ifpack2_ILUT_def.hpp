@@ -51,9 +51,7 @@
 #include <Ifpack2_Heap.hpp>
 #include <Ifpack2_LocalFilter.hpp>
 #include <Ifpack2_Parameters.hpp>
-#include <Tpetra_CrsMatrix_def.hpp>
-#include <Ifpack2_ILUT.hpp>
-
+#include <Tpetra_CrsMatrix.hpp>
 #include <Teuchos_Time.hpp>
 #include <Teuchos_TypeNameTraits.hpp>
 
@@ -816,10 +814,14 @@ apply (const Tpetra::MultiVector<scalar_type, local_ordinal_type, global_ordinal
     // auxiliary vector, X_temp, so that we don't clobber the input
     // when computing the output.  Otherwise, alias X_temp to X.
     RCP<const MV> X_temp;
-    if (X.getLocalMV ().getValues () == Y.getLocalMV ().getValues ()) {
-      X_temp = rcp (new MV (X, Teuchos::Copy));
-    } else {
-      X_temp = rcpFromRef (X);
+    {
+      auto X_lcl_host = X.template getLocalView<Kokkos::HostSpace> ();
+      auto Y_lcl_host = Y.template getLocalView<Kokkos::HostSpace> ();
+      if (X_lcl_host.ptr_on_device () == Y_lcl_host.ptr_on_device ()) {
+        X_temp = rcp (new MV (X, Teuchos::Copy));
+      } else {
+        X_temp = rcpFromRef (X);
+      }
     }
 
     // Create a temporary multivector Y_mid to hold the intermediate
@@ -967,7 +969,6 @@ ILUT<MatrixType>::makeLocalFilter (const Teuchos::RCP<const row_matrix_type>& A)
 // more specific than RowMatrix.
 
 #define IFPACK2_ILUT_INSTANT(S,LO,GO,N) \
-  template class Ifpack2::ILUT< Tpetra::RowMatrix<S, LO, GO, N> >; \
-  template class Ifpack2::ILUT< Tpetra::CrsMatrix<S, LO, GO, N> >;
+  template class Ifpack2::ILUT< Tpetra::RowMatrix<S, LO, GO, N> >;
 
 #endif /* IFPACK2_ILUT_DEF_HPP */

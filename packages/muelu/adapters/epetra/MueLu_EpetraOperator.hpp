@@ -46,27 +46,29 @@
 #ifndef MUELU_EPETRAOPERATOR_HPP
 #define MUELU_EPETRAOPERATOR_HPP
 
-// Turns a MueLu::Hierarchy into a Epetra_Operator.
-// It allows to use MueLu as a preconditionner for AztecOO (for instance).
-
-// TODO: Is MueLu::EpetraOperator a good name for this adapter? (
-//       For the MueLu/Belos adapter, the name of the class is Belos::MueLuOp)
+//! @file
 
 #include <Epetra_Operator.h>
 #include "MueLu_Hierarchy.hpp"
 //TODO: Kokkos headers
 
+#if defined(HAVE_MUELU_SERIAL) and defined(HAVE_MUELU_EPETRA)
+
 namespace MueLu {
 
+/*! @class EpetraOperator
+    @brief Turns a MueLu::Hierarchy into a Epetra_Operator.
+    It allows MueLu to be used as a preconditioner for AztecOO (for instance).
+*/
   class EpetraOperator : public Epetra_Operator {
     typedef double                                              SC;
     typedef int                                                 LO;
     typedef int                                                 GO;
-    typedef KokkosClassic::DefaultNode::DefaultNodeType         NO;
+    typedef Kokkos::Compat::KokkosSerialWrapperNode             NO;
 
     typedef Xpetra::Matrix<SC,LO,GO,NO>                     Matrix;
     typedef MueLu::Hierarchy<SC,LO,GO,NO>                   Hierarchy;
-    typedef MueLu::Utils<SC,LO,GO,NO>                       Utils;
+    typedef MueLu::Utilities<SC,LO,GO,NO>                       Utils;
 
   public:
 
@@ -159,5 +161,7 @@ namespace MueLu {
   };
 
 } // namespace
+
+#endif // HAVE_MUELU_EPETRA and HAVE_MUELU_SERIAL
 
 #endif // MUELU_EPETRAOPERATOR_HPP

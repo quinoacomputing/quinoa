@@ -24,6 +24,8 @@ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 # FAD
 APPEND_SET(HEADERS
   Phalanx.hpp
+  Phalanx_any.hpp
+  Phalanx_DAG_Node.hpp
   Phalanx_DataLayout_MDALayout_Def.hpp
   Phalanx_DataLayout_MDALayout.hpp
   Phalanx_DataLayout.hpp
@@ -49,6 +51,7 @@ APPEND_SET(HEADERS
   Phalanx_Evaluator_Utilities.hpp
   Phalanx_Evaluator_WithBaseImpl_Def.hpp
   Phalanx_Evaluator_WithBaseImpl.hpp
+  Phalanx_Exceptions.hpp
   Phalanx_Field_Def.hpp
   Phalanx_Field.hpp
   Phalanx_FieldManager_Def.hpp
@@ -69,7 +72,7 @@ APPEND_SET(HEADERS
   Phalanx_TemplateIterator.hpp
   Phalanx_TemplateManager_Def.hpp
   Phalanx_TemplateManager.hpp
-  Phalanx_Traits_Base.hpp
+  Phalanx_Traits.hpp
   Phalanx_TypeStrings.hpp
   Phalanx_MDField_Utilities.hpp
   Phalanx_MDField_Utilities_Def.hpp
@@ -78,6 +81,7 @@ APPEND_SET(HEADERS
 APPEND_SET(SOURCES
   Phalanx_DataLayout.cpp
   Phalanx_DimTag.cpp
+  Phalanx_Exceptions.cpp
   Phalanx_FieldTag.cpp
   Phalanx_KokkosUtilities.cpp
   )

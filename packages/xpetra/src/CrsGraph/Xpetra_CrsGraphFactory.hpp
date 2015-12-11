@@ -90,11 +90,11 @@ namespace Xpetra {
   };
 
   template <>
-  class CrsGraphFactory<int, int> {
+  class CrsGraphFactory<int, int, typename CrsGraph<int, int>::node_type> {
 
     typedef int LocalOrdinal;
     typedef int GlobalOrdinal;
-    typedef CrsGraph<int, GlobalOrdinal>::node_type Node;
+    typedef CrsGraph<int, int>::node_type Node;
 
   private:
     //! Private constructor. This is a static class.
@@ -107,14 +107,18 @@ namespace Xpetra {
       XPETRA_MONITOR("CrsGraphFactory::Build");
 
 #ifdef HAVE_XPETRA_TPETRA
+#ifdef HAVE_XPETRA_TPETRA_INST_INT_INT
       if (map->lib() == UseTpetra)
         return rcp( new TpetraCrsGraph<LocalOrdinal, GlobalOrdinal, Node> (map, NumVectors, pftype) );
+#else
+      XPETRA_TPETRA_ETI_EXCEPTION("CrsGraphFactory<int,int>", "TpetraCrsGraph<int,int>", "int");
+#endif
 #endif
 
 #ifdef HAVE_XPETRA_EPETRA
 #ifndef XPETRA_EPETRA_NO_32BIT_GLOBAL_INDICES
       if (map->lib() == UseEpetra)
-        return rcp( new EpetraCrsGraphT<int>(map, NumVectors, pftype) );
+        return rcp( new EpetraCrsGraphT<int, Node>(map, NumVectors, pftype) );
 #endif
 #endif
 
@@ -124,13 +128,13 @@ namespace Xpetra {
 
   };
 
-#ifdef HAVE_TEUCHOS_LONG_LONG_INT
-  template <>
-  class CrsGraphFactory<int, long long> {
+#ifdef HAVE_XPETRA_INT_LONG_LONG
+  template <class Node>
+  class CrsGraphFactory<int, long long, Node> {
 
     typedef int LocalOrdinal;
     typedef long long GlobalOrdinal;
-    typedef CrsGraph<int, GlobalOrdinal>::node_type Node;
+    //typedef CrsGraph<int, GlobalOrdinal>::node_type Node;
 
   private:
     //! Private constructor. This is a static class.
@@ -150,7 +154,7 @@ namespace Xpetra {
 #ifdef HAVE_XPETRA_EPETRA
 #ifndef XPETRA_EPETRA_NO_64BIT_GLOBAL_INDICES
       if (map->lib() == UseEpetra)
-        return rcp( new EpetraCrsGraphT<long long>(map, NumVectors, pftype) );
+        return rcp( new EpetraCrsGraphT<long long, Node>(map, NumVectors, pftype) );
 #endif
 #endif
 
@@ -159,7 +163,7 @@ namespace Xpetra {
     }
 
   };
-#endif // HAVE_TEUCHOS_LONG_LONG_INT
+#endif // HAVE_XPETRA_INT_LONG_LONG
 }
 
 #define XPETRA_CRSGRAPHFACTORY_SHORT
