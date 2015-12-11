@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Conductor.C
   \author    J. Bakosi
-  \date      Wed 09 Dec 2015 08:26:33 AM MST
+  \date      Fri 11 Dec 2015 12:22:48 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Conductor drives the time integration of a PDE
   \details   Conductor drives the time integration of a PDE
@@ -259,6 +259,10 @@ Conductor::computeCost()
     // Associate upper row index to PE
     m_div[ p.first ].second = upper;
   }
+  // Since m_div contains the dividers (global mesh point indices) at which the
+  // linear system assembly is divided among PEs, but Hypre and LinSysMerger
+  // expects exclusive upper indices, so we increase the last one by one.
+  ++std::prev(m_div.end())->second.second;
 
   Assert( m_div.size() == CkNumPes(), "Size of divisions map must equal the "
           "number PEs, " + std::to_string(CkNumPes()) );
@@ -357,11 +361,7 @@ Conductor::createWorkers()
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // Create linear system merger chare group. m_div contains the dividers
-  // (global mesh point indices) at which the linear system assembly is divided
-  // among PEs. However, Hypre and thus LinSysMerger expects exclusive upper
-  // indices, so we increase the last one by one.
-  ++std::prev(m_div.end())->second.second;
+  // Create linear system merger chare group
   m_linsysmerger = LinSysMergerProxy::ckNew( thisProxy, m_div );
 
   m_print.diagstart( "Creating workers ..." );
