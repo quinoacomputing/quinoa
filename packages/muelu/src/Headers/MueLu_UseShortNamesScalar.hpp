@@ -53,9 +53,6 @@ typedef MueLu::CoalesceDropFactory_kokkos<Scalar,LocalOrdinal,GlobalOrdinal,Node
 #ifdef MUELU_COARSEMAPFACTORY_SHORT
 typedef MueLu::CoarseMapFactory<Scalar,LocalOrdinal,GlobalOrdinal,Node> CoarseMapFactory;
 #endif
-#ifdef MUELU_COARSEMAPFACTORY_KOKKOS_SHORT
-typedef MueLu::CoarseMapFactory_kokkos<Scalar,LocalOrdinal,GlobalOrdinal,Node> CoarseMapFactory_kokkos;
-#endif
 #ifdef MUELU_COARSENINGVISUALIZATIONFACTORY_SHORT
 typedef MueLu::CoarseningVisualizationFactory<Scalar,LocalOrdinal,GlobalOrdinal,Node> CoarseningVisualizationFactory;
 #endif
@@ -67,9 +64,6 @@ typedef MueLu::ConstraintFactory<Scalar,LocalOrdinal,GlobalOrdinal,Node> Constra
 #endif
 #ifdef MUELU_COORDINATESTRANSFERFACTORY_SHORT
 typedef MueLu::CoordinatesTransferFactory<Scalar,LocalOrdinal,GlobalOrdinal,Node> CoordinatesTransferFactory;
-#endif
-#ifdef MUELU_COORDINATESTRANSFERFACTORY_KOKKOS_SHORT
-typedef MueLu::CoordinatesTransferFactory_kokkos<Scalar,LocalOrdinal,GlobalOrdinal,Node> CoordinatesTransferFactory_kokkos;
 #endif
 #ifdef MUELU_COUPLEDRBMFACTORY_SHORT
 typedef MueLu::CoupledRBMFactory<Scalar,LocalOrdinal,GlobalOrdinal,Node> CoupledRBMFactory;
@@ -139,9 +133,6 @@ typedef MueLu::MultiVectorTransferFactory<Scalar,LocalOrdinal,GlobalOrdinal,Node
 #endif
 #ifdef MUELU_NULLSPACEFACTORY_SHORT
 typedef MueLu::NullspaceFactory<Scalar,LocalOrdinal,GlobalOrdinal,Node> NullspaceFactory;
-#endif
-#ifdef MUELU_NULLSPACEFACTORY_KOKKOS_SHORT
-typedef MueLu::NullspaceFactory_kokkos<Scalar,LocalOrdinal,GlobalOrdinal,Node> NullspaceFactory_kokkos;
 #endif
 #ifdef MUELU_NULLSPACEPRESMOOTHFACTORY_SHORT
 typedef MueLu::NullspacePresmoothFactory<Scalar,LocalOrdinal,GlobalOrdinal,Node> NullspacePresmoothFactory;
@@ -245,9 +236,6 @@ typedef MueLu::SubBlockAFactory<Scalar,LocalOrdinal,GlobalOrdinal,Node> SubBlock
 #ifdef MUELU_TENTATIVEPFACTORY_SHORT
 typedef MueLu::TentativePFactory<Scalar,LocalOrdinal,GlobalOrdinal,Node> TentativePFactory;
 #endif
-#ifdef MUELU_TENTATIVEPFACTORY_KOKKOS_SHORT
-typedef MueLu::TentativePFactory_kokkos<Scalar,LocalOrdinal,GlobalOrdinal,Node> TentativePFactory_kokkos;
-#endif
 #ifdef MUELU_THRESHOLDAFILTERFACTORY_SHORT
 typedef MueLu::ThresholdAFilterFactory<Scalar,LocalOrdinal,GlobalOrdinal,Node> ThresholdAFilterFactory;
 #endif
@@ -269,15 +257,6 @@ typedef MueLu::TrilinosSmoother<Scalar,LocalOrdinal,GlobalOrdinal,Node> Trilinos
 #ifdef MUELU_USERPFACTORY_SHORT
 typedef MueLu::UserPFactory<Scalar,LocalOrdinal,GlobalOrdinal,Node> UserPFactory;
 #endif
-#ifdef MUELU_UTILITIES_SHORT
-typedef MueLu::Utilities<Scalar,LocalOrdinal,GlobalOrdinal,Node> Utilities;
-#endif
-#ifdef MUELU_UTILITIESBASE_SHORT
-typedef MueLu::UtilitiesBase<Scalar,LocalOrdinal,GlobalOrdinal,Node> UtilitiesBase;
-#endif
-#ifdef MUELU_UTILITIES_KOKKOS_SHORT
-typedef MueLu::Utilities_kokkos<Scalar,LocalOrdinal,GlobalOrdinal,Node> Utilities_kokkos;
-#endif
 #ifdef MUELU_SEMICOARSENPFACTORY_SHORT
 typedef MueLu::SemiCoarsenPFactory<Scalar,LocalOrdinal,GlobalOrdinal,Node> SemiCoarsenPFactory;
 #endif
@@ -287,11 +266,16 @@ typedef MueLu::UzawaSmoother<Scalar,LocalOrdinal,GlobalOrdinal,Node> UzawaSmooth
 #ifdef MUELU_VISUALIZATIONHELPERS_SHORT
 typedef MueLu::VisualizationHelpers<Scalar,LocalOrdinal,GlobalOrdinal,Node> VisualizationHelpers;
 #endif
-#ifdef MUELU_ZOLTANINTERFACE_SHORT
-typedef MueLu::ZoltanInterface<Scalar,LocalOrdinal,GlobalOrdinal,Node> ZoltanInterface;
-#endif
 #ifdef MUELU_ZOLTAN2INTERFACE_SHORT
 typedef MueLu::Zoltan2Interface<Scalar,LocalOrdinal,GlobalOrdinal,Node> Zoltan2Interface;
+#endif
+#ifdef MUELU_UTILITIES_KOKKOS_SHORT
+typedef MueLu::Utils_kokkos<Scalar,LocalOrdinal,GlobalOrdinal,Node> Utils_kokkos;
+typedef MueLu::Utils2_kokkos<Scalar,LocalOrdinal,GlobalOrdinal,Node> Utils2_kokkos;
+#endif
+#ifdef MUELU_UTILITIES_SHORT
+typedef MueLu::Utils<Scalar,LocalOrdinal,GlobalOrdinal,Node> Utils;
+typedef MueLu::Utils2<Scalar,LocalOrdinal,GlobalOrdinal,Node> Utils2;
 #endif
 #ifdef MUELU_TWOLEVELMATLABFACTORY_SHORT
 typedef MueLu::TwoLevelMatlabFactory<Scalar,LocalOrdinal,GlobalOrdinal,Node> TwoLevelMatlabFactory;

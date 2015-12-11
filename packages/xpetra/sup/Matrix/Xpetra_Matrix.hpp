@@ -100,16 +100,15 @@ namespace Xpetra {
     typedef Xpetra::CrsGraph<LocalOrdinal, GlobalOrdinal, Node> CrsGraph;
     typedef Xpetra::CrsMatrixFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node> CrsMatrixFactory;
     typedef Xpetra::MatrixView<Scalar, LocalOrdinal, GlobalOrdinal, Node> MatrixView;
-
-  public:
-    typedef Scalar          scalar_type;
-    typedef LocalOrdinal    local_ordinal_type;
-    typedef GlobalOrdinal   global_ordinal_type;
-    typedef Node            node_type;
-
 #ifdef HAVE_XPETRA_KOKKOS_REFACTOR
     typedef typename CrsMatrix::local_matrix_type local_matrix_type;
 #endif
+
+  public:
+    typedef Scalar scalar_type;
+    typedef LocalOrdinal local_ordinal_type;
+    typedef GlobalOrdinal global_ordinal_type;
+    typedef Node node_type;
 
     //! @name Constructor/Destructor Methods
     //@{
@@ -134,6 +133,8 @@ namespace Xpetra {
       RCP<const Map> domainMap = Teuchos::null;
       RCP<const Map> rangeMap  = Teuchos::null;
 
+      typedef Xpetra::StridedMapFactory<LocalOrdinal, GlobalOrdinal, Node> StridedMapFactory;
+
       const size_t        blkSize = 1;
       std::vector<size_t> stridingInfo(1, blkSize);
       LocalOrdinal        stridedBlockId = -1;
@@ -148,8 +149,8 @@ namespace Xpetra {
         domainMap = transposeA ? A->getRangeMap()        : A->getDomainMap();
 
         if (viewLabel == "stridedMaps") {
-          rangeMap  = Xpetra::StridedMapFactory<LocalOrdinal, GlobalOrdinal, Node>::Build(rangeMap,  stridingInfo, stridedBlockId);
-          domainMap = Xpetra::StridedMapFactory<LocalOrdinal, GlobalOrdinal, Node>::Build(domainMap, stridingInfo, stridedBlockId);
+          rangeMap  = StridedMapFactory::Build(rangeMap,  stridingInfo, stridedBlockId);
+          domainMap = StridedMapFactory::Build(domainMap, stridingInfo, stridedBlockId);
         }
       }
 
@@ -163,7 +164,7 @@ namespace Xpetra {
           domainMap = transposeB ? B->getRangeMap()        : B->getDomainMap();
 
           if (viewLabel == "stridedMaps")
-            domainMap = Xpetra::StridedMapFactory<LocalOrdinal, GlobalOrdinal, Node>::Build(domainMap, stridingInfo, stridedBlockId);
+            domainMap = StridedMapFactory::Build(domainMap, stridingInfo, stridedBlockId);
         }
       }
 

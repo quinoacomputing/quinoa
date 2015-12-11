@@ -150,7 +150,6 @@ namespace Tacho {
     static const int HierByBlocks      = 1211;
 
     static const int ExternalLapack    = 1221;
-    static const int ExternalPardiso   = 1222;
   };
 
   // aliasing name space

@@ -83,11 +83,13 @@ dot (const XVector& x, const YVector& y)
   typedef Kokkos::View<typename XVector::const_value_type*,
     typename XVector::array_layout,
     typename XVector::device_type,
-    Kokkos::MemoryTraits<Kokkos::Unmanaged> > XVector_Internal;
+    Kokkos::MemoryTraits<Kokkos::Unmanaged>,
+    typename XVector::specialize> XVector_Internal;
   typedef Kokkos::View<typename YVector::const_value_type*,
     typename YVector::array_layout,
     typename YVector::device_type,
-    Kokkos::MemoryTraits<Kokkos::Unmanaged> > YVector_Internal;
+    Kokkos::MemoryTraits<Kokkos::Unmanaged>,
+    typename YVector::specialize> YVector_Internal;
   XVector_Internal x_i = x;
   YVector_Internal y_i = y;
 
@@ -95,10 +97,12 @@ dot (const XVector& x, const YVector& y)
                    typename XVector_Internal::array_layout,
                    typename XVector_Internal::device_type,
                    typename XVector_Internal::memory_traits,
+                   typename XVector_Internal::specialize,
                    typename YVector_Internal::value_type*,
                    typename YVector_Internal::array_layout,
                    typename YVector_Internal::device_type,
-                   typename YVector_Internal::memory_traits
+                   typename YVector_Internal::memory_traits,
+                   typename YVector_Internal::specialize
                    >::dot (x_i, y_i);
 }
 
@@ -175,11 +179,13 @@ dot (Handle& handle, const XVector& x, const YVector& y,
   typedef Kokkos::View<typename XVector::const_value_type*,
     typename XVector::array_layout,
     typename XVector::device_type,
-    Kokkos::MemoryTraits<Kokkos::Unmanaged> > XVector_Internal;
+    Kokkos::MemoryTraits<Kokkos::Unmanaged>,
+    typename XVector::specialize> XVector_Internal;
   typedef Kokkos::View<typename YVector::const_value_type*,
     typename YVector::array_layout,
     typename YVector::device_type,
-    Kokkos::MemoryTraits<Kokkos::Unmanaged> > YVector_Internal;
+    Kokkos::MemoryTraits<Kokkos::Unmanaged>,
+    typename YVector::specialize> YVector_Internal;
   XVector_Internal x_i = x;
   YVector_Internal y_i = y;
 
@@ -189,10 +195,12 @@ dot (Handle& handle, const XVector& x, const YVector& y,
                    typename XVector_Internal::array_layout,
                    typename XVector_Internal::device_type,
                    typename XVector_Internal::memory_traits,
+                   typename XVector_Internal::specialize,
                    typename YVector_Internal::value_type*,
                    typename YVector_Internal::array_layout,
                    typename YVector_Internal::device_type,
-                   typename YVector_Internal::memory_traits
+                   typename YVector_Internal::memory_traits,
+                   typename YVector_Internal::specialize
                    >::dot (x_i, y_i);
 }
 

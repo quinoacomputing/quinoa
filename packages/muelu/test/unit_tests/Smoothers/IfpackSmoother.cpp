@@ -49,11 +49,7 @@
 
 #include "MueLu_IfpackSmoother.hpp"
 
-#ifdef HAVE_MUELU_SERIAL
-typedef double                                      Scalar;
-typedef int                                         LocalOrdinal;
-typedef int                                         GlobalOrdinal;
-typedef Kokkos::Compat::KokkosSerialWrapperNode     Node;
+#include "MueLu_UseDefaultTypes.hpp"
 
 /*
    Comments about tests with hard coded results:
@@ -64,8 +60,6 @@ typedef Kokkos::Compat::KokkosSerialWrapperNode     Node;
    */
 
 namespace MueLuTests {
-
-#include "MueLu_UseShortNames.hpp"
 
   // this namespace already has:  #include "MueLu_UseShortNames.hpp"
   using namespace TestHelpers::Smoothers;
@@ -192,5 +186,3 @@ namespace MueLuTests {
 //TODO: test if 10 its of ifpack == 10 apply call
 //TODO:     TEST_EQUALITY(smoother->GetNIts(),10);
 //TODO: check failed if TPETRA
-
-#endif // HAVE_MUELU_SERIAL

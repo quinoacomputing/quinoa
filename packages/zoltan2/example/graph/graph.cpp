@@ -72,15 +72,16 @@ int main(int narg, char** arg)
     Tpetra::DefaultPlatform::getDefaultPlatform().getComm();
   int me = comm->getRank();
 
+  // Useful typedefs:  basic types
+  typedef int zlno_t;
+  typedef int zgno_t;
+  typedef double zscalar_t;
+
   // Useful typedefs:  Tpetra types
-  // In this example, we'll use Tpetra defaults for local/global ID type
-  typedef double scalar_t;
-  typedef Tpetra::Map<> Map_t;  
-  typedef Map_t::local_ordinal_type localId_t;
-  typedef Map_t::global_ordinal_type globalId_t;
-  typedef Tpetra::CrsMatrix<scalar_t, localId_t, globalId_t> Matrix_t;
-  typedef Tpetra::MultiVector<scalar_t, localId_t, globalId_t> MultiVector_t;
-  typedef Tpetra::Vector<scalar_t, localId_t, globalId_t> Vector_t;
+  typedef Tpetra::Map<zlno_t, zgno_t> Map_t;
+  typedef Tpetra::CrsMatrix<zscalar_t, zlno_t, zgno_t> Matrix_t;
+  typedef Tpetra::MultiVector<zscalar_t, zlno_t, zgno_t> MultiVector_t;
+  typedef Tpetra::Vector<zscalar_t, zlno_t, zgno_t> Vector_t;
 
   // Useful typedefs:  Zoltan2 types
   typedef Zoltan2::XpetraCrsMatrixAdapter<Matrix_t> MatrixAdapter_t;
@@ -88,7 +89,7 @@ int main(int narg, char** arg)
 
   // Input parameters with default values
   std::string method = "scotch";    // Partitioning method
-  globalId_t nx = 50, ny = 40, nz = 30; // Dimensions of mesh corresponding to
+  zgno_t nx = 50, ny = 40, nz = 30; // Dimensions of mesh corresponding to
                                     // the matrix to be partitioned
 
   // Read run-time options.
@@ -128,7 +129,7 @@ int main(int narg, char** arg)
 
     typedef Galeri::Xpetra::Problem<Map_t,Matrix_t,MultiVector_t> Galeri_t;
     RCP<Galeri_t> galeriProblem =
-                  Galeri::Xpetra::BuildProblem<scalar_t, localId_t, globalId_t, 
+                  Galeri::Xpetra::BuildProblem<zscalar_t, zlno_t, zgno_t, 
                                      Map_t, Matrix_t, MultiVector_t>
                                      ("Laplace3D", map, galeriList);
     origMatrix = galeriProblem->BuildMatrix();
@@ -145,9 +146,9 @@ int main(int narg, char** arg)
 
   // Create vectors to use with the matrix for sparse matvec.
   RCP<Vector_t> origVector, origProd;
-  origProd   = Tpetra::createVector<scalar_t,localId_t,globalId_t>(
+  origProd   = Tpetra::createVector<zscalar_t,zlno_t,zgno_t>(
                                     origMatrix->getRangeMap());
-  origVector = Tpetra::createVector<scalar_t,localId_t,globalId_t>(
+  origVector = Tpetra::createVector<zscalar_t,zlno_t,zgno_t>(
                                     origMatrix->getDomainMap());
   origVector->randomize();
 
@@ -186,7 +187,7 @@ int main(int narg, char** arg)
 
   // Create a new product vector for sparse matvec
   RCP<Vector_t> redistribProd;
-  redistribProd = Tpetra::createVector<scalar_t,localId_t,globalId_t>(
+  redistribProd = Tpetra::createVector<zscalar_t,zlno_t,zgno_t>(
                                        redistribMatrix->getRangeMap());
 
   // SANITY CHECK
@@ -208,13 +209,13 @@ int main(int narg, char** arg)
 
   if (me == 0) cout << "Matvec original..." << endl;
   origMatrix->apply(*origVector, *origProd);
-  scalar_t origNorm = origProd->norm2();
+  zscalar_t origNorm = origProd->norm2();
   if (me == 0)
     cout << "Norm of Original matvec prod:       " << origNorm << endl;
 
   if (me == 0) cout << "Matvec redistributed..." << endl;
   redistribMatrix->apply(*redistribVector, *redistribProd);
-  scalar_t redistribNorm = redistribProd->norm2();
+  zscalar_t redistribNorm = redistribProd->norm2();
   if (me == 0)
     cout << "Norm of Redistributed matvec prod:  " << redistribNorm << endl;
 

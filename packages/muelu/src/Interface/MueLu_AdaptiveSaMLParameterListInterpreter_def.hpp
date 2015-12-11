@@ -19,7 +19,6 @@
 #include <Xpetra_MultiVector.hpp>
 #include <Xpetra_MultiVectorFactory.hpp>
 #include <Xpetra_Operator.hpp>
-#include <Xpetra_IO.hpp>
 
 #include "MueLu_AdaptiveSaMLParameterListInterpreter_decl.hpp"
 
@@ -46,7 +45,7 @@
 #include "MueLu_ParameterListUtils.hpp"
 #include "MueLu_MLParameterListInterpreter.hpp"
 
-//#include "MueLu_Utilities.hpp"
+#include "MueLu_Utilities.hpp"
 
 #include "MueLu_DisableMultipleCallCheck.hpp"
 
@@ -388,10 +387,10 @@ namespace MueLu {
       Teuchos::RCP<MueLu::Level> Finest = H.GetLevel(0);  // get finest level,MueLu::NoFactory::get()
       Teuchos::RCP<MultiVector> nspVector2 = Finest->Get<Teuchos::RCP<MultiVector> >("Nullspace");
 
-      Xpetra::IO<Scalar,LocalOrdinal,GlobalOrdinal,Node>::Write("orig_nsp.vec", *nspVector2);
+      MueLu::Utils<Scalar,LocalOrdinal,GlobalOrdinal,Node>::Write("orig_nsp.vec", *nspVector2);
 
       RCP<Matrix> Op = Finest->Get<RCP<Matrix> >("A");
-      Xpetra::IO<Scalar,LocalOrdinal,GlobalOrdinal,Node>::Write("A.mat", *Op);
+      MueLu::Utils<Scalar,LocalOrdinal,GlobalOrdinal,Node>::Write("A.mat", *Op);
 
 
       Teuchos::RCP<MultiVector> homogRhsVec = MultiVectorFactory::Build(nspVector2->getMap(),nspVector2->getNumVectors(),true);
@@ -405,7 +404,7 @@ namespace MueLu {
       // store improved fine level null space
       Finest->Set("Nullspace",nspVector2);
 
-      Xpetra::IO<Scalar,LocalOrdinal,GlobalOrdinal,Node>::Write("new_nsp.vec", *nspVector2);
+      MueLu::Utils<Scalar,LocalOrdinal,GlobalOrdinal,Node>::Write("new_nsp.vec", *nspVector2);
 
       //H.Delete("CoarseSolver", init_levelManagers_[0]->GetFactory("CoarseSolver").get());
     }

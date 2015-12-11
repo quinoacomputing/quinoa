@@ -1,9 +1,6 @@
 #include <iostream>
 #include <fstream>
-#include <sstream>
 #include <vector>
-#include <cstring>
-#include <stdexcept>
 
 using namespace std;
 int main(int argc, char* argv[]) {
@@ -11,31 +8,16 @@ int main(int argc, char* argv[]) {
         cout << "Usage: ./a.out <in> <out>" << endl;
         return 1;
     }
-    if (std::ifstream(argv[2])) {
-      std::cerr << "target file already exists" << std::endl;
-      return 1;
-    }
     ifstream ifs(argv[1]);
     ofstream ofs(argv[2], std::ios::binary);
 
     std::cout << "Reading matrix \"" << argv[1] << "\"" << std::endl;
-    // Skip %% MatrixMarket header and any comments.
+    // Skip %% MatrixMarket header
     char line[256];
-    char percent[1];
-    percent[0] = '%';
     ifs.getline(line, 256);
-    while (strncmp(line,percent,1) == 0) {
-      ifs.getline(line, 256);
-    }
 
     int m, n, nnz;
-    int numConverted = sscanf(line,"%d %d %d",&m,&n,&nnz);
-
-    if (numConverted != 3) {
-      std::ostringstream errStr;
-      errStr << "Error reading matrix dimensions.  Expected 3 integers, found " << numConverted;
-      throw(std::runtime_error(errStr.str()));
-    }
+    ifs >> m >> n >> nnz;
     ofs.write(reinterpret_cast<char*>(&m),   sizeof(m));
     ofs.write(reinterpret_cast<char*>(&n),   sizeof(n));
     ofs.write(reinterpret_cast<char*>(&nnz), sizeof(nnz));

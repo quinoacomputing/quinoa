@@ -43,18 +43,18 @@
 
 #include "ROL_PartitionedVector.hpp"
 #include "ROL_Objective.hpp"
-#include "ROL_InequalityConstraint.hpp"
+#include "ROL_EqualityConstraint.hpp"
+#include "ROL_BoundConstraint.hpp"
 
 namespace ROL {
 
-namespace InteriorPoint {
 
 /** @ingroup func_group
- *  \class ROL::PenalizedObjective
+ *  \class ROL::InteriorPointObjective
  *  \brief Adds barrier term to generic objective
  */
 template <class Real>
-class PenalizedObjective : public ROL::Objective<Real> {
+class InteriorPointObjective : public Objective<Real> {
 private:
 
   typedef Vector<Real>            V;
@@ -66,28 +66,28 @@ private:
 
   Teuchos::RCP<Objective<Real> > obj_;
   Teuchos::RCP<Objective<Real> > barrier_;
-  Teuchos::RCP<PV>    x_;
-  Teuchos::RCP<PV>    g_;
 
   Real mu_;
   int nfval_;
   int ngval_;
-  Real fval_; 
-  Real gnorm_;
+
+  // Downcast const ROL::Vector to const ROL::PartitionedVector
+  const PV& partition(const V& x) {
+    using Teuchos::dyn_cast;
+    return dyn_cast<const PV>(x);
+  }
+  
+  // Downcast ROL::Vector to ROL::PartitionedVector
+  PV& partition(V &x) {
+    using Teuchos::dyn_cast;
+    return dyn_cast<PV>(x);
+  }
+  
 
 public:
-
-  PenalizedObjective( Teuchos::RCP<Objective<Real> > &obj, 
-                      Teuchos::RCP<Objective<Real> > &barrier, 
-                      const Vector<Real> &x,
-                      Real mu ) :
-    obj_(obj), barrier_(barrier),x_(Teuchos::null), g_(Teuchos::null), 
-    mu_(mu), nfval_(0), ngval_(0), fval_(0.0), gnorm_(0.0)  { 
-
-    const PV &xpv = Teuchos::dyn_cast<const PV>(x);
-    
-    x_ = Teuchos::rcp_static_cast<PV>(xpv.clone());
-    g_ = Teuchos::rcp_static_cast<PV>(xpv.dual().clone());
+  InteriorPointObjective( const Teuchos::RCP<Objective<Real> > &obj, 
+                          const Teuchos::RCP<Objective<Real> > &barrier, Real mu ) :
+    obj_(obj),barrier_(barrier),mu_(mu),nfval_(0),ngval_(0) {
   }
  
   void updatePenalty( Real mu ) {
@@ -102,126 +102,53 @@ public:
     return ngval_;
   }
 
-  void reset(void) { 
-    nfval_ = 0.; nfval_ = 0.;
-  } 
-
-  /** \brief Update barrier penalized objective function
-
-      This function updates the penalized objective function at new iterations. 
-      @param[in]          x      is the new iterate. 
-      @param[in]          flag   is true if the iterate has changed.
-      @param[in]          iter   is the outer algorithm iterations count.
-  */
-
-  void update( const Vector<Real> &x, bool flag = true, int iter = -1 ) {
-   
-    const PV &xpv = Teuchos::dyn_cast<const PV>(x);
-
-    Teuchos::RCP<const V> xo = xpv.get(OPT);
-    Teuchos::RCP<const V> xs = xpv.get(SLACK);
-
-    obj_->update(*xo,flag,iter);
-    barrier_->update(*xs,flag,iter);
-
-  }
-
-  /** \brief Compute value.
-
-      This function returns the barrier objective value.
-      @param[in]          x   is the current iterate.
-      @param[in]          tol is a tolerance. 
-  */
   Real value( const Vector<Real> &x, Real &tol ) {
-    
-    const PV &xpv = Teuchos::dyn_cast<const PV>(x); 
+    const PV &xpv = partition(x); 
 
-    Teuchos::RCP<const V> xo = xpv.get(OPT);    
-    Teuchos::RCP<const V> xs = xpv.get(SLACK);
-
-    // Compute objective function value
-    fval_ = obj_->value(*xo,tol);  
-    Real pval = barrier_->value(*xs,tol);
+    Teuchos::RCP<const V> xopt = xpv.get(OPT);    
+    Teuchos::RCP<const V> s    = xpv.get(SLACK);
 
     ++nfval_;
+    return obj_->value(*xopt,tol) + mu_*barrier_->value(*s,tol); 
 
-    return fval_+mu_*pval; 
   }
 
-  Real getObjectiveValue() {
-    return fval_;
-  }
-  
-
-  /** \brief Compute gradient.
-
-      This function returns the barrier penalized objective gradient.
-      @param[out]         g   is the gradient.
-      @param[in]          x   is the current iterate.
-      @param[in]          tol is a tolerance. 
-  */
   void gradient( Vector<Real> &g, const Vector<Real> &x, Real &tol ) {
 
-      // Compute objective function gradient
-      const PV &xpv = Teuchos::dyn_cast<const PV>(x);
-      PV &gpv = Teuchos::dyn_cast<PV>(g); 
+    const PV &xpv = partition(x);
+    PV &gpv = partition(g); 
         
-      Teuchos::RCP<const V> xo = xpv.get(OPT);    
-      Teuchos::RCP<const V> xs = xpv.get(SLACK);    
- 
-      Teuchos::RCP<V> go = gpv.get(OPT);
-      Teuchos::RCP<V> gs = gpv.get(SLACK); 
- 
-      obj_->gradient(*go,*xo,tol);
-      barrier_->gradient(*gs,*xs,tol);
-      gs->scale(mu_);
-      
-      g_->set(g);
-      g_->zero(SLACK);      
+    Teuchos::RCP<const V> xopt = xpv.get(OPT);    
+    Teuchos::RCP<const V> s    = xpv.get(SLACK);    
 
-      gnorm_ = g.norm();
+    Teuchos::RCP<V> gopt = gpv.get(OPT);
+    Teuchos::RCP<V> gs   = gpv.get(SLACK);
 
-      ++ngval_;
+    obj_->gradient(*gopt, *xopt, tol);
+    barrier_->gradient(*gs, *s, tol); 
+    gs->scale(mu_);
 
+    ++ngval_;   
   } 
-
-  void getObjectiveGradient( Vector<Real> &g ) {
-
-  }
-
-  Real getGradientNorm() {
-    return gnorm_;
-  }
-
-  /** \brief Apply Hessian approximation to vector.
-
-      This function applies the Hessian of the barrier penalized objective 
-      to the vector \f$v\f$.
-      @param[out]         hv  is the the action of the Hessian on \f$v\f$.
-      @param[in]          v   is the direction vector.
-      @param[in]          x   is the current iterate.
-      @param[in]          tol is a tolerance.
-  */   
+   
   void hessVec( Vector<Real> &hv, const Vector<Real> &v,
                  const Vector<Real> &x, Real &tol ) {
 
-    using Teuchos::RCP;  using Teuchos::dyn_cast;
-
-    const PV &xpv = dyn_cast<const PV>(x);
-    const PV &vpv = dyn_cast<const PV>(v);
-    PV &hvpv = dyn_cast<PV>(hv); 
+    const PV &xpv = partition(x);
+    const PV &vpv = partition(v);
+    PV &hvpv = partition(hv); 
         
-    RCP<const V> xo = xpv.get(OPT);    
-    RCP<const V> xs = xpv.get(SLACK);    
+    Teuchos::RCP<const V> xopt = xpv.get(OPT);    
+    Teuchos::RCP<const V> s    = xpv.get(SLACK);    
 
-    RCP<const V> vo = vpv.get(OPT);    
-    RCP<const V> vs = vpv.get(SLACK);
+    Teuchos::RCP<const V> vopt = vpv.get(OPT);    
+    Teuchos::RCP<const V> vs   = vpv.get(SLACK);
 
-    RCP<V> hvo = hvpv.get(OPT);
-    RCP<V> hvs = hvpv.get(SLACK);
+    Teuchos::RCP<V> hvopt = hvpv.get(OPT);
+    Teuchos::RCP<V> hvs   = hvpv.get(SLACK);
 
-    obj_->hessVec(*hvo, *vo, *xo, tol);
-    barrier_->hessVec(*hvs, *vs, *xs, tol);
+    obj_->hessVec(*hvopt, *vopt, *xopt, tol);
+    barrier_->hessVec(*hvs, *vs, *s, tol);
     hvs->scale(mu_);
    
   }
@@ -231,15 +158,14 @@ public:
 
 
 /** @ingroup func_group
- *  \class ROL::InteriorPoint::CompositeConstraint
+ *  \class ROL::InteriorPointEqualityConstraint
  *  \brief Has both inequality and equality constraints. 
  *        Treat inequality constraint as equality with slack variable
  */
 
 template<class Real> 
-class CompositeConstraint : public EqualityConstraint<Real> {
+class InteriorPointEqualityConstraint : public EqualityConstraint<Real> {
 private:
-
   typedef Vector<Real>            V;
   typedef PartitionedVector<Real> PV;
   typedef typename PV::size_type  size_type; 
@@ -250,67 +176,63 @@ private:
   const static size_type INEQ  = 0;
   const static size_type EQUAL = 1;
 
-  Teuchos::RCP<InequalityConstraint<Real> > incon_;
-  Teuchos::RCP<EqualityConstraint<Real> >   eqcon_;
+  Teuchos::RCP<EqualityConstraint<Real> > incon_;
+  Teuchos::RCP<EqualityConstraint<Real> > eqcon_;
    
   bool hasEquality_;         // True if an equality constraint is present
   int  ncval_;               // Number of constraint evaluations
 
-
+  // Downcast const ROL::Vector to const ROL::PartitionedVector
+  const PV& partition(const V& x) {
+    using Teuchos::dyn_cast;
+    return dyn_cast<const PV>(x);
+  }
+  
+  // Downcast ROL::Vector to ROL::PartitionedVector
+  PV& partition(V &x) {
+    using Teuchos::dyn_cast;
+    return dyn_cast<PV>(x);
+  }
+ 
 public:
 
   // Constructor with inequality and equality constraints
-  CompositeConstraint( Teuchos::RCP<InequalityConstraint<Real> > &incon, 
-                       Teuchos::RCP<EqualityConstraint<Real> > &eqcon ) :
-                       incon_(incon), eqcon_(eqcon), 
-                       hasEquality_(true), ncval_(0) { }
+  InteriorPointEqualityConstraint( const Teuchos::RCP<EqualityConstraint<Real> > &incon, 
+                            const Teuchos::RCP<EqualityConstraint<Real> > &eqcon ) :
+     incon_(incon), eqcon_(eqcon),hasEquality_(true), ncval_(0) {}
 
   // Constructor with inequality constraint only
-  CompositeConstraint( Teuchos::RCP<InequalityConstraint<Real> > &incon ) :
-                       incon_(incon), eqcon_(Teuchos::null),
-                       hasEquality_(false), ncval_(0) { }
-  
+  InteriorPointEqualityConstraint( const Teuchos::RCP<EqualityConstraint<Real> > &incon ) :
+    incon_(incon), hasEquality_(false), ncval_(0) {}
+
  
   int getNumberConstraintEvaluations(void) {
     return ncval_;
   }
  
-  void update( const Vector<Real> &x, bool flag = true, int iter = -1 ) {
-
-    const PV &xpv = Teuchos::dyn_cast<const PV>(x);     
-   
-    Teuchos::RCP<const V> xo = xpv.get(OPT);
-    Teuchos::RCP<const V> xs = xpv.get(SLACK);
-
-    incon_->update(*xo,flag,iter);
- 
-    if( hasEquality_ ) {
-      eqcon_->update(*xo,flag,iter);
-    }
-
-  }
 
   void value( Vector<Real> &c, const Vector<Real> &x, Real &tol ) {
 
-    PV &cpv = Teuchos::dyn_cast<PV>(c); 
-    const PV &xpv = Teuchos::dyn_cast<const PV>(x);
+    using Teuchos::RCP;
 
-    Teuchos::RCP<const V> xo = xpv.get(OPT);    
-    Teuchos::RCP<const V> xs = xpv.get(SLACK);
+    // Partition vectors and extract subvectors
+    const PV &xpv = partition(x);
 
-    Teuchos::RCP<V> ci = cpv.get(INEQ);
-    Teuchos::RCP<V> ce;
+    RCP<const V> xopt = xpv.get(OPT);    
+    RCP<const V> s    = xpv.get(SLACK);
 
-    incon_->value(*ci, *xo, tol);
-    ci->axpy(-1.0,*xs);
-       
+    PV &cpv = partition(c); 
+
+    RCP<V> ci = cpv.get(INEQ);
+    incon_->value(*ci, *xopt, tol);
+    ci->axpy(-1.0,*s);
+
     if(hasEquality_) {
-      ce = cpv.get(EQUAL);      
-      eqcon_->value(*ce, *xo, tol);
+      RCP<V> ce = cpv.get(EQUAL);
+      eqcon_->value(*ce, *xopt, tol);
     }
 
     ++ncval_;
-
   }
 
   void applyJacobian( Vector<Real> &jv,
@@ -318,27 +240,27 @@ public:
                       const Vector<Real> &x,
                       Real &tol ) {
     
-    using Teuchos::RCP;  using Teuchos::dyn_cast;
+    using Teuchos::RCP;
 
     // Partition vectors and extract subvectors
-    const PV &xpv = dyn_cast<const PV>(x);
-    const PV &vpv = dyn_cast<const PV>(v);
+    const PV &xpv = partition(x);
+    const PV &vpv = partition(v);
 
-    RCP<const V> xo = xpv.get(OPT);    
-    RCP<const V> xs = xpv.get(SLACK);
+    RCP<const V> xopt = xpv.get(OPT);    
+    RCP<const V> s    = xpv.get(SLACK);
 
-    RCP<const V> vo = vpv.get(OPT);    
-    RCP<const V> vs = vpv.get(SLACK);
+    RCP<const V> vopt = vpv.get(OPT);    
+    RCP<const V> vs   = vpv.get(SLACK);
 
-    PV &jvpv = dyn_cast<PV>(jv); 
+    PV &jvpv = partition(jv); 
 
     RCP<V> jvi = jvpv.get(INEQ);
-    incon_->applyJacobian(*jvi, *vo, *xo, tol);
+    incon_->applyJacobian(*jvi, *vopt, *xopt, tol);
     jvi->axpy(-1.0,*vs);
 
     if(hasEquality_) {
       RCP<V> jve = jvpv.get(EQUAL);
-      eqcon_->applyJacobian(*jve, *vo, *xo, tol);  
+      eqcon_->applyJacobian(*jve, *vopt, *xopt, tol);  
     }
 
   }
@@ -348,23 +270,24 @@ public:
                              const Vector<Real> &x,
                              Real &tol ) {
 
-    using Teuchos::RCP;  using Teuchos::dyn_cast;
+    using Teuchos::RCP;
 
     // Partition vectors and extract subvectors
-    const PV &xpv = dyn_cast<const PV>(x);
-    PV &ajvpv = dyn_cast<PV>(ajv); 
+    const PV &xpv = partition(x);
+    PV &ajvpv = partition(ajv); 
 
-    RCP<const V> xo = xpv.get(OPT);    
-    RCP<const V> xs = xpv.get(SLACK);
+    RCP<const V> xopt = xpv.get(OPT);    
+    RCP<const V> s    = xpv.get(SLACK);
 
-    RCP<V> ajvo = ajvpv.get(OPT);
-    RCP<V> ajvs = ajvpv.get(SLACK);
+    RCP<V> ajvopt = ajvpv.get(OPT);
+    RCP<V> ajvs   = ajvpv.get(SLACK);
 
-    const PV &vpv = dyn_cast<const PV>(v);
+    const PV &vpv = partition(v);
 
     RCP<const V> vi = vpv.get(INEQ);
 
-    incon_->applyAdjointJacobian(*ajvo,*vi,*xo,tol);
+    incon_->applyAdjointJacobian(*ajvopt,*vi,*xopt,tol);
+
 
     ajvs->set(*vi);
     ajvs->scale(-1.0);
@@ -372,9 +295,9 @@ public:
     if(hasEquality_) {
 
       RCP<const V> ve = vpv.get(EQUAL);    
-      RCP<V> temp = ajvo->clone();
-      eqcon_->applyAdjointJacobian(*temp,*ve,*xo,tol);
-      ajvo->plus(*temp);
+      RCP<V> temp = ajvopt->clone();
+      eqcon_->applyAdjointJacobian(*temp,*ve,*xopt,tol);
+      ajvopt->plus(*temp);
 
     } 
 
@@ -386,40 +309,126 @@ public:
                             const Vector<Real> &x,
                             Real &tol ) {
   
-    using Teuchos::RCP;  using Teuchos::dyn_cast;
+    using Teuchos::RCP;
 
-    const PV &xpv = dyn_cast<const PV>(x);
-    const PV &vpv = dyn_cast<const PV>(v);
-    PV &ahuvpv = dyn_cast<PV>(ahuv); 
+    const PV &xpv = partition(x);
+    const PV &vpv = partition(v);
+    PV &ahuvpv = partition(ahuv); 
 
-    RCP<const V> xo = xpv.get(OPT);    
-    RCP<const V> xs = xpv.get(SLACK);
+    RCP<const V> xopt = xpv.get(OPT);    
+    RCP<const V> s    = xpv.get(SLACK);
 
-    RCP<const V> vo = vpv.get(OPT);    
+    RCP<const V> vopt = vpv.get(OPT);    
     
-    RCP<V> ahuvo = ahuvpv.get(OPT);
-    RCP<V> ahuvs = ahuvpv.get(SLACK);
+    RCP<V> ahuvopt = ahuvpv.get(OPT);
+    RCP<V> ahuvs   = ahuvpv.get(SLACK);
 
-    RCP<V> temp = ahuvo->clone();
+    RCP<V> temp = ahuvopt->clone();
  
-    const PV &upv = dyn_cast<const PV>(u);
+    const PV &upv = partition(u);
 
-    RCP<const V> ui = upv.get(INEQ);
+    RCP<const V> ui   = upv.get(INEQ);
  
-    incon_->applyAdjointHessian(*ahuvo,*ui,*vo,*xo,tol);
+    incon_->applyAdjointHessian(*ahuvopt,*ui,*vopt,*xopt,tol);
     ahuvs->zero();
 
     if(hasEquality_) {
       RCP<const V> ue   = upv.get(EQUAL);    
-      eqcon_->applyAdjointHessian(*temp,*ue,*vo,*xo,tol);
-      ahuvo->plus(*temp);
+      eqcon_->applyAdjointHessian(*temp,*ue,*vopt,*xopt,tol);
+      ahuvopt->plus(*temp);
     }
 
   }
    
-}; // class CompositeConstraint
+}; // class InteriorPointEqualityConstraint
 
-} // namespace InteriorPoint
-} // namespace ROL
+
+/** @ingroup func_group
+ *  \class ROL::InteriorPointBoundConstraint
+ *  \brief Require positivity of slack variables
+ */
+
+template<class Real>
+class InteriorPointBoundConstraint : public BoundConstraint<Real> {
+private:
+  typedef Vector<Real>            V;
+  typedef PartitionedVector<Real> PV;
+  typedef typename PV::size_type  size_type; 
+
+  const static size_type OPT   = 0;
+  const static size_type SLACK = 1;
+
+  Teuchos::RCP<BoundConstraint<Real> > bc_;
+
+  Teuchos::RCP<Vector<Real> > lower_;
+  Teuchos::RCP<Vector<Real> > upper_;  
+
+public:
+
+  InteriorPointBoundConstraint( const Vector<Real> &x ) {
+
+    lower_ = x.clone();
+    upper_ = x.clone();
+
+    PV lowerpv = Teuchos::dyn_cast<PV>(lower_);
+    PV upperpv = Teuchos::dyn_cast<PV>(upper_);
+   
+    Teuchos::RCP<V> lower_opt   = lowerpv.get(OPT);
+    Teuchos::RCP<V> lower_slack = lowerpv.get(SLACK);
+
+    Teuchos::RCP<V> upper_opt   = upperpv.get(OPT);
+    Teuchos::RCP<V> upper_slack = upperpv.get(SLACK);
+
+    Elementwise::Fill<Real> setToMax(std::numeric_limits<Real>::max());
+    Elementwise::Fill<Real> setToMin(std::numeric_limits<Real>::lowest());
+    
+    lower_opt->applyUnary( setToMin );
+    lower_slack->zero();
+
+    upper_opt->applyUnary( setToMax );
+    upper_slack->applyUnary( setToMax );
+
+    bc_ = Teuchos::rcp( new BoundConstraint<Real>( lower_, upper_ ) );
+
+  }
+
+  void project( Vector<Real> &x ) {
+    bc_->project(x);
+  }
+
+  void pruneUpperActive( Vector<Real> &v, const Vector<Real> &x, Real eps ) {
+    bc_->pruneUpperActive( v, x, eps );
+  } 
+
+  void pruneUpperActive( Vector<Real> &v, const Vector<Real> &g, 
+                         const Vector<Real> &x, Real eps ) {
+    bc_->pruneUpperActive( v, g, x, eps );
+  }
+
+   void pruneLowerActive( Vector<Real> &v, const Vector<Real> &x, Real eps ) {
+    bc_->pruneLowerActive( v, x, eps );
+  } 
+
+  void pruneLowerActive( Vector<Real> &v, const Vector<Real> &g, 
+                         const Vector<Real> &x, Real eps ) {
+    bc_->pruneLowerActive( v, g, x, eps );
+  }
+ 
+  void setVectorToUpperBound( Vector<Real> &u ) {
+    u.set(*upper_);
+  }
+
+  void setVectorToLowerBound( Vector<Real> &l ) {
+    l.set(*lower_);
+  }
+
+  bool isFeasible( const Vector<Real> &v ) { 
+    return bc_->isFeasible(v);
+  }
+
+}; // class InteriorPointBoundConstraint
+
+
+}
 
 #endif

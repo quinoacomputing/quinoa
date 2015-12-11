@@ -55,7 +55,7 @@
 #include "Teuchos_Assert.hpp"
 
 
-#include <Intrepid_KokkosRank.hpp>
+#include <KokkosRank.hpp>
 #ifdef HAVE_INTREPID_KOKKOSCORE
 #include "Kokkos_Core.hpp"
 #endif

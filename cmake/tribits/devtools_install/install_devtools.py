@@ -59,7 +59,7 @@ sourceGitUrlBase_default = "https://github.com/tribitsdevtools/"
 
 # tool default versions
 autoconf_version_default = "2.69"
-cmake_version_default = "3.4.0"
+cmake_version_default = "2.8.11"
 git_version_default = "1.7.0.4"
 gcc_version_default = "4.8.3"
 mpich_version_default = "3.1.3"
@@ -395,7 +395,7 @@ def getToolsSelectedArray(toolsSelectedStr, validToolsArray):
 #
 def substituteStrings(inputStr, subPairArray):
   outputStr = ""
-  inputStrArray = inputStr.splitlines()
+  inputStrArray = inputStr.split("\n")
   if inputStrArray[-1] == "": inputStrArray = inputStrArray[0:-1]
   for line in inputStrArray:
     #print "line = '"+line+"'"

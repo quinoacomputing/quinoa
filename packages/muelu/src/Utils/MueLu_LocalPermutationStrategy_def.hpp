@@ -50,6 +50,7 @@ namespace MueLu {
 
   template<class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
   void LocalPermutationStrategy<Scalar, LocalOrdinal, GlobalOrdinal, Node>::BuildPermutation(const Teuchos::RCP<Matrix> & A, const Teuchos::RCP<const Map> permRowMap, Level & currentLevel, const FactoryBase* genFactory) const {
+#ifndef HAVE_MUELU_INST_COMPLEX_INT_INT // TODO remove this -> check scalar = std::complex
     size_t nDofsPerNode = 1;
     if (A->IsView("stridedMaps")) {
       Teuchos::RCP<const Map> permRowMapStrided = A->getRowMap("stridedMaps");
@@ -91,8 +92,7 @@ namespace MueLu {
         A->getLocalRowView(A->getRowMap()->getLocalElement(grow), indices, vals);
 
         // find column entry with max absolute value
-        typedef typename Teuchos::ScalarTraits<Scalar>::magnitudeType MT;
-        MT maxVal = 0.0;
+        Scalar maxVal = 0.0;
         for (size_t j = 0; j < Teuchos::as<size_t>(indices.size()); j++) {
           if(Teuchos::ScalarTraits<Scalar>::magnitude(vals[j]) > maxVal) {
             maxVal = Teuchos::ScalarTraits<Scalar>::magnitude(vals[j]);
@@ -105,7 +105,7 @@ namespace MueLu {
           GlobalOrdinal gcol = A->getColMap()->getGlobalElement(indices[j]);
           GlobalOrdinal gcnodeid = globalDofId2globalNodeId(A,gcol); // -> global node id
           if (grnodeid == gcnodeid) {
-            if(maxVal != Teuchos::ScalarTraits<MT>::zero ()) {
+            if(maxVal != 0.0) {
               subBlockMatrix(lrdof, gcol % nDofsPerNode) = vals[j]/maxVal;
             } else
             {
@@ -149,8 +149,7 @@ namespace MueLu {
       }*/
 
       // find permutation with maximum performance value
-      typedef typename Teuchos::ScalarTraits<Scalar>::magnitudeType MT;
-      MT maxVal = Teuchos::ScalarTraits<MT>::zero();
+      Scalar maxVal = 0.0;
       size_t maxPerformancePermutationIdx = 0;
       for (size_t j = 0; j < Teuchos::as<size_t>(performance_vector.size()); j++) {
         if(Teuchos::ScalarTraits<Scalar>::magnitude(performance_vector[j]) > maxVal) {
@@ -202,9 +201,9 @@ namespace MueLu {
     Teuchos::RCP<CrsMatrixWrap> permQTmatrix = Teuchos::rcp(new CrsMatrixWrap(A->getRowMap(),1,Xpetra::StaticProfile));
 
     for(size_t row=0; row<A->getNodeNumRows(); row++) {
-      Teuchos::ArrayRCP<GlobalOrdinal> indoutP(1,Teuchos::as<GO>(Teuchos::ScalarTraits<Scalar>::real(PpermData[row]))); // column idx for Perm^T
-      Teuchos::ArrayRCP<GlobalOrdinal> indoutQ(1,Teuchos::as<GO>(Teuchos::ScalarTraits<Scalar>::real(QpermData[row]))); // column idx for Qperm
-      Teuchos::ArrayRCP<Scalar> valout(1,Teuchos::ScalarTraits<Scalar>::one());
+      Teuchos::ArrayRCP<GlobalOrdinal> indoutP(1,Teuchos::as<GO>(PpermData[row])); // column idx for Perm^T
+      Teuchos::ArrayRCP<GlobalOrdinal> indoutQ(1,Teuchos::as<GO>(QpermData[row])); // column idx for Qperm
+      Teuchos::ArrayRCP<Scalar> valout(1,1.0);
       permPTmatrix->insertGlobalValues(A->getRowMap()->getGlobalElement(row), indoutP.view(0,indoutP.size()), valout.view(0,valout.size()));
       permQTmatrix->insertGlobalValues (A->getRowMap()->getGlobalElement(row), indoutQ.view(0,indoutQ.size()), valout.view(0,valout.size()));
     }
@@ -212,7 +211,7 @@ namespace MueLu {
     permPTmatrix->fillComplete();
     permQTmatrix->fillComplete();
 
-    Teuchos::RCP<Matrix> permPmatrix = Utilities::Transpose(*permPTmatrix,true);
+    Teuchos::RCP<Matrix> permPmatrix = Utils2::Transpose(*permPTmatrix,true);
 
     /*for(size_t row=0; row<permPTmatrix->getNodeNumRows(); row++) {
       if(permPTmatrix->getNumEntriesInLocalRow(row) != 1)
@@ -243,9 +242,9 @@ namespace MueLu {
     permPApermQt->getLocalDiagCopy(*diagVec);
     for(size_t i = 0; i<diagVec->getMap()->getNodeNumElements(); ++i) {
       if(diagVecData[i] != 0.0)
-        invDiagVecData[i] = Teuchos::ScalarTraits<Scalar>::one()/diagVecData[i];
+        invDiagVecData[i] = 1/diagVecData[i];
       else {
-        invDiagVecData[i] = Teuchos::ScalarTraits<Scalar>::one();
+        invDiagVecData[i] = 1.0;
         lCntZeroDiagonals++;
         //GetOStream(Statistics0) << "MueLu::LocalPermutationStrategy: found zero on diagonal in row " << i << std::endl;
       }
@@ -314,6 +313,8 @@ namespace MueLu {
 
     GetOStream(Statistics0) << "#Row    permutations/max possible permutations: " << gNumRowPermutations << "/" << diagPVec->getMap()->getGlobalNumElements() << std::endl;
     GetOStream(Statistics0) << "#Column permutations/max possible permutations: " << gNumColPermutations << "/" << diagQTVec->getMap()->getGlobalNumElements() << std::endl;
+
+#endif // #ifndef HAVE_MUELU_INST_COMPLEX_INT_INT
   }
 
   template<class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>

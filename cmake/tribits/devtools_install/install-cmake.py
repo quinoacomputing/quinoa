@@ -46,13 +46,10 @@
 
 cmakeBaseName = "cmake"
 cmakeDefaultVersion = "2.8.11"
-cmakeSupportedVersions = ["2.8.11", "3.1.1", "3.3.2", "3.4.0", "3.4.1"]
+cmakeSupportedVersions = ["2.8.11", "3.1.1"]
 cmakeTarballVersions = {
   "2.8.11" : "2.8.11.2",
-  "3.1.1" : "3.1.1",
-  "3.3.2" : "3.3.2",
-  "3.4.0" : "3.4.0",
-  "3.4.1" : "3.4.1"
+  "3.1.1" : "3.1.1"
   }
 
 # NOTES:
@@ -162,9 +159,6 @@ command --download-cmnd=<download-cmnd> is:
     if self.inOptions.version == "2.8.11" or self.inOptions.version == "3.1.1":
       echoChDir(self.cmakeSrcDir+"/Source/CPack")
       echoRunSysCmnd("patch -i ../../../fix_cpack_symlink.patch")
-    elif self.inOptions.version == "3.3.2" or self.inOptions.version == "3.4.0":
-      echoChDir(self.cmakeSrcDir+"/Source")
-      echoRunSysCmnd("patch -i ../../remove_getrealpath.patch")
 
   def doConfigure(self):
     createDir(self.cmakeBuildBaseDir, True, True)

@@ -113,9 +113,6 @@ Piro::LOCAAdaptiveSolver<Scalar>::LOCAAdaptiveSolver(
 
   stepper_ = Teuchos::rcp(new LOCA::AdaptiveStepper(piroParams_, solMgr_, globalData_, noxStatusTests_));
 
-  if (piroParams_->isSublist("NOX") &&
-      piroParams_->sublist("NOX").isSublist("Printing"))
-    utils_.reset(piroParams_->sublist("NOX").sublist("Printing"));
 }
 
 template<typename Scalar>
@@ -153,11 +150,11 @@ Piro::LOCAAdaptiveSolver<Scalar>::evalModelImpl(
   status = stepper_->run();
 
   if (status == LOCA::Abstract::Iterator::Finished) {
-    utils_.out() << "Continuation Stepper Finished.\n";
+    std::cerr << "Continuation Stepper Finished.\n";
   } else if (status == LOCA::Abstract::Iterator::NotFinished) {
-    utils_.out() << "Continuation Stepper did not reach final value.\n";
+    std::cerr << "Continuation Stepper did not reach final value.\n";
   } else {
-    utils_.out() << "Nonlinear solver failed to converge.\n";
+    std::cerr << "Nonlinear solver failed to converge.\n";
     outArgs.setFailed();
   }
 

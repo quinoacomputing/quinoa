@@ -56,7 +56,7 @@
 #include "ROL_Algorithm.hpp"
 // ROL vectors
 #include "ROL_StdVector.hpp"
-#include "ROL_RiskVector.hpp"
+#include "ROL_CVaRVector.hpp"
 // ROL objective functions and constraints
 #include "ROL_ParametrizedObjective_SimOpt.hpp"
 #include "ROL_ParametrizedEqualityConstraint_SimOpt.hpp"
@@ -65,6 +65,10 @@
 // ROL sample generators
 #include "ROL_MonteCarloGenerator.hpp"
 #include "ROL_StdTeuchosBatchManager.hpp"
+// ROL CVaR definitions
+#include "ROL_DistributionFactory.hpp"
+#include "ROL_PlusFunction.hpp"
+#include "ROL_CVaR.hpp"
 
 template<class Real>
 class EqualityConstraint_BurgersControl : public ROL::ParametrizedEqualityConstraint_SimOpt<Real> {

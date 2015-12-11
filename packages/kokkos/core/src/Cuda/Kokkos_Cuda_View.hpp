@@ -53,7 +53,6 @@
 
 #include <Kokkos_HostSpace.hpp>
 #include <Kokkos_CudaSpace.hpp>
-#include <impl/Kokkos_Shape.hpp>
 #include <Kokkos_View.hpp>
 
 #include <Cuda/Kokkos_Cuda_BasicAllocators.hpp>
@@ -89,8 +88,6 @@ struct AssertShapeBoundsAbort< CudaSpace >
 
 //----------------------------------------------------------------------------
 //----------------------------------------------------------------------------
-
-#if ! defined( KOKKOS_USING_EXPERIMENTAL_VIEW )
 
 namespace Kokkos {
 namespace Impl {
@@ -421,8 +418,6 @@ public:
 
 }
 }
-
-#endif /* #if ! defined( KOKKOS_USING_EXPERIMENTAL_VIEW ) */
 
 //----------------------------------------------------------------------------
 //----------------------------------------------------------------------------

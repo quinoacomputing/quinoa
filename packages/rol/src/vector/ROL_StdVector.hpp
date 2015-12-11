@@ -78,8 +78,8 @@ public:
   void plus( const Vector<Real> &x ) {
     const StdVector &ex = Teuchos::dyn_cast<const StdVector>(x);
     const std::vector<Element>& xval = *ex.getVector();
-    uint dim  = std_vec_->size();
-    for (uint i=0; i<dim; i++) {
+    unsigned dimension  = std_vec_->size();
+    for (unsigned i=0; i<dimension; i++) {
       (*std_vec_)[i] += xval[i];
     }
   }
@@ -87,25 +87,25 @@ public:
   void axpy( const Real alpha, const Vector<Real> &x ) {
     const StdVector &ex = Teuchos::dyn_cast<const StdVector>(x);
     const std::vector<Element>& xval = *ex.getVector();
-    uint dim  = std_vec_->size();
-    for (uint i=0; i<dim; i++) {
+    uint dimension  = std_vec_->size();
+    for (uint i=0; i<dimension; i++) {
       (*std_vec_)[i] += alpha*xval[i];
     }
   }
 
   void scale( const Real alpha ) {
-    uint dim = std_vec_->size();
-    for (uint i=0; i<dim; i++) {
+    uint dimension = std_vec_->size();
+    for (uint i=0; i<dimension; i++) {
       (*std_vec_)[i] *= alpha;
     }
   }
 
-  virtual Real dot( const Vector<Real> &x ) const {
+  Real dot( const Vector<Real> &x ) const {
     const StdVector & ex = Teuchos::dyn_cast<const StdVector>(x);
     const std::vector<Element>& xval = *ex.getVector();
-    uint dim  = std_vec_->size();
+    uint dimension  = std_vec_->size();
     Real val = 0;
-    for (uint i=0; i<dim; i++) {
+    for (uint i=0; i<dimension; i++) {
       val += (*std_vec_)[i]*xval[i];
     }
     return val;
@@ -117,7 +117,7 @@ public:
     return val;
   }
 
-  virtual Teuchos::RCP<Vector<Real> > clone() const {
+  Teuchos::RCP<Vector<Real> > clone() const {
     return Teuchos::rcp( new StdVector( Teuchos::rcp(new std::vector<Element>(std_vec_->size())) ));
   }
 
@@ -140,17 +140,18 @@ public:
   }
 
   void applyUnary( const Elementwise::UnaryFunction<Real> &f ) {
-    uint dim  = std_vec_->size();
-    for(uint i=0; i<dim; ++i) {
+    uint dimension  = std_vec_->size();
+    for(uint i=0; i<dimension; ++i) {
       (*std_vec_)[i] = f.apply((*std_vec_)[i]);
     }
+
   }
 
   void applyBinary( const Elementwise::BinaryFunction<Real> &f, const Vector<Real> &x ) {
     const StdVector & ex = Teuchos::dyn_cast<const StdVector>(x);
     const std::vector<Element>& xval = *ex.getVector();
-    uint dim  = std_vec_->size();
-    for (uint i=0; i<dim; i++) {
+    uint dimension  = std_vec_->size();
+    for (uint i=0; i<dimension; i++) {
       (*std_vec_)[i] = f.apply((*std_vec_)[i],xval[i]);
     }
 
@@ -158,8 +159,8 @@ public:
 
   Real reduce( const Elementwise::ReductionOp<Real> &r ) const {
     Real result = r.initialValue();
-    uint dim  = std_vec_->size();
-    for(uint i=0; i<dim; ++i) {
+    uint dimension  = std_vec_->size();
+    for(uint i=0; i<dimension; ++i) {
       r.reduce((*std_vec_)[i],result);
     }
     return result;

@@ -61,11 +61,8 @@
 #include <Xpetra_CrsGraph.hpp>
 
 #include <MatrixMarket_Tpetra.hpp>
-
-#ifdef HAVE_ZOLTAN2_GALERI
 #include <Galeri_XpetraProblemFactory.hpp>
 #include <Galeri_XpetraParameters.hpp>
-#endif
 
 #include <Kokkos_DefaultNode.hpp>
 
@@ -74,6 +71,13 @@
 #include <string>
 
 #include <TpetraExt_MatrixMatrix_def.hpp>
+
+//#include <Xpetra_EpetraUtils.hpp>
+#ifdef HAVE_ZOLTAN2_MPI
+#include <Epetra_MpiComm.h>
+#else
+#include <Epetra_SerialComm.h>
+#endif
 
 // pamgen required includes
 #include "Zoltan2_PamgenMeshStructure.hpp"
@@ -232,9 +236,7 @@ public:
   
   RCP<xMVector_t> getUIXpetraMultiVector(int nvec);
   
-#ifdef HAVE_ZOLTAN2_PAMGEN
   PamgenMesh * getPamGenMesh(){return this->pamgen_mesh.operator->();}
-#endif
   
 #ifdef HAVE_EPETRA_DATA_TYPES
   RCP<Epetra_CrsGraph> getUIEpetraCrsGraph();
@@ -290,9 +292,7 @@ private:
   const RCP<const Comm<int> > tcomm_;
   
   bool havePamgenMesh;
-#ifdef HAVE_ZOLTAN2_PAMGEN
   RCP<PamgenMesh> pamgen_mesh;
-#endif
   
   RCP<tcrsMatrix_t> M_;
   RCP<xcrsMatrix_t> xM_;
@@ -381,10 +381,8 @@ private:
   
   // Read a pamgen mesh
   void readPamgenMeshFile(string path, string testData);
-#ifdef HAVE_ZOLTAN2_PAMGEN
   void setPamgenAdjacencyGraph();
   void setPamgenCoordinateMV();
-#endif
 };
 
 UserInputForTests::UserInputForTests(string path, string testData,
@@ -1256,7 +1254,6 @@ void UserInputForTests::readMatrixMarketFile(string path, string testData, bool 
 void UserInputForTests::buildCrsMatrix(int xdim, int ydim, int zdim,
                                        string problemType, bool distributeInput)
 {
-#ifdef HAVE_ZOLTAN2_GALERI
   Teuchos::CommandLineProcessor tclp;
   Galeri::Xpetra::Parameters<zgno_t> params(tclp,
                                             xdim, ydim, zdim, problemType);
@@ -1364,10 +1361,6 @@ void UserInputForTests::buildCrsMatrix(int xdim, int ydim, int zdim,
       coordView[i] = coordinates[i].view(0,count);
   
   xyz_ = rcp(new tMVector_t(map, coordView.view(0, dim), dim));
-#else
-  throw std::runtime_error("Galeri input requested but Trilinos is "
-                           "not built with Galeri.");
-#endif
 }
 
 void UserInputForTests::readZoltanTestData(string path, string testData,
@@ -2364,7 +2357,6 @@ int UserInputForTests::chaco_input_geom(
 // Pamgen Reader
 void UserInputForTests::readPamgenMeshFile(string path, string testData)
 {
-#ifdef HAVE_ZOLTAN2_PAMGEN
   int rank = this->tcomm_->getRank();
   if (verbose_ && tcomm_->getRank() == 0)
     std::cout << "UserInputForTestsBD::readPamgenFile, Read: " << testData << std::endl;
@@ -2454,13 +2446,8 @@ void UserInputForTests::readPamgenMeshFile(string path, string testData)
   this->tcomm_->barrier();
   if(rank == 0) file.close();
   delete [] file_data;
-#else
-  throw std::runtime_error("Pamgen requested but Trilinos "
-                           "not built with Pamgen");
-#endif
 }
 
-#ifdef HAVE_ZOLTAN2_PAMGEN
 void UserInputForTests::setPamgenCoordinateMV()
 {
   int dimension = pamgen_mesh->num_dim;
@@ -2508,6 +2495,7 @@ void UserInputForTests::setPamgenCoordinateMV()
                          tMVector_t(mp, coordView.view(0, dimension),
                                     dimension));
 }
+
 
 void UserInputForTests::setPamgenAdjacencyGraph()
 {
@@ -2615,7 +2603,5 @@ void UserInputForTests::setPamgenAdjacencyGraph()
   //  if(rank == 0) cout << "Completed M... " << endl;
 
 }
-
-#endif
 
 #endif

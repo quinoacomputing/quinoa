@@ -181,7 +181,6 @@ namespace Example {
       using Teuchos::Array;
       typedef Tpetra::CrsMatrix<Scalar,LO,GO,N> MatrixType;
       typedef Tpetra::Map<LO,GO,N> Map;
-      typedef Tpetra::Operator<Scalar,LO,GO,N> OperatorType;
       typedef MueLu::TpetraOperator<Scalar,LO,GO,N> PreconditionerType;
 
       typedef typename MatrixType::local_matrix_type KokkosMatrixType;
@@ -210,10 +209,9 @@ namespace Example {
       Teuchos::RCP < MatrixType > M =
           Teuchos::rcp( new MatrixType(rmap, cmap, mean_kokkos_matrix) );
 
-      Teuchos::RCP< OperatorType > M_op = M;
       Teuchos::RCP< PreconditionerType > mueluPreconditioner;
       mueluPreconditioner =
-        MueLu::CreateTpetraPreconditioner(M_op,*precParams,coords);
+        MueLu::CreateTpetraPreconditioner(M,*precParams,coords);
       return mueluPreconditioner;
     };
 

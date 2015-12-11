@@ -241,21 +241,25 @@ template<> \
 struct Nrm2w<Kokkos::View<Kokkos::Details::InnerProductSpaceTraits< SCALAR >::mag_type*, \
                           EXEC_SPACE::array_layout, \
                           Kokkos::Device<EXEC_SPACE, MEM_SPACE>, \
-                          Kokkos::MemoryTraits<Kokkos::Unmanaged> >, \
+                          Kokkos::MemoryTraits<Kokkos::Unmanaged>, \
+                          Kokkos::Impl::ViewDefault>, \
              Kokkos::View<const SCALAR**, \
                           LAYOUT, \
                           Kokkos::Device<EXEC_SPACE, MEM_SPACE>, \
-                          Kokkos::MemoryTraits<Kokkos::Unmanaged> >, \
+                          Kokkos::MemoryTraits<Kokkos::Unmanaged>, \
+                          Kokkos::Impl::ViewDefault>, \
              2 > \
 { \
   typedef Kokkos::View<Kokkos::Details::InnerProductSpaceTraits< SCALAR >::mag_type*, \
                        EXEC_SPACE::array_layout, \
                        Kokkos::Device<EXEC_SPACE, MEM_SPACE>, \
-                       Kokkos::MemoryTraits<Kokkos::Unmanaged> > RV; \
+                       Kokkos::MemoryTraits<Kokkos::Unmanaged>, \
+                       Kokkos::Impl::ViewDefault> RV; \
   typedef Kokkos::View<const SCALAR**, \
                        LAYOUT, \
                        Kokkos::Device<EXEC_SPACE, MEM_SPACE>, \
-                       Kokkos::MemoryTraits<Kokkos::Unmanaged> > XMV; \
+                       Kokkos::MemoryTraits<Kokkos::Unmanaged>, \
+                       Kokkos::Impl::ViewDefault> XMV; \
   typedef XMV::execution_space execution_space; \
   typedef XMV::size_type size_type; \
  \
@@ -307,11 +311,13 @@ void \
 Nrm2w<Kokkos::View<Kokkos::Details::InnerProductSpaceTraits< SCALAR >::mag_type*, \
                    EXEC_SPACE::array_layout, \
                    Kokkos::Device<EXEC_SPACE, MEM_SPACE>, \
-                   Kokkos::MemoryTraits<Kokkos::Unmanaged> >, \
+                   Kokkos::MemoryTraits<Kokkos::Unmanaged>, \
+                   Kokkos::Impl::ViewDefault>, \
       Kokkos::View<const SCALAR**, \
                    LAYOUT, \
                    Kokkos::Device<EXEC_SPACE, MEM_SPACE>, \
-                   Kokkos::MemoryTraits<Kokkos::Unmanaged> >, \
+                   Kokkos::MemoryTraits<Kokkos::Unmanaged>, \
+                   Kokkos::Impl::ViewDefault>, \
       2 >:: \
 nrm2w_squared (const RV& r, const XMV& X, const XMV& W) \
 { \

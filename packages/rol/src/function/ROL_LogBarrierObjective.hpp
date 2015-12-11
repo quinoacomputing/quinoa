@@ -55,8 +55,8 @@ public:
     logx->set(x);
     
     struct Logarithm : public Elementwise::UnaryFunction<Real> {
-      Real apply( const Real &xc ) const {
-        return std::log(xc);
+      Real apply( const Real &x ) const {
+        return std::log(x);
       }
     } log;
 
@@ -75,8 +75,8 @@ public:
     g.set(x);
      
     struct Reciprocal : public Elementwise::UnaryFunction<Real> {
-      Real apply( const Real &xc ) const {
-        return 1.0/xc;
+      Real apply( const Real &x ) const {
+        return 1.0/x;
       }
     } reciprocal;
    
@@ -90,8 +90,8 @@ public:
     dbyx->set(x);
 
     struct Division : public Elementwise::BinaryFunction<Real> {
-      Real apply( const Real &xc, const Real &dc ) const {
-        return dc/xc;    
+      Real apply( const Real &x, const Real &d ) const {
+        return d/x;    
       }
     } division;
 
@@ -106,8 +106,8 @@ public:
     hv.set(v);
     
     struct HessianApply : public Elementwise::BinaryFunction<Real> {
-      Real apply( const Real &vc, const Real &xc ) const { 
-        return vc/(xc*xc);   
+      Real apply( const Real &v, const Real &x ) const { 
+        return v/(x*x);   
       }
     } hessian;
 

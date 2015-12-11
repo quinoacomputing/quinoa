@@ -48,17 +48,6 @@
 
 #include <Teuchos_RCP.hpp>
 
-#include "Kokkos_SerialNode.hpp"
-
-// forward declaration for (fake) KokkosSerialWrapperNode
-// This is the node definition used if Epetra is enabled only
-/*namespace Kokkos {
-namespace Compat {
-  class KokkosSerialWrapperNode;
-}
-}*/
-
-// This KokkosClassic namespace is used for getting the DefaultNode in some classes
 namespace KokkosClassic {
 
   namespace Details {
@@ -68,7 +57,8 @@ namespace KokkosClassic {
 
   class DefaultNode {
     public:
-    typedef Kokkos::Compat::KokkosSerialWrapperNode DefaultNodeType;
+
+      typedef int DefaultNodeType;
 
     static Teuchos::RCP<DefaultNodeType> getDefaultNode() { return Teuchos::null; }
   };

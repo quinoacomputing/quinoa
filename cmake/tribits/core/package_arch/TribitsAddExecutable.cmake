@@ -74,7 +74,7 @@ INCLUDE(ParseVariableArguments)
 #     [IMPORTEDLIBS <lib0> <lib1> ...]
 #     [COMM [serial] [mpi]]
 #     [LINKER_LANGUAGE (C|CXX|Fortran)]
-#     [TARGET_DEFINES -D<define0> -D<define1> ...]
+#     [DEFINES -D<define0> -D<define1> ...]
 #     [INSTALLABLE]
 #     [ADDED_EXE_TARGET_NAME_OUT <exeTargetName>]
 #     )
@@ -130,16 +130,11 @@ INCLUDE(ParseVariableArguments)
 #
 #   ``DIRECTORY <dir>``
 #
-#     If specified, then the generated executable ``<exeTargetName>`` is
-#     placed in the relative or absolute directory ``<dir>``.  If ``<dir>`` is
-#     not an absolute path, then the generated executable is placed in the
-#     directory ``${CMAKE_CURRENT_BINARY_DIR}/<dir>/``.  Also, the sources for
-#     the executable listed in ``SOURCES <src0> <src1> ...`` are assumed to be
-#     in the relative or absolute directory ``<dir>`` instead of the current
-#     source directory.  This directory path is prepended to each source file
-#     name ``<srci>`` unless ``<srci>`` is an absolute path.  If ``<dir>`` is
-#     not an absolute path, then source files listed in ``SOURCES`` are
-#     assumed to be in the directory ``${CMAKE_CURRENT_SOURCE_DIR}/<dir>/``.
+#     If specified, then the sources for the executable listed in ``SOURCES
+#     <src0> <src1> ...`` are assumed to be in the relative or absolute
+#     directory ``<dir>`` instead of the current source directory.  This
+#     directory path is prepended to each source file name ``<srci>`` unless
+#     ``<srci>`` is an absolute path.
 #
 #   ``CATEGORIES <category0> <category1> ...``
 #
@@ -214,12 +209,11 @@ INCLUDE(ParseVariableArguments)
 #     are passed in through ``SOURCES`` but a C++ linker is needed because
 #     there are upstream C++ libraries.
 #
-#   ``TARGET_DEFINES -D<define0> -D<define1> ...``
+#   ``DEFINES -D<define0> -D<define1> ...``
 #
-#     Add the listed defines using
-#     ``TARGET_COMPILE_DEFINITIONS(<exeTargetName> ...)``.  These should only
+#     Add the listed defines using ``ADD_DEFINITIONS()``.  These should only
 #     affect the listed sources for the built executable and not other
-#     targets.
+#     compiles in this directory due to the FUNCTION scoping.
 #
 #   ``INSTALLABLE``
 #
@@ -284,15 +278,8 @@ INCLUDE(ParseVariableArguments)
 #   TRIBITS_ADD_EXECUTABLE( someExe ...
 #     ADDED_EXE_TARGET_NAME_OUT  someExe_TARGET_NAME )
 #
-#   IF (someExe_TARGET_NAME)
-#     SET_TARGET_PROPERTIES( ${someExe_TARGET_NAME}
-#       PROPERTIES  LINKER_LANGUAGE  CXX )
-#   ENDIF()
-#
-# The ``IF(someExe_TARGET_NAME)`` is needed in case the executable does not
-# get added for some reason (see `Formal Arguments
-# (TRIBITS_ADD_EXECUTABLE())`_ for logic that can result in the executable
-# target not getting added).
+#   SET_TARGET_PROPERTIES( ${someExe_TARGET_NAME}
+#     PROPERTIES  LINKER_LANGUAGE  CXX )
 #
 # .. _Install Target (TRIBITS_ADD_EXECUTABLE()):
 #
@@ -320,7 +307,7 @@ FUNCTION(TRIBITS_ADD_EXECUTABLE EXE_NAME)
     #prefix
     PARSE
     #lists
-    "SOURCES;CATEGORIES;HOST;XHOST;HOSTTYPE;XHOSTTYPE;DIRECTORY;TESTONLYLIBS;IMPORTEDLIBS;DEPLIBS;COMM;LINKER_LANGUAGE;TARGET_DEFINES;DEFINES;ADDED_EXE_TARGET_NAME_OUT"
+    "SOURCES;CATEGORIES;HOST;XHOST;HOSTTYPE;XHOSTTYPE;DIRECTORY;TESTONLYLIBS;IMPORTEDLIBS;DEPLIBS;COMM;LINKER_LANGUAGE;DEFINES;ADDED_EXE_TARGET_NAME_OUT"
     #options
     "NOEXEPREFIX;NOEXESUFFIX;ADD_DIR_TO_NAME;INSTALLABLE"
     ${ARGN}
@@ -478,12 +465,6 @@ FUNCTION(TRIBITS_ADD_EXECUTABLE EXE_NAME)
   ENDFOREACH()
 
   IF (PARSE_DEFINES)
-    MESSAGE(WARNING "WARNING: Passing extra defines through 'DEFINES' ${PARSE_DEFINES}"
-      " is deprecated.  Instead, pass them through 'TARGET_DEFINES'.  The 'DEFINES'"
-      " argument was incorrectly implemented by calling ADD_DEFINITIONS() which has"
-      " directory scope and not function scope as was documented.  This resulted in"
-      " confusing behavior.  If one wishes to set defines at the directly level,"
-      " just call ADD_DEFINITIONS() directly.")
     ADD_DEFINITIONS(${PARSE_DEFINES})
   ENDIF()
 
@@ -495,10 +476,6 @@ FUNCTION(TRIBITS_ADD_EXECUTABLE EXE_NAME)
 
   IF(PARSE_ADDED_EXE_TARGET_NAME_OUT)
     SET(${PARSE_ADDED_EXE_TARGET_NAME_OUT} ${EXE_BINARY_NAME} PARENT_SCOPE)
-  ENDIF()
-
-  IF (PARSE_TARGET_DEFINES)
-    TARGET_COMPILE_DEFINITIONS(${EXE_BINARY_NAME} PUBLIC ${PARSE_TARGET_DEFINES})
   ENDIF()
 
   IF(PARSE_NOEXESUFFIX AND NOT WIN32)

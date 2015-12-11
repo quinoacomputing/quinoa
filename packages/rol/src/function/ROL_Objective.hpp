@@ -138,11 +138,7 @@ public:
       @param[in]          x   is the current iterate.
       @param[in]          tol is a tolerance for inexact objective function computation.
   */
-  virtual void invHessVec( Vector<Real> &hv, const Vector<Real> &v, const Vector<Real> &x, Real &tol ) {
-    TEUCHOS_TEST_FOR_EXCEPTION(true, std::invalid_argument,
-      ">>> ERROR (ROL::Objective): invHessVec not implemented!"); 
-    //hv.set(v.dual());
-  }
+  virtual void invHessVec( Vector<Real> &hv, const Vector<Real> &v, const Vector<Real> &x, Real &tol ) {}
 
   /** \brief Apply preconditioner to vector.
 
@@ -307,7 +303,7 @@ public:
                                                         const int numSteps = ROL_NUM_CHECKDERIV_STEPS,
                                                         const int order = 1 ) {
 
-    return checkHessVec(x, x.dual(), v, printToStream, outStream, numSteps, order);
+    return checkHessVec(x, x, v, printToStream, outStream, numSteps, order);
 
   }
 

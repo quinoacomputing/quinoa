@@ -66,8 +66,8 @@
 
 namespace MueLu {
 
-  template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class DeviceType>
-  RCP<const ParameterList> SaPFactory_kokkos<Scalar,LocalOrdinal,GlobalOrdinal,Kokkos::Compat::KokkosDeviceWrapperNode<DeviceType>>::GetValidParameterList() const {
+  template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
+  RCP<const ParameterList> SaPFactory_kokkos<Scalar, LocalOrdinal, GlobalOrdinal, Node>::GetValidParameterList() const {
     RCP<ParameterList> validParamList = rcp(new ParameterList());
 
 #define SET_VALID_ENTRY(name) validParamList->setEntry(name, MasterList::getEntry(name))
@@ -82,8 +82,8 @@ namespace MueLu {
     return validParamList;
   }
 
-  template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class DeviceType>
-  void SaPFactory_kokkos<Scalar,LocalOrdinal,GlobalOrdinal,Kokkos::Compat::KokkosDeviceWrapperNode<DeviceType>>::DeclareInput(Level& fineLevel, Level& coarseLevel) const {
+  template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
+  void SaPFactory_kokkos<Scalar, LocalOrdinal, GlobalOrdinal, Node>::DeclareInput(Level &fineLevel, Level &coarseLevel) const {
     Input(fineLevel, "A");
 
     // Get default tentative prolongator factory
@@ -93,17 +93,17 @@ namespace MueLu {
     coarseLevel.DeclareInput("P", initialPFact.get(), this);
   }
 
-  template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class DeviceType>
-  void SaPFactory_kokkos<Scalar,LocalOrdinal,GlobalOrdinal,Kokkos::Compat::KokkosDeviceWrapperNode<DeviceType>>::Build(Level& fineLevel, Level& coarseLevel) const {
+  template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
+  void SaPFactory_kokkos<Scalar, LocalOrdinal, GlobalOrdinal, Node>::Build(Level& fineLevel, Level& coarseLevel) const {
     return BuildP(fineLevel, coarseLevel);
   }
 
-  template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class DeviceType>
-  void SaPFactory_kokkos<Scalar,LocalOrdinal,GlobalOrdinal,Kokkos::Compat::KokkosDeviceWrapperNode<DeviceType>>::BuildP(Level& fineLevel, Level& coarseLevel) const {
+  template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
+  void SaPFactory_kokkos<Scalar, LocalOrdinal, GlobalOrdinal, Node>::BuildP(Level& fineLevel, Level& coarseLevel) const {
     FactoryMonitor m(*this, "Prolongator smoothing", coarseLevel);
 
     // Add debugging information
-    DeviceType::execution_space::print_configuration(GetOStream(Runtime1));
+    Node::execution_space::print_configuration(GetOStream(Runtime1));
 
     typedef typename Teuchos::ScalarTraits<SC>::magnitudeType Magnitude;
 
@@ -119,8 +119,7 @@ namespace MueLu {
 
     if(restrictionMode_) {
       SubFactoryMonitor m2(*this, "Transpose A", coarseLevel);
-
-      A = Utilities_kokkos::Transpose(*A, true); // build transpose of A explicitly
+      A = MueLu::Utils2_kokkos<Scalar,LocalOrdinal,GlobalOrdinal,Node>::Transpose(*A, true); // build transpose of A explicitely
     }
 
     //Build final prolongator
@@ -139,7 +138,7 @@ namespace MueLu {
         if (lambdaMax == -Teuchos::ScalarTraits<SC>::one() || estimateMaxEigen) {
           GetOStream(Statistics1) << "Calculating max eigenvalue estimate now (max iters = "<< maxEigenIterations << ")" << std::endl;
           Magnitude stopTol = 1e-4;
-          lambdaMax = Utilities_kokkos::PowerMethod(*A, true, maxEigenIterations, stopTol);
+          lambdaMax = Utils::PowerMethod(*A, true, maxEigenIterations, stopTol);
           A->SetMaxEigenvalueEstimate(lambdaMax);
         } else {
           GetOStream(Statistics1) << "Using cached max eigenvalue estimate" << std::endl;
@@ -149,7 +148,7 @@ namespace MueLu {
 
       {
         SubFactoryMonitor m2(*this, "Fused (I-omega*D^{-1} A)*Ptent", coarseLevel);
-        RCP<Vector> invDiag = Utilities_kokkos::GetMatrixDiagonalInverse(*A);
+        RCP<Vector> invDiag = Utils::GetMatrixDiagonalInverse(*A);
 
         SC omega = dampingFactor / lambdaMax;
 
@@ -172,7 +171,7 @@ namespace MueLu {
 
     } else {
       // prolongation factory is in restriction mode
-      RCP<Matrix> R = Utilities_kokkos::Transpose(*finalP, true);
+      RCP<Matrix> R = Utils2::Transpose(*finalP, true); // use Utils2 -> specialization for double
       Set(coarseLevel, "R", R);
 
       // NOTE: EXPERIMENTAL

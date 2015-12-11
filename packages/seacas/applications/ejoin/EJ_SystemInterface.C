@@ -466,6 +466,9 @@ void SystemInterface::parse_step_option(const char *tokens)
     }
   }
 }
+void SystemInterface::dump(std::ostream &) const
+{
+}
 
 void SystemInterface::show_version()
 {

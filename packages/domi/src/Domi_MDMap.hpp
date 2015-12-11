@@ -639,6 +639,32 @@ public:
 #ifdef HAVE_TPETRA
 
   /** \brief Return an RCP to a Tpetra::Map that is equivalent to this
+   *         MDMap, specifying only the LocalOrdinal type
+   *
+   * \param withCommPad [in] flag whether to include the communication
+   *        padding in the map
+   *
+   * Note that the boundary padding is always included in the map
+   */
+  template< class LocalOrdinal >
+  Teuchos::RCP< const Tpetra::Map< LocalOrdinal, LocalOrdinal, Node > >
+  getTpetraMap(bool withCommPad=true) const;
+
+  /** \brief Return an RCP to a Tpetra::Map that is equivalent to this
+   *         MDMap, specifying the LocalOrdinal and GlobalOrdinal
+   *         types, but not the Node type
+   *
+   * \param withCommPad [in] flag whether to include the communication
+   *        padding in the map
+   *
+   * Note that the boundary padding is always included in the map
+   */
+  template< class LocalOrdinal,
+            class GlobalOrdinal >
+  Teuchos::RCP< const Tpetra::Map< LocalOrdinal, GlobalOrdinal, Node > >
+  getTpetraMap(bool withCommPad=true) const;
+
+  /** \brief Return an RCP to a Tpetra::Map that is equivalent to this
    *         MDMap, specifying the new LocalOrdinal, GlobalOrdinal and
    *         Node types
    *
@@ -648,10 +674,43 @@ public:
    * Note that the boundary padding is always included in the map
    */
   template< class LocalOrdinal,
-            class GlobalOrdinal = LocalOrdinal,
-            class Node2 = Node >
+            class GlobalOrdinal,
+            class Node2 >
   Teuchos::RCP< const Tpetra::Map< LocalOrdinal, GlobalOrdinal, Node2 > >
   getTpetraMap(bool withCommPad=true) const;
+
+  /** \brief Return an RCP to a Tpetra::Map that represents the
+   *         decomposition of this MDMap along the given axis,
+   *         specifying only the LocalOrdinal type
+   *
+   * \param axis [in] the requested axis
+   *
+   * \param withCommPad [in] flag whether to include the communication
+   *        padding in the map
+   *
+   * Note that the boundary padding is always included in the map
+   */
+  template< class LocalOrdinal >
+  Teuchos::RCP< const Tpetra::Map< LocalOrdinal, LocalOrdinal, Node > >
+  getTpetraAxisMap(int axis,
+                   bool withCommPad=true) const;
+
+  /** \brief Return an RCP to a Tpetra::Map that represents the
+   *         decomposition of this MDMap along the given axis,
+   *         specifying both the LocalOrdinal and GlobalOrdinal types
+   *
+   * \param axis [in] the requested axis
+   *
+   * \param withCommPad [in] flag whether to include the communication
+   *        padding in the map
+   *
+   * Note that the boundary padding is always included in the map
+   */
+  template< class LocalOrdinal,
+            class GlobalOrdinal >
+  Teuchos::RCP< const Tpetra::Map< LocalOrdinal, GlobalOrdinal, Node > >
+  getTpetraAxisMap(int axis,
+                   bool withCommPad=true) const;
 
   /** \brief Return an RCP to a Tpetra::Map that represents the
    *         decomposition of this MDMap along the given axis,
@@ -666,8 +725,8 @@ public:
    * Note that the boundary padding is always included in the map
    */
   template< class LocalOrdinal,
-            class GlobalOrdinal = LocalOrdinal,
-            class Node2 = Node >
+            class GlobalOrdinal,
+            class Node2 >
   Teuchos::RCP< const Tpetra::Map< LocalOrdinal, GlobalOrdinal, Node2 > >
   getTpetraAxisMap(int axis,
                    bool withCommPad=true) const;
@@ -2527,6 +2586,23 @@ getEpetraAxisMap(int axis,
 #ifdef HAVE_TPETRA
 
 template< class Node >
+template< class LocalOrdinal >
+Teuchos::RCP< const Tpetra::Map< LocalOrdinal, LocalOrdinal, Node > >
+MDMap< Node >::getTpetraMap(bool withCommPad) const
+{
+  return getTpetraMap< LocalOrdinal, LocalOrdinal, Node >(withCommPad);
+}
+
+template< class Node >
+template< class LocalOrdinal,
+          class GlobalOrdinal >
+Teuchos::RCP< const Tpetra::Map< LocalOrdinal, GlobalOrdinal, Node > >
+MDMap< Node >::getTpetraMap(bool withCommPad) const
+{
+  return getTpetraMap< LocalOrdinal, GlobalOrdinal, Node >(withCommPad);
+}
+
+template< class Node >
 template< class LocalOrdinal,
           class GlobalOrdinal,
           class Node2 >
@@ -2627,6 +2703,27 @@ MDMap< Node >::getTpetraMap(bool withCommPad) const
 ////////////////////////////////////////////////////////////////////////
 
 #ifdef HAVE_TPETRA
+
+template< class Node >
+template< class LocalOrdinal >
+Teuchos::RCP< const Tpetra::Map< LocalOrdinal, LocalOrdinal, Node > >
+MDMap< Node >::
+getTpetraAxisMap(int axis,
+                 bool withCommPad) const
+{
+  return getTpetraAxisMap< LocalOrdinal, LocalOrdinal, Node >(axis, withCommPad);
+}
+
+template< class Node >
+template< class LocalOrdinal,
+          class GlobalOrdinal >
+Teuchos::RCP< const Tpetra::Map< LocalOrdinal, GlobalOrdinal, Node > >
+MDMap< Node >::
+getTpetraAxisMap(int axis,
+                 bool withCommPad) const
+{
+  return getTpetraAxisMap< LocalOrdinal, LocalOrdinal, Node >(axis, withCommPad);
+}
 
 template< class Node >
 template< class LocalOrdinal,

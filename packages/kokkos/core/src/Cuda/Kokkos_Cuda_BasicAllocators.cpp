@@ -43,8 +43,6 @@
 
 #include <Kokkos_Macros.hpp>
 
-#if ! defined( KOKKOS_USING_EXPERIMENTAL_VIEW )
-
 /* only compile this file if CUDA is enabled for Kokkos */
 #ifdef KOKKOS_HAVE_CUDA
 
@@ -58,7 +56,6 @@ namespace Kokkos { namespace Impl {
 
 
 /*--------------------------------------------------------------------------*/
-
 TextureAttribute::TextureAttribute(  void * const alloc_ptr
                                    , size_t alloc_size
                                    , cudaChannelFormatDesc const & desc
@@ -193,6 +190,3 @@ void * CudaHostAllocator::reallocate(void * old_ptr, size_t old_size, size_t new
 }} // namespace Kokkos::Impl
 
 #endif //KOKKOS_HAVE_CUDA
-
-#endif /* #if ! defined( KOKKOS_USING_EXPERIMENTAL_VIEW ) */
-

@@ -42,9 +42,6 @@
 #ifndef __Tpetra_DirectoryImpl_decl_hpp
 #define __Tpetra_DirectoryImpl_decl_hpp
 
-/// \file Tpetra_DirectoryImpl_decl.hpp
-/// \brief Declaration of implementation details of Tpetra::Directory.
-
 #include <Tpetra_ConfigDefs.hpp>
 #include "Tpetra_TieBreak.hpp"
 

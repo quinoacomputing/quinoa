@@ -71,7 +71,6 @@ typedef KokkosClassic::DefaultNode::DefaultNodeType                         Node
 
 #include <Xpetra_MultiVectorFactory.hpp>
 #include <Xpetra_ImportFactory.hpp>
-#include <Xpetra_IO.hpp>
 
 #include <Galeri_XpetraParameters.hpp>
 #include <Galeri_XpetraProblemFactory.hpp>
@@ -84,7 +83,7 @@ typedef KokkosClassic::DefaultNode::DefaultNodeType                         Node
 #include <MueLu_Utilities.hpp>
 #include <MueLu_SemiCoarsenPFactory_decl.hpp>
 
-#ifdef HAVE_MUELU_BELOS
+
 #include <BelosConfigDefs.hpp>
 #include <BelosLinearProblem.hpp>
 #include <BelosBlockCGSolMgr.hpp>
@@ -92,7 +91,6 @@ typedef KokkosClassic::DefaultNode::DefaultNodeType                         Node
 #include <BelosBlockGmresSolMgr.hpp>
 #include <BelosXpetraAdapter.hpp>
 #include <BelosMueLuAdapter.hpp>
-#endif
 
 int main(int argc, char *argv[]) {
   // Most MueLu and Xpetra classes are templated on some or all of the
@@ -259,12 +257,12 @@ int main(int argc, char *argv[]) {
     // (though you may avoid that in a serial run), a matrix (in a
     // MatrixMarket format), and a file with coordinates.
     if (!mapFile.empty())
-      map = Xpetra::IO<SC,LO,GO,Node>::ReadMap(mapFile, xpetraParameters.GetLib(), comm);
+      map = Utils2::ReadMap(mapFile, xpetraParameters.GetLib(), comm);
 
-    A = Xpetra::IO<SC,LO,GO,Node>::Read(matrixFile, map);
+    A = Utils::Read(matrixFile, map);
 
     if (!coordFile.empty())
-      coordinates = Xpetra::IO<SC,LO,GO,Node>::ReadMultiVector(coordFile, map);
+      coordinates = Utils2::ReadMultiVector(coordFile, map);
   }
 
   // For scalar equations, we assume that the constant vector is a
@@ -350,7 +348,7 @@ printf("after level print\n");
   // use any initial guess you like.
   {
     // We set seed for reproducibility
-    Utilities::SetRandomSeed(*comm);
+    Utils::SetRandomSeed(*comm);
     X->randomize();
     A->apply(*X, *B, Teuchos::NO_TRANS, one, zero);
 
@@ -359,7 +357,7 @@ printf("after level print\n");
     B->scale(one/norms[0]);
     X->putScalar(zero);
   }
-#ifdef HAVE_MUELU_BELOS
+
   typedef MultiVector          MV;
   typedef Belos::OperatorT<MV> OP;
 
@@ -427,9 +425,7 @@ printf("after level print\n");
     out << std::endl << "ERROR:  Belos did not converge! " << std::endl;
   else
     out << std::endl << "SUCCESS:  Belos converged!" << std::endl;
-#else
-  out << std::endl << "MueLu has been compiled without Belos support!" << std::endl;
-#endif
+
   // GlobalMPISession calls MPI_Finalize() in its destructor, if
   // appropriate. You don't have to do anything here!  Just return
   // from main(). Isn't that helpful?

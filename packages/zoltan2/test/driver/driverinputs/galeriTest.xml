@@ -155,8 +155,7 @@
   
   <!-- 3. COMPARISON BLOCK DEFINITIONS -->
   
-<!--
-  <ParameterList name="Comparison"> 
+  <ParameterList name="Comparison"> <!-- compare solutions of problems A and B-->
     <Parameter name="A" type="string" value="Problem 1"/>
     <Parameter name="B" type="string" value="Problem 2"/>
   </ParameterList>
@@ -166,9 +165,9 @@
     <Parameter name="B" type="string" value="Problem 3"/>
   </ParameterList>
   
-  <ParameterList name="Comparison"> 
+  <ParameterList name="Comparison"> <!-- compare specified metrics of problem to a baseline reference-->
     <Parameter name="Problem" type="string" value="Problem 3"/>
-    <Parameter name="Reference" type="string" value="Problem 2"/>
+    <Parameter name="Reference" type="string" value="Problem 2"/><!-- compare our test problem against this one-->
     
     <ParameterList name="object count">
       <Parameter name="lower" type="double" value="1.0"/>
@@ -180,17 +179,16 @@
       <Parameter name="upper" type="double" value="1.5"/>
     </ParameterList>
     
-    <ParameterList name="problem construction time">
+    <ParameterList name="problem construction time"> <!-- problem construction time-->
       <Parameter name="lower" type="double" value="0.1"/>
       <Parameter name="upper" type="double" value="1.5"/>
     </ParameterList>
     
-    <ParameterList name="adapter construction time">
+    <ParameterList name="apdapter construction time"> <!-- problem construction time-->
       <Parameter name="lower" type="double" value="0.1"/>
       <Parameter name="upper" type="double" value="1.5"/>
     </ParameterList>
     
   </ParameterList>
--->
   
 </ParameterList>

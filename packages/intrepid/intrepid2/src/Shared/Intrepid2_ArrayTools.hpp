@@ -54,9 +54,11 @@
 #include "Intrepid2_Types.hpp"
 #include "Teuchos_BLAS.hpp"
 #include "Teuchos_Assert.hpp"
-#include <Intrepid2_KokkosRank.hpp>
+#include <KokkosRank.hpp>
+#ifdef HAVE_INTREPID_KOKKOSCORE
 #include "Kokkos_Core.hpp"
 #include <impl/Kokkos_Timer.hpp>
+#endif
 
 namespace Intrepid2 {
   
@@ -680,6 +682,7 @@ namespace Intrepid2 {
                                                ArrayInDataLeft &  inputDataLeft,
                                                ArrayInDataRight & inputDataRight,
                                                const bool               reciprocal=false);*/
+#ifdef HAVE_INTREPID_KOKKOSCORE
 /*
     template<class ArrayOutData, class ArrayInDataLeft, class ArrayInDataRight, class Layout, class MemorySpace>
         static void scalarMultiplyDataDataTemp(Kokkos::View<ArrayOutData,Layout,MemorySpace> &     outputData,
@@ -690,6 +693,7 @@ namespace Intrepid2 {
     template<class ArrayOutData, class ArrayInDataLeft, class ArrayInDataRight, class Layout, class MemorySpace,int invalRank,int outvalRank>
 	struct scalarMultiplyDataData2Kokkos;
 
+#endif
 
     /** \brief There are two use cases:
                (1) dot product of a rank-3, 4 or 5 container \a <b>inputFields</b> with dimensions (C,F,P)
@@ -1128,7 +1132,9 @@ namespace Intrepid2 {
 } // end namespace Intrepid2
 
 // include templated definitions
+// #ifdef HAVE_INTREPID_KOKKOSCORE
 // #include <Intrepid2_ArrayToolsDefScalar_Kokkos.hpp>
+// #endif
 #include <Intrepid2_ArrayToolsDefContractions.hpp>
 #include <Intrepid2_ArrayToolsDefScalar.hpp>
 #include <Intrepid2_ArrayToolsDefDot.hpp>

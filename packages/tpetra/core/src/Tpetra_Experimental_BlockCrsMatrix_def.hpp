@@ -46,8 +46,7 @@
 /// \brief Definition of Tpetra::Experimental::BlockCrsMatrix
 
 #include "Tpetra_Experimental_BlockCrsMatrix_decl.hpp"
-#include "Tpetra_Details_PackTraits.hpp"
-#include "Teuchos_TimeMonitor.hpp"
+#include <Tpetra_Details_PackTraits.hpp>
 
 namespace Tpetra {
 namespace Experimental {
@@ -131,11 +130,8 @@ namespace Experimental {
       ptr_ = ptr_h_nc;
     }
     ind_ = graph.getNodePackedIndices ().getRawPtr ();
-
-    Kokkos::resize (valView_,
-                    static_cast<size_t> (graph.getNodeNumEntries () *
-                                         offsetPerBlock ()));
-    val_ = valView_.ptr_on_device ();
+    valView_.resize (graph.getNodeNumEntries () * offsetPerBlock ());
+    val_ = valView_.getRawPtr ();
   }
 
   template<class Scalar, class LO, class GO, class Node>
@@ -188,11 +184,8 @@ namespace Experimental {
       ptr_ = ptr_h_nc;
     }
     ind_ = graph.getNodePackedIndices ().getRawPtr ();
-
-    Kokkos::resize (valView_,
-                    static_cast<size_t> (graph.getNodeNumEntries () *
-                                         offsetPerBlock ()));
-    val_ = valView_.ptr_on_device ();
+    valView_.resize (graph.getNodeNumEntries () * offsetPerBlock ());
+    val_ = valView_.getRawPtr ();
   }
 
   template<class Scalar, class LO, class GO, class Node>
@@ -395,7 +388,7 @@ namespace Experimental {
           getNonConstLocalBlockFromAbsOffset (absBlockOffset);
         const_little_block_type A_new =
           getConstLocalBlockFromInput (vIn, pointOffset);
-        COPY (A_new, A_old);
+        A_old.assign (A_new);
         hint = relBlockOffset + 1;
         ++validCount;
       }
@@ -590,8 +583,8 @@ namespace Experimental {
         const LO actlRow = lclRow - 1;
 
         little_vec_type B_cur = B.getLocalBlock (actlRow, 0);
-        COPY (B_cur, X_lcl);
-        SCAL (omega, X_lcl);
+        X_lcl.assign (B_cur);
+        X_lcl.scale (omega);
 
         const size_t meshBeg = ptr_[actlRow];
         const size_t meshEnd = ptr_[actlRow+1];
@@ -604,8 +597,7 @@ namespace Experimental {
 
           // X_lcl += alpha*A_cur*X_cur
           const Scalar alpha = meshCol == actlRow ? one_minus_omega : minus_omega;
-          //X_lcl.matvecUpdate (alpha, A_cur, X_cur);
-          GEMV (alpha, A_cur, X_cur, X_lcl);
+          X_lcl.matvecUpdate (alpha, A_cur, X_cur);
         } // for each entry in the current local row of the matrx
 
         factorizedDiagonal.getLocalRowView (actlRow, columnIndices,
@@ -615,7 +607,7 @@ namespace Experimental {
 
         D_lcl.solve (X_lcl, &factorizationPivots[actlRow*blockSize_]);
         little_vec_type X_update = X.getLocalBlock (actlRow, 0);
-        COPY (X_lcl, X_update);
+        X_update.assign(X_lcl);
       } // for each local row of the matrix
     }
     else {
@@ -624,8 +616,8 @@ namespace Experimental {
           LO actlRow = lclRow-1;
 
           little_vec_type B_cur = B.getLocalBlock (actlRow, j);
-          COPY (B_cur, X_lcl);
-          SCAL (omega, X_lcl);
+          X_lcl.assign (B_cur);
+          X_lcl.scale (omega);
 
           const size_t meshBeg = ptr_[actlRow];
           const size_t meshEnd = ptr_[actlRow+1];
@@ -638,8 +630,7 @@ namespace Experimental {
 
             // X_lcl += alpha*A_cur*X_cur
             const Scalar alpha = meshCol == actlRow ? one_minus_omega : minus_omega;
-            //X_lcl.matvecUpdate (alpha, A_cur, X_cur);
-            GEMV (alpha, A_cur, X_cur, X_lcl);
+            X_lcl.matvecUpdate (alpha, A_cur, X_cur);
           } // for each entry in the current local row of the matrx
 
           factorizedDiagonal.getLocalRowView (actlRow, columnIndices,
@@ -650,7 +641,7 @@ namespace Experimental {
           D_lcl.solve (X_lcl, &factorizationPivots[actlRow*blockSize_]);
 
           little_vec_type X_update = X.getLocalBlock (actlRow, j);
-          COPY (X_lcl, X_update);
+          X_update.assign(X_lcl);
         } // for each entry in the current local row of the matrix
       } // for each local row of the matrix
     }
@@ -680,7 +671,7 @@ namespace Experimental {
   reorderedGaussSeidelCopy (MultiVector<Scalar,LO,GO,Node>& X,
                             const MultiVector<Scalar,LO,GO,Node>& B,
                             const MultiVector<Scalar,LO,GO,Node>& D,
-                            const Teuchos::ArrayView<LO>& rowIndices,
+                            const ArrayView<LO>& rowIndices,
                             const Scalar& dampingFactor,
                             const ESweepDirection direction,
                             const int numSweeps,
@@ -781,7 +772,6 @@ namespace Experimental {
       // advantage of returning the number of valid indices.
       return static_cast<LO> (0);
     }
-    const impl_scalar_type ONE = static_cast<impl_scalar_type> (1.0);
     const impl_scalar_type* const vIn = reinterpret_cast<const impl_scalar_type*> (vals);
 
     const size_t absRowBlockOffset = ptr_[localRowInd];
@@ -800,8 +790,7 @@ namespace Experimental {
           getNonConstLocalBlockFromAbsOffset (absBlockOffset);
         const_little_block_type A_new =
           getConstLocalBlockFromInput (vIn, pointOffset);
-        //A_old.update (ONE, A_new);
-        AXPY (ONE, A_new, A_old);
+        A_old.update (static_cast<impl_scalar_type> (STS::one ()), A_new);
         hint = relBlockOffset + 1;
         ++validCount;
       }
@@ -847,15 +836,13 @@ namespace Experimental {
     Scalar *vals;
     LO numInds;
     getLocalRowView(LocalRow,colInds,vals,numInds);
-    if (numInds > Indices.size() || numInds*blockSize_*blockSize_ > Values.size()) {
+    if (numInds > Indices.size() || numInds > Values.size()) {
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error,
                   "Tpetra::BlockCrsMatrix::getLocalRowCopy : Column and/or values array is not large enough to hold "
                   << numInds << " row entries");
     }
     for (LO i=0; i<numInds; ++i) {
       Indices[i] = colInds[i];
-    }
-    for (LO i=0; i<numInds*blockSize_*blockSize_; ++i) {
       Values[i] = vals[i];
     }
     NumEntries = numInds;
@@ -925,7 +912,7 @@ namespace Experimental {
           getNonConstLocalBlockFromAbsOffset (absBlockOffset);
         const_little_block_type A_new =
           getConstLocalBlockFromInput (vIn, pointOffset);
-        COPY (A_new, A_old);
+        A_old.assign (A_new);
         ++validCount;
       }
     }
@@ -987,7 +974,6 @@ namespace Experimental {
       // advantage of returning the number of valid indices.
       return static_cast<LO> (0);
     }
-    const impl_scalar_type ONE = static_cast<impl_scalar_type> (1.0);
     const impl_scalar_type* const vIn = reinterpret_cast<const impl_scalar_type*> (vals);
 
     const size_t absRowBlockOffset = ptr_[localRowInd];
@@ -1004,8 +990,7 @@ namespace Experimental {
           getNonConstLocalBlockFromAbsOffset (absBlockOffset);
         const_little_block_type A_new =
           getConstLocalBlockFromInput (vIn, pointOffset);
-        //A_old.update (ONE, A_new);
-        AXPY (ONE, A_new, A_old);
+        A_old.update (static_cast<impl_scalar_type> (STS::one ()), A_new);
         ++validCount;
       }
     }
@@ -1175,10 +1160,10 @@ namespace Experimental {
         if (beta == zero) {
           Y_lcl.fill (zero);
         } else if (beta == one) {
-          COPY (Y_cur, Y_lcl);
+          Y_lcl.assign (Y_cur);
         } else {
-          COPY (Y_cur, Y_lcl);
-          SCAL (beta, Y_lcl);
+          Y_lcl.assign (Y_cur);
+          Y_lcl.scale (beta);
         }
 
         const size_t meshBeg = ptr_[lclRow];
@@ -1189,11 +1174,10 @@ namespace Experimental {
             getConstLocalBlockFromAbsOffset (absBlkOff);
           little_vec_type X_cur = X.getLocalBlock (meshCol, 0);
           // Y_lcl += alpha*A_cur*X_cur
-          //Y_lcl.matvecUpdate (alpha, A_cur, X_cur);
-          GEMV (alpha, A_cur, X_cur, Y_lcl);
+          Y_lcl.matvecUpdate (alpha, A_cur, X_cur);
         } // for each entry in the current local row of the matrx
 
-        COPY (Y_lcl, Y_cur);
+        Y_cur.assign (Y_lcl);
       } // for each local row of the matrix
     }
     else {
@@ -1204,10 +1188,10 @@ namespace Experimental {
           if (beta == zero) {
             Y_lcl.fill (zero);
           } else if (beta == one) {
-            COPY (Y_cur, Y_lcl);
+            Y_lcl.assign (Y_cur);
           } else {
-            COPY (Y_cur, Y_lcl);
-            SCAL (beta, Y_lcl);
+            Y_lcl.assign (Y_cur);
+            Y_lcl.scale (beta);
           }
 
           const size_t meshBeg = ptr_[lclRow];
@@ -1218,11 +1202,10 @@ namespace Experimental {
               getConstLocalBlockFromAbsOffset (absBlkOff);
             little_vec_type X_cur = X.getLocalBlock (meshCol, j);
             // Y_lcl += alpha*A_cur*X_cur
-            //Y_lcl.matvecUpdate (alpha, A_cur, X_cur);
-            GEMV (alpha, A_cur, X_cur, Y_lcl);
+            Y_lcl.matvecUpdate (alpha, A_cur, X_cur);
           } // for each entry in the current local row of the matrix
 
-          COPY (Y_lcl, Y_cur);
+          Y_cur.assign (Y_lcl);
         } // for each entry in the current row of Y
       } // for each local row of the matrix
     }
@@ -2088,7 +2071,8 @@ namespace Experimental {
     using Kokkos::subview;
     using Kokkos::View;
     typedef typename Tpetra::MultiVector<Scalar, LO, GO, Node>::impl_scalar_type ST;
-    typedef typename View<int*, device_type>::HostMirror::execution_space HES;
+    typedef typename Node::execution_space execution_space;
+    typedef typename View<int*, execution_space>::HostMirror::execution_space HES;
     typedef BlockCrsMatrix<Scalar, LO, GO, Node> this_type;
     typedef typename Teuchos::ArrayView<const LO>::size_type size_type;
     const bool debug = false;
@@ -2317,7 +2301,8 @@ namespace Experimental {
     using Kokkos::View;
     typedef typename Tpetra::MultiVector<Scalar, LO, GO, Node>::impl_scalar_type ST;
     typedef typename Teuchos::ArrayView<const LO>::size_type size_type;
-    typedef typename View<int*, device_type>::HostMirror::execution_space HES;
+    typedef typename Node::execution_space execution_space;
+    typedef typename View<int*, execution_space>::HostMirror::execution_space HES;
     typedef std::pair<typename View<int*, HES>::size_type,
       typename View<int*, HES>::size_type> pair_type;
     typedef View<GO*, HES, MemoryUnmanaged> gids_out_type;
@@ -2903,7 +2888,7 @@ namespace Experimental {
   BlockCrsMatrix<Scalar, LO, GO, Node>::
   isFillComplete() const
   {
-    return graph_.isFillComplete ();
+    return true;
   }
 
   template<class Scalar, class LO, class GO, class Node>
@@ -2933,8 +2918,8 @@ namespace Experimental {
   void
   BlockCrsMatrix<Scalar, LO, GO, Node>::
   getGlobalRowView (GO GlobalRow,
-                    Teuchos::ArrayView<const GO> &indices,
-                    Teuchos::ArrayView<const Scalar> &values) const
+                    ArrayView<const GO> &indices,
+                    ArrayView<const Scalar> &values) const
   {
     TEUCHOS_TEST_FOR_EXCEPTION(
       true, std::logic_error, "Tpetra::Experimental::BlockCrsMatrix::getGlobalRowView: "
@@ -2946,8 +2931,8 @@ namespace Experimental {
   void
   BlockCrsMatrix<Scalar, LO, GO, Node>::
   getLocalRowView (LO LocalRow,
-                   Teuchos::ArrayView<const LO> &indices,
-                   Teuchos::ArrayView<const Scalar> &values) const
+                   ArrayView<const LO> &indices,
+                   ArrayView<const Scalar> &values) const
   {
     TEUCHOS_TEST_FOR_EXCEPTION(
       true, std::logic_error, "Tpetra::Experimental::BlockCrsMatrix::getGlobalRowView: "
@@ -2961,32 +2946,10 @@ namespace Experimental {
   BlockCrsMatrix<Scalar, LO, GO, Node>::
   getLocalDiagCopy (Tpetra::Vector<Scalar,LO,GO,Node> &diag) const
   {
-    // TODO amk: This is a temporary measure to make the code run with Ifpack2
-    int rowOffset = 0;
-    int offset = 0;
-    LO bs = getBlockSize();
-    Teuchos::ArrayRCP<size_t> colOffsets;
-    getLocalDiagOffsets (colOffsets);
-    for(size_t r=0; r<getNodeNumRows(); r++)
-    {
-      // move pointer to start of diagonal block
-      offset = rowOffset + colOffsets[r]*bs*bs;
-      for(int b=0; b<bs; b++)
-      {
-        std::cout << "offset: " << offset+b*(bs+1) << std::endl;
-        diag.replaceLocalValue(r*bs+b, val_[offset+b*(bs+1)]);
-      }
-      // move pointer to start of next block row
-      rowOffset += getNumEntriesInLocalRow(r)*bs*bs;
-    }
+    TEUCHOS_TEST_FOR_EXCEPTION(
+      true, std::logic_error, "Tpetra::Experimental::BlockCrsMatrix::getLocalDiagCopy: "
+      "not implemented.");
 
-    Teuchos::RCP<Teuchos::FancyOStream> wrappedStream = Teuchos::getFancyOStream (Teuchos::rcpFromRef (std::cout));
-    diag.describe (*wrappedStream, Teuchos::VERB_EXTREME);
-
-    std::cout << "Raw data:\n";
-    int nnz = getNodeNumEntries()*bs*bs;
-    for(int i=0; i<nnz; i++)
-      std::cout << "val[" << i << "] = " << val_[i] << std::endl;
   }
 
   template<class Scalar, class LO, class GO, class Node>
@@ -3035,7 +2998,7 @@ namespace Experimental {
 //
 // Explicit instantiation macro
 //
-// Must be expanded from within the Tpetra::Experimental namespace!
+// Must be expanded from within the Tpetra namespace!
 //
 #define TPETRA_EXPERIMENTAL_BLOCKCRSMATRIX_INSTANT(S,LO,GO,NODE) \
   template class Experimental::BlockCrsMatrix< S, LO, GO, NODE >;

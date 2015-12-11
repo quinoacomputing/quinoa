@@ -1,5 +1,4 @@
 
-#include <iterator>
 #include <Epetra_CrsMatrix.h>
 
 namespace XpetraBlockMatrixTests {
@@ -46,7 +45,7 @@ Teuchos::RCP<Epetra_Map> MergeMaps(const std::vector<Teuchos::RCP<const Epetra_M
   for (unsigned i=0; i<maps.size(); ++i) {
     if (maps[i]==Teuchos::null)
       std::cout << "can not merge extractor with null maps" << std::endl;
-    if (maps[i]->UniqueGIDs() == false)
+    if (not maps[i]->UniqueGIDs())
       std::cout << "map " << i <<  " not unique" << std::endl;
   }
   std::set<int> mapentries;

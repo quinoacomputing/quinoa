@@ -46,7 +46,6 @@
 #ifndef MUELU_COALESCEDROPFACTORY_KOKKOS_DEF_HPP
 #define MUELU_COALESCEDROPFACTORY_KOKKOS_DEF_HPP
 
-#ifdef HAVE_MUELU_KOKKOS_REFACTOR
 #include <Kokkos_CrsMatrix.hpp>
 
 #include "MueLu_CoalesceDropFactory_kokkos_decl.hpp"
@@ -61,28 +60,8 @@
 
 namespace MueLu {
 
-  namespace { // anonymous
-
-    template<class LocalOrdinal, class RowType>
-    class ScanFunctor {
-    public:
-      ScanFunctor(RowType rows) : rows_(rows) { }
-
-      KOKKOS_INLINE_FUNCTION
-      void operator()(const LocalOrdinal i, LocalOrdinal& upd, const bool& final) const {
-        upd += rows_(i);
-        if (final)
-          rows_(i) = upd;
-      }
-
-    private:
-      RowType rows_;
-    };
-
-  }
-
-  template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class DeviceType>
-  RCP<const ParameterList> CoalesceDropFactory_kokkos<Scalar,LocalOrdinal,GlobalOrdinal,Kokkos::Compat::KokkosDeviceWrapperNode<DeviceType>>::GetValidParameterList() const {
+  template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
+  RCP<const ParameterList> CoalesceDropFactory_kokkos<Scalar, LocalOrdinal, GlobalOrdinal, Node>::GetValidParameterList() const {
     RCP<ParameterList> validParamList = rcp(new ParameterList());
 
 #define SET_VALID_ENTRY(name) validParamList->setEntry(name, MasterList::getEntry(name))
@@ -104,8 +83,8 @@ namespace MueLu {
     return validParamList;
   }
 
-  template <class Scalar,class LocalOrdinal, class GlobalOrdinal, class DeviceType>
-  void CoalesceDropFactory_kokkos<Scalar,LocalOrdinal,GlobalOrdinal,Kokkos::Compat::KokkosDeviceWrapperNode<DeviceType>>::DeclareInput(Level &currentLevel) const {
+  template <class Scalar,class LocalOrdinal, class GlobalOrdinal, class Node>
+  void CoalesceDropFactory_kokkos<Scalar, LocalOrdinal, GlobalOrdinal, Node>::DeclareInput(Level &currentLevel) const {
     Input(currentLevel, "A");
     Input(currentLevel, "UnAmalgamationInfo");
 
@@ -116,18 +95,15 @@ namespace MueLu {
     }
   }
 
-  template <class Scalar,class LocalOrdinal, class GlobalOrdinal, class DeviceType>
-  void CoalesceDropFactory_kokkos<Scalar,LocalOrdinal,GlobalOrdinal,Kokkos::Compat::KokkosDeviceWrapperNode<DeviceType>>::Build(Level& currentLevel) const {
+  template <class Scalar,class LocalOrdinal, class GlobalOrdinal, class Node>
+  void CoalesceDropFactory_kokkos<Scalar, LocalOrdinal, GlobalOrdinal, Node>::Build(Level& currentLevel) const {
     FactoryMonitor m(*this, "Build", currentLevel);
 
     typedef Teuchos::ScalarTraits<SC> STS;
     SC zero = STS::zero(), one = STS::one();
 
-    auto A         = Get< RCP<Matrix> >(currentLevel, "A");
-    LO   blkSize   = A->GetFixedBlockSize();
-    GO   indexBase = A->getRowMap()->getIndexBase();
-
-    auto amalInfo = Get< RCP<AmalgamationInfo> >(currentLevel, "UnAmalgamationInfo");
+    RCP<Matrix> A = Get< RCP<Matrix> >(currentLevel, "A");
+    RCP<AmalgamationInfo> amalInfo = Get< RCP<AmalgamationInfo> >(currentLevel, "UnAmalgamationInfo");
 
     const ParameterList& pL = GetParameterList();
 
@@ -136,7 +112,7 @@ namespace MueLu {
 
     std::string algo = pL.get<std::string>("aggregation: drop scheme");
 
-    double threshold = pL.get<double>("aggregation: drop tol");
+    SC threshold = as<SC>(pL.get<double>("aggregation: drop tol"));
     GetOStream(Runtime0) << "algorithm = \"" << algo << "\": threshold = " << threshold << ", blocksize = " << A->GetFixedBlockSize() << std::endl;
 
     Set(currentLevel, "Filtering", (threshold != STS::zero()));
@@ -144,265 +120,40 @@ namespace MueLu {
     const typename STS::magnitudeType dirichletThreshold = STS::magnitude(as<SC>(pL.get<double>("aggregation: Dirichlet threshold")));
 
     GO numDropped = 0, numTotal = 0;
-
-    RCP<LWGraph_kokkos> graph;
-    LO                  dofsPerNode = -1;
-
-    typedef typename LWGraph_kokkos::boundary_nodes_type boundary_nodes_type;
-    boundary_nodes_type boundaryNodes;
+    std::string graphType = "unamalgamated"; //for description purposes only
 
     if (algo == "classical") {
-
-      if (blkSize == 1 && threshold == STS::zero()) {
-        //
-        // Case 1:  scalar problem without dropping
-        //
-        graph = rcp(new LWGraph_kokkos(A->getLocalMatrix().graph, A->getRowMap(), A->getColMap(), "graph of A"));
-
-        // Detect and record rows that correspond to Dirichlet boundary conditions
-        boundaryNodes = Utilities_kokkos::DetectDirichletRows(*A, dirichletThreshold);
-        graph->SetBoundaryNodeMap(boundaryNodes);
-
-        numTotal = A->getNodeNumEntries();
-
-        dofsPerNode = 1;
-
-      } else if (blkSize == 1 && threshold != STS::zero()) {
-        //
-        // Case 2:  scalar problem with filtering
-        //
-        RCP<Vector> ghostedDiagVec = Utilities_kokkos::GetMatrixOverlappedDiagonal(*A);
-        auto        ghostedDiag    = ghostedDiagVec->template getLocalView<typename NO::device_type>();
-
-        typedef typename Matrix::local_matrix_type          local_matrix_type;
-        typedef typename LWGraph_kokkos::local_graph_type   kokkos_graph_type;
-        typedef typename kokkos_graph_type::row_map_type    row_map_type;
-        typedef typename kokkos_graph_type::entries_type    entries_type;
-
-        LO   numRows      = A->getNodeNumRows();
-        auto kokkosMatrix = A->getLocalMatrix();
-
-        typedef Kokkos::ArithTraits<SC>     ATS;
-        typedef typename ATS::magnitudeType magnitudeType;
-
-        // Stage 1: calculate the number of remaining entries per row
-        typename row_map_type::non_const_type rows("row_map", numRows+1);       // rows(0) = 0 automatically
-
-        LO realnnz = 0;
-        Kokkos::parallel_reduce("CoalesceDropF:Build:scalar_filter:stage1_reduce", numRows, KOKKOS_LAMBDA(const LO row, LO& nnz) {
-          auto rowView = kokkosMatrix.template row<LO>(row);
-          auto length  = rowView.length;
-
-          LO rownnz = 0;
-          for (decltype(length) colID = 0; colID < length; colID++) {
-            LO col = rowView.colidx(colID);
-
-            // Avoid square root by using squared values
-            magnitudeType aiiajj = threshold*threshold * ATS::magnitude(ghostedDiag(row, 0))*ATS::magnitude(ghostedDiag(col, 0));   // eps^2*|a_ii|*|a_jj|
-            magnitudeType aij2   = ATS::magnitude(rowView.value(colID)) * ATS::magnitude(rowView.value(colID));                     // |a_ij|^2
-
-            if (aij2 > aiiajj || row == col)
-              rownnz++;
-          }
-          rows(row+1) = rownnz;
-          nnz += rownnz;
-        }, realnnz);
-
-        // parallel_scan (exclusive)
-        // NOTE: parallel_scan with KOKKOS_LAMBDA does not work with CUDA for now
-#if 0
-        Kokkos::parallel_scan("CoalesceDropF:Build:scalar_filter:stage1_scan", numRows+1, KOKKOS_LAMBDA(const LO i, LO& upd, const bool& final) {
-          upd += rows(i);
-          if (final)
-            rows(i) = upd;
-        });
-#else
-        ScanFunctor<LO,decltype(rows)> scanFunctor(rows);
-        Kokkos::parallel_scan("CoalesceDropF:Build:scalar_filter:stage1_scan", numRows+1, scanFunctor);
-#endif
-
-
-        // Stage 2: fill in the column indices
-        typename boundary_nodes_type::non_const_type bndNodes("boundaryNodes", numRows);
-        typename entries_type::non_const_type        cols    ("entries",       realnnz);
-        Kokkos::parallel_reduce("CoalesceDropF:Build:scalar_filter:stage2_reduce", numRows, KOKKOS_LAMBDA(const LO row, GO& dropped) {
-          auto rowView = kokkosMatrix.template row<LO>(row);
-          auto length = rowView.length;
-
-          LO rownnz = 0;
-          for (decltype(length) colID = 0; colID < length; colID++) {
-            LO col = rowView.colidx(colID);
-
-            // Avoid square root by using squared values
-            magnitudeType aiiajj = threshold*threshold * ATS::magnitude(ghostedDiag(row, 0))*ATS::magnitude(ghostedDiag(col, 0));   // eps^2*|a_ii|*|a_jj|
-            magnitudeType aij2   = ATS::magnitude(rowView.value(colID)) * ATS::magnitude(rowView.value(colID));                     // |a_ij|^2
-
-            if (aij2 > aiiajj || row == col) {
-              cols(rows(row) + rownnz) = col;
-              rownnz++;
-            } else {
-              dropped++;
-            }
-            if (rownnz == 1) {
-              // If the only element remaining after filtering is diagonal, mark node as boundary
-              // FIXME: this should really be replaced by the following
-              //    if (indices.size() == 1 && indices[0] == row)
-              //        boundaryNodes[row] = true;
-              // We do not do it this way now because there is no framework for distinguishing isolated
-              // and boundary nodes in the aggregation algorithms
-              bndNodes(row) = true;
-            }
-          }
-        }, numDropped);
-        boundaryNodes = bndNodes;
-
-        kokkos_graph_type kokkosGraph(cols, rows);
-
-        graph = rcp(new LWGraph_kokkos(kokkosGraph, A->getRowMap(), A->getColMap(), "filtered graph of A"));
-        graph->SetBoundaryNodeMap(boundaryNodes);
-
-        numTotal = A->getNodeNumEntries();
-
-        dofsPerNode = 1;
-
-      } else if (blkSize > 1 && threshold == STS::zero()) {
-        //
-        // Case 3:  block problem without filtering
-        //
-        throw Exceptions::RuntimeError("Block systems without filtering are not implemented");
-
-        // Detect and record rows that correspond to Dirichlet boundary conditions
-        // boundary_nodes_type pointBoundaryNodes = Utilities_kokkos::DetectDirichletRows(*A, dirichletThreshold);
-
-      } else if (blkSize > 1 && threshold != STS::zero()) {
-        //
-        // Case 4:  block problem with filtering
-        //
-        throw Exceptions::RuntimeError("Block systems with filtering are not implemented");
-
-        // Detect and record rows that correspond to Dirichlet boundary conditions
-        // boundary_nodes_type pointBoundaryNodes = Utilities_kokkos::DetectDirichletRows(*A, dirichletThreshold);
-      }
-
-    } else if (algo == "distance laplacian") {
-      typedef Xpetra::MultiVector<double,LO,GO,NO> doubleMultiVector;
-
-      auto coords = Get<RCP<doubleMultiVector> >(currentLevel, "Coordinates");
-
       if (A->GetFixedBlockSize() == 1 && threshold == STS::zero()) {
         //
-        // Case 1:  scalar problem without dropping
+        // Case 1:  scalar problem, no dropping => just use matrix graph
         //
-        graph = rcp(new LWGraph_kokkos(A->getLocalMatrix().graph, A->getRowMap(), A->getColMap(), "graph of A"));
+        RCP<LWGraph_kokkos> graph = rcp(new LWGraph_kokkos(A->getLocalMatrix().graph, A->getDomainMap(), A->getRangeMap(), "graph of A"));
 
         // Detect and record rows that correspond to Dirichlet boundary conditions
-        boundaryNodes = Utilities_kokkos::DetectDirichletRows(*A, dirichletThreshold);
+        ArrayRCP<const bool> boundaryNodes = Utils_kokkos::DetectDirichletRows(*A, dirichletThreshold);
         graph->SetBoundaryNodeMap(boundaryNodes);
 
         numTotal = A->getNodeNumEntries();
 
-        dofsPerNode = 1;
+        if (GetVerbLevel() & Statistics0) {
+          GO numLocalBoundaryNodes  = 0;
+          GO numGlobalBoundaryNodes = 0;
+          Kokkos::parallel_reduce(boundaryNodes.size(), KOKKOS_LAMBDA(const LO i, GO& n) {
+            if (boundaryNodes[i])
+              n++;
+          }, numLocalBoundaryNodes, "CoalesceDropF:Build:case1_bnd");
 
-      } else if (blkSize == 1 && threshold != STS::zero()) {
-        //
-        // Case 2:  scalar problem with filtering
-        //
-        throw Exceptions::RuntimeError("not implemented");
+          RCP<const Teuchos::Comm<int> > comm = A->getRowMap()->getComm();
+          MueLu_sumAll(comm, numLocalBoundaryNodes, numGlobalBoundaryNodes);
+          GetOStream(Statistics0) << "Detected " << numGlobalBoundaryNodes << " Dirichlet nodes" << std::endl;
+        }
 
-      } else if (blkSize > 1 && threshold == STS::zero()) {
-        //
-        // Case 3:  block problem without filtering
-        //
-        throw Exceptions::RuntimeError("Block systems without filtering are not implemented");
-
-        // Detect and record rows that correspond to Dirichlet boundary conditions
-        boundary_nodes_type pointBoundaryNodes = Utilities_kokkos::DetectDirichletRows(*A, dirichletThreshold);
-
-      } else if (blkSize > 1 && threshold != STS::zero()) {
-        //
-        // Case 4:  block problem with filtering
-        //
-        throw Exceptions::RuntimeError("Block systems with filtering are not implemented");
-
-        // Detect and record rows that correspond to Dirichlet boundary conditions
-        boundary_nodes_type pointBoundaryNodes = Utilities_kokkos::DetectDirichletRows(*A, dirichletThreshold);
-      }
-
-    } else if (algo == "distance laplacian") {
-      typedef Xpetra::MultiVector<double,LO,GO,NO> doubleMultiVector;
-
-      auto coords = Get<RCP<doubleMultiVector> >(currentLevel, "Coordinates");
-
-      if (A->GetFixedBlockSize() == 1 && threshold == STS::zero()) {
-        //
-        // Case 1:  scalar problem without dropping
-        //
-        graph = rcp(new LWGraph_kokkos(A->getLocalMatrix().graph, A->getRowMap(), A->getColMap(), "graph of A"));
-
-        // Detect and record rows that correspond to Dirichlet boundary conditions
-        boundaryNodes = Utilities_kokkos::DetectDirichletRows(*A, dirichletThreshold);
-        graph->SetBoundaryNodeMap(boundaryNodes);
-
-        numTotal = A->getNodeNumEntries();
-
-        dofsPerNode = 1;
-
-      } else if (blkSize == 1 && threshold != STS::zero()) {
-        //
-        // Case 2:  scalar problem with filtering
-        //
-        throw Exceptions::RuntimeError("not implemented");
-
-      } else if (blkSize > 1 && threshold == STS::zero()) {
-        //
-        // Case 3:  block problem without filtering
-        //
-        throw Exceptions::RuntimeError("Block systems without filtering are not implemented");
-
-        // Detect and record rows that correspond to Dirichlet boundary conditions
-        // boundary_nodes_type pointBoundaryNodes = Utilities_kokkos::DetectDirichletRows(*A, dirichletThreshold);
-
-      } else if (blkSize > 1 && threshold != STS::zero()) {
-        //
-        // Case 4:  block problem with filtering
-        //
-        throw Exceptions::RuntimeError("Block systems with filtering are not implemented");
-
-        // Detect and record rows that correspond to Dirichlet boundary conditions
-        // boundary_nodes_type pointBoundaryNodes = Utilities_kokkos::DetectDirichletRows(*A, dirichletThreshold);
-      }
-
-
-    }
-
-    if (GetVerbLevel() & Statistics0) {
-      GO numLocalBoundaryNodes  = 0;
-      GO numGlobalBoundaryNodes = 0;
-      Kokkos::parallel_reduce("CoalesceDropF:Build:bnd", boundaryNodes.dimension_0(), KOKKOS_LAMBDA(const LO i, GO& n) {
-        if (boundaryNodes(i))
-          n++;
-      }, numLocalBoundaryNodes);
-
-      RCP<const Teuchos::Comm<int> > comm = A->getRowMap()->getComm();
-      MueLu_sumAll(comm, numLocalBoundaryNodes, numGlobalBoundaryNodes);
-      GetOStream(Statistics0) << "Detected " << numGlobalBoundaryNodes << " Dirichlet nodes" << std::endl;
-    }
-
-    if ((GetVerbLevel() & Statistics0) && threshold != STS::zero()) {
-      RCP<const Teuchos::Comm<int> > comm = A->getRowMap()->getComm();
-      GO numGlobalTotal, numGlobalDropped;
-      MueLu_sumAll(comm, numTotal,   numGlobalTotal);
-      MueLu_sumAll(comm, numDropped, numGlobalDropped);
-      if (numGlobalTotal != 0) {
-        GetOStream(Statistics0) << "Number of dropped entries: "
-            << numGlobalDropped << "/" << numGlobalTotal
-            << " (" << 100*Teuchos::as<double>(numGlobalDropped)/Teuchos::as<double>(numGlobalTotal) << "%)" << std::endl;
+        Set(currentLevel, "DofsPerNode",  1);
+        Set(currentLevel, "Graph",        graph);
       }
     }
 
-    Set(currentLevel, "DofsPerNode",  dofsPerNode);
-    Set(currentLevel, "Graph",        graph);
   }
 }
-#endif // HAVE_MUELU_KOKKOS_REFACTOR
+
 #endif // MUELU_COALESCEDROPFACTORY_KOKKOS_DEF_HPP

@@ -73,6 +73,7 @@ using Teuchos::DefaultComm;
 
 typedef Tpetra::MultiVector<zscalar_t, zlno_t, zgno_t, znode_t> tvector_t;
 typedef Xpetra::MultiVector<zscalar_t, zlno_t, zgno_t, znode_t> xvector_t;
+typedef Epetra_MultiVector evector_t;
 
 template <typename User>
 int verifyInputAdapter(
@@ -322,7 +323,6 @@ int main(int argc, char *argv[])
 #ifdef HAVE_EPETRA_DATA_TYPES
   /////////////////////////////////////////////////////////////
   // User object is Epetra_MultiVector
-  typedef Epetra_MultiVector evector_t;
   if (!gfail){ 
     RCP<evector_t> eV = 
         rcp(new Epetra_MultiVector(uinput->getUIEpetraCrsGraph()->RowMap(),

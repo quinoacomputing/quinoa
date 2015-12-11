@@ -61,8 +61,6 @@
 
 namespace Teko {
 
-void addToStratimikosBuilder(const Teuchos::RCP<Stratimikos::DefaultLinearSolverBuilder> & builder);
-
 class InverseLibrary : public RequestHandlerContainer {
 public:
    InverseLibrary();
@@ -152,16 +150,6 @@ public:
    /** \brief Build an inverse library from Stratimikos
      * 
      * Build an inverse library from Stratimkos. The labels
-     * will just be the names in Stratimikos. Uses the Stratimikos
-     * default linear solver builder and adds extra inverse types
-     *
-     * \returns A pointer to the inverse library created.
-     */
-   static Teuchos::RCP<InverseLibrary> buildFromStratimikos();
-
-   /** \brief Build an inverse library from Stratimikos
-     * 
-     * Build an inverse library from Stratimkos. The labels
      * will just be the names in Stratimikos.
      *
      * \param[in] strat Stratimikos object to use
@@ -169,7 +157,7 @@ public:
      * \returns A pointer to the inverse library created.
      */
    static Teuchos::RCP<InverseLibrary> buildFromStratimikos(
-         const Stratimikos::DefaultLinearSolverBuilder & strat);
+         const Stratimikos::DefaultLinearSolverBuilder & strat=Stratimikos::DefaultLinearSolverBuilder());
 
    /** \brief Build an inverse library from Stratimikos
      * 

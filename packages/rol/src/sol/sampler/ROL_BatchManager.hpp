@@ -46,7 +46,6 @@
 
 #include "Teuchos_RefCountPtr.hpp"
 #include "ROL_Vector.hpp"
-#include "ROL_Elementwise_Function.hpp"
 
 namespace ROL {
 
@@ -71,11 +70,6 @@ public:
 
   virtual void sumAll(Vector<Real> &input, Vector<Real> &output) {
     output.set(input);
-  }
-
-  virtual void reduceAll(Real *input, Real* output,
-                         const Elementwise::ReductionOp<Real> &r) {
-    output[0] = input[0];
   }
 
   virtual void barrier(void) {}

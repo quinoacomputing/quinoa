@@ -48,53 +48,37 @@
 #  include "Amesos2_Superlu_def.hpp"
 #  include "Amesos2_ExplicitInstantiationHelpers.hpp"
 
-
-
 namespace Amesos2 {
-
-#ifdef HAVE_TPETRA_INST_INT_INT
 #ifdef HAVE_AMESOS2_EPETRA
   AMESOS2_SOLVER_EPETRA_INST(Superlu);
 #endif
-#endif
 
-}
-
-
-#ifdef HAVE_TPETRA_INST_INT_INT
-namespace Amesos2 {
 #ifdef HAVE_TPETRA_INST_FLOAT
   AMESOS2_SOLVER_TPETRA_INST(Superlu,float,int,int);
+#ifdef HAVE_TPETRA_INST_INT_UNSIGNED
+  AMESOS2_SOLVER_TPETRA_INST(Superlu,float,int,unsigned int);
+#endif
 #endif
 #ifdef HAVE_TPETRA_INST_DOUBLE
   AMESOS2_SOLVER_TPETRA_INST(Superlu,double,int,int);
+#ifdef HAVE_TPETRA_INST_INT_UNSIGNED
+  AMESOS2_SOLVER_TPETRA_INST(Superlu,double,int,unsigned int);
+#endif
 #endif
 #ifdef HAVE_TPETRA_INST_COMPLEX_FLOAT
   AMESOS2_SOLVER_TPETRA_INST(Superlu,std::complex<float>,int,int);
+#ifdef HAVE_TPETRA_INST_INT_UNSIGNED
+  AMESOS2_SOLVER_TPETRA_INST(Superlu,std::complex<float>,int,unsigned int);
+#endif
 #endif
 #ifdef HAVE_TPETRA_INST_COMPLEX_DOUBLE
   AMESOS2_SOLVER_TPETRA_INST(Superlu,std::complex<double>,int,int);
-#endif
-}
-#endif //END INST_INT_INT
-
 #ifdef HAVE_TPETRA_INST_INT_UNSIGNED
-namespace Amesos2 {
-#ifdef HAVE_TPETRA_INST_FLOAT
-  AMESOS2_SOLVER_TPETRA_INST(Superlu,float,int,unsigned int);
-#endif
-#ifdef HAVE_TPETRA_INST_DOUBLE
-  AMESOS2_SOLVER_TPETRA_INST(Superlu,double,int,unsigned int);
-#endif
-#ifdef HAVE_TPETRA_INST_COMPLEX_FLOAT
-  AMESOS2_SOLVER_TPETRA_INST(Superlu,std::complex<float>,int,unsigned int);
-#endif
-#ifdef HAVE_TPETRA_INST_COMPLEX_DOUBLE
   AMESOS2_SOLVER_TPETRA_INST(Superlu,std::complex<double>,int,unsigned int);
 #endif
-}
-#endif //END INST_INST_UNSIGNED
+#endif
 
+}
 
 #ifdef HAVE_TPETRA_INST_INT_LONG
 namespace Amesos2 {
@@ -145,9 +129,7 @@ TPETRA_ETI_MANGLING_TYPEDEFS()
 #if defined(HAVE_TPETRA_INST_SERIAL) && !defined(HAVE_TPETRA_DEFAULTNODE_SERIALWRAPPERNODE) && defined(HAVE_TPETRA_INST_DOUBLE) && defined(TPETRA_HAVE_KOKKOS_REFACTOR)
 #define NODETYPE Kokkos_Compat_KokkosSerialWrapperNode
 #ifdef HAVE_TPETRA_INST_FLOAT
-  #ifdef HAVE_TPETRA_INST_INT_INT
-    AMESOS2_SUPERLU_LOCAL_INSTANT(float, int, int, NODETYPE)
-  #endif
+  AMESOS2_SUPERLU_LOCAL_INSTANT(float, int, int, NODETYPE)
   #ifdef HAVE_TPETRA_INST_INT_LONG
     AMESOS2_SUPERLU_LOCAL_INSTANT(float, int, long, NODETYPE)
   #endif
@@ -159,9 +141,7 @@ TPETRA_ETI_MANGLING_TYPEDEFS()
   #endif
 #endif
 #ifdef HAVE_TPETRA_INST_DOUBLE
-    #ifdef HAVE_TPETRA_INST_INT_INT
-      AMESOS2_SUPERLU_LOCAL_INSTANT(double, int, int, NODETYPE)
-    #endif
+    AMESOS2_SUPERLU_LOCAL_INSTANT(double, int, int, NODETYPE)
     #ifdef HAVE_TPETRA_INST_INT_LONG
       AMESOS2_SUPERLU_LOCAL_INSTANT(double, int, long, NODETYPE)
     #endif
@@ -173,9 +153,7 @@ TPETRA_ETI_MANGLING_TYPEDEFS()
     #endif
 #endif
 #ifdef HAVE_TPETRA_INST_COMPLEX_FLOAT
-  #ifdef HAVE_TPETRA_INST_INT_INT
-    AMESOS2_SUPERLU_LOCAL_INSTANT(std::complex<float>, int, int, NODETYPE)
-  #endif
+  AMESOS2_SUPERLU_LOCAL_INSTANT(std::complex<float>, int, int, NODETYPE)
   #ifdef HAVE_TPETRA_INST_INT_LONG
     AMESOS2_SUPERLU_LOCAL_INSTANT(std::complex<float>, int, long, NODETYPE)
   #endif
@@ -187,9 +165,7 @@ TPETRA_ETI_MANGLING_TYPEDEFS()
   #endif
 #endif
 #ifdef HAVE_TPETRA_INST_COMPLEX_DOUBLE
-    #ifdef HAVE_TPETRA_INST_INT_INT
-      AMESOS2_SUPERLU_LOCAL_INSTANT(std::complex<double>, int, int, NODETYPE)
-    #endif
+    AMESOS2_SUPERLU_LOCAL_INSTANT(std::complex<double>, int, int, NODETYPE)
     #ifdef HAVE_TPETRA_INST_INT_LONG
       AMESOS2_SUPERLU_LOCAL_INSTANT(std::complex<double>, int, long, NODETYPE)
     #endif
@@ -206,9 +182,7 @@ TPETRA_ETI_MANGLING_TYPEDEFS()
 #if defined(HAVE_TPETRA_INST_PTHREAD) && !defined(HAVE_TPETRA_DEFAULTNODE_THREADSWRAPPERNODE) && defined(HAVE_TPETRA_INST_DOUBLE) && defined(TPETRA_HAVE_KOKKOS_REFACTOR)
 #define NODETYPE Kokkos_Compat_KokkosThreadsWrapperNode
 #ifdef HAVE_TPETRA_INST_FLOAT
-  #ifdef HAVE_TPETRA_INST_INT_INT
-    AMESOS2_SUPERLU_LOCAL_INSTANT(float, int, int, NODETYPE)
-  #endif
+  AMESOS2_SUPERLU_LOCAL_INSTANT(float, int, int, NODETYPE)
   #ifdef HAVE_TPETRA_INST_INT_LONG
     AMESOS2_SUPERLU_LOCAL_INSTANT(float, int, long, NODETYPE)
   #endif
@@ -220,9 +194,7 @@ TPETRA_ETI_MANGLING_TYPEDEFS()
   #endif
 #endif
 #ifdef HAVE_TPETRA_INST_DOUBLE
-    #ifdef HAVE_TPETRA_INST_INT_INT
-      AMESOS2_SUPERLU_LOCAL_INSTANT(double, int, int, NODETYPE)
-    #endif
+    AMESOS2_SUPERLU_LOCAL_INSTANT(double, int, int, NODETYPE)
     #ifdef HAVE_TPETRA_INST_INT_LONG
       AMESOS2_SUPERLU_LOCAL_INSTANT(double, int, long, NODETYPE)
     #endif
@@ -234,9 +206,7 @@ TPETRA_ETI_MANGLING_TYPEDEFS()
     #endif
 #endif
 #ifdef HAVE_TPETRA_INST_COMPLEX_FLOAT
-  #ifdef HAVE_TPETRA_INST_INT_INT
-    AMESOS2_SUPERLU_LOCAL_INSTANT(std::complex<float>, int, int, NODETYPE)
-  #endif
+  AMESOS2_SUPERLU_LOCAL_INSTANT(std::complex<float>, int, int, NODETYPE)
   #ifdef HAVE_TPETRA_INST_INT_LONG
     AMESOS2_SUPERLU_LOCAL_INSTANT(std::complex<float>, int, long, NODETYPE)
   #endif
@@ -248,9 +218,7 @@ TPETRA_ETI_MANGLING_TYPEDEFS()
   #endif
 #endif
 #ifdef HAVE_TPETRA_INST_COMPLEX_DOUBLE
-    #ifdef HAVE_TPETRA_INST_INT_INT
-      AMESOS2_SUPERLU_LOCAL_INSTANT(std::complex<double>, int, int, NODETYPE)
-    #endif
+    AMESOS2_SUPERLU_LOCAL_INSTANT(std::complex<double>, int, int, NODETYPE)
     #ifdef HAVE_TPETRA_INST_INT_LONG
       AMESOS2_SUPERLU_LOCAL_INSTANT(std::complex<double>, int, long, NODETYPE)
     #endif
@@ -267,9 +235,7 @@ TPETRA_ETI_MANGLING_TYPEDEFS()
 #if defined(HAVE_TPETRA_INST_OPENMP) && !defined(HAVE_TPETRA_DEFAULTNODE_OPENMPWRAPPERNODE) && defined(HAVE_TPETRA_INST_DOUBLE) && defined(TPETRA_HAVE_KOKKOS_REFACTOR)
 #define NODETYPE Kokkos_Compat_KokkosOpenMPWrapperNode
 #ifdef HAVE_TPETRA_INST_FLOAT
-  #ifdef HAVE_TPETRA_INST_INT_INT
-    AMESOS2_SUPERLU_LOCAL_INSTANT(float, int, int, NODETYPE)
-  #endif
+  AMESOS2_SUPERLU_LOCAL_INSTANT(float, int, int, NODETYPE)
   #ifdef HAVE_TPETRA_INST_INT_LONG
     AMESOS2_SUPERLU_LOCAL_INSTANT(float, int, long, NODETYPE)
   #endif
@@ -281,9 +247,7 @@ TPETRA_ETI_MANGLING_TYPEDEFS()
   #endif
 #endif
 #ifdef HAVE_TPETRA_INST_DOUBLE
-    #ifdef HAVE_TPETRA_INST_INT_INT
-      AMESOS2_SUPERLU_LOCAL_INSTANT(double, int, int, NODETYPE)
-    #endif
+    AMESOS2_SUPERLU_LOCAL_INSTANT(double, int, int, NODETYPE)
     #ifdef HAVE_TPETRA_INST_INT_LONG
       AMESOS2_SUPERLU_LOCAL_INSTANT(double, int, long, NODETYPE)
     #endif
@@ -295,9 +259,7 @@ TPETRA_ETI_MANGLING_TYPEDEFS()
     #endif
 #endif
 #ifdef HAVE_TPETRA_INST_COMPLEX_FLOAT
-  #ifdef HAVE_TPETRA_INST_INT_INT
-    AMESOS2_SUPERLU_LOCAL_INSTANT(std::complex<float>, int, int, NODETYPE)
-  #endif
+  AMESOS2_SUPERLU_LOCAL_INSTANT(std::complex<float>, int, int, NODETYPE)
   #ifdef HAVE_TPETRA_INST_INT_LONG
     AMESOS2_SUPERLU_LOCAL_INSTANT(std::complex<float>, int, long, NODETYPE)
   #endif
@@ -309,9 +271,7 @@ TPETRA_ETI_MANGLING_TYPEDEFS()
   #endif
 #endif
 #ifdef HAVE_TPETRA_INST_COMPLEX_DOUBLE
-    #ifdef HAVE_TPETRA_INST_INT_INT
-      AMESOS2_SUPERLU_LOCAL_INSTANT(std::complex<double>, int, int, NODETYPE)
-    #endif
+    AMESOS2_SUPERLU_LOCAL_INSTANT(std::complex<double>, int, int, NODETYPE)
     #ifdef HAVE_TPETRA_INST_INT_LONG
       AMESOS2_SUPERLU_LOCAL_INSTANT(std::complex<double>, int, long, NODETYPE)
     #endif
@@ -328,9 +288,7 @@ TPETRA_ETI_MANGLING_TYPEDEFS()
 #if defined(HAVE_TPETRA_INST_CUDA) && !defined(HAVE_TPETRA_DEFAULTNODE_CUDAWRAPPERNODE) && defined(HAVE_TPETRA_INST_DOUBLE) && defined(TPETRA_HAVE_KOKKOS_REFACTOR)
 #define NODETYPE Kokkos_Compat_KokkosCudaWrapperNode
 #ifdef HAVE_TPETRA_INST_FLOAT
-  #ifdef HAVE_TPETRA_INST_INT_INT
-    AMESOS2_SUPERLU_LOCAL_INSTANT(float, int, int, NODETYPE)
-  #endif
+  AMESOS2_SUPERLU_LOCAL_INSTANT(float, int, int, NODETYPE)
   #ifdef HAVE_TPETRA_INST_INT_LONG
     AMESOS2_SUPERLU_LOCAL_INSTANT(float, int, long, NODETYPE)
   #endif
@@ -342,9 +300,7 @@ TPETRA_ETI_MANGLING_TYPEDEFS()
   #endif
 #endif
 #ifdef HAVE_TPETRA_INST_DOUBLE
-    #ifdef HAVE_TPETRA_INST_INT_INT
-      AMESOS2_SUPERLU_LOCAL_INSTANT(double, int, int, NODETYPE)
-    #endif
+    AMESOS2_SUPERLU_LOCAL_INSTANT(double, int, int, NODETYPE)
     #ifdef HAVE_TPETRA_INST_INT_LONG
       AMESOS2_SUPERLU_LOCAL_INSTANT(double, int, long, NODETYPE)
     #endif
@@ -356,9 +312,7 @@ TPETRA_ETI_MANGLING_TYPEDEFS()
     #endif
 #endif
 #ifdef HAVE_TPETRA_INST_COMPLEX_FLOAT
-  #ifdef HAVE_TPETRA_INST_INT_INT
-    AMESOS2_SUPERLU_LOCAL_INSTANT(std::complex<float>, int, int, NODETYPE)
-  #endif
+  AMESOS2_SUPERLU_LOCAL_INSTANT(std::complex<float>, int, int, NODETYPE)
   #ifdef HAVE_TPETRA_INST_INT_LONG
     AMESOS2_SUPERLU_LOCAL_INSTANT(std::complex<float>, int, long, NODETYPE)
   #endif
@@ -370,9 +324,7 @@ TPETRA_ETI_MANGLING_TYPEDEFS()
   #endif
 #endif
 #ifdef HAVE_TPETRA_INST_COMPLEX_DOUBLE
-    #ifdef HAVE_TPETRA_INST_INT_INT
-      AMESOS2_SUPERLU_LOCAL_INSTANT(std::complex<double>, int, int, NODETYPE)
-    #endif
+    AMESOS2_SUPERLU_LOCAL_INSTANT(std::complex<double>, int, int, NODETYPE)
     #ifdef HAVE_TPETRA_INST_INT_LONG
       AMESOS2_SUPERLU_LOCAL_INSTANT(std::complex<double>, int, long, NODETYPE)
     #endif

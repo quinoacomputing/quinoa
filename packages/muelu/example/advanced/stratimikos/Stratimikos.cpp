@@ -141,7 +141,7 @@ int main(int argc,char * argv[]) {
 
     {
       // we set seed for reproducibility
-      Utilities::SetRandomSeed(*comm);
+      Utils::SetRandomSeed(*comm);
       X->randomize();
       A->apply(*X, *B, Teuchos::NO_TRANS, Teuchos::ScalarTraits<Scalar>::one(), Teuchos::ScalarTraits<Scalar>::zero());
 

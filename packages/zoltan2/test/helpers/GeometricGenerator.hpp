@@ -66,7 +66,10 @@
 #include <Zoltan2_PartitioningProblem.hpp>
 
 
+//#define HAVE_ZOLTAN2_ZOLTAN
+#ifdef HAVE_ZOLTAN2_ZOLTAN
 #include <zoltan.h>
+#endif
 
 #ifdef _MSC_VER
 #define NOMINMAX
@@ -81,27 +84,30 @@ using Teuchos::ArrayRCP;
 namespace GeometricGen{
 #define CATCH_EXCEPTIONS(pp) \
         catch (std::runtime_error &e) { \
-            std::cout << "Runtime exception returned from " << pp << ": " \
-            << e.what() << " FAIL" << std::endl; \
+            cout << "Runtime exception returned from " << pp << ": " \
+            << e.what() << " FAIL" << endl; \
             return -1; \
         } \
         catch (std::logic_error &e) { \
-            std::cout << "Logic exception returned from " << pp << ": " \
-            << e.what() << " FAIL" << std::endl; \
+            cout << "Logic exception returned from " << pp << ": " \
+            << e.what() << " FAIL" << endl; \
             return -1; \
         } \
         catch (std::bad_alloc &e) { \
-            std::cout << "Bad_alloc exception returned from " << pp << ": " \
-            << e.what() << " FAIL" << std::endl; \
+            cout << "Bad_alloc exception returned from " << pp << ": " \
+            << e.what() << " FAIL" << endl; \
             return -1; \
         } \
         catch (std::exception &e) { \
-            std::cout << "Unknown exception returned from " << pp << ": " \
-            << e.what() << " FAIL" << std::endl; \
+            cout << "Unknown exception returned from " << pp << ": " \
+            << e.what() << " FAIL" << endl; \
             return -1; \
         }
 
 
+
+
+#ifdef HAVE_ZOLTAN2_ZOLTAN
 
 
 template <typename tMVector_t>
@@ -191,6 +197,7 @@ void getObjList(void *data, int numGid, int numLid,
         *wgts++ = dots_->weights[w][i];
   }
 }
+#endif
 
 
 enum shape {SQUARE, RECTANGLE, CIRCLE, CUBE, RECTANGULAR_PRISM, SPHERE};
@@ -427,9 +434,9 @@ public:
   }
 
   void print (T x, T y, T z){
-    std::cout << this->a1 << "*" <<  "math.pow( (" << x  << "- " <<  this->x1 << " ), " << b1 <<")" << "+" <<  this->a2<< "*"<<  "math.pow( (" << y << "-" <<  this->y1 << "), " <<
+    cout << this->a1 << "*" <<  "math.pow( (" << x  << "- " <<  this->x1 << " ), " << b1 <<")" << "+" <<  this->a2<< "*"<<  "math.pow( (" << y << "-" <<  this->y1 << "), " <<
         b2 << " ) + " << this->a3 << " * math.pow( (" << z << "-" <<  this->z1 << "), " << b3 << ")+ " << c << " == " <<
-        this->a1 * pow( (x - this->x1), b1) + this->a2 * pow( (y - this->y1), b2) + this->a3 * pow( (z - this->z1), b3) + c << std::endl;
+        this->a1 * pow( (x - this->x1), b1) + this->a2 * pow( (y - this->y1), b2) + this->a3 * pow( (z - this->z1), b3) + c << endl;
 
   }
 
@@ -440,12 +447,12 @@ public:
     if(this->stepCount > 0){
       for (int i = 0; i < this->stepCount; ++i){
         if (expressionRes < this->steps[i]) {
-          //std::cout << "0exp:" << expressionRes << " step:" << steps[i] << " value:" << values[i] << std::endl;
+          //cout << "0exp:" << expressionRes << " step:" << steps[i] << " value:" << values[i] << endl;
           return this->values[i];
         }
       }
 
-      //std::cout << "1exp:" << expressionRes << " step:" << steps[stepCount] << " value:" << values[stepCount] << std::endl;
+      //cout << "1exp:" << expressionRes << " step:" << steps[stepCount] << " value:" << values[stepCount] << endl;
       return this->values[this->stepCount];
     }
     else {
@@ -490,7 +497,7 @@ public:
       float *sharedRatios_, int myRank){
 
     for (int i = 0; i < myRank; ++i){
-      //std::cout << "me:" << myRank << " i:" << i << " s:" << sharedRatios_[i]<< std::endl;
+      //cout << "me:" << myRank << " i:" << i << " s:" << sharedRatios_[i]<< endl;
       this->assignedPrevious += lno_t(sharedRatios_[i] * this->numPoints);
       if (i < this->numPoints % this->worldSize){
         this->assignedPrevious += 1;
@@ -579,7 +586,7 @@ public:
       float *sharedRatios_, int myRank){
 
     for (int i = 0; i < myRank; ++i){
-      //std::cout << "me:" << myRank << " i:" << i << " s:" << sharedRatios_[i]<< std::endl;
+      //cout << "me:" << myRank << " i:" << i << " s:" << sharedRatios_[i]<< endl;
       this->assignedPrevious += lno_t(sharedRatios_[i] * this->numPoints);
       if (gno_t(i) < this->numPoints % this->worldSize){
         this->assignedPrevious += 1;
@@ -605,7 +612,7 @@ public:
 #pragma omp critical
       {
 
-        std::cout << "myRank:" << me << " stateBeg:" << stateBegin << " tsize:" << tsize << " state:" << state <<  " slice: " << slice / tsize <<  std::endl;
+        cout << "myRank:" << me << " stateBeg:" << stateBegin << " tsize:" << tsize << " state:" << state <<  " slice: " << slice / tsize <<  endl;
       }
       */
 #ifdef HAVE_ZOLTAN2_OMP
@@ -823,7 +830,7 @@ public:
   virtual ~CoordinateGridDistribution(){};
   virtual CoordinatePoint<T> getPoint(gno_t pindex, unsigned int &state){
     //lno_t before = processCnt + this->assignedPrevious;
-    //std::cout << "before:" << processCnt << " " << this->assignedPrevious << std::endl;
+    //cout << "before:" << processCnt << " " << this->assignedPrevious << endl;
     //lno_t xshift = 0, yshift = 0, zshift = 0;
 
     //lno_t tmp = before % (this->along_X * this->along_Y);
@@ -885,10 +892,10 @@ public:
     if(this->requested - 1 > this->processCnt){
       this->processCnt++;
     } else {
-      std::cout << "req:" << this->requested << " pr:" <<this->processCnt << std::endl;
-      std::cout << "p:" << p.x << " " << p.y << " " << p.z <<  std::endl ;
-      std::cout << "s:" << xshift << " " << yshift << " " << zshift <<  std::endl ;
-      std::cout << "st:" << this->xstep << " " << this->ystep << " " << this->zstep <<  std::endl ;
+      cout << "req:" << this->requested << " pr:" <<this->processCnt << endl;
+      cout << "p:" << p.x << " " << p.y << " " << p.z <<  endl ;
+      cout << "s:" << xshift << " " << yshift << " " << zshift <<  endl ;
+      cout << "st:" << this->xstep << " " << this->ystep << " " << this->zstep <<  endl ;
     }
     */
     return p;
@@ -1122,7 +1129,7 @@ private:
         if(np_x < 1 || np_z < 1 || np_y < 1 ){
           throw "Provide at least 1 point along each dimension for grid test.";
         }
-        //std::cout << "ly:" << l_y << " ry:" << r_y << std::endl;
+        //cout << "ly:" << l_y << " ry:" << r_y << endl;
         this->coordinateDistributions[this->distributionCount++] = new CoordinateGridDistribution<scalar_t, lno_t,gno_t>
         (np_x, np_y,np_z, this->coordinate_dimension, l_x, r_x,l_y, r_y, l_z, r_z , this->myRank, this->worldSize);
 
@@ -1267,7 +1274,7 @@ private:
       int count = this->countChar(weight_distribution, ' ');
       std::string *splittedStr = new string[count + 1];
       this->splitString(weight_distribution, ' ', splittedStr);
-      //std::cout << count << std::endl;
+      //cout << count << endl;
       scalar_t c=1;
       scalar_t a1=0,a2=0,a3=0;
       scalar_t x1=0,y1=0,z1=0;
@@ -1286,7 +1293,7 @@ private:
         this->splitString(splittedStr[i], '=', parameter_vs_val);
         std::string parameter = parameter_vs_val[0];
         std::string value = parameter_vs_val[1];
-        //std::cout << "parameter:" << parameter << " value:" << value << std::endl;
+        //cout << "parameter:" << parameter << " value:" << value << endl;
 
         if (parameter == "a1"){
           a1 = this->fromString<scalar_t>(value);
@@ -1424,7 +1431,7 @@ private:
             coordinate_distributions = getParamVal<std::string>(pe, paramName);
           else
             coordinate_distributions +=  ","+getParamVal<std::string>(pe, paramName);
-          //std::cout << coordinate_distributions << std::endl;
+          //cout << coordinate_distributions << endl;
           //TODO coordinate distribution description
         }
 
@@ -1587,43 +1594,43 @@ public:
   }
 
   void print_description(){
-    std::cout <<"\nGeometric Generator Parameter File Format:" << std::endl;
-    std::cout <<"- dim=Coordinate Dimension: 2 or 3" << std::endl;
-    std::cout <<"- Available distributions:" << std::endl;
-    std::cout <<"\tUNIFORM: -> distribution-1=UNIFORM,NUMCOORDINATES,XMIN,XMAX,YMIN,YMAX{,ZMIN,ZMAX}" << std::endl;
-    std::cout <<"\tGRID: -> distribution-2=GRID,XLENGTH,YLENGTH{,ZLENGTH},XMIN,XMAX,YMIN,YMAX{,ZMIN,ZMAX}" << std::endl;
-    std::cout <<"\tNORMAL: -> distribution-3=NORMAL,XCENTER,YCENTER{,ZCENTER},XSD,YSD,{,ZSD}" << std::endl;
-    std::cout <<"- wdim=numWeightsPerCoord:  There should be as many weight function as number of weights per coord." << std::endl;
-    std::cout <<"- Weight Equation: w = (a1 * (x - x1)^b1) + (a2 * (y - y1)^b2) + (a3 * (z - z1)^b3) + c" << std::endl;
-    std::cout << "Parameter settings:" << std::endl;
-    std::cout << "\tWeightDistribution-1-a1=a1 " << std::endl;
-    std::cout << "\tWeightDistribution-1-a2=a2 " << std::endl;
-    std::cout << "\tWeightDistribution-1-a3=a3 " << std::endl;
-    std::cout << "\tWeightDistribution-1-b1=b1 " << std::endl;
-    std::cout << "\tWeightDistribution-1-b2=b2 " << std::endl;
-    std::cout << "\tWeightDistribution-1-b3=b3 " << std::endl;
-    std::cout << "\tWeightDistribution-1-x1=x1 " << std::endl;
-    std::cout << "\tWeightDistribution-1-y1=y1 " << std::endl;
-    std::cout << "\tWeightDistribution-1-z1=z1 " << std::endl;
-    std::cout << "\tWeightDistribution-1-c=c " << std::endl;
-    std::cout << "\tIt is possible to set step function to the result of weight equation." << std::endl;
-    std::cout << "\tWeightDistribution-1-steps=step1,step2,step3:increasing order" << std::endl;
-    std::cout << "\tWeightDistribution-1-values=val1,val2,val3,val4." << std::endl;
-    std::cout << "\t\tIf w < step1 -> w = val1" << std::endl;
-    std::cout << "\t\tElse if w < step2 -> w = val2" << std::endl;
-    std::cout << "\t\tElse if w < step3 -> w = val3" << std::endl;
-    std::cout << "\t\tElse  -> w = val4" << std::endl;
-    std::cout <<"- Holes:" << std::endl;
-    std::cout << "\thole-1:SPHERE,XCENTER,YCENTER,ZCENTER,RADIUS (only for dim=3)" << std::endl;
-    std::cout << "\thole-2:CUBE,XCENTER,YCENTER,ZCENTER,EDGE (only for dim=3)" << std::endl;
-    std::cout << "\thole-3:RECTANGULAR_PRISM,XCENTER,YCENTER,ZCENTER,XEDGE,YEDGE,ZEDGE (only for dim=3)" << std::endl;
-    std::cout << "\thole-4:SQUARE,XCENTER,YCENTER,EDGE (only for dim=2)" << std::endl;
-    std::cout << "\thole-5:RECTANGLE,XCENTER,YCENTER,XEDGE,YEDGE (only for dim=2)" << std::endl;
-    std::cout << "\thole-6:CIRCLE,XCENTER,YCENTER,RADIUS (only for dim=2)" << std::endl;
-    std::cout << "- out_file:out_file_path : if provided output will be written to files." << std::endl;
-    std::cout << "- proc_load_distributions:ratio_0, ratio_1, ratio_2....ratio_n. Loads of each processor, should be as many as MPI ranks and should sum up to 1." << std::endl;
-    std::cout << "- predistribution:distribution_option. Predistribution of the coordinates to the processors. 0 for NONE, 1 RCB, 2 MJ, 3 BLOCK." << std::endl;
-    std::cout << "- perturbation_ratio:the percent of the local data which will be perturbed in order to simulate the changes in the dynamic partitioning. Float value between 0 and 1." << std::endl;
+    cout <<"\nGeometric Generator Parameter File Format:" << endl;
+    cout <<"- dim=Coordinate Dimension: 2 or 3" << endl;
+    cout <<"- Available distributions:" << endl;
+    cout <<"\tUNIFORM: -> distribution-1=UNIFORM,NUMCOORDINATES,XMIN,XMAX,YMIN,YMAX{,ZMIN,ZMAX}" << endl;
+    cout <<"\tGRID: -> distribution-2=GRID,XLENGTH,YLENGTH{,ZLENGTH},XMIN,XMAX,YMIN,YMAX{,ZMIN,ZMAX}" << endl;
+    cout <<"\tNORMAL: -> distribution-3=NORMAL,XCENTER,YCENTER{,ZCENTER},XSD,YSD,{,ZSD}" << endl;
+    cout <<"- wdim=numWeightsPerCoord:  There should be as many weight function as number of weights per coord." << endl;
+    cout <<"- Weight Equation: w = (a1 * (x - x1)^b1) + (a2 * (y - y1)^b2) + (a3 * (z - z1)^b3) + c" << endl;
+    cout << "Parameter settings:" << endl;
+    cout << "\tWeightDistribution-1-a1=a1 " << endl;
+    cout << "\tWeightDistribution-1-a2=a2 " << endl;
+    cout << "\tWeightDistribution-1-a3=a3 " << endl;
+    cout << "\tWeightDistribution-1-b1=b1 " << endl;
+    cout << "\tWeightDistribution-1-b2=b2 " << endl;
+    cout << "\tWeightDistribution-1-b3=b3 " << endl;
+    cout << "\tWeightDistribution-1-x1=x1 " << endl;
+    cout << "\tWeightDistribution-1-y1=y1 " << endl;
+    cout << "\tWeightDistribution-1-z1=z1 " << endl;
+    cout << "\tWeightDistribution-1-c=c " << endl;
+    cout << "\tIt is possible to set step function to the result of weight equation." << endl;
+    cout << "\tWeightDistribution-1-steps=step1,step2,step3:increasing order" << endl;
+    cout << "\tWeightDistribution-1-values=val1,val2,val3,val4." << endl;
+    cout << "\t\tIf w < step1 -> w = val1" << endl;
+    cout << "\t\tElse if w < step2 -> w = val2" << endl;
+    cout << "\t\tElse if w < step3 -> w = val3" << endl;
+    cout << "\t\tElse  -> w = val4" << endl;
+    cout <<"- Holes:" << endl;
+    cout << "\thole-1:SPHERE,XCENTER,YCENTER,ZCENTER,RADIUS (only for dim=3)" << endl;
+    cout << "\thole-2:CUBE,XCENTER,YCENTER,ZCENTER,EDGE (only for dim=3)" << endl;
+    cout << "\thole-3:RECTANGULAR_PRISM,XCENTER,YCENTER,ZCENTER,XEDGE,YEDGE,ZEDGE (only for dim=3)" << endl;
+    cout << "\thole-4:SQUARE,XCENTER,YCENTER,EDGE (only for dim=2)" << endl;
+    cout << "\thole-5:RECTANGLE,XCENTER,YCENTER,XEDGE,YEDGE (only for dim=2)" << endl;
+    cout << "\thole-6:CIRCLE,XCENTER,YCENTER,RADIUS (only for dim=2)" << endl;
+    cout << "- out_file:out_file_path : if provided output will be written to files." << endl;
+    cout << "- proc_load_distributions:ratio_0, ratio_1, ratio_2....ratio_n. Loads of each processor, should be as many as MPI ranks and should sum up to 1." << endl;
+    cout << "- predistribution:distribution_option. Predistribution of the coordinates to the processors. 0 for NONE, 1 RCB, 2 MJ, 3 BLOCK." << endl;
+    cout << "- perturbation_ratio:the percent of the local data which will be perturbed in order to simulate the changes in the dynamic partitioning. Float value between 0 and 1." << endl;
   }
 
   GeometricGenerator(Teuchos::ParameterList &params, const RCP<const Teuchos::Comm<int> > & comm_){
@@ -1712,7 +1719,7 @@ public:
       if (gno_t(myRank) < this->coordinateDistributions[i]->numPoints % this->worldSize){
         requestedPointCount += 1;
       }
-      //std::cout << "req:" << requestedPointCount << std::endl;
+      //cout << "req:" << requestedPointCount << endl;
       //this->coordinateDistributions[i]->GetPoints(requestedPointCount,this->points + this->numLocalCoords, this->holes, this->holeCount,  this->loadDistributions, myRank);
       this->coordinateDistributions[i]->GetPoints(requestedPointCount,this->coords, this->numLocalCoords, this->holes, this->holeCount,  this->loadDistributions, myRank);
       this->numLocalCoords += requestedPointCount;
@@ -1723,14 +1730,14 @@ public:
     if (this->myRank >= 0){
         for(lno_t i = 0; i < this->numLocalCoords; ++i){
 
-          std::cout <<"me:" << this->myRank << " "<< this->coords[0][i];
+          cout <<"me:" << this->myRank << " "<< this->coords[0][i];
           if(this->coordinate_dimension > 1){
-        	  std::cout << " " << this->coords[1][i];
+        	  cout << " " << this->coords[1][i];
           }
           if(this->coordinate_dimension > 2){
-        	  std::cout  << " " << this->coords[2][i];
+        	  cout  << " " << this->coords[2][i];
           }
-          std::cout << std::endl;
+          cout << std::endl;
         }
     }
 	*/
@@ -1749,17 +1756,17 @@ public:
     }
     /*
     if (this->myRank >= 0){
-    	std::cout << "after distribution" << std::endl;
+    	cout << "after distribution" << endl;
         for(lno_t i = 0; i < this->numLocalCoords; ++i){
 
-          std::cout <<"me:" << this->myRank << " " << this->coords[0][i];
+          cout <<"me:" << this->myRank << " " << this->coords[0][i];
           if(this->coordinate_dimension > 1){
-        	  std::cout << " " << this->coords[1][i];
+        	  cout << " " << this->coords[1][i];
           }
           if(this->coordinate_dimension > 2){
-        	  std::cout  << " " << this->coords[2][i];
+        	  cout  << " " << this->coords[2][i];
           }
-          std::cout << std::endl;
+          cout << std::endl;
         }
     }
 
@@ -1797,9 +1804,9 @@ public:
     		  if (i > 0){
     			  s = "replot";
     		  }
-    		  gnuplotfile << s << " \"" << (this->outfile + toString<int>(i)) << "\"" << std::endl;
+    		  gnuplotfile << s << " \"" << (this->outfile + toString<int>(i)) << "\"" << endl;
     	  }
-    	  gnuplotfile  << "pause -1" << std::endl;
+    	  gnuplotfile  << "pause -1" << endl;
     	  gnuplotfile.close();
       }
     }
@@ -1879,7 +1886,7 @@ public:
 	  }
 
 	  gno_t numLocalToPerturb = gno_t(this->numLocalCoords*used_perturbation_ratio);
-	  //std::cout << "numLocalToPerturb :" << numLocalToPerturb  << std::endl;
+	  //cout << "numLocalToPerturb :" << numLocalToPerturb  << endl;
 	  for (int dim = 0; dim < this->coordinate_dimension; ++dim){
 		  scalar_t range = maxCoords[dim] - minCoords[dim];
 		  for (gno_t i = 0; i < numLocalToPerturb; ++i){
@@ -2077,23 +2084,23 @@ public:
 		  totalSize += numPointsInParts[i];
 	  }
 	  if (totalSize != this->numLocalCoords){
-		  std::cout << "me:" << this->myRank << " ts:" << totalSize << " nl:" << this->numLocalCoords << std::endl;
+		  cout << "me:" << this->myRank << " ts:" << totalSize << " nl:" << this->numLocalCoords << endl;
 	  }
 	  */
 
 
-      //std::cout << "me:" << this->myRank << " ilk print" << std::endl;
+      //cout << "me:" << this->myRank << " ilk print" << endl;
 
 	  gno_t optimal_num = gno_t(this->numGlobalCoords/double(this->worldSize)+0.5);
 #ifdef printparts
 	  if (this->myRank == 0){
 		  gno_t totalSize = 0;
 		  for (int i = 0; i < this->worldSize; ++i){
-			  std::cout << "me:" << this->myRank << " NumPoints in part:" << i << " is: " << numGlobalPointsInParts[i] << std::endl;
+			  cout << "me:" << this->myRank << " NumPoints in part:" << i << " is: " << numGlobalPointsInParts[i] << endl;
 			  totalSize += numGlobalPointsInParts[i];
 		  }
-		  std::cout << "Total:" << totalSize << " ng:" << this->numGlobalCoords << std::endl;
-		  std::cout << "optimal_num:" << optimal_num << std::endl;
+		  cout << "Total:" << totalSize << " ng:" << this->numGlobalCoords << endl;
+		  cout << "optimal_num:" << optimal_num << endl;
 	  }
 #endif
 	  ssize_t *extraInPart = new ssize_t [this->worldSize];
@@ -2308,7 +2315,7 @@ public:
     	  }
       }
 
-      //if (this->myRank == 0) std::cout << "4" << std::endl;
+      //if (this->myRank == 0) cout << "4" << endl;
 
 #ifdef printparts
 
@@ -2324,13 +2331,13 @@ public:
 			  	  	  	  	  	  	  numPointsInParts,
 			  	  	  	  	  	  	  numGlobalPointsInParts);
 	  if (this->myRank == 0){
-		  std::cout << "reassigning" << std::endl;
+		  cout << "reassigning" << endl;
 		  gno_t totalSize = 0;
 		  for (int i = 0; i < this->worldSize; ++i){
-			  std::cout << "me:" << this->myRank << " NumPoints in part:" << i << " is: " << numGlobalPointsInParts[i] << std::endl;
+			  cout << "me:" << this->myRank << " NumPoints in part:" << i << " is: " << numGlobalPointsInParts[i] << endl;
 			  totalSize += numGlobalPointsInParts[i];
 		  }
-		  std::cout << "Total:" << totalSize << " ng:" << this->numGlobalCoords << std::endl;
+		  cout << "Total:" << totalSize << " ng:" << this->numGlobalCoords << endl;
 	  }
 #endif
 	  delete []mySendCountsToParts;
@@ -2361,12 +2368,12 @@ public:
 	  ArrayView<const int> pIds( coordinate_grid_parts, this->numLocalCoords);
 	  /*
 	  for (int i = 0 ; i < this->numLocalCoords; ++i){
-		  std::cout << "me:" << this->myRank << " to part:" << coordinate_grid_parts[i] << std::endl;
+		  cout << "me:" << this->myRank << " to part:" << coordinate_grid_parts[i] << endl;
 	  }
 	  */
 	  gno_t numMyNewGnos = distributor.createFromSends(pIds);
 
-	  //std::cout << "distribution step 1 me:" << this->myRank << " numLocal:"  <<numMyNewGnos << " old:" <<  numLocalCoords << std::endl;
+	  //cout << "distribution step 1 me:" << this->myRank << " numLocal:"  <<numMyNewGnos << " old:" <<  numLocalCoords << endl;
 
 	  this->numLocalCoords = numMyNewGnos;
 
@@ -2434,7 +2441,7 @@ public:
 	  //TODO we need to fix the setting parts.
 	  //Although MJ sets the parts with
 	  //currently the part setting is not correct when migration is done.
-	  //params->set("migration_check_option", 2);
+	  params->set("migration_check_option", 2);
 
 
 	  Zoltan2::PartitioningProblem<inputAdapter_t> *problem;
@@ -2459,12 +2466,13 @@ public:
 
 	  for (lno_t i = 0; i < this->numLocalCoords;++i){
 		  coordinate_grid_parts[i] = partIds[i];
-		  //std::cout << "me:" << this->myRank << " i:" << i << " goes to:" << partIds[i] << std::endl;
+		  //cout << "me:" << this->myRank << " i:" << i << " goes to:" << partIds[i] << endl;
 	  }
 	  delete problem;
 	  return 0;
   }
 
+#ifdef HAVE_ZOLTAN2_ZOLTAN
   //calls RCP for p = numProcs
   int predistributeRCB(int *coordinate_grid_parts){
 	  int rank = this->myRank;
@@ -2536,11 +2544,11 @@ public:
 
 	  if (rc != Teuchos::CommandLineProcessor::PARSE_SUCCESSFUL) {
 	    if (rc == Teuchos::CommandLineProcessor::PARSE_HELP_PRINTED) {
-	      if (rank==0) std::cout << "PASS" << std::endl;
+	      if (rank==0) cout << "PASS" << endl;
 	      return 1;
 	    }
 	    else {
-	      if (rank==0) std::cout << "FAIL" << std::endl;
+	      if (rank==0) cout << "FAIL" << endl;
 	      return 0;
 	    }
 	  }
@@ -2651,12 +2659,15 @@ public:
 	  delete dots_.coordinates;
 	  return 0;
 }
+#endif
   void redistribute(){
 	  int *coordinate_grid_parts = new int[this->numLocalCoords];
 	  switch (this->predistribution){
 	  case 1:
+#ifdef HAVE_ZOLTAN2_ZOLTAN
 		  this->predistributeRCB(coordinate_grid_parts);
 		  break;
+#endif
 	  case 2:
 
 		  this->predistributeMJ(coordinate_grid_parts);

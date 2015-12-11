@@ -1,13 +1,10 @@
 
-
 TRIBITS_ADD_EXECUTABLE(
   Solver_Test
   SOURCES Solver_Test
   )
 
-
 ##### KLU2 Tests #####
-
 IF (${PACKAGE_NAME}_ENABLE_KLU2)
     TRIBITS_ADD_EXECUTABLE_AND_TEST(
     KLU2_UnitTests
@@ -22,16 +19,13 @@ ENDIF()
 
 ##### SuperLu Tests #####
 
-
 IF (${PACKAGE_NAME}_ENABLE_SuperLU)
-
   TRIBITS_COPY_FILES_TO_BINARY_DIR(SolverTestCopySuperLUFiles
     SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}
     SOURCE_FILES superlu_test.xml
     EXEDEPS Solver_Test
     )
 
-    
   TRIBITS_ADD_TEST(
     Solver_Test
     NAME SuperLU_Solver_Test
@@ -39,7 +33,6 @@ IF (${PACKAGE_NAME}_ENABLE_SuperLU)
     STANDARD_PASS_OUTPUT
     COMM serial mpi
     )
-
 
   TRIBITS_ADD_EXECUTABLE_AND_TEST(
     Superlu_UnitTests
@@ -50,7 +43,6 @@ IF (${PACKAGE_NAME}_ENABLE_SuperLU)
     CATEGORIES NIGHTLY
     STANDARD_PASS_OUTPUT
     )
-
 ENDIF()
 
 
@@ -74,7 +66,6 @@ ENDIF()
 
 
 ##### SuperLU_DIST Tests #####
-
 
 IF (${PACKAGE_NAME}_ENABLE_SuperLUDist)
   TRIBITS_COPY_FILES_TO_BINARY_DIR(SolverTestCopySuperLUDistFiles
@@ -144,8 +135,6 @@ IF (${PACKAGE_NAME}_ENABLE_Basker)
 ENDIF()
 
 ##### MUMPS Tests ####
-#MUMPS requires int/int type
-IF (Tpetra_INST_INT_INT)
 if (${PACKAGE_NAME}_ENABLE_MUMPS)
    TRIBITS_ADD_EXECUTABLE_AND_TEST(
    MUMPS_UnitTests
@@ -156,8 +145,6 @@ if (${PACKAGE_NAME}_ENABLE_MUMPS)
    STANDARD_PASS_OUTPUT
    )
 ENDIF()
-ENDIF()
-
 
 ASSERT_DEFINED (Trilinos_ENABLE_LINEAR_SOLVER_FACTORY_REGISTRATION)
 IF (Trilinos_ENABLE_LINEAR_SOLVER_FACTORY_REGISTRATION)

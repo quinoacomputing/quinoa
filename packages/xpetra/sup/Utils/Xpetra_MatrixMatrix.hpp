@@ -105,7 +105,7 @@ public:
     if (crsOp == Teuchos::null)
       throw(Xpetra::Exceptions::BadCast("Cast from Xpetra::Matrix to Xpetra::CrsMatrixWrap failed"));
     RCP<const Xpetra::CrsMatrix<Scalar, LocalOrdinal, GlobalOrdinal, Node> > tmp_CrsMtx = crsOp->getCrsMatrix();
-    const RCP<const Xpetra::EpetraCrsMatrixT<GlobalOrdinal,Node> > &tmp_ECrsMtx = Teuchos::rcp_dynamic_cast<const Xpetra::EpetraCrsMatrixT<GlobalOrdinal,Node> >(tmp_CrsMtx);
+    const RCP<const Xpetra::EpetraCrsMatrix> &tmp_ECrsMtx = Teuchos::rcp_dynamic_cast<const Xpetra::EpetraCrsMatrix>(tmp_CrsMtx);
     if (tmp_ECrsMtx == Teuchos::null)
       throw(Xpetra::Exceptions::BadCast("Cast from Xpetra::CrsMatrix to Xpetra::EpetraCrsMatrix failed"));
     A = tmp_ECrsMtx->getEpetra_CrsMatrix();
@@ -119,7 +119,7 @@ public:
     if (crsOp == Teuchos::null)
       throw(Xpetra::Exceptions::BadCast("Cast from Xpetra::Matrix to Xpetra::CrsMatrixWrap failed"));
     RCP<const Xpetra::CrsMatrix<Scalar, LocalOrdinal, GlobalOrdinal, Node> > tmp_CrsMtx = crsOp->getCrsMatrix();
-    const RCP<const Xpetra::EpetraCrsMatrixT<GlobalOrdinal,Node> > &tmp_ECrsMtx = Teuchos::rcp_dynamic_cast<const Xpetra::EpetraCrsMatrixT<GlobalOrdinal,Node> >(tmp_CrsMtx);
+    const RCP<const Xpetra::EpetraCrsMatrix> &tmp_ECrsMtx = Teuchos::rcp_dynamic_cast<const Xpetra::EpetraCrsMatrix>(tmp_CrsMtx);
     if (tmp_ECrsMtx == Teuchos::null)
       throw(Xpetra::Exceptions::BadCast("Cast from Xpetra::CrsMatrix to Xpetra::EpetraCrsMatrix failed"));
     A = tmp_ECrsMtx->getEpetra_CrsMatrixNonConst();
@@ -132,7 +132,7 @@ public:
     try {
       const Xpetra::CrsMatrixWrap<Scalar, LocalOrdinal, GlobalOrdinal, Node> & crsOp = dynamic_cast<const Xpetra::CrsMatrixWrap<Scalar, LocalOrdinal, GlobalOrdinal, Node> & >(Op);
       RCP<const Xpetra::CrsMatrix<Scalar, LocalOrdinal, GlobalOrdinal, Node> > tmp_CrsMtx = crsOp.getCrsMatrix();
-      const RCP<const Xpetra::EpetraCrsMatrixT<GlobalOrdinal,Node> > &tmp_ECrsMtx = Teuchos::rcp_dynamic_cast<const Xpetra::EpetraCrsMatrixT<GlobalOrdinal,Node> >(tmp_CrsMtx);
+      const RCP<const Xpetra::EpetraCrsMatrix> &tmp_ECrsMtx = Teuchos::rcp_dynamic_cast<const Xpetra::EpetraCrsMatrix>(tmp_CrsMtx);
       if (tmp_ECrsMtx == Teuchos::null)
         throw(Xpetra::Exceptions::BadCast("Cast from Xpetra::CrsMatrix to Xpetra::EpetraCrsMatrix failed"));
       A = tmp_ECrsMtx->getEpetra_CrsMatrix();
@@ -148,7 +148,7 @@ public:
     try {
       const Xpetra::CrsMatrixWrap<Scalar, LocalOrdinal, GlobalOrdinal, Node> & crsOp = dynamic_cast<const Xpetra::CrsMatrixWrap<Scalar, LocalOrdinal, GlobalOrdinal, Node> & >(Op);
       RCP<const Xpetra::CrsMatrix<Scalar, LocalOrdinal, GlobalOrdinal, Node> > tmp_CrsMtx = crsOp.getCrsMatrix();
-      const RCP<const Xpetra::EpetraCrsMatrixT<GlobalOrdinal,Node> > &tmp_ECrsMtx = Teuchos::rcp_dynamic_cast<const Xpetra::EpetraCrsMatrixT<GlobalOrdinal,Node> >(tmp_CrsMtx);
+      const RCP<const Xpetra::EpetraCrsMatrixT<GlobalOrdinal> > &tmp_ECrsMtx = Teuchos::rcp_dynamic_cast<const Xpetra::EpetraCrsMatrixT<GlobalOrdinal> >(tmp_CrsMtx);
       if (tmp_ECrsMtx == Teuchos::null)
         throw(Xpetra::Exceptions::BadCast("Cast from Xpetra::CrsMatrix to Xpetra::EpetraCrsMatrix failed"));
       A = Teuchos::rcp_const_cast<Epetra_CrsMatrix>(tmp_ECrsMtx->getEpetra_CrsMatrix());
@@ -225,9 +225,9 @@ public:
 };
 
 template <class Scalar,
-class LocalOrdinal  /*= int*/,
-class GlobalOrdinal /*= LocalOrdinal*/,
-class Node          /*= KokkosClassic::DefaultNode::DefaultNodeType*/>
+class LocalOrdinal  = int,
+class GlobalOrdinal = LocalOrdinal,
+class Node          = KokkosClassic::DefaultNode::DefaultNodeType>
 class MatrixMatrix {
 
 private:
@@ -643,13 +643,12 @@ public:
 
 
 // specialization MatrixMatrix for SC=double, LO=GO=int
-template<class Node>
-class MatrixMatrix<double,int,int,Node> {
+template<>
+class MatrixMatrix<double,int,int> {
   typedef double                                                     SC;
   typedef int                                                        LO;
   typedef int                                                        GO;
-  /*typedef KokkosClassic::DefaultNode::DefaultNodeType                NO;*/
-  typedef Node                                                       NO;
+  typedef KokkosClassic::DefaultNode::DefaultNodeType                NO;
   typedef Xpetra::Map<int,int,NO>                                    Map;
   typedef Xpetra::Matrix<double,int,int,NO>                          Matrix;
   typedef Xpetra::MultiVector<double,int,int,NO>                     MultiVector;
@@ -735,7 +734,6 @@ public:
 #endif
     } else if (C.getRowMap()->lib() == Xpetra::UseTpetra) {
 #ifdef HAVE_XPETRA_TPETRA
-#ifdef HAVE_XPETRA_TPETRA_INST_INT_INT
       const Tpetra::CrsMatrix<SC,LO,GO,NO> & tpA = Xpetra::Helpers<SC,LO,GO,NO>::Op2TpetraCrs(A);
       const Tpetra::CrsMatrix<SC,LO,GO,NO> & tpB = Xpetra::Helpers<SC,LO,GO,NO>::Op2TpetraCrs(B);
       Tpetra::CrsMatrix<SC,LO,GO,NO> &       tpC = Xpetra::Helpers<SC,LO,GO,NO>::Op2NonConstTpetraCrs(C);
@@ -743,9 +741,6 @@ public:
       //18Feb2013 JJH I'm reenabling the code that allows the matrix matrix multiply to do the fillComplete.
       //Previously, Tpetra's matrix matrix multiply did not support fillComplete.
       Tpetra::MatrixMatrix::Multiply(tpA,transposeA,tpB,transposeB,tpC,haveMultiplyDoFillComplete,label);
-#else
-      throw(Xpetra::Exceptions::RuntimeError("Xpetra must be compiled with Tpetra GO=int enabled."));
-#endif
 #else
       throw(Xpetra::Exceptions::RuntimeError("Xpetra must be compiled with Tpetra."));
 #endif
@@ -1124,14 +1119,10 @@ public:
 #endif
     } else if (A.getRowMap()->lib() == Xpetra::UseTpetra) {
 #ifdef HAVE_XPETRA_TPETRA
-#ifdef HAVE_XPETRA_TPETRA_INST_INT_INT
       const Tpetra::CrsMatrix<SC,LO,GO,NO>& tpA = Xpetra::Helpers<SC,LO,GO,NO>::Op2TpetraCrs(A);
       Tpetra::CrsMatrix<SC,LO,GO,NO>& tpB = Xpetra::Helpers<SC,LO,GO,NO>::Op2NonConstTpetraCrs(B);
 
       Tpetra::MatrixMatrix::Add(tpA, transposeA, alpha, tpB, beta);
-#else
-      throw(Xpetra::Exceptions::RuntimeError("Xpetra must be compiled with Tpetra GO=int enabled."));
-#endif
 #else
       throw Exceptions::RuntimeError("Xpetra must be compiled with Tpetra.");
 #endif
@@ -1222,7 +1213,6 @@ public:
 #endif
     } else if (C->getRowMap()->lib() == Xpetra::UseTpetra) {
 #ifdef HAVE_XPETRA_TPETRA
-#ifdef HAVE_XPETRA_TPETRA_INST_INT_INT
       const Tpetra::CrsMatrix<SC,LO,GO,NO>& tpA =
           Xpetra::Helpers<SC,LO,GO,NO>::Op2TpetraCrs(A);
       const Tpetra::CrsMatrix<SC,LO,GO,NO>& tpB =
@@ -1231,9 +1221,6 @@ public:
           Xpetra::Helpers<SC,LO,GO,NO>::Op2NonConstTpetraCrs(C);
 
       Tpetra::MatrixMatrix::Add(tpA, transposeA, alpha, tpB, transposeB, beta, tpC);
-#else
-      throw(Xpetra::Exceptions::RuntimeError("Xpetra must be compiled with Tpetra GO=int enabled."));
-#endif
 #else
       throw Exceptions::RuntimeError("Xpetra must be compile with Tpetra.");
 #endif

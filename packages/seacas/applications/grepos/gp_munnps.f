@@ -151,7 +151,6 @@ C     a large array and see if ltnnps(inno+i) is indexed....
       CALL MOVINT (LNPSNL, LTNX, LTNNPS)
       if (lnpsdf .ne. 0) then
         CALL MOVREA (LNPSNL, FACX, FACNPS)
-        lnpsdf = lnpsnl
       end if
 
       RETURN

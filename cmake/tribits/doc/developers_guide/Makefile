@@ -17,7 +17,6 @@ EXTRA_FILES = \
   gitdist-help.txt \
   clone_extra_repos-help.txt \
   snapshot-dir-help.txt \
-  is_checkin_tested_commit.txt \
   install_devtools-help.txt \
   TriBITS.README.DIRECTORY_CONTENTS.rst \
   TribitsMacroFunctionDoc.rst \

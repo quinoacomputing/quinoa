@@ -186,10 +186,6 @@ namespace MueLu {
     //@}
 
   private:
-    bool areGidsUnique(const std::vector<GO>& X) const {
-      std::set<GO> Y(X.begin(), X.end());
-      return X.size() == Y.size();
-    }
 
     //! Input factories
     std::vector<Teuchos::RCP<const FactoryManagerBase> > FactManager_;

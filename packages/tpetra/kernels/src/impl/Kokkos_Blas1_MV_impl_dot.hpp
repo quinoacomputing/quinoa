@@ -43,10 +43,6 @@
 #ifndef KOKKOS_BLAS1_MV_IMPL_DOT_HPP_
 #define KOKKOS_BLAS1_MV_IMPL_DOT_HPP_
 
-#ifndef KOKKOSBLAS_OPTIMIZATION_LEVEL_DOT
-#define KOKKOSBLAS_OPTIMIZATION_LEVEL_DOT 2
-#endif // KOKKOSBLAS_OPTIMIZATION_LEVEL_DOT
-
 #include <TpetraKernels_config.h>
 #include <Kokkos_Core.hpp>
 #include <Kokkos_InnerProductSpaceTraits.hpp>
@@ -326,53 +322,15 @@ void
 MV_Dot_Invoke (const RV& r, const XMV& X, const YMV& Y)
 {
   const SizeType numRows = static_cast<SizeType> (X.dimension_0 ());
-  const SizeType numCols = static_cast<SizeType> (X.dimension_1 ());
+  const SizeType numVecs = static_cast<SizeType> (X.dimension_1 ());
   Kokkos::RangePolicy<typename XMV::execution_space, SizeType> policy (0, numRows);
 
-#if KOKKOSBLAS_OPTIMIZATION_LEVEL_DOT <= 2
-
-  // Strip-mine by 8, then 4.  After that, do one column at a time.
-  // We limit the number of strip-mine values in order to keep down
-  // the amount of code to compile.
-
-  SizeType j = 0; // the current column of X and Y
-  for ( ; j + 8 <= numCols; j += 8) {
-    auto X_cur = Kokkos::subview (X, Kokkos::ALL (), std::make_pair (j, j+8));
-    auto Y_cur = Kokkos::subview (Y, Kokkos::ALL (), std::make_pair (j, j+8));
-    auto r_cur = Kokkos::subview (r, std::make_pair (j, j+8));
-
-    MV_Dot_Right_FunctorUnroll<RV, XMV, YMV, 8, SizeType> op (r_cur, X_cur, Y_cur);
-    Kokkos::parallel_reduce (policy, op);
-  }
-  for ( ; j + 4 <= numCols; j += 4) {
-    auto X_cur = Kokkos::subview (X, Kokkos::ALL (), std::make_pair (j, j+4));
-    auto Y_cur = Kokkos::subview (Y, Kokkos::ALL (), std::make_pair (j, j+4));
-    auto r_cur = Kokkos::subview (r, std::make_pair (j, j+4));
-
-    MV_Dot_Right_FunctorUnroll<RV, XMV, YMV, 4, SizeType> op (r_cur, X_cur, Y_cur);
-    Kokkos::parallel_reduce (policy, op);
-  }
-  for ( ; j < numCols; ++j) {
-    // RV needs to turn 0-D, and XMV and YMV need to turn 1-D.
-    auto x_cur = Kokkos::subview (X, Kokkos::ALL (), j);
-    auto y_cur = Kokkos::subview (Y, Kokkos::ALL (), j);
-    auto r_cur = Kokkos::subview (r, j);
-    typedef decltype (r_cur) RV0D;
-    typedef decltype (x_cur) XMV1D;
-    typedef decltype (y_cur) YMV1D;
-
-    V_Dot_Functor<RV0D, XMV1D, YMV1D, SizeType> op (r_cur, x_cur, y_cur);
-    Kokkos::parallel_reduce (policy, op);
-  }
-
-#else // KOKKOSBLAS_OPTIMIZATION_LEVEL_DOT > 2
-
-  if (numCols > 16) {
+  if (numVecs > 16) {
     MV_Dot_Right_FunctorVector<RV, XMV, YMV, SizeType> op (r, X, Y);
     Kokkos::parallel_reduce (policy, op);
   }
   else {
-    switch (numCols) {
+    switch (numVecs) {
     case 16: {
       MV_Dot_Right_FunctorUnroll<RV, XMV, YMV, 16, SizeType> op (r, X, Y);
       Kokkos::parallel_reduce (policy, op);
@@ -464,8 +422,6 @@ MV_Dot_Invoke (const RV& r, const XMV& X, const YMV& Y)
     }
     } // switch
   } // if-else
-
-#endif // KOKKOSBLAS_OPTIMIZATION_LEVEL_DOT
 }
 
 /// \brief Implementation of KokkosBlas::dot for multivectors or
@@ -534,29 +490,35 @@ template<> \
 struct Dot_MV<Kokkos::View<Kokkos::Details::InnerProductSpaceTraits<SCALAR>::dot_type*, \
                            EXEC_SPACE::array_layout, \
                            Kokkos::Device<EXEC_SPACE, MEM_SPACE>, \
-                           Kokkos::MemoryTraits<Kokkos::Unmanaged> >, \
+                           Kokkos::MemoryTraits<Kokkos::Unmanaged>, \
+                           Kokkos::Impl::ViewDefault>, \
               Kokkos::View<const SCALAR**, \
                            LAYOUT, \
                            Kokkos::Device<EXEC_SPACE, MEM_SPACE>, \
-                           Kokkos::MemoryTraits<Kokkos::Unmanaged> >, \
+                           Kokkos::MemoryTraits<Kokkos::Unmanaged>, \
+                           Kokkos::Impl::ViewDefault>, \
               Kokkos::View<const SCALAR**, \
                            LAYOUT, \
                            Kokkos::Device<EXEC_SPACE, MEM_SPACE>, \
-                           Kokkos::MemoryTraits<Kokkos::Unmanaged> >, \
+                           Kokkos::MemoryTraits<Kokkos::Unmanaged>, \
+                           Kokkos::Impl::ViewDefault>, \
               2> \
 { \
   typedef Kokkos::View<Kokkos::Details::InnerProductSpaceTraits<SCALAR>::dot_type*, \
     EXEC_SPACE::array_layout, \
     Kokkos::Device<EXEC_SPACE, MEM_SPACE>, \
-    Kokkos::MemoryTraits<Kokkos::Unmanaged> > RV; \
+    Kokkos::MemoryTraits<Kokkos::Unmanaged>, \
+    Kokkos::Impl::ViewDefault> RV; \
   typedef Kokkos::View<const SCALAR**, \
     LAYOUT, \
     Kokkos::Device<EXEC_SPACE, MEM_SPACE>, \
-    Kokkos::MemoryTraits<Kokkos::Unmanaged> > XMV; \
+    Kokkos::MemoryTraits<Kokkos::Unmanaged>, \
+    Kokkos::Impl::ViewDefault> XMV; \
   typedef Kokkos::View<const SCALAR**, \
     LAYOUT, \
     Kokkos::Device<EXEC_SPACE, MEM_SPACE>, \
-    Kokkos::MemoryTraits<Kokkos::Unmanaged> > YMV; \
+    Kokkos::MemoryTraits<Kokkos::Unmanaged>, \
+    Kokkos::Impl::ViewDefault> YMV; \
  \
   static void dot (const RV& r, const XMV& X, const YMV& Y); \
 };
@@ -573,29 +535,35 @@ template<> \
 struct Dot_MV<Kokkos::View<Kokkos::Details::InnerProductSpaceTraits<SCALAR>::dot_type, \
                            EXEC_SPACE::array_layout, \
                            Kokkos::Device<EXEC_SPACE, MEM_SPACE>, \
-                           Kokkos::MemoryTraits<Kokkos::Unmanaged> >, \
+                           Kokkos::MemoryTraits<Kokkos::Unmanaged>, \
+                           Kokkos::Impl::ViewDefault>, \
               Kokkos::View<const SCALAR*, \
                            LAYOUT, \
                            Kokkos::Device<EXEC_SPACE, MEM_SPACE>, \
-                           Kokkos::MemoryTraits<Kokkos::Unmanaged> >, \
+                           Kokkos::MemoryTraits<Kokkos::Unmanaged>, \
+                           Kokkos::Impl::ViewDefault>, \
               Kokkos::View<const SCALAR*, \
                            LAYOUT, \
                            Kokkos::Device<EXEC_SPACE, MEM_SPACE>, \
-                           Kokkos::MemoryTraits<Kokkos::Unmanaged> >, \
+                           Kokkos::MemoryTraits<Kokkos::Unmanaged>, \
+                           Kokkos::Impl::ViewDefault>, \
               1> \
 { \
   typedef Kokkos::View<Kokkos::Details::InnerProductSpaceTraits<SCALAR>::dot_type, \
     EXEC_SPACE::array_layout, \
     Kokkos::Device<EXEC_SPACE, MEM_SPACE>, \
-    Kokkos::MemoryTraits<Kokkos::Unmanaged> > RV; \
+    Kokkos::MemoryTraits<Kokkos::Unmanaged>, \
+    Kokkos::Impl::ViewDefault> RV; \
   typedef Kokkos::View<const SCALAR*, \
     LAYOUT, \
     Kokkos::Device<EXEC_SPACE, MEM_SPACE>, \
-    Kokkos::MemoryTraits<Kokkos::Unmanaged> > XV; \
+    Kokkos::MemoryTraits<Kokkos::Unmanaged>, \
+    Kokkos::Impl::ViewDefault> XV; \
   typedef Kokkos::View<const SCALAR*, \
     LAYOUT, \
     Kokkos::Device<EXEC_SPACE, MEM_SPACE>, \
-    Kokkos::MemoryTraits<Kokkos::Unmanaged> > YV; \
+    Kokkos::MemoryTraits<Kokkos::Unmanaged>, \
+    Kokkos::Impl::ViewDefault> YV; \
  \
   static void dot (const RV& r, const XV& X, const YV& Y); \
 };
@@ -659,15 +627,18 @@ void \
 Dot_MV<Kokkos::View<SCALAR*, \
                     EXEC_SPACE::array_layout, \
                     Kokkos::Device<EXEC_SPACE, MEM_SPACE>, \
-                    Kokkos::MemoryTraits<Kokkos::Unmanaged> >, \
+                    Kokkos::MemoryTraits<Kokkos::Unmanaged>, \
+                    Kokkos::Impl::ViewDefault>, \
        Kokkos::View<const SCALAR**, \
                     LAYOUT, \
                     Kokkos::Device<EXEC_SPACE, MEM_SPACE>, \
-                    Kokkos::MemoryTraits<Kokkos::Unmanaged> >, \
+                    Kokkos::MemoryTraits<Kokkos::Unmanaged>, \
+                    Kokkos::Impl::ViewDefault>, \
        Kokkos::View<const SCALAR**, \
                     LAYOUT, \
                     Kokkos::Device<EXEC_SPACE, MEM_SPACE>, \
-                    Kokkos::MemoryTraits<Kokkos::Unmanaged> >, \
+                    Kokkos::MemoryTraits<Kokkos::Unmanaged>, \
+                    Kokkos::Impl::ViewDefault>, \
        2>:: \
 dot (const RV& r, const XMV& X, const XMV& Y) \
 { \
@@ -690,15 +661,18 @@ void \
 Dot_MV<Kokkos::View<SCALAR, \
                     EXEC_SPACE::array_layout, \
                     Kokkos::Device<EXEC_SPACE, MEM_SPACE>, \
-                    Kokkos::MemoryTraits<Kokkos::Unmanaged> >, \
+                    Kokkos::MemoryTraits<Kokkos::Unmanaged>, \
+                    Kokkos::Impl::ViewDefault>, \
        Kokkos::View<const SCALAR*, \
                     LAYOUT, \
                     Kokkos::Device<EXEC_SPACE, MEM_SPACE>, \
-                    Kokkos::MemoryTraits<Kokkos::Unmanaged> >, \
+                    Kokkos::MemoryTraits<Kokkos::Unmanaged>, \
+                    Kokkos::Impl::ViewDefault>, \
        Kokkos::View<const SCALAR*, \
                     LAYOUT, \
                     Kokkos::Device<EXEC_SPACE, MEM_SPACE>, \
-                    Kokkos::MemoryTraits<Kokkos::Unmanaged> >, \
+                    Kokkos::MemoryTraits<Kokkos::Unmanaged>, \
+                    Kokkos::Impl::ViewDefault>, \
        1>:: \
 dot (const RV& r, const XV& X, const XV& Y) \
 { \

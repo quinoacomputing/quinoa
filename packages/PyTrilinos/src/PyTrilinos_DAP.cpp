@@ -40,11 +40,11 @@
 // ***********************************************************************
 // @HEADER
 
-// PyTrilinos includes
-#include "PyTrilinos_config.h"
-#include "PyTrilinos_PythonException.hpp"
-#include "PyTrilinos_NumPy_Util.hpp"
+// Include the PyTrilinos DistArray Protocol header
 #include "PyTrilinos_DAP.hpp"
+
+// Python exception handling
+#include "PyTrilinos_PythonException.hpp"
 
 // Verbosity
 // #define PYTRILINOS_DAP_VERBOSE
@@ -398,10 +398,7 @@ DimensionDictionary::DimensionDictionary(PyObject * dim_dict)
   else
   {
     PyObject * indicesArray =
-      PyArray_ContiguousFromAny(indicesObj,
-                                NumPy_TypeCode< PYTRILINOS_GLOBAL_ORD >(),
-                                1,
-                                1);
+      PyArray_ContiguousFromAny(indicesObj, NPY_INT, 1, 1);
     if (indicesArray == NULL)
     {
       PyErr_SetString(PyExc_ValueError, "'dim_dict' attribute 'indices' "

@@ -52,6 +52,7 @@
 
 #include <Zoltan2_TestHelpers.hpp>
 
+#ifdef HAVE_ZOLTAN2_ZOLTAN
 #include <zoltan.h>
 #include <Teuchos_CommandLineProcessor.hpp>
 
@@ -65,7 +66,7 @@
 #include <Zoltan2_PartitioningSolution.hpp>
 #include <Zoltan2_PartitioningProblem.hpp>
 #include <GeometricGenerator.hpp>
-#include <Zoltan2_EvaluatePartition.hpp>
+#include <Zoltan2_PartitioningSolutionQuality.hpp>
 using namespace std;
 using std::vector;
 using std::cout;
@@ -709,3 +710,12 @@ int main(int argc, char *argv[])
 
   return 0;
 }
+
+#else
+#include <iostream>
+int main(int argc, char *argv[])
+{
+  std::cout << "Test did not run due to faulty configuration." << std::endl;
+  std::cout << "FAIL" << std::endl;
+}
+#endif

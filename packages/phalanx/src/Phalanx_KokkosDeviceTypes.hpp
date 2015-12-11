@@ -13,28 +13,24 @@
 #if defined(PHX_KOKKOS_DEVICE_TYPE_CUDA)
 
 //#include <Kokkos_Cuda.hpp>
-namespace PHX { typedef Kokkos::Cuda Device; 
-                typedef Kokkos::LayoutLeft Layout;}
+namespace PHX { typedef Kokkos::Cuda Device; }
   
 #elif defined(PHX_KOKKOS_DEVICE_TYPE_OPENMP)
   
 //#include <Kokkos_hwloc.hpp>
 //#include <Kokkos_OpenMP.hpp>
-namespace PHX { typedef Kokkos::OpenMP Device; 
-                typedef Kokkos::LayoutRight Layout;}
+namespace PHX { typedef Kokkos::OpenMP Device; }
 
 #elif defined(PHX_KOKKOS_DEVICE_TYPE_THREAD)
   
 #include <Kokkos_hwloc.hpp>
 //#include <Kokkos_Threads.hpp>
-namespace PHX { typedef Kokkos::Threads Device; 
-                typedef Kokkos::LayoutRight Layout;}
+namespace PHX { typedef Kokkos::Threads Device; }
 
 #elif defined(PHX_KOKKOS_DEVICE_TYPE_SERIAL)
   
 //#include <Kokkos_Serial.hpp>
-namespace PHX { typedef Kokkos::Serial Device; 
-                typedef Kokkos::LayoutRight Layout;}
+namespace PHX { typedef Kokkos::Serial Device; }
 
 #endif
 

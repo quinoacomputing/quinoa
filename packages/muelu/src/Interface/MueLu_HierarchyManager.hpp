@@ -52,7 +52,6 @@
 #include <Teuchos_Array.hpp>
 
 #include <Xpetra_Operator.hpp>
-#include <Xpetra_IO.hpp>
 
 #include "MueLu_ConfigDefs.hpp"
 
@@ -61,6 +60,7 @@
 #include "MueLu_HierarchyFactory.hpp"
 #include "MueLu_Level.hpp"
 #include "MueLu_MasterList.hpp"
+#include "MueLu_Utilities.hpp"
 
 namespace MueLu {
 
@@ -280,7 +280,7 @@ namespace MueLu {
           if (L->IsAvailable(name)) {
             RCP<T> M = L->template Get< RCP<T> >(name);
             if (!M.is_null())
-              Xpetra::IO<Scalar, LocalOrdinal, GlobalOrdinal, Node>::Write(fileName,* M);
+              Utils::Write(fileName,* M);
           }
         }
       }

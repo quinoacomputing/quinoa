@@ -43,27 +43,29 @@
 // ***********************************************************************
 //
 // @HEADER
-#include <Teuchos_UnitTestHarness.hpp>
-#include <MueLu_TestHelpers.hpp>
-#include <MueLu_Version.hpp>
+#include "Teuchos_UnitTestHarness.hpp"
+#include "MueLu_TestHelpers.hpp"
+#include "MueLu_Version.hpp"
 
 #include <Xpetra_MultiVectorFactory.hpp>
 
-#include <MueLu_FactoryManagerBase.hpp>
-#include <MueLu_CoalesceDropFactory.hpp>
-#include <MueLu_CoupledAggregationFactory.hpp>
-#include <MueLu_AmalgamationFactory.hpp>
-#include <MueLu_AmalgamationInfo.hpp>
-#include <MueLu_Aggregates.hpp>
-#include <MueLu_CoarseMapFactory.hpp>
+#include "MueLu_FactoryManagerBase.hpp"
+#include "MueLu_CoalesceDropFactory.hpp"
+#include "MueLu_CoupledAggregationFactory.hpp"
+#include "MueLu_AmalgamationFactory.hpp"
+#include "MueLu_AmalgamationInfo.hpp"
+#include "MueLu_Aggregates.hpp"
+#include "MueLu_CoarseMapFactory.hpp"
+
+#include "MueLu_UseDefaultTypes.hpp"
 
 namespace MueLuTests {
 
-  TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(CoarseMap, StandardCase, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#include "MueLu_UseShortNames.hpp"
+
+
+  TEUCHOS_UNIT_TEST(CoarseMap, StandardCase)
   {
-#   include <MueLu_UseShortNames.hpp>
-    MUELU_TESTING_SET_OSTREAM;
-    MUELU_TESTING_LIMIT_EPETRA_SCOPE(Scalar,GlobalOrdinal,Node);
     out << "version: " << MueLu::Version() << std::endl;
     Level myLevel;
     myLevel.SetLevelID(0);
@@ -95,11 +97,8 @@ namespace MueLuTests {
 
   ///////////////////////////////////////////////////////////////////////////
 
-  TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(CoarseMap, NonStandardCaseA, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+  TEUCHOS_UNIT_TEST(CoarseMap, NonStandardCaseA )
   {
-#   include <MueLu_UseShortNames.hpp>
-    MUELU_TESTING_SET_OSTREAM;
-    MUELU_TESTING_LIMIT_EPETRA_SCOPE(Scalar,GlobalOrdinal,Node);
     out << "version: " << MueLu::Version() << std::endl;
     Level myLevel;
     myLevel.SetLevelID(0);
@@ -151,12 +150,6 @@ namespace MueLuTests {
     TEST_EQUALITY(myCoarseMap->getMinAllGlobalIndex() == 0, true);
     TEST_EQUALITY(myCoarseMap->getMaxLocalIndex()==9,true);
   }
-
-#define MUELU_ETI_GROUP(Scalar, LocalOrdinal, GlobalOrdinal, Node) \
-  TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(CoarseMap, StandardCase, Scalar, LocalOrdinal, GlobalOrdinal, Node) \
-  TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(CoarseMap, NonStandardCaseA, Scalar, LocalOrdinal, GlobalOrdinal, Node)
-
-#include <MueLu_ETI_4arg.hpp>
 
 
 } // namespace MueLuTests

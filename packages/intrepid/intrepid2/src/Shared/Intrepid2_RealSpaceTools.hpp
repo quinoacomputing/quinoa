@@ -55,8 +55,10 @@
 #include "Teuchos_Assert.hpp"
 
 
-#include <Intrepid2_KokkosRank.hpp>
+#include <KokkosRank.hpp>
+#ifdef HAVE_INTREPID_KOKKOSCORE
 #include "Kokkos_Core.hpp"
+#endif
 namespace Intrepid2 {
   
 /** \class Intrepid2::RealSpaceTools
@@ -240,9 +242,11 @@ class RealSpaceTools {
     */
     template<class ArrayDet, class ArrayIn>
     static void det(ArrayDet & detArray, const ArrayIn & inMats);
-   /* 
+    
+/*    #ifdef HAVE_INTREPID_KOKKOSCORE
     template<class ArrayDet, class ArrayIn>
     static void detTemp(ArrayDet & inverseMats, const ArrayIn & inMats);
+    #endif
     */
     template<class ArrayDet, class ArrayIn, int matRank>
 	struct detTempSpec;

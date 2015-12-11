@@ -200,7 +200,6 @@ public:
 
 } // end namespace Anasazi
 
-#ifdef HAVE_ANASAZI_BELOS
 namespace Belos {
 
 template<class ScalarType, class MV, class OP>
@@ -214,6 +213,5 @@ public:
 };
 
 } // end namespace Belos
-#endif
 
 #endif

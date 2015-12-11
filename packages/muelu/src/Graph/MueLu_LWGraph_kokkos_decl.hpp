@@ -79,14 +79,12 @@ namespace MueLu {
     typedef GlobalOrdinal                                       global_ordinal_type;
     typedef typename DeviceType::execution_space                execution_space;
     typedef Kokkos::Compat::KokkosDeviceWrapperNode<DeviceType> node_type;
-    typedef size_t                                              size_type;
-
-    typedef Xpetra::Map<LocalOrdinal, GlobalOrdinal, node_type> map_type;
-    typedef Kokkos::StaticCrsGraph<LocalOrdinal, Kokkos::LayoutLeft, execution_space> local_graph_type;
-    typedef Kokkos::View<const bool*, DeviceType>               boundary_nodes_type;
-    typedef Kokkos::View<const LocalOrdinal*, DeviceType>       row_type;
 
   private:
+    typedef Xpetra::Map<LocalOrdinal, GlobalOrdinal, node_type> map_type;
+
+    typedef Kokkos::StaticCrsGraph<LocalOrdinal, Kokkos::LayoutLeft, execution_space> local_graph_type;
+
     // For compatibility
     typedef node_type                                           Node;
 #undef MUELU_LWGRAPH_KOKKOS_SHORT
@@ -104,53 +102,31 @@ namespace MueLu {
     ~LWGraph_kokkos() { }
     //@}
 
-    const RCP<const Teuchos::Comm<int> > GetComm() const {
-      return domainMap_->getComm();
-    }
-    const RCP<const Map> GetDomainMap() const {
-      return domainMap_;
-    }
-    //! Return overlapping import map (nodes).
-    const RCP<const Map> GetImportMap() const {
-      return importMap_;
-    }
+    size_t GetNodeNumVertices() const                           { return graph_.row_map.dimension_0()-1; }
+    size_t GetNodeNumEdges()    const                           { return graph_.row_map(GetNodeNumVertices()); }
 
-    //! Return number of graph vertices
-    KOKKOS_INLINE_FUNCTION size_type GetNodeNumVertices() const {
-      return graph_.numRows();
-    }
-    //! Return number of graph edges
-    KOKKOS_INLINE_FUNCTION size_type GetNodeNumEdges() const {
-      return graph_.row_map(GetNodeNumVertices());
-    }
+    const RCP<const Teuchos::Comm<int> > GetComm()      const   { return domainMap_->getComm(); }
+    const RCP<const Map>                 GetDomainMap() const   { return domainMap_; }
+    //! Returns overlapping import map (nodes).
+    const RCP<const Map>                 GetImportMap() const   { return importMap_; }
 
     //! Return the list of vertices adjacent to the vertex 'v'.
-    KOKKOS_INLINE_FUNCTION row_type getNeighborVertices(LO i) const;
+    ArrayView<const LO> getNeighborVertices(LO i) const;
 
     //! Return true if vertex with local id 'v' is on current process.
-    KOKKOS_INLINE_FUNCTION bool isLocalNeighborVertex(LO i) const {
-      return i >= minLocalIndex_ && i <= maxLocalIndex_;
-    }
+    bool isLocalNeighborVertex(LO i) const                      { return i >= minLocalIndex_ && i <= maxLocalIndex_; }
 
     //! Set boolean array indicating which rows correspond to Dirichlet boundaries.
-    KOKKOS_INLINE_FUNCTION void SetBoundaryNodeMap(const boundary_nodes_type bndry) {
-      dirichletBoundaries_ = bndry;
-    }
+    void SetBoundaryNodeMap(const ArrayRCP<const bool>& bndry)  { dirichletBoundaries_ = bndry; }
 
     //! Returns the maximum number of entries across all rows/columns on this node
-    KOKKOS_INLINE_FUNCTION size_type getNodeMaxNumRowEntries () const {
-      return maxNumRowEntries_;
-    }
+    size_t getNodeMaxNumRowEntries () const                     { return maxNumRowEntries_; }
 
     //! Returns map with global ids of boundary nodes.
-    KOKKOS_INLINE_FUNCTION const boundary_nodes_type GetBoundaryNodeMap() const {
-      return dirichletBoundaries_;
-    }
+    const ArrayRCP<const bool> GetBoundaryNodeMap() const       { return dirichletBoundaries_; }
 
     /// Return a simple one-line description of the Graph.
-    KOKKOS_INLINE_FUNCTION std::string description() const {
-      return "LWGraph (" + objectLabel_ + ")";
-    }
+    std::string description() const                             { return "MueLu.description()"; } //FIXME use object's label
 
     //! Print the Graph with some verbosity level to an FancyOStream object.
     // void print(Teuchos::FancyOStream &out, const VerbLevel verbLevel = Default) const;
@@ -165,14 +141,14 @@ namespace MueLu {
     const RCP<const map_type>   importMap_;
 
     //! Boolean array marking Dirichlet rows.
-    boundary_nodes_type         dirichletBoundaries_;
+    ArrayRCP<const bool>        dirichletBoundaries_;
 
     //! Local index boundaries (cached from domain map)
-    LO        minLocalIndex_, maxLocalIndex_;
-    size_type maxNumRowEntries_;
+    LO     minLocalIndex_, maxLocalIndex_;
+    size_t maxNumRowEntries_;
 
     //! Name of this graph.
-    const std::string& objectLabel_;
+    const std::string & objectLabel_;
   };
 
 }

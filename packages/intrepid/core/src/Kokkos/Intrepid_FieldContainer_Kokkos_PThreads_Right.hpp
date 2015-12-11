@@ -1,4 +1,4 @@
-#ifdef KOKKOS_HAVE_PTHREAD
+#ifdef KOKKOS_HAVE_PTHREADS
 namespace Intrepid{
 template <class Scalar,class ScalarPointer>
 class FieldContainer_Kokkos<Scalar,ScalarPointer,Kokkos::LayoutRight,Kokkos::Threads>{

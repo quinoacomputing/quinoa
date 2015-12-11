@@ -53,29 +53,30 @@
 #include <Teuchos_UnitTestHarness.hpp>
 #include <Teuchos_DefaultComm.hpp>
 
-#include <MueLu_TestHelpers.hpp>
-#include <MueLu_Version.hpp>
+#include "MueLu_TestHelpers.hpp"
+#include "MueLu_Version.hpp"
 
 #include <Xpetra_MultiVectorFactory.hpp>
 #include <Xpetra_MatrixMatrix.hpp>
 
-#include <MueLu_TentativePFactory.hpp>
-#include <MueLu_PgPFactory.hpp>
-#include <MueLu_GenericRFactory.hpp>
-#include <MueLu_TransPFactory.hpp>
-#include <MueLu_TrilinosSmoother.hpp>
-#include <MueLu_CoupledAggregationFactory.hpp>
-#include <MueLu_RAPFactory.hpp>
-#include <MueLu_SmootherFactory.hpp>
-#include <MueLu_Utilities.hpp>
+#include "MueLu_TentativePFactory.hpp"
+#include "MueLu_PgPFactory.hpp"
+#include "MueLu_GenericRFactory.hpp"
+#include "MueLu_TransPFactory.hpp"
+#include "MueLu_TrilinosSmoother.hpp"
+#include "MueLu_CoupledAggregationFactory.hpp"
+#include "MueLu_RAPFactory.hpp"
+#include "MueLu_SmootherFactory.hpp"
+#include "MueLu_Utilities.hpp"
+
+#include "MueLu_UseDefaultTypes.hpp"
 
 namespace MueLuTests {
 
-  TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(PgPFactory, Test0, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#include "MueLu_UseShortNames.hpp"
+
+  TEUCHOS_UNIT_TEST(PgPFactory, Test0)
   {
-#   include <MueLu_UseShortNames.hpp>
-    MUELU_TESTING_SET_OSTREAM;
-    MUELU_TESTING_LIMIT_EPETRA_SCOPE(Scalar,GlobalOrdinal,Node);
     out << "version: " << MueLu::Version() << std::endl;
 
     RCP<PgPFactory> pgpFactory = rcp(new PgPFactory);
@@ -84,44 +85,36 @@ namespace MueLuTests {
     out << *pgpFactory << std::endl;
   }
 
-  TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(PgPFactory, nonsymExample, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+  TEUCHOS_UNIT_TEST(PgPFactory, nonsymExample)
   {
-#   if defined(IFPACK) && defined(IFPACK2)
-#   include <MueLu_UseShortNames.hpp>
-    MUELU_TESTING_SET_OSTREAM;
-    MUELU_TESTING_LIMIT_EPETRA_SCOPE(Scalar,GlobalOrdinal,Node);
-    out << "Skipping test because not all required packages are enabled (Ifpack, Ifpack2)." << std::endl;
-    return;
     out << "version: " << MueLu::Version() << std::endl;
     out << "Test PgPFactory within" << std::endl;
     out << "level AMG solver using Petrov Galerkin smoothed aggregation with" << std::endl;
     out << "one SGS sweep on each multigrid level as pre- and postsmoother" << std::endl;
 
-    typedef typename Teuchos::ScalarTraits<SC>::magnitudeType magnitude_type;
-
     RCP<const Teuchos::Comm<int> > comm = Teuchos::DefaultComm<int>::getComm();
 
-    Teuchos::Array<magnitude_type> results(2);
+    Teuchos::Array<Teuchos::ScalarTraits<SC>::magnitudeType> results(2);
 
     // used Xpetra lib (for maps and smoothers)
     Xpetra::UnderlyingLib lib = MueLuTests::TestHelpers::Parameters::getLib();
 
     // generate problem
-    LocalOrdinal maxLevels = 3;
-    LocalOrdinal its=10;
-    LocalOrdinal nEle = 63;
+    LO maxLevels = 3;
+    LO its=10;
+    LO nEle = 63;
     const RCP<const Map> map = MapFactory::Build(lib, nEle, 0, comm);
     Teuchos::ParameterList matrixParameters;
     matrixParameters.set("nx",nEle);
 
     // create nonsymmetric tridiagonal matrix
     Scalar epsilon = 1e-3;
-    RCP<Matrix> Op = Galeri::Xpetra::TriDiag<SC,LocalOrdinal,GlobalOrdinal,Map,CrsMatrixWrap>(map, nEle, 1.0, 1.0-epsilon, epsilon);
+    RCP<Matrix> Op = Galeri::Xpetra::TriDiag<SC,LO,GO,Map,CrsMatrixWrap>(map, nEle, 1.0, 1.0-epsilon, epsilon);
 
     // build nullspace
     RCP<MultiVector> nullSpace = MultiVectorFactory::Build(map,1);
     nullSpace->putScalar( (SC) 1.0);
-    Teuchos::Array<magnitude_type> norms(1);
+    Teuchos::Array<Teuchos::ScalarTraits<SC>::magnitudeType> norms(1);
     nullSpace->norm1(norms);
     if (comm->getRank() == 0)
       out << "||NS|| = " << norms[0] << std::endl;
@@ -151,7 +144,7 @@ namespace MueLuTests {
     // setup smoothers
     Teuchos::ParameterList smootherParamList;
     smootherParamList.set("relaxation: type", "Symmetric Gauss-Seidel");
-    smootherParamList.set("relaxation: sweeps", (LocalOrdinal) 1);
+    smootherParamList.set("relaxation: sweeps", (LO) 1);
     smootherParamList.set("relaxation: damping factor", (SC) 1.0);
     RCP<SmootherPrototype> smooProto = rcp( new TrilinosSmoother("RELAXATION", smootherParamList) );
     RCP<SmootherFactory> SmooFact = rcp( new SmootherFactory(smooProto) );
@@ -262,26 +255,21 @@ namespace MueLuTests {
       if (comm->getRank() == 0)
         out << "||X_" << std::setprecision(2) << its << "|| = " << std::setiosflags(std::ios::fixed) << std::setprecision(10) << norms[0] << std::endl;
     }
-#   else
-    out << "Skipping test because some required packages are not enabled (Ifpack, Ifpack2)." << std::endl;
-#   endif
-  } //nonsymExample
+
+  } //EpetraVsTpetra
 
 
 #if 0
-  TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(PgPFactory, NonStandardMaps, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+  TEUCHOS_UNIT_TEST(PgPFactory, NonStandardMaps)
   {
-#   include <MueLu_UseShortNames.hpp>
-    MUELU_TESTING_SET_OSTREAM;
-    MUELU_TESTING_LIMIT_EPETRA_SCOPE(Scalar,GlobalOrdinal,Node);
     RCP<const Teuchos::Comm<int> > comm = Teuchos::DefaultComm<int>::getComm();
     Xpetra::UnderlyingLib lib = MueLuTests::TestHelpers::Parameters::getLib();
 
     // generate problem
-    LocalOrdinal maxLevels = 3;
-    //LocalOrdinal its=10;
-    GlobalOrdinal nEle = 63;
-    GlobalOrdinal nIndexBase = 10;
+    LO maxLevels = 3;
+    //LO its=10;
+    GO nEle = 63;
+    GO nIndexBase = 10;
     const RCP<const Map> map = MapFactory::Build(lib, nEle, nIndexBase, comm);
 
     RCP<CrsMatrixWrap> mtx = Galeri::Xpetra::MatrixTraits<Map,CrsMatrixWrap>::Build(map, 3);
@@ -375,7 +363,7 @@ namespace MueLuTests {
     // setup smoothers
     Teuchos::ParameterList smootherParamList;
     smootherParamList.set("relaxation: type", "Symmetric Gauss-Seidel");
-    smootherParamList.set("relaxation: sweeps", (LocalOrdinal) 1);
+    smootherParamList.set("relaxation: sweeps", (LO) 1);
     smootherParamList.set("relaxation: damping factor", (SC) 1.0);
     RCP<SmootherPrototype> smooProto = rcp( new TrilinosSmoother("RELAXATION", smootherParamList) );
     RCP<SmootherFactory> SmooFact = rcp( new SmootherFactory(smooProto) );
@@ -449,11 +437,8 @@ namespace MueLuTests {
   }
 #endif
 
-  TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(PgPFactory, MinimizationModes, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+  TEUCHOS_UNIT_TEST(PgPFactory, MinimizationModes)
   {
-#   include <MueLu_UseShortNames.hpp>
-    MUELU_TESTING_SET_OSTREAM;
-    MUELU_TESTING_LIMIT_EPETRA_SCOPE(Scalar,GlobalOrdinal,Node);
     out << "version: " << MueLu::Version() << std::endl;
     out << "Test PgPFactory (minimization modes)" << std::endl;
 
@@ -469,11 +454,8 @@ namespace MueLuTests {
   }
 
 #if 0 // TODO check me
-  TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(PgPFactory, ColumnBasedOmegas, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+  TEUCHOS_UNIT_TEST(PgPFactory, ColumnBasedOmegas)
   {
-#   include <MueLu_UseShortNames.hpp>
-    MUELU_TESTING_SET_OSTREAM;
-    MUELU_TESTING_LIMIT_EPETRA_SCOPE(Scalar,GlobalOrdinal,Node);
     out << "version: " << MueLu::Version() << std::endl;
     out << "Test PgPFactory (column based omegas)" << std::endl;
 
@@ -484,15 +466,15 @@ namespace MueLuTests {
     Xpetra::UnderlyingLib lib = MueLuTests::TestHelpers::Parameters::getLib();
 
     // generate problem
-    LocalOrdinal maxLevels = 3;
-    LocalOrdinal its=10;
-    LocalOrdinal nEle = 63;
+    LO maxLevels = 3;
+    LO its=10;
+    LO nEle = 63;
     const RCP<const Map> map = MapFactory::Build(lib, nEle, 0, comm);
     Teuchos::ParameterList matrixParameters;
     matrixParameters.set("nx",nEle);
 
     // create nonsymmetric tridiagonal matrix
-    RCP<Matrix> Op = Galeri::Xpetra::TriDiag<SC,LocalOrdinal,GlobalOrdinal,Map,CrsMatrixWrap>(map, nEle, 2.0, -1.0, -1.0);
+    RCP<Matrix> Op = Galeri::Xpetra::TriDiag<SC,LO,GO,Map,CrsMatrixWrap>(map, nEle, 2.0, -1.0, -1.0);
 
     // build nullspace
     RCP<MultiVector> nullSpace = MultiVectorFactory::Build(map,1);
@@ -530,7 +512,7 @@ namespace MueLuTests {
     // setup smoothers
     Teuchos::ParameterList smootherParamList;
     smootherParamList.set("relaxation: type", "Symmetric Gauss-Seidel");
-    smootherParamList.set("relaxation: sweeps", (LocalOrdinal) 1);
+    smootherParamList.set("relaxation: sweeps", (LO) 1);
     smootherParamList.set("relaxation: damping factor", (SC) 1.0);
     RCP<SmootherPrototype> smooProto = rcp( new TrilinosSmoother("RELAXATION", smootherParamList) );
     RCP<SmootherFactory> SmooFact = rcp( new SmootherFactory(smooProto) );
@@ -633,18 +615,10 @@ namespace MueLuTests {
   }
 #endif
 
-  TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(PgPFactory, ReUseOmegas, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+  TEUCHOS_UNIT_TEST(PgPFactory, ReUseOmegas)
   {
-#   include <MueLu_UseShortNames.hpp>
-    MUELU_TESTING_SET_OSTREAM;
-    MUELU_TESTING_LIMIT_EPETRA_SCOPE(Scalar,GlobalOrdinal,Node);
-#   if !defined(HAVE_MUELU_IFPACK2)
-    MUELU_TESTING_DO_NOT_TEST(Xpetra::UseTpetra,"Ifpack2");
-#   endif
     out << "version: " << MueLu::Version() << std::endl;
     out << "Test PgPFactory (reuse row based omegas for restriction operator)" << std::endl;
-
-    typedef typename Teuchos::ScalarTraits<SC>::magnitudeType magnitude_type;
 
     RCP<const Teuchos::Comm<int> > comm = Teuchos::DefaultComm<int>::getComm();
 
@@ -652,20 +626,20 @@ namespace MueLuTests {
     Xpetra::UnderlyingLib lib = MueLuTests::TestHelpers::Parameters::getLib();
 
     // generate problem
-    LocalOrdinal maxLevels = 3;
-    LocalOrdinal its       = 10;
-    LocalOrdinal nEle      = 63;
+    LO maxLevels = 3;
+    LO its       = 10;
+    LO nEle      = 63;
     const RCP<const Map> map = MapFactory::Build(lib, nEle, 0, comm);
     Teuchos::ParameterList matrixParameters;
     matrixParameters.set("nx", nEle);
 
     // create nonsymmetric tridiagonal matrix
-    RCP<Matrix> Op = Galeri::Xpetra::TriDiag<SC,LocalOrdinal,GlobalOrdinal,Map,CrsMatrixWrap>(map, nEle, 2.0, -1.0, -1.0);
+    RCP<Matrix> Op = Galeri::Xpetra::TriDiag<SC,LO,GO,Map,CrsMatrixWrap>(map, nEle, 2.0, -1.0, -1.0);
 
     // build nullspace
     RCP<MultiVector> nullSpace = MultiVectorFactory::Build(map,1);
     nullSpace->putScalar( (SC) 1.0);
-    Teuchos::Array<magnitude_type> norms(1);
+    Teuchos::Array<Teuchos::ScalarTraits<SC>::magnitudeType> norms(1);
     nullSpace->norm1(norms);
     if (comm->getRank() == 0)
       out << "||NS|| = " << norms[0] << std::endl;
@@ -697,7 +671,7 @@ namespace MueLuTests {
     // setup smoothers
     Teuchos::ParameterList smootherParamList;
     smootherParamList.set("relaxation: type",           "Symmetric Gauss-Seidel");
-    smootherParamList.set("relaxation: sweeps",         (LocalOrdinal) 1);
+    smootherParamList.set("relaxation: sweeps",         (LO) 1);
     smootherParamList.set("relaxation: damping factor", (SC) 1.0);
     RCP<SmootherPrototype> smooProto = rcp(new TrilinosSmoother("RELAXATION", smootherParamList));
     RCP<SmootherFactory>   SmooFact  = rcp(new SmootherFactory(smooProto));
@@ -806,20 +780,13 @@ namespace MueLuTests {
     TEST_EQUALITY(l2->GetKeepFlag("PreSmoother",  MueLu::NoFactory::get()), MueLu::Final);
   }
 
-  TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(PgPFactory, ReUseOmegasTransP, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+  TEUCHOS_UNIT_TEST(PgPFactory, ReUseOmegasTransP)
   {
     // reuse row based omegas in PgPFactory activated but not used, since TransPFactory is set as restriction factory
     // check if RowBasedOmega is not stored in Level!
-#   include <MueLu_UseShortNames.hpp>
-    MUELU_TESTING_SET_OSTREAM;
-    MUELU_TESTING_LIMIT_EPETRA_SCOPE(Scalar,GlobalOrdinal,Node);
-#   if !defined(HAVE_MUELU_AMESOS2) || !defined(HAVE_MUELU_IFPACK2)
-    MUELU_TESTING_DO_NOT_TEST(Xpetra::UseTpetra,"Amesos2, Ifpack2");
-#   endif
     out << "version: " << MueLu::Version() << std::endl;
     out << "Test PgPFactory (reuse row based omegas for restriction operator)" << std::endl;
 
-    typedef typename Teuchos::ScalarTraits<SC>::magnitudeType magnitude_type;
 
     RCP<const Teuchos::Comm<int> > comm = Teuchos::DefaultComm<int>::getComm();
 
@@ -827,20 +794,20 @@ namespace MueLuTests {
     Xpetra::UnderlyingLib lib = MueLuTests::TestHelpers::Parameters::getLib();
 
     // generate problem
-    LocalOrdinal maxLevels = 3;
-    LocalOrdinal its=10;
-    LocalOrdinal nEle = 63;
+    LO maxLevels = 3;
+    LO its=10;
+    LO nEle = 63;
     const RCP<const Map> map = MapFactory::Build(lib, nEle, 0, comm);
     Teuchos::ParameterList matrixParameters;
     matrixParameters.set("nx",nEle);
 
     // create nonsymmetric tridiagonal matrix
-    RCP<Matrix> Op = Galeri::Xpetra::TriDiag<SC,LocalOrdinal,GlobalOrdinal,Map,CrsMatrixWrap>(map, nEle, 2.0, -1.0, -1.0);
+    RCP<Matrix> Op = Galeri::Xpetra::TriDiag<SC,LO,GO,Map,CrsMatrixWrap>(map, nEle, 2.0, -1.0, -1.0);
 
     // build nullspace
     RCP<MultiVector> nullSpace = MultiVectorFactory::Build(map,1);
     nullSpace->putScalar( (SC) 1.0);
-    Teuchos::Array<magnitude_type> norms(1);
+    Teuchos::Array<Teuchos::ScalarTraits<SC>::magnitudeType> norms(1);
     nullSpace->norm1(norms);
     if (comm->getRank() == 0)
       out << "||NS|| = " << norms[0] << std::endl;
@@ -872,7 +839,7 @@ namespace MueLuTests {
     // setup smoothers
     Teuchos::ParameterList smootherParamList;
     smootherParamList.set("relaxation: type", "Symmetric Gauss-Seidel");
-    smootherParamList.set("relaxation: sweeps", (LocalOrdinal) 1);
+    smootherParamList.set("relaxation: sweeps", (LO) 1);
     smootherParamList.set("relaxation: damping factor", (SC) 1.0);
     RCP<SmootherPrototype> smooProto = rcp( new TrilinosSmoother("RELAXATION", smootherParamList) );
     RCP<SmootherFactory> SmooFact = rcp( new SmootherFactory(smooProto) );
@@ -981,23 +948,17 @@ namespace MueLuTests {
     TEST_EQUALITY(l2->GetKeepFlag("PreSmoother",MueLu::NoFactory::get()), MueLu::Final);
   }
 
-  TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(PgPFactory, EpetraVsTpetra, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#if defined(HAVE_MUELU_TPETRA) && defined(HAVE_MUELU_EPETRA) && defined(HAVE_MUELU_EPETRAEXT) && defined(HAVE_MUELU_IFPACK) && defined(HAVE_MUELU_IFPACK2)
+  TEUCHOS_UNIT_TEST(PgPFactory, EpetraVsTpetra)
   {
-#   if defined(HAVE_MUELU_TPETRA) && defined(HAVE_MUELU_EPETRA) && defined(HAVE_MUELU_EPETRAEXT) && defined(HAVE_MUELU_IFPACK) && defined(HAVE_MUELU_IFPACK2)
-#   include <MueLu_UseShortNames.hpp>
-    MUELU_TESTING_SET_OSTREAM;
     out << "version: " << MueLu::Version() << std::endl;
     out << "Compare results of Epetra and Tpetra" << std::endl;
     out << "for 3 level AMG solver using Petrov Galerkin smoothed aggregation with" << std::endl;
     out << "one SGS sweep on each multigrid level as pre- and postsmoother" << std::endl;
 
-    MUELU_TESTING_LIMIT_EPETRA_SCOPE_TPETRA_IS_DEFAULT(Scalar,GlobalOrdinal,Node);
-
-    typedef typename Teuchos::ScalarTraits<SC>::magnitudeType magnitude_type;
-
     RCP<const Teuchos::Comm<int> > comm = Teuchos::DefaultComm<int>::getComm();
 
-    Teuchos::Array<magnitude_type> results(2);
+    Teuchos::Array<Teuchos::ScalarTraits<SC>::magnitudeType> results(2);
 
     // run test only on 1 procs
     // then we can check shape of transfer operators
@@ -1013,21 +974,21 @@ namespace MueLuTests {
         else lib = Xpetra::UseTpetra;
 
         // generate problem
-        LocalOrdinal maxLevels = 3;
-        LocalOrdinal its=10;
-        GlobalOrdinal nEle = 63;
+        LO maxLevels = 3;
+        LO its=10;
+        LO nEle = 63;
         const RCP<const Map> map = MapFactory::Build(lib, nEle, 0, comm);
         Teuchos::ParameterList matrixParameters;
         matrixParameters.set("nx",nEle);
 
         RCP<Galeri::Xpetra::Problem<Map,CrsMatrixWrap,MultiVector> > Pr =
-          Galeri::Xpetra::BuildProblem<SC, LocalOrdinal, GlobalOrdinal, Map, CrsMatrixWrap, MultiVector>("Laplace1D", map, matrixParameters);
+          Galeri::Xpetra::BuildProblem<SC, LO, GO, Map, CrsMatrixWrap, MultiVector>("Laplace1D", map, matrixParameters);
         RCP<Matrix> Op = Pr->BuildMatrix();
 
         // build nullspace
         RCP<MultiVector> nullSpace = MultiVectorFactory::Build(map,1);
         nullSpace->putScalar( (SC) 1.0);
-        Teuchos::Array<magnitude_type> norms(1);
+        Teuchos::Array<Teuchos::ScalarTraits<SC>::magnitudeType> norms(1);
         nullSpace->norm1(norms);
         if (comm->getRank() == 0)
           out << "||NS|| = " << norms[0] << std::endl;
@@ -1057,7 +1018,7 @@ namespace MueLuTests {
         // setup smoothers
         Teuchos::ParameterList smootherParamList;
         smootherParamList.set("relaxation: type", "Symmetric Gauss-Seidel");
-        smootherParamList.set("relaxation: sweeps", (LocalOrdinal) 1);
+        smootherParamList.set("relaxation: sweeps", (LO) 1);
         smootherParamList.set("relaxation: damping factor", (SC) 1.0);
         RCP<SmootherPrototype> smooProto = rcp( new TrilinosSmoother("RELAXATION", smootherParamList) );
         RCP<SmootherFactory> SmooFact = rcp( new SmootherFactory(smooProto) );
@@ -1145,7 +1106,7 @@ namespace MueLuTests {
         TEST_EQUALITY(R2->getGlobalNumRows(), 7);
         TEST_EQUALITY(R2->getGlobalNumCols(), 21);
 
-        Teuchos::RCP<Xpetra::Matrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> > PtentTPtent = Xpetra::MatrixMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node>::Multiply(*P1,true,*P1,false,out);
+        Teuchos::RCP<Xpetra::Matrix<Scalar,LO,GO> > PtentTPtent = Xpetra::MatrixMatrix<Scalar,LO,GO>::Multiply(*P1,true,*P1,false,out);
         TEST_EQUALITY(PtentTPtent->getGlobalMaxNumRowEntries()-3<1e-12, true);
         TEST_EQUALITY(P1->getGlobalMaxNumRowEntries()-2<1e-12, true);
         TEST_EQUALITY(P2->getGlobalMaxNumRowEntries()-2<1e-12, true);
@@ -1177,22 +1138,9 @@ namespace MueLuTests {
       std::cout << results[0] << " VS " << results[1] << std::endl;
       TEST_EQUALITY(results[0] - results[1] < 1e-10, true); // check results of EPETRA vs TPETRA
     } // comm->getSize == 1
-#   else
-    out << "Skipping test because some required packages are not enabled (Tpetra, Epetra, EpetraExt, Ifpack, Ifpack2)." << std::endl;
-#   endif
 
   } //EpetraVsTpetra
-
-
-#   define MUELU_ETI_GROUP(Scalar, LO, GO, Node) \
-      TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(PgPFactory, Test0, Scalar, LO, GO, Node) \
-      TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(PgPFactory, nonsymExample, Scalar, LO, GO, Node) \
-      TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(PgPFactory, MinimizationModes, Scalar, LO, GO, Node) \
-      TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(PgPFactory, ReUseOmegas, Scalar, LO, GO, Node) \
-      TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(PgPFactory, ReUseOmegasTransP, Scalar, LO, GO, Node) \
-      TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(PgPFactory, EpetraVsTpetra, Scalar, LO, GO, Node)
-
-# include <MueLu_ETI_4arg.hpp>
+#endif
 
 }//namespace MueLuTests
 

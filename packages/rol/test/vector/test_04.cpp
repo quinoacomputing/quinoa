@@ -69,11 +69,12 @@ void print_vector( const ROL::Vector<Real> &x ) {
     std::cout << "[subvector " << k << "]" << std::endl;
     Teuchos::RCP<const V> vec = eb.get(k);
     Teuchos::RCP<const std::vector<Real> > vp = 
-      Teuchos::dyn_cast<const SV>(*vec).getVector();  
+      Teuchos::dyn_cast<SV>(const_cast<V&>(*vec)).getVector();  
    for(size_type i=0;i<vp->size();++i) {
       std::cout << (*vp)[i] << std::endl;
     }  
   }
+
 }
 
 

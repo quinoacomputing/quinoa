@@ -49,8 +49,6 @@
 
 #include <Tpetra_CrsMatrix.hpp>
 
-
-#ifdef HAVE_TPETRA_INST_INT_INT
 #ifdef HAVE_AMESOS2_EPETRA
 #  include <Tpetra_DefaultPlatform.hpp>
 #  include <Epetra_RowMatrix.h>
@@ -58,7 +56,6 @@
 // #  include <Epetra_MsrMatrix.h>
 #  include <Epetra_VbrMatrix.h>
 // and perhaps some others later...
-#endif
 #endif
 
 #include "Amesos2_Util.hpp"
@@ -107,8 +104,6 @@ namespace Amesos2 {
     typedef row_access major_access;
   };
 
-
-#ifdef HAVE_TPETRA_INST_INT_INT
 #ifdef HAVE_AMESOS2_EPETRA
 
   template <>
@@ -151,7 +146,6 @@ namespace Amesos2 {
     typedef row_access major_access;
   };
 
-#endif
 #endif
 
 }

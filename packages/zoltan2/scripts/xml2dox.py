@@ -1,12 +1,12 @@
 #!/usr/bin/python
 #
-# xml.etree.ElementTree is available in python 2.5 and higher.
+# Element is available in python 1.5.2 and higher.
 # It can be downloaded to use with older python.
 #
 # This script reads an XML description of the Zoltan2 parameters, 
 # and writes a doxygen page with this information.
 
-import xml.etree.ElementTree as ET
+import elementtree.ElementTree as ET
 
 outfile = open("parameters.dox", "w")
 

@@ -1217,19 +1217,19 @@ void FunctionSpaceTools::integrate(ArrayOut            & outputValues,
                                    const ArrayInRight  & rightValues,
                                    const ECompEngine           compEngine,
                                    const bool            sumInto) {
-  //ArrayWrapper<Scalar,ArrayOut, Rank<ArrayOut >::value, false>outputValuesWrap(outputValues);
-  //ArrayWrapper<Scalar,ArrayInLeft, Rank<ArrayInLeft >::value, true>leftValuesWrap(leftValues);
-  //ArrayWrapper<Scalar,ArrayInRight, Rank<ArrayInRight >::value, true>rightValuesWrap(rightValues);
-  int outRank = getrank(outputValues);
+	 ArrayWrapper<Scalar,ArrayOut, Rank<ArrayOut >::value, false>outputValuesWrap(outputValues);
+     ArrayWrapper<Scalar,ArrayInLeft, Rank<ArrayInLeft >::value, true>leftValuesWrap(leftValues);
+	 ArrayWrapper<Scalar,ArrayInRight, Rank<ArrayInRight >::value, true>rightValuesWrap(rightValues);
+	 int outRank = getrank(outputValues);
   switch (outRank) {
     case 1: 
-      dataIntegral<Scalar>(outputValues, leftValues, rightValues, compEngine, sumInto);
+      dataIntegral<Scalar>(outputValuesWrap, leftValuesWrap, rightValuesWrap, compEngine, sumInto);
     break;  
     case 2: 
-      functionalIntegral<Scalar>(outputValues, leftValues, rightValues, compEngine, sumInto);
+      functionalIntegral<Scalar>(outputValuesWrap, leftValuesWrap, rightValuesWrap, compEngine, sumInto);
     break;  
     case 3: 
-      operatorIntegral<Scalar>(outputValues, leftValues, rightValues, compEngine, sumInto);
+      operatorIntegral<Scalar>(outputValuesWrap, leftValuesWrap, rightValuesWrap, compEngine, sumInto);
     break;
   default:
 #ifdef HAVE_INTREPID_DEBUG
@@ -1332,36 +1332,11 @@ void FunctionSpaceTools::dataIntegral(ArrayOutData &            outputData,
 }
 
 } // dataIntegral
-template <class Scalar,class ArrayOut,class ArrayDet>
-struct computeCellMeasure_Abs {
-  ArrayOut outVals;
-  ArrayDet inDet;
-typedef typename conditional_eSpace<ArrayOut>::execution_space execution_space;
-  // Views have "view semantics."  This means that they behave like
-  // pointers, not like std::vector.  Their copy constructor and
-  // operator= only do shallow copies.  Thus, you can pass View
-  // objects around by "value"; they won't do a deep copy unless you
-  // explicitly ask for a deep copy.
-  computeCellMeasure_Abs (ArrayOut outVals_, ArrayDet inDet_) :
-    outVals (outVals_),inDet (inDet_)
-  {}
 
-
-  KOKKOS_INLINE_FUNCTION
-  void operator () (const index_type cell) const {
-   if (inDet(cell,0) < 0.0) {
-      for (index_type point=0; point<static_cast<index_type>(outVals.dimension(1)); point++) {
-        outVals(cell, point) *= -1.0;
-      }
-    }
- 
-   }
-};
 template<class Scalar, class ArrayOut, class ArrayDet, class ArrayWeights>
 inline void FunctionSpaceTools::computeCellMeasure(ArrayOut             & outVals,
                                                    const ArrayDet       & inDet,
                                                    const ArrayWeights   & inWeights) {
-ArrayWrapper<Scalar,ArrayOut, Rank<ArrayOut >::value, false>outValsWrap(outVals);
 #ifdef HAVE_INTREPID_DEBUG
 
   TEUCHOS_TEST_FOR_EXCEPTION( (inDet.rank() != 2), std::invalid_argument,
@@ -1371,9 +1346,13 @@ ArrayWrapper<Scalar,ArrayOut, Rank<ArrayOut >::value, false>outValsWrap(outVals)
 
   ArrayTools::scalarMultiplyDataData<Scalar>(outVals, inDet, inWeights);
   // must use absolute value of inDet, so flip sign where needed
-
-Kokkos::parallel_for (outVals.dimension(0), computeCellMeasure_Abs<Scalar, ArrayWrapper<Scalar,ArrayOut, Rank<ArrayOut >::value, false>,ArrayDet> (outValsWrap,inDet));
- 
+  for (int cell=0; cell<outVals.dimension(0); cell++) {
+    if (inDet(cell,0) < 0.0) {
+      for (int point=0; point<outVals.dimension(1); point++) {
+        outVals(cell, point) *= -1.0;
+      }
+    }
+  }
 
 } // computeCellMeasure
 

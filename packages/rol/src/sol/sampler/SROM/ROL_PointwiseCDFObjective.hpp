@@ -45,7 +45,6 @@
 #define ROL_POINTWISECDFOBJECTIVE_H
 
 #include "ROL_Objective.hpp"
-#include "ROL_BatchManager.hpp"
 #include "ROL_Vector.hpp"
 #include "ROL_Distribution.hpp"
 #include "Teuchos_RCP.hpp"
@@ -57,7 +56,6 @@ template <class Real>
 class PointwiseCDFObjective : public Objective<Real> {
 private:
   std::vector<Teuchos::RCP<Distribution<Real> > > dist_;
-  Teuchos::RCP<BatchManager<Real> > bman_;
   const Real scale_;
   const Real sqrt2_;
   const Real sqrtpi_;
@@ -106,25 +104,23 @@ private:
 
 public:
   PointwiseCDFObjective(const std::vector<Teuchos::RCP<Distribution<Real> > > &dist,
-                              Teuchos::RCP<BatchManager<Real> >               &bman,
-                        const Real scale = 1.e-2)
-    : Objective<Real>(), dist_(dist), bman_(bman), scale_(scale),
+               const Real scale = 1.e-2)
+    : Objective<Real>(), dist_(dist), scale_(scale),
       sqrt2_(std::sqrt(2.)), sqrtpi_(std::sqrt(M_PI)) {}
 
   Real value( const Vector<Real> &x, Real &tol ) {
     const SROMVector<Real> &ex = Teuchos::dyn_cast<const SROMVector<Real> >(x);
     const size_t dimension  = ex.getDimension();
     const size_t numSamples = ex.getNumSamples();
-    Real val = 0., diff = 0., xpt = 0., sum = 0.;
+    Real val = 0., diff = 0., xpt = 0.;
     for (size_t d = 0; d < dimension; d++) {
       for (size_t k = 0; k < numSamples; k++) {
         xpt = (*ex.getPoint(k))[d];
         diff = (valueCDF(d,xpt,ex)-dist_[d]->evaluateCDF(xpt));
         val += std::pow(diff,2);
       }
-    }
-    bman_->sumAll(&val,&sum,1);
-    return 0.5*sum;
+    } 
+    return 0.5*val;
   }
 
   void gradient( Vector<Real> &g, const Vector<Real> &x, Real &tol ) {

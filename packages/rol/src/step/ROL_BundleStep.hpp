@@ -45,7 +45,7 @@
 #define ROL_BUNDLE_STEP_H
 
 #include "ROL_Bundle.hpp"
-//#include "ROL_Bundle_TT.hpp"
+#include "ROL_Bundle_TT.hpp"
 #include "ROL_Types.hpp"
 #include "ROL_Step.hpp"
 #include "ROL_Vector.hpp"
@@ -133,8 +133,7 @@ public:
     unsigned maxSize  = parlist.sublist("Step").sublist("Bundle").get("Maximum Bundle Size",            200);
     unsigned remSize  = parlist.sublist("Step").sublist("Bundle").get("Removal Size for Bundle Update", 2);
     if ( parlist.sublist("Step").sublist("Bundle").get("Cutting Plane Solver",0) == 1 ) {
-      //bundle_ = Teuchos::rcp(new Bundle_TT<Real>(maxSize,coeff,remSize));
-      bundle_ = Teuchos::rcp(new Bundle<Real>(maxSize,coeff,remSize));
+      bundle_ = Teuchos::rcp(new Bundle_TT<Real>(maxSize,coeff,remSize));
     }
     else {
       bundle_ = Teuchos::rcp(new Bundle<Real>(maxSize,coeff,remSize));
@@ -166,10 +165,8 @@ public:
     // Initialize storage for updated iterate
     y_ = x.clone();
     // Initialize storage for aggregate subgradients
-    aggSubGradNew_     = g.clone();
+    aggSubGradNew_ = x.clone();
     aggSubGradOldNorm_ = algo_state.gnorm;
-    // Initialize line search
-    lineSearch_->initialize(x,x,g,obj,con);
   }
 
   void compute( Vector<Real> &s, const Vector<Real> &x, Objective<Real> &obj, 
@@ -190,8 +187,8 @@ public:
       /******** Construct Cutting Plane Solution *******************/
       /*************************************************************/
       v = -state->searchSize*std::pow(algo_state.aggregateGradientNorm,2.0)-aggLinErrNew_; // CP objective value
-      s.set(aggSubGradNew_->dual()); s.scale(-state->searchSize);            // CP solution
-      algo_state.snorm = state->searchSize*algo_state.aggregateGradientNorm; // Step norm
+      s.set(*aggSubGradNew_); s.scale(-state->searchSize);                        // CP solution
+      algo_state.snorm = state->searchSize*algo_state.aggregateGradientNorm;      // Step norm
       /*************************************************************/
       /******** Decide Whether Step is Serious or Null *************/
       /*************************************************************/
@@ -212,7 +209,7 @@ public:
         obj.gradient(*(state->gradientVec),*y_,ftol_); // Compute objective (sub)gradient at y
         algo_state.ngrad++;
         // Compute new linearization error and distance measure
-        gd = s.dot(state->gradientVec->dual());
+        gd = s.dot(*(state->gradientVec));
         linErrNew_ = algo_state.value - (valueNew_ - gd); // Linearization error
         // Determine whether to take a serious or null step
         bool SS1  = (valueNew_-algo_state.value <  m1_*v);

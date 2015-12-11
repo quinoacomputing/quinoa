@@ -1,8 +1,10 @@
 #include "Intrepid2_ArrayTools.hpp"
 #include <iostream>
+#ifdef HAVE_INTREPID_KOKKOSCORE
 #include <Kokkos_Core.hpp>
 #include <Kokkos_Random.hpp>
 #include <impl/Kokkos_Timer.hpp>
+#endif
 #include "Intrepid2_FieldContainer.hpp"
 #include "Teuchos_ScalarTraits.hpp"
 
@@ -10,6 +12,7 @@
 
 
 int main(){
+#ifdef HAVE_INTREPID_KOKKOSCORE
 
    Kokkos::initialize();
   //initialize viewsto random values
@@ -124,6 +127,7 @@ int main(){
 
    Kokkos::finalize();
   
+#endif 
   
 	
 	return 0;

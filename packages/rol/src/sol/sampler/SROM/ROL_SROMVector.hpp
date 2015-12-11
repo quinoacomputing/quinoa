@@ -47,8 +47,7 @@
 #include <algorithm>
 #include <cstdlib>
 
-#include "ROL_ProbabilityVector.hpp"
-#include "ROL_AtomVector.hpp"
+#include "ROL_Vector.hpp"
 
 /** \class ROL::SROMVector
     \brief Provides the std::vector implementation of the ROL::Vector interface.
@@ -57,54 +56,68 @@
 
 namespace ROL {
 
-template <class Real>
+template <class Real, class Element=Real>
 class SROMVector : public Vector<Real> {
-  typedef typename std::vector<Real>::size_type uint;
 private:
-  const Teuchos::RCP<ProbabilityVector<Real> > pvec_;
-  const Teuchos::RCP<AtomVector<Real> > avec_;
 
-  mutable Teuchos::RCP<Vector<Real> > dual_pvec_;
-  mutable Teuchos::RCP<Vector<Real> > dual_avec_;
-  mutable Teuchos::RCP<SROMVector<Real> > dual_vec_;
+  Teuchos::RCP<std::vector<Element> >  pts_vec_;
+  Teuchos::RCP<std::vector<Element> >  wts_vec_;
+  size_t dimension_;
+  size_t numSamples_;
+
+  Real const_pt_;
+  Real const_wt_;
 
 public:
 
-  SROMVector(const Teuchos::RCP<ProbabilityVector<Real> >  &pvec,
-             const Teuchos::RCP<AtomVector<Real> >         &avec)
-    : pvec_(pvec), avec_(avec) {
-    dual_pvec_ = (pvec_->dual()).clone();
-    dual_avec_ = (avec_->dual()).clone();
+  SROMVector(const Teuchos::RCP<std::vector<Element> > &pts_vec,
+             const Teuchos::RCP<std::vector<Element> > &wts_vec,
+             const Real const_pt = 1.0, const Real const_wt = 1.0)
+    : pts_vec_(pts_vec), wts_vec_(wts_vec),
+      const_pt_(const_pt), const_wt_(const_wt) {
+    numSamples_ = wts_vec_->size();
+    dimension_  = pts_vec_->size()/numSamples_; 
   }
 
   void set( const Vector<Real> &x ) {
     const SROMVector &ex = Teuchos::dyn_cast<const SROMVector>(x);
-    pvec_->set(*(ex.getProbabilityVector()));
-    avec_->set(*(ex.getAtomVector()));
+    for (size_t i = 0; i < numSamples_; i++) {
+      for (size_t j = 0; j < dimension_; j++) {
+        (*pts_vec_)[i*dimension_ + j] = (*ex.getPoint(i))[j];
+      }
+      (*wts_vec_)[i] = (ex.getWeight(i)); 
+    }
   }
 
   void plus( const Vector<Real> &x ) {
     const SROMVector &ex = Teuchos::dyn_cast<const SROMVector>(x);
-    pvec_->plus(*(ex.getProbabilityVector()));
-    avec_->plus(*(ex.getAtomVector()));
+    for (size_t i = 0; i < numSamples_; i++) {
+      for (size_t j = 0; j < dimension_; j++) {
+        (*pts_vec_)[i*dimension_ + j] += (*ex.getPoint(i))[j];
+      }
+      (*wts_vec_)[i] += (ex.getWeight(i)); 
+    }
   }
 
   void scale( const Real alpha ) {
-    pvec_->scale(alpha);
-    avec_->scale(alpha);
-  }
-
-  void axpy( const Real alpha, const Vector<Real> &x ) {
-    const SROMVector &ex = Teuchos::dyn_cast<const SROMVector>(x);
-    pvec_->axpy(alpha,*(ex.getProbabilityVector()));
-    avec_->axpy(alpha,*(ex.getAtomVector()));
+    for (size_t i = 0; i < numSamples_; i++) {
+      for (size_t j = 0; j < dimension_; j++) {
+        (*pts_vec_)[i*dimension_ + j] *= alpha;
+      }
+      (*wts_vec_)[i] *= alpha;
+    }
   }
 
   Real dot( const Vector<Real> &x ) const {
     const SROMVector & ex = Teuchos::dyn_cast<const SROMVector>(x);
-    Real pval = pvec_->dot(*(ex.getProbabilityVector()));
-    Real aval = avec_->dot(*(ex.getAtomVector()));
-    return pval + aval;
+    Real pt_val = 0, wt_val = 0;
+    for (size_t i = 0; i < numSamples_; i++) {
+      for (size_t j = 0; j < dimension_; j++) {
+        pt_val += (*pts_vec_)[i*dimension_ + j] * (*ex.getPoint(i))[j];
+      }
+      wt_val += (*wts_vec_)[i] * (ex.getWeight(i)); 
+    }
+    return const_pt_*pt_val + const_wt_*wt_val;
   }
 
   Real norm() const {
@@ -113,67 +126,40 @@ public:
     return val;
   }
 
-  Teuchos::RCP<Vector<Real> > clone(void) const {
-    return Teuchos::rcp( new SROMVector(
-           Teuchos::rcp_static_cast<ProbabilityVector<Real> >(pvec_->clone()),
-           Teuchos::rcp_static_cast<AtomVector<Real> >(avec_->clone())) );
+  Teuchos::RCP<Vector<Real> > clone() const {
+    return Teuchos::rcp( new SROMVector( Teuchos::rcp(new std::vector<Element>(pts_vec_->size())),
+                                         Teuchos::rcp(new std::vector<Element>(wts_vec_->size())),
+                                         const_pt_, const_wt_ ) );
   }
 
-  const Vector<Real> & dual(void) const {
-    dual_pvec_->set(pvec_->dual());
-    dual_avec_->set(avec_->dual());
-    dual_vec_ = Teuchos::rcp(new SROMVector(
-                  Teuchos::rcp_static_cast<ProbabilityVector<Real> >(dual_pvec_),
-                  Teuchos::rcp_static_cast<AtomVector<Real> >(dual_avec_)));
-    return *dual_vec_;
+  Teuchos::RCP<const std::vector<Element> > getPoint(const size_t i) const {
+    std::vector<Element> pt(dimension_,0.);
+    for (size_t j = 0; j < dimension_; j++) {
+      pt[j] = (*pts_vec_)[i*dimension_ + j];
+    }
+    return Teuchos::rcp(new std::vector<Element>(pt));
   }
 
-  int dimension(void) const {
-    return avec_->dimension() + pvec_->dimension();
+  void setPoint(const size_t i, const std::vector<Element> &pt) {
+    for (size_t j = 0; j < dimension_; j++) {
+      (*pts_vec_)[i*dimension_ + j] = pt[j];
+    }
   }
 
-  void applyUnary( const Elementwise::UnaryFunction<Real> &f ) {
-    pvec_->applyUnary(f);
-    avec_->applyUnary(f);
+  const Element getWeight(const size_t i) const {
+    return (*wts_vec_)[i];
   }
 
-  void applyBinary( const Elementwise::BinaryFunction<Real> &f, const Vector<Real> &x ) {
-    const SROMVector & ex = Teuchos::dyn_cast<const SROMVector>(x);
-    pvec_->applyBinary(f,*(ex.getProbabilityVector()));
-    avec_->applyBinary(f,*(ex.getAtomVector()));
+  void setWeight(const size_t i, const Element wt) {
+    (*wts_vec_)[i] = wt;
   }
 
-  Real reduce( const Elementwise::ReductionOp<Real> &r ) const {
-    Real result = r.initialValue();
-    Real pval = pvec_->reduce(r);
-    Real aval = avec_->reduce(r);
-    r.reduce(pval,result);
-    r.reduce(aval,result);
-    return result;
+  const size_t getDimension(void) const {
+    return dimension_;
   }
 
-  const Teuchos::RCP<const AtomVector<Real> > getAtomVector(void) const {
-    return avec_;
-  }
-  
-  const Teuchos::RCP<const ProbabilityVector<Real> > getProbabilityVector(void) const {
-    return pvec_;
-  }
-
-  Teuchos::RCP<AtomVector<Real> > getAtomVector(void) {
-    return avec_;
-  }
-  
-  Teuchos::RCP<ProbabilityVector<Real> > getProbabilityVector(void) {
-    return pvec_;
-  }
-
-  void setAtomVector(const AtomVector<Real> &vec) {
-    avec_->set(vec);
-  }
-
-  void setProbabilityVector(const ProbabilityVector<Real> &vec) {
-    pvec_->set(vec);
+  const size_t getNumSamples(void) const {
+    return numSamples_;
   }
   
 }; // class SROMVector

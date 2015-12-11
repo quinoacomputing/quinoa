@@ -56,7 +56,7 @@ import string
 import subprocess
 import sys
 import tarfile
-import urllib2
+import urllib
 import zipfile
 import socket
 
@@ -66,8 +66,7 @@ import socket
 # Use it to set default_http_proxy value appropriately.
 #
 
-default_http_proxy  = ""
-default_https_proxy = ""
+default_http_proxy = ""
 hostname = ""
 
 hostname = socket.getfqdn()
@@ -77,8 +76,7 @@ if hostname != '':
   hostname = hostname.lower()
 
   if hostname[-11:] == ".sandia.gov":
-    default_http_proxy  = "http://wwwproxy.sandia.gov:80/"
-    default_https_proxy = "https://wwwproxy.sandia.gov:80/"
+    default_http_proxy = "http://wwwproxy.sandia.gov:80/"
 
 
 #
@@ -181,10 +179,6 @@ clp.add_option(
   help="Proxy in the form 'http://server:port/' - use if you are behind a firewall with respect to downloading from http://www.cmake.org (default = \""+default_http_proxy+"\")." )
 
 clp.add_option(
-  "--https-proxy", dest="httpsProxy", type="string", default=default_https_proxy,
-  help="Proxy in the form 'https://server:port/' - use if you are behind a firewall with respect to downloading from https://www.cmake.org (default = \""+default_https_proxy+"\")." )
-
-clp.add_option(
   "--install-dir", dest="installDir", type="string", default=defInstallDir,
   help="The install directory for CMake (default = "+defInstallDir+"." )
 
@@ -235,25 +229,12 @@ def DetectLatestCMakeBuilds(basedir, baseurl, vdir):
 
   print "Querying " + url + "..."
 
-  proxyDict = {}
+  proxies = None # if None, use proxy from env var http_proxy
   if not options.httpProxy == "":
-    proxyDict["http"] = options.httpProxy
+    proxies = {'http': options.httpProxy}
 
-  if not options.httpsProxy == "":
-    proxyDict["https"] = options.httpsProxy
-
-  if len(proxyDict) != 0:
-    proxies = urllib2.ProxyHandler(proxyDict)
-  else:
-    #no proxies set so use proxies from environment
-    proxies = urllib2.ProxyHandler()
-
-  opener   = urllib2.build_opener(proxies)
-  url_file = opener.open(url)
-
-  outfile = open(filename, "w")
-  outfile.write(url_file.read())
-  outfile.close()
+  opener = urllib.FancyURLopener(proxies=proxies)
+  opener.retrieve(url, filename)
 
   print "Detecting ..."
 
@@ -340,25 +321,12 @@ def Download(basedir, url):
     if not os.path.exists(basedir):
       raise
 
-  proxyDict = {}
+  proxies = None # if None, use proxy from env var http_proxy
   if not options.httpProxy == "":
-    proxyDict["http"] = options.httpProxy
+    proxies = {'http': options.httpProxy}
 
-  if not options.httpsProxy == "":
-    proxyDict["https"] = options.httpsProxy
-
-  if len(proxyDict) != 0:
-    proxies = urllib2.ProxyHandler(proxyDict)
-  else:
-    #no proxies set so use proxies from environment
-    proxies = urllib2.ProxyHandler()
-
-  opener   = urllib2.build_opener(proxies)
-  url_file = opener.open(url)
-
-  outfile = open(filename, "wb")
-  outfile.write(url_file.read())
-  outfile.close()
+  opener = urllib.FancyURLopener(proxies=proxies)
+  opener.retrieve(url, filename)
 
 
 def Extract(basedir, url):
@@ -569,7 +537,6 @@ print "Script: download-cmake.py \\"
 if options.allPlatforms:
   print "  --all-platforms \\"
 print "  --http-proxy="+options.httpProxy+" \\"
-print "  --https-proxy="+options.httpsProxy+" \\"
 print "  --install-dir="+options.installDir+" \\"
 print "  --installer-type="+options.installerType+" \\"
 if options.skipDetect:
@@ -587,9 +554,6 @@ if options.symlinksDir != '':
 
 if not options.httpProxy and not default_http_proxy:
   print "\nWARNING: Could not detect default http proxy for '"+hostname+"'!"
-
-if not options.httpsProxy and not default_https_proxy:
-  print "\nWARNING: Could not detect default https proxy for '"+hostname+"'!"
 
 download_dir = "download_area"
 

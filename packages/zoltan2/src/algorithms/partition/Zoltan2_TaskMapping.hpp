@@ -11,12 +11,13 @@
 #include "Teuchos_ReductionOp.hpp"
 #include "Zoltan2_XpetraMultiVectorAdapter.hpp"
 
+#include "Teuchos_ConfigDefs.hpp" // define HAVE_MPI
 #include "Teuchos_Comm.hpp"
-#ifdef HAVE_ZOLTAN2_MPI
+#ifdef HAVE_MPI
 #  include "Teuchos_DefaultMpiComm.hpp"
 #else
 #  include "Teuchos_DefaultSerialComm.hpp"
-#endif // HAVE_ZOLTAN2_MPI
+#endif // HAVE_MPI
 
 //#define gnuPlot
 
@@ -813,7 +814,6 @@ public:
         ZOLTAN2_ALGMULTIJAGGED_SWAP(a[v+1], a[u+1], tmp);
         ZOLTAN2_ALGMULTIJAGGED_SWAP(a[v+2], a[u+2], tmp);
         ZOLTAN2_ALGMULTIJAGGED_SWAP(a[v+3], a[u+3], tmp);
-
       }
     }
     else {

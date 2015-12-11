@@ -65,10 +65,12 @@ struct SPMV<const KOKKOSSPARSE_IMPL_MV_SCALAR,
             Kokkos::LayoutLeft,
             KOKKOSSPARSE_IMPL_MV_DEVICE_TYPE,
             Kokkos::MemoryTraits<Kokkos::Unmanaged|Kokkos::RandomAccess>,
+            Kokkos::Impl::ViewDefault,
             KOKKOSSPARSE_IMPL_MV_SCALAR*,
             Kokkos::LayoutLeft,
             KOKKOSSPARSE_IMPL_MV_DEVICE_TYPE,
-            Kokkos::MemoryTraits<Kokkos::Unmanaged> >
+            Kokkos::MemoryTraits<Kokkos::Unmanaged>,
+            Kokkos::Impl::ViewDefault>
 {
   typedef CrsMatrix<const KOKKOSSPARSE_IMPL_MV_SCALAR,
                     const size_t,
@@ -78,11 +80,13 @@ struct SPMV<const KOKKOSSPARSE_IMPL_MV_SCALAR,
   typedef Kokkos::View<const KOKKOSSPARSE_IMPL_MV_SCALAR*,
                        Kokkos::LayoutLeft,
                        KOKKOSSPARSE_IMPL_MV_DEVICE_TYPE,
-                       Kokkos::MemoryTraits<Kokkos::Unmanaged|Kokkos::RandomAccess> > XVector;
+                       Kokkos::MemoryTraits<Kokkos::Unmanaged|Kokkos::RandomAccess>,
+                       Kokkos::Impl::ViewDefault> XVector;
   typedef Kokkos::View<KOKKOSSPARSE_IMPL_MV_SCALAR*,
                        Kokkos::LayoutLeft,
                        KOKKOSSPARSE_IMPL_MV_DEVICE_TYPE,
-                       Kokkos::MemoryTraits<Kokkos::Unmanaged> > YVector;
+                       Kokkos::MemoryTraits<Kokkos::Unmanaged>,
+                       Kokkos::Impl::ViewDefault> YVector;
   typedef typename YVector::non_const_value_type Scalar;
 
   static void
