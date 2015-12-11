@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/LinSysMerger.h
   \author    J. Bakosi
-  \date      Wed 09 Dec 2015 08:58:13 AM MST
+  \date      Fri 11 Dec 2015 12:50:29 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Linear system merger
   \details   Linear system merger.
@@ -409,16 +409,17 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
     //!   quicker. This procedure must find the PE for the id.
     //! \return PE that owns global row id
     int pe( std::size_t gid ) {
-      int pe = -1;
+      int p = -1;
       auto it = m_pe.find( gid );
       if (it != end(m_pe))
-        pe = it->second;
+        p = it->second;
       else
-        for (const auto& p : m_div)
-          if (gid >= p.first.first && gid < p.first.second)
-            pe = m_pe[ gid ] = p.second;
-      Assert( pe >= 0, "PE not found for node id " + std::to_string(gid) );
-      return pe;
+        for (const auto& d : m_div)
+          if (gid >= d.first.first && gid < d.first.second)
+            p = m_pe[ gid ] = d.second;
+      Assert( p >= 0, "PE not found for node id " + std::to_string(gid) );
+      Assert( p < CkNumPes(), "Assigning to nonexistent PE" );
+      return p;
     }
 
     //! Check if we have done our part in storing and exporting global row ids

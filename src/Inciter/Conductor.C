@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Conductor.C
   \author    J. Bakosi
-  \date      Fri 11 Dec 2015 12:22:48 PM MST
+  \date      Fri 11 Dec 2015 12:39:52 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Conductor drives the time integration of a PDE
   \details   Conductor drives the time integration of a PDE
@@ -259,9 +259,11 @@ Conductor::computeCost()
     // Associate upper row index to PE
     m_div[ p.first ].second = upper;
   }
-  // Since m_div contains the dividers (global mesh point indices) at which the
-  // linear system assembly is divided among PEs, but Hypre and LinSysMerger
-  // expects exclusive upper indices, so we increase the last one by one.
+  // The map m_div contains the dividers (global mesh point indices) at which
+  // the linear system assembly is divided among PEs. However, Hypre and thus
+  // LinSysMerger expect exclusive upper indices, so we increase the last one by
+  // one here. Note that the cost calculation, Partitioner::cost() also expects
+  // exclusive upper indices.
   ++std::prev(m_div.end())->second.second;
 
   Assert( m_div.size() == CkNumPes(), "Size of divisions map must equal the "
@@ -323,7 +325,7 @@ Conductor::costed( int pe, tk::real cost )
 
     // Estimate communication cost across all PEs
     auto stat = estimate( m_cost );
-    m_print.diagstart( "Communication cost of linear system assembly: avg = " +
+    m_print.diagstart( "Communication cost: avg = " +
                        std::to_string(stat.first) + ", std = " +
                        std::to_string(stat.second) + '\n' );
 

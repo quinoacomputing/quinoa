@@ -216,6 +216,7 @@ ExternalProject_Add(
                 ${CHARM_ARCH}
                 ${CHARM_COMPILER}
                 --build-shared
+                --with-production
                 -j${PROCESSOR_COUNT}
                 ${CXXFLAGS}
   DOWNLOAD_COMMAND ""
@@ -287,6 +288,7 @@ ExternalProject_Add(
              -D TPL_ENABLE_MPI:BOOL=ON
              -D Trilinos_ENABLE_Zoltan2:BOOL=ON
              -D Zoltan2_ENABLE_Experimental:BOOL=ON
+             -D Trilinos_ENABLE_ALL_OPTIONAL_PACKAGES=OFF
              -D Trilinos_ENABLE_SEACASExodus:BOOL=ON
              -D Trilinos_ENABLE_SEACASNemesis:BOOL=ON
              -D Trilinos_ENABLE_SEACASExodiff:BOOL=ON

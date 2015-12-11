@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Spawner.h
   \author    J. Bakosi
-  \date      Thu 03 Dec 2015 01:41:12 PM MST
+  \date      Fri 11 Dec 2015 12:40:42 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Charm++ chare spawner group
   \details   Charm++ chare spawner group.
@@ -30,8 +30,6 @@
 #endif
 
 namespace inciter {
-
-extern std::unordered_map< int, std::vector< std::size_t > > g_element;
 
 //! Spawner Charm++ chare group class
 //! \details Instantiations of Spawner comprise a processor aware Charm++ chare
