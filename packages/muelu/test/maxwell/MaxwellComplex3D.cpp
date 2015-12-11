@@ -63,7 +63,6 @@
 #include <BelosConfigDefs.hpp>
 #include <BelosLinearProblem.hpp>
 #include <BelosSolverFactory.hpp>
-#include <BelosTpetraAdapter.hpp>
 
 int main(int argc, char *argv[]) {
 
@@ -206,16 +205,16 @@ int main(int argc, char *argv[]) {
     Teuchos::ParameterList params, params11, params22;
     params.set("refmaxwell: disable add-on",false);
     params.set("refmaxwell: max coarse size",25);
-    params.set("max levels",4);
-    params11.set("smoother: type","KRYLOV");
-    params11.set("smoother: type","KRYLOV");
-    //    params11.set("krylov: number of iterations",3);
-    //    params22.set("krylov: number of iterations",3);
-    params.set("refmaxwell: 11list",params11);
-    params.set("refmaxwell: 22list",params22);
+    params.set("refmaxwell: max levels",4);
+    params.set("refmaxwell: edge smoother","KRYLOV");
+    params.set("refmaxwell: node smoother","KRYLOV");
+    params11.set("krylov: number of iterations",3);
+    params22.set("krylov: number of iterations",3);
+    params.set("refmaxwell: edge smoother list",params11);
+    params.set("refmaxwell: node smoother list",params22);
     // construct preconditioner
-    RCP<MueLu::RefMaxwell<SC,LO,GO,NO> > preconditioner
-      = rcp( new MueLu::RefMaxwell<SC,LO,GO,NO>(SM_Matrix,D0_Matrix,M0inv_Matrix,
+    RCP<RefMaxwell> preconditioner
+      = rcp( new RefMaxwell(SM_Matrix,D0_Matrix,M0inv_Matrix,
             M1_Matrix,Teuchos::null,coords,params) );
 
     // setup LHS, RHS

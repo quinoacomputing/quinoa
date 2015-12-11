@@ -949,7 +949,6 @@ const char *do_rescan(char *string)
 
 const char *do_if(double x)
 {
-  aprepro->inIfdefGetvar = false; 
   aprepro->lexer->if_handler(x);
   return NULL;
 }

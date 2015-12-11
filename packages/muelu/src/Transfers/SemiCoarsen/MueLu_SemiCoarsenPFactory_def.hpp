@@ -48,11 +48,10 @@
 
 #include <stdlib.h>
 
-#include <Teuchos_LAPACK.hpp>
-
 #include <Xpetra_CrsMatrixWrap.hpp>
 #include <Xpetra_ImportFactory.hpp>
 #include <Xpetra_Matrix.hpp>
+#include <Xpetra_StridedMapFactory.hpp>
 #include <Xpetra_MultiVectorFactory.hpp>
 #include <Xpetra_VectorFactory.hpp>
 
@@ -61,6 +60,9 @@
 
 #include "MueLu_MasterList.hpp"
 #include "MueLu_Monitor.hpp"
+#include "MueLu_PerfUtils.hpp"
+#include "MueLu_Utilities.hpp"
+#include <Teuchos_LAPACK.hpp>
 
 namespace MueLu {
 
@@ -193,7 +195,7 @@ namespace MueLu {
       ArrayRCP<double> z = fineCoords->getDataNonConst(2);
 
       // determine the maximum and minimum z coordinate value on the current processor.
-      double zval_max = -Teuchos::ScalarTraits<double>::one() / Teuchos::ScalarTraits<double>::sfmin();
+      double zval_max = -Teuchos::ScalarTraits<double>::one() / Teuchos::ScalarTraits<double>::sfmin();;
       double zval_min =  Teuchos::ScalarTraits<double>::one() / Teuchos::ScalarTraits<double>::sfmin();
       for ( ArrayRCP<double>::iterator it = z.begin(); it != z.end(); ++it) {
         if(*it > zval_max) zval_max = *it;

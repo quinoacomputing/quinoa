@@ -79,6 +79,10 @@
 #include <Teuchos_UnitTestHarness.hpp>
 #include <iostream>
 
+#if defined(HAVE_IFPACK2_QD) && !defined(HAVE_TPETRA_EXPLICIT_INSTANTIATION)
+#include <qd/dd_real.h>
+#endif
+
 // Xpetra / Galeri
 #ifdef HAVE_IFPACK2_XPETRA
 #include <Xpetra_ConfigDefs.hpp>
@@ -97,7 +101,7 @@
 #include <Ifpack2_OverlappingRowMatrix.hpp>
 #include <Ifpack2_CreateOverlapGraph.hpp>
 
-namespace { // (anonymous)
+namespace {
 
 using Teuchos::ArrayRCP;
 using Teuchos::Comm;
@@ -144,7 +148,6 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL(Ifpack2OverlappingRowMatrix, Test0, Scalar, LO
   out << "This test requires building with Xpetra enabled." << endl;
 #else
   typedef Tpetra::CrsMatrix<Scalar,LO,GO,Node>       CrsType;
-  typedef Tpetra::RowMatrix<Scalar,LO,GO,Node>       row_matrix_type;
   typedef Xpetra::TpetraCrsMatrix<Scalar,LO,GO,Node> XCrsType;
   typedef Xpetra::Map<LO,GO,Node>                    XMapType;
   typedef Xpetra::MultiVector<Scalar,LO,GO,Node>     XMVectorType;
@@ -209,10 +212,10 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL(Ifpack2OverlappingRowMatrix, Test0, Scalar, LO
   // Build the overlapping matrix using class //
   // Ifpack2::OverlappingRowMatrix.           //
   // ======================================== //
-  RCP<Ifpack2::OverlappingRowMatrix<row_matrix_type> > B;
+  RCP<Ifpack2::OverlappingRowMatrix<CrsType> > B;
 
   try {
-    B = rcp (new Ifpack2::OverlappingRowMatrix<row_matrix_type> (A, OverlapLevel));
+    B = rcp (new Ifpack2::OverlappingRowMatrix<CrsType> (A, OverlapLevel));
   } catch (std::exception& e) {
     lclSuccess = 0;
     errStrm << "Ifpack2::OverlappingRowMatrix constructor threw exception: " << e.what () << endl;
@@ -276,16 +279,12 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL(Ifpack2OverlappingRowMatrix, Test0, Scalar, LO
 #define UNIT_TEST_GROUP_SCALAR_ORDINAL( Scalar, LO, GO ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT( Ifpack2OverlappingRowMatrix, Test0, Scalar, LO, GO )
 
-// mfh 26 Aug 2015: Ifpack2::OverlappingRowMatrix was only getting
-// tested for Scalar = double, LocalOrdinal = int, GlobalOrdinal =
-// int, and the default Node type.  As part of the fix for Bug 6358,
-// I'm removing the assumption that GlobalOrdinal = int exists.
 
-typedef Tpetra::MultiVector<>::scalar_type default_scalar_type;
-typedef Tpetra::MultiVector<>::local_ordinal_type default_local_ordinal_type;
-typedef Tpetra::MultiVector<>::global_ordinal_type default_global_ordinal_type;
+UNIT_TEST_GROUP_SCALAR_ORDINAL(double, int, int)
 
-UNIT_TEST_GROUP_SCALAR_ORDINAL(default_scalar_type, default_local_ordinal_type, default_global_ordinal_type)
+#if defined(HAVE_IFPACK2_QD) && !defined(HAVE_TPETRA_EXPLICIT_INSTANTIATION)
+UNIT_TEST_GROUP_SCALAR_ORDINAL(dd_real, int, int)
+#endif
 
-} // namespace (anonymous)
+}//namespace <anonymous>
 

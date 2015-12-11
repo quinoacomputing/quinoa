@@ -42,11 +42,21 @@
 */
 
 #include <Tpetra_ConfigDefs.hpp>
-#include <Tpetra_Map.hpp>
+#include <Teuchos_UnitTestHarness.hpp>
+#include <Teuchos_Tuple.hpp>
 #include <Teuchos_Array.hpp>
 #include <Teuchos_DefaultComm.hpp>
-#include <Teuchos_Tuple.hpp>
-#include <Teuchos_UnitTestHarness.hpp>
+#include <Tpetra_Map.hpp>
+
+#ifdef HAVE_TPETRA_EXPLICIT_INSTANTIATION
+#  include "Tpetra_Map_def.hpp"
+#  include "Tpetra_Directory_def.hpp"
+#  ifdef HAVE_TPETRA_FIXED_HASH_TABLE
+#    include "Tpetra_Details_FixedHashTable_def.hpp"
+#  else
+#    include "Tpetra_HashTable_def.hpp"
+#  endif // HAVE_TPETRA_FIXED_HASH_TABLE
+#endif
 
 using Tpetra::global_size_t;
 using Teuchos::Array;
@@ -69,7 +79,7 @@ TEUCHOS_UNIT_TEST( Map, Bug5822_StartWith3Billion )
   TEUCHOS_TEST_FOR_EXCEPTION(numProcs != 2, std::logic_error,
     "This test only makes sense to run with 2 MPI processes.");
 
-#ifdef HAVE_TPETRA_INT_LONG_LONG
+#ifdef HAVE_TEUCHOS_LONG_LONG_INT
   typedef long long GO;
   if (sizeof (long long) <= 4) {
     out << "sizeof (long long) = " << sizeof (long long) << " <= 4.  "
@@ -77,7 +87,7 @@ TEUCHOS_UNIT_TEST( Map, Bug5822_StartWith3Billion )
       "since the test is supposed to exercise GIDs > 2 billion.";
     return;
   }
-#else // NOT HAVE_TPETRA_INT_LONG_LONG
+#else // NOT HAVE_TEUCHOS_LONG_LONG_INT
   typedef long GO;
   if (sizeof (long) <= 4) {
     out << "sizeof (long) = " << sizeof (long) << " <= 4.  "
@@ -85,7 +95,7 @@ TEUCHOS_UNIT_TEST( Map, Bug5822_StartWith3Billion )
       "since the test is supposed to exercise GIDs > 2 billion.";
     return;
   }
-#endif // HAVE_TPETRA_INT_LONG_LONG
+#endif // HAVE_TEUCHOS_LONG_LONG_INT
   typedef Tpetra::Map<>::local_ordinal_type LO;
   typedef Tpetra::Details::DefaultTypes::node_type NT;
   typedef Tpetra::Map<LO, GO, NT> map_type;

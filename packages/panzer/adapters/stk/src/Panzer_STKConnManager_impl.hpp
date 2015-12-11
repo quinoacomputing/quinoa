@@ -77,7 +77,7 @@ private:
 
 template <typename GO>
 STKConnManager<GO>::STKConnManager(const Teuchos::RCP<STK_Interface> & stkMeshDB)
-   : stkMeshDB_(stkMeshDB), ownedElementCount_(0), hasElementsAcrossInterface_(false)
+   : stkMeshDB_(stkMeshDB), ownedElementCount_(0)
 {
 }
 
@@ -279,11 +279,6 @@ void STKConnManager<GO>::buildConnectivity(const panzer::FieldPattern & fp)
    }
 
    applyPeriodicBCs( fp, nodeOffset, edgeOffset, faceOffset, cellOffset);
-
-   // This method does not modify connectivity_. But it should be called here
-   // because the data it initializes should be available at the same time as
-   // connectivity_.
-   applyInterfaceConditions();
 }
 
 template <typename GO>
@@ -327,9 +322,6 @@ void STKConnManager<GO>::applyPeriodicBCs( const panzer::FieldPattern & fp, Glob
       else if((*matchTypes)[m] == 1){
         offset0 = stkMeshDB_->getMaxEntityId(stkMeshDB_->getNodeRank());
         offset1 = edgeOffset-offset0;
-      } else if((*matchTypes)[m] == 2){
-        offset0 = stkMeshDB_->getMaxEntityId(stkMeshDB_->getNodeRank())+stkMeshDB_->getMaxEntityId(stkMeshDB_->getEdgeRank());
-        offset1 = faceOffset-offset0;
       } else
         TEUCHOS_ASSERT(false);
 
@@ -362,53 +354,6 @@ void STKConnManager<GO>::getDofCoords(const std::string & blockId,
    // setup output array
    points.resize(localCellIds.size(),numIds,dim);
    coordProvider.getInterpolatoryCoordinates(vertices,points);
-}
-
-inline std::size_t
-getElementIdx(const std::vector<stk_classic::mesh::Entity*>& elements,
-              const stk_classic::mesh::Entity* const e)
-{
-  return static_cast<std::size_t>(
-    std::distance(elements.begin(), std::find(elements.begin(), elements.end(), e)));
-}
-
-template <typename GO>
-void STKConnManager<GO>::applyInterfaceConditions()
-{
-  std::vector<std::string> sideset_names;
-  stkMeshDB_->getSidesetNames(sideset_names);
-  for (std::vector<std::string>::const_iterator ssni = sideset_names.begin();
-       ssni != sideset_names.end(); ++ssni) {
-    std::vector<stk_classic::mesh::Entity*> sides;
-    stkMeshDB_->getAllSides(*ssni, sides);
-    for (std::vector<stk_classic::mesh::Entity*>::const_iterator si = sides.begin();
-         si != sides.end(); ++si) {
-      const stk_classic::mesh::Entity* const side = *si;
-      const stk_classic::mesh::PairIterRelation
-        relations = side->relations(stkMeshDB_->getElementRank());
-      if (relations.size() != 2) {
-        // If relations.size() != 2 for one side in the sideset, then it's true
-        // for all, including the first.
-        TEUCHOS_ASSERT(si == sides.begin());
-        // This lets us move on to the next sideset immediately.
-        break;
-      }
-      const std::size_t ea_id = getElementIdx(*elements_, relations[0].entity()),
-        eb_id = getElementIdx(*elements_, relations[1].entity());
-      elmtToInterfaceElmt_[ea_id] = eb_id;
-      elmtToInterfaceElmt_[eb_id] = ea_id;
-      hasElementsAcrossInterface_ = true;
-    }
-  }
-}
-
-template <typename GO>
-bool STKConnManager<GO>::getElementAcrossInterface(const LocalOrdinal& el, LocalOrdinal& el_other) const
-{
-  typename std::map<LocalOrdinal,LocalOrdinal>::const_iterator it = elmtToInterfaceElmt_.find(el);
-  if (it == elmtToInterfaceElmt_.end()) return false;
-  el_other = it->second;
-  return true;
 }
 
 }

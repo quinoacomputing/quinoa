@@ -57,10 +57,10 @@
 #include "ROL_Sacado_Objective.hpp"
 #include "ROL_Sacado_EqualityConstraint.hpp"
 
+#include "ROL_LineSearchStep.hpp"
 #include "ROL_Algorithm.hpp"
-#include "ROL_CompositeStep.hpp"
-#include "ROL_ConstraintStatusTest.hpp"
 #include "ROL_EqualityConstraint.hpp"
+#include "ROL_CompositeStepSQP.hpp"
 
 #include "Teuchos_oblackholestream.hpp"
 #include "Teuchos_GlobalMPISession.hpp"
@@ -123,6 +123,12 @@ int main(int argc, char **argv)
     (*sol_rcp)[3] = -7.636430781841294e-01;
     (*sol_rcp)[4] = -7.636430781841294e-01;
 
+    Teuchos::ParameterList parlist;
+
+    // Define Step
+    parlist.set("Nominal SQP Optimality Solver Tolerance", 1.e-2);
+    ROL::CompositeStepSQP<RealT> step(parlist);
+
     RealT left = -1e0, right = 1e0;
     Teuchos::RCP<std::vector<RealT> > xtest_rcp = Teuchos::rcp( new std::vector<RealT> (dim, 0.0) );
     Teuchos::RCP<std::vector<RealT> > g_rcp = Teuchos::rcp( new std::vector<RealT> (dim, 0.0) );
@@ -163,15 +169,23 @@ int main(int argc, char **argv)
     RealT augtol = 1e-8;
     constr->solveAugmentedSystem(v1, v2, d, vc, xtest, augtol);
     
-    // Define algorithm.
-    Teuchos::RCP<Teuchos::ParameterList> parlist = Teuchos::rcp(new Teuchos::ParameterList());
-    std::string paramfile = "parameters.xml";
-    Teuchos::updateParametersFromXmlFile(paramfile,parlist.ptr());
-    ROL::Algorithm<RealT> algo("Composite Step", *parlist);
+    // Define Status Test
+    RealT gtol  = 1e-12;  // norm of gradient tolerance
+    RealT ctol  = 1e-12;  // norm of constraint tolerance
+    RealT stol  = 1e-18;  // norm of step tolerance
+    int   maxit = 1000;    // maximum number of iterations
+    ROL::StatusTestSQP<RealT> status(gtol, ctol, stol, maxit);    
 
-    // Run algorithm.
+    // Define Algorithm
+    ROL::DefaultAlgorithm<RealT> algo(step, status, false);
+
+    // Run Algorithm
     vl.zero();
-    algo.run(x, g, vl, vc, *obj, *constr, true, *outStream);
+
+    std::vector<std::string> output = algo.run(x, g, vl, vc, *obj, *constr, false);
+    for ( unsigned i = 0; i < output.size(); i++ ) {
+      *outStream << output[i];
+    }
 
     // Compute Error
     *outStream << "\nReference solution x_r =\n";

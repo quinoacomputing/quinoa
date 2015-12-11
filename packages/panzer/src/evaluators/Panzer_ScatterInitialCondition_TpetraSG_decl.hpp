@@ -46,8 +46,6 @@
 
 #include "Panzer_SGTpetraLinearObjContainer.hpp"
 
-#include "Panzer_Evaluator_WithBaseImpl.hpp"
-
 namespace panzer {
 
 // **************************************************************
@@ -55,7 +53,7 @@ namespace panzer {
 // **************************************************************
 template<typename TRAITS,typename LO,typename GO,typename NodeT>
 class ScatterInitialCondition_Tpetra<panzer::Traits::SGResidual,TRAITS,LO,GO,NodeT>
-  : public panzer::EvaluatorWithBaseImpl<TRAITS>,
+  : public PHX::EvaluatorWithBaseImpl<TRAITS>,
     public PHX::EvaluatorDerived<panzer::Traits::SGResidual, TRAITS>,
     public panzer::CloneableEvaluator {
   
@@ -100,7 +98,7 @@ private:
 // **************************************************************
 template<typename TRAITS,typename LO,typename GO,typename NodeT>
 class ScatterInitialCondition_Tpetra<panzer::Traits::SGJacobian,TRAITS,LO,GO,NodeT>
-  : public panzer::EvaluatorWithBaseImpl<TRAITS>,
+  : public PHX::EvaluatorWithBaseImpl<TRAITS>,
     public PHX::EvaluatorDerived<panzer::Traits::SGJacobian, TRAITS>, 
     public panzer::CloneableEvaluator {
   

@@ -46,7 +46,6 @@
 #include "Teuchos_UnitTestHarness.hpp"
 
 #include <Xpetra_MultiVectorFactory.hpp>
-#include <Xpetra_MatrixMatrix.hpp>
 
 #include "MueLu_config.hpp"
 
@@ -77,7 +76,7 @@ namespace MueLuTests {
     int nx = 37*comm->getSize();
     int ny=nx;
     RCP<Matrix> Op = TestHelpers::TestFactory<SC, LO, GO, NO>::Build2DPoisson(nx,ny,Xpetra::UseEpetra);
-    RCP<Matrix> OpOp = Xpetra::MatrixMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node>::Multiply(*Op,false,*Op,false,out);
+    RCP<Matrix> OpOp = Utils::Multiply(*Op,false,*Op,false,out);
     RCP<MultiVector> result = MultiVectorFactory::Build(OpOp->getRangeMap(),1);
     RCP<MultiVector> X = MultiVectorFactory::Build(OpOp->getDomainMap(),1);
     Teuchos::Array<ST::magnitudeType> xnorm(1);
@@ -98,7 +97,7 @@ namespace MueLuTests {
 
     //Calculate result = (Op*Op)*X for Tpetra
     Op = TestHelpers::TestFactory<SC, LO, GO, NO>::Build2DPoisson(nx,ny,Xpetra::UseTpetra);
-    OpOp = Xpetra::MatrixMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node>::Multiply(*Op,false,*Op,false,out);
+    OpOp = Utils::Multiply(*Op,false,*Op,false,out);
     result = MultiVectorFactory::Build(OpOp->getRangeMap(),1);
     X = MultiVectorFactory::Build(OpOp->getDomainMap(),1);
     X->setSeed(8675309);

@@ -70,10 +70,14 @@ private:
 
   std::vector<Real> dualVariables_;
 
-  unsigned size_;
+  Teuchos::RCP<Vector<Real> > tG_;
+  Teuchos::RCP<Vector<Real> > eG_;
+  Teuchos::RCP<Vector<Real> > yG_;
 
+  unsigned size_;
   unsigned maxSize_;
   unsigned remSize_;
+
   Real coeff_;
 
   bool isInitialized_;
@@ -108,11 +112,6 @@ private:
     size_++;
   }
 
-protected:
-  Teuchos::RCP<Vector<Real> > tG_;
-  Teuchos::RCP<Vector<Real> > eG_;
-  Teuchos::RCP<Vector<Real> > yG_;
-  
 /***********************************************************************************************/
 /***************** BUNDLE MODIFICATION AND ACCESS ROUTINES *************************************/
 /***********************************************************************************************/
@@ -251,29 +250,12 @@ public:
     size_++;
   }
 
-  // TT: adding access routines for derived classes
-protected:
-  
-  Real getDualVariables (const unsigned i){
-    return dualVariables_[i];
-  }
-  
-  void setDualVariables(const unsigned i, const Real val) {
-    dualVariables_[i] = val;
-  }
-
-  void resetDualVariables(void){
-    dualVariables_.assign(size_,0.0);
-  }
-
 /***********************************************************************************************/
 /***************** DUAL CUTTING PLANE PROBLEM ROUTINES *****************************************/
 /***********************************************************************************************/
-protected:
+private:
   Teuchos::RCP<Vector<Real> > gx_;
   Teuchos::RCP<Vector<Real> > ge_;
-
-private:
   std::set<unsigned> workingSet_;
   std::set<unsigned> nworkingSet_;
 

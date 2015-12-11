@@ -47,8 +47,6 @@
 
 #include "Panzer_SGEpetraLinearObjContainer.hpp"
 
-#include "Panzer_Evaluator_WithBaseImpl.hpp"
-
 //
 // Note: This file is included in Panzer_GatherSolution_Epetra.hpp
 //       so many of the required includes and data types are defined
@@ -63,7 +61,7 @@ namespace panzer {
 // **************************************************************
 template<typename TRAITS,typename LO,typename GO>
 class GatherSolution_Epetra<panzer::Traits::SGResidual,TRAITS,LO,GO>
-  : public panzer::EvaluatorWithBaseImpl<TRAITS>,
+  : public PHX::EvaluatorWithBaseImpl<TRAITS>,
     public PHX::EvaluatorDerived<panzer::Traits::SGResidual, TRAITS>,
     public panzer::CloneableEvaluator  {
    
@@ -112,7 +110,7 @@ private:
 // **************************************************************
 template<typename TRAITS,typename LO,typename GO>
 class GatherSolution_Epetra<panzer::Traits::SGJacobian,TRAITS,LO,GO>
-  : public panzer::EvaluatorWithBaseImpl<TRAITS>,
+  : public PHX::EvaluatorWithBaseImpl<TRAITS>,
     public PHX::EvaluatorDerived<panzer::Traits::SGJacobian, TRAITS>,
     public panzer::CloneableEvaluator  {
   

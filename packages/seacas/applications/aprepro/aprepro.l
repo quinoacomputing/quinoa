@@ -49,10 +49,9 @@ YY_BUFFER_STATE file_pointer[MAX_INCLUDE_DEPTH];
 file_rec ap_file_list[MAX_INCLUDE_DEPTH];
 extern int nfile;
 
-int in_ifdef_getvar = False;
+int ifdef;
 int file_must_exist = 0; /* Global used by include/conditional include */
 #define LINENUM_INC	ap_file_list[nfile].lineno++
-
 
 static int get_input(char *buf, int size);
 #define YY_INPUT(buf,result,max_size) \
@@ -293,8 +292,6 @@ integer {D}+({E})?
    * a line.
    */
   {WS}"{"[Ii]"fdef"{WS}"(" { 
-    /* Used to avoid undefined variable warnings in old ifdef/ifndef construct */
-    in_ifdef_getvar = True; 
     unput('(');
     unput('f');
     unput('e');
@@ -306,8 +303,6 @@ integer {D}+({E})?
   }
 
   {WS}"{"[Ii]"fndef"{WS}"(" {
-    /* Used to avoid undefined variable warnings in old ifdef/ifndef construct */
-    in_ifdef_getvar = True; 
     unput('(');
     unput('f');
     unput('e');
@@ -529,9 +524,8 @@ integer {D}+({E})?
   {id} {
     symrec *s;
     s = getsym(yytext);
-    if (s == 0) {
+    if (s == 0)
       s = putsym (yytext, UNDVAR, 0);
-    }
     yylval.tptr = s;
     return(s->type);
   }
@@ -700,11 +694,6 @@ void yyerror (char *s)
 
 void undefined_warning (char *var)
 {
-  if (in_ifdef_getvar == True) {
-    in_ifdef_getvar = False;
-    return;
-  }
-
   if (ap_options.warning_msg == True)
     fprintf (stderr,
 	     "Aprepro: WARN: Undefined variable '%s' (%s, line %d)\n",
@@ -875,7 +864,6 @@ char *do_case(double x)
 
 char *do_if(double x)
 {
-  in_ifdef_getvar = False;
   if_lvl++;
   if (if_lvl >= MAX_IF_NESTING) {
     yyerror("Too many nested if statements");

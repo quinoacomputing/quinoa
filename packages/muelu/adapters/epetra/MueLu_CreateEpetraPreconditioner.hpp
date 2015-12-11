@@ -17,17 +17,17 @@
 #include <MueLu_Utilities.hpp>
 #include <MueLu_HierarchyHelpers.hpp>
 
-//! @file
-//! @brief Various adapters that will create a MueLu preconditioner that is an Epetra_Operator.
+//! @file MueLu_CreateEpetraPreconditioner.hpp
 
 namespace MueLu {
 
-  /*!
+  /*! \fn CreateEpetraPreconditioner
     @brief Helper function to create a MueLu preconditioner that can be used by Epetra.
-    @ingroup MueLuAdapters
-    Given a EpetraCrs_Matrix, this function returns a constructed MueLu preconditioner.
+
+    Given a Epetra matrix, this function returns a constructed MueLu preconditioner.
+
     @param[in] inA Matrix
-    @param[in] paramListIn Parameter list
+    @param[in] paramList Parameter list
     @param[in] inCoords (optional) Coordinates.  The first vector is x, the second (if necessary) y, the third (if necessary) z.
     @param[in] inNullspace (optional) Near nullspace of the matrix.
     */
@@ -122,10 +122,11 @@ namespace MueLu {
     return rcp(new EpetraOperator(H));
   }
 
-  /*!
+  /*! \fn CreateEpetraPreconditioner
     @brief Helper function to create a MueLu preconditioner that can be used by Epetra.
-    @ingroup MueLuAdapters
-    Given a Epetra_CrsMatrix, this function returns a constructed MueLu preconditioner.
+
+    Given a Epetra matrix, this function returns a constructed MueLu preconditioner.
+
     @param[in] inA Matrix
     @param[in] inCoords (optional) Coordinates.  The first vector is x, the second (if necessary) y, the third (if necessary) z.
     @param[in] inNullspace (optional) Near nullspace of the matrix.
@@ -138,10 +139,11 @@ namespace MueLu {
     return CreateEpetraPreconditioner(inA, paramList, inCoords, inNullspace);
   }
 
-  /*!
+  /*! \fn CreateEpetraPreconditioner
     @brief Helper function to create a MueLu preconditioner that can be used by Epetra.
-    @ingroup MueLuAdapters
-    Given a Epetra_CrsMatrix, this function returns a constructed MueLu preconditioner.
+
+    Given a Epetra matrix, this function returns a constructed MueLu preconditioner.
+
     @param[in] inA Matrix
     @param[in] xmlFileName XML file containing MueLu options
     @param[in] inCoords (optional) Coordinates.  The first vector is x, the second (if necessary) y, the third (if necessary) z.

@@ -44,6 +44,7 @@
 
 #include <Teuchos_Assert.hpp>
 #include <Teuchos_CommHelpers.hpp>
+#include <Kokkos_NodeHelpers.hpp>
 
 #include "Tpetra_Vector.hpp"
 

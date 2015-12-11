@@ -47,17 +47,15 @@
 #include "Phalanx_Evaluator_Macros.hpp"
 #include "Phalanx_Field.hpp"
 
-#include "Panzer_Evaluator_Macros.hpp"
-
 namespace panzer {
     
 //! Interpolates basis DOF values to IP DOF values
-PANZER_EVALUATOR_CLASS(ScalarToVector)
+PHX_EVALUATOR_CLASS(ScalarToVector)
   
   std::vector< PHX::MDField<ScalarT,Cell,Point> > scalar_fields;
   PHX::MDField<ScalarT,Cell,Point,Dim> vector_field;
 
-PANZER_EVALUATOR_CLASS_END
+PHX_EVALUATOR_CLASS_END
 
 }
 

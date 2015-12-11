@@ -104,7 +104,6 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL(Ifpack2Amesos2Wrapper, Test0, Scalar, LocalOrd
   using Teuchos::RCP;
   typedef Tpetra::Map<LocalOrdinal,GlobalOrdinal,Node> map_type;
   typedef Tpetra::CrsMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> crs_matrix_type;
-  typedef Tpetra::RowMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> row_matrix_type;
   typedef Tpetra::MultiVector<Scalar,LocalOrdinal,GlobalOrdinal,Node> mv_type;
 
   std::string version = Ifpack2::Version();
@@ -116,7 +115,7 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL(Ifpack2Amesos2Wrapper, Test0, Scalar, LocalOrd
 
   RCP<const crs_matrix_type> crsmatrix = tif_utest::create_test_matrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> (rowmap);
 
-  Ifpack2::Details::Amesos2Wrapper<row_matrix_type> prec (crsmatrix);
+  Ifpack2::Details::Amesos2Wrapper<crs_matrix_type> prec (crsmatrix);
 
   Teuchos::ParameterList params;
   params.set("Amesos2 solver name","superlu");
@@ -164,7 +163,6 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL(Ifpack2Amesos2Wrapper, Test1, Scalar, LocalOrd
   using Teuchos::RCP;
   typedef Tpetra::Map<LocalOrdinal,GlobalOrdinal,Node> map_type;
   typedef Tpetra::CrsMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> crs_matrix_type;
-  typedef Tpetra::RowMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> row_matrix_type;
   typedef Tpetra::MultiVector<Scalar,LocalOrdinal,GlobalOrdinal,Node> mv_type;
 
   std::string version = Ifpack2::Version();
@@ -176,7 +174,7 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL(Ifpack2Amesos2Wrapper, Test1, Scalar, LocalOrd
 
   RCP<const crs_matrix_type> crsmatrix = tif_utest::create_test_matrix3<Scalar,LocalOrdinal,GlobalOrdinal,Node>(rowmap);
 
-  Ifpack2::Details::Amesos2Wrapper<row_matrix_type> prec (crsmatrix);
+  Ifpack2::Details::Amesos2Wrapper<crs_matrix_type> prec (crsmatrix);
 
   Teuchos::ParameterList params;
 

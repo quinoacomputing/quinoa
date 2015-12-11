@@ -265,8 +265,7 @@ SystemInterface::SystemInterface()
     show_unmatched       (false),
     noSymmetricNameCheck (false),
     allowNameMismatch    (false),
-    doL1Norm             (false),
-    doL2Norm             (false),
+    doNorms              (false),
     pedantic             (false),
     interpolating        (false),
     by_name              (false),
@@ -453,11 +452,7 @@ void SystemInterface::enroll_options()
 		  "\t\tthe 1-based step number or 'last' for the last step on the database.\n"
 		  "\t\tExample: '-explicit 42:last' to match step 42 on database 1 with last step on database 2", 0);
   options_.enroll("norms", GetLongOption::NoValue,
-		  "Calculate L1 and L2 norms of variable differences and output if > 0.0", 0);
-  options_.enroll("l2norms", GetLongOption::NoValue,
 		  "Calculate L2 norm of variable differences and output if > 0.0", 0);
-  options_.enroll("l1norms", GetLongOption::NoValue,
-		  "Calculate L1 norm of variable differences and output if > 0.0", 0);
   options_.enroll("status", GetLongOption::NoValue,
 		  "Return exit status of 2 if the files are different. (default).", 0);
   options_.enroll("ignore_status", GetLongOption::NoValue,
@@ -753,14 +748,7 @@ bool SystemInterface::parse_options(int argc, char **argv)
     noSymmetricNameCheck = true;
   }
   if (options_.retrieve("norms")) {
-    doL1Norm = true;
-    doL2Norm = true;
-  }
-  if (options_.retrieve("l2norms")) {
-    doL2Norm = true;
-  }
-  if (options_.retrieve("l1norms")) {
-    doL1Norm = true;
+    doNorms = true;
   }
   if (options_.retrieve("pedantic")) {
     pedantic = true;
@@ -1042,18 +1030,7 @@ void SystemInterface::Parse_Command_File()
 	  else if ( abbreviation(tok1, "calculate", 3) &&
 		    abbreviation(tok2, "norms", 3) )
 	    {
-	      doL2Norm = true;
-	      doL1Norm = true;
-	    }
-	  else if ( abbreviation(tok1, "calculate", 3) &&
-		    abbreviation(tok2, "l2norms", 3) )
-	    {
-	      doL2Norm = true;
-	    }
-	  else if ( abbreviation(tok1, "calculate", 3) &&
-		    abbreviation(tok2, "l1norms", 3) )
-	    {
-	      doL1Norm = true;
+	      doNorms = true;
 	    }
 	  else if ( tok1 == "nodeset" &&
 		    abbreviation(tok2, "match", 3) )

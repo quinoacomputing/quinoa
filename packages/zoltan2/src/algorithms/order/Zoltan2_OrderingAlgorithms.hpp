@@ -52,9 +52,5 @@
 #include "Zoltan2_AlgSortedDegree.hpp"
 #include "Zoltan2_AlgAMD.hpp"
 
-#ifdef INCLUDE_ZOLTAN2_EXPERIMENTAL_WOLF
-#include <Zoltan2_AlgND.hpp>
-#endif
-
 
 #endif

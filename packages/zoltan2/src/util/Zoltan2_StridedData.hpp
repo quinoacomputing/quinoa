@@ -87,13 +87,11 @@ public:
    *  \param stride   the stride of the elements in the strided array.
    */
   StridedData(ArrayRCP<const scalar_t> x, int stride) :  
-    vec_(x), stride_(stride)
-    { }
+    vec_(x), stride_(stride) { }
 
   /*! \brief Default constructor.  A zero-length strided array.
    */
-  StridedData(): vec_(), stride_(0)
-    { }
+  StridedData(): vec_(), stride_(0) { }
 
   /*! \brief Return the length of the strided array.
    *
@@ -142,8 +140,7 @@ public:
   void getStridedList(size_t &len, const scalar_t *&vec, int &stride) const
   {
     len = vec_.size();
-    if (len != 0) vec = vec_.getRawPtr();
-    else          vec = NULL;
+    vec = vec_.getRawPtr();
     stride = stride_;
   }
 
@@ -169,8 +166,7 @@ template<typename lno_t, typename scalar_t>
   else if (stride_==1 && typeid(T()) == typeid(scalar_t())){
     array = vec_;
   }
-  else {
-    // Create an unstrided copy
+  else{
     Environment env;           // a default environment for error reporting
     size_t n = vec_.size() / stride_;
     T *tmp = new T [n];

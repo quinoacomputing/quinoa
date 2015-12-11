@@ -196,6 +196,7 @@ if (!ml_defines_have_printed && ML_Get_PrintLevel() > 0) {
 
 
    }
+  ML_random_init();
   return 0;
 }
 

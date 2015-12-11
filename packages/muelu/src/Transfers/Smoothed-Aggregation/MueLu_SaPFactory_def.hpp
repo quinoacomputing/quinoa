@@ -47,7 +47,6 @@
 #define MUELU_SAPFACTORY_DEF_HPP
 
 #include <Xpetra_Matrix.hpp>
-#include <Xpetra_IteratorOps.hpp> // containing routines to generate Jacobi iterator
 #include <sstream>
 
 #include "MueLu_SaPFactory_decl.hpp"
@@ -149,7 +148,7 @@ namespace MueLu {
         SC omega = dampingFactor / lambdaMax;
 
         // finalP = Ptent + (I - \omega D^{-1}A) Ptent
-        finalP = Xpetra::IteratorOps<Scalar,LocalOrdinal,GlobalOrdinal,Node>::Jacobi(omega, *invDiag, *A, *Ptent, finalP, GetOStream(Statistics2),std::string("MueLu::SaP-")+levelstr.str());
+        finalP = Utils::Jacobi(omega, *invDiag, *A, *Ptent, finalP, GetOStream(Statistics2),std::string("MueLu::SaP-")+levelstr.str());
       }
 
     } else {
@@ -183,6 +182,19 @@ namespace MueLu {
     }
 
   } //Build()
+
+  // deprecated
+  template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
+  void SaPFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::SetDampingFactor(Scalar dampingFactor) {
+    SetParameter("sa: damping factor", ParameterEntry(dampingFactor)); // revalidate
+  }
+
+  // deprecated
+  template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
+  Scalar SaPFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::GetDampingFactor() {
+    const ParameterList & pL = GetParameterList();
+    return as<Scalar>(pL.get<double>("sa: damping factor"));
+  }
 
 } //namespace MueLu
 

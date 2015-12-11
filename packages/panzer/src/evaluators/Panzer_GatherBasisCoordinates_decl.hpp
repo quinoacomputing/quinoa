@@ -55,8 +55,6 @@
 
 #include "Panzer_PureBasis.hpp"
 
-#include "Panzer_Evaluator_WithBaseImpl.hpp"
-
 namespace panzer {
 
 /** \brief Gathers coordinates for the basis function from the
@@ -64,7 +62,7 @@ namespace panzer {
 */
 template<typename EvalT, typename TRAITS>
 class GatherBasisCoordinates
-  : public panzer::EvaluatorWithBaseImpl<TRAITS>,
+  : public PHX::EvaluatorWithBaseImpl<TRAITS>,
     public PHX::EvaluatorDerived<EvalT, TRAITS> {
 public:
   

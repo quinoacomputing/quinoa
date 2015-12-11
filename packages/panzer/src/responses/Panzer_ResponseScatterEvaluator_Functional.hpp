@@ -55,8 +55,6 @@
 #include "Phalanx_Evaluator_Macros.hpp"
 #include "Phalanx_MDField.hpp"
 
-#include "Panzer_Evaluator_WithBaseImpl.hpp"
-
 namespace panzer {
 
 class FunctionalScatterBase {
@@ -65,7 +63,6 @@ public:
 
   virtual void scatterDerivative(const PHX::MDField<panzer::Traits::Jacobian::ScalarT,panzer::Cell> & cellIntegral,
                                  panzer::Traits::EvalData workset, 
-                                 WorksetDetailsAccessor& wda,
                                  Teuchos::ArrayRCP<double> & dgdx) const = 0;
 };
  
@@ -77,7 +74,6 @@ public:
 
    void scatterDerivative(const PHX::MDField<panzer::Traits::Jacobian::ScalarT,panzer::Cell> & cellIntegral,
                          panzer::Traits::EvalData workset, 
-                         WorksetDetailsAccessor& wda,
                          Teuchos::ArrayRCP<double> & dgdx) const;
 private:
  
@@ -88,7 +84,7 @@ private:
   * on each finite element cell.
   */
 template<typename EvalT, typename Traits>
-class ResponseScatterEvaluator_Functional : public panzer::EvaluatorWithBaseImpl<Traits>,
+class ResponseScatterEvaluator_Functional : public PHX::EvaluatorWithBaseImpl<Traits>,
                                             public PHX::EvaluatorDerived<EvalT, Traits>  { 
 public:
 
@@ -119,14 +115,13 @@ private:
 template <typename LO,typename GO>
 void FunctionalScatter<LO,GO>::scatterDerivative(const PHX::MDField<panzer::Traits::Jacobian::ScalarT,panzer::Cell> & cellIntegral,
                                                 panzer::Traits::EvalData workset, 
-                                                WorksetDetailsAccessor& wda,
                                                 Teuchos::ArrayRCP<double> & dgdx) const
 {
   std::vector<LO> LIDs;
  
   // for convenience pull out some objects from workset
-  std::string blockId = wda(workset).block_id;
-  const std::vector<std::size_t> & localCellIds = wda(workset).cell_local_ids;
+  std::string blockId = workset.block_id;
+  const std::vector<std::size_t> & localCellIds = workset.cell_local_ids;
 
   // scatter operation for each cell in workset
   for(std::size_t worksetCellIndex=0;worksetCellIndex<localCellIds.size();++worksetCellIndex) {

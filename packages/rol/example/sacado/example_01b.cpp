@@ -51,9 +51,8 @@
 
 #include <iostream>
 
-#include "ROL_Algorithm.hpp"
 #include "ROL_LineSearchStep.hpp"
-#include "ROL_StatusTest.hpp"
+#include "ROL_Algorithm.hpp"
 
 #include "Teuchos_oblackholestream.hpp"
 #include "Teuchos_GlobalMPISession.hpp"
@@ -91,10 +90,19 @@ int main(int argc, char **argv)
         // Load optimizer parameters form XML file
         Teuchos::RCP<Teuchos::ParameterList> parlist = Teuchos::rcp(new Teuchos::ParameterList());
         std::string paramfile = "parameters.xml";
-        Teuchos::updateParametersFromXmlFile(paramfile,parlist.ptr());
+        Teuchos::updateParametersFromXmlFile(paramfile,Teuchos::Ptr<Teuchos::ParameterList>(&*parlist));
 
-        // Define algorithm.
-        Algorithm<RealT> algo("Line Search",*parlist);
+        // Define Step
+        LineSearchStep<RealT> step(*parlist);
+
+        // Define Status Test
+        RealT gtol  = 1e-12;  // norm of gradient tolerance
+        RealT stol  = 1e-14;  // norm of step tolerance
+        int   maxit = 100;    // maximum number of iterations
+        StatusTest<RealT> status(gtol, stol, maxit);    
+
+        // Define Algorithm
+        DefaultAlgorithm<RealT> algo(step,status,false);
 
         // Iteration Vector
         Teuchos::RCP<std::vector<RealT> > x_rcp = Teuchos::rcp( new std::vector<RealT> (dim, 0.0) );
@@ -106,7 +114,10 @@ int main(int argc, char **argv)
         StdVector<RealT> x(x_rcp);
 
         // Run Algorithm
-        algo.run(x, obj, true, *outStream);
+        std::vector<std::string> output = algo.run(x, obj, false);
+        for ( unsigned i = 0; i < output.size(); i++ ) {
+            std::cout << output[i];
+        }
 
         // Get True Solution
         Teuchos::RCP<std::vector<RealT> > xtrue_rcp = Teuchos::rcp( new std::vector<RealT> (dim, 0.0) );

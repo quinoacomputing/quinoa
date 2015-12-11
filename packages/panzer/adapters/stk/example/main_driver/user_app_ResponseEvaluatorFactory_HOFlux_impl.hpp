@@ -34,7 +34,7 @@ buildAndRegisterEvaluators(const std::string & responseName,
     Teuchos::RCP<PHX::Evaluator<panzer::Traits> > eval 
         = Teuchos::rcp(new panzer::SubcellSum<EvalT,panzer::Traits>(pl));
  
-    this->template registerEvaluator<EvalT>(fm, eval);
+    fm.template registerEvaluator<EvalT>(eval);
   }
 
   panzer::ResponseEvaluatorFactory_Functional<EvalT,LO,GO>::buildAndRegisterEvaluators(responseName,fm,physicsBlock,user_data);

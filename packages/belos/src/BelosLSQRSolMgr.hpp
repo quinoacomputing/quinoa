@@ -674,7 +674,7 @@ setParameters (const Teuchos::RCP<Teuchos::ParameterList>& params)
   // (Re)set the timer label.
   {
     const std::string newLabel =
-      params->isParameter ("Timer Label") ?
+      params->isParameter ("Maximum Iterations") ?
       params->get<std::string> ("Timer Label") :
       label_;
 

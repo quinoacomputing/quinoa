@@ -111,7 +111,6 @@ APPEND_SET(HEADERS
 APPEND_SET(SOURCES
   Domi_Version.cpp
   Domi_Utils.cpp
-  Domi_Exceptions.cpp
   Domi_DefaultNode.cpp
   Domi_Slice.cpp
   Domi_MDComm.cpp

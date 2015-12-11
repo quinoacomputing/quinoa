@@ -46,15 +46,14 @@
 */
 
 #include "ROL_DiodeCircuit.hpp"
-#include "ROL_StepFactory.hpp"
-#include "ROL_StatusTestFactory.hpp"
+#include "ROL_LineSearchStep.hpp"
 #include "ROL_Algorithm.hpp"
-
 #include "Teuchos_oblackholestream.hpp"
 #include "Teuchos_GlobalMPISession.hpp"
+#include "ROL_BoundConstraint.hpp"
 #include "Teuchos_XMLParameterListHelpers.hpp"
+#include "ROL_TrustRegionStep.hpp"
 
-#include <string>
 #include <iostream>
 #include <fstream>
 #include <math.h>
@@ -82,7 +81,7 @@ int main(int argc, char *argv[]) {
     
     std::string filename = "input.xml";
     Teuchos::RCP<Teuchos::ParameterList> parlist = Teuchos::rcp( new Teuchos::ParameterList() );
-    Teuchos::updateParametersFromXmlFile( filename, parlist.ptr() );
+    Teuchos::updateParametersFromXmlFile( filename, Teuchos::Ptr<Teuchos::ParameterList>(&*parlist) );
 
     RealT V_th      = parlist->get("Thermal Voltage", 0.02585);
     RealT lo_Vsrc   = parlist->get("Source Voltage Lower Bound", 0.0);
@@ -100,6 +99,7 @@ int main(int argc, char *argv[]) {
 
     bool use_lambertw   = parlist->get("Use Analytical Solution",true); 
     bool use_scale      = parlist->get("Use Scaling For Epsilon-Active Sets",true);
+    bool use_linesearch = parlist->get("Use Line Search", true);
     bool datatype       = parlist->get("Get Data From Input File",false);
     bool use_adjoint    = parlist->get("Use Adjoint Gradient Computation",false);
     int  use_hessvec    = parlist->get("Use Hessian-Vector Implementation",1); // 0 - FD, 1 - exact, 2 - GN
@@ -125,26 +125,38 @@ int main(int argc, char *argv[]) {
 			   std::min(true_Rs,init_Rs),std::max(true_Rs,init_Rs),fabs((true_Rs-init_Rs)/100));
     }
     
-    int dim = 2;
+    //ROL::getTestObjectives<RealT>(obj,con,x0,z,prob);
+    
+    int dim = 2; // Set problem dimension. Must be even.
+
+    // Define Step
+    Teuchos::RCP< ROL::Step<RealT> > step;
+    if(use_linesearch){
+      step = Teuchos::rcp( new ROL::LineSearchStep<RealT> (*parlist) );
+    }
+    else{
+      step = Teuchos::rcp( new ROL::TrustRegionStep<RealT> (*parlist) );
+    }
+    
+    // Define Status Test                                                      
+    RealT gtol = parlist->get("Gradient Tolerance",1.e-6);
+    RealT stol = parlist->get("Step Tolerance",1.e-12);
+    int maxit  = parlist->get("Maximum Number of Iterations",100);
+    ROL::StatusTest<RealT> status(gtol,stol,maxit);
 
     // Define Algorithm
-    std::string stepname(parlist->get("Step Type", "Line Search"));
-    ROL::Algorithm<RealT> algo(stepname, *parlist);
+    ROL::DefaultAlgorithm<RealT> algo(*step,status,false);
 
     // Iteration Vector
     Teuchos::RCP<std::vector<RealT> > x_rcp = Teuchos::rcp( new std::vector<RealT> (dim, 0.0) );
     // Set Initial Guess
     (*x_rcp)[0] = init_Is; /// Is
-    (*x_rcp)[1] = init_Rs; /// Rs
-    // Scaling Vector
-    Teuchos::RCP<std::vector<RealT> > scaling_rcp = Teuchos::rcp( new std::vector<RealT> (dim, 0.0) );
-    (*scaling_rcp)[0] = 1e24; /// Is
-    (*scaling_rcp)[1] = 1e01; /// Rs
-    ROL::PrimalScaledStdVector<RealT> x(x_rcp,scaling_rcp);
+    (*x_rcp)[1] = init_Rs;    /// Rs
+    ROL::StdVector<RealT> x(x_rcp);
 
     RealT tol = 1.e-12;
     Teuchos::RCP<std::vector<RealT> > g0_rcp = Teuchos::rcp( new std::vector<RealT> (dim, 0.0) );;
-    ROL::DualScaledStdVector<RealT> g0p(g0_rcp,scaling_rcp);
+    ROL::StdVector<RealT> g0p(g0_rcp);
     (*obj).gradient(g0p,x,tol);
     *outStream << std::scientific <<  "Initial gradient = " << (*g0_rcp)[0] << " " << (*g0_rcp)[1] << "\n";
     *outStream << std::scientific << "Norm of Gradient = " << g0p.norm() << "\n";
@@ -155,19 +167,10 @@ int main(int argc, char *argv[]) {
     else{ scale = 1.0;}
      *outStream << std::scientific << "Scaling: " << scale << "\n";
 
-    /// Define constraints on Is and Rs.
-    // Bound vectors.
-    Teuchos::RCP<std::vector<RealT> > IsRs_lower_rcp = Teuchos::rcp( new std::vector<RealT> (dim, 0.0) );
-    (*IsRs_lower_rcp)[0] = lo_Is; /// Is lower bound
-    (*IsRs_lower_rcp)[1] = lo_Rs; /// Rs lower bound
-    Teuchos::RCP<std::vector<RealT> > IsRs_upper_rcp = Teuchos::rcp( new std::vector<RealT> (dim, 0.0) );
-    (*IsRs_upper_rcp)[0] = up_Is; /// Is upper bound
-    (*IsRs_upper_rcp)[1] = up_Rs; /// Rs upper bound
-    Teuchos::RCP<ROL::PrimalScaledStdVector<RealT> > lo_IsRs = Teuchos::rcp(new ROL::PrimalScaledStdVector<RealT>(IsRs_lower_rcp, scaling_rcp));
-    Teuchos::RCP<ROL::PrimalScaledStdVector<RealT> > up_IsRs = Teuchos::rcp(new ROL::PrimalScaledStdVector<RealT>(IsRs_upper_rcp, scaling_rcp));
-    // Bound constraint.
-    ROL::BoundConstraint<RealT> con2(lo_IsRs, up_IsRs, scale);
+    /// Define constraints on Is and Rs
+    ROL::ZOO::BoundConstraint_DiodeCircuit<RealT> con(scale,lo_Is,up_Is,lo_Rs,up_Rs);
 
+    /*--------------------------------------------------------------------------------------------
     // Gradient and Hessian check
     // direction for gradient check
     Teuchos::RCP<std::vector<RealT> > d_rcp = Teuchos::rcp( new std::vector<RealT> (dim, 0.0) );
@@ -176,16 +179,20 @@ int main(int argc, char *argv[]) {
     RealT Rs_scale = pow(10,int(log10(init_Rs)));
     (*d_rcp)[0] = Is_scale*(( (RealT)rand() / (RealT)RAND_MAX ) * (right - left) + left);
     (*d_rcp)[1] = Rs_scale*(( (RealT)rand() / (RealT)RAND_MAX ) * (right - left) + left);
-    ROL::PrimalScaledStdVector<RealT> d(d_rcp,scaling_rcp);
+    ROL::StdVector<RealT> d(d_rcp);
     // check gradient and Hessian-vector computation using finite differences
-    (*obj).checkGradient(x, g0p, d, true, *outStream);
-    (*obj).checkHessVec(x, g0p, d, true, *outStream);
+    (*obj).checkGradient(x, d, true);
+    (*obj).checkHessVec(x, d, true);
+    ---------------------------------------------------------------------------------------------*/
 
     // Run Algorithm
-    algo.run(x, *obj, con2, true, *outStream);
+    std::vector<std::string> output = algo.run(x, *obj, con, false);
+    for ( unsigned i = 0; i < output.size(); i++ ) {
+      std::cout << output[i];
+    }
     
     Teuchos::RCP<std::vector<RealT> > gf_rcp = Teuchos::rcp( new std::vector<RealT> (dim, 0.0) );
-    ROL::DualScaledStdVector<RealT> gfp(gf_rcp,scaling_rcp);
+    ROL::StdVector<RealT> gfp(gf_rcp);
     (*obj).gradient(gfp,x,tol);
      *outStream << std::scientific << "Final gradient = " << (*gf_rcp)[0] << " " << (*gf_rcp)[1] << "\n";
      *outStream << std::scientific << "Norm of Gradient = " << gfp.norm() << "\n";
@@ -194,7 +201,7 @@ int main(int argc, char *argv[]) {
     Teuchos::RCP<std::vector<RealT> > xtrue_rcp = Teuchos::rcp( new std::vector<RealT> (dim, 0.0) );
     (*xtrue_rcp)[0] = true_Is;
     (*xtrue_rcp)[1] = true_Rs;
-    ROL::PrimalScaledStdVector<RealT> xtrue(xtrue_rcp,scaling_rcp);
+    ROL::StdVector<RealT> xtrue(xtrue_rcp);
     
     // Print
     *outStream << "Solution:" << "\n";

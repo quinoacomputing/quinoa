@@ -46,12 +46,10 @@
 #include "Phalanx_Evaluator_Macros.hpp"
 #include "Phalanx_MDField.hpp"
 
-#include "Panzer_Evaluator_Macros.hpp"
-
 namespace panzer {
     
 //! Evaluates a Dirichlet BC residual corresponding to a field value
-PANZER_EVALUATOR_CLASS(DirichletResidual)
+PHX_EVALUATOR_CLASS(DirichletResidual)
   
   PHX::MDField<ScalarT> residual;
   PHX::MDField<ScalarT> dof;
@@ -59,7 +57,7 @@ PANZER_EVALUATOR_CLASS(DirichletResidual)
 
   std::size_t cell_data_size;
 
-PANZER_EVALUATOR_CLASS_END
+PHX_EVALUATOR_CLASS_END
 
 }
 

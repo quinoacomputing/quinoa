@@ -53,45 +53,29 @@
 
 \mainpage
 
-@image html muelu.png
+@image html muelu2.png
 
 \section muelu_index Table of Contents
 
 - \ref muelu_overview
-- \ref muelu_documentation
 - \ref muelu_authors
 - \ref muelu_copyright
 - \ref muelu_questions
 
-\section muelu_overview MueLu Overview
+\section muelu_overview Overview
 
 MueLu is a flexible and extensible multigrid solver framework.  It is intended for the research and
 development of new multigrid preconditioning techniques.
-More information can be found at https://trilinos.org/packages/muelu.
-
-\section muelu_documentation Documentation
-
-Useful views of the Doxygen documentation are:
-  - Browsing the entire class documentation. Choose the <a href="classes.html">Class Index subtab</a>.
-  - Browsing the class documentation organized by logical groups.  Choose the <a href="modules.html">Modules tab</a>.
-
-The MueLu User's Guide is located in muelu/doc/UsersGuide and at the
-<a href=https://trilinos.org/packages/muelu/muelu-documentation>MueLu home page</a>.
-
 
 \section muelu_authors Authors and Contributors
 
-  - Tom Benson, LLNL
-  - Emily Furst, University of Washington (summer intern, 2015)
-  - Jeremie Gaidamour, INRIA (Nancy, France)
+  - Jeremie Gaidamour, Sandia National Labs
   - Axel Gerstenberger, Rolls Royce
   - Jonathan Hu, Sandia National Labs
-  - Brian Kelley, Texas A&M (summer intern, 2015)
   - Andrey Prokopenko, Sandia National Labs
   - Chris Siefert, Sandia National Labs
-  - Paul Tsuji, LLNL
   - Ray Tuminaro, Sandia National Labs
-  - Tobias Wiesner, Sandia National Labs
+  - Tobias Wiesner, Technical University Munich
 
 \section muelu_copyright Copyright and License
 
@@ -99,8 +83,58 @@ The MueLu User's Guide is located in muelu/doc/UsersGuide and at the
 
 \section muelu_questions For All Questions and Comments...
 
-   Please contact the authors listed in the License above, or use one of the
-   <a href=https://trilinos.org/packages/muelu/muelu-contact-us>MueLu mailing lists</a>.
+   Please contact Jonathan Hu (jhu@sandia.gov), Andrey Prokopenko (aprokop@sandia.gov),
+   or Ray Tuminaro (rstumin@sandia.gov).
+
+*/
+
+/* ************************************************************************ */
+/* ************************************************************************ */
+
+/*! \page user_guide Users Guide
+
+\section user_guide_index Index
+
+- \ref user_guide_getting_started
+- \ref questions
+
+\section user_guide_getting_started Getting Started
+
+*/
+
+/* ************************************************************************ */
+/* ************************************************************************ */
+
+/*! \page todo ToDo List
+
+Short Term:
+<ul>
+<li> ???
+</ul>
+
+Long Term:
+<ul>
+<li> ???
+<li>
+</ul>
+
+*/
+
+/* ************************************************************************ */
+/* ************************************************************************ */
+
+/*! \page faq Frequently Asked Questions
+
+\section Questions
+\ref faq1
+
+\ref faq2
+
+\section faq1 1. Why name the code MueLu?
+Why not?
+
+\section faq2 2. Put your question here?
+Answer your question here.
 
 */
 

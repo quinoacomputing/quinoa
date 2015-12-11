@@ -42,11 +42,11 @@
 
 #include "Panzer_config.hpp"
 
-#include "Panzer_Workset_Builder_decl.hpp"
-
 #ifdef HAVE_PANZER_EXPLICIT_INSTANTIATION
 
 #include "Panzer_ExplicitTemplateInstantiation.hpp"
+
+#include "Panzer_Workset_Builder_decl.hpp"
 #include "Panzer_Workset_Builder_impl.hpp"
 
 template
@@ -70,15 +70,6 @@ panzer::buildBCWorkset(const panzer::PhysicsBlock & volume_pb,
 		       const Intrepid::FieldContainer<double>& vertex_coordinates);
 
 template
-Teuchos::RCP<std::map<unsigned,panzer::Workset> >
-panzer::buildBCWorkset(const WorksetNeeds& needs,
-                       const std::string& elementBlock,
-                       const std::vector<std::size_t>& local_cell_ids,
-                       const std::vector<std::size_t>& local_side_ids,
-                       const Intrepid::FieldContainer<double>& vertex_coordinates,
-                       const bool populate_value_arrays);
-
-template
 Teuchos::RCP<std::vector<panzer::Workset> > 
 panzer::buildEdgeWorksets(const panzer::PhysicsBlock &,
 	  	          const std::vector<std::size_t>&,
@@ -89,23 +80,9 @@ panzer::buildEdgeWorksets(const panzer::PhysicsBlock &,
 		          const std::vector<std::size_t>&,
 		          const Intrepid::FieldContainer<double>&);
 
-template
-Teuchos::RCP<std::map<unsigned,panzer::Workset> >
-panzer::buildBCWorkset(const panzer::PhysicsBlock& pb_a,
-                       const std::vector<std::size_t>& local_cell_ids_a,
-                       const std::vector<std::size_t>& local_side_ids_a,
-                       const Intrepid::FieldContainer<double>& vertex_coordinates_a,
-                       const panzer::PhysicsBlock& pb_b,
-                       const std::vector<std::size_t>& local_cell_ids_b,
-                       const std::vector<std::size_t>& local_side_ids_b,
-                       const Intrepid::FieldContainer<double>& vertex_coordinates_b);
-
-#endif
-
 namespace panzer {
 
-void populateValueArrays(std::size_t num_cells,bool isSide,const WorksetNeeds & needs,
-                         WorksetDetails & details,const Teuchos::RCP<WorksetDetails> other_details)
+void populateValueArrays(std::size_t num_cells,bool isSide,const WorksetNeeds & needs,WorksetDetails & details)
 {
   using Teuchos::RCP;
   using Teuchos::rcp;
@@ -142,10 +119,7 @@ void populateValueArrays(std::size_t num_cells,bool isSide,const WorksetNeeds & 
     RCP<panzer::IntegrationValues2<double> > iv2 = 
         rcp(new panzer::IntegrationValues2<double>("",true));
     iv2->setupArrays(int_rules[i]);
-    if (Teuchos::nonnull(other_details))
-      iv2->evaluateValues(details.cell_vertex_coordinates, other_details->int_rules[i]->ip_coordinates);
-    else
-      iv2->evaluateValues(details.cell_vertex_coordinates);
+    iv2->evaluateValues(details.cell_vertex_coordinates);
       
     details.int_rules.push_back(iv2);
       
@@ -174,8 +148,7 @@ void populateValueArrays(std::size_t num_cells,bool isSide,const WorksetNeeds & 
 
 }
 
-void populateValueArrays(std::size_t num_cells,bool isSide,const panzer::PhysicsBlock & pb,
-                         WorksetDetails & details,const Teuchos::RCP<WorksetDetails> other_details)
+void populateValueArrays(std::size_t num_cells,bool isSide,const panzer::PhysicsBlock & pb,WorksetDetails & details)
 {
   using Teuchos::RCP;
 
@@ -192,7 +165,9 @@ void populateValueArrays(std::size_t num_cells,bool isSide,const panzer::Physics
      b_itr != bases.end(); ++b_itr)
    needs.bases.push_back(b_itr->second);
  
- return populateValueArrays(num_cells,isSide,needs,details,other_details);
+  return populateValueArrays(num_cells,isSide,needs,details);
 }
 
 }
+
+#endif

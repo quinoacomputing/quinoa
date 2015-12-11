@@ -43,16 +43,17 @@
 #ifndef IFPACK2_DIAGONAL_DECL_HPP
 #define IFPACK2_DIAGONAL_DECL_HPP
 
-#include "Ifpack2_Preconditioner.hpp"
-#include "Ifpack2_Details_CanChangeMatrix.hpp"
-#include "Tpetra_CrsMatrix_decl.hpp"
-#include <type_traits>
+#include <Ifpack2_Preconditioner.hpp>
+#include <Ifpack2_Details_CanChangeMatrix.hpp>
+#include <Tpetra_CrsMatrix_decl.hpp>
 
 namespace Ifpack2 {
 
 /// \class Diagonal
 /// \brief Diagonal preconditioner.
 /// \tparam MatrixType A specialization of Tpetra::RowMatrix.
+///   We prefer that you use Tpetra::RowMatrix here, and not
+///   Tpetra::CrsMatrix, though the latter may still work.
 ///
 /// This class wraps a Tpetra::Vector as a diagonal preconditioner.
 /// The preconditioner is defined as
@@ -90,9 +91,6 @@ public:
                             local_ordinal_type,
                             global_ordinal_type,
                             node_type> row_matrix_type;
-
-  static_assert(std::is_same<MatrixType, row_matrix_type>::value, "Ifpack2::Diagonal: The template parameter MatrixType must be a Tpetra::RowMatrix specialization.  Please don't use Tpetra::CrsMatrix (a subclass of Tpetra::RowMatrix) here anymore.  The constructor can take either a RowMatrix or a CrsMatrix just fine.");
-
   //! Tpetra::CrsMatrix specialization used by this class.
   typedef Tpetra::CrsMatrix<scalar_type,
                             local_ordinal_type,
@@ -311,18 +309,10 @@ private:
 * \endcode
 */
 template<class MatrixType, class VectorType>
-Teuchos::RCP<Ifpack2::Diagonal<Tpetra::RowMatrix<typename MatrixType::scalar_type,
-                                                 typename MatrixType::local_ordinal_type,
-                                                 typename MatrixType::global_ordinal_type,
-                                                 typename MatrixType::node_type> > >
+Teuchos::RCP<Ifpack2::Diagonal<MatrixType> >
 createDiagonalPreconditioner (const Teuchos::RCP<const VectorType>& invdiag)
 {
-  typedef Tpetra::RowMatrix<typename MatrixType::scalar_type,
-    typename MatrixType::local_ordinal_type,
-    typename MatrixType::global_ordinal_type,
-    typename MatrixType::node_type> row_matrix_type;
-
-  return Teuchos::rcp (new Ifpack2::Diagonal<row_matrix_type> (invdiag));
+  return Teuchos::rcp (new Ifpack2::Diagonal<MatrixType> (invdiag));
 }
 
 }//namespace Ifpack2

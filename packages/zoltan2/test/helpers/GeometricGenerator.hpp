@@ -42,9 +42,6 @@
 // ***********************************************************************
 //
 // @HEADER
-#ifndef GEOMETRICGENERATOR
-#define GEOMETRICGENERATOR
-
 #include <Teuchos_Comm.hpp>
 #include <Teuchos_ParameterList.hpp>
 #include <Teuchos_FilteredIterator.hpp>
@@ -77,9 +74,6 @@
 #endif
 
 using Teuchos::CommandLineProcessor;
-using Teuchos::ArrayView;
-using std::string;
-using Teuchos::ArrayRCP;
 
 namespace GeometricGen{
 #define CATCH_EXCEPTIONS(pp) \
@@ -113,7 +107,7 @@ namespace GeometricGen{
 template <typename tMVector_t>
 class DOTS{
 public:
-  std::vector<std::vector<float> > weights;
+  vector<vector<float> > weights;
   tMVector_t *coordinates;
 };
 
@@ -2424,8 +2418,8 @@ public:
 
 
 	  RCP<const tMVector_t> coordsConst = Teuchos::rcp_const_cast<const tMVector_t>(tmVector);
-	  std::vector<const scalar_t *> weights;
-	  std::vector <int> stride;
+	  vector<const scalar_t *> weights;
+	  vector <int> stride;
 
 	  typedef Zoltan2::XpetraMultiVectorAdapter<tMVector_t> inputAdapter_t;
 	  //inputAdapter_t ia(coordsConst);
@@ -2733,5 +2727,3 @@ public:
   }
 };
 }
-
-#endif /* GEOMETRICGENERATOR */

@@ -63,23 +63,8 @@ namespace ZOO {
    */
   template<class Real>
   class Objective_Beale : public Objective<Real> {
-
-  typedef std::vector<Real>  vector;
-  typedef Vector<Real>       V;
-  typedef StdVector<Real>    SV;  
-
   private:
-    vector y_;
-
-    Teuchos::RCP<const vector> getVector( const V& x ) {
-      using Teuchos::dyn_cast;
-      return dyn_cast<const SV>(x).getVector();
-    }
-
-    Teuchos::RCP<vector> getVector( V& x ) {
-      using Teuchos::dyn_cast;
-      return dyn_cast<SV>(x).getVector();
-    }
+    std::vector<Real> y_;
 
   public:
     Objective_Beale() {
@@ -90,10 +75,8 @@ namespace ZOO {
     }
 
     Real value( const Vector<Real> &x, Real &tol ) {
-
-      using Teuchos::RCP;
-
-      RCP<const vector> ex = getVector(x);
+      Teuchos::RCP<const std::vector<Real> > ex =
+        (Teuchos::dyn_cast<StdVector<Real> >(const_cast<Vector<Real> &>(x))).getVector();
 
       Real f1 = 1.5-(*ex)[0]*(1.0-(*ex)[1]);
       Real f2 = 2.25-(*ex)[0]*(1.0-pow((*ex)[1],2));
@@ -103,11 +86,10 @@ namespace ZOO {
     }
 
     void gradient( Vector<Real> &g, const Vector<Real> &x, Real &tol ) {
-
-      using Teuchos::RCP;
-
-      RCP<const vector> ex = getVector(x);
-      RCP<vector> eg = getVector(g);
+      Teuchos::RCP<const std::vector<Real> > ex =
+        (Teuchos::dyn_cast<StdVector<Real> >(const_cast<Vector<Real> &>(x))).getVector();
+      Teuchos::RCP<std::vector<Real> > eg =
+        Teuchos::rcp_const_cast<std::vector<Real> >((Teuchos::dyn_cast<StdVector<Real> >(g)).getVector());
 
       Real f1 = 1.5-(*ex)[0]*(1.0-(*ex)[1]);
       Real f2 = 2.25-(*ex)[0]*(1.0-pow((*ex)[1],2));
@@ -124,11 +106,12 @@ namespace ZOO {
     }
 #if USE_HESSVEC
     void hessVec( Vector<Real> &hv, const Vector<Real> &v, const Vector<Real> &x, Real &tol ) {
-
-      using Teuchos::RCP;
-      RCP<const vector> ex = getVector(x);
-      RCP<const vector> ev = getVector(v);
-      RCP<vector> ehv = getVector(hv);
+      Teuchos::RCP<const std::vector<Real> > ex =
+        (Teuchos::dyn_cast<StdVector<Real> >(const_cast<Vector<Real> &>(x))).getVector();
+      Teuchos::RCP<const std::vector<Real> > ev =
+        (Teuchos::dyn_cast<StdVector<Real> >(const_cast<Vector<Real> &>(v))).getVector();
+      Teuchos::RCP<std::vector<Real> > ehv =
+        Teuchos::rcp_const_cast<std::vector<Real> >((Teuchos::dyn_cast<StdVector<Real> >(hv)).getVector());
 
       Real f1 = 1.5-(*ex)[0]*(1.0-(*ex)[1]);
       Real f2 = 2.25-(*ex)[0]*(1.0-pow((*ex)[1],2));
@@ -161,12 +144,12 @@ namespace ZOO {
     }
 #endif
     void invHessVec( Vector<Real> &hv, const Vector<Real> &v, const Vector<Real> &x, Real &tol ) {
-
-      using Teuchos::RCP;
-
-      RCP<const vector> ex = getVector(x);
-      RCP<const vector> ev = getVector(v);
-      RCP<vector> ehv = getVector(hv);
+      Teuchos::RCP<const std::vector<Real> > ex =
+        (Teuchos::dyn_cast<StdVector<Real> >(const_cast<Vector<Real> &>(x))).getVector();
+      Teuchos::RCP<const std::vector<Real> > ev =
+        (Teuchos::dyn_cast<StdVector<Real> >(const_cast<Vector<Real> &>(v))).getVector();
+      Teuchos::RCP<std::vector<Real> > ehv =
+        Teuchos::rcp_const_cast<std::vector<Real> >((Teuchos::dyn_cast<StdVector<Real> >(hv)).getVector());
 
       Real f1 = 1.5-(*ex)[0]*(1.0-(*ex)[1]);
       Real f2 = 2.25-(*ex)[0]*(1.0-pow((*ex)[1],2));
@@ -201,21 +184,12 @@ namespace ZOO {
 
   template<class Real>
   void getBeale( Teuchos::RCP<Objective<Real> > &obj, Vector<Real> &x0, Vector<Real> &x ) {
-
-    typedef std::vector<Real>  vector;
-    typedef StdVector<Real>    SV;  
-
-    typedef typename vector::size_type uint;
-
-    using Teuchos::RCP;
-    using Teuchos::dyn_cast;
-
     // Cast Initial Guess and Solution Vectors
-    RCP<vector> x0p = dyn_cast<SV>(x0).getVector();
-    RCP<vector> xp  = dyn_cast<SV>(x).getVector();
-
-    uint n = xp->size();
-
+    Teuchos::RCP<std::vector<Real> > x0p =
+      Teuchos::rcp_const_cast<std::vector<Real> >((Teuchos::dyn_cast<StdVector<Real> >(x0)).getVector());
+    Teuchos::RCP<std::vector<Real> > xp =
+      Teuchos::rcp_const_cast<std::vector<Real> >((Teuchos::dyn_cast<StdVector<Real> >(x)).getVector());
+    int n = xp->size();
     // Resize Vectors
     n = 2;
     x0p->resize(n);

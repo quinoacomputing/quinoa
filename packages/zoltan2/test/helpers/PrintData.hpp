@@ -46,29 +46,26 @@
 #ifndef PRINTDATA_HPP
 #define PRINTDATA_HPP
 
-#include "Zoltan2_config.h"
-#include "Tpetra_CrsGraph.hpp"
-#include "Teuchos_ArrayView.hpp"
+#include <Zoltan2_config.h>
+#include <Tpetra_CrsGraph.hpp>
 
-#include <iostream>
 #include <string>
+#include <iostream>
 
 using std::string;
 using std::endl;
-using std::ostream;
-using Teuchos::ArrayView;
 
 template <typename lno_t, typename gno_t>
- void printTpetraGraph(const Tpetra::CrsGraph<lno_t, gno_t> &graph,
+ void printTpetraGraph(const Tpetra::CrsGraph<lno_t, gno_t> &graph, 
    ostream &os, size_t maxSize, string info)
 {
   size_t nrows = graph.getNodeNumRows();
   if (nrows > maxSize)
     return;
 
-  const RCP<const typename Tpetra::Map<lno_t, gno_t> > &rowMap=
+  const RCP<const typename Tpetra::Map<lno_t, gno_t> > &rowMap= 
     graph.getRowMap();
-  const RCP<const typename Tpetra::Map<lno_t, gno_t> > &colMap=
+  const RCP<const typename Tpetra::Map<lno_t, gno_t> > &colMap= 
     graph.getColMap();
 
   if (info.size() > 0)
@@ -102,7 +99,7 @@ template <typename lno_t, typename gno_t>
 
 template <typename lno_t, typename gno_t>
   void printTpetraGraph(const RCP<const Comm<int> > &comm,
-  const Tpetra::CrsGraph<lno_t, gno_t> &graph, ostream &os,
+  const Tpetra::CrsGraph<lno_t, gno_t> &graph, ostream &os, 
   size_t maxSize, string info)
 {
   int rank = comm->getRank();

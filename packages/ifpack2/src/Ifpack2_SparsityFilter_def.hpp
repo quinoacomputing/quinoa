@@ -42,13 +42,17 @@
 
 #ifndef IFPACK2_SPARSITYFILTER_DEF_HPP
 #define IFPACK2_SPARSITYFILTER_DEF_HPP
+#include "Ifpack2_SparsityFilter_decl.hpp"
+#include <vector>
 
+#include "Tpetra_ConfigDefs.hpp"
+#include "Tpetra_RowMatrix.hpp"
 #include "Tpetra_Map.hpp"
 #include "Tpetra_MultiVector.hpp"
 #include "Tpetra_Vector.hpp"
 
-#include <algorithm>
 #include <vector>
+#include <algorithm>
 
 namespace Ifpack2 {
 
@@ -482,6 +486,6 @@ typename SparsityFilter<MatrixType>::mag_type SparsityFilter<MatrixType>::getFro
 } // namespace Ifpack2
 
 #define IFPACK2_SPARSITYFILTER_INSTANT(S,LO,GO,N)                            \
-  template class Ifpack2::SparsityFilter< Tpetra::RowMatrix<S, LO, GO, N> >;
+  template class Ifpack2::SparsityFilter< Tpetra::CrsMatrix<S, LO, GO, N> >;
 
 #endif

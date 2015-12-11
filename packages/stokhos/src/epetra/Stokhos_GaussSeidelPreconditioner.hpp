@@ -48,10 +48,6 @@
 
 #ifdef HAVE_STOKHOS_NOX
 
-#include "NOX_Config.h"
-
-#ifdef HAVE_NOX_EPETRAEXT
-
 #include "Teuchos_RCP.hpp"
 
 #include "Stokhos_SGPreconditioner.hpp"
@@ -235,8 +231,6 @@ namespace Stokhos {
   }; // class GaussSeidelPreconditioner
   
 } // namespace Stokhos
-
-#endif
 
 #endif
 

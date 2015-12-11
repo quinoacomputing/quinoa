@@ -67,7 +67,6 @@ namespace MueLu {
 
   /*!
     @class DirectSolver
-    @ingroup MueLuSmootherClasses 
     @brief Class that encapsulates direct solvers. Autoselection of AmesosSmoother or Amesos2Smoother according to the compile time configuration of Trilinos
   */
 
@@ -144,10 +143,6 @@ namespace MueLu {
     RCP<SmootherPrototype> sEpetra_, sTpetra_;
     mutable
       RCP<SmootherPrototype> s_;
-
-    // Records for the case if something goes wrong
-    bool triedEpetra_, triedTpetra_;
-    std::string errorEpetra_, errorTpetra_;
 
   }; // class DirectSolver
 

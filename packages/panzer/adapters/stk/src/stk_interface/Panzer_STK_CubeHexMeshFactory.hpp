@@ -108,7 +108,6 @@ protected:
 
    mutable unsigned int machRank_, machSize_;
 
-   bool buildInterfaceSidesets_;
    bool buildSubcells_;
 
    mutable Teuchos::Tuple<std::size_t,3> procTuple_;

@@ -2,7 +2,6 @@
 #define UNITTESTUTILS_OPTIONS_PARSING
 
 #include <string>
-#include <sstream>
 
 extern int gl_argc;
 extern char** gl_argv;
@@ -29,16 +28,6 @@ inline std::string getOption(const std::string& option, const std::string defaul
         }
     }
     return returnValue;
-}
-
-template <typename T>
-T get_command_line_option(const std::string &option, const std::string &defaultValue)
-{
-    std::string str = unitTestUtils::getOption(option, defaultValue);
-    std::istringstream ss(str);
-    T val=0;
-    ss >> val;
-    return val;
 }
 
 } // end namespace

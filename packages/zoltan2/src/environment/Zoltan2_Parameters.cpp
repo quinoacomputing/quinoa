@@ -61,6 +61,8 @@
 
 #include <Zoltan2_XML_Parameters.hpp>  
 
+using namespace std;
+
 namespace Zoltan2 {
 
 /*! \brief  Create a list of all Zoltan2 parameters and validators.
@@ -92,7 +94,7 @@ void createAllParameters(Teuchos::ParameterList &pList)
   Teuchos::StringInputSource src(xmlParameterString);
 
   Teuchos::XMLObject xmlObj;
-  std::ostringstream errMsg;
+  ostringstream errMsg;
 
   Teuchos::XMLParser parser(src.stream());
 
@@ -192,22 +194,23 @@ void printListDocumentation(
   std::ostream &os,
   std::string listNames)
 {
+  using std::string;
 
   if (listNames.size() == 0)
-    listNames = std::string("top");
+    listNames = string("top");
 
-  Array<std::string> subLists;
+  Array<string> subLists;
   ParameterList::ConstIterator next = pl.begin();
 
   while (next != pl.end()){
-    const std::string &name = next->first;
+    const string &name = next->first;
     const ParameterEntry &entry = pl.getEntry(name);
 
     if (entry.isList()){
       subLists.append(name);
     }
     else{
-      std::string doc = entry.docString();
+      string doc = entry.docString();
       os << "List: "<< listNames << ", parameter: " << name << "\n";
       if (doc.size())
         os << doc << "\n";
@@ -217,7 +220,7 @@ void printListDocumentation(
   }
 
   for (int i=0; i < subLists.size(); i++){
-    std::string newListName = listNames + std::string("/") + subLists[i];
+    string newListName = listNames + string("/") + subLists[i];
     const ParameterList &sublist = pl.sublist(subLists[i]);
     printListDocumentation(sublist, os, newListName);
   }

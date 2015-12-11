@@ -239,12 +239,14 @@ read_int (
 
 
 static void 
-flush_line (FILE *infile)
+flush_line (
+    FILE *infile		/* file to read value from */
+)
 {
-  int c;		/* character being read */
+    char      c;		/* character being read */
 
-  offset = 0;
-  c = getc(infile);
-  while (c != '\n' && c != '\f')
+    offset = 0;
     c = getc(infile);
+    while (c != '\n' && c != '\f')
+	c = getc(infile);
 }

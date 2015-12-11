@@ -11,12 +11,6 @@ IF (${PROJECT_NAME}_ENABLE_Zoltan)
 ENDIF()
 
 TRIBITS_ADD_EXECUTABLE_AND_TEST(
-  mapRemotes
-  SOURCES mapRemotes.cpp
-  COMM mpi
-)
-
-TRIBITS_ADD_EXECUTABLE_AND_TEST(
   teuchosCommTest
   SOURCES teuchosCommTest.cpp
   ARGS
@@ -39,20 +33,6 @@ TRIBITS_ADD_EXECUTABLE_AND_TEST(
   SOURCES absdefinitiontest.cpp
   NUM_MPI_PROCS 1
   COMM serial mpi
-)
-
-TRIBITS_ADD_EXECUTABLE_AND_TEST(
-  tpetraOneToOneMapTest
-  SOURCES mapOneToOne.cpp
-  NUM_MPI_PROCS 4
-  COMM mpi
-)
-
-TRIBITS_ADD_EXECUTABLE_AND_TEST(
-  tpetraVecWithCopiesTest
-  SOURCES vecWithCopies.cpp
-  NUM_MPI_PROCS 4
-  COMM mpi
 )
 
 #TRIBITS_ADD_EXECUTABLE_AND_TEST(

@@ -92,6 +92,7 @@ class ColoringProblem : public Problem<Adapter>
 public:
 
   typedef typename Adapter::scalar_t scalar_t;
+  typedef typename Adapter::zgid_t zgid_t;
   typedef typename Adapter::gno_t gno_t;
   typedef typename Adapter::lno_t lno_t;
   typedef typename Adapter::user_t user_t;
@@ -203,6 +204,18 @@ void ColoringProblem<Adapter>::solve(bool newData)
 #endif
   }
   Z2_FORWARD_EXCEPTIONS;
+
+#ifdef HAVE_ZOLTAN2_MPI
+
+  // The algorithm may have changed the communicator.  Change it back.
+  // EGB: This seems excessive. Algorithms should never change the comm?!
+
+  RCP<const mpiWrapper_t > wrappedComm = rcp(new mpiWrapper_t(mpiComm_));
+  problemComm_ = rcp(new Teuchos::MpiComm<int>(wrappedComm));
+  problemCommConst_ = rcp_const_cast<const Comm<int> > (problemComm_);
+
+#endif
+
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -224,9 +237,9 @@ void ColoringProblem<Adapter>::createColoringProblem()
   HELLO;
   using Teuchos::ParameterList;
 
-//  std::cout << __func__zoltan2__ << " input adapter type " 
+//  cout << __func__zoltan2__ << " input adapter type " 
 //       << this->inputAdapter_->inputAdapterType() << " " 
-//       << this->inputAdapter_->inputAdapterName() << std::endl;
+//       << this->inputAdapter_->inputAdapterName() << endl;
 
   // Create a copy of the user's communicator.
 
@@ -263,8 +276,8 @@ void ColoringProblem<Adapter>::createColoringProblem()
   switch (modelType) {
 
   case GraphModelType:
-    graphFlags.set(REMOVE_SELF_EDGES);
-    graphFlags.set(BUILD_LOCAL_GRAPH);
+    graphFlags.set(SELF_EDGES_MUST_BE_REMOVED);
+    graphFlags.set(IDS_MUST_BE_GLOBALLY_CONSECUTIVE);
     this->graphModel_ = rcp(new GraphModel<base_adapter_t>(
       this->baseInputAdapter_, this->envConst_, problemCommConst_, graphFlags));
 
@@ -277,13 +290,12 @@ void ColoringProblem<Adapter>::createColoringProblem()
   case IdentifierModelType:
   case HypergraphModelType:
   case CoordinateModelType:
-    std::cout << __func__zoltan2__ << " Model type " << modelType 
-              << " not yet supported." << std::endl;
+    cout << __func__zoltan2__ << " Model type " << modelType << " not yet supported." 
+         << endl;
     break;
 
   default:
-    std::cout << __func__zoltan2__ << " Invalid model" << modelType 
-              << std::endl;
+    cout << __func__zoltan2__ << " Invalid model" << modelType << endl;
     break;
   }
 }

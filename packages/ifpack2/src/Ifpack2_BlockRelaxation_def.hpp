@@ -307,14 +307,10 @@ apply (const Tpetra::MultiVector<typename MatrixType::scalar_type,
   // If X and Y are pointing to the same memory location,
   // we need to create an auxiliary vector, Xcopy
   Teuchos::RCP<const MV> X_copy;
-  {
-    auto X_lcl_host = X.template getLocalView<Kokkos::HostSpace> ();
-    auto Y_lcl_host = Y.template getLocalView<Kokkos::HostSpace> ();
-    if (X_lcl_host.ptr_on_device () == Y_lcl_host.ptr_on_device ()) {
-      X_copy = rcp (new MV (X, Teuchos::Copy));
-    } else {
-      X_copy = rcpFromRef (X);
-    }
+  if (X.getLocalMV ().getValues () == Y.getLocalMV ().getValues ()) {
+    X_copy = Teuchos::rcp (new MV (X, Teuchos::Copy));
+  } else {
+    X_copy = Teuchos::rcpFromRef (X);
   }
 
   if (ZeroStartingSolution_) {
@@ -1029,6 +1025,7 @@ describe (Teuchos::FancyOStream &out, const Teuchos::EVerbosityLevel verbLevel) 
 #include "Ifpack2_BandedContainer_decl.hpp"
 #include "Ifpack2_ILUT_decl.hpp"
 
+// FIXME (mfh 16 Sep 2014) We should really only use RowMatrix here!
 // There's no need to instantiate for CrsMatrix too.  All Ifpack2
 // preconditioners can and should do dynamic casts if they need a type
 // more specific than RowMatrix.
@@ -1057,7 +1054,32 @@ describe (Teuchos::FancyOStream &out, const Teuchos::EVerbosityLevel verbLevel) 
     Tpetra::RowMatrix<S, LO, GO, N>, \
     Ifpack2::BandedContainer<        \
       Tpetra::RowMatrix<S, LO, GO, N>, \
+      S > >; \
+  template \
+  class Ifpack2::BlockRelaxation<      \
+    Tpetra::CrsMatrix<S, LO, GO, N>, \
+    Ifpack2::SparseContainer<       \
+      Tpetra::CrsMatrix<S, LO, GO, N>, \
+      Ifpack2::ILUT< ::Tpetra::CrsMatrix<S,LO,GO,N> > > >; \
+  template \
+  class Ifpack2::BlockRelaxation<      \
+    Tpetra::CrsMatrix<S, LO, GO, N>, \
+    Ifpack2::DenseContainer<        \
+      Tpetra::CrsMatrix<S, LO, GO, N>, \
+      S > >; \
+  template \
+  class Ifpack2::BlockRelaxation<      \
+    Tpetra::CrsMatrix<S, LO, GO, N>, \
+    Ifpack2::TriDiContainer<        \
+      Tpetra::CrsMatrix<S, LO, GO, N>, \
+      S > >; \
+  template \
+  class Ifpack2::BlockRelaxation<      \
+    Tpetra::CrsMatrix<S, LO, GO, N>, \
+    Ifpack2::BandedContainer<        \
+      Tpetra::CrsMatrix<S, LO, GO, N>, \
       S > >;
+
 
 #endif // HAVE_IFPACK2_EXPLICIT_INSTANTIATION
 

@@ -60,13 +60,15 @@
 #include <BelosLinearProblem.hpp>
 #include <BelosBlockGmresSolMgr.hpp>
 
-// TODO: Kokkos headers
+//TODO: Kokkos headers
+
+/*! @class ShiftedLaplacianOperator
+    Wraps an existing MueLu::Hierarchy as a Tpetra::Operator, with an optional two-level correction.
+    Built for use with MueLu::ShiftedLaplacian.
+*/
 
 namespace MueLu {
 
-  /*! @brief Wraps an existing MueLu::Hierarchy as a Tpetra::Operator, with an optional two-level correction.
-      Intended to be used with MueLu::ShiftedLaplacian.
-  */
   template <class Scalar = Tpetra::Operator<>::scalar_type,
             class LocalOrdinal = typename Tpetra::Operator<Scalar>::local_ordinal_type,
             class GlobalOrdinal = typename Tpetra::Operator<Scalar, LocalOrdinal>::global_ordinal_type,

@@ -91,10 +91,6 @@ APPEND_SET(HEADERS
   Amesos2.hpp
   Amesos2_AbstractConcreteMatrixAdapter_def.hpp
   Amesos2_Control.hpp
-  Amesos2_Details_LinearSolverFactory.hpp
-  Amesos2_Details_LinearSolverFactory_decl.hpp
-  Amesos2_Details_LinearSolverFactory_def.hpp
-  Amesos2_Details_registerLinearSolverFactory.hpp
   Amesos2_Factory.hpp
   Amesos2_FunctionMap.hpp
   Amesos2_TpetraRowMatrix_AbstractMatrixAdapter.hpp
@@ -138,8 +134,6 @@ APPEND_SET(HEADERS
 
 APPEND_SET(SOURCES
   Amesos2_Control.cpp
-  Amesos2_Details_LinearSolverFactory.cpp
-  Amesos2_Details_registerLinearSolverFactory.cpp
   Amesos2_Factory.cpp
   Amesos2_MatrixAdapter.cpp
   Amesos2_ConcreteMatrixAdapter.cpp

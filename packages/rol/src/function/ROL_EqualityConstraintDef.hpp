@@ -189,8 +189,7 @@ std::vector<Real> EqualityConstraint<Real>::solveAugmentedSystem(Vector<Real> &v
   Real temp = zero;
   Real resnrm = zero;
 
-  //tol = std::sqrt(b1.dot(b1)+b2.dot(b2))*1e-8;
-  tol = std::sqrt(b1.dot(b1)+b2.dot(b2))*tol;
+  tol = std::sqrt(b1.dot(b1)+b2.dot(b2))*1e-8;
 
   // Set initial guess to zero.
   v1.zero(); v2.zero();
@@ -659,7 +658,7 @@ std::vector<std::vector<Real> > EqualityConstraint<Real>::checkApplyAdjointHessi
 
     for(int j=0; j<order; ++j) {
 
-        xnew->axpy(eta*shifts[order-1][j],v); 
+        xnew->axpy(eta*shifts[order-1][j],v);        
 
         if( weights[order-1][j+1] != 0 ) {    
             this->update(*xnew);

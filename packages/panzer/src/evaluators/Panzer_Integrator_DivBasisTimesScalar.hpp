@@ -49,8 +49,6 @@
 #include "Phalanx_MDField.hpp"
 #include "Intrepid_FieldContainer.hpp"
 
-#include "Panzer_Evaluator_Macros.hpp"
-
 namespace panzer {
     
 /** This computes
@@ -59,7 +57,7 @@ namespace panzer {
   *
   * where \f$\phi\f$ is a vector HDIV basis.
   */
-PANZER_EVALUATOR_CLASS(Integrator_DivBasisTimesScalar)
+PHX_EVALUATOR_CLASS(Integrator_DivBasisTimesScalar)
   
   PHX::MDField<ScalarT,Cell,BASIS> residual;
   PHX::MDField<ScalarT,Cell,IP> scalar; 
@@ -80,7 +78,7 @@ PANZER_EVALUATOR_CLASS(Integrator_DivBasisTimesScalar)
 
 private:
   Teuchos::RCP<Teuchos::ParameterList> getValidParameters() const;
-PANZER_EVALUATOR_CLASS_END
+PHX_EVALUATOR_CLASS_END
 
 }
 

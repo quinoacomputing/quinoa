@@ -47,13 +47,6 @@
 #include "Epetra_OffsetIndex.h"
 %}
 
-/////////////////////////////////////////////////////////
-// Teuchos::RCP<> support for all classes in this file //
-/////////////////////////////////////////////////////////
-%teuchos_rcp(Epetra_CrsGraph)
-%teuchos_rcp(Epetra_OffsetIndex)
-//%teuchos_rcp(Epetra_FECrsGraph)
-
 ////////////////////////
 // Typemap directives //
 ////////////////////////
@@ -79,6 +72,7 @@
 /////////////////////////////
 // Epetra_CrsGraph support //
 /////////////////////////////
+%teuchos_rcp(Epetra_CrsGraph)
 %feature("autodoc",
 "
 __init__(self, Epetra_DataAccess CV, BlockMap rowMap, int numIndicesPerRow,
@@ -318,6 +312,7 @@ Epetra_CrsGraph::RemoveMyIndices(int, int, int*);
 ////////////////////////////////
 // Epetra_OffsetIndex support //
 ////////////////////////////////
+%teuchos_rcp(Epetra_OffsetIndex)
 %rename(OffsetIndex) Epetra_OffsetIndex;
 %include "Epetra_OffsetIndex.h"
 
@@ -326,5 +321,6 @@ Epetra_CrsGraph::RemoveMyIndices(int, int, int*);
 ///////////////////////////////
 // ** Epetra_FECrsGraph is apparently not built **
 //#include "Epetra_FECrsGraph.h"
+//%teuchos_rcp(Epetra_FECrsGraph)
 //%rename(FECrsGraph) Epetra_FECrsGraph;
 //%include "Epetra_FECrsGraph.h"

@@ -59,11 +59,7 @@ namespace Kokkos {
 namespace Experimental {
 namespace Impl {
 
-template< class DataType >
-struct ViewArrayAnalysis ;
-
-template< class DataType , class ValueType , class ArrayLayout >
-struct ViewDataAnalysis ;
+template< class > struct ViewDataAnalysis ;
 
 template< class , class = void , typename Enable = void >
 class ViewMapping { enum { is_assignable = false }; };
@@ -174,45 +170,37 @@ private:
     >::type >::type >::type
       MemoryTraits ;
 
-  // Analyze data type's array properties
-  typedef Kokkos::Experimental::Impl::ViewArrayAnalysis< DataType >  array_analysis ;
-
-  // Analyze data type's properties with opportunity to specialize based upon the array value type
-  typedef Kokkos::Experimental::Impl::
-    ViewDataAnalysis< DataType
-                    , typename array_analysis::non_const_value_type
-                    , ArrayLayout
-                    >  data_analysis ;
+  typedef Kokkos::Experimental::Impl::ViewDataAnalysis< DataType >  analysis ;
 
 public:
 
   //------------------------------------
   // Data type traits:
 
-  typedef typename data_analysis::type            data_type ;
-  typedef typename data_analysis::const_type      const_data_type ;
-  typedef typename data_analysis::non_const_type  non_const_data_type ;
+  typedef typename analysis::type            data_type ;
+  typedef typename analysis::const_type      const_data_type ;
+  typedef typename analysis::non_const_type  non_const_data_type ;
 
   //------------------------------------
   // Compatible array of trivial type traits:
 
-  typedef typename data_analysis::array_scalar_type            array_scalar_type ;
-  typedef typename data_analysis::const_array_scalar_type      const_array_scalar_type ;
-  typedef typename data_analysis::non_const_array_scalar_type  non_const_array_scalar_type ;
+  typedef typename analysis::array_scalar_type            array_scalar_type ;
+  typedef typename analysis::const_array_scalar_type      const_array_scalar_type ;
+  typedef typename analysis::non_const_array_scalar_type  non_const_array_scalar_type ;
 
   //------------------------------------
   // Value type traits:
 
-  typedef typename data_analysis::value_type            value_type ;
-  typedef typename data_analysis::const_value_type      const_value_type ;
-  typedef typename data_analysis::non_const_value_type  non_const_value_type ;
+  typedef typename analysis::value_type            value_type ;
+  typedef typename analysis::const_value_type      const_value_type ;
+  typedef typename analysis::non_const_value_type  non_const_value_type ;
 
   //------------------------------------
   // Mapping traits:
 
-  typedef ArrayLayout                         array_layout ;
-  typedef typename data_analysis::dimension   dimension ;
-  typedef typename data_analysis::specialize  specialize /* mapping specialization tag */ ;
+  typedef ArrayLayout                    array_layout ;
+  typedef typename analysis::dimension   dimension ;
+  typedef typename analysis::specialize  specialize /* mapping specialization tag */ ;
 
   enum { rank         = dimension::rank };
   enum { rank_dynamic = dimension::rank_dynamic };
@@ -329,7 +317,6 @@ class View ;
 
 #include <impl/KokkosExp_ViewMapping.hpp>
 #include <impl/KokkosExp_ViewAllocProp.hpp>
-#include <impl/KokkosExp_ViewArray.hpp>
 
 //----------------------------------------------------------------------------
 //----------------------------------------------------------------------------
@@ -450,7 +437,7 @@ public:
   KOKKOS_INLINE_FUNCTION constexpr size_t stride_7() const { return m_map.stride_7(); }
 
   //----------------------------------------
-  // Range span is the span which contains all members.
+  // Range span
 
   typedef typename map_type::reference_type  reference_type ;
 
@@ -464,12 +451,6 @@ public:
   KOKKOS_INLINE_FUNCTION constexpr bool   is_contiguous() const { return m_map.span_is_contiguous(); }
   // Deprecated, use 'data()' instead
   KOKKOS_INLINE_FUNCTION constexpr typename traits::value_type * ptr_on_device() const { return m_map.data(); }
-
-  //----------------------------------------
-  // Allow specializations to query their specialized map
-
-  KOKKOS_INLINE_FUNCTION
-  const map_type & implementation_map() const { return m_map ; }
 
   //----------------------------------------
 
@@ -851,6 +832,7 @@ private:
     map_type  m_map ;
     ExecSpace m_space ;
 
+    KOKKOS_INLINE_FUNCTION
     void destroy_shared_allocation() { m_map.destroy( m_space ); }
   };
 
@@ -886,11 +868,6 @@ public:
 
       const alloc_prop prop( arg_prop );
 
-      // If initializing view data then the execution space must be initialized.
-      if ( prop.initialize.value && ! prop.execution.is_initialized() ) {
-        Kokkos::Impl::throw_runtime_exception("Constructing View and initializing data with uninitialized execution space");
-      }
-
       // Query the mapping for byte-size of allocation.
       const size_t alloc_size = map_type::memory_span( prop.allow_padding
                                                      , arg_N0 , arg_N1 , arg_N2 , arg_N3
@@ -906,17 +883,15 @@ public:
                       , arg_N0 , arg_N1 , arg_N2 , arg_N3
                       , arg_N4 , arg_N5 , arg_N6 , arg_N7 );
 
-      // If constructing the plan for destructing as well
-      // Copy the destroy functor into the allocation record
-      // before initiating tracking.
+      // Copy the destroy functor into the allocation record before initiating tracking.
+      record->m_destroy.m_map   = m_map ;
+      record->m_destroy.m_space = prop.execution ;
+
       if ( prop.initialize.value ) {
         m_map.construct( prop.execution );
-
-        record->m_destroy.m_map   = m_map ;
-        record->m_destroy.m_space = prop.execution ;
       }
 
-      // Setup and initialization complete, start tracking
+      // Destroy functor assigned and initialization complete, start tracking
       m_track = track_type( record );
     }
 
@@ -940,11 +915,6 @@ public:
 
       const alloc_prop prop( arg_prop );
 
-      // If initializing view data then the execution space must be initialized.
-      if ( prop.initialize.value && ! prop.execution.is_initialized() ) {
-        Kokkos::Impl::throw_runtime_exception("Constructing View and initializing data with uninitialized execution space");
-      }
-
       // Query the mapping for byte-size of allocation.
       const size_t alloc_size = map_type::memory_span( prop.allow_padding , arg_layout );
 
@@ -956,15 +926,14 @@ public:
       m_map = map_type( record->data() , prop.allow_padding , arg_layout );
 
       // Copy the destroy functor into the allocation record before initiating tracking.
+      record->m_destroy.m_map   = m_map ;
+      record->m_destroy.m_space = prop.execution ;
 
       if ( prop.initialize.value ) {
         m_map.construct( prop.execution );
-
-        record->m_destroy.m_map   = m_map ;
-        record->m_destroy.m_space = prop.execution ;
       }
 
-      // Setup and initialization complete, start tracking
+      // Destroy functor assigned and initialization complete, start tracking
       m_track = track_type( record );
     }
 
@@ -1051,13 +1020,6 @@ public:
   // Subviews
 
 private:
-
-  /**\brief Private method to support extensibility of subview construction */
-  KOKKOS_INLINE_FUNCTION
-  View( const track_type & arg_track , const map_type & arg_map )
-    : m_track( arg_track )
-    , m_map(   arg_map )
-    {}
 
   explicit KOKKOS_INLINE_FUNCTION
   View( const track_type & rhs )

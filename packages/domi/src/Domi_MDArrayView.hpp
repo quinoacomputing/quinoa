@@ -254,7 +254,7 @@ public:
 
   /** \brief Return the total size of the <tt>MDArrayView</tt>
    */
-  inline size_type size() const;
+  inline size_type size();
 
   /** \brief Return the indexing strides
    */
@@ -892,7 +892,7 @@ MDArrayView< T >::dimension(int axis) const
 
 template< typename T >
 size_type
-MDArrayView< T >::size() const
+MDArrayView< T >::size()
 {
   return computeSize(_dimensions(), _strides());
 }

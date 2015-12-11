@@ -48,7 +48,6 @@
     \brief Provides definitions for limited-memory SR1 operators.
 */
 
-#include "ROL_Secant.hpp"
 #include "ROL_Types.hpp"
 
 namespace ROL {

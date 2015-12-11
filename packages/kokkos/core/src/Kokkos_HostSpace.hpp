@@ -128,8 +128,6 @@ public:
   //! This memory space preferred device_type
   typedef Kokkos::Device<execution_space,memory_space> device_type;
 
-  /*--------------------------------*/
-#if ! defined( KOKKOS_USING_EXPERIMENTAL_VIEW )
 
 #if defined( KOKKOS_USE_PAGE_ALIGNED_HOST_MEMORY )
   typedef Impl::PageAlignedAllocator allocator ;
@@ -144,8 +142,6 @@ public:
    *  allocation gives it a reference count of one.
    */
   static Impl::AllocationTracker allocate_and_track( const std::string & label, const size_t size );
-
-#endif /* #if ! defined( KOKKOS_USING_EXPERIMENTAL_VIEW ) */
 
   /*--------------------------------*/
   /* Functions unique to the HostSpace */
@@ -168,10 +164,10 @@ public:
   explicit
   HostSpace( const AllocationMechanism & );
 
-  /**\brief  Allocate untracked memory in the space */
+  /**\brief  Allocate memory in the host space */
   void * allocate( const size_t arg_alloc_size ) const ;
 
-  /**\brief  Deallocate untracked memory in the space */
+  /**\brief  Deallocate memory in the host space */
   void deallocate( void * const arg_alloc_ptr 
                  , const size_t arg_alloc_size ) const ;
 
@@ -242,21 +238,6 @@ public:
       return (SharedAllocationRecord *) 0 ;
 #endif
     }
-
-  /**\brief  Allocate tracked memory in the space */
-  static
-  void * allocate_tracked( const Kokkos::HostSpace & arg_space
-                         , const std::string & arg_label
-                         , const size_t arg_alloc_size );
-
-  /**\brief  Reallocate tracked memory in the space */
-  static
-  void * reallocate_tracked( void * const arg_alloc_ptr
-                           , const size_t arg_alloc_size );
-
-  /**\brief  Deallocate tracked memory in the space */
-  static
-  void deallocate_tracked( void * const arg_alloc_ptr );
 
 
   static SharedAllocationRecord * get_record( void * arg_alloc_ptr );

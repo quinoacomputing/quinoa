@@ -53,7 +53,6 @@
 #include "Panzer_ClosureModel_Factory_TemplateManager.hpp"
 #include "Panzer_LinearObjFactory.hpp"
 #include "Panzer_FieldLibrary.hpp"
-#include "Panzer_EvaluatorsRegistrar.hpp"
 
 namespace Teuchos {
   class ParameterList;
@@ -68,7 +67,7 @@ namespace panzer {
   class FieldLayoutLibrary;
 
   //! Non-templated empty base class for EquationSet objects
-  class EquationSetBase : public EvaluatorsRegistrar {
+  class EquationSetBase {
     
   public:
     

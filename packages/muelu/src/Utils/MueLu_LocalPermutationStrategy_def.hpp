@@ -12,7 +12,6 @@
 
 #include <Xpetra_MultiVector.hpp>
 #include <Xpetra_Matrix.hpp>
-#include <Xpetra_MatrixMatrix.hpp>
 #include <Xpetra_CrsGraph.hpp>
 #include <Xpetra_Vector.hpp>
 #include <Xpetra_VectorFactory.hpp>
@@ -94,8 +93,8 @@ namespace MueLu {
         // find column entry with max absolute value
         Scalar maxVal = 0.0;
         for (size_t j = 0; j < Teuchos::as<size_t>(indices.size()); j++) {
-          if(Teuchos::ScalarTraits<Scalar>::magnitude(vals[j]) > maxVal) {
-            maxVal = Teuchos::ScalarTraits<Scalar>::magnitude(vals[j]);
+          if(std::abs(vals[j]) > maxVal) {
+            maxVal = std::abs(vals[j]);
           }
         }
 
@@ -152,8 +151,8 @@ namespace MueLu {
       Scalar maxVal = 0.0;
       size_t maxPerformancePermutationIdx = 0;
       for (size_t j = 0; j < Teuchos::as<size_t>(performance_vector.size()); j++) {
-        if(Teuchos::ScalarTraits<Scalar>::magnitude(performance_vector[j]) > maxVal) {
-          maxVal = Teuchos::ScalarTraits<Scalar>::magnitude(performance_vector[j]);
+        if(std::abs(performance_vector[j]) > maxVal) {
+          maxVal = std::abs(performance_vector[j]);
           maxPerformancePermutationIdx = j;
         }
       }
@@ -223,8 +222,8 @@ namespace MueLu {
     }*/
 
     // build permP * A * permQT
-    Teuchos::RCP<Matrix> ApermQt = Xpetra::MatrixMatrix<Scalar, LocalOrdinal, GlobalOrdinal, Node>::Multiply(*A, false, *permQTmatrix, false, GetOStream(Statistics2),true,true);
-    Teuchos::RCP<Matrix> permPApermQt = Xpetra::MatrixMatrix<Scalar, LocalOrdinal, GlobalOrdinal, Node>::Multiply(*permPmatrix, false, *ApermQt, false, GetOStream(Statistics2),true,true);
+    Teuchos::RCP<Matrix> ApermQt = Utils::Multiply(*A, false, *permQTmatrix, false, GetOStream(Statistics2),true,true);
+    Teuchos::RCP<Matrix> permPApermQt = Utils::Multiply(*permPmatrix, false, *ApermQt, false, GetOStream(Statistics2),true,true);
 
     /*
     MueLu::Utils<Scalar, LocalOrdinal, GlobalOrdinal, Node>::Write("A.mat", *A);
@@ -266,7 +265,7 @@ namespace MueLu {
     }
     diagScalingOp->fillComplete();
 
-    Teuchos::RCP<Matrix> scaledA = Xpetra::MatrixMatrix<Scalar, LocalOrdinal, GlobalOrdinal, Node>::Multiply(*diagScalingOp, false, *permPApermQt, false, GetOStream(Statistics2), true, true);
+    Teuchos::RCP<Matrix> scaledA = Utils::Multiply(*diagScalingOp, false, *permPApermQt, false, GetOStream(Statistics2), true, true);
     currentLevel.Set("A", Teuchos::rcp_dynamic_cast<Matrix>(scaledA), genFactory);
 
     currentLevel.Set("permA", Teuchos::rcp_dynamic_cast<Matrix>(permPApermQt), genFactory);

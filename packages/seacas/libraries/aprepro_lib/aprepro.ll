@@ -61,18 +61,19 @@ typedef SEAMS::Parser::token_type token_type;
 #define show(x)   *(aprepro->infoStream) << "<" << x << ">" << std::flush;
  namespace SEAMS {
    extern int echo;
-   extern const char *get_temp_filename(void);
+   extern char *get_temp_filename(void);
    extern char *pathopen(const char *file);
    extern void  conv_string(const char *string);
    void yyerror(const char *s);
  }
  
+int ifdef;
 int file_must_exist = 0; /* Global used by include/conditional include */
 
 /* Global variables used by the looping mechanism */
 int loop_lvl = 0;
 std::fstream *tmp_file;
-const char  *temp_f;
+char  *temp_f;
 
 #define MAX_IF_NESTING 64
 
@@ -359,8 +360,6 @@ integer {D}+({E})?
    * a line.
    */
   {WS}"{"[Ii]"fdef"{WS}"(" { 
-    // Used to avoid undefined variable warnings in old ifdef/ifndef construct
-    aprepro.inIfdefGetvar = true; 
     unput('(');
     unput('f');
     unput('e');
@@ -372,8 +371,6 @@ integer {D}+({E})?
   }
 
   {WS}"{"[Ii]"fndef"{WS}"(" {
-    // Used to avoid undefined variable warnings in old ifdef/ifndef construct
-    aprepro.inIfdefGetvar = true; 
     unput('(');
     unput('f');
     unput('e');

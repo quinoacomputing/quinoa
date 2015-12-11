@@ -60,9 +60,6 @@ c
       real attrib(100), dist_fact(100)
 
       character*(MXSTLN) coord_names(3)
-      character*(MXSTLN) blk_names(5)
-      character*(MXSTLN) nset_names(2)
-      character*(MXSTLN) sset_names(5)
       character*(MXSTLN) cname
       character*(MXSTLN) var_names(3)
       character*(MXSTLN) qa_record(4,2)
@@ -314,19 +311,6 @@ c
          call exit (0)
       endif
 
-      blk_names(1) = "block_a";
-      blk_names(2) = "block_b";
-      blk_names(3) = "block_c";
-      blk_names(4) = "block_d";
-      blk_names(5) = "block_e";
-
-      call expnams(exoid, EXEBLK, num_elem_blk, blk_names, ierr)
-      write (iout, '("after expnams, error = ", i4)' ) ierr
-      if (ierr .ne. 0) then
-         call exclos(exoid,ierr)
-         call exit (0)
-      endif
-      
 c  write element block properties
 
       prop_names(1) = "MATL"
@@ -591,17 +575,6 @@ c
 c     call expcns (exoid, ids, num_nodes_per_set, num_df_per_set,
 c    1        node_ind, df_ind, node_list, dist_fact, ierr)
 c     write (iout, '("after expcns, error = ", i4)' ) ierr
-
-      nset_names(1) = "nodeset_a1";
-      nset_names(2) = "nodeset_b2";
-
-      call expnams(exoid, EXNSET, num_node_sets, nset_names, ierr)
-      write (iout, '("after expnams, error = ", i4)' ) ierr
-      if (ierr .ne. 0) then
-         call exclos(exoid,ierr)
-         call exit (0)
-      endif
-      
 
 c     write node set properties
 
@@ -977,19 +950,6 @@ c     write (iout, '("after expcss, error = ", i4)' ) ierr
 
       call expp(exoid, EXSSET, 31, prop_names(1), 101, ierr)
       write (iout, '("after expp, error = ", i4)' ) ierr
-      if (ierr .ne. 0) then
-         call exclos(exoid,ierr)
-         call exit (0)
-      endif
-
-      sset_names(1) = "surf_first"
-      sset_names(2) = "surf_second";
-      sset_names(3) = "surf_third";
-      sset_names(4) = "surf_fourth";
-      sset_names(5) = "surf_fifth";
-
-      call expnams(exoid, EXSSET, num_side_sets, sset_names, ierr)
-      write (iout, '("after expnams, error = ", i4)' ) ierr
       if (ierr .ne. 0) then
          call exclos(exoid,ierr)
          call exit (0)

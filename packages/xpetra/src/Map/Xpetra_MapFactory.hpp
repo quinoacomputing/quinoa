@@ -535,7 +535,7 @@ namespace Xpetra {
 
   };
 
-#ifdef HAVE_XPETRA_INT_LONG_LONG
+#ifdef HAVE_TEUCHOS_LONG_LONG_INT
   template <>
   class MapFactory<int, long long> {
 
@@ -795,7 +795,7 @@ namespace Xpetra {
     }
 
   };
-#endif // HAVE_XPETRA_INT_LONG_LONG
+#endif // HAVE_TEUCHOS_LONG_LONG_INT
 
 }
 

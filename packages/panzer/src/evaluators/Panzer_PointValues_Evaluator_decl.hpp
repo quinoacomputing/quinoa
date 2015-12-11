@@ -49,12 +49,10 @@
 
 #include "Panzer_PointValues2.hpp"
 
-#include "Panzer_Evaluator_Macros.hpp"
-
 namespace panzer {
     
 //! Interpolates basis DOF values to IP DOF values
-PANZER_EVALUATOR_CLASS(PointValues_Evaluator)
+PHX_EVALUATOR_CLASS(PointValues_Evaluator)
 
   // is anything other than ScalarT really needed here?
   PointValues2<ScalarT,PHX::MDField> pointValues;
@@ -78,7 +76,7 @@ public:
   PointValues_Evaluator(const Teuchos::RCP<const panzer::PointRule> & pointRule,
                         const Teuchos::RCP<const panzer::PureBasis> & pureBasis);
 
-PANZER_EVALUATOR_CLASS_END
+PHX_EVALUATOR_CLASS_END
 
 }
 

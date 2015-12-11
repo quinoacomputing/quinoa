@@ -48,17 +48,15 @@
 #include "Phalanx_Evaluator_Macros.hpp"
 #include "Phalanx_MDField.hpp"
 
-#include "Panzer_Evaluator_Macros.hpp"
-
 namespace panzer {
     
-PANZER_EVALUATOR_CLASS(ConstantFlux)
+PHX_EVALUATOR_CLASS(ConstantFlux)
   
   std::vector<ScalarT> values;
   
   PHX::MDField<ScalarT> flux;
 
-PANZER_EVALUATOR_CLASS_END
+PHX_EVALUATOR_CLASS_END
 
 }
 

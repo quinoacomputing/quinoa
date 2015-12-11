@@ -277,7 +277,7 @@ namespace stk {
     }
 
     double InputFile::read_defined_input_fields(int step,
-						std::vector<stk::io::MeshField> *missingFields,
+						std::vector<stk::io::MeshField> *missing,
 						stk::mesh::BulkData &bulk)
     {
       ThrowErrorMsgIf(step <= 0, 
@@ -300,196 +300,160 @@ namespace stk {
 		      << step_count << " steps.");
 
       double state_time = region->get_state_time(step);
-      return read_defined_input_fields(state_time, missingFields, bulk);
+      return read_defined_input_fields(state_time, missing, bulk);
     }
 
-    bool InputFile::build_field_part_associations(stk::io::MeshField &mesh_field,
+    void InputFile::build_field_part_associations(stk::io::MeshField &mesh_field,
 						  const stk::mesh::Part &part,
 						  const stk::mesh::EntityRank rank,
-						  Ioss::GroupingEntity *io_entity,
-						  std::map<stk::mesh::FieldBase *, const stk::io::MeshField *> *missing_fields_collector)
+						  Ioss::GroupingEntity *io_entity)
     {
-        bool field_is_missing = false;
-        stk::mesh::FieldBase *f = mesh_field.field();
-        // Only add TRANSIENT Fields -- check role; if not present assume transient...
-        const Ioss::Field::RoleType *role = stk::io::get_field_role(*f);
-        if (role == NULL || *role == Ioss::Field::TRANSIENT) {
-            if (stk::io::is_field_on_part(f, rank, part)) {
-                const stk::mesh::FieldBase::Restriction &res = stk::mesh::find_restriction(*f, rank, part);
-                std::pair<std::string, Ioss::Field::BasicType> field_type;
-                stk::io::get_io_field_type(f, res, &field_type);
-                if (field_type.second != Ioss::Field::INVALID) {
-
-                    const std::string &db_name = mesh_field.db_name();
-                    unsigned num_states = f->number_of_states();
-                    std::vector<stk::mesh::FieldState> missing_states;
-                    if (num_states > 1 && !all_field_states_exist_on_io_entity(db_name, f, io_entity, missing_states)) {
-                        field_is_missing = true;
-                        if (missing_fields_collector) {
-                            for (stk::mesh::FieldState missing_state : missing_states)
-                                (*missing_fields_collector)[f->field_state(missing_state)] = &mesh_field;
-                        }
-                    }
-
-                    bool field_exists = io_entity->field_exists(db_name);
-                    if (!field_exists) {
-                        field_is_missing = true;
-                        if (missing_fields_collector) {
-                            (*missing_fields_collector)[f] = &mesh_field;
-                        }
-                    }
-
-                    // See if field with that name exists on io_entity...
-                    if (field_exists) {
-                        mesh_field.add_part(rank, part, io_entity);
-                        mesh_field.set_single_state((m_db_purpose == stk::io::READ_RESTART) ? false : true);
-                        mesh_field.set_active();
-                    }
-                }
-            }
-        }
-        return field_is_missing;
+      const stk::mesh::FieldBase *f = mesh_field.field();
+      // Only add TRANSIENT Fields -- check role; if not present assume transient...
+      const Ioss::Field::RoleType *role = stk::io::get_field_role(*f);
+      if (role == NULL || *role == Ioss::Field::TRANSIENT) {
+	if (stk::io::is_field_on_part(f, rank, part)) {
+	  const stk::mesh::FieldBase::Restriction &res = stk::mesh::find_restriction(*f, rank, part);
+	  std::pair<std::string, Ioss::Field::BasicType> field_type;
+	  stk::io::get_io_field_type(f, res, &field_type);
+	  if (field_type.second != Ioss::Field::INVALID) {
+	  
+	    // See if field with that name exists on io_entity...
+	    const std::string &db_name = mesh_field.db_name();
+	    if (io_entity->field_exists(db_name)) {
+	      mesh_field.add_part(rank, part, io_entity);
+	      mesh_field.set_single_state((m_db_purpose == stk::io::READ_RESTART) ? false : true);
+	      mesh_field.set_active();
+	    }
+	  }
+	}
+      }
     }
 
-    void InputFile::build_field_part_associations(stk::mesh::BulkData &bulk, std::vector<stk::io::MeshField> *missingFields)
+    void InputFile::build_field_part_associations(stk::mesh::BulkData &bulk)
     {
-        std::map<stk::mesh::FieldBase *, const stk::io::MeshField *> missing_fields_collector;
-        std::map<stk::mesh::FieldBase *, const stk::io::MeshField *> *missing_fields_collector_ptr =
-                (missingFields ? &missing_fields_collector : 0);
+      // Each input field will have a list of the Parts that the field exists on...
+      // Create this list.
+      Ioss::Region *region = m_region.get();
+      
+      // First handle any fields that are subsetted (restricted to a specified list of parts)
+      {
+	std::vector<stk::io::MeshField>::iterator I = m_fields.begin();
+	while (I != m_fields.end()) {
+	  const stk::mesh::FieldBase *f = (*I).field();
+	  std::vector<const stk::mesh::Part*>::iterator P = (*I).m_subsetParts.begin();
+	  while (P != (*I).m_subsetParts.end()) {
+	    // Find the Ioss::GroupingEntity corresponding to this part...
+	    const stk::mesh::Part *part = *P; ++P;
+	    stk::mesh::EntityRank rank = part_primary_entity_rank(*part);
+	    if (f->entity_rank() == rank) {
+	      Ioss::GroupingEntity *io_entity = region->get_entity(part->name());
+	      ThrowErrorMsgIf( io_entity == NULL,
+			       "ERROR: For field '" << (*I).field()->name()
+			       << "' Could not find database entity corresponding to the part named '"
+			       << part->name() << "'.");
+	      build_field_part_associations(*I, *part, rank, io_entity);
+	    } 
 
-        // Each input field will have a list of the Parts that the field exists on...
-        // Create this list.
-        Ioss::Region *region = m_region.get();
-        size_t num_missing_fields = 0;
-        // First handle any fields that are subsetted (restricted to a specified list of parts)
-        {
-            std::vector<stk::io::MeshField>::iterator I = m_fields.begin();
-            while (I != m_fields.end()) {
-                const stk::mesh::FieldBase *f = (*I).field();
-                std::vector<const stk::mesh::Part*>::iterator P = (*I).m_subsetParts.begin();
-                while (P != (*I).m_subsetParts.end()) {
-                    // Find the Ioss::GroupingEntity corresponding to this part...
-                    const stk::mesh::Part *part = *P; ++P;
-                    stk::mesh::EntityRank rank = part_primary_entity_rank(*part);
-                    bool field_is_missing = false;
-                    if (f->entity_rank() == rank) {
-                        Ioss::GroupingEntity *io_entity = region->get_entity(part->name());
-                        ThrowErrorMsgIf( io_entity == NULL,
-                                "ERROR: For field '" << (*I).field()->name()
-                                << "' Could not find database entity corresponding to the part named '"
-                                << part->name() << "'.");
-                        field_is_missing = build_field_part_associations(*I, *part, rank, io_entity, missing_fields_collector_ptr);
-                    }
+	    // If rank is != NODE_RANK, then see if field is defined on the nodes of this part
+	    if (rank != stk::topology::NODE_RANK && f->entity_rank() == stk::topology::NODE_RANK) {
+	      Ioss::GroupingEntity *node_entity = NULL;
+	      std::string nodes_name = part->name() + "_nodes";
+	      node_entity = region->get_entity(nodes_name);
+	      if (node_entity == NULL) {
+		node_entity = region->get_entity("nodeblock_1");
+	      }
+	      if (node_entity != NULL) {
+		build_field_part_associations(*I, *part, stk::topology::NODE_RANK, node_entity);
+	      }
+	    }
+	  }
+	  ++I;
+	}
+      }
+      
+      // Now handle the non-subsetted fields...
 
-                    // If rank is != NODE_RANK, then see if field is defined on the nodes of this part
-                    if (rank != stk::topology::NODE_RANK && f->entity_rank() == stk::topology::NODE_RANK) {
-                        Ioss::GroupingEntity *node_entity = NULL;
-                        std::string nodes_name = part->name() + "_nodes";
-                        node_entity = region->get_entity(nodes_name);
-                        if (node_entity == NULL) {
-                            node_entity = region->get_entity("nodeblock_1");
-                        }
-                        if (node_entity != NULL) {
-                            field_is_missing = build_field_part_associations(*I, *part, stk::topology::NODE_RANK, node_entity,
-                                                                             missing_fields_collector_ptr);
-                        }
-                    }
+      // Check universal_part() NODE_RANK first...
+      const stk::mesh::MetaData &meta = stk::mesh::MetaData::get(bulk);
+      {
+	std::vector<stk::io::MeshField>::iterator I = m_fields.begin();
+	while (I != m_fields.end()) {
+	  if ((*I).m_subsetParts.empty()) {
+	    const stk::mesh::FieldBase *f = (*I).field();
+	    if (f->entity_rank() == stk::topology::NODE_RANK) {
+	      build_field_part_associations(*I, meta.universal_part(), stk::topology::NODE_RANK,
+					    region->get_node_blocks()[0]);
+	    }
+	  }
+	  ++I;
+	}
+      }
 
-                    if (field_is_missing) {
-                        ++num_missing_fields;
-                    }
-                }
-                ++I;
-            }
-        }
+      // Now handle all non-nodeblock parts...
+      const stk::mesh::PartVector &all_parts = meta.get_parts();
+      for ( stk::mesh::PartVector::const_iterator
+              ip = all_parts.begin(); ip != all_parts.end(); ++ip ) {
 
-        // Now handle the non-subsetted fields...
+        stk::mesh::Part * const part = *ip;
 
-        // Check universal_part() NODE_RANK first...
-        const stk::mesh::MetaData &meta = stk::mesh::MetaData::get(bulk);
-        {
-            std::vector<stk::io::MeshField>::iterator I = m_fields.begin();
-            while (I != m_fields.end()) {
-                if ((*I).m_subsetParts.empty()) {
-                    const stk::mesh::FieldBase *f = (*I).field();
-                    if (f->entity_rank() == stk::topology::NODE_RANK) {
-                        bool field_is_missing = build_field_part_associations(*I, meta.universal_part(), stk::topology::NODE_RANK,
-                                                                              region->get_node_blocks()[0], missing_fields_collector_ptr);
-                        if (field_is_missing) {
-                            ++num_missing_fields;
-                        }
-                    }
-                }
-                ++I;
-            }
-        }
+        // Check whether this part is an input part...
+        if (stk::io::is_part_io_part(*part)) {
+          stk::mesh::EntityRank rank = part_primary_entity_rank(*part);
+          // Get Ioss::GroupingEntity corresponding to this part...
+          Ioss::GroupingEntity *entity = region->get_entity(part->name());
+          if (entity != NULL && !m_fields.empty() && entity->type() != Ioss::SIDESET) {
+	    std::vector<stk::io::MeshField>::iterator I = m_fields.begin();
+	    while (I != m_fields.end()) {
+	      if ((*I).m_subsetParts.empty()) {
+		const stk::mesh::FieldBase *f = (*I).field();
+		if (f->entity_rank() == rank) {
+		  build_field_part_associations(*I, *part, rank, entity);
+		}
 
-        // Now handle all non-nodeblock parts...
-        const stk::mesh::PartVector &all_parts = meta.get_parts();
-        for ( stk::mesh::PartVector::const_iterator
-                ip = all_parts.begin(); ip != all_parts.end(); ++ip ) {
+		// If rank is != NODE_RANK, then see if field is defined on the nodes of this part
+		if (rank != stk::topology::NODE_RANK && f->entity_rank() == stk::topology::NODE_RANK) {
+		  Ioss::GroupingEntity *node_entity = NULL;
+		  std::string nodes_name = part->name() + "_nodes";
+		  node_entity = region->get_entity(nodes_name);
+		  if (node_entity == NULL) {
+		    node_entity = region->get_entity("nodeblock_1");
+		  }
+		  if (node_entity != NULL) {
+		    build_field_part_associations(*I, *part, stk::topology::NODE_RANK, node_entity);
+		  }
+		}
+	      }
+	      ++I;
+	    }
+	  }
+	}
+      }
+    }
 
-            stk::mesh::Part * const part = *ip;
+    void InputFile::report_missing_fields(std::vector<stk::io::MeshField> *missing) const
+    {
+      size_t missing_fields = 0;
+      std::ostringstream msg ;
+      std::vector<stk::io::MeshField>::const_iterator I = m_fields.begin();
+      while (I != m_fields.end()) {
+	if (!(*I).is_active()) {
+	  ++missing_fields;
+	  if (missing) {
+	    missing->push_back(*I);
+	  }
+	  else {
+	    msg << "ERROR: Could not find input field '" << (*I).db_name() << "'.\n";
+	  }
+	}
+	++I;
+      }
 
-            // Check whether this part is an input part...
-            if (stk::io::is_part_io_part(*part)) {
-                stk::mesh::EntityRank rank = part_primary_entity_rank(*part);
-                // Get Ioss::GroupingEntity corresponding to this part...
-                Ioss::GroupingEntity *entity = region->get_entity(part->name());
-                if (entity != NULL && !m_fields.empty() && entity->type() != Ioss::SIDESET) {
-                    std::vector<stk::io::MeshField>::iterator I = m_fields.begin();
-                    while (I != m_fields.end()) {
-                        if ((*I).m_subsetParts.empty()) {
-                            const stk::mesh::FieldBase *f = (*I).field();
-                            bool field_is_missing = false;
-                            if (f->entity_rank() == rank) {
-                                field_is_missing = build_field_part_associations(*I, *part, rank, entity, missing_fields_collector_ptr);
-                            }
-
-                            // If rank is != NODE_RANK, then see if field is defined on the nodes of this part
-                            if (rank != stk::topology::NODE_RANK && f->entity_rank() == stk::topology::NODE_RANK) {
-                                Ioss::GroupingEntity *node_entity = NULL;
-                                std::string nodes_name = part->name() + "_nodes";
-                                node_entity = region->get_entity(nodes_name);
-                                if (node_entity == NULL) {
-                                    node_entity = region->get_entity("nodeblock_1");
-                                }
-                                if (node_entity != NULL) {
-                                    field_is_missing = build_field_part_associations(*I, *part, stk::topology::NODE_RANK, node_entity,
-                                                                                     missing_fields_collector_ptr);
-                                }
-                            }
-
-                            if (field_is_missing) {
-                                ++num_missing_fields;
-                            }
-                        }
-                        ++I;
-                    }
-                }
-            }
-        }
-
-        if (num_missing_fields > 0 && missingFields==NULL) {
-            std::ostringstream msg;
-            msg << "ERROR: Input field processing could not find " << num_missing_fields << " fields.\n";
-            throw std::runtime_error( msg.str() );
-        }
-
-        if (missingFields)
-        {
-            std::vector<stk::io::MeshField> discoveredMissingFields;
-            for (auto missingStatedFieldIter : missing_fields_collector)
-            {
-                discoveredMissingFields.push_back(stk::io::MeshField(missingStatedFieldIter.first,
-                                                                     missingStatedFieldIter.second->db_name()));
-            }
-            std::sort(discoveredMissingFields.begin(), discoveredMissingFields.end(),
-                      [](const stk::io::MeshField &a, const stk::io::MeshField &b) {
-                            return (a.db_name() < b.db_name())
-                                    || ((a.db_name() == b.db_name()) && (a.field()->name() == b.field()->name())); });
-            missingFields->insert(missingFields->end(), discoveredMissingFields.begin(), discoveredMissingFields.end());
-        }
+      ThrowAssert(missing==NULL || missing_fields == missing->size());
+      if (missing_fields > 0 && missing==NULL) {
+	msg << "ERROR: Input field processing could not find " << missing_fields << " fields.\n";
+	throw std::runtime_error( msg.str() );
+      }
     }
 
     double InputFile::map_analysis_to_db_time(double time) const
@@ -514,13 +478,13 @@ namespace stk {
     }
 
     double InputFile::read_defined_input_fields(double time,
-						std::vector<stk::io::MeshField> *missingFields,
+						std::vector<stk::io::MeshField> *missing,
 						stk::mesh::BulkData &bulk)
     {
       // Sort fields to ensure they are iterated in the same order on all processors.
       std::sort(m_fields.begin(), m_fields.end(), meshFieldSort);
 
-      bool ignore_missing_fields = (missingFields != NULL);
+      bool ignore_missing_fields = (missing != NULL);
 
       if (!m_fieldsInitialized) {
 	std::vector<stk::io::MeshField>::iterator I = m_fields.begin();
@@ -528,9 +492,14 @@ namespace stk {
 	  (*I).set_inactive(); ++I;
 	}
 
-	build_field_part_associations(bulk, missingFields);
+	build_field_part_associations(bulk);
+	report_missing_fields(missing);
 	  
 	m_fieldsInitialized = true;
+//        I = m_fields.begin();
+//        while (I != m_fields.end()) {
+//          (*I).set_active(); ++I;
+//        }
       }
 
       if (time < m_startTime || time > m_stopTime)

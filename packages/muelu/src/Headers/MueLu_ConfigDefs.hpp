@@ -50,6 +50,7 @@
 
 // Kokkos
 #include <Kokkos_DefaultNode.hpp> // default template parameter of many MueLu classes
+#include <Kokkos_DefaultKernels.hpp>
 
 // Memory management
 #include <Teuchos_Array.hpp>

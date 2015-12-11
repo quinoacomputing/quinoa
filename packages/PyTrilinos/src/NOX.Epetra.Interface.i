@@ -72,9 +72,6 @@ NOX.Epetra.Interface provides the following user-level classes:
 #define NO_IMPORT_ARRAY
 #include "numpy_include.hpp"
 
-// PyTrilinos include
-#include "PyTrilinos_PythonException.hpp"
-
 // Teuchos includes
 #include "Teuchos_Comm.hpp"
 #include "Teuchos_DefaultSerialComm.hpp"
@@ -84,10 +81,6 @@ NOX.Epetra.Interface provides the following user-level classes:
 #include "PyTrilinos_Teuchos_Util.hpp"
 
 // Epetra includes
-#include "Epetra_SerialComm.h"
-#ifdef HAVE_MPI
-#include "Epetra_MpiComm.h"
-#endif
 #include "Epetra_LocalMap.h"
 #include "Epetra_MapColoring.h"
 #include "Epetra_SrcDistObject.h"
@@ -103,17 +96,27 @@ NOX.Epetra.Interface provides the following user-level classes:
 #include "Epetra_FEVbrMatrix.h"
 #include "Epetra_FECrsMatrix.h"
 #include "Epetra_SerialDistributor.h"
-#include "Epetra_SerialSymDenseMatrix.h"
 #include "Epetra_SerialDenseSVD.h"
 #include "Epetra_SerialDenseSolver.h"
 #include "Epetra_Import.h"
 #include "Epetra_Export.h"
 #include "Epetra_OffsetIndex.h"
 #include "Epetra_Time.h"
-#include "PyTrilinos_LinearProblem.hpp"
+#ifdef HAVE_MPI
+#include "Epetra_MpiComm.h"
+#endif
 
 // Local Epetra includes
 #include "PyTrilinos_Epetra_Util.hpp"
+#include "Epetra_NumPyIntVector.hpp"
+#include "Epetra_NumPyMultiVector.hpp"
+#include "Epetra_NumPyVector.hpp"
+#include "Epetra_NumPyFEVector.hpp"
+#include "Epetra_NumPyIntSerialDenseMatrix.hpp"
+#include "Epetra_NumPyIntSerialDenseVector.hpp"
+#include "Epetra_NumPySerialDenseMatrix.hpp"
+#include "Epetra_NumPySerialSymDenseMatrix.hpp"
+#include "Epetra_NumPySerialDenseVector.hpp"
 
 // NOX::Epetra::Interface includes
 #include "NOX_Epetra_Interface_Required.H"
@@ -160,11 +163,11 @@ NOX.Epetra.Interface provides the following user-level classes:
     e.restore();
     SWIG_fail;
   }
+  SWIG_CATCH_STDEXCEPT
   catch (Swig::DirectorException & e)
   {
     SWIG_fail;
   }
-  SWIG_CATCH_STDEXCEPT
   catch(...)
   {
     SWIG_exception(SWIG_UnknownError, "Unknown C++ exception");

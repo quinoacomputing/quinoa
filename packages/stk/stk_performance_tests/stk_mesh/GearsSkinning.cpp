@@ -40,6 +40,7 @@
 
 #include <stk_mesh/fixtures/GearsFixture.hpp>
 #include <stk_mesh/fixtures/Gear.hpp>
+#include <stk_mesh/fixtures/HexFixture.hpp>
 
 #include <stk_mesh/base/Comm.hpp>
 #include <stk_mesh/base/Selector.hpp>

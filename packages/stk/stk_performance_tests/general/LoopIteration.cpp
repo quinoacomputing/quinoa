@@ -48,7 +48,10 @@ void force_calculation( long long sum )
   //volatile to prevent the compiler from optimizing the loops away
   static volatile long long value;
 
-  EXPECT_TRUE( count==0 || value == sum );
+  if( count && value != sum )
+  {
+    EXPECT_TRUE(false);
+  }
 
   value = sum;
   ++count;

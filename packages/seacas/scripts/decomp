@@ -80,7 +80,7 @@ Other options:
 --processors #p    Specify number of processors (-p, -j)
 --root root_dir    Root directory to begin the path to on the separate disks (-R)
 --subdir sub_dir   Continuation of the path on the separate disks to the files (-S)
---64               Force creation of 64-bit integer decomposed files (-6)
+
    help-email: sierra-help@sandia.gov 
 
 DECOMP_USAGE_EOF
@@ -269,9 +269,9 @@ function execute_spread {
     
     echo ${txtblu}
     echo "Executing:"
-    echo "   $NEM_SPREAD $use64 $pexsh"
+    echo "   $NEM_SPREAD $pexsh"
     echo ${txtrst}
-    $NEM_SPREAD $use64 $pexsh
+    $NEM_SPREAD $pexsh
 }
 
 ########################################################################
@@ -301,7 +301,6 @@ rootdir="`pwd`/"
 subdir="."
 spheres="-S"
 curdir=`pwd`
-use64=""
 
 ACCESSBIN="`dirname \"$0\"`"
 ACCESSBIN="`( cd \"${ACCESSBIN}\" && pwd )`"
@@ -313,18 +312,9 @@ NEM_SPREAD=${ACCESSBIN}/nem_spread
 LAUNCH=`command -v launch`
 if [ ! -z "$LAUNCH" ]
 then
-    if [ -z "$PBS_JOBID" -a -z "$LSB_JOBID" -a -z "$SLURM_JOB_ID" ]
-    then
-        LAUNCH="$LAUNCH -n 1"
-        # If the launch script doesn't work to run something simple, don't use it.
-        $LAUNCH >/dev/null 2>&1 true || LAUNCH=
-    else
-        LAUNCH=
-        unset OMPI_MCA_btl_openib_ib_retry_count
-        unset OMPI_MCA_btl_openib_ib_timeout
-        export OMPI_MCA_mtl=^psm
-        export OMPI_MCA_btl=tcp,sm,self
-    fi
+    LAUNCH="$LAUNCH -n 1"
+    # If the launch script doesn't work to run something simple, don't use it.
+    $LAUNCH >/dev/null 2>&1 true || LAUNCH=
 fi
 
 ########################################################################
@@ -346,8 +336,8 @@ fi
 if [ $OLDGETOPT -eq 1 ] ; then
    TEMP=`getopt Hhn:i:o:p:j:r:R:S:sl:vd: $*`
 else
-   TEMP=`getopt -o Hh6n:i:o:p:j:r:R:S:sl:vd: -a \
-       --long input:,help,nem_slice_flag,64,processors:,rootdir:,subdir:,spheres_linear,nolaunch,verbose,debug: \
+   TEMP=`getopt -o Hhn:i:o:p:j:r:R:S:sl:vd: -a \
+       --long input:,help,nem_slice_flag,processors:,rootdir:,subdir:,spheres_linear,nolaunch,verbose,debug: \
        --long multikl,rcb,rcb_ignore_z,rib,hsfc,spectral,inertial,linear,random,scattered,brick,zpinch \
        -n 'decomp' -- "$@"`
 fi
@@ -378,8 +368,6 @@ while true ; do
 	      subdir=$2 ; shift 2 ;;
 	    -s|--spheres_linear) 
 	      spheres="" ; shift ;;
-	    -6|--64) 
-	      use64="-64" ; shift ;;
 	    --nolaunch)
               LAUNCH="" ; shift ;;
 	    -l)

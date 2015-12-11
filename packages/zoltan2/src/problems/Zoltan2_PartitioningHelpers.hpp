@@ -80,11 +80,12 @@ template <typename SolutionAdapter, typename DataAdapter>
 size_t getImportList(
    const PartitioningSolution<SolutionAdapter> &solution,
    const DataAdapter * const data,
-   ArrayRCP<typename DataAdapter::gno_t> &imports // output
+   ArrayRCP<typename DataAdapter::zgid_t> &imports // output
 )
 {
   typedef typename PartitioningSolution<SolutionAdapter>::part_t part_t;
   typedef typename PartitioningSolution<SolutionAdapter>::gno_t gno_t;
+  typedef typename DataAdapter::zgid_t zgid_t;
 
   size_t numParts = solution.getActualGlobalNumberOfParts();
   int numProcs = solution.getCommunicator()->getSize();
@@ -98,7 +99,7 @@ size_t getImportList(
   }
 
   size_t localNumIds = data->getLocalNumIDs();
-  const typename DataAdapter::gno_t *gids = NULL;
+  const zgid_t *gids = NULL;
   data->getIDsView(gids);
 
   const part_t *parts = solution.getPartListView();
@@ -113,7 +114,7 @@ size_t getImportList(
     offsets[i] = offsets[i-1] + counts[i-1];
   }
 
-  Array<typename DataAdapter::gno_t> gidList(localNumIds);
+  Array<typename DataAdapter::zgid_t> gidList(localNumIds);
   for (size_t i=0; i < localNumIds; i++) {
     gno_t idx = offsets[parts[i]];
     gidList[idx] = gids[i];
@@ -122,7 +123,7 @@ size_t getImportList(
 
   Array<int> recvCounts(numProcs, 0);
   try {
-    AlltoAllv<typename DataAdapter::gno_t>(*(solution.getCommunicator()),
+    AlltoAllv<zgid_t>(*(solution.getCommunicator()),
                       *(solution.getEnvironment()),
                       gidList(), counts(), imports, recvCounts());
   }

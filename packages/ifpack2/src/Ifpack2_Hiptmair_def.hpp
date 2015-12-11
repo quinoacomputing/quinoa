@@ -43,12 +43,9 @@
 #ifndef IFPACK2_HIPTMAIR_DEF_HPP
 #define IFPACK2_HIPTMAIR_DEF_HPP
 
-#include "Ifpack2_Details_OneLevelFactory.hpp"
-#include "Ifpack2_Parameters.hpp"
-#include "Teuchos_TimeMonitor.hpp"
-#include <cmath>
-#include <iostream>
-#include <sstream>
+#include "Ifpack2_Hiptmair_decl.hpp"
+#include "Ifpack2_Details_OneLevelFactory_decl.hpp"
+#include "Ifpack2_Details_OneLevelFactory_def.hpp"
 
 namespace Ifpack2 {
 
@@ -226,7 +223,7 @@ void Hiptmair<MatrixType>::initialize ()
   { // The body of code to time
     Teuchos::TimeMonitor timeMon (timer);
 
-    Details::OneLevelFactory<row_matrix_type> factory;
+    Details::OneLevelFactory<MatrixType> factory;
 
     ifpack2_prec1_=factory.create(precType1_,A_);
     ifpack2_prec1_->initialize();
@@ -314,14 +311,10 @@ apply (const Tpetra::MultiVector<typename MatrixType::scalar_type,
     // If X and Y are pointing to the same memory location,
     // we need to create an auxiliary vector, Xcopy
     RCP<const MV> Xcopy;
-    {
-      auto X_lcl_host = X.template getLocalView<Kokkos::HostSpace> ();
-      auto Y_lcl_host = Y.template getLocalView<Kokkos::HostSpace> ();
-      if (X_lcl_host.ptr_on_device () == Y_lcl_host.ptr_on_device ()) {
-        Xcopy = rcp (new MV (X, Teuchos::Copy));
-      } else {
-        Xcopy = rcpFromRef (X);
-      }
+    if (X.getLocalMV ().getValues () == Y.getLocalMV ().getValues ()) {
+      Xcopy = rcp (new MV (X, Teuchos::Copy));
+    } else {
+      Xcopy = rcpFromRef (X);
     }
 
     RCP<MV> Ycopy = rcpFromRef (Y);
@@ -460,6 +453,6 @@ describe (Teuchos::FancyOStream &out,
 } // namespace Ifpack2
 
 #define IFPACK2_HIPTMAIR_INSTANT(S,LO,GO,N) \
-  template class Ifpack2::Hiptmair< Tpetra::RowMatrix<S, LO, GO, N> >;
+  template class Ifpack2::Hiptmair< Tpetra::CrsMatrix<S, LO, GO, N> >;
 
 #endif /* IFPACK2_HIPTMAIR_DEF_HPP */

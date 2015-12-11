@@ -82,9 +82,10 @@ template <typename User, typename UserCoord=User>
 public:
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
-  typedef typename InputTraits<User>::scalar_t scalar_t;
+  typedef typename InputTraits<User>::scalar_t    scalar_t;
   typedef typename InputTraits<User>::lno_t    lno_t;
   typedef typename InputTraits<User>::gno_t    gno_t;
+  typedef typename InputTraits<User>::zgid_t    zgid_t;
   typedef typename InputTraits<User>::part_t   part_t;
   typedef typename InputTraits<User>::node_t   node_t;
   typedef Xpetra::RowMatrix<scalar_t, lno_t, gno_t, node_t> xmatrix_t;
@@ -168,19 +169,19 @@ public:
 
   bool CRSViewAvailable() const { return true; }
 
-  void getRowIDsView(const gno_t *&rowIds) const 
+  void getRowIDsView(const zgid_t *&rowIds) const 
   {
-    ArrayView<const gno_t> rowView = rowMap_->getNodeElementList();
+    ArrayView<const zgid_t> rowView = rowMap_->getNodeElementList();
     rowIds = rowView.getRawPtr();
   }
 
-  void getCRSView(const lno_t *&offsets, const gno_t *&colIds) const
+  void getCRSView(const lno_t *&offsets, const zgid_t *&colIds) const
   {
     offsets = offset_.getRawPtr();
     colIds = columnIds_.getRawPtr();
   }
 
-  void getCRSView(const lno_t *&offsets, const gno_t *&colIds,
+  void getCRSView(const lno_t *&offsets, const zgid_t *&colIds,
                     const scalar_t *&values) const
   {
     offsets = offset_.getRawPtr();
@@ -352,7 +353,7 @@ template <typename User, typename UserCoord>
 { 
   // Get an import list (rows to be received)
   size_t numNewRows;
-  ArrayRCP<gno_t> importList;
+  ArrayRCP<zgid_t> importList;
   try{
     numNewRows = Zoltan2::getImportList<Adapter,
                                         XpetraRowMatrixAdapter<User,UserCoord> >
@@ -376,7 +377,7 @@ template <typename User, typename UserCoord>
 { 
   // Get an import list (rows to be received)
   size_t numNewRows;
-  ArrayRCP<gno_t> importList;
+  ArrayRCP<zgid_t> importList;
   try{
     numNewRows = Zoltan2::getImportList<Adapter,
                                         XpetraRowMatrixAdapter<User,UserCoord> >

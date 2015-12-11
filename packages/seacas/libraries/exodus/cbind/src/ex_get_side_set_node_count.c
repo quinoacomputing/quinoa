@@ -68,13 +68,12 @@ int ex_get_side_set_node_count(int exoid,
   int  num_side_sets, num_elem_blks, num_df, ndim;
   size_t tot_num_ss_elem = 0;
   int64_t side, elem;
-  void_int *elem_blk_ids = NULL;
-  void_int *ss_elem_ndx  = NULL;
-  void_int *side_set_elem_list = NULL;
-  void_int *side_set_side_list = NULL;
+  void_int *elem_blk_ids;
+  void_int *ss_elem_ndx;
+  void_int *side_set_elem_list, *side_set_side_list;
   size_t elem_ctr;
 
-  struct elem_blk_parm  *elem_blk_parms = NULL;
+  struct elem_blk_parm  *elem_blk_parms;
 
   char errmsg[MAX_ERR_LENGTH];
   int err_stat = EX_NOERR;

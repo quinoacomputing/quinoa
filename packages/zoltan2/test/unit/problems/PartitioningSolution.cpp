@@ -54,9 +54,9 @@
 #include <Zoltan2_BasicIdentifierAdapter.hpp>
 #include <Zoltan2_TestHelpers.hpp>
 
-typedef Zoltan2::BasicUserTypes<zscalar_t, zlno_t, zgno_t> zzuser_t;
-typedef Zoltan2::BasicIdentifierAdapter<zzuser_t> idInput_t;
-typedef idInput_t::part_t zzpart_t;
+typedef Zoltan2::BasicUserTypes<zscalar_t, zgno_t, zlno_t, zgno_t> user_t;
+typedef Zoltan2::BasicIdentifierAdapter<user_t> idInput_t;
+typedef idInput_t::part_t part_t;
 
 using Teuchos::ArrayRCP;
 using Teuchos::Array;
@@ -66,10 +66,10 @@ using Teuchos::arcp;
 
 
 
-void makeArrays(int wdim, int *lens, zzpart_t **ids, zscalar_t **sizes,
-  ArrayRCP<ArrayRCP<zzpart_t> > &idList, ArrayRCP<ArrayRCP<zscalar_t> > &sizeList)
+void makeArrays(int wdim, int *lens, part_t **ids, zscalar_t **sizes,
+  ArrayRCP<ArrayRCP<part_t> > &idList, ArrayRCP<ArrayRCP<zscalar_t> > &sizeList)
 {
-  ArrayRCP<zzpart_t> *idArrays = new ArrayRCP<zzpart_t> [wdim];
+  ArrayRCP<part_t> *idArrays = new ArrayRCP<part_t> [wdim];
   ArrayRCP<zscalar_t> *sizeArrays = new ArrayRCP<zscalar_t> [wdim];
 
   for (int w=0; w < wdim; w++){
@@ -97,11 +97,11 @@ int main(int argc, char *argv[])
   int maxNumWeights = 3;
   int maxNumPartSizes = nprocs;
   int *lengths = new int [maxNumWeights];
-  zzpart_t **idLists = new zzpart_t * [maxNumWeights];
+  part_t **idLists = new part_t * [maxNumWeights];
   zscalar_t **sizeLists = new zscalar_t * [maxNumWeights];
 
   for (int w=0; w < maxNumWeights; w++){
-    idLists[w] = new zzpart_t [maxNumPartSizes];
+    idLists[w] = new part_t [maxNumPartSizes];
     sizeLists[w] = new zscalar_t [maxNumPartSizes];
   }
 
@@ -113,8 +113,9 @@ int main(int argc, char *argv[])
   // A simple identifier map.
 
   zgno_t *myGids = new zgno_t [numIdsPerProc];
-  for (int i=0, x=rank*numIdsPerProc; i < numIdsPerProc; i++)
+  for (int i=0, x=rank*numIdsPerProc; i < numIdsPerProc; i++){
     myGids[i] = x++;
+  }
 
   /////////////
   // TEST:
@@ -124,7 +125,7 @@ int main(int argc, char *argv[])
   int numGlobalParts = nprocs;
   int nWeights = 1;
 
-  ArrayRCP<ArrayRCP<zzpart_t> > ids;
+  ArrayRCP<ArrayRCP<part_t> > ids;
   ArrayRCP<ArrayRCP<zscalar_t> > sizes;
 
   memset(lengths, 0, sizeof(int) * maxNumWeights);
@@ -207,11 +208,11 @@ int main(int argc, char *argv[])
 
   // Test the Solution set method that is called by algorithms
 
-  zzpart_t *partAssignments = new zzpart_t [numIdsPerProc];
+  part_t *partAssignments = new part_t [numIdsPerProc];
   for (int i=0; i < numIdsPerProc; i++){
     partAssignments[i] = myGids[i] % numGlobalParts;  // round robin
   }
-  ArrayRCP<zzpart_t> partList = arcp(partAssignments, 0, numIdsPerProc);
+  ArrayRCP<part_t> partList = arcp(partAssignments, 0, numIdsPerProc);
 
   try{
     solution->setParts(partList);
@@ -229,9 +230,9 @@ int main(int argc, char *argv[])
   // or migration functions.
 
   if (!fail){
-    const zzpart_t *parts = solution->getPartListView();
+    const part_t *parts = solution->getPartListView();
     for (int i=0; !fail && i < numIdsPerProc; i++){
-      if (parts[i] != zzpart_t(myGids[i] % numGlobalParts))
+      if (parts[i] != part_t(myGids[i] % numGlobalParts))
         fail = 13;
     }
   }
@@ -262,5 +263,4 @@ int main(int argc, char *argv[])
   }
   delete [] idLists;
   delete [] sizeLists;
-  delete [] myGids;
 }

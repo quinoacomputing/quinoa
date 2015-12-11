@@ -22,8 +22,11 @@
 #  define HAVE_TPETRA_MPI
 #endif // HAVE_TPETRACORE_MPI
 
-/* Determine if the CUDA TPL is enabled */
+/* Determine if we have CUDA */
 /* #undef HAVE_TPETRACORE_CUDA */
+#ifdef HAVE_TPETRACORE_CUDA
+#  define HAVE_TPETRA_CUDA
+#endif // HAVE_TPETRACORE_CUDA
 
 /* Determine if we have the quadmath TPL */
 /* #undef HAVE_TPETRACORE_QUADMATH */
@@ -129,45 +132,40 @@
 /* Define if user requested explicit instantiation of classes into libtpetra */
 /* #undef HAVE_TPETRA_EXPLICIT_INSTANTIATION */
 
-/* List of enabled (LocalOrdinal, GlobalOrdinal) pairs */
-#define HAVE_TPETRA_INST_INT_INT
+/* Define if user requested explicit instantiation over ordinal pair <int,long> into libtpetra */
+/* #undef HAVE_TPETRA_INST_INT_INT */
 /* #undef HAVE_TPETRA_INST_INT_LONG */
-#define HAVE_TPETRA_INST_INT_LONG_LONG
+/* #undef HAVE_TPETRA_INST_INT_LONG_LONG */
 /* #undef HAVE_TPETRA_INST_INT_UNSIGNED */
-/* #undef HAVE_TPETRA_INST_INT_UNSIGNED_LONG */
 
-/* List of enabled Scalar types */
 /* #undef HAVE_TPETRA_INST_FLOAT */
-#define HAVE_TPETRA_INST_DOUBLE
+/* #undef HAVE_TPETRA_INST_DOUBLE */
 /* #undef HAVE_TPETRA_INST_COMPLEX_FLOAT */
 /* #undef HAVE_TPETRA_INST_COMPLEX_DOUBLE */
 /* #undef HAVE_TPETRA_INST_DD_REAL */
 /* #undef HAVE_TPETRA_INST_QD_REAL */
-/* #undef HAVE_TPETRA_INST_FLOAT128 */
 
-/* List of enabled Node types */
 /* #undef HAVE_TPETRA_INST_SERIALCLASSIC */
-#define HAVE_TPETRA_INST_SERIAL
+/* #undef HAVE_TPETRA_INST_SERIAL */
 /* #undef HAVE_TPETRA_INST_PTHREAD */
 /* #undef HAVE_TPETRA_INST_OPENMP */
 /* #undef HAVE_TPETRA_INST_CUDA */
 
 #define HAVE_TPETRA_INT_INT
-/* #undef HAVE_TPETRA_INT_LONG */
-#define HAVE_TPETRA_INT_LONG_LONG
-/* #undef HAVE_TPETRA_INT_UNSIGNED */
-/* #undef HAVE_TPETRA_INT_UNSIGNED_LONG */
+#define HAVE_TPETRA_INT_LONG
+/* #undef HAVE_TPETRA_INT_LONG_LONG */
+#define HAVE_TPETRA_INT_UNSIGNED
 
-/* #undef HAVE_TPETRA_FLOAT */
+#define HAVE_TPETRA_FLOAT
 #define HAVE_TPETRA_DOUBLE
-/* #undef HAVE_TPETRA_COMPLEX_FLOAT */
-/* #undef HAVE_TPETRA_COMPLEX_DOUBLE */
+#define HAVE_TPETRA_COMPLEX_FLOAT
+#define HAVE_TPETRA_COMPLEX_DOUBLE
 /* #undef HAVE_TPETRA_DD_REAL */
 /* #undef HAVE_TPETRA_QD_REAL */
 
-/* #undef HAVE_TPETRA_SERIALCLASSIC */
+#define HAVE_TPETRA_SERIALCLASSIC
 #define HAVE_TPETRA_SERIAL
-/* #undef HAVE_TPETRA_PTHREAD */
+#define HAVE_TPETRA_PTHREAD
 /* #undef HAVE_TPETRA_OPENMP */
 /* #undef HAVE_TPETRA_CUDA */
 

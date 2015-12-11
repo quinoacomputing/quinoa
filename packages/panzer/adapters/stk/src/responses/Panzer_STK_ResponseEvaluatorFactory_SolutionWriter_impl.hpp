@@ -44,26 +44,19 @@ buildAndRegisterEvaluators(const std::string & responseName,
   using Teuchos::RCP;
   using Teuchos::rcp;
 
-  typedef std::pair<std::string,RCP<const panzer::PureBasis> > StrConstPureBasisPair;
-
   // this will help so we can print out any unused scaled fields as a warning
   boost::unordered_set<std::string> scaledFieldsHash = scaledFieldsHash_;
 
-  std::map<std::string,RCP<const panzer::PureBasis> > bases;
+  const std::map<std::string,Teuchos::RCP<panzer::PureBasis> > & bases = physicsBlock.getBases();
   std::map<std::string,std::vector<std::string> > basisBucket;
-  { 
-    const std::map<std::string,RCP<panzer::PureBasis> > & nc_bases = physicsBlock.getBases();
-    bases.insert(nc_bases.begin(),nc_bases.end());
-  }
 
-  std::vector<StrConstPureBasisPair> allFields;
+  std::vector<panzer::StrPureBasisPair> allFields;
 
   // only add in solution fields if required
 
   if(!addCoordinateFields_ && addSolutionFields_) {
     // inject all the fields, including the coordinates (we will remove them shortly)
-    allFields.insert(allFields.end(),physicsBlock.getProvidedDOFs().begin(),physicsBlock.getProvidedDOFs().end());
-   
+    allFields = physicsBlock.getProvidedDOFs();
 
     // get a list of strings with fields to remove
     std::vector<std::string> removedFields;
@@ -91,11 +84,7 @@ buildAndRegisterEvaluators(const std::string & responseName,
     }
   }
   else if(addSolutionFields_)
-    allFields.insert(allFields.end(),physicsBlock.getProvidedDOFs().begin(),physicsBlock.getProvidedDOFs().end());
-
-  // add in bases for any addtional fields
-  for(std::size_t i=0;i<additionalFields_.size();i++)
-    bases[additionalFields_[i].second->name()] = additionalFields_[i].second;
+    allFields = physicsBlock.getProvidedDOFs();;
 
   allFields.insert(allFields.end(),additionalFields_.begin(),additionalFields_.end());
 
@@ -106,7 +95,7 @@ buildAndRegisterEvaluators(const std::string & responseName,
   // add this for HCURL and HDIV basis, only want to add them once: evaluate vector fields at centroid
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////
   RCP<panzer::PointRule> centroidRule;
-  for(std::map<std::string,Teuchos::RCP<const panzer::PureBasis> >::const_iterator itr=bases.begin();
+  for(std::map<std::string,Teuchos::RCP<panzer::PureBasis> >::const_iterator itr=bases.begin();
       itr!=bases.end();++itr) {
 
     if(itr->second->isVectorBasis()) {
@@ -119,7 +108,7 @@ buildAndRegisterEvaluators(const std::string & responseName,
       // build pointe values evaluator
       RCP<PHX::Evaluator<panzer::Traits> > evaluator  = 
          rcp(new panzer::PointValues_Evaluator<EvalT,panzer::Traits>(centroidRule,centroid));
-      this->template registerEvaluator<EvalT>(fm, evaluator);
+      fm.template registerEvaluator<EvalT>(evaluator);
 
       break; // get out of the loop, only need one evaluator
     }
@@ -134,9 +123,8 @@ buildAndRegisterEvaluators(const std::string & responseName,
     std::string basisName = itr->first;
     const std::vector<std::string> & fields = itr->second;
 
-    std::map<std::string,Teuchos::RCP<const panzer::PureBasis> >::const_iterator found = bases.find(basisName);
-    TEUCHOS_TEST_FOR_EXCEPTION(found==bases.end(),std::logic_error,
-                               "Could not find basis \""+basisName+"\"!");
+    std::map<std::string,Teuchos::RCP<panzer::PureBasis> >::const_iterator found = bases.find(basisName);
+    TEUCHOS_ASSERT(found!=bases.end());
     Teuchos::RCP<const panzer::PureBasis> basis = found->second;
     
     // write out nodal fields
@@ -164,7 +152,7 @@ buildAndRegisterEvaluators(const std::string & responseName,
                                                       mesh_, basis, fields,scalars));
 
       // register and require evaluator fields
-      this->template registerEvaluator<EvalT>(fm, eval);
+      fm.template registerEvaluator<EvalT>(eval);
       fm.template requireField<EvalT>(*eval->evaluatedFields()[0]);
     }
     else if(basis->getElementSpace()==panzer::PureBasis::HCURL) {
@@ -174,7 +162,7 @@ buildAndRegisterEvaluators(const std::string & responseName,
       {
         Teuchos::RCP<PHX::Evaluator<panzer::Traits> > evaluator  
            = Teuchos::rcp(new panzer::BasisValues_Evaluator<EvalT,panzer::Traits>(centroidRule,basis));
-        this->template registerEvaluator<EvalT>(fm, evaluator);
+        fm.template registerEvaluator<EvalT>(evaluator);
       }
 
       // add a DOF_PointValues for each field
@@ -188,7 +176,7 @@ buildAndRegisterEvaluators(const std::string & responseName,
         Teuchos::RCP<PHX::Evaluator<panzer::Traits> > evaluator  
            = Teuchos::rcp(new panzer::DOF_PointValues<EvalT,panzer::Traits>(p));
 
-        this->template registerEvaluator<EvalT>(fm, evaluator);
+        fm.template registerEvaluator<EvalT>(evaluator);
 
         pointFields.push_back(fields[f]+"_"+centroidRule->getName());
 
@@ -201,7 +189,7 @@ buildAndRegisterEvaluators(const std::string & responseName,
            = Teuchos::rcp(new panzer_stk_classic::ScatterVectorFields<EvalT,panzer::Traits>("STK HCURL Scatter Basis " +basis->name()+": "+fields_concat,
                                                                               mesh_,centroidRule,fields));
 
-        this->template registerEvaluator<EvalT>(fm, evaluator);
+        fm.template registerEvaluator<EvalT>(evaluator);
         fm.template requireField<EvalT>(*evaluator->evaluatedFields()[0]); // require the dummy evaluator
       }
     }
@@ -212,7 +200,7 @@ buildAndRegisterEvaluators(const std::string & responseName,
       {
         Teuchos::RCP<PHX::Evaluator<panzer::Traits> > evaluator  
            = Teuchos::rcp(new panzer::BasisValues_Evaluator<EvalT,panzer::Traits>(centroidRule,basis));
-        this->template registerEvaluator<EvalT>(fm, evaluator);
+        fm.template registerEvaluator<EvalT>(evaluator);
       }
 
       // add a DOF_PointValues for each field
@@ -226,7 +214,7 @@ buildAndRegisterEvaluators(const std::string & responseName,
         Teuchos::RCP<PHX::Evaluator<panzer::Traits> > evaluator  
            = Teuchos::rcp(new panzer::DOF_PointValues<EvalT,panzer::Traits>(p));
 
-        this->template registerEvaluator<EvalT>(fm, evaluator);
+        fm.template registerEvaluator<EvalT>(evaluator);
 
         pointFields.push_back(fields[f]+"_"+centroidRule->getName());
 
@@ -239,7 +227,7 @@ buildAndRegisterEvaluators(const std::string & responseName,
            = Teuchos::rcp(new panzer_stk_classic::ScatterVectorFields<EvalT,panzer::Traits>("STK HDIV Scatter Basis " +basis->name()+": "+fields_concat,
                                                                               mesh_,centroidRule,fields));
 
-        this->template registerEvaluator<EvalT>(fm, evaluator);
+        fm.template registerEvaluator<EvalT>(evaluator);
         fm.template requireField<EvalT>(*evaluator->evaluatedFields()[0]); // require the dummy evaluator
       }
     }
@@ -258,7 +246,7 @@ buildAndRegisterEvaluators(const std::string & responseName,
 
 template <typename EvalT>
 void ResponseEvaluatorFactory_SolutionWriter<EvalT>::
-bucketByBasisType(const std::vector<std::pair<std::string,Teuchos::RCP<const panzer::PureBasis> > > & providedDofs,
+bucketByBasisType(const std::vector<panzer::StrPureBasisPair> & providedDofs,
                   std::map<std::string,std::vector<std::string> > & basisBucket)
 {
    // this should be self explanatory
@@ -272,7 +260,7 @@ bucketByBasisType(const std::vector<std::pair<std::string,Teuchos::RCP<const pan
 
 template <typename EvalT>
 void ResponseEvaluatorFactory_SolutionWriter<EvalT>::
-computeReferenceCentroid(const std::map<std::string,Teuchos::RCP<const panzer::PureBasis> > & bases,
+computeReferenceCentroid(const std::map<std::string,Teuchos::RCP<panzer::PureBasis> > & bases,
                          int baseDimension,
                          Intrepid::FieldContainer<double> & centroid) const
 {
@@ -282,7 +270,7 @@ computeReferenceCentroid(const std::map<std::string,Teuchos::RCP<const panzer::P
    centroid.resize(1,baseDimension);
 
    // loop over each possible basis
-   for(std::map<std::string,RCP<const panzer::PureBasis> >::const_iterator itr=bases.begin();
+   for(std::map<std::string,RCP<panzer::PureBasis> >::const_iterator itr=bases.begin();
        itr!=bases.end();++itr) {
 
       // see if this basis has coordinates
@@ -334,7 +322,7 @@ typeSupported() const
 
 template <typename EvalT>
 void ResponseEvaluatorFactory_SolutionWriter<EvalT>::
-addAdditionalField(const std::string & fieldName,const Teuchos::RCP<const panzer::PureBasis> & basis)
+addAdditionalField(const std::string & fieldName,const Teuchos::RCP<panzer::PureBasis> & basis)
 {
   additionalFields_.push_back(std::make_pair(fieldName,basis));
 }
@@ -342,7 +330,7 @@ addAdditionalField(const std::string & fieldName,const Teuchos::RCP<const panzer
 template <typename EvalT>
 void ResponseEvaluatorFactory_SolutionWriter<EvalT>::
 deleteRemovedFields(const std::vector<std::string> & removedFields,
-                    std::vector<std::pair<std::string,Teuchos::RCP<const panzer::PureBasis> > > & fields) const
+                    std::vector<panzer::StrPureBasisPair> & fields) const
 {
   RemovedFieldsSearchUnaryFunctor functor;
   functor.removedFields_ = removedFields;

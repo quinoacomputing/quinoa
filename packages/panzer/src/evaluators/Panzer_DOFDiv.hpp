@@ -46,13 +46,11 @@
 #include "Phalanx_Evaluator_Macros.hpp"
 #include "Phalanx_Field.hpp"
 
-#include "Panzer_Evaluator_WithBaseImpl.hpp"
-
 namespace panzer {
     
 //! Interpolates basis DOF values to IP DOF Div values
 template<typename EvalT, typename TRAITS>                   
-class DOFDiv : public panzer::EvaluatorWithBaseImpl<TRAITS>,      
+class DOFDiv : public PHX::EvaluatorWithBaseImpl<TRAITS>,      
                 public PHX::EvaluatorDerived<EvalT, TRAITS>  {   
 public:
 
@@ -81,7 +79,7 @@ private:
 // Specitialization for the Jacobian
 template<typename TRAITS>                   
 class DOFDiv<panzer::Traits::Jacobian,TRAITS> : 
-                public panzer::EvaluatorWithBaseImpl<TRAITS>,      
+                public PHX::EvaluatorWithBaseImpl<TRAITS>,      
                 public PHX::EvaluatorDerived<panzer::Traits::Jacobian, TRAITS>  {   
 public:
 

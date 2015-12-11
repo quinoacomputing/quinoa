@@ -216,156 +216,138 @@ namespace ROL {
 
 
 
-  template<class Real>
+  template<class Real> 
   class ProjectedObjective : public Objective<Real> {
   private:
     Teuchos::RCP<Objective<Real> >       obj_;
     Teuchos::RCP<BoundConstraint<Real> > con_;
     Teuchos::RCP<Secant<Real> >          secant_;
-
-    Teuchos::RCP<ROL::Vector<Real> > primalV_;
-    Teuchos::RCP<ROL::Vector<Real> > dualV_;
-    bool isInitialized_;
-
     bool useSecantPrecond_;
     bool useSecantHessVec_;
     Real eps_;
 
   public:
-    ProjectedObjective( Objective<Real> &obj, BoundConstraint<Real> &con,
-                        Teuchos::RCP<Secant<Real> > &secant,
-                        bool useSecantPrecond = false,
-                        bool useSecantHessVec = false,
-                        Real eps = 0.0 )
-      : isInitialized_(false), useSecantPrecond_(useSecantPrecond),
-        useSecantHessVec_(useSecantHessVec), eps_(eps) {
-      obj_    = Teuchos::rcp(&obj, false);
-      con_    = Teuchos::rcp(&con, false);
-      secant_ = secant;
+    ProjectedObjective( Objective<Real> &obj, BoundConstraint<Real> &con, 
+                        Teuchos::RCP<Secant<Real> > &secant, 
+                        bool useSecantPrecond = false, bool useSecantHessVec = false, Real eps = 0.0 ) {
+      obj_              = Teuchos::rcp(&obj,    false);
+      con_              = Teuchos::rcp(&con,    false);
+      secant_           = secant; //Teuchos::rcp(&secant, false);
+      useSecantPrecond_ = useSecantPrecond;
+      useSecantHessVec_ = useSecantHessVec;
+      eps_              = eps;
     }
 
-    void update( const Vector<Real> &x, bool flag = true, int iter = -1 ) {
-      obj_->update(x,flag,iter);
-      con_->update(x,flag,iter);
+    void update( const Vector<Real> &x, bool flag = true, int iter = -1 ) { 
+      this->obj_->update(x,flag,iter);
+      this->con_->update(x,flag,iter);
     }
 
     Real value( const Vector<Real> &x, Real &tol ) {
-      return obj_->value(x,tol);
+      return this->obj_->value(x,tol);
     }
 
     void gradient( Vector<Real> &g, const Vector<Real> &x, Real &tol ) {
-      obj_->gradient(g,x,tol);
+      this->obj_->gradient(g,x,tol);
     }
 
     Real dirDeriv( const Vector<Real> &x, const Vector<Real> &d, Real &tol ) {
-      return obj_->dirDeriv(x,d,tol);
+      return this->obj_->dirDeriv(x,d,tol);
     }
 
     void hessVec( Vector<Real> &Hv, const Vector<Real> &v, const Vector<Real> &x, Real &tol ) {
-      if ( useSecantHessVec_ ) {
-        secant_->applyB( Hv, v, x );
+      if ( this->useSecantHessVec_ ) {
+        this->secant_->applyB( Hv, v, x );
       }
       else {
-        obj_->hessVec( Hv, v, x, tol );
+        this->obj_->hessVec( Hv, v, x, tol );
       }
     }
 
-    void invHessVec( Vector<Real> &Hv, const Vector<Real> &v, const Vector<Real> &x, Real &tol ) {
-      if ( useSecantHessVec_ ) {
-        secant_->applyH(Hv,v,x);
+    void invHessVec( Vector<Real> &Hv, const Vector<Real> &v, const Vector<Real> &x, Real &tol ) { 
+      if ( this->useSecantHessVec_ ) {
+        this->secant_->applyH(Hv,v,x);
       }
       else {
-        obj_->invHessVec(Hv,v,x,tol);
+        this->obj_->invHessVec(Hv,v,x,tol);
       }
     }
 
     void precond( Vector<Real> &Mv, const Vector<Real> &v, const Vector<Real> &x, Real &tol ) {
-      if ( useSecantPrecond_ ) {
-        secant_->applyH( Mv, v, x );
+      if ( this->useSecantPrecond_ ) {
+        this->secant_->applyH( Mv, v, x );
       }
       else {
-        obj_->precond( Mv, v, x, tol );
+        this->obj_->precond( Mv, v, x, tol );
       }
     }
 
-    /** \brief Apply the reduced Hessian to a vector, v.
-               The reduced Hessian first removes elements of v
-               corresponding to the feasible indices from
+    /** \brief Apply the reduced Hessian to a vector, v.  
+               The reduced Hessian first removes elements of v 
+               corresponding to the feasible indices from 
                the point p in the direction -d.
                    Hv   the Hessian times a vector
-                   v    input vector
+                   v    input vector 
                    p    starting point for tangent cone
                    d    negative of search direction
                    x    current iteration vector
                    tol  objective function tolerance
     */
-    void reducedHessVec( Vector<Real> &Hv, const Vector<Real> &v, const Vector<Real> &p,
+    void reducedHessVec( Vector<Real> &Hv, const Vector<Real> &v, const Vector<Real> &p, 
                          const Vector<Real> &d, const Vector<Real> &x, Real &tol ) {
-      if ( con_->isActivated() ) {
-        if (!isInitialized_) {
-          primalV_ = x.clone();
-          dualV_   = x.dual().clone();
-          isInitialized_ = true;
-        }
+      if ( this->con_->isActivated() ) {
+        Teuchos::RCP<Vector<Real> > vnew = x.clone();
         // Set vnew to v
-        primalV_->set(v);
+        vnew->set(v);
         // Remove elements of vnew corresponding to binding set
-        con_->pruneActive(*primalV_,d,p,eps_);
+        this->con_->pruneActive(*vnew,d,p,this->eps_);
         // Apply full Hessian to reduced vector
-        hessVec(Hv,*primalV_,x,tol);
+        this->hessVec(Hv,*vnew,x,tol);
         // Remove elements of Hv corresponding to binding set
-        con_->pruneActive(Hv,d,p,eps_);
+        this->con_->pruneActive(Hv,d,p,this->eps_);
         // Set vnew to v
-        primalV_->set(v);
+        vnew->set(v);                             
         // Remove Elements of vnew corresponding to complement of binding set
-        con_->pruneInactive(*primalV_,d,p,eps_);
-        dualV_->set(primalV_->dual());
-        con_->pruneInactive(*dualV_,d,p,eps_);
+        this->con_->pruneInactive(*vnew,d,p,this->eps_); 
         // Fill complement of binding set elements in Hp with v
-        Hv.plus(*dualV_);
+        Hv.plus(*vnew);                           
       }
       else {
-        hessVec(Hv,v,x,tol);
+        this->hessVec(Hv,v,x,tol);
       }
     }
  
-    /** \brief Apply the reduced Hessian to a vector, v.
-               The reduced Hessian first removes elements of v
-               corresponding to the feasible indices from
+    /** \brief Apply the reduced Hessian to a vector, v.  
+               The reduced Hessian first removes elements of v 
+               corresponding to the feasible indices from 
                the point p.
                    Hv   the Hessian times a vector
-                   v    input vector
+                   v    input vector 
                    p    starting point for tangent cone
                    x    current iteration vector
                    tol  objective function tolerance
     */
-    void reducedHessVec( Vector<Real> &Hv, const Vector<Real> &v, const Vector<Real> &p,
+    void reducedHessVec( Vector<Real> &Hv, const Vector<Real> &v, const Vector<Real> &p, 
                          const Vector<Real> &x, Real &tol ) {
-      if ( con_->isActivated() ) {
-        if (!isInitialized_) {
-          primalV_ = x.clone();
-          dualV_   = x.dual().clone();
-          isInitialized_ = true;
-        }
+      if ( this->con_->isActivated() ) {
+        Teuchos::RCP<Vector<Real> > vnew = x.clone();
         // Set vnew to v
-        primalV_->set(v);
+        vnew->set(v);
         // Remove elements of vnew corresponding to binding set
-        con_->pruneActive(*primalV_,p,eps_);
+        this->con_->pruneActive(*vnew,p,this->eps_);
         // Apply full Hessian to reduced vector
-        hessVec(Hv,*primalV_,x,tol);
+        this->hessVec(Hv,*vnew,x,tol);
         // Remove elements of Hv corresponding to binding set
-        con_->pruneActive(Hv,p,eps_);
+        this->con_->pruneActive(Hv,p,this->eps_);
         // Set vnew to v
-        primalV_->set(v);
+        vnew->set(v);
         // Remove Elements of vnew corresponding to complement of binding set
-        con_->pruneInactive(*primalV_,p,eps_);
-        dualV_->set(primalV_->dual());
-        con_->pruneInactive(*dualV_,p,eps_);
+        this->con_->pruneInactive(*vnew,p,this->eps_);
         // Fill complement of binding set elements in Hp with v
-        Hv.plus(*dualV_);
+        Hv.plus(*vnew);
       }
       else {
-        hessVec(Hv,v,x,tol);
+        this->hessVec(Hv,v,x,tol);
       }
     }
 
@@ -382,31 +364,25 @@ namespace ROL {
     */
     void reducedInvHessVec( Vector<Real> &Hv, const Vector<Real> &v, const Vector<Real> &p, 
                             const Vector<Real> &d, const Vector<Real> &x, Real &tol ) {
-      if ( con_->isActivated() ) {
-        if (!isInitialized_) {
-          primalV_ = x.clone();
-          dualV_   = x.dual().clone();
-          isInitialized_ = true;
-        }
+      if ( this->con_->isActivated() ) {
+        Teuchos::RCP<Vector<Real> > vnew = x.clone();
         // Set vnew to v
-        dualV_->set(v);
+        vnew->set(v);
         // Remove elements of vnew corresponding to binding set
-        con_->pruneActive(*dualV_,d,p,eps_);
+        this->con_->pruneActive(*vnew,d,p,this->eps_);
         // Apply full Hessian to reduced vector
-        invHessVec(Hv,*dualV_,x,tol);
+        this->invHessVec(Hv,*vnew,x,tol);
         // Remove elements of Hv corresponding to binding set
-        con_->pruneActive(Hv,d,p,eps_);
+        this->con_->pruneActive(Hv,d,p,this->eps_);
         // Set vnew to v
-        dualV_->set(v);
+        vnew->set(v);
         // Remove Elements of vnew corresponding to complement of binding set
-        con_->pruneInactive(*dualV_,d,p,eps_);
-        primalV_->set(dualV_->dual());
-        con_->pruneInactive(*primalV_,d,p,eps_);
+        this->con_->pruneInactive(*vnew,d,p,this->eps_);
         // Fill complement of binding set elements in Hv with v
-        Hv.plus(*primalV_);
+        Hv.plus(*vnew);
       }
       else {
-        invHessVec(Hv,v,x,tol);
+        this->invHessVec(Hv,v,x,tol);
       }
     }
 
@@ -422,31 +398,25 @@ namespace ROL {
     */
     void reducedInvHessVec( Vector<Real> &Hv, const Vector<Real> &v, const Vector<Real> &p, 
                             const Vector<Real> &x, Real &tol ) {
-      if ( con_->isActivated() ) {
-        if (!isInitialized_) {
-          primalV_ = x.clone();
-          dualV_   = x.dual().clone();
-          isInitialized_ = true;
-        }
+      if ( this->con_->isActivated() ) {
+        Teuchos::RCP<Vector<Real> > vnew = x.clone();
         // Set vnew to v
-        dualV_->set(v);
+        vnew->set(v);
         // Remove elements of vnew corresponding to binding set
-        con_->pruneActive(*dualV_,p,eps_);
+        this->con_->pruneActive(*vnew,p,this->eps_);
         // Apply full Hessian to reduced vector
-        invHessVec(Hv,*dualV_,x,tol);
+        this->invHessVec(Hv,*vnew,x,tol);
         // Remove elements of Hv corresponding to binding set
-        con_->pruneActive(Hv,p,eps_);
+        this->con_->pruneActive(Hv,p,this->eps_);
         // Set vnew to v
-        dualV_->set(v);
+        vnew->set(v);
         // Remove Elements of vnew corresponding to complement of binding set
-        con_->pruneInactive(*dualV_,p,eps_);
-        primalV_->set(dualV_->dual());
-        con_->pruneInactive(*primalV_,p,eps_);
+        this->con_->pruneInactive(*vnew,p,this->eps_);
         // Fill complement of binding set elements in Hv with v
-        Hv.plus(*primalV_);
+        Hv.plus(*vnew);
       }
       else {
-        invHessVec(Hv,v,x,tol);
+        this->invHessVec(Hv,v,x,tol);
       }
     }
 
@@ -463,31 +433,25 @@ namespace ROL {
     */
     void reducedPrecond( Vector<Real> &Mv, const Vector<Real> &v, const Vector<Real> &p, 
                          const Vector<Real> &d, const Vector<Real> &x, Real &tol ) {
-      if ( con_->isActivated() ) {
-        if (!isInitialized_) {
-          primalV_ = x.clone();
-          dualV_   = x.dual().clone();
-          isInitialized_ = true;
-        }
+      if ( this->con_->isActivated() ) {
+        Teuchos::RCP<Vector<Real> > vnew = x.clone();
         // Set vnew to v
-        dualV_->set(v);
+        vnew->set(v);
         // Remove elements of vnew corresponding to binding set
-        con_->pruneActive(*dualV_,d,p,eps_);
+        this->con_->pruneActive(*vnew,d,p,this->eps_);
         // Apply full Hessian to reduced vector
-        precond(Mv,*dualV_,x,tol);
+        this->precond(Mv,*vnew,x,tol);
         // Remove elements of Mv corresponding to binding set
-        con_->pruneActive(Mv,d,p,eps_);
+        this->con_->pruneActive(Mv,d,p,this->eps_);
         // Set vnew to v
-        dualV_->set(v);
+        vnew->set(v);
         // Remove Elements of vnew corresponding to complement of binding set
-        con_->pruneInactive(*dualV_,d,p,eps_);
-        primalV_->set(dualV_->dual());
-        con_->pruneInactive(*primalV_,d,p,eps_);
+        this->con_->pruneInactive(*vnew,d,p,this->eps_);
         // Fill complement of binding set elements in Mv with v
-        Mv.plus(*primalV_);
+        Mv.plus(*vnew);
       }
       else {
-        precond(Mv,v,x,tol);
+        this->precond(Mv,v,x,tol);
       }
     }
 
@@ -503,64 +467,58 @@ namespace ROL {
     */
     void reducedPrecond( Vector<Real> &Mv, const Vector<Real> &v, const Vector<Real> &p, 
                          const Vector<Real> &x, Real &tol ) {
-      if ( con_->isActivated() ) {
-        if (!isInitialized_) {
-          primalV_ = x.clone();
-          dualV_   = x.dual().clone();
-          isInitialized_ = true;
-        }
+      if ( this->con_->isActivated() ) {
+        Teuchos::RCP<Vector<Real> > vnew = x.clone();
         // Set vnew to v
-        dualV_->set(v);
+        vnew->set(v);
         // Remove elements of vnew corresponding to binding set
-        con_->pruneActive(*dualV_,p,eps_);
+        this->con_->pruneActive(*vnew,p,this->eps_);
         // Apply full Hessian to reduced vector
-        precond(Mv,*dualV_,x,tol);
+        this->precond(Mv,*vnew,x,tol);
         // Remove elements of Mv corresponding to binding set
-        con_->pruneActive(Mv,p,eps_);
+        this->con_->pruneActive(Mv,p,this->eps_);
         // Set vnew to v
-        dualV_->set(v);
+        vnew->set(v);
         // Remove Elements of vnew corresponding to complement of binding set
-        con_->pruneInactive(*dualV_,p,eps_);
-        primalV_->set(dualV_->dual());
-        con_->pruneInactive(*primalV_,p,eps_);
+        this->con_->pruneInactive(*vnew,p,this->eps_);
         // Fill complement of binding set elements in Mv with v
-        Mv.plus(*primalV_);
+        Mv.plus(*vnew);
       }
       else {
-        precond(Mv,v,x,tol);
+        this->precond(Mv,v,x,tol);
       }
     }
 
     void project( Vector<Real> &x ) {
-      con_->project(x);
+      this->con_->project(x);
     } 
 
     void pruneActive( Vector<Real> &v, const Vector<Real> &g, const Vector<Real> &x ) {
-      con_->pruneActive(v,g,x,eps_);
+      this->con_->pruneActive(v,g,x,this->eps_);
     }
 
     void pruneActive( Vector<Real> &v, const Vector<Real> &x ) {
-      con_->pruneActive(v,x,eps_);
+      this->con_->pruneActive(v,x,this->eps_);
     }
 
     void pruneInactive( Vector<Real> &v, const Vector<Real> &g, const Vector<Real> &x ) {
-      con_->pruneInactive(v,g,x,eps_);
+      this->con_->pruneInactive(v,g,x,this->eps_);
     }
 
     void pruneInactive( Vector<Real> &v, const Vector<Real> &x ) {
-      con_->pruneInactive(v,x,eps_);
+      this->con_->pruneInactive(v,x,this->eps_);
     }
 
     bool isFeasible( const Vector<Real> &v ) {
-      return con_->isFeasible(v);
+      return this->con_->isFeasible(v);
     }
 
     bool isConActivated(void) {
-      return con_->isActivated();
+      return this->con_->isActivated();
     }
 
     void computeProjectedStep( Vector<Real> &v, const Vector<Real> &x ) {
-      con_->computeProjectedStep(v,x);
+      this->con_->computeProjectedStep(v,x);
     } 
   }; 
 

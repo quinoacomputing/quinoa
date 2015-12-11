@@ -54,8 +54,6 @@
 #include "Panzer_Traits.hpp"
 #include "Panzer_CloneableEvaluator.hpp"
 
-#include "Panzer_Evaluator_WithBaseImpl.hpp"
-
 class Epetra_Vector;
 class Epetra_CrsMatrix;
 
@@ -77,7 +75,7 @@ class BlockedDOFManager; //forward declaration
     names vector.
 */
 template<typename EvalT, typename TRAITS,typename LO,typename GO> class GatherSolution_BlockedEpetra
-  : public panzer::EvaluatorWithBaseImpl<TRAITS>,
+  : public PHX::EvaluatorWithBaseImpl<TRAITS>,
     public PHX::EvaluatorDerived<panzer::Traits::Residual, TRAITS>,
     public panzer::CloneableEvaluator  {
 public:
@@ -111,7 +109,7 @@ public:
 // **************************************************************
 template<typename TRAITS,typename LO,typename GO>
 class GatherSolution_BlockedEpetra<panzer::Traits::Residual,TRAITS,LO,GO>
-  : public panzer::EvaluatorWithBaseImpl<TRAITS>,
+  : public PHX::EvaluatorWithBaseImpl<TRAITS>,
     public PHX::EvaluatorDerived<panzer::Traits::Residual, TRAITS>,
     public panzer::CloneableEvaluator  {
    
@@ -161,7 +159,7 @@ private:
 // **************************************************************
 template<typename TRAITS,typename LO,typename GO>
 class GatherSolution_BlockedEpetra<panzer::Traits::Tangent,TRAITS,LO,GO>
-  : public panzer::EvaluatorWithBaseImpl<TRAITS>,
+  : public PHX::EvaluatorWithBaseImpl<TRAITS>,
     public PHX::EvaluatorDerived<panzer::Traits::Tangent, TRAITS>,
     public panzer::CloneableEvaluator  {
    
@@ -211,7 +209,7 @@ private:
 // **************************************************************
 template<typename TRAITS,typename LO,typename GO>
 class GatherSolution_BlockedEpetra<panzer::Traits::Jacobian,TRAITS,LO,GO>
-  : public panzer::EvaluatorWithBaseImpl<TRAITS>,
+  : public PHX::EvaluatorWithBaseImpl<TRAITS>,
     public PHX::EvaluatorDerived<panzer::Traits::Jacobian, TRAITS>,
     public panzer::CloneableEvaluator  {
   

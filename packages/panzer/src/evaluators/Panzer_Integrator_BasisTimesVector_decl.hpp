@@ -49,11 +49,9 @@
 #include "Phalanx_MDField.hpp"
 #include "Intrepid_FieldContainer.hpp"
 
-#include "Panzer_Evaluator_Macros.hpp"
-
 namespace panzer {
     
-PANZER_EVALUATOR_CLASS(Integrator_BasisTimesVector)
+PHX_EVALUATOR_CLASS(Integrator_BasisTimesVector)
   
   PHX::MDField<ScalarT,Cell,BASIS> residual;
     
@@ -80,7 +78,7 @@ PANZER_EVALUATOR_CLASS(Integrator_BasisTimesVector)
 private:
   Teuchos::RCP<Teuchos::ParameterList> getValidParameters() const;
 
-PANZER_EVALUATOR_CLASS_END
+PHX_EVALUATOR_CLASS_END
 
 }
 

@@ -108,7 +108,8 @@
 //
 typedef double Scalar;
 typedef int    LocalOrdinal;
-// #ifdef HAVE_XPETRA_INT_LONG_LONG
+// FIXME
+// #ifdef HAVE_TEUCHOS_LONG_LONG_INT
 // typedef long long int GlobalOrdinal;
 // #else
 typedef int GlobalOrdinal;
@@ -203,7 +204,7 @@ int main(int argc, char *argv[]) {
     out->setOutputToRootOnly(0);
     *out << MueLu::MemUtils::PrintMemoryUsage() << std::endl;
 
-    //#ifndef HAVE_XPETRA_INT_LONG_LONG
+    //#ifndef HAVE_TEUCHOS_LONG_LONG_INT
     *out << "Warning: scaling test was not compiled with long long int support" << std::endl;
     //#endif
 

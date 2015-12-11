@@ -277,11 +277,11 @@ namespace {
 #ifdef HAVE_TPETRA_DEBUG
     typedef Tpetra::Vector<Scalar,LO,GO,Node>       V;
     // too small an ArrayView (less than 4 values) is met with an exception, if debugging is on
-    TEST_THROW(MV mvec(map,values(0,3),2,numVecs), std::invalid_argument);
+    TEST_THROW(MV mvec(map,values(0,3),2,numVecs), std::runtime_error);
     // it could also be too small for the given LDA:
-    TEST_THROW(MV mvec(map,values(),2+1,numVecs), std::invalid_argument);
+    TEST_THROW(MV mvec(map,values(),2+1,numVecs), std::runtime_error);
     // too small for number of entries in a Vector
-    TEST_THROW(V   vec(map,values(0,1)), std::invalid_argument);
+    TEST_THROW(V   vec(map,values(0,1)), std::runtime_error);
 #endif
     // LDA < numLocal throws an exception anytime
     TEST_THROW(MV mvec(map,values(0,4),1,numVecs), std::runtime_error);
@@ -1663,25 +1663,30 @@ namespace {
       TEST_EQUALITY( X2->getNumVectors (), numVecs );
 
       // Make sure the pointers are the same, by extracting the
-      // Kokkos::DualView objects.  Get the host pointer, just in case
-      // MV allocation favors host space for initial allocations and
-      // defers device allocations.
-
-      auto X_local = X->template getLocalView<typename MV::dual_view_type::t_host::memory_space> ();
-      auto X1_local = X1->template getLocalView<typename MV::dual_view_type::t_host::memory_space> ();
-      auto X2_local = X2->template getLocalView<typename MV::dual_view_type::t_host::memory_space> ();
+      // KokkosClassic::MultiVector (KMV) objects.  KMV's copy
+      // constructor does a shallow (pointer) copy.
+      //
+      // FIXME (mfh 24 Oct 2013) This interface (to get the
+      // KokkosClassic::MultiVector) will change at some point, due to
+      // the port of Tpetra to use the new Kokkos.
+      typedef KokkosClassic::MultiVector<Scalar, Node> KMV;
+      const KMV X_local = X.getLocalMV ();
+      const KMV X1_local = X1->getLocalMV ();
+      const KMV X2_local = X2->getLocalMV ();
 
       // Make sure the pointers match.  It doesn't really matter to
-      // what X2_local points, as long as it has zero rows.
-      TEST_EQUALITY( X1_local.ptr_on_device (), X_local.ptr_on_device () );
+      // what X2_val points, as long as X2_local has zero rows.
+      ArrayRCP<const Scalar> X_val = X_local.getValues ();
+      ArrayRCP<const Scalar> X1_val = X1_local.getValues ();
+      TEST_EQUALITY( X1_val.getRawPtr (), X_val.getRawPtr () );
 
       // Make sure the local dimensions of X1 are correct.
-      TEST_EQUALITY( X1_local.dimension_0 (), X_local.dimension_0 () );
-      TEST_EQUALITY( X1_local.dimension_1 (), X_local.dimension_1 () );
+      TEST_EQUALITY( X1_local.getNumRows (), X_local.getNumRows () );
+      TEST_EQUALITY( X1_local.getNumCols (), X_local.getNumCols () );
 
       // Make sure the local dimensions of X2 are correct.
-      TEST_EQUALITY_CONST( X2_local.dimension_0 (), static_cast<size_t> (0) );
-      TEST_EQUALITY( X2_local.dimension_1 (), X_local.dimension_1 () );
+      TEST_EQUALITY_CONST( X2_local.getNumRows (), static_cast<size_t> (0) );
+      TEST_EQUALITY( X2_local.getNumCols (), X_local.getNumCols () );
 
       // Make sure that nothing bad happens on deallocation.
       try {
@@ -1716,25 +1721,30 @@ namespace {
       TEST_EQUALITY( X2_nonconst->getNumVectors (), numVecs );
 
       // Make sure the pointers are the same, by extracting the
-      // Kokkos::DualView objects.  Get the host pointer, just in case
-      // MV allocation favors host space for initial allocations and
-      // defers device allocations.
-
-      auto X_local = X->template getLocalView<typename MV::dual_view_type::t_host::memory_space> ();
-      auto X1_local = X1_nonconst->template getLocalView<typename MV::dual_view_type::t_host::memory_space> ();
-      auto X2_local = X2_nonconst->template getLocalView<typename MV::dual_view_type::t_host::memory_space> ();
+      // KokkosClassic::MultiVector (KMV) objects.  KMV's copy
+      // constructor does a shallow (pointer) copy.
+      //
+      // FIXME (mfh 24 Oct 2013) This interface (to get the
+      // KokkosClassic::MultiVector) will change at some point, due to
+      // the port of Tpetra to use the new Kokkos.
+      typedef KokkosClassic::MultiVector<Scalar, Node> KMV;
+      const KMV X_local = X.getLocalMV ();
+      KMV X1_local = X1_nonconst->getLocalMV ();
+      KMV X2_local = X2_nonconst->getLocalMV ();
 
       // Make sure the pointers match.  It doesn't really matter to
-      // what X2_local points, as long as it has zero rows.
-      TEST_EQUALITY( X1_local.ptr_on_device (), X_local.ptr_on_device () );
+      // what X2_val points, as long as X2_local has zero rows.
+      ArrayRCP<const Scalar> X_val = X_local.getValues ();
+      ArrayRCP<const Scalar> X1_val = X1_local.getValues ();
+      TEST_EQUALITY( X1_val.getRawPtr (), X_val.getRawPtr () );
 
       // Make sure the local dimensions of X1 are correct.
-      TEST_EQUALITY( X1_local.dimension_0 (), X_local.dimension_0 () );
-      TEST_EQUALITY( X1_local.dimension_1 (), X_local.dimension_1 () );
+      TEST_EQUALITY( X1_local.getNumRows (), X_local.getNumRows () );
+      TEST_EQUALITY( X1_local.getNumCols (), X_local.getNumCols () );
 
       // Make sure the local dimensions of X2 are correct.
-      TEST_EQUALITY_CONST( X2_local.dimension_0 (), static_cast<size_t> (0) );
-      TEST_EQUALITY( X2_local.dimension_1 (), X_local.dimension_1 () );
+      TEST_EQUALITY_CONST( X2_local.getNumRows (), static_cast<size_t> (0) );
+      TEST_EQUALITY( X2_local.getNumCols (), X_local.getNumCols () );
 
       // Make sure that nothing bad happens on deallocation.
       try {
@@ -1771,24 +1781,30 @@ namespace {
       TEST_EQUALITY( X2->getNumVectors (), numVecs );
 
       // Make sure the pointers are the same, by extracting the
-      // Kokkos::DualView objects.  Get the host pointer, just in case
-      // MV allocation favors host space for initial allocations and
-      // defers device allocations.
+      // KokkosClassic::MultiVector (KMV) objects.  KMV's copy
+      // constructor does a shallow (pointer) copy.
+      //
+      // FIXME (mfh 24 Oct 2013) This interface (to get the
+      // KokkosClassic::MultiVector) will change at some point, due to
+      // the port of Tpetra to use the new Kokkos.
+      typedef KokkosClassic::MultiVector<Scalar, Node> KMV;
+      const KMV X_local = X.getLocalMV ();
+      const KMV X1_local = X1->getLocalMV ();
+      const KMV X2_local = X2->getLocalMV ();
 
-      auto X_local = X->template getLocalView<typename MV::dual_view_type::t_host::memory_space> ();
-      auto X1_local = X1->template getLocalView<typename MV::dual_view_type::t_host::memory_space> ();
-      auto X2_local = X2->template getLocalView<typename MV::dual_view_type::t_host::memory_space> ();
       // Make sure the pointers match.  It doesn't really matter to
-      // what X1_local points, as long as it has zero rows.
-      TEST_EQUALITY( X2_local.ptr_on_device (), X_local.ptr_on_device () );
+      // what X1_val points, as long as X1_local has zero rows.
+      ArrayRCP<const Scalar> X_val = X_local.getValues ();
+      ArrayRCP<const Scalar> X2_val = X2_local.getValues ();
+      TEST_EQUALITY( X2_val.getRawPtr (), X_val.getRawPtr () );
 
       // Make sure the local dimensions of X1 are correct.
-      TEST_EQUALITY_CONST( X1_local.dimension_0 (), static_cast<size_t> (0) );
-      TEST_EQUALITY( X1_local.dimension_1 (), X_local.dimension_1 () );
+      TEST_EQUALITY_CONST( X1_local.getNumRows (), static_cast<size_t> (0) );
+      TEST_EQUALITY( X1_local.getNumCols (), X_local.getNumCols () );
 
       // Make sure the local dimensions of X2 are correct.
-      TEST_EQUALITY( X2_local.dimension_0 (), X_local.dimension_0 () );
-      TEST_EQUALITY( X2_local.dimension_1 (), X_local.dimension_1 () );
+      TEST_EQUALITY( X2_local.getNumRows (), X_local.getNumRows () );
+      TEST_EQUALITY( X2_local.getNumCols (), X_local.getNumCols () );
 
       // Make sure that nothing bad happens on deallocation.
       try {
@@ -1823,25 +1839,30 @@ namespace {
       TEST_EQUALITY( X2_nonconst->getNumVectors (), numVecs );
 
       // Make sure the pointers are the same, by extracting the
-      // Kokkos::DualView objects.  Get the host pointer, just in case
-      // MV allocation favors host space for initial allocations and
-      // defers device allocations.
-
-      auto X_local = X->template getLocalView<typename MV::dual_view_type::t_host::memory_space> ();
-      auto X1_local = X1_nonconst->template getLocalView<typename MV::dual_view_type::t_host::memory_space> ();
-      auto X2_local = X2_nonconst->template getLocalView<typename MV::dual_view_type::t_host::memory_space> ();
+      // KokkosClassic::MultiVector (KMV) objects.  KMV's copy
+      // constructor does a shallow (pointer) copy.
+      //
+      // FIXME (mfh 24 Oct 2013) This interface (to get the
+      // KokkosClassic::MultiVector) will change at some point, due to
+      // the port of Tpetra to use the new Kokkos.
+      typedef KokkosClassic::MultiVector<Scalar, Node> KMV;
+      const KMV X_local = X.getLocalMV ();
+      KMV X1_local = X1_nonconst->getLocalMV ();
+      KMV X2_local = X2_nonconst->getLocalMV ();
 
       // Make sure the pointers match.  It doesn't really matter to
-      // what X1_local points, as long as it has zero rows.
-      TEST_EQUALITY( X2_local.ptr_on_device (), X_local.ptr_on_device () );
+      // what X1_val points, as long as X1_local has zero rows.
+      ArrayRCP<const Scalar> X_val = X_local.getValues ();
+      ArrayRCP<const Scalar> X2_val = X2_local.getValues ();
+      TEST_EQUALITY( X2_val.getRawPtr (), X_val.getRawPtr () );
 
       // Make sure the local dimensions of X1 are correct.
-      TEST_EQUALITY_CONST( X1_local.dimension_0 (), static_cast<size_t> (0) );
-      TEST_EQUALITY( X1_local.dimension_1 (), X_local.dimension_1 () );
+      TEST_EQUALITY_CONST( X1_local.getNumRows (), static_cast<size_t> (0) );
+      TEST_EQUALITY( X1_local.getNumCols (), X_local.getNumCols () );
 
       // Make sure the local dimensions of X2 are correct.
-      TEST_EQUALITY( X2_local.dimension_0 (), X_local.dimension_0 () );
-      TEST_EQUALITY( X2_local.dimension_1 (), X_local.dimension_1 () );
+      TEST_EQUALITY( X2_local.getNumRows (), X_local.getNumRows () );
+      TEST_EQUALITY( X2_local.getNumCols (), X_local.getNumCols () );
 
       // Make sure that nothing bad happens on deallocation.
       try {
@@ -3221,7 +3242,7 @@ namespace {
   {
     out << "Tpetra::MultiVector::getDualView test" << endl;
     Teuchos::OSTab tab0 (out);
-
+#ifdef TPETRA_HAVE_KOKKOS_REFACTOR
     using Teuchos::outArg;
     using Teuchos::REDUCE_MIN;
     using Teuchos::reduceAll;
@@ -3385,6 +3406,14 @@ namespace {
     for (size_t k = 0; k < numVecs; ++k) {
       TEST_EQUALITY_CONST( norms.h_view(k), ONE );
     }
+
+#else // NOT TPETRA_HAVE_KOKKOS_REFACTOR
+    out << "Test disabled, because it only works if the Kokkos refactor "
+      "version of Tpetra is enabled.  If you wish to exercise this feature of "
+      "Tpetra::MultiVector, please check your Trilinos configuration and make "
+      "sure that the CMake option Tpetra_ENABLE_Kokkos_Refactor is either not "
+      "set at all, or set to OFF." << endl;
+#endif // TPETRA_HAVE_KOKKOS_REFACTOR
   }
 
 
@@ -3402,7 +3431,7 @@ namespace {
   {
     out << "Tpetra::MultiVector DualView constructor test" << endl;
     Teuchos::OSTab tab0 (out);
-
+#ifdef TPETRA_HAVE_KOKKOS_REFACTOR
     using Teuchos::outArg;
     using Teuchos::REDUCE_MIN;
     using Teuchos::reduceAll;
@@ -3499,6 +3528,14 @@ namespace {
     for (size_t k = 0; k < numVecs; ++k) {
       TEST_EQUALITY_CONST( norms.h_view(k), TWO );
     }
+
+#else // NOT TPETRA_HAVE_KOKKOS_REFACTOR
+    out << "Test disabled, because it only works if the Kokkos refactor "
+      "version of Tpetra is enabled.  If you wish to exercise this feature of "
+      "Tpetra::MultiVector, please check your Trilinos configuration and make "
+      "sure that the CMake option Tpetra_ENABLE_Kokkos_Refactor is either not "
+      "set at all, or set to OFF." << endl;
+#endif // TPETRA_HAVE_KOKKOS_REFACTOR
   }
 
 
@@ -3520,7 +3557,7 @@ namespace {
   {
     out << "Tpetra::MultiVector View constructor test" << endl;
     Teuchos::OSTab tab0 (out);
-
+#ifdef TPETRA_HAVE_KOKKOS_REFACTOR
     using Teuchos::outArg;
     using Teuchos::REDUCE_MIN;
     using Teuchos::reduceAll;
@@ -3630,6 +3667,14 @@ namespace {
       out << "We modified X_gbl in host memory, and sync'd to device memory, "
         "but X_lcl did not change!" << endl;
     }
+
+#else // NOT TPETRA_HAVE_KOKKOS_REFACTOR
+    out << "Test disabled, because it only works if the Kokkos refactor "
+      "version of Tpetra is enabled.  If you wish to exercise this feature of "
+      "Tpetra::MultiVector, please check your Trilinos configuration and make "
+      "sure that the CMake option Tpetra_ENABLE_Kokkos_Refactor is either not "
+      "set at all, or set to OFF." << endl;
+#endif // TPETRA_HAVE_KOKKOS_REFACTOR
   }
 
 // Macro used inside the SubViewSomeZeroRows test below.  It tests for
@@ -4267,19 +4312,17 @@ namespace {
       TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( MultiVector, DimsWithAllZeroRows, LO, GO, SCALAR, NODE )
 
 
-  typedef Tpetra::Map<>::local_ordinal_type default_local_ordinal_type;
-  typedef Tpetra::Map<>::global_ordinal_type default_global_ordinal_type;
 
 #if defined(HAVE_TEUCHOS_COMPLEX) && defined(HAVE_TPETRA_INST_COMPLEX_FLOAT)
 #  define TPETRA_MULTIVECTOR_COMPLEX_FLOAT_DOT_TEST( NODE ) \
-  TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( MultiVector, ComplexDotOneColumn, float, default_local_ordinal_type, default_global_ordinal_type, NODE )
+  TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( MultiVector, ComplexDotOneColumn, float, int, int, NODE )
 #else
 #  define TPETRA_MULTIVECTOR_COMPLEX_FLOAT_DOT_TEST( NODE )
 #endif // defined(HAVE_TEUCHOS_COMPLEX) && defined(HAVE_TPETRA_INST_COMPLEX_FLOAT)
 
 #if defined(HAVE_TEUCHOS_COMPLEX) && defined(HAVE_TPETRA_INST_COMPLEX_DOUBLE)
 #  define TPETRA_MULTIVECTOR_COMPLEX_DOUBLE_DOT_TEST( NODE ) \
-  TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( MultiVector, ComplexDotOneColumn, double, default_local_ordinal_type, default_global_ordinal_type, NODE )
+  TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( MultiVector, ComplexDotOneColumn, double, int, int, NODE )
 #else
 #  define TPETRA_MULTIVECTOR_COMPLEX_DOUBLE_DOT_TEST( NODE )
 #endif // defined(HAVE_TEUCHOS_COMPLEX) && defined(HAVE_TPETRA_INST_COMPLEX_DOUBLE)

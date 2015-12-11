@@ -64,8 +64,22 @@ typedef int GlobalOrdinal;
 #include "Tpetra_Vector_def.hpp"
 #include "Tpetra_CrsGraph_def.hpp"
 #include "Tpetra_CrsMatrix_def.hpp"
+#include "Tpetra_CrsMatrixMultiplyOp_def.hpp"
 
 #include "TpetraExt_MatrixMatrix_def.hpp"
 #include "Tpetra_RowMatrixTransposer_def.hpp"
+
+namespace Tpetra {
+
+#if defined(HAVE_KOKKOSCLASSIC_SERIAL)
+  TPETRA_MULTIVECTOR_INSTANT(Scalar,LocalOrdinal,GlobalOrdinal,KokkosClassic::DoNotUse::SerialNode)
+  TPETRA_VECTOR_INSTANT(Scalar,LocalOrdinal,GlobalOrdinal,KokkosClassic::DoNotUse::SerialNode)
+  TPETRA_CRSMATRIX_INSTANT(Scalar,LocalOrdinal,GlobalOrdinal,KokkosClassic::DoNotUse::SerialNode)
+  TPETRA_CRSMATRIX_MULTIPLYOP_INSTANT(Scalar,Scalar,LocalOrdinal,GlobalOrdinal,KokkosClassic::DoNotUse::SerialNode)
+  TPETRA_MATRIXMATRIX_INSTANT(Scalar,LocalOrdinal,GlobalOrdinal,KokkosClassic::DoNotUse::SerialNode)
+  TPETRA_ROWMATRIXTRANSPOSE_INSTANT(Scalar,LocalOrdinal,GlobalOrdinal,KokkosClassic::DoNotUse::SerialNode)
+#endif // defined(HAVE_KOKKOSCLASSIC_SERIAL)
+
+}
 
 #endif

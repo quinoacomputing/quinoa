@@ -54,8 +54,6 @@
 
 #include "Panzer_STK_Interface.hpp"
 
-#include "Panzer_Evaluator_Macros.hpp"
-
 namespace panzer_stk_classic {
 
 /** This class is a scatter operation to the mesh. It
@@ -69,11 +67,11 @@ namespace panzer_stk_classic {
   * "Workset Size" of type <code>int</code>
   * "Mesh" of type <code>Teuchos::RCP<const panzer_stk_classic::STK_Interface></code>.
   */
-PANZER_EVALUATOR_CLASS(ScatterCellQuantity)
+PHX_EVALUATOR_CLASS(ScatterCellQuantity)
   std::vector< PHX::MDField<const ScalarT,panzer::Cell> > scatterFields_;
   Teuchos::RCP<STK_Interface> mesh_;
 
-PANZER_EVALUATOR_CLASS_END
+PHX_EVALUATOR_CLASS_END
 
 }
 

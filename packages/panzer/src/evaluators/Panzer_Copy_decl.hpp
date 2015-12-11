@@ -46,8 +46,6 @@
 #include "Phalanx_Evaluator_Macros.hpp"
 #include "Phalanx_MDField.hpp"
 
-#include "Panzer_Evaluator_Macros.hpp"
-
 namespace panzer {
     
 /** Copies the contents of one field to anouther with a different
@@ -61,12 +59,12 @@ namespace panzer {
     <ParameterList/>
     \endverbatim
   */
-PANZER_EVALUATOR_CLASS(Copy)
+PHX_EVALUATOR_CLASS(Copy)
   
   PHX::MDField<ScalarT> input;
   PHX::MDField<ScalarT> output;
 
-PANZER_EVALUATOR_CLASS_END
+PHX_EVALUATOR_CLASS_END
 
 }
 

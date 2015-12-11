@@ -39,6 +39,9 @@
 // ************************************************************************
 //@HEADER
 
+// The file below includes Kokkos_ConfigDefs.hpp, so this file doesn't
+// have to.  Avoiding unnecessary includes can save build time.
+#include "Kokkos_DefaultNode.hpp"
 #include "Teuchos_ConfigDefs.hpp" // HAVE_MPI
 #ifdef HAVE_MPI
 #  include "Teuchos_GlobalMPISession.hpp"
@@ -47,7 +50,7 @@
 #include "Teuchos_CommandLineProcessor.hpp"
 #include "Teuchos_DefaultComm.hpp"
 #include "Teuchos_StandardCatchMacros.hpp"
-#include "Tsqr_KokkosNodeTsqrTest.hpp"
+#include <Tsqr_KokkosNodeTsqrTest.hpp>
 
 #ifdef HAVE_KOKKOSTSQR_COMPLEX
 #  include <complex>

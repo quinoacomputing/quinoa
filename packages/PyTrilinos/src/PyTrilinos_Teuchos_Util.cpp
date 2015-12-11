@@ -146,13 +146,6 @@ bool setPythonParameter(Teuchos::ParameterList & plist,
                            NPY_ARRAY_DEFAULT | NPY_ARRAY_NOTSWAPPED,
                            NULL);
     if (!pyArray) return false;
-    // if (PyArray_TYPE((PyArrayObject*) pyArray) == NPY_BOOL)
-    // {
-    //   Teuchos::Array< bool > tArray;
-    //   copyNumPyToTeuchosArray(pyArray, tArray);
-    //   plist.set(name, tArray);
-    // }
-    // else if (PyArray_TYPE((PyArrayObject*) pyArray) == NPY_INT)
     if (PyArray_TYPE((PyArrayObject*) pyArray) == NPY_INT)
     {
       Teuchos::Array< int > tArray;
@@ -174,12 +167,6 @@ bool setPythonParameter(Teuchos::ParameterList & plist,
     else if (PyArray_TYPE((PyArrayObject*) pyArray) == NPY_DOUBLE)
     {
       Teuchos::Array< double > tArray;
-      copyNumPyToTeuchosArray(pyArray, tArray);
-      plist.set(name, tArray);
-    }
-    else if (PyArray_TYPE((PyArrayObject*) pyArray) == NPY_STRING)
-    {
-      Teuchos::Array< std::string > tArray;
       copyNumPyToTeuchosArray(pyArray, tArray);
       plist.set(name, tArray);
     }
@@ -258,63 +245,45 @@ PyObject * getPythonParameter(const Teuchos::ParameterList & plist,
   // Teuchos::Array values
   else if (entry->isArray())
   {
-    // try
-    // {
-    //   Teuchos::Array< bool > tArray =
-    //     Teuchos::any_cast< Teuchos::Array< bool > >(entry->getAny(false));
-    //   return copyTeuchosArrayToNumPy(tArray);
-    // }
-    // catch(Teuchos::bad_any_cast &e)
-    // {
+    try
+    {
+      Teuchos::Array< int > tArray =
+        Teuchos::any_cast< Teuchos::Array< int > >(entry->getAny(false));
+      return copyTeuchosArrayToNumPy(tArray);
+    }
+    catch(Teuchos::bad_any_cast &e)
+    {
       try
       {
-        Teuchos::Array< int > tArray =
-          Teuchos::any_cast< Teuchos::Array< int > >(entry->getAny(false));
+        Teuchos::Array< long > tArray =
+          Teuchos::any_cast< Teuchos::Array< long > >(entry->getAny(false));
         return copyTeuchosArrayToNumPy(tArray);
       }
       catch(Teuchos::bad_any_cast &e)
       {
         try
         {
-          Teuchos::Array< long > tArray =
-            Teuchos::any_cast< Teuchos::Array< long > >(entry->getAny(false));
+          Teuchos::Array< float > tArray =
+            Teuchos::any_cast< Teuchos::Array< float > >(entry->getAny(false));
           return copyTeuchosArrayToNumPy(tArray);
         }
         catch(Teuchos::bad_any_cast &e)
         {
           try
           {
-            Teuchos::Array< float > tArray =
-              Teuchos::any_cast< Teuchos::Array< float > >(entry->getAny(false));
+            Teuchos::Array< double > tArray =
+              Teuchos::any_cast< Teuchos::Array< double > >(entry->getAny(false));
             return copyTeuchosArrayToNumPy(tArray);
           }
           catch(Teuchos::bad_any_cast &e)
           {
-            try
-            {
-              Teuchos::Array< double > tArray =
-                Teuchos::any_cast< Teuchos::Array< double > >(entry->getAny(false));
-              return copyTeuchosArrayToNumPy(tArray);
-            }
-            catch(Teuchos::bad_any_cast &e)
-            {
-              try
-              {
-                Teuchos::Array< std::string > tArray =
-                  Teuchos::any_cast< Teuchos::Array< std::string > >(entry->getAny(false));
-                return copyTeuchosArrayToNumPy(tArray);
-              }
-              catch(Teuchos::bad_any_cast &e)
-              {
-                // Teuchos::Arrays of type other than int or double are
-                // currently unsupported
-                return NULL;
-              }
-            }
+            // Teuchos::Arrays of type other than int or double are
+            // currently unsupported
+            return NULL;
           }
         }
       }
-    // }
+    }
   }
 
   // All  other types are unsupported
@@ -323,8 +292,7 @@ PyObject * getPythonParameter(const Teuchos::ParameterList & plist,
 
 // **************************************************************** //
 
-bool isEquivalent(PyObject                     * dict,
-                  const Teuchos::ParameterList & plist)
+bool isEquivalent(PyObject * dict, const Teuchos::ParameterList & plist)
 {
   PyObject  * key   = NULL;
   PyObject  * value = NULL;
@@ -364,7 +332,8 @@ bool isEquivalent(PyObject                     * dict,
     if (!plist.isParameter(name)) goto fail;
     if (plist.isSublist(name))
     {
-      if (!isEquivalent(value, plist.sublist(name))) goto fail;
+      if (!isEquivalent(value, plist.sublist(name)))
+	goto fail;
     }
     else
     {
@@ -586,6 +555,8 @@ pyDictToNewParameterList(PyObject                  * dict,
     case storeNames:
       break;
     case raiseError:
+      delete plist;
+      goto fail;
     default:
       delete plist;
       goto fail;

@@ -222,13 +222,9 @@ private:
   CudaInternal( const CudaInternal & );
   CudaInternal & operator = ( const CudaInternal & );
 
-#if ! defined( KOKKOS_USING_EXPERIMENTAL_VIEW )
-
   AllocationTracker m_scratchFlagsTracker;
   AllocationTracker m_scratchSpaceTracker;
   AllocationTracker m_scratchUnifiedTracker;
-
-#endif
 
 
 public:
@@ -505,26 +501,8 @@ CudaInternal::scratch_flags( const Cuda::size_type size )
 
     m_scratchFlagsCount = ( size + sizeScratchGrain - 1 ) / sizeScratchGrain ;
 
-#if ! defined( KOKKOS_USING_EXPERIMENTAL_VIEW )
-
     m_scratchFlagsTracker = CudaSpace::allocate_and_track( std::string("InternalScratchFlags") , sizeof( ScratchGrain ) * m_scratchFlagsCount );
-
     m_scratchFlags = reinterpret_cast<size_type *>(m_scratchFlagsTracker.alloc_ptr());
-
-#else
-
-    typedef Kokkos::Experimental::Impl::SharedAllocationRecord< Kokkos::CudaSpace , void > Record ;
-
-    Record * const r = Record::allocate( Kokkos::CudaSpace()
-                                       , "InternalScratchFlags"
-                                       , ( sizeof( ScratchGrain ) * m_scratchFlagsCount ) );
-
-    Record::increment( r );
-
-    m_scratchFlags = reinterpret_cast<size_type *>( r->data() );
-
-#endif
-
 
     CUDA_SAFE_CALL( cudaMemset( m_scratchFlags , 0 , m_scratchFlagsCount * sizeScratchGrain ) );
   }
@@ -539,25 +517,8 @@ CudaInternal::scratch_space( const Cuda::size_type size )
 
     m_scratchSpaceCount = ( size + sizeScratchGrain - 1 ) / sizeScratchGrain ;
 
-#if ! defined( KOKKOS_USING_EXPERIMENTAL_VIEW )
-
     m_scratchSpaceTracker = CudaSpace::allocate_and_track( std::string("InternalScratchSpace") , sizeof( ScratchGrain ) * m_scratchSpaceCount );
-
     m_scratchSpace = reinterpret_cast<size_type *>(m_scratchSpaceTracker.alloc_ptr());
-
-#else
-
-    typedef Kokkos::Experimental::Impl::SharedAllocationRecord< Kokkos::CudaSpace , void > Record ;
-
-    Record * const r = Record::allocate( Kokkos::CudaSpace()
-                                       , "InternalScratchSpace"
-                                       , ( sizeof( ScratchGrain ) * m_scratchSpaceCount ) );
-
-    Record::increment( r );
-
-    m_scratchSpace = reinterpret_cast<size_type *>( r->data() );
-
-#endif
 
   }
 
@@ -572,26 +533,8 @@ CudaInternal::scratch_unified( const Cuda::size_type size )
 
     m_scratchUnifiedCount = ( size + sizeScratchGrain - 1 ) / sizeScratchGrain ;
 
-#if ! defined( KOKKOS_USING_EXPERIMENTAL_VIEW )
-
     m_scratchUnifiedTracker = CudaHostPinnedSpace::allocate_and_track( std::string("InternalScratchUnified") , sizeof( ScratchGrain ) * m_scratchUnifiedCount );
-
     m_scratchUnified = reinterpret_cast<size_type *>( m_scratchUnifiedTracker.alloc_ptr() );
-
-#else
-
-    typedef Kokkos::Experimental::Impl::SharedAllocationRecord< Kokkos::CudaHostPinnedSpace , void > Record ;
-
-    Record * const r = Record::allocate( Kokkos::CudaHostPinnedSpace()
-                                       , "InternalScratchUnified"
-                                       , ( sizeof( ScratchGrain ) * m_scratchUnifiedCount ) );
-
-    Record::increment( r );
-
-    m_scratchUnified = reinterpret_cast<size_type *>( r->data() );
-
-#endif
-
   }
 
   return m_scratchUnified ;
@@ -612,22 +555,9 @@ void CudaInternal::finalize()
       ::free( m_stream );
     }
 
-#if ! defined( KOKKOS_USING_EXPERIMENTAL_VIEW )
-
     m_scratchSpaceTracker.clear();
     m_scratchFlagsTracker.clear();
     m_scratchUnifiedTracker.clear();
-
-#else
-
-    typedef Kokkos::Experimental::Impl::SharedAllocationRecord< CudaSpace > RecordCuda ;
-    typedef Kokkos::Experimental::Impl::SharedAllocationRecord< CudaHostPinnedSpace > RecordHost ;
-
-    RecordCuda::decrement( RecordCuda::get_record( m_scratchFlags ) );
-    RecordCuda::decrement( RecordCuda::get_record( m_scratchSpace ) );
-    RecordHost::decrement( RecordHost::get_record( m_scratchUnified ) );
-
-#endif
 
     m_cudaDev             = -1 ;
     m_maxWarpCount        = 0 ;

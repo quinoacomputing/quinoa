@@ -50,9 +50,12 @@ WARN_FORMAT            = "$file:$line: $text"
 INPUT                  = index.doc groups.doc ../src ../LinAlg ../NodeAPI ../LinAlg/examples ../LinAlg/test/CrsMatrix ../NodeAPI/examples
 FILE_PATTERNS          = *.hpp *.cpp *.cuh
 RECURSIVE              = NO
-EXCLUDE                = 
+EXCLUDE                = ../LinAlg/Kokkos_PackedCRSOperatorAdaptor.hpp
 EXCLUDE_PATTERNS       = *.x *.o *.out
-EXAMPLE_PATH           = 
+EXAMPLE_PATH           = ../NodeAPI/examples/SimpleNodeExample.cpp \
+                         ../NodeAPI/examples/Kokkos_NodeExampleKernels.hpp \
+                         ../LinAlg/examples/EmptySparseKernelDriver.cpp \
+                         ../LinAlg/test/CrsMatrix/CrsMatrix_DefaultMultiplyTests.hpp
 EXAMPLE_PATTERNS       = *.cpp *.hpp
 IMAGE_PATH             = 
 INPUT_FILTER           = 

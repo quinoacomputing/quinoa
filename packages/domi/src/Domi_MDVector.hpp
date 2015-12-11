@@ -62,7 +62,6 @@
 #include "Teuchos_CommHelpers.hpp"
 
 #ifdef HAVE_EPETRA
-#include "Epetra_IntVector.h"
 #include "Epetra_Vector.h"
 #endif
 
@@ -598,23 +597,6 @@ public:
 
 #ifdef HAVE_EPETRA
 
-  /** \brief Return a view of this MDVector as an Epetra_IntVector
-   *
-   * The multiple dimensions of the MDVector will be flattened in
-   * order to be expressed as an Epetra_IntVector.  Currently, if the
-   * MDVector is non-contiguous, a Domi::MDMapNoncontiguous exception
-   * will be thrown, as Epetra_IntVectors are contiguous, and this is
-   * a view transform.  Non-contiguous data is the result of slicing a
-   * parent MDVector.  In this case, getEpetraIntVectorView() should
-   * be called on the parent, or getEpetraIntVectorCopy() should be
-   * called on this non-contiguous MDVector.
-   *
-   * The MDVector Scalar template must be the same type as an
-   * Epetra_IntVector, i.e. int, or a Domi::TypeError exception will
-   * be thrown.
-   */
-  Teuchos::RCP< Epetra_IntVector > getEpetraIntVectorView() const;
-
   /** \brief Return a view of this MDVector as an Epetra_Vector
    *
    * The multiple dimensions of the MDVector will be flattened in
@@ -653,17 +635,6 @@ public:
    * will be thrown.
    */
   Teuchos::RCP< Epetra_MultiVector > getEpetraMultiVectorView() const;
-
-  /** \brief Return a copy of this MDVector as an Epetra_IntVector
-   *
-   * The multiple dimensions of the MDVector will be flattened in
-   * order to be expressed as an Epetra_IntVector.
-   *
-   * The MDVector Scalar template must be the same type as an
-   * Epetra_IntVector, i.e. int, or a Domi::TypeError exception will
-   * be thrown.
-   */
-  Teuchos::RCP< Epetra_IntVector > getEpetraIntVectorCopy() const;
 
   /** \brief Return a copy of this MDVector as an Epetra_Vector
    *
@@ -1184,9 +1155,6 @@ private:
 #ifdef HAVE_MPI
     // MPI data type (strided vector)
     Teuchos::RCP< MPI_Datatype > datatype;
-#else
-    // Teuchos ArrayView for periodic domains
-    MDArrayView< Scalar > dataview;
 #endif
     // Processor rank for communication partner
     int proc;
@@ -1988,47 +1956,6 @@ isContiguous() const
 
 #ifdef HAVE_EPETRA
 
-// The getEpetraIntVectorView() method only makes sense for Scalar =
-// int, because Epetra_IntVectors store data buffers of type int only.
-// There is no convenient way to specialize just one (or a small
-// handfull of) methods, instead you have to specialize the whole
-// class.  So we allow getEpetraIntVectorView() to compile for any
-// Scalar, but we will throw an exception if Scalar is not int.
-
-template< class Scalar,
-          class Node >
-Teuchos::RCP< Epetra_IntVector >
-MDVector< Scalar, Node >::
-getEpetraIntVectorView() const
-{
-  // Throw an exception if Scalar is not int
-  TEUCHOS_TEST_FOR_EXCEPTION(
-    typeid(Scalar) != typeid(int),
-    TypeError,
-    "MDVector is of scalar type '" << typeid(Scalar).name() << "', but "
-    "Epetra_IntVector requires scalar type 'int'");
-
-  // Throw an exception if this MDVector's MDMap is not contiguous
-  TEUCHOS_TEST_FOR_EXCEPTION(
-    !isContiguous(),
-    MDMapNoncontiguousError,
-    "This MDVector's MDMap is non-contiguous.  This can happen when you take "
-    "a slice of a parent MDVector.");
-
-  // Get the Epetra_Map that is equivalent to this MDVector's MDMap
-  Teuchos::RCP< const Epetra_Map > epetraMap = _mdMap->getEpetraMap(true);
-
-  // Return the result.  We are changing a Scalar* to a double*, which
-  // looks sketchy, but we have thrown an exception if Sca is not
-  // double, so everything is kosher.
-  void * buffer = (void*) _mdArrayView.getRawPtr();
-  return Teuchos::rcp(new Epetra_IntVector(View,
-                                           *epetraMap,
-                                           (int*) buffer));
-}
-
-////////////////////////////////////////////////////////////////////////
-
 // The getEpetraVectorView() method only makes sense for Scalar =
 // double, because Epetra_Vectors store data buffers of type double
 // only.  There is no convenient way to specialize just one (or a
@@ -2043,11 +1970,12 @@ MDVector< Scalar, Node >::
 getEpetraVectorView() const
 {
   // Throw an exception if Scalar is not double
+  const char * scalarType = typeid(Scalar).name();
   TEUCHOS_TEST_FOR_EXCEPTION(
-    typeid(Scalar) != typeid(double),
+    strncmp(scalarType, "double", 6) != 0,
     TypeError,
-    "MDVector is of scalar type '" << typeid(Scalar).name() << "', but "
-    "Epetra_Vector requires scalar type 'double'");
+    "MDVector is of scalar type '" << scalarType << "', but Epetra_Vector "
+    "requires scalar type 'double'");
 
   // Throw an exception if this MDVector's MDMap is not contiguous
   TEUCHOS_TEST_FOR_EXCEPTION(
@@ -2059,7 +1987,7 @@ getEpetraVectorView() const
   // Get the Epetra_Map that is equivalent to this MDVector's MDMap
   Teuchos::RCP< const Epetra_Map > epetraMap = _mdMap->getEpetraMap(true);
 
-  // Return the result.  We are changing a Scalar* to a double*, which
+  // Return the result.  We are changing a Sca* to a double*, which
   // looks sketchy, but we have thrown an exception if Sca is not
   // double, so everything is kosher.
   void * buffer = (void*) _mdArrayView.getRawPtr();
@@ -2068,7 +1996,11 @@ getEpetraVectorView() const
                                         (double*) buffer));
 }
 
+#endif
+
 ////////////////////////////////////////////////////////////////////////
+
+#ifdef HAVE_EPETRA
 
 // The getEpetraMultiVectorView() method only makes sense for Scalar =
 // double, because Epetra_MultiVectors store data buffers of type
@@ -2084,11 +2016,12 @@ MDVector< Scalar, Node >::
 getEpetraMultiVectorView() const
 {
   // Throw an exception if Scalar is not double
+  const char * scalarType = typeid(Scalar).name();
   TEUCHOS_TEST_FOR_EXCEPTION(
-    typeid(Scalar) != typeid(double),
+    strncmp(scalarType, "double", 6) != 0,
     TypeError,
-    "MDVector is of scalar type '" << typeid(Scalar).name() << "', but "
-    "Epetra_Vector requires scalar type 'double'");
+    "MDVector is of scalar type '" << scalarType << "', but Epetra_Vector "
+    "requires scalar type 'double'");
 
   // Determine the vector axis and related info
   int vectorAxis = (getLayout() == C_ORDER) ? 0 : numDims()-1;
@@ -2127,7 +2060,7 @@ getEpetraMultiVectorView() const
   // Get the Epetra_Map that is equivalent to newMdMap
   Teuchos::RCP< const Epetra_Map > epetraMap = newMdMap->getEpetraMap(true);
 
-  // Return the result.  We are changing a Scalar* to a double*, which
+  // Return the result.  We are changing a Sca* to a double*, which
   // looks sketchy, but we have thrown an exception if Sca is not
   // double, so everything is kosher.
   void * buffer = (void*) _mdArrayView.getRawPtr();
@@ -2138,34 +2071,11 @@ getEpetraMultiVectorView() const
                                              numVectors));
 }
 
-////////////////////////////////////////////////////////////////////////
-
-template< class Scalar,
-          class Node >
-Teuchos::RCP< Epetra_IntVector >
-MDVector< Scalar, Node >::
-getEpetraIntVectorCopy() const
-{
-  typedef typename MDArrayView< const Scalar >::iterator iterator;
-
-  // Get the Epetra_Map that is equivalent to this MDVector's MDMap
-  Teuchos::RCP< const Epetra_Map > epetraMap = _mdMap->getEpetraMap(true);
-
-  // Construct the result
-  Teuchos::RCP< Epetra_IntVector > result =
-    Teuchos::rcp(new Epetra_IntVector(*epetraMap));
-
-  // Copy the MDVector data buffer to the Epetra_IntVector, even if the
-  // MDVector is non-contiguous
-  int ii = 0;
-  for (iterator it = _mdArrayView.begin(); it != _mdArrayView.end(); ++it)
-    result->operator[](ii++) = (int) *it;
-
-  // Return the result
-  return result;
-}
+#endif
 
 ////////////////////////////////////////////////////////////////////////
+
+#ifdef HAVE_EPETRA
 
 template< class Scalar,
           class Node >
@@ -2192,7 +2102,11 @@ getEpetraVectorCopy() const
   return result;
 }
 
+#endif
+
 ////////////////////////////////////////////////////////////////////////
+
+#ifdef HAVE_EPETRA
 
 template< class Scalar,
           class Node >
@@ -2264,7 +2178,11 @@ getTpetraVectorView() const
   return getTpetraVectorView< LocalOrdinal, LocalOrdinal, Node >();
 }
 
+#endif
+
 ////////////////////////////////////////////////////////////////////////
+
+#ifdef HAVE_TPETRA
 
 template< class Scalar, class Node >
 template< class LocalOrdinal,
@@ -2276,7 +2194,11 @@ getTpetraVectorView() const
   return getTpetraVectorView< LocalOrdinal, GlobalOrdinal, Node >();
 }
 
+#endif
+
 ////////////////////////////////////////////////////////////////////////
+
+#ifdef HAVE_TPETRA
 
 template< class Scalar, class Node >
 template< class LocalOrdinal,
@@ -2307,7 +2229,11 @@ getTpetraVectorView() const
                                                   _mdArrayView.arrayView()));
 }
 
+#endif
+
 ////////////////////////////////////////////////////////////////////////
+
+#ifdef HAVE_TPETRA
 
 template< class Scalar, class Node >
 template< class LocalOrdinal >
@@ -2318,7 +2244,11 @@ getTpetraVectorCopy() const
   return getTpetraVectorCopy< LocalOrdinal, LocalOrdinal, Node >();
 }
 
+#endif
+
 ////////////////////////////////////////////////////////////////////////
+
+#ifdef HAVE_TPETRA
 
 template< class Scalar, class Node >
 template< class LocalOrdinal,
@@ -2330,7 +2260,11 @@ getTpetraVectorCopy() const
   return getTpetraVectorCopy< LocalOrdinal, GlobalOrdinal, Node >();
 }
 
+#endif
+
 ////////////////////////////////////////////////////////////////////////
+
+#ifdef HAVE_TPETRA
 
 template< class Scalar, class Node >
 template< class LocalOrdinal,
@@ -2369,7 +2303,11 @@ getTpetraVectorCopy() const
   return result;
 }
 
+#endif
+
 ////////////////////////////////////////////////////////////////////////
+
+#ifdef HAVE_TPETRA
 
 template< class Scalar, class Node >
 template < class LocalOrdinal >
@@ -2383,7 +2321,11 @@ getTpetraMultiVectorView() const
   return getTpetraMultiVectorView< LocalOrdinal, LocalOrdinal, Node >();
 }
 
+#endif
+
 ////////////////////////////////////////////////////////////////////////
+
+#ifdef HAVE_TPETRA
 
 template< class Scalar, class Node >
 template < class LocalOrdinal,
@@ -2398,7 +2340,11 @@ getTpetraMultiVectorView() const
   return getTpetraMultiVectorView< LocalOrdinal, GlobalOrdinal, Node >();
 }
 
+#endif
+
 ////////////////////////////////////////////////////////////////////////
+
+#ifdef HAVE_TPETRA
 
 template< class Scalar, class Node >
 template < class LocalOrdinal,
@@ -2412,10 +2358,10 @@ MDVector< Scalar, Node >::
 getTpetraMultiVectorView() const
 {
   // Determine the vector axis and related info
-  int vectorAxis    = (getLayout() == C_ORDER) ? 0 : numDims()-1;
-  int padding       = getLowerPadSize(vectorAxis) + getUpperPadSize(vectorAxis);
-  int commDim       = getCommDim(vectorAxis);
-  size_t numVectors = getGlobalDim(vectorAxis);
+  int vectorAxis = (getLayout() == C_ORDER) ? 0 : numDims()-1;
+  int padding    = getLowerPadSize(vectorAxis) + getUpperPadSize(vectorAxis);
+  int commDim    = getCommDim(vectorAxis);
+  int numVectors = getGlobalDim(vectorAxis);
 
   // Obtain the appropriate MDMap and check that it is contiguous
   Teuchos::RCP< const MDMap< Node > > newMdMap;
@@ -2456,12 +2402,16 @@ getTpetraMultiVectorView() const
                                                LocalOrdinal,
                                                GlobalOrdinal,
                                                Node2 >(tpetraMap,
-                                                       _mdArrayView.arrayView(),
+                                                       _mdArrayRcp.arrayRCP(),
                                                        lda,
                                                        numVectors));
 }
 
+#endif
+
 ////////////////////////////////////////////////////////////////////////
+
+#ifdef HAVE_TPETRA
 
 template< class Scalar, class Node >
 template < class LocalOrdinal >
@@ -2475,7 +2425,11 @@ getTpetraMultiVectorCopy() const
   return getTpetraMultiVectorCopy< LocalOrdinal, LocalOrdinal, Node >();
 }
 
+#endif
+
 ////////////////////////////////////////////////////////////////////////
+
+#ifdef HAVE_TPETRA
 
 template< class Scalar, class Node >
 template < class LocalOrdinal,
@@ -2490,7 +2444,11 @@ getTpetraMultiVectorCopy() const
   return getTpetraMultiVectorCopy< LocalOrdinal, GlobalOrdinal, Node >();
 }
 
+#endif
+
 ////////////////////////////////////////////////////////////////////////
+
+#ifdef HAVE_TPETRA
 
 template< class Scalar, class Node >
 template < class LocalOrdinal,
@@ -3071,28 +3029,6 @@ startUpdateCommPad(int axis)
       _requests.push_back(request);
     }
   }
-#else
-  // HAVE_MPI is not defined, so we are on a single processor.
-  // However, if the axis is periodic, we need to copy the appropriate
-  // data to the communication padding.
-  if (isPeriodic(axis))
-  {
-    for (int sendBndry = 0; sendBndry < 2; ++sendBndry)
-    {
-      int recvBndry = 1 - sendBndry;
-      // Get the receive and send data views
-      MDArrayView< Scalar > recvView = _recvMessages[axis][recvBndry].dataview;
-      MDArrayView< Scalar > sendView = _sendMessages[axis][sendBndry].dataview;
-
-      // Initialize the receive and send data view iterators
-      typename MDArrayView< Scalar >::iterator it_recv = recvView.begin();
-      typename MDArrayView< Scalar >::iterator it_send = sendView.begin();
-
-      // Copy the send buffer to the receive buffer
-      for ( ; it_recv != recvView.end(); ++it_recv, ++it_send)
-        *it_recv = *it_send;
-    }
-  }
 #endif
 }
 
@@ -3234,15 +3170,6 @@ initializeMessages()
         MPI_Type_commit(commPad.get());
         messageInfo.datatype = commPad;
       }
-#else
-      messageInfo.dataview = _mdArrayView;
-      for (int axis = 0; axis < numDims(); ++axis)
-      {
-        Slice slice(starts[axis], starts[axis] + subsizes[axis]);
-        messageInfo.dataview = MDArrayView< Scalar >(messageInfo.dataview,
-                                                     axis,
-                                                     slice);
-      }
 #endif
 
     }
@@ -3274,15 +3201,6 @@ initializeMessages()
                                  commPad.get());
         MPI_Type_commit(commPad.get());
         messageInfo.datatype = commPad;
-      }
-#else
-      messageInfo.dataview = _mdArrayView;
-      for (int axis = 0; axis < numDims(); ++axis)
-      {
-        Slice slice(starts[axis], starts[axis] + subsizes[axis]);
-        messageInfo.dataview = MDArrayView< Scalar >(messageInfo.dataview,
-                                                     axis,
-                                                     slice);
       }
 #endif
 
@@ -3328,15 +3246,6 @@ initializeMessages()
         MPI_Type_commit(commPad.get());
         messageInfo.datatype = commPad;
       }
-#else
-      messageInfo.dataview = _mdArrayView;
-      for (int axis = 0; axis < numDims(); ++axis)
-      {
-        Slice slice(starts[axis], starts[axis] + subsizes[axis]);
-        messageInfo.dataview = MDArrayView< Scalar >(messageInfo.dataview,
-                                                     axis,
-                                                     slice);
-      }
 #endif
 
     }
@@ -3368,15 +3277,6 @@ initializeMessages()
                                  commPad.get());
         MPI_Type_commit(commPad.get());
         messageInfo.datatype = commPad;
-      }
-#else
-      messageInfo.dataview = _mdArrayView;
-      for (int axis = 0; axis < numDims(); ++axis)
-      {
-        Slice slice(starts[axis], starts[axis] + subsizes[axis]);
-        messageInfo.dataview = MDArrayView< Scalar >(messageInfo.dataview,
-                                                     axis,
-                                                     slice);
       }
 #endif
 

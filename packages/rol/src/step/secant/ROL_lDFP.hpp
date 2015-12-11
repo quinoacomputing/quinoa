@@ -48,8 +48,6 @@
     \brief Provides definitions for limited-memory DFP operators.
 */
 
-#include "ROL_Secant.hpp"
-
 namespace ROL {
 
 template<class Real>

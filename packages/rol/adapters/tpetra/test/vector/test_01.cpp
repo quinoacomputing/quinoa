@@ -47,6 +47,7 @@
 
 
 #include "ROL_Algorithm.hpp"
+#include "ROL_TrustRegionStep.hpp"
 #include "ROL_TpetraMultiVector.hpp"
 #include "ROL_Types.hpp"
 #include "ROL_Zakharov.hpp"
@@ -225,36 +226,42 @@ int main(int argc, char *argv[]) {
         obj.hessVec(hv,v,xtest,tol);
         obj.invHessVec(ihhv,hv,xtest,tol);
         ihhv.axpy(-1,v);
-        outStream << "Checking inverse Hessian" << std::endl;
-        outStream << "||H^{-1}Hv-v|| = " << ihhv.norm() << std::endl;
+        std::cout << "Checking inverse Hessian" << std::endl;
+        std::cout << "||H^{-1}Hv-v|| = " << ihhv.norm() << std::endl;
      
         // Set optimization parameters
         Teuchos::ParameterList parlist;
 
         // Trust Region Parameters
-        parlist.sublist("Step").sublist("Trust Region").set("Subproblem Solver", "Truncated CG");
-        parlist.sublist("Step").sublist("Trust Region").set("Initial Radius",    0.5);
-        parlist.sublist("Step").sublist("Trust Region").set("Maximum Radius",    2.0);
+        parlist.set("Trust-Region Subproblem Solver Type", "Truncated CG");
+        parlist.set("Initial Trust-Region Radius",          0.5);
+        parlist.set("Maximum Trust-Region Radius",          2.0);
 
         // Krylov Parameters
-        parlist.sublist("General").sublist("Krylov").set("Absolute Tolerance", 1.e-4);
-        parlist.sublist("General").sublist("Krylov").set("Relative Tolerance", 1.e-2);
-        parlist.sublist("General").sublist("Krylov").set("Iteration Limit",    10);
+        parlist.set("Absolute Krylov Tolerance",            1.e-4);
+        parlist.set("Relative Krylov Tolerance",            1.e-2);
+        parlist.set("Maximum Number of Krylov Iterations",  10);
+        // Define Step
+        ROL::TrustRegionStep<RealT> step(parlist);
 
         // Define Status Test
-        parlist.sublist("Status Test").set("Gradient Tolerance", 1e-12);
-        parlist.sublist("Status Test").set("Step Tolerance",     1e-14);
-        parlist.sublist("Status Test").set("Iteration Limit",    100);
+        RealT gtol  = 1e-12;  // norm of gradient tolerance
+        RealT stol  = 1e-14;  // norm of step tolerance
+        int   maxit = 100;    // maximum number of iterations
+        ROL::StatusTest<RealT> status(gtol, stol, maxit);    
 
         // Define Algorithm
-        ROL::Algorithm<RealT> algo("Trust Region", parlist);
+        ROL::DefaultAlgorithm<RealT> algo(step,status,false);
 
         // Run Algorithm
-        algo.run(x, obj, true, outStream);
+        std::vector<std::string> output = algo.run(x, obj, false);
+        for ( unsigned i = 0; i < output.size(); i++ ) {
+            std::cout << output[i];
+        }
 
         // Compute Error
         RealT abserr = x.norm();
-        outStream << std::scientific << "\n   Absolute Error: " << abserr << std::endl;
+        outStream << std::scientific << "\n   Absolute Error: " << abserr;
         if ( abserr > sqrt(ROL::ROL_EPSILON) ) {
             errorFlag += 1;
         }
