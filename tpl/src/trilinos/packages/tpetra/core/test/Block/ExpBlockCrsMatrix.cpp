@@ -43,7 +43,9 @@
 
 #include <Tpetra_ConfigDefs.hpp>
 #include <Tpetra_TestingUtilities.hpp>
+#include <MatrixMarket_Tpetra.hpp>
 #include <Tpetra_Experimental_BlockCrsMatrix.hpp>
+#include <Tpetra_Experimental_BlockCrsMatrix_Helpers.hpp>
 #include <Tpetra_Experimental_BlockVector.hpp>
 
 namespace {
@@ -261,7 +263,7 @@ namespace {
     // Test that getLocalRowView returns the right column indices.
     Array<LO> lclColInds (maxNumEntPerRow);
     Array<LO> myLclColIndsCopy (maxNumEntPerRow);
-    Array<Scalar> myValsCopy (maxNumEntPerRow);
+    Array<Scalar> myValsCopy (maxNumEntPerRow*entriesPerBlock);
     Array<LO> myLclColIndsSorted (maxNumEntPerRow);
     for (LO lclRowInd = meshRowMap.getMinLocalIndex ();
          lclRowInd <= meshRowMap.getMaxLocalIndex (); ++lclRowInd) {
@@ -1444,14 +1446,16 @@ namespace {
   //
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL( ExpBlockCrsMatrix, localGSDiagonalMatrix, Scalar, LO, GO, Node )
   {
-    typedef Tpetra::Experimental::BlockVector<Scalar, LO, GO, Node> BV;
-    typedef Tpetra::Experimental::BlockCrsMatrix<Scalar, LO, GO, Node> BCM;
+    typedef Scalar ST;
+    typedef Tpetra::Experimental::BlockVector<ST, LO, GO, Node> BV;
+    typedef Tpetra::Experimental::BlockCrsMatrix<ST, LO, GO, Node> BCM;
     typedef Tpetra::CrsGraph<LO, GO, Node> graph_type;
     typedef Tpetra::Map<LO, GO, Node> map_type;
-    typedef Teuchos::ScalarTraits<Scalar> STS;
+    //typedef typename BCM::impl_scalar_type impl_scalar_type;
+    typedef Teuchos::ScalarTraits<ST> STS;
 
-    const Scalar two = STS::one () + STS::one ();
-    const Scalar three = STS::one () + STS::one () + STS::one ();
+    const ST two = STS::one () + STS::one ();
+    const ST three = two + STS::one ();
 
     out << "Testing Tpetra::Experimental::BlockCrsMatrix::localGaussSeidel "
       "with a matrix whose graph is diagonal" << endl;
@@ -1505,8 +1509,7 @@ namespace {
     BV solution;
     TEST_NOTHROW( solution = BV(meshRowMap, blockSize));
 
-
-    Teuchos::Array<Scalar> basematrix(blockSize*blockSize, STS::zero());
+    Teuchos::Array<ST> basematrix (blockSize*blockSize, STS::zero ());
     basematrix[0] = two;
     basematrix[2] = three;
     basematrix[3] = three;
@@ -1514,8 +1517,8 @@ namespace {
     basematrix[7] = three;
     basematrix[8] = two;
 
-    Teuchos::Array<Scalar> baseResidual(blockSize, STS::zero());
-    baseResidual[0] = STS::one();
+    Teuchos::Array<ST> baseResidual(blockSize, STS::zero ());
+    baseResidual[0] = STS::one ();
     baseResidual[1] = three;
     baseResidual[2] = -two;
 
@@ -1523,7 +1526,7 @@ namespace {
     // = float or double.  On the other hand, the author of these
     // tests understood that and only instantiated them for
     // Scalar=double (see the instantiations list below).
-    Teuchos::Array<Scalar> exactSolution(blockSize, STS::zero());
+    Teuchos::Array<ST> exactSolution(blockSize, STS::zero());
     exactSolution[0] = 43.0/35.0;
     exactSolution[1] = -12.0/35.0;
     exactSolution[2] = -17.0/35.0;
@@ -1538,9 +1541,10 @@ namespace {
         baseResidual[k] *= two;
       }
       lclColInds[0] = lclRowInd;
-      blockMat.replaceLocalValues(lclRowInd, lclColInds.getRawPtr(), &basematrix[0], 1);
-      residual.replaceLocalValues(lclRowInd, &baseResidual[0]);
-      solution.replaceLocalValues(lclRowInd, &baseResidual[0]);
+      blockMat.replaceLocalValues (lclRowInd, lclColInds.getRawPtr (),
+                                   basematrix.getRawPtr (), 1);
+      residual.replaceLocalValues (lclRowInd, baseResidual.getRawPtr ());
+      solution.replaceLocalValues (lclRowInd, baseResidual.getRawPtr ());
     }
 
     BCM diagonalMat(graph, blockSize);
@@ -1581,7 +1585,7 @@ namespace {
     for (LO lclRowInd = meshRowMap.getMinLocalIndex ();
          lclRowInd <= meshRowMap.getMaxLocalIndex (); ++lclRowInd) {
       typename BV::little_vec_type xlcl = solution.getLocalBlock (lclRowInd);
-      Scalar* x = xlcl.getRawPtr ();
+      ST* x = reinterpret_cast<ST*> (xlcl.getRawPtr ());
       out << "row = " << lclRowInd << endl;
       for (LO k = 0; k < blockSize; ++k) {
         TEST_FLOATING_EQUALITY( x[k], exactSolution[k], 1e-12 );
@@ -1595,7 +1599,7 @@ namespace {
     for (LO lclRowInd = meshRowMap.getMinLocalIndex ();
          lclRowInd <= meshRowMap.getMaxLocalIndex (); ++lclRowInd) {
       typename BV::little_vec_type xlcl = solution.getLocalBlock (lclRowInd);
-      Scalar* x = xlcl.getRawPtr ();
+      ST* x = reinterpret_cast<ST*> (xlcl.getRawPtr ());
       for (LO k = 0; k < blockSize; ++k) {
         TEST_FLOATING_EQUALITY( x[k], exactSolution[k], 1e-12 );
       }
@@ -1611,16 +1615,16 @@ namespace {
   //
   // Test BlockCrsMatrix's localGaussSeidel with a triangular matrix (???)
   //
-  TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL( ExpBlockCrsMatrix, localGSTriangularMatrices, Scalar, LO, GO, Node )
+  TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL( ExpBlockCrsMatrix, localGSTriangularMatrices, ST, LO, GO, Node )
   {
-    typedef Tpetra::Experimental::BlockVector<Scalar, LO, GO, Node> BV;
-    typedef Tpetra::Experimental::BlockCrsMatrix<Scalar, LO, GO, Node> BCM;
+    typedef Tpetra::Experimental::BlockVector<ST, LO, GO, Node> BV;
+    typedef Tpetra::Experimental::BlockCrsMatrix<ST, LO, GO, Node> BCM;
     typedef Tpetra::CrsGraph<LO, GO, Node> graph_type;
     typedef Tpetra::Map<LO, GO, Node> map_type;
-    typedef Teuchos::ScalarTraits<Scalar> STS;
+    typedef Teuchos::ScalarTraits<ST> STS;
 
-    const Scalar two = STS::one () + STS::one ();
-    const Scalar three = STS::one () + STS::one () + STS::one ();
+    const ST two = STS::one () + STS::one ();
+    const ST three = STS::one () + STS::one () + STS::one ();
 
     out << "Testing Tpetra::Experimental::BlockCrsMatrix::localGaussSeidel "
       "with a triangular matrix ( ??? )" << endl;
@@ -1684,9 +1688,7 @@ namespace {
     BCM diagonalMat;
     TEST_NOTHROW( diagonalMat = BCM (* (blockMat.getDiagonalGraph ()), blockSize) );
 
-
-    Teuchos::Array<Scalar> basematrix (maxNumEntPerRow * maxNumEntPerRow,
-                                       STS::zero ());
+    Teuchos::Array<ST> basematrix (maxNumEntPerRow * maxNumEntPerRow, STS::zero ());
     basematrix[0] = two;
     basematrix[3] = three;
     basematrix[4] = two;
@@ -1694,7 +1696,7 @@ namespace {
     basematrix[7] = three;
     basematrix[8] = two;
 
-    Teuchos::Array<Scalar> baseResidual (maxNumEntPerRow, STS::zero ());
+    Teuchos::Array<ST> baseResidual (maxNumEntPerRow, STS::zero ());
     baseResidual[0] = STS::one ();
     baseResidual[1] = three;
     baseResidual[2] = -two;
@@ -1703,13 +1705,13 @@ namespace {
     // = float or double.  On the other hand, the author of these
     // tests understood that and only instantiated them for
     // Scalar=double (see the instantiations list below).
-    Teuchos::Array<Scalar> exactSolution (maxNumEntPerRow, STS::zero ());
+    Teuchos::Array<ST> exactSolution (maxNumEntPerRow, STS::zero ());
     exactSolution[0] = 0.5;
     exactSolution[1] = 0.75;
     exactSolution[2] = -19.0/8.0;
 
-    Teuchos::Array<Scalar> assembleMatrix (blockSize * blockSize, STS::zero ());
-    Teuchos::Array<Scalar> assembleResidual (blockSize, STS::zero ());
+    Teuchos::Array<ST> assembleMatrix (blockSize * blockSize, STS::zero ());
+    Teuchos::Array<ST> assembleResidual (blockSize, STS::zero ());
 
     Teuchos::Array<LO> lclColInds (1);
 
@@ -1745,8 +1747,8 @@ namespace {
     blockMat.getLocalDiagOffsets(diagonalOffsets);
     blockMat.getLocalDiagCopy(diagonalMat, diagonalOffsets());
 
-    Scalar* blockVals;
-    Scalar* diagVals;
+    ST* blockVals;
+    ST* diagVals;
 
     Teuchos::Array<int> pivots(blockSize*numLocalMeshPoints+1, Teuchos::OrdinalTraits<int>::one());
 
@@ -1758,8 +1760,8 @@ namespace {
       typename BCM::little_block_type block =
         blockMat.getLocalBlock (lclRowInd, lclRowInd);
 
-      diagVals = diagBlock.getRawPtr ();
-      blockVals = block.getRawPtr ();
+      diagVals = reinterpret_cast<ST*> (diagBlock.getRawPtr ());
+      blockVals = reinterpret_cast<ST*> (block.getRawPtr ());
       for (LO k = 0; k < blockSize * blockSize; ++k) {
         TEST_EQUALITY( blockVals[k], diagVals[k] );
       }
@@ -1775,7 +1777,7 @@ namespace {
          lclRowInd <= meshRowMap.getMaxLocalIndex(); ++lclRowInd) {
       const LO rowOffset = lclRowInd - meshRowMap.getMinLocalIndex ();
       typename BV::little_vec_type xlcl = solution.getLocalBlock (lclRowInd);
-      Scalar* x = xlcl.getRawPtr ();
+      ST* x = reinterpret_cast<ST*> (xlcl.getRawPtr ());
       for (LO k = 0; k < blockSize; ++k) {
         TEST_FLOATING_EQUALITY( x[k], exactSolution[rowOffset], 1e-12 );
         x[k] = -STS::one ();
@@ -1825,8 +1827,8 @@ namespace {
         diagonalMat.getLocalBlock(lclRowInd, lclRowInd);
       typename BCM::little_block_type block =
         blockMat.getLocalBlock(lclRowInd, lclRowInd);
-      diagVals = diagBlock.getRawPtr ();
-      blockVals = block.getRawPtr ();
+      diagVals = reinterpret_cast<ST*> (diagBlock.getRawPtr ());
+      blockVals = reinterpret_cast<ST*> (block.getRawPtr ());
       for (LO k = 0; k < blockSize*blockSize; ++k) {
         TEST_EQUALITY( blockVals[k], diagVals[k] );
       }
@@ -1842,7 +1844,7 @@ namespace {
          lclRowInd <= meshRowMap.getMaxLocalIndex(); ++lclRowInd) {
       const LO rowOffset = lclRowInd - meshRowMap.getMinLocalIndex ();
       typename BV::little_vec_type xlcl = solution.getLocalBlock (lclRowInd);
-      Scalar* x = xlcl.getRawPtr ();
+      ST* x = reinterpret_cast<ST*> (xlcl.getRawPtr ());
       for (LO k = 0; k < blockSize; ++k) {
         TEST_FLOATING_EQUALITY( x[k], exactSolution[rowOffset], 1e-12 );
         x[k] = -STS::one ();
@@ -1856,6 +1858,75 @@ namespace {
     TEST_EQUALITY_CONST( gblSuccess, 1 );
   }
 
+  //
+  // Test conversion from CrsMatrix to BlockCrsMatrix.  This test is valid only on
+  // 1, 2, or 4 processes.  (See note below.)
+  //
+  TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL( ExpBlockCrsMatrix, point2block, ST, LO, GO, Node )
+  {
+    typedef Tpetra::Experimental::BlockCrsMatrix<ST, LO, GO, Node> block_matrix_type;
+    typedef Tpetra::CrsMatrix<ST, LO, GO, Node>                    crs_matrix_type;
+    typedef Tpetra::Import<LO, GO, Node>                           import_type;
+    typedef Tpetra::MultiVector<ST, LO, GO, Node>                  mv_type;
+    typedef Tpetra::Map<LO, GO, Node>                              map_type;
+    typedef Tpetra::MatrixMarket::Reader<crs_matrix_type>          reader_type;
+    typedef Teuchos::ScalarTraits<ST>                              STS;
+    typedef typename STS::magnitudeType                            magnitude_type;
+    ST zero = STS::zero(), one = STS::one();
+
+    RCP<const Comm<int> > comm = getDefaultComm();
+    RCP<Node> node = getNode<Node>();
+    std::string matrixFile;
+    if (STS::isComplex)
+      matrixFile = "blockA-complex.mm";
+    else
+      matrixFile = "blockA.mm";
+    out << "reading " << matrixFile << std::endl;
+    RCP<crs_matrix_type> pointMatrix = reader_type::readSparseFile(matrixFile, comm, node);
+
+    // Migrate pointMatrix to final parallel distribution.
+    // Note that the input matrix has 12 point rows, with block size 3.  Point rows associated with a mesh node
+    // must stay together.  This means the serial matrix can only be migrated to 1,2 or 4 processes.  3 processes
+    // would split up dofs associate with a mesh node.
+    Tpetra::global_size_t numGlobElts = pointMatrix->getRowMap()->getGlobalNumElements();
+    RCP<const map_type> parPointMap     = Tpetra::createUniformContigMapWithNode<LO,GO,Node>(numGlobElts, comm, node);
+    RCP<crs_matrix_type> parPointMatrix = rcp(new crs_matrix_type(parPointMap,pointMatrix->getGlobalMaxNumRowEntries()));
+    RCP<const import_type> importer     = Tpetra::createImport<LO,GO,Node>(pointMatrix->getRowMap(), parPointMap);
+    parPointMatrix->doImport(*pointMatrix, *importer, Tpetra::INSERT);
+    parPointMatrix->fillComplete();
+    pointMatrix.swap(parPointMatrix);
+
+    int blockSize = 3;
+    RCP<block_matrix_type> blockMatrix = Tpetra::Experimental::convertToBlockCrsMatrix(*pointMatrix,blockSize);
+
+    //normalized pseudo-random vector
+    RCP<mv_type> randVec = rcp(new mv_type(pointMatrix->getDomainMap(),1));
+    randVec->randomize();
+    Teuchos::Array<magnitude_type> normVec1(1);
+    randVec->norm2(normVec1);
+    randVec->scale(1.0/normVec1[0]);
+
+    RCP<mv_type> resultVec1 = rcp(new mv_type(pointMatrix->getRangeMap(),1));
+    pointMatrix->apply(*randVec, *resultVec1, Teuchos::NO_TRANS, one, zero);
+    resultVec1->norm2(normVec1);
+
+    RCP<mv_type> resultVec2 = rcp(new mv_type(blockMatrix->getRangeMap(),1));
+    blockMatrix->apply(*randVec, *resultVec2, Teuchos::NO_TRANS, one, zero);
+    Teuchos::Array<magnitude_type> normVec2(1);
+    resultVec2->norm2(normVec2);
+
+    resultVec2->update(-1.0,*resultVec1,1.0);
+    Teuchos::Array<magnitude_type> normDelta(1);
+    resultVec2->norm2(normDelta);
+    Teuchos::Array<magnitude_type> relativeError(1);
+    relativeError[0] = std::abs(normDelta[0] / normVec1[0]);
+
+    std::ostringstream normStr;
+    normStr << "||CSR*xrand|| = " << normVec1[0] << ", ||CSR*xrand - BCSR*xrand|| / ||CSR*xrand|| = " << relativeError[0];
+    out << normStr.str() << std::endl;
+    TEUCHOS_TEST_FOR_EXCEPTION(relativeError[0]>1e-8, std::runtime_error, "BlockCrsMatrix matvec does not produce same result as CrsMatrix matvec.");
+  }
+
 
 //
 // INSTANTIATIONS
@@ -1867,31 +1938,17 @@ namespace {
   TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( ExpBlockCrsMatrix, write, SCALAR, LO, GO, NODE ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( ExpBlockCrsMatrix, SetAllToScalar, SCALAR, LO, GO, NODE ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( ExpBlockCrsMatrix, ImportCopy, SCALAR, LO, GO, NODE ) \
-  TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( ExpBlockCrsMatrix, ExportDiffRowMaps, SCALAR, LO, GO, NODE )
-
-# define UNIT_TEST_GROUP_LGN( LO, GO, NODE ) \
-  TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( ExpBlockCrsMatrix, localGSDiagonalMatrix, double, LO, GO, NODE ) \
-  TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( ExpBlockCrsMatrix, localGSTriangularMatrices, double, LO, GO, NODE )
-
+  TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( ExpBlockCrsMatrix, ExportDiffRowMaps, SCALAR, LO, GO, NODE ) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( ExpBlockCrsMatrix, localGSDiagonalMatrix, SCALAR, LO, GO, NODE ) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( ExpBlockCrsMatrix, localGSTriangularMatrices, SCALAR, LO, GO, NODE ) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( ExpBlockCrsMatrix, point2block, SCALAR, LO, GO, NODE )
 
   TPETRA_ETI_MANGLING_TYPEDEFS()
 
-  // FIXME (mfh 30 Jul 2014) We might like to use Teuchos::LAPACK in
-  // the implementation of BlockCrsMatrix, so it wouldn't make sense
-  // to do explicit instantiation for Scalar types that
-  // Teuchos::LAPACK doesn't support.  It seems that the *_TESTMV
-  // macro does whaat we want, but it would make sense to have a macro
-  // like TPETRA_INSTANTIATE_FLOATINGPOINT or
-  // TPETRA_INSTANTIATE_LAPACK_TYPES.
-  //
-  // NOTE (mfh 30 Jul 2014) BlockCrsMatrix's explicit instantiation
-  // (in ../../src/Tpetra_Experimental_BlockCrsMatrix.cpp) must also
-  // use this macro, so that the class itself and the tests are
-  // explicitly instantiated over the same set of types.  I have also
-  // put a note there that points here.
+  // NOTE (mfh 24 Sep 2015) It only makes sense to test over Scalar
+  // types which have a Teuchos::LAPACK implementation.
 
-  TPETRA_INSTANTIATE_TESTMV( UNIT_TEST_GROUP )
-  TPETRA_INSTANTIATE_LGN( UNIT_TEST_GROUP_LGN )
+  TPETRA_INSTANTIATE_SLGN_NO_ORDINAL_SCALAR( UNIT_TEST_GROUP )
 
 } // namespace (anonymous)
 

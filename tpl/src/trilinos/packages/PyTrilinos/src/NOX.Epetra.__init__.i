@@ -118,6 +118,7 @@ NOX.Epetra provides the following user-level classes:
 #include "Epetra_SerialDistributor.h"
 #include "Epetra_DLLExportMacro.h"
 #include "PyTrilinos_Epetra_Util.hpp"
+#include "PyTrilinos_LinearProblem.hpp"
 
 // EpetraExt includes
 #ifdef HAVE_NOX_EPETRAEXT
@@ -142,18 +143,9 @@ NOX.Epetra provides the following user-level classes:
 #include "NOX_Epetra_LinearSystem_AztecOO.H"
 #include "NOX_Epetra_ModelEvaluatorInterface.H"
 
-// Local includes
+// NumPy include
 #define NO_IMPORT_ARRAY
 #include "numpy_include.hpp"
-#include "Epetra_NumPyFEVector.hpp"
-#include "Epetra_NumPyIntSerialDenseMatrix.hpp"
-#include "Epetra_NumPyIntSerialDenseVector.hpp"
-#include "Epetra_NumPyIntVector.hpp"
-#include "Epetra_NumPyMultiVector.hpp"
-#include "Epetra_NumPySerialDenseMatrix.hpp"
-#include "Epetra_NumPySerialDenseVector.hpp"
-#include "Epetra_NumPySerialSymDenseMatrix.hpp"
-#include "Epetra_NumPyVector.hpp"
 
 // Namespace flattening
 using Teuchos::RCP;

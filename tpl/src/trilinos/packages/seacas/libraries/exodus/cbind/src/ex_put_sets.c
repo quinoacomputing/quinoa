@@ -70,7 +70,7 @@ int ex_put_sets (int   exoid,
   char* numdfptr = NULL;
   char* factptr = NULL;
 
-  size_t int_size;
+  int int_type;
   
   exerrval = 0; /* clear error code */
 
@@ -100,13 +100,21 @@ int ex_put_sets (int   exoid,
       return (EX_FATAL);
     }
 
-    ex_id_lkup(exoid, sets[i].type, sets[i].id);
-    if (exerrval != EX_LOOKUPFAIL) {  /* found the side set id, so set is already defined... */
-      sets_to_define[i] = 0;
-      continue;
-    } else {
+    if (sets[i].id < 0) {
+      /* We are adding a set with id = -sets[i].id. We want to define everything, but we don't
+       * want to increment the number of sets...  Major kluge / proof of concept 
+       */
       needs_define++;
-      sets_to_define[i] = 1;
+      sets_to_define[i] = -1;
+    } else {
+      ex_id_lkup(exoid, sets[i].type, sets[i].id);
+      if (exerrval != EX_LOOKUPFAIL) {  /* found the side set id, so set is already defined... */
+	sets_to_define[i] = 0;
+	continue;
+      } else {
+	needs_define++;
+	sets_to_define[i] = 1;
+      }
     }
   }
     
@@ -126,12 +134,19 @@ int ex_put_sets (int   exoid,
       if (sets_to_define[i] == 0)
 	continue;
       
-      /*   NOTE: ex_inc_file_item finds the current number of sets defined
-	   for a specific file and returns that value incremented. */
-      cur_num_sets=ex_inc_file_item(exoid, ex_get_counter_list(sets[i].type));
-      set_id_ndx = cur_num_sets + 1;
-      sets_to_define[i] = set_id_ndx;
-      
+      if (sets_to_define[i] > 0) {
+	/*   NOTE: ex_inc_file_item finds the current number of sets defined
+	     for a specific file and returns that value incremented. */
+	cur_num_sets=ex_inc_file_item(exoid, ex_get_counter_list(sets[i].type));
+	set_id_ndx = cur_num_sets + 1;
+	sets_to_define[i] = set_id_ndx;
+      }
+      else {
+	cur_num_sets=ex_get_file_item(exoid, ex_get_counter_list(sets[i].type));
+	set_id_ndx = cur_num_sets - set_count + i + 1;
+	sets_to_define[i] = set_id_ndx;
+      }
+
       if (sets[i].num_entry == 0)
 	continue;
       
@@ -192,14 +207,14 @@ int ex_put_sets (int   exoid,
 	goto error_ret;
       }
       
-      int_size = sizeof(int);
+      int_type = NC_INT;
       if (ex_int64_status(exoid) & EX_BULK_INT64_DB) {
-	int_size = sizeof(int64_t);
+	int_type = NC_INT64;
       }
       
       /* create variable array in which to store the entry lists */
       dims[0] = dimid;
-      if ((status = nc_def_var(exoid, entryptr, int_size, 1, dims, &varid)) != NC_NOERR) {
+      if ((status = nc_def_var(exoid, entryptr, int_type, 1, dims, &varid)) != NC_NOERR) {
 	exerrval = status;
 	if (status == NC_ENAMEINUSE) {
 	  sprintf(errmsg,
@@ -217,7 +232,7 @@ int ex_put_sets (int   exoid,
       ex_compress_variable(exoid, varid, 1);
       
       if (extraptr) {
-	if ((status = nc_def_var(exoid, extraptr, int_size, 1, dims, &varid)) != NC_NOERR) {
+	if ((status = nc_def_var(exoid, extraptr, int_type, 1, dims, &varid)) != NC_NOERR) {
 	  exerrval = status;
 	  if (status == NC_ENAMEINUSE) {
 	    sprintf(errmsg,
@@ -329,7 +344,9 @@ int ex_put_sets (int   exoid,
       
       /* write out set id */
       start[0] = sets_to_define[i]-1;
-      status = nc_put_var1_longlong(exoid, varid, start, (long long*)&sets[i].id);
+      long long id = sets[i].id;
+      if (id < 0) id = -id;
+      status = nc_put_var1_longlong(exoid, varid, start, &id);
     
       if (status != NC_NOERR) {
 	exerrval = status;
@@ -371,14 +388,16 @@ int ex_put_sets (int   exoid,
   status = EX_NOERR;
   for (i=0; i < set_count; i++) {
     int stat;
+    long long id = sets[i].id;
+    if (id < 0) id = -id;
     if (sets[i].entry_list != NULL || sets[i].extra_list != NULL) {
       /* NOTE: ex_put_set will write the warning/error message... */
-      stat = ex_put_set(exoid, sets[i].type, sets[i].id, sets[i].entry_list, sets[i].extra_list);
+      stat = ex_put_set(exoid, sets[i].type, id, sets[i].entry_list, sets[i].extra_list);
       if (stat != EX_NOERR) status = EX_FATAL;
     }
-    if (sets[i].distribution_factor_list != NULL) {
+    if (sets[i].num_distribution_factor > 0 && sets[i].distribution_factor_list != NULL) {
       /* NOTE: ex_put_set_dist_fact will write the warning/error message... */
-      stat = ex_put_set_dist_fact(exoid, sets[i].type, sets[i].id, sets[i].distribution_factor_list);
+      stat = ex_put_set_dist_fact(exoid, sets[i].type, id, sets[i].distribution_factor_list);
       if (stat != EX_NOERR) status = EX_FATAL;
     }
   }  

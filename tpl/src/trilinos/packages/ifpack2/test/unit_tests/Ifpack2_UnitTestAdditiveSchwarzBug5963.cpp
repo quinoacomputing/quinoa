@@ -111,10 +111,10 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL(AdditiveSchwarz, AddCombineMode, ScalarType, L
                             local_ordinal_type,
                             global_ordinal_type,
                             node_type> crs_matrix_type;
-  // typedef Tpetra::RowMatrix<scalar_type,
-  //                           local_ordinal_type,
-  //                           global_ordinal_type,
-  //                           node_type> row_matrix_type; // unused
+  typedef Tpetra::RowMatrix<scalar_type,
+                            local_ordinal_type,
+                            global_ordinal_type,
+                            node_type> row_matrix_type;
   typedef Tpetra::Vector<scalar_type,
                          local_ordinal_type,
                          global_ordinal_type,
@@ -122,7 +122,7 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL(AdditiveSchwarz, AddCombineMode, ScalarType, L
   typedef Tpetra::Map<local_ordinal_type,
                       global_ordinal_type,
                       node_type> map_type;
-  typedef Ifpack2::AdditiveSchwarz<crs_matrix_type> global_solver_type;
+  typedef Ifpack2::AdditiveSchwarz<row_matrix_type> global_solver_type;
 
   RCP<const Teuchos::Comm<int> > comm =
     Tpetra::DefaultPlatform::getDefaultPlatform ().getComm ();
@@ -278,10 +278,10 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL(AdditiveSchwarz, ZeroCombineMode, ScalarType, 
                             local_ordinal_type,
                             global_ordinal_type,
                             node_type> crs_matrix_type;
-  // typedef Tpetra::RowMatrix<scalar_type,
-  //                           local_ordinal_type,
-  //                           global_ordinal_type,
-  //                           node_type> row_matrix_type; // unused
+  typedef Tpetra::RowMatrix<scalar_type,
+                            local_ordinal_type,
+                            global_ordinal_type,
+                            node_type> row_matrix_type;
   typedef Tpetra::Vector<scalar_type,
                          local_ordinal_type,
                          global_ordinal_type,
@@ -289,7 +289,7 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL(AdditiveSchwarz, ZeroCombineMode, ScalarType, 
   typedef Tpetra::Map<local_ordinal_type,
                       global_ordinal_type,
                       node_type> map_type;
-  typedef Ifpack2::AdditiveSchwarz<crs_matrix_type> global_solver_type;
+  typedef Ifpack2::AdditiveSchwarz<row_matrix_type> global_solver_type;
 
   RCP<const Teuchos::Comm<int> > comm =
     Tpetra::DefaultPlatform::getDefaultPlatform ().getComm ();
@@ -465,13 +465,17 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL(AdditiveSchwarz, ZeroCombineMode, ScalarType, 
 
 
 // Define the set of unit tests to instantiate in this file.
-#define UNIT_TEST_GROUP_SCALAR_ORDINAL(Scalar,LocalOrdinal,GlobalOrdinal) \
-  TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT( AdditiveSchwarz, ZeroCombineMode, Scalar, LocalOrdinal, GlobalOrdinal)
+#define UNIT_TEST_GROUP_SC_LO_GO( SC, LO, GO ) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT( AdditiveSchwarz, ZeroCombineMode, SC, LO, GO )
 
-// Instantiate the unit tests for Scalar=double, LO=int, and GO=int.
-// It's not necessary to exercise other Scalar types, as that would
-// just be a Teuchos::LAPACK test, not an Ifpack2 test.
-UNIT_TEST_GROUP_SCALAR_ORDINAL(double, int, int)
+#include "Ifpack2_ETIHelperMacros.h"
 
-}//namespace <anonymous>
+IFPACK2_ETI_MANGLING_TYPEDEFS()
+
+// Test all enabled combinations of Scalar (SC), LocalOrdinal (LO),
+// and GlobalOrdinal (GO) types, where Scalar is real.
+
+IFPACK2_INSTANTIATE_SLG_REAL( UNIT_TEST_GROUP_SC_LO_GO )
+
+} // namespace (anonymous)
 

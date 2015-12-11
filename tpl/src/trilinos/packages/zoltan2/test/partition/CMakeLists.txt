@@ -1,13 +1,13 @@
 
-IF (${PACKAGE_NAME}_ENABLE_Experimental)
+IF (${PROJECT_NAME}_ENABLE_Galeri)
   TRIBITS_ADD_EXECUTABLE_AND_TEST(
-    rcbTest
-    SOURCES rcbTest.cpp
-    NUM_MPI_PROCS 4
-    COMM serial mpi
-    PASS_REGULAR_EXPRESSION "PASS"
-    FAIL_REGULAR_EXPRESSION "FAIL"
-  )
+      rcbTest
+      SOURCES rcbTest.cpp
+      NUM_MPI_PROCS 4
+      COMM serial mpi
+      PASS_REGULAR_EXPRESSION "PASS"
+      FAIL_REGULAR_EXPRESSION "FAIL"
+    )
 ENDIF()
   
 # MultiJagged Tests
@@ -134,67 +134,97 @@ TRIBITS_ADD_EXECUTABLE_AND_TEST(
   FAIL_REGULAR_EXPRESSION "FAIL"
   )
 
-TRIBITS_ADD_EXECUTABLE_AND_TEST(
-  pamgenMeshAdapterTest
-  NAME pamgenMeshAdapterTest_color
-  SOURCES pamgenMeshAdapterTest.cpp
-  NUM_MPI_PROCS 4
-  COMM serial mpi
-  ARGS
-    "--action=color"
-  PASS_REGULAR_EXPRESSION "PASS"
-  FAIL_REGULAR_EXPRESSION "FAIL"
-)
+IF (${PROJECT_NAME}_ENABLE_Pamgen)
 
-TRIBITS_ADD_TEST(
-  pamgenMeshAdapterTest
-  NAME pamgenMeshAdapterTest_mj
-  NUM_MPI_PROCS 4
-  COMM serial mpi
-  ARGS
-    "--action=mj --nparts=6"
-  PASS_REGULAR_EXPRESSION "PASS"
-  FAIL_REGULAR_EXPRESSION "FAIL"
-)
-
-TRIBITS_ADD_TEST(
-  pamgenMeshAdapterTest
-  NAME pamgenMeshAdapterTest_zoltanrcb
-  NUM_MPI_PROCS 4
-  COMM serial mpi
-  ARGS
-    "--action=zoltan_rcb --nparts=6"
-  PASS_REGULAR_EXPRESSION "PASS"
-  FAIL_REGULAR_EXPRESSION "FAIL"
-)
-
-TRIBITS_ADD_TEST(
-  pamgenMeshAdapterTest
-  NAME pamgenMeshAdapterTest_zoltanhg
-  NUM_MPI_PROCS 4
-  COMM serial mpi
-  ARGS
-    "--action=zoltan_hg --nparts=6"
-  PASS_REGULAR_EXPRESSION "PASS"
-  FAIL_REGULAR_EXPRESSION "FAIL"
-)
-
-IF (${PROJECT_NAME}_ENABLE_SCOREC)
-   MESSAGE("GFD HELLO") 
-  TRIBITS_ADD_TEST(
+  TRIBITS_ADD_EXECUTABLE_AND_TEST(
     pamgenMeshAdapterTest
-    NAME pamgenMeshAdapterTest_ParMA
+    NAME pamgenMeshAdapterTest_color
+    SOURCES pamgenMeshAdapterTest.cpp
     NUM_MPI_PROCS 4
     COMM serial mpi
     ARGS
-    "--action=parma"
+      "--action=color"
     PASS_REGULAR_EXPRESSION "PASS"
     FAIL_REGULAR_EXPRESSION "FAIL"
   )
+
+  TRIBITS_ADD_TEST(
+    pamgenMeshAdapterTest
+    NAME pamgenMeshAdapterTest_mj
+    NUM_MPI_PROCS 4
+    COMM serial mpi
+    ARGS
+      "--action=mj --nparts=6"
+    PASS_REGULAR_EXPRESSION "PASS"
+    FAIL_REGULAR_EXPRESSION "FAIL"
+  )
+
+  TRIBITS_ADD_TEST(
+    pamgenMeshAdapterTest
+    NAME pamgenMeshAdapterTest_zoltanrcb
+    NUM_MPI_PROCS 4
+    COMM serial mpi
+    ARGS
+      "--action=zoltan_rcb --nparts=6"
+    PASS_REGULAR_EXPRESSION "PASS"
+    FAIL_REGULAR_EXPRESSION "FAIL"
+  )
+
+  TRIBITS_ADD_TEST(
+    pamgenMeshAdapterTest
+    NAME pamgenMeshAdapterTest_zoltanhg
+    NUM_MPI_PROCS 4
+    COMM serial mpi
+    ARGS
+      "--action=zoltan_hg --nparts=6"
+    PASS_REGULAR_EXPRESSION "PASS"
+    FAIL_REGULAR_EXPRESSION "FAIL"
+  )
+
+  TRIBITS_ADD_TEST(
+    pamgenMeshAdapterTest
+    NAME pamgenMeshAdapterTest_ghosthg
+    NUM_MPI_PROCS 4
+    COMM serial mpi
+    ARGS
+      "--action=hg_ghost --nparts=6"
+    PASS_REGULAR_EXPRESSION "PASS"
+    FAIL_REGULAR_EXPRESSION "FAIL"
+  )
+
+  IF (${PACKAGE_NAME}_ENABLE_Scotch)
+    TRIBITS_ADD_TEST(
+      pamgenMeshAdapterTest
+      NAME pamgenMeshAdapterTest_scotch
+      NUM_MPI_PROCS 4
+      COMM serial mpi
+      ARGS
+        "--action=scotch --nparts=6"
+      PASS_REGULAR_EXPRESSION "PASS"
+      FAIL_REGULAR_EXPRESSION "FAIL"
+    )
+  ENDIF()
+ENDIF()
+
+
+IF (${PROJECT_NAME}_ENABLE_SCOREC)
+  IF (${PROJECT_NAME}_ENABLE_Pamgen)
+    TRIBITS_ADD_TEST(
+      pamgenMeshAdapterTest
+      NAME pamgenMeshAdapterTest_ParMA
+      NUM_MPI_PROCS 4
+      COMM serial mpi
+      ARGS
+      "--action=parma"
+      PASS_REGULAR_EXPRESSION "PASS"
+      FAIL_REGULAR_EXPRESSION "FAIL"
+    )
+  ENDIF()
+
   TRIBITS_ADD_EXECUTABLE_AND_TEST(
-    RPIMeshAdapterTest
-    NAME RPIMeshAdapterTest_ParMA
-    SOURCES RPIMeshAdapterTest.cpp
+    APFMeshAdapterTest
+    NAME APFMeshAdapterTest_ParMA
+    SOURCES APFMeshAdapterTest.cpp
     NUM_MPI_PROCS 4
     COMM serial mpi
     ARGS
@@ -203,8 +233,8 @@ IF (${PROJECT_NAME}_ENABLE_SCOREC)
     FAIL_REGULAR_EXPRESSION "FAIL"
   )
   TRIBITS_ADD_TEST(
-    RPIMeshAdapterTest
-    NAME RPIMeshAdapterTest_ParMA_Vtx_Edge_Elm
+    APFMeshAdapterTest
+    NAME APFMeshAdapterTest_ParMA_Vtx_Edge_Elm
     NUM_MPI_PROCS 4
     COMM serial mpi
     ARGS
@@ -213,8 +243,8 @@ IF (${PROJECT_NAME}_ENABLE_SCOREC)
     FAIL_REGULAR_EXPRESSION "FAIL"
   )
   TRIBITS_ADD_TEST(
-    RPIMeshAdapterTest
-    NAME RPIMeshAdapterTest_ParMA_Ghost
+    APFMeshAdapterTest
+    NAME APFMeshAdapterTest_ParMA_Ghost
     NUM_MPI_PROCS 4
     COMM serial mpi
     ARGS
@@ -223,8 +253,8 @@ IF (${PROJECT_NAME}_ENABLE_SCOREC)
     FAIL_REGULAR_EXPRESSION "FAIL"
   )
   TRIBITS_ADD_TEST(
-    RPIMeshAdapterTest
-    NAME RPIMeshAdapterTest_ParMA_Shape
+    APFMeshAdapterTest
+    NAME APFMeshAdapterTest_ParMA_Shape
     NUM_MPI_PROCS 4
     COMM serial mpi
     ARGS
@@ -234,12 +264,22 @@ IF (${PROJECT_NAME}_ENABLE_SCOREC)
   )
   
   TRIBITS_ADD_TEST(
-    RPIMeshAdapterTest
-    NAME RPIMeshAdapterTest_ZOLTAN_HG
+    APFMeshAdapterTest
+    NAME APFMeshAdapterTest_ZOLTAN_HG
     NUM_MPI_PROCS 4
     COMM serial mpi
     ARGS
     "--action=zoltan_hg --meshfile=4/ --modelfile=torus.dmg"
+    PASS_REGULAR_EXPRESSION "PASS"
+    FAIL_REGULAR_EXPRESSION "FAIL"
+  )
+  TRIBITS_ADD_TEST(
+    APFMeshAdapterTest
+    NAME APFMeshAdapterTest_ZOLTAN_GHOST_HG
+    NUM_MPI_PROCS 2
+    COMM serial mpi
+    ARGS
+    "--action=hg_ghost --meshfile=pumiTri14/2/ --modelfile=pumiTri14/plate.dmg --layers=1"
     PASS_REGULAR_EXPRESSION "PASS"
     FAIL_REGULAR_EXPRESSION "FAIL"
   )
@@ -255,19 +295,6 @@ IF (${PROJECT_NAME}_ENABLE_SCOREC)
     FAIL_REGULAR_EXPRESSION "FAIL"
   )
 
-ENDIF()
-
-IF (${PACKAGE_NAME}_ENABLE_Scotch)
-  TRIBITS_ADD_TEST(
-    pamgenMeshAdapterTest
-    NAME pamgenMeshAdapterTest_scotch
-    NUM_MPI_PROCS 4
-    COMM serial mpi
-    ARGS
-      "--action=scotch --nparts=6"
-    PASS_REGULAR_EXPRESSION "PASS"
-    FAIL_REGULAR_EXPRESSION "FAIL"
-  )
 ENDIF()
 
 TRIBITS_ADD_EXECUTABLE_AND_TEST(
@@ -402,27 +429,6 @@ TRIBITS_ADD_TEST(
   FAIL_REGULAR_EXPRESSION "FAIL"
   )
 
-##########################################
-IF (${PACKAGE_NAME}_ENABLE_Experimental)
-
-IF (${PACKAGE_NAME}_ENABLE_Experimental_Wolf)
-
-TRIBITS_ADD_EXECUTABLE_AND_TEST(
-  ND
-  SOURCES nd.cpp
-  NUM_MPI_PROCS 1
-  COMM serial mpi
-  ARGS
-   "--inputFile=simple"
-  PASS_REGULAR_EXPRESSION "PASS"
-  FAIL_REGULAR_EXPRESSION "FAIL"
-  )
-ENDIF()
-#
-ENDIF()
-##########################################
-
-
 # Command that copies files to the executable directory.
 TRIBITS_COPY_FILES_TO_BINARY_DIR(copy_files_for_partition_tests
   SOURCE_FILES
@@ -447,7 +453,6 @@ TRIBITS_COPY_FILES_TO_BINARY_DIR(copy_more_files_for_partition_tests
     4/1.smb	
     4/2.smb
     4/3.smb
-    torus16k0.smb
     pumiTri14/plate.dmg
     pumiTri14/plate0.smb
     pumiTri14/2/0.smb

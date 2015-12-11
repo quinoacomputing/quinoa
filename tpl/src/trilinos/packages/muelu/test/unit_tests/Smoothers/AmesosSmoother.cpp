@@ -50,7 +50,11 @@
 
 #include "MueLu_AmesosSmoother.hpp"
 
-#include "MueLu_UseDefaultTypes.hpp"
+#ifdef HAVE_MUELU_SERIAL
+typedef double                                      Scalar;
+typedef int                                         LocalOrdinal;
+typedef int                                         GlobalOrdinal;
+typedef Kokkos::Compat::KokkosSerialWrapperNode     Node;
 
 namespace MueLuTests {
 
@@ -60,7 +64,7 @@ namespace MueLuTests {
   {
     MUELU_TEST_ONLY_FOR(Xpetra::UseEpetra)
     {
-      testApplyNoSetup(MueLu::AmesosSmoother(), out, success);
+      testApplyNoSetup(MueLu::AmesosSmoother<Node>(), out, success);
     }
   }
 
@@ -68,14 +72,14 @@ namespace MueLuTests {
   {
     MUELU_TEST_ONLY_FOR(Xpetra::UseEpetra)
     {
-      Teuchos::RCP<MueLu::AmesosSmoother> smoother;
+      Teuchos::RCP<MueLu::AmesosSmoother<Node> > smoother;
 #ifdef HAVE_AMESOS_KLU
-      smoother = rcp(new MueLu::AmesosSmoother("Klu"));
+      smoother = rcp(new MueLu::AmesosSmoother<Node>("Klu"));
       testDirectSolver(*smoother, out, success);
 #endif
 
 #ifdef HAVE_AMESOS_SUPERLU
-      smoother = rcp(new MueLu::AmesosSmoother("Superlu"));
+      smoother = rcp(new MueLu::AmesosSmoother<Node>("Superlu"));
       testDirectSolver(*smoother, out, success);
 #endif
     }
@@ -88,3 +92,5 @@ namespace MueLuTests {
 // Test with invalid parameterList? (== a characterization test for Amesos)
 // Test if paramList takes into account
 // Check if all the defaults that are used by MueLu are tested
+
+#endif // HAVE_MUELU_SERIAL

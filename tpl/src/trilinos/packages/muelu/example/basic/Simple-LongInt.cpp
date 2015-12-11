@@ -44,8 +44,9 @@
 //
 // @HEADER
 //
-// To compile and run this example, Trilinos must be configured with the following option:
-// -D Teuchos_ENABLE_LONG_LONG_INT:BOOL=ON
+// To compile and run this example, Trilinos must be configured with
+// long long enabled, either in Epetra ("Epetra64") or in Tpetra
+// (Tpetra_INST_INT_LONG_LONG=ON).
 //
 
 #include <iostream>
@@ -56,7 +57,11 @@
 // Define default types
 typedef double Scalar;
 typedef int LocalOrdinal;
+#if defined (HAVE_XPETRA_INT_LONG_LONG)
 typedef long long int GlobalOrdinal; // <<<<<<
+#else
+#  error "You must enable GlobalOrdinal = long long in order to build this example."
+#endif // HAVE_XPETRA_INT_LONG_LONG
 typedef KokkosClassic::DefaultNode::DefaultNodeType Node;
 
 int main(int argc, char *argv[]) {
@@ -146,7 +151,7 @@ int main(int argc, char *argv[]) {
   H.Iterate(*B, *X, nIts);
 
   // Print relative residual norm
-  Teuchos::ScalarTraits<SC>::magnitudeType residualNorms = Utils::ResidualNorm(*A, *X, *B)[0];
+  Teuchos::ScalarTraits<SC>::magnitudeType residualNorms = Utilities::ResidualNorm(*A, *X, *B)[0];
   if (comm->getRank() == 0)
     std::cout << "||Residual|| = " << residualNorms << std::endl;
 

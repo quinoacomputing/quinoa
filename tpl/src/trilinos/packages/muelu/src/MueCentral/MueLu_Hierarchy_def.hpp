@@ -52,6 +52,7 @@
 #include <Xpetra_Matrix.hpp>
 #include <Xpetra_MultiVectorFactory.hpp>
 #include <Xpetra_Operator.hpp>
+#include <Xpetra_IO.hpp>
 
 #include "MueLu_Hierarchy_decl.hpp"
 
@@ -64,7 +65,6 @@
 #include "MueLu_SmootherFactoryBase.hpp"
 #include "MueLu_SmootherFactory.hpp"
 #include "MueLu_SmootherBase.hpp"
-#include "MueLu_Utilities.hpp"
 
 namespace MueLu {
 
@@ -182,7 +182,7 @@ namespace MueLu {
     // Use PrintMonitor/TimerMonitor instead of just a FactoryMonitor to print "Level 0" instead of Hierarchy(0)
     // Print is done after the requests for next coarse level
     TimeMonitor m1(*this, this->ShortClassName() + ": " + "Setup (total)");
-    TimeMonitor m2(*this, this->ShortClassName() + ": " + "Setup" + " (total, level=" + Teuchos::Utils::toString(coarseLevelID) + ")");
+    TimeMonitor m2(*this, this->ShortClassName() + ": " + "Setup" + " (total, level=" + Teuchos::toString(coarseLevelID) + ")");
 
     // TODO: pass coarseLevelManager by reference
     TEUCHOS_TEST_FOR_EXCEPTION(coarseLevelManager == Teuchos::null, Exceptions::RuntimeError,
@@ -211,7 +211,7 @@ namespace MueLu {
       RCP<const Teuchos::Comm<int> > comm      = domainMap->getComm();
 
       // Initialize random seed for reproducibility
-      Utils::SetRandomSeed(*comm);
+      Utilities::SetRandomSeed(*comm);
 
       // Record the communicator on the level (used for timers sync)
       level.SetComm(comm);
@@ -292,7 +292,7 @@ namespace MueLu {
       level.Request(*coarseFact);
     }
 
-    PrintMonitor m0(*this, "Level " +  Teuchos::Utils::toString(coarseLevelID), static_cast<MsgType>(GetVerbLevel()));
+    PrintMonitor m0(*this, "Level " +  Teuchos::toString(coarseLevelID), static_cast<MsgType>(GetVerbLevel()));
 
     // Build coarse level hierarchy
     RCP<Operator> Ac = Teuchos::null;
@@ -563,7 +563,7 @@ namespace MueLu {
       // We calculate the residual only if we want to print it out, or if we
       // want to stop once we achive the tolerance
       Teuchos::Array<MagnitudeType> rn;
-      rn = Utils::ResidualNorm(*A, X, B);
+      rn = Utilities::ResidualNorm(*A, X, B);
 
       if (tol > 0) {
         bool passed = true;
@@ -625,10 +625,6 @@ namespace MueLu {
         // On intermediate levels, we do cycles
         RCP<Level> Coarse = Levels_[startLevel+1];
 
-        // Utils::Write("X_before.mm", X);
-        // Utils::Write("B_before.mm", B);
-
-
         {
           // ============== PRESMOOTHING ==============
           RCP<TimeMonitor> STime      = rcp(new TimeMonitor(*this, prefix + "Solve : smoothing (total)"      , Timings0));
@@ -641,18 +637,13 @@ namespace MueLu {
             GetOStream(Warnings1) << "Level " <<  startLevel << ": No PreSmoother!" << std::endl;
           }
         }
-        // Utils::Write("X_after.mm", X);
-        // Utils::Write("B_after.mm", B);
 
         RCP<MultiVector> residual;
         {
           RCP<TimeMonitor> ATime      = rcp(new TimeMonitor(*this, prefix + "Solve : residual calculation (total)"      , Timings0));
           RCP<TimeMonitor> ALevelTime = rcp(new TimeMonitor(*this, prefix + "Solve : residual calculation" + levelSuffix, Timings0));
-          residual = Utils::Residual(*A, X, B);
+          residual = Utilities::Residual(*A, X, B);
         }
-        // Utils::Write("R_after.mm", *residual);
-        // if (startLevel == 0)
-          // exit(1);
 
         RCP<Operator>    P = Coarse->Get< RCP<Operator> >("P");
         RCP<MultiVector> coarseRhs, coarseX;
@@ -758,7 +749,7 @@ namespace MueLu {
         // We calculate the residual only if we want to print it out, or if we
         // want to stop once we achive the tolerance
         Teuchos::Array<MagnitudeType> rn;
-        rn = Utils::ResidualNorm(*A, X, B);
+        rn = Utilities::ResidualNorm(*A, X, B);
 
         prevNorm = curNorm;
         curNorm  = rn[0];
@@ -805,9 +796,9 @@ namespace MueLu {
           R = rcp_dynamic_cast<Matrix>(Levels_[i]-> template Get< RCP< Operator> >("R"));
       }
 
-      if (!A.is_null()) Utils::Write("A_" + toString(i) + ".m", *A);
-      if (!P.is_null()) Utils::Write("P_" + toString(i) + ".m", *P);
-      if (!R.is_null()) Utils::Write("R_" + toString(i) + ".m", *R);
+      if (!A.is_null()) Xpetra::IO<Scalar, LocalOrdinal, GlobalOrdinal, Node>::Write("A_" + toString(i) + ".m", *A);
+      if (!P.is_null()) Xpetra::IO<Scalar, LocalOrdinal, GlobalOrdinal, Node>::Write("P_" + toString(i) + ".m", *P);
+      if (!R.is_null()) Xpetra::IO<Scalar, LocalOrdinal, GlobalOrdinal, Node>::Write("R_" + toString(i) + ".m", *R);
     }
   }
 
@@ -912,14 +903,16 @@ namespace MueLu {
         int nnzspacer = 2; while (tt != 0) { tt /= 10; nnzspacer++; }
         tt = numProcsPerLevel[0];
         int npspacer = 2;  while (tt != 0) { tt /= 10; npspacer++; }
-        oss  << "matrix" << std::setw(rowspacer) << " rows " << std::setw(nnzspacer) << " nnz " <<  " nnz/row" << std::setw(npspacer)  << " procs" << std::endl;
+        oss  << "level " << std::setw(rowspacer) << " rows " << std::setw(nnzspacer) << " nnz " << " nnz/row" << std::setw(npspacer) << "  c ratio" << "  procs" << std::endl;
         for (size_t i = 0; i < nnzPerLevel.size(); ++i) {
-          oss << "A " << i << "  "
-              << std::setw(rowspacer) << rowsPerLevel[i]
-              << std::setw(nnzspacer) << nnzPerLevel[i]
-              << std::setw(9) << std::setprecision(2) << std::setiosflags(std::ios::fixed)
-              << Teuchos::as<double>(nnzPerLevel[i]) / rowsPerLevel[i]
-              << std::setw(npspacer) << numProcsPerLevel[i] << std::endl;
+          oss << "  " << i << "  ";
+          oss << std::setw(rowspacer) << rowsPerLevel[i];
+          oss << std::setw(nnzspacer) << nnzPerLevel[i];
+          oss << std::setprecision(2) << std::setiosflags(std::ios::fixed);
+          oss << std::setw(9) << as<double>(nnzPerLevel[i]) / rowsPerLevel[i];
+          if (i) oss << std::setw(9) << as<double>(rowsPerLevel[i-1])/rowsPerLevel[i];
+          else   oss << std::setw(9) << "     ";
+          oss << "    " << std::setw(npspacer) << numProcsPerLevel[i] << std::endl;
         }
         oss << std::endl;
         for (int i = 0; i < GetNumLevels(); ++i) {

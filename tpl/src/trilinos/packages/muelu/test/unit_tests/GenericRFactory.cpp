@@ -52,54 +52,63 @@
 
 #include <Teuchos_UnitTestHarness.hpp>
 #include <Teuchos_DefaultComm.hpp>
+#include <Teuchos_ScalarTraits.hpp>
 
 #include <Xpetra_MultiVectorFactory.hpp>
 #include <Xpetra_VectorFactory.hpp>
+#include <Xpetra_MatrixMatrix.hpp>
 
-#include "MueLu_TestHelpers.hpp"
-#include "MueLu_Utilities.hpp"
-#include "MueLu_Version.hpp"
+#include <MueLu_TestHelpers.hpp>
+#include <MueLu_Utilities.hpp>
+#include <MueLu_Version.hpp>
 
-#include "MueLu_PgPFactory.hpp"
-#include "MueLu_SaPFactory.hpp"
-#include "MueLu_GenericRFactory.hpp"
-#include "MueLu_TrilinosSmoother.hpp"
-#include "MueLu_CoupledAggregationFactory.hpp"
-#include "MueLu_TentativePFactory.hpp"
-#include "MueLu_SmootherFactory.hpp"
-#include "MueLu_RAPFactory.hpp"
-
-#include "MueLu_UseDefaultTypes.hpp"
+#include <MueLu_PgPFactory.hpp>
+#include <MueLu_SaPFactory.hpp>
+#include <MueLu_GenericRFactory.hpp>
+#include <MueLu_TrilinosSmoother.hpp>
+#include <MueLu_CoupledAggregationFactory.hpp>
+#include <MueLu_TentativePFactory.hpp>
+#include <MueLu_SmootherFactory.hpp>
+#include <MueLu_RAPFactory.hpp>
 
 //TODO: remove this
 #ifdef HAVE_MUELU_EPETRAEXT
-#include "EpetraExt_RowMatrixOut.h"
-#include "Xpetra_EpetraCrsMatrix.hpp"
+#include <EpetraExt_RowMatrixOut.h>
+#include <Xpetra_EpetraCrsMatrix.hpp>
 #endif
 
 namespace MueLuTests {
 
-#include "MueLu_UseShortNames.hpp"
-
   //this macro declares the unit-test-class:
-  TEUCHOS_UNIT_TEST(GenericRFactory, Constructor)
+  TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(GenericRFactory, Constructor, Scalar, LocalOrdinal, GlobalOrdinal, Node)
   {
-    //we are now in a class method declared by the above macro, and
-    //that method has these input arguments:
-    //Teuchos::FancyOStream& out, bool& success
+    #include <MueLu_UseShortNames.hpp>
+    MUELU_TESTING_SET_OSTREAM;
+    MUELU_TESTING_LIMIT_EPETRA_SCOPE(Scalar,GlobalOrdinal,Node);
     out << "version: " << MueLu::Version() << std::endl;
 
     //TEST_EQUALITY(needs != Teuchos::null, true);
   }
 
-  TEUCHOS_UNIT_TEST(GenericRFactory, SymmetricProblem)
+  TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(GenericRFactory, SymmetricProblem, Scalar, LocalOrdinal, GlobalOrdinal, Node)
   {
+    #include <MueLu_UseShortNames.hpp>
+    MUELU_TESTING_SET_OSTREAM;
+    MUELU_TESTING_LIMIT_EPETRA_SCOPE(Scalar,GlobalOrdinal,Node);
+#   if !defined(MUELU_HAVE_IFPACK)
+    MUELU_TESTING_DO_NOT_TEST(Xpetra::UseEpetra, "Ifpack");
+#   endif
+#   if !defined(MUELU_HAVE_IFPACK2)
+    MUELU_TESTING_DO_NOT_TEST(Xpetra::UseTpetra, "Ifpack2");
+#   endif
     out << "version: " << MueLu::Version() << std::endl;
     RCP<const Teuchos::Comm<int> > comm = Teuchos::DefaultComm<int>::getComm();
 
+    typedef typename Teuchos::ScalarTraits<SC>::magnitudeType magnitude_type;
+
     // generate problem
     LO maxLevels = 3;
-    LO nEle = 63;
+    GO nEle = 63;
     const RCP<const Map> map = MapFactory::Build(TestHelpers::Parameters::getLib(), nEle, 0, comm);
     Teuchos::ParameterList matrixParameters;
     matrixParameters.set("nx",nEle);
@@ -111,7 +120,7 @@ namespace MueLuTests {
     // build nullspace
     RCP<MultiVector> nullSpace = MultiVectorFactory::Build(map,1);
     nullSpace->putScalar( (SC) 1.0);
-    Teuchos::Array<Teuchos::ScalarTraits<SC>::magnitudeType> norms(1);
+    Teuchos::Array<magnitude_type> norms(1);
     nullSpace->norm1(norms);
     if (comm->getRank() == 0)
       out << "||NS|| = " << norms[0] << std::endl;
@@ -186,8 +195,8 @@ namespace MueLuTests {
     // note: the Epetra matrix-matrix multiplication using implicit transpose is buggy in parallel case
     //       (for multiplication of a square matrix with a rectangular matrix)
     //       however it seems to work for two rectangular matrices
-    Teuchos::RCP<Xpetra::Matrix<Scalar,LO,GO> > RP = MueLu::Utils<Scalar,LO,GO>::Multiply(*R1,false,*P1,false,out);
-    Teuchos::RCP<Xpetra::Matrix<Scalar,LO,GO> > PtP = MueLu::Utils<Scalar,LO,GO>::Multiply(*P1,true,*P1,false,out);
+    Teuchos::RCP<Xpetra::Matrix<Scalar,LO,GO,Node> > RP = Xpetra::MatrixMatrix<Scalar,LO,GO,Node>::Multiply(*R1,false,*P1,false,out);
+    Teuchos::RCP<Xpetra::Matrix<Scalar,LO,GO,Node> > PtP = Xpetra::MatrixMatrix<Scalar,LO,GO,Node>::Multiply(*P1,true,*P1,false,out);
 
     RCP<Vector> x = VectorFactory::Build(RP->getDomainMap());
     RCP<Vector> bRP  = VectorFactory::Build(RP->getRangeMap());
@@ -199,8 +208,8 @@ namespace MueLuTests {
 
     TEST_EQUALITY(bRP->norm1() - bPtP->norm1() < 1e-12, true);
 
-    Teuchos::RCP<Xpetra::Matrix<Scalar,LO,GO> > RP2 = MueLu::Utils<Scalar,LO,GO>::Multiply(*R2,false,*P2,false,out);
-    Teuchos::RCP<Xpetra::Matrix<Scalar,LO,GO> > PtP2 = MueLu::Utils<Scalar,LO,GO>::Multiply(*P2,true,*P2,false,out);
+    Teuchos::RCP<Xpetra::Matrix<Scalar,LO,GO,Node> > RP2 = Xpetra::MatrixMatrix<Scalar,LO,GO,Node>::Multiply(*R2,false,*P2,false,out);
+    Teuchos::RCP<Xpetra::Matrix<Scalar,LO,GO,Node> > PtP2 = Xpetra::MatrixMatrix<Scalar,LO,GO,Node>::Multiply(*P2,true,*P2,false,out);
 
     x = VectorFactory::Build(RP2->getDomainMap());
     bRP  = VectorFactory::Build(RP2->getRangeMap());
@@ -214,27 +223,23 @@ namespace MueLuTests {
 
 
     //R1->describe(*fos,Teuchos::VERB_EXTREME);
-
-    /*RCP<CrsMatrixWrap> crsP1 = rcp_dynamic_cast<CrsMatrixWrap>(P1);
-      RCP<CrsMatrix> crsMat = crsP1->getCrsMatrix();
-      RCP<Xpetra::EpetraCrsMatrix> epcrsMat = rcp_dynamic_cast<Xpetra::EpetraCrsMatrix>(crsMat);
-      RCP<Epetra_CrsMatrix> epMat = epcrsMat->getEpetra_CrsMatrixNonConst();
-      EpetraExt::RowMatrixToMatrixMarketFile( "Test.mat", *epMat);*/
-
-    //P1->describe(*fos,Teuchos::VERB_EXTREME);
-
-    //R1->getRangeMap()->describe(*fos,Teuchos::VERB_EXTREME);
-    //P1->describe(*fos,Teuchos::VERB_EXTREME);
-    //R1->describe(*fos,Teuchos::VERB_EXTREME);
-
-
-
   }
 
   // check Hierarchy::Setup routine with GenericRFactory as restriction factory
-  TEUCHOS_UNIT_TEST(GenericRFactory, GenericRSetup)
+  TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(GenericRFactory, GenericRSetup, Scalar, LocalOrdinal, GlobalOrdinal, Node)
   {
+    #include <MueLu_UseShortNames.hpp>
+    MUELU_TESTING_SET_OSTREAM;
+    MUELU_TESTING_LIMIT_EPETRA_SCOPE(Scalar,GlobalOrdinal,Node);
+#   if !defined(MUELU_HAVE_IFPACK)
+    MUELU_TESTING_DO_NOT_TEST(Xpetra::UseEpetra, "Ifpack");
+#   endif
+#   if !defined(MUELU_HAVE_IFPACK2)
+    MUELU_TESTING_DO_NOT_TEST(Xpetra::UseTpetra, "Ifpack2");
+#   endif
     out << "version: " << MueLu::Version() << std::endl;
+
+    typedef typename Teuchos::ScalarTraits<SC>::magnitudeType magnitude_type;
 
     for (int i=1; i<5; i++) {
       // generate problem
@@ -248,7 +253,7 @@ namespace MueLuTests {
       // build nullspace
       RCP<MultiVector> nullSpace = MultiVectorFactory::Build(A->getRowMap(),1);
       nullSpace->putScalar( (SC) 1.0);
-      Teuchos::Array<Teuchos::ScalarTraits<SC>::magnitudeType> norms(1);
+      Teuchos::Array<magnitude_type> norms(1);
       nullSpace->norm1(norms);
       if (comm->getRank() == 0)
         out << "||NS|| = " << norms[0] << std::endl;
@@ -296,8 +301,6 @@ namespace MueLuTests {
       RCP<Level> l0 = H.GetLevel(0);
       RCP<Level> l1;
       RCP<Level> l2;
-
-      std::cout << "i = " << i << std::endl;
 
       if (H.GetNumLevels() > 1) l1 = H.GetLevel(1);
       if (H.GetNumLevels() > 2) l2 = H.GetLevel(2);
@@ -354,6 +357,14 @@ namespace MueLuTests {
     } // end for i=1..5
 
   }
+
+#define MUELU_ETI_GROUP(Scalar, LO, GO, Node) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(GenericRFactory, Constructor, Scalar, LO, GO, Node) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(GenericRFactory, SymmetricProblem, Scalar, LO, GO, Node) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(GenericRFactory, GenericRSetup, Scalar, LO, GO, Node)
+
+#include <MueLu_ETI_4arg.hpp>
+
 
 }//namespace MueLuTests
 

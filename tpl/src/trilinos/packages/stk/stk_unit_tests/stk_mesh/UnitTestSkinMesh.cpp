@@ -956,8 +956,8 @@ void test_2_hex_2_block_with_second_selector(stk::mesh::BulkData::AutomaticAuraO
         stk::mesh::PartVector skin_parts;
         skin_parts.push_back(&skin_part);
 
-        stk::mesh::Selector onlyConsiderTheseElementsWhenFindingBoundary(!stk::mesh::Selector(*meta.get_part("block_1")));
-        stk::mesh::skin_mesh(mesh, block_2, skin_parts, &onlyConsiderTheseElementsWhenFindingBoundary);
+        stk::mesh::Selector block_1_becomes_air(!stk::mesh::Selector(*meta.get_part("block_1")));
+        stk::mesh::skin_mesh(mesh, block_2, skin_parts, &block_1_becomes_air);
 
         stk::mesh::Entity element2 = mesh.get_entity(stk::topology::ELEM_RANK, element_id);
 
@@ -969,11 +969,10 @@ void test_2_hex_2_block_with_second_selector(stk::mesh::BulkData::AutomaticAuraO
 
         stk::mesh::Entity element1 = mesh.get_entity(stk::topology::ELEM_RANK, 1);
 
-        // with correct face connection behavior, shouldn't this be 1 for num_faces?
         if (mesh.is_valid(element1))
         {
             unsigned num_faces = mesh.num_faces(element1);
-            EXPECT_EQ(0u, num_faces);
+            EXPECT_EQ(1u, num_faces);
         }
     }
 }
@@ -1062,3 +1061,5 @@ TEST( SkinMesh, SimpleQuad)
     test_quad_2D_skin_with_aura_option(true);
     test_quad_2D_skin_with_aura_option(false);
 }
+
+

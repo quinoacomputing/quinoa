@@ -55,20 +55,13 @@
 #include "MueLu_Hierarchy_decl.hpp"
 #include "MueLu_Utilities.hpp"
 
-// Belos
-#include <BelosConfigDefs.hpp>
-#include <BelosLinearProblem.hpp>
-#include <BelosBlockGmresSolMgr.hpp>
-
-//TODO: Kokkos headers
-
-/*! @class ShiftedLaplacianOperator
-    Wraps an existing MueLu::Hierarchy as a Tpetra::Operator, with an optional two-level correction.
-    Built for use with MueLu::ShiftedLaplacian.
-*/
+// TODO: Kokkos headers
 
 namespace MueLu {
 
+  /*! @brief Wraps an existing MueLu::Hierarchy as a Tpetra::Operator, with an optional two-level correction.
+      Intended to be used with MueLu::ShiftedLaplacian.
+  */
   template <class Scalar = Tpetra::Operator<>::scalar_type,
             class LocalOrdinal = typename Tpetra::Operator<Scalar>::local_ordinal_type,
             class GlobalOrdinal = typename Tpetra::Operator<Scalar, LocalOrdinal>::global_ordinal_type,
@@ -81,7 +74,7 @@ namespace MueLu {
     typedef Tpetra::CrsMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node>   CrsMatrix;
     typedef Tpetra::MultiVector<Scalar,LocalOrdinal,GlobalOrdinal,Node> MV;
     typedef Tpetra::Operator<Scalar,LocalOrdinal,GlobalOrdinal,Node>    OP;
-    typedef MueLu::Utils<Scalar,LocalOrdinal,GlobalOrdinal,Node>        MUtils;
+    typedef MueLu::Utilities<Scalar,LocalOrdinal,GlobalOrdinal,Node>        MUtils;
   public:
 
     //! @name Constructor/Destructor
@@ -154,8 +147,10 @@ namespace MueLu {
     RCP< Xpetra::Matrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> > R_, P_, A_;
     RCP< Tpetra::CrsMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> > Ac_;
     RCP< Teuchos::ParameterList >  BelosList_;
-    RCP< Belos::LinearProblem<Scalar,MV,OP> > BelosLP_;
-    RCP< Belos::SolverManager<Scalar,MV,OP> > BelosSM_;
+
+    //RCP< Belos::LinearProblem<Scalar,MV,OP> > BelosLP_;
+    //RCP< Belos::SolverManager<Scalar,MV,OP> > BelosSM_;
+
     // cycles -> number of V-cycles
     // iters  -> number of GMRES iterations per correction
     // option -> 0 if no correction is desired

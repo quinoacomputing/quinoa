@@ -55,7 +55,10 @@
 #include <Galeri_XpetraUtils.hpp>
 #include <Galeri_XpetraMaps.hpp>
 
-#include <XpetraExt_MatrixMatrix.hpp>
+#include <Kokkos_DefaultNode.hpp> // For Epetra only runs this points to FakeKokkos in Xpetra
+
+#include "Xpetra_ConfigDefs.hpp"
+#include <Xpetra_MatrixMatrix.hpp>
 
 #include <MueLu.hpp>
 #include <MueLu_Level.hpp>
@@ -73,19 +76,19 @@
 #include <MueLu_CreateEpetraPreconditioner.hpp>
 #endif
 
-#include <MueLu_UseDefaultTypes.hpp>
-
 // Belos
 #ifdef HAVE_MUELU_BELOS
 #include "BelosConfigDefs.hpp"
 #include "BelosLinearProblem.hpp"
 #include "BelosSolverFactory.hpp"
+#ifdef HAVE_MUELU_TPETRA
+#include <BelosTpetraAdapter.hpp>
+#endif
 
 #ifdef HAVE_MUELU_EPETRA
 #include "BelosEpetraAdapter.hpp"
 #endif
 #endif
-
 
 using Teuchos::RCP;
 
@@ -104,20 +107,27 @@ const std::string thinSeparator  = "--------------------------------------------
 const std::string prefSeparator = "=====================================";
 
 namespace MueLuExamples {
-#include <MueLu_UseShortNames.hpp>
 
-  void solve_system_hierarchy(Xpetra::UnderlyingLib & lib, RCP<Matrix> & A, RCP<Vector>&  X, RCP<Vector> & B, RCP<Hierarchy> & H, RCP<Teuchos::ParameterList> & SList) {
-    using Teuchos::RCP;
+  template<class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
+  void solve_system_hierarchy(Xpetra::UnderlyingLib& lib,
+                              Teuchos::RCP<Xpetra::Matrix<Scalar,LocalOrdinal,GlobalOrdinal,Node>>&   A,
+                              Teuchos::RCP<Xpetra::Vector<Scalar,LocalOrdinal,GlobalOrdinal,Node>>&   X,
+                              Teuchos::RCP<Xpetra::Vector<Scalar,LocalOrdinal,GlobalOrdinal,Node>>&   B,
+                              Teuchos::RCP<MueLu::Hierarchy<Scalar,LocalOrdinal,GlobalOrdinal,Node>>& H,
+                              Teuchos::RCP<Teuchos::ParameterList>& SList) {
+#include "MueLu_UseShortNames.hpp"
     using Teuchos::rcp;
+
 #ifdef HAVE_MUELU_BELOS
-#ifdef HAVE_MUELU_TPETRA
-    typedef Tpetra::Operator<SC,LO,GO> Tpetra_Operator;
-    typedef Tpetra::CrsMatrix<SC,LO,GO> Tpetra_CrsMatrix;
-    typedef Tpetra::Vector<SC,LO,GO> Tpetra_Vector;
-    typedef Tpetra::MultiVector<SC,LO,GO> Tpetra_MultiVector;
-    if(lib==Xpetra::UseTpetra) {
-      RCP<Tpetra_CrsMatrix>   At = Xpetra::MatrixMatrix::Op2NonConstTpetraCrs(A);
-      RCP<Tpetra_Operator>    Mt = rcp(new MueLu::TpetraOperator<SC,LO,GO>(H));
+# ifdef HAVE_MUELU_TPETRA
+    typedef Tpetra::Operator    <SC,LO,GO,NO> Tpetra_Operator;
+    typedef Tpetra::CrsMatrix   <SC,LO,GO,NO> Tpetra_CrsMatrix;
+    typedef Tpetra::Vector      <SC,LO,GO,NO> Tpetra_Vector;
+    typedef Tpetra::MultiVector <SC,LO,GO,NO> Tpetra_MultiVector;
+
+    if (lib == Xpetra::UseTpetra) {
+      RCP<Tpetra_CrsMatrix>   At = Xpetra::Helpers<SC,LO,GO,NO>::Op2NonConstTpetraCrs(A);
+      RCP<Tpetra_Operator>    Mt = rcp(new MueLu::TpetraOperator<SC,LO,GO,NO>(H));
       RCP<Tpetra_MultiVector> Xt = Xpetra::toTpetra(*X);
       RCP<Tpetra_MultiVector> Bt = Xpetra::toTpetra(*B);
       typedef Tpetra_MultiVector MV;
@@ -130,16 +140,34 @@ namespace MueLuExamples {
       Teuchos::RCP<Belos::SolverManager<SC, MV, OP> > BelosSolver = BelosFactory.create(std::string("CG"), SList);
       BelosSolver->setProblem(belosProblem);
       Belos::ReturnType result = BelosSolver->solve();
-      if(result==Belos::Unconverged)
-        throw std::runtime_error("Belos failed to converge");
+      TEUCHOS_TEST_FOR_EXCEPTION(result == Belos::Unconverged, std::runtime_error, "Belos failed to converge");
     }
 #endif
-#ifdef HAVE_MUELU_EPETRA
-    if(lib==Xpetra::UseEpetra) {
-      RCP<Epetra_CrsMatrix>      Ae = Xpetra::MatrixMatrix::Op2NonConstEpetraCrs(A);
-      RCP<MueLu::EpetraOperator> Me = rcp(new MueLu::EpetraOperator(H));
-      RCP<Epetra_MultiVector>    Xe = rcp(&Xpetra::toEpetra(*X),false);
-      RCP<Epetra_MultiVector>    Be = rcp(&Xpetra::toEpetra(*B),false);
+#if defined(HAVE_MUELU_EPETRA) and defined(HAVE_MUELU_SERIAL)
+    if (lib == Xpetra::UseEpetra) {
+      RCP<Epetra_CrsMatrix> Ae;
+      // Get the underlying Epetra Mtx
+      try {
+        RCP<const Xpetra::CrsMatrixWrap<SC, LO, GO, Node> > crsOp = Teuchos::rcp_dynamic_cast<const Xpetra::CrsMatrixWrap<SC, LO, GO, Node> >(A);
+        RCP<const Xpetra::CrsMatrix<SC, LO, GO, Node> > tmp_CrsMtx = crsOp->getCrsMatrix();
+        const RCP<const Xpetra::EpetraCrsMatrixT<GO,Node> > &tmp_ECrsMtx = Teuchos::rcp_dynamic_cast<const Xpetra::EpetraCrsMatrixT<GO,Node> >(tmp_CrsMtx);
+        if (tmp_ECrsMtx == Teuchos::null)
+          throw(Xpetra::Exceptions::BadCast("Cast from Xpetra::CrsMatrix to Xpetra::EpetraCrsMatrix failed"));
+        const RCP<const Xpetra::EpetraCrsMatrixT<GO,Kokkos::Compat::KokkosSerialWrapperNode> > &tmp_ECrsMtxSer = Teuchos::rcp_dynamic_cast<const Xpetra::EpetraCrsMatrixT<GO,Kokkos::Compat::KokkosSerialWrapperNode> >(tmp_ECrsMtx);
+        if (tmp_ECrsMtxSer == Teuchos::null)
+          throw(Xpetra::Exceptions::BadCast("Cast from Xpetra::EpetraCrsMatrix<...,Node> to Xpetra::EpetraCrsMatrix<...,Kokkos::Compat::KokkosSerialWrapperNode> failed"));
+        //RCP<const Epetra_CrsMatrix> constEpMat = tmp_ECrsMtxSer->getEpetra_CrsMatrix();
+        //Ae = Teuchos::rcp_const_cast<Epetra_CrsMatrix>(constEpMat);
+        Ae = Teuchos::rcp_const_cast<Epetra_CrsMatrix>(tmp_ECrsMtxSer->getEpetra_CrsMatrix());
+      } catch(...) {
+        throw(Xpetra::Exceptions::BadCast("Cast from Xpetra::Matrix to Xpetra::CrsMatrixWrap failed"));
+      }
+      RCP<MueLu::Hierarchy<SC,LO,GO,Kokkos::Compat::KokkosSerialWrapperNode> > epH = Teuchos::rcp_dynamic_cast<MueLu::Hierarchy<SC,LO,GO,Kokkos::Compat::KokkosSerialWrapperNode> >(H);
+      if (epH == Teuchos::null)
+        throw(Xpetra::Exceptions::BadCast("Cast from MueLu::Hierarchy<...,Node> to MueLu::Hierarchy<...,Kokkos::Compat::KokkosSerialWrapperNode> failed"));
+      RCP<MueLu::EpetraOperator> Me = rcp(new MueLu::EpetraOperator(epH));
+      RCP<Epetra_MultiVector>    Xe = rcp(&Xpetra::toEpetra<GO,Node>(*X),false);
+      RCP<Epetra_MultiVector>    Be = rcp(&Xpetra::toEpetra<GO,Node>(*B),false);
       typedef Epetra_MultiVector MV;
       typedef Epetra_Operator OP;
       RCP<Belos::LinearProblem<SC,MV,OP> > belosProblem = rcp(new Belos::LinearProblem<SC,MV,OP>(Ae, Xe, Be));
@@ -151,8 +179,7 @@ namespace MueLuExamples {
       Teuchos::RCP<Belos::SolverManager<SC, MV, OP> > BelosSolver = BelosFactory.create(std::string("CG"), SList);
       BelosSolver->setProblem(belosProblem);
       Belos::ReturnType result = BelosSolver->solve();
-      if(result==Belos::Unconverged)
-        throw std::runtime_error("Belos failed to converge");
+      TEUCHOS_TEST_FOR_EXCEPTION(result == Belos::Unconverged, std::runtime_error, "Belos failed to converge");
     }
 #endif
 #endif // #ifdef HAVE_MUELU_BELOS
@@ -160,17 +187,24 @@ namespace MueLuExamples {
 
 
   // --------------------------------------------------------------------------------------
-  void solve_system_list(Xpetra::UnderlyingLib & lib, RCP<Matrix> & A, RCP<Vector>&  X, RCP<Vector> & B, Teuchos::ParameterList & MueLuList, RCP<Teuchos::ParameterList> & SList) {
-    using Teuchos::RCP;
+  template<class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
+  void solve_system_list(Xpetra::UnderlyingLib& lib,
+                         Teuchos::RCP<Xpetra::Matrix<Scalar,LocalOrdinal,GlobalOrdinal,Node>>& A,
+                         Teuchos::RCP<Xpetra::Vector<Scalar,LocalOrdinal,GlobalOrdinal,Node>>& X,
+                         Teuchos::RCP<Xpetra::Vector<Scalar,LocalOrdinal,GlobalOrdinal,Node>>& B,
+                         Teuchos::ParameterList& MueLuList,
+                         Teuchos::RCP<Teuchos::ParameterList>& SList) {
+#include "MueLu_UseShortNames.hpp"
     using Teuchos::rcp;
+
 #ifdef HAVE_MUELU_BELOS
 #ifdef HAVE_MUELU_TPETRA
-    typedef Tpetra::Operator<SC,LO,GO> Tpetra_Operator;
-    typedef Tpetra::CrsMatrix<SC,LO,GO> Tpetra_CrsMatrix;
-    typedef Tpetra::Vector<SC,LO,GO> Tpetra_Vector;
-    typedef Tpetra::MultiVector<SC,LO,GO> Tpetra_MultiVector;
+    typedef Tpetra::Operator<SC,LO,GO,NO> Tpetra_Operator;
+    typedef Tpetra::CrsMatrix<SC,LO,GO,NO> Tpetra_CrsMatrix;
+    typedef Tpetra::Vector<SC,LO,GO,NO> Tpetra_Vector;
+    typedef Tpetra::MultiVector<SC,LO,GO,NO> Tpetra_MultiVector;
     if(lib==Xpetra::UseTpetra) {
-      RCP<Tpetra_CrsMatrix>   At = Xpetra::MatrixMatrix::Op2NonConstTpetraCrs(A);
+      RCP<Tpetra_CrsMatrix>   At = Xpetra::Helpers<SC,LO,GO,NO>::Op2NonConstTpetraCrs(A);
       RCP<Tpetra_Operator>    Mt = MueLu::CreateTpetraPreconditioner(At,MueLuList);
       RCP<Tpetra_MultiVector> Xt = Xpetra::toTpetra(*X);
       RCP<Tpetra_MultiVector> Bt = Xpetra::toTpetra(*B);
@@ -188,9 +222,9 @@ namespace MueLuExamples {
         throw std::runtime_error("Belos failed to converge");
     }
 #endif
-#ifdef HAVE_MUELU_EPETRA
+#if defined(HAVE_MUELU_EPETRA) && defined(HAVE_MUELU_SERIAL)
     if(lib==Xpetra::UseEpetra) {
-      RCP<Epetra_CrsMatrix>   Ae = Xpetra::MatrixMatrix::Op2NonConstEpetraCrs(A);
+      RCP<Epetra_CrsMatrix>   Ae = Xpetra::Helpers<SC,LO,GO,NO>::Op2NonConstEpetraCrs(A);
       RCP<Epetra_Operator>    Me = MueLu::CreateEpetraPreconditioner(Ae,MueLuList);
       RCP<Epetra_MultiVector> Xe = rcp(&Xpetra::toEpetra(*X),false);
       RCP<Epetra_MultiVector> Be = rcp(&Xpetra::toEpetra(*B),false);
@@ -217,8 +251,14 @@ namespace MueLuExamples {
 
   // --------------------------------------------------------------------------------------
   // This routine generate's the user's original A matrix and nullspace
-  void generate_user_matrix_and_nullspace(std::string &matrixType,  Xpetra::UnderlyingLib & lib,Teuchos::ParameterList &galeriList,  RCP<const Teuchos::Comm<int> > &comm, RCP<Matrix> & A, RCP<MultiVector> & nullspace){
-    using Teuchos::RCP;
+  template<class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
+  void generate_user_matrix_and_nullspace(std::string& matrixType,
+                                          Xpetra::UnderlyingLib& lib,
+                                          Teuchos::ParameterList& galeriList,
+                                          Teuchos::RCP<const Teuchos::Comm<int>>& comm,
+                                          Teuchos::RCP<Xpetra::Matrix<Scalar,LocalOrdinal,GlobalOrdinal,Node>>&      A,
+                                          Teuchos::RCP<Xpetra::MultiVector<Scalar,LocalOrdinal,GlobalOrdinal,Node>>& nullspace) {
+#include "MueLu_UseShortNames.hpp"
 
     RCP<Teuchos::FancyOStream> fancy = Teuchos::fancyOStream(Teuchos::rcpFromRef(std::cout));
     Teuchos::FancyOStream& out = *fancy;
@@ -264,9 +304,12 @@ namespace MueLuExamples {
 
 // --------------------------------------------------------------------------------------
 int main(int argc, char *argv[]) {
+  typedef double                                    Scalar;
+  typedef int                                       LocalOrdinal;
+  typedef int                                       GlobalOrdinal;
+  typedef Kokkos::Compat::KokkosSerialWrapperNode   Node;
+
 #include <MueLu_UseShortNames.hpp>
-  using Teuchos::RCP;
-  using Teuchos::rcp;
   using Teuchos::TimeMonitor;
 
   Teuchos::GlobalMPISession mpiSession(&argc, &argv, NULL);
@@ -274,6 +317,7 @@ int main(int argc, char *argv[]) {
   bool success = false;
   bool verbose = true;
   try {
+#if defined(HAVE_MUELU_SERIAL) && defined(HAVE_TPETRA_INST_INT_INT)
     RCP<const Teuchos::Comm<int> > comm = Teuchos::DefaultComm<int>::getComm();
 
     RCP<Teuchos::FancyOStream> fancy = Teuchos::fancyOStream(Teuchos::rcpFromRef(std::cout));
@@ -517,10 +561,9 @@ int main(int argc, char *argv[]) {
       MueLuExamples::solve_system_list(lib,A,X,B,MueLuList,SList);
 #endif
     }
+#endif
     success = true;
   }
-
-
   TEUCHOS_STANDARD_CATCH_STATEMENTS(verbose, std::cerr, success);
 
   return ( success ? EXIT_SUCCESS : EXIT_FAILURE );

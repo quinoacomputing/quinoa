@@ -193,6 +193,10 @@ SET(PARAKLETE_KLU_COMMON
                 PROPERTIES
                 COMPILE_FLAGS "-Wno-all -Wno-pedantic")
       ENDIF()
+  ELSEIF (WIN32 AND NOT CYGWIN)
+       # No flags
+  ELSEIF ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "PGI")
+      #No flags
   ELSE()
        SET_SOURCE_FILES_PROPERTIES(${PARAKLETE_KLU_COMMON},
                 PROPERTIES
@@ -213,6 +217,7 @@ IF (${PACKAGE_NAME}_ENABLE_KLU)
   INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/SuiteSparse/KLU/Include)
   INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/SuiteSparse/BTF/Include)
   INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/SuiteSparse/CAMD/Include)
+  INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/SuiteSparse/CCOLAMD/Include)
 
   SET(HEADERS ${HEADERS}
     ${PARAKLETE_KLU_COMMON_H}
@@ -221,6 +226,7 @@ IF (${PACKAGE_NAME}_ENABLE_KLU)
     SuiteSparse/KLU/Include/amesos_klu_version.h
     SuiteSparse/BTF/Include/amesos_btf_decl.h
     SuiteSparse/BTF/Include/amesos_btf_internal.h
+    SuiteSparse/CCOLAMD/Include/amesos_ccolamd.h
     Amesos_Klu.h
     )
 
@@ -248,6 +254,9 @@ IF (${PACKAGE_NAME}_ENABLE_KLU)
     SuiteSparse/BTF/Source/amesos_btf_l_order.c
     SuiteSparse/BTF/Source/amesos_btf_l_maxtrans.c
     SuiteSparse/BTF/Source/amesos_btf_l_strongcomp.c
+    SuiteSparse/CCOLAMD/Source/amesos_ccolamd.c
+    SuiteSparse/CCOLAMD/Source/amesos_ccolamd_l.c
+    SuiteSparse/CCOLAMD/Source/amesos_ccolamd_global.c
     )
     
 
@@ -257,6 +266,10 @@ IF (${PACKAGE_NAME}_ENABLE_KLU)
                 PROPERTIES
                 COMPILE_FLAGS "-Wno-all -Wno-pedantic")
         ENDIF()
+    ELSEIF (WIN32 AND NOT CYGWIN)
+       # No flags
+    ELSEIF ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "PGI")
+      #No flags
     ELSE()
          SET_SOURCE_FILES_PROPERTIES(${KLU_FILES},
                 PROPERTIES
@@ -311,6 +324,10 @@ IF (${PACKAGE_NAME}_ENABLE_PARAKLETE)
                                 PROPERTIES
                                 COMPILE_FLAGS "-Wno-all -Wno-pedantic")
                             ENDIF()
+   ELSEIF (WIN32 AND NOT CYGWIN)
+       # No flags
+   ELSEIF ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "PGI")
+      #No flags
    ELSE()
         SET_SOURCE_FILES_PROPERTIES(${PARAKLETE_HEADERS},
                                 PROPERTIES
@@ -395,13 +412,17 @@ IF (${PACKAGE_NAME}_ENABLE_PARAKLETE)
  )
 
     
-    IF(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
+  IF(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
     IF(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 4.2)
      SET_SOURCE_FILES_PROPERTIES(${PARAKLETE_SOURCE},
                               PROPERTIES
                               COMPILE_FLAGS "-Wno-all -Wno-pedantic")
         ENDIF()
-   ELSE()
+  ELSEIF (WIN32 AND NOT CYGWIN)
+       # No flags
+  ELSEIF ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "PGI")
+      #No flags
+  ELSE()
       SET_SOURCE_FILES_PROPERTIES(${PARAKLETE_SOURCE},
                               PROPERTIES
                               COMPILE_FLAGS "-Wno-all")

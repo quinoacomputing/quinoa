@@ -86,6 +86,8 @@
 // These files must be included last
 #include <MueLu_UseDefaultTypes.hpp>
 
+
+#ifdef HAVE_MUELU_BELOS
 namespace Belos {
 
   template<class SC, class MV, class OP>
@@ -123,6 +125,7 @@ namespace Belos {
     MagnitudeType curNorm_;
   };
 }
+#endif
 
 int main(int argc, char *argv[]) {
 #include <MueLu_UseShortNames.hpp>
@@ -224,9 +227,9 @@ int main(int argc, char *argv[]) {
 
 #if 0
       out << "========================================================\n" << xpetraParameters << galeriParameters;
-      out << "Processor subdomains in x direction: " << galeriParameters.get<int>("mx") << std::endl
-          << "Processor subdomains in y direction: " << galeriParameters.get<int>("my") << std::endl
-          << "Processor subdomains in z direction: " << galeriParameters.get<int>("mz") << std::endl
+      out << "Processor subdomains in x direction: " << galeriParameters.get<GO>("mx") << std::endl
+          << "Processor subdomains in y direction: " << galeriParameters.get<GO>("my") << std::endl
+          << "Processor subdomains in z direction: " << galeriParameters.get<GO>("mz") << std::endl
           << "========================================================" << std::endl;
 #endif
 
@@ -260,7 +263,7 @@ int main(int argc, char *argv[]) {
           continue;
 
         // Set seed
-        Utils::SetRandomSeed(*comm);
+        Utilities::SetRandomSeed(*comm);
 
         // Reset (potentially) cached value of the estimate
         A->SetMaxEigenvalueEstimate(-Teuchos::ScalarTraits<SC>::one());
@@ -322,7 +325,7 @@ int main(int argc, char *argv[]) {
           // TODO: do multiple vectors simultaneously to average
 
           // we set seed for reproducibility
-          Utils::SetRandomSeed(*comm);
+          Utilities::SetRandomSeed(*comm);
           X->randomize();
           A->apply(*X, *B, Teuchos::NO_TRANS, one, zero);
 

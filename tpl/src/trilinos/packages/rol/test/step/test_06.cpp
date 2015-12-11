@@ -48,7 +48,6 @@
 #define USE_HESSVEC 0
 
 #include "ROL_TestObjectives.hpp"
-#include "ROL_LineSearchStep.hpp"
 #include "ROL_Algorithm.hpp"
 #include "Teuchos_oblackholestream.hpp"
 #include "Teuchos_GlobalMPISession.hpp"
@@ -79,83 +78,59 @@ int main(int argc, char *argv[]) {
 
     std::string filename = "input.xml";
     Teuchos::RCP<Teuchos::ParameterList> parlist = Teuchos::rcp( new Teuchos::ParameterList() );
-    Teuchos::updateParametersFromXmlFile( filename, Teuchos::Ptr<Teuchos::ParameterList>(&*parlist) );
-    parlist->set("Use Inexact Hessian-Times-A-Vector",true);
+    Teuchos::updateParametersFromXmlFile( filename, parlist.ptr() );
+    parlist->sublist("General").set("Inexact Hessian-Times-A-Vector",true);
 #if USE_HESSVEC
-    parlist->set("Use Inexact Hessian-Times-A-Vector",false);
+    parlist->sublist("General").set("Inexact Hessian-Times-A-Vector",false);
 #endif
-
-    // Define Status Test
-    RealT gtol = parlist->get("Gradient Tolerance",1.e-8);
-    RealT stol = parlist->get("Step Tolerance",1.e-12);
-    int maxit  = parlist->get("Maximum Number of Iterations",1000);
-    ROL::StatusTest<RealT> status(gtol,stol,maxit);
 
     *outStream << "\n\n" << ROL::ETestObjectivesToString(ROL::TESTOBJECTIVES_ROSENBROCK) << "\n\n";
 
-    // Initial Guess Vector 
-    Teuchos::RCP<std::vector<RealT> > x0_rcp = Teuchos::rcp( new std::vector<RealT> );
-    ROL::StdVector<RealT> x0(x0_rcp);
-
-    // Exact Solution Vector
-    Teuchos::RCP<std::vector<RealT> > z_rcp = Teuchos::rcp( new std::vector<RealT> );
-    ROL::StdVector<RealT> z(z_rcp);
-
-    // Get Objective Function
-    Teuchos::RCP<ROL::Objective<RealT> > obj = Teuchos::null;
+    // Set Up Optimization Problem
+    Teuchos::RCP<ROL::Vector<RealT> > x0, z;
+    Teuchos::RCP<ROL::Objective<RealT> > obj;
     ROL::getTestObjectives<RealT>(obj,x0,z,ROL::TESTOBJECTIVES_ROSENBROCK);
+    Teuchos::RCP<ROL::Vector<RealT> > x = x0->clone();
 
     // Get Dimension of Problem
-    int dim = Teuchos::rcp_const_cast<std::vector<RealT> >(
-                (Teuchos::dyn_cast<ROL::StdVector<RealT> >(x0)).getVector())->size();
-    parlist->set("Maximum Number of Krylov Iterations", 2*dim);
-
-    // Iteration Vector
-    Teuchos::RCP<std::vector<RealT> > x_rcp = Teuchos::rcp( new std::vector<RealT> (dim, 0.0) );
-    ROL::StdVector<RealT> x(x_rcp);
-    x.set(x0);
+    int dim = x0->dimension();
+    parlist->sublist("General").sublist("Krylov").set("Iteration Limit", 2*dim);
 
     // Error Vector
-    Teuchos::RCP<std::vector<RealT> > e_rcp = Teuchos::rcp( new std::vector<RealT> (dim, 0.0) );
-    ROL::StdVector<RealT> e(e_rcp);
-    e.zero();
+    Teuchos::RCP<ROL::Vector<RealT> > e = x->clone();
+    e->zero();
 
     for ( ROL::EDescent desc = ROL::DESCENT_STEEPEST; desc < ROL::DESCENT_LAST; desc++ ) {
-      parlist->set("Descent Type", ROL::EDescentToString(desc));
-      *outStream << "\n\n" << ROL::EDescentToString(desc) << "\n\n";
+      parlist->sublist("Step").sublist("Line Search").sublist("Descent Method").set("Type", ROL::EDescentToString(desc));
+      *outStream << std::endl << std::endl << ROL::EDescentToString(desc) << std::endl << std::endl;
       for (ROL::ELineSearch ls = ROL::LINESEARCH_BACKTRACKING; ls < ROL::LINESEARCH_USERDEFINED; ls++) {
         // Define Step
-        parlist->set("Linesearch Type",ROL::ELineSearchToString(ls));
-        ROL::LineSearchStep<RealT> step(*parlist);
+        parlist->sublist("Step").sublist("Line Search").sublist("Line-Search Method").set("Type",ROL::ELineSearchToString(ls));
       
         // Define Algorithm
-        ROL::DefaultAlgorithm<RealT> algo(step,status,false);
+        ROL::Algorithm<RealT> algo("Line Search",*parlist,false);
 
         // Run Algorithm
-        x.set(x0);
-        std::vector<std::string> output = algo.run(x, *obj);
-        for ( unsigned i = 0; i < output.size(); i++ ) {
-          std::cout << output[i];
-        }
+        x->set(*x0);
+        algo.run(*x, *obj, true, *outStream);
 
         // Compute Error
-        e.set(x);
-        e.axpy(-1.0,z);
-        *outStream << "\nNorm of Error: " << e.norm() << "\n";
+        e->set(*x);
+        e->axpy(-1.0,*z);
+        *outStream << std::endl << "Norm of Error: " << e->norm() << std::endl;
         //errorFlag += (int)(e.norm() < std::sqrt(ROL::ROL_EPSILON)); 
       }
-      
     }
   }
   catch (std::logic_error err) {
-    *outStream << err.what() << "\n";
+    *outStream << err.what() << std::endl;
     errorFlag = -1000;
   }; // end try
 
   if (errorFlag != 0)
-    std::cout << "End Result: TEST FAILED\n";
+    std::cout << "End Result: TEST FAILED" << std::endl;
   else
-    std::cout << "End Result: TEST PASSED\n";
+    std::cout << "End Result: TEST PASSED" << std::endl;
 
   return 0;
 

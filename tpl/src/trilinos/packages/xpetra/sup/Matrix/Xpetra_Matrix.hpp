@@ -102,10 +102,14 @@ namespace Xpetra {
     typedef Xpetra::MatrixView<Scalar, LocalOrdinal, GlobalOrdinal, Node> MatrixView;
 
   public:
-    typedef Scalar scalar_type;
-    typedef LocalOrdinal local_ordinal_type;
-    typedef GlobalOrdinal global_ordinal_type;
-    typedef Node node_type;
+    typedef Scalar          scalar_type;
+    typedef LocalOrdinal    local_ordinal_type;
+    typedef GlobalOrdinal   global_ordinal_type;
+    typedef Node            node_type;
+
+#ifdef HAVE_XPETRA_KOKKOS_REFACTOR
+    typedef typename CrsMatrix::local_matrix_type local_matrix_type;
+#endif
 
     //! @name Constructor/Destructor Methods
     //@{
@@ -130,8 +134,6 @@ namespace Xpetra {
       RCP<const Map> domainMap = Teuchos::null;
       RCP<const Map> rangeMap  = Teuchos::null;
 
-      typedef Xpetra::StridedMapFactory<LocalOrdinal, GlobalOrdinal, Node> StridedMapFactory;
-
       const size_t        blkSize = 1;
       std::vector<size_t> stridingInfo(1, blkSize);
       LocalOrdinal        stridedBlockId = -1;
@@ -146,8 +148,8 @@ namespace Xpetra {
         domainMap = transposeA ? A->getRangeMap()        : A->getDomainMap();
 
         if (viewLabel == "stridedMaps") {
-          rangeMap  = StridedMapFactory::Build(rangeMap,  stridingInfo, stridedBlockId);
-          domainMap = StridedMapFactory::Build(domainMap, stridingInfo, stridedBlockId);
+          rangeMap  = Xpetra::StridedMapFactory<LocalOrdinal, GlobalOrdinal, Node>::Build(rangeMap,  stridingInfo, stridedBlockId);
+          domainMap = Xpetra::StridedMapFactory<LocalOrdinal, GlobalOrdinal, Node>::Build(domainMap, stridingInfo, stridedBlockId);
         }
       }
 
@@ -161,7 +163,7 @@ namespace Xpetra {
           domainMap = transposeB ? B->getRangeMap()        : B->getDomainMap();
 
           if (viewLabel == "stridedMaps")
-            domainMap = StridedMapFactory::Build(domainMap, stridingInfo, stridedBlockId);
+            domainMap = Xpetra::StridedMapFactory<LocalOrdinal, GlobalOrdinal, Node>::Build(domainMap, stridingInfo, stridedBlockId);
         }
       }
 
@@ -513,7 +515,7 @@ namespace Xpetra {
     // "TEMPORARY" VIEW MECHANISM
     /**
      * Set fixed block size of operator (e.g., 3 for 3 DOFs per node).
-     * 
+     *
      * @param blksize: block size denoting how many DOFs per node are used (LocalOrdinal)
      * @param offset:  global offset allows to define operators with global indices starting from a given value "offset" instead of 0. (GlobalOrdinal, default = 0)
      * */
@@ -569,6 +571,11 @@ namespace Xpetra {
       return operatorViewTable_.get(GetCurrentViewLabel())->GetMaxEigenvalueEstimate();
     }
 
+    // ----------------------------------------------------------------------------------
+#ifdef HAVE_XPETRA_KOKKOS_REFACTOR
+    /// \brief Access the underlying local Kokkos::CrsMatrix object
+    virtual local_matrix_type getLocalMatrix () const = 0;
+#endif
     // ----------------------------------------------------------------------------------
 
     protected:

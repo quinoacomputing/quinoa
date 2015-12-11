@@ -54,7 +54,7 @@
 /*                          Includes                          */
 /**************************************************************/
 
-#include <Zoltan2_RPIMeshAdapter.hpp>
+#include <Zoltan2_APFMeshAdapter.hpp>
 #include <Zoltan2_Environment.hpp>
 #include <Zoltan2_PartitioningProblem.hpp>
 #include <Zoltan2_ColoringProblem.hpp>
@@ -88,9 +88,12 @@ using Teuchos::RCP;
 //Tpetra typedefs
 typedef Tpetra::DefaultPlatform::DefaultPlatformType            Platform;
 
+#ifdef HAVE_ZOLTAN2_PARMA
+
 void runTest(RCP<const Teuchos::Comm<int> >& CommT, apf::Mesh2* m,std::string action, 
 	     std::string parma_method,int nParts, double imbalance, std::string output_title );
 
+#endif
 /*****************************************************************************/
 /******************************** MAIN ***************************************/
 /*****************************************************************************/
@@ -217,12 +220,14 @@ int main(int narg, char *arg[]) {
 /********************************* END MAIN **********************************/
 /*****************************************************************************/
 
+#ifdef HAVE_ZOLTAN2_PARMA
+
 void runTest(RCP<const Teuchos::Comm<int> >& CommT, apf::Mesh2* m,std::string action,
 	     std::string parma_method,int nParts, double imbalance,std::string output_title) {
   //Get rank
   int me = CommT->getRank();
   
-  //Data for RPI MeshAdapter
+  //Data for APF MeshAdapter
   std::string primary="region";
   std::string adjacency="face";
   if (m->getDimension()==2) {
@@ -271,7 +276,7 @@ void runTest(RCP<const Teuchos::Comm<int> >& CommT, apf::Mesh2* m,std::string ac
       pparams.set("ghost_bridge",m->getDimension()-1);
     }
     params.set("compute_metrics","yes");
-
+    adjacency="vertex";
   }
   else if (action=="zoltan_hg") {
     params.set("debug_level", "no_status");
@@ -289,7 +294,7 @@ void runTest(RCP<const Teuchos::Comm<int> >& CommT, apf::Mesh2* m,std::string ac
   
   // Creating mesh adapter
   if (me == 0) cout << "Creating mesh adapter ... \n\n";
-  typedef Zoltan2::RPIMeshAdapter<apf::Mesh2*> inputAdapter_t;
+  typedef Zoltan2::APFMeshAdapter<apf::Mesh2*> inputAdapter_t;
   
   double time_1 = PCU_Time();
   inputAdapter_t ia(*CommT, m,primary,adjacency,needSecondAdj);
@@ -329,3 +334,5 @@ void runTest(RCP<const Teuchos::Comm<int> >& CommT, apf::Mesh2* m,std::string ac
   }
   
 }
+
+#endif

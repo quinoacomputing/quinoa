@@ -211,7 +211,7 @@ Because tutorials and detailed documentation for the CMake language already
 exists, this document will not even attempt to provide a first reference to
 CMake (which is a large topic in itself).  However, what we try to provide
 below is a short overview of the more quirky or surprising aspects of the
-CMake language that an programmer experienced in another language might get
+CMake language that a programmer experienced in another language might get
 tripped up or surprised by.  Some of the more unique features of the language
 are described in order to help avoid some of these common mistakes and provide
 greater understanding of how TriBITS works.
@@ -224,19 +224,19 @@ Project Dependencies`_) is a fairly simple programming language with fairly
 simple rules (for the most part).  However, compared to other programming
 languages, there are a few peculiar aspects to the CMake language like strange
 variable scoping rules, and how arguments are passed to macros and functions,
-that can make working with it difficult if you don't understand these.  Also,
-CMake has some interesting gotchas.  In order to effectively use TriBITS (or
-just raw CMake) to construct and maintain a project's CMake files, one must
-know the basic rules of CMake and be aware of these gotchas.
+that can make working with it difficult if you don't understand these rules.
+Also, CMake has some interesting gotchas.  In order to effectively use TriBITS
+(or just raw CMake) to construct and maintain a project's CMake files, one
+must know the basic rules of CMake and be aware of these gotchas.
 
 The first thing to understand about the CMake language is that nearly every
 line of CMake code is just a command taking a string (or an array of strings)
 and functions that operate on strings.  An array argument is just a single
 string literal with elements separated by semi-colons ``"<str0>;<str1>;..."``.
-CMake is a bit odd in how it deals with these arrays (which are just
-represented as a string with elements separated with semi-colons ``';'``).
-For example, all of the following are equivalent and pass in a CMake array
-with 3 elements [``A``], [``B``], and [``C``]::
+CMake is a bit odd in how it deals with these arrays, which are just
+represented as a string with elements separated with semi-colons ``';'``.  For
+example, all of the following are equivalent and pass in a CMake array with 3
+elements [``A``], [``B``], and [``C``]::
 
   SOME_FUNC(A B C)
   SOME_FUNC("A" "B" "C")
@@ -270,7 +270,7 @@ In CMake, the above is identical, in every way, to::
 
 The function ``SET()`` simply interprets the first argument to as the name of
 a variable to set in the local scope.  Many other built-in and user-defined
-CMake functions work the same way.  That is some of the string arguments are
+CMake functions work the same way.  That is, some of the string arguments are
 interpreted as the names of variables.  There is no special language feature
 that interprets them as variables (except in an ``IF()`` statement).
 
@@ -790,17 +790,26 @@ is `TribitsExampleProject`_/``CTestConfig.cmake``:
 .. include:: ../../examples/TribitsExampleProject/CTestConfig.cmake
    :literal:
 
-All of the variables set in this file are directly understood by raw ``ctest``
-and will not be explained here further (see documentation for the standard
-CMake module ``CTest``).  The usage of the function
+Most of the variables set in this file are directly understood by raw
+``ctest`` and those variables not be explained here further (see documentation
+for the standard CMake module ``CTest``).  The usage of the function
 `SET_DEFAULT_AND_FROM_ENV()`_ allows the variables to be overridden both as
 CMake cache variables and in the environment.  The latter is needed when
 running using ``ctest`` as the driver (since older versions of ``ctest`` did
-not support ``-D<var-name>:<type>=<value>`` command-line arguments like
-``cmake`` does).  Given that all of these variables are nicely namespaced,
+not support ``-D<var-name>:<type>=<value>`` command-line arguments like for
+``cmake``).  Given that all of these variables are nicely namespaced,
 overriding them in the shell environment is not as dangerous as might
 otherwise be the case but this is what had to be done to get around
 limitations for older versions of CMake/CTest.
+
+NOTE: One can also set::
+
+  SET_DEFAULT_AND_FROM_ENV(TRIBITS_2ND_CTEST_DROP_SITE ...)
+  SET_DEFAULT_AND_FROM_ENV(TRIBITS_2ND_CTEST_DROP_LOCATION ...)
+
+in this file in order to submit to a second CDash site/location.  For details,
+see `Dashboard Submissions`_.  This is useful when considering a CDash upgrade
+and/or implementing new CDash features or tweaks.
 
 .. _<projectDir>/Version.cmake:
 
@@ -1497,17 +1506,20 @@ ${${PACKAGE_NAME}_SOURCE_DIR}``) are::
       Dependencies.cmake  # Always processed if its repo is processed
       <packageName>_config.h.in  # [Optional], name is not fixed
 
-**NOTE:** Before a TriBITS Package's files are described in more detail, it is
-important to note that all of the package's files that define its behavior and
-tests should strictly be contained under the package's base source directory
-``<packageDir>/`` if at all possible.  While this is not a requirement for the
-basic TriBITS build system, the approach for automatically detecting when a
-package has changed by looking at what files have changed (which is used in
-the `checkin-test.py`_ script and `TRIBITS_CTEST_DRIVER()`_) requires that the
-package's files be listed under ``<packageDir>/`` (see `Pre-push Testing using
-checkin-test.py`_).  Without this, the TriBITS development tools will not be
-able to automatically determine what needs to be rebuilt and retested which
-can lead to pushing broken software.
+There are a few simple rules for the location and the contents of the
+``<packageDir>/`` directory:
+
+* The directory ``<packageDir>/`` must not be a subdirectory of the package
+  directory of any other SE package (e.g. not ``pkga/pkgb``).
+* All of the source files, test files, etc. for the package should be included
+  under ``<packageDir>/``.
+
+The above rules are not needed for basic building and testing but are needed
+for extended features like automatically detecting when a package has changed
+by looking at what files have changed (see `Pre-push Testing using
+checkin-test.py`_) and for creating source tarballs correctly (see `Creating
+Source Distributions`_).  Therefore, it would be wise to abide by the above
+rules when defining packages.
 
 The following TriBITS Package files are documented in more detail below:
 
@@ -1546,6 +1558,17 @@ which is:
 ``WithSubpackages`` defines three subpackages which creates three new SE
 packages with names ``WithSubpackagesA``, ``WithSubpackagesB``, and
 ``WithSubpackagesC``.
+
+if a TriBITS Package or Subpackage has no dependencies, it still has to call
+``TRIBITS_PACKAGE_DEFINE_DEPENDENCIES()`` but it is called with no arguments
+such as with:
+
+  `TribitsHelloWorld`_/``hello_world/cmake/Dependencies.cmake:``
+
+which contains:
+
+.. include:: ../../examples/TribitsHelloWorld/hello_world/cmake/Dependencies.cmake
+   :literal:
 
 .. _<packageDir>/cmake/<packageName>_config.h.in:
 
@@ -1905,6 +1928,23 @@ Core Files`_ and are::
 ``<spkgDir>`` is the subpackage directory listed in the
 `SUBPACKAGES_DIRS_CLASSIFICATIONS_OPTREQS`_ to
 `TRIBITS_PACKAGE_DEFINE_DEPENDENCIES()`_).
+
+There are a few simple rules for the location and the contents of the
+``<spkgDir>/`` directory:
+
+* The relative directory ``<spkgDir>/`` should be a strict subdirectory of
+  ``<packageDir>/`` (e.g. not ``../../somewhereelse``).
+* The directory ``<spkgDir>/`` must not be a subdirectory of the package
+  directory of any other subpackage (e.g. not ``spkga/spkgb``).
+* All of the source files, test files, etc. for the subpackage should be
+  included under ``<spkgDir>/``.
+
+The above rules are not needed for basic building and testing but are needed
+for extended features like automatically detecting when a package has changed
+by looking at what files have changed (see `Pre-push Testing using
+checkin-test.py`_) and for creating source tarballs correctly (see `Creating
+Source Distributions`_).  Therefore, it would be wise to abide by the above
+rules when defining subpackages.
 
 These TriBITS Subpackage files are documented in more detail below:
 
@@ -2616,7 +2656,7 @@ shown by the file ``TribitsHelloWorld/hello_world/CMakeLists.txt`` which is:
 The build and test of this simple project is tested in the `The TriBITS Test
 Package`_ file::
 
-  tribits/doc/examples/UnitTests/CMakeLists.txt
+  TriBITS/test/core/ExamplesUnitTests/CMakeLists.txt
 
 Note that this little example is a fully functional `TriBITS Repository`_ and
 can be embedded in to a larger TriBITS meta-project and be seamlessly built
@@ -2849,14 +2889,14 @@ document come from ``MockTrilinos``.
 
 Most of the dependency tests involving ``MockTrilinos`` are specified in::
 
-  tribits/package_arch/UnitTests/DependencyUnitTests/CMakeLists.txt
+  TriBITS/test/core/DependencyUnitTests/CMakeLists.txt
 
 A great deal about the current behavior of TriBITS `Package Dependencies and
 Enable/Disable Logic`_ can be learned from inspecting these tests.  There are
 also some faster-running unit tests involving ``MockTrilinos`` defined in the
 file::
 
-  tribits/package_arch/UnitTests/TribitsAdjustPackageEnables_UnitTests.cmake
+  TriBITS/test/core/TribitsAdjustPackageEnables_UnitTests.cmake
 
 
 ReducedMockTrilinos
@@ -4555,6 +4595,22 @@ process of:
    message with the test results, then pushing local commits to the remove VC
    repo(s) and sending out summary emails.
 
+There are several advantages to using a project's ``checkin-test.py`` script
+for pushing changes to the main development branch which include:
+
+a) provides a consistent definition for "okay to push" for all developers
+
+b) protects other developers from pulling badly broken code
+
+c) reduces the number of packages that need to be tested by automatically
+   determining the set based on changed files and package dependencies
+
+d) avoids developer mistakes in performing repetitive tasks and forgetting
+   important steps in the process
+
+e) marks a set of working commits that are safe to search with ``git bisect``
+   to find problems (see `Using Git Bisect with checkin-test.py workflows`_)
+
 When using the ``checkin-test.py`` script, every TriBITS project defines one
 or more "default builds" (specified through the ``--default-builds`` argument)
 for pre-push CI testing that form the criteria for if it is okay to push code
@@ -4840,24 +4896,43 @@ selected for a given package is:
    given package.
 
 What the above setup does is it results in the TriBITS system (in the
-`TRIBITS_CTEST_DRIVER()`_ function called in ``ctest -S`` script) creating a
-file called ``CDashSubprojectDependencies.xml`` that gets sent to the CDash
+`TRIBITS_CTEST_DRIVER()`_ function called in a ``ctest -S`` script) creating a
+file called ``CDashSubprojectDependencies.xml`` (which contains the list of
+TriBITS packages, which CDash calls "subprojects", and email address for each
+package to send regression emails to) and that file gets sent to the CDash
 server. CDash then takes this file and creates, or updates, a set of CDash
-users (same name as the email list name) and sets up a mapping of Labels
-(which are used for TriBITS package names) to CDash user emails
+users (same name and password as the email list address) and sets up a mapping
+of Labels (which are used for TriBITS package names) to CDash user emails
 addresses. CDash is automatically set up to process this XML file and create
-and update CDash users. It is not, however, set up to remove labels from
-existing users.  Therefore, if you change a TriBITS package's CDash regression
-email address (using one of the methods described above), then you need to
-manually remove the associated labels from the old email address.  CDash will
-not remove them for you.
+and update CDash users.  There are several consequences of this implementation
+of which project maintainers need to be aware.
 
-Therefore, to change the mapping of CDash regression email addresses to
-TriBITS packages, you must perform the actions:
+First, **one should not list the email address for a CDash user account
+already on CDash**.  This is because labels will be added for the TriBITS
+packages that this email address is associated with and CDash emails will not
+be sent out for any other TriBITS packages, no matter what setting that CDash
+user account has.  Therefore, one should only list email addresses as CDash
+regression email lists that are not already CDash user accounts and wish to be
+maintained separately.  For example, if there is an email list that one wants
+to have CDash emails sent to but is already a CDash user account, then one can
+create another email list (e.g. using Mailman) which can then be registered
+with the TriBITS packages in the ``CDashSubprojectDependencies.xml`` file and
+then that new email list forward email to the target email list.
+
+Second, the CDash implementation currently is not set up to remove labels from
+existing users when an email address is disassociated with a TriBITS package
+in the ``CDashSubprojectDependencies.xml`` file.  Therefore, **if one changes
+a TriBITS package's CDash regression email address then one needs to manually
+remove the associated labels from the old email address**.  CDash will not
+remove them automatically.  Otherwise, email will continue to be sent to that
+email address for that package.
+
+Therefore, **to change the mapping of CDash regression email addresses to
+TriBITS packages, one must perform the following actions**:
 
 1) Change the TriBITS CMake files as described above that will result in the
    desired email addresses in the ``CDashSubprojectDependencies.xml``
-   file. You can debug this by running the `checkin-test.py`_ script and
+   file. One can debug this by running the `checkin-test.py`_ script and
    seeing what gets written in the generated
    `<Project>PackageDependencies.xml`_ file in the ``CHECKIN`` directory.
 
@@ -4875,8 +4950,9 @@ TriBITS packages, you must perform the actions:
    ``CDashSubprojectDependencies.xml`` file).  Also, any new CDash users for
    new email addresses will be created.
 
-Hopefully that should be enough clues to manage the mapping of CDash
-regression email lists to TriBITS packages.
+Hopefully that should be enough information to manage the mapping of CDash
+regression email lists to TriBITS packages for single and multi-repository
+TriBITS projects.
 
 
 Multi-Repository Support
@@ -5547,17 +5623,21 @@ be missing.  This is demonstrated in `TribitsExampleProject`_ with the package
 .. include:: ../../examples/TribitsExampleProject/PackagesList.cmake
    :literal:
 
-In this example, the subpackage ``InsertedPkg`` has a required dependency on
-``SimpleCxx`` and ``WithSubpackagesB`` has an optional dependency on
+In this example, ``InsertedPkg`` has a required dependency on on ``SimpleCxx``
+and the SE package ``WithSubpackagesB`` has an optional dependency on
 ``InsertedPkg``.  Therefore, the inserted package ``InsertedPkg`` has upstream
-and downstream dependencies.
+and downstream dependencies on packages in the ``TribitsExampleProject`` repo.
 
-What the function ``TRIBITS_ALLOW_MISSING_EXTERNAL_PACKAGES()`` does is to
-tell TriBITS to treat ``InsertedPkg`` the same as any other package if the
-directory ``TribitsExampleProject/InsertedPkg`` exists and to otherwise
-complete ignore the package ``InsertedPkg`` if the source for the package does
-not exist.  In addition, TriBITS will automatically disable of all downstream
-package dependencies for the missing package.
+The function ``TRIBITS_ALLOW_MISSING_EXTERNAL_PACKAGES()`` tells TriBITS to
+treat ``InsertedPkg`` the same as any other package if the directory
+``TribitsExampleProject/InsertedPkg`` exists or to completely ignore the
+package ``InsertedPkg`` otherwise.  In addition, TriBITS will automatically
+disable of all downstream package dependencies for the missing package (and
+print a note about the disables).  NOTE: By default TriBITS will silently
+ignore missing inserted packages and disable optional support for the missing
+package.  To see what packages are missing and being ignored, configure with::
+
+  -D <Project>_WARN_ABOUT_MISSING_EXTERNAL_PACKAGES=TRUE
 
 The way one would set up ``TribitsExampleProject`` to enable ``InsertedPkg``,
 if these were in separate VC (e.g. git) repos for example, would be to do::
@@ -5602,6 +5682,9 @@ one would perform the following steps:
 6) When configuring and building to get the package working, add
    ``-D<insertedPackageName>_ALLOW_MISSING_EXTERNAL_PACKAGE=FALSE`` so that
    TriBITS will catch mistakes in specifying the package directory.
+   Otherwise, to see notes about ignoring missing inserted/external packages,
+   set the variable ``-D<Project>_WARN_ABOUT_MISSING_EXTERNAL_PACKAGES=TRUE``
+   and TriBITS will print warnings about missing external packages.
 
 
 Additional Topics
@@ -5841,7 +5924,7 @@ The commands for creating a source distribution are described in `Creating a
 tarball of the source tree`_ using the built-in ``package_source`` build
 target. The value added by TriBITS is that TriBITS will automatically exclude
 the source for any defined packages that are not enabled and TriBITS provides
-a framework for systematically excluded files and directories from individual
+a framework for systematically excluding files and directories from individual
 repositories and packages.  In addition, the source for non-enabled
 subpackages can also be excluded depending on the value of
 `${PROJECT_NAME}_EXCLUDE_DISABLED_SUBPACKAGES_FROM_DISTRIBUTION`_.  All of
@@ -5879,7 +5962,7 @@ are specified in the file
 The `TribitsExampleProject`_ is set up for creating source distributions and
 this is demonstrated in one of the tests defined in::
 
-  tribits/doc/examples/UnitTests/CMakeLists.txt
+  TriBITS/test/core/ExamplesUnitTests/CMakeLists.txt
 
 There are a few points of caution to note about creating source distributions.
 
@@ -5907,6 +5990,20 @@ debugging what happens when random files are missing when one tries to
 configure what is left.  Somethings, what is left will actually configure and
 might almost build!
 
+**NOTE:** As warned in `TriBITS Package Core Files`_ and `TriBITS Subpackage
+Core Files`_, SE Packages must have directories that are strictly independent
+of the directories of other SE packages.  If they don't, then the source
+directory for an enabled package will get excluded from the source
+distribution if its directory is under the directory of a package that is not
+enabled.  For example, if ``PackageA`` is enabled but its package directory
+``packageb/packagea/`` is under the package directory ``packageb/`` for the
+disabled package ``PackageB``, then every file and directory under
+``packageb/`` will be excluded from the source distribution (tarball),
+including everything under ``packageb/packagea/``!  It would be too expensive
+to put in an automated check for cases like this so package developers should
+just take care not to nest the directories of packages inside of each other to
+avoid problems like this.
+
 **NOTE:** Extra repositories that are sitting in the source tree but not
 processed by TriBITS for some reason (e.g. due to explicitly listing in the
 variable `${PROJECT_NAME}_EXTRA_REPOSITORIES`_ only a subset of the repositories
@@ -5920,6 +6017,289 @@ the source distribution!.
 variable ``<Project>_DUMP_CPACK_SOURCE_IGNORE_FILES=ON``.  If you don't see a
 regex listed for the file or directory you expect to be excluded, then that
 file/directory it will be included in the source distribution!
+
+
+Using Git Bisect with checkin-test.py workflows
+-----------------------------------------------
+
+There are cases where a customer will do an update of an upstream project from
+a git repo and then find out that some feature or behavior is broken with
+respect to their usage.  This can happen even if the upstream project's own
+test suite passes all of its tests.  Depending on the situation, there may be
+hundreds to thousands of commits between the last known "good" working version
+of the code and pulled "bad" version.  To help customers find the first commit
+that contains the changes which are causing the breakage, git supplies ``git
+bisect``.  This set of commands does a binary search of the commits in the
+range ``<good-sha>..<bad_sha>`` and finds the first commit that is "bad" (or a
+range of commits which contains the first "bad" commit if commits are skipped,
+as described below).
+
+But the ``git bisect`` commands require that all of the commits in the range
+``<good-sha>..<bad_sha>`` be complete commits that provide full working
+versions of the upstream project.  However, many beginning git developers and
+even many experienced developers don't always create individual git commits
+that build and pass all of the upstream project's tests and therefore can
+create false "bad" commits during the binary search.  This can happen when
+developers create intermediate "check-point" commits during the development
+process but did not squash the intermediate commits together to create
+cohesive working commits.  This can also happen when experienced developers
+have a set of what they believe are all working commits but do not actually
+test all of the commits to know that they pass *all* of the upstream project's
+tests before pushing these commits to the main development branch.  This lack
+of detailed testing of each and every individual commit can give rise to false
+"bad" commits which will result in ``git bisect`` reporting the wrong first
+"bad" commit.
+
+Projects that use the `checkin-test.py`_ script to push sets of commits to the
+main development branch have an advantage in the usage of ``git bisect``.
+This is because the default mode of the ``checkin-test.py`` script is to amend
+the top commit message with a summary of what was tested and therefore marks a
+set of commits that are known to have more complete testing.  For example, the
+``checkin-test.py`` script amends the top commit (after the final pull and
+rebase by default) as shown in the following Trilinos commit::
+
+  commit 71ce56bd2d268922fda7b8eca74fad0ffbd7d807
+  Author: Roscoe A. Bartlett <bartlettra@ornl.gov>
+  Date:   Thu Feb 19 12:04:11 2015 -0500
+  
+      Define HAVE_TEUCHOSCORE_CXX11 in TeuchosCore_config.h
+      
+      This makes TeuchosCore a good example for how Trilinos (or any TriBITS)
+      subpackages should put in an optinal dependency on C++11.
+      
+      Build/Test Cases Summary
+      Enabled Packages: TeuchosCore
+      Disabled Packages: [...]
+      0) MPI_DEBUG => passed: passed=44,notpassed=0 (2.61 min)
+      1) SERIAL_RELEASE => passed: passed=43,notpassed=0 (1.08 min)
+
+Therefore, these special known-tested commits can be flagged by grepping the
+``git log -1 HEAD`` output for the string ``"Build/Test Cases Summary"``.  By
+bisecting on these commits, one has a lower chance of encountering false "bad"
+commits and has a higher chance of finding a smaller range of commits where
+the first true "bad" commit might be found.  To aid in performing ``git
+bisect`` and only checking ``checkin-test.py``-tested commits, the script
+`is_checkin_tested_commit.py`_ is provided.
+
+To demonstrate how the ``is_checkin_tested_commit.py`` script can be used with
+``git bisect``, suppose that someone writes a customized script
+``build_and_test_customer_code.sh`` that will build the upstream project and
+the downstream customer's code and then run a set of tests to see if the "bad"
+behavior seen by the customer code is the current ``HEAD`` version of the
+upstream project.  Assume this script is copied into the upstream project's
+local git repo using::
+
+  $ cd <upstream-repo>/
+  $ cp ~/build_and_test_customer_code.sh .
+  $ cat /build_and_test_customer_code.sh >> .git/info/exclude
+
+Now, one could use ``build_and_test_customer_code.sh`` directly with::
+
+  $ git bisect run ./build_and_test_customer_code.sh
+
+but that would result in testing *all* the commits which may have a high
+chance of producing false "bad" commits as described above and fail to
+correctly bracket the location of the true first "bad" commit.
+
+So instead, one can write a filtered testing script
+``safe_build_and_test_customer_code.sh`` which calls
+``is_checkin_tested_commit.py`` and ``build_and_test_customer_code.sh`` as
+follows::
+
+  #!/bin/bash
+  #
+  # Script: safe_build_and_test_customer_code.sh
+
+  $TRIBITS_DIR/ci_support/is_checkin_tested_commit.py
+  IS_CHECKIN_TESTED_COMMIT_RTN=$?
+  if [ "$IS_CHECKIN_TESTED_COMMIT_RTN" != "0" ] ; then
+    exit 125 # Skip the commit because HEAD is not known to be tested!
+  fi
+
+  ./build_and_test_customer_code.sh  # Rtn 0 "good", or [1, 124] if "bad"
+
+The above test script ``safe_build_and_test_customer_code.sh`` will skip the
+testing of commits that are not marked by the ``checkin-test.py`` script.
+
+To demonstrate how to use the ``is_checkin_tested_commit.py`` script with
+``git bisect``, an example from Trilinos is used below.  (Note that the
+current Trilinos public repository may have been filtered so the commit SHA1s
+shown below may not match what is in the current Trilinos repository.  But one
+can use the commit summary message, author, and author date to find the
+updated SHA1s and then to update this example for the current repository.)
+
+Consider a scenario where a customer application updates Trilinos from the
+commit::
+
+  d44c17d "Merge branch 'master' of software.sandia.gov:/space/git/Trilinos"
+  Author: Roscoe A. Bartlett <xxx@ornl.gov>
+  Date:   Tue May 26 12:43:25 2015 -0400
+
+to the commit::
+
+  605b91b "Merge branch 'master' of software.sandia.gov:/git/Trilinos"
+  Author: Vitus Leung <xxx@sandia.gov>
+  Date:   Tue Sep 29 20:18:54 2015 -0600
+
+and it is found that some critical feature broke or is not behaving acceptably
+for the customer code (but all of the tests for Trilinos pass just fine).
+This range of commits ``d44c17d..605b91b`` gives 2257 commits to search as
+shown by::
+
+  $ cd Trilinos/
+  $ git log-oneline d44c17d..605b91b | wc -l
+  2257
+
+However, as described above, it is likely that doing ``git bisect`` on that
+full set of 2257 commits may result in hitting false "bad" commits and
+therefore result in a false bracketing of the first "bad" commit.  This is
+where the usage of the ``checkin-test.py`` script helps which is used by many
+(but not currently all) Trilinos developers to push changes to the Trilinos
+'master' branch in the current single-branch workflow.  The commits marked
+with the ``checkin-test.py`` script are known (with some caveats mentioned
+below) to be working commits and for this the range of commits
+``d44c17d..605b91b`` yields 166 commits as shown by::
+
+  $ git log-oneline --grep="Build/Test Cases Summary" d44c17d..605b91b | wc -l
+  166
+
+That is an average of 2257/166 = 13.6 commits between commits pushed with the
+``checkin-test.py`` script.  So bisecting on just the commits marked by
+``checkin-test.py`` should bound the "bad" commit in a set of 13.6 commits on
+average.  Bisecting on this set of 166 commits should likely give no false
+“bad” commits, and therefore result in the correct bracketing of the first
+"bad" commit.
+
+Using the ``safe_build_and_test_customer_code.sh`` shown above, one would
+search for the first bad commit over this range using::
+
+  $ git bisect start 605b91b d44c17d
+  $ env DUMMY_TEST_COMMIT_BAD_SHA=83f05e8 \
+      time git bisect run ./safe_build_and_test_customer_code.sh
+
+and this would return the range of commits that contains the first "bad"
+commit (listed at the end of ``git bisect log`` output, see example below).
+
+To provide a concrete example, suppose the commit that first introduced the
+problem in the range of commits ``d44c17d..605b91b`` was::
+
+  83f05e8 "MueLu: stop semi-coarsening if no z-layers are left."
+  Author: Tobias Wiesner <tawiesn@sandia.gov>
+  Date:   Wed Jul 1 14:54:20 2015 -0600
+
+And instead of using the script ``safe_build_and_test_customer_code.sh``, we
+use a dummy driver script ``dummy_test_commit.sh`` to simulate this which is
+provided in the set of TriBITS documentation::
+
+  $TRIBITS_DIR/doc/developers_guide/scripts/dummy_test_commit.sh
+
+as:
+
+.. include:: scripts/dummy_test_commit.sh
+   :literal:
+
+This driver script allows one to simulate the usage of ``git bisect`` to
+understand how it works without having to actually build and test code.  It is
+a useful training and experimentation tool.
+
+Using ``git bisect`` (with git version 2.1.0) over the range of commits
+``d44c17d..605b91b`` searching for the first "bad" commit is done by running
+the commands::
+
+  $ git bisect start 605b91b d44c17d
+  $ env DUMMY_TEST_COMMIT_BAD_SHA=83f05e8 \
+      time git bisect run \
+      $TRIBITS_DIR/doc/developers_guide/scripts/dummy_test_commit.sh \
+      &> ../git_bisect_run.log
+  $ git2 bisect log &> ../git_bisect_log.log
+  $ cat ../git_bisect_log.log | grep "possible first bad commit" | \
+      sed "s/possible first bad commit://g"  | sed "s/[a-z0-9]\{30\}\]/]/g"
+  $ git bisect reset
+  
+This set of commands yield the output::
+
+  Bisecting: 1128 revisions left to test after this (roughly 10 steps)
+  [9634d462dba77704b598e89ba69ba3ffa5a71471] Revert "Trilinos: remove _def.hpp [...]"
+  
+  real	1m22.961s
+  user	0m57.157s
+  sys	3m40.376s
+  
+  #  [165067ce53] MueLu: SemiCoarsenPFactory. Use strided maps to properly transfer [...]
+  #  [ada21a95a9] MueLu: refurbish LineDetectionFactory
+  #  [83f05e8970] MueLu: stop semi-coarsening if no z-layers are left.
+
+  Previous HEAD position was 83f05e8... MueLu: stop semi-coarsening if no z-layers are left.
+  Switched to branch 'master'
+
+This output shows the dummy bad commit 83f05e8 in a set of just 3 commits,
+bounded in the set of commits ``8b79832..165067c``::
+
+  165067c "MueLu: SemiCoarsenPFactory. Use strided maps to properly [...]."
+  Author: Tobias Wiesner <tawiesn@sandia.gov>
+  Date:   Thu Jul 2 12:11:24 2015 -0600
+  
+  8b79832 "Ifpack2: RBILUK: adding additional ETI types"
+  Author: Jonathan Hu <jhu@sandia.gov>
+  Date:   Thu Jul 2 14:17:40 2015 -0700
+
+The set of commits that were actually tested by ``git bisect run <script>`` is
+shown by::
+
+  $ cat ../git_bisect_log.log | grep "\(good:\|bad:\)" | sed "s/[a-z0-9]\{30\}\]/]/g"
+  # bad: [605b91b012] Merge branch 'master' of software.sandia.gov:/git/Trilinos
+  # good: [d44c17d5d2] Merge branch 'master' of software.sandia.gov:/space/git/Trilinos
+  # good: [7e13a95774] Ifpack2: If the user does not provide the bandwith of the banded [...]
+  # bad: [7335d8bc92] MueLu: fix documentation
+  # bad: [9997ecf0ba] Belos::LSQRSolMgr: Fixed bug in setParameters.
+  # bad: [b6e0453224] MueLu: add a nightly test for the combination of semicoarsening [...]
+  # bad: [165067ce53] MueLu: SemiCoarsenPFactory. Use strided maps to properly [...]
+  # good: [3b5453962e] Ifpack2: Nuking the old ETI system
+  # good: [8b79832f1d] Ifpack2: RBILUK: adding additional ETI types
+
+This is only 9 commits out of the possible set of 166 ``checkin-test.py``
+marked commits which is out of the total set of 2257 possible commits.  With
+just 9 build/test cycles, it bounded the first "bad" commit in a set of 3
+commits in this case.  And it does not matter how sloppy or broken the
+intermediate commits are in Trilinos.  All that matters is the usage of the
+``checkin-test.py`` script (another motivation for the usage of the
+``checkin-test.py`` script, see `Pre-push Testing using checkin-test.py`_ for
+others as well).
+ 
+Note that above, we grep the output from ``git bisect log`` for the set of
+possible "bad" commits instead of just looking at the output from the ``git
+bisect run <script>`` command (which also lists the set of possible "bad"
+commits).  This is because the direct output from the ``git bisect run
+<script>`` command (shown in the log file ``git_bisect_run.log``) shows the
+set of possible bad commits at the end of the output but they are unsorted and
+give no other git commit information::
+
+  There are only 'skip'ped commits left to test.
+  The first bad commit could be any of:
+  83f05e89706590c4b384dd191f51ef4ab00ce9bb
+  ada21a95a991cd238581e5a6a96800d209a57924
+  165067ce538af2cd0bd403e2664171726ec86f3f
+  We cannot bisect more!
+  bisect run cannot continue any more
+
+The problem with unsorted commits is that it is difficult to use an unsorted
+set to do further bisection.  However, the output of the set of commits from
+``git bisect log`` is sorted and also shows the commit summary message and
+therefore is much more useful.  (But note that older versions of git don’t
+show this set of commits at the end of ``git bisect log`` so make sure and use
+an updated version of git, preferably >= 2.1.0.)
+
+Now that one has the range of possible "bad" commits (just 3 in this example)
+doing a further manual bisection or even manual inspection of these commits
+may be enough to find the change that is causing the problem for the
+downstream customer application.
+
+Without the usage of the ``checkin-test.py`` script, one would not have an
+automated way to ensure that ``git bisect`` avoids false "bad" commits.  This
+allows for less experienced developers to create commits and push to the main
+development branch but still ensure effective usage of ``git bisect``.  (This
+is another example where automated tools in TriBITS help to overcome lacking
+developer experience and discipline.)
 
 
 Multi-Repository Almost Continuous Integration
@@ -7682,6 +8062,18 @@ development workflow (mostly related to pushing commits) and outlines a number
 of different use cases for using the script.
 
 .. include:: checkin-test-help.txt
+   :literal:
+
+
+.. _is_checkin_tested_commit.py:
+
+is_checkin_tested_commit.py --help
+----------------------------------
+
+Below is a snapshot of the output from ``is_checkin_tested_commit.py``.  For
+more details see `Using Git Bisect with checkin-test.py workflows`_.
+
+.. include:: is_checkin_tested_commit.txt
    :literal:
 
 

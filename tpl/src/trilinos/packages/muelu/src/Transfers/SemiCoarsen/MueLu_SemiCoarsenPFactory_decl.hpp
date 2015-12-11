@@ -47,14 +47,10 @@
 #define MUELU_SEMICOARSENPFACTORY_DECL_HPP
 
 #include <Xpetra_Matrix_fwd.hpp>
-#include <Xpetra_MultiVectorFactory_fwd.hpp>
 
 #include "MueLu_ConfigDefs.hpp"
-#include "MueLu_PerfUtils_fwd.hpp"
 #include "MueLu_PFactory.hpp"
 #include "MueLu_SemiCoarsenPFactory_fwd.hpp"
-#include "MueLu_Utilities_fwd.hpp"
-#include "MueLu_CoarseMapFactory_fwd.hpp"
 
 #include "MueLu_Level_fwd.hpp"
 
@@ -68,9 +64,9 @@ namespace MueLu {
 
 
 /*!
-  @class SemiCoarsenPFactory class.
-  @brief Prolongator factory performing semi-coarsening.
+  @class SemiCoarsenPFactory
   @ingroup MueLuTransferClasses
+  @brief Prolongator factory performing semi-coarsening.
 
   The semi-coarsening is performed along user-provided "vertical lines" (in z-direction).
   The line detection algorithm can be found in the LineDetectionFactory.

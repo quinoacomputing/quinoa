@@ -137,18 +137,28 @@ namespace {
 #define UNIT_TEST_GROUP_ORDINAL_TPETRA( LO, GO ) \
   typedef Xpetra::TpetraMap<LO,GO> TpetraMap ## LO ## GO;       \
     UNIT_TEST_GROUP_ORDINAL_(TpetraMap ## LO ## GO, LO, GO)
-
+#ifdef HAVE_TPETRA_INT_INT
   UNIT_TEST_GROUP_ORDINAL_TPETRA(int , int)
+#endif
+#ifdef HAVE_TPETRA_INT_LONG
+  UNIT_TEST_GROUP_ORDINAL_TPETRA(int , long)
+#endif
+#ifdef HAVE_TPETRA_INT_LONG_LONG
+  typedef long long LongLongInt;
+  UNIT_TEST_GROUP_ORDINAL_TPETRA(int , LongLongInt)
+#endif
 
 #endif // HAVE_XPETRA_TPETRA
 
 #ifdef HAVE_XPETRA_EPETRA
 #ifndef XPETRA_TEST_USE_LONGLONG_GO
-    typedef Xpetra::EpetraMap EpetraMap;
+  typedef KokkosClassic::DefaultNode::DefaultNodeType Node;
+  typedef Xpetra::EpetraMapT<int,Node> EpetraMap;
   UNIT_TEST_GROUP_ORDINAL_(EpetraMap, int , int)
 #else
-    typedef long long LongLongInt;
-    typedef Xpetra::EpetraMap64 EpetraMap;
+  typedef KokkosClassic::DefaultNode::DefaultNodeType Node;
+  typedef long long LongLongInt;
+  typedef Xpetra::EpetraMapT<long long, Node> EpetraMap;
   UNIT_TEST_GROUP_ORDINAL_(EpetraMap, int , LongLongInt)
 #endif
 #endif // HAVE_XPETRA_EPETRA

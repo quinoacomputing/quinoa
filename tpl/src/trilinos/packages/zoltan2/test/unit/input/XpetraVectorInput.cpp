@@ -70,7 +70,6 @@ using Teuchos::DefaultComm;
 
 typedef Tpetra::Vector<zscalar_t, zlno_t, zgno_t, znode_t> tvector_t;
 typedef Xpetra::Vector<zscalar_t, zlno_t, zgno_t, znode_t> xvector_t;
-typedef Epetra_Vector evector_t;
 
 void printVector(RCP<const Comm<int> > &comm, zlno_t vlen,
     const zgno_t *vtxIds, const zscalar_t *vals)
@@ -177,13 +176,11 @@ int main(int argc, char *argv[])
   RCP<tvector_t> tV;     // original vector (for checking)
   RCP<tvector_t> newV;   // migrated vector
 
-  tV = uinput->getUITpetraVector();
+  tV = rcp(new tvector_t(uinput->getUITpetraCrsGraph()->getRowMap()));
+  tV->randomize();
   size_t vlen = tV->getLocalLength();
 
-  // To test migration in the input adapter we need a Solution
-  // object.  The Solution needs an IdentifierMap.
-
-  typedef Zoltan2::IdentifierMap<tvector_t> idmap_t;
+  // To test migration in the input adapter we need a Solution object.
 
   RCP<const Zoltan2::Environment> env = rcp(new Zoltan2::Environment);
 
@@ -199,8 +196,7 @@ int main(int argc, char *argv[])
   std::vector<const zscalar_t *> emptyWeights;
   std::vector<int> emptyStrides;
 
-  Zoltan2::PartitioningSolution<adapter_t> solution(
-    env, comm, nWeights);
+  Zoltan2::PartitioningSolution<adapter_t> solution(env, comm, nWeights);
   solution.setParts(solnParts);
 
   /////////////////////////////////////////////////////////////
@@ -269,7 +265,10 @@ int main(int argc, char *argv[])
   /////////////////////////////////////////////////////////////
   // User object is Xpetra::Vector
   if (!gfail){ 
-    RCP<xvector_t> xV = uinput->getUIXpetraVector();
+    RCP<tvector_t> xtV =
+        rcp(new tvector_t(uinput->getUITpetraCrsGraph()->getRowMap()));
+    xtV->randomize();
+    RCP<xvector_t> xV = Zoltan2::XpetraTraits<tvector_t>::convertToXpetra(xtV);
     RCP<const xvector_t> cxV = rcp_const_cast<const xvector_t>(xV);
     RCP<Zoltan2::XpetraMultiVectorAdapter<xvector_t> > xVInput;
   
@@ -332,8 +331,11 @@ int main(int argc, char *argv[])
 #ifdef HAVE_EPETRA_DATA_TYPES
   /////////////////////////////////////////////////////////////
   // User object is Epetra_Vector
+  typedef Epetra_Vector evector_t;
   if (!gfail){ 
-    RCP<evector_t> eV = uinput->getUIEpetraVector();
+    RCP<evector_t> eV = 
+        rcp(new Epetra_Vector(uinput->getUIEpetraCrsGraph()->RowMap()));
+    eV->Random();
     RCP<const evector_t> ceV = rcp_const_cast<const evector_t>(eV);
     RCP<Zoltan2::XpetraMultiVectorAdapter<evector_t> > eVInput;
   

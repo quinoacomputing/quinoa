@@ -110,9 +110,6 @@
 //TODO is it really needed?
 #include "MueLu_HierarchyHelpers.hpp"
 
-
-#include "MueLu_UseDefaultTypes.hpp"
-
 #include <Epetra_LinearProblem.h>
 #include <AztecOO.h>
 
@@ -125,15 +122,19 @@
  */
 
 int main(int argc, char *argv[]) {
+#if defined(HAVE_MUELU_EPETRA) && defined(HAVE_MUELU_SERIAL)
+  typedef double Scalar;
+  typedef int LocalOrdinal;
+  typedef int GlobalOrdinal;
+  typedef LocalOrdinal LO;
+  typedef GlobalOrdinal GO;
+  typedef Kokkos::Compat::KokkosSerialWrapperNode Node;
 #include "MueLu_UseShortNames.hpp"
 
   using Teuchos::RCP;
   using Teuchos::rcp;
   using namespace MueLuTests;
   using namespace Teuchos;
-
-  typedef Xpetra::StridedMap<int,int>        StridedMap;
-  typedef Xpetra::StridedMapFactory<int,int> StridedMapFactory;
 
   oblackholestream blackhole;
   GlobalMPISession mpiSession(&argc,&argv,&blackhole);
@@ -150,7 +151,7 @@ int main(int argc, char *argv[]) {
     Time myTime("global");
     TimeMonitor MM(myTime);
 
-#ifndef HAVE_TEUCHOS_LONG_LONG_INT
+#ifndef HAVE_XPETRA_INT_LONG_LONG
     *out << "Warning: scaling test was not compiled with long long int support" << std::endl;
 #endif
 
@@ -178,7 +179,7 @@ int main(int argc, char *argv[]) {
       case CommandLineProcessor::PARSE_SUCCESSFUL:                               break;
     }
 
-    int globalNumDofs = 8898;  // used for the maps
+    int globalNumDofs = 1500;  // used for the maps
     //int nDofsPerNode = 3;      // used for generating the fine level null-space
 
     // build strided maps
@@ -212,8 +213,8 @@ int main(int argc, char *argv[]) {
 
     *out << "Reading matrix market file" << std::endl;
 
-    EpetraExt::MatrixMarketFileToCrsMatrix("A5932_re1000.txt",*fullmap,*fullmap,*fullmap,ptrA);
-    EpetraExt::MatrixMarketFileToVector("b5932_re1000.txt",*fullmap,ptrf);
+    EpetraExt::MatrixMarketFileToCrsMatrix("A_re1000_5932.txt",*fullmap,*fullmap,*fullmap,ptrA);
+    EpetraExt::MatrixMarketFileToVector("b_re1000_5932.txt",*fullmap,ptrf);
 
     RCP<Epetra_CrsMatrix> epA = rcp(ptrA);
     RCP<Epetra_Vector> epv = rcp(ptrf);
@@ -236,10 +237,10 @@ int main(int argc, char *argv[]) {
     /////////////////////////////////////// transform Epetra objects to Xpetra (needed for MueLu)
 
     // build Xpetra objects from Epetra_CrsMatrix objects
-    RCP<Xpetra::CrsMatrix<Scalar,LO,GO,Node> > xA11 = rcp(new Xpetra::EpetraCrsMatrix(A11));
-    RCP<Xpetra::CrsMatrix<Scalar,LO,GO,Node> > xA12 = rcp(new Xpetra::EpetraCrsMatrix(A12));
-    RCP<Xpetra::CrsMatrix<Scalar,LO,GO,Node> > xA21 = rcp(new Xpetra::EpetraCrsMatrix(A21));
-    RCP<Xpetra::CrsMatrix<Scalar,LO,GO,Node> > xA22 = rcp(new Xpetra::EpetraCrsMatrix(A22));
+    RCP<Xpetra::CrsMatrix<Scalar,LO,GO,Node> > xA11 = rcp(new Xpetra::EpetraCrsMatrixT<GO,Node>(A11));
+    RCP<Xpetra::CrsMatrix<Scalar,LO,GO,Node> > xA12 = rcp(new Xpetra::EpetraCrsMatrixT<GO,Node>(A12));
+    RCP<Xpetra::CrsMatrix<Scalar,LO,GO,Node> > xA21 = rcp(new Xpetra::EpetraCrsMatrixT<GO,Node>(A21));
+    RCP<Xpetra::CrsMatrix<Scalar,LO,GO,Node> > xA22 = rcp(new Xpetra::EpetraCrsMatrixT<GO,Node>(A22));
 
     /////////////////////////////////////// generate MapExtractor object
 
@@ -248,11 +249,11 @@ int main(int argc, char *argv[]) {
     xmaps.push_back(xstridedvelmap);
     xmaps.push_back(xstridedpremap);
 
-    RCP<const Xpetra::MapExtractor<Scalar,LO,GO,Node> > map_extractor = Xpetra::MapExtractorFactory<Scalar,LO,GO>::Build(xstridedfullmap,xmaps);
+    RCP<const Xpetra::MapExtractor<Scalar,LO,GO,Node> > map_extractor = Xpetra::MapExtractorFactory<Scalar,LO,GO,Node>::Build(xstridedfullmap,xmaps);
 
     /////////////////////////////////////// build blocked transfer operator
     // using the map extractor
-    RCP<Xpetra::BlockedCrsMatrix<Scalar,LO,GO,Node> > bOp = rcp(new Xpetra::BlockedCrsMatrix<Scalar,LO,GO>(map_extractor,map_extractor,10));
+    RCP<Xpetra::BlockedCrsMatrix<Scalar,LO,GO,Node> > bOp = rcp(new Xpetra::BlockedCrsMatrix<Scalar,LO,GO,Node>(map_extractor,map_extractor,10));
     bOp->setMatrix(0,0,xA11);
     bOp->setMatrix(0,1,xA12);
     bOp->setMatrix(1,0,xA21);
@@ -338,7 +339,7 @@ int main(int argc, char *argv[]) {
     RCP<MultiVector> xtest = MultiVectorFactory::Build(xstridedfullmap,1);
     xtest->putScalar( (SC) 0.0);
 
-    RCP<Vector> xR = rcp(new Xpetra::EpetraVector(epv));
+    RCP<Vector> xR = rcp(new Xpetra::EpetraVectorT<GO,Node>(epv));
     // calculate initial (absolute) residual
     Array<ScalarTraits<SC>::magnitudeType> norms(1);
 
@@ -351,7 +352,7 @@ int main(int argc, char *argv[]) {
     xtest->norm2(norms);
     *out << "Test: ||x_1|| = " << norms[0] << std::endl;
 
-    Array<ScalarTraits<double>::magnitudeType> test = MueLu::Utils<double, int, int>::ResidualNorm(*bOp, *xtest, *xR);
+    Array<ScalarTraits<Scalar>::magnitudeType> test = MueLu::Utilities<Scalar, LO, GO, Node>::ResidualNorm(*bOp, *xtest, *xR);
     *out << "residual norm: " << test[0] << std::endl;
 
     success = true;
@@ -359,4 +360,8 @@ int main(int argc, char *argv[]) {
   TEUCHOS_STANDARD_CATCH_STATEMENTS(verbose, std::cerr, success);
 
   return ( success ? EXIT_SUCCESS : EXIT_FAILURE );
+#else
+  std::cout << "Epetra needs Serial node. Please recompile MueLu with the Serial node enabled." << std::endl;
+  return EXIT_SUCCESS;
+#endif // #if defined(HAVE_MUELU_SERIAL) && defined(HAVE_MUELU_EPETRA)
 }

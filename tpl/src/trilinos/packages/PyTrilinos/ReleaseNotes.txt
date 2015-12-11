@@ -1,28 +1,38 @@
-Release Notes for PyTrilinos for Trilinos 12.2
+Release Notes for PyTrilinos for Trilinos 12.4
 ==============================================
 
 General
-  * Updated the Developers Guide
+  * Fixed several memory management bugs
+  * Fixed a pervasive bug where C++ exceptions were caught in the
+    wrong order. This fix results in Python errors that have much
+    better messages, making it easier to debug problems that employ
+    cross-language polymorphism.
 
 Teuchos
-  * Made Teuchos a required dependency for PyTrilinos.
+  * Upgraded Teuchos.ParameterList to support an Array(string) value
+    type.
 
-Domi
-  * Domi wrappers now use new Domi::DefaultNode class
-  * Added HAVE_DOMI as a macro in PyTrilinos_config.h
-  * Fixed docstrings for Domi package
-  * Added a simple Domi example
-  * Fixed Domi.MDVector extensions
+Epetra
+  * Added new Python-to-C++ converters that convert a wider variety of
+    Python objects to distributed Epetra vectors (Epetra_MultiVector,
+    Epetra_Vector, Epetra_IntVector).  This includes any Python object
+    that exports the Distributed Array Protocol, such as Enthought's
+    DistArray.  It also includes NumPy arrays when running in a serial
+    environment.
+  * Added __distarray__() method to Epetra vector classes, so that
+    they now export the Distributed Array Protocol.
+  * Memory management issues associated with the Epetra.LinearProblem
+    class and the new Epetra vector converters were fixed.
 
 Tpetra
-  * Enabled Tpetra wrappers in the release branch
-  * Fixed a dynamic typing problem
-  * Bug fixes in Tpetra.Map
-  * Added HAVE_TPETRA as a macro in PyTrilinos_config.h
-  * Fixed docstrings for Tpetra package
-  * Got wrappers for all requiredTpetra constructors to work
-  * Expanded Tpetra.Vector unit tests
-  * Added unit tests for Tpetra.MultiVector
+  * Fixed wrappers for Tpetra MultiVector and Vector classes.
+  * Added __distarray__() method to Tpetra vector classes, so that
+    they now export the Distributed Array Protocol.
+  * Bug fixes related to latest Tpetra upgrade
+
+LOCA
+  * Introduced a new LOCA test in which the Chan problem is solved
+    using a preconditioner.
 
 Release Notes for PyTrilinos for Trilinos 12.0
 ==============================================

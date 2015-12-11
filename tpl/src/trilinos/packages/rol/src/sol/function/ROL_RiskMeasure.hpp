@@ -44,7 +44,7 @@
 #ifndef ROL_RISKMEASURE_HPP
 #define ROL_RISKMEASURE_HPP
 
-#include "ROL_Vector.hpp"
+#include "ROL_RiskVector.hpp"
 
 namespace ROL {
 
@@ -55,6 +55,7 @@ protected:
   Real gv_;
   Teuchos::RCP<Vector<Real> > g_;
   Teuchos::RCP<Vector<Real> > hv_;
+  Teuchos::RCP<Vector<Real> > dualVector_;
   bool firstReset_;
 
 public:
@@ -64,17 +65,18 @@ public:
 
   // Reset risk measure storage.  Called for value and gradient computation.
   virtual void reset(Teuchos::RCP<Vector<Real> > &x0, const Vector<Real> &x) {
+    x0 = Teuchos::rcp_const_cast<Vector<Real> >(Teuchos::dyn_cast<const RiskVector<Real> >(
+           Teuchos::dyn_cast<const Vector<Real> >(x)).getVector());
     // Create memory for class members
     if ( firstReset_ ) {
-      g_  = (x.dual()).clone();
-      hv_ = (x.dual()).clone();
+      g_  = (x0->dual()).clone();
+      hv_ = (x0->dual()).clone();
+      dualVector_ = (x0->dual()).clone();
       firstReset_ = false;
     }
     // Zero member variables
     val_ = 0.0; gv_ = 0.0;
-    g_->zero(); hv_->zero();
-    // Get vector component of x.  This is important for CVaR.
-    x0 = Teuchos::rcp(&const_cast<Vector<Real> &>(x),false);
+    g_->zero(); hv_->zero(); dualVector_->zero();
   }
 
   // Reset risk measure storage.  Called for Hessian-times-a-vector computation.
@@ -82,7 +84,8 @@ public:
                      Teuchos::RCP<Vector<Real> > &v0, const Vector<Real> &v) {
     reset(x0,x);
     // Get vector component of v.  This is important for CVaR.
-    v0 = Teuchos::rcp(&const_cast<Vector<Real> &>(v),false);
+    v0 = Teuchos::rcp_const_cast<Vector<Real> >(Teuchos::dyn_cast<const RiskVector<Real> >(
+           Teuchos::dyn_cast<const Vector<Real> >(v)).getVector());
   }
 
   virtual void update(const Real val, const Real weight) {
@@ -105,11 +108,13 @@ public:
   }
 
   virtual void getGradient(Vector<Real> &g, SampleGenerator<Real> &sampler) {
-    sampler.sumAll(*g_,g);
+    sampler.sumAll(*g_,*dualVector_);
+    (Teuchos::dyn_cast<RiskVector<Real> >(g)).setVector(*dualVector_);
   }
 
   virtual void getHessVec(Vector<Real> &hv, SampleGenerator<Real> &sampler) {
-    sampler.sumAll(*hv_,hv);
+    sampler.sumAll(*hv_,*dualVector_);
+    (Teuchos::dyn_cast<RiskVector<Real> >(hv)).setVector(*dualVector_);
   }
 };
 

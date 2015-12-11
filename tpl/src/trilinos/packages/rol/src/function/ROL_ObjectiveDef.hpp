@@ -74,29 +74,34 @@ void Objective<Real>::gradient( Vector<Real> &g, const Vector<Real> &x, Real &to
 
 template <class Real>
 void Objective<Real>::hessVec( Vector<Real> &hv, const Vector<Real> &v, const Vector<Real> &x, Real &tol ) {
-  Real gtol = std::sqrt(ROL_EPSILON);
-
   // Get Step Length
-  Real h = std::max(1.0,x.norm()/v.norm())*tol;
-  //Real h = 2.0/(v.norm()*v.norm())*tol;
+  if ( v.norm() == 0. ) {
+    hv.zero();
+  }
+  else {
+    Real gtol = std::sqrt(ROL_EPSILON);
 
-  // Compute Gradient at x
-  Teuchos::RCP<Vector<Real> > g = hv.clone();
-  this->gradient(*g,x,gtol);
+    Real h = std::max(1.0,x.norm()/v.norm())*tol;
+    //Real h = 2.0/(v.norm()*v.norm())*tol;
 
-  // Compute New Step x + h*v
-  Teuchos::RCP<Vector<Real> > xnew = x.clone();
-  xnew->set(x);
-  xnew->axpy(h,v);  
-  this->update(*xnew);
+    // Compute Gradient at x
+    Teuchos::RCP<Vector<Real> > g = hv.clone();
+    this->gradient(*g,x,gtol);
 
-  // Compute Gradient at x + h*v
-  hv.zero();
-  this->gradient(hv,*xnew,gtol);
-  
-  // Compute Newton Quotient
-  hv.axpy(-1.0,*g);
-  hv.scale(1.0/h);
+    // Compute New Step x + h*v
+    Teuchos::RCP<Vector<Real> > xnew = x.clone();
+    xnew->set(x);
+    xnew->axpy(h,v);  
+    this->update(*xnew);
+
+    // Compute Gradient at x + h*v
+    hv.zero();
+    this->gradient(hv,*xnew,gtol);
+    
+    // Compute Newton Quotient
+    hv.axpy(-1.0,*g);
+    hv.scale(1.0/h);
+  }
 } 
 
 
@@ -172,14 +177,14 @@ std::vector<std::vector<Real> > Objective<Real>::checkGradient( const Vector<Rea
     gCheck[i][2] = weights[order-1][0] * val;
 
     for(int j=0; j<order; ++j) {
-        // Evaluate at x <- x+eta*c_i*d.
-        xnew->axpy(eta*shifts[order-1][j], d);
+      // Evaluate at x <- x+eta*c_i*d.
+      xnew->axpy(eta*shifts[order-1][j], d);
 
-        // Only evaluate at shifts where the weight is nonzero  
-        if( weights[order-1][j+1] != 0 ) {        
-            this->update(*xnew);
-            gCheck[i][2] += weights[order-1][j+1] * this->value(*xnew,tol);
-        }
+      // Only evaluate at shifts where the weight is nonzero  
+      if( weights[order-1][j+1] != 0 ) {
+        this->update(*xnew);
+        gCheck[i][2] += weights[order-1][j+1] * this->value(*xnew,tol);
+      }
     }
 
     gCheck[i][2] /= eta;
@@ -188,12 +193,12 @@ std::vector<std::vector<Real> > Objective<Real>::checkGradient( const Vector<Rea
 
     if (printToStream) {
       if (i==0) {
-      outStream << std::right
-                << std::setw(20) << "Step size"
-                << std::setw(20) << "grad'*dir"
-                << std::setw(20) << "FD approx"
-                << std::setw(20) << "abs error"
-                << "\n";
+        outStream << std::right
+                  << std::setw(20) << "Step size"
+                  << std::setw(20) << "grad'*dir"
+                  << std::setw(20) << "FD approx"
+                  << std::setw(20) << "abs error"
+                  << "\n";
       }
       outStream << std::scientific << std::setprecision(11) << std::right
                 << std::setw(20) << gCheck[i][0]

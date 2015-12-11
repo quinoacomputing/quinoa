@@ -53,6 +53,14 @@
 typedef Xpetra::CrsMatrix<Scalar, LocalOrdinal, GlobalOrdinal, Node> CrsMatrix;
 #endif
 
+#ifdef XPETRA_IO_SHORT
+typedef Xpetra::IO<Scalar, LocalOrdinal, GlobalOrdinal, Node> IO;
+#endif
+
+#ifdef XPETRA_ITERATOROPS_SHORT
+typedef Xpetra::IteratorOps<Scalar, LocalOrdinal, GlobalOrdinal, Node> IteratorOps;
+#endif
+
 #ifdef XPETRA_VECTOR_SHORT
 typedef Xpetra::Vector<Scalar, LocalOrdinal, GlobalOrdinal, Node> Vector;
 #endif
@@ -65,6 +73,10 @@ typedef Xpetra::MultiVector<Scalar, LocalOrdinal, GlobalOrdinal, Node> MultiVect
 typedef Xpetra::Matrix<Scalar, LocalOrdinal, GlobalOrdinal, Node> Matrix;
 #endif
 
+#ifdef XPETRA_MATRIXMATRIX_SHORT
+typedef Xpetra::MatrixMatrix<Scalar, LocalOrdinal, GlobalOrdinal, Node> MatrixMatrix;
+#endif
+
 #ifdef XPETRA_OPERATOR_SHORT
 typedef Xpetra::Operator<Scalar, LocalOrdinal, GlobalOrdinal, Node> Operator;
 #endif
@@ -75,6 +87,12 @@ typedef Xpetra::TpetraOperator<Scalar, LocalOrdinal, GlobalOrdinal, Node> Tpetra
 
 #ifdef XPETRA_BLOCKEDCRSMATRIX_SHORT
 typedef Xpetra::BlockedCrsMatrix<Scalar, LocalOrdinal, GlobalOrdinal, Node> BlockedCrsMatrix;
+#endif
+
+#ifdef HAVE_XPETRA_THYRA
+#ifdef XPETRA_THYRAUTILS_SHORT
+typedef Xpetra::ThyraUtils<Scalar, LocalOrdinal, GlobalOrdinal, Node> ThyraUtils;
+#endif
 #endif
 
 #ifdef XPETRA_CRSMATRIXWRAP_SHORT
@@ -105,11 +123,14 @@ typedef Xpetra::MatrixFactory2<Scalar, LocalOrdinal, GlobalOrdinal, Node> Matrix
 typedef Xpetra::TpetraCrsMatrix<Scalar, LocalOrdinal, GlobalOrdinal, Node> TpetraCrsMatrix;
 #endif
 
+// TODO remove this
 #ifdef XPETRA_EPETRACRSMATRIX_SHORT
 #ifndef XPETRA_EPETRA_NO_32BIT_GLOBAL_INDICES
-typedef Xpetra::EpetraCrsMatrix EpetraCrsMatrix;
+typedef Xpetra::EpetraCrsMatrixT<long long, Node> EpetraCrsMatrix64;
 #endif
+typedef Xpetra::EpetraCrsMatrixT<int, Node> EpetraCrsMatrix; // do we need this???
 #endif
+// TODO remove above entries
 
 #ifdef XPETRA_TPETRAMULTIVECTOR_SHORT
 typedef Xpetra::TpetraMultiVector<Scalar, LocalOrdinal, GlobalOrdinal, Node> TpetraMultiVector;

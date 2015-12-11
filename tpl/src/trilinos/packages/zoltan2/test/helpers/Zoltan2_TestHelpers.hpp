@@ -102,15 +102,21 @@ typedef Tpetra::Map<>::node_type znode_t;
 #include <TpetraCore_config.h>
 
 #ifdef HAVE_TPETRA_EXPLICIT_INSTANTIATION
-  typedef unsigned long zzgid_t;
 
-# ifdef HAVE_TPETRA_FLOAT
-    typedef float zscalar_t;
-# else
+# ifdef HAVE_TPETRA_DOUBLE
     typedef double zscalar_t;
+#   define HAVE_EPETRA_SCALAR_TYPE
+# else
+    typedef float zscalar_t;
 # endif
 
-# if defined HAVE_TPETRA_INT_LONG
+# if defined HAVE_TPETRA_INT_INT
+    typedef int zlno_t;
+    typedef int zgno_t;
+#   if defined HAVE_EPETRA_SCALAR_TYPE
+#     define HAVE_EPETRA_DATA_TYPES
+#   endif
+# elif defined HAVE_TPETRA_INT_LONG
     typedef int zlno_t;
     typedef long zgno_t;
 # elif defined HAVE_TPETRA_INT_LONG_LONG
@@ -119,9 +125,6 @@ typedef Tpetra::Map<>::node_type znode_t;
 # elif defined HAVE_TPETRA_INT_UNSIGNED
     typedef int zlno_t;
     typedef unsigned zgno_t;
-# elif defined HAVE_TPETRA_INT_INT
-    typedef int zlno_t;
-    typedef int zgno_t;
 # else
 #   error "Tpetra uses ETI, but no lno/gno instantiation is recognized"
 # endif
@@ -129,12 +132,10 @@ typedef Tpetra::Map<>::node_type znode_t;
 #else  // !HAVE_TPETRA_EXPLICIT_INSTANTIATION
 
 # if defined TEST_STK_DATA_TYPES
-    typedef size_t  zzgid_t;
     typedef double  zscalar_t;
     typedef ssize_t zlno_t;
     typedef size_t  zgno_t;
 # else  // !TEST_STK_DATA_TYPES
-    typedef unsigned long zzgid_t;
     typedef double zscalar_t;
     typedef int zlno_t;
     typedef int zgno_t;
@@ -142,6 +143,11 @@ typedef Tpetra::Map<>::node_type znode_t;
 # endif  // TEST_STK_DATA_TYPES
 
 #endif // HAVE_TPETRA_EXPLICIT_INSTANTIATION
+
+#ifndef HAVE_ZOLTAN2_EPETRA
+#  undef HAVE_EPETRA_SCALAR_TYPE
+#  undef HAVE_EPETRA_DATA_TYPES
+#endif
 
 //////////////////////////////////////////////////////////////////////////
 

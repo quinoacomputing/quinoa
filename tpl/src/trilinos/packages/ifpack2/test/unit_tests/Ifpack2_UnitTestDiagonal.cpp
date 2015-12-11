@@ -80,10 +80,6 @@
 #include <Ifpack2_Version.hpp>
 #include <iostream>
 
-#if defined(HAVE_IFPACK2_QD) && !defined(HAVE_TPETRA_EXPLICIT_INSTANTIATION)
-#include <qd/dd_real.h>
-#endif
-
 #include <Ifpack2_UnitTestHelpers.hpp>
 #include <Ifpack2_Diagonal.hpp>
 
@@ -107,7 +103,7 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL(Ifpack2Diagonal, Test0, Scalar, LocalOrdinal, 
 
   Teuchos::RCP<const Tpetra::CrsMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> > crsmatrix = tif_utest::create_test_matrix<Scalar,LocalOrdinal,GlobalOrdinal,Node>(rowmap);
 
-  Ifpack2::Diagonal<Tpetra::CrsMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> > prec(crsmatrix);
+  Ifpack2::Diagonal<Tpetra::RowMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> > prec(crsmatrix);
 
   prec.initialize();
   //trivial tests to insist that the preconditioner's domain/range maps are
@@ -184,18 +180,18 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL(Ifpack2Diagonal, Test1, Scalar, LocalOrdinal, 
   TEST_COMPARE_FLOATING_ARRAYS(yview, halfs(), Teuchos::ScalarTraits<Scalar>::eps());
 }
 
-#define UNIT_TEST_GROUP_SCALAR_ORDINAL(Scalar,LocalOrdinal,GlobalOrdinal) \
+#define UNIT_TEST_GROUP_SC_LO_GO(Scalar,LocalOrdinal,GlobalOrdinal) \
   TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT( Ifpack2Diagonal, Test0, Scalar, LocalOrdinal,GlobalOrdinal) \
   TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT( Ifpack2Diagonal, Test1, Scalar, LocalOrdinal,GlobalOrdinal)
 
-UNIT_TEST_GROUP_SCALAR_ORDINAL(double, int, int)
-#ifndef HAVE_IFPACK2_EXPLICIT_INSTANTIATION
-UNIT_TEST_GROUP_SCALAR_ORDINAL(float, short, int)
-#endif
+#include "Ifpack2_ETIHelperMacros.h"
 
-#if defined(HAVE_IFPACK2_QD) && !defined(HAVE_TPETRA_EXPLICIT_INSTANTIATION)
-UNIT_TEST_GROUP_SCALAR_ORDINAL(dd_real, int, int)
-#endif
+IFPACK2_ETI_MANGLING_TYPEDEFS()
 
-}//namespace <anonymous>
+// Test all enabled combinations of Scalar (SC), LocalOrdinal (LO),
+// and GlobalOrdinal (GO) types, where Scalar is real.
+
+IFPACK2_INSTANTIATE_SLG_REAL( UNIT_TEST_GROUP_SC_LO_GO )
+
+} // namespace (anonymous)
 

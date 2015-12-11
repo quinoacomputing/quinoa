@@ -17,6 +17,16 @@ IF (NOT ${PACKAGE_NAME}_ENABLE_Epetra AND NOT ${PACKAGE_NAME}_ENABLE_Tpetra)
   MESSAGE(FATAL_ERROR "Neither Epetra nor Tpetra are enabled.  MueLu requires at least one of them to be enabled.")
 ENDIF()
 
+# JJH: pulled this logic from Tpetra.  Comments below about CUDA are from Tpetra developers.
+# This is redundant, since MueLu also requires Kokkos, and Kokkos requires C++11.
+# "I left a special case for CUDA because I'm not sure whether TriBITS
+# counts C++11 as enabled in that case; please feel free to revise if
+# you know better."
+ASSERT_DEFINED(${PROJECT_NAME}_ENABLE_CXX11)
+ASSERT_DEFINED(TPL_ENABLE_CUDA)
+IF (NOT ${PROJECT_NAME}_ENABLE_CXX11 AND NOT TPL_ENABLE_CUDA)
+  MESSAGE(FATAL_ERROR "MueLu requires that C++11 support in Trilinos be enabled.  This should happen automatically if your compiler is C++11 compliant.")
+ENDIF ()
 
 # The following Tribits macro sets MueLu_ENABLE_EXPLICIT_INSTANTIATION
 # to be true if Trilinos_ENABLE_EXPLICIT_INSTANTIATION is true.
@@ -95,6 +105,17 @@ TRIBITS_ADD_OPTION_AND_DEFINE(${PACKAGE_NAME}_ENABLE_Boost_for_real
   "Enable Boost"
   OFF)
 
+# Define option to enable code that is refactored to use Kokkos
+TRIBITS_ADD_OPTION_AND_DEFINE(
+  ${PACKAGE_NAME}_ENABLE_Kokkos_Refactor
+  HAVE_${PACKAGE_NAME_UC}_KOKKOS_REFACTOR
+  "Enable MueLu code refactored to use Kokkos."
+  NO)
+
+# Define HAVE_MUELU_STRATIMIKOS if Stratimikos package is enabled
+ASSERT_DEFINED(${PACKAGE_NAME}_ENABLE_Stratimikos)
+GLOBAL_SET(HAVE_${PACKAGE_NAME_UC}_STRATIMIKOS ${${PACKAGE_NAME}_ENABLE_Stratimikos})
+
 # Explicit instantiation options:
 # - MueLu_ENABLE_EXPLICIT_INSTANTIATION
 # - Enabling/disabling of scalar/ordinal types is controlled by Tpetra
@@ -111,17 +132,17 @@ IF(${PACKAGE_NAME}_ENABLE_EXPLICIT_INSTANTIATION)
     GLOBAL_SET(HAVE_${PACKAGE_NAME_UC}_INST_DOUBLE_INT_INT OFF)
   ENDIF()
 
-  IF(${PACKAGE_NAME}_ENABLE_EXAMPLES OR ${PACKAGE_NAME}_ENABLE_TESTS)
-    IF (NOT ${PACKAGE_NAME}_INST_DOUBLE_INT_INT)
-      MESSAGE(FATAL_ERROR "Error: MueLu examples and tests needs explicit template instantation with <double, int, int>. Turn on the options Tpetra_INST_DOUBLE and Tpetra_INST_INT_INT or disable examples and tests.")
-    ENDIF()
-  ENDIF()
+  #IF(${PACKAGE_NAME}_ENABLE_EXAMPLES OR ${PACKAGE_NAME}_ENABLE_TESTS)
+  #  IF (NOT ${PACKAGE_NAME}_INST_DOUBLE_INT_INT)
+  #    MESSAGE(FATAL_ERROR "Error: MueLu examples and tests needs explicit template instantation with <double, int, int>. Turn on the options Tpetra_INST_DOUBLE and Tpetra_INST_INT_INT or disable examples and tests.")
+  #  ENDIF()
+  #ENDIF()
 
-  IF(${PACKAGE_NAME}_ENABLE_Epetra)
-    IF (NOT ${PACKAGE_NAME}_INST_DOUBLE_INT_INT)
-      MESSAGE(FATAL_ERROR "Error: MueLu needs explicit template instantation with <double, int, int> when enabling Epetra. Turn on the options Tpetra_INST_DOUBLE and Tpetra_INST_INT_INT or disable Epetra.")
-    ENDIF()
-  ENDIF()
+  #IF(${PACKAGE_NAME}_ENABLE_Epetra)
+  #  IF (NOT ${PACKAGE_NAME}_INST_DOUBLE_INT_INT)
+  #    MESSAGE(FATAL_ERROR "Error: MueLu needs explicit template instantation with <double, int, int> when enabling Epetra. Turn on the options Tpetra_INST_DOUBLE and Tpetra_INST_INT_INT or disable Epetra.")
+  #  ENDIF()
+  #ENDIF()
 
   # <double, int, long>
   IF(Tpetra_INST_DOUBLE AND Tpetra_INST_INT_LONG)
@@ -134,7 +155,7 @@ IF(${PACKAGE_NAME}_ENABLE_EXPLICIT_INSTANTIATION)
 
 
   # <double, int, long long int>
-   IF(Tpetra_INST_DOUBLE AND Tpetra_INST_INT_LONG_LONG)
+  IF(Tpetra_INST_DOUBLE AND Tpetra_INST_INT_LONG_LONG)
     GLOBAL_SET(${PACKAGE_NAME}_INST_DOUBLE_INT_LONGLONGINT ON)
     GLOBAL_SET(HAVE_${PACKAGE_NAME_UC}_INST_DOUBLE_INT_LONGLONGINT ON)
   ELSE()
@@ -167,6 +188,31 @@ IF(${PACKAGE_NAME}_ENABLE_EXPLICIT_INSTANTIATION)
   MESSAGE(STATUS "<double,  int, long long> : ${${PACKAGE_NAME}_INST_DOUBLE_INT_LONGLONGINT}")
   MESSAGE(STATUS "<complex, int, int>       : ${${PACKAGE_NAME}_INST_COMPLEX_INT_INT}")
 
+  # If Tpetra is enabled, determine which Nodes are used
+  IF (${PACKAGE_NAME}_ENABLE_Tpetra)
+    GLOBAL_SET (HAVE_${PACKAGE_NAME_UC}_SERIAL  ${Tpetra_INST_SERIAL})
+    GLOBAL_SET (HAVE_${PACKAGE_NAME_UC}_PTHREAD ${Tpetra_INST_PTHREAD})
+    GLOBAL_SET (HAVE_${PACKAGE_NAME_UC}_OPENMP  ${Tpetra_INST_OPENMP})
+    GLOBAL_SET (HAVE_${PACKAGE_NAME_UC}_CUDA    ${Tpetra_INST_CUDA})
+  ENDIF()
+  IF (${PACKAGE_NAME}_ENABLE_Epetra)
+    # If Epetra is active, always activate SerialNode
+    GLOBAL_SET (HAVE_${PACKAGE_NAME_UC}_SERIAL ON)
+  ENDIF ()
+  MESSAGE(STATUS "HAVE_${PACKAGE_NAME_UC}_SERIAL       : ${HAVE_${PACKAGE_NAME_UC}_SERIAL}")
+  MESSAGE(STATUS "HAVE_${PACKAGE_NAME_UC}_PTHREAD      : ${HAVE_${PACKAGE_NAME_UC}_PTHREAD}")
+  MESSAGE(STATUS "HAVE_${PACKAGE_NAME_UC}_OPENMP       : ${HAVE_${PACKAGE_NAME_UC}_OPENMP}")
+  MESSAGE(STATUS "HAVE_${PACKAGE_NAME_UC}_CUDA         : ${HAVE_${PACKAGE_NAME_UC}_CUDA}")
+ELSE()
+  # ETI is turned off
+
+  # If Epetra only is enabled, ETI is off by default. We have to make sure that
+  # the HAVE_MUELU_SERIAL variable is set such that the IfpackSmoother and other
+  # purely Epetra-related routines are enabled properly
+  IF (${PACKAGE_NAME}_ENABLE_Epetra)
+    # If Epetra only is active, only activate SerialNode by default
+    GLOBAL_SET (HAVE_${PACKAGE_NAME_UC}_SERIAL  ON)
+  ENDIF()
 ENDIF()
 
 # HAVE_MUELU_COMPLEX=ON iff:
@@ -183,6 +229,25 @@ ELSE()
   SET(HAVE_${PACKAGE_NAME_UC}_COMPLEX OFF)
 ENDIF()
 
+# mfh 18 Aug 2015: Revise whether complex is enabled, based on
+# Tpetra's settings.  These are independent of whether ETI is enabled!
+ASSERT_DEFINED(${PACKAGE_NAME}_ENABLE_Tpetra)
+IF(${PACKAGE_NAME}_ENABLE_Tpetra)
+  ASSERT_DEFINED(Tpetra_INST_COMPLEX_DOUBLE)
+  IF(NOT Tpetra_INST_COMPLEX_DOUBLE)
+    SET(HAVE_${PACKAGE_NAME_UC}_COMPLEX OFF)
+  ENDIF()
+ENDIF()
+
+# The HAVE_MUELU_TPETRA_INST_INT_INT flag is enabled if Tpetra is enabled
+# with TPETRA_INST_INT_INT. This flag is used to control whether we need
+# special stub implementations for the MueLu::Tpetra stack with GO=int.
+# taw 9 Oct 2015: This is independent from ETI on/off
+IF (${PACKAGE_NAME}_ENABLE_Tpetra)
+  ASSERT_DEFINED(Tpetra_INST_INT_INT)
+  SET (${PACKAGE_NAME}_TPETRA_INST_INT_INT ${Tpetra_INST_INT_INT})
+ENDIF()
+GLOBAL_SET (HAVE_MUELU_TPETRA_INST_INT_INT ${${PACKAGE_NAME}_TPETRA_INST_INT_INT})
 
 # ML's MMM
 TRIBITS_ADD_OPTION_AND_DEFINE(${PACKAGE_NAME}_ENABLE_ML_MMM
@@ -198,7 +263,28 @@ ENDIF ()
 # C) Add the libraries, tests, and examples
 #
 
+# The build has to be in a very specific order because of the existence of Matlab interface:
+#   1. Build the majority of the code in src/   [except src/Interface; src/CMakeLists.txt is responsible for ignoring that]
+#   2. Build matlab factories                   [located in matlab/; matlab/bin is ignored in matlab/CMakeLists.txt]
+#   3. Build the interpreter                    [requires all factories]
+#   4. Build the adapters                       [required for Matlab]
+#   5. Build the rest of matlab code
+# This order required splitting of the src/ library into two: muelu and muelu-interface, as steps 1. and 3. are separated.
+# A simple diagram explains this:
+#                                               /  muelu
+# matlab/bin - muelu-adapters - muelu-interface      |
+#                                               \  matlab
 ADD_SUBDIRECTORY(src)
+
+if(TPL_ENABLE_MATLAB)
+  if (NOT ${PROJECT_NAME}_ENABLE_EXPLICIT_INSTANTIATION)
+    MESSAGE(FATAL_ERROR "Muemex interfaces require \"-DTrilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON\".")
+  ENDIF()
+  IF(NOT ${PACKAGE_NAME}_ENABLE_Epetra OR NOT ${PACKAGE_NAME}_ENABLE_Tpetra)
+      MESSAGE(FATAL_ERROR "Muemex interfaces require \"-DTrilinos_ENABLE_Epetra:BOOL=ON\" and \"-DTrilinos_ENABLE_Tpetra:BOOL=ON\".")
+  ENDIF()
+ENDIF()
+
 if(TPL_ENABLE_MATLAB)
   ADD_SUBDIRECTORY(matlab)
 ENDIF()
@@ -206,6 +292,7 @@ ADD_SUBDIRECTORY(src/Interface)
 ADD_SUBDIRECTORY(adapters)
 if(TPL_ENABLE_MATLAB)
   ADD_SUBDIRECTORY(matlab/bin)
+  ADD_SUBDIRECTORY(matlab/tests)
 ENDIF()
 
 #address bugzilla bug#6236
@@ -213,7 +300,6 @@ IF (IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/doc
     AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/doc/CMakeLists.txt)
   ADD_SUBDIRECTORY(doc)
 ENDIF()
-
 
 
 TRIBITS_ADD_EXAMPLE_DIRECTORIES(example)

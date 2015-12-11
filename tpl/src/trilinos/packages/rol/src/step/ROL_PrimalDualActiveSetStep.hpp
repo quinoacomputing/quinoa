@@ -194,21 +194,6 @@ private:
     return xtmp_->norm();
   }
 
-  void KrylovFactory(Teuchos::ParameterList &parlist) {
-    EKrylov ekv  = StringToEKrylov(parlist.get("Krylov Method","Conjugate Residuals"));  
-    Real absTol  = parlist.get("Absolute Krylov Tolerance", 1.e-4);
-    Real relTol  = parlist.get("Relative Krylov Tolerance", 1.e-2);
-    int maxit    = parlist.get("Maximum Number of Krylov Iterations", 20);
-    bool inexact = parlist.get("Use Inexact Hessian-Times-A-Vector",false);
-    switch(ekv) {
-      case KRYLOV_CR:
-        krylov_ = Teuchos::rcp( new ConjugateResiduals<Real>(absTol,relTol,maxit,inexact) ); break;
-      case KRYLOV_CG:
-      default:
-        krylov_ = Teuchos::rcp( new ConjugateGradients<Real>(absTol,relTol,maxit,inexact) ); break;
-    }
-  }
-
 public:
   /** \brief Constructor.
      
@@ -217,22 +202,31 @@ public:
                                       a secant approximation of the Hessian
   */
   PrimalDualActiveSetStep( Teuchos::ParameterList &parlist ) 
-    : Step<Real>::Step(), iterCR_(0), flagCR_(0), iter_(0), flag_(0), neps_(-ROL_EPSILON), feasible_(false) {
-    esec_    = StringToESecant(parlist.get("Secant Type","Limited-Memory BFGS"));
-    maxit_   = parlist.get("PDAS Maximum Number of Iterations",10);
-    stol_    = parlist.get("PDAS Relative Step Tolerance",1.e-8);
-    gtol_    = parlist.get("PDAS Relative Gradient Tolerance",1.e-6);
-    scale_   = parlist.get("PDAS Dual Scaling", 1.0);
-  
-    useSecantHessVec_ = parlist.get("Use Secant Hessian-Times-A-Vector", false); 
-    useSecantPrecond_ = parlist.get("Use Secant Preconditioning", false);
-    secant_  = Teuchos::null;
+    : Step<Real>::Step(),
+      hessian_(Teuchos::null), precond_(Teuchos::null), krylov_(Teuchos::null),
+      iterCR_(0), flagCR_(0), itol_(0.),
+      maxit_(0), iter_(0), flag_(0), stol_(0.), gtol_(0.), scale_(0.),
+      neps_(-ROL_EPSILON), feasible_(false),
+      lambda_(Teuchos::null), xlam_(Teuchos::null), x0_(Teuchos::null),
+      xbnd_(Teuchos::null), As_(Teuchos::null), xtmp_(Teuchos::null),
+      res_(Teuchos::null), Ag_(Teuchos::null), rtmp_(Teuchos::null),
+      gtmp_(Teuchos::null),
+      esec_(SECANT_LBFGS), secant_(Teuchos::null), useSecantPrecond_(false),
+      useSecantHessVec_(false) {
+    // Algorithmic parameters
+    maxit_ = parlist.sublist("Step").sublist("Primal Dual Active Set").get("Iteration Limit",10);
+    stol_ = parlist.sublist("Step").sublist("Primal Dual Active Set").get("Relative Step Tolerance",1.e-8);
+    gtol_ = parlist.sublist("Step").sublist("Primal Dual Active Set").get("Relative Gradient Tolerance",1.e-6);
+    scale_ = parlist.sublist("Step").sublist("Primal Dual Active Set").get("Dual Scaling", 1.0);
+    // Build secant object
+    esec_ = StringToESecant(parlist.sublist("General").sublist("Secant").get("Type","Limited-Memory BFGS"));
+    useSecantHessVec_ = parlist.sublist("General").sublist("Secant").get("Use as Hessian", false); 
+    useSecantPrecond_ = parlist.sublist("General").sublist("Secant").get("Use as Preconditioner", false);
     if ( useSecantHessVec_ || useSecantPrecond_ ) {
-      int L   = parlist.get("Maximum Secant Storage",10);
-      int BB  = parlist.get("Barzilai-Borwein",1);
-      secant_ = getSecant<Real>(esec_,L,BB); 
+      secant_ = SecantFactory<Real>(parlist);
     }
-    KrylovFactory(parlist);
+    // Build Krylov object
+    krylov_ = KrylovFactory<Real>(parlist);
   }
 
   /** \brief Initialize step.  
@@ -330,11 +324,11 @@ public:
       /********************************************************************/
       As_->zero();                               // As   = 0
    
-      con.setVectorToUpperBound(*xbnd_);         // xbnd = u        
-      xbnd_->axpy(-1.0,x);                       // xbnd = u - x    
-      xtmp_->set(*xbnd_);                        // tmp  = u - x    
-      con.pruneUpperActive(*xtmp_,*xlam_,neps_); // tmp  = I(u - x) 
-      xbnd_->axpy(-1.0,*xtmp_);                  // xbnd = A(u - x)  
+      con.setVectorToUpperBound(*xbnd_);         // xbnd = u
+      xbnd_->axpy(-1.0,x);                       // xbnd = u - x
+      xtmp_->set(*xbnd_);                        // tmp  = u - x
+      con.pruneUpperActive(*xtmp_,*xlam_,neps_); // tmp  = I(u - x)
+      xbnd_->axpy(-1.0,*xtmp_);                  // xbnd = A(u - x)
       As_->plus(*xbnd_);                         // As  += A(u - x)
 
       con.setVectorToLowerBound(*xbnd_);         // xbnd = l
@@ -344,7 +338,7 @@ public:
       xbnd_->axpy(-1.0,*xtmp_);                  // xbnd = A(l - x)
       As_->plus(*xbnd_);                         // As  += A(l - x)
       /********************************************************************/
-      // APPLY HESSIAN TO ACTIVE COMPONENTS OF s AND REMOVE INACTIVE 
+      // APPLY HESSIAN TO ACTIVE COMPONENTS OF s AND REMOVE INACTIVE
       /********************************************************************/
       itol_ = std::sqrt(ROL_EPSILON);
       if ( useSecantHessVec_ && secant_ != Teuchos::null ) {        // IHAs = H*As

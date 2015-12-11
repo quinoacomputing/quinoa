@@ -45,11 +45,10 @@
 /// \file Tpetra_Experimental_BlockCrsMatrix_decl.hpp
 /// \brief Declaration of Tpetra::Experimental::BlockCrsMatrix
 
-#include <ctime>
-#include <Tpetra_ConfigDefs.hpp>
-#include <Tpetra_CrsGraph.hpp>
-#include <Tpetra_RowMatrix.hpp>
-#include <Tpetra_Experimental_BlockMultiVector.hpp>
+#include "Tpetra_CrsGraph.hpp"
+#include "Tpetra_RowMatrix.hpp"
+#include "Tpetra_Experimental_BlockMultiVector.hpp"
+#include "Tpetra_CrsMatrix_decl.hpp"
 
 namespace Tpetra {
 namespace Experimental {
@@ -158,6 +157,13 @@ public:
   typedef GO global_ordinal_type;
   //! The Kokkos Node type.
   typedef Node node_type;
+
+  //! The Kokkos::Device specialization that this class uses.
+  typedef typename Node::device_type device_type;
+  //! The Kokkos execution space that this class uses.
+  typedef typename device_type::execution_space execution_space;
+  //! The Kokkos memory space that this class uses.
+  typedef typename device_type::memory_space memory_space;
 
   typedef ::Tpetra::Map<LO, GO, node_type> map_type;
   typedef Tpetra::MultiVector<Scalar, LO, GO, node_type> mv_type;
@@ -350,63 +356,99 @@ public:
                           const Scalar omega,
                           const ESweepDirection direction) const;
 
-  /// \brief Replace values at the given column indices, in the given row.
+  /// \brief Replace values at the given (mesh, i.e., block) column
+  ///   indices, in the given (mesh, i.e., block) row.
   ///
-  /// \param localRowInd [in] Local index of the row in which to replace.
+  /// \param localRowInd [in] Local mesh (i.e., block) index of the
+  ///   row in which to replace.
   ///
-  /// \param colInds [in] Local column ind{ex,ices} at which to
-  ///   replace values.  colInds[k] is the local column index whose
-  ///   new values start at vals[getBlockSize() * getBlockSize() * k],
-  ///   and colInds has length at least numColInds.  This method will
-  ///   only access the first numColInds entries of colInds.
+  /// \param colInds [in] Local mesh (i.e., block) column ind{ex,ices}
+  ///   at which to replace values.  \c colInds[k] is the local column
+  ///   index whose new values start at
+  ///   <tt>vals[getBlockSize() * getBlockSize() * k]</tt>,
+  ///   and \c colInds has length at least \c numColInds.  This method
+  ///   will only access the first \c numColInds entries of \c colInds.
   ///
   /// \param vals [in] The new values to use at the given column
-  ///   indices.
+  ///   indices.  Values for each block are stored contiguously, in
+  ///   row major layout, with no padding between rows or between
+  ///   blocks.  Thus, if <tt>b = getBlockSize()</tt>, then
+  ///   <tt>vals[k*b*b] .. vals[(k+1)*b*b-1]</tt> are the values to
+  ///   use for block \c colInds[k].
   ///
-  /// \param numColInds [in] The number of entries of colInds.
+  /// \param numColInds [in] The number of entries of \c colInds.
   ///
-  /// \return The number of valid column indices in colInds.  This
-  ///   method succeeded if and only if the return value equals the
-  ///   input argument numColInds.
+  /// \return The number of valid entries of \c colInds.  \c colInds[k]
+  ///   is valid if and only if it is a valid local mesh (i.e., block)
+  ///   column index.  This method succeeded if and only if the return
+  ///   value equals the input argument \c numColInds.
   LO
   replaceLocalValues (const LO localRowInd,
                       const LO colInds[],
                       const Scalar vals[],
                       const LO numColInds) const;
 
-  /// \brief Sum into values at the given column indices, in the given row.
+  /// \brief Sum into values at the given (mesh, i.e., block) column
+  ///   indices, in the given (mesh, i.e., block) row.
   ///
-  /// \param localRowInd [in] Local index of the row into which to sum.
+  /// \param localRowInd [in] Local mesh (i.e., block) index of the
+  ///   row in which to sum.
   ///
-  /// \param colInds [in] Local column ind{ex,ices} at which to sum
-  ///   into values.  colInds[k] is the local column index whose new
-  ///   values start at vals[getBlockSize() * getBlockSize() * k], and
-  ///   colInds has length at least numColInds.  This method will only
-  ///   access the first numColInds entries of colInds.
+  /// \param colInds [in] Local mesh (i.e., block) column ind{ex,ices}
+  ///   at which to sum.  \c colInds[k] is the local column index whose
+  ///   new values start at
+  ///   <tt>vals[getBlockSize() * getBlockSize() * k]</tt>,
+  ///   and \c colInds has length at least \c numColInds.  This method
+  ///   will only access the first \c numColInds entries of \c colInds.
   ///
-  /// \param vals [in] The new values to sum into at the given column
-  ///   indices.
+  /// \param vals [in] The new values to sum in at the given column
+  ///   indices.  Values for each block are stored contiguously, in
+  ///   row major layout, with no padding between rows or between
+  ///   blocks.  Thus, if <tt>b = getBlockSize()</tt>, then
+  ///   <tt>vals[k*b*b] .. vals[(k+1)*b*b-1]</tt> are the values to
+  ///   use for block \c colInds[k].
   ///
-  /// \param numColInds [in] The number of entries of colInds.
+  /// \param numColInds [in] The number of entries of \c colInds.
   ///
-  /// \return The number of valid column indices in colInds.  This
-  ///   method succeeded if and only if the return value equals the
-  ///   input argument numColInds.
+  /// \return The number of valid entries of \c colInds.  \c colInds[k]
+  ///   is valid if and only if it is a valid local mesh (i.e., block)
+  ///   column index.  This method succeeded if and only if the return
+  ///   value equals the input argument \c numColInds.
   LO
   sumIntoLocalValues (const LO localRowInd,
                       const LO colInds[],
                       const Scalar vals[],
                       const LO numColInds) const;
 
-  /// \brief Get a view of the row, using local indices.
+  /// \brief Get a view of the (mesh, i.e., block) row, using local
+  ///   (mesh, i.e., block) indices.
   ///
-  /// Since this object has a graph (which we assume is fill complete
-  /// on input to the constructor), it has a column Map, and it stores
-  /// column indices as local indices.  This means you can view the
-  /// column indices as local indices directly.  However, you may
-  /// <i>not</i> view them as global indices directly, since the
-  /// column indices are not stored that way in the graph.
+  /// This matrix has a graph, and we assume that the graph is fill
+  /// complete on input to the matrix's constructor.  Thus, the matrix
+  /// has a column Map, and it stores column indices as local indices.
+  /// This means you can view the column indices as local indices
+  /// directly.  However, you may <i>not</i> view them as global
+  /// indices directly, since the column indices are not stored as
+  /// global indices in the graph.
   ///
+  /// \param localRowInd [in] Local (mesh, i.e., block) row index.
+  ///
+  /// \param colInds [out] If \c localRowInd is valid on the calling
+  ///   process, then on output, this is a pointer to the local (mesh,
+  ///   i.e., block) column indices in the given (mesh, i.e., block)
+  ///   row.  If localRowInd is <i>not</i> valid, then this is
+  ///   undefined.  (Please check the return value of this method.)
+  ///
+  /// \param vals [out] If \c localRowInd is valid on the calling
+  ///   process, then on output, this is a pointer to the row's
+  ///   values.  If localRowInd is <i>not</i> valid, then this is
+  ///   undefined.  (Please check the return value of this method.)
+  ///
+  /// \param numInds [in] The number of (mesh, i.e., block) indices in
+  ///   \c colInds on output.
+  ///
+  /// \return 0 if \c localRowInd is valid, else
+  ///   <tt>Teuchos::OrdinalTraits<LO>::invalid()</tt>.
   LO
   getLocalRowView (const LO localRowInd,
                    const LO*& colInds,
@@ -659,29 +701,24 @@ private:
   //! The number of degrees of freedom per mesh point.
   LO blockSize_;
 
-#if defined(HAVE_TPETRACLASSIC_SERIAL) || defined(HAVE_TPETRACLASSIC_TBB) || defined(HAVE_TPETRACLASSIC_THREADPOOL) || defined(HAVE_TPETRACLASSIC_OPENMP)
-  //! Raw pointer to the graph's array of row offsets.
-  const size_t* ptr_;
-#else
   /// \brief The graph's array of row offsets.
   ///
   /// FIXME (mfh 23 Mar 2015) Once we write a Kokkos kernel for the
   /// mat-vec, we won't need a host version of this.
   typename crs_graph_type::local_graph_type::row_map_type::HostMirror ptr_;
-#endif
 
   //! Raw pointer to the graph's array of column indices.
   const LO* ind_;
   /// \brief Array of values in the matrix.
   ///
-  /// This is stored as a Teuchos::ArrayRCP, so that BlockCrsMatrix
-  /// has view (shallow copy) semantics.  In the future, we will want
-  /// to replace this with Kokkos::View.
-  Teuchos::ArrayRCP<impl_scalar_type> valView_;
+  /// Each blockSize_ x blockSize_ block is stored contiguously, in
+  /// row major format, with no padding either inside a block or
+  /// between blocks.
+  Kokkos::View<impl_scalar_type*, device_type> valView_;
   /// \brief Raw pointer version of valView_.
   ///
   /// It must always be true, outside of the constructors, that
-  /// <tt>valView_.getRawPtr() == val_</tt>.
+  /// <tt>valView_.ptr_on_device() == val_</tt>.
   impl_scalar_type* val_;
 
   /// \brief Column Map block multivector (only initialized if needed).
@@ -1021,241 +1058,13 @@ public:
   /// This method computes and returns the Frobenius norm of the
   /// matrix.  The Frobenius norm \f$\|A\|_F\f$ for the matrix
   /// \f$A\f$ is defined as
-  /// \f$\|A\|_F = \sqrt{ \sum_{i,j} |\a_{ij}|^2 }\f$.
+  /// \f$\|A\|_F = \sqrt{ \sum_{i,j} |A(i,j)|^2 }\f$.
   /// It has the same value as the Euclidean norm of a vector made
   /// by stacking the columns of \f$A\f$.
   virtual typename Tpetra::RowMatrix<Scalar, LO, GO, Node>::mag_type
   getFrobeniusNorm () const;
   //@}
 };
-
-
-  /// \brief Helper function to write a BlockCrsMatrix.  Calls the 3-argument version.
-  template<class Scalar, class LO, class GO, class Node>
-  void blockCrsMatrixWriter(BlockCrsMatrix<Scalar,LO,GO,Node> const &A, std::string const &fileName) {
-    Teuchos::ParameterList pl;
-    std::ofstream out;
-    out.open(fileName.c_str());
-    blockCrsMatrixWriter(A, out, pl);
-  }
-
-  /// \brief Helper function to write a BlockCrsMatrix.  Calls the 3-argument version.
-  template<class Scalar, class LO, class GO, class Node>
-  void blockCrsMatrixWriter(BlockCrsMatrix<Scalar,LO,GO,Node> const &A, std::string const &fileName, Teuchos::ParameterList const &params) {
-    std::ofstream out;
-    out.open(fileName.c_str());
-    blockCrsMatrixWriter(A, out, params);
-  }
-
-  /// \brief Helper function to write a BlockCrsMatrix.  Calls the 3-argument version.
-  template<class Scalar, class LO, class GO, class Node>
-  void blockCrsMatrixWriter(BlockCrsMatrix<Scalar,LO,GO,Node> const &A, std::ostream &os) {
-    Teuchos::ParameterList pl;
-    blockCrsMatrixWriter(A, os, pl);
-  }
-
-  /*! \brief Helper function to write a BlockCrsMatrix.
-
-    Writes the block matrix to the specified ostream in point form.  The following parameter list options are available:
-
-    - "always use parallel algorithm" : on one process, this forces the use of the parallel strip-mining algorithm (default=false)
-    - "print MatrixMarket header"     : if false, don't print the MatrixMarket header (default=true)
-    - "precision"                     : precision to be used in printing matrix entries (default=C++ default)
-    - "zero-based indexing"           : if true, print the matrix with 0-based indexing (default=false)
-  */
-  template<class Scalar, class LO, class GO, class Node>
-  void blockCrsMatrixWriter(BlockCrsMatrix<Scalar,LO,GO,Node> const &A, std::ostream &os, Teuchos::ParameterList const &params) {
-
-    using Teuchos::RCP;
-    using Teuchos::rcp;
-
-    typedef Teuchos::OrdinalTraits<GO>                     TOT;
-    typedef BlockCrsMatrix<Scalar, LO, GO, Node>           block_crs_matrix_type;
-    typedef Tpetra::Import<LO, GO, Node>                   import_type;
-    typedef Tpetra::Map<LO, GO, Node>                      map_type;
-    typedef Tpetra::MultiVector<GO, LO, GO, Node>          mv_type;
-    typedef Tpetra::CrsGraph<LO, GO, Node>                 crs_graph_type;
-
-    RCP<const map_type> const rowMap = A.getRowMap(); //"mesh" map
-    RCP<const Teuchos::Comm<int> > comm = rowMap->getComm();
-    const int myRank = comm->getRank();
-    const size_t numProcs = comm->getSize();
-
-    // If true, force use of the import strip-mining infrastructure.  This is useful for debugging on one process.
-    bool alwaysUseParallelAlgorithm = false;
-    if (params.isParameter("always use parallel algorithm"))
-      alwaysUseParallelAlgorithm = params.get<bool>("always use parallel algorithm");
-    bool printMatrixMarketHeader = true;
-    if (params.isParameter("print MatrixMarket header"))
-      printMatrixMarketHeader = params.get<bool>("print MatrixMarket header");
-
-    if (printMatrixMarketHeader && myRank==0) {
-      std::time_t now = std::time(NULL);
-      os << "%%MatrixMarket matrix coordinate real general" << std::endl;
-      os << "% time stamp: " << ctime(&now);
-      os << "% written from " << numProcs << " processes" << std::endl;
-      os << "% point representation of Tpetra::Experimental::BlockCrsMatrix" << std::endl;
-      size_t numRows = A.getGlobalNumRows();
-      size_t numCols = A.getGlobalNumCols();
-      os << "% " << numRows << " block rows, " << numCols << " block columns" << std::endl;
-      const LO blockSize = A.getBlockSize();
-      os << "% block size " << blockSize << std::endl;
-      os << numRows*blockSize << " " << numCols*blockSize << " " << A.getGlobalNumEntries()*blockSize*blockSize << std::endl;
-    }
-
-    if (numProcs==1 && !alwaysUseParallelAlgorithm) {
-      writeMatrixStrip(A,os,params);
-    } else {
-      size_t numRows = rowMap->getNodeNumElements();
-
-      //Create source map
-      RCP<const map_type> allMeshGidsMap = rcp(new map_type(TOT::invalid(), numRows, A.getIndexBase(), comm));
-      //Create and populate vector of mesh GIDs corresponding to this pid's rows.
-      //This vector will be imported one pid's worth of information at a time to pid 0.
-      mv_type allMeshGids(allMeshGidsMap,1);
-      Teuchos::ArrayRCP<GO> allMeshGidsData = allMeshGids.getDataNonConst(0);
-
-      for (size_t i=0; i<numRows; i++)
-        allMeshGidsData[i] = rowMap->getGlobalElement(i);
-      allMeshGidsData = Teuchos::null;
-
-      // Now construct a RowMatrix on PE 0 by strip-mining the rows of the input matrix A.
-      size_t stripSize = allMeshGids.getGlobalLength() / numProcs;
-      size_t remainder = allMeshGids.getGlobalLength() % numProcs;
-      size_t curStart = 0;
-      size_t curStripSize = 0;
-      Teuchos::Array<GO> importMeshGidList;
-      for (size_t i=0; i<numProcs; i++) {
-        if (myRank==0) { // Only PE 0 does this part
-          curStripSize = stripSize;
-          if (i<remainder) curStripSize++; // handle leftovers
-          importMeshGidList.resize(curStripSize); // Set size of vector to max needed
-          for (size_t j=0; j<curStripSize; j++) importMeshGidList[j] = j + curStart + A.getIndexBase();
-          curStart += curStripSize;
-        }
-        // The following import map should be non-trivial only on PE 0.
-        TEUCHOS_TEST_FOR_EXCEPTION(myRank>0 && curStripSize!=0,
-          std::runtime_error, "Tpetra::Experimental::blockCrsMatrixWriter: (pid "
-          << myRank << ") map size should be zero, but is " << curStripSize);
-        RCP<map_type> importMeshGidMap = rcp(new map_type(TOT::invalid(), importMeshGidList(), A.getIndexBase(), comm));
-        import_type gidImporter(allMeshGidsMap, importMeshGidMap);
-        mv_type importMeshGids(importMeshGidMap, 1);
-        importMeshGids.doImport(allMeshGids, gidImporter, INSERT);
-
-        // importMeshGids now has a list of GIDs for the current strip of matrix rows.
-        // Use these values to build another importer that will get rows of the matrix.
-
-        // The following import map will be non-trivial only on PE 0.
-        Teuchos::ArrayRCP<const GO> importMeshGidsData = importMeshGids.getData(0);
-        Teuchos::Array<GO> importMeshGidsGO;
-        importMeshGidsGO.reserve(importMeshGidsData.size());
-        for (typename Teuchos::ArrayRCP<const GO>::size_type j=0; j<importMeshGidsData.size(); ++j)
-          importMeshGidsGO.push_back(importMeshGidsData[j]);
-        RCP<const map_type> importMap = rcp(new map_type(TOT::invalid(), importMeshGidsGO(), rowMap->getIndexBase(), comm) );
-
-        import_type importer(rowMap,importMap );
-        size_t numEntriesPerRow = A.getCrsGraph().getGlobalMaxNumRowEntries();
-        RCP<crs_graph_type> graph = createCrsGraph(importMap,numEntriesPerRow);
-        RCP<const map_type> domainMap = A.getCrsGraph().getDomainMap();
-        graph->doImport(A.getCrsGraph(), importer, INSERT);
-        graph->fillComplete(domainMap, importMap);
-
-        block_crs_matrix_type importA(*graph, A.getBlockSize());
-        importA.doImport(A, importer, INSERT);
-
-        // Finally we are ready to write this strip of the matrix
-        writeMatrixStrip(importA, os, params);
-      }
-    }
-  }
-
-  /*! @brief Helper function called by blockCrsMatrixWriter.
-
-  This function should not be called directly.
-  */
-  template<class Scalar, class LO, class GO, class Node>
-  void writeMatrixStrip(BlockCrsMatrix<Scalar,LO,GO,Node> const &A, std::ostream &os, Teuchos::ParameterList const &params) {
-
-    typedef Tpetra::Map<LO, GO, Node>                      map_type;
-
-    size_t numRows = A.getGlobalNumRows();
-    RCP<const map_type> rowMap = A.getRowMap();
-    RCP<const map_type> colMap = A.getColMap();
-    RCP<const Teuchos::Comm<int> > comm = rowMap->getComm();
-    const int myRank = comm->getRank();
-
-    const size_t meshRowOffset = rowMap->getIndexBase();
-    const size_t meshColOffset = colMap->getIndexBase();
-    TEUCHOS_TEST_FOR_EXCEPTION(meshRowOffset != meshColOffset,
-      std::runtime_error, "Tpetra::Experimental::writeMatrixStrip: "
-      "mesh row index base != mesh column index base");
-
-    if (myRank !=0) {
-
-      TEUCHOS_TEST_FOR_EXCEPTION(A.getNodeNumRows() != 0,
-        std::runtime_error, "Tpetra::Experimental::writeMatrixStrip: pid "
-        << myRank << " should have 0 rows but has " << A.getNodeNumRows());
-      TEUCHOS_TEST_FOR_EXCEPTION(A.getNodeNumCols() != 0,
-        std::runtime_error, "Tpetra::Experimental::writeMatrixStrip: pid "
-        << myRank << " should have 0 columns but has " << A.getNodeNumCols());
-
-    } else {
-
-      TEUCHOS_TEST_FOR_EXCEPTION(numRows != A.getNodeNumRows(),
-        std::runtime_error, "Tpetra::Experimental::writeMatrixStrip: "
-        "number of rows on pid 0 does not match global number of rows");
-
-
-      int err = 0;
-      const LO blockSize = A.getBlockSize();
-      const size_t numLocalRows = A.getNodeNumRows();
-      bool precisionChanged=false;
-      int oldPrecision;
-      if (params.isParameter("precision")) {
-        oldPrecision = os.precision(params.get<int>("precision"));
-        precisionChanged=true;
-      }
-      int pointOffset = 1;
-      if (params.isParameter("zero-based indexing")) {
-        if (params.get<bool>("zero-based indexing") == true)
-          pointOffset = 0;
-      }
-
-      size_t localRowInd;
-      for (localRowInd = 0; localRowInd < numLocalRows; ++localRowInd) {
-
-        // Get a view of the current row.
-        const LO*     localColInds;
-        Scalar* vals;
-        LO numEntries;
-        err = A.getLocalRowView (localRowInd, localColInds, vals, numEntries);
-        if (err != 0)
-          break;
-        GO globalMeshRowID = rowMap->getGlobalElement(localRowInd) - meshRowOffset;
-
-        for (LO k = 0; k < numEntries; ++k) {
-          GO globalMeshColID = colMap->getGlobalElement(localColInds[k]) - meshColOffset;
-          Scalar* const curBlock = vals + blockSize * blockSize * k;
-          // Blocks are stored in row-major format.
-          for (LO j = 0; j < blockSize; ++j) {
-            GO globalPointRowID = globalMeshRowID * blockSize + j + pointOffset;
-            for (LO i = 0; i < blockSize; ++i) {
-              GO globalPointColID = globalMeshColID * blockSize + i + pointOffset;
-              const Scalar curVal = curBlock[i + j * blockSize];
-              os << globalPointRowID << " " << globalPointColID << " " << curVal << std::endl;
-            }
-          }
-        }
-      }
-      if (precisionChanged)
-        os.precision(oldPrecision);
-      TEUCHOS_TEST_FOR_EXCEPTION(err != 0,
-        std::runtime_error, "Tpetra::Experimental::writeMatrixStrip: "
-        "error getting view of local row " << localRowInd);
-
-    }
-
-  }
 
 } // namespace Experimental
 } // namespace Tpetra

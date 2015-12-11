@@ -56,7 +56,7 @@
 #include <Galeri_XpetraUtils.hpp>
 #include <Galeri_XpetraMaps.hpp>
 
-#include <XpetraExt_MatrixMatrix.hpp>
+#include <Xpetra_MatrixMatrix.hpp>
 
 #include <MueLu.hpp>
 #include <MueLu_Level.hpp>
@@ -107,7 +107,7 @@ namespace MueLuExamples {
         oldbuffer = std::cout.rdbuf(&buffer);
       }
 
-      RCP<Tpetra_CrsMatrix> At = Xpetra::MatrixMatrix::Op2NonConstTpetraCrs(A);
+      RCP<Tpetra_CrsMatrix> At = Xpetra::Helpers<Scalar, LocalOrdinal, GlobalOrdinal, Node>::Op2NonConstTpetraCrs(A);
       RCP<Tpetra_Operator>  Mt = MueLu::CreateTpetraPreconditioner(At, mueluList);
 
       if (myRank == 0) {
@@ -117,7 +117,7 @@ namespace MueLuExamples {
       }
     }
 #endif
-#ifdef HAVE_MUELU_EPETRA
+#if defined(HAVE_MUELU_EPETRA) && defined(HAVE_MUELU_SERIAL)
     if (lib == Xpetra::UseEpetra) {
       if (myRank == 0) {
         // Redirect output
@@ -125,7 +125,7 @@ namespace MueLuExamples {
         oldbuffer = std::cout.rdbuf(&buffer);
       }
 
-      RCP<Epetra_CrsMatrix>   Ae = Xpetra::MatrixMatrix::Op2NonConstEpetraCrs(A);
+      RCP<Epetra_CrsMatrix>   Ae = Xpetra::Helpers<Scalar, LocalOrdinal, GlobalOrdinal, Node>::Op2NonConstEpetraCrs(A);
       RCP<Epetra_Operator>    Me = MueLu::CreateEpetraPreconditioner(Ae, mueluList);
 
       if (myRank == 0) {
@@ -163,9 +163,9 @@ namespace MueLuExamples {
     if (matrixType == "Elasticity2D" || matrixType == "Elasticity3D")
       map = Xpetra::MapFactory<LO,GO,Node>::Build(map, (matrixType == "Elasticity2D" ? 2 : 3));
 
-    out << "Processor subdomains in x direction: " << galeriList.get<int>("mx") << std::endl
-        << "Processor subdomains in y direction: " << galeriList.get<int>("my") << std::endl
-        << "Processor subdomains in z direction: " << galeriList.get<int>("mz") << std::endl
+    out << "Processor subdomains in x direction: " << galeriList.get<GO>("mx") << std::endl
+        << "Processor subdomains in y direction: " << galeriList.get<GO>("my") << std::endl
+        << "Processor subdomains in z direction: " << galeriList.get<GO>("mz") << std::endl
         << "========================================================" << std::endl;
 
     RCP<Galeri::Xpetra::Problem<Map,CrsMatrixWrap,MultiVector> > Pr =
