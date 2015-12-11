@@ -90,6 +90,10 @@ int main(int argc, char *argv[]) {
   Epetra_SerialComm Comm;
 #endif
 
+  int MyPID = Comm.MyPID();
+  bool verbose = false; 
+  if (MyPID==0) verbose = true;
+
   Teuchos::ParameterList GaleriList;
   int nx = 30; 
 

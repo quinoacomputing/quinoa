@@ -44,7 +44,7 @@
 /* Record a return TRUE if answer is yes, FALSE if no. */
 int       affirm(char *prompt)
 {
-    int       reply;		/* character typed in */
+    char      reply;		/* character typed in */
     int       done;		/* loop control */
     void      bail(char *msg, int status);
 

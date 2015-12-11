@@ -155,9 +155,6 @@ struct FILL {
 template< class Space >
 void TestViewAggregateReduction()
 {
-
-#if ! defined( KOKKOS_USING_EXPERIMENTAL_VIEW )
-
   const int count = 2 ;
   const long result = count % 2 ? ( count * ( ( count + 1 ) / 2 ) )
                                 : ( ( count / 2 ) * ( count + 1 ) );
@@ -184,9 +181,6 @@ void TestViewAggregateReduction()
   ASSERT_EQ( result , r );
   for ( int i = 0 ; i < 10 ; ++i ) { ASSERT_EQ( result , r10.value[i] ); }
   for ( int i = 0 ; i < 4 ; ++i ) { ASSERT_EQ( result , r4.value[i] ); }
-
-#endif
-
 }
 
 }

@@ -53,18 +53,6 @@
 #include "Epetra_Export.h"
 %}
 
-/////////////////////////////////////////////////////////
-// Teuchos::RCP<> support for all classes in this file //
-/////////////////////////////////////////////////////////
-%teuchos_rcp(Epetra_BlockMap)
-%teuchos_rcp(Epetra_Map     )
-%teuchos_rcp(Epetra_LocalMap)
-%teuchos_rcp(Epetra_Import  )
-%teuchos_rcp(Epetra_Export  )
-%teuchos_rcp_epetra_argout(Epetra_BlockMap)
-%teuchos_rcp_epetra_argout(Epetra_Map     )
-%teuchos_rcp_epetra_argout(Epetra_LocalMap)
-
 // General ignore directives
 %ignore *::PermuteFromLIDs() const;
 %ignore *::PermuteToLIDs() const;
@@ -75,6 +63,8 @@
 /////////////////////////////
 // Epetra_BlockMap support //
 /////////////////////////////
+%teuchos_rcp(Epetra_BlockMap)
+%teuchos_rcp_epetra_argout(Epetra_BlockMap)
 %feature("autodoc",
 "
 __init__(self, int numGlobalElements, int elementSize, int indexBase,
@@ -394,6 +384,8 @@ indicates the local element ID that the point belongs to."
 ////////////////////////
 // Epetra_Map support //
 ////////////////////////
+%teuchos_rcp(Epetra_Map)
+%teuchos_rcp_epetra_argout(Epetra_Map)
 %feature("autodoc",
 "
 __init__(self, int numGlobalElements, int indexBase, Comm comm) -> Map
@@ -466,6 +458,8 @@ Epetra_Map::Epetra_Map(const Epetra_Map &);
 /////////////////////////////
 // Epetra_LocalMap support //
 /////////////////////////////
+%teuchos_rcp(Epetra_LocalMap)
+%teuchos_rcp_epetra_argout(Epetra_LocalMap)
 %rename(LocalMap) Epetra_LocalMap;
 %include "Epetra_LocalMap.h"
 
@@ -517,6 +511,7 @@ PyObject * methodName()
 ///////////////////////////
 // Epetra_Import support //
 ///////////////////////////
+%teuchos_rcp(Epetra_Import)
 %rename(Import) Epetra_Import;
 %include "Epetra_Import.h"
 %epetra_mover_class(Import)
@@ -524,6 +519,7 @@ PyObject * methodName()
 ///////////////////////////
 // Epetra_Export support //
 ///////////////////////////
+%teuchos_rcp(Epetra_Export)
 %rename(Export) Epetra_Export;
 %include "Epetra_Export.h"
 %epetra_mover_class(Export)

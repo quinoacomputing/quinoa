@@ -49,7 +49,7 @@ buildAndRegisterEvaluators(const std::string & responseName,
      Teuchos::RCP<PHX::Evaluator<panzer::Traits> > eval 
          = Teuchos::rcp(new Integrator_Scalar<EvalT,panzer::Traits>(pl));
  
-     this->template registerEvaluator<EvalT>(fm, eval);
+     fm.template registerEvaluator<EvalT>(eval);
    }
 
 
@@ -63,7 +63,7 @@ buildAndRegisterEvaluators(const std::string & responseName,
      Teuchos::RCP<PHX::Evaluator<panzer::Traits> > eval 
          = Teuchos::rcp(new ResponseScatterEvaluator_Functional<EvalT,panzer::Traits>(field,responseName,physicsBlock.cellData(),scatterObj));
 
-     this->template registerEvaluator<EvalT>(fm, eval);
+     fm.template registerEvaluator<EvalT>(eval);
 
      // require last field
      fm.template requireField<EvalT>(*eval->evaluatedFields()[0]);

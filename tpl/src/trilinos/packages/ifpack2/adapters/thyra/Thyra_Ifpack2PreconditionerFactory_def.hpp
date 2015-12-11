@@ -184,10 +184,7 @@ void Ifpack2PreconditionerFactory<MatrixType>::initializePrec(
   timer.start(true);
 
   typedef Ifpack2::Preconditioner<scalar_type, local_ordinal_type, global_ordinal_type, node_type> Ifpack2Prec;
-  typedef Tpetra::RowMatrix<scalar_type, local_ordinal_type,
-    global_ordinal_type, node_type> row_matrix_type;
-  const Teuchos::RCP<Ifpack2Prec> concretePrecOp =
-    Ifpack2::Factory::create<row_matrix_type> (preconditionerType, tpetraFwdMatrix);
+  const Teuchos::RCP<Ifpack2Prec> concretePrecOp = Ifpack2::Factory::create (preconditionerType, tpetraFwdMatrix);
 
   timer.stop();
   if (Teuchos::nonnull(out) && Teuchos::includesVerbLevel(verbLevel, Teuchos::VERB_LOW)) {

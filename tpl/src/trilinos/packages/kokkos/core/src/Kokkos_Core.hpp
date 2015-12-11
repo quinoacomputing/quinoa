@@ -66,7 +66,6 @@
 #endif
 
 #include <Kokkos_Pair.hpp>
-#include <Kokkos_Array.hpp>
 #include <Kokkos_View.hpp>
 #include <Kokkos_Vectorization.hpp>
 #include <Kokkos_Atomic.hpp>
@@ -105,70 +104,9 @@ void finalize_all();
 
 void fence();
 
-} // namespace Kokkos
-
-//----------------------------------------------------------------------------
-//----------------------------------------------------------------------------
-
-namespace Kokkos {
-namespace Experimental {
-
-/* Allocate memory from a memory space.
- * The allocation is tracked in Kokkos memory tracking system, so
- * leaked memory can be identified.
- */
-template< class Space = typename Kokkos::DefaultExecutionSpace::memory_space >
-inline
-void * kokkos_malloc( const std::string & arg_alloc_label
-                    , const size_t arg_alloc_size )
-{
-  typedef typename Space::memory_space MemorySpace ;
-  return Impl::SharedAllocationRecord< MemorySpace >::
-    allocate_tracked( MemorySpace() , arg_alloc_label , arg_alloc_size );
 }
 
-template< class Space = typename Kokkos::DefaultExecutionSpace::memory_space >
-inline
-void * kokkos_malloc( const size_t arg_alloc_size )
-{
-  typedef typename Space::memory_space MemorySpace ;
-  return Impl::SharedAllocationRecord< MemorySpace >::
-    allocate_tracked( MemorySpace() , "no-label" , arg_alloc_size );
-}
-
-template< class Space = typename Kokkos::DefaultExecutionSpace::memory_space >
-inline
-void kokkos_free( void * arg_alloc )
-{
-  typedef typename Space::memory_space MemorySpace ;
-  return Impl::SharedAllocationRecord< MemorySpace >::
-    deallocate_tracked( arg_alloc );
-}
-
-template< class Space = typename Kokkos::DefaultExecutionSpace::memory_space >
-inline
-void * kokkos_realloc( void * arg_alloc , const size_t arg_alloc_size )
-{
-  typedef typename Space::memory_space MemorySpace ;
-  return Impl::SharedAllocationRecord< MemorySpace >::
-    reallocate_tracked( arg_alloc , arg_alloc_size );
-}
-
-} // namespace Experimental
-} // namespace Kokkos
-
-#if defined( KOKKOS_USING_EXPERIMENTAL_VIEW )
-
-namespace Kokkos {
-
-using Kokkos::Experimental::kokkos_malloc ;
-using Kokkos::Experimental::kokkos_realloc ;
-using Kokkos::Experimental::kokkos_free ;
-
-}
-
-#else
-
+#ifdef KOKKOS_HAVE_CXX11
 namespace Kokkos {
 
 namespace Impl {
@@ -193,7 +131,6 @@ struct MallocHelper
  */
 template< class Arg = DefaultExecutionSpace>
 void* kokkos_malloc(const std::string label, size_t count) {
-  if(count == 0) return NULL;
   typedef typename Arg::memory_space MemorySpace;
   Impl::AllocationTracker tracker = MemorySpace::allocate_and_track(label,count);;
   Impl::MallocHelper::increment_ref_count( tracker );
@@ -220,10 +157,7 @@ void kokkos_free(const void* ptr) {
 
 
 template< class Arg = DefaultExecutionSpace>
-void* kokkos_realloc(const void* old_ptr, size_t size) {
-  if(old_ptr == NULL)
-    return kokkos_malloc<Arg>(size);
-
+const void* kokkos_realloc(const void* old_ptr, size_t size) {
   typedef typename Arg::memory_space MemorySpace;
   typedef typename MemorySpace::allocator allocator;
   Impl::AllocationTracker tracker = Impl::AllocationTracker::find<allocator>(old_ptr);
@@ -234,11 +168,64 @@ void* kokkos_realloc(const void* old_ptr, size_t size) {
 }
 
 } // namespace Kokkos
-
 #endif
 
 //----------------------------------------------------------------------------
 //----------------------------------------------------------------------------
+
+namespace Kokkos {
+namespace Experimental {
+
+template< class Space = typename Kokkos::DefaultExecutionSpace::memory_space >
+inline
+void * kokkos_malloc( const size_t arg_alloc_size )
+{
+  typedef typename Space::memory_space  MemorySpace ;
+  typedef Kokkos::Experimental::Impl::SharedAllocationRecord< void , void >         RecordBase ;
+  typedef Kokkos::Experimental::Impl::SharedAllocationRecord< MemorySpace , void >  RecordHost ;
+
+  RecordHost * const r = RecordHost::allocate( MemorySpace() , "kokkos_malloc" , arg_alloc_size );
+
+  RecordBase::increment( r );
+
+  return r->data();
+}
+
+template< class Space = typename Kokkos::DefaultExecutionSpace::memory_space >
+inline
+void kokkos_free( void * arg_alloc )
+{
+  typedef typename Space::memory_space  MemorySpace ;
+  typedef Kokkos::Experimental::Impl::SharedAllocationRecord< void , void >         RecordBase ;
+  typedef Kokkos::Experimental::Impl::SharedAllocationRecord< MemorySpace , void >  RecordHost ;
+
+  RecordHost * const r = RecordHost::get_record( arg_alloc );
+
+  RecordBase::decrement( r );
+}
+
+template< class Space = typename Kokkos::DefaultExecutionSpace::memory_space >
+inline
+void * kokkos_realloc( void * arg_alloc , const size_t arg_alloc_size )
+{
+  typedef typename Space::memory_space  MemorySpace ;
+  typedef Kokkos::Experimental::Impl::SharedAllocationRecord< void , void >         RecordBase ;
+  typedef Kokkos::Experimental::Impl::SharedAllocationRecord< MemorySpace , void >  RecordHost ;
+
+  RecordHost * const r_old = RecordHost::get_record( arg_alloc );
+  RecordHost * const r_new = RecordHost::allocate( MemorySpace() , "kokkos_malloc" , arg_alloc_size );
+
+  Kokkos::Impl::DeepCopy<MemorySpace,MemorySpace>( r_new->data() , r_old->data()
+                                                 , std::min( r_old->size() , r_new->size() ) );
+
+  RecordBase::increment( r_new );
+  RecordBase::decrement( r_old );
+
+  return r_new->data();
+}
+
+} // namespace Experimental
+} // namespace Kokkos
 
 #endif
 

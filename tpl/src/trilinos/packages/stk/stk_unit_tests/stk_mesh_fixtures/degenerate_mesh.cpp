@@ -42,8 +42,6 @@
 #include "stk_mesh/base/FieldBase.hpp"  // for FieldBase::Restriction, etc
 #include "stk_mesh/base/Types.hpp"      // for EntityId
 #include "stk_topology/topology.hpp"    // for topology, etc
-#include <stk_io/StkMeshIoBroker.hpp>
-
 namespace stk { namespace mesh { class Part; } }
 
 
@@ -65,8 +63,7 @@ namespace stk {
 				     VectorFieldType & node_coord )
       {
 	stk::mesh::Part & universal        = meta_data.universal_part();
-	stk::mesh::Part& part = meta_data.declare_part_with_topology( "hexes", stk::topology::HEX_8);
-        stk::io::put_io_part_attribute(part);
+	meta_data.declare_part_with_topology( "hexes", stk::topology::HEX_8);
 
 	const stk::mesh::FieldBase::Restriction & res =
 	  stk::mesh::find_restriction(node_coord, stk::topology::NODE_RANK , universal );

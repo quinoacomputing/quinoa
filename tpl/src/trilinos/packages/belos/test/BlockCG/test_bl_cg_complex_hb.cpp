@@ -200,9 +200,6 @@ int main(int argc, char *argv[]) {
     // *************Start the block CG iteration***********************
     // *******************************************************************
     //
-    if (proc_verbose) {
-      std::cout << "Attempt to create Belos::BlockCGSolMgr" << std::endl;
-    }
     Belos::BlockCGSolMgr<ST,MV,OP> solver( problem, rcp(&belosList,false) );
 
     //
@@ -237,11 +234,6 @@ int main(int argc, char *argv[]) {
         norm_failure = true;
       }
     }
-
-    // Test achievedTol output
-    MT ach_tol = solver.achievedTol();
-    if (proc_verbose)
-      std::cout << "Achieved tol : "<<ach_tol<<std::endl;
 
     // Clean up.
     delete [] dvals;

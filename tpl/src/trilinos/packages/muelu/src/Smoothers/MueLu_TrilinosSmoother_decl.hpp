@@ -70,7 +70,6 @@ namespace MueLu {
 
   /*!
     @class TrilinosSmoother
-    @ingroup MueLuSmootherClasses 
     @brief Class that encapsulates external library smoothers.
 
     Autoselection of Ifpack or Ifpack2 according to the underlying linear algebra library.
@@ -191,10 +190,6 @@ namespace MueLu {
     RCP<SmootherPrototype> sEpetra_, sTpetra_;
     mutable
       RCP<SmootherPrototype> s_;
-
-    // Records for the case if something goes wrong
-    bool        triedEpetra_, triedTpetra_;
-    std::string errorEpetra_, errorTpetra_;
 
   }; // class TrilinosSmoother
 

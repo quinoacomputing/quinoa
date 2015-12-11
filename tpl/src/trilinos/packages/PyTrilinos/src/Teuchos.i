@@ -172,11 +172,11 @@ using std::string;
     PyErr_SetString(PyExc_KeyError, e.what());
     SWIG_fail;
   }
+  SWIG_CATCH_STDEXCEPT
   catch (Swig::DirectorException & e)
   {
     SWIG_fail;
   }
-  SWIG_CATCH_STDEXCEPT
   catch(...)
   {
     SWIG_exception(SWIG_UnknownError, "Unknown C++ exception");
@@ -193,7 +193,6 @@ using std::string;
 // accomplished by %include-ing Teuchos_RCP.i and calling the provided
 // macro %teuchos_rcp() on the class.
 %include "Teuchos_RCP.i"
-%include "Teuchos_RCP_DAP.i"
 %teuchos_rcp(std::basic_ostream)
 %teuchos_rcp(std::ostream)
 %teuchos_rcp(std::vector< int, std::allocator< int > >)

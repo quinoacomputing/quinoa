@@ -197,18 +197,10 @@ namespace Teuchos {
   void BLAS<int, float>::GEMM(ETransp transa, ETransp transb, const int m, const int n, const int k, const float alpha, const float* A, const int lda, const float* B, const int ldb, const float beta, float* C, const int ldc) const
   { SGEMM_F77(CHAR_MACRO(ETranspChar[transa]), CHAR_MACRO(ETranspChar[transb]), &m, &n, &k, &alpha, A, &lda, B, &ldb, &beta, C, &ldc); }
 
-  void BLAS<int, float>::SWAP(const int n, float* const x, const int incx, float* const y, const int incy) const
-  {
-    SSWAP_F77 (&n, x, &incx, y, &incy);
-  }
-
   void BLAS<int, float>::SYMM(ESide side, EUplo uplo, const int m, const int n, const float alpha, const float* A, const int lda, const float* B, const int ldb, const float beta, float* C, const int ldc) const
   { SSYMM_F77(CHAR_MACRO(ESideChar[side]), CHAR_MACRO(EUploChar[uplo]), &m, &n, &alpha, A, &lda, B, &ldb, &beta, C, &ldc); }
 
   void BLAS<int, float>::SYRK(EUplo uplo, ETransp trans, const int n, const int k, const float alpha, const float* A, const int lda, const float beta, float* C, const int ldc) const
-  { SSYRK_F77(CHAR_MACRO(EUploChar[uplo]), CHAR_MACRO(ETranspChar[trans]), &n, &k, &alpha, A, &lda, &beta, C, &ldc); }
-
-  void BLAS<int, float>::HERK(EUplo uplo, ETransp trans, const int n, const int k, const float alpha, const float* A, const int lda, const float beta, float* C, const int ldc) const
   { SSYRK_F77(CHAR_MACRO(EUploChar[uplo]), CHAR_MACRO(ETranspChar[trans]), &n, &k, &alpha, A, &lda, &beta, C, &ldc); }
 
   void BLAS<int, float>::TRMM(ESide side, EUplo uplo, ETransp transa, EDiag diag, const int m, const int n, const float alpha, const float* A, const int lda, float* B, const int ldb) const
@@ -260,18 +252,10 @@ namespace Teuchos {
   void BLAS<int, double>::GEMM(ETransp transa, ETransp transb, const int m, const int n, const int k, const double alpha, const double* A, const int lda, const double* B, const int ldb, const double beta, double* C, const int ldc) const
   { DGEMM_F77(CHAR_MACRO(ETranspChar[transa]), CHAR_MACRO(ETranspChar[transb]), &m, &n, &k, &alpha, A, &lda, B, &ldb, &beta, C, &ldc); }
 
-  void BLAS<int, double>::SWAP(const int n, double* const x, const int incx, double* const y, const int incy) const
-  {
-    DSWAP_F77 (&n, x, &incx, y, &incy);
-  }
-
   void BLAS<int, double>::SYMM(ESide side, EUplo uplo, const int m, const int n, const double alpha, const double* A, const int lda, const double *B, const int ldb, const double beta, double *C, const int ldc) const
   { DSYMM_F77(CHAR_MACRO(ESideChar[side]), CHAR_MACRO(EUploChar[uplo]), &m, &n, &alpha, A, &lda, B, &ldb, &beta, C, &ldc); }
 
   void BLAS<int, double>::SYRK(EUplo uplo, ETransp trans, const int n, const int k, const double alpha, const double* A, const int lda, const double beta, double* C, const int ldc) const
-  { DSYRK_F77(CHAR_MACRO(EUploChar[uplo]), CHAR_MACRO(ETranspChar[trans]), &n, &k, &alpha, A, &lda, &beta, C, &ldc); }
-
-  void BLAS<int, double>::HERK(EUplo uplo, ETransp trans, const int n, const int k, const double alpha, const double* A, const int lda, const double beta, double* C, const int ldc) const
   { DSYRK_F77(CHAR_MACRO(EUploChar[uplo]), CHAR_MACRO(ETranspChar[trans]), &n, &k, &alpha, A, &lda, &beta, C, &ldc); }
 
   void BLAS<int, double>::TRMM(ESide side, EUplo uplo, ETransp transa, EDiag diag, const int m, const int n, const double alpha, const double* A, const int lda, double* B, const int ldb) const
@@ -304,12 +288,12 @@ namespace Teuchos {
     double result = 0;
     if (incx == 1) {
       for (int i = 0; i < n; ++i) {
-        result += std::abs (std::real (x[i])) + std::abs (std::imag (x[i]));
+	result += std::abs (std::real (x[i])) + std::abs (std::imag (x[i]));
       }
     } else {
       const int nincx = n * incx;
       for (int i = 0; i < nincx; i += incx) {
-        result += std::abs (std::real (x[i])) + std::abs (std::imag (x[i]));
+	result += std::abs (std::real (x[i])) + std::abs (std::imag (x[i]));
       }
     }
     return static_cast<float> (result);
@@ -340,23 +324,23 @@ namespace Teuchos {
     std::complex<double> result (0, 0);
     if (n >= 0) {
       if (incx == 1 && incy == 1) {
-        for (int i = 0; i < n; ++i) {
-          result += std::conj (x[i]) * y[i];
-        }
+	for (int i = 0; i < n; ++i) {
+	  result += std::conj (x[i]) * y[i];
+	}
       } else {
-        int ix = 0;
-        int iy = 0;
-        if (incx < 0) {
-          ix = (1-n) * incx;
-        }
-        if (incy < 0) {
-          iy = (1-n) * incy;
-        }
-        for (int i = 0; i < n; ++i) {
-          result += std::conj (x[ix]) * y[iy];
-          ix += incx;
-          iy += incy;
-        }
+	int ix = 0;
+	int iy = 0;
+	if (incx < 0) {
+	  ix = (1-n) * incx;
+	}
+	if (incy < 0) {
+	  iy = (1-n) * incy;
+	}
+	for (int i = 0; i < n; ++i) {
+	  result += std::conj (x[ix]) * y[iy];
+	  ix += incx;
+	  iy += incy;
+	}
       }
     }
     return static_cast<std::complex<float> > (result);
@@ -385,34 +369,34 @@ namespace Teuchos {
 
       const int upper = 1 + (n-1)*incx;
       for (int ix = 0; ix < upper; ix += incx) {
-        // The reference BLAS implementation cleverly scales the
-        // intermediate result. so that even if the square of the norm
-        // would overflow, computing the norm itself does not.  Hence,
-        // "ssq" for "scaled square root."
-        if (std::real (x[ix]) != 0) {
-          const double temp = std::abs (std::real (x[ix]));
-          if (scale < temp) {
-            const double scale_over_temp = scale / temp;
-            ssq = 1 + ssq * scale_over_temp*scale_over_temp;
-            // New scaling factor: biggest (in magnitude) real or imaginary part seen thus far.
-            scale = temp;
-          } else {
-            const double temp_over_scale = temp / scale;
-            ssq = ssq + temp_over_scale*temp_over_scale;
-          }
-        }
-        if (std::imag (x[ix]) != 0) {
-          const double temp = std::abs (std::imag (x[ix]));
-          if (scale < temp) {
-            const double scale_over_temp = scale / temp;
-            ssq = 1 + ssq * scale_over_temp*scale_over_temp;
-            // New scaling factor: biggest (in magnitude) real or imaginary part seen thus far.
-            scale = temp;
-          } else {
-            const double temp_over_scale = temp / scale;
-            ssq = ssq + temp_over_scale*temp_over_scale;
-          }
-        }
+	// The reference BLAS implementation cleverly scales the
+	// intermediate result. so that even if the square of the norm
+	// would overflow, computing the norm itself does not.  Hence,
+	// "ssq" for "scaled square root."
+	if (std::real (x[ix]) != 0) {
+	  const double temp = std::abs (std::real (x[ix]));
+	  if (scale < temp) {
+	    const double scale_over_temp = scale / temp;
+	    ssq = 1 + ssq * scale_over_temp*scale_over_temp;
+	    // New scaling factor: biggest (in magnitude) real or imaginary part seen thus far.
+	    scale = temp;
+	  } else {
+	    const double temp_over_scale = temp / scale;
+	    ssq = ssq + temp_over_scale*temp_over_scale;
+	  }
+	}
+	if (std::imag (x[ix]) != 0) {
+	  const double temp = std::abs (std::imag (x[ix]));
+	  if (scale < temp) {
+	    const double scale_over_temp = scale / temp;
+	    ssq = 1 + ssq * scale_over_temp*scale_over_temp;
+	    // New scaling factor: biggest (in magnitude) real or imaginary part seen thus far.
+	    scale = temp;
+	  } else {
+	    const double temp_over_scale = temp / scale;
+	    ssq = ssq + temp_over_scale*temp_over_scale;
+	  }
+	}
       }
       return static_cast<float> (scale * std::sqrt (ssq));
     }
@@ -434,19 +418,11 @@ namespace Teuchos {
   void BLAS<int, std::complex<float> >::GEMM(ETransp transa, ETransp transb, const int m, const int n, const int k, const std::complex<float> alpha, const std::complex<float>* A, const int lda, const std::complex<float>* B, const int ldb, const std::complex<float> beta, std::complex<float>* C, const int ldc) const
   { CGEMM_F77(CHAR_MACRO(ETranspChar[transa]), CHAR_MACRO(ETranspChar[transb]), &m, &n, &k, &alpha, A, &lda, B, &ldb, &beta, C, &ldc); }
 
-  void BLAS<int, std::complex<float> >::SWAP(const int n, std::complex<float>* const x, const int incx, std::complex<float>* const y, const int incy) const
-  {
-    CSWAP_F77 (&n, x, &incx, y, &incy);
-  }
-
   void BLAS<int, std::complex<float> >::SYMM(ESide side, EUplo uplo, const int m, const int n, const std::complex<float> alpha, const std::complex<float>* A, const int lda, const std::complex<float>* B, const int ldb, const std::complex<float> beta, std::complex<float>* C, const int ldc) const
   { CSYMM_F77(CHAR_MACRO(ESideChar[side]), CHAR_MACRO(EUploChar[uplo]), &m, &n, &alpha, A, &lda, B, &ldb, &beta, C, &ldc); }
 
   void BLAS<int, std::complex<float> >::SYRK(EUplo uplo, ETransp trans, const int n, const int k, const std::complex<float> alpha, const std::complex<float>* A, const int lda, const std::complex<float> beta, std::complex<float>* C, const int ldc) const
   { CSYRK_F77(CHAR_MACRO(EUploChar[uplo]), CHAR_MACRO(ETranspChar[trans]), &n, &k, &alpha, A, &lda, &beta, C, &ldc); }
-
-  void BLAS<int, std::complex<float> >::HERK(EUplo uplo, ETransp trans, const int n, const int k, const std::complex<float> alpha, const std::complex<float>* A, const int lda, const std::complex<float> beta, std::complex<float>* C, const int ldc) const
-  { CHERK_F77(CHAR_MACRO(EUploChar[uplo]), CHAR_MACRO(ETranspChar[trans]), &n, &k, &alpha, A, &lda, &beta, C, &ldc); }
 
   void BLAS<int, std::complex<float> >::TRMM(ESide side, EUplo uplo, ETransp transa, EDiag diag, const int m, const int n, const std::complex<float> alpha, const std::complex<float>* A, const int lda, std::complex<float>* B, const int ldb) const
   { CTRMM_F77(CHAR_MACRO(ESideChar[side]), CHAR_MACRO(EUploChar[uplo]), CHAR_MACRO(ETranspChar[transa]), CHAR_MACRO(EDiagChar[diag]), &m, &n, &alpha, A, &lda, B, &ldb); }
@@ -489,23 +465,23 @@ namespace Teuchos {
     std::complex<double> ztemp (0, 0);
     if (n > 0) {
       if (incx == 1 && incy == 1) {
-        for (int i = 0; i < n; ++i) {
-          ztemp += std::conj (x[i]) * y[i];
-        }
+	for (int i = 0; i < n; ++i) {
+	  ztemp += std::conj (x[i]) * y[i];
+	}
       } else {
-        int ix = 0;
-        int iy = 0;
-        if (incx < 0) {
-          ix = (1-n)*incx;
-        }
-        if (incy < 0) {
-          iy = (1-n)*incy;
-        }
-        for (int i = 0; i < n; ++i) {
-          ztemp += std::conj (x[ix]) * y[iy];
-          ix += incx;
-          iy += incy;
-        }
+	int ix = 0;
+	int iy = 0;
+	if (incx < 0) {
+	  ix = (1-n)*incx;
+	}
+	if (incy < 0) {
+	  iy = (1-n)*incy;
+	}
+	for (int i = 0; i < n; ++i) {
+	  ztemp += std::conj (x[ix]) * y[iy];
+	  ix += incx;
+	  iy += incy;
+	}
       }
     }
     return ztemp;
@@ -537,19 +513,11 @@ namespace Teuchos {
   void BLAS<int, std::complex<double> >::GEMM(ETransp transa, ETransp transb, const int m, const int n, const int k, const std::complex<double> alpha, const std::complex<double>* A, const int lda, const std::complex<double>* B, const int ldb, const std::complex<double> beta, std::complex<double>* C, const int ldc) const
   { ZGEMM_F77(CHAR_MACRO(ETranspChar[transa]), CHAR_MACRO(ETranspChar[transb]), &m, &n, &k, &alpha, A, &lda, B, &ldb, &beta, C, &ldc); }
 
-  void BLAS<int, std::complex<double> >::SWAP(const int n, std::complex<double>* const x, const int incx, std::complex<double>* const y, const int incy) const
-  {
-    ZSWAP_F77 (&n, x, &incx, y, &incy);
-  }
-
   void BLAS<int, std::complex<double> >::SYMM(ESide side, EUplo uplo, const int m, const int n, const std::complex<double> alpha, const std::complex<double>* A, const int lda, const std::complex<double> *B, const int ldb, const std::complex<double> beta, std::complex<double> *C, const int ldc) const
   { ZSYMM_F77(CHAR_MACRO(ESideChar[side]), CHAR_MACRO(EUploChar[uplo]), &m, &n, &alpha, A, &lda, B, &ldb, &beta, C, &ldc); }
 
   void BLAS<int, std::complex<double> >::SYRK(EUplo uplo, ETransp trans, const int n, const int k, const std::complex<double> alpha, const std::complex<double>* A, const int lda, const std::complex<double> beta, std::complex<double>* C, const int ldc) const
   { ZSYRK_F77(CHAR_MACRO(EUploChar[uplo]), CHAR_MACRO(ETranspChar[trans]), &n, &k, &alpha, A, &lda, &beta, C, &ldc); }
-
-  void BLAS<int, std::complex<double> >::HERK(EUplo uplo, ETransp trans, const int n, const int k, const std::complex<double> alpha, const std::complex<double>* A, const int lda, const std::complex<double> beta, std::complex<double>* C, const int ldc) const
-  { ZHERK_F77(CHAR_MACRO(EUploChar[uplo]), CHAR_MACRO(ETranspChar[trans]), &n, &k, &alpha, A, &lda, &beta, C, &ldc); }
 
   void BLAS<int, std::complex<double> >::TRMM(ESide side, EUplo uplo, ETransp transa, EDiag diag, const int m, const int n, const std::complex<double> alpha, const std::complex<double>* A, const int lda, std::complex<double>* B, const int ldb) const
   { ZTRMM_F77(CHAR_MACRO(ESideChar[side]), CHAR_MACRO(EUploChar[uplo]), CHAR_MACRO(ETranspChar[transa]), CHAR_MACRO(EDiagChar[diag]), &m, &n, &alpha, A, &lda, B, &ldb); }

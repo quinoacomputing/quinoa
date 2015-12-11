@@ -149,7 +149,7 @@ buildAndRegisterEquationSetEvaluators(PHX::FieldManager<panzer::Traits>& fm,
       RCP< PHX::Evaluator<panzer::Traits> > op = 
         rcp(new panzer::Integrator_BasisTimesScalar<EvalT,panzer::Traits>(p));
       
-      this->template registerEvaluator<EvalT>(fm, op);
+      fm.template registerEvaluator<EvalT>(op);
     }
   }
   else {
@@ -167,7 +167,7 @@ buildAndRegisterEquationSetEvaluators(PHX::FieldManager<panzer::Traits>& fm,
     RCP< PHX::Evaluator<panzer::Traits> > op =
       rcp(new panzer::Integrator_BasisTimesScalar<EvalT,panzer::Traits>(p));
 
-    this->template registerEvaluator<EvalT>(fm, op);
+    fm.template registerEvaluator<EvalT>(op);
   }
 
   // Use a sum operator to form the overall residual for the equation

@@ -70,11 +70,6 @@ private:
              , const PType & range )
     {
       const typename PType::member_type work_end = range.end();
-      #ifdef KOKKOS_OPT_RANGE_AGGRESSIVE_VECTORIZATION
-      #ifdef KOKKOS_HAVE_PRAGMA_IVDEP
-      #pragma ivdep
-      #endif
-      #endif
       for ( typename PType::member_type iwork = range.begin() ; iwork < work_end ; ++iwork ) {
         functor( iwork );
       }
@@ -87,11 +82,6 @@ private:
              , const PType & range )
     {
       const typename PType::member_type work_end = range.end();
-      #ifdef KOKKOS_OPT_RANGE_AGGRESSIVE_VECTORIZATION
-      #ifdef KOKKOS_HAVE_PRAGMA_IVDEP
-      #pragma ivdep
-      #endif
-      #endif
       for ( typename PType::member_type iwork = range.begin() ; iwork < work_end ; ++iwork ) {
         functor( typename PType::work_tag() , iwork );
       }
@@ -146,11 +136,6 @@ private:
              , const PType & range )
     {
       const typename PType::member_type work_end = range.end();
-      #ifdef KOKKOS_OPT_RANGE_AGGRESSIVE_VECTORIZATION
-      #ifdef KOKKOS_HAVE_PRAGMA_IVDEP
-      #pragma ivdep
-      #endif
-      #endif
       for ( typename PType::member_type iwork = range.begin() ; iwork < work_end ; ++iwork ) {
         functor( iwork , update );
       }
@@ -164,11 +149,6 @@ private:
              , const PType & range )
     {
       const typename PType::member_type work_end = range.end();
-      #ifdef KOKKOS_OPT_RANGE_AGGRESSIVE_VECTORIZATION
-      #ifdef KOKKOS_HAVE_PRAGMA_IVDEP
-      #pragma ivdep
-      #endif
-      #endif
       for ( typename PType::member_type iwork = range.begin() ; iwork < work_end ; ++iwork ) {
         functor( typename PType::work_tag() , iwork , update );
       }
@@ -254,11 +234,6 @@ private:
              , const bool    final )
     {
       const typename PType::member_type work_end = range.end();
-      #ifdef KOKKOS_OPT_RANGE_AGGRESSIVE_VECTORIZATION
-      #ifdef KOKKOS_HAVE_PRAGMA_IVDEP
-      #pragma ivdep
-      #endif
-      #endif
       for ( typename PType::member_type iwork = range.begin() ; iwork < work_end ; ++iwork ) {
         functor( iwork , update , final );
       }
@@ -273,11 +248,6 @@ private:
              , const bool    final )
     {
       const typename PType::member_type work_end = range.end();
-      #ifdef KOKKOS_OPT_RANGE_AGGRESSIVE_VECTORIZATION
-      #ifdef KOKKOS_HAVE_PRAGMA_IVDEP
-      #pragma ivdep
-      #endif
-      #endif
       for ( typename PType::member_type iwork = range.begin() ; iwork < work_end ; ++iwork ) {
         functor( typename PType::work_tag() , iwork , update , final );
       }
@@ -465,11 +435,7 @@ public:
 
       const pointer_type ptr = pointer_type( OpenMPexec::pool_rev(0)->scratch_reduce() );
 
-      int max_active_threads = OpenMPexec::pool_size();
-      if( max_active_threads > policy.league_size()*policy.team_size() )
-        max_active_threads = policy.league_size()*policy.team_size();
-
-      for ( int i = 1 ; i < max_active_threads ; ++i ) {
+      for ( int i = 1 ; i < OpenMPexec::pool_size() ; ++i ) {
         Join::join( functor , ptr , OpenMPexec::pool_rev(i)->scratch_reduce() );
       }
 
@@ -505,11 +471,7 @@ public:
     {
       const pointer_type ptr = pointer_type( OpenMPexec::pool_rev(0)->scratch_reduce() );
 
-      int max_active_threads = OpenMPexec::pool_size();
-      if( max_active_threads > policy.league_size()*policy.team_size() )
-        max_active_threads = policy.league_size()*policy.team_size();
-
-      for ( int i = 1 ; i < max_active_threads ; ++i ) {
+      for ( int i = 1 ; i < OpenMPexec::pool_size() ; ++i ) {
         ValueJoin::join( functor , ptr , OpenMPexec::pool_rev(i)->scratch_reduce() );
       }
 

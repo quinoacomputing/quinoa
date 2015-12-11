@@ -59,7 +59,6 @@
 #include <string>
 #include <utility>
 #include <vector>
-#include <limits>
 
 #include "Ioss_CoordinateFrame.h"
 #include "Ioss_CommSet.h"
@@ -212,21 +211,19 @@ namespace Iofx {
       if (write_message || error_msg != NULL) {
         // See which processors could not open/create the file...
         std::string open_create = is_input() ? "open input" : "create output";
+        bool first = true;
         std::ostringstream errmsg;
+        errmsg << "ERROR: Unable to " << open_create << " database '" << get_filename() << "' of type 'exodusII'";
         if (isParallel) {
-	  errmsg << "ERROR: Unable to " << open_create << " exodus decomposed database files:\n";
+          errmsg << "\n\ton processor(s): ";
           for (int i=0; i < util().parallel_size(); i++) {
             if (status[i] < 0) {
-	      std::string proc_filename = Ioss::Utils::decode_filename(get_filename(),
-								       i, util().parallel_size());
-              errmsg << "\t" << proc_filename << "\n";
+              if (!first) errmsg << ", ";
+              errmsg << i;
+              first = false;
             }
           }
         }
-	else {
-	  errmsg << "ERROR: Unable to " << open_create
-		 << " database '" << get_filename() << "' of type 'exodusII'";
-	}
         if (error_msg != NULL) {
           *error_msg = errmsg.str();
         }
@@ -1622,7 +1619,7 @@ namespace Iofx {
           Ioss::Int64Vector element(number_sides);
           Ioss::Int64Vector sides(number_sides);
 
-          // Easier below here if the element and sides are a known 64-bit size...
+          // Easier below here is the element and sides are a know 64-bit size...
           // Kluge here to do that...
           if (int_byte_size_api() == 4) {
             Ioss::IntVector e32(number_sides);
@@ -2990,40 +2987,17 @@ namespace Iofx {
                 int* sids = reinterpret_cast<int*>(&sides[0]);
 
                 size_t j=0;
-		int64_t int_max = std::numeric_limits<int>::max();
                 if (field.get_name() == "entity_processor") {
                   const Ioss::MapContainer &map = get_map(EX_ELEM_BLOCK).map;
 
                   for (ssize_t i=0; i < entity_count; i++) {
                     int local_id = ents[i];
-		    int64_t comb_64 = (int64_t)10 * map[local_id] + sids[i];
-		    if (comb_64 > int_max) {
-		      std::string decoded_filename = util().decode_filename(get_filename(), isParallel);
-		      std::ostringstream errmsg;
-		      errmsg << "ERROR: Process " << Ioss::SerializeIO::getRank()
-			     << " in routine 'get_field_internal(const Ioss::CommSet* cs,...'"
-			     << " has exceeded the integer bounds for entity " << map[local_id]
-			     << ", local side id " << sids[i] << "\n. Try using 64-bit mode to read the file '"
-			     << decoded_filename << "'.\n";
-		      IOSS_ERROR(errmsg);
-		    }
-                    entity_proc[j++] = (int)comb_64;
+                    entity_proc[j++] = 10*map[local_id]+sids[i];
                     entity_proc[j++] = pros[i];
                   }
                 } else {
                   for (ssize_t i=0; i < entity_count; i++) {
-		    int64_t comb_64 = (int64_t)10 * ents[i] + sids[i];
-		    if (comb_64 > int_max) {
-		      std::string decoded_filename = util().decode_filename(get_filename(), isParallel);
-		      std::ostringstream errmsg;
-		      errmsg << "ERROR: Process " << Ioss::SerializeIO::getRank()
-			     << " in routine 'get_field_internal(const Ioss::CommSet* cs,...'"
-			     << " has exceeded the integer bounds for entity " << ents[i]
-			     << ", local side id " << sids[i] << "\n. Try using 64-bit mode to read the file '"
-			     << decoded_filename << "'.\n";
-		      IOSS_ERROR(errmsg);
-		    }
-                    entity_proc[j++] = (int)comb_64;
+                    entity_proc[j++] = 10*ents[i]+sids[i];
                     entity_proc[j++] = pros[i];
                   }
                 }
@@ -3039,12 +3013,12 @@ namespace Iofx {
 
                   for (ssize_t i=0; i < entity_count; i++) {
                     int64_t local_id = ents[i];
-                    entity_proc[j++] = (int64_t)10*map[local_id]+sids[i];
+                    entity_proc[j++] = 10*map[local_id]+sids[i];
                     entity_proc[j++] = pros[i];
                   }
                 } else {
                   for (ssize_t i=0; i < entity_count; i++) {
-                    entity_proc[j++] = (int64_t)10*ents[i]+sids[i];
+                    entity_proc[j++] = 10*ents[i]+sids[i];
                     entity_proc[j++] = pros[i];
                   }
                 }
@@ -3122,21 +3096,12 @@ namespace Iofx {
               if (ierr < 0)
                 Ioex::exodus_error(get_file_pointer(), __LINE__, myProcessor);
 
-	      if (field.get_type() == Ioss::Field::INTEGER) {
-		// Need to convert 'double' to 'int' for Sierra use...
-		int* ids = static_cast<int*>(data);
-		for (ssize_t i = 0; i < num_to_get; i++) {
-		  ids[i] = static_cast<int>(real_ids[i]);
-		}
-	      }
-	      else {
-		// Need to convert 'double' to 'int' for Sierra use...
-		int64_t* ids = static_cast<int64_t*>(data);
-		for (ssize_t i = 0; i < num_to_get; i++) {
-		  ids[i] = static_cast<int64_t>(real_ids[i]);
-		}
-	      }
-	    }
+              // Need to convert 'double' to 'int' for Sierra use...
+              int* ids = static_cast<int*>(data);
+              for (ssize_t i = 0; i < num_to_get; i++) {
+                ids[i] = static_cast<int>(real_ids[i]);
+              }
+            }
           }
 
           else if (field.get_name() == "side_ids") {
@@ -3161,24 +3126,12 @@ namespace Iofx {
             // the global element ids and the sides...  Iterate
             // through to generate the ids...
             if (int_byte_size_api() == 4) {
-	      int64_t int_max = std::numeric_limits<int>::max();
               int *ids = static_cast<int*>(data);
               int *els = (int*)TOPTR(element_side);
               size_t idx = 0;
               for (ssize_t iel = 0; iel < 2*entity_count; iel+=2) {
-                int64_t new_id = (int64_t)10*els[iel] + els[iel+1];
-		if (new_id > int_max) {
-		  std::string decoded_filename = util().decode_filename(get_filename(), isParallel);
-		      std::ostringstream errmsg;
-		      errmsg << "ERROR: Process " << Ioss::SerializeIO::getRank()
-			     << " accessing the sideset field 'ids'\n"
-			     << "\t\thas exceeded the integer bounds for entity " << els[iel]
-			     << ", local side id " << els[iel+1] << ".\n\t\tTry using 64-bit mode to read the file '"
-			     << decoded_filename << "'.\n";
-		      IOSS_ERROR(errmsg);
-		    }
-		
-                ids[idx++] = (int)new_id;
+                int64_t new_id = 10*els[iel] + els[iel+1];
+                ids[idx++] = new_id;
               }
             } else {
               int64_t *ids = static_cast<int64_t*>(data);
@@ -4926,29 +4879,16 @@ namespace Iofx {
 
             // Need to convert 'ints' to 'double' for storage on mesh...
             // FIX 64
-	    if (field.get_type() == Ioss::Field::INTEGER) {
-	      int* ids = static_cast<int*>(data);
-	      std::vector<double> real_ids(num_to_get);
-	      for (size_t i = 0; i < num_to_get; i++) {
-		real_ids[i] = static_cast<double>(ids[i]);
-	      }
-	      int ierr = ex_put_partial_set_dist_fact(get_file_pointer(), EX_SIDE_SET, id,
+            int* ids = static_cast<int*>(data);
+            std::vector<double> real_ids(num_to_get);
+            for (size_t i = 0; i < num_to_get; i++) {
+              real_ids[i] = static_cast<double>(ids[i]);
+            }
+            int ierr = ex_put_partial_set_dist_fact(get_file_pointer(), EX_SIDE_SET, id,
                                                     offset+1, entity_count, TOPTR(real_ids));
-	      if (ierr < 0)
-		Ioex::exodus_error(get_file_pointer(), __LINE__, myProcessor);
-	    }
-	    else {
-	      int64_t* ids = static_cast<int64_t*>(data);
-	      std::vector<double> real_ids(num_to_get);
-	      for (size_t i = 0; i < num_to_get; i++) {
-		real_ids[i] = static_cast<double>(ids[i]);
-	      }
-	      int ierr = ex_put_partial_set_dist_fact(get_file_pointer(), EX_SIDE_SET, id,
-                                                    offset+1, entity_count, TOPTR(real_ids));
-	      if (ierr < 0)
-		Ioex::exodus_error(get_file_pointer(), __LINE__, myProcessor);
-	    }
-	  }
+            if (ierr < 0)
+              Ioex::exodus_error(get_file_pointer(), __LINE__, myProcessor);
+          }
 
           else if (field.get_name() == "side_ids") {
           }

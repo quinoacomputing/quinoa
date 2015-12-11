@@ -48,17 +48,15 @@
 #include "Phalanx_Evaluator_Macros.hpp"
 #include "Phalanx_MDField.hpp"
 
-#include "Panzer_Evaluator_Macros.hpp"
-
 namespace panzer {
     
-PANZER_EVALUATOR_CLASS(ConstantVector)
+PHX_EVALUATOR_CLASS(ConstantVector)
   
   ScalarT vals[3]; // 3 dimensional vector
   
   PHX::MDField<ScalarT> vector;
 
-PANZER_EVALUATOR_CLASS_END
+PHX_EVALUATOR_CLASS_END
 
 }
 

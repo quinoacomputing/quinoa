@@ -1642,7 +1642,7 @@ Thyra::convert(
   const RCP<const Epetra_Map> &var_map
   )
 {
-  //typedef ModelEvaluatorBase MEB; // unused
+  typedef ModelEvaluatorBase MEB;
   if(derivative.getLinearOp().get()) {
     return EpetraExt::ModelEvaluator::MPDerivative(
         derivative.getLinearOp()

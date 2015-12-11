@@ -49,8 +49,6 @@
 #include "Phalanx_MDField.hpp"
 #include "Intrepid_FieldContainer.hpp"
 
-#include "Panzer_Evaluator_Macros.hpp"
-
 namespace panzer {
     
 /** In 3D this computes
@@ -61,7 +59,7 @@ namespace panzer {
   * in 2D is simply a scalar, here the evaluators handles
   * both cases.
   */
-PANZER_EVALUATOR_CLASS(Integrator_CurlBasisDotVector)
+PHX_EVALUATOR_CLASS(Integrator_CurlBasisDotVector)
   
   PHX::MDField<ScalarT,Cell,BASIS> residual;
     
@@ -87,7 +85,7 @@ PANZER_EVALUATOR_CLASS(Integrator_CurlBasisDotVector)
 
 private:
   Teuchos::RCP<Teuchos::ParameterList> getValidParameters() const;
-PANZER_EVALUATOR_CLASS_END
+PHX_EVALUATOR_CLASS_END
 
 }
 

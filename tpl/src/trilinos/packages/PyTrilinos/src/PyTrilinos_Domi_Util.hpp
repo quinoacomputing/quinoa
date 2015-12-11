@@ -44,7 +44,6 @@
 #define PYTRILINOS_DOMI_UTIL_HPP
 
 // Include PyTrilinos utilities
-#include "PyTrilinos_PythonException.hpp"
 #include "PyTrilinos_NumPy_Util.hpp"
 #include "PyTrilinos_DAP.hpp"
 
@@ -117,7 +116,7 @@ convertToMDMap(const Teuchos::RCP< const Teuchos::Comm< int > > teuchosComm,
 
 ////////////////////////////////////////////////////////////////////////
 
-PyObject * convertToDimData(const Teuchos::RCP< const Domi::MDMap<> > & mdMap);
+PyObject * convertToDimData(const Teuchos::RCP< const Domi::MDMap<> > mdMap);
 
 ////////////////////////////////////////////////////////////////////////
 
@@ -262,15 +261,7 @@ convertToMDVector(const Teuchos::RCP< const Teuchos::Comm< int > > teuchosComm,
 #endif
 
   // Return the result
-  try
-  {
-    return Teuchos::rcp(new Domi::MDVector< Scalar >(mdMap, mdArrayRcp));
-  }
-  catch (Domi::InvalidArgument & e)
-  {
-    PyErr_SetString(PyExc_ValueError, e.what());
-    throw PythonException();
-  }
+  return Teuchos::rcp(new Domi::MDVector< Scalar >(mdMap, mdArrayRcp));
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -304,7 +295,6 @@ convertToDistArray(Domi::MDVector< Scalar > & mdVector)
 
   fail:
   if (distArrayProtocol) PyDict_Clear(distArrayProtocol);
-  Py_XDECREF(distArrayProtocol);
   Py_XDECREF(buffer);
   Py_XDECREF(dimData);
   return NULL;

@@ -220,6 +220,12 @@ private:
     Teuchos::RCP<V> D (new V (A.getGraph ()->getRowMap ()));
     A.getLocalDiagCopy (*D);
 
+    // FIXME (mfh 02 Oct 2014) This is currently the only explicit
+    // dependence on KokkosClassic in Ifpack2 that is not protected by
+    // the HAVE_IFPACK2_KOKKOSCLASSIC macro.  See around line 100 of
+    // ifpack2/src/Ifpack2_Details_Chebyshev_def.hpp for a way to work
+    // around this.
+
     typedef typename V::scalar_type scalar_type;
     typedef typename V::mag_type mag_type;
     typedef Teuchos::ScalarTraits<scalar_type> STS;
@@ -381,10 +387,9 @@ TEUCHOS_UNIT_TEST(Ifpack2Chebyshev, Convergence)
   // Convenience typedefs.
   typedef Tpetra::Map<LO, GO, NT> map_type;
   typedef Tpetra::CrsMatrix<ST, LO, GO, NT> crs_matrix_type;
-  typedef Tpetra::RowMatrix<ST, LO, GO, NT> row_matrix_type;
   typedef Tpetra::MultiVector<ST, LO, GO, NT> MV;
   typedef Tpetra::Vector<ST, LO, GO, NT> V;
-  typedef Ifpack2::Chebyshev<row_matrix_type> prec_type;
+  typedef Ifpack2::Chebyshev<crs_matrix_type> prec_type;
   typedef Teuchos::ScalarTraits<ST> STS;
   typedef STS::magnitudeType MT;
 

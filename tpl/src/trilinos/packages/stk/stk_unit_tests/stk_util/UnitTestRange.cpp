@@ -32,6 +32,7 @@
 // 
 
 #include <gtest/gtest.h>
+#include <stk_util/util/Foreach.hpp>    // for stk_foreach
 #include <utility>                      // for pair, make_pair
 #include <vector>                       // for vector
 
@@ -56,13 +57,13 @@ TEST( UnitTestRange, range )
   EXPECT_EQ( a_range, c_range );
   EXPECT_EQ( a_range, d_range );
 
-  for( int & i : a_range)
+  stk_foreach( int & i, a_range)
   {
     EXPECT_EQ( i, 0 );
     i = 1;
   }
 
-  for( int i : c_range)
+  stk_foreach( int i, c_range)
   {
     EXPECT_EQ( i, 1 );
   }

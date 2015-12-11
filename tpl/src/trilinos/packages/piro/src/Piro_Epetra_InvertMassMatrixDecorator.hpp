@@ -116,8 +116,7 @@ class InvertMassMatrixDecorator
    Teuchos::RCP<EpetraExt::ModelEvaluator> model;
    Teuchos::RCP<Epetra_Vector> x_dot;
 
-   //Teuchos::RCP<Epetra_CrsMatrix> massMatrix;
-   Teuchos::RCP<Epetra_Operator> massMatrix;
+   Teuchos::RCP<Epetra_CrsMatrix> massMatrix;
    Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<double> > lowsFactory;
 
    bool massMatrixIsConstant; // User Setting

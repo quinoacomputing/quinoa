@@ -81,8 +81,7 @@
 
 #define HAVE_COMPLEX_SCALARS
 
-namespace MueLu
-{
+namespace MueLu {
 
 typedef enum
   {
@@ -100,14 +99,19 @@ typedef enum
     MODE_STATUS, //3
     MODE_AGGREGATE, //4
     MODE_GET, //5
-    MODE_SET, //6
-    MODE_ERROR //7
+    MODE_ERROR
   } MODE_TYPE;
 
-/* Note: MuemexSystem is declared friend in MueLu::Hierarchy and MueLu::FactoryManager.
-   This gives access to the private method Hierarchy::GetFactoryManager, which allows
-   muelu('get', ...) to retrieve nonstandard "kept" items like Nullspace and Aggregates.
-*/
+typedef enum
+  {
+    MATRIX,
+    MULTIVECTOR,
+    LOVECTOR,
+    SCALAR,
+    HIER_AGGREGATES,
+    UNKNOWN
+  } HierAttribType;
+
 class MuemexSystem
 {
  public:
@@ -118,7 +122,7 @@ class MuemexSystem
   int id;
   Teuchos::RCP<Teuchos::ParameterList> List;
   DataPackType type;
-  mxArray* getHierarchyData(std::string dataName, MuemexType dataType, int levelID); //Works for all dp types
+  mxArray* getHierarchyData(std::string dataName, HierAttribType dataType, int levelID); //Works for all dp types
 };
 
 class EpetraSystem : public MuemexSystem
@@ -130,13 +134,13 @@ class EpetraSystem : public MuemexSystem
   int status();
   mxArray* solve(Teuchos::RCP<Teuchos::ParameterList> params, Teuchos::RCP<Epetra_CrsMatrix> matrix, const mxArray* rhs, int &iters);
   Teuchos::RCP<Epetra_CrsMatrix> GetMatrix()
-  {
-    return A;
-  }
+    {
+      return A;
+    }
   Teuchos::RCP<Epetra_Operator> GetPrec()
-  {
-    return prec;
-  }
+    {
+      return prec;
+    }
   int NumGlobalRows()
   {
     return A->NumGlobalRows();
@@ -164,19 +168,17 @@ class TpetraSystem : public MuemexSystem
   typedef Tpetra::CrsMatrix<Scalar, mm_LocalOrd, mm_GlobalOrd, mm_node_t> TMatrix;
   typedef Tpetra::Operator<Scalar, mm_LocalOrd, mm_GlobalOrd, mm_node_t> TOperator;
   int setup(const mxArray* matlabA, bool haveCoords = false, const mxArray* matlabCoords = NULL);
-  void normalSetup(const mxArray* matlabA, bool haveCoords = false, const mxArray* matlabCoords = NULL);
-  void customSetup(const mxArray* matlabA, bool haveCoords = false, const mxArray* matlabCoords = NULL);
   int status();
   mxArray* solve(Teuchos::RCP<Teuchos::ParameterList> params, Teuchos::RCP<TMatrix> matrix, const mxArray* rhs, int &iters);
   //note: I typedef'd mm_node_t at the top of this file as the Kokkos default type
   Teuchos::RCP<TMatrix> GetMatrix()
-  { 
-    return A;
-  }
+    {
+      return A;
+    }
   Teuchos::RCP<TOperator> GetPrec()
-  {
-    return prec;
-  }
+    {
+      return prec;
+    }
   int NumMyRows()
   {
     if(A.is_null())
@@ -196,9 +198,6 @@ class TpetraSystem : public MuemexSystem
  private:
   Teuchos::RCP<TMatrix> A;
   Teuchos::RCP<TOperator> prec;
- public:
-  bool keepAll;
-  std::vector<Teuchos::RCP<const FactoryManagerBase>> systemManagers;
 };
 
 namespace MuemexSystemList
@@ -212,6 +211,15 @@ namespace MuemexSystemList
   int status_all();
   bool isInList(int id);
   void clearAll();
+}
+
+
+// Template function implementations
+template<typename Scalar>
+Teuchos::RCP<Xpetra::Matrix<Scalar, mm_LocalOrd, mm_GlobalOrd, mm_node_t>> xpetraLoadMatrix(const mxArray* mxa)
+{
+  Teuchos::RCP<Tpetra::CrsMatrix<Scalar, mm_LocalOrd, mm_GlobalOrd, mm_node_t>> tpetraMat = tpetraLoadMatrix<Scalar>(mxa);
+  return MueLu::TpetraCrs_To_XpetraMatrix<Scalar, mm_LocalOrd, mm_GlobalOrd, mm_node_t>(tpetraMat);
 }
 
 // Get a hierarchy from a MuemexSystem

@@ -71,10 +71,6 @@ private:
   Real c2_;
   Real c3_;
   Real eps_;
-  Real fmin_;         // smallest fval encountered
-  Real alphaMin_;     // Alpha that yields the smallest fval encountered
-  bool acceptMin_;    // Use smallest fval if sufficient decrease not satisfied
-  bool itcond_;       // true if maximum function evaluations reached
 
   Teuchos::RCP<Vector<Real> > xtst_; 
   Teuchos::RCP<Vector<Real> > d_;
@@ -83,30 +79,30 @@ private:
 
 public:
 
-
   virtual ~LineSearch() {}
 
   // Constructor
   LineSearch( Teuchos::ParameterList &parlist ) : eps_(0.0) {
     // Enumerations
-    edesc_ = StringToEDescent(parlist.sublist("Step").sublist("Line Search").sublist("Descent Method").get("Type","Quasi-Newton Method"));
-    econd_ = StringToECurvatureCondition(parlist.sublist("Step").sublist("Line Search").sublist("Curvature Condition").get("Type","Strong Wolfe Conditions"));
+    edesc_ = StringToEDescent(parlist.get("Descent Type","Quasi-Newton Method"));
+    econd_ = StringToECurvatureCondition( parlist.get("Linesearch Curvature Condition","Strong Wolfe Conditions"));
     // Linesearc Parameters
-    alpha0_    = parlist.sublist("Step").sublist("Line Search").get("Initial Step Size",1.0);
-    useralpha_ = parlist.sublist("Step").sublist("Line Search").get("User Defined Initial Step Size",false);
-    acceptMin_ = parlist.sublist("Step").sublist("Line Search").get("Accept Linesearch Minimizer",false);
-    maxit_     = parlist.sublist("Step").sublist("Line Search").get("Function Evaluation Limit",20);
-    c1_        = parlist.sublist("Step").sublist("Line Search").get("Sufficient Decrease Tolerance",1.e-4);
-    c2_        = parlist.sublist("Step").sublist("Line Search").sublist("Curvature Condition").get("General Parameter",0.9);
-    c3_        = parlist.sublist("Step").sublist("Line Search").sublist("Curvature Condition").get("Generalized Wolfe Parameter",0.6);
+    maxit_     = parlist.get("Maximum Number of Function Evaluations",            20);
+    c1_        = parlist.get("Sufficient Decrease Parameter",                     1.e-4);
+    c2_        = parlist.get("Curvature Conditions Parameter",                    0.9);
+    c3_        = parlist.get("Curvature Conditions Parameter: Generalized Wolfe", 0.6);
+    alpha0_    = parlist.get("Initial Linesearch Parameter",1.0);
+    useralpha_ = parlist.get("User Defined Linesearch Parameter",false);
 
-    fmin_      = std::numeric_limits<Real>::max();
-    alphaMin_  = 0; 
-    itcond_    = false;
-
-    c1_ = ((c1_ < 0.0) ? 1.e-4 : c1_);
-    c2_ = ((c2_ < 0.0) ? 0.9   : c2_);
-    c3_ = ((c3_ < 0.0) ? 0.9   : c3_);
+    if ( c1_ < 0.0 ) {
+      c1_ = 1.e-4;
+    }
+    if ( c2_ < 0.0 ) {
+      c2_ = 0.9;
+    }
+    if ( c3_ < 0.0 ) {
+      c3_ = 0.9;
+    }
     if ( c2_ <= c1_ ) {
       c1_ = 1.e-4;
       c2_ = 0.9;
@@ -149,7 +145,7 @@ public:
         d_->set(s);
         d_->scale(-1.0);
         con.pruneActive(*d_,*(grad_),x,eps_);
-        gs = alpha*(grad_)->dot(d_->dual());
+        gs = alpha*(grad_)->dot(*d_);
         d_->zero();
         updateIterate(*d_,x,s,alpha,con);
         d_->scale(-1.0);
@@ -168,9 +164,9 @@ public:
     }
 
     // Check Maximum Iteration
-    itcond_ = false;
+    bool itcond = false;
     if ( ls_neval >= maxit_ ) { 
-      itcond_ = true;
+      itcond = true;
     }
 
     // Check Curvature Condition
@@ -214,21 +210,16 @@ public:
       }
     }
 
-    if(fnew<fmin_) {
-      fmin_ = fnew;
-      alphaMin_ = alpha;
-    }
-
     if (type == LINESEARCH_BACKTRACKING || type == LINESEARCH_CUBICINTERP) {
       if (edesc_ == DESCENT_NONLINEARCG) {
-        return ((armijo && curvcond) || itcond_);
+        return ((armijo && curvcond) || itcond);
       }
       else {
-        return (armijo || itcond_);
+        return (armijo || itcond);
       }
     }
     else {
-      return ((armijo && curvcond) || itcond_);
+      return ((armijo && curvcond) || itcond);
     }
   }
 
@@ -275,43 +266,22 @@ public:
 
   void updateIterate(Vector<Real> &xnew, const Vector<Real> &x, const Vector<Real> &s, Real alpha,
                      BoundConstraint<Real> &con ) {
-
     xnew.set(x);
     xnew.axpy(alpha,s);
-
     if ( con.isActivated() ) {
       con.project(xnew);
     }
   }
-
-  bool useLocalMinimizer() {
-    return itcond_ && acceptMin_;
-  }
- 
-  bool takeNoStep() {
-    return itcond_ && !acceptMin_;
-  }
-
-  // use this function to modify alpha and fval if the maximum number of iterations
-  // are reached
-  void setMaxitUpdate(Real &alpha, Real &fnew, const Real &fold) {
-    // Use local minimizer
-    if( itcond_ && acceptMin_ ) {
-      alpha = alphaMin_;
-      fnew = fmin_;
-    }
-    // Take no step
-    else if(itcond_ && !acceptMin_) {
-      alpha = 0;
-      fnew = fold;
-    }
-  }
- 
-
 };
 
 }
 
-#include "ROL_LineSearchFactory.hpp"
+#include "ROL_IterationScaling.hpp"
+#include "ROL_PathBasedTargetLevel.hpp"
+#include "ROL_BackTracking.hpp"
+#include "ROL_CubicInterp.hpp"
+#include "ROL_Bisection.hpp"
+#include "ROL_GoldenSection.hpp"
+#include "ROL_Brents.hpp"
 
 #endif

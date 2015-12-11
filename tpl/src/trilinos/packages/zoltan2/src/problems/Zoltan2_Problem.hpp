@@ -57,6 +57,9 @@
 #include <Zoltan2_Algorithm.hpp>
 #include <Zoltan2_TimerManager.hpp>
 
+using std::cout;
+using std::endl;
+
 namespace Zoltan2{
 
 ////////////////////////////////////////////////////////////////////////

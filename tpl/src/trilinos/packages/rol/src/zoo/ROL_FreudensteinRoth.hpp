@@ -63,30 +63,13 @@ namespace ZOO {
    */
   template<class Real>
   class Objective_FreudensteinRoth : public Objective<Real> {
-
-    typedef std::vector<Real> vector;
-    typedef Vector<Real>      V;
-    typedef StdVector<Real>   SV;
-
-  private:
- 
-    Teuchos::RCP<const vector> getVector( const V& x ) {
-      using Teuchos::dyn_cast;
-      return dyn_cast<const SV>(x).getVector();
-    }
-
-    Teuchos::RCP<vector> getVector( V& x ) {
-      using Teuchos::dyn_cast;
-      return dyn_cast<SV>(x).getVector();
-    }    
-
   public:
     Objective_FreudensteinRoth() {}
 
     Real value( const Vector<Real> &x, Real &tol ) {
-      using Teuchos::RCP;
-
-      RCP<const vector> xp = getVector(x);
+      StdVector<Real> & ex =
+        Teuchos::dyn_cast<StdVector<Real> >(const_cast <Vector<Real> &>(x));
+      Teuchos::RCP<const std::vector<Real> > xp = ex.getVector();
 
       Real f1 = -13.0 + (*xp)[0] + ((5.0-(*xp)[1])*(*xp)[1] - 2.0)*(*xp)[1];
       Real f2 = -29.0 + (*xp)[0] + (((*xp)[1]+1.0)*(*xp)[1] - 14.0)*(*xp)[1];
@@ -95,10 +78,10 @@ namespace ZOO {
     }
 
     void gradient( Vector<Real> &g, const Vector<Real> &x, Real &tol ) {
-
-      using Teuchos::RCP;
-      RCP<const vector> xp = getVector(x);
-      RCP<vector> gp = getVector(g);
+      Teuchos::RCP<const std::vector<Real> > xp =
+        (Teuchos::dyn_cast<StdVector<Real> >(const_cast<Vector<Real> &>(x))).getVector();
+      Teuchos::RCP<std::vector<Real> > gp =
+        Teuchos::rcp_const_cast<std::vector<Real> >((Teuchos::dyn_cast<StdVector<Real> >(g)).getVector());
 
       Real f1 = -13.0 + (*xp)[0] + ((5.0-(*xp)[1])*(*xp)[1] - 2.0)*(*xp)[1];
       Real f2 = -29.0 + (*xp)[0] + (((*xp)[1]+1.0)*(*xp)[1] - 14.0)*(*xp)[1];
@@ -113,11 +96,12 @@ namespace ZOO {
     }
 #if USE_HESSVEC
     void hessVec( Vector<Real> &hv, const Vector<Real> &v, const Vector<Real> &x, Real &tol ) {
-
-      using Teuchos::RCP; 
-      RCP<const vector> xp = getVector(x);
-      RCP<const vector> vp = getVector(v);
-      RCP<vector> hvp = getVector(hv);
+      Teuchos::RCP<const std::vector<Real> > xp =
+        (Teuchos::dyn_cast<StdVector<Real> >(const_cast<Vector<Real> &>(x))).getVector();
+      Teuchos::RCP<const std::vector<Real> > vp =
+        (Teuchos::dyn_cast<StdVector<Real> >(const_cast<Vector<Real> &>(v))).getVector();
+      Teuchos::RCP<std::vector<Real> > hvp =
+        Teuchos::rcp_const_cast<std::vector<Real> >((Teuchos::dyn_cast<StdVector<Real> >(hv)).getVector());
 
       Real f1 = -13.0 + (*xp)[0] + ((5.0-(*xp)[1])*(*xp)[1] - 2.0)*(*xp)[1];
       Real f2 = -29.0 + (*xp)[0] + (((*xp)[1]+1.0)*(*xp)[1] - 14.0)*(*xp)[1];
@@ -139,11 +123,12 @@ namespace ZOO {
     }
 #endif
     void invHessVec( Vector<Real> &hv, const Vector<Real> &v, const Vector<Real> &x, Real &tol ) {
-
-      using Teuchos::RCP;
-      RCP<const vector> xp = getVector(x);
-      RCP<const vector> vp = getVector(v);
-      RCP<vector> hvp = getVector(hv); 
+      Teuchos::RCP<const std::vector<Real> > xp =
+        (Teuchos::dyn_cast<StdVector<Real> >(const_cast<Vector<Real> &>(x))).getVector();
+      Teuchos::RCP<const std::vector<Real> > vp =
+        (Teuchos::dyn_cast<StdVector<Real> >(const_cast<Vector<Real> &>(v))).getVector();
+      Teuchos::RCP<std::vector<Real> > hvp =
+        Teuchos::rcp_const_cast<std::vector<Real> >((Teuchos::dyn_cast<StdVector<Real> >(hv)).getVector());
 
       Real f1 = -13.0 + (*xp)[0] + ((5.0-(*xp)[1])*(*xp)[1] - 2.0)*(*xp)[1];
       Real f2 = -29.0 + (*xp)[0] + (((*xp)[1]+1.0)*(*xp)[1] - 14.0)*(*xp)[1];
@@ -167,16 +152,11 @@ namespace ZOO {
 
   template<class Real>
   void getFreudensteinRoth( Teuchos::RCP<Objective<Real> > &obj, Vector<Real> &x0, Vector<Real> &x ) {
-
-    typedef std::vector<Real> vector;
-    typedef StdVector<Real>   SV;
-    using Teuchos::RCP;
-    using Teuchos::dyn_cast;
-
     // Cast Initial Guess and Solution Vectors
-    RCP<vector> x0p = dyn_cast<SV>(x0).getVector();
-    RCP<vector> xp  = dyn_cast<SV>(x).getVector();
-
+    Teuchos::RCP<std::vector<Real> > x0p =
+      Teuchos::rcp_const_cast<std::vector<Real> >((Teuchos::dyn_cast<StdVector<Real> >(x0)).getVector());
+    Teuchos::RCP<std::vector<Real> > xp =
+      Teuchos::rcp_const_cast<std::vector<Real> >((Teuchos::dyn_cast<StdVector<Real> >(x)).getVector());
     int n = xp->size();
     // Resize Vectors
     n = 2;

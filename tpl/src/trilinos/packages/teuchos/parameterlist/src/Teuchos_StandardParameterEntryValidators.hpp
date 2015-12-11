@@ -52,10 +52,6 @@
 #include "Teuchos_TypeNameTraits.hpp"
 #include "Teuchos_DummyObjectGetter.hpp"
 
-#ifdef HAVE_TEUCHOSCORE_QUADMATH
-#  include <quadmath.h> // __float128 constants and functions
-#endif // HAVE_TEUCHOSCORE_QUADMATH
-
 #include <locale>
 
 
@@ -1140,17 +1136,6 @@ public:
 #endif // HAVE_TEUCHOS_LONG_LONG_INT
 
 
-#ifdef HAVE_TEUCHOSCORE_QUADMATH
-template<>
-class EnhancedNumberTraits<__float128>{
-public:
-  static inline __float128 min() { return -std::numeric_limits<__float128>::max(); }
-  static inline __float128 max() { return std::numeric_limits<__float128>::max(); }
-  static inline __float128 defaultStep() { return 1; }
-  static inline unsigned short defaultPrecision() { return 100; }
-};
-#endif // HAVE_TEUCHOSCORE_QUADMATH
-
 template<>
 class EnhancedNumberTraits<double>{
 public:
@@ -1160,6 +1145,7 @@ public:
   static inline unsigned short defaultPrecision() { return 100; }
 };
 
+
 template<>
 class EnhancedNumberTraits<float>{
 public:
@@ -1168,6 +1154,7 @@ public:
   static inline float defaultStep() { return 1; }
   static inline unsigned short defaultPrecision() { return 100; }
 };
+
 
 /** \brief Class uesd to validate a particular type of number.
  *

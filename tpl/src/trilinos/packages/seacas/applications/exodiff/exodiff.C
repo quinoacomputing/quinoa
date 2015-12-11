@@ -58,7 +58,6 @@
 #include "exodiff.h"
 #include "Tolerance.h"
 #include "MinMaxData.h"
-#include "Norm.h"
 #include "map.h"
 #include "smart_assert.h"
 #include "exoII_read.h"
@@ -1320,8 +1319,9 @@ void do_diffs(ExoII_Read<INT>& file1, ExoII_Read<INT>& file2, int time_step1, Ti
       const double* vals2 = get_nodal_values(file2, t2,    idx2, 2, name, &diff_flag);
 
       DiffData max_diff;
-      Norm norm;
-
+      double norm_d = 0.0;
+      double norm_1 = 0.0;
+      double norm_2 = 0.0;
       size_t ncount = file1.Num_Nodes();
       for (size_t n = 0; n < ncount; ++n) {
 
@@ -1341,22 +1341,22 @@ void do_diffs(ExoII_Read<INT>& file1, ExoII_Read<INT>& file2, int time_step1, Ti
 	  } else {
 	    max_diff.set_max(d, vals1[n], vals2[n2], n);
 	  }
-	  norm.add_value(vals1[n], vals2[n2]);
+	  if (interface.doNorms) {
+	    norm_d += (vals1[n]-vals2[n2])*(vals1[n]-vals2[n2]);
+	    norm_1 += vals1[n]*vals1[n];
+	    norm_2 += vals2[n2]*vals2[n2];
+	  }
 	}
       } // End of node iteration...
 
-      if (interface.doL1Norm && norm.diff(1) > 0.0) {
-        sprintf(buf,
-                "   %-*s L1 norm of diff=%14.7e (%11.5e ~ %11.5e) rel=%14.7e",
-                name_length, name.c_str(),
-		norm.diff(1), norm.left(1), norm.right(1), norm.relative(1));
-        std::cout << buf << std::endl;
-      }
-      if (interface.doL2Norm && norm.diff(2) > 0.0) {
+      if (interface.doNorms && norm_d > 0.0) {
+	norm_d = sqrt(norm_d);
+	norm_1 = sqrt(norm_1);
+	norm_2 = sqrt(norm_2);
         sprintf(buf,
                 "   %-*s L2 norm of diff=%14.7e (%11.5e ~ %11.5e) rel=%14.7e",
                 name_length, name.c_str(),
-		norm.diff(2), norm.left(2), norm.right(2), norm.relative(2));
+		norm_d, norm_1, norm_2, norm_d / max(norm_1, norm_2));
         std::cout << buf << std::endl;
       }
 
@@ -1402,7 +1402,9 @@ void do_diffs(ExoII_Read<INT>& file1, ExoII_Read<INT>& file2, int time_step1, Ti
 	vidx2 = find_string(file2.Elmt_Var_Names(), name, interface.nocase_var_names);
       SMART_ASSERT(vidx1 >= 0 && vidx2 >= 0);
       
-      Norm norm;
+      double norm_d = 0.0;
+      double norm_1 = 0.0;
+      double norm_2 = 0.0;
     
       if (elmt_map != 0) { // Load variable for all blocks in file 2.
 	for (int b = 0; b < file2.Num_Elmt_Blocks(); ++b) {
@@ -1488,13 +1490,8 @@ void do_diffs(ExoII_Read<INT>& file1, ExoII_Read<INT>& file2, int time_step1, Ti
 		file2.Global_to_Block_Local(
 					    elmt_map[global_elmt_index] + 1, b2, e2);
 		SMART_ASSERT(blocks2[b2] != 0);
-		if (blocks2[b2]->is_valid_var(vidx2)) {
-		  v2 = blocks2[b2]->Get_Results(vidx2)[e2]; // Get value from file 2.
-		} else {
-		  // Easiest from logic standpoint to just set v2 equal to v1 at
-		  // this point and continue through rest of loop. 
-		  v2 = vals1[e];
-		}
+		SMART_ASSERT(blocks2[b2]->Get_Results(vidx2) != 0);
+		v2 = blocks2[b2]->Get_Results(vidx2)[e2]; // Get value from file 2.
 	      }
 	    }
           
@@ -1521,7 +1518,11 @@ void do_diffs(ExoII_Read<INT>& file1, ExoII_Read<INT>& file2, int time_step1, Ti
 	      double d = interface.elmt_var[e_idx].Delta(vals1[e], v2);
 	      max_diff.set_max(d, vals1[e], v2, global_elmt_index, block_id);
 	    }
-	    norm.add_value(vals1[e], v2);
+	    if (interface.doNorms) {
+	      norm_d += (vals1[e]-v2)*(vals1[e]-v2);
+	      norm_1 += vals1[e]*vals1[e];
+	      norm_2 += v2*v2;
+	    }
 	  }
 	  ++global_elmt_index;
 	}
@@ -1537,21 +1538,17 @@ void do_diffs(ExoII_Read<INT>& file1, ExoII_Read<INT>& file2, int time_step1, Ti
         
       }  // End of element block loop.
     
-      if (interface.doL1Norm && norm.diff(1) > 0.0) {
-        sprintf(buf,
-                "   %-*s L1 norm of diff=%14.7e (%11.5e ~ %11.5e) rel=%14.7e",
-                name_length, name.c_str(),
-		norm.diff(1), norm.left(1), norm.right(1), norm.relative(1));
-        std::cout << buf << std::endl;
-      }
-      if (interface.doL2Norm && norm.diff(2) > 0.0) {
-        sprintf(buf,
+      if (interface.doNorms && norm_d > 0.0) {
+	norm_d = sqrt(norm_d);
+	norm_1 = sqrt(norm_1);
+	norm_2 = sqrt(norm_2);
+	sprintf(buf,
                 "   %-*s L2 norm of diff=%14.7e (%11.5e ~ %11.5e) rel=%14.7e",
                 name_length, name.c_str(),
-		norm.diff(2), norm.left(2), norm.right(2), norm.relative(2));
+		norm_d, norm_1, norm_2, norm_d / max(norm_1, norm_2));
         std::cout << buf << std::endl;
       }
-
+      
       if (!interface.summary_flag && max_diff.diff > interface.elmt_var[e_idx].value) {
 	diff_flag = true;
         
@@ -1596,9 +1593,11 @@ void do_diffs(ExoII_Read<INT>& file1, ExoII_Read<INT>& file2, int time_step1, Ti
 	vidx2 = find_string(file2.NS_Var_Names(), name, interface.nocase_var_names);
       SMART_ASSERT(vidx1 >= 0 && vidx2 >= 0);
       
-      DiffData max_diff;
-      Norm norm;
+      double norm_d = 0.0;
+      double norm_1 = 0.0;
+      double norm_2 = 0.0;
 
+      DiffData max_diff;
       for (int b = 0; b < file1.Num_Node_Sets(); ++b) {
 	Node_Set<INT>* nset1 = file1.Get_Node_Set_by_Index(b);
 	if (!nset1->is_valid_var(vidx1)) {
@@ -1678,7 +1677,11 @@ void do_diffs(ExoII_Read<INT>& file1, ExoII_Read<INT>& file2, int time_step1, Ti
 	      double d = interface.ns_var[e_idx].Delta(vals1[idx1], v2);
 	      max_diff.set_max(d, vals1[idx1], v2, e, nset1->Id());
 	    }
-	    norm.add_value(vals1[idx1], v2);
+	    if (interface.doNorms) {
+	      norm_d += (vals1[idx1]-v2)*(vals1[idx1]-v2);
+	      norm_1 += vals1[idx1]*vals1[idx1];
+	      norm_2 += v2*v2;
+	    }
 	  }
         
 	  if (out_file_id >= 0)
@@ -1702,21 +1705,14 @@ void do_diffs(ExoII_Read<INT>& file1, ExoII_Read<INT>& file2, int time_step1, Ti
         
       }  // End of nodeset loop.
       
-      if (interface.doL1Norm && norm.diff(1) > 0.0) {
+      if (interface.doNorms && norm_d > 0.0) {
         sprintf(buf,
-                "   %-*s L1 norm of diff=%14.7e (%11.5e ~ %11.5e) rel=%14.7e",
+                "   %-*s L2 norm of diff=%14.7e (%11.5e ~ %11.5e)",
                 name_length, name.c_str(),
-		norm.diff(1), norm.left(1), norm.right(1), norm.relative(1));
+		sqrt(norm_d), sqrt(norm_1), sqrt(norm_2));
         std::cout << buf << std::endl;
       }
-      if (interface.doL2Norm && norm.diff(2) > 0.0) {
-        sprintf(buf,
-                "   %-*s L2 norm of diff=%14.7e (%11.5e ~ %11.5e) rel=%14.7e",
-                name_length, name.c_str(),
-		norm.diff(2), norm.left(2), norm.right(2), norm.relative(2));
-        std::cout << buf << std::endl;
-      }
-
+      
       if (!interface.summary_flag && max_diff.diff > interface.ns_var[e_idx].value) {
 	diff_flag = true;
         
@@ -1754,7 +1750,9 @@ void do_diffs(ExoII_Read<INT>& file1, ExoII_Read<INT>& file2, int time_step1, Ti
     if (out_file_id < 0 && !interface.quiet_flag && !interface.summary_flag && !interface.ss_var_names.empty())
       std::cout << "Sideset variables:" << std::endl;
     
-    Norm norm;
+    double norm_d = 0.0;
+    double norm_1 = 0.0;
+    double norm_2 = 0.0;
 
     for (unsigned e_idx = 0; e_idx < interface.ss_var_names.size(); ++e_idx) {
       const string& name = (interface.ss_var_names)[e_idx];
@@ -1844,7 +1842,11 @@ void do_diffs(ExoII_Read<INT>& file1, ExoII_Read<INT>& file2, int time_step1, Ti
 	      double d = interface.ss_var[e_idx].Delta(vals1[ind1], v2);
 	      max_diff.set_max(d, vals1[ind1], v2, e, sset1->Id());
 	    }
-	    norm.add_value(vals1[ind1], v2);
+	    if (interface.doNorms) {
+	      norm_d += (vals1[ind1]-v2)*(vals1[ind1]-v2);
+	      norm_1 += vals1[ind1]*vals1[ind1];
+	      norm_2 += v2*v2;
+	    }
 	  }
 	  if (out_file_id >= 0)
 	    ex_put_var(out_file_id, t2.step1, EX_SIDE_SET,
@@ -1869,21 +1871,14 @@ void do_diffs(ExoII_Read<INT>& file1, ExoII_Read<INT>& file2, int time_step1, Ti
       if (!interface.summary_flag && max_diff.diff > interface.ss_var[e_idx].value) {
 	diff_flag = true;
         
-	if (interface.doL1Norm && norm.diff(1) > 0.0) {
+	if (interface.doNorms && norm_d > 0.0) {
 	  sprintf(buf,
-		  "   %-*s L1 norm of diff=%14.7e (%11.5e ~ %11.5e) rel=%14.7e",
+		  "   %-*s L2 norm of diff=%14.7e (%11.5e ~ %11.5e)",
 		  name_length, name.c_str(),
-		  norm.diff(1), norm.left(1), norm.right(1), norm.relative(1));
+		  sqrt(norm_d), sqrt(norm_1), sqrt(norm_2));
 	  std::cout << buf << std::endl;
 	}
-	if (interface.doL2Norm && norm.diff(2) > 0.0) {
-	  sprintf(buf,
-		  "   %-*s L2 norm of diff=%14.7e (%11.5e ~ %11.5e) rel=%14.7e",
-		  name_length, name.c_str(),
-		  norm.diff(2), norm.left(2), norm.right(2), norm.relative(2));
-	  std::cout << buf << std::endl;
-	}
-
+      
 	if (!interface.quiet_flag) {
 	  Side_Set<INT> *sset = file1.Get_Side_Set_by_Id(max_diff.blk);
 	  sprintf(buf,
@@ -1992,7 +1987,7 @@ bool diff_sideset_df(ExoII_Read<INT>& file1, ExoII_Read<INT>& file2, const INT *
 		      v1, v2, d,
 		      (size_t)sset1->Id(),
 		      (size_t)id_map[sset1->Side_Id(e).first-1],
-		      (int)sset1->Side_Id(e).second,(int)i+1);
+		      (int)sset1->Side_Id(e).second,i+1);
 	      std::cout << buf << std::endl;
 	    }
 	  }
@@ -2092,7 +2087,9 @@ bool diff_element_attributes(ExoII_Read<INT>& file1, ExoII_Read<INT>& file2,
       if (tol_idx == -1)
 	continue;
 
-      Norm norm;
+      double norm_d = 0.0;
+      double norm_1 = 0.0;
+      double norm_2 = 0.0;
     
       eblock1->Load_Attributes(idx1);
       const double* vals1 = eblock1->Get_Attributes(idx1);
@@ -2138,25 +2135,25 @@ bool diff_element_attributes(ExoII_Read<INT>& file1, ExoII_Read<INT>& file2,
 	  double d = interface.elmt_att[tol_idx].Delta(vals1[e], vals2[e]);
 	  max_diff.set_max(d, vals1[e], vals2[e], global_elmt_index, block_id);
 	}
-	norm.add_value(vals1[e], vals2[e]);
+	if (interface.doNorms) {
+	  norm_d += (vals1[e]-vals2[e])*(vals1[e]-vals2[e]);
+	  norm_1 += vals1[e]*vals1[e];
+	  norm_2 += vals2[e]*vals2[e];
+	}
 	++global_elmt_index;
       }
         
-      if (interface.doL1Norm && norm.diff(1) > 0.0) {
-	sprintf(buf,
-		"   %-*s L1 norm of diff=%14.7e (%11.5e ~ %11.5e) rel=%14.7e",
-		name_length, name.c_str(),
-		norm.diff(1), norm.left(1), norm.right(1), norm.relative(1));
-	std::cout << buf << std::endl;
-      }
-      if (interface.doL2Norm && norm.diff(2) > 0.0) {
+      if (interface.doNorms && norm_d > 0.0) {
+	norm_d = sqrt(norm_d);
+	norm_1 = sqrt(norm_1);
+	norm_2 = sqrt(norm_2);
 	sprintf(buf,
 		"   %-*s L2 norm of diff=%14.7e (%11.5e ~ %11.5e) rel=%14.7e",
 		name_length, name.c_str(),
-		norm.diff(2), norm.left(2), norm.right(2), norm.relative(2));
+		norm_d, norm_1, norm_2, norm_d / max(norm_1, norm_2));
 	std::cout << buf << std::endl;
       }
-
+      
       if (!interface.summary_flag && max_diff.diff > interface.elmt_att[tol_idx].value) {
 	diff_flag = true;
         

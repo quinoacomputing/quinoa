@@ -83,9 +83,8 @@
 #ifndef ROL_ZAKHAROV_HPP
 #define ROL_ZAKHAROV_HPP
 
-#include "ROL_Objective.hpp"
 #include "ROL_StdVector.hpp"
-
+#include "ROL_Objective.hpp"
 
 namespace ROL {
 namespace ZOO {
@@ -122,20 +121,6 @@ namespace ZOO {
         g.axpy(coeff,*k_);
     }
 
-    Real dirDeriv( const Vector<Real> &x, const Vector<Real> &d, Real &tol ) {
-
-        Real kdotd = d.dot(*k_);
-        Real kdotx = x.dot(*k_);
-        Real xdotd = x.dot(d);
-        
-        Real coeff = 0.25*(2.0*kdotx+pow(kdotx,3.0));
-
-        Real deriv = 2*xdotd + coeff*kdotd;
- 
-        return deriv;
-
-    }
-
 #if USE_HESSVEC
     void hessVec( Vector<Real> &hv, const Vector<Real> &v, const Vector<Real> &x, Real &tol ) {
 
@@ -165,34 +150,24 @@ namespace ZOO {
 
 template<class Real>
 void getZakharov( Teuchos::RCP<Objective<Real> > &obj, Vector<Real> &x0, Vector<Real> &x ) {
-  
-    using Teuchos::RCP;
-    using Teuchos::rcp;
-    using Teuchos::dyn_cast; 
-
-    typedef std::vector<Real> vector;
-    typedef Vector<Real>      V;
-    typedef StdVector<Real>   SV;  
- 
-    typedef typename vector::size_type uint;
-
     // Cast Initial Guess and Solution Vectors
-    RCP<vector> x0p = dyn_cast<SV>(x0).getVector();
-    RCP<vector> xp  = dyn_cast<SV>(x).getVector();
-
-    uint n = xp->size();
+    Teuchos::RCP<std::vector<Real> > x0p =
+      Teuchos::rcp_const_cast<std::vector<Real> >((Teuchos::dyn_cast<StdVector<Real> >(x0)).getVector());
+    Teuchos::RCP<std::vector<Real> > xp =
+      Teuchos::rcp_const_cast<std::vector<Real> >((Teuchos::dyn_cast<StdVector<Real> >(x)).getVector());
+    int n = xp->size();
     // Resize Vectors
     n = 10;
 
-    RCP<vector> k_rcp = rcp(new vector(n,0));
-    for(uint i=0;i<n;++i) {
+    Teuchos::RCP<std::vector<Real> > k_rcp = Teuchos::rcp(new std::vector<Real>(n,0));
+    for(int i=0;i<n;++i) {
         (*k_rcp)[i] = i+1.0;    
     }    
-    RCP<V> k = rcp(new SV(k_rcp));
+    Teuchos::RCP<Vector<Real> > k = Teuchos::rcp(new StdVector<Real>(k_rcp));
     x0p->resize(n);
     xp->resize(n);
     // Instantiate Objective Function
-    obj = rcp( new Objective_Zakharov<Real>(k) );
+    obj = Teuchos::rcp( new Objective_Zakharov<Real>(k) );
     // Get Initial Guess
     (*x0p)[0] =  3.0;
     (*x0p)[1] =  3.0;

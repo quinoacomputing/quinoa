@@ -1,6 +1,3 @@
-#ifndef RTOP_CONFIG_H
-#define RTOP_CONFIG_H
-
 #define HAVE_MPI
 
 /* #undef HAVE_RTOP_DEBUG */
@@ -10,5 +7,3 @@
 #define RTOP_DEPRECATED
 #define RTOP_DEPRECATED_MSG(MSG)
 
-
-#endif

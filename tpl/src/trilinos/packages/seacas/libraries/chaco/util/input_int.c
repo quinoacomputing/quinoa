@@ -43,7 +43,6 @@
 /* Robust routine to read an integer */
 int       input_int(void)
 {
-    int       c;
     char      line[LINE_LENGTH];/* space to read input line */
     int       done;		/* flag for end of integer */
     int       val;		/* value returned */
@@ -53,16 +52,11 @@ int       input_int(void)
     i = 0;
     done = FALSE;
     while (!done) {
-      c = getchar();
-      if (c >= 0 && c <= 127) {
-	line[i] = (char)c;
+	line[i] = getchar();
 	if (isdigit(line[i]) || line[i] == '-')
 	    i++;
 	else if (i != 0)
 	    done = TRUE;
-      }
-      else
-	done = TRUE;
     }
 
     sscanf(line, "%d", &val);

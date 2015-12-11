@@ -61,15 +61,6 @@ TEST( UnitTestEvaluator, testEvaluator)
   unit.testEvaluator();
 }
 
-TEST( UnitTestEvaluator, testEvaluateEmptyString)
-{
-    std::string by_expr = "";
-    stk::expreval::Eval expr_eval(stk::expreval::VariableMap::getDefaultResolver(), by_expr.c_str());
-    expr_eval.parse();
-    double result = expr_eval.evaluate();
-    EXPECT_EQ(0.0, result);
-}
-
 bool
 checkUndefinedFunction(
     const char *	expr)

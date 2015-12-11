@@ -54,8 +54,6 @@
 #include "Panzer_PointRule.hpp"
 #include "Panzer_STK_Interface.hpp"
 
-#include "Panzer_Evaluator_Macros.hpp"
-
 namespace panzer_stk_classic {
 
 /** This class is a scatter operation to the mesh. It
@@ -68,7 +66,7 @@ namespace panzer_stk_classic {
   * "Basis" of type <code>Teuchos::RCP<panzer::BasisIRLayout></code> and
   * "Mesh" of type <code>Teuchos::RCP<const panzer_stk_classic::STK_Interface></code>.
   */
-PANZER_EVALUATOR_CLASS(ScatterVectorFields)
+PHX_EVALUATOR_CLASS(ScatterVectorFields)
   typedef panzer_stk_classic::STK_Interface::SolutionFieldType VariableField;
 
   std::vector<std::string> names_;
@@ -85,7 +83,7 @@ public:
                       const Teuchos::RCP<const panzer::PointRule> & pointRule,
                       const std::vector<std::string> & names);
  
-PANZER_EVALUATOR_CLASS_END
+PHX_EVALUATOR_CLASS_END
 
 }
 

@@ -65,43 +65,68 @@ namespace ZOO {
   class Objective_SumOfSquares : public Objective<Real> {
   public:
     Real value( const Vector<Real> &x, Real &tol ) {
+      StdVector<Real> & ex =
+        Teuchos::dyn_cast<StdVector<Real> >(const_cast <Vector<Real> &>(x));
+      Teuchos::RCP<const std::vector<Real> > xp = ex.getVector();
 
-      return x.dot(x);
+      int n = xp->size();
+      Real val = 0;
+      for (int i=0; i<n; i++) {
+        val += pow((*xp)[i], 2);
+      }
+
+      return val;
     }
 
     void gradient( Vector<Real> &g, const Vector<Real> &x, Real &tol ) {
-      g.set(x);
-      g.scale(2.0);
+      Teuchos::RCP<const std::vector<Real> > xp =
+        (Teuchos::dyn_cast<StdVector<Real> >(const_cast<Vector<Real> &>(x))).getVector();
+      Teuchos::RCP<std::vector<Real> > gp =
+        Teuchos::rcp_const_cast<std::vector<Real> >((Teuchos::dyn_cast<StdVector<Real> >(g)).getVector());
+
+      int n = xp->size();
+      for( int i=0; i<n; i++ ) {
+        (*gp)[i] = 2.0*(*xp)[i];
+      }
     }
 #if USE_HESSVEC
     void hessVec( Vector<Real> &hv, const Vector<Real> &v, const Vector<Real> &x, Real &tol ) {
-      hv.set(v);
-      hv.scale(2.0);
+      Teuchos::RCP<const std::vector<Real> > xp =
+        (Teuchos::dyn_cast<StdVector<Real> >(const_cast<Vector<Real> &>(x))).getVector();
+      Teuchos::RCP<const std::vector<Real> > vp =
+        (Teuchos::dyn_cast<StdVector<Real> >(const_cast<Vector<Real> &>(v))).getVector();
+      Teuchos::RCP<std::vector<Real> > hvp =
+        Teuchos::rcp_const_cast<std::vector<Real> >((Teuchos::dyn_cast<StdVector<Real> >(hv)).getVector());
+
+      int n = xp->size();
+      for( int i=0; i<n; i++ ) {
+        (*hvp)[i] = 2.0*(*vp)[i];
+      }
     }
 #endif
     void invHessVec( Vector<Real> &hv, const Vector<Real> &v, const Vector<Real> &x, Real &tol ) {
+      Teuchos::RCP<const std::vector<Real> > xp =
+        (Teuchos::dyn_cast<StdVector<Real> >(const_cast<Vector<Real> &>(x))).getVector();
+      Teuchos::RCP<const std::vector<Real> > vp =
+        (Teuchos::dyn_cast<StdVector<Real> >(const_cast<Vector<Real> &>(v))).getVector();
+      Teuchos::RCP<std::vector<Real> > hvp =
+        Teuchos::rcp_const_cast<std::vector<Real> >((Teuchos::dyn_cast<StdVector<Real> >(hv)).getVector());
 
-      hv.set(v);
-      hv.scale(0.5);
+      int n = xp->size();
+      for( int i=0; i<n; i++ ) {
+        (*hvp)[i] = 0.5*(*vp)[i];
+      }
     }
   };
 
   template<class Real>
   void getSumOfSquares( Teuchos::RCP<Objective<Real> > &obj, Vector<Real> &x0, Vector<Real> &x ) {
-
-    typedef std::vector<Real> vector;
-    typedef StdVector<Real>   SV;
-
-    typedef typename vector::size_type uint; 
-
-    using Teuchos::RCP;
-    using Teuchos::dyn_cast;    
- 
     // Cast Initial Guess and Solution Vectors
-    RCP<vector> x0p = dyn_cast<SV>(x0).getVector();
-    RCP<vector> xp  = dyn_cast<SV>(x).getVector();
-
-    uint n = xp->size();
+    Teuchos::RCP<std::vector<Real> > x0p =
+      Teuchos::rcp_const_cast<std::vector<Real> >((Teuchos::dyn_cast<StdVector<Real> >(x0)).getVector());
+    Teuchos::RCP<std::vector<Real> > xp =
+      Teuchos::rcp_const_cast<std::vector<Real> >((Teuchos::dyn_cast<StdVector<Real> >(x)).getVector());
+    int n = xp->size();
     // Resize Vectors
     n = 100;
     x0p->resize(n);
@@ -109,11 +134,11 @@ namespace ZOO {
     // Instantiate Objective Function
     obj = Teuchos::rcp( new Objective_SumOfSquares<Real> );
     // Get Initial Guess
-    for ( uint i=0; i<n; i++) {
+    for (int i=0; i<n; i++) {
       (*x0p)[i] = 1.0;
     }
     // Get Solution
-    for( uint i=0; i<n; i++ ) {
+    for( int i=0; i<n; i++ ) {
       (*xp)[i] = 0.0;
     }
   }

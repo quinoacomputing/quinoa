@@ -57,8 +57,6 @@
 
 #include "Panzer_NodeType.hpp"
 
-#include "Panzer_Evaluator_WithBaseImpl.hpp"
-
 namespace panzer {
 
 template <typename LocalOrdinalT,typename GlobalOrdinalT>
@@ -87,7 +85,7 @@ class ScatterDirichletResidual_Tpetra;
 // **************************************************************
 template<typename TRAITS,typename LO,typename GO,typename NodeT>
 class ScatterDirichletResidual_Tpetra<panzer::Traits::Residual,TRAITS,LO,GO,NodeT>
-  : public panzer::EvaluatorWithBaseImpl<TRAITS>,
+  : public PHX::EvaluatorWithBaseImpl<TRAITS>,
     public PHX::EvaluatorDerived<panzer::Traits::Residual, TRAITS>,
     public panzer::CloneableEvaluator  {
   
@@ -156,7 +154,7 @@ private:
 // **************************************************************
 template<typename TRAITS,typename LO,typename GO,typename NodeT>
 class ScatterDirichletResidual_Tpetra<panzer::Traits::Tangent,TRAITS,LO,GO,NodeT>
-  : public panzer::EvaluatorWithBaseImpl<TRAITS>,
+  : public PHX::EvaluatorWithBaseImpl<TRAITS>,
     public PHX::EvaluatorDerived<panzer::Traits::Tangent, TRAITS>,
     public panzer::CloneableEvaluator  {
   
@@ -225,7 +223,7 @@ private:
 // **************************************************************
 template<typename TRAITS,typename LO,typename GO,typename NodeT>
 class ScatterDirichletResidual_Tpetra<panzer::Traits::Jacobian,TRAITS,LO,GO,NodeT>
-  : public panzer::EvaluatorWithBaseImpl<TRAITS>,
+  : public PHX::EvaluatorWithBaseImpl<TRAITS>,
     public PHX::EvaluatorDerived<panzer::Traits::Jacobian, TRAITS>,
     public panzer::CloneableEvaluator  {
   

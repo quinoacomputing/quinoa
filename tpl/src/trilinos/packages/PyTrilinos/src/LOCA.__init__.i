@@ -168,11 +168,11 @@ and classes:
     e.restore();
     SWIG_fail;
   }
+  SWIG_CATCH_STDEXCEPT
   catch (Swig::DirectorException & e)
   {
     SWIG_fail;
   }
-  SWIG_CATCH_STDEXCEPT
   catch(...)
   {
     SWIG_exception(SWIG_UnknownError, "Unknown C++ exception");
@@ -200,11 +200,7 @@ __all__ = ['Extended',
            'Bifurcation',
            'StatusTest',
            'StepSize',
-           'MultiPredictor',
-           'Eigensolver',
-           'EigenvalueSort',
-           'SaveEigenData',
-           'AnasaziOperator'
+           'MultiPredictor'
            ]
 from . import Extended
 from . import MultiContinuation
@@ -222,10 +218,6 @@ from . import Bifurcation
 from . import StatusTest
 from . import StepSize
 from . import MultiPredictor
-from . import Eigensolver
-from . import EigenvalueSort
-from . import SaveEigenData
-from . import AnasaziOperator
 %}
 
 // Techos::RCP handling

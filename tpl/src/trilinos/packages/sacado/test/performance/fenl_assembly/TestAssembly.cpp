@@ -54,10 +54,6 @@
 #include "cuda_runtime_api.h"
 #endif
 
-// For vtune
-#include <sys/types.h>
-#include <unistd.h>
-
 int main(int argc, char *argv[])
 {
   bool success = true;
@@ -110,28 +106,11 @@ int main(int argc, char *argv[])
     int device_id = 0;
     CLP.setOption("device", &device_id, "CUDA device ID.");
 #endif
-    bool vtune = false;
-    CLP.setOption("vtune", "no-vtune", &vtune, "connect to vtune");
     CLP.parse( argc, argv );
 
     if (nGrid > 0) {
       nGridBegin = nGrid;
       nGridEnd = nGrid;
-    }
-
-    // Connect to VTune if requested
-    if (vtune) {
-      std::stringstream cmd;
-      pid_t my_os_pid=getpid();
-      const std::string vtune_loc =
-        "amplxe-cl";
-      const std::string output_dir = "./vtune/vtune.0";
-      cmd << vtune_loc
-          << " -collect hotspots -result-dir " << output_dir
-          << " -target-pid " << my_os_pid << " &";
-      std::cout << cmd.str() << std::endl;
-      system(cmd.str().c_str());
-      system("sleep 10");
     }
 
 #ifdef KOKKOS_HAVE_PTHREAD

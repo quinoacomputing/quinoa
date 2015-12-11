@@ -50,8 +50,13 @@
 #include <Zoltan2_AlgParMETIS.hpp>
 #include <Zoltan2_AlgParMA.hpp>
 #include <Zoltan2_AlgBlock.hpp>
+#include <Zoltan2_AlgRCB.hpp>
 #include <Zoltan2_AlgMultiJagged.hpp>
+
+#ifdef INCLUDE_ZOLTAN2_EXPERIMENTAL_WOLF
+#include <Zoltan2_AlgND.hpp>
+#endif
+
 #include <Zoltan2_AlgZoltan.hpp>
-#include <Zoltan2_AlgForTestingOnly.hpp>
 
 #endif

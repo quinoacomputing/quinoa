@@ -51,7 +51,6 @@
 #include "Phalanx_FieldManager.hpp"
 #include "Panzer_Traits.hpp"
 #include "Panzer_Base.hpp"
-#include "Panzer_EvaluatorsRegistrar.hpp"
 #include <string>
 #include <vector>
 
@@ -61,8 +60,7 @@ namespace panzer {
   class IntegrationRule;
   struct GlobalData;
 
-  class ClosureModelFactoryBase : public panzer::Base,
-                                  public EvaluatorsRegistrar {
+  class ClosureModelFactoryBase : public panzer::Base {
 
   public:
 

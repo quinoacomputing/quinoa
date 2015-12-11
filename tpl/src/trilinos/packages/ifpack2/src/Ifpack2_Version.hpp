@@ -47,7 +47,7 @@ namespace Ifpack2 {
 
 inline
 std::string Version() {
-  return "Ifpack2 VOTD";
+  return "Ifpack2, Trilinos 12.2";
 }
 
 }//namespace Ifpack2

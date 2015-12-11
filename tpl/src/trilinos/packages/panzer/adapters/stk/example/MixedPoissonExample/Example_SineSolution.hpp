@@ -55,8 +55,6 @@
 
 #include <string>
 
-#include "Panzer_Evaluator_WithBaseImpl.hpp"
-
 namespace Example {
     
   using panzer::Cell;
@@ -66,7 +64,7 @@ namespace Example {
 /** The analytic solution to the mixed poisson equation for the sine source.
   */
 template<typename EvalT, typename Traits>
-class SineSolution : public panzer::EvaluatorWithBaseImpl<Traits>,
+class SineSolution : public PHX::EvaluatorWithBaseImpl<Traits>,
                         public PHX::EvaluatorDerived<EvalT, Traits>  {
 
 public:

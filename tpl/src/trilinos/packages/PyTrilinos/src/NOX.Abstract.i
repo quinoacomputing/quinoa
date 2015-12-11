@@ -69,9 +69,6 @@ NOX.Abstract provides the following user-level classes:
 	docstring    = %nox_abstract_docstring) Abstract
 
 %{
-// PyTrilinos includes
-#include "PyTrilinos_config.h"
-
 // Teuchos includes
 #include "Teuchos_Comm.hpp"
 #include "Teuchos_DefaultSerialComm.hpp"
@@ -79,11 +76,6 @@ NOX.Abstract provides the following user-level classes:
 #include "Teuchos_DefaultMpiComm.hpp"
 #endif
 #include "PyTrilinos_Teuchos_Util.hpp"
-
-// Epetra includes
-#ifdef HAVE_EPETRA
-#include "Epetra_Vector.h"
-#endif
 
 // NOX includes
 #include "NOX_Abstract_Group.H"
@@ -103,6 +95,7 @@ NOX.Abstract provides the following user-level classes:
 %{
 #include "NOX_Epetra_Group.H"
 #include "NOX_Epetra_Vector.H"
+#include "Epetra_NumPyVector.hpp"
 %}
 #endif
 

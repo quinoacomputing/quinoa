@@ -72,8 +72,7 @@ namespace panzer {
   //! Type of boundary condition.
   enum BCType {
     BCT_Dirichlet,
-    BCT_Neumann,
-    BCT_Interface
+    BCT_Neumann
   };
 
   //! Stores input information for a boundary condition.
@@ -125,7 +124,7 @@ namespace panzer {
     //! Returns a unique identifier for this bc - needed for unique parameter setting in LOCA and for map key comparisons (strict weak ordering).
     std::size_t bcID() const;
 
-    //! Returns the boundary condition type (Dirichlet or Neumann or Interface).
+    //! Returns the boundary condition type (Dirichlet or Neumann).
     BCType bcType() const;
 
     //! Returns the set id.
@@ -134,14 +133,8 @@ namespace panzer {
     //! Returns the element block id associated with this sideset.
     std::string elementBlockID() const;
 
-    //! Returns the second element block id associated with this sideset.
-    std::string elementBlockID2() const;
-
     //! Returns the unknown name/keyword.
     std::string equationSetName() const;
-
-    //! Returns the second unknown name/keyword.
-    std::string equationSetName2() const;
 
     //! Returns the keyword used to construct a bc strategy.
     std::string strategy() const;
@@ -175,11 +168,7 @@ namespace panzer {
 
     std::string m_element_block_id;
 
-    std::string m_element_block_id2;
-
     std::string m_equation_set_name;
-
-    std::string m_equation_set_name2;
 
     std::string m_strategy;
 

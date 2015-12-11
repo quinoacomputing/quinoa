@@ -69,6 +69,9 @@ namespace Experimental {
     dist_object_type (Teuchos::rcp (new map_type ())), // nonnull, so DistObject doesn't throw
     graph_ (Teuchos::rcp (new map_type ()), 0), // FIXME (mfh 16 May 2014) no empty ctor yet
     blockSize_ (static_cast<LO> (0)),
+#if defined(HAVE_TPETRACLASSIC_SERIAL) || defined(HAVE_TPETRACLASSIC_TBB) || defined(HAVE_TPETRACLASSIC_THREADPOOL) || defined(HAVE_TPETRACLASSIC_OPENMP)
+    ptr_ (NULL),
+#endif
     ind_ (NULL),
     X_colMap_ (new Teuchos::RCP<BMV> ()), // ptr to a null ptr
     Y_rowMap_ (new Teuchos::RCP<BMV> ()), // ptr to a null ptr
@@ -88,6 +91,9 @@ namespace Experimental {
     graph_ (graph),
     rowMeshMap_ (* (graph.getRowMap ())),
     blockSize_ (blockSize),
+#if defined(HAVE_TPETRACLASSIC_SERIAL) || defined(HAVE_TPETRACLASSIC_TBB) || defined(HAVE_TPETRACLASSIC_THREADPOOL) || defined(HAVE_TPETRACLASSIC_OPENMP)
+    ptr_ (NULL), // to be initialized below
+#endif
     ind_ (NULL), // to be initialized below
     val_ (NULL), // to be initialized below
     X_colMap_ (new Teuchos::RCP<BMV> ()), // ptr to a null ptr
@@ -118,6 +124,9 @@ namespace Experimental {
     domainPointMap_ = BMV::makePointMap (* (graph.getDomainMap ()), blockSize);
     rangePointMap_ = BMV::makePointMap (* (graph.getRangeMap ()), blockSize);
 
+#if defined(HAVE_TPETRACLASSIC_SERIAL) || defined(HAVE_TPETRACLASSIC_TBB) || defined(HAVE_TPETRACLASSIC_THREADPOOL) || defined(HAVE_TPETRACLASSIC_OPENMP)
+    ptr_ = graph.getNodeRowPtrs ().getRawPtr ();
+#else
     {
       typedef typename crs_graph_type::local_graph_type::row_map_type row_map_type;
       typedef typename row_map_type::HostMirror::non_const_type nc_host_row_map_type;
@@ -129,6 +138,8 @@ namespace Experimental {
       Kokkos::deep_copy (ptr_h_nc, ptr_d);
       ptr_ = ptr_h_nc;
     }
+#endif
+
     ind_ = graph.getNodePackedIndices ().getRawPtr ();
     valView_.resize (graph.getNodeNumEntries () * offsetPerBlock ());
     val_ = valView_.getRawPtr ();
@@ -146,6 +157,9 @@ namespace Experimental {
     domainPointMap_ (domainPointMap),
     rangePointMap_ (rangePointMap),
     blockSize_ (blockSize),
+#if defined(HAVE_TPETRACLASSIC_SERIAL) || defined(HAVE_TPETRACLASSIC_TBB) || defined(HAVE_TPETRACLASSIC_THREADPOOL) || defined(HAVE_TPETRACLASSIC_OPENMP)
+    ptr_ (NULL), // to be initialized below
+#endif
     ind_ (NULL), // to be initialized below
     X_colMap_ (new Teuchos::RCP<BMV> ()), // ptr to a null ptr
     Y_rowMap_ (new Teuchos::RCP<BMV> ()), // ptr to a null ptr
@@ -172,6 +186,9 @@ namespace Experimental {
       "BlockCrsMatrix constructor: The input blockSize = " << blockSize <<
       " <= 0.  The block size must be positive.");
 
+#if defined(HAVE_TPETRACLASSIC_SERIAL) || defined(HAVE_TPETRACLASSIC_TBB) || defined(HAVE_TPETRACLASSIC_THREADPOOL) || defined(HAVE_TPETRACLASSIC_OPENMP)
+    ptr_ = graph.getNodeRowPtrs ().getRawPtr ();
+#else
     {
       typedef typename crs_graph_type::local_graph_type::row_map_type row_map_type;
       typedef typename row_map_type::HostMirror::non_const_type nc_host_row_map_type;
@@ -183,6 +200,7 @@ namespace Experimental {
       Kokkos::deep_copy (ptr_h_nc, ptr_d);
       ptr_ = ptr_h_nc;
     }
+#endif
     ind_ = graph.getNodePackedIndices ().getRawPtr ();
     valView_.resize (graph.getNodeNumEntries () * offsetPerBlock ());
     val_ = valView_.getRawPtr ();
@@ -1916,19 +1934,15 @@ namespace Experimental {
     /// \brief Pack the block row (stored in the input arrays).
     ///
     /// \return The number of bytes packed.
-    ///
-    /// \note This function is not called packRow, because Intel 16
-    /// has a bug that makes it confuse this packRow with
-    /// Tpetra::RowMatrix::packRow.
     template<class ST, class LO, class GO, class D>
     size_t
-    packRowForBlockCrs (const typename Tpetra::Details::PackTraits<LO, D>::output_buffer_type& exports,
-                        const size_t offset,
-                        const size_t numEnt,
-                        const typename Tpetra::Details::PackTraits<GO, D>::input_array_type& gidsIn,
-                        const typename Tpetra::Details::PackTraits<ST, D>::input_array_type& valsIn,
-                        const size_t numBytesPerValue,
-                        const size_t blockSize)
+    packRow (const typename Tpetra::Details::PackTraits<LO, D>::output_buffer_type& exports,
+             const size_t offset,
+             const size_t numEnt,
+             const typename Tpetra::Details::PackTraits<GO, D>::input_array_type& gidsIn,
+             const typename Tpetra::Details::PackTraits<ST, D>::input_array_type& valsIn,
+             const size_t numBytesPerValue,
+             const size_t blockSize)
     {
       using Kokkos::subview;
       using Tpetra::Details::PackTraits;
@@ -1980,14 +1994,14 @@ namespace Experimental {
     // Return the number of bytes actually read / used.
     template<class ST, class LO, class GO, class D>
     size_t
-    unpackRowForBlockCrs (const typename Tpetra::Details::PackTraits<GO, D>::output_array_type& gidsOut,
-                          const typename Tpetra::Details::PackTraits<ST, D>::output_array_type& valsOut,
-                          const typename Tpetra::Details::PackTraits<int, D>::input_buffer_type& imports,
-                          const size_t offset,
-                          const size_t numBytes,
-                          const size_t numEnt,
-                          const size_t numBytesPerValue,
-                          const size_t blockSize)
+    unpackRow (const typename Tpetra::Details::PackTraits<GO, D>::output_array_type& gidsOut,
+               const typename Tpetra::Details::PackTraits<ST, D>::output_array_type& valsOut,
+               const typename Tpetra::Details::PackTraits<int, D>::input_buffer_type& imports,
+               const size_t offset,
+               const size_t numBytes,
+               const size_t numEnt,
+               const size_t numBytesPerValue,
+               const size_t blockSize)
     {
       using Kokkos::subview;
       using Tpetra::Details::PackTraits;
@@ -2256,8 +2270,8 @@ namespace Experimental {
 
         // Copy the row's data into the current spot in the exports array.
         const size_t numBytes =
-          packRowForBlockCrs<ST, LO, GO, HES> (exportsK, offset, numEnt, gblColInds,
-                                               vals, numBytesPerValue, blockSize);
+          packRow<ST, LO, GO, HES> (exportsK, offset, numEnt, gblColInds,
+                                    vals, numBytesPerValue, blockSize);
         // Keep track of how many bytes we packed.
         offset += numBytes;
       } // for each LID (of a row) to send
@@ -2433,8 +2447,8 @@ namespace Experimental {
       vals_out_type valsOut = subview (vals, pair_type (0, numScalarEnt));
 
       const size_t numBytesOut =
-        unpackRowForBlockCrs<ST, LO, GO, HES> (gidsOut, valsOut, importsK, offset, numBytes,
-                                               numEnt, numBytesPerValue, blockSize);
+        unpackRow<ST, LO, GO, HES> (gidsOut, valsOut, importsK, offset, numBytes,
+                                    numEnt, numBytesPerValue, blockSize);
       if (numBytes != numBytesOut) {
         std::ostream& err = this->markLocalErrorAndGetStream ();
         err << prefix << "At i = " << i << ", numBytes = " << numBytes
@@ -2535,7 +2549,7 @@ namespace Experimental {
     using Teuchos::VERB_DEFAULT;
     using Teuchos::VERB_NONE;
     using Teuchos::VERB_LOW;
-    using Teuchos::VERB_MEDIUM;
+    // using Teuchos::VERB_MEDIUM;
     // using Teuchos::VERB_HIGH;
     using Teuchos::VERB_EXTREME;
     using Teuchos::RCP;
@@ -2571,66 +2585,6 @@ namespace Experimental {
 
     const LO blockSize = getBlockSize ();
     out << "Block size: " << blockSize << endl;
-
-    // constituent objects
-    if (vl >= VERB_MEDIUM) {
-      const Teuchos::Comm<int>& comm = * (graph_.getMap ()->getComm ());
-      const int myRank = comm.getRank ();
-      if (myRank == 0) {
-        out << "Row Map:" << endl;
-      }
-      getRowMap()->describe (out, vl);
-
-      if (! getColMap ().is_null ()) {
-        if (getColMap() == getRowMap()) {
-          if (myRank == 0) {
-            out << "Column Map: same as row Map" << endl;
-          }
-        }
-        else {
-          if (myRank == 0) {
-            out << "Column Map:" << endl;
-          }
-          getColMap ()->describe (out, vl);
-        }
-      }
-      if (! getDomainMap ().is_null ()) {
-        if (getDomainMap () == getRowMap ()) {
-          if (myRank == 0) {
-            out << "Domain Map: same as row Map" << endl;
-          }
-        }
-        else if (getDomainMap () == getColMap ()) {
-          if (myRank == 0) {
-            out << "Domain Map: same as column Map" << endl;
-          }
-        }
-        else {
-          if (myRank == 0) {
-            out << "Domain Map:" << endl;
-          }
-          getDomainMap ()->describe (out, vl);
-        }
-      }
-      if (! getRangeMap ().is_null ()) {
-        if (getRangeMap () == getDomainMap ()) {
-          if (myRank == 0) {
-            out << "Range Map: same as domain Map" << endl;
-          }
-        }
-        else if (getRangeMap () == getRowMap ()) {
-          if (myRank == 0) {
-            out << "Range Map: same as row Map" << endl;
-          }
-        }
-        else {
-          if (myRank == 0) {
-            out << "Range Map: " << endl;
-          }
-          getRangeMap ()->describe (out, vl);
-        }
-      }
-    }
 
     if (vl >= VERB_EXTREME) {
       const Teuchos::Comm<int>& comm = * (graph_.getMap ()->getComm ());

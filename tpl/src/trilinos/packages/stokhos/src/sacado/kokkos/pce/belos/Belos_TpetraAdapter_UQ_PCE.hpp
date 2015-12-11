@@ -49,7 +49,6 @@
 #  include <Tpetra_TsqrAdaptor_UQ_PCE.hpp>
 #endif // HAVE_BELOS_TSQR
 
-#include "Kokkos_DefaultArithmetic.hpp"
 
 namespace Belos {
 

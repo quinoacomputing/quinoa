@@ -54,23 +54,27 @@ template <typename DeviceType, unsigned int DIM, MorkonFaceType FACE_TYPE >
 Interface<DeviceType, DIM,  FACE_TYPE >::Interface(Morkon_Manager<DeviceType, DIM, FACE_TYPE> * manager)
   : m_manager(manager)
   , m_committed(false)
+  , m_distributed(false)
+  , m_sides(std::vector<faces_ids_t>(2))
 {
   m_hs_adapters.resize(2, 0);
 }
 
-template <typename DeviceType, unsigned int DIM, MorkonFaceType FACE_TYPE >
-Interface<DeviceType, DIM,  FACE_TYPE >::~Interface()
-{
-  delete m_hs_adapters[0];
-  delete m_hs_adapters[1];
-  m_hs_adapters.clear();
-}
 
+template <typename DeviceType, unsigned int DIM, MorkonFaceType FACE_TYPE >
+bool Interface<DeviceType, DIM,  FACE_TYPE >::define_side(SideEnum which_side, faces_ids_t faces_on_side)
+{
+  if (m_committed || (m_sides[which_side].dimension_0() > 0) || (m_hs_adapters[which_side] != 0))
+  {
+    return false;
+  }
+  m_sides[which_side] = faces_on_side;
+}
 
 template <typename DeviceType, unsigned int DIM, MorkonFaceType FACE_TYPE >
 bool Interface<DeviceType, DIM,  FACE_TYPE >::hsa_add_node(SideEnum which_side, global_idx_t gbl_node_id, const double coords[])
 {
-  if (m_committed)
+  if (m_committed || (m_sides[which_side].dimension_0() > 0))
   {
     return false;
   }
@@ -102,7 +106,7 @@ bool Interface<DeviceType, DIM,  FACE_TYPE >::hsa_add_node(SideEnum which_side, 
 template <typename DeviceType, unsigned int DIM, MorkonFaceType FACE_TYPE >
 bool Interface<DeviceType, DIM, FACE_TYPE>::hsa_add_face(SideEnum which_side, global_idx_t gbl_face_id, int num_nodes, const global_idx_t gbl_node_id[])
 {
-  if (m_committed )
+  if (m_committed || (m_sides[which_side].dimension_0() > 0))
   {
     return false;
   }
@@ -113,14 +117,10 @@ bool Interface<DeviceType, DIM, FACE_TYPE>::hsa_add_face(SideEnum which_side, gl
     ifc_hsa = m_hs_adapters[which_side] = new Interface_HostSideAdapter<DIM>();
   }
 
-  for (size_t node_i = 0; node_i < TopoConsts<FACE_TYPE>::NODES_PER_FACE; ++node_i)
+  typename Interface_HostSideAdapter<DIM>::node_map_type::iterator probe_node = ifc_hsa->m_nodes.find(gbl_node_id);
+  if (probe_node != ifc_hsa->m_nodes.end())
   {
-    typename Interface_HostSideAdapter<DIM>::node_map_type::iterator probe_node
-      = ifc_hsa->m_nodes.find(gbl_node_id[node_i]);
-    if (probe_node == ifc_hsa->m_nodes.end())
-    {
-      return false;
-    }
+    return false;
   }
 
   typename Interface_HostSideAdapter<DIM>::face_map_type::iterator probe_face = ifc_hsa->m_faces.find(gbl_face_id);
@@ -138,7 +138,7 @@ bool Interface<DeviceType, DIM, FACE_TYPE>::hsa_add_face(SideEnum which_side, gl
     face_info.m_nodes[i] = gbl_node_id[i];
   }
 
-  ifc_hsa->m_faces.insert(probe_face, std::make_pair(gbl_face_id, face_info));
+  ifc_hsa->m_faces.insert(probe_face, std::make_pair(gbl_node_id, face_info));
 
   return true;
 }

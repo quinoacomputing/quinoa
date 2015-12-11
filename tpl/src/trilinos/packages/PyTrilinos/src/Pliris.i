@@ -86,9 +86,13 @@ python version of the Pliris package supports the following class:
 #include "Epetra_VbrMatrix.h"
 #include "Epetra_FEVbrMatrix.h"
 
-// NumPy includes
+// Epetra python includes
 #define NO_IMPORT_ARRAY
 #include "numpy_include.hpp"
+#include "Epetra_NumPyMultiVector.hpp"
+#include "Epetra_NumPyVector.hpp"
+#include "Epetra_NumPyFEVector.hpp"
+#include "Epetra_NumPySerialDenseVector.hpp"
 
 // Pliris includes
 // #include "Pliris_config.h"

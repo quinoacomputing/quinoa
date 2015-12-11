@@ -35,8 +35,6 @@
 #include <vector>
 #include <fstream>
 
-#include <ContactRangeSearch.h>
-
 #include <unit_tests/UnitTestUtils.hpp>
 #include <unit_tests/MeshUtilsForBoundingVolumes.hpp>
 

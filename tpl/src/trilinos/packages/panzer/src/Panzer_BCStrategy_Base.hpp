@@ -47,7 +47,6 @@
 #include "Panzer_LinearObjFactory.hpp"
 #include "Teuchos_ParameterList.hpp"
 #include "Panzer_ClosureModel_Factory_TemplateManager.hpp"
-#include "Panzer_EvaluatorsRegistrar.hpp"
 
 namespace PHX {
   template<typename T> class FieldManager;
@@ -58,7 +57,7 @@ namespace panzer {
   class PhysicsBlock;
 
   //! Non-templated empty base class for BCStrategy objects
-class BCStrategyBase : public EvaluatorsRegistrar {
+  class BCStrategyBase {
     
   public:
     

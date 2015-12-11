@@ -67,7 +67,7 @@ namespace MueLu {
     @brief Interface to Zoltan2 library.
 
     This interface provides access to partitioning methods in Zoltan2.
-    Currently, it only supports the MultiJagged and RCB algorithms.
+    Currently, it supports the MultiJagged algorithm only.
   */
 
   //FIXME: this class should not be templated

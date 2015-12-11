@@ -47,7 +47,7 @@
 
 // Don't bother compiling anything, or even including anything else,
 // unless KokkosThreadsWrapperNode is enabled.
-#if defined(HAVE_TPETRA_EXPLICIT_INSTANTIATION) && defined(HAVE_TPETRA_INST_PTHREAD)
+#if defined(HAVE_TPETRA_EXPLICIT_INSTANTIATION) && defined(HAVE_TPETRA_INST_PTHREAD) && defined(TPETRA_HAVE_KOKKOS_REFACTOR)
 
 #include "Tpetra_CrsGraph_decl.hpp"
 #include "TpetraCore_ETIHelperMacros.h"
@@ -74,4 +74,4 @@ namespace Tpetra {
 
 } // namespace Tpetra
 
-#endif // defined(HAVE_TPETRA_EXPLICIT_INSTANTIATION) && defined(HAVE_TPETRA_INST_PTHREAD)
+#endif // defined(HAVE_TPETRA_EXPLICIT_INSTANTIATION) && defined(HAVE_TPETRA_INST_PTHREAD) && defined(TPETRA_HAVE_KOKKOS_REFACTOR)

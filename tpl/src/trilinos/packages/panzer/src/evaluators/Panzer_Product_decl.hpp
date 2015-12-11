@@ -46,8 +46,6 @@
 #include "Phalanx_Evaluator_Macros.hpp"
 #include "Phalanx_MDField.hpp"
 
-#include "Panzer_Evaluator_Macros.hpp"
-
 namespace panzer {
     
 /** Product of entries on a single data layout
@@ -61,13 +59,13 @@ namespace panzer {
     </ParameterList>
     \endverbatim
   */
-PANZER_EVALUATOR_CLASS(Product)
+PHX_EVALUATOR_CLASS(Product)
   
   double scaling;
   PHX::MDField<ScalarT> product;
   std::vector< PHX::MDField<ScalarT> > values;
 
-PANZER_EVALUATOR_CLASS_END
+PHX_EVALUATOR_CLASS_END
 
 }
 

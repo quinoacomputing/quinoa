@@ -132,13 +132,13 @@ CreateVbrMatrix(const Epetra_CrsMatrix* CrsMatrix, const int NumPDEs)
     throw "Galeri::CreateVbrMatrix: not implemented fully";
 #endif
 
-    for (int ii = 0 ; ii < CrsNumEntries ; ++ii)
+    for (int i = 0 ; i < CrsNumEntries ; ++i)
     {
       for (int k = 0 ; k < BlockRows ; ++k)
       {
         for (int h = 0 ; h < BlockRows ; ++h)
         {
-          if (k == h) VbrValues[k + h * BlockRows] = CrsValues[ii];
+          if (k == h) VbrValues[k + h * BlockRows] = CrsValues[i];
           else        VbrValues[k + h * BlockRows] = 0.0;
         }
       }

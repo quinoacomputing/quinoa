@@ -869,12 +869,13 @@ public:
     }
   }
 
+  template <typename local_scalar_type>
   KOKKOS_INLINE_FUNCTION
-  void computeElementResidual(const fad_scalar_type dof_values[] ,
+  void computeElementResidual(const local_scalar_type dof_values[] ,
                               const double x[],
                               const double y[],
                               const double z[],
-                              fad_scalar_type elem_res[] ) const
+                              local_scalar_type elem_res[] ) const
   {
     double coeff_k = 3.456;
     double coeff_src = 1.234;
@@ -893,10 +894,10 @@ public:
       const double detJ_weight = detJ * integ_weight;
       const double detJ_weight_coeff_k = detJ_weight * coeff_k;
 
-      fad_scalar_type value_at_pt = 0 ;
-      fad_scalar_type gradx_at_pt = 0 ;
-      fad_scalar_type grady_at_pt = 0 ;
-      fad_scalar_type gradz_at_pt = 0 ;
+      local_scalar_type value_at_pt = 0 ;
+      local_scalar_type gradx_at_pt = 0 ;
+      local_scalar_type grady_at_pt = 0 ;
+      local_scalar_type gradz_at_pt = 0 ;
       for ( unsigned m = 0 ; m < FunctionCount ; m++ ) {
         value_at_pt += dof_values[m] * bases_vals[m] ;
         gradx_at_pt += dof_values[m] * dpsidx[m] ;
@@ -904,10 +905,10 @@ public:
         gradz_at_pt += dof_values[m] * dpsidz[m] ;
       }
 
-      const fad_scalar_type source_term =
+      const local_scalar_type source_term =
         coeff_src * value_at_pt * value_at_pt ;
 
-      const fad_scalar_type advection_term =
+      const local_scalar_type advection_term =
         advection[0]*gradx_at_pt +
         advection[1]*grady_at_pt +
         advection[2]*gradz_at_pt;
@@ -1012,12 +1013,13 @@ public:
     }
   }
 
+  template <typename local_scalar_type>
   KOKKOS_INLINE_FUNCTION
   void computeElementResidual(const scalar_type dof_values[] ,
                               const double x[],
                               const double y[],
                               const double z[],
-                              fad_scalar_type elem_res[] ) const
+                              local_scalar_type elem_res[] ) const
   {
     double coeff_k = 3.456;
     double coeff_src = 1.234;
@@ -1036,10 +1038,10 @@ public:
       const double detJ_weight = detJ * integ_weight;
       const double detJ_weight_coeff_k = detJ_weight * coeff_k;
 
-      fad_scalar_type value_at_pt(FunctionCount, 0.0, Sacado::NoInitDerivArray) ;
-      fad_scalar_type gradx_at_pt(FunctionCount, 0.0, Sacado::NoInitDerivArray) ;
-      fad_scalar_type grady_at_pt(FunctionCount, 0.0, Sacado::NoInitDerivArray) ;
-      fad_scalar_type gradz_at_pt(FunctionCount, 0.0, Sacado::NoInitDerivArray) ;
+      local_scalar_type value_at_pt(FunctionCount, 0.0, Sacado::NoInitDerivArray) ;
+      local_scalar_type gradx_at_pt(FunctionCount, 0.0, Sacado::NoInitDerivArray) ;
+      local_scalar_type grady_at_pt(FunctionCount, 0.0, Sacado::NoInitDerivArray) ;
+      local_scalar_type gradz_at_pt(FunctionCount, 0.0, Sacado::NoInitDerivArray) ;
       for ( unsigned m = 0 ; m < FunctionCount ; m++ ) {
         value_at_pt.val() += dof_values[m] * bases_vals[m] ;
         value_at_pt.fastAccessDx(m) = bases_vals[m] ;
@@ -1054,10 +1056,10 @@ public:
         gradz_at_pt.fastAccessDx(m) = dpsidz[m] ;
       }
 
-      const fad_scalar_type source_term =
+      const local_scalar_type source_term =
         coeff_src * value_at_pt * value_at_pt ;
 
-      const fad_scalar_type advection_term =
+      const local_scalar_type advection_term =
         advection[0]*gradx_at_pt +
         advection[1]*grady_at_pt +
         advection[2]*gradz_at_pt;

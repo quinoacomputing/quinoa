@@ -148,14 +148,10 @@ check_input (
 	flag = TRUE;
     }
 
-    if (architecture == 0) {
-      if (!flag) {
+    if (architecture == 0)
 	nprocs = 1 << ndims_tot;
-      }
-    }
-    else if (architecture > 0) {
+    else if (architecture > 0)
 	nprocs = mesh_dims[0] * mesh_dims[1] * mesh_dims[2];
-    }
     if (1 << ndims > nprocs) {
 	printf("Partitioning step %d too large for %d processors.\n",
 	       ndims, nprocs);

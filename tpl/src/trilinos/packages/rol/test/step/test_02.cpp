@@ -48,9 +48,8 @@
 #define USE_HESSVEC 1
 
 #include "ROL_TestObjectives.hpp"
-#include "ROL_Algorithm.hpp"
 #include "ROL_TrustRegionStep.hpp"
-#include "ROL_StatusTest.hpp"
+#include "ROL_Algorithm.hpp"
 #include "Teuchos_oblackholestream.hpp"
 #include "Teuchos_GlobalMPISession.hpp"
 #include "Teuchos_XMLParameterListHelpers.hpp"
@@ -80,10 +79,13 @@ int main(int argc, char *argv[]) {
 
     std::string filename = "input.xml";
     Teuchos::RCP<Teuchos::ParameterList> parlist = Teuchos::rcp( new Teuchos::ParameterList() );
-    Teuchos::updateParametersFromXmlFile( filename, parlist.ptr() );
+    Teuchos::updateParametersFromXmlFile( filename, Teuchos::Ptr<Teuchos::ParameterList>(&*parlist) );
 
     // Define Status Test
-    Teuchos::RCP<ROL::StatusTest<RealT> > status = Teuchos::rcp(new ROL::StatusTest<RealT>(*parlist));
+    RealT gtol = parlist->get("Gradient Tolerance",1.e-6);
+    RealT stol = parlist->get("Step Tolerance",1.e-12);
+    int maxit  = parlist->get("Maximum Number of Iterations",100);
+    ROL::StatusTest<RealT> status(gtol,stol,maxit);    
 
     // Loop Through Test Objectives
     for ( ROL::ETestObjectives objFunc = ROL::TESTOBJECTIVES_ROSENBROCK; objFunc < ROL::TESTOBJECTIVES_LAST; objFunc++ ) {
@@ -104,7 +106,7 @@ int main(int argc, char *argv[]) {
       // Get Dimension of Problem
       int dim = 
         Teuchos::rcp_const_cast<std::vector<RealT> >((Teuchos::dyn_cast<ROL::StdVector<RealT> >(x0)).getVector())->size();
-      parlist->sublist("General").sublist("Krylov").set("Iteration Limit", 2*dim);
+      parlist->set("Maximum Number of Krylov Iterations", 2*dim);
 
       // Iteration Vector
       Teuchos::RCP<std::vector<RealT> > x_rcp = Teuchos::rcp( new std::vector<RealT> (dim, 0.0) );
@@ -118,23 +120,26 @@ int main(int argc, char *argv[]) {
 
       for ( ROL::ETrustRegion tr = ROL::TRUSTREGION_CAUCHYPOINT; tr < ROL::TRUSTREGION_LAST; tr++ ) {
         *outStream << "\n\n" << ROL::ETrustRegionToString(tr) << "\n\n";
-        parlist->sublist("Step").sublist("Trust Region").set("Subproblem Solver", ETrustRegionToString(tr));
+        parlist->set("Trust-Region Subproblem Solver Type", ETrustRegionToString(tr));
         if ( tr == ROL::TRUSTREGION_DOGLEG || tr == ROL::TRUSTREGION_DOUBLEDOGLEG ) {
-          parlist->sublist("General").sublist("Secant").set("Secant Hessian-Times-A-Vector", true);
+          parlist->set("Use Secant Hessian-Times-A-Vector", true);
         } 
         else {
-          parlist->sublist("General").sublist("Secant").set("Secant Hessian-Times-A-Vector", false);
+          parlist->set("Use Secant Hessian-Times-A-Vector", false);
         }
 
         // Define Step
-        Teuchos::RCP<ROL::TrustRegionStep<RealT> > step = Teuchos::rcp(new ROL::TrustRegionStep<RealT>(*parlist));
+        ROL::TrustRegionStep<RealT> step(*parlist);
 
         // Define Algorithm
-        ROL::Algorithm<RealT> algo(step,status,false);
+        ROL::DefaultAlgorithm<RealT> algo(step,status,false);
 
         // Run Algorithm
         x.set(x0);
-        algo.run(x, *obj, true, *outStream);
+        std::vector<std::string> output = algo.run(x, *obj);
+        for ( unsigned i = 0; i < output.size(); i++ ) {
+          std::cout << output[i];
+        }
 
         // Compute Error 
         e.set(x);

@@ -11,7 +11,6 @@
 #include "Panzer_Traits.hpp"
 #include "Panzer_ResponseBase.hpp"
 #include "Panzer_WorksetDescriptor.hpp"
-#include "Panzer_EvaluatorsRegistrar.hpp"
 
 #include "Phalanx_FieldTag.hpp"
 
@@ -21,17 +20,13 @@ namespace panzer {
   * to construct a response using field managers. It is assumed
   * that multiple field managers can be populated with this
   * response, thus the object itself should remain stateless.
-  *
-  * (Later, EvaluatorsRegistrar was added to manage the workset
-  * details index. It is stateful, but its default state
-  * behaves as if the Registrar is not present.)
   * 
   * \note Users should not derive directly off of this object,
   *       but should instead derive from the ResponseEvaluatorFactory
   *       which is the templated version with a specific evaluation
   *       type.
   */
-class ResponseEvaluatorFactoryBase : public EvaluatorsRegistrar {
+class ResponseEvaluatorFactoryBase {
 public:
 
    ResponseEvaluatorFactoryBase() {}

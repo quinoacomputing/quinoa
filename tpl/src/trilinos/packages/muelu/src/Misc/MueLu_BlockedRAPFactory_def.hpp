@@ -49,7 +49,6 @@
 #ifdef HAVE_MUELU_EXPERIMENTAL
 
 #include <Xpetra_Matrix.hpp>
-#include <Xpetra_MatrixMatrix.hpp>
 #include <Xpetra_CrsMatrix.hpp>
 #include <Xpetra_CrsMatrixWrap.hpp>
 #include <Xpetra_MatrixFactory.hpp>
@@ -124,7 +123,7 @@ namespace MueLu {
                                "A is " << bA->Rows() << "x" << bA->Cols() <<
                                "P is " << bP->Rows() << "x" << bP->Cols());
 
-      bAP = Xpetra::MatrixMatrix<Scalar, LocalOrdinal, GlobalOrdinal, Node>::TwoMatrixMultiplyBlock(*bA, false, *bP,  false, GetOStream(Statistics2), true, true);
+      bAP = Utils::TwoMatrixMultiplyBlock(*bA, false, *bP,  false, GetOStream(Statistics2), true, true);
     }
 
 
@@ -136,7 +135,7 @@ namespace MueLu {
     const bool doFillComplete = true;
     if (pL.get<bool>("transpose: use implicit") == true) {
       SubFactoryMonitor m2(*this, "MxM: P' x (AP) (implicit)", coarseLevel);
-      bAc = Xpetra::MatrixMatrix<Scalar, LocalOrdinal, GlobalOrdinal, Node>::TwoMatrixMultiplyBlock(*bP,  doTranspose, *bAP, !doTranspose, GetOStream(Statistics2), doFillComplete, doOptimizeStorage);
+      bAc = Utils::TwoMatrixMultiplyBlock(*bP,  doTranspose, *bAP, !doTranspose, GetOStream(Statistics2), doFillComplete, doOptimizeStorage);
 
     } else {
       RCP<Matrix>           R  = Get< RCP<Matrix> >(coarseLevel, "R");
@@ -149,7 +148,7 @@ namespace MueLu {
                                  "A is " << bA->Rows() << "x" << bA->Cols());
 
       SubFactoryMonitor m2(*this, "MxM: R x (AP) (explicit)", coarseLevel);
-      bAc = Xpetra::MatrixMatrix<Scalar, LocalOrdinal, GlobalOrdinal, Node>::TwoMatrixMultiplyBlock(*bR, !doTranspose, *bAP, !doTranspose, GetOStream(Statistics2), doFillComplete, doOptimizeStorage);
+      bAc = Utils::TwoMatrixMultiplyBlock(*bR, !doTranspose, *bAP, !doTranspose, GetOStream(Statistics2), doFillComplete, doOptimizeStorage);
     }
 
 

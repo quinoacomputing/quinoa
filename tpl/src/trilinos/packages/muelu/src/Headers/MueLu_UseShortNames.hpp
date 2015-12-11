@@ -79,6 +79,4 @@
 #include "MueLu_UseShortNamesOrdinal.hpp"
 #include "MueLu_UseShortNamesScalar.hpp"
 
-//! @file MueLu_UseShortNamesOrdinal.hpp
-
 //TODO / NOTE: This file should not be included at the global scope (to avoid name collision)

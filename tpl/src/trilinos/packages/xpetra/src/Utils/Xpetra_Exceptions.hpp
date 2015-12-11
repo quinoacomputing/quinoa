@@ -101,13 +101,6 @@ namespace Xpetra {
       RuntimeError(const std::string& what_arg) : Teuchos::ExceptionBase(what_arg) {}
     };
 
-    //! Exception throws to report incompatible objects (like maps).
-    class Incompatible : public Teuchos::ExceptionBase {
-    public:
-      Incompatible(const std::string& what_arg) : Teuchos::ExceptionBase(what_arg) {}
-    };
-
-
   }
 }
 

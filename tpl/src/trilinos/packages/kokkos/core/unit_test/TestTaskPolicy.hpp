@@ -341,6 +341,8 @@ void test_task_dep( const int n )
 
 //----------------------------------------------------------------------------
 
+#if defined( KOKKOS_HAVE_CXX11 )
+
 template< class ExecSpace >
 struct TaskTeam {
 
@@ -480,6 +482,8 @@ void test_task_team( long n )
     }
   }
 }
+
+#endif
 
 //----------------------------------------------------------------------------
 

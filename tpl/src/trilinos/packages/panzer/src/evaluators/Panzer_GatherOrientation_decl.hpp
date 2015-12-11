@@ -53,8 +53,6 @@
 #include "Panzer_Traits.hpp"
 #include "Panzer_CloneableEvaluator.hpp"
 
-#include "Panzer_Evaluator_WithBaseImpl.hpp"
-
 namespace panzer {
 
 template <typename LocalOrdinalT,typename GlobalOrdinalT>
@@ -65,7 +63,7 @@ class UniqueGlobalIndexer; //forward declaration
 */
 template<typename EvalT, typename TRAITS,typename LO,typename GO> 
 class GatherOrientation
-  : public panzer::EvaluatorWithBaseImpl<TRAITS>,
+  : public PHX::EvaluatorWithBaseImpl<TRAITS>,
     public PHX::EvaluatorDerived<EvalT, TRAITS>,
     public panzer::CloneableEvaluator  {
    

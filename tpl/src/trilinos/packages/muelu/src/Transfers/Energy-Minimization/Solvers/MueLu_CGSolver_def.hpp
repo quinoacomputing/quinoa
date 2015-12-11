@@ -47,7 +47,6 @@
 #define MUELU_CGSOLVER_DEF_HPP
 
 #include <Xpetra_MatrixFactory.hpp>
-#include <Xpetra_MatrixMatrix.hpp>
 
 #include "MueLu_CGSolver_decl.hpp"
 
@@ -105,7 +104,7 @@ namespace MueLu {
     // bool optimizeStorage = false;
     bool optimizeStorage = true;
 
-    tmpAP = Xpetra::MatrixMatrix<Scalar, LocalOrdinal, GlobalOrdinal, Node>::Multiply(*A, false, *X, false, mmfancy, doFillComplete, optimizeStorage);
+    tmpAP = Utils::Multiply(*A, false, *X, false, mmfancy, doFillComplete, optimizeStorage);
     C.Apply(*tmpAP, *T);
 
     // R_0 = -A*X_0
@@ -134,10 +133,10 @@ namespace MueLu {
         // This is done by default for Tpetra as the three argument version requires tmpAP
         // to *not* be locally indexed which defeats the purpose
         // TODO: need a three argument Tpetra version which allows reuse of already fill-completed matrix
-        tmpAP = Xpetra::MatrixMatrix<Scalar, LocalOrdinal, GlobalOrdinal, Node>::Multiply(*A, false, *P, false,        mmfancy, doFillComplete, optimizeStorage);
+        tmpAP = Utils::Multiply(*A, false, *P, false,        mmfancy, doFillComplete, optimizeStorage);
       } else {
         // Reuse the MxM pattern
-        tmpAP = Xpetra::MatrixMatrix<Scalar, LocalOrdinal, GlobalOrdinal, Node>::Multiply(*A, false, *P, false, tmpAP, mmfancy, doFillComplete, optimizeStorage);
+        tmpAP = Utils::Multiply(*A, false, *P, false, tmpAP, mmfancy, doFillComplete, optimizeStorage);
       }
       C.Apply(*tmpAP, *T);
       AP = T;
@@ -159,11 +158,11 @@ namespace MueLu {
       // X_{k+1} = X_k + alpha*P_k
 #ifndef TWO_ARG_MATRIX_ADD
       newX = Teuchos::null;
-      Xpetra::MatrixMatrix<Scalar, LocalOrdinal, GlobalOrdinal, Node>::TwoMatrixAdd(*P, false, alpha, *X, false, Teuchos::ScalarTraits<Scalar>::one(), newX, mmfancy);
+      Utils2::TwoMatrixAdd(*P, false, alpha, *X, false, Teuchos::ScalarTraits<Scalar>::one(), newX, mmfancy);
       newX->fillComplete(P0.getDomainMap(), P0.getRangeMap());
       X.swap(newX);
 #else
-      Xpetra::MatrixMatrix<Scalar, LocalOrdinal, GlobalOrdinal, Node>::TwoMatrixAdd(*P, false, alpha, *X, one);
+      Utils2::TwoMatrixAdd(*P, false, alpha, *X, one);
 #endif
 
       if (k == nIts_ - 1)
@@ -172,11 +171,11 @@ namespace MueLu {
       // R_{k+1} = R_k - alpha*A*P_k
 #ifndef TWO_ARG_MATRIX_ADD
       newR = Teuchos::null;
-      Xpetra::MatrixMatrix<Scalar, LocalOrdinal, GlobalOrdinal, Node>::TwoMatrixAdd(*AP, false, -alpha, *R, false, Teuchos::ScalarTraits<Scalar>::one(), newR, mmfancy);
+      Utils2::TwoMatrixAdd(*AP, false, -alpha, *R, false, Teuchos::ScalarTraits<Scalar>::one(), newR, mmfancy);
       newR->fillComplete(P0.getDomainMap(), P0.getRangeMap());
       R.swap(newR);
 #else
-      Xpetra::MatrixMatrix<Scalar, LocalOrdinal, GlobalOrdinal, Node>::TwoMatrixAdd(*AP, false, -alpha, *R, one);
+      Utils2::TwoMatrixAdd(*AP, false, -alpha, *R, one);
 #endif
 
       // Z_{k+1} = M^{-1} R_{k+1}
@@ -190,11 +189,11 @@ namespace MueLu {
       // P_{k+1} = Z_{k+1} + beta*P_k
 #ifndef TWO_ARG_MATRIX_ADD
       newP = Teuchos::null;
-      Xpetra::MatrixMatrix<Scalar, LocalOrdinal, GlobalOrdinal, Node>::TwoMatrixAdd(*P, false, beta, *Z, false, Teuchos::ScalarTraits<Scalar>::one(), newP, mmfancy);
+      Utils2::TwoMatrixAdd(*P, false, beta, *Z, false, Teuchos::ScalarTraits<Scalar>::one(), newP, mmfancy);
       newP->fillComplete(P0.getDomainMap(), P0.getRangeMap());
       P.swap(newP);
 #else
-      Xpetra::MatrixMatrix<Scalar, LocalOrdinal, GlobalOrdinal, Node>::TwoMatrixAdd(*Z, false, one, *P, beta);
+      Utils2::TwoMatrixAdd(*Z, false, one, *P, beta);
 #endif
 
       oldRZ = newRZ;

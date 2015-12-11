@@ -66,7 +66,6 @@ namespace MueLu {
 
   /*!
     @class IfpackSmoother
-    @ingroup MueLuSmootherClasses 
     @brief Class that encapsulates Ifpack smoothers.
 
     This class creates an Ifpack preconditioner factory. The factory creates a smoother based on the

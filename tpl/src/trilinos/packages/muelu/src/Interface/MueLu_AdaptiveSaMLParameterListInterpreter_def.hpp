@@ -175,7 +175,7 @@ namespace MueLu {
     } else if (agg_damping != 0.0 && bEnergyMinimization == false) {
       // smoothed aggregation (SA-AMG)
       RCP<SaPFactory> SaPFact =  rcp( new SaPFactory() );
-      SaPFact->SetParameter("sa: damping factor", ParameterEntry(agg_damping));
+      SaPFact->SetDampingFactor(agg_damping);
       PFact  = SaPFact;
       RFact  = rcp( new TransPFactory() );
     } else if (bEnergyMinimization == true) {

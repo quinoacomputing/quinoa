@@ -23,8 +23,6 @@ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 
 # CORE
 APPEND_SET(HEADERS
-  BelosBiCGStabIter.hpp
-  BelosBiCGStabSolMgr.hpp
   BelosBlockCGIter.hpp
   BelosBlockCGSolMgr.hpp
   BelosBlockFGmresIter.hpp
@@ -94,16 +92,12 @@ APPEND_SET(HEADERS
   BelosPseudoBlockTFQMRIter.hpp
   BelosPseudoBlockTFQMRSolMgr.hpp
   BelosTypes.hpp
-  Belos_Details_LinearSolver.hpp
-  Belos_Details_LinearSolverFactory.hpp
-  Belos_Details_registerLinearSolverFactory.hpp
   )
 
 # UTIL
 APPEND_SET(SOURCES
   BelosTypes.cpp
   BelosVersion.cpp
-  Belos_Details_registerLinearSolverFactory.cpp
   )
 
 # COMP_H
@@ -147,11 +141,24 @@ ENDIF() # ${PACKAGE_NAME}_ENABLE_TSQR
 # option was set at configure time.
 #
 APPEND_SET(${PACKAGE_NAME}_EXPERIMENTAL_HEADERS
+  BelosAkxFactory.hpp
+  BelosAkx.hpp
   BelosBlockGCRODRIter.hpp
   BelosBlockGCRODRSolMgr.hpp
+  BelosCaGmres.hpp
+  BelosGmresBaseFactory.hpp
+  BelosGmresBase.hpp
+  BelosGmresBaseIteration.hpp
+  BelosGmresInnerSolver.hpp
+  BelosGmresSolMgr.hpp
   BelosInnerSolveResult.hpp
   BelosInnerSolver.hpp
+  BelosMonomialOpAkx.hpp
+  BelosNewtonBasis.hpp
+  BelosNewtonOpAkx.hpp
+  BelosOpAkx.hpp
   BelosProjectedLeastSquaresSolver.hpp
+  BelosStandardGmres.hpp
 )
 
 APPEND_SET(${PACKAGE_NAME}_EXPERIMENTAL_SOURCES

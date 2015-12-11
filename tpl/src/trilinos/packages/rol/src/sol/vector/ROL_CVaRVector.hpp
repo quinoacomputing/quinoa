@@ -54,14 +54,8 @@ protected:
   Real var_;
   Teuchos::RCP<Vector<Real> > vec_;
 
-  mutable Teuchos::RCP<Vector<Real> > dual_vec1_;
-  mutable Teuchos::RCP<CVaRVector<Real> > dual_vec_;
-
 public:
-  CVaRVector( const Real var, const Teuchos::RCP<Vector<Real> > &vec )
-    : var_(var), vec_(vec) {
-    dual_vec1_ = vec->dual().clone();
-  }
+  CVaRVector( Real &var, Teuchos::RCP<Vector<Real> > &vec ) : var_(var), vec_(vec) {}
   
   void plus( const Vector<Real> &x ) {
     const CVaRVector<Real> &xs = Teuchos::dyn_cast<const CVaRVector<Real> >(
@@ -105,12 +99,6 @@ public:
     Teuchos::RCP<Vector<Real> > vec = Teuchos::rcp_dynamic_cast<Vector<Real> >(
       Teuchos::rcp_const_cast<Vector<Real> >(this->vec_->clone()));
     return Teuchos::rcp( new CVaRVector( var, vec ) );  
-  }
-
-  const Vector<Real> &dual(void) const {
-    dual_vec1_->set(vec_->dual());
-    dual_vec_ = Teuchos::rcp(new CVaRVector<Real>(var_,dual_vec1_));
-    return *dual_vec_;
   }
 
   void setVaR(const Real var) { 

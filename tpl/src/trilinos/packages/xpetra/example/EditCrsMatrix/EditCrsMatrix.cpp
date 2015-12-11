@@ -64,7 +64,7 @@
 
 typedef double Scalar;
 typedef int    LocalOrdinal;
-#ifndef HAVE_XPETRA_INT_LONG_LONG
+#ifndef XPETRA_TEST_USE_LONGLONG_GO
 typedef int    GlobalOrdinal;
 #else
 typedef long long GlobalOrdinal;

@@ -66,35 +66,14 @@ namespace ZOO {
   template< class Real, class XPrim=StdVector<Real>, class XDual=StdVector<Real> >
   class Objective_SimpleEqConstrained : public Objective<Real> {
 
-  typedef std::vector<Real> vector;
-  typedef Vector<Real>      V;
-
-  typedef typename vector::size_type uint;
-   
-
-  private:
-
-    template<class VectorType>
-    Teuchos::RCP<const vector> getVector( const V& x ) {
-      using Teuchos::dyn_cast;
-      return dyn_cast<const VectorType>(x).getVector();
-    }
-
-    template<class VectorType>
-    Teuchos::RCP<vector> getVector( V& x ) {
-      using Teuchos::dyn_cast;
-      return dyn_cast<VectorType>(x).getVector();
-    }
-
   public:
     Objective_SimpleEqConstrained() {}
 
     Real value( const Vector<Real> &x, Real &tol ) {
- 
-     using Teuchos::RCP;
-     RCP<const vector> xp = getVector<XPrim>(x); 
+      Teuchos::RCP<const std::vector<Real> > xp =
+        (Teuchos::dyn_cast<const XPrim>(x)).getVector();
 
-      uint n = xp->size();
+      int n = xp->size();
       TEUCHOS_TEST_FOR_EXCEPTION( (n != 5), std::invalid_argument, ">>> ERROR (ROL_SimpleEqConstrained, objective value): "
                                                                    "Primal vector x must be of length 5.");
 
@@ -110,12 +89,12 @@ namespace ZOO {
     }
 
     void gradient( Vector<Real> &g, const Vector<Real> &x, Real &tol ) {
+      Teuchos::RCP<const std::vector<Real> > xp =
+        (Teuchos::dyn_cast<const XPrim>(x)).getVector();
+      Teuchos::RCP<std::vector<Real> > gp =
+        Teuchos::rcp_const_cast<std::vector<Real> >((Teuchos::dyn_cast<XDual>(g)).getVector());
 
-      using Teuchos::RCP;
-      RCP<const vector> xp = getVector<XPrim>(x);
-      RCP<vector> gp = getVector<XDual>(g); 
-
-      uint n = xp->size();
+      int n = xp->size();
       TEUCHOS_TEST_FOR_EXCEPTION( (n != 5), std::invalid_argument, ">>> ERROR (ROL_SimpleEqConstrained, objective gradient): "
                                                                    " Primal vector x must be of length 5."); 
 
@@ -139,13 +118,14 @@ namespace ZOO {
     }
 
     void hessVec( Vector<Real> &hv, const Vector<Real> &v, const Vector<Real> &x, Real &tol ) {
+      Teuchos::RCP<const std::vector<Real> > xp =
+        (Teuchos::dyn_cast<const XPrim>(x)).getVector();
+      Teuchos::RCP<const std::vector<Real> > vp =
+        (Teuchos::dyn_cast<const XPrim>(v)).getVector();
+      Teuchos::RCP<std::vector<Real> > hvp =
+        Teuchos::rcp_const_cast<std::vector<Real> >((Teuchos::dyn_cast<XDual>(hv)).getVector());
 
-      using Teuchos::RCP;
-      RCP<const vector> xp = getVector<XPrim>(x);
-      RCP<const vector> vp = getVector<XPrim>(v);
-      RCP<vector> hvp = getVector<XDual>(hv);
-
-      uint n = xp->size();
+      int n = xp->size();
       TEUCHOS_TEST_FOR_EXCEPTION( (n != 5), std::invalid_argument, ">>> ERROR (ROL_SimpleEqConstrained, objective hessVec): "
                                                                    "Primal vector x must be of length 5."); 
 
@@ -213,38 +193,20 @@ namespace ZOO {
   template<class Real, class XPrim=StdVector<Real>, class XDual=StdVector<Real>, class CPrim=StdVector<Real>, class CDual=StdVector<Real> >
   class EqualityConstraint_SimpleEqConstrained : public EqualityConstraint<Real> {
 
-    typedef std::vector<Real> vector;
-    typedef Vector<Real>      V;
-
-    typedef typename vector::size_type uint;
-
-  private:
-    template<class VectorType>
-    Teuchos::RCP<const vector> getVector( const V& x ) {
-      using Teuchos::dyn_cast;
-      return dyn_cast<const VectorType>(x).getVector();
-    }
-
-    template<class VectorType> 
-    Teuchos::RCP<vector> getVector( V& x ) {
-      using Teuchos::dyn_cast;
-      return dyn_cast<VectorType>(x).getVector(); 
-    }
-
   public:
     EqualityConstraint_SimpleEqConstrained() {}
 
     void value( Vector<Real> &c, const Vector<Real> &x, Real &tol ) {
+      Teuchos::RCP<const std::vector<Real> > xp =
+        (Teuchos::dyn_cast<const XPrim>(x)).getVector();
+      Teuchos::RCP<std::vector<Real> > cp =
+        Teuchos::rcp_const_cast<std::vector<Real> >((Teuchos::dyn_cast<CPrim>(c)).getVector());
 
-      using Teuchos::RCP;
-      RCP<const vector> xp = getVector<XPrim>(x);
-      RCP<vector> cp = getVector<CPrim>(c);
-
-      uint n = xp->size();
+      int n = xp->size();
       TEUCHOS_TEST_FOR_EXCEPTION( (n != 5), std::invalid_argument, ">>> ERROR (ROL_SimpleEqConstrained, constraint value): "
                                                                    "Primal vector x must be of length 5.");
 
-      uint m = cp->size();
+      int m = cp->size();
       TEUCHOS_TEST_FOR_EXCEPTION( (m != 3), std::invalid_argument, ">>> ERROR (ROL_SimpleEqConstrained, constraint value): "
                                                                    "Constraint vector c must be of length 3.");
 
@@ -260,17 +222,18 @@ namespace ZOO {
     }
   
     void applyJacobian( Vector<Real> &jv, const Vector<Real> &v, const Vector<Real> &x, Real &tol ) {
+      Teuchos::RCP<const std::vector<Real> > xp =
+        (Teuchos::dyn_cast<const XPrim>(x)).getVector();
+      Teuchos::RCP<const std::vector<Real> > vp =
+        (Teuchos::dyn_cast<const XPrim>(v)).getVector();
+      Teuchos::RCP<std::vector<Real> > jvp =
+        Teuchos::rcp_const_cast<std::vector<Real> >((Teuchos::dyn_cast<CPrim>(jv)).getVector());
 
-      using Teuchos::RCP;
-      RCP<const vector> xp = getVector<XPrim>(x);
-      RCP<const vector> vp = getVector<XPrim>(v);
-      RCP<vector> jvp = getVector<CPrim>(jv);
-
-      uint n = xp->size();
+      int n = xp->size();
       TEUCHOS_TEST_FOR_EXCEPTION( (n != 5), std::invalid_argument, ">>> ERROR (ROL_SimpleEqConstrained, constraint applyJacobian): "
                                                                    "Primal vector x must be of length 5.");
 
-      uint d = vp->size();
+      int d = vp->size();
       TEUCHOS_TEST_FOR_EXCEPTION( (d != 5), std::invalid_argument, ">>> ERROR (ROL_SimpleEqConstrained, constraint applyJacobian): "
                                                                    "Input vector v must be of length 5.");
       d = jvp->size();
@@ -296,17 +259,18 @@ namespace ZOO {
     } //applyJacobian
 
     void applyAdjointJacobian( Vector<Real> &ajv, const Vector<Real> &v, const Vector<Real> &x, Real &tol ) {
+      Teuchos::RCP<const std::vector<Real> > xp =
+        (Teuchos::dyn_cast<const XPrim>(x)).getVector();
+      Teuchos::RCP<const std::vector<Real> > vp =
+        (Teuchos::dyn_cast<const CDual>(v)).getVector();
+      Teuchos::RCP<std::vector<Real> > ajvp =
+        Teuchos::rcp_const_cast<std::vector<Real> >((Teuchos::dyn_cast<XDual>(ajv)).getVector());
 
-      using Teuchos::RCP;
-      RCP<const vector> xp = getVector<XPrim>(x);
-      RCP<const vector> vp = getVector<CDual>(v);
-      RCP<vector> ajvp = getVector<XDual>(ajv);
-
-      uint n = xp->size();
+      int n = xp->size();
       TEUCHOS_TEST_FOR_EXCEPTION( (n != 5), std::invalid_argument, ">>> ERROR (ROL_SimpleEqConstrained, constraint applyAdjointJacobian): "
                                                                    "Primal vector x must be of length 5.");
 
-      uint d = vp->size();
+      int d = vp->size();
       TEUCHOS_TEST_FOR_EXCEPTION( (d != 3), std::invalid_argument, ">>> ERROR (ROL_SimpleEqConstrained, constraint applyAdjointJacobian): "
                                                                    "Input vector v must be of length 3.");
 
@@ -333,13 +297,16 @@ namespace ZOO {
     } //applyAdjointJacobian
 
     void applyAdjointHessian( Vector<Real> &ahuv, const Vector<Real> &u, const Vector<Real> &v, const Vector<Real> &x, Real &tol ) {
-      using Teuchos::RCP;
-      RCP<const vector> xp = getVector<XPrim>(x);
-      RCP<const vector> up = getVector<CDual>(u);
-      RCP<const vector> vp = getVector<XPrim>(v);
-      RCP<vector> ahuvp = getVector<XDual>(ahuv);
+      Teuchos::RCP<const std::vector<Real> > xp =
+        (Teuchos::dyn_cast<const XPrim>(x)).getVector();
+      Teuchos::RCP<const std::vector<Real> > up =
+        (Teuchos::dyn_cast<const CDual>(u)).getVector();
+      Teuchos::RCP<const std::vector<Real> > vp =
+        (Teuchos::dyn_cast<const XPrim>(v)).getVector();
+      Teuchos::RCP<std::vector<Real> > ahuvp =
+        Teuchos::rcp_const_cast<std::vector<Real> >((Teuchos::dyn_cast<XDual>(ahuv)).getVector());
 
-      uint n = xp->size();
+      int n = xp->size();
       TEUCHOS_TEST_FOR_EXCEPTION( (n != 5), std::invalid_argument, ">>> ERROR (ROL_SimpleEqConstrained, constraint applyAdjointHessian): "
                                                                    "Primal vector x must be of length 5.");
 
@@ -350,7 +317,7 @@ namespace ZOO {
       n = ahuvp->size();
       TEUCHOS_TEST_FOR_EXCEPTION( (n != 5), std::invalid_argument, ">>> ERROR (ROL_SimpleEqConstrained, constraint applyAdjointHessian): "
                                                                    "Output vector ahuv must be of length 5.");
-      uint d = up->size();
+      int d = up->size();
       TEUCHOS_TEST_FOR_EXCEPTION( (d != 3), std::invalid_argument, ">>> ERROR (ROL_SimpleEqConstrained, constraint applyAdjointHessian): "
                                                                    "Dual constraint vector u must be of length 3.");
       
@@ -441,20 +408,12 @@ namespace ZOO {
                                Teuchos::RCP<EqualityConstraint<Real> > &constr,
                                Vector<Real> &x0,
                                Vector<Real> &sol ) {
-
-    typedef std::vector<Real> vector;
-    
-    typedef typename vector::size_type uint;
-
-    using Teuchos::RCP;       using Teuchos::rcp;
-    using Teuchos::dyn_cast; 
-
     // Cast initial guess and solution vectors.
-    RCP<vector> x0p  = dyn_cast<XPrim>(x0).getVector(); 
-    RCP<vector> solp = dyn_cast<XPrim>(sol).getVector();
-
-    uint n = 5;
-
+    Teuchos::RCP<std::vector<Real> > x0p =
+      Teuchos::rcp_const_cast<std::vector<Real> >((Teuchos::dyn_cast<XPrim>(x0)).getVector());
+    Teuchos::RCP<std::vector<Real> > solp =
+      Teuchos::rcp_const_cast<std::vector<Real> >((Teuchos::dyn_cast<XPrim>(sol)).getVector());
+    int n = 5;
     // Resize vectors.
     x0p->resize(n);
     solp->resize(n);

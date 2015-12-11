@@ -47,8 +47,6 @@
 #include "Phalanx_Evaluator_Macros.hpp"
 #include "Phalanx_Field.hpp"
 
-#include "Panzer_Evaluator_Macros.hpp"
-
 namespace panzer {
     
 /** Compute normals on a particular side of an element.
@@ -68,7 +66,7 @@ namespace panzer {
   * the determinant of the side jacobian built in thus they correspond to a
   * differential on the side.
   */
-PANZER_EVALUATOR_CLASS(Normals)
+PHX_EVALUATOR_CLASS(Normals)
 
   int side_id;
   int quad_order, quad_index;
@@ -83,7 +81,7 @@ public:
   const PHX::FieldTag & getFieldTag() const 
   { return normals.fieldTag(); }
 
-PANZER_EVALUATOR_CLASS_END
+PHX_EVALUATOR_CLASS_END
 
 }
 

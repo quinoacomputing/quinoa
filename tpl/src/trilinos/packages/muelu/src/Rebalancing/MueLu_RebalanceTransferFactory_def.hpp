@@ -183,11 +183,7 @@ namespace MueLu {
           {
             SubFactoryMonitor subM(*this, "Rebalancing prolongator -- fast map replacement", coarseLevel);
 
-            RCP<const Import> newImporter;
-            {
-              SubFactoryMonitor(*this, "Import construction", coarseLevel);
-              newImporter = ImportFactory::Build(importer->getTargetMap(), rebalancedP->getColMap());
-            }
+            RCP<const Import> newImporter = ImportFactory::Build(importer->getTargetMap(), rebalancedP->getColMap());
             rebalancedP2->replaceDomainMapAndImporter(importer->getTargetMap(), newImporter);
           }
 

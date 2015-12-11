@@ -92,6 +92,7 @@ class OrderingProblem : public Problem<Adapter>
 public:
 
   typedef typename Adapter::scalar_t scalar_t;
+  typedef typename Adapter::zgid_t zgid_t;
   typedef typename Adapter::gno_t gno_t;
   typedef typename Adapter::lno_t lno_t;
   typedef typename Adapter::user_t user_t;
@@ -147,8 +148,8 @@ public:
   //
   //   \return  a reference to the solution to the most recent solve().
 
-  OrderingSolution<lno_t, gno_t> *getSolution() {
-    // std::cout << "havePerm= " << solution_->havePerm() <<  " haveInverse= " << solution_->haveInverse() << std::endl;
+  OrderingSolution<zgid_t, lno_t> *getSolution() {
+    // cout << "havePerm= " << solution_->havePerm() <<  " haveInverse= " << solution_->haveInverse() << endl;
     // Compute Perm or InvPerm, if one is missing.
     if (!(solution_->havePerm()))
       solution_->computePerm();
@@ -160,7 +161,7 @@ public:
 private:
   void createOrderingProblem();
 
-  RCP<OrderingSolution<lno_t, gno_t> > solution_;
+  RCP<OrderingSolution<zgid_t, lno_t> > solution_;
 
   RCP<Comm<int> > problemComm_;
   RCP<const Comm<int> > problemCommConst_;
@@ -181,7 +182,7 @@ void OrderingProblem<Adapter>::solve(bool newData)
   // TODO: Assuming one MPI process now. nVtx = ngids = nlids
   try
   {
-      this->solution_ = rcp(new OrderingSolution<lno_t, gno_t>(nVtx));
+      this->solution_ = rcp(new OrderingSolution<zgid_t, lno_t>(nVtx));
   }
   Z2_FORWARD_EXCEPTIONS;
 
@@ -232,18 +233,19 @@ void OrderingProblem<Adapter>::solve(bool newData)
           alg.order(this->solution_);
       }
   }
-
-#ifdef INCLUDE_ZOLTAN2_EXPERIMENTAL_WOLF
-  else if (method == std::string("nd")) 
-  {
-      AlgND<base_adapter_t> alg(this->envConst_,problemComm_,this->graphModel_,
-		                this->coordinateModel_,this->baseInputAdapter_);
-      alg.order(this->solution_);
-  }
-#endif
-
   }
   Z2_FORWARD_EXCEPTIONS;
+
+#ifdef HAVE_ZOLTAN2_MPI
+
+  // The algorithm may have changed the communicator.  Change it back.
+
+  RCP<const mpiWrapper_t > wrappedComm = rcp(new mpiWrapper_t(mpiComm_));
+  problemComm_ = rcp(new Teuchos::MpiComm<int>(wrappedComm));
+  problemCommConst_ = rcp_const_cast<const Comm<int> > (problemComm_);
+
+#endif
+
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -265,9 +267,9 @@ void OrderingProblem<Adapter>::createOrderingProblem()
   HELLO;
   using Teuchos::ParameterList;
 
-//  std::cout << __func__zoltan2__ << " input adapter type " 
+//  cout << __func__zoltan2__ << " input adapter type " 
 //       << this->inputAdapter_->inputAdapterType() << " " 
-//       << this->inputAdapter_->inputAdapterName() << std::endl;
+//       << this->inputAdapter_->inputAdapterName() << endl;
 
 #ifdef HAVE_ZOLTAN2_OVIS
   ovis_enabled(this->comm_->getRank());
@@ -314,15 +316,10 @@ void OrderingProblem<Adapter>::createOrderingProblem()
   std::bitset<NUM_MODEL_FLAGS> graphFlags;
   std::bitset<NUM_MODEL_FLAGS> idFlags;
 
-
-  //MMW: need to change this to allow multiple models
-  //     as I did with partitioning, use modelAvail_
-
   switch (modelType) {
 
   case GraphModelType:
-    graphFlags.set(REMOVE_SELF_EDGES);
-    graphFlags.set(BUILD_LOCAL_GRAPH);
+    graphFlags.set(SELF_EDGES_MUST_BE_REMOVED);
     this->graphModel_ = rcp(new GraphModel<base_adapter_t>(
       this->baseInputAdapter_, this->envConst_, problemCommConst_, graphFlags));
 
@@ -344,14 +341,12 @@ void OrderingProblem<Adapter>::createOrderingProblem()
 
   case HypergraphModelType:
   case CoordinateModelType:
-    std::cout << __func__zoltan2__ 
-              << " Model type " << modelType << " not yet supported." 
-              << std::endl;
+    cout << __func__zoltan2__ << " Model type " << modelType << " not yet supported." 
+         << endl;
     break;
 
   default:
-    std::cout << __func__zoltan2__ << " Invalid model" << modelType 
-              << std::endl;
+    cout << __func__zoltan2__ << " Invalid model" << modelType << endl;
     break;
   }
 }

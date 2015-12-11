@@ -21,9 +21,6 @@
 /* Define if want to build anasazi-experimental */
 /* #undef HAVE_ANASAZI_EXPERIMENTAL */
 
-/* Define if want to build with RBGen enabled */
-/* #undef HAVE_ANASAZI_RBGEN */
-
 /* Define if want to build with tpetra enabled */
 #define HAVE_ANASAZI_TPETRA
 

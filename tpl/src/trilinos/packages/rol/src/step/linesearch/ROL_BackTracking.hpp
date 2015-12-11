@@ -44,8 +44,6 @@
 #ifndef ROL_BACKTRACKING_H
 #define ROL_BACKTRACKING_H
 
-#include "ROL_LineSearch.hpp"
-
 /** \class ROL::BackTracking
     \brief Implements a simple back tracking line search.
 */
@@ -64,7 +62,7 @@ public:
 
   // Constructor
   BackTracking( Teuchos::ParameterList &parlist ) : LineSearch<Real>(parlist) { 
-    rho_ = parlist.sublist("Step").sublist("Line Search").sublist("Line-Search Method").get("Backtracking Rate",0.5);
+    rho_ = parlist.get("Backtracking Rate",0.5);
   }
 
   void initialize( const Vector<Real> &x, const Vector<Real> &s, const Vector<Real> &g, 

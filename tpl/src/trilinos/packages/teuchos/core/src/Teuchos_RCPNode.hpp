@@ -968,17 +968,7 @@ private:
 inline
 std::ostream& operator<<(std::ostream& out, const RCPNodeHandle& node)
 {
-  // mfh 15 Sep 2015: Make sure that NULL pointers print consistently.
-  // Clang 3.5 likes to print an empty string in that case, while GCC
-  // prints 0.  Thus, we test if the pointer is NULL and print 0 in
-  // that case.  This is important for MueLu tests, which compare
-  // string print-outs.
-  if (node.node_ptr () == NULL) {
-    out << "0";
-  } else {
-    out << node.node_ptr ();
-  }
-  return out;
+  return (out << node.node_ptr());
 }
 
 

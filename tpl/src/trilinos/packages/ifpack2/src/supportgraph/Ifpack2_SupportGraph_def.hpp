@@ -536,7 +536,7 @@ void SupportGraph<MatrixType>::initialize ()
     findSupport(); // Compute the support.
 
     // Set up the solver and compute the symbolic factorization.
-    solver_ = Amesos2::create<crs_matrix_type, MV> ("amesos2_cholmod", Support_);
+    solver_ = Amesos2::create<MatrixType, MV> ("amesos2_cholmod", Support_);
     solver_->symbolicFactorization();
 
     IsInitialized_ = true;
@@ -645,14 +645,11 @@ apply (const Tpetra::MultiVector<scalar_type,
     // If X and Y are pointing to the same memory location,
     // we need to create an auxiliary vector, Xcopy
     RCP<const MV> Xcopy;
-    {
-      auto X_lcl_host = X.getLocalView<Kokkos::HostSpace> ();
-      auto Y_lcl_host = Y.getLocalView<Kokkos::HostSpace> ();
-      if (X_lcl_host.ptr_on_device () == Y_lcl_host.ptr_on_device ()) {
-        Xcopy = rcp (new MV (X, Teuchos::Copy));
-      } else {
-        Xcopy = rcpFromRef (X);
-      }
+    if (X.getLocalMV ().getValues () == Y.getLocalMV ().getValues ()) {
+      Xcopy = rcp (new MV (X, Teuchos::Copy));
+    }
+    else {
+      Xcopy = rcpFromRef (X);
     }
 
     if (alpha != STS::one ()) {

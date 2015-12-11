@@ -1059,9 +1059,6 @@ ComputePreconditioner(const bool CheckPreconditioner)
 
   if (List_.name() == "ANONYMOUS") List_.setName("ML preconditioner");
 
-  bool init_seed = List_.get("initialize random seed",false);
-  if (init_seed) ML_random_init();
-
   if (List_.get("read XML", false)) {
     std::string XMLFileName = List_.get("XML input file","ml_ParameterList.xml");
     ReadXML(XMLFileName,List_,Comm());

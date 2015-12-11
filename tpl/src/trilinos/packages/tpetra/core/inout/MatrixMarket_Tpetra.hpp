@@ -3173,6 +3173,7 @@ namespace Tpetra {
         return A;
       }
 
+
       /// \brief Read dense matrix (as a MultiVector) from the given
       ///   Matrix Market file.
       ///
@@ -3205,21 +3206,6 @@ namespace Tpetra {
       static RCP<multivector_type>
       readDenseFile (const std::string& filename,
                      const RCP<const comm_type>& comm,
-                     RCP<const map_type>& map,
-                     const bool tolerant=false,
-                     const bool debug=false)
-      {
-        std::ifstream in;
-        if (comm->getRank () == 0) { // Only open the file on Proc 0.
-          in.open (filename.c_str ()); // Destructor closes safely
-        }
-        return readDense (in, comm, map, tolerant, debug);
-      }
-
-      //! Variant of readDenseMatrix (see above) that takes a Node.
-      static RCP<multivector_type>
-      readDenseFile (const std::string& filename,
-                     const RCP<const comm_type>& comm,
                      const RCP<node_type>& node,
                      RCP<const map_type>& map,
                      const bool tolerant=false,
@@ -3249,6 +3235,7 @@ namespace Tpetra {
       ///   only accessed on Rank 0 of the given communicator.
       /// \param comm [in] Communicator containing all process(es)
       ///   over which the dense matrix will be distributed.
+      /// \param node [in] Kokkos Node object.
       /// \param map [in/out] On input: if nonnull, the map describing
       ///   how to distribute the vector (not modified).  In this
       ///   case, the map's communicator and node must equal \c comm
@@ -3263,27 +3250,11 @@ namespace Tpetra {
       ///   anyone else.
       static RCP<vector_type>
       readVectorFile (const std::string& filename,
-                      const RCP<const comm_type>& comm,
-                      RCP<const map_type>& map,
-                      const bool tolerant=false,
-                      const bool debug=false)
-      {
-        std::ifstream in;
-        if (comm->getRank () == 0) { // Only open the file on Proc 0.
-          in.open (filename.c_str ()); // Destructor closes safely
-        }
-        return readVector (in, comm, map, tolerant, debug);
-      }
-
-      /// \brief Like readVectorFile() (see above), but with a
-      ///   supplied Node object.
-      static RCP<vector_type>
-      readVectorFile (const std::string& filename,
-                      const RCP<const comm_type>& comm,
-                      const RCP<node_type>& node,
-                      RCP<const map_type>& map,
-                      const bool tolerant=false,
-                      const bool debug=false)
+                     const RCP<const comm_type>& comm,
+                     const RCP<node_type>& node,
+                     RCP<const map_type>& map,
+                     const bool tolerant=false,
+                     const bool debug=false)
       {
         std::ifstream in;
         if (comm->getRank () == 0) { // Only open the file on Proc 0.
@@ -3362,17 +3333,6 @@ namespace Tpetra {
       static RCP<multivector_type>
       readDense (std::istream& in,
                  const RCP<const comm_type>& comm,
-                 RCP<const map_type>& map,
-                 const bool tolerant=false,
-                 const bool debug=false)
-      {
-        return readDense (in, comm, Teuchos::null, map, tolerant, debug);
-      }
-
-      //! Variant of readDense (see above) that takes a Node.
-      static RCP<multivector_type>
-      readDense (std::istream& in,
-                 const RCP<const comm_type>& comm,
                  const RCP<node_type>& node,
                  RCP<const map_type>& map,
                  const bool tolerant=false,
@@ -3384,21 +3344,7 @@ namespace Tpetra {
                                            err, tolerant, debug);
       }
 
-      //! Read Vector from the given Matrix Market input stream.
-      static RCP<vector_type>
-      readVector (std::istream& in,
-                  const RCP<const comm_type>& comm,
-                  RCP<const map_type>& map,
-                  const bool tolerant=false,
-                  const bool debug=false)
-      {
-        Teuchos::RCP<Teuchos::FancyOStream> err =
-          Teuchos::getFancyOStream (Teuchos::rcpFromRef (std::cerr));
-        return readVectorImpl<scalar_type> (in, comm, Teuchos::null, map,
-                                            err, tolerant, debug);
-      }
-
-      //! Read Vector from the given Matrix Market input stream, with a supplied Node.
+      /// \brief Read Vector from the given Matrix Market input stream.
       static RCP<vector_type>
       readVector (std::istream& in,
                  const RCP<const comm_type>& comm,
@@ -3410,7 +3356,7 @@ namespace Tpetra {
         Teuchos::RCP<Teuchos::FancyOStream> err =
           Teuchos::getFancyOStream (Teuchos::rcpFromRef (std::cerr));
         return readVectorImpl<scalar_type> (in, comm, node, map,
-                                            err, tolerant, debug);
+                                           err, tolerant, debug);
       }
 
       /// \brief Read Map (as a MultiVector) from the given
@@ -3699,15 +3645,9 @@ namespace Tpetra {
           // The user didn't supply a Map.  Make a contiguous
           // distributed Map for them, using the read-in multivector
           // dimensions.
-          if (node.is_null ()) {
-            map = createUniformContigMapWithNode<LO, GO, NT> (numRows, comm);
-          } else {
-            map = createUniformContigMapWithNode<LO, GO, NT> (numRows, comm, node);
-          }
+          map = createUniformContigMapWithNode<LO, GO, NT> (numRows, comm, node);
           const size_t localNumRows = (myRank == 0) ? numRows : 0;
-          // At this point, map exists and has a nonnull node.
-          proc0Map = createContigMapWithNode<LO, GO, NT> (numRows, localNumRows,
-                                                          comm, map->getNode ());
+          proc0Map = createContigMapWithNode<LO, GO, NT> (numRows, localNumRows, comm, node);
         }
         else { // The user supplied a Map.
           proc0Map = Details::computeGatherMap<map_type> (map, err, debug);
@@ -3976,12 +3916,12 @@ namespace Tpetra {
                                      global_ordinal_type,
                                      node_type> >
       readVectorImpl (std::istream& in,
-                      const RCP<const comm_type>& comm,
-                      const RCP<node_type>& node, // allowed to be null
-                      RCP<const map_type>& map,
-                      const Teuchos::RCP<Teuchos::FancyOStream>& err,
-                      const bool tolerant=false,
-                      const bool debug=false)
+                     const RCP<const comm_type>& comm,
+                     const RCP<node_type>& node,
+                     RCP<const map_type>& map,
+                     const Teuchos::RCP<Teuchos::FancyOStream>& err,
+                     const bool tolerant=false,
+                     const bool debug=false)
       {
         using Teuchos::MatrixMarket::Banner;
         using Teuchos::MatrixMarket::checkCommentLine;
@@ -4006,7 +3946,7 @@ namespace Tpetra {
           err->pushTab ();
         }
         if (debug) {
-          *err << myRank << ": readVectorImpl" << endl;
+          *err << myRank << ": readDenseImpl" << endl;
         }
         if (! err.is_null ()) {
           err->pushTab ();
@@ -4052,7 +3992,7 @@ namespace Tpetra {
         // Only Proc 0 gets to read matrix data from the input stream.
         if (myRank == 0) {
           if (debug) {
-            *err << myRank << ": readVectorImpl: Reading banner line (dense)" << endl;
+            *err << myRank << ": readDenseImpl: Reading banner line (dense)" << endl;
           }
 
           // The "Banner" tells you whether the input stream
@@ -4091,7 +4031,7 @@ namespace Tpetra {
           // Now read the dimensions line.
           if (localBannerReadSuccess) {
             if (debug) {
-              *err << myRank << ": readVectorImpl: Reading dimensions line (dense)" << endl;
+              *err << myRank << ": readDenseImpl: Reading dimensions line (dense)" << endl;
             }
             // Keep reading lines from the input stream until we find
             // a non-comment line, or until we run out of lines.  The
@@ -4215,15 +4155,9 @@ namespace Tpetra {
           // The user didn't supply a Map.  Make a contiguous
           // distributed Map for them, using the read-in multivector
           // dimensions.
-          if (node.is_null ()) {
-            map = createUniformContigMapWithNode<LO, GO, NT> (numRows, comm);
-          } else {
-            map = createUniformContigMapWithNode<LO, GO, NT> (numRows, comm, node);
-          }
+          map = createUniformContigMapWithNode<LO, GO, NT> (numRows, comm, node);
           const size_t localNumRows = (myRank == 0) ? numRows : 0;
-          // At this point, map exists and has a nonnull node.
-          proc0Map = createContigMapWithNode<LO, GO, NT> (numRows, localNumRows,
-                                                          comm, map->getNode ());
+          proc0Map = createContigMapWithNode<LO, GO, NT> (numRows, localNumRows, comm, node);
         }
         else { // The user supplied a Map.
           proc0Map = Details::computeGatherMap<map_type> (map, err, debug);
@@ -4240,7 +4174,7 @@ namespace Tpetra {
         if (myRank == 0) {
           try {
             if (debug) {
-              *err << myRank << ": readVectorImpl: Reading matrix data (dense)"
+              *err << myRank << ": readDenseImpl: Reading matrix data (dense)"
                    << endl;
             }
 
@@ -4422,7 +4356,7 @@ namespace Tpetra {
         } // if (myRank == 0)
 
         if (debug) {
-          *err << myRank << ": readVectorImpl: done reading data" << endl;
+          *err << myRank << ": readDenseImpl: done reading data" << endl;
         }
 
         // Synchronize on whether Proc 0 successfully read the data.
@@ -4441,7 +4375,7 @@ namespace Tpetra {
             err->popTab ();
           }
           if (debug) {
-            *err << myRank << ": readVectorImpl: done" << endl;
+            *err << myRank << ": readDenseImpl: done" << endl;
           }
           if (! err.is_null ()) {
             err->popTab ();
@@ -4450,14 +4384,14 @@ namespace Tpetra {
         }
 
         if (debug) {
-          *err << myRank << ": readVectorImpl: Creating target MV" << endl;
+          *err << myRank << ": readDenseImpl: Creating target MV" << endl;
         }
 
         // Make a multivector Y with the distributed map pMap.
         RCP<MV> Y = createVector<ST, LO, GO, NT> (map);
 
         if (debug) {
-          *err << myRank << ": readVectorImpl: Creating Export" << endl;
+          *err << myRank << ": readDenseImpl: Creating Export" << endl;
         }
 
         // Make an Export object that will export X to Y.  First
@@ -4466,7 +4400,7 @@ namespace Tpetra {
         Export<LO, GO, NT> exporter (proc0Map, map, err);
 
         if (debug) {
-          *err << myRank << ": readVectorImpl: Exporting" << endl;
+          *err << myRank << ": readDenseImpl: Exporting" << endl;
         }
         // Export X into Y.
         Y->doExport (*X, exporter, INSERT);
@@ -4475,7 +4409,7 @@ namespace Tpetra {
           err->popTab ();
         }
         if (debug) {
-          *err << myRank << ": readVectorImpl: done" << endl;
+          *err << myRank << ": readDenseImpl: done" << endl;
         }
         if (! err.is_null ()) {
           err->popTab ();
@@ -5745,12 +5679,6 @@ namespace Tpetra {
           *dbg << os.str ();
           dbg->pushTab ();
         }
-
-        // Make the output stream write floating-point numbers in
-        // scientific notation.  It will politely put the output
-        // stream back to its state on input, when this scope
-        // terminates.
-        Teuchos::MatrixMarket::details::SetScientific<scalar_type> sci (out);
 
         const size_t myNumRows = X.getLocalLength ();
         const size_t numCols = X.getNumVectors ();

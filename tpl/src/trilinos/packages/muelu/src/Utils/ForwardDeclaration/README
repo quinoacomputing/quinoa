@@ -3,10 +3,10 @@
 ===========================
 
 1) Add the class name to one of the following files:
-LO-GO-NO.classList
+LO-GO-NO-LMO.classList
 Non-Templated.classList
 SC-LO-GO.classList
-SC-LO-GO-NO.classList
+SC-LO-GO-NO-LMO.classList
 
 2) Run gen_fwdFiles.sh
 

@@ -105,14 +105,11 @@
 typedef double Scalar;
 typedef int    LocalOrdinal;
 //FIXME we need a HAVE_MUELU_LONG_LONG_INT option
-//
-// NOTE (mfh 11 Aug 2015) I just added a HAVE_XPETRA_INT_LONG_LONG option.
-
-#ifdef HAVE_XPETRA_INT_LONG_LONG
-typedef long long int GlobalOrdinal;
-#else
+// #ifdef HAVE_TEUCHOS_LONG_LONG_INT
+// typedef long long int GlobalOrdinal;
+// #else
 typedef int GlobalOrdinal;
-#endif
+//#endif
 //
 typedef KokkosClassic::DefaultNode::DefaultNodeType Node;
 //
@@ -138,12 +135,9 @@ int main(int argc, char *argv[]) {
   // out->precision(12);
 
   //FIXME we need a HAVE_MUELU_LONG_LONG_INT option
-  //
-  // NOTE (mfh 11 Aug 2015) I just added a HAVE_XPETRA_INT_LONG_LONG option.
-  //
-  #ifndef HAVE_XPETRA_INT_LONG_LONG
+  //#ifndef HAVE_TEUCHOS_LONG_LONG_INT
   *out << "Warning: scaling test was not compiled with long long int support" << std::endl;
-  #endif
+  //#endif
 
   //
   // SET TEST PARAMETERS
@@ -260,7 +254,7 @@ int main(int argc, char *argv[]) {
   // USER GUIDE   // define near null space
   RCP<MultiVector> nullspace = MultiVectorFactory::Build(map, 1);
   nullspace->putScalar( (SC) 1.0);
-  // USER GUIDE   //
+  // USER GUIDE   // 
   Teuchos::Array<Teuchos::ScalarTraits<SC>::magnitudeType> norms(1);
 
   nullspace->norm1(norms);
@@ -270,7 +264,7 @@ int main(int argc, char *argv[]) {
   // USER GUIDE   // create new hierarchy
   RCP<MueLu::Hierarchy<SC, LO, GO, NO> > H;
   // USER GUIDE   //
-
+  
   //
   //
   // SETUP
@@ -289,7 +283,7 @@ int main(int argc, char *argv[]) {
     H->setDefaultVerbLevel(Teuchos::VERB_HIGH);
     H->SetMaxCoarseSize((GO) optMaxCoarseSize);
     // USER GUIDE     //
-
+    
     //
     // Finest level
     //
@@ -301,7 +295,7 @@ int main(int argc, char *argv[]) {
     Finest->Set("Nullspace",   nullspace);
     Finest->Set("Coordinates", coordinates); //FIXME: XCoordinates, YCoordinates, ..
     // USER GUIDE //
-
+    
     //
     // FactoryManager
     //
@@ -347,14 +341,14 @@ int main(int argc, char *argv[]) {
 
       // USER GUIDE       // declare some factories (potentially overwrite default factories)
       RCP<SaPFactory> PFact = rcp(new SaPFactory());
-      PFact->SetParameter("sa: damping factor", ParameterEntry(optSaDamping));
+      PFact->SetDampingFactor(optSaDamping);
 
       RCP<Factory>    RFact = rcp(new TransPFactory());
 
       RCP<RAPFactory> AFact = rcp(new RAPFactory());
       AFact->setVerbLevel(Teuchos::VERB_HIGH);
       // USER GUIDE       //
-
+      
       if (!optExplicitR) {
         H->SetImplicitTranspose(true);
         ParameterList Aclist = *(AFact->GetValidParameterList());
@@ -374,7 +368,7 @@ int main(int argc, char *argv[]) {
         M.SetFactory("P", PFact);
         M.SetFactory("R", RFact);
         M.SetFactory("A", AFact);
-        // USER GUIDE         //
+	// USER GUIDE         //
 
       } else {
 #if defined(HAVE_MPI) && defined(HAVE_MUELU_ZOLTAN)
@@ -472,7 +466,7 @@ int main(int argc, char *argv[]) {
         ifpackType = "RELAXATION";
         ifpackList.set("relaxation: type", "Symmetric Gauss-Seidel");
       }
-      // USER GUIDE       //
+      // USER GUIDE       // 
       else if (optSmooType == "l1-sgs") {
         ifpackType = "RELAXATION";
         ifpackList.set("relaxation: type", "Symmetric Gauss-Seidel");
@@ -537,7 +531,7 @@ int main(int argc, char *argv[]) {
   B->norm2(norms);
   B->scale(1.0/norms[0]);
   // USER GUIDE   //
-
+  
   //
   // Use AMG directly as an iterative method
   //
@@ -563,7 +557,7 @@ int main(int argc, char *argv[]) {
 
     RCP<TimeMonitor> tm;
     tm = rcp (new TimeMonitor(*TimeMonitor::getNewTimer("ScalingTest: 5 - Belos Solve")));
-
+    
     // USER GUIDE     // Operator and Multivector type that will be used with Belos
     typedef MultiVector          MV;
     typedef Belos::OperatorT<MV> OP;
@@ -598,7 +592,7 @@ int main(int argc, char *argv[]) {
     // Create an iterative solver manager
     RCP< Belos::SolverManager<SC, MV, OP> > solver = rcp(new Belos::BlockCGSolMgr<SC, MV, OP>(belosProblem, rcp(&belosList, false)));
     // USER GUIDE     //
-
+    
     // Perform solve
     Belos::ReturnType ret = Belos::Unconverged;
     try {
@@ -606,7 +600,7 @@ int main(int argc, char *argv[]) {
         TimeMonitor tm2(*TimeMonitor::getNewTimer("ScalingTest: 5bis - Belos Internal Solve"));
         // USER GUIDE         // solve linear system
         ret = solver->solve();
-        // USER GUIDE         //
+        // USER GUIDE         // 
       } // end of TimeMonitor
 
       // Get the number of iterations for this solve.
@@ -646,7 +640,7 @@ int main(int argc, char *argv[]) {
     } else {
       if (comm->getRank() == 0) std::cout << std::endl << "SUCCESS:  Belos converged!" << std::endl;
     }
-    // USER GUIDE     //
+    // USER GUIDE     // 
     tm = Teuchos::null;
 
   } //if (optPrecond)

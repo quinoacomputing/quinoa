@@ -52,8 +52,6 @@
 #include "Phalanx_Evaluator_Macros.hpp"
 #include "Phalanx_MDField.hpp"
 
-#include "Panzer_Evaluator_Macros.hpp"
-
 namespace panzer {
     
 /** This performs a sum over all the fields limited to the subcell
@@ -77,7 +75,7 @@ namespace panzer {
     </ParameterList>
   \endverbatim
   */
-PANZER_EVALUATOR_CLASS(SubcellSum)
+PHX_EVALUATOR_CLASS(SubcellSum)
   
   PHX::MDField<ScalarT,Cell> outField;  // result
     
@@ -99,7 +97,7 @@ private:
   // evalaute on the "closure" of the indicated sub-cells
   bool evaluateOnClosure_;
 
-PANZER_EVALUATOR_CLASS_END
+PHX_EVALUATOR_CLASS_END
 
 }
 
