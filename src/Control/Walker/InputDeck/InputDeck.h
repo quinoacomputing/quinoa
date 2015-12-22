@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Fri 17 Jul 2015 08:46:46 AM MDT
+  \date      Tue 15 Dec 2015 09:50:04 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Walker's input deck
   \details   Walker's input deck
@@ -179,7 +179,8 @@ class InputDeck :
                                      , kw::massfracbeta
                                      , kw::sde_r
                                      , kw::homdecay
-                                     , kw::mchomdecay
+                                     , kw::montecarlo_homdecay
+                                     , kw::hydrotimescale
                                      , kw::jointbeta
                                      , kw::jointdelta
                                      , kw::jointbeta

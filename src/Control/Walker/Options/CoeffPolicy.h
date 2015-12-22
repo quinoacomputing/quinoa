@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/Options/CoeffPolicy.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:19:02 PM MDT
+  \date      Tue 15 Dec 2015 09:50:48 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Differential equation coefficients policy options
   \details   Differential equation coefficients policy options
@@ -26,6 +26,7 @@ enum class CoeffPolicyType : uint8_t { CONSTANT=0
                                      , DECAY
                                      , HOMOGENEOUS_DECAY
                                      , MONTE_CARLO_HOMOGENEOUS_DECAY
+                                     , HYDROTIMESCALE_HOMOGENEOUS_DECAY
                                      };
 
 //! Pack/Unpack CoeffPolicyType: forward overload to generic enum class packer
@@ -43,6 +44,8 @@ class CoeffPolicy : public tk::Toggle< CoeffPolicyType > {
     using keywords = boost::mpl::vector< kw::constant
                                        , kw::decay
                                        , kw::homdecay
+                                       , kw::montecarlo_homdecay
+                                       , kw::hydrotimescale
                                        >;
 
     //! \brief Options constructor
@@ -58,13 +61,17 @@ class CoeffPolicy : public tk::Toggle< CoeffPolicyType > {
           { CoeffPolicyType::DECAY, kw::decay::name() },
           { CoeffPolicyType::HOMOGENEOUS_DECAY, kw::homdecay::name() },
           { CoeffPolicyType::MONTE_CARLO_HOMOGENEOUS_DECAY,
-            kw::mchomdecay::name() } },
+            kw::montecarlo_homdecay::name() },
+          { CoeffPolicyType::HYDROTIMESCALE_HOMOGENEOUS_DECAY,
+            kw::hydrotimescale::name() } },
         //! keywords -> Enums
         {  { kw::constant::string(), CoeffPolicyType::CONSTANT },
            { kw::decay::string(), CoeffPolicyType::DECAY },
            { kw::homdecay::string(), CoeffPolicyType::HOMOGENEOUS_DECAY },
-           { kw::mchomdecay::string(),
-             CoeffPolicyType::MONTE_CARLO_HOMOGENEOUS_DECAY } } ) {}
+           { kw::montecarlo_homdecay::string(),
+             CoeffPolicyType::MONTE_CARLO_HOMOGENEOUS_DECAY },
+           { kw::hydrotimescale::string(),
+             CoeffPolicyType::HYDROTIMESCALE_HOMOGENEOUS_DECAY } } ) {}
 };
 
 } // ctr::
