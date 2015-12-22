@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Partitioner.h
   \author    J. Bakosi
-  \date      Fri 11 Dec 2015 12:49:28 PM MST
+  \date      Tue 22 Dec 2015 07:40:39 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Charm++ chare partitioner group used to perform mesh partitioning
   \details   Charm++ chare partitioner group used to parform mesh partitioning.
@@ -46,6 +46,10 @@ extern ctr::InputDeck g_inputdeck;
 template< class HostProxy >
 class Partitioner : public CBase_Partitioner< HostProxy > {
 
+  // Include Charm++ SDAG code. See http://charm.cs.illinois.edu/manuals/html/
+  // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
+  Partitioner_SDAG_CODE
+
   private:
     using Group = CBase_Partitioner< HostProxy >;
 
@@ -55,9 +59,10 @@ class Partitioner : public CBase_Partitioner< HostProxy > {
     Partitioner( HostProxy& host ) :
       m_host( host ),
       m_npe( 0 ),
-      m_er( g_inputdeck.get< tag::cmd, tag::io, tag::input >() )
+      m_er( g_inputdeck.get< tag::cmd, tag::io, tag::input >() ),
+      m_reordered( 0 )
     {
-      // Read our chunk of the mesh graph from file
+      // Read our contiguously-numbered chunk of the mesh graph from file
       readGraph();
       // If a geometric partitioner is selected, compute element centroid
       // coordinates
@@ -96,8 +101,15 @@ class Partitioner : public CBase_Partitioner< HostProxy > {
 
       // Read connectivity (node IDs) of elements our chares operate on
       for (auto& c : m_elem) {
+
         std::vector< std::size_t > id;
-        for (auto e : c.second) m_er.readElement( e, tk::ExoElemType::TET, id );
+        auto r = m_er.readElements(tk::extents(c.second),tk::ExoElemType::TET);
+        for (auto e : c.second) {
+          const auto& conn = tk::cref_find( r, e );
+          id.insert( end(id), begin(conn), end(conn) );
+        }
+        //for (auto e : c.second) m_er.readElement( e, tk::ExoElemType::TET, id );
+
         // Since we are done with the element ids of chare c.first, we overwrite
         // the element ids with a copy of the element connectivity, i.e., node
         // IDs, just read. This will be remapped to the new node ID order after
@@ -105,51 +117,74 @@ class Partitioner : public CBase_Partitioner< HostProxy > {
         c.second.clear();
         c.second.insert( end(c.second), begin(id), end(id) );
         m_id.insert( end(m_id), begin(id), end(id) );
-        id.clear();
       }
       // Make node ids unique, these need reordering on our PE
       tk::unique( m_id );
-      // Call back to host indicating that we are ready for a new order
-      if (CkMyPe() == 0) m_host.reorder( 0 );
+      // Call back to host indicating that we are ready for a new node order
+      signal2host_owngraph_complete( m_host );
+      // Send unique global mesh point indices of our chunk to host
+      m_host.addNodes( CkMyPe(), m_id );
     }
 
     //! Reorder global mesh node IDs
-    //! \param[in] map Old-node-id-new-node-id map constructed by PEs before me
-    void reorder( std::unordered_map< std::size_t, std::size_t >& map ) {
-      // Map associating old node IDs (as in file) to new node IDs (as in
-      // producing contiguous-row-id linear system contributions)
-      std::unordered_map< std::size_t, std::size_t > cid;
-      // Reorder our chunk of mesh node IDs
-      auto n = map.size();
-      for (auto& p : m_id) {
-        auto o = p;             // save old id
-        const auto it = map.find( p );
-        if (it != end(map)) {   // if old global id has already been assigned
-          p = it->second;       //   use its new id
-        } else {                // if not
-          map[ p ] = n;         //   assign new id to old id, and
-          p = n++;              //   use it (reorder)
+    //! \param[in] n Starting node ID we assign new node IDs from
+    //! \param[in] comm Communication map used to retrieve node IDs assigned by
+    //!   PEs with lower indices than ours
+    void reorder( std::size_t n,
+                  const std::unordered_map< int,
+                          std::set< std::size_t > >& comm )
+    {
+      // Activate SDAG wait for completing the reordering of our node IDs
+      wait4owned();
+      // Send out request for new global nodes IDs right away
+      for (const auto& c : comm)
+        Group::thisProxy[ c.first ].request( CkMyPe(), c.second );
+      // Lambda to decide if node ID is being assigned a new ID by another PE
+      auto own = [ &comm ]( std::size_t p ) {
+        using Set = std::remove_reference<decltype(comm)>::type::value_type;
+        return !std::any_of( cbegin(comm), cend(comm),
+                             [&](const Set& s){
+                               if (s.second.find(p) != cend(s.second))
+                                 return true;
+                               else
+                                 return false;
+                             } );
+      };
+      // Reorder our chunk of the mesh node IDs by looping through all of our
+      // node IDs (resulting from reading our chunk of the mesh cells). We test
+      // if we are to assign a new ID to a node ID, and if so we assign new ID,
+      // i.e., reorder, by constructing a map associating new to old IDs. We
+      // also count up the reordered nodes.
+      for (auto& p : m_id)
+        if (own(p)) {           
+          m_newid[ p ] = n++;
+          ++m_reordered;
         }
-        // Construct map associating old to new IDs
-        cid[ p ] = o;
-      }
-      // If we are not the last PE, continue with the next PE forwarding the
-      // node id map accumulated by us and all PEs before us
-      if (CkMyPe() < CkNumPes()-1) Group::thisProxy[ CkMyPe()+1 ].reorder(map);
-      // Update our chare ID map to now contain the new global node IDs
-      for (auto& c : m_elem) for (auto& e : c.second) e = tk::val_find(map,e);
-      // Construct maps associating old node IDs (as in file) to new node IDs
-      // (as in producing contiguous-row-id linear system contributions)
-      // associated to chare IDs (outer key) based on flat map, cid, that is not
-      // categorized by chares
-      std::unordered_map< int,
-        std::unordered_map< std::size_t, std::size_t > > chcid;
-      for (const auto& c : m_elem) {
-        auto& m = chcid[ c.first ];
-        for (auto p : c.second) m[p] = tk::val_find(cid,p);
-      }
-      // Send back result to host
-      m_host.prepared( CkMyPe(), m_elem, chcid );
+      // Trigger SDAG wait, indicating that reordering own node IDs are complete
+      trigger_reorderowned_complete();
+      // If we have reordered all of our node IDs, compute and send back result
+      // to host
+      if (m_reordered == m_id.size()) reordered();
+    }
+
+    //! Request new global node IDs for old node IDs
+    //! \param[in] pe PE request coming from and to which we send new IDs to
+    //! \param[in] id Set of old node IDs whose new IDs are requested
+    void request( int pe, const std::set< std::size_t >& id ) {
+      // Queue up requesting PE and node IDs
+      m_req.push_back( { pe, id } );
+      // Trigger SDAG wait, signaling that node IDs have been requested from us
+      trigger_nodes_requested();
+    }
+
+    //! Receive new (reordered) global node IDs
+    //! \param[in] id Set of new node IDs
+    void neworder( const std::unordered_map< std::size_t, std::size_t >& id ) {
+      // Store new node IDs associated to old ones
+      for (const auto& p : id) m_newid[ p.first ] = p.second;
+      m_reordered += id.size();   // count up number of reordered nodes
+      // If we have reordered all of our node IDs, send back result to host
+      if (m_reordered == m_id.size()) reordered();
     }
 
     //! Compute communication cost of linear system merging for our PE
@@ -167,6 +202,27 @@ class Partitioner : public CBase_Partitioner< HostProxy > {
                                  static_cast<tk::real>(ownpts + compts) );
     }
 
+    //! Receive mesh element indices associated to chares we own
+    //! \param[in] element Mesh element indices associated to chare IDs
+    void add( int frompe,
+             const std::unordered_map< int, std::vector< std::size_t > >& elem )
+    {
+      for (const auto& c : elem) {
+        Assert( pe(c.first) == CkMyPe(), "PE " + std::to_string(CkMyPe()) +
+                " received a chareid-elemidx-vector pair whose chare it does"
+                " not own" );
+        auto& e = m_elem[ c.first ];
+        e.insert( end(e), begin(c.second), end(c.second) );
+      }
+      Group::thisProxy[ frompe ].recv();
+    }
+
+    //! Acknowledge received element IDs
+    void recv() {
+      --m_npe;
+      if (recvaliens()) signal2host_distribution_complete( m_host );
+    }
+
   private:
     //! Host proxy
     HostProxy m_host;
@@ -174,6 +230,10 @@ class Partitioner : public CBase_Partitioner< HostProxy > {
     std::size_t m_npe;
     //! ExodusII mesh reader
     tk::ExodusIIMeshReader m_er;
+    //! Queue of requested node IDs from PEs
+    std::vector< std::pair< int, std::set< std::size_t > > > m_req;
+    //! Number of mesh nodes reordered
+    std::size_t m_reordered;
     //! Total number of nodes in mesh
     std::size_t m_nnode;
     //! Tetrtahedron element connectivity of our chunk of the mesh
@@ -192,20 +252,24 @@ class Partitioner : public CBase_Partitioner< HostProxy > {
     //! \brief Unique global node IDs chares on our PE will contribute to in a
     //!   linear system
     std::vector< std::size_t > m_id;
+    //! \brief Map associating new node IDs (as in producing contiguous-row-id
+    //!   linear system contributions) to old node IDs (as in file)
+    std::unordered_map< std::size_t, std::size_t > m_newid;
 
-    //! Read mesh graph from file, a chunk by each PE group
+    //! Read our contiguously-numbered chunk of the mesh graph from file
     void readGraph() {
       // Get number of mesh points and number of tetrahedron elements in file
       m_nnode = m_er.readElemBlockIDs();
       auto nel = m_er.nel( tk::ExoElemType::TET );
-      // Read our chunk of tetrahedron element connectivity from file and also
-      // store the list of global element indices for our chunk of the mesh
+      // Read our contiguously-numbered chunk of tetrahedron element
+      // connectivity from file and also generate and store the list of global
+      // element indices for our chunk of the mesh
       auto chunk = nel / CkNumPes();
       auto from = CkMyPe() * chunk;
       auto till = from + chunk;
       if (CkMyPe() == CkNumPes()-1) till += nel % CkNumPes();
-      std::array< std::size_t, 2 > ext = { { static_cast<std::size_t>(from),
-                                             static_cast<std::size_t>(till) } };
+      std::array< std::size_t, 2 > ext = { {static_cast<std::size_t>(from),
+                                            static_cast<std::size_t>(till-1)} };
       m_er.readElements( ext, tk::ExoElemType::TET, m_tetinpoel );
       m_gelemid.resize( static_cast<std::size_t>(till-from) );
       std::iota( begin(m_gelemid), end(m_gelemid), from );
@@ -214,6 +278,7 @@ class Partitioner : public CBase_Partitioner< HostProxy > {
 
     // Compute element centroid coordinates
     void computeCentroids() {
+      // Construct unique global mesh point indices of our chunk
       auto gid = m_tetinpoel;
       tk::unique( gid );
       // Read node coordinates of our chunk of the mesh elements from file
@@ -316,30 +381,6 @@ class Partitioner : public CBase_Partitioner< HostProxy > {
       if (recvaliens()) signal2host_distribution_complete( m_host );
     }
 
-  public:
-    //! Receive mesh element indices associated to chares we own
-    //! \param[in] element Mesh element indices associated to chare IDs
-    void add( int frompe,
-             const std::unordered_map< int, std::vector< std::size_t > >& elem )
-    {
-      for (const auto& c : elem) {
-        Assert( pe(c.first) == CkMyPe(), "PE " + std::to_string(CkMyPe()) +
-                " received a chareid-elemidx-vector pair whose chare it does"
-                " not own" );
-        auto& e = m_elem[ c.first ];
-        e.insert( end(e), begin(c.second), end(c.second) );
-      }
-      Group::thisProxy[ frompe ].recv();
-    }
-
-    //! Acknowledge received element IDs
-    void recv() {
-      --m_npe;
-      if (recvaliens()) signal2host_distribution_complete( m_host );
-    }
-
-  private:
-
     //! Compute chare distribution
     //! \return Chunksize, i.e., number of chares per all PEs except the last
     //!   one, and the number of chares for my PE
@@ -367,6 +408,50 @@ class Partitioner : public CBase_Partitioner< HostProxy > {
       return p;
     }
 
+    //! Associate new node IDs to old ones and return them to the requestor(s)
+    void prepare() {
+      for (const auto& r : m_req) {
+        std::unordered_map< std::size_t, std::size_t > n;
+        for (auto p : r.second) n[ p ] = tk::val_find( m_newid, p );
+        Group::thisProxy[ r.first ].neworder( n );
+        n.clear();
+      }
+      m_req.clear();    // Clear queue of requests just fulfilled
+      wait4owned();     // Re-enable SDAG wait for new requests
+      // Re-enable trigger signaling that reordering of owned node IDs are
+      // complete right away
+      trigger_reorderowned_complete();
+    }
+
+    //! Compute final result of reordering and send it back to host
+    //! \details This member function is called when both those node IDs that we
+    //!   assign a new ordering to as well as those assigned new IDs by other
+    //!   PEs have been reordered and we are ready (on this PE) to compute our
+    //!   final result of the reordering and send it back to the host.
+    void reordered() {
+      // Construct maps associating old node IDs (as in file) to new node IDs
+      // (as in producing contiguous-row-id linear system contributions)
+      // associated to chare IDs (outer key). This is basically the inverse of
+      // m_newid and categorized by chares. Note that m_elem at this point
+      // contains the old global node IDs the chares contribute to.
+      std::unordered_map< int,
+        std::unordered_map< std::size_t, std::size_t > > chcid;
+      for (const auto& c : m_elem) {
+        auto& m = chcid[ c.first ];
+        for (auto p : c.second) m[ tk::val_find(m_newid,p) ] = p;
+      }
+      // Update our chare ID maps to now contain the new global node IDs
+      // instead of the old ones
+      for (auto& c : m_elem)
+        for (auto& p : c.second)
+          p = tk::val_find( m_newid, p );
+      // Update unique global node IDs chares on our PE will contribute to in a
+      // to the new IDs resulting from reordering
+      for (auto& p : m_id) p = tk::val_find( m_newid, p );
+      // Send back result to host
+      m_host.prepared( CkMyPe(), m_elem, chcid );
+    }
+
     //! Signal back to host that we have done our part of reading the mesh graph
     void signal2host_graph_complete( const CProxy_Conductor& host,
                                      uint64_t nelem )
@@ -385,6 +470,11 @@ class Partitioner : public CBase_Partitioner< HostProxy > {
       Group::contribute(
         CkCallback( CkIndex_Conductor::redn_wrapper_readOwnedGraph(NULL),
                     m_host ) );
+    }
+    //! Signal back to host that we are ready for a new mesh node order
+    void signal2host_owngraph_complete( const CProxy_Conductor& host ) {
+      Group::contribute(
+        CkCallback(CkIndex_Conductor::redn_wrapper_owngraph(NULL), m_host ));
     }
 };
 
