@@ -2,7 +2,7 @@
 /*!
   \file      src/Walker/Distributor.h
   \author    J. Bakosi
-  \date      Mon 10 Aug 2015 12:10:18 PM MDT
+  \date      Tue 22 Dec 2015 10:58:20 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Distributor drives the time integration of differential equations
   \details   Distributor drives the time integration of differential equations.
@@ -64,7 +64,7 @@ class Distributor : public CBase_Distributor {
     //!   all Integrator chares have registered with their local branch of the
     //!   statistics merger group, Collector. Once this is done, we issue a
     //!   broadcast to all Itegrator chares to continue with their setup.
-    void registered() { m_intproxy.setup( m_dt, m_it, m_moments ); }
+    void registered() { m_intproxy.setup( m_dt, m_t, m_it, m_moments ); }
 
     //! Finish initialization
     void init() const;

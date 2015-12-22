@@ -2,7 +2,7 @@
 /*!
   \file      src/Walker/Integrator.C
   \author    J. Bakosi
-  \date      Tue 21 Jul 2015 02:56:04 PM MDT
+  \date      Tue 22 Dec 2015 10:57:23 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Integrator advances differential equations
   \details   Integrator advances differential equations. There are a potentially
@@ -54,17 +54,19 @@ Integrator::Integrator( CProxy_Distributor& hostproxy,
 
 void
 Integrator::setup( tk::real dt,
+                   tk::real t,
                    uint64_t it,
                    const std::map< tk::ctr::Product, tk::real >& moments )
 //******************************************************************************
 // Perform setup: set initial conditions and advance a time step
 //! \param[in] dt Size of time step
+//! \param[in] t Physical time
 //! \param[in] it Iteration count
 //! \param[in] moments Map of statistical moments
 //******************************************************************************
 {
-  ic();                        // set initial conditions for all equations
-  advance( dt, it, moments );  // start time stepping all equations
+  ic();                           // set initial conditions for all equations
+  advance( dt, t, it, moments );  // start time stepping all equations
 }
 
 void
@@ -86,11 +88,13 @@ Integrator::ic()
 
 void
 Integrator::advance( tk::real dt,
+                     tk::real t,
                      uint64_t it,
                      const std::map< tk::ctr::Product, tk::real >& moments )
 //******************************************************************************
 // Advance all particles owned by this integrator
 //! \param[in] dt Size of time step
+//! \param[in] t Physical time
 //! \param[in] it Iteration count
 //! \param[in] moments Map of statistical moments
 //! \author J. Bakosi
@@ -99,7 +103,7 @@ Integrator::advance( tk::real dt,
   //! Advance all equations one step in time
   if (it < g_inputdeck.get< tag::discr, tag::nstep >()) {
     for (const auto& e : g_diffeqs)
-      e.advance( m_particles, CkMyPe(), dt, moments );
+      e.advance( m_particles, CkMyPe(), dt, t, moments );
   }
 
   if (!g_inputdeck.stat()) {// if no stats to estimate, skip to end of time step
