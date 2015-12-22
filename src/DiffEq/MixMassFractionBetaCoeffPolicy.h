@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/MixMassFractionBetaCoeffPolicy.h
   \author    J. Bakosi
-  \date      Wed 16 Dec 2015 12:43:47 PM MST
+  \date      Tue 22 Dec 2015 11:29:46 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Mix mass-fraction beta SDE coefficients policies
   \details   This file defines coefficients policy classes for the mix
@@ -492,6 +492,8 @@ class MixMassFracBetaCoeffHydroTimeScaleHomDecay {
       // <Y> = mean mass fraction,
       // <R> = mean density,
       std::vector< tk::real > M{ 0.5, 0.012, 0.98, 0.37, 0.9 };
+      // Sample hydrodynamics timescale at time t
+      auto hts = hydrotimescale( t );
       for (ncomp_t c=0; c<ncomp; ++c) {
         tk::real m = lookup( mean(depvar,c), moments );            // <Y>
         tk::real v = lookup( variance(depvar,c), moments );        // <y^2>
@@ -499,16 +501,11 @@ class MixMassFracBetaCoeffHydroTimeScaleHomDecay {
         tk::real d2 = lookup( variance(depvar,c+ncomp), moments ); // <r^2>
         tk::real d3 = lookup( cen3(depvar,c+ncomp), moments );     // <r^3>
 
-        // Sample hydrodynamics timescale at time t
-        auto hts = hydrotimescale( t );
-
         if (m<1.0e-8 || m>1.0-1.0e-8) m = 0.5;
         if (v<1.0e-8 && v>1.0-1.0e-8) v = 0.5;
         b[c] = bprime[c] * (1.0 - v/m/(1.0-m)) * hts;
         //b[c] = bprime[c] * (1.0 - v/M[c]/(1.0-M[c])) * hts;
         k[c] = kprime[c] * v * hts;
-        //b[c] = 1.0;
-        //k[c] = 0.5*v/(m*(1.0-m));
 
         if (d < 1.0e-8) {
           std::cout << "d:" << d << " ";
@@ -535,12 +532,9 @@ class MixMassFracBetaCoeffHydroTimeScaleHomDecay {
     //! Sample hydrodynamics time scale at time t, k/eps
     //! \param[in] t Time at which to sample hydrodynamics time scale
     tk::real hydrotimescale( tk::real t ) const {
-      return 8.29259 * std::pow(t,-2.76879)     // A = 0.05
-                     * std::exp(-143.406 * std::pow(t,-4.34417)) + 0.0203248;
-//       return 6671.42 * std::pow(t,-4.68674)     // A = 0.5
-//                      * std::exp(-18.206 * std::pow(t,-1.22331)) + 0.075777;
-//       return 374705  * std::pow(t,-4.43666)     // A= 0.9
-//                      * std::exp(-13.763 * std::pow(t,-0.422221)) + 0.120419;
+      if (t < 1.0e-8) t = 1.0e-8;
+      return 34145.3 * std::pow(t,-3.94975)     // A = 0.05
+                     * std::exp(-2057.44 * std::pow(t,-2.60227)) + 0.0226072;
     }
 
 };

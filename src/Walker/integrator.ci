@@ -2,7 +2,7 @@
 /*!
   \file      src/Walker/integrator.ci
   \author    J. Bakosi
-  \date      Wed 15 Jul 2015 08:20:32 PM MDT
+  \date      Tue 22 Dec 2015 10:57:48 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Charm++ module interface file for Integrator
   \details   Charm++ module interface file for Integrator
@@ -21,9 +21,11 @@ module integrator {
                         CProxy_Collector& collproxy,
                         uint64_t npar );
       entry void setup( tk::real dt,
+                        tk::real t,
                         uint64_t it,
                         const std::map< tk::ctr::Product, tk::real >& moments );
       entry void advance( tk::real dt,
+                          tk::real t,
                           uint64_t it,
                           const std::map< tk::ctr::Product, tk::real >& moments
       );
