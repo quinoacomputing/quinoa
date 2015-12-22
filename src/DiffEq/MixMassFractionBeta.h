@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/MixMassFractionBeta.h
   \author    J. Bakosi
-  \date      Tue 15 Dec 2015 02:15:13 PM MST
+  \date      Tue 22 Dec 2015 11:12:58 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     System of mix mass-fraction beta SDEs
   \details   This file implements the time integration of a system of stochastic
@@ -108,7 +108,6 @@ class MixMassFractionBeta {
       m_rng( g_rng.at( tk::ctr::raw( g_inputdeck.get< tag::param,
                                                       tag::mixmassfracbeta,
                                                       tag::rng >().at(c) ) ) ),
-      m_t( 0.0 ),
       coeff(
         m_ncomp,
         g_inputdeck.get< tag::param,
@@ -154,13 +153,12 @@ class MixMassFractionBeta {
     void advance( tk::ParProps& particles,
                   int stream,
                   tk::real dt,
+                  tk::real t,
                   const std::map< tk::ctr::Product, tk::real >& moments )
     {
-      // Advance physical time
-      m_t += dt;
       // Update SDE coefficients
       coeff.update( m_depvar, m_ncomp, moments, m_bprime, m_kprime, m_rho2, m_r,
-                    m_b, m_k, m_S, m_t );
+                    m_b, m_k, m_S, t );
       // Advance particles
       const auto npar = particles.npar();
       for (auto p=decltype(npar){0}; p<npar; ++p) {

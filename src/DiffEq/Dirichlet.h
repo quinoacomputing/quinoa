@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/Dirichlet.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:35:57 PM MDT
+  \date      Tue 22 Dec 2015 10:53:55 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Dirichlet SDE
   \details   This file implements the time integration of a system of stochastic
@@ -92,11 +92,13 @@ class Dirichlet {
     //! \param[inout] particles Array of particle properties
     //! \param[in] stream Thread (or more precisely stream) ID
     //! \param[in] dt Time step size
+    //! \param[in] t Physical time
     //! \param[in] moments Map of statistical moments
     //! \author J. Bakosi
     void advance( tk::ParProps& particles,
                   int stream,
                   tk::real dt,
+                  tk::real t,
                   const std::map< tk::ctr::Product, tk::real >& moments )
     {
       const auto npar = particles.npar();

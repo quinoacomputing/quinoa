@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/DiffEq.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:34:51 PM MDT
+  \date      Tue 22 Dec 2015 10:52:52 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Differential equation
   \details   This file defines a generic differential equation class. The class
@@ -75,8 +75,9 @@ class DiffEq {
     void advance( tk::ParProps& particles,
                   int stream,
                   tk::real dt,
+                  tk::real t,
                   const std::map< tk::ctr::Product, tk::real >& moments ) const
-    { self->advance( particles, stream, dt, moments ); }
+    { self->advance( particles, stream, dt, t, moments ); }
 
     //! Copy assignment
     DiffEq& operator=( const DiffEq& x )
@@ -98,6 +99,7 @@ class DiffEq {
       virtual void advance( tk::ParProps&,
                             int,
                             tk::real,
+                            tk::real,
                             const std::map< tk::ctr::Product, tk::real >& ) = 0;
     };
 
@@ -112,8 +114,9 @@ class DiffEq {
       void advance( tk::ParProps& particles,
                     int stream,
                     tk::real dt,
+                    tk::real t,
                     const std::map< tk::ctr::Product, tk::real >& moments )
-      override { data.advance( particles, stream, dt, moments ); }
+      override { data.advance( particles, stream, dt, t, moments ); }
       T data;
     };
 
