@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/MixMassFractionBetaCoeffPolicy.h
   \author    J. Bakosi
-  \date      Thu 22 Oct 2015 02:11:07 PM MDT
+  \date      Wed 16 Dec 2015 12:43:47 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Mix mass-fraction beta SDE coefficients policies
   \details   This file defines coefficients policy classes for the mix
@@ -83,7 +83,7 @@
 
 namespace walker {
 
-//! \brief Mix mass-fraction beta SDE decay coefficients policity.
+//! \brief Mix mass-fraction beta SDE decay coefficients policy
 //! \details User-defined parameters b' and kappa' are constants in time and
 //!   ensure decay in the evolution of <y^2>.
 //! \author J. Bakosi
@@ -148,7 +148,8 @@ class MixMassFracBetaCoeffDecay {
       const std::vector< kw::sde_r::info::expect::type >& r,
       std::vector< kw::sde_b::info::expect::type  >& b,
       std::vector< kw::sde_kappa::info::expect::type >& k,
-      std::vector< kw::sde_S::info::expect::type >& S ) const
+      std::vector< kw::sde_S::info::expect::type >& S,
+      tk::real t = 0.0 ) const
     {
       for (ncomp_t c=0; c<ncomp; ++c) {
         tk::real m = tk::ctr::lookup( tk::ctr::mean(depvar,c), moments );
@@ -163,7 +164,7 @@ class MixMassFracBetaCoeffDecay {
     }
 };
 
-//! \brief Mix mass-fraction beta SDE homogneous decay coefficients policity.
+//! \brief Mix mass-fraction beta SDE homogneous decay coefficients policy
 //! \details User-defined parameters b' and kappa' are constants in time and
 //!   ensure decay in the evolution of <y^2>. Additionally, S is constrained to
 //!   make d<rho>/dt = 0, where <rho> = rho_2/(1+rY).
@@ -229,7 +230,8 @@ class MixMassFracBetaCoeffHomDecay {
       const std::vector< kw::sde_r::info::expect::type >& r,
       std::vector< kw::sde_b::info::expect::type  >& b,
       std::vector< kw::sde_kappa::info::expect::type >& k,
-      std::vector< kw::sde_S::info::expect::type >& S ) const
+      std::vector< kw::sde_S::info::expect::type >& S,
+      tk::real t = 0.0 ) const
     {
       using tk::ctr::lookup;
       using tk::ctr::mean;
@@ -281,10 +283,13 @@ class MixMassFracBetaCoeffHomDecay {
 };
 
 //! \brief Mix mass-fraction beta SDE Monte Carlo homogneous decay coefficients
-//!   policity.
+//!   policy
 //! \details User-defined parameters b' and kappa' are constants in time and
 //!   ensure decay in the evolution of <y^2>. Additionally, S is constrained to
-//!   make d<rho>/dt = 0, where <rho> = rho_2/(1+rY).
+//!   make d<rho>/dt = 0, where <rho> = rho_2/(1+rY). This is the same as the
+//!   specification in MixMassFracBetaCoeffHomDecay, but uses more advanced
+//!   statistics, available from the Monte Carlo simulation, which yield a
+//!   simpler formula for the coefficient S.
 //! \author J. Bakosi
 class MixMassFracBetaCoeffMonteCarloHomDecay {
 
@@ -347,7 +352,8 @@ class MixMassFracBetaCoeffMonteCarloHomDecay {
       const std::vector< kw::sde_r::info::expect::type >& r,
       std::vector< kw::sde_b::info::expect::type  >& b,
       std::vector< kw::sde_kappa::info::expect::type >& k,
-      std::vector< kw::sde_S::info::expect::type >& S ) const
+      std::vector< kw::sde_S::info::expect::type >& S,
+      tk::real t = 0.0 ) const
     {
       using tk::ctr::lookup;
       using tk::ctr::mean;
@@ -401,11 +407,150 @@ class MixMassFracBetaCoeffMonteCarloHomDecay {
     }
 };
 
+//! \brief Mix mass-fraction beta SDE homogneous decay coefficients policy with
+//!   DNS hydrodynamics time scale
+//! \details User-defined parameters b' and kappa' are functions of an
+//!   externally, e.g., DNS-, provided hydrodynamics time scale ensuring decay
+//!   in the evolution of <y^2>. Additionally, S is constrained to
+//!   make d<rho>/dt = 0, where <rho> = rho_2/(1+rY).
+//! \see kw::hydrotimescale_info
+//! \author J. Bakosi
+class MixMassFracBetaCoeffHydroTimeScaleHomDecay {
+
+    using ncomp_t = kw::ncomp::info::expect::type;
+
+  public:
+    //! Constructor: initialize coefficients
+    MixMassFracBetaCoeffHydroTimeScaleHomDecay(
+      ncomp_t ncomp,
+      const std::vector< kw::sde_bprime::info::expect::type >& bprime_,
+      const std::vector< kw::sde_S::info::expect::type >& S_,
+      const std::vector< kw::sde_kappaprime::info::expect::type >& kprime_,
+      const std::vector< kw::sde_rho2::info::expect::type >& rho2_,
+      const std::vector< kw::sde_r::info::expect::type >& r_,
+      std::vector< kw::sde_bprime::info::expect::type  >& bprime,
+      std::vector< kw::sde_S::info::expect::type >& S,
+      std::vector< kw::sde_kappaprime::info::expect::type >& kprime,
+      std::vector< kw::sde_rho2::info::expect::type >& rho2,
+      std::vector< kw::sde_r::info::expect::type >& r,
+      std::vector< kw::sde_b::info::expect::type  >& b,
+      std::vector< kw::sde_kappa::info::expect::type >& k )
+    {
+      ErrChk( bprime_.size() == ncomp,
+        "Wrong number of mix mass-fraction beta SDE parameters 'b''");
+      ErrChk( S_.size() == ncomp,
+        "Wrong number of mix mass-fraction beta SDE parameters 'S'");
+      ErrChk( kprime_.size() == ncomp,
+        "Wrong number of mix mass-fraction beta SDE parameters 'kappa''");
+      ErrChk( rho2_.size() == ncomp,
+        "Wrong number of mix mass-fraction beta SDE parameters 'rho2'");
+      ErrChk( r_.size() == ncomp,
+        "Wrong number of mix mass-fraction beta SDE parameters 'r'");
+
+      bprime = bprime_;
+      S = S_;
+      kprime = kprime_;
+      rho2 = rho2_;
+      r = r_;
+
+      b.resize( bprime.size() );
+      k.resize( kprime.size() );
+    }
+
+    //! Coefficients policy type accessor
+    static ctr::CoeffPolicyType type() noexcept
+    { return ctr::CoeffPolicyType::HYDROTIMESCALE_HOMOGENEOUS_DECAY; }
+
+    //! \brief Update coefficients b', kappa', and S
+    //! \details This where the mix mass-fraction beta SDE is made consistent
+    //!   with the no-mix and fully mixed limits by specifying the SDE
+    //!   coefficients, b and kappa as functions of b' and kappa'. Additionally,
+    //!   we pull in a hydrodynamic timescale from an external function. We also
+    //!   specify S to force d<rho>/dt = 0, where <rho> = rho_2/(1+rY).
+    void update(
+      char depvar,
+      ncomp_t ncomp,
+      const std::map< tk::ctr::Product, tk::real >& moments,
+      const std::vector< kw::sde_bprime::info::expect::type  >& bprime,
+      const std::vector< kw::sde_kappaprime::info::expect::type >& kprime,
+      const std::vector< kw::sde_rho2::info::expect::type >& rho2,
+      const std::vector< kw::sde_r::info::expect::type >& r,
+      std::vector< kw::sde_b::info::expect::type  >& b,
+      std::vector< kw::sde_kappa::info::expect::type >& k,
+      std::vector< kw::sde_S::info::expect::type >& S,
+      tk::real t ) const
+    {
+      using tk::ctr::lookup;
+      using tk::ctr::mean;
+      using tk::ctr::variance;
+      using tk::ctr::cen3;
+      // statistics nomenclature:
+      //   Y = instantaneous mass fraction,
+      //   R = instantaneous density,
+      //   y = Y - <Y>, mass fraction fluctuation about its mean,
+      //   r = R - <R>, density fluctuation about its mean,
+      // <Y> = mean mass fraction,
+      // <R> = mean density,
+      std::vector< tk::real > M{ 0.5, 0.012, 0.98, 0.37, 0.9 };
+      for (ncomp_t c=0; c<ncomp; ++c) {
+        tk::real m = lookup( mean(depvar,c), moments );            // <Y>
+        tk::real v = lookup( variance(depvar,c), moments );        // <y^2>
+        tk::real d = lookup( mean(depvar,c+ncomp), moments );      // <R>
+        tk::real d2 = lookup( variance(depvar,c+ncomp), moments ); // <r^2>
+        tk::real d3 = lookup( cen3(depvar,c+ncomp), moments );     // <r^3>
+
+        // Sample hydrodynamics timescale at time t
+        auto hts = hydrotimescale( t );
+
+        if (m<1.0e-8 || m>1.0-1.0e-8) m = 0.5;
+        if (v<1.0e-8 && v>1.0-1.0e-8) v = 0.5;
+        b[c] = bprime[c] * (1.0 - v/m/(1.0-m)) * hts;
+        //b[c] = bprime[c] * (1.0 - v/M[c]/(1.0-M[c])) * hts;
+        k[c] = kprime[c] * v * hts;
+        //b[c] = 1.0;
+        //k[c] = 0.5*v/(m*(1.0-m));
+
+        if (d < 1.0e-8) {
+          std::cout << "d:" << d << " ";
+          d = 0.5;
+        }
+        tk::real R = 1.0 + d2/d/d;
+        tk::real B = -1.0/r[c]/r[c];
+        tk::real C = (2.0+r[c])/r[c]/r[c];
+        tk::real D = -(1.0+r[c])/r[c]/r[c];
+        tk::real diff =
+          B*d/rho2[c] +
+          C*d*d*R/rho2[c]/rho2[c] +
+          D*d*d*d*(1.0 + 3.0*d2/d/d + d3/d/d/d)/rho2[c]/rho2[c]/rho2[c];
+        S[c] = (rho2[c]/d/R +
+                2.0*k[c]/b[c]*rho2[c]*rho2[c]/d/d*r[c]*r[c]/R*diff - 1.0) / r[c];
+        if (S[c] < 0.0 || S[c] > 1.0) {
+          std::cout << S[c] << " ";
+          S[c] = 0.5;
+        }
+      }
+    }
+
+  public:
+    //! Sample hydrodynamics time scale at time t, k/eps
+    //! \param[in] t Time at which to sample hydrodynamics time scale
+    tk::real hydrotimescale( tk::real t ) const {
+      return 8.29259 * std::pow(t,-2.76879)     // A = 0.05
+                     * std::exp(-143.406 * std::pow(t,-4.34417)) + 0.0203248;
+//       return 6671.42 * std::pow(t,-4.68674)     // A = 0.5
+//                      * std::exp(-18.206 * std::pow(t,-1.22331)) + 0.075777;
+//       return 374705  * std::pow(t,-4.43666)     // A= 0.9
+//                      * std::exp(-13.763 * std::pow(t,-0.422221)) + 0.120419;
+    }
+
+};
+
 //! List of all mix mass-fraction beta's coefficients policies
 using MixMassFracBetaCoeffPolicies =
   boost::mpl::vector< MixMassFracBetaCoeffDecay
                     , MixMassFracBetaCoeffHomDecay
-                    , MixMassFracBetaCoeffMonteCarloHomDecay >;
+                    , MixMassFracBetaCoeffMonteCarloHomDecay
+                    , MixMassFracBetaCoeffHydroTimeScaleHomDecay >;
 
 } // walker::
 

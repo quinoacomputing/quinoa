@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/WalkerPrint.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 09:49:33 AM MDT
+  \date      Tue 15 Dec 2015 09:50:11 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Walker-specific pretty printer functionality
   \details   Walker-specific pretty printer functionality.
@@ -166,8 +166,11 @@ class WalkerPrint : public tk::RNGPrint {
              m_item_indent + "   " +
                kw::homdecay::info::name() + " - homogeneous decay\n" +
              m_item_indent + "   " +
-               kw::mchomdecay::info::name() +
-               " - Monte Carlo homogeneous decay\n\n" );
+               kw::montecarlo_homdecay::info::name() +
+               " - Monte Carlo homogeneous decay\n" +
+             m_item_indent + "   " +
+               kw::hydrotimescale::info::name() +
+               " - hydro-timescale homogeneous decay\n\n" );
         // extract eqname and supported policies
         const auto ip = ctr::InitPolicy();
         const auto cp = ctr::CoeffPolicy();
