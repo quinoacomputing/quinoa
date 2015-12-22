@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/OrnsteinUhlenbeck.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:36:33 PM MDT
+  \date      Tue 22 Dec 2015 10:55:51 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     System of Ornstein-Uhlenbeck SDEs
   \details   This file implements the time integration of a system of stochastic
@@ -121,11 +121,13 @@ class OrnsteinUhlenbeck {
     //! \param[inout] particles Array of particle properties
     //! \param[in] stream Thread (or more precisely stream) ID
     //! \param[in] dt Time step size
+    //! \param[in] t Physical time
     //! \param[in] moments Map of statistical moments
     //! \author J. Bakosi
     void advance( tk::ParProps& particles,
                   int stream,
                   tk::real dt,
+                  tk::real t,
                   const std::map< tk::ctr::Product, tk::real >& moments )
     {
       const auto npar = particles.npar();

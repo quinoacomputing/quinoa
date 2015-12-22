@@ -2,7 +2,7 @@
 /*!
   \file      src/Walker/Integrator.h
   \author    J. Bakosi
-  \date      Fri 17 Jul 2015 08:47:05 AM MDT
+  \date      Tue 22 Dec 2015 10:57:40 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Integrator advances differential equations
   \details   Integrator advances differential equations. There are a potentially
@@ -65,14 +65,16 @@ class Integrator : public CBase_Integrator {
 
     //! Perform setup: set initial conditions and advance a time step
     void setup( tk::real dt,
-                 uint64_t it,
-                 const std::map< tk::ctr::Product, tk::real >& moments );
+                tk::real t,
+                uint64_t it,
+                const std::map< tk::ctr::Product, tk::real >& moments );
 
     //! Set initial conditions
     void ic();
 
     //! Advance all particles owned by this integrator
     void advance( tk::real dt,
+                  tk::real t,
                   uint64_t it,
                   const std::map< tk::ctr::Product, tk::real >& moments );
 

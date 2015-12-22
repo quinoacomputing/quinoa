@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/SkewNormal.h
   \author    J. Bakosi
-  \date      Sat 20 Jun 2015 11:36:02 AM MDT
+  \date      Tue 22 Dec 2015 10:56:04 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     System of skew-normal SDEs
   \details   This file implements the time integration of a system of stochastic
@@ -102,11 +102,13 @@ class SkewNormal {
     //! \param[inout] particles Array of particle properties
     //! \param[in] stream Thread (or more precisely stream) ID
     //! \param[in] dt Time step size
+    //! \param[in] t Physical time
     //! \param[in] moments Map of statistical moments
     //! \author J. Bakosi
     void advance( tk::ParProps& particles,
                   int stream,
                   tk::real dt,
+                  tk::real t,
                   const std::map< tk::ctr::Product, tk::real >& moments )
     {
       const auto npar = particles.npar();
