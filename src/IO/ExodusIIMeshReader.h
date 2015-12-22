@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/ExodusIIMeshReader.h
   \author    J. Bakosi
-  \date      Tue 01 Dec 2015 08:49:45 AM MST
+  \date      Mon 21 Dec 2015 11:35:32 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     ExodusII mesh reader
   \details   ExodusII mesh reader class declaration.
@@ -92,6 +92,11 @@ class ExodusIIMeshReader {
     void readElements( const std::array< std::size_t, 2 >& extent,
                        tk::ExoElemType elemtype,
                        std::vector< std::size_t >& conn ) const;
+
+    //! Read element connectivity of a number of mesh cells from file
+    std::unordered_map< std::size_t, std::vector< std::size_t > >
+    readElements( const std::array< std::size_t, 2 >& extent,
+                  tk::ExoElemType elemtype ) const;
 
     //!  Return number of elements in a mesh block in the ExodusII file
     int nel( tk::ExoElemType elemtype ) const;

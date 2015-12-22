@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/ExodusIIMeshReader.C
   \author    J. Bakosi
-  \date      Thu 19 Nov 2015 03:18:28 PM MST
+  \date      Mon 21 Dec 2015 12:03:11 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     ExodusII mesh reader
   \details   ExodusII mesh reader class definition. Currently, this is a bare
@@ -158,7 +158,8 @@ std::unordered_map< std::size_t, std::array< tk::real, 3 > >
 ExodusIIMeshReader::readNodes( const std::array< std::size_t, 2 >& ext ) const
 //******************************************************************************
 //  Read coordinates of a number of mesh nodes from ExodusII file
-//! \param[in] ext Extents of node ids whose coordinates to read
+//! \param[in] ext Extents of element ids whose connectivity to read, both
+//!   inclusive
 //! \param[inout] coord Unordered map of node coordinates associated to ids
 //! \author J. Bakosi
 //******************************************************************************
@@ -314,12 +315,13 @@ ExodusIIMeshReader::readElement( std::size_t id,
 }
 
 void
-ExodusIIMeshReader::readElements( const std::array< std::size_t, 2 >& extent,
+ExodusIIMeshReader::readElements( const std::array< std::size_t, 2 >& ext,
                                   tk::ExoElemType elemtype,
                                   std::vector< std::size_t >& conn ) const
 //******************************************************************************
 //  Read element connectivity of a single mesh cell from ExodusII file
-//! \param[in] extent Extents of element ids whose connectivity to read
+//! \param[in] ext Extents of element ids whose connectivity to read, both
+//!   inclusive
 //! \param[in] elemtype Element type
 //! \param[inout] conn Connectivity vector to push to
 //! \note Must be preceded by a call to readElemBlockIDs()
@@ -332,22 +334,66 @@ ExodusIIMeshReader::readElements( const std::array< std::size_t, 2 >& extent,
 
   auto bid = static_cast< std::size_t >( elemtype );
 
-  auto num = extent[1] - extent[0];
+  auto num = ext[1] - ext[0] + 1;
 
   std::vector< int > c( num * m_nnpe[bid] );
 
   // Read element connectivity from file
   ErrChk(
     ne_get_n_elem_conn(
-      m_inFile, m_eidt[bid], static_cast<int64_t>(extent[0])+1,
+      m_inFile, m_eidt[bid], static_cast<int64_t>(ext[0])+1,
       static_cast<int64_t>(num), c.data() ) == 0,
       "Failed to read element connectivity of elements [" +
-      std::to_string(extent[0]) + "..." + std::to_string(extent[1]) +
+      std::to_string(ext[0]) + "..." + std::to_string(ext[1]) +
       "] from block " + std::to_string(m_eidt[bid]) + " from ExodusII file: " +
       m_filename );
 
   // Put in element connectivity using zero-based node indexing
   for (auto i : c) conn.push_back( static_cast<std::size_t>(i)-1 );
+}
+
+std::unordered_map< std::size_t, std::vector< std::size_t > >
+ExodusIIMeshReader::readElements( const std::array< std::size_t, 2 >& ext,
+                                  tk::ExoElemType elemtype ) const
+//******************************************************************************
+//  Read element connectivity of a single mesh cell from ExodusII file
+//! \param[in] ext Extents of element ids whose connectivity to read, both
+//!   inclusive
+//! \param[in] elemtype Element type
+//! \return Connectivity of mesh elements read
+//! \note Must be preceded by a call to readElemBlockIDs()
+//! \author J. Bakosi
+//******************************************************************************
+{
+  Assert( std::accumulate(begin(m_eidt), end(m_eidt), 0) != -m_nnpe.size(),
+          "A call to ExodusIIMeshReader::readElement() must be preceded by a "
+          "call to ExodusIIMeshReader::readElemBlockIDs()" );
+
+  auto bid = static_cast< std::size_t >( elemtype );
+
+  auto num = ext[1] - ext[0] + 1;
+
+  std::vector< int > c( num * m_nnpe[bid] );
+
+  // Read element connectivity from file
+  ErrChk(
+    ne_get_n_elem_conn(
+      m_inFile, m_eidt[bid], static_cast<int64_t>(ext[0])+1,
+      static_cast<int64_t>(num), c.data() ) == 0,
+      "Failed to read element connectivity of elements [" +
+      std::to_string(ext[0]) + "..." + std::to_string(ext[1]) +
+      "] from block " + std::to_string(m_eidt[bid]) + " from ExodusII file: " +
+      m_filename );
+
+  // Return element connectivity using zero-based node indexing
+  std::unordered_map< std::size_t, std::vector< std::size_t > > conn;
+  std::size_t e = 0;
+  for (auto i : c) {
+    auto eid = ext[0] + e++ / m_nnpe[bid];
+    conn[ eid ].push_back( static_cast<std::size_t>(i)-1 );
+  }
+  Assert( conn.size() == num, "Element connectivity incompletely built" );
+  return conn;
 }
 
 int
