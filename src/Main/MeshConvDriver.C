@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/MeshConvDriver.C
   \author    J. Bakosi
-  \date      Tue 24 Nov 2015 11:33:32 AM MST
+  \date      Mon 14 Dec 2015 10:18:53 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Mesh converter driver
   \details   Mesh converter driver.
@@ -60,9 +60,10 @@ MeshConvDriver::execute() const
 
   std::vector< std::pair< std::string, tk::real > > times( 1 );
 
+  auto mesh = tk::readUnsMesh( m_print, m_input, times[0] );
   auto wtimes = tk::writeUnsMesh( m_print,
                                   m_output,
-                                  tk::readUnsMesh( m_print, m_input, times[0] ),
+                                  mesh,
                                   m_reorder );
 
   times.insert( end(times), begin(wtimes), end(wtimes) );
