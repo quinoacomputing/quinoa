@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Conductor.C
   \author    J. Bakosi
-  \date      Fri 11 Dec 2015 12:39:52 PM MST
+  \date      Tue 22 Dec 2015 07:36:06 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Conductor drives the time integration of a PDE
   \details   Conductor drives the time integration of a PDE
@@ -42,7 +42,12 @@ Conductor::Conductor() :
   m_arrTimestampCnt( 0 ),
   m_grpTimestampCnt( 0 ),
   m_arrPerfstatCnt( 0 ),
-  m_grpPerfstatCnt( 0 )
+  m_grpPerfstatCnt( 0 ),
+  m_gid( static_cast<std::size_t>(CkNumPes()) ),
+  m_communication( m_gid.size() ),
+  m_commbuilt( m_gid.size(), false ),
+  m_nrecv( m_gid.size(), 0 ),
+  m_start( m_gid.size() )
 //******************************************************************************
 //  Constructor
 //! \author J. Bakosi
@@ -72,6 +77,9 @@ Conductor::Conductor() :
   // do, otherwise, finish right away
   if ( nstep != 0 && term > t0 && dt < term-t0 ) {
 
+    // Activate SDAG waits
+    wait4setup();
+
     // Print I/O filenames
     m_print.section( "Output filenames" );
     m_print.item( "Field", g_inputdeck.get< tag::cmd, tag::io, tag::output >()
@@ -95,13 +103,13 @@ void
 Conductor::load( uint64_t nelem )
 //******************************************************************************
 // Reduction target indicating that all Partitioner chare groups have finished
-// reading their part of the computational mesh graph and we are ready to
-// compute the computational load
+// reading their part of the contiguously-numbered computational mesh graph and
+// we are ready to compute the computational load
 //! \param[in] nelem Total number of mesh elements (summed across all PEs)
 //! \author J. Bakosi
 //******************************************************************************
 {
-  mainProxy.timestamp( "Distributed-read of mesh graph from file",
+  mainProxy.timestamp( "Distributed-read of unordered mesh graph from file",
                        tk::query(m_timer,TimerTag::MESH) );
   m_print.diagend( "done" );
 
@@ -169,24 +177,166 @@ Conductor::readOwnedGraph()
   mainProxy.timestamp( "Partition & distribute mesh elements",
                        tk::query(m_timer,TimerTag::MESH) );
   m_timer[ TimerTag::MESH ].zero();
+  m_timer[ TimerTag::GRAPH ].zero();
+  m_print.diagstart( "Prepare for reordering mesh nodes ..." );
   m_partitioner.readOwnedGraph();
 }
 
 void
-Conductor::reorder( int pe )
+Conductor::owngraph()
 //******************************************************************************
-// Start reordering mesh node IDs owned on each PE
-//! \param[in] pe PE that called us, indicating readiness for a new order
-//! \details This function must be only called from PE 0, hence the argument
+// Reduction target indicating that all Partitioner chare groups have finished
+// reading their chunk of the mesh connectivity and ready for a new order
 //! \author J. Bakosi
 //******************************************************************************
 {
-  Assert( pe == 0, "Reordering must start with PE 0" );
+  trigger_ownedgraph_complete();
   mainProxy.timestamp( "Distributed-read of owned mesh graph from file",
-                       tk::query(m_timer,TimerTag::MESH) );
+                       tk::query(m_timer,TimerTag::GRAPH) );
+}
+
+void
+Conductor::addNodes( int pe, const std::vector< std::size_t >& gid )
+//******************************************************************************
+// Add global mesh node IDs from PE
+//! \param[in] pe PE contribution coming from
+//! \param[in] gid Global node indices resulting from the contributing PE
+//!   reading its contiguously-numbered mesh elements from file
+//! \author J. Bakosi
+//******************************************************************************
+{
+  // Store node ids from pe
+  for (auto p : gid) m_gid[ static_cast<std::size_t>(pe) ].insert( p );
+
+  // Whenever a new list of node IDs has been received, attempt to build
+  // communication maps for all PEs, even if not all PEs have contributed their
+  // mesh node IDs. Since the node IDs arrive in arbitrary order, we cannot be
+  // sure at this point that the node IDs for all PEs < PE have been received.
+  // However, we don't wait for the nodes from all PEs to have been received to
+  // attempt this. Building the map for a PE will only happen if the node IDs
+  // for all PEs below the PE have already been received. See also buildComm().
+  buildComm();
+
+  // When the communication maps for all PEs have been computed, continue. Note
+  // that PE 0 does not communicate, since there is no PEs with indices lower
+  // than 0, hence we only test PEs > 0.
+  if (std::all_of( std::next(cbegin(m_commbuilt)),
+                   cend(m_commbuilt),
+                   [](const decltype(m_commbuilt)::value_type& m)
+                   { return m; } ))
+  {
+    // Note that this assert should automatically be satisfied, since we can
+    // only get here if the communication maps for all PEs have already been
+    // built. This is ensured by the logic in buildComm(), which only sets an
+    // entry in m_commbuilt to true if the corresponding entry in m_gid is not
+    // empty. However, this was useful during development, so we leave it here.
+    Assert( std::none_of( cbegin(m_gid), cbegin(m_gid),
+                          [](const decltype(m_gid)::value_type& m)
+                          { return m.empty(); } ),
+            "Not all node IDs have been received" );
+
+    // Compute node ID offset for all PEs. The offsets will be stored in vector
+    // m_start. We use m_nrecv which, for each PE, contains the total number of
+    // node IDs that a PE needs to receive from PEs with lower indices. Here we
+    // compute the offset each PE will need to start assigning its new node IDs
+    // from (for those nodes that are not assigned new IDs by any PEs with lower
+    // indices). The offset for a PE is the offset for the previous PE plus the
+    // number of node IDs the previous PE (uniquely) assigns new IDs for minus
+    // the number of node IDs the previous PE receives for others.
+    Assert( m_nrecv[0] == 0, "PE 0 must not receive any node IDs" );
+    Assert( m_gid.size() == m_nrecv.size(), "Number of PE node IDs and number "
+            "of to-be-received node IDs must be equal" );
+    Assert( m_gid.size() == m_start.size(), "Number of PE node IDs and number "
+            "of offsets must be equal" );
+    m_start[0] = 0;
+    for (std::size_t p=1; p<m_gid.size(); ++p)
+      m_start[p] = m_start[p-1] + m_gid[p-1].size() - m_nrecv[p-1];
+
+    m_print.diagend( "done" );
+    mainProxy.timestamp( "Prepare for reordering mesh nodes including "
+                         "'distributed-read'",
+                         tk::query(m_timer,TimerTag::MESH) );
+    // Compute expected communication cost during mesh node reordering. The cost
+    // is a real number between 0 and 1, defined as the number of mesh points
+    // the PE needs to receive from other PEs < PE, divided by the number of
+    // points the PE contributes to. This is the sum of the number of nodes
+    // other PE assign new IDs to and the number of nodes PE assigns new node
+    // IDs to, i.e., the number of mesh nodes PE contributes to in the linear
+    // system assembly. The lower the better.
+    std::map< int, tk::real > cost;
+    for (std::size_t p=0; p<m_gid.size(); ++p)
+      cost[ static_cast<int>(p) ] = static_cast<tk::real>(m_nrecv[p]) /
+                                      static_cast<tk::real>(m_gid[p].size());
+    // Estimate communication cost across all PEs
+    auto stat = estimate( cost );
+    m_print.diagstart( "Mesh reordering communication cost: avg = " +
+                       std::to_string(stat.first) + ", std = " +
+                       std::to_string(stat.second) + '\n' );
+
+    // Continue with reordering, see also conductor.ci
+    trigger_commmap_complete();
+  }
+}
+
+void
+Conductor::buildComm()
+//******************************************************************************
+// Attempt to build communication maps for for all PEs
+//! \details This function attempts to build communication maps for all PEs. The
+//!   container we store the maps is a vector of maps. The length of the vector
+//!   is already set by constructor to be the number of PEs. Each vector entry
+//!   is filled in by a map associating a vector global mesh node indices to a
+//!   PE from which the PE (whose communication map we are building) will
+//!   request new global node IDs from due to reordering. Note that only PEs
+//!   with lower IDs than PE need to be considered here, since the global node
+//!   reordering will start with PE 0 assigning new indices, followed by PE 1,
+//!   assigning only to the nodes have not been encountered, and so on. Thus new
+//!   IDs assigned by PEs lower than a given PE need to be communicated
+//!   upstream. In other words, what we are doing here is collecting all mesh
+//!   node IDs that a PE will contribute to that are also contributed to by PEs
+//!   with lower IDs than PE.
+//! \author J. Bakosi
+//******************************************************************************
+{
+  // Only attempt to build the map for a PE if
+  //  (1) we have not yet built the communication map for PE, and
+  //  (2) we have received the node IDs for PE, and
+  //  (4) we have the nodes from all PEs below PE.
+  for (int pe=0; pe<static_cast<int>(m_gid.size()); ++pe) {
+    const auto PE = static_cast< std::size_t >( pe );
+    auto& cpe = m_communication[ PE ];  // attempt to build PE's comm map
+    if (!m_commbuilt[PE] && !m_gid[PE].empty() && nodesComplete(pe)) {
+      m_commbuilt[PE] = true;           // mark PE's communication map as built
+      const auto& peid = m_gid[ PE ];   // global node IDs we are looing for
+      for (auto i : peid) {             // try to find them all
+        for (int p=0; p<pe; ++p) {      // on PEs < pe
+          const auto& id = m_gid[ static_cast<std::size_t>(p) ];
+          const auto it = id.find(i);
+          if (it != end(id)) {          // node ID will be assigned by PE p
+            cpe[ p ].insert( *it );
+            ++m_nrecv[ PE ];            // count up to-be-received nodes for PE
+            p = pe;      // get out, i.e., favor the lowest PE that has the node
+          }
+        }
+      }
+    }
+  }
+}
+
+void
+Conductor::reorder()
+//******************************************************************************
+// Start reordering mesh node IDs on all PEs
+//! \author J. Bakosi
+//******************************************************************************
+{
   m_timer[ TimerTag::MESH ].zero();
   m_print.diagstart( "Reordering mesh nodes ..." );
-  m_partitioner[0].reorder( {} );       // start with empty map
+
+  for (int p=0; p<CkNumPes(); ++p) {
+    const auto P = static_cast< std::size_t >( p );
+    m_partitioner[p].reorder( m_start[P], m_communication[P] );
+  }
 }
 
 void
@@ -209,13 +359,14 @@ Conductor::prepared(
 //! \author J. Bakosi
 //******************************************************************************
 {
-  m_conn[ pe ] = conn;          // store connectivity arriving from PE
+  m_connectivity[ pe ] = conn;  // store connectivity arriving from PE
   m_chcid[ pe ] = chcid;        // store old->new node ID map arriving from PE
 
   // When every PE has finished with the mesh node ID reordering, continue
   if ( ++m_prepared == CkNumPes() ) {
     m_print.diagend( "done" );
     mainProxy.timestamp( "Reorder mesh", tk::query(m_timer,TimerTag::MESH) );
+//mainProxy.finalize();
     computeCost();
   }
 }
@@ -325,7 +476,7 @@ Conductor::costed( int pe, tk::real cost )
 
     // Estimate communication cost across all PEs
     auto stat = estimate( m_cost );
-    m_print.diagstart( "Communication cost: avg = " +
+    m_print.diagstart( "Linear system communication cost: avg = " +
                        std::to_string(stat.first) + ", std = " +
                        std::to_string(stat.second) + '\n' );
 
@@ -374,7 +525,7 @@ Conductor::createWorkers()
   m_spawner = SpawnerProxy::ckNew( m_nchare, thisProxy );
   for (int p=0; p<CkNumPes(); ++p)
     m_spawner[p].create( m_linsysmerger,
-                         tk::cref_find( m_conn, p ),
+                         tk::cref_find( m_connectivity, p ),
                          tk::cref_find( m_chcid, p ) );
 }
 

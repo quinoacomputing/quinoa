@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/partitioner.ci
   \author    J. Bakosi
-  \date      Wed 09 Dec 2015 08:28:04 AM MST
+  \date      Tue 22 Dec 2015 08:27:02 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Charm++ module interface file for the chare partitioner group
   \details   Charm++ module interface file for the chare partitioner group used
@@ -35,8 +35,68 @@ module partitioner {
             const std::unordered_map< int, std::vector< std::size_t > >& elem );
       entry void recv();
       entry void readOwnedGraph();
-      entry void reorder( std::unordered_map< std::size_t, std::size_t >& map );
+      entry void reorder( std::size_t n,
+                          const std::unordered_map< int,
+                                  std::set< std::size_t > >& comm );
+      entry void request( int pe, const std::set< std::size_t >& id );
+      entry void neworder(
+                   const std::unordered_map< std::size_t, std::size_t >& id );
       entry void cost( std::size_t lower, std::size_t upper );
+
+      // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
+      // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
+
+      // High-level overview of the dependency and asynchronous call structure
+      // ---------------------------------------------------------------------
+      //
+      // Directed Acyclic Graph (DAG):        DAG legend:
+      // -----------------------------          Own - Owned nodes reordered
+      //                                        Req - Node IDs requested
+      // Own --  Pre                            Pre - Start preparing nodes IDs
+      //       /
+      // Req --
+      //
+      // Interpretation of the above DAG
+      // -------------------------------
+      // Control flow is from left to right and top to bottom. As the above
+      // graph shows, we wait for both Own and Req conditions to be complete
+      // before we start preparing node IDs for the requestor.
+      //
+      // Reordering of node IDs consists of two main parts: (1) Reordering those
+      // nodes that are unique on our PE, i.e., does not exist on any other PE.
+      // These nodes can be assigned a new node ID without any communication.
+      // (2) Reordering those nodes that connect to mesh cells on other PEs.
+      // Assignment of new node IDs, i.e., reordering, must be handled in a way
+      // that the same new node IDs will be assigned to the nodes that are
+      // physically the same but happen to exist on other PEs as well as on
+      // ours.
+      //
+      // Accordingly, reordering starts with the owned, i.e., independently
+      // reordered nodes, on each PE. When that is done, Own is triggered,
+      // signaling that the new order for the owned nodes are ready to be
+      // queried. On another path, every PE immediately sends out requests to
+      // fellow PEs for nodes that they cannot reorder by themselves. However,
+      // those can only be sent back when the PE they are requested from has
+      // finished reordering them, so we wait until Own is satisfied on that PE.
+      // Req is triggered when a PE has received a request. Only when Own and
+      // Req are both satisfied do we need to prepare a set of new node IDs for
+      // a requestor, hence the above logic in the SDAG. Since there can be
+      // multiple requests arriving before any (or some or all) of them can be
+      // satisfied, the requests are queued into a vector and when the runtime
+      // system calls prepare(), we fullfill all requests, clear the queue, and
+      // automatically re-enable the trigger for Own, i.e., wait only for Req,
+      // i.e., new requests.
+
+      entry void wait4owned() {
+        when trigger_reorderowned_complete(),
+             trigger_nodes_requested()
+        serial {
+          prepare();
+        }
+      };
+
+      entry void trigger_reorderowned_complete();
+      entry void trigger_nodes_requested();
     };
 
   } // inciter::
