@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/MixMassFractionBeta.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:38:18 PM MDT
+  \date      Tue 15 Dec 2015 02:15:13 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     System of mix mass-fraction beta SDEs
   \details   This file implements the time integration of a system of stochastic
@@ -98,24 +98,34 @@ class MixMassFractionBeta {
     //! \author J. Bakosi
     explicit MixMassFractionBeta( ncomp_t c ) :
       m_c( c ),
-      m_depvar(
-        g_inputdeck.get< tag::param, tag::mixmassfracbeta, tag::depvar >().at(c)
-      ),
-      m_ncomp(
-        g_inputdeck.get< tag::component >().get< tag::mixmassfracbeta >().at(c)/4
-      ),
-      m_offset(
-        g_inputdeck.get< tag::component >().offset< tag::mixmassfracbeta >(c) ),
-      m_rng( g_rng.at( tk::ctr::raw(
-        g_inputdeck.get< tag::param, tag::mixmassfracbeta, tag::rng >().at(c) ) )
-      ),
+      m_depvar( g_inputdeck.get< tag::param,
+                                 tag::mixmassfracbeta,
+                                 tag::depvar >().at(c) ),
+      m_ncomp( g_inputdeck.get< tag::component >().
+                           get< tag::mixmassfracbeta >().at(c) / 4 ),
+      m_offset( g_inputdeck.get< tag::component >().
+                            offset< tag::mixmassfracbeta >(c) ),
+      m_rng( g_rng.at( tk::ctr::raw( g_inputdeck.get< tag::param,
+                                                      tag::mixmassfracbeta,
+                                                      tag::rng >().at(c) ) ) ),
+      m_t( 0.0 ),
       coeff(
         m_ncomp,
-        g_inputdeck.get< tag::param, tag::mixmassfracbeta, tag::bprime >().at(c),
-        g_inputdeck.get< tag::param, tag::mixmassfracbeta, tag::S >().at(c),
-        g_inputdeck.get< tag::param, tag::mixmassfracbeta, tag::kappaprime >().at(c),
-        g_inputdeck.get< tag::param, tag::mixmassfracbeta, tag::rho2 >().at(c),
-        g_inputdeck.get< tag::param, tag::mixmassfracbeta, tag::r >().at(c),
+        g_inputdeck.get< tag::param,
+                         tag::mixmassfracbeta,
+                         tag::bprime >().at(c),
+        g_inputdeck.get< tag::param,
+                         tag::mixmassfracbeta,
+                         tag::S >().at(c),
+        g_inputdeck.get< tag::param,
+                         tag::mixmassfracbeta,
+                         tag::kappaprime >().at(c),
+        g_inputdeck.get< tag::param,
+                         tag::mixmassfracbeta,
+                         tag::rho2 >().at(c),
+        g_inputdeck.get< tag::param,
+                         tag::mixmassfracbeta,
+                         tag::r >().at(c),
         m_bprime, m_S, m_kprime, m_rho2, m_r, m_b, m_k ) {}
 
     //! Initalize SDE, prepare for time integration
@@ -146,9 +156,11 @@ class MixMassFractionBeta {
                   tk::real dt,
                   const std::map< tk::ctr::Product, tk::real >& moments )
     {
+      // Advance physical time
+      m_t += dt;
       // Update SDE coefficients
       coeff.update( m_depvar, m_ncomp, moments, m_bprime, m_kprime, m_rho2, m_r,
-                    m_b, m_k, m_S );
+                    m_b, m_k, m_S, m_t );
       // Advance particles
       const auto npar = particles.npar();
       for (auto p=decltype(npar){0}; p<npar; ++p) {
@@ -173,6 +185,7 @@ class MixMassFractionBeta {
     const ncomp_t m_ncomp;              //!< Number of components
     const ncomp_t m_offset;             //!< Offset SDE operates from
     const tk::RNG& m_rng;               //!< Random number generator
+    tk::real m_t;                       //!< Time
 
     //! Coefficients
     std::vector< kw::sde_bprime::info::expect::type > m_bprime;

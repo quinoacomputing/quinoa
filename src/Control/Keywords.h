@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Keywords.h
   \author    J. Bakosi
-  \date      Tue 24 Nov 2015 08:45:34 AM MST
+  \date      Tue 15 Dec 2015 09:49:42 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Definition of all keywords
   \details   This file contains the definition of all keywords, including those
@@ -1261,20 +1261,20 @@ struct homdecay_info {
     This policy (or model) is used to constrain a beta stochastic differential
     equation so that its variance, <y^2>, always decays and its mean, <R> =
     rho2/(1+r<RY>/<R>), where Y = <Y> + y, does not change in time. Note that
-    R = rho2/(1+rY). This policy is similar to 'mchomdecay', but computes the
-    SDE coefficient S in a different but statistically equivalent way. While
-    'homdecay' only requires the estimation of statistics, <R>, <r^2>, and
-    <r^3>, 'mchomdecay' requires <R^2>, <YR^2>, and <Y(1-Y)R^3>. A coefficients
-    policy, in general, is used to specify how the coefficients are set at each
-    time step during time-integration. Example: "coeff const", which selects
-    constant coefficients policy, which sets constant coefficients before t = 0
-    and leaves the coefficients unchanged during time integration. Note that
-    this option may behave differently depending on the particular equation or
-    physical model.)"; }
+    R = rho2/(1+rY). This policy is similar to 'montecarlo_homdecay', but
+    computes the SDE coefficient S in a different but statistically equivalent
+    way. While 'homdecay' only requires the estimation of statistics, <R>,
+    <r^2>, and <r^3>, 'montecarlo_homdecay' requires <R^2>, <YR^2>, and
+    <Y(1-Y)R^3>. A coefficients policy, in general, is used to specify how the
+    coefficients are set at each time step during time-integration. Example:
+    "coeff const", which selects constant coefficients policy, which sets
+    constant coefficients before t = 0 and leaves the coefficients unchanged
+    during time integration. Note that this option may behave differently
+    depending on the particular equation or physical model.)"; }
 };
 using homdecay = keyword< homdecay_info, h,o,m,d,e,c,a,y >;
 
-struct mchomdecay_info {
+struct montecarlo_homdecay_info {
   static std::string name() { return "M"; }
   static std::string shortDescription() { return
     "Select Monte Carlo homogeneous decay coefficients policy"; }
@@ -1286,15 +1286,43 @@ struct mchomdecay_info {
     change in time. Note that R = rho2/(1+rY). This policy is similar to
     'homdecay', but computes the the SDE coefficient S in a different but
     statistically equivalent way. While 'homdecay' only requires the estimation
-    of statistics, <R>, <r^2>, and <r^3>, 'mchomdecay' requires <R^2>, <YR^2>,
-    and <Y(1-Y)R^3>. A coefficients policy, in general, is used to specify how
-    the coefficients are set at each time step during time-integration. Example:
-    "coeff const", which selects constant coefficients policy, which sets
-    constant coefficients before t = 0 and leaves the coefficients unchanged
-    during time integration. Note that this option may behave differently
-    depending on the particular equation or physical model.)"; }
+    of statistics, <R>, <r^2>, and <r^3>, 'montecarlo_homdecay' requires <R^2>,
+    <YR^2>, and <Y(1-Y)R^3>. A coefficients policy, in general, is used to
+    specify how the coefficients are set at each time step during
+    time-integration. Example: "coeff const", which selects constant
+    coefficients policy, which sets constant coefficients before t = 0 and
+    leaves the coefficients unchanged during time integration. Note that this
+    option may behave differently depending on the particular equation or
+    physical model.)"; }
 };
-using mchomdecay = keyword< mchomdecay_info, m,c,h,o,m,d,e,c,a,y >;
+using montecarlo_homdecay =
+  keyword< montecarlo_homdecay_info, m,o,n,t,e,c,a,r,l,o,'_',h,o,m,d,e,c,a,y >;
+
+struct hydrotimescale_info {
+  static std::string name() { return "T"; }
+  static std::string shortDescription() { return
+    "Select hydro-timescale homogeneous decay coefficients policy"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the hydrodynamics-timescale homogeneous
+    decay coefficients policy. This policy (or model) is used to constrain a
+    beta stochastic differential equation (SDE) so that its variance, <y^2>,
+    always decays and its mean, <R> = rho2/(1+r<RY>/<R>), where Y = <Y> + y,
+    does not change in time. Note that R = rho2/(1+rY). This policy is similar
+    to 'homdecay' as well as 'montecarlo_homdecay', but instead of simply
+    constraining b' and kappa' to ensure decay in the evolution of <y^2>, b' and
+    kappa' are specified as functions of an externally-specified hydrodynamics
+    time scale, as a function of time. This policy is more similar to 'homdecay'
+    than to 'montecarlo_homdecay' in that only requires the estimation
+    of statistics, <R>, <r^2>, and <r^3>. A coefficients policy, in general, is
+    used to specify how the coefficients are set at each time step during
+    time-integration. Example: "coeff const", which selects constant
+    coefficients policy, which sets constant coefficients before t = 0 and
+    leaves the coefficients unchanged during time integration. Note that this
+    option may behave differently depending on the particular equation or
+    physical model.)"; }
+};
+using hydrotimescale =
+  keyword< hydrotimescale_info, h,y,d,r,o,t,i,m,e,s,c,a,l,e >;
 
 struct coeff_info {
   static std::string name() { return "coeffpolicy"; }
