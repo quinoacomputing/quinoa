@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/conductor.ci
   \author    J. Bakosi
-  \date      Tue 22 Dec 2015 07:51:32 AM MST
+  \date      Tue 22 Dec 2015 10:08:33 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Charm++ module interface file for Conductor
   \details   Charm++ module interface file for Conductor
@@ -26,8 +26,8 @@ module conductor {
       entry [reductiontarget] void load( uint64_t nelem );
       entry void addNodes( int pe, const std::vector< std::size_t >& gid );
       entry [reductiontarget] void partition();
-      entry [reductiontarget] void readOwnedGraph();
-      entry [reductiontarget] void owngraph();
+      entry [reductiontarget] void flatten();
+      entry [reductiontarget] void flattened();
       entry void prepared(
               int pe,
               const std::unordered_map< int, std::vector< std::size_t > >& conn,
@@ -57,23 +57,24 @@ module conductor {
       // ---------------------------------------------------------------------
       //
       // Directed Acyclic Graph (DAG):        DAG legend:
-      // -----------------------------          Gra - Graph complete
+      // -----------------------------          Fla - Node ID flattening
       //                                        Com - Communication map complete
-      // Gra --  Re                             Re  - Reorder
+      // Fla --  Re                             Re  - Reorder
       //       /
       // Com --
       //
       // Interpretation of the above DAG
       // -------------------------------
       // Control flow is from left to right and top to bottom. As the above
-      // graph shows, we wait for both Gra and Com conditions to be complete
+      // graph shows, we wait for both Fla and Com conditions to be complete
       // before we can start reordering of the nodes.
       //
-      // Gra is triggered when all Partitioner chare groups (one on each PE)
-      // have access to their part of the mesh graph, i.e., their chares will
-      // operate on. This happens when the the unique mesh node IDs, connecting
-      // those elements of the mesh graph that have been assigned to the chares
-      // assigned to a PE, are ready on a PE, needed for reordering.
+      // Fla is triggered when all Partitioner chare groups (one on each PE)
+      // have access to their part of the unique node IDs, i.e., their chares
+      // will contribute to (in the linear system assembly later). This happens
+      // when the the unique mesh node IDs, connecting those elements of the
+      // mesh graph that have been assigned to the chares assigned to a PE, are
+      // ready on a PE, needed for reordering.
       //
       // Com is ready when the communication map, needed for mesh node
       // reordering, is fully built for all PEs. This is done by member
@@ -81,18 +82,18 @@ module conductor {
       // node IDs, the latter attempting to build the communication map for each
       // PE. While there is only Conductor object, receiving and building the
       // maps are asynchronous and overlap communication and computation. Also
-      // all this happens in an unordered fashion, as the IDs from PEs arrive in
-      // an unordered fashion.
+      // all this happens unordered as the IDs from PEs arrive in an unordered
+      // fashion.
 
       entry void wait4setup() {
-        when trigger_ownedgraph_complete(),
+        when trigger_flatten_complete(),
              trigger_commmap_complete()
         serial {
           reorder();
         }
       };
 
-      entry void trigger_ownedgraph_complete();
+      entry void trigger_flatten_complete();
       entry void trigger_commmap_complete();
     }
 

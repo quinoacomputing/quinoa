@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Conductor.h
   \author    J. Bakosi
-  \date      Mon 21 Dec 2015 08:43:28 AM MST
+  \date      Tue 22 Dec 2015 10:14:21 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Conductor drives the time integration of a PDE
   \details   Conductor drives the time integration of a PDE
@@ -65,16 +65,14 @@ class Conductor : public CBase_Conductor {
     void partition();
 
     //! \brief Reduction target indicating that all Partitioner chare groups
-    //!   have finished distributing the mesh element IDs after partitioning and
-    //!   we ready to start reordering mesh node IDs whose first step is reading
-    //!   the mesh graph connectivity (i.e., the global node IDs) owned on each
-    //!   PE
-    void readOwnedGraph();
+    //!   have finished distributing the mesh node IDs after partitioning and
+    //!   we are ready to start reordering mesh node IDs
+    void flatten();
 
     //! \brief Reduction target indicating that all Partitioner chare groups
-    //!   have finished reading their chunk of the mesh connectivity and ready
+    //!   have finished preparing their chunk of the mesh connectivity and ready
     //!   for a new order
-    void owngraph();
+    void flattened() { trigger_flatten_complete(); }
 
     //! \brief Charm++ entry method inidicating that all Partitioner chare
     //!  groups have finished preparing the computational mesh
@@ -208,8 +206,7 @@ class Conductor : public CBase_Conductor {
     //! Performance statistics merged from chare group elements
     std::map< std::string, std::vector< tk::real > > m_grpPerfstat;
     //! Timer labels
-    enum class TimerTag { GRAPH,
-                          MESH,
+    enum class TimerTag { MESH,
                           CREATE,
                           SETUP,
                           INITIALIZE,
