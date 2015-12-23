@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Conductor.C
   \author    J. Bakosi
-  \date      Tue 22 Dec 2015 07:36:06 AM MST
+  \date      Wed 23 Dec 2015 06:18:25 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Conductor drives the time integration of a PDE
   \details   Conductor drives the time integration of a PDE
@@ -164,12 +164,11 @@ Conductor::partition()
 }
 
 void
-Conductor::readOwnedGraph()
+Conductor::flatten()
 //******************************************************************************
 // Reduction target indicating that all Partitioner chare groups have finished
-// distributing mesh element IDs after partitioning and we are ready to start
-// reordering mesh node IDs whose first step is reading the mesh graph
-// connectivity (i.e., the global node IDs) owned on each PE
+// distributing mesh node IDs after partitioning and we are ready to start
+// reordering mesh node IDs.
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -177,22 +176,8 @@ Conductor::readOwnedGraph()
   mainProxy.timestamp( "Partition & distribute mesh elements",
                        tk::query(m_timer,TimerTag::MESH) );
   m_timer[ TimerTag::MESH ].zero();
-  m_timer[ TimerTag::GRAPH ].zero();
   m_print.diagstart( "Prepare for reordering mesh nodes ..." );
-  m_partitioner.readOwnedGraph();
-}
-
-void
-Conductor::owngraph()
-//******************************************************************************
-// Reduction target indicating that all Partitioner chare groups have finished
-// reading their chunk of the mesh connectivity and ready for a new order
-//! \author J. Bakosi
-//******************************************************************************
-{
-  trigger_ownedgraph_complete();
-  mainProxy.timestamp( "Distributed-read of owned mesh graph from file",
-                       tk::query(m_timer,TimerTag::GRAPH) );
+  m_partitioner.flatten();
 }
 
 void
@@ -253,26 +238,8 @@ Conductor::addNodes( int pe, const std::vector< std::size_t >& gid )
       m_start[p] = m_start[p-1] + m_gid[p-1].size() - m_nrecv[p-1];
 
     m_print.diagend( "done" );
-    mainProxy.timestamp( "Prepare for reordering mesh nodes including "
-                         "'distributed-read'",
+    mainProxy.timestamp( "Prepare for reordering mesh nodes",
                          tk::query(m_timer,TimerTag::MESH) );
-    // Compute expected communication cost during mesh node reordering. The cost
-    // is a real number between 0 and 1, defined as the number of mesh points
-    // the PE needs to receive from other PEs < PE, divided by the number of
-    // points the PE contributes to. This is the sum of the number of nodes
-    // other PE assign new IDs to and the number of nodes PE assigns new node
-    // IDs to, i.e., the number of mesh nodes PE contributes to in the linear
-    // system assembly. The lower the better.
-    std::map< int, tk::real > cost;
-    for (std::size_t p=0; p<m_gid.size(); ++p)
-      cost[ static_cast<int>(p) ] = static_cast<tk::real>(m_nrecv[p]) /
-                                      static_cast<tk::real>(m_gid[p].size());
-    // Estimate communication cost across all PEs
-    auto stat = estimate( cost );
-    m_print.diagstart( "Mesh reordering communication cost: avg = " +
-                       std::to_string(stat.first) + ", std = " +
-                       std::to_string(stat.second) + '\n' );
-
     // Continue with reordering, see also conductor.ci
     trigger_commmap_complete();
   }
