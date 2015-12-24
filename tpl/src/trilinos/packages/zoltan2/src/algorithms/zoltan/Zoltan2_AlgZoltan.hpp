@@ -147,7 +147,7 @@ private:
   void setCallbacksGraph(
     const RCP<const MeshAdapter<user_t> > &adp)
   {
-    std::cout << "NotReadyForGraphYet" << std::endl;
+    //std::cout << "NotReadyForGraphYet" << std::endl;
     // TODO
   }
 
