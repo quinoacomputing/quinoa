@@ -2,21 +2,13 @@
 /*!
   \file      src/LinSys/ZoltanInterOp.C
   \author    J. Bakosi
-  \date      Wed 09 Dec 2015 12:18:55 PM MST
+  \date      Wed 23 Dec 2015 10:01:48 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Interoperation with the Zoltan library
   \details   Interoperation with the Zoltan library, used for static mesh graph
     partitioning.
 */
 //******************************************************************************
-
-#include <string>
-#include <tuple>
-#include <algorithm>
-#include <iterator>
-#include <iosfwd>
-#include <cstdlib>
-#include <cstring>
 
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic push
@@ -32,32 +24,26 @@
 
 #include <Zoltan2_PartitioningSolution.hpp>
 
-#include "Exception.h"
-#include "UnsMesh.h"
-#include "ExceptionMPI.h"
 #include "ZoltanInterOp.h"
-#include "DerivedData.h"
-#include "Reorder.h"
 
 namespace tk {
 namespace zoltan {
-
 
 //! GeometricMeshElemAdapter : Zoltan2::MeshAdapter
 //! \details GeometricMeshElemAdapter specializes those virtual member functions
 //!   of Zoltan2::MeshAdapter that are required for mesh-element-based
 //!   geometric partitioning with Zoltan2
-template< typename User >
-class GeometricMeshElemAdapter : public Zoltan2::MeshAdapter< User > {
+template< typename ZoltanTypes >
+class GeometricMeshElemAdapter : public Zoltan2::MeshAdapter< ZoltanTypes > {
 
   private:
     using MeshEntityType = Zoltan2::MeshEntityType;
     using EntityTopologyType = Zoltan2::EntityTopologyType;
 
   public:
-    using gno_t = typename Zoltan2::InputTraits< User >::gno_t;
-    using scalar_t = typename Zoltan2::InputTraits< User >::scalar_t;
-    using base_adapter_t = Zoltan2::MeshAdapter< User >;
+    using gno_t = typename Zoltan2::InputTraits< ZoltanTypes >::gno_t;
+    using scalar_t = typename Zoltan2::InputTraits< ZoltanTypes >::scalar_t;
+    using base_adapter_t = Zoltan2::MeshAdapter< ZoltanTypes >;
 
     //! Constructor
     //! \param[in] nelem Number of elements in mesh graph on this rank
