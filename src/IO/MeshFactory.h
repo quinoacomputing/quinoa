@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/MeshFactory.h
   \author    J. Bakosi
-  \date      Tue 24 Nov 2015 11:29:40 AM MST
+  \date      Mon 14 Dec 2015 10:17:57 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unstructured mesh reader and writer factory
   \details   Unstructured mesh reader and writer factory.
@@ -47,7 +47,7 @@ readUnsMesh( const tk::Print& print,
 std::vector< std::pair< std::string, tk::real > >
 writeUnsMesh( const tk::Print& print,
               const std::string& filename,
-              const UnsMesh& mesh,
+              UnsMesh& mesh,
               bool reorder );
 
 } // tk::
