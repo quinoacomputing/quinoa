@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/MeshFactory.C
   \author    J. Bakosi
-  \date      Tue 24 Nov 2015 12:04:42 PM MST
+  \date      Mon 14 Dec 2015 10:17:35 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unstructured mesh reader and writer factory
   \details   Unstructured mesh reader and writer factory.
@@ -127,7 +127,7 @@ readUnsMesh( const tk::Print& print,
 std::vector< std::pair< std::string, tk::real > >
 writeUnsMesh( const tk::Print& print,
               const std::string& filename,
-              const UnsMesh& mesh,
+              UnsMesh& mesh,
               bool reorder )
 //******************************************************************************
 //  Write unstructured mesh to file
@@ -148,7 +148,7 @@ writeUnsMesh( const tk::Print& print,
   if (reorder) {
     print.diagstart( "Reordering mesh nodes ..." );
 
-    auto inpoel = mesh.tetinpoel();
+    auto& inpoel = mesh.tetinpoel();
     const auto psup = tk::genPsup( inpoel, 4, tk::genEsup( inpoel, 4 ) );
     std::vector< std::size_t > map, invmap;
     std::tie( map, invmap ) = tk::renumber( psup );

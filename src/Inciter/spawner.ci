@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/spawner.ci
   \author    J. Bakosi
-  \date      Tue 24 Nov 2015 03:04:55 PM MST
+  \date      Thu 03 Dec 2015 11:57:29 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Charm++ module interface file for the chare spawner group
   \details   Charm++ module interface file for the chare spawner group.
@@ -34,11 +34,11 @@ module spawner {
     template< class HostProxy, class WorkerProxy, class LinSysMergerProxy >
     group Spawner {
       entry Spawner( int nchare, HostProxy& host );
-      entry void create( LinSysMergerProxy& lsm );
-      entry void add(
-        int frompe,
-        const std::unordered_map< int, std::vector< std::size_t > >& element );
-      entry void recv();
+      entry void
+      create( LinSysMergerProxy& lsm,
+              const std::unordered_map< int, std::vector< std::size_t > >& conn,
+              const std::unordered_map< int,
+                std::unordered_map< std::size_t, std::size_t > >& chcid );
       entry void setup();
       entry void init( tk::real dt );
       entry void advance( uint8_t stage, tk::real dt, uint64_t it, tk::real t );

@@ -130,7 +130,7 @@ struct Param_List;
  * These are used in both lb.c and key_params.c.
  ******************************************************
  */
-#define ZOLTAN_DEBUG_LEVEL_DEF    ZOLTAN_DEBUG_PARAMS
+#define ZOLTAN_DEBUG_LEVEL_DEF    ZOLTAN_DEBUG_NONE
 #define ZOLTAN_DEBUG_PROC_DEF     0
 #define ZOLTAN_OBJ_WEIGHT_DEF     0
 #define ZOLTAN_EDGE_WEIGHT_DEF    0
