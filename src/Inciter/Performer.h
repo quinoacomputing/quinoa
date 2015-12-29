@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.h
   \author    J. Bakosi
-  \date      Thu 03 Dec 2015 01:43:26 PM MST
+  \date      Tue 29 Dec 2015 08:11:41 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Performer advances a PDE
   \details   Performer advances a PDE. There are a potentially
@@ -76,17 +76,19 @@ class Performer : public CBase_Performer {
     void init( tk::real dt );
 
     //! Update solution vector
-    void updateSolution( const std::map< std::size_t, tk::real >& sol );
+    void updateSolution( const std::vector< std::size_t >& gid,
+                         const std::vector< tk::real >& sol );
 
     //! Advance equations to next stage in multi-stage time stepping
     void advance( uint8_t stage, tk::real dt, uint64_t it, tk::real t );
 
   private:
-    std::size_t m_id;                   //!< Charm++ global array id
+    int m_id;                           //!< Charm++ global array id
     uint64_t m_it;                      //!< Iteration count
     uint64_t m_itf;                     //!< Field output iteration count
     tk::real m_t;                       //!< Physical time
     uint8_t m_stage;                    //!< Stage in multi-stage time stepping
+    std::size_t m_nsol;                 //!< Counter for solution nodes updated
     CProxy_Conductor m_conductor;       //!< Conductor proxy
     LinSysMergerProxy m_linsysmerger;   //!< Linear system merger proxy
     SpawnerProxy m_spanwer;             //!< Spawner proxy
@@ -99,7 +101,7 @@ class Performer : public CBase_Performer {
     //! Mesh point coordinates
     std::array< std::vector< tk::real >, 3 > m_coord;
     //! Unknown/solution vector: global mesh point row ids and values
-    std::map< std::size_t, tk::real > m_u, m_uf, m_ur, m_un;
+    std::vector< tk::real > m_u, m_uf, m_un;
     //! Time stamps
     std::vector< std::pair< std::string, tk::real > > m_timestamp;
     std::vector< tk::Timer > m_timer;   //!< Timers
@@ -119,8 +121,8 @@ class Performer : public CBase_Performer {
     //! Compute righ-hand side vector of PDE
     void rhs( tk::real mult,
               tk::real dt,
-              const std::map< std::size_t, tk::real >& sol,
-              std::map< std::size_t, tk::real >& rhs );
+              const std::vector< tk::real >& sol,
+              std::vector< tk::real >& rhs );
 
     //! Output chare mesh to file
     void writeMesh();
@@ -132,7 +134,7 @@ class Performer : public CBase_Performer {
     void writeSolution( const tk::ExodusIIMeshWriter& ew,
                         uint64_t it,
                         int varid,
-                        const std::map< std::size_t, tk::real >& unk ) const;
+                        const std::vector< tk::real >& u ) const;
 
     //! Output mesh-based fields metadata to file
     void writeMeta() const;
