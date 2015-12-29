@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/LinSysMerger.h
   \author    J. Bakosi
-  \date      Mon 28 Dec 2015 12:34:50 PM MST
+  \date      Tue 29 Dec 2015 03:40:52 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Linear system merger
   \details   Linear system merger.
@@ -175,24 +175,27 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
 
     //! Chares contribute their solution nonzero values
     //! \param[in] chgid Charm chare global array index contribution coming from
-    //! \param[in] sol Portion of the unknown/solution vector contributed,
-    //!   containing global row indices and values
+    //! \param[in] gid Global row indices of the vector contributed
+    //! \param[in] sol Portion of the unknown/solution vector contributed
     //! \note This function does not have to be declared as a Charm++ entry
     //!   method since it is always called by chares on the same PE.
-    void charesol( int chgid, const std::map< std::size_t, tk::real >& sol ) {
+    void charesol( int chgid,
+                   const std::vector< std::size_t >& gid,
+                   const std::vector< tk::real >& sol )
+    {
+      Assert( gid.size() == sol.size(),
+              "Size of solution and row ID vectors must equal" );
       m_timer[ TimerTag::SOL ]; // start measuring merging of solution vector
       // Store solution vector nonzero values owned and pack those to be
       // exported, also build import map used to test for completion
       std::map< int, std::map< std::size_t, tk::real > > exp;
-      for (const auto& r : sol) {
-        auto gid = r.first;
-        if (gid >= m_lower && gid < m_upper) {  // if own
-          m_solimport[ chgid ].push_back( gid );
-          m_sol[gid] = r.second;
+      for (std::size_t i=0; i<gid.size(); ++i)
+        if (gid[i] >= m_lower && gid[i] < m_upper) {    // if own
+          m_solimport[ chgid ].push_back( gid[i] );
+          m_sol[ gid[i] ] = sol[i];
         } else {
-          exp[ pe(gid) ][ gid ] = r.second;
+          exp[ pe(gid[i]) ][ gid[i] ] = sol[i];
         }
-      }
       // Export non-owned vector values to fellow branches that own them
       for (const auto& p : exp) {
         auto tope = static_cast< int >( p.first );
@@ -261,23 +264,26 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
 
     //! Chares contribute their rhs nonzero values
     //! \param[in] chgid Charm chare global array index contribution coming from
-    //! \param[in] rhs Portion of the right-hand side vector contributed,
-    //!   containing global row indices and values
+    //! \param[in] gid Global row indices of the vector contributed
+    //! \param[in] rhs Portion of the right-hand side vector contributed
     //! \note This function does not have to be declared as a Charm++ entry
     //!   method since it is always called by chares on the same PE.
-    void charerhs( int chgid, const std::map< std::size_t, tk::real >& rhs ) {
+    void charerhs( int chgid,
+                   const std::vector< std::size_t >& gid,
+                   const std::vector< tk::real >& rhs )
+    {
+      Assert( gid.size() == rhs.size(),
+              "Size of right-hand side and row ID vectors must equal" );
       m_timer[ TimerTag::RHS ]; // start measuring merging of rhs vector
       // Store vector nonzero values owned and pack those to be exported
       std::map< int, std::map< std::size_t, tk::real > > exp;
-      for (const auto& r : rhs) {
-        auto gid = r.first;
-        if (gid >= m_lower && gid < m_upper) {  // if own
-          m_rhsimport[ chgid ].push_back( gid );
-          m_rhs[gid] += r.second;
+      for (std::size_t i=0; i<gid.size(); ++i)
+        if (gid[i] >= m_lower && gid[i] < m_upper) {  // if own
+          m_rhsimport[ chgid ].push_back( gid[i] );
+          m_rhs[ gid[i] ] += rhs[i];
         } else {
-          exp[ pe(gid) ][ gid ] = r.second;
+          exp[ pe(gid[i]) ][ gid[i] ] = rhs[i];
         }
-      }
       // Export non-owned vector values to fellow branches that own them
       for (const auto& p : exp) {
         auto tope = static_cast< int >( p.first );
@@ -580,18 +586,20 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       // Group solution vector by workers and send each the parts back to
       // workers that own them
       for (const auto& w : m_solimport) {
-        std::map< std::size_t, tk::real > sol;
+        std::vector< std::size_t > gid;
+        std::vector< tk::real > sol;
         for (auto r : w.second) {
           const auto it = m_sol.find( r );
-          if (it != end(m_sol))
-            sol.emplace( it->first, m_hypreSol[tk::val_find(m_lid,it->first)] );
-          else
+          if (it != end(m_sol)) {
+            gid.push_back( it->first );
+            sol.push_back( m_hypreSol[ tk::val_find( m_lid, it->first ) ] );
+          } else
             Throw( "Can't find global row id " + std::to_string(r) +
                    " to export in solution vector" );
         }
         // Find pair of local chare id and proxy of worker chare to update
         const auto& ch = tk::ref_find( m_worker, w.first );
-        ch.first[ ch.second ].updateSolution( sol );
+        ch.first[ ch.second ].updateSolution( gid, sol );
       }
     }
 
