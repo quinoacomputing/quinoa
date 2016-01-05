@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.C
   \author    J. Bakosi
-  \date      Tue 29 Dec 2015 03:32:02 PM MST
+  \date      Tue 05 Jan 2016 09:38:54 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Performer advances a PDE
   \details   Performer advances a PDE. There are a potentially
@@ -79,9 +79,9 @@ Performer::setup()
 //******************************************************************************
 {
   // Initialize local->global, global->local node ids, element connectivity
-  initIds( m_conn );
+  setupIds( m_conn );
   // Read coordinates of owned and received mesh nodes
-  initCoords();
+  setupCoords();
   // Output chare mesh to file
   writeMesh();
   // Output mesh-based fields metadata to file
@@ -89,7 +89,7 @@ Performer::setup()
 }
 
 void
-Performer::initIds( const std::vector< std::size_t >& gelem )
+Performer::setupIds( const std::vector< std::size_t >& gelem )
 //******************************************************************************
 //! Initialize local->global, global->local node ids, element connectivity
 //! \param[in] gelem Set of unique owned global ids
@@ -97,10 +97,6 @@ Performer::initIds( const std::vector< std::size_t >& gelem )
 //******************************************************************************
 {
   tk::Timer t;
-
-// std::cout << CkMyPe() << ", " << thisIndex << ": ";
-// for (auto p : gelem) std::cout << p << ' ';
-// std::cout << std::endl;
 
   // Generate connectivity graph storing local node ids
   std::tie( m_inpoel, m_gid ) = tk::global2local( gelem );
@@ -165,12 +161,35 @@ Performer::lhs()
 {
   tk::Timer t;
 
+  // Generate points surrounding points
+  const auto psup = tk::genPsup( m_inpoel, 4, tk::genEsup(m_inpoel,4) );
+
+  Assert( psup.second.size()-1 == m_gid.size(),
+          "Number of mesh points and number of global IDs unequal" );
+
+  // Sparse matrix storing the nonzero matrix values at rows and columns given
+  // by psup. The format is similar to compressed row storage, but the diagonal
+  // and off-diagonal data are stored in separate vectors. For the off-diagonal
+  // data the local row and column indices, at which values are nonzero, are
+  // stored by psup (psup1 and _psup2, where psup2 holds the indices at which
+  // psup1 holds the point ids surrounding points, see also tk::genPsup()). Note
+  // that the number of mesh points (our chunk) npoin = psup.second.size()-1.
+  std::vector< tk::real > lhsd( psup.second.size()-1, 0.0 );
+  std::vector< tk::real > lhso( psup.first.size(), 0.0 );
+
+  // Lambda to compute the sparse matrix vector index for row and column
+  // indices. Used only for off-diagonal entries.
+  auto spidx = [ &psup ]( std::size_t r, std::size_t c ) -> std::size_t {
+    Assert( r != c, "Only for computing the off-diagonal indices" );
+    for (auto i=psup.second[r]+1; i<=psup.second[r+1]; ++i)
+      if (c == psup.first[i]) return i;
+    Throw( "Cannot find row, column: " + std::to_string(r) + ',' +
+           std::to_string(c) + " in sparse matrix" );
+  };
+
   const auto& x = m_coord[0];
   const auto& y = m_coord[1];
   const auto& z = m_coord[2];
-
-  // Sparse matrix: global mesh point row and column ids, and nonzero value
-  std::map< std::size_t, std::map< std::size_t, tk::real > > lhs;
 
   for (std::size_t e=0; e<m_inpoel.size()/4; ++e) {
     const auto a = m_inpoel[e*4+0];
@@ -182,35 +201,31 @@ Performer::lhs()
                               da{{ x[d]-x[a], y[d]-y[a], z[d]-z[a] }};
     const auto J = tk::triple( ba, ca, da ) / 120.0;
 
-    const auto A = m_gid[a];
-    const auto B = m_gid[b];
-    const auto C = m_gid[c];
-    const auto D = m_gid[d];
-    auto& lA = lhs[A];
-    lA[A] += 2.0*J;
-    lA[B] += J;
-    lA[C] += J;
-    lA[D] += J;
-    auto& lB = lhs[B];
-    lB[A] += J;
-    lB[B] += 2.0*J;
-    lB[C] += J;
-    lB[D] += J;
-    auto& lC = lhs[C];
-    lC[A] += J;
-    lC[B] += J;
-    lC[C] += 2.0*J;
-    lC[D] += J;
-    auto& lD = lhs[D];
-    lD[A] += J;
-    lD[B] += J;
-    lD[C] += J;
-    lD[D] += 2.0*J;
+    lhsd[ a ] += 2.0*J;
+    lhsd[ b ] += 2.0*J;
+    lhsd[ c ] += 2.0*J;
+    lhsd[ d ] += 2.0*J;
+
+    lhso[ spidx(a,b) ] += J;
+    lhso[ spidx(a,c) ] += J;
+    lhso[ spidx(a,d) ] += J;
+
+    lhso[ spidx(b,a) ] += J;
+    lhso[ spidx(b,c) ] += J;
+    lhso[ spidx(b,d) ] += J;
+
+    lhso[ spidx(c,a) ] += J;
+    lhso[ spidx(c,b) ] += J;
+    lhso[ spidx(c,d) ] += J;
+
+    lhso[ spidx(d,a) ] += J;
+    lhso[ spidx(d,b) ] += J;
+    lhso[ spidx(d,c) ] += J;
   }
 
   m_timestamp.emplace_back( "Compute left-hand side matrix", t.dsec() );
 
-  m_linsysmerger.ckLocalBranch()->charelhs( m_id, lhs );
+  m_linsysmerger.ckLocalBranch()->charelhs( m_id, m_gid, psup, lhsd, lhso );
 }
 
 void
@@ -247,9 +262,9 @@ Performer::rhs( tk::real mult,
     const auto d = m_inpoel[e*4+3];
 
     // compute element Jacobi determinant
-    std::array< tk::real, 3 > ba{{ x[b]-x[a], y[b]-y[a], z[b]-z[a] }},
-                              ca{{ x[c]-x[a], y[c]-y[a], z[c]-z[a] }},
-                              da{{ x[d]-x[a], y[d]-y[a], z[d]-z[a] }};
+    const std::array< tk::real, 3 > ba{{ x[b]-x[a], y[b]-y[a], z[b]-z[a] }},
+                                    ca{{ x[c]-x[a], y[c]-y[a], z[c]-z[a] }},
+                                    da{{ x[d]-x[a], y[d]-y[a], z[d]-z[a] }};
     const auto J = tk::triple( ba, ca, da );
 
     // construct tetrahedron element-level matrices
@@ -280,9 +295,9 @@ Performer::rhs( tk::real mult,
       grad[0][i] = -grad[1][i]-grad[2][i]-grad[3][i];
 
     // solution at nodes at time n
-    std::array< tk::real, 4 > u{{ m_u[a], m_u[b], m_u[c], m_u[d] }};
+    const std::array< tk::real, 4 > u{{ m_u[a], m_u[b], m_u[c], m_u[d] }};
     // solution at nodes at time n (at stage 0) and n+1/2 (at stage 1)
-    std::array< tk::real, 4 > s{{ sol[a], sol[b], sol[c], sol[d] }};
+    const std::array< tk::real, 4 > s{{ sol[a], sol[b], sol[c], sol[d] }};
     // pointers to rhs at nodes
     std::array< tk::real*, 4 > r{{ &rhs[a], &rhs[b], &rhs[c], &rhs[d] }};
 
@@ -311,7 +326,7 @@ Performer::rhs( tk::real mult,
 }
 
 void
-Performer::initCoords()
+Performer::setupCoords()
 //******************************************************************************
 //  Read coordinates of mesh nodes from file
 //! \author J. Bakosi

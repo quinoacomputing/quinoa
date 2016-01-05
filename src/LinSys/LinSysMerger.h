@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/LinSysMerger.h
   \author    J. Bakosi
-  \date      Tue 29 Dec 2015 03:40:52 PM MST
+  \date      Tue 05 Jan 2016 08:57:20 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Linear system merger
   \details   Linear system merger.
@@ -217,34 +217,50 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
 
     //! Chares contribute their matrix nonzero values
     //! \param[in] chgid Charm chare global array index contribution coming from
-    //! \param[in] lhs Portion of the left-hand side matrix contributed,
-    //!   containing global row and column indices and non-zero values
+    //! \param[in] gid Global row indices of the matrix chunk contributed
+    //! \param[in] psup Points surrounding points using local indices. See also
+    //!   tk::genPsup().
+    //! \param[in] lhsd Portion of the left-hand side matrix contributed,
+    //!   containing non-zero values as a sparse matrix diagonal
+    //! \param[in] lhso Portion of the left-hand side matrix contributed,
+    //!   containing non-zero values as a sparse matrix off-diagonal entries in
+    //!   compressed row storage format
     //! \note This function does not have to be declared as a Charm++ entry
     //!   method since it is always called by chares on the same PE.
     void charelhs( int chgid,
-                   const std::map< std::size_t,
-                                   std::map< std::size_t, tk::real > >& lhs )
+                   const std::vector< std::size_t >& gid,
+                   const std::pair< std::vector< std::size_t >,
+                                    std::vector< std::size_t > >& psup,
+                   const std::vector< tk::real >& lhsd,
+                   const std::vector< tk::real >& lhso )
     {
+      Assert( psup.second.size()-1 == gid.size(),
+              "Number of mesh points and number of global IDs unequal" );
+      Assert( psup.second.size()-1 == lhsd.size(),
+              "Number of mesh points and number of diagonals unequal" );
+      Assert( psup.first.size() == lhso.size(),
+              "Number of off-diagonals and their number of indices unequal" );
       m_timer[ TimerTag::LHS ]; // start measuring merging of lhs matrix
       // Store matrix nonzero values owned and pack those to be exported, also
       // build import map used to test for completion
       std::map< int, std::map< std::size_t,
                                std::map< std::size_t, tk::real > > > exp;
-      for (const auto& r : lhs) {
-        auto gid = r.first;
-        if (gid >= m_lower && gid < m_upper) {  // if own
-          m_lhsimport[ chgid ].push_back( gid );
-          auto& row = m_lhs[gid];
-          for (const auto& c : r.second) row[ c.first ] += c.second;
+      for (std::size_t i=0; i<gid.size(); ++i)
+        if (gid[i] >= m_lower && gid[i] < m_upper) {  // if own
+          m_lhsimport[ chgid ].push_back( gid[i] );
+          auto& row = m_lhs[ gid[i] ];
+          row[ gid[i] ] += lhsd[i];
+          for (auto j=psup.second[i]+1; j<=psup.second[i+1]; ++j)
+            row[ gid[ psup.first[j] ] ] += lhso[j];
         } else {
-          exp[ pe(gid) ][ gid ] = r.second;
+          auto& row = exp[ pe(gid[i]) ][ gid[i] ];
+          row[ gid[i] ] = lhsd[i];
+          for (auto j=psup.second[i]+1; j<=psup.second[i+1]; ++j)
+            row[ gid[ psup.first[j] ] ] = lhso[j];
         }
-      }
       // Export non-owned matrix rows values to fellow branches that own them
-      for (const auto& p : exp) {
-        auto tope = static_cast< int >( p.first );
-        Group::thisProxy[ tope ].addlhs( chgid, p.second );
-      }
+      for (const auto& p : exp)
+        Group::thisProxy[ p.first ].addlhs( chgid, p.second );
       if (lhscomplete()) trigger_lhs_complete();
     }
     //! Receive matrix nonzeros from fellow group branches
