@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.h
   \author    J. Bakosi
-  \date      Tue 29 Dec 2015 08:11:41 AM MST
+  \date      Tue 05 Jan 2016 09:29:34 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Performer advances a PDE
   \details   Performer advances a PDE. There are a potentially
@@ -17,7 +17,6 @@
 #include <array>
 #include <cstddef>
 #include <iosfwd>
-#include <map>
 #include <utility>
 #include <vector>
 #include <cstring>
@@ -107,10 +106,10 @@ class Performer : public CBase_Performer {
     std::vector< tk::Timer > m_timer;   //!< Timers
 
     //! Initialize local->global, global->local node ids, element connectivity
-    void initIds( const std::vector< std::size_t >& gelem );
+    void setupIds( const std::vector< std::size_t >& gelem );
 
     //! Read coordinates of mesh nodes given
-    void initCoords();
+    void setupCoords();
 
     //! Set initial conditions
     void ic();

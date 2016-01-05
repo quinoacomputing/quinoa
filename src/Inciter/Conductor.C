@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Conductor.C
   \author    J. Bakosi
-  \date      Wed 23 Dec 2015 06:18:25 AM MST
+  \date      Tue 05 Jan 2016 09:42:59 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Conductor drives the time integration of a PDE
   \details   Conductor drives the time integration of a PDE
@@ -333,7 +333,6 @@ Conductor::prepared(
   if ( ++m_prepared == CkNumPes() ) {
     m_print.diagend( "done" );
     mainProxy.timestamp( "Reorder mesh", tk::query(m_timer,TimerTag::MESH) );
-//mainProxy.finalize();
     computeCost();
   }
 }
