@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.h
   \author    J. Bakosi
-  \date      Wed 06 Jan 2016 09:45:35 AM MST
+  \date      Wed 06 Jan 2016 11:35:49 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Performer advances a PDE
   \details   Performer advances a PDE. There are a potentially
@@ -21,6 +21,7 @@
 #include <vector>
 #include <cstring>
 #include <cmath>
+#include <unordered_map>
 
 #include "Types.h"
 #include "LinSysMerger.h"
@@ -96,6 +97,8 @@ class Performer : public CBase_Performer {
     std::unordered_map< std::size_t, std::size_t > m_cid;
     std::vector< std::size_t > m_inpoel;//!< Element connectivity (local IDs)
     std::vector< std::size_t > m_gid;   //!< Global node ids of owned elements
+    //!< Local node ids associated to the global ones of owned elements
+    std::unordered_map< std::size_t, std::size_t > m_lid;
     //! Mesh point coordinates
     std::array< std::vector< tk::real >, 3 > m_coord;
     //! Unknown/solution vector: global mesh point row ids and values
