@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/linsysmerger.ci
   \author    J. Bakosi
-  \date      Wed 09 Dec 2015 05:26:57 AM MST
+  \date      Wed 06 Jan 2016 09:54:51 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Charm++ module interface file for merging a linear system
   \details   Charm++ module interface file for merging a linear system
@@ -67,27 +67,12 @@ module linsysmerger {
       // Control flow is from left to right and top to bottom.
       //
 
-      entry void wait4sol() {
-        when trigger_sol_complete() serial {
-          m_timestamp.emplace_back( "Merge solution vector",
-                                    tk::query( m_timer, TimerTag::SOL ) );
-          hypresol();
-        }
-      };
-      entry void wait4lhs() {
-        when trigger_lhs_complete() serial {
-          m_timestamp.emplace_back( "Merge left-hand side matrix",
-                                    tk::query( m_timer, TimerTag::LHS ) );
-          hyprelhs();
-        }
-      };
-      entry void wait4rhs() {
-        when trigger_rhs_complete() serial {
-          m_timestamp.emplace_back( "Merge right-hand side vector",
-                                    tk::query( m_timer, TimerTag::RHS ) );
-          hyprerhs();
-        }
-      };
+      entry void wait4sol()
+      { when trigger_sol_complete() serial { hypresol(); } };
+      entry void wait4lhs()
+      { when trigger_lhs_complete() serial { hyprelhs(); } };
+      entry void wait4rhs()
+      { when trigger_rhs_complete() serial { hyprerhs(); } };
 
       entry void wait4hypresol()
       { when trigger_hypresol_complete() serial { sol(); } };
@@ -109,7 +94,6 @@ module linsysmerger {
              trigger_asmrhs_complete()
         serial {
           solve();
-          sendTimers();
         }
       };
 
