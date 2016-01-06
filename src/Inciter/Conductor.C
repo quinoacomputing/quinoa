@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Conductor.C
   \author    J. Bakosi
-  \date      Wed 23 Dec 2015 06:18:25 AM MST
+  \date      Wed 06 Jan 2016 09:55:15 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Conductor drives the time integration of a PDE
   \details   Conductor drives the time integration of a PDE
@@ -41,8 +41,6 @@ Conductor::Conductor() :
   m_stage( 0 ),
   m_arrTimestampCnt( 0 ),
   m_grpTimestampCnt( 0 ),
-  m_arrPerfstatCnt( 0 ),
-  m_grpPerfstatCnt( 0 ),
   m_gid( static_cast<std::size_t>(CkNumPes()) ),
   m_communication( m_gid.size() ),
   m_commbuilt( m_gid.size(), false ),
@@ -93,7 +91,6 @@ Conductor::Conductor() :
 
     // Fire up mesh partitioner Charm++ chare group and start partitiioning mesh
     m_print.diagstart( "Reading mesh graph ..." );
-    m_timer[ TimerTag::MESH ];
     m_partitioner = PartitionerProxy::ckNew( thisProxy );
 
   } else finish();      // stop if no time stepping requested
@@ -109,8 +106,6 @@ Conductor::load( uint64_t nelem )
 //! \author J. Bakosi
 //******************************************************************************
 {
-  mainProxy.timestamp( "Distributed-read of unordered mesh graph from file",
-                       tk::query(m_timer,TimerTag::MESH) );
   m_print.diagend( "done" );
 
   // Compute load distribution given total work (nelem) and user-specified
@@ -156,10 +151,7 @@ Conductor::partition()
 //! \author J. Bakosi
 //******************************************************************************
 {
-  mainProxy.timestamp( "Setup mesh for partitioning",
-                       tk::query(m_timer,TimerTag::MESH) );
   m_print.diagstart( "Partitioning and distributing mesh ..." );
-  m_timer[ TimerTag::MESH ].zero();
   m_partitioner.partition( m_nchare );
 }
 
@@ -173,9 +165,6 @@ Conductor::flatten()
 //******************************************************************************
 {
   m_print.diagend( "done" );
-  mainProxy.timestamp( "Partition & distribute mesh elements",
-                       tk::query(m_timer,TimerTag::MESH) );
-  m_timer[ TimerTag::MESH ].zero();
   m_print.diagstart( "Prepare for reordering mesh nodes ..." );
   m_partitioner.flatten();
 }
@@ -238,8 +227,6 @@ Conductor::addNodes( int pe, const std::vector< std::size_t >& gid )
       m_start[p] = m_start[p-1] + m_gid[p-1].size() - m_nrecv[p-1];
 
     m_print.diagend( "done" );
-    mainProxy.timestamp( "Prepare for reordering mesh nodes",
-                         tk::query(m_timer,TimerTag::MESH) );
     // Continue with reordering, see also conductor.ci
     trigger_commmap_complete();
   }
@@ -297,7 +284,6 @@ Conductor::reorder()
 //! \author J. Bakosi
 //******************************************************************************
 {
-  m_timer[ TimerTag::MESH ].zero();
   m_print.diagstart( "Reordering mesh nodes ..." );
 
   for (int p=0; p<CkNumPes(); ++p) {
@@ -332,8 +318,6 @@ Conductor::prepared(
   // When every PE has finished with the mesh node ID reordering, continue
   if ( ++m_prepared == CkNumPes() ) {
     m_print.diagend( "done" );
-    mainProxy.timestamp( "Reorder mesh", tk::query(m_timer,TimerTag::MESH) );
-//mainProxy.finalize();
     computeCost();
   }
 }
@@ -486,98 +470,12 @@ Conductor::createWorkers()
 
   m_print.diagstart( "Creating workers ..." );
 
-  m_timer[ TimerTag::CREATE ];
-
   // Create chare group spawning asynchronous performers
   m_spawner = SpawnerProxy::ckNew( m_nchare, thisProxy );
   for (int p=0; p<CkNumPes(); ++p)
     m_spawner[p].create( m_linsysmerger,
                          tk::cref_find( m_connectivity, p ),
                          tk::cref_find( m_chcid, p ) );
-}
-
-void
-Conductor::timestamp(
-  const std::vector< std::pair< std::string, tk::real > >& stamp,
-  std::map< std::string, std::vector< tk::real > >& map,
-  int& counter,
-  int max )
-//******************************************************************************
-// Collect and compute averages over time stamps contributed by chares
-//! \param[in] stamp Vector of time stamps contributed
-//! \param[inout] map Map in which to sore labels and vector of times
-//! \param[inout] counter Counter to use
-//! \param[in] max Max number of contributions to expect
-//! \author J. Bakosi
-//******************************************************************************
-{
-  // Collect time stamps with the same name. These come from different chares
-  // performing their portion of some work.
-  for (const auto& s : stamp) map[ s.first ].push_back( s.second );
-
-  // If all expected have arrived, get ready for the next round
-  if (++counter == max) counter = 0;
-}
-
-void
-Conductor::perfstat( const std::vector< std::pair< std::string, tk::real > >& p,
-                     std::map< std::string, std::vector< tk::real > >& map,
-                     int& counter,
-                     int max )
-//******************************************************************************
-// Collect and compute performance statistics contributed by chares
-//! \param[in] p Vector of time stamps contributed
-//! \param[inout] map Map in which to sore labels and vector of times
-//! \param[inout] counter Counter to use
-//! \param[in] max Max number of contributions to expect
-//! \author J. Bakosi
-//******************************************************************************
-{
-  // Collect performance statistics with the same name. These come from
-  // different chares performing their portion of some work.
-  for (const auto& s : p) map[ s.first ].push_back( s.second );
-
-  // If all expected have arrived, get ready for the next round
-  if (++counter == max) counter = 0;
-}
-
-void
-Conductor::finalReport()
-//******************************************************************************
-// Send collected timer and performance data to host
-//! \author J. Bakosi
-//******************************************************************************
-{
-  // Compute average over chare array and send to main proxy for printing
-  mainProxy.timestamp(
-    tk::average( m_arrTimestamp,
-                 ", avg of " + std::to_string(m_nchare) + " chares" ) );
-
-  // Compute average over chare group and send to main proxy for printing
-  mainProxy.timestamp(
-    tk::average( m_grpTimestamp,
-                 ", avg of " + std::to_string(CkNumPes()) + " PEs" ) );
-
-  // Lambda for sending performance statistics to host
-  auto perf = []( std::map< std::string, std::vector< tk::real > >& map,
-                  int max,
-                  const std::string& of )
-  {
-    const auto nc = std::to_string( max );
-    // Compute average over chares and send to main proxy for printing
-    const auto avg = tk::average( map, ", avg of " + nc + " " + of );
-    mainProxy.perfstat( avg );
-    // Compute variance over chares and send to main proxy for printing
-    mainProxy.perfstat(
-      tk::variance( map, avg, ", var of " + nc + " " + of ) );
-  };
-
-  // Send performance statistics of chare array to host
-  perf( m_arrPerfstat, m_nchare, "chares" );
-  perf( m_grpPerfstat, CkNumPes(), "PEs" );
-
-  // Quit
-  mainProxy.finalize();
 }
 
 void
@@ -592,12 +490,8 @@ Conductor::created()
 //! \author J. Bakosi
 //******************************************************************************
 {
-  mainProxy.timestamp( "Create " + std::to_string(m_nchare) + " workers on " +
-                       std::to_string(CkNumPes()) + " PEs",
-                       tk::query(m_timer, TimerTag::CREATE) );
   m_print.diagend( "done" );
   m_print.diagstart( "Setting up workers ..." );
-  m_timer[ TimerTag::SETUP ];
   m_spawner.setup();
 }
 
@@ -614,13 +508,9 @@ Conductor::rowcomplete()
 //! \author J. Bakosi
 //******************************************************************************
 {
-  mainProxy.timestamp( "Setup " + std::to_string(m_nchare) + " workers on " +
-                       std::to_string(CkNumPes()) + " PEs",
-                       tk::query(m_timer, TimerTag::SETUP) );
   m_linsysmerger.rowsreceived();
   m_print.diagend( "done" );
   m_print.diagstart( "Initializing workers ..." );
-  m_timer[ TimerTag::INITIALIZE ];
   m_spawner.init( m_dt );
 }
 
@@ -633,9 +523,6 @@ Conductor::initcomplete()
 //******************************************************************************
 {
   if ( ++m_init == CkNumPes() ) {
-    mainProxy.timestamp( "Initialize " + std::to_string(m_nchare) + " workers "
-                         "on " + std::to_string(CkNumPes()) + " PEs",
-                         tk::query(m_timer, TimerTag::INITIALIZE) );
     m_init = 0; // get ready for next time
     m_print.diagend( "done" );
     m_print.diagstart( "Starting time stepping ...\n" );
@@ -656,10 +543,23 @@ Conductor::evaluateTime()
     const auto term = g_inputdeck.get< tag::discr, tag::term >();
     const auto eps = std::numeric_limits< tk::real >::epsilon();
     const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
+
+    // if at final stage of time step, finish time step just taken
+    if (m_stage == 1) {
+      // Increase number of iterations taken
+      ++m_it;
+      // Advance physical time to include time step just finished
+      m_t += m_dt;
+      // Truncate the size of last time step
+      if (m_t > term) m_t = term;
+      // Echo one-liner info on time step just taken
+      report();
+    }
+
     // if not final stage of time step or if neither max iterations nor max time
-    // reached, will continue by telling all linear system merger group elements
-    // to prepare for a new rhs, otherwise, finish
-    if ( m_stage < 1 || (std::fabs(m_t-term) > eps && m_it < nstep) )
+    // reached, will continue (by telling all linear system merger group
+    // elements to prepare for a new rhs), otherwise, finish
+    if (m_stage < 1 || (std::fabs(m_t-term) > eps && m_it < nstep))
       m_linsysmerger.enable_wait4rhs();
     else
       finish();
@@ -674,36 +574,13 @@ Conductor::advance()
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // Update stage in multi-stage time stepping
-  if (m_stage < 1) {    // if not final stage, continue with next stage
-
+  // If not final stage, continue with next stage, increasing the stage. If
+  // final stage, continue with next time step zeroing stage and using new time
+  // step size.
+  if (m_stage < 1)
     m_spawner.advance( ++m_stage, m_dt, m_it, m_t );
-
-  } else {              // if final stage, evaluate time
-
-    // Increase number of iterations taken
-    ++m_it;
-
-    // Compute size of next time step
-    m_dt = computedt();
-
-    // Advance physical time
-    m_t += m_dt;
-
-    // Get physical time at which to terminate
-    const auto term = g_inputdeck.get< tag::discr, tag::term >();
-
-    // Truncate the size of last time step
-    if (m_t > term) m_t = term;
-
-    // Echo one-liner info on time step
-    report();
-
-    // Continue with next time step (at stage 0) with all integrators
-    m_stage = 0;
-    m_spawner.advance( m_stage, m_dt, m_it, m_t );
-
-  }
+  else
+    m_spawner.advance( m_stage=0, m_dt=computedt(), m_it, m_t );
 }
 
 tk::real
@@ -728,15 +605,15 @@ Conductor::finish()
   // Print out reason for stopping
   const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
   m_print.endsubsection();
-  if (m_it >= g_inputdeck.get< tag::discr, tag::nstep >())
+  if (m_it >= nstep)
      m_print.note( "Normal finish, maximum number of iterations reached: " +
                    std::to_string( nstep ) );
    else
      m_print.note( "Normal finish, maximum time reached: " +
                    std::to_string( g_inputdeck.get<tag::discr,tag::term>() ) );
 
-  // Send timer and performance data to main proxy and quit
-  finalReport();
+  // Quit
+  mainProxy.finalize();
 }
 
 void
@@ -772,7 +649,7 @@ Conductor::report()
     const auto& timer = tk::cref_find( m_timer, TimerTag::TIMESTEP );
     timer.eta( g_inputdeck.get< tag::discr, tag::term >() -
                  g_inputdeck.get< tag::discr, tag::t0 >(),
-               m_t -  g_inputdeck.get< tag::discr, tag::t0 >(),
+               m_t - g_inputdeck.get< tag::discr, tag::t0 >(),
                g_inputdeck.get< tag::discr, tag::nstep >(),
                m_it,
                ete,
@@ -792,8 +669,7 @@ Conductor::report()
             << std::setw(2) << eta.sec.count() << "  ";
 
     // Augment one-liner with output indicators
-    if (!(m_it % g_inputdeck.get< tag::interval, tag::field >()))
-      m_print << 'F';
+    if (!(m_it % g_inputdeck.get<tag::interval,tag::field>())) m_print << 'F';
 
     m_print << '\n';
   }

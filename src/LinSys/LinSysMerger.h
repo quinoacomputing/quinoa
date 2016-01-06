@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/LinSysMerger.h
   \author    J. Bakosi
-  \date      Mon 28 Dec 2015 12:34:50 PM MST
+  \date      Wed 06 Jan 2016 09:44:49 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Linear system merger
   \details   Linear system merger.
@@ -30,7 +30,6 @@
 #endif
 
 #include "Types.h"
-#include "Timer.h"
 #include "Exception.h"
 #include "ContainerUtil.h"
 #include "HypreMatrix.h"
@@ -105,7 +104,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       m_hypreRhs.clear();
       trigger_asmsol_complete();
       trigger_asmlhs_complete();
-      signal2host_wait4rhs_complete( m_host );
+      signal2host_advance( m_host );
     }
 
     //! Chares register on my PE
@@ -175,24 +174,26 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
 
     //! Chares contribute their solution nonzero values
     //! \param[in] chgid Charm chare global array index contribution coming from
-    //! \param[in] sol Portion of the unknown/solution vector contributed,
-    //!   containing global row indices and values
+    //! \param[in] gid Global row indices of the vector contributed
+    //! \param[in] sol Portion of the unknown/solution vector contributed
     //! \note This function does not have to be declared as a Charm++ entry
     //!   method since it is always called by chares on the same PE.
-    void charesol( int chgid, const std::map< std::size_t, tk::real >& sol ) {
-      m_timer[ TimerTag::SOL ]; // start measuring merging of solution vector
+    void charesol( int chgid,
+                   const std::vector< std::size_t >& gid,
+                   const std::vector< tk::real >& sol )
+    {
+      Assert( gid.size() == sol.size(),
+              "Size of solution and row ID vectors must equal" );
       // Store solution vector nonzero values owned and pack those to be
       // exported, also build import map used to test for completion
       std::map< int, std::map< std::size_t, tk::real > > exp;
-      for (const auto& r : sol) {
-        auto gid = r.first;
-        if (gid >= m_lower && gid < m_upper) {  // if own
-          m_solimport[ chgid ].push_back( gid );
-          m_sol[gid] = r.second;
+      for (std::size_t i=0; i<gid.size(); ++i)
+        if (gid[i] >= m_lower && gid[i] < m_upper) {    // if own
+          m_solimport[ chgid ].push_back( gid[i] );
+          m_sol[ gid[i] ] = sol[i];
         } else {
-          exp[ pe(gid) ][ gid ] = r.second;
+          exp[ pe(gid[i]) ][ gid[i] ] = sol[i];
         }
-      }
       // Export non-owned vector values to fellow branches that own them
       for (const auto& p : exp) {
         auto tope = static_cast< int >( p.first );
@@ -214,34 +215,49 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
 
     //! Chares contribute their matrix nonzero values
     //! \param[in] chgid Charm chare global array index contribution coming from
-    //! \param[in] lhs Portion of the left-hand side matrix contributed,
-    //!   containing global row and column indices and non-zero values
+    //! \param[in] gid Global row indices of the matrix chunk contributed
+    //! \param[in] psup Points surrounding points using local indices. See also
+    //!   tk::genPsup().
+    //! \param[in] lhsd Portion of the left-hand side matrix contributed,
+    //!   containing non-zero values as a sparse matrix diagonal
+    //! \param[in] lhso Portion of the left-hand side matrix contributed,
+    //!   containing non-zero values as a sparse matrix off-diagonal entries in
+    //!   compressed row storage format
     //! \note This function does not have to be declared as a Charm++ entry
     //!   method since it is always called by chares on the same PE.
     void charelhs( int chgid,
-                   const std::map< std::size_t,
-                                   std::map< std::size_t, tk::real > >& lhs )
+                   const std::vector< std::size_t >& gid,
+                   const std::pair< std::vector< std::size_t >,
+                                    std::vector< std::size_t > >& psup,
+                   const std::vector< tk::real >& lhsd,
+                   const std::vector< tk::real >& lhso )
     {
-      m_timer[ TimerTag::LHS ]; // start measuring merging of lhs matrix
+      Assert( psup.second.size()-1 == gid.size(),
+              "Number of mesh points and number of global IDs unequal" );
+      Assert( psup.second.size()-1 == lhsd.size(),
+              "Number of mesh points and number of diagonals unequal" );
+      Assert( psup.first.size() == lhso.size(),
+              "Number of off-diagonals and their number of indices unequal" );
       // Store matrix nonzero values owned and pack those to be exported, also
       // build import map used to test for completion
       std::map< int, std::map< std::size_t,
                                std::map< std::size_t, tk::real > > > exp;
-      for (const auto& r : lhs) {
-        auto gid = r.first;
-        if (gid >= m_lower && gid < m_upper) {  // if own
-          m_lhsimport[ chgid ].push_back( gid );
-          auto& row = m_lhs[gid];
-          for (const auto& c : r.second) row[ c.first ] += c.second;
+      for (std::size_t i=0; i<gid.size(); ++i)
+        if (gid[i] >= m_lower && gid[i] < m_upper) {  // if own
+          m_lhsimport[ chgid ].push_back( gid[i] );
+          auto& row = m_lhs[ gid[i] ];
+          row[ gid[i] ] += lhsd[i];
+          for (auto j=psup.second[i]+1; j<=psup.second[i+1]; ++j)
+            row[ gid[ psup.first[j] ] ] += lhso[j];
         } else {
-          exp[ pe(gid) ][ gid ] = r.second;
+          auto& row = exp[ pe(gid[i]) ][ gid[i] ];
+          row[ gid[i] ] = lhsd[i];
+          for (auto j=psup.second[i]+1; j<=psup.second[i+1]; ++j)
+            row[ gid[ psup.first[j] ] ] = lhso[j];
         }
-      }
       // Export non-owned matrix rows values to fellow branches that own them
-      for (const auto& p : exp) {
-        auto tope = static_cast< int >( p.first );
-        Group::thisProxy[ tope ].addlhs( chgid, p.second );
-      }
+      for (const auto& p : exp)
+        Group::thisProxy[ p.first ].addlhs( chgid, p.second );
       if (lhscomplete()) trigger_lhs_complete();
     }
     //! Receive matrix nonzeros from fellow group branches
@@ -261,23 +277,25 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
 
     //! Chares contribute their rhs nonzero values
     //! \param[in] chgid Charm chare global array index contribution coming from
-    //! \param[in] rhs Portion of the right-hand side vector contributed,
-    //!   containing global row indices and values
+    //! \param[in] gid Global row indices of the vector contributed
+    //! \param[in] rhs Portion of the right-hand side vector contributed
     //! \note This function does not have to be declared as a Charm++ entry
     //!   method since it is always called by chares on the same PE.
-    void charerhs( int chgid, const std::map< std::size_t, tk::real >& rhs ) {
-      m_timer[ TimerTag::RHS ]; // start measuring merging of rhs vector
+    void charerhs( int chgid,
+                   const std::vector< std::size_t >& gid,
+                   const std::vector< tk::real >& rhs )
+    {
+      Assert( gid.size() == rhs.size(),
+              "Size of right-hand side and row ID vectors must equal" );
       // Store vector nonzero values owned and pack those to be exported
       std::map< int, std::map< std::size_t, tk::real > > exp;
-      for (const auto& r : rhs) {
-        auto gid = r.first;
-        if (gid >= m_lower && gid < m_upper) {  // if own
-          m_rhsimport[ chgid ].push_back( gid );
-          m_rhs[gid] += r.second;
+      for (std::size_t i=0; i<gid.size(); ++i)
+        if (gid[i] >= m_lower && gid[i] < m_upper) {  // if own
+          m_rhsimport[ chgid ].push_back( gid[i] );
+          m_rhs[ gid[i] ] += rhs[i];
         } else {
-          exp[ pe(gid) ][ gid ] = r.second;
+          exp[ pe(gid[i]) ][ gid[i] ] = rhs[i];
         }
-      }
       // Export non-owned vector values to fellow branches that own them
       for (const auto& p : exp) {
         auto tope = static_cast< int >( p.first );
@@ -368,14 +386,6 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
     std::vector< tk::real > m_hypreSol;
     //! Global->local row id map for sending back solution vector parts
     std::map< std::size_t, std::size_t > m_lid;
-    //! Time stamps
-    std::vector< std::pair< std::string, tk::real > > m_timestamp;
-    //! Timer labels
-    enum class TimerTag { LHS, RHS, SOL };
-    //! Timers
-    std::map< TimerTag, tk::Timer > m_timer;
-    //! Performance statistics
-    std::vector< std::pair< std::string, tk::real > > m_perfstat;
     //! \brief PEs associated to lower and upper global row indices
     //! \details These are the divisions at which the linear system is divided
     //!   along PE boundaries.
@@ -390,7 +400,6 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
     //! \brief Create linear system, i.e., left-hand side matrix, vector of
     //!   unknowns, right-hand side vector, solver perform their initialization
     void create() {
-      tk::Timer t;
       // Create my PE's lhs matrix distributed across all PEs
       m_A.create( m_lower, m_upper );
       // Create my PE's rhs and unknown vectors distributed across all PEs
@@ -398,7 +407,6 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       m_x.create( m_lower, m_upper );
       // Create linear solver
       m_solver.create();
-      m_timestamp.emplace_back( "Create distributed linear system", t.dsec() );
     }
 
     //! Return processing element for global mesh row id
@@ -463,7 +471,6 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
 
     //! Build Hypre data for our portion of the solution vector
     void hypresol() {
-      tk::Timer t;
       Assert( solcomplete(),
               "Values of distributed solution vector on PE " +
               std::to_string( CkMyPe() ) + " is incomplete" );
@@ -472,15 +479,12 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
         m_lid[ r.first ] = i++;
         m_hypreSol.push_back( r.second );
       }
-      m_timestamp.emplace_back( "Build Hypre data for solution vector",
-                                t.dsec() );
       trigger_hypresol_complete();
     }
     //! Build Hypre data for our portion of the matrix
     //! \note Hypre only likes one-based indexing. Zero-based row indexing fails
     //!   to update the vector with HYPRE_IJVectorGetValues().
     void hyprelhs() {
-      tk::Timer t;
       Assert( lhscomplete(),
               "Nonzero values of distributed matrix on PE " +
               std::to_string( CkMyPe() ) + " is incomplete" );
@@ -494,23 +498,19 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
            m_hypreMat.push_back( c.second );
         }
       }
-      m_timestamp.emplace_back( "Build Hypre data for lhs matrix", t.dsec() );
       trigger_hyprelhs_complete();
     }
     //! Build Hypre data for our portion of the right-hand side vector
     void hyprerhs() {
-      tk::Timer t;
       Assert( rhscomplete(),
               "Values of distributed right-hand-side vector on PE " +
               std::to_string( CkMyPe() ) + " is incomplete" );
       for (const auto& r : m_rhs) m_hypreRhs.push_back( r.second );
-      m_timestamp.emplace_back( "Build Hypre data for rhs vector", t.dsec() );
       trigger_hyprerhs_complete();
     }
 
     //! Set our portion of values of the distributed solution vector
     void sol() {
-      tk::Timer t;
       Assert( m_hypreSol.size() == m_hypreRows.size(),
               "Solution vector values incomplete on " +
               std::to_string(CkMyPe()) );
@@ -518,12 +518,10 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       m_x.set( static_cast< int >( m_upper - m_lower ),
                m_hypreRows.data(),
                m_hypreSol.data() );
-      m_timestamp.emplace_back( "Fill solution vector", t.dsec() );
       trigger_fillsol_complete();
     }
     //! Set our portion of values of the distributed matrix
     void lhs() {
-      tk::Timer t;
       Assert( m_hypreMat.size() == m_hypreCols.size(),
               "Matrix values incomplete on " + std::to_string(CkMyPe()) );
       // Set our portion of the matrix values
@@ -532,41 +530,32 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
                m_hypreRows.data(),
                m_hypreCols.data(),
                m_hypreMat.data() );
-      m_timestamp.emplace_back( "Fill left-hand side matrix", t.dsec() );
       trigger_filllhs_complete();
     }
     //! Set our portion of values of the distributed right-hand side vector
     void rhs() {
-      tk::Timer t;
       Assert( m_hypreRhs.size() == m_hypreRows.size(),
               "RHS vector values incomplete on " + std::to_string(CkMyPe()) );
       // Set our portion of the vector values
       m_b.set( static_cast< int >( m_upper - m_lower  ),
                m_hypreRows.data(),
                m_hypreRhs.data() );
-      m_timestamp.emplace_back( "Fill right-hand side vector", t.dsec() );
       trigger_fillrhs_complete();
     }
 
     //! Assemble distributed solution vector
     void assemblesol() {
-      tk::Timer t;
       m_x.assemble();
-      m_timestamp.emplace_back( "Assemble solution vector", t.dsec() );
       trigger_asmsol_complete();
     }
     //! Assemble distributed matrix
     void assemblelhs() {
-      tk::Timer t;
       m_A.assemble();
-      m_timestamp.emplace_back( "Assemble left-hand side matrix", t.dsec() );
       trigger_asmlhs_complete();
     }
     //! Assemble distributed right-hand side vector
     void assemblerhs() {
-      tk::Timer t;
       m_b.assemble();
-      m_timestamp.emplace_back( "Assemble right-hand side vector", t.dsec() );
       trigger_asmrhs_complete();
     }
 
@@ -576,44 +565,30 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       m_x.get( static_cast< int >( m_upper - m_lower ),
                m_hypreRows.data(),
                m_hypreSol.data() );
-
       // Group solution vector by workers and send each the parts back to
       // workers that own them
       for (const auto& w : m_solimport) {
-        std::map< std::size_t, tk::real > sol;
+        std::vector< std::size_t > gid;
+        std::vector< tk::real > sol;
         for (auto r : w.second) {
           const auto it = m_sol.find( r );
-          if (it != end(m_sol))
-            sol.emplace( it->first, m_hypreSol[tk::val_find(m_lid,it->first)] );
-          else
+          if (it != end(m_sol)) {
+            gid.push_back( it->first );
+            sol.push_back( m_hypreSol[ tk::val_find( m_lid, it->first ) ] );
+          } else
             Throw( "Can't find global row id " + std::to_string(r) +
                    " to export in solution vector" );
         }
         // Find pair of local chare id and proxy of worker chare to update
         const auto& ch = tk::ref_find( m_worker, w.first );
-        ch.first[ ch.second ].updateSolution( sol );
+        ch.first[ ch.second ].updateSolution( gid, sol );
       }
     }
 
     //! Solve linear system
     void solve() {
-      tk::Timer t;
-      //m_A.print( "hypre_mat" );
-      //m_b.print( "hypre_b" );
-      //m_x.print( "hypre_x" );
       m_solver.solve( m_A, m_b, m_x );
-      m_timestamp.emplace_back( "Solve linear system", t.dsec() );
-      //m_x.print( "hypre_sol" );
       updateSolution();
-    }
-
-    //! Send timers and performance statistics to host for collection
-    void sendTimers() {
-       m_host.grpTimestamp( m_timestamp );
-       m_host.grpPerfstat( m_perfstat );
-       m_timestamp.clear();
-       m_perfstat.clear();
-       m_timer.clear();
     }
 
     /** @name Host signal calls
@@ -675,7 +650,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
     ///@{
     //! \brief Signal back to host that enabling the SDAG waits for assembling
     //!    the right-hand side is complete and ready for a new advance in time
-    void signal2host_wait4rhs_complete( const inciter::CProxy_Conductor& host ) {
+    void signal2host_advance( const inciter::CProxy_Conductor& host ) {
       using inciter::CkIndex_Conductor;
       Group::contribute(
         CkCallback( CkIndex_Conductor::redn_wrapper_advance(NULL), host )

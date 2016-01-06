@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/conductor.ci
   \author    J. Bakosi
-  \date      Tue 22 Dec 2015 10:08:33 PM MST
+  \date      Wed 06 Jan 2016 09:47:50 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Charm++ module interface file for Conductor
   \details   Charm++ module interface file for Conductor
@@ -40,15 +40,6 @@ module conductor {
       entry [reductiontarget] void evaluateTime();
       entry [reductiontarget] void advance();
       entry [reductiontarget] void finish();
-      entry void arrTimestamp(
-        const std::vector< std::pair< std::string, tk::real > >& stamp );
-      entry void grpTimestamp(
-        const std::vector< std::pair< std::string, tk::real > >& stamp );
-      entry void arrPerfstat(
-        const std::vector< std::pair< std::string, tk::real > >& p );
-      entry void grpPerfstat(
-        const std::vector< std::pair< std::string, tk::real > >& p );
-
 
       // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
       // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
