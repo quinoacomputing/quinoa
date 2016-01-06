@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.C
   \author    J. Bakosi
-  \date      Wed 06 Jan 2016 09:46:57 AM MST
+  \date      Wed 06 Jan 2016 02:06:01 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Performer advances a PDE
   \details   Performer advances a PDE. There are a potentially
@@ -101,6 +101,9 @@ Performer::setupIds( const std::vector< std::size_t >& gelem )
 
   // Send off number of columns per row to linear system merger
   m_linsysmerger.ckLocalBranch()->charerow( thisProxy, m_id, thisIndex, m_gid );
+
+  // Associate local node IDs to global ones
+  for (std::size_t i=0; i<m_gid.size(); ++i) m_lid[ m_gid[i] ] = i;
 }
 
 void
@@ -469,13 +472,8 @@ Performer::updateSolution( const std::vector< std::size_t >& gid,
           "Size of solution and row ID vectors must equal" );
 
   // Receive update of solution vector
-  for (std::size_t i=0; i<gid.size(); ++i) {
-    auto it = std::find( cbegin(m_gid), cend(m_gid), gid[i] );
-    if (it != cend(m_gid)) {
-      auto p = static_cast< std::size_t >( std::distance( cbegin(m_gid), it ) );
-      m_un[ p ] = sol[i];
-    } else Throw( "Cannot find global node ID for solution received" );
-  }
+  for (std::size_t i=0; i<gid.size(); ++i)
+    m_un[ tk::val_find(m_lid,gid[i]) ] = sol[i];
 
   // Count number of solution nodes updated
   m_nsol += gid.size();
