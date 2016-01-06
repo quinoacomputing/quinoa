@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Conductor.h
   \author    J. Bakosi
-  \date      Tue 22 Dec 2015 10:14:21 PM MST
+  \date      Wed 06 Jan 2016 10:07:17 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Conductor drives the time integration of a PDE
   \details   Conductor drives the time integration of a PDE
@@ -113,30 +113,6 @@ class Conductor : public CBase_Conductor {
     //! Normal finish of time stepping
     void finish();
 
-    //! Collect vector of time stamps from (Performer) chare array
-    //! \param[in] stamp Vector of time stamps contributed    
-    void arrTimestamp(
-      const std::vector< std::pair< std::string, tk::real > >& stamp )
-    { timestamp( stamp, m_arrTimestamp, m_arrTimestampCnt, m_nchare ); }
-
-    //! Collect vector of time stamps from (LinSysMerger) chare group branches
-    //! \param[in] stamp Vector of time stamps contributed
-    void grpTimestamp(
-      const std::vector< std::pair< std::string, tk::real > >& stamp )
-    { timestamp( stamp, m_grpTimestamp, m_grpTimestampCnt, CkNumPes() ); }
-
-    //! Collect performance statistics from (Performer) chare array elements
-    //! \param[in] p Vector of performance statistics contributed    
-    void arrPerfstat(
-      const std::vector< std::pair< std::string, tk::real > >& p )
-    { perfstat( p, m_arrPerfstat, m_arrPerfstatCnt, m_nchare ); }
-
-    //! Collect performance statistics from (LinSysMerger) chare group branches
-    //! \param[in] p Vector of performance statistics contributed
-    void grpPerfstat(
-      const std::vector< std::pair< std::string, tk::real > >& p )
-    { perfstat( p, m_grpPerfstat, m_grpPerfstatCnt, CkNumPes() ); }
-
   private:
     using PartitionerProxy = CProxy_Partitioner< CProxy_Conductor >;
     using LinSysMergerProxy = tk::CProxy_LinSysMerger< CProxy_Conductor,
@@ -157,8 +133,6 @@ class Conductor : public CBase_Conductor {
     uint8_t m_stage;                    //!< Stage in multi-stage time stepping
     int m_arrTimestampCnt;              //!< Time stamp chare array counter
     int m_grpTimestampCnt;              //!< Time stamp chare group counter
-    int m_arrPerfstatCnt;               //!< Perfstat chare array counter
-    int m_grpPerfstatCnt;               //!< Perfstat chare group counter
     PartitionerProxy m_partitioner;     //!< Partitioner group
     SpawnerProxy m_spawner;             //!< Spawner group
     LinSysMergerProxy m_linsysmerger;   //!< Linear system merger chare group
@@ -201,16 +175,7 @@ class Conductor : public CBase_Conductor {
     std::map< std::string, std::vector< tk::real > > m_arrTimestamp;
     //! Time stamps merged from chare group elements
     std::map< std::string, std::vector< tk::real > > m_grpTimestamp;
-    //! Performance statistics merged from chare array elements
-    std::map< std::string, std::vector< tk::real > > m_arrPerfstat;
-    //! Performance statistics merged from chare group elements
-    std::map< std::string, std::vector< tk::real > > m_grpPerfstat;
-    //! Timer labels
-    enum class TimerTag { MESH,
-                          CREATE,
-                          SETUP,
-                          INITIALIZE,
-                          TIMESTEP };
+    enum class TimerTag { TIMESTEP };
     //! Timers
     std::map< TimerTag, tk::Timer > m_timer;
 
@@ -249,22 +214,6 @@ class Conductor : public CBase_Conductor {
 
     //! Print out one-liner report on time step
     void report();
-
-    //! Send collected timer and performance data to host
-    void finalReport();
-
-    //! Collect and compute averages of time stamps contributed by chares
-    void timestamp(
-      const std::vector< std::pair< std::string, tk::real > >& stamp,
-      std::map< std::string, std::vector< tk::real > >& map,
-      int& counter,
-      int max );
-
-    //! Collect and compute performance statistics contributed by chares
-    void perfstat( const std::vector< std::pair< std::string, tk::real > >& p,
-                   std::map< std::string, std::vector< tk::real > >& map,
-                   int& counter,
-                   int max );
 };
 
 } // inciter::

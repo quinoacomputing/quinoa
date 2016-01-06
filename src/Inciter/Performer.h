@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.h
   \author    J. Bakosi
-  \date      Tue 05 Jan 2016 09:29:34 AM MST
+  \date      Wed 06 Jan 2016 09:45:35 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Performer advances a PDE
   \details   Performer advances a PDE. There are a potentially
@@ -23,7 +23,6 @@
 #include <cmath>
 
 #include "Types.h"
-#include "Timer.h"
 #include "LinSysMerger.h"
 #include "Inciter/InputDeck/InputDeck.h"
 
@@ -101,15 +100,12 @@ class Performer : public CBase_Performer {
     std::array< std::vector< tk::real >, 3 > m_coord;
     //! Unknown/solution vector: global mesh point row ids and values
     std::vector< tk::real > m_u, m_uf, m_un;
-    //! Time stamps
-    std::vector< std::pair< std::string, tk::real > > m_timestamp;
-    std::vector< tk::Timer > m_timer;   //!< Timers
 
     //! Initialize local->global, global->local node ids, element connectivity
     void setupIds( const std::vector< std::size_t >& gelem );
 
     //! Read coordinates of mesh nodes given
-    void setupCoords();
+    void readCoords();
 
     //! Set initial conditions
     void ic();

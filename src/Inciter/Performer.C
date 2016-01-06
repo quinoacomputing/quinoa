@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.C
   \author    J. Bakosi
-  \date      Tue 05 Jan 2016 09:38:54 AM MST
+  \date      Wed 06 Jan 2016 09:46:57 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Performer advances a PDE
   \details   Performer advances a PDE. There are a potentially
@@ -81,7 +81,7 @@ Performer::setup()
   // Initialize local->global, global->local node ids, element connectivity
   setupIds( m_conn );
   // Read coordinates of owned and received mesh nodes
-  setupCoords();
+  readCoords();
   // Output chare mesh to file
   writeMesh();
   // Output mesh-based fields metadata to file
@@ -96,16 +96,11 @@ Performer::setupIds( const std::vector< std::size_t >& gelem )
 //! \author J. Bakosi
 //******************************************************************************
 {
-  tk::Timer t;
-
   // Generate connectivity graph storing local node ids
   std::tie( m_inpoel, m_gid ) = tk::global2local( gelem );
 
   // Send off number of columns per row to linear system merger
   m_linsysmerger.ckLocalBranch()->charerow( thisProxy, m_id, thisIndex, m_gid );
-
-  m_timestamp.emplace_back( "Initialize mesh point ids, element connectivity",
-                            t.dsec() );
 }
 
 void
@@ -127,8 +122,6 @@ Performer::init( tk::real dt )
   lhs();
   // Start advancing PDE in time at time step stage 0
   advance( 0, dt, m_it, m_t );
-  // Send time stamps to host
-  m_conductor.arrTimestamp( m_timestamp );
 }
 
 void
@@ -159,8 +152,6 @@ Performer::lhs()
 //! \author J. Bakosi
 //******************************************************************************
 {
-  tk::Timer t;
-
   // Generate points surrounding points
   const auto psup = tk::genPsup( m_inpoel, 4, tk::genEsup(m_inpoel,4) );
 
@@ -223,8 +214,6 @@ Performer::lhs()
     lhso[ spidx(d,c) ] += J;
   }
 
-  m_timestamp.emplace_back( "Compute left-hand side matrix", t.dsec() );
-
   m_linsysmerger.ckLocalBranch()->charelhs( m_id, m_gid, psup, lhsd, lhso );
 }
 
@@ -243,8 +232,6 @@ Performer::rhs( tk::real mult,
 //! \author J. Bakosi
 //******************************************************************************
 {
-  tk::Timer t;
-
   const auto& x = m_coord[0];
   const auto& y = m_coord[1];
   const auto& z = m_coord[2];
@@ -320,20 +307,16 @@ Performer::rhs( tk::real mult,
           *r[i] -= mult * dt * D * J/6.0 * grad[i][k] * grad[j][k] * s[j];
   }
 
-  m_timestamp.emplace_back( "Compute right-hand side vector", t.dsec() );
-
   m_linsysmerger.ckLocalBranch()->charerhs( m_id, m_gid, rhs );
 }
 
 void
-Performer::setupCoords()
+Performer::readCoords()
 //******************************************************************************
 //  Read coordinates of mesh nodes from file
 //! \author J. Bakosi
 //******************************************************************************
 {
-  tk::Timer t;
-
   tk::ExodusIIMeshReader
     er( g_inputdeck.get< tag::cmd, tag::io, tag::input >() );
 
@@ -341,8 +324,6 @@ Performer::setupCoords()
   auto& y = m_coord[1];
   auto& z = m_coord[2];
   for (auto p : m_gid) er.readNode( tk::val_find(m_cid,p), x, y, z );
-
-  m_timestamp.emplace_back( "Read mesh point coordinates from file", t.dsec() );
 }
 
 void
@@ -352,8 +333,6 @@ Performer::writeMesh()
 //! \author J. Bakosi
 //******************************************************************************
 {
-  tk::Timer t;
-
   // Create mesh object initializing element connectivity and point coords
   tk::UnsMesh mesh( m_inpoel, m_coord );
 
@@ -365,8 +344,6 @@ Performer::writeMesh()
 
   // Write chare mesh
   ew.writeMesh( mesh );
-
-  m_timestamp.emplace_back( "Write chare mesh to file", t.dsec() );
 }
 
 void
@@ -426,8 +403,6 @@ Performer::writeFields( tk::real time )
 //! \author J. Bakosi
 //******************************************************************************
 {
-  tk::Timer t;
-
   // Increase field output iteration count
   ++m_itf;
 
@@ -448,8 +423,6 @@ Performer::writeFields( tk::real time )
   for (std::size_t i=0; i<m_gid.size(); ++i)
     m_un[i] = ansol_shear( i, time );
   writeSolution( ew, m_itf, 2, m_un );
-
-  m_timestamp.emplace_back( "Write mesh-based fields to file", t.dsec() );
 }
 
 void
