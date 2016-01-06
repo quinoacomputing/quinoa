@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Inciter.C
   \author    J. Bakosi
-  \date      Fri 11 Dec 2015 12:40:25 PM MST
+  \date      Wed 06 Jan 2016 09:49:05 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Inciter, computational shock hydrodynamics tool, Charm++ main
     chare.
@@ -130,33 +130,12 @@ class Main : public CBase_Main {
         if (!m_timer.empty()) {
           m_timestamp.emplace_back( "Total runtime", m_timer[0].hms() );
           m_print.time( "Timers (h:m:s)", m_timestamp );
-          m_print.perf( "Performance statistics", m_perf );
           m_print.endpart();
         }
       } catch (...) { tk::processExceptionCharm(); }
       // Tell the Charm++ runtime system to exit
       CkExit();
     }
-
-    //! Add a time stamp contributing to final timers output
-    void timestamp( std::string label, tk::real stamp ) {
-      try {
-        m_timestamp.emplace_back( label, tk::hms( stamp ) );
-      } catch (...) { tk::processExceptionCharm(); }
-    }
-    //! Add multiple time stamps contributing to final timers output
-    void timestamp( const std::vector< std::pair< std::string, tk::real > >& s )
-    { for (const auto& t : s) timestamp( t.first, t.second ); }
-
-    //! Add a performance statistic contributing to final perfstat output
-    void perfstat( std::string label, tk::real value ) {
-      try {
-        m_perf.emplace_back( label, value );
-      } catch (...) { tk::processExceptionCharm(); }
-    }
-    //! Add multiple performance statistics contributing to final perf output
-    void perfstat( const std::vector< std::pair< std::string, tk::real > >& p )
-    { for (const auto& s : p) perfstat( s.first, s.second ); }
 
   private:
     inciter::ctr::CmdLine m_cmdline;            //!< Command line
@@ -167,9 +146,6 @@ class Main : public CBase_Main {
 
     //! Time stamps in h:m:s with labels
     std::vector< std::pair< std::string, tk::Timer::Watch > > m_timestamp;
-
-    //! Performance statistics
-    std::vector< std::pair< std::string, tk::real > > m_perf;
 };
 
 //! \brief Charm++ chare execute

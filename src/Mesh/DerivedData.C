@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/DerivedData.C
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 10:05:31 AM MDT
+  \date      Thu 31 Dec 2015 02:02:46 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Generate data structures derived from unstructured mesh
   \details   Generate data structures derived from the connectivity information
@@ -146,7 +146,7 @@ genPsup( const std::vector< std::size_t >& inpoel,
 //!   \endcode
 //!   or the length-1 of the generated index list:
 //!   \code{.cpp}
-//!     autp npoin = psup.second.size()-1;
+//!     auto npoin = psup.second.size()-1;
 //!   \endcode
 //! \note In principle, this function *should* work for any positive nnpe,
 //!   however, only nnpe = 4 (tetrahedra) and nnpe = 3 (triangles) are tested.
