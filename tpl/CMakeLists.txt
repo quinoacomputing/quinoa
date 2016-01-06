@@ -147,6 +147,11 @@ endif()
 # Set Boost's default build type
 string(TOLOWER ${CMAKE_BUILD_TYPE} BOOST_BUILD_TYPE)
 
+# Enable "--with-production" for Charm++ build for Release builds
+if(CMAKE_BUILD_TYPE MATCHES "Rel")      # Release, RelWithDebInfo, MinSizeRel
+  set(CHARM_RELEASE_BUILD "--with-production")
+endif()
+
 # Set compiler flags for use of libc++. If nothing is given, do nothing; gnu
 # and intel will use libstdc++, while clang will use libc++ by default.
 if(LIBCXX_CPP)
@@ -216,7 +221,7 @@ ExternalProject_Add(
                 ${CHARM_ARCH}
                 ${CHARM_COMPILER}
                 --build-shared
-                --with-production
+                ${CHARM_RELEASE_BUILD}
                 -j${PROCESSOR_COUNT}
                 ${CXXFLAGS}
   DOWNLOAD_COMMAND ""
