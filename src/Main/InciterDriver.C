@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/InciterDriver.C
   \author    J. Bakosi
-  \date      Tue 01 Dec 2015 09:22:59 AM MST
+  \date      Fri 08 Jan 2016 06:11:29 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Inciter driver
   \details   Inciter driver.
@@ -22,7 +22,7 @@
   #pragma GCC diagnostic ignored "-Wconversion"
 #endif
 
-#include "performer.decl.h"
+#include "conductor.decl.h"
 
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic pop
@@ -64,8 +64,6 @@ InciterDriver::execute() const
 //******************************************************************************
 {
   // Instantiate Conductor chare which drives the time-integration of a PDE via
-  // several Performer chares. Charm++ chare Conductor fires up performers.
-  // Store proxy handle in global-scope to make it available to individual
-  // Performers so they can call back to Conductor.
+  // several Performer chares.
   CProxy_Conductor::ckNew();
 }

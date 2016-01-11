@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.C
   \author    J. Bakosi
-  \date      Wed 06 Jan 2016 02:06:01 PM MST
+  \date      Mon 11 Jan 2016 08:57:20 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Performer advances a PDE
   \details   Performer advances a PDE. There are a potentially
@@ -22,9 +22,10 @@
 #include "Reorder.h"
 #include "ExodusIIMeshReader.h"
 #include "ExodusIIMeshWriter.h"
-#include "LinSysMerger.h"
 #include "Inciter/InputDeck/InputDeck.h"
 #include "DerivedData.h"
+
+#include "LinSysMerger.h"
 
 namespace inciter {
 
@@ -35,40 +36,33 @@ extern ctr::InputDeck g_inputdeck;
 using inciter::Performer;
 
 Performer::Performer(
-  int id,
-  ConductorProxy& conductor,
-  LinSysMergerProxy& linsysmerger,
-  SpawnerProxy& spawner,
+  const ConductorProxy& conductor,
+  const LinSysMergerProxy& lsm,
   const std::vector< std::size_t >& conn,
   const std::unordered_map< std::size_t, std::size_t >& cid )
 :
-  m_id( id ),
   m_it( 0 ),
   m_itf( 0 ),
   m_t( g_inputdeck.get< tag::discr, tag::t0 >() ),
   m_stage( 0 ),
   m_nsol( 0 ),
   m_conductor( conductor ),
-  m_linsysmerger( linsysmerger ),
-  m_spanwer( spawner ),
-  m_conn( conn ),
+  m_linsysmerger( lsm ),
   m_cid( cid )
 //******************************************************************************
 //  Constructor
-//! \param[in] id Charm++ global array id
-//! \param[in] host Host proxy
+//! \param[in] conductor Host (Conductor) proxy
 //! \param[in] lsm Linear system merger (LinSysMerger) proxy
 //! \param[in] conn Vector of mesh element connectivity owned (global IDs)
 //! \param[in] cid Map associating old node IDs (as in file) to new node IDs (as
 //!   in producing contiguous-row-id linear system contributions)
-//! \details Since a Performer chare array is created separately on each PE, the
-//!   chare array index, thisIndex, is a local index. The global index, unknown
-//!   to Charm, is unique across all PEs, stored in m_id.
 //! \author J. Bakosi
 //******************************************************************************
 {
   // Register ourselves with the linear system merger
   m_linsysmerger.ckLocalBranch()->checkin();
+  // Generate connectivity graph storing local node ids
+  std::tie( m_inpoel, m_gid ) = tk::global2local( conn );
 }
 
 void
@@ -78,8 +72,8 @@ Performer::setup()
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // Initialize local->global, global->local node ids, element connectivity
-  setupIds( m_conn );
+  // Send off global row IDs to linear system merger, setup global->local IDs
+  setupIds();
   // Read coordinates of owned and received mesh nodes
   readCoords();
   // Output chare mesh to file
@@ -89,19 +83,14 @@ Performer::setup()
 }
 
 void
-Performer::setupIds( const std::vector< std::size_t >& gelem )
+Performer::setupIds()
 //******************************************************************************
-//! Initialize local->global, global->local node ids, element connectivity
-//! \param[in] gelem Set of unique owned global ids
+// Send off global row IDs to linear system merger, setup global->local IDs
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // Generate connectivity graph storing local node ids
-  std::tie( m_inpoel, m_gid ) = tk::global2local( gelem );
-
-  // Send off number of columns per row to linear system merger
-  m_linsysmerger.ckLocalBranch()->charerow( thisProxy, m_id, thisIndex, m_gid );
-
+  // Send off global row IDs to linear system merger
+  m_linsysmerger.ckLocalBranch()->charerow( thisIndex, m_gid );
   // Associate local node IDs to global ones
   for (std::size_t i=0; i<m_gid.size(); ++i) m_lid[ m_gid[i] ] = i;
 }
@@ -145,7 +134,7 @@ Performer::ic()
   // Output initial conditions to file (it = 1, time = 0.0)
   writeFields( m_t );
 
-  m_linsysmerger.ckLocalBranch()->charesol( m_id, m_gid, m_u );
+  m_linsysmerger.ckLocalBranch()->charesol( thisIndex, m_gid, m_u );
 }
 
 void
@@ -217,7 +206,8 @@ Performer::lhs()
     lhso[ spidx(d,c) ] += J;
   }
 
-  m_linsysmerger.ckLocalBranch()->charelhs( m_id, m_gid, psup, lhsd, lhso );
+  m_linsysmerger.ckLocalBranch()->charelhs( thisIndex, m_gid, psup, lhsd,
+                                            lhso );
 }
 
 void
@@ -310,7 +300,7 @@ Performer::rhs( tk::real mult,
           *r[i] -= mult * dt * D * J/6.0 * grad[i][k] * grad[j][k] * s[j];
   }
 
-  m_linsysmerger.ckLocalBranch()->charerhs( m_id, m_gid, rhs );
+  m_linsysmerger.ckLocalBranch()->charerhs( thisIndex, m_gid, rhs );
 }
 
 void
@@ -342,7 +332,7 @@ Performer::writeMesh()
   // Create ExodusII writer
   tk::ExodusIIMeshWriter
     ew( g_inputdeck.get< tag::cmd, tag::io, tag::output >() + "_" +
-          std::to_string( m_id ),
+          std::to_string( thisIndex ),
         tk::ExoWriter::CREATE );
 
   // Write chare mesh
@@ -360,7 +350,8 @@ Performer::writeChareId( const tk::ExodusIIMeshWriter& ew,
 //******************************************************************************
 {
   // Write elem chare id field to mesh
-  std::vector< tk::real > chid( m_inpoel.size()/4, static_cast<tk::real>(m_id) );
+  std::vector< tk::real > chid( m_inpoel.size()/4,
+                                static_cast<tk::real>(thisIndex) );
   ew.writeElemScalar( it, 1, chid );
 }
 
@@ -391,7 +382,7 @@ Performer::writeMeta() const
   // Create ExodusII writer
   tk::ExodusIIMeshWriter
     ew( g_inputdeck.get< tag::cmd, tag::io, tag::output >() + "_" +
-          std::to_string( m_id ),
+          std::to_string( thisIndex ),
         tk::ExoWriter::OPEN );
 
   ew.writeElemVarNames( { "Chare Id" } );
@@ -412,7 +403,7 @@ Performer::writeFields( tk::real time )
   // Create ExodusII writer
   tk::ExodusIIMeshWriter
     ew( g_inputdeck.get< tag::cmd, tag::io, tag::output >() + "_" +
-          std::to_string( m_id ),
+          std::to_string( thisIndex ),
         tk::ExoWriter::OPEN );
 
   // Write time stamp

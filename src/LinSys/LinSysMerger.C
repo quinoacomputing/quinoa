@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/LinSysMerger.C
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:12:28 PM MDT
+  \date      Fri 08 Jan 2016 06:10:42 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Linear system merger
   \details   Linear system merger.
@@ -10,6 +10,17 @@
 //******************************************************************************
 
 #include "LinSysMerger.h"
+
+#if defined(__clang__) || defined(__GNUC__)
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wconversion"
+#endif
+
+#include "performer.decl.h"
+
+#if defined(__clang__) || defined(__GNUC__)
+  #pragma GCC diagnostic pop
+#endif
 
 // Some compilers (e.g., GNU and Intel) do not find some of the SDAG code
 // generated for Charm++ entry methods defined entirely inside .ci files, such

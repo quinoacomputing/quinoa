@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.h
   \author    J. Bakosi
-  \date      Wed 06 Jan 2016 11:35:49 AM MST
+  \date      Sun 10 Jan 2016 12:39:26 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Performer advances a PDE
   \details   Performer advances a PDE. There are a potentially
@@ -24,7 +24,6 @@
 #include <unordered_map>
 
 #include "Types.h"
-#include "LinSysMerger.h"
 #include "Inciter/InputDeck/InputDeck.h"
 
 #if defined(__clang__) || defined(__GNUC__)
@@ -32,7 +31,9 @@
   #pragma GCC diagnostic ignored "-Wconversion"
 #endif
 
-#include "inciter.decl.h"
+#include "conductor.decl.h"
+#include "performer.decl.h"
+#include "linsysmerger.decl.h"
 
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic pop
@@ -49,19 +50,13 @@ class Performer : public CBase_Performer {
 
   private:
     using ConductorProxy = CProxy_Conductor;
-    using LinSysMergerProxy =
-      tk::CProxy_LinSysMerger< CProxy_Conductor, CProxy_Performer >;
-    using SpawnerProxy = CProxy_Spawner< CProxy_Conductor,
-                                         CProxy_Performer,
-                                         LinSysMergerProxy >;
-
+    using LinSysMergerProxy = tk::CProxy_LinSysMerger< CProxy_Conductor,
+                                                       CProxy_Performer >;
   public:
     //! Constructor
     explicit
-      Performer( int id,
-                 ConductorProxy& conductor,
-                 LinSysMergerProxy& linsysmerger,
-                 SpawnerProxy& spawner,
+      Performer( const CProxy_Conductor& conductor,
+                 const LinSysMergerProxy& lsm,
                  const std::vector< std::size_t >& conn,
                  const std::unordered_map< std::size_t, std::size_t >& cid );
 
@@ -82,16 +77,13 @@ class Performer : public CBase_Performer {
     void advance( uint8_t stage, tk::real dt, uint64_t it, tk::real t );
 
   private:
-    int m_id;                           //!< Charm++ global array id
     uint64_t m_it;                      //!< Iteration count
     uint64_t m_itf;                     //!< Field output iteration count
     tk::real m_t;                       //!< Physical time
     uint8_t m_stage;                    //!< Stage in multi-stage time stepping
     std::size_t m_nsol;                 //!< Counter for solution nodes updated
-    CProxy_Conductor m_conductor;       //!< Conductor proxy
+    ConductorProxy m_conductor;         //!< Conductor proxy
     LinSysMergerProxy m_linsysmerger;   //!< Linear system merger proxy
-    SpawnerProxy m_spanwer;             //!< Spawner proxy
-    std::vector< std::size_t > m_conn;  //!< Element connectivity (global IDs)
     //! \brief Map associating old node IDs (as in file) to new node IDs (as in
     //!   producing contiguous-row-id linear system contributions)
     std::unordered_map< std::size_t, std::size_t > m_cid;
@@ -104,8 +96,8 @@ class Performer : public CBase_Performer {
     //! Unknown/solution vector: global mesh point row ids and values
     std::vector< tk::real > m_u, m_uf, m_un;
 
-    //! Initialize local->global, global->local node ids, element connectivity
-    void setupIds( const std::vector< std::size_t >& gelem );
+    //! Send off global row IDs to linear system merger, setup global->local IDs
+    void setupIds();
 
     //! Read coordinates of mesh nodes given
     void readCoords();

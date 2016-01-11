@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/linsysmerger.ci
   \author    J. Bakosi
-  \date      Wed 06 Jan 2016 09:54:51 AM MST
+  \date      Fri 08 Jan 2016 01:04:15 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Charm++ module interface file for merging a linear system
   \details   Charm++ module interface file for merging a linear system
@@ -13,14 +13,7 @@ module linsysmerger {
 
   extern module conductor;
 
-  include "Types.h";
-
   namespace tk {
-
-    // LinSysMerger is templated so that the same code (parameterized by the
-    // type given by the template arguments, HostProxy and WorkerProxy) can be
-    // generated for different types of proxies. All possible specializations
-    // must be listed below to ensure that Charm++ generates corect code.
 
     // List all possible specializations of templated chare to instantiate
     // registration and delivery of code for the individual specializations
@@ -28,24 +21,26 @@ module linsysmerger {
     // Will specialize linear system merger for inciter's Conductor & Performer
     chare LinSysMerger< inciter::CProxy_Conductor, inciter::CProxy_Performer >;
 
+    // LinSysMerger is templated so that the same code (parameterized by the
+    // type given by the template arguments, HostProxy and WorkerProxy) can be
+    // generated for different types of proxies. Howver, all possible
+    // specializations must be listed above to ensure that Charm++ generates
+    // correct code.
     template< class HostProxy, class WorkerProxy >
     group LinSysMerger {
-      entry LinSysMerger(
-        HostProxy& host,
-        const std::map< int, std::pair< std::size_t, std::size_t > >& div );
+      entry LinSysMerger( const HostProxy& host, const WorkerProxy& worker );
+      entry void bounds( int pe, std::size_t lower, std::size_t upper );
       entry void enable_wait4rhs();
-      entry void addrow( WorkerProxy fromworker,
-                         int chgid,
-                         int chlid,
+      entry void addrow( int fromch,
                          int frompe,
                          const std::set< std::size_t >& row );
       entry void recrow();
-      entry void addsol( int chgid,
+      entry void addsol( int fromch,
                          const std::map< std::size_t, tk::real >& sol );
-      entry void addlhs( int chgid,
+      entry void addlhs( int fromch,
                          const std::map< std::size_t,
                                      std::map< std::size_t, tk::real > >& lhs );
-      entry void addrhs( int chgid,
+      entry void addrhs( int fromch,
                          const std::map< std::size_t, tk::real >& rhs );
       entry void rowsreceived();
 
@@ -92,9 +87,7 @@ module linsysmerger {
         when trigger_asmsol_complete(),
              trigger_asmlhs_complete(),
              trigger_asmrhs_complete()
-        serial {
-          solve();
-        }
+        serial { solve(); }
       };
 
       entry void trigger_lhs_complete();
