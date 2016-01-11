@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/partitioner.ci
   \author    J. Bakosi
-  \date      Tue 22 Dec 2015 10:01:41 PM MST
+  \date      Mon 11 Jan 2016 09:07:00 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Charm++ module interface file for the chare partitioner group
   \details   Charm++ module interface file for the chare partitioner group used
@@ -12,24 +12,18 @@
 
 module partitioner {
 
-  extern module conductor;
-
   namespace inciter {
 
-    // Partitioner is templated so that the same code (parameterized by the type
-    // given by the template arguments, HostProxy) can be generated for
-    // different types of proxies. All possible specializations must be listed
-    // below to ensure that Charm++ generates corect code.
+    chare Partitioner< CProxy_Conductor,
+                       CProxy_Performer,
+                       tk::CProxy_LinSysMerger< CProxy_Conductor,
+                                                CProxy_Performer > >;
 
-    // List all possible specializations of templated chare to instantiate
-    // registration and delivery of code for the individual specializations
-
-    // Will specialize partitioner for inciter's Conductor
-    chare Partitioner< CProxy_Conductor >;
-
-    template< class HostProxy >
+    template< class HostProxy, class WorkerProxy, class LinSysMergerProxy >
     group Partitioner {
-      entry Partitioner( HostProxy& host );
+      entry Partitioner( const HostProxy& host,
+                         const WorkerProxy& worker,
+                         const LinSysMergerProxy& lsm );
       entry void partition( int nchare );
       entry void add( int frompe,
             const std::unordered_map< int, std::vector< std::size_t > >& elem );
@@ -41,7 +35,8 @@ module partitioner {
       entry void request( int pe, const std::set< std::size_t >& id );
       entry void neworder(
                    const std::unordered_map< std::size_t, std::size_t >& id );
-      entry void cost( std::size_t lower, std::size_t upper );
+      entry void lower( std::size_t low );
+      entry void stdCost( tk::real av );
 
       // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
       // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
@@ -55,6 +50,11 @@ module partitioner {
       // Own --  Pre                            Pre - Start preparing nodes IDs
       //       /
       // Req --
+      //
+      //
+      // Low -- Cre                             Low - Lower bound received
+      //       /                                Upp - Upper bound computed
+      // Upp --                                 Cre - Create workers
       //
       // Interpretation of the above DAG
       // -------------------------------
@@ -86,17 +86,36 @@ module partitioner {
       // system calls prepare(), we fullfill all requests, clear the queue, and
       // automatically re-enable the trigger for Own, i.e., wait only for Req,
       // i.e., new requests.
+      //
+      // The second graph, independent of the first one, is done later in time,
+      // after the mesh reordering has been completed and started by a call to
+      // bounds() inside reordered(). First the upper bounds of the node IDs
+      // are computed on each PE, and once that's done the lower bounds are
+      // communicated among the fellow Partitioner branches, since the lower
+      // bound of PE n is the upper bound of PE n-1. Only when both upper and
+      // lower bounds have been stored on a PE, can Performer chare array
+      // elements be inserted, done in create(). Initiation of estimating the
+      // average and standard deviation of the communication cost of merging
+      // the linear system is done in the beginning of create(), which starts
+      // two reductions, which must be done after each other: the first one
+      // accumulates the sum of the cost from each PE, and once the average is
+      // available on Conductor, a second round accumulates the variances back
+      // to Conductor.
 
       entry void wait4prep() {
-        when trigger_reorderowned_complete(),
-             trigger_nodes_requested()
-        serial {
-          prepare();
-        }
+        when trigger_reorderowned_complete(), trigger_nodes_requested()
+        serial { prepare(); }
+      };
+
+      entry void wait4bounds() {
+        when trigger_lower(), trigger_upper()
+        serial { create(); }
       };
 
       entry void trigger_reorderowned_complete();
       entry void trigger_nodes_requested();
+      entry void trigger_lower();
+      entry void trigger_upper();
     };
 
   } // inciter::

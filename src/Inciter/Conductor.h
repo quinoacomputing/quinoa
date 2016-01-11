@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Conductor.h
   \author    J. Bakosi
-  \date      Wed 06 Jan 2016 10:07:17 AM MST
+  \date      Mon 11 Jan 2016 11:37:21 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Conductor drives the time integration of a PDE
   \details   Conductor drives the time integration of a PDE
@@ -25,14 +25,15 @@
 #include "Types.h"
 #include "InciterPrint.h"
 #include "Partitioner.h"
-#include "Performer.h"
 
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wconversion"
 #endif
 
+#include "linsysmerger.decl.h"
 #include "conductor.decl.h"
+#include "performer.decl.h"
 
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic pop
@@ -74,26 +75,16 @@ class Conductor : public CBase_Conductor {
     //!   for a new order
     void flattened() { trigger_flatten_complete(); }
 
-    //! \brief Charm++ entry method inidicating that all Partitioner chare
-    //!  groups have finished preparing the computational mesh
-    void prepared(
-      int pe,
-      const std::unordered_map< int, std::vector< std::size_t > >& conn,
-      const std::unordered_map< int,
-              std::unordered_map< std::size_t, std::size_t > >& chcid );
+    //! \brief Reduction target estimating the average communication cost of
+    //!   merging the linear system
+    void aveCost( tk::real c );
 
-    //! Start a round of estimation by querying the communication costs from PEs
-    void query(
-      const std::map< int, std::pair< std::size_t, std::size_t > >& div );
+    //! \brief Reduction target estimating the standard deviation of the
+    //!   communication cost of merging the linear system
+    void stdCost( tk::real c );
 
-    //! \brief Receive and estimate overall communication cost of merging the
-    //!   linear system
-    void costed( int pe, tk::real c );
-
-    //! \brief Reduction target indicating that all Spawner chare groups have
-    //!   finished creating their Charm++ Performer worker chare array elements
-    //!   (initializing their mesh element ids they will work on)
-    void created();
+    //! Reduction target indicating that all chare groups are ready for workers
+    void setup() { m_performer.setup(); }
 
     //! \brief Reduction target indicating that all linear system merger
     //!   branches have done their part of storing and exporting global row ids
@@ -114,28 +105,24 @@ class Conductor : public CBase_Conductor {
     void finish();
 
   private:
-    using PartitionerProxy = CProxy_Partitioner< CProxy_Conductor >;
     using LinSysMergerProxy = tk::CProxy_LinSysMerger< CProxy_Conductor,
                                                        CProxy_Performer >;
-    using SpawnerProxy = CProxy_Spawner< CProxy_Conductor,
-                                         CProxy_Performer,
-                                         LinSysMergerProxy >;
+    using PerformerProxy = CProxy_Performer;
+    using PartitionerProxy = CProxy_Partitioner< CProxy_Conductor,
+                                                 CProxy_Performer,
+                                                 LinSysMergerProxy >;
 
     InciterPrint m_print;               //!< Pretty printer
     int m_nchare;                       //!< Number of performer chares
-    int m_prepared;                     //!< perpared() chare group counter
-    std::size_t m_costed;               //!< costed() chare group counter
-    int m_eval;                         //!< EvaluateTime() charge group counter
-    int m_init;                         //!< initcomplete() charge group counter
     uint64_t m_it;                      //!< Iteration count
     tk::real m_t;                       //!< Physical time
     tk::real m_dt;                      //!< Physical time step size
     uint8_t m_stage;                    //!< Stage in multi-stage time stepping
-    int m_arrTimestampCnt;              //!< Time stamp chare array counter
-    int m_grpTimestampCnt;              //!< Time stamp chare group counter
-    PartitionerProxy m_partitioner;     //!< Partitioner group
-    SpawnerProxy m_spawner;             //!< Spawner group
-    LinSysMergerProxy m_linsysmerger;   //!< Linear system merger chare group
+    LinSysMergerProxy m_linsysmerger;   //!< Linear system merger group proxy
+    PerformerProxy m_performer;         //!< Performer chare array proxy
+    PartitionerProxy m_partitioner;     //!< Partitioner group proxy
+    //! Average communication cost of merging the linear system
+    tk::real m_avcost;
     //! \brief Global node ids contributed from PEs
     //! \details Storage for global node indices resulting from the contributing
     //!   PE reading its contiguously-numbered mesh elements from file
@@ -154,27 +141,9 @@ class Conductor : public CBase_Conductor {
     std::vector< std::size_t > m_nrecv;
     //! Start IDs for each PE for reordering nodes
     std::vector< std::size_t > m_start;
-    //! \brief  Reordered global mesh connectivity, i.e., node IDs, all PEs
-    //!   (outer key) with their chares (inner key) contribute to in a linear
-    //!   system
-    std::unordered_map< int,
-      std::unordered_map< int, std::vector< std::size_t > > > m_connectivity;
-    //! \brief Map associating old node IDs (as in file) to new node IDs (as
-    //!   in producing contiguous-row-id linear system contributions)
-    //!   categorized by chare IDs (middle key) associated to PEs (outer key)
-    std::unordered_map< int,
-      std::unordered_map< int,
-        std::unordered_map< std::size_t, std::size_t > > > m_chcid;
-    //! \brief Lower and upper global row indices associated to a PE
-    //! \details These are the divisions at which the linear system is divided
-    //!   at along PE boundaries.
-    std::map< int, std::pair< std::size_t, std::size_t > > m_div;
     //! Communication cost for merging the linear system associated to PE
     std::map< int, tk::real > m_cost;
-    //! Time stamps merged from chare array elements
-    std::map< std::string, std::vector< tk::real > > m_arrTimestamp;
-    //! Time stamps merged from chare group elements
-    std::map< std::string, std::vector< tk::real > > m_grpTimestamp;
+    //! Timer tags
     enum class TimerTag { TIMESTEP };
     //! Timers
     std::map< TimerTag, tk::Timer > m_timer;
@@ -188,23 +157,13 @@ class Conductor : public CBase_Conductor {
     bool nodesComplete( int pe ) {
       using Map = decltype(m_gid)::value_type;
       using Diff = Map::difference_type;
-      return std::none_of( cbegin(m_gid),
-                           std::next( cbegin(m_gid), static_cast<Diff>(pe) ),
+      return std::none_of( m_gid.cbegin(),
+                           std::next( m_gid.cbegin(), static_cast<Diff>(pe) ),
                            [](const Map& m){ return m.empty(); } );
     }
 
     //! Reorder mesh node IDs owned on each PE
     void reorder();
-
-    //! Query communication cost after mesh reordering
-    void computeCost();
-
-    //! Estimate communication cost across all PEs
-    std::pair< tk::real, tk::real >
-    estimate( const std::map< int, tk::real >& cost );
-
-    //! Create linear system merger group and worker chares
-    void createWorkers();
 
     //! Compute size of next time step
     tk::real computedt();

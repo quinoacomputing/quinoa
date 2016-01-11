@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/HypreSolver.h
   \author    J. Bakosi
-  \date      Wed 26 Aug 2015 02:28:50 PM MDT
+  \date      Thu 07 Jan 2016 06:07:57 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Hypre solver class
   \details   Hypre solver class.
@@ -20,6 +20,7 @@
 
 #include <HYPRE.h>
 #include <HYPRE_krylov.h>
+#include <charm.h>
 
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic pop

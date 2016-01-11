@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Print.h
   \author    J. Bakosi
-  \date      Tue 08 Dec 2015 05:04:22 PM MST
+  \date      Thu 07 Jan 2016 07:04:09 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     General purpose pretty printer functionality
   \details   This file contains general purpose printer functions. Using the
@@ -289,6 +289,13 @@ class Print {
     template< Style s = VERBOSE >
     void note( const std::string& msg ) const
     { stream<s>() << m_note_fmt % m_item_indent % msg; }
+
+    //! Echo ormatted print of a diagnostics message
+    //! \param[in] msg Message to print as a diagnostics message
+    //! \author J. Bakosi
+    template< Style s = VERBOSE >
+    void diag( const std::string& msg ) const
+    { stream<s>() << m_diag_fmt % msg << std::flush; }
 
     //! Start formatted print of a diagnostics message
     //! \param[in] msg First part of message to print as a diagnostics message
@@ -581,6 +588,7 @@ class Print {
     mutable format m_subsection_title_fmt = format("%s%c %s >\n");
     mutable format m_list_item_fmt = format("%s%-30s\n");
     mutable format m_note_fmt = format("%s%-30s\n");
+    mutable format m_diag_fmt = format("Quinoa> %s\n");
     mutable format m_diag_start_fmt = format("Quinoa> %s");
     mutable format m_diag_end_fmt = format(" %s\n");
     mutable format m_help_title_fmt = format("\n%s %s\n");
