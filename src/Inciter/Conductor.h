@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Conductor.h
   \author    J. Bakosi
-  \date      Mon 11 Jan 2016 08:53:09 AM MST
+  \date      Mon 11 Jan 2016 11:37:21 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Conductor drives the time integration of a PDE
   \details   Conductor drives the time integration of a PDE
@@ -157,8 +157,8 @@ class Conductor : public CBase_Conductor {
     bool nodesComplete( int pe ) {
       using Map = decltype(m_gid)::value_type;
       using Diff = Map::difference_type;
-      return std::none_of( cbegin(m_gid),
-                           std::next( cbegin(m_gid), static_cast<Diff>(pe) ),
+      return std::none_of( m_gid.cbegin(),
+                           std::next( m_gid.cbegin(), static_cast<Diff>(pe) ),
                            [](const Map& m){ return m.empty(); } );
     }
 

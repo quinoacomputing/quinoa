@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Partitioner.h
   \author    J. Bakosi
-  \date      Sun 10 Jan 2016 01:56:09 PM MST
+  \date      Mon 11 Jan 2016 11:37:44 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Charm++ chare partitioner group used to perform mesh partitioning
   \details   Charm++ chare partitioner group used to parform mesh partitioning.
@@ -137,9 +137,9 @@ class Partitioner : public CBase_Partitioner< HostProxy,
       // Lambda to decide if node ID is being assigned a new ID by us
       auto own = [ &comm ]( std::size_t p ) {
         using Set = std::remove_reference<decltype(comm)>::type::value_type;
-        return !std::any_of( cbegin(comm), cend(comm),
+        return !std::any_of( comm.cbegin(), comm.cbegin(),
                              [&](const Set& s){
-                               if (s.second.find(p) != cend(s.second))
+                               if (s.second.find(p) != s.second.cend())
                                  return true;
                                else
                                  return false;

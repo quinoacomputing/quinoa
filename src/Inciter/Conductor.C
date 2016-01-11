@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Conductor.C
   \author    J. Bakosi
-  \date      Mon 11 Jan 2016 08:52:39 AM MST
+  \date      Mon 11 Jan 2016 11:39:17 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Conductor drives the time integration of a PDE
   \details   Conductor drives the time integration of a PDE
@@ -194,8 +194,8 @@ Conductor::addNodes( int pe, const std::vector< std::size_t >& gid )
   // When the communication maps for all PEs have been computed, continue. Note
   // that PE 0 does not communicate, since there is no PEs with indices lower
   // than 0, hence we only test PEs > 0.
-  if (std::all_of( std::next(cbegin(m_commbuilt)),
-                   cend(m_commbuilt),
+  if (std::all_of( std::next(m_commbuilt.cbegin()),
+                   m_commbuilt.cend(),
                    [](const decltype(m_commbuilt)::value_type& m)
                    { return m; } ))
   {
@@ -204,7 +204,7 @@ Conductor::addNodes( int pe, const std::vector< std::size_t >& gid )
     // built. This is ensured by the logic in buildComm(), which only sets an
     // entry in m_commbuilt to true if the corresponding entry in m_gid is not
     // empty. However, this was useful during development, so we leave it here.
-    Assert( std::none_of( cbegin(m_gid), cbegin(m_gid),
+    Assert( std::none_of( m_gid.cbegin(), m_gid.cend(),
                           [](const decltype(m_gid)::value_type& m)
                           { return m.empty(); } ),
             "Not all node IDs have been received" );
