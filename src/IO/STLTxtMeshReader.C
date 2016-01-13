@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/STLTxtMeshReader.C
   \author    J. Bakosi
-  \date      Wed 04 Nov 2015 08:02:09 AM MST
+  \date      Wed 13 Jan 2016 12:17:32 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     ASCII STL (STereoLithography) reader class definition
   \details   ASCII STL (STereoLithography) reader class definition.
@@ -128,8 +128,6 @@ STLTxtMeshReader::readFacets( const bool store,
     }   // while (newfacet)
   }   // while (newsolid)
 
-  // Clear failbit triggered by eof, so close() won't throw a false FAILED_CLOSE
-  m_inFile.clear();
   // Seek to beginning of file
   m_inFile.seekg(0, std::ios::beg);
 
