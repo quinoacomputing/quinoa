@@ -8,6 +8,7 @@ add_library(IO
             STLTxtMeshReader.C
             NetgenMeshReader.C
             ExodusIIMeshReader.C
+            HyperMeshReader.C
             PDFWriter.C                 # writers
             TxtStatWriter.C
             GmshMeshWriter.C
@@ -16,7 +17,7 @@ add_library(IO
 #            SiloWriter.C
 )
 
-removeWarnings( "TxtStatWriter.C;PDFWriter.C;MeshFactory.C;GmshMeshReader.C;GmshMeshWriter.C;NetgenMeshReader.C;NetgenMeshWriter.C;ExodusIIMeshReader.C;ExodusIIMeshWriter.C" )
+removeWarnings( "TxtStatWriter.C;PDFWriter.C;MeshFactory.C;GmshMeshReader.C;GmshMeshWriter.C;NetgenMeshReader.C;NetgenMeshWriter.C;ExodusIIMeshReader.C;ExodusIIMeshWriter.C;HyperMeshReader.C" )
 
 INSTALL(TARGETS IO
   	RUNTIME DESTINATION bin COMPONENT Runtime

@@ -171,7 +171,6 @@ if (NOT NO_SYSTEM_BOOST)
 endif()
 if(Boost_FOUND)
   set(boost "")
-  #message(STATUS "Boost found at ${Boost_INCLUDE_DIR} - will not build ours")
 else()
   set(boost "boost")
 endif()
@@ -181,10 +180,8 @@ if (NOT NO_SYSTEM_PSTREAMS)
   find_package(PStreams)
 endif()
 if(PSTREAMS_FOUND)
-  #message(STATUS "PStreams found at ${PSTREAMS_INCLUDES} - will not unpack ours")
   set(pstreams "")
 else()
-  #message(STATUS "PStreams not found - will unpack ours")
   set(pstreams "pstreams")
 endif()
 
@@ -193,11 +190,19 @@ if (NOT NO_SYSTEM_HYPRE)
   find_package(Hypre)
 endif()
 if(HYPRE_FOUND)
-  #message(STATUS "Hypre found at ${HYPRE_INCLUDES} (include) and at ${HYPRE_LIBRARIES} (lib) - will not build ours")
   set(hypre "")
 else()
-  #message(STATUS "Hypre not found - will build ours")
   set(hypre "hypre")
+endif()
+
+# Detect pugixml, exclude if found, build if not
+if (NOT NO_SYSTEM_PUGIXML)
+  find_package(pugixml)
+endif()
+if(PUGIXML_FOUND)
+  set(pugixml "")
+else()
+  set(pugixml "pugixml")
 endif()
 
 # Define fine-grained targets
@@ -452,3 +457,22 @@ ExternalProject_Add(
   LOG_BUILD 1
   LOG_INSTALL 1
 )
+
+#### pugixml ###################################################################
+# http://pugixml.org
+if (pugixml)
+  ExternalProject_Add(
+    pugixml
+    PREFIX pugixml
+    SOURCE_DIR ${PROJECT_SOURCE_DIR}/src/pugixml/scripts
+    CMAKE_ARGS -D CMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
+               -D CMAKE_CXX_COMPILER:PATH=${UNDERLYING_CXX_COMPILER}
+               -D CMAKE_CXX_FLAGS:STRING=${CXXFLAGS}
+                -D CMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX}
+               -D BUILD_SHARED_LIBS:BOOL=TRUE
+    DOWNLOAD_COMMAND ""
+    LOG_CONFIGURE 1
+    LOG_BUILD 1
+    LOG_INSTALL 1
+  )
+endif()

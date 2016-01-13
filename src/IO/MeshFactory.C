@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/MeshFactory.C
   \author    J. Bakosi
-  \date      Mon 14 Dec 2015 10:17:35 PM MST
+  \date      Wed 13 Jan 2016 07:42:39 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unstructured mesh reader and writer factory
   \details   Unstructured mesh reader and writer factory.
@@ -19,6 +19,7 @@
 #include "GmshMeshReader.h"
 #include "NetgenMeshReader.h"
 #include "ExodusIIMeshReader.h"
+#include "HyperMeshReader.h"
 #include "NetgenMeshWriter.h"
 #include "GmshMeshWriter.h"
 #include "ExodusIIMeshWriter.h"
@@ -43,6 +44,8 @@ detectInput( const std::string& filename )
     return MeshReader::GMSH;
   } else if ( s == "CDF" || s == "HDF" ) {
     return MeshReader::EXODUSII;
+  } else if ( s == "<?x" ) {
+    return MeshReader::HYPERMESH;
   } else {
     try {
       std::stoi(s);    // try to convert to an integer
@@ -113,8 +116,10 @@ readUnsMesh( const tk::Print& print,
     GmshMeshReader( filename ).readMesh( mesh );
   else if (meshtype == MeshReader::NETGEN)
     NetgenMeshReader( filename ).readMesh( mesh );
-  else if (meshtype== MeshReader::EXODUSII)
+  else if (meshtype == MeshReader::EXODUSII)
     ExodusIIMeshReader( filename ).readMesh( mesh );
+  else if (meshtype == MeshReader::HYPERMESH)
+    HyperMeshReader( filename ).readMesh( mesh );
 
   timestamp = std::make_pair( "Read mesh from file", t.dsec() );
 

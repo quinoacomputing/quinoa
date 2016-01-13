@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Reader.C
   \author    J. Bakosi
-  \date      Tue 03 Nov 2015 03:33:50 PM MST
+  \date      Wed 13 Jan 2016 11:57:46 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Reader class definition
   \details   Reader base class declaration. Reader base servers as a base class
@@ -66,6 +66,9 @@ Reader::~Reader() noexcept
 //! \author J. Bakosi
 //******************************************************************************
 {
+  // Clear failbit triggered by eof, so close() won't throw a false FAILED_CLOSE
+  m_inFile.clear();
+
   try {
 
     m_inFile.close();
