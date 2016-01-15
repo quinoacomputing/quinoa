@@ -9,7 +9,7 @@ walker
   ttyi  500      # TTY output interval
 
   rngs
-    mkl_r250 end
+    mkl_mcg59 end
   end
 
   massfracbeta
@@ -21,7 +21,7 @@ walker
     kappa 2.0  0.76923  0.5  0.15873  0.1 end
     b     0.4  1.0      1.0  1.0    100.0 end
     S     0.5  0.53846  0.5  0.39683  0.5 end
-    rng mkl_r250
+    rng mkl_mcg59
     rho2 1.0 1.0 1.0 1.0 1.0 end
     #r 0.0101 0.0101 0.0101 0.0101 0.0101 end # low-A
     r 9.0 9.0 9.0 9.0 9.0 end   # high-A

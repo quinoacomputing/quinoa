@@ -8,7 +8,7 @@ walker
   ttyi  100     # TTY output interval
 
   rngs
-    mkl_r250 seed 1 end
+    mkl_mcg59 seed 1 end
   end
 
   gamma
@@ -21,7 +21,7 @@ walker
     b     1.5            2.5 end
     kappa 1.0            1.0 end
     S     0.666666666666 0.8 end
-    rng mkl_r250
+    rng mkl_mcg59
   end
 
   statistics

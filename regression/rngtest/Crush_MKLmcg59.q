@@ -2,10 +2,10 @@
 # This is a comment
 # Keywords are case-sensitive
 
-title "Subject MKL's MRG32K3A to Crush"
+title "Subject MKL's MCG59 to Crush"
 
 crush
 
-  mkl_mrg32k3a end
+  mkl_mcg59 end
 
 end
