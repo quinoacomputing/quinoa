@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Conductor.C
   \author    J. Bakosi
-  \date      Mon 11 Jan 2016 11:39:17 AM MST
+  \date      Fri 15 Jan 2016 08:26:02 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Conductor drives the time integration of a PDE
   \details   Conductor drives the time integration of a PDE
@@ -369,7 +369,6 @@ Conductor::evaluateTime()
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // Get physical time at which to terminate
   const auto term = g_inputdeck.get< tag::discr, tag::term >();
   const auto eps = std::numeric_limits< tk::real >::epsilon();
   const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
