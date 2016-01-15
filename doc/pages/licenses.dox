@@ -96,6 +96,11 @@ to the tools.
   - Web: https://software.intel.com/en-us/intel-mkl
   - License: \subpage MKL_license
 
+\subsection pugixml_license 18. PugiXML for XML format reading and writing
+  - Required
+  - Web: http://pugixml.org/
+  - License: \subpage PugiXML_license
+
 \section compiler_web Compilers
 
 \subsection clang_web 1. Clang C++ compiler
@@ -135,7 +140,7 @@ to the tools.
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Tue 28 Jul 2015 03:05:10 PM MDT
+<em>Page last updated:</em> Wed 13 Jan 2016 06:08:20 AM MST
 <em>Copyright 2012-2015, Jozsef Bakosi.</em>
 </small></div>
 */

@@ -11,10 +11,10 @@ add_regression_test(SmallCrush_all ${RNGTEST_EXECUTABLE}
                     INPUTFILES SmallCrush_all.q
                     ARGS -c SmallCrush_all.q -v)
 
-add_regression_test(Crush_MKLmrg32k3a ${RNGTEST_EXECUTABLE}
+add_regression_test(Crush_MKLmcg59 ${RNGTEST_EXECUTABLE}
                     NUMPES ${ManyPEs}
-                    INPUTFILES Crush_MKLmrg32k3a.q
-                    ARGS -c Crush_MKLmrg32k3a.q -v)
+                    INPUTFILES Crush_MKLmcg59.q
+                    ARGS -c Crush_MKLmcg59.q -v)
 
 add_regression_test(BigCrush_RNGSSEmrg32k3a ${RNGTEST_EXECUTABLE}
                     NUMPES ${PROCESSOR_COUNT}

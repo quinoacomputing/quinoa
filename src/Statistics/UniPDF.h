@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/UniPDF.h
   \author    J. Bakosi
-  \date      Mon 20 Jul 2015 05:56:53 PM MDT
+  \date      Thu 14 Jan 2016 03:33:43 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Univariate PDF estimator
   \details   Univariate PDF estimator. This class can be used to estimate a
@@ -20,6 +20,7 @@
 #include <algorithm>
 
 #include "Types.h"
+#include "Exception.h"
 #include "PUPUtil.h"
 
 namespace tk {
@@ -59,6 +60,7 @@ class UniPDF {
     //! Add sample to univariate PDF
     //! \param[in] sample Sample to insert
     void add( tk::real sample ) {
+      Assert( m_binsize > 0, "Bin size must be positive" );
       ++m_nsample;
       ++m_pdf[ std::lround( sample / m_binsize ) ];
     }
@@ -91,7 +93,7 @@ class UniPDF {
       return {{ x.first->first, x.second->first }};
     }
 
-    /** @name Pack/Unpack: Serialize BiPDF object for Charm++ */
+    /** @name Pack/Unpack: Serialize UniPDF object for Charm++ */
     ///@{
     //! Pack/Unpack serialize member function
     //! \param[inout] p Charm++'s PUP::er serializer object reference

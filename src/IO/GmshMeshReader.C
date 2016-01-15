@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshMeshReader.C
   \author    J. Bakosi
-  \date      Fri 22 May 2015 08:11:20 AM MDT
+  \date      Wed 13 Jan 2016 11:58:35 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Gmsh mesh reader class definition
   \details   Gmsh mesh reader class definition. Currently, this class supports
@@ -49,9 +49,6 @@ GmshMeshReader::readMesh( UnsMesh& mesh )
     else if ( s == "$PhysicalNames" )
       readPhysicalNames();
   }
-
-  // Clear failbit triggered by eof, so close() won't throw a false FAILED_CLOSE
-  m_inFile.clear();
 }
 
 void

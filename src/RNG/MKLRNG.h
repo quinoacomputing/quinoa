@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/MKLRNG.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:40:45 PM MDT
+  \date      Thu 14 Jan 2016 09:08:38 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Interface to Intel MKL VSL random number generators
   \details   Interface to Intel MKL VSL random number generators.
@@ -54,11 +54,14 @@ class MKLRNG {
       // encounter errors and always continue. As a result, the constructor
       // finishes, the MKLRNG object gets created, so the destructor will also
       // get called when leaving scope.
-      for (int i=0; i<nthreads; ++i) {
-        auto I = static_cast< std::size_t >( i );
-        vslNewStream( &m_stream[ I ], brng, seed );
-        vslLeapfrogStream( m_stream[ I ], i, nthreads );
-      }
+      if (nthreads == 1)
+        errchk( vslNewStream( &m_stream[0], brng, seed ) );
+      else
+        for (int i=0; i<nthreads; ++i) {
+          auto I = static_cast< std::size_t >( i );
+          errchk( vslNewStream( &m_stream[I], brng, seed ) );
+          errchk( vslLeapfrogStream( m_stream[I], i, nthreads ) );
+        }
     }
 
     //! Destructor
@@ -116,11 +119,14 @@ class MKLRNG {
       m_nthreads = x.m_nthreads;
       m_stream = tk::make_unique< VSLStreamStatePtr[] >(
                    static_cast<std::size_t>(x.m_nthreads) );
-      for (int i=0; i<x.m_nthreads; ++i) {
-        auto I = static_cast< std::size_t >( i );
-        vslNewStream( &m_stream[ I ], x.m_brng, x.m_seed );
-        vslLeapfrogStream( m_stream[ I ], i, x.m_nthreads );
-      }
+      if (m_nthreads == 1)
+        errchk( vslNewStream( &m_stream[0], x.m_brng, x.m_seed ) );
+      else
+        for (int i=0; i<x.m_nthreads; ++i) {
+          auto I = static_cast< std::size_t >( i );
+          errchk( vslNewStream( &m_stream[I], x.m_brng, x.m_seed ) );
+          errchk( vslLeapfrogStream( m_stream[I], i, x.m_nthreads ) );
+        }
       return *this;
     }
 
@@ -140,8 +146,8 @@ class MKLRNG {
                    static_cast<std::size_t>(x.m_nthreads) );
       for (int i=0; i<x.m_nthreads; ++i) {
         auto I = static_cast< std::size_t >( i );
-        m_stream[ I ] = x.m_stream[ I ];
-        x.m_stream[ I ] = nullptr;
+        m_stream[I] = x.m_stream[I];
+        x.m_stream[I] = nullptr;
       }
       x.m_brng = 0;
       x.m_seed = 0;
@@ -169,11 +175,21 @@ class MKLRNG {
     void deleteStreams() {
       for (int i=0; i<m_nthreads; ++i) {
         auto I = static_cast< std::size_t >( i );
-        if (m_stream[ I ]) {
-          vslDeleteStream( &m_stream[ I ] );
-          m_stream[ I ] = nullptr;
+        if (m_stream[I]) {
+          errchk( vslDeleteStream( &m_stream[I] ) );
+          m_stream[I] = nullptr;
         }
       }
+    }
+
+    //! MKL VSL error check
+    //! \param[in] err MKL VSL error code as returned from MKL VSL functions
+    //! \details This calls ErrChk(), i.e., it is not compiled away in Release
+    //!   mode as an error here can result due to user input incompatible with
+    //!   the MKL library.
+    void errchk( int err ) {
+       ErrChk( err == VSL_STATUS_OK, "MKL VSL Error Code: " +
+               std::to_string(err) + ", see mkl_vsl_defines.h for more info" );
     }
 
     int m_brng;                                      //!< MKL RNG id

@@ -19,15 +19,15 @@ smallcrush
   rngsse_mrg32k3a end
 
   mkl_mcg31 end
-  mkl_r250 end
-  mkl_mrg32k3a end
+  #mkl_r250 end         # no leapfrog support
+  #mkl_mrg32k3a end     # no leapfrog support
   mkl_mcg59 end
   mkl_wh end
-  mkl_mt19937 end
-  mkl_mt2203 end
-  mkl_sfmt19937 end
-  mkl_sobol end
-  mkl_niederr end
-  mkl_nondeterm end
+  #mkl_mt19937 end      # no leapfrog support
+  #mkl_mt2203 end       # no leapfrog support
+  #mkl_sfmt19937 end    # no leapfrog support
+  #mkl_sobol end        # no leapfrog support
+  #mkl_niederr end      # no leapfrog support
+  #mkl_nondeterm end    # no leapfrog support
 
 end

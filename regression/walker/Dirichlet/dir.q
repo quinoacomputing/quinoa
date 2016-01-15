@@ -11,7 +11,7 @@ walker
   ttyi  1000    # TTY output interval
 
   rngs
-    mkl_mrg32k3a seed 0 end
+    mkl_mcg59 seed 0 end
   end
 
   dirichlet     # Select Dirichlet SDE
@@ -22,7 +22,7 @@ walker
     b     0.1    1.5 end
     S     0.625  0.4 end
     kappa 0.0125 0.3 end
-    rng mkl_mrg32k3a    
+    rng mkl_mcg59    
   end
 
   statistics

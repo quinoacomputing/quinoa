@@ -8,7 +8,7 @@ walker
   ttyi  1000    # TTY output interval
 
   rngs
-    mkl_mrg32k3a seed 0 end
+    mkl_mcg59 seed 0 end
   end
 
   diag_ou
@@ -19,7 +19,7 @@ walker
     sigmasq 0.25 1.0 end
     theta 1.0 1.0 end
     mu 0.0 1.5 end
-    rng mkl_mrg32k3a
+    rng mkl_mcg59
   end
 
   statistics

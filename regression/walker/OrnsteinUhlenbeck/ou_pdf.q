@@ -8,7 +8,7 @@ walker
   ttyi  100    # TTY output interval
 
   rngs
-    mkl_mrg32k3a seed 0 end
+    mkl_mcg59 seed 0 end
   end
 
   ornstein-uhlenbeck
@@ -23,7 +23,7 @@ walker
           32.0   5.6
                 23.0
     end
-    rng mkl_mrg32k3a
+    rng mkl_mcg59
   end
 
   pdfs
