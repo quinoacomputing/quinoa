@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/PDFUtil.C
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:52:59 PM MDT
+  \date      Fri 15 Jan 2016 07:40:55 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     PDF utilities
   \brief     PDF utilities.
@@ -15,77 +15,35 @@
 namespace tk {
 
 std::pair< int, std::unique_ptr<char[]> >
-serialize( const std::tuple< std::vector< tk::UniPDF >,
-                             std::vector< tk::BiPDF >,
-                             std::vector< tk::TriPDF > >& pdf )
+serialize( const std::vector< tk::UniPDF >& u,
+           const std::vector< tk::BiPDF >& b,
+           const std::vector< tk::TriPDF >& t )
 //******************************************************************************
 // Serialize vectors of PDFs to raw memory stream
-//! \param[in] pdf Tuple of vectors of uni-, bi-, and tri-variate PDFs
+//! \param[in] u Vector of univariate PDFs
+//! \param[in] b Vector of bivariate PDFs
+//! \param[in] t Vector of trivariate PDFs
 //! \return Pair of the length and the raw stream containing the serialized PDFs
 //! \author J. Bakosi
 //******************************************************************************
 {
   // Prepare for serializing PDFs to a raw binary stream, compute size
   PUP::sizer sizer;
-  sizer | const_cast< std::vector<tk::UniPDF>& >( std::get<0>(pdf) );
-  sizer | const_cast< std::vector<tk::BiPDF>& >( std::get<1>(pdf) );
-  sizer | const_cast< std::vector<tk::TriPDF>& >( std::get<2>(pdf) );
+  sizer | const_cast< std::vector< tk::UniPDF >& >( u );
+  sizer | const_cast< std::vector< tk::BiPDF >& >( b );
+  sizer | const_cast< std::vector< tk::TriPDF >& >( t );
 
   // Create raw character stream to store the serialized PDFs
   std::unique_ptr<char[]> flatData = tk::make_unique<char[]>( sizer.size() );
 
   // Serialize PDFs, each message will contain a vector of PDFs
   PUP::toMem packer( flatData.get() );
-  packer | const_cast< std::vector<tk::UniPDF>& >( std::get<0>(pdf) );
-  packer | const_cast< std::vector<tk::BiPDF>& >( std::get<1>(pdf) );
-  packer | const_cast< std::vector<tk::TriPDF>& >( std::get<2>(pdf) );
+  packer | const_cast< std::vector< tk::UniPDF >& >( u );
+  packer | const_cast< std::vector< tk::BiPDF >& >( b );
+  packer | const_cast< std::vector< tk::TriPDF >& >( t );
 
   // Return size of and raw stream
-  return { static_cast< int >( sizer.size() ), std::move(flatData) };
-}
-
-std::tuple< std::vector< tk::UniPDF >,
-            std::vector< tk::BiPDF >,
-            std::vector< tk::TriPDF > >
-merge( CkReductionMsg* msg )
-//******************************************************************************
-// Deserialize and merge vectors of PDFs from Charm's CkReductionMsg
-//! \param[in] msg Charm++ reduction message containing the serialized PDFs
-//! \return Vector of merged PDFs
-//! \author J. Bakosi
-//******************************************************************************
-{
-  // Create PUP deserializer based on message passed in
-  PUP::fromMem creator( msg->getData() );
-
-  // Will store deserialized uni-, bi-, and tri-variate PDFs
-  std::vector< tk::UniPDF > updf;
-  std::vector< tk::BiPDF > bpdf;
-  std::vector< tk::TriPDF > tpdf;
-
-  // Deserialize PDFs from raw stream
-  creator | updf;
-  creator | bpdf;
-  creator | tpdf;
-
-  // Create tuple to hold all PDFs
-  std::tuple< std::vector< tk::UniPDF >,
-              std::vector< tk::BiPDF >,
-              std::vector< tk::TriPDF > >
-    res( std::vector< tk::UniPDF >( updf.size() ),
-         std::vector< tk::BiPDF >( bpdf.size() ),
-         std::vector< tk::TriPDF >( tpdf.size() ) );
-
-  // Merge PDFs into tuple
-  std::size_t i = 0;
-  for (const auto& p : updf) std::get<0>(res)[i++].addPDF(p);
-  i = 0;
-  for (const auto& p : bpdf) std::get<1>(res)[i++].addPDF(p);
-  i = 0;
-  for (const auto& p : tpdf) std::get<2>(res)[i++].addPDF(p);
-
-  // Return merged PDFs
-  return res;
+  return { sizer.size(), std::move(flatData) };
 }
 
 CkReductionMsg*
@@ -98,16 +56,39 @@ mergePDF( int nmsg, CkReductionMsg **msgs )
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // Will store merged PDFs in deserialized form
-  std::tuple< std::vector< tk::UniPDF >,
-              std::vector< tk::BiPDF >,
-              std::vector< tk::TriPDF > > pdf;
+  // Will store deserialized uni-, bi-, and tri-variate PDFs
+  std::vector< tk::UniPDF > updf;
+  std::vector< tk::BiPDF > bpdf;
+  std::vector< tk::TriPDF > tpdf;
 
-  // Deserialize and merge vector of PDFs with partial sums
-  for (int i=0; i<nmsg; ++i) pdf = tk::merge( msgs[i] );
+  // Create PUP deserializer based on message passed in
+  PUP::fromMem creator( msgs[0]->getData() );
+
+  // Deserialize PDFs from raw stream
+  creator | updf;
+  creator | bpdf;
+  creator | tpdf;
+
+  for (int m=1; m<nmsg; ++m) {
+    // Unpack PDFs
+    std::vector< tk::UniPDF > u;
+    std::vector< tk::BiPDF > b;
+    std::vector< tk::TriPDF > t;
+    PUP::fromMem curCreator( msgs[m]->getData() );
+    curCreator | u;
+    curCreator | b;
+    curCreator | t;
+    // Merge PDFs
+    std::size_t i = 0;
+    for (const auto& p : u) updf[i++].addPDF( p );
+    i = 0;
+    for (const auto& p : b) bpdf[i++].addPDF( p );
+    i = 0;
+    for (const auto& p : t) tpdf[i++].addPDF( p );
+  }
 
   // Serialize vector of merged PDFs to raw stream
-  auto stream = tk::serialize( pdf );
+  auto stream = tk::serialize( updf, bpdf, tpdf );
 
   // Forward serialized PDFs
   return CkReductionMsg::buildNew( stream.first, stream.second.get() );

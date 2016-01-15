@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/StatCtr.h
   \author    J. Bakosi
-  \date      Mon 10 Aug 2015 01:35:53 PM MDT
+  \date      Thu 14 Jan 2016 11:37:13 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Types and associated functions to deal with moments and PDFs
   \details   Types and associated functions to deal with statistical moments and
@@ -265,9 +265,6 @@ struct PDFInfo {
 };
 
 //! \brief Find PDF information, see tk::ctr::PDFInfo
-//! \details Find PDF information given the sample space dimension (template
-//!   argument D), ordinary or central PDF (m), and the index within the list of
-//!   matching (based on D and m) PDFs requested (idx)
 //! \note Size of binsizes, names, pdfs, and exts must all be equal
 //! \note idx must be less than the length of binsizes, names, and pdfs
 //! \param[in] binsizes Vector of sample space bin sizes for multiple PDFs
@@ -279,6 +276,11 @@ struct PDFInfo {
 //! \param[in] m ORDINARY or CENTRAL PDF we are looking for
 //! \param[in] idx Index of the PDF within the list of matching (based on D and
 //!   m) PDFs requested
+//! \return The PDF metadata requested
+//! \details Find PDF information given the sample space dimension (template
+//!   argument D), ordinary or central PDF (m), and the index within the list of
+//!   matching (based on D and m) PDFs requested (idx). This function must find
+//!   the PDF, if it does not, it throws an exception.
 //! \see walker::Distributor
 //! \author J. Bakosi
 template< std::size_t D >
@@ -290,12 +292,12 @@ PDFInfo pdfInfo( const std::vector< std::vector< tk::real > >& binsizes,
                  std::size_t idx )
 {
   Assert( binsizes.size() == names.size(),
-          "Length of binsizes vector and that of PDF names must equal." );
+          "Length of binsizes vector and that of PDF names must equal" );
   Assert( binsizes.size() == pdfs.size(),
-          "Length of binsizes vector and that of PDFs must equal." );
+          "Length of binsizes vector and that of PDFs must equal" );
   Assert( binsizes.size() == exts.size(),
-          "Length of binsizes vector and that of PDF extents must equal." );
-  Assert( binsizes.size() > idx, "Indexing out of bounds." );
+          "Length of binsizes vector and that of PDF extents must equal" );
+  Assert( binsizes.size() > idx, "Indexing out of bounds" );
 
   std::size_t i = 0;  // will count all PDFs queried
   std::size_t n = 0;  // will count PDFs with sample space dimensions and type
@@ -313,6 +315,30 @@ PDFInfo pdfInfo( const std::vector< std::vector< tk::real > >& binsizes,
     ++i;
   }
   Throw( "Cannot find PDF." );
+}
+
+//! Extract number of PDFs given sample space dimension
+//! \details Count number of PDFs given the sample space dimension (template
+//!   argument D) and whether the PDF is ordinary or central (m)
+//! \note Size of binsizes, names, pdfs, and exts must all be equal
+//! \param[in] pdfs Vector of PDFs
+//! \param[in] m ORDINARY or CENTRAL PDF we are looking for
+//! \return The number of PDFs matchin the criteria discussed above
+//! \author J. Bakosi
+template< std::size_t D >
+std::size_t numPDF( const std::vector< std::vector< tk::real > >& binsizes,
+                    const std::vector< Probability >& pdfs,
+                    ctr::Moment m )
+{
+  Assert( binsizes.size() == pdfs.size(),
+          "Length of binsizes vector and that of PDFs must equal" );
+  auto& kind = (m == Moment::ORDINARY ? ordinary : central);
+  std::size_t i=0, n=0;
+  for (const auto& p : pdfs) {
+    const auto& bs = binsizes[i++];
+    if (kind(p) && bs.size() == D) ++n;
+  }
+  return n;
 }
 
 //! Lookup moment in moments map based on product key

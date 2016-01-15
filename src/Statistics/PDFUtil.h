@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/PDFUtil.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:10:29 PM MDT
+  \date      Thu 14 Jan 2016 02:38:42 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     PDF utilities
   \brief     PDF utilities.
@@ -33,15 +33,9 @@ namespace tk {
 
 //! Serialize vectors of PDFs to raw memory stream
 std::pair< int, std::unique_ptr<char[]> >
-serialize( const std::tuple< std::vector< tk::UniPDF >,
-                             std::vector< tk::BiPDF >,
-                             std::vector< tk::TriPDF > >& pdf );
-
-//! Deserialize and merge vectors of PDFs from Charm's CkReductionMsg
-std::tuple< std::vector< tk::UniPDF >,
-            std::vector< tk::BiPDF >,
-            std::vector< tk::TriPDF > >
-merge( CkReductionMsg* msg );
+serialize( const std::vector< tk::UniPDF >& u,
+           const std::vector< tk::BiPDF >& b,
+           const std::vector< tk::TriPDF >& t );
 
 //! Charm++ custom reducer for merging PDFs during reduction across PEs
 CkReductionMsg*

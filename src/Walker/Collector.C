@@ -2,7 +2,7 @@
 /*!
   \file      src/Walker/Collector.C
   \author    J. Bakosi
-  \date      Mon 20 Jul 2015 08:22:17 PM MDT
+  \date      Fri 15 Jan 2016 07:43:50 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Charm++ module interface file for collecting contributions from
              Integrators
@@ -97,28 +97,22 @@ Collector::chareOrdPDF( const std::vector< tk::UniPDF >& updf,
 
   // Add contribution from worker chares to partial sums on my PE
   std::size_t i = 0;
-  m_ordupdf.resize( updf.size() );
   for (const auto& p : updf) m_ordupdf[i++].addPDF( p );
-
   i = 0;
-  m_ordbpdf.resize( bpdf.size() );
   for (const auto& p : bpdf) m_ordbpdf[i++].addPDF( p );
-
   i = 0;
-  m_ordtpdf.resize( tpdf.size() );
   for (const auto& p : tpdf) m_ordtpdf[i++].addPDF( p );
 
   // If all chares on my PE have contributed, send partial sums to host
   if (m_nopdf == m_nchare) {
 
+    // Serialize vector of PDFs to raw stream
+    auto stream = tk::serialize( m_ordupdf, m_ordbpdf, m_ordtpdf );
+
     // Create Charm++ callback function for reduction.
     // Distributor::estimateOrdPDF() will be the final target of the reduction
     // where the results of the reduction will appear.
     CkCallback cb( CkIndex_Distributor::estimateOrdPDF(nullptr), m_hostproxy );
-
-    // Serialize vector of PDFs to raw stream
-    auto stream =
-     tk::serialize( std::make_tuple( m_ordupdf, m_ordbpdf, m_ordtpdf ) );
 
     // Contribute serialized PDFs of partial sums to host via Charm++ reduction
     contribute( stream.first, stream.second.get(), PDFMerger, cb );
@@ -152,28 +146,22 @@ Collector::chareCenPDF( const std::vector< tk::UniPDF >& updf,
 
   // Add contribution from worker chares to partial sums on my PE
   std::size_t i = 0;
-  m_cenupdf.resize( updf.size() );
   for (const auto& p : updf) m_cenupdf[i++].addPDF( p );
-
   i = 0;
-  m_cenbpdf.resize( bpdf.size() );
   for (const auto& p : bpdf) m_cenbpdf[i++].addPDF( p );
-
   i = 0;
-  m_centpdf.resize( tpdf.size() );
   for (const auto& p : tpdf) m_centpdf[i++].addPDF( p );
 
   // If all chares on my PE have contributed, send partial sums to host
   if (m_ncpdf == m_nchare) {
 
+    // Serialize vector of PDFs to raw stream
+    auto stream = tk::serialize( m_cenupdf, m_cenbpdf, m_centpdf );
+
     // Create Charm++ callback function for reduction.
     // Distributor::estimateCenPDF() will be the final target of the reduction
     // where the results of the reduction will appear.
     CkCallback cb( CkIndex_Distributor::estimateCenPDF(nullptr), m_hostproxy );
-
-    // Serialize vector of PDFs to raw stream
-    auto stream =
-      tk::serialize( std::make_tuple( m_cenupdf, m_cenbpdf, m_centpdf ) );
 
     // Contribute serialized PDFs of partial sums to host via Charm++ reduction
     contribute( stream.first, stream.second.get(), PDFMerger, cb );
