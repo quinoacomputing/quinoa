@@ -2,7 +2,7 @@
 /*!
   \file      src/Walker/Distributor.C
   \author    J. Bakosi
-  \date      Tue 22 Dec 2015 10:51:16 AM MST
+  \date      Fri 15 Jan 2016 07:45:52 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Distributor drives the time integration of differential equations
   \details   Distributor drives the time integration of differential equations.
@@ -276,8 +276,13 @@ Distributor::estimateOrdPDF( CkReductionMsg* msg )
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // Deserialize and merge PDFs
-  std::tie( m_ordupdf, m_ordbpdf, m_ordtpdf ) = tk::merge( msg );
+  // Deserialize final PDFs
+  PUP::fromMem creator( msg->getData() );
+  creator | m_ordupdf;
+  creator | m_ordbpdf;
+  creator | m_ordtpdf;
+
+  delete msg;
 
   // Activate SDAG trigger signaling that ordinary PDFs have been estimated
   estimateOrdPDFDone();
@@ -291,8 +296,13 @@ Distributor::estimateCenPDF( CkReductionMsg* msg )
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // Deserialize and merge PDFs
-  std::tie( m_cenupdf, m_cenbpdf, m_centpdf ) = tk::merge( msg );
+  // Deserialize final PDFs
+  PUP::fromMem creator( msg->getData() );
+  creator | m_cenupdf;
+  creator | m_cenbpdf;
+  creator | m_centpdf;
+
+  delete msg;
 
   // Activate SDAG trigger signaling that central PDFs have been estimated
   estimateCenPDFDone();
@@ -508,13 +518,11 @@ Distributor::outUniPDF()
 //******************************************************************************
 {
   std::size_t idx = 0;
-  for (const auto& p : m_ordupdf) {
+  for (const auto& p : m_ordupdf)
     writeUniPDF( p, tk::ctr::Moment::ORDINARY, idx++ );
-  }
   idx = 0;
-  for (const auto& p : m_cenupdf) {
+  for (const auto& p : m_cenupdf)
     writeUniPDF( p, tk::ctr::Moment::CENTRAL, idx++ );
-  }
 }
 
 void
@@ -526,9 +534,8 @@ Distributor::outBiPDF()
 //******************************************************************************
 {
   std::size_t idx = 0;
-  for (const auto& p : m_ordbpdf) {
+  for (const auto& p : m_ordbpdf)
     writeBiPDF( p, tk::ctr::Moment::ORDINARY, idx++ );
-  }
   idx = 0;
   for (const auto& p : m_cenbpdf) {
     writeBiPDF( p, tk::ctr::Moment::CENTRAL, idx++ );
@@ -602,16 +609,7 @@ Distributor::evaluateTime()
       wait4cen();
 
       // Selectively re-activate SDAG-wait for estimation of PDFs for next step
-      if ( !(m_it % g_inputdeck.get< tag::interval, tag::pdf >()) ) {
-        // Zero PDF counters and accumulators
-        for (auto& p : m_ordupdf) p.zero();
-        for (auto& p : m_ordbpdf) p.zero();
-        for (auto& p : m_ordtpdf) p.zero();
-        for (auto& p : m_cenupdf) p.zero();
-        for (auto& p : m_cenbpdf) p.zero();
-        for (auto& p : m_centpdf) p.zero();
-        wait4pdf();
-      }
+      if ( !(m_it % g_inputdeck.get< tag::interval, tag::pdf >()) ) wait4pdf();
     }
 
     // Continue with next time step with all integrators
