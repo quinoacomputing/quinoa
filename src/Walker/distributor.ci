@@ -2,7 +2,7 @@
 /*!
   \file      src/Walker/distributor.ci
   \author    J. Bakosi
-  \date      Wed 19 Aug 2015 11:20:24 AM MDT
+  \date      Fri 15 Jan 2016 11:40:55 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Charm++ module interface file for Distributor
   \details   Charm++ module interface file for Distributor
@@ -21,7 +21,6 @@ module distributor {
     chare Distributor {
       entry Distributor( const ctr::CmdLine& cmdline );
       entry [reductiontarget] void registered();
-      entry [reductiontarget] void init();
       entry [reductiontarget] void nostat();
       entry [reductiontarget] void estimateOrd( tk::real ord[n], std::size_t n );
       entry [reductiontarget] void estimateCen( tk::real cen[n], std::size_t n );
@@ -145,7 +144,7 @@ module distributor {
           m_intproxy.accumulateCen( m_ordinary );
           // Start accumulating sums for central PDFs at select times
           if ( g_inputdeck.pdf() &&
-               !(m_it % g_inputdeck.get< tag::interval, tag::pdf >()) )
+               !((m_it+1) % g_inputdeck.get< tag::interval, tag::pdf >()) )
             m_intproxy.accumulateCenPDF( m_ordinary );
         }
       };
@@ -157,7 +156,7 @@ module distributor {
           outStat();
           // If PDFs not estimated, evaluate time step
           if ( !g_inputdeck.pdf() ||
-                m_it % g_inputdeck.get< tag::interval, tag::pdf >() )
+                (m_it+1) % g_inputdeck.get< tag::interval, tag::pdf >() )
             evaluateTime();
         }
       };
