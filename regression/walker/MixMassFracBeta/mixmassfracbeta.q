@@ -11,7 +11,7 @@ walker
   ttyi  100      # TTY output interval
 
   rngs
-    mkl_r250
+    mkl_mcg59
       beta_method cja
     end
   end
@@ -41,7 +41,7 @@ walker
     kappaprime 1.0  1.0  1.0  1.0  1.0 end
     bprime     1.9  1.9  1.9  1.9  1.9 end
     S          0.5  0.5  0.5  0.5  0.5 end
-    rng mkl_r250
+    rng mkl_mcg59
     rho2 1.0 1.0 1.0 1.0 1.0 end
     #r 2.0 2.0 2.0 2.0 2.0 end
     #r 0.0101 0.0101 0.0101 0.0101 0.0101 end    # low-A
