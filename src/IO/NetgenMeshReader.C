@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/NetgenMeshReader.C
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:27:17 PM MDT
+  \date      Wed 13 Jan 2016 11:58:21 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Netgen mesh reader class definition
   \details   Netgen mesh reader class definition. Only supports tetrahedra.
@@ -35,9 +35,6 @@ NetgenMeshReader::readMesh( UnsMesh& mesh )
   readNodes( mesh );
   // Read elements
   readElements( mesh );
-
-  // Clear failbit triggered by eof, so close() won't throw a false FAILED_CLOSE
-  m_inFile.clear();
 }
 
 void

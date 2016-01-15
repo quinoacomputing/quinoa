@@ -103,8 +103,11 @@ if (NOT NO_SYSTEM_PSTREAMS)
   set(PSTREAMS_ROOT ${TPL_DIR}) # prefer ours
   find_package(PStreams REQUIRED)
 endif()
-if(PSTREAMS_FOUND)
-  #message(STATUS "PStreams at ${PSTREAMS_INCLUDES}")
+
+#### pugixml library
+if (NOT NO_SYSTEM_PUGIXML)
+  set(PUGIXML_ROOT ${TPL_DIR}) # prefer ours
+  find_package(pugixml REQUIRED)
 endif()
 
 #### RNGSSE2 library

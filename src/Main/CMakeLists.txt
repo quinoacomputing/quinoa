@@ -39,6 +39,7 @@ target_link_libraries(${UNITTEST_EXECUTABLE}
                       UnitTest
                       UnitTestControl
                       #${SILO_LIBRARY}
+                      ${PUGIXML_LIBRARIES}
                       ${Trilinos_LIBRARIES}
 )
 
@@ -79,6 +80,7 @@ target_link_libraries(${INCITER_EXECUTABLE}
                       Mesh
                       InciterControl
                       LoadBalance
+                      ${PUGIXML_LIBRARIES}
                       ${Trilinos_LIBRARIES}
                       ${HYPRE_LIBRARIES}
 )
@@ -160,6 +162,7 @@ target_link_libraries(${MESHCONV_EXECUTABLE}
                       Mesh
                       MeshConvControl
                       #${SILO_LIBRARY}
+                      ${PUGIXML_LIBRARIES}
                       ${Trilinos_LIBRARIES}
 )
 
@@ -201,6 +204,7 @@ target_link_libraries(${WALKER_EXECUTABLE}
                       Mesh      # WALKER SHOULD NOT DEPEND ON MESH
                       IO
                       WalkerControl
+                      ${PUGIXML_LIBRARIES}
                       ${Trilinos_LIBRARIES}
                       ${LAPACKE_LIB}
                       ${LAPACK_LIBRARIES}

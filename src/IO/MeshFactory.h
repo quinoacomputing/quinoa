@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/MeshFactory.h
   \author    J. Bakosi
-  \date      Mon 14 Dec 2015 10:17:57 PM MST
+  \date      Wed 13 Jan 2016 06:11:42 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unstructured mesh reader and writer factory
   \details   Unstructured mesh reader and writer factory.
@@ -22,7 +22,8 @@ namespace tk {
 //! Supported mesh readers
 enum class MeshReader : uint8_t { GMSH=0,
                                   NETGEN,
-                                  EXODUSII };
+                                  EXODUSII,
+                                  HYPERMESH };
 
 //! Supported mesh writers
 enum class MeshWriter : uint8_t { GMSH=0,

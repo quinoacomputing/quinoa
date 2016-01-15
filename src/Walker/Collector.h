@@ -2,7 +2,7 @@
 /*!
   \file      src/Walker/Collector.h
   \author    J. Bakosi
-  \date      Mon 09 Nov 2015 04:19:13 PM MST
+  \date      Fri 15 Jan 2016 07:43:13 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Charm++ module interface file for collecting contributions from
              Integrators
@@ -60,7 +60,31 @@ class Collector : public CBase_Collector {
       m_nopdf( 0 ),
       m_ncpdf( 0 ),
       m_ordinary( g_inputdeck.momentNames( tk::ctr::ordinary ).size(), 0.0 ),
-      m_central( g_inputdeck.momentNames( tk::ctr::central ) .size(), 0.0 )
+      m_central( g_inputdeck.momentNames( tk::ctr::central ).size(), 0.0 ),
+      m_ordupdf(
+        tk::ctr::numPDF< 1 >( g_inputdeck.get< tag::discr, tag::binsize >(),
+                              g_inputdeck.get< tag::pdf >(),
+                              tk::ctr::Moment::ORDINARY ) ),
+      m_ordbpdf(
+        tk::ctr::numPDF< 2 >( g_inputdeck.get< tag::discr, tag::binsize >(),
+                              g_inputdeck.get< tag::pdf >(),
+                              tk::ctr::Moment::ORDINARY ) ),
+      m_ordtpdf(
+        tk::ctr::numPDF< 3 >( g_inputdeck.get< tag::discr, tag::binsize >(),
+                              g_inputdeck.get< tag::pdf >(),
+                              tk::ctr::Moment::ORDINARY ) ),
+      m_cenupdf(
+        tk::ctr::numPDF< 1 >( g_inputdeck.get< tag::discr, tag::binsize >(),
+                              g_inputdeck.get< tag::pdf >(),
+                              tk::ctr::Moment::CENTRAL ) ),
+      m_cenbpdf(
+        tk::ctr::numPDF< 2 >( g_inputdeck.get< tag::discr, tag::binsize >(),
+                              g_inputdeck.get< tag::pdf >(),
+                              tk::ctr::Moment::CENTRAL ) ),
+      m_centpdf(
+        tk::ctr::numPDF< 3 >( g_inputdeck.get< tag::discr, tag::binsize >(),
+                              g_inputdeck.get< tag::pdf >(),
+                              tk::ctr::Moment::CENTRAL ) )
     {}
 
     //! \brief Configure Charm++ reduction types for collecting PDFs
@@ -70,7 +94,7 @@ class Collector : public CBase_Collector {
     //!   it is called without an object. See also: Section "Initializations at
     //!   Program Startup" at in the Charm++ manual
     //!   http://charm.cs.illinois.edu/manuals/html/charm++/manual.html.
-    static void registerOrdPDFMerger()
+    static void registerPDFMerger()
     { PDFMerger = CkReduction::addReducer( tk::mergePDF ); }
 
     //! Chares register on my PE
