@@ -2,7 +2,7 @@
 /*!
   \file      src/Walker/Integrator.C
   \author    J. Bakosi
-  \date      Tue 22 Dec 2015 10:57:23 AM MST
+  \date      Fri 15 Jan 2016 11:40:41 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Integrator advances differential equations
   \details   Integrator advances differential equations. There are a potentially
@@ -77,13 +77,6 @@ Integrator::ic()
 //******************************************************************************
 {
   for (const auto& eq : g_diffeqs) eq.initialize( CkMyPe(), m_particles );
-  // Tell the Charm++ runtime system to call back to Distributor::init()
-  // once all Integrator chares have called initialize above. The reduction
-  // is done via creating a callback that invokes the typed reduction
-  // client, where m_hostproxy is the proxy on which the reduction target
-  // method, init(), is called upon completion of the reduction.
-  contribute(
-    CkCallback(CkReductionTarget( Distributor, init ), m_hostproxy) );
 }
 
 void
@@ -100,11 +93,12 @@ Integrator::advance( tk::real dt,
 //! \author J. Bakosi
 //******************************************************************************
 {
-  //! Advance all equations one step in time
-  if (it < g_inputdeck.get< tag::discr, tag::nstep >()) {
+  // Advance all equations one step in time. At the 0th iteration skip advance
+  // but estimate statistics and (potentially) PDFs (at the interval given by
+  // the user).
+  if (it > 0)
     for (const auto& e : g_diffeqs)
       e.advance( m_particles, CkMyPe(), dt, t, moments );
-  }
 
   if (!g_inputdeck.stat()) {// if no stats to estimate, skip to end of time step
     contribute(
@@ -114,7 +108,7 @@ Integrator::advance( tk::real dt,
     accumulateOrd();
     // Accumulate sums for ordinary PDFs at select times
     if ( g_inputdeck.pdf() &&
-         !(it % g_inputdeck.get< tag::interval, tag::pdf >()) )
+         !((it+1) % g_inputdeck.get< tag::interval, tag::pdf >()) )
       accumulateOrdPDF();
   }
 }
