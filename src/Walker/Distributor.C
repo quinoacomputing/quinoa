@@ -2,7 +2,7 @@
 /*!
   \file      src/Walker/Distributor.C
   \author    J. Bakosi
-  \date      Fri 15 Jan 2016 07:45:52 AM MST
+  \date      Fri 15 Jan 2016 11:46:10 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Distributor drives the time integration of differential equations
   \details   Distributor drives the time integration of differential equations.
@@ -54,8 +54,8 @@ Distributor::Distributor( const ctr::CmdLine& cmdline ) :
   m_print( cmdline.get< tag::verbose >() ? std::cout : std::clog ),
   m_output( false, false ),
   m_it( 0 ),
-  m_nchare( 0 ),
   m_t( 0.0 ),
+  m_dt( computedt() ),
   m_nameOrdinary( g_inputdeck.momentNames( tk::ctr::ordinary ) ),
   m_nameCentral( g_inputdeck.momentNames( tk::ctr::central ) ),
   m_ordinary( m_nameOrdinary.size(), 0.0 ),
@@ -69,29 +69,38 @@ Distributor::Distributor( const ctr::CmdLine& cmdline ) :
   // Compute load distribution given total work (= number of particles) and
   // user-specified virtualization
   uint64_t chunksize, remainder;
-  m_nchare = tk::linearLoadDistributor(
-               g_inputdeck.get< tag::cmd, tag::virtualization >(),
-               g_inputdeck.get< tag::discr, tag::npar >(),
-               CkNumPes(),
-               chunksize,
-               remainder );
+  auto nchare = tk::linearLoadDistributor(
+                  g_inputdeck.get< tag::cmd, tag::virtualization >(),
+                  g_inputdeck.get< tag::discr, tag::npar >(),
+                  CkNumPes(),
+                  chunksize,
+                  remainder );
 
-  // Compute total number of particles distributed over all workers
-  // Note that this number will not necessarily be the same as given by the
-  // user, coming from g_inputdeck.get< tag::discr, tag::npar >(), since each
-  // Charm++ chare array element constructor takes this chunksize argument,
-  // which equals the number of particles the array element (worker) will work
-  // on.
-  m_npar = static_cast< tk::real >( m_nchare * chunksize );
+  // Compute total number of particles distributed over all workers Note that
+  // this number will not necessarily be the same as given by the user, coming
+  // from g_inputdeck.get< tag::discr, tag::npar >(), since each Charm++ chare
+  // array element constructor takes this chunksize argument, which equals the
+  // number of particles the array element (worker) will work on.
+  m_npar = static_cast< tk::real >( nchare * chunksize );
 
   // Print out info on what will be done and how
-  info( chunksize );
+  info( chunksize, nchare );
+
+  // Output header for statistics output file
+  tk::TxtStatWriter sw( !m_nameOrdinary.empty() || !m_nameCentral.empty() ?
+                        g_inputdeck.get< tag::cmd, tag::io, tag::stat >() :
+                        std::string(),
+                        g_inputdeck.get< tag::flformat, tag::stat >(),
+                        g_inputdeck.get< tag::prec, tag::stat >() );
+  sw.header( m_nameOrdinary, m_nameCentral );
+
+  // Print out time integration header
+  m_print.endsubsection();
+  m_print.diag( "Starting time stepping ..." );  
+  header();
 
   // Start timer measuring total integration time
   m_timer.emplace_back();
-
-  // Compute size of initial time step
-  m_dt = computedt();
 
   // Construct and initialize map of statistical moments
   for (const auto& product : g_inputdeck.get< tag::stat >())
@@ -110,14 +119,15 @@ Distributor::Distributor( const ctr::CmdLine& cmdline ) :
   // Fire up asynchronous differential equation integrators
   m_intproxy =
     CProxy_Integrator::ckNew( thisProxy, collproxy, chunksize,
-                              static_cast<int>( m_nchare ) );
+                              static_cast<int>( nchare ) );
 }
 
 void
-Distributor::info( uint64_t chunksize ) const
+Distributor::info( uint64_t chunksize, std::size_t nchare ) const
 //******************************************************************************
 //  Print information at startup
 //! \param[in] chunksize Chunk size, see Base/LoadDistribution.h
+//! \param[in] nchare Total number of Charem++ Integrator chares doing work
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -178,26 +188,15 @@ Distributor::info( uint64_t chunksize ) const
   m_print.item( "Virtualization [0.0...1.0]",
                 g_inputdeck.get< tag::cmd, tag::virtualization >() );
   m_print.item( "Number of processing elements", CkNumPes() );
-  m_print.item( "Number of work units", m_nchare );
+  m_print.item( "Number of work units", nchare );
   m_print.item( "User load (# of particles)",
                 g_inputdeck.get< tag::discr, tag::npar >() );
   m_print.item( "Chunksize (load per work unit)", chunksize );
   m_print.item( "Actual load (# of particles)",
-                std::to_string( m_nchare * chunksize ) +
+                std::to_string( nchare * chunksize ) +
                 " (=" +
-                std::to_string( m_nchare ) + "*" +
+                std::to_string( nchare ) + "*" +
                 std::to_string( chunksize ) + ")" );
-
-  // Print out time integration header
-  if (g_inputdeck.get< tag::discr, tag::nstep >()) {
-    header();
-    tk::TxtStatWriter sw( !m_nameOrdinary.empty() || !m_nameCentral.empty() ?
-                          g_inputdeck.get< tag::cmd, tag::io, tag::stat >() :
-                          std::string(),
-                          g_inputdeck.get< tag::flformat, tag::stat >(),
-                          g_inputdeck.get< tag::prec, tag::stat >() );
-    sw.header( m_nameOrdinary, m_nameCentral );
-  }
 }
 
 tk::real
@@ -210,18 +209,6 @@ Distributor::computedt()
 {
   // Simply return a constant user-defined dt for now
   return g_inputdeck.get< tag::discr, tag::dt >();
-}
-
-void
-Distributor::init() const
-//******************************************************************************
-// Reduction target indicating that all integrators finished initialization
-//! \details Upon calling this Charm++ reduction target, we simply put in a time
-//!   stamp measuring setting the initial conditions.
-//! \author J. Bakosi
-//******************************************************************************
-{
-  mainProxy.timestamp( "Initial conditions", m_timer[0].dsec() );
 }
 
 void
@@ -316,14 +303,14 @@ Distributor::outStat()
 //******************************************************************************
 {
   // Append statistics file at selected times
-  if (!(m_it % g_inputdeck.get< tag::interval, tag::stat >())) {
+  if (!((m_it+1) % g_inputdeck.get< tag::interval, tag::stat >())) {
     tk::TxtStatWriter sw( !m_nameOrdinary.empty() || !m_nameCentral.empty() ?
                           g_inputdeck.get< tag::cmd, tag::io, tag::stat >() :
                           std::string(),
                           g_inputdeck.get< tag::flformat, tag::stat >(),
                           g_inputdeck.get< tag::prec, tag::stat >(),
                           std::ios_base::app );
-    if (sw.stat( m_it, m_t, m_ordinary, m_central ))
+    if (sw.stat( m_it+1, m_t+m_dt, m_ordinary, m_central ))
       m_output.get< tag::stat >() = true;
   }
 }
@@ -336,7 +323,7 @@ Distributor::outPDF()
 //******************************************************************************
 {
   // Output PDFs at selected times
-  if ( !(m_it % g_inputdeck.get< tag::interval, tag::pdf >()) ) {
+  if ( !((m_it+1) % g_inputdeck.get< tag::interval, tag::pdf >()) ) {
     outUniPDF();                        // Output univariate PDFs to file(s)
     outBiPDF();                         // Output bivariate PDFs to file(s)
     outTriPDF();                        // Output trivariate PDFs to file(s)
@@ -372,7 +359,7 @@ Distributor::writeUniPDF( const tk::UniPDF& p,
   // Augment PDF filename by time stamp if PDF output file policy is multiple
   if (g_inputdeck.get< tag::selected, tag::pdfpolicy >() ==
       tk::ctr::PDFPolicyType::MULTIPLE)
-    filename += '_' + std::to_string( m_t );
+    filename += '_' + std::to_string( m_t+m_dt );
 
   // Augment PDF filename by '.txt' extension
   filename += ".txt";
@@ -414,7 +401,7 @@ Distributor::writeBiPDF( const tk::BiPDF& p,
   // Augment PDF filename by time stamp if PDF output file policy is multiple
   if (g_inputdeck.get< tag::selected, tag::pdfpolicy >() ==
       tk::ctr::PDFPolicyType::MULTIPLE)
-    filename += '_' + std::to_string( m_t );
+    filename += '_' + std::to_string( m_t+m_dt );
 
   const auto& filetype = g_inputdeck.get< tag::selected, tag::pdffiletype >();
 
@@ -476,7 +463,7 @@ Distributor::writeTriPDF( const tk::TriPDF& p,
   // Augment PDF filename by time stamp if PDF output file policy is multiple
   if (g_inputdeck.get< tag::selected, tag::pdfpolicy >() ==
       tk::ctr::PDFPolicyType::MULTIPLE)
-    filename += '_' + std::to_string( m_t );
+    filename += '_' + std::to_string( m_t+m_dt );
 
   const auto& filetype = g_inputdeck.get< tag::selected, tag::pdffiletype >();
 
@@ -567,27 +554,23 @@ Distributor::evaluateTime()
 //! \author J. Bakosi
 //******************************************************************************
 {
+  const auto term = g_inputdeck.get< tag::discr, tag::term >();
+  const auto eps = std::numeric_limits< tk::real >::epsilon();
+  const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
+
   // Increase number of iterations taken
   ++m_it;
-
-  // Compute size of next time step
-  m_dt = computedt();
-
   // Advance physical time
   m_t += m_dt;
-
-  // Get physical time at which to terminate
-  const auto term = g_inputdeck.get< tag::discr, tag::term >();
-
   // Truncate the size of last time step
   if (m_t > term) m_t = term;
-
+  // Compute size of next time step
+  m_dt = computedt();
   // Echo one-liner info on time step
   report();
 
   // Finish if either max iterations or max time reached 
-  if ( std::fabs(m_t - term) > std::numeric_limits< tk::real >::epsilon() &&
-       m_it < g_inputdeck.get< tag::discr, tag::nstep >() ) {
+  if ( std::fabs(m_t-term) > eps && m_it < nstep ) {
 
     if (g_inputdeck.stat()) {
       // Update map of statistical moments
@@ -603,7 +586,7 @@ Distributor::evaluateTime()
       std::fill( begin(m_ordinary), end(m_ordinary), 0.0 );
       std::fill( begin(m_central), end(m_central), 0.0 );
 
-      // Re-activate SDAG-wait for estimation of ordinary statistics for next step
+      // Re-activate SDAG-wait for estimation of ordinary stats for next step
       wait4ord();
       // Re-activate SDAG-wait for estimation of central moments for next step
       wait4cen();
@@ -615,22 +598,29 @@ Distributor::evaluateTime()
     // Continue with next time step with all integrators
     m_intproxy.advance( m_dt, m_t, m_it, m_moments );
 
-  } else {
+  } else finish();
+}
 
-    // Normal finish, print out reason
-    const auto term = g_inputdeck.get< tag::discr, tag::term >();
-    const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
-    m_print.endsubsection();
-    if (m_it >= g_inputdeck.get< tag::discr, tag::nstep >())
-       m_print.note( "Normal finish, maximum number of iterations reached: " +
-                     std::to_string( nstep ) );
-     else 
-       m_print.note( "Normal finish, maximum time reached: " +
-                     std::to_string( term ) );
-    // Quit
-    mainProxy.finalize();
+void
+Distributor::finish()
+//******************************************************************************
+// Normal finish of time stepping
+//! \author J. Bakosi
+//******************************************************************************
+{
+  // Print out reason for stopping
+  const auto term = g_inputdeck.get< tag::discr, tag::term >();
+  const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
+  m_print.endsubsection();
+  if (m_it >= g_inputdeck.get< tag::discr, tag::nstep >())
+     m_print.note( "Normal finish, maximum number of iterations reached: " +
+                   std::to_string( nstep ) );
+   else 
+     m_print.note( "Normal finish, maximum time reached: " +
+                   std::to_string( term ) );
 
-  }
+  // Quit
+  mainProxy.finalize();
 }
 
 void
@@ -696,12 +686,12 @@ Distributor::report()
     if (m_output.get< tag::stat >()) m_print << 'S';
     if (m_output.get< tag::pdf >()) m_print << 'P';
 
+    // Reset output indicators
+    m_output.get< tag::stat >() = false;
+    m_output.get< tag::pdf >() = false;
+
     m_print << '\n';
   }
-
-  // Reset output indicators
-  m_output.get< tag::stat >() = false;
-  m_output.get< tag::pdf >() = false;
 }
 
 #if defined(__clang__) || defined(__GNUC__)

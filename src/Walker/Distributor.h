@@ -2,7 +2,7 @@
 /*!
   \file      src/Walker/Distributor.h
   \author    J. Bakosi
-  \date      Tue 22 Dec 2015 10:58:20 AM MST
+  \date      Fri 15 Jan 2016 09:13:37 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Distributor drives the time integration of differential equations
   \details   Distributor drives the time integration of differential equations.
@@ -66,9 +66,6 @@ class Distributor : public CBase_Distributor {
     //!   broadcast to all Itegrator chares to continue with their setup.
     void registered() { m_intproxy.setup( m_dt, m_t, m_it, m_moments ); }
 
-    //! Finish initialization
-    void init() const;
-
     //! Estimate ordinary moments
     void estimateOrd( tk::real* ord, std::size_t n );
 
@@ -86,7 +83,7 @@ class Distributor : public CBase_Distributor {
 
   private:
     //! Print information at startup
-    void info( uint64_t chunksize ) const;
+    void info( uint64_t chunksize, std::size_t nchare ) const;
 
     //! Compute size of next time step
     tk::real computedt();
@@ -132,7 +129,6 @@ class Distributor : public CBase_Distributor {
                              tag::pdf,  bool > m_output;
 
     uint64_t m_it;                              //!< Iteration count
-    uint64_t m_nchare;                          //!< Number of chares counter
     tk::real m_npar;                            //!< Total number of particles
     tk::real m_t;                               //!< Physical time
     tk::real m_dt;                              //!< Physical time step size
@@ -151,6 +147,9 @@ class Distributor : public CBase_Distributor {
 
     //! Map used to lookup moments
     std::map< tk::ctr::Product, tk::real > m_moments;
+
+    //! Normal finish of time stepping
+    void finish();
 };
 
 } // walker::
