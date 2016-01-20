@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Conductor.C
   \author    J. Bakosi
-  \date      Wed 20 Jan 2016 07:36:44 AM MST
+  \date      Wed 20 Jan 2016 09:32:28 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Conductor drives the time integration of a PDE
   \details   Conductor drives the time integration of a PDE
@@ -218,7 +218,7 @@ Conductor::nodes( CkReductionMsg* msg )
   std::vector< std::size_t > nrecv( static_cast<std::size_t>(CkNumPes()), 0 );
   for (int pe=0; pe<static_cast<int>(sid.size()); ++pe) {
     const auto PE = static_cast< std::size_t >( pe );
-    auto& cpe = m_communication[ PE ];  // attempt to build PE's comm map
+    auto& cpe = m_communication[ PE ];  // will build PE's communication map
     const auto& peid = sid[PE];         // global node IDs we are looking for
     for (auto i : peid)                 // try to find them all
       for (int p=0; p<pe; ++p) {        // on PEs < pe
