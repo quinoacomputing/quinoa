@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/PUPUtil.h
   \author    J. Bakosi
-  \date      Tue 21 Jul 2015 08:44:55 AM MDT
+  \date      Tue 19 Jan 2016 09:31:44 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Charm++ Pack/UnPack utilities
   \brief     This file contains some extensions to Charm++'s Pack/UnPack
@@ -13,6 +13,7 @@
 #define PUPUtil_h
 
 #include <unordered_map>
+#include <unordered_set>
 #include <array>
 
 #include <boost/optional.hpp>
@@ -117,8 +118,7 @@ template< class Key,
           class T,
           class Hash = std::hash< Key >,
           class KeyEqual = std::equal_to< Key > >
-inline void pup( PUP::er& p,
-                 std::unordered_map< Key, T, Hash, KeyEqual >& m ) {
+inline void pup( PUP::er& p, std::unordered_map< Key, T, Hash, KeyEqual >& m ) {
   auto size = PUP_stl_container_size( p, m );
   if (p.isUnpacking()) {
     for (std::size_t s=0; s<size; ++s) {
@@ -145,6 +145,40 @@ inline void operator|( PUP::er& p,
                        std::unordered_map< Key, T, Hash, KeyEqual >& m )
 { pup( p, m ); }
 
+//////////////////// Serialize std::unordered_set ////////////////////
+
+//! Pack/Unpack std::unordered_set.
+//! \param[in] p Charm++'s pack/unpack object
+//! \param[in] s std::unordered_set< Key, Hash, KeyEqual > to pack/unpack
+//! \author J. Bakosi
+template< class Key,
+          class Hash = std::hash< Key >,
+          class KeyEqual = std::equal_to< Key > >
+inline void pup( PUP::er& p, std::unordered_set< Key, Hash, KeyEqual >& s ) {
+  auto size = PUP_stl_container_size( p, s );
+  if (p.isUnpacking()) {
+    for (std::size_t i=0; i<size; ++i) {
+      Key node;
+      p | node;
+      s.emplace( node );
+    }
+  } else {
+    for (auto& t : s) {
+      Key node( t );
+      p | node;
+    }
+  }
+}
+//! Pack/Unpack std::unordered_set.
+//! \param[in] p Charm++'s pack/unpack object
+//! \param[in] s std::unordered_set< Key, Hash, KeyEqual > to pack/unpack
+//! \author J. Bakosi
+template< class Key,
+          class Hash = std::hash< Key >,
+          class KeyEqual = std::equal_to< Key > >
+inline void operator|( PUP::er& p,
+                       std::unordered_set< Key, Hash, KeyEqual >& s )
+{ pup( p, s ); }
 //////////////////// Serialize boost::optional ////////////////////
 
 //! Pack/Unpack boost::optional.

@@ -1,15 +1,15 @@
 //******************************************************************************
 /*!
-  \file      src/Statistics/PDFUtil.C
+  \file      src/Statistics/PDFReducer.C
   \author    J. Bakosi
-  \date      Fri 15 Jan 2016 07:40:55 AM MST
+  \date      Tue 19 Jan 2016 07:43:42 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
-  \brief     PDF utilities
-  \brief     PDF utilities.
+  \brief     Custom Charm++ reducer for merging PDFs across PEs
+  \details   Custom Charm++ reducer for merging PDFs across PEs.
 */
 //******************************************************************************
 
-#include "PDFUtil.h"
+#include "PDFReducer.h"
 #include "Make_unique.h"
 
 namespace tk {

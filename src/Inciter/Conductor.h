@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Conductor.h
   \author    J. Bakosi
-  \date      Mon 11 Jan 2016 11:37:21 AM MST
+  \date      Wed 20 Jan 2016 05:55:18 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Conductor drives the time integration of a PDE
   \details   Conductor drives the time integration of a PDE
@@ -57,8 +57,8 @@ class Conductor : public CBase_Conductor {
     //!   we are ready to compute the computational load
     void load( uint64_t nelem );
 
-    //! Add global mesh node IDs from PE
-    void addNodes( int pe, const std::vector< std::size_t >& gid );
+    //! Reduction target collecting global mesh node IDs from PEs
+    void nodes( CkReductionMsg* msg );
 
     //! \brief Reduction target indicating that all Partitioner chare groups
     //!   have finished setting up the necessary data structures for
@@ -123,10 +123,6 @@ class Conductor : public CBase_Conductor {
     PartitionerProxy m_partitioner;     //!< Partitioner group proxy
     //! Average communication cost of merging the linear system
     tk::real m_avcost;
-    //! \brief Global node ids contributed from PEs
-    //! \details Storage for global node indices resulting from the contributing
-    //!   PE reading its contiguously-numbered mesh elements from file
-    std::vector< std::unordered_set< std::size_t > > m_gid;
     //! \brief Communication map for all PEs used for node reordering
     //! \details This map, for all PEs, associates the list of global mesh point
     //!   indices to fellow PE IDs which a PE will receive new node ID numbers
@@ -134,33 +130,12 @@ class Conductor : public CBase_Conductor {
     //!   lower index are stored.
     std::vector<
       std::unordered_map< int, std::set< std::size_t > > > m_communication;
-    //! \brief Vector of bools indicating whether the communication map has
-    //!   been built for a PE
-    std::vector< bool > m_commbuilt;
-    //! Number of to-be-received node IDs for each PE for reordering nodes
-    std::vector< std::size_t > m_nrecv;
     //! Start IDs for each PE for reordering nodes
     std::vector< std::size_t > m_start;
-    //! Communication cost for merging the linear system associated to PE
-    std::map< int, tk::real > m_cost;
     //! Timer tags
     enum class TimerTag { TIMESTEP };
     //! Timers
     std::map< TimerTag, tk::Timer > m_timer;
-
-    //! Attempt to build communication maps for for all PEs
-    void buildComm();
-
-    //! Check if the global node indices for all PEs below PE have been filled
-    //! \param[in] pe PE to check for
-    //! \return True if the global node IDs for all PEs < pe have been received.
-    bool nodesComplete( int pe ) {
-      using Map = decltype(m_gid)::value_type;
-      using Diff = Map::difference_type;
-      return std::none_of( m_gid.cbegin(),
-                           std::next( m_gid.cbegin(), static_cast<Diff>(pe) ),
-                           [](const Map& m){ return m.empty(); } );
-    }
 
     //! Reorder mesh node IDs owned on each PE
     void reorder();

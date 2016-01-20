@@ -1,15 +1,15 @@
 //******************************************************************************
 /*!
-  \file      src/Statistics/PDFUtil.h
+  \file      src/Statistics/PDFReducer.h
   \author    J. Bakosi
-  \date      Thu 14 Jan 2016 02:38:42 PM MST
+  \date      Tue 19 Jan 2016 07:44:04 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
-  \brief     PDF utilities
-  \brief     PDF utilities.
+  \brief     Custom Charm++ reducer for merging PDFs across PEs
+  \details   Custom Charm++ reducer for merging PDFs across PEs.
 */
 //******************************************************************************
-#ifndef PDFUtil_h
-#define PDFUtil_h
+#ifndef PDFReducer_h
+#define PDFReducer_h
 
 #include <tuple>
 #include <vector>
@@ -43,4 +43,4 @@ mergePDF( int nmsg, CkReductionMsg **msgs );
 
 } // tk::
 
-#endif // PDFUtil_h
+#endif // PDFReducer_h

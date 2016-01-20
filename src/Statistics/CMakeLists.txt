@@ -4,10 +4,10 @@ project(Statistics CXX)
 
 add_library(Statistics
             Statistics.C
-            PDFUtil.C
+            PDFReducer.C
 )
 
-removeWarnings( "Statistics.C;PDFUtil.C" )
+removeWarnings( "Statistics.C;PDFReducer.C" )
 
 INSTALL(TARGETS Statistics
   	RUNTIME DESTINATION bin COMPONENT Runtime

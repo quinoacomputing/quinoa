@@ -2,7 +2,7 @@
 /*!
   \file      src/Walker/Collector.h
   \author    J. Bakosi
-  \date      Fri 15 Jan 2016 07:43:13 AM MST
+  \date      Tue 19 Jan 2016 03:42:27 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Charm++ module interface file for collecting contributions from
              Integrators
@@ -16,7 +16,7 @@
 #include <cstddef>
 
 #include "Types.h"
-#include "PDFUtil.h"
+#include "PDFReducer.h"
 #include "Make_unique.h"
 #include "Distributor.h"
 #include "Walker/InputDeck/InputDeck.h"
@@ -35,9 +35,7 @@
 namespace walker {
 
 extern ctr::InputDeck g_inputdeck;
-
-//! Charm++ PDF merger reducer
-static CkReduction::reducerType PDFMerger;
+extern CkReduction::reducerType PDFMerger;
 
 //! Collector Charm++ chare group class
 //! \details Instantiations of Collector comprise a processor aware Charm++
@@ -135,6 +133,6 @@ class Collector : public CBase_Collector {
     std::vector< tk::TriPDF > m_centpdf;        //!< Central trivariate PDFs
 };
 
-} // tk::
+} // walker::
 
 #endif // Collector_h

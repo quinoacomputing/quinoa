@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Partitioner.h
   \author    J. Bakosi
-  \date      Mon 11 Jan 2016 11:37:44 AM MST
+  \date      Wed 20 Jan 2016 07:36:32 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Charm++ chare partitioner group used to perform mesh partitioning
   \details   Charm++ chare partitioner group used to parform mesh partitioning.
@@ -19,6 +19,7 @@
 #include "ZoltanInterOp.h"
 #include "Inciter/InputDeck/InputDeck.h"
 #include "LinSysMerger.h"
+#include "NodesReducer.h"
 
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic push
@@ -35,6 +36,7 @@
 namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
+extern CkReduction::reducerType NodesMerger;
 
 //! Partitioner Charm++ chare group class
 //! \details Instantiations of Partitioner comprise a processor aware Charm++
@@ -56,6 +58,16 @@ class Partitioner : public CBase_Partitioner< HostProxy,
       CBase_Partitioner< HostProxy, WorkerProxy, LinSysMergerProxy >;
 
   public:
+    //! \brief Configure Charm++ reduction types for collecting global node IDs
+    //! \details Since this is a [nodeinit] routine, see partitioner.ci, the
+    //!   Charm++ runtime system executes the routine exactly once on every
+    //!   logical node early on in the Charm++ init sequence. Must be static as
+    //!   it is called without an object. See also: Section "Initializations at
+    //!   Program Startup" at in the Charm++ manual
+    //!   http://charm.cs.illinois.edu/manuals/html/charm++/manual.html.
+    static void registerNodesMerger()
+    { NodesMerger = CkReduction::addReducer( tk::mergeNodes ); }
+
     //! Constructor
     //! \param[in] hostproxy Host Charm++ proxy we are being called from
     //! \param[in] lsm Linear system merger proxy (required by the workers)
@@ -114,7 +126,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
       // Call back to host indicating that we are ready for a new node order
       signal2host_flatten_complete( m_host );
       // Send unique global mesh point indices of our chunk to host
-      m_host.addNodes( CkMyPe(), m_id );
+      signal2host_addnodes( m_host, m_id );
     }
 
     //! Reorder global mesh node IDs
@@ -595,6 +607,14 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     void signal2host_flatten_complete( const CProxy_Conductor& host ) {
       Group::contribute(
         CkCallback(CkIndex_Conductor::redn_wrapper_flattened(NULL), host ));
+    }
+    //! Send unique global mesh point indices of our chunk to host
+    void signal2host_addnodes( const CProxy_Conductor& host,
+                               const std::vector< std::size_t >& gid )
+    {
+      auto stream = tk::serialize( { CkMyPe() }, { gid } );
+      CkCallback cb( CkIndex_Conductor::nodes(nullptr), host );
+      Group::contribute( stream.first, stream.second.get(), NodesMerger, cb );
     }
 };
 
