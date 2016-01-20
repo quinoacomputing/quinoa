@@ -2,7 +2,7 @@
 /*!
   \file      src/Walker/Collector.C
   \author    J. Bakosi
-  \date      Fri 15 Jan 2016 07:43:50 AM MST
+  \date      Tue 19 Jan 2016 03:43:47 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Charm++ module interface file for collecting contributions from
              Integrators
@@ -13,6 +13,21 @@
 
 #include "Make_unique.h"
 #include "Collector.h"
+
+namespace walker {
+
+//! \brief Charm++ PDF merger reducer
+//! \details This variable is defined here in the .C file and declared as extern
+//!   in Collector.h. If instead one defines it in the header (as static),
+//!   a new version of the variable is created any time the header file is
+//!   included, yielding no compilation nor linking errors. However, that leads
+//!   to runtime errors, since Collector::registerPDFMerger(), a Charm++
+//!   "initnode" entry method, *may* fill one while contribute() may use the
+//!   other (unregistered) one. Result: undefined behavior, segfault, and
+//!   formatting the internet ...
+CkReduction::reducerType PDFMerger;
+
+}
 
 using walker::Collector;
 

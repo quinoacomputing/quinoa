@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/partitioner.ci
   \author    J. Bakosi
-  \date      Mon 11 Jan 2016 09:07:00 AM MST
+  \date      Wed 20 Jan 2016 05:48:56 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Charm++ module interface file for the chare partitioner group
   \details   Charm++ module interface file for the chare partitioner group used
@@ -24,6 +24,7 @@ module partitioner {
       entry Partitioner( const HostProxy& host,
                          const WorkerProxy& worker,
                          const LinSysMergerProxy& lsm );
+      initnode void registerNodesMerger();
       entry void partition( int nchare );
       entry void add( int frompe,
             const std::unordered_map< int, std::vector< std::size_t > >& elem );

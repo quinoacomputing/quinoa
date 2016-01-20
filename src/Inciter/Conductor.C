@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Conductor.C
   \author    J. Bakosi
-  \date      Fri 15 Jan 2016 08:26:02 AM MST
+  \date      Wed 20 Jan 2016 07:36:44 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Conductor drives the time integration of a PDE
   \details   Conductor drives the time integration of a PDE
@@ -17,12 +17,14 @@
 #include <string>
 #include <iostream>
 #include <cstddef>
+#include <unordered_set>
 
 #include "Conductor.h"
 #include "ContainerUtil.h"
 #include "LoadDistributor.h"
 #include "ExodusIIMeshReader.h"
 #include "Inciter/InputDeck/InputDeck.h"
+#include "NodesReducer.h"
 
 #include "inciter.decl.h"
 
@@ -36,11 +38,8 @@ Conductor::Conductor() :
   m_t( g_inputdeck.get< tag::discr, tag::t0 >() ),
   m_dt( computedt() ),
   m_stage( 0 ),
-  m_gid( static_cast<std::size_t>(CkNumPes()) ),
-  m_communication( m_gid.size() ),
-  m_commbuilt( m_gid.size(), false ),
-  m_nrecv( m_gid.size(), 0 ),
-  m_start( m_gid.size() )
+  m_communication( static_cast<std::size_t>(CkNumPes()) ),
+  m_start( static_cast<std::size_t>(CkNumPes()) )
 //******************************************************************************
 //  Constructor
 //! \author J. Bakosi
@@ -170,111 +169,89 @@ Conductor::flatten()
 }
 
 void
-Conductor::addNodes( int pe, const std::vector< std::size_t >& gid )
+Conductor::nodes( CkReductionMsg* msg )
 //******************************************************************************
-// Add global mesh node IDs from PE
-//! \param[in] pe PE contribution coming from
-//! \param[in] gid Global node indices resulting from the contributing PE
-//!   reading its contiguously-numbered mesh elements from file
+// Reduction target collecting global mesh node IDs from PEs
+//! \param[in] msg Serialized global mesh node IDs associated to PEs
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // Store node ids from pe
-  for (auto p : gid) m_gid[ static_cast<std::size_t>(pe) ].insert( p );
+  // Deserialize global mesh node IDs associated to PEs
+  std::vector< int > pe;
+  std::vector< std::vector< std::size_t > > gid;
+  PUP::fromMem creator( msg->getData() );
+  creator | pe;
+  creator | gid;
+  delete msg;
 
-  // Whenever a new list of node IDs has been received, attempt to build
-  // communication maps for all PEs, even if not all PEs have contributed their
-  // mesh node IDs. Since the node IDs arrive in arbitrary order, we cannot be
-  // sure at this point that the node IDs for all PEs < PE have been received.
-  // However, we don't wait for the nodes from all PEs to have been received to
-  // attempt this. Building the map for a PE will only happen if the node IDs
-  // for all PEs below the PE have already been received. See also buildComm().
-  buildComm();
+  Assert( pe.size() == gid.size(), "Not all contributions have been received" );
 
-  // When the communication maps for all PEs have been computed, continue. Note
-  // that PE 0 does not communicate, since there is no PEs with indices lower
-  // than 0, hence we only test PEs > 0.
-  if (std::all_of( std::next(m_commbuilt.cbegin()),
-                   m_commbuilt.cend(),
-                   [](const decltype(m_commbuilt)::value_type& m)
-                   { return m; } ))
-  {
-    // Note that this assert should automatically be satisfied, since we can
-    // only get here if the communication maps for all PEs have already been
-    // built. This is ensured by the logic in buildComm(), which only sets an
-    // entry in m_commbuilt to true if the corresponding entry in m_gid is not
-    // empty. However, this was useful during development, so we leave it here.
-    Assert( std::none_of( m_gid.cbegin(), m_gid.cend(),
-                          [](const decltype(m_gid)::value_type& m)
-                          { return m.empty(); } ),
-            "Not all node IDs have been received" );
+  // Store global mesh node IDs in hash-sets associated to PEs
+  std::vector< std::unordered_set< std::size_t > >
+    sid( static_cast<std::size_t>(CkNumPes()) );
+  for (std::size_t p=0; p<gid.size(); ++p)
+    for (auto&& i : gid[p])
+      sid[ static_cast<std::size_t>(pe[p]) ].insert( std::move(i) );
 
-    // Compute node ID offset for all PEs. The offsets will be stored in vector
-    // m_start. We use m_nrecv which, for each PE, contains the total number of
-    // node IDs that a PE needs to receive from PEs with lower indices. Here we
-    // compute the offset each PE will need to start assigning its new node IDs
-    // from (for those nodes that are not assigned new IDs by any PEs with lower
-    // indices). The offset for a PE is the offset for the previous PE plus the
-    // number of node IDs the previous PE (uniquely) assigns new IDs for minus
-    // the number of node IDs the previous PE receives for others.
-    Assert( m_nrecv[0] == 0, "PE 0 must not receive any node IDs" );
-    Assert( m_gid.size() == m_nrecv.size(), "Number of PE node IDs and number "
-            "of to-be-received node IDs must be equal" );
-    Assert( m_gid.size() == m_start.size(), "Number of PE node IDs and number "
-            "of offsets must be equal" );
-    m_start[0] = 0;
-    for (std::size_t p=1; p<m_gid.size(); ++p)
-      m_start[p] = m_start[p-1] + m_gid[p-1].size() - m_nrecv[p-1];
+  Assert( sid.size() == static_cast<std::size_t>(CkNumPes()),
+          "Some PEs have contributed the wrong PE id" );
 
-    m_print.diagend( "done" );  // "Prepare for reordering mesh nodes ..."
-    // Continue with reordering, see also conductor.ci
-    trigger_commmap_complete();
-  }
-}
+  Assert( std::none_of( begin(sid), end(sid),
+                        [](const decltype(sid)::value_type& m)
+                        { return m.empty(); } ),
+          "Global node IDs aggregated across all PEs incomplete" );
 
-void
-Conductor::buildComm()
-//******************************************************************************
-// Attempt to build communication maps for for all PEs
-//! \details This function attempts to build communication maps for all PEs. The
-//!   container we store the maps is a vector of maps. The length of the vector
-//!   is already set by constructor to be the number of PEs. Each vector entry
-//!   is filled in by a map associating a vector global mesh node indices to a
-//!   PE from which the PE (whose communication map we are building) will
-//!   request new global node IDs from due to reordering. Note that only PEs
-//!   with lower IDs than PE need to be considered here, since the global node
-//!   reordering will start with PE 0 assigning new indices, followed by PE 1,
-//!   assigning only to the nodes have not been encountered, and so on. Thus new
-//!   IDs assigned by PEs lower than a given PE need to be communicated
-//!   upstream. In other words, what we are doing here is collecting all mesh
-//!   node IDs that a PE will contribute to that are also contributed to by PEs
-//!   with lower IDs than PE.
-//! \author J. Bakosi
-//******************************************************************************
-{
-  // Only attempt to build the map for a PE if
-  //  (1) we have not yet built the communication map for PE, and
-  //  (2) we have received the node IDs for PE, and
-  //  (4) we have the nodes from all PEs below PE.
-  for (int pe=0; pe<static_cast<int>(m_gid.size()); ++pe) {
+  // Build communication maps for all PEs. The container we store the maps is a
+  // vector of maps, m_communication. The length of the vector is already set by
+  // the constructor to be the number of PEs. Each vector entry is filled in by
+  // a hash-map associating a vector global mesh node indices to a PE from which
+  // the PE (whose communication map we are building) will request new global
+  // node IDs from due to reordering. Note that only PEs with lower IDs than PE
+  // need to be considered here, since the global node reordering will start
+  // with PE 0 assigning new indices, followed by PE 1, assigning only to the
+  // nodes that have not been encountered, and so on. Thus new IDs assigned by
+  // PEs lower than a given PE need to be communicated upstream. In other words,
+  // what we are doing here is collecting all mesh node IDs that a PE will
+  // contribute to that are also contributed to by PEs with lower IDs than PE.
+  // Vector nrecv will store the number of to-be-received node IDs for each PE
+  // for reordering nodes.
+  std::vector< std::size_t > nrecv( static_cast<std::size_t>(CkNumPes()), 0 );
+  for (int pe=0; pe<static_cast<int>(sid.size()); ++pe) {
     const auto PE = static_cast< std::size_t >( pe );
     auto& cpe = m_communication[ PE ];  // attempt to build PE's comm map
-    if (!m_commbuilt[PE] && !m_gid[PE].empty() && nodesComplete(pe)) {
-      m_commbuilt[PE] = true;           // mark PE's communication map as built
-      const auto& peid = m_gid[ PE ];   // global node IDs we are looing for
-      for (auto i : peid) {             // try to find them all
-        for (int p=0; p<pe; ++p) {      // on PEs < pe
-          const auto& id = m_gid[ static_cast<std::size_t>(p) ];
-          const auto it = id.find(i);
-          if (it != end(id)) {          // node ID will be assigned by PE p
-            cpe[ p ].insert( *it );
-            ++m_nrecv[ PE ];            // count up to-be-received nodes for PE
-            p = pe;      // get out, i.e., favor the lowest PE that has the node
-          }
+    const auto& peid = sid[PE];         // global node IDs we are looking for
+    for (auto i : peid)                 // try to find them all
+      for (int p=0; p<pe; ++p) {        // on PEs < pe
+        const auto& id = sid[ static_cast<std::size_t>(p) ];
+        const auto it = id.find(i);
+        if (it != end(id)) {            // node ID will be assigned by PE p
+          cpe[ p ].insert( *it );       // store it
+          ++nrecv[PE];                  // count up to-be-received nodes for PE
+          p = pe;       // get out, i.e., favor the lowest PE that has the node
         }
       }
-    }
   }
+
+  // Compute node ID offset for all PEs. The offsets will be stored in vector
+  // m_start. We use nrecv which, for each PE, contains the total number of node
+  // IDs that a PE needs to receive from PEs with lower indices. Here we compute
+  // the offset each PE will need to start assigning its new node IDs from (for
+  // those nodes that are not assigned new IDs by any PEs with lower indices).
+  // The offset for a PE is the offset for the previous PE plus the number of
+  // node IDs the previous PE (uniquely) assigns new IDs for minus the number of
+  // node IDs the previous PE receives for others.
+  Assert( nrecv[0] == 0, "PE 0 must not receive any node IDs" );
+  Assert( sid.size() == nrecv.size(), "Number of PE node IDs and number of "
+          "to-be-received node IDs must be equal" );
+  Assert( sid.size() == m_start.size(), "Number of PE node IDs and number of "
+          "offsets must be equal" );
+  m_start[0] = 0;
+  for (std::size_t p=1; p<sid.size(); ++p)
+    m_start[p] = m_start[p-1] + sid[p-1].size() - nrecv[p-1];
+
+  m_print.diagend( "done" );  // "Prepare for reordering mesh nodes ..."
+  // Continue with reordering, see also conductor.ci
+  trigger_commmap_complete();
 }
 
 void

@@ -2,7 +2,7 @@
 /*!
   \file      src/Walker/Distributor.C
   \author    J. Bakosi
-  \date      Fri 15 Jan 2016 11:46:10 AM MST
+  \date      Tue 19 Jan 2016 08:43:02 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Distributor drives the time integration of differential equations
   \details   Distributor drives the time integration of differential equations.
@@ -39,7 +39,7 @@
 #include "Integrator.h"
 #include "DiffEqStack.h"
 #include "TxtStatWriter.h"
-#include "PDFUtil.h"
+#include "PDFReducer.h"
 #include "PDFWriter.h"
 #include "Options/PDFFile.h"
 #include "Options/PDFPolicy.h"
@@ -259,7 +259,7 @@ void
 Distributor::estimateOrdPDF( CkReductionMsg* msg )
 //******************************************************************************
 // Estimate ordinary PDFs
-//! \param[in] Serialized tuple of vectors of uni-, bi-, and tri-variate PDFs
+//! \param[in] msg Serialized vectors of uni-, bi-, and tri-variate PDFs
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -279,7 +279,7 @@ void
 Distributor::estimateCenPDF( CkReductionMsg* msg )
 //******************************************************************************
 // Estimate central PDFs
-//! \param[in] Serialized tuple of vectors of uni-, bi-, and tri-variate PDFs
+//! \param[in] Serialized vectors of uni-, bi-, and tri-variate PDFs
 //! \author J. Bakosi
 //******************************************************************************
 {
