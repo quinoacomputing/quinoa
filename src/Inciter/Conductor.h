@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Conductor.h
   \author    J. Bakosi
-  \date      Wed 20 Jan 2016 05:55:18 AM MST
+  \date      Fri 22 Jan 2016 09:23:12 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Conductor drives the time integration of a PDE
   \details   Conductor drives the time integration of a PDE
@@ -44,10 +44,6 @@ namespace inciter {
 //! Conductor drives the time integration of a PDE
 class Conductor : public CBase_Conductor {
 
-  // Include Charm++ SDAG code. See http://charm.cs.illinois.edu/manuals/html/
-  // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
-  Conductor_SDAG_CODE
-
   public:
     //! Constructor
     explicit Conductor();
@@ -57,23 +53,10 @@ class Conductor : public CBase_Conductor {
     //!   we are ready to compute the computational load
     void load( uint64_t nelem );
 
-    //! Reduction target collecting global mesh node IDs from PEs
-    void nodes( CkReductionMsg* msg );
-
     //! \brief Reduction target indicating that all Partitioner chare groups
     //!   have finished setting up the necessary data structures for
     //!   partitioning the computational mesh and we are ready for partitioning
     void partition();
-
-    //! \brief Reduction target indicating that all Partitioner chare groups
-    //!   have finished distributing the mesh node IDs after partitioning and
-    //!   we are ready to start reordering mesh node IDs
-    void flatten();
-
-    //! \brief Reduction target indicating that all Partitioner chare groups
-    //!   have finished preparing their chunk of the mesh connectivity and ready
-    //!   for a new order
-    void flattened() { trigger_flatten_complete(); }
 
     //! \brief Reduction target estimating the average communication cost of
     //!   merging the linear system
@@ -123,22 +106,10 @@ class Conductor : public CBase_Conductor {
     PartitionerProxy m_partitioner;     //!< Partitioner group proxy
     //! Average communication cost of merging the linear system
     tk::real m_avcost;
-    //! \brief Communication map for all PEs used for node reordering
-    //! \details This map, for all PEs, associates the list of global mesh point
-    //!   indices to fellow PE IDs which a PE will receive new node ID numbers
-    //!   during reordering. Only data that will be received from PEs with a
-    //!   lower index are stored.
-    std::vector<
-      std::unordered_map< int, std::set< std::size_t > > > m_communication;
-    //! Start IDs for each PE for reordering nodes
-    std::vector< std::size_t > m_start;
     //! Timer tags
     enum class TimerTag { TIMESTEP };
     //! Timers
     std::map< TimerTag, tk::Timer > m_timer;
-
-    //! Reorder mesh node IDs owned on each PE
-    void reorder();
 
     //! Compute size of next time step
     tk::real computedt();

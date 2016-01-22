@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Conductor.C
   \author    J. Bakosi
-  \date      Wed 20 Jan 2016 09:32:28 AM MST
+  \date      Fri 22 Jan 2016 09:23:07 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Conductor drives the time integration of a PDE
   \details   Conductor drives the time integration of a PDE
@@ -24,7 +24,6 @@
 #include "LoadDistributor.h"
 #include "ExodusIIMeshReader.h"
 #include "Inciter/InputDeck/InputDeck.h"
-#include "NodesReducer.h"
 
 #include "inciter.decl.h"
 
@@ -37,9 +36,7 @@ Conductor::Conductor() :
   m_it( 0 ),
   m_t( g_inputdeck.get< tag::discr, tag::t0 >() ),
   m_dt( computedt() ),
-  m_stage( 0 ),
-  m_communication( static_cast<std::size_t>(CkNumPes()) ),
-  m_start( static_cast<std::size_t>(CkNumPes()) )
+  m_stage( 0 )
 //******************************************************************************
 //  Constructor
 //! \author J. Bakosi
@@ -68,9 +65,6 @@ Conductor::Conductor() :
   // is smaller than the duration of the time to be simulated, we have work to
   // do, otherwise, finish right away
   if ( nstep != 0 && term > t0 && dt < term-t0 ) {
-
-    // Activate SDAG waits
-    wait4setup();
 
     // Print I/O filenames
     m_print.section( "Output filenames" );
@@ -155,120 +149,6 @@ Conductor::partition()
 }
 
 void
-Conductor::flatten()
-//******************************************************************************
-// Reduction target indicating that all Partitioner chare groups have finished
-// distributing mesh node IDs after partitioning and we are ready to start
-// reordering mesh node IDs.
-//! \author J. Bakosi
-//******************************************************************************
-{
-  m_print.diagend( "done" );    // "Partitioning and distributing mesh ..."
-  m_print.diagstart( "Prepare for reordering mesh nodes ..." );
-  m_partitioner.flatten();
-}
-
-void
-Conductor::nodes( CkReductionMsg* msg )
-//******************************************************************************
-// Reduction target collecting global mesh node IDs from PEs
-//! \param[in] msg Serialized global mesh node IDs associated to PEs
-//! \author J. Bakosi
-//******************************************************************************
-{
-  // Deserialize global mesh node IDs associated to PEs
-  std::vector< int > pe;
-  std::vector< std::vector< std::size_t > > gid;
-  PUP::fromMem creator( msg->getData() );
-  creator | pe;
-  creator | gid;
-  delete msg;
-
-  Assert( pe.size() == gid.size(), "Not all contributions have been received" );
-
-  // Store global mesh node IDs in hash-sets associated to PEs
-  std::vector< std::unordered_set< std::size_t > >
-    sid( static_cast<std::size_t>(CkNumPes()) );
-  for (std::size_t p=0; p<gid.size(); ++p)
-    for (auto&& i : gid[p])
-      sid[ static_cast<std::size_t>(pe[p]) ].insert( std::move(i) );
-
-  Assert( sid.size() == static_cast<std::size_t>(CkNumPes()),
-          "Some PEs have contributed the wrong PE id" );
-
-  Assert( std::none_of( begin(sid), end(sid),
-                        [](const decltype(sid)::value_type& m)
-                        { return m.empty(); } ),
-          "Global node IDs aggregated across all PEs incomplete" );
-
-  // Build communication maps for all PEs. The container we store the maps is a
-  // vector of maps, m_communication. The length of the vector is already set by
-  // the constructor to be the number of PEs. Each vector entry is filled in by
-  // a hash-map associating a vector global mesh node indices to a PE from which
-  // the PE (whose communication map we are building) will request new global
-  // node IDs from due to reordering. Note that only PEs with lower IDs than PE
-  // need to be considered here, since the global node reordering will start
-  // with PE 0 assigning new indices, followed by PE 1, assigning only to the
-  // nodes that have not been encountered, and so on. Thus new IDs assigned by
-  // PEs lower than a given PE need to be communicated upstream. In other words,
-  // what we are doing here is collecting all mesh node IDs that a PE will
-  // contribute to that are also contributed to by PEs with lower IDs than PE.
-  // Vector nrecv will store the number of to-be-received node IDs for each PE
-  // for reordering nodes.
-  std::vector< std::size_t > nrecv( static_cast<std::size_t>(CkNumPes()), 0 );
-  for (int pe=0; pe<static_cast<int>(sid.size()); ++pe) {
-    const auto PE = static_cast< std::size_t >( pe );
-    auto& cpe = m_communication[ PE ];  // will build PE's communication map
-    const auto& peid = sid[PE];         // global node IDs we are looking for
-    for (auto i : peid)                 // try to find them all
-      for (int p=0; p<pe; ++p) {        // on PEs < pe
-        const auto& id = sid[ static_cast<std::size_t>(p) ];
-        const auto it = id.find(i);
-        if (it != end(id)) {            // node ID will be assigned by PE p
-          cpe[ p ].insert( *it );       // store it
-          ++nrecv[PE];                  // count up to-be-received nodes for PE
-          p = pe;       // get out, i.e., favor the lowest PE that has the node
-        }
-      }
-  }
-
-  // Compute node ID offset for all PEs. The offsets will be stored in vector
-  // m_start. We use nrecv which, for each PE, contains the total number of node
-  // IDs that a PE needs to receive from PEs with lower indices. Here we compute
-  // the offset each PE will need to start assigning its new node IDs from (for
-  // those nodes that are not assigned new IDs by any PEs with lower indices).
-  // The offset for a PE is the offset for the previous PE plus the number of
-  // node IDs the previous PE (uniquely) assigns new IDs for minus the number of
-  // node IDs the previous PE receives for others.
-  Assert( nrecv[0] == 0, "PE 0 must not receive any node IDs" );
-  Assert( sid.size() == nrecv.size(), "Number of PE node IDs and number of "
-          "to-be-received node IDs must be equal" );
-  Assert( sid.size() == m_start.size(), "Number of PE node IDs and number of "
-          "offsets must be equal" );
-  m_start[0] = 0;
-  for (std::size_t p=1; p<sid.size(); ++p)
-    m_start[p] = m_start[p-1] + sid[p-1].size() - nrecv[p-1];
-
-  m_print.diagend( "done" );  // "Prepare for reordering mesh nodes ..."
-  // Continue with reordering, see also conductor.ci
-  trigger_commmap_complete();
-}
-
-void
-Conductor::reorder()
-//******************************************************************************
-// Start reordering mesh node IDs on all PEs
-//! \author J. Bakosi
-//******************************************************************************
-{
-  m_print.diagstart( "Reordering mesh nodes ..." );
-  for (int p=0; p<CkNumPes(); ++p) {
-    const auto P = static_cast< std::size_t >( p );
-    m_partitioner[p].reorder( m_start[P], m_communication[P] );
-  }
-}
-
-void
 Conductor::aveCost( tk::real c )
 //******************************************************************************
 // Reduction target estimating the average communication cost of merging the
@@ -283,7 +163,7 @@ Conductor::aveCost( tk::real c )
 //! \author J. Bakosi
 //******************************************************************************
 {
-  m_print.diagend( "done" );    // "Reordering mesh nodes ...";
+  m_print.diagend( "done" );    // "Partitioning and distributing mesh ...";
   // Compute average and broadcast it back to all partitioners (PEs)
   m_avcost = c / CkNumPes();
   m_partitioner.stdCost( m_avcost );
