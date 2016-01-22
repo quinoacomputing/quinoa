@@ -9,13 +9,12 @@ add_library(Inciter
             Conductor.C
             Performer.C
             Partitioner.C
-            NodesReducer.C
 )
 
 addCharmModule( "conductor" "Inciter" )
 addCharmModule( "performer" "Inciter" )
 addCharmModule( "partitioner" "Inciter" )
-removeWarnings( "Conductor.C;Performer.C;Partitioner.C;NodesReducer.C" )
+removeWarnings( "Conductor.C;Performer.C;Partitioner.C" )
 
 # Add extra dependency of Inciter on inciterCharmModule. This is required as
 # Inciter refers to the main Charm++ proxy defined in the Charm++ module
