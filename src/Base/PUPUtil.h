@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/PUPUtil.h
   \author    J. Bakosi
-  \date      Tue 19 Jan 2016 09:31:44 AM MST
+  \date      Fri 22 Jan 2016 02:47:18 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Charm++ Pack/UnPack utilities
   \brief     This file contains some extensions to Charm++'s Pack/UnPack
@@ -179,6 +179,7 @@ template< class Key,
 inline void operator|( PUP::er& p,
                        std::unordered_set< Key, Hash, KeyEqual >& s )
 { pup( p, s ); }
+
 //////////////////// Serialize boost::optional ////////////////////
 
 //! Pack/Unpack boost::optional.

@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Conductor.h
   \author    J. Bakosi
-  \date      Fri 22 Jan 2016 09:23:12 AM MST
+  \date      Tue 26 Jan 2016 08:23:41 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Conductor drives the time integration of a PDE
   \details   Conductor drives the time integration of a PDE
@@ -57,6 +57,11 @@ class Conductor : public CBase_Conductor {
     //!   have finished setting up the necessary data structures for
     //!   partitioning the computational mesh and we are ready for partitioning
     void partition();
+
+    //! \brief Reduction target indicating that all Partitioner chare groups
+    //!   have finished flattening its global mesh node IDs and they are ready
+    //!   for computing the communication maps required for node ID reordering
+    void flattened() { m_partitioner.gather(); }
 
     //! \brief Reduction target estimating the average communication cost of
     //!   merging the linear system
