@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Partitioner.h
   \author    J. Bakosi
-  \date      Fri 22 Jan 2016 08:58:15 AM MST
+  \date      Tue 26 Jan 2016 08:22:05 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Charm++ chare partitioner group used to perform mesh partitioning
   \details   Charm++ chare partitioner group used to parform mesh partitioning.
@@ -12,6 +12,7 @@
 #define Partitioner_h
 
 #include <unordered_map>
+#include <algorithm>
 #include <numeric>
 
 #include "ExodusIIMeshReader.h"
@@ -70,7 +71,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
       m_reordered( 0 ),
       m_start( 0 ),
       m_noffset( 0 ),
-      m_sid( static_cast<std::size_t>(CkMyPe()) )
+      m_nquery( 0 )
     {
       tk::ExodusIIMeshReader
         er( g_inputdeck.get< tag::cmd, tag::io, tag::input >() );
@@ -101,46 +102,27 @@ class Partitioner : public CBase_Partitioner< HostProxy,
       // Construct global mesh node ids for each chare and distribute
       distribute( chareNodes(che) );
     }
-    //! Receive unordered unique global mesh point indices from lower PEs
-    //! \param[in] pe Sender PE
-    //! \param[in] id Unique global mesh node IDs read by PE pe
-    void nodes( int pe, const std::vector< std::size_t >& id ) {
-      Assert( pe < CkMyPe(), "Received node IDs from larger or own PE" );
-      Assert( m_sid[ static_cast<std::size_t>(pe) ].empty(),
-              "PE " + std::to_string(CkMyPe()) + " already has node IDs from " +
-              std::to_string(pe) );
-      for (auto i : id) m_sid[ static_cast<std::size_t>(pe) ].insert( i );
-      if ( std::none_of( begin(m_sid), end(m_sid),
-                         [](const typename decltype(m_sid)::value_type& s)
-                         { return s.empty(); } ) )
-        commap();
-    }
 
-    //! Receive number of to-be-received global mesh node IDs from lower PEs
-    //! \param[in] Number of to-be-received global mesh node IDs of sending PE
-    //! \details This is the second part of computing the offset each PE will
-    //!   need to start assigning its new node IDs from (for those nodes that
-    //!   are not assigned new IDs by any PEs with lower indices). The offset
-    //!   for a PE is the offset for the previous PE plus the number of node IDs
-    //!   the previous PE (uniquely) assigns new IDs for minus the number of
-    //!   node IDs the previous PE receives from others. This is computed in a
-    //!   parallel/distributed fashion by each PE sending its number of
-    //!   to-be-received node IDs to all higher PEs. This is the receive part.
-    //!   We count up the number of to-be-received node IDs on al lower PEs and
-    //!   when all have been counted, we finish the offset calculation by adding
-    //!   up the number of node IDs uniquely assigned on all lower PEs and
-    //!   subtracting the sum of their received node IDs. When this is done, we
-    //!   have the precise communication map on all lower PEs and the our start
-    //!   offset, so we can start the distributed global mesh node ID
+    //! Receive number of uniquely assigned global mesh node IDs from lower PEs
+    //! \param[in] Number of uniquely assigned global mesh node IDs of sender PE
+    //! \details This function computes the offset each PE will need to start
+    //!   assigning its new node IDs from (for those nodes that are not assigned
+    //!   new IDs by any PEs with lower indices). The offset for a PE is the
+    //!   offset for the previous PE plus the number of node IDs the previous PE
+    //!   (uniquely) assigns new IDs for minus the number of node IDs the
+    //!   previous PE receives from others (lower PEs). This is computed here in
+    //!   a parallel/distributed fashion by each PE sending its number of node
+    //!   IDs (that it uniquely assigns) to all PEs. Note that each PE would
+    //!   only need to send this information to higher PEs, but instead this
+    //!   function is called in a broadcast fashion, because that is more
+    //!   efficient than individual calls to only the higher PEs. Therefore when
+    //!   computing the offsets, we only count the lower PEs. When this is done,
+    //!   we have the precise communication map as well as the start offset on
+    //!   all PEs and so we can start the distributed global mesh node ID
     //!   reordering.
-    void offset( std::size_t nrecv ) {
-      m_start += nrecv;
-      if (++m_noffset == CkMyPe()) {
-        std::size_t n = 0;
-        for (const auto& p : m_sid) n += p.size();
-        m_start = n - m_start;
-        reorder();
-      }
+    void offset( int pe, std::size_t u ) {
+      if (pe < CkMyPe()) m_start += u;
+      if (++m_noffset == CkNumPes()) reorder();
     }
 
     //! Request new global node IDs for old node IDs
@@ -200,6 +182,80 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     void stdCost( tk::real av )
     { signal2host_stdcost( m_host, (m_cost-av)*(m_cost-av) ); }
 
+    //! \brief Start gathering global node IDs this PE will need to receive
+    //!   (instead of assign) during reordering
+    void gather() { Group::thisProxy.query( CkMyPe(), m_id ); }
+
+    //! \brief Query our global node IDs by other PEs so they know if they
+    //!   receive IDs for those from during reordering
+    //! \param[in] pe Querying PE
+    //! \param[in] id Vector of global mesh node IDs to query
+    //! \details Note that every PE calls this function in a broadcast fashion,
+    //!   including our own. However, to compute the correct result, this would
+    //!   only be necessary for PEs whose ID is higher than ours. However, the
+    //!   broadcast (calling everyone) is more efficient. Because of this we
+    //!   only do the query for higher PEs here but return a mask to all
+    //!   callers. This also results in a simpler logic, because every PE goes
+    //!   through this single call path. The returned mask is simply a boolean
+    //!   array signaling if the node ID is found (owned).
+    void query( int pe, const std::vector< std::size_t >& id ) {
+      std::vector< int > own( id.size(), 0 );
+      if (pe > CkMyPe()) {
+        for (std::size_t i=0; i<id.size(); ++i) {
+          const auto it = m_sid.find( id[i] );
+          if (it != end(m_sid)) own[i] = 1;
+        }
+      }
+      Group::thisProxy[ pe ].mask( CkMyPe(), own );
+    }
+
+    //! Receive mask of to-be-received global mesh node IDs
+    //! \param[in] pe The PE uniquely assigns the node IDs marked by 1 in rec
+    //! \param[in] rec Mask vector containing 1 if the pe owns the node ID, 0 if
+    //!   it does not
+    //! \details Note that every PE will call this function, since query() was
+    //!   called in a broadcast fashion and query() answers to every PE once.
+    //!   This is more efficient than calling only the PEs from which we would
+    //!   have to receive results from. Thus the incoming results are only
+    //!   interesting from PEs with lower IDs than ours.
+    void mask( int pe, const std::vector< int >& rec ) {
+      // Associate global mesh node IDs to lower PEs we will need to receive
+      // from during node reordering. The choice of associated container is
+      // std::map, which is ordered (vs. unordered, hash-map). This is required
+      // by the following operation that makes the mesh node IDs unique in the
+      // communication map. (We are called in an unordered fashion, so we need
+      // to collect from all PEs and then we need to make the node IDs unique,
+      // keeping only the lowest PEs a node ID is associated with.)
+      if (pe < CkMyPe()) {
+        auto& id = m_comm[ pe ];
+        for (std::size_t i=0; i<rec.size(); ++i)
+          if (rec[i]) id.insert( m_id[i] );
+      }
+      if (++m_nquery == CkNumPes()) {
+        // Make sure we have received all we need
+        Assert( m_comm.size() == CkMyPe(), "Communication map size on PE " +
+                std::to_string(CkMyPe()) + " must equal " +
+                std::to_string(CkMyPe()) );
+        // Fill new hash-map, keeping only unique node IDs obtained from the
+        // lowest possible PEs
+        for (auto p=begin(m_comm); p!=end(m_comm); ++p) {
+          auto& u = m_communication[ p->first ];
+          for (auto i : p->second)
+            if (std::none_of( begin(m_comm), p,
+                 [i](const typename decltype(m_comm)::value_type& s)
+                 { return s.second.find(i) != end(s.second); } )) {
+              u.insert(i);
+            }
+          if (u.empty()) m_communication.erase( p->first );
+        }
+        // Count up total number of nodes we will need receive durin reordering
+        std::size_t nrecv = 0;
+        for (const auto& u : m_communication) nrecv += u.second.size();
+        // Start computing PE offsets for node reordering
+        Group::thisProxy.offset( CkMyPe(), m_sid.size()-nrecv );
+      }
+    }
+
   private:
     //! Host proxy
     HostProxy m_host;
@@ -215,9 +271,17 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     std::size_t m_reordered;
     //! Starting global mesh node ID for node reordering
     std::size_t m_start;
-    //! \brief Counter for number of offsets (to-be-received node IDs) received
-    //!   from lower PEs
+    //! \brief Counter for number of offsets
+    //! \details This counts the to-be-received node IDs received while
+    //!   computing global mesh node ID offsets for each PE rquired for node
+    //!   reordering later
     std::size_t m_noffset;
+    //! \brief Counter for number of masks of to-be-received global mesh node
+    //!   IDs received
+    //! \details This counts the to-be-received node ID masks received while
+    //!   gathering the node IDs that need to be received (instead of uniquely
+    //!   assigned) by each PE
+    std::size_t m_nquery;
     //! Tetrtahedron element connectivity of our chunk of the mesh
     std::vector< std::size_t > m_tetinpoel;
     //! Global element IDs we read (our chunk of the mesh)
@@ -235,23 +299,26 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     //!   corresponding to the ordering as in the mesh file. After reordering it
     //!   stores the (new) global node IDs the chares contribute to.
     std::unordered_map< int, std::vector< std::size_t > > m_node;
+    //! \brief Temporary communication map used to receive global mesh node IDs
+    //! \details This is an ordered map, as that facilitates making the node IDs
+    //!   unique, storing only the lowest associated PE, efficient.
+    std::map< int, std::set< std::size_t > > m_comm;
     //! \brief Communication map used for distributed mesh node reordering
     //! \details This map, on each PE, associates the list of global mesh point
-    //!   indices to fellow PE IDs from which we will receive new node ID numbers
+    //!   indices to fellow PE IDs from which we will receive new node IDs
     //!   during reordering. Only data that will be received from PEs with a
     //!   lower index are stored.
     std::unordered_map< int, std::set< std::size_t > > m_communication;
     //! \brief Unique global node IDs chares on our PE will contribute to in a
     //!   linear system
     std::vector< std::size_t > m_id;
-    //! \brief Global mesh node IDs associated to PEs
-    //! \details These are the node IDs, corresponding to the mesh ordering read
-    //!   from file, i.e., not yet reordered. They are stored in hash-sets to
-    //!   enable constant-in-time search needed by computing the communication
-    //!   maps required for distributed reordering. The size of the vector
-    //!   corresponds to the number of PEs less than our PE, i.e., there is a
-    //!   set for each PE whose IDs are less than ours.
-    std::vector< std::unordered_set< std::size_t > > m_sid;
+    //! \brief Global mesh node IDs associated in hash set
+    //! \details These are the same global mesh node IDs as stored in m_id,
+    //!   corresponding to the mesh ordering read from file, i.e., not yet
+    //!   reordered. They are stored in a hash-set to enable constant-in-time
+    //!   search needed by computing the communication maps required for
+    //!   distributed reordering.
+    std::unordered_set< std::size_t > m_sid;
     //! \brief Map associating new node IDs (as in producing contiguous-row-id
     //!   linear system contributions) to old node IDs (as in file)
     std::unordered_map< std::size_t, std::size_t > m_newid;
@@ -408,42 +475,13 @@ class Partitioner : public CBase_Partitioner< HostProxy,
       // Flatten node IDs of elements our chares operate on
       for (auto& c : m_node)
         m_id.insert( end(m_id), begin(c.second), end(c.second) );
-      // Make node ids unique, these need reordering on our PE
+      // Make node IDs unique, these need reordering on our PE
       tk::unique( m_id );
-      // Send unique global mesh point indices to higher PEs
-      for (int p=CkMyPe()+1; p<CkNumPes(); ++p)
-        Group::thisProxy[ p ].nodes( CkMyPe(), m_id );
-      if (CkMyPe() == 0) commap();
-    }
-
-    //! Build communication map required for mesh node reordering
-    void commap() {
-      // Build communication map
-      std::size_t nrecv = 0;
-      for (auto i : m_id)                // search for all our node IDs
-        for (std::size_t p=0; p<m_sid.size(); ++p) {        // on PEs < pe
-          const auto it = m_sid[p].find(i);
-          if (it != end(m_sid[p])) {     // node ID will be assigned by PE p
-            m_communication[ static_cast<int>(p) ].insert( *it );
-            ++nrecv;                     // count up to-be-received nodes
-            p = m_sid.size();            // favor the lowest PE that has node i
-          }
-        }
-      // Send the number of to-be-received node IDs to higher PEs. This is the
-      // send-part of computing the node ID offsets on all PEs. The number of
-      // to-be-received nodes have been counted up in nrecv above. Thus ncrev
-      // contains the total number of node IDs that we need to receive from PEs
-      // with lower indices than ours. Next is to compute, on each PE, the
-      // offset each PE will need to start assigning its new node IDs from (for
-      // those nodes that are not assigned new IDs by any PEs with lower
-      // indices). The offset for a PE is the offset for the previous PE plus
-      // the number of node IDs the previous PE (uniquely) assigns new IDs for
-      // minus the number of node IDs the previous PE receives from others. This
-      // is computed in a parallel/distributed fashion by each PE sending its
-      // nrecv to all higher PEs. This send is what is done in the loop below.
-      for (int p=CkMyPe()+1; p<CkNumPes(); ++p)
-        Group::thisProxy[ p ].offset( nrecv );
-      if (CkMyPe() == 0) reorder();
+      // Store mesh node IDs in hash-set
+      std::copy( begin(m_id), end(m_id), std::inserter(m_sid,end(m_sid)) );
+      // Signal host that we are ready for computing the communication map,
+      // required for parallel distributed global mesh node reordering
+      signal2host_flattened( m_host );
     }
 
     //! Compute chare distribution
@@ -486,7 +524,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
       // if we are to assign a new ID to a node ID, and if so, we assign new ID,
       // i.e., reorder, by constructing a map associating new to old IDs. We
       // also count up the reordered nodes.
-      for (auto& p : m_id)
+      for (const auto& p : m_id)
         if (own(p)) {           
           m_newid[ p ] = m_start++;
           ++m_reordered;
@@ -673,6 +711,12 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     void signal2host_setup_complete( const CProxy_Conductor& host ) {
       Group::contribute(
         CkCallback(CkIndex_Conductor::redn_wrapper_partition(NULL), host ));
+    }
+    //! \brief Signal host that we are ready for computing the communication
+    //!   map, required for parallel distributed global mesh node reordering
+    void signal2host_flattened( const CProxy_Conductor& host ) {
+      Group::contribute(
+        CkCallback(CkIndex_Conductor::redn_wrapper_flattened(NULL), host ));
     }
 };
 

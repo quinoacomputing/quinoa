@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/conductor.ci
   \author    J. Bakosi
-  \date      Thu 21 Jan 2016 03:00:19 PM MST
+  \date      Fri 22 Jan 2016 01:54:38 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Charm++ module interface file for Conductor
   \details   Charm++ module interface file for Conductor
@@ -20,6 +20,7 @@ module conductor {
       entry Conductor();
       entry [reductiontarget] void load( uint64_t nelem );
       entry [reductiontarget] void partition();
+      entry [reductiontarget] void flattened();
       entry [reductiontarget] void setup();
       entry [reductiontarget] void aveCost( tk::real c );
       entry [reductiontarget] void stdCost( tk::real c );

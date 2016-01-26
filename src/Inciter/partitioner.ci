@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/partitioner.ci
   \author    J. Bakosi
-  \date      Fri 22 Jan 2016 08:27:05 AM MST
+  \date      Tue 26 Jan 2016 08:01:03 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Charm++ module interface file for the chare partitioner group
   \details   Charm++ module interface file for the chare partitioner group used
@@ -30,13 +30,15 @@ module partitioner {
       entry void add( int frompe,
             const std::unordered_map< int, std::vector< std::size_t > >& elem );
       entry void recv();
-      entry void nodes( int pe, const std::vector< std::size_t >& id );
-      entry void offset( std::size_t nrecv );
+      entry void offset( int pe, std::size_t u );
       entry void request( int pe, const std::set< std::size_t >& id );
       entry void neworder(
                    const std::unordered_map< std::size_t, std::size_t >& id );
       entry void lower( std::size_t low );
       entry void stdCost( tk::real av );
+      entry void gather();
+      entry void query( int pe, const std::vector< std::size_t >& low );
+      entry void mask( int pe, const std::vector< int >& rec );
 
       // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
       // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
