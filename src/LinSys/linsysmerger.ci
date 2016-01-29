@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/linsysmerger.ci
   \author    J. Bakosi
-  \date      Fri 08 Jan 2016 01:04:15 PM MST
+  \date      Wed 27 Jan 2016 09:39:40 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Charm++ module interface file for merging a linear system
   \details   Charm++ module interface file for merging a linear system
@@ -63,31 +63,31 @@ module linsysmerger {
       //
 
       entry void wait4sol()
-      { when trigger_sol_complete() serial { hypresol(); } };
+      { when trigger_sol_complete() serial "hypresol" { hypresol(); } };
       entry void wait4lhs()
-      { when trigger_lhs_complete() serial { hyprelhs(); } };
+      { when trigger_lhs_complete() serial "hyprelhs" { hyprelhs(); } };
       entry void wait4rhs()
-      { when trigger_rhs_complete() serial { hyprerhs(); } };
+      { when trigger_rhs_complete() serial "hyprerhs" { hyprerhs(); } };
 
       entry void wait4hypresol()
-      { when trigger_hypresol_complete() serial { sol(); } };
+      { when trigger_hypresol_complete() serial "sol" { sol(); } };
       entry void wait4hyprelhs()
-      { when trigger_hyprelhs_complete() serial { lhs(); } };
+      { when trigger_hyprelhs_complete() serial "lhs" { lhs(); } };
       entry void wait4hyprerhs()
-      { when trigger_hyprerhs_complete() serial { rhs(); } };
+      { when trigger_hyprerhs_complete() serial "rhs" { rhs(); } };
 
       entry void wait4fillsol()
-      { when trigger_fillsol_complete() serial { assemblesol(); } };
+      { when trigger_fillsol_complete() serial "asmsol" { assemblesol(); } };
       entry void wait4filllhs()
-      { when trigger_filllhs_complete() serial { assemblelhs(); } };
+      { when trigger_filllhs_complete() serial "asmlhs" { assemblelhs(); } };
       entry void wait4fillrhs()
-      { when trigger_fillrhs_complete() serial { assemblerhs(); } };
+      { when trigger_fillrhs_complete() serial "asmrhs" { assemblerhs(); } };
 
       entry void wait4asm() {
         when trigger_asmsol_complete(),
              trigger_asmlhs_complete(),
              trigger_asmrhs_complete()
-        serial { solve(); }
+        serial "solve" { solve(); }
       };
 
       entry void trigger_lhs_complete();
