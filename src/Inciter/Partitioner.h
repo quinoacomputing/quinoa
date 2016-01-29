@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Partitioner.h
   \author    J. Bakosi
-  \date      Tue 26 Jan 2016 08:22:05 AM MST
+  \date      Fri 29 Jan 2016 08:05:39 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Charm++ chare partitioner group used to perform mesh partitioning
   \details   Charm++ chare partitioner group used to parform mesh partitioning.
@@ -512,12 +512,8 @@ class Partitioner : public CBase_Partitioner< HostProxy,
         using Set = typename std::remove_reference<
                       decltype(m_communication) >::type::value_type;
         return !std::any_of( m_communication.cbegin(), m_communication.cend(),
-                             [&](const Set& s){
-                               if (s.second.find(p) != s.second.cend())
-                                 return true;
-                               else
-                                 return false;
-                             } );
+                             [&](const Set& s)
+                             { return s.second.find(p) != s.second.cend(); } );
       };
       // Reorder our chunk of the mesh node IDs by looping through all of our
       // node IDs (resulting from reading our chunk of the mesh cells). We test
