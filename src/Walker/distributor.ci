@@ -2,7 +2,7 @@
 /*!
   \file      src/Walker/distributor.ci
   \author    J. Bakosi
-  \date      Fri 15 Jan 2016 11:40:55 AM MST
+  \date      Wed 27 Jan 2016 09:39:55 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Charm++ module interface file for Distributor
   \details   Charm++ module interface file for Distributor
@@ -139,7 +139,7 @@ module distributor {
 
       // SDAG wait-for: wait for ordinary moments to have been estimated
       entry void wait4ord() {
-        when estimateOrdDone() serial {
+        when estimateOrdDone() serial "accumulateCen" {
           // Start accumulating sums for central moments (every time step)
           m_intproxy.accumulateCen( m_ordinary );
           // Start accumulating sums for central PDFs at select times
@@ -151,7 +151,7 @@ module distributor {
 
       // SDAG wait-for: wait for central moments to have been estimated
       entry void wait4cen() {
-        when estimateCenDone() serial {
+        when estimateCenDone() serial "outStat" {
           // Output statistics to file
           outStat();
           // If PDFs not estimated, evaluate time step
@@ -165,7 +165,7 @@ module distributor {
       // statements are undestood with a logical AND between them
       entry void wait4pdf() {
         when estimateOrdPDFDone()
-        when estimateCenPDFDone() serial {
+        when estimateCenPDFDone() serial "outPDF" {
           outPDF();             // output PDFs to file
           evaluateTime();       // evaluate time step, compute new time step
         }
