@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/partitioner.ci
   \author    J. Bakosi
-  \date      Fri 29 Jan 2016 08:05:34 AM MST
+  \date      Fri 29 Jan 2016 08:45:06 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Charm++ module interface file for the chare partitioner group
   \details   Charm++ module interface file for the chare partitioner group used
@@ -11,8 +11,6 @@
 //******************************************************************************
 
 module partitioner {
-
-  include "unordered_set";
 
   namespace inciter {
 
@@ -54,9 +52,11 @@ module partitioner {
       // Req --
       //
       //
-      // Low -- Cre                             Low - Lower bound received
-      //       /                                Upp - Upper bound computed
-      // Upp --                                 Cre - Create workers
+      // Low ----  Cre                          Low - Lower bound received
+      //         /  |                           Upp - Upper bound computed
+      // Upp ---   /                            Cre - Create workers
+      //          /                             Par - Partitioners participated
+      // Par ----
       //
       // Interpretation of the above DAG
       // -------------------------------
@@ -103,6 +103,29 @@ module partitioner {
       // accumulates the sum of the cost from each PE, and once the average is
       // available on Conductor, a second round accumulates the variances back
       // to Conductor.
+      //
+      // While the tasks carried out as described in the previous paragraph lead
+      // to correct results, there is an additional trigger, participated, that
+      // needs to be enabled before create() is called. The role of
+      // trigger_participated is to make sure that all PEs participate in the
+      // distribution of new (reordered) mesh node IDs during reordering. In
+      // particular, since PE 0 has nothing to receive from others, if this
+      // trigger is not in place, PE 0 goes ahead of every other PE and calls
+      // create() which calls Performer constructors, a potentially heavy
+      // function. This is undesired at this point since PE 0 will surely need
+      // to answer to requests from other PEs with new node IDs, which can only
+      // be done (if the participated trigger is not in place) when the
+      // Performers have been created. This introduces unnecessarly delays and
+      // load imbalance during reordering. Thus requiring trigger_participated
+      // in addition to lower and upper, delays creating of Performers. As a
+      // result, PE 0 is ready for requests from other PEs for new node IDs
+      // earlier than without the participate trigger, which yields a lot
+      // tighter CPU utilization during reordering. The participated trigger is
+      // enabled in two places: (1) in prepare(), i.e., if a PE had to prepare
+      // some of its new node IDs for others, and (2) in neworder(), i.e., if a
+      // PE had to receive new node IDs from others. Thus node reordering is
+      // only considered complete if every PE has participated in communication
+      // of the new node IDs.
 
       entry void wait4prep() {
         when trigger_reorderowned_complete(), trigger_nodes_requested()
@@ -110,7 +133,7 @@ module partitioner {
       };
 
       entry void wait4bounds() {
-        when trigger_lower(), trigger_upper()
+        when trigger_lower(), trigger_upper(), trigger_participated()
         serial "create" { create(); }
       };
 
@@ -118,6 +141,7 @@ module partitioner {
       entry void trigger_nodes_requested();
       entry void trigger_lower();
       entry void trigger_upper();
+      entry void trigger_participated();
     };
 
   } // inciter::
