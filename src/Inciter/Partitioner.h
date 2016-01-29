@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Partitioner.h
   \author    J. Bakosi
-  \date      Fri 29 Jan 2016 08:05:39 AM MST
+  \date      Fri 29 Jan 2016 08:34:06 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Charm++ chare partitioner group used to perform mesh partitioning
   \details   Charm++ chare partitioner group used to parform mesh partitioning.
@@ -138,6 +138,8 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     //! Receive new (reordered) global node IDs
     //! \param[in] id Map associating new to old node IDs
     void neworder( const std::unordered_map< std::size_t, std::size_t >& id ) {
+      // Signal to the runtime system that we have partipitated in reordering
+      trigger_participated();
       // Store new node IDs associated to old ones
       for (const auto& p : id) m_newid[ p.first ] = p.second;
       m_reordered += id.size();   // count up number of reordered nodes
@@ -549,6 +551,8 @@ class Partitioner : public CBase_Partitioner< HostProxy,
 
     //! Associate new node IDs to old ones and return them to the requestor(s)
     void prepare() {
+      // Signal to the runtime system that we have partipitated in reordering
+      trigger_participated();
       for (const auto& r : m_req) {
         std::unordered_map< std::size_t, std::size_t > n;
         for (auto p : r.second) n[ p ] = tk::val_find( m_newid, p );
