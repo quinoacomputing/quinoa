@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/NumberFractionBeta.h
   \author    J. Bakosi
-  \date      Tue 22 Dec 2015 10:55:36 AM MST
+  \date      Sat 30 Jan 2016 09:11:57 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     System of number-fraction beta SDEs
   \details   This file implements the time integration of a system of stochastic
@@ -104,7 +104,7 @@ class NumberFractionBeta {
     //! \param[in] stream Thread (or more precisely stream) ID 
     //! \param[inout] particles Array of particle properties 
     //! \author J. Bakosi
-    void initialize( int stream, tk::ParProps& particles ) {
+    void initialize( int stream, tk::Particles& particles ) {
       //! Set initial conditions using initialization policy
       Init::template
         init< tag::numfracbeta >
@@ -119,14 +119,14 @@ class NumberFractionBeta {
     //! \param[in] t Physical time
     //! \param[in] moments Map of statistical moments
     //! \author J. Bakosi
-    void advance( tk::ParProps& particles,
+    void advance( tk::Particles& particles,
                   int stream,
                   tk::real dt,
                   tk::real t,
                   const std::map< tk::ctr::Product, tk::real >& moments )
     {
       // Advance particles
-      const auto npar = particles.npar();
+      const auto npar = particles.nunk();
       for (auto p=decltype(npar){0}; p<npar; ++p) {
         // Generate Gaussian random numbers with zero mean and unit variance
         tk::real dW[m_ncomp];

@@ -2,7 +2,7 @@
 /*!
   \file      src/Walker/Distributor.C
   \author    J. Bakosi
-  \date      Tue 19 Jan 2016 08:43:02 AM MST
+  \date      Sat 30 Jan 2016 09:09:03 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Distributor drives the time integration of differential equations
   \details   Distributor drives the time integration of differential equations.
@@ -33,7 +33,7 @@
 #include "Tags.h"
 #include "StatCtr.h"
 #include "Exception.h"
-#include "ParticleProperties.h"
+#include "Particles.h"
 #include "LoadDistributor.h"
 #include "Distributor.h"
 #include "Integrator.h"
@@ -133,7 +133,7 @@ Distributor::info( uint64_t chunksize, std::size_t nchare ) const
 {
   // Print out info data layout
   m_print.list( "Particle properties data layout policy (CMake: LAYOUT)",
-                std::list< std::string >{ tk::ParProps().major() } );
+                std::list< std::string >{ tk::Particles().major() } );
 
   // Re-create differential equations stack for output
   DiffEqStack stack;
