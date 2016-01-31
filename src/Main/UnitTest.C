@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/UnitTest.C
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 04:08:45 PM MDT
+  \date      Sun 31 Jan 2016 06:59:00 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     UnitTest's Charm++ main chare and main().
   \details   UnitTest's Charm++ main chare and main(). This file contains
@@ -82,7 +82,7 @@ const int MAX_TESTS_IN_GROUP = 80;
 #include <tests/Base/TestTimer.h>
 #include <tests/Base/TestCharmUtil.h>
 #include <tests/Base/TestHas.h>
-#include <tests/Base/TestParticleProperties.h>
+#include <tests/Base/TestDataLayout.h>
 #include <tests/Base/TestFactory.h>
 #include <tests/Base/TestPrint.h>
 #include <tests/Base/TestTaggedTuple.h>

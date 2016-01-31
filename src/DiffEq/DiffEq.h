@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/DiffEq.h
   \author    J. Bakosi
-  \date      Tue 22 Dec 2015 10:52:52 AM MST
+  \date      Sat 30 Jan 2016 09:07:35 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Differential equation
   \details   This file defines a generic differential equation class. The class
@@ -21,7 +21,7 @@
 
 #include "Types.h"
 #include "Make_unique.h"
-#include "ParticleProperties.h"
+#include "Particles.h"
 #include "Statistics.h"
 
 namespace walker {
@@ -68,11 +68,11 @@ class DiffEq {
       self( tk::make_unique< Model<T> >( std::move(x(args...)) ) ) {}
 
     //! Public interface to setting the initial conditions for the diff eq
-    void initialize( int stream, tk::ParProps& particles ) const
+    void initialize( int stream, tk::Particles& particles ) const
     { self->initialize( stream, particles ); }
 
     //! Public interface to advancing particles in time by the diff eq
-    void advance( tk::ParProps& particles,
+    void advance( tk::Particles& particles,
                   int stream,
                   tk::real dt,
                   tk::real t,
@@ -95,8 +95,8 @@ class DiffEq {
     struct Concept {
       virtual ~Concept() = default;
       virtual Concept* copy() const = 0;
-      virtual void initialize( int, tk::ParProps& ) = 0;
-      virtual void advance( tk::ParProps&,
+      virtual void initialize( int, tk::Particles& ) = 0;
+      virtual void advance( tk::Particles&,
                             int,
                             tk::real,
                             tk::real,
@@ -109,9 +109,9 @@ class DiffEq {
     struct Model : Concept {
       Model( T x ) : data( std::move(x) ) {}
       Concept* copy() const override { return new Model( *this ); }
-      void initialize( int stream, tk::ParProps& particles )
+      void initialize( int stream, tk::Particles& particles )
         override { data.initialize( stream, particles ); }
-      void advance( tk::ParProps& particles,
+      void advance( tk::Particles& particles,
                     int stream,
                     tk::real dt,
                     tk::real t,

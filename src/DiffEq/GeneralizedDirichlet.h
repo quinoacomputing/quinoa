@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/GeneralizedDirichlet.h
   \author    J. Bakosi
-  \date      Tue 22 Dec 2015 10:54:35 AM MST
+  \date      Sat 30 Jan 2016 09:12:12 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Lochner's generalized Dirichlet SDE
   \details   This file implements the time integration of a system of stochastic
@@ -101,7 +101,7 @@ class GeneralizedDirichlet {
     //! \param[in] stream Thread (or more precisely stream) ID 
     //! \param[inout] particles Array of particle properties 
     //! \author J. Bakosi
-    void initialize( int stream, tk::ParProps& particles ) {
+    void initialize( int stream, tk::Particles& particles ) {
       //! Set initial conditions using initialization policy
       Init::template
         init< tag::gendir >
@@ -115,13 +115,13 @@ class GeneralizedDirichlet {
     //! \param[in] t Physical time
     //! \param[in] moments Map of statistical moments
     //! \author J. Bakosi
-    void advance( tk::ParProps& particles,
+    void advance( tk::Particles& particles,
                   int stream,
                   tk::real dt,
                   tk::real t,
                   const std::map< tk::ctr::Product, tk::real >& moments )
     {
-      const auto npar = particles.npar();
+      const auto npar = particles.nunk();
       for (auto p=decltype(npar){0}; p<npar; ++p) {
         // Y_i = 1 - sum_{k=1}^{i} y_k
         tk::real Y[m_ncomp];

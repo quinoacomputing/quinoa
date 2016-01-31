@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.C
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:52:59 PM MDT
+  \date      Sat 30 Jan 2016 09:12:43 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Statistics class definition
   \details   This file implements a statistics class that can be used to
@@ -24,7 +24,7 @@
 #include "Types.h"
 #include "Exception.h"
 #include "Statistics.h"
-#include "ParticleProperties.h"
+#include "Particles.h"
 #include "SystemComponents.h"
 #include "UniPDF.h"
 #include "BiPDF.h"
@@ -32,7 +32,7 @@
 
 using tk::Statistics;
 
-Statistics::Statistics( const tk::ParProps& particles,
+Statistics::Statistics( const tk::Particles& particles,
                         const ctr::OffsetMap& offset,
                         const std::vector< ctr::Product >& stat,
                         const std::vector< ctr::Probability >& pdf,
@@ -254,7 +254,7 @@ Statistics::accumulateOrd()
 
     // Accumulate sum for ordinary moments. This is a partial sum, so no
     // division by the number of samples.
-    const auto npar = m_particles.npar();
+    const auto npar = m_particles.nunk();
     for (auto p=decltype(npar){0}; p<npar; ++p) {
       for (std::size_t i=0; i<m_nord; ++i) {
        auto prod = m_particles.cvar( m_instOrd[i][0], p );
@@ -292,7 +292,7 @@ Statistics::accumulateCen( const std::vector< tk::real >& ord )
 
     // Accumulate sum for central moments. This is a partial sum, so no division
     // by the number of samples.
-    const auto npar = m_particles.npar();
+    const auto npar = m_particles.nunk();
     for (auto p=decltype(npar){0}; p<npar; ++p) {
       for (std::size_t i=0; i<m_ncen; ++i) {
         auto prod = m_particles.cvar( m_instCen[i][0], p ) - *(m_ctr[i][0]);
@@ -320,7 +320,7 @@ Statistics::accumulateOrdPDF()
     for (auto& pdf : m_ordtpdf) pdf.zero();
 
     // Accumulate partial sum for PDFs
-    const auto npar = m_particles.npar();
+    const auto npar = m_particles.nunk();
     for (auto p=decltype(npar){0}; p<npar; ++p) {
       std::size_t i = 0;
       // Accumulate partial sum for univariate PDFs
@@ -371,7 +371,7 @@ Statistics::accumulateCenPDF( const std::vector< tk::real >& ord )
     for (auto& pdf : m_centpdf) pdf.zero();
 
     // Accumulate partial sum for PDFs
-    const auto npar = m_particles.npar();
+    const auto npar = m_particles.nunk();
     for (auto p=decltype(npar){0}; p<npar; ++p) {
       std::size_t i = 0;
       // Accumulate partial sum for univariate PDFs
