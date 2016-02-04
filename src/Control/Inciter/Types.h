@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/Types.h
   \author    J. Bakosi
-  \date      Tue 17 Nov 2015 12:01:07 PM MST
+  \date      Wed 03 Feb 2016 03:50:58 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Types for Incitier's parsers
   \details   Types for Incitier's parsers. This file defines the components of the
@@ -16,7 +16,7 @@
 
 #include "Tags.h"
 #include "Types.h"
-#include "Inciter/Options/DiffEq.h"
+#include "Inciter/Options/PDE.h"
 #include "Inciter/Options/Problem.h"
 #include "Options/PartitioningAlgorithm.h"
 #include "PUPUtil.h"
@@ -26,7 +26,7 @@ namespace ctr {
 
 //! Storage of selected options
 using selects = tk::tuple::tagged_tuple<
-  tag::diffeq,       std::vector< ctr::DiffEqType >,    //!< Differential eqs
+  tag::pde,          std::vector< ctr::PDEType >,       //!< Partial diff eqs
   tag::partitioner,  tk::ctr::PartitioningAlgorithmType //!< Mesh partitioner
 >;
 
@@ -47,18 +47,24 @@ using intervals = tk::tuple::tagged_tuple<
 //! IO parameters storage
 using ios = tk::tuple::tagged_tuple<
   tag::control,     kw::control::info::expect::type,  //!< Control filename
-  tag::input,       std::string,  //!< Input filename
-  tag::output,      std::string   //!< Output filename
+  tag::input,       std::string,                      //!< Input filename
+  tag::output,      std::string                       //!< Output filename
 >;
 
-//! Scalar transport equation parameters storage
-using ScalarEqParameters = tk::tuple::tagged_tuple<
-  tag::problem,  std::vector< ProblemType >
+//! Advection-diffusion transport equation parameters storage
+using AdvDiffPDEParameters = tk::tuple::tagged_tuple<
+  tag::problem,     std::vector< ProblemType >
+>;
+
+//! Euler equation parameters storage
+using EulerPDEParameters = tk::tuple::tagged_tuple<
+  tag::problem,     std::vector< ProblemType >
 >;
 
 //! Parameters storage
 using parameters = tk::tuple::tagged_tuple<
-  tag::scalar,       ScalarEqParameters
+  tag::advdiff,     AdvDiffPDEParameters,
+  tag::euler,       EulerPDEParameters
 >;
 
 //! PEGTL location type to use throughout Incitier's parsers

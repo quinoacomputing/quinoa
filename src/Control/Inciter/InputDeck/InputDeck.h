@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Thu 19 Nov 2015 04:00:11 PM MST
+  \date      Wed 03 Feb 2016 03:32:11 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Inciter's input deck definition
   \details   This file defines the heterogeneous stack that is used for storing
@@ -36,6 +36,7 @@ class InputDeck :
                       tag::title,      kw::title::info::expect::type,
                       tag::selected,   selects,
                       tag::discr,      discretization,
+                      tag::component,  ncomps,
                       tag::interval,   intervals,
                       tag::cmd,        CmdLine,
                       tag::param,      parameters,
@@ -48,25 +49,27 @@ class InputDeck :
     //!   preprocessor-generated boost::mpl headers), the whole set is broken up
     //!   into several sets each containing 20 keywords.
     //! \see tk::grm::use and its documentation
-    using keywords = boost::mpl::set< kw::title,
-                                      kw::nstep,
-                                      kw::term,
-                                      kw::t0,
-                                      kw::dt,
-                                      kw::ttyi,
-                                      kw::scalar,
-                                      kw::end,
-                                      kw::shear_diff,
-                                      kw::slot_cyl,
-                                      kw::problem,
-                                      kw::plotvar,
-                                      kw::interval,
-                                      kw::partitioning,
-                                      kw::algorithm,
-                                      kw::rcb,
-                                      kw::rib,
-                                      kw::phg,
-                                      kw::inciter >;
+    using keywords1 = boost::mpl::set< kw::title,
+                                       kw::nstep,
+                                       kw::term,
+                                       kw::t0,
+                                       kw::dt,
+                                       kw::ttyi,
+                                       kw::advdiff,
+                                       kw::euler,
+                                       kw::end,
+                                       kw::shear_diff,
+                                       kw::slot_cyl,
+                                       kw::problem,
+                                       kw::plotvar,
+                                       kw::interval,
+                                       kw::partitioning,
+                                       kw::algorithm,
+                                       kw::rcb,
+                                       kw::rib,
+                                       kw::phg,
+                                       kw::inciter >;
+    using keywords2 = boost::mpl::set< kw::ncomp >;
                                      
     //! \brief Constructor: set defaults
     //! \details Anything not set here is initialized by the compiler using the
@@ -84,7 +87,8 @@ class InputDeck :
       set< tag::interval, tag::field >( 1 );
       // Initialize help: fill own keywords
       const auto& ctrinfoFill = tk::ctr::Info( get< tag::cmd, tag::ctrinfo >() );
-      boost::mpl::for_each< keywords >( ctrinfoFill );
+      boost::mpl::for_each< keywords1 >( ctrinfoFill );
+      boost::mpl::for_each< keywords2 >( ctrinfoFill );
     }
 
     /** @name Pack/Unpack: Serialize InputDeck object for Charm++ */
@@ -96,6 +100,7 @@ class InputDeck :
       tk::Control< tag::title,      kw::title::info::expect::type,
                    tag::selected,   selects,
                    tag::discr,      discretization,
+                   tag::component,  ncomps,
                    tag::interval,   intervals,
                    tag::cmd,        CmdLine,
                    tag::param,      parameters,

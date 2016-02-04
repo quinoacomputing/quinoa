@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/InitPolicy.h
   \author    J. Bakosi
-  \date      Sat 30 Jan 2016 09:11:23 PM MST
+  \date      Thu 04 Feb 2016 06:17:28 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Initialization policies
   \details   This file defines initialization policy classes. As opposed to

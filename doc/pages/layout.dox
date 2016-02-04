@@ -155,7 +155,7 @@ optimizations.) This decision leaves us with the following choices:
     3. EqCompPar: [ equation ] [ component ] [ particle ]
     4. EqParComp: [ equation ] [ particle ] [ component ]
 
-Access is based on the 3 coordinates: particle, component, and offset.  Particle
+Access is based on the 3 coordinates: particle, component, and offset. Particle
 is the particle ID, component denotes the given component of a vector equation,
 e.g., velocity has 3 components, a multi-material turbulent mix model governed
 by the Dirichlet SDE has K=N-1 scalars (components), and offset is determined by
@@ -587,7 +587,7 @@ For the implementation see the tk::DataLayout.
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Mon 01 Feb 2016 10:52:07 AM MST
+<em>Page last updated:</em> Mon 01 Feb 2016 01:56:52 PM MST
 <em>Copyright 2012-2015, Jozsef Bakosi.</em>
 </small></div>
 */

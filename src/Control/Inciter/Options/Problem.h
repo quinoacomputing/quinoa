@@ -2,10 +2,10 @@
 /*!
   \file      src/Control/Inciter/Options/Problem.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:14:46 PM MDT
+  \date      Wed 03 Feb 2016 02:52:54 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
-  \brief     Test problem options for inciter
-  \details   Test problem options for inciter
+  \brief     Problem options for inciter
+  \details   Problem options for inciter
 */
 //******************************************************************************
 #ifndef ProblemOptions_h
@@ -20,9 +20,9 @@
 namespace inciter {
 namespace ctr {
 
-//! Test problem types
+//! Problem types
 //! \author J. Bakosi
-enum class ProblemType : uint8_t { NO_PROB=0,
+enum class ProblemType : uint8_t { USER_DEFINED=0,
                                    SHEAR_DIFF,
                                    SLOT_CYL };
 
@@ -50,10 +50,12 @@ class Problem : public tk::Toggle< ProblemType > {
         //! Group, i.e., options, name
         "Test problem",
         //! Enums -> names
-        { { ProblemType::SHEAR_DIFF, kw::shear_diff::name() },
+        { { ProblemType::USER_DEFINED, kw::user_defined::name() },
+          { ProblemType::SHEAR_DIFF, kw::shear_diff::name() },
           { ProblemType::SLOT_CYL, kw::slot_cyl::name() } },
         //! keywords -> Enums
-        { { kw::shear_diff::string(), ProblemType::SHEAR_DIFF },
+        { { kw::user_defined::string(), ProblemType::USER_DEFINED },
+          { kw::shear_diff::string(), ProblemType::SHEAR_DIFF },
           { kw::slot_cyl::string(), ProblemType::SLOT_CYL } } ) {}
 };
 

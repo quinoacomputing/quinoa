@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Tags.h
   \author    J. Bakosi
-  \date      Tue 24 Nov 2015 08:19:23 AM MST
+  \date      Wed 03 Feb 2016 03:47:15 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Tags
   \details   Tags are unique types, used for metaprogramming.
@@ -53,6 +53,7 @@ struct gamma {};
 struct spike {};
 struct betapdf {};
 struct diffeq {};
+struct pde {};
 struct partitioner {};
 struct initpolicy {};
 struct coeffpolicy {};
@@ -125,7 +126,8 @@ struct group {};
 struct esup {};
 struct psup {};
 struct gid {};
-struct scalar {};
+struct advdiff {};
+struct euler {};
 struct problem {};
 
 struct BirthdaySpacings {};

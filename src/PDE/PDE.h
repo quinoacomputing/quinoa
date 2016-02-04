@@ -1,48 +1,48 @@
 //******************************************************************************
 /*!
-  \file      src/DiffEq/DiffEq.h
+  \file      src/PDE/PDE.h
   \author    J. Bakosi
-  \date      Mon 01 Feb 2016 02:07:33 PM MST
+  \date      Wed 03 Feb 2016 03:05:20 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
-  \brief     Differential equation
-  \details   This file defines a generic differential equation class. The class
-    uses runtime polymorphism without client-side inheritance: inheritance is
-    confined to the internals of the class, inivisble to client-code. The class
-    exclusively deals with ownership enabling client-side value semantics.
-    Credit goes to Sean Parent at Adobe: https://github.com/sean-parent/
-    sean-parent.github.com/wiki/Papers-and-Presentations.
+  \brief     Partial differential equation
+  \details   This file defines a generic partial differential equation class.
+    The class uses runtime polymorphism without client-side inheritance:
+    inheritance is confined to the internals of the class, inivisble to
+    client-code. The class exclusively deals with ownership enabling client-side
+    value semantics. Credit goes to Sean Parent at Adobe:
+    https://github.com/sean-parent/sean-parent.github.com/wiki/
+    Papers-and-Presentations.
 */
 //******************************************************************************
-#ifndef DiffEq_h
-#define DiffEq_h
+#ifndef PDE_h
+#define PDE_h
 
 #include <string>
 #include <functional>
 
 #include "Types.h"
 #include "Make_unique.h"
-#include "Particles.h"
-#include "Statistics.h"
+#include "MeshNodes.h"
 
-namespace walker {
+namespace inciter {
 
-//! \brief Differential equation
+//! \brief Partial differential equation
 //! \details This class uses runtime polymorphism without client-side
 //!   inheritance: inheritance is confined to the internals of the this class,
 //!   inivisble to client-code. The class exclusively deals with ownership
 //!   enabling client-side value semantics. Credit goes to Sean Parent at Adobe:
 //!   https://github.com/sean-parent/sean-parent.github.com/wiki/
-//!   Papers-and-Presentations. For example client code that models a DiffEq,
-//!   see walker::Beta.
+//!   Papers-and-Presentations. For example client code that models a PDE,
+//!   see inciter::Euler.
 //! \author J. Bakosi
-class DiffEq {
+class PDE {
 
   public:
     //! \brief Constructor taking an object modeling Concept.
     //! \details The object of class T comes pre-constructed.
     //! \param[in] x Instantiated object of type T given by the template
     //!   argument.
-    template< typename T > explicit DiffEq( T x ) :
+    template< typename T > explicit PDE( T x ) :
       self( tk::make_unique< Model<T> >( std::move(x) ) ) {}
 
     //! \brief Constructor taking a function pointer to a constructor of an
@@ -64,30 +64,26 @@ class DiffEq {
     //!    Concept.
     //! \param[in] args Zero or more constructor arguments
     template< typename T, typename...Args >
-    explicit DiffEq( std::function<T(Args...)> x, Args... args ) :
+    explicit PDE( std::function<T(Args...)> x, Args... args ) :
       self( tk::make_unique< Model<T> >( std::move(x(args...)) ) ) {}
 
     //! Public interface to setting the initial conditions for the diff eq
-    void initialize( int stream, tk::Particles& particles ) const
-    { self->initialize( stream, particles ); }
+    void initialize( tk::MeshNodes& unk ) const
+    { self->initialize( unk ); }
 
-    //! Public interface to advancing particles in time by the diff eq
-    void advance( tk::Particles& particles,
-                  int stream,
-                  tk::real dt,
-                  tk::real t,
-                  const std::map< tk::ctr::Product, tk::real >& moments ) const
-    { self->advance( particles, stream, dt, t, moments ); }
+    //! Public interface to advancing the PDE in time
+    void advance( tk::MeshNodes& unk, tk::real dt, tk::real t ) const
+    { self->advance( unk, dt, t ); }
 
     //! Copy assignment
-    DiffEq& operator=( const DiffEq& x )
-    { DiffEq tmp(x); *this = std::move(tmp); return *this; }
+    PDE& operator=( const PDE& x )
+    { PDE tmp(x); *this = std::move(tmp); return *this; }
     //! Copy constructor
-    DiffEq( const DiffEq& x ) : self( x.self->copy() ) {}
+    PDE( const PDE& x ) : self( x.self->copy() ) {}
     //! Move assignment
-    DiffEq& operator=( DiffEq&& ) noexcept = default;
+    PDE& operator=( PDE&& ) noexcept = default;
     //! Move constructor
-    DiffEq( DiffEq&& ) noexcept = default;
+    PDE( PDE&& ) noexcept = default;
 
   private:
     //! \brief Concept is a pure virtual base class specifying the requirements
@@ -95,12 +91,8 @@ class DiffEq {
     struct Concept {
       virtual ~Concept() = default;
       virtual Concept* copy() const = 0;
-      virtual void initialize( int, tk::Particles& ) = 0;
-      virtual void advance( tk::Particles&,
-                            int,
-                            tk::real,
-                            tk::real,
-                            const std::map< tk::ctr::Product, tk::real >& ) = 0;
+      virtual void initialize( tk::MeshNodes& ) = 0;
+      virtual void advance( tk::MeshNodes&, tk::real, tk::real ) = 0;
     };
 
     //! \brief Model models the Concept above by deriving from it and overriding
@@ -109,20 +101,15 @@ class DiffEq {
     struct Model : Concept {
       Model( T x ) : data( std::move(x) ) {}
       Concept* copy() const override { return new Model( *this ); }
-      void initialize( int stream, tk::Particles& particles )
-        override { data.initialize( stream, particles ); }
-      void advance( tk::Particles& particles,
-                    int stream,
-                    tk::real dt,
-                    tk::real t,
-                    const std::map< tk::ctr::Product, tk::real >& moments )
-      override { data.advance( particles, stream, dt, t, moments ); }
+      void initialize( tk::MeshNodes& unk ) override { data.initialize( unk ); }
+      void advance( tk::MeshNodes& unk, tk::real dt, tk::real t ) override
+      { data.advance( unk, dt, t ); }
       T data;
     };
 
     std::unique_ptr< Concept > self;    //!< Base pointer used polymorphically
 };
 
-} // walker::
+} // inciter::
 
-#endif // DiffEq_h
+#endif // PDE_h
