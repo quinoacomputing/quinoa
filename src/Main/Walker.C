@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Walker.C
   \author    J. Bakosi
-  \date      Mon 30 Nov 2015 12:09:51 PM MST
+  \date      Mon 01 Feb 2016 03:26:17 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Random walker Charm++ main chare
   \details   Random walker Charm++ main chare. This file contains the definition
@@ -75,12 +75,26 @@ namespace walker {
 //! be on different machines.
 
 //! Defaults of input deck, facilitates detection what is set by user
+//! \details This object is in global scope, it contains the default of all
+//!   possible user input, and thus it is made available to all PEs for
+//!   convenience reasons. The runtime system distributes it to all PEs during
+//!   initialization. Once distributed, the object does not change.
 ctr::InputDeck g_inputdeck_defaults;
 //! Input deck filled by parser, containing all input data
+//! \details This object is in global scope, it contains all of user input, and
+//!   thus it is made available to all PEs for convenience reasons. The runtime
+//!   system distributes it to all PEs during initialization. Once distributed,
+//!   the object does not change.
 ctr::InputDeck g_inputdeck;
 //! Random number generators selected by user
+//! \details This map is in global scope, because it holds polymorphic
+//!   objects, and thus must be distributed to all PEs during initialization.
+//!   Once distributed by the runtime system, the objects do not change.
 std::map< tk::ctr::RawRNGType, tk::RNG > g_rng;
 //! Differential equations selected by user
+//! \details This vector is in global scope, because it holds polymorphic
+//!   objects, and thus must be distributed to all PEs during initialization.
+//!   Once distributed by the runtime system, the objects do not change.
 std::vector< DiffEq > g_diffeqs;
 
 //! Distributor Charm++ proxy facilitating call-back to Distributor by the

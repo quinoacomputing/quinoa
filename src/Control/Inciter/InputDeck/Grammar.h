@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Tue 17 Nov 2015 01:02:12 PM MST
+  \date      Thu 04 Feb 2016 05:27:27 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Inciter's input deck grammar definition
   \details   Inciter's input deck grammar definition. We use the Parsing
@@ -17,6 +17,7 @@
 #include "CommonGrammar.h"
 #include "PEGTLParsed.h"
 #include "Keywords.h"
+#include "Inciter/InputDeck/InputDeck.h"
 #include "Inciter/InputDeck/InputDeck.h"
 
 namespace inciter {
@@ -40,7 +41,8 @@ namespace deck {
   //! \author J. Bakosi
   template< typename keyword >
   using use = tk::grm::use< keyword,
-                            ctr::InputDeck::keywords >;
+                            ctr::InputDeck::keywords1,
+                            ctr::InputDeck::keywords2 >;
 
   // Inciter's InputDeck state
 
@@ -50,7 +52,8 @@ namespace deck {
   //! \brief Number of registered equations
   //! \details Counts the number of parsed equation blocks during parsing.
   //! \author J. Bakosi
-  tk::tuple::tagged_tuple< tag::scalar, std::size_t > neq;
+  tk::tuple::tagged_tuple< tag::advdiff, std::size_t,
+                           tag::euler,   std::size_t > neq;
 
   // Inciter's InputDeck actions
 
@@ -71,10 +74,17 @@ namespace deck {
   template< class eq >
   struct check_eq : pegtl::action_base< check_eq< eq > > {
     static void apply( const std::string& value, Stack& stack ) {
+
       // Error out if no test problem has been selected
       const auto& problem = stack.get< tag::param, eq, tag::problem >();
       if (problem.empty() || problem.size() != neq.get< eq >())
         tk::grm::Message< Stack, tk::grm::ERROR, tk::grm::MsgKey::NOINIT >
+                        ( stack, value );
+
+      // Error out if no number of components has been selected
+      const auto& ncomp = stack.get< tag::component, eq >();
+      if (ncomp.empty() || ncomp.size() != neq.get< eq >())
+        tk::grm::Message< Stack, tk::grm::ERROR, tk::grm::MsgKey::NONCOMP >
                         ( stack, value );
     }
   };
@@ -100,9 +110,9 @@ namespace deck {
                         typename keyword::pegtl_string,
                         tk::grm::store_back_option< Stack,
                                                     use,
-                                                    ctr::DiffEq,
+                                                    ctr::PDE,
                                                     tag::selected,
-                                                    tag::diffeq > > {};
+                                                    tag::pde > > {};
 
   //! Error checks after an equation...end block has been parsed
   template< class eq >
@@ -121,19 +131,22 @@ namespace deck {
                      tk::grm::discr< Stack, use< kw::dt >, tag::dt >,
                      tk::grm::interval< Stack, use< kw::ttyi >, tag::tty > > {};
 
-  //! scalar transport equation
-  struct scalar :
+  //! advection-diffusion partial differential equation for a scalar
+  struct advdiff :
          pegtl::ifmust<
-           scan_eq< use< kw::scalar >, tag::scalar >,
+           scan_eq< use< kw::advdiff >, tag::advdiff >,
            tk::grm::block< Stack,
                            use< kw::end >,
                            tk::grm::policy< Stack,
                                             use,
                                             use< kw::problem >,
                                             ctr::Problem,
-                                            tag::scalar,
-                                            tag::problem > >,
-           check_errors< tag::scalar > > {};
+                                            tag::advdiff,
+                                            tag::problem >,
+                           tk::grm::component< Stack,
+                                               use< kw::ncomp >,
+                                               tag::advdiff > >,
+           check_errors< tag::advdiff > > {};
 
   //! partitioning ... end block
   struct partitioning :
@@ -151,7 +164,7 @@ namespace deck {
 
   //! equation types
   struct equations :
-         pegtl::sor< scalar > {};
+         pegtl::sor< advdiff > {};
 
   //! plotvar ... end block
   struct plotvar :

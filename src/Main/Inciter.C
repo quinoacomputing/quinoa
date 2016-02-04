@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Inciter.C
   \author    J. Bakosi
-  \date      Wed 06 Jan 2016 09:49:05 AM MST
+  \date      Tue 02 Feb 2016 11:31:56 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Inciter, computational shock hydrodynamics tool, Charm++ main
     chare.
@@ -21,6 +21,8 @@
 #include "Config.h"
 #include "Timer.h"
 #include "Exception.h"
+#include "PDE.h"
+#include "PDEStack.h"
 #include "ProcessException.h"
 #include "InciterPrint.h"
 #include "InciterDriver.h"
@@ -54,9 +56,40 @@ namespace inciter {
 //! be on different machines.
 
 //! Defaults of input deck, facilitates detection what is set by user
+//! \details This object is in global scope, it contains the default of all
+//!   possible user input, and thus it is made available to all PEs for
+//!   convenience reasons. The runtime system distributes it to all PEs during
+//!   initialization. Once distributed, the object does not change.
 ctr::InputDeck g_inputdeck_defaults;
 //! Input deck filled by parser, containing all input data
+//! \details This object is in global scope, it contains all of user input, and
+//!   thus it is made available to all PEs for convenience reasons. The runtime
+//!   system distributes it to all PEs during initialization. Once distributed,
+//!   the object does not change.
 ctr::InputDeck g_inputdeck;
+//! Partial differential equations selected by user
+//! \details This vector is in global scope, because it holds polymorphic
+//!   objects, and thus must be distributed to all PEs during initialization.
+//!   Once distributed by the runtime system, the objects do not change.
+std::vector< PDE > g_pdes;
+
+//! Pack/Unpack selected partial differential equations. This Pack/Unpack method
+//! (re-)creates the PDE factory since it needs to (re-)bind function
+//! pointers on different processing elements. Therefore we circumvent Charm's
+//! usual pack/unpack for this type, and thus sizing does not make sense: sizing
+//! is a no-op. We could initialize the factory in InciterDriver's constructor
+//! and let this function re-create the stack only when unpacking, but that
+//! leads to repeating the same code twice: once in InciterDriver's constructor,
+//! once here. Another option is to use this pack/unpack routine to both
+//! initially create (when packing) and to re-create (when unpacking) the
+//! factory, which eliminates the need for pre-creating the object in
+//! InciterDriver's constructor and therefore eliminates the repeated code. This
+//! explains the guard for sizing: the code below is called for packing only (in
+//! serial) and packing and unpacking (in parallel).
+inline
+void operator|( PUP::er& p, std::vector< PDE >& eqs ) {
+  if (!p.isSizing()) eqs = PDEStack().selected();
+}
 
 } // inciter::
 

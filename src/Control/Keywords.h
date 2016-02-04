@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Keywords.h
   \author    J. Bakosi
-  \date      Tue 15 Dec 2015 09:49:42 AM MST
+  \date      Thu 04 Feb 2016 06:00:46 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Definition of all keywords
   \details   This file contains the definition of all keywords, including those
@@ -1166,14 +1166,14 @@ struct jointdelta_info {
     set at t = 0 before time-integration. Example: "init zero", which selects
     zero initialization policy, which puts zeros in memory. Note that this
     option may behave differently depending on the particular equation or
-    physical model. For an example, see tk::InitPolicies in DiffEq/InitPolicy.h
-    for valid options.) The joint delta initialization policy can be used to
-    prescribe delta-spikes on the sample space with given heights, i.e.,
-    probabilities. Example: "init jointdelta" - select delta init-policy,
-    "delta spike 0.1 0.3 0.8 0.7 end end" - prescribe two delta-spikes
-    at sample space positions 0.1 and 0.8 with spike heights 0.3 and 0.7,
-    respectively. Note that the sum of the heights must add up to unity. See
-    also the help on keyword spike.)"; }
+    physical model. For an example, see tk::InitPolicies in
+    DiffEq/InitPolicy.h for valid options.) The joint delta initialization
+    policy can be used to prescribe delta-spikes on the sample space with given
+    heights, i.e., probabilities. Example: "init jointdelta" - select delta
+    init-policy, "delta spike 0.1 0.3 0.8 0.7 end end" - prescribe two
+    delta-spikes at sample space positions 0.1 and 0.8 with spike heights 0.3
+    and 0.7, respectively. Note that the sum of the heights must add up to
+    unity. See also the help on keyword spike.)"; }
 };
 using jointdelta = keyword< jointdelta_info, j,o,i,n,t,d,e,l,t,a >;
 
@@ -1187,11 +1187,11 @@ struct jointbeta_info {
     set at t = 0 before time-integration. Example: "init zero", which selects
     zero initialization policy, which puts zeros in memory. Note that this
     option may behave differently depending on the particular equation or
-    physical model. For an example, see tk::InitPolicies in DiffEq/InitPolicy.h
-    for valid options.) The joint beta initialization policy can be used to
-    prescribe a multi-dimensional sample space where the samples are generated
-    from a joint beta distribution with independent marginal univariate beta
-    distributions.)";
+    physical model. For an example, see tk::InitPolicies in
+    DiffEq/InitPolicy.h for valid options.) The joint beta initialization
+    policy can be used to prescribe a multi-dimensional sample space where the
+    samples are generated from a joint beta distribution with independent
+    marginal univariate beta distributions.)";
   }
 };
 using jointbeta = keyword< jointbeta_info, j,o,i,n,t,b,e,t,a >;
@@ -2452,20 +2452,22 @@ struct inciter_info {
 };
 using inciter = keyword< inciter_info, i,n,c,i,t,e,r >;
 
-struct scalar_info {
-  static std::string name() { return "Scalar transport"; }
+struct user_defined_info {
+  static std::string name() { return "user-defined"; }
   static std::string shortDescription() { return
-    "Start configuration block for the scalar transport equation"; }
+    "Select user-defined specification for a problem"; }
   static std::string longDescription() { return
-    R"(This keyword is used to introduce the scalar ... end block, used to
-    specify the configuration for a scalar transport equation. Keywords allowed
-    in a scalar ... end block: )" + std::string("\'")
-    + init::string() + "\'."
-    + R"(For an example scalar ... end block, see
-      doc/html/inicter_example_scalar.html.)";
-  }
+    R"(This keyword is used to select the user-define specification for a
+    problem to be solved by a partial differential equation. The initial and
+    boundary conditions are expected to be specified elsewhere in the input file
+    to set up the problem. Example: "problem user_defined". This the default
+    problem type.)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+  };
 };
-using scalar = keyword< scalar_info, s,c,a,l,a,r >;
+
+using user_defined = keyword< user_defined_info, u,s,e,r,'_',d,e,f,i,n,e,d >;
 
 struct shear_diff_info {
   static std::string name() { return "shear_diff"; }
@@ -2500,22 +2502,54 @@ using slot_cyl = keyword< slot_cyl_info, s,l,o,t,'_',c,y,l >;
 struct problem_info {
   static std::string name() { return "problem"; }
   static std::string shortDescription() { return
-    "Select test problem type"; }
+    "Specify problem configuration for a partial differential equation solver";
+  }
   static std::string longDescription() { return
-    R"(This keyword is used to select a test problem, which selects the intial
-    and boundary conditions from a set of available test problems. Example:
-    "problem shear_diff", which selects the shear-diffusion test problem, used
-    to test the advection and diffusion terms of a scalar transport equation.)";
+    R"(This keyword is used to specify the problem configuration for a partial
+    differential equation solver in the input file.)";
   }
   struct expect {
     static std::string description() { return "string"; }
     static std::string choices() {
-      return '\'' + shear_diff::string() + "\' | \'"
+      return '\'' + user_defined::string() + "\' | \'"
+                  + shear_diff::string() + "\' | \'"
                   + slot_cyl::string() + '\'';
     }
   };
 };
 using problem = keyword< problem_info, p,r,o,b,l,e,m >;
+
+struct advdiff_info {
+  static std::string name() { return "Advection-diffsion of a scalar"; }
+  static std::string shortDescription() { return
+    "Start configuration block for an advection-diffusion equation"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to introduce the advdiff ... end block, used to
+    specify the configuration for a partial differential equation of
+    advection-diffusion type. Keywords allowed
+    in a advdiff ... end block: )" + std::string("\'")
+    + problem::string() + "\'."
+    + R"(For an example advdiff ... end block, see
+      doc/html/inicter_example_advdiff.html.)";
+  }
+};
+using advdiff = keyword< advdiff_info, a,d,v,d,i,f,f >;
+
+struct euler_info {
+  static std::string name() { return "Euler equations"; }
+  static std::string shortDescription() { return
+    "Start configuration block for the Euler equations"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to introduce the euler ... end block, used to
+    specify the configuration for a system of partial differential equation,
+    governing compressible inviscid fluid flow, the Euler equations. Keywords
+    allowed in an euler ... end block: )" + std::string("\'")
+    + problem::string() + "\'."
+    + R"(For an example euler ... end block, see
+      doc/html/inicter_example_euler.html.)";
+  }
+};
+using euler = keyword< euler_info, e,u,l,e,r >;
 
 struct rcb_info {
   static std::string name() { return "recursive coordinate bisection"; }

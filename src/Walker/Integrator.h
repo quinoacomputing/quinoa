@@ -2,7 +2,7 @@
 /*!
   \file      src/Walker/Integrator.h
   \author    J. Bakosi
-  \date      Sat 30 Jan 2016 09:08:20 PM MST
+  \date      Mon 01 Feb 2016 03:19:00 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Integrator advances differential equations
   \details   Integrator advances differential equations. There are a potentially
@@ -43,7 +43,6 @@
 namespace walker {
 
 extern ctr::InputDeck g_inputdeck;
-extern std::vector< DiffEq > g_diffeqs;
 
 //! Integrator Charm++ chare used to advance differential equations in time
 class Integrator : public CBase_Integrator {

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/Options/InitPolicy.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:18:31 PM MDT
+  \date      Thu 04 Feb 2016 06:14:29 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Differential equation initialization policy options for walker
   \details   Differential equation initialization policy options for walker
@@ -31,7 +31,7 @@ enum class InitPolicyType : uint8_t { RAW=0,
 //! \author J. Bakosi
 inline void operator|( PUP::er& p, InitPolicyType& e ) { PUP::pup( p, e ); }
 
-//! \brief InitPolicy options: outsource searches to base templated on enum type
+//! InitPolicy options: outsource searches to base templated on enum type
 //! \author J. Bakosi
 class InitPolicy : public tk::Toggle< InitPolicyType > {
 

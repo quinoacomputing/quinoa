@@ -369,6 +369,7 @@ include_directories(${QUINOA_SOURCE_DIR}
                     ${QUINOA_SOURCE_DIR}/Base
                     ${QUINOA_SOURCE_DIR}/Control
                     ${QUINOA_SOURCE_DIR}/DiffEq
+                    ${QUINOA_SOURCE_DIR}/PDE
                     ${QUINOA_SOURCE_DIR}/Walker
                     ${QUINOA_SOURCE_DIR}/Inciter
                     ${QUINOA_SOURCE_DIR}/LinSys
@@ -399,6 +400,7 @@ add_subdirectory(UnitTest)
 add_subdirectory(Base)
 add_subdirectory(Control)
 add_subdirectory(DiffEq)
+add_subdirectory(PDE)
 add_subdirectory(Walker)
 add_subdirectory(Inciter)
 add_subdirectory(LoadBalance)

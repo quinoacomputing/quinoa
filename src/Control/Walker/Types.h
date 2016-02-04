@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/Types.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:17:31 PM MDT
+  \date      Thu 04 Feb 2016 06:09:12 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Types for Walker's parsers
   \details   Types for Walker's parsers. This file defines the components of the
@@ -91,8 +91,8 @@ using DirichletParameters = tk::tuple::tagged_tuple<
   tag::betapdf,     std::vector< std::vector< std::vector <
                       kw::betapdf::info::expect::type > > >,
   tag::rng,         std::vector< tk::ctr::RNGType >,
-  tag::initpolicy,  std::vector< InitPolicyType >,
-  tag::coeffpolicy, std::vector< CoeffPolicyType >
+  tag::initpolicy,  std::vector< ctr::InitPolicyType >,
+  tag::coeffpolicy, std::vector< ctr::CoeffPolicyType >
 >;
 
 //! Generalized Dirichlet parameters storage
@@ -111,8 +111,8 @@ using GenDirichletParameters = tk::tuple::tagged_tuple<
   tag::betapdf,     std::vector< std::vector< std::vector <
                       kw::betapdf::info::expect::type > > >,
   tag::rng,         std::vector< tk::ctr::RNGType >,
-  tag::initpolicy,  std::vector< InitPolicyType >,
-  tag::coeffpolicy, std::vector< CoeffPolicyType >
+  tag::initpolicy,  std::vector< ctr::InitPolicyType >,
+  tag::coeffpolicy, std::vector< ctr::CoeffPolicyType >
 >;
 
 //! Wright-Fisher parameters storage
@@ -125,8 +125,8 @@ using WrightFisherParameters = tk::tuple::tagged_tuple<
   tag::betapdf,     std::vector< std::vector< std::vector <
                       kw::betapdf::info::expect::type > > >,
   tag::rng,         std::vector< tk::ctr::RNGType >,
-  tag::initpolicy,  std::vector< InitPolicyType >,
-  tag::coeffpolicy, std::vector< CoeffPolicyType >
+  tag::initpolicy,  std::vector< ctr::InitPolicyType >,
+  tag::coeffpolicy, std::vector< ctr::CoeffPolicyType >
 >;
 
 //! Ornstein-Uhlenbeck parameters storage
@@ -143,8 +143,8 @@ using OrnsteinUhlenbeckParameters = tk::tuple::tagged_tuple<
   tag::betapdf,     std::vector< std::vector< std::vector <
                       kw::betapdf::info::expect::type > > >,
   tag::rng,         std::vector< tk::ctr::RNGType >,
-  tag::initpolicy,  std::vector< InitPolicyType >,
-  tag::coeffpolicy, std::vector< CoeffPolicyType >
+  tag::initpolicy,  std::vector< ctr::InitPolicyType >,
+  tag::coeffpolicy, std::vector< ctr::CoeffPolicyType >
 >;
 
 //! Diagonal Ornstein-Uhlenbeck parameters storage
@@ -161,8 +161,8 @@ using DiagOrnsteinUhlenbeckParameters = tk::tuple::tagged_tuple<
   tag::betapdf,     std::vector< std::vector< std::vector <
                       kw::betapdf::info::expect::type > > >,
   tag::rng,         std::vector< tk::ctr::RNGType >,
-  tag::initpolicy,  std::vector< InitPolicyType >,
-  tag::coeffpolicy, std::vector< CoeffPolicyType >
+  tag::initpolicy,  std::vector< ctr::InitPolicyType >,
+  tag::coeffpolicy, std::vector< ctr::CoeffPolicyType >
 >;
 
 //! Skew-normal parameters storage
@@ -179,8 +179,8 @@ using SkewNormalParameters = tk::tuple::tagged_tuple<
   tag::betapdf,     std::vector< std::vector< std::vector <
                       kw::betapdf::info::expect::type > > >,
   tag::rng,         std::vector< tk::ctr::RNGType >,
-  tag::initpolicy,  std::vector< InitPolicyType >,
-  tag::coeffpolicy, std::vector< CoeffPolicyType >
+  tag::initpolicy,  std::vector< ctr::InitPolicyType >,
+  tag::coeffpolicy, std::vector< ctr::CoeffPolicyType >
 >;
 
 //! Gamma parameters storage
@@ -197,8 +197,8 @@ using GammaParameters = tk::tuple::tagged_tuple<
   tag::betapdf,     std::vector< std::vector< std::vector <
                       kw::betapdf::info::expect::type > > >,
   tag::rng,         std::vector< tk::ctr::RNGType >,
-  tag::initpolicy,  std::vector< InitPolicyType >,
-  tag::coeffpolicy, std::vector< CoeffPolicyType >
+  tag::initpolicy,  std::vector< ctr::InitPolicyType >,
+  tag::coeffpolicy, std::vector< ctr::CoeffPolicyType >
 >;
 
 //! Beta parameters storage
@@ -215,8 +215,8 @@ using BetaParameters = tk::tuple::tagged_tuple<
   tag::betapdf,     std::vector< std::vector< std::vector <
                       kw::betapdf::info::expect::type > > >,
   tag::rng,         std::vector< tk::ctr::RNGType >,
-  tag::initpolicy,  std::vector< InitPolicyType >,
-  tag::coeffpolicy, std::vector< CoeffPolicyType >
+  tag::initpolicy,  std::vector< ctr::InitPolicyType >,
+  tag::coeffpolicy, std::vector< ctr::CoeffPolicyType >
 >;
 
 //! Number-fraction beta parameters storage
@@ -237,8 +237,8 @@ using NumberFractionBetaParameters = tk::tuple::tagged_tuple<
   tag::betapdf,     std::vector< std::vector< std::vector <
                       kw::betapdf::info::expect::type > > >,
   tag::rng,         std::vector< tk::ctr::RNGType >,
-  tag::initpolicy,  std::vector< InitPolicyType >,
-  tag::coeffpolicy, std::vector< CoeffPolicyType >
+  tag::initpolicy,  std::vector< ctr::InitPolicyType >,
+  tag::coeffpolicy, std::vector< ctr::CoeffPolicyType >
 >;
 
 //! Mass-fraction beta parameters storage
@@ -259,8 +259,8 @@ using MassFractionBetaParameters = tk::tuple::tagged_tuple<
   tag::betapdf,     std::vector< std::vector< std::vector <
                       kw::betapdf::info::expect::type > > >,
   tag::rng,         std::vector< tk::ctr::RNGType >,
-  tag::initpolicy,  std::vector< InitPolicyType >,
-  tag::coeffpolicy, std::vector< CoeffPolicyType >
+  tag::initpolicy,  std::vector< ctr::InitPolicyType >,
+  tag::coeffpolicy, std::vector< ctr::CoeffPolicyType >
 >;
 
 //! Mix number-fraction beta parameters storage
@@ -281,8 +281,8 @@ using MixNumberFractionBetaParameters = tk::tuple::tagged_tuple<
   tag::betapdf,     std::vector< std::vector< std::vector <
                       kw::betapdf::info::expect::type > > >,
   tag::rng,         std::vector< tk::ctr::RNGType >,
-  tag::initpolicy,  std::vector< InitPolicyType >,
-  tag::coeffpolicy, std::vector< CoeffPolicyType >
+  tag::initpolicy,  std::vector< ctr::InitPolicyType >,
+  tag::coeffpolicy, std::vector< ctr::CoeffPolicyType >
 >;
 
 //! Mix mass-fraction beta parameters storage

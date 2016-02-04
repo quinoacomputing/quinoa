@@ -2,7 +2,7 @@
 /*!
   \file      src/Walker/Integrator.C
   \author    J. Bakosi
-  \date      Fri 15 Jan 2016 11:40:41 AM MST
+  \date      Mon 01 Feb 2016 03:19:31 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Integrator advances differential equations
   \details   Integrator advances differential equations. There are a potentially
@@ -16,6 +16,12 @@
 
 #include "Integrator.h"
 #include "Collector.h"
+
+namespace walker {
+
+extern std::vector< DiffEq > g_diffeqs;
+
+}
 
 using walker::Integrator;
 

@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/DiffEqStack.C
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:56:03 PM MDT
+  \date      Thu 04 Feb 2016 06:19:01 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Stack of differential equations
   \details   This file defines class DiffEqStack, which implements various
@@ -19,7 +19,6 @@
 #include "DiffEqStack.h"
 #include "Tags.h"
 #include "SystemComponents.h"
-#include "InitPolicy.h"
 #include "Options/RNG.h"
 #include "Walker/Options/CoeffPolicy.h"
 #include "Walker/Options/InitPolicy.h"
@@ -76,7 +75,7 @@ DiffEqStack::DiffEqStack()
 //!   equations._ By _register_, we mean, an entry is recorded in an associative
 //!   container, a std::map, that associates a lightweight key of type
 //!   walker::ctr::DiffEqKey, consisting of only an enum for each policy type,
-//!   to an std::function object that holds the a constructor bound to its
+//!   to an std::function object that holds the constructor bound to its
 //!   arguments corresponding to a particular differential equation + policies
 //!   combination. Note that registering these entries in the map does not
 //!   invoke the constructors. The mapped value simply stores how the
@@ -125,8 +124,7 @@ DiffEqStack::DiffEqStack()
 
   // Dirichlet SDE
   // Construct vector of vectors for all possible policies for SDE
-  using DirPolicies =
-    mpl::vector< walker::InitPolicies, DirichletCoeffPolicies >;
+  using DirPolicies = mpl::vector< InitPolicies, DirichletCoeffPolicies >;
   // Register SDE for all combinations of policies
   mpl::cartesian_product< DirPolicies >(
     registerDiffEq< Dirichlet >
@@ -134,8 +132,8 @@ DiffEqStack::DiffEqStack()
 
   // Lochner's generalized Dirichlet SDE
   // Construct vector of vectors for all possible policies for SDE
-  using GenDirPolicies =
-    mpl::vector< walker::InitPolicies, GeneralizedDirichletCoeffPolicies >;
+  using GenDirPolicies = mpl::vector< InitPolicies,
+                                      GeneralizedDirichletCoeffPolicies >;
   // Register SDE for all combinations of policies
   mpl::cartesian_product< GenDirPolicies >(
     registerDiffEq< GeneralizedDirichlet >
@@ -144,7 +142,7 @@ DiffEqStack::DiffEqStack()
   // Wright-Fisher SDE
   // Construct vector of vectors for all possible policies for SDE
   using WrightFisherPolicies =
-    mpl::vector< walker::InitPolicies, WrightFisherCoeffPolicies >;
+    mpl::vector< InitPolicies, WrightFisherCoeffPolicies >;
   // Register SDE for all combinations of policies
   mpl::cartesian_product< WrightFisherPolicies >(
     registerDiffEq< WrightFisher >
@@ -153,7 +151,7 @@ DiffEqStack::DiffEqStack()
   // Ornstein-Uhlenbeck SDE
   // Construct vector of vectors for all possible policies for SDE
   using OrnsteinUhlenbeckPolicies =
-    mpl::vector< walker::InitPolicies, OrnsteinUhlenbeckCoeffPolicies >;
+    mpl::vector< InitPolicies, OrnsteinUhlenbeckCoeffPolicies >;
   // Register SDE for all combinations of policies
   mpl::cartesian_product< OrnsteinUhlenbeckPolicies >(
     registerDiffEq< OrnsteinUhlenbeck >
@@ -162,7 +160,7 @@ DiffEqStack::DiffEqStack()
   // Diagonal Ornstein-Uhlenbeck SDE
   // Construct vector of vectors for all possible policies for SDE
   using DiagOrnsteinUhlenbeckPolicies =
-    mpl::vector< walker::InitPolicies, DiagOrnsteinUhlenbeckCoeffPolicies >;
+    mpl::vector< InitPolicies, DiagOrnsteinUhlenbeckCoeffPolicies >;
   // Register SDE for all combinations of policies
   mpl::cartesian_product< DiagOrnsteinUhlenbeckPolicies >(
     registerDiffEq< DiagOrnsteinUhlenbeck >
@@ -170,16 +168,15 @@ DiffEqStack::DiffEqStack()
 
   // beta SDE
   // Construct vector of vectors for all possible policies for SDE
-  using BetaPolicies = mpl::vector< walker::InitPolicies, BetaCoeffPolicies >;
+  using BetaPolicies = mpl::vector< InitPolicies, BetaCoeffPolicies >;
   // Register SDE for all combinations of policies
   mpl::cartesian_product< BetaPolicies >(
-    registerDiffEq< Beta >
-                  ( m_factory, ctr::DiffEqType::BETA, m_eqTypes ) );
+    registerDiffEq< Beta >( m_factory, ctr::DiffEqType::BETA, m_eqTypes ) );
 
   // Number-fraction beta SDE
   // Construct vector of vectors for all possible policies for SDE
   using NumberFractionBetaPolicies =
-    mpl::vector< walker::InitPolicies, NumberFractionBetaCoeffPolicies >;
+    mpl::vector< InitPolicies, NumberFractionBetaCoeffPolicies >;
   // Register SDE for all combinations of policies
   mpl::cartesian_product< NumberFractionBetaPolicies >(
     registerDiffEq< NumberFractionBeta >
@@ -188,7 +185,7 @@ DiffEqStack::DiffEqStack()
   // Mass-fraction beta SDE
   // Construct vector of vectors for all possible policies for SDE
   using MassFractionBetaPolicies =
-    mpl::vector< walker::InitPolicies, MassFractionBetaCoeffPolicies >;
+    mpl::vector< InitPolicies, MassFractionBetaCoeffPolicies >;
   // Register SDE for all combinations of policies
   mpl::cartesian_product< MassFractionBetaPolicies >(
     registerDiffEq< MassFractionBeta >
@@ -197,7 +194,7 @@ DiffEqStack::DiffEqStack()
   // Mix number-fraction beta SDE
   // Construct vector of vectors for all possible policies for SDE
   using MixNumFracBetaPolicies =
-    mpl::vector< walker::InitPolicies, MixNumFracBetaCoeffPolicies >;
+    mpl::vector< InitPolicies, MixNumFracBetaCoeffPolicies >;
   // Register SDE for all combinations of policies
   mpl::cartesian_product< MixNumFracBetaPolicies >(
     registerDiffEq< MixNumberFractionBeta >
@@ -206,7 +203,7 @@ DiffEqStack::DiffEqStack()
   // Mix mass-fraction beta SDE
   // Construct vector of vectors for all possible policies for SDE
   using MixMassFracBetaPolicies =
-    mpl::vector< walker::InitPolicies, MixMassFracBetaCoeffPolicies >;
+    mpl::vector< InitPolicies, MixMassFracBetaCoeffPolicies >;
   // Register SDE for all combinations of policies
   mpl::cartesian_product< MixMassFracBetaPolicies >(
     registerDiffEq< MixMassFractionBeta >
@@ -215,7 +212,7 @@ DiffEqStack::DiffEqStack()
   // Skew-normal SDE
   // Construct vector of vectors for all possible policies for SDE
   using SkewNormalPolicies =
-    mpl::vector< walker::InitPolicies, SkewNormalCoeffPolicies >;
+    mpl::vector< InitPolicies, SkewNormalCoeffPolicies >;
   // Register SDE for all combinations of policies
   mpl::cartesian_product< SkewNormalPolicies >(
     registerDiffEq< SkewNormal >
@@ -223,11 +220,10 @@ DiffEqStack::DiffEqStack()
 
   // Gamma SDE
   // Construct vector of vectors for all possible policies for SDE
-  using GammaPolicies = mpl::vector< walker::InitPolicies, GammaCoeffPolicies >;
+  using GammaPolicies = mpl::vector< InitPolicies, GammaCoeffPolicies >;
   // Register SDE for all combinations of policies
   mpl::cartesian_product< GammaPolicies >(
-    registerDiffEq< Gamma >
-                  ( m_factory, ctr::DiffEqType::GAMMA, m_eqTypes ) );
+    registerDiffEq< Gamma >( m_factory, ctr::DiffEqType::GAMMA, m_eqTypes ) );
 
 }
 
