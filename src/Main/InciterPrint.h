@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/InciterPrint.h
   \author    J. Bakosi
-  \date      Tue 17 Nov 2015 01:06:42 PM MST
+  \date      Fri 05 Feb 2016 07:59:50 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Inciter-specific pretty printer functionality
   \details   Inciter-specific pretty printer functionality.
@@ -18,7 +18,7 @@
 #include <boost/optional.hpp>
 
 #include "Print.h"
-#include "RNGPrint.h"
+#include "ContainerUtil.h"
 #include "Inciter/InputDeck/InputDeck.h"
 
 namespace inciter {
@@ -26,8 +26,8 @@ namespace inciter {
 extern ctr::InputDeck g_inputdeck_defaults;
 extern ctr::InputDeck g_inputdeck;
 
-//! InciterPrint : tk::RNGPrint
-class InciterPrint : public tk::RNGPrint {
+//! InciterPrint : tk::Print
+class InciterPrint : public tk::Print {
 
   public:
     //! Constructor
@@ -37,7 +37,7 @@ class InciterPrint : public tk::RNGPrint {
     //! \author J. Bakosi
     explicit InciterPrint( std::ostream& str = std::clog,
                            std::ostream& qstr = std::cout ) :
-      RNGPrint( str, qstr ) {}
+      Print( str, qstr ) {}
 
 //     //! Print control option: 'group : option' only if differs from its default
 //     template< typename Option, typename... tags >
@@ -79,9 +79,90 @@ class InciterPrint : public tk::RNGPrint {
                   % opt.name( g_inputdeck.get< tags... >() );
     }
 
+    // Helper class for compact output of PDE policies
+    //! \author J. Bakosi
+    class Policies {
+      public:
+        // Default constructor
+        explicit Policies() {}
+        // Initializer constructor
+        explicit Policies( const std::string& p ) :
+          prob(p) {}
+        // Operator += for adding up two Policies structs
+        Policies& operator+= ( const Policies& p ) {
+          prob += p.prob;
+          return *this;
+        }
+        // Output unique policies to output stream
+        friend std::ostream& operator<< ( std::ostream& os, const Policies& p )
+        {
+          Policies copy( p );     // copy policies
+          copy.unique();          // get rid of duplicate policies
+          os << "p:" << copy.prob;
+          return os;
+        }
+
+      private:
+        // Make all policies unique
+        void unique() {
+          tk::unique( prob );
+        }
+
+        std::string prob;
+    };
+
+    //! Print equation list with policies
+    //! \param[in] title Section title
+    //! \param[in] factory Factory to get equation data from
+    //! \param[in] ntypes Unique equation types
+    //! \author J. Bakosi
+    template< class Factory >
+    void eqlist( const std::string& title,
+                 const Factory& factory,
+                 std::size_t ntypes ) const {
+      if (!factory.empty()) {
+        section( title );
+        item( "Unique equation types", ntypes );
+        item( "With all policy combinations", factory.size() );
+        raw( '\n' );
+        raw( m_item_indent + "Legend: equation name : supported policies\n" );
+        raw( '\n' );
+        raw( m_item_indent + "Policy codes:\n" +
+             m_item_indent + " * p: problem configuration:\n" +
+             m_item_indent + "   " +
+               kw::user_defined::info::name() + " - user-defined\n" +
+             m_item_indent + "   " +
+               kw::shear_diff::info::name() + " - shear diffusion\n" +
+             m_item_indent + "   " +
+               kw::slot_cyl::info::name() + " - slotted cylinder\n\n" );
+        // extract eqname and supported policies
+        const auto p = ctr::Problem();
+        std::map< std::string, Policies > eqs;      // eqname : policies
+        for (const auto& f : factory)
+          eqs[ PDEName( f.first ) ] +=
+            Policies( p.name( f.first.template get< tag::problem >() ) );
+        // output eqname and supported policies
+        for (const auto& e : eqs)
+          m_stream << m_item_name_value_fmt % m_item_indent % e.first % e.second;
+      }
+    }
+
+    //! Print configuration of a stack of partial differential equations
+    void pdes( const std::string& title,
+      const std::vector< std::vector< std::pair< std::string, std::string > > >&
+        info ) const;
+
     //! Print time integration header
     void inthead( const std::string& title, const std::string& name,
                   const std::string& legend, const std::string& head ) const;
+
+  private:
+    //! Return partial differential equation name
+    //! \param[in] key Equation key
+    //! \return Partial differential equation name based on key
+    template< class Key >
+    std::string PDEName ( const Key& key ) const
+    { return ctr::PDE().name( key.template get< tag::pde >() ); }
 };
 
 } // inciter::

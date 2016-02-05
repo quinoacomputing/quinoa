@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.h
   \author    J. Bakosi
-  \date      Sun 10 Jan 2016 12:39:26 PM MST
+  \date      Fri 05 Feb 2016 06:25:46 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Performer advances a PDE
   \details   Performer advances a PDE. There are a potentially
@@ -24,6 +24,7 @@
 #include <unordered_map>
 
 #include "Types.h"
+#include "MeshNodes.h"
 #include "Inciter/InputDeck/InputDeck.h"
 
 #if defined(__clang__) || defined(__GNUC__)

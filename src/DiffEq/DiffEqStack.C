@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/DiffEqStack.C
   \author    J. Bakosi
-  \date      Thu 04 Feb 2016 06:19:01 AM MST
+  \date      Fri 05 Feb 2016 07:57:40 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Stack of differential equations
   \details   This file defines class DiffEqStack, which implements various
@@ -273,7 +273,8 @@ std::vector< std::vector< std::pair< std::string, std::string > > >
 DiffEqStack::info() const
 //******************************************************************************
 //  Return information on all selected differential equations
-//! \return 
+//! \return A vector of vector of pair of strings, containing the configuration
+//!   for each selected differential equation
 //! \author J. Bakosi
 //******************************************************************************
 {
