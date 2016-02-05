@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Partitioner.h
   \author    J. Bakosi
-  \date      Fri 29 Jan 2016 08:34:06 AM MST
+  \date      Fri 05 Feb 2016 01:06:23 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Charm++ chare partitioner group used to perform mesh partitioning
   \details   Charm++ chare partitioner group used to parform mesh partitioning.
@@ -506,6 +506,11 @@ class Partitioner : public CBase_Partitioner< HostProxy,
       // PE operates on after reordering
       wait4prep();
       wait4bounds();
+      // In serial signal to the runtime system that we have partipitated in
+      // reordering. This is required here because this is only triggered if
+      // communication is required during mesh node reordering. See also
+      // particioner.ci.
+      if (CkNumPes() == 1) trigger_participated();
       // Send out request for new global node IDs for nodes we do not reorder
       for (const auto& c : m_communication)
         Group::thisProxy[ c.first ].request( CkMyPe(), c.second );
