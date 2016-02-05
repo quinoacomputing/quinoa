@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Keywords.h
   \author    J. Bakosi
-  \date      Thu 04 Feb 2016 06:00:46 AM MST
+  \date      Fri 05 Feb 2016 06:14:11 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Definition of all keywords
   \details   This file contains the definition of all keywords, including those
@@ -2453,7 +2453,7 @@ struct inciter_info {
 using inciter = keyword< inciter_info, i,n,c,i,t,e,r >;
 
 struct user_defined_info {
-  static std::string name() { return "user-defined"; }
+  static std::string name() { return "U"; }
   static std::string shortDescription() { return
     "Select user-defined specification for a problem"; }
   static std::string longDescription() { return
@@ -2470,7 +2470,7 @@ struct user_defined_info {
 using user_defined = keyword< user_defined_info, u,s,e,r,'_',d,e,f,i,n,e,d >;
 
 struct shear_diff_info {
-  static std::string name() { return "shear_diff"; }
+  static std::string name() { return "S"; }
   static std::string shortDescription() { return
     "Select test shear + diffusion test problem "; }
   static std::string longDescription() { return
@@ -2485,7 +2485,7 @@ struct shear_diff_info {
 using shear_diff = keyword< shear_diff_info, s,h,e,a,r,'_',d,i,f,f >;
 
 struct slot_cyl_info {
-  static std::string name() { return "slot_cyl"; }
+  static std::string name() { return "C"; }
   static std::string shortDescription() { return
     "Select Zalesak's slotted cylinder test problem"; }
   static std::string longDescription() { return
@@ -2520,7 +2520,7 @@ struct problem_info {
 using problem = keyword< problem_info, p,r,o,b,l,e,m >;
 
 struct advdiff_info {
-  static std::string name() { return "Advection-diffsion of a scalar"; }
+  static std::string name() { return "Scalar advection-diffusion"; }
   static std::string shortDescription() { return
     "Start configuration block for an advection-diffusion equation"; }
   static std::string longDescription() { return

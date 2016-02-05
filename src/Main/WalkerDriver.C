@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/WalkerDriver.C
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 09:43:36 AM MDT
+  \date      Fri 05 Feb 2016 06:09:39 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     WalkerDriver that drives Walker
   \details   WalkerDriver that drives Walker
@@ -58,9 +58,7 @@ WalkerDriver::WalkerDriver( const WalkerPrint& print,
   m_print.item( "Control file", cmdline.get< tag::io, tag::control >() );  
   InputDeckParser inputdeckParser( m_print, cmdline, g_inputdeck );
   m_print.item( "Parsed control file", "success" );  
-
   m_print.endpart();
-  m_print.part( "Factory" );
 
   // Instantiate Distributor chare which drives the time-integration of
   // differential equations via several integrator chares. We only support a

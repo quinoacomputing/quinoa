@@ -2,7 +2,7 @@
 /*!
   \file      src/PDE/PDEStack.h
   \author    J. Bakosi
-  \date      Fri 05 Feb 2016 05:28:29 AM MST
+  \date      Fri 05 Feb 2016 05:33:12 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Stack of differential equations
   \details   This file declares class PDEStack, which implements various
@@ -61,9 +61,9 @@ class PDEStack {
     //! \author J. Bakosi
     const PDEFactory& factory() const { return m_factory; }
 
-//     //! Return info on selected partial differential equations
-//     std::vector< std::vector< std::pair< std::string, std::string > > > info()
-//     const;
+    //! Return info on selected partial differential equations
+    std::vector< std::vector< std::pair< std::string, std::string > > > info()
+    const;
 
     //! \brief Return number of unique equation types registered
     //! \return The number of unique equation types registered in the factory

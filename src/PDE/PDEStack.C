@@ -2,7 +2,7 @@
 /*!
   \file      src/PDE/PDEStack.C
   \author    J. Bakosi
-  \date      Wed 03 Feb 2016 04:11:54 PM MST
+  \date      Fri 05 Feb 2016 08:02:36 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Stack of partial differential equations
   \details   This file defines class PDEStack, which implements various
@@ -137,45 +137,80 @@ PDEStack::selected() const
   return pdes;
 }
 
-// std::vector< std::vector< std::pair< std::string, std::string > > >
-// DiffEqStack::info() const
-// //******************************************************************************
-// //  Return information on all selected differential equations
-// //! \return 
-// //! \author J. Bakosi
-// //******************************************************************************
-// {
-//   std::map< ctr::DiffEqType, std::size_t > cnt; // count DiffEqs per type
-//   // will store info on all differential equations selected
-//   std::vector< std::vector< std::pair< std::string, std::string > > > info;
-// 
-// //   for (const auto& d : g_inputdeck.get< tag::selected, tag::diffeq >()) {
-// //     if (d == ctr::DiffEqType::DIRICHLET)
-// //       info.emplace_back( infoDirichlet( cnt ) );
-// //     else if (d == ctr::DiffEqType::GENDIR)
-// //       info.emplace_back( infoGenDir( cnt ) );
-// //     else if (d == ctr::DiffEqType::WRIGHTFISHER)
-// //       info.emplace_back( infoWrightFisher( cnt ) );
-// //     else if (d == ctr::DiffEqType::OU)
-// //       info.emplace_back( infoOU( cnt ) );
-// //     else if (d == ctr::DiffEqType::DIAG_OU)
-// //       info.emplace_back( infoDiagOU( cnt ) );
-// //     else if (d == ctr::DiffEqType::BETA)
-// //       info.emplace_back( infoBeta( cnt ) );
-// //     else if (d == ctr::DiffEqType::NUMFRACBETA)
-// //       info.emplace_back( infoNumberFractionBeta( cnt ) );
-// //     else if (d == ctr::DiffEqType::MASSFRACBETA)
-// //       info.emplace_back( infoMassFractionBeta( cnt ) );
-// //     else if (d == ctr::DiffEqType::MIXNUMFRACBETA)
-// //       info.emplace_back( infoMixNumFracBeta( cnt ) );
-// //     else if (d == ctr::DiffEqType::MIXMASSFRACBETA)
-// //       info.emplace_back( infoMixMassFracBeta( cnt ) );
-// //     else if (d == ctr::DiffEqType::SKEWNORMAL)
-// //       info.emplace_back( infoSkewNormal( cnt ) );
-// //     else if (d == ctr::DiffEqType::GAMMA)
-// //       info.emplace_back( infoGamma( cnt ) );
-// //     else Throw( "Can't find selected DiffEq" );
-// //   }
-// 
-//   return info;
-// }
+std::vector< std::vector< std::pair< std::string, std::string > > >
+PDEStack::info() const
+//******************************************************************************
+//  Return information on all selected partial differential equations
+//! \return A vector of vector of pair of strings, containing the configuration
+//!   for each selected partial differential equation
+//! \author J. Bakosi
+//******************************************************************************
+{
+  std::map< ctr::PDEType, std::size_t > cnt; // count PDEs per type
+  // will store info on all differential equations selected
+  std::vector< std::vector< std::pair< std::string, std::string > > > info;
+
+  for (const auto& d : g_inputdeck.get< tag::selected, tag::pde >()) {
+    if (d == ctr::PDEType::ADV_DIFF)
+      info.emplace_back( infoAdvDiff( cnt ) );
+    else if (d == ctr::PDEType::EULER)
+      info.emplace_back( infoEuler( cnt ) );
+    else Throw( "Can't find selected PDE" );
+  }
+
+  return info;
+}
+
+std::vector< std::pair< std::string, std::string > >
+PDEStack::infoAdvDiff( std::map< ctr::PDEType, std::size_t >& cnt )
+const
+//******************************************************************************
+//  Return information on the advection-diffusion PDE
+//! \param[inout] cnt std::map of counters for all partial differential equation
+//!   types
+//! \return vector of string pairs describing the PDE configuration
+//! \author J. Bakosi
+//******************************************************************************
+{
+  auto c = ++cnt[ ctr::PDEType::ADV_DIFF ];       // count eqs
+  --c;  // used to index vectors starting with 0
+
+  std::vector< std::pair< std::string, std::string > > info;
+
+  info.emplace_back( ctr::PDE().name( ctr::PDEType::ADV_DIFF ), "" );
+  info.emplace_back( "problem", ctr::Problem().name(
+    g_inputdeck.get< tag::param, tag::advdiff, tag::problem >()[c] ) );
+  info.emplace_back( "start offset in unknowns array", std::to_string(
+    g_inputdeck.get< tag::component >().offset< tag::advdiff >(c) ) );
+  auto ncomp = g_inputdeck.get< tag::component >().get< tag::advdiff >()[c];
+  info.emplace_back( "number of components", std::to_string( ncomp ) );
+
+  return info;
+}
+
+std::vector< std::pair< std::string, std::string > >
+PDEStack::infoEuler( std::map< ctr::PDEType, std::size_t >& cnt )
+const
+//******************************************************************************
+//  Return information on the Euler system of PDEs
+//! \param[inout] cnt std::map of counters for all partial differential equation
+//!   types
+//! \return vector of string pairs describing the PDE configuration
+//! \author J. Bakosi
+//******************************************************************************
+{
+  auto c = ++cnt[ ctr::PDEType::EULER ];       // count eqs
+  --c;  // used to index vectors starting with 0
+
+  std::vector< std::pair< std::string, std::string > > info;
+
+  info.emplace_back( ctr::PDE().name( ctr::PDEType::EULER ), "" );
+  info.emplace_back( "problem", ctr::Problem().name(
+    g_inputdeck.get< tag::param, tag::euler, tag::problem >()[c] ) );
+  info.emplace_back( "start offset in unknowns array", std::to_string(
+    g_inputdeck.get< tag::component >().offset< tag::euler >(c) ) );
+  auto ncomp = g_inputdeck.get< tag::component >().get< tag::euler >()[c];
+  info.emplace_back( "number of components", std::to_string( ncomp ) );
+
+  return info;
+}
