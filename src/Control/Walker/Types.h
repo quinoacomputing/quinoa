@@ -3,7 +3,7 @@
   \file      src/Control/Walker/Types.h
   \author    J. Bakosi
   \date      Thu 04 Feb 2016 06:09:12 AM MST
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     Types for Walker's parsers
   \details   Types for Walker's parsers. This file defines the components of the
     tagged tuple that stores heteroegeneous objects in a hierarchical way. These

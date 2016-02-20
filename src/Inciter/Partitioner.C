@@ -3,7 +3,7 @@
   \file      src/Inciter/Partitioner.C
   \author    J. Bakosi
   \date      Thu 21 Jan 2016 03:07:05 PM MST
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     Charm++ chare partitioner group used to perform mesh partitioning
   \details   Charm++ chare partitioner group used to parform mesh partitioning.
 */

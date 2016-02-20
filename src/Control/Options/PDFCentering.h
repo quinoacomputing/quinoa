@@ -3,7 +3,7 @@
   \file      src/Control/Options/PDFCentering.h
   \author    J. Bakosi
   \date      Mon 01 Jun 2015 02:22:43 PM MDT
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     PDF output file centering type options
   \details   PDF output file centering type options
 */

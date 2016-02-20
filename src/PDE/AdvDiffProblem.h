@@ -3,7 +3,7 @@
   \file      src/PDE/AdvDiffProblem.h
   \author    J. Bakosi
   \date      Fri 19 Feb 2016 09:45:32 AM MST
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     Problem configurations for the advection-diffusion equation
   \details   This file defines policy classes for the advection-diffusion
     partial differential equation, defined in PDE/AdvDiff.h.

@@ -3,7 +3,7 @@
   \file      src/Base/MeshNodes.h
   \author    J. Bakosi
   \date      Sun 31 Jan 2016 07:16:21 AM MST
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     MeshNodes used to store mesh node data.
   \details   MeshNodes used to store data at mesh nodes as a specialization of
     DataLayout. See also Base/DataLayout.h and the rationale discussed in the

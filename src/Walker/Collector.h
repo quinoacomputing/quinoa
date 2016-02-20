@@ -3,7 +3,7 @@
   \file      src/Walker/Collector.h
   \author    J. Bakosi
   \date      Tue 19 Jan 2016 03:42:27 PM MST
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     Charm++ module interface file for collecting contributions from
              Integrators
   \details   Charm++ module interface file for collecting contributions from

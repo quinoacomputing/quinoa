@@ -3,7 +3,7 @@
   \file      src/DiffEq/SkewNormal.h
   \author    J. Bakosi
   \date      Sat 30 Jan 2016 09:11:45 PM MST
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     System of skew-normal SDEs
   \details   This file implements the time integration of a system of stochastic
     differential equations (SDEs), whose invariant is the joint [skew-normal

@@ -3,7 +3,7 @@
   \file      src/Base/DataLayout.h
   \author    J. Bakosi
   \date      Fri 19 Feb 2016 09:27:06 AM MST
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     Generic data access abstraction for different data layouts
   \details   Generic data access abstraction for different data layouts. See
     also the rationale discussed in the [design](layout.html) document.

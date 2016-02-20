@@ -3,7 +3,7 @@
   \file      src/UnitTest/tests/Base/TestDataLayout.h
   \author    J. Bakosi
   \date      Thu 11 Feb 2016 03:52:49 PM MST
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     Unit tests for Base/DataLayout.h
   \details   Unit tests for Base/DataLayout.h
 */

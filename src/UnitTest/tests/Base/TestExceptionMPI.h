@@ -3,7 +3,7 @@
   \file      src/UnitTest/tests/Base/TestExceptionMPI.h
   \author    J. Bakosi
   \date      Mon 01 Jun 2015 03:09:33 PM MDT
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     Unit tests for Base/TestExceptionMPI.h
   \details   Unit tests for Base/TestExceptionMPI.h
 */

@@ -3,7 +3,7 @@
   \file      src/Base/Has.h
   \author    J. Bakosi
   \date      Mon 12 Jan 2015 08:02:07 AM MST
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     "Has-a" utilities for detecting class internals
   \details   "Has-a" utilities for detecting class internals
 */

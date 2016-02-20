@@ -3,7 +3,7 @@
   \file      src/Mesh/STLMesh.h
   \author    J. Bakosi
   \date      Mon 01 Jun 2015 10:08:32 AM MDT
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     STL (STereoLithography) mesh class declaration
   \details   STL (STereoLithography) mesh class declaration.
 */

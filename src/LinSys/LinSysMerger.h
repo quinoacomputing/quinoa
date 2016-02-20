@@ -3,7 +3,7 @@
   \file      src/LinSys/LinSysMerger.h
   \author    J. Bakosi
   rdate      Thu 07 Jan 2016 07:33:27 PM MST
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     Linear system merger
   \details   Linear system merger.
 */

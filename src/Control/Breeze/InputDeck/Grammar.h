@@ -3,7 +3,7 @@
   \file      src/Control/Breeze/InputDeck/Grammar.h
   \author    J. Bakosi
   \date      Mon 01 Jun 2015 02:20:28 PM MDT
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     Breeze's input deck grammar definition
   \details   Breeze's input deck grammar definition. We use the Parsing
   Expression Grammar Template Library (PEGTL) to create the grammar and the

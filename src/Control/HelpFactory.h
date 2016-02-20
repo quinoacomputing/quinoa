@@ -3,7 +3,7 @@
   \file      src/Control/HelpFactory.h
   \author    J. Bakosi
   \date      Mon 01 Jun 2015 02:02:26 PM MDT
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     Command-line and input deck help factory
   \details   This file contains some types that facilitate the generation of
      on-screen help.

@@ -3,7 +3,7 @@
   \file      src/LoadBalance/UnsMeshMap.h
   \author    J. Bakosi
   \date      Sat 30 May 2015 11:59:56 AM MDT
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     Advanced Charm++ array creation with a map using an unstructured
              grid
   \details   Advanced Charm++ array creation refers to various ways arrays can

@@ -3,7 +3,7 @@
   \file      src/LoadBalance/CommMap.C
   \author    J. Bakosi
   \date      Wed 04 Nov 2015 10:16:33 AM MST
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     Calculation of communication maps for unstructured meshes
   \details   Calculation of communication maps for unstructured meshes.
 */

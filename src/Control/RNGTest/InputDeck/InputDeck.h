@@ -3,7 +3,7 @@
   \file      src/Control/RNGTest/InputDeck/InputDeck.h
   \author    J. Bakosi
   \date      Mon 01 Jun 2015 02:16:27 PM MDT
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     Random number generator test suite input deck
   \details   This file defines the heterogeneous stack that is used for storing
      the data from user input during the control file parsing of the random

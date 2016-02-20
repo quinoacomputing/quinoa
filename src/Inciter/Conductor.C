@@ -3,7 +3,7 @@
   \file      src/Inciter/Conductor.C
   \author    J. Bakosi
   \date      Thu 11 Feb 2016 02:03:10 PM MST
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     Conductor drives the time integration of a PDE
   \details   Conductor drives the time integration of a PDE
     The implementation uses the Charm++ runtime system and is fully asynchronous,

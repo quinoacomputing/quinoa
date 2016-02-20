@@ -3,7 +3,7 @@
   \file      src/LoadBalance/linearmap.ci
   \author    J. Bakosi
   \date      Thu 21 May 2015 09:42:34 AM MDT
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     Charm++ module interface file for linear array creation
   \details   Charm++ module interface file for linear array creation. See
      http://charm.cs.illinois.edu/manuals/html/charm++/manual.html, Sec.

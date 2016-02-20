@@ -3,7 +3,7 @@
   \file      src/DiffEq/NumberFractionBetaCoeffPolicy.h
   \author    J. Bakosi
   \date      Mon 01 Jun 2015 02:39:06 PM MDT
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     Number-fraction beta SDE coefficients policies
   \details   This file defines coefficients policy classes for the
     number-fraction beta SDE, defined in DiffEq/NumberFractionBeta.h.

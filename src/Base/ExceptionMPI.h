@@ -3,7 +3,7 @@
   \file      src/Base/ExceptionMPI.h
   \author    J. Bakosi
   \date      Mon 01 Jun 2015 02:09:17 PM MDT
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     Exception macros interoperating with MPI
   \details   Exception macros interoperating with MPI.
 */

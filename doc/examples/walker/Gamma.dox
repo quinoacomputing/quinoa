@@ -295,6 +295,6 @@ plot "stat.txt" u 2:6 w l t "<l1l2>"
 <hr>
 <div><small>
 <em>Page last updated:</em> Wed 18 Feb 2015 03:36:04 PM MST
-<em>Copyright 2012-2015, Jozsef Bakosi.</em>
+<em>Copyright 2012-2016, Jozsef Bakosi.</em>
 </small></div>
 */

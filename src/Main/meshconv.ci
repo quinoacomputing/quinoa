@@ -3,7 +3,7 @@
   \file      src/Main/meshconv.ci
   \author    J. Bakosi
   \date      Sat 11 Apr 2015 06:44:09 AM MDT
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     Charm++ module interface file for meshconv
   \details   Charm++ module interface file for the mesh file converter,
     meshconv.

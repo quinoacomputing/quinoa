@@ -3,7 +3,7 @@
   \file      src/Control/PEGTLParsed.h
   \author    J. Bakosi
   \date      Wed 14 Jan 2015 01:36:14 PM MST
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     Class to equip parsed classes with PEGTL instruments
   \details   Class to equip parsed classes with PEGTL instruments. This is used
     to track the parser's location so that we can detect the location of errors

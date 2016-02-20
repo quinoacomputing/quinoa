@@ -3,7 +3,7 @@
   \file      src/DiffEq/OrnsteinUhlenbeck.h
   \author    J. Bakosi
   \date      Sat 30 Jan 2016 09:12:17 PM MST
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     System of Ornstein-Uhlenbeck SDEs
   \details   This file implements the time integration of a system of stochastic
     differential equations (SDEs), with linear drift and constant diffusion,

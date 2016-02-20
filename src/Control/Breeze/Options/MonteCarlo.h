@@ -3,7 +3,7 @@
   \file      src/Control/Breeze/Options/MonteCarlo.h
   \author    J. Bakosi
   \date      Mon 01 Jun 2015 02:21:41 PM MDT
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     MonteCarlo options
   \details   MonteCarlo options
 */

@@ -3,7 +3,7 @@
   \file      src/Base/Particles.h
   \author    J. Bakosi
   \date      Sun 31 Jan 2016 07:16:07 AM MST
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     Particles used to store particle data.
   \details   Particles used to store data at particles as a specialization of
     DataLayout. See also Base/DataLayout.h and the rationale discussed in the

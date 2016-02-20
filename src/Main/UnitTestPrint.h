@@ -3,7 +3,7 @@
   \file      src/Main/UnitTestPrint.h
   \author    J. Bakosi
   \date      Mon 01 Jun 2015 02:39:31 PM MDT
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     UnitTest's printer
   \details   UnitTest's printer
 */

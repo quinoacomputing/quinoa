@@ -3,7 +3,7 @@
   \file      src/UnitTest/Assessment.h
   \author    J. Bakosi
   \date      Mon 01 Jun 2015 12:57:57 PM MDT
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     Unit test suite assessment
   \details   Unit test suite assessment.
 */

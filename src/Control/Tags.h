@@ -3,7 +3,7 @@
   \file      src/Control/Tags.h
   \author    J. Bakosi
   \date      Tue 16 Feb 2016 05:25:58 PM MST
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     Tags
   \details   Tags are unique types, used for metaprogramming.
 */

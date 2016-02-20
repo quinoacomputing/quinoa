@@ -3,7 +3,7 @@
   \file      src/DiffEq/DirichletCoeffPolicy.h
   \author    J. Bakosi
   \date      Mon 01 Jun 2015 02:36:03 PM MDT
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     Dirichlet coefficients policies
   \details   This file defines coefficients policy classes for the Dirichlet
     SDE, defined in DiffEq/Dirichlet.h.

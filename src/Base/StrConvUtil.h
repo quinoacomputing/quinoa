@@ -3,7 +3,7 @@
   \file      src/Base/StrConvUtil.h
   \author    J. Bakosi
   \date      Fri 01 May 2015 07:28:14 AM MDT
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     String conversion utilities
   \details   Various string conversion utilities.
 */

@@ -3,7 +3,7 @@
   \file      src/UnitTest/TUTSuite.C
   \author    J. Bakosi
   \date      Mon 01 Jun 2015 01:43:33 PM MDT
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     Template Unit Test suite class definition
   \details   Template Unit Test suite class definition. In principle there can
     be unit test suites other than this one which uses the Template Unit Test

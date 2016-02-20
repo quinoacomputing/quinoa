@@ -3,7 +3,7 @@
   \file      src/Base/ContainerUtil.h
   \author    J. Bakosi
   \date      Wed 17 Feb 2016 03:52:47 PM MST
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     Various STL container utilities
   \details   Various STL container utilities.
 */

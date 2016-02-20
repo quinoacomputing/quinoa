@@ -3,7 +3,7 @@
   \file      src/LoadBalance/LoadDistributor.C
   \author    J. Bakosi
   \date      Sat 30 May 2015 12:01:39 PM MDT
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     Load distributors
   \details   Load distributors compute chunksize based on the degree of
      virtualization.

@@ -402,6 +402,6 @@ plot "stat.txt" u 2:(-$37) w l t "b", "stat.txt" u 2:($12**4.0*$42*(1.0+$42/9.0/
 <hr>
 <div><small>
 <em>Page last updated:</em> Tue 04 Aug 2015 08:35:12 AM MDT
-<em>Copyright 2012-2015, Jozsef Bakosi.</em>
+<em>Copyright 2012-2016, Jozsef Bakosi.</em>
 </small></div>
 */
