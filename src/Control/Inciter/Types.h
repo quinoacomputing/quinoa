@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/Types.h
   \author    J. Bakosi
-  \date      Wed 03 Feb 2016 03:50:58 PM MST
+  \date      Wed 17 Feb 2016 06:57:12 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Types for Incitier's parsers
   \details   Types for Incitier's parsers. This file defines the components of the
@@ -53,7 +53,14 @@ using ios = tk::tuple::tagged_tuple<
 
 //! Advection-diffusion transport equation parameters storage
 using AdvDiffPDEParameters = tk::tuple::tagged_tuple<
-  tag::problem,     std::vector< ProblemType >
+  tag::depvar,      std::vector< char >,
+  tag::problem,     std::vector< ProblemType >,
+  tag::diffusivity, std::vector< std::vector<
+                      kw::pde_diffusivity::info::expect::type > >,
+  tag::lambda,      std::vector< std::vector<
+                      kw::pde_lambda::info::expect::type > >,
+  tag::u0,          std::vector< std::vector<
+                      kw::pde_u0::info::expect::type > >
 >;
 
 //! Euler equation parameters storage

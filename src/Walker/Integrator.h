@@ -2,7 +2,7 @@
 /*!
   \file      src/Walker/Integrator.h
   \author    J. Bakosi
-  \date      Mon 01 Feb 2016 03:19:00 PM MST
+  \date      Fri 05 Feb 2016 08:49:17 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Integrator advances differential equations
   \details   Integrator advances differential equations. There are a potentially
@@ -55,6 +55,7 @@ class Integrator : public CBase_Integrator {
 
     //! Migrate constructor
     explicit Integrator( CkMigrateMessage* ) :
+      m_particles( 0, g_inputdeck.get< tag::component >().nprop() ),
       m_stat( m_particles,
                 g_inputdeck.get< tag::component >().offsetmap( 
                   g_inputdeck.depvars() ),

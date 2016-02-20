@@ -2,20 +2,21 @@
 /*!
   \file      src/Base/DataLayout.h
   \author    J. Bakosi
-  \date      Sun 31 Jan 2016 07:16:42 AM MST
+  \date      Fri 19 Feb 2016 09:27:06 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Generic data access abstraction for different data layouts
   \details   Generic data access abstraction for different data layouts. See
-    also Base/DataLayout.h and the rationale discussed in the
-    [design](layout.html) document.
+    also the rationale discussed in the [design](layout.html) document.
 */
 //******************************************************************************
 #ifndef DataLayout_h
 #define DataLayout_h
 
+#include <array>
+
 #include "Types.h"
-#include "Make_unique.h"
 #include "Keywords.h"
+#include "Exception.h"
 
 namespace tk {
 
@@ -35,98 +36,241 @@ class DataLayout {
   public:
     //! Constructor
     //! \param[in] nunk Number of unknowns to allocate memory for
-    //! \param[in] nprop Number properties, i.e., scalar variables, per unknown
+    //! \param[in] nprop Total number of properties, i.e., scalar variables or
+    //!   components, per unknown
     //! \author J. Bakosi
-    explicit DataLayout( ncomp_t nunk = 0, ncomp_t nprop = 0) :
-      m_ptr( tk::make_unique< tk::real[] >( nunk*nprop ) ),
+    explicit DataLayout( ncomp_t nunk, ncomp_t nprop ) :
+      m_vec( nunk*nprop ),
       m_nunk( nunk ),
       m_nprop( nprop ) {}
 
-    //! \brief Data access dispatch.
-    //! \details Public interface to data access. Use it as DataLayout(p,c,o),
-    //!   where p is the unknown index, c is component index specifying the
-    //!   scalar equation within a system of equations, and o is the offset
-    //!   specifying the position at which the system resides among other
-    //!   systems.
+    //! Const data access dispatch
+    //! \details Public interface to const-ref data access to a single real
+    //!   value. Use it as DataLayout(p,c,o), where p is the unknown index, c is
+    //!   the component index specifying the scalar equation within a system of
+    //!   equations, and o is the offset specifying the position at which the
+    //!   system resides among other systems. Requirement: offset + component <
+    //!   nprop, unknown < nunk, enforced with an assert in DEBUG mode, see also
+    //!   the constructor.
     //! \param[in] unknown Unknown index
     //! \param[in] component Component index, i.e., position of a scalar within
     //!   a system
     //! \param[in] offset System offset specifying the position of the system of
     //!   equations among other systems
-    //! \return Reference to data of type tk::real
+    //! \return Const reference to data of type tk::real
     //! \author J. Bakosi
-    inline tk::real&
-    operator()( ncomp_t unknown, ncomp_t component, ncomp_t offset )
-    const noexcept {
-      return access( unknown, component, offset, int2type< Layout >() );
+    const tk::real&
+    operator()( ncomp_t unknown, ncomp_t component, ncomp_t offset ) const
+    { return access( unknown, component, offset, int2type< Layout >() ); }
+
+    //! Non-const data access dispatch
+    //! \details Public interface to non-const-ref data access to a single real
+    //!   value. Use it as DataLayout(p,c,o), where p is the unknown index, c is
+    //!   the component index specifying the scalar equation within a system of
+    //!   equations, and o is the offset specifying the position at which the
+    //!   system resides among other systems. Requirement: offset + component <
+    //!   nprop, unknown < nunk, enforced with an assert in DEBUG mode, see also
+    //!   the constructor.
+    //! \param[in] unknown Unknown index
+    //! \param[in] component Component index, i.e., position of a scalar within
+    //!   a system
+    //! \param[in] offset System offset specifying the position of the system of
+    //!   equations among other systems
+    //! \return Non-const reference to data of type tk::real
+    //! \see "Avoid Duplication in const and Non-const Member Function," and
+    //!   "Use const whenever possible," Scott Meyers, Effective C++, 3d ed.
+    //! \author J. Bakosi
+    tk::real&
+    operator()( ncomp_t unknown, ncomp_t component, ncomp_t offset ) {
+      return const_cast< tk::real& >(
+               static_cast< const DataLayout& >( *this ).
+                 operator()( unknown, component, offset ) );
     }
 
-    //! \brief Const ptr to physical variable access dispatch.
-    //! \details Public interface to physical variable access. cptr() and
-    //!   cvar() are intended to be used together in case component and offset
-    //!   would be expensive to compute for data access via the function call
-    //!   operator. In essence, cptr() returns part of the address known based
-    //!   on component and offset and intended to be used in a setup phase. Then
-    //!   cvar() takes this partial address and finishes the address calculation
-    //!   given the unknown id. The following two data accesses are equivalent
-    //!   (modulo constness):
-    //!   * real& value = operator()( unk, comp, offs );
-    //!   * const real* p = cptr( comp, offs );
-    //!     const real& value = cvar( p, unk );
+    //! Const ptr to physical variable access dispatch
+    //! \details Public interface to the first half of a physical variable
+    //!   access. cptr() and var() are two member functions intended to be used
+    //!   together in case when component and offset would be expensive to
+    //!   compute for data access via the function call operator, i.e., cptr()
+    //!   can be used to pre-compute part of the address, which returns a
+    //!   pointer and var() can be used to finish the data access using the
+    //!   pointer returned by cptr(). In other words, cptr() returns part of the
+    //!   address known based on component and offset and intended to be used in
+    //!   a setup phase. Then var() takes this partial address and finishes the
+    //!   address calculation given the unknown id. Thus the following two data
+    //!   accesses are equivalent (modulo constness):
+    //!   * real& value = operator()( unk, comp, offs ); and
+    //!   * const real* p = cptr( comp, offs ); and
+    //!     const real& value = var( p, unk ); or real& value = var( p, unk );
+    //!   Requirement: offset + component < nprop, enforced with an assert in
+    //!   DEBUG mode, see also the constructor.
     //! \param[in] component Component index, i.e., position of a scalar within
     //!   a system
     //! \param[in] offset System offset specifying the position of the system of
     //!   equations among other systems
-    //! \return Pointer to data of type tk::real for use with cvar()
-    //! \see Client code for cptr() and cvar() in Statistics::setupOrdinary()
-    //!   and Statistics::accumulateOrd() in Statistics/Statistics.C.
+    //! \return Pointer to data of type tk::real for use with var()
+    //! \see Example client code in Statistics::setupOrdinary() and
+    //!   Statistics::accumulateOrd() in Statistics/Statistics.C.
     //! \author J. Bakosi
-    inline const tk::real*
-    cptr( ncomp_t component, ncomp_t offset ) const noexcept
+    const tk::real*
+    cptr( ncomp_t component, ncomp_t offset ) const
     { return cptr( component, offset, int2type< Layout >() ); }
 
-    //! \brief Const physical variable access dispatch.
-    //! \details Public interface to physical variable access. cptr() and cvar()
-    //!   are intended to be used together in case component and offset would be
-    //!   expensive to compute for data access via the function call operator.
-    //!   In essence, cptr() returns part of the address known based on
-    //!   component and offset and intended to be used in a setup phase. Then
-    //!   cvar() takes this partial address and finishes the address calculation
-    //!   given the unknown id. The following two data accesses are equivalent
-    //!   (modulo constness):
-    //!   * real& value = operator()( unk, comp, offs );
-    //!   * const real* p = cptr( comp, offs );
-    //!    const real& value = cvar( p, unk );
+    //! Const-ref data-access dispatch
+    //! \details Public interface to the second half of a physical variable
+    //!   access. cptr() and var() are two member functions intended to be used
+    //!   together in case when component and offset would be expensive to
+    //!   compute for data access via the function call operator, i.e., cptr()
+    //!   can be used to pre-compute part of the address, which returns a
+    //!   pointer and var() can be used to finish the data access using the
+    //!   pointer returned by cptr(). In other words, cptr() returns part of the
+    //!   address known based on component and offset and intended to be used in
+    //!   a setup phase. Then var() takes this partial address and finishes the
+    //!   address calculation given the unknown id. Thus the following two data
+    //!   accesses are equivalent (modulo constness):
+    //!   * real& value = operator()( unk, comp, offs ); and
+    //!   * const real* p = cptr( comp, offs ); and
+    //!     const real& value = var( p, unk ); or real& value = var( p, unk );
+    //!   Requirement: unknown < nunk, enforced with an assert in DEBUG mode,
+    //!   see also the constructor.
     //! \param[in] pt Pointer to data of type tk::real as returned from cptr()
     //! \param[in] unknown Unknown index
-    //! \return Reference to data of type tk::real
-    //! \see Client code for cptr() and cvar() in Statistics::setupOrdinary()
-    //!   and Statistics::accumulateOrd() in Statistics/Statistics.C.
+    //! \return Const reference to data of type tk::real
+    //! \see Example client code in Statistics::setupOrdinary() and
+    //!   Statistics::accumulateOrd() in Statistics/Statistics.C.
     //! \author J. Bakosi
-    inline const tk::real&
-    cvar( const tk::real* const pt, ncomp_t unknown ) const noexcept
-    { return cvar( pt, unknown, int2type< Layout >() ); }
+    const tk::real&
+    var( const tk::real* pt, ncomp_t unknown ) const
+    { return var( pt, unknown, int2type< Layout >() ); }
 
-    //! Raw pointer access to data.
-    //! \return Raw pointer to array of type tk::real
+    //! Non-const-ref data-access dispatch
+    //! \details Public interface to the second half of a physical variable
+    //!   access. cptr() and var() are two member functions intended to be used
+    //!   together in case when component and offset would be expensive to
+    //!   compute for data access via the function call operator, i.e., cptr()
+    //!   can be used to pre-compute part of the address, which returns a
+    //!   pointer and var() can be used to finish the data access using the
+    //!   pointer returned by cptr(). In other words, cptr() returns part of the
+    //!   address known based on component and offset and intended to be used in
+    //!   a setup phase. Then var() takes this partial address and finishes the
+    //!   address calculation given the unknown id. Thus the following two data
+    //!   accesses are equivalent (modulo constness):
+    //!   * real& value = operator()( unk, comp, offs ); and
+    //!   * const real* p = cptr( comp, offs ); and
+    //!     const real& value = var( p, unk ); or real& value = var( p, unk );
+    //!   Requirement: unknown < nunk, enforced with an assert in DEBUG mode,
+    //!   see also the constructor.
+    //! \param[in] pt Pointer to data of type tk::real as returned from cptr()
+    //! \param[in] unknown Unknown index
+    //! \return Non-const reference to data of type tk::real
+    //! \see Example client code in Statistics::setupOrdinary() and
+    //!   Statistics::accumulateOrd() in Statistics/Statistics.C.
+    //! \see "Avoid Duplication in const and Non-const Member Function," and
+    //!   "Use const whenever possible," Scott Meyers, Effective C++, 3d ed.
     //! \author J. Bakosi
-    inline tk::real* ptr() const noexcept { return m_ptr.get(); }
+    tk::real&
+    var( const tk::real* pt, ncomp_t unknown ) {
+      return const_cast< tk::real& >(
+               static_cast< const DataLayout& >( *this ).var( pt, unknown ) );
+    }
 
-    //! Total Size access.
-    //! \return Total number of real numbers stored in the entire array: number
-    //! of unknowns * number of properties/unknown.
-    //! \author J. Bakosi
-    inline ncomp_t size() const noexcept { return m_nunk * m_nprop; }
-
-    //! Number of unknown access.
+    //! Access to number of unknowns
     //! \return Number of unknowns
     //! \author J. Bakosi
-    inline ncomp_t nunk() const noexcept { return m_nunk; }
+    ncomp_t nunk() const noexcept { return m_nunk; }
 
-    //! Layout name dispatch.
+    //! Access to number of properties
+    //! \details This is the total number of scalar components per unknown
+    //! \return Number of propertes/unknown
+    //! \author J. Bakosi
+    ncomp_t nprop() const noexcept { return m_nprop; }
+
+    //! Extract vector of unknowns given component and offset
+    //! \details Requirement: offset + component < nprop, enforced with an
+    //!   assert in DEBUG mode, see also the constructor.
+    //! \param[in] component Component index, i.e., position of a scalar within
+    //!   a system
+    //! \param[in] offset System offset specifying the position of the system of
+    //!   equations among other systems
+    //! \return A vector of unknowns given by component at offset (length:
+    //!   nunkn(), i.e., the first constructor argument)
+    std::vector< tk::real >
+    extract( ncomp_t component, ncomp_t offset ) const {
+      std::vector< tk::real > w( m_nunk );
+      for (ncomp_t i=0; i<m_nunk; ++i)
+        w[i] = operator()( i, component, offset );
+      return w;
+    }
+
+    //! Extract (a copy of) all components for an unknown
+    //! \details Requirement: unknown < nunk, enforced with an assert in DEBUG
+    //!   mode, see also the constructor.
+    //! \param[in] unknown Index of unknown
+    //! \return A vector of components for a single unknown (length: nprop,
+    //!   i.e., the second constructor argument)
+    std::vector< tk::real >
+    extract( ncomp_t unknown ) const {
+      std::vector< tk::real > w( m_nprop );
+      for (ncomp_t i=0; i<m_nprop; ++i)
+        w[i] = operator()( unknown, i, 0 );
+      return w;
+    }
+
+    //! Extract all components for unknown
+    //! \details Requirement: unknown < nunk, enforced with an assert in DEBUG
+    //!   mode, see also the constructor.
+    //! \param[in] unknown Index of unknown
+    //! \return A vector of components for a single unknown (length: nprop,
+    //!   i.e., the second constructor argument)
+    //! \note This is simply an alias for extract( unknown )
+    std::vector< tk::real >
+    operator[]( ncomp_t unknown ) const { return extract( unknown ); }
+
+    //! Extract (a copy of) four values of unknowns
+    //! \details Requirement: offset + component < nprop, [A,B,C,D] < nunk,
+    //!   enforced with an assert in DEBUG mode, see also the constructor.
+    //! \param[in] component Component index, i.e., position of a scalar within
+    //!   a system
+    //! \param[in] offset System offset specifying the position of the system of
+    //!   equations among other systems
+    //! \param[in] A Index of 1st unknown
+    //! \param[in] B Index of 2nd unknown
+    //! \param[in] C Index of 3rd unknown
+    //! \param[in] D Index of 4th unknown
+    //! \return Array of the four values of component at offset
+    //! \author J. Bakosi
+    std::array< tk::real, 4 >
+    extract( ncomp_t component, ncomp_t offset,
+             ncomp_t A, ncomp_t B, ncomp_t C, ncomp_t D ) const
+    {
+      auto p = cptr( component, offset );
+      return {{ var(p,A), var(p,B), var(p,C), var(p,D) }};
+    }
+
+    //! Fill vector of unknowns with the same value
+    //! \details Requirement: offset + component < nprop, enforced with an
+    //!   assert in DEBUG mode, see also the constructor.
+    //! \param[in] component Component index, i.e., position of a scalar within
+    //!   a system
+    //! \param[in] offset System offset specifying the position of the system of
+    //!   equations among other systems
+    //! \param[in] value Value to fill vector of unknowns with
+    //! \author J. Bakosi
+    void fill( ncomp_t component, ncomp_t offset, tk::real value ) {
+      auto p = cptr( component, offset );
+      for (ncomp_t i=0; i<m_nunk; ++i) var(p,i) = value;
+    }
+
+    //! Fill full data storage with value
+    //! \param[in] value Value to fill data with
+    //! \author J. Bakosi
+    void fill( tk::real value )
+    { std::fill( begin(m_vec), end(m_vec), value ); }
+
+    //! Layout name dispatch
     //! \return The name of the data layout used
     //! \author J. Bakosi
-    inline const char* major() const noexcept
+    static constexpr const char* major()
     { return major( int2type< Layout >() ); }
 
   private:
@@ -136,64 +280,84 @@ class DataLayout {
     //! \author J. Bakosi
     template< uint8_t m > struct int2type { enum { value = m }; };
 
-    //! Overloads for the various data accesses
+    //! Overloads for the various const data accesses
+    //! \details Requirement: offset + component < nprop, unknown < nunk,
+    //!   enforced with an assert in DEBUG mode, see also the constructor.
     //! \param[in] unknown Unknown index
     //! \param[in] component Component index, i.e., position of a scalar within
     //!   a system
     //! \param[in] offset System offset specifying the position of the system of
     //!   equations among other systems
-    //! \return Reference to data of type tk::real
+    //! \return Const reference to data of type tk::real
     //! \see A. Alexandrescu, Modern C++ Design: Generic Programming and Design
     //!   Patterns Applied, Addison-Wesley Professional, 2001.
     //! \author J. Bakosi
-    inline tk::real&
+    const tk::real&
     access( ncomp_t unknown, ncomp_t component, ncomp_t offset,
-            int2type< UnkEqComp > ) const noexcept
+            int2type< UnkEqComp > ) const
     {
-      return *(m_ptr.get() + unknown*m_nprop + offset + component);
+      Assert( offset + component < m_nprop, "Out-of-bounds access: offset + "
+              "component < number of properties" );
+      Assert( unknown < m_nunk, "Out-of-bounds access: unknown < number of "
+              "unknowns" );
+      return m_vec[ unknown*m_nprop + offset + component ];
     }
-    inline tk::real&
+    const tk::real&
     access( ncomp_t unknown, ncomp_t component, ncomp_t offset,
-            int2type< EqCompUnk > ) const noexcept
+            int2type< EqCompUnk > ) const
     {
-      return *(m_ptr.get() + (offset+component)*m_nunk + unknown);
+      Assert( offset + component < m_nprop, "Out-of-bounds access: offset + "
+              "component < number of properties" );
+      Assert( unknown < m_nunk, "Out-of-bounds access: unknown < number of "
+              "unknowns" );
+      return m_vec[ (offset+component)*m_nunk + unknown ];
     }
 
     // Overloads for the various const ptr to physical variable accesses
+    //! \details Requirement: offset + component < nprop, unknown < nunk,
+    //!   enforced with an assert in DEBUG mode, see also the constructor.
     //! \param[in] component Component index, i.e., position of a scalar within
     //!   a system
     //! \param[in] offset System offset specifying the position of the system of
     //!   equations among other systems
-    //! \return Pointer to data of type tk::real for use with cvar()
+    //! \return Pointer to data of type tk::real for use with var()
     //! \see A. Alexandrescu, Modern C++ Design: Generic Programming and Design
     //!   Patterns Applied, Addison-Wesley Professional, 2001.
     //! \author J. Bakosi
-    inline const tk::real*
-    cptr( ncomp_t component, ncomp_t offset, int2type< UnkEqComp > ) const
-    noexcept {
-      return m_ptr.get() + component + offset;
+    const tk::real*
+    cptr( ncomp_t component, ncomp_t offset, int2type< UnkEqComp > ) const {
+      Assert( offset + component < m_nprop, "Out-of-bounds access: offset + "
+              "component < number of properties" );
+      return m_vec.data() + component + offset;
     }
-    inline const tk::real*
-    cptr( ncomp_t component, ncomp_t offset, int2type< EqCompUnk > ) const
-    noexcept {
-      return m_ptr.get() + (offset+component)*m_nunk;
+    const tk::real*
+    cptr( ncomp_t component, ncomp_t offset, int2type< EqCompUnk > ) const {
+      Assert( offset + component < m_nprop, "Out-of-bounds access: offset + "
+              "component < number of properties" );
+      return m_vec.data() + (offset+component)*m_nunk;
     }
 
     // Overloads for the various const physical variable accesses
+    //!   Requirement: unknown < nunk, enforced with an assert in DEBUG mode,
+    //!   see also the constructor.
     //! \param[in] pt Pointer to data of type tk::real as returned from cptr()
     //! \param[in] unknown Unknown index
-    //! \return Reference to data of type tk::real
+    //! \return Const reference to data of type tk::real
     //! \see A. Alexandrescu, Modern C++ Design: Generic Programming and Design
     //!   Patterns Applied, Addison-Wesley Professional, 2001.
     //! \author J. Bakosi
-    inline const tk::real&
-    cvar( const tk::real* const pt, ncomp_t unknown, int2type< UnkEqComp > )
-    const noexcept {
+    const tk::real&
+    var( const tk::real* const pt, ncomp_t unknown, int2type< UnkEqComp > )
+    const {
+      Assert( unknown < m_nunk, "Out-of-bounds access: unknown < number of "
+              "unknowns" );
       return *(pt + unknown*m_nprop);
     }
-    inline const tk::real&
-    cvar( const tk::real* const pt, ncomp_t unknown, int2type< EqCompUnk > )
-    const noexcept {
+    const tk::real&
+    var( const tk::real* const pt, ncomp_t unknown, int2type< EqCompUnk > )
+    const {
+      Assert( unknown < m_nunk, "Out-of-bounds access: unknown < number of "
+              "unknowns" );
       return *(pt + unknown);
     }
 
@@ -202,16 +366,14 @@ class DataLayout {
     //! \see A. Alexandrescu, Modern C++ Design: Generic Programming and Design
     //!   Patterns Applied, Addison-Wesley Professional, 2001.
     //! \author J. Bakosi
-    inline const char* major( int2type< UnkEqComp > ) const noexcept {
-      return "unknown-major";
-    }
-    inline const char* major( int2type< EqCompUnk > ) const noexcept {
-      return "equation-major";
-    }
+    static constexpr const char* major( int2type< UnkEqComp > )
+    { return "unknown-major"; }
+    static constexpr const char* major( int2type< EqCompUnk > )
+    { return "equation-major"; }
 
-    const std::unique_ptr< tk::real[] > m_ptr; //!< Particle data pointer
-    const ncomp_t m_nunk;                      //!< Number of unknowns
-    const ncomp_t m_nprop;                     //!< Number of properties/unknown
+    std::vector< tk::real > m_vec;      //!< Data pointer
+    ncomp_t m_nunk;                     //!< Number of unknowns
+    ncomp_t m_nprop;                    //!< Number of properties/unknown
 };
 
 } // tk::

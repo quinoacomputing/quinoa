@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Wed 03 Feb 2016 03:32:11 PM MST
+  \date      Wed 17 Feb 2016 07:01:34 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Inciter's input deck definition
   \details   This file defines the heterogeneous stack that is used for storing
@@ -69,7 +69,11 @@ class InputDeck :
                                        kw::rib,
                                        kw::phg,
                                        kw::inciter >;
-    using keywords2 = boost::mpl::set< kw::ncomp >;
+    using keywords2 = boost::mpl::set< kw::ncomp,
+                                       kw::pde_diffusivity,
+                                       kw::pde_lambda,
+                                       kw::pde_u0,
+                                       kw::depvar >;
                                      
     //! \brief Constructor: set defaults
     //! \details Anything not set here is initialized by the compiler using the

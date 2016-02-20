@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/InitPolicy.h
   \author    J. Bakosi
-  \date      Thu 04 Feb 2016 06:17:28 AM MST
+  \date      Tue 16 Feb 2016 03:45:20 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Initialization policies
   \details   This file defines initialization policy classes. As opposed to
@@ -14,8 +14,8 @@
     - Must define the member function _init_, which is used to do the
       initialization. Required signature:
       \code{.cpp}
-        template< class eq, class InputDeck >
-        static void init( const InputDeck& deck,
+        template< class eq >
+        static void init( const ctr::InputDeck& deck,
                           const tk::RNG& rng,
                           int stream,
                           tk::Particles& particles,
@@ -45,7 +45,6 @@
 #ifndef InitPolicy_h
 #define InitPolicy_h
 
-#include <cstring>
 #include <algorithm>
 
 #include <boost/mpl/vector.hpp>
@@ -62,8 +61,8 @@ namespace walker {
 struct InitRaw {
 
   //! Initialize particle properties
-  template< class eq, class InputDeck >
-  static void init( const InputDeck& deck,
+  template< class eq >
+  static void init( const ctr::InputDeck& deck,
                     const tk::RNG& rng,
                     int stream,
                     tk::Particles& particles,
@@ -79,8 +78,8 @@ struct InitRaw {
 struct InitZero {
 
   //! Initialize particle properties
-  template< class eq, class InputDeck >
-  static void init( const InputDeck& deck,
+  template< class eq >
+  static void init( const ctr::InputDeck& deck,
                     const tk::RNG& rng,
                     int stream,
                     tk::Particles& particles,
@@ -88,7 +87,7 @@ struct InitZero {
                     tk::ctr::ncomp_type ncomp,
                     tk::ctr::ncomp_type offset )
   {
-    std::memset( particles.ptr(), 0, particles.size()*sizeof(tk::real) );
+    particles.fill( 0.0 );
   }
 
   static ctr::InitPolicyType type() noexcept
@@ -99,8 +98,8 @@ struct InitZero {
 struct InitDelta {
 
   //! Initialize particle properties
-  template< class eq, class InputDeck >
-  static void init( const InputDeck& deck,
+  template< class eq >
+  static void init( const ctr::InputDeck& deck,
                     const tk::RNG& rng,
                     int stream,
                     tk::Particles& particles,
@@ -140,8 +139,8 @@ struct InitDelta {
 struct InitBeta {
 
   //! Initialize particle properties (zero)
-  template< class eq, class InputDeck >
-  static void init( const InputDeck& deck,
+  template< class eq >
+  static void init( const ctr::InputDeck& deck,
                     const tk::RNG& rng,
                     int stream,
                     tk::Particles& particles,

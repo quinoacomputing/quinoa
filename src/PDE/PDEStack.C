@@ -2,7 +2,7 @@
 /*!
   \file      src/PDE/PDEStack.C
   \author    J. Bakosi
-  \date      Fri 05 Feb 2016 08:02:36 AM MST
+  \date      Fri 19 Feb 2016 08:38:16 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Stack of partial differential equations
   \details   This file defines class PDEStack, which implements various
@@ -184,6 +184,15 @@ const
     g_inputdeck.get< tag::component >().offset< tag::advdiff >(c) ) );
   auto ncomp = g_inputdeck.get< tag::component >().get< tag::advdiff >()[c];
   info.emplace_back( "number of components", std::to_string( ncomp ) );
+  info.emplace_back( "coeff diffusivity [" + std::to_string( ncomp ) + "]",
+    parameters(
+      g_inputdeck.get< tag::param, tag::advdiff, tag::diffusivity >().at(c) ) );
+  info.emplace_back( "coeff u0 [" + std::to_string( ncomp ) + "]",
+    parameters(
+      g_inputdeck.get< tag::param, tag::advdiff, tag::u0 >().at(c) ) );
+  info.emplace_back( "coeff lambda [" + std::to_string( ncomp ) + "]",
+    parameters(
+      g_inputdeck.get< tag::param, tag::advdiff, tag::lambda >().at(c) ) );
 
   return info;
 }

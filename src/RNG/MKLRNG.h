@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/MKLRNG.h
   \author    J. Bakosi
-  \date      Thu 14 Jan 2016 09:08:38 PM MST
+  \date      Sun 07 Feb 2016 02:04:59 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Interface to Intel MKL VSL random number generators
   \details   Interface to Intel MKL VSL random number generators.
@@ -23,7 +23,7 @@ class MKLRNG {
     using ncomp_t = kw::ncomp::info::expect::type;    
 
   public:
-    //! \brief Constructor
+    //! Constructor
     //! \param[in] nthreads Initialize RNG using this many independent streams
     //! \param[in] brng Index of the basic generator to initialize the stream
     //! \param[in] seed RNG seed
