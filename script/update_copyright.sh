@@ -2,7 +2,7 @@
 # 
 # \file      script/update_copyright.sh
 # \author    J. Bakosi
-# \date      Sat 20 Feb 2016 01:17:54 PM MST
+# \date      Sat 20 Feb 2016 01:22:04 PM MST
 # \copyright 2012-2015, Jozsef Bakosi.
 # \brief     Update copyright year in all files in src and doc
 # 
