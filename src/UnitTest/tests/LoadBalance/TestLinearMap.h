@@ -3,7 +3,7 @@
   \file      src/UnitTest/tests/LoadBalance/TestLinearMap.h
   \author    J. Bakosi
   \date      Mon 01 Jun 2015 03:16:35 PM MDT
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     Unit tests for LoadBalance/LinearMap
   \details   Unit tests for LoadBalance/LinearMap
 */

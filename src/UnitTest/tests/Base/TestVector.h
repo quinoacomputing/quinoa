@@ -3,7 +3,7 @@
   \file      src/UnitTest/tests/Base/TestVector.h
   \author    J. Bakosi
   \date      Mon 01 Jun 2015 03:11:53 PM MDT
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     Unit tests for Base/Vector.h
   \details   Unit tests for Base/Vector.h
 */

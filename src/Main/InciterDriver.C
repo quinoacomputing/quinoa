@@ -3,7 +3,7 @@
   \file      src/Main/InciterDriver.C
   \author    J. Bakosi
   \date      Fri 08 Jan 2016 06:11:29 AM MST
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     Inciter driver
   \details   Inciter driver.
 */

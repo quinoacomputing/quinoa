@@ -3,7 +3,7 @@
   \file      src/Main/rngtest.ci
   \author    J. Bakosi
   \date      Mon 02 Mar 2015 02:09:50 PM MST
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     Charm++ module interface file for rngtest
   \details   Charm++ module interface file for the random number generator test
     suite, rngtest. 

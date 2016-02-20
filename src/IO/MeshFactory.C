@@ -3,7 +3,7 @@
   \file      src/IO/MeshFactory.C
   \author    J. Bakosi
   \date      Wed 13 Jan 2016 07:42:39 AM MST
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     Unstructured mesh reader and writer factory
   \details   Unstructured mesh reader and writer factory.
 */

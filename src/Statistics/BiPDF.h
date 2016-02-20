@@ -3,7 +3,7 @@
   \file      src/Statistics/BiPDF.h
   \author    J. Bakosi
   \date      Mon 01 Jun 2015 02:08:13 PM MDT
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     Joint bivariate PDF estimator
   \details   Joint bivariate PDF estimator. This class can be used to estimate a
     joint probability density function (PDF) of two scalar variables from an

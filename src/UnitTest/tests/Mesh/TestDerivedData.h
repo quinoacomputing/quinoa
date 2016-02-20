@@ -3,7 +3,7 @@
   \file      src/UnitTest/tests/Mesh/TestDerivedData.h
   \author    J. Bakosi
   \date      Wed 11 Nov 2015 06:59:38 AM MST
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     Unit tests for Mesh/DerivedData
   \details   Unit tests for Mesh/DerivedData. All unit tests start from simple
      mesh connectivities defined in the code. The tetrahedron mesh in Gmsh ASCII

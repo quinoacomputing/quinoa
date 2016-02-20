@@ -3,7 +3,7 @@
   \file      src/UnitTest/tests/Control/TestControl.h
   \author    J. Bakosi
   \date      Mon 01 Jun 2015 03:14:49 PM MDT
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     Unit tests for Control/Control
   \details   Unit tests for Control/Control
 */

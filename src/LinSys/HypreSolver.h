@@ -3,7 +3,7 @@
   \file      src/LinSys/HypreSolver.h
   \author    J. Bakosi
   \date      Thu 07 Jan 2016 06:07:57 PM MST
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     Hypre solver class
   \details   Hypre solver class.
 */

@@ -3,7 +3,7 @@
   \file      src/Main/Driver.h
   \author    J. Bakosi
   \date      Mon 01 Jun 2015 02:40:17 PM MDT
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     Driver base class declaration
   \details   Driver base class declaration. This class used as a base for
      various drivers. Note that "base" is not in a classical OOP sense. See also

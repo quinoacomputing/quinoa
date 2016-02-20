@@ -3,7 +3,7 @@
   \file      src/UnitTest/tests/Base/TestStrConvUtil.h
   \author    J. Bakosi
   \date      Mon 01 Jun 2015 03:11:35 PM MDT
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     Unit tests for Base/StrConvUtil.h
   \details   Unit tests for Base/StrConvUtil.h
 */

@@ -3,7 +3,7 @@
   \file      src/Main/Init.h
   \author    J. Bakosi
   \date      Wed 20 Jan 2016 08:11:53 AM MST
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     Common initialization routines for main() functions for multiple
      exectuables
   \details   Common initialization routines for main() functions for multiple

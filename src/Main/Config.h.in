@@ -3,7 +3,7 @@
   \file      src/Main/Config.h
   \author    J. Bakosi
   \date      Sat 30 Jan 2016 04:57:30 PM MST
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     CMake header input file with information to be passed to cmake
   \details   CMake header input file with information to be passed to cmake. See
     also src/CMakeLists.txt.

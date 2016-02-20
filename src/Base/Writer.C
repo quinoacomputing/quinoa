@@ -3,7 +3,7 @@
   \file      src/Base/Writer.C
   \author    J. Bakosi
   \date      Tue 03 Nov 2015 03:24:52 PM MST
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     Writer base class definition
   \details   Writer base class definition. Writer base serves as a base class
     for various file writers. It does generic low-level I/O, e.g., opening and
