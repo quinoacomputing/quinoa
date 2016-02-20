@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/Components.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:53:06 PM MDT
+  \date      Wed 03 Feb 2016 03:49:35 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Storage for number of components
   \details   Storage for number of components. This is part of the input deck
@@ -17,13 +17,10 @@
 namespace inciter {
 namespace ctr {
 
-//! Number of components of models and equations
+//! Number of components of partial differential equations
 using ncomps = tk::ctr::ncomponents<
-  tag::position,     std::vector< tk::ctr::ncomp_type >,
-  tag::mass,         std::vector< tk::ctr::ncomp_type >,
-  tag::hydro,        std::vector< tk::ctr::ncomp_type >,
-  tag::mix,          std::vector< tk::ctr::ncomp_type >,
-  tag::frequency,    std::vector< tk::ctr::ncomp_type >
+  tag::advdiff,      std::vector< tk::ctr::ncomp_type >,
+  tag::euler,        std::vector< tk::ctr::ncomp_type >
 >;
 
 } // ctr::

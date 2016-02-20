@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/GammaCoeffPolicy.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:34:36 PM MDT
+  \date      Thu 04 Feb 2016 06:07:41 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Gamma coefficients policies
   \details   This file defines coefficients policy classes for the gamma SDE,
@@ -35,8 +35,8 @@
     - Must define the static function _type()_, returning the enum value of the
       policy option. Example:
       \code{.cpp}
-        static ctrCoeffPolicyType type() noexcept {
-          return ctrCoeffPolicyType::CONSTANT;
+        static ctr::CoeffPolicyType type() noexcept {
+          return ctr::CoeffPolicyType::CONSTANT;
         }
       \endcode
       which returns the enum value of the option from the underlying option

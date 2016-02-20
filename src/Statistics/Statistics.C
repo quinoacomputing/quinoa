@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.C
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:52:59 PM MDT
+  \date      Mon 08 Feb 2016 06:02:27 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Statistics class definition
   \details   This file implements a statistics class that can be used to
@@ -24,7 +24,7 @@
 #include "Types.h"
 #include "Exception.h"
 #include "Statistics.h"
-#include "ParticleProperties.h"
+#include "Particles.h"
 #include "SystemComponents.h"
 #include "UniPDF.h"
 #include "BiPDF.h"
@@ -32,7 +32,7 @@
 
 using tk::Statistics;
 
-Statistics::Statistics( const tk::ParProps& particles,
+Statistics::Statistics( const tk::Particles& particles,
                         const ctr::OffsetMap& offset,
                         const std::vector< ctr::Product >& stat,
                         const std::vector< ctr::Probability >& pdf,
@@ -254,13 +254,13 @@ Statistics::accumulateOrd()
 
     // Accumulate sum for ordinary moments. This is a partial sum, so no
     // division by the number of samples.
-    const auto npar = m_particles.npar();
+    const auto npar = m_particles.nunk();
     for (auto p=decltype(npar){0}; p<npar; ++p) {
       for (std::size_t i=0; i<m_nord; ++i) {
-       auto prod = m_particles.cvar( m_instOrd[i][0], p );
+       auto prod = m_particles.var( m_instOrd[i][0], p );
         const auto s = m_instOrd[i].size();
         for (auto j=decltype(s){1}; j<s; ++j) {
-          prod *= m_particles.cvar( m_instOrd[i][j], p );
+          prod *= m_particles.var( m_instOrd[i][j], p );
         }
         m_ordinary[i] += prod;
       }
@@ -292,13 +292,13 @@ Statistics::accumulateCen( const std::vector< tk::real >& ord )
 
     // Accumulate sum for central moments. This is a partial sum, so no division
     // by the number of samples.
-    const auto npar = m_particles.npar();
+    const auto npar = m_particles.nunk();
     for (auto p=decltype(npar){0}; p<npar; ++p) {
       for (std::size_t i=0; i<m_ncen; ++i) {
-        auto prod = m_particles.cvar( m_instCen[i][0], p ) - *(m_ctr[i][0]);
+        auto prod = m_particles.var( m_instCen[i][0], p ) - *(m_ctr[i][0]);
         const auto s = m_instCen[i].size();
         for (auto j=decltype(s){1}; j<s; ++j) {
-          prod *= m_particles.cvar( m_instCen[i][j], p ) - *(m_ctr[i][j]);
+          prod *= m_particles.var( m_instCen[i][j], p ) - *(m_ctr[i][j]);
         }
         m_central[i] += prod;
       }
@@ -320,27 +320,27 @@ Statistics::accumulateOrdPDF()
     for (auto& pdf : m_ordtpdf) pdf.zero();
 
     // Accumulate partial sum for PDFs
-    const auto npar = m_particles.npar();
+    const auto npar = m_particles.nunk();
     for (auto p=decltype(npar){0}; p<npar; ++p) {
       std::size_t i = 0;
       // Accumulate partial sum for univariate PDFs
       for (auto& pdf : m_ordupdf) {
-        pdf.add( m_particles.cvar( m_instOrdUniPDF[i++][0], p ) );
+        pdf.add( m_particles.var( m_instOrdUniPDF[i++][0], p ) );
       }
       // Accumulate partial sum for bivariate PDFs
       i = 0;
       for (auto& pdf : m_ordbpdf) {
         const auto inst = m_instOrdBiPDF[i++];
-        pdf.add( {{ m_particles.cvar( inst[0], p ),
-                    m_particles.cvar( inst[1], p ) }} );
+        pdf.add( {{ m_particles.var( inst[0], p ),
+                    m_particles.var( inst[1], p ) }} );
       }
       // Accumulate partial sum for trivariate PDFs
       i = 0;
       for (auto& pdf : m_ordtpdf) {
         const auto inst = m_instOrdTriPDF[i++];
-        pdf.add( {{ m_particles.cvar( inst[0], p ),
-                    m_particles.cvar( inst[1], p ),
-                    m_particles.cvar( inst[2], p ) }} );
+        pdf.add( {{ m_particles.var( inst[0], p ),
+                    m_particles.var( inst[1], p ),
+                    m_particles.var( inst[2], p ) }} );
       }
     }
   }
@@ -371,13 +371,13 @@ Statistics::accumulateCenPDF( const std::vector< tk::real >& ord )
     for (auto& pdf : m_centpdf) pdf.zero();
 
     // Accumulate partial sum for PDFs
-    const auto npar = m_particles.npar();
+    const auto npar = m_particles.nunk();
     for (auto p=decltype(npar){0}; p<npar; ++p) {
       std::size_t i = 0;
       // Accumulate partial sum for univariate PDFs
       for (auto& pdf : m_cenupdf) {
         pdf.add(
-          m_particles.cvar( m_instCenUniPDF[i][0], p ) - *(m_ctrUniPDF[i][0]) );
+          m_particles.var( m_instCenUniPDF[i][0], p ) - *(m_ctrUniPDF[i][0]) );
         ++i;
       }
       // Accumulate partial sum for bivariate PDFs
@@ -385,8 +385,8 @@ Statistics::accumulateCenPDF( const std::vector< tk::real >& ord )
       for (auto& pdf : m_cenbpdf) {
         const auto& inst = m_instCenBiPDF[i];
         const auto& cen = m_ctrBiPDF[i];
-        pdf.add( {{ m_particles.cvar( inst[0], p ) - *(cen[0]),
-                    m_particles.cvar( inst[1], p ) - *(cen[1]) }} );
+        pdf.add( {{ m_particles.var( inst[0], p ) - *(cen[0]),
+                    m_particles.var( inst[1], p ) - *(cen[1]) }} );
         ++i;
       }
       // Accumulate partial sum for trivariate PDFs
@@ -394,9 +394,9 @@ Statistics::accumulateCenPDF( const std::vector< tk::real >& ord )
       for (auto& pdf : m_centpdf) {
         const auto inst = m_instCenTriPDF[i];
         const auto& cen = m_ctrTriPDF[i];
-        pdf.add( {{ m_particles.cvar( inst[0], p ) - *(cen[0]),
-                    m_particles.cvar( inst[1], p ) - *(cen[1]),
-                    m_particles.cvar( inst[2], p ) - *(cen[2]) }} );
+        pdf.add( {{ m_particles.var( inst[0], p ) - *(cen[0]),
+                    m_particles.var( inst[1], p ) - *(cen[1]),
+                    m_particles.var( inst[2], p ) - *(cen[2]) }} );
         ++i;
       }
     }

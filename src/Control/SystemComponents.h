@@ -2,12 +2,12 @@
 /*!
   \file      src/Control/SystemComponents.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:52:20 PM MDT
+  \date      Thu 04 Feb 2016 05:42:03 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Operations on numbers of scalar components of systems of equations
   \details   Operations on numbers of scalar components of systems of equations,
-    e.g. multiple equation sets of a physical model or a set of equations of
-    different kinds.
+    e.g. multiple equation sets of a physical model or a set of (stochastic
+    ordinary or partial differential) equations of different kinds.
 
     _Problem:_ We are given a type that is a tk::tuple::tagged_tuple that
     contains an arbitrary number of std::vectors of integers. The number of
@@ -86,23 +86,24 @@ namespace ctr {
 //! Inherit type of number of components from keyword 'ncomp'
 using ncomp_type = kw::ncomp::info::expect::type;
 
-//! Map associating a dependent variable of a differential equation to its
-//! offset in the particle data array. We use a case-insensitive character
-//! comparison functor for the offset map, since the keys (dependent variables)
-//! in the offset map are only used to indicate the equation's dependent
-//! variable, however, queries (using std::map's member function, find) can be
-//! fired up for both ordinary and central moments (which are denoted by upper
-//! and lower case, characters, respectively) for which the offset (for the same
-//! dependent variable) should be the same.
+//! \brief Map associating a dependent variable of a differential equation to
+//!   its offset in its data array storing its dependent variables
+//! \details We use a case-insensitive character comparison functor for the
+//!   offset map, since the keys (dependent variables) in the offset map are
+//!   only used to indicate the equation's dependent variable, however, queries
+//!   (using std::map's member function, find) can be fired up for both ordinary
+//!   and central moments (which are denoted by upper and lower case,
+//!   characters, respectively) for which the offset (for the same dependent
+//!   variable) should be the same.
 using OffsetMap = std::map< char, ncomp_type, CaseInsensitiveCharLess >;
 
-//! Number of components storage. All this trickery with boost::mpl allows the
-//! code below to be generic. As a result, adding a new component requires
-//! adding a single line (a tag and its type) to the already existing list, see
-//! typedefs 'ncomps'. The member functions, doing initialization, computing the
-//! number of total components, the offset for a given tag, and computing the
-//! offset map, need no change -- even if the order of the number of components
-//! change.
+//! \brief Number of components storage
+//! \details All this trickery with boost::mpl allows the code below to be
+//!   generic. As a result, adding a new component requires adding a single line
+//!   (a tag and its type) to the already existing list, see typedefs 'ncomps'.
+//!   The member functions, doing initialization, computing the number of total
+//!   components, the offset for a given tag, and computing the offset map, need
+//!   no change -- even if the order of the number of components change.
 template< typename... Tags >
 class ncomponents : public tk::tuple::tagged_tuple< Tags... > {
 
@@ -130,16 +131,16 @@ class ncomponents : public tk::tuple::tagged_tuple< Tags... > {
       }
     };
 
-    //! Function object for computing the total number of components (i.e., the
-    //! sum of all of the number of components)
+    //! \brief Function object for computing the total number of components
+    //!   (i.e., the sum of all of the number of components)
     //! \author J. Bakosi
     struct addncomp {
       //! Need to store reference to host class whose data we operate on
       const ncomponents* const m_host;
       //! Internal reference used to return the total number of components
       ncomp_type& m_nprop;
-      //! Constructor: store host object pointer and initially zeroed counter
-      //! reference
+      //! \brief Constructor: store host object pointer and initially zeroed
+      //!   counter reference
       addncomp( const ncomponents* const host, ncomp_type& nprop ) :
         m_host( host ), m_nprop( nprop = 0 ) {}
       //! Function call operator templated on the type that does the counting
@@ -149,10 +150,11 @@ class ncomponents : public tk::tuple::tagged_tuple< Tags... > {
       }
     };
 
-    //! Function object for computing the offset for a given tag (i.e., the sum
-    //! of the number of components up to a given tag). This is used to index
-    //! into the particle array and get to the beginning of data for a given
-    //! differential equation system.
+    //! \brief Function object for computing the offset for a given tag (i.e.,
+    //!   the sum of the number of components up to a given tag)
+    //! \details This is used to index into the data array (the equation systems
+    //!   operate on during the numerical solution) and get to the beginning of
+    //!   data for a given differential equation system.
     //! \author J. Bakosi
     template< typename tag >
     struct addncomp4tag {
@@ -160,18 +162,19 @@ class ncomponents : public tk::tuple::tagged_tuple< Tags... > {
       const ncomponents* const m_host;
       //! Internal reference used to return the offset for the tag given
       ncomp_type& m_offset;
-      //! Internal storage for the index of a system within systems, i.e., I
-      //! want the second Dirichlet system: m_c = 1. See also offset().
+      //! \brief Internal storage for the index of a system within systems
+      //! \details Example: I want the second Dirichlet system: m_c = 1.
+      //! \see offset().
       const ncomp_type m_c;
       //! Indicates whether the tag (eq system) was found, so it is time to quit
       bool m_found;
-      //! Constructor: store host object pointer, initially zeroed offset
-      //! reference, and system index we are looking for
+      //! \brief Constructor: store host object pointer, initially zeroed offset
+      //!   reference, and system index we are looking for
       addncomp4tag( const ncomponents* const host, ncomp_type& offset,
                     ncomp_type c ) :
         m_host( host ), m_offset( offset = 0 ), m_c( c ), m_found( false ) {}
-      //! Function call operator templated on the type that does the offset
-      //! calculation
+      //! \brief Function call operator templated on the type that does the
+      //!   offset calculation
       template< typename U > void operator()( U ) {
         if (std::is_same< tag, U >::value) {
           // Make sure we are not trying to index beyond the length for this U

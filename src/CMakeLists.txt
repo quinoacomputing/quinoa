@@ -315,26 +315,8 @@ if(CODE_COVERAGE)
       "${CMAKE_CXX_FLAGS} -O0 --coverage -fprofile-arcs -ftest-coverage")
 endif()
 
-# Set data layout for particle properties
-# Available options
-set(LAYOUT_VALUES "particle" "equation")
-# Initialize all to off
-set(LAYOUT_PARTICLE_MAJOR off)  # 0
-set(LAYOUT_EQUATION_MAJOR off)  # 1
-# Set default and select from list
-set(LAYOUT "particle" CACHE STRING "Particle properties layout. Default: (particle-major). Available options: ${LAYOUT_VALUES}(-major).")
-SET_PROPERTY (CACHE LAYOUT PROPERTY STRINGS ${LAYOUT_VALUES})
-STRING (TOLOWER ${LAYOUT} LAYOUT)
-LIST (FIND LAYOUT_VALUES ${LAYOUT} LAYOUT_INDEX)
-# Evaluate selected option and put in a define for it
-IF (${LAYOUT_INDEX} EQUAL 0)
-  set(LAYOUT_PARTICLE_MAJOR on)
-ELSEIF (${LAYOUT_INDEX} EQUAL 1)
-  set(LAYOUT_EQUATION_MAJOR on)
-ELSEIF (${LAYOUT_INDEX} EQUAL -1)
-  MESSAGE(FATAL_ERROR "Particle properties layout '${LAYOUT}' not supported, valid entries are ${LAYOUT_VALUES}(-major).")
-ENDIF()
-message(STATUS "Particle properties layout (LAYOUT): " ${LAYOUT} "(-major)")
+# Include cmake code to enable configuration for data layouts
+include(ConfigureDataLayout)
 
 # Include third-party libraries configuration
 include(TPLs)
@@ -387,6 +369,7 @@ include_directories(${QUINOA_SOURCE_DIR}
                     ${QUINOA_SOURCE_DIR}/Base
                     ${QUINOA_SOURCE_DIR}/Control
                     ${QUINOA_SOURCE_DIR}/DiffEq
+                    ${QUINOA_SOURCE_DIR}/PDE
                     ${QUINOA_SOURCE_DIR}/Walker
                     ${QUINOA_SOURCE_DIR}/Inciter
                     ${QUINOA_SOURCE_DIR}/LinSys
@@ -417,6 +400,7 @@ add_subdirectory(UnitTest)
 add_subdirectory(Base)
 add_subdirectory(Control)
 add_subdirectory(DiffEq)
+add_subdirectory(PDE)
 add_subdirectory(Walker)
 add_subdirectory(Inciter)
 add_subdirectory(LoadBalance)

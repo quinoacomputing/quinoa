@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:52:55 PM MDT
+  \date      Sat 30 Jan 2016 09:07:56 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Statistics class declaration
   \details   This file implements a statistics class that can be used to
@@ -64,7 +64,7 @@
 
 #include "Types.h"
 #include "StatCtr.h"
-#include "ParticleProperties.h"
+#include "Particles.h"
 #include "SystemComponents.h"
 #include "UniPDF.h"
 #include "BiPDF.h"
@@ -77,7 +77,7 @@ class Statistics {
 
   public:
     //! Constructor
-    explicit Statistics( const tk::ParProps& particles,
+    explicit Statistics( const tk::Particles& particles,
                          const ctr::OffsetMap& offset,
                          const std::vector< ctr::Product >& stat,
                          const std::vector< ctr::Probability >& pdf,
@@ -140,7 +140,7 @@ class Statistics {
     std::size_t mean(const tk::ctr::Term& term) const;
 
     //! Particle properties
-    const tk::ParProps& m_particles;
+    const tk::Particles& m_particles;
 
     /** @name Data for statistical moment estimation */
     ///@{

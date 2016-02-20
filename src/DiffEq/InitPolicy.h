@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/InitPolicy.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:34:26 PM MDT
+  \date      Tue 16 Feb 2016 03:45:20 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Initialization policies
   \details   This file defines initialization policy classes. As opposed to
@@ -14,11 +14,11 @@
     - Must define the member function _init_, which is used to do the
       initialization. Required signature:
       \code{.cpp}
-        template< class eq, class InputDeck >
-        static void init( const InputDeck& deck,
+        template< class eq >
+        static void init( const ctr::InputDeck& deck,
                           const tk::RNG& rng,
                           int stream,
-                          tk::ParProps& particles,
+                          tk::Particles& particles,
                           tk::ctr::ncomp_type e,
                           tk::ctr::ncomp_type ncomp,
                           tk::ctr::ncomp_type offset );
@@ -45,14 +45,13 @@
 #ifndef InitPolicy_h
 #define InitPolicy_h
 
-#include <cstring>
 #include <algorithm>
 
 #include <boost/mpl/vector.hpp>
 
 #include "Macro.h"
 #include "Types.h"
-#include "ParticleProperties.h"
+#include "Particles.h"
 #include "Walker/Options/InitPolicy.h"
 #include "RNG.h"
 
@@ -62,11 +61,11 @@ namespace walker {
 struct InitRaw {
 
   //! Initialize particle properties
-  template< class eq, class InputDeck >
-  static void init( const InputDeck& deck,
+  template< class eq >
+  static void init( const ctr::InputDeck& deck,
                     const tk::RNG& rng,
                     int stream,
-                    tk::ParProps& particles,
+                    tk::Particles& particles,
                     tk::ctr::ncomp_type e,
                     tk::ctr::ncomp_type ncomp,
                     tk::ctr::ncomp_type offset ) {}
@@ -79,16 +78,16 @@ struct InitRaw {
 struct InitZero {
 
   //! Initialize particle properties
-  template< class eq, class InputDeck >
-  static void init( const InputDeck& deck,
+  template< class eq >
+  static void init( const ctr::InputDeck& deck,
                     const tk::RNG& rng,
                     int stream,
-                    tk::ParProps& particles,
+                    tk::Particles& particles,
                     tk::ctr::ncomp_type e,
                     tk::ctr::ncomp_type ncomp,
                     tk::ctr::ncomp_type offset )
   {
-    std::memset( particles.ptr(), 0, particles.size()*sizeof(tk::real) );
+    particles.fill( 0.0 );
   }
 
   static ctr::InitPolicyType type() noexcept
@@ -99,11 +98,11 @@ struct InitZero {
 struct InitDelta {
 
   //! Initialize particle properties
-  template< class eq, class InputDeck >
-  static void init( const InputDeck& deck,
+  template< class eq >
+  static void init( const ctr::InputDeck& deck,
                     const tk::RNG& rng,
                     int stream,
-                    tk::ParProps& particles,
+                    tk::Particles& particles,
                     tk::ctr::ncomp_type e,
                     tk::ctr::ncomp_type ncomp,
                     tk::ctr::ncomp_type offset )
@@ -124,7 +123,7 @@ struct InitDelta {
         // compute number of samples to be set at relative probability height
         const auto npar =
           static_cast< ncomp_t >(
-            static_cast< tk::real >( particles.npar() ) * sc[s+1] );
+            static_cast< tk::real >( particles.nunk() ) * sc[s+1] );
         // assign sample values
         for (ncomp_t p=0; p<npar; ++p) particles( i+p, c, offset ) = sc[s];
         i += npar;
@@ -140,11 +139,11 @@ struct InitDelta {
 struct InitBeta {
 
   //! Initialize particle properties (zero)
-  template< class eq, class InputDeck >
-  static void init( const InputDeck& deck,
+  template< class eq >
+  static void init( const ctr::InputDeck& deck,
                     const tk::RNG& rng,
                     int stream,
-                    tk::ParProps& particles,
+                    tk::Particles& particles,
                     tk::ctr::ncomp_type e,
                     tk::ctr::ncomp_type ncomp,
                     tk::ctr::ncomp_type offset )
@@ -164,7 +163,7 @@ struct InitBeta {
 
       for (ncomp_t s=0; s<bc.size(); s+=4) {
         // generate beta random numbers for all particles using parameters in bc
-        for (ncomp_t p=0; p<particles.npar(); ++p)
+        for (ncomp_t p=0; p<particles.nunk(); ++p)
           rng.beta( stream, 1, bc[s], bc[s+1], bc[s+2], bc[s+3],
                     &particles( p, c, offset ) );
       }

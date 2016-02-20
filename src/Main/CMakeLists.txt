@@ -75,6 +75,7 @@ endif()
 target_link_libraries(${INCITER_EXECUTABLE}
                       Base
                       Inciter
+                      PDE
                       IO
                       LinSys
                       Mesh

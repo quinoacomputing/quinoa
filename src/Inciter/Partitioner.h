@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Partitioner.h
   \author    J. Bakosi
-  \date      Fri 05 Feb 2016 01:06:23 PM MST
+  \date      Sat 20 Feb 2016 12:01:56 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Charm++ chare partitioner group used to perform mesh partitioning
   \details   Charm++ chare partitioner group used to parform mesh partitioning.
@@ -138,7 +138,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     //! Receive new (reordered) global node IDs
     //! \param[in] id Map associating new to old node IDs
     void neworder( const std::unordered_map< std::size_t, std::size_t >& id ) {
-      // Signal to the runtime system that we have partipitated in reordering
+      // Signal to the runtime system that we have participated in reordering
       trigger_participated();
       // Store new node IDs associated to old ones
       for (const auto& p : id) m_newid[ p.first ] = p.second;
@@ -506,7 +506,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
       // PE operates on after reordering
       wait4prep();
       wait4bounds();
-      // In serial signal to the runtime system that we have partipitated in
+      // In serial signal to the runtime system that we have participated in
       // reordering. This is required here because this is only triggered if
       // communication is required during mesh node reordering. See also
       // particioner.ci.
@@ -556,11 +556,11 @@ class Partitioner : public CBase_Partitioner< HostProxy,
 
     //! Associate new node IDs to old ones and return them to the requestor(s)
     void prepare() {
-      // Signal to the runtime system that we have partipitated in reordering
+      // Signal to the runtime system that we have participated in reordering
       trigger_participated();
       for (const auto& r : m_req) {
         std::unordered_map< std::size_t, std::size_t > n;
-        for (auto p : r.second) n[ p ] = tk::val_find( m_newid, p );
+        for (auto p : r.second) n[ p ] = tk::cref_find( m_newid, p );
         Group::thisProxy[ r.first ].neworder( n );
         n.clear();
       }
@@ -585,16 +585,16 @@ class Partitioner : public CBase_Partitioner< HostProxy,
       // contains the old global node IDs the chares contribute to.
       for (const auto& c : m_node) {
         auto& m = m_chcid[ c.first ];
-        for (auto p : c.second) m[ tk::val_find(m_newid,p) ] = p;
+        for (auto p : c.second) m[ tk::cref_find(m_newid,p) ] = p;
       }
       // Update our chare ID maps to now contain the new global node IDs
       // instead of the old ones
       for (auto& c : m_node)
         for (auto& p : c.second)
-          p = tk::val_find( m_newid, p );
+          p = tk::cref_find( m_newid, p );
       // Update unique global node IDs of chares our PE will contribute to the
       // new IDs resulting from reordering
-      for (auto& p : m_id) p = tk::val_find( m_newid, p );
+      for (auto& p : m_id) p = tk::cref_find( m_newid, p );
       // Compute lower and upper bounds of reordered node IDs our PE operates on
       bounds();
     }
