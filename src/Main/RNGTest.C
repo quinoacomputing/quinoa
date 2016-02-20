@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTest.C
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 01:44:19 PM MDT
+  \date      Mon 01 Feb 2016 03:29:10 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     RNGTest's random number generator test suite's Charm++ main chare.
   \details   RNGTest's random number generator test suite's Charm++ main chare.
@@ -85,12 +85,27 @@ namespace rngtest {
 //! migration).
 
 //! Defaults of input deck, facilitates detection what is set by user
+//! \details This object is in global scope, it contains the default of all
+//!   possible user input, and thus it is made available to all PEs for
+//!   convenience reasons. The runtime system distributes it to all PEs during
+//!   initialization. Once distributed, the object does not change.
 ctr::InputDeck g_inputdeck_defaults;
 //! Input deck filled by parser, containing all input data
+//! \details This object is in global scope, it contains all of user input, and
+//!   thus it is made available to all PEs for convenience reasons. The runtime
+//!   system distributes it to all PEs during initialization. Once distributed,
+//!   the object does not change.
 ctr::InputDeck g_inputdeck;
 //! Random number generators selected by user
+//! \details This map is in global scope, because it holds polymorphic
+//!   objects, and thus must be distributed to all PEs during initialization.
+//!   Once distributed by the runtime system, the objects do not change.
 std::map< tk::ctr::RawRNGType, tk::RNG > g_rng;
 //! Statistical test wrappers, grouped by test libraries
+//! \details This object is in global scope, because it holds function pointers
+//!   to test runners, and thus must be distributed to all PEs during
+//!   initialization. Once distributed by the runtime system, the objects do not
+//!   change.
 TestStack g_testStack;
 
 //! Pack/Unpack selected RNGs. This Pack/Unpack method (re-)creates the full RNG

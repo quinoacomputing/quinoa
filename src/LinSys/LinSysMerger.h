@@ -15,12 +15,14 @@
 #include <map>
 #include <unordered_map>
 #include <utility>
+#include <numeric>
 #include <iosfwd>
 #include <cstddef>
 
 #include "Types.h"
 #include "Exception.h"
 #include "ContainerUtil.h"
+#include "MeshNodes.h"
 #include "HypreMatrix.h"
 #include "HypreVector.h"
 #include "HypreSolver.h"
@@ -61,12 +63,13 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
     //! Constructor
     //! \param[in] host Charm++ host proxy
     //! \param[in] worker Charm++ worker proxy
-    //! \param[in] div Lower and upper global row indices associated to a PE.
-    //!   These are the divisions at which the linear system is divided at along
-    //!   PE boundaries.
-    LinSysMerger( const HostProxy& host, const WorkerProxy& worker ) :
+    //! \param[in] ncomp Total number of scalar components in the linear system
+    LinSysMerger( const HostProxy& host,
+                  const WorkerProxy& worker,
+                  std::size_t ncomp ) :
       m_host( host ),
       m_worker( worker ),
+      m_ncomp( ncomp ),
       m_nchare( 0 ),
       m_nperow( 0 )
     {
@@ -98,10 +101,10 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       // If we have all PEs' bounds, signal the runtime system to continue
       if (m_div.size() == CkNumPes()) {
         // Create my PE's lhs matrix distributed across all PEs
-        m_A.create( m_lower, m_upper );
+        m_A.create( m_lower*m_ncomp, m_upper*m_ncomp );
         // Create my PE's rhs and unknown vectors distributed across all PEs
-        m_b.create( m_lower, m_upper );
-        m_x.create( m_lower, m_upper );
+        m_b.create( m_lower*m_ncomp, m_upper*m_ncomp );
+        m_x.create( m_lower*m_ncomp, m_upper*m_ncomp );
         // Create linear solver
         m_solver.create();
         // Signal back to host that setup of workers can start
@@ -181,13 +184,13 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
     //!   method since it is always called by chares on the same PE.
     void charesol( int fromch,
                    const std::vector< std::size_t >& gid,
-                   const std::vector< tk::real >& sol )
+                   const MeshNodes& sol )
     {
-      Assert( gid.size() == sol.size(),
+      Assert( gid.size() == sol.nunk(),
               "Size of solution and row ID vectors must equal" );
       // Store solution vector nonzero values owned and pack those to be
       // exported, also build import map used to test for completion
-      std::map< int, std::map< std::size_t, tk::real > > exp;
+      std::map< int, std::map< std::size_t, std::vector< tk::real > > > exp;
       for (std::size_t i=0; i<gid.size(); ++i)
         if (gid[i] >= m_lower && gid[i] < m_upper) {    // if own
           m_solimport[ fromch ].push_back( gid[i] );
@@ -205,8 +208,10 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
     //! Receive solution vector nonzeros from fellow group branches
     //! \param[in] fromch Charm chare array index contribution coming from
     //! \param[in] sol Portion of the unknown/solution vector contributed,
-    //!   containing global row indices and values
-    void addsol( int fromch, const std::map< std::size_t, tk::real >& sol ) {
+    //!   containing global row indices and values for all components
+    void addsol( int fromch,
+                 const std::map< std::size_t, std::vector< tk::real > >& sol )
+    {
       for (const auto& r : sol) {
         m_solimport[ fromch ].push_back( r.first );
         m_sol[ r.first ] = r.second;
@@ -220,29 +225,32 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
     //! \param[in] psup Points surrounding points using local indices. See also
     //!   tk::genPsup().
     //! \param[in] lhsd Portion of the left-hand side matrix contributed,
-    //!   containing non-zero values as a sparse matrix diagonal
+    //!   containing non-zero values (for all scalar components of the equations
+    //!   solved) as a sparse matrix diagonal
     //! \param[in] lhso Portion of the left-hand side matrix contributed,
-    //!   containing non-zero values as a sparse matrix off-diagonal entries in
-    //!   compressed row storage format
+    //!   containing non-zero values (for all scalar components of the equations
+    //!   solved) as a sparse matrix off-diagonal entries in compressed row
+    //!   storage format
     //! \note This function does not have to be declared as a Charm++ entry
     //!   method since it is always called by chares on the same PE.
     void charelhs( int fromch,
                    const std::vector< std::size_t >& gid,
                    const std::pair< std::vector< std::size_t >,
                                     std::vector< std::size_t > >& psup,
-                   const std::vector< tk::real >& lhsd,
-                   const std::vector< tk::real >& lhso )
+                   const tk::MeshNodes& lhsd,
+                   const tk::MeshNodes& lhso )
     {
       Assert( psup.second.size()-1 == gid.size(),
               "Number of mesh points and number of global IDs unequal" );
-      Assert( psup.second.size()-1 == lhsd.size(),
+      Assert( psup.second.size()-1 == lhsd.nunk(),
               "Number of mesh points and number of diagonals unequal" );
-      Assert( psup.first.size() == lhso.size(),
+      Assert( psup.first.size() == lhso.nunk(),
               "Number of off-diagonals and their number of indices unequal" );
       // Store matrix nonzero values owned and pack those to be exported, also
       // build import map used to test for completion
       std::map< int, std::map< std::size_t,
-                               std::map< std::size_t, tk::real > > > exp;
+                               std::map< std::size_t,
+                                         std::vector< tk::real > > > > exp;
       for (std::size_t i=0; i<gid.size(); ++i)
         if (gid[i] >= m_lower && gid[i] < m_upper) {  // if own
           m_lhsimport[ fromch ].push_back( gid[i] );
@@ -267,7 +275,8 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
     //!   containing global row and column indices and non-zero values
     void addlhs( int fromch,
                  const std::map< std::size_t,
-                                 std::map< std::size_t, tk::real > >& lhs )
+                                 std::map< std::size_t,
+                                           std::vector< tk::real > > >& lhs )
     {
       for (const auto& r : lhs) {
         m_lhsimport[ fromch ].push_back( r.first );
@@ -285,19 +294,18 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
     //!   method since it is always called by chares on the same PE.
     void charerhs( int fromch,
                    const std::vector< std::size_t >& gid,
-                   const std::vector< tk::real >& rhs )
+                   const MeshNodes& rhs )
     {
-      Assert( gid.size() == rhs.size(),
+      Assert( gid.size() == rhs.nunk(),
               "Size of right-hand side and row ID vectors must equal" );
-      // Store vector nonzero values owned and pack those to be exported
-      std::map< int, std::map< std::size_t, tk::real > > exp;
+      // Store+add vector of nonzero values owned and pack those to be exported
+      std::map< int, std::map< std::size_t, std::vector< tk::real > > > exp;
       for (std::size_t i=0; i<gid.size(); ++i)
         if (gid[i] >= m_lower && gid[i] < m_upper) {  // if own
           m_rhsimport[ fromch ].push_back( gid[i] );
           m_rhs[ gid[i] ] += rhs[i];
-        } else {
+        } else
           exp[ pe(gid[i]) ][ gid[i] ] = rhs[i];
-        }
       // Export non-owned vector values to fellow branches that own them
       for (const auto& p : exp) {
         auto tope = static_cast< int >( p.first );
@@ -305,11 +313,12 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       }
       if (rhscomplete()) trigger_rhs_complete();
     }
-    //! Receive right-hand side vector nonzeros from fellow group branches
+    //! Receive+add right-hand side vector nonzeros from fellow group branches
     //! \param[in] fromch Charm chare array index contribution coming from
     //! \param[in] rhs Portion of the right-hand side vector contributed,
     //!   containing global row indices and values
-    void addrhs( int fromch, const std::map< std::size_t, tk::real >& rhs ) {
+    void addrhs( int fromch,
+                 const std::map< std::size_t, std::vector< tk::real > >& rhs ) {
       for (const auto& r : rhs) {
         m_rhsimport[ fromch ].push_back( r.first );
         m_rhs[ r.first ] += r.second;
@@ -338,10 +347,11 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
   private:
     HostProxy m_host;           //!< Host proxy
     WorkerProxy m_worker;       //!< Worker proxy
-    std::size_t m_lower;        //!< Lower index of the global rows on my PE
-    std::size_t m_upper;        //!< Upper index of the global rows on my PE
+    std::size_t m_ncomp;        //!< Number of scalar components per unknown
     std::size_t m_nchare;       //!< Number of chares contributing to my PE
     std::size_t m_nperow;       //!< Number of fellow PEs to send row ids to
+    std::size_t m_lower;        //!< Lower index of the global rows on my PE
+    std::size_t m_upper;        //!< Upper index of the global rows on my PE
     //! Ids of workers on my PE
     std::vector< int > m_myworker;
     //! \brief Import map associating a list of global row ids to a worker chare
@@ -358,15 +368,19 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
     std::map< int, std::vector< std::size_t > > m_rhsimport;
     //! Part of global row indices owned by my PE
     std::set< std::size_t > m_row;
-    //! \brief Part of unknown/solution vector owned by my PE: global mesh point
-    //!   row ids and values
-    std::map< std::size_t, tk::real > m_sol;
-    //! \brief Part of left-hand side matrix owned by my PE: global mesh point
-    //!   row and column ids, and nonzero value
-    std::map< std::size_t, std::map< std::size_t, tk::real > > m_lhs;
-    //! \brief Part of right-hand side vector owned by my PE: global mesh point
-    //!   row ids and values
-    std::map< std::size_t, tk::real > m_rhs;
+    //! \brief Part of unknown/solution vector owned by my PE
+    //! \details Vector of values (for each scalar equation solved) associated
+    //!   to global mesh point row IDs
+    std::map< std::size_t, std::vector< tk::real > > m_sol;
+    //! \brief Part of left-hand side matrix owned by my PE
+    //! \details Nonzero values (for each scalar equation solved) associated to
+    //!   global mesh point row and column IDs.
+    std::map< std::size_t,
+              std::map< std::size_t, std::vector< tk::real > > > m_lhs;
+    //! \brief Part of right-hand side vector owned by my PE
+    //! \details Vector of values (for each scalar equation solved) associated
+    //!   to global mesh point row ids
+    std::map< std::size_t, std::vector< tk::real > > m_rhs;
     tk::hypre::HypreVector m_x; //!< Hypre vector to store the solution/unknowns
     tk::hypre::HypreMatrix m_A; //!< Hypre matrix to store the left-hand side
     tk::hypre::HypreVector m_b; //!< Hypre vector to store the right-hand side
@@ -453,9 +467,13 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
     //! Build Hypre data for our portion of the global row ids
     //! \note Hypre only likes one-based indexing. Zero-based row indexing fails
     //!   to update the vector with HYPRE_IJVectorGetValues().
-    void hyprerow()
-    { for (auto r : m_row) m_hypreRows.push_back( static_cast< int >( r+1 ) ); }
-
+    void hyprerow() {
+      for (auto r : m_row) {
+        decltype(m_hypreRows) h( m_ncomp );
+        std::iota( begin(h), end(h), r*m_ncomp+1 );
+        m_hypreRows.insert( end(m_hypreRows), begin(h), end(h) );
+      }
+    }
     //! Build Hypre data for our portion of the solution vector
     void hypresol() {
       Assert( solcomplete(),
@@ -464,7 +482,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       std::size_t i = 0;
       for (const auto& r : m_sol) {
         m_lid[ r.first ] = i++;
-        m_hypreSol.push_back( r.second );
+        m_hypreSol.insert( end(m_hypreSol), begin(r.second), end(r.second) );
       }
       trigger_hypresol_complete();
     }
@@ -475,14 +493,16 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       Assert( lhscomplete(),
               "Nonzero values of distributed matrix on PE " +
               std::to_string( CkMyPe() ) + " is incomplete" );
-      Assert( m_lhs.size() == m_hypreRows.size(),
-              "Left-hand side matrix incomplete on " +
+      Assert( m_lhs.size() == m_hypreRows.size() / m_ncomp,
+              "Left-hand side matrix incomplete on PE " +
               std::to_string(CkMyPe()) );
-      for (auto& r : m_lhs) {
-        m_hypreNcols.push_back( static_cast< int >( r.second.size() ) );
-        for (const auto& c : r.second) {
-           m_hypreCols.push_back( static_cast< int >( c.first+1 ) );
-           m_hypreMat.push_back( c.second );
+      for (const auto& r : m_lhs) {
+        for (decltype(m_ncomp) i=0; i<m_ncomp; ++i) {
+          m_hypreNcols.push_back( static_cast< int >( r.second.size() ) );
+          for (const auto& c : r.second) {
+            m_hypreCols.push_back( static_cast< int >( c.first*m_ncomp+i+1 ) );
+            m_hypreMat.push_back( c.second[i] );
+          }
         }
       }
       trigger_hyprelhs_complete();
@@ -492,27 +512,27 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       Assert( rhscomplete(),
               "Values of distributed right-hand-side vector on PE " +
               std::to_string( CkMyPe() ) + " is incomplete" );
-      for (const auto& r : m_rhs) m_hypreRhs.push_back( r.second );
+      for (const auto& r : m_rhs)
+        m_hypreRhs.insert( end(m_hypreRhs), begin(r.second), end(r.second) );
       trigger_hyprerhs_complete();
     }
 
     //! Set our portion of values of the distributed solution vector
     void sol() {
-      Assert( m_hypreSol.size() == m_hypreRows.size(),
-              "Solution vector values incomplete on " +
-              std::to_string(CkMyPe()) );
+      Assert( m_hypreSol.size() == m_hypreRows.size(), "Solution vector values "
+              "incomplete on PE " + std::to_string(CkMyPe()) );
       // Set our portion of the vector values
-      m_x.set( static_cast< int >( m_upper - m_lower ),
+      m_x.set( static_cast< int >( (m_upper - m_lower)*m_ncomp ),
                m_hypreRows.data(),
                m_hypreSol.data() );
       trigger_fillsol_complete();
     }
     //! Set our portion of values of the distributed matrix
     void lhs() {
-      Assert( m_hypreMat.size() == m_hypreCols.size(),
-              "Matrix values incomplete on " + std::to_string(CkMyPe()) );
+      Assert( m_hypreMat.size() == m_hypreCols.size(), "Matrix values "
+              "incomplete on PE " + std::to_string(CkMyPe()) );
       // Set our portion of the matrix values
-      m_A.set( static_cast< int >( m_upper - m_lower ),
+      m_A.set( static_cast< int >( (m_upper - m_lower)*m_ncomp ),
                m_hypreNcols.data(),
                m_hypreRows.data(),
                m_hypreCols.data(),
@@ -521,10 +541,10 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
     }
     //! Set our portion of values of the distributed right-hand side vector
     void rhs() {
-      Assert( m_hypreRhs.size() == m_hypreRows.size(),
-              "RHS vector values incomplete on " + std::to_string(CkMyPe()) );
+      Assert( m_hypreRhs.size() == m_hypreRows.size(), "RHS vector values "
+              "incomplete on PE " + std::to_string(CkMyPe()) );
       // Set our portion of the vector values
-      m_b.set( static_cast< int >( m_upper - m_lower  ),
+      m_b.set( static_cast< int >( (m_upper - m_lower)*m_ncomp ),
                m_hypreRows.data(),
                m_hypreRhs.data() );
       trigger_fillrhs_complete();
@@ -549,7 +569,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
     //! Update solution vector in our PE's performers
     void updateSolution() {
       // Get solution vector values for our PE
-      m_x.get( static_cast< int >( m_upper - m_lower ),
+      m_x.get( static_cast< int >( (m_upper - m_lower)*m_ncomp ),
                m_hypreRows.data(),
                m_hypreSol.data() );
       // Group solution vector by workers and send each the parts back to
@@ -561,7 +581,13 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
           const auto it = m_sol.find( r );
           if (it != end(m_sol)) {
             gid.push_back( it->first );
-            sol.push_back( m_hypreSol[ tk::val_find( m_lid, it->first ) ] );
+            auto i = tk::cref_find( m_lid, it->first );
+            using diff_type = typename decltype(m_hypreSol)::difference_type;
+            auto b = static_cast< diff_type >( i*m_ncomp );
+            auto e = static_cast< diff_type >( (i+1)*m_ncomp );
+            sol.insert( end(sol),
+                        std::next( begin(m_hypreSol), b ),
+                        std::next( begin(m_hypreSol), e ) );
           } else
             Throw( "Can't find global row id " + std::to_string(r) +
                    " to export in solution vector" );

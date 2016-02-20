@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Conductor.C
   \author    J. Bakosi
-  \date      Fri 22 Jan 2016 09:23:07 AM MST
+  \date      Thu 11 Feb 2016 02:03:10 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Conductor drives the time integration of a PDE
   \details   Conductor drives the time integration of a PDE
@@ -20,6 +20,8 @@
 #include <unordered_set>
 
 #include "Conductor.h"
+#include "MeshNodes.h"
+#include "PDEStack.h"
 #include "ContainerUtil.h"
 #include "LoadDistributor.h"
 #include "ExodusIIMeshReader.h"
@@ -42,12 +44,29 @@ Conductor::Conductor() :
 //! \author J. Bakosi
 //******************************************************************************
 {
+  m_print.part( "Factory" );
+
+  // Print out info data layout
+  m_print.list( "Unknowns data layout (CMake: MESHNODE_DATA_LAYOUT)",
+                std::list< std::string >{ tk::MeshNodes::major() } );
+
+  // Re-create partial differential equations stack for output
+  PDEStack stack;
+
+  // Print out information on factory
+  m_print.eqlist( "Registered partial differential equations",
+                  stack.factory(), stack.ntypes() );
+  m_print.endpart();
+
   // Print out information on problem
   m_print.part( "Problem" );
 
   // Print out info on problem title
   if ( !g_inputdeck.get< tag::title >().empty() )
     m_print.title( g_inputdeck.get< tag::title >() );
+
+  // Print out info on settings of selected partial differential equations
+  m_print.pdes( "Partial differential equations integrated", stack.info() );
 
   // Print discretization parameters
   m_print.section( "Discretization parameters" );
@@ -80,7 +99,8 @@ Conductor::Conductor() :
     // Create (empty) worker array
     m_performer = PerformerProxy::ckNew();
     // Create linear system merger chare group
-    m_linsysmerger = LinSysMergerProxy::ckNew( thisProxy, m_performer );
+    m_linsysmerger = LinSysMergerProxy::ckNew( thisProxy, m_performer,
+                       g_inputdeck.get< tag::component >().nprop() );
     // Create mesh partitioner Charm++ chare group and start partitioning mesh
     m_print.diagstart( "Reading mesh graph ..." );
     m_partitioner =

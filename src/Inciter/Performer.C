@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.C
   \author    J. Bakosi
-  \date      Mon 11 Jan 2016 08:57:20 AM MST
+  \date      Fri 19 Feb 2016 03:12:36 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Performer advances a PDE
   \details   Performer advances a PDE. There are a potentially
@@ -24,12 +24,14 @@
 #include "ExodusIIMeshWriter.h"
 #include "Inciter/InputDeck/InputDeck.h"
 #include "DerivedData.h"
+#include "PDE.h"
 
 #include "LinSysMerger.h"
 
 namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
+extern std::vector< PDE > g_pdes;
 
 } // inciter::
 
@@ -48,7 +50,14 @@ Performer::Performer(
   m_nsol( 0 ),
   m_conductor( conductor ),
   m_linsysmerger( lsm ),
-  m_cid( cid )
+  m_cid( cid ),
+  m_el( tk::global2local( conn ) ),     // fills m_inpoel and m_gid
+  m_psup( tk::genPsup( m_inpoel, 4, tk::genEsup(m_inpoel,4) ) ),
+  m_u( m_gid.size(), g_inputdeck.get< tag::component >().nprop() ),
+  m_uf( m_gid.size(), g_inputdeck.get< tag::component >().nprop() ),
+  m_un( m_gid.size(), g_inputdeck.get< tag::component >().nprop() ),
+  m_lhsd( m_psup.second.size()-1, g_inputdeck.get< tag::component >().nprop() ),
+  m_lhso( m_psup.first.size(), g_inputdeck.get< tag::component >().nprop() )
 //******************************************************************************
 //  Constructor
 //! \param[in] conductor Host (Conductor) proxy
@@ -59,10 +68,11 @@ Performer::Performer(
 //! \author J. Bakosi
 //******************************************************************************
 {
+  Assert( m_psup.second.size()-1 == m_gid.size(),
+          "Number of mesh points and number of global IDs unequal" );
+
   // Register ourselves with the linear system merger
   m_linsysmerger.ckLocalBranch()->checkin();
-  // Generate connectivity graph storing local node ids
-  std::tie( m_inpoel, m_gid ) = tk::global2local( conn );
 }
 
 void
@@ -102,8 +112,14 @@ Performer::init( tk::real dt )
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // Set initial conditions
-  ic();
+  // Set initial conditions for all PDEs
+  for (const auto& eq : g_pdes) eq.initialize( m_coord, m_u, m_t );
+
+  // Output initial conditions to file (it = 1, time = 0.0)
+  writeFields( m_t );
+
+  // Send off initial conditions for assembly
+  m_linsysmerger.ckLocalBranch()->charesol( thisIndex, m_gid, m_u );
 
   // Call back to Conductor::initcomplete(), signaling that the initialization
   // is complete and we are now starting time stepping
@@ -117,104 +133,26 @@ Performer::init( tk::real dt )
 }
 
 void
-Performer::ic()
-//******************************************************************************
-// Set initial conditions
-//! \author J. Bakosi
-//******************************************************************************
-{
-  m_u.resize( m_gid.size() );
-  m_uf.resize( m_gid.size() );
-  m_un.resize( m_gid.size() );
-
-  for (std::size_t i=0; i<m_gid.size(); ++i)
-    m_u[i] = ansol_shear( i, m_t );
-    //m_u[i] = ansol_gauss( i );
-
-  // Output initial conditions to file (it = 1, time = 0.0)
-  writeFields( m_t );
-
-  m_linsysmerger.ckLocalBranch()->charesol( thisIndex, m_gid, m_u );
-}
-
-void
 Performer::lhs()
 //******************************************************************************
 // Compute left-hand side of PDE
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // Generate points surrounding points
-  const auto psup = tk::genPsup( m_inpoel, 4, tk::genEsup(m_inpoel,4) );
+  // Compute left-hand side matrix for all equations
+  for (const auto& eq : g_pdes)
+    eq.lhs( m_coord, m_inpoel, m_psup, m_lhsd, m_lhso );
 
-  Assert( psup.second.size()-1 == m_gid.size(),
-          "Number of mesh points and number of global IDs unequal" );
-
-  // Sparse matrix storing the nonzero matrix values at rows and columns given
-  // by psup. The format is similar to compressed row storage, but the diagonal
-  // and off-diagonal data are stored in separate vectors. For the off-diagonal
-  // data the local row and column indices, at which values are nonzero, are
-  // stored by psup (psup1 and _psup2, where psup2 holds the indices at which
-  // psup1 holds the point ids surrounding points, see also tk::genPsup()). Note
-  // that the number of mesh points (our chunk) npoin = psup.second.size()-1.
-  std::vector< tk::real > lhsd( psup.second.size()-1, 0.0 );
-  std::vector< tk::real > lhso( psup.first.size(), 0.0 );
-
-  // Lambda to compute the sparse matrix vector index for row and column
-  // indices. Used only for off-diagonal entries.
-  auto spidx = [ &psup ]( std::size_t r, std::size_t c ) -> std::size_t {
-    Assert( r != c, "Only for computing the off-diagonal indices" );
-    for (auto i=psup.second[r]+1; i<=psup.second[r+1]; ++i)
-      if (c == psup.first[i]) return i;
-    Throw( "Cannot find row, column: " + std::to_string(r) + ',' +
-           std::to_string(c) + " in sparse matrix" );
-  };
-
-  const auto& x = m_coord[0];
-  const auto& y = m_coord[1];
-  const auto& z = m_coord[2];
-
-  for (std::size_t e=0; e<m_inpoel.size()/4; ++e) {
-    const auto a = m_inpoel[e*4+0];
-    const auto b = m_inpoel[e*4+1];
-    const auto c = m_inpoel[e*4+2];
-    const auto d = m_inpoel[e*4+3];
-    std::array< tk::real, 3 > ba{{ x[b]-x[a], y[b]-y[a], z[b]-z[a] }},
-                              ca{{ x[c]-x[a], y[c]-y[a], z[c]-z[a] }},
-                              da{{ x[d]-x[a], y[d]-y[a], z[d]-z[a] }};
-    const auto J = tk::triple( ba, ca, da ) / 120.0;
-
-    lhsd[ a ] += 2.0*J;
-    lhsd[ b ] += 2.0*J;
-    lhsd[ c ] += 2.0*J;
-    lhsd[ d ] += 2.0*J;
-
-    lhso[ spidx(a,b) ] += J;
-    lhso[ spidx(a,c) ] += J;
-    lhso[ spidx(a,d) ] += J;
-
-    lhso[ spidx(b,a) ] += J;
-    lhso[ spidx(b,c) ] += J;
-    lhso[ spidx(b,d) ] += J;
-
-    lhso[ spidx(c,a) ] += J;
-    lhso[ spidx(c,b) ] += J;
-    lhso[ spidx(c,d) ] += J;
-
-    lhso[ spidx(d,a) ] += J;
-    lhso[ spidx(d,b) ] += J;
-    lhso[ spidx(d,c) ] += J;
-  }
-
-  m_linsysmerger.ckLocalBranch()->charelhs( thisIndex, m_gid, psup, lhsd,
-                                            lhso );
+  // Send off left hand side for assembly
+  m_linsysmerger.ckLocalBranch()->
+    charelhs( thisIndex, m_gid, m_psup, m_lhsd, m_lhso );
 }
 
 void
 Performer::rhs( tk::real mult,
                 tk::real dt,
-                const std::vector< tk::real >& sol,
-                std::vector< tk::real >& rhs )
+                const tk::MeshNodes& sol,
+                tk::MeshNodes& rhs )
 //******************************************************************************
 // Compute right-hand side of PDE
 //! \param[in] mult Multiplier differentiating the different stages in
@@ -225,81 +163,11 @@ Performer::rhs( tk::real mult,
 //! \author J. Bakosi
 //******************************************************************************
 {
-  const auto& x = m_coord[0];
-  const auto& y = m_coord[1];
-  const auto& z = m_coord[2];
+  // Compute right-hand side vector for all equations
+  for (const auto& eq : g_pdes)
+    eq.rhs( mult, dt, m_coord, m_inpoel, sol, m_u, rhs );
 
-  const tk::real U0 = 0.5;
-  const tk::real LAMBDA = 5.0e-4;
-  const tk::real D = 10.0;
-
-  std::fill( begin(rhs), end(rhs), 0.0 );
-
-  for (std::size_t e=0; e<m_inpoel.size()/4; ++e) {
-    const auto a = m_inpoel[e*4+0];
-    const auto b = m_inpoel[e*4+1];
-    const auto c = m_inpoel[e*4+2];
-    const auto d = m_inpoel[e*4+3];
-
-    // compute element Jacobi determinant
-    const std::array< tk::real, 3 > ba{{ x[b]-x[a], y[b]-y[a], z[b]-z[a] }},
-                                    ca{{ x[c]-x[a], y[c]-y[a], z[c]-z[a] }},
-                                    da{{ x[d]-x[a], y[d]-y[a], z[d]-z[a] }};
-    const auto J = tk::triple( ba, ca, da );
-
-    // construct tetrahedron element-level matrices
-
-    // consistent mass
-    std::array< std::array< tk::real, 4 >, 4 > mass;  // nnode*nnode [4][4]
-    // diagonal
-    mass[0][0] = mass[1][1] = mass[2][2] = mass[3][3] = J/60.0;
-    // off-diagonal
-    mass[0][1] = mass[0][2] = mass[0][3] =
-    mass[1][0] = mass[1][2] = mass[1][3] =
-    mass[2][0] = mass[2][1] = mass[2][3] =
-    mass[3][0] = mass[3][1] = mass[3][2] = J/120.0;
-
-    // prescribed shear velocity
-    std::array< std::array< tk::real, 4 >, 3 > vel;  // ndim*nnode [3][4]
-    vel[0][0] = U0 + LAMBDA*y[a];  vel[1][0] = 0.0;  vel[2][0] = 0.0;
-    vel[0][1] = U0 + LAMBDA*y[b];  vel[1][1] = 0.0;  vel[2][1] = 0.0;
-    vel[0][2] = U0 + LAMBDA*y[c];  vel[1][2] = 0.0;  vel[2][2] = 0.0;
-    vel[0][3] = U0 + LAMBDA*y[d];  vel[1][3] = 0.0;  vel[2][3] = 0.0;
-
-    // shape function derivatives
-    std::array< std::array< tk::real, 3 >, 4 > grad;  // nnode*ndim [4][3]
-    grad[1] = tk::crossdiv( ca, da, J );
-    grad[2] = tk::crossdiv( da, ba, J );
-    grad[3] = tk::crossdiv( ba, ca, J );
-    for (std::size_t i=0; i<3; ++i)
-      grad[0][i] = -grad[1][i]-grad[2][i]-grad[3][i];
-
-    // solution at nodes at time n
-    const std::array< tk::real, 4 > u{{ m_u[a], m_u[b], m_u[c], m_u[d] }};
-    // solution at nodes at time n (at stage 0) and n+1/2 (at stage 1)
-    const std::array< tk::real, 4 > s{{ sol[a], sol[b], sol[c], sol[d] }};
-    // pointers to rhs at nodes
-    std::array< tk::real*, 4 > r{{ &rhs[a], &rhs[b], &rhs[c], &rhs[d] }};
-
-    // add mass contribution to rhs
-    for (std::size_t i=0; i<4; ++i)
-      for (std::size_t j=0; j<4; ++j)
-        *r[i] += mass[i][j] * u[j];
-
-    // add advection contribution to rhs
-    for (std::size_t i=0; i<4; ++i)
-      for (std::size_t j=0; j<4; ++j)
-        for (std::size_t k=0; k<3; ++k)
-          for (std::size_t l=0; l<4; ++l)
-            *r[i] -= mult * dt * mass[i][j] * vel[k][j] * grad[l][k] * s[l];
-
-    // add diffusion contribution to rhs
-    for (std::size_t i=0; i<4; ++i)
-      for (std::size_t j=0; j<4; ++j)
-        for (std::size_t k=0; k<3; ++k)
-          *r[i] -= mult * dt * D * J/6.0 * grad[i][k] * grad[j][k] * s[j];
-  }
-
+  // Send off right-hand sides for assembly
   m_linsysmerger.ckLocalBranch()->charerhs( thisIndex, m_gid, rhs );
 }
 
@@ -316,7 +184,7 @@ Performer::readCoords()
   auto& x = m_coord[0];
   auto& y = m_coord[1];
   auto& z = m_coord[2];
-  for (auto p : m_gid) er.readNode( tk::val_find(m_cid,p), x, y, z );
+  for (auto p : m_gid) er.readNode( tk::cref_find(m_cid,p), x, y, z );
 }
 
 void
@@ -358,18 +226,19 @@ Performer::writeChareId( const tk::ExodusIIMeshWriter& ew,
 void
 Performer::writeSolution( const tk::ExodusIIMeshWriter& ew,
                           uint64_t it,
-                          int varid,
-                          const std::vector< tk::real >& u ) const
+                          const std::vector< std::vector< tk::real > >& u )
+  const
 //******************************************************************************
 // Output solution to file
 //! \param[in] ew ExodusII mesh-based writer object
 //! \param[in] it Iteration count
 //! \param[in] varid Exodus variable ID
-//! \param[in] u Field to write
+//! \param[in] u Vector of fields to write to file
 //! \author J. Bakosi
 //******************************************************************************
 {
-  ew.writeNodeScalar( it, varid, u );
+  int varid = 0;
+  for (const auto& f : u) ew.writeNodeScalar( it, ++varid, f );
 }
 
 void
@@ -386,7 +255,15 @@ Performer::writeMeta() const
         tk::ExoWriter::OPEN );
 
   ew.writeElemVarNames( { "Chare Id" } );
-  ew.writeNodeVarNames( { "NumSol", "AnSol" } );
+
+  // Collect nodal field output names from all PDEs
+  std::vector< std::string > names;
+  for (const auto& eq : g_pdes) {
+    auto n = eq.names();
+    names.insert( end(names), begin(n), end(n) );
+  }
+  // Write node field names
+  ew.writeNodeVarNames( names );
 }
 
 void
@@ -409,14 +286,18 @@ Performer::writeFields( tk::real time )
   // Write time stamp
   ew.writeTimeStamp( m_itf, time );
 
-  // Write mesh-based fields
+  // Write element fields
   writeChareId( ew, m_itf );
-  writeSolution( ew, m_itf, 1, m_u );
 
-  // Analytical solution for this time
-  for (std::size_t i=0; i<m_gid.size(); ++i)
-    m_un[i] = ansol_shear( i, time );
-  writeSolution( ew, m_itf, 2, m_un );
+  // Collect node fields output from all PDEs
+  m_un = m_u;   // make a copy as eq::output() is allowed to overwrite its arg
+  std::vector< std::vector< tk::real > > output;
+  for (const auto& eq : g_pdes) {
+    auto o = eq.output( time, m_coord, m_un );
+    output.insert( end(output), begin(o), end(o) );
+  }
+  // Write node fields
+  writeSolution( ew, m_itf, output );
 }
 
 void
@@ -451,20 +332,24 @@ Performer::advance( uint8_t stage, tk::real dt, uint64_t it, tk::real t )
 
 void
 Performer::updateSolution( const std::vector< std::size_t >& gid,
-                           const std::vector< tk::real >& sol )
+                           const std::vector< tk::real >& u )
 //******************************************************************************
 // Update solution vector
 //! \param[in] gid Global row indices of the vector updated
-//! \param[in] sol Portion of the unknown/solution vector updated
+//! \param[in] u Portion of the unknown/solution vector updated
 //! \author J. Bakosi
 //******************************************************************************
 {
-  Assert( gid.size() == sol.size(),
-          "Size of solution and row ID vectors must equal" );
+  auto ncomp = g_inputdeck.get< tag::component >().nprop();
+  Assert( gid.size() * ncomp == u.size(),
+          "Size of row ID vector times the number of scalar components and the "
+          "size of the solution vector must equal" );
 
   // Receive update of solution vector
-  for (std::size_t i=0; i<gid.size(); ++i)
-    m_un[ tk::val_find(m_lid,gid[i]) ] = sol[i];
+  for (std::size_t i=0; i<gid.size(); ++i) {
+    auto id = tk::cref_find( m_lid, gid[i] );
+    for (ncomp_t c=0; c<ncomp; ++c) m_un( id, c, 0 ) = u[ i*ncomp+c ];
+  }
 
   // Count number of solution nodes updated
   m_nsol += gid.size();

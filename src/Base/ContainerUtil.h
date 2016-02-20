@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/ContainerUtil.h
   \author    J. Bakosi
-  \date      Mon 23 Nov 2015 08:53:56 AM MST
+  \date      Wed 17 Feb 2016 03:52:47 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Various STL container utilities
   \details   Various STL container utilities.
@@ -35,107 +35,35 @@ unique( Container& c )
   c.resize( static_cast< std::size_t >( d ) );
 }
 
-template< typename T >
-std::vector< std::pair< std::string, T > >
-average( const std::map< std::string, std::vector< T > >& mapvec,
-         const std::string& addendum = "" )
-//******************************************************************************
-//  Compute average of values of vector in std::map::mapped_type 
-//! \param[in] mapvec Map of vectors associated to labels
-//! \param[in] addendum Optional string to add to the label
-//! \return Vector of pairs of label and average
-//! \author J. Bakosi
-//******************************************************************************
-{
-  std::vector< std::pair< std::string, T > > s;
-  for (const auto& t : mapvec) {
-    T sum = 0.0;
-    for (const auto& v : t.second) sum += v;
-    s.emplace_back( t.first + addendum, sum/static_cast<T>(t.second.size()) );
-  }
-  return s;
-}
-
-template< typename T >
-std::vector< std::pair< std::string, T > >
-variance( const std::map< std::string, std::vector< T > >& mapvec,
-          const std::vector< std::pair< std::string, T > >& avg,
-          const std::string& addendum = "" )
-//******************************************************************************
-//  Compute variance of values of vector in std::map::mapped_type 
-//! \param[in] mapvec Map of vectors associated to labels
-//! \param[in] avg Vector of labels and averages (labels unused)
-//! \param[in] addendum Optional string to add to the label
-//! \return Vector of pairs of label and variance
-//! \author J. Bakosi
-//******************************************************************************
-{
-  Assert( mapvec.size() == avg.size(),
-          "Map and vector must be equal size for variance calculation" );
-
-  std::vector< std::pair< std::string, T > > s;
-  std::size_t i = 0;
-  for (const auto& t : mapvec) {
-    T sum = 0.0;
-    for (const auto& v : t.second) sum += (v-avg[i].second)*(v-avg[i].second);
-    s.emplace_back( t.first + addendum, sum/static_cast<T>(t.second.size()) );
-    ++i;
-  }
-
-  return s;
-}
-
 template< typename Container >
-auto cref_find( const Container& map, typename Container::key_type key ) ->
-  const typename Container::mapped_type&
+auto cref_find( const Container& map, const typename Container::key_type& key )
+  -> const typename Container::mapped_type&
 //******************************************************************************
 //! \brief Find and return a constant reference to value for key in container
 //!   that provides a find() member function with error handling
 //! \param[in] map Map associating values to keys
-//! \param[in] key
+//! \param[in] key Key to search for
 //! \return A constant reference to the value associated to the key in map
-//! \Note This function should not be called with heavy Key types, as the key is
-//!   passed by value.
 //! \author J. Bakosi
 //******************************************************************************
 {
   const auto it = map.find( key );
-
   if (it != end(map)) return it->second; else Throw( "Can't find key" );
 }
 
 template< typename Container >
-auto ref_find( const Container& map, typename Container::key_type key ) ->
-  typename Container::mapped_type&
+auto ref_find( const Container& map, const typename Container::key_type& key )
+  -> typename Container::mapped_type&
 //******************************************************************************
 //! \brief Find and return a reference to value for key in a container that
 //!   provides a find() member function with error handling
 //! \param[in] map Map associating values to keys
-//! \param[in] key
+//! \param[in] key Key to search for
 //! \return A reference to the value associated to the key in map
-//! \Note This function should not be called with heavy Key types, as the key is
-//!   passed by value.
 //! \author J. Bakosi
 //******************************************************************************
 {
   return const_cast< typename Container::mapped_type& >( cref_find(map,key) );
-}
-
-template< typename Container >
-auto val_find( const Container& map, typename Container::key_type key ) ->
-  typename Container::mapped_type
-//******************************************************************************
-//! Find and return a copy of value for key in a container that provides a
-//!   find() member function with error handling
-//! \param[in] map Map associating values to keys
-//! \param[in] key
-//! \return A copy of the value associated to the key in map
-//! \Note This function should not be called with heavy Key types, as the key is
-//!    passed by value.
-//! \author J. Bakosi
-//******************************************************************************
-{
-  return cref_find( map, key );
 }
 
 template< typename T >
@@ -154,11 +82,11 @@ extents( const std::vector< T >& vec )
   return {{ *x.first, *x.second }};
 }
 
-template< typename Key, typename Value >
-std::array< Value, 2 >
-extents( const std::map< Key, Value >& map )
+template< typename Container >
+auto extents( const Container& map )
+  -> std::array< typename Container::mapped_type, 2 >
 //******************************************************************************
-//! \brief Find and return minimum and maximum values in std::map
+//! \brief Find and return minimum and maximum values in associative container
 //! \param[in] map Map whose extents of values to find 
 //! \return Array of two values with the minimum and maximum values in the map
 //! \Note This function should not be called with heavy Value types, as the a
@@ -166,11 +94,36 @@ extents( const std::map< Key, Value >& map )
 //! \author J. Bakosi
 //******************************************************************************
 {
-  using pair_type = std::pair< const Key, Value >;
+  using pair_type = typename Container::value_type;
   auto x = std::minmax_element( begin(map), end(map),
              []( const pair_type& a, const pair_type& b )
              { return a.second < b.second; } );
   return {{ x.first->second, x.second->second }};
+}
+
+template< class T, class Allocator >
+std::vector< T, Allocator >&
+operator+=( std::vector< T, Allocator >& dst,
+            const std::vector< T, Allocator >& src )
+//******************************************************************************
+//! \brief Add all elements of a vector to another one
+//! \param[inout] dst Destination vector, i.e., left-hand side of v1 += v2
+//! \param[in] src Source vector, i.e., righ-hand side of v1 += v2
+//! \return Destination containing v1[0] += v2[0], v1[1] += v2[1], ...
+//! \details If src.size() > dst.size() will grow dst to that of src.size()
+//!   padding with zeros.
+//! \note Will throw exception in DEBUG if src is empty (to warn on no-op), and
+//!   if src.size() < dst.size() (to warn on loosing data).
+//! \author J. Bakosi
+//******************************************************************************
+{
+  Assert( !src.empty(), "src empty in std::vector<T,Allocator>::operator+=()" );
+  Assert( src.size() >= dst.size(), "src.size() < dst.size() would loose data "
+          "in std::vector<T,Allocator>::operator+=()" );
+  dst.resize( src.size() );
+  std::transform( cbegin(src), cend(src), begin(dst), begin(dst),
+                  []( const T& s, T& d ){ return d += s; } );
+  return dst;
 }
 
 } // tk::

@@ -2,7 +2,7 @@
 /*!
   \file      src/Walker/Integrator.h
   \author    J. Bakosi
-  \date      Tue 22 Dec 2015 10:57:40 AM MST
+  \date      Fri 05 Feb 2016 08:49:17 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Integrator advances differential equations
   \details   Integrator advances differential equations. There are a potentially
@@ -24,7 +24,7 @@
 #include "Tags.h"
 #include "StatCtr.h"
 #include "DiffEq.h"
-#include "ParticleProperties.h"
+#include "Particles.h"
 #include "SystemComponents.h"
 #include "Statistics.h"
 #include "Walker/InputDeck/InputDeck.h"
@@ -43,7 +43,6 @@
 namespace walker {
 
 extern ctr::InputDeck g_inputdeck;
-extern std::vector< DiffEq > g_diffeqs;
 
 //! Integrator Charm++ chare used to advance differential equations in time
 class Integrator : public CBase_Integrator {
@@ -56,6 +55,7 @@ class Integrator : public CBase_Integrator {
 
     //! Migrate constructor
     explicit Integrator( CkMigrateMessage* ) :
+      m_particles( 0, g_inputdeck.get< tag::component >().nprop() ),
       m_stat( m_particles,
                 g_inputdeck.get< tag::component >().offsetmap( 
                   g_inputdeck.depvars() ),
@@ -93,7 +93,7 @@ class Integrator : public CBase_Integrator {
   private:
     CProxy_Distributor m_hostproxy;     //!< Host proxy
     CProxy_Collector m_collproxy;       //!< Collector proxy
-    tk::ParProps m_particles;           //!< Particle properties
+    tk::Particles m_particles;          //!< Particle properties
     tk::Statistics m_stat;              //!< Statistics
 };
 

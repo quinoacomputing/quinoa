@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/MixMassFractionBetaCoeffPolicy.h
   \author    J. Bakosi
-  \date      Tue 22 Dec 2015 11:29:46 AM MST
+  \date      Thu 04 Feb 2016 06:07:09 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Mix mass-fraction beta SDE coefficients policies
   \details   This file defines coefficients policy classes for the mix
@@ -495,22 +495,44 @@ class MixMassFracBetaCoeffHydroTimeScaleHomDecay {
       // Sample hydrodynamics timescale at time t
       auto hts = hydrotimescale( t );
       for (ncomp_t c=0; c<ncomp; ++c) {
+
+        const tk::ctr::Term Y( static_cast<char>(std::toupper(depvar)),
+                               c,
+                               tk::ctr::Moment::ORDINARY );
+        const tk::ctr::Term dens( static_cast<char>(std::toupper(depvar)),
+                                  c+ncomp,
+                                  tk::ctr::Moment::ORDINARY );
+        const tk::ctr::Term s1( static_cast<char>(std::tolower(depvar)),
+                                c+ncomp,
+                                tk::ctr::Moment::CENTRAL );
+        const tk::ctr::Term s2( static_cast<char>(std::tolower(depvar)),
+                                c+ncomp*2,
+                                tk::ctr::Moment::CENTRAL );
+
+        const auto RY = tk::ctr::Product( { dens, Y } );
+        tk::real ry = lookup( RY, moments );                       // <RY>
+        const auto dscorr = tk::ctr::Product( { s1, s2 } );
+        tk::real ds = -lookup( dscorr, moments );                  // b = -<rv>
+
         tk::real m = lookup( mean(depvar,c), moments );            // <Y>
         tk::real v = lookup( variance(depvar,c), moments );        // <y^2>
         tk::real d = lookup( mean(depvar,c+ncomp), moments );      // <R>
         tk::real d2 = lookup( variance(depvar,c+ncomp), moments ); // <r^2>
         tk::real d3 = lookup( cen3(depvar,c+ncomp), moments );     // <r^3>
 
-        if (m<1.0e-8 || m>1.0-1.0e-8) m = 0.5;
-        if (v<1.0e-8 && v>1.0-1.0e-8) v = 0.5;
-        b[c] = bprime[c] * (1.0 - v/m/(1.0-m)) * hts;
-        //b[c] = bprime[c] * (1.0 - v/M[c]/(1.0-M[c])) * hts;
-        k[c] = kprime[c] * v * hts;
+        tk::real yt = ry/d;
 
-        if (d < 1.0e-8) {
-          std::cout << "d:" << d << " ";
-          d = 0.5;
-        }
+        tk::real a = r[c]/(1.0+r[c]*yt);
+        tk::real n = 1.0;
+        tk::real bnm = a*a*yt*(1.0-yt);
+
+        //b[c] = bprime[c] * (1.0 - v/m/(1.0-m)) * hts;
+        b[c] = bprime[c] * std::pow(1.0 - ds/(a*a)/yt/(1.0-yt),n) * hts;
+        //b[c] = bprime[c] * std::pow(1.0 - 2.0*ds/(ds+bnm),n) * hts;
+
+        //k[c] = kprime[c] * v * hts;
+        k[c] = kprime[c] * ds * std::pow(1.0 - ds/(a*a)/yt/(1.0-yt),n) * hts;
+
         tk::real R = 1.0 + d2/d/d;
         tk::real B = -1.0/r[c]/r[c];
         tk::real C = (2.0+r[c])/r[c]/r[c];
@@ -521,20 +543,22 @@ class MixMassFracBetaCoeffHydroTimeScaleHomDecay {
           D*d*d*d*(1.0 + 3.0*d2/d/d + d3/d/d/d)/rho2[c]/rho2[c]/rho2[c];
         S[c] = (rho2[c]/d/R +
                 2.0*k[c]/b[c]*rho2[c]*rho2[c]/d/d*r[c]*r[c]/R*diff - 1.0) / r[c];
-        if (S[c] < 0.0 || S[c] > 1.0) {
-          std::cout << S[c] << " ";
-          S[c] = 0.5;
-        }
       }
     }
 
   public:
-    //! Sample hydrodynamics time scale at time t, k/eps
-    //! \param[in] t Time at which to sample hydrodynamics time scale
+    //! Sample the (inverse) hydrodynamics time scale at time t, eps/k
+    //! \param[in] t Time at which to sample inverse hydrodynamics time scale
     tk::real hydrotimescale( tk::real t ) const {
-      if (t < 1.0e-8) t = 1.0e-8;
-      return 34145.3 * std::pow(t,-3.94975)     // A = 0.05
-                     * std::exp(-2057.44 * std::pow(t,-2.60227)) + 0.0226072;
+      // eps/k
+      auto eok = 34145.3 * std::pow(t,-3.94975)
+                 * std::exp(-2057.44 * std::pow(t,-2.60227)) + 0.0226072;
+      // dk/dt/k
+      auto kdok = 3.33511 * std::exp(-0.745261*std::pow(t,0.741547));
+      //return eok;
+      //return std::sqrt(kdok*kdok/4.0 + eok*eok);
+      return std::sqrt( 0.5*(std::pow(kdok+eok,2.0) + std::pow(eok,2.0)) );
+
     }
 
 };

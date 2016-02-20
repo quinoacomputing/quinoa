@@ -1,55 +1,61 @@
 /*!
-  \page      layout Particle data layout
+  \page      layout Data layout design
 
 \section layout_req Data layout requirements and design
 
-How should the particle properties should be stored in memory? This is the
-single largest chunk of data in a particle-based code. The layout determines how
-the data is accessed and potentially has a first-degree effect on overall
-efficiency.
+How should the particle properties should be stored in memory? How should the
+mesh nodal data should be stored in memory? These are the single largest chunks
+of data a particle-, and/or mesh-based code operates on.  The data layout, i.e.,
+how the data is stored and organized in memory, determines how the data is
+accessed and potentially has a first-degree effect on overall performance.
 
 \section layout_possibilities Possibilities
 
-1. __Particle-major__, in which various physical properties, e.g., position,
-velocity, energy, etc., of a single particle are close to each other in memory.
-For example: [ x1, y1, z1, ..., x2, y2, z2, ..., x3, y3, z3, ... ] where the x*
-are governed by one equation (e.g., position), the y* are governed by another
-equation (e.g., velocity), and the z* are governed by a third equation (e.g.,
-energy), etc. Here the first letter denotes a physical quantity, while the
-second is the particle number. If the algorithm that advances the properties in
-time applies one equation at a time, the equations will access data by having to
-jump a distance that corresponds to the number of scalar physical variables per
-particle.  In the example, the update will have to jump as x1, x2, x3, ... are
-updated.
+1. __Unknown-major__, in which various physical properties, e.g., position,
+velocity, energy, etc., i.e., the unknowns in a solver, of a single particle or
+mesh node are close to each other in memory.  For example: [ x1, y1, z1, ...,
+x2, y2, z2, ..., x3, y3, z3, ... ] where the x* are governed by one equation
+(e.g., position), the y* are governed by another equation (e.g., velocity), and
+the z* are governed by a third equation (e.g., energy), etc. Here the first
+letter denotes a physical quantity, while the second is the particle number or
+mesh node ID. If the algorithm that advances the properties, unknowns, in time
+applies one equation at a time, the equations will access data by having to jump
+a distance that corresponds to the number of scalar physical variables per
+particle or mesh node. In the example, the update will have to jump as x1, x2,
+x3, ... are updated.
 
 2. __Property-major__, in which the same type of physical properties are close
 to each other in memory. For example, [ x1, x2, x3, ..., y1, y2, y3, ..., z1,
-z2, z3, ... ]. The legend here is the same as in particle-major: the first
-letter denotes a physical quantity, while the second is the particle number. If
-the algorithm that advances the properties in time applies one equation at a
-time, the equations will access data contiguously in memory as the properties
-are contiguously stored.
+z2, z3, ... ]. The legend here is the same as in unknown-major: the first letter
+denotes a physical quantity, while the second is the particle or mesh node
+number. If the algorithm that advances the properties in time applies one
+equation at a time, the equations will access data contiguously in memory as the
+properties are contiguously stored.
 
 \section layout_discussion Discussion
 
 A property-major storage, case 2 above, seems to be the most efficient at first
 sight, as it stores data, as it is read and written by the equation algorithms,
 contiguously. However, data access is contiguous only if the particle properties
-are independent, i.e., if there is no coupling among the equations.
-Unfortunately, this is rarely the case, at least not for fluid dynamics. For
-example, position is used by the velocity update, and velocity is required by
-the energy update.  Depending on the physical approximation, density (or mass)
-may be required for all equations. The stronger the equations are coupled the
-more very-far-reads are required for a given update. These far-reads are
-potentially almost always cache misses, as the property-major storage stores the
-physical variables for the same particle very far in memory, e.g., the distance
-between x1 and y1 is the number of particles. While the particle-major storage,
-case 1 above, inherently stores data non-contiguously, the distance between
-properties of a single particle is relatively small, i.e., the number of
-properties, which may incure less cache misses as several particles with all of
-their properties could fit into cache.
+(or data stored at mesh node IDs) are independent, i.e., if there is no coupling
+among the equations.  Unfortunately, this is rarely the case, at least not for
+fluid dynamics. For example in a Lagrangian particle code, position is used by
+the velocity update, and velocity is required by the energy update. The same is
+true for a mesh-based solver, where the physical variables are couple, i.e.,
+their update needs other physical variables at the same mesh node (and possibly
+others). Depending on the physical approximation, density (or mass) may be
+required for all equations. The stronger the equations are coupled the more
+very-far-reads are required for a given update with a property-major data
+layout. These far-reads are potentially almost always cache misses, as the
+property-major storage stores the physical variables for the same particle or
+mesh node very far in memory, e.g., the distance between x1 and y1 is the number
+of particles or mesh nodes. While the unknown-major storage, case 1 above,
+inherently stores data non-contiguously, the distance between properties of a
+single particle (or a single mesh node) is relatively small, i.e., the number of
+properties, which may incure less cache misses as several particles (or nodes)
+but all of their properties could fit into cache.
 
-Assuming strong coupling among the variables, the particle-major storage will be
+Assuming strong coupling among the variables, the unknown-major storage will be
 favored, but it would be nice if the design allowed for both layouts, so
 depending on the type of equations the most appropriate layout could be
 selected. If such a design is maintanable, there is still a question wether the
@@ -73,25 +79,64 @@ are problematic:
 
   - The run-time usage also duplicates code by doing an if-test on SO in, e.g.,
   isDefault(). Is there a better way of doing this? If there are only two types
-  of data layout (particle-, and property-major), code duplication should not be
-  too much of an issue. However, the implementation of particle-property data
+  of data layout (unknown-, and property-major), code duplication should not be
+  too much of an issue. However, the implementation of unknown-property data
   access must be absolutely zero run-time cost. This means the selection must be
   at compile-time and the element access must be absolutely invisible to the
   derived equation classes. In other words, there must be no re-implementation
   of a time-integrator for an equation just because the data access is
   different.
 
+\section layout_kokkos Assessment of the Kokkos library that offers a similar choice
+
+Since the first implementation of the configurable data layout, described below,
+the Kokkos library, https://github.com/kokkos/kokkos, from Sandia National Labs,
+has been released. Kokkos appears to have all the requirements described here,
+and a lot more. It does have compile-time configurable data layouts, \a views,
+for the purpose of optimal data access on various compute devices, such as
+multi-core CPUs, many-core accelerators, and Graphics Processing Units. Kokkos
+appears to provide an excellent abstraction for data layout abstraction.
+However, Kokkos provides a lot more than just data layout abstraction: it can
+generate low level code for various devices using its configurable views. The
+currently available Kokkos back-ends are OpenMP, pthreads, and CUDA. Thus Kokkos
+provides abstractions for on-node, i.e., shared-memory, parallelism. While
+Kokkos has been successfully used in Charm++ code, at this point (Jan 2016) we
+opt for NOT adopting Kokkos' views and keep our original data layout
+abstractions, discussed below. The reasons:
+
+  - At this point we are too early in the development of Quinoa and its tools to
+    be able to say that the current abstractions Charm++ provides are sufficient
+    or not to strike the correct balance between performance and productivity.
+    In particular, it could be possible that Charm++'s abstractions (using
+    overdecomposition), which we use already, are enough. In that case, using a
+    single abstraction for parallelism is preferable to two.
+
+  - At this point we would really only need the compile-time configurable data
+    layout abstractions from Kokkos and not the abstractions for loop-level
+    shared-memory parallelism.
+
+As far I can tell, the views of an array in Kokkos provide a very similar
+abstraction for data layout and thus memory access what is described below.
+
 \section layout_requirements Requirements
 
 Is it possible to implement a compile-time configurable data-access policy via a
 thin data-access interface with zero run-time cost, no code-duplication, and in
-a way that is invisible to derived equation classes? \a Yes.
+a way that is invisible to derived equation classes? \a Yes. See below.
 
 Zero-cost is achieved via type-based compile-time polymorphism. This is
-controlled via the cmake variable LAYOUT.
+controlled via a cmake variable.
 
-The particle data is a logically 3-dimensional array that stores the particle
-properties. In principle there are a total of 6 permutations:
+The particle (or mesh node) data is a logically 3-dimensional array that stores
+the particle properties (or nodal unknowns).
+
+For clarity, the discussion below will use the expression "particle" for a
+particle-code anad will not specifically mention nodal unknowns, stored at the
+nodes of a computational mesh. The former is for a particle-code, the latter is
+for a mesh-code. The data layout discussion is independent of whether particles
+or mesh nodes (or cells) are used.
+
+In principle there are a total of 6 permutations:
 
     1. ParEqComp: [ particle ] [ equation ] [ component ]
     2. ParCompEq: [ particle ] [ component ] [ equation ]
@@ -110,7 +155,7 @@ optimizations.) This decision leaves us with the following choices:
     3. EqCompPar: [ equation ] [ component ] [ particle ]
     4. EqParComp: [ equation ] [ particle ] [ component ]
 
-Access is based on the 3 coordinates: particle, component, and offset.  Particle
+Access is based on the 3 coordinates: particle, component, and offset. Particle
 is the particle ID, component denotes the given component of a vector equation,
 e.g., velocity has 3 components, a multi-material turbulent mix model governed
 by the Dirichlet SDE has K=N-1 scalars (components), and offset is determined by
@@ -142,13 +187,12 @@ layout, and only implement the following two:
     1. ParEqComp - Particle-major
     3. EqCompPar - Equation-major
 
-These options are exposed via the cmake variable LAYOUT and can be switched
-before a build by setting LAYOUT to either 'LAYOUT_PARTICLE_MAJOR' or
-'LAYOUT_EQUATION_MAJOR'.
+These options are exposed via a cmake variable and can be switched
+before a build.
 
 Data layout assembly
 --------------------
-This section documents the assembly, produced by the compilers, of the
+This section documents the assembly code, produced by the compilers, of the
 implementation of the compile-time configurable particle-data-access policy
 discussed above. The implementation is via a thin data-access interface with
 zero run-time cost, no code-duplication, and in a way that is invisible to
@@ -532,11 +576,18 @@ algorithms and general particle data access are implemented in a
 data-layout-independent fashion. The data layout can be changed at compile time.
 Access will be abstracted (and optimized) away.
 
-For the implementation see the tk::ParticleProperties.
+Note that the above discussion is independent of whether a particle-code, or a
+mesh-code is used. From the data layout viewpoint the particle-major and
+meshnode-major are equivalent and in the code, in tk::DataLayout, called
+Unknown-major. See src/Base/DataLayout, and its specializations in
+src/Base/MeshNodes.h and src/Base/Particles.h. The data layouts for mesh-nodes
+and particles can be configured independently at compile time.
+
+For the implementation see the tk::DataLayout.
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Tue 09 Jun 2015 08:33:55 AM MDT
+<em>Page last updated:</em> Mon 01 Feb 2016 01:56:52 PM MST
 <em>Copyright 2012-2015, Jozsef Bakosi.</em>
 </small></div>
 */

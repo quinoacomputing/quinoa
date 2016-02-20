@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/WrightFisher.h
   \author    J. Bakosi
-  \date      Tue 22 Dec 2015 10:56:21 AM MST
+  \date      Sat 30 Jan 2016 09:11:40 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Wright-Fisher SDE
   \details   This file implements the time integration of a system of stochastic
@@ -85,13 +85,13 @@ class WrightFisher {
     //! \param[in] stream Thread (or more precisely stream) ID 
     //! \param[inout] particles Array of particle properties 
     //! \author J. Bakosi
-    void initialize( int stream, tk::ParProps& particles ) {
+    void initialize( int stream, tk::Particles& particles ) {
       //! Set initial conditions using initialization policy
       //Init::template
       //  init< tag::wrightfisher >
       //      ( g_inputdeck, m_rng, stream, particles, m_c, m_ncomp, m_offset );
 
-      const auto npar = particles.npar();
+      const auto npar = particles.nunk();
       for (auto p=decltype(npar){0}; p<npar; ++p) {
         // Initialize the first m_ncomp (N-1) scalars
         ncomp_t i;
@@ -115,7 +115,7 @@ class WrightFisher {
     //! \param[in] t Physical time
     //! \param[in] moments Map of statistical moments
     //! \author J. Bakosi
-    void advance( tk::ParProps& particles,
+    void advance( tk::Particles& particles,
                   int stream,
                   tk::real dt,
                   tk::real t,
@@ -123,7 +123,7 @@ class WrightFisher {
     {
       // Compute sum of coefficients
       const auto omega = std::accumulate( begin(m_omega), end(m_omega), 0.0 );
-      const auto npar = particles.npar();
+      const auto npar = particles.nunk();
 
       for (auto p=decltype(npar){0}; p<npar; ++p) {
         // Need to build the square-root of the Wright-Fisher diffusion matrix:

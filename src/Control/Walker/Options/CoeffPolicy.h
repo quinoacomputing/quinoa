@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/Options/CoeffPolicy.h
   \author    J. Bakosi
-  \date      Tue 15 Dec 2015 09:50:48 AM MST
+  \date      Thu 04 Feb 2016 06:13:35 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Differential equation coefficients policy options
   \details   Differential equation coefficients policy options
@@ -33,8 +33,7 @@ enum class CoeffPolicyType : uint8_t { CONSTANT=0
 //! \author J. Bakosi
 inline void operator|( PUP::er& p, CoeffPolicyType& e ) { PUP::pup( p, e ); }
 
-//! \brief CoeffPolicy options: outsource searches to base templated on enum
-//!   type
+//! CoeffPolicy options: outsource searches to base templated on enum type
 //! \author J. Bakosi
 class CoeffPolicy : public tk::Toggle< CoeffPolicyType > {
 
@@ -77,4 +76,4 @@ class CoeffPolicy : public tk::Toggle< CoeffPolicyType > {
 } // ctr::
 } // walker::
 
-#endif // oeffPolicyOptions_h
+#endif // CoeffPolicyOptions_h

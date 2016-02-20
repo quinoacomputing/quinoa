@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/MixMassFractionBeta.h
   \author    J. Bakosi
-  \date      Tue 22 Dec 2015 11:12:58 AM MST
+  \date      Sat 30 Jan 2016 09:12:04 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     System of mix mass-fraction beta SDEs
   \details   This file implements the time integration of a system of stochastic
@@ -131,13 +131,13 @@ class MixMassFractionBeta {
     //! \param[in] stream Thread (or more precisely stream) ID 
     //! \param[inout] particles Array of particle properties 
     //! \author J. Bakosi
-    void initialize( int stream, tk::ParProps& particles ) {
+    void initialize( int stream, tk::Particles& particles ) {
       //! Set initial conditions using initialization policy
       Init::template
         init< tag::mixmassfracbeta >
             ( g_inputdeck, m_rng, stream, particles, m_c, m_ncomp, m_offset );
       // Initialize values derived from primary prognostic variable
-      const auto npar = particles.npar();
+      const auto npar = particles.nunk();
       for (auto p=decltype(npar){0}; p<npar; ++p)
         for (ncomp_t i=0; i<m_ncomp; ++i)
           derived( particles, p, i );
@@ -150,7 +150,7 @@ class MixMassFractionBeta {
     //! \param[in] dt Time step size
     //! \param[in] moments Map of statistical moments
     //! \author J. Bakosi
-    void advance( tk::ParProps& particles,
+    void advance( tk::Particles& particles,
                   int stream,
                   tk::real dt,
                   tk::real t,
@@ -160,7 +160,7 @@ class MixMassFractionBeta {
       coeff.update( m_depvar, m_ncomp, moments, m_bprime, m_kprime, m_rho2, m_r,
                     m_b, m_k, m_S, t );
       // Advance particles
-      const auto npar = particles.npar();
+      const auto npar = particles.nunk();
       for (auto p=decltype(npar){0}; p<npar; ++p) {
         // Generate Gaussian random numbers with zero mean and unit variance
         tk::real dW[m_ncomp];
@@ -223,7 +223,7 @@ class MixMassFractionBeta {
     //! \param[inout] particles Particle properties array
     //! \param[in] p Particle index
     //! \param[in] i Component index
-    void derived( tk::ParProps& particles, ncomp_t p, ncomp_t i ) const {
+    void derived( tk::Particles& particles, ncomp_t p, ncomp_t i ) const {
       tk::real& Y = particles( p, i, m_offset );
       particles( p, m_ncomp+i, m_offset ) = rho( Y, i );
       particles( p, m_ncomp*2+i, m_offset ) = vol( Y, i );

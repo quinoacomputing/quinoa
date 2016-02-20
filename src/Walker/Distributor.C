@@ -2,7 +2,7 @@
 /*!
   \file      src/Walker/Distributor.C
   \author    J. Bakosi
-  \date      Tue 19 Jan 2016 08:43:02 AM MST
+  \date      Fri 05 Feb 2016 08:46:06 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Distributor drives the time integration of differential equations
   \details   Distributor drives the time integration of differential equations.
@@ -33,7 +33,7 @@
 #include "Tags.h"
 #include "StatCtr.h"
 #include "Exception.h"
-#include "ParticleProperties.h"
+#include "Particles.h"
 #include "LoadDistributor.h"
 #include "Distributor.h"
 #include "Integrator.h"
@@ -131,16 +131,18 @@ Distributor::info( uint64_t chunksize, std::size_t nchare ) const
 //! \author J. Bakosi
 //******************************************************************************
 {
+  m_print.part( "Factory" );
+
   // Print out info data layout
-  m_print.list( "Particle properties data layout policy (CMake: LAYOUT)",
-                std::list< std::string >{ tk::ParProps().major() } );
+  m_print.list( "Particle properties data layout (CMake: PARTICLE_DATA_LAYOUT)",
+                std::list< std::string >{ tk::Particles::major() } );
 
   // Re-create differential equations stack for output
   DiffEqStack stack;
 
   // Print out information on factory
-  m_print.eqlist( "Registered differential equations", stack.factory(),
-                  stack.ntypes() );
+  m_print.eqlist( "Registered differential equations",
+                  stack.factory(), stack.ntypes() );
   m_print.endpart();
 
   // Print out information on problem
