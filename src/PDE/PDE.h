@@ -2,7 +2,7 @@
 /*!
   \file      src/PDE/PDE.h
   \author    J. Bakosi
-  \date      Wed 03 Feb 2016 03:05:20 PM MST
+  \date      Wed 17 Feb 2016 10:35:56 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Partial differential equation
   \details   This file defines a generic partial differential equation class.
@@ -18,6 +18,7 @@
 #define PDE_h
 
 #include <string>
+#include <vector>
 #include <functional>
 
 #include "Types.h"
@@ -36,6 +37,9 @@ namespace inciter {
 //!   see inciter::Euler.
 //! \author J. Bakosi
 class PDE {
+
+  private:
+    using ncomp_t = kw::ncomp::info::expect::type;
 
   public:
     //! \brief Constructor taking an object modeling Concept.
@@ -68,12 +72,43 @@ class PDE {
       self( tk::make_unique< Model<T> >( std::move(x(args...)) ) ) {}
 
     //! Public interface to setting the initial conditions for the diff eq
-    void initialize( tk::MeshNodes& unk ) const
-    { self->initialize( unk ); }
+    void initialize( const std::array< std::vector< tk::real >, 3 >& coord,
+                     tk::MeshNodes& unk,
+                     tk::real t )
+    const { self->initialize( coord, unk, t ); }
+
+    //! Public interface to computing the left-hand side matrix for the diff eq
+    void lhs( const std::array< std::vector< tk::real >, 3 >& coord,
+              const std::vector< std::size_t >& inpoel,
+              const std::pair< std::vector< std::size_t >,
+                               std::vector< std::size_t > >& psup,
+              tk::MeshNodes& lhsd,
+              tk::MeshNodes& lhso ) const
+    { self->lhs( coord, inpoel, psup, lhsd, lhso ); }
+
+    //! Public interface to computing the right-hand side vector for the diff eq
+    void rhs( tk::real mult,
+              tk::real dt,
+              const std::array< std::vector< tk::real >, 3 >& coord,
+              const std::vector< std::size_t >& inpoel,
+              const tk::MeshNodes& U,
+              const tk::MeshNodes& Un,
+              tk::MeshNodes& R ) const
+    { self->rhs( mult, dt, coord, inpoel, U, Un, R ); }
 
     //! Public interface to advancing the PDE in time
     void advance( tk::MeshNodes& unk, tk::real dt, tk::real t ) const
     { self->advance( unk, dt, t ); }
+
+    //! Public interface to returning field output labels
+    std::vector< std::string > names() const { return self->names(); }
+
+    //! Public interface to returning field output
+    std::vector< std::vector< tk::real > > output(
+      tk::real t,
+      const std::array< std::vector< tk::real >, 3 >& coord,
+      tk::MeshNodes& U ) const
+    { return self->output( t, coord, U ); }
 
     //! Copy assignment
     PDE& operator=( const PDE& x )
@@ -91,8 +126,24 @@ class PDE {
     struct Concept {
       virtual ~Concept() = default;
       virtual Concept* copy() const = 0;
-      virtual void initialize( tk::MeshNodes& ) = 0;
+      virtual void initialize( const std::array< std::vector< tk::real >, 3 >&,
+                               tk::MeshNodes&, tk::real ) = 0;
+      virtual void lhs( const std::array< std::vector< tk::real >, 3 >&,
+                        const std::vector< std::size_t >&,
+                        const std::pair< std::vector< std::size_t >,
+                                         std::vector< std::size_t > >&,
+                        tk::MeshNodes&, tk::MeshNodes& ) = 0;
+      virtual void rhs( tk::real, tk::real,
+                        const std::array< std::vector< tk::real >, 3 >&,
+                        const std::vector< std::size_t >&,
+                        const tk::MeshNodes&, const tk::MeshNodes&,
+                        tk::MeshNodes& ) = 0;
       virtual void advance( tk::MeshNodes&, tk::real, tk::real ) = 0;
+      virtual std::vector< std::string > names() = 0;
+      virtual std::vector< std::vector< tk::real > > output(
+        tk::real,
+        const std::array< std::vector< tk::real >, 3 >&,
+        tk::MeshNodes& ) = 0;
     };
 
     //! \brief Model models the Concept above by deriving from it and overriding
@@ -101,9 +152,29 @@ class PDE {
     struct Model : Concept {
       Model( T x ) : data( std::move(x) ) {}
       Concept* copy() const override { return new Model( *this ); }
-      void initialize( tk::MeshNodes& unk ) override { data.initialize( unk ); }
+      void initialize( const std::array< std::vector< tk::real >, 3 >& coord,
+                       tk::MeshNodes& unk, tk::real t ) override
+      { data.initialize( coord, unk, t ); }
+      void lhs( const std::array< std::vector< tk::real >, 3 >& coord,
+                const std::vector< std::size_t >& inpoel,
+                const std::pair< std::vector< std::size_t >,
+                                 std::vector< std::size_t > >& psup,
+                tk::MeshNodes& lhsd, tk::MeshNodes& lhso ) override
+      { data.lhs( coord, inpoel, psup, lhsd, lhso ); }
+      void rhs( tk::real mult, tk::real dt,
+                const std::array< std::vector< tk::real >, 3 >& coord,
+                const std::vector< std::size_t >& inpoel,
+                const tk::MeshNodes& U,
+                const tk::MeshNodes& Un,
+                tk::MeshNodes& R ) override
+      { data.rhs( mult, dt, coord, inpoel, U, Un, R ); }
       void advance( tk::MeshNodes& unk, tk::real dt, tk::real t ) override
       { data.advance( unk, dt, t ); }
+      std::vector< std::string > names() override { return data.names(); }
+      std::vector< std::vector< tk::real > > output(
+        tk::real t,
+        const std::array< std::vector< tk::real >, 3 >& coord,
+        tk::MeshNodes& U ) override { return data.output( t, coord, U ); }
       T data;
     };
 

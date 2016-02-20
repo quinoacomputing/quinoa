@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Keywords.h
   \author    J. Bakosi
-  \date      Fri 05 Feb 2016 06:14:11 AM MST
+  \date      Tue 16 Feb 2016 05:50:19 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Definition of all keywords
   \details   This file contains the definition of all keywords, including those
@@ -1904,7 +1904,7 @@ struct dirichlet_info {
   static std::string shortDescription() { return
     "Start configuration block for the Dirichlet SDE"; }
   static std::string longDescription() { return
-    R"(This keyword is used to introduce the dirichlet ... end block, used to
+    R"(This keyword is used to introduce a dirichlet ... end block, used to
     specify the configuration of a system of stochastic differential
     equations (SDEs), whose invariant is the Dirichlet distribution. For more
     details on the Dirichlet SDE, see http://dx.doi.org/10.1155/2013/842981.
@@ -1928,7 +1928,7 @@ struct gendir_info {
   static std::string shortDescription() { return
     "Start configuration block for the generalized Dirichlet SDE"; }
   static std::string longDescription() { return
-    R"(This keyword is used to introduce the gendir ... end
+    R"(This keyword is used to introduce a gendir ... end
     block, used to specify the configuration of a system of stochastic
     differential equations (SDEs), whose invariant is Lochner's generalized
     Dirichlet distribution. For more details on the generalized Dirichlet
@@ -1954,7 +1954,7 @@ struct wrightfisher_info {
   static std::string shortDescription() { return
     "Start configuration block for the Wright-Fisher SDE"; }
   static std::string longDescription() { return
-    R"(This keyword is used to introduce the wright_fisher ... end block, used
+    R"(This keyword is used to introduce a wright_fisher ... end block, used
     to specify the configuration of a system of stochastic differential
     equations (SDEs), whose invariant is the Dirichlet distribution. For more
     details on the Wright-Fisher SDE, see
@@ -1978,7 +1978,7 @@ struct skewnormal_info {
   static std::string shortDescription() { return
     "Start configuration block for the Skew-normal SDE"; }
   static std::string longDescription() { return
-    R"(This keyword is used to introduce the skew-normal ... end block, used
+    R"(This keyword is used to introduce a skew-normal ... end block, used
     to specify the configuration of a system of stochastic differential
     equations (SDEs), whose invariant is the joint skew-normal distribution.
     For more details on the skew-normal distribution, see
@@ -2003,7 +2003,7 @@ struct beta_info {
   static std::string shortDescription() { return
     "Introduce the beta SDE input block"; }
   static std::string longDescription() { return
-    R"(This keyword is used to introduce the beta ... end block, used to specify
+    R"(This keyword is used to introduce a beta ... end block, used to specify
     the configuration of a system of stochastic differential equations (SDEs),
     with linear drift and quadratic diagonal diffusion, whose invariant is the
     joint beta distribution. For more details on the beta SDE, see
@@ -2028,7 +2028,7 @@ struct numfracbeta_info {
   static std::string shortDescription() { return
     "Introduce the numfracbeta SDE input block"; }
   static std::string longDescription() { return
-    R"(This keyword is used to introduce the numfracbeta ... end block, used to
+    R"(This keyword is used to introduce a numfracbeta ... end block, used to
     specify the configuration of a system of number-fraction beta SDEs, a system
     of stochastic differential equations (SDEs), in which, in addition to the
     dependent variable, computed with linear drift and quadratic diagonal
@@ -2062,7 +2062,7 @@ struct massfracbeta_info {
   static std::string shortDescription() { return
     "Introduce the massfracbeta SDE input block"; }
   static std::string longDescription() { return
-    R"(This keyword is used to introduce the massfracbeta ... end block, used to
+    R"(This keyword is used to introduce a massfracbeta ... end block, used to
     specify the configuration of a system of number-fraction beta SDEs, a system
     of stochastic differential equations (SDEs), in which, in addition to the
     dependent variable, computed with linear drift and quadratic diagonal
@@ -2096,7 +2096,7 @@ struct mixnumfracbeta_info {
   static std::string shortDescription() { return
     "Introduce the mixnumfracbeta SDE input block"; }
   static std::string longDescription() { return
-    R"(This keyword is used to introduce the mixnumfracbeta ... end block, used
+    R"(This keyword is used to introduce a mixnumfracbeta ... end block, used
     to specify the configuration of a system of mix number-fraction beta SDEs, a
     system of stochastic differential equations (SDEs), whose solution is the
     joint beta distribution and in which the usual beta SDE parameters b and
@@ -2139,7 +2139,7 @@ struct mixmassfracbeta_info {
   static std::string shortDescription() { return
     "Introduce the mixmassfracbeta SDE input block"; }
   static std::string longDescription() { return
-    R"(This keyword is used to introduce the mixmassfracbeta ... end block, used
+    R"(This keyword is used to introduce a mixmassfracbeta ... end block, used
     to specify the configuration of a system of mix mass-fraction beta SDEs, a
     system of stochastic differential equations (SDEs), whose solution is the
     joint beta distribution and in which the usual beta SDE parameters b and
@@ -2195,7 +2195,7 @@ struct ornstein_uhlenbeck_info {
   static std::string shortDescription() { return
     "Introduce the Ornstein-Uhlenbeck SDE input block"; }
   static std::string longDescription() { return
-    R"(This keyword is used to introduce the ornstein-uhlenbeck ... end block,
+    R"(This keyword is used to introduce an ornstein-uhlenbeck ... end block,
     used to specify the configuration of a system of stochastic differential
     equations (SDEs), with linear drift and constant diffusion, whose
     invariant is the joint normal distribution. Keywords allowed in an
@@ -2220,7 +2220,7 @@ struct diag_ou_info {
   static std::string shortDescription() { return
     "Introduce the diagonal Ornstein-Uhlenbeck SDE input block"; }
   static std::string longDescription() { return
-    R"(This keyword is used to introduce the diag_ou ... end
+    R"(This keyword is used to introduce a diag_ou ... end
     block, where 'diag_ou' stands for diagonal Ornstein-Uhlenbeck' and is used
     to specify the configuration of a system of stochastic differential
     equations (SDEs), with linear drift and constant diagonal diffusion, whose
@@ -2519,16 +2519,68 @@ struct problem_info {
 };
 using problem = keyword< problem_info, p,r,o,b,l,e,m >;
 
+struct pde_diffusivity_info {
+  static std::string name() { return "diffusivity"; }
+  static std::string shortDescription() { return
+    R"(Set PDE parameter(s) diffusivity)"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify a vector of real numbers used to
+    parameterize a system of partial differential equations. Example:
+    "diffusivity 5.0 2.0 3.0 end". The length of the vector depends on the
+    particular type of PDE system and is controlled by the preceding keyword
+    'ncomp'.)"; }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real(s)"; }
+  };
+};
+using pde_diffusivity = keyword< pde_diffusivity_info, d,i,f,f,u,s,i,v,i,t,y >;
+
+struct pde_lambda_info {
+  static std::string name() { return "lambda"; }
+  static std::string shortDescription() { return
+    R"(Set PDE parameter(s) lambda)"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify a vector of real numbers used to
+    parameterize a system of partial differential equations. Example:
+    "lambda 5.0 2.0 3.0 end". The length of the vector depends on the particular
+    type of PDE system and is controlled by the preceding keyword 'ncomp'.)"; }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real(s)"; }
+  };
+};
+using pde_lambda = keyword< pde_lambda_info, l,a,m,b,d,a >;
+
+struct pde_u0_info {
+  static std::string name() { return "u0"; }
+  static std::string shortDescription() { return
+    R"(Set PDE parameter(s) u0)"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify a vector of real numbers used to
+    parameterize a system of partial differential equations. Example:
+    "u0 5.0 2.0 3.0 end". The length of the vector depends on the particular
+    type of PDE system and is controlled by the preceding keyword 'ncomp'.)"; }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real(s)"; }
+  };
+};
+using pde_u0 = keyword< pde_u0_info, u,'0' >;
+
 struct advdiff_info {
   static std::string name() { return "Scalar advection-diffusion"; }
   static std::string shortDescription() { return
     "Start configuration block for an advection-diffusion equation"; }
   static std::string longDescription() { return
-    R"(This keyword is used to introduce the advdiff ... end block, used to
+    R"(This keyword is used to introduce an advdiff ... end block, used to
     specify the configuration for a partial differential equation of
     advection-diffusion type. Keywords allowed
-    in a advdiff ... end block: )" + std::string("\'")
-    + problem::string() + "\'."
+    in an advdiff ... end block: )" + std::string("\'")
+    + problem::string() + "\', \'"
+    + pde_diffusivity::string() + "\', \'"
+    + pde_lambda::string() + "\', \'"
+    + pde_u0::string() + "\'. "
     + R"(For an example advdiff ... end block, see
       doc/html/inicter_example_advdiff.html.)";
   }

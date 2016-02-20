@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.h
   \author    J. Bakosi
-  \date      Fri 05 Feb 2016 06:25:46 AM MST
+  \date      Fri 19 Feb 2016 08:45:24 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Performer advances a PDE
   \details   Performer advances a PDE. There are a potentially
@@ -62,7 +62,13 @@ class Performer : public CBase_Performer {
                  const std::unordered_map< std::size_t, std::size_t >& cid );
 
     //! Migrate constructor
-    explicit Performer( CkMigrateMessage* ) {}
+    explicit Performer( CkMigrateMessage* ) :
+      m_u( 0, g_inputdeck.get< tag::component >().nprop() ),
+      m_uf( 0, g_inputdeck.get< tag::component >().nprop() ),
+      m_un( 0, g_inputdeck.get< tag::component >().nprop() ),
+      m_lhsd( 0, g_inputdeck.get< tag::component >().nprop() ),
+      m_lhso( 0, g_inputdeck.get< tag::component >().nprop() )
+    {}
 
     //! Initialize mesh IDs, element connectivity, coordinates
     void setup();
@@ -78,6 +84,8 @@ class Performer : public CBase_Performer {
     void advance( uint8_t stage, tk::real dt, uint64_t it, tk::real t );
 
   private:
+    using ncomp_t = kw::ncomp::info::expect::type;
+
     uint64_t m_it;                      //!< Iteration count
     uint64_t m_itf;                     //!< Field output iteration count
     tk::real m_t;                       //!< Physical time
@@ -88,14 +96,25 @@ class Performer : public CBase_Performer {
     //! \brief Map associating old node IDs (as in file) to new node IDs (as in
     //!   producing contiguous-row-id linear system contributions)
     std::unordered_map< std::size_t, std::size_t > m_cid;
-    std::vector< std::size_t > m_inpoel;//!< Element connectivity (local IDs)
-    std::vector< std::size_t > m_gid;   //!< Global node ids of owned elements
+    //! \brief Elements of the mesh chunk we operate on
+    //! \details Initialized by the constructor. The first vector is the element
+    //!   connectivity (local IDs), while the second vector is the global node
+    //!   IDs of owned elements.
+    std::pair< std::vector< std::size_t >, std::vector< std::size_t > > m_el;
+    //! Alias to element connectivity in m_el
+    decltype(m_el.first)& m_inpoel = m_el.first;
+    //! Alias to global node IDs of owned elements in in m_el
+    decltype(m_el.second)& m_gid = m_el.second;
     //!< Local node ids associated to the global ones of owned elements
     std::unordered_map< std::size_t, std::size_t > m_lid;
     //! Mesh point coordinates
     std::array< std::vector< tk::real >, 3 > m_coord;
+    //! Points surrounding points of our chunk of the mesh
+    std::pair< std::vector< std::size_t >, std::vector< std::size_t > > m_psup;
     //! Unknown/solution vector: global mesh point row ids and values
-    std::vector< tk::real > m_u, m_uf, m_un;
+    tk::MeshNodes m_u, m_uf, m_un;
+    //! Sparse matrix sotring the diagonals and off-diagonals of nonzeros
+    tk::MeshNodes m_lhsd, m_lhso;
 
     //! Send off global row IDs to linear system merger, setup global->local IDs
     void setupIds();
@@ -103,17 +122,14 @@ class Performer : public CBase_Performer {
     //! Read coordinates of mesh nodes given
     void readCoords();
 
-    //! Set initial conditions
-    void ic();
-
     //! Compute left-hand side matrix of PDE
     void lhs();
 
     //! Compute righ-hand side vector of PDE
     void rhs( tk::real mult,
               tk::real dt,
-              const std::vector< tk::real >& sol,
-              std::vector< tk::real >& rhs );
+              const tk::MeshNodes& sol,
+              tk::MeshNodes& rhs );
 
     //! Output chare mesh to file
     void writeMesh();
@@ -124,44 +140,13 @@ class Performer : public CBase_Performer {
     //! Output solution to file
     void writeSolution( const tk::ExodusIIMeshWriter& ew,
                         uint64_t it,
-                        int varid,
-                        const std::vector< tk::real >& u ) const;
+                        const std::vector< std::vector< tk::real > >& u ) const;
 
     //! Output mesh-based fields metadata to file
     void writeMeta() const;
 
     //! Output mesh-based fields to file
     void writeFields( tk::real time );
-
-    //! Compute initial conditions for dispersion in simple shear flow
-    tk::real ansol_shear( std::size_t i, tk::real t ) const {
-      const tk::real X0 = 7200.0;        // x position of source
-      const tk::real t0 = g_inputdeck.get< tag::discr, tag::t0 >(); // initial t
-      const tk::real U0 = 0.5;           // velocity in x direction
-      const tk::real LAMBDA = 5.0e-4;    // amount of shear, (lambda = du/dy)
-      const tk::real D = 10.0;           // scalar diffusivity
-      const tk::real M = 4.0*M_PI*t0*std::sqrt( 1.0 + LAMBDA*LAMBDA*t0*t0/12.0 );
-      const auto& x = m_coord[0];
-      const auto& y = m_coord[1];
-      tk::real a = x[i] - X0 - U0*t - 0.5*LAMBDA*y[i]*t;
-      tk::real b = 1.0 + LAMBDA*LAMBDA*t*t/12.0;
-      return M * exp( -a*a/(4.0*M_PI*D*t*b) - y[i]*y[i]/(4.0*D*t) )
-               / ( 4.0*M_PI*t*std::sqrt(b) );
-    };
-
-    //! Compute initial conditions representing a joint Gaussian
-    tk::real ansol_gauss( std::size_t i ) const {
-      const tk::real X0 = 0.5, Y0 = 0.5, Z0 = 0.5;
-      const tk::real v1 = 0.1, v2 = 0.05, v3 = 0.05;
-      const auto& x = m_coord[0];
-      const auto& y = m_coord[1];
-      const auto& z = m_coord[2];
-      const tk::real rx = x[i]-X0;
-      const tk::real ry = y[i]-Y0;
-      const tk::real rz = z[i]-Z0;
-      return std::exp( -0.5 * (rx*rx/v1 + ry*ry/v2 + rz*rz/v3) ) /
-             2.0 / M_PI / v1 / v2 / v3;
-    }
 };
 
 } // inciter::

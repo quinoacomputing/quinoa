@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/UnitTest.C
   \author    J. Bakosi
-  \date      Sun 31 Jan 2016 06:59:00 AM MST
+  \date      Thu 11 Feb 2016 03:36:22 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     UnitTest's Charm++ main chare and main().
   \details   UnitTest's Charm++ main chare and main(). This file contains
@@ -94,6 +94,7 @@ const int MAX_TESTS_IN_GROUP = 80;
 #include <tests/Base/TestWriter.h>
 #include <tests/Base/TestProcessControl.h>
 #include <tests/Base/TestVector.h>
+#include <tests/Base/TestContainerUtil.h>
 
 #include <tests/Control/TestSystemComponents.h>
 #include <tests/Control/TestControl.h>
