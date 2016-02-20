@@ -3,7 +3,7 @@
   \file      src/Main/MeshConv.C
   \author    J. Bakosi
   \date      Mon 01 Jun 2015 01:46:37 PM MDT
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     Mesh file converter Charm++ main chare
   \details   Mesh file converter Charm++ main chare. This file contains the
     definition of the Charm++ main chare, equivalent to main() in Charm++-land.

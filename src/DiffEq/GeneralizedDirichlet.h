@@ -3,7 +3,7 @@
   \file      src/DiffEq/GeneralizedDirichlet.h
   \author    J. Bakosi
   \date      Sat 30 Jan 2016 09:12:12 PM MST
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     Lochner's generalized Dirichlet SDE
   \details   This file implements the time integration of a system of stochastic
     differential equations (SDEs) whose invariant is Lochner's [generalized

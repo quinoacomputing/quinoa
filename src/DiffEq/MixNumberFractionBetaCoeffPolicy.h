@@ -3,7 +3,7 @@
   \file      src/DiffEq/MixNumberFractionBetaCoeffPolicy.h
   \author    J. Bakosi
   \date      Mon 01 Jun 2015 02:38:37 PM MDT
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     Mix number-fraction beta SDE coefficients policies
   \details   This file defines coefficients policy classes for the mix
     number-fraction beta SDE, defined in DiffEq/MixNumberFractionBeta.h.

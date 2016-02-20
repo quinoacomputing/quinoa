@@ -3,7 +3,7 @@
   \file      src/Mesh/Reorder.C
   \author    J. Bakosi
   \date      Sun 14 Feb 2016 07:09:07 AM MST
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     Mesh reordering routines for unstructured meshes
   \details   Mesh reordering routines for unstructured meshes.
 */

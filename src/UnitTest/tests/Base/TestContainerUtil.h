@@ -3,7 +3,7 @@
   \file      src/UnitTest/tests/Base/TestContainerUtil.h
   \author    J. Bakosi
   \date      Sun 14 Feb 2016 08:01:31 AM MST
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     Unit tests for Base/ContainerUtil.h
   \details   Unit tests for Base/ContainerUtil.h
 */

@@ -3,7 +3,7 @@
   \file      src/RNG/MKLRNG.h
   \author    J. Bakosi
   \date      Sun 07 Feb 2016 02:04:59 PM MST
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     Interface to Intel MKL VSL random number generators
   \details   Interface to Intel MKL VSL random number generators.
 */

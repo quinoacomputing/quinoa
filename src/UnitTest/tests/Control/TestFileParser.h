@@ -3,7 +3,7 @@
   \file      src/UnitTest/tests/Control/TestFileParser.h
   \author    J. Bakosi
   \date      Mon 01 Jun 2015 03:14:56 PM MDT
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     Unit tests for Control/FileParser
   \details   Unit tests for Control/FileParser
 */

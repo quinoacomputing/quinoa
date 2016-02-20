@@ -3,7 +3,7 @@
   \file      src/RNGTest/TestU01Props.h
   \author    J. Bakosi
   \date      Mon 01 Jun 2015 12:40:29 PM MDT
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     TestU01 statistical test properties class
   \details   This file defines a generic TestU01 statistical test properties
     class, used to initialize, interface, and evaluate TestU01 RNG statistical

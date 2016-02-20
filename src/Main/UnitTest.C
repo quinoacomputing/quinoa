@@ -3,7 +3,7 @@
   \file      src/Main/UnitTest.C
   \author    J. Bakosi
   \date      Thu 11 Feb 2016 03:36:22 PM MST
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     UnitTest's Charm++ main chare and main().
   \details   UnitTest's Charm++ main chare and main(). This file contains
     the definition of the Charm++ main chare, equivalent to main() in Charm++-
