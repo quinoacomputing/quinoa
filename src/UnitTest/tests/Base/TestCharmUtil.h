@@ -3,7 +3,7 @@
   \file      src/UnitTest/tests/Base/TestCharmUtil.h
   \author    J. Bakosi
   \date      Mon 01 Jun 2015 03:12:09 PM MDT
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     Unit tests for Base/CharmUtil.h
   \details   Unit tests for Base/CharmUtil.h
 */

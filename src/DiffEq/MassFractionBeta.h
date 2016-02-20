@@ -3,7 +3,7 @@
   \file      src/DiffEq/MassFractionBeta.h
   \author    J. Bakosi
   \date      Sat 30 Jan 2016 09:11:35 PM MST
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     System of mass-fraction beta SDEs
   \details   This file implements the time integration of a system of stochastic
     differential equations (SDEs) with linear drift and quadratic diagonal

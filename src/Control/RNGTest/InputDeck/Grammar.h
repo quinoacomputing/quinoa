@@ -3,7 +3,7 @@
   \file      src/Control/RNGTest/InputDeck/Grammar.h
   \author    J. Bakosi
   \date      Tue 17 Nov 2015 12:16:23 PM MST
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     Random number generator test suite grammar definition
   \details   Random number generator test suite input deck grammar definition.
   We use the Parsing Expression Grammar Template Library (PEGTL) to create the

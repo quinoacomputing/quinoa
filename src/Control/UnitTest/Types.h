@@ -3,7 +3,7 @@
   \file      src/Control/UnitTest/Types.h
   \author    J. Bakosi
   \date      Mon 01 Jun 2015 02:19:37 PM MDT
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     Types for UnitTest's parsers
   \details   Types for UnitTest's parsers. This file defines the components of
     the tagged tuple that stores heteroegeneous objects in a hierarchical way.

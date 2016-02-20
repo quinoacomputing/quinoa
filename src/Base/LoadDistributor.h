@@ -3,7 +3,7 @@
   \file      src/LoadBalance/LoadDistributor.h
   \author    J. Bakosi
   \date      Sat 30 May 2015 12:02:02 PM MDT
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     Load distributors and partitioning data types
   \details   Load distributors and partitioning data types. Load distributors
      compute chunksize based on the degree of virtualization.

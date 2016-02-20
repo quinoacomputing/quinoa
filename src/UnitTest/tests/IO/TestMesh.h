@@ -3,7 +3,7 @@
   \file      src/UnitTest/tests/IO/TestMesh.h
   \author    J. Bakosi
   \date      Mon 01 Jun 2015 03:16:05 PM MDT
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     Unit tests for unstructured-mesh reader and writers in IO
   \details   Unit tests for unstructured-mesh reader and writers in IO
 */

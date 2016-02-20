@@ -3,7 +3,7 @@
   \file      src/UnitTest/tests/LoadBalance/TestUnsMeshMap.h
   \author    J. Bakosi
   \date      Mon 01 Jun 2015 03:16:44 PM MDT
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     Unit tests for LoadBalance/UnsMeshMap
   \details   Unit tests for LoadBalance/UnsMeshMap
 */

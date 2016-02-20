@@ -3,7 +3,7 @@
   \file      src/Base/str_const.h
   \author    J. Bakosi
   \date      Sat 03 Jan 2015 10:01:02 PM MST
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     Constexpr, i.e., compile-time, string class
   \details   Constexpr, i.e., compile-time, string class
 */

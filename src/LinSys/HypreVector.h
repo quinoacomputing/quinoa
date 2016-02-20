@@ -3,7 +3,7 @@
   \file      src/LinSys/HypreVector.h
   \author    J. Bakosi
   \date      Mon 01 Jun 2015 02:12:56 PM MDT
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     Hypre IJ vector class
   \details   Hypre IJ vector class.
 */

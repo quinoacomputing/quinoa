@@ -3,7 +3,7 @@
   \file      src/Statistics/TriPDF.h
   \author    J. Bakosi
   \date      Mon 01 Jun 2015 02:07:32 PM MDT
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     Joint trivariate PDF estimator
   \details   Joint trivariate PDF estimator. This class can be used to estimate
     a joint probability density function (PDF) of three scalar variables from an

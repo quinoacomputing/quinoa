@@ -3,7 +3,7 @@
   \file      src/Control/Options/MKLUniformMethod.h
   \author    J. Bakosi
   \date      Mon 01 Jun 2015 02:22:24 PM MDT
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     Intel MKL uniform RNG method options
   \details   Intel MKL uniform RNG method options
 */

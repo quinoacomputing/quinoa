@@ -3,7 +3,7 @@
   \file      src/Base/Reader.h
   \author    J. Bakosi
   \date      Tue 03 Nov 2015 03:34:05 PM MST
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     Reader base class declaration
   \details   Reader base class declaration. Reader base serves as a base class
     for various file readers. It does generic low-level I/O, e.g., opening and

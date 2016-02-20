@@ -3,7 +3,7 @@
   \file      src/Control/Inciter/Components.h
   \author    J. Bakosi
   \date      Wed 03 Feb 2016 03:49:35 PM MST
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     Storage for number of components
   \details   Storage for number of components. This is part of the input deck
      stack and is thus populated during the control file parsing.

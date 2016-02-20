@@ -3,7 +3,7 @@
   \file      src/Control/Options/RNG.h
   \author    J. Bakosi
   \date      Fri 22 May 2015 08:09:14 AM MDT
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     Random number generator options and associations
   \details   Random number generator options and associations
 */

@@ -3,7 +3,7 @@
   \file      src/Main/RNGPrint.C
   \author    J. Bakosi
   \date      Mon 01 Jun 2015 04:25:14 PM MDT
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     Pretty printer base for pretty printers supporting RNGs
   \details   Pretty printer base for pretty printers supporting RNGs.
 */

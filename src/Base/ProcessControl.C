@@ -3,7 +3,7 @@
   \file      src/Base/ProcessControl.h
   \author    J. Bakosi
   \date      Fri 22 May 2015 08:21:45 AM MDT
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     POSIX process control wrapper definitions
   \details   POSIX process control wrapper definitions.
 */

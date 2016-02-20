@@ -3,7 +3,7 @@
   \file      src/IO/ExodusIIMeshWriter.h
   \author    J. Bakosi
   \date      Wed 19 Aug 2015 03:35:13 PM MDT
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     ExodusII mesh-based data writer
   \details   ExodusII mesh-based data writer class declaration.
 */

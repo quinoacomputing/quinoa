@@ -3,7 +3,7 @@
   \file      src/Control/RNGParam.h
   \author    J. Bakosi
   \date      Mon 01 Jun 2015 04:30:37 PM MDT
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     Types for storing parameters of random number generators
   \details   Types for storing parameters of random number generators.
 */

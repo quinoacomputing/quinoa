@@ -3,7 +3,7 @@
   \file      src/Control/Inciter/InputDeck/Grammar.h
   \author    J. Bakosi
   \date      Wed 17 Feb 2016 10:20:01 AM MST
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     Inciter's input deck grammar definition
   \details   Inciter's input deck grammar definition. We use the Parsing
   Expression Grammar Template Library (PEGTL) to create the grammar and the

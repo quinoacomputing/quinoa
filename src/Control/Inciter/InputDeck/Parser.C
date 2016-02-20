@@ -3,7 +3,7 @@
   \file      src/Control/Inciter/InputDeck/Parser.C
   \author    J. Bakosi
   \date      Mon 30 Nov 2015 12:45:28 PM MST
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     Inciter's input deck file parser
   \details   This file declares the input deck, i.e., control file, parser for
     the computational shock hydrodynamics tool, Inciter.

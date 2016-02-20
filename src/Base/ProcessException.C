@@ -3,7 +3,7 @@
   \file      src/Base/ProcessException.C
   \author    J. Bakosi
   \date      Fri 22 May 2015 08:24:48 AM MDT
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     Process an exception
   \details   This file contains the implementation of processing an exception.
     Logically, it would make sense to put this into Exception.C, however,

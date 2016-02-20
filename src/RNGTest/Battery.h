@@ -3,7 +3,7 @@
   \file      src/RNGTest/Battery.h
   \author    J. Bakosi
   \date      Thu 10 Sep 2015 12:11:44 PM MDT
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     Random number generator test harness
   \details   This file defines a generic random number generator test harness
     class. The class uses runtime polymorphism without client-side inheritance:

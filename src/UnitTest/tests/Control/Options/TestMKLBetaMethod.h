@@ -3,7 +3,7 @@
   \file      src/UnitTest/tests/Control/Options/TestMKLBetaMethod.h
   \author    J. Bakosi
   \date      Mon 01 Jun 2015 04:10:43 PM MDT
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     Unit tests for Control/Options/MKLBetaMethod
   \details   Unit tests for Control/Options/MKLBetaMethod
 */

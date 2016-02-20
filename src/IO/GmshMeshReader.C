@@ -3,7 +3,7 @@
   \file      src/IO/GmshMeshReader.C
   \author    J. Bakosi
   \date      Wed 13 Jan 2016 11:58:35 AM MST
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     Gmsh mesh reader class definition
   \details   Gmsh mesh reader class definition. Currently, this class supports
     line, triangle, tetrahedron, and point Gmsh element types.

@@ -3,7 +3,7 @@
   \file      src/Control/RNGTest/CmdLine/CmdLine.h
   \author    J. Bakosi
   \date      Mon 01 Jun 2015 02:16:17 PM MDT
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     RNGTest's command line
   \details   This file defines the heterogeneous stack that is used for storing
      the data from user input during the command-line parsing of the

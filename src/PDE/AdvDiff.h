@@ -3,7 +3,7 @@
   \file      src/PDE/AdvDiff.h
   \author    J. Bakosi
   \date      Fri 19 Feb 2016 01:21:41 PM MST
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     Advection-diffusion equation of a transported scalar
   \details   This file implements the time integration of the
     advection-diffusion equation of a single scalar.

@@ -3,7 +3,7 @@
   \file      src/Base/Timer.C
   \author    J. Bakosi
   \date      Mon 01 Jun 2015 02:10:15 PM MDT
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     Timer definition
   \details   Timer definition. Timer is a simple class to do timing various
     parts of the code in a portable way. The functionality is intended to be

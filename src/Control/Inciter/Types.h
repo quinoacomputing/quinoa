@@ -3,7 +3,7 @@
   \file      src/Control/Inciter/Types.h
   \author    J. Bakosi
   \date      Wed 17 Feb 2016 06:57:12 AM MST
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     Types for Incitier's parsers
   \details   Types for Incitier's parsers. This file defines the components of the
     tagged tuple that stores heteroegeneous objects in a hierarchical way. These

@@ -3,7 +3,7 @@
   \file      src/Control/Breeze/Options/Energy.h
   \author    J. Bakosi
   \date      Mon 01 Jun 2015 02:21:08 PM MDT
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     Energy model options
   \details   Energy model options
 */

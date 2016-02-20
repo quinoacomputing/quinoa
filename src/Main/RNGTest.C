@@ -3,7 +3,7 @@
   \file      src/Main/RNGTest.C
   \author    J. Bakosi
   \date      Mon 01 Feb 2016 03:29:10 PM MST
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     RNGTest's random number generator test suite's Charm++ main chare.
   \details   RNGTest's random number generator test suite's Charm++ main chare.
     This file contains the definition of the Charm++ main chare, equivalent to

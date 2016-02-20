@@ -3,7 +3,7 @@
   \file      src/Main/InciterPrint.C
   \author    J. Bakosi
   \date      Fri 05 Feb 2016 06:04:20 AM MST
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     Inciter-specific pretty printer functionality
   \details   Inciter-specific pretty printer functionality.
 */

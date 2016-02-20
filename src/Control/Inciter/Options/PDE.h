@@ -3,7 +3,7 @@
   \file      src/Control/Inciter/Options/PDE.h
   \author    J. Bakosi
   \date      Wed 03 Feb 2016 03:46:53 PM MST
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     Partial differential equation options and associations for inciter
   \details   Partial differential equation options and associations for inciter
 */

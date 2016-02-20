@@ -3,7 +3,7 @@
   \file      src/Control/Inciter/InputDeck/InputDeck.h
   \author    J. Bakosi
   \date      Wed 17 Feb 2016 07:01:34 AM MST
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     Inciter's input deck definition
   \details   This file defines the heterogeneous stack that is used for storing
      the data from user input during the control file parsing of the

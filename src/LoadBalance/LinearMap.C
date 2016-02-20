@@ -3,7 +3,7 @@
   \file      src/LoadBalance/LinearMap.C
   \author    J. Bakosi
   \date      Mon 01 Jun 2015 01:32:19 PM MDT
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     Advanced Charm++ array creation with a map in a linear fashion
   \details   Advanced Charm++ array creation refers to various ways arrays can
      be created with the Charm++ runtime system. See

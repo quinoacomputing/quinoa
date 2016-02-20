@@ -3,7 +3,7 @@
   \file      src/PDE/Euler.h
   \author    J. Bakosi
   \date      Wed 17 Feb 2016 10:36:07 AM MST
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     Euler equations describing compressible flow
   \details   This file implements the time integration of the Euler equations
     governing compressible fluid flow.

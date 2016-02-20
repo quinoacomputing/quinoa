@@ -3,7 +3,7 @@
   \file      src/Control/StringParser.C
   \author    J. Bakosi
   \date      Fri 29 May 2015 04:15:00 PM MDT
-  \copyright 2012-2015, Jozsef Bakosi.
+  \copyright 2012-2016, Jozsef Bakosi.
   \brief     String parser base class definition
   \details   String parser base class definition. String parser base serves as
     a base class for various string parsers, e.g., command-line parsers. It does
