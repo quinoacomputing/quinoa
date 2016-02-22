@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/MKLRNG.h
   \author    J. Bakosi
-  \date      Sun 07 Feb 2016 02:04:59 PM MST
+  \date      Sun 21 Feb 2016 05:29:10 PM MST
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Interface to Intel MKL VSL random number generators
   \details   Interface to Intel MKL VSL random number generators.
@@ -70,7 +70,7 @@ class MKLRNG {
     //! Uniform RNG: Generate uniform random numbers
     //! \param[in] tid Thread (or more precisely stream) ID
     //! \param[in] num Number of RNGs to generate
-    //! \param[inout] r Pointer to memory to write the RNGs to
+    //! \param[inout] r Pointer to memory to write the random numbers to
     void uniform( int tid, ncomp_t num, double* r ) const {
       vdRngUniform( m_uniform_method,
                     m_stream[ static_cast<std::size_t>(tid) ],
@@ -82,7 +82,7 @@ class MKLRNG {
     //! Gaussian RNG: Generate Gaussian random numbers
     //! \param[in] tid Thread (or more precisely stream) ID
     //! \param[in] num Number of RNGs to generate
-    //! \param[inout] r Pointer to memory to write the RNGs to
+    //! \param[inout] r Pointer to memory to write the random numbers to
     void gaussian( int tid, ncomp_t num, double* r ) const {
       vdRngGaussian( m_gaussian_method,
                      m_stream[ static_cast<std::size_t>(tid) ],
@@ -98,7 +98,7 @@ class MKLRNG {
     //! \param[in] q Second beta shape parameter
     //! \param[in] a Beta displacement parameter
     //! \param[in] b Beta scale factor
-    //! \param[inout] r Pointer to memory to write the RNGs to
+    //! \param[inout] r Pointer to memory to write the random numbers to
     void beta( int tid, ncomp_t num, double p, double q, double a, double b,
                double* r ) const
     {
