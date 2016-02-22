@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/RNGSSE.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:40:59 PM MDT
+  \date      Mon 22 Feb 2016 11:10:23 AM MST
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Interface to RNGSSE random number generators
   \details   Interface to RNGSSE random number generators
@@ -12,6 +12,9 @@
 #define RNGSSE_h
 
 #include <cstring>
+#include <random>
+
+#include <boost/random/beta_distribution.hpp>
 
 #include "Make_unique.h"
 #include "Exception.h"
@@ -23,8 +26,22 @@ namespace tk {
 template< class State, typename SeqNumType, unsigned int (*Generate)(State*) >
 class RNGSSE {
 
+  private:
     using InitFn = void (*)( State*, SeqNumType );
     using ncomp_t = kw::ncomp::info::expect::type;    
+
+    //! Adaptor to use a std distribution with the RNGSSE generator
+    //! \see C++ concepts: UniformRandomNumberGenerator
+    struct Adaptor {
+      using result_type = unsigned int;
+      Adaptor( const std::unique_ptr< State[] >& s, int t ) : str(s), tid(t) {}
+      static constexpr result_type min() { return 0u; }
+      static constexpr result_type max() { return 4294967295u; }
+      result_type operator()()
+      { return Generate( &str[ static_cast<std::size_t>(tid) ] ); }
+      const std::unique_ptr< State[] >& str;
+      int tid;
+    };
 
   public:
     //! \brief Constructor
@@ -40,7 +57,8 @@ class RNGSSE {
                      InitFn fnMed = nullptr) :
        m_nthreads( nthreads ),
        m_init( seqlen == ctr::RNGSSESeqLenType::LONG ? fnLong :
-               seqlen == ctr::RNGSSESeqLenType::MEDIUM ? fnMed : fnShort ) {
+               seqlen == ctr::RNGSSESeqLenType::MEDIUM ? fnMed : fnShort )
+    {
       Assert( m_init != nullptr, "nullptr passed to RNGSSE constructor" );
       Assert( nthreads > 0, "Need at least one thread" );
       // Allocate array of stream-pointers for threads
@@ -52,7 +70,7 @@ class RNGSSE {
     //! Uniform RNG: Generate uniform random numbers
     //! \param[in] tid Thread (or more precisely) stream ID
     //! \param[in] num Number of RNGs to generate
-    //! \param[inout] r Pointer to memory to write the RNGs to
+    //! \param[inout] r Pointer to memory to write the random numbers to
     void uniform( int tid, ncomp_t num, double* r ) const {
       for (int i=0; i<num; ++i)
         r[i] = static_cast<double>(
@@ -63,13 +81,24 @@ class RNGSSE {
     //! Gaussian RNG: Generate Gaussian random numbers
     //! \param[in] tid Thread (or more precisely stream) ID
     //! \param[in] num Number of RNGs to generate
-    //! \param[inout] r Pointer to memory to write the RNGs to
-    // TODO: not yet implemented
+    //! \param[inout] r Pointer to memory to write the random numbers to
+    //! \details Generating Gaussian random numbers is implemented via an
+    //!   adaptor, modeling std::UniformRandomNumberGenerator, outsourcing the
+    //!   transformation of uniform random numbers to Gaussian ones, to the
+    //!   standard library. The adaptor is instantiated here because a standard
+    //!   distribution, such as e.g., std::normal_distribution, generates
+    //!   numbers using operator() with no arguments, thus the RNG state and the
+    //!   thread ID (this latter only known here) must be stored in the adaptor
+    //!   functor's state. Even though creating the adaptor seems like a
+    //!   potentially costly operation for every call, using the standard
+    //!   library implementation is still faster than a hand-coded
+    //!   implementation of the Box-Muller algorithm. Note that libc++ uses a
+    //!   cache, as Box-Muller, implemented using the polar algorithm generates
+    //!   2 Gaussian numbers for each pair of uniform ones, caching every 2nd.
     void gaussian( int tid, ncomp_t num, double* r ) const {
-      Throw( "RNGSSE::gaussian undefined" );
-      IGNORE(tid);
-      IGNORE(num);
-      IGNORE(r);
+      Adaptor generator( m_stream, tid );
+      std::normal_distribution<> gauss_dist( 0.0, 1.0 );
+      for (int i=0; i<num; ++i) r[i] = gauss_dist( generator );
     }
 
     //! Beta RNG: Generate beta random numbers
@@ -79,18 +108,20 @@ class RNGSSE {
     //! \param[in] q Second beta shape parameter
     //! \param[in] a Beta displacement parameter
     //! \param[in] b Beta scale factor
-    //! \param[inout] r Pointer to memory to write the RNGs to
-    // TODO: not yet implemented
+    //! \param[inout] r Pointer to memory to write the random numbers to
+    //! \details Generating beta-distributed random numbers is implemented via
+    //!   an adaptor, modeling boost::UniformRandomNumberGenerator, outsourcing
+    //!   the transformation of uniform random numbers to beta-distributed ones,
+    //!   to boost::random. The adaptor is instantiated here because a boost
+    //!   random number distribution, such as e.g.,
+    //!   boost::random::beta_distribution, generates numbers using operator()
+    //!   with no arguments, thus the RNG state and the thread ID (this latter
+    //!   only known here) must be stored in the adaptor functor's state.
     void beta( int tid, ncomp_t num, double p, double q, double a, double b,
                double* r ) const {
-      Throw( "RNGSSE::beta undefined" );
-      IGNORE(tid);
-      IGNORE(num);
-      IGNORE(p);
-      IGNORE(q);
-      IGNORE(a);
-      IGNORE(b);
-      IGNORE(r);
+      Adaptor generator( m_stream, tid );
+      boost::random::beta_distribution<> beta_dist( p, q );
+      for (int i=0; i<num; ++i) r[i] = beta_dist( generator ) * b + a;
     }
 
     //! Copy assignment
