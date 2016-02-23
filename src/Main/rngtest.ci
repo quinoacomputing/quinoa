@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/rngtest.ci
   \author    J. Bakosi
-  \date      Mon 02 Mar 2015 02:09:50 PM MST
+  \date      Tue 23 Feb 2016 09:52:35 AM MST
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Charm++ module interface file for rngtest
   \details   Charm++ module interface file for the random number generator test
@@ -19,6 +19,7 @@ mainmodule rngtest {
 
   namespace rngtest {
 
+    // Order important: must be the same as in Main/RNGTest.C
     readonly ctr::InputDeck g_inputdeck_defaults;
     readonly ctr::InputDeck g_inputdeck;
     readonly std::map< tk::ctr::RawRNGType, tk::RNG > g_rng;

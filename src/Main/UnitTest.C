@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/UnitTest.C
   \author    J. Bakosi
-  \date      Thu 11 Feb 2016 03:36:22 PM MST
+  \date      Tue 23 Feb 2016 03:36:12 PM MST
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     UnitTest's Charm++ main chare and main().
   \details   UnitTest's Charm++ main chare and main(). This file contains
@@ -77,44 +77,50 @@ const int MAX_TESTS_IN_GROUP = 80;
 } // tut::
 
 // Unit test groups to be tested. Each file defines a different test group.
-#include <tests/Base/TestFlip_map.h>
-#include <tests/Base/TestMake_list.h>
-#include <tests/Base/TestTimer.h>
-#include <tests/Base/TestCharmUtil.h>
-#include <tests/Base/TestHas.h>
-#include <tests/Base/TestDataLayout.h>
-#include <tests/Base/TestFactory.h>
-#include <tests/Base/TestPrint.h>
-#include <tests/Base/TestTaggedTuple.h>
-#include <tests/Base/TestException.h>
-#include <tests/Base/TestExceptionMPI.h>
-#include <tests/Base/TestPUPUtil.h>
-#include <tests/Base/TestReader.h>
-#include <tests/Base/TestStrConvUtil.h>
-#include <tests/Base/TestWriter.h>
-#include <tests/Base/TestProcessControl.h>
-#include <tests/Base/TestVector.h>
-#include <tests/Base/TestContainerUtil.h>
+#include "tests/Base/TestFlip_map.h"
+#include "tests/Base/TestMake_list.h"
+#include "tests/Base/TestTimer.h"
+#include "tests/Base/TestCharmUtil.h"
+#include "tests/Base/TestHas.h"
+#include "tests/Base/TestDataLayout.h"
+#include "tests/Base/TestFactory.h"
+#include "tests/Base/TestPrint.h"
+#include "tests/Base/TestTaggedTuple.h"
+#include "tests/Base/TestException.h"
+#include "tests/Base/TestExceptionMPI.h"
+#include "tests/Base/TestPUPUtil.h"
+#include "tests/Base/TestReader.h"
+#include "tests/Base/TestStrConvUtil.h"
+#include "tests/Base/TestWriter.h"
+#include "tests/Base/TestProcessControl.h"
+#include "tests/Base/TestVector.h"
+#include "tests/Base/TestContainerUtil.h"
 
-#include <tests/Control/TestSystemComponents.h>
-#include <tests/Control/TestControl.h>
-#include <tests/Control/TestFileParser.h>
-#include <tests/Control/TestStringParser.h>
-#include <tests/Control/TestToggle.h>
+#include "tests/Control/TestSystemComponents.h"
+#include "tests/Control/TestControl.h"
+#include "tests/Control/TestFileParser.h"
+#include "tests/Control/TestStringParser.h"
+#include "tests/Control/TestToggle.h"
 #ifdef HAS_MKL
-  #include <tests/Control/Options/TestMKLUniformMethod.h>
-  #include <tests/Control/Options/TestMKLGaussianMethod.h>
-  #include <tests/Control/Options/TestMKLBetaMethod.h>
+  #include "tests/Control/Options/TestMKLUniformMethod.h"
+  #include "tests/Control/Options/TestMKLGaussianMethod.h"
+  #include "tests/Control/Options/TestMKLBetaMethod.h"
 #endif
-#include <tests/Control/Options/TestRNG.h>
+#include "tests/Control/Options/TestRNG.h"
 
-#include <tests/IO/TestMesh.h>
+#include "tests/IO/TestMesh.h"
 
-#include <tests/Mesh/TestDerivedData.h>
+#include "tests/Mesh/TestDerivedData.h"
 
-#include <tests/LoadBalance/TestLoadDistributor.h>
-#include <tests/LoadBalance/TestLinearMap.h>
-#include <tests/LoadBalance/TestUnsMeshMap.h>
+#include "tests/RNG/TestRNG.h"
+#ifdef HAS_MKL
+  #include "tests/RNG/TestMKLRNG.h"
+#endif
+#include "tests/RNG/TestRNGSSE.h"
+
+#include "tests/LoadBalance/TestLoadDistributor.h"
+#include "tests/LoadBalance/TestLinearMap.h"
+#include "tests/LoadBalance/TestUnsMeshMap.h"
 
 //! \brief Charm handle to the main proxy, facilitates call-back to finalize,
 //!    etc., must be in global scope, unique per executable

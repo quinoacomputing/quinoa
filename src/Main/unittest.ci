@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/unittest.ci
   \author    J. Bakosi
-  \date      Wed 18 Mar 2015 09:14:56 AM MDT
+  \date      Tue 23 Feb 2016 03:34:00 PM MST
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Charm++ module interface file for unittest
   \details   Charm++ module interface file for the unit test suite, unittest.
@@ -18,8 +18,8 @@ mainmodule unittest {
 
   namespace unittest {
 
+    // Order important: must be the same as in Main/UnitTest.C
     readonly tut::test_runner_singleton g_runner;
-    readonly CProxy_TUTSuite g_suiteProxy;
     readonly std::string g_executable;
     readonly int g_maxTestsInGroup;
 

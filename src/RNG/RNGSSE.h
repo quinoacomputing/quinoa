@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/RNGSSE.h
   \author    J. Bakosi
-  \date      Mon 22 Feb 2016 11:10:23 AM MST
+  \date      Tue 23 Feb 2016 02:06:49 PM MST
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Interface to RNGSSE random number generators
   \details   Interface to RNGSSE random number generators
@@ -44,7 +44,7 @@ class RNGSSE {
     };
 
   public:
-    //! \brief Constructor
+    //! Constructor
     //! \param[in] nthreads Initialize RNG using this many independent streams
     //! \param[in] fnShort RNG initializer function for short streams
     //! \param[in] seqlen Sequence length enum: short, medium or long
@@ -157,6 +157,9 @@ class RNGSSE {
       m_init( nullptr ),
       m_stream( nullptr )
     { *this = std::move( x ); }
+
+    //! Accessor to the number of threads we operate on
+    SeqNumType nthreads() const noexcept { return m_nthreads; }
 
   private:
     SeqNumType m_nthreads;                 //!< Number of threads

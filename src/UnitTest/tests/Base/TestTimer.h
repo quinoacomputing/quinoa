@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/TestTimer.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 03:11:48 PM MDT
+  \date      Mon 22 Feb 2016 08:23:55 PM MST
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Unit tests for Base/Timer.h
   \details   Unit tests for Base/Timer.h
@@ -166,8 +166,7 @@ struct CharmTimer : CBase_CharmTimer {
     // migration time, so tested with a somewhat lose precision that includes
     // the approximate (guessed) migration time.
     try {
-     ensure_equals( "timer different after migrated: ",
-                    timer.dsec(), 1.0, 0.1 );
+     ensure( "timer different after migrated: ", timer.dsec() > 1.0 );
     } catch ( const failure& ex ) {
       tr.result = ex.result();
       tr.exception_typeid = ex.type();

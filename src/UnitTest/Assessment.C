@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/Assessment.C
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 12:59:47 PM MDT
+  \date      Tue 23 Feb 2016 03:51:57 PM MST
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Unit test suite assessment
   \details   Unit test suite assessment.
@@ -83,8 +83,8 @@ assess( const tk::Print& print,
     if (nfail) fail = std::string(nexcp || nskip || nwarn ?
                       ", " : "") + "failed: " + std::to_string(nfail);
     print.note< tk::QUIET >
-              ( "Of " + std::to_string(ncomplete) + " tests total: " +
-                warn + skip + excp + fail );
+              ( "Of " + std::to_string(ncomplete) + " " + suite +
+                " tests total: " + warn + skip + excp + fail );
   }
 }
 
