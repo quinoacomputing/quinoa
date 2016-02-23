@@ -35,12 +35,17 @@ target_link_libraries(${UNITTEST_EXECUTABLE}
                       Base
                       IO
                       Mesh
+                      RNG
                       LoadBalance
                       UnitTest
                       UnitTestControl
                       #${SILO_LIBRARY}
                       ${PUGIXML_LIBRARIES}
                       ${Trilinos_LIBRARIES}
+                      ${MKL_INTERFACE_LIBRARY}
+                      ${MKL_CORE_LIBRARY}
+                      ${MKL_SEQUENTIAL_LAYER_LIBRARY}
+                      ${RNGSSE_LIBRARY}
 )
 
 # Add custom dependencies for UnitTest's main Charm++ module

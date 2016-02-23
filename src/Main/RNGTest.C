@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTest.C
   \author    J. Bakosi
-  \date      Mon 01 Feb 2016 03:29:10 PM MST
+  \date      Tue 23 Feb 2016 07:47:40 AM MST
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     RNGTest's random number generator test suite's Charm++ main chare.
   \details   RNGTest's random number generator test suite's Charm++ main chare.
@@ -99,7 +99,8 @@ ctr::InputDeck g_inputdeck;
 //! Random number generators selected by user
 //! \details This map is in global scope, because it holds polymorphic
 //!   objects, and thus must be distributed to all PEs during initialization.
-//!   Once distributed by the runtime system, the objects do not change.
+//!   Once distributed by the runtime system, the objects do not change and
+//!   available to all PEs.
 std::map< tk::ctr::RawRNGType, tk::RNG > g_rng;
 //! Statistical test wrappers, grouped by test libraries
 //! \details This object is in global scope, because it holds function pointers

@@ -2,14 +2,14 @@
 /*!
   \file      src/UnitTest/tests/Control/Options/TestRNG.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 03:15:47 PM MDT
+  \date      Tue 23 Feb 2016 09:20:24 AM MST
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Unit tests for Control/Options/RNG
   \details   Unit tests for Control/Options/RNG
 */
 //******************************************************************************
-#ifndef test_RNG_h
-#define test_RNG_h
+#ifndef test_RNGOptions_h
+#define test_RNGOptions_h
 
 #include <tut/tut.hpp>
 
@@ -19,23 +19,23 @@
 namespace tut {
 
 //! All tests in group inherited from this base
-struct RNG_common {
+struct RNGOptions_common {
   const tk::ctr::RNG m;
 };
 
 //! Test group shortcuts
-using RNG_group = test_group< RNG_common, MAX_TESTS_IN_GROUP >;
-using RNG_object = RNG_group::object;
+using RNGOptions_group = test_group< RNGOptions_common, MAX_TESTS_IN_GROUP >;
+using RNGOptions_object = RNGOptions_group::object;
 
 //! Define test group
-RNG_group RNG( "Control/Options/RNG" );
+RNGOptions_group RNGOptions( "Control/Options/RNGOptions" );
 
 //! Test definitions for group
 
 //! Test that member function param() finds RNG parameter for method type
 //! \author J. Bakosi
 template<> template<>
-void RNG_object::test< 1 >() {
+void RNGOptions_object::test< 1 >() {
   set_test_name( "param() finds RNG parameter" );
   ensure( "cannot find parameter",
           m.param( tk::ctr::RNGType::RNGSSE_GM19 ) == 0 );
@@ -44,7 +44,7 @@ void RNG_object::test< 1 >() {
 //! Test that member function param() throws in DEBUG mode if can't find param
 //! \author J. Bakosi
 template<> template<>
-void RNG_object::test< 2 >() {
+void RNGOptions_object::test< 2 >() {
   set_test_name( "param() throws if can't find" );
 
   try {
@@ -66,7 +66,7 @@ void RNG_object::test< 2 >() {
 //! Test copy constructor
 //! \author J. Bakosi
 template<> template<>
-void RNG_object::test< 3 >() {
+void RNGOptions_object::test< 3 >() {
   set_test_name( "copy constructor" );
 
   tk::ctr::RNG c( m );
@@ -79,7 +79,7 @@ void RNG_object::test< 3 >() {
 //! Test move constructor
 //! \author J. Bakosi
 template<> template<>
-void RNG_object::test< 4 >() {
+void RNGOptions_object::test< 4 >() {
   set_test_name( "move constructor" );
 
   tk::ctr::RNG c( m );
@@ -92,7 +92,7 @@ void RNG_object::test< 4 >() {
 //! Test copy assignment
 //! \author J. Bakosi
 template<> template<>
-void RNG_object::test< 5 >() {
+void RNGOptions_object::test< 5 >() {
   set_test_name( "copy assignment" );
 
   tk::ctr::RNG c;
@@ -104,7 +104,7 @@ void RNG_object::test< 5 >() {
 //! Test move assignment
 //! \author J. Bakosi
 template<> template<>
-void RNG_object::test< 6 >() {
+void RNGOptions_object::test< 6 >() {
   set_test_name( "move assignment" );
 
   tk::ctr::RNG c;
@@ -117,7 +117,7 @@ void RNG_object::test< 6 >() {
 //! Test that member function lib() finds MKL library type for a MKL rng
 //! \author J. Bakosi
 template<> template<>
-void RNG_object::test< 7 >() {
+void RNGOptions_object::test< 7 >() {
   set_test_name( "lib() finds MKL library type" );
   ensure( "cannot find library type",
           m.lib( tk::ctr::RNGType::MKL_R250 ) == tk::ctr::RNGLibType::MKL );
@@ -127,7 +127,7 @@ void RNG_object::test< 7 >() {
 //! Test that member function lib() finds RNGSSE library type for a RNGSSE rng
 //! \author J. Bakosi
 template<> template<>
-void RNG_object::test< 8 >() {
+void RNGOptions_object::test< 8 >() {
   set_test_name( "lib() finds RNGSSE library type" );
   ensure( "cannot find library type",
           m.lib( tk::ctr::RNGType::RNGSSE_GM29 ) ==
@@ -137,7 +137,7 @@ void RNG_object::test< 8 >() {
 //! Test that member function supportSeq() returns true for an RNGSSE rng
 //! \author J. Bakosi
 template<> template<>
-void RNG_object::test< 9 >() {
+void RNGOptions_object::test< 9 >() {
   set_test_name( "supportsSeq() true for RNGSSE" );
   ensure_equals( "cannot find RNGSSE rng in support map",
                  m.supportsSeq( tk::ctr::RNGType::RNGSSE_GM29 ), true );
@@ -150,7 +150,7 @@ void RNG_object::test< 9 >() {
 //! mkl)
 //! \author J. Bakosi
 template<> template<>
-void RNG_object::test< 10 >() {
+void RNGOptions_object::test< 10 >() {
   set_test_name( "supportsSeq() false for non-RNGSSE" );
   ensure_equals( "cannot find non-RNGSSE rng in support map",
                  m.supportsSeq( tk::ctr::RNGType::MKL_SFMT19937 ), false );
@@ -161,7 +161,7 @@ void RNG_object::test< 10 >() {
 //!   parameter
 //! \author J. Bakosi
 template<> template<>
-void RNG_object::test< 11 >() {
+void RNGOptions_object::test< 11 >() {
   set_test_name( "param() correctly returns default" );
 
   // empty bundle: no parameter specified
@@ -175,7 +175,7 @@ void RNG_object::test< 11 >() {
 //!   parameter
 //! \author J. Bakosi
 template<> template<>
-void RNG_object::test< 12 >() {
+void RNGOptions_object::test< 12 >() {
   set_test_name( "param() returns specified param" );
 
   // specify sequence length parameter for RNGSSE rng
@@ -192,4 +192,4 @@ void RNG_object::test< 12 >() {
 
 } // tut::
 
-#endif // test_RNG_h
+#endif // test_RNGOptions_h

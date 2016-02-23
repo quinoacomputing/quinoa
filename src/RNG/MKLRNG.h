@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/MKLRNG.h
   \author    J. Bakosi
-  \date      Sun 21 Feb 2016 05:29:10 PM MST
+  \date      Tue 23 Feb 2016 02:43:52 PM MST
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Interface to Intel MKL VSL random number generators
   \details   Interface to Intel MKL VSL random number generators.
@@ -30,12 +30,12 @@ class MKLRNG {
     //! \param[in] uniform_method MKL ID of the method to use for uniform RNGs
     //! \param[in] gaussian_method MKL ID of the method to use for Gaussian RNGs
     //! \param[in] beta_method MKL ID of the method to use for beta RNGs
-    explicit MKLRNG( int nthreads,
-                     int brng,
-                     unsigned int seed,
-                     int uniform_method,
-                     int gaussian_method,
-                     int beta_method ) :
+    explicit MKLRNG( int nthreads = 1,
+                     int brng = VSL_BRNG_MCG59,
+                     unsigned int seed = 0,
+                     int uniform_method = VSL_RNG_METHOD_UNIFORM_STD,
+                     int gaussian_method = VSL_RNG_METHOD_GAUSSIAN_BOXMULLER,
+                     int beta_method = VSL_RNG_METHOD_BETA_CJA ) :
       m_brng( brng ),
       m_seed( seed ),
       m_uniform_method( uniform_method ),
@@ -44,6 +44,7 @@ class MKLRNG {
       m_nthreads( nthreads )
     {
       Assert( nthreads > 0, "Need at least one thread" );
+      Assert( brng > 0, "Basic RNG MKL parameter must be positive" );
       // Allocate array of stream-pointers for threads
       m_stream = tk::make_unique< VSLStreamStatePtr[] >(
                    static_cast<std::size_t>(nthreads) );
@@ -65,7 +66,7 @@ class MKLRNG {
     }
 
     //! Destructor
-    ~MKLRNG() { deleteStreams(); }
+    ~MKLRNG() noexcept { deleteStreams(); }
 
     //! Uniform RNG: Generate uniform random numbers
     //! \param[in] tid Thread (or more precisely stream) ID
@@ -169,6 +170,10 @@ class MKLRNG {
       m_nthreads( 0 ),
       m_stream( nullptr )
     { *this = std::move(x); }
+
+    //! Accessor to the number of threads we operate on
+    std::size_t nthreads() const noexcept
+    { return static_cast< std::size_t >( m_nthreads); }
 
   private:
     //! Delete all thread streams
