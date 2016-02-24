@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Exception.h
   \author    J. Bakosi
-  \date      Fri 22 May 2015 08:10:21 AM MDT
+  \date      Tue 23 Feb 2016 10:02:36 PM MST
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Exception class declaration
   \details   Exception class declaration. The basic functionality provided by
@@ -107,9 +107,6 @@ class Exception : public std::exception {
 
     //! Save call trace
     void saveTrace() noexcept;
-
-    //! Echo call trace as symbols
-    void echoSymbols() noexcept;
 
     //! Demangle and Echo call trace
     void echoTrace() noexcept;

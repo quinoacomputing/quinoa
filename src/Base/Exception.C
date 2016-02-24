@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Exception.C
   \author    J. Bakosi
-  \date      Fri 22 May 2015 08:07:29 AM MDT
+  \date      Tue 23 Feb 2016 10:02:31 PM MST
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Exception class definition
   \details   Exception class definition
@@ -109,22 +109,6 @@ Exception::saveTrace() noexcept
 
   // Resolve addresses into strings containing "filename(function+address)"
   m_symbolList = backtrace_symbols(m_addrList, m_addrLength);
-}
-
-void
-Exception::echoSymbols() noexcept
-//******************************************************************************
-//  Echo call trace as symbol list
-//! \details Exception safety: no-throw guarantee: this member function never
-//!   throws exceptions. For more information see the libc manual at
-//!   http://www.gnu.org/software/libc/manual/html_node/Backtraces.html
-//! \author J. Bakosi
-//******************************************************************************
-{
-  // Echo trace
-  for (int i=0; i<m_addrLength; ++i) {
-    printf("%s\n", m_symbolList[i]);
-  }
 }
 
 void
