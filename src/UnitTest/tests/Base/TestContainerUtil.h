@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/TestContainerUtil.h
   \author    J. Bakosi
-  \date      Sun 14 Feb 2016 08:01:31 AM MST
+  \date      Tue 23 Feb 2016 09:32:45 PM MST
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Unit tests for Base/ContainerUtil.h
   \details   Unit tests for Base/ContainerUtil.h
@@ -104,6 +104,11 @@ void ContainerUtil_object::test< 3 >() {
   std::vector< int > v{{ 1, 1, 2, 6, -2, 3, 5, 5 }};
   auto e = tk::extents( v );
   ensure( "vector extents incorrect", e == std::array< int, 2 >{{ -2, 6 }} );
+
+  std::vector< std::size_t > w{{ 1, 1, 2, 6, 2, 3, 5, 5 }};
+  auto f = tk::extents( w );
+  ensure( "vector extents incorrect",
+          f == std::array< std::size_t, 2 >{{ 1, 6 }} );
 }
 
 //! Test associative container (value) extents
