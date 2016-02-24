@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/RNG.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:40:36 PM MDT
+  \date      Wed 24 Feb 2016 10:18:14 AM MST
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Random number generator
   \details   This file defines a generic random number generator class. The
@@ -37,7 +37,7 @@ class RNG {
     using ncomp_t = kw::ncomp::info::expect::type;    
 
   public:
-    //! \brief Constructor taking an object modeling Concept.
+    //! \brief Constructor taking an object modeling Concept
     //! \details The object of class T comes pre-constructed.
     //! \param[in] x Instantiated object of type T given by the template
     //!   argument.
@@ -45,7 +45,7 @@ class RNG {
     explicit RNG( T x ) : self( make_unique< Model<T> >( std::move(x) ) ) {}
 
     //! \brief Constructor taking a function pointer to a constructor of an
-    //!   object modeling Concept.
+    //!   object modeling Concept
     //! \details Passing std::function allows late execution of the constructor,
     //!   i.e., as late as inside this class' constructor, and thus usage from a
     //!   factory.
@@ -68,6 +68,9 @@ class RNG {
                double* r ) const
     { self->beta( stream, num, p, q, a, b, r ); }
 
+    //! Public interface to number of threads accessor
+    std::size_t nthreads() const noexcept { return self->nthreads(); }
+
     //! Copy assignment
     RNG& operator=( const RNG& x )
     { RNG tmp(x); *this = std::move(tmp); return *this; }
@@ -88,6 +91,7 @@ class RNG {
       virtual void gaussian( int, ncomp_t, double* ) const = 0;
       virtual void beta( int, ncomp_t, double, double, double, double, double* )
       const = 0;
+      virtual std::size_t nthreads() const noexcept = 0;
     };
 
     //! Model models the Concept above by deriving from it and overriding the
@@ -103,6 +107,7 @@ class RNG {
       void beta( int stream, ncomp_t num, double p, double q, double a,
                  double b, double* r ) const override
       { data.beta( stream, num, p, q, a, b, r ); }
+      std::size_t nthreads() const noexcept override { return data.nthreads(); }
       T data;
     };
 
