@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/TestException.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 03:12:15 PM MDT
+  \date      Wed 24 Feb 2016 07:36:52 AM MST
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Unit tests for Base/Exception.h
   \details   Unit tests for Base/Exception.h
@@ -14,6 +14,7 @@
 #include <tut/tut.hpp>
 
 #include "Exception.h"
+#include "ProcessControl.h"
 
 namespace tut {
 
@@ -129,6 +130,42 @@ void Exception_object::test< 7 >() {
     fail( "should not throw excecption" );
   }
 }
+
+// //! Test tk::Exception::handleException()
+// //! \note Disabled until we find a way to redirect/divert printf's output to
+// //!   from stdout to a file (buffer, etc.) and be able to safely restore the
+// //!   output to stdout in a way that correctly interoperates with Charm++.
+// //!   Currently, the redirection to file works using the code below, but
+// //!   restoration happens in an unpredictable way: sometimes works sometimes
+// //!   does not, swallowing the rest of the output from the unit test harness.
+// //! \author J. Bakosi
+// template<> template<>
+// void Exception_object::test< 8 >() {
+//   set_test_name( "handleException" );
+//
+//   try {
+//     ErrChk( 0 == 1, "msg" );    // will throw tk::Exception
+//   }
+//   catch ( tk::Exception& e ) {
+//
+//     // redirect printf's output to file (requires POSIX)
+//     // see http://stackoverflow.com/a/11110451
+//     int stdout_fd = dup( STDOUT_FILENO );
+//     freopen( "handle_output", "w", stdout );
+//
+//     e.handleException();
+//
+//     // restore stdout to its original state (requires POSIX)
+//     fclose( stdout );
+//     dup2( stdout_fd, STDOUT_FILENO );
+//     stdout = fdopen( STDOUT_FILENO, "w" );
+//     close( stdout_fd );
+//     // remove handle_output from disk
+//     tk::rm( "handle_output" );
+//
+//   }
+//
+// }
 
 } // tut::
 
