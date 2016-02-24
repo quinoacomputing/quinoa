@@ -31,4 +31,4 @@ void mrg32k3a_get_sse_state_(mrg32k3a_state* state,mrg32k3a_sse_state* sse_state
 
 void mrg32k3a_print_state_(mrg32k3a_state* state);
 
-#endif mrg32k3a_h
+#endif // mrg32k3a_h
