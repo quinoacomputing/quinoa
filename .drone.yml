@@ -1,6 +1,7 @@
-image: jbakosi/quinoa-docker:debian-testing-clang-alltpl
+build:
+  image: jbakosi/quinoa-docker:debian-testing-clang-alltpl
 
-script:
+commands:
   - mkdir -p tpl/build
   - cd tpl/build
   - cmake -D CMAKE_CXX_COMPILER=mpic++ -D CMAKE_C_COMPILER=mpicc -D CMAKE_Fortran_COMPILER=mpif90 -D CMAKE_BUILD_TYPE=Debug -D STDLIBCPP=libstdc++ ..
