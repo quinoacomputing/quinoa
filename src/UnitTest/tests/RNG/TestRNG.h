@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/RNG/TestRNG.h
   \author    J. Bakosi
-  \date      Wed 24 Feb 2016 10:50:56 AM MST
+  \date      Fri 26 Feb 2016 03:27:14 PM MST
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Unit tests for RNG/RNG.h
   \details   Unit tests for RNG/RNG.h
@@ -16,7 +16,10 @@
 #include <boost/functional/value_factory.hpp>
 #include <tut/tut.hpp>
 
-#include <mkl_vsl_types.h>
+#ifdef HAS_MKL
+  #include <mkl_vsl_types.h>
+  #include "MKLRNG.h"
+#endif
 
 #include <gm19.h>
 #include <gm29.h>
@@ -31,7 +34,6 @@
 #include <mrg32k3a.h>
 
 #include "RNG.h"
-#include "MKLRNG.h"
 #include "RNGSSE.h"
 
 namespace tut {
@@ -41,7 +43,9 @@ struct RNG_common {
 
   //! Constructor: create a vector of RNGs to be tested by most tests
   RNG_common() {
+    #ifdef HAS_MKL
     rngs.emplace_back( tk::MKLRNG( 4, VSL_BRNG_MCG31 ) );
+    #endif
     rngs.emplace_back( tk::RNGSSE< gm19_state, unsigned, gm19_generate_ >
                                  ( 4, gm19_init_sequence_ ) );
     rngs.emplace_back( tk::RNGSSE< gm29_state, unsigned, gm29_generate_ >
@@ -251,7 +255,9 @@ void RNG_object::test< 2 >() {
 
   std::vector< tk::RNG > v;
 
+  #ifdef HAS_MKL
   add< tk::MKLRNG >( v, 4, VSL_BRNG_MCG31 );
+  #endif
 
   add< tk::RNGSSE< gm19_state, unsigned, gm19_generate_ > >
      ( v, 4, gm19_init_sequence_ );
