@@ -43,7 +43,7 @@ if (MKL_INTERFACE_LIBRARY AND
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DMKL_ILP64 -m64")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DMKL_ILP64 -m64")
 else()
-  message(STATUS "MKL NOT found: Intel MKL VSL RNGs will not be available")
+  message(WARNING "MKL NOT found: Intel MKL VSL RNGs will not be available")
   set(MKL_INTERFACE_LIBRARY "")
   set(MKL_SEQUENTIAL_LAYER_LIBRARY "")
   #set(MKL_THREADED_LAYER_LIBRARY "")
