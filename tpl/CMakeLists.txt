@@ -97,11 +97,9 @@ include(libstdcxx)
 # Compiler-specific settings
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")  # clang-specific settings
 
-  # Set the default standard C++ library and allow selection by default
-  if (NOT STDLIBCPP)
-    setlibstdcxx("libc++")
-  else()
-    setlibstdcxx(${STDLIBCPP})
+  # Offer switch between libc++ and libstdc++, using libc++ as default
+  if (libc++_FOUND)
+    set_libstdcpp_vs_libcpp(CXXFLAGS "libc++")
   endif()
 
   # Don't error out on functions not returning anything even when supposed to,
@@ -112,20 +110,14 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")  # gcc-specific settings
 
   # Boost as build toolset wants 'gcc' for the gnu compiler
   set(BOOST_TOOLSET "gcc")
-  # Set the default standard C++ library and allow selection by default
-  if (NOT STDLIBCPP)
-    setlibstdcxx("libstdc++")
-  else()
-    setlibstdcxx(${STDLIBCPP})
-  endif()
+
+  # Gnu will use libstdc++ by default. We do not offer libc++.
 
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
 
-  # Set the default standard C++ library and allow selection by default
-  if (NOT STDLIBCPP)
-    setlibstdcxx("libstdc++")
-  else()
-    setlibstdcxx(${STDLIBCPP})
+  # Offer switch between libc++ and libstdc++, using libc++ as default
+  if (libc++_FOUND)
+    set_libstdcpp_vs_libcpp(CXXFLAGS "libc++")
   endif()
 
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "PGI")  # pgi-specific settings
@@ -150,14 +142,6 @@ string(TOLOWER ${CMAKE_BUILD_TYPE} BOOST_BUILD_TYPE)
 # Enable "--with-production" for Charm++ build for Release builds
 if(CMAKE_BUILD_TYPE MATCHES "Rel")      # Release, RelWithDebInfo, MinSizeRel
   set(CHARM_RELEASE_BUILD "--with-production")
-endif()
-
-# Set compiler flags for use of libc++. If nothing is given, do nothing; gnu
-# and intel will use libstdc++, while clang will use libc++ by default.
-if(LIBCXX_CPP)
-   # Use libc++ (http://libcxx.llvm.org)
-   # Use libc++abi (http://libcxxabi.llvm.org)
-   set(CXXFLAGS "${CXXFLAGS} -stdlib=libc++")
 endif()
 
 # Get compiler flags (CFLAGS, CXXFLAGS, FFLAGS) independent of CMAKE_BUILD_TYPE
