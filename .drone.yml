@@ -2,9 +2,20 @@ build:
   image: jbakosi/quinoa-testing:latest
   commands:
     - source /usr/share/modules/init/bash
-    - module load mkl gnu/system openmpi/1.10.2/gnu/system ; module list
+    - module load $$MKL $$COMPILER openmpi/1.10.2/$$COMPILER ; module list
     - cd /home/quinoa/quinoa
-    - mkdir tpl/build; cd tpl/build; cmake .. ; make -sj$(nproc) ; cd -
-    - mkdir build ; cd build ; cmake -G Ninja ../src ; ninja ; cd -
-    - cd build ; charmrun +p$(nproc) Main/unittest -v ; cd -
-    - cd build ; ctest -j$(nproc) -E Big ; cd -
+    - mkdir tpl/build; cd tpl/build; cmake -D STDLIBCPP=$$STDLIBCPP .. ; make -sj`~/cpus.sh` ; cd -
+    - mkdir build ; cd build ; cmake -D STDLIBCPP=$$STDLIBCPP -G Ninja ../src ; ninja ; cd -
+    - cd build ; ./charmrun +p`~/cpus.sh` Main/unittest -v ; cd -
+    - cd build ; ctest -j`~/cpus.sh` -R GeneralizedDirichlet -E Big ; cd -
+
+matrix:
+  COMPILER:
+    - gnu/system
+    - clang/system
+  STDLIBCPP:
+    - libc++
+    - libstdc++
+  MKL:
+    - mkl
+    -
