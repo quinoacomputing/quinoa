@@ -1,0 +1,79 @@
+# vim: filetype=dockerfile:
+#
+# Author:    J. Bakosi
+# Date:      Mon 29 Feb 2016 09:48:24 AM MST
+# Copyright: 2012-2016, Jozsef Bakosi.
+
+# Dockerfile for setting up a complete environment in a docker container for
+# testing Quinoa. We start from the official debian/testing distribution and
+# install all prerequisites, compilers, OpenMPI, etc. This docker images is
+# intended to be created, and the image stored in a docker registry from which
+# a continuous integration/delivery platform, such as drone, can fire up a
+# matrix of builds for testing the build and the code.
+
+# This container is only intended for testing and thus for developers and not
+# for users. Users should use the release containers.
+
+# This container contains proprietary software, such as Intel's C++ and Fortran
+# Compilers and the MKL library, and thus the container image should not be
+# publicly distributed.
+#
+# Prerequisites that must be supplied before this container can be built:
+#
+# (1) openmpi-1.10.2.tar.bz2
+#
+# (2) Intel's C++ and Fortran Compilers and the MKL library, previously
+#     installed in /opt/intel, then copied to <quinoa>/docker/intel.
+
+FROM debian:testing
+MAINTAINER Jozsef Bakosi <jbakosi@lanl.gov>
+
+# From behind LANL firewall
+ENV http_proxy http://proxyout.lanl.gov:8080/
+ENV https_proxy https://proxyout.lanl.gov:8080/
+
+# Install system-wide prerequisites, including gcc and clang
+RUN apt-get -y update && apt-get install -y debian-keyring debian-archive-keyring wget
+RUN wget -O - http://llvm.org/apt/llvm-snapshot.gpg.key | apt-key add -
+RUN echo "deb http://ftp.us.debian.org/debian squeeze main non-free contrib \n deb http://ftp.us.debian.org/debian testing main non-free contrib \n deb http://security.debian.org testing/updates main contrib non-free \n deb http://llvm.org/apt/unstable/ llvm-toolchain main" > /etc/apt/sources.list
+RUN apt-get -y update && apt-get install -y m4 zlib1g-dev procps cpio git cmake gcc g++ clang libc++-dev libc++abi-dev gfortran environment-modules libpugixml-dev libpstreams-dev libboost-all-dev liblapack-dev liblapacke-dev ninja-build gmsh
+
+# Copy over install of Intel Parallel Studio XE Professional Edition for Fortran and C++ Linux
+COPY intel /opt/intel
+
+# Switch to bash for the rest of the build (needed for environment-modules below)
+RUN rm /bin/sh && ln -s /bin/bash /bin/sh
+
+# Populate and setup environment modules
+RUN mkdir -p /usr/share/modules/modulefiles/gnu /usr/share/modules/modulefiles/clang /usr/share/modules/modulefiles/intel /usr/share/modules/modulefiles/mkl /usr/share/modules/modulefiles/openmpi/1.10.2/gnu /usr/share/modules/modulefiles/openmpi/1.10.2/clang /usr/share/modules/modulefiles/openmpi/1.10.2/intel
+COPY modules/gnu/system /usr/share/modules/modulefiles/gnu/
+COPY modules/openmpi/1.10.2/gnu/system /usr/share/modules/modulefiles/openmpi/1.10.2/gnu/
+COPY modules/clang/system /usr/share/modules/modulefiles/clang/
+COPY modules/openmpi/1.10.2/clang/system /usr/share/modules/modulefiles/openmpi/1.10.2/clang/
+COPY modules/intel/latest /usr/share/modules/modulefiles/intel/
+COPY modules/openmpi/1.10.2/intel/16.0.2 /usr/share/modules/modulefiles/openmpi/1.10.2/intel/
+COPY modules/mkl/latest /usr/share/modules/modulefiles/mkl/
+
+# Install OpenMPI with gnu, clang, intel
+ADD openmpi-1.10.2.tar.bz2 /install
+RUN CPUS=`cat /proc/cpuinfo | grep MHz | wc -l` ; source /usr/share/modules/init/bash && module load gnu/system && cd /install/openmpi-1.10.2 && ./configure --prefix=/opt/openmpi/1.10.2/gnu/system && make -sj$CPUS install
+RUN CPUS=`cat /proc/cpuinfo | grep MHz | wc -l` ; source /usr/share/modules/init/bash && module load clang/system && cd /install/openmpi-1.10.2 && ./configure --prefix=/opt/openmpi/1.10.2/clang/system && make -sj$CPUS install
+RUN CPUS=`cat /proc/cpuinfo | grep MHz | wc -l` ; source /usr/share/modules/init/bash && module load intel/latest && cd /install/openmpi-1.10.2 && ./configure --prefix=/opt/openmpi/1.10.2/intel/16.0.2 && make -sj$CPUS install
+RUN rm -rf /install/openmpi-1.10.2
+
+# Remove /install - no more installations after this line
+RUN rm -rf /install
+
+# Copy init script used to initialize interactive shell
+COPY init.sh cpus.sh /home/quinoa/
+ENTRYPOINT ["/home/quinoa/init.sh"]
+# Create a non-root user 'quinoa'
+RUN groupadd -r quinoa -g 433 && useradd -u 431 -r -g quinoa -d /home/quinoa -s /sbin/nologin -c "Quinoa user" quinoa && chown -R quinoa:quinoa /home/quinoa
+# Switch default user to 'quinoa' and change default work directory
+USER quinoa
+WORKDIR /home/quinoa
+# Set bash as default interactive shell
+CMD ["/bin/bash"]
+
+# Clone quinoa
+RUN git clone https://github.com/jbakosi/quinoa.git

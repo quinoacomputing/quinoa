@@ -1,0 +1,21 @@
+#%Module1.0#####################################################################
+##
+## mkl/latest modulefile
+##
+
+setenv MKLROOT /opt/intel/mkl
+
+prepend-path CPATH /opt/intel/mkl/include
+
+prepend-path INCLUDE /opt/intel/mkl/include
+
+prepend-path LD_LIBRARY_PATH /opt/intel/lib/intel64:/opt/intel/mkl/lib/intel64
+
+prepend-path LIBRARY_PATH /opt/intel/lib/intel64:/opt/intel/mkl/lib/intel64
+
+catch {set cur_manpath $env(MANPATH)}
+if { ![info exists cur_manpath] || ($cur_manpath == "") } {
+   setenv MANPATH :
+}
+
+prepend-path MANPATH /opt/intel/man/common

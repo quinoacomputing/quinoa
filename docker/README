@@ -1,0 +1,8 @@
+This directory contains Docker configuration required to automatically build
+Docker images with all dependencies pre-installed used for automated builds and
+testing.
+
+Note that not all prerequisites are included. Note included are binary files,
+such as openmpi release tarballs, or proprietary software, such as Intel's C++
+and Fortran Compilers and the MKL library. See the docker files for more
+details.

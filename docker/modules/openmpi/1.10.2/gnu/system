@@ -1,0 +1,62 @@
+#%Module1.0#####################################################################
+## vi:set filetype=tcl:
+## openmpi/1.10.2/gnu/system modulefile
+
+# load prereq always, don't unload at unload
+if { [module-info mode load] } {
+  module load gnu/system
+}
+
+set root   /opt/openmpi/1.10.2/gnu/system
+set bindir $root/bin
+set libdir $root/lib
+
+setenv MPI_ROOT $root
+
+prepend-path PATH $bindir
+prepend-path LD_LIBRARY_PATH $libdir
+
+catch {set cur_manpath $env(MANPATH)}
+if { ![info exists cur_manpath] || ($cur_manpath == "") } {
+   setenv MANPATH :
+}
+
+prepend-path MANPATH $root/share/man
+
+# save old ones
+catch { set cc  $env(CC)  }
+catch { set cxx $env(CXX) }
+catch { set fc  $env(FC)  }
+catch { set f77 $env(F77) }
+catch { set f90 $env(F90) }
+catch { set f95 $env(F95) }
+setenv _MODULES_CC_OLD  $cc
+setenv _MODULES_CXX_OLD $cxx
+setenv _MODULES_FC_OLD  $fc
+setenv _MODULES_F77_OLD $f77
+setenv _MODULES_F90_OLD $f90
+setenv _MODULES_F95_OLD $f95
+
+# set new ones
+setenv  CC   $bindir/mpicc
+setenv  CXX  $bindir/mpic++
+setenv  FC   $bindir/mpif90
+setenv  F77  $bindir/mpif77
+setenv  F90  $bindir/mpif90
+setenv  F95  $bindir/mpif90
+
+# reset old ones at unload
+if { [module-info mode remove] } {
+  catch { set cc  $env(_MODULES_CC_OLD)  }
+  catch { set cxx $env(_MODULES_CXX_OLD) }
+  catch { set fc  $env(_MODULES_FC_OLD)  }
+  catch { set f77 $env(_MODULES_F77_OLD) }
+  catch { set f90 $env(_MODULES_F90_OLD) }
+  catch { set f95 $env(_MODULES_F95_OLD) }
+  unsetenv CC  $cc
+  unsetenv CXX $cxx
+  unsetenv FC  $fc
+  unsetenv F77 $f77
+  unsetenv F90 $f90
+  unsetenv F95 $f95
+}
