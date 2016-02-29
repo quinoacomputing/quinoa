@@ -1,0 +1,40 @@
+#%Module1.0#####################################################################
+## vi:set filetype=tcl:
+## intel/latest modulefile
+
+# conflict with anything that sets CC
+if { [module-info mode load] } {
+  catch {set cc $env(_MODULES_CC)}
+  if { [info exists cc] && ($cc != "[module-info name]") } {
+    puts stderr "ERROR: Module '[module-info name]' conflicts with a currently loaded module '$cc'"
+    break
+    exit 1
+  }
+}
+
+setenv  _MODULES_CC     [module-info name]
+
+setenv INTEL_LICENSE_FILE /opt/intel/licenses
+
+prepend-path LD_LIBRARY_PATH /opt/intel/lib/intel64
+
+prepend-path LIBRARY_PATH /opt/intel/lib/intel64
+
+catch {set cur_manpath $env(MANPATH)}
+if { ![info exists cur_manpath] || ($cur_manpath == "") } {
+   setenv MANPATH :
+}
+
+prepend-path MANPATH /opt/intel/man/common
+
+prepend-path PATH /opt/intel/bin
+
+#set gxx_version [exec g++ -dumpversion]
+#prepend-path CPLUS_INCLUDE_PATH /usr/include/x86_64-linux-gnu/c++/$gxx_version
+
+setenv  CC  /opt/intel/bin/icc
+setenv  CXX /opt/intel/bin/icpc
+setenv  F77 /opt/intel/bin/ifort
+setenv  F90 /opt/intel/bin/ifort
+setenv  F95 /opt/intel/bin/ifort
+setenv  FC  /opt/intel/bin/ifort

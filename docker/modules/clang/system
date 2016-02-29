@@ -1,0 +1,21 @@
+#%Module1.0#####################################################################
+## vi:set filetype=tcl:
+## clang/system modulefile
+
+if { [module-info mode load] } {
+  catch {set cc $env(_MODULES_CC)}
+  if { [info exists cc] && ($cc != "[module-info name]") } {
+    puts stderr "ERROR: Module '[module-info name]' conflicts with a currently loaded module '$cc'"
+    break
+    exit 1
+  }
+}
+
+setenv  _MODULES_CC     [module-info name]
+
+setenv  CC  clang-3.8
+setenv  CXX clang++-3.8
+setenv  F77 gfortran
+setenv  F90 gfortran
+setenv  FC  gfortran
+setenv  F95 gfortran
