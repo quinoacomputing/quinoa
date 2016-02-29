@@ -1,12 +1,12 @@
 # vim: filetype=dockerfile:
 #
 # Author:    J. Bakosi
-# Date:      Mon 29 Feb 2016 09:48:24 AM MST
+# Date:      Mon 29 Feb 2016 09:59:53 AM MST
 # Copyright: 2012-2016, Jozsef Bakosi.
 
 # Dockerfile for setting up a complete environment in a docker container for
 # testing Quinoa. We start from the official debian/testing distribution and
-# install all prerequisites, compilers, OpenMPI, etc. This docker images is
+# install all prerequisites, compilers, OpenMPI, etc. This docker image is
 # intended to be created, and the image stored in a docker registry from which
 # a continuous integration/delivery platform, such as drone, can fire up a
 # matrix of builds for testing the build and the code.
@@ -15,8 +15,8 @@
 # for users. Users should use the release containers.
 
 # This container contains proprietary software, such as Intel's C++ and Fortran
-# Compilers and the MKL library, and thus the container image should not be
-# publicly distributed.
+# Compilers and the MKL library, and thus the container image is not publicly
+# distributed.
 #
 # Prerequisites that must be supplied before this container can be built:
 #
