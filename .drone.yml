@@ -4,19 +4,20 @@ build:
     - source /usr/share/modules/init/bash
     - module load $$MKL $$COMPILER openmpi/1.10.2/$$COMPILER ; module list
     - cd /home/quinoa/quinoa
-    - mkdir tpl/build; cd tpl/build; cmake -D STDLIBCPP=$$STDLIBCPP .. ; make -sj`~/cpus.sh` ; cd -
-    - mkdir build ; cd build ; cmake -D STDLIBCPP=$$STDLIBCPP -G Ninja ../src ; ninja ; cd -
+    - mkdir tpl/build; cd tpl/build; cmake -D STDLIBCPP=$$STDLIBCPP -D CMAKE_BUILD_TYPE=$$BUILD .. ; make -sj`~/cpus.sh` ; cd -
+    - mkdir build ; cd build ; cmake -D STDLIBCPP=$$STDLIBCPP -D CMAKE_BUILD_TYPE=$$BUILD -G Ninja ../src ; ninja ; cd -
     - cd build; ../script/run_tests.sh ; cd -
-#    - cd build ; ./charmrun +p`~/cpus.sh` Main/unittest -v ; cd -
-#    - cd build ; ctest -j`~/cpus.sh` -R GeneralizedDirichlet -E Big ; cd -
 
 matrix:
   COMPILER:
 #    - gnu/system
     - clang/system
+  BUILD:
+    - Debug
+    - Release
   STDLIBCPP:
     - libc++
-#    - libstdc++
+    - libstdc++
   MKL:
     - mkl
-#    -
+    -

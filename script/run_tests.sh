@@ -4,7 +4,7 @@
 # 
 # \file      script/run_tests.sh
 # \author    J. Bakosi
-# \date      Mon 29 Feb 2016 01:15:41 PM MST
+# \date      Mon 29 Feb 2016 02:03:16 PM MST
 # \copyright 2012-2016, Jozsef Bakosi.
 # \brief     Run multiple test suites as part of automated testing
 # \details   Run multiple test suites as part of automated testing.
@@ -16,6 +16,11 @@
 #  This script will try to run the test suites in whatever build directory it is
 #  called in.
 #
+#  Note that it should also be fine putting the commands in this script into
+#  .drone.yml, however, for some unknown reason, only the first command was
+#  executed, so we call this script, running multiple test suites, used ofr
+#  automated testing.
+#
 ################################################################################
 
 # Query number of CPUs
@@ -24,5 +29,5 @@ CPUS=`cat /proc/cpuinfo | grep MHz | wc -l`
 # Run unit test suite
 ./charmrun +p$CPUS Main/unittest -v
 
-# Run regression test suite
-ctest -j$CPUS -R GeneralizedDirichlet -E Big
+# Run regression test suite (skip tests that would run a very long time)
+ctest -j$CPUS -E Big
