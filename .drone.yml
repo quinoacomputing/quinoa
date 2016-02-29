@@ -1,14 +1,10 @@
 build:
-  image: jbakosi/quinoa-docker:debian-testing-clang-alltpl
+  image: jbakosi/quinoa-testing:latest
   commands:
-    - mkdir -p tpl/build
-    - cd tpl/build
-    - cmake -D CMAKE_CXX_COMPILER=mpic++ -D CMAKE_C_COMPILER=mpicc -D CMAKE_Fortran_COMPILER=mpif90 -D CMAKE_BUILD_TYPE=Debug -D STDLIBCPP=libstdc++ ..
-    - make -sj4
-    - cd -
-    - mkdir build
-    - cd build
-    - cmake -D CMAKE_CXX_COMPILER=mpic++ -D CMAKE_C_COMPILER=mpicc -D CMAKE_BUILD_TYPE=Debug -D STDLIBCPP=libstdc++ ../src
-    - make -sj4
+    - source /usr/share/modules/init/bash
+    - module load mkl gnu/system openmpi/1.10.2/gnu/system
+    - cd /home/quinoa/quinoa
+    - mkdir tpl/build; cd tpl/build; cmake .. ; make -sj4 ; cd -
+    - mkdir build ; cd build ; cmake -G Ninja ../src ; ninja ; cd -
 #  - Main/charmrun +p4 Main/unittest -v
 #  - ctest -j4
