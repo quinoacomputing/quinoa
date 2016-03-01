@@ -9,7 +9,7 @@ walker
   ttyi  100     # TTY output interval
 
   rngs
-    mkl_mcg59 end
+    rngsse_gq58.3 end
   end
 
   numfracbeta   # Select the number-fraction beta SDE
@@ -24,7 +24,7 @@ walker
     kappa 2.0  0.76923  0.5  0.15873  0.1 end
     b     0.4  1.0      1.0  1.0    100.0 end
     S     0.5  0.53846  0.5  0.39683  0.5 end
-    rng mkl_mcg59
+    rng rngsse_gq58.3
     rho2 1.0 1.0 1.0 1.0 1.0 end
     # low-A
     rcomma 1.0e-2 1.0e-2 1.0e-2 1.0e-2 1.0e-2 end

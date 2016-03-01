@@ -8,7 +8,7 @@ walker
   ttyi 1000 # TTY output interval
 
   rngs
-   rngsse_gq58.3 end
+    mkl_mcg59 seed 1 end
   end
 
   skew-normal
@@ -19,7 +19,7 @@ walker
     T 1.0 3.5 end
     sigmasq 0.04 0.25 end
     lambda 100.0 -50.0 end
-    rng rngsse_gq58.3
+    rng mkl_mcg59
   end
 
   statistics
