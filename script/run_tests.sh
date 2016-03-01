@@ -4,7 +4,7 @@
 # 
 # \file      script/run_tests.sh
 # \author    J. Bakosi
-# \date      Mon 29 Feb 2016 02:03:16 PM MST
+# \date      Tue 01 Mar 2016 11:51:36 AM MST
 # \copyright 2012-2016, Jozsef Bakosi.
 # \brief     Run multiple test suites as part of automated testing
 # \details   Run multiple test suites as part of automated testing.
@@ -29,5 +29,5 @@ CPUS=`cat /proc/cpuinfo | grep MHz | wc -l`
 # Run unit test suite
 ./charmrun +p$CPUS Main/unittest -v
 
-# Run regression test suite (skip tests that would run a very long time)
-ctest -j$CPUS -E Big
+# Run regression test suite (skip stringent tests that would run very long)
+ctest -j$CPUS -LE stringent
