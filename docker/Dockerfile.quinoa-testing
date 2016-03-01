@@ -1,7 +1,7 @@
 # vim: filetype=dockerfile:
 #
 # Author:    J. Bakosi
-# Date:      Mon 29 Feb 2016 08:46:30 PM MST
+# Date:      Tue 01 Mar 2016 03:19:31 PM MST
 # Copyright: 2012-2016, Jozsef Bakosi.
 
 # Dockerfile for setting up a complete environment in a docker container for
@@ -64,8 +64,20 @@ RUN rm -rf /install/openmpi-1.10.2
 # Remove /install - no more installations after this line
 RUN rm -rf /install
 
-# Copy init script used to initialize interactive shell
-COPY init.sh cpus.sh /
-ENTRYPOINT ["/init.sh"]
+## Copy init script used to initialize interactive shell
+#COPY init.sh cpus.sh /
+#ENTRYPOINT ["/init.sh"]
+## Set bash as default interactive shell
+#CMD ["/bin/bash"]
+
+# Copy init script used to initialize interactive shell and ncpus query script
+COPY init.sh cpus.sh /home/tester/
+# Create a non-root user 'tester'
+RUN groupadd -r tester -g 433 && useradd -u 431 -r -g tester -d /home/tester -s /sbin/nologin -c "Quinoa tester" tester && chown -R tester:tester /home/tester
+# Make init script to initialize shell as the entry point
+ENTRYPOINT ["/home/tester/init.sh"]
+# Switch default user to 'tester' and change default work directory
+USER tester
+WORKDIR /home/tester
 # Set bash as default interactive shell
 CMD ["/bin/bash"]
