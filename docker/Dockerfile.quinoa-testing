@@ -1,7 +1,7 @@
 # vim: filetype=dockerfile:
 #
 # Author:    J. Bakosi
-# Date:      Tue 01 Mar 2016 03:19:31 PM MST
+# Date:      Tue 01 Mar 2016 03:37:15 PM MST
 # Copyright: 2012-2016, Jozsef Bakosi.
 
 # Dockerfile for setting up a complete environment in a docker container for
@@ -63,12 +63,6 @@ RUN rm -rf /install/openmpi-1.10.2
 
 # Remove /install - no more installations after this line
 RUN rm -rf /install
-
-## Copy init script used to initialize interactive shell
-#COPY init.sh cpus.sh /
-#ENTRYPOINT ["/init.sh"]
-## Set bash as default interactive shell
-#CMD ["/bin/bash"]
 
 # Copy init script used to initialize interactive shell and ncpus query script
 COPY init.sh cpus.sh /home/tester/
