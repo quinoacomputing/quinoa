@@ -3,21 +3,25 @@ build:
   commands:
     - source /usr/share/modules/init/bash
     - module load $$MKL $$COMPILER openmpi/1.10.2/$$COMPILER ; module list
-    - cd /home/quinoa/quinoa
-    - mkdir tpl/build; cd tpl/build; cmake -D STDLIBCPP=$$STDLIBCPP -D CMAKE_BUILD_TYPE=$$BUILD .. ; make -sj`~/cpus.sh` ; cd -
+    - mkdir tpl/build; cd tpl/build; cmake -D STDLIBCPP=$$STDLIBCPP -D CMAKE_BUILD_TYPE=$$BUILD .. ; make -sj`/cpus.sh` ; cd -
     - mkdir build ; cd build ; cmake -D STDLIBCPP=$$STDLIBCPP -D CMAKE_BUILD_TYPE=$$BUILD -G Ninja ../src ; ninja ; cd -
     - cd build; ../script/run_tests.sh ; cd -
 
+cache:
+  mount:
+    - .git
+
 matrix:
+  BUILD:
+    - Debug
+#    - Release
   COMPILER:
 #    - gnu/system
     - clang/system
-  BUILD:
-    - Debug
-    - Release
+#    - intel/latest
+  MKL:
+    - mkl
+    -           # test absence of MKL
   STDLIBCPP:
     - libc++
     - libstdc++
-  MKL:
-    - mkl
-    -

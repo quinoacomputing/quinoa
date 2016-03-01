@@ -1,10 +1,10 @@
 #%Module1.0#####################################################################
 ## vi:set filetype=tcl:
-## openmpi/1.10.2/intel/16.0.2 modulefile
+## openmpi/1.10.2/intel/latest modulefile
 
 # load after sourcing intel's script
 
-set root   /opt/openmpi/1.10.2/intel/16.0.2
+set root   /opt/openmpi/1.10.2/intel/latest
 set bindir $root/bin
 set libdir $root/lib
 
