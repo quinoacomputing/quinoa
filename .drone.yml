@@ -18,11 +18,11 @@ matrix:
     - Release
   COMPILER:
 #    - gnu/system
-    - clang/system
-#    - intel/latest
+#    - clang/system
+    - intel/latest
   MKL:
     - mkl
-#    -           # test absence of MKL
+#    -
   STDLIBCPP:
     - libc++
 #    - libstdc++
