@@ -1,7 +1,7 @@
 # vim: filetype=dockerfile:
 #
 # Author:    J. Bakosi
-# Date:      Wed 02 Mar 2016 07:49:49 AM MST
+# Date:      Wed 02 Mar 2016 08:41:45 AM MST
 # Copyright: 2012-2016, Jozsef Bakosi.
 
 # Dockerfile for setting up a complete environment in a docker container for
@@ -36,7 +36,7 @@ MAINTAINER Jozsef Bakosi <jbakosi@lanl.gov>
 RUN apt-get -y update && apt-get install -y debian-keyring debian-archive-keyring wget
 RUN wget -O - http://llvm.org/apt/llvm-snapshot.gpg.key | apt-key add -
 RUN echo "deb http://ftp.us.debian.org/debian testing main non-free contrib \n deb http://security.debian.org testing/updates main contrib non-free \n deb http://llvm.org/apt/unstable/ llvm-toolchain main" > /etc/apt/sources.list
-RUN apt-get -y update && apt-get install -y m4 sudo zlib1g-dev procps cpio git cmake gcc g++ clang libc++-dev libc++abi-dev gfortran environment-modules libpugixml-dev libpstreams-dev libboost-all-dev liblapack-dev liblapacke-dev ninja-build gmsh
+RUN apt-get -y update && apt-get install -y m4 sudo zlib1g-dev procps cpio git cmake gcc g++-4.9 g++ clang libc++-dev libc++abi-dev gfortran environment-modules libpugixml-dev libpstreams-dev libboost-all-dev liblapack-dev liblapacke-dev ninja-build gmsh
 
 # Copy over install of Intel Parallel Studio XE Professional Edition for Fortran and C++ Linux
 COPY intel /opt/intel
