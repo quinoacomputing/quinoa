@@ -14,8 +14,8 @@ cache:
 
 matrix:
   BUILD:
-#    - Debug
-    - Release
+    - Debug
+#    - Release
   COMPILER:
 #    - gnu/system
 #    - clang/system
