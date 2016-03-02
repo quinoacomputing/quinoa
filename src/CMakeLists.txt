@@ -171,8 +171,8 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")  # clang-specific settings
     set_libstdcpp_vs_libcpp(CMAKE_CXX_FLAGS "libc++")
   endif()
 
-  # Experimental: use the C++14 standard
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1y")
+  # Use the C++14 standard
+  add_compiler_flag("-std=c++1y")
 
   # See all template error messages
   #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ftemplate-backtrace-limit=0")
@@ -196,8 +196,8 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")  # gcc-specific settings
 
   # Gnu will use libstdc++ by default. We do not offer libc++.
 
-  # Experimental: use the C++14 standard
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1y")
+  # Use the C++14 standard
+  add_compiler_flag("-std=c++1y")
 
   add_compiler_flag("-Wno-literal-suffix")
   add_compiler_flag("-Wno-unused-local-typedefs")
@@ -217,6 +217,9 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")  # gcc-specific settings
   set(PARTOF_FLAGS "-Wno-unused-parameter")
 
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
+
+  # Use the C++14 standard
+  add_compiler_flag("-std=c++14")
 
   add_compiler_flag("-Wremarks")
   # Suppress the following Intel compiler remarks:
