@@ -15,14 +15,14 @@ cache:
 matrix:
   BUILD:
     - Debug
-#    - Release
+    - Release
   COMPILER:
 #    - gnu/system
-#    - clang/system
+    - clang/system
     - intel/latest
   MKL:
     - mkl
-#    -
+    -
   STDLIBCPP:
     - libc++
-#    - libstdc++
+    - libstdc++
