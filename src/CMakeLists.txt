@@ -174,6 +174,10 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")  # clang-specific settings
   # Use the C++14 standard
   add_compiler_flag("-std=c++1y")
 
+  # Reduce opt level for release mode (clang 3.8 fails to list LinSysMerger with
+  # -O2 and segfaults with -O3)
+  set(CMAKE_CXX_FLAGS_RELEASE "-O1 -DNDEBUG" CACHE STRING "CMAKE_CXX_FLAGS_RELEASE: Flags used by the compiler during release builds." FORCE)
+
   # See all template error messages
   #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ftemplate-backtrace-limit=0")
 
