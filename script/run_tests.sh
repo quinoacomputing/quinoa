@@ -1,4 +1,4 @@
-#!/bin/bash -eu
+#!/bin/bash -eux
 # vim: filetype=sh:
 ################################################################################
 # 
@@ -12,6 +12,7 @@
 #   Arguments to bash:
 #   -e: shell will exit if any statement returns a non-true return value
 #   -u: shell will exit if we try to use an uninitialised variable
+#   -x: shell will print each command to stdout before executing it
 #
 #  This script will try to run the test suites in whatever build directory it is
 #  called in.

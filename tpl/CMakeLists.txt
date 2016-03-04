@@ -120,6 +120,12 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
     set_libstdcpp_vs_libcpp(CXXFLAGS "libc++")
   endif()
 
+  # Specify the name of the g++ compiler that should be used to set up the
+  # environment. This is necessary if a newer g++ is installed system-wide with
+  # its libstdc++ and headers and the intel compiler does not yet compile those
+  # newer headers.
+  set(CXXFLAGS "${CXXFLAGS} -gxx-name=g++-4.9")
+
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "PGI")  # pgi-specific settings
 
   # Some configure scripts don't like pgi's preprocessor so use gnu's
@@ -287,7 +293,6 @@ ExternalProject_Add(
              -D Trilinos_ENABLE_SEACASNemesis:BOOL=ON
              -D Trilinos_ENABLE_SEACASExodiff:BOOL=ON
              -D Trilinos_ENABLE_SECONDARY_STABLE_CODE:BOOL=ON
-             -D Trilinos_ENABLE_DEBUG=OFF
              -D TPL_ENABLE_Netcdf:BOOL=ON
              -D Netcdf_LIBRARY_DIRS:PATH=${CMAKE_INSTALL_PREFIX}/lib
              -D TPL_Netcdf_INCLUDE_DIRS:PATH=${CMAKE_INSTALL_PREFIX}/include

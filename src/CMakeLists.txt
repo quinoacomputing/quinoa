@@ -171,8 +171,12 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")  # clang-specific settings
     set_libstdcpp_vs_libcpp(CMAKE_CXX_FLAGS "libc++")
   endif()
 
-  # Experimental: use the C++14 standard
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1y")
+  # Use the C++14 standard
+  add_compiler_flag("-std=c++1y")
+
+  # Reduce opt level for release mode (clang 3.8 fails to list LinSysMerger with
+  # -O2 and segfaults with -O3)
+  set(CMAKE_CXX_FLAGS_RELEASE "-O1 -DNDEBUG" CACHE STRING "CMAKE_CXX_FLAGS_RELEASE: Flags used by the compiler during release builds." FORCE)
 
   # See all template error messages
   #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ftemplate-backtrace-limit=0")
@@ -196,8 +200,8 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")  # gcc-specific settings
 
   # Gnu will use libstdc++ by default. We do not offer libc++.
 
-  # Experimental: use the C++14 standard
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1y")
+  # Use the C++14 standard
+  add_compiler_flag("-std=c++1y")
 
   add_compiler_flag("-Wno-literal-suffix")
   add_compiler_flag("-Wno-unused-local-typedefs")
@@ -217,6 +221,15 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")  # gcc-specific settings
   set(PARTOF_FLAGS "-Wno-unused-parameter")
 
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
+
+  # Use the C++14 standard
+  add_compiler_flag("-std=c++14")
+
+  # Specify the name of the g++ compiler that should be used to set up the
+  # environment. This is necessary if a newer g++ is installed system-wide with
+  # its libstdc++ and headers and the intel compiler does not yet compile those
+  # newer headers.
+  add_compiler_flag("-gxx-name=g++-4.9")
 
   add_compiler_flag("-Wremarks")
   # Suppress the following Intel compiler remarks:
