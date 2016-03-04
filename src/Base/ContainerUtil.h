@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/ContainerUtil.h
   \author    J. Bakosi
-  \date      Wed 17 Feb 2016 03:52:47 PM MST
+  \date      Wed 02 Mar 2016 08:12:36 AM MST
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Various STL container utilities
   \details   Various STL container utilities.
@@ -14,6 +14,7 @@
 #include <vector>
 #include <map>
 #include <algorithm>
+#include <iterator>
 
 #include "Exception.h"
 
@@ -121,7 +122,7 @@ operator+=( std::vector< T, Allocator >& dst,
   Assert( src.size() >= dst.size(), "src.size() < dst.size() would loose data "
           "in std::vector<T,Allocator>::operator+=()" );
   dst.resize( src.size() );
-  std::transform( cbegin(src), cend(src), begin(dst), begin(dst),
+  std::transform( src.begin(), src.end(), dst.begin(), dst.begin(),
                   []( const T& s, T& d ){ return d += s; } );
   return dst;
 }

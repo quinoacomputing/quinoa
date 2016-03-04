@@ -79,13 +79,13 @@ endif()
 
 target_link_libraries(${INCITER_EXECUTABLE}
                       Base
-                      Inciter
                       PDE
                       IO
                       LinSys
                       Mesh
                       InciterControl
                       LoadBalance
+                      Inciter
                       ${PUGIXML_LIBRARIES}
                       ${Trilinos_LIBRARIES}
                       ${HYPRE_LIBRARIES}
