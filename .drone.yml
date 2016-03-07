@@ -17,7 +17,7 @@ matrix:
     - Debug
     - Release
   COMPILER:
-#    - gnu/system
+    - gnu/system
     - clang/system
     - intel/latest
   MKL:
@@ -26,3 +26,8 @@ matrix:
   STDLIBCPP:
     - libc++
     - libstdc++
+exclude:
+  COMPILER:
+    - gnu/system
+  STDLIBCPP:
+    - libc++
