@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/UnitTest.C
   \author    J. Bakosi
-  \date      Tue 23 Feb 2016 03:36:12 PM MST
+  \date      Tue 08 Mar 2016 07:09:18 AM MST
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     UnitTest's Charm++ main chare and main().
   \details   UnitTest's Charm++ main chare and main(). This file contains
@@ -150,6 +150,9 @@ std::string g_executable;
 //! Max number of tests in every group
 int g_maxTestsInGroup = tut::MAX_TESTS_IN_GROUP;
 
+//! Bool indicating whether all Charm++ and serial tests have passed
+bool g_charmpass = true;
+
 //! Pack/Unpack test runner. This Pack/Unpack method (re-)creates the
 //! test runner singleton on all processing elements. Therefore we circumvent
 //! Charm's usual pack/unpack for this type, and thus sizing does not make
@@ -228,7 +231,7 @@ class Main : public CBase_Main {
       } catch (...) { tk::processExceptionCharm(); }
     }
 
-    void finalize( bool worked ) {
+    void finalize( bool worked, bool pass ) {
       try {
         if (worked && !m_timer.empty()) {
           m_timestamp.emplace_back( "Serial and Charm++ tests runtime",
@@ -238,6 +241,8 @@ class Main : public CBase_Main {
           m_print.endpart();
         }
       } catch (...) { tk::processExceptionCharm(); }
+      // Set global bool indicating whether all tests have passed
+      unittest::g_charmpass = pass;
       // Tell the Charm++ runtime system to exit
       CkExit();
     }
@@ -282,6 +287,27 @@ int main( int argc, char **argv ) {
   CharmLibInit( MPI_COMM_WORLD, argc, argv );
   CharmLibExit();
 
+  bool mpipass = true;
+
+  // Lambda to compute exit code based on test failures and exit. This is the
+  // single exit point and we must exit from the program.
+  auto stop = [numpes](int mpipass) {
+    // Combine pass-status from Charm++/serial and MPI suites
+    int mypass = unittest::g_charmpass && mpipass ? 1 : 0;
+    // Add up every PE's pass status
+    int g = 0;
+    MPI_Allreduce( &mypass, &g, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD );
+    // Exit code: g==numpes: pass, g<numpes: fail
+    g /= numpes;
+    if (g == 1)
+      MPI_Finalize();   // will pass exit code 0 to shell
+    else
+      MPI_Abort( MPI_COMM_WORLD, tk::ErrCode::FAILURE ); // nonzero exit code
+    // Since this is an MPI program, the exit code passed to exit() does not
+    // matter, however, calling exit() here is important, because we must exit.
+    exit( tk::ErrCode::SUCCESS );
+  };
+
   // Run MPI test suite
   try {
 
@@ -303,10 +329,7 @@ int main( int argc, char **argv ) {
       print.helpkw< tk::QUIET >( UNITTEST_EXECUTABLE, helpkw );
 
     // Immediately exit if any help was output
-    if (helpcmd || !helpkw.keyword.empty()) {
-      MPI_Finalize();
-      return tk::ErrCode::SUCCESS;
-    }
+    if (helpcmd || !helpkw.keyword.empty()) stop( mpipass );
 
     unittest::UnitTestPrint
       uprint( cmdline.get< tag::verbose >() ? std::cout : std::clog );
@@ -331,8 +354,7 @@ int main( int argc, char **argv ) {
       if (peid == 0)
         uprint.note( "\nNo MPI test groups to be executed because no test "
                      "group names match '" + grp + "'.\n" );
-      MPI_Finalize();
-      return tk::ErrCode::SUCCESS;
+      stop( mpipass );
     }
 
     if (peid == 0) {
@@ -372,7 +394,8 @@ int main( int argc, char **argv ) {
       }
 
     if (peid == 0) {
-      unittest::assess( uprint, "MPI", nfail, nwarn, nskip, nexcp, ncomplete );
+      mpipass =
+       unittest::assess( uprint, "MPI", nfail, nwarn, nskip, nexcp, ncomplete );
       std::vector< std::pair< std::string, tk::Timer::Watch > > timestamp;
       timestamp.emplace_back( "MPI tests runtime", timer.hms() );
       uprint.time( "MPI test suite timers (h:m:s)", timestamp );
@@ -380,10 +403,7 @@ int main( int argc, char **argv ) {
 
   } catch (...) { tk::processExceptionMPI(); }
 
-  // Finalize MPI
-  MPI_Finalize();
-
-  return tk::ErrCode::SUCCESS;
+  stop( mpipass );
 }
 
 #if defined(__clang__) || defined(__GNUC__)
