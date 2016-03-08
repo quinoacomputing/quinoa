@@ -4,14 +4,14 @@
 # 
 # \file      script/run_tests.sh
 # \author    J. Bakosi
-# \date      Tue 01 Mar 2016 11:51:36 AM MST
+# \date      Tue 08 Mar 2016 08:04:35 AM MST
 # \copyright 2012-2016, Jozsef Bakosi.
 # \brief     Run multiple test suites as part of automated testing
 # \details   Run multiple test suites as part of automated testing.
 #
 #   Arguments to bash:
 #   -e: shell will exit if any statement returns a non-true return value
-#   -u: shell will exit if we try to use an uninitialised variable
+#   -u: shell will exit if we try to use an uninitialized variable
 #   -x: shell will print each command to stdout before executing it
 #
 #  This script will try to run the test suites in whatever build directory it is
