@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/TUTSuite.C
   \author    J. Bakosi
-  \date      Tue 23 Feb 2016 10:36:51 AM MST
+  \date      Mon 07 Mar 2016 03:50:24 PM MST
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Template Unit Test suite class definition
   \details   Template Unit Test suite class definition. In principle there can
@@ -76,7 +76,7 @@ TUTSuite::TUTSuite( const ctr::CmdLine& cmdline ) :
 
     m_print.note( "\nNo serial or Charm++ test groups to be executed because "
                   "no test group names match '" + grp + "'.\n" );
-    mainProxy.finalize( false );
+    mainProxy.finalize( false, true );
 
   } else {
 
@@ -139,10 +139,11 @@ TUTSuite::evaluate( std::vector< std::string > status )
   // Wait for all tests to finish, then quit
   if (m_nrun == m_ngroup*static_cast<std::size_t>(g_maxTestsInGroup) + m_nmigr)
   {
-    assess( m_print, "serial and Charm++", m_nfail, m_nwarn, m_nskip, m_nexcp,
-            m_ncomplete );
+    auto pass =
+      assess( m_print, "serial and Charm++", m_nfail, m_nwarn, m_nskip, m_nexcp,
+              m_ncomplete );
     // Quit
-    mainProxy.finalize( true );
+    mainProxy.finalize( true, pass );
   }
 }
 

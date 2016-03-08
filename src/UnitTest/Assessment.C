@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/Assessment.C
   \author    J. Bakosi
-  \date      Tue 23 Feb 2016 03:51:57 PM MST
+  \date      Mon 07 Mar 2016 04:24:17 PM MST
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Unit test suite assessment
   \details   Unit test suite assessment.
@@ -50,7 +50,7 @@ evaluate( std::vector< std::string > status,
   }
 }
 
-void
+bool
 assess( const tk::Print& print,
         std::string suite,
         std::size_t nfail,
@@ -67,6 +67,8 @@ assess( const tk::Print& print,
 //! \param[in] nskip Number of skipped tests
 //! \param[in] nexcp Number of tests with an exception
 //! \param[in] ncomplete Number of completed tests
+//! \return True of all tests passed, false if there was at least a failure or
+//!   an exception
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -86,6 +88,8 @@ assess( const tk::Print& print,
               ( "Of " + std::to_string(ncomplete) + " " + suite +
                 " tests total: " + warn + skip + excp + fail );
   }
+
+  return nfail || nexcp ? false : true;
 }
 
 } // unittest::
