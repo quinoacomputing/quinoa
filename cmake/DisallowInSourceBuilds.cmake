@@ -1,7 +1,7 @@
 if(__disallow_in_source_builds)
 	return()
 endif()
-set(disallow_in_source_buildsrs YES)
+set(disallow_in_source_builds YES)
 
 
 function(disallow_in_source_builds)
