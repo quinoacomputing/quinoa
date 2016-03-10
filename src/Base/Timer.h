@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Timer.h
   \author    J. Bakosi
-  \date      Mon 23 Nov 2015 08:27:42 AM MST
+  \date      Thu 10 Mar 2016 09:08:56 AM MST
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Timer declaration
   \details   Timer declaration. Timer is a simple class to do timing various
@@ -105,21 +105,6 @@ class Timer {
 //! Convert existing time stamp as a real to Watch (global scope)
 Timer::Watch
 hms( tk::real stamp );
-
-//! Query timer from timer map
-//! \param[in] timers Timer map
-//! \param[in] t Tag to look for
-//! \return Timer clock state in seconds
-//! \author J. Bakosi
-template< typename Tag >
-tk::real
-query( const std::map< Tag, Timer >& timers, Tag t ) {
-  const auto it = timers.find( t );
-  if (it != timers.end())
-    return it->second.dsec();
-  else
-    Throw( "Can't find timer tag" );
-}
 
 } // tk::
 

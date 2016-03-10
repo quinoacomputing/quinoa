@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/TestTimer.h
   \author    J. Bakosi
-  \date      Mon 22 Feb 2016 08:23:55 PM MST
+  \date      Thu 10 Mar 2016 09:11:40 AM MST
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Unit tests for Base/Timer.h
   \details   Unit tests for Base/Timer.h
@@ -15,6 +15,7 @@
 #include <tut/tut.hpp>
 
 #include "Timer.h"
+#include "ContainerUtil.h"
 #include "charmtimer.decl.h"
 
 namespace unittest {
@@ -95,11 +96,11 @@ void Timer_object::test< 3 >() {
   ensure_equals( "estimated time elapsed in sec",
                  static_cast<tk::real>(ete.sec.count()), 1.0, precision );
   // test estimated time to accomplishment with given precision
-  ensure_equals( "estimated time to accomlishment in hrs",
+  ensure_equals( "estimated time to accomplishment in hrs",
                  static_cast<tk::real>(eta.hrs.count()), 0.0, precision );
-  ensure_equals( "estimated time to accomlishment in min",
+  ensure_equals( "estimated time to accomplishment in min",
                  static_cast<tk::real>(eta.min.count()), 0.0, precision );
-  ensure_equals( "estimated time to accomlishment in sec",
+  ensure_equals( "estimated time to accomplishment in sec",
                  static_cast<tk::real>(eta.sec.count()), 4.0, precision );
 }
 
@@ -127,11 +128,11 @@ void Timer_object::test< 4 >() {
   ensure_equals( "estimated time elapsed in sec",
                  static_cast<tk::real>(ete.sec.count()), 1.0, precision );
   // test estimated time to accomplishment with given precision
-  ensure_equals( "estimated time to accomlishment in hrs",
+  ensure_equals( "estimated time to accomplishment in hrs",
                  static_cast<tk::real>(eta.hrs.count()), 0.0, precision );
-  ensure_equals( "estimated time to accomlishment in min",
+  ensure_equals( "estimated time to accomplishment in min",
                  static_cast<tk::real>(eta.min.count()), 1.0, precision );
-  ensure_equals( "estimated time to accomlishment in sec",
+  ensure_equals( "estimated time to accomplishment in sec",
                  static_cast<tk::real>(eta.sec.count()), 39.0, precision );
 }
 
@@ -211,9 +212,9 @@ void Timer_object::test< 7 >() {
   std::map< std::string, tk::Timer > timer;
   timer[ "some timer" ];// start timing, assign to label
   usleep( 1000000 );    // in micro-seconds, sleep for 1.0 second
-  const auto t = tk::query( timer, std::string("some timer") );
+  const auto t = tk::ref_find( timer, "some timer" );
 
-  ensure_equals( "timer different", t, 1.0, precision );
+  ensure_equals( "timer different", t.dsec(), 1.0, precision );
 }
 
 //! Test that querying timer from a map throws with garbage key
@@ -225,7 +226,7 @@ void Timer_object::test< 8 >() {
   try {
     std::map< std::string, tk::Timer > timer;
     timer[ "some timer" ];// start timing, assign to label
-    const auto t = tk::query( timer, std::string("some non-existent timer") );
+    tk::cref_find( timer, std::string("some non-existent timer") );
     fail( "should throw exception" );
   }
   catch ( tk::Exception& e ) {
