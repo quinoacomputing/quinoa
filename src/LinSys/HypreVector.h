@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/HypreVector.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:12:56 PM MDT
+  \date      Thu 10 Mar 2016 11:04:47 AM MST
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Hypre IJ vector class
   \details   Hypre IJ vector class.
@@ -49,11 +49,11 @@ class HypreVector {
     ~HypreVector() noexcept { HYPRE_IJVectorDestroy( m_v ); }
 
     //! Set values of vector
-    void set( int nvalues, const int* indices, const HYPRE_Complex* values )
+    void set( int nvalues, const int* indices, const double* values )
     { HYPRE_IJVectorSetValues( m_v, nvalues, indices, values ); }
 
     //! Get the local vector
-    void get( int nvalues, const int* indices, HYPRE_Complex* values )
+    void get( int nvalues, const int* indices, double* values )
     { HYPRE_IJVectorGetValues( m_v, nvalues, indices, values ); }
 
     //! Assemble vector

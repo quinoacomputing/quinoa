@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/HypreMatrix.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:12:46 PM MDT
+  \date      Thu 10 Mar 2016 11:04:21 AM MST
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Hypre IJ matrix class
   \details   Hypre IJ matrix class.
@@ -52,7 +52,7 @@ class HypreMatrix {
 
     //! Set values of matrix
     void set( int nrows, int* ncols, const int* rows, const int* cols,
-              const HYPRE_Complex* values )
+              const double* values )
     { HYPRE_IJMatrixSetValues( m_A, nrows, ncols, rows, cols, values ); }
 
     //! Assemble matrix
