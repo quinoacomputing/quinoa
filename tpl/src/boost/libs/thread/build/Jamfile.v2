@@ -1,4 +1,4 @@
-# $Id: Jamfile.v2 84792 2013-06-15 10:35:45Z viboes $
+# $Id$
 # Copyright 2006-2007 Roland Schwarz.
 # Copyright 2007 Anthony Williams
 # Copyright 2011-2012 Vicente J.Botet Escriba.
@@ -36,6 +36,7 @@ import os ;
 import feature ;
 import indirect ;
 import path ;
+import configure ; 
 
 project boost/thread
     : source-location ../src
@@ -59,37 +60,43 @@ project boost/thread
         <toolset>gcc:<cxxflags>-Wno-long-long
         #<toolset>gcc:<cxxflags>-ansi
         #<toolset>gcc:<cxxflags>-fpermissive
-        <toolset>gcc:<cxxflags>-Wno-variadic-macros
+        <toolset>gcc-4:<cxxflags>-Wno-variadic-macros
+        <toolset>gcc-5:<cxxflags>-Wno-variadic-macros
         #<toolset>gcc:<cxxflags>-Wunused-local-typedefs
         <toolset>gcc:<cxxflags>-Wunused-function
+        <toolset>gcc:<cxxflags>-Wno-unused-parameter
 
         <toolset>darwin:<cxxflags>-Wextra
         <toolset>darwin:<cxxflags>-pedantic
         #<toolset>darwin:<cxxflags>-ansi
         <toolset>darwin:<cxxflags>-fpermissive
         <toolset>darwin:<cxxflags>-Wno-long-long
-        <toolset>darwin:<cxxflags>-Wno-variadic-macros
+        #<toolset>darwin:<cxxflags>-Wno-variadic-macros
+        <toolset>darwin-4:<cxxflags>-Wno-variadic-macros
+        <toolset>darwin-5:<cxxflags>-Wno-variadic-macros
         #<toolset>darwin:<cxxflags>-Wunused-local-typedefs
         <toolset>darwin:<cxxflags>-Wunused-function
+        <toolset>darwin:<cxxflags>-Wno-unused-parameter
 
         #<toolset>pathscale:<cxxflags>-Wextra
         <toolset>pathscale:<cxxflags>-Wno-long-long
         <toolset>pathscale:<cxxflags>-pedantic
 
+        <toolset>clang:<warnings>on
         <toolset>clang:<cxxflags>-Wextra
-        <toolset>clang:<cxxflags>-pedantic
         #<toolset>clang:<cxxflags>-ansi
         #<toolset>clang:<cxxflags>-fpermissive
         <toolset>clang:<cxxflags>-Wno-long-long
         <toolset>clang:<cxxflags>-Wunused-function
         <toolset>clang:<cxxflags>-Wno-variadic-macros
+        <toolset>clang:<cxxflags>-Wno-unused-parameter
 
-        <toolset>gcc-mingw-4.4.0:<cxxflags>-fdiagnostics-show-option
-        <toolset>gcc-mingw-4.5.0:<cxxflags>-fdiagnostics-show-option
-        <toolset>gcc-mingw-4.6.0:<cxxflags>-fdiagnostics-show-option
-        <toolset>gcc-mingw-4.6.3:<cxxflags>-fdiagnostics-show-option
-        <toolset>gcc-mingw-4.7.0:<cxxflags>-fdiagnostics-show-option
-        <toolset>gcc-mingw-4.8.0:<cxxflags>-fdiagnostics-show-option
+        #<toolset>gcc-mingw-4.4.0:<cxxflags>-fdiagnostics-show-option
+        #<toolset>gcc-mingw-4.5.0:<cxxflags>-fdiagnostics-show-option
+        #<toolset>gcc-mingw-4.6.0:<cxxflags>-fdiagnostics-show-option
+        #<toolset>gcc-mingw-4.6.3:<cxxflags>-fdiagnostics-show-option
+        #<toolset>gcc-mingw-4.7.0:<cxxflags>-fdiagnostics-show-option
+        #<toolset>gcc-mingw-4.8.0:<cxxflags>-fdiagnostics-show-option
         #<toolset>gcc:<cxxflags>-Wno-missing-field-initializers
 
         <toolset>darwin-4.6.2:<cxxflags>-Wno-delete-non-virtual-dtor
@@ -115,7 +122,9 @@ project boost/thread
         <toolset>intel:<cxxflags>-wd1418
         <toolset>intel:<cxxflags>-wd2415
 
+        <toolset>msvc:<cxxflags>/wd4100
         <toolset>msvc:<cxxflags>/wd4512
+        <toolset>msvc:<cxxflags>/wd6246
 
 
     # : default-build <threading>multi
@@ -139,6 +148,8 @@ local rule default_threadapi ( )
 
 feature.feature threadapi : pthread win32 : propagated ;
 feature.set-default threadapi : [ default_threadapi ] ;
+
+exe has_atomic_flag_lockfree : ../build/has_atomic_flag_lockfree_test.cpp ; 
 
 rule tag ( name : type ? : property-set )
 {
@@ -236,10 +247,10 @@ rule usage-requirements ( properties * )
         }
     }
 
-    if ! <toolset>vacpp in $(properties) || <toolset-vacpp:version>11.1 in $(properties) || <toolset-vacpp:version>12.1.0.1 in $(properties)  || <toolset-vacpp:version>12.1 in $(properties)
-    {
+    #if ! <toolset>vacpp in $(properties) || <toolset-vacpp:version>11.1 in $(properties) || <toolset-vacpp:version>12.1.0.1 in $(properties)  || <toolset-vacpp:version>12.1 in $(properties)
+    #{
       result += <library>/boost/chrono//boost_chrono ;
-    }
+    #}
 
     return $(result) ;
 }
@@ -264,14 +275,13 @@ rule requirements ( properties * )
             }
         }
         result += <define>BOOST_THREAD_DONT_USE_CHRONO ;
+        if ! [ configure.builds has_atomic_flag_lockfree 
+            : $(properties) : "lockfree boost::atomic_flag" ]  { 
+           result += <library>/boost/atomic//boost_atomic ; 
+        } 
     } else {
         result += <define>BOOST_THREAD_USES_CHRONO ;
         result += <library>/boost/chrono//boost_chrono ;
-    }
-
-    if <toolset>pgi in $(properties)  || <toolset>vacpp in $(properties)
-    {
-      result += <library>/boost/atomic//boost_atomic ;
     }
 
     return $(result) ;

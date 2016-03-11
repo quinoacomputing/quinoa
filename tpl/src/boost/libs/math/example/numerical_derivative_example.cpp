@@ -35,7 +35,7 @@ order to numerically compute the derivative of a function, and then repeat
 with a 5 decimal digit higher precision user-defined floating-point type. 
 
 Consider the function  shown below.
-
+!!
 (3)
 We will now take the derivative of this function with respect to x evaluated
 at x = 3= 2. In other words,
@@ -44,7 +44,7 @@ at x = 3= 2. In other words,
 
 The expected result is
 
- 0:74535 59924 99929 89880 . (5)
+ 0:74535 59924 99929 89880 . (5)
 The program below uses the derivative template in order to perform
 the numerical calculation of this derivative. The program also compares the
 numerically-obtained result with the expected result and reports the absolute
@@ -206,3 +206,4 @@ the entire precision of the result in double is preserved.
   float_distance = 0.000000
 
  */
+

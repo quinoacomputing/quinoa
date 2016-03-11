@@ -18,7 +18,7 @@
 namespace {
 
 // Shared variables for generation barrier test
-const int N_THREADS=10;
+const int N_THREADS=3;
 boost::barrier gen_barrier(N_THREADS);
 boost::mutex mutex;
 long global_parameter;
@@ -50,9 +50,10 @@ void test_barrier()
     }
     catch(...)
     {
+        BOOST_TEST(false);
         g.interrupt_all();
         g.join_all();
-        throw;
+        //throw;
     }
 
     BOOST_TEST(global_parameter==5);

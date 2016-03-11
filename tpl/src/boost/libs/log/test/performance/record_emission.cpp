@@ -1,5 +1,5 @@
 /*
- *          Copyright Andrey Semashev 2007 - 2013.
+ *          Copyright Andrey Semashev 2007 - 2015.
  * Distributed under the Boost Software License, Version 1.0.
  *    (See accompanying file LICENSE_1_0.txt or copy at
  *          http://www.boost.org/LICENSE_1_0.txt)
@@ -21,8 +21,8 @@
 #include <iostream>
 #include <boost/ref.hpp>
 #include <boost/bind.hpp>
-#include <boost/shared_ptr.hpp>
-#include <boost/make_shared.hpp>
+#include <boost/smart_ptr/shared_ptr.hpp>
+#include <boost/smart_ptr/make_shared_object.hpp>
 #include <boost/date_time/microsec_time_clock.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <boost/thread/thread.hpp>
@@ -33,6 +33,7 @@
 #include <boost/log/attributes.hpp>
 #include <boost/log/sinks.hpp>
 #include <boost/log/sinks/basic_sink_backend.hpp>
+#include <boost/log/sources/logger.hpp>
 
 #include <boost/log/expressions.hpp>
 
@@ -40,8 +41,8 @@
 
 enum config
 {
-    RECORD_COUNT = 50000000,
-    THREAD_COUNT = 3,
+    RECORD_COUNT = 20000000,
+    THREAD_COUNT = 8,
     SINK_COUNT = 3
 };
 
@@ -78,12 +79,14 @@ namespace {
 void test(unsigned int record_count, boost::barrier& bar)
 {
     BOOST_LOG_SCOPED_THREAD_TAG("ThreadID", boost::this_thread::get_id());
+    src::severity_logger< severity_level > slg;
+//    src::logger lg;
     bar.wait();
 
-    src::severity_logger< severity_level > slg;
     for (unsigned int i = 0; i < record_count; ++i)
     {
         BOOST_LOG_SEV(slg, warning) << "Test record";
+//        BOOST_LOG(lg) << "Test record";
     }
 }
 
@@ -104,7 +107,7 @@ int main(int argc, char* argv[])
 //    logging::core::get()->set_filter(severity > normal); // all records pass the filter
 //    logging::core::get()->set_filter(severity > error); // all records don't pass the filter
 
-    logging::core::get()->set_filter(severity > error); // all records don't pass the filter
+//    logging::core::get()->set_filter(severity > error); // all records don't pass the filter
 
     const unsigned int record_count = RECORD_COUNT / THREAD_COUNT;
     boost::barrier bar(THREAD_COUNT);

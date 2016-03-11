@@ -1,5 +1,5 @@
 /*
- *          Copyright Andrey Semashev 2007 - 2013.
+ *          Copyright Andrey Semashev 2007 - 2015.
  * Distributed under the Boost Software License, Version 1.0.
  *    (See accompanying file LICENSE_1_0.txt or copy at
  *          http://www.boost.org/LICENSE_1_0.txt)
@@ -10,20 +10,23 @@
  * \date   19.04.2007
  *
  * \brief  This header is the Boost.Log library implementation, see the library documentation
- *         at http://www.boost.org/libs/log/doc/log.html.
+ *         at http://www.boost.org/doc/libs/release/libs/log/doc/html/index.html.
  */
 
 #include <cstddef>
 #include <new>
-#include <memory>
 #include <vector>
 #include <algorithm>
 #include <boost/cstdint.hpp>
 #include <boost/assert.hpp>
-#include <boost/weak_ptr.hpp>
-#include <boost/shared_ptr.hpp>
-#include <boost/make_shared.hpp>
+#include <boost/core/swap.hpp>
+#include <boost/filesystem/path.hpp>
+#include <boost/smart_ptr/weak_ptr.hpp>
+#include <boost/smart_ptr/shared_ptr.hpp>
+#include <boost/smart_ptr/make_shared_object.hpp>
 #include <boost/range/iterator_range_core.hpp>
+#include <boost/date_time/posix_time/posix_time_types.hpp>
+#include <boost/random/taus88.hpp>
 #include <boost/move/core.hpp>
 #include <boost/move/utility.hpp>
 #include <boost/log/core/core.hpp>
@@ -37,7 +40,9 @@
 #include <boost/thread/exceptions.hpp>
 #include <boost/log/detail/locks.hpp>
 #include <boost/log/detail/light_rw_mutex.hpp>
+#include <boost/log/detail/thread_id.hpp>
 #endif
+#include "unique_ptr.hpp"
 #include "default_sink.hpp"
 #include "stateless_allocator.hpp"
 #include "alignment_gap_between.hpp"
@@ -46,6 +51,29 @@
 namespace boost {
 
 BOOST_LOG_OPEN_NAMESPACE
+
+namespace aux {
+
+BOOST_LOG_ANONYMOUS_NAMESPACE {
+
+//! Sequence shuffling algorithm. Very similar to std::random_shuffle, used for forward portability with compilers that removed it from STL.
+template< typename Iterator, typename RandomNumberGenerator >
+void random_shuffle(Iterator begin, Iterator end, RandomNumberGenerator& rng)
+{
+    Iterator it = begin;
+    ++it;
+    while (it != end)
+    {
+        Iterator where = begin + rng() % (it - begin + 1u);
+        if (where != it)
+            boost::swap(*where, *it);
+        ++it;
+    }
+}
+
+} // namespace
+
+} // namespace aux
 
 //! Private record data information, with core-specific structures
 struct record_view::private_data :
@@ -134,8 +162,8 @@ public:
     //! Returns the flag indicating whether it is needed to detach the record from the current thread
     bool is_detach_from_thread_needed() const BOOST_NOEXCEPT { return m_detach_from_thread_needed; }
 
-    BOOST_LOG_DELETED_FUNCTION(private_data(private_data const&))
-    BOOST_LOG_DELETED_FUNCTION(private_data& operator= (private_data const&))
+    BOOST_DELETED_FUNCTION(private_data(private_data const&))
+    BOOST_DELETED_FUNCTION(private_data& operator= (private_data const&))
 
 private:
     //! Returns a pointer to the first accepting sink
@@ -208,6 +236,23 @@ public:
     {
         //! Thread-specific attribute set
         attribute_set m_thread_attributes;
+        //! Random number generator for shuffling
+        random::taus88 m_rng;
+
+        thread_data() : m_rng(get_random_seed())
+        {
+        }
+
+    private:
+        //! Creates a seed for RNG
+        static uint32_t get_random_seed()
+        {
+            uint32_t seed = static_cast< uint32_t >(posix_time::microsec_clock::universal_time().time_of_day().ticks());
+#if !defined(BOOST_LOG_NO_THREADS)
+            seed += static_cast< uint32_t >(log::aux::this_thread::get_id().native_id());
+#endif
+            return seed;
+        }
     };
 
 public:
@@ -234,7 +279,7 @@ public:
 
 #else
     //! Thread-specific data
-    std::auto_ptr< thread_data > m_thread_data;
+    log::aux::unique_ptr< thread_data > m_thread_data;
 #endif
 
     //! The global state of logging
@@ -286,7 +331,7 @@ public:
 
     //! Opens a record
     template< typename SourceAttributesT >
-    BOOST_LOG_FORCEINLINE record open_record(BOOST_FWD_REF(SourceAttributesT) source_attributes)
+    BOOST_FORCEINLINE record open_record(BOOST_FWD_REF(SourceAttributesT) source_attributes)
     {
         // Try a quick win first
         if (m_enabled) try
@@ -387,7 +432,7 @@ private:
         BOOST_LOG_EXPR_IF_MT(scoped_write_lock lock(m_mutex);)
         if (!m_thread_data.get())
         {
-            std::auto_ptr< thread_data > p(new thread_data());
+            log::aux::unique_ptr< thread_data > p(new thread_data());
             m_thread_data.reset(p.get());
 #if defined(BOOST_LOG_USE_COMPILER_TLS)
             m_thread_data_cache = p.release();
@@ -601,7 +646,7 @@ BOOST_LOG_API void core::push_record_move(record& rec)
         typedef std::vector< shared_ptr< sinks::sink > > accepting_sinks_t;
         accepting_sinks_t accepting_sinks(data->accepting_sink_count());
         shared_ptr< sinks::sink >* const begin = &*accepting_sinks.begin();
-        register shared_ptr< sinks::sink >* end = begin;
+        shared_ptr< sinks::sink >* end = begin;
 
         // Lock sinks that are willing to consume the record
         record_view::private_data::sink_list weak_sinks = data->get_accepting_sinks();
@@ -617,11 +662,11 @@ BOOST_LOG_API void core::push_record_move(record& rec)
         }
 
         bool shuffled = (end - begin) <= 1;
-        register shared_ptr< sinks::sink >* it = begin;
+        shared_ptr< sinks::sink >* it = begin;
         while (true) try
         {
             // First try to distribute load between different sinks
-            register bool all_locked = true;
+            bool all_locked = true;
             while (it != end)
             {
                 if (it->get()->try_consume(rec_view))
@@ -642,7 +687,8 @@ BOOST_LOG_API void core::push_record_move(record& rec)
                     // If all sinks are busy then block on any
                     if (!shuffled)
                     {
-                        std::random_shuffle(begin, end);
+                        implementation::thread_data* tsd = m_impl->get_thread_data();
+                        log::aux::random_shuffle(begin, end, tsd->m_rng);
                         shuffled = true;
                     }
 

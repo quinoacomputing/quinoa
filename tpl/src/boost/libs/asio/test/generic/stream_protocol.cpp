@@ -2,7 +2,7 @@
 // generic/stream_protocol.cpp
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //
-// Copyright (c) 2003-2013 Christopher M. Kohlhoff (chris at kohlhoff dot com)
+// Copyright (c) 2003-2015 Christopher M. Kohlhoff (chris at kohlhoff dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -20,6 +20,10 @@
 #include <boost/asio/io_service.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include "../unit_test.hpp"
+
+#if defined(__cplusplus_cli) || defined(__cplusplus_winrt)
+# define generic cpp_generic
+#endif
 
 //------------------------------------------------------------------------------
 
@@ -57,6 +61,10 @@ void test()
   namespace generic = boost::asio::generic;
   typedef generic::stream_protocol sp;
 
+  const int af_inet = BOOST_ASIO_OS_DEF(AF_INET);
+  const int ipproto_tcp = BOOST_ASIO_OS_DEF(IPPROTO_TCP);
+  const int sock_stream = BOOST_ASIO_OS_DEF(SOCK_STREAM);
+
   try
   {
     io_service ios;
@@ -70,14 +78,20 @@ void test()
     // basic_stream_socket constructors.
 
     sp::socket socket1(ios);
-    sp::socket socket2(ios, sp(AF_INET, IPPROTO_TCP));
+    sp::socket socket2(ios, sp(af_inet, ipproto_tcp));
     sp::socket socket3(ios, sp::endpoint());
-    int native_socket1 = ::socket(AF_INET, SOCK_STREAM, 0);
-    sp::socket socket4(ios, sp(AF_INET, IPPROTO_TCP), native_socket1);
+#if defined(BOOST_ASIO_WINDOWS_RUNTIME)
+    Windows::Networking::Sockets::StreamSocket^ native_socket1 = nullptr;
+#else // defined(BOOST_ASIO_WINDOWS_RUNTIME)
+    sp::socket::native_handle_type native_socket1
+      = ::socket(af_inet, sock_stream, 0);
+#endif // defined(BOOST_ASIO_WINDOWS_RUNTIME)
+    sp::socket socket4(ios, sp(af_inet, ipproto_tcp), native_socket1);
 
 #if defined(BOOST_ASIO_HAS_MOVE)
     sp::socket socket5(std::move(socket4));
-    sp::socket socket6(boost::asio::ip::tcp::socket(ios));
+    boost::asio::ip::tcp::socket tcp_socket(ios);
+    sp::socket socket6(std::move(tcp_socket));
 #endif // defined(BOOST_ASIO_HAS_MOVE)
 
     // basic_stream_socket operators.
@@ -98,13 +112,23 @@ void test()
     sp::socket::lowest_layer_type& lowest_layer = socket1.lowest_layer();
     (void)lowest_layer;
 
-    socket1.open(sp(AF_INET, IPPROTO_TCP));
-    socket1.open(sp(AF_INET, IPPROTO_TCP), ec);
+    socket1.open(sp(af_inet, ipproto_tcp));
+    socket1.open(sp(af_inet, ipproto_tcp), ec);
 
-    int native_socket2 = ::socket(AF_INET, SOCK_STREAM, 0);
-    socket1.assign(sp(AF_INET, IPPROTO_TCP), native_socket2);
-    int native_socket3 = ::socket(AF_INET, SOCK_STREAM, 0);
-    socket1.assign(sp(AF_INET, IPPROTO_TCP), native_socket3, ec);
+#if defined(BOOST_ASIO_WINDOWS_RUNTIME)
+    Windows::Networking::Sockets::StreamSocket^ native_socket2 = nullptr;
+#else // defined(BOOST_ASIO_WINDOWS_RUNTIME)
+    sp::socket::native_handle_type native_socket2
+      = ::socket(af_inet, sock_stream, 0);
+#endif // defined(BOOST_ASIO_WINDOWS_RUNTIME)
+    socket1.assign(sp(af_inet, ipproto_tcp), native_socket2);
+#if defined(BOOST_ASIO_WINDOWS_RUNTIME)
+    Windows::Networking::Sockets::StreamSocket^ native_socket3 = nullptr;
+#else // defined(BOOST_ASIO_WINDOWS_RUNTIME)
+    sp::socket::native_handle_type native_socket3
+      = ::socket(af_inet, sock_stream, 0);
+#endif // defined(BOOST_ASIO_WINDOWS_RUNTIME)
+    socket1.assign(sp(af_inet, ipproto_tcp), native_socket3, ec);
 
     bool is_open = socket1.is_open();
     (void)is_open;

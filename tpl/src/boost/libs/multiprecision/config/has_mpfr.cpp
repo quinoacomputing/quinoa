@@ -3,6 +3,7 @@
 //  Boost Software License, Version 1.0. (See accompanying file
 //  LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
+#include <cstddef> // See https://gcc.gnu.org/gcc-4.9/porting_to.html
 #include <mpfr.h>
 #include <boost/config.hpp>
 
@@ -27,6 +28,7 @@
 #error "Incompatible GMP version"
 #endif
 
+
 int main()
 {
    void *(*alloc_func_ptr) (size_t);
@@ -36,6 +38,11 @@ int main()
    mp_get_memory_functions(&alloc_func_ptr, &realloc_func_ptr, &free_func_ptr);
 
    mpfr_buildopt_tls_p();
+
+   mpfr_t t;
+   mpfr_init2(t, 128);
+   if(t[0]._mpfr_d)
+      mpfr_clear(t);
 
    return 0;
 }

@@ -130,6 +130,8 @@ boost_asio/reference/add_service.html
 boost_asio/reference/asio_handler_allocate.html
 boost_asio/reference/asio_handler_deallocate.html
 boost_asio/reference/asio_handler_invoke.html
+boost_asio/reference/asio_handler_invoke/overload1.html
+boost_asio/reference/asio_handler_invoke/overload2.html
 boost_asio/reference/asio_handler_is_continuation.html
 boost_asio/reference/async_connect.html
 boost_asio/reference/async_connect/overload1.html
@@ -1828,6 +1830,7 @@ boost_asio/reference/ip__basic_resolver_iterator/basic_resolver_iterator.html
 boost_asio/reference/ip__basic_resolver_iterator/create.html
 boost_asio/reference/ip__basic_resolver_iterator/create/overload1.html
 boost_asio/reference/ip__basic_resolver_iterator/create/overload2.html
+boost_asio/reference/ip__basic_resolver_iterator/create/overload3.html
 boost_asio/reference/ip__basic_resolver_iterator/difference_type.html
 boost_asio/reference/ip__basic_resolver_iterator/iterator_category.html
 boost_asio/reference/ip__basic_resolver_iterator/operator__star_.html
@@ -2426,6 +2429,8 @@ boost_asio/reference/ssl__context/no_compression.html
 boost_asio/reference/ssl__context/no_sslv2.html
 boost_asio/reference/ssl__context/no_sslv3.html
 boost_asio/reference/ssl__context/no_tlsv1.html
+boost_asio/reference/ssl__context/no_tlsv1_1.html
+boost_asio/reference/ssl__context/no_tlsv1_2.html
 boost_asio/reference/ssl__context/operator_eq_.html
 boost_asio/reference/ssl__context/options.html
 boost_asio/reference/ssl__context/password_purpose.html
@@ -2487,6 +2492,8 @@ boost_asio/reference/ssl__context_base/no_compression.html
 boost_asio/reference/ssl__context_base/no_sslv2.html
 boost_asio/reference/ssl__context_base/no_sslv3.html
 boost_asio/reference/ssl__context_base/no_tlsv1.html
+boost_asio/reference/ssl__context_base/no_tlsv1_1.html
+boost_asio/reference/ssl__context_base/no_tlsv1_2.html
 boost_asio/reference/ssl__context_base/options.html
 boost_asio/reference/ssl__context_base/password_purpose.html
 boost_asio/reference/ssl__context_base/single_dh_use.html

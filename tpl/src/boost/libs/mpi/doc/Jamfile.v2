@@ -5,6 +5,7 @@
 project boost/mpi/doc ;
 
 using quickbook ;
+using boostbook ;
 using doxygen ;
 
 doxygen mpi_autodoc 
@@ -31,6 +32,7 @@ doxygen mpi_autodoc
     ../../../boost/mpi/status.hpp
     ../../../boost/mpi/request.hpp
     ../../../boost/mpi/timer.hpp
+    ../../../boost/mpi/inplace.hpp
     ../../../boost/mpi/python.hpp
     ]
   : <doxygen:param>MACRO_EXPANSION=YES

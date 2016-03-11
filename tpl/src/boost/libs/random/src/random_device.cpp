@@ -6,7 +6,7 @@
  * accompanying file LICENSE_1_0.txt or copy at
  * http://www.boost.org/LICENSE_1_0.txt)
  *
- * $Id: random_device.cpp 71018 2011-04-05 21:27:52Z steven_watanabe $
+ * $Id$
  *
  */
 
@@ -14,8 +14,11 @@
 
 #include <boost/random/random_device.hpp>
 #include <boost/config.hpp>
+#include <boost/throw_exception.hpp>
 #include <boost/assert.hpp>
 #include <boost/detail/workaround.hpp>
+#include <boost/system/system_error.hpp>
+#include <boost/system/error_code.hpp>
 #include <string>
 
 #if !defined(BOOST_NO_INCLASS_MEMBER_INITIALIZATION) && !BOOST_WORKAROUND(BOOST_MSVC, BOOST_TESTED_AT(1600))
@@ -23,12 +26,26 @@
 const bool boost::random::random_device::has_fixed_range;
 #endif
 
+// WinRT target.
+#if !defined(BOOST_RANDOM_WINDOWS_RUNTIME)
+# if defined(__cplusplus_winrt)
+#  include <winapifamily.h>
+#  if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_APP)
+#   define BOOST_RANDOM_WINDOWS_RUNTIME 1
+#  endif
+# endif
+#endif
 
 #if defined(BOOST_WINDOWS)
 
+#if !defined(BOOST_RANDOM_WINDOWS_RUNTIME)
 #include <windows.h>
 #include <wincrypt.h>
 #include <stdexcept>  // std::invalid_argument
+#else
+using namespace Platform;
+using namespace Windows::Security::Cryptography;
+#endif
 
 #define BOOST_AUTO_LINK_NOMANGLE
 #define BOOST_LIB_NAME "Advapi32"
@@ -56,24 +73,28 @@ CryptEnumProvidersA(
 #endif
 
 namespace {
-
+#if !defined(BOOST_RANDOM_WINDOWS_RUNTIME)
 const char * const default_token = MS_DEF_PROV_A;
-
+#else
+const char * const default_token = "";
+#endif
 }
 
 class boost::random::random_device::impl
 {
 public:
   impl(const std::string & token) : provider(token) {
+#if !defined(BOOST_RANDOM_WINDOWS_RUNTIME)
     char buffer[80];
     DWORD type;
     DWORD len;
 
-    // Find the type of the provider
+    // Find the type of a specific provider
     for(DWORD i = 0; ; ++i) {
       len = sizeof(buffer);
       if(!CryptEnumProvidersA(i, NULL, 0, &type, buffer, &len)) {
-        error("Could not find provider name");
+        if (GetLastError() == ERROR_NO_MORE_ITEMS) break;
+        continue;
       }
       if(buffer == provider) {
         break;
@@ -84,41 +105,46 @@ public:
         CRYPT_VERIFYCONTEXT | CRYPT_SILENT)) {
       error("Could not acquire CSP context");
     }
+#endif
   }
 
+#if !defined(BOOST_RANDOM_WINDOWS_RUNTIME)
   ~impl() {
     if(!CryptReleaseContext(hProv, 0)) error("Could not release CSP context");
   }
+#endif
 
   unsigned int next() {
     unsigned int result;
 
+#if !defined(BOOST_RANDOM_WINDOWS_RUNTIME)
     if(!CryptGenRandom(hProv, sizeof(result),
         static_cast<BYTE*>(static_cast<void*>(&result)))) {
       error("error while reading");
     }
+#else
+    auto buffer = CryptographicBuffer::GenerateRandom(sizeof(result));
+    auto data = ref new Array<unsigned char>(buffer->Length);
+    CryptographicBuffer::CopyToByteArray(buffer, &data);
+    memcpy(&result, data->begin(), data->end() - data->begin());
+#endif
 
     return result;
   }
 
 private:
-  void error(const std::string & msg) {
-    char buf[80];
-    DWORD num = FormatMessageA(
-      FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-      NULL,
-      GetLastError(),
-      0,
-      buf,
-      sizeof(buf),
-      NULL);
-
-    throw std::invalid_argument("boost::random_device: " + msg + 
-                                " Cryptopraphic Service Provider " + provider + 
-                                ": " + std::string(&buf[0], &buf[0] + num));
+#if !defined(BOOST_RANDOM_WINDOWS_RUNTIME)
+  void error(const char * msg) {
+    DWORD error_code = GetLastError();
+    boost::throw_exception(
+      boost::system::system_error(
+        error_code, boost::system::system_category(),
+        std::string("boost::random_device: ") + msg + 
+        " Cryptographic Service Provider " + provider));
   }
-  const std::string provider;
   HCRYPTPROV hProv;
+#endif
+  const std::string provider;
 };
 
 #else
@@ -182,10 +208,13 @@ public:
   }
 
 private:
-  void error(const std::string & msg) {
-    throw std::invalid_argument("boost::random_device: " + msg + 
-                                " random-number pseudo-device " + path + 
-                                ": " + strerror(errno));
+  void error(const char * msg) {
+    int error_code = errno;
+    boost::throw_exception(
+      boost::system::system_error(
+        error_code, boost::system::system_category(),
+        std::string("boost::random_device: ") + msg + 
+        " random-number pseudo-device " + path));
   }
   const std::string path;
   int fd;

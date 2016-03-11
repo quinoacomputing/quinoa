@@ -12,8 +12,11 @@ import testing ;
 project boost/atomic/test
     : requirements
       <threading>multi
-      <library>../../thread/build//boost_thread
-      <library>/boost/atomic//boost_atomic/<link>static
+      <library>/boost/thread//boost_thread
+      <library>/boost/atomic//boost_atomic
+      <target-os>windows:<define>BOOST_USE_WINDOWS_H
+      <target-os>windows:<define>_WIN32_WINNT=0x0500
+      <toolset>gcc,<target-os>windows:<linkflags>"-lkernel32"
     ;
 
 test-suite atomic

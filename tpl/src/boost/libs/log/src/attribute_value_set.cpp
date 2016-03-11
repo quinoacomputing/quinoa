@@ -1,5 +1,5 @@
 /*
- *          Copyright Andrey Semashev 2007 - 2013.
+ *          Copyright Andrey Semashev 2007 - 2015.
  * Distributed under the Boost Software License, Version 1.0.
  *    (See accompanying file LICENSE_1_0.txt or copy at
  *          http://www.boost.org/LICENSE_1_0.txt)
@@ -10,7 +10,7 @@
  * \date   19.04.2007
  *
  * \brief  This header is the Boost.Log library implementation, see the library documentation
- *         at http://www.boost.org/libs/log/doc/log.html.
+ *         at http://www.boost.org/doc/libs/release/libs/log/doc/html/index.html.
  */
 
 #include <new>
@@ -32,13 +32,13 @@ namespace boost {
 
 BOOST_LOG_OPEN_NAMESPACE
 
-BOOST_LOG_FORCEINLINE attribute_value_set::node_base::node_base() :
+BOOST_FORCEINLINE attribute_value_set::node_base::node_base() :
     m_pPrev(NULL),
     m_pNext(NULL)
 {
 }
 
-BOOST_LOG_FORCEINLINE attribute_value_set::node::node(key_type const& key, mapped_type& data, bool dynamic) :
+BOOST_FORCEINLINE attribute_value_set::node::node(key_type const& key, mapped_type& data, bool dynamic) :
     node_base(),
     m_Value(key, mapped_type()),
     m_DynamicallyAllocated(dynamic)
@@ -79,7 +79,7 @@ private:
     typedef intrusive::list<
         node,
         intrusive::value_traits< value_traits >,
-        intrusive::constant_time_size< false >
+        intrusive::constant_time_size< true >
     > node_list;
 
     //! A hash table bucket
@@ -94,13 +94,13 @@ private:
     };
 
     //! A list of buckets
-    typedef boost::array< bucket, 1U << BOOST_LOG_HASH_TABLE_SIZE_LOG > buckets;
+    typedef boost::array< bucket, 1u << BOOST_LOG_HASH_TABLE_SIZE_LOG > buckets;
 
     //! Element disposer
     struct disposer
     {
         typedef void result_type;
-        void operator() (node* p) const
+        void operator() (node* p) const BOOST_NOEXCEPT
         {
             if (!p->m_DynamicallyAllocated)
                 p->~node();
@@ -119,8 +119,6 @@ private:
 
     //! The container with elements
     node_list m_Nodes;
-    //! The pointer to the beginning of the storage of the elements
-    node* m_pStorage;
     //! The pointer to the end of the allocated elements within the storage
     node* m_pEnd;
     //! The pointer to the end of storage
@@ -141,7 +139,6 @@ private:
         m_pSourceAttributes(source_attrs),
         m_pThreadAttributes(thread_attrs),
         m_pGlobalAttributes(global_attrs),
-        m_pStorage(storage),
         m_pEnd(storage),
         m_pEOS(eos)
     {
@@ -259,7 +256,7 @@ public:
     size_type size()
     {
         freeze();
-        return (m_pEnd - m_pStorage);
+        return m_Nodes.size();
     }
 
     //! Looks for the element with an equivalent key
@@ -267,7 +264,7 @@ public:
     {
         // First try to find an acquired element
         bucket& b = get_bucket(key.id());
-        register node* p = b.first;
+        node* p = b.first;
         if (p)
         {
             // The bucket is not empty, search among the elements
@@ -320,7 +317,7 @@ private:
     //! The function returns a bucket for the specified element
     bucket& get_bucket(id_type id)
     {
-        return m_Buckets[id & (buckets::static_size - 1)];
+        return m_Buckets[id & (buckets::static_size - 1u)];
     }
 
     //! Attempts to find an element with the specified key in the bucket
@@ -330,7 +327,7 @@ private:
         typedef node_list::value_traits value_traits;
 
         // All elements within the bucket are sorted to speedup the search.
-        register node* p = b.first;
+        node* p = b.first;
         while (p != b.last && p->m_Value.first.id() < key.id())
         {
             p = value_traits::to_value_ptr(node_traits::get_next(p));
@@ -391,26 +388,33 @@ private:
             p = new node(key, data, true);
         }
 
+        node_list::iterator it;
         if (b.first == NULL)
         {
             // The bucket is empty
             b.first = b.last = p;
-            m_Nodes.push_back(*p);
+            it = m_Nodes.end();
         }
         else if (where == b.last && key.id() > where->m_Value.first.id())
         {
             // The new element should become the last element of the bucket
-            node_list::iterator it = m_Nodes.iterator_to(*where);
+            it = m_Nodes.iterator_to(*where);
             ++it;
-            m_Nodes.insert(it, *p);
             b.last = p;
+        }
+        else if (where == b.first)
+        {
+            // The new element should become the first element of the bucket
+            it = m_Nodes.iterator_to(*where);
+            b.first = p;
         }
         else
         {
             // The new element should be within the bucket
-            node_list::iterator it = m_Nodes.iterator_to(*where);
-            m_Nodes.insert(it, *p);
+            it = m_Nodes.iterator_to(*where);
         }
+
+        m_Nodes.insert(it, *p);
 
         return p;
     }
@@ -423,7 +427,7 @@ private:
         {
             key_type key = it->first;
             bucket& b = get_bucket(key.id());
-            register node* p = b.first;
+            node* p = b.first;
             if (p)
             {
                 p = find_in_bucket(key, b);

@@ -14,6 +14,7 @@
 
 #include <boost/concept/assert.hpp>
 #include <boost/concept_archetype.hpp>
+#include <boost/shared_ptr.hpp>
 
 #include <boost/heap/heap_concepts.hpp>
 
@@ -233,19 +234,19 @@ void pri_queue_test_iterators(void)
         BOOST_REQUIRE(q.begin() == q.end());
         fill_q(q, shuffled);
 
-        for (unsigned long i = 0; i != data.size(); ++i)
-            BOOST_REQUIRE(std::find(q.begin(), q.end(), data[i]) != q.end());
+        for (unsigned long j = 0; j != data.size(); ++j)
+            BOOST_REQUIRE(std::find(q.begin(), q.end(), data[j]) != q.end());
 
-        for (unsigned long i = 0; i != data.size(); ++i)
-            BOOST_REQUIRE(std::find(q.begin(), q.end(), data[i] + data.size()) == q.end());
+        for (unsigned long j = 0; j != data.size(); ++j)
+            BOOST_REQUIRE(std::find(q.begin(), q.end(), data[j] + data.size()) == q.end());
 
         test_data data_from_queue(q.begin(), q.end());
         std::sort(data_from_queue.begin(), data_from_queue.end());
 
         BOOST_REQUIRE(data == data_from_queue);
 
-        for (unsigned long i = 0; i != data.size(); ++i) {
-            BOOST_REQUIRE_EQUAL((long)std::distance(q.begin(), q.end()), (long)(data.size() - i));
+        for (unsigned long j = 0; j != data.size(); ++j) {
+            BOOST_REQUIRE_EQUAL((long)std::distance(q.begin(), q.end()), (long)(data.size() - j));
             q.pop();
         }
     }
@@ -266,14 +267,14 @@ void pri_queue_test_ordered_iterators(void)
         std::reverse(data_from_queue.begin(), data_from_queue.end());
         BOOST_REQUIRE(data == data_from_queue);
 
-        for (unsigned long i = 0; i != data.size(); ++i)
-            BOOST_REQUIRE(std::find(q.ordered_begin(), q.ordered_end(), data[i]) != q.ordered_end());
+        for (unsigned long j = 0; j != data.size(); ++j)
+            BOOST_REQUIRE(std::find(q.ordered_begin(), q.ordered_end(), data[j]) != q.ordered_end());
 
-        for (unsigned long i = 0; i != data.size(); ++i)
-            BOOST_REQUIRE(std::find(q.ordered_begin(), q.ordered_end(), data[i] + data.size()) == q.ordered_end());
+        for (unsigned long j = 0; j != data.size(); ++j)
+            BOOST_REQUIRE(std::find(q.ordered_begin(), q.ordered_end(), data[j] + data.size()) == q.ordered_end());
 
-        for (unsigned long i = 0; i != data.size(); ++i) {
-            BOOST_REQUIRE_EQUAL((long)std::distance(q.begin(), q.end()), (long)(data.size() - i));
+        for (unsigned long j = 0; j != data.size(); ++j) {
+            BOOST_REQUIRE_EQUAL((long)std::distance(q.begin(), q.end()), (long)(data.size() - j));
             q.pop();
         }
     }
@@ -439,6 +440,14 @@ void run_reserve_heap_tests(void)
 
     check_q(q, data);
 }
+
+template <typename pri_queue>
+void run_leak_check_test(void)
+{
+    pri_queue q;
+    q.push(boost::shared_ptr<int>(new int(0)));
+}
+
 
 struct less_with_T
 {

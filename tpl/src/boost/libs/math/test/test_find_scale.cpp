@@ -15,6 +15,7 @@
 
 #include <pch.hpp>
 
+#include <boost/math/tools/test.hpp>
 #include <boost/math/concepts/real_concept.hpp> // for real_concept
 #include <boost/math/distributions/normal.hpp> // for normal_distribution
   using boost::math::normal; // Default type double.
@@ -34,6 +35,7 @@
 #include <boost/test/floating_point_comparison.hpp> // for BOOST_CHECK_CLOSE_FRACTION, BOOST_CHECK_EQUAL...
 
 #include <iostream>
+#include <iomanip>
   using std::cout; using std::endl; using std::fixed;
   using std::right; using std::left; using std::showpoint;
   using std::showpos; using std::setw; using std::setprecision;
@@ -58,7 +60,7 @@ void test_spots(RealType)
   cout << "Tolerance for type " << typeid(RealType).name()  << " is "
     << setprecision(3) << tolerance  << " (or " << tolerance * 100 << "%)." << endl;
 
-  BOOST_CHECK_THROW( // Probability outside 0 to 1.
+  BOOST_MATH_CHECK_THROW( // Probability outside 0 to 1.
        find_scale<normal_distribution<RealType> >(
        static_cast<RealType>(0.), static_cast<RealType>(-1.), static_cast<RealType>(0.) ),
        std::domain_error);
@@ -68,32 +70,32 @@ void test_spots(RealType)
   BOOST_CHECK_EQUAL(n.scale(), 1); // aka standard_deviation.
 
    // Check for 'bad' arguments.
-  BOOST_CHECK_THROW(find_scale<normal>(0., -1., 0.), std::domain_error); // p below 0 to 1.
-  BOOST_CHECK_THROW(find_scale<normal>(0., 2., 0.), std::domain_error); // p above 0 to 1.
-  BOOST_CHECK_THROW(find_scale<normal>(numeric_limits<double>::infinity(), 0.5, 0.),
+  BOOST_MATH_CHECK_THROW(find_scale<normal>(0., -1., 0.), std::domain_error); // p below 0 to 1.
+  BOOST_MATH_CHECK_THROW(find_scale<normal>(0., 2., 0.), std::domain_error); // p above 0 to 1.
+  BOOST_MATH_CHECK_THROW(find_scale<normal>(numeric_limits<double>::infinity(), 0.5, 0.),
     std::domain_error); // z not finite.
-  BOOST_CHECK_THROW(find_scale<normal>(numeric_limits<double>::quiet_NaN(), -1., 0.),
+  BOOST_MATH_CHECK_THROW(find_scale<normal>(numeric_limits<double>::quiet_NaN(), -1., 0.),
     std::domain_error); // z not finite
-  BOOST_CHECK_THROW(find_scale<normal>(0., -1., numeric_limits<double>::quiet_NaN()),
+  BOOST_MATH_CHECK_THROW(find_scale<normal>(0., -1., numeric_limits<double>::quiet_NaN()),
     std::domain_error); // scale not finite
 
 
-  BOOST_CHECK_THROW(find_scale<normal>(complement(0., -1., 0.)), std::domain_error); // p below 0 to 1.
-  BOOST_CHECK_THROW(find_scale<normal>(complement(0., 2., 0.)), std::domain_error); // p above 0 to 1.
-  BOOST_CHECK_THROW(find_scale<normal>(complement(numeric_limits<double>::infinity(), 0.5, 0.)),
+  BOOST_MATH_CHECK_THROW(find_scale<normal>(complement(0., -1., 0.)), std::domain_error); // p below 0 to 1.
+  BOOST_MATH_CHECK_THROW(find_scale<normal>(complement(0., 2., 0.)), std::domain_error); // p above 0 to 1.
+  BOOST_MATH_CHECK_THROW(find_scale<normal>(complement(numeric_limits<double>::infinity(), 0.5, 0.)),
     std::domain_error); // z not finite.
-  BOOST_CHECK_THROW(find_scale<normal>(complement(numeric_limits<double>::quiet_NaN(), -1., 0.)),
+  BOOST_MATH_CHECK_THROW(find_scale<normal>(complement(numeric_limits<double>::quiet_NaN(), -1., 0.)),
     std::domain_error); // z not finite
-  BOOST_CHECK_THROW(find_scale<normal>(complement(0., -1., numeric_limits<double>::quiet_NaN())),
+  BOOST_MATH_CHECK_THROW(find_scale<normal>(complement(0., -1., numeric_limits<double>::quiet_NaN())),
     std::domain_error); // scale not finite
 
-  BOOST_CHECK_THROW(find_scale<normal>(complement(0., -1., 0.)), std::domain_error); // p below 0 to 1.
+  BOOST_MATH_CHECK_THROW(find_scale<normal>(complement(0., -1., 0.)), std::domain_error); // p below 0 to 1.
 
 
   // Check for ab-use with unsuitable distribution(s), for example,
   // pareto distribution (and most others) can't be used with find_scale (or find_location)
   // because they lack the scale and location attributes.
-  // BOOST_CHECK_THROW(find_scale<pareto>(0., 0.5, 0.), std::domain_error);
+  // BOOST_MATH_CHECK_THROW(find_scale<pareto>(0., 0.5, 0.), std::domain_error);
   // correctly fails to compile in find_scale() at
   // BOOST_STATIC_ASSERT(::boost::math::tools::is_scaled_distribution<Dist>::value); 
 
@@ -105,7 +107,7 @@ void test_spots(RealType)
   // Define a (bad?) policy to ignore domain errors ('bad' arguments):
   typedef policy<domain_error<ignore_error> > ignore_domain_policy;
   // Using a typedef is convenient, especially if it is re-used.
-
+#ifndef BOOST_NO_EXCEPTIONS
   BOOST_CHECK_NO_THROW(find_scale<normal>(0, -1, 1,
     ignore_domain_policy())); // probability outside [0, 1]
   BOOST_CHECK_NO_THROW(find_scale<normal>(numeric_limits<double>::infinity(), -1, 1,
@@ -113,7 +115,7 @@ void test_spots(RealType)
   BOOST_CHECK_NO_THROW(find_scale<normal>(complement(0, -1, 1, ignore_domain_policy()))); // probability outside [0, 1]
   BOOST_CHECK_NO_THROW(find_scale<normal>(complement(numeric_limits<double>::infinity(), -1, 1,
     ignore_domain_policy()))); // z not finite.
-
+#endif
   RealType l = 0.; // standard normal distribution.
   RealType sd = static_cast<RealType>(1); // normal default standard deviation = 1.
   normal_distribution<RealType> n01(l, sd); // mean(location) = 0, standard_deviation (scale) = 1.
@@ -187,7 +189,7 @@ BOOST_AUTO_TEST_CASE( test_main )
      std::cout << "<note>The long double tests have been disabled on this platform "
         "either because the long double overloads of the usual math functions are "
         "not available at all, or because they are too inaccurate for these tests "
-        "to pass.</note>" << std::cout;
+        "to pass.</note>" << std::endl;
   #endif
   
 } // BOOST_AUTO_TEST_CASE( test_main )

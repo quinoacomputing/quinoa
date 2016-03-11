@@ -2,9 +2,9 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
 <title>Why use a high-precision library rather than built-in floating-point types?</title>
-<link rel="stylesheet" href="../../boostbook.css" type="text/css">
-<meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
-<link rel="home" href="../../index.html" title="Math Toolkit">
+<link rel="stylesheet" href="../../math.css" type="text/css">
+<meta name="generator" content="DocBook XSL Stylesheets V1.77.1">
+<link rel="home" href="../../index.html" title="Math Toolkit 2.3.0">
 <link rel="up" href="../high_precision.html" title="Using Boost.Math with High-Precision Floating-Point Libraries">
 <link rel="prev" href="../high_precision.html" title="Using Boost.Math with High-Precision Floating-Point Libraries">
 <link rel="next" href="use_multiprecision.html" title="Using Boost.Multiprecision">
@@ -22,7 +22,7 @@
 <div class="spirit-nav">
 <a accesskey="p" href="../high_precision.html"><img src="../../../../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../high_precision.html"><img src="../../../../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../../../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="use_multiprecision.html"><img src="../../../../../../doc/src/images/next.png" alt="Next"></a>
 </div>
-<div class="section  math_toolkit_high_precision_why_high_precision">
+<div class="section">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="math_toolkit.high_precision.why_high_precision"></a><a class="link" href="why_high_precision.html" title="Why use a high-precision library rather than built-in floating-point types?">Why use
       a high-precision library rather than built-in floating-point types?</a>
@@ -45,13 +45,15 @@
             are the textbook example.
           </li>
 <li class="listitem">
-            Using double is (or may be) too inaccurate.
+            Using <code class="computeroutput"><span class="keyword">double</span></code> is (or may
+            be) too inaccurate.
           </li>
 <li class="listitem">
-            Using long double (or may be) is too inaccurate.
+            Using <code class="computeroutput"><span class="keyword">long</span> <span class="keyword">double</span></code>
+            (or may be) is too inaccurate.
           </li>
 <li class="listitem">
-            Using an extended precision type implemented in software as <a href="http://en.wikipedia.org/wiki/Double-double_(arithmetic)#Double-double_arithmetic" target="_top">double-double</a>
+            Using an extended-precision type implemented in software as <a href="http://en.wikipedia.org/wiki/Double-double_(arithmetic)#Double-double_arithmetic" target="_top">double-double</a>
             (<a href="http://en.wikipedia.org/wiki/Darwin_(operating_system)" target="_top">Darwin</a>)
             is sometimes unpredictably inaccurate.
           </li>
@@ -107,8 +109,8 @@
 </tr>
 <tr><td align="left" valign="top"><p>
           In contrast, reading a value from an <code class="computeroutput"><span class="identifier">std</span><span class="special">::</span><span class="identifier">istream</span></code>
-          into a built-in floating-point type is <span class="bold"><strong>not guaranteed</strong></span>
-          by the C++ Standard to give the nearest representable value.
+          into a built-in floating-point type is <span class="bold"><strong>not guaranteed
+          by the C++ Standard</strong></span> to give the nearest representable value.
         </p></td></tr>
 </table></div>
 <p>
@@ -120,9 +122,10 @@
 </div>
 <table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>
 <td align="left"></td>
-<td align="right"><div class="copyright-footer">Copyright &#169; 2006-2010, 2012, 2013 Paul A. Bristow, Christopher Kormanyos,
-      Hubert Holin, Bruno Lalande, John Maddock, Johan R&#229;de, Gautam Sewani, Benjamin
-      Sobotta, Thijs van den Berg, Daryle Walker and Xiaogang Zhang<p>
+<td align="right"><div class="copyright-footer">Copyright &#169; 2006-2010, 2012-2014 Nikhar Agrawal,
+      Anton Bikineev, Paul A. Bristow, Marco Guazzone, Christopher Kormanyos, Hubert
+      Holin, Bruno Lalande, John Maddock, Johan R&#229;de, Gautam Sewani, Benjamin Sobotta,
+      Thijs van den Berg, Daryle Walker and Xiaogang Zhang<p>
         Distributed under the Boost Software License, Version 1.0. (See accompanying
         file LICENSE_1_0.txt or copy at <a href="http://www.boost.org/LICENSE_1_0.txt" target="_top">http://www.boost.org/LICENSE_1_0.txt</a>)
       </p>

@@ -12,6 +12,7 @@
 #include <boost/multiprecision/detail/big_lanczos.hpp>
 #include <boost/multiprecision/detail/digits.hpp>
 #include <boost/multiprecision/mpfr.hpp>
+#include <boost/math/constants/constants.hpp>
 #include <mpfi.h>
 #include <cmath>
 #include <algorithm>
@@ -54,8 +55,13 @@ struct mpfi_float_imp;
 template <unsigned digits10>
 struct mpfi_float_imp
 {
-   typedef mpl::list<long, long long>                     signed_types;
-   typedef mpl::list<unsigned long, unsigned long long>   unsigned_types;
+#ifdef BOOST_HAS_LONG_LONG
+   typedef mpl::list<long, boost::long_long_type>                     signed_types;
+   typedef mpl::list<unsigned long, boost::ulong_long_type>   unsigned_types;
+#else
+   typedef mpl::list<long>                                signed_types;
+   typedef mpl::list<unsigned long>                       unsigned_types;
+#endif
    typedef mpl::list<double, long double>                 float_types;
    typedef long                                           exponent_type;
 
@@ -96,8 +102,9 @@ struct mpfi_float_imp
       return *this;
    }
 #endif
+#ifdef BOOST_HAS_LONG_LONG
 #ifdef _MPFR_H_HAVE_INTMAX_T
-   mpfi_float_imp& operator = (unsigned long long i)
+   mpfi_float_imp& operator = (boost::ulong_long_type i)
    {
       if(m_data[0].left._mpfr_d == 0)
          mpfi_init2(m_data, multiprecision::detail::digits10_2_2(digits10 ? digits10 : get_default_precision()));
@@ -105,7 +112,7 @@ struct mpfi_float_imp
       mpfr_set_uj(right_data(), i, GMP_RNDU);
       return *this;
    }
-   mpfi_float_imp& operator = (long long i)
+   mpfi_float_imp& operator = (boost::long_long_type i)
    {
       if(m_data[0].left._mpfr_d == 0)
          mpfi_init2(m_data, multiprecision::detail::digits10_2_2(digits10 ? digits10 : get_default_precision()));
@@ -114,38 +121,38 @@ struct mpfi_float_imp
       return *this;
    }
 #else
-   mpfi_float_imp& operator = (unsigned long long i)
+   mpfi_float_imp& operator = (boost::ulong_long_type i)
    {
       if(m_data[0].left._mpfr_d == 0)
          mpfi_init2(m_data, multiprecision::detail::digits10_2_2(digits10 ? digits10 : get_default_precision()));
-      unsigned long long mask = ((1uLL << std::numeric_limits<unsigned>::digits) - 1);
+      boost::ulong_long_type mask = ((((1uLL << (std::numeric_limits<unsigned long>::digits - 1)) - 1) << 1) | 1u);
       unsigned shift = 0;
       mpfi_t t;
-      mpfi_init2(t, (std::max)(static_cast<unsigned>(std::numeric_limits<unsigned long long>::digits), static_cast<unsigned>(multiprecision::detail::digits10_2_2(digits10))));
+      mpfi_init2(t, (std::max)(static_cast<unsigned long>(std::numeric_limits<boost::ulong_long_type>::digits), static_cast<unsigned long>(multiprecision::detail::digits10_2_2(digits10))));
       mpfi_set_ui(m_data, 0);
       while(i)
       {
-         mpfi_set_ui(t, static_cast<unsigned>(i & mask));
+         mpfi_set_ui(t, static_cast<unsigned long>(i & mask));
          if(shift)
             mpfi_mul_2exp(t, t, shift);
          mpfi_add(m_data, m_data, t);
-         shift += std::numeric_limits<unsigned>::digits;
-         i >>= std::numeric_limits<unsigned>::digits;
+         shift += std::numeric_limits<unsigned long>::digits;
+         i >>= std::numeric_limits<unsigned long>::digits;
       }
       mpfi_clear(t);
       return *this;
    }
-   mpfi_float_imp& operator = (long long i)
+   mpfi_float_imp& operator = (boost::long_long_type i)
    {
-      BOOST_MP_USING_ABS
       if(m_data[0].left._mpfr_d == 0)
          mpfi_init2(m_data, multiprecision::detail::digits10_2_2(digits10 ? digits10 : get_default_precision()));
       bool neg = i < 0;
-      *this = static_cast<unsigned long long>(abs(i));
+      *this = boost::multiprecision::detail::unsigned_abs(i);
       if(neg)
          mpfi_neg(m_data, m_data);
       return *this;
    }
+#endif
 #endif
    mpfi_float_imp& operator = (unsigned long i)
    {
@@ -178,6 +185,8 @@ struct mpfi_float_imp
    }
    mpfi_float_imp& operator = (const char* s)
    {
+      using default_ops::eval_fpclassify;
+   
       if(m_data[0].left._mpfr_d == 0)
          mpfi_init2(m_data, multiprecision::detail::digits10_2_2(digits10 ? digits10 : get_default_precision()));
 
@@ -202,7 +211,22 @@ struct mpfi_float_imp
             part.erase();
          b = part.c_str();
 
-         mpfi_interv_fr(m_data, a.data(), b.data());
+         if(eval_fpclassify(a) == (int)FP_NAN)
+         {
+            mpfi_set_fr(this->data(), a.data());
+         }
+         else if(eval_fpclassify(b) == (int)FP_NAN)
+         {
+            mpfi_set_fr(this->data(), b.data());
+         }
+         else
+         {
+            if(a.compare(b) > 0)
+            {
+               BOOST_THROW_EXCEPTION(std::runtime_error("Attempt to create interval with invalid range (start is greater than end)."));
+            }
+            mpfi_interv_fr(m_data, a.data(), b.data());
+         }
       }
       else if(mpfi_set_str(m_data, s, 10) != 0)
       {
@@ -476,7 +500,10 @@ inline void eval_subtract(mpfi_float_backend<D1>& result, const mpfi_float_backe
 template <unsigned D1, unsigned D2>
 inline void eval_multiply(mpfi_float_backend<D1>& result, const mpfi_float_backend<D2>& o)
 {
-   mpfi_mul(result.data(), result.data(), o.data());
+   if((void*)&result == (void*)&o)
+      mpfi_sqr(result.data(), o.data());
+   else
+      mpfi_mul(result.data(), result.data(), o.data());
 }
 template <unsigned D1, unsigned D2>
 inline void eval_divide(mpfi_float_backend<D1>& result, const mpfi_float_backend<D2>& o)
@@ -509,7 +536,7 @@ inline void eval_add(mpfi_float_backend<digits10>& result, long i)
    if(i > 0)
       mpfi_add_ui(result.data(), result.data(), i);
    else
-      mpfi_sub_ui(result.data(), result.data(), std::abs(i));
+      mpfi_sub_ui(result.data(), result.data(), boost::multiprecision::detail::unsigned_abs(i));
 }
 template <unsigned digits10>
 inline void eval_subtract(mpfi_float_backend<digits10>& result, long i)
@@ -517,19 +544,19 @@ inline void eval_subtract(mpfi_float_backend<digits10>& result, long i)
    if(i > 0)
       mpfi_sub_ui(result.data(), result.data(), i);
    else
-      mpfi_add_ui(result.data(), result.data(), std::abs(i));
+      mpfi_add_ui(result.data(), result.data(), boost::multiprecision::detail::unsigned_abs(i));
 }
 template <unsigned digits10>
 inline void eval_multiply(mpfi_float_backend<digits10>& result, long i)
 {
-   mpfi_mul_ui(result.data(), result.data(), std::abs(i));
+   mpfi_mul_ui(result.data(), result.data(), boost::multiprecision::detail::unsigned_abs(i));
    if(i < 0)
       mpfi_neg(result.data(), result.data());
 }
 template <unsigned digits10>
 inline void eval_divide(mpfi_float_backend<digits10>& result, long i)
 {
-   mpfi_div_ui(result.data(), result.data(), std::abs(i));
+   mpfi_div_ui(result.data(), result.data(), boost::multiprecision::detail::unsigned_abs(i));
    if(i < 0)
       mpfi_neg(result.data(), result.data());
 }
@@ -550,7 +577,7 @@ template <unsigned D1, unsigned D2>
 inline void eval_add(mpfi_float_backend<D1>& a, const mpfi_float_backend<D2>& x, long y)
 {
    if(y < 0)
-      mpfi_sub_ui(a.data(), x.data(), -y);
+      mpfi_sub_ui(a.data(), x.data(), boost::multiprecision::detail::unsigned_abs(y));
    else
       mpfi_add_ui(a.data(), x.data(), y);
 }
@@ -564,7 +591,7 @@ inline void eval_add(mpfi_float_backend<D1>& a, long x, const mpfi_float_backend
 {
    if(x < 0)
    {
-      mpfi_ui_sub(a.data(), -x, y.data());
+      mpfi_ui_sub(a.data(), boost::multiprecision::detail::unsigned_abs(x), y.data());
       mpfi_neg(a.data(), a.data());
    }
    else
@@ -584,7 +611,7 @@ template <unsigned D1, unsigned D2>
 inline void eval_subtract(mpfi_float_backend<D1>& a, const mpfi_float_backend<D2>& x, long y)
 {
    if(y < 0)
-      mpfi_add_ui(a.data(), x.data(), -y);
+      mpfi_add_ui(a.data(), x.data(), boost::multiprecision::detail::unsigned_abs(y));
    else
       mpfi_sub_ui(a.data(), x.data(), y);
 }
@@ -598,7 +625,7 @@ inline void eval_subtract(mpfi_float_backend<D1>& a, long x, const mpfi_float_ba
 {
    if(x < 0)
    {
-      mpfi_add_ui(a.data(), y.data(), -x);
+      mpfi_add_ui(a.data(), y.data(), boost::multiprecision::detail::unsigned_abs(x));
       mpfi_neg(a.data(), a.data());
    }
    else
@@ -608,7 +635,10 @@ inline void eval_subtract(mpfi_float_backend<D1>& a, long x, const mpfi_float_ba
 template <unsigned D1, unsigned D2, unsigned D3>
 inline void eval_multiply(mpfi_float_backend<D1>& a, const mpfi_float_backend<D2>& x, const mpfi_float_backend<D3>& y)
 {
-   mpfi_mul(a.data(), x.data(), y.data());
+   if((void*)&x == (void*)&y)
+      mpfi_sqr(a.data(), x.data());
+   else
+      mpfi_mul(a.data(), x.data(), y.data());
 }
 template <unsigned D1, unsigned D2>
 inline void eval_multiply(mpfi_float_backend<D1>& a, const mpfi_float_backend<D2>& x, unsigned long y)
@@ -620,7 +650,7 @@ inline void eval_multiply(mpfi_float_backend<D1>& a, const mpfi_float_backend<D2
 {
    if(y < 0)
    {
-      mpfi_mul_ui(a.data(), x.data(), -y);
+      mpfi_mul_ui(a.data(), x.data(), boost::multiprecision::detail::unsigned_abs(y));
       a.negate();
    }
    else
@@ -636,7 +666,7 @@ inline void eval_multiply(mpfi_float_backend<D1>& a, long x, const mpfi_float_ba
 {
    if(x < 0)
    {
-      mpfi_mul_ui(a.data(), y.data(), -x);
+      mpfi_mul_ui(a.data(), y.data(), boost::multiprecision::detail::unsigned_abs(x));
       mpfi_neg(a.data(), a.data());
    }
    else
@@ -658,7 +688,7 @@ inline void eval_divide(mpfi_float_backend<D1>& a, const mpfi_float_backend<D2>&
 {
    if(y < 0)
    {
-      mpfi_div_ui(a.data(), x.data(), -y);
+      mpfi_div_ui(a.data(), x.data(), boost::multiprecision::detail::unsigned_abs(y));
       a.negate();
    }
    else
@@ -674,7 +704,7 @@ inline void eval_divide(mpfi_float_backend<D1>& a, long x, const mpfi_float_back
 {
    if(x < 0)
    {
-      mpfi_ui_div(a.data(), -x, y.data());
+      mpfi_ui_div(a.data(), boost::multiprecision::detail::unsigned_abs(x), y.data());
       mpfi_neg(a.data(), a.data());
    }
    else
@@ -708,14 +738,14 @@ inline void eval_convert_to(long* result, const mpfi_float_backend<digits10>& va
 }
 #ifdef _MPFR_H_HAVE_INTMAX_T
 template <unsigned digits10>
-inline void eval_convert_to(unsigned long long* result, const mpfi_float_backend<digits10>& val)
+inline void eval_convert_to(boost::ulong_long_type* result, const mpfi_float_backend<digits10>& val)
 {
    mpfr_float_backend<digits10> t;
    mpfi_mid(t.data(), val.data());
    eval_convert_to(result, t);
 }
 template <unsigned digits10>
-inline void eval_convert_to(long long* result, const mpfi_float_backend<digits10>& val)
+inline void eval_convert_to(boost::long_long_type* result, const mpfi_float_backend<digits10>& val)
 {
    mpfr_float_backend<digits10> t;
    mpfi_mid(t.data(), val.data());
@@ -738,7 +768,23 @@ inline void eval_convert_to(long double* result, const mpfi_float_backend<digits
 template <unsigned D1, unsigned D2, mpfr_allocation_type AllocationType>
 inline void assign_components(mpfi_float_backend<D1>& result, const mpfr_float_backend<D2, AllocationType>& a, const mpfr_float_backend<D2, AllocationType>& b)
 {
-   mpfi_interv_fr(result.data(), a.data(), b.data());
+   using default_ops::eval_fpclassify;
+   if(eval_fpclassify(a) == (int)FP_NAN)
+   {
+      mpfi_set_fr(result.data(), a.data());
+   }
+   else if(eval_fpclassify(b) == (int)FP_NAN)
+   {
+      mpfi_set_fr(result.data(), b.data());
+   }
+   else
+   {
+      if(a.compare(b) > 0)
+      {
+         BOOST_THROW_EXCEPTION(std::runtime_error("Attempt to create interval with invalid range (start is greater than end)."));
+      }
+      mpfi_interv_fr(result.data(), a.data(), b.data());
+   }
 }
 
 template <unsigned Digits10, class V>
@@ -833,6 +879,55 @@ inline int eval_fpclassify(const mpfi_float_backend<Digits10>& val) BOOST_NOEXCE
 template <unsigned Digits10>
 inline void eval_pow(mpfi_float_backend<Digits10>& result, const mpfi_float_backend<Digits10>& b, const mpfi_float_backend<Digits10>& e)
 {
+   typedef typename boost::multiprecision::detail::canonical<unsigned, mpfi_float_backend<Digits10> >::type ui_type;
+   using default_ops::eval_get_sign;
+   int s = eval_get_sign(b);
+   if(s == 0)
+   {
+      if(eval_get_sign(e) == 0)
+      {
+         result = ui_type(1);
+      }
+      else
+      {
+         result = ui_type(0);
+      }
+      return;
+   }
+   if(s < 0)
+   {
+      if(eval_get_sign(e) < 0)
+      {
+         mpfi_float_backend<Digits10> t1, t2;
+         t1 = e;
+         t1.negate();
+         eval_pow(t2, b, t1);
+         t1 = ui_type(1);
+         eval_divide(result, t1, t2);
+         return;
+      }
+      typename boost::multiprecision::detail::canonical<boost::uintmax_t, mpfi_float_backend<Digits10> >::type an;
+      try
+      {
+         using default_ops::eval_convert_to;
+         eval_convert_to(&an, e);
+         if(e.compare(an) == 0)
+         {
+            mpfi_float_backend<Digits10> pb(b);
+            pb.negate();
+            eval_pow(result, pb, e);
+            if(an & 1u)
+               result.negate();
+            return;
+         }
+      }
+      catch(const std::exception&)
+      {
+         // conversion failed, just fall through, value is not an integer.
+      }
+      result = std::numeric_limits<number<mpfi_float_backend<Digits10>, et_on> >::quiet_NaN().backend();
+      return;
+   }
    mpfi_log(result.data(), b.data());
    mpfi_mul(result.data(), result.data(), e.data());
    mpfi_exp(result.data(), result.data());
@@ -1050,11 +1145,17 @@ namespace tools{
 
 template <>
 inline int digits<boost::multiprecision::mpfi_float>()
+#ifdef BOOST_MATH_NOEXCEPT
+   BOOST_NOEXCEPT
+#endif
 {
    return boost::multiprecision::backends::detail::get_default_precision();
 }
 template <>
 inline int digits<boost::multiprecision::number<boost::multiprecision::mpfi_float_backend<0>, boost::multiprecision::et_off> >()
+#ifdef BOOST_MATH_NOEXCEPT
+   BOOST_NOEXCEPT
+#endif
 {
    return boost::multiprecision::backends::detail::get_default_precision();
 }
@@ -1068,15 +1169,48 @@ template <class T> struct constant_ln_two;
 template <class T> struct constant_euler;
 template <class T> struct constant_catalan;
 
+//
+// Initializer: ensure all our constants are initialized prior to the first call of main:
+//
+template <class T>
+struct mpfi_initializer
+{
+   struct init
+   {
+      init()
+      {
+         boost::math::constants::pi<T>();
+         boost::math::constants::ln_two<T>();
+         boost::math::constants::euler<T>();
+         boost::math::constants::catalan<T>();
+      }
+      void force_instantiate()const{}
+   };
+   static const init initializer;
+   static void force_instantiate()
+   {
+      initializer.force_instantiate();
+   }
+};
+
+template <class T>
+const typename mpfi_initializer<T>::init mpfi_initializer<T>::initializer;
+
 template<unsigned Digits10, boost::multiprecision::expression_template_option ExpressionTemplates>
 struct constant_pi<boost::multiprecision::number<boost::multiprecision::mpfi_float_backend<Digits10>, ExpressionTemplates> >
 {
    typedef boost::multiprecision::number<boost::multiprecision::mpfi_float_backend<Digits10>, ExpressionTemplates> result_type;
    template<int N>
-   static inline result_type get(const mpl::int_<N>&)
+   static inline result_type const& get(const mpl::int_<N>&)
    {
-      result_type result;
-      mpfi_const_pi(result.backend().data());
+      mpfi_initializer<result_type>::force_instantiate();
+      static result_type result;
+      static bool has_init = false;
+      if(!has_init)
+      {
+         has_init = true;
+         mpfi_const_pi(result.backend().data());
+      }
       return result;
    }
 };
@@ -1085,10 +1219,16 @@ struct constant_ln_two<boost::multiprecision::number<boost::multiprecision::mpfi
 {
    typedef boost::multiprecision::number<boost::multiprecision::mpfi_float_backend<Digits10>, ExpressionTemplates> result_type;
    template<int N>
-   static inline result_type get(const mpl::int_<N>&)
+   static inline result_type const& get(const mpl::int_<N>&)
    {
-      result_type result;
-      mpfi_const_log2(result.backend().data());
+      mpfi_initializer<result_type>::force_instantiate();
+      static result_type result;
+      static bool has_init = false;
+      if(!has_init)
+      {
+         has_init = true;
+         mpfi_const_log2(result.backend().data());
+      }
       return result;
    }
 };
@@ -1097,10 +1237,16 @@ struct constant_euler<boost::multiprecision::number<boost::multiprecision::mpfi_
 {
    typedef boost::multiprecision::number<boost::multiprecision::mpfi_float_backend<Digits10>, ExpressionTemplates> result_type;
    template<int N>
-   static inline result_type get(const mpl::int_<N>&)
+   static inline result_type const& get(const mpl::int_<N>&)
    {
-      result_type result;
-      mpfi_const_euler(result.backend().data());
+      mpfi_initializer<result_type>::force_instantiate();
+      static result_type result;
+      static bool has_init = false;
+      if(!has_init)
+      {
+         has_init = true;
+         mpfi_const_euler(result.backend().data());
+      }
       return result;
    }
 };
@@ -1109,10 +1255,16 @@ struct constant_catalan<boost::multiprecision::number<boost::multiprecision::mpf
 {
    typedef boost::multiprecision::number<boost::multiprecision::mpfi_float_backend<Digits10>, ExpressionTemplates> result_type;
    template<int N>
-   static inline result_type get(const mpl::int_<N>&)
+   static inline result_type const& get(const mpl::int_<N>&)
    {
-      result_type result;
-      mpfi_const_catalan(result.backend().data());
+      mpfi_initializer<result_type>::force_instantiate();
+      static result_type result;
+      static bool has_init = false;
+      if(!has_init)
+      {
+         has_init = true;
+         mpfi_const_catalan(result.backend().data());
+      }
       return result;
    }
 };
@@ -1163,7 +1315,7 @@ public:
    BOOST_STATIC_CONSTEXPR int digits = static_cast<int>((Digits10 * 1000L) / 301L + ((Digits10 * 1000L) % 301 ? 2 : 1));
    BOOST_STATIC_CONSTEXPR int digits10 = Digits10;
    // Is this really correct???
-   BOOST_STATIC_CONSTEXPR int max_digits10 = Digits10 + 2;
+   BOOST_STATIC_CONSTEXPR int max_digits10 = Digits10 + 3;
    BOOST_STATIC_CONSTEXPR bool is_signed = true;
    BOOST_STATIC_CONSTEXPR bool is_integer = false;
    BOOST_STATIC_CONSTEXPR bool is_exact = false;
@@ -1190,7 +1342,7 @@ public:
       {
          value.first = true;
          value.second = 1;
-         mpfi_div_2exp(value.second.backend().data(), value.second.backend().data(), digits);
+         mpfi_div_2exp(value.second.backend().data(), value.second.backend().data(), 1);
       }
       return value.second;
    }

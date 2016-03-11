@@ -1,3 +1,4 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
@@ -5,7 +6,7 @@
 <link rel="stylesheet" href="../../../doc/src/boostbook.css" type="text/css">
 <meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
 <link rel="home" href="../index.html" title="The Boost C++ Libraries BoostBook Documentation Subset">
-<link rel="up" href="../move.html" title="Chapter&#160;18.&#160;Boost.Move">
+<link rel="up" href="../move.html" title="Chapter&#160;19.&#160;Boost.Move">
 <link rel="prev" href="introduction.html" title="Introduction">
 <link rel="next" href="composition_inheritance.html" title="Composition or inheritance">
 </head>
@@ -78,9 +79,12 @@
 
    <span class="identifier">clone_ptr</span><span class="special">&amp;</span> <span class="keyword">operator</span><span class="special">=(</span><span class="identifier">clone_ptr</span><span class="special">&amp;&amp;</span> <span class="identifier">p</span><span class="special">)</span>
    <span class="special">{</span>
-      <span class="identifier">std</span><span class="special">::</span><span class="identifier">swap</span><span class="special">(</span><span class="identifier">ptr</span><span class="special">,</span> <span class="identifier">p</span><span class="special">.</span><span class="identifier">ptr</span><span class="special">);</span>
-      <span class="keyword">delete</span> <span class="identifier">p</span><span class="special">.</span><span class="identifier">ptr</span><span class="special">;</span>
-      <span class="identifier">p</span><span class="special">.</span><span class="identifier">ptr</span> <span class="special">=</span> <span class="number">0</span><span class="special">;</span>
+      <span class="keyword">if</span><span class="special">(</span><span class="keyword">this</span> <span class="special">!=</span> <span class="special">&amp;</span><span class="identifier">p</span><span class="special">)</span>
+      <span class="special">{</span>
+         <span class="identifier">std</span><span class="special">::</span><span class="identifier">swap</span><span class="special">(</span><span class="identifier">ptr</span><span class="special">,</span> <span class="identifier">p</span><span class="special">.</span><span class="identifier">ptr</span><span class="special">);</span>
+         <span class="keyword">delete</span> <span class="identifier">p</span><span class="special">.</span><span class="identifier">ptr</span><span class="special">;</span>
+         <span class="identifier">p</span><span class="special">.</span><span class="identifier">ptr</span> <span class="special">=</span> <span class="number">0</span><span class="special">;</span>
+      <span class="special">}</span>
       <span class="keyword">return</span> <span class="special">*</span><span class="keyword">this</span><span class="special">;</span>
    <span class="special">}</span>
 
@@ -119,16 +123,16 @@
           </li>
 </ul></div>
 <p>
-        When the source of the copy is known to be an <code class="computeroutput"><span class="identifier">rvalue</span></code>
+        When the source of the copy is known to be a <code class="computeroutput"><span class="identifier">rvalue</span></code>
         (e.g.: a temporary object), one can avoid the potentially expensive <code class="computeroutput"><span class="identifier">clone</span><span class="special">()</span></code>
         operation by pilfering source's pointer (no one will notice!). The move constructor
         above does exactly that, leaving the rvalue in a default constructed state.
         The move assignment operator simply does the same freeing old resources.
       </p>
 <p>
-        Now when code tries to copy an rvalue <code class="computeroutput"><span class="identifier">clone_ptr</span></code>,
+        Now when code tries to copy a rvalue <code class="computeroutput"><span class="identifier">clone_ptr</span></code>,
         or if that code explicitly gives permission to consider the source of the
-        copy an rvalue (using <code class="computeroutput"><span class="identifier">boost</span><span class="special">::</span><span class="identifier">move</span></code>),
+        copy a rvalue (using <code class="computeroutput"><span class="identifier">boost</span><span class="special">::</span><span class="identifier">move</span></code>),
         the operation will execute much faster.
       </p>
 <p>
@@ -161,7 +165,7 @@
             section: <code class="computeroutput"><a class="link" href="../BOOST_COPYABLE_AND_MOVABLE.html" title="Macro BOOST_COPYABLE_AND_MOVABLE">BOOST_COPYABLE_AND_MOVABLE(classname)</a></code>
           </li>
 <li class="listitem">
-            Left copy constructor as is.
+            Leave copy constructor as is.
           </li>
 <li class="listitem">
             Write a copy assignment taking the parameter as <code class="computeroutput"><a class="link" href="../BOOST_COPY_ASSIGN_REF.html" title="Macro BOOST_COPY_ASSIGN_REF">BOOST_COPY_ASSIGN_REF(classname)</a></code>
@@ -232,7 +236,7 @@
 </div>
 <table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>
 <td align="left"></td>
-<td align="right"><div class="copyright-footer">Copyright &#169; 2008-2012 Ion Gaztanaga<p>
+<td align="right"><div class="copyright-footer">Copyright &#169; 2008-2014 Ion Gaztanaga<p>
         Distributed under the Boost Software License, Version 1.0. (See accompanying
         file LICENSE_1_0.txt or copy at <a href="http://www.boost.org/LICENSE_1_0.txt" target="_top">http://www.boost.org/LICENSE_1_0.txt</a>)
       </p>

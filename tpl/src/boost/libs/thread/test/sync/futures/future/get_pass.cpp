@@ -22,7 +22,7 @@
 
 //#define BOOST_THREAD_VERSION 3
 #define BOOST_THREAD_VERSION 4
-#define BOOST_THREAD_USES_LOG
+//#define BOOST_THREAD_USES_LOG
 #define BOOST_THREAD_USES_LOG_THREAD_ID
 #include <boost/thread/detail/log.hpp>
 
@@ -188,6 +188,26 @@ int main()
 #ifdef BOOST_THREAD_PROVIDES_FUTURE_INVALID_AFTER_GET
           BOOST_TEST(!f.valid());
 #endif
+      }
+      BOOST_THREAD_LOG << BOOST_THREAD_END_LOG;
+      {
+          boost::promise<T> p;
+          boost::future<T> f = p.get_future();
+#if defined BOOST_THREAD_PROVIDES_SIGNATURE_PACKAGED_TASK && defined(BOOST_THREAD_PROVIDES_VARIADIC_THREAD)
+          boost::thread(func4, boost::move(p)).detach();
+#else
+          p.set_exception(boost::make_exception_ptr(3.5));
+#endif
+          try
+          {
+              BOOST_TEST(f.valid());
+              boost::exception_ptr ptr = f.get_exception_ptr();
+          }
+          catch (...)
+          {
+            BOOST_TEST(false);
+          }
+          BOOST_TEST(f.valid());
       }
   }
   BOOST_THREAD_LOG << BOOST_THREAD_END_LOG;

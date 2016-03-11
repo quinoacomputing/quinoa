@@ -32,7 +32,12 @@ struct configuration
 
     enum output_style_type {def, alt};
     output_style_type output_style;
-    configuration() : output_style(def) {}
+    bool output_member_variables;
+
+    configuration()
+      : output_style(def)
+      , output_member_variables(false)
+    {}
 };
 
 

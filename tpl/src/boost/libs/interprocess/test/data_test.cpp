@@ -13,8 +13,6 @@
 #include <boost/interprocess/managed_shared_memory.hpp>
 #include <boost/interprocess/containers/vector.hpp>
 #include <boost/interprocess/containers/list.hpp>
-#include <iostream>
-#include <algorithm>
 #include <functional>
 #include <string>
 #include "print_container.hpp"
@@ -47,7 +45,6 @@ int main ()
    const char *allocName = "testAllocation";
 
    typedef boost::interprocess::vector<int, shmem_allocator_int_t > MyVect;
-   typedef boost::interprocess::list<int, shmem_allocator_int_t >   MyList;
 
    //----   ALLOC, NAMED_ALLOC, NAMED_NEW TEST   ----//
    {

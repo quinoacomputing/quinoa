@@ -1,8 +1,9 @@
 /*
  libs/numeric/odeint/examples/stochastic_euler.hpp
 
- Copyright 2009 Karsten Ahnert
- Copyright 2009 Mario Mulansky
+ Copyright 2012 Karsten Ahnert
+ Copyright 2012-2013 Mario Mulansky
+ Copyright 2013 Pascal Germroth
 
  Stochastic euler stepper example and Ornstein-Uhlenbeck process
 
@@ -63,6 +64,13 @@ struct controller_factory< custom_stepper , custom_controller >
     {
         return custom_controller();
     }
+
+    custom_controller operator()( double abs_tol , double rel_tol , double max_dt ,
+                                  const custom_stepper & ) const
+    {
+        // version with maximal allowed step size max_dt
+        return custom_controller();
+    }
 };
 
 } } }
@@ -76,13 +84,18 @@ int main( int argc , char **argv )
         /*
         //[ generation_functions_syntax_auto
         auto stepper1 = make_controlled( 1.0e-6 , 1.0e-6 , stepper_type() );
+        // or with max step size limit:
+        // auto stepper1 = make_controlled( 1.0e-6 , 1.0e-6 , 0.01, stepper_type() );
+
         auto stepper2 = make_dense_output( 1.0e-6 , 1.0e-6 , stepper_type() );
         //]
         */
 
         //[ generation_functions_syntax_result_of
         boost::numeric::odeint::result_of::make_controlled< stepper_type >::type stepper3 = make_controlled( 1.0e-6 , 1.0e-6 , stepper_type() );
+        (void)stepper3;
         boost::numeric::odeint::result_of::make_dense_output< stepper_type >::type stepper4 = make_dense_output( 1.0e-6 , 1.0e-6 , stepper_type() );
+        (void)stepper4;
         //]
     }
 
@@ -94,6 +107,7 @@ int main( int argc , char **argv )
         */
 
         boost::numeric::odeint::result_of::make_controlled< custom_stepper >::type stepper5 = make_controlled( 1.0e-6 , 1.0e-6 , custom_stepper() );
+        (void)stepper5;
     }
     return 0;
 }

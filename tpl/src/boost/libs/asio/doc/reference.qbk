@@ -1,5 +1,5 @@
 [/
- / Copyright (c) 2003-2013 Christopher M. Kohlhoff (chris at kohlhoff dot com)
+ / Copyright (c) 2003-2015 Christopher M. Kohlhoff (chris at kohlhoff dot com)
  /
  / Distributed under the Boost Software License, Version 1.0. (See accompanying
  / file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -206,19 +206,25 @@ The default implementation of these allocation hooks uses `operator new` and `op
 [endsect]
 
 
-
 [section:asio_handler_invoke asio_handler_invoke]
 
 [indexterm1 asio_handler_invoke] 
 Default invoke function for handlers. 
 
+      
+  template<
+      typename Function>
+  void ``[link boost_asio.reference.asio_handler_invoke.overload1 asio_handler_invoke]``(
+      Function & function,
+      ... );
+  ``  [''''&raquo;''' [link boost_asio.reference.asio_handler_invoke.overload1 more...]]``
 
   template<
       typename Function>
-  void asio_handler_invoke(
-      Function function,
+  void ``[link boost_asio.reference.asio_handler_invoke.overload2 asio_handler_invoke]``(
+      const Function & function,
       ... );
-
+  ``  [''''&raquo;''' [link boost_asio.reference.asio_handler_invoke.overload2 more...]]``
 
 Completion handlers for asynchronous operations are invoked by the [link boost_asio.reference.io_service `io_service`] associated with the corresponding object (e.g. a socket or deadline\_timer). Certain guarantees are made on when the handler may be invoked, in particular that a handler can only be invoked from a thread that is currently calling `run()` on the corresponding [link boost_asio.reference.io_service `io_service`] object. Handlers may subsequently be invoked through other objects (such as [link boost_asio.reference.io_service__strand `io_service::strand`] objects) that provide additional guarantees.
 
@@ -226,12 +232,12 @@ When asynchronous operations are composed from other asynchronous operations, al
 
 Implement asio\_handler\_invoke for your own handlers to specify a custom invocation strategy.
 
-This default implementation is simply: 
+This default implementation invokes the function object like so: 
 
-   function();
+   function(); 
 
 
-
+If necessary, the default implementation makes a copy of the function object so that the non-const operator() can be used.
 
 
 [heading Example]
@@ -258,8 +264,42 @@ This default implementation is simply:
 ['Convenience header: ][^boost/asio.hpp]
 
 
+[section:overload1 asio_handler_invoke (1 of 2 overloads)]
+
+
+Default handler invocation hook used for non-const function objects. 
+
+
+  template<
+      typename Function>
+  void asio_handler_invoke(
+      Function & function,
+      ... );
+
+
+
 [endsect]
 
+
+
+[section:overload2 asio_handler_invoke (2 of 2 overloads)]
+
+
+Default handler invocation hook used for const function objects. 
+
+
+  template<
+      typename Function>
+  void asio_handler_invoke(
+      const Function & function,
+      ... );
+
+
+
+[endsect]
+
+
+[endsect]
 
 
 [section:asio_handler_is_continuation asio_handler_is_continuation]
@@ -2609,7 +2649,7 @@ This function is used to asynchronously write a certain number of bytes of data 
 
 * An error occurred.
 
-This operation is implemented in terms of zero or more calls to the device's async\_write\_some\_at function.
+This operation is implemented in terms of zero or more calls to the device's async\_write\_some\_at function, and is known as a ['composed operation]. The program must ensure that the device performs no ['overlapping] write operations (such as async\_write\_at, the device's async\_write\_some\_at function, or any other composed operations that perform writes) until this operation completes. Operations are overlapping if the regions defined by their offsets, and the numbers of bytes to write, intersect.
 
 
 [heading Parameters]
@@ -2682,7 +2722,7 @@ This function is used to asynchronously write a certain number of bytes of data 
 
 * The completion\_condition function object returns 0.
 
-This operation is implemented in terms of zero or more calls to the device's async\_write\_some\_at function.
+This operation is implemented in terms of zero or more calls to the device's async\_write\_some\_at function, and is known as a ['composed operation]. The program must ensure that the device performs no ['overlapping] write operations (such as async\_write\_at, the device's async\_write\_some\_at function, or any other composed operations that perform writes) until this operation completes. Operations are overlapping if the regions defined by their offsets, and the numbers of bytes to write, intersect.
 
 
 [heading Parameters]
@@ -2768,7 +2808,7 @@ This function is used to asynchronously write a certain number of bytes of data 
 
 * An error occurred.
 
-This operation is implemented in terms of zero or more calls to the device's async\_write\_some\_at function.
+This operation is implemented in terms of zero or more calls to the device's async\_write\_some\_at function, and is known as a ['composed operation]. The program must ensure that the device performs no ['overlapping] write operations (such as async\_write\_at, the device's async\_write\_some\_at function, or any other composed operations that perform writes) until this operation completes. Operations are overlapping if the regions defined by their offsets, and the numbers of bytes to write, intersect.
 
 
 [heading Parameters]
@@ -2831,7 +2871,7 @@ This function is used to asynchronously write a certain number of bytes of data 
 
 * The completion\_condition function object returns 0.
 
-This operation is implemented in terms of zero or more calls to the device's async\_write\_some\_at function.
+This operation is implemented in terms of zero or more calls to the device's async\_write\_some\_at function, and is known as a ['composed operation]. The program must ensure that the device performs no ['overlapping] write operations (such as async\_write\_at, the device's async\_write\_some\_at function, or any other composed operations that perform writes) until this operation completes. Operations are overlapping if the regions defined by their offsets, and the numbers of bytes to write, intersect.
 
 
 [heading Parameters]
@@ -3645,7 +3685,7 @@ Regardless of whether the asynchronous operation completes immediately or not, t
 To receive into a single data buffer use the [link boost_asio.reference.buffer `buffer`]  function as follows: 
 
    socket.async_receive_from(
-       boost::asio::buffer(data, size), 0, sender_endpoint, handler); 
+       boost::asio::buffer(data, size), sender_endpoint, handler); 
 
 
 See the [link boost_asio.reference.buffer `buffer`]  documentation for information on receiving into multiple buffers in one go, and how to use it with arrays, boost::array or std::vector. 
@@ -3744,7 +3784,7 @@ Start an asynchronous send on a connected socket.
       WriteHandler handler);
 
 
-This function is used to send data on the datagram socket. The function call will block until the data has been sent successfully or an error occurs.
+This function is used to asynchronously send data on the datagram socket. The function call always returns immediately.
 
 
 [heading Parameters]
@@ -3802,7 +3842,7 @@ Start an asynchronous send on a connected socket.
       WriteHandler handler);
 
 
-This function is used to send data on the datagram socket. The function call will block until the data has been sent successfully or an error occurs.
+This function is used to asynchronously send data on the datagram socket. The function call always returns immediately.
 
 
 [heading Parameters]
@@ -22398,7 +22438,7 @@ This function is used to get the current value of an option on the serial port.
   
 [[option][The option value to be obtained from the serial port.]]
 
-[[ec][Set to indicate what error occured, if any.]]
+[[ec][Set to indicate what error occurred, if any.]]
 
 ]
 
@@ -43554,14 +43594,9 @@ Appends `n` characters from the start of the output sequence to the input sequen
 Requires a preceding call `prepare(x)` where `x >= n`, and no intervening operations that modify the input or output sequence.
 
 
-[heading Exceptions]
-    
-
-[variablelist
-  
-[[std::length_error][If `n` is greater than the size of the output sequence. ]]
-
-]
+[heading Remarks]
+      
+If `n` is greater than the size of the output sequence, the entire output sequence is moved to the input sequence and no error is issued. 
 
 
 
@@ -43604,14 +43639,9 @@ Remove characters from the input sequence.
 Removes `n` characters from the beginning of the input sequence.
 
 
-[heading Exceptions]
-    
-
-[variablelist
-  
-[[std::length_error][If `n > size()`. ]]
-
-]
+[heading Remarks]
+      
+If `n` is greater than the size of the input sequence, the entire input sequence is consumed and no error is issued. 
 
 
 
@@ -45169,7 +45199,7 @@ The initiating function (async\_read\_some in the above example) suspends the cu
 
 ['Header: ][^boost/asio/spawn.hpp]
 
-['Convenience header: ][^boost/asio.hpp]
+['Convenience header: ]None
 
 
 [section:basic_yield_context basic_yield_context::basic_yield_context]
@@ -45217,7 +45247,7 @@ When using Boost.Coroutine v2 (unidirectional coroutines), this type is:
 
 ['Header: ][^boost/asio/spawn.hpp]
 
-['Convenience header: ][^boost/asio.hpp]
+['Convenience header: ]None
 
 
 [endsect]
@@ -45250,7 +45280,7 @@ When using Boost.Coroutine v2 (unidirectional coroutines), this type is:
 
 ['Header: ][^boost/asio/spawn.hpp]
 
-['Convenience header: ][^boost/asio.hpp]
+['Convenience header: ]None
 
 
 [endsect]
@@ -45570,6 +45600,8 @@ In particular, when used with the [link boost_asio.reference.buffer_size `buffer
 
 
 
+
+Note that [link boost_asio.reference.buffer_copy `buffer_copy`]  is implemented in terms of `memcpy`, and consequently it cannot be used to copy between overlapping memory regions.
 
 
 [heading Buffer Invalidation]
@@ -46867,7 +46899,9 @@ Both forms return the number of bytes actually copied. The number of bytes copie
 
 * `If` specified, `max_bytes_to_copy`.
 
-This prevents buffer overflow, regardless of the buffer sizes used in the copy operation. 
+This prevents buffer overflow, regardless of the buffer sizes used in the copy operation.
+
+Note that [link boost_asio.reference.buffer_copy `buffer_copy`]  is implemented in terms of `memcpy`, and consequently it cannot be used to copy between overlapping memory regions. 
 
 [heading Requirements]
 
@@ -46915,7 +46949,7 @@ The number of bytes copied is the lesser of:
 
 * `buffer_size(source)` 
 
-
+This function is implemented in terms of `memcpy`, and consequently it cannot be used to copy between overlapping memory regions. 
 
 
 [endsect]
@@ -46961,7 +46995,7 @@ The number of bytes copied is the lesser of:
 
 * `buffer_size(source)` 
 
-
+This function is implemented in terms of `memcpy`, and consequently it cannot be used to copy between overlapping memory regions. 
 
 
 [endsect]
@@ -47007,7 +47041,7 @@ The number of bytes copied is the lesser of:
 
 * `buffer_size(source)` 
 
-
+This function is implemented in terms of `memcpy`, and consequently it cannot be used to copy between overlapping memory regions. 
 
 
 [endsect]
@@ -47053,7 +47087,7 @@ The number of bytes copied is the lesser of:
 
 * `buffer_size(source)` 
 
-
+This function is implemented in terms of `memcpy`, and consequently it cannot be used to copy between overlapping memory regions. 
 
 
 [endsect]
@@ -47101,7 +47135,7 @@ The number of bytes copied is the lesser of:
 
 * `buffer_size(source)` 
 
-
+This function is implemented in terms of `memcpy`, and consequently it cannot be used to copy between overlapping memory regions. 
 
 
 [endsect]
@@ -47147,7 +47181,7 @@ The number of bytes copied is the lesser of:
 
 * `buffer_size(source)` 
 
-
+This function is implemented in terms of `memcpy`, and consequently it cannot be used to copy between overlapping memory regions. 
 
 
 [endsect]
@@ -47193,7 +47227,7 @@ The number of bytes copied is the lesser of:
 
 * `buffer_size(source)` 
 
-
+This function is implemented in terms of `memcpy`, and consequently it cannot be used to copy between overlapping memory regions. 
 
 
 [endsect]
@@ -47239,7 +47273,7 @@ The number of bytes copied is the lesser of:
 
 * `buffer_size(source)` 
 
-
+This function is implemented in terms of `memcpy`, and consequently it cannot be used to copy between overlapping memory regions. 
 
 
 [endsect]
@@ -47285,7 +47319,7 @@ The number of bytes copied is the lesser of:
 
 * `buffer_size(source)` 
 
-
+This function is implemented in terms of `memcpy`, and consequently it cannot be used to copy between overlapping memory regions. 
 
 
 [endsect]
@@ -47333,7 +47367,7 @@ The number of bytes copied is the lesser of:
 
 * `buffer_size(source)` 
 
-
+This function is implemented in terms of `memcpy`, and consequently it cannot be used to copy between overlapping memory regions. 
 
 
 [endsect]
@@ -47381,7 +47415,7 @@ The number of bytes copied is the lesser of:
 
 * `buffer_size(source)` 
 
-
+This function is implemented in terms of `memcpy`, and consequently it cannot be used to copy between overlapping memory regions. 
 
 
 [endsect]
@@ -47429,7 +47463,7 @@ The number of bytes copied is the lesser of:
 
 * `buffer_size(source)` 
 
-
+This function is implemented in terms of `memcpy`, and consequently it cannot be used to copy between overlapping memory regions. 
 
 
 [endsect]
@@ -47477,7 +47511,7 @@ The number of bytes copied is the lesser of:
 
 * `buffer_size(source)` 
 
-
+This function is implemented in terms of `memcpy`, and consequently it cannot be used to copy between overlapping memory regions. 
 
 
 [endsect]
@@ -47525,7 +47559,7 @@ The number of bytes copied is the lesser of:
 
 * `buffer_size(source)` 
 
-
+This function is implemented in terms of `memcpy`, and consequently it cannot be used to copy between overlapping memory regions. 
 
 
 [endsect]
@@ -47574,7 +47608,7 @@ The number of bytes copied is the lesser of:
 
 * `buffer_size(source)` 
 
-
+This function is implemented in terms of `memcpy`, and consequently it cannot be used to copy between overlapping memory regions. 
 
 
 [endsect]
@@ -47626,7 +47660,7 @@ The number of bytes copied is the lesser of:
 
 * `max_bytes_to_copy` 
 
-
+This function is implemented in terms of `memcpy`, and consequently it cannot be used to copy between overlapping memory regions. 
 
 
 [endsect]
@@ -47678,7 +47712,7 @@ The number of bytes copied is the lesser of:
 
 * `max_bytes_to_copy` 
 
-
+This function is implemented in terms of `memcpy`, and consequently it cannot be used to copy between overlapping memory regions. 
 
 
 [endsect]
@@ -47730,7 +47764,7 @@ The number of bytes copied is the lesser of:
 
 * `max_bytes_to_copy` 
 
-
+This function is implemented in terms of `memcpy`, and consequently it cannot be used to copy between overlapping memory regions. 
 
 
 [endsect]
@@ -47782,7 +47816,7 @@ The number of bytes copied is the lesser of:
 
 * `max_bytes_to_copy` 
 
-
+This function is implemented in terms of `memcpy`, and consequently it cannot be used to copy between overlapping memory regions. 
 
 
 [endsect]
@@ -47836,7 +47870,7 @@ The number of bytes copied is the lesser of:
 
 * `max_bytes_to_copy` 
 
-
+This function is implemented in terms of `memcpy`, and consequently it cannot be used to copy between overlapping memory regions. 
 
 
 [endsect]
@@ -47888,7 +47922,7 @@ The number of bytes copied is the lesser of:
 
 * `max_bytes_to_copy` 
 
-
+This function is implemented in terms of `memcpy`, and consequently it cannot be used to copy between overlapping memory regions. 
 
 
 [endsect]
@@ -47940,7 +47974,7 @@ The number of bytes copied is the lesser of:
 
 * `max_bytes_to_copy` 
 
-
+This function is implemented in terms of `memcpy`, and consequently it cannot be used to copy between overlapping memory regions. 
 
 
 [endsect]
@@ -47992,7 +48026,7 @@ The number of bytes copied is the lesser of:
 
 * `max_bytes_to_copy` 
 
-
+This function is implemented in terms of `memcpy`, and consequently it cannot be used to copy between overlapping memory regions. 
 
 
 [endsect]
@@ -48044,7 +48078,7 @@ The number of bytes copied is the lesser of:
 
 * `max_bytes_to_copy` 
 
-
+This function is implemented in terms of `memcpy`, and consequently it cannot be used to copy between overlapping memory regions. 
 
 
 [endsect]
@@ -48098,7 +48132,7 @@ The number of bytes copied is the lesser of:
 
 * `max_bytes_to_copy` 
 
-
+This function is implemented in terms of `memcpy`, and consequently it cannot be used to copy between overlapping memory regions. 
 
 
 [endsect]
@@ -48152,7 +48186,7 @@ The number of bytes copied is the lesser of:
 
 * `max_bytes_to_copy` 
 
-
+This function is implemented in terms of `memcpy`, and consequently it cannot be used to copy between overlapping memory regions. 
 
 
 [endsect]
@@ -48206,7 +48240,7 @@ The number of bytes copied is the lesser of:
 
 * `max_bytes_to_copy` 
 
-
+This function is implemented in terms of `memcpy`, and consequently it cannot be used to copy between overlapping memory regions. 
 
 
 [endsect]
@@ -48260,7 +48294,7 @@ The number of bytes copied is the lesser of:
 
 * `max_bytes_to_copy` 
 
-
+This function is implemented in terms of `memcpy`, and consequently it cannot be used to copy between overlapping memory regions. 
 
 
 [endsect]
@@ -48314,7 +48348,7 @@ The number of bytes copied is the lesser of:
 
 * `max_bytes_to_copy` 
 
-
+This function is implemented in terms of `memcpy`, and consequently it cannot be used to copy between overlapping memory regions. 
 
 
 [endsect]
@@ -48369,7 +48403,7 @@ The number of bytes copied is the lesser of:
 
 * `max_bytes_to_copy` 
 
-
+This function is implemented in terms of `memcpy`, and consequently it cannot be used to copy between overlapping memory regions. 
 
 
 [endsect]
@@ -48643,7 +48677,7 @@ Start an asynchronous fill.
 
   template<
       typename ``[link boost_asio.reference.ReadHandler ReadHandler]``>
-  void async_fill(
+  ``[link boost_asio.reference.asynchronous_operations.return_type_of_an_initiating_function ['void-or-deduced]]`` async_fill(
       ReadHandler handler);
 
 
@@ -48661,7 +48695,7 @@ Start an asynchronous read. The buffer into which the data will be read must be 
   template<
       typename ``[link boost_asio.reference.MutableBufferSequence MutableBufferSequence]``,
       typename ``[link boost_asio.reference.ReadHandler ReadHandler]``>
-  void async_read_some(
+  ``[link boost_asio.reference.asynchronous_operations.return_type_of_an_initiating_function ['void-or-deduced]]`` async_read_some(
       const MutableBufferSequence & buffers,
       ReadHandler handler);
 
@@ -48680,7 +48714,7 @@ Start an asynchronous write. The data being written must be valid for the lifeti
   template<
       typename ``[link boost_asio.reference.ConstBufferSequence ConstBufferSequence]``,
       typename ``[link boost_asio.reference.WriteHandler WriteHandler]``>
-  void async_write_some(
+  ``[link boost_asio.reference.asynchronous_operations.return_type_of_an_initiating_function ['void-or-deduced]]`` async_write_some(
       const ConstBufferSequence & buffers,
       WriteHandler handler);
 
@@ -49346,7 +49380,7 @@ Start an asynchronous fill.
 
   template<
       typename ``[link boost_asio.reference.ReadHandler ReadHandler]``>
-  void async_fill(
+  ``[link boost_asio.reference.asynchronous_operations.return_type_of_an_initiating_function ['void-or-deduced]]`` async_fill(
       ReadHandler handler);
 
 
@@ -49363,7 +49397,7 @@ Start an asynchronous flush.
 
   template<
       typename ``[link boost_asio.reference.WriteHandler WriteHandler]``>
-  void async_flush(
+  ``[link boost_asio.reference.asynchronous_operations.return_type_of_an_initiating_function ['void-or-deduced]]`` async_flush(
       WriteHandler handler);
 
 
@@ -49381,7 +49415,7 @@ Start an asynchronous read. The buffer into which the data will be read must be 
   template<
       typename ``[link boost_asio.reference.MutableBufferSequence MutableBufferSequence]``,
       typename ``[link boost_asio.reference.ReadHandler ReadHandler]``>
-  void async_read_some(
+  ``[link boost_asio.reference.asynchronous_operations.return_type_of_an_initiating_function ['void-or-deduced]]`` async_read_some(
       const MutableBufferSequence & buffers,
       ReadHandler handler);
 
@@ -49400,7 +49434,7 @@ Start an asynchronous write. The data being written must be valid for the lifeti
   template<
       typename ``[link boost_asio.reference.ConstBufferSequence ConstBufferSequence]``,
       typename ``[link boost_asio.reference.WriteHandler WriteHandler]``>
-  void async_write_some(
+  ``[link boost_asio.reference.asynchronous_operations.return_type_of_an_initiating_function ['void-or-deduced]]`` async_write_some(
       const ConstBufferSequence & buffers,
       WriteHandler handler);
 
@@ -50101,7 +50135,7 @@ Start an asynchronous flush.
 
   template<
       typename ``[link boost_asio.reference.WriteHandler WriteHandler]``>
-  void async_flush(
+  ``[link boost_asio.reference.asynchronous_operations.return_type_of_an_initiating_function ['void-or-deduced]]`` async_flush(
       WriteHandler handler);
 
 
@@ -50119,7 +50153,7 @@ Start an asynchronous read. The buffer into which the data will be read must be 
   template<
       typename ``[link boost_asio.reference.MutableBufferSequence MutableBufferSequence]``,
       typename ``[link boost_asio.reference.ReadHandler ReadHandler]``>
-  void async_read_some(
+  ``[link boost_asio.reference.asynchronous_operations.return_type_of_an_initiating_function ['void-or-deduced]]`` async_read_some(
       const MutableBufferSequence & buffers,
       ReadHandler handler);
 
@@ -50138,7 +50172,7 @@ Start an asynchronous write. The data being written must be valid for the lifeti
   template<
       typename ``[link boost_asio.reference.ConstBufferSequence ConstBufferSequence]``,
       typename ``[link boost_asio.reference.WriteHandler WriteHandler]``>
-  void async_write_some(
+  ``[link boost_asio.reference.asynchronous_operations.return_type_of_an_initiating_function ['void-or-deduced]]`` async_write_some(
       const ConstBufferSequence & buffers,
       WriteHandler handler);
 
@@ -54910,6 +54944,7 @@ The time traits type.
 [indexterm2 no_memory..error::basic_errors]
 [indexterm2 no_permission..error::basic_errors]
 [indexterm2 no_protocol_option..error::basic_errors]
+[indexterm2 no_such_device..error::basic_errors]
 [indexterm2 not_connected..error::basic_errors]
 [indexterm2 not_socket..error::basic_errors]
 [indexterm2 operation_aborted..error::basic_errors]
@@ -55045,6 +55080,11 @@ The time traits type.
   [
     [no_protocol_option]
     [Protocol not available. ]
+  ]
+
+  [
+    [no_such_device]
+    [No such device. ]
   ]
 
   [
@@ -61299,6 +61339,11 @@ Note that in the following case:
 the completion of the first async operation will perform `s.dispatch(a)`, and the second will perform `s.dispatch(b)`, but the order in which those are performed is unspecified. That is, you cannot state whether one happens-before the other. Therefore none of the above conditions are met and no ordering guarantee is made.
 
 
+[heading Remarks]
+      
+The implementation makes no guarantee that handlers posted or dispatched through different `strand` objects will be invoked concurrently.
+
+
 [heading Thread Safety]
   
 ['Distinct] ['objects:] Safe.
@@ -65410,7 +65455,9 @@ The iterator type.
     [[link boost_asio.reference.ip__basic_resolver_iterator.create [*create]]]
     [Create an iterator from an addrinfo list returned by getaddrinfo. 
 
-     Create an iterator from an endpoint, host name and service name. ]
+     Create an iterator from an endpoint, host name and service name. 
+
+     Create an iterator from a sequence of endpoints, host and service name. ]
   ]
   
   [
@@ -66185,7 +66232,9 @@ An iterator over the entries produced by a resolver.
     [[link boost_asio.reference.ip__basic_resolver_iterator.create [*create]]]
     [Create an iterator from an addrinfo list returned by getaddrinfo. 
 
-     Create an iterator from an endpoint, host name and service name. ]
+     Create an iterator from an endpoint, host name and service name. 
+
+     Create an iterator from a sequence of endpoints, host and service name. ]
   ]
   
   [
@@ -66284,7 +66333,20 @@ Create an iterator from an endpoint, host name and service name.
   ``  [''''&raquo;''' [link boost_asio.reference.ip__basic_resolver_iterator.create.overload2 more...]]``
 
 
-[section:overload1 ip::basic_resolver_iterator::create (1 of 2 overloads)]
+Create an iterator from a sequence of endpoints, host and service name. 
+
+
+  template<
+      typename EndpointIterator>
+  static basic_resolver_iterator ``[link boost_asio.reference.ip__basic_resolver_iterator.create.overload3 create]``(
+      EndpointIterator begin,
+      EndpointIterator end,
+      const std::string & host_name,
+      const std::string & service_name);
+  ``  [''''&raquo;''' [link boost_asio.reference.ip__basic_resolver_iterator.create.overload3 more...]]``
+
+
+[section:overload1 ip::basic_resolver_iterator::create (1 of 3 overloads)]
 
 
 Create an iterator from an addrinfo list returned by getaddrinfo. 
@@ -66301,7 +66363,7 @@ Create an iterator from an addrinfo list returned by getaddrinfo.
 
 
 
-[section:overload2 ip::basic_resolver_iterator::create (2 of 2 overloads)]
+[section:overload2 ip::basic_resolver_iterator::create (2 of 3 overloads)]
 
 
 Create an iterator from an endpoint, host name and service name. 
@@ -66309,6 +66371,26 @@ Create an iterator from an endpoint, host name and service name.
 
   static basic_resolver_iterator create(
       const typename InternetProtocol::endpoint & endpoint,
+      const std::string & host_name,
+      const std::string & service_name);
+
+
+
+[endsect]
+
+
+
+[section:overload3 ip::basic_resolver_iterator::create (3 of 3 overloads)]
+
+
+Create an iterator from a sequence of endpoints, host and service name. 
+
+
+  template<
+      typename EndpointIterator>
+  static basic_resolver_iterator create(
+      EndpointIterator begin,
+      EndpointIterator end,
       const std::string & host_name,
       const std::string & service_name);
 
@@ -69029,7 +69111,9 @@ The iterator type.
     [[link boost_asio.reference.ip__basic_resolver_iterator.create [*create]]]
     [Create an iterator from an addrinfo list returned by getaddrinfo. 
 
-     Create an iterator from an endpoint, host name and service name. ]
+     Create an iterator from an endpoint, host name and service name. 
+
+     Create an iterator from a sequence of endpoints, host and service name. ]
   ]
   
   [
@@ -83543,7 +83627,7 @@ Start an asynchronous receive.
   template<
       typename ``[link boost_asio.reference.MutableBufferSequence MutableBufferSequence]``,
       typename ``[link boost_asio.reference.ReadHandler ReadHandler]``>
-  void async_receive(
+  ``[link boost_asio.reference.asynchronous_operations.return_type_of_an_initiating_function ['void-or-deduced]]`` async_receive(
       implementation_type & impl,
       const MutableBufferSequence & buffers,
       socket_base::message_flags in_flags,
@@ -83565,7 +83649,7 @@ Start an asynchronous send.
   template<
       typename ``[link boost_asio.reference.ConstBufferSequence ConstBufferSequence]``,
       typename ``[link boost_asio.reference.WriteHandler WriteHandler]``>
-  void async_send(
+  ``[link boost_asio.reference.asynchronous_operations.return_type_of_an_initiating_function ['void-or-deduced]]`` async_send(
       implementation_type & impl,
       const ConstBufferSequence & buffers,
       socket_base::message_flags flags,
@@ -88075,7 +88159,7 @@ The `spawn()` function is a high-level wrapper over the Boost.Coroutine library.
 
 ['Header: ][^boost/asio/spawn.hpp]
 
-['Convenience header: ][^boost/asio.hpp]
+['Convenience header: ]None
 
 
 [section:overload1 spawn (1 of 4 overloads)]
@@ -88169,7 +88253,7 @@ This function is used to launch a new coroutine.
 [section:overload3 spawn (3 of 4 overloads)]
 
 
-Start a new stackful coroutine that executes in the contex of a strand. 
+Start a new stackful coroutine that executes in the context of a strand. 
 
 
   template<
@@ -88468,6 +88552,16 @@ This function is used to launch a new coroutine.
   [
     [[link boost_asio.reference.ssl__context.no_tlsv1 [*no_tlsv1]]]
     [Disable TLS v1. ]
+  ]
+
+  [
+    [[link boost_asio.reference.ssl__context.no_tlsv1_1 [*no_tlsv1_1]]]
+    [Disable TLS v1.1. ]
+  ]
+
+  [
+    [[link boost_asio.reference.ssl__context.no_tlsv1_2 [*no_tlsv1_2]]]
+    [Disable TLS v1.2. ]
   ]
 
   [
@@ -89272,6 +89366,34 @@ Disable TLS v1.
 
 
   static const long no_tlsv1 = implementation_defined;
+
+
+
+[endsect]
+
+
+
+[section:no_tlsv1_1 ssl::context::no_tlsv1_1]
+
+[indexterm2 no_tlsv1_1..ssl::context] 
+Disable TLS v1.1. 
+
+
+  static const long no_tlsv1_1 = implementation_defined;
+
+
+
+[endsect]
+
+
+
+[section:no_tlsv1_2 ssl::context::no_tlsv1_2]
+
+[indexterm2 no_tlsv1_2..ssl::context] 
+Disable TLS v1.2. 
+
+
+  static const long no_tlsv1_2 = implementation_defined;
 
 
 
@@ -91129,6 +91251,16 @@ The [link boost_asio.reference.ssl__context_base `ssl::context_base`] class is u
   ]
 
   [
+    [[link boost_asio.reference.ssl__context_base.no_tlsv1_1 [*no_tlsv1_1]]]
+    [Disable TLS v1.1. ]
+  ]
+
+  [
+    [[link boost_asio.reference.ssl__context_base.no_tlsv1_2 [*no_tlsv1_2]]]
+    [Disable TLS v1.2. ]
+  ]
+
+  [
     [[link boost_asio.reference.ssl__context_base.single_dh_use [*single_dh_use]]]
     [Always create a new key when using tmp_dh parameters. ]
   ]
@@ -91365,6 +91497,34 @@ Disable TLS v1.
 
 
   static const long no_tlsv1 = implementation_defined;
+
+
+
+[endsect]
+
+
+
+[section:no_tlsv1_1 ssl::context_base::no_tlsv1_1]
+
+[indexterm2 no_tlsv1_1..ssl::context_base] 
+Disable TLS v1.1. 
+
+
+  static const long no_tlsv1_1 = implementation_defined;
+
+
+
+[endsect]
+
+
+
+[section:no_tlsv1_2 ssl::context_base::no_tlsv1_2]
+
+[indexterm2 no_tlsv1_2..ssl::context_base] 
+Disable TLS v1.2. 
+
+
+  static const long no_tlsv1_2 = implementation_defined;
 
 
 
@@ -93797,7 +93957,7 @@ This typedef uses the C++11 `<chrono>` standard library facility, if available. 
 [section:strand strand]
 
 [indexterm1 strand] 
-Typedef for backwards compatibility. 
+(Deprecated: Use [link boost_asio.reference.io_service__strand `io_service::strand`].) Typedef for backwards compatibility. 
 
 
   typedef boost::asio::io_service::strand strand;
@@ -93889,6 +94049,11 @@ Note that in the following case:
 
 
 the completion of the first async operation will perform `s.dispatch(a)`, and the second will perform `s.dispatch(b)`, but the order in which those are performed is unspecified. That is, you cannot state whether one happens-before the other. Therefore none of the above conditions are met and no ordering guarantee is made.
+
+
+[heading Remarks]
+      
+The implementation makes no guarantee that handlers posted or dispatched through different `strand` objects will be invoked concurrently.
 
 
 [heading Thread Safety]
@@ -95642,7 +95807,7 @@ See the documentation for [link boost_asio.reference.use_future_t `use_future_t`
 
 ['Header: ][^boost/asio/use_future.hpp]
 
-['Convenience header: ][^boost/asio.hpp]
+['Convenience header: ]None
 
 
 [endsect]
@@ -95711,7 +95876,7 @@ The initiating function (async\_read\_some in the above example) returns a futur
 
 ['Header: ][^boost/asio/use_future.hpp]
 
-['Convenience header: ][^boost/asio.hpp]
+['Convenience header: ]None
 
 
 [section:allocator_type use_future_t::allocator_type]
@@ -95728,7 +95893,7 @@ The allocator type. The allocator is used when constructing the `std::promise` o
 
 ['Header: ][^boost/asio/use_future.hpp]
 
-['Convenience header: ][^boost/asio.hpp]
+['Convenience header: ]None
 
 
 [endsect]
@@ -105222,7 +105387,7 @@ The number of bytes written. If an error occurs, returns the total number of byt
 [section:yield_context yield_context]
 
 [indexterm1 yield_context] 
-Context object the represents the currently executing coroutine. 
+Context object that represents the currently executing coroutine. 
 
 
   typedef basic_yield_context< unspecified > yield_context;
@@ -105286,7 +105451,7 @@ The initiating function (async\_read\_some in the above example) suspends the cu
 
 ['Header: ][^boost/asio/spawn.hpp]
 
-['Convenience header: ][^boost/asio.hpp]
+['Convenience header: ]None
 
 
 [endsect]

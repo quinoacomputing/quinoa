@@ -4,7 +4,7 @@
 <title>Configuring and building the library</title>
 <link rel="stylesheet" href="../../../../../../doc/src/boostbook.css" type="text/css">
 <meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
-<link rel="home" href="../../index.html" title="Chapter&#160;1.&#160;Boost.Log 2.0">
+<link rel="home" href="../../index.html" title="Chapter&#160;1.&#160;Boost.Log v2">
 <link rel="up" href="../installation.html" title="Installation and compatibility">
 <link rel="prev" href="../installation.html" title="Installation and compatibility">
 <link rel="next" href="../defs.html" title="Definitions">
@@ -85,6 +85,23 @@
 <tr>
 <td>
                 <p>
+                  <code class="computeroutput"><span class="identifier">BOOST_USE_WINAPI_VERSION</span></code>
+                </p>
+              </td>
+<td>
+                <p>
+                  Affects compilation of both the library and user's code. This macro
+                  is Windows-specific. Selects the target Windows version for various
+                  Boost libraries, including Boost.Log. Code compiled for a particular
+                  Windows version will likely fail to run on the older Windows versions,
+                  but may improve performance because of using newer OS features.
+                  The macro is expected to have an integer value equivalent to <a href="https://msdn.microsoft.com/en-us/library/6sehtctf.aspx" target="_top"><code class="computeroutput"><span class="identifier">_WIN32_WINNT</span></code></a>.
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
                   <code class="computeroutput"><span class="identifier">BOOST_LOG_NO_THREADS</span></code>
                 </p>
               </td>
@@ -136,7 +153,7 @@
                   API in the <code class="computeroutput"><span class="identifier">timer</span></code>
                   attribute. This will result in significantly less accurate time
                   readings. The macro is intended to solve possible problems with
-                  earlier revisions of AMD Athlon CPU, described <a href="http://support.microsoft.com/?scid=kb;en-us;895980" target="_top">here</a>
+                  earlier revisions of AMD Athlon CPU, described <a href="http://support.microsoft.com/?scid=kb%3ben-us%3b895980" target="_top">here</a>
                   and <a href="http://support.microsoft.com/?id=896256" target="_top">here</a>.
                   There are also known chipset hardware failures that may prevent
                   this API from functioning properly (see <a href="http://support.microsoft.com/kb/274323" target="_top">here</a>).
@@ -151,9 +168,25 @@
               </td>
 <td>
                 <p>
-                  Affects only the compilation of the library. If for some reason
-                  support for the native SysLog API is not detected automatically,
-                  define this macro to forcibly enable it
+                  Affects only compilation of the library. If for some reason support
+                  for the native SysLog API is not detected automatically, define
+                  this macro to forcibly enable it
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <code class="computeroutput"><span class="identifier">BOOST_LOG_WITHOUT_DEFAULT_FACTORIES</span></code>
+                </p>
+              </td>
+<td>
+                <p>
+                  Affects only compilation of the library. If defined, the parsers
+                  for settings will be built without any default factories for filters
+                  and formatters. The user will have to register all attributes in
+                  the library before parsing any filters or formatters from strings.
+                  This can substantially reduce the binary size.
                 </p>
               </td>
 </tr>
@@ -165,9 +198,9 @@
               </td>
 <td>
                 <p>
-                  Affects only the compilation of the library. If defined, none of
-                  the facilities related to the parsers for settings will be built.
-                  This can substantially reduce the binary size.
+                  Affects only compilation of the library. If defined, none of the
+                  facilities related to the parsers for settings will be built. This
+                  can substantially reduce the binary size.
                 </p>
               </td>
 </tr>
@@ -179,7 +212,7 @@
               </td>
 <td>
                 <p>
-                  Affects only the compilation of the library. If defined, the support
+                  Affects only compilation of the library. If defined, the support
                   for debugger output on Windows will not be built.
                 </p>
               </td>
@@ -192,7 +225,7 @@
               </td>
 <td>
                 <p>
-                  Affects only the compilation of the library. If defined, the support
+                  Affects only compilation of the library. If defined, the support
                   for Windows event log will not be built. Defining the macro also
                   makes Message Compiler toolset unnecessary.
                 </p>
@@ -206,7 +239,7 @@
               </td>
 <td>
                 <p>
-                  Affects only the compilation of the library. If defined, the support
+                  Affects only compilation of the library. If defined, the support
                   for syslog backend will not be built.
                 </p>
               </td>
@@ -219,26 +252,8 @@
               </td>
 <td>
                 <p>
-                  Affects only the compilation of users' code. If defined, some deprecated
+                  Affects only compilation of users' code. If defined, some deprecated
                   shorthand macro names will not be available.
-                </p>
-              </td>
-</tr>
-<tr>
-<td>
-                <p>
-                  <code class="computeroutput"><span class="identifier">BOOST_LOG_USE_WINNT6_API</span></code>
-                </p>
-              </td>
-<td>
-                <p>
-                  Affects the compilation of both the library and users' code. This
-                  macro is Windows-specific. If defined, the library makes use of
-                  the Windows NT 6 (Vista, Server 2008) and later APIs to generate
-                  more efficient code. This macro will also enable some experimental
-                  features of the library. Note, however, that the resulting binary
-                  will not run on Windows prior to NT 6. In order to use this feature
-                  Platform SDK 6.0 or later is required.
                 </p>
               </td>
 </tr>
@@ -250,10 +265,37 @@
               </td>
 <td>
                 <p>
-                  Affects only the compilation of the library. This macro enables
-                  support for compiler intrinsics for thread-local storage. Defining
-                  it may improve performance of Boost.Log if certain usage limitations
-                  are acceptable. See below for more comments.
+                  Affects only compilation of the library. This macro enables support
+                  for compiler intrinsics for thread-local storage. Defining it may
+                  improve performance of Boost.Log if certain usage limitations are
+                  acceptable. See below for more comments.
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <code class="computeroutput"><span class="identifier">BOOST_LOG_USE_STD_REGEX</span></code>,
+                  <code class="computeroutput"><span class="identifier">BOOST_LOG_USE_BOOST_REGEX</span></code>
+                  or <code class="computeroutput"><span class="identifier">BOOST_LOG_USE_BOOST_XPRESSIVE</span></code>
+                </p>
+              </td>
+<td>
+                <p>
+                  Affects only compilation of the library. By defining one of these
+                  macros the user can instruct Boost.Log to use <code class="computeroutput"><span class="identifier">std</span><span class="special">::</span><span class="identifier">regex</span></code>,
+                  <a href="http://www.boost.org/doc/libs/release/libs/regex/index.html" target="_top">Boost.Regex</a>
+                  or <a href="http://www.boost.org/doc/libs/release/doc/html/xpressive.html" target="_top">Boost.Xpressive</a>
+                  internally for string matching filters parsed from strings and
+                  settings. If none of these macros is defined then Boost.Log uses
+                  <a href="http://www.boost.org/doc/libs/release/libs/regex/index.html" target="_top">Boost.Regex</a>
+                  by default. Using <code class="computeroutput"><span class="identifier">std</span><span class="special">::</span><span class="identifier">regex</span></code>
+                  or <a href="http://www.boost.org/doc/libs/release/libs/regex/index.html" target="_top">Boost.Regex</a>
+                  typically produces smaller executables, <a href="http://www.boost.org/doc/libs/release/libs/regex/index.html" target="_top">Boost.Regex</a>
+                  usually also being the fastest in run time. Using <a href="http://www.boost.org/doc/libs/release/doc/html/xpressive.html" target="_top">Boost.Xpressive</a>
+                  allows to eliminate the dependency on <a href="http://www.boost.org/doc/libs/release/libs/regex/index.html" target="_top">Boost.Regex</a>
+                  compiled binary. Note that these macros do not affect <a class="link" href="../detailed/expressions.html#log.detailed.expressions.predicates.advanced_string_matching" title="Advanced string matching filter">filtering
+                  expressions</a> created by users.
                 </p>
               </td>
 </tr>
@@ -264,7 +306,7 @@
         You can define configuration macros in the <code class="computeroutput"><span class="identifier">bjam</span></code>
         command line, like this:
       </p>
-<pre class="programlisting">bjam --with-log variant=release define=BOOST_LOG_WITHOUT_EVENT_LOG define=BOOST_LOG_USE_WINNT6_API stage
+<pre class="programlisting">bjam --with-log variant=release define=BOOST_LOG_WITHOUT_EVENT_LOG define=BOOST_USE_WINAPI_VERSION=0x0600 stage
 </pre>
 <p>
         However, it may be more convenient to define configuration macros in the
@@ -277,8 +319,9 @@
         The logging library uses several other Boost libraries that require building
         too. These are <a href="http://www.boost.org/doc/libs/release/libs/filesystem/doc/index.htm" target="_top">Boost.Filesystem</a>,
         <a href="http://www.boost.org/doc/libs/release/libs/system/doc/index.html" target="_top">Boost.System</a>,
-        <a href="http://www.boost.org/doc/libs/release/doc/html/date_time.html" target="_top">Boost.DateTime</a>
-        and <a href="http://www.boost.org/doc/libs/release/doc/html/thread.html" target="_top">Boost.Thread</a>.
+        <a href="http://www.boost.org/doc/libs/release/doc/html/date_time.html" target="_top">Boost.DateTime</a>,
+        <a href="http://www.boost.org/doc/libs/release/doc/html/thread.html" target="_top">Boost.Thread</a>
+        and in some configurations <a href="http://www.boost.org/doc/libs/release/libs/regex/index.html" target="_top">Boost.Regex</a>.
         Refer to their documentation for detailed instructions on the building procedure.
       </p>
 <p>
@@ -326,10 +369,62 @@
             The application must not use logging in global constructors or destructors.
           </li>
 </ul></div>
+<p>
+        Note that the <code class="computeroutput"><span class="identifier">BOOST_LOG_USE_COMPILER_TLS</span></code>
+        macro only controls use of TLS in Boost.Log but not in other libraries used
+        by Boost.Log. For example, <a href="http://www.boost.org/doc/libs/release/doc/html/boost_asio.html" target="_top">Boost.ASIO</a>
+        uses compiler-supplied TLS by default. In order to build Boost.Log binaries
+        completely free from use of compiler-supplied TLS, this feature has to be
+        disabled in those other libraries as well (in case of <a href="http://www.boost.org/doc/libs/release/doc/html/boost_asio.html" target="_top">Boost.ASIO</a>
+        this can be achieved by defining <code class="computeroutput"><span class="identifier">BOOST_ASIO_DISABLE_THREAD_KEYWORD_EXTENSION</span></code>
+        when building and using Boost).
+      </p>
+<h5>
+<a name="log.installation.config.h1"></a>
+        <span class="phrase"><a name="log.installation.config.notes_about_native__code__phrase_role__keyword__wchar_t__phrase___code__support"></a></span><a class="link" href="config.html#log.installation.config.notes_about_native__code__phrase_role__keyword__wchar_t__phrase___code__support">Notes
+        about native <code class="computeroutput"><span class="keyword">wchar_t</span></code> support</a>
+      </h5>
+<p>
+        Some compilers, most notably MSVC, have an option to disable the native
+        <code class="computeroutput"><span class="keyword">wchar_t</span></code> type, emulating it with
+        a typedef for one of the standard integral types. From the C++ language perspective
+        this behavior is not conforming but it may be useful for compatibility with
+        some legacy code which is difficult to update.
+      </p>
+<p>
+        By default, Boost (and Boost.Log being part of it) is built with native
+        <code class="computeroutput"><span class="keyword">wchar_t</span></code> enabled. At the time
+        of this writing, user will have to modify Boost.Build to enable the emulation
+        mode. It is possible to build Boost.Log in this mode, but there are several
+        caveats that have to be kept in mind:
+      </p>
+<div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; ">
+<li class="listitem">
+            The compiled Boost.Log binaries will be exporting symbols corresponding
+            to the configuration chosen at build time. The user's code will have
+            to use the same setting as was used when building Boost.Log, otherwise
+            linking errors will appear.
+          </li>
+<li class="listitem">
+            Since in emulation mode <code class="computeroutput"><span class="keyword">wchar_t</span></code>
+            is undistinguishable from one of the integer types, certain parts of
+            the library may behave differently from the normal mode with native
+            <code class="computeroutput"><span class="keyword">wchar_t</span></code>. In particular,
+            wide-character literals may be rejected or formatted differently.
+          </li>
+<li class="listitem">
+            The emulation mode is not tested, so unexpected breakages are possible.
+          </li>
+</ul></div>
+<p>
+        Because of that using the emulation mode is discouraged and should be avoided.
+        In future releases of the library its support may be removed completely.
+      </p>
 </div>
 <table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>
 <td align="left"></td>
-<td align="right"><div class="copyright-footer">Copyright &#169; 2007-2013 Andrey Semashev<p>
+<td align="right"><div class="copyright-footer">Copyright &#169; 2007-2015 Andrey
+      Semashev<p>
         Distributed under the Boost Software License, Version 1.0. (See accompanying
         file LICENSE_1_0.txt or copy at <a href="http://www.boost.org/LICENSE_1_0.txt" target="_top">http://www.boost.org/LICENSE_1_0.txt</a>).
       </p>

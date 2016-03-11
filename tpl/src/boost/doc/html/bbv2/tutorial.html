@@ -1,3 +1,4 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
@@ -5,8 +6,8 @@
 <link rel="stylesheet" href="../../../doc/src/boostbook.css" type="text/css">
 <meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
 <link rel="home" href="../index.html" title="The Boost C++ Libraries BoostBook Documentation Subset">
-<link rel="up" href="../bbv2.html" title="Chapter&#160;42.&#160;Boost.Build V2 User Manual">
-<link rel="prev" href="installation.html" title="Installation">
+<link rel="up" href="../bbv2.html" title="Chapter&#160;44.&#160;Boost.Build User Manual">
+<link rel="prev" href="../bbv2.html" title="Chapter&#160;44.&#160;Boost.Build User Manual">
 <link rel="next" href="overview.html" title="Overview">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
@@ -20,7 +21,7 @@
 </tr></table>
 <hr>
 <div class="spirit-nav">
-<a accesskey="p" href="installation.html"><img src="../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../bbv2.html"><img src="../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../index.html"><img src="../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="overview.html"><img src="../../../doc/src/images/next.png" alt="Next"></a>
+<a accesskey="p" href="../bbv2.html"><img src="../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../bbv2.html"><img src="../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../index.html"><img src="../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="overview.html"><img src="../../../doc/src/images/next.png" alt="Next"></a>
 </div>
 <div class="section">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
@@ -35,8 +36,8 @@
 <dt><span class="section"><a href="tutorial.html#bbv2.tutorial.prebuilt">Prebuilt targets</a></span></dt>
 </dl></div>
 <p>
-    This section will guide you though the most basic features of Boost.Build
-    V2. We will start with the &#8220;Hello, world&#8221; example, learn how
+    This section will guide you though the most basic features of Boost.Build.
+    We will start with the &#8220;Hello, world&#8221; example, learn how
     to use libraries, and finish with testing and installing features.
   </p>
 <div class="section">
@@ -203,7 +204,7 @@ exe hello
         requirements, the target requirements usually override (or, in the case
         of &#8220;free&#8221;&#8221; features like
         <code class="varname">&lt;include&gt;</code>,
-        <a href="#ftn.idp221577952" class="footnote" name="idp221577952"><sup class="footnote">[13]</sup></a>
+        <a href="#ftn.idm45555008262272" class="footnote" name="idm45555008262272"><sup class="footnote">[13]</sup></a>
         augments) the build request.
       </p>
 <div class="tip"><table border="0" summary="Tip">
@@ -315,7 +316,7 @@ top/
 
       in its requirements, then all of its subprojects will have it
       in their requirements, too.  Of course, any project can add
-      include paths to those specified by its parents. <a href="#ftn.idp221593728" class="footnote" name="idp221593728"><sup class="footnote">[14]</sup></a>
+      include paths to those specified by its parents. <a href="#ftn.idm45555008234000" class="footnote" name="idm45555008234000"><sup class="footnote">[14]</sup></a>
     More details can be found in
       <a class="xref" href="overview.html#bbv2.overview.projects" title="Projects">the section called &#8220;Projects&#8221;</a>.
     </p>
@@ -560,8 +561,8 @@ lib core <span class="special">:</span> core.cpp utils <span class="special">;</
 exe app <span class="special">:</span> app.cpp core <span class="special">;</span></pre>
 <p>
         This works no matter what kind of linking is used. When <code class="filename">core
-        </code> is built as a shared library, it is linked directly into
-        <code class="filename">utils</code>. Static libraries can't link to other
+        </code> is built as a shared library, links <code class="filename">utils
+        </code> directly into it. Static libraries can't link to other
         libraries, so when <code class="filename">core</code> is built as a static
         library, its dependency on <code class="filename">utils</code> is passed along to
         <code class="filename">core</code>'s dependents, causing <code class="filename">app</code>
@@ -600,13 +601,13 @@ exe app <span class="special">:</span> app.cpp core <span class="special">;</spa
       </p>
 <pre class="programlisting">
 lib network <span class="special">:</span> network.cpp
-    <span class="special">:</span> <span class="bold"><strong>&lt;link&gt;shared:&lt;define&gt;NEWORK_LIB_SHARED</strong></span>
+    <span class="special">:</span> <span class="bold"><strong>&lt;link&gt;shared:&lt;define&gt;NETWORK_LIB_SHARED</strong></span>
      &lt;variant&gt;release:&lt;define&gt;EXTRA_FAST
     <span class="special">;</span></pre>
 <p>
 
       In the example above, whenever <code class="filename">network</code> is built with
-      <code class="computeroutput">&lt;link&gt;shared</code>, <code class="computeroutput">&lt;define&gt;NEWORK_LIB_SHARED
+      <code class="computeroutput">&lt;link&gt;shared</code>, <code class="computeroutput">&lt;define&gt;NETWORK_LIB_SHARED
       </code> will be in its properties, too. Also, whenever its release variant
       is built, <code class="computeroutput">&lt;define&gt;EXTRA_FAST</code> will appear in its
       properties.
@@ -712,10 +713,10 @@ lib pythonlib <span class="special">:</span> <span class="special">:</span> &lt;
 </div>
 <div class="footnotes">
 <br><hr style="width:100; text-align:left;margin-left: 0">
-<div id="ftn.idp221577952" class="footnote"><p><a href="#idp221577952" class="para"><sup class="para">[13] </sup></a>
+<div id="ftn.idm45555008262272" class="footnote"><p><a href="#idm45555008262272" class="para"><sup class="para">[13] </sup></a>
              See <a class="xref" href="reference.html#bbv2.reference.features.attributes" title="Feature Attributes">the section called &#8220;Feature Attributes&#8221;</a>
           </p></div>
-<div id="ftn.idp221593728" class="footnote"><p><a href="#idp221593728" class="para"><sup class="para">[14] </sup></a>Many
+<div id="ftn.idm45555008234000" class="footnote"><p><a href="#idm45555008234000" class="para"><sup class="para">[14] </sup></a>Many
       features will be overridden,
       rather than added-to, in subprojects.  See <a class="xref" href="reference.html#bbv2.reference.features.attributes" title="Feature Attributes">the section called &#8220;Feature Attributes&#8221;</a> for more
       information</p></div>
@@ -723,15 +724,11 @@ lib pythonlib <span class="special">:</span> <span class="special">:</span> &lt;
 </div>
 <table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>
 <td align="left"></td>
-<td align="right"><div class="copyright-footer">Copyright &#169; 2006-2009 Vladimir Prus<p>Distributed under the Boost Software License, Version 1.0.
-      (See accompanying file <code class="filename">LICENSE_1_0.txt</code> or copy at 
-      <a href="http://www.boost.org/LICENSE_1_0.txt" target="_top">http://www.boost.org/LICENSE_1_0.txt</a>)
-      </p>
-</div></td>
+<td align="right"><div class="copyright-footer"></div></td>
 </tr></table>
 <hr>
 <div class="spirit-nav">
-<a accesskey="p" href="installation.html"><img src="../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../bbv2.html"><img src="../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../index.html"><img src="../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="overview.html"><img src="../../../doc/src/images/next.png" alt="Next"></a>
+<a accesskey="p" href="../bbv2.html"><img src="../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../bbv2.html"><img src="../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../index.html"><img src="../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="overview.html"><img src="../../../doc/src/images/next.png" alt="Next"></a>
 </div>
 </body>
 </html>

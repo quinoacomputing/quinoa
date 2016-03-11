@@ -1,5 +1,5 @@
 /*
- *          Copyright Andrey Semashev 2007 - 2013.
+ *          Copyright Andrey Semashev 2007 - 2015.
  * Distributed under the Boost Software License, Version 1.0.
  *    (See accompanying file LICENSE_1_0.txt or copy at
  *          http://www.boost.org/LICENSE_1_0.txt)
@@ -10,7 +10,7 @@
  * \date   16.11.2012
  *
  * \brief  This header is the Boost.Log library implementation, see the library documentation
- *         at http://www.boost.org/libs/log/doc/log.html.
+ *         at http://www.boost.org/doc/libs/release/libs/log/doc/html/index.html.
  */
 
 #include <string>
@@ -36,7 +36,7 @@ BOOST_LOG_OPEN_NAMESPACE
 namespace aux {
 
 template< typename CharT >
-format_description< CharT > parse_format(const CharT* begin, const CharT* end)
+BOOST_LOG_API format_description< CharT > parse_format(const CharT* begin, const CharT* end)
 {
     typedef CharT char_type;
     typedef format_description< char_type > description;

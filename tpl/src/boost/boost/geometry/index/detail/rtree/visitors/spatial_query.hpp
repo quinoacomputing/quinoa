@@ -2,7 +2,7 @@
 //
 // R-tree spatial query visitor implementation
 //
-// Copyright (c) 2011-2013 Adam Wulkiewicz, Lodz, Poland.
+// Copyright (c) 2011-2014 Adam Wulkiewicz, Lodz, Poland.
 //
 // Use, modification and distribution is subject to the Boost Software License,
 // Version 1.0. (See accompanying file LICENSE_1_0.txt or copy at
@@ -94,10 +94,18 @@ public:
 
     static const unsigned predicates_len = index::detail::predicates_length<Predicates>::value;
 
+    inline spatial_query_incremental()
+        : m_translator(NULL)
+//        , m_pred()
+        , m_values(NULL)
+        , m_current()
+    {}
+
     inline spatial_query_incremental(Translator const& t, Predicates const& p)
         : m_translator(::boost::addressof(t))
         , m_pred(p)
-        , m_values(0)
+        , m_values(NULL)
+        , m_current()
     {}
 
     inline void operator()(internal_node const& n)
@@ -112,26 +120,34 @@ public:
     {
         m_values = ::boost::addressof(rtree::elements(n));
         m_current = rtree::elements(n).begin();
-        m_last = rtree::elements(n).end();
     }
 
     const_reference dereference() const
     {
-        BOOST_ASSERT_MSG(m_values, "not dereferencable");
+        BOOST_GEOMETRY_INDEX_ASSERT(m_values, "not dereferencable");
         return *m_current;
+    }
+
+    void initialize(node_pointer root)
+    {
+        rtree::apply_visitor(*this, *root);
+        search_value();
     }
 
     void increment()
     {
-        if ( m_values )
-            ++m_current;
+        ++m_current;
+        search_value();
+    }
 
+    void search_value()
+    {
         for (;;)
         {
             // if leaf is choosen, move to the next value in leaf
             if ( m_values )
             {
-                if ( m_current != m_last )
+                if ( m_current != m_values->end() )
                 {
                     // return if next value is found
                     Value const& v = *m_current;
@@ -188,7 +204,7 @@ private:
 
     std::vector< std::pair<internal_iterator, internal_iterator> > m_internal_stack;
     const leaf_elements * m_values;
-    leaf_iterator m_current, m_last;
+    leaf_iterator m_current;
 };
 
 }}} // namespace detail::rtree::visitors

@@ -108,6 +108,14 @@ public:
    {
       return m_value;
    }
+   template <class Archive>
+   void serialize(Archive& ar, const unsigned int /*version*/)
+   {
+      ar & m_value;
+      typedef typename Archive::is_loading tag;
+      if(tag::value)
+         update_view();
+   }
 };
 
 template <class Backend>
@@ -236,19 +244,33 @@ template <class Backend, class Exp>
 inline void eval_frexp(debug_adaptor<Backend>& result, const debug_adaptor<Backend>& arg, Exp* exp)
 {
    eval_frexp(result.value(), arg.value(), exp);
-   result.update_view();\
+   result.update_view();
 }
 
 template <class Backend, class Exp>
 inline void eval_ldexp(debug_adaptor<Backend>& result, const debug_adaptor<Backend>& arg, Exp exp)
 {
    eval_ldexp(result.value(), arg.value(), exp);
-   result.update_view();\
+   result.update_view();
+}
+
+template <class Backend, class Exp>
+inline void eval_scalbn(debug_adaptor<Backend>& result, const debug_adaptor<Backend>& arg, Exp exp)
+{
+   eval_scalbn(result.value(), arg.value(), exp);
+   result.update_view();
+}
+
+template <class Backend>
+inline typename Backend::exponent_type eval_ilogb(const debug_adaptor<Backend>& arg)
+{
+   return eval_ilogb(arg.value());
 }
 
 NON_MEMBER_OP2(floor, "floor");
 NON_MEMBER_OP2(ceil, "ceil");
 NON_MEMBER_OP2(sqrt, "sqrt");
+NON_MEMBER_OP2(logb, "logb");
 
 template <class Backend>
 inline int eval_fpclassify(const debug_adaptor<Backend>& arg)
@@ -333,6 +355,13 @@ inline unsigned eval_lsb(const debug_adaptor<Backend>& arg)
 {
    using default_ops::eval_lsb;
    return eval_lsb(arg.value());
+}
+
+template <class Backend>
+inline unsigned eval_msb(const debug_adaptor<Backend>& arg)
+{
+   using default_ops::eval_msb;
+   return eval_msb(arg.value());
 }
 
 template <class Backend>

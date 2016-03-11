@@ -4,6 +4,9 @@
 //  Distributed under the Boost Software License, Version 1.0. (See accompanying
 //  file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
+#undef BOOST_THREAD_VERSION
+#define BOOST_THREAD_VERSION 2
+
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/condition.hpp>
 #include <boost/thread/thread_only.hpp>
@@ -36,7 +39,7 @@ const char* player_name(int state)
     if (state == PLAYER_B)
         return "PLAYER-B";
     throw "bad player";
-    return 0;
+    //return 0;
 }
 
 void player(int active)
@@ -47,7 +50,7 @@ void player(int active)
 
     while (state < GAME_OVER)
     {
-        std::cout << player_name(active) << ": Play." << std::endl;
+        //std::cout << player_name(active) << ": Play." << std::endl;
         state = other;
         cond.notify_all();
         do

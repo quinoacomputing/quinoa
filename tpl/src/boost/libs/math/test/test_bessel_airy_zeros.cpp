@@ -15,8 +15,10 @@
 //#include <pch_light.hpp> // commented out during testing.
 
 //#include <boost/math/special_functions/math_fwd.hpp>
+#include <boost/cstdint.hpp>
 #include <boost/math/special_functions/bessel.hpp>
 #include <boost/math/special_functions/airy.hpp>
+#include <boost/math/tools/test.hpp>
 
 #include <boost/math/concepts/real_concept.hpp> // for real_concept
 
@@ -25,6 +27,8 @@
 #include <boost/test/floating_point_comparison.hpp>
 
 #include <typeinfo>
+#include <iostream>
+#include <iomanip>
 
 // #include <boost/math/tools/
 //
@@ -99,17 +103,20 @@ void test_bessel_zeros(RealType)
 
   // Parameter RealType is only used to communicate the RealType, float, double...
   // and is an arbitrary zero for all tests.
-   RealType tolerance = (std::max)(
+   RealType tolerance = 5 * (std::max)(
      static_cast<RealType>(boost::math::tools::epsilon<long double>()),
      boost::math::tools::epsilon<RealType>());
    std::cout << "Tolerance for type " << typeid(RealType).name()  << " is " << tolerance << "." << std::endl;
+   //
+   // An extra fudge factor for real_concept which has a less accurate tgamma:
+   RealType tolerance_tgamma_extra = std::numeric_limits<RealType>::is_specialized ? 1 : 15;
 
    // http://www.wolframalpha.com/
    using boost::math::cyl_bessel_j_zero; // (nu, j)
    using boost::math::isnan;
 
-  BOOST_CHECK_THROW(cyl_bessel_j_zero(static_cast<RealType>(0), 0), std::domain_error);
-  // BOOST_CHECK_THROW(cyl_bessel_j_zero(static_cast<RealType>(-1), 2), std::domain_error);
+  BOOST_MATH_CHECK_THROW(cyl_bessel_j_zero(static_cast<RealType>(0), 0), std::domain_error);
+  // BOOST_MATH_CHECK_THROW(cyl_bessel_j_zero(static_cast<RealType>(-1), 2), std::domain_error);
   // From 83051 negative orders are supported.
 
   // Abuse with infinity and max.
@@ -122,19 +129,19 @@ void test_bessel_zeros(RealType)
     // Error in function boost::math::cyl_bessel_j_zero<double>(double, int): Order argument is 1.#INF, but must be finite >= 0 !
     // Note that the reported type long double is not the type of the original call RealType,
     // but the promoted value, here long double, if applicable.
-    BOOST_CHECK_THROW(cyl_bessel_j_zero(static_cast<RealType>(std::numeric_limits<RealType>::infinity()), 1),
+    BOOST_MATH_CHECK_THROW(cyl_bessel_j_zero(static_cast<RealType>(std::numeric_limits<RealType>::infinity()), 1),
      std::domain_error);
-    BOOST_CHECK_THROW(cyl_bessel_j_zero(static_cast<RealType>(-std::numeric_limits<RealType>::infinity()), 1),
+    BOOST_MATH_CHECK_THROW(cyl_bessel_j_zero(static_cast<RealType>(-std::numeric_limits<RealType>::infinity()), 1),
      std::domain_error);
 
   }
   // Test with maximum value of v that will cause evaluation error
-  //BOOST_CHECK_THROW(cyl_bessel_j_zero(boost::math::tools::max_value<RealType>(), 1), std::domain_error);
+  //BOOST_MATH_CHECK_THROW(cyl_bessel_j_zero(boost::math::tools::max_value<RealType>(), 1), std::domain_error);
   // unknown location(0): fatal error in "test_main":
   // class boost::exception_detail::clone_impl<struct boost::exception_detail::error_info_injector<class boost::math::evaluation_error> >:
   // Error in function boost::math::bessel_jy<double>(double,double): Order of Bessel function is too large to evaluate: got 3.4028234663852886e+038
 
-  BOOST_CHECK_THROW(cyl_bessel_j_zero(boost::math::tools::max_value<RealType>(), 1), boost::math::evaluation_error);
+  BOOST_MATH_CHECK_THROW(cyl_bessel_j_zero(boost::math::tools::max_value<RealType>(), 1), boost::math::evaluation_error);
 
   BOOST_CHECK_CLOSE_FRACTION(cyl_bessel_j_zero(boost::math::tools::min_value<RealType>(), 1),
     static_cast<RealType>(2.4048255576957727686216318793264546431242449091460L), tolerance);
@@ -292,7 +299,7 @@ Table[N[BesselJZero[7001/19, n], 50], {n, 19, 20, 1}]
   BOOST_CHECK_CLOSE_FRACTION(cyl_bessel_j_zero(static_cast<RealType>(7001)/19, 20), static_cast<RealType>(496.394350379382525575353754985779897202722983108025L), tolerance);
 
   // Zero'th cases.
-  BOOST_CHECK_THROW(boost::math::cyl_bessel_j_zero(static_cast<RealType>(0), 0), std::domain_error); // Zero'th zero of J0(x).
+  BOOST_MATH_CHECK_THROW(boost::math::cyl_bessel_j_zero(static_cast<RealType>(0), 0), std::domain_error); // Zero'th zero of J0(x).
   BOOST_CHECK(boost::math::cyl_bessel_j_zero(static_cast<RealType>(1), 0) == 0); // Zero'th zero of J1(x).
   BOOST_CHECK(boost::math::cyl_bessel_j_zero(static_cast<RealType>(2), 0) == 0); // Zero'th zero of J2(x).
 
@@ -367,7 +374,7 @@ Table[N[BesselJZero[7001/19, n], 50], {n, 19, 20, 1}]
     BOOST_CHECK_CLOSE_FRACTION(cyl_bessel_j_zero(v, 20), static_cast<RealType>(62.0484499877253314338528593349200129641402661038743L), tolerance);
 
   // Confirm that negative m throws domain_error.
-  BOOST_CHECK_THROW(boost::math::cyl_bessel_j_zero(static_cast<RealType>(0), -1), std::domain_error);
+  BOOST_MATH_CHECK_THROW(boost::math::cyl_bessel_j_zero(static_cast<RealType>(0), -1), std::domain_error);
   // unknown location(0): fatal error in "test_main":
   // class boost::exception_detail::clone_impl<struct boost::exception_detail::error_info_injector<class std::domain_error> >:
   // Error in function boost::math::cyl_bessel_j_zero<double>(double, int): Requested the -1'th zero, but must be > 0 !
@@ -384,10 +391,10 @@ Table[N[BesselJZero[7001/19, n], 50], {n, 19, 20, 1}]
 
   if (std::numeric_limits<RealType>::has_quiet_NaN)
   {
-    BOOST_CHECK_THROW(cyl_bessel_j_zero(static_cast<RealType>(std::numeric_limits<RealType>::quiet_NaN()), 1), std::domain_error);
+    BOOST_MATH_CHECK_THROW(cyl_bessel_j_zero(static_cast<RealType>(std::numeric_limits<RealType>::quiet_NaN()), 1), std::domain_error);
     // Check that bad m returns NaN if policy is no throws.
-    BOOST_CHECK(boost::math::isnan<RealType>(cyl_bessel_j_zero(std::numeric_limits<RealType>::quiet_NaN(), 1, ignore_all_policy())) );
-    BOOST_CHECK_THROW(boost::math::cyl_bessel_j_zero(static_cast<RealType>(std::numeric_limits<RealType>::quiet_NaN()), -1), std::domain_error);
+    BOOST_CHECK((boost::math::isnan<RealType>)(cyl_bessel_j_zero(std::numeric_limits<RealType>::quiet_NaN(), 1, ignore_all_policy())) );
+    BOOST_MATH_CHECK_THROW(boost::math::cyl_bessel_j_zero(static_cast<RealType>(std::numeric_limits<RealType>::quiet_NaN()), -1), std::domain_error);
   }
   else
   { // real_concept bad m returns zero.
@@ -397,10 +404,10 @@ Table[N[BesselJZero[7001/19, n], 50], {n, 19, 20, 1}]
 
   if (std::numeric_limits<RealType>::has_infinity)
   {
-    BOOST_CHECK_THROW(cyl_bessel_j_zero(std::numeric_limits<RealType>::infinity(), 0), std::domain_error);
-    BOOST_CHECK_THROW(cyl_bessel_j_zero(std::numeric_limits<RealType>::infinity(), 1), std::domain_error);
+    BOOST_MATH_CHECK_THROW(cyl_bessel_j_zero(std::numeric_limits<RealType>::infinity(), 0), std::domain_error);
+    BOOST_MATH_CHECK_THROW(cyl_bessel_j_zero(std::numeric_limits<RealType>::infinity(), 1), std::domain_error);
     // Check that NaN is returned if error ignored.
-    BOOST_CHECK(boost::math::isnan<RealType>(cyl_bessel_j_zero(std::numeric_limits<RealType>::infinity(), 1, ignore_all_policy())) );
+    BOOST_CHECK((boost::math::isnan<RealType>)(cyl_bessel_j_zero(std::numeric_limits<RealType>::infinity(), 1, ignore_all_policy())) );
   }
 
   // Tests of cyc_neumann zero function (BesselYZero in Wolfram) for spot values.
@@ -445,18 +452,18 @@ n |
 
   using boost::math::cyl_neumann_zero;
   // Bad rank m.
-  BOOST_CHECK_THROW(cyl_neumann_zero(static_cast<RealType>(0), 0), std::domain_error); // 
-  BOOST_CHECK_THROW(cyl_neumann_zero(static_cast<RealType>(0), -1), std::domain_error);
+  BOOST_MATH_CHECK_THROW(cyl_neumann_zero(static_cast<RealType>(0), 0), std::domain_error); // 
+  BOOST_MATH_CHECK_THROW(cyl_neumann_zero(static_cast<RealType>(0), -1), std::domain_error);
 
   if (std::numeric_limits<RealType>::has_quiet_NaN)
   {
-    BOOST_CHECK_THROW(cyl_neumann_zero(std::numeric_limits<RealType>::quiet_NaN(), 1), std::domain_error);
-    BOOST_CHECK_THROW(cyl_neumann_zero(static_cast<RealType>(0), -1), std::domain_error);
+    BOOST_MATH_CHECK_THROW(cyl_neumann_zero(std::numeric_limits<RealType>::quiet_NaN(), 1), std::domain_error);
+    BOOST_MATH_CHECK_THROW(cyl_neumann_zero(static_cast<RealType>(0), -1), std::domain_error);
   }
   if (std::numeric_limits<RealType>::has_infinity)
   {
-    BOOST_CHECK_THROW(cyl_neumann_zero(std::numeric_limits<RealType>::infinity(), 2), std::domain_error);
-    BOOST_CHECK_THROW(cyl_neumann_zero(static_cast<RealType>(0), -1), std::domain_error);
+    BOOST_MATH_CHECK_THROW(cyl_neumann_zero(std::numeric_limits<RealType>::infinity(), 2), std::domain_error);
+    BOOST_MATH_CHECK_THROW(cyl_neumann_zero(static_cast<RealType>(0), -1), std::domain_error);
   }
   // else no infinity tests.
 
@@ -817,14 +824,14 @@ Calculated using cpp_dec_float_50
 
    using boost::math::isnan;
 
-   BOOST_CHECK_THROW(airy_ai_zero<RealType>(0), std::domain_error);
+   BOOST_MATH_CHECK_THROW(airy_ai_zero<RealType>(0), std::domain_error);
 
   if (std::numeric_limits<RealType>::has_quiet_NaN)
   { // If ignore errors, return NaN.
-    BOOST_CHECK(boost::math::isnan(airy_ai_zero<RealType>(0, ignore_all_policy())));
-    BOOST_CHECK(boost::math::isnan(airy_ai_zero<RealType>(std::numeric_limits<unsigned>::min() , ignore_all_policy())));
+    BOOST_CHECK((boost::math::isnan)(airy_ai_zero<RealType>(0, ignore_all_policy())));
+    BOOST_CHECK((boost::math::isnan)(airy_ai_zero<RealType>((std::numeric_limits<unsigned>::min)() , ignore_all_policy())));
     // Can't abuse with NaN as won't compile.
-    //BOOST_CHECK_THROW(airy_ai_zero<RealType>(std::numeric_limits<RealType>::quiet_NaN()), std::domain_error);
+    //BOOST_MATH_CHECK_THROW(airy_ai_zero<RealType>(std::numeric_limits<RealType>::quiet_NaN()), std::domain_error);
   }
   else
   { // real_concept NaN not available, so return zero.
@@ -832,8 +839,8 @@ Calculated using cpp_dec_float_50
     // BOOST_CHECK_EQUAL(airy_ai_zero<RealType>(-1), 0); //  warning C4245: 'argument' : conversion from 'int' to 'unsigned int', signed/unsigned mismatch
   }
 
-  BOOST_CHECK_CLOSE_FRACTION(airy_ai_zero<RealType>(std::numeric_limits<unsigned>::max()), -static_cast<RealType>(7426781.75639318326103L), tolerance);
-  BOOST_CHECK_CLOSE_FRACTION(airy_ai_zero<RealType>(std::numeric_limits<int>::max()), -static_cast<RealType>(4678579.33301973093739L), tolerance);
+  BOOST_MATH_CHECK_THROW(airy_ai_zero<RealType>(-1), std::domain_error);
+  BOOST_CHECK_CLOSE_FRACTION(airy_ai_zero<RealType>((std::numeric_limits<boost::int32_t>::max)()), -static_cast<RealType>(4678579.33301973093739L), tolerance);
 
   // Can't abuse with infinity because won't compile - no conversion.
   //if (std::numeric_limits<RealType>::has_infinity)
@@ -843,7 +850,7 @@ Calculated using cpp_dec_float_50
 
   // WolframAlpha  Table[N[AiryAiZero[n], 51], {n, 1, 20, 1}]
 
-  BOOST_CHECK_CLOSE_FRACTION(airy_ai_zero<RealType>(1), static_cast<RealType>(-2.33810741045976703848919725244673544063854014567239L), tolerance * 2);
+  BOOST_CHECK_CLOSE_FRACTION(airy_ai_zero<RealType>(1), static_cast<RealType>(-2.33810741045976703848919725244673544063854014567239L), tolerance * 2 * tolerance_tgamma_extra);
   BOOST_CHECK_CLOSE_FRACTION(airy_ai_zero<RealType>(2), static_cast<RealType>(-4.08794944413097061663698870145739106022476469910853L), tolerance);
   BOOST_CHECK_CLOSE_FRACTION(airy_ai_zero<RealType>(3), static_cast<RealType>(-5.52055982809555105912985551293129357379721428061753L), tolerance);
   BOOST_CHECK_CLOSE_FRACTION(airy_ai_zero<RealType>(4), static_cast<RealType>(-6.78670809007175899878024638449617696605388247739349L), tolerance);
@@ -881,14 +888,14 @@ Calculated using cpp_dec_float_50
   // Test Data for airy_bi
   using boost::math::airy_bi_zero;
 
-  BOOST_CHECK_THROW(airy_bi_zero<RealType>(0), std::domain_error);
+  BOOST_MATH_CHECK_THROW(airy_bi_zero<RealType>(0), std::domain_error);
 
   if (std::numeric_limits<RealType>::has_quiet_NaN)
   { // return NaN.
-    BOOST_CHECK(boost::math::isnan(airy_bi_zero<RealType>(0, ignore_all_policy())));
-    BOOST_CHECK(boost::math::isnan(airy_bi_zero<RealType>(std::numeric_limits<unsigned>::min() , ignore_all_policy())));
+    BOOST_CHECK((boost::math::isnan)(airy_bi_zero<RealType>(0, ignore_all_policy())));
+    BOOST_CHECK((boost::math::isnan)(airy_bi_zero<RealType>((std::numeric_limits<unsigned>::min)() , ignore_all_policy())));
     // Can't abuse with NaN as won't compile.
-    // BOOST_CHECK_THROW(airy_bi_zero<RealType>(std::numeric_limits<RealType>::quiet_NaN()), std::domain_error);
+    // BOOST_MATH_CHECK_THROW(airy_bi_zero<RealType>(std::numeric_limits<RealType>::quiet_NaN()), std::domain_error);
     // cannot convert parameter 1 from 'boost::math::concepts::real_concept' to 'unsigned int'.
   }
   else
@@ -900,8 +907,8 @@ Calculated using cpp_dec_float_50
     // check airy_bi_zero<RealType>(-1) == 0 has failed [-7.42678e+006 != 0]
   }
 
-  BOOST_CHECK_CLOSE_FRACTION(airy_bi_zero<RealType>(std::numeric_limits<unsigned>::max()), -7426781.75581678913522, tolerance * 300);
-  BOOST_CHECK_CLOSE_FRACTION(airy_bi_zero<RealType>(std::numeric_limits<int>::max()), -4678579.33229351984573, tolerance * 300);
+  BOOST_MATH_CHECK_THROW(airy_bi_zero<RealType>(-1), std::domain_error);
+  BOOST_CHECK_CLOSE_FRACTION(airy_bi_zero<RealType>((std::numeric_limits<boost::int32_t>::max)()), -static_cast<RealType>(4678579.33229351984573L), tolerance * 300);
 
   // Can't abuse with infinity because won't compile - no conversion.
   //if (std::numeric_limits<RealType>::has_infinity)
@@ -910,8 +917,8 @@ Calculated using cpp_dec_float_50
   //}
 
   // Table[N[AiryBiZero[n], 51], {n, 1, 20, 1}]
-  BOOST_CHECK_CLOSE_FRACTION(airy_bi_zero<RealType>(1), static_cast<RealType>(-1.17371322270912792491997996247390210454364638917570L), tolerance * 4);
-  BOOST_CHECK_CLOSE_FRACTION(airy_bi_zero<RealType>(2), static_cast<RealType>(-3.27109330283635271568022824016641380630093596910028L), tolerance);
+  BOOST_CHECK_CLOSE_FRACTION(airy_bi_zero<RealType>(1), static_cast<RealType>(-1.17371322270912792491997996247390210454364638917570L), tolerance * 4 * tolerance_tgamma_extra);
+  BOOST_CHECK_CLOSE_FRACTION(airy_bi_zero<RealType>(2), static_cast<RealType>(-3.27109330283635271568022824016641380630093596910028L), tolerance * tolerance_tgamma_extra);
   BOOST_CHECK_CLOSE_FRACTION(airy_bi_zero<RealType>(3), static_cast<RealType>(-4.83073784166201593266770933990517817696614261732301L), tolerance);
   BOOST_CHECK_CLOSE_FRACTION(airy_bi_zero<RealType>(4), static_cast<RealType>(-6.16985212831025125983336452055593667996554943427563L), tolerance);
   BOOST_CHECK_CLOSE_FRACTION(airy_bi_zero<RealType>(5), static_cast<RealType>(-7.37676207936776371359995933044254122209152229939710L), tolerance);
@@ -954,7 +961,7 @@ Calculated using cpp_dec_float_50
     unsigned int n_roots = 1U;
     std::vector<RealType> roots;
     boost::math::airy_bi_zero<RealType>(2U, n_roots, std::back_inserter(roots));
-    BOOST_CHECK_CLOSE_FRACTION(roots[0], static_cast<RealType>(-3.27109330283635271568022824016641380630093596910028L), tolerance);
+    BOOST_CHECK_CLOSE_FRACTION(roots[0], static_cast<RealType>(-3.27109330283635271568022824016641380630093596910028L), tolerance * tolerance_tgamma_extra);
   }
 } // template <class RealType> void test_spots(RealType)
 
@@ -973,10 +980,6 @@ BOOST_AUTO_TEST_CASE(test_main)
    std::cout << "<note>The long double tests have been disabled on this platform "
       "either because the long double overloads of the usual math functions are "
       "not available at all, or because they are too inaccurate for these tests "
-      "to pass.</note>" << std::cout;
+      "to pass.</note>" << std::endl;
 #endif
 }
-
-
-
-

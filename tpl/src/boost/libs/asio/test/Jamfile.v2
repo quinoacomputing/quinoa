@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2003-2013 Christopher M. Kohlhoff (chris at kohlhoff dot com)
+# Copyright (c) 2003-2015 Christopher M. Kohlhoff (chris at kohlhoff dot com)
 #
 # Distributed under the Boost Software License, Version 1.0. (See accompanying
 # file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -26,6 +26,10 @@ else if [ os.name ] = QNXNTO
 {
   lib socket ;
 }
+else if [ os.name ] = HAIKU
+{
+  lib network ;
+}
 
 local USE_SELECT =
   <define>BOOST_ASIO_DISABLE_DEV_POLL
@@ -38,9 +42,7 @@ project
   : requirements
     <library>/boost/date_time//boost_date_time
     <library>/boost/system//boost_system
-    <library>/boost/thread//boost_thread
     <library>/boost/regex//boost_regex
-    <library>/boost/test//boost_test_exec_monitor
     <define>BOOST_ALL_NO_LIB=1
     <threading>multi
     <os>LINUX:<define>_XOPEN_SOURCE=600
@@ -58,6 +60,7 @@ project
     <os>HPUX,<toolset>gcc:<define>_XOPEN_SOURCE_EXTENDED
     <os>HPUX:<library>ipv6
     <os>QNXNTO:<library>socket
+    <os>HAIKU:<library>network
   ;
 
 test-suite "asio" :

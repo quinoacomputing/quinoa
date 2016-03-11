@@ -1,6 +1,6 @@
 /* Boost.MultiIndex test for key extractors.
  *
- * Copyright 2003-2013 Joaquin M Lopez Munoz.
+ * Copyright 2003-2015 Joaquin M Lopez Munoz.
  * Distributed under the Boost Software License, Version 1.0.
  * (See accompanying file LICENSE_1_0.txt or copy at
  * http://www.boost.org/LICENSE_1_0.txt)
@@ -17,7 +17,6 @@
 #include <boost/ref.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <list>
-#include <memory>
 
 using namespace boost::multi_index;
 using namespace boost::tuples;
@@ -61,9 +60,6 @@ struct test_derived_class:test_class
   test_derived_class(int i=0):test_class(i){}
   test_derived_class(int i,int j):test_class(i,j){}
 };
-
-BOOST_BROKEN_COMPILER_TYPE_TRAITS_SPECIALIZATION(test_class)
-BOOST_BROKEN_COMPILER_TYPE_TRAITS_SPECIALIZATION(test_derived_class)
 
 typedef identity<test_class>                                       idn;
 typedef identity<const test_class>                                 cidn;
@@ -134,9 +130,6 @@ struct test_nc_derived_class:test_nc_class
   test_nc_derived_class(int i,int j):test_nc_class(i,j){}
 };
 
-BOOST_BROKEN_COMPILER_TYPE_TRAITS_SPECIALIZATION(test_nc_class)
-BOOST_BROKEN_COMPILER_TYPE_TRAITS_SPECIALIZATION(test_nc_derived_class)
-
 typedef identity<test_nc_class>                                nc_idn;
 typedef identity<const test_nc_class>                          nc_cidn;
 typedef BOOST_MULTI_INDEX_MEMBER(test_nc_class,int,int_member) nc_key_m;
@@ -194,8 +187,8 @@ void test_key_extractors()
   test_class**                               tpp=&tp;
   const test_class**                         ctpp=&ctp;
 
-  std::auto_ptr<test_class*>                 tap(new test_class*(tp));
-  std::auto_ptr<const test_class*>           ctap(new const test_class*(ctp));
+  boost::scoped_ptr<test_class*>             tap(new test_class*(tp));
+  boost::scoped_ptr<const test_class*>       ctap(new const test_class*(ctp));
 
   boost::reference_wrapper<test_class>       tw(tr);
   boost::reference_wrapper<const test_class> ctw(tr);

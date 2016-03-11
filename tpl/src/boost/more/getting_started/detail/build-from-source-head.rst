@@ -9,7 +9,7 @@ Boost.Build_ is a text-based system for developing, testing, and
 installing software. First, you'll need to build and
 install it. To do this:
 
-1. Go to the directory ``tools``\ |/|\ ``build``\ |/|\ ``v2``\ |/|.
+1. Go to the directory ``tools``\ |/|\ ``build``\ |/|.
 2. Run |bootstrap|
 3. Run ``b2 install --prefix=``\ *PREFIX* where *PREFIX* is
    the directory where you want Boost.Build to be installed
@@ -28,7 +28,7 @@ First, find the toolset corresponding to your compiler in the
 following table (an up-to-date list is always available `in the
 Boost.Build documentation`__).
 
-__ http://www.boost.org/boost-build2/doc/html/bbv2/reference/tools.html
+__ http://www.boost.org/build/doc/html/bbv2/reference/tools.html
 
 .. Note:: If you previously chose a toolset for the purposes of
   `building b2`_, you should assume it won't work and instead
@@ -36,40 +36,42 @@ __ http://www.boost.org/boost-build2/doc/html/bbv2/reference/tools.html
 
 .. _building b2: ../../doc/html/bbv2/installation.html
 
-+-----------+--------------------+-----------------------------+
-|Toolset    |Vendor              |Notes                        |
-|Name       |                    |                             |
-+===========+====================+=============================+
-|``acc``    |Hewlett Packard     |Only very recent versions are|
-|           |                    |known to work well with Boost|
-+-----------+--------------------+-----------------------------+
-|``borland``|Borland             |                             |
-+-----------+--------------------+-----------------------------+
-|``como``   |Comeau Computing    |Using this toolset may       |
-|           |                    |require configuring__ another|
-|           |                    |toolset to act as its backend|
-+-----------+--------------------+-----------------------------+
-|``darwin`` |Apple Computer      |Apple's version of the GCC   |
-|           |                    |toolchain with support for   |
-|           |                    |Darwin and MacOS X features  |
-|           |                    |such as frameworks.          |
-+-----------+--------------------+-----------------------------+
-|``gcc``    |The Gnu Project     |Includes support for Cygwin  |
-|           |                    |and MinGW compilers.         |
-+-----------+--------------------+-----------------------------+
-|``hp_cxx`` |Hewlett Packard     |Targeted at the Tru64        |
-|           |                    |operating system.            |
-+-----------+--------------------+-----------------------------+
-|``intel``  |Intel               |                             |
-+-----------+--------------------+-----------------------------+
-|``msvc``   |Microsoft           |                             |
-+-----------+--------------------+-----------------------------+
-|``sun``    |Sun                 |Only very recent versions are|
-|           |                    |known to work well with      |
-|           |                    |Boost.                       |
-+-----------+--------------------+-----------------------------+
-|``vacpp``  |IBM                 |The VisualAge C++ compiler.  |
-+-----------+--------------------+-----------------------------+
++-----------+--------------------+------------------------------------------------------------+
+|Toolset    |Vendor              |Notes                                                       |
+|Name       |                    |                                                            |
++===========+====================+============================================================+
+|``acc``    |Hewlett Packard     |Only very recent versions are known to work well with Boost |
++-----------+--------------------+------------------------------------------------------------+
+|``borland``|Borland             |                                                            |
++-----------+--------------------+------------------------------------------------------------+
+|``como``   |Comeau Computing    |Using this toolset may require configuring__ another        |
+|           |                    |toolset to act as its backend.                              |
++-----------+--------------------+------------------------------------------------------------+
+|``darwin`` |Apple Computer      |Apple's version of the GCC toolchain with support for       |
+|           |                    |Darwin and MacOS X features such as frameworks.             |
++-----------+--------------------+------------------------------------------------------------+
+|``gcc``    |The Gnu Project     |Includes support for Cygwin and MinGW compilers.            |
++-----------+--------------------+------------------------------------------------------------+
+|``hp_cxx`` |Hewlett Packard     |Targeted at the Tru64 operating system.                     |
++-----------+--------------------+------------------------------------------------------------+
+|``intel``  |Intel               |                                                            |
++-----------+--------------------+------------------------------------------------------------+
+|``msvc``   |Microsoft           |                                                            |
++-----------+--------------------+------------------------------------------------------------+
+|``sun``    |Oracle              |Only very recent versions are known to work well with       |
+|           |                    |Boost.  Note that the Oracle/Sun compiler has a large number|
+|           |                    |of options which effect binary compatibility: it is vital   |
+|           |                    |that the libraries are built with the same options that your|
+|           |                    |appliction will use. In particular be aware that the default|
+|           |                    |standard library may not work well with Boost, *unless you  |
+|           |                    |are building for C++11*. The particular compiler options you|
+|           |                    |need can be injected with the b2 command line options       |
+|           |                    |``cxxflags=``and ``linkflags=``.  For example to build with |
+|           |                    |the Apache standard library in C++03 mode use               |
+|           |                    |``b2 cxxflags=-library=stdcxx4 linkflags=-library=stdcxx4``.|
++-----------+--------------------+------------------------------------------------------------+
+|``vacpp``  |IBM                 |The VisualAge C++ compiler.                                 |
++-----------+--------------------+------------------------------------------------------------+
 
 __ Boost.Build_
 
@@ -107,5 +109,5 @@ invoke ``b2`` as follows:
 For a complete description of these and other invocation options,
 please see the `Boost.Build documentation`__.
 
-__ http://www.boost.org/boost-build2/doc/html/bbv2/advanced/invocation.html
+__ http://www.boost.org/build/doc/html/bbv2/overview/invocation.html
 

@@ -8,9 +8,9 @@
 //
 // See http://www.boost.org/libs/mpl for documentation.
 
-// $Id: set.cpp 49268 2008-10-11 06:26:17Z agurtovoy $
-// $Date: 2008-10-10 23:26:17 -0700 (Fri, 10 Oct 2008) $
-// $Revision: 49268 $
+// $Id$
+// $Date$
+// $Revision$
 
 #include <boost/mpl/set.hpp>
 #include <boost/mpl/contains.hpp>
@@ -328,4 +328,20 @@ MPL_TEST_CASE()
     typedef mpl::set<int,long,char> s;
     find_test<s>();
     find_test<s::type>();
+}
+
+MPL_TEST_CASE()
+{
+    typedef insert< set<>, int >::type little_set;
+
+    MPL_ASSERT_RELATION(size<little_set>::value, ==, 1);
+    MPL_ASSERT_RELATION(size<little_set::type>::value, ==, 1);
+}
+
+MPL_TEST_CASE()
+{
+    typedef erase_key< set< float, int >, float >::type little_set;
+
+    MPL_ASSERT_RELATION(size<little_set>::value, ==, 1);
+    MPL_ASSERT_RELATION(size<little_set::type>::value, ==, 1);
 }

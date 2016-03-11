@@ -1,7 +1,7 @@
 /*=============================================================================
     Copyright (c) 2001-2011 Joel de Guzman
 
-    Distributed under the Boost Software License, Version 1.0. (See accompanying 
+    Distributed under the Boost Software License, Version 1.0. (See accompanying
     file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 ==============================================================================*/
 #include <boost/detail/lightweight_test.hpp>
@@ -65,8 +65,8 @@ main()
         std::cout << pop_back(sv) << std::endl;
 
         // Compile check only
-        begin(pop_back(sv)) == end(sv);
-        end(pop_back(sv)) == begin(sv);
+        (void)(begin(pop_back(sv)) == end(sv));
+        (void)(end(pop_back(sv)) == begin(sv));
     }
 
     // $$$ JDG: TODO add compile fail facility $$$
@@ -75,7 +75,7 @@ main()
         //~ std::cout << pop_back(l) << std::endl;
     //~ }
 
-#ifndef BOOST_NO_AUTO_DECLARATIONS
+#ifndef BOOST_NO_CXX11_AUTO_DECLARATIONS
     {
         auto vec = make_vector(1, 3.14, "hello");
 
@@ -88,6 +88,7 @@ main()
         auto i1 = find<int>(popv);
         auto i2 = find<double>(pop);
 
+        (void)push;
         BOOST_TEST(i1 != end(pop));
         BOOST_TEST(i2 != end(pop));
         BOOST_TEST(i1 != i2);
@@ -95,7 +96,7 @@ main()
 #endif
 
     {
-        boost::array<std::size_t, 2> a = { 10, 50 };
+        boost::array<std::size_t, 2> a = {{ 10, 50 }};
         BOOST_TEST(back(pop_back(a)) == 10);
     }
 

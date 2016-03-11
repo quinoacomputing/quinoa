@@ -3,14 +3,13 @@
 //  Boost Software License, Version 1.0. (See accompanying file
 //  LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
+#define BOOST_TEST_MODULE foobar
 #define BOOST_UBLAS_TYPE_CHECK_EPSILON (type_traits<real_type>::type_sqrt (boost::math::tools::epsilon <real_type>()))
 #define BOOST_UBLAS_TYPE_CHECK_MIN (type_traits<real_type>::type_sqrt ( boost::math::tools::min_value<real_type>()))
 #define BOOST_UBLAS_NDEBUG
 
-#include <boost/math/bindings/rr.hpp>
-namespace std{
-using boost::math::ntl::pow;
-} // workaround for spirit parser.
+#include "multiprecision.hpp"
+
 #include <boost/math/tools/remez.hpp>
 #include <boost/math/tools/test.hpp>
 #include <boost/math/special_functions/binomial.hpp>
@@ -21,18 +20,20 @@ using boost::math::ntl::pow;
 #include <iomanip>
 #include <string>
 #include <boost/test/included/unit_test.hpp> // for test_main
+#include <boost/multiprecision/cpp_bin_float.hpp>
 
-extern boost::math::ntl::RR f(const boost::math::ntl::RR& x, int variant);
+
+extern mp_type f(const mp_type& x, int variant);
 extern void show_extra(
-   const boost::math::tools::polynomial<boost::math::ntl::RR>& n, 
-   const boost::math::tools::polynomial<boost::math::ntl::RR>& d, 
-   const boost::math::ntl::RR& x_offset, 
-   const boost::math::ntl::RR& y_offset, 
+   const boost::math::tools::polynomial<mp_type>& n, 
+   const boost::math::tools::polynomial<mp_type>& d, 
+   const mp_type& x_offset, 
+   const mp_type& y_offset, 
    int variant);
 
 using namespace boost::spirit::classic;
 
-boost::math::ntl::RR a(0), b(1);   // range to optimise over
+mp_type a(0), b(1);   // range to optimise over
 bool rel_error(true);
 bool pin(false);
 int orderN(3);
@@ -43,12 +44,12 @@ bool started(false);
 int variant(0);
 int skew(0);
 int brake(50);
-boost::math::ntl::RR x_offset(0), y_offset(0), x_scale(1);
+mp_type x_offset(0), y_offset(0), x_scale(1);
 bool auto_offset_y;
 
-boost::shared_ptr<boost::math::tools::remez_minimax<boost::math::ntl::RR> > p_remez;
+boost::shared_ptr<boost::math::tools::remez_minimax<mp_type> > p_remez;
 
-boost::math::ntl::RR the_function(const boost::math::ntl::RR& val)
+mp_type the_function(const mp_type& val)
 {
    return f(x_scale * (val + x_offset), variant) + y_offset;
 }
@@ -56,7 +57,7 @@ boost::math::ntl::RR the_function(const boost::math::ntl::RR& val)
 void step_some(unsigned count)
 {
    try{
-      NTL::RR::SetPrecision(working_precision);
+      set_working_precision(working_precision);
       if(!started)
       {
          //
@@ -64,23 +65,23 @@ void step_some(unsigned count)
          //
          if(auto_offset_y)
          {
-            boost::math::ntl::RR fa, fb, fm;
+            mp_type fa, fb, fm;
             fa = f(x_scale * (a + x_offset), variant);
             fb = f(x_scale * (b + x_offset), variant);
             fm = f(x_scale * ((a+b)/2 + x_offset), variant);
             y_offset = -(fa + fb + fm) / 3;
-            NTL::RR::SetOutputPrecision(5);
+            set_output_precision(5);
             std::cout << "Setting auto-y-offset to " << y_offset << std::endl;
          }
          //
          // Truncate offsets to float precision:
          //
-         x_offset = NTL::RoundToPrecision(x_offset.value(), 20);
-         y_offset = NTL::RoundToPrecision(y_offset.value(), 20);
+         x_offset = round_to_precision(x_offset, 20);
+         y_offset = round_to_precision(y_offset, 20);
          //
          // Construct new Remez state machine:
          //
-         p_remez.reset(new boost::math::tools::remez_minimax<boost::math::ntl::RR>(
+         p_remez.reset(new boost::math::tools::remez_minimax<mp_type>(
             &the_function, 
             orderN, orderD, 
             a, b, 
@@ -99,8 +100,8 @@ void step_some(unsigned count)
       {
          std::cout << "Stepping..." << std::endl;
          p_remez->set_brake(brake);
-         boost::math::ntl::RR r = p_remez->iterate();
-         NTL::RR::SetOutputPrecision(3);
+         mp_type r = p_remez->iterate();
+         set_output_precision(3);
          std::cout 
             << "Maximum Deviation Found:                     " << std::setprecision(3) << std::scientific << boost::math::tools::real_cast<double>(p_remez->max_error()) << std::endl
             << "Expected Error Term:                         " << std::setprecision(3) << std::scientific << boost::math::tools::real_cast<double>(p_remez->error_term()) << std::endl
@@ -120,17 +121,17 @@ void step(const char*, const char*)
 
 void show(const char*, const char*)
 {
-   NTL::RR::SetPrecision(working_precision);
+   set_working_precision(working_precision);
    if(started)
    {
-      boost::math::tools::polynomial<boost::math::ntl::RR> n = p_remez->numerator();
-      boost::math::tools::polynomial<boost::math::ntl::RR> d = p_remez->denominator();
-      std::vector<boost::math::ntl::RR> cn = n.chebyshev();
-      std::vector<boost::math::ntl::RR> cd = d.chebyshev();
+      boost::math::tools::polynomial<mp_type> n = p_remez->numerator();
+      boost::math::tools::polynomial<mp_type> d = p_remez->denominator();
+      std::vector<mp_type> cn = n.chebyshev();
+      std::vector<mp_type> cd = d.chebyshev();
       int prec = 2 + (target_precision * 3010LL)/10000;
       std::cout << std::scientific << std::setprecision(prec);
-      NTL::RR::SetOutputPrecision(prec);
-      boost::numeric::ublas::vector<boost::math::ntl::RR> v = p_remez->zero_points();
+      set_output_precision(prec);
+      boost::numeric::ublas::vector<mp_type> v = p_remez->zero_points();
       
       std::cout << "  Zeros = {\n";
       unsigned i;
@@ -190,12 +191,12 @@ void show(const char*, const char*)
 
 void do_graph(unsigned points)
 {
-   NTL::RR::SetPrecision(working_precision);
-   boost::math::ntl::RR step = (b - a) / (points - 1);
-   boost::math::ntl::RR x = a;
+   set_working_precision(working_precision);
+   mp_type step = (b - a) / (points - 1);
+   mp_type x = a;
    while(points > 1)
    {
-      NTL::RR::SetOutputPrecision(10);
+      set_output_precision(10);
       std::cout << std::setprecision(10) << std::setw(30) << std::left 
          << boost::lexical_cast<std::string>(x) << the_function(x) << std::endl;
       --points;
@@ -211,9 +212,20 @@ void graph(const char*, const char*)
 }
 
 template <class T>
+mp_type convert_to_rr(const T& val)
+{
+   return val;
+}
+template <class Backend, boost::multiprecision::expression_template_option ET>
+mp_type convert_to_rr(const boost::multiprecision::number<Backend, ET>& val)
+{
+   return boost::lexical_cast<mp_type>(val.str());
+}
+
+template <class T>
 void do_test(T, const char* name)
 {
-   boost::math::ntl::RR::SetPrecision(working_precision);
+   set_working_precision(working_precision);
    if(started)
    {
       //
@@ -222,13 +234,13 @@ void do_test(T, const char* name)
       // polynomials:
       //
       boost::math::tools::polynomial<T> n, d;
-      boost::math::tools::polynomial<boost::math::ntl::RR> nr, dr;
+      boost::math::tools::polynomial<mp_type> nr, dr;
       nr = p_remez->numerator();
       dr = p_remez->denominator();
       n = nr;
       d = dr;
 
-      std::vector<boost::math::ntl::RR> cn1, cd1;
+      std::vector<mp_type> cn1, cd1;
       cn1 = nr.chebyshev();
       cd1 = dr.chebyshev();
       std::vector<T> cn, cd;
@@ -245,11 +257,11 @@ void do_test(T, const char* name)
       // (in theory) the largest deviation should occur.  For good
       // measure we'll test at the zeros as well:
       //
-      boost::numeric::ublas::vector<boost::math::ntl::RR> 
+      boost::numeric::ublas::vector<mp_type> 
          zeros(p_remez->zero_points()),
          cheb(p_remez->chebyshev_points());
 
-      boost::math::ntl::RR max_error(0), cheb_max_error(0);
+      mp_type max_error(0), cheb_max_error(0);
 
       //
       // Do the tests at the zeros:
@@ -258,11 +270,11 @@ void do_test(T, const char* name)
       std::cout << "Absissa        Error (Poly)   Error (Cheb)\n";
       for(unsigned i = 0; i < zeros.size(); ++i)
       {
-         boost::math::ntl::RR true_result = the_function(zeros[i]);
+         mp_type true_result = the_function(zeros[i]);
          T absissa = boost::math::tools::real_cast<T>(zeros[i]);
-         boost::math::ntl::RR test_result = n.evaluate(absissa) / d.evaluate(absissa);
-         boost::math::ntl::RR cheb_result = boost::math::tools::evaluate_chebyshev(cn, absissa) / boost::math::tools::evaluate_chebyshev(cd, absissa);
-         boost::math::ntl::RR err, cheb_err;
+         mp_type test_result = convert_to_rr(n.evaluate(absissa) / d.evaluate(absissa));
+         mp_type cheb_result = convert_to_rr(boost::math::tools::evaluate_chebyshev(cn, absissa) / boost::math::tools::evaluate_chebyshev(cd, absissa));
+         mp_type err, cheb_err;
          if(rel_error)
          {
             err = boost::math::tools::relative_error(test_result, true_result);
@@ -285,11 +297,11 @@ void do_test(T, const char* name)
       //
       for(unsigned i = 0; i < cheb.size(); ++i)
       {
-         boost::math::ntl::RR true_result = the_function(cheb[i]);
+         mp_type true_result = the_function(cheb[i]);
          T absissa = boost::math::tools::real_cast<T>(cheb[i]);
-         boost::math::ntl::RR test_result = n.evaluate(absissa) / d.evaluate(absissa);
-         boost::math::ntl::RR cheb_result = boost::math::tools::evaluate_chebyshev(cn, absissa) / boost::math::tools::evaluate_chebyshev(cd, absissa);
-         boost::math::ntl::RR err, cheb_err;
+         mp_type test_result = convert_to_rr(n.evaluate(absissa) / d.evaluate(absissa));
+         mp_type cheb_result = convert_to_rr(boost::math::tools::evaluate_chebyshev(cn, absissa) / boost::math::tools::evaluate_chebyshev(cd, absissa));
+         mp_type err, cheb_err;
          if(rel_error)
          {
             err = boost::math::tools::relative_error(test_result, true_result);
@@ -334,6 +346,16 @@ void test_long(const char*, const char*)
    do_test((long double)(0), "long double");
 }
 
+void test_float80(const char*, const char*)
+{
+   do_test((boost::multiprecision::cpp_bin_float_double_extended)(0), "float80");
+}
+
+void test_float128(const char*, const char*)
+{
+   do_test((boost::multiprecision::cpp_bin_float_quad)(0), "float128");
+}
+
 void test_all(const char*, const char*)
 {
    do_test(float(0), "float");
@@ -344,7 +366,7 @@ void test_all(const char*, const char*)
 template <class T>
 void do_test_n(T, const char* name, unsigned count)
 {
-   boost::math::ntl::RR::SetPrecision(working_precision);
+   set_working_precision(working_precision);
    if(started)
    {
       //
@@ -353,13 +375,13 @@ void do_test_n(T, const char* name, unsigned count)
       // polynomials:
       //
       boost::math::tools::polynomial<T> n, d;
-      boost::math::tools::polynomial<boost::math::ntl::RR> nr, dr;
+      boost::math::tools::polynomial<mp_type> nr, dr;
       nr = p_remez->numerator();
       dr = p_remez->denominator();
       n = nr;
       d = dr;
 
-      std::vector<boost::math::ntl::RR> cn1, cd1;
+      std::vector<mp_type> cn1, cd1;
       cn1 = nr.chebyshev();
       cd1 = dr.chebyshev();
       std::vector<T> cn, cd;
@@ -372,21 +394,24 @@ void do_test_n(T, const char* name, unsigned count)
          cd.push_back(boost::math::tools::real_cast<T>(cd1[i]));
       }
 
-      boost::math::ntl::RR max_error(0), max_cheb_error(0);
-      boost::math::ntl::RR step = (b - a) / count;
+      mp_type max_error(0), max_cheb_error(0);
+      mp_type step = (b - a) / count;
 
       //
       // Do the tests at the zeros:
       //
       std::cout << "Starting tests at " << name << " precision...\n";
       std::cout << "Absissa        Error (poly)   Error (Cheb)\n";
-      for(boost::math::ntl::RR x = a; x <= b; x += step)
+      for(mp_type x = a; x <= b; x += step)
       {
-         boost::math::ntl::RR true_result = the_function(x);
+         mp_type true_result = the_function(x);
+         //std::cout << true_result << std::endl;
          T absissa = boost::math::tools::real_cast<T>(x);
-         boost::math::ntl::RR test_result = n.evaluate(absissa) / d.evaluate(absissa);
-         boost::math::ntl::RR cheb_result = boost::math::tools::evaluate_chebyshev(cn, absissa) / boost::math::tools::evaluate_chebyshev(cd, absissa);
-         boost::math::ntl::RR err, cheb_err;
+         mp_type test_result = convert_to_rr(n.evaluate(absissa) / d.evaluate(absissa));
+         //std::cout << test_result << std::endl;
+         mp_type cheb_result = convert_to_rr(boost::math::tools::evaluate_chebyshev(cn, absissa) / boost::math::tools::evaluate_chebyshev(cd, absissa));
+         //std::cout << cheb_result << std::endl;
+         mp_type err, cheb_err;
          if(rel_error)
          {
             err = boost::math::tools::relative_error(test_result, true_result);
@@ -423,7 +448,7 @@ void do_test_n(T, const char* name, unsigned count)
 
 void test_n(unsigned n)
 {
-   do_test_n(boost::math::ntl::RR(), "boost::math::ntl::RR", n);
+   do_test_n(mp_type(), "mp_type", n);
 }
 
 void test_float_n(unsigned n)
@@ -439,6 +464,16 @@ void test_double_n(unsigned n)
 void test_long_n(unsigned n)
 {
    do_test_n((long double)(0), "long double", n);
+}
+
+void test_float80_n(unsigned n)
+{
+   do_test_n((boost::multiprecision::cpp_bin_float_double_extended)(0), "float80", n);
+}
+
+void test_float128_n(unsigned n)
+{
+   do_test_n((boost::multiprecision::cpp_bin_float_quad)(0), "float128", n);
 }
 
 void rotate(const char*, const char*)
@@ -468,7 +503,7 @@ void rescale(const char*, const char*)
 void graph_poly(const char*, const char*)
 {
    int i = 50;
-   boost::math::ntl::RR::SetPrecision(working_precision);
+   set_working_precision(working_precision);
    if(started)
    {
       //
@@ -476,15 +511,15 @@ void graph_poly(const char*, const char*)
       // either float, double or long double.  Begin by getting the
       // polynomials:
       //
-      boost::math::tools::polynomial<boost::math::ntl::RR> n, d;
+      boost::math::tools::polynomial<mp_type> n, d;
       n = p_remez->numerator();
       d = p_remez->denominator();
 
-      boost::math::ntl::RR max_error(0);
-      boost::math::ntl::RR step = (b - a) / i;
+      mp_type max_error(0);
+      mp_type step = (b - a) / i;
 
       std::cout << "Evaluating Numerator...\n";
-      boost::math::ntl::RR val;
+      mp_type val;
       for(val = a; val <= b; val += step)
          std::cout << n.evaluate(val) << std::endl;
       std::cout << "Evaluating Denominator...\n";
@@ -500,11 +535,11 @@ void graph_poly(const char*, const char*)
 BOOST_AUTO_TEST_CASE( test_main )
 {
    std::string line;
-   real_parser<long double/*boost::math::ntl::RR*/ > const rr_p;
+   real_parser<long double/*mp_type*/ > const rr_p;
    while(std::getline(std::cin, line))
    {
       if(parse(line.c_str(), str_p("quit"), space_p).full)
-         return 0;
+         return;
       if(false == parse(line.c_str(), 
          (
 
@@ -569,6 +604,14 @@ BOOST_AUTO_TEST_CASE( test_main )
             str_p("test") && str_p("long") && uint_p[&test_long_n]
       ||
             str_p("test") && str_p("long")[&test_long]
+      ||
+            str_p("test") && str_p("float80") && uint_p[&test_float80_n]
+      ||
+            str_p("test") && str_p("float80")[&test_float80]
+      ||
+            str_p("test") && str_p("float128") && uint_p[&test_float128_n]
+      ||
+            str_p("test") && str_p("float128")[&test_float128]
       ||
             str_p("test") && str_p("all")[&test_all]
       ||

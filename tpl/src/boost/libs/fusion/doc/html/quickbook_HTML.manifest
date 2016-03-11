@@ -17,6 +17,7 @@ fusion/iterator/concepts/forward_iterator.html
 fusion/iterator/concepts/bidirectional_iterator.html
 fusion/iterator/concepts/random_access_iterator.html
 fusion/iterator/concepts/associative_iterator.html
+fusion/iterator/concepts/unbounded_iterator.html
 fusion/iterator/functions.html
 fusion/iterator/functions/deref.html
 fusion/iterator/functions/next.html
@@ -47,6 +48,7 @@ fusion/sequence/concepts/forward_sequence.html
 fusion/sequence/concepts/bidirectional_sequence.html
 fusion/sequence/concepts/random_access_sequence.html
 fusion/sequence/concepts/associative_sequence.html
+fusion/sequence/concepts/unbounded_sequence.html
 fusion/sequence/intrinsic.html
 fusion/sequence/intrinsic/functions.html
 fusion/sequence/intrinsic/functions/begin.html
@@ -86,6 +88,7 @@ fusion/sequence/operator/comparison/less_than.html
 fusion/sequence/operator/comparison/less_than_equal.html
 fusion/sequence/operator/comparison/greater_than.html
 fusion/sequence/operator/comparison/greater_than_equal.html
+fusion/sequence/operator/hashing.html
 fusion/container.html
 fusion/container/vector.html
 fusion/container/cons.html
@@ -142,9 +145,11 @@ fusion/view/transform_view.html
 fusion/view/reverse_view.html
 fusion/view/nview.html
 fusion/view/repetitive_view.html
+fusion/view/flatten_view.html
 fusion/adapted.html
 fusion/adapted/array.html
 fusion/adapted/std__pair.html
+fusion/adapted/std__tuple.html
 fusion/adapted/mpl_sequence.html
 fusion/adapted/boost__array.html
 fusion/adapted/boost__tuple.html
@@ -168,6 +173,10 @@ fusion/algorithm.html
 fusion/algorithm/auxiliary.html
 fusion/algorithm/auxiliary/functions.html
 fusion/algorithm/auxiliary/functions/copy.html
+fusion/algorithm/auxiliary/functions/move.html
+fusion/algorithm/auxiliary/metafunctions.html
+fusion/algorithm/auxiliary/metafunctions/copy.html
+fusion/algorithm/auxiliary/metafunctions/move.html
 fusion/algorithm/iteration.html
 fusion/algorithm/iteration/functions.html
 fusion/algorithm/iteration/functions/fold.html
@@ -221,6 +230,7 @@ fusion/algorithm/transformation/functions/pop_back.html
 fusion/algorithm/transformation/functions/pop_front.html
 fusion/algorithm/transformation/functions/push_back.html
 fusion/algorithm/transformation/functions/push_front.html
+fusion/algorithm/transformation/functions/flatten.html
 fusion/algorithm/transformation/metafunctions.html
 fusion/algorithm/transformation/metafunctions/filter.html
 fusion/algorithm/transformation/metafunctions/filter_if.html
@@ -241,6 +251,7 @@ fusion/algorithm/transformation/metafunctions/pop_back.html
 fusion/algorithm/transformation/metafunctions/pop_front.html
 fusion/algorithm/transformation/metafunctions/push_back.html
 fusion/algorithm/transformation/metafunctions/push_front.html
+fusion/algorithm/transformation/metafunctions/flatten.html
 fusion/tuple.html
 fusion/tuple/class_template_tuple.html
 fusion/tuple/class_template_tuple/construction.html

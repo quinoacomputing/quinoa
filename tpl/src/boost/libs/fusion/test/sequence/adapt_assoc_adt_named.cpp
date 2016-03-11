@@ -48,9 +48,12 @@ namespace ns
 BOOST_FUSION_ADAPT_ASSOC_ADT_NAMED(
     ns::point,
     point,
-    (int, int, obj.obj.get_x(), obj.obj.set_x(val), ns::x_member)
-    (int, int, obj.obj.get_y(), obj.obj.set_y(val), ns::y_member)
+    (int, int, obj.get_x(), obj.set_x(val), ns::x_member)
+    (int, int, obj.get_y(), obj.set_y(val), ns::y_member)
 )
+
+class empty_adt{};
+BOOST_FUSION_ADAPT_ASSOC_ADT_NAMED(empty_adt, renamed_empty_adt,)
 
 int
 main()

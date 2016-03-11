@@ -6,10 +6,14 @@
 #include <pch.hpp>
 
 #include <boost/math/concepts/real_concept.hpp>
+#include <boost/math/tools/test.hpp>
 #define BOOST_TEST_MAIN
 #include <boost/test/unit_test.hpp>
 #include <boost/test/floating_point_comparison.hpp>
 #include <boost/math/special_functions/next.hpp>
+#include <boost/math/special_functions/ulp.hpp>
+#include <iostream>
+#include <iomanip>
 
 #ifdef BOOST_MSVC
 #pragma warning(disable:4127)
@@ -56,6 +60,36 @@ void test_value(const T& val, const char* name)
       BOOST_CHECK_EQUAL(float_distance(float_advance(float_next(float_next(val)), 4), float_next(float_next(val))), -4);
       BOOST_CHECK_EQUAL(float_distance(float_advance(float_next(float_next(val)), -4), float_next(float_next(val))), 4);
    }
+   if(val > 0)
+   {
+      T n = val + ulp(val);
+      T fn = float_next(val);
+      if(n > fn)
+      {
+         BOOST_CHECK_LE(ulp(val), boost::math::tools::min_value<T>());
+      }
+      else
+      {
+         BOOST_CHECK_EQUAL(fn, n);
+      }
+   }
+   else if(val == 0)
+   {
+      BOOST_CHECK_GE(boost::math::tools::min_value<T>(), ulp(val));
+   }
+   else
+   {
+      T n = val - ulp(val);
+      T fp = float_prior(val);
+      if(n < fp)
+      {
+         BOOST_CHECK_LE(ulp(val), boost::math::tools::min_value<T>());
+      }
+      else
+      {
+         BOOST_CHECK_EQUAL(fp, n);
+      }
+   }
 }
 
 template <class T>
@@ -87,7 +121,7 @@ void test_values(const T& val, const char* name)
    test_value(-boost::math::tools::epsilon<T>(), name);
    test_value(boost::math::tools::min_value<T>(), name);
    test_value(-boost::math::tools::min_value<T>(), name);
-   if(std::numeric_limits<T>::is_specialized && (std::numeric_limits<T>::has_denorm == std::denorm_present))
+   if (std::numeric_limits<T>::is_specialized && (std::numeric_limits<T>::has_denorm == std::denorm_present) && ((std::numeric_limits<T>::min)() / 2 != 0))
    {
       test_value(z, name);
       test_value(-z, name);
@@ -96,14 +130,20 @@ void test_values(const T& val, const char* name)
    test_value(-one, name);
    test_value(two, name);
    test_value(-two, name);
-   if(std::numeric_limits<T>::is_specialized && (std::numeric_limits<T>::has_denorm == std::denorm_present))
+#if defined(TEST_SSE2)
+   if((_mm_getcsr() & (_MM_FLUSH_ZERO_ON | 0x40)) == 0)
    {
-      test_value(std::numeric_limits<T>::denorm_min(), name);
-      test_value(-std::numeric_limits<T>::denorm_min(), name);
-      test_value(2 * std::numeric_limits<T>::denorm_min(), name);
-      test_value(-2 * std::numeric_limits<T>::denorm_min(), name);
+#endif
+      if(std::numeric_limits<T>::is_specialized && (std::numeric_limits<T>::has_denorm == std::denorm_present) && ((std::numeric_limits<T>::min)() / 2 != 0))
+      {
+         test_value(std::numeric_limits<T>::denorm_min(), name);
+         test_value(-std::numeric_limits<T>::denorm_min(), name);
+         test_value(2 * std::numeric_limits<T>::denorm_min(), name);
+         test_value(-2 * std::numeric_limits<T>::denorm_min(), name);
+      }
+#if defined(TEST_SSE2)
    }
-
+#endif
    static const int primes[] = {
       11,     13,     17,     19,     23,     29, 
       31,     37,     41,     43,     47,     53,     59,     61,     67,     71, 
@@ -134,12 +174,12 @@ void test_values(const T& val, const char* name)
    {
       BOOST_CHECK_EQUAL(boost::math::float_prior(std::numeric_limits<T>::infinity()), (std::numeric_limits<T>::max)());
       BOOST_CHECK_EQUAL(boost::math::float_next(-std::numeric_limits<T>::infinity()), -(std::numeric_limits<T>::max)());
-      BOOST_CHECK_THROW(boost::math::float_prior(-std::numeric_limits<T>::infinity()), std::domain_error);
-      BOOST_CHECK_THROW(boost::math::float_next(std::numeric_limits<T>::infinity()), std::domain_error);
+      BOOST_MATH_CHECK_THROW(boost::math::float_prior(-std::numeric_limits<T>::infinity()), std::domain_error);
+      BOOST_MATH_CHECK_THROW(boost::math::float_next(std::numeric_limits<T>::infinity()), std::domain_error);
       if(boost::math::policies:: BOOST_MATH_OVERFLOW_ERROR_POLICY == boost::math::policies::throw_on_error)
       {
-         BOOST_CHECK_THROW(boost::math::float_prior(-(std::numeric_limits<T>::max)()), std::overflow_error);
-         BOOST_CHECK_THROW(boost::math::float_next((std::numeric_limits<T>::max)()), std::overflow_error);
+         BOOST_MATH_CHECK_THROW(boost::math::float_prior(-(std::numeric_limits<T>::max)()), std::overflow_error);
+         BOOST_MATH_CHECK_THROW(boost::math::float_next((std::numeric_limits<T>::max)()), std::overflow_error);
       }
       else
       {
@@ -166,6 +206,8 @@ BOOST_AUTO_TEST_CASE( test_main )
 #  pragma message "Compiling SSE2 test code"
 #endif
 
+   int mmx_flags = _mm_getcsr(); // We'll restore these later.
+
 #ifdef _WIN32
    // These tests fail pretty badly on Linux x64, especially with Intel-12.1
    _MM_SET_FLUSH_ZERO_MODE(_MM_FLUSH_ZERO_ON);
@@ -181,6 +223,9 @@ BOOST_AUTO_TEST_CASE( test_main )
    std::cout << "SSE2 control word is: " << std::hex << _mm_getcsr() << std::endl;
    test_values(1.0f, "float");
    test_values(1.0, "double");
+
+   // Restore the MMX flags:
+   _mm_setcsr(mmx_flags);
 #endif
    
 }

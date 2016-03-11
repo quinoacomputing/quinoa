@@ -18,7 +18,6 @@
 #include <boost/array.hpp>
 #include "functor.hpp"
 
-#include "test_gamma_hooks.hpp"
 #include "handle_test_result.hpp"
 #include "table_type.hpp"
 
@@ -46,7 +45,6 @@ void do_test_gamma_2(const T& data, const char* type_name, const char* test_name
    // test gamma_p_inv(T, T) against data:
    //
    using namespace std;
-   typedef typename T::value_type row_type;
    typedef Real                   value_type;
 
    std::cout << test_name << " with type " << type_name << std::endl;
@@ -84,7 +82,7 @@ void do_test_gamma_2(const T& data, const char* type_name, const char* test_name
          BOOST_CHECK_CLOSE_EX(Real(data[i][1]), inv, precision, i);
       }
       else if(1 == Real(data[i][5]))
-         BOOST_CHECK_EQUAL(boost::math::gamma_p_inv(Real(data[i][0]), Real(data[i][5])), boost::math::tools::max_value<value_type>());
+         BOOST_CHECK_EQUAL(boost::math::gamma_p_inv(Real(data[i][0]), Real(data[i][5])), std::numeric_limits<value_type>::has_infinity ? std::numeric_limits<value_type>::infinity() : boost::math::tools::max_value<value_type>());
       else
       {
          // not enough bits in our input to get back to x, but we should be in
@@ -94,7 +92,7 @@ void do_test_gamma_2(const T& data, const char* type_name, const char* test_name
       }
 
       if(Real(data[i][3]) == 0)
-         BOOST_CHECK_EQUAL(boost::math::gamma_q_inv(Real(data[i][0]), Real(data[i][3])), boost::math::tools::max_value<value_type>());
+         BOOST_CHECK_EQUAL(boost::math::gamma_q_inv(Real(data[i][0]), Real(data[i][3])), std::numeric_limits<value_type>::has_infinity ? std::numeric_limits<value_type>::infinity() : boost::math::tools::max_value<value_type>());
       else if((1 - Real(data[i][3]) > 0.001) && (fabs(Real(data[i][3])) > 2 * boost::math::tools::min_value<value_type>()))
       {
          value_type inv = boost::math::gamma_q_inv(Real(data[i][0]), Real(data[i][3]));
@@ -116,11 +114,13 @@ void do_test_gamma_2(const T& data, const char* type_name, const char* test_name
 template <class Real, class T>
 void do_test_gamma_inv(const T& data, const char* type_name, const char* test_name)
 {
-   typedef typename T::value_type row_type;
+#if !(defined(ERROR_REPORTING_MODE) && !defined(GAMMAP_INV_FUNCTION_TO_TEST))
    typedef Real                   value_type;
 
    typedef value_type (*pg)(value_type, value_type);
-#if defined(BOOST_MATH_NO_DEDUCED_FUNCTION_POINTERS)
+#ifdef GAMMAP_INV_FUNCTION_TO_TEST
+   pg funcp = GAMMAP_INV_FUNCTION_TO_TEST;
+#elif defined(BOOST_MATH_NO_DEDUCED_FUNCTION_POINTERS)
    pg funcp = boost::math::gamma_p_inv<value_type, value_type>;
 #else
    pg funcp = boost::math::gamma_p_inv;
@@ -138,11 +138,13 @@ void do_test_gamma_inv(const T& data, const char* type_name, const char* test_na
       data,
       bind_func<Real>(funcp, 0, 1),
       extract_result<Real>(2));
-   handle_test_result(result, data[result.worst()], result.worst(), type_name, "boost::math::gamma_p_inv", test_name);
+   handle_test_result(result, data[result.worst()], result.worst(), type_name, "gamma_p_inv", test_name);
    //
    // test gamma_q_inv(T, T) against data:
    //
-#if defined(BOOST_MATH_NO_DEDUCED_FUNCTION_POINTERS)
+#ifdef GAMMAQ_INV_FUNCTION_TO_TEST
+   funcp = GAMMAQ_INV_FUNCTION_TO_TEST;
+#elif defined(BOOST_MATH_NO_DEDUCED_FUNCTION_POINTERS)
    funcp = boost::math::gamma_q_inv<value_type, value_type>;
 #else
    funcp = boost::math::gamma_q_inv;
@@ -151,36 +153,14 @@ void do_test_gamma_inv(const T& data, const char* type_name, const char* test_na
       data,
       bind_func<Real>(funcp, 0, 1),
       extract_result<Real>(3));
-   handle_test_result(result, data[result.worst()], result.worst(), type_name, "boost::math::gamma_q_inv", test_name);
-#ifdef TEST_OTHER
-   if(boost::is_floating_point<value_type>::value)
-   {
-      funcp = other::gamma_p_inv;
-      //
-      // test gamma_p_inv(T, T) against data:
-      //
-      result = boost::math::tools::test_hetero<Real>(
-         data,
-         bind_func<Real>(funcp, 0, 1),
-         extract_result<Real>(2));
-      print_test_result(result, data[result.worst()], result.worst(), type_name, "other::gamma_q");
-      //
-      // test gamma_q_inv(T, T) against data:
-      //
-      funcp = other::gamma_q_inv;
-      result = boost::math::tools::test_hetero<Real>(
-         data,
-         bind_func<Real>(funcp, 0, 1),
-         extract_result<Real>(3));
-      print_test_result(result, data[result.worst()], result.worst(), type_name, "other::gamma_q");
-   }
+   handle_test_result(result, data[result.worst()], result.worst(), type_name, "gamma_q_inv", test_name);
 #endif
 }
 
 template <class T>
 void test_gamma(T, const char* name)
 {
-#ifndef TEST_UDT
+#if !defined(TEST_UDT) && !defined(ERROR_REPORTING_MODE)
    //
    // The actual test data is rather verbose, so it's in a separate file
    //

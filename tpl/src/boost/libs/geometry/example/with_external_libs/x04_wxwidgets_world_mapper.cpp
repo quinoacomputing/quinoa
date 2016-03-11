@@ -20,7 +20,7 @@
 #include <boost/geometry/geometry.hpp>
 #include <boost/geometry/geometries/geometries.hpp>
 #include <boost/geometry/geometries/point_xy.hpp>
-#include <boost/geometry/multi/geometries/multi_geometries.hpp>
+#include <boost/geometry/geometries/multi_geometries.hpp>
 
 #include <boost/geometry/geometries/register/point.hpp>
 #include <boost/geometry/geometries/register/ring.hpp>
@@ -159,13 +159,13 @@ private:
 
     typedef boost::geometry::strategy::transform::map_transformer
         <
-            point_2d, wxPoint,
+            double, 2, 2,
             true, true
         > map_transformer_type;
 
     typedef boost::geometry::strategy::transform::inverse_transformer
         <
-            wxPoint, point_2d
+            double, 2, 2
         > inverse_transformer_type;
 
     boost::shared_ptr<map_transformer_type> m_map_transformer;

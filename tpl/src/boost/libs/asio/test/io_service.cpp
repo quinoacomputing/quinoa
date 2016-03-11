@@ -2,7 +2,7 @@
 // io_service.cpp
 // ~~~~~~~~~~~~~~
 //
-// Copyright (c) 2003-2013 Christopher M. Kohlhoff (chris at kohlhoff dot com)
+// Copyright (c) 2003-2015 Christopher M. Kohlhoff (chris at kohlhoff dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -17,6 +17,7 @@
 #include <boost/asio/io_service.hpp>
 
 #include <sstream>
+#include <boost/asio/detail/thread.hpp>
 #include "unit_test.hpp"
 
 #if defined(BOOST_ASIO_HAS_BOOST_DATE_TIME)
@@ -26,7 +27,6 @@
 #endif // defined(BOOST_ASIO_HAS_BOOST_DATE_TIME)
 
 #if defined(BOOST_ASIO_HAS_BOOST_BIND)
-# include <boost/thread/thread.hpp>
 # include <boost/bind.hpp>
 #else // defined(BOOST_ASIO_HAS_BOOST_BIND)
 # include <functional>
@@ -221,8 +221,8 @@ void io_service_test()
   BOOST_ASIO_CHECK(!ios.stopped());
   ios.post(bindns::bind(start_sleep_increments, &ios, &count));
   ios.post(bindns::bind(start_sleep_increments, &ios, &count2));
-  boost::thread thread1(bindns::bind(io_service_run, &ios));
-  boost::thread thread2(bindns::bind(io_service_run, &ios));
+  boost::asio::detail::thread thread1(bindns::bind(io_service_run, &ios));
+  boost::asio::detail::thread thread2(bindns::bind(io_service_run, &ios));
   thread1.join();
   thread2.join();
 

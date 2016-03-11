@@ -2,7 +2,7 @@
 //
 // varray details
 //
-// Copyright (c) 2012-2013 Adam Wulkiewicz, Lodz, Poland.
+// Copyright (c) 2012-2015 Adam Wulkiewicz, Lodz, Poland.
 // Copyright (c) 2011-2013 Andrew Hundt.
 //
 // Use, modification and distribution is subject to the Boost Software License,
@@ -29,6 +29,8 @@
 #include <boost/type_traits/has_trivial_copy.hpp>
 #include <boost/type_traits/has_trivial_constructor.hpp>
 #include <boost/type_traits/has_trivial_destructor.hpp>
+#include <boost/type_traits/has_trivial_move_constructor.hpp>
+#include <boost/type_traits/has_trivial_move_assign.hpp>
 //#include <boost/type_traits/has_nothrow_constructor.hpp>
 //#include <boost/type_traits/has_nothrow_copy.hpp>
 //#include <boost/type_traits/has_nothrow_assign.hpp>
@@ -37,8 +39,12 @@
 #include <boost/detail/no_exceptions_support.hpp>
 #include <boost/config.hpp>
 #include <boost/move/move.hpp>
-#include <boost/utility/addressof.hpp>
+#include <boost/core/addressof.hpp>
 #include <boost/iterator/iterator_traits.hpp>
+
+#if defined(BOOST_NO_CXX11_VARIADIC_TEMPLATES)
+#include <boost/move/detail/fwd_macros.hpp>
+#endif
 
 // TODO - move vectors iterators optimization to the other, optional file instead of checking defines?
 
@@ -409,12 +415,12 @@ struct has_nothrow_move : public
 template <typename I, typename O>
 inline
 O uninitialized_move_if_noexcept_dispatch(I first, I last, O dst, boost::mpl::bool_<true> const& /*use_move*/)
-{ return uninitialized_move(first, last, dst); }
+{ return varray_detail::uninitialized_move(first, last, dst); }
 
 template <typename I, typename O>
 inline
 O uninitialized_move_if_noexcept_dispatch(I first, I last, O dst, boost::mpl::bool_<false> const& /*use_move*/)
-{ return uninitialized_copy(first, last, dst); }
+{ return varray_detail::uninitialized_copy(first, last, dst); }
 
 template <typename I, typename O>
 inline
@@ -532,16 +538,16 @@ void construct(DisableTrivialInit const&, I pos)
 
 template <typename I, typename V>
 inline
-void construct_dispatch(I pos, V const& v,
-                        boost::mpl::bool_<true> const& /*use_memcpy*/)
+void construct_copy_dispatch(I pos, V const& v,
+                             boost::mpl::bool_<true> const& /*use_memcpy*/)
 {
     ::memcpy(boost::addressof(*pos), boost::addressof(v), sizeof(V));
 }
 
 template <typename I, typename P>
 inline
-void construct_dispatch(I pos, P const& p,
-                        boost::mpl::bool_<false> const& /*use_memcpy*/)
+void construct_copy_dispatch(I pos, P const& p,
+                             boost::mpl::bool_<false> const& /*use_memcpy*/)
 {
     typedef typename boost::iterator_value<I>::type V;
     new (static_cast<void*>(boost::addressof(*pos))) V(p);                      // may throw
@@ -559,10 +565,27 @@ void construct(DisableTrivialInit const&,
     >::type
     use_memcpy;
 
-    construct_dispatch(pos, p, use_memcpy());                                   // may throw
+    construct_copy_dispatch(pos, p, use_memcpy());                              // may throw
 }
 
 // Needed by push_back(V &&)
+
+template <typename I, typename V>
+inline
+void construct_move_dispatch(I pos, V const& v,
+                             boost::mpl::bool_<true> const& /*use_memcpy*/)
+{
+    ::memcpy(boost::addressof(*pos), boost::addressof(v), sizeof(V));
+}
+
+template <typename I, typename P>
+inline
+void construct_move_dispatch(I pos, BOOST_RV_REF(P) p,
+                             boost::mpl::bool_<false> const& /*use_memcpy*/)
+{
+    typedef typename boost::iterator_value<I>::type V;
+    new (static_cast<void*>(boost::addressof(*pos))) V(::boost::move(p));       // may throw
+}
 
 template <typename DisableTrivialInit, typename I, typename P>
 inline
@@ -571,18 +594,17 @@ void construct(DisableTrivialInit const&, I pos, BOOST_RV_REF(P) p)
     typedef typename
     ::boost::mpl::and_<
         is_corresponding_value<I, P>,
-        ::boost::has_trivial_copy<P>
+        ::boost::has_trivial_move_constructor<P>
     >::type
     use_memcpy;
 
-    typedef typename boost::iterator_value<I>::type V;
-    new (static_cast<void*>(boost::addressof(*pos))) V(::boost::move(p));       // may throw
+    construct_move_dispatch(pos, ::boost::move(p), use_memcpy());               // may throw
 }
 
 // Needed by emplace_back() and emplace()
 
 #if !defined(BOOST_CONTAINER_VARRAY_DISABLE_EMPLACE)
-#if !defined(BOOST_NO_VARIADIC_TEMPLATES)
+#if !defined(BOOST_NO_CXX11_VARIADIC_TEMPLATES)
 
 template <typename DisableTrivialInit, typename I, class ...Args>
 inline
@@ -594,46 +616,47 @@ void construct(DisableTrivialInit const&,
     new (static_cast<void*>(boost::addressof(*pos))) V(::boost::forward<Args>(args)...);    // may throw
 }
 
-#else // !BOOST_NO_VARIADIC_TEMPLATES
+#else // !BOOST_NO_CXX11_VARIADIC_TEMPLATES
 
-// BOOST_NO_RVALUE_REFERENCES -> P0 const& p0
-// !BOOST_NO_RVALUE_REFERENCES -> P0 && p0
+// BOOST_NO_CXX11_RVALUE_REFERENCES -> P0 const& p0
+// !BOOST_NO_CXX11_RVALUE_REFERENCES -> P0 && p0
 // which means that version with one parameter may take V const& v
 
-#define BOOST_PP_LOCAL_MACRO(n)                                                                     \
-template <typename DisableTrivialInit, typename I, typename P BOOST_PP_ENUM_TRAILING_PARAMS(n, typename P) >  \
+#define BOOST_GEOMETRY_INDEX_DETAIL_VARRAY_DETAIL_CONSTRUCT(N)                                      \
+template <typename DisableTrivialInit, typename I, typename P BOOST_MOVE_I##N BOOST_MOVE_CLASS##N > \
 inline                                                                                              \
 void construct(DisableTrivialInit const&,                                                           \
                I pos,                                                                               \
-               BOOST_CONTAINER_PP_PARAM(P, p)                                                       \
-               BOOST_PP_ENUM_TRAILING(n, BOOST_CONTAINER_PP_PARAM_LIST, _))                         \
+               BOOST_FWD_REF(P) p                                                                   \
+               BOOST_MOVE_I##N BOOST_MOVE_UREF##N)                                                  \
 {                                                                                                   \
     typedef typename boost::iterator_value<I>::type V;                                              \
     new                                                                                             \
     (static_cast<void*>(boost::addressof(*pos)))                                                    \
-    V(p, BOOST_PP_ENUM(n, BOOST_CONTAINER_PP_PARAM_FORWARD, _));                   /*may throw*/    \
+    V(boost::forward<P>(p) BOOST_MOVE_I##N BOOST_MOVE_FWD##N);                    /*may throw*/    \
 }                                                                                                   \
-//
-#define BOOST_PP_LOCAL_LIMITS (1, BOOST_CONTAINER_MAX_CONSTRUCTOR_PARAMETERS)
-#include BOOST_PP_LOCAL_ITERATE()
 
-#endif // !BOOST_NO_VARIADIC_TEMPLATES
+BOOST_MOVE_ITERATE_1TO9(BOOST_GEOMETRY_INDEX_DETAIL_VARRAY_DETAIL_CONSTRUCT)
+#undef BOOST_GEOMETRY_INDEX_DETAIL_VARRAY_DETAIL_CONSTRUCT
+
+#endif // !BOOST_NO_CXX11_VARIADIC_TEMPLATES
 #endif // !BOOST_CONTAINER_VARRAY_DISABLE_EMPLACE
 
 // assign(I, V)
 
 template <typename I, typename V>
 inline
-void assign_dispatch(I pos, V const& v,
-                     boost::mpl::bool_<true> const& /*use_memcpy*/)
+void assign_copy_dispatch(I pos, V const& v,
+                          boost::mpl::bool_<true> const& /*use_memcpy*/)
 {
+// TODO - use memmove here?
     ::memcpy(boost::addressof(*pos), boost::addressof(v), sizeof(V));
 }
 
 template <typename I, typename V>
 inline
-void assign_dispatch(I pos, V const& v,
-                     boost::mpl::bool_<false> const& /*use_memcpy*/)
+void assign_copy_dispatch(I pos, V const& v,
+                          boost::mpl::bool_<false> const& /*use_memcpy*/)
 {
     *pos = v;                                                                   // may throw
 }
@@ -649,16 +672,39 @@ void assign(I pos, V const& v)
     >::type
     use_memcpy;
 
-    assign_dispatch(pos, v, use_memcpy());                                        // may throw
+    assign_copy_dispatch(pos, v, use_memcpy());                                   // may throw
+}
+
+template <typename I, typename V>
+inline
+void assign_move_dispatch(I pos, V const& v,
+                          boost::mpl::bool_<true> const& /*use_memcpy*/)
+{
+// TODO - use memmove here?
+    ::memcpy(boost::addressof(*pos), boost::addressof(v), sizeof(V));
+}
+
+template <typename I, typename V>
+inline
+void assign_move_dispatch(I pos, BOOST_RV_REF(V) v,
+                          boost::mpl::bool_<false> const& /*use_memcpy*/)
+{
+    *pos = boost::move(v);                                                        // may throw
 }
 
 template <typename I, typename V>
 inline
 void assign(I pos, BOOST_RV_REF(V) v)
 {
-    *pos = boost::move(v);                                                        // may throw
-}
+    typedef typename
+    ::boost::mpl::and_<
+        is_corresponding_value<I, V>,
+        ::boost::has_trivial_move_assign<V>
+    >::type
+    use_memcpy;
 
+    assign_move_dispatch(pos, ::boost::move(v), use_memcpy());
+}
 
 // uninitialized_copy_s
 

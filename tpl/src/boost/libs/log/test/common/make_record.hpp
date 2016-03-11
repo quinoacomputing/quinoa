@@ -1,5 +1,5 @@
 /*
- *          Copyright Andrey Semashev 2007 - 2013.
+ *          Copyright Andrey Semashev 2007 - 2015.
  * Distributed under the Boost Software License, Version 1.0.
  *    (See accompanying file LICENSE_1_0.txt or copy at
  *          http://www.boost.org/LICENSE_1_0.txt)
@@ -19,12 +19,12 @@
 #include <boost/log/core.hpp>
 #include <boost/log/attributes/attribute_set.hpp>
 
-inline boost::log::record make_record(boost::log::attribute_set const& src_attrs)
+inline boost::log::record make_record(boost::log::attribute_set const& src_attrs = boost::log::attribute_set())
 {
     return boost::log::core::get()->open_record(src_attrs);
 }
 
-inline boost::log::record_view make_record_view(boost::log::attribute_set const& src_attrs)
+inline boost::log::record_view make_record_view(boost::log::attribute_set const& src_attrs = boost::log::attribute_set())
 {
     return make_record(src_attrs).lock();
 }

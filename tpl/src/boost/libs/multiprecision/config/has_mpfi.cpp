@@ -3,6 +3,7 @@
 //  Boost Software License, Version 1.0. (See accompanying file
 //  LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
+#include <cstddef> // See https://gcc.gnu.org/gcc-4.9/porting_to.html
 #include <mpfi.h>
 #include <boost/config.hpp>
 
@@ -49,6 +50,12 @@ int main()
    mp_get_memory_functions(&alloc_func_ptr, &realloc_func_ptr, &free_func_ptr);
 
    mpfr_buildopt_tls_p();
+
+   mpfi_t t;
+   mpfi_init2(t, 128);
+   if(t[0].left._mpfr_d)
+      mpfi_clear(t);
+
 
    return 0;
 }

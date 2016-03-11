@@ -53,9 +53,9 @@ static inline void add_or_set(std::vector<parameter>& parameters, parameter cons
 
 
 
-/// Parses a "para" element 
+/// Parses a "para" element
 /*
-This is used for different purposes within Doxygen. 
+This is used for different purposes within Doxygen.
 - Either a detailed description, possibly containing several sections (para's)
   -> so parse next siblings
 - Or a detailed description also containing qbk records
@@ -138,11 +138,11 @@ static void parse_para(rapidxml::xml_node<>* node, configuration const& config, 
                     {
                         contents += std::string("[link ") + refid + " ";
                         parse_para(node->first_node(), config, contents, skip, false, in_block);
-                        contents += "]";                        
+                        contents += "]";
                         parse_para(node->next_sibling(), config, contents, skip, false, tb);
                         return;
                     }
-                }                                
+                }
             }
             else if (! (
                 (boost::equals(name, "para") && first)
@@ -210,8 +210,8 @@ static void parse_parameter(rapidxml::xml_node<>* node, configuration const& con
         }
         else if (name == "declname") p.name = node->value();
         else if (name == "parametername") p.name = node->value();
-        else if (name == "defname") p.name = node->value(); 
-        else if (name == "defval") 
+        else if (name == "defname") p.name = node->value();
+        else if (name == "defval")
         {
             parse_para(node, config, p.default_value, p.skip);
         }
@@ -439,7 +439,7 @@ static void parse_element(rapidxml::xml_node<>* node, configuration const& confi
                     p.title = title_node->value();
 
                 parse_para(node->first_node("para"), config, p.text, el.skip);
-                
+
                 el.paragraphs.push_back(p);
             }
             else if (kind == "warning")
@@ -649,7 +649,7 @@ static void parse(rapidxml::xml_node<>* node, configuration const& config, docum
                         boost::equals(f.name, std::string("~") + doc.cos.name);
 
                     f.type = c_or_d
-                        ? function_constructor_destructor 
+                        ? function_constructor_destructor
                         : function_member;
                     doc.cos.functions.push_back(f);
                 }
@@ -691,13 +691,44 @@ static void parse(rapidxml::xml_node<>* node, configuration const& config, docum
             }
             else if (kind == "variable")
             {
-                if (boost::equals(get_attribute(node, "static"), "yes")
-                    && boost::equals(get_attribute(node, "mutable"), "no")
-                    && boost::equals(get_attribute(node, "prot"), "public"))
+                if (boost::equals(get_attribute(node, "prot"), "public"))
                 {
-                    std::string name = parse_named_node(node->first_node(), "name");
-                    doc.cos.variables.push_back(base_element(name));
-                    doc.cos.variables.back().id = id;
+                    parameter p;
+                    p.id = id;
+                    for(rapidxml::xml_node<>* var_node = node->first_node(); var_node; var_node=var_node->next_sibling())
+                    {
+                        if(boost::equals(var_node->name(), "name"))
+                        {
+                            p.name = var_node->value();
+                        }
+                        else if(boost::equals(var_node->name(), "type"))
+                        {
+                            get_contents(var_node->first_node(), p.fulltype);
+                            p.type = p.fulltype;
+                            //boost::replace_all(p.type, " const", "");
+                            //boost::trim(p.type);
+                            //boost::replace_all(p.type, "&", "");
+                            //boost::replace_all(p.type, "*", "");
+                            boost::trim(p.type);
+
+                            // If alt output is used retrieve type with QBK links
+                            if ( configuration::alt == config.output_style )
+                            {
+                                p.fulltype_without_links = p.fulltype;
+                                p.fulltype.clear();
+                                parse_para(var_node->first_node(), config, p.fulltype, p.skip);
+                            }
+                        }
+                        else if(boost::equals(var_node->name(), "briefdescription"))
+                        {
+                            parse_para(var_node->first_node(), config, p.brief_description, p.skip);
+                        }
+                        else if(p.brief_description.empty() && boost::equals(var_node->name(), "detaileddescription"))
+                        {
+                            parse_para(var_node->first_node(), config, p.brief_description, p.skip);
+                        }
+                    }
+                    doc.cos.variables.push_back(p);
                 }
             }
 

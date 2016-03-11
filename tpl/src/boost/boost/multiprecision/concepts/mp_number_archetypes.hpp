@@ -26,8 +26,8 @@ namespace concepts{
 
 struct number_backend_float_architype
 {
-   typedef mpl::list<long long>                 signed_types;
-   typedef mpl::list<unsigned long long>        unsigned_types;
+   typedef mpl::list<boost::long_long_type>                 signed_types;
+   typedef mpl::list<boost::ulong_long_type>        unsigned_types;
    typedef mpl::list<long double>               float_types;
    typedef int                                  exponent_type;
 
@@ -46,13 +46,13 @@ struct number_backend_float_architype
       std::cout << "Assignment (" << m_value << ")" << std::endl;
       return *this;
    }
-   number_backend_float_architype& operator = (unsigned long long i)
+   number_backend_float_architype& operator = (boost::ulong_long_type i)
    {
       m_value = i;
       std::cout << "UInt Assignment (" << i << ")" << std::endl;
       return *this;
    }
-   number_backend_float_architype& operator = (long long i)
+   number_backend_float_architype& operator = (boost::long_long_type i)
    {
       m_value = i;
       std::cout << "Int Assignment (" << i << ")" << std::endl;
@@ -89,7 +89,7 @@ struct number_backend_float_architype
       if(digits)
          ss.precision(digits);
       else
-         ss.precision(std::numeric_limits<long double>::digits10 + 2);
+         ss.precision(std::numeric_limits<long double>::digits10 + 3);
       boost::intmax_t i = m_value;
       boost::uintmax_t u = m_value;
       if(!(f & std::ios_base::scientific) && m_value == i)
@@ -112,12 +112,12 @@ struct number_backend_float_architype
       std::cout << "Comparison" << std::endl;
       return m_value > o.m_value ? 1 : (m_value < o.m_value ? -1 : 0);
    }
-   int compare(long long i)const
+   int compare(boost::long_long_type i)const
    {
       std::cout << "Comparison with int" << std::endl;
       return m_value > i ? 1 : (m_value < i ? -1 : 0);
    }
-   int compare(unsigned long long i)const
+   int compare(boost::ulong_long_type i)const
    {
       std::cout << "Comparison with unsigned" << std::endl;
       return m_value > i ? 1 : (m_value < i ? -1 : 0);
@@ -151,13 +151,13 @@ inline void eval_divide(number_backend_float_architype& result, const number_bac
    result.m_value /= o.m_value;
 }
 
-inline void eval_convert_to(unsigned long long* result, const number_backend_float_architype& val)
+inline void eval_convert_to(boost::ulong_long_type* result, const number_backend_float_architype& val)
 {
-   *result = static_cast<unsigned long long>(val.m_value);
+   *result = static_cast<boost::ulong_long_type>(val.m_value);
 }
-inline void eval_convert_to(long long* result, const number_backend_float_architype& val)
+inline void eval_convert_to(boost::long_long_type* result, const number_backend_float_architype& val)
 {
-   *result = static_cast<long long>(val.m_value);
+   *result = static_cast<boost::long_long_type>(val.m_value);
 }
 inline void eval_convert_to(long double* result, number_backend_float_architype& val)
 {
@@ -215,7 +215,7 @@ public:
    static number_type (max)() BOOST_NOEXCEPT { return (base_type::max)(); }
    static number_type lowest() BOOST_NOEXCEPT { return -(max)(); }
    static number_type epsilon() BOOST_NOEXCEPT { return base_type::epsilon(); }
-   static number_type round_error() BOOST_NOEXCEPT { return epsilon() / 2; }
+   static number_type round_error() BOOST_NOEXCEPT { return base_type::round_error(); }
    static number_type infinity() BOOST_NOEXCEPT { return base_type::infinity(); }
    static number_type quiet_NaN() BOOST_NOEXCEPT { return base_type::quiet_NaN(); }
    static number_type signaling_NaN() BOOST_NOEXCEPT { return base_type::signaling_NaN(); }

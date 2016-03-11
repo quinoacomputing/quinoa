@@ -7,12 +7,7 @@
 =============================================================================*/
 
 #define BOOST_TEST_MAIN
-#ifdef BOOST_HEAP_INCLUDE_TESTS
-#include <boost/test/included/unit_test.hpp>
-#else
 #include <boost/test/unit_test.hpp>
-#endif
-
 
 #include <algorithm>
 
@@ -71,4 +66,11 @@ BOOST_AUTO_TEST_CASE( fibonacci_heap_compare_lookup_test )
                                        boost::heap::compare<less_with_T>,
                                        boost::heap::allocator<std::allocator<int> > > pri_queue;
     run_common_heap_tests<pri_queue>();
+}
+
+
+BOOST_AUTO_TEST_CASE( fibonacci_heap_leak_test )
+{
+    typedef boost::heap::fibonacci_heap<boost::shared_ptr<int> > pri_queue;
+    run_leak_check_test<pri_queue>();
 }

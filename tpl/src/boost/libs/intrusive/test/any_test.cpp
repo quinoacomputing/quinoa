@@ -1,7 +1,8 @@
+
 /////////////////////////////////////////////////////////////////////////////
 //
 // (C) Copyright Olaf Krzikalla 2004-2006.
-// (C) Copyright Ion Gaztanaga  2006-2012.
+// (C) Copyright Ion Gaztanaga  2006-2013.
 //
 // Distributed under the Boost Software License, Version 1.0.
 //    (See accompanying file LICENSE_1_0.txt or copy at
@@ -10,7 +11,6 @@
 // See http://www.boost.org/libs/intrusive for documentation.
 //
 /////////////////////////////////////////////////////////////////////////////
-#include<boost/intrusive/detail/config_begin.hpp>
 #include<boost/intrusive/any_hook.hpp>
 #include<boost/intrusive/slist.hpp>
 #include<boost/intrusive/rbtree.hpp>
@@ -187,5 +187,3 @@ int main()
    instantiation_test();
    return 0;
 }
-
-#include <boost/intrusive/detail/config_end.hpp>

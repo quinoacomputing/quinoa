@@ -2,7 +2,7 @@
 // strand.cpp
 // ~~~~~~~~~~
 //
-// Copyright (c) 2003-2013 Christopher M. Kohlhoff (chris at kohlhoff dot com)
+// Copyright (c) 2003-2015 Christopher M. Kohlhoff (chris at kohlhoff dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -18,6 +18,7 @@
 
 #include <sstream>
 #include <boost/asio/io_service.hpp>
+#include <boost/asio/detail/thread.hpp>
 #include "unit_test.hpp"
 
 #if defined(BOOST_ASIO_HAS_BOOST_DATE_TIME)
@@ -27,7 +28,6 @@
 #endif // defined(BOOST_ASIO_HAS_BOOST_DATE_TIME)
 
 #if defined(BOOST_ASIO_HAS_BOOST_BIND)
-# include <boost/thread/thread.hpp>
 # include <boost/bind.hpp>
 #else // defined(BOOST_ASIO_HAS_BOOST_BIND)
 # include <functional>
@@ -57,7 +57,7 @@ void increment(int* count)
   ++(*count);
 }
 
-void increment_without_lock(strand* s, int* count)
+void increment_without_lock(io_service::strand* s, int* count)
 {
   BOOST_ASIO_CHECK(!s->running_in_this_thread());
 
@@ -70,7 +70,7 @@ void increment_without_lock(strand* s, int* count)
   BOOST_ASIO_CHECK(*count == original_count + 1);
 }
 
-void increment_with_lock(strand* s, int* count)
+void increment_with_lock(io_service::strand* s, int* count)
 {
   BOOST_ASIO_CHECK(s->running_in_this_thread());
 
@@ -91,7 +91,7 @@ void sleep_increment(io_service* ios, int* count)
   ++(*count);
 }
 
-void start_sleep_increments(io_service* ios, strand* s, int* count)
+void start_sleep_increments(io_service* ios, io_service::strand* s, int* count)
 {
   // Give all threads a chance to start.
   timer t(*ios, chronons::seconds(2));
@@ -116,7 +116,7 @@ void io_service_run(io_service* ios)
 void strand_test()
 {
   io_service ios;
-  strand s(ios);
+  io_service::strand s(ios);
   int count = 0;
 
   ios.post(bindns::bind(increment_without_lock, &s, &count));
@@ -144,8 +144,8 @@ void strand_test()
   count = 0;
   ios.reset();
   ios.post(bindns::bind(start_sleep_increments, &ios, &s, &count));
-  boost::thread thread1(bindns::bind(io_service_run, &ios));
-  boost::thread thread2(bindns::bind(io_service_run, &ios));
+  boost::asio::detail::thread thread1(bindns::bind(io_service_run, &ios));
+  boost::asio::detail::thread thread2(bindns::bind(io_service_run, &ios));
 
   // Check all events run one after another even though there are two threads.
   timer timer1(ios, chronons::seconds(3));

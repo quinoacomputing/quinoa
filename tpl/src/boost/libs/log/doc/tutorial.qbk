@@ -1,5 +1,5 @@
 [/
-              Copyright Andrey Semashev 2007 - 2013.
+              Copyright Andrey Semashev 2007 - 2015.
      Distributed under the Boost Software License, Version 1.0.
         (See accompanying file LICENSE_1_0.txt or copy at
               http://www.boost.org/LICENSE_1_0.txt)
@@ -37,7 +37,7 @@ While severity levels can be used for informative purposes, you will normally wa
 
 [@boost:/libs/log/example/doc/tutorial_trivial_flt.cpp See the complete code].
 
-Now, if we run this code sample, the first two log records will be ignored, while the remaining four will pass on to the file.
+Now, if we run this code sample, the first two log records will be ignored, while the remaining four will pass on to the console.
 
 [important Remember that the streaming expression is only executed if the record passed filtering. Don't specify business-critical calls in the streaming expression, as these calls may not get invoked if the record is filtered away.]
 
@@ -87,10 +87,10 @@ The [link log.detailed.sink_frontends.sync `synchronous_sink`] class template ab
 
 The [link log.detailed.sink_backends.text_ostream `text_ostream_backend`] class writes formatted log records into STL-compatible streams. We have used a file stream above but we could have used any type of stream. For example, adding output to console could look as follows:
 
-    #include <``[boost_log_utility_empty_deleter_hpp]``>
+    #include <boost/core/null_deleter.hpp>
 
     // We have to provide an empty deleter to avoid destroying the global stream object
-    boost::shared_ptr< std::ostream > stream(&std::clog, logging::empty_deleter());
+    boost::shared_ptr< std::ostream > stream(&std::clog, boost::null_deleter());
     sink->locked_backend()->add_stream(stream);
 
 The [link log.detailed.sink_backends.text_ostream `text_ostream_backend`] supports adding several streams. In that case its output will be duplicated to all added streams. It can be useful to duplicate the output to console and file since all the filtering, formatting and other overhead of the library happen only once per record for the sink.
@@ -342,6 +342,8 @@ Like with formatters, it is also possible to use custom functions as filters. __
 
 As you can see, the custom formatter receives attribute values wrapped into the [link log.detailed.utilities.value_ref `value_ref`] template. This wrapper contains an optional reference to the attribute value of the specified type; the reference is valid if the log record contains the attribute value of the required type. The relational operators used in `my_filter` can be applied unconditionally because they will automatically return `false` if the reference is not valid. The rest is done with the `bind` expression which will recognize the `severity` and `tag_attr` keywords and extract the corresponding values before passing them to `my_filter`.
 
+[note Because of limitations related to the integration with __boost_phoenix__ (see [ticket 7996]), it is required to explicitly specify the fallback policy in case if the attribute value is missing, when attribute keywords are used with `phoenix::bind` or `phoenix::function`. In the example above, this is done by calling `or_none`, which results in an empty [link log.detailed.utilities.value_ref `value_ref`] if the value is not found. In other contexts this policy is the default. There are [link log.detailed.expressions.attr.fallback_policies other policies] that can be used instead.]
+
 You can try how this works by compiling and running the [@boost:/libs/log/example/doc/tutorial_filtering.cpp test].
 
 [endsect]
@@ -350,7 +352,7 @@ You can try how this works by compiling and running the [@boost:/libs/log/exampl
 
 The library supports logging strings containing national characters. There are basically two ways of doing this. On UNIX-like systems typically some multibyte character encoding (e.g. UTF-8) is used to represent national characters. In this case the library can be used just the way it is used for plain ASCII logging, no additional setup is required.
 
-On Windows the common practice is to use wide strings to represent national characters. Also, most of the system API is wide character oriented, which requires Windows-specific sinks to also support wide strings. On the other hand, generic sinks, like [link log.detailed.sink_backends.text_file text file sink, are byte-oriented (because, well, you store bytes in files, not characters). This forces the library to perform character code conversion when needed by the sink. To set up the library for this one has to imbue the sink with a locale with the appropriate `codecvt` facet. __boost_locale__ can be used to generate such a locale. Let's see an example:
+On Windows the common practice is to use wide strings to represent national characters. Also, most of the system API is wide character oriented, which requires Windows-specific sinks to also support wide strings. On the other hand, generic sinks, like the [link log.detailed.sink_backends.text_file text file sink], are byte-oriented (because, well, you store bytes in files, not characters). This forces the library to perform character code conversion when needed by the sink. To set up the library for this one has to imbue the sink with a locale with the appropriate `codecvt` facet. __boost_locale__ can be used to generate such a locale. Let's see an example:
 
 [example_wide_char_logging_initialization]
 

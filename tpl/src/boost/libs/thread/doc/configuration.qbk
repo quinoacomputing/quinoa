@@ -1,5 +1,5 @@
 [/
-  (C) Copyright 20012 Vicente J. Botet Escriba.
+  (C) Copyright 2012-2015 Vicente J. Botet Escriba.
   Distributed under the Boost Software License, Version 1.0.
   (See accompanying file LICENSE_1_0.txt or copy at
   http://www.boost.org/LICENSE_1_0.txt).
@@ -23,6 +23,7 @@
     [[PROVIDES_GENERIC_SHARED_MUTEX_ON_WIN] [DONT_PROVIDE_GENERIC_SHARED_MUTEX_ON_WIN]   [NO]  [YES] [YES] ]
 
     [[PROVIDES_SHARED_MUTEX_UPWARDS_CONVERSION]    [DONT_PROVIDE_SHARED_MUTEX_UPWARDS_CONVERSION]  [NO] [YES] [YES]  ]
+    [[PROVIDES_EXECUTORS]    [-]  [NO] [NO] [NO]  ]
     [[PROVIDES_EXPLICIT_LOCK_CONVERSION]    [DONT_PROVIDE_EXPLICIT_LOCK_CONVERSION]  [NO] [YES] [YES]  ]
     [[PROVIDES_FUTURE]    [DONT_PROVIDE_FUTURE]  [NO] [YES] [YES]  ]
     [[PROVIDES_FUTURE_CTOR_ALLOCATORS]    [DONT_PROVIDE_FUTURE_CTOR_ALLOCATORS]  [NO] [YES] [YES]  ]
@@ -78,20 +79,28 @@ When `BOOST_THREAD_VERSION>3`  && defined BOOST_THREAD_PLATFORM_PTHREAD define `
 
 [endsect]
 
+[section:move  Boost.Atomic]
 
-[section:thread_eq `boost::thread::oprator==` deprecated]
+Boost.Thread uses by default an Boost.Atomic in POSIX platforms to implement call_once..
 
-The following nested typedefs are deprecated: 
+Define `BOOST_THREAD_USES_ATOMIC ` if you want to use Boost.Atomic.
+Define `BOOST_THREAD_DONT_USE_ATOMIC ` if you don't want to use Boost.Atomic or if it is not supported in your platform.
 
-* `boost::thread::oprator==`
-* `boost::thread::oprator!=`
+[endsect]
+ 
+[section:thread_eq `boost::thread::operator==` deprecated]
+
+The following operators are deprecated: 
+
+* `boost::thread::operator==`
+* `boost::thread::operator!=`
 
 When `BOOST_THREAD_PROVIDES_THREAD_EQ` is defined Boost.Thread provides these deprecated feature. 
 
 Use instead 
 
-* `boost::thread::id::oprator==`
-* `boost::thread::id::oprator!=`
+* `boost::thread::id::operator==`
+* `boost::thread::id::operator!=`
 
 [warning This is a breaking change respect to version 1.x.]
 
@@ -296,8 +305,12 @@ When `BOOST_THREAD_VERSION>=4` define `BOOST_THREAD_DONT_PROVIDE_SIGNATURE_PACKA
 
 C++11 thread constructor accep a variable number of rvalue argumentshas. When `BOOST_THREAD_PROVIDES_VARIADIC_THREAD ` is defined Boost.Thread provides this C++ feature if the following are not defined 
 
+* BOOST_NO_SFINAE_EXPR
 * BOOST_NO_CXX11_VARIADIC_TEMPLATES
 * BOOST_NO_CXX11_DECLTYPE
+* BOOST_NO_CXX11_DECLTYPE_N3276
+* BOOST_NO_CXX11_RVALUE_REFERENCES
+* BOOST_NO_CXX11_TRAILING_RESULT_TYPES
 * BOOST_NO_CXX11_RVALUE_REFERENCES
 * BOOST_NO_CXX11_HDR_TUPLE
 

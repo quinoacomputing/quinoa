@@ -118,7 +118,7 @@ namespace
     pair<status, request_list::iterator> result = 
       wait_any(requests.begin(), requests.end());
 
-    return make_tuple(
+    return boost::python::make_tuple(
         result.second->get_value_or_none(),
         result.first, 
         distance(requests.begin(), result.second));
@@ -134,7 +134,7 @@ namespace
       test_any(requests.begin(), requests.end());
 
     if (result)
-      return make_tuple(
+      return boost::python::make_tuple(
           result->second->get_value_or_none(),
           result->first, 
           distance(requests.begin(), result->second));
@@ -163,10 +163,10 @@ namespace
   {
     check_request_list_not_empty(requests);
     if (py_callable != object())
-      return test_all(requests.begin(), requests.end(), 
-          status_value_iterator(py_callable, requests.begin()));
+      return bool(test_all(requests.begin(), requests.end(), 
+			   status_value_iterator(py_callable, requests.begin())));
     else
-      return test_all(requests.begin(), requests.end());
+      return bool(test_all(requests.begin(), requests.end()));
   }
 
 

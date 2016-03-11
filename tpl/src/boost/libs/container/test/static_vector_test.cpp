@@ -8,22 +8,15 @@
 // Version 1.0. (See accompanying file LICENSE_1_0.txt or copy at
 // http://www.boost.org/LICENSE_1_0.txt)
 #include <boost/container/detail/config_begin.hpp>
-#include <boost/detail/lightweight_test.hpp>
-#include <boost/detail/no_exceptions_support.hpp>
-
-// TODO: Disable parts of the unit test that should not run when BOOST_NO_EXCEPTIONS
-// if exceptions are enabled there must be a user defined throw_exception function
-#ifdef BOOST_NO_EXCEPTIONS
-namespace boost {
-   void throw_exception(std::exception const &){}; // user defined
-} // namespace boost
-#endif // BOOST_NO_EXCEPTIONS
+#include <boost/core/lightweight_test.hpp>
+#include <boost/core/no_exceptions_support.hpp>
+#include <boost/container/vector.hpp>
+#include <boost/container/stable_vector.hpp>
+#include <boost/container/detail/iterator.hpp>
+#include "../../intrusive/test/iterator_test.hpp"
 
 #include <vector>
 #include <list>
-
-#include <boost/container/vector.hpp>
-#include <boost/container/stable_vector.hpp>
 
 #include "static_vector_test.hpp"
 
@@ -85,6 +78,41 @@ void test_ctor_nd(size_t n, T const& v)
       BOOST_TEST(T(20) == s[1]);
       BOOST_TEST(T(20) == s.at(1));
    }
+}
+
+void test_support_for_initializer_list()
+{
+#if !defined(BOOST_NO_CXX11_HDR_INITIALIZER_LIST)
+   {
+      static_vector<int, 2> sv = {10, 8};
+      BOOST_TEST(10 == sv[0]);
+      BOOST_TEST(8 == sv[1]);
+
+      typedef static_vector<int, 1> sv_cap_1;
+      BOOST_TEST_THROWS(sv_cap_1({1, 1}), std::bad_alloc);
+   }
+
+   {
+      static_vector<int, 2> sv;
+      sv.assign({1, 2});
+      BOOST_TEST(1 == sv[0]);
+      BOOST_TEST(2 == sv[1]);
+
+      BOOST_TEST_THROWS(sv.assign({1, 2, 3}), std::bad_alloc);
+
+      static_vector<int, 3> greaterThanSv = {1, 2, 3};
+      BOOST_TEST_THROWS(sv = greaterThanSv, std::bad_alloc);
+   }
+
+   {
+      static_vector<int, 2> sv;
+      sv.insert(sv.begin(), {99, 95});
+      BOOST_TEST(99 == sv[0]);
+      BOOST_TEST(95 == sv[1]);
+
+      BOOST_TEST_THROWS(sv.insert(sv.begin(), {101, 102, 103}), std::bad_alloc);
+   }
+#endif
 }
 
 template <typename T, size_t N>
@@ -181,7 +209,7 @@ void test_pop_back_nd()
 template <typename It1, typename It2>
 void test_compare_ranges(It1 first1, It1 last1, It2 first2, It2 last2)
 {
-   BOOST_TEST(std::distance(first1, last1) == std::distance(first2, last2));
+   BOOST_TEST(boost::container::iterator_distance(first1, last1) == boost::container::iterator_distance(first2, last2));
    for ( ; first1 != last1 && first2 != last2 ; ++first1, ++first2 )
       BOOST_TEST(*first1 == *first2);
 }
@@ -325,7 +353,7 @@ void test_insert(SV const& s, C const& c)
       static_vector<T, N> s1(s);
 
       typename C::const_iterator it = c.begin();
-      std::advance(it, n);
+      boost::container::iterator_advance(it, n);
       typename static_vector<T, N>::iterator
           it1 = s1.insert(s1.begin() + i, c.begin(), it);
 
@@ -494,7 +522,7 @@ void test_swap_and_move_nd()
    }
    {
       static_vector<T, N> v1, v2, v3;
-      static_vector<T, N/2> s1, s2;
+      static_vector<T, N/2> s1, s2, s3;
 
       for (size_t i = 0 ; i < N/2 ; ++i )
       {
@@ -509,17 +537,19 @@ void test_swap_and_move_nd()
       }
 
       s1.swap(v1);
+      s3 = v2;
       s2 = boost::move(v2);
-      static_vector<T, N/2> s3(boost::move(v3));
+      static_vector<T, N/2> s4(boost::move(v3));
 
       BOOST_TEST(v1.size() == N/3);
       BOOST_TEST(s1.size() == N/2);
       //iG moving does not imply emptying source
       //BOOST_TEST(v2.size() == 0);
       BOOST_TEST(s2.size() == N/2);
+      BOOST_TEST(s3.size() == N/2);
       //iG moving does not imply emptying source
       //BOOST_TEST(v3.size() == 0);
-      BOOST_TEST(s3.size() == N/2);
+      BOOST_TEST(s4.size() == N/2);
       for (size_t i = 0 ; i < N/3 ; ++i )
           BOOST_TEST(v1[i] == T(100 + i));
       for (size_t i = 0 ; i < N/2 ; ++i )
@@ -527,6 +557,7 @@ void test_swap_and_move_nd()
           BOOST_TEST(s1[i] == T(i));
           BOOST_TEST(s2[i] == T(i));
           BOOST_TEST(s3[i] == T(i));
+          BOOST_TEST(s4[i] == T(i));
       }
    }
    {
@@ -536,6 +567,7 @@ void test_swap_and_move_nd()
       BOOST_TEST_THROWS(s.swap(v), std::bad_alloc);
       v.resize(N, T(0));
       BOOST_TEST_THROWS(s = boost::move(v), std::bad_alloc);
+      BOOST_TEST_THROWS(s = v, std::bad_alloc);
       v.resize(N, T(0));
       BOOST_TEST_THROWS(small_vector_t s2(boost::move(v)), std::bad_alloc);
    }
@@ -610,6 +642,54 @@ void test_sv_elem(T const& t)
    v.insert(v.end(), V(N/2, t));
    v.emplace_back(N/2, t);
 }
+
+bool default_init_test()//Test for default initialization
+{
+   typedef static_vector<int, 100> di_vector_t;
+
+   const std::size_t Capacity = 100;
+
+   {
+      di_vector_t v;
+      int *p = v.data();
+
+      for(std::size_t i = 0; i != Capacity; ++i, ++p){
+         *p = static_cast<int>(i);
+      }
+
+      //Destroy the vector, p stilll pointing to the storage
+      v.~di_vector_t();
+
+      di_vector_t &rv = *::new(&v)di_vector_t(Capacity, default_init);
+      di_vector_t::iterator it = rv.begin();
+
+      for(std::size_t i = 0; i != Capacity; ++i, ++it){
+         if(*it != static_cast<int>(i))
+            return false;
+      }
+
+      v.~di_vector_t();
+   }
+   {
+      di_vector_t v;
+
+      int *p = v.data();
+      for(std::size_t i = 0; i != Capacity; ++i, ++p){
+         *p = static_cast<int>(i+100);
+      }
+
+      v.resize(Capacity, default_init);
+
+      di_vector_t::iterator it = v.begin();
+      for(std::size_t i = 0; i != Capacity; ++i, ++it){
+         if(*it != static_cast<int>(i+100))
+            return false;
+      }
+   }
+
+   return true;
+}
+
 
 int main(int, char* [])
 {
@@ -727,6 +807,20 @@ int main(int, char* [])
    BOOST_TEST(counting_value::count() == 0);
    test_sv_elem<shptr_value, 10>(shptr_value(50));
    test_sv_elem<movable_and_copyable_int, 10>(movable_and_copyable_int(50));
+
+   BOOST_TEST(default_init_test() == true);
+
+   test_support_for_initializer_list();
+
+   ////////////////////////////////////
+   //    Iterator testing
+   ////////////////////////////////////
+   {
+      typedef boost::container::static_vector<int, 3> cont_int;
+      cont_int a; a.push_back(0); a.push_back(1); a.push_back(2);
+      boost::intrusive::test::test_iterator_random< cont_int >(a);
+   }
+
    return boost::report_errors();
 }
 

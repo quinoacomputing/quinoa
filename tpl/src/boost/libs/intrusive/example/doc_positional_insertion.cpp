@@ -1,6 +1,6 @@
 /////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga  2009-2012
+// (C) Copyright Ion Gaztanaga  2009-2013
 //
 // Distributed under the Boost Software License, Version 1.0.
 //    (See accompanying file LICENSE_1_0.txt or copy at
@@ -12,7 +12,7 @@
 //[doc_positional_insertion
 #include <boost/intrusive/set.hpp>
 #include <vector>
-#include <algorithm>
+#include <functional>
 #include <cassert>
 
 using namespace boost::intrusive;

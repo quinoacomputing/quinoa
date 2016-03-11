@@ -1,5 +1,5 @@
 [/
- / Copyright (c) 2003-2013 Christopher M. Kohlhoff (chris at kohlhoff dot com)
+ / Copyright (c) 2003-2015 Christopher M. Kohlhoff (chris at kohlhoff dot com)
  /
  / Distributed under the Boost Software License, Version 1.0. (See accompanying
  / file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -48,7 +48,7 @@ A client that connects to this server might look like:
 Transmission of file descriptors or credentials across UNIX domain sockets is
 not directly supported within Boost.Asio, but may be achieved by accessing the
 socket's underlying descriptor using the [link
-boost_asio.reference.basic_socket.native native()] member function.
+boost_asio.reference.basic_socket.native_handle native_handle()] member function.
 
 [heading See Also]
 

@@ -3,15 +3,13 @@
 //  Software License, Version 1.0. (See accompanying file
 //  LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_
 
+//[float128_eg
 #include <boost/multiprecision/float128.hpp>
 #include <boost/math/special_functions/gamma.hpp>
 #include <iostream>
 
-void t1()
+int main()
 {
-   //[float128_eg
-   //=#include <boost/multiprecision/float128.hpp>
-
    using namespace boost::multiprecision;
 
    // Operations at 128-bit precision and full numeric_limits support:
@@ -32,18 +30,13 @@ void t1()
    // We can declare constants using GCC or Intel's native types, and the Q suffix,
    // these can be declared constexpr if required:
    /*<-*/
-#ifndef BOOST_NO_CONSTEXPR
+#ifndef BOOST_NO_CXX11_CONSTEXPR
    /*->*/
    constexpr float128 pi = 3.1415926535897932384626433832795028841971693993751058Q;
    /*<-*/
 #endif
    /*->*/
-   //]
-}
-
-int main()
-{
-   t1();
    return 0;
 }
+//]
 

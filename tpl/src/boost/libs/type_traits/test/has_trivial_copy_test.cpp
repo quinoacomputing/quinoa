@@ -12,6 +12,26 @@
 #  include <boost/type_traits/has_trivial_copy.hpp>
 #endif
 
+#ifndef BOOST_NO_CXX11_DELETED_FUNCTIONS
+
+class bug_10389
+{
+   int m_data;
+public:
+   bug_10389() { m_data = 0; }
+   bug_10389(const bug_10389&) = delete;
+   bug_10389(bug_10389&& r) : m_data(r.m_data) {  r.m_data = 0;  }
+};
+
+#endif
+
+struct private_copy
+{
+   private_copy();
+private:
+   private_copy(const private_copy&);
+};
+
 TT_TEST_BEGIN(has_trivial_copy)
 
 BOOST_CHECK_INTEGRAL_CONSTANT(::tt::has_trivial_copy<bool>::value, true);
@@ -181,9 +201,10 @@ BOOST_CHECK_INTEGRAL_CONSTANT(::tt::has_trivial_copy<int&>::value, false);
 BOOST_CHECK_INTEGRAL_CONSTANT(::tt::has_trivial_copy<int&&>::value, false);
 #endif
 BOOST_CHECK_INTEGRAL_CONSTANT(::tt::has_trivial_copy<const int&>::value, false);
-BOOST_CHECK_INTEGRAL_CONSTANT(::tt::has_trivial_copy<int[2]>::value, true);
-BOOST_CHECK_INTEGRAL_CONSTANT(::tt::has_trivial_copy<int[3][2]>::value, true);
-BOOST_CHECK_INTEGRAL_CONSTANT(::tt::has_trivial_copy<int[2][4][5][6][3]>::value, true);
+// Arrays can not be explicitly copied:
+BOOST_CHECK_INTEGRAL_CONSTANT(::tt::has_trivial_copy<int[2]>::value, false);
+BOOST_CHECK_INTEGRAL_CONSTANT(::tt::has_trivial_copy<int[3][2]>::value, false);
+BOOST_CHECK_INTEGRAL_CONSTANT(::tt::has_trivial_copy<int[2][4][5][6][3]>::value, false);
 BOOST_CHECK_INTEGRAL_CONSTANT(::tt::has_trivial_copy<UDT>::value, false);
 BOOST_CHECK_INTEGRAL_CONSTANT(::tt::has_trivial_copy<void>::value, false);
 // cases we would like to succeed but can't implement in the language:
@@ -202,6 +223,11 @@ BOOST_CHECK_SOFT_INTEGRAL_CONSTANT(::tt::has_trivial_copy<wrap<trivial_except_co
 BOOST_CHECK_SOFT_INTEGRAL_CONSTANT(::tt::has_trivial_copy<wrap<trivial_except_assign> >::value, true, false);
 
 BOOST_CHECK_INTEGRAL_CONSTANT(::tt::has_trivial_copy<test_abc1>::value, false);
+
+#ifndef BOOST_NO_CXX11_DELETED_FUNCTIONS
+BOOST_CHECK_INTEGRAL_CONSTANT(::tt::has_trivial_copy<bug_10389>::value, false);
+#endif
+BOOST_CHECK_INTEGRAL_CONSTANT(::tt::has_trivial_copy<private_copy>::value, false);
 
 TT_TEST_END
 

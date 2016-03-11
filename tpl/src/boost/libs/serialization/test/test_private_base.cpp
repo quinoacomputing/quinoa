@@ -29,37 +29,38 @@ class Base {
     int m_i;
     template<class Archive>
     void serialize(Archive & ar, const unsigned int version){
-        ar & m_i;
+        ar & BOOST_SERIALIZATION_NVP(m_i);
     }
 protected:
-    bool operator==(const Base &rhs) const {
+    bool equals(const Base &rhs) const {
         return m_i == rhs.m_i;
     }
     Base(int i = 0) :
         m_i(i)
     {}
-    virtual ~Base();
+public:
 };
 
-class Derived :  public Base {
+class Derived : private Base {
     friend class boost::serialization::access;
 private:
+    Base & base_cast(){
+        return static_cast<Base &>(*this);
+    }
     template<class Archive>
     void serialize(Archive & ar, const unsigned int version){
-        ar & boost::serialization::base_object<Base>(*this);
+        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Base);
     }
 public:
     bool operator==(const Derived &rhs) const {
-        return Base::operator==(rhs);
+        return Base::equals(static_cast<const Base &>(rhs));
     }
     Derived(int i = 0) :
         Base(i)
     {}
 };
 
-BOOST_CLASS_EXPORT(Derived)
-
-int 
+int
 test_main( int /* argc */, char* /* argv */[] )
 {
     const char * testfile = boost::archive::tmpnam(NULL);
@@ -79,21 +80,5 @@ test_main( int /* argc */, char* /* argv */[] )
     BOOST_CHECK_EQUAL(a, a1);
     std::remove(testfile);
 
-    Base *ta = new Derived(1);
-    Base *ta1 = NULL;
-
-    {   
-        test_ostream os(testfile, TEST_STREAM_FLAGS);
-        test_oarchive oa(os, TEST_ARCHIVE_FLAGS);
-        oa << boost::serialization::make_nvp("ta", ta);
-    }
-    {
-        test_istream is(testfile, TEST_STREAM_FLAGS);
-        test_iarchive ia(is, TEST_ARCHIVE_FLAGS);
-        ia >> boost::serialization::make_nvp("ta", ta1);
-    }
-    BOOST_CHECK(ta != ta1);
-    BOOST_CHECK(*static_cast<Derived *>(ta) == *static_cast<Derived *>(ta1));
-    std::remove(testfile);
     return 0;
 }

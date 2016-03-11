@@ -22,7 +22,8 @@ import project ;
 import regex ;
 import set ;
 import targets ;
-
+import feature ;
+import property ;
 
 ##############################################################################
 #
@@ -209,8 +210,48 @@ rule make-unversioned-links ( project name ? : property-set : sources * )
     return $(result) ;
 }
 
+rule filtered-target ( name : message + : sources + : requirements * )
+{
+    message $(name)-message : warning: $(message) ;
+    alias $(name) : $(sources) : $(requirements) ;
+    alias $(name) : $(name)-message ;
+
+    local p = [ project.current ] ;
+    $(p).mark-target-as-explicit $(name) ;
+    $(p).mark-target-as-explicit $(name)-message ;
+}
+
 rule declare_install_and_stage_proper_targets ( libraries * : headers * )
 {
+    local p = [ project.current ] ;
+    for local l in $(libraries)
+    {
+        if $(l) = locale
+        {
+            filtered-target $(l)-for-install :
+                Skipping Boost.Locale library with threading=single. :
+                libs/$(l)/build : <threading>multi ;
+        }
+        else if $(l) = wave
+        {
+            filtered-target $(l)-for-install :
+                Skipping Boost.Wave library with threading=single. :
+                libs/$(l)/build : <threading>multi ;
+        }
+        else if $(l) = thread
+        {
+            filtered-target $(l)-for-install :
+                Skipping Boost.Thread library with threading=single. :
+                libs/$(l)/build : <threading>multi ;
+        }
+        else
+        {
+            alias $(l)-for-install : libs/$(l)/build ; 
+            $(p).mark-target-as-explicit $(l)-for-install ;
+        }
+    }
+    local library-targets = $(libraries)-for-install ;
+
     install-requirements = <install-source-root>$(BOOST_ROOT)/boost ;
 
     if $(layout-versioned)
@@ -238,14 +279,14 @@ rule declare_install_and_stage_proper_targets ( libraries * : headers * )
     package.install install-proper
         : $(install-requirements) <install-no-version-symlinks>on
         :
-        : libs/$(libraries)/build
+        : $(libraries)-for-install
         : $(headers)
         ;
     $(p).mark-target-as-explicit install-proper ;
 
     # Install just library.
     install stage-proper
-        : libs/$(libraries)/build
+        : $(libraries)-for-install
         : <location>$(stage-locate)/lib
           <install-dependencies>on <install-type>LIB
           <install-no-version-symlinks>on
@@ -460,13 +501,14 @@ rule post-build ( ok ? )
     {
         if $(ok)
         {
+            local include-path = [ path.native $(BOOST_ROOT) ] ;
             ECHO "
 
 The Boost C++ Libraries were successfully built!
 
 The following directory should be added to compiler include paths:
 
-    $(BOOST_ROOT)
+    $(include-path)
 
 The following directory should be added to linker library paths:
 
@@ -552,4 +594,99 @@ rule declare-targets ( all-libraries * : headers * )
     }
 
     declare_top_level_targets $(libraries) : $(headers) ;
+}
+
+# Returns the properties identifying the toolset. We'll use them
+# below to configure checks. These are essentially same as in
+# configure.builds, except we don't use address-model and
+# architecture - as we're trying to detect them here.
+#
+rule toolset-properties ( properties * )
+{
+    local toolset = [ property.select <toolset> : $(properties) ] ;
+    local toolset-version-property = "<toolset-$(toolset:G=):version>" ;
+    return [ property.select <target-os> <toolset> $(toolset-version-property) : $(properties) ] ;
+}
+
+feature.feature deduced-address-model : 32 64 : propagated optional composite hidden ;
+feature.compose <deduced-address-model>32 : <address-model>32 ;
+feature.compose <deduced-address-model>64 : <address-model>64 ;
+
+rule deduce-address-model ( properties * )
+{
+    local result ;
+    local filtered = [ toolset-properties $(properties) ] ;
+
+    if [ configure.builds /boost/architecture//32 : $(filtered) : 32-bit ]
+    {
+        result = 32 ;
+    }
+    else if [ configure.builds /boost/architecture//64 : $(filtered) : 64-bit ]
+    {
+        result = 64 ;
+    }
+
+    if $(result)
+    {
+        # Normally, returning composite feature here is equivalent to forcing
+        # consituent properties as well. But we only want to indicate toolset
+        # deduced default, so also pick whatever address-model is explicitly
+        # specified, if any.
+        result = <deduced-address-model>$(result) [ property.select <address-model> : $(properties) ] ;
+    }
+    return $(result) ;
+}
+
+rule address-model ( )
+{
+    return <conditional>@boostcpp.deduce-address-model ;
+}
+
+local deducable-architectures = arm mips1 power sparc x86 combined ;
+feature.feature deduced-architecture : $(deducable-architectures) : propagated optional composite hidden ;
+for a in $(deducable-architectures)
+{
+    feature.compose <deduced-architecture>$(a) : <architecture>$(a) ;
+}
+
+rule deduce-architecture ( properties * )
+{
+    local result ;
+    local filtered = [ toolset-properties $(properties) ] ;
+    if [ configure.builds /boost/architecture//arm : $(filtered) : arm ]
+    {
+        result = arm ;
+    }
+    else if [ configure.builds /boost/architecture//mips1 : $(filtered) : mips1 ]
+    {
+        result = mips1 ;
+    }
+    else if [ configure.builds /boost/architecture//power : $(filtered) : power ]
+    {
+        result = power ;
+    }
+    else if [ configure.builds /boost/architecture//sparc : $(filtered) : sparc ]
+    {
+        result = sparc ;
+    }
+    else if [ configure.builds /boost/architecture//x86 : $(filtered) : x86 ]
+    {
+        result = x86 ;
+    }
+    else if [ configure.builds /boost/architecture//combined : $(filtered) : combined ]
+    {
+        result = combined ;
+    }
+
+    if $(result)
+    {
+        # See comment in deduce-address-model.
+        result = <deduced-architecture>$(result) [ property.select <architecture> : $(properties) ] ;
+    }
+    return $(result) ;
+}
+
+rule architecture ( )
+{
+    return <conditional>@boostcpp.deduce-architecture ;
 }

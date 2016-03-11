@@ -2,7 +2,7 @@
 // detail/impl/win_iocp_handle_service.ipp
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //
-// Copyright (c) 2003-2013 Christopher M. Kohlhoff (chris at kohlhoff dot com)
+// Copyright (c) 2003-2015 Christopher M. Kohlhoff (chris at kohlhoff dot com)
 // Copyright (c) 2008 Rep Invariant Systems, Inc. (info@repinvariant.com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
@@ -40,13 +40,14 @@ public:
     OffsetHigh = 0;
 
     // Create a non-signalled manual-reset event, for GetOverlappedResult.
-    hEvent = ::CreateEvent(0, TRUE, FALSE, 0);
+    hEvent = ::CreateEventW(0, TRUE, FALSE, 0);
     if (hEvent)
     {
       // As documented in GetQueuedCompletionStatus, setting the low order
       // bit of this event prevents our synchronous writes from being treated
       // as completion port events.
-      *reinterpret_cast<DWORD_PTR*>(&hEvent) |= 1;
+      DWORD_PTR tmp = reinterpret_cast<DWORD_PTR>(hEvent);
+      hEvent = reinterpret_cast<HANDLE>(tmp | 1);
     }
     else
     {
@@ -449,7 +450,7 @@ size_t win_iocp_handle_service::do_read(
       ec = boost::system::error_code(last_error,
           boost::asio::error::get_system_category());
     }
-    return 0;
+    return (last_error == ERROR_MORE_DATA) ? bytes_transferred : 0;
   }
 
   ec = boost::system::error_code();

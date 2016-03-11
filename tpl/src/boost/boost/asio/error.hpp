@@ -2,7 +2,7 @@
 // error.hpp
 // ~~~~~~~~~
 //
-// Copyright (c) 2003-2013 Christopher M. Kohlhoff (chris at kohlhoff dot com)
+// Copyright (c) 2003-2015 Christopher M. Kohlhoff (chris at kohlhoff dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -18,7 +18,10 @@
 #include <boost/asio/detail/config.hpp>
 #include <boost/cerrno.hpp>
 #include <boost/system/error_code.hpp>
-#if defined(BOOST_ASIO_WINDOWS) || defined(__CYGWIN__)
+#include <boost/system/system_error.hpp>
+#if defined(BOOST_ASIO_WINDOWS) \
+  || defined(__CYGWIN__) \
+  || defined(BOOST_ASIO_WINDOWS_RUNTIME)
 # include <winerror.h>
 #else
 # include <cerrno>
@@ -36,6 +39,12 @@
 # define BOOST_ASIO_GETADDRINFO_ERROR(e) implementation_defined
 /// INTERNAL ONLY.
 # define BOOST_ASIO_WIN_OR_POSIX(e_win, e_posix) implementation_defined
+#elif defined(BOOST_ASIO_WINDOWS_RUNTIME)
+# define BOOST_ASIO_NATIVE_ERROR(e) __HRESULT_FROM_WIN32(e)
+# define BOOST_ASIO_SOCKET_ERROR(e) __HRESULT_FROM_WIN32(WSA ## e)
+# define BOOST_ASIO_NETDB_ERROR(e) __HRESULT_FROM_WIN32(WSA ## e)
+# define BOOST_ASIO_GETADDRINFO_ERROR(e) __HRESULT_FROM_WIN32(WSA ## e)
+# define BOOST_ASIO_WIN_OR_POSIX(e_win, e_posix) e_win
 #elif defined(BOOST_ASIO_WINDOWS) || defined(__CYGWIN__)
 # define BOOST_ASIO_NATIVE_ERROR(e) e
 # define BOOST_ASIO_SOCKET_ERROR(e) WSA ## e
@@ -138,6 +147,11 @@ enum basic_errors
 
   /// Protocol not available.
   no_protocol_option = BOOST_ASIO_SOCKET_ERROR(ENOPROTOOPT),
+
+  /// No such device.
+  no_such_device = BOOST_ASIO_WIN_OR_POSIX(
+      BOOST_ASIO_NATIVE_ERROR(ERROR_BAD_UNIT),
+      BOOST_ASIO_NATIVE_ERROR(ENODEV)),
 
   /// Transport endpoint is not connected.
   not_connected = BOOST_ASIO_SOCKET_ERROR(ENOTCONN),

@@ -30,7 +30,7 @@ namespace {
 using namespace boost::math;
 using boost::math::signbit;
 using boost::math::changesign;
-using boost::math::isnan;
+using (boost::math::isnan)(;
 
 //------------------------------------------------------------------------------
 // Test nonfinite_num_put and nonfinite_num_get facets by checking
@@ -266,7 +266,7 @@ template<class CharType, class ValType> void trap_test_get_nan_impl()
   os.imbue(new_locale);
   os.exceptions(std::ios_base::badbit | std::ios_base::failbit); // Enable throwing exceptions.
   double nan =  std::numeric_limits<double>::quiet_NaN();
-  BOOST_CHECK_THROW((os << nan), std::runtime_error);
+  BOOST_MATH_CHECK_THROW((os << nan), std::runtime_error);
   // warning : in "check_trap_nan": exception std::runtime_error is expected
  } //  BOOST_AUTO_TEST_CASE(check_trap_nan)
 
@@ -279,7 +279,7 @@ template<class CharType, class ValType> void trap_test_get_nan_impl()
   os.imbue(new_locale);
   os.exceptions(std::ios_base::badbit | std::ios_base::failbit); // Enable throwing exceptions.
   double inf =  std::numeric_limits<double>::infinity();
-  BOOST_CHECK_THROW((os << inf), std::runtime_error);
+  BOOST_MATH_CHECK_THROW((os << inf), std::runtime_error);
   // warning : in "check_trap_inf": exception std::runtime_error is expected.
  
  } //  BOOST_AUTO_TEST_CASE(check_trap_nan_inf)

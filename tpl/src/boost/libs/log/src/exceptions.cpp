@@ -1,5 +1,5 @@
 /*
- *          Copyright Andrey Semashev 2007 - 2013.
+ *          Copyright Andrey Semashev 2007 - 2015.
  * Distributed under the Boost Software License, Version 1.0.
  *    (See accompanying file LICENSE_1_0.txt or copy at
  *          http://www.boost.org/LICENSE_1_0.txt)
@@ -10,7 +10,7 @@
  * \date   31.10.2009
  *
  * \brief  This header is the Boost.Log library implementation, see the library documentation
- *         at http://www.boost.org/libs/log/doc/log.html.
+ *         at http://www.boost.org/doc/libs/release/libs/log/doc/html/index.html.
  */
 
 #include <boost/throw_exception.hpp>
@@ -129,7 +129,7 @@ void invalid_type::throw_(const char* file, std::size_t line, std::string const&
     );
 }
 
-void invalid_type::throw_(const char* file, std::size_t line, std::string const& descr, type_info_wrapper const& type)
+void invalid_type::throw_(const char* file, std::size_t line, std::string const& descr, typeindex::type_index const& type)
 {
     boost::throw_exception(boost::enable_error_info(invalid_type(descr))
         << boost::throw_file(file)
@@ -138,7 +138,7 @@ void invalid_type::throw_(const char* file, std::size_t line, std::string const&
     );
 }
 
-void invalid_type::throw_(const char* file, std::size_t line, std::string const& descr, attribute_name const& name, type_info_wrapper const& type)
+void invalid_type::throw_(const char* file, std::size_t line, std::string const& descr, attribute_name const& name, typeindex::type_index const& type)
 {
     boost::throw_exception(boost::enable_error_info(invalid_type(descr))
         << boost::throw_file(file)

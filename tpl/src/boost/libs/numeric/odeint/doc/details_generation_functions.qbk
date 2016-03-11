@@ -1,8 +1,9 @@
 [/============================================================================
   Boost.odeint
 
-  Copyright (c) 2009-2012 Karsten Ahnert
-  Copyright (c) 2009-2012 Mario Mulansky
+  Copyright 2012 Karsten Ahnert
+  Copyright 2012 Mario Mulansky
+  Copyright 2012 Sylwester Arabas
 
   Use, modification and distribution is subject to the Boost Software License,
   Version 1.0. (See accompanying file LICENSE_1_0.txt or copy at
@@ -17,7 +18,8 @@ In the __tutorial we have learned how we can use the generation functions `make_
 
 [generation_functions_syntax_auto]
 
-The first two parameters are the absolute and the relative error tolerances and the third parameter is the stepper. In C++03 you can infer the type from the `result_of` mechanism:
+The first two parameters are the absolute and the relative error tolerances and the third parameter is the stepper. Additionally, a second version exists where additionally a maximal step size is supplied which ensures the the step size is not increased above this value.
+ In C++03 you can infer the type from the `result_of` mechanism:
 
 [generation_functions_syntax_result_of]
 

@@ -1,5 +1,5 @@
 /*
- *          Copyright Andrey Semashev 2007 - 2013.
+ *          Copyright Andrey Semashev 2007 - 2015.
  * Distributed under the Boost Software License, Version 1.0.
  *    (See accompanying file LICENSE_1_0.txt or copy at
  *          http://www.boost.org/LICENSE_1_0.txt)
@@ -10,7 +10,7 @@
  * \date   05.11.2010
  *
  * \brief  This header is the Boost.Log library implementation, see the library documentation
- *         at http://www.boost.org/libs/log/doc/log.html.
+ *         at http://www.boost.org/doc/libs/release/libs/log/doc/html/index.html.
  *
  * The implementation is based on algorithms published in the "Simple, Fast,
  * and Practical Non-Blocking and Blocking Concurrent Queue Algorithms" article
@@ -25,44 +25,13 @@
 
 #ifndef BOOST_LOG_NO_THREADS
 
-#include <stdlib.h>
 #include <new>
 #include <boost/assert.hpp>
-#include <boost/static_assert.hpp>
 #include <boost/throw_exception.hpp>
+#include <boost/align/aligned_alloc.hpp>
 #include <boost/type_traits/alignment_of.hpp>
-#include <boost/log/detail/spin_mutex.hpp>
+#include <boost/log/detail/adaptive_mutex.hpp>
 #include <boost/log/detail/locks.hpp>
-#include <boost/log/detail/alignas.hpp>
-
-#if defined(BOOST_HAS_UNISTD_H)
-#include <unistd.h> // _POSIX_VERSION
-#endif
-
-#if defined(BOOST_HAS_STDINT_H)
-#include <stdint.h> // uintptr_t
-#else
-// MSVC defines integer types here
-#include <stddef.h> // uintptr_t
-#endif
-
-#if defined(__APPLE__) || defined(__APPLE_CC__) || defined(macintosh)
-#include <AvailabilityMacros.h>
-#if defined(MAC_OS_X_VERSION_MIN_REQUIRED) && (MAC_OS_X_VERSION_MIN_REQUIRED >= 1060)
-// Mac OS X 10.6 and later have posix_memalign
-#define BOOST_LOG_HAS_POSIX_MEMALIGN 1
-#endif
-#elif (defined(_POSIX_VERSION) && (_POSIX_VERSION >= 200112L)) || (defined(_XOPEN_SOURCE) && (_XOPEN_SOURCE >= 600))
-// Solaris 10 does not have posix_memalign. Solaris 11 and later seem to have it.
-#if !(defined(sun) || defined(__sun)) || defined(__SunOS_5_11) || defined(__SunOS_5_12)
-#define BOOST_LOG_HAS_POSIX_MEMALIGN 1
-#endif
-#endif
-
-#if defined(BOOST_WINDOWS)
-#include <malloc.h> // _aligned_malloc, _aligned_free
-#endif
-
 #include <boost/log/detail/header.hpp>
 
 namespace boost {
@@ -77,13 +46,13 @@ class threadsafe_queue_impl_generic :
 {
 private:
     //! Mutex type to be used
-    typedef spin_mutex mutex_type;
+    typedef adaptive_mutex mutex_type;
 
     /*!
      * A structure that contains a pointer to the node and the associated mutex.
-     * The alignment below allows to eliminate false sharing, it should be not less than CPU cache line size (which is assumed to be 64 bytes in most cases).
+     * The alignment below allows to eliminate false sharing, it should not be less than CPU cache line size.
      */
-    struct BOOST_LOG_ALIGNAS(64) pointer
+    struct BOOST_ALIGNMENT(BOOST_LOG_CPU_CACHE_LINE_SIZE) pointer
     {
         //! Pointer to the either end of the queue
         node_base* node;
@@ -147,18 +116,18 @@ public:
     }
 
 private:
-    // Copying and assignment are closed
-    threadsafe_queue_impl_generic(threadsafe_queue_impl_generic const&);
-    threadsafe_queue_impl_generic& operator= (threadsafe_queue_impl_generic const&);
-
-    BOOST_LOG_FORCEINLINE static void set_next(node_base* p, node_base* next)
+    BOOST_FORCEINLINE static void set_next(node_base* p, node_base* next)
     {
         p->next.data[0] = next;
     }
-    BOOST_LOG_FORCEINLINE static node_base* get_next(node_base* p)
+    BOOST_FORCEINLINE static node_base* get_next(node_base* p)
     {
         return static_cast< node_base* >(p->next.data[0]);
     }
+
+    // Copying and assignment are closed
+    BOOST_DELETED_FUNCTION(threadsafe_queue_impl_generic(threadsafe_queue_impl_generic const&))
+    BOOST_DELETED_FUNCTION(threadsafe_queue_impl_generic& operator= (threadsafe_queue_impl_generic const&))
 };
 
 BOOST_LOG_API threadsafe_queue_impl* threadsafe_queue_impl::create(node_base* first_node)
@@ -168,41 +137,15 @@ BOOST_LOG_API threadsafe_queue_impl* threadsafe_queue_impl::create(node_base* fi
 
 BOOST_LOG_API void* threadsafe_queue_impl::operator new (std::size_t size)
 {
-    void* p = NULL;
-
-#if defined(BOOST_LOG_HAS_POSIX_MEMALIGN)
-    if (posix_memalign(&p, 64, size) || !p)
+    void* p = alignment::aligned_alloc(BOOST_LOG_CPU_CACHE_LINE_SIZE, size);
+    if (BOOST_UNLIKELY(!p))
         BOOST_THROW_EXCEPTION(std::bad_alloc());
-    return p;
-#elif defined(BOOST_WINDOWS)
-    p = _aligned_malloc(size, 64);
-    if (!p)
-        BOOST_THROW_EXCEPTION(std::bad_alloc());
-#else
-    p = malloc(size + 64);
-    if (!p)
-        BOOST_THROW_EXCEPTION(std::bad_alloc());
-    unsigned char* q = static_cast< unsigned char* >(p) + 64;
-    q = (unsigned char*)((uintptr_t)q & (~(uintptr_t)63));
-    const unsigned char diff = q - static_cast< unsigned char* >(p);
-    p = q;
-    *--q = diff;
-#endif
-
     return p;
 }
 
 BOOST_LOG_API void threadsafe_queue_impl::operator delete (void* p, std::size_t)
 {
-#if defined(BOOST_LOG_HAS_POSIX_MEMALIGN)
-    free(p);
-#elif defined(BOOST_WINDOWS)
-    _aligned_free(p);
-#else
-    unsigned char* q = static_cast< unsigned char* >(p);
-    const unsigned char diff = *--q;
-    free(static_cast< unsigned char* >(p) - diff);
-#endif
+    alignment::aligned_free(p);
 }
 
 } // namespace aux

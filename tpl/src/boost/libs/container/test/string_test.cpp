@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2004-2012. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2004-2013. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -13,7 +13,7 @@
 #include <boost/container/string.hpp>
 #include <string>
 #include <vector>
-#include <algorithm>
+#include <boost/container/detail/algorithm.hpp> //equal()
 #include <cstring>
 #include <cstdio>
 #include <cstddef>
@@ -23,6 +23,8 @@
 #include "expand_bwd_test_allocator.hpp"
 #include "expand_bwd_test_template.hpp"
 #include "propagate_allocator_test.hpp"
+#include "default_init_test.hpp"
+#include "../../intrusive/test/iterator_test.hpp"
 
 using namespace boost::container;
 
@@ -67,8 +69,34 @@ template<class StrVector1, class StrVector2>
 bool CheckEqualStringVector(StrVector1 *strvect1, StrVector2 *strvect2)
 {
    StringEqual comp;
-   return std::equal(strvect1->begin(), strvect1->end(),
+   return boost::container::algo_equal(strvect1->begin(), strvect1->end(),
                      strvect2->begin(), comp);
+}
+
+template<class ForwardIt>
+ForwardIt unique(ForwardIt first, ForwardIt const last)
+{
+   if(first == last){
+      ForwardIt i = first;
+      //Find first adjacent pair
+      while(1){
+         if(++i == last){
+            return last;
+         }
+         else if(*first == *i){
+            break;
+         }
+         ++first;
+      }
+      //Now overwrite skipping adjacent elements
+      while (++i != last) {
+         if (!(*first == *i)) {
+            *(++first) = boost::move(*i);
+         }
+      }
+      ++first;
+   }
+   return first;
 }
 
 template<class CharType>
@@ -137,7 +165,6 @@ int string_test()
 
    const int MaxSize = 100;
 
-   //Create shared memory
    {
       BoostStringVector *boostStringVect = new BoostStringVector;
       StdStringVector *stdStringVect = new StdStringVector;
@@ -216,15 +243,15 @@ int string_test()
       boost_swapper.swap(auxBoostString);
       std_swapper.swap(auxStdString);
       if(!StringEqual()(auxBoostString, auxStdString))
-         return 1;  
+         return 1;
       if(!StringEqual()(boost_swapper, std_swapper))
-         return 1;  
+         return 1;
       boost_swapper.swap(auxBoostString);
       std_swapper.swap(auxStdString);
       if(!StringEqual()(auxBoostString, auxStdString))
-         return 1;  
+         return 1;
       if(!StringEqual()(boost_swapper, std_swapper))
-         return 1;  
+         return 1;
 
       //Shrink_to_fit
       auxBoostString.shrink_to_fit();
@@ -251,7 +278,7 @@ int string_test()
       boost_swapper.swap(auxBoostString);
       std_swapper.swap(auxStdString);
       if(!StringEqual()(auxBoostString, auxStdString))
-         return 1;  
+         return 1;
       if(!StringEqual()(boost_swapper, std_swapper))
          return 1;
       boost_swapper.swap(auxBoostString);
@@ -322,9 +349,9 @@ int string_test()
 
       if(!CheckEqualStringVector(boostStringVect, stdStringVect)) return 1;
 
-      boostStringVect->erase(std::unique(boostStringVect->begin(), boostStringVect->end()),
+      boostStringVect->erase((unique)(boostStringVect->begin(), boostStringVect->end()),
                            boostStringVect->end());
-      stdStringVect->erase(std::unique(stdStringVect->begin(), stdStringVect->end()),
+      stdStringVect->erase((unique)(stdStringVect->begin(), stdStringVect->end()),
                            stdStringVect->end());
       if(!CheckEqualStringVector(boostStringVect, stdStringVect)) return 1;
 
@@ -413,6 +440,37 @@ int string_test()
          if(!StringEqual()(bs4, ss4)){
             return 1;
          }
+
+         //Check front/back/begin/end
+
+         if(bs4.front() != *ss4.begin())
+            return 1;
+
+         if(bs4.back() != *(ss4.end()-1))
+            return 1;
+
+         bs4.pop_back();
+         ss4.erase(ss4.end()-1);
+         if(!StringEqual()(bs4, ss4)){
+            return 1;
+         }
+
+         if(*bs4.begin() != *ss4.begin())
+            return 1;
+         if(*bs4.cbegin() != *ss4.begin())
+            return 1;
+         if(*bs4.rbegin() != *ss4.rbegin())
+            return 1;
+         if(*bs4.crbegin() != *ss4.rbegin())
+            return 1;
+         if(*(bs4.end()-1) != *(ss4.end()-1))
+            return 1;
+         if(*(bs4.cend()-1) != *(ss4.end()-1))
+            return 1;
+         if(*(bs4.rend()-1) != *(ss4.rend()-1))
+            return 1;
+         if(*(bs4.crend()-1) != *(ss4.rend()-1))
+            return 1;
       }
 
       //When done, delete vector
@@ -432,34 +490,21 @@ bool test_expand_bwd()
    return  test::test_all_expand_bwd<string_type>();
 }
 
-template<class T, class A>
-class string_propagate_test_wrapper
-   : public basic_string<T, std::char_traits<T>, A>
+struct boost_container_string;
+
+namespace boost { namespace container {   namespace test {
+
+template<>
+struct alloc_propagate_base<boost_container_string>
 {
-   BOOST_COPYABLE_AND_MOVABLE(string_propagate_test_wrapper)
-   typedef basic_string<T, std::char_traits<T>, A> Base;
-   public:
-   string_propagate_test_wrapper()
-      : Base()
-   {}
-
-   string_propagate_test_wrapper(const string_propagate_test_wrapper &x)
-      : Base(x)
-   {}
-
-   string_propagate_test_wrapper(BOOST_RV_REF(string_propagate_test_wrapper) x)
-      : Base(boost::move(static_cast<Base&>(x)))
-   {}
-
-   string_propagate_test_wrapper &operator=(BOOST_COPY_ASSIGN_REF(string_propagate_test_wrapper) x)
-   {  this->Base::operator=(x);  return *this; }
-
-   string_propagate_test_wrapper &operator=(BOOST_RV_REF(string_propagate_test_wrapper) x)
-   {  this->Base::operator=(boost::move(static_cast<Base&>(x)));  return *this; }
-
-   void swap(string_propagate_test_wrapper &x)
-   {  this->Base::swap(x);  }
+   template <class T, class Allocator>
+   struct apply
+   {
+      typedef boost::container::basic_string<T, std::char_traits<T>, Allocator> type;
+   };
 };
+
+}}}   //namespace boost::container::test
 
 int main()
 {
@@ -471,11 +516,50 @@ int main()
       return 1;
    }
 
+   ////////////////////////////////////
+   //    Backwards expansion test
+   ////////////////////////////////////
    if(!test_expand_bwd())
       return 1;
 
-   if(!boost::container::test::test_propagate_allocator<string_propagate_test_wrapper>())
+   ////////////////////////////////////
+   //    Allocator propagation testing
+   ////////////////////////////////////
+   if(!boost::container::test::test_propagate_allocator<boost_container_string>())
       return 1;
+
+   ////////////////////////////////////
+   //    Default init test
+   ////////////////////////////////////
+   if(!test::default_init_test< basic_string<char, std::char_traits<char>, test::default_init_allocator<char> > >()){
+      std::cerr << "Default init test failed" << std::endl;
+      return 1;
+   }
+
+   if(!test::default_init_test< basic_string<wchar_t, std::char_traits<wchar_t>, test::default_init_allocator<wchar_t> > >()){
+      std::cerr << "Default init test failed" << std::endl;
+      return 1;
+   }
+
+   ////////////////////////////////////
+   //    Iterator testing
+   ////////////////////////////////////
+   {
+      typedef boost::container::basic_string<char> cont_int;
+      cont_int a; a.push_back(char(1)); a.push_back(char(2)); a.push_back(char(3));
+      boost::intrusive::test::test_iterator_random< cont_int >(a);
+      if(boost::report_errors() != 0) {
+         return 1;
+      }
+   }
+   {
+      typedef boost::container::basic_string<wchar_t> cont_int;
+      cont_int a; a.push_back(wchar_t(1)); a.push_back(wchar_t(2)); a.push_back(wchar_t(3));
+      boost::intrusive::test::test_iterator_random< cont_int >(a);
+      if(boost::report_errors() != 0) {
+         return 1;
+      }
+   }
 
    return 0;
 }

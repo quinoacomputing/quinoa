@@ -1,5 +1,5 @@
 /*
- *          Copyright Andrey Semashev 2007 - 2013.
+ *          Copyright Andrey Semashev 2007 - 2015.
  * Distributed under the Boost Software License, Version 1.0.
  *    (See accompanying file LICENSE_1_0.txt or copy at
  *          http://www.boost.org/LICENSE_1_0.txt)
@@ -16,7 +16,6 @@
 #ifndef BOOST_LOG_WITHOUT_EVENT_LOG
 
 #include "windows_version.hpp"
-#include <memory>
 #include <string>
 #include <vector>
 #include <ostream>
@@ -30,6 +29,7 @@
 #include <boost/log/detail/attachable_sstream_buf.hpp>
 #include <boost/log/detail/code_conversion.hpp>
 #include <boost/log/utility/formatting_ostream.hpp>
+#include "unique_ptr.hpp"
 #include "event_log_registry.hpp"
 #include <windows.h>
 #include <psapi.h>
@@ -56,13 +56,12 @@ namespace event_log {
         switch (lev)
         {
         case success: return success;
-        case info: return info;
         case warning: return warning;
         case error: return error;
         default:
             BOOST_THROW_EXCEPTION(std::out_of_range("Windows NT event type is out of range"));
-            BOOST_LOG_UNREACHABLE();
-            return info; // to get rid of warnings
+            BOOST_LOG_UNREACHABLE_RETURN(info);
+        case info: return info;
         }
     }
 
@@ -258,7 +257,7 @@ BOOST_LOG_API void basic_simple_event_log_backend< CharT >::construct(
         aux::init_event_log_registry(log_name, source_name, reg_mode == event_log::forced, reg_params);
     }
 
-    std::auto_ptr< implementation > p(new implementation());
+    log::aux::unique_ptr< implementation > p(new implementation());
 
     const char_type* target_unc = NULL;
     if (!target.empty())
@@ -497,6 +496,8 @@ BOOST_LOG_API void basic_event_log_backend< CharT >::construct(
 {
     if (reg_mode != event_log::never)
     {
+        if (message_file_name.empty())
+            BOOST_THROW_EXCEPTION(std::invalid_argument("Message file name not specified."));
         aux::registry_params< char_type > reg_params;
         string_type file_name;
         log::aux::code_convert(message_file_name.string(), file_name);
@@ -509,7 +510,7 @@ BOOST_LOG_API void basic_event_log_backend< CharT >::construct(
         aux::init_event_log_registry(log_name, source_name, reg_mode == event_log::forced, reg_params);
     }
 
-    std::auto_ptr< implementation > p(new implementation());
+    log::aux::unique_ptr< implementation > p(new implementation());
 
     const char_type* target_unc = NULL;
     if (!target.empty())

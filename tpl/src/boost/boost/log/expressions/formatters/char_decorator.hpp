@@ -1,5 +1,5 @@
 /*
- *          Copyright Andrey Semashev 2007 - 2013.
+ *          Copyright Andrey Semashev 2007 - 2015.
  * Distributed under the Boost Software License, Version 1.0.
  *    (See accompanying file LICENSE_1_0.txt or copy at
  *          http://www.boost.org/LICENSE_1_0.txt)
@@ -28,6 +28,7 @@
 #include <boost/range/value_type.hpp>
 #include <boost/move/core.hpp>
 #include <boost/move/utility.hpp>
+#include <boost/core/enable_if.hpp>
 #include <boost/utility/addressof.hpp>
 #include <boost/phoenix/core/actor.hpp>
 #include <boost/phoenix/core/meta_grammar.hpp>
@@ -45,7 +46,7 @@
 #include <boost/log/utility/formatting_ostream.hpp>
 #include <boost/log/detail/header.hpp>
 
-#ifdef BOOST_LOG_HAS_PRAGMA_ONCE
+#ifdef BOOST_HAS_PRAGMA_ONCE
 #pragma once
 #endif
 
@@ -109,10 +110,15 @@ public:
      * of each pair is the source pattern, and the second one is the corresponding replacement.
      */
     template< typename RangeT >
-    explicit pattern_replacer(RangeT const& decorations)
+    explicit pattern_replacer(RangeT const& decorations
+#ifndef BOOST_LOG_DOXYGEN_PASS
+        // This is needed for a workaround against an MSVC-10 and older bug in constructor overload resolution
+        , typename boost::enable_if_has_type< typename range_const_iterator< RangeT >::type, int >::type = 0
+#endif
+    )
     {
         typedef typename range_const_iterator< RangeT >::type iterator;
-        for (iterator it = begin(decorations), end_ = end(decorations); it != end_; ++it)
+        for (iterator it = boost::begin(decorations), end_ = boost::end(decorations); it != end_; ++it)
         {
             string_lengths lens;
             {
@@ -140,8 +146,8 @@ public:
     {
         typedef typename range_const_iterator< FromRangeT >::type iterator1;
         typedef typename range_const_iterator< ToRangeT >::type iterator2;
-        iterator1 it1 = begin(from), end1 = end(from);
-        iterator2 it2 = begin(to), end2 = end(to);
+        iterator1 it1 = boost::begin(from), end1 = boost::end(from);
+        iterator2 it2 = boost::begin(to), end2 = boost::end(to);
         for (; it1 != end1 && it2 != end2; ++it1, ++it2)
         {
             string_lengths lens;
@@ -200,25 +206,21 @@ private:
     template< typename RangeT >
     static typename range_const_iterator< RangeT >::type string_begin(RangeT const& r)
     {
-        return begin(r);
+        return boost::begin(r);
     }
 
     static char_type* string_end(char_type* p)
     {
-        while (*p)
-            ++p;
-        return p;
+        return p + std::char_traits< char_type >::length(p);
     }
     static const char_type* string_end(const char_type* p)
     {
-        while (*p)
-            ++p;
-        return p;
+        return p + std::char_traits< char_type >::length(p);
     }
     template< typename RangeT >
     static typename range_const_iterator< RangeT >::type string_end(RangeT const& r)
     {
-        return end(r);
+        return boost::end(r);
     }
 };
 
@@ -250,23 +252,12 @@ public:
     template< typename >
     struct result;
 
-    template< typename ContextT >
-    struct result< this_type(ContextT) >
+    template< typename ThisT, typename ContextT >
+    struct result< ThisT(ContextT) >
     {
         typedef typename remove_cv< typename remove_reference< ContextT >::type >::type context_type;
         typedef typename phoenix::evaluator::impl<
             typename LeftT::proto_base_expr&,
-            context_type,
-            phoenix::unused
-        >::result_type type;
-    };
-
-    template< typename ContextT >
-    struct result< const this_type(ContextT) >
-    {
-        typedef typename remove_cv< typename remove_reference< ContextT >::type >::type context_type;
-        typedef typename phoenix::evaluator::impl<
-            typename LeftT::proto_base_expr const&,
             context_type,
             phoenix::unused
         >::result_type type;
@@ -342,7 +333,7 @@ public:
         return strm;
     }
 
-    BOOST_LOG_DELETED_FUNCTION(char_decorator_output_terminal())
+    BOOST_DELETED_FUNCTION(char_decorator_output_terminal())
 };
 
 } // namespace aux
@@ -483,7 +474,7 @@ public:
         return boost::move(str);
     }
 
-    BOOST_LOG_DELETED_FUNCTION(char_decorator_terminal())
+    BOOST_DELETED_FUNCTION(char_decorator_terminal())
 };
 
 /*!
@@ -519,7 +510,7 @@ public:
 
 #define BOOST_LOG_AUX_OVERLOAD(left_ref, right_ref)\
     template< typename LeftExprT, typename SubactorT, typename ImplT, template< typename > class ActorT >\
-    BOOST_LOG_FORCEINLINE phoenix::actor< aux::char_decorator_output_terminal< phoenix::actor< LeftExprT >, SubactorT, ImplT > >\
+    BOOST_FORCEINLINE phoenix::actor< aux::char_decorator_output_terminal< phoenix::actor< LeftExprT >, SubactorT, ImplT > >\
     operator<< (phoenix::actor< LeftExprT > left_ref left, char_decorator_actor< SubactorT, ImplT, ActorT > right_ref right)\
     {\
         typedef aux::char_decorator_output_terminal< phoenix::actor< LeftExprT >, SubactorT, ImplT > terminal_type;\
@@ -548,7 +539,7 @@ public:
     }
 
     template< typename SubactorT >
-    BOOST_LOG_FORCEINLINE char_decorator_actor< SubactorT, pattern_replacer< char_type > > operator[] (SubactorT const& subactor) const
+    BOOST_FORCEINLINE char_decorator_actor< SubactorT, pattern_replacer< char_type > > operator[] (SubactorT const& subactor) const
     {
         typedef pattern_replacer< char_type > replacer_type;
         typedef char_decorator_actor< SubactorT, replacer_type > result_type;
@@ -574,7 +565,7 @@ public:
     }
 
     template< typename SubactorT >
-    BOOST_LOG_FORCEINLINE char_decorator_actor< SubactorT, pattern_replacer< from_char_type > > operator[] (SubactorT const& subactor) const
+    BOOST_FORCEINLINE char_decorator_actor< SubactorT, pattern_replacer< from_char_type > > operator[] (SubactorT const& subactor) const
     {
         typedef pattern_replacer< from_char_type > replacer_type;
         typedef char_decorator_actor< SubactorT, replacer_type > result_type;
@@ -594,7 +585,7 @@ public:
  *                    substring occurrence in the output will be replaced with <tt>decorations[i].second</tt>.
  */
 template< typename RangeT >
-BOOST_LOG_FORCEINLINE aux::char_decorator_gen1< RangeT > char_decor(RangeT const& decorations)
+BOOST_FORCEINLINE aux::char_decorator_gen1< RangeT > char_decor(RangeT const& decorations)
 {
     return aux::char_decorator_gen1< RangeT >(decorations);
 }
@@ -610,7 +601,7 @@ BOOST_LOG_FORCEINLINE aux::char_decorator_gen1< RangeT > char_decor(RangeT const
  *       substring occurrence in the output will be replaced with <tt>to[i]</tt>.
  */
 template< typename FromRangeT, typename ToRangeT >
-BOOST_LOG_FORCEINLINE aux::char_decorator_gen2< FromRangeT, ToRangeT > char_decor(FromRangeT const& from, ToRangeT const& to)
+BOOST_FORCEINLINE aux::char_decorator_gen2< FromRangeT, ToRangeT > char_decor(FromRangeT const& from, ToRangeT const& to)
 {
     return aux::char_decorator_gen2< FromRangeT, ToRangeT >(from, to);
 }

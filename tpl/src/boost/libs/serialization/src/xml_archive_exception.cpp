@@ -23,7 +23,7 @@
 namespace boost {
 namespace archive {
 
-BOOST_ARCHIVE_DECL(BOOST_PP_EMPTY())
+BOOST_ARCHIVE_DECL
 xml_archive_exception::xml_archive_exception(
         exception_code c, 
         const char * e1,
@@ -31,27 +31,34 @@ xml_archive_exception::xml_archive_exception(
     ) : 
         archive_exception(other_exception, e1, e2)
     {
-        unsigned int length = 0;
         switch(c){
         case xml_archive_parsing_error:
-            length = archive_exception::append(length, "unrecognized XML syntax");
+            archive_exception::append(0, "unrecognized XML syntax");
             break;
         case xml_archive_tag_mismatch:
-            length = archive_exception::append(length, "XML start/end tag mismatch");
+            archive_exception::append(0, "XML start/end tag mismatch");
             if(NULL != e1){
-                length = archive_exception::append(length, " - ");
-                length = archive_exception::append(length, e1);
+                archive_exception::append(0, " - ");
+                archive_exception::append(0, e1);
             }    
             break;
         case xml_archive_tag_name_error:
-            length = archive_exception::append(length, "Invalid XML tag name");
+            archive_exception::append(0, "Invalid XML tag name");
             break;
         default:
             BOOST_ASSERT(false);
-            length = archive_exception::append(length, "programming error");
+            archive_exception::append(0, "programming error");
             break;
         }
     }
+    
+BOOST_ARCHIVE_DECL
+xml_archive_exception::xml_archive_exception(xml_archive_exception const & oth) :
+ 	archive_exception(oth)
+	{
+	}
+	
+BOOST_ARCHIVE_DECL xml_archive_exception::~xml_archive_exception() BOOST_NOEXCEPT_OR_NOTHROW {}
 
 } // archive
 } // boost

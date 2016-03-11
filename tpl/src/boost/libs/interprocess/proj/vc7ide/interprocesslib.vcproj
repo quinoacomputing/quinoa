@@ -297,18 +297,8 @@
 				<File
 					RelativePath="..\..\..\..\boost\interprocess\sync\spin\semaphore.hpp">
 				</File>
-			</Filter>
-			<Filter
-				Name="xsi"
-				Filter="">
 				<File
-					RelativePath="..\..\..\..\boost\interprocess\sync\xsi\advanced_xsi_semaphore.hpp">
-				</File>
-				<File
-					RelativePath="..\..\..\..\boost\interprocess\sync\xsi\simple_xsi_semaphore.hpp">
-				</File>
-				<File
-					RelativePath="..\..\..\..\boost\interprocess\sync\xsi\xsi_named_mutex.hpp">
+					RelativePath="..\..\..\..\boost\interprocess\sync\spin\wait.hpp">
 				</File>
 			</Filter>
 			<Filter
@@ -353,6 +343,9 @@
 				<File
 					RelativePath="..\..\..\..\boost\interprocess\sync\windows\winapi_semaphore_wrapper.hpp">
 				</File>
+				<File
+					RelativePath="..\..\..\..\boost\interprocess\sync\windows\winapi_wrapper_common.hpp">
+				</File>
 			</Filter>
 			<Filter
 				Name="shm"
@@ -382,6 +375,9 @@
 			<Filter
 				Name="detail"
 				Filter="">
+				<File
+					RelativePath="..\..\..\..\boost\interprocess\sync\detail\common_algorithms.hpp">
+				</File>
 				<File
 					RelativePath="..\..\..\..\boost\interprocess\sync\detail\condition_algorithm_8a.hpp">
 				</File>
@@ -509,9 +505,6 @@
 				RelativePath="..\..\..\..\boost\interprocess\detail\interprocess_tester.hpp">
 			</File>
 			<File
-				RelativePath="..\..\..\..\boost\interprocess\detail\intersegment_ptr.hpp">
-			</File>
-			<File
 				RelativePath="..\..\..\..\boost\interprocess\detail\lock_file_utilities.hpp">
 			</File>
 			<File
@@ -536,10 +529,10 @@
 				RelativePath="..\..\..\..\boost\interprocess\detail\mpl.hpp">
 			</File>
 			<File
-				RelativePath="..\..\..\..\boost\interprocess\detail\multi_segment_services.hpp">
+				RelativePath="..\..\..\..\boost\interprocess\detail\named_proxy.hpp">
 			</File>
 			<File
-				RelativePath="..\..\..\..\boost\interprocess\detail\named_proxy.hpp">
+				RelativePath="..\..\..\..\boost\interprocess\detail\nothrow.hpp">
 			</File>
 			<File
 				RelativePath="..\..\..\..\boost\interprocess\detail\os_file_functions.hpp">
@@ -548,13 +541,13 @@
 				RelativePath="..\..\..\..\boost\interprocess\detail\os_thread_functions.hpp">
 			</File>
 			<File
+				RelativePath="..\..\..\..\boost\interprocess\detail\placement_new.hpp">
+			</File>
+			<File
 				RelativePath="..\..\..\..\boost\interprocess\detail\pointer_type.hpp">
 			</File>
 			<File
 				RelativePath="..\..\..\..\boost\interprocess\detail\posix_time_types_wrk.hpp">
-			</File>
-			<File
-				RelativePath="..\..\..\..\boost\interprocess\detail\preprocessor.hpp">
 			</File>
 			<File
 				RelativePath="..\..\..\..\boost\interprocess\detail\ptime_wrk.hpp">
@@ -566,7 +559,13 @@
 				RelativePath="..\..\..\..\boost\interprocess\detail\segment_manager_helper.hpp">
 			</File>
 			<File
-				RelativePath="..\..\..\..\boost\interprocess\detail\tmp_dir_helpers.hpp">
+				RelativePath="..\..\..\..\boost\interprocess\detail\shared_dir_helpers.hpp">
+			</File>
+			<File
+				RelativePath="..\..\..\..\boost\interprocess\detail\simple_swap.hpp">
+			</File>
+			<File
+				RelativePath="..\..\..\..\boost\interprocess\detail\std_fwd.hpp">
 			</File>
 			<File
 				RelativePath="..\..\..\..\boost\interprocess\detail\transform_iterator.hpp">
@@ -578,16 +577,10 @@
 				RelativePath="..\..\..\..\boost\interprocess\detail\utilities.hpp">
 			</File>
 			<File
-				RelativePath="..\..\..\..\boost\interprocess\detail\variadic_templates_tools.hpp">
-			</File>
-			<File
 				RelativePath="..\..\..\..\boost\interprocess\detail\win32_api.hpp">
 			</File>
 			<File
 				RelativePath="..\..\..\..\boost\interprocess\detail\workaround.hpp">
-			</File>
-			<File
-				RelativePath="..\..\..\..\boost\interprocess\detail\xsi_shared_memory_device.hpp">
 			</File>
 			<File
 				RelativePath="..\..\..\..\boost\interprocess\detail\xsi_shared_memory_file_wrapper.hpp">
@@ -683,6 +676,9 @@
 			</File>
 			<File
 				RelativePath="..\..\test\heap_allocator_v1.hpp">
+			</File>
+			<File
+				RelativePath="..\..\test\Jamfile.v2">
 			</File>
 			<File
 				RelativePath="..\..\test\list_test.hpp">

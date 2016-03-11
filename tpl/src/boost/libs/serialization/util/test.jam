@@ -46,6 +46,9 @@ rule run-template ( test-name : sources * : requirements * ) {
             <toolset>msvc:<cxxflags>"-wd4996"
             # toolset optimizations
             <toolset>gcc:<cxxflags>"-ftemplate-depth-255"
+            <toolset>clang:<cxxflags>"-ftemplate-depth-255"
+            <toolset>clang-darwin:<cxxflags>"-ftemplate-depth-255"
+            <toolset>darwin:<cxxflags>"-ftemplate-depth-255"
             <toolset>msvc:<cxxflags>"-Gy"
             $(requirements)
         : # test name
@@ -173,16 +176,15 @@ rule test-bsl-run_files ( test-name : sources * : libs * : requirements * ) {
     return $(tests) ;
 }
     
-rule test-bsl-run_polymorphic_archive ( test-name : sources * ) {
+rule test-bsl-run_polymorphic_archive ( test-name : sources * : requirements * ) {
     local tests ;
     for local defn in $(BOOST_ARCHIVE_LIST) {
         tests += [ 
             test-bsl-run_archive $(test-name)
             : polymorphic_$(defn:LB)  
-            : $(test-name) $(sources)
+            : $(test-name) $(sources) $(requirements)
         ] ;
     }
     return $(tests) ;
 }
-
 

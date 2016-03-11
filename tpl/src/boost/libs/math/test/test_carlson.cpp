@@ -81,28 +81,28 @@ void expected_results()
       ".*",                          // platform
       largest_type,                  // test type(s)
       ".*RJ.*",      // test data group
-      ".*", 180, 50);  // test function
+      ".*", 250, 50);  // test function
    add_expected_result(
       ".*",                          // compiler
       ".*",                          // stdlib
       ".*",                          // platform
       "real_concept",                  // test type(s)
       ".*RJ.*",      // test data group
-      ".*", 180, 50);  // test function
+      ".*", 250, 50);  // test function
    add_expected_result(
       ".*",                          // compiler
       ".*",                          // stdlib
       ".*",                          // platform
       largest_type,                  // test type(s)
       ".*",      // test data group
-      ".*", 15, 8);  // test function
+      ".*", 25, 8);  // test function
    add_expected_result(
       ".*",                          // compiler
       ".*",                          // stdlib
       ".*",                          // platform
       "real_concept",                  // test type(s)
       ".*",      // test data group
-      ".*", 15, 8);  // test function
+      ".*", 25, 8);  // test function
    //
    // Finish off by printing out the compiler/stdlib/platform names,
    // we do this to make it easier to mark up expected error rates.
@@ -130,7 +130,7 @@ BOOST_AUTO_TEST_CASE( test_main )
    std::cout << "<note>The long double tests have been disabled on this platform "
       "either because the long double overloads of the usual math functions are "
       "not available at all, or because they are too inaccurate for these tests "
-      "to pass.</note>" << std::cout;
+      "to pass.</note>" << std::endl;
 #endif
 }
 

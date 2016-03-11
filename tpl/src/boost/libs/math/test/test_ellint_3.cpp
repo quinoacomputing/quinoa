@@ -43,11 +43,11 @@ void expected_results()
 #ifndef BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS
    if(boost::math::policies::digits<double, boost::math::policies::policy<> >() == boost::math::policies::digits<long double, boost::math::policies::policy<> >())
    {
-      largest_type = "(long\\s+)?double";
+      largest_type = "(long\\s+)?double|real_concept";
    }
    else
    {
-      largest_type = "long double";
+      largest_type = "long double|real_concept";
    }
 #else
    largest_type = "(long\\s+)?double";
@@ -67,21 +67,14 @@ void expected_results()
       ".*",                          // compiler
       ".*",                          // stdlib
       ".*",                          // platform
-      "real_concept",                  // test type(s)
-      ".*Large.*",      // test data group
-      ".*", 50, 20);  // test function
+      largest_type,                  // test type(s)
+      ".*Mathworld.*",      // test data group
+      ".*", 600, 200);  // test function
    add_expected_result(
       ".*",                          // compiler
       ".*",                          // stdlib
       ".*",                          // platform
       largest_type,                  // test type(s)
-      ".*",      // test data group
-      ".*", 15, 8);  // test function
-   add_expected_result(
-      ".*",                          // compiler
-      ".*",                          // stdlib
-      ".*",                          // platform
-      "real_concept",                  // test type(s)
       ".*",      // test data group
       ".*", 15, 8);  // test function
    //
@@ -107,7 +100,7 @@ BOOST_AUTO_TEST_CASE( test_main )
    std::cout << "<note>The long double tests have been disabled on this platform "
       "either because the long double overloads of the usual math functions are "
       "not available at all, or because they are too inaccurate for these tests "
-      "to pass.</note>" << std::cout;
+      "to pass.</note>" << std::endl;
 #endif
 
 }

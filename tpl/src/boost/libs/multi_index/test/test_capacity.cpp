@@ -1,6 +1,6 @@
 /* Boost.MultiIndex test for capacity memfuns.
  *
- * Copyright 2003-2013 Joaquin M Lopez Munoz.
+ * Copyright 2003-2015 Joaquin M Lopez Munoz.
  * Distributed under the Boost Software License, Version 1.0.
  * (See accompanying file LICENSE_1_0.txt or copy at
  * http://www.boost.org/LICENSE_1_0.txt)
@@ -47,10 +47,11 @@ void test_capacity()
   BOOST_TEST(ss.size()==10);
   BOOST_TEST(ss.size()<=ss.max_size());
 
-  ss.resize(20);
+  ss.resize(20,666);
   BOOST_TEST(ss.size()==20);
+  BOOST_TEST(ss.back()==666);
 
-  ss.resize(5);
+  ss.resize(5,10);
   BOOST_TEST(ss.size()==5);
 
   ss.resize(4);
@@ -63,11 +64,16 @@ void test_capacity()
   BOOST_TEST(rs.size()<=rs.max_size());
   BOOST_TEST(rs.size()<=rs.capacity());
 
-  rs.resize(20);
+  rs.resize(20,666);
   BOOST_TEST(rs.size()==20);
+  BOOST_TEST(rs.back()==666);
   BOOST_TEST(rs.size()<=rs.capacity());
 
-  unsigned int c=rs.capacity();
+  employee_set::size_type c=rs.capacity();
+  rs.resize(10,20);
+  BOOST_TEST(rs.size()==10);
+  BOOST_TEST(rs.capacity()==c);
+
   rs.resize(5);
   BOOST_TEST(rs.size()==5);
   BOOST_TEST(rs.capacity()==c);
@@ -80,4 +86,12 @@ void test_capacity()
   rs.reserve(99);
   BOOST_TEST(rs.size()==5);
   BOOST_TEST(rs.capacity()==c);
+
+  rs.shrink_to_fit();
+  BOOST_TEST(rs.size()==5);
+  BOOST_TEST(rs.capacity()==rs.size());
+
+  rs.clear();
+  rs.shrink_to_fit();
+  BOOST_TEST(rs.capacity()==0);
 }

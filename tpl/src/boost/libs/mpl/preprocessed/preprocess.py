@@ -7,9 +7,9 @@
 #
 # See http://www.boost.org/libs/mpl for documentation.
 
-# $Id: preprocess.py 49269 2008-10-11 06:30:50Z agurtovoy $
-# $Date: 2008-10-10 23:30:50 -0700 (Fri, 10 Oct 2008) $
-# $Revision: 49269 $
+# $Id$
+# $Date$
+# $Revision$
 
 import pp
 import shutil
@@ -82,7 +82,7 @@ def main( all_modes, src_dir, dst_dir ):
 if __name__ == '__main__':
     
     main(
-          ["bcc", "bcc551", "gcc", "msvc60", "msvc70", "mwcw", "dmc", "no_ctps", "no_ttp", "plain"]
+          ["bcc", "bcc551", "gcc", "mwcw", "dmc", "no_ttp", "plain"]
         , "src"
         , os.path.join( "boost", "mpl", "aux_", "preprocessed" )
         )

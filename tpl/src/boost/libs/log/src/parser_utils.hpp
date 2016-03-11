@@ -1,5 +1,5 @@
 /*
- *          Copyright Andrey Semashev 2007 - 2013.
+ *          Copyright Andrey Semashev 2007 - 2015.
  * Distributed under the Boost Software License, Version 1.0.
  *    (See accompanying file LICENSE_1_0.txt or copy at
  *          http://www.boost.org/LICENSE_1_0.txt)
@@ -10,7 +10,7 @@
  * \date   31.03.2008
  *
  * \brief  This header is the Boost.Log library implementation, see the library documentation
- *         at http://www.boost.org/libs/log/doc/log.html.
+ *         at http://www.boost.org/doc/libs/release/libs/log/doc/html/index.html.
  */
 
 #ifndef BOOST_LOG_PARSER_UTILS_HPP_INCLUDED_
@@ -20,9 +20,10 @@
 #include <iostream>
 #include <cctype>
 #include <boost/log/detail/config.hpp>
+#include <boost/log/utility/string_literal.hpp>
 #include <boost/log/detail/header.hpp>
 
-#ifdef BOOST_LOG_HAS_PRAGMA_ONCE
+#ifdef BOOST_HAS_PRAGMA_ONCE
 #pragma once
 #endif
 
@@ -40,8 +41,12 @@ template< >
 struct char_constants< char >
 {
     typedef char char_type;
+    typedef std::basic_string< char_type > string_type;
+    typedef boost::log::basic_string_literal< char_type > literal_type;
+
     static const char_type char_comment = '#';
     static const char_type char_comma = ',';
+    static const char_type char_dot = '.';
     static const char_type char_quote = '"';
     static const char_type char_percent = '%';
     static const char_type char_exclamation = '!';
@@ -73,8 +78,8 @@ struct char_constants< char >
 
     static const char_type* message_text_keyword() { return "_"; }
 
-    static const char_type* true_keyword() { return "true"; }
-    static const char_type* false_keyword() { return "false"; }
+    static literal_type true_keyword() { return literal_type("true"); }
+    static literal_type false_keyword() { return literal_type("false"); }
 
     static const char_type* default_level_attribute_name() { return "Severity"; }
 
@@ -117,20 +122,20 @@ struct char_constants< char >
     static const char_type* simple_event_log_destination() { return "SimpleEventLog"; }
     static const char_type* debugger_destination() { return "Debugger"; }
 
-    static const char_type* monday_keyword() { return "Monday"; }
-    static const char_type* short_monday_keyword() { return "Mon"; }
-    static const char_type* tuesday_keyword() { return "Tuesday"; }
-    static const char_type* short_tuesday_keyword() { return "Tue"; }
-    static const char_type* wednesday_keyword() { return "Wednesday"; }
-    static const char_type* short_wednesday_keyword() { return "Wed"; }
-    static const char_type* thursday_keyword() { return "Thursday"; }
-    static const char_type* short_thursday_keyword() { return "Thu"; }
-    static const char_type* friday_keyword() { return "Friday"; }
-    static const char_type* short_friday_keyword() { return "Fri"; }
-    static const char_type* saturday_keyword() { return "Saturday"; }
-    static const char_type* short_saturday_keyword() { return "Sat"; }
-    static const char_type* sunday_keyword() { return "Sunday"; }
-    static const char_type* short_sunday_keyword() { return "Sun"; }
+    static literal_type monday_keyword() { return literal_type("Monday"); }
+    static literal_type short_monday_keyword() { return literal_type("Mon"); }
+    static literal_type tuesday_keyword() { return literal_type("Tuesday"); }
+    static literal_type short_tuesday_keyword() { return literal_type("Tue"); }
+    static literal_type wednesday_keyword() { return literal_type("Wednesday"); }
+    static literal_type short_wednesday_keyword() { return literal_type("Wed"); }
+    static literal_type thursday_keyword() { return literal_type("Thursday"); }
+    static literal_type short_thursday_keyword() { return literal_type("Thu"); }
+    static literal_type friday_keyword() { return literal_type("Friday"); }
+    static literal_type short_friday_keyword() { return literal_type("Fri"); }
+    static literal_type saturday_keyword() { return literal_type("Saturday"); }
+    static literal_type short_saturday_keyword() { return literal_type("Sat"); }
+    static literal_type sunday_keyword() { return literal_type("Sunday"); }
+    static literal_type short_sunday_keyword() { return literal_type("Sun"); }
 
     static std::ostream& get_console_log_stream() { return std::clog; }
 
@@ -147,7 +152,16 @@ struct char_constants< char >
         return n;
     }
 
-    static void translate_escape_sequences(std::basic_string< char_type >& str);
+    //! Skips spaces in the beginning of the input
+    static const char_type* trim_spaces_left(const char_type* begin, const char_type* end);
+    //! Skips spaces in the end of the input
+    static const char_type* trim_spaces_right(const char_type* begin, const char_type* end);
+    //! Scans for the attribute name placeholder in the input
+    static const char_type* scan_attr_placeholder(const char_type* begin, const char_type* end);
+    //! Parses an operand string (possibly quoted) from the input
+    static const char_type* parse_operand(const char_type* begin, const char_type* end, string_type& operand);
+    //! Converts escape sequences to the corresponding characters
+    static void translate_escape_sequences(string_type& str);
 };
 #endif
 
@@ -156,8 +170,12 @@ template< >
 struct char_constants< wchar_t >
 {
     typedef wchar_t char_type;
+    typedef std::basic_string< char_type > string_type;
+    typedef boost::log::basic_string_literal< char_type > literal_type;
+
     static const char_type char_comment = L'#';
     static const char_type char_comma = L',';
+    static const char_type char_dot = L'.';
     static const char_type char_quote = L'"';
     static const char_type char_percent = L'%';
     static const char_type char_exclamation = L'!';
@@ -189,8 +207,8 @@ struct char_constants< wchar_t >
 
     static const char_type* message_text_keyword() { return L"_"; }
 
-    static const char_type* true_keyword() { return L"true"; }
-    static const char_type* false_keyword() { return L"false"; }
+    static literal_type true_keyword() { return literal_type(L"true"); }
+    static literal_type false_keyword() { return literal_type(L"false"); }
 
     static const char_type* default_level_attribute_name() { return L"Severity"; }
 
@@ -233,20 +251,20 @@ struct char_constants< wchar_t >
     static const char_type* simple_event_log_destination() { return L"SimpleEventLog"; }
     static const char_type* debugger_destination() { return L"Debugger"; }
 
-    static const char_type* monday_keyword() { return L"Monday"; }
-    static const char_type* short_monday_keyword() { return L"Mon"; }
-    static const char_type* tuesday_keyword() { return L"Tuesday"; }
-    static const char_type* short_tuesday_keyword() { return L"Tue"; }
-    static const char_type* wednesday_keyword() { return L"Wednesday"; }
-    static const char_type* short_wednesday_keyword() { return L"Wed"; }
-    static const char_type* thursday_keyword() { return L"Thursday"; }
-    static const char_type* short_thursday_keyword() { return L"Thu"; }
-    static const char_type* friday_keyword() { return L"Friday"; }
-    static const char_type* short_friday_keyword() { return L"Fri"; }
-    static const char_type* saturday_keyword() { return L"Saturday"; }
-    static const char_type* short_saturday_keyword() { return L"Sat"; }
-    static const char_type* sunday_keyword() { return L"Sunday"; }
-    static const char_type* short_sunday_keyword() { return L"Sun"; }
+    static literal_type monday_keyword() { return literal_type(L"Monday"); }
+    static literal_type short_monday_keyword() { return literal_type(L"Mon"); }
+    static literal_type tuesday_keyword() { return literal_type(L"Tuesday"); }
+    static literal_type short_tuesday_keyword() { return literal_type(L"Tue"); }
+    static literal_type wednesday_keyword() { return literal_type(L"Wednesday"); }
+    static literal_type short_wednesday_keyword() { return literal_type(L"Wed"); }
+    static literal_type thursday_keyword() { return literal_type(L"Thursday"); }
+    static literal_type short_thursday_keyword() { return literal_type(L"Thu"); }
+    static literal_type friday_keyword() { return literal_type(L"Friday"); }
+    static literal_type short_friday_keyword() { return literal_type(L"Fri"); }
+    static literal_type saturday_keyword() { return literal_type(L"Saturday"); }
+    static literal_type short_saturday_keyword() { return literal_type(L"Sat"); }
+    static literal_type sunday_keyword() { return literal_type(L"Sunday"); }
+    static literal_type short_sunday_keyword() { return literal_type(L"Sun"); }
 
     static std::wostream& get_console_log_stream() { return std::wclog; }
 
@@ -267,7 +285,16 @@ struct char_constants< wchar_t >
         return (c >= L'0' && c <= L'9') || (c >= L'a' && c <= L'f') || (c >= L'A' && c <= L'F');
     }
 
-    static void translate_escape_sequences(std::basic_string< char_type >& str);
+    //! Skips spaces in the beginning of the input
+    static const char_type* trim_spaces_left(const char_type* begin, const char_type* end);
+    //! Skips spaces in the end of the input
+    static const char_type* trim_spaces_right(const char_type* begin, const char_type* end);
+    //! Scans for the attribute name placeholder in the input
+    static const char_type* scan_attr_placeholder(const char_type* begin, const char_type* end);
+    //! Parses an operand string (possibly quoted) from the input
+    static const char_type* parse_operand(const char_type* begin, const char_type* end, string_type& operand);
+    //! Converts escape sequences to the corresponding characters
+    static void translate_escape_sequences(string_type& str);
 };
 #endif
 

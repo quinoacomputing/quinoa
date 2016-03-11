@@ -13,6 +13,8 @@
 #include <boost/math/special_functions/fpclassify.hpp>
 #define BOOST_TEST_MAIN
 #include <boost/test/unit_test.hpp>
+#include <iostream>
+#include <iomanip>
 
 #ifdef _MSC_VER
 #pragma warning(disable: 4127 4146) //  conditional expression is constant
@@ -273,10 +275,11 @@ BOOST_AUTO_TEST_CASE( test_main )
    // then run the tests:
    test_classify(float(0), "float");
    test_classify(double(0), "double");
-#ifndef BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS
+   // long double support for fpclassify is considered "core" so we always test it
+   // even when long double support is turned off via BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS
    test_classify((long double)(0), "long double");
    test_classify((boost::math::concepts::real_concept)(0), "real_concept");
-#endif
+
    // We should test with integer types as well:
    test_classify(int(0), "int");
    test_classify(unsigned(0), "unsigned");

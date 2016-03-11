@@ -2,7 +2,7 @@
 // udp.cpp
 // ~~~~~~~
 //
-// Copyright (c) 2003-2013 Christopher M. Kohlhoff (chris at kohlhoff dot com)
+// Copyright (c) 2003-2015 Christopher M. Kohlhoff (chris at kohlhoff dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -79,8 +79,11 @@ void test()
     ip::udp::socket socket3(ios, ip::udp::v6());
     ip::udp::socket socket4(ios, ip::udp::endpoint(ip::udp::v4(), 0));
     ip::udp::socket socket5(ios, ip::udp::endpoint(ip::udp::v6(), 0));
-    int native_socket1 = ::socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+#if !defined(BOOST_ASIO_WINDOWS_RUNTIME)
+    ip::udp::socket::native_handle_type native_socket1
+      = ::socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     ip::udp::socket socket6(ios, ip::udp::v4(), native_socket1);
+#endif // !defined(BOOST_ASIO_WINDOWS_RUNTIME)
 
 #if defined(BOOST_ASIO_HAS_MOVE)
     ip::udp::socket socket7(std::move(socket6));
@@ -113,10 +116,14 @@ void test()
     socket1.open(ip::udp::v4(), ec);
     socket1.open(ip::udp::v6(), ec);
 
-    int native_socket2 = ::socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+#if !defined(BOOST_ASIO_WINDOWS_RUNTIME)
+    ip::udp::socket::native_handle_type native_socket2
+      = ::socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     socket1.assign(ip::udp::v4(), native_socket2);
-    int native_socket3 = ::socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    ip::udp::socket::native_handle_type native_socket3
+      = ::socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     socket1.assign(ip::udp::v4(), native_socket3, ec);
+#endif // !defined(BOOST_ASIO_WINDOWS_RUNTIME)
 
     bool is_open = socket1.is_open();
     (void)is_open;

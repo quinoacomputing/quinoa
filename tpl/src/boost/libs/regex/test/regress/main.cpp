@@ -19,6 +19,8 @@
 #include "test.hpp"
 #include "test_locale.hpp"
 #include <stdarg.h>
+#include <iostream>
+#include <iomanip>
 
 #ifdef BOOST_HAS_ICU
 #include <unicode/uloc.h>
@@ -82,6 +84,7 @@ void run_tests()
    RUN_TESTS(test_pocessive_repeats);
    RUN_TESTS(test_mark_resets);
    RUN_TESTS(test_recursion);
+   RUN_TESTS(test_verbs);
 }
 
 int cpp_main(int /*argc*/, char * /*argv*/[])
@@ -159,6 +162,7 @@ const int* make_array(int first, ...)
 #else
    static int data[200];
 #endif
+   std::fill_n(data, 200, -2);
    va_list ap;
    va_start(ap, first);
    //
@@ -183,19 +187,6 @@ const int* make_array(int first, ...)
    va_end(ap);
    return data;
 }
-
-#ifdef BOOST_NO_EXCEPTIONS
-
-namespace boost{
-
-void throw_exception(std::exception const & e)
-{
-   std::abort();
-}
-
-}
-
-#endif
 
 void test(const char& c, const test_regex_replace_tag& tag)
 {
@@ -225,7 +216,7 @@ void test(const wchar_t& c, const test_invalid_regex_tag& tag)
 }
 #endif
 
-#ifdef BOOST_NO_EXCETIONS
+#ifdef BOOST_NO_EXCEPTIONS
 namespace boost{
 
 void throw_exception( std::exception const & e )
@@ -235,6 +226,14 @@ void throw_exception( std::exception const & e )
 }
 
 }
-#endif
 
-#include <boost/test/included/prg_exec_monitor.hpp>
+int main(int argc, char * argv[])
+{
+   return cpp_main(argc, argv);
+}
+
+#else
+
+#include <boost/detail/lightweight_main.hpp>
+
+#endif

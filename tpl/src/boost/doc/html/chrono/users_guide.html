@@ -1,3 +1,4 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
@@ -5,8 +6,8 @@
 <link rel="stylesheet" href="../../../doc/src/boostbook.css" type="text/css">
 <meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
 <link rel="home" href="../index.html" title="The Boost C++ Libraries BoostBook Documentation Subset">
-<link rel="up" href="../chrono.html" title="Chapter&#160;5.&#160;Boost.Chrono 2.0.2">
-<link rel="prev" href="../chrono.html" title="Chapter&#160;5.&#160;Boost.Chrono 2.0.2">
+<link rel="up" href="../chrono.html" title="Chapter&#160;6.&#160;Boost.Chrono 2.0.5">
+<link rel="prev" href="../chrono.html" title="Chapter&#160;6.&#160;Boost.Chrono 2.0.5">
 <link rel="next" href="reference.html" title="Reference">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
@@ -83,9 +84,8 @@
           you will need to link with boost_system.
         </p>
 <p>
-          Boost.System has un undocumented feature (use of macro BOOST_ERROR_CODE_HEADER_ONLY)
-          to make it header only, but it is buggy (see <a href="http://svn.boost.org/trac/boost/ticket/7347" target="_top">#7347</a>
-          duplicate symbol while BOOST_ERROR_CODE_HEADER_ONLY is defined)
+          Boost.System has an undocumented feature (use of macro BOOST_ERROR_CODE_HEADER_ONLY)
+          to make it header only.
         </p>
 <p>
           If <a class="link" href="reference.html#chrono.reference.cpp0x.chrono_chrono_hpp.conf.header_only" title="How to Build Boost.Chrono as a Header Only Library?"><code class="computeroutput"><span class="identifier">BOOST_CHRONO_HEADER_ONLY</span></code></a> is not
@@ -214,6 +214,12 @@
 <li class="listitem">
               GCC 4.6.0 -std=c++0x
             </li>
+<li class="listitem">
+              GCC 4.8.0
+            </li>
+<li class="listitem">
+              GCC 4.8.0 -std=c++0x
+            </li>
 </ul></div>
 <p>
           Ubuntu with * GCC 4.4.6 * GCC 4.4.6 -std=c++0x * GCC 4.5.4 * GCC 4.5.4
@@ -246,34 +252,31 @@
               GCC 4.7.1 -std=c++0x
             </li>
 <li class="listitem">
-              clang 1.6
+              GCC 4.7.2
             </li>
 <li class="listitem">
-              clang 2.9
+              GCC 4.7.2 -std=c++0x
             </li>
 <li class="listitem">
-              clang 2.9 -std=c++0x
+              GCC 4.8.0
             </li>
 <li class="listitem">
-              clang 3.0
+              GCC 4.8.0 -std=c++0x
             </li>
 <li class="listitem">
-              clang 3.0 -std=c++0x
+              GCC 4.8.1
+            </li>
+<li class="listitem">
+              GCC 4.8.1 -std=c++0x
             </li>
 <li class="listitem">
               clang 3.1
-            </li>
-<li class="listitem">
-              clang 3.1 -std=c++0x
             </li>
 <li class="listitem">
               clang 3.1 -std=c++0x -stdlib=libc++
             </li>
 <li class="listitem">
               clang 3.2
-            </li>
-<li class="listitem">
-              clang 3.2 -std=c++11
             </li>
 <li class="listitem">
               clang 3.2 -std=c++11 -stdlib=libc++
@@ -1230,7 +1233,7 @@
               spellings for "hours", "minutes" and "seconds",
               and their abbreviations (for the short format). The short or long format
               can be easily chosen by streaming a <code class="computeroutput"><span class="identifier">duration_short</span><span class="special">()</span></code> or <code class="computeroutput"><span class="identifier">duration_long</span><span class="special">()</span></code> manipulator respectively or using
-              the parameterized manimulator <code class="computeroutput"><span class="identifier">duration_fmt</span><span class="special">(</span><span class="identifier">duration_style</span><span class="special">::</span><span class="identifier">prefix</span><span class="special">)</span></code> or <code class="computeroutput"><span class="identifier">duration_fmt</span><span class="special">(</span><span class="identifier">duration_style</span><span class="special">::</span><span class="identifier">symbol</span><span class="special">)</span></code>.
+              the parameterized manipulator <code class="computeroutput"><span class="identifier">duration_fmt</span><span class="special">(</span><span class="identifier">duration_style</span><span class="special">::</span><span class="identifier">prefix</span><span class="special">)</span></code> or <code class="computeroutput"><span class="identifier">duration_fmt</span><span class="special">(</span><span class="identifier">duration_style</span><span class="special">::</span><span class="identifier">symbol</span><span class="special">)</span></code>.
             </p>
 </td></tr>
 </table></div>
@@ -2231,7 +2234,7 @@
               </li>
 <li class="listitem">
                 <code class="computeroutput"><span class="identifier">ss</span><span class="special">.</span><span class="identifier">cc</span></code> is the number of <code class="computeroutput"><span class="identifier">seconds</span></code> rounded to the nearest
-                hundreth of a second
+                hundredth of a second
                 <div class="orderedlist"><ol class="orderedlist" type="1">
 <li class="listitem">
                       include &lt;boost/chrono/chrono_io.hpp&gt;
@@ -2364,7 +2367,7 @@
 <span class="special">}}</span>
 </pre>
 <p>
-            Next is the <code class="computeroutput"><span class="identifier">boost</span><span class="special">::</span><span class="identifier">thread</span><span class="special">::</span><span class="identifier">timed_mutex</span></code> modified fuctions
+            Next is the <code class="computeroutput"><span class="identifier">boost</span><span class="special">::</span><span class="identifier">thread</span><span class="special">::</span><span class="identifier">timed_mutex</span></code> modified functions
           </p>
 <pre class="programlisting"><span class="keyword">namespace</span> <span class="identifier">boost</span> <span class="special">{</span>
 <span class="keyword">struct</span> <span class="identifier">timed_mutex</span> <span class="special">{</span>

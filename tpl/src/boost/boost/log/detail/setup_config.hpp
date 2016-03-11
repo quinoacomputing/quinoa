@@ -1,5 +1,5 @@
 /*
- *          Copyright Andrey Semashev 2007 - 2013.
+ *          Copyright Andrey Semashev 2007 - 2015.
  * Distributed under the Boost Software License, Version 1.0.
  *    (See accompanying file LICENSE_1_0.txt or copy at
  *          http://www.boost.org/LICENSE_1_0.txt)
@@ -10,7 +10,7 @@
  * \date   14.09.2009
  *
  * \brief  This header is the Boost.Log library implementation, see the library documentation
- *         at http://www.boost.org/libs/log/doc/log.html. In this file
+ *         at http://www.boost.org/doc/libs/release/libs/log/doc/html/index.html. In this file
  *         internal configuration macros are defined.
  */
 
@@ -19,7 +19,7 @@
 
 #include <boost/log/detail/config.hpp>
 
-#ifdef BOOST_LOG_HAS_PRAGMA_ONCE
+#ifdef BOOST_HAS_PRAGMA_ONCE
 #pragma once
 #endif
 
@@ -30,11 +30,12 @@
 #        define BOOST_LOG_SETUP_DLL
 #   endif
 
-#   if defined(BOOST_HAS_DECLSPEC) && defined(BOOST_LOG_SETUP_DLL)
-#       define BOOST_LOG_SETUP_API __declspec(dllimport)
+#   if defined(BOOST_LOG_SETUP_DLL)
+#       define BOOST_LOG_SETUP_API BOOST_SYMBOL_IMPORT
 #   else
 #       define BOOST_LOG_SETUP_API
-#   endif // defined(BOOST_HAS_DECLSPEC)
+#   endif
+
 //
 // Automatically link to the correct build variant where possible.
 //
@@ -48,12 +49,10 @@
 
 #else // !defined(BOOST_LOG_SETUP_BUILDING_THE_LIB)
 
-#   if defined(BOOST_HAS_DECLSPEC) && defined(BOOST_LOG_SETUP_DLL)
-#       define BOOST_LOG_SETUP_API __declspec(dllexport)
-#   elif defined(__GNUC__) && __GNUC__ >= 4 && (defined(linux) || defined(__linux) || defined(__linux__))
-#       define BOOST_LOG_SETUP_API __attribute__((visibility("default")))
+#   if defined(BOOST_LOG_SETUP_DLL)
+#       define BOOST_LOG_SETUP_API BOOST_SYMBOL_EXPORT
 #   else
-#       define BOOST_LOG_SETUP_API
+#       define BOOST_LOG_SETUP_API BOOST_SYMBOL_VISIBLE
 #   endif
 
 #endif // !defined(BOOST_LOG_SETUP_BUILDING_THE_LIB)

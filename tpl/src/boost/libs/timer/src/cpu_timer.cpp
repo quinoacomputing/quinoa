@@ -53,10 +53,10 @@ namespace
     os.setf(std::ios_base::fixed, std::ios_base::floatfield);
     os.precision(places);
 
-    const long double sec = 1000000000.0L;
+    const double sec = 1000000000.0L;
     nanosecond_type total = times.system + times.user;
-    long double wall_sec = times.wall / sec;
-    long double total_sec = total / sec;
+    double wall_sec = static_cast<double>(times.wall) / sec;
+    double total_sec = static_cast<double>(total) / sec;
 
     for (const char* format = fmt.c_str(); *format; ++format)
     {
@@ -69,16 +69,16 @@ namespace
         switch (*format)
         {
         case 'w':
-          os << times.wall / sec;
+          os << wall_sec;
           break;
         case 'u':
-          os << times.user / sec;
+          os << static_cast<double>(times.user) / sec;
           break;
         case 's':
-          os << times.system / sec;
+          os << static_cast<double>(times.system) / sec;
           break;
         case 't':
-          os << total / sec;
+          os << total_sec;
           break;
         case 'p':
           os.precision(1);
@@ -136,7 +136,7 @@ namespace
 # else
     tms tm;
     clock_t c = ::times(&tm);
-    if (c == -1) // error
+    if (c == static_cast<clock_t>(-1)) // error
     {
       current.system = current.user = boost::timer::nanosecond_type(-1);
     }
@@ -173,6 +173,7 @@ namespace boost
     std::string format(const cpu_times& times, short places, const std::string& fmt)
     {
       std::stringstream ss;
+      ss.exceptions(std::ios_base::badbit | std::ios_base::failbit);
       show_time(times, ss, fmt, places);
       return ss.str();
     }
@@ -185,13 +186,13 @@ namespace boost
 
     //  cpu_timer  ---------------------------------------------------------------------//
 
-    void cpu_timer::start()
+    void cpu_timer::start() BOOST_NOEXCEPT
     {
       m_is_stopped = false;
       get_cpu_times(m_times);
     }
 
-    void cpu_timer::stop()
+    void cpu_timer::stop() BOOST_NOEXCEPT
     {
       if (is_stopped())
         return;
@@ -204,7 +205,7 @@ namespace boost
       m_times.system = (current.system - m_times.system);
     }
 
-    cpu_times cpu_timer::elapsed() const
+    cpu_times cpu_timer::elapsed() const BOOST_NOEXCEPT
     {
       if (is_stopped())
         return m_times;
@@ -216,7 +217,7 @@ namespace boost
       return current;
     }
 
-    void cpu_timer::resume()
+    void cpu_timer::resume() BOOST_NOEXCEPT
     {
       if (is_stopped())
       {

@@ -13,13 +13,11 @@
 
 #include <boost/interprocess/detail/config_begin.hpp>
 #include "check_equal_containers.hpp"
-#include <memory>
-#include <set>
-#include <functional>
 #include "print_container.hpp"
-#include <boost/interprocess/detail/move.hpp>
-#include <string>
+#include <boost/move/utility_core.hpp>
 #include "get_process_id_name.hpp"
+
+#include <functional>
 
 namespace boost{
 namespace interprocess{
@@ -573,6 +571,8 @@ int set_test_copyable ()
       }
       segment.destroy_ptr(shmset);
       segment.destroy_ptr(shmmultiset);
+      delete stdset;
+      delete stdmultiset;
       segment.shrink_to_fit_indexes();
       if(!segment.all_memory_deallocated())
          return 1;

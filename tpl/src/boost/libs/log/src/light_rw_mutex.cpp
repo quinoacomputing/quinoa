@@ -1,5 +1,5 @@
 /*
- *          Copyright Andrey Semashev 2007 - 2013.
+ *          Copyright Andrey Semashev 2007 - 2015.
  * Distributed under the Boost Software License, Version 1.0.
  *    (See accompanying file LICENSE_1_0.txt or copy at
  *          http://www.boost.org/LICENSE_1_0.txt)
@@ -10,7 +10,7 @@
  * \date   19.06.2010
  *
  * \brief  This header is the Boost.Log library implementation, see the library documentation
- *         at http://www.boost.org/libs/log/doc/log.html.
+ *         at http://www.boost.org/doc/libs/release/libs/log/doc/html/index.html.
  */
 
 // This first include is to ensure that __MSVCRT_VERSION__ is defined properly
@@ -23,21 +23,14 @@
 
 #include <new>
 #include <boost/assert.hpp>
+#include <boost/align/aligned_alloc.hpp>
 #include <boost/thread/shared_mutex.hpp>
 #include <boost/log/utility/once_block.hpp>
 
 #include "windows_version.hpp"
 #include <windows.h>
-#include <malloc.h>
 
 #include <boost/log/detail/header.hpp>
-
-#if defined(__MINGW32__) && __MSVCRT_VERSION__ < 0x0700
-// MinGW doesn't declare aligned memory allocation routines for MSVC 6 runtime
-inline void* _aligned_malloc(size_t size, size_t) { return malloc(size); }
-inline void _aligned_free(void* p) { free(p); }
-#endif
-
 
 namespace boost {
 
@@ -67,17 +60,15 @@ void __stdcall InitializeSharedMutex(mutex_impl* mtx)
     // To avoid cache line aliasing we do aligned memory allocation here
     enum
     {
-        // Cache line size on x86
-        cache_line_size = 64,
         // Allocation size is the minimum number of cache lines to accommodate shared_mutex
         size =
             (
-                sizeof(shared_mutex) / cache_line_size
-                + ((sizeof(shared_mutex) % cache_line_size) != 0)
+                sizeof(shared_mutex) / BOOST_LOG_CPU_CACHE_LINE_SIZE
+                + ((sizeof(shared_mutex) % BOOST_LOG_CPU_CACHE_LINE_SIZE) != 0)
             )
-            * cache_line_size
+            * BOOST_LOG_CPU_CACHE_LINE_SIZE
     };
-    mtx->p = _aligned_malloc(size, cache_line_size);
+    mtx->p = alignment::aligned_alloc(BOOST_LOG_CPU_CACHE_LINE_SIZE, size);
     BOOST_ASSERT(mtx->p != NULL);
     new (mtx->p) shared_mutex();
 }
@@ -85,7 +76,7 @@ void __stdcall InitializeSharedMutex(mutex_impl* mtx)
 void __stdcall DeinitializeSharedMutex(mutex_impl* mtx)
 {
     static_cast< shared_mutex* >(mtx->p)->~shared_mutex();
-    _aligned_free(mtx->p);
+    alignment::aligned_free(mtx->p);
     mtx->p = NULL;
 }
 

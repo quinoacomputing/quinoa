@@ -8,9 +8,9 @@
 //
 // See http://www.boost.org/libs/mpl for documentation.
 
-// $Id: map.cpp 55752 2009-08-24 04:17:30Z agurtovoy $
-// $Date: 2009-08-23 21:17:30 -0700 (Sun, 23 Aug 2009) $
-// $Revision: 55752 $
+// $Id$
+// $Date$
+// $Revision$
 
 #include <boost/mpl/map.hpp>
 #include <boost/mpl/insert.hpp>
@@ -216,4 +216,20 @@ MPL_TEST_CASE()
           , long
         >
     ));
+}
+
+MPL_TEST_CASE()
+{
+    typedef insert< map<>, pair<int,int> >::type little_map;
+
+    MPL_ASSERT_RELATION(size<little_map>::value, ==, 1);
+    MPL_ASSERT_RELATION(size<little_map::type>::value, ==, 1);
+}
+
+MPL_TEST_CASE()
+{
+    typedef erase_key< map< pair<float,float>, pair<int,int> >, float >::type little_map;
+
+    MPL_ASSERT_RELATION(size<little_map>::value, ==, 1);
+    MPL_ASSERT_RELATION(size<little_map::type>::value, ==, 1);
 }

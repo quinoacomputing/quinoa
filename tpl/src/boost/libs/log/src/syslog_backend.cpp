@@ -1,5 +1,5 @@
 /*
- *          Copyright Andrey Semashev 2007 - 2013.
+ *          Copyright Andrey Semashev 2007 - 2015.
  * Distributed under the Boost Software License, Version 1.0.
  *    (See accompanying file LICENSE_1_0.txt or copy at
  *          http://www.boost.org/LICENSE_1_0.txt)
@@ -10,21 +10,21 @@
  * \date   08.01.2008
  *
  * \brief  This header is the Boost.Log library implementation, see the library documentation
- *         at http://www.boost.org/libs/log/doc/log.html.
+ *         at http://www.boost.org/doc/libs/release/libs/log/doc/html/index.html.
  */
 
 #ifndef BOOST_LOG_WITHOUT_SYSLOG
 
 #include "windows_version.hpp"
 #include <boost/log/detail/config.hpp>
-#include <memory>
+#include <ctime>
 #include <algorithm>
 #include <stdexcept>
 #include <boost/limits.hpp>
 #include <boost/assert.hpp>
-#include <boost/weak_ptr.hpp>
-#include <boost/shared_ptr.hpp>
-#include <boost/make_shared.hpp>
+#include <boost/smart_ptr/weak_ptr.hpp>
+#include <boost/smart_ptr/shared_ptr.hpp>
+#include <boost/smart_ptr/make_shared_object.hpp>
 #include <boost/throw_exception.hpp>
 #if !defined(BOOST_LOG_NO_ASIO)
 #include <boost/asio/buffer.hpp>
@@ -36,7 +36,6 @@
 #endif
 #include <boost/system/error_code.hpp>
 #include <boost/date_time/c_time.hpp>
-#include <ctime>
 #include <boost/log/sinks/syslog_backend.hpp>
 #include <boost/log/detail/singleton.hpp>
 #include <boost/log/detail/snprintf.hpp>
@@ -45,6 +44,7 @@
 #include <boost/thread/locks.hpp>
 #include <boost/thread/mutex.hpp>
 #endif
+#include "unique_ptr.hpp"
 
 #ifdef BOOST_LOG_USE_NATIVE_SYSLOG
 #include <syslog.h>
@@ -271,7 +271,7 @@ private:
             LOG_LOCAL7
         };
 
-        register std::size_t n = static_cast< unsigned int >(fac) / 8U;
+        std::size_t n = static_cast< unsigned int >(fac) / 8U;
         BOOST_ASSERT(n < sizeof(native_facilities) / sizeof(*native_facilities));
         return native_facilities[n];
     }
@@ -373,7 +373,7 @@ BOOST_LOG_ANONYMOUS_NAMESPACE {
 
         // The packet size is mandated in RFC3164, plus one for the terminating zero
         char packet[1025];
-        std::size_t packet_size = boost::log::aux::snprintf
+        int n = boost::log::aux::snprintf
         (
             packet,
             sizeof(packet),
@@ -387,8 +387,11 @@ BOOST_LOG_ANONYMOUS_NAMESPACE {
             local_host_name,
             message
         );
-
-        m_Socket.send_to(asio::buffer(packet, packet_size), target);
+        if (n > 0)
+        {
+            std::size_t packet_size = static_cast< std::size_t >(n) >= sizeof(packet) ? sizeof(packet) - 1u : static_cast< std::size_t >(n);
+            m_Socket.send_to(asio::buffer(packet, packet_size), target);
+        }
     }
 
 } // namespace
@@ -401,7 +404,7 @@ struct syslog_backend::implementation::udp_socket_based :
     //! Pointer to the list of sockets
     shared_ptr< syslog_udp_service > m_pService;
     //! Pointer to the socket being used
-    std::auto_ptr< syslog_udp_socket > m_pSocket;
+    log::aux::unique_ptr< syslog_udp_socket > m_pSocket;
     //! The target host to send packets to
     asio::ip::udp::endpoint m_TargetHost;
 

@@ -18,7 +18,7 @@ import os ;
 
 project boost-geometry-index-example
     : requirements
-        <source>/boost//headers
+        <implicit-dependency>/boost//headers
     ;
 
 local GLUT_ROOT = [ os.environ GLUT_ROOT ] ;
@@ -44,6 +44,7 @@ if $(GLUT_ROOT)
 }
 
 exe random_test : random_test.cpp ;
+link serialize.cpp /boost//serialization : ;
 link benchmark.cpp /boost//chrono : <threading>multi ;
 link benchmark2.cpp /boost//chrono : <threading>multi ;
 link benchmark3.cpp /boost//chrono : <threading>multi ;

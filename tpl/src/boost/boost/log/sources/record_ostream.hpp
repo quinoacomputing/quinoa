@@ -1,5 +1,5 @@
 /*
- *          Copyright Andrey Semashev 2007 - 2013.
+ *          Copyright Andrey Semashev 2007 - 2015.
  * Distributed under the Boost Software License, Version 1.0.
  *    (See accompanying file LICENSE_1_0.txt or copy at
  *          http://www.boost.org/LICENSE_1_0.txt)
@@ -27,17 +27,29 @@
 #include <boost/log/detail/unhandled_exception_count.hpp>
 #include <boost/log/core/record.hpp>
 #include <boost/log/utility/unique_identifier_name.hpp>
-#include <boost/log/utility/explicit_operator_bool.hpp>
+#include <boost/utility/explicit_operator_bool.hpp>
 #include <boost/log/utility/formatting_ostream.hpp>
 #include <boost/log/detail/header.hpp>
 
-#ifdef BOOST_LOG_HAS_PRAGMA_ONCE
+#ifdef BOOST_HAS_PRAGMA_ONCE
 #pragma once
 #endif
 
 namespace boost {
 
 BOOST_LOG_OPEN_NAMESPACE
+
+template< typename CharT >
+class basic_record_ostream;
+
+namespace aux {
+
+template< typename StreamT, typename R >
+struct enable_if_record_ostream {};
+template< typename CharT, typename R >
+struct enable_if_record_ostream< basic_record_ostream< CharT >, R > { typedef R type; };
+
+} // namespace aux
 
 /*!
  * \brief Logging record adapter with a streaming capability
@@ -103,7 +115,7 @@ public:
      * \return \c true, if stream is valid and ready for formatting, \c false, if the stream is not valid. The latter also applies to
      *         the case when the stream is not attached to a log record.
      */
-    BOOST_LOG_EXPLICIT_OPERATOR_BOOL()
+    BOOST_EXPLICIT_OPERATOR_BOOL_NOEXCEPT()
 
     /*!
      * Inverted conversion to an unspecified boolean type
@@ -162,8 +174,8 @@ private:
     BOOST_LOG_API void init_stream();
 
     //  Copy and assignment are closed
-    BOOST_LOG_DELETED_FUNCTION(basic_record_ostream(basic_record_ostream const&))
-    BOOST_LOG_DELETED_FUNCTION(basic_record_ostream& operator= (basic_record_ostream const&))
+    BOOST_DELETED_FUNCTION(basic_record_ostream(basic_record_ostream const&))
+    BOOST_DELETED_FUNCTION(basic_record_ostream& operator= (basic_record_ostream const&))
 };
 
 
@@ -173,6 +185,55 @@ typedef basic_record_ostream< char > record_ostream;        //!< Convenience typ
 #ifdef BOOST_LOG_USE_WCHAR_T
 typedef basic_record_ostream< wchar_t > wrecord_ostream;    //!< Convenience typedef for wide-character logging
 #endif
+
+// Implementation note: these operators below should be the least attractive for the compiler
+// so that user's overloads are chosen, when present. We use function template partial ordering for this purpose.
+// We also don't use perfect forwarding for the right hand argument because in ths case the generic overload
+// would be more preferred than the typical one written by users:
+//
+// record_ostream& operator<< (record_ostream& strm, my_type const& arg);
+//
+// This is because my_type rvalues require adding const to the type, which counts as a conversion that is not required
+// if there is a perfect forwarding overload.
+template< typename StreamT, typename T >
+inline typename boost::log::aux::enable_if_record_ostream< StreamT, StreamT& >::type
+operator<< (StreamT& strm, T const& value)
+{
+    typedef basic_formatting_ostream< typename StreamT::char_type > formatting_ostream_type;
+    static_cast< formatting_ostream_type& >(strm) << value;
+    return strm;
+}
+
+template< typename StreamT, typename T >
+inline typename boost::log::aux::enable_if_record_ostream< StreamT, StreamT& >::type
+operator<< (StreamT& strm, T& value)
+{
+    typedef basic_formatting_ostream< typename StreamT::char_type > formatting_ostream_type;
+    static_cast< formatting_ostream_type& >(strm) << value;
+    return strm;
+}
+
+#if !defined(BOOST_NO_CXX11_RVALUE_REFERENCES)
+
+template< typename StreamT, typename T >
+inline typename boost::log::aux::enable_if_record_ostream< StreamT, StreamT& >::type
+operator<< (StreamT&& strm, T const& value)
+{
+    typedef basic_formatting_ostream< typename StreamT::char_type > formatting_ostream_type;
+    static_cast< formatting_ostream_type& >(strm) << value;
+    return strm;
+}
+
+template< typename StreamT, typename T >
+inline typename boost::log::aux::enable_if_record_ostream< StreamT, StreamT& >::type
+operator<< (StreamT&& strm, T& value)
+{
+    typedef basic_formatting_ostream< typename StreamT::char_type > formatting_ostream_type;
+    static_cast< formatting_ostream_type& >(strm) << value;
+    return strm;
+}
+
+#endif // !defined(BOOST_NO_CXX11_RVALUE_REFERENCES)
 
 namespace aux {
 
@@ -201,9 +262,9 @@ struct stream_provider
     BOOST_LOG_API static void release_compound(stream_compound* compound) BOOST_NOEXCEPT;
 
     //  Non-constructible, non-copyable, non-assignable
-    BOOST_LOG_DELETED_FUNCTION(stream_provider())
-    BOOST_LOG_DELETED_FUNCTION(stream_provider(stream_provider const&))
-    BOOST_LOG_DELETED_FUNCTION(stream_provider& operator= (stream_provider const&))
+    BOOST_DELETED_FUNCTION(stream_provider())
+    BOOST_DELETED_FUNCTION(stream_provider(stream_provider const&))
+    BOOST_DELETED_FUNCTION(stream_provider& operator= (stream_provider const&))
 };
 
 
@@ -289,7 +350,7 @@ public:
 };
 
 template< typename LoggerT >
-BOOST_LOG_FORCEINLINE record_pump< LoggerT > make_record_pump(LoggerT& lg, record& rec)
+BOOST_FORCEINLINE record_pump< LoggerT > make_record_pump(LoggerT& lg, record& rec)
 {
     return record_pump< LoggerT >(lg, rec);
 }

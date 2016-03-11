@@ -67,8 +67,15 @@ void expected_results()
       ".*",                          // stdlib
       ".*",                          // platform
       largest_type,                  // test type(s)
+      ".*Integer.*",                 // test data group
+      ".*", 30, 15);                 // test function
+   add_expected_result(
+      ".*",                          // compiler
+      ".*",                          // stdlib
+      ".*",                          // platform
+      largest_type,                  // test type(s)
       ".*",                          // test data group
-      ".*", 3, 1);                   // test function
+      ".*", 3, 3);                   // test function
    add_expected_result(
       ".*",                          // compiler
       ".*",                          // stdlib
@@ -95,7 +102,7 @@ BOOST_AUTO_TEST_CASE( test_main )
    std::cout << "<note>The long double tests have been disabled on this platform "
       "either because the long double overloads of the usual math functions are "
       "not available at all, or because they are too inaccurate for these tests "
-      "to pass.</note>" << std::cout;
+      "to pass.</note>" << std::endl;
 #endif
 
    test_zeta(0.1F, "float");
@@ -107,7 +114,7 @@ BOOST_AUTO_TEST_CASE( test_main )
    std::cout << "<note>The long double tests have been disabled on this platform "
       "either because the long double overloads of the usual math functions are "
       "not available at all, or because they are too inaccurate for these tests "
-      "to pass.</note>" << std::cout;
+      "to pass.</note>" << std::endl;
 #endif
    
 }

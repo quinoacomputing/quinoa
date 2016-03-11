@@ -1,5 +1,5 @@
 /*
- *          Copyright Andrey Semashev 2007 - 2013.
+ *          Copyright Andrey Semashev 2007 - 2015.
  * Distributed under the Boost Software License, Version 1.0.
  *    (See accompanying file LICENSE_1_0.txt or copy at
  *          http://www.boost.org/LICENSE_1_0.txt)
@@ -9,7 +9,8 @@
 #include <iostream>
 #include <stdexcept>
 #include <boost/config.hpp>
-#include <boost/shared_ptr.hpp>
+#include <boost/smart_ptr/shared_ptr.hpp>
+#include <boost/core/null_deleter.hpp>
 #include <boost/log/core.hpp>
 #include <boost/log/expressions.hpp>
 #include <boost/log/sinks/sync_frontend.hpp>
@@ -20,7 +21,6 @@
 #include <boost/log/attributes/attribute_value.hpp>
 #include <boost/log/attributes/attribute_value_impl.hpp>
 #include <boost/log/attributes/attribute_cast.hpp>
-#include <boost/log/utility/empty_deleter.hpp>
 
 // Includes for get_uptime()
 #include <boost/throw_exception.hpp>
@@ -85,7 +85,7 @@ void init_logging()
     // Initialize the sink
     typedef sinks::synchronous_sink< sinks::text_ostream_backend > sink_t;
     boost::shared_ptr< sink_t > sink(new sink_t());
-    sink->locked_backend()->add_stream(boost::shared_ptr< std::ostream >(&std::clog, logging::empty_deleter()));
+    sink->locked_backend()->add_stream(boost::shared_ptr< std::ostream >(&std::clog, boost::null_deleter()));
     sink->set_formatter(expr::stream << expr::attr< unsigned int >("SystemUptime") << ": " << expr::smessage);
     core->add_sink(sink);
     //->

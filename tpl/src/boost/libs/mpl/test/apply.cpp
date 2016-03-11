@@ -7,9 +7,9 @@
 //
 // See http://www.boost.org/libs/mpl for documentation.
 
-// $Id: apply.cpp 49268 2008-10-11 06:26:17Z agurtovoy $
-// $Date: 2008-10-10 23:26:17 -0700 (Fri, 10 Oct 2008) $
-// $Revision: 49268 $
+// $Id$
+// $Date$
+// $Revision$
 
 #include <boost/mpl/apply.hpp>
 #include <boost/mpl/lambda.hpp>
@@ -76,7 +76,7 @@ MPL_TEST_CASE()
 
     typedef apply1< _1, std_vector<_1> >::type v_lambda;
     typedef apply1<v_lambda,int>::type v_int;
-    MPL_ASSERT(( is_same< v,std_vector<int> > ));
+    MPL_ASSERT(( is_same< v_int,std_vector<int> > ));
 }
 
 MPL_TEST_CASE()
@@ -86,7 +86,7 @@ MPL_TEST_CASE()
 
     typedef apply1< lambda<_1>, std_vector<_1> >::type make_vector;
     typedef apply_wrap1< make_vector,int >::type v_int;
-    MPL_ASSERT(( is_same< v,std_vector<int> > ));
+    MPL_ASSERT(( is_same< v_int,std_vector<int> > ));
 }
 
 MPL_TEST_CASE()
