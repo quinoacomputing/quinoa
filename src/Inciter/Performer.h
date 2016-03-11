@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.h
   \author    J. Bakosi
-  \date      Fri 19 Feb 2016 08:45:24 AM MST
+  \date      Thu 10 Mar 2016 09:04:46 PM MST
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Performer advances a PDE
   \details   Performer advances a PDE. There are a potentially
@@ -91,6 +91,7 @@ class Performer : public CBase_Performer {
     tk::real m_t;                       //!< Physical time
     uint8_t m_stage;                    //!< Stage in multi-stage time stepping
     std::size_t m_nsol;                 //!< Counter for solution nodes updated
+    std::string m_outFilename;          //!< Output filename
     ConductorProxy m_conductor;         //!< Conductor proxy
     LinSysMergerProxy m_linsysmerger;   //!< Linear system merger proxy
     //! \brief Map associating old node IDs (as in file) to new node IDs (as in

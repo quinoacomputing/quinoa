@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.C
   \author    J. Bakosi
-  \date      Fri 19 Feb 2016 03:12:36 PM MST
+  \date      Thu 10 Mar 2016 09:05:55 PM MST
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Performer advances a PDE
   \details   Performer advances a PDE. There are a potentially
@@ -48,6 +48,8 @@ Performer::Performer(
   m_t( g_inputdeck.get< tag::discr, tag::t0 >() ),
   m_stage( 0 ),
   m_nsol( 0 ),
+  m_outFilename( g_inputdeck.get< tag::cmd, tag::io, tag::output >() + "." +
+                 std::to_string( thisIndex ) ),
   m_conductor( conductor ),
   m_linsysmerger( lsm ),
   m_cid( cid ),
@@ -198,10 +200,7 @@ Performer::writeMesh()
   tk::UnsMesh mesh( m_inpoel, m_coord );
 
   // Create ExodusII writer
-  tk::ExodusIIMeshWriter
-    ew( g_inputdeck.get< tag::cmd, tag::io, tag::output >() + "_" +
-          std::to_string( thisIndex ),
-        tk::ExoWriter::CREATE );
+  tk::ExodusIIMeshWriter ew( m_outFilename, tk::ExoWriter::CREATE );
 
   // Write chare mesh
   ew.writeMesh( mesh );
@@ -249,10 +248,7 @@ Performer::writeMeta() const
 //******************************************************************************
 {
   // Create ExodusII writer
-  tk::ExodusIIMeshWriter
-    ew( g_inputdeck.get< tag::cmd, tag::io, tag::output >() + "_" +
-          std::to_string( thisIndex ),
-        tk::ExoWriter::OPEN );
+  tk::ExodusIIMeshWriter ew( m_outFilename, tk::ExoWriter::OPEN );
 
   ew.writeElemVarNames( { "Chare Id" } );
 
@@ -278,10 +274,7 @@ Performer::writeFields( tk::real time )
   ++m_itf;
 
   // Create ExodusII writer
-  tk::ExodusIIMeshWriter
-    ew( g_inputdeck.get< tag::cmd, tag::io, tag::output >() + "_" +
-          std::to_string( thisIndex ),
-        tk::ExoWriter::OPEN );
+  tk::ExodusIIMeshWriter ew( m_outFilename, tk::ExoWriter::OPEN );
 
   // Write time stamp
   ew.writeTimeStamp( m_itf, time );

@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Conductor.C
   \author    J. Bakosi
-  \date      Thu 11 Feb 2016 02:03:10 PM MST
+  \date      Thu 10 Mar 2016 09:07:30 PM MST
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Conductor drives the time integration of a PDE
   \details   Conductor drives the time integration of a PDE
@@ -88,7 +88,7 @@ Conductor::Conductor() :
     // Print I/O filenames
     m_print.section( "Output filenames" );
     m_print.item( "Field", g_inputdeck.get< tag::cmd, tag::io, tag::output >()
-                           + "_<PEid>" );
+                           + ".<chareid>" );
 
     // Print output intervals
     m_print.section( "Output intervals" );
