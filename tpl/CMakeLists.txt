@@ -275,7 +275,7 @@ ExternalProject_Add(
   LOG_INSTALL 1
 )
 
-set(NETCDF_ROOT ${CMAKE_INSTALL_PREFIX})
+#set(NETCDF_ROOT ${CMAKE_INSTALL_PREFIX})
 
 ##### Trilinos #################################################################
 ## http://trilinos.sandia.gov
@@ -293,6 +293,7 @@ ExternalProject_Add(
              -D Trilinos_ENABLE_SEACASNemesis:BOOL=ON
              -D Trilinos_ENABLE_SEACASExodiff:BOOL=ON
              -D Trilinos_ENABLE_SECONDARY_STABLE_CODE:BOOL=ON
+             -D Trilinos_ENABLE_DEBUG=OFF
              -D TPL_ENABLE_Netcdf:BOOL=ON
              -D Netcdf_LIBRARY_DIRS:PATH=${CMAKE_INSTALL_PREFIX}/lib
              -D TPL_Netcdf_INCLUDE_DIRS:PATH=${CMAKE_INSTALL_PREFIX}/include
