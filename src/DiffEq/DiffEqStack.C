@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/DiffEqStack.C
   \author    J. Bakosi
-  \date      Fri 05 Feb 2016 07:57:40 AM MST
+  \date      Sun 13 Mar 2016 12:13:43 PM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Stack of differential equations
   \details   This file defines class DiffEqStack, which implements various
@@ -224,7 +224,6 @@ DiffEqStack::DiffEqStack()
   // Register SDE for all combinations of policies
   mpl::cartesian_product< GammaPolicies >(
     registerDiffEq< Gamma >( m_factory, ctr::DiffEqType::GAMMA, m_eqTypes ) );
-
 }
 
 std::vector< walker::DiffEq >
