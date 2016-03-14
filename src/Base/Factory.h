@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Factory.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:09:31 PM MDT
+  \date      Sun 13 Mar 2016 08:47:35 PM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Factory utilities
   \details   Factory utilities. The functions defined in this file help
@@ -126,7 +126,7 @@ void recordModel( Factory& f, const Key& key, ModelConstrArgs&&... args ) {
 //! time when the object is instantiated instead of at the time when it is
 //! registered. This has all the benefits of using a factory and allows passing
 //! information into the model object only when it is available. The late bind
-//! is facilitated via boost::bind instead of std::bind) using a placeholder,
+//! is facilitated via boost::bind instead of std::bind using a placeholder,
 //! _1, which stands for the first argument (bound later, i.e., not here). The
 //! value of the model constructor argument is then not used here, only its
 //! type, used to perform the late binding. The binding happens to both the
@@ -150,7 +150,7 @@ template< class Host, class ModelConstructor, class Factory, class Key,
           typename ModelConstrArg >
 void recordModelLate( Factory& f, const Key& key, ModelConstrArg ) {
   // Prescribe late binding the model constructor to its single argument
-  std::function< ModelConstructor(ModelConstrArg) > c =
+  std::function< ModelConstructor(const ModelConstrArg&) > c =
     boost::bind( boost::value_factory< ModelConstructor >(), _1 );
   // Bind host to std::function of model constructor and place in factory and
   // also explicitly bind single model constructor argument to host constructor

@@ -2,7 +2,7 @@
 /*!
   \file      src/PDE/PDEStack.h
   \author    J. Bakosi
-  \date      Fri 05 Feb 2016 05:33:12 AM MST
+  \date      Mon 14 Mar 2016 08:13:02 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Stack of differential equations
   \details   This file declares class PDEStack, which implements various
@@ -42,7 +42,8 @@ using ncomp_t = kw::ncomp::info::expect::type;
 //! \brief Partial differential equation factory: keys associated to their
 //!   constructors
 //! \author J. Bakosi
-using PDEFactory = std::map< ctr::PDEKey, std::function< PDE( ncomp_t ) > >;
+using PDEFactory =
+  std::map< ctr::PDEKey, std::function< PDE(const ncomp_t&) > >;
 
 //! \brief Partial differential equations stack
 //! \author J. Bakosi

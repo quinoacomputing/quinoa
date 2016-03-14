@@ -2,7 +2,7 @@
 /*!
   \file      src/PDE/PDE.h
   \author    J. Bakosi
-  \date      Wed 17 Feb 2016 10:35:56 AM MST
+  \date      Mon 14 Mar 2016 09:39:33 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Partial differential equation
   \details   This file defines a generic partial differential equation class.
@@ -68,8 +68,9 @@ class PDE {
     //!    Concept.
     //! \param[in] args Zero or more constructor arguments
     template< typename T, typename...Args >
-    explicit PDE( std::function<T(Args...)> x, Args... args ) :
-      self( tk::make_unique< Model<T> >( std::move(x(args...)) ) ) {}
+    explicit PDE( std::function<T(Args...)> x, Args&&... args ) :
+      self( tk::make_unique< Model<T> >(
+              std::move( x( std::forward<Args>(args)... ) ) ) ) {}
 
     //! Public interface to setting the initial conditions for the diff eq
     void initialize( const std::array< std::vector< tk::real >, 3 >& coord,
