@@ -1,4 +1,8 @@
-# Third-party libraries paths
+# Find third-party libraries
+
+# Add TPL_DIR/include to modules directory for TPLs that provide cmake
+# FIND_PACKAGE code, such as Trilinos
+SET(CMAKE_PREFIX_PATH ${TPL_DIR} ${CMAKE_PREFIX_PATH})
 
 #### MKL (optional)
 find_library(MKL_INTERFACE_LIBRARY
@@ -51,8 +55,10 @@ else()
   set(HAS_MKL off)
 endif()
 
-#### Boost C++ libraries
-if (NOT NO_SYSTEM_BOOST)
+#### TPLs we attempt to find on the system #####################################
+
+#### Boost
+if(NOT NO_SYSTEM_BOOST)
   set(BOOST_INCLUDEDIR ${TPL_DIR}/include) # prefer ours
   find_package(Boost REQUIRED)
 endif()
@@ -61,29 +67,17 @@ if(Boost_FOUND)
   include_directories(${Boost_INCLUDE_DIR})
 endif()
 
-#### Trilinos
-FIND_PACKAGE(Trilinos REQUIRED)
-MESSAGE(STATUS "Found Trilinos:")
-MESSAGE(STATUS " * Trilinos_DIR = ${Trilinos_DIR}")
-MESSAGE(STATUS " * Trilinos_VERSION = ${Trilinos_VERSION}")
-#MESSAGE(STATUS " * Trilinos_PACKAGE_LIST = ${Trilinos_PACKAGE_LIST}")
-#MESSAGE(STATUS " * Trilinos_LIBRARIES = ${Trilinos_LIBRARIES}")
-#MESSAGE(STATUS " * Trilinos_INCLUDE_DIRS = ${Trilinos_INCLUDE_DIRS}")
-#MESSAGE(STATUS " * Trilinos_LIBRARY_DIRS = ${Trilinos_LIBRARY_DIRS}")
-#MESSAGE(STATUS " * Trilinos_TPL_LIST = ${Trilinos_TPL_LIST}")
-#MESSAGE(STATUS " * Trilinos_TPL_INCLUDE_DIRS = ${Trilinos_TPL_INCLUDE_DIRS}")
-#MESSAGE(STATUS " * Trilinos_TPL_LIBRARIES = ${Trilinos_TPL_LIBRARIES}")
-#MESSAGE(STATUS " * Trilinos_TPL_LIBRARY_DIRS = ${Trilinos_TPL_LIBRARY_DIRS}")
-#MESSAGE(STATUS " * Trilinos_BUILD_SHARED_LIBS = ${Trilinos_BUILD_SHARED_LIBS}")
+#### PStreams
+set(PSTREAMS_ROOT ${TPL_DIR}) # prefer ours
+find_package(PStreams REQUIRED)
 
-#### Hypre library
-if (NOT NO_SYSTEM_HYPRE)
-  set(HYPRE_ROOT ${TPL_DIR}) # prefer ours
-  find_package(Hypre REQUIRED)
-endif()
-if(HYPRE_FOUND)
-  message(STATUS "Hypre at ${HYPRE_INCLUDES} (include) and at ${HYPRE_LIBRARIES} (lib)")
-endif()
+#### Hypre
+set(HYPRE_ROOT ${TPL_DIR}) # prefer ours
+find_package(Hypre REQUIRED)
+
+#### PugiXML
+set(PUGIXML_ROOT ${TPL_DIR}) # prefer ours
+find_package(pugixml REQUIRED)
 
 #### BLAS/LAPACK library with LAPACKE C-interface
 if (HAS_MKL)    # prefer Intel's MKL's BLAS/LAPACK if MKL is available
@@ -98,16 +92,26 @@ else()
   endif()
 endif()
 
-#### PStreams library
-if (NOT NO_SYSTEM_PSTREAMS)
-  set(PSTREAMS_ROOT ${TPL_DIR}) # prefer ours
-  find_package(PStreams REQUIRED)
+#### TPLs we always want ours ##################################################
+
+#### Zoltan2 library
+find_package(Zoltan2 REQUIRED)
+if(Zoltan2_FOUND)
+  message(STATUS "Found Zoltan2: ${Zoltan2_LIBRARY_DIRS}")
 endif()
 
-#### pugixml library
-if (NOT NO_SYSTEM_PUGIXML)
-  set(PUGIXML_ROOT ${TPL_DIR}) # prefer ours
-  find_package(pugixml REQUIRED)
+#### ExodusII library
+find_package(SEACASExodus REQUIRED)
+if(SEACASExodus_FOUND)
+  message(STATUS "Found SEACASExodus: ${SEACASExodus_LIBRARY_DIRS}")
+endif()
+find_package(SEACASNemesis REQUIRED)
+if(SEACASNemesis_FOUND)
+  message(STATUS "Found SEACASNemesis: ${SEACASNemesis_LIBRARY_DIRS}")
+endif()
+find_package(SEACASExodiff REQUIRED)
+if(SEACASExodiff_FOUND)
+  message(STATUS "Found SEACASExodiff: ${SEACASExodiff_LIBRARY_DIRS}")
 endif()
 
 #### RNGSSE2 library
@@ -137,11 +141,3 @@ find_library(TESTU01_MYLIB_LIBRARY
              PATHS ${TPL_DIR}/lib
              NO_DEFAULT_PATH
              REQUIRED)
-
-##### Silo
-#set(SILO_LIBRARY "NOTFOUND")
-#find_library(SILO_LIBRARY
-#             NAMES siloh5
-#             PATHS ${TPL_DIR}/lib
-#             NO_DEFAULT_PATH
-#             REQUIRED)

@@ -39,13 +39,13 @@ target_link_libraries(${UNITTEST_EXECUTABLE}
                       LoadBalance
                       UnitTest
                       UnitTestControl
-                      #${SILO_LIBRARY}
                       ${PUGIXML_LIBRARIES}
-                      ${Trilinos_LIBRARIES}
+                      ${SEACASNemesis_LIBRARIES}
+                      ${SEACASExodus_LIBRARIES}
+                      ${RNGSSE_LIBRARY}
                       ${MKL_INTERFACE_LIBRARY}
                       ${MKL_CORE_LIBRARY}
                       ${MKL_SEQUENTIAL_LAYER_LIBRARY}
-                      ${RNGSSE_LIBRARY}
 )
 
 # Add custom dependencies for UnitTest's main Charm++ module
@@ -87,8 +87,10 @@ target_link_libraries(${INCITER_EXECUTABLE}
                       LoadBalance
                       Inciter
                       ${PUGIXML_LIBRARIES}
-                      ${Trilinos_LIBRARIES}
+                      ${SEACASNemesis_LIBRARIES}
+                      ${SEACASExodus_LIBRARIES}
                       ${HYPRE_LIBRARIES}
+                      ${Zoltan2_LIBRARIES}
 )
 
 # Add custom dependencies for Inciter's main Charm++ module
@@ -167,9 +169,9 @@ target_link_libraries(${MESHCONV_EXECUTABLE}
                       IO
                       Mesh
                       MeshConvControl
-                      #${SILO_LIBRARY}
                       ${PUGIXML_LIBRARIES}
-                      ${Trilinos_LIBRARIES}
+                      ${SEACASNemesis_LIBRARIES}
+                      ${SEACASExodus_LIBRARIES}
 )
 
 # Add custom dependencies for MeshConv's main Charm++ module
@@ -211,7 +213,8 @@ target_link_libraries(${WALKER_EXECUTABLE}
                       IO
                       WalkerControl
                       ${PUGIXML_LIBRARIES}
-                      ${Trilinos_LIBRARIES}
+                      ${SEACASNemesis_LIBRARIES}
+                      ${SEACASExodus_LIBRARIES}
                       ${LAPACKE_LIB}
                       ${LAPACK_LIBRARIES}
                       ${MKL_INTERFACE_LIBRARY}

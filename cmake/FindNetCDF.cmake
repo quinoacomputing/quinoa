@@ -32,7 +32,7 @@ if (NETCDF_INCLUDES AND NETCDF_LIBRARIES)
   set (NETCDF_FIND_QUIETLY TRUE)
 endif (NETCDF_INCLUDES AND NETCDF_LIBRARIES)
 
-find_path (NETCDF_INCLUDES netcdf.h
+find_path (NETCDF_INCLUDES netcdf_par.h
            HINTS ${NETCDF_ROOT}/include
                  ${NETCDF_DIR}/include
                  $ENV{NETCDF_DIR}/include)
