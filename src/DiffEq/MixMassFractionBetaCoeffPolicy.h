@@ -109,11 +109,11 @@ class MixMassFracBetaCoeffDecay {
       std::vector< kw::sde_kappa::info::expect::type >& k )
     {
       ErrChk( bprime_.size() == ncomp,
-        "Wrong number of mix mass-fraction beta SDE parameters 'b''");
+        "Wrong number of mix mass-fraction beta SDE parameters 'b'");
       ErrChk( S_.size() == ncomp,
         "Wrong number of mix mass-fraction beta SDE parameters 'S'");
       ErrChk( kprime_.size() == ncomp,
-        "Wrong number of mix mass-fraction beta SDE parameters 'kappa''");
+        "Wrong number of mix mass-fraction beta SDE parameters 'kappa'");
       ErrChk( rho2_.size() == ncomp,
         "Wrong number of mix mass-fraction beta SDE parameters 'rho2'");
       ErrChk( r_.size() == ncomp,
@@ -525,13 +525,29 @@ class MixMassFracBetaCoeffHydroTimeScaleHomDecay {
         tk::real a = r[c]/(1.0+r[c]*yt);
         tk::real n = 1.0;
         tk::real bnm = a*a*yt*(1.0-yt);
+        tk::real theta = 1.0 - ds/bnm;
+        tk::real A = 0.15;
+
+        //tk::real mix = (1.0-theta) / (2.0-theta) * theta;
+        //tk::real mix = (1.0-theta) / (2.0-theta) * theta/2.0/(2.0-theta);
+        tk::real mix = 1.0;
+        //tk::real mix = 1.0/(2.0*(2.0-theta));
+
+        //tk::real f = 1.0;
+        tk::real f = (1.0+A)/(1.0+30.0*A*theta);
 
         //b[c] = bprime[c] * (1.0 - v/m/(1.0-m)) * hts;
-        b[c] = bprime[c] * std::pow(1.0 - ds/(a*a)/yt/(1.0-yt),n) * hts;
+        //b[c] = bprime[c] * std::pow(1.0 - ds/(a*a)/yt/(1.0-yt),n) * hts;
         //b[c] = bprime[c] * std::pow(1.0 - 2.0*ds/(ds+bnm),n) * hts;
+        //b[c] = bprime[c] * std::pow(theta,n) * hts;
+        //b[c] = bprime[c] * (1.0+A)/(1.0+A*theta)*theta * hts;
+        b[c] = bprime[c] * f * mix * theta * hts;
 
         //k[c] = kprime[c] * v * hts;
-        k[c] = kprime[c] * ds * std::pow(1.0 - ds/(a*a)/yt/(1.0-yt),n) * hts;
+        //k[c] = kprime[c] * ds * std::pow(1.0 - ds/(a*a)/yt/(1.0-yt),n) * hts;
+        //k[c] = kprime[c] * ds * std::pow(theta,n) * hts;
+        //k[c] = kprime[c] * ds * (1.0+A)/(1.0+A*theta)*theta * hts;
+        k[c] = kprime[c] * ds * f * mix * theta * hts;
 
         tk::real R = 1.0 + d2/d/d;
         tk::real B = -1.0/r[c]/r[c];
@@ -557,8 +573,13 @@ class MixMassFracBetaCoeffHydroTimeScaleHomDecay {
       auto kdok = 3.33511 * std::exp(-0.745261*std::pow(t,0.741547));
       //return eok;
       //return std::sqrt(kdok*kdok/4.0 + eok*eok);
-      return std::sqrt( 0.5*(std::pow(kdok+eok,2.0) + std::pow(eok,2.0)) );
-
+      //return std::sqrt( 0.5*(std::pow(kdok+eok,2.0) + std::pow(eok,2.0)) );
+      //return 0.5*(kdok+eok + eok);
+      //return std::sqrt( std::sqrt(std::pow(kdok+eok,2.0) * std::pow(eok,2.0)) ); /
+      //return std::sqrt( 2.0/(std::pow(1.0/(kdok+eok),2.0)*std::pow(1.0/eok,2.0)) );
+      //return std::sqrt( std::sqrt(std::pow(kdok,2.0) * std::pow(eok,2.0)) );
+      //return std::sqrt( 2.0/(std::pow(1.0/kdok,2.0) * std::pow(1.0/eok,2.0)) );
+      return eok*sqrt(2.0+kdok/eok);
     }
 
 };
