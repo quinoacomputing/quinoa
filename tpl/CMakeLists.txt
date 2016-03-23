@@ -2,7 +2,7 @@
 
 cmake_minimum_required(VERSION 2.8.5)
 
-project(TPL C CXX Fortran)
+project(TPL C CXX)
 include(ExternalProject)
 
 # Quinoa cmake modules directory
@@ -75,21 +75,16 @@ message(STATUS "Charm++ compiler (the compiler used to build Charm++): ${CHARM_C
 #
 #    UNDERLYING_C_COMPILER
 #    UNDERLYING_CXX_COMPILER
-#    UNDERLYING_Fortran_COMPILER
 #
 # 2. The MPI wrappers (of the underlying compilers)
 #
 #    MPI_C_COMPILER
 #    MPI_CXX_COMPILER
-#    MPI_Fortran_COMPILER
 #
 # 3. The Charm++ wrapper (of the MPI wrappers or around the underlying
 #    compilers, depending on CHARM_COMPILER), the compiler used to build Charm++
 #
 #    CHARM_COMPILER
-
-# Set Boost's default toolset
-set(BOOST_TOOLSET ${COMP})
 
 # Include function that allows to set standard C++ library
 include(libstdcxx)
@@ -107,9 +102,6 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")  # clang-specific settings
   set(CFLAGS "${CFLAGS} -Wno-error=return-type")
 
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")  # gcc-specific settings
-
-  # Boost as build toolset wants 'gcc' for the gnu compiler
-  set(BOOST_TOOLSET "gcc")
 
   # Gnu will use libstdc++ by default. We do not offer libc++.
 
@@ -332,6 +324,7 @@ ExternalProject_Add(
              -D Trilinos_ENABLE_SEACASExodus:BOOL=ON
              -D Trilinos_ENABLE_SEACASNemesis:BOOL=ON
              -D Trilinos_ENABLE_SEACASExodiff:BOOL=ON
+             -D Trilinos_ENABLE_Fortran=OFF
              -D Trilinos_ENABLE_DEBUG=OFF
              -D TPL_ENABLE_Netcdf:BOOL=ON
              -D Netcdf_LIBRARY_DIRS:PATH=${netcdf_library_dirs}
@@ -340,10 +333,8 @@ ExternalProject_Add(
              -D CMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
              -D CMAKE_C_COMPILER:PATH=${MPI_C_COMPILER}
              -D CMAKE_CXX_COMPILER:PATH=${MPI_CXX_COMPILER}
-             -D CMAKE_Fortran_COMPILER:PATH=${MPI_Fortran_COMPILER}
              -D CMAKE_C_FLAGS:STRING=${CFLAGS}
              -D CMAKE_CXX_FLAGS:STRING=${CXXFLAGS}
-             -D CMAKE_Fortran_FLAGS:STRING=${FFLAGS}
              -D CMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX}
   DOWNLOAD_COMMAND ""
   LOG_CONFIGURE 1
