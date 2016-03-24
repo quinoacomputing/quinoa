@@ -8,6 +8,9 @@ build:
     - mkdir build ; cd build ; cmake -D STDLIBCPP=$$STDLIBCPP -D CMAKE_BUILD_TYPE=$$BUILD -G Ninja ../src ; ninja ; cd -
     - cd build; ../script/run_tests.sh ; cd -
 
+clone:
+  skip_verify: true
+
 cache:
   mount:
     - .git
