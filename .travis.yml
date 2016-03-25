@@ -1,0 +1,16 @@
+os:
+  - osx
+
+compiler:
+  - clang
+
+before_install:
+  - brew tap homebrew/science
+  - brew update
+  - brew install open-mpi ninja openblas
+
+script:
+  - mkdir tpl/build ; cd tpl/build ; cmake -D CMAKE_C_COMPILER=mpicc -D CMAKE_CXX_COMPILER=mpicxx -G Ninja .. ; ninja ; cd -
+  - mkdir build ; cd build ; cmake -D CMAKE_C_COMPILER=mpicc -D CMAKE_CXX_COMPILER=mpicxx -G Ninja ../src ; ninja ; cd -
+#  - cd build; ../script/run_tests.sh ; cd -
+

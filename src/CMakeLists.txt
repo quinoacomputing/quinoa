@@ -144,11 +144,11 @@ add_compiler_flag("-Wno-vla")
 
 # Require a C++11 compiler
 check_cxx_compiler_flag(-std=c++11 COMPILER_HAS_CPP11)
-check_cxx_compiler_flag(--c++11 COMPILER_HAS_CXX11)
+#check_cxx_compiler_flag(--c++11 COMPILER_HAS_CXX11)
 if(COMPILER_HAS_CPP11)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-elseif(COMPILER_HAS_CXX11)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --c++11")
+#elseif(COMPILER_HAS_CXX11)
+#  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --c++11")
 else()
   MESSAGE(FATAL_ERROR "Need a compiler with C++11 support.")
 endif()
@@ -168,7 +168,7 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")  # clang-specific settings
   endif()
 
   # Use the C++14 standard
-  add_compiler_flag("-std=c++1y")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1y")
 
   # Reduce opt level for release mode (clang 3.8 fails to list LinSysMerger with
   # -O2 and segfaults with -O3)
@@ -197,7 +197,7 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")  # gcc-specific settings
   # Gnu will use libstdc++ by default. We do not offer libc++.
 
   # Use the C++14 standard
-  add_compiler_flag("-std=c++1y")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1y")
 
   add_compiler_flag("-Wno-literal-suffix")
   add_compiler_flag("-Wno-unused-local-typedefs")
