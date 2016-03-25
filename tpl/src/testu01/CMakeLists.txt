@@ -29,17 +29,12 @@ endif()
 # Add compiler flags
 include(CheckCCompilerFlag)
 
-macro (require_compiler_flag flag)
-  check_c_compiler_flag(${flag} COMPILER_HAS${flag})
-  if(COMPILER_HAS${flag})
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${flag}")
-  else()
-    message(FATAL "The compiler must support the -Wno-return-type argument")
-  endif()
-endmacro (require_compiler_flag)
-
-# Require the following arguments for all compilers
-require_compiler_flag("-Wno-return-type")
+check_c_compiler_flag(-Wno-return-type COMPILER_HAS-Wno-return-type)
+if(COMPILER_HAS-Wno-return-type)
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-return-type")
+else()
+  message(FATAL "The compiler must support the -Wno-return-type argument")
+endif()
 
 file(GLOB PROBDIST_SOURCES "probdist/*.c")
 file(GLOB MYLIB_SOURCES "mylib/*.c")

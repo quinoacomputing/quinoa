@@ -20,17 +20,18 @@ set(MINOR_VER 1)
 # Set release number
 set(RELEASE "LA-CC-XX-XXX")
 
-# Set a default build type if none was specified
-if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
-  message(STATUS "CMAKE_BUILD_TYPE not specified, setting to 'DEBUG'")
-  set(CMAKE_BUILD_TYPE DEBUG CACHE STRING "Build type. Possible values: DEBUG | RELEASE | RELWITHDEBINFO | MINSIZEREL" FORCE)
-  # Set the possible values of build type for cmake-gui
-  set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release"
-    "MinSizeRel" "RelWithDebInfo")
-endif()
+# Set CMAKE_BUILD_TYPE
+include(BuildType)
 
-# Echo build type
-message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
+# Set BUILD_SHARED_LIBS
+include(BuildShared)
+
+# Conditionally enforce static linking for exeuctables added after this point.
+# This must precede all add_executable() calls adding executables to link
+# statically.
+if (NOT BUILD_SHARED_LIBS)
+  set(CMAKE_EXE_LINKER_FLAGS "-static")
+endif()
 
 # Determine number of CPUs available
 if (DEFINED ENV{SLURM_NPROCS})
@@ -53,11 +54,8 @@ endif()
 # Convert CMAKE_BUILD_TYPE
 string(TOUPPER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE)
 
-# Set build type
+# Set build type (will become compiler define in Main/Config.h)
 set(BUILD_TYPE ${CMAKE_BUILD_TYPE})
-
-# Build shared-libs by default
-set(BUILD_SHARED_LIBS on)
 
 # If not specified on the command-line, set default third-party libraries
 # directory based on cmake-supplied compiler ID
@@ -85,6 +83,14 @@ set(MPI_COMPILER ${MPI_CXX_COMPILER})
 set(CHARM_COMPILER ${TPL_DIR}/charm/bin/charmc)
 message(STATUS "Charm++ compiler wrapper (used to compile Charm++ interface (.ci) files and link Charm++ executables): " ${CHARM_COMPILER})
 
+# Mac OS X specifics
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+  set(CMAKE_MACOSX_RPATH ON)
+#  STRING(REGEX REPLACE "<CMAKE_CXX_COMPILER>"
+#         ${CHARM_COMPILER}
+#         CMAKE_CXX_CREATE_SHARED_LIBRARY "${CMAKE_CXX_CREATE_SHARED_LIBRARY}")
+endif()
+
 # Query build hostname
 site_name(HOSTNAME)
 
@@ -106,12 +112,21 @@ set(RNGTEST_EXECUTABLE rngtest)
 set(MESHCONV_EXECUTABLE meshconv)
 set(WALKER_EXECUTABLE walker)
 set(UNITTEST_EXECUTABLE unittest)
+set(NUMDIFF_EXECUTABLE numdiff)
 
 # Create set of all executables tested. These are the executables that do
 # "interesting things", i.e., excluding unittest but keeping rngtest as that is
 # (to be) regression tested
 set(NONTEST_EXECUTABLES ${INCITER_EXECUTABLE} ${RNGTEST_EXECUTABLE}
                         ${MESHCONV_EXECUTABLE} ${WALKER_EXECUTABLE})
+
+# Create set of all executables.
+set(EXECUTABLES ${INCITER_EXECUTABLE}
+                ${RNGTEST_EXECUTABLE}
+                ${MESHCONV_EXECUTABLE}
+                ${WALKER_EXECUTABLE}
+                ${UNITTEST_EXECUTABLE}
+                ${NUMDIFF_EXECUTABLE})
 
 # Get git revision
 include(GetGitRevisionDescription)
@@ -205,6 +220,9 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")  # gcc-specific settings
   set(PARTOF_FLAGS "-Wno-unused-parameter")
 
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
+
+  # Use the C++14 standard (CMAKE_CXX_STANDARD does not set this for intel)
+  add_compiler_flag("-std=c++14")
 
   # Specify the name of the g++ compiler that should be used to set up the
   # environment. This is necessary if a newer g++ is installed system-wide with
@@ -388,12 +406,17 @@ add_subdirectory(RNG)
 add_subdirectory(RNGTest)
 add_subdirectory(Statistics)
 
+# Conditionally enforce static link for all executables. This must be after all
+# add_executable() calls creating the targets for executables in EXECUTABLES.
+if (NOT BUILD_SHARED_LIBS)
+  foreach(exe IN LISTS EXECUTABLES)
+    set_property(TARGET ${exe} PROPERTY LINK_SEARCH_START_STATIC 1)
+    set_property(TARGET ${exe} PROPERTY LINK_SEARCH_END_STATIC 1)
+  endforeach()
+endif()
+
 # Enable cmake's ctest test suite used for regression testing
 enable_testing()
-
-# Add cmake code describing how to build numdiff
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../tool/src/ndiff
-                 ${CMAKE_BINARY_DIR}/regression/ndiff)
 
 # Set mpirun arguments controling process binding
 set(MPIRUN_BIND_ARGS "-bind-to none -map-by node")
@@ -422,7 +445,8 @@ if(CODE_COVERAGE)
   setup_target_for_coverage(regression doc/html regression_coverage
                             ${CMAKE_CTEST_COMMAND}
                             TESTRUNNER_ARGS -j${PROCESSOR_COUNT}
-                            DEPENDS ${NONTEST_EXECUTABLES} numdiff)
+                            DEPENDS ${NONTEST_EXECUTABLES}
+                                    ${NUMDIFF_EXECUTABLE})
 endif()
 
 # Setup code coverage for all individual coverage targets included
@@ -430,5 +454,5 @@ if(CODE_COVERAGE)
   setup_target_for_all_coverage(all doc/html test_coverage
                                 DEPENDS ${NONTEST_EXECUTABLES}
                                         ${UNITTEST_EXECUTABLE}
-                                        numdiff)
+                                        ${NUMDIFF_EXECUTABLE})
 endif()

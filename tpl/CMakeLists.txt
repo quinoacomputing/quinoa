@@ -112,22 +112,11 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "PGI")  # pgi-specific settings
 
 endif()
 
-# Set a default build type if none was specified
-if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
-  message(STATUS "CMAKE_BUILD_TYPE not specified, setting to 'DEBUG'")
-  set(CMAKE_BUILD_TYPE DEBUG CACHE STRING "Build type." FORCE)
-  # Set the possible values of build type for cmake-gui
-  set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release"
-    "MinSizeRel" "RelWithDebInfo")
-endif()
+# Set CMAKE_BUILD_TYPE
+include(BuildType)
 
-# Set Boost's default build type
-string(TOLOWER ${CMAKE_BUILD_TYPE} BOOST_BUILD_TYPE)
-
-# Enable "--with-production" for Charm++ build for Release builds
-if(CMAKE_BUILD_TYPE MATCHES "Rel")      # Release, RelWithDebInfo, MinSizeRel
-  set(CHARM_RELEASE_BUILD "--with-production")
-endif()
+# Set BUILD_SHARED_LIBS
+include(BuildShared)
 
 # Get compiler flags (CFLAGS, CXXFLAGS, FFLAGS) independent of CMAKE_BUILD_TYPE
 # and echo flags that will be passed to all TPL builds
@@ -139,19 +128,26 @@ get_compiler_flags()
 # Detect HDF5, exclude if found, copy if not
 set(HDF5_PREFER_PARALLEL true)
 if(NOT NO_SYSTEM_HDF5)
-  find_package(HDF5)
+  if(NOT BUILD_SHARED_LIBS)
+    set(HDF5_USE_STATIC_LIBRARIES true)
+  endif()
+  find_package(HDF5 COMPONENTS HL)
 endif()
 if(HDF5_FOUND AND HDF5_IS_PARALLEL)
   set(hdf5 "")
-  set(hdf5_include_dirs "${HDF5_INCLUDE_DIRS}")
+  set(hdf5_include_dirs_flags "${HDF5_INCLUDE_DIRS}")
+  string(REGEX REPLACE "([^;]+)" "-I\\1" hdf5_include_dirs_flags
+         "${hdf5_include_dirs_flags}")
+  set(hdf5_library_dirs_flags "${HDF5_LIBRARY_DIRS}")
+  string(REGEX REPLACE "([^;]+)" "-L\\1" hdf5_library_dirs_flags
+        "${hdf5_library_dirs_flags}")
   set(hdf5_library_dirs "${HDF5_LIBRARY_DIRS}")
-  string(REGEX REPLACE "([^;]+)" "-I\\1" hdf5_include_dirs "${hdf5_include_dirs}")
-  string(REGEX REPLACE "([^;]+)" "-L\\1" hdf5_library_dirs "${hdf5_library_dirs}")
 else()
   message(STATUS "HDF5 either not found or not parallel: will build")
   set(hdf5 "hdf5")
-  set(hdf5_include_dirs "-I${CMAKE_INSTALL_PREFIX}/include")
-  set(hdf5_library_dirs "-L${CMAKE_INSTALL_PREFIX}/lib")
+  set(hdf5_include_dirs_flags "-I${CMAKE_INSTALL_PREFIX}/include")
+  set(hdf5_library_dirs_flags "-L${CMAKE_INSTALL_PREFIX}/lib")
+  set(hdf5_library_dirs "${CMAKE_INSTALL_PREFIX}/lib")
 endif()
 
 # Detect NetCDF, exclude if found, build if not
@@ -170,6 +166,9 @@ endif()
 
 # Detect Boost, exclude if found, copy if not
 if(NOT NO_SYSTEM_BOOST)
+  if(NOT BUILD_SHARED_LIBS)
+    set(Boost_USE_STATIC_LIBS true)
+  endif()
   find_package(Boost)
 endif()
 if(Boost_FOUND)
@@ -209,13 +208,17 @@ else()
 endif()
 
 # Detect lapack, exclude if found, build if not
-if(NOT NO_SYSTEM_LAPACK)
-  find_package(LAPACK)
-endif()
-if(LAPACK_FOUND)
+set(lapack "lapack")
+find_package(MKL)     # Prefer MKL if found
+if(MKL_FOUND)
   set(lapack "")
 else()
-  set(lapack "lapack")
+  if(NOT NO_SYSTEM_LAPACK)
+    find_package(LAPACKE)
+    if(LAPACKE_FOUND)
+      set(lapack "")
+    endif()
+  endif()
 endif()
 
 # Output TPLs to be built
@@ -227,6 +230,13 @@ set_property(DIRECTORY PROPERTY EP_STEP_TARGETS
 
 #### Charm++ ###################################################################
 # http://charm.cs.illinois.edu
+if(BUILD_SHARED_LIBS)
+  set(CHARM_SHARED "--build-shared")
+endif()
+# Enable "--with-production" for Charm++ build for Release builds
+if(CMAKE_BUILD_TYPE MATCHES "Rel")      # Release | RelWithDebInfo | MinSizeRel
+  set(CHARM_RELEASE_BUILD "--with-production")
+endif()
 ExternalProject_Add(
   charm
   PREFIX charm
@@ -241,7 +251,7 @@ ExternalProject_Add(
                 charm++
                 ${CHARM_ARCHITECTURE}
                 ${CHARM_COMPILER}
-                --build-shared
+                ${CHARM_SHARED}
                 ${CHARM_RELEASE_BUILD}
                 -j${PROCESSOR_COUNT}
                 ${CXXFLAGS}
@@ -254,6 +264,11 @@ ExternalProject_Add(
 #### HDF5 ######################################################################
 # http://www.hdfgroup.org/HDF5
 if (hdf5)
+  if(BUILD_SHARED_LIBS)
+    set(HDF5_SHARED "--enable-shared")
+  else()
+    set(HDF5_SHARED "--disable-shared;--enable-static;--with-pic")
+  endif()
   ExternalProject_Add(
     hdf5
     PREFIX hdf5
@@ -265,7 +280,7 @@ if (hdf5)
                       CFLAGS=${CFLAGS}
                       ${PGCPP}
                       --enable-parallel
-                      --enable-shared
+                      ${HDF5_SHARED}
                       --prefix=${CMAKE_INSTALL_PREFIX}
     BUILD_IN_SOURCE 1
     LOG_DOWNLOAD 1
@@ -278,6 +293,11 @@ endif()
 #### NETCDF ####################################################################
 ## http://www.unidata.ucar.edu/downloads/netcdf/index.jsp
 if (netcdf)
+  if(BUILD_SHARED_LIBS)
+    set(NETCDF_SHARED "--enable-shared")
+  else()
+    set(NETCDF_SHARED "--enable-static;--with-pic")
+  endif()
   ExternalProject_Add(
     netcdf
     DEPENDS ${hdf5}
@@ -289,13 +309,14 @@ if (netcdf)
                       CC=${MPI_C_COMPILER}
                       CFLAGS=${CFLAGS}
                       ${PGCPP}
-                      CPPFLAGS=${hdf5_include_dirs}
-                      LDFLAGS=${hdf5_library_dirs}
+                      CPPFLAGS=${hdf5_include_dirs_flags}
+                      LDFLAGS=${hdf5_library_dirs_flags}
                       --enable-netcdf4
                       --disable-examples
                       --disable-fsync
                       --disable-dap
                       --disable-cdmremote
+                      ${NETCDF_SHARED}
                       --prefix=${CMAKE_INSTALL_PREFIX}
     BUILD_IN_SOURCE 1
     LOG_DOWNLOAD 1
@@ -307,9 +328,15 @@ endif()
 
 ##### Trilinos #################################################################
 ## http://trilinos.sandia.gov
+if(BUILD_SHARED_LIBS)
+  set(TRILINOS_SHARED "-DBUILD_SHARED_LIBS=ON")
+else()
+  set(TRILINOS_SHARED "-DBUILD_SHARED_LIBS=OFF;-DTPL_FIND_SHARED_LIBS:BOOL=OFF;-DTrilinos_LINK_SEARCH_START_STATIC:BOOL=ON")
+  set(tr_hdf5 "-DTrilinos_EXTRA_LINK_FLAGS=-L${hdf5_library_dirs} -lhdf5_hl -lhdf5 -lz -lm -ldl")
+endif()
 ExternalProject_Add(
   trilinos
-  DEPENDS ${netcdf}
+  DEPENDS ${hdf5} ${netcdf}
   PREFIX trilinos
   SOURCE_DIR ${PROJECT_SOURCE_DIR}/src/trilinos
   CMAKE_ARGS -D Trilinos_ENABLE_ALL_PACKAGES:BOOL=OFF
@@ -323,6 +350,8 @@ ExternalProject_Add(
              -D Trilinos_ENABLE_SEACASExodiff:BOOL=ON
              -D Trilinos_ENABLE_Fortran=OFF
              -D Trilinos_ENABLE_DEBUG=OFF
+             ${tr_hdf5}
+             ${TRILINOS_SHARED}
              -D TPL_ENABLE_Netcdf:BOOL=ON
              -D Netcdf_LIBRARY_DIRS:PATH=${netcdf_library_dirs}
              -D TPL_Netcdf_INCLUDE_DIRS:PATH=${netcdf_include_dirs}
@@ -395,6 +424,7 @@ ExternalProject_Add(
   PREFIX rngsse2
   SOURCE_DIR ${PROJECT_SOURCE_DIR}/src/rngsse2
   CMAKE_ARGS -D CMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
+             -D BUILD_SHARED_LIBS=${BUILD_SHARED_LIBS}
              -D CMAKE_CXX_COMPILER:PATH=${UNDERLYING_CXX_COMPILER}
              -D CMAKE_CXX_FLAGS:STRING=${CXXFLAGS}
              -D CMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX}
@@ -412,6 +442,7 @@ ExternalProject_Add(
   PREFIX testu01
   SOURCE_DIR ${PROJECT_SOURCE_DIR}/src/testu01
   CMAKE_ARGS -D CMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
+             -D BUILD_SHARED_LIBS=${BUILD_SHARED_LIBS}
              -D CMAKE_C_COMPILER:PATH=${UNDERLYING_C_COMPILER}
              -D CMAKE_C_FLAGS:STRING=${CFLAGS}
              -D CMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX}
@@ -467,6 +498,7 @@ if (hypre)
     CMAKE_ARGS -D CMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
                -D CMAKE_CXX_COMPILER:PATH=${UNDERLYING_CXX_COMPILER}
                -D CMAKE_CXX_FLAGS:STRING=${CXXFLAGS}
+               -D HYPRE_SHARED:BOOL=${BUILD_SHARED_LIBS}
                -D HYPRE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX}
     DOWNLOAD_COMMAND ""
     LOG_CONFIGURE 1
@@ -485,8 +517,8 @@ if (pugixml)
     CMAKE_ARGS -D CMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
                -D CMAKE_CXX_COMPILER:PATH=${UNDERLYING_CXX_COMPILER}
                -D CMAKE_CXX_FLAGS:STRING=${CXXFLAGS}
-                -D CMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX}
-               -D BUILD_SHARED_LIBS:BOOL=TRUE
+               -D CMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX}
+               -D BUILD_SHARED_LIBS:BOOL=${BUILD_SHARED_LIBS}
     DOWNLOAD_COMMAND ""
     LOG_CONFIGURE 1
     LOG_BUILD 1
@@ -505,7 +537,7 @@ if (lapack)
                -D CMAKE_Fortran_COMPILER:PATH=${UNDERLYING_Fortran_COMPILER}
                -D CMAKE_Fortran_FLAGS:STRING=${FFLAGS}
                -D BUILD_TESTING:BOOL=OFF
-               -D BUILD_SHARED_LIBS:BOOL=ON
+               -D BUILD_SHARED_LIBS:BOOL=${BUILD_SHARED_LIBS}
                -D LAPACKE:BOOL=ON
                -D USE_OPTIMIZED_BLAS:BOOL=ON
                -D USE_OPTIMIZED_LAPACK:BOOL=ON

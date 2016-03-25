@@ -27,8 +27,8 @@
 #  target_link_libraries (uses_f90_interface ${NETCDF_LIBRARIES})
 #  target_link_libraries (only_uses_c_interface ${NETCDF_LIBRARIES_C})
 
+# If already in cache, be silent
 if (NETCDF_INCLUDES AND NETCDF_LIBRARIES)
-  # Already in cache, be silent
   set (NETCDF_FIND_QUIETLY TRUE)
 endif (NETCDF_INCLUDES AND NETCDF_LIBRARIES)
 
@@ -37,10 +37,17 @@ find_path (NETCDF_INCLUDES netcdf_par.h
                  ${NETCDF_DIR}/include
                  $ENV{NETCDF_DIR}/include)
 
-find_library (NETCDF_LIBRARIES_C NAMES netcdf
-              HINTS ${NETCDF_ROOT}/lib
-                    ${NETCDF_DIR}/lib
-                    $ENV{NETCDF_DIR}/lib)
+if(NOT BUILD_SHARED_LIBS)
+  find_library (NETCDF_LIBRARIES_C NAMES libnetcdf.a
+                HINTS ${NETCDF_ROOT}/lib
+                      ${NETCDF_DIR}/lib
+                      $ENV{NETCDF_DIR}/lib)
+else()
+  find_library (NETCDF_LIBRARIES_C NAMES netcdf
+                HINTS ${NETCDF_ROOT}/lib
+                      ${NETCDF_DIR}/lib
+                      $ENV{NETCDF_DIR}/lib)
+endif()
 mark_as_advanced(NETCDF_LIBRARIES_C)
 
 set (NetCDF_has_interfaces "YES") # will be set to NO if we're missing any interfaces
@@ -65,9 +72,15 @@ macro (NetCDF_check_interface lang header libs)
   endif (NETCDF_${lang})
 endmacro (NetCDF_check_interface)
 
-NetCDF_check_interface (CXX netcdfcpp.h netcdf_c++)
-NetCDF_check_interface (F77 netcdf.inc  netcdff)
-NetCDF_check_interface (F90 netcdf.mod  netcdff)
+if(NETCDF_USE_STATIC_LIBRARIES)
+  NetCDF_check_interface (CXX netcdfcpp.h libnetcdf_c++.a)
+  NetCDF_check_interface (F77 netcdf.inc  libnetcdff.a)
+  NetCDF_check_interface (F90 netcdf.mod  libnetcdff.a)
+else()
+  NetCDF_check_interface (CXX netcdfcpp.h netcdf_c++)
+  NetCDF_check_interface (F77 netcdf.inc  netcdff)
+  NetCDF_check_interface (F90 netcdf.mod  netcdff)
+endif()
 
 set (NETCDF_LIBRARIES "${NetCDF_libs}" CACHE STRING "All NetCDF libraries required for interface level")
 

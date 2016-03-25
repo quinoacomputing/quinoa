@@ -13,13 +13,12 @@ endif()
 file(GLOB numdiff_src src/*.c)
 
 include_directories(src)
-add_executable(numdiff ${numdiff_src})
+add_executable(${NUMDIFF_EXECUTABLE} ${numdiff_src})
 if(UNIX)
-   target_link_libraries(numdiff m)
+   target_link_libraries(${NUMDIFF_EXECUTABLE} m)
 endif()
 
-install(TARGETS numdiff
-   RUNTIME
-   DESTINATION bin
-   COMPONENT Runtime
-   )
+install(TARGETS ${NUMDIFF_EXECUTABLE}
+        RUNTIME DESTINATION bin COMPONENT Runtime
+        LIBRARY DESTINATION lib COMPONENT Runtime
+        ARCHIVE DESTINATION lib COMPONENT Development)
