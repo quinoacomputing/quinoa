@@ -17,15 +17,21 @@
 #    target_link_libraries (TARGET ${libc++_LIBRARIES} ${libc++abi_LIBRARIES})
 #  endif()
 
+# If already in cache, be silent
 if(libc++_INCLUDES AND libc++_LIBRARIES AND libc++abi_LIBRARIES)
-  # Already in cache, be silent
   set (libc++_FIND_QUIETLY TRUE)
 endif()
 
-FIND_PATH(libc++_INCLUDES NAMES cxxabi.h HINTS ${libc++_ROOT}/include
+find_path(libc++_INCLUDES NAMES cxxabi.h HINTS ${libc++_ROOT}/include
                                                /usr/include/c++/v1)
-FIND_LIBRARY(libc++_LIBRARIES NAMES c++ HINTS ${libc++_ROOT}/lib)
-FIND_LIBRARY(libc++abi_LIBRARIES NAMES c++abi HINTS ${libc++_ROOT}/lib)
+
+if(NOT BUILD_SHARED_LIBS)
+  find_library(libc++_LIBRARIES NAMES libc++.a HINTS ${libc++_ROOT}/lib)
+  find_library(libc++abi_LIBRARIES NAMES libc++abi.a HINTS ${libc++_ROOT}/lib)
+else()
+  find_library(libc++_LIBRARIES NAMES c++ HINTS ${libc++_ROOT}/lib)
+  find_library(libc++abi_LIBRARIES NAMES c++abi HINTS ${libc++_ROOT}/lib)
+endif()
 
 # Handle the QUIETLY and REQUIRED arguments and set libc++_FOUND to TRUE if
 # all listed variables are TRUE.

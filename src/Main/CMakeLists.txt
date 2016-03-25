@@ -46,6 +46,9 @@ target_link_libraries(${UNITTEST_EXECUTABLE}
                       ${MKL_INTERFACE_LIBRARY}
                       ${MKL_CORE_LIBRARY}
                       ${MKL_SEQUENTIAL_LAYER_LIBRARY}
+                      ${NETCDF_LIBRARIES}       # only for static link
+                      ${HDF5_LIBRARIES}         # only for static link
+                      ${AEC_LIBRARY}            # only for static link
 )
 
 # Add custom dependencies for UnitTest's main Charm++ module
@@ -78,19 +81,22 @@ if(MPI_LINK_FLAGS)
 endif()
 
 target_link_libraries(${INCITER_EXECUTABLE}
-                      Base
                       PDE
-                      IO
-                      LinSys
-                      Mesh
                       InciterControl
                       LoadBalance
                       Inciter
+                      Base
+                      IO
+                      Mesh
+                      LinSys
                       ${PUGIXML_LIBRARIES}
                       ${SEACASNemesis_LIBRARIES}
                       ${SEACASExodus_LIBRARIES}
-                      ${HYPRE_LIBRARIES}
+                      ${HYPRE_LIBRARY}
                       ${Zoltan2_LIBRARIES}
+                      ${NETCDF_LIBRARIES}       # only for static link
+                      ${HDF5_LIBRARIES}         # only for static link
+                      ${AEC_LIBRARY}            # only for static link
 )
 
 # Add custom dependencies for Inciter's main Charm++ module
@@ -123,10 +129,10 @@ if(MPI_LINK_FLAGS)
 endif()
 
 target_link_libraries(${RNGTEST_EXECUTABLE}
-                      Base
                       RNG
                       RNGTest
                       RNGTestControl
+                      Base
                       ${TESTU01_LIBRARY}
                       ${TESTU01_PROBDIST_LIBRARY}
                       ${TESTU01_MYLIB_LIBRARY}
@@ -165,13 +171,16 @@ if(MPI_LINK_FLAGS)
 endif()
 
 target_link_libraries(${MESHCONV_EXECUTABLE}
-                      Base
                       IO
                       Mesh
                       MeshConvControl
+                      Base
                       ${PUGIXML_LIBRARIES}
                       ${SEACASNemesis_LIBRARIES}
                       ${SEACASExodus_LIBRARIES}
+                      ${NETCDF_LIBRARIES}       # only for static link
+                      ${HDF5_LIBRARIES}         # only for static link
+                      ${AEC_LIBRARY}            # only for static link
 )
 
 # Add custom dependencies for MeshConv's main Charm++ module
@@ -204,7 +213,6 @@ if(MPI_LINK_FLAGS)
 endif()
 
 target_link_libraries(${WALKER_EXECUTABLE}
-                      Base
                       DiffEq
                       RNG
                       Walker
@@ -212,15 +220,19 @@ target_link_libraries(${WALKER_EXECUTABLE}
                       Mesh      # WALKER SHOULD NOT DEPEND ON MESH
                       IO
                       WalkerControl
+                      Base
                       ${PUGIXML_LIBRARIES}
                       ${SEACASNemesis_LIBRARIES}
                       ${SEACASExodus_LIBRARIES}
-                      ${LAPACKE_LIB}
-                      ${LAPACK_LIBRARIES}
+                      ${LAPACKE_LIBRARY}        # only if MKL not found
                       ${MKL_INTERFACE_LIBRARY}
+                      ${MKL_SEQUENTIAL_LAYER_LIBRARY}   # only for static link
                       ${MKL_CORE_LIBRARY}
                       ${MKL_SEQUENTIAL_LAYER_LIBRARY}
                       ${RNGSSE_LIBRARY}
+                      ${NETCDF_LIBRARIES}       # only for static link
+                      ${HDF5_LIBRARIES}         # only for static link
+                      ${AEC_LIBRARY}            # only for static link
 )
 
 # Add custom dependencies for Walker's main Charm++ module
@@ -234,3 +246,9 @@ INSTALL(TARGETS ${WALKER_EXECUTABLE}
 )
 
 message(STATUS "Adding executable target ${WALKER_EXECUTABLE}")
+
+### NumDiff executable #########################################################
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../../tool/src/ndiff
+                 ${CMAKE_BINARY_DIR}/regression/ndiff)
+
+message(STATUS "Adding executable target ${NUMDIFF_EXECUTABLE}")

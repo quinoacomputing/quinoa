@@ -4,58 +4,22 @@
 # FIND_PACKAGE code, such as Trilinos
 SET(CMAKE_PREFIX_PATH ${TPL_DIR} ${CMAKE_PREFIX_PATH})
 
+#### TPLs we attempt to find on the system #####################################
+
 #### MKL (optional)
-find_library(MKL_INTERFACE_LIBRARY
-             NAMES mkl_intel_ilp64
-             PATHS $ENV{MKLROOT}/lib/intel64
-                   $ENV{INTEL}/mkl/lib/intel64
-             NO_DEFAULT_PATH)
-
-find_library(MKL_SEQUENTIAL_LAYER_LIBRARY
-             NAMES mkl_sequential
-             PATHS $ENV{MKLROOT}/lib/intel64
-                   $ENV{INTEL}/mkl/lib/intel64
-             NO_DEFAULT_PATH)
-
-#find_library(MKL_THREADED_LAYER_LIBRARY
-#             NAMES mkl_intel_thread
-#             PATHS $ENV{MKLROOT}/lib/intel64
-#                   $ENV{INTEL}/mkl/lib/intel64
-#             NO_DEFAULT_PATH)
-
-find_library(MKL_CORE_LIBRARY
-             NAMES mkl_core
-             PATHS $ENV{MKLROOT}/lib/intel64
-                   $ENV{INTEL}/mkl/lib/intel64
-             NO_DEFAULT_PATH)
-
-find_path(MKL_INCLUDE_PATH mkl.h
-          $ENV{MKLROOT}/include
-          $ENV{INTEL}/mkl/include
-          NO_DEFAULT_PATH)
-
-if (MKL_INTERFACE_LIBRARY AND
-    MKL_SEQUENTIAL_LAYER_LIBRARY AND
-    #MKL_THREADED_LAYER_LIBRARY AND
-    MKL_CORE_LIBRARY)
-  message(STATUS "Found MKL:")
-  message(STATUS " * MKL_INTERFACE_LIBRARY: ${MKL_INTERFACE_LIBRARY}")
-  message(STATUS " * MKL_SEQUENTIAL_LAYER_LIBRARY: ${MKL_SEQUENTIAL_LAYER_LIBRARY}")
-  #message(STATUS " * MKL_THREADED_LAYER_LIBRARY: ${MKL_THREADED_LAYER_LIBRARY}")
-  message(STATUS " * MKL_CORE_LIBRARY: ${MKL_CORE_LIBRARY}")
-  set(HAS_MKL on)
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DMKL_ILP64 -m64")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DMKL_ILP64 -m64")
-else()
-  message(WARNING "MKL NOT found: Intel MKL VSL RNGs will not be available")
-  set(MKL_INTERFACE_LIBRARY "")
-  set(MKL_SEQUENTIAL_LAYER_LIBRARY "")
-  #set(MKL_THREADED_LAYER_LIBRARY "")
-  set(MKL_CORE_LIBRARY "")
-  set(HAS_MKL off)
+find_package(MKL)
+if(MKL_FOUND)
+  set(HAS_MKL true)  # will become compiler define in Main/Config.h
 endif()
 
-#### TPLs we attempt to find on the system #####################################
+#### BLAS/LAPACK library with LAPACKE C-interface
+if (NOT MKL_FOUND)    # Prefer Intel's MKL for BLAS/LAPACK if available
+  # If MKL is unavailable, prefer ours then fall back to system
+  find_path(LAPACKE_PATH lapacke.h DOC "C-interface to LAPACK")
+  find_library(LAPACKE_LIB NAMES lapacke HINTS ${TPL_DIR}/lib NO_DEFAULT_PATH)
+  find_library(LAPACKE_LIB NAMES lapacke REQUIRED)
+  message(STATUS "Found LAPACK C-interface ${LAPACKE_PATH}/lapacke.h and ${LAPACKE_LIB}")
+endif()
 
 #### Boost
 if(NOT NO_SYSTEM_BOOST)
@@ -79,17 +43,17 @@ find_package(Hypre REQUIRED)
 set(PUGIXML_ROOT ${TPL_DIR}) # prefer ours
 find_package(pugixml REQUIRED)
 
-#### BLAS/LAPACK library with LAPACKE C-interface
-if (HAS_MKL)    # prefer Intel's MKL's BLAS/LAPACK if MKL is available
-  message(STATUS "Found BLAS/LAPACK: ${MKL_INTERFACE_LIBRARY};${MKL_CORE_LIBRARY};${MKL_SEQUENTIAL_LAYER_LIBRARY} using via MKL's C-interface")
-else()
-  find_package(LAPACK REQUIRED)
-  if(LAPACK_FOUND)
-    # find C-interface
-    find_path(LAPACKE_PATH lapacke.h DOC "C-interface to LAPACK")
-    find_library(LAPACKE_LIB NAMES lapacke REQUIRED)
-    message(STATUS "Found BLAS/LAPACK: ${LAPACK_LIBRARIES} using via C-interface ${LAPACKE_PATH}/lapacke.h and ${LAPACKE_LIB}")
-  endif()
+#### HDF5 (only for static link)
+if(NOT BUILD_SHARED_LIBS)
+  set(HDF5_PREFER_PARALLEL true)
+  set(HDF5_USE_STATIC_LIBRARIES true)
+  find_package(HDF5 COMPONENTS HL)
+  find_package(NetCDF)
+endif()
+
+#### AEC (only for static link)
+if(NOT BUILD_SHARED_LIBS)
+  find_package(AEC REQUIRED)
 endif()
 
 #### TPLs we always want ours ##################################################
