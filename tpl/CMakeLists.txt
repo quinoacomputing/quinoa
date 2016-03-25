@@ -38,13 +38,16 @@ else()
   message(STATUS "CMAKE_INSTALL_PREFIX: " ${CMAKE_INSTALL_PREFIX})
 endif()
 
+# Convert system name to lower case
+string(TOLOWER ${CMAKE_SYSTEM_NAME} SYSTEM_NAME)
+
 # Set Charm++ build architecture: if MPI is detected, use it
 if(NOT CHARM_ARCH)
   if(MPI_CXX_FOUND)
-    set(CHARM_ARCHITECTURE "mpi-linux-x86_64")
+    set(CHARM_ARCHITECTURE "mpi-${SYSTEM_NAME}-x86_64")
     message(STATUS "CHARM_ARCH not specified and MPI found, setting to '${CHARM_ARCHITECTURE}'")
   else()
-    set(CHARM_ARCHITECTURE "net-linux-x86_64")
+    set(CHARM_ARCHITECTURE "net-${SYSTEM_NAME}-x86_64")
     message(STATUS "CHARM_ARCH not specified and MPI not found, setting to '${CHARM_ARCHITECTURE}'")
   endif()
 
@@ -56,7 +59,11 @@ message(STATUS "Charm++ architecture: ${CHARM_ARCH}")
 # If MPI is detected use its wrapper, if not, let the Charm++ build decide.
 if(NOT CHARM_COMPILER)
   if(MPI_CXX_FOUND)
-    set(CHARM_COMP "mpicxx")
+    if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+      set(CHARM_COMP "")
+    else()
+      set(CHARM_COMP "mpicxx")
+    endif()
     message(STATUS "CHARM_COMPILER not specified and MPI found, setting to '${CHARM_COMP}'")
   else()
     set(CHARM_COMP "")
