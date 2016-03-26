@@ -41,38 +41,16 @@ endif()
 # Convert system name to lower case
 string(TOLOWER ${CMAKE_SYSTEM_NAME} SYSTEM_NAME)
 
-# Set Charm++ build architecture: if MPI is detected, use it
-if(NOT CHARM_ARCH)
-  if(MPI_CXX_FOUND)
-    set(CHARM_ARCHITECTURE "mpi-${SYSTEM_NAME}-x86_64")
-    message(STATUS "CHARM_ARCH not specified and MPI found, setting to '${CHARM_ARCHITECTURE}'")
-  else()
-    set(CHARM_ARCHITECTURE "net-${SYSTEM_NAME}-x86_64")
-    message(STATUS "CHARM_ARCH not specified and MPI not found, setting to '${CHARM_ARCHITECTURE}'")
-  endif()
+# Set Charm++ build architecture
+set(CHARM_ARCHITECTURE "mpi-${SYSTEM_NAME}-x86_64")
+message(STATUS "Charm++ architecture: ${CHARM_ARCHITECTURE}")
 
-  set(CHARM_ARCH ${CHARM_ARCHITECTURE} CACHE STRING "Select Charm++ target architecture, see http://charm.cs.illinois.edu/manuals/html/charm++ and <charm>/build --help for more info.")
+# Set Charm++ compiler: let the Charm++ build decide on MacOS, otherwise use mpi
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+  set(CHARM_COMPILER "")
+else()
+  set(CHARM_COMPILER "mpicxx")
 endif()
-message(STATUS "Charm++ architecture: ${CHARM_ARCH}")
-
-# Set Charm++ compiler (CHARM_COMPILER, the compiler used to build Charm++).
-# If MPI is detected use its wrapper, if not, let the Charm++ build decide.
-if(NOT CHARM_COMPILER)
-  if(MPI_CXX_FOUND)
-    if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-      set(CHARM_COMP "")
-    else()
-      set(CHARM_COMP "mpicxx")
-    endif()
-    message(STATUS "CHARM_COMPILER not specified and MPI found, setting to '${CHARM_COMP}'")
-  else()
-    set(CHARM_COMP "")
-    message(STATUS "CHARM_COMPILER not specified and MPI not found, letting Charm++ build use its default compiler")
-  endif()
-
-  set(CHARM_COMPILER ${CHARM_COMP} CACHE STRING "Select compiler used to build Charm++ with, see http://charm.cs.illinois.edu/manuals/html/charm++ and <charm>/build --help for more info.")
-endif()
-message(STATUS "Charm++ compiler (the compiler used to build Charm++): ${CHARM_COMPILER}")
 
 # Compilers
 # =========
@@ -249,7 +227,7 @@ ExternalProject_Add(
   # Build Charm++
   BUILD_COMMAND ${CMAKE_INSTALL_PREFIX}/charm/build
                 charm++
-                ${CHARM_ARCH}
+                ${CHARM_ARCHITECTURE}
                 ${CHARM_COMPILER}
                 --build-shared
                 ${CHARM_RELEASE_BUILD}
