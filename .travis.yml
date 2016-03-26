@@ -5,9 +5,10 @@ compiler:
   - clang
 
 before_install:
-  - brew tap homebrew/science
   - brew update
-  - brew install open-mpi ninja openblas
+  - brew outdated cmake || brew upgrade cmake
+  - brew install open-mpi ninja
+  - brew install --build-from-source homebrew/dupes/lapack
 
 script:
   - mkdir tpl/build ; cd tpl/build ; cmake -D CMAKE_C_COMPILER=mpicc -D CMAKE_CXX_COMPILER=mpicxx -G Ninja .. ; ninja ; cd -
