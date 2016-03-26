@@ -1,6 +1,6 @@
 # Build quinoa third-party Libraries
 
-cmake_minimum_required(VERSION 2.8.5)
+cmake_minimum_required(VERSION 3.1.0 FATAL_ERROR)
 
 project(TPL C CXX Fortran)
 include(ExternalProject)
