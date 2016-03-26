@@ -1,6 +1,6 @@
 # Build quinoa
 
-cmake_minimum_required(VERSION 2.8.5)
+cmake_minimum_required(VERSION 3.1.0 FATAL_ERROR)
 
 project(QUINOA C CXX)
 
@@ -95,6 +95,11 @@ execute_process(
 )
 string(REGEX REPLACE "[\r\n]" "" BUILD_DATE "${BUILD_DATE}")
 
+# Set the requirement for the C++ standard
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
 # Set names of executables
 set(INCITER_EXECUTABLE inciter)
 set(RNGTEST_EXECUTABLE rngtest)
@@ -142,17 +147,6 @@ add_compiler_flag("-fdiagnostics-show-option")
 # Suppress warning for all compilers: ISO C++ forbids variable length array
 add_compiler_flag("-Wno-vla")
 
-# Require a C++11 compiler
-check_cxx_compiler_flag(-std=c++11 COMPILER_HAS_CPP11)
-#check_cxx_compiler_flag(--c++11 COMPILER_HAS_CXX11)
-if(COMPILER_HAS_CPP11)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-#elseif(COMPILER_HAS_CXX11)
-#  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --c++11")
-else()
-  MESSAGE(FATAL_ERROR "Need a compiler with C++11 support.")
-endif()
-
 # Include function that allows to set standard C++ library
 include(libstdcxx)
 
@@ -166,9 +160,6 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")  # clang-specific settings
   if (libc++_FOUND)
     set_libstdcpp_vs_libcpp(CMAKE_CXX_FLAGS "libc++")
   endif()
-
-  # Use the C++14 standard
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1y")
 
   # Reduce opt level for release mode (clang 3.8 fails to list LinSysMerger with
   # -O2 and segfaults with -O3)
@@ -196,9 +187,6 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")  # gcc-specific settings
 
   # Gnu will use libstdc++ by default. We do not offer libc++.
 
-  # Use the C++14 standard
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1y")
-
   add_compiler_flag("-Wno-literal-suffix")
   add_compiler_flag("-Wno-unused-local-typedefs")
   add_compiler_flag("-Wno-unused-function")
@@ -217,9 +205,6 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")  # gcc-specific settings
   set(PARTOF_FLAGS "-Wno-unused-parameter")
 
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
-
-  # Use the C++14 standard
-  add_compiler_flag("-std=c++14")
 
   # Specify the name of the g++ compiler that should be used to set up the
   # environment. This is necessary if a newer g++ is installed system-wide with
