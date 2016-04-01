@@ -16,9 +16,9 @@ endif()
 if (NOT MKL_FOUND)    # Prefer Intel's MKL for BLAS/LAPACK if available
   # If MKL is unavailable, prefer ours then fall back to system
   find_path(LAPACKE_PATH lapacke.h DOC "C-interface to LAPACK")
-  find_library(LAPACKE_LIB NAMES lapacke HINTS ${TPL_DIR}/lib NO_DEFAULT_PATH)
-  find_library(LAPACKE_LIB NAMES lapacke REQUIRED)
-  message(STATUS "Found LAPACK C-interface ${LAPACKE_PATH}/lapacke.h and ${LAPACKE_LIB}")
+  find_library(LAPACKE_LIBRARY NAMES lapacke HINTS ${TPL_DIR}/lib NO_DEFAULT_PATH)
+  find_library(LAPACKE_LIBRARY NAMES lapacke REQUIRED)
+  message(STATUS "Found LAPACK C-interface ${LAPACKE_PATH}/lapacke.h and ${LAPACKE_LIBRARY}")
 endif()
 
 #### Boost
