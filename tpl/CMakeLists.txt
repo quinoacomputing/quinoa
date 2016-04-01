@@ -548,3 +548,26 @@ if (lapack)
     LOG_INSTALL 1
   )
 endif()
+
+#### lapack ####################################################################
+# http://www.netlib.org/lapack
+if (lapack)
+  ExternalProject_Add(
+    lapack
+    PREFIX lapack
+    SOURCE_DIR ${PROJECT_SOURCE_DIR}/src/lapack
+    CMAKE_ARGS -D CMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
+               -D CMAKE_Fortran_COMPILER:PATH=${UNDERLYING_Fortran_COMPILER}
+               -D CMAKE_Fortran_FLAGS:STRING=${FFLAGS}
+               -D BUILD_TESTING:BOOL=OFF
+               -D BUILD_SHARED_LIBS:BOOL=ON
+               -D LAPACKE:BOOL=ON
+               -D USE_OPTIMIZED_BLAS:BOOL=ON
+               -D USE_OPTIMIZED_LAPACK:BOOL=ON
+               -D CMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX}
+    DOWNLOAD_COMMAND ""
+    LOG_CONFIGURE 1
+    LOG_BUILD 1
+    LOG_INSTALL 1
+  )
+endif()
