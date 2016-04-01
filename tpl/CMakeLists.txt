@@ -140,13 +140,15 @@ if(NOT NO_SYSTEM_HDF5)
 endif()
 if(HDF5_FOUND AND HDF5_IS_PARALLEL)
   set(hdf5 "")
-  set(hdf5_include_dirs_flags "${HDF5_INCLUDE_DIRS}")
-  string(REGEX REPLACE "([^;]+)" "-I\\1" hdf5_include_dirs_flags
-         "${hdf5_include_dirs_flags}")
-  set(hdf5_library_dirs_flags "${HDF5_LIBRARY_DIRS}")
-  string(REGEX REPLACE "([^;]+)" "-L\\1" hdf5_library_dirs_flags
-        "${hdf5_library_dirs_flags}")
-  set(hdf5_library_dirs "${HDF5_LIBRARY_DIRS}")
+  if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    set(hdf5_include_dirs_flags "${HDF5_INCLUDE_DIRS}")
+    string(REGEX REPLACE "([^;]+)" "-I\\1" hdf5_include_dirs_flags
+           "${hdf5_include_dirs_flags}")
+    set(hdf5_library_dirs_flags "${HDF5_LIBRARY_DIRS}")
+    string(REGEX REPLACE "([^;]+)" "-L\\1" hdf5_library_dirs_flags
+          "${hdf5_library_dirs_flags}")
+    set(hdf5_library_dirs "${HDF5_LIBRARY_DIRS}")
+  endif()
 else()
   message(STATUS "HDF5 either not found or not parallel: will build")
   set(hdf5 "hdf5")
@@ -320,7 +322,6 @@ if (netcdf)
                       --disable-examples
                       --disable-fsync
                       --disable-dap
-                      --disable-cdmremote
                       ${NETCDF_SHARED}
                       --prefix=${CMAKE_INSTALL_PREFIX}
     BUILD_IN_SOURCE 1
