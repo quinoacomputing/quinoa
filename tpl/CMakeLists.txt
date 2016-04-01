@@ -2,7 +2,7 @@
 
 cmake_minimum_required(VERSION 2.8.5)
 
-project(TPL C CXX)
+project(TPL C CXX Fortran)
 include(ExternalProject)
 
 # Quinoa cmake modules directory
@@ -75,11 +75,13 @@ message(STATUS "Charm++ compiler (the compiler used to build Charm++): ${CHARM_C
 #
 #    UNDERLYING_C_COMPILER
 #    UNDERLYING_CXX_COMPILER
+#    UNDERLYING_Fortran_COMPILER
 #
 # 2. The MPI wrappers (of the underlying compilers)
 #
 #    MPI_C_COMPILER
 #    MPI_CXX_COMPILER
+#    MPI_Fortran_COMPILER
 #
 # 3. The Charm++ wrapper (of the MPI wrappers or around the underlying
 #    compilers, depending on CHARM_COMPILER), the compiler used to build Charm++
@@ -221,8 +223,18 @@ else()
   set(pugixml "pugixml")
 endif()
 
+# Detect lapack, exclude if found, build if not
+if(NOT NO_SYSTEM_LAPACK)
+  find_package(LAPACK)
+endif()
+if(LAPACK_FOUND)
+  set(lapack "")
+else()
+  set(lapack "lapack")
+endif()
+
 # Output TPLs to be built
-message(STATUS "Will build: charm trilinos pegtl tut cartesian_product rngsse2 testu01 ${hdf5} ${netcdf} ${boost} ${pstreams} ${hypre} ${pugixml}")
+message(STATUS "Will build: charm trilinos pegtl tut cartesian_product rngsse2 testu01 ${hdf5} ${netcdf} ${boost} ${pstreams} ${hypre} ${pugixml} ${lapack}")
 
 # Define fine-grained targets
 set_property(DIRECTORY PROPERTY EP_STEP_TARGETS
@@ -490,6 +502,29 @@ if (pugixml)
                -D CMAKE_CXX_FLAGS:STRING=${CXXFLAGS}
                 -D CMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX}
                -D BUILD_SHARED_LIBS:BOOL=TRUE
+    DOWNLOAD_COMMAND ""
+    LOG_CONFIGURE 1
+    LOG_BUILD 1
+    LOG_INSTALL 1
+  )
+endif()
+
+#### lapack ####################################################################
+# http://www.netlib.org/lapack
+if (lapack)
+  ExternalProject_Add(
+    lapack
+    PREFIX lapack
+    SOURCE_DIR ${PROJECT_SOURCE_DIR}/src/lapack
+    CMAKE_ARGS -D CMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
+               -D CMAKE_Fortran_COMPILER:PATH=${UNDERLYING_Fortran_COMPILER}
+               -D CMAKE_Fortran_FLAGS:STRING=${FFLAGS}
+               -D BUILD_TESTING:BOOL=OFF
+               -D BUILD_SHARED_LIBS:BOOL=ON
+               -D LAPACKE:BOOL=ON
+               -D USE_OPTIMIZED_BLAS:BOOL=ON
+               -D USE_OPTIMIZED_LAPACK:BOOL=ON
+               -D CMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX}
     DOWNLOAD_COMMAND ""
     LOG_CONFIGURE 1
     LOG_BUILD 1
