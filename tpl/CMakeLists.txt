@@ -123,6 +123,11 @@ include(BuildShared)
 include(get_compiler_flags)
 get_compiler_flags()
 
+# Mac OS X specifics
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+  set(MACOSX_RPATH "-DCMAKE_MACOSX_RPATH:BOOL=ON")
+endif()
+
 # Attempt to find some TPLs on the system (some others we always build)
 
 # Detect HDF5, exclude if found, copy if not
@@ -352,6 +357,7 @@ ExternalProject_Add(
              -D Trilinos_ENABLE_DEBUG=OFF
              ${tr_hdf5}
              ${TRILINOS_SHARED}
+             ${MACOSX_RPATH}
              -D TPL_ENABLE_Netcdf:BOOL=ON
              -D Netcdf_LIBRARY_DIRS:PATH=${netcdf_library_dirs}
              -D TPL_Netcdf_INCLUDE_DIRS:PATH=${netcdf_include_dirs}
@@ -425,6 +431,7 @@ ExternalProject_Add(
   SOURCE_DIR ${PROJECT_SOURCE_DIR}/src/rngsse2
   CMAKE_ARGS -D CMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
              -D BUILD_SHARED_LIBS=${BUILD_SHARED_LIBS}
+             ${MACOSX_RPATH}
              -D CMAKE_CXX_COMPILER:PATH=${UNDERLYING_CXX_COMPILER}
              -D CMAKE_CXX_FLAGS:STRING=${CXXFLAGS}
              -D CMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX}
@@ -437,12 +444,17 @@ ExternalProject_Add(
 #### TestU01 ##################################################################
 # http://www.iro.umontreal.ca/~simardr/testu01/tu01.html
 # No need for MPI, use underlying compilers
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+  set(testu01_shared_off_mac "-DBUILD_SHARED_LIBS:BOOL=OFF")
+endif()
 ExternalProject_Add(
   testu01
   PREFIX testu01
   SOURCE_DIR ${PROJECT_SOURCE_DIR}/src/testu01
   CMAKE_ARGS -D CMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
              -D BUILD_SHARED_LIBS=${BUILD_SHARED_LIBS}
+             ${testu01_shared_off_mac}
+             ${MACOSX_RPATH}
              -D CMAKE_C_COMPILER:PATH=${UNDERLYING_C_COMPILER}
              -D CMAKE_C_FLAGS:STRING=${CFLAGS}
              -D CMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX}
@@ -490,15 +502,20 @@ endif()
 
 #### Hypre #####################################################################
 # http://computation.llnl.gov/project/linear_solvers/software.php
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+  set(hypre_shared_off_mac "-DHYPRE_SHARED:BOOL=OFF")
+endif()
 if (hypre)
   ExternalProject_Add(
     hypre
     PREFIX hypre
     SOURCE_DIR ${PROJECT_SOURCE_DIR}/src/hypre/src
     CMAKE_ARGS -D CMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
-               -D CMAKE_CXX_COMPILER:PATH=${UNDERLYING_CXX_COMPILER}
+               -D CMAKE_CXX_COMPILER:PATH=${MPI_CXX_COMPILER}
                -D CMAKE_CXX_FLAGS:STRING=${CXXFLAGS}
+               ${MACOSX_RPATH}
                -D HYPRE_SHARED:BOOL=${BUILD_SHARED_LIBS}
+               ${hypre_shared_off_mac}
                -D HYPRE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX}
     DOWNLOAD_COMMAND ""
     LOG_CONFIGURE 1
@@ -519,6 +536,7 @@ if (pugixml)
                -D CMAKE_CXX_FLAGS:STRING=${CXXFLAGS}
                -D CMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX}
                -D BUILD_SHARED_LIBS:BOOL=${BUILD_SHARED_LIBS}
+               ${MACOSX_RPATH}
     DOWNLOAD_COMMAND ""
     LOG_CONFIGURE 1
     LOG_BUILD 1
@@ -542,29 +560,7 @@ if (lapack)
                -D USE_OPTIMIZED_BLAS:BOOL=ON
                -D USE_OPTIMIZED_LAPACK:BOOL=ON
                -D CMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX}
-    DOWNLOAD_COMMAND ""
-    LOG_CONFIGURE 1
-    LOG_BUILD 1
-    LOG_INSTALL 1
-  )
-endif()
-
-#### lapack ####################################################################
-# http://www.netlib.org/lapack
-if (lapack)
-  ExternalProject_Add(
-    lapack
-    PREFIX lapack
-    SOURCE_DIR ${PROJECT_SOURCE_DIR}/src/lapack
-    CMAKE_ARGS -D CMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
-               -D CMAKE_Fortran_COMPILER:PATH=${UNDERLYING_Fortran_COMPILER}
-               -D CMAKE_Fortran_FLAGS:STRING=${FFLAGS}
-               -D BUILD_TESTING:BOOL=OFF
-               -D BUILD_SHARED_LIBS:BOOL=ON
-               -D LAPACKE:BOOL=ON
-               -D USE_OPTIMIZED_BLAS:BOOL=ON
-               -D USE_OPTIMIZED_LAPACK:BOOL=ON
-               -D CMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX}
+               ${MACOSX_RPATH}
     DOWNLOAD_COMMAND ""
     LOG_CONFIGURE 1
     LOG_BUILD 1
