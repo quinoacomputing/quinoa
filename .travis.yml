@@ -7,13 +7,13 @@ compiler:
 before_install:
   - brew update
   - brew outdated cmake || brew upgrade cmake
-  - brew install open-mpi ninja
+  - brew install open-mpi ninja boost ninja open-mpi pugixml homebrew/science/gmsh homebrew/science/hypre homebrew/science/hdf5 --with-mpi
 
 script:
-  - mkdir tpl/build ; cd tpl/build ; cmake -D CMAKE_C_COMPILER=mpicc -D CMAKE_CXX_COMPILER=mpicxx -D BUILD_SHARED_LIBS=off ..
+  - mkdir tpl/build ; cd tpl/build ; cmake -D CMAKE_C_COMPILER=mpicc -D CMAKE_CXX_COMPILER=mpicxx -DCMAKE_Fortran_COMPILER=mpif90 -D BUILD_SHARED_LIBS=on ..
   - make -sj2
   - cd -
-  - mkdir build ; cd build ; cmake -D CMAKE_C_COMPILER=mpicc -D CMAKE_CXX_COMPILER=mpicxx -D BUILD_SHARED_LIBS=off -G Ninja ../src
+  - mkdir build ; cd build ; cmake -D CMAKE_C_COMPILER=mpicc -D CMAKE_CXX_COMPILER=mpicxx -D BUILD_SHARED_LIBS=on -G Ninja ../src
   - ninja
   - cd -
 #  - cd build; ../script/run_tests.sh ; cd -
