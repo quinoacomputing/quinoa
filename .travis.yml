@@ -7,8 +7,9 @@ compiler:
 before_install:
   - brew update
   - brew outdated cmake || brew upgrade cmake
-  - brew install open-mpi ninja open-mpi pugixml homebrew/science/gmsh homebrew/science/hypre
+  - brew install open-mpi ninja pugixml
   - brew install homebrew/science/hdf5 --with-mpi
+  - brew install homebrew/science/gmsh homebrew/science/hypre
 
 script:
   - mkdir tpl/build ; cd tpl/build ; cmake -D CMAKE_C_COMPILER=mpicc -D CMAKE_CXX_COMPILER=mpicxx -DCMAKE_Fortran_COMPILER=mpif90 -D BUILD_SHARED_LIBS=on ..
