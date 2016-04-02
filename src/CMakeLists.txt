@@ -86,9 +86,6 @@ message(STATUS "Charm++ compiler wrapper (used to compile Charm++ interface (.ci
 # Mac OS X specifics
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   set(CMAKE_MACOSX_RPATH ON)
-#  STRING(REGEX REPLACE "<CMAKE_CXX_COMPILER>"
-#         ${CHARM_COMPILER}
-#         CMAKE_CXX_CREATE_SHARED_LIBRARY "${CMAKE_CXX_CREATE_SHARED_LIBRARY}")
 endif()
 
 # Query build hostname
@@ -167,6 +164,14 @@ include(libstdcxx)
 
 # Compiler-specific settings
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")  # clang-specific settings
+
+  # Make clang not to resolve symbols when creating a shared library and only
+  # resolve the symbols when linking executables. This behavior is consistent
+  # with gcc, intel, and clang on linux and gcc on mac.
+  if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    set(CMAKE_SHARED_LIBRARY_CREATE_CXX_FLAGS
+        "${CMAKE_SHARED_LIBRARY_CREATE_CXX_FLAGS} -undefined dynamic_lookup")
+  endif()
 
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fcolor-diagnostics")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Qunused-arguments")
