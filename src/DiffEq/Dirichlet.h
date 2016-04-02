@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/Dirichlet.h
   \author    J. Bakosi
-  \date      Sat 30 Jan 2016 09:12:28 PM MST
+  \date      Fri 01 Apr 2016 03:38:39 PM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Dirichlet SDE
   \details   This file implements the time integration of a system of stochastic
@@ -39,6 +39,7 @@
 #include "InitPolicy.h"
 #include "DirichletCoeffPolicy.h"
 #include "RNG.h"
+#include "Particles.h"
 
 namespace walker {
 

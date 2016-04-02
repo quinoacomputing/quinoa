@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/OrnsteinUhlenbeck.h
   \author    J. Bakosi
-  \date      Sat 30 Jan 2016 09:12:17 PM MST
+  \date      Fri 01 Apr 2016 03:39:33 PM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     System of Ornstein-Uhlenbeck SDEs
   \details   This file implements the time integration of a system of stochastic
@@ -59,6 +59,7 @@
 #include "InitPolicy.h"
 #include "OrnsteinUhlenbeckCoeffPolicy.h"
 #include "RNG.h"
+#include "Particles.h"
 
 namespace walker {
 

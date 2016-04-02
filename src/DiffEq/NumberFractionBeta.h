@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/NumberFractionBeta.h
   \author    J. Bakosi
-  \date      Sat 30 Jan 2016 09:11:57 PM MST
+  \date      Fri 01 Apr 2016 03:39:27 PM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     System of number-fraction beta SDEs
   \details   This file implements the time integration of a system of stochastic
@@ -56,6 +56,7 @@
 #include "InitPolicy.h"
 #include "NumberFractionBetaCoeffPolicy.h"
 #include "RNG.h"
+#include "Particles.h"
 
 namespace walker {
 
