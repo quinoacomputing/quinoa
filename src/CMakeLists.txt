@@ -163,7 +163,7 @@ add_compiler_flag("-Wno-vla")
 include(libstdcxx)
 
 # Compiler-specific settings
-if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")  # clang-specific settings
+if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")  # clang-specific settings
 
   # Make clang not to resolve symbols when creating a shared library and only
   # resolve the symbols when linking executables. This behavior is consistent
