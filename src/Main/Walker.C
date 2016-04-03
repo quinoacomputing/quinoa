@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Walker.C
   \author    J. Bakosi
-  \date      Mon 01 Feb 2016 03:26:17 PM MST
+  \date      Sun 03 Apr 2016 10:04:44 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Random walker Charm++ main chare
   \details   Random walker Charm++ main chare. This file contains the definition
@@ -34,7 +34,7 @@
 #include "Timer.h"
 #include "Types.h"
 #include "Init.h"
-#include "Config.h"
+#include "QuinoaConfig.h"
 #include "Tags.h"
 #include "ProcessException.h"
 #include "RNG.h"

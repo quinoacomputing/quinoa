@@ -9,7 +9,7 @@ SET(CMAKE_PREFIX_PATH ${TPL_DIR} ${CMAKE_PREFIX_PATH})
 #### MKL (optional)
 find_package(MKL)
 if(MKL_FOUND)
-  set(HAS_MKL true)  # will become compiler define in Main/Config.h
+  set(HAS_MKL true)  # will become compiler define in Main/QuinoaConfig.h
 endif()
 
 #### BLAS/LAPACK library with LAPACKE C-interface

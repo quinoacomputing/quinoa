@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/TestU01Stack.C
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 01:40:55 PM MDT
+  \date      Sun 03 Apr 2016 10:06:49 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Stack of TestU01 RNG statistical tests
   \details   Stack of TestU01 RNG statistical tests
@@ -15,7 +15,6 @@
 #include <utility>
 
 #include "Tags.h"
-#include "Config.h"
 #include "Exception.h"
 #include "TestU01Stack.h"
 #include "TestU01Wrappers.h"
