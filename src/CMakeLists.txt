@@ -54,7 +54,7 @@ endif()
 # Convert CMAKE_BUILD_TYPE
 string(TOUPPER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE)
 
-# Set build type (will become compiler define in Main/Config.h)
+# Set build type (will become compiler define in Main/QuinoaConfig.h)
 set(BUILD_TYPE ${CMAKE_BUILD_TYPE})
 
 # If not specified on the command-line, set default third-party libraries
@@ -324,8 +324,8 @@ include(TPLs)
 # Make sure that the config file is in the search path
 # Configure a header file to pass info to the code
 configure_file(
-  "${PROJECT_SOURCE_DIR}/Main/Config.h.in"
-  "${PROJECT_BINARY_DIR}/Main/Config.h"
+  "${PROJECT_SOURCE_DIR}/Main/QuinoaConfig.h.in"
+  "${PROJECT_BINARY_DIR}/Main/QuinoaConfig.h"
 )
 
 # Remove build hostname from cmake cache

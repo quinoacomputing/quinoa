@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/CmdLine/Parser.C
   \author    J. Bakosi
-  \date      Mon 30 Nov 2015 12:24:07 PM MST
+  \date      Sun 03 Apr 2016 10:07:59 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Walker's command line parser
   \details   Walker's command line parser
@@ -28,7 +28,7 @@
 #endif
 
 #include "Print.h"
-#include "Config.h"
+#include "QuinoaConfig.h"
 #include "Exception.h"
 #include "HelpFactory.h"
 #include "Keywords.h"
