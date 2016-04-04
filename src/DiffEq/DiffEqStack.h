@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/DiffEqStack.h
   \author    J. Bakosi
-  \date      Sun 13 Mar 2016 12:12:30 PM MDT
+  \date      Sun 03 Apr 2016 06:06:18 PM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Stack of differential equations
   \details   This file declares class DiffEqStack, which implements various
@@ -34,6 +34,7 @@
 #include "Exception.h"
 #include "Factory.h"
 #include "DiffEq.h"
+#include "SystemComponents.h"
 #include "Walker/Options/DiffEq.h"
 #include "Walker/InputDeck/InputDeck.h"
 
@@ -41,16 +42,18 @@ namespace walker {
 
 extern ctr::InputDeck g_inputdeck;
 
-using ncomp_t = kw::ncomp::info::expect::type;
-
 //! \brief Differential equation factory: keys associated to their constructors
 //! \author J. Bakosi
 using DiffEqFactory =
-  std::map< ctr::DiffEqKey, std::function< DiffEq(const ncomp_t&) > >;
+  std::map< ctr::DiffEqKey,
+            std::function< DiffEq(const tk::ctr::ncomp_type&) > >;
 
 //! \brief Differential equations stack
 //! \author J. Bakosi
 class DiffEqStack {
+
+  private:
+    using ncomp_t = tk::ctr::ncomp_type;
 
   public:
     //! Constructor: register differential equations into factory
