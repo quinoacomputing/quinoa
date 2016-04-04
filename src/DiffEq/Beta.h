@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/Beta.h
   \author    J. Bakosi
-  \date      Fri 01 Apr 2016 03:38:09 PM MDT
+  \date      Sun 03 Apr 2016 06:02:57 PM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     System of beta SDEs
   \details   This file implements the time integration of a system of stochastic
@@ -35,6 +35,7 @@
 #include "BetaCoeffPolicy.h"
 #include "RNG.h"
 #include "Particles.h"
+#include "SystemComponents.h"
 
 namespace walker {
 
@@ -50,7 +51,7 @@ template< class Init, class Coefficients >
 class Beta {
 
   private:
-    using ncomp_t = kw::ncomp::info::expect::type;
+    using ncomp_t = tk::ctr::ncomp_type;
 
   public:
     //! \brief Constructor

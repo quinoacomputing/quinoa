@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/GammaCoeffPolicy.h
   \author    J. Bakosi
-  \date      Thu 04 Feb 2016 06:07:41 AM MST
+  \date      Sun 03 Apr 2016 05:59:50 PM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Gamma coefficients policies
   \details   This file defines coefficients policy classes for the gamma SDE,
@@ -50,6 +50,7 @@
 
 #include "Types.h"
 #include "Walker/Options/CoeffPolicy.h"
+#include "SystemComponents.h"
 
 namespace walker {
 

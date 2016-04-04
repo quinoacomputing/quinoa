@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/MixMassFractionBeta.h
   \author    J. Bakosi
-  \date      Fri 01 Apr 2016 03:39:09 PM MDT
+  \date      Sun 03 Apr 2016 06:04:29 PM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     System of mix mass-fraction beta SDEs
   \details   This file implements the time integration of a system of stochastic
@@ -87,7 +87,7 @@ template< class Init, class Coefficients >
 class MixMassFractionBeta {
 
   private:
-    using ncomp_t = kw::ncomp::info::expect::type;
+    using ncomp_t = tk::ctr::ncomp_type;
 
   public:
     //! \brief Constructor

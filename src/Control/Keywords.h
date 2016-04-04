@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Keywords.h
   \author    J. Bakosi
-  \date      Tue 16 Feb 2016 05:50:19 PM MST
+  \date      Sun 03 Apr 2016 05:51:19 PM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Definition of all keywords
   \details   This file contains the definition of all keywords, including those
@@ -1454,7 +1454,7 @@ struct ncomp_info {
     vector.)";
   }
   struct expect {
-    using type = uint64_t;
+    using type = std::size_t;
     static constexpr type lower = 0;
     static std::string description() { return "uint"; }
   };
