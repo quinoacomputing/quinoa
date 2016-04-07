@@ -61,7 +61,7 @@ INSTALL(TARGETS ${UNITTEST_EXECUTABLE}
         ARCHIVE DESTINATION lib COMPONENT Development
 )
 
-message(STATUS "Adding executable target ${UNITTEST_EXECUTABLE}")
+message(STATUS "Will build executable ${UNITTEST_EXECUTABLE}")
 
 ### Inciter executable #########################################################
 add_executable(${INCITER_EXECUTABLE}
@@ -109,7 +109,7 @@ INSTALL(TARGETS ${INCITER_EXECUTABLE}
         ARCHIVE DESTINATION lib COMPONENT Development
 )
 
-message(STATUS "Adding executable target ${INCITER_EXECUTABLE}")
+message(STATUS "Will build executable ${INCITER_EXECUTABLE}")
 
 ### RNGTest executable #########################################################
 add_executable(${RNGTEST_EXECUTABLE}
@@ -152,7 +152,7 @@ INSTALL(TARGETS ${RNGTEST_EXECUTABLE}
         ARCHIVE DESTINATION lib COMPONENT Development
 )
 
-message(STATUS "Adding executable target ${RNGTEST_EXECUTABLE}")
+message(STATUS "Will build executable ${RNGTEST_EXECUTABLE}")
 
 ### MeshConv executable ########################################################
 add_executable(${MESHCONV_EXECUTABLE}
@@ -193,7 +193,7 @@ INSTALL(TARGETS ${MESHCONV_EXECUTABLE}
         ARCHIVE DESTINATION lib COMPONENT Development
 )
 
-message(STATUS "Adding executable target ${MESHCONV_EXECUTABLE}")
+message(STATUS "Will build executable ${MESHCONV_EXECUTABLE}")
 
 ### Walker executable ##########################################################
 add_executable(${WALKER_EXECUTABLE}
@@ -245,10 +245,10 @@ INSTALL(TARGETS ${WALKER_EXECUTABLE}
         ARCHIVE DESTINATION lib COMPONENT Development
 )
 
-message(STATUS "Adding executable target ${WALKER_EXECUTABLE}")
+message(STATUS "Will build executable ${WALKER_EXECUTABLE}")
 
 ### NumDiff executable #########################################################
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../../tool/src/ndiff
                  ${CMAKE_BINARY_DIR}/regression/ndiff)
 
-message(STATUS "Adding executable target ${NUMDIFF_EXECUTABLE}")
+message(STATUS "Will build executable ${NUMDIFF_EXECUTABLE}")
