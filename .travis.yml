@@ -12,7 +12,7 @@ before_install:
   - brew install homebrew/science/gmsh homebrew/science/hypre
 
 script:
-  - mkdir tpl/build ; cd tpl/build ; cmake -D CMAKE_C_COMPILER=mpicc -D CMAKE_CXX_COMPILER=mpicxx -DCMAKE_Fortran_COMPILER=mpif90 -D BUILD_SHARED_LIBS=on ..
+  - mkdir tpl/build ; cd tpl/build ; cmake -D CMAKE_C_COMPILER=mpicc -D CMAKE_CXX_COMPILER=mpicxx -DCMAKE_Fortran_COMPILER=mpif90 ..
   - make -sj2
   - cd -
   - mkdir build ; cd build ; cmake -D CMAKE_C_COMPILER=mpicc -D CMAKE_CXX_COMPILER=mpicxx -D BUILD_SHARED_LIBS=on -G Ninja ../src
