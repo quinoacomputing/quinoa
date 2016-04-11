@@ -86,18 +86,22 @@ message(STATUS "Charm++ compiler wrapper (used to compile Charm++ interface (.ci
 # Mac OS X specifics
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
-  # Set RPATH on Mac OS X
+  # On Mac OS X, set RPATH
   set(CMAKE_MACOSX_RPATH ON)
 
-  # Do not to resolve symbols when creating a shared library and only resolve
-  # the symbols when linking executables. This behavior is consistent with gcc,
-  # intel, and clang on linux.
+  # On Mac OS X, do not to resolve symbols when creating a shared library and
+  # only resolve the symbols when linking executables. This behavior is
+  # consistent with gcc, intel, and clang on linux.
   set(CMAKE_SHARED_LINKER_FLAGS
       "${CMAKE_SHARED_LINKER_FLAGS} -undefined dynamic_lookup")
 
-  #set(CMAKE_OSX_DEPLOYMENT_TARGET "")
-  #set(CMAKE_OSX_SYSROOT "10.11")
-  #message(STATUS "OS X Deployment Target: ${CMAKE_OSX_DEPLOYMENT_TARGET}")
+  # On Mac OS X, due to changes in SnowLeopard (darwin10) linker changes, we add
+  # "-no_compact_unwind" to the link line. This tells the linker to not produce
+  # compact unwind information from the dwarf unwind info in .o files. Then at
+  # runtime the darwin unwinder will fallback and use the slow dwarf unwind
+  # info.
+  set(CMAKE_EXE_LINKER_FLAGS
+      "${CMAKE_EXE_LINKER_FLAGS} -Wl,-no_compact_unwind" )
 endif()
 
 # Query build hostname
