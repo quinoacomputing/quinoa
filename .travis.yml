@@ -5,8 +5,9 @@ compiler:
   - gcc
 
 env:
-  - HOMEBREW_CC=gcc
-  - HOMEBREW_CXX=g++
+  global:
+    - HOMEBREW_CC=gcc
+    - HOMEBREW_CXX=g++
 
 before_install:
   - brew update
