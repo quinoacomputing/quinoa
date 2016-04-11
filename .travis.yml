@@ -6,12 +6,13 @@ compiler:
 
 env:
   global:
-    - HOMEBREW_CC=gcc
-    - HOMEBREW_CXX=g++
+    - HOMEBREW_CC=/usr/local/bin/gcc
+    - HOMEBREW_CXX=/usr/local/bin/g++
 
 before_install:
   - brew update
   - brew outdated cmake || brew upgrade cmake
+  - brew outdated gcc || brew upgrade gcc
   - brew install open-mpi ninja pugixml
   - brew install homebrew/science/hdf5 --with-mpi
   - brew install homebrew/science/gmsh homebrew/science/hypre
