@@ -25,12 +25,12 @@ endif()
 find_path(libc++_INCLUDES NAMES cxxabi.h HINTS ${libc++_ROOT}/include
                                                /usr/include/c++/v1)
 
-if(NOT BUILD_SHARED_LIBS)
-  find_library(libc++_LIBRARIES NAMES libc++.a HINTS ${libc++_ROOT}/lib)
-  find_library(libc++abi_LIBRARIES NAMES libc++abi.a HINTS ${libc++_ROOT}/lib)
-else()
+if(BUILD_SHARED_LIBS)
   find_library(libc++_LIBRARIES NAMES c++ HINTS ${libc++_ROOT}/lib)
   find_library(libc++abi_LIBRARIES NAMES c++abi HINTS ${libc++_ROOT}/lib)
+else()
+  find_library(libc++_LIBRARIES NAMES libc++.a HINTS ${libc++_ROOT}/lib)
+  find_library(libc++abi_LIBRARIES NAMES libc++abi.a HINTS ${libc++_ROOT}/lib)
 endif()
 
 # Handle the QUIETLY and REQUIRED arguments and set libc++_FOUND to TRUE if

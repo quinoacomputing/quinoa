@@ -73,9 +73,6 @@ endif()
 #
 #    CHARM_COMPILER
 
-# Include function that allows to set standard C++ library
-include(libstdcxx)
-
 # Compiler-specific settings
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")  # clang-specific settings
 
@@ -127,6 +124,9 @@ get_compiler_flags()
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   set(MACOSX_RPATH "-DCMAKE_MACOSX_RPATH:BOOL=ON")
 endif()
+
+# Include function that allows to set standard C++ library
+include(libstdcxx)
 
 # Attempt to find some TPLs on the system (some others we always build)
 
