@@ -7,7 +7,6 @@ compiler:
 before_install:
   - brew update
   - brew outdated cmake || brew upgrade cmake
-  - brew outdated gcc || brew upgrade gcc
   - brew install open-mpi ninja pugixml
   - brew install homebrew/science/hdf5 --with-mpi
   - brew install homebrew/science/gmsh homebrew/science/hypre
