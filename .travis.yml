@@ -2,12 +2,7 @@ os:
   - osx
 
 compiler:
-  - gcc
-
-env:
-  global:
-    - HOMEBREW_CC=/usr/local/bin/gcc
-    - HOMEBREW_CXX=/usr/local/bin/g++
+  - clang
 
 before_install:
   - brew update
@@ -21,8 +16,7 @@ script:
   - mkdir tpl/build ; cd tpl/build ; cmake -D CMAKE_C_COMPILER=mpicc -D CMAKE_CXX_COMPILER=mpicxx -DCMAKE_Fortran_COMPILER=mpif90 ..
   - make -sj2
   - cd -
-  - mkdir build ; cd build ; cmake -D CMAKE_C_COMPILER=mpicc -D CMAKE_CXX_COMPILER=mpicxx -D BUILD_SHARED_LIBS=on -G Ninja ../src
+  - mkdir build ; cd build ; cmake -D CMAKE_C_COMPILER=mpicc -D CMAKE_CXX_COMPILER=mpicxx -G Ninja ../src
   - ninja
   - cd -
-#  - cd build; ../script/run_tests.sh ; cd -
-
+  - cd build ; ../script/run_tests.sh ; cd -
