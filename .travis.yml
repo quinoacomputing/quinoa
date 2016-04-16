@@ -7,6 +7,7 @@ compiler:
 before_install:
   - brew update
   - brew outdated cmake || brew upgrade cmake
+  - brew outdated boost || brew upgrade boost
   - brew install open-mpi ninja pugixml homebrew/science/gmsh homebrew/science/hypre
 
 script:
