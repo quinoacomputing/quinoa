@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/UnitTest.C
   \author    J. Bakosi
-  \date      Tue 08 Mar 2016 07:09:18 AM MST
+  \date      Sun 03 Apr 2016 10:05:41 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     UnitTest's Charm++ main chare and main().
   \details   UnitTest's Charm++ main chare and main(). This file contains
@@ -46,7 +46,7 @@
 #include "Tags.h"
 #include "Exception.h"
 #include "Init.h"
-#include "Config.h"
+#include "QuinoaConfig.h"
 #include "HelpFactory.h"
 #include "Assessment.h"
 #include "ProcessException.h"

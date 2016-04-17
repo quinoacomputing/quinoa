@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Options/RNG.h
   \author    J. Bakosi
-  \date      Fri 22 May 2015 08:09:14 AM MDT
+  \date      Sun 03 Apr 2016 10:07:44 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Random number generator options and associations
   \details   Random number generator options and associations
@@ -15,7 +15,7 @@
 
 #include <boost/mpl/vector/vector30.hpp>
 
-#include "Config.h"
+#include "QuinoaConfig.h"
 
 #ifdef HAS_MKL
 #include <mkl_vsl.h>

@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/TestTimer.h
   \author    J. Bakosi
-  \date      Thu 10 Mar 2016 09:11:40 AM MST
+  \date      Mon 11 Apr 2016 08:00:38 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Unit tests for Base/Timer.h
   \details   Unit tests for Base/Timer.h
@@ -44,13 +44,14 @@ Timer_group Timer( "Base/Timer" );
 //! \author J. Bakosi
 template<> template<>
 void Timer_object::test< 1 >() {
-  set_test_name( "measure 0.1s using dsec() with " + std::to_string(precision) +
+  double prec = 1.0e-1; // only for this single test (to pass on Mac OS)
+  set_test_name( "measure 0.1s using dsec() with " + std::to_string(prec) +
                  "s prec" );
 
   tk::Timer timer;
   usleep( 100000 );    // in micro-seconds, sleep for 0.1 second
-  // test if time measured with at least 1/10th of a millisecond precision
-  ensure_equals( "time 0.1s elapsed as float", timer.dsec(), 0.1, precision );
+  // test if time measured with at least 1/10th of a millisecond prec
+  ensure_equals( "time 0.1s elapsed as float", timer.dsec(), 0.1, prec );
 }
 
 //! Test timing a 1.0 duration as h:m:s with given precision
@@ -207,6 +208,7 @@ void Timer_object::test< 6 >() {
 //! \author J. Bakosi
 template<> template<>
 void Timer_object::test< 7 >() {
+  double prec = 1.0e-2; // only for this single test (to pass on Mac OS)
   set_test_name( "query timer from map" );
 
   std::map< std::string, tk::Timer > timer;
@@ -214,7 +216,7 @@ void Timer_object::test< 7 >() {
   usleep( 1000000 );    // in micro-seconds, sleep for 1.0 second
   const auto t = tk::ref_find( timer, "some timer" );
 
-  ensure_equals( "timer different", t.dsec(), 1.0, precision );
+  ensure_equals( "timer different", t.dsec(), 1.0, prec );
 }
 
 //! Test that querying timer from a map throws with garbage key

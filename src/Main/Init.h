@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Init.h
   \author    J. Bakosi
-  \date      Wed 20 Jan 2016 08:11:53 AM MST
+  \date      Sun 03 Apr 2016 10:04:53 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Common initialization routines for main() functions for multiple
      exectuables
@@ -19,7 +19,7 @@
 #include <ctime>
 #include <unistd.h>
 
-#include "Config.h"
+#include "QuinoaConfig.h"
 #include "Exception.h"
 #include "Print.h"
 #include "Tags.h"

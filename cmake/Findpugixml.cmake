@@ -15,13 +15,18 @@
 #    target_link_libraries (TARGET ${PUGIXML_LIBRARIES})
 #  endif()
 
+# If already in cache, be silent
 if(PUGIXML_INCLUDES)
-  # Already in cache, be silent
   set (PUGIXML_FIND_QUIETLY TRUE)
 endif()
 
 FIND_PATH(PUGIXML_INCLUDES NAMES pugixml.hpp HINTS ${PUGIXML_ROOT}/include)
-FIND_LIBRARY(PUGIXML_LIBRARIES NAMES pugixml HINTS ${PUGIXML_ROOT}/lib)
+
+if(NOT BUILD_SHARED_LIBS)
+ find_library(PUGIXML_LIBRARIES NAMES libpugixml.a HINTS ${PUGIXML_ROOT}/lib)
+else()
+ find_library(PUGIXML_LIBRARIES NAMES pugixml HINTS ${PUGIXML_ROOT}/lib)
+endif()
 
 # Handle the QUIETLY and REQUIRED arguments and set PUGIXML_FOUND to TRUE if
 # all listed variables are TRUE.

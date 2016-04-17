@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Inciter.C
   \author    J. Bakosi
-  \date      Tue 02 Feb 2016 11:31:56 AM MST
+  \date      Sun 03 Apr 2016 10:05:04 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Inciter, computational shock hydrodynamics tool, Charm++ main
     chare.
@@ -18,7 +18,7 @@
 
 #include "Types.h"
 #include "Init.h"
-#include "Config.h"
+#include "QuinoaConfig.h"
 #include "Timer.h"
 #include "Exception.h"
 #include "PDE.h"

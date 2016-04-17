@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Particles.h
   \author    J. Bakosi
-  \date      Sun 31 Jan 2016 07:16:07 AM MST
+  \date      Sun 03 Apr 2016 10:07:21 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Particles used to store particle data.
   \details   Particles used to store data at particles as a specialization of
@@ -13,7 +13,7 @@
 #ifndef Particles_h
 #define Particles_h
 
-#include "Config.h"
+#include "QuinoaConfig.h"
 #include "DataLayout.h"
 
 namespace tk {

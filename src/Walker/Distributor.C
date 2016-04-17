@@ -2,7 +2,7 @@
 /*!
   \file      src/Walker/Distributor.C
   \author    J. Bakosi
-  \date      Fri 05 Feb 2016 08:46:06 AM MST
+  \date      Sun 03 Apr 2016 03:25:37 PM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Distributor drives the time integration of differential equations
   \details   Distributor drives the time integration of differential equations.
@@ -24,7 +24,6 @@
 #include <limits>
 #include <cmath>
 #include <cstddef>
-#include <sys/sysmacros.h>
 
 #include <boost/format.hpp>
 #include <boost/optional.hpp>

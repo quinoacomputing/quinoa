@@ -1,6 +1,6 @@
 # Build quinoa
 
-cmake_minimum_required(VERSION 2.8.5)
+cmake_minimum_required(VERSION 3.1.0 FATAL_ERROR)
 
 project(QUINOA C CXX)
 
@@ -20,17 +20,18 @@ set(MINOR_VER 1)
 # Set release number
 set(RELEASE "LA-CC-XX-XXX")
 
-# Set a default build type if none was specified
-if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
-  message(STATUS "CMAKE_BUILD_TYPE not specified, setting to 'DEBUG'")
-  set(CMAKE_BUILD_TYPE DEBUG CACHE STRING "Build type. Possible values: DEBUG | RELEASE | RELWITHDEBINFO | MINSIZEREL" FORCE)
-  # Set the possible values of build type for cmake-gui
-  set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release"
-    "MinSizeRel" "RelWithDebInfo")
-endif()
+# Set CMAKE_BUILD_TYPE
+include(BuildType)
 
-# Echo build type
-message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
+# Set BUILD_SHARED_LIBS
+include(BuildShared)
+
+# Conditionally enforce static linking for exeuctables added after this point.
+# This must precede all add_executable() calls adding executables to link
+# statically.
+if (NOT BUILD_SHARED_LIBS)
+  set(CMAKE_EXE_LINKER_FLAGS "-static")
+endif()
 
 # Determine number of CPUs available
 if (DEFINED ENV{SLURM_NPROCS})
@@ -53,11 +54,8 @@ endif()
 # Convert CMAKE_BUILD_TYPE
 string(TOUPPER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE)
 
-# Set build type
+# Set build type (will become compiler define in Main/QuinoaConfig.h)
 set(BUILD_TYPE ${CMAKE_BUILD_TYPE})
-
-# Build shared-libs by default
-set(BUILD_SHARED_LIBS on)
 
 # If not specified on the command-line, set default third-party libraries
 # directory based on cmake-supplied compiler ID
@@ -85,6 +83,27 @@ set(MPI_COMPILER ${MPI_CXX_COMPILER})
 set(CHARM_COMPILER ${TPL_DIR}/charm/bin/charmc)
 message(STATUS "Charm++ compiler wrapper (used to compile Charm++ interface (.ci) files and link Charm++ executables): " ${CHARM_COMPILER})
 
+# Mac OS X specifics
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+
+  # On Mac OS X, set RPATH
+  set(CMAKE_MACOSX_RPATH ON)
+
+  # On Mac OS X, do not to resolve symbols when creating a shared library and
+  # only resolve the symbols when linking executables. This behavior is
+  # consistent with gcc, intel, and clang on linux.
+  set(CMAKE_SHARED_LINKER_FLAGS
+      "${CMAKE_SHARED_LINKER_FLAGS} -undefined dynamic_lookup")
+
+  # On Mac OS X, due to changes in SnowLeopard (darwin10) linker changes, we add
+  # "-no_compact_unwind" to the link line. This tells the linker to not produce
+  # compact unwind information from the dwarf unwind info in .o files. Then at
+  # runtime the darwin unwinder will fallback and use the slow dwarf unwind
+  # info.
+  set(CMAKE_EXE_LINKER_FLAGS
+      "${CMAKE_EXE_LINKER_FLAGS} -Wl,-no_compact_unwind" )
+endif()
+
 # Query build hostname
 site_name(HOSTNAME)
 
@@ -95,18 +114,32 @@ execute_process(
 )
 string(REGEX REPLACE "[\r\n]" "" BUILD_DATE "${BUILD_DATE}")
 
+# Set the requirement for the C++ standard
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
 # Set names of executables
 set(INCITER_EXECUTABLE inciter)
 set(RNGTEST_EXECUTABLE rngtest)
 set(MESHCONV_EXECUTABLE meshconv)
 set(WALKER_EXECUTABLE walker)
 set(UNITTEST_EXECUTABLE unittest)
+set(NUMDIFF_EXECUTABLE numdiff)
 
 # Create set of all executables tested. These are the executables that do
 # "interesting things", i.e., excluding unittest but keeping rngtest as that is
 # (to be) regression tested
 set(NONTEST_EXECUTABLES ${INCITER_EXECUTABLE} ${RNGTEST_EXECUTABLE}
                         ${MESHCONV_EXECUTABLE} ${WALKER_EXECUTABLE})
+
+# Create set of all executables.
+set(EXECUTABLES ${INCITER_EXECUTABLE}
+                ${RNGTEST_EXECUTABLE}
+                ${MESHCONV_EXECUTABLE}
+                ${WALKER_EXECUTABLE}
+                ${UNITTEST_EXECUTABLE}
+                ${NUMDIFF_EXECUTABLE})
 
 # Get git revision
 include(GetGitRevisionDescription)
@@ -142,22 +175,11 @@ add_compiler_flag("-fdiagnostics-show-option")
 # Suppress warning for all compilers: ISO C++ forbids variable length array
 add_compiler_flag("-Wno-vla")
 
-# Require a C++11 compiler
-check_cxx_compiler_flag(-std=c++11 COMPILER_HAS_CPP11)
-check_cxx_compiler_flag(--c++11 COMPILER_HAS_CXX11)
-if(COMPILER_HAS_CPP11)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-elseif(COMPILER_HAS_CXX11)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --c++11")
-else()
-  MESSAGE(FATAL_ERROR "Need a compiler with C++11 support.")
-endif()
-
 # Include function that allows to set standard C++ library
 include(libstdcxx)
 
 # Compiler-specific settings
-if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")  # clang-specific settings
+if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")  # clang-specific settings
 
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fcolor-diagnostics")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Qunused-arguments")
@@ -166,9 +188,6 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")  # clang-specific settings
   if (libc++_FOUND)
     set_libstdcpp_vs_libcpp(CMAKE_CXX_FLAGS "libc++")
   endif()
-
-  # Use the C++14 standard
-  add_compiler_flag("-std=c++1y")
 
   # Reduce opt level for release mode (clang 3.8 fails to list LinSysMerger with
   # -O2 and segfaults with -O3)
@@ -196,9 +215,6 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")  # gcc-specific settings
 
   # Gnu will use libstdc++ by default. We do not offer libc++.
 
-  # Use the C++14 standard
-  add_compiler_flag("-std=c++1y")
-
   add_compiler_flag("-Wno-literal-suffix")
   add_compiler_flag("-Wno-unused-local-typedefs")
   add_compiler_flag("-Wno-unused-function")
@@ -218,7 +234,7 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")  # gcc-specific settings
 
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
 
-  # Use the C++14 standard
+  # Use the C++14 standard (CMAKE_CXX_STANDARD does not set this for intel)
   add_compiler_flag("-std=c++14")
 
   # Specify the name of the g++ compiler that should be used to set up the
@@ -316,8 +332,8 @@ include(TPLs)
 # Make sure that the config file is in the search path
 # Configure a header file to pass info to the code
 configure_file(
-  "${PROJECT_SOURCE_DIR}/Main/Config.h.in"
-  "${PROJECT_BINARY_DIR}/Main/Config.h"
+  "${PROJECT_SOURCE_DIR}/Main/QuinoaConfig.h.in"
+  "${PROJECT_BINARY_DIR}/Main/QuinoaConfig.h"
 )
 
 # Remove build hostname from cmake cache
@@ -403,12 +419,17 @@ add_subdirectory(RNG)
 add_subdirectory(RNGTest)
 add_subdirectory(Statistics)
 
+# Conditionally enforce static link for all executables. This must be after all
+# add_executable() calls creating the targets for executables in EXECUTABLES.
+if (NOT BUILD_SHARED_LIBS)
+  foreach(exe IN LISTS EXECUTABLES)
+    set_property(TARGET ${exe} PROPERTY LINK_SEARCH_START_STATIC 1)
+    set_property(TARGET ${exe} PROPERTY LINK_SEARCH_END_STATIC 1)
+  endforeach()
+endif()
+
 # Enable cmake's ctest test suite used for regression testing
 enable_testing()
-
-# Add cmake code describing how to build numdiff
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../tool/src/ndiff
-                 ${CMAKE_BINARY_DIR}/regression/ndiff)
 
 # Set mpirun arguments controling process binding
 set(MPIRUN_BIND_ARGS "-bind-to none -map-by node")
@@ -437,7 +458,8 @@ if(CODE_COVERAGE)
   setup_target_for_coverage(regression doc/html regression_coverage
                             ${CMAKE_CTEST_COMMAND}
                             TESTRUNNER_ARGS -j${PROCESSOR_COUNT}
-                            DEPENDS ${NONTEST_EXECUTABLES} numdiff)
+                            DEPENDS ${NONTEST_EXECUTABLES}
+                                    ${NUMDIFF_EXECUTABLE})
 endif()
 
 # Setup code coverage for all individual coverage targets included
@@ -445,5 +467,5 @@ if(CODE_COVERAGE)
   setup_target_for_all_coverage(all doc/html test_coverage
                                 DEPENDS ${NONTEST_EXECUTABLES}
                                         ${UNITTEST_EXECUTABLE}
-                                        numdiff)
+                                        ${NUMDIFF_EXECUTABLE})
 endif()

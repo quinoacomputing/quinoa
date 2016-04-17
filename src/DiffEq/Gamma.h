@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/Gamma.h
   \author    J. Bakosi
-  \date      Sat 30 Jan 2016 09:11:29 PM MST
+  \date      Sun 03 Apr 2016 06:03:56 PM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     System of gamma SDEs
   \details   This file implements the time integration of a system of stochastic
@@ -32,6 +32,8 @@
 #include "InitPolicy.h"
 #include "GammaCoeffPolicy.h"
 #include "RNG.h"
+#include "Particles.h"
+#include "SystemComponents.h"
 
 namespace walker {
 
@@ -47,7 +49,7 @@ template< class Init, class Coefficients >
 class Gamma {
 
   private:
-    using ncomp_t = kw::ncomp::info::expect::type;
+    using ncomp_t = tk::ctr::ncomp_type;
 
   public:
     //! \brief Constructor

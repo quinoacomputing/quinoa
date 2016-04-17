@@ -4,7 +4,7 @@
 # 
 # \file      script/run_tests.sh
 # \author    J. Bakosi
-# \date      Tue 08 Mar 2016 08:04:35 AM MST
+# \date      Fri 15 Apr 2016 02:18:16 PM MDT
 # \copyright 2012-2016, Jozsef Bakosi.
 # \brief     Run multiple test suites as part of automated testing
 # \details   Run multiple test suites as part of automated testing.
@@ -25,7 +25,10 @@
 ################################################################################
 
 # Query number of CPUs
-CPUS=`cat /proc/cpuinfo | grep MHz | wc -l`
+case "$OSTYPE" in
+  darwin*)  CPUS=`sysctl -n hw.ncpu`;;
+  linux*)   CPUS=`cat /proc/cpuinfo | grep MHz | wc -l`;;
+esac
 
 # Run unit test suite
 ./charmrun +p$CPUS Main/unittest -v
