@@ -11,8 +11,8 @@
 #  set(PSTREAMS_ROOT "/path/to/custom/pstreams") # prefer over system
 #  find_package(Pstreams)
 
+# If already in cache, be silent
 if(PSTREAMS_INCLUDES)
-  # Already in cache, be silent
   set (PSTREAMS_FIND_QUIETLY TRUE)
 endif()
 

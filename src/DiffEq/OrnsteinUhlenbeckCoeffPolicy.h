@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/OrnsteinUhlenbeckCoeffPolicy.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:36:43 PM MDT
+  \date      Sun 03 Apr 2016 06:02:00 PM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Ornstein-Uhlenbeck coefficients policies
   \details   This file defines coefficients policy classes for the
@@ -52,6 +52,7 @@
 
 #include "Types.h"
 #include "Walker/Options/CoeffPolicy.h"
+#include "SystemComponents.h"
 
 namespace walker {
 

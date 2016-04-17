@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/MeshConv.C
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 01:46:37 PM MDT
+  \date      Sun 03 Apr 2016 10:04:59 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Mesh file converter Charm++ main chare
   \details   Mesh file converter Charm++ main chare. This file contains the
@@ -19,7 +19,7 @@
 #include "Print.h"
 #include "Timer.h"
 #include "Types.h"
-#include "Config.h"
+#include "QuinoaConfig.h"
 #include "Init.h"
 #include "Tags.h"
 #include "MeshConvDriver.h"

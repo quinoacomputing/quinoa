@@ -2,7 +2,7 @@
 /*!
   \file      src/PDE/PDEStack.C
   \author    J. Bakosi
-  \date      Fri 19 Feb 2016 08:38:16 AM MST
+  \date      Sun 03 Apr 2016 02:26:31 PM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Stack of partial differential equations
   \details   This file defines class PDEStack, which implements various
@@ -123,7 +123,7 @@ PDEStack::selected() const
 //! \author J. Bakosi
 //******************************************************************************
 {
-  std::map< ctr::PDEType, std::size_t > cnt;    // count PDEs per type
+  std::map< ctr::PDEType, ncomp_t > cnt;    // count PDEs per type
   std::vector< PDE > pdes;                      // will store instantiated PDEs
 
   for (const auto& d : g_inputdeck.get< tag::selected, tag::pde >()) {
@@ -146,7 +146,7 @@ PDEStack::info() const
 //! \author J. Bakosi
 //******************************************************************************
 {
-  std::map< ctr::PDEType, std::size_t > cnt; // count PDEs per type
+  std::map< ctr::PDEType, ncomp_t > cnt; // count PDEs per type
   // will store info on all differential equations selected
   std::vector< std::vector< std::pair< std::string, std::string > > > info;
 
@@ -162,8 +162,7 @@ PDEStack::info() const
 }
 
 std::vector< std::pair< std::string, std::string > >
-PDEStack::infoAdvDiff( std::map< ctr::PDEType, std::size_t >& cnt )
-const
+PDEStack::infoAdvDiff( std::map< ctr::PDEType, ncomp_t >& cnt ) const
 //******************************************************************************
 //  Return information on the advection-diffusion PDE
 //! \param[inout] cnt std::map of counters for all partial differential equation
@@ -198,8 +197,7 @@ const
 }
 
 std::vector< std::pair< std::string, std::string > >
-PDEStack::infoEuler( std::map< ctr::PDEType, std::size_t >& cnt )
-const
+PDEStack::infoEuler( std::map< ctr::PDEType, ncomp_t >& cnt ) const
 //******************************************************************************
 //  Return information on the Euler system of PDEs
 //! \param[inout] cnt std::map of counters for all partial differential equation

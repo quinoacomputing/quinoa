@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTest.C
   \author    J. Bakosi
-  \date      Tue 23 Feb 2016 07:47:40 AM MST
+  \date      Sun 03 Apr 2016 10:04:41 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     RNGTest's random number generator test suite's Charm++ main chare.
   \details   RNGTest's random number generator test suite's Charm++ main chare.
@@ -18,7 +18,7 @@
 
 #include <boost/format.hpp>
 
-#include "Config.h"
+#include "QuinoaConfig.h"
 #include "Print.h"
 #include "Init.h"
 #include "Timer.h"

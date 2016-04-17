@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/InitPolicy.h
   \author    J. Bakosi
-  \date      Tue 16 Feb 2016 03:45:20 PM MST
+  \date      Sun 03 Apr 2016 05:57:48 PM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Initialization policies
   \details   This file defines initialization policy classes. As opposed to
@@ -53,6 +53,7 @@
 #include "Types.h"
 #include "Particles.h"
 #include "Walker/Options/InitPolicy.h"
+#include "SystemComponents.h"
 #include "RNG.h"
 
 namespace walker {

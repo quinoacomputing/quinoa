@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/SkewNormalCoeffPolicy.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:37:40 PM MDT
+  \date      Sun 03 Apr 2016 06:02:16 PM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Skew-normal coefficients policies
   \details   This file defines coefficients policy classes for the diagonal
@@ -50,6 +50,7 @@
 
 #include "Types.h"
 #include "Walker/Options/CoeffPolicy.h"
+#include "SystemComponents.h"
 
 namespace walker {
 

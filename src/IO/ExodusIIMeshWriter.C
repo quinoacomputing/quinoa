@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/ExodusIIMeshWriter.C
   \author    J. Bakosi
-  \date      Sat 14 Nov 2015 07:00:26 AM MST
+  \date      Fri 15 Apr 2016 12:08:27 PM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     ExodusII mesh-based data writer
   \details   ExodusII mesh-based data writer class definition.
@@ -218,14 +218,14 @@ const
     "Failed to write nodal output variable parameters to ExodusII file: " +
     m_filename );
 
-  std::vector< const char* > names;
-  std::transform( std::begin( nv ), std::end( nv ), std::back_inserter( names ),
-                  std::mem_fn( &std::string::c_str ) );
+  char* names[ nv.size() ];
+  std::size_t i = 0;
+  for (const auto& n : nv) names[ i++ ] = const_cast< char* >( n.c_str() );
 
   ErrChk( ex_put_var_names( m_outFile,
                             "n",
                             static_cast< int >( nv.size() ),
-                            const_cast< char** >( names.data() ) ) == 0,
+                            names ) == 0,
           "Failed to write nodal output variable names to ExodusII file: " +
           m_filename );
 }
@@ -244,14 +244,14 @@ const
     "Failed to write element output variable parameters to ExodusII file: " +
     m_filename );
 
-  std::vector< const char* > names;
-  std::transform( std::begin( ev ), std::end( ev ), std::back_inserter( names ),
-                  std::mem_fn( &std::string::c_str ) );
+  char* names[ ev.size() ];
+  std::size_t i = 0;
+  for (const auto& n : ev) names[ i++ ] = const_cast< char* >( n.c_str() );
 
   ErrChk( ex_put_var_names( m_outFile,
                             "e",
                             static_cast< int >( ev.size() ),
-                            const_cast< char** >( names.data() ) ) == 0,
+                            names ) == 0,
           "Failed to write element output variable names to ExodusII file: " +
           m_filename );
 }

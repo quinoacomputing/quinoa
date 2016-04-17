@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/RNGStack.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 10:22:28 AM MDT
+  \date      Sun 03 Apr 2016 10:06:07 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Stack of random number generators
   \details   This file declares class RNGStack, which implements various
@@ -21,7 +21,6 @@
 #include <functional>
 #include <type_traits>
 
-#include "Config.h"
 #include "RNG.h"
 #include "RNGParam.h"
 #include "Options/RNG.h"

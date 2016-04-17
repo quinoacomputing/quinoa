@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/MixNumberFractionBeta.h
   \author    J. Bakosi
-  \date      Sat 30 Jan 2016 09:11:52 PM MST
+  \date      Sun 03 Apr 2016 06:04:37 PM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     System of mix number-fraction beta SDEs
   \details   This file implements the time integration of a system of stochastic
@@ -71,6 +71,8 @@
 #include "InitPolicy.h"
 #include "MixNumberFractionBetaCoeffPolicy.h"
 #include "RNG.h"
+#include "Particles.h"
+#include "SystemComponents.h"
 
 namespace walker {
 
@@ -87,7 +89,7 @@ template< class Init, class Coefficients >
 class MixNumberFractionBeta {
 
   private:
-    using ncomp_t = kw::ncomp::info::expect::type;
+    using ncomp_t = tk::ctr::ncomp_type;
 
   public:
     //! \brief Constructor

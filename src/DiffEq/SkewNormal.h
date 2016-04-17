@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/SkewNormal.h
   \author    J. Bakosi
-  \date      Sat 30 Jan 2016 09:11:45 PM MST
+  \date      Sun 03 Apr 2016 06:05:04 PM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     System of skew-normal SDEs
   \details   This file implements the time integration of a system of stochastic
@@ -45,6 +45,8 @@
 #include "InitPolicy.h"
 #include "SkewNormalCoeffPolicy.h"
 #include "RNG.h"
+#include "Particles.h"
+#include "SystemComponents.h"
 
 namespace walker {
 
@@ -60,7 +62,7 @@ template< class Init, class Coefficients >
 class SkewNormal {
 
   private:
-    using ncomp_t = kw::ncomp::info::expect::type;
+    using ncomp_t = tk::ctr::ncomp_type;
 
   public:
     //! \brief Constructor

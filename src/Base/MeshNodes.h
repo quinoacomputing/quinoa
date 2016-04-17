@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/MeshNodes.h
   \author    J. Bakosi
-  \date      Sun 31 Jan 2016 07:16:21 AM MST
+  \date      Sun 03 Apr 2016 10:07:28 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     MeshNodes used to store mesh node data.
   \details   MeshNodes used to store data at mesh nodes as a specialization of
@@ -13,7 +13,7 @@
 #ifndef MeshNodes_h
 #define MeshNodes_h
 
-#include "Config.h"
+#include "QuinoaConfig.h"
 #include "DataLayout.h"
 
 namespace tk {
