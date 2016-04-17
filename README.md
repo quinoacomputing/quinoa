@@ -39,11 +39,11 @@ Jozsef Bakosi (jbakosi@lanl.gov)
 
 #### Debian/Ubuntu:
    ```
-    $ apt-get install git cmake gcc g++ ninja-build gmsh libpugixml-dev libpstreams-dev libboost-all-dev liblapack-dev liblapacke-dev libhdf5-dev libhdf5-openmpi-dev libhypre-dev
+    $ apt-get install git cmake gfortran gcc g++ gmsh libpugixml-dev libpstreams-dev libboost-all-dev liblapack-dev liblapacke-dev libhdf5-dev libhdf5-openmpi-dev libhypre-dev
    ```
 #### Mac OS X:
    ```
-    $ port install git cmake openmpi-clang38 ninja gmsh pugixml boost
+    $ port install git cmake openmpi-clang38 gmsh pugixml boost
     $ port install hdf5 +hl +openmpi
     $ port install hypre +openmpi
    ```
@@ -68,8 +68,8 @@ Jozsef Bakosi (jbakosi@lanl.gov)
    ```
     $ cd quinoa; mkdir build; cd build
     $ cmake ../src
-    $ ninja
-    $ ./charmrun +p4 Main/unittest
+    $ make -sj4
+    $ Main/charmrun +p4 Main/unittest
     $ ctest -j4 -LE stringent
    ```
    - All executables will be in <tt>quinoa/build/Main</tt>
