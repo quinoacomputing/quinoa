@@ -33,19 +33,19 @@ See the [license](https://github.com/jbakosi/quinoa/blob/master/LICENSE)
 
 Jozsef Bakosi (jbakosi@lanl.gov)
 
-## Build on linux or mac
+## Build (linux, mac)
 
 ### 1. Install prerequisites
 
-#### Debian/Ubuntu:
+#### Debian/Ubuntu linux:
    ```
-    $ apt-get install git cmake gfortran gcc g++ gmsh libpugixml-dev libpstreams-dev libboost-all-dev liblapack-dev liblapacke-dev libhdf5-dev libhdf5-openmpi-dev libhypre-dev
+    $ sudo apt-get install git cmake gcc g++ gmsh libpugixml-dev libpstreams-dev libboost-all-dev liblapack-dev liblapacke-dev libhdf5-dev libhdf5-openmpi-dev libhypre-dev
    ```
 #### Mac OS X:
    ```
-    $ port install git cmake openmpi-clang38 gmsh pugixml boost
-    $ port install hdf5 +hl +openmpi
-    $ port install hypre +openmpi
+    $ sudo port install git cmake openmpi-clang38 gmsh pugixml boost
+    $ sudo port install hdf5 +hl +openmpi
+    $ sudo port install hypre +openmpi
    ```
 
 ### 2. Clone
@@ -54,7 +54,7 @@ Jozsef Bakosi (jbakosi@lanl.gov)
     $ git clone https://github.com/jbakosi/quinoa.git
    ```
 
-### 3. Build the third-party libraries
+### 3. Build the required third-party libraries
 
    ```
     $ CC=mpicc CXX=mpic++ FC=mpif90
