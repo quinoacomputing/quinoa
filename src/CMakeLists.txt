@@ -57,11 +57,16 @@ string(TOUPPER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE)
 # Set build type (will become compiler define in Main/QuinoaConfig.h)
 set(BUILD_TYPE ${CMAKE_BUILD_TYPE})
 
+# Query target architecture
+include(TargetArch)
+target_architecture(ARCH)
+message(STATUS "Target architecture: ${ARCH}")
+
 # If not specified on the command-line, set default third-party libraries
 # directory based on cmake-supplied compiler ID
 if (NOT TPL_DIR)
   string(TOLOWER "${CMAKE_CXX_COMPILER_ID}" COMP)
-  set(REL_TPL_DIR ${PROJECT_SOURCE_DIR}/../tpl/install/${COMP})
+  set(REL_TPL_DIR ${PROJECT_SOURCE_DIR}/../tpl/install/${COMP}-${ARCH})
   get_filename_component(ABS_TPL_DIR ${REL_TPL_DIR} ABSOLUTE)
   set(TPL_DIR ${ABS_TPL_DIR} CACHE STRING "Third-party libraries directory.")
 endif()
