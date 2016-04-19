@@ -237,12 +237,6 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
   # Use the C++14 standard (CMAKE_CXX_STANDARD does not set this for intel)
   add_compiler_flag("-std=c++14")
 
-  # Specify the name of the g++ compiler that should be used to set up the
-  # environment. This is necessary if a newer g++ is installed system-wide with
-  # its libstdc++ and headers and the intel compiler does not yet compile those
-  # newer headers.
-  add_compiler_flag("-gxx-name=g++-4.9")
-
   add_compiler_flag("-Wremarks")
   # Suppress the following Intel compiler remarks:
   #     7: unrecognized token
