@@ -39,7 +39,7 @@ Jozsef Bakosi (jbakosi@lanl.gov)
 
 #### Debian/Ubuntu linux:
    ```
-    $ sudo apt-get install git cmake gcc g++ gmsh libpugixml-dev libpstreams-dev libboost-all-dev liblapack-dev liblapacke-dev libhdf5-dev libhdf5-openmpi-dev libhypre-dev
+    $ sudo apt-get install git cmake gfortran gcc g++ gmsh libpugixml-dev libpstreams-dev libboost-all-dev liblapack-dev liblapacke-dev libhdf5-dev libhdf5-openmpi-dev libhypre-dev
    ```
 #### Mac OS X:
    ```
