@@ -105,12 +105,6 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
     set_libstdcpp_vs_libcpp(CXXFLAGS "libc++")
   endif()
 
-  # Specify the name of the g++ compiler that should be used to set up the
-  # environment. This is necessary if a newer g++ is installed system-wide with
-  # its libstdc++ and headers and the intel compiler does not yet compile those
-  # newer headers.
-  set(CXXFLAGS "${CXXFLAGS} -gxx-name=g++-4.9")
-
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "PGI")  # pgi-specific settings
 
   # Some configure scripts don't like pgi's preprocessor so use gnu's
