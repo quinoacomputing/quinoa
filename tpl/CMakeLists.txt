@@ -29,11 +29,16 @@ message(STATUS "Found ${PROCESSOR_COUNT} PEs")
 # Set compiler id
 string(TOLOWER "${CMAKE_CXX_COMPILER_ID}" COMP)
 
+# Query target architecture
+include(TargetArch)
+target_architecture(ARCH)
+message(STATUS "Target architecture: ${ARCH}")
+
 # Set install directory based on compiler ID if was not given on command line
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-  set(CMAKE_INSTALL_PREFIX "${PROJECT_SOURCE_DIR}/install/${COMP}" CACHE STRING
-      "Third-party install prefix." FORCE)
-  message(STATUS "CMAKE_INSTALL_PREFIX not specified, setting to '${PROJECT_SOURCE_DIR}/install/${COMP}'")
+  set(CMAKE_INSTALL_PREFIX "${PROJECT_SOURCE_DIR}/install/${COMP}-${ARCH}"
+      CACHE STRING "Third-party install prefix." FORCE)
+  message(STATUS "CMAKE_INSTALL_PREFIX not specified, setting to '${PROJECT_SOURCE_DIR}/install/${COMP}-${ARCH}'")
 else()
   message(STATUS "CMAKE_INSTALL_PREFIX: " ${CMAKE_INSTALL_PREFIX})
 endif()
