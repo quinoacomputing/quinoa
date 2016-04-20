@@ -431,7 +431,8 @@ endif()
 enable_testing()
 
 # Set mpirun arguments controling process binding
-set(MPIRUN_BIND_ARGS "-bind-to none -map-by node")
+set(MPIRUN_BIND_ARGS "-bind-to none -map-by node"
+    CACHE STRING "Arguments to pass to mpirun for all regression tests.")
 message(STATUS "mpirun process binding for ctest: ${MPIRUN_BIND_ARGS}")
 
 # Include cmake code common to all regression tests
