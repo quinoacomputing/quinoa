@@ -39,13 +39,13 @@ Jozsef Bakosi (jbakosi@lanl.gov)
 
 #### Debian/Ubuntu linux:
    ```
-    $ sudo apt-get install git cmake gfortran gcc g++ gmsh libpugixml-dev libpstreams-dev libboost-all-dev liblapack-dev liblapacke-dev libhdf5-dev libhdf5-openmpi-dev libhypre-dev
+    $ sudo apt-get install git cmake gfortran gcc g++ # required
+    $ sudo apt-get install gmsh libpugixml-dev libpstreams-dev libboost-all-dev liblapack-dev liblapacke-dev libhdf5-dev libhdf5-openmpi-dev libhypre-dev # recommended
    ```
 #### Mac OS X:
    ```
-    $ sudo port install git cmake openmpi-clang38 gmsh pugixml boost
-    $ sudo port install hdf5 +hl +openmpi
-    $ sudo port install hypre +openmpi
+    $ sudo port install git cmake openmpi-clang38 # required
+    $ sudo port gmsh pugixml boost hdf5 +hl +openmpi hypre +openmpi # recommended
    ```
 
 ### 2. Clone
