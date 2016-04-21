@@ -23,7 +23,8 @@ if(libc++_INCLUDES AND libc++_LIBRARIES AND libc++abi_LIBRARIES)
 endif()
 
 find_path(libc++_INCLUDES NAMES cxxabi.h HINTS ${libc++_ROOT}/include
-                                               /usr/include/c++/v1)
+                                               /usr/include/c++/v1
+                                               $ENV{CPLUS_INCLUDE_PATH}/c++/v1)
 
 if(BUILD_SHARED_LIBS)
   find_library(libc++_LIBRARIES NAMES c++ HINTS ${libc++_ROOT}/lib)
