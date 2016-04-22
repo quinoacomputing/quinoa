@@ -39,16 +39,20 @@ See the [LICENSE](https://github.com/jbakosi/quinoa/blob/master/LICENSE).
 
 Jozsef Bakosi (jbakosi@lanl.gov)
 
-## How to build
+## Build (linux, mac)
 
 ### 1. Install prerequisites
-   Click on the links below for details on how to install the prerequisites for
-   your system:
-   - [debian/testing/gnu](https://github.com/jbakosi/quinoa-docker/blob/master/debian/testing/gnu/alltpl/Dockerfile)
-   - [debian/testing/clang](https://github.com/jbakosi/quinoa-docker/blob/master/debian/testing/clang/alltpl/Dockerfile)
-   - [ubuntu/precise/gnu](https://github.com/jbakosi/quinoa-docker/blob/master/ubuntu/precise/gnu/alltpl/Dockerfile)
-   - [ubuntu/trusty/gnu](https://github.com/jbakosi/quinoa-docker/blob/master/ubuntu/trusty/gnu/alltpl/Dockerfile)
-   - [add yours](https://github.com/jbakosi/quinoa/issues/73)
+
+#### Debian/Ubuntu linux:
+   \code{.sh}
+    $ sudo apt-get install git cmake gfortran gcc g++ # required
+    $ sudo apt-get install gmsh libpugixml-dev libpstreams-dev libboost-all-dev liblapack-dev liblapacke-dev libhdf5-dev libhdf5-openmpi-dev libhypre-dev # recommended
+   \endcode
+#### Mac OS X:
+   \code{.sh}
+    $ sudo port install git cmake openmpi-clang38 # required
+    $ sudo port gmsh pugixml boost hdf5 +hl +openmpi hypre +openmpi # recommended
+   \endcode
 
 ### 2. Clone
 
@@ -56,38 +60,30 @@ Jozsef Bakosi (jbakosi@lanl.gov)
     $ git clone https://github.com/jbakosi/quinoa.git
    \endcode
 
-### 3. Pick compilers
+### 3. Build the required third-party libraries
 
    \code{.sh}
     $ CC=mpicc CXX=mpic++ FC=mpif90
-   \endcode
-   - Currently, MPI is required, use the OpenMPI wrappers
-   - The underlying C++ compiler must support the C++11 standard
-
-### 4. Build the third-party libraries
-
-   \code{.sh}
     $ cd quinoa/tpl; mkdir build; cd build
     $ cmake ..
-    $ make
+    $ make -sj4
    \endcode
 
-### 5. Build Quinoa
+### 4. Build & test Quinoa
 
    \code{.sh}
     $ cd quinoa; mkdir build; cd build
     $ cmake ../src
-    $ make
+    $ make -sj4
+    $ Main/charmrun +p4 Main/unittest
+    $ ctest -j4 -LE stringent
    \endcode
    - All executables will be in <tt>quinoa/build/Main</tt>
-
-### 6. Contribute
    - Browse the [documentation](http://jbakosi.github.io/quinoa/index.html)
-   - Check out the issues labeled [help wanted](https://github.com/jbakosi/quinoa/labels/help%20wanted)
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Tue 14 Jul 2015 09:10:15 AM MDT
+<em>Page last updated:</em> Fri 22 Apr 2016 07:36:08 AM MDT
 <em>Copyright 2012-2016, Jozsef Bakosi.</em>
 </small></div>
 */
