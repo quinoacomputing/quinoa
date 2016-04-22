@@ -337,9 +337,6 @@ else()
   set(TRILINOS_SHARED "-DBUILD_SHARED_LIBS=OFF;-DTPL_FIND_SHARED_LIBS:BOOL=OFF;-DTrilinos_LINK_SEARCH_START_STATIC:BOOL=ON")
   set(tr_hdf5 "-DTrilinos_EXTRA_LINK_FLAGS=-L${hdf5_library_dirs} -lhdf5_hl -lhdf5 -lz -lm -ldl")
 endif()
-#if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")  # force static libs on MAC OS X
-#  set(TRILINOS_SHARED "-DBUILD_SHARED_LIBS:BOOL=OFF")
-#endif()
 ExternalProject_Add(
   trilinos
   DEPENDS ${hdf5} ${netcdf}
