@@ -32,7 +32,7 @@ string(TOLOWER "${CMAKE_CXX_COMPILER_ID}" COMP)
 # Query target architecture
 include(TargetArch)
 target_architecture(ARCH)
-message(STATUS "Target architecture: ${ARCH}")
+message(STATUS "Detected target architecture: ${ARCH}")
 
 # Set install directory based on compiler ID if was not given on command line
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
@@ -46,16 +46,45 @@ endif()
 # Convert system name to lower case
 string(TOLOWER ${CMAKE_SYSTEM_NAME} SYSTEM_NAME)
 
-# Set Charm++ build architecture
-set(CHARM_ARCHITECTURE "mpi-${SYSTEM_NAME}-x86_64")
-message(STATUS "Charm++ architecture: ${CHARM_ARCHITECTURE}")
+# Match Charm++ build architecture for system architecture detected
+if(ARCH MATCHES "x86_64")
 
-# Set Charm++ compiler: let the Charm++ build decide on MacOS, otherwise use mpi
-if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-  set(CHARM_COMPILER "")
+  set(CHARM_ARCH "-${ARCH}")
+
+elseif(ARCH MATCHES "i386")
+
+  if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    set(CHARM_ARCH "")
+  elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    set(CHARM_ARCH "-x86")
+  endif()
+
 else()
-  set(CHARM_COMPILER "mpicxx")
+
+  message(FATAL "Selecting a Charm++ architecture for ${ARCH} is not supported")
+
 endif()
+
+# Set Charm++ architecture
+set(CHARM_ARCHITECTURE "mpi-${SYSTEM_NAME}${CHARM_ARCH}")
+
+# Set Charm++ compiler
+if(CMAKE_CXX_COMPILER MATCHES "mpi")    # using mpi wrappers
+
+  if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    set(CHARM_COMPILER "mpicxx")
+  elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    set(CHARM_COMPILER "")
+  endif()
+
+else()  # if not using mpi wrappers
+
+  set(CHARM_COMPILER "")
+
+endif()
+
+message(STATUS "Charm++ architecture: '${CHARM_ARCHITECTURE}'")
+message(STATUS "Charm++ compiler: '${CHARM_COMPILER}'")
 
 # Set CMAKE_BUILD_TYPE
 include(BuildType)
