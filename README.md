@@ -33,44 +33,28 @@ See the [license](https://github.com/jbakosi/quinoa/blob/master/LICENSE)
 
 Jozsef Bakosi (jbakosi@lanl.gov)
 
-## Build (linux, mac)
+## Build
 
 ### 1. Install prerequisites
 
-#### Debian/Ubuntu linux:
+- Debian/Ubuntu linux: (line 1: required, line 2: recommended)
    ```
-    $ sudo apt-get install git cmake gfortran gcc g++ # required
-    $ sudo apt-get install gmsh libpugixml-dev libpstreams-dev libboost-all-dev liblapack-dev liblapacke-dev libhdf5-dev libhdf5-openmpi-dev libhypre-dev # recommended
+   sudo apt-get install git cmake gfortran gcc g++ openmpi-bin libopenmpi-dev
+   sudo apt-get install gmsh libpugixml-dev libpstreams-dev libboost-all-dev liblapack-dev liblapacke-dev libhdf5-dev libhdf5-openmpi-dev libhypre-dev
    ```
-#### Mac OS X:
+- Mac OS X: (line 1: required, line 2: recommended)
    ```
-    $ sudo port install git cmake openmpi-clang38 # required
-    $ sudo port gmsh pugixml boost hdf5 +hl +openmpi hypre +openmpi # recommended
-   ```
-
-### 2. Clone
-
-   ```
-    $ git clone https://github.com/jbakosi/quinoa.git
+   sudo port install git cmake openmpi-clang38
+   sudo port gmsh pugixml boost hdf5 +hl +openmpi hypre +openmpi
    ```
 
-### 3. Build the required third-party libraries
+### 2. Clone, build third-party libraries, build & test Quinoa
 
    ```
-    $ CC=mpicc CXX=mpic++ FC=mpif90
-    $ cd quinoa/tpl; mkdir build; cd build
-    $ cmake ..
-    $ make -sj4
-   ```
+   git clone https://github.com/jbakosi/quinoa.git; cd quinoa
+   mkdir tpl/build; cd build; cmake ..; make; cd -
+   mkdir build; cd build; cmake ../src; make; ../script/run_tests.sh
 
-### 4. Build & test Quinoa
-
-   ```
-    $ cd quinoa; mkdir build; cd build
-    $ cmake ../src
-    $ make -sj4
-    $ Main/charmrun +p4 Main/unittest
-    $ ctest -j4 -LE stringent
    ```
    - All executables will be in <tt>quinoa/build/Main</tt>
    - Browse the [documentation](http://jbakosi.github.io/quinoa/index.html)
