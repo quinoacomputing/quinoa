@@ -55,7 +55,7 @@ Jozsef Bakosi (jbakosi@lanl.gov)
 
    ```
    git clone https://github.com/jbakosi/quinoa.git; cd quinoa
-   mkdir tpl/build; cd build; cmake ..; make; cd -
+   mkdir tpl/build; cd tpl/build; cmake ..; make; cd -
    mkdir build; cd build; cmake ../src; make; ../script/run_tests.sh
    ```
 
