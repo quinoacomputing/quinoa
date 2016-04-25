@@ -40,18 +40,18 @@ Jozsef Bakosi (jbakosi@lanl.gov)
 - Debian/Ubuntu linux: (line 1: required, line 2: recommended)
 
    ```
-   sudo apt-get install cmake gfortran gcc g++ openmpi-bin libopenmpi-dev
+   sudo apt-get install git cmake gfortran gcc g++ openmpi-bin libopenmpi-dev
    sudo apt-get install gmsh libpugixml-dev libpstreams-dev libboost-all-dev liblapack-dev liblapacke-dev libhdf5-dev libhdf5-openmpi-dev libhypre-dev
    ```
 
 - Mac OS X: (line 1: required, line 2: recommended)
 
    ```
-   sudo port install cmake openmpi-clang38
+   sudo port install git cmake openmpi-clang38
    sudo port gmsh pugixml boost hdf5 +hl +openmpi hypre +openmpi
    ```
 
-### 2. Clone, build third-party libraries, build & test Quinoa
+### 2. Clone, build third-party libraries, build & test
 
    ```
    git clone https://github.com/jbakosi/quinoa.git; cd quinoa
