@@ -302,13 +302,12 @@ message(STATUS "Charm++ host extra compiler flags: ${HOSTFILE_FLAGS}")
 # Echo Charm++ module extra link flags
 message(STATUS "Charm++ module extra linker flags: ${PARTOF_FLAGS}")
 
-# Set default charmrun path. This is used when generating code coverage and
-# running regression test.
-SET(CHARMRUN "${CMAKE_BINARY_DIR}/Main/charmrun")
-# Ninja puts chamrun to build dir
-IF(CMAKE_GENERATOR STREQUAL "Ninja")
-  SET(CHARMRUN "${CMAKE_BINARY_DIR}/charmrun")
-ENDIF()
+# Set charmrun path. This is used when generating code coverage and running
+# regression tests using ctest. Note that ninja puts chamrun to <build> while
+# make puts it into <build>/Main, but after any executable target we copy
+# <build>/Main/charmrun to <build> for non-ninja builds. See also
+# Main/CMakeLists.txt.
+SET(CHARMRUN "${CMAKE_BINARY_DIR}/charmrun")
 message(STATUS "charmrun executable: ${CHARMRUN}")
 
 # Attempt to find tools required for code coverage analysis
