@@ -47,7 +47,7 @@ Jozsef Bakosi (jbakosi@lanl.gov)
 - Mac OS X: (line 1: required, line 2: recommended)
 
    ```
-   sudo port install git cmake openmpi-clang38
+   sudo port install cmake openmpi-clang38
    sudo port gmsh pugixml boost hdf5 +hl +openmpi hypre +openmpi
    ```
 
