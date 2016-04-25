@@ -38,11 +38,14 @@ Jozsef Bakosi (jbakosi@lanl.gov)
 ### 1. Install prerequisites
 
 - Debian/Ubuntu linux: (line 1: required, line 2: recommended)
+
    ```
-   sudo apt-get install git cmake gfortran gcc g++ openmpi-bin libopenmpi-dev
+   sudo apt-get install cmake gfortran gcc g++ openmpi-bin libopenmpi-dev
    sudo apt-get install gmsh libpugixml-dev libpstreams-dev libboost-all-dev liblapack-dev liblapacke-dev libhdf5-dev libhdf5-openmpi-dev libhypre-dev
    ```
+
 - Mac OS X: (line 1: required, line 2: recommended)
+
    ```
    sudo port install git cmake openmpi-clang38
    sudo port gmsh pugixml boost hdf5 +hl +openmpi hypre +openmpi
@@ -54,7 +57,7 @@ Jozsef Bakosi (jbakosi@lanl.gov)
    git clone https://github.com/jbakosi/quinoa.git; cd quinoa
    mkdir tpl/build; cd build; cmake ..; make; cd -
    mkdir build; cd build; cmake ../src; make; ../script/run_tests.sh
-
    ```
+
    - All executables will be in <tt>quinoa/build/Main</tt>
    - Browse the [documentation](http://jbakosi.github.io/quinoa/index.html)
