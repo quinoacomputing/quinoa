@@ -12,6 +12,20 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../cmake")
 include(DisallowInSourceBuilds)
 disallow_in_source_builds()
 
+# Set CMAKE_BUILD_TYPE
+include(BuildType)
+
+# Set BUILD_SHARED_LIBS
+include(BuildShared)
+
+# Conditionally enforce static linking for exeuctables added after this point.
+# This must precede all add_executable() calls adding executables to link
+# statically.
+if (NOT BUILD_SHARED_LIBS)
+  set(CMAKE_EXE_LINKER_FLAGS "-static")
+  set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
+endif()
+
 # Find MPI and get its underlying compilers
 # The get_mpi_compilers cmake function uses the built-in CMake functionality to
 # find the MPI wrappers and based on the wrappers detects the underyling
@@ -85,12 +99,6 @@ endif()
 
 message(STATUS "Charm++ architecture: '${CHARM_ARCHITECTURE}'")
 message(STATUS "Charm++ compiler: '${CHARM_COMPILER}'")
-
-# Set CMAKE_BUILD_TYPE
-include(BuildType)
-
-# Set BUILD_SHARED_LIBS
-include(BuildShared)
 
 # Include function that allows to set standard C++ library
 include(libstdcxx)
