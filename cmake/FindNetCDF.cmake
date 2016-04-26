@@ -72,7 +72,7 @@ macro (NetCDF_check_interface lang header libs)
   endif (NETCDF_${lang})
 endmacro (NetCDF_check_interface)
 
-if(NETCDF_USE_STATIC_LIBRARIES)
+if(NOT BUILD_SHARED_LIBS)
   NetCDF_check_interface (CXX netcdfcpp.h libnetcdf_c++.a)
   NetCDF_check_interface (F77 netcdf.inc  libnetcdff.a)
   NetCDF_check_interface (F90 netcdf.mod  libnetcdff.a)
