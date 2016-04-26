@@ -40,6 +40,9 @@ if(PROCESSOR_COUNT EQUAL 0)     # if ncpus could not be determined, assign 1
 endif()
 message(STATUS "Found ${PROCESSOR_COUNT} PEs")
 
+# Include support for multiarch path names
+include(GNUInstallDirs)
+
 # Set compiler id
 string(TOLOWER "${CMAKE_CXX_COMPILER_ID}" COMP)
 
@@ -139,6 +142,14 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")  # clang-specific settings
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")  # gcc-specific settings
 
   # Gnu will use libstdc++ by default. We do not offer libc++.
+
+  # Detect gcc version
+  execute_process(COMMAND ${CMAKE_C_COMPILER} -dumpversion
+                  OUTPUT_VARIABLE GCC_VERSION)
+  string(REGEX MATCHALL "[0-9]+" GCC_VERSION_COMPONENTS ${GCC_VERSION})
+  list(GET GCC_VERSION_COMPONENTS 0 GCC_MAJOR)
+  list(GET GCC_VERSION_COMPONENTS 1 GCC_MINOR)
+  message(STATUS "GCC version: ${GCC_MAJOR}.${GCC_MINOR}")
 
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
 

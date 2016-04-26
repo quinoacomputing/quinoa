@@ -4,6 +4,9 @@
 # FIND_PACKAGE code, such as Trilinos
 SET(CMAKE_PREFIX_PATH ${TPL_DIR} ${CMAKE_PREFIX_PATH})
 
+# Include support for multiarch path names
+include(GNUInstallDirs)
+
 #### TPLs we attempt to find on the system #####################################
 
 #### MKL (optional)
@@ -14,7 +17,7 @@ endif()
 
 #### BLAS/LAPACK library with LAPACKE C-interface
 if (NOT MKL_FOUND)    # Prefer Intel's MKL for BLAS/LAPACK if available
-  find_package(LAPACKE)
+  find_package(LAPACKE REQUIRED)
 endif()
 
 #### Boost
