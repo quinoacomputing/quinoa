@@ -4,7 +4,7 @@
 # 
 # \file      script/run_tests.sh
 # \author    J. Bakosi
-# \date      Fri 15 Apr 2016 02:18:16 PM MDT
+# \date      Tue 26 Apr 2016 11:11:09 AM MDT
 # \copyright 2012-2016, Jozsef Bakosi.
 # \brief     Run multiple test suites as part of automated testing
 # \details   Run multiple test suites as part of automated testing.
@@ -19,7 +19,7 @@
 #
 #  Note that it should also be fine putting the commands in this script into
 #  .drone.yml, however, for some unknown reason, only the first command was
-#  executed, so we call this script, running multiple test suites, used ofr
+#  executed, so we call this script, running multiple test suites, used for
 #  automated testing.
 #
 ################################################################################
