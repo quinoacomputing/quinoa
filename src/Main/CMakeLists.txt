@@ -252,7 +252,7 @@ target_link_libraries(${WALKER_EXECUTABLE}
                       ${PUGIXML_LIBRARIES}
                       ${SEACASNemesis_LIBRARIES}
                       ${SEACASExodus_LIBRARIES}
-                      ${LAPACKE_LIBRARY}        # only if MKL not found
+                      ${LAPACK_LIBRARIES}        # only if MKL not found
                       ${MKL_INTERFACE_LIBRARY}
                       ${MKL_SEQUENTIAL_LAYER_LIBRARY}   # only for static link
                       ${MKL_CORE_LIBRARY}
