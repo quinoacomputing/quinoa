@@ -44,11 +44,14 @@ Jozsef Bakosi (jbakosi@lanl.gov)
 ### 1. Install prerequisites
 
 - Debian/Ubuntu linux: (line 1: _required, line 2: recommended)
+
    \code{.sh}
     sudo apt-get install git cmake gfortran gcc g++ openmpi-bin libopenmpi-dev
     sudo apt-get install gmsh libpugixml-dev libpstreams-dev libboost-all-dev liblapack-dev liblapacke-dev libhdf5-dev libhdf5-openmpi-dev libhypre-dev
    \endcode
+
 - Mac OS X: (line 1: required, line 2: recommended)
+
    \code{.sh}
     sudo port install git cmake openmpi-clang38
     sudo port gmsh pugixml boost hdf5 +hl +openmpi hypre +openmpi
@@ -66,7 +69,7 @@ Jozsef Bakosi (jbakosi@lanl.gov)
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Fri 22 Apr 2016 11:47:29 PM MDT
+<em>Page last updated:</em> Wed 27 Apr 2016 07:24:02 AM MDT
 <em>Copyright 2012-2016, Jozsef Bakosi.</em>
 </small></div>
 */
