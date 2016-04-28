@@ -52,6 +52,7 @@ endif()
 
 #### AEC (only for static link)
 if(NOT BUILD_SHARED_LIBS)
+  set(AEC_ROOT ${TPL_DIR}) # prefer ours
   find_package(AEC REQUIRED)
 endif()
 
