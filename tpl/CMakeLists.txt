@@ -295,7 +295,7 @@ if(CMAKE_BUILD_TYPE MATCHES "Rel")      # Release | RelWithDebInfo | MinSizeRel
   set(CHARM_RELEASE_BUILD "--with-production")
 endif()
 if (HOST_OS MATCHES "alpine")
-  set(CHARM_ALPINE "--incdir=/usr/include/tirpc --disable-charmdebug")
+  set(CHARM_ALPINE "--disable-charmdebug")
 endif()
 ExternalProject_Add(
   charm
