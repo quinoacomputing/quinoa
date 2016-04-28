@@ -1,0 +1,50 @@
+2015-02-04  Mathis Rosenhauer  <rosenhauer@dkrz.de>
+
+	v0.3.2
+
+	Allow nonconforming block sizes in SZ mode.
+
+	Performance improvement for decoder.
+
+2014-10-23  Mathis Rosenhauer  <rosenhauer@dkrz.de>
+
+	v0.3.1
+
+	Allow incomplete scanlines in SZ mode.
+
+2014-08-06  Mathis Rosenhauer  <rosenhauer@dkrz.de>
+
+	v0.3
+
+	Performance improvement for encoding pre-precessed data.
+
+	More efficient coding of second extension if reference
+	sample is present.
+
+	Port library to Windows (Visual Studio).
+
+	Support building with CMake.
+
+	Benchmarking target using ECHAM data (make bench)
+
+
+2014-02-12  Mathis Rosenhauer  <rosenhauer@dkrz.de>
+
+	v0.2
+
+	Fixed incorrect length calculation in assessment of Second
+	Extension coding.
+
+	Unlimited encoding of fundamental sequences.
+
+	Additional testing with official CCSDS sample data.
+
+	Handle corrupted compressed data more gracefully.
+
+	Support restricted coding options from latest standard.
+
+	Facilitate generation of SIMD instructions by compiler.
+
+2013-05-21  Mathis Rosenhauer  <rosenhauer@dkrz.de>
+
+	Initial relaease: v0.1.

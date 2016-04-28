@@ -1,0 +1,13 @@
+---------------------
+ 32 bits vs. 64 bits
+---------------------
+
+libaec compiles and runs both in 32 and 64 bits. For encoding and
+decoding I see a performance degradation with 32 bit binaries of 38%
+and 33% resp.
+
+The main reason for this is that encoding and decoding use a buffer of
+type uin64_t to align a potentially 32 bit wide sample with the output
+(encoding) or input (decoding) stream. Avoiding the use of this
+uin64_t buffer variable would degrade 64 bit performance for a modest
+gain in 32 bit performance so I decided against it.
