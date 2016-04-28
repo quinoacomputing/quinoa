@@ -6,7 +6,7 @@ function(detect_os)
     set(os "windows")
   else()
     execute_process(COMMAND cat /etc/os-release
-                    COMMAND grep ID
+                    COMMAND grep ^ID
                     COMMAND awk -F= "{ print $2 }"
                     COMMAND tr "\n" " "
                     COMMAND sed "s/ //"
