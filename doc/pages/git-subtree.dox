@@ -31,19 +31,21 @@ make life easier.
 
    \code{.sh}
      $ git remote add --tags -f charm http://charm.cs.uiuc.edu/gerrit/charm
-     $ git remote add --tags -f pegtl git@github.com:jbakosi/PEGTL-0.32.git
+     $ git remote add --tags -f pegtl git@github.com:quinoacomputing/PEGTL-0.32.git
      $ git remote add --tags -f tut git@github.com:mrzechonek/tut-framework.git
-     $ git remote add --tags -f boost git@github.com:jbakosi/Boost.git
-     $ git remote add --tags -f cartesian_product git@github.com:jbakosi/BoostMPLCartesianProduct.git
+     $ git remote add --tags -f boost git@github.com:quinoacomputing/Boost.git
+     $ git remote add --tags -f cartesian_product git@github.com:quinoacomputing/BoostMPLCartesianProduct.git
      $ git remote add --tags -f pstreams git://git.code.sf.net/p/pstreams/code
-     $ git remote add --tags -f hdf5 git@github.com:jbakosi/HDF5.git
+     $ git remote add --tags -f hdf5 git@github.com:quinoacomputing/HDF5.git
      $ git remote add --tags -f netcdf git@github.com:Unidata/netcdf-c.git
      $ git remote add --tags -f trilinos git@github.com:trilinos/trilinos.git
-     $ git remote add --tags -f hypre git@github.com:jbakosi/HYPRE.git
-     $ git remote add --tags -f rngsse2 git@github.com:jbakosi/RNGSSE2.git
-     $ git remote add --tags -f testu01 git@github.com:jbakosi/TestU01-threadsafe.git
-     $ git remote add --tags -f ndiff git@github.com:jbakosi/ndiff.git
+     $ git remote add --tags -f hypre git@github.com:quinoacomputing/HYPRE.git
+     $ git remote add --tags -f rngsse2 git@github.com:quinoacomputing/RNGSSE2.git
+     $ git remote add --tags -f testu01 git@github.com:quinoacomputing/TestU01-threadsafe.git
+     $ git remote add --tags -f ndiff git@github.com:quinoacomputing/ndiff.git
      $ git remote add --tags -f pugixml git@github.com:zeux/pugixml.git
+     $ git remote add --tags -f blas git@github.com:quinoacomputing/BLAS.git
+     $ git remote add --tags -f lapack git@github.com:quinoacomputing/LAPACK.git
    \endcode
 
 ### Git subtree commands to initially merge in a set of commits (squashed) from the TPLs and tools
@@ -70,6 +72,8 @@ documentation of what and how it has been done to set up the subtrees.
      $ git subtree add --prefix=tpl/src/testu01 testu01 master --squash
      $ git subtree add --prefix=tool/src/ndiff ndiff master --squash
      $ git subtree add --prefix=tpl/src/pugixml pugixml v1.7 --squash
+     $ git subtree add --prefix=tpl/src/lapack lapack master --squash
+     $ git subtree add --prefix=tpl/src/blas blas master --squash
    \endcode
 
 ### Example git command to pull the latest changes to TPL charm
@@ -109,7 +113,7 @@ If you are happy with the diff, push the changes to the TPL:
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Wed 13 Jan 2016 06:06:33 AM MST
+<em>Page last updated:</em> Thu 28 Apr 2016 11:14:52 AM MDT
 <em>Copyright 2012-2016, Jozsef Bakosi.</em>
 </small></div>
 */
