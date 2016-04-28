@@ -286,6 +286,15 @@ else()
   endif()
 endif()
 
+# Detect AEC (only for static link)
+set(aec "aec")
+if(NOT NO_SYSTEM_AEC AND NOT BUILD_SHARED_LIBS)
+  find_package(AEC)
+  if(AEC_FOUND)
+    set(aec "")
+ endif()
+endif()
+
 # Output TPLs to be built
 message(STATUS "Will build: charm trilinos pegtl tut cartesian_product rngsse2 testu01 ${hdf5} ${netcdf} ${blas} ${boost} ${pstreams} ${hypre} ${pugixml} ${lapack}")
 
@@ -388,6 +397,30 @@ if (netcdf)
                       --prefix=${CMAKE_INSTALL_PREFIX}
     BUILD_IN_SOURCE 1
     LOG_DOWNLOAD 1
+    LOG_CONFIGURE 1
+    LOG_BUILD 1
+    LOG_INSTALL 1
+  )
+endif()
+
+#### AEC #######################################################################
+## https://gitlab.dkrz.de/k202009/libaec
+if (aec)
+  if(BUILD_SHARED_LIBS)
+    set(AEC_SHARED "--enable-shared")
+  else()
+    set(AEC_SHARED "--enable-static;--disable-shared")
+  endif()
+  ExternalProject_Add(
+    aec
+    PREFIX aec
+    SOURCE_DIR ${PROJECT_SOURCE_DIR}/src/aec
+    CMAKE_ARGS -D CMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
+               -D CMAKE_Fortran_COMPILER:PATH=${UNDERLYING_Fortran_COMPILER}
+               -D CMAKE_Fortran_FLAGS:STRING=${FFLAGS}
+               -D BUILD_SHARED_LIBS:BOOL=${BUILD_SHARED_LIBS}
+               -D CMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX}
+    DOWNLOAD_COMMAND ""
     LOG_CONFIGURE 1
     LOG_BUILD 1
     LOG_INSTALL 1

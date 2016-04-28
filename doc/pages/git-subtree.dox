@@ -46,6 +46,7 @@ make life easier.
      $ git remote add --tags -f pugixml git@github.com:zeux/pugixml.git
      $ git remote add --tags -f blas git@github.com:quinoacomputing/BLAS.git
      $ git remote add --tags -f lapack git@github.com:quinoacomputing/LAPACK.git
+     $ git remote add --tags -f aec https://gitlab.dkrz.de/k202009/libaec.git
    \endcode
 
 ### Git subtree commands to initially merge in a set of commits (squashed) from the TPLs and tools
@@ -74,6 +75,7 @@ documentation of what and how it has been done to set up the subtrees.
      $ git subtree add --prefix=tpl/src/pugixml pugixml v1.7 --squash
      $ git subtree add --prefix=tpl/src/lapack lapack master --squash
      $ git subtree add --prefix=tpl/src/blas blas master --squash
+     $ git subtree add --prefix=tpl/src/aec aec v0.3.2 --squash
    \endcode
 
 ### Example git command to pull the latest changes to TPL charm
@@ -113,7 +115,7 @@ If you are happy with the diff, push the changes to the TPL:
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Thu 28 Apr 2016 11:14:52 AM MDT
+<em>Page last updated:</em> Thu 28 Apr 2016 04:25:21 PM MDT
 <em>Copyright 2012-2016, Jozsef Bakosi.</em>
 </small></div>
 */
