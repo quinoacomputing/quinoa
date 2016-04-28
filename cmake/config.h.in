@@ -1,0 +1,5 @@
+#cmakedefine HAVE_MALLOC_H 1
+#cmakedefine HAVE_STDINT_H 1
+#cmakedefine WORDS_BIGENDIAN 1
+#cmakedefine HAVE_DECL___BUILTIN_CLZLL 1
+#cmakedefine HAVE_BSR64 1

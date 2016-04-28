@@ -1,0 +1,55 @@
+-----------------------------------------------------------------------------------
+Lossless Data Compression,Recommended Standard, Issue 2, MAy 2012, CCSDS, 121.0-B-2
+-----------------------------------------------------------------------------------
+License Considerations, Section A3, page 37
+
+With respect to this issue we got the following information from the aforementioned
+NASA contact:
+
+From: Geurts, Bryan A. (GSFC-1401)
+Sent: Tuesday, April 21, 2009 12:14 PM
+To: Yeh, Pen-Shu (GSFC-5670)
+Subject: RE: Need help from you again
+
+Pen-Shu,
+
+The license agreement with ICs, LLC, for Patent Numbers US 5,448,642,
+US 5,687,255 and US 5,822,457, has been terminated effective March 31,
+2009. NASA has no other licensee of these patents. It is NASA's intent
+to not pay the remaining maintenance fees owing on these patents,
+thereby allowing them to eventually become abandoned, and to not
+enforce the patents.
+
+If you have any questions or concerns, please do not hesitate to contact me.
+
+Bryan A. Geurts
+Chief Patent Counsel
+NASA Goddard Space Flight Center
+Code 140.1, 8800 Greenbelt Road
+Greenbelt, MD 20771
+Phone:  (301) 286-7352
+Fax:  (301) 286-9502
+
+Reassuring this information in August 2012 because of the license
+considerations in the above referenced CCSDS standard:
+
+From: Geurts, Bryan A. (GSFC-1401)
+Sent: Friday, August 31, 2012 10:36 AM
+To: Luis Kornblueh
+Subject: RE: Patent 5448642
+
+Dear Mr. Kornblueh
+
+Per my email cited above, NASA has no interest in licensing or
+maintaining US Patent No. 5448642 and therefore has no objection to
+your use of its teachings and claims.  However, while NASA has
+effectively abandoned this patent, any use of the subject matter is at
+your own risk and NASA cannot warrant that its use will satisfy your
+particular needs or that your use will not infringe on another's
+intellectual property rights.
+
+-----------------------------------------------------------------------------------
+
+The cited CCSDS standard does not refer to any other intellectual property rights.
+
+-----------------------------------------------------------------------------------
