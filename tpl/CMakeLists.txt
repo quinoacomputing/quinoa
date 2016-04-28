@@ -46,6 +46,11 @@ include(GNUInstallDirs)
 # Set compiler id
 string(TOLOWER "${CMAKE_CXX_COMPILER_ID}" COMP)
 
+# Detect operating system type and version
+include(DetectOS)
+detect_os()
+message(STATUS "Detected OS: ${HOST_OS}")
+
 # Query target architecture
 include(TargetArch)
 target_architecture(ARCH)
@@ -289,6 +294,9 @@ endif()
 if(CMAKE_BUILD_TYPE MATCHES "Rel")      # Release | RelWithDebInfo | MinSizeRel
   set(CHARM_RELEASE_BUILD "--with-production")
 endif()
+if (HOST_OS MATCHES "alpine")
+  set(CHARM_ALPINE "--incdir=/usr/include/tirpc --disable-charmdebug")
+endif()
 ExternalProject_Add(
   charm
   PREFIX charm
@@ -305,6 +313,7 @@ ExternalProject_Add(
                 ${CHARM_COMPILER}
                 ${CHARM_SHARED}
                 ${CHARM_RELEASE_BUILD}
+                ${CHARM_ALPINE}
                 -j${PROCESSOR_COUNT}
                 ${CXXFLAGS}
   DOWNLOAD_COMMAND ""
