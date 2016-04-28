@@ -298,7 +298,7 @@ if(NOT BUILD_SHARED_LIBS)
 endif()
 
 # Output TPLs to be built
-message(STATUS "Will build: charm trilinos pegtl tut cartesian_product rngsse2 testu01 ${hdf5} ${netcdf} ${blas} ${boost} ${pstreams} ${hypre} ${pugixml} ${lapack}")
+message(STATUS "Will build: charm trilinos pegtl tut cartesian_product rngsse2 testu01 ${hdf5} ${netcdf} ${aec} ${blas} ${boost} ${pstreams} ${hypre} ${pugixml} ${lapack}")
 
 # Define fine-grained targets
 set_property(DIRECTORY PROPERTY EP_STEP_TARGETS
