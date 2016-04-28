@@ -410,10 +410,34 @@ if (blas)
                   FORTRAN=${UNDERLYING_Fortran_COMPILER}
     INSTALL_COMMAND ${CMAKE_COMMAND} -E copy
                     ${PROJECT_BINARY_DIR}/blas/blas.a
-                    ${CMAKE_INSTALL_PREFIX}/lib/
+                    ${CMAKE_INSTALL_PREFIX}/lib/libblas.a
     BUILD_IN_SOURCE 1
     DOWNLOAD_COMMAND ""
     CONFIGURE_COMMAND ""
+    LOG_BUILD 1
+    LOG_INSTALL 1
+  )
+endif()
+
+#### lapack ####################################################################
+# http://www.netlib.org/lapack
+if (lapack)
+  ExternalProject_Add(
+    lapack
+    PREFIX lapack
+    SOURCE_DIR ${PROJECT_SOURCE_DIR}/src/lapack
+    CMAKE_ARGS -D CMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
+               -D CMAKE_Fortran_COMPILER:PATH=${UNDERLYING_Fortran_COMPILER}
+               -D CMAKE_Fortran_FLAGS:STRING=${FFLAGS}
+               -D BUILD_TESTING:BOOL=OFF
+               -D BUILD_SHARED_LIBS:BOOL=${BUILD_SHARED_LIBS}
+               -D LAPACKE:BOOL=ON
+               -D USE_OPTIMIZED_BLAS:BOOL=ON
+               -D USE_OPTIMIZED_LAPACK:BOOL=ON
+               -D CMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX}
+               ${MACOSX_RPATH}
+    DOWNLOAD_COMMAND ""
+    LOG_CONFIGURE 1
     LOG_BUILD 1
     LOG_INSTALL 1
   )
@@ -429,7 +453,7 @@ else()
 endif()
 ExternalProject_Add(
   trilinos
-  DEPENDS ${hdf5} ${netcdf} ${blas}
+  DEPENDS ${hdf5} ${netcdf} ${blas} ${lapack}
   PREFIX trilinos
   SOURCE_DIR ${PROJECT_SOURCE_DIR}/src/trilinos
   CMAKE_ARGS -D Trilinos_ENABLE_ALL_PACKAGES:BOOL=OFF
@@ -446,6 +470,8 @@ ExternalProject_Add(
              ${tr_hdf5}
              ${TRILINOS_SHARED}
              ${MACOSX_RPATH}
+             -D BLAS_LIBRARY_DIRS=${CMAKE_INSTALL_PREFIX}/lib
+             -D LAPACK_LIBRARY_DIRS=${CMAKE_INSTALL_PREFIX}/lib
              -D TPL_ENABLE_Netcdf:BOOL=ON
              -D Netcdf_LIBRARY_DIRS:PATH=${netcdf_library_dirs}
              -D TPL_Netcdf_INCLUDE_DIRS:PATH=${netcdf_include_dirs}
@@ -624,30 +650,6 @@ if (pugixml)
                -D CMAKE_CXX_FLAGS:STRING=${CXXFLAGS}
                -D CMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX}
                -D BUILD_SHARED_LIBS:BOOL=${BUILD_SHARED_LIBS}
-               ${MACOSX_RPATH}
-    DOWNLOAD_COMMAND ""
-    LOG_CONFIGURE 1
-    LOG_BUILD 1
-    LOG_INSTALL 1
-  )
-endif()
-
-#### lapack ####################################################################
-# http://www.netlib.org/lapack
-if (lapack)
-  ExternalProject_Add(
-    lapack
-    PREFIX lapack
-    SOURCE_DIR ${PROJECT_SOURCE_DIR}/src/lapack
-    CMAKE_ARGS -D CMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
-               -D CMAKE_Fortran_COMPILER:PATH=${UNDERLYING_Fortran_COMPILER}
-               -D CMAKE_Fortran_FLAGS:STRING=${FFLAGS}
-               -D BUILD_TESTING:BOOL=OFF
-               -D BUILD_SHARED_LIBS:BOOL=${BUILD_SHARED_LIBS}
-               -D LAPACKE:BOOL=ON
-               -D USE_OPTIMIZED_BLAS:BOOL=ON
-               -D USE_OPTIMIZED_LAPACK:BOOL=ON
-               -D CMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX}
                ${MACOSX_RPATH}
     DOWNLOAD_COMMAND ""
     LOG_CONFIGURE 1
