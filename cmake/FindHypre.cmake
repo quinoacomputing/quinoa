@@ -28,8 +28,6 @@ else()
   find_library(HYPRE_LIBRARY NAMES HYPRE HINTS ${HYPRE_ROOT}/lib)
 endif()
 
-set(HYPRE_LIBRARY ${HYPRE_LIBRARY})
-
 # Handle the QUIETLY and REQUIRED arguments and set HYPRE_FOUND to TRUE if
 # all listed variables are TRUE.
 INCLUDE(FindPackageHandleStandardArgs)

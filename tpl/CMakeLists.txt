@@ -264,12 +264,20 @@ else()
   set(pugixml "pugixml")
 endif()
 
-# Detect lapack, exclude if found, build if not
+# Detect blas and lapack, exclude if found, build if not
 set(lapack "lapack")
+set(blas "blas")
 find_package(MKL)     # Prefer MKL if found
 if(MKL_FOUND)
+  set(blas "")
   set(lapack "")
 else()
+  if(NOT NO_SYSTEM_BLAS)
+    find_package(BLAS)
+    if(BLAS_FOUND)
+      set(blas "")
+    endif()
+  endif()
   if(NOT NO_SYSTEM_LAPACK)
     find_package(LAPACKE)
     if(LAPACKE_FOUND)
@@ -279,7 +287,7 @@ else()
 endif()
 
 # Output TPLs to be built
-message(STATUS "Will build: charm trilinos pegtl tut cartesian_product rngsse2 testu01 ${hdf5} ${netcdf} ${boost} ${pstreams} ${hypre} ${pugixml} ${lapack}")
+message(STATUS "Will build: charm trilinos pegtl tut cartesian_product rngsse2 testu01 ${hdf5} ${netcdf} ${blas} ${boost} ${pstreams} ${hypre} ${pugixml} ${lapack}")
 
 # Define fine-grained targets
 set_property(DIRECTORY PROPERTY EP_STEP_TARGETS
@@ -357,7 +365,7 @@ if (netcdf)
   if(BUILD_SHARED_LIBS)
     set(NETCDF_SHARED "--enable-shared")
   else()
-    set(NETCDF_SHARED "--enable-static;--with-pic")
+    set(NETCDF_SHARED "--enable-static;--disable-shared;--with-pic")
   endif()
   ExternalProject_Add(
     netcdf
@@ -386,6 +394,31 @@ if (netcdf)
   )
 endif()
 
+#### blas ######################################################################
+# http://www.netlib.org/blas
+if (blas)
+  ExternalProject_Add(
+    blas
+    PREFIX blas
+    SOURCE_DIR ${PROJECT_BINARY_DIR}/blas
+    DOWNLOAD_COMMAND ${CMAKE_COMMAND} -E copy_directory
+                     ${PROJECT_SOURCE_DIR}/src/blas
+                     ${PROJECT_BINARY_DIR}/blas
+    CONFIGURE_COMMAND ${CMAKE_COMMAND} -E make_directory 
+                      ${CMAKE_INSTALL_PREFIX}/lib
+    BUILD_COMMAND make -j${PROCESSOR_COUNT} PLAT=''
+                  FORTRAN=${UNDERLYING_Fortran_COMPILER}
+    INSTALL_COMMAND ${CMAKE_COMMAND} -E copy
+                    ${PROJECT_BINARY_DIR}/blas/blas.a
+                    ${CMAKE_INSTALL_PREFIX}/lib/
+    BUILD_IN_SOURCE 1
+    DOWNLOAD_COMMAND ""
+    CONFIGURE_COMMAND ""
+    LOG_BUILD 1
+    LOG_INSTALL 1
+  )
+endif()
+
 ##### Trilinos #################################################################
 ## http://trilinos.sandia.gov
 if(BUILD_SHARED_LIBS)
@@ -396,7 +429,7 @@ else()
 endif()
 ExternalProject_Add(
   trilinos
-  DEPENDS ${hdf5} ${netcdf}
+  DEPENDS ${hdf5} ${netcdf} ${blas}
   PREFIX trilinos
   SOURCE_DIR ${PROJECT_SOURCE_DIR}/src/trilinos
   CMAKE_ARGS -D Trilinos_ENABLE_ALL_PACKAGES:BOOL=OFF
