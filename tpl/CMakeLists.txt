@@ -486,6 +486,9 @@ else()
   set(TRILINOS_SHARED "-DBUILD_SHARED_LIBS=OFF;-DTPL_FIND_SHARED_LIBS:BOOL=OFF;-DTrilinos_LINK_SEARCH_START_STATIC:BOOL=ON")
   set(tr_hdf5 "-DTrilinos_EXTRA_LINK_FLAGS=-L${hdf5_library_dirs} -lhdf5_hl -lhdf5 -lz -lm -ldl")
 endif()
+if (HOST_OS MATCHES "alpine")
+  set(TRILINOS_ALPINE "-DBLAS_LIBRARY_DIRS=${CMAKE_INSTALL_PREFIX}/lib;-DLAPACK_LIBRARY_DIRS=${CMAKE_INSTALL_PREFIX}/lib")
+endif()
 ExternalProject_Add(
   trilinos
   DEPENDS ${hdf5} ${netcdf} ${blas} ${lapack}
@@ -504,9 +507,8 @@ ExternalProject_Add(
              -D Trilinos_ENABLE_DEBUG=OFF
              ${tr_hdf5}
              ${TRILINOS_SHARED}
+             ${TRILINOS_ALPINE}
              ${MACOSX_RPATH}
-             -D BLAS_LIBRARY_DIRS=${CMAKE_INSTALL_PREFIX}/lib
-             -D LAPACK_LIBRARY_DIRS=${CMAKE_INSTALL_PREFIX}/lib
              -D TPL_ENABLE_Netcdf:BOOL=ON
              -D Netcdf_LIBRARY_DIRS:PATH=${netcdf_library_dirs}
              -D TPL_Netcdf_INCLUDE_DIRS:PATH=${netcdf_include_dirs}
