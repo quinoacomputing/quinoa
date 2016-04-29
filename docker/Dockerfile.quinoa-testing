@@ -1,7 +1,7 @@
 # vim: filetype=dockerfile:
 #
 # Author:    J. Bakosi
-# Date:      Tue 19 Apr 2016 02:16:59 PM MDT
+# Date:      Fri 29 Apr 2016 09:47:11 AM MDT
 # Copyright: 2012-2016, Jozsef Bakosi.
 
 # Dockerfile for setting up a complete environment in a docker container for
@@ -20,9 +20,7 @@
 #
 # Prerequisites that must be supplied before this container can be built:
 #
-# (1) openmpi-1.10.2.tar.bz2
-#
-# (2) Intel's C++ and Fortran Compilers and the MKL library, previously
+# (1) Intel's C++ and Fortran Compilers and the MKL library, previously
 #     installed in /opt/intel, then copied to <quinoa>/docker/intel.
 
 FROM debian:testing
@@ -55,7 +53,8 @@ COPY modules/openmpi/1.10.2/intel/latest /usr/share/modules/modulefiles/openmpi/
 COPY modules/mkl/latest /usr/share/modules/modulefiles/mkl/
 
 # Install OpenMPI with gnu, clang, intel
-ADD openmpi-1.10.2.tar.bz2 /install
+ADD https://www.open-mpi.org/software/ompi/v1.10/downloads/openmpi-1.10.2.tar.bz2 /install/
+RUN cd /install/ && tar xjf openmpi-1.10.2.tar.bz2
 RUN CPUS=`cat /proc/cpuinfo | grep MHz | wc -l` ; source /usr/share/modules/init/bash && module load gnu/system && cd /install/openmpi-1.10.2 && ./configure --prefix=/opt/openmpi/1.10.2/gnu/system && make -sj$CPUS install
 RUN CPUS=`cat /proc/cpuinfo | grep MHz | wc -l` ; source /usr/share/modules/init/bash && module load clang/system && cd /install/openmpi-1.10.2 && ./configure --prefix=/opt/openmpi/1.10.2/clang/system && make -sj$CPUS install
 RUN CPUS=`cat /proc/cpuinfo | grep MHz | wc -l` ; source /usr/share/modules/init/bash && module load intel/latest && cd /install/openmpi-1.10.2 && ./configure --prefix=/opt/openmpi/1.10.2/intel/latest && make -sj$CPUS install
