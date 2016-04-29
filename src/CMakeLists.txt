@@ -17,8 +17,8 @@ disallow_in_source_builds()
 set(MAJOR_VER 0)
 set(MINOR_VER 1)
 
-# Set release number
-set(RELEASE "LA-CC-XX-XXX")
+# Set LA-CC number
+set(LACC "16015")
 
 # Set CMAKE_BUILD_TYPE
 include(BuildType)
@@ -149,7 +149,8 @@ set(EXECUTABLES ${INCITER_EXECUTABLE}
 
 # Get git revision
 include(GetGitRevisionDescription)
-get_git_head_revision(GIT_REFSPEC GIT_SHA1)
+git_describe(GIT_SHA1 --always)
+message(STATUS "git commit sha1: ${GIT_SHA1}")
 
 # Add compiler flags
 include(CheckCXXCompilerFlag)

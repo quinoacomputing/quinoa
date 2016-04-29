@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/QuinoaConfig.h
   \author    J. Bakosi
-  \date      Sat 30 Jan 2016 04:57:30 PM MST
+  \date      Fri 29 Apr 2016 03:48:13 PM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     CMake header input file with information to be passed to cmake
   \details   CMake header input file with information to be passed to cmake. See
@@ -20,8 +20,7 @@
 
 namespace tk {
  
-#define VERSION                      "@MAJOR_VER@.@MINOR_VER@"
-#define RELEASE                      "@RELEASE@"
+#define VERSION                      "@MAJOR_VER@.@MINOR_VER@ (C@LACC@)"
 #define GIT_COMMIT                   "@GIT_SHA1@"
 #define MPI_COMPILER                 "@MPI_COMPILER@"
 #define COMPILER                     "@COMPILER@"
