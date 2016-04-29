@@ -1,8 +1,20 @@
 # vim: filetype=dockerfile:
 #
 # Author:    J. Bakosi
-# Date:      Wed 27 Apr 2016 02:01:25 PM MDT
+# Date:      Fri 29 Apr 2016 10:09:58 AM MDT
 # Copyright: 2012-2016, Jozsef Bakosi.
+
+# Dockerfile for a simple dynamic build of Quinoa using the native (system-wide
+# compiler and mpi wrappers). We start from the debian/testing distribution and
+# install all prerequisites. This docker image is intended to demonstrate one of
+# the simplest way of building Quinoa. It creates dynamically built executables
+# which require runtime libraries. This container is intended for developers and
+# users.
+#
+# This container does not contain proprietary software and thus the container
+# image can be publicly distributed.
+#
+# All prerequisites for building the container are downloaded from the internet.
 
 FROM debian:testing
 MAINTAINER Jozsef Bakosi <jbakosi@lanl.gov>
