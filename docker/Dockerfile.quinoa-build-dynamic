@@ -1,0 +1,39 @@
+# vim: filetype=dockerfile:
+#
+# Author:    J. Bakosi
+# Date:      Wed 27 Apr 2016 02:01:25 PM MDT
+# Copyright: 2012-2016, Jozsef Bakosi.
+
+FROM debian:testing
+MAINTAINER Jozsef Bakosi <jbakosi@lanl.gov>
+
+# From behind LANL firewall
+ENV http_proxy http://proxyout.lanl.gov:8080/
+ENV https_proxy https://proxyout.lanl.gov:8080/
+
+# Install system-wide prerequisites
+RUN apt-get update -y && apt-get install -y debian-keyring debian-archive-keyring wget
+RUN echo "deb http://ftp.us.debian.org/debian testing main \n deb http://security.debian.org testing/updates main" > /etc/apt/sources.list
+RUN apt-get update -y && apt-get install -y m4 sudo git cmake gfortran gcc g++ gmsh libpugixml-dev libpstreams-dev zlib1g-dev libaec-dev libboost-all-dev libblas-dev liblapack-dev liblapacke-dev libhdf5-dev libhdf5-openmpi-dev libhypre-dev
+
+# Switch to bash for the rest of the build
+RUN rm /bin/sh && ln -s /bin/bash /bin/sh
+
+# Create a non-root user 'quinoa' that can sudo without password
+RUN mkdir /home/quinoa && groupadd -r quinoa -g 433 && useradd -u 431 -r -g quinoa -d /home/quinoa -s /sbin/nologin -c "Quinoa quinoa" quinoa && echo "quinoa:quinoa" | chpasswd && adduser quinoa sudo && echo "quinoa ALL = NOPASSWD : ALL" > /etc/sudoers.d/quinoa && chmod 0440 /etc/sudoers.d/quinoa && chown -R quinoa:quinoa /home/quinoa
+# Switch default user to 'quinoa' and change default work directory
+USER quinoa
+WORKDIR /home/quinoa
+# Set default interactive shell
+CMD ["/bin/bash"]
+
+# Clone quinoa
+RUN git clone https://github.com/jbakosi/quinoa.git
+# Build TPLs
+RUN cd quinoa && mkdir -p tpl/build && cd tpl/build && cmake -DCMAKE_BUILD_TYPE=Release .. && make -sj`cat /proc/cpuinfo | grep MHz | wc -l`
+# Build & test
+RUN cd quinoa && mkdir -p build && cd build && cmake -DCMAKE_BUILD_TYPE=Release ../src && make -sj`cat /proc/cpuinfo | grep MHz | wc -l` && ../script/run_tests.sh
+
+# Clean everything not needed to run quinoa
+#RUN sudo -E apt-get clean -y && sudo -E apt-get autoclean -y && sudo -E apt-get autoremove -y && sudo rm -rf /usr/share/locale/* && sudo rm -rf /var/cache/debconf/*-old && sudo rm -rf /var/lib/apt/lists/* && sudo rm -rf /usr/share/doc/*
+#RUN cd quinoa && rm -rf .git doc docker src tool tpl/CMakeLists.txt tpl/build tpl/src
