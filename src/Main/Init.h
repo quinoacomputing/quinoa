@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Init.h
   \author    J. Bakosi
-  \date      Sun 03 Apr 2016 10:04:53 AM MDT
+  \date      Fri 29 Apr 2016 04:09:41 PM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Common initialization routines for main() functions for multiple
      exectuables
@@ -114,9 +114,8 @@ static void echoBuildEnv( const Print& print, const std::string& executable )
   print.item( "Hostname", BUILD_HOSTNAME );
   print.item( "Executable", executable );
   print.item( "Version", VERSION );
-  print.item( "Release", RELEASE );
   if (std::string(GIT_COMMIT) != "GITDIR-NOTFOUND")
-    print.item( "Revision", GIT_COMMIT );
+    print.item( "Revision SHA1", GIT_COMMIT );
   print.item( "CMake build type", BUILD_TYPE );
 
 #ifdef NDEBUG
