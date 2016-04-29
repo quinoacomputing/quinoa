@@ -4,7 +4,7 @@
 # 
 # \file      script/run_tests.sh
 # \author    J. Bakosi
-# \date      Tue 26 Apr 2016 11:11:09 AM MDT
+# \date      Fri 29 Apr 2016 09:25:59 AM MDT
 # \copyright 2012-2016, Jozsef Bakosi.
 # \brief     Run multiple test suites as part of automated testing
 # \details   Run multiple test suites as part of automated testing.
@@ -31,7 +31,7 @@ case "$OSTYPE" in
 esac
 
 # Run unit test suite
-./charmrun +p$CPUS Main/unittest -v
+./charmrun +p$CPUS --allow-run-as-root Main/unittest -v
 
 # Run regression test suite (skip stringent tests that would run very long)
 ctest -j$CPUS -LE stringent
