@@ -104,6 +104,7 @@ target_link_libraries(${INCITER_EXECUTABLE}
                       ${NETCDF_LIBRARIES}       # only for static link
                       ${HDF5_LIBRARIES}         # only for static link
                       ${AEC_LIBRARY}            # only for static link
+                      ${LAPACK_LIBRARIES}       # only for static link
 )
 
 # Add custom dependencies for Inciter's main Charm++ module

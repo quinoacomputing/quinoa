@@ -52,6 +52,8 @@ endif()
 set(LAPACK_LIBRARIES ${LAPACKE_LIBRARY} ${LAPACK_LIBRARY} ${BLAS_LIBRARY}
                      ${GFORTRAN_LIBRARY} ${QUADMATH_LIBRARY})
 
+message(STATUS "LAPACK libraries: ${LAPACK_LIBRARIES}")
+
 # Handle the QUIETLY and REQUIRED arguments and set LAPACKE_FOUND to TRUE if
 # all listed variables are TRUE.
 INCLUDE(FindPackageHandleStandardArgs)
