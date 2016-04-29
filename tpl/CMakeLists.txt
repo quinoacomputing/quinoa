@@ -314,7 +314,13 @@ if(CMAKE_BUILD_TYPE MATCHES "Rel")      # Release | RelWithDebInfo | MinSizeRel
   set(CHARM_RELEASE_BUILD "--with-production")
 endif()
 if (HOST_OS MATCHES "alpine")
+  # To avoid requiring rpc.h on Alpine Linux using musl-libc, see also
+  # https://lists.cs.illinois.edu/lists/arc/charm/2016-04/msg00002.html
   set(CHARM_ALPINE "--disable-charmdebug")
+  # Use pthreads and avoid requiring glibc's thread context API, unimplemented
+  # on purpose on Alpine Linux and musl-libc, see also the thread at
+  # http://www.openwall.com/lists/musl/2016/02/04/3
+  set(CHARM_PTHREADS "pthreads")
 endif()
 ExternalProject_Add(
   charm
@@ -330,6 +336,7 @@ ExternalProject_Add(
                 charm++
                 ${CHARM_ARCHITECTURE}
                 ${CHARM_COMPILER}
+                ${CHARM_PTHREADS}
                 ${CHARM_SHARED}
                 ${CHARM_RELEASE_BUILD}
                 ${CHARM_ALPINE}
