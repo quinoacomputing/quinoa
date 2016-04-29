@@ -36,70 +36,85 @@ to the tools.
   - Web: http://tinyurl.com/55wdww
   - License: \subpage Cartesian_Product_license
 
-\subsection hdf5_license 6. The HDF5 data model
-  - Required
-  - Web: http://www.hdfgroup.org/HDF5
-  - License: \subpage HDF5_license
-
-\subsection netcdf_license 7. The NetCDF data model
-  - Required
-  - Web: http://www.unidata.ucar.edu/downloads/netcdf/index.jsp
-  - License: \subpage NetCDF_license
-
-\subsection exodusii_license 8. ExodusII for storing data for finite element analyses
-  - Required
-  - Web: http://sourceforge.net/projects/exodusii
-  - License: \subpage ExodusII_license
-
-\subsection zoltan_license 9. Zoltan for static load balancing
-  - Required
-  - Web: http://www.cs.sandia.gov/Zoltan/Zoltan.html
-  - License: \subpage Zoltan_license
-
-\subsection rngsselib_license 10. RNGSSELIB for random number generation
-  - Required
-  - Web: http://cpc.cs.qub.ac.uk/summaries/AEIT_v2_0.html
-  - License: \subpage RNGSSELIB_license
-
-\subsection testu01_license 11. TestU01 for statistical testing of random number generators
-  - Required
-  - Web: http://www.iro.umontreal.ca/~simardr/testu01/tu01.html
-  - License: \subpage TestU01_license
-
-\subsection pstreams_license 12. PStreams for POSIX process Control
+\subsection pstreams_license 6. PStreams for POSIX process Control
   - Required
   - Web: http://pstreams.sourceforge.net/
   - License: \subpage PStreams_license
 
-\subsection hypre_license 13. Hypre for linear solvers and preconditioners
+\subsection hdf5_license 7. The HDF5 data model
+  - Required
+  - Web: http://www.hdfgroup.org/HDF5
+  - License: \subpage HDF5_license
+
+\subsection netcdf_license 8. The NetCDF data model
+  - Required
+  - Web: http://www.unidata.ucar.edu/downloads/netcdf/index.jsp
+  - License: \subpage NetCDF_license
+
+\subsection exodusii_license 9. ExodusII for storing data for finite element analyses
+  - Required
+  - Web: http://sourceforge.net/projects/exodusii
+  - License: \subpage ExodusII_license
+
+\subsection zoltan_license 10. Zoltan for static load balancing
+  - Required
+  - Web: http://www.cs.sandia.gov/Zoltan/Zoltan.html
+  - License: \subpage Zoltan_license
+
+\subsection hypre_license 11. Hypre for linear solvers and preconditioners
   - Required
   - Web: http://computation.llnl.gov/project/linear_solvers/software.php
   - License: \subpage Hypre_license
 
-\subsection libstdcpp_license 14. Libstdc++ for standard C++ containers and algorithms
+\subsection rngsselib_license 12. RNGSSELIB for random number generation
+  - Required
+  - Web: http://cpc.cs.qub.ac.uk/summaries/AEIT_v2_0.html
+  - License: \subpage RNGSSELIB_license
+
+\subsection testu01_license 13. TestU01 for statistical testing of random number generators
+  - Required
+  - Web: http://www.iro.umontreal.ca/~simardr/testu01/tu01.html
+  - License: \subpage TestU01_license
+
+\subsection pugixml_license 14. PugiXML for XML format reading and writing
+  - Required
+  - Web: http://pugixml.org/
+  - License: \subpage PugiXML_license
+
+\subsection blas_license 15. BLAS for basic linear algebra
+  - Required
+  - Web: http://www.netlib.org/blas
+  - License: \subpage BLAS_license
+
+\subsection lapack_license 16. LAPACK for linear algebra
+  - Required
+  - Web: http://www.netlib.org/lapack
+  - License: \subpage LAPACK_license
+
+\subsection aec_license 17. AEC for adaptive entropy coding
+  - Required
+  - Web: https://gitlab.dkrz.de/k202009/libaec
+  - License: \subpage AEC_license
+
+\subsection libstdcpp_license 18. Libstdc++ for standard C++ containers and algorithms
   - Either libc++ or libstdc++ required
   - Web: https://gcc.gnu.org/libstdc++
   - License: \subpage LibStdCPP_license
 
-\subsection libcpp_license 15. Libc++ for standard C++ containers and algorithms
+\subsection libcpp_license 19. Libc++ for standard C++ containers and algorithms
   - Either libc++ or libstdc++ required
   - Web: http://libcxx.llvm.org
   - License: \subpage LibCPP_license
 
-\subsection openmpi_license 16. OpenMPI for the message passing interface
+\subsection openmpi_license 20. OpenMPI for the message passing interface
   - Required
   - Web: http://www.open-mpi.org
   - License: \subpage OpenMPI_license
 
-\subsection mkl_license 17. Intel Math Kernel Library for BLAS/LAPACK and random number generation
+\subsection mkl_license 21. Intel Math Kernel Library for BLAS/LAPACK and random number generation
   - Optional
   - Web: https://software.intel.com/en-us/intel-mkl
   - License: \subpage MKL_license
-
-\subsection pugixml_license 18. PugiXML for XML format reading and writing
-  - Required
-  - Web: http://pugixml.org/
-  - License: \subpage PugiXML_license
 
 \section compiler_web Compilers
 
@@ -140,7 +155,7 @@ to the tools.
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Wed 13 Jan 2016 06:08:20 AM MST
+<em>Page last updated:</em> Fri 29 Apr 2016 08:59:14 AM MDT
 <em>Copyright 2012-2016, Jozsef Bakosi.</em>
 </small></div>
 */
