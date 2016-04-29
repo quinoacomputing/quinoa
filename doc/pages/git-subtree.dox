@@ -42,11 +42,11 @@ make life easier.
      $ git remote add --tags -f hypre git@github.com:quinoacomputing/HYPRE.git
      $ git remote add --tags -f rngsse2 git@github.com:quinoacomputing/RNGSSE2.git
      $ git remote add --tags -f testu01 git@github.com:quinoacomputing/TestU01-threadsafe.git
-     $ git remote add --tags -f ndiff git@github.com:quinoacomputing/ndiff.git
      $ git remote add --tags -f pugixml git@github.com:zeux/pugixml.git
      $ git remote add --tags -f blas git@github.com:quinoacomputing/BLAS.git
      $ git remote add --tags -f lapack git@github.com:quinoacomputing/LAPACK.git
      $ git remote add --tags -f aec https://gitlab.dkrz.de/k202009/libaec.git
+     $ git remote add --tags -f ndiff git@github.com:quinoacomputing/ndiff.git
    \endcode
 
 ### Git subtree commands to initially merge in a set of commits (squashed) from the TPLs and tools
@@ -71,11 +71,11 @@ documentation of what and how it has been done to set up the subtrees.
      $ git subtree add --prefix=tpl/src/hypre hypre master --squash
      $ git subtree add --prefix=tpl/src/rngsse2 rngsse2 master --squash
      $ git subtree add --prefix=tpl/src/testu01 testu01 master --squash
-     $ git subtree add --prefix=tool/src/ndiff ndiff master --squash
      $ git subtree add --prefix=tpl/src/pugixml pugixml v1.7 --squash
      $ git subtree add --prefix=tpl/src/lapack lapack master --squash
      $ git subtree add --prefix=tpl/src/blas blas master --squash
      $ git subtree add --prefix=tpl/src/aec aec v0.3.2 --squash
+     $ git subtree add --prefix=tool/src/ndiff ndiff master --squash
    \endcode
 
 ### Example git command to pull the latest changes to TPL charm
@@ -115,7 +115,7 @@ If you are happy with the diff, push the changes to the TPL:
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Thu 28 Apr 2016 04:25:21 PM MDT
+<em>Page last updated:</em> Fri 29 Apr 2016 08:51:22 AM MDT
 <em>Copyright 2012-2016, Jozsef Bakosi.</em>
 </small></div>
 */

@@ -803,14 +803,18 @@ INPUT                  = \
   @CMAKE_CURRENT_SOURCE_DIR@/../doc/licenses/TUT_license.dox \
   @CMAKE_CURRENT_SOURCE_DIR@/../doc/licenses/Boost_license.dox \
   @CMAKE_CURRENT_SOURCE_DIR@/../doc/licenses/Cartesian_Product_license.dox \
+  @CMAKE_CURRENT_SOURCE_DIR@/../doc/licenses/PStreams_license.dox \
   @CMAKE_CURRENT_SOURCE_DIR@/../doc/licenses/HDF5_license.dox \
   @CMAKE_CURRENT_SOURCE_DIR@/../doc/licenses/NetCDF_license.dox \
   @CMAKE_CURRENT_SOURCE_DIR@/../doc/licenses/ExodusII_license.dox \
   @CMAKE_CURRENT_SOURCE_DIR@/../doc/licenses/Zoltan_license.dox \
+  @CMAKE_CURRENT_SOURCE_DIR@/../doc/licenses/Hypre_license.dox \
   @CMAKE_CURRENT_SOURCE_DIR@/../doc/licenses/RNGSSELIB_license.dox \
   @CMAKE_CURRENT_SOURCE_DIR@/../doc/licenses/TestU01_license.dox \
-  @CMAKE_CURRENT_SOURCE_DIR@/../doc/licenses/PStreams_license.dox \
-  @CMAKE_CURRENT_SOURCE_DIR@/../doc/licenses/Hypre_license.dox \
+  @CMAKE_CURRENT_SOURCE_DIR@/../doc/licenses/PugiXML_license.dox \
+  @CMAKE_CURRENT_SOURCE_DIR@/../doc/licenses/BLAS_license.dox \
+  @CMAKE_CURRENT_SOURCE_DIR@/../doc/licenses/LAPACK_license.dox \
+  @CMAKE_CURRENT_SOURCE_DIR@/../doc/licenses/AEC_license.dox \
   @CMAKE_CURRENT_SOURCE_DIR@/../doc/licenses/LibStdCPP_license.dox \
   @CMAKE_CURRENT_SOURCE_DIR@/../doc/licenses/LibCPP_license.dox \
   @CMAKE_CURRENT_SOURCE_DIR@/../doc/licenses/OpenMPI_license.dox \
