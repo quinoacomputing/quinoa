@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/DataLayout.h
   \author    J. Bakosi
-  \date      Fri 19 Feb 2016 09:27:06 AM MST
+  \date      Fri 29 Apr 2016 07:14:12 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Generic data access abstraction for different data layouts
   \details   Generic data access abstraction for different data layouts. See
@@ -13,6 +13,8 @@
 #define DataLayout_h
 
 #include <array>
+#include <string>
+#include <cstdint>
 
 #include "Types.h"
 #include "Keywords.h"
@@ -270,8 +272,7 @@ class DataLayout {
     //! Layout name dispatch
     //! \return The name of the data layout used
     //! \author J. Bakosi
-    static constexpr const char* major()
-    { return major( int2type< Layout >() ); }
+    static std::string layout() { return layout( int2type< Layout >() ); }
 
   private:
     //! Transform a compile-time uint8_t into a type, used for dispatch
@@ -366,9 +367,9 @@ class DataLayout {
     //! \see A. Alexandrescu, Modern C++ Design: Generic Programming and Design
     //!   Patterns Applied, Addison-Wesley Professional, 2001.
     //! \author J. Bakosi
-    static constexpr const char* major( int2type< UnkEqComp > )
+    static std::string layout( int2type< UnkEqComp > )
     { return "unknown-major"; }
-    static constexpr const char* major( int2type< EqCompUnk > )
+    static std::string layout( int2type< EqCompUnk > )
     { return "equation-major"; }
 
     std::vector< tk::real > m_vec;      //!< Data pointer

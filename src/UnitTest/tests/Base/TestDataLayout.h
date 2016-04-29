@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/TestDataLayout.h
   \author    J. Bakosi
-  \date      Thu 11 Feb 2016 03:52:49 PM MST
+  \date      Fri 29 Apr 2016 07:16:03 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Unit tests for Base/DataLayout.h
   \details   Unit tests for Base/DataLayout.h
@@ -431,18 +431,18 @@ void DataLayout_object::test< 6 >() {
                  pe.var( pe.cptr(2,3), 1 ), pe(1,2,3) );
 }
 
-//! Test that tk::DataLayout's major() returns correct string
+//! Test that tk::DataLayout's layou() returns correct string
 //! \author J. Bakosi
 template<> template<>
 void DataLayout_object::test< 7 >() {
-  set_test_name( "major()" );
+  set_test_name( "layou()" );
 
   tk::DataLayout< tk::UnkEqComp > pp( 2, 6 );
   tk::DataLayout< tk::EqCompUnk > pe( 2, 6 );
 
   // Test all template specializations
-  ensure_equals( "<UnkEqComp>::major() correct", pp.major(), "unknown-major" );
-  ensure_equals( "<EqCompUnk>::major() correct", pe.major(), "equation-major" );
+  ensure_equals( "<UnkEqComp>::layou() correct", pp.layout(), "unknown-major" );
+  ensure_equals( "<EqCompUnk>::layou() correct", pe.layout(), "equation-major" );
 }
 
 //! Test that tk::DataLayout's extract() returns correct vector of unknowns
