@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Conductor.C
   \author    J. Bakosi
-  \date      Thu 10 Mar 2016 09:07:30 PM MST
+  \date      Fri 29 Apr 2016 07:14:57 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Conductor drives the time integration of a PDE
   \details   Conductor drives the time integration of a PDE
@@ -48,7 +48,7 @@ Conductor::Conductor() :
 
   // Print out info data layout
   m_print.list( "Unknowns data layout (CMake: MESHNODE_DATA_LAYOUT)",
-                std::list< std::string >{ tk::MeshNodes::major() } );
+                std::list< std::string >{ tk::MeshNodes::layout() } );
 
   // Re-create partial differential equations stack for output
   PDEStack stack;
