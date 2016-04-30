@@ -1,5 +1,7 @@
 #include "CkLoop.h"
+#if !defined(_WIN32)
 #include <pthread.h>
+#endif
 
 #if !USE_CONVERSE_NOTIFICATION
 #include "qd.h"
@@ -7,11 +9,12 @@
 
 #define CKLOOP_USECHARM 1
 #define CKLOOP_PTHREAD 2
+#define CKLOOP_NOOP 3
 
 /*====Beginning of pthread-related variables and impelementation====*/
 //__thread is not portable, but it works almost everywhere if pthread works
 //After C++11, this should be thread_local
-#if !CMK_SMP
+#if !CMK_SMP && !defined(_WIN32)
 static __thread pthread_cond_t thdCondition; //the signal var of each pthread to be notified
 static __thread pthread_mutex_t thdLock; //the lock associated with the condition variables
 #endif
@@ -20,9 +23,11 @@ static FuncCkLoop *mainHelper = NULL;
 static int mainHelperPhyRank = 0;
 static int numPhysicalPEs = 0;
 static CurLoopInfo *pthdLoop = NULL; //the pthread-version is always synchronized
+#if !defined(_WIN32)
 static pthread_mutex_t **allLocks = NULL;
 static pthread_cond_t **allConds = NULL;
 static pthread_t *ndhThreads = NULL;
+#endif
 static volatile int gCrtCnt = 0;
 static volatile int exitFlag = 0;
 
@@ -47,7 +52,7 @@ static int HelperOnCore() {
 }
 
 static void *ndhThreadWork(void *id) {
-#if !CMK_SMP
+#if !CMK_SMP && !defined(_WIN32)
     size_t myId = (size_t) id;
 
     //further improvement of this affinity setting!!
@@ -88,6 +93,7 @@ static void *ndhThreadWork(void *id) {
 }
 
 void FuncCkLoop::createPThreads() {
+#if !defined(_WIN32)
     int numThreads = numHelpers - 1;
     allLocks = (pthread_mutex_t **)malloc(sizeof(void *)*numThreads);
     allConds = (pthread_cond_t **)malloc(sizeof(void *)*numThreads);
@@ -105,9 +111,11 @@ void FuncCkLoop::createPThreads() {
         pthread_create(ndhThreads+i, &attr, ndhThreadWork, (void *)i);
     }
     while (gCrtCnt != numThreads); //wait for all threads to finish creation
+#endif
 }
 
 void FuncCkLoop::exit() {
+#if !defined(_WIN32)
     if (mode == CKLOOP_PTHREAD) {
         exitFlag = 1;
         for (int i=0; i<numHelpers-1; i++)
@@ -117,6 +125,7 @@ void FuncCkLoop::exit() {
         free(allConds);
         delete pthdLoop;
     }
+#endif
 }
 
 /*====End of pthread-related variables and impelementation====*/
@@ -129,40 +138,43 @@ void FuncCkLoop::exit() {
 static FuncCkLoop *globalCkLoop = NULL;
 
 FuncCkLoop::FuncCkLoop(int mode_, int numThreads_) {
-    traceRegisterUserEvent("ckloop total work",CKLOOP_TOTAL_WORK_EVENTID);
-    traceRegisterUserEvent("ckloop finish signal",CKLOOP_FINISH_SIGNAL_EVENTID);
+  init(mode_, numThreads_);
+}
 
-    mode = mode_;
-    loop_info_inited_lock = CmiCreateLock();
+void FuncCkLoop::init(int mode_, int numThreads_) {
+  traceRegisterUserEvent("ckloop total work",CKLOOP_TOTAL_WORK_EVENTID);
+  traceRegisterUserEvent("ckloop finish signal",CKLOOP_FINISH_SIGNAL_EVENTID);
 
-    CmiAssert(globalCkLoop==NULL);
-    globalCkLoop = this;
+  mode = mode_;
+  loop_info_inited_lock = CmiCreateLock();
 
-    if (mode == CKLOOP_USECHARM) {
-        //CkPrintf("FuncCkLoop created on node %d\n", CkMyNode());
-        numHelpers = CkMyNodeSize();
-        helperPtr = new FuncSingleHelper *[numHelpers];
-        useTreeBcast = (numHelpers >= USE_TREE_BROADCAST_THRESHOLD);
+  CmiAssert(globalCkLoop==NULL);
+  globalCkLoop = this;
 
-        int pestart = CkNodeFirst(CkMyNode());
+  if (mode == CKLOOP_USECHARM) {
+      //CkPrintf("FuncCkLoop created on node %d\n", CkMyNode());
+      numHelpers = CkMyNodeSize();
+      helperPtr = new FuncSingleHelper *[numHelpers];
+      useTreeBcast = (numHelpers >= USE_TREE_BROADCAST_THRESHOLD);
 
-        for (int i=0; i<numHelpers; i++) {
-            CkChareID helper;
-            CProxy_FuncSingleHelper::ckNew(&helper, pestart+i);
-        }
-    } else if (mode == CKLOOP_PTHREAD) {
-        helperPtr = NULL;
+      int pestart = CkNodeFirst(CkMyNode());
 
-        numHelpers = numThreads_;
-        useTreeBcast = (numHelpers >= USE_TREE_BROADCAST_THRESHOLD);
-        pthdLoop = new CurLoopInfo(FuncCkLoop::MAX_CHUNKS);
-        mainHelper = this;
-        createPThreads();
-    }
+      for (int i=0; i<numHelpers; i++) {
+          CkChareID helper;
+          CProxy_FuncSingleHelper::ckNew(&helper, pestart+i);
+      }
+  } else if (mode == CKLOOP_PTHREAD) {
+      helperPtr = NULL;
+
+      numHelpers = numThreads_;
+      useTreeBcast = (numHelpers >= USE_TREE_BROADCAST_THRESHOLD);
+      pthdLoop = new CurLoopInfo(FuncCkLoop::MAX_CHUNKS);
+      mainHelper = this;
+      createPThreads();
+  }
 }
 
 FuncCkLoop::FuncCkLoop(CkMigrateMessage *m) : CBase_FuncCkLoop(m) {
-  loop_info_inited_lock = CmiCreateLock();
 }
 
 int FuncCkLoop::MAX_CHUNKS = 64;
@@ -179,12 +191,13 @@ int FuncCkLoop::MAX_CHUNKS = 64;
 void FuncCkLoop::parallelizeFunc(HelperFn func, int paramNum, void * param,
                                      int numChunks, int lowerRange,
                                      int upperRange, int sync,
-                                     void *redResult, REDUCTION_TYPE type) {
+                                     void *redResult, REDUCTION_TYPE type,
+                                     CallerFn cfunc,
+                                     int cparamNum, void * cparam) {
 
     double _start; //may be used for tracing
 
     if (numChunks > MAX_CHUNKS) {
-        CkPrintf("CkLoop[%d]: WARNING! chunk is set to MAX_CHUNKS=%d\n", CmiMyPe(), MAX_CHUNKS);
         numChunks = MAX_CHUNKS;
     }
 
@@ -263,6 +276,8 @@ void FuncCkLoop::parallelizeFunc(HelperFn func, int paramNum, void * param,
         }
 #endif
     } else if (mode == CKLOOP_PTHREAD) {
+
+#if !defined(_WIN32)
         int numThreads = numHelpers-1;
         curLoop = pthdLoop;
         curLoop->set(numChunks, func, lowerRange, upperRange, paramNum, param);
@@ -277,7 +292,20 @@ void FuncCkLoop::parallelizeFunc(HelperFn func, int paramNum, void * param,
         }
         //in this mode, it's always synced
         sync = 1;
+#endif
+    } else if (mode == CKLOOP_NOOP) {
+      func(lowerRange, upperRange, redResult, paramNum, param);
+      if (cfunc != NULL) {
+        cfunc(cparamNum, cparam);
+      }
+      return;
     }
+
+    // Call the function on the caller PE before it starts working on chunks
+    if (cfunc != NULL) {
+      cfunc(cparamNum, cparam);
+    }
+
     if(curLoop) curLoop->stealWork();
     TRACE_BRACKET(CKLOOP_TOTAL_WORK_EVENTID);
 
@@ -306,6 +334,21 @@ void FuncCkLoop::parallelizeFunc(HelperFn func, int paramNum, void * param,
      /*CkPrintf("CkLoop Reduce: %d\n", result);*/ \
     }\
 }
+
+void FuncCkLoop::destroyHelpers() {
+  int pe = CmiMyRank()+1;
+  for (int i = 0; i < numHelpers; i++) {
+    if (pe >= CmiMyNodeSize()) pe -= CmiMyNodeSize();
+    DestroyNotifyMsg *tmp = new DestroyNotifyMsg;
+    envelope *env = UsrToEnv(tmp);
+    env->setMsgtype(ForChareMsg);
+    env->setEpIdx(CkIndex_FuncSingleHelper::destroyMyself());
+    env->setSrcPe(CkMyPe());
+    CmiSetHandler(env, _charmHandlerIdx);
+    CmiPushPE(pe, (void *)(env));
+  }
+}
+
 void FuncCkLoop::reduce(void **redBufs, void *redBuf, REDUCTION_TYPE type, int numChunks) {
     switch (type) {
     case CKLOOP_INT_SUM: {
@@ -344,20 +387,28 @@ void FuncCkLoop::registerHelper(HelperNotifyMsg* msg) {
 }
 
 void FuncCkLoop::pup(PUP::er &p) {
-  CBase_FuncCkLoop::pup(p);
   p|mode;
   p|numHelpers;
-  p|useTreeBcast;
   if (p.isUnpacking()) {
-    helperPtr = new FuncSingleHelper *[numHelpers];
-    globalCkLoop = this;
+    init(mode, numHelpers);
   }
 }
 
+static int _ckloopEP;
 CpvStaticDeclare(int, NdhStealWorkHandler);
 static void RegisterCkLoopHdlrs() {
     CpvInitialize(int, NdhStealWorkHandler);
     CpvAccess(NdhStealWorkHandler) = CmiRegisterHandler((CmiHandler)SingleHelperStealWork);
+#ifdef __BIGSIM__
+    if(BgNodeRank()==0) {
+#else
+      if(CkMyRank()==0) {
+#endif
+        int _ckloopMsg = CkRegisterMsg("ckloop_converse_msg", 0, 0, 0, 0);
+        int _ckloopChare = CkRegisterChare("ckloop_converse_chare", 0, TypeInvalid);
+        CkRegisterChareInCharm(_ckloopChare);
+        _ckloopEP = CkRegisterEp("CkLoop", (CkCallFnPtr)SingleHelperStealWork, _ckloopMsg, _ckloopChare, 0+CK_EP_INTRINSIC);
+      }
 }
 
 extern int _charmHandlerIdx;
@@ -446,22 +497,6 @@ void FuncSingleHelper::stealWork(CharmNotifyMsg *msg) {
 #endif
 }
 
-void FuncSingleHelper::pup(PUP::er &p) {
-  CBase_FuncSingleHelper::pup(p);
-  p|funcckproxy;
-  p|useTreeBcast;
-  if (p.isUnpacking()) {
-    HelperNotifyMsg* msg = new HelperNotifyMsg;
-    msg->srcRank = CkMyRank();
-    msg->localHelper = this;
-    // Register the helper with the node group proxy via message since the node
-    // group is not constructed yet.
-    funcckproxy[CkMyNode()].registerHelper(msg);
-
-    createNotifyMsg();
-  }
-}
-
 void SingleHelperStealWork(ConverseNotifyMsg *msg) {
     int srcRank = msg->srcRank;
 
@@ -482,7 +517,11 @@ void SingleHelperStealWork(ConverseNotifyMsg *msg) {
         }
     }
     CurLoopInfo *loop = (CurLoopInfo *)msg->ptr;
+
+    _TRACE_BEGIN_EXECUTE_DETAILED(0, 4, _ckloopEP,
+      CkNodeFirst(CkMyNode())+srcRank, sizeof(ConverseNotifyMsg), NULL, NULL);
     loop->stealWork();
+    _TRACE_END_EXECUTE();
 }
 
 void CurLoopInfo::stealWork() {
@@ -518,6 +557,8 @@ void CurLoopInfo::stealWork() {
       }
 
       if (first < lowerIndex || first > upperIndex || last < lowerIndex || last > upperIndex) {
+        CkPrintf("Error in CurLoopInfo::stealWork() node %d pe %d lowerIndex %d upperIndex %d numChunks %d first %d last %d\n",
+          CkMyNode(), CkMyPe(), lowerIndex, upperIndex, numChunks, first, last);
         CkAbort("Indices of CkLoop incorrect. There maybe a race condition!\n");
       }
 
@@ -541,6 +582,8 @@ CProxy_FuncCkLoop CkLoop_Init(int numThreads) {
 #else
     CkPrintf("CkLoopLib is used in SMP with a simple dynamic scheduling (charm-level notifiation) but not using node-level queue\n");
 #endif
+#elif defined(WIN32)
+    mode = CKLOOP_NOOP;
 #else
     mode = CKLOOP_PTHREAD;
     CkPrintf("CkLoopLib is used with extra %d pthreads via a simple dynamic scheduling\n", numThreads);
@@ -557,7 +600,15 @@ void CkLoop_Parallelize(HelperFn func,
                             int paramNum, void * param,
                             int numChunks, int lowerRange, int upperRange,
                             int sync,
-                            void *redResult, REDUCTION_TYPE type) {
-    globalCkLoop->parallelizeFunc(func, paramNum, param, numChunks, lowerRange, upperRange, sync, redResult, type);
+                            void *redResult, REDUCTION_TYPE type,
+                            CallerFn cfunc,
+                            int cparamNum, void* cparam) {
+    if ( numChunks > upperRange - lowerRange + 1 ) numChunks = upperRange - lowerRange + 1;
+    globalCkLoop->parallelizeFunc(func, paramNum, param, numChunks, lowerRange,
+        upperRange, sync, redResult, type, cfunc, cparamNum, cparam);
+}
+
+void CkLoop_DestroyHelpers() {
+  globalCkLoop->destroyHelpers();
 }
 #include "CkLoop.def.h"

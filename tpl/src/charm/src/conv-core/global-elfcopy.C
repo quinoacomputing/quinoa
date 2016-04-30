@@ -181,7 +181,7 @@ CtgGlobalList::CtgGlobalList() {
   datalen=0;
   nRec=0;
 
-  int count;
+  unsigned int count;
   for (count = 0; count < _namelist.size(); count ++) 
   {
     unsigned long addr;
@@ -273,8 +273,8 @@ extern "C" int init_symtab(char *exename);
 /** Initialize the globals support (called on each processor). */
 void CtgInit(void) {
   CpvInitialize(int, CmiPICMethod);
-  CpvAccess(CmiPICMethod) = 2;
-  CpvInitialize(CtgGlobal,_curCtg);
+  CpvAccess(CmiPICMethod) = CMI_PIC_ELFCOPY;
+  CpvInitialize(CtgGlobals,_curCtg);
 
   if (!_ctgList) 
   {

@@ -17,13 +17,13 @@
 #include "CentralLB.h"
 #include "RecBipartLB.decl.h"
 
-class RecBipartLB : public CentralLB {
+class RecBipartLB : public CBase_RecBipartLB {
   public:
     RecBipartLB(const CkLBOptions &opt);
-    RecBipartLB(CkMigrateMessage *m) : CentralLB (m) { };
+    RecBipartLB(CkMigrateMessage *m) : CBase_RecBipartLB (m) { };
 
     void work(LDStats *stats);
-    void pup(PUP::er &p) { CentralLB::pup(p); }
+    void pup(PUP::er &p) { }
 
   private:
     bool QueryBalanceNow(int _step);

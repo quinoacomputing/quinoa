@@ -321,6 +321,7 @@ void _loadbalancerInit()
 
 int LBDatabase::manualOn = 0;
 char *LBDatabase::avail_vector = NULL;
+bool LBDatabase::avail_vector_set = false;
 CmiNodeLock avail_vector_lock;
 
 static LBRealType * _expectedLoad = NULL;
@@ -336,6 +337,38 @@ void LBDatabase::initnodeFn()
 
   _expectedLoad = new LBRealType[num_proc];
   for (proc=0; proc<num_proc; proc++) _expectedLoad[proc]=0.0;
+
+  _registerCommandLineOpt("+balancer");
+  _registerCommandLineOpt("+LBPeriod");
+  _registerCommandLineOpt("+LBLoop");
+  _registerCommandLineOpt("+LBTopo");
+  _registerCommandLineOpt("+LBNumMoves");
+  _registerCommandLineOpt("+LBPredictor");
+  _registerCommandLineOpt("+LBPredictorDelay");
+  _registerCommandLineOpt("+LBPredictorWindow");
+  _registerCommandLineOpt("+LBVersion");
+  _registerCommandLineOpt("+LBCentPE");
+  _registerCommandLineOpt("+LBDump");
+  _registerCommandLineOpt("+LBDumpSteps");
+  _registerCommandLineOpt("+LBDumpFile");
+  _registerCommandLineOpt("+LBSim");
+  _registerCommandLineOpt("+LBSimSteps");
+  _registerCommandLineOpt("+LBSimProcs");
+  _registerCommandLineOpt("+LBShowDecisions");
+  _registerCommandLineOpt("+LBSyncResume");
+  _registerCommandLineOpt("+LBDebug");
+  _registerCommandLineOpt("+teamSize");
+  _registerCommandLineOpt("+LBPrintSummary");
+  _registerCommandLineOpt("+LBNoBackground");
+  _registerCommandLineOpt("+LBObjOnly");
+  _registerCommandLineOpt("+LBTestPESpeed");
+  _registerCommandLineOpt("+LBSameCpus");
+  _registerCommandLineOpt("+LBUseCpuTime");
+  _registerCommandLineOpt("+LBOff");
+  _registerCommandLineOpt("+LBCommOff");
+  _registerCommandLineOpt("+MetaLB");
+  _registerCommandLineOpt("+LBAlpha");
+  _registerCommandLineOpt("+LBBeta");
 }
 
 // called my constructor
@@ -448,28 +481,40 @@ const char *LBDatabase::loadbalancer(int seq) {
 
 void LBDatabase::pup(PUP::er& p)
 {
-	IrrGroup::pup(p);
-	// the memory should be already allocated
-	int np;
-	if (!p.isUnpacking()) np = CkNumPes();
-	p|np;
-	CmiAssert(avail_vector);
-	// in case number of processors changes
-	if (p.isUnpacking() && np > CkNumPes()) {
-		CmiLock(avail_vector_lock);
-		delete [] avail_vector;
-		avail_vector = new char[np];
-		for (int i=0; i<np; i++) avail_vector[i] = 1;
-		CmiUnlock(avail_vector_lock);
-	}
-	p(avail_vector, np);
-	p|mystep;
-	if(p.isUnpacking()) {
+  IrrGroup::pup(p);
+  // the memory should be already allocated
+  int np;
+  if (!p.isUnpacking()) np = CkNumPes();
+  p|np;
+  // in case number of processors changes
+  if (p.isUnpacking()) {
+    CmiLock(avail_vector_lock);
+    if(!avail_vector_set){
+      avail_vector_set = true;
+      CmiAssert(avail_vector);
+      if(np>CkNumPes()){
+        delete [] avail_vector;
+        avail_vector = new char[np];
+        for (int i=0; i<np; i++) avail_vector[i] = 1;
+      }
+      p(avail_vector, np);
+    } else{
+      char * tmp_avail_vector = new char[np];
+      p(tmp_avail_vector, np);
+      delete [] tmp_avail_vector;
+    }
+    CmiUnlock(avail_vector_lock);
+  } else{
+    CmiAssert(avail_vector);
+    p(avail_vector, np);
+  }
+  p|mystep;
+  if(p.isUnpacking()) {
     nloadbalancers = 0;
-		if (_lb_args.metaLbOn()) {
+    if (_lb_args.metaLbOn()) {
       // if unpacking set metabalancer using the id
       metabalancer = (MetaBalancer*)CkLocalBranch(_metalb);
-		}
+    }
   }
 }
 

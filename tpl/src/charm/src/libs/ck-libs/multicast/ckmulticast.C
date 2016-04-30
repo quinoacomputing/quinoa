@@ -1000,7 +1000,7 @@ inline CkReductionMsg *CkMulticastMgr::buildContributeMsg(int dataSize,void *dat
   CkReductionMsg *msg = CkReductionMsg::buildNew(dataSize, data);
   msg->reducer = type;
   msg->sid = id;
-  msg->sourceFlag = 1;   // from array element
+  msg->sourceFlag = -1;   // from array element
   msg->redNo = id.get_redNo();
   msg->gcount = 1;
   msg->rebuilt = (id.get_pe() == CkMyPe())?0:1;
@@ -1060,7 +1060,7 @@ void CkMulticastMgr::contribute(int dataSize,void *data,CkReduction::reducerType
     msg->sid                = id;
     msg->nFrags             = nFrags;
     msg->fragNo             = i;
-    msg->sourceFlag         = 1;
+    msg->sourceFlag         = -1;
     msg->redNo              = id.get_redNo();
     msg->gcount             = 1;
     msg->rebuilt            = (mpe == CkMyPe())?0:1;
@@ -1151,7 +1151,7 @@ void CkMulticastMgr::reduceFragment (int index, CkSectionInfo& id,
 
     // Figure out (from one of the msg fragments) which reducer function to use
     CkReduction::reducerType reducer = rmsgs[0]->reducer;
-    CkReduction::reducerFn f= CkReduction::reducerTable[reducer];
+    CkReduction::reducerFn f= CkReduction::reducerTable[reducer].fn;
     CkAssert(NULL != f);
 
     // Check if migration occurred in any of the subtrees, and pick one valid callback
@@ -1314,7 +1314,7 @@ void CkMulticastMgr::recvRedMsg(CkReductionMsg *msg)
     //-------------------------------------------------------------------------
     const int index = msg->fragNo;
     // New contribution from an ArrayElement
-    if (msg->sourceFlag == 1) {
+    if (msg->isFromUser()) {
         redInfo.lcount [index] ++;
     }
     // Redn from a child
@@ -1323,10 +1323,6 @@ void CkMulticastMgr::recvRedMsg(CkReductionMsg *msg)
     }
     // Total elems that have contributed the indexth fragment
     redInfo.gcount [index] += msg->gcount;
-
-    // Check if message is of proper size
-    if ((0 != redInfo.msgs[index].length()) && (msg->dataSize != (redInfo.msgs [index][0]->dataSize)))
-    CmiAbort("Reduction data are not of same length!");
 
     //-------------------------------------------------------------------------
     // Buffer the msg

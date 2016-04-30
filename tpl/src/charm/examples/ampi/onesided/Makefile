@@ -1,24 +1,25 @@
-OPTS=-O3 
+-include ../../common.mk
+OPTS=-O3
 CHARMBASE=../../../
 CHARMC=../../../bin/charmc -language ampi $(OPTS)
 MPICC=mpicc $(OPTS)
 TOKENS=6
 
-all: GetPutTest IGetTest
+all: GetPutTest IgetTest
 
 GetPutTest: GetPutTest.C
 	$(CHARMC) GetPutTest.C -language ampi  -o GetPutTest
 #	$(MPICC) GetPutTest.C -o GetPutTest-mpi
-IGetTest: IGetTest.C
-	$(CHARMC) IGetTest.C -language ampi  -o IGetTest
+IgetTest: IgetTest.C
+	$(CHARMC) IgetTest.C -language ampi  -o IgetTest
 
-IGetTest-tokens:
+IgetTest-tokens:
 	cd $(CHARMBASE)/tmp; touch machine.c; touch ckfutures.C; make AMPI OPTS="-DIGET_FLOWCONTROL=1 -DIGET_TOKENNUM=$(TOKENS) $(OPTS)"; cd -;
-	rm IGetTest; make IGetTest OPTS="$(OPTS)";
+	rm IgetTest; make IgetTest OPTS="$(OPTS)";
 	
 test: all
-	./charmrun +p2 ./pgm 100000 16 +vp2
+	$(call run, +p2 ./IgetTest 100000 16 +vp2)
 
 clean:
-	rm -rf charmrun conv-host moduleinit* *.o GetPutTest IGetTest GetPutTest-mpi *~ *.sts core
+	rm -rf charmrun conv-host moduleinit* *.o GetPutTest IgetTest GetPutTest-mpi *~ *.sts core
 

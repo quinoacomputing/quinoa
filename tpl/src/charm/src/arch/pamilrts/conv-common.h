@@ -25,9 +25,8 @@
 #define CMK_MULTICAST_LIST_USE_COMMON_CODE                 0
 #define CMK_MULTICAST_GROUP_USE_COMMON_CODE                1
 
-#define CMK_RSH_IS_A_COMMAND                               0
-#define CMK_RSH_NOT_NEEDED                                 1
-#define CMK_RSH_USE_REMSH                                  0
+#define CMK_SSH_IS_A_COMMAND                               0
+#define CMK_SSH_NOT_NEEDED                                 1
 
 #define CMK_SPANTREE_MAXSPAN                               4
 #define CMK_SPANTREE_USE_COMMON_CODE                       1
@@ -40,6 +39,9 @@
 
 //#define CMK_IMMEDIATE_MSG				   1
 #define CMK_MACHINE_PROGRESS_DEFINED                       0
+
+#undef CMK_HAS_FDATASYNC_FUNC
+#define CMK_HAS_FDATASYNC_FUNC                             0
 
 //#define CMI_DIRECT_MANY_TO_MANY_DEFINED                    0
 

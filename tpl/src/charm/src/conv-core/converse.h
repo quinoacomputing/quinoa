@@ -75,11 +75,6 @@
 /* not the C++ compiler.  If this is C++, ignore them.       */
 #ifdef __cplusplus
 
-/// @todo: Cmi{Bool,False,True} are a relic from gory old days. Remove completely in charm v6.6
-typedef bool CmiBool;
-#define CmiFalse false
-#define CmiTrue true
-
 #if ! CMK_HAS_OFFSETOF
 #undef offsetof
 #define offsetof(TYPE, MEMBER) ((size_t) &((TYPE *)0)->MEMBER)
@@ -139,7 +134,7 @@ typedef enum Partition_Type {
       PARTITION_SINGLETON,
       PARTITION_DEFAULT,
       PARTITION_MASTER,
-      PARTITION_PREFIX,
+      PARTITION_PREFIX
 } Partition_Type;
 
 //variables and functions for partition
@@ -749,9 +744,9 @@ struct infiCmiChunkMetaDataStruct *registerMultiSendMesg(char *msg,int msgSize);
 #endif
 
 /* Given a user chunk m, extract the enclosing chunk header fields: */
-#define SIZEFIELD(m) (((CmiChunkHeader *)(m))[-1].size)
-#define REFFIELD(m) (((CmiChunkHeader *)(m))[-1].ref)
-#define BLKSTART(m) (((CmiChunkHeader *)(m))-1)
+#define BLKSTART(m) ((CmiChunkHeader *) (((intptr_t)m) - sizeof(CmiChunkHeader)))
+#define SIZEFIELD(m) ((BLKSTART(m))->size)
+#define REFFIELD(m) ((BLKSTART(m))->ref)
 
 extern void* malloc_nomigrate(size_t size);
 
@@ -953,13 +948,23 @@ void  CmiError(const char *format, ...);
 #define __CMK_STRING(x) "x"
 #endif
 
+#define __CMK_XSTRING(x) __CMK_STRING(x)
+
+extern void __cmi_assert(const char *);
+#define CmiEnforce(expr) \
+  ((void) ((expr) ? 0 :                   \
+     (__cmi_assert ("Assertion \"" __CMK_STRING(expr) \
+                    "\" failed in file " __FILE__ \
+                    " line " __CMK_XSTRING(__LINE__) "."), 0)))
+
 #if ! CMK_ERROR_CHECKING
 #define CmiAssert(expr) ((void) 0)
 #else
-extern void __cmi_assert(const char *, const char *, int);
 #define CmiAssert(expr) \
   ((void) ((expr) ? 0 :                   \
-     (__cmi_assert (__CMK_STRING(expr), __FILE__, __LINE__), 0)))
+     (__cmi_assert ("Assertion \"" __CMK_STRING(expr) \
+                    "\" failed in file " __FILE__ \
+                    " line " __CMK_XSTRING(__LINE__) "."), 0)))
 #endif
 
 typedef void (*CmiStartFn)(int argc, char **argv);
@@ -1405,7 +1410,11 @@ typedef struct CtgGlobalStruct *CtgGlobals;
 
 /** Initialize the globals support (called on each processor). */
 void CtgInit(void);
-/** PIC method used: 0 = nop, 1 = elfgot, 2 = elfcopy */
+
+/** PIC method used. **/
+#define CMI_PIC_NOP     0
+#define CMI_PIC_ELFGOT  1
+#define CMI_PIC_ELFCOPY 2
 CpvExtern(int, CmiPICMethod);
 
 /** Copy the current globals into this new set */
@@ -1705,6 +1714,7 @@ void CmiDeleteArgs(char **argv,int k);
 int CmiGetArgc(char **argv);
 char **CmiCopyArgs(char **argv);
 int CmiArgGivingUsage(void);
+void CmiDeprecateArgInt(char **argv,const char *arg,const char *desc,const char *warning);
 
 /** 
    Extract the function-return pointers listed in the stack
@@ -1775,19 +1785,39 @@ extern "C"
 #endif*/
 void CmiMachineProgressImpl();
 
+#if CMK_USE_PXSHM
+#define CmiNetworkProgress() {CpvAccess(networkProgressCount) ++; \
+      if(CpvAccess(networkProgressCount) >=  networkProgressPeriod) { \
+          CmiMachineProgressImpl(); \
+	  CommunicationServerPxshm(); \
+          CpvAccess(networkProgressCount) = 0; \
+      } \
+}
+#else
 #define CmiNetworkProgress() {CpvAccess(networkProgressCount) ++; \
       if(CpvAccess(networkProgressCount) >=  networkProgressPeriod) { \
           CmiMachineProgressImpl(); \
           CpvAccess(networkProgressCount) = 0; \
       } \
-} \
+}
+#endif
 
+#if CMK_USE_PXSHM
+#define CmiNetworkProgressAfter(p) {CpvAccess(networkProgressCount) ++; \
+      if(CpvAccess(networkProgressCount) >=  p) { \
+          CmiMachineProgressImpl(); \
+	  CommunicationServerPxshm(); \
+          CpvAccess(networkProgressCount) = 0; \
+      } \
+}
+#else
 #define CmiNetworkProgressAfter(p) {CpvAccess(networkProgressCount) ++; \
       if(CpvAccess(networkProgressCount) >=  p) { \
           CmiMachineProgressImpl(); \
           CpvAccess(networkProgressCount) = 0; \
       } \
-} \
+}
+#endif
 
 #endif
 

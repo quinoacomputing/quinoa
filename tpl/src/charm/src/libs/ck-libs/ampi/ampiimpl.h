@@ -7,15 +7,6 @@
 #include "charm++.h"
 #include "ckliststring.h"
 
-#if AMPI_COMLIB
-//#warning COMPILING IN UNTESTED AMPI COMLIB SUPPORT
-#include "StreamingStrategy.h"
-#include "EachToManyMulticastStrategy.h" /* for ComlibManager Strategy*/
-#include "BroadcastStrategy.h"
-#else
-#define ComlibInstanceHandle int
-#endif
-
 #if 0
 #define AMPI_DEBUG CkPrintf
 #else
@@ -85,17 +76,18 @@ class fromzDisk : public zdisk {
 #if AMPI_COUNTER
 class AmpiCounters{
 public:
-	int send,recv,isend,irecv,barrier,bcast,gather,scatter,allgather,alltoall,reduce,allreduce,scan;
+	int send,recv,isend,irecv,nbor_alltoall,nbor_allgather,barrier,bcast,gather,scatter,allgather,alltoall,reduce,allreduce,scan,exscan;
 	AmpiCounters(){
-		send=0;recv=0;isend=0;irecv=0;barrier=0;bcast=0;gather=0;scatter=0;allgather=0;alltoall=0;reduce=0;allreduce=0;scan=0;
+		send=0;recv=0;isend=0;irecv=0;nbor_alltoall=0;nbor_allgather=0;barrier=0;bcast=0;gather=0;scatter=0;allgather=0;alltoall=0;reduce=0;allreduce=0;scan=0;exscan=0;
 	}
 	void output(int idx){
-		printf("[%d]send=%d;recv=%d;isend=%d;irecv=%d;barrier=%d;bcast=%d;gather=%d;scatter=%d;allgather=%d;alltoall=%d;reduce=%d;allreduce=%d;scan=%d\n",idx,send,recv,isend,irecv,barrier,bcast,gather,scatter,allgather,alltoall,reduce,allreduce,scan);
+		CkPrintf("[%d]send=%d;recv=%d;isend=%d;irecv=%d;nbor_alltoall=%d;nbor_allgather=%d;barrier=%d;bcast=%d;gather=%d;scatter=%d;allgather=%d;alltoall=%d;reduce=%d;allreduce=%d;scan=%d;exscan=%d\n",idx,send,recv,isend,irecv,nbor_alltoall,nbor_allgather,barrier,bcast,gather,scatter,allgather,alltoall,reduce,allreduce,scan,exscan);
 	}
 };
 #endif
 
 
+typedef void (*MPI_MigrateFn)(void);
 
 void applyOp(MPI_Datatype datatype, MPI_Op op, int count, void* invec, void* inoutvec);
 PUPfunctionpointer(MPI_Op)
@@ -197,11 +189,11 @@ class win_obj {
 class KeyvalPair{
 protected:
   int klen, vlen;
-  char* key;
-  char* val;
+  const char* key;
+  const char* val;
 public:
   KeyvalPair(void){ }
-  KeyvalPair(char* k, char* v);
+  KeyvalPair(const char* k, const char* v);
   ~KeyvalPair(void);
   void pup(PUP::er& p){
     p|klen; p|vlen;
@@ -209,8 +201,8 @@ public:
       key=new char[klen];
       val=new char[vlen];
     }
-    p(key,klen);
-    p(val,vlen);
+    p((char*)key,klen);
+    p((char*)val,vlen);
   }
 friend class InfoStruct;
 };
@@ -222,11 +214,11 @@ public:
   InfoStruct(void):valid(true) { }
   void setvalid(bool valid_){ valid = valid_; }
   bool getvalid(void){ return valid; }
-  void set(char* k, char* v);
+  void set(const char* k, const char* v);
   void dup(InfoStruct& src);
-  int get(char* k, int vl, char*& v); // return flag
-  int deletek(char* k); // return -1 when not found
-  int get_valuelen(char* k, int* vl); // return flag
+  int get(const char* k, int vl, char*& v); // return flag
+  int deletek(const char* k); // return -1 when not found
+  int get_valuelen(const char* k, int* vl); // return flag
   int get_nkeys(void) { return nodes.size(); }
   int get_nthkey(int n,char* k);
   void myfree(void);
@@ -250,8 +242,12 @@ class ampiCommStruct {
 	CkVec<int> dims;
 	CkVec<int> periods;
 	
-	// For communicator attributes (MPI_Attr_get): indexed by keyval
+	// For communicator attributes (MPI_*_get_attr): indexed by keyval
 	CkVec<void *> keyvals;
+
+	// For communicator names
+	char *commName;
+	int commNameLen;
 
 	// graph virtual topology parameters
 	int nvertices;
@@ -286,6 +282,22 @@ public:
 	}
 	const CkVec<int> &getRemoteIndices(void) const {return remoteIndices;}
 	CkVec<void *> &getKeyvals(void) {return keyvals;}
+
+	void setName(const char *src, int len) {
+	  if (commName == NULL) commName = new char[MPI_MAX_OBJECT_NAME];
+	  commNameLen = len;
+	  memcpy(commName, src, len);
+	  commName[len] = '\0';
+	}
+
+	void getName(char *name, int *len) {
+	  if (commName == NULL) {
+	    *len = 0;
+	    return;
+	  }
+	  *len = commNameLen;
+	  memcpy(name, commName, *len+1);
+	}
 
 	//Get the proxy for the entire array
 	CProxy_ampi getProxy(void) const;
@@ -474,19 +486,25 @@ inline groupStruct exclOp(int n,int* ranks,groupStruct vec){
   }
   return retvec;
 }
-inline groupStruct rangeInclOp(int n, int ranges[][3], groupStruct vec){
+inline groupStruct rangeInclOp(int n, int ranges[][3], groupStruct vec, int *flag){
   groupStruct retvec;
   int first,last,stride;
   for(int i=0;i<n;i++){
     first = ranges[i][0];
     last = ranges[i][1];
     stride = ranges[i][2];
-    for(int j=0;j<=(last-first)/stride;j++)
-      retvec.push_back(vec[first+stride*j]);
+    if(stride!=0){
+      for(int j=0;j<=(last-first)/stride;j++)
+        retvec.push_back(vec[first+stride*j]);
+    }else{
+      *flag = MPI_ERR_ARG;
+      return retvec;
+    }
   }
+  *flag = MPI_SUCCESS;
   return retvec;
 }
-inline groupStruct rangeExclOp(int n, int ranges[][3], groupStruct vec){
+inline groupStruct rangeExclOp(int n, int ranges[][3], groupStruct vec, int *flag){
   groupStruct retvec;
   CkVec<int> ranksvec;
   int first,last,stride;
@@ -496,13 +514,19 @@ inline groupStruct rangeExclOp(int n, int ranges[][3], groupStruct vec){
     first = ranges[i][0];
     last = ranges[i][1];
     stride = ranges[i][2];
-    for(j=0;j<=(last-first)/stride;j++)
-      ranksvec.push_back(first+stride*j);
+    if(stride!=0){
+      for(j=0;j<=(last-first)/stride;j++)
+        ranksvec.push_back(first+stride*j);
+    }else{
+      *flag = MPI_ERR_ARG;
+      return retvec;
+    }
   }
   cnt=ranksvec.size();
   ranks=new int[cnt];
   for(i=0;i<cnt;i++)
     ranks[i]=ranksvec[i];
+  *flag = MPI_SUCCESS;
   return exclOp(cnt,ranks,vec);
 }
 
@@ -523,7 +547,15 @@ extern int _mpi_nworlds;
 #define MPI_GATHER_TAG  MPI_TAG_UB_VALUE+13
 #define MPI_SCATTER_TAG MPI_TAG_UB_VALUE+14
 #define MPI_SCAN_TAG 	MPI_TAG_UB_VALUE+15
-#define MPI_ATA_TAG	MPI_TAG_UB_VALUE+16
+#define MPI_EXSCAN_TAG  MPI_TAG_UB_VALUE+16
+#define MPI_ATA_TAG     MPI_TAG_UB_VALUE+17
+
+#define MPI_PERS_REQ 1
+#define MPI_I_REQ    2
+#define MPI_ATA_REQ  3
+#define MPI_IATA_REQ 4
+#define MPI_S_REQ    5
+#define MPI_GPU_REQ  6
 
 #define MyAlign8(x) (((x)+7)&(~7))
 
@@ -556,8 +588,11 @@ public:
 	///  other requests just abort.
 	virtual int start(void){ return -1; }
 
-	/// Return true if this request is finished (progress).
+	/// Return true if this request is finished (progress):
+	///  test always yields before returning false.
+	///  itest does not yield before returning false for IReq's and SReq's.
 	virtual bool test(MPI_Status *sts) =0;
+	virtual bool itest(MPI_Status *sts) =0;
 
 	/// Completes the operation hanging on the request
 	virtual void complete(MPI_Status *sts) =0;
@@ -572,8 +607,8 @@ public:
 	virtual void free(void){ isvalid=false; }
 	inline bool isValid(void){ return isvalid; }
 
-	/// Returns the type of request: 1-PersReq, 2-IReq, 3-ATAReq,
-	/// 4-SReq, 5-GPUReq
+	/// Returns the type of request:
+	///  MPI_PERS_REQ, MPI_I_REQ, MPI_ATA_REQ, MPI_IATA_REQ, MPI_S_REQ, MPI_GPU_REQ
 	virtual int getType(void) =0;
 
 	virtual void pup(PUP::er &p) {
@@ -609,10 +644,11 @@ public:
 	~PersReq(){ }
 	int start();
 	bool test(MPI_Status *sts);
+	bool itest(MPI_Status *sts);
 	void complete(MPI_Status *sts);
 	int wait(MPI_Status *sts);
 	void receive(ampi *ptr, AmpiMsg *msg) {}
-	inline int getType(void){ return 1; }
+	inline int getType(void){ return MPI_PERS_REQ; }
 	virtual void pup(PUP::er &p){
 		AmpiRequest::pup(p);
 		p(sndrcv);
@@ -633,9 +669,10 @@ public:
 	IReq(): statusIreq(false){};
 	~IReq(){ }
 	bool test(MPI_Status *sts);
+	bool itest(MPI_Status *sts);
 	void complete(MPI_Status *sts);
 	int wait(MPI_Status *sts);
-	inline int getType(void){ return 2; }
+	inline int getType(void){ return MPI_I_REQ; }
 	void receive(ampi *ptr, AmpiMsg *msg); 
 	virtual void pup(PUP::er &p){
 		AmpiRequest::pup(p);
@@ -685,11 +722,12 @@ public:
 		return (++idx);
 	}
 	bool test(MPI_Status *sts);
+	bool itest(MPI_Status *sts);
 	void complete(MPI_Status *sts);
 	int wait(MPI_Status *sts);
 	void receive(ampi *ptr, AmpiMsg *msg) {}
 	inline int getCount(void){ return elmcount; }
-	inline int getType(void){ return 3; }
+	inline int getType(void){ return MPI_ATA_REQ; }
 // 	inline void free(void){ isvalid=false; delete [] myreqs; }
 	virtual void pup(PUP::er &p){
 		AmpiRequest::pup(p);
@@ -718,10 +756,11 @@ public:
 	SReq(): statusIreq(false) {}
 	~SReq(){ }
 	bool test(MPI_Status *sts);
+	bool itest(MPI_Status *sts);
 	void complete(MPI_Status *sts);
 	int wait(MPI_Status *sts);
 	void receive(ampi *ptr, AmpiMsg *msg) {}
-	inline int getType(void){ return 4; }
+	inline int getType(void){ return MPI_S_REQ; }
 	virtual void pup(PUP::er &p){
 		AmpiRequest::pup(p);
 		p|statusIreq;
@@ -735,12 +774,53 @@ class GPUReq : public AmpiRequest {
 
 public:
     GPUReq();
-    int getType() { return 5; }
+    int getType() { return MPI_GPU_REQ; }
     bool test(MPI_Status *sts);
+    bool itest(MPI_Status *sts);
     void complete(MPI_Status *sts);
     int wait(MPI_Status *sts);
     void receive(ampi *ptr, AmpiMsg *msg);
     void setComplete();
+};
+
+class IATAReq : public AmpiRequest {
+	IReq *myreqs;
+	int elmcount;
+	int idx;
+public:
+	IATAReq(int c_):elmcount(c_),idx(0){ myreqs = new IReq[c_]; isvalid=true; }
+	IATAReq(){};
+	~IATAReq(void) { if(myreqs) delete [] myreqs; }
+	int addReq(void *buf_, int count_, int type_, int src_, int tag_, MPI_Comm comm_){
+		myreqs[idx].buf=buf_;	myreqs[idx].count=count_;
+		myreqs[idx].type=type_;	myreqs[idx].src=src_;
+		myreqs[idx].tag=tag_;	myreqs[idx].comm=comm_;
+		return (++idx);
+	}
+	bool test(MPI_Status *sts);
+	bool itest(MPI_Status *sts);
+	void complete(MPI_Status *sts);
+	int wait(MPI_Status *sts);
+	void receive(ampi *ptr, AmpiMsg *msg) {}
+	inline int getCount(void){ return elmcount; }
+	inline int getType(void){ return MPI_IATA_REQ; }
+// 	inline void free(void){ isvalid=false; delete [] myreqs; }
+	virtual void pup(PUP::er &p){
+		AmpiRequest::pup(p);
+		p(elmcount);
+		p(idx);
+		if(p.isUnpacking()){
+			myreqs = new IReq[elmcount];
+		}
+		for(int i=0;i<idx;i++){
+			myreqs[i].pup(p);
+		}
+		if(p.isDeleting()){
+			delete [] myreqs;
+		}
+	}
+	//added due to BIGSIM_OOC DEBUGGING
+	virtual void print();
 };
 
 /// Special CkVec<AmpiRequest*> for AMPI. Most code copied from cklist.h
@@ -832,7 +912,7 @@ class AmpiRequestList : private CkSTLHelper<AmpiRequest *> {
     void print(){
 	for(int i=0; i<len; i++){
 	    if(block[i]==NULL) continue;
-	    CmiPrintf("AmpiRequestList Element %d [%p]: \n", i+1, block[i]);
+	    CkPrintf("AmpiRequestList Element %d [%p]: \n", i+1, block[i]);
 	    block[i]->print();
 	}
     }
@@ -1053,14 +1133,20 @@ class ampiParent : public CBase_ampiParent {
     }
     void intraChildRegister(const ampiCommStruct &s);
 
-    // MPI MPI_Attr_get C binding returns a *pointer* to an integer,
-    //  so there needs to be some storage somewhere to point to.
+    /* MPI_*_get_attr C binding returns a *pointer* to an integer,
+     *  so there needs to be some storage somewhere to point to.
+     * All builtin keyvals are ints, except for MPI_WIN_BASE, which
+     *  is a pointer. */
     int* kv_builtin_storage;
-    int kv_is_builtin(int keyval);
+    void** win_base_storage;
+    bool kv_set_builtin(int keyval, void* attribute_val);
+    bool kv_get_builtin(int keyval);
     CkPupPtrVec<KeyvalNode> kvlist;
 
     int RProxyCnt;
     CProxy_ampi tmpRProxy;
+
+    MPI_MigrateFn userAboutToMigrateFn, userJustMigratedFn;
 
 public:
     int ampiInitCallDone;
@@ -1068,8 +1154,11 @@ public:
 public:
     ampiParent(MPI_Comm worldNo_,CProxy_TCharm threads_);
     ampiParent(CkMigrateMessage *msg);
+    void ckAboutToMigrate(void);
     void ckJustMigrated(void);
     void ckJustRestored(void);
+    void setUserAboutToMigrateFn(MPI_MigrateFn f);
+    void setUserJustMigratedFn(MPI_MigrateFn f);
     ~ampiParent();
 
     ampi *lookupComm(MPI_Comm comm) {
@@ -1246,9 +1335,17 @@ public:
     int createKeyval(MPI_Copy_function *copy_fn, MPI_Delete_function *delete_fn,
                      int *keyval, void* extra_state);
     int freeKeyval(int *keyval);
-    int putAttr(MPI_Comm comm, int keyval, void* attribute_val);
-    int getAttr(MPI_Comm comm, int keyval, void *attribute_val, int *flag);
-    int deleteAttr(MPI_Comm comm, int keyval);
+    bool getBuiltinKeyval(int keyval, void *attribute_val);
+    int setUserKeyval(MPI_Comm comm, int keyval, void *attribute_val);
+    bool getUserKeyval(MPI_Comm comm, int keyval, void *attribute_val, int *flag);
+
+    int setCommAttr(MPI_Comm comm, int keyval, void *attribute_val);
+    int getCommAttr(MPI_Comm comm, int keyval, void *attribute_val, int *flag);
+    int deleteCommAttr(MPI_Comm comm, int keyval);
+
+    int setWinAttr(MPI_Win win, int keyval, void *attribute_val);
+    int getWinAttr(MPI_Win win, int keyval, void *attribute_val, int *flag);
+    int deleteWinAttr(MPI_Win win, int keyval);
 
     CkDDT myDDTsto;
     CkDDT *myDDT;
@@ -1270,10 +1367,10 @@ public:
 public:
     MPI_Info createInfo(void);
     MPI_Info dupInfo(MPI_Info info);
-    void setInfo(MPI_Info info, char *key, char *value);
-    int deleteInfo(MPI_Info info, char *key);    
-    int getInfo(MPI_Info info, char *key, int valuelen, char *value);
-    int getInfoValuelen(MPI_Info info, char *key, int *valuelen);
+    void setInfo(MPI_Info info, const char *key, const char *value);
+    int deleteInfo(MPI_Info info, const char *key);
+    int getInfo(MPI_Info info, const char *key, int valuelen, char *value);
+    int getInfoValuelen(MPI_Info info, const char *key, int *valuelen);
     int getInfoNkeys(MPI_Info info);
     int getInfoNthkey(MPI_Info info, int n, char *key);
     void freeInfo(MPI_Info info);
@@ -1313,17 +1410,6 @@ friend class SReq;
     int myRank;
     groupStruct tmpVec; // stores temp group info
     CProxy_ampi remoteProxy; // valid only for intercommunicator
-
-#if AMPI_COMLIB
-    /// A proxy used when delegating message sends to comlib
-    CProxy_ampi comlibProxy;
-    
-    /// References to the comlib instance handles(currently just integers)
-    ComlibInstanceHandle ciStreaming;
-    ComlibInstanceHandle ciBcast;
-    ComlibInstanceHandle ciAllgather;
-    ComlibInstanceHandle ciAlltoall;
-#endif
     
     int seqEntries; //Number of elements in below arrays
     AmpiSeqQ oorder;
@@ -1335,14 +1421,12 @@ friend class SReq;
 
     ampi();
     ampi(CkArrayID parent_,const ampiCommStruct &s);
-    ampi(CkArrayID parent_,const ampiCommStruct &s,ComlibInstanceHandle ciStreaming_,
-    	ComlibInstanceHandle ciBcast_,ComlibInstanceHandle ciAllgather_,ComlibInstanceHandle ciAlltoall_);
     ampi(CkMigrateMessage *msg);
     void ckJustMigrated(void);
     void ckJustRestored(void);
     ~ampi();
 
-    virtual void pup(PUP::er &p);
+    void pup(PUP::er &p);
 
     void allInitDone(CkReductionMsg *m);
     void setInitDoneFlag();
@@ -1350,15 +1434,19 @@ friend class SReq;
     void block(void);
     void unblock(void);
     void yield(void);
+    void blockOnRecv(void);
     void generic(AmpiMsg *);
     void ssend_ack(int sreq);
     void reduceResult(CkReductionMsg *m);
+
     void splitPhase1(CkReductionMsg *msg);
     void commCreatePhase1(CkReductionMsg *msg);
-    void cartCreatePhase1(CkReductionMsg *m);
-    void graphCreatePhase1(CkReductionMsg *m);
     void intercommCreatePhase1(CkReductionMsg *m);
     void intercommMergePhase1(CkReductionMsg *msg);
+
+  private: // Used by the above entry methods that create new MPI_Comm objects
+    CProxy_ampi createNewChildAmpiSync();
+    void insertNewChildAmpiElements(MPI_Comm *newComm, CProxy_ampi newAmpi);
 
   public: // to be used by MPI_* functions
 
@@ -1369,9 +1457,6 @@ friend class SReq;
     AmpiMsg *makeAmpiMsg(int destIdx,int t,int sRank,const void *buf,int count,
                          int type,MPI_Comm destcomm, int sync=0);
 
-#if AMPI_COMLIB
-    inline void comlibsend(int t, int s, const void* buf, int count, int type, int rank, MPI_Comm destcomm);
-#endif
     inline void send(int t, int s, const void* buf, int count, int type, int rank, MPI_Comm destcomm, int sync=0);
     static void sendraw(int t, int s, void* buf, int len, CkArrayID aid,
                         int idx);
@@ -1404,24 +1489,16 @@ friend class SReq;
         else return myComm.getSize();
     }
     inline MPI_Comm getComm(void) const {return myComm.getComm();}
+    inline void setCommName(const char *name, int len){myComm.setName(name, len);}
+    inline void getCommName(char *name, int *len){myComm.getName(name,len);}
     inline CkVec<int> getIndices(void) const { return myComm.getindices(); }
     inline const CProxy_ampi &getProxy(void) const {return thisProxy;}
     inline const CProxy_ampi &getRemoteProxy(void) const {return remoteProxy;}
     inline void setRemoteProxy(CProxy_ampi rproxy) { remoteProxy = rproxy; thread->resume(); }
     inline int getIndexForRank(int r) const {return myComm.getIndexForRank(r);}
     inline int getIndexForRemoteRank(int r) const {return myComm.getIndexForRemoteRank(r);}
-#if AMPI_COMLIB
-    inline const CProxy_ampi &getComlibProxy(void) const { return comlibProxy; }
-    inline ComlibInstanceHandle getStreaming(void) { return ciStreaming; }
-    inline ComlibInstanceHandle getBcast(void) { return ciBcast; }
-    inline ComlibInstanceHandle getAllgather(void) { return ciAllgather; }
-    inline ComlibInstanceHandle getAlltoall(void) { return ciAlltoall; }
-
-    inline Strategy* getStreamingStrategy(void) { return CkpvAccess(conv_com_object).getStrategy(ciStreaming); }
-    inline Strategy* getBcastStrategy(void) { return CkpvAccess(conv_com_object).getStrategy(ciBcast); }
-    inline Strategy* getAllgatherStrategy(void) { return CkpvAccess(conv_com_object).getStrategy(ciAllgather); }
-    inline Strategy* getAlltoallStrategy(void) { return CkpvAccess(conv_com_object).getStrategy(ciAlltoall); }
-#endif
+    int getNumTopologyNeighbors(MPI_Comm comm, int rank);
+    void getTopologyNeighborRanks(MPI_Comm comm, int rank, int num_neighbors, int *neighbors);
     
     CkDDT *getDDT(void) {return parent->myDDT;}
     CthThread getThread() { return thread->getThread(); }
@@ -1451,18 +1528,18 @@ friend class SReq;
 	       MPI_Aint targdisp, int targcnt, MPI_Datatype targtype, WinStruct win);
     int winGet(void *orgaddr, int orgcnt, MPI_Datatype orgtype, int rank, 
 	       MPI_Aint targdisp, int targcnt, MPI_Datatype targtype, WinStruct win);
-    int winIGet(MPI_Aint orgdisp, int orgcnt, MPI_Datatype orgtype, int rank,
+    int winIget(MPI_Aint orgdisp, int orgcnt, MPI_Datatype orgtype, int rank,
                MPI_Aint targdisp, int targcnt, MPI_Datatype targtype, WinStruct win, 
 	       MPI_Request *req);
-    int winIGetWait(MPI_Request *request, MPI_Status *status);
-    int winIGetFree(MPI_Request *request, MPI_Status *status);
+    int winIgetWait(MPI_Request *request, MPI_Status *status);
+    int winIgetFree(MPI_Request *request, MPI_Status *status);
     void winRemotePut(int orgtotalsize, char* orgaddr, int orgcnt, MPI_Datatype orgtype,
 		      MPI_Aint targdisp, int targcnt, MPI_Datatype targtype, 
 		      int winIndex, CkFutureID ftHandle, int pe_src);
     void winRemoteGet(int orgcnt, MPI_Datatype orgtype, MPI_Aint targdisp, 
 		      int targcnt, MPI_Datatype targtype, 
     		      int winIndex, CkFutureID ftHandle, int pe_src);
-    AmpiMsg* winRemoteIGet(int orgdisp, int orgcnt, MPI_Datatype orgtype, MPI_Aint targdisp,
+    AmpiMsg* winRemoteIget(int orgdisp, int orgcnt, MPI_Datatype orgtype, MPI_Aint targdisp,
 			   int targcnt, MPI_Datatype targtype, int winIndex);
     int winLock(int lock_type, int rank, WinStruct win);
     int winUnlock(int rank, WinStruct win);
@@ -1480,13 +1557,13 @@ friend class SReq;
     win_obj* getWinObjInstance(WinStruct win); 
     int getNewSemaId(); 
 
-    AmpiMsg* Alltoall_RemoteIGet(int disp, int targcnt, MPI_Datatype targtype, int tag);
+    AmpiMsg* Alltoall_RemoteIget(int disp, int targcnt, MPI_Datatype targtype, int tag);
 private:
     int AlltoallGetFlag;
     void *Alltoallbuff;
 public:
-    void setA2AIGetFlag(void* ptr) {AlltoallGetFlag=1;Alltoallbuff=ptr;}
-    void resetA2AIGetFlag() {AlltoallGetFlag=0;Alltoallbuff=NULL;} 
+    void setA2AIgetFlag(void* ptr) {AlltoallGetFlag=1;Alltoallbuff=ptr;}
+    void resetA2AIgetFlag() {AlltoallGetFlag=0;Alltoallbuff=NULL;}
     //------------------------ End of code by YAN ---------------------
 };
 

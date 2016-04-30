@@ -1,14 +1,15 @@
 DIRS	= \
-AllReduce \
 allToAll \
 cksequence \
 completion \
 fib \
 hello \
 integrate \
-integrate2 \
+integratePUPable \
 integrateArray \
-jacobi2d \
+jacobi2d-1d-decomposition \
+jacobi2d-2d-decomposition \
+jacobi3d-2d-decomposition \
 leanmd \
 load_balancing \
 manyToMany \
@@ -16,28 +17,25 @@ matmul \
 namespace \
 piArray \
 PUP \
-queens \
-RedExample \
+NQueen \
+reductions \
 ring \
 rings \
 speeds \
 sync_square \
 threaded_ring \
-TRAM \
-typed_reduction
+TRAM
 
 BGDIRS=\
-AllReduce \
 hello \
 integrate \
-integrate2 \
+integratePUPable \
 integrateArray \
-jacobi2d \
 load_balancing \
 piArray \
 PUP \
-queens \
-RedExample \
+NQueen \
+reductions \
 ring \
 rings \
 speeds

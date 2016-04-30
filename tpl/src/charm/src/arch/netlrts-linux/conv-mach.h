@@ -19,11 +19,9 @@
 #define CMK_MEMORY_PAGESIZE                                8192
 #define CMK_MEMORY_PROTECTABLE                             1
 
-#define CMK_NODE_QUEUE_AVAILABLE                           0
 
-#define CMK_RSH_IS_A_COMMAND                               1
-#define CMK_RSH_NOT_NEEDED                                 0
-#define CMK_RSH_USE_REMSH                                  0
+#define CMK_SSH_IS_A_COMMAND                               1
+#define CMK_SSH_NOT_NEEDED                                 0
 
 #define CMK_SHARED_VARS_UNAVAILABLE                        1
 #define CMK_SHARED_VARS_UNIPROCESSOR                       0

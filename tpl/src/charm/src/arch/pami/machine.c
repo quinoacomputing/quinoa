@@ -43,6 +43,9 @@ char *ALIGN_32(char *p) {
   return((char *)((((unsigned long)p)+0x1f) & (~0x1FUL)));
 }
 
+extern int quietMode;
+extern int quietModeRequested;
+
 /*To reduce the buffer used in broadcast and distribute the load from
   broadcasting node, define CMK_BROADCAST_SPANNING_TREE enforce the use of
   spanning tree broadcast algorithm.
@@ -599,7 +602,7 @@ pamix_progress_enable_fn    cmi_progress_enable;
 pamix_progress_disable_fn   cmi_progress_disable;
 
 int CMI_Progress_init(int start, int ncontexts) {
-  if (CmiMyPe() == 0)
+  if ((CmiMyPe() == 0) && (!quietMode))
     printf("Enabling communication threads\n");
   
   PAMI_EXTENSION_OPEN(cmi_pami_client,"EXT_async_progress",&cmi_ext_progress);
@@ -641,6 +644,10 @@ int CMI_Progress_finalize(int start, int ncontexts) {
 
 void ConverseInit(int argc, char **argv, CmiStartFn fn, int usched, int initret) {
     int n, i, count;
+
+    if (CmiGetArgFlagDesc(argv,"++quiet","Omit non-error runtime messages")) {
+      quietModeRequested = quietMode = 1;
+    }
 
     /* processor per node */
     _Cmi_mynodesize = 1;
@@ -795,7 +802,7 @@ void ConverseInit(int argc, char **argv, CmiStartFn fn, int usched, int initret)
 	break;
       }
 
-    if (_Cmi_mynode == 0)
+    if ((_Cmi_mynode == 0) && (!quietMode))
       printf ("Choosing optimized barrier algorithm name %s\n",
 	      always_works_md[opt_alg]);
 	      
@@ -980,6 +987,8 @@ void spin_wait_barrier () {
 
 void ConverseExit(void) {
 
+  if (quietModeRequested) quietMode = 1;
+
   while (MSGQLEN() > 0 || ORECVS() > 0) {
     AdvanceCommunications();
   }
@@ -995,7 +1004,7 @@ void ConverseExit(void) {
   ConverseCommonExit();
 
   if (CmiMyPe() == 0) {
-    printf("End of program\n");
+    CmiPrintf("End of program\n");
   }
 
   int rank0 = 0;

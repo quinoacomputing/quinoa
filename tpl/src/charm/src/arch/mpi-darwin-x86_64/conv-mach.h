@@ -27,14 +27,11 @@
 #define CMK_MEMORY_PAGESIZE                                4096
 #define CMK_MEMORY_PROTECTABLE                             0
 
-#define CMK_NODE_QUEUE_AVAILABLE                           0
 
-#undef CMK_RSH_IS_A_COMMAND                              
-#define CMK_RSH_IS_A_COMMAND                               1
-#undef CMK_RSH_NOT_NEEDED                               
-#define CMK_RSH_NOT_NEEDED                                 0
-#undef CMK_RSH_USE_REMSH                               
-#define CMK_RSH_USE_REMSH                                  0
+#undef CMK_SSH_IS_A_COMMAND
+#define CMK_SSH_IS_A_COMMAND                               1
+#undef CMK_SSH_NOT_NEEDED
+#define CMK_SSH_NOT_NEEDED                                 0
 
 #define CMK_SHARED_VARS_UNAVAILABLE                        1
 #define CMK_SHARED_VARS_UNIPROCESSOR                       0
@@ -74,10 +71,6 @@
 #undef CMK_USE_POLL
 #define CMK_USE_POLL                                       0
 #define CMK_USE_KQUEUE                                     1
-#define PXSHM_OSSPINLOCK                                   1
-#define PXSHM_LOCK                                         0
-#define PXSHM_FENCE                                        0
-
 
 #endif
 

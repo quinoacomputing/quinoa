@@ -1,25 +1,52 @@
-%expect 6
+%expect 7
 %{
 #include <iostream>
 #include <string>
 #include <string.h>
 #include "xi-symbol.h"
+#include "sdag/constructs/Constructs.h"
 #include "EToken.h"
+#include "xi-Chare.h"
+
+// Has to be a macro since YYABORT can only be used within rule actions.
+#define ERROR(...) \
+  if (xi::num_errors++ == xi::MAX_NUM_ERRORS) { \
+    YYABORT;                                    \
+  } else {                                      \
+    xi::pretty_msg("error", __VA_ARGS__);       \
+  }
+
+#define WARNING(...) \
+  if (enable_warnings) {                    \
+    xi::pretty_msg("warning", __VA_ARGS__); \
+  }
+
 using namespace xi;
 extern int yylex (void) ;
 extern unsigned char in_comment;
-void yyerror(const char *);
 extern unsigned int lineno;
 extern int in_bracket,in_braces,in_int_expr;
 extern std::list<Entry *> connectEntries;
 AstChildren<Module> *modlist;
+
+void yyerror(const char *);
+
 namespace xi {
+
+const int MAX_NUM_ERRORS = 10;
+int num_errors = 0;
+
+bool enable_warnings = true;
+
 extern int macroDefined(const char *str, int istrue);
 extern const char *python_doc;
+extern char *fname;
 void splitScopedName(const char* name, const char** scope, const char** basename);
 void ReservedWord(int token);
 }
 %}
+
+%locations
 
 %union {
   AstChildren<Module> *modlist;
@@ -53,9 +80,14 @@ void ReservedWord(int token);
   IncludeFile *includeFile;
   const char *strval;
   int intval;
-  Chare::attrib_t cattr;
+  unsigned int cattr; // actually Chare::attrib_t, but referring to that creates nasty #include issues
   SdagConstruct *sc;
+  IntExprConstruct *intexpr;
   WhenConstruct *when;
+  SListConstruct *slist;
+  CaseListConstruct *clist;
+  OListConstruct *olist;
+  SdagEntryConstruct *sentry;
   XStr* xstrptr;
   AccelBlock* accelBlock;
 }
@@ -118,7 +150,7 @@ void ReservedWord(int token);
 %type <cattr>		ArrayAttribs ArrayAttribList ArrayAttrib
 %type <tparam>		TParam
 %type <tparlist>	TParamList TParamEList OptTParams
-%type <type>		BaseType Type SimpleType OptTypeInit EReturn
+%type <type>		BaseDataType BaseType RestrictedType Type SimpleType OptTypeInit EReturn
 %type <type>		BuiltinType
 %type <ftype>		FuncType
 %type <ntype>		NamedType QualNamedType ArrayIndexType
@@ -146,7 +178,12 @@ void ReservedWord(int token);
 %type <mv>		Var
 %type <mvlist>		VarList
 %type <intval>		ParamBraceStart ParamBraceEnd SParamBracketStart SParamBracketEnd StartIntExpr EndIntExpr
-%type <sc>		Slist SingleConstruct Olist OptSdagCode HasElse CaseList
+%type <sc>		SingleConstruct HasElse
+%type <intexpr>		IntExpr
+%type <slist>		Slist
+%type <clist>		CaseList
+%type <olist>		Olist
+%type <sentry>		OptSdagCode
 %type <when>            WhenConstruct NonWhenConstruct
 %type <intval>		PythonOptions
 
@@ -247,7 +284,6 @@ QualName	: IDENT
 		  $$ = tmp;
 		}
 		;
-
 Module		: MODULE Name ConstructEList
 		{ 
 		    $$ = new Module(lineno, $2, $3); 
@@ -281,7 +317,7 @@ ConstructSemi   : USING NAMESPACE QualName
                 { $2->setExtern($1); $$ = $2; }
                 | EXTERN ENTRY EReturn QualNamedType Name OptTParams EParameters
                 {
-                  Entry *e = new Entry(lineno, 0, $3, $5, $7, 0, 0, 0);
+                  Entry *e = new Entry(lineno, 0, $3, $5, $7, 0, 0, 0, @1.first_line, @$.last_line);
                   int isExtern = 1;
                   e->setExtern(isExtern);
                   e->targs = $6;
@@ -298,7 +334,11 @@ Construct	: OptExtern '{' ConstructList '}' OptSemiColon
         | ConstructSemi ';'
         { $$ = $1; }
         | ConstructSemi UnexpectedToken
-        { yyerror("The preceding construct must be semicolon terminated"); YYABORT; }
+        {
+          ERROR("preceding construct must be semicolon terminated",
+                @$.first_column, @$.last_column);
+          YYABORT;
+        }
         | OptExtern Module
         { $2->setExtern($1); $$ = $2; }
         | OptExtern Chare
@@ -318,7 +358,11 @@ Construct	: OptExtern '{' ConstructList '}' OptSemiColon
         | AccelBlock
         { $$ = $1; }
         | error
-        { printf("Invalid construct\n"); YYABORT; }
+        {
+          ERROR("invalid construct",
+                @$.first_column, @$.last_column);
+          YYABORT;
+        }
         ;
 
 TParam		: Type
@@ -415,11 +459,28 @@ BaseType	: SimpleType
 		{ $$ = $1; }
 		| FuncType
 		{ $$ = $1; }
-		//{ $$ = $1; }
 		| CONST BaseType 
 		{ $$ = new ConstType($2); }
 		| BaseType CONST
 		{ $$ = new ConstType($1); }
+		;
+
+BaseDataType	: SimpleType
+		{ $$ = $1; }
+		| OnePtrType
+		{ $$ = $1; }
+		| PtrType
+		{ $$ = $1; }
+		| CONST BaseDataType
+		{ $$ = new ConstType($2); }
+		| BaseDataType CONST
+		{ $$ = new ConstType($1); }
+		;
+
+RestrictedType : BaseDataType '&'
+		{ $$ = new ReferenceType($1); }
+		| BaseDataType
+		{ $$ = $1; }
 		;
 
 Type		: BaseType '&'
@@ -446,8 +507,8 @@ Readonly	: READONLY Type QualName DimList
 		{ $$ = new Readonly(lineno, $2, $3, $4); }
 		;
 
-ReadonlyMsg	: READONLY MESSAGE SimpleType '*'  Name
-		{ $$ = new Readonly(lineno, $3, $5, 0, 1); }
+ReadonlyMsg	: READONLY MESSAGE SimpleType '*'  QualName DimList
+		{ $$ = new Readonly(lineno, $3, $5, $6, 1); }
 		;
 
 OptVoid		: /*Empty*/
@@ -624,6 +685,13 @@ OptNameInit	: /* Empty */
 		{ $$ = $2; }
 		| '=' LITERAL
 		{ $$ = $2; }
+		| '=' QualNamedType
+		{
+		  XStr typeStr;
+		  $2->print(typeStr);
+		  char *tmp = strdup(typeStr.get_string());
+		  $$ = tmp;
+		}
 		;
 
 TVar		: CLASS Name OptTypeInit
@@ -699,13 +767,20 @@ InitNode	: INITNODE OptVoid QualName
 					    ($5)->to_string() + '>').c_str()),
 				    1);
 		}
-                | INITCALL OptVoid QualName
-		{ printf("Warning: deprecated use of initcall. Use initnode or initproc instead.\n"); 
-		  $$ = new InitCall(lineno, $3, 1); }
+		| INITCALL OptVoid QualName
+		{
+		  WARNING("deprecated use of initcall. Use initnode or initproc instead",
+		          @1.first_column, @1.last_column, @1.first_line);
+		  $$ = new InitCall(lineno, $3, 1);
+		}
 		| INITCALL OptVoid QualName '(' OptVoid ')'
-		{ printf("Warning: deprecated use of initcall. Use initnode or initproc instead.\n");
-		  $$ = new InitCall(lineno, $3, 1); }
+		{
+		  WARNING("deprecated use of initcall. Use initnode or initproc instead",
+		          @1.first_column, @1.last_column, @1.first_line);
+		  $$ = new InitCall(lineno, $3, 1);
+		}
 		;
+
 
 InitProc	: INITPROC OptVoid QualName
 		{ $$ = new InitCall(lineno, $3, 0); }
@@ -734,12 +809,9 @@ IncludeFile    : LITERAL
 		{ $$ = new IncludeFile(lineno,$1); } 
 		;
 
-Member          : MemberBody ';'
-                { $$ = $1; }
-                // Error constructions
-                | MemberBody UnexpectedToken
-                { yyerror("The preceding entry method declaration must be semicolon-terminated."); YYABORT; }
-                ;
+Member : MemberBody
+		{ $$ = $1; }
+		;
 
 MemberBody	: Entry
 		{ $$ = $1; }
@@ -748,8 +820,14 @@ MemberBody	: Entry
                   $2->tspec = $1;
                   $$ = $2;
                 }
-		| NonEntryMember
+		| NonEntryMember ';'
 		{ $$ = $1; }
+        | error
+        {
+          ERROR("invalid SDAG member",
+                @$.first_column, @$.last_column);
+          YYABORT;
+        }
 		;
 
 UnexpectedToken : ENTRY
@@ -777,7 +855,7 @@ UnexpectedToken : ENTRY
 
 Entry		: ENTRY EAttribs EReturn Name EParameters OptStackSize OptSdagCode
 		{ 
-                  $$ = new Entry(lineno, $2, $3, $4, $5, $6, $7); 
+                  $$ = new Entry(lineno, $2, $3, $4, $5, $6, $7, (const char *) NULL, @1.first_line, @$.last_line);
 		  if ($7 != 0) { 
 		    $7->con1 = new SdagConstruct(SIDENT, $4);
                     $7->entry = $$;
@@ -787,7 +865,7 @@ Entry		: ENTRY EAttribs EReturn Name EParameters OptStackSize OptSdagCode
 		}
 		| ENTRY EAttribs Name EParameters OptSdagCode /*Constructor*/
 		{ 
-                  Entry *e = new Entry(lineno, $2, 0, $3, $4,  0, $5);
+                  Entry *e = new Entry(lineno, $2, 0, $3, $4,  0, $5, (const char *) NULL, @1.first_line, @$.last_line);
                   if ($5 != 0) {
 		    $5->con1 = new SdagConstruct(SIDENT, $3);
                     $5->entry = e;
@@ -795,12 +873,14 @@ Entry		: ENTRY EAttribs EReturn Name EParameters OptStackSize OptSdagCode
                     $5->param = new ParamList($4);
                   }
 		  if (e->param && e->param->isCkMigMsgPtr()) {
-		    yyerror("Charm++ takes a CkMigrateMsg chare constructor for granted, but continuing anyway");
+		    WARNING("CkMigrateMsg chare constructor is taken for granted",
+		            @$.first_column, @$.last_column);
 		    $$ = NULL;
-		  } else
+		  } else {
 		    $$ = e;
+		  }
 		}
-		| ENTRY '[' ACCEL ']' VOID Name EParameters AccelEParameters ParamBraceStart CCode ParamBraceEnd Name /* DMK : Accelerated Entry Method */
+		| ENTRY '[' ACCEL ']' VOID Name EParameters AccelEParameters ParamBraceStart CCode ParamBraceEnd Name ';' /* DMK : Accelerated Entry Method */
                 {
                   int attribs = SACCEL;
                   const char* name = $6;
@@ -822,9 +902,7 @@ AccelBlock      : ACCELBLOCK ParamBraceStart CCode ParamBraceEnd ';'
                 { $$ = new AccelBlock(lineno, NULL); }
                 ;
 
-EReturn		: VOID
-		{ $$ = new BuiltinType("void"); }
-		| OnePtrType
+EReturn	: RestrictedType
 		{ $$ = $1; }
 		;
 
@@ -832,8 +910,11 @@ EAttribs	: /* Empty */
 		{ $$ = 0; }
 		| '[' EAttribList ']'
 		{ $$ = $2; }
-                | error
-                { printf("Invalid entry method attribute list\n"); YYABORT; }
+		| error
+		{ ERROR("invalid entry method attribute list",
+		        @$.first_column, @$.last_column);
+		  YYABORT;
+		}
 		;
 
 EAttribList	: EAttrib
@@ -875,7 +956,12 @@ EAttrib		: THREADED
                 | REDUCTIONTARGET
                 { $$ = SREDUCE; }
 		| error
-		{ printf("Invalid entry method attribute: %s\n", yylval); YYABORT; }
+		{
+		  ERROR("invalid entry method attribute",
+		        @1.first_column, @1.last_column);
+		  yyclearin;
+		  yyerrok;
+		}
 		;
 
 DefaultParameter: LITERAL
@@ -1050,32 +1136,36 @@ OptStackSize	: /* Empty */
 		{ $$ = new Value($3); }
 		;
 
-OptSdagCode	: /* Empty */
+OptSdagCode	: ';' /* Empty */
 		{ $$ = 0; }
 		| SingleConstruct
-		{ $$ = new SdagConstruct(SSDAGENTRY, $1); }
-		| '{' Slist '}'
-		{ $$ = new SdagConstruct(SSDAGENTRY, $2); }
+		{ $$ = new SdagEntryConstruct($1); }
+		| '{' Slist '}' OptSemiColon
+		{ $$ = new SdagEntryConstruct($2); }
 		;
 
 Slist		: SingleConstruct
-		{ $$ = new SdagConstruct(SSLIST, $1); }
+		{ $$ = new SListConstruct($1); }
 		| SingleConstruct Slist
-		{ $$ = new SdagConstruct(SSLIST, $1, $2);  }
+		{ $$ = new SListConstruct($1, $2);  }
 		;
 
 Olist		: SingleConstruct
-		{ $$ = new SdagConstruct(SOLIST, $1); }
+		{ $$ = new OListConstruct($1); }
 		| SingleConstruct Slist
-		{ $$ = new SdagConstruct(SOLIST, $1, $2); } 
+		{ $$ = new OListConstruct($1, $2); }
 		;
 
-CaseList        : WhenConstruct
-                { $$ = new SdagConstruct(SCASELIST, $1); }
+CaseList	: WhenConstruct
+		{ $$ = new CaseListConstruct($1); }
 		| WhenConstruct CaseList
-		{ $$ = new SdagConstruct(SCASELIST, $1, $2); }
-                | NonWhenConstruct
-                { yyerror("Case blocks in SDAG can only contain when clauses."); YYABORT; }
+		{ $$ = new CaseListConstruct($1, $2); }
+		| NonWhenConstruct
+		{
+		  ERROR("case blocks can only contain when clauses",
+		        @1.first_column, @1.last_column);
+		  $$ = 0;
+		}
 		;
 
 OptTraceName	: LITERAL
@@ -1090,64 +1180,82 @@ WhenConstruct   : WHEN SEntryList '{' '}'
 		{ $$ = new WhenConstruct($2, $3); }
 		| WHEN SEntryList '{' Slist '}'
 		{ $$ = new WhenConstruct($2, $4); }
-                ;
+		;
 
-NonWhenConstruct : ATOMIC
-                 { $$ = 0; }
-                 | OVERLAP
-                 { $$ = 0; }
-                 | FOR
-                 { $$ = 0; }
-                 | FORALL
-                 { $$ = 0; }
-                 | IF
-                 { $$ = 0; }
-                 | WHILE
-                 { $$ = 0; }
-                 ;
+NonWhenConstruct : ATOMIC OptTraceName ParamBraceStart CCode ParamBraceEnd
+		{ $$ = 0; }
+		| OVERLAP '{' Olist '}'
+		{ $$ = 0; }
+		| CASE '{' CaseList '}'
+		{ $$ = 0; }
+		| FOR StartIntExpr CCode ';' CCode ';' CCode  EndIntExpr '{' Slist '}'
+		{ $$ = 0; }
+		| FOR StartIntExpr CCode ';' CCode ';' CCode  EndIntExpr SingleConstruct
+		{ $$ = 0; }
+		| FORALL '[' IDENT ']' StartIntExpr CCode ':' CCode ',' CCode  EndIntExpr SingleConstruct
+		{ $$ = 0; }
+		| FORALL '[' IDENT ']' StartIntExpr CCode ':' CCode ',' CCode  EndIntExpr '{' Slist '}' 
+		{ $$ = 0; }
+		| IF StartIntExpr CCode EndIntExpr SingleConstruct HasElse
+		{ $$ = 0; }
+		| IF StartIntExpr CCode EndIntExpr '{' Slist '}' HasElse
+		{ $$ = 0; }
+		| WHILE StartIntExpr CCode EndIntExpr SingleConstruct 
+		{ $$ = 0; }
+		| WHILE StartIntExpr CCode EndIntExpr '{' Slist '}' 
+		{ $$ = 0; }
+		| ParamBraceStart CCode ParamBraceEnd
+		{ $$ = 0; }
+		;
 
 SingleConstruct : ATOMIC OptTraceName ParamBraceStart CCode ParamBraceEnd
-                { $$ = new AtomicConstruct($4, $2); }
+		{ $$ = new AtomicConstruct($4, $2, @3.first_line); }
 		| OVERLAP '{' Olist '}'
-		{ $$ = new SdagConstruct(SOVERLAP,0, 0,0,0,0,$3, 0); }	
-                | WhenConstruct
-                { $$ = $1; }
+		{ $$ = new OverlapConstruct($3); }	
+		| WhenConstruct
+		{ $$ = $1; }
 		| CASE '{' CaseList '}'
-		{ $$ = new SdagConstruct(SCASE, 0, 0, 0, 0, 0, $3, 0); }
-		| FOR StartIntExpr CCode ';' CCode ';' CCode  EndIntExpr '{' Slist '}'
-		{ $$ = new SdagConstruct(SFOR, 0, new SdagConstruct(SINT_EXPR, $3), new SdagConstruct(SINT_EXPR, $5),
-		             new SdagConstruct(SINT_EXPR, $7), 0, $10, 0); }
-		| FOR StartIntExpr CCode ';' CCode ';' CCode  EndIntExpr SingleConstruct
-		{ $$ = new SdagConstruct(SFOR, 0, new SdagConstruct(SINT_EXPR, $3), new SdagConstruct(SINT_EXPR, $5), 
-		         new SdagConstruct(SINT_EXPR, $7), 0, $9, 0); }
-		| FORALL '[' IDENT ']' StartIntExpr CCode ':' CCode ',' CCode  EndIntExpr SingleConstruct
-		{ $$ = new SdagConstruct(SFORALL, 0, new SdagConstruct(SIDENT, $3), new SdagConstruct(SINT_EXPR, $6), 
-		             new SdagConstruct(SINT_EXPR, $8), new SdagConstruct(SINT_EXPR, $10), $12, 0); }
-		| FORALL '[' IDENT ']' StartIntExpr CCode ':' CCode ',' CCode  EndIntExpr '{' Slist '}' 
-		{ $$ = new SdagConstruct(SFORALL, 0, new SdagConstruct(SIDENT, $3), new SdagConstruct(SINT_EXPR, $6), 
-		                 new SdagConstruct(SINT_EXPR, $8), new SdagConstruct(SINT_EXPR, $10), $13, 0); }
-		| IF StartIntExpr CCode EndIntExpr SingleConstruct HasElse
-		{ $$ = new SdagConstruct(SIF, 0, new SdagConstruct(SINT_EXPR, $3), $6,0,0,$5,0); }
-		| IF StartIntExpr CCode EndIntExpr '{' Slist '}' HasElse
-		{ $$ = new SdagConstruct(SIF, 0, new SdagConstruct(SINT_EXPR, $3), $8,0,0,$6,0); }
-		| WHILE StartIntExpr CCode EndIntExpr SingleConstruct 
-		{ $$ = new SdagConstruct(SWHILE, 0, new SdagConstruct(SINT_EXPR, $3), 0,0,0,$5,0); }
-		| WHILE StartIntExpr CCode EndIntExpr '{' Slist '}' 
-		{ $$ = new SdagConstruct(SWHILE, 0, new SdagConstruct(SINT_EXPR, $3), 0,0,0,$6,0); }
+		{ $$ = new CaseConstruct($3); }
+		| FOR StartIntExpr IntExpr ';' IntExpr ';' IntExpr  EndIntExpr '{' Slist '}'
+		{ $$ = new ForConstruct($3, $5, $7, $10); }
+		| FOR StartIntExpr IntExpr ';' IntExpr ';' IntExpr  EndIntExpr SingleConstruct
+		{ $$ = new ForConstruct($3, $5, $7, $9); }
+		| FORALL '[' IDENT ']' StartIntExpr IntExpr ':' IntExpr ',' IntExpr  EndIntExpr SingleConstruct
+		{ $$ = new ForallConstruct(new SdagConstruct(SIDENT, $3), $6,
+		             $8, $10, $12); }
+		| FORALL '[' IDENT ']' StartIntExpr IntExpr ':' IntExpr ',' IntExpr  EndIntExpr '{' Slist '}'
+		{ $$ = new ForallConstruct(new SdagConstruct(SIDENT, $3), $6,
+		             $8, $10, $13); }
+		| IF StartIntExpr IntExpr EndIntExpr SingleConstruct HasElse
+		{ $$ = new IfConstruct($3, $5, $6); }
+		| IF StartIntExpr IntExpr EndIntExpr '{' Slist '}' HasElse
+		{ $$ = new IfConstruct($3, $6, $8); }
+		| WHILE StartIntExpr IntExpr EndIntExpr SingleConstruct
+		{ $$ = new WhileConstruct($3, $5); }
+		| WHILE StartIntExpr IntExpr EndIntExpr '{' Slist '}'
+		{ $$ = new WhileConstruct($3, $6); }
 		| ParamBraceStart CCode ParamBraceEnd
-		{ $$ = new AtomicConstruct($2, NULL); }
-                | error
-                { printf("Unknown SDAG construct or malformed entry method definition.\n"
-                         "You may have forgotten to terminate an entry method definition with a"
-                         " semicolon or forgotten to mark a block of sequential SDAG code as 'atomic'\n"); YYABORT; }
-                ;
+		{ $$ = new AtomicConstruct($2, NULL, @$.first_line); }
+		| error
+		{
+		  ERROR("unknown SDAG construct or malformed entry method declaration.\n"
+		        "You may have forgotten to terminate a previous entry method declaration with a"
+		        " semicolon or forgotten to mark a block of sequential SDAG code as 'serial'",
+		        @$.first_column, @$.last_column);
+		  YYABORT;
+		}
+		;
 
 HasElse		: /* Empty */
 		{ $$ = 0; }
 		| ELSE SingleConstruct
-		{ $$ = new SdagConstruct(SELSE, 0,0,0,0,0, $2,0); }
+		{ $$ = new ElseConstruct($2); }
 		| ELSE '{' Slist '}'
-		{ $$ = new SdagConstruct(SELSE, 0,0,0,0,0, $3,0); }
+		{ $$ = new ElseConstruct($3); }
+		;
+
+IntExpr	: CCode
+		{ $$ = new IntExprConstruct($1); }
 		;
 
 EndIntExpr	: ')'
@@ -1159,9 +1267,13 @@ StartIntExpr	: '('
 		;
 
 SEntry		: IDENT EParameters
-		{ $$ = new Entry(lineno, 0, 0, $1, $2, 0, 0, 0); }
+		{
+		  $$ = new Entry(lineno, 0, 0, $1, $2, 0, 0, 0, @$.first_line, @$.last_line);
+		}
 		| IDENT SParamBracketStart CCode SParamBracketEnd EParameters 
-		{ $$ = new Entry(lineno, 0, 0, $1, $5, 0, 0, $3); }
+		{
+		  $$ = new Entry(lineno, 0, 0, $1, $5, 0, 0, $3, @$.first_line, @$.last_line);
+		}
 		;
 
 SEntryList	: SEntry 
@@ -1186,8 +1298,5 @@ HashIFDefComment: HASHIFDEF Name
 		;
 
 %%
-void yyerror(const char *mesg)
-{
-    std::cerr << cur_file<<":"<<lineno<<": Charmxi syntax error> "
-	      << mesg << std::endl;
-}
+
+void yyerror(const char *msg) { }

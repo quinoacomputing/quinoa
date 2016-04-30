@@ -159,10 +159,6 @@ Jacobi::Jacobi() {
        // CkPrintf("neighbor = %d \n", neighbors);
     }
 void Jacobi::pup(PUP::er &p){
-		
-		// calling parent's pup
-		CBase_Jacobi::pup(p);
-		__sdag_pup(p);
 		// pupping properties of this class
 		p | iterations;
 		p | imsg;
@@ -634,7 +630,11 @@ class JacobiMap : public CkArrayMap {
 class TraceControl : public Group 
 {
 public:
-    TraceControl() { omp_set_num_threads(threadNums);}
+    TraceControl() {
+#ifdef JACOBI_OPENMP
+      omp_set_num_threads(threadNums);
+#endif
+    }
 
     void startTrace() { traceBegin(); }
 

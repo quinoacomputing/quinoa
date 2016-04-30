@@ -41,7 +41,7 @@ OVERRIDE_LDXX=""
 OPTS=""
 #Specific options
 #charm internal flag, only pass to c and cxx, not f90
-OPTS_CPP_INTERNAL="-D__CHARMC__=1 "
+OPTS_CPP_INTERNAL="-D__CHARMC__=1"
 OPTS_CPP=
 OPTS_LDRO="" 
 OPTS_CC=""
@@ -91,6 +91,7 @@ BUILD_SHARE="0"
 SWAPGLOBALS="0"
 TLSGLOBALS="0"
 ROSE_OMP_TLS_GLOBALS="no"
+NOABORT=""
 
 TAU_MAKEFILE=Make.tau
 TAU_TRACE_MPI=1
@@ -103,6 +104,7 @@ MPI_INTEROPERATE=""
 NO_MAIN_MODULE=""
 NO_MAIN=""
 CUSTOM_PARTITION=""
+PREPROCESS_CI="yes"
 
 ####################################################################
 #
@@ -120,24 +122,25 @@ printUsage() {
     echo "  flags:"
     echo "        -o <target> -g -O"
     echo "        -D<define> -I<include path> -L<lib path> -l<library> -s"
-    echo "        -machine <mach> -seq -host -language <lang> "
+    echo "        -machine <mach> -seq -host -language <lang> -pg <opt>"
     echo "        -balance <mode> -tracemode <mode> -memory <mode>"
-    echo "        -modules <comma-separated list of C++ modules>"
-    echo "        -verbose -save -purify -cp <dest> -gen-cpm <package>"
-    echo "        -use-reliable-cc -use-fastest-cc"
-    echo "        -cc <new cc> -c++ <new CC>  -ld <new ld> -ld++ <new LD>"
+    echo "        -modules <comma-separated list of C++ modules> -thread"
+    echo "        -debug-script -count-tokens -default-to-aout -E -S -M"
+    echo "        -verbose -save -purify -cp <dest> -cpmod -gen-cpm <pkg>"
+    echo "        -swapglobals -copyglobals -tlsglobals -roseomptlsglobals"
+    echo "        -use-reliable-cc -use-fastest-cc -use-new-std"
+    echo "        -cc <new cc> -c++ <new CC> -ld <new ld> -ld++ <new LD>"
     echo "        -cpp-option <opt> -ldro-option <opt> -cc-option <opt>"
     echo "        -c++-option <opt> -ld-option <opt> -ld++-option <opt>"
-    echo "        -fmoddir <f90mod path>"
-    echo "        -pg <opt> -build-shared -charm-shared -no-trace-mpi"
-    echo "        -mpi -nomain-module -nomain -custom-part"
+    echo "        -f90 <new f90> -f90-option <opt> -fmoddir <f90mod path>"
+    echo "        -flibs -rpath <path> -custom-part -touch-on-failure"
+    echo "        -mpi -openmp -no-trace-mpi -build-shared -charm-shared"
+    echo "        -no-charmrun -no-preprocess-ci -nomain-module -nomain"
+    echo "        -nof90main -f90main"
     echo
-    echo "  Cell specific flags:"
-    echo "        -spu-cpp -spu-lib <libname>"
-    echo
-    echo "  Charmc compiles C, C++, f77, f90, Converse, Converse++, Charm, "
+    echo "  Charmc compiles C, C++, f77, f90, AMPI, Converse, Converse++, Charm, "
     echo "and Charm++ programs.  The flags generally match those of cc or f77."
-    echo "Version 5.0, Parallel Programming Lab, UIUC, 1999"
+    echo "Parallel Programming Lab, UIUC, 2016."
     echo $*
     exit 1
 }
@@ -193,7 +196,7 @@ Do() {
 	DoNoErrCheck "$@"
 	Do_res=$?
 # The UNIX result code better be zero, or we die
-	[ $Do_res -eq 0 ] || Abort "Command $@ returned error code $Do_res"
+	[ $Do_res -eq 0 -o -n "$NOABORT" ] || Abort "Command $@ returned error code $Do_res"
 }
 
 # This procedure removes the extention (the ".c" in "./main.c") from
@@ -615,7 +618,11 @@ do
         "-preprocess")
 # Run preprocessor as an extra step, continue after preprocessing
 		PREPROCESS="yes"
-                ;;
+		;;
+	"-no-preprocess-ci")
+# Turn off the preprocessor for ci files
+		PREPROCESS_CI="no"
+		;;
 	"-P"|"-S")
 # Run preprocessor/assembler only
 		SKIPLINK="yes"
@@ -789,6 +796,10 @@ do
 		USE_OPENMP="yes"
 		;;
 
+	-touch-on-failure)
+		NOABORT="yes"
+		;;
+
 	-*|+*)
 #		Warning "passing unrecognized option $arg to all compilers and linkers"
 		OPTS="$OPTS  $arg"
@@ -840,12 +851,6 @@ if [ -n "$CHARMDEBUG" -a -z "$SEQUENTIAL" -a -z "$NATIVE" ]; then
 		POST_LIBRARIES=`AddList $POST_LIBRARIES -lpython${CMK_BUILD_PYTHON}`
    	fi
     	OPTS_CPP="$OPTS_CPP -O0 -g"
-fi
-
-if [ -z "$NATIVE" -a -n "$UGNI_CFLAGS" ]
-then
-    linkopt=`env | grep  "HUGETLB[0-9]*[MKG]_POST_LINK_OPTS" 2> /dev/null`
-    test -z "$linkopt" && POST_LIBRARIES=`AddList $POST_LIBRARIES $CHARMLIB/cray_tlbhack.o`
 fi
 
 PROCESSED_MODULES=""
@@ -1331,7 +1336,7 @@ do
 	*.ci)
                 XIOPTS=$CMK_XIOPTS
                 test "$LANGUAGE" = "f90charm" && XIOPTS="$XIOPTS -f90"
-                if [ -n "$PREPROCESS" ]
+                if [ "$PREPROCESS_CI" = "yes" ]
                 then
 		  Do $CMK_CPP_CHARM $OPTS_CPP $FILE | Do $CHARMBIN/charmxi $XIOPTS -orig-file $FILE
                 else
@@ -1341,6 +1346,10 @@ do
 	*.c|*.s)
 		Do $CMK_CC -I$CHARMINC $CMK_SYSINC $OPTS_CPP_INTERNAL $OPTS_CPP $OPTS_CC -c $FILE $DESTO
 		NU_OBJ=$BASEO
+		if [ "$Do_res" -ne 0 ]
+		then
+		    touch $BASEO
+		fi
 		;;
 	bglmachine.C)
 		Do $CMK_GCXX -I$CHARMINC $CMK_SYSINC $OPTS_CPP_INTERNAL $OPTS_CPP $OPTS_CXX -c $FILE $DESTO
@@ -1349,17 +1358,29 @@ do
 	*.C|*.cc|*.cxx|*.cpp|*.c++|*.cu)
 		Do $CMK_CXX -I$CHARMINC $CMK_SYSINC $OPTS_CPP_INTERNAL $OPTS_CPP $OPTS_CXX -c $FILE $DESTO
 		NU_OBJ=$BASEO
+		if [ "$Do_res" -ne 0 ]
+		then
+		    touch $BASEO
+		fi
 		;;
 	*.f|*.F)
 		test -z "$CMK_CF90_FIXED" && Abort "No F90 compiler (CMK_CF90_FIXED) defined"
 		Do $CMK_CF90_FIXED -I$CHARMINC $CMK_SYSINC $OPTS_CPP $OPTS_F90 -c $FILE $DESTO
 		NU_OBJ=$BASEO
+		if [ "$Do_res" -ne 0 ]
+		then
+		    touch $BASEO
+		fi
 		;;
 	*.f90|*.F90)
 		test -z "$CMK_CF90" && Abort "No F90 compiler (CMK_CF90) defined"
 		test -z "$PREPROCESS" && OPTS_F90="$OPTS_F90 -c"
 		Do $CMK_CF90 -I$CHARMINC $CMK_SYSINC $OPTS_CPP $OPTS_F90 $FILE $DESTO
 		NU_OBJ=$BASEO
+		if [ "$Do_res" -ne 0 ]
+		then
+		    touch $BASEO
+		fi
 		;;
 	*.fc|*.FC)
 		Abort "I'm not yet smart enough to compile $FILE"
@@ -1420,15 +1441,20 @@ MakeSO() {
 	fi
 	DoNoErrCheck $soCmd
 	Do_res=$?
-	if [ $Do_res -ne 0 ] 
+	if [ $Do_res -ne 0 ]
 	then
-	echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-	echo "!!  Failed to compile Charm++ shared library. You can disable shared  !!"
-	echo "!!  lib compilation by providing --no-build-shared build option like: !!"
-	echo "!!     ./build charm++ net-linux --no-build-shared -O                 !!"
-	echo "!!  or reexecute this charmc command with --no-build-shared compile option        !!"
-	echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-	Abort "Command $soCmd returned error code $Do_res"
+	    if [ -n $NOABORT ]
+	    then
+		touch $OBJECT
+	    else
+		echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+		echo "!!  Failed to compile Charm++ shared library. You can disable shared  !!"
+		echo "!!  lib compilation by providing --no-build-shared build option like: !!"
+		echo "!!     ./build charm++ net-linux --no-build-shared -O                 !!"
+		echo "!!  or reexecute this charmc command with --no-build-shared compile option        !!"
+		echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+		Abort "Command $soCmd returned error code $Do_res"
+	    fi
 	fi
 	Copyobj
 }
@@ -1534,13 +1560,13 @@ esac
 if [ $CMK_CELL -eq 1 ]
 then
 
-  if [ "$LANGUAGE" == "converse++" ]
+  if [ "$LANGUAGE" = "converse++" ]
   then
     # Include a "do nothing" register_accel_spe_funcs() function
     POST_LIBRARIES="$POST_LIBRARIES -lnoAccelStub"
   fi
 
-  if [ "$LANGUAGE" == "charm++" ]
+  if [ "$LANGUAGE" = "charm++" ]
   then
 
     if [ $SPU_USE_CPP -eq 1 ]
@@ -1570,26 +1596,26 @@ fi
 
 if [ "$SWAPGLOBALS" = "1" ]
 then
-	swapo="$CHARMLIB/libglobal-swap.o"
+	swapo="$CHARMLIB/libglobal-swap.a"
 	if [ ! -r "$swapo" -o ! -s "$swapo" ]
 	then
 		echo "Global-swapping library $swapo missing--"
 		echo "  Is -swapglobals supported on this machine?"
 		exit 1
 	else
-		OBJECTFILES="$swapo $OBJECTFILES"
+		MIDDLE_LIBS="-lglobal-swap $MIDDLE_LIBS"
 	fi
 fi
 if [ "$SWAPGLOBALS" = "2" ]
 then
-	swapo="$CHARMLIB/libglobal-copy.o"
+	swapo="$CHARMLIB/libglobal-copy.a"
 	if [ ! -r "$swapo" -o ! -s "$swapo" ]
 	then
 		echo "Global-copying library $swapo missing--"
 		echo "  Is -copyglobals supported on this machine?"
 		exit 1
 	else
-		OBJECTFILES="$swapo $OBJECTFILES $CHARMLIB/loadsym.o"
+		MIDDLE_LIBS="-lglobal-copy $MIDDLE_LIBS"
 	fi
 fi
 
@@ -1608,19 +1634,12 @@ then
 	fi
 	
 	POST_LIBRARIES="$POST_LIBRARIES -lconv-utilf $CMK_F90LIBS"
-        if [ -z "$SEQUENTIAL" -a ! -z "$CMK_F90OBJS" ] 
-        then
-          for f90obj in $CMK_F90OBJS
-          do
-            OBJECTFILES="$OBJECTFILES $CHARMLIB/$f90obj"
-          done
-        fi
 fi
 
 # dummy main module
 if [ "$MPI_INTEROPERATE" != "" -a "$NO_MAIN_MODULE" = "" ]
 then
-	OBJECTFILES="$CHARMLIB/mpi-mainmodule.o $OBJECTFILES"
+	POST_LIBRARIES="-lmpi-mainmodule $POST_LIBRARIES"
 fi
 
 # check if we're linking a sequential object
@@ -1680,13 +1699,16 @@ then
 fi
 
 BAL_EXT=`getExtention $BALANCE`
-if [ -z "$BAL_EXT" ]
-then
-# Balance has no extention-- is a library reference
-    BAL_OBJ="$CHARMLIB/libldb-$BALANCE.o"
+if [ -z "$BAL_EXT" ]; then
+  # Balance has no extension-- is a library reference
+  if [ -f "${CHARMLIB}/libldb-$BALANCE.a" ]; then
+    BAL_OBJ="${CHARMLIB}/libldb-$BALANCE.a"
+  else
+    BAL_OBJ="${CHARMLIBSO}/libldb-$BALANCE.so"
+  fi
 else
-# Balance has some extention-- must be a .o or .a file
-    BAL_OBJ="$BALANCE"
+  # Balance has some extension-- must be a .o or .a file
+  BAL_OBJ="$BALANCE"
 fi
 
 Debug "Finished with BAL_OBJ=$BAL_OBJ, TRACEMODE=$TRACEMODE..."
@@ -1702,10 +1724,15 @@ then
 	fi
 fi
 
+BAL_OBJ="-lldb-$BALANCE -lconv-ldb"
 
 # Check for valid choice of MEMORY
 
-MEM_OBJ="$CHARMLIB/libmemory-$MEMORY.o"
+if [ -f "${CHARMLIB}/libmemory-${MEMORY}.a" ]; then
+  MEM_OBJ="${CHARMLIB}/libmemory-${MEMORY}.a"
+else
+  MEM_OBJ="${CHARMLIBSO}/libmemory-${MEMORY}.so"
+fi
 
 if [ ! -r $MEM_OBJ -o ! -s $MEM_OBJ ] 
 then
@@ -1713,10 +1740,12 @@ then
   Abort "charmc : No such memory mode $MEMORY"
 fi
 
+MEM_OBJ="-lmemory-${MEMORY}"
+
 # For memory wrapping around the OS allocator, need to add also the wrapper object
 case $MEMORY in
   os-*)
-  MEM_OBJ=$MEM_OBJ" $CHARMLIB/libmemory-os-wrapper.o"
+     MEM_OBJ=$MEM_OBJ" -lmemory-os-wrapper"
   ;;
 esac
 
@@ -1734,13 +1763,20 @@ then
     THREAD=${THREAD}-tls
   fi
 fi
-THREAD_OBJ="$CHARMLIB/libthreads-$THREAD.o"
+
+if [ -f "${CHARMLIB}/libthreads-${THREAD}.a" ]; then
+  THREAD_OBJ="${CHARMLIB}/libthreads-${THREAD}.a"
+else
+  THREAD_OBJ="${CHARMLIBSO}/libthreads-${THREAD}.so"
+fi
 
 if [ ! -r $THREAD_OBJ -o ! -s $THREAD_OBJ ] 
 then
   (cd $CHARMLIB ; list=`ls libthreads-* 2>/dev/null`; test -n "$list" && for i in $list; do [ -s $i ] && ls -l $i; done )
   Abort "charmc : No such thread mode $THREAD"
 fi
+
+THREAD_OBJ="-lthreads-${THREAD}"
 
 ################# Build the module initialization function ##################
 modInitName="moduleinit$$"
@@ -1770,9 +1806,6 @@ for trace in $TRACEMODE; do
     elif test $trace = "controlPoints"
     then
       echo "  extern void _registerTraceControlPoints();" >> $modInitSrc
-    elif test $trace = "autoPerf"
-    then
-      echo "  extern void _registerTraceAutoPerf();" >> $modInitSrc
     elif test $trace = "all"
     then
       echo "  extern void _registerTraceProjections();" >> $modInitSrc
@@ -1808,9 +1841,6 @@ for trace in $TRACEMODE; do
     elif test $trace = "controlPoints"
     then
       echo "  _registerTraceControlPoints();" >> $modInitSrc
-    elif test $trace = "autoPerf"
-    then
-      echo "  _registerTraceAutoPerf();" >> $modInitSrc
     elif test $trace = "all"
     then
       echo "  _registerTraceProjections();" >> $modInitSrc
@@ -1866,10 +1896,15 @@ then
 fi
 # done getting TAU variables
 
+if [ "$BUILD_SHARE" = "0" ]
+then
+       MIDDLE_LIBS="$MIDDLE_LIBS $MEM_OBJ $THREAD_OBJ"
+fi
+
 case "$LANGUAGE" in
 "f90charm")
 	MAKE_LDXX="1"
-	MIDDLE_LIBS="-lck -lconv-cplus-y $CORE_LIBS "
+	MIDDLE_LIBS="-lck $MIDDLE_LIBS -lconv-cplus-y $CORE_LIBS "
         CMK_SYSLIBS="$CMK_SYSLIBS -lm"
         if [ "$NO_MAIN" = "" ]
         then
@@ -1884,7 +1919,7 @@ case "$LANGUAGE" in
 	;;
 "charm"|"charm++"|"f90charm"|"ckbluegene"|"bgcharm++")
 	MAKE_LDXX="1"
-	MIDDLE_LIBS="-lck -lconv-cplus-y $CORE_LIBS "
+	MIDDLE_LIBS="-lck $MIDDLE_LIBS -lconv-cplus-y $CORE_LIBS "
         if [ "$NO_MAIN" = "" ]
         then
 	  MIDDLE_LIBS="-lckmain $MIDDLE_LIBS"
@@ -1899,7 +1934,7 @@ case "$LANGUAGE" in
 	;;
 "converse")
 	MAKE_LD="1"
-	MIDDLE_LIBS="-lconv-cplus-n $CORE_LIBS -ltrace-converse "
+	MIDDLE_LIBS="$MIDDLE_LIBS -lconv-cplus-n $CORE_LIBS -ltrace-converse "
         CMK_SYSLIBS="$CMK_SYSLIBS -lm"
 	;;
 "converse++"|"bluegene"|"bigsim"|"bgconverse++")
@@ -1914,7 +1949,7 @@ esac
 
 if [ "$BUILD_SHARE" = "0" ]
 then
-	MIDDLE_LIBS="$MEM_OBJ $THREAD_OBJ $MIDDLE_LIBS"
+	MIDDLE_LIBS="$MIDDLE_LIBS $MEM_OBJ $THREAD_OBJ"
 fi
 
 if [ "$CHARM_SHARED" = "1" ]
@@ -1926,23 +1961,23 @@ then
   then
     LANG_LIBS="-L$CHARMLIBSO $OBJECTFILES $PRE_LIBRARIES"
   else
-    LANG_LIBS="-L$CHARMLIBSO $BAL_OBJ $OBJECTFILES $modInitObj $PRE_LIBRARIES"
+    LANG_LIBS="-L$CHARMLIBSO $OBJECTFILES $modInitObj $PRE_LIBRARIES"
   fi
 else
-# if interoperate, need a lib with moduleinit
+  # if interoperate, need a lib with moduleinit
   if [ "$MPI_INTEROPERATE" != "" ]
   then
-    LANG_LIBS="-L$CHARMLIB -I$CHARMINC $CMK_SYSINC $BAL_OBJ $PRE_LIBRARIES"
+    LANG_LIBS="-L$CHARMLIB -I$CHARMINC $CMK_SYSINC $PRE_LIBRARIES"
   else
-    LANG_LIBS="-L$CHARMLIB -I$CHARMINC $CMK_SYSINC $BAL_OBJ $OBJECTFILES $modInitObj $PRE_LIBRARIES"
+    LANG_LIBS="-L$CHARMLIB -I$CHARMINC $CMK_SYSINC $OBJECTFILES $modInitObj $PRE_LIBRARIES"
   fi
 fi
 if [ "$TRACE_WITH_TAU" = 1 ]
 then
 	echo "Linking with the TAU libraries: $TAU_LIBS"
-	ALL_LIBS="$LANG_LIBS $MIDDLE_LIBS $CMK_LIBS $POST_LIBRARIES $CMK_SYSLIBS $TAU_LIBS"
+	ALL_LIBS="$LANG_LIBS $MIDDLE_LIBS $BAL_OBJ $CMK_LIBS $POST_LIBRARIES $CMK_SYSLIBS $TAU_LIBS"
 else
-	ALL_LIBS="$LANG_LIBS $MIDDLE_LIBS $CMK_LIBS $POST_LIBRARIES $CMK_SYSLIBS"
+	ALL_LIBS="$LANG_LIBS $MIDDLE_LIBS $BAL_OBJ $CMK_LIBS $POST_LIBRARIES $CMK_SYSLIBS"
 fi
 Debugf "All libraries are: $ALL_LIBS"
 
@@ -1960,9 +1995,14 @@ case "$OBJECT" in
         echo "CHARM_ALL_LIBS=\"$ALL_LIBS\""
 	Copyobj
 	;;
+*.so|*.so.*|*.sl|*.dylib)
+        echo "Warning: building shared library failed; for interoperation build
+        static library."
+        End 0
+	;;
 esac
 fi
-  
+
 if [ "$MPI_INTEROPERATE" != "" ]
 then
   ALL_LIBS="$OBJECTFILES $modInitObj $ALL_LIBS"

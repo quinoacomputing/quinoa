@@ -24,7 +24,7 @@ using namespace std;
 
 CreateLBFunc_Def(GreedyLB, "always assign the heaviest obj onto lightest loaded processor.")
 
-GreedyLB::GreedyLB(const CkLBOptions &opt): CentralLB(opt)
+GreedyLB::GreedyLB(const CkLBOptions &opt): CBase_GreedyLB(opt)
 {
   lbname = "GreedyLB";
   if (CkMyPe()==0)
@@ -39,14 +39,14 @@ bool GreedyLB::QueryBalanceNow(int _step)
 
 class ProcLoadGreater {
   public:
-    bool operator()(ProcInfo p1, ProcInfo p2) {
-      return (p1.totalLoad() > p2.totalLoad());
+    bool operator()(const ProcInfo &p1, const ProcInfo &p2) {
+      return (p1.getTotalLoad() > p2.getTotalLoad());
     }
 };
 
 class ObjLoadGreater {
   public:
-    bool operator()(Vertex v1, Vertex v2) {
+    bool operator()(const Vertex &v1, const Vertex &v2) {
       return (v1.getVertexLoad() > v2.getVertexLoad());
     }
 };

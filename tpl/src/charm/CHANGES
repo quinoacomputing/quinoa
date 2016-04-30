@@ -2,6 +2,118 @@ This file describes the most significant changes. For more detail, use
 'git log' on a clone of the charm repository.
 
 ================================================================================
+What's new in Charm++ 6.7.1
+================================================================================
+
+Changes in this release are primarily bug fixes for 6.7.0. The major exception
+is AMPI, which has seen changes to its extension APIs and now complies with more
+of the MPI standard. A brief list of changes follows:
+
+Charm++ Bug Fixes
+
+- Startup and exit sequences are more robust
+
+- Error and warning messages are generally more informative
+
+- CkMulticast's set and concat reducers work correctly
+
+AMPI Features
+
+- AMPI's extensions have been renamed to use the prefix AMPI_ instead of MPI_
+  and to generally follow MPI's naming conventions
+
+- AMPI_Migrate(MPI_Info) is now used for dynamic load balancing and all fault
+  tolerance schemes (see the AMPI manual)
+
+- AMPI officially supports MPI-2.2, and also implements the non-blocking
+  collectives and neighborhood collectives from MPI-3.1
+
+Platforms and Portability
+
+- Cray regularpages build target has been fixed
+
+- Clang compiler target for BlueGene/Q systems added
+
+- Comm. thread tracing for SMP mode added
+
+- AMPI's compiler wrappers are easier to use with autoconf and cmake
+
+================================================================================
+What's new in Charm++ 6.7.0
+================================================================================
+
+Over 120 bugs fixed, spanning areas across the entire system
+
+Charm++ Features
+
+- New API for efficient formula-based distributed spare array creation
+
+- CkLoop is now built by default
+
+- CBase_Foo::pup need not be called from Foo::pup in user code anymore - runtime
+  code handles this automatically
+
+- Error reporting and recovery in .ci files is greatly improved, providing more
+  precise line numbers and often column information
+
+- Many data races occurring under shared-memory builds (smp, multicore) were
+  fixed, facilitating use of tools like ThreadSanitizer and Helgrind
+
+AMPI Enhancements
+
+- Further MPI standard compliance in AMPI allows users to build and run
+  Hypre-2.10.1 on AMPI with virtualization, migration, etc.
+
+- Improved AMPI Fortran2003 PUP interface 'apup', similiar to C++'s STL PUP
+
+Platforms and Portability
+
+- Compiling Charm++ now requires support for C++11 variadic templates. In GCC,
+  this became available with version 4.3, released in 2008
+
+- New machine target for multicore Linux ARM7: multicore-linux-arm7
+
+- Preliminary support for POWER8 processors, in preparation for the upcoming
+  Summit and Sierra supercomputers
+
+- The charmrun process launcher is now much more robust in the face of slow
+  or rate-limited connections to compute nodes
+
+- PXSHM now auto-detects the node size, so the '+nodesize' is no longer needed
+
+- Out-of-tree builds are now supported
+
+Deprecations
+
+- CommLib has been removed.
+
+- CmiBool has been dropped in favor of C++'s bool
+
+
+================================================================================
+What's new in Charm++ 6.6.1
+================================================================================
+
+Changes in this release are primarily bug fixes for 6.6.0. A concise list of
+affected components follows:
+
+- CkIO
+
+- Reductions with syncFT
+
+- mpicxx based MPI builds
+
+- Increased support for macros in CI file
+
+- GNI + RDMA related communication
+
+- MPI_STATUSES_IGNORE support for AMPIF
+
+- Restart on different node count with chkpt
+
+- Immediate msgs on multicore builds
+
+================================================================================
 What's new in Charm++ 6.6.0
 ================================================================================
 

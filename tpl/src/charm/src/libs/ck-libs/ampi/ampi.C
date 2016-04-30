@@ -23,6 +23,9 @@
 #define STARTUP_DEBUG(x)  //ckout<<"ampi[pe "<<CkMyPe()<<"] "<< x <<endl; 
 #define FUNCCALL_DEBUG(x) //x /* empty */
 
+/* For MPI_Get_library_version */
+extern "C" const char * const CmiCommitID;
+
 static CkDDT *getDDT(void) {
   return getAmpiParent()->myDDT;
 }
@@ -165,15 +168,15 @@ switch (*datatype) { \
   case MPI_UNSIGNED_CHAR: for(i=0;i<(*len);i++) { MPI_OP_IMPL(unsigned char); } break; \
   case MPI_UNSIGNED_SHORT: for(i=0;i<(*len);i++) { MPI_OP_IMPL(unsigned short); } break; \
   case MPI_UNSIGNED: for(i=0;i<(*len);i++) { MPI_OP_IMPL(unsigned int); } break; \
-  case MPI_UNSIGNED_LONG: for(i=0;i<(*len);i++) { MPI_OP_IMPL(CmiUInt8); } break; \
+  case MPI_UNSIGNED_LONG: for(i=0;i<(*len);i++) { MPI_OP_IMPL(unsigned long); } break; \
   case MPI_FLOAT: for(i=0;i<(*len);i++) { MPI_OP_IMPL(float); } break; \
   case MPI_DOUBLE: for(i=0;i<(*len);i++) { MPI_OP_IMPL(double); } break; \
   case MPI_COMPLEX: for(i=0;i<(*len);i++) { MPI_OP_IMPL(AmpiComplex); } break; \
   case MPI_DOUBLE_COMPLEX: for(i=0;i<(*len);i++) { MPI_OP_IMPL(AmpiComplex); } break; \
-  case MPI_LONG_LONG_INT: for(i=0;i<(*len);i++) { MPI_OP_IMPL(CmiInt8); } break; \
+  case MPI_LONG_LONG_INT: for(i=0;i<(*len);i++) { MPI_OP_IMPL(long long); } break; \
   default: \
            ckerr << "Type " << *datatype << " with Op "#OPNAME" not supported." << endl; \
-  CmiAbort("Unsupported MPI datatype for MPI Op"); \
+  CkAbort("Unsupported MPI datatype for MPI Op"); \
 };\
 
 void MPI_MAX( void *invec, void *inoutvec, int *len, MPI_Datatype *datatype){
@@ -204,6 +207,17 @@ void MPI_PROD( void *invec, void *inoutvec, int *len, MPI_Datatype *datatype){
 #undef MPI_OP_IMPL
 }
 
+void MPI_REPLACE( void *invec, void *inoutvec, int *len, MPI_Datatype *datatype){
+#define MPI_OP_IMPL(type) \
+  ((type *)inoutvec)[i] = ((type *)invec)[i];
+  MPI_OP_SWITCH(MPI_REPLACE)
+#undef MPI_OP_IMPL
+}
+
+void MPI_NO_OP( void *invec, void *inoutvec, int *len, MPI_Datatype *datatype){
+  /* no-op */
+}
+
 void MPI_LAND( void *invec, void *inoutvec, int *len, MPI_Datatype *datatype){
   int i;  
   switch (*datatype) {
@@ -214,7 +228,7 @@ void MPI_LAND( void *invec, void *inoutvec, int *len, MPI_Datatype *datatype){
       break;
     default:
       ckerr << "Type " << *datatype << " with Op MPI_LAND not supported." << endl;
-      CmiAbort("exiting");
+      CkAbort("exiting");
   }
 }
 void MPI_BAND( void *invec, void *inoutvec, int *len, MPI_Datatype *datatype){
@@ -230,7 +244,7 @@ void MPI_BAND( void *invec, void *inoutvec, int *len, MPI_Datatype *datatype){
       break;
     default:
       ckerr << "Type " << *datatype << " with Op MPI_BAND not supported." << endl;
-      CmiAbort("exiting");
+      CkAbort("exiting");
   }
 }
 void MPI_LOR( void *invec, void *inoutvec, int *len, MPI_Datatype *datatype){
@@ -243,7 +257,7 @@ void MPI_LOR( void *invec, void *inoutvec, int *len, MPI_Datatype *datatype){
       break;
     default:
       ckerr << "Type " << *datatype << " with Op MPI_LOR not supported." << endl;
-      CmiAbort("exiting");
+      CkAbort("exiting");
   }
 }
 void MPI_BOR( void *invec, void *inoutvec, int *len, MPI_Datatype *datatype){
@@ -259,7 +273,7 @@ void MPI_BOR( void *invec, void *inoutvec, int *len, MPI_Datatype *datatype){
       break;
     default:
       ckerr << "Type " << *datatype << " with Op MPI_BOR not supported." << endl;
-      CmiAbort("exiting");
+      CkAbort("exiting");
   }
 }
 void MPI_LXOR( void *invec, void *inoutvec, int *len, MPI_Datatype *datatype){
@@ -272,7 +286,7 @@ void MPI_LXOR( void *invec, void *inoutvec, int *len, MPI_Datatype *datatype){
       break;
     default:
       ckerr << "Type " << *datatype << " with Op MPI_LXOR not supported." << endl;
-      CmiAbort("exiting");
+      CkAbort("exiting");
   }
 }
 void MPI_BXOR( void *invec, void *inoutvec, int *len, MPI_Datatype *datatype){
@@ -292,7 +306,7 @@ void MPI_BXOR( void *invec, void *inoutvec, int *len, MPI_Datatype *datatype){
       break;
     default:
       ckerr << "Type " << *datatype << " with Op MPI_BXOR not supported." << endl;
-      CmiAbort("exiting");
+      CkAbort("exiting");
   }
 }
 
@@ -305,129 +319,144 @@ void MPI_MAXLOC( void *invec, void *inoutvec, int *len, MPI_Datatype *datatype){
 
   switch (*datatype) {
     case MPI_FLOAT_INT:
-      for(i=0;i<(*len);i++)
+      for(i=0;i<(*len);i++){
         if(((FloatInt *)invec)[i].val > ((FloatInt *)inoutvec)[i].val)
           ((FloatInt *)inoutvec)[i] = ((FloatInt *)invec)[i];
         else if(((FloatInt *)invec)[i].val == ((FloatInt *)inoutvec)[i].val)
           ((FloatInt *)inoutvec)[i].idx = MIN(((FloatInt *)inoutvec)[i].idx, ((FloatInt *)invec)[i].idx);
+      }
       break;
     case MPI_DOUBLE_INT:
-      for(i=0;i<(*len);i++)
+      for(i=0;i<(*len);i++){
         if(((DoubleInt *)invec)[i].val > ((DoubleInt *)inoutvec)[i].val)
           ((DoubleInt *)inoutvec)[i] = ((DoubleInt *)invec)[i];
         else if(((DoubleInt *)invec)[i].val == ((DoubleInt *)inoutvec)[i].val)
           ((DoubleInt *)inoutvec)[i].idx = MIN(((DoubleInt *)inoutvec)[i].idx, ((DoubleInt *)invec)[i].idx);
-
+      }
       break;
     case MPI_LONG_INT:
-      for(i=0;i<(*len);i++)
+      for(i=0;i<(*len);i++){
         if(((LongInt *)invec)[i].val > ((LongInt *)inoutvec)[i].val)
           ((LongInt *)inoutvec)[i] = ((LongInt *)invec)[i];
         else if(((FloatInt *)invec)[i].val == ((FloatInt *)inoutvec)[i].val)
           ((LongInt *)inoutvec)[i].idx = MIN(((LongInt *)inoutvec)[i].idx, ((LongInt *)invec)[i].idx);
+      }
       break;
     case MPI_2INT:
-      for(i=0;i<(*len);i++)
+      for(i=0;i<(*len);i++){
         if(((IntInt *)invec)[i].val > ((IntInt *)inoutvec)[i].val)
           ((IntInt *)inoutvec)[i] = ((IntInt *)invec)[i];
         else if(((IntInt *)invec)[i].val == ((IntInt *)inoutvec)[i].val)
           ((IntInt *)inoutvec)[i].idx = MIN(((IntInt *)inoutvec)[i].idx, ((IntInt *)invec)[i].idx);
+      }
       break;
     case MPI_SHORT_INT:
-      for(i=0;i<(*len);i++)
+      for(i=0;i<(*len);i++){
         if(((ShortInt *)invec)[i].val > ((ShortInt *)inoutvec)[i].val)
           ((ShortInt *)inoutvec)[i] = ((ShortInt *)invec)[i];
         else if(((ShortInt *)invec)[i].val == ((ShortInt *)inoutvec)[i].val)
           ((ShortInt *)inoutvec)[i].idx = MIN(((ShortInt *)inoutvec)[i].idx, ((ShortInt *)invec)[i].idx);
+      }
       break;
     case MPI_LONG_DOUBLE_INT:
-      for(i=0;i<(*len);i++)
+      for(i=0;i<(*len);i++){
         if(((LongdoubleInt *)invec)[i].val > ((LongdoubleInt *)inoutvec)[i].val)
           ((LongdoubleInt *)inoutvec)[i] = ((LongdoubleInt *)invec)[i];
         else if(((LongdoubleInt *)invec)[i].val == ((LongdoubleInt *)inoutvec)[i].val)
           ((LongdoubleInt *)inoutvec)[i].idx = MIN(((LongdoubleInt *)inoutvec)[i].idx, ((LongdoubleInt *)invec)[i].idx);
+      }
       break;
     case MPI_2FLOAT:
-      for(i=0;i<(*len);i++)
+      for(i=0;i<(*len);i++){
         if(((FloatFloat *)invec)[i].val > ((FloatFloat *)inoutvec)[i].val)
           ((FloatFloat *)inoutvec)[i] = ((FloatFloat *)invec)[i];
         else if(((FloatFloat *)invec)[i].val == ((FloatFloat *)inoutvec)[i].val)
           ((FloatFloat *)inoutvec)[i].idx = MIN(((FloatFloat *)inoutvec)[i].idx, ((FloatFloat *)invec)[i].idx);
+      }
       break;
     case MPI_2DOUBLE:
-      for(i=0;i<(*len);i++)
+      for(i=0;i<(*len);i++){
         if(((DoubleDouble *)invec)[i].val > ((DoubleDouble *)inoutvec)[i].val)
           ((DoubleDouble *)inoutvec)[i] = ((DoubleDouble *)invec)[i];
         else if(((DoubleDouble *)invec)[i].val == ((DoubleDouble *)inoutvec)[i].val)
           ((DoubleDouble *)inoutvec)[i].idx = MIN(((DoubleDouble *)inoutvec)[i].idx, ((DoubleDouble *)invec)[i].idx);
+      }
       break;
     default:
       ckerr << "Type " << *datatype << " with Op MPI_MAXLOC not supported." << endl;
-      CmiAbort("exiting");
+      CkAbort("exiting");
   }
 }
 void MPI_MINLOC( void *invec, void *inoutvec, int *len, MPI_Datatype *datatype){
   int i;  
   switch (*datatype) {
     case MPI_FLOAT_INT:
-      for(i=0;i<(*len);i++)
+      for(i=0;i<(*len);i++){
         if(((FloatInt *)invec)[i].val < ((FloatInt *)inoutvec)[i].val)
           ((FloatInt *)inoutvec)[i] = ((FloatInt *)invec)[i];
         else if(((FloatInt *)invec)[i].val == ((FloatInt *)inoutvec)[i].val)
           ((FloatInt *)inoutvec)[i].idx = MIN(((FloatInt *)inoutvec)[i].idx, ((FloatInt *)invec)[i].idx);
+      }
       break;
     case MPI_DOUBLE_INT:
-      for(i=0;i<(*len);i++)
+      for(i=0;i<(*len);i++){
         if(((DoubleInt *)invec)[i].val < ((DoubleInt *)inoutvec)[i].val)
           ((DoubleInt *)inoutvec)[i] = ((DoubleInt *)invec)[i];
         else if(((DoubleInt *)invec)[i].val == ((DoubleInt *)inoutvec)[i].val)
           ((DoubleInt *)inoutvec)[i].idx = MIN(((DoubleInt *)inoutvec)[i].idx, ((DoubleInt *)invec)[i].idx);
+      }
       break;
     case MPI_LONG_INT:
-      for(i=0;i<(*len);i++)
+      for(i=0;i<(*len);i++){
         if(((LongInt *)invec)[i].val < ((LongInt *)inoutvec)[i].val)
           ((LongInt *)inoutvec)[i] = ((LongInt *)invec)[i];
         else if(((LongInt *)invec)[i].val == ((LongInt *)inoutvec)[i].val)
           ((LongInt *)inoutvec)[i].idx = MIN(((LongInt *)inoutvec)[i].idx, ((LongInt *)invec)[i].idx);
+      }
       break;
     case MPI_2INT:
-      for(i=0;i<(*len);i++)
+      for(i=0;i<(*len);i++){
         if(((IntInt *)invec)[i].val < ((IntInt *)inoutvec)[i].val)
           ((IntInt *)inoutvec)[i] = ((IntInt *)invec)[i];
         else if(((IntInt *)invec)[i].val == ((IntInt *)inoutvec)[i].val)
           ((IntInt *)inoutvec)[i].idx = MIN(((IntInt *)inoutvec)[i].idx, ((IntInt *)invec)[i].idx);
+      }
       break;
     case MPI_SHORT_INT:
-      for(i=0;i<(*len);i++)
+      for(i=0;i<(*len);i++){
         if(((ShortInt *)invec)[i].val < ((ShortInt *)inoutvec)[i].val)
           ((ShortInt *)inoutvec)[i] = ((ShortInt *)invec)[i];
         else if(((ShortInt *)invec)[i].val == ((ShortInt *)inoutvec)[i].val)
           ((ShortInt *)inoutvec)[i].idx = MIN(((ShortInt *)inoutvec)[i].idx, ((ShortInt *)invec)[i].idx);
+      }
       break;
     case MPI_LONG_DOUBLE_INT:
-      for(i=0;i<(*len);i++)
+      for(i=0;i<(*len);i++){
         if(((LongdoubleInt *)invec)[i].val < ((LongdoubleInt *)inoutvec)[i].val)
           ((LongdoubleInt *)inoutvec)[i] = ((LongdoubleInt *)invec)[i];
         else if(((LongdoubleInt *)invec)[i].val == ((LongdoubleInt *)inoutvec)[i].val)
           ((LongdoubleInt *)inoutvec)[i].idx = MIN(((LongdoubleInt *)inoutvec)[i].idx, ((LongdoubleInt *)invec)[i].idx);
+      }
       break;
     case MPI_2FLOAT:
-      for(i=0;i<(*len);i++)
+      for(i=0;i<(*len);i++){
         if(((FloatFloat *)invec)[i].val < ((FloatFloat *)inoutvec)[i].val)
           ((FloatFloat *)inoutvec)[i] = ((FloatFloat *)invec)[i];
         else if(((FloatFloat *)invec)[i].val == ((FloatFloat *)inoutvec)[i].val)
           ((FloatFloat *)inoutvec)[i].idx = MIN(((FloatFloat *)inoutvec)[i].idx, ((FloatFloat *)invec)[i].idx);
+      }
       break;
     case MPI_2DOUBLE:
-      for(i=0;i<(*len);i++)
+      for(i=0;i<(*len);i++){
         if(((DoubleDouble *)invec)[i].val < ((DoubleDouble *)inoutvec)[i].val)
           ((DoubleDouble *)inoutvec)[i] = ((DoubleDouble *)invec)[i];
         else if(((DoubleDouble *)invec)[i].val == ((DoubleDouble *)inoutvec)[i].val)
           ((DoubleDouble *)inoutvec)[i].idx = MIN(((DoubleDouble *)inoutvec)[i].idx, ((DoubleDouble *)invec)[i].idx);
+      }
       break;
     default:
       ckerr << "Type " << *datatype << " with Op MPI_MINLOC not supported." << endl;
-      CmiAbort("exiting");
+      CkAbort("exiting");
   }
 }
 
@@ -459,16 +488,21 @@ CkReduction::reducerType AmpiReducer;
 
 class Builtin_kvs{
   public:
-    int tag_ub,host,io,wtime_is_global,keyval_mype,keyval_numpes,keyval_mynode,keyval_numnodes;
+    int tag_ub,host,io,wtime_is_global,appnum,universe_size;
+    void* win_base;
+    int win_size,win_disp_unit,win_create_flavor,win_model;
     Builtin_kvs(){
       tag_ub = MPI_TAG_UB_VALUE; 
       host = MPI_PROC_NULL;
       io = 0;
       wtime_is_global = 0;
-      keyval_mype = CkMyPe();
-      keyval_numpes = CkNumPes();
-      keyval_mynode = CkMyNode();
-      keyval_numnodes = CkNumNodes();
+      appnum = 0;
+      universe_size = 0;
+      win_base = NULL;
+      win_size = 0;
+      win_disp_unit = 0;
+      win_create_flavor = MPI_WIN_FLAVOR_CREATE;
+      win_model = MPI_WIN_SEPARATE;
     }
 };
 
@@ -508,7 +542,6 @@ CtvDeclare(void*,stackBottom);
 CtvDeclare(int, ampiFinalized);
 CkpvDeclare(Builtin_kvs, bikvs);
 CkpvDeclare(int,argvExtracted);
-static int enableStreaming = 0;
 
 CDECL long ampiCurrentStackUsage(){
   int localVariable;
@@ -544,7 +577,7 @@ static void ampiNodeInit(void)
 
   AmpiReducer = CkReduction::addReducer(AmpiReducerFunc);
 
-  CmiAssert(AMPI_threadstart_idx == -1);    // only initialize once
+  CkAssert(AMPI_threadstart_idx == -1);    // only initialize once
   AMPI_threadstart_idx = TCHARM_Register_thread_function(AMPI_threadstart);
 
   nodeinit_has_been_called=1;
@@ -594,11 +627,6 @@ static void ampiProcInit(void){
   initAmpiProjections();
 
   char **argv=CkGetArgv();
-#if AMPI_COMLIB  
-  if(CkpvAccess(argvExtracted)==0){
-    enableStreaming=CmiGetArgFlagDesc(argv,"+ampi_streaming","Enable streaming comlib for ampi send/recv.");
-  }
-#endif
 
 #if AMPIMSGLOG
   msgLogWrite = CmiGetArgFlag(argv, "+msgLogWrite");
@@ -613,8 +641,8 @@ static void ampiProcInit(void){
   }
   CmiGetArgString(argv, "+msgLogFilename", &msgLogFilename);
   if (CkMyPe() == 0) {
-    if (msgLogWrite) CmiPrintf("Writing AMPI messages of rank %s to log: %s\n", procs?procs:"", msgLogFilename);
-    if (msgLogRead) CmiPrintf("Reading AMPI messages of rank %s from log: %s\n", procs?procs:"", msgLogFilename);
+    if (msgLogWrite) CkPrintf("Writing AMPI messages of rank %s to log: %s\n", procs?procs:"", msgLogFilename);
+    if (msgLogRead) CkPrintf("Reading AMPI messages of rank %s from log: %s\n", procs?procs:"", msgLogFilename);
   }
 #endif
 
@@ -626,20 +654,6 @@ static inline int record_msglog(int rank){
   return msgLogRanks.includes(rank);
 }
 #endif
-
-void AMPI_Install_Idle_Timer(){
-#if AMPI_PRINT_IDLE
-  beginHandle = CcdCallOnConditionKeep(CcdPROCESSOR_BEGIN_IDLE,(CcdVoidFn)BeginIdle,NULL);
-  endHandle = CcdCallOnConditionKeep(CcdPROCESSOR_END_IDLE,(CcdVoidFn)EndIdle,NULL);
-#endif
-}
-
-void AMPI_Uninstall_Idle_Timer(){
-#if AMPI_PRINT_IDLE
-  CcdCancelCallOnConditionKeep(CcdPROCESSOR_BEGIN_IDLE,beginHandle);
-  CcdCancelCallOnConditionKeep(CcdPROCESSOR_BEGIN_BUSY,endHandle);
-#endif
-}
 
 PUPfunctionpointer(MPI_MainFn)
 
@@ -714,6 +728,8 @@ static void init_operations()
   tab[i++] = MPI_BXOR;
   tab[i++] = MPI_MAXLOC;
   tab[i++] = MPI_MINLOC;
+  tab[i++] = MPI_REPLACE;
+  tab[i++] = MPI_NO_OP;
 
   CtvInitialize(int, mpi_opc);
   CtvAccess(mpi_opc) = i;
@@ -726,7 +742,7 @@ static void init_operations()
  */
 static ampi *ampiInit(char **argv)
 {
-  FUNCCALL_DEBUG(CkPrintf("Calling from proc %d for tcharm element %d\n", CmiMyPe(), TCHARM_Element());)
+  FUNCCALL_DEBUG(CkPrintf("Calling from proc %d for tcharm element %d\n", CkMyPe(), TCHARM_Element());)
     if (CtvAccess(ampiInitDone)) return NULL; /* Already called ampiInit */
   STARTUP_DEBUG("ampiInit> begin")
 
@@ -764,39 +780,7 @@ static ampi *ampiInit(char **argv)
 
       ampiCommStruct worldComm(new_world,empty,_nchunks);
       CProxy_ampi arr;
-
-
-#if AMPI_COMLIB
-
-      ComlibInstanceHandle ciStreaming = 1;
-      ComlibInstanceHandle ciBcast = 2;
-      ComlibInstanceHandle ciAllgather = 3;
-      ComlibInstanceHandle ciAlltoall = 4;
-
-      arr=CProxy_ampi::ckNew(parent, worldComm, ciStreaming, ciBcast, ciAllgather, ciAlltoall, opts);
-
-
-      CkPrintf("Using untested comlib code in ampi.C\n");
-
-      Strategy *sStreaming = new StreamingStrategy(1,10);
-      CkAssert(ciStreaming == ComlibRegister(sStreaming));
-
-      Strategy *sBcast = new BroadcastStrategy(USE_HYPERCUBE);
-      CkAssert(ciBcast = ComlibRegister(sBcast));
-
-      Strategy *sAllgather = new EachToManyMulticastStrategy(USE_HYPERCUBE,arr.ckGetArrayID(),arr.ckGetArrayID());
-      CkAssert(ciAllgather = ComlibRegister(sAllgather));
-
-      Strategy *sAlltoall = new EachToManyMulticastStrategy(USE_PREFIX, arr.ckGetArrayID(),arr.ckGetArrayID());
-      CkAssert(ciAlltoall = ComlibRegister(sAlltoall));
-
-      CmiPrintf("Created AMPI comlib strategies in new manner\n");
-
-      // FIXME: Propogate the comlib table here
-      CkpvAccess(conv_com_object).doneCreating();
-#else
       arr=CProxy_ampi::ckNew(parent,worldComm,opts);
-#endif
 
       //Broadcast info. to the mpi_worlds array
       // FIXME: remove race condition from MPI_COMM_UNIVERSE broadcast
@@ -821,6 +805,7 @@ static ampi *ampiInit(char **argv)
 #endif
 
   init_operations();     // initialize fortran reduction operation table
+  getAmpiParent()->setCommAttr(MPI_COMM_WORLD, MPI_UNIVERSE_SIZE, &_nchunks);
 
   getAmpiParent()->ampiInitCallDone = 0;
 
@@ -855,7 +840,7 @@ class ampiWorlds : public CBase_ampiWorlds {
       add(nextWorld);
     }
     ampiWorlds(CkMigrateMessage *m): CBase_ampiWorlds(m) {}
-    void pup(PUP::er &p)  { CBase_ampiWorlds::pup(p); }
+    void pup(PUP::er &p)  { }
     void add(const ampiCommStruct &nextWorld) {
       int new_idx=nextWorld.getComm()-(MPI_COMM_WORLD); // Isaac guessed there shouldn't be a +1 after the MPI_COMM_WORLD
       mpi_worlds[new_idx].comm=nextWorld;
@@ -872,6 +857,8 @@ class ampiWorlds : public CBase_ampiWorlds {
   STARTUP_DEBUG("ampiParent> starting up")
     thread=NULL;
   worldPtr=NULL;
+  userAboutToMigrateFn=NULL;
+  userJustMigratedFn=NULL;
   myDDT=&myDDTsto;
   prepareCtv();
 
@@ -891,19 +878,27 @@ ampiParent::ampiParent(CkMigrateMessage *msg):CBase_ampiParent(msg) {
   AsyncEvacuate(false);
 }
 
+PUPfunctionpointer(MPI_MigrateFn)
+
 void ampiParent::pup(PUP::er &p) {
-  ArrayElement1D::pup(p);
   p|threads;
   p|worldNo;           // why it was missing from here before??
   p|worldStruct;
   myDDT->pup(p);
   p|splitComm;
   p|groupComm;
+  p|cartComm;
+  p|graphComm;
+  p|interComm;
+  p|intraComm;
+  
   p|groups;
+  p|winStructList;
+  p|infos;
 
   //BIGSIM_OOC DEBUGGING
   //if(!p.isUnpacking()){
-  //    CmiPrintf("ampiParent[%d] packing ampiRequestList: \n", thisIndex);
+  //    CkPrintf("ampiParent[%d] packing ampiRequestList: \n", thisIndex);
   //    ampiReqs.print();
   //}
 
@@ -911,14 +906,16 @@ void ampiParent::pup(PUP::er &p) {
 
   //BIGSIM_OOC DEBUGGING
   //if(p.isUnpacking()){
-  //    CmiPrintf("ampiParent[%d] unpacking ampiRequestList: \n", thisIndex);
+  //    CkPrintf("ampiParent[%d] unpacking ampiRequestList: \n", thisIndex);
   //    ampiReqs.print();
   //}
 
+  p|kvlist;
   p|RProxyCnt;
   p|tmpRProxy;
-  p|winStructList;
-  p|infos;
+
+  p|userAboutToMigrateFn;
+  p|userJustMigratedFn;
 
   p|ampiInitCallDone;
 }
@@ -942,7 +939,7 @@ void ampiParent::init(){
     toPUPer = new PUP::tozDisk(fMsgLog);
 #else
     fMsgLog = fopen(fname,"wb");
-    CmiAssert(fMsgLog != NULL);
+    CkAssert(fMsgLog != NULL);
     toPUPer = new PUP::toDisk(fMsgLog);
 #endif
   }else if(msgLogRead){
@@ -953,7 +950,7 @@ void ampiParent::init(){
     fromPUPer = new PUP::fromzDisk(fMsgLog);
 #else
     fMsgLog = fopen(fname,"rb");
-    CmiAssert(fMsgLog != NULL);
+    CkAssert(fMsgLog != NULL);
     fromPUPer = new PUP::fromDisk(fMsgLog);
 #endif
     CkPrintf("AMPI> opened message log file: %s for replay\n", fname);
@@ -981,9 +978,26 @@ void ampiParent::finalize(){
 #endif
 }
 
+void ampiParent::setUserAboutToMigrateFn(MPI_MigrateFn f) {
+  userAboutToMigrateFn = f;
+}
+
+void ampiParent::setUserJustMigratedFn(MPI_MigrateFn f) {
+  userJustMigratedFn = f;
+}
+
+void ampiParent::ckAboutToMigrate(void) {
+  if (userAboutToMigrateFn) {
+    (*userAboutToMigrateFn)();
+  }
+}
+
 void ampiParent::ckJustMigrated(void) {
   ArrayElement1D::ckJustMigrated();
   prepareCtv();
+  if (userJustMigratedFn) {
+    (*userJustMigratedFn)();
+  }
 }
 
 void ampiParent::ckJustRestored(void) {
@@ -1050,7 +1064,7 @@ TCharm *ampiParent::registerAmpi(ampi *ptr,ampiCommStruct s,bool forMigration)
 //Move the comm2ampi from inline to normal function for the sake of debugging
 /*ampi *ampiParent::comm2ampi(MPI_Comm comm){
 //BIGSIM_OOC DEBUGGING
-//CmiPrintf("%d, in ampiParent::comm2ampi, comm=%d\n", thisIndex, comm);
+//CkPrintf("%d, in ampiParent::comm2ampi, comm=%d\n", thisIndex, comm);
 if (comm==MPI_COMM_WORLD) return worldPtr;
 if (comm==MPI_COMM_SELF) return worldPtr;
 if (comm==worldNo) return worldPtr;
@@ -1144,7 +1158,7 @@ void ampiParent::ResumeThread(void){
   thread->resume();
 }
 
-int ampiParent::createKeyval(MPI_Copy_function *copy_fn, MPI_Delete_function *delete_fn,
+int ampiParent::createKeyval(MPI_Comm_copy_attr_function *copy_fn, MPI_Comm_delete_attr_function *delete_fn,
     int *keyval, void* extra_state){
   KeyvalNode* newnode = new KeyvalNode(copy_fn, delete_fn, extra_state);
   int idx = kvlist.size();
@@ -1153,62 +1167,143 @@ int ampiParent::createKeyval(MPI_Copy_function *copy_fn, MPI_Delete_function *de
   *keyval = idx;
   return 0;
 }
-  int ampiParent::freeKeyval(int *keyval){
-    if(*keyval <0 || *keyval >= kvlist.size() || !kvlist[*keyval])
-      return -1;
-    delete kvlist[*keyval];
-    kvlist[*keyval] = NULL;
-    *keyval = MPI_KEYVAL_INVALID;
-    return 0;
-  }
 
-  int ampiParent::putAttr(MPI_Comm comm, int keyval, void* attribute_val){
-    if(keyval<0 || keyval >= kvlist.size() || (kvlist[keyval]==NULL))
-      return -1;
-    ampiCommStruct &cs=*(ampiCommStruct *)&comm2CommStruct(comm);
-    // Enlarge the keyval list:
-    while (cs.getKeyvals().size()<=keyval) cs.getKeyvals().push_back(0);
-    cs.getKeyvals()[keyval]=attribute_val;
-    return 0;
-  }
+int ampiParent::freeKeyval(int *keyval){
+  if(*keyval <0 || *keyval >= kvlist.size() || !kvlist[*keyval])
+    return MPI_ERR_KEYVAL;
+  delete kvlist[*keyval];
+  kvlist[*keyval] = NULL;
+  *keyval = MPI_KEYVAL_INVALID;
+  return MPI_SUCCESS;
+}
 
-int ampiParent::kv_is_builtin(int keyval) {
+int ampiParent::setUserKeyval(MPI_Comm comm, int keyval, void *attribute_val){
+  if(keyval<0 || keyval >= kvlist.size() || (kvlist[keyval]==NULL))
+    return MPI_ERR_KEYVAL;
+  ampiCommStruct &cs = *(ampiCommStruct *)&comm2CommStruct(comm);
+  // Enlarge the keyval list:
+  while (cs.getKeyvals().size()<=keyval) cs.getKeyvals().push_back(0);
+  cs.getKeyvals()[keyval]=attribute_val;
+  return MPI_SUCCESS;
+}
+
+int ampiParent::setWinAttr(MPI_Win win, int keyval, void* attribute_val){
+  if(kv_set_builtin(keyval,attribute_val))
+    return MPI_SUCCESS;
+  MPI_Comm comm = (getAmpiParent()->getWinStruct(win)).comm;
+  return setUserKeyval(comm, keyval, attribute_val);
+}
+
+int ampiParent::setCommAttr(MPI_Comm comm, int keyval, void* attribute_val){
+  if(kv_set_builtin(keyval,attribute_val))
+    return MPI_SUCCESS;
+  return setUserKeyval(comm, keyval, attribute_val);
+}
+
+bool ampiParent::kv_set_builtin(int keyval, void* attribute_val) {
   switch(keyval) {
-    case MPI_TAG_UB: kv_builtin_storage=&(CkpvAccess(bikvs).tag_ub); return 1;
-    case MPI_HOST: kv_builtin_storage=&(CkpvAccess(bikvs).host); return 1;
-    case MPI_IO: kv_builtin_storage=&(CkpvAccess(bikvs).io); return 1;
-    case MPI_WTIME_IS_GLOBAL: kv_builtin_storage=&(CkpvAccess(bikvs).wtime_is_global); return 1;
-    case AMPI_KEYVAL_MYPE: kv_builtin_storage=&(CkpvAccess(bikvs).keyval_mype); return 1;
-    case AMPI_KEYVAL_NUMPES: kv_builtin_storage=&(CkpvAccess(bikvs).keyval_numpes); return 1;
-    case AMPI_KEYVAL_MYNODE: kv_builtin_storage=&(CkpvAccess(bikvs).keyval_mynode); return 1;
-    case AMPI_KEYVAL_NUMNODES: kv_builtin_storage=&(CkpvAccess(bikvs).keyval_numnodes); return 1;
-    default: return 0;
+    case MPI_TAG_UB:            /*immutable*/ return false;
+    case MPI_HOST:              /*immutable*/ return false;
+    case MPI_IO:                /*immutable*/ return false;
+    case MPI_WTIME_IS_GLOBAL:   /*immutable*/ return false;
+    case MPI_APPNUM:            /*immutable*/ return false;
+    case MPI_UNIVERSE_SIZE:     (CkpvAccess(bikvs).universe_size)     = *((int*)attribute_val); return true;
+    case MPI_WIN_BASE:          (CkpvAccess(bikvs).win_base)          = attribute_val;          return true;
+    case MPI_WIN_SIZE:          (CkpvAccess(bikvs).win_size)          = *((int*)attribute_val); return true;
+    case MPI_WIN_DISP_UNIT:     (CkpvAccess(bikvs).win_disp_unit)     = *((int*)attribute_val); return true;
+    case MPI_WIN_CREATE_FLAVOR: (CkpvAccess(bikvs).win_create_flavor) = *((int*)attribute_val); return true;
+    case MPI_WIN_MODEL:         (CkpvAccess(bikvs).win_model)         = *((int*)attribute_val); return true;
+    case AMPI_MY_PE:            /*immutable*/ return false;
+    case AMPI_NUM_PES:          /*immutable*/ return false;
+    case AMPI_MY_NODE:          /*immutable*/ return false;
+    case AMPI_NUM_NODES:        /*immutable*/ return false;
+    default: return false;
   };
 }
 
-int ampiParent::getAttr(MPI_Comm comm, int keyval, void *attribute_val, int *flag){
-  *flag = false;
-  if (kv_is_builtin(keyval)) { /* Allow access to special builtin flags */
-    *flag=true;
-    *(int **)attribute_val = kv_builtin_storage;  // all default tags are ints
-    return 0;
-  }
-  if(keyval<0 || keyval >= kvlist.size() || (kvlist[keyval]==NULL))
-    return -1; /* invalid keyval */
+bool ampiParent::kv_get_builtin(int keyval) {
+  int my_pe, num_pes, my_node, num_nodes;
+  switch(keyval) {
+    case MPI_TAG_UB:            kv_builtin_storage = &(CkpvAccess(bikvs).tag_ub);            return true;
+    case MPI_HOST:              kv_builtin_storage = &(CkpvAccess(bikvs).host);              return true;
+    case MPI_IO:                kv_builtin_storage = &(CkpvAccess(bikvs).io);                return true;
+    case MPI_WTIME_IS_GLOBAL:   kv_builtin_storage = &(CkpvAccess(bikvs).wtime_is_global);   return true;
+    case MPI_APPNUM:            kv_builtin_storage = &(CkpvAccess(bikvs).appnum);            return true;
+    case MPI_UNIVERSE_SIZE:     kv_builtin_storage = &(CkpvAccess(bikvs).universe_size);     return true;
+    case MPI_WIN_BASE:          win_base_storage   = &(CkpvAccess(bikvs).win_base);          return true;
+    case MPI_WIN_SIZE:          kv_builtin_storage = &(CkpvAccess(bikvs).win_size);          return true;
+    case MPI_WIN_DISP_UNIT:     kv_builtin_storage = &(CkpvAccess(bikvs).win_disp_unit);     return true;
+    case MPI_WIN_CREATE_FLAVOR: kv_builtin_storage = &(CkpvAccess(bikvs).win_create_flavor); return true;
+    case MPI_WIN_MODEL:         kv_builtin_storage = &(CkpvAccess(bikvs).win_model);         return true;
+    case AMPI_MY_PE:            my_pe     = CkMyPe();     kv_builtin_storage = &my_pe;       return true;
+    case AMPI_NUM_PES:          num_pes   = CkNumPes();   kv_builtin_storage = &num_pes;     return true;
+    case AMPI_MY_NODE:          my_node   = CkMyNode();   kv_builtin_storage = &my_node;     return true;
+    case AMPI_NUM_NODES:        num_nodes = CkNumNodes(); kv_builtin_storage = &num_nodes;   return true;
+    default: return false;
+  };
+}
 
+bool ampiParent::getBuiltinKeyval(int keyval, void *attribute_val) {
+  if (kv_get_builtin(keyval)){
+    /* All builtin keyvals are ints except MPI_WIN_BASE, which is a pointer
+     * to the window's base address in C but an integer representation of
+     * the base address in Fortran. */
+    if (keyval == MPI_WIN_BASE)
+      *((void**)attribute_val) = *win_base_storage;
+    else
+      *(int **)attribute_val = kv_builtin_storage;
+    return true;
+  }
+  return false;
+}
+
+bool ampiParent::getUserKeyval(MPI_Comm comm, int keyval, void *attribute_val, int *flag) {
+  *flag = false;
+  if (keyval<0 || keyval >= kvlist.size() || (kvlist[keyval]==NULL))
+    return false;
   ampiCommStruct &cs=*(ampiCommStruct *)&comm2CommStruct(comm);
   if (keyval>=cs.getKeyvals().size())  
-    return 0; /* we don't have a value yet */
+    return true; /* we don't have a value yet */
   if (cs.getKeyvals()[keyval]==0)
-    return 0; /* we had a value, but now it's zero */
+    return true; /* we had a value, but now it's zero */
   /* Otherwise, we have a good value */
   *flag = true;
   *(void **)attribute_val = cs.getKeyvals()[keyval];
-  return 0;
+  return true;
 }
-int ampiParent::deleteAttr(MPI_Comm comm, int keyval){
+
+int ampiParent::getCommAttr(MPI_Comm comm, int keyval, void *attribute_val, int *flag) {
+  *flag = false;
+  if (getBuiltinKeyval(keyval, attribute_val)) {
+    *flag = true;
+    return MPI_SUCCESS;
+  }
+  if (getUserKeyval(comm, keyval, attribute_val, flag))
+    return MPI_SUCCESS;
+  return MPI_ERR_KEYVAL;
+}
+
+int ampiParent::getWinAttr(MPI_Win win, int keyval, void *attribute_val, int *flag) {
+  *flag = false;
+  if (getBuiltinKeyval(keyval, attribute_val)) {
+    *flag = true;
+    return MPI_SUCCESS;
+  }
+  MPI_Comm comm = (getAmpiParent()->getWinStruct(win)).comm;
+  if (getUserKeyval(comm, keyval, attribute_val, flag))
+    return MPI_SUCCESS;
+  return MPI_ERR_KEYVAL;
+}
+
+int ampiParent::deleteCommAttr(MPI_Comm comm, int keyval){
   /* no way to delete an attribute: just overwrite it with 0 */
-  return putAttr(comm,keyval,0);
+  return setUserKeyval(comm, keyval, 0);
+}
+
+int ampiParent::deleteWinAttr(MPI_Win win, int keyval){
+  /* no way to delete an attribute: just overwrite it with 0 */
+  MPI_Comm comm = (getAmpiParent()->getWinStruct(win)).comm;
+  return setUserKeyval(comm, keyval, 0);
 }
 
 //----------------------- ampi -------------------------
@@ -1241,10 +1336,6 @@ ampi::ampi()
   posted_ireqs = CmmNew();
   nbcasts = 0;
 
-#if AMPI_COMLIB
-  comlibProxy = thisProxy; // Will later be associated with comlib
-#endif
-
   seqEntries=parent->ckGetArraySize();
   oorder.init (seqEntries);
 #if (defined(_FAULT_MLOG_) || defined(_FAULT_CAUSAL_))
@@ -1256,39 +1347,6 @@ ampi::ampi()
      *                                      CkArray *_myManager = thisProxy.ckLocalBranch();
      *                                              _myManager->setNumInitial(numElements);*/
   }
-#endif
-}
-
-ampi::ampi(CkArrayID parent_,const ampiCommStruct &s, ComlibInstanceHandle ciStreaming_,
-    ComlibInstanceHandle ciBcast_,ComlibInstanceHandle ciAllgather_,ComlibInstanceHandle ciAlltoall_)
-:parentProxy(parent_)
-{
-#if AMPI_COMLIB
-  ciStreaming = ciStreaming_;
-  ciBcast = ciBcast_;
-  ciAllgather = ciAllgather_;
-  ciAlltoall = ciAlltoall_;
-
-  init();
-
-  myComm=s; myComm.setArrayID(thisArrayID);
-  myRank=myComm.getRankForIndex(thisIndex);
-
-  findParent(false);
-
-  msgs = CmmNew();
-  posted_ireqs = CmmNew();
-  nbcasts = 0;
-
-  comlibProxy = thisProxy;
-  CmiPrintf("comlibProxy created as a copy of thisProxy, no associate call\n");
-
-#if AMPI_COMLIB
-  //  ComlibAssociateProxy(ciAlltoall, comlibProxy);
-#endif
-
-  seqEntries=parent->ckGetArraySize();
-  oorder.init (seqEntries);
 #endif
 }
 
@@ -1358,7 +1416,7 @@ static void cmm_pup_posted_ireq(pup_er p,void **msg) {
   AmpiRequestList *reqL = getReqs();
   int retIdx = reqL->findRequestIndex((IReq *)*msg);
   if(retIdx==-1){
-  CmiAbort("An AmpiRequest instance should be found for an instance in posted_ireq!\n");
+  CkAbort("An AmpiRequest instance should be found for an instance in posted_ireq!\n");
   }
   pup_int(p, retIdx)
   }
@@ -1369,10 +1427,17 @@ static void cmm_pup_posted_ireq(pup_er p,void **msg) {
   //	printf("[%d] pupping postd irequests %p \n",CkMyPe(),*msg);
 }
 
-void ampi::pup(PUP::er &p)
+#if 0
+void ampi::virtual_pup(PUP::er &p)
 {
   if(!p.isUserlevel())
-    ArrayElement1D::pup(p);//Pack superclass
+    ArrayElement1D::pup(p);
+  recursive_pup(this, p);
+}
+#endif
+
+void ampi::pup(PUP::er &p)
+{
   p|parentProxy;
   p|myComm;
   p|myRank;
@@ -1380,20 +1445,6 @@ void ampi::pup(PUP::er &p)
   p|tmpVec;
   p|remoteProxy;
   p|resumeOnRecv;
-#if AMPI_COMLIB
-  p|comlibProxy;
-  p|ciStreaming;
-  p|ciBcast;
-  p|ciAllgather;
-  p|ciAlltoall;
-
-  if(p.isUnpacking()){
-    //    ciStreaming.setSourcePe();
-    //    ciBcast.setSourcePe();
-    //    ciAllgather.setSourcePe();
-    //    ciAlltoall.setSourcePe();
-  }
-#endif
 
   msgs=CmmPup((pup_er)&p,msgs,cmm_pup_ampi_message);
 
@@ -1484,6 +1535,21 @@ CDECL int compareAmpiSplitKey(const void *a_, const void *b_) {
   return a->rank-b->rank;
 }
 
+CProxy_ampi ampi::createNewChildAmpiSync() {
+  CkArrayOptions opts;
+  opts.bindTo(parentProxy);
+  opts.setNumInitial(0);
+  CkArrayID unusedAID;
+  ampiCommStruct unusedComm;
+  CkCallback cb(CkCallback::resumeThread);
+  CProxy_ampi::ckNew(unusedAID, unusedComm, opts, cb);
+  CkArrayCreatedMsg *newAmpiMsg = static_cast<CkArrayCreatedMsg*>(cb.thread_delay());
+  CProxy_ampi newAmpi = newAmpiMsg->aid;
+  delete newAmpiMsg;
+  newAmpi.doneInserting(); //<- Meaning, I need to do my own creation race resolution
+  return newAmpi;
+}
+
 void ampi::splitPhase1(CkReductionMsg *msg)
 {
   //Order the keys, which orders the ranks properly:
@@ -1493,9 +1559,10 @@ void ampi::splitPhase1(CkReductionMsg *msg)
   qsort(keys,nKeys,sizeof(ampiSplitKey),compareAmpiSplitKey);
 
   MPI_Comm newComm = -1;
-  for(int i=0;i<nKeys;i++)
+  for(int i=0;i<nKeys;i++){
     if(keys[i].nextSplitComm>newComm)
       newComm = keys[i].nextSplitComm;
+  }
 
   //Loop over the sorted keys, which gives us the new arrays:
   int lastColor=keys[0].color-1; //The color we're building an array for
@@ -1507,14 +1574,10 @@ void ampi::splitPhase1(CkReductionMsg *msg)
     { //Hit a new color-- need to build a new communicator and array
       lastColor=keys[c].color;
       lastRoot=c;
-      CkArrayOptions opts;
-      opts.bindTo(parentProxy);
-      opts.setNumInitial(0);
-      CkArrayID unusedAID; ampiCommStruct unusedComm;
-      lastAmpi=CProxy_ampi::ckNew(unusedAID,unusedComm,opts);
-      lastAmpi.doneInserting(); //<- Meaning, I need to do my own creation race resolution
 
-      CkVec<int> indices; //Maps rank to array indices for new arrau
+      lastAmpi = createNewChildAmpiSync();
+
+      CkVec<int> indices; //Maps rank to array indices for new array
       for (int i=c;i<nKeys;i++) {
         if (keys[i].color!=lastColor) break; //Done with this color
         int idx=myComm.getIndexForRank(keys[i].rank);
@@ -1574,23 +1637,20 @@ void ampi::commCreate(const groupStruct vec,MPI_Comm* newcomm){
   }
 }
 
+void ampi::insertNewChildAmpiElements(MPI_Comm *nextComm, CProxy_ampi newAmpi) {
+  ampiCommStruct newCommStruct = ampiCommStruct(*nextComm, newAmpi, tmpVec.size(), tmpVec);
+
+  for (int i = 0; i < tmpVec.size(); ++i)
+    newAmpi[tmpVec[i]].insert(parentProxy, newCommStruct);
+}
+
 void ampi::commCreatePhase1(CkReductionMsg *msg){
   MPI_Comm *nextGroupComm = (int *)msg->getData();
 
-  CkArrayOptions opts;
-  opts.bindTo(parentProxy);
-  opts.setNumInitial(0);
-  CkArrayID unusedAID;
-  ampiCommStruct unusedComm;
-  CProxy_ampi newAmpi=CProxy_ampi::ckNew(unusedAID,unusedComm,opts);
-  newAmpi.doneInserting(); //<- Meaning, I need to do my own creation race resolution
+  CProxy_ampi newAmpi = createNewChildAmpiSync();
 
-  groupStruct indices = tmpVec;
-  ampiCommStruct newCommstruct = ampiCommStruct(*nextGroupComm,newAmpi,indices.size(),indices);
-  for(int i=0;i<indices.size();i++){
-    int newIdx=indices[i];
-    newAmpi[newIdx].insert(parentProxy,newCommstruct);
-  }
+  insertNewChildAmpiElements(nextGroupComm, newAmpi);
+
   delete msg;
 }
 
@@ -1605,7 +1665,7 @@ void ampiParent::groupChildRegister(const ampiCommStruct &s) {
 void ampi::cartCreate(const groupStruct vec,MPI_Comm* newcomm){
   int rootIdx=vec[0];
   tmpVec = vec;
-  CkCallback cb(CkIndex_ampi::cartCreatePhase1(NULL),CkArrayIndex1D(rootIdx),myComm.getProxy());
+  CkCallback cb(CkIndex_ampi::commCreatePhase1(NULL),CkArrayIndex1D(rootIdx),myComm.getProxy());
 
   MPI_Comm nextcart = parent->getNextCart();
   contribute(sizeof(nextcart), &nextcart,CkReduction::max_int,cb);
@@ -1616,27 +1676,6 @@ void ampi::cartCreate(const groupStruct vec,MPI_Comm* newcomm){
     *newcomm = retcomm;
   }else
     *newcomm = MPI_COMM_NULL;
-}
-
-void ampi::cartCreatePhase1(CkReductionMsg *msg){
-  MPI_Comm *nextCartComm = (int *)msg->getData();
-
-  CkArrayOptions opts;
-  opts.bindTo(parentProxy);
-  opts.setNumInitial(0);
-  CkArrayID unusedAID;
-  ampiCommStruct unusedComm;
-  CProxy_ampi newAmpi=CProxy_ampi::ckNew(unusedAID,unusedComm,opts);
-  newAmpi.doneInserting(); //<- Meaning, I need to do my own creation race resolution
-
-  groupStruct indices = tmpVec;
-  ampiCommStruct newCommstruct = ampiCommStruct(*nextCartComm,newAmpi,indices.
-      size(),indices);
-  for(int i=0;i<indices.size();i++){
-    int newIdx=indices[i];
-    newAmpi[newIdx].insert(parentProxy,newCommstruct);
-  }
-  delete msg;
 }
 
 void ampiParent::cartChildRegister(const ampiCommStruct &s) {
@@ -1652,7 +1691,7 @@ void ampiParent::cartChildRegister(const ampiCommStruct &s) {
 void ampi::graphCreate(const groupStruct vec,MPI_Comm* newcomm){
   int rootIdx=vec[0];
   tmpVec = vec;
-  CkCallback cb(CkIndex_ampi::graphCreatePhase1(NULL),CkArrayIndex1D(rootIdx),
+  CkCallback cb(CkIndex_ampi::commCreatePhase1(NULL),CkArrayIndex1D(rootIdx),
       myComm.getProxy());
   MPI_Comm nextgraph = parent->getNextGraph();
   contribute(sizeof(nextgraph), &nextgraph,CkReduction::max_int,cb);
@@ -1663,27 +1702,6 @@ void ampi::graphCreate(const groupStruct vec,MPI_Comm* newcomm){
     *newcomm = retcomm;
   }else
     *newcomm = MPI_COMM_NULL;
-}
-
-void ampi::graphCreatePhase1(CkReductionMsg *msg){
-  MPI_Comm *nextGraphComm = (int *)msg->getData();
-
-  CkArrayOptions opts;
-  opts.bindTo(parentProxy);
-  opts.setNumInitial(0);
-  CkArrayID unusedAID;
-  ampiCommStruct unusedComm;
-  CProxy_ampi newAmpi=CProxy_ampi::ckNew(unusedAID,unusedComm,opts);
-  newAmpi.doneInserting(); //<- Meaning, I need to do my own creation race resolution
-
-  groupStruct indices = tmpVec;
-  ampiCommStruct newCommstruct = ampiCommStruct(*nextGraphComm,newAmpi,indices
-      .size(),indices);
-  for(int i=0;i<indices.size();i++){
-    int newIdx=indices[i];
-    newAmpi[newIdx].insert(parentProxy,newCommstruct);
-  }
-  delete msg;
 }
 
 void ampiParent::graphChildRegister(const ampiCommStruct &s) {
@@ -1712,15 +1730,9 @@ void ampi::intercommCreate(const groupStruct rvec, const int root, MPI_Comm *nco
 void ampi::intercommCreatePhase1(CkReductionMsg *msg){
   MPI_Comm *nextInterComm = (int *)msg->getData();
 
-  groupStruct lgroup = myComm.getIndices();
-  CkArrayOptions opts;
-  opts.bindTo(parentProxy);
-  opts.setNumInitial(0);
-  CkArrayID unusedAID;
-  ampiCommStruct unusedComm;
-  CProxy_ampi newAmpi=CProxy_ampi::ckNew(unusedAID,unusedComm,opts);
-  newAmpi.doneInserting(); //<- Meaning, I need to do my own creation race resolution
+  CProxy_ampi newAmpi = createNewChildAmpiSync();
 
+  groupStruct lgroup = myComm.getIndices();
   ampiCommStruct newCommstruct = ampiCommStruct(*nextInterComm,newAmpi,lgroup.size(),lgroup,tmpVec);
   for(int i=0;i<lgroup.size();i++){
     int newIdx=lgroup[i];
@@ -1764,19 +1776,10 @@ void ampi::intercommMerge(int first, MPI_Comm *ncomm){ // first valid only at lo
 void ampi::intercommMergePhase1(CkReductionMsg *msg){  // gets called on two roots, first root creates the comm
   if(tmpVec.size()==0) { delete msg; return; }
   MPI_Comm *nextIntraComm = (int *)msg->getData();
-  CkArrayOptions opts;
-  opts.bindTo(parentProxy);
-  opts.setNumInitial(0);
-  CkArrayID unusedAID;
-  ampiCommStruct unusedComm;
-  CProxy_ampi newAmpi=CProxy_ampi::ckNew(unusedAID,unusedComm,opts);
-  newAmpi.doneInserting(); //<- Meaning, I need to do my own creation race resolution
+  CProxy_ampi newAmpi = createNewChildAmpiSync();
 
-  ampiCommStruct newCommstruct = ampiCommStruct(*nextIntraComm,newAmpi,tmpVec.size(),tmpVec);
-  for(int i=0;i<tmpVec.size();i++){
-    int newIdx=tmpVec[i];
-    newAmpi[newIdx].insert(parentProxy,newCommstruct);
-  }
+  insertNewChildAmpiElements(nextIntraComm, newAmpi);
+
   delete msg;
 }
 
@@ -1810,6 +1813,12 @@ void ampi::yield(void){
 
 void ampi::unblock(void){
   thread->resume();
+}
+
+void ampi::blockOnRecv(void){
+  resumeOnRecv = true;
+  thread->suspend();
+  resumeOnRecv = false;
 }
 
   void ampi::ssend_ack(int sreq_idx){
@@ -1883,14 +1892,14 @@ ampi::inorder(AmpiMsg* msg)
     int tags[3], sts[3];
   tags[0] = msg->tag; tags[1] = msg->srcRank; tags[2] = msg->comm;
   IReq *ireq = NULL;
-  if (CpvAccess(CmiPICMethod) != 2) {
+  if (CpvAccess(CmiPICMethod) != CMI_PIC_ELFCOPY) {
 #if 0
     //IReq *ireq = (IReq *)CmmGet(posted_ireqs, 3, tags, sts);
     ireq = (IReq *)CmmGet(posted_ireqs, 3, tags, sts);
 #else
 #if CMK_BIGSIM_CHARM
     _TRACE_BG_TLINE_END(&msg->event);    // store current log
-    msg->eventPe = CmiMyPe();
+    msg->eventPe = CkMyPe();
 #endif
     //in case ampi has not initialized and posted_ireqs are only inserted 
     //at AMPI_Irecv (MPI_Irecv)
@@ -1943,14 +1952,6 @@ AmpiMsg *ampi::makeAmpiMsg(int destIdx,
   TCharm::deactivateVariable(buf);
   return msg;
 }
-
-#if AMPI_COMLIB
-  void
-ampi::comlibsend(int t, int sRank, const void* buf, int count, int type,  int rank, MPI_Comm destcomm)
-{
-  delesend(t,sRank,buf,count,type,rank,destcomm,comlibProxy);
-}
-#endif
 
   void
 ampi::send(int t, int sRank, const void* buf, int count, int type,  int rank, MPI_Comm destcomm, int sync)
@@ -2117,14 +2118,14 @@ ampi::recv(int t, int s, void* buf, int count, int type, int comm, int *sts)
 #if 1
   if (!dosuspend) {
     TRACE_BG_AMPI_BREAK(thread->getThread(), "RECV_RESUME", NULL, 0, 1);
-    if (msg->eventPe == CmiMyPe()) _TRACE_BG_ADD_BACKWARD_DEP(msg->event);
+    if (msg->eventPe == CkMyPe()) _TRACE_BG_ADD_BACKWARD_DEP(msg->event);
   }
   else
 #endif
     TRACE_BG_ADD_TAG("RECV_RESUME_THREAD");
 #else
   TRACE_BG_AMPI_BREAK(thread->getThread(), "RECV_RESUME", NULL, 0, 0);
-  if (msg->eventPe == CmiMyPe()) _TRACE_BG_ADD_BACKWARD_DEP(msg->event);
+  if (msg->eventPe == CkMyPe()) _TRACE_BG_ADD_BACKWARD_DEP(msg->event);
 #endif
 #endif
 
@@ -2192,15 +2193,10 @@ ampi::bcast(int root, void* buf, int count, int type,MPI_Comm destcomm)
   const ampiCommStruct &dest=comm2CommStruct(destcomm);
   int rootIdx=dest.getIndexForRank(root);
   if(rootIdx==thisIndex) {
-#if 0//AMPI_COMLIB
-    ciBcast.beginIteration();
-    comlibProxy.generic(makeAmpiMsg(-1,MPI_BCAST_TAG,0, buf,count,type, MPI_BCAST_COMM));
-#else
 #if (defined(_FAULT_MLOG_) || defined(_FAULT_CAUSAL_))
     CpvAccess(_currentObj) = this;
 #endif
     thisProxy.generic(makeAmpiMsg(-1,MPI_BCAST_TAG,0, buf,count,type, MPI_BCAST_COMM));
-#endif
   }
   if(-1==recv(MPI_BCAST_TAG,0, buf,count,type, MPI_BCAST_COMM)) CkAbort("AMPI> Error in broadcast");
   nbcasts++;
@@ -2217,7 +2213,7 @@ ampi::bcastraw(void* buf, int len, CkArrayID aid)
 
 
   AmpiMsg* 
-ampi::Alltoall_RemoteIGet(int disp, int cnt, MPI_Datatype type, int tag)
+ampi::Alltoall_RemoteIget(int disp, int cnt, MPI_Datatype type, int tag)
 {
   CkAssert(tag==MPI_ATA_TAG && AlltoallGetFlag);
   int unit;
@@ -2231,21 +2227,35 @@ ampi::Alltoall_RemoteIGet(int disp, int cnt, MPI_Datatype type, int tag)
   return msg;
 }
 
-int MPI_null_copy_fn (MPI_Comm comm, int keyval, void *extra_state,
+int MPI_comm_null_copy_fn (MPI_Comm comm, int keyval, void *extra_state,
     void *attr_in, void *attr_out, int *flag){
   (*flag) = 0;
   return (MPI_SUCCESS);
 }
-int MPI_dup_fn(MPI_Comm comm, int keyval, void *extra_state,
+int MPI_comm_dup_fn (MPI_Comm comm, int keyval, void *extra_state,
     void *attr_in, void *attr_out, int *flag){
   (*(void **)attr_out) = attr_in;
   (*flag) = 1;
   return (MPI_SUCCESS);
 }
-int MPI_null_delete_fn (MPI_Comm comm, int keyval, void *attr, void *extra_state ){
+int MPI_comm_null_delete_fn (MPI_Comm comm, int keyval, void *attr, void *extra_state){
   return (MPI_SUCCESS);
 }
 
+int MPI_type_null_copy_fn (MPI_Datatype type, int keyval, void *extra_state,
+    void *attr_in, void *attr_out, int *flag){
+  (*flag) = 0;
+  return (MPI_SUCCESS);
+}
+int MPI_type_dup_fn (MPI_Datatype type, int keyval, void *extra_state,
+    void *attr_in, void *attr_out, int *flag){
+  (*(void **)attr_out) = attr_in;
+  (*flag) = 1;
+  return (MPI_SUCCESS);
+}
+int MPI_type_null_delete_fn (MPI_Datatype type, int keyval, void *attr, void *extra_state){
+  return (MPI_SUCCESS);
+}
 
 void AmpiSeqQ::init(int numP) 
 {
@@ -2292,27 +2302,32 @@ AmpiMsg *AmpiSeqQ::getOutOfOrder(int srcIdx)
 
 //BIGSIM_OOC DEBUGGING: Output for AmpiRequest and its children classes
 void AmpiRequest::print(){
-  CmiPrintf("In AmpiRequest: buf=%p, count=%d, type=%d, src=%d, tag=%d, comm=%d, isvalid=%d\n", buf, count, type, src, tag, comm, isvalid);
+  CkPrintf("In AmpiRequest: buf=%p, count=%d, type=%d, src=%d, tag=%d, comm=%d, isvalid=%d\n", buf, count, type, src, tag, comm, isvalid);
 }
 
 void PersReq::print(){
   AmpiRequest::print();
-  CmiPrintf("In PersReq: sndrcv=%d\n", sndrcv);
+  CkPrintf("In PersReq: sndrcv=%d\n", sndrcv);
 }
 
 void IReq::print(){
   AmpiRequest::print();
-  CmiPrintf("In IReq: this=%p, status=%d, length=%d\n", this, statusIreq, length);
+  CkPrintf("In IReq: this=%p, status=%d, length=%d\n", this, statusIreq, length);
 }
 
 void ATAReq::print(){ //not complete for myreqs
   AmpiRequest::print();
-  CmiPrintf("In ATAReq: elmcount=%d, idx=%d\n", elmcount, idx);
+  CkPrintf("In ATAReq: elmcount=%d, idx=%d\n", elmcount, idx);
 } 
+
+void IATAReq::print(){ //not complete for myreqs
+  AmpiRequest::print();
+  CkPrintf("In IATAReq: elmcount=%d, idx=%d\n", elmcount, idx);
+}
 
 void SReq::print(){
   AmpiRequest::print();
-  CmiPrintf("In SReq: this=%p, status=%d\n", this, statusIreq);
+  CkPrintf("In SReq: this=%p, status=%d\n", this, statusIreq);
 }
 
 void AmpiRequestList::pup(PUP::er &p) { 
@@ -2339,14 +2354,17 @@ void AmpiRequestList::pup(PUP::er &p) {
     if(nonnull != 0){
       if(p.isUnpacking()){
         switch(nonnull){
-          case 1:
+          case MPI_PERS_REQ:
             block[i] = new PersReq;
             break;
-          case 2:	
+          case MPI_I_REQ:
             block[i] = new IReq;
             break;
-          case 3:	
+          case MPI_ATA_REQ:
             block[i] = new ATAReq;
+            break;
+          case MPI_IATA_REQ:
+            block[i] = new IATAReq;
             break;
         }
       }	
@@ -2402,92 +2420,66 @@ inline void checkRequests(int n, MPI_Request* reqs){
 #endif
 }
 
-CDECL void AMPI_Migrate(void)
-{
-  //  AMPIAPI("AMPI_Migrate");
-#if 0
-#if CMK_BIGSIM_CHARM
-  TRACE_BG_AMPI_SUSPEND();
-#endif
-#endif
-  TCHARM_Migrate();
+int testRequest(MPI_Request *reqIdx, int *flag, MPI_Status *sts){
+  MPI_Status tempStatus;
+  if(!sts) sts = &tempStatus;
 
-#if (defined(_FAULT_MLOG_) || defined(_FAULT_CAUSAL_))
-  ampi *currentAmpi = getAmpiInstance(MPI_COMM_WORLD);
-  CpvAccess(_currentObj) = currentAmpi;
-#endif
-
-#if CMK_BIGSIM_CHARM
-  //  TRACE_BG_AMPI_START(getAmpiInstance(MPI_COMM_WORLD)->getThread(), "AMPI_MIGRATE")
-  TRACE_BG_ADD_TAG("AMPI_MIGRATE");
-#endif
+  if(*reqIdx==MPI_REQUEST_NULL){
+    *flag = 1;
+    stsempty(*sts);
+    return MPI_SUCCESS;
+  }
+  checkRequest(*reqIdx);
+  AmpiRequestList* reqList = getReqs();
+  AmpiRequest& req = *(*reqList)[*reqIdx];
+  if(1 == (*flag = req.itest(sts))){
+    req.complete(sts);
+    if(req.getType() != MPI_PERS_REQ) { // only free non-blocking request
+      reqList->free(*reqIdx);
+      *reqIdx = MPI_REQUEST_NULL;
+    }
+  }
+  return MPI_SUCCESS;
 }
 
+int testRequestNoFree(MPI_Request *reqIdx, int *flag, MPI_Status *sts){
+  MPI_Status tempStatus;
+  if(!sts) sts = &tempStatus;
 
-CDECL void AMPI_Evacuate(void)
-{
-  TCHARM_Evacuate();
+  if(*reqIdx==MPI_REQUEST_NULL){
+    *flag = 1;
+    stsempty(*sts);
+    return MPI_SUCCESS;
+  }
+  checkRequest(*reqIdx);
+  AmpiRequestList* reqList = getReqs();
+  AmpiRequest& req = *(*reqList)[*reqIdx];
+  *flag = req.itest(sts);
+  if(*flag)
+    req.complete(sts);
+  return MPI_SUCCESS;
 }
 
-
-
-CDECL void AMPI_Migrateto(int destPE)
+CDECL int AMPI_Is_thread_main(int *flag)
 {
-  AMPIAPI("AMPI_MigrateTo");
-#if 0
-#if CMK_BIGSIM_CHARM
-  TRACE_BG_AMPI_SUSPEND();
-#endif
-#endif
-  TCHARM_Migrate_to(destPE);
-#if CMK_BIGSIM_CHARM
-  //TRACE_BG_AMPI_START(getAmpiInstance(MPI_COMM_WORLD)->getThread(), "AMPI_MIGRATETO")
-  TRACE_BG_ADD_TAG("AMPI_MIGRATETO");
-#endif
+  AMPIAPI("AMPI_Is_thread_main");
+  *flag=1;
+  return MPI_SUCCESS;
 }
 
-CDECL void AMPI_MigrateTo(int destPE)
+CDECL int AMPI_Query_thread(int *provided)
 {
-  AMPI_Migrateto(destPE);
+  AMPIAPI("AMPI_Query_thread");
+  *provided = MPI_THREAD_SINGLE;
+  return MPI_SUCCESS;
 }
 
-CDECL void AMPI_Async_Migrate(void)
+CDECL int AMPI_Init_thread(int *p_argc, char*** p_argv, int required, int *provided)
 {
-  AMPIAPI("AMPI_Async_Migrate");
-#if 0
-#if CMK_BIGSIM_CHARM
-  TRACE_BG_AMPI_SUSPEND();
-#endif
-#endif
-  TCHARM_Async_Migrate();
-#if CMK_BIGSIM_CHARM
-  //TRACE_BG_AMPI_START(getAmpiInstance(MPI_COMM_WORLD)->getThread(), "AMPI_MIGRATE")
-  TRACE_BG_ADD_TAG("AMPI_ASYNC_MIGRATE");
-#endif
-}
-
-CDECL void AMPI_Allow_Migrate(void)
-{
-  AMPIAPI("AMPI_Allow_Migrate");
-#if 0
-#if CMK_BIGSIM_CHARM
-  TRACE_BG_AMPI_SUSPEND();
-#endif
-#endif
-  TCHARM_Allow_Migrate();
-#if CMK_BIGSIM_CHARM
-  TRACE_BG_ADD_TAG("AMPI_ALLOW_MIGRATE");
-#endif
-}
-
-CDECL void AMPI_Setmigratable(MPI_Comm comm, int mig){
-#if CMK_LBDB_ON
-  //AMPIAPI("AMPI_Setmigratable");
-  ampi *ptr=getAmpiInstance(comm);
-  ptr->setMigratable(mig);
-#else
-  CkPrintf("Warning: MPI_Setmigratable and load balancing are not supported in this version.\n");
-#endif
+  AMPIAPI("AMPI_Init_thread");
+  *provided = MPI_THREAD_SINGLE;
+  AMPI_Init(p_argc, p_argv);
+  return MPI_SUCCESS;
 }
 
 CDECL int AMPI_Init(int *p_argc, char*** p_argv)
@@ -2506,7 +2498,7 @@ CDECL int AMPI_Init(int *p_argc, char*** p_argv)
     CkAbort("AMPI_Init> Charm is not initialized!");
   }
 
-  return 0;
+  return MPI_SUCCESS;
 }
 
 CDECL int AMPI_Initialized(int *isInit)
@@ -2518,14 +2510,14 @@ CDECL int AMPI_Initialized(int *isInit)
   else /* !nodeinit_has_been_called */ {
     *isInit=nodeinit_has_been_called;
   }
-  return 0;
+  return MPI_SUCCESS;
 }
 
 CDECL int AMPI_Finalized(int *isFinalized)
 {
   AMPIAPI("AMPI_Initialized");     /* in case charm init not called */
   *isFinalized=CtvAccess(ampiFinalized);
-  return 0;
+  return MPI_SUCCESS;
 }
 
 CDECL int AMPI_Comm_rank(MPI_Comm comm, int *rank)
@@ -2541,7 +2533,7 @@ CDECL int AMPI_Comm_rank(MPI_Comm comm, int *rank)
   ampiParent* pptr = getAmpiParent();
   if(msgLogRead){
     PUParray(*(pptr->fromPUPer), (char*)rank, sizeof(int));
-    return 0;
+    return MPI_SUCCESS;
   }
 #endif
 
@@ -2552,7 +2544,7 @@ CDECL int AMPI_Comm_rank(MPI_Comm comm, int *rank)
     PUParray(*(pptr->toPUPer), (char*)rank, sizeof(int));
   }
 #endif
-  return 0;
+  return MPI_SUCCESS;
 }
 
   CDECL
@@ -2569,7 +2561,7 @@ int AMPI_Comm_size(MPI_Comm comm, int *size)
   ampiParent* pptr = getAmpiParent();
   if(msgLogRead){
     PUParray(*(pptr->fromPUPer), (char*)size, sizeof(int));
-    return 0;
+    return MPI_SUCCESS;
   }
 #endif
 
@@ -2581,7 +2573,7 @@ int AMPI_Comm_size(MPI_Comm comm, int *size)
   }
 #endif
 
-  return 0;
+  return MPI_SUCCESS;
 }
 
   CDECL
@@ -2598,18 +2590,29 @@ int AMPI_Comm_compare(MPI_Comm comm1,MPI_Comm comm2, int *result)
   AMPIAPI("AMPI_Comm_compare");
   if(comm1==comm2) *result=MPI_IDENT;
   else{
-    int equal=1;
+    int congruent=1;
     CkVec<int> ind1, ind2;
     ind1 = getAmpiInstance(comm1)->getIndices();
     ind2 = getAmpiInstance(comm2)->getIndices();
     if(ind1.size()==ind2.size()){
-      for(int i=0;i<ind1.size();i++)
-        if(ind1[i] != ind2[i]) { equal=0; break; }
+      for(int i=0;i<ind1.size();i++){
+        int equal=0;
+        for(int j=0;j<ind2.size();j++){
+          if(ind1[i]==ind2[j]){
+            equal=1;
+            if(i!=j) congruent=0;
+          }
+        }
+        if(!equal){
+          *result=MPI_UNEQUAL;
+          return MPI_SUCCESS;
+        }
+      }
     }
-    if(equal==1) *result=MPI_CONGRUENT;
-    else *result=MPI_UNEQUAL;
+    if(congruent==1) *result=MPI_CONGRUENT;
+    else *result=MPI_SIMILAR;
   }
-  return 0;
+  return MPI_SUCCESS;
 }
 
 CDECL void AMPI_Exit(int /*exitCode*/)
@@ -2646,7 +2649,7 @@ int AMPI_Finalize(void)
 
   //  getAmpiInstance(MPI_COMM_WORLD)->outputCounter();
   AMPI_Exit(0);
-  return 0;
+  return MPI_SUCCESS;
 }
 
 CDECL
@@ -2663,18 +2666,12 @@ int AMPI_Send(void *msg, int count, MPI_Datatype type, int dest,
   AMPIAPI("AMPI_Send");
 #if AMPIMSGLOG
   if(msgLogRead){
-    return 0;
+    return MPI_SUCCESS;
   }
 #endif
 
   ampi *ptr = getAmpiInstance(comm);
-#if AMPI_COMLIB
-  if(enableStreaming){  
-    //    ptr->getStreaming().beginIteration();
-    ptr->comlibsend(tag,ptr->getRank(comm),msg,count,type,dest,comm);
-  } else
-#endif
-    ptr->send(tag, ptr->getRank(comm), msg, count, type, dest, comm);
+  ptr->send(tag, ptr->getRank(comm), msg, count, type, dest, comm);
 #if AMPI_COUNTER
   getAmpiParent()->counters.send++;
 #endif
@@ -2682,7 +2679,7 @@ int AMPI_Send(void *msg, int count, MPI_Datatype type, int dest,
   //  ptr->yield();
   //  //  processRemoteMlogMessages();
 #endif
-  return 0;
+  return MPI_SUCCESS;
 }
 
   CDECL
@@ -2699,23 +2696,17 @@ int AMPI_Ssend(void *msg, int count, MPI_Datatype type, int dest,
   AMPIAPI("AMPI_Ssend");
 #if AMPIMSGLOG
   if(msgLogRead){
-    return 0;
+    return MPI_SUCCESS;
   }
 #endif
 
   ampi *ptr = getAmpiInstance(comm);
-#if AMPI_COMLIB
-  if(enableStreaming){
-    ptr->getStreaming().beginIteration();
-    ptr->comlibsend(tag,ptr->getRank(comm),msg,count,type,dest,comm);
-  } else
-#endif
-    ptr->send(tag, ptr->getRank(comm), msg, count, type, dest, comm, 1);
+  ptr->send(tag, ptr->getRank(comm), msg, count, type, dest, comm, 1);
 #if AMPI_COUNTER
   getAmpiParent()->counters.send++;
 #endif
 
-  return 0;
+  return MPI_SUCCESS;
 }
 
   CDECL
@@ -2738,7 +2729,7 @@ int AMPI_Issend(void *buf, int count, MPI_Datatype type, int dest,
   ampiParent* pptr = getAmpiParent();
   if(msgLogRead){
     PUParray(*(pptr->fromPUPer), (char *)request, sizeof(MPI_Request));
-    return 0;
+    return MPI_SUCCESS;
   }
 #endif
 
@@ -2760,7 +2751,7 @@ int AMPI_Issend(void *buf, int count, MPI_Datatype type, int dest,
   }
 #endif
 
-  return 0;
+  return MPI_SUCCESS;
 }
 
   CDECL
@@ -2785,7 +2776,7 @@ int AMPI_Recv(void *msg, int count, MPI_Datatype type, int src, int tag,
     (*(pptr->fromPUPer))|(pptr->pupBytes);
     PUParray(*(pptr->fromPUPer), (char *)msg, (pptr->pupBytes));
     PUParray(*(pptr->fromPUPer), (char *)status, sizeof(MPI_Status));
-    return 0;
+    return MPI_SUCCESS;
   }
 #endif
 
@@ -2805,7 +2796,7 @@ int AMPI_Recv(void *msg, int count, MPI_Datatype type, int src, int tag,
   }
 #endif
 
-  return 0;
+  return MPI_SUCCESS;
 }
 
   CDECL
@@ -2825,7 +2816,7 @@ int AMPI_Probe(int src, int tag, MPI_Comm comm, MPI_Status *status)
   AMPIAPI("AMPI_Probe");
   ampi *ptr = getAmpiInstance(comm);
   ptr->probe(tag,src, comm, (int*) status);
-  return 0;
+  return MPI_SUCCESS;
 }
 
   CDECL
@@ -2844,7 +2835,7 @@ int AMPI_Iprobe(int src,int tag,MPI_Comm comm,int *flag,MPI_Status *status)
 
   ampi *ptr = getAmpiInstance(comm);
   *flag = ptr->iprobe(tag,src,comm,(int*) status);
-  return 0;
+  return MPI_SUCCESS;
 }
 
   CDECL
@@ -2856,7 +2847,7 @@ int AMPI_Sendrecv(void *sbuf, int scount, int stype, int dest,
 
 #if CMK_ERROR_CHECKING
   if (sbuf == MPI_IN_PLACE || rbuf == MPI_IN_PLACE)
-    CmiAbort("MPI_sendrecv does not accept MPI_IN_PLACE; use MPI_Sendrecv_replace instead");
+    CkAbort("MPI_sendrecv does not accept MPI_IN_PLACE; use MPI_Sendrecv_replace instead");
 
   int ret;
   ret = errorCheck(comm, 1, scount, 1, stype, 1, stag, 1, dest, 1, sbuf, 1);
@@ -2870,8 +2861,8 @@ int AMPI_Sendrecv(void *sbuf, int scount, int stype, int dest,
   MPI_Status tempStatus;
   if(!sts) sts = &tempStatus;
 
-  int se=MPI_Send(sbuf,scount,stype,dest,stag,comm);
-  int re=MPI_Recv(rbuf,rcount,rtype,src,rtag,comm,sts);
+  int se=AMPI_Send(sbuf,scount,stype,dest,stag,comm);
+  int re=AMPI_Recv(rbuf,rcount,rtype,src,rtag,comm,sts);
   if (se) return se;
   else return re;
 }
@@ -2899,7 +2890,9 @@ int AMPI_Barrier(MPI_Comm comm)
 
   if(getAmpiParent()->isInter(comm)) CkAbort("MPI_Barrier not allowed for Inter-communicator!");
 
+#if CMK_BIGSIM_CHARM
   TRACE_BG_AMPI_LOG(MPI_BARRIER, 0);
+#endif
 
   //HACK: Use collective operation as a barrier.
   AMPI_Allreduce(NULL,NULL,0,MPI_INT,MPI_SUM,comm);
@@ -2909,7 +2902,34 @@ int AMPI_Barrier(MPI_Comm comm)
 #if AMPI_COUNTER
   getAmpiParent()->counters.barrier++;
 #endif
-  return 0;
+  return MPI_SUCCESS;
+}
+
+  CDECL
+int AMPI_Ibarrier(MPI_Comm comm, MPI_Request *request)
+{
+  AMPIAPI("AMPI_Ibarrier");
+
+#if CMK_ERROR_CHECKING
+  if(checkCommunicator(comm) != MPI_SUCCESS)
+    return checkCommunicator(comm);
+#endif
+
+  if(getAmpiParent()->isInter(comm)) CkAbort("MPI_Ibarrier not allowed for Inter-communicator!");
+
+#if CMK_BIGSIM_CHARM
+  TRACE_BG_AMPI_LOG(MPI_BARRIER, 0);
+#endif
+
+  //HACK: Use collective operation as a barrier.
+  AMPI_Iallreduce(NULL,NULL,0,MPI_INT,MPI_SUM,comm,request);
+
+  //BIGSIM_OOC DEBUGGING
+  //CkPrintf("%d: in AMPI_Ibarrier, after AMPI_Iallreduce\n", getAmpiParent()->thisIndex);
+#if AMPI_COUNTER
+  getAmpiParent()->counters.barrier++;
+#endif
+  return MPI_SUCCESS;
 }
 
   CDECL
@@ -2926,14 +2946,14 @@ int AMPI_Bcast(void *buf, int count, MPI_Datatype type, int root,
 #endif
 
   if(getAmpiParent()->isInter(comm)) CkAbort("MPI_Bcast not allowed for Inter-communicator!");
-  if(comm==MPI_COMM_SELF) return 0;
+  if(comm==MPI_COMM_SELF) return MPI_SUCCESS;
 
 #if AMPIMSGLOG
   ampiParent* pptr = getAmpiParent();
   if(msgLogRead){
     (*(pptr->fromPUPer))|(pptr->pupBytes);
     PUParray(*(pptr->fromPUPer), (char *)buf, (pptr->pupBytes));
-    return 0;
+    return MPI_SUCCESS;
   }
 #endif
 
@@ -2955,7 +2975,54 @@ int AMPI_Bcast(void *buf, int count, MPI_Datatype type, int root,
   //  //  processRemoteMlogMessages();
 #endif
 
-  return 0;
+  return MPI_SUCCESS;
+}
+
+  CDECL
+int AMPI_Ibcast(void *buf, int count, MPI_Datatype type, int root,
+    MPI_Comm comm, MPI_Request *request)
+{
+  AMPIAPI("AMPI_Ibcast");
+
+#if CMK_ERROR_CHECKING
+  int ret;
+  ret = errorCheck(comm, 1, count, 1, type, 1, 0, 0, root, 1, buf, 1);
+  if(ret != MPI_SUCCESS)
+    return ret;
+#endif
+
+  if(getAmpiParent()->isInter(comm)) CkAbort("MPI_Ibcast not allowed for Inter-communicator!");
+  if(comm==MPI_COMM_SELF) return MPI_SUCCESS;
+
+#if AMPIMSGLOG
+  ampiParent* pptr = getAmpiParent();
+  if(msgLogRead){
+    (*(pptr->fromPUPer))|(pptr->pupBytes);
+    PUParray(*(pptr->fromPUPer), (char *)buf, (pptr->pupBytes));
+    return MPI_SUCCESS;
+  }
+#endif
+
+  ampi* ptr = getAmpiInstance(comm);
+  ptr->bcast(root, buf, count, type, comm);
+  *request = MPI_REQUEST_NULL;
+#if AMPI_COUNTER
+  getAmpiParent()->counters.bcast++;
+#endif
+
+#if AMPIMSGLOG
+  if(msgLogWrite && record_msglog(pptr->thisIndex)) {
+    (pptr->pupBytes) = getDDT()->getSize(type) * count;
+    (*(pptr->toPUPer))|(pptr->pupBytes);
+    PUParray(*(pptr->toPUPer), (char *)buf, (pptr->pupBytes));
+  }
+#endif
+#if (defined(_FAULT_MLOG_) || defined(_FAULT_CAUSAL_))
+  //ptr->yield();
+  //processRemoteMlogMessages();
+#endif
+
+  return MPI_SUCCESS;
 }
 
 /// This routine is called with the results of a Reduce or AllReduce
@@ -3007,7 +3074,7 @@ static void handle_MPI_IN_PLACE(void* &inbuf, void* &outbuf)
 {
   if (inbuf == MPI_IN_PLACE) inbuf = outbuf;
   if (outbuf == MPI_IN_PLACE) outbuf = inbuf;
-  CmiAssert(inbuf != MPI_IN_PLACE && outbuf != MPI_IN_PLACE);
+  CkAssert(inbuf != MPI_IN_PLACE && outbuf != MPI_IN_PLACE);
 }
 
 #define SYNCHRONOUS_REDUCE                           0
@@ -3035,7 +3102,7 @@ int AMPI_Reduce(void *inbuf, void *outbuf, int count, int type, MPI_Op op,
   if(msgLogRead){
     (*(pptr->fromPUPer))|(pptr->pupBytes);
     PUParray(*(pptr->fromPUPer), (char *)outbuf, (pptr->pupBytes));
-    return 0;
+    return MPI_SUCCESS;
   }
 #endif
 
@@ -3078,7 +3145,7 @@ int AMPI_Reduce(void *inbuf, void *outbuf, int count, int type, MPI_Op op,
   }
 #endif
 
-  return 0;
+  return MPI_SUCCESS;
 }
 
   CDECL
@@ -3112,7 +3179,7 @@ int AMPI_Allreduce(void *inbuf, void *outbuf, int count, int type,
     (*(pptr->fromPUPer))|(pptr->pupBytes);
     PUParray(*(pptr->fromPUPer), (char *)outbuf, (pptr->pupBytes));
     //    CkExit();
-    return 0;
+    return MPI_SUCCESS;
   }
 #endif
 
@@ -3140,7 +3207,7 @@ int AMPI_Allreduce(void *inbuf, void *outbuf, int count, int type,
   }
 #endif
 
-  return 0;
+  return MPI_SUCCESS;
 }
 
   CDECL
@@ -3161,23 +3228,74 @@ int AMPI_Iallreduce(void *inbuf, void *outbuf, int count, int type,
   }
 #endif
 
-  if(comm==MPI_COMM_SELF) return copyDatatype(comm,type,count,inbuf,outbuf);
-
-  checkRequest(*request);
   if(op == MPI_OP_NULL) CkAbort("MPI_Iallreduce called with MPI_OP_NULL!!!");
   if(getAmpiParent()->isInter(comm)) CkAbort("MPI_Iallreduce not allowed for Inter-communicator!");
+  if(comm==MPI_COMM_SELF) return copyDatatype(comm,type,count,inbuf,outbuf);
   ampi *ptr = getAmpiInstance(comm);
-
   CkReductionMsg *msg=makeRednMsg(ptr->getDDT()->getType(type),inbuf,count,type,op);
+
   CkCallback allreduceCB(CkIndex_ampi::reduceResult(0),ptr->getProxy());
   msg->setCallback(allreduceCB);
   ptr->contribute(msg);
 
-  // using irecv instead recv to non-block the call and get request pointer
+  // use an IReq to non-block the caller and get a request ptr
   AmpiRequestList* reqs = getReqs();
   IReq *newreq = new IReq(outbuf,count,type,MPI_REDUCE_SOURCE,MPI_REDUCE_TAG,MPI_REDUCE_COMM);
   *request = reqs->insert(newreq);
-  return 0;
+  int tags[3] = { MPI_REDUCE_TAG, MPI_REDUCE_SOURCE, MPI_REDUCE_COMM };
+  CmmPut(ptr->posted_ireqs, 3, tags, (void *)(CmiIntPtr)((*request)+1));
+
+#if AMPI_COUNTER
+  getAmpiParent()->counters.allreduce++;
+#endif
+  return MPI_SUCCESS;
+}
+
+  CDECL
+int AMPI_Reduce_local(void *inbuf, void *outbuf, int count, int type, MPI_Op op)
+{
+  AMPIAPI("AMPI_Reduce_local");
+
+#if CMK_ERROR_CHECKING
+  if (inbuf == MPI_IN_PLACE || outbuf == MPI_IN_PLACE)
+    CkAbort("MPI_Reduce_local does not implement MPI_IN_PLACE");
+
+  int ret;
+  ret = errorCheck(MPI_COMM_SELF, 1, count, 1, type, 1, 0, 0, 0, 1, inbuf, 1, outbuf, 1);
+  if(ret != MPI_SUCCESS)
+    return ret;
+#endif
+
+  (op)(inbuf,outbuf,&count,&type);
+  return MPI_SUCCESS;
+}
+
+  CDECL
+int AMPI_Reduce_scatter_block(void* sendbuf, void* recvbuf, int count,
+    MPI_Datatype datatype, MPI_Op op, MPI_Comm comm)
+{
+  AMPIAPI("AMPI_Reduce_scatter_block");
+
+  handle_MPI_IN_PLACE(sendbuf, recvbuf);
+
+#if CMK_ERROR_CHECKING
+  int ret;
+  ret = errorCheck(comm, 1, 0, 0, datatype, 1, 0, 0, 0, 0, sendbuf, 1, recvbuf, 1);
+  if(ret != MPI_SUCCESS)
+    return ret;
+#endif
+
+  if(getAmpiParent()->isInter(comm)) CkAbort("MPI_Reduce_scatter_block not allowed for Inter-communicator!");
+  if(comm==MPI_COMM_SELF) return copyDatatype(comm, datatype, count, sendbuf, recvbuf);
+
+  ampi *ptr = getAmpiInstance(comm);
+  void *tmpbuf = malloc(ptr->getDDT()->getType(datatype)->getSize(count));
+
+  AMPI_Reduce(sendbuf, tmpbuf, count, datatype, op, MPI_REDUCE_SOURCE, comm);
+  AMPI_Scatter(tmpbuf, count, datatype, recvbuf, count, datatype, MPI_REDUCE_SOURCE, comm);
+
+  free(tmpbuf);
+  return MPI_SUCCESS;
 }
 
   CDECL
@@ -3216,7 +3334,7 @@ int AMPI_Reduce_scatter(void* sendbuf, void* recvbuf, int *recvcounts,
       recvbuf, recvcounts[ptr->getRank(comm)], datatype, 0, comm);
   free(tmpbuf);
   delete [] displs;	// < memory leak ! // gzheng
-  return 0;
+  return MPI_SUCCESS;
 }
 
 /***** MPI_Scan algorithm (from MPICH) *******
@@ -3254,7 +3372,7 @@ int AMPI_Scan(void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MP
 
 #if CMK_ERROR_CHECKING
   if (sendbuf == MPI_IN_PLACE || recvbuf == MPI_IN_PLACE)
-    CmiAbort("AMPI_Scan does not implement MPI_IN_PLACE");
+    CkAbort("AMPI_Scan does not implement MPI_IN_PLACE");
 
   int ret;
   ret = errorCheck(comm, 1, count, 1, datatype, 1, 0, 0, 0, 0, sendbuf, 1, recvbuf, 1);
@@ -3297,21 +3415,83 @@ int AMPI_Scan(void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MP
 #if AMPI_COUNTER
   getAmpiParent()->counters.scan++;
 #endif
-  return 0;
+  return MPI_SUCCESS;
+}
+
+CDECL
+int AMPI_Exscan(void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm){
+  AMPIAPI("AMPI_Exscan");
+
+#if CMK_ERROR_CHECKING
+  if (sendbuf == MPI_IN_PLACE || recvbuf == MPI_IN_PLACE)
+    CkAbort("AMPI_Exscan does not implement MPI_IN_PLACE");
+
+  int ret;
+  ret = errorCheck(comm, 1, count, 1, datatype, 1, 0, 0, 0, 0, sendbuf, 1, recvbuf, 1);
+  if(ret != MPI_SUCCESS)
+    return ret;
+#endif
+
+  if(getAmpiParent()->isInter(comm)) CkAbort("MPI_Exscan not allowed for Inter-communicator!");
+  MPI_Status sts;
+  ampi *ptr = getAmpiInstance(comm);
+  int size = ptr->getSize(comm);
+  int blklen = ptr->getDDT()->getType(datatype)->getSize(count);
+  int rank = ptr->getRank(comm);
+  int mask = 0x1;
+  int dst, flag;
+  void* tmp_buf = malloc(blklen);
+  void* partial_scan = malloc(blklen);
+
+  memcpy(recvbuf, sendbuf, blklen);
+  memcpy(partial_scan, sendbuf, blklen);
+  flag = 0;
+  mask = 0x1;
+  while(mask < size){
+    dst = rank^mask;
+    if(dst < size){
+      AMPI_Sendrecv(partial_scan,count,datatype,dst,MPI_EXSCAN_TAG,
+                   tmp_buf,count,datatype,dst,MPI_EXSCAN_TAG,comm,&sts);
+      if(rank > dst){
+        (op)(tmp_buf,partial_scan,&count,&datatype);
+        if(rank != 0){
+          if(flag == 0){
+            memcpy(recvbuf,tmp_buf,blklen);
+            flag = 1;
+          }
+          else{
+            (op)(tmp_buf,recvbuf,&count,&datatype);
+          }
+        }
+      }
+      else{
+        (op)(partial_scan,tmp_buf,&count,&datatype);
+        memcpy(partial_scan,tmp_buf,blklen);
+      }
+      mask <<= 1;
+    }
+  }
+
+  free(tmp_buf);
+  free(partial_scan);
+#if AMPI_COUNTER
+  getAmpiParent()->counters.exscan++;
+#endif
+  return MPI_SUCCESS;
 }
 
 CDECL
 int AMPI_Op_create(MPI_User_function *function, int commute, MPI_Op *op){
   //AMPIAPI("AMPI_Op_create");
   *op = function;
-  return 0;
+  return MPI_SUCCESS;
 }
 
 CDECL
 int AMPI_Op_free(MPI_Op *op){
   //AMPIAPI("AMPI_Op_free");
   *op = MPI_OP_NULL;
-  return 0;
+  return MPI_SUCCESS;
 }
 
 
@@ -3364,7 +3544,7 @@ int AMPI_Start(MPI_Request *request)
   if(-1==(*reqs)[*request]->start()) {
     CkAbort("MPI_Start could be used only on persistent communication requests!");
   }
-  return 0;
+  return MPI_SUCCESS;
 }
 
 CDECL
@@ -3376,7 +3556,7 @@ int AMPI_Startall(int count, MPI_Request *requests){
     if(-1==(*reqs)[requests[i]]->start())
       CkAbort("MPI_Start could be used only on persistent communication requests!");
   }
-  return 0;
+  return MPI_SUCCESS;
 }
 
 /* organize the indices of requests into a vector of a vector: 
@@ -3413,10 +3593,12 @@ inline void sortedIndex(int n, int* arr, int* idx){
   int i,j;
   for(i=0;i<n;i++) 
     idx[i]=i;
-  for (i=0; i<n-1; i++) 
-    for (j=0; j<n-1-i; j++)
+  for (i=0; i<n-1; i++) {
+    for (j=0; j<n-1-i; j++) {
       if (arr[idx[j+1]] < arr[idx[j]]) 
         swapInt(idx[j+1],idx[j]);
+    }
+  }
 }
 CkVec<CkVec<int> > *vecIndex(int count, int* arr){
   CkAssert(count!=0);
@@ -3470,8 +3652,8 @@ int PersReq::wait(MPI_Status *sts){
 }
 
 int IReq::wait(MPI_Status *sts){
-  if(CpvAccess(CmiPICMethod) == 2) {
-    AMPI_DEBUG("In weird clause of IReq::wait\n");
+  if(CpvAccess(CmiPICMethod) == CMI_PIC_ELFCOPY) {
+    AMPI_DEBUG("In IReq::wait calling recv with CmiPICMethod == CMI_PIC_ELFCOPY\n");
     if(-1==getAmpiInstance(comm)->recv(tag, src, buf, count, type, comm, (int*)sts))
       CkAbort("AMPI> Error in non-blocking request wait");
 
@@ -3489,19 +3671,19 @@ int IReq::wait(MPI_Status *sts){
   //BIGSIM_OOC DEBUGGING
   //int ooccnt=0;
   //int ampiIndex = ptr->thisIndex;
-  //CmiPrintf("%d: IReq's status=%d\n", ampiIndex, statusIreq);
+  //CkPrintf("%d: IReq's status=%d\n", ampiIndex, statusIreq);
 
   while (statusIreq == false) {
     //BIGSIM_OOC DEBUGGING
-    //CmiPrintf("Before blocking: %dth time: %d: in Ireq::wait\n", ++ooccnt, ptr->thisIndex);
+    //CkPrintf("Before blocking: %dth time: %d: in Ireq::wait\n", ++ooccnt, ptr->thisIndex);
     //print();
 
     ptr->resumeOnRecv=true;
     ptr->block();
 
     //BIGSIM_OOC DEBUGGING
-    //CmiPrintf("[%d] After blocking: in Ireq::wait\n", ptr->thisIndex);
-    //CmiPrintf("IReq's this pointer: %p\n", this);
+    //CkPrintf("[%d] After blocking: in Ireq::wait\n", ptr->thisIndex);
+    //CkPrintf("IReq's this pointer: %p\n", this);
     //print();
 
 #if CMK_BIGSIM_CHARM
@@ -3510,7 +3692,7 @@ int IReq::wait(MPI_Status *sts){
     //in the outer function call.	
     if(_BgInOutOfCoreMode)
       return -1;
-#endif	
+#endif
   }   // end of while
   ptr->resumeOnRecv=false;
 
@@ -3547,6 +3729,27 @@ int ATAReq::wait(MPI_Status *sts){
   return 0;
 }
 
+int IATAReq::wait(MPI_Status *sts){
+  int i;
+  for(i=0;i<elmcount;i++){
+    if(-1==getAmpiInstance(myreqs[i].comm)->recv(myreqs[i].tag, myreqs[i].src, myreqs[i].buf,
+                                                 myreqs[i].count, myreqs[i].type,
+                                                 myreqs[i].comm, (int *)sts))
+      CkAbort("AMPI> Error in ialltoall request wait");
+#if CMK_BIGSIM_CHARM
+    _TRACE_BG_TLINE_END(&myreqs[i].event);
+#endif
+  }
+#if CMK_BIGSIM_CHARM
+  //TRACE_BG_AMPI_NEWSTART(getAmpiInstance(MPI_COMM_WORLD)->getThread(), "IATAReq", NULL, 0);
+  TRACE_BG_AMPI_BREAK(getAmpiInstance(MPI_COMM_WORLD)->getThread(), "IATAReq_wait", NULL, 0, 1);
+  for (i=0; i<elmcount; i++)
+    _TRACE_BG_ADD_BACKWARD_DEP(myreqs[i].event);
+  _TRACE_BG_TLINE_END(&event);
+#endif
+  return 0;
+}
+
 int SReq::wait(MPI_Status *sts){
   ampi *ptr = getAmpiInstance(comm);
   while (statusIreq == false) {
@@ -3568,7 +3771,7 @@ int AMPI_Wait(MPI_Request *request, MPI_Status *sts)
 
   if(*request == MPI_REQUEST_NULL){
     stsempty(*sts);
-    return 0;
+    return MPI_SUCCESS;
   }
   checkRequest(*request);
   AmpiRequestList* reqs = getReqs();
@@ -3579,7 +3782,7 @@ int AMPI_Wait(MPI_Request *request, MPI_Status *sts)
     (*(pptr->fromPUPer))|(pptr->pupBytes);
     PUParray(*(pptr->fromPUPer), (char *)((*reqs)[*request]->buf), (pptr->pupBytes));
     PUParray(*(pptr->fromPUPer), (char *)sts, sizeof(MPI_Status));
-    return 0;
+    return MPI_SUCCESS;
   }
 #endif
 
@@ -3595,9 +3798,11 @@ int AMPI_Wait(MPI_Request *request, MPI_Status *sts)
   do{
     AmpiRequest *waitReq = (*reqs)[*request];
     waitResult = waitReq->wait(sts);
+#if CMK_BIGSIM_CHARM
     if(_BgInOutOfCoreMode){
       reqs = getReqs();
     }
+#endif
   }while(waitResult==-1);
 
 
@@ -3617,14 +3822,14 @@ int AMPI_Wait(MPI_Request *request, MPI_Status *sts)
   TRACE_BG_AMPI_WAIT(reqs);   // setup forward and backward dependence
 #endif
 
-  if((*reqs)[*request]->getType() != 1) { // only free non-blocking request
+  if((*reqs)[*request]->getType() != MPI_PERS_REQ) { // only free non-blocking request
     reqs->free(*request);
     *request = MPI_REQUEST_NULL;
   }
 
   AMPI_DEBUG("End of AMPI_Wait\n");
 
-  return 0;
+  return MPI_SUCCESS;
 }
 
   CDECL
@@ -3655,7 +3860,7 @@ int AMPI_Waitall(int count, MPI_Request request[], MPI_Status sts[])
         PUParray(*(pptr->fromPUPer), (char *)(&sts[((*reqvec)[i])[j]]), sizeof(MPI_Status));
       }
     }
-    return 0;
+    return MPI_SUCCESS;
   }
 #endif
 
@@ -3680,11 +3885,13 @@ int AMPI_Waitall(int count, MPI_Request request[], MPI_Status sts[])
       do{	
         AmpiRequest *waitReq = ((*reqs)[request[((*reqvec)[i])[j]]]);
         waitResult = waitReq->wait(sts ? &sts[((*reqvec)[i])[j]] : &tempStatus);
+
+#if CMK_BIGSIM_CHARM
         if(_BgInOutOfCoreMode){
           reqs = getReqs();
           reqvec = vecIndex(count, request);
         }
-
+#endif
 #if AMPIMSGLOG
         if(msgLogWrite && record_msglog(pptr->thisIndex)){
           (pptr->pupBytes) = getDDT()->getSize(waitReq->type) * (waitReq->count);
@@ -3716,13 +3923,13 @@ int AMPI_Waitall(int count, MPI_Request request[], MPI_Status sts[])
   for(i=0;i<count;i++){ 
     if(request[i] == MPI_REQUEST_NULL)
       continue;
-    if((*reqs)[request[i]]->getType() != 1) { // only free non-blocking request
+    if((*reqs)[request[i]]->getType() != MPI_PERS_REQ) { // only free non-blocking request
       reqs->free(request[i]);
       request[i] = MPI_REQUEST_NULL;
     }
   }
   delete reqvec;
-  return 0;
+  return MPI_SUCCESS;
 }
 
   CDECL
@@ -3745,20 +3952,20 @@ int AMPI_Waitany(int count, MPI_Request *request, int *idx, MPI_Status *sts)
   CkVec<CkVec<int> > *reqvec = vecIndex(count,request);
   while(count>0){ /* keep looping until some request finishes: */
     for(int i=0;i<reqvec->size();i++){
-      AMPI_Test(&request[((*reqvec)[i])[0]], &flag, sts);
+      testRequest(&request[((*reqvec)[i])[0]], &flag, sts);
       if(flag == 1 && sts->MPI_COMM != 0){ // to skip MPI_REQUEST_NULL
         *idx = ((*reqvec)[i])[0];
         USER_CALL_DEBUG("AMPI_Waitany returning "<<*idx);
-        return 0;
+        return MPI_SUCCESS;
       }
     }
-    /* no requests have finished yet-- schedule and try again */
-    AMPI_Yield(MPI_COMM_WORLD);
+    /* no requests have finished yet-- block until one does */
+    getAmpiInstance(MPI_COMM_WORLD)->blockOnRecv();
   }
   *idx = MPI_UNDEFINED;
   USER_CALL_DEBUG("AMPI_Waitany returning UNDEFINED");
   delete reqvec;
-  return 0;
+  return MPI_SUCCESS;
 }
 
   CDECL
@@ -3778,7 +3985,7 @@ int AMPI_Waitsome(int incount, MPI_Request *array_of_requests, int *outcount,
   *outcount = 0;
   while(1){
     for(i=0;i<reqvec->size();i++){
-      AMPI_Test(&array_of_requests[((*reqvec)[i])[0]], &flag, &sts);
+      testRequest(&array_of_requests[((*reqvec)[i])[0]], &flag, &sts);
       if(flag == 1){ 
         array_of_indices[(*outcount)]=((*reqvec)[i])[0];
         if(array_of_statuses)
@@ -3787,23 +3994,30 @@ int AMPI_Waitsome(int incount, MPI_Request *array_of_requests, int *outcount,
           realflag=1; // there is real(non null) request
       }
     }
-    if(realflag && outcount>0) break;
+    if(realflag && *outcount>0)
+      break;
+    else
+      getAmpiInstance(MPI_COMM_WORLD)->blockOnRecv();
   }
   delete reqvec;
-  return 0;
+  return MPI_SUCCESS;
 }
 
-  bool PersReq::test(MPI_Status *sts){
-    if(sndrcv == 2) 	// recv request
-      return getAmpiInstance(comm)->iprobe(tag, src, comm, (int*)sts);
-    else			// send request
-      return 1;
+bool PersReq::test(MPI_Status *sts){
+  if(sndrcv == 2) // recv request
+    return getAmpiInstance(comm)->iprobe(tag, src, comm, (int*)sts);
+  else            // send request
+    return 1;
+}
 
-  }
-  void PersReq::complete(MPI_Status *sts){
-    if(-1==getAmpiInstance(comm)->recv(tag, src, buf, count, type, comm, (int*)sts))
-      CkAbort("AMPI> Error in persistent request complete");
-  }
+bool PersReq::itest(MPI_Status *sts){
+  return test(sts);
+}
+
+void PersReq::complete(MPI_Status *sts){
+  if(-1==getAmpiInstance(comm)->recv(tag, src, buf, count, type, comm, (int*)sts))
+    CkAbort("AMPI> Error in persistent request complete");
+}
 
 bool IReq::test(MPI_Status *sts){
   if (statusIreq == true) {           
@@ -3820,12 +4034,32 @@ bool IReq::test(MPI_Status *sts){
    */
 }
 
+bool IReq::itest(MPI_Status *sts){
+  if (statusIreq == true) {
+    if(sts)
+      sts->MPI_LENGTH = length;
+    return true;
+  }
+  else {
+    return false;
+  }
+}
+
 bool SReq::test(MPI_Status *sts){
   if (statusIreq == true) {
     return true;
   }
   else {
     getAmpiInstance(comm)->yield();
+    return false;
+  }
+}
+
+bool SReq::itest(MPI_Status *sts){
+  if (statusIreq == true) {
+    return true;
+  }
+  else {
     return false;
   }
 }
@@ -3857,7 +4091,7 @@ void IReq::receive(ampi *ptr, AmpiMsg *msg)
   delete msg;
 
   //BIGSIM_OOC DEBUGGING
-  //CmiPrintf("In IReq::receive, this=%p ", this);
+  //CkPrintf("In IReq::receive, this=%p ", this);
   //print();
 }
 
@@ -3869,6 +4103,11 @@ bool ATAReq::test(MPI_Status *sts){
   }
   return flag;
 }
+
+bool ATAReq::itest(MPI_Status *sts){
+  return test(sts);
+}
+
 void ATAReq::complete(MPI_Status *sts){
   int i;
   for(i=0;i<count;i++){
@@ -3878,29 +4117,52 @@ void ATAReq::complete(MPI_Status *sts){
   }
 }
 
+bool IATAReq::test(MPI_Status *sts){
+  for(int i=0;i<elmcount;i++){
+    if(false==myreqs[i].itest(sts)){
+      getAmpiInstance(comm)->yield();
+      return false;
+    }
+  }
+  return true;
+}
+
+bool IATAReq::itest(MPI_Status *sts){
+  bool flag=true;
+  for(int i=0;i<elmcount;i++){
+    if(false==myreqs[i].itest(sts))
+      return false;
+  }
+  return true;
+}
+
+void IATAReq::complete(MPI_Status *sts){
+  for(int i=0;i<elmcount;i++){
+    if(-1==getAmpiInstance(myreqs[i].comm)->recv(myreqs[i].tag, myreqs[i].src, myreqs[i].buf,
+                                                 myreqs[i].count, myreqs[i].type,
+                                                 myreqs[i].comm, (int*)sts))
+      CkAbort("AMPI> Error in ialltoall request complete");
+  }
+}
+
+  CDECL
+int AMPI_Request_get_status(MPI_Request request, int *flag, MPI_Status *sts)
+{
+  AMPIAPI("AMPI_Request_get_status");
+  testRequestNoFree(&request, flag, sts);
+  if(*flag != 1)
+    AMPI_Yield(MPI_COMM_WORLD);
+  return MPI_SUCCESS;
+}
+
   CDECL
 int AMPI_Test(MPI_Request *request, int *flag, MPI_Status *sts)
 {
   AMPIAPI("AMPI_Test");
-
-  MPI_Status tempStatus;
-  if(!sts) sts = &tempStatus;
-
-  if(*request==MPI_REQUEST_NULL) {
-    *flag = 1;
-    stsempty(*sts);
-    return 0;
-  }
-  checkRequest(*request);
-  AmpiRequestList* reqs = getReqs();
-  if(1 == (*flag = (*reqs)[*request]->test(sts))){
-    (*reqs)[*request]->complete(sts);
-    if((*reqs)[*request]->getType() != 1) { // only free non-blocking request
-      reqs->free(*request);
-      *request = MPI_REQUEST_NULL;
-    }
-  }
-  return 0;
+  testRequest(request, flag, sts);
+  if(*flag != 1)
+    AMPI_Yield(MPI_COMM_WORLD);
+  return MPI_SUCCESS;
 }
 
 CDECL
@@ -3920,40 +4182,45 @@ int AMPI_Testany(int count, MPI_Request *request, int *index, int *flag, MPI_Sta
   CkVec<CkVec<int> > *reqvec = vecIndex(count,request);
   *flag=0;
   for(int i=0;i<reqvec->size();i++){
-    AMPI_Test(&request[((*reqvec)[i])[0]], flag, sts);
+    testRequest(&request[((*reqvec)[i])[0]], flag, sts);
     if(*flag==1 && sts->MPI_COMM!=0){ // skip MPI_REQUEST_NULL
       *index = ((*reqvec)[i])[0];
-      return 0;
+      return MPI_SUCCESS;
     }
   }
   *index = MPI_UNDEFINED;
   delete reqvec;
-  return 0;
+  AMPI_Yield(MPI_COMM_WORLD);
+  return MPI_SUCCESS;
 }
 
   CDECL
 int AMPI_Testall(int count, MPI_Request *request, int *flag, MPI_Status *sts)
 {
   AMPIAPI("AMPI_Testall");
-  if(count==0) return MPI_SUCCESS;
+  if(count==0){
+    *flag = 1;
+    return MPI_SUCCESS;
+  }
   checkRequests(count,request);
-  int tmpflag;
-  int i,j;
+  int i,j,tmpflag;
   AmpiRequestList* reqs = getReqs();
   CkVec<CkVec<int> > *reqvec = vecIndex(count,request);
-  *flag = 1;  
+  *flag = 1;
   for(i=0;i<reqvec->size();i++){
     for(j=0;j<((*reqvec)[i]).size();j++){
       if(request[((*reqvec)[i])[j]] == MPI_REQUEST_NULL)
         continue;
-      tmpflag = (*reqs)[request[((*reqvec)[i])[j]]]->test(&sts[((*reqvec)[i])[j]]);
+      tmpflag = (*reqs)[request[((*reqvec)[i])[j]]]->itest(&sts[((*reqvec)[i])[j]]);
       *flag *= tmpflag;
     }
   }
-  if(flag) 
-    MPI_Waitall(count,request,sts);
-  delete reqvec;	
-  return 0;
+  delete reqvec;
+  if(*flag)
+    AMPI_Waitall(count,request,sts);
+  else
+    AMPI_Yield(MPI_COMM_WORLD);
+  return MPI_SUCCESS;
 }
 
   CDECL
@@ -3972,7 +4239,7 @@ int AMPI_Testsome(int incount, MPI_Request *array_of_requests, int *outcount,
   CkVec<CkVec<int> > *reqvec = vecIndex(incount,array_of_requests);
   *outcount = 0;
   for(i=0;i<reqvec->size();i++){
-    AMPI_Test(&array_of_requests[((*reqvec)[i])[0]], &flag, &sts);
+    testRequest(&array_of_requests[((*reqvec)[i])[0]], &flag, &sts);
     if(flag == 1){
       array_of_indices[(*outcount)]=((*reqvec)[i])[0];
       if(array_of_statuses)
@@ -3980,18 +4247,20 @@ int AMPI_Testsome(int incount, MPI_Request *array_of_requests, int *outcount,
     }
   }
   delete reqvec;
-  return 0;
+  if(*outcount==0)
+    AMPI_Yield(MPI_COMM_WORLD);
+  return MPI_SUCCESS;
 }
 
 CDECL
 int AMPI_Request_free(MPI_Request *request){
   AMPIAPI("AMPI_Request_free");
-  if(*request==MPI_REQUEST_NULL) return 0;
+  if(*request==MPI_REQUEST_NULL) return MPI_SUCCESS;
   checkRequest(*request);
   AmpiRequestList* reqs = getReqs();
   reqs->free(*request);
   *request = MPI_REQUEST_NULL;
-  return 0;
+  return MPI_SUCCESS;
 }
 
 CDECL
@@ -4002,9 +4271,17 @@ int AMPI_Cancel(MPI_Request *request){
 
 CDECL
 int AMPI_Test_cancelled(MPI_Status* status, int* flag) {
+  AMPIAPI("AMPI_Test_cancelled");
   /* FIXME: always returns success */
   *flag = 1;
-  return 0;
+  return MPI_SUCCESS;
+}
+
+CDECL
+int AMPI_Status_set_cancelled(MPI_Status *status, int flag){
+  AMPIAPI("AMPI_Status_set_cancelled");
+  /* AMPI_Test_cancelled always returns true */
+  return MPI_SUCCESS;
 }
 
   CDECL
@@ -4026,7 +4303,7 @@ int AMPI_Recv_init(void *buf, int count, int type, int src, int tag,
   AmpiRequestList* reqs = getReqs();
   PersReq *newreq = new PersReq(buf,count,type,src,tag,comm,2);
   *req = reqs->insert(newreq);
-  return 0;
+  return MPI_SUCCESS;
 }
 
   CDECL
@@ -4048,7 +4325,7 @@ int AMPI_Send_init(void *buf, int count, int type, int dest, int tag,
   AmpiRequestList* reqs = getReqs();
   PersReq *newreq = new PersReq(buf,count,type,dest,tag,comm,1);
   *req = reqs->insert(newreq);
-  return 0;
+  return MPI_SUCCESS;
 }
 
   CDECL
@@ -4070,7 +4347,7 @@ int AMPI_Ssend_init(void *buf, int count, int type, int dest, int tag,
   AmpiRequestList* reqs = getReqs();
   PersReq *newreq = new PersReq(buf,count,type,dest,tag,comm,3);
   *req = reqs->insert(newreq);
-  return 0;
+  return MPI_SUCCESS;
 }
 
   CDECL
@@ -4079,7 +4356,7 @@ int AMPI_Type_contiguous(int count, MPI_Datatype oldtype,
 {
   AMPIAPI("AMPI_Type_contiguous");
   getDDT()->newContiguous(count, oldtype, newtype);
-  return 0;
+  return MPI_SUCCESS;
 }
 
   CDECL
@@ -4088,16 +4365,24 @@ int AMPI_Type_vector(int count, int blocklength, int stride,
 {
   AMPIAPI("AMPI_Type_vector");
   getDDT()->newVector(count, blocklength, stride, oldtype, newtype);
-  return 0 ;
+  return MPI_SUCCESS;
 }
 
   CDECL
-int AMPI_Type_hvector(int count, int blocklength, MPI_Aint stride, 
+int AMPI_Type_create_hvector(int count, int blocklength, MPI_Aint stride,
+    MPI_Datatype oldtype, MPI_Datatype*  newtype)
+{
+  AMPIAPI("AMPI_Type_create_hvector");
+  getDDT()->newHVector(count, blocklength, stride, oldtype, newtype);
+  return MPI_SUCCESS;
+}
+
+  CDECL
+int AMPI_Type_hvector(int count, int blocklength, MPI_Aint stride,
     MPI_Datatype oldtype, MPI_Datatype*  newtype)
 {
   AMPIAPI("AMPI_Type_hvector");
-  getDDT()->newHVector(count, blocklength, stride, oldtype, newtype);
-  return 0 ;
+  return AMPI_Type_create_hvector(count, blocklength, stride, oldtype, newtype);
 }
 
   CDECL
@@ -4106,7 +4391,16 @@ int AMPI_Type_indexed(int count, int* arrBlength, int* arrDisp,
 {
   AMPIAPI("AMPI_Type_indexed");
   getDDT()->newIndexed(count, arrBlength, arrDisp, oldtype, newtype);
-  return 0 ;
+  return MPI_SUCCESS;
+}
+
+  CDECL
+int AMPI_Type_create_hindexed(int count, int* arrBlength, MPI_Aint* arrDisp,
+    MPI_Datatype oldtype, MPI_Datatype*  newtype)
+{
+  AMPIAPI("AMPI_Type_create_hindexed");
+  getDDT()->newHIndexed(count, arrBlength, arrDisp, oldtype, newtype);
+  return MPI_SUCCESS;
 }
 
   CDECL
@@ -4114,8 +4408,16 @@ int AMPI_Type_hindexed(int count, int* arrBlength, MPI_Aint* arrDisp,
     MPI_Datatype oldtype, MPI_Datatype*  newtype)
 {
   AMPIAPI("AMPI_Type_hindexed");
-  getDDT()->newHIndexed(count, arrBlength, arrDisp, oldtype, newtype);
-  return 0 ;
+  return AMPI_Type_create_hindexed(count, arrBlength, arrDisp, oldtype, newtype);
+}
+
+  CDECL
+int AMPI_Type_create_struct(int count, int* arrBlength, int* arrDisp,
+    MPI_Datatype* oldtype, MPI_Datatype*  newtype)
+{
+  AMPIAPI("AMPI_Type_create_struct");
+  getDDT()->newStruct(count, arrBlength, arrDisp, oldtype, newtype);
+  return MPI_SUCCESS;
 }
 
   CDECL
@@ -4123,15 +4425,14 @@ int AMPI_Type_struct(int count, int* arrBlength, int* arrDisp,
     MPI_Datatype* oldtype, MPI_Datatype*  newtype)
 {
   AMPIAPI("AMPI_Type_struct");
-  getDDT()->newStruct(count, arrBlength, arrDisp, oldtype, newtype);
-  return 0 ;
+  return AMPI_Type_create_struct(count, arrBlength, arrDisp, oldtype, newtype);
 }
 
   CDECL
 int AMPI_Type_commit(MPI_Datatype *datatype)
 {
   AMPIAPI("AMPI_Type_commit");
-  return 0;
+  return MPI_SUCCESS;
 }
 
   CDECL
@@ -4139,16 +4440,25 @@ int AMPI_Type_free(MPI_Datatype *datatype)
 {
   AMPIAPI("AMPI_Type_free");
   getDDT()->freeType(datatype);
-  return 0;
+  return MPI_SUCCESS;
 }
 
+
+  CDECL
+int AMPI_Type_get_extent(MPI_Datatype datatype, MPI_Aint *lb, MPI_Aint *extent)
+{
+  AMPIAPI("AMPI_Type_get_extent");
+  *lb = getDDT()->getLB(datatype);
+  *extent = getDDT()->getExtent(datatype);
+  return MPI_SUCCESS;
+}
 
   CDECL
 int AMPI_Type_extent(MPI_Datatype datatype, MPI_Aint *extent)
 {
   AMPIAPI("AMPI_Type_extent");
-  *extent = getDDT()->getExtent(datatype);
-  return 0;
+  MPI_Aint tmpLB;
+  return AMPI_Type_get_extent(datatype, &tmpLB, extent);
 }
 
   CDECL
@@ -4156,7 +4466,23 @@ int AMPI_Type_size(MPI_Datatype datatype, int *size)
 {
   AMPIAPI("AMPI_Type_size");
   *size=getDDT()->getSize(datatype);
-  return 0;
+  return MPI_SUCCESS;
+}
+
+  CDECL
+int AMPI_Type_set_name(MPI_Datatype datatype, char *name)
+{
+  AMPIAPI("AMPI_Type_set_name");
+  getDDT()->setName(datatype, name, strlen(name));
+  return MPI_SUCCESS;
+}
+
+  CDECL
+int AMPI_Type_get_name(MPI_Datatype datatype, char *name, int *resultlen)
+{
+  AMPIAPI("AMPI_Type_get_name");
+  getDDT()->getName(datatype, name, resultlen);
+  return MPI_SUCCESS;
 }
 
   CDECL
@@ -4179,19 +4505,13 @@ int AMPI_Isend(void *buf, int count, MPI_Datatype type, int dest,
   ampiParent* pptr = getAmpiParent();
   if(msgLogRead){
     PUParray(*(pptr->fromPUPer), (char *)request, sizeof(MPI_Request));
-    return 0;
+    return MPI_SUCCESS;
   }
 #endif
 
   USER_CALL_DEBUG("AMPI_Isend("<<type<<","<<dest<<","<<tag<<","<<comm<<")");
   ampi *ptr = getAmpiInstance(comm);
-#if AMPI_COMLIB
-  if(enableStreaming){
-    //    ptr->getStreaming().beginIteration();
-    ptr->comlibsend(tag,ptr->getRank(comm),buf,count,type,dest,comm);
-  } else
-#endif
-    ptr->send(tag, ptr->getRank(comm), buf, count, type, dest, comm);
+  ptr->send(tag, ptr->getRank(comm), buf, count, type, dest, comm);
   *request = MPI_REQUEST_NULL;
 #if AMPI_COUNTER
   getAmpiParent()->counters.isend++;
@@ -4203,7 +4523,7 @@ int AMPI_Isend(void *buf, int count, MPI_Datatype type, int dest,
   }
 #endif
 
-  return 0;
+  return MPI_SUCCESS;
 }
 
   CDECL
@@ -4219,7 +4539,7 @@ int AMPI_Irecv(void *buf, int count, MPI_Datatype type, int src,
     return ret;
 #endif
 
-  if(src==MPI_PROC_NULL) { *request = MPI_REQUEST_NULL; return 0; }
+  if(src==MPI_PROC_NULL) { *request = MPI_REQUEST_NULL; return MPI_SUCCESS; }
   USER_CALL_DEBUG("AMPI_Irecv("<<type<<","<<src<<","<<tag<<","<<comm<<")");
   AmpiRequestList* reqs = getReqs();
   IReq *newreq = new IReq(buf,count,type,src,tag,comm);
@@ -4229,7 +4549,7 @@ int AMPI_Irecv(void *buf, int count, MPI_Datatype type, int src,
   ampiParent* pptr = getAmpiParent();
   if(msgLogRead){
     PUParray(*(pptr->fromPUPer), (char *)request, sizeof(MPI_Request));
-    return 0;
+    return MPI_SUCCESS;
   }
 #endif
 
@@ -4238,7 +4558,7 @@ int AMPI_Irecv(void *buf, int count, MPI_Datatype type, int src,
   // message already arraved?
   ampi *ptr = getAmpiInstance(comm);
   AmpiMsg *msg = NULL;
-  if (CpvAccess(CmiPICMethod) != 2)       // not copyglobals 
+  if (CpvAccess(CmiPICMethod) != CMI_PIC_ELFCOPY)
   {
     msg = ptr->getMessage(tag, src, comm, &newreq->tag);
   }
@@ -4274,7 +4594,7 @@ int AMPI_Irecv(void *buf, int count, MPI_Datatype type, int src,
   }
 #endif
 
-  return 0;
+  return MPI_SUCCESS;
 }
 
   CDECL
@@ -4297,21 +4617,29 @@ int AMPI_Ireduce(void *sendbuf, void *recvbuf, int count, int type, MPI_Op op,
 #endif
 
   if(op == MPI_OP_NULL) CkAbort("MPI_Ireduce called with MPI_OP_NULL!!!");
+  if(getAmpiParent()->isInter(comm)) CkAbort("MPI_Ireduce not allowed for Inter-communicator!");
   if(comm==MPI_COMM_SELF) return copyDatatype(comm,type,count,sendbuf,recvbuf);
   ampi *ptr = getAmpiInstance(comm);
   CkReductionMsg *msg=makeRednMsg(ptr->getDDT()->getType(type),sendbuf,count,type,op);
   int rootIdx=ptr->comm2CommStruct(comm).getIndexForRank(root);
+
   CkCallback reduceCB(CkIndex_ampi::reduceResult(0),CkArrayIndex1D(rootIdx),ptr->getProxy(),true);
   msg->setCallback(reduceCB);
   ptr->contribute(msg);
 
   if (ptr->thisIndex == rootIdx){
-    // using irecv instead recv to non-block the call and get request pointer
+    // use an IReq to non-block the caller and get a request ptr
     AmpiRequestList* reqs = getReqs();
-    IReq *newreq = new IReq(recvbuf,count,type,0,MPI_REDUCE_TAG,MPI_REDUCE_COMM);
+    IReq *newreq = new IReq(recvbuf,count,type,MPI_REDUCE_SOURCE,MPI_REDUCE_TAG,MPI_REDUCE_COMM);
     *request = reqs->insert(newreq);
+    int tags[3] = { MPI_REDUCE_TAG, MPI_REDUCE_SOURCE, MPI_REDUCE_COMM };
+    CmmPut(ptr->posted_ireqs, 3, tags, (void *)(CmiIntPtr)((*request)+1));
   }
-  return 0;
+
+#if AMPI_COUNTER
+  getAmpiParent()->counters.reduce++;
+#endif
+  return MPI_SUCCESS;
 }
 
   CDECL
@@ -4322,7 +4650,7 @@ int AMPI_Allgather(void *sendbuf, int sendcount, MPI_Datatype sendtype,
   AMPIAPI("AMPI_Allgather");
 
   if (sendbuf == MPI_IN_PLACE || recvbuf == MPI_IN_PLACE)
-    CmiAbort("AMPI_Allgather does not implement MPI_IN_PLACE");
+    CkAbort("AMPI_Allgather does not implement MPI_IN_PLACE");
 
 #if CMK_ERROR_CHECKING
   int ret;
@@ -4341,24 +4669,10 @@ int AMPI_Allgather(void *sendbuf, int sendcount, MPI_Datatype sendtype,
   int size = ptr->getSize(comm);
   int i;
 
-#if AMPI_COMLIB  
-
-  if(comm == MPI_COMM_WORLD) {
-    // commlib support
-
-    for(i=0;i<size;i++) {
-      ptr->delesend(MPI_GATHER_TAG, ptr->getRank(comm), sendbuf, sendcount,
-          sendtype, i, comm, ptr->getComlibProxy());
-    }
-    ptr->getAllgatherStrategy()->doneInserting();
-
-  } else 
-#endif
-
-    for(i=0;i<size;i++) {
-      ptr->send(MPI_GATHER_TAG, ptr->getRank(comm), sendbuf, sendcount,
-          sendtype, i, comm);
-    }
+  for(i=0;i<size;i++) {
+    ptr->send(MPI_GATHER_TAG, ptr->getRank(comm), sendbuf, sendcount,
+              sendtype, i, comm);
+  }
 
 
   MPI_Status status;
@@ -4372,7 +4686,7 @@ int AMPI_Allgather(void *sendbuf, int sendcount, MPI_Datatype sendtype,
 #if AMPI_COUNTER
   getAmpiParent()->counters.allgather++;
 #endif
-  return 0;
+  return MPI_SUCCESS;
 }
 
   CDECL
@@ -4383,7 +4697,7 @@ int AMPI_Iallgather(void *sendbuf, int sendcount, MPI_Datatype sendtype,
   AMPIAPI("AMPI_Iallgather");
 
   if (sendbuf == MPI_IN_PLACE || recvbuf == MPI_IN_PLACE)
-    CmiAbort("AMPI_Iallgather does not implement MPI_IN_PLACE");
+    CkAbort("AMPI_Iallgather does not implement MPI_IN_PLACE");
 
 #if CMK_ERROR_CHECKING
   int ret;
@@ -4407,36 +4721,24 @@ int AMPI_Iallgather(void *sendbuf, int sendcount, MPI_Datatype sendtype,
   ampi *ptr = getAmpiInstance(comm);
   int size = ptr->getSize(comm);
   int i;
-#if AMPI_COMLIB
-  if(comm == MPI_COMM_WORLD) {
-    // commlib support
-    //      ptr->getAllgather().beginIteration();
-    for(i=0;i<size;i++) {
-      ptr->delesend(MPI_GATHER_TAG, ptr->getRank(comm), sendbuf, sendcount,
-          sendtype, i, comm, ptr->getComlibProxy());
-    }
-    ptr->getAllgatherStrategy()->doneInserting();
-  } else 
-#endif
-    for(i=0;i<size;i++) {
-      ptr->send(MPI_GATHER_TAG, ptr->getRank(comm), sendbuf, sendcount,
-          sendtype, i, comm);
-    }
+  for(i=0;i<size;i++) {
+    ptr->send(MPI_GATHER_TAG, ptr->getRank(comm), sendbuf, sendcount,
+              sendtype, i, comm);
+  }
 
   CkDDT_DataType* dttype = ptr->getDDT()->getType(recvtype) ;
   int itemsize = dttype->getSize(recvcount) ;
 
-  // copy+paste from MPI_Irecv
+  // use an IATAReq to non-block the caller and get a request ptr
   AmpiRequestList* reqs = getReqs();
-  ATAReq *newreq = new ATAReq(size);
+  IATAReq *newreq = new IATAReq(size);
   for(i=0;i<size;i++){
     if(newreq->addReq(((char*)recvbuf)+(itemsize*i),recvcount,recvtype,i,MPI_GATHER_TAG,comm)!=(i+1))
-      CkAbort("MPI_Iallgather: Error adding requests into ATAReq!");
+      CkAbort("MPI_Iallgather: Error adding requests into IATAReq!");
   }
   *request = reqs->insert(newreq);
   AMPI_DEBUG("MPI_Iallgather: request=%d, reqs.size=%d, &reqs=%d\n",*request,reqs->size(),reqs);
-
-  return 0;
+  return MPI_SUCCESS;
 }
 
   CDECL
@@ -4447,7 +4749,7 @@ int AMPI_Allgatherv(void *sendbuf, int sendcount, MPI_Datatype sendtype,
   AMPIAPI("AMPI_Allgatherv");
 
   if (sendbuf == MPI_IN_PLACE || recvbuf == MPI_IN_PLACE)
-    CmiAbort("AMPI_Allgatherv does not implement MPI_IN_PLACE");
+    CkAbort("AMPI_Allgatherv does not implement MPI_IN_PLACE");
 
 #if CMK_ERROR_CHECKING
   int ret;
@@ -4462,21 +4764,10 @@ int AMPI_Allgatherv(void *sendbuf, int sendcount, MPI_Datatype sendtype,
   ampi *ptr = getAmpiInstance(comm);
   int size = ptr->getSize(comm);
   int i;
-#if AMPI_COMLIB
-  if(comm == MPI_COMM_WORLD) {
-    // commlib support
-    //      ptr->getAllgather().beginIteration();
-    for(i=0;i<size;i++) {
-      ptr->delesend(MPI_GATHER_TAG, ptr->getRank(comm), sendbuf, sendcount,
-          sendtype, i, comm, ptr->getComlibProxy());
-    }
-    ptr->getAllgatherStrategy()->doneInserting();
-  } else
-#endif 
-    for(i=0;i<size;i++) {
-      ptr->send(MPI_GATHER_TAG, ptr->getRank(comm), sendbuf, sendcount,
-          sendtype, i, comm);
-    }
+  for(i=0;i<size;i++) {
+    ptr->send(MPI_GATHER_TAG, ptr->getRank(comm), sendbuf, sendcount,
+              sendtype, i, comm);
+  }
 
   MPI_Status status;
   CkDDT_DataType* dttype = ptr->getDDT()->getType(recvtype) ;
@@ -4489,7 +4780,53 @@ int AMPI_Allgatherv(void *sendbuf, int sendcount, MPI_Datatype sendtype,
 #if AMPI_COUNTER
   getAmpiParent()->counters.allgather++;
 #endif
-  return 0;
+  return MPI_SUCCESS;
+}
+
+  CDECL
+int AMPI_Iallgatherv(void *sendbuf, int sendcount, MPI_Datatype sendtype,
+    void *recvbuf, int *recvcounts, int *displs,
+    MPI_Datatype recvtype, MPI_Comm comm, MPI_Request *request)
+{
+  AMPIAPI("AMPI_Iallgatherv");
+
+  if (sendbuf == MPI_IN_PLACE || recvbuf == MPI_IN_PLACE)
+    CkAbort("AMPI_Iallgatherv does not implement MPI_IN_PLACE");
+
+#if CMK_ERROR_CHECKING
+  int ret;
+  ret = errorCheck(comm, 1, sendcount, 1, sendtype, 1, 0, 0, 0, 0, sendbuf, 1);
+  if(ret != MPI_SUCCESS)
+    return ret;
+#endif
+
+  if(getAmpiParent()->isInter(comm)) CkAbort("MPI_Iallgatherv not allowed for Inter-communicator!");
+  if(comm==MPI_COMM_SELF) return copyDatatype(comm,sendtype,sendcount,sendbuf,recvbuf);
+
+  ampi *ptr = getAmpiInstance(comm);
+  int size = ptr->getSize(comm);
+  int i;
+  for(i=0;i<size;i++) {
+    ptr->send(MPI_GATHER_TAG, ptr->getRank(comm), sendbuf, sendcount,
+              sendtype, i, comm);
+  }
+
+  CkDDT_DataType* dttype = ptr->getDDT()->getType(recvtype) ;
+  int itemsize = dttype->getSize() ;
+
+  // use an IATAReq to non-block the caller and get a request ptr
+  AmpiRequestList* reqs = getReqs();
+  IATAReq *newreq = new IATAReq(size);
+  for(i=0;i<size;i++){
+    if(newreq->addReq(((char*)recvbuf)+(itemsize*displs[i]),recvcounts[i],recvtype,i,MPI_GATHER_TAG,comm)!=(i+1))
+      CkAbort("MPI_Iallgatherv: Error adding requests into IATAReq!");
+  }
+  *request = reqs->insert(newreq);
+  AMPI_DEBUG("MPI_Iallgatherv: request=%d, reqs.size=%d, &reqs=%d\n",*request,reqs->size(),reqs);
+#if AMPI_COUNTER
+  getAmpiParent()->counters.allgather++;
+#endif
+  return MPI_SUCCESS;
 }
 
   CDECL
@@ -4500,7 +4837,7 @@ int AMPI_Gather(void *sendbuf, int sendcount, MPI_Datatype sendtype,
   AMPIAPI("AMPI_Gather");
 
   if (sendbuf == MPI_IN_PLACE || recvbuf == MPI_IN_PLACE)
-    CmiAbort("AMPI_Gather does not implement MPI_IN_PLACE");
+    CkAbort("AMPI_Gather does not implement MPI_IN_PLACE");
 
 #if CMK_ERROR_CHECKING
   int ret;
@@ -4516,7 +4853,7 @@ int AMPI_Gather(void *sendbuf, int sendcount, MPI_Datatype sendtype,
   if(msgLogRead){
     (*(pptr->fromPUPer))|(pptr->pupBytes);
     PUParray(*(pptr->fromPUPer), (char *)recvbuf, (pptr->pupBytes));
-    return 0;
+    return MPI_SUCCESS;
   }
 #endif
 
@@ -4557,7 +4894,82 @@ int AMPI_Gather(void *sendbuf, int sendcount, MPI_Datatype sendtype,
   }
 #endif
 
-  return 0;
+  return MPI_SUCCESS;
+}
+
+  CDECL
+int AMPI_Igather(void *sendbuf, int sendcount, MPI_Datatype sendtype,
+    void *recvbuf, int recvcount, MPI_Datatype recvtype,
+    int root, MPI_Comm comm, MPI_Request *request)
+{
+  AMPIAPI("AMPI_Igather");
+
+  if (sendbuf == MPI_IN_PLACE || recvbuf == MPI_IN_PLACE)
+    CkAbort("AMPI_Igather does not implement MPI_IN_PLACE");
+
+#if CMK_ERROR_CHECKING
+  int ret;
+  ret = errorCheck(comm, 1, sendcount, 1, sendtype, 1, 0, 0, 0, 0, sendbuf, 1);
+  if(ret != MPI_SUCCESS)
+    return ret;
+#endif
+
+  if(comm==MPI_COMM_SELF) return copyDatatype(comm,sendtype,sendcount,sendbuf,recvbuf);
+
+#if AMPIMSGLOG
+  ampiParent* pptr = getAmpiParent();
+  if(msgLogRead){
+    (*(pptr->fromPUPer))|(pptr->pupBytes);
+    PUParray(*(pptr->fromPUPer), (char *)recvbuf, (pptr->pupBytes));
+    return MPI_SUCCESS;
+  }
+#endif
+
+  if(getAmpiParent()->isInter(comm)) CkAbort("MPI_Igather not allowed for Inter-communicator!");
+
+  ampi *ptr = getAmpiInstance(comm);
+
+#if CMK_ERROR_CHECKING
+  ret = errorCheck(comm, 1, recvcount, 1, recvtype, 1, 0, 0, 0, 0,
+                   recvbuf, ptr->getRank(comm) == root);
+  if(ret != MPI_SUCCESS)
+    return ret;
+#endif
+
+  ptr->send(MPI_GATHER_TAG,ptr->getRank(comm),sendbuf,sendcount,sendtype,root,comm);
+
+  int size = ptr->getSize(comm);
+  if(ptr->getRank(comm)==root) {
+    CkDDT_DataType* dttype = ptr->getDDT()->getType(recvtype) ;
+    int itemsize = dttype->getSize(recvcount) ;
+
+    // use an IATAReq to non-block the caller and get a request ptr
+    AmpiRequestList* reqs = getReqs();
+    IATAReq *newreq = new IATAReq(size);
+    for(int i=0;i<size;i++){
+      if(newreq->addReq(((char*)recvbuf)+(itemsize*i),recvcount,recvtype,i,MPI_GATHER_TAG,comm)!=(i+1))
+        CkAbort("MPI_Igather: Error adding requests into IATAReq!");
+    }
+    *request = reqs->insert(newreq);
+    AMPI_DEBUG("MPI_Igather: request=%d, reqs.size=%d, &reqs=%d\n",*request,reqs->size(),reqs);
+  }
+  else {
+    *request = MPI_REQUEST_NULL;
+  }
+
+#if AMPI_COUNTER
+  getAmpiParent()->counters.gather++;
+#endif
+
+#if AMPIMSGLOG
+  if(msgLogWrite && record_msglog(pptr->thisIndex)){
+    (pptr->pupBytes) = getDDT()->getSize(recvtype) * recvcount * size;
+    (*(pptr->toPUPer))|(pptr->pupBytes);
+    PUParray(*(pptr->toPUPer), (char *)recvbuf, (pptr->pupBytes));
+  }
+#endif
+
+  return MPI_SUCCESS;
 }
 
   CDECL
@@ -4568,7 +4980,7 @@ int AMPI_Gatherv(void *sendbuf, int sendcount, MPI_Datatype sendtype,
   AMPIAPI("AMPI_Gatherv");
 
   if (sendbuf == MPI_IN_PLACE || recvbuf == MPI_IN_PLACE)
-    CmiAbort("AMPI_Gatherv does not implement MPI_IN_PLACE");
+    CkAbort("AMPI_Gatherv does not implement MPI_IN_PLACE");
 
 #if CMK_ERROR_CHECKING
   int ret;
@@ -4590,7 +5002,7 @@ int AMPI_Gatherv(void *sendbuf, int sendcount, MPI_Datatype sendtype,
       (*(pptr->fromPUPer))|(pptr->pupBytes);
       PUParray(*(pptr->fromPUPer), (char *)(((char*)recvbuf)+(itemsize*displs[i])), (pptr->pupBytes));
     }
-    return 0;
+    return MPI_SUCCESS;
   }
 #endif
 
@@ -4621,7 +5033,78 @@ int AMPI_Gatherv(void *sendbuf, int sendcount, MPI_Datatype sendtype,
   }
 #endif
 
-  return 0;
+  return MPI_SUCCESS;
+}
+
+  CDECL
+int AMPI_Igatherv(void *sendbuf, int sendcount, MPI_Datatype sendtype,
+    void *recvbuf, int *recvcounts, int *displs,
+    MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Request *request)
+{
+  AMPIAPI("AMPI_Igatherv");
+
+  if (sendbuf == MPI_IN_PLACE || recvbuf == MPI_IN_PLACE)
+    CkAbort("AMPI_Igatherv does not implement MPI_IN_PLACE");
+
+#if CMK_ERROR_CHECKING
+  int ret;
+  ret = errorCheck(comm, 1, sendcount, 1, sendtype, 1, 0, 0, 0, 0, sendbuf, 1);
+  if(ret != MPI_SUCCESS)
+    return ret;
+#endif
+
+  if(comm==MPI_COMM_SELF) return copyDatatype(comm,sendtype,sendcount,sendbuf,recvbuf);
+
+  int itemsize = getDDT()->getSize(recvtype);
+
+#if AMPIMSGLOG
+  ampiParent* pptr = getAmpiParent();
+  if(msgLogRead){
+    int commsize;
+    (*(pptr->fromPUPer))|commsize;
+    for(int i=0;i<commsize;i++){
+      (*(pptr->fromPUPer))|(pptr->pupBytes);
+      PUParray(*(pptr->fromPUPer), (char *)(((char*)recvbuf)+(itemsize*displs[i])), (pptr->pupBytes));
+    }
+    return MPI_SUCCESS;
+  }
+#endif
+
+  if(getAmpiParent()->isInter(comm)) CkAbort("MPI_Igatherv not allowed for Inter-communicator!");
+
+  ampi *ptr = getAmpiInstance(comm);
+  ptr->send(MPI_GATHER_TAG,ptr->getRank(comm),sendbuf,sendcount,sendtype,root,comm);
+
+  int size = ptr->getSize(comm);
+  if(ptr->getRank(comm) == root) {
+    // use an IATAReq to non-block the caller and get a request ptr
+    AmpiRequestList* reqs = getReqs();
+    IATAReq *newreq = new IATAReq(size);
+    for(int i=0;i<size;i++){
+      if(newreq->addReq((void*)(((char*)recvbuf)+(itemsize*displs[i])),recvcounts[i],recvtype,i,MPI_GATHER_TAG,comm)!=(i+1))
+        CkAbort("MPI_Igatherv: Error adding requests into IATAReq!");
+    }
+    *request = reqs->insert(newreq);
+    AMPI_DEBUG("MPI_Igatherv: request=%d, reqs.size=%d, &reqs=%d\n",*request,reqs->size(),reqs);
+  }
+  else {
+    *request = MPI_REQUEST_NULL;
+  }
+#if AMPI_COUNTER
+  getAmpiParent()->counters.gather++;
+#endif
+
+#if AMPIMSGLOG
+  if(msgLogWrite && record_msglog(pptr->thisIndex)){
+    for(int i=0;i<size;i++){
+      (pptr->pupBytes) = getDDT()->getSize(recvtype) * recvcounts[i];
+      (*(pptr->toPUPer))|(pptr->pupBytes);
+      PUParray(*(pptr->toPUPer), (char *)(((char*)recvbuf)+(itemsize*displs[i])), (pptr->pupBytes));
+    }
+  }
+#endif
+
+  return MPI_SUCCESS;
 }
 
   CDECL
@@ -4632,7 +5115,7 @@ int AMPI_Scatter(void *sendbuf, int sendcount, MPI_Datatype sendtype,
   AMPIAPI("AMPI_Scatter");
 
   if (sendbuf == MPI_IN_PLACE || recvbuf == MPI_IN_PLACE)
-    CmiAbort("AMPI_Scatter does not implement MPI_IN_PLACE");
+    CkAbort("AMPI_Scatter does not implement MPI_IN_PLACE");
 
 #if CMK_ERROR_CHECKING
   int ret;
@@ -4652,7 +5135,7 @@ int AMPI_Scatter(void *sendbuf, int sendcount, MPI_Datatype sendtype,
   if(msgLogRead){
     (*(pptr->fromPUPer))|(pptr->pupBytes);
     PUParray(*(pptr->fromPUPer), (char *)recvbuf, (pptr->pupBytes));
-    return 0;
+    return MPI_SUCCESS;
   }
 #endif
 
@@ -4667,7 +5150,6 @@ int AMPI_Scatter(void *sendbuf, int sendcount, MPI_Datatype sendtype,
       ptr->send(MPI_SCATTER_TAG, ptr->getRank(comm), ((char*)sendbuf)+(itemsize*i),
           sendcount, sendtype, i, comm);
     }
-    //ptr->mcomlibEnd();
   }
 
   MPI_Status status;
@@ -4686,7 +5168,75 @@ int AMPI_Scatter(void *sendbuf, int sendcount, MPI_Datatype sendtype,
   }
 #endif
 
-  return 0;
+  return MPI_SUCCESS;
+}
+
+  CDECL
+int AMPI_Iscatter(void *sendbuf, int sendcount, MPI_Datatype sendtype,
+    void *recvbuf, int recvcount, MPI_Datatype recvtype,
+    int root, MPI_Comm comm, MPI_Request *request)
+{
+  AMPIAPI("AMPI_Iscatter");
+
+  if (sendbuf == MPI_IN_PLACE || recvbuf == MPI_IN_PLACE)
+    CkAbort("AMPI_Iscatter does not implement MPI_IN_PLACE");
+
+#if CMK_ERROR_CHECKING
+  int ret;
+  ret = errorCheck(comm, 1, sendcount, 1, sendtype, 1, 0, 0, 0, 0, sendbuf, 1);
+  if(ret != MPI_SUCCESS)
+    return ret;
+  ret = errorCheck(comm, 1, recvcount, 1, recvtype, 1, 0, 0, 0, 0, recvbuf, 1);
+  if(ret != MPI_SUCCESS)
+    return ret;
+#endif
+
+  if(getAmpiParent()->isInter(comm)) CkAbort("MPI_Iscatter not allowed for Inter-communicator!");
+  if(comm==MPI_COMM_SELF) return copyDatatype(comm,sendtype,sendcount,sendbuf,recvbuf);
+
+#if AMPIMSGLOG
+  ampiParent* pptr = getAmpiParent();
+  if(msgLogRead){
+    (*(pptr->fromPUPer))|(pptr->pupBytes);
+    PUParray(*(pptr->fromPUPer), (char *)recvbuf, (pptr->pupBytes));
+    return MPI_SUCCESS;
+  }
+#endif
+
+  ampi *ptr = getAmpiInstance(comm);
+  int size = ptr->getSize(comm);
+  int i;
+
+  if(ptr->getRank(comm)==root) {
+    CkDDT_DataType* dttype = ptr->getDDT()->getType(sendtype) ;
+    int itemsize = dttype->getSize(sendcount) ;
+    for(i=0;i<size;i++) {
+      ptr->send(MPI_SCATTER_TAG, ptr->getRank(comm), ((char*)sendbuf)+(itemsize*i),
+          sendcount, sendtype, i, comm);
+    }
+  }
+
+  // use an IReq to non-block the caller and get a request ptr
+  AmpiRequestList* reqs = getReqs();
+  IReq *newreq = new IReq(recvbuf,recvcount,recvtype,root,MPI_SCATTER_TAG,comm);
+  *request = reqs->insert(newreq);
+  int tags[3];
+  tags[0]=MPI_SCATTER_TAG; tags[1]=root; tags[2]=comm;
+  CmmPut(ptr->posted_ireqs, 3, tags, (void *)(CmiIntPtr)((*request)+1));
+
+#if AMPI_COUNTER
+  getAmpiParent()->counters.scatter++;
+#endif
+
+#if AMPIMSGLOG
+  if(msgLogWrite && record_msglog(pptr->thisIndex)){
+    (pptr->pupBytes) = getDDT()->getSize(recvtype) * recvcount;
+    (*(pptr->toPUPer))|(pptr->pupBytes);
+    PUParray(*(pptr->toPUPer), (char *)recvbuf, (pptr->pupBytes));
+  }
+#endif
+
+  return MPI_SUCCESS;
 }
 
   CDECL
@@ -4697,7 +5247,7 @@ int AMPI_Scatterv(void *sendbuf, int *sendcounts, int *displs, MPI_Datatype send
   AMPIAPI("AMPI_Scatterv");
 
   if (sendbuf == MPI_IN_PLACE || recvbuf == MPI_IN_PLACE)
-    CmiAbort("AMPI_Scatterv does not implement MPI_IN_PLACE");
+    CkAbort("AMPI_Scatterv does not implement MPI_IN_PLACE");
 
 #if CMK_ERROR_CHECKING
   int ret;
@@ -4717,7 +5267,7 @@ int AMPI_Scatterv(void *sendbuf, int *sendcounts, int *displs, MPI_Datatype send
   if(msgLogRead){
     (*(pptr->fromPUPer))|(pptr->pupBytes);
     PUParray(*(pptr->fromPUPer), (char *)recvbuf, (pptr->pupBytes));
-    return 0;
+    return MPI_SUCCESS;
   }
 #endif
 
@@ -4732,7 +5282,6 @@ int AMPI_Scatterv(void *sendbuf, int *sendcounts, int *displs, MPI_Datatype send
       ptr->send(MPI_SCATTER_TAG, ptr->getRank(comm), ((char*)sendbuf)+(itemsize*displs[i]),
           sendcounts[i], sendtype, i, comm);
     }
-    //ptr->mcomlibEnd();
   }
 
   MPI_Status status;
@@ -4751,7 +5300,75 @@ int AMPI_Scatterv(void *sendbuf, int *sendcounts, int *displs, MPI_Datatype send
   }
 #endif
 
-  return 0;
+  return MPI_SUCCESS;
+}
+
+  CDECL
+int AMPI_Iscatterv(void *sendbuf, int *sendcounts, int *displs, MPI_Datatype sendtype,
+    void *recvbuf, int recvcount, MPI_Datatype recvtype,
+    int root, MPI_Comm comm, MPI_Request *request)
+{
+  AMPIAPI("AMPI_Iscatterv");
+
+  if (sendbuf == MPI_IN_PLACE || recvbuf == MPI_IN_PLACE)
+    CkAbort("AMPI_Iscatterv does not implement MPI_IN_PLACE");
+
+#if CMK_ERROR_CHECKING
+  int ret;
+  ret = errorCheck(comm, 1, 0, 0, sendtype, 1, 0, 0, 0, 0, sendbuf, 1);
+  if(ret != MPI_SUCCESS)
+    return ret;
+  ret = errorCheck(comm, 1, recvcount, 1, recvtype, 1, 0, 0, 0, 0, recvbuf, 1);
+  if(ret != MPI_SUCCESS)
+    return ret;
+#endif
+
+  if(getAmpiParent()->isInter(comm)) CkAbort("MPI_Iscatterv not allowed for Inter-communicator!");
+  if(comm==MPI_COMM_SELF) return copyDatatype(comm,sendtype,sendcounts[0],sendbuf,recvbuf);
+
+#if AMPIMSGLOG
+  ampiParent* pptr = getAmpiParent();
+  if(msgLogRead){
+    (*(pptr->fromPUPer))|(pptr->pupBytes);
+    PUParray(*(pptr->fromPUPer), (char *)recvbuf, (pptr->pupBytes));
+    return MPI_SUCCESS;
+  }
+#endif
+
+  ampi *ptr = getAmpiInstance(comm);
+  int size = ptr->getSize(comm);
+  int i;
+
+  if(ptr->getRank(comm) == root) {
+    CkDDT_DataType* dttype = ptr->getDDT()->getType(sendtype) ;
+    int itemsize = dttype->getSize() ;
+    for(i=0;i<size;i++) {
+      ptr->send(MPI_SCATTER_TAG, ptr->getRank(comm), ((char*)sendbuf)+(itemsize*displs[i]),
+          sendcounts[i], sendtype, i, comm);
+    }
+  }
+
+  // use an IReq to non-block the caller and get a request ptr
+  AmpiRequestList* reqs = getReqs();
+  IReq *newreq = new IReq(recvbuf,recvcount,recvtype,root,MPI_SCATTER_TAG,comm);
+  *request = reqs->insert(newreq);
+  int tags[3];
+  tags[0]=MPI_SCATTER_TAG; tags[1]=root; tags[2]=comm;
+  CmmPut(ptr->posted_ireqs, 3, tags, (void *)(CmiIntPtr)((*request)+1));
+
+#if AMPI_COUNTER
+  getAmpiParent()->counters.scatter++;
+#endif
+
+#if AMPIMSGLOG
+  if(msgLogWrite && record_msglog(pptr->thisIndex)){
+    (pptr->pupBytes) = getDDT()->getSize(recvtype) * recvcount;
+    (*(pptr->toPUPer))|(pptr->pupBytes);
+    PUParray(*(pptr->toPUPer), (char *)recvbuf, (pptr->pupBytes));
+  }
+#endif
+
+  return MPI_SUCCESS;
 }
 
   CDECL
@@ -4763,7 +5380,7 @@ int AMPI_Alltoall(void *sendbuf, int sendcount, MPI_Datatype sendtype,
 
 #if CMK_ERROR_CHECKING
   if (sendbuf == MPI_IN_PLACE || recvbuf == MPI_IN_PLACE)
-    CmiAbort("MPI_Alltoall does not accept MPI_IN_PLACE");
+    CkAbort("MPI_Alltoall does not accept MPI_IN_PLACE");
 
   int ret;
   ret = errorCheck(comm, 1, sendcount, 1, sendtype, 1, 0, 0, 0, 0, sendbuf, 1);
@@ -4799,23 +5416,10 @@ int AMPI_Alltoall(void *sendbuf, int sendcount, MPI_Datatype sendtype,
 
   dttype = ptr->getDDT()->getType(sendtype) ;
   itemsize = dttype->getSize(sendcount) ;
-#if AMPI_COMLIB
-  if(comm == MPI_COMM_WORLD) {
-    // commlib support
-    ptr->getAlltoall().beginIteration();
-    for(i=0;i<size;i++) {
-      ptr->delesend(MPI_ATA_TAG, ptr->getRank(comm), ((char*)sendbuf)+(itemsize*i), sendcount,
-          sendtype, i, comm, ptr->getComlibProxy());
-    }
-    ptr->getAlltoall().endIteration();
-  } else
-#endif 
-  {
-    for(i=0;i<size;i++) {
-      int dst = (rank+i) % size;
-      ptr->send(MPI_ATA_TAG, rank, ((char*)sendbuf)+(itemsize*dst), sendcount,
-          sendtype, dst, comm);
-    }
+  for(i=0;i<size;i++) {
+    int dst = (rank+i) % size;
+    ptr->send(MPI_ATA_TAG, rank, ((char*)sendbuf)+(itemsize*dst), sendcount,
+              sendtype, dst, comm);
   }
 
   // can use waitall if it is fixed for memory
@@ -4875,7 +5479,7 @@ int AMPI_Alltoall(void *sendbuf, int sendcount, MPI_Datatype sendtype,
       my_tree_root <<= i;
 
       if (dst < comm_size) {
-        MPI_Sendrecv(((char *)tmp_buf +
+        AMPI_Sendrecv(((char *)tmp_buf +
               my_tree_root*sendbuf_extent),
             curr_cnt, sendtype,
             dst, MPI_ATA_SEQ_TAG, 
@@ -4887,7 +5491,7 @@ int AMPI_Alltoall(void *sendbuf, int sendcount, MPI_Datatype sendtype,
 
         /* in case of non-power-of-two nodes, less data may be
            received than specified */
-        MPI_Get_count(&status, sendtype, &last_recv_cnt);
+        AMPI_Get_count(&status, sendtype, &last_recv_cnt);
         curr_cnt += last_recv_cnt;
       }
 
@@ -4927,7 +5531,7 @@ int AMPI_Alltoall(void *sendbuf, int sendcount, MPI_Datatype sendtype,
               (rank < tree_root + nprocs_completed)
               && (dst >= tree_root + nprocs_completed)) {
             /* send the data received in this step above */
-            MPI_Send(((char *)tmp_buf +
+            AMPI_Send(((char *)tmp_buf +
                   dst_tree_root*sendbuf_extent),
                 last_recv_cnt, sendtype,
                 dst, MPI_ATA_SEQ_TAG,
@@ -4938,13 +5542,13 @@ int AMPI_Alltoall(void *sendbuf, int sendcount, MPI_Datatype sendtype,
           else if ((dst < rank) && 
               (dst < tree_root + nprocs_completed) &&
               (rank >= tree_root + nprocs_completed)) {
-            MPI_Recv(((char *)tmp_buf +
+            AMPI_Recv(((char *)tmp_buf +
                   dst_tree_root*sendbuf_extent),
                 sendcount*comm_size*mask, 
                 sendtype,   
                 dst, MPI_ATA_SEQ_TAG,
                 comm, &status); 
-            MPI_Get_count(&status, sendtype, &last_recv_cnt);
+            AMPI_Get_count(&status, sendtype, &last_recv_cnt);
             curr_cnt += last_recv_cnt;
           }
           tmp_mask >>= 1;
@@ -4970,24 +5574,10 @@ int AMPI_Alltoall(void *sendbuf, int sendcount, MPI_Datatype sendtype,
     free((char *)tmp_buf); 
 
   }else if ( itemsize <= AMPI_ALLTOALL_MEDIUM_MSG ) {
-#if AMPI_COMLIB
-    if(comm == MPI_COMM_WORLD) {
-      // commlib support
-      //      ptr->getAlltoall().beginIteration();
-      for(i=0;i<size;i++) {
-        CmiPrintf("delesend\n");
-        ptr->delesend(MPI_ATA_TAG, ptr->getRank(comm), ((char*)sendbuf)+(itemsize*i), sendcount,
-            sendtype, i, comm, ptr->getComlibProxy());
-      }
-      ptr->getAlltoallStrategy()->doneInserting();
-    } else
-#endif 
-    { // Note that this block hangs off the conditional above
-      for(i=0;i<size;i++) {
-        int dst = (rank+i) % size;
-        ptr->send(MPI_ATA_TAG, rank, ((char*)sendbuf)+(itemsize*dst), sendcount,
-            sendtype, dst, comm);
-      }
+    for(i=0;i<size;i++) {
+      int dst = (rank+i) % size;
+      ptr->send(MPI_ATA_TAG, rank, ((char*)sendbuf)+(itemsize*dst), sendcount,
+                sendtype, dst, comm);
     }
     dttype = ptr->getDDT()->getType(recvtype) ;
     itemsize = dttype->getSize(recvcount) ;
@@ -5025,7 +5615,7 @@ int AMPI_Alltoall(void *sendbuf, int sendcount, MPI_Datatype sendtype,
       }
 
       MPI_Status status;
-      MPI_Sendrecv(((char *)sendbuf + dst*itemsize),
+      AMPI_Sendrecv(((char *)sendbuf + dst*itemsize),
           sendcount, sendtype, dst,
           MPI_ATA_TAG,
           ((char *)recvbuf + src*itemsize),
@@ -5038,19 +5628,19 @@ int AMPI_Alltoall(void *sendbuf, int sendcount, MPI_Datatype sendtype,
 #if AMPI_COUNTER
   getAmpiParent()->counters.alltoall++;
 #endif
-  return 0;
+  return MPI_SUCCESS;
 }
 
   CDECL
-int AMPI_Alltoall2(void *sendbuf, int sendcount, MPI_Datatype sendtype,
+int AMPI_Alltoall_iget(void *sendbuf, int sendcount, MPI_Datatype sendtype,
     void *recvbuf, int recvcount, MPI_Datatype recvtype,
     MPI_Comm comm)
 {
-  AMPIAPI("AMPI_Alltoall2");
+  AMPIAPI("AMPI_Alltoall_iget");
 
 #if CMK_ERROR_CHECKING
   if (sendbuf == MPI_IN_PLACE || recvbuf == MPI_IN_PLACE)
-    CmiAbort("AMPI_Alltoall2 does not accept MPI_IN_PLACE");
+    CkAbort("AMPI_Alltoall_iget does not accept MPI_IN_PLACE");
 
   int ret;
   ret = errorCheck(comm, 1, sendcount, 1, sendtype, 1, 0, 0, 0, 0, sendbuf, 1);
@@ -5061,7 +5651,7 @@ int AMPI_Alltoall2(void *sendbuf, int sendcount, MPI_Datatype sendtype,
     return ret;
 #endif
 
-  if(getAmpiParent()->isInter(comm)) CkAbort("MPI_Alltoall not allowed for Inter-communicator!");
+  if(getAmpiParent()->isInter(comm)) CkAbort("AMPI_Alltoall_iget not allowed for Inter-communicator!");
   if(comm==MPI_COMM_SELF) return copyDatatype(comm,sendtype,sendcount,sendbuf,recvbuf);
   ampi *ptr = getAmpiInstance(comm);
   CProxy_ampi pa(ptr->ckGetArrayID());
@@ -5072,7 +5662,7 @@ int AMPI_Alltoall2(void *sendbuf, int sendcount, MPI_Datatype sendtype,
   int myrank;
   int i;
   // Set flags for others to get
-  ptr->setA2AIGetFlag((void*)sendbuf);
+  ptr->setA2AIgetFlag((void*)sendbuf);
   MPI_Comm_rank(comm,&myrank);
   recvdisp = myrank*recvcount;
 
@@ -5080,7 +5670,7 @@ int AMPI_Alltoall2(void *sendbuf, int sendcount, MPI_Datatype sendtype,
   // post receives
   MPI_Request *reqs = new MPI_Request[size];
   for(i=0;i<size;i++) {
-    reqs[i] = pa[i].Alltoall_RemoteIGet(recvdisp, recvcount, recvtype,
+    reqs[i] = pa[i].Alltoall_RemoteIget(recvdisp, recvcount, recvtype,
         MPI_ATA_TAG);
   }
 
@@ -5097,12 +5687,12 @@ int AMPI_Alltoall2(void *sendbuf, int sendcount, MPI_Datatype sendtype,
   AMPI_Barrier(comm);
 
   // Reset flags 
-  ptr->resetA2AIGetFlag();
+  ptr->resetA2AIgetFlag();
 
 #if AMPI_COUNTER
   getAmpiParent()->counters.alltoall++;
 #endif
-  return 0;
+  return MPI_SUCCESS;
 }
 
   CDECL
@@ -5114,7 +5704,7 @@ int AMPI_Ialltoall(void *sendbuf, int sendcount, MPI_Datatype sendtype,
 
 #if CMK_ERROR_CHECKING
   if (sendbuf == MPI_IN_PLACE || recvbuf == MPI_IN_PLACE)
-    CmiAbort("AMPI_Ialltoall does not accept MPI_IN_PLACE");
+    CkAbort("AMPI_Ialltoall does not accept MPI_IN_PLACE");
 
   int ret;
   ret = errorCheck(comm, 1, sendcount, 1, sendtype, 1, 0, 0, 0, 0, sendbuf, 1);
@@ -5133,39 +5723,27 @@ int AMPI_Ialltoall(void *sendbuf, int sendcount, MPI_Datatype sendtype,
 
   if(getAmpiParent()->isInter(comm)) CkAbort("MPI_Ialltoall not allowed for Inter-communicator!");
   if(comm==MPI_COMM_SELF) return copyDatatype(comm,sendtype,sendcount,sendbuf,recvbuf);
+
   ampi *ptr = getAmpiInstance(comm);
-  AmpiRequestList* reqs = getReqs();
   int size = ptr->getSize(comm);
-  int reqsSize = reqs->size();
-  CkDDT_DataType* dttype = ptr->getDDT()->getType(sendtype) ;
-  int itemsize = dttype->getSize(sendcount) ;
+  CkDDT_DataType* dttype = ptr->getDDT()->getType(sendtype);
+  int itemsize = dttype->getSize(sendcount);
   int i;
+  for(i=0;i<size;i++) {
+    ptr->send(MPI_ATA_TAG, ptr->getRank(comm), ((char*)sendbuf)+(itemsize*i), sendcount,
+              sendtype, i, comm);
+  }
 
-#if AMPI_COMLIB
-  if(comm == MPI_COMM_WORLD) {
-    // commlib support
-    //      ptr->getAlltoall().beginIteration();
-    for(i=0;i<size;i++) {
-      ptr->delesend(MPI_ATA_TAG+reqsSize, ptr->getRank(comm), ((char*)sendbuf)+(itemsize*i), sendcount,
-          sendtype, i, comm, ptr->getComlibProxy());
-    }
-    ptr->getAlltoallStrategy()->doneInserting();
-  } else
-#endif
-    for(i=0;i<size;i++) {
-      ptr->send(MPI_ATA_TAG+reqsSize, ptr->getRank(comm), ((char*)sendbuf)+(itemsize*i), sendcount,
-          sendtype, i, comm);
-    }
-
-  // copy+paste from MPI_Irecv
-  ATAReq *newreq = new ATAReq(size);
+  // use an IATAReq to non-block the caller and get a request ptr
+  AmpiRequestList* reqs = getReqs();
+  IATAReq *newreq = new IATAReq(size);
   for(i=0;i<size;i++){
-    if(newreq->addReq(((char*)recvbuf)+(itemsize*i),recvcount,recvtype,i,MPI_ATA_TAG+reqsSize,comm)!=(i+1))
-      CkAbort("MPI_Ialltoall: Error adding requests into ATAReq!");
+    if(newreq->addReq(((char*)recvbuf)+(itemsize*i),recvcount,recvtype,i,MPI_ATA_TAG,comm)!=(i+1))
+      CkAbort("MPI_Ialltoall: Error adding requests into IATAReq!");
   }
   *request = reqs->insert(newreq);
   AMPI_DEBUG("MPI_Ialltoall: request=%d, reqs.size=%d, &reqs=%d\n",*request,reqs->size(),reqs);
-  return 0;
+  return MPI_SUCCESS;
 }
 
   CDECL
@@ -5174,11 +5752,11 @@ int AMPI_Alltoallv(void *sendbuf, int *sendcounts_, int *sdispls_,
     int *rdispls_, MPI_Datatype recvtype, MPI_Comm comm)
 {
   if(getAmpiParent()->isInter(comm)) CkAbort("MPI_Alltoallv not allowed for Inter-communicator!");
-  if(comm==MPI_COMM_SELF) return 0;
+  if(comm==MPI_COMM_SELF) return MPI_SUCCESS;
 
 #if CMK_ERROR_CHECKING
   if (sendbuf == MPI_IN_PLACE || recvbuf == MPI_IN_PLACE)
-    CmiAbort("MPI_Alltoallv does not accept MPI_IN_PLACE");
+    CkAbort("MPI_Alltoallv does not accept MPI_IN_PLACE");
 
   int ret;
   ret = errorCheck(comm, 1, 0, 0, sendtype, 1, 0, 0, 0, 0, sendbuf, 1);
@@ -5195,7 +5773,7 @@ int AMPI_Alltoallv(void *sendbuf, int *sendcounts_, int *sdispls_,
   int *sdispls = sdispls_;
   int *recvcounts = recvcounts_;
   int *rdispls = rdispls_;
-  if (CpvAccess(CmiPICMethod) == 2)       // copyglobals make separate copy
+  if (CpvAccess(CmiPICMethod) == CMI_PIC_ELFCOPY)
   {
     // FIXME: we don't need to make copy if it is not global variable
     sendcounts = new int[size];
@@ -5213,22 +5791,9 @@ int AMPI_Alltoallv(void *sendbuf, int *sendcounts_, int *sdispls_,
   CkDDT_DataType* dttype = ptr->getDDT()->getType(sendtype) ;
   int itemsize = dttype->getSize() ;
   int i;
-#if AMPI_COMLIB
-  if(comm == MPI_COMM_WORLD) {
-    // commlib support
-    //      ptr->getAlltoall().beginIteration();
-    for(i=0;i<size;i++) {
-      ptr->delesend(MPI_GATHER_TAG,ptr->getRank(comm),((char*)sendbuf)+(itemsize*sdispls[i]),sendcounts[i],
-          sendtype, i, comm, ptr->getComlibProxy());
-    }
-    ptr->getAlltoallStrategy()->doneInserting();
-  } else
-#endif
-  {
-    for(i=0;i<size;i++)  {
-      ptr->send(MPI_GATHER_TAG,ptr->getRank(comm),((char*)sendbuf)+(itemsize*sdispls[i]),sendcounts[i],
-          sendtype, i, comm);
-    }
+  for(i=0;i<size;i++)  {
+    ptr->send(MPI_GATHER_TAG,ptr->getRank(comm),((char*)sendbuf)+(itemsize*sdispls[i]),sendcounts[i],
+              sendtype, i, comm);
   }
   MPI_Status status;
   dttype = ptr->getDDT()->getType(recvtype) ;
@@ -5241,14 +5806,703 @@ int AMPI_Alltoallv(void *sendbuf, int *sendcounts_, int *sdispls_,
 #if AMPI_COUNTER
   getAmpiParent()->counters.alltoall++;
 #endif
-  if (CpvAccess(CmiPICMethod) == 2)       // copyglobals
+  if (CpvAccess(CmiPICMethod) == CMI_PIC_ELFCOPY)
   {
     delete [] sendcounts;
     delete [] sdispls;
     delete [] recvcounts;
     delete [] rdispls;
   }
-  return 0;
+  return MPI_SUCCESS;
+}
+
+  CDECL
+int AMPI_Ialltoallv(void *sendbuf, int *sendcounts_, int *sdispls_,
+    MPI_Datatype sendtype, void *recvbuf, int *recvcounts_,
+    int *rdispls_, MPI_Datatype recvtype, MPI_Comm comm, MPI_Request *request)
+{
+  if(getAmpiParent()->isInter(comm)) CkAbort("MPI_Ialltoallv not allowed for Inter-communicator!");
+  if(comm==MPI_COMM_SELF) return MPI_SUCCESS;
+
+#if CMK_ERROR_CHECKING
+  if (sendbuf == MPI_IN_PLACE || recvbuf == MPI_IN_PLACE)
+    CkAbort("MPI_Ialltoallv does not accept MPI_IN_PLACE");
+
+  int ret;
+  ret = errorCheck(comm, 1, 0, 0, sendtype, 1, 0, 0, 0, 0, sendbuf, 1);
+  if(ret != MPI_SUCCESS)
+    return ret;
+  ret = errorCheck(comm, 1, 0, 0, recvtype, 1, 0, 0, 0, 0, recvbuf, 1);
+  if(ret != MPI_SUCCESS)
+    return ret;
+#endif
+
+  ampi *ptr = getAmpiInstance(comm);
+  int size = ptr->getSize(comm);
+  int *sendcounts = sendcounts_;
+  int *sdispls = sdispls_;
+  int *recvcounts = recvcounts_;
+  int *rdispls = rdispls_;
+  if (CpvAccess(CmiPICMethod) == CMI_PIC_ELFCOPY)
+  {
+    // FIXME: we don't need to make copy if it is not global variable
+    sendcounts = new int[size];
+    sdispls = new int[size];
+    recvcounts = new int[size];
+    rdispls = new int[size];
+    for (int i=0; i<size; i++) {
+      sendcounts[i] = sendcounts_[i];
+      sdispls[i] = sdispls_[i];
+      recvcounts[i] = recvcounts_[i];
+      rdispls[i] = rdispls_[i];
+    }
+  }
+  AMPIAPI("AMPI_Ialltoallv");
+  CkDDT_DataType* dttype = ptr->getDDT()->getType(sendtype) ;
+  int itemsize = dttype->getSize() ;
+  int i;
+  for(i=0;i<size;i++)  {
+    ptr->send(MPI_ATA_TAG,ptr->getRank(comm),((char*)sendbuf)+(itemsize*sdispls[i]),sendcounts[i],
+              sendtype, i, comm);
+  }
+
+  dttype = ptr->getDDT()->getType(recvtype) ;
+  itemsize = dttype->getSize() ;
+
+  // use an IATAReq to non-block the caller and get a request ptr
+  AmpiRequestList* reqs = getReqs();
+  IATAReq *newreq = new IATAReq(size);
+  for(i=0;i<size;i++){
+    if(newreq->addReq((void*)(((char*)recvbuf)+(itemsize*rdispls[i])),recvcounts[i],recvtype,i,MPI_ATA_TAG,comm)!=(i+1))
+      CkAbort("MPI_Ialltoallv: Error adding requests into IATAReq!");
+  }
+  *request = reqs->insert(newreq);
+  AMPI_DEBUG("MPI_Ialltoallv: request=%d, reqs.size=%d, &reqs=%d\n",*request,reqs->size(),reqs);
+#if AMPI_COUNTER
+  getAmpiParent()->counters.alltoall++;
+#endif
+  if (CpvAccess(CmiPICMethod) == CMI_PIC_ELFCOPY)
+  {
+    delete [] sendcounts;
+    delete [] sdispls;
+    delete [] recvcounts;
+    delete [] rdispls;
+  }
+  return MPI_SUCCESS;
+}
+
+  CDECL
+int AMPI_Alltoallw(void *sendbuf, int *sendcounts, int *sdispls,
+                  MPI_Datatype *sendtypes, void *recvbuf, int *recvcounts,
+                  int *rdispls, MPI_Datatype *recvtypes, MPI_Comm comm)
+{
+  AMPIAPI("AMPI_Alltoallw");
+  if(getAmpiParent()->isInter(comm)) CkAbort("MPI_Alltoallw not allowed for Inter-communicator!");
+  if(comm==MPI_COMM_SELF) return MPI_SUCCESS;
+
+#if CMK_ERROR_CHECKING
+  if (sendbuf == MPI_IN_PLACE || recvbuf == MPI_IN_PLACE)
+    CkAbort("MPI_Alltoallw does not accept MPI_IN_PLACE");
+
+  int ret;
+  ret = errorCheck(comm, 1, 0, 0, sendtypes[0], 1, 0, 0, 0, 0, sendbuf, 1);
+  if(ret != MPI_SUCCESS)
+    return ret;
+  ret = errorCheck(comm, 1, 0, 0, recvtypes[0], 1, 0, 0, 0, 0, recvbuf, 1);
+  if(ret != MPI_SUCCESS)
+    return ret;
+#endif
+
+  /* displs are in terms of bytes for Alltoallw (unlike Alltoallv) */
+  ampi *ptr = getAmpiInstance(comm);
+  int i, size = ptr->getSize(comm);
+  for(i=0;i<size;i++){
+    ptr->send(MPI_ATA_TAG, ptr->getRank(comm), ((char*)sendbuf)+sdispls[i],
+              sendcounts[i], sendtypes[i], i, comm);
+  }
+
+  for(i=0;i<size;i++){
+    if(-1==ptr->recv(MPI_ATA_TAG, i, ((char*)recvbuf)+rdispls[i], recvcounts[i],
+                     recvtypes[i], comm))
+      CkAbort("MPI_Alltoallw failed in recv\n");
+  }
+
+#if AMPI_COUNTER
+  getAmpiParent()->counters.alltoall++;
+#endif
+  return MPI_SUCCESS;
+}
+
+  CDECL
+int AMPI_Ialltoallw(void *sendbuf, int *sendcounts, int *sdispls,
+                   MPI_Datatype *sendtypes, void *recvbuf, int *recvcounts,
+                   int *rdispls, MPI_Datatype *recvtypes, MPI_Comm comm,
+                   MPI_Request *request)
+{
+  AMPIAPI("AMPI_Ialltoallw");
+  if(getAmpiParent()->isInter(comm)) CkAbort("MPI_Ialltoallw not allowed for Inter-communicator!");
+  if(comm==MPI_COMM_SELF) return MPI_SUCCESS;
+
+#if CMK_ERROR_CHECKING
+  if (sendbuf == MPI_IN_PLACE || recvbuf == MPI_IN_PLACE)
+    CkAbort("MPI_Ialltoallw does not accept MPI_IN_PLACE");
+
+  int ret;
+  ret = errorCheck(comm, 1, 0, 0, sendtypes[0], 1, 0, 0, 0, 0, sendbuf, 1);
+  if(ret != MPI_SUCCESS)
+    return ret;
+  ret = errorCheck(comm, 1, 0, 0, recvtypes[0], 1, 0, 0, 0, 0, recvbuf, 1);
+  if(ret != MPI_SUCCESS)
+    return ret;
+#endif
+
+  /* displs are in terms of bytes for Alltoallw (unlike Alltoallv) */
+  ampi *ptr = getAmpiInstance(comm);
+  int i, size = ptr->getSize(comm);
+  for(i=0;i<size;i++){
+    ptr->send(MPI_ATA_TAG, ptr->getRank(comm), ((char*)sendbuf)+sdispls[i],
+              sendcounts[i], sendtypes[i], i, comm);
+  }
+
+  // use an IATAReq to non-block the caller and get a request ptr
+  AmpiRequestList* reqs = getReqs();
+  IATAReq *newreq = new IATAReq(size);
+  for(i=0;i<size;i++){
+    if(newreq->addReq((void*)(((char*)recvbuf)+rdispls[i]), recvcounts[i],
+                      recvtypes[i], i, MPI_ATA_TAG, comm) != (i+1))
+      CkAbort("MPI_Ialltoallw: Error adding requests into IATAReq!");
+  }
+  *request = reqs->insert(newreq);
+
+#if AMPI_COUNTER
+  getAmpiParent()->counters.alltoall++;
+#endif
+  return MPI_SUCCESS;
+}
+
+  CDECL
+int AMPI_Neighbor_alltoall(void* sendbuf, int sendcount, MPI_Datatype sendtype,
+         void* recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm)
+{
+  AMPIAPI("AMPI_Neighbor_alltoall");
+
+  if (sendbuf == MPI_IN_PLACE || recvbuf == MPI_IN_PLACE)
+    CkAbort("MPI_Neighbor_alltoall does not implement MPI_IN_PLACE");
+
+#if CMK_ERROR_CHECKING
+  int ret;
+  ret = errorCheck(comm, 1, sendcount, 1, sendtype, 1, 0, 0, 0, 0, sendbuf, 1);
+  if(ret != MPI_SUCCESS)
+    return ret;
+  ret = errorCheck(comm, 1, recvcount, 1, recvtype, 1, 0, 0, 0, 0, recvbuf, 1);
+  if(ret != MPI_SUCCESS)
+    return ret;
+#endif
+
+  if (getAmpiParent()->isInter(comm)) CkAbort("MPI_Neighbor_alltoall not allowed for Inter-communicator!");
+  if (comm == MPI_COMM_SELF) return copyDatatype(comm, sendtype, sendcount, sendbuf, recvbuf);
+
+  int num_neighbors, rank_in_comm;
+  int *neighbors;
+  ampi *ptr = getAmpiInstance(comm);
+  rank_in_comm = ptr->getRank(comm);
+
+  num_neighbors = ptr->getNumTopologyNeighbors(comm, rank_in_comm);
+  if (num_neighbors == 0) return MPI_SUCCESS;
+  neighbors = new int[num_neighbors];
+  ptr->getTopologyNeighborRanks(comm, rank_in_comm, num_neighbors, neighbors);
+
+  int itemsize = getDDT()->getType(sendtype)->getSize(sendcount);
+  for (int i=0; i<num_neighbors; i++) {
+    ptr->send(MPI_ATA_TAG, rank_in_comm, (void*)((char*)sendbuf+(itemsize*i)), sendcount, sendtype, neighbors[i], comm);
+  }
+  for (int j=0; j<num_neighbors; j++) {
+    if (-1==ptr->recv(MPI_ATA_TAG, neighbors[j], (void*)(((char*)recvbuf)+(itemsize*j)),
+                      recvcount, recvtype, comm))
+      CkAbort("AMPI> Error in MPI_Neighbor_alltoall recv");
+  }
+
+#if AMPI_COUNTER
+  getAmpiParent()->counters.nbor_alltoall++;
+#endif
+  delete [] neighbors;
+  return MPI_SUCCESS;
+}
+
+  CDECL
+int AMPI_Ineighbor_alltoall(void* sendbuf, int sendcount, MPI_Datatype sendtype,
+         void* recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm,
+         MPI_Request *request)
+{
+  AMPIAPI("AMPI_Ineighbor_alltoall");
+
+  if (sendbuf == MPI_IN_PLACE || recvbuf == MPI_IN_PLACE)
+    CkAbort("MPI_Ineighbor_alltoall does not implement MPI_IN_PLACE");
+
+#if CMK_ERROR_CHECKING
+  int ret;
+  ret = errorCheck(comm, 1, sendcount, 1, sendtype, 1, 0, 0, 0, 0, sendbuf, 1);
+  if(ret != MPI_SUCCESS)
+    return ret;
+  ret = errorCheck(comm, 1, recvcount, 1, recvtype, 1, 0, 0, 0, 0, recvbuf, 1);
+  if(ret != MPI_SUCCESS)
+    return ret;
+#endif
+
+  if (getAmpiParent()->isInter(comm)) CkAbort("MPI_Ineighbor_alltoall not allowed for Inter-communicator!");
+  if (comm == MPI_COMM_SELF) return copyDatatype(comm, sendtype, sendcount, sendbuf, recvbuf);
+
+  int num_neighbors, rank_in_comm;
+  int *neighbors;
+  ampi *ptr = getAmpiInstance(comm);
+  rank_in_comm = ptr->getRank(comm);
+
+  num_neighbors = ptr->getNumTopologyNeighbors(comm, rank_in_comm);
+  if (num_neighbors == 0) return MPI_SUCCESS;
+  neighbors = new int[num_neighbors];
+  ptr->getTopologyNeighborRanks(comm, rank_in_comm, num_neighbors, neighbors);
+
+  int itemsize = getDDT()->getType(sendtype)->getSize(sendcount);
+  for (int i=0; i<num_neighbors; i++) {
+    ptr->send(MPI_ATA_TAG, rank_in_comm, (void*)((char*)sendbuf+(itemsize*i)), sendcount, sendtype, neighbors[i], comm);
+  }
+
+  // use an IATAReq to non-block the caller and get a request ptr
+  AmpiRequestList* reqs = getReqs();
+  IATAReq *newreq = new IATAReq(num_neighbors);
+  for (int j=0; j<num_neighbors; j++) {
+    if(newreq->addReq(((char*)recvbuf)+(itemsize*j), recvcount, recvtype,
+                      neighbors[j], MPI_ATA_TAG, comm)!=(j+1))
+      CkAbort("MPI_Ineighbor_alltoall: Error adding requests into IATAReq!");
+  }
+  *request = reqs->insert(newreq);
+
+#if AMPI_COUNTER
+  getAmpiParent()->counters.nbor_alltoall++;
+#endif
+  delete [] neighbors;
+  return MPI_SUCCESS;
+}
+
+  CDECL
+int AMPI_Neighbor_alltoallv(void* sendbuf, int *sendcounts, int *sdispls,
+         MPI_Datatype sendtype, void* recvbuf, int *recvcounts, int *rdispls,
+         MPI_Datatype recvtype, MPI_Comm comm)
+{
+  AMPIAPI("AMPI_Neighbor_alltoallv");
+
+  if (sendbuf == MPI_IN_PLACE || recvbuf == MPI_IN_PLACE)
+    CkAbort("MPI_Neighbor_alltoallv does not implement MPI_IN_PLACE");
+
+#if CMK_ERROR_CHECKING
+  int ret;
+  ret = errorCheck(comm, 1, sendcounts[0], 1, sendtype, 1, 0, 0, 0, 0, sendbuf, 1);
+  if(ret != MPI_SUCCESS)
+    return ret;
+  ret = errorCheck(comm, 1, recvcounts[0], 1, recvtype, 1, 0, 0, 0, 0, recvbuf, 1);
+  if(ret != MPI_SUCCESS)
+    return ret;
+#endif
+
+  if (getAmpiParent()->isInter(comm)) CkAbort("MPI_Neighbor_alltoallv not allowed for Inter-communicator!");
+  if (comm == MPI_COMM_SELF) return MPI_SUCCESS;
+
+  int num_neighbors, rank_in_comm;
+  int *neighbors;
+  ampi *ptr = getAmpiInstance(comm);
+  rank_in_comm = ptr->getRank(comm);
+
+  num_neighbors = ptr->getNumTopologyNeighbors(comm, rank_in_comm);
+  if (num_neighbors == 0) return MPI_SUCCESS;
+  neighbors = new int[num_neighbors];
+  ptr->getTopologyNeighborRanks(comm, rank_in_comm, num_neighbors, neighbors);
+
+  int itemsize = getDDT()->getType(sendtype)->getSize();
+  for (int i=0; i<num_neighbors; i++) {
+    ptr->send(MPI_ATA_TAG, rank_in_comm, (void*)((char*)sendbuf+(itemsize*sdispls[i])),
+              sendcounts[i], sendtype, neighbors[i], comm);
+  }
+  for (int j=0; j<num_neighbors; j++) {
+    if (-1==ptr->recv(MPI_ATA_TAG, neighbors[j], (void*)(((char*)recvbuf)+(itemsize*rdispls[j])),
+                      recvcounts[j], recvtype, comm))
+      CkAbort("AMPI> Error in MPI_Neighbor_alltoallv recv");
+  }
+
+#if AMPI_COUNTER
+  getAmpiParent()->counters.nbor_alltoall++;
+#endif
+  delete [] neighbors;
+  return MPI_SUCCESS;
+}
+
+  CDECL
+int AMPI_Ineighbor_alltoallv(void* sendbuf, int *sendcounts, int *sdispls,
+         MPI_Datatype sendtype, void* recvbuf, int *recvcounts, int *rdispls,
+         MPI_Datatype recvtype, MPI_Comm comm, MPI_Request *request)
+{
+  AMPIAPI("AMPI_Ineighbor_alltoallv");
+
+  if (sendbuf == MPI_IN_PLACE || recvbuf == MPI_IN_PLACE)
+    CkAbort("MPI_Ineighbor_alltoallv does not implement MPI_IN_PLACE");
+
+#if CMK_ERROR_CHECKING
+  int ret;
+  ret = errorCheck(comm, 1, sendcounts[0], 1, sendtype, 1, 0, 0, 0, 0, sendbuf, 1);
+  if(ret != MPI_SUCCESS)
+    return ret;
+  ret = errorCheck(comm, 1, recvcounts[0], 1, recvtype, 1, 0, 0, 0, 0, recvbuf, 1);
+  if(ret != MPI_SUCCESS)
+    return ret;
+#endif
+
+  if (getAmpiParent()->isInter(comm)) CkAbort("MPI_Ineighbor_alltoallv not allowed for Inter-communicator!");
+  if (comm == MPI_COMM_SELF) return MPI_SUCCESS;
+
+  int num_neighbors, rank_in_comm;
+  int *neighbors;
+  ampi *ptr = getAmpiInstance(comm);
+  rank_in_comm = ptr->getRank(comm);
+
+  num_neighbors = ptr->getNumTopologyNeighbors(comm, rank_in_comm);
+  if (num_neighbors == 0) return MPI_SUCCESS;
+  neighbors = new int[num_neighbors];
+  ptr->getTopologyNeighborRanks(comm, rank_in_comm, num_neighbors, neighbors);
+
+  int itemsize = getDDT()->getType(sendtype)->getSize();
+  for (int i=0; i<num_neighbors; i++) {
+    ptr->send(MPI_ATA_TAG, rank_in_comm, (void*)((char*)sendbuf+(itemsize*sdispls[i])),
+              sendcounts[i], sendtype, neighbors[i], comm);
+  }
+
+  // use an IATAReq to non-block the caller and get a request ptr
+  AmpiRequestList* reqs = getReqs();
+  IATAReq *newreq = new IATAReq(num_neighbors);
+  for (int j=0; j<num_neighbors; j++) {
+    if(newreq->addReq(((char*)recvbuf)+(itemsize*rdispls[j]), recvcounts[j], recvtype,
+                      neighbors[j], MPI_ATA_TAG, comm)!=(j+1))
+      CkAbort("MPI_Ineighbor_alltoallv: Error adding requests into IATAReq!");
+  }
+  *request = reqs->insert(newreq);
+
+#if AMPI_COUNTER
+  getAmpiParent()->counters.nbor_alltoall++;
+#endif
+  delete [] neighbors;
+  return MPI_SUCCESS;
+}
+
+  CDECL
+int AMPI_Neighbor_alltoallw(void* sendbuf, int *sendcounts, int *sdispls,
+         MPI_Datatype *sendtypes, void* recvbuf, int *recvcounts, int *rdispls,
+         MPI_Datatype *recvtypes, MPI_Comm comm)
+{
+  AMPIAPI("AMPI_Neighbor_alltoallw");
+
+  if (sendbuf == MPI_IN_PLACE || recvbuf == MPI_IN_PLACE)
+    CkAbort("MPI_Neighbor_alltoallw does not implement MPI_IN_PLACE");
+
+#if CMK_ERROR_CHECKING
+  int ret;
+  ret = errorCheck(comm, 1, sendcounts[0], 1, sendtypes[0], 1, 0, 0, 0, 0, sendbuf, 1);
+  if(ret != MPI_SUCCESS)
+    return ret;
+  ret = errorCheck(comm, 1, recvcounts[0], 1, recvtypes[0], 1, 0, 0, 0, 0, recvbuf, 1);
+  if(ret != MPI_SUCCESS)
+    return ret;
+#endif
+
+  if (getAmpiParent()->isInter(comm)) CkAbort("MPI_Neighbor_alltoallw not allowed for Inter-communicator!");
+  if (comm == MPI_COMM_SELF) return MPI_SUCCESS;
+
+  int num_neighbors, rank_in_comm;
+  int *neighbors;
+  ampi *ptr = getAmpiInstance(comm);
+  rank_in_comm = ptr->getRank(comm);
+
+  num_neighbors = ptr->getNumTopologyNeighbors(comm, rank_in_comm);
+  if (num_neighbors == 0) return MPI_SUCCESS;
+  neighbors = new int[num_neighbors];
+  ptr->getTopologyNeighborRanks(comm, rank_in_comm, num_neighbors, neighbors);
+
+  for (int i=0; i<num_neighbors; i++) {
+    ptr->send(MPI_ATA_TAG, rank_in_comm, (void*)((char*)sendbuf+sdispls[i]),
+              sendcounts[i], sendtypes[i], neighbors[i], comm);
+  }
+  for (int j=0; j<num_neighbors; j++) {
+    if (-1==ptr->recv(MPI_ATA_TAG, neighbors[j], (void*)((char*)recvbuf+rdispls[j]),
+                      recvcounts[j], recvtypes[j], comm))
+      CkAbort("AMPI> Error in MPI_Neighbor_alltoallv recv");
+  }
+
+#if AMPI_COUNTER
+  getAmpiParent()->counters.nbor_alltoall++;
+#endif
+  delete [] neighbors;
+  return MPI_SUCCESS;
+}
+
+  CDECL
+int AMPI_Ineighbor_alltoallw(void* sendbuf, int *sendcounts, int *sdispls,
+         MPI_Datatype *sendtypes, void* recvbuf, int *recvcounts, int *rdispls,
+         MPI_Datatype *recvtypes, MPI_Comm comm, MPI_Request *request)
+{
+  AMPIAPI("AMPI_Ineighbor_alltoallw");
+
+  if (sendbuf == MPI_IN_PLACE || recvbuf == MPI_IN_PLACE)
+    CkAbort("MPI_Ineighbor_alltoallw does not implement MPI_IN_PLACE");
+
+#if CMK_ERROR_CHECKING
+  int ret;
+  ret = errorCheck(comm, 1, sendcounts[0], 1, sendtypes[0], 1, 0, 0, 0, 0, sendbuf, 1);
+  if(ret != MPI_SUCCESS)
+    return ret;
+  ret = errorCheck(comm, 1, recvcounts[0], 1, recvtypes[0], 1, 0, 0, 0, 0, recvbuf, 1);
+  if(ret != MPI_SUCCESS)
+    return ret;
+#endif
+
+  if (getAmpiParent()->isInter(comm)) CkAbort("MPI_Ineighbor_alltoallw not allowed for Inter-communicator!");
+  if (comm == MPI_COMM_SELF) return MPI_SUCCESS;
+
+  int num_neighbors, rank_in_comm;
+  int *neighbors;
+  ampi *ptr = getAmpiInstance(comm);
+  rank_in_comm = ptr->getRank(comm);
+
+  num_neighbors = ptr->getNumTopologyNeighbors(comm, rank_in_comm);
+  if (num_neighbors == 0) return MPI_SUCCESS;
+  neighbors = new int[num_neighbors];
+  ptr->getTopologyNeighborRanks(comm, rank_in_comm, num_neighbors, neighbors);
+
+  for (int i=0; i<num_neighbors; i++) {
+    ptr->send(MPI_ATA_TAG, rank_in_comm, (void*)((char*)sendbuf+sdispls[i]),
+              sendcounts[i], sendtypes[i], neighbors[i], comm);
+  }
+
+  // use an IATAReq to non-block the caller and get a request ptr
+  AmpiRequestList* reqs = getReqs();
+  IATAReq *newreq = new IATAReq(num_neighbors);
+  for (int j=0; j<num_neighbors; j++) {
+    if(newreq->addReq((char*)recvbuf+rdispls[j], recvcounts[j], recvtypes[j],
+                      neighbors[j], MPI_ATA_TAG, comm)!=(j+1))
+      CkAbort("MPI_Ineighbor_alltoallw: Error adding requests into IATAReq!");
+  }
+  *request = reqs->insert(newreq);
+
+#if AMPI_COUNTER
+  getAmpiParent()->counters.nbor_alltoall++;
+#endif
+  delete [] neighbors;
+  return MPI_SUCCESS;
+}
+
+  CDECL
+int AMPI_Neighbor_allgather(void* sendbuf, int sendcount, MPI_Datatype sendtype,
+         void* recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm)
+{
+  AMPIAPI("AMPI_Neighbor_allgather");
+
+  if (sendbuf == MPI_IN_PLACE || recvbuf == MPI_IN_PLACE)
+    CkAbort("MPI_Neighbor_allgather does not implement MPI_IN_PLACE");
+
+#if CMK_ERROR_CHECKING
+  int ret;
+  ret = errorCheck(comm, 1, sendcount, 1, sendtype, 1, 0, 0, 0, 0, sendbuf, 1);
+  if(ret != MPI_SUCCESS)
+    return ret;
+  ret = errorCheck(comm, 1, recvcount, 1, recvtype, 1, 0, 0, 0, 0, recvbuf, 1);
+  if(ret != MPI_SUCCESS)
+    return ret;
+#endif
+
+  if (getAmpiParent()->isInter(comm)) CkAbort("MPI_Neighbor_allgather not allowed for Inter-communicator!");
+  if (comm == MPI_COMM_SELF) return copyDatatype(comm, sendtype, sendcount, sendbuf, recvbuf);
+
+  int num_neighbors, rank_in_comm;
+  int *neighbors;
+  ampi *ptr = getAmpiInstance(comm);
+  rank_in_comm = ptr->getRank(comm);
+
+  num_neighbors = ptr->getNumTopologyNeighbors(comm, rank_in_comm);
+  if (num_neighbors == 0) return MPI_SUCCESS;
+  neighbors = new int[num_neighbors];
+  ptr->getTopologyNeighborRanks(comm, rank_in_comm, num_neighbors, neighbors);
+
+  for (int i=0; i<num_neighbors; i++) {
+    ptr->send(MPI_GATHER_TAG, rank_in_comm, sendbuf, sendcount, sendtype, neighbors[i], comm);
+  }
+  int itemsize = getDDT()->getType(recvtype)->getSize(recvcount);
+  for (int j=0; j<num_neighbors; j++) {
+    if (-1==ptr->recv(MPI_GATHER_TAG, neighbors[j], (void*)(((char*)recvbuf)+(itemsize*j)),
+                      recvcount, recvtype, comm))
+      CkAbort("AMPI> Error in MPI_Neighbor_allgather recv");
+  }
+
+#if AMPI_COUNTER
+  getAmpiParent()->counters.nbor_allgather++;
+#endif
+  delete [] neighbors;
+  return MPI_SUCCESS;
+}
+
+  CDECL
+int AMPI_Ineighbor_allgather(void* sendbuf, int sendcount, MPI_Datatype sendtype,
+         void* recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm,
+         MPI_Request *request)
+{
+  AMPIAPI("AMPI_Ineighbor_allgather");
+
+  if (sendbuf == MPI_IN_PLACE || recvbuf == MPI_IN_PLACE)
+    CkAbort("MPI_Ineighbor_allgather does not implement MPI_IN_PLACE");
+
+#if CMK_ERROR_CHECKING
+  int ret;
+  ret = errorCheck(comm, 1, sendcount, 1, sendtype, 1, 0, 0, 0, 0, sendbuf, 1);
+  if(ret != MPI_SUCCESS)
+    return ret;
+  ret = errorCheck(comm, 1, recvcount, 1, recvtype, 1, 0, 0, 0, 0, recvbuf, 1);
+  if(ret != MPI_SUCCESS)
+    return ret;
+#endif
+
+  if (getAmpiParent()->isInter(comm)) CkAbort("MPI_Ineighbor_allgather not allowed for Inter-communicator!");
+  if (comm == MPI_COMM_SELF) return copyDatatype(comm, sendtype, sendcount, sendbuf, recvbuf);
+
+  int num_neighbors, rank_in_comm;
+  int *neighbors;
+  ampi *ptr = getAmpiInstance(comm);
+  rank_in_comm = ptr->getRank(comm);
+
+  num_neighbors = ptr->getNumTopologyNeighbors(comm, rank_in_comm);
+  if (num_neighbors == 0) return MPI_SUCCESS;
+  neighbors = new int[num_neighbors];
+  ptr->getTopologyNeighborRanks(comm, rank_in_comm, num_neighbors, neighbors);
+
+  for (int i=0; i<num_neighbors; i++) {
+    ptr->send(MPI_GATHER_TAG, rank_in_comm, sendbuf, sendcount, sendtype, neighbors[i], comm);
+  }
+
+  // use an IATAReq to non-block the caller and get a request ptr
+  AmpiRequestList* reqs = getReqs();
+  IATAReq *newreq = new IATAReq(num_neighbors);
+  int itemsize = getDDT()->getType(recvtype)->getSize(recvcount);
+  for (int j=0; j<num_neighbors; j++) {
+    if(newreq->addReq(((char*)recvbuf)+(itemsize*j), recvcount, recvtype,
+                      neighbors[j], MPI_GATHER_TAG, comm)!=(j+1))
+      CkAbort("MPI_Ineighbor_allgather: Error adding requests into IATAReq!");
+  }
+  *request = reqs->insert(newreq);
+
+#if AMPI_COUNTER
+  getAmpiParent()->counters.nbor_allgather++;
+#endif
+  delete [] neighbors;
+  return MPI_SUCCESS;
+}
+
+  CDECL
+int AMPI_Neighbor_allgatherv(void* sendbuf, int sendcount, MPI_Datatype sendtype,
+         void* recvbuf, int *recvcounts, int *displs, MPI_Datatype recvtype,
+         MPI_Comm comm)
+{
+  AMPIAPI("AMPI_Neighbor_allgatherv");
+
+  if (sendbuf == MPI_IN_PLACE || recvbuf == MPI_IN_PLACE)
+    CkAbort("MPI_Neighbor_allgatherv does not implement MPI_IN_PLACE");
+
+#if CMK_ERROR_CHECKING
+  int ret;
+  ret = errorCheck(comm, 1, sendcount, 1, sendtype, 1, 0, 0, 0, 0, sendbuf, 1);
+  if(ret != MPI_SUCCESS)
+    return ret;
+  ret = errorCheck(comm, 1, recvcounts[0], 1, recvtype, 1, 0, 0, 0, 0, recvbuf, 1);
+  if(ret != MPI_SUCCESS)
+    return ret;
+#endif
+
+  if (getAmpiParent()->isInter(comm)) CkAbort("MPI_Neighbor_allgatherv not allowed for Inter-communicator!");
+  if (comm == MPI_COMM_SELF) return copyDatatype(comm, sendtype, sendcount, sendbuf, recvbuf);
+
+  int num_neighbors, rank_in_comm;
+  int *neighbors;
+  ampi *ptr = getAmpiInstance(comm);
+  rank_in_comm = ptr->getRank(comm);
+
+  num_neighbors = ptr->getNumTopologyNeighbors(comm, rank_in_comm);
+  if (num_neighbors == 0) return MPI_SUCCESS;
+  neighbors = new int[num_neighbors];
+  ptr->getTopologyNeighborRanks(comm, rank_in_comm, num_neighbors, neighbors);
+
+  for (int i=0; i<num_neighbors; i++) {
+    ptr->send(MPI_GATHER_TAG, rank_in_comm, sendbuf, sendcount, sendtype, neighbors[i], comm);
+  }
+  int itemsize = getDDT()->getType(recvtype)->getSize();
+  for (int j=0; j<num_neighbors; j++) {
+    if (-1==ptr->recv(MPI_GATHER_TAG, neighbors[j], (void*)(((char*)recvbuf)+(itemsize*displs[j])),
+                      recvcounts[j], recvtype, comm))
+      CkAbort("AMPI> Error in MPI_Neighbor_allgatherv recv");
+  }
+
+#if AMPI_COUNTER
+  getAmpiParent()->counters.nbor_allgather++;
+#endif
+  delete [] neighbors;
+  return MPI_SUCCESS;
+}
+
+  CDECL
+int AMPI_Ineighbor_allgatherv(void* sendbuf, int sendcount, MPI_Datatype sendtype,
+         void* recvbuf, int* recvcounts, int* displs, MPI_Datatype recvtype,
+         MPI_Comm comm, MPI_Request *request)
+{
+  AMPIAPI("AMPI_Ineighbor_allgatherv");
+
+  if (sendbuf == MPI_IN_PLACE || recvbuf == MPI_IN_PLACE)
+    CkAbort("MPI_Ineighbor_allgatherv does not implement MPI_IN_PLACE");
+
+#if CMK_ERROR_CHECKING
+  int ret;
+  ret = errorCheck(comm, 1, sendcount, 1, sendtype, 1, 0, 0, 0, 0, sendbuf, 1);
+  if(ret != MPI_SUCCESS)
+    return ret;
+  ret = errorCheck(comm, 1, recvcounts[0], 1, recvtype, 1, 0, 0, 0, 0, recvbuf, 1);
+  if(ret != MPI_SUCCESS)
+    return ret;
+#endif
+
+  if (getAmpiParent()->isInter(comm)) CkAbort("MPI_Ineighbor_allgatherv not allowed for Inter-communicator!");
+  if (comm == MPI_COMM_SELF) return copyDatatype(comm, sendtype, sendcount, sendbuf, recvbuf);
+
+  int num_neighbors, rank_in_comm;
+  int *neighbors;
+  ampi *ptr = getAmpiInstance(comm);
+  rank_in_comm = ptr->getRank(comm);
+
+  num_neighbors = ptr->getNumTopologyNeighbors(comm, rank_in_comm);
+  if (num_neighbors == 0) return MPI_SUCCESS;
+  neighbors = new int[num_neighbors];
+  ptr->getTopologyNeighborRanks(comm, rank_in_comm, num_neighbors, neighbors);
+
+  for (int i=0; i<num_neighbors; i++) {
+    ptr->send(MPI_GATHER_TAG, rank_in_comm, sendbuf, sendcount, sendtype, neighbors[i], comm);
+  }
+
+  // use an IATAReq to non-block the caller and get a request ptr
+  AmpiRequestList* reqs = getReqs();
+  IATAReq *newreq = new IATAReq(num_neighbors);
+  int itemsize = getDDT()->getType(recvtype)->getSize();
+  for (int j=0; j<num_neighbors; j++) {
+    if(newreq->addReq(((char*)recvbuf)+(itemsize*displs[j]), recvcounts[j], recvtype,
+                      neighbors[j], MPI_GATHER_TAG, comm)!=(j+1))
+      CkAbort("MPI_Ineighbor_allgatherv: Error adding requests into IATAReq!");
+  }
+  *request = reqs->insert(newreq);
+
+#if AMPI_COUNTER
+  getAmpiParent()->counters.nbor_allgather++;
+#endif
+  delete [] neighbors;
+  return MPI_SUCCESS;
 }
 
   CDECL
@@ -5277,42 +6531,42 @@ int AMPI_Comm_split(int src,int color,int key,int *dest)
   ampiParent* pptr = getAmpiParent();
   if(msgLogRead){
     PUParray(*(pptr->fromPUPer), (char *)dest, sizeof(int));
-    return 0;
+    return MPI_SUCCESS;
   }
   else if(msgLogWrite && record_msglog(pptr->thisIndex)){
     PUParray(*(pptr->toPUPer), (char *)dest, sizeof(int));
   }
 #endif
 
-  return 0;
+  return MPI_SUCCESS;
 }
 
   CDECL
 int AMPI_Comm_free(int *comm)
 {
   AMPIAPI("AMPI_Comm_free");
-  return 0;
+  return MPI_SUCCESS;
 }
 
 CDECL
 int AMPI_Comm_test_inter(MPI_Comm comm, int *flag){
   AMPIAPI("AMPI_Comm_test_inter");
   *flag = getAmpiParent()->isInter(comm);
-  return 0;
+  return MPI_SUCCESS;
 }
 
 CDECL
 int AMPI_Comm_remote_size(MPI_Comm comm, int *size){
   AMPIAPI("AMPI_Comm_remote_size");
   *size = getAmpiParent()->getRemoteSize(comm);
-  return 0;
+  return MPI_SUCCESS;
 }
 
 CDECL
 int AMPI_Comm_remote_group(MPI_Comm comm, MPI_Group *group){
   AMPIAPI("AMPI_Comm_remote_group");
   *group = getAmpiParent()->getRemoteGroup(comm);
-  return 0;
+  return MPI_SUCCESS;
 }
 
 CDECL
@@ -5348,11 +6602,15 @@ int AMPI_Intercomm_create(MPI_Comm lcomm, int lleader, MPI_Comm rcomm, int rlead
     delete [] larr;
     delete [] rarr;
 
-    if(rsize==0) CkAbort("MPI_Intercomm_create: remote size = 0! Does it really make sense to create an empty communicator?\n");
+    if(rsize==0){
+      AMPI_DEBUG("AMPI> In MPI_Intercomm_create, creating an empty communicator\n");
+      *newintercomm = MPI_COMM_NULL;
+      return MPI_SUCCESS;
+    }
   }
 
   ptr->intercommCreate(rvec,root,newintercomm);
-  return 0;
+  return MPI_SUCCESS;
 }
 
 CDECL
@@ -5379,7 +6637,7 @@ int AMPI_Intercomm_merge(MPI_Comm intercomm, int high, MPI_Comm *newintracomm){
   }
 
   ptr->intercommMerge(first, newintracomm);
-  return 0;
+  return MPI_SUCCESS;
 }
 
   CDECL
@@ -5400,28 +6658,46 @@ int AMPI_Get_count(MPI_Status *sts, MPI_Datatype dtype, int *count){
   } else {
     *count = sts->MPI_LENGTH/itemsize;
   }
-  return 0;
+  return MPI_SUCCESS;
 }
 
 CDECL
 int AMPI_Type_lb(MPI_Datatype dtype, MPI_Aint* displacement){
   AMPIAPI("AMPI_Type_lb");
   *displacement = getDDT()->getLB(dtype);
-  return 0;
+  return MPI_SUCCESS;
 }
 
 CDECL
 int AMPI_Type_ub(MPI_Datatype dtype, MPI_Aint* displacement){
   AMPIAPI("AMPI_Type_ub");
   *displacement = getDDT()->getUB(dtype);
-  return 0;
+  return MPI_SUCCESS;
+}
+
+CDECL
+int AMPI_Get_address(void* location, MPI_Aint *address){
+  AMPIAPI("AMPI_Get_address");
+  *address = (MPI_Aint)(unsigned long)(char *)location;
+  return MPI_SUCCESS;
 }
 
 CDECL
 int AMPI_Address(void* location, MPI_Aint *address){
   AMPIAPI("AMPI_Address");
-  *address = (MPI_Aint)(unsigned long)(char *)location;
-  return 0;
+  return AMPI_Get_address(location, address);
+}
+
+CDECL
+int AMPI_Status_set_elements(MPI_Status *sts, MPI_Datatype dtype, int count){
+  AMPIAPI("AMPI_Status_set_elements");
+  if(sts == MPI_STATUS_IGNORE || sts == MPI_STATUSES_IGNORE)
+    return MPI_SUCCESS;
+  CkDDT_DataType* dttype = getDDT()->getType(dtype);
+  int basesize = dttype->getBaseSize();
+  if(basesize==0) basesize = dttype->getSize();
+  sts->MPI_LENGTH = basesize * count;
+  return MPI_SUCCESS;
 }
 
 CDECL
@@ -5431,7 +6707,7 @@ int AMPI_Get_elements(MPI_Status *sts, MPI_Datatype dtype, int *count){
   int basesize = dttype->getBaseSize() ;
   if(basesize==0) basesize=dttype->getSize();
   *count = sts->MPI_LENGTH/basesize;
-  return 0;
+  return MPI_SUCCESS;
 }
 
   CDECL
@@ -5443,7 +6719,7 @@ int AMPI_Pack(void *inbuf, int incount, MPI_Datatype dtype, void *outbuf,
   int itemsize = dttype->getSize();
   dttype->serialize((char*)inbuf, ((char*)outbuf)+(*position), incount, 1);
   *position += (itemsize*incount);
-  return 0;
+  return MPI_SUCCESS;
 }
 
   CDECL
@@ -5455,7 +6731,7 @@ int AMPI_Unpack(void *inbuf, int insize, int *position, void *outbuf,
   int itemsize = dttype->getSize();
   dttype->serialize((char*)outbuf, ((char*)inbuf+(*position)), outcount, -1);
   *position += (itemsize*outcount);
-  return 0;
+  return MPI_SUCCESS;
 }
 
   CDECL
@@ -5464,7 +6740,7 @@ int AMPI_Pack_size(int incount,MPI_Datatype datatype,MPI_Comm comm,int *sz)
   AMPIAPI("AMPI_Pack_size");
   CkDDT_DataType* dttype = getDDT()->getType(datatype) ;
   *sz = incount*dttype->getSize() ;
-  return 0;
+  return MPI_SUCCESS;
 }
 
 CDECL
@@ -5472,7 +6748,17 @@ int AMPI_Get_version(int *version, int *subversion){
   AMPIAPI("AMPI_Get_version");
   *version = MPI_VERSION;
   *subversion = MPI_SUBVERSION;
-  return 0;
+  return MPI_SUCCESS;
+}
+
+CDECL
+int AMPI_Get_library_version(char *version, int *resultlen){
+  AMPIAPI("AMPI_Get_library_version");
+  const char *ampiNameStr = "Adaptive MPI ";
+  strncpy(version, ampiNameStr, MPI_MAX_LIBRARY_VERSION_STRING);
+  strncat(version, CmiCommitID, MPI_MAX_LIBRARY_VERSION_STRING - strlen(version));
+  *resultlen = strlen(version);
+  return MPI_SUCCESS;
 }
 
 CDECL
@@ -5481,7 +6767,7 @@ int AMPI_Get_processor_name(char *name, int *resultlen){
   ampiParent *ptr = getAmpiParent();
   sprintf(name,"AMPI_VP[%d]_PE[%d]",ptr->thisIndex,ptr->getMyPe());
   *resultlen = strlen(name);
-  return 0;
+  return MPI_SUCCESS;
 }
 
 /* Error handling */
@@ -5492,26 +6778,74 @@ void error_handler ( MPI_Comm *, int * );
 #endif
 
 CDECL
+int AMPI_Comm_call_errhandler(MPI_Comm comm, int errorcode){
+  AMPIAPI("AMPI_Comm_call_errhandler");
+  return MPI_SUCCESS;
+}
+
+CDECL
+int AMPI_Comm_create_errhandler(MPI_Comm_errhandler_fn *function, MPI_Errhandler *errhandler){
+  AMPIAPI("AMPI_Comm_create_errhandler");
+  return MPI_SUCCESS;
+}
+
+CDECL
+int AMPI_Comm_set_errhandler(MPI_Comm comm, MPI_Errhandler errhandler){
+  AMPIAPI("AMPI_Comm_set_errhandler");
+  return MPI_SUCCESS;
+}
+
+CDECL
+int AMPI_Comm_get_errhandler(MPI_Comm comm, MPI_Errhandler *errhandler){
+  AMPIAPI("AMPI_Comm_get_errhandler");
+  return MPI_SUCCESS;
+}
+
+CDECL
+int AMPI_Comm_free_errhandler(MPI_Errhandler *errhandler){
+  AMPIAPI("AMPI_Comm_free_errhandler");
+  return MPI_SUCCESS;
+}
+
+CDECL
 int AMPI_Errhandler_create(MPI_Handler_function *function, MPI_Errhandler *errhandler){
   AMPIAPI("AMPI_Errhandler_create");
-  return MPI_SUCCESS;
+  return AMPI_Comm_create_errhandler(function, errhandler);
 }
 
 CDECL
 int AMPI_Errhandler_set(MPI_Comm comm, MPI_Errhandler errhandler){
   AMPIAPI("AMPI_Errhandler_set");
-  return MPI_SUCCESS;
+  return AMPI_Comm_set_errhandler(comm, errhandler);
 }
 
 CDECL
 int AMPI_Errhandler_get(MPI_Comm comm, MPI_Errhandler *errhandler){
   AMPIAPI("AMPI_Errhandler_get");
-  return MPI_SUCCESS;
+  return AMPI_Comm_get_errhandler(comm, errhandler);
 }
 
 CDECL
 int AMPI_Errhandler_free(MPI_Errhandler *errhandler){
   AMPIAPI("AMPI_Errhandler_free");
+  return AMPI_Comm_free_errhandler(errhandler);
+}
+
+CDECL
+int AMPI_Add_error_code(int errorclass, int *errorcode){
+  AMPIAPI("AMPI_Add_error_code");
+  return MPI_SUCCESS;
+}
+
+CDECL
+int AMPI_Add_error_class(int *errorclass){
+  AMPIAPI("AMPI_Add_error_class");
+  return MPI_SUCCESS;
+}
+
+CDECL
+int AMPI_Add_error_string(int errorcode, const char *errorstring){
+  AMPIAPI("AMPI_Add_error_string");
   return MPI_SUCCESS;
 }
 
@@ -5539,14 +6873,13 @@ int AMPI_Error_string(int errorcode, char *string, int *resultlen)
   return MPI_SUCCESS;
 }
 
-
 /* Group operations */
   CDECL
 int AMPI_Comm_group(MPI_Comm comm, MPI_Group *group)
 {
   AMPIAPI("AMPI_Comm_Group");
   *group = getAmpiParent()->comm2group(comm);
-  return 0;
+  return MPI_SUCCESS;
 }
 
   CDECL
@@ -5559,7 +6892,7 @@ int AMPI_Group_union(MPI_Group group1, MPI_Group group2, MPI_Group *newgroup)
   vec2 = ptr->group2vec(group2);
   newvec = unionOp(vec1,vec2);
   *newgroup = ptr->saveGroupStruct(newvec);
-  return 0;
+  return MPI_SUCCESS;
 }
 
   CDECL
@@ -5572,7 +6905,7 @@ int AMPI_Group_intersection(MPI_Group group1, MPI_Group group2, MPI_Group *newgr
   vec2 = ptr->group2vec(group2);
   newvec = intersectOp(vec1,vec2);
   *newgroup = ptr->saveGroupStruct(newvec);
-  return 0;
+  return MPI_SUCCESS;
 }
 
   CDECL
@@ -5585,7 +6918,7 @@ int AMPI_Group_difference(MPI_Group group1, MPI_Group group2, MPI_Group *newgrou
   vec2 = ptr->group2vec(group2);
   newvec = diffOp(vec1,vec2);
   *newgroup = ptr->saveGroupStruct(newvec);
-  return 0;
+  return MPI_SUCCESS;
 }
 
   CDECL
@@ -5593,7 +6926,7 @@ int AMPI_Group_size(MPI_Group group, int *size)
 {
   AMPIAPI("AMPI_Group_size");
   *size = (getAmpiParent()->group2vec(group)).size();
-  return 0;
+  return MPI_SUCCESS;
 }
 
   CDECL
@@ -5601,7 +6934,7 @@ int AMPI_Group_rank(MPI_Group group, int *rank)
 {
   AMPIAPI("AMPI_Group_rank");
   *rank = getAmpiParent()->getRank(group);
-  return 0;
+  return MPI_SUCCESS;
 }
 
   CDECL
@@ -5613,7 +6946,7 @@ int AMPI_Group_translate_ranks (MPI_Group group1, int n, int *ranks1, MPI_Group 
   vec1 = ptr->group2vec(group1);
   vec2 = ptr->group2vec(group2);
   translateRanksOp(n, vec1, ranks1, vec2, ranks2);
-  return 0;
+  return MPI_SUCCESS;
 }
 
   CDECL
@@ -5625,7 +6958,7 @@ int AMPI_Group_compare(MPI_Group group1,MPI_Group group2, int *result)
   vec1 = ptr->group2vec(group1);
   vec2 = ptr->group2vec(group2);
   *result = compareVecOp(vec1, vec2);
-  return 0;
+  return MPI_SUCCESS;
 }
 
   CDECL
@@ -5637,7 +6970,7 @@ int AMPI_Group_incl(MPI_Group group, int n, int *ranks, MPI_Group *newgroup)
   vec = ptr->group2vec(group);
   newvec = inclOp(n,ranks,vec);
   *newgroup = ptr->saveGroupStruct(newvec);
-  return 0;
+  return MPI_SUCCESS;
 }
   CDECL
 int AMPI_Group_excl(MPI_Group group, int n, int *ranks, MPI_Group *newgroup)
@@ -5649,163 +6982,162 @@ int AMPI_Group_excl(MPI_Group group, int n, int *ranks, MPI_Group *newgroup)
   newvec = exclOp(n,ranks,vec);
   *newgroup = ptr->saveGroupStruct(newvec);
   //outputOp(vec); outputOp(newvec);
-  return 0;
+  return MPI_SUCCESS;
 }
   CDECL
 int AMPI_Group_range_incl(MPI_Group group, int n, int ranges[][3], MPI_Group *newgroup)
 {
   AMPIAPI("AMPI_Group_range_incl");
   groupStruct vec, newvec;
+  int ret;
   ampiParent *ptr = getAmpiParent();
   vec = ptr->group2vec(group);
-  newvec = rangeInclOp(n,ranges,vec);
-  *newgroup = ptr->saveGroupStruct(newvec);
-  return 0;
+  newvec = rangeInclOp(n,ranges,vec,&ret);
+  if(ret != MPI_SUCCESS){
+    *newgroup = MPI_GROUP_EMPTY;
+    return ret;
+  }else{
+    *newgroup = ptr->saveGroupStruct(newvec);
+    return MPI_SUCCESS;
+  }
 }
   CDECL
 int AMPI_Group_range_excl(MPI_Group group, int n, int ranges[][3], MPI_Group *newgroup)
 {
   AMPIAPI("AMPI_Group_range_excl");
   groupStruct vec, newvec;
+  int ret;
   ampiParent *ptr = getAmpiParent();
   vec = ptr->group2vec(group);
-  newvec = rangeExclOp(n,ranges,vec);
-  *newgroup = ptr->saveGroupStruct(newvec);
-  return 0;
+  newvec = rangeExclOp(n,ranges,vec,&ret);
+  if(ret != MPI_SUCCESS){
+    *newgroup = MPI_GROUP_EMPTY;
+    return ret;
+  }else{
+    *newgroup = ptr->saveGroupStruct(newvec);
+    return MPI_SUCCESS;
+  }
 }
   CDECL
 int AMPI_Group_free(MPI_Group *group)
 {
   AMPIAPI("AMPI_Group_free");
-  return 0;
+  return MPI_SUCCESS;
 }
   CDECL
 int AMPI_Comm_create(MPI_Comm comm, MPI_Group group, MPI_Comm* newcomm)
 {
   AMPIAPI("AMPI_Comm_create");
+  int rank, rank_in_group, key, color, zero;
+  MPI_Group group_of_comm;
+
   groupStruct vec = getAmpiParent()->group2vec(group);
-  if(vec.size()==0) CkAbort("AMPI> Abort: Does it really make sense to create an empty communicator?");
-  getAmpiInstance(comm)->commCreate(vec, newcomm);
-  AMPI_Barrier(comm);
-  return 0;
-}
-
-/* Charm++ Extentions to MPI standard: */
-  CDECL
-void AMPI_Checkpoint(char *dname)
-{
-  AMPI_Barrier(MPI_COMM_WORLD);
-  AMPIAPI("AMPI_Checkpoint");
-  getAmpiParent()->startCheckpoint(dname);
-}
-
-  CDECL
-void AMPI_MemCheckpoint()
-{
-#if CMK_MEM_CHECKPOINT
-  AMPI_Barrier(MPI_COMM_WORLD);
-  AMPIAPI("AMPI_Checkpoint");
-  getAmpiParent()->startCheckpoint("");
-#else
-  CmiPrintf("Error: In memory checkpoint/restart is not on! \n");
-  CmiAbort("Error: recompile Charm++ with CMK_MEM_CHECKPOINT. \n");
-#endif
-}
-
-  CDECL
-void AMPI_Print(char *str)
-{
-  AMPIAPI("AMPI_Print");
-  ampiParent *ptr = getAmpiParent();
-  CkPrintf("[%d] %s\n", ptr->thisIndex, str);
-}
-
-  CDECL
-int AMPI_Register(void *d, MPI_PupFn f)
-{
-  AMPIAPI("AMPI_Register");
-  return TCHARM_Register(d,f);
-}
-
-  CDECL
-void *MPI_Get_userdata(int idx)
-{
-  AMPIAPI("AMPI_Get_userdata");
-  return TCHARM_Get_userdata(idx);
-}
-
-  CDECL
-void AMPI_Start_measure()
-{
-  AMPIAPI("AMPI_Start_measure");
-  ampiParent *ptr = getAmpiParent();
-  ptr->start_measure();
-}
-
-  CDECL
-void AMPI_Stop_measure()
-{
-  AMPIAPI("AMPI_Stop_measure");
-  ampiParent *ptr = getAmpiParent();
-  ptr->stop_measure();
-}
-
-  CDECL
-void AMPI_Set_load(double load)
-{
-  AMPIAPI("AMPI_Set_load");
-  ampiParent *ptr = getAmpiParent();
-  ptr->setObjTime(load);
-}
-
-  CDECL
-void AMPI_Register_main(MPI_MainFn mainFn,const char *name)
-{
-  AMPIAPI("AMPI_Register_main");
-  if (TCHARM_Element()==0)
-  { // I'm responsible for building the TCHARM threads:
-    ampiCreateMain(mainFn,name,strlen(name));
+  if(vec.size()==0){
+    AMPI_DEBUG("AMPI> In MPI_Comm_create, creating an empty communicator");
+    *newcomm = MPI_COMM_NULL;
+    return MPI_SUCCESS;
   }
-}
-  FDECL
-  void FTN_NAME(MPI_REGISTER_MAIN,mpi_register_main)
-(MPI_MainFn mainFn,const char *name,int nameLen)
-{
-  AMPIAPI("AMPI_register_main");
-  if (TCHARM_Element()==0)
-  { // I'm responsible for building the TCHARM threads:
-    ampiCreateMain(mainFn,name,nameLen);
+
+  if(getAmpiParent()->isInter(comm)){
+    /* inter-communicator: create a single new comm. */
+    getAmpiInstance(comm)->commCreate(vec, newcomm);
+    AMPI_Barrier(comm);
   }
+  else{
+    /* intra-communicator: create comm's for disjoint subgroups,
+     * by calculating (color, key) and splitting comm. */
+    AMPI_Group_rank(group, &rank_in_group);
+    if(rank_in_group == MPI_UNDEFINED){
+      color = MPI_UNDEFINED;
+      key = 0;
+    }
+    else{
+      /* use rank in 'comm' of the 0th rank in 'group'
+       * as identical 'color' of all ranks in 'group' */
+      AMPI_Comm_group(comm, &group_of_comm);
+      zero = 0;
+      AMPI_Group_translate_ranks(group, 1, &zero, group_of_comm, &color);
+      key = rank_in_group;
+    }
+    return AMPI_Comm_split(comm, color, key, newcomm);
+  }
+  return MPI_SUCCESS;
 }
 
 CDECL
-int AMPI_Keyval_create(MPI_Copy_function *copy_fn, MPI_Delete_function *delete_fn, int *keyval, void* extra_state){
-  AMPIAPI("AMPI_Keyval_create");
+int AMPI_Comm_set_name(MPI_Comm comm, const char *comm_name){
+  AMPIAPI("AMPI_Comm_set_name");
+  getAmpiInstance(comm)->setCommName(comm_name, strlen(comm_name));
+  return MPI_SUCCESS;
+}
+
+CDECL
+int AMPI_Comm_get_name(MPI_Comm comm, char *comm_name, int *resultlen){
+  AMPIAPI("AMPI_Comm_get_name");
+  getAmpiInstance(comm)->getCommName(comm_name, resultlen);
+  return MPI_SUCCESS;
+}
+
+CDECL
+int AMPI_Comm_create_keyval(MPI_Comm_copy_attr_function *copy_fn,
+        MPI_Comm_delete_attr_function *delete_fn, int *keyval, void* extra_state){
+  AMPIAPI("AMPI_Comm_create_keyval");
   return getAmpiParent()->createKeyval(copy_fn,delete_fn,keyval,extra_state);
+}
+
+CDECL
+int AMPI_Comm_free_keyval(int *keyval){
+  AMPIAPI("AMPI_Comm_free_keyval");
+  return getAmpiParent()->freeKeyval(keyval);
+}
+
+CDECL
+int AMPI_Comm_set_attr(MPI_Comm comm, int keyval, void* attribute_val){
+  AMPIAPI("AMPI_Comm_set_attr");
+  return getAmpiParent()->setCommAttr(comm,keyval,attribute_val);
+}
+
+CDECL
+int AMPI_Comm_get_attr(MPI_Comm comm, int keyval, void *attribute_val, int *flag){
+  AMPIAPI("AMPI_Comm_get_attr");
+  return getAmpiParent()->getCommAttr(comm,keyval,attribute_val,flag);
+}
+
+CDECL
+int AMPI_Comm_delete_attr(MPI_Comm comm, int keyval){
+  AMPIAPI("AMPI_Comm_delete_attr");
+  return getAmpiParent()->deleteCommAttr(comm,keyval);
+}
+
+CDECL
+int AMPI_Keyval_create(MPI_Copy_function *copy_fn, MPI_Delete_function *delete_fn,
+        int *keyval, void* extra_state){
+  AMPIAPI("AMPI_Keyval_create");
+  return AMPI_Comm_create_keyval(copy_fn, delete_fn, keyval, extra_state);
 }
 
 CDECL
 int AMPI_Keyval_free(int *keyval){
   AMPIAPI("AMPI_Keyval_free");
-  return getAmpiParent()->freeKeyval(keyval);
+  return AMPI_Comm_free_keyval(keyval);
 }
 
 CDECL
 int AMPI_Attr_put(MPI_Comm comm, int keyval, void* attribute_val){
   AMPIAPI("AMPI_Attr_put");
-  return getAmpiParent()->putAttr(comm,keyval,attribute_val);
+  return AMPI_Comm_set_attr(comm, keyval, attribute_val);
 }
 
 CDECL
 int AMPI_Attr_get(MPI_Comm comm, int keyval, void *attribute_val, int *flag){
   AMPIAPI("AMPI_Attr_get");
-  return getAmpiParent()->getAttr(comm,keyval,attribute_val,flag);
+  return AMPI_Comm_get_attr(comm, keyval, attribute_val, flag);
 }
 
 CDECL
 int AMPI_Attr_delete(MPI_Comm comm, int keyval){
   AMPIAPI("AMPI_Attr_delete");
-  return getAmpiParent()->deleteAttr(comm,keyval);
+  return AMPI_Comm_delete_attr(comm, keyval);
 }
 
 CDECL
@@ -5815,7 +7147,7 @@ int AMPI_Cart_map(MPI_Comm comm, int ndims, int *dims, int *periods,
 
   AMPI_Comm_rank(comm, newrank);
 
-  return 0;
+  return MPI_SUCCESS;
 }
 
 CDECL
@@ -5824,7 +7156,7 @@ int AMPI_Graph_map(MPI_Comm comm, int nnodes, int *index, int *edges,
   AMPIAPI("AMPI_Graph_map");
   AMPI_Comm_rank(comm, newrank);
 
-  return 0;
+  return MPI_SUCCESS;
 }
 
 CDECL
@@ -5856,14 +7188,12 @@ int AMPI_Cart_create(MPI_Comm comm_old, int ndims, int *dims, int *periods,
   for (int i = 0; i < ndims; i++) {
     dimsv.push_back(dims[i]);
     periodsv.push_back(periods[i]);
-    if ((periods[i] != 0) && (periods[i] != 1))
-      CkAbort("MPI_Cart_create: periods should be all booleans\n");
   }
 
   c.setdims(dimsv);
   c.setperiods(periodsv);
 
-  return 0;
+  return MPI_SUCCESS;
 }
 
 CDECL
@@ -5896,7 +7226,7 @@ int AMPI_Graph_create(MPI_Comm comm_old, int nnodes, int *index, int *edges,
 
   c.setedges(edges_);
 
-  return 0;
+  return MPI_SUCCESS;
 }
 
 CDECL
@@ -5911,7 +7241,7 @@ int AMPI_Topo_test(MPI_Comm comm, int *status) {
     *status = MPI_GRAPH;
   else *status = MPI_UNDEFINED;
 
-  return 0;
+  return MPI_SUCCESS;
 }
 
 CDECL
@@ -5920,7 +7250,7 @@ int AMPI_Cartdim_get(MPI_Comm comm, int *ndims) {
 
   *ndims = getAmpiParent()->getCart(comm).getndims();
 
-  return 0;
+  return MPI_SUCCESS;
 }
 
 CDECL
@@ -5950,7 +7280,7 @@ int AMPI_Cart_get(MPI_Comm comm, int maxdims, int *dims, int *periods,
     rank = (int) (rank / dims_[i]);
   }
 
-  return 0;
+  return MPI_SUCCESS;
 }
 
 CDECL
@@ -5966,21 +7296,23 @@ int AMPI_Cart_rank(MPI_Comm comm, int *coords, int *rank) {
   int r = 0;
 
   for (int i = ndims - 1; i >= 0; i--) {
-    if ((coords[i] < 0) || (coords[i] >= dims[i]))
-      if (periods[i] == 1)
-        if (coords[i] > 0)
+    if ((coords[i] < 0) || (coords[i] >= dims[i])) {
+      if (periods[i] != 0) {
+        if (coords[i] > 0) {
           coords[i] %= dims[i];
-        else {
+        } else {
           //coords[i] += (((-coords[i] / dims[i]) + 1) * dims[i]) % dims[i];
           while (coords[i] < 0) coords[i]+=dims[i];
         }
+      }
+    }
     r += prod * coords[i];
     prod *= dims[i];
   }
 
   *rank = r;
 
-  return 0;
+  return MPI_SUCCESS;
 }
 
 CDECL
@@ -5997,7 +7329,7 @@ int AMPI_Cart_coords(MPI_Comm comm, int rank, int maxdims, int *coords) {
     rank = (int) (rank / dims[i]);
   }
 
-  return 0;
+  return MPI_SUCCESS;
 }
 
 // Offset coords[direction] by displacement, and set the rank that
@@ -6009,7 +7341,7 @@ static void cart_clamp_coord(MPI_Comm comm, const CkVec<int> &dims,
   int base_coord = coords[direction];
   coords[direction] += displacement;
 
-  if (periodicity[direction] == 1) {
+  if (periodicity[direction] != 0) {
     while (coords[direction] < 0)
       coords[direction] += dims[direction];
     while (coords[direction] >= dims[direction])
@@ -6046,7 +7378,7 @@ int AMPI_Cart_shift(MPI_Comm comm, int direction, int disp,
   cart_clamp_coord(comm, dims, periods, coords, direction, -disp, rank_source);
 
   delete [] coords;
-  return 0;
+  return MPI_SUCCESS;
 }
 
 CDECL
@@ -6058,7 +7390,7 @@ int AMPI_Graphdims_get(MPI_Comm comm, int *nnodes, int *nedges) {
   const CkVec<int> &index = c.getindex();
   *nedges = index[(*nnodes) - 1];
 
-  return 0;
+  return MPI_SUCCESS;
 }
 
 CDECL
@@ -6081,7 +7413,7 @@ int AMPI_Graph_get(MPI_Comm comm, int maxindex, int maxedges, int *index,
   for (i = 0; i < maxedges; i++)
     edges[i] = edges_[i];
 
-  return 0;
+  return MPI_SUCCESS;
 } 
 
 CDECL
@@ -6100,7 +7432,7 @@ int AMPI_Graph_neighbors_count(MPI_Comm comm, int rank, int *nneighbors) {
   else 
     *nneighbors = index[rank] - index[rank - 1];
 
-  return 0;
+  return MPI_SUCCESS;
 }
 
 CDECL
@@ -6122,14 +7454,45 @@ int AMPI_Graph_neighbors(MPI_Comm comm, int rank, int maxneighbors,
   if ((rank >= index.size()) || (rank < 0))
     CkAbort("MPI_Graph_neighbors: rank not within range");
 
-  if (rank == 0)
+  if (rank == 0) {
     for (int i = 0; i < maxneighbors; i++)
       neighbors[i] = edges[i];
-  else
+  } else {
     for (int i = 0; i < maxneighbors; i++)
       neighbors[i] = edges[index[rank - 1] + i];
+  }
+  return MPI_SUCCESS;
+}
 
-  return 0;
+/* Used by MPI_Neighbor_* routines */
+int ampi::getNumTopologyNeighbors(MPI_Comm comm, int rank) {
+  int num_dims, num_neighbors = 0;
+  ampiParent *ptr = getAmpiParent();
+  if (ptr->isGraph(comm)) {
+    AMPI_Graph_neighbors_count(comm, rank, &num_neighbors);
+  }
+  else if (ptr->isCart(comm)) {
+    AMPI_Cartdim_get(comm, &num_dims);
+    num_neighbors = 2*num_dims;
+  }
+  return num_neighbors;
+}
+
+void ampi::getTopologyNeighborRanks(MPI_Comm comm, int rank, int num_neighbors, int *neighbors) {
+  ampiParent *ptr = getAmpiParent();
+  if (ptr->isGraph(comm)) {
+    AMPI_Graph_neighbors(comm, rank, num_neighbors, neighbors);
+  }
+  else if (ptr->isCart(comm)) {
+    for (int i=0; i<num_neighbors; i++) {
+      int src, dest;
+      AMPI_Cart_shift(comm, i/2, (i%2==0)?1:-1, &src, &dest);
+      neighbors[i] = dest;
+    }
+  }
+  else {
+    for (int i=0; i<num_neighbors; i++) neighbors[i] = MPI_PROC_NULL;
+  }
 }
 
 /* Factorization code by Orion. Idea thrashed out by Orion and Prakash */
@@ -6162,12 +7525,13 @@ int integerRoot(int n,int d) {
     }
     else { /* induction case */
       int k_up=integerRoot(n,d);
-      for (int k=k_up;k>=m;k--)
+      for (int k=k_up;k>=m;k--) {
         if (n%k==0) { /* k divides n-- try it as a factor */
           dims[0]=k;
           if (factors(n/k,d-1,&dims[1],k))
             return true;
         }
+      }
     }
     /* If we fall out here, there were no factors available */
     return false;
@@ -6182,14 +7546,16 @@ int AMPI_Dims_create(int nnodes, int ndims, int *dims) {
   n = nnodes;
   d = ndims;
 
-  for (i = 0; i < ndims; i++)
-    if (dims[i] != 0)
-      if (n % dims[i] != 0)
+  for (i = 0; i < ndims; i++) {
+    if (dims[i] != 0) {
+      if (n % dims[i] != 0) {
         CkAbort("MPI_Dims_Create: Value in dimensions array infeasible!");
-      else {
+      } else {
         n = n / dims[i];
         d--;
       }
+    }
+  }
 
   if(d > 0) {
     pdims = new int[d];
@@ -6198,16 +7564,16 @@ int AMPI_Dims_create(int nnodes, int ndims, int *dims) {
       CkAbort("MPI_Dims_Create: Factorization failed. Wonder why?");
 
     int j = 0;
-    for (i = 0; i < ndims; i++)
+    for (i = 0; i < ndims; i++) {
       if (dims[i] == 0) {
         dims[i] = pdims[j];
         j++;
       }
-
+    }
     delete [] pdims;
   }
 
-  return 0;
+  return MPI_SUCCESS;
 }
 
 /* Implemented with call to MPI_Comm_Split. Color and key are single integer
@@ -6231,15 +7597,17 @@ int AMPI_Cart_sub(MPI_Comm comm, int *remain_dims, MPI_Comm *newcomm) {
   coords = new int [ndims];
   AMPI_Cart_coords(comm, rank, ndims, coords);
 
-  for (i = 0; i < ndims; i++)
+  for (i = 0; i < ndims; i++) {
     if (remain_dims[i]) {
       /* key single integer encoding*/
       key = key * dims[i] + coords[i];
       num_remain_dims++;
     }
-    else
+    else {
       /* color */
       color = color * dims[i] + coords[i];
+    }
+  }
 
   getAmpiInstance(comm)->split(color, key, newcomm, CART_TOPOL);
 
@@ -6249,26 +7617,17 @@ int AMPI_Cart_sub(MPI_Comm comm, int *remain_dims, MPI_Comm *newcomm) {
   const CkVec<int> &periods = c.getperiods();
   CkVec<int> periodsv;
 
-  for (i = 0; i < ndims; i++)
+  for (i = 0; i < ndims; i++) {
     if (remain_dims[i]) {
       dimsv.push_back(dims[i]);
       periodsv.push_back(periods[i]);
     }
-
+  }
   newc.setdims(dimsv);
   newc.setperiods(periodsv);
 
   delete [] coords;
-  return 0;
-}
-
-void _registerampif(void)
-{
-  _registerampi();
-}
-
-void AMPI_Datatype_iscontig(MPI_Datatype datatype, int *flag){
-  *flag = getDDT()->isContig(datatype);
+  return MPI_SUCCESS;
 }
 
 CDECL
@@ -6283,43 +7642,304 @@ int AMPI_Type_get_contents(MPI_Datatype datatype, int ni, int na, int nd, int i[
   return getDDT()->getContents(datatype,ni,na,nd,i,a,d);
 }
 
-/******** AMPI-specific (not standard MPI) calls *********/
+CDECL
+int AMPI_Pcontrol(const int level, ...) {
+  return MPI_SUCCESS;
+}
 
+/******** AMPI Extensions to the MPI standard *********/
 
 CDECL
-int AMPI_Suspend(int comm) {
+int AMPI_Migrate(MPI_Info hints)
+{
+#if 0 && CMK_BIGSIM_CHARM
+  TRACE_BG_AMPI_SUSPEND();
+#endif
+  int nkeys, exists;
+  char key[MPI_MAX_INFO_KEY], value[MPI_MAX_INFO_VAL];
+
+  AMPI_Info_get_nkeys(hints, &nkeys);
+
+  for (int i=0; i<nkeys; i++) {
+    AMPI_Info_get_nthkey(hints, i, key);
+    AMPI_Info_get(hints, key, MPI_MAX_INFO_VAL, value, &exists);
+    if (!exists) {
+      continue;
+    }
+    else if (strncmp(key, "ampi_load_balance", MPI_MAX_INFO_KEY) == 0) {
+
+      if (strncmp(value, "sync", MPI_MAX_INFO_VAL) == 0) {
+        TCHARM_Migrate();
+      }
+      else if (strncmp(value, "async", MPI_MAX_INFO_VAL) == 0) {
+        TCHARM_Async_Migrate();
+      }
+      else if (strncmp(value, "false", MPI_MAX_INFO_VAL) == 0) {
+        /* do nothing */
+      }
+      else {
+        CkPrintf("WARNING: Unknown MPI_Info value (%s) given to AMPI_Migrate for key: %s\n", value, key);
+      }
+    }
+    else if (strncmp(key, "ampi_checkpoint", MPI_MAX_INFO_KEY) == 0) {
+
+      if (strncmp(value, "true", MPI_MAX_INFO_VAL) == 0) {
+        CkAbort("AMPI> Error: Value \"true\" is not supported for AMPI_Migrate key \"ampi_checkpoint\"!\n");
+      }
+      else if (strncmp(value, "to_file=", strlen("to_file=")) == 0) {
+        int offset = strlen("to_file=");
+        int restart_dir_name_len = 0;
+        AMPI_Info_get_valuelen(hints, key, &restart_dir_name_len, &exists);
+        if (restart_dir_name_len > offset) {
+          value[restart_dir_name_len] = '\0';
+        }
+        else {
+          CkAbort("AMPI> Error: No checkpoint directory name given to AMPI_Migrate\n");
+        }
+        AMPI_Barrier(MPI_COMM_WORLD);
+        getAmpiParent()->startCheckpoint(&value[offset]);
+      }
+      else if (strncmp(value, "in_memory", MPI_MAX_INFO_VAL) == 0) {
+#if CMK_MEM_CHECKPOINT
+        AMPI_Barrier(MPI_COMM_WORLD);
+        getAmpiParent()->startCheckpoint("");
+#else
+        CkPrintf("AMPI> Error: In-memory checkpoint/restart is not enabled!\n");
+        CkAbort("AMPI> Error: Recompile Charm++/AMPI with CMK_MEM_CHECKPOINT.\n");
+#endif
+      }
+      else if (strncmp(value, "message_logging", MPI_MAX_INFO_VAL) == 0) {
+#if CMK_MESSAGE_LOGGING
+        TCHARM_Migrate();
+#else
+        CkPrintf("AMPI> Error: Message logging is not enabled!\n");
+        CkAbort("AMPI> Error: Recompile Charm++/AMPI with CMK_MESSAGE_LOGGING.\n");
+#endif
+      }
+      else if (strncmp(value, "false", MPI_MAX_INFO_VAL) == 0) {
+        /* do nothing */
+      }
+      else {
+        CkPrintf("WARNING: Unknown MPI_Info value (%s) given to AMPI_Migrate for key: %s\n", value, key);
+      }
+    }
+    else {
+      CkPrintf("WARNING: Unknown MPI_Info key given to AMPI_Migrate: %s\n", key);
+    }
+  }
+
+#if (defined(_FAULT_MLOG_) || defined(_FAULT_CAUSAL_))
+  ampi *currentAmpi = getAmpiInstance(MPI_COMM_WORLD);
+  CpvAccess(_currentObj) = currentAmpi;
+#endif
+
+#if CMK_BIGSIM_CHARM
+  //TRACE_BG_AMPI_START(getAmpiInstance(MPI_COMM_WORLD)->getThread(), "AMPI_MIGRATE")
+  TRACE_BG_ADD_TAG("AMPI_MIGRATE");
+#endif
+  return MPI_SUCCESS;
+}
+
+CDECL
+int AMPI_Evacuate(void)
+{
+  TCHARM_Evacuate();
+  return MPI_SUCCESS;
+}
+
+CDECL
+int AMPI_Migrate_to_pe(int dest)
+{
+  AMPIAPI("AMPI_Migrate_to_pe");
+#if 0 && CMK_BIGSIM_CHARM
+  TRACE_BG_AMPI_SUSPEND();
+#endif
+  TCHARM_Migrate_to(dest);
+#if CMK_BIGSIM_CHARM
+  //TRACE_BG_AMPI_START(getAmpiInstance(MPI_COMM_WORLD)->getThread(), "AMPI_MIGRATE_TO_PE")
+  TRACE_BG_ADD_TAG("AMPI_MIGRATE_TO_PE");
+#endif
+  return MPI_SUCCESS;
+}
+
+CDECL
+int AMPI_Comm_set_migratable(MPI_Comm comm, int mig){
+#if CMK_LBDB_ON
+  //AMPIAPI("AMPI_Comm_set_migratable");
+  ampi *ptr=getAmpiInstance(comm);
+  ptr->setMigratable(mig);
+#else
+  CkPrintf("WARNING: MPI_Comm_set_migratable is not supported in this build of Charm++/AMPI.\n");
+#endif
+  return MPI_SUCCESS;
+}
+
+CDECL
+int AMPI_Load_start_measure(void)
+{
+  AMPIAPI("AMPI_Load_start_measure");
+  ampiParent *ptr = getAmpiParent();
+  ptr->start_measure();
+  return MPI_SUCCESS;
+}
+
+CDECL
+int AMPI_Load_stop_measure(void)
+{
+  AMPIAPI("AMPI_Load_stop_measure");
+  ampiParent *ptr = getAmpiParent();
+  ptr->stop_measure();
+  return MPI_SUCCESS;
+}
+
+CDECL
+int AMPI_Load_set_value(double value)
+{
+  AMPIAPI("AMPI_Load_set_value");
+  ampiParent *ptr = getAmpiParent();
+  ptr->setObjTime(value);
+  return MPI_SUCCESS;
+}
+
+void _registerampif(void) {
+  _registerampi();
+}
+
+CDECL
+int AMPI_Register_main(MPI_MainFn mainFn,const char *name)
+{
+  AMPIAPI("AMPI_Register_main");
+  if (TCHARM_Element()==0)
+  { // I'm responsible for building the TCHARM threads:
+    ampiCreateMain(mainFn,name,strlen(name));
+  }
+  return MPI_SUCCESS;
+}
+
+FDECL
+void FTN_NAME(MPI_REGISTER_MAIN,mpi_register_main)
+(MPI_MainFn mainFn,const char *name,int nameLen)
+{
+  AMPIAPI("AMPI_register_main");
+  if (TCHARM_Element()==0)
+  { // I'm responsible for building the TCHARM threads:
+    ampiCreateMain(mainFn,name,nameLen);
+  }
+}
+
+CDECL
+int AMPI_Register_pup(MPI_PupFn fn, void *data, int *idx)
+{
+  AMPIAPI("AMPI_Register_pup");
+  *idx = TCHARM_Register(data, fn);
+  return MPI_SUCCESS;
+}
+
+CDECL
+int AMPI_Register_about_to_migrate(MPI_MigrateFn fn)
+{
+  AMPIAPI("AMPI_Register_about_to_migrate");
+  ampiParent *thisParent = getAmpiParent();
+  thisParent->setUserAboutToMigrateFn(fn);
+  return MPI_SUCCESS;
+}
+
+CDECL
+int AMPI_Register_just_migrated(MPI_MigrateFn fn)
+{
+  AMPIAPI("AMPI_Register_just_migrated");
+  ampiParent *thisParent = getAmpiParent();
+  thisParent->setUserJustMigratedFn(fn);
+  return MPI_SUCCESS;
+}
+
+CDECL
+int AMPI_Get_pup_data(int idx, void *data)
+{
+  AMPIAPI("AMPI_Get_pup_data");
+  data = TCHARM_Get_userdata(idx);
+  return MPI_SUCCESS;
+}
+
+CDECL
+int AMPI_Type_is_contiguous(MPI_Datatype datatype, int *flag)
+{
+  *flag = getDDT()->isContig(datatype);
+  return MPI_SUCCESS;
+}
+
+CDECL
+int AMPI_Print(char *str)
+{
+  AMPIAPI("AMPI_Print");
+  ampiParent *ptr = getAmpiParent();
+  CkPrintf("[%d] %s\n", ptr->thisIndex, str);
+  return MPI_SUCCESS;
+}
+
+CDECL
+int AMPI_Suspend(MPI_Comm comm)
+{
   AMPIAPI("AMPI_Suspend");
   getAmpiInstance(comm)->block();
-  return 0;
+  return MPI_SUCCESS;
 }
 
 CDECL
-int AMPI_Yield(int comm) {
+int AMPI_Yield(MPI_Comm comm)
+{
   AMPIAPI("AMPI_Yield");
   getAmpiInstance(comm)->yield();
-  return 0;
+  return MPI_SUCCESS;
 }
 
 CDECL
-int AMPI_Resume(int dest, int comm) {
+int AMPI_Resume(int dest, MPI_Comm comm)
+{
   AMPIAPI("AMPI_Resume");
   getAmpiInstance(comm)->getProxy()[dest].unblock();
-  return 0;
+  return MPI_SUCCESS;
 }
 
 CDECL
-int AMPI_System(const char *cmd) {
+int AMPI_System(const char *cmd)
+{
   return TCHARM_System(cmd);
 }
 
 CDECL
-int AMPI_Pcontrol(const int level, ...)
+int AMPI_Trace_begin(void)
 {
-    return MPI_SUCCESS;
+  traceBegin();
+  return MPI_SUCCESS;
+}
+
+CDECL
+int AMPI_Trace_end(void)
+{
+  traceEnd();
+  return MPI_SUCCESS;
+}
+
+int AMPI_Install_idle_timer(void)
+{
+#if AMPI_PRINT_IDLE
+  beginHandle = CcdCallOnConditionKeep(CcdPROCESSOR_BEGIN_IDLE,(CcdVoidFn)BeginIdle,NULL);
+  endHandle = CcdCallOnConditionKeep(CcdPROCESSOR_END_IDLE,(CcdVoidFn)EndIdle,NULL);
+#endif
+  return MPI_SUCCESS;
+}
+
+int AMPI_Uninstall_idle_timer(void)
+{
+#if AMPI_PRINT_IDLE
+  CcdCancelCallOnConditionKeep(CcdPROCESSOR_BEGIN_IDLE,beginHandle);
+  CcdCancelCallOnConditionKeep(CcdPROCESSOR_BEGIN_BUSY,endHandle);
+#endif
+  return MPI_SUCCESS;
 }
 
 #if CMK_BIGSIM_CHARM
-
 extern "C" void startCFnCall(void *param,void *msg)
 {
   BgSetStartEvent();
@@ -6328,11 +7948,11 @@ extern "C" void startCFnCall(void *param,void *msg)
   delete (CkReductionMsg*)msg;
 }
 
-  CDECL
-int AMPI_Set_startevent(MPI_Comm comm)
+CDECL
+int AMPI_Set_start_event(MPI_Comm comm)
 {
   AMPIAPI("AMPI_BgSetStartEvent");
-  CmiAssert(comm == MPI_COMM_WORLD);
+  CkAssert(comm == MPI_COMM_WORLD);
 
   ampi *ptr = getAmpiInstance(comm);
 
@@ -6349,10 +7969,16 @@ int AMPI_Set_startevent(MPI_Comm comm)
   if(-1==ptr->recv(MPI_BCAST_TAG, -1, NULL, 0, MPI_INT, MPI_COMM_WORLD))
     CkAbort("AMPI> MPI_Allreduce called with different values on different processors!");
 
-  printf("AMPI_Set_startevent done %d\n", CkMyPe());
-  return 0;
+  return MPI_SUCCESS;
 }
-#endif
+
+CDECL
+int AMPI_Set_end_event(void)
+{
+  AMPIAPI("AMPI_BgSetEndEvent");
+  return MPI_SUCCESS;
+}
+#endif // CMK_BIGSIM_CHARM
 
 #if CMK_CUDA
 GPUReq::GPUReq()
@@ -6360,13 +7986,18 @@ GPUReq::GPUReq()
   comm = MPI_COMM_SELF;
   isComplete = false;
   isvalid = true;
-  MPI_Comm_rank(comm, &src);
+  AMPI_Comm_rank(comm, &src);
   buf = getAmpiInstance(comm);
 }
 
 bool GPUReq::test(MPI_Status *sts)
 {
   return isComplete;
+}
+
+bool GPUReq::itest(MPI_Status *sts)
+{
+  return test(sts);
 }
 
 void GPUReq::complete(MPI_Status *sts)
@@ -6429,12 +8060,11 @@ int AMPI_GPU_Invoke(workRequest *to_call)
 
   MPI_Request req;
   AMPI_GPU_Iinvoke(to_call, &req);
-  MPI_Wait(&req, MPI_STATUS_IGNORE);
+  AMPI_Wait(&req, MPI_STATUS_IGNORE);
 
-  return 0;
+  return MPI_SUCCESS;
 }
-
-#endif
+#endif // CMK_CUDA
 
 #include "ampi.def.h"
 

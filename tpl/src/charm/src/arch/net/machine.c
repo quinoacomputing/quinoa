@@ -409,7 +409,6 @@ static void KillOnAllSigs(int sigNo)
   }
 #endif
   
-  CmiDestroyLocks();
 
   if (sigNo==SIGSEGV) {
      sig="segmentation violation";
@@ -453,7 +452,7 @@ static void machine_atexit_check(void)
 {
   if (!machine_initiated_shutdown)
     CmiAbort("unexpected call to exit by user program. Must use CkExit, not exit!");
-  printf("Program finished after %f seconds.\n", CmiWallTimer());
+  CmiPrintf("Program finished after %f seconds.\n", CmiWallTimer());
 #if 0 /*Wait for the user to press any key (for Win32 debugging)*/
   fgetc(stdin);
 #endif
@@ -512,10 +511,10 @@ Horrific #defines to hide the differences between select() and poll().
 # define CMK_PIPE_PARAM struct kevent* ke
 # define CMK_PIPE_ADDREAD(rd_fd) \
         do { EV_SET(ke, rd_fd, EVFILT_READ, EV_ADD, 0, 10, NULL); \
-                kevent(_kq, ke, 1, NULL, 0, NULL); memset(ke, 0, sizeof(ke));} while(0)
+                kevent(_kq, ke, 1, NULL, 0, NULL); memset(ke, 0, sizeof(*ke));} while(0)
 # define CMK_PIPE_ADDWRITE(wr_fd) \
         do { EV_SET(ke, wr_fd, EVFILT_WRITE, EV_ADD, 0, 10, NULL); \
-                kevent(_kq, ke, 1, NULL, 0, NULL); memset(ke, 0, sizeof(ke));} while(0)
+                kevent(_kq, ke, 1, NULL, 0, NULL); memset(ke, 0, sizeof(*ke));} while(0)
 # define CMK_PIPE_CHECKREAD(rd_fd) (ke->ident == rd_fd && ke->filter == EVFILT_READ)
 # define CMK_PIPE_CHECKWRITE(wr_fd) (ke->ident == wr_fd && ke->filter == EVFILT_WRITE)
 
@@ -689,6 +688,7 @@ void CmiEnableNonblockingIO(int fd) { }
 int               _Cmi_mynode;    /* Which address space am I */
 int               _Cmi_mynodesize;/* Number of processors in my address space */
 int               _Cmi_numnodes;  /* Total number of address spaces */
+int               _Cmi_myphysnode_numprocesses;  /* Total number of processors within this node */
 int               _Cmi_numpes;    /* Total number of processors */
 static int        Cmi_nodestart; /* First processor in this address space */
 static skt_ip_t   Cmi_self_IP;
@@ -896,7 +896,7 @@ void printLog(void)
  * SMP implementation moved to machine-smp.c
  *****************************************************************************/
 
-int inProgress[128];
+int* inProgress;
 
 /** Mechanism to prevent dual locking when comm-layer functions, including prints, 
  * are called recursively. (UN)LOCK_IF_AVAILABLE is used before and after a code piece
@@ -1134,7 +1134,7 @@ by the commlock.*/
 static int Cmi_charmrun_fd_sendflag=0;
 
 /* ctrl_sendone */
-static int sendone_abort_fn(int code,const char *msg) {
+static int sendone_abort_fn(SOCKET skt,int code,const char *msg) {
 	fprintf(stderr,"Socket error %d in ctrl_sendone! %s\n",code,msg);
 	machine_exit(1);
 	return -1;
@@ -1224,7 +1224,7 @@ static void pingCharmrunPeriodic(void *ignored)
   CcdCallFnAfter((CcdVoidFn)pingCharmrunPeriodic,NULL,1000);
 }
 
-static int ignore_further_errors(int c,const char *msg) {machine_exit(2);return -1;}
+static int ignore_further_errors(SOCKET skt,int c,const char *msg) {machine_exit(2);return -1;}
 static void charmrun_abort(const char *s)
 {
   if (Cmi_charmrun_fd==-1) {/*Standalone*/
@@ -1403,11 +1403,15 @@ static int InternalScanf(char *fmt, va_list l)
   return i;
 }
 
+extern int quietModeRequested;
+extern int quietMode;
+
 #if CMK_CMIPRINTF_IS_A_BUILTIN
 
 /*New stdarg.h declarations*/
 void CmiPrintf(const char *fmt, ...)
 {
+  if (quietMode) return;
   CpdSystemEnter();
   {
   va_list p; va_start(p, fmt);
@@ -1754,6 +1758,9 @@ static void node_addresses_obtain(char **argv)
   	ChMessage_recv(Cmi_charmrun_fd,&nodetabmsg);
         MACHSTATE(2,"} recv initnode");
   }
+  ChMessageInt_t *n32 = (ChMessageInt_t *) nodetabmsg.data;
+  ChNodeinfo *d = (ChNodeinfo *) (n32+1);
+  _Cmi_myphysnode_numprocesses = ChMessageInt(d[_Cmi_mynode].nProcessesInPhysNode);
 //#if CMK_USE_IBVERBS	
 //#else
   node_addresses_store(&nodetabmsg);
@@ -2700,8 +2707,10 @@ static void ConverseRunPE(int everReturn)
 
 void ConverseExit(void)
 {
+  if (quietModeRequested) quietMode = 1;
   MACHSTATE(2,"ConverseExit {");
   machine_initiated_shutdown=1;
+
   if (CmiMyRank()==0) {
     if(Cmi_print_stats)
       printNetStatistics();
@@ -2762,7 +2771,7 @@ static void set_signals(void)
 */
 static void obtain_idleFn(void) {sleep(0);}
 
-static int net_default_skt_abort(int code,const char *msg)
+static int net_default_skt_abort(SOCKET skt,int code,const char *msg)
 {
   fprintf(stderr,"Fatal socket error: code %d-- %s\n",code,msg);
   machine_exit(1);
@@ -2775,6 +2784,9 @@ FILE *debugLog = NULL;
 
 void ConverseInit(int argc, char **argv, CmiStartFn fn, int usc, int everReturn)
 {
+  if (CmiGetArgFlagDesc(argv,"++quiet","Omit non-error runtime messages")) {
+    quietModeRequested = quietMode = 1;
+  }
 #if MACHINE_DEBUG
   debugLog=NULL;
 #endif
@@ -2787,6 +2799,10 @@ void ConverseInit(int argc, char **argv, CmiStartFn fn, int usc, int everReturn)
   Cmi_idlepoll = 0;
 #else
   Cmi_idlepoll = 1;
+#endif
+#if CMK_CCS_AVAILABLE
+  CpvInitialize(int, cmiArgDebugFlag);
+  CpvAccess(cmiArgDebugFlag) = 0;
 #endif
   Cmi_truecrash = 0;
   if (CmiGetArgFlagDesc(argv,"+truecrash","Do not install signal handlers") ||
@@ -2859,7 +2875,7 @@ void ConverseInit(int argc, char **argv, CmiStartFn fn, int usc, int everReturn)
 	skt_tcp_no_nagle(Cmi_charmrun_fd);
 	CmiStdoutInit();
   } else {/*Standalone operation*/
-  	printf("Charm++: standalone mode (not using charmrun)\n");
+  	if (!quietMode) printf("Charm++: standalone mode (not using charmrun)\n");
   	dataskt=-1;
   	Cmi_charmrun_fd=-1;
   }
@@ -2870,6 +2886,10 @@ void ConverseInit(int argc, char **argv, CmiStartFn fn, int usc, int everReturn)
   MACHSTATE(5,"node_addresses_obtain done");
 
   CmiCommunicationInit(argv);
+
+#if CMK_SMP
+  comm_mutex=CmiCreateLock();
+#endif
 
 #if CMK_USE_SYSVSHM
   CmiInitSysvshm(argv);
@@ -2882,6 +2902,8 @@ void ConverseInit(int argc, char **argv, CmiStartFn fn, int usc, int everReturn)
 
   if (Cmi_charmrun_fd==-1) /*Don't bother with check in standalone mode*/
       Cmi_check_delay=1.0e30;
+
+  inProgress = calloc(_Cmi_mynodesize, sizeof(int));
 
   CsvInitialize(CmiNodeState, NodeState);
   CmiNodeStateInit(&CsvAccess(NodeState));

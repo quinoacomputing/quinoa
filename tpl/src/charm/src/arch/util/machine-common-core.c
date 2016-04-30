@@ -151,6 +151,7 @@ int _Cmi_numnodes_global;
 static int _writeToStdout = 1;
 
 // Node state structure, local information for the partition
+int               _Cmi_myphysnode_numprocesses;  /* Total number of processes within this node */
 int               _Cmi_mynodesize;/* Number of processors in my address space */
 int               _Cmi_mynode;    /* Which address space am I */
 int               _Cmi_numnodes;  /* Total number of address spaces */
@@ -196,7 +197,7 @@ extern int CharmLibInterOperate;
  *
  */
 #ifndef CMK_SMP_NO_COMMTHD
-#define CMK_SMP_NO_COMMTHD 0
+#define CMK_SMP_NO_COMMTHD CMK_MULTICORE
 #endif
 
 #if CMK_SMP_NO_COMMTHD
@@ -222,6 +223,9 @@ static int Cmi_nodestartGlobal = -1;
 CpvDeclare(unsigned , networkProgressCount);
 int networkProgressPeriod;
 
+#if CMK_CCS_AVAILABLE
+extern int ccsRunning;
+#endif
 
 /* ===== Beginning of Common Function Declarations ===== */
 void CmiAbort(const char *message);
@@ -365,6 +369,7 @@ INLINE_KEYWORD CMIQueue CmiMyNodeQueue() {
     return CsvAccess(NodeState).NodeRecv;
 }
 #endif
+
 INLINE_KEYWORD int CmiMyPe() {
     return CmiGetState()->pe;
 }
@@ -390,6 +395,12 @@ INLINE_KEYWORD int CmiRankOf(int pe) {
     return pe%_Cmi_mynodesize;
 }
 #endif
+
+static int CmiState_hasMessage() {
+  CmiState cs = CmiGetState();
+  return CmiIdleLock_hasMessage(cs);
+}
+
 /* ===== End of Processor/Node State-related Stuff =====*/
 
 #include "machine-broadcast.c"
@@ -831,6 +842,12 @@ static int create_partition_map( char **argv)
     CmiGetArgIntDesc(argv,"+replicas", &_partitionInfo.numPartitions,"number of partitions");
   }
 
+#if CMK_MULTICORE
+  if(_partitionInfo.numPartitions != 1) {
+    CmiAbort("+partitions other than 1 is not allowed for multicore build\n");
+  }
+#endif
+
   _partitionInfo.partitionSize = (int*)calloc(_partitionInfo.numPartitions,sizeof(int));
   _partitionInfo.partitionPrefix = (int*)calloc(_partitionInfo.numPartitions,sizeof(int));
   
@@ -860,7 +877,9 @@ static int create_partition_map( char **argv)
   }
 
   if(_partitionInfo.type == PARTITION_DEFAULT) {
-    assert((_Cmi_numnodes_global % _partitionInfo.numPartitions) == 0);
+    if((_Cmi_numnodes_global % _partitionInfo.numPartitions) != 0) {
+      CmiAbort("Number of partitions does not evenly divide number of processes. Aborting\n");
+    }
     _partitionInfo.partitionPrefix[0] = 0;
     _partitionInfo.partitionSize[0] = _Cmi_numnodes_global / _partitionInfo.numPartitions;
     for(i = 1; i < _partitionInfo.numPartitions; i++) {
@@ -869,7 +888,9 @@ static int create_partition_map( char **argv)
     } 
     _partitionInfo.myPartition = _Cmi_mynode_global / _partitionInfo.partitionSize[0];
   } else if(_partitionInfo.type == PARTITION_MASTER) {
-    assert(((_Cmi_numnodes_global-1) % (_partitionInfo.numPartitions-1)) == 0);
+    if(((_Cmi_numnodes_global-1) % (_partitionInfo.numPartitions-1)) != 0) {
+      CmiAbort("Number of non-master partitions does not evenly divide number of processes minus one. Aborting\n");
+    }
     _partitionInfo.partitionSize[0] = 1;
     _partitionInfo.partitionPrefix[0] = 0;
     _partitionInfo.partitionSize[1] = (_Cmi_numnodes_global-1) / (_partitionInfo.numPartitions-1);
@@ -930,13 +951,17 @@ static int create_partition_map( char **argv)
     _partitionInfo.partitionPrefix[0] = 0;
     _partitionInfo.myPartition = 0;
     for(i = 1; i < _partitionInfo.numPartitions; i++) {
-      assert(_partitionInfo.partitionSize[i-1] > 0);
+      if(_partitionInfo.partitionSize[i-1] <= 0) {
+        CmiAbort("Partition size has to be greater than zero.\n");
+      }
       _partitionInfo.partitionPrefix[i] = _partitionInfo.partitionPrefix[i-1] + _partitionInfo.partitionSize[i-1];
       if((_Cmi_mynode_global >= _partitionInfo.partitionPrefix[i]) && (_Cmi_mynode_global < (_partitionInfo.partitionPrefix[i] + _partitionInfo.partitionSize[i]))) {
         _partitionInfo.myPartition = i;
       }
     } 
-    assert(_partitionInfo.partitionSize[i-1] > 0);
+    if(_partitionInfo.partitionSize[i-1] <= 0) {
+      CmiAbort("Partition size has to be greater than zero.\n");
+    }
   }
   _Cmi_mynode = _Cmi_mynode - _partitionInfo.partitionPrefix[_partitionInfo.myPartition];
 
@@ -1012,15 +1037,24 @@ INLINE_KEYWORD int pe_gToLTranslate(int pe) {
 }
 //end of functions related to partition
 
+extern int quietMode;
+extern int quietModeRequested;
+
 /* ##### Beginning of Functions Related with Machine Startup ##### */
 void ConverseInit(int argc, char **argv, CmiStartFn fn, int usched, int initret) {
     int _ii;
     int tmp;
     //handle output to files for partition if requested
     char *stdoutbase,*stdoutpath;
+
+
 #if CMK_WITH_STATS
     MSG_STATISTIC = CmiGetArgFlag(argv, "+msgstatistic");
 #endif
+
+  if (CmiGetArgFlagDesc(argv,"++quiet","Omit non-error runtime messages")) {
+    quietModeRequested = quietMode = 1;
+  }
 
     /* processor per node */
     _Cmi_mynodesize = 1;
@@ -1049,7 +1083,6 @@ if (  MSG_STATISTIC)
 }
 #endif
 
-    LrtsInit(&argc, &argv, &_Cmi_numnodes, &_Cmi_mynode);
 #if MACHINE_DEBUG_LOG
     char ln[200];
     sprintf(ln,"debugLog.%d", _Cmi_mynode);
@@ -1060,24 +1093,32 @@ if (  MSG_STATISTIC)
     }
 #endif
 
+    LrtsInit(&argc, &argv, &_Cmi_numnodes, &_Cmi_mynode);
+
 
     if (_Cmi_mynode==0) {
 #if !CMK_SMP 
-      printf("Charm++> Running in non-SMP mode: numPes %d\n",_Cmi_numnodes);
+      if (!quietMode) printf("Charm++> Running in non-SMP mode: numPes %d\n",_Cmi_numnodes);
       MACHSTATE1(4,"running nonsmp %d", _Cmi_mynode)
 #else
-      printf("Charm++> Running in SMP mode: numNodes %d,  %d worker threads per process\n", CmiNumNodes(),_Cmi_mynodesize);
+
+#if !CMK_MULTICORE
+      if (!quietMode) printf("Charm++> Running in SMP mode: numNodes %d,  %d worker threads per process\n", CmiNumNodes(),_Cmi_mynodesize);
       if (Cmi_smp_mode_setting == COMM_THREAD_SEND_RECV) {
-        printf("Charm++> The comm. thread both sends and receives messages\n");
+        if (!quietMode) printf("Charm++> The comm. thread both sends and receives messages\n");
       } else if (Cmi_smp_mode_setting == COMM_THREAD_ONLY_RECV) {
-        printf("Charm++> The comm. thread only receives messages, while work threads send messages\n");
+        if (!quietMode) printf("Charm++> The comm. thread only receives messages, while work threads send messages\n");
       } else if (Cmi_smp_mode_setting == COMM_WORK_THREADS_SEND_RECV) {
-        printf("Charm++> Both  comm. thread and worker thread send and messages\n");
+        if (!quietMode) printf("Charm++> Both  comm. thread and worker thread send and messages\n");
       } else if (Cmi_smp_mode_setting == COMM_THREAD_NOT_EXIST) {
-        printf("Charm++> There's no comm. thread. Work threads both send and receive messages\n");
+        if (!quietMode) printf("Charm++> There's no comm. thread. Work threads both send and receive messages\n");
       } else {
         CmiAbort("Charm++> Invalid SMP mode setting\n");
       }
+#else
+      if (!quietMode) printf("Charm++> Running in Multicore mode:  %d threads\n", _Cmi_mynodesize);
+#endif
+      
 #endif
     }
 
@@ -1096,7 +1137,7 @@ if (  MSG_STATISTIC)
       if ( ! strcmp(stdoutpath, stdoutbase) ) {
         sprintf(stdoutpath, "%s.%d", stdoutbase, CmiMyPartition());
       }
-      if ( CmiMyPartition() == 0 && CmiMyNode() == 0 ) {
+      if ( CmiMyPartition() == 0 && CmiMyNode() == 0 && !quietMode) {
         printf("Redirecting stdout to files %s through %d\n",stdoutpath,CmiNumPartitions()-1);
       }
       if ( ! freopen(stdoutpath, "a", stdout) ) {
@@ -1107,7 +1148,9 @@ if (  MSG_STATISTIC)
       _writeToStdout = 0;
       free(stdoutpath);
     }
-
+#if CMK_SMP
+    comm_mutex=CmiCreateLock();
+#endif
 
 #if CMK_USE_PXSHM
     CmiInitPxshm(argv);
@@ -1154,10 +1197,25 @@ if (  MSG_STATISTIC)
 
 extern void ConverseCommonInit(char **argv);
 extern void CthInit(char **argv);
-
 static void ConverseRunPE(int everReturn) {
     CmiState cs;
     char** CmiMyArgv;
+
+#if CMK_CCS_AVAILABLE
+/**
+ * The reason to initialize this variable here:
+ * cmiArgDebugFlag is possibly accessed in CmiPrintf/CmiError etc.,
+ * therefore, we have to initialize this variable before any calls
+ * to those functions (such as CmiPrintf). Otherwise, we may encounter
+ * a memory segmentation fault (bad memory access). Note, even
+ * testing CpvInitialized(cmiArgDebugFlag) doesn't help to solve
+ * this problem because the variable indicating whether cmiArgDebugFlag is
+ * initialized or not is not initialized, thus possibly causing another
+ * bad memory access. --Chao Mei
+ */
+  CpvInitialize(int, cmiArgDebugFlag);
+  CpvAccess(cmiArgDebugFlag) = 0;
+#endif
 
     LrtsPreCommonInit(everReturn);
 
@@ -1285,10 +1343,7 @@ static void CommunicationServer(int sleepTime) {
         MACHSTATE(2, "} CommunicationServer EXIT");
 
         ConverseCommonExit();
-
-#if CMK_USE_PXSHM
-        CmiExitPxshm();
-#endif
+  
 #if CMK_USE_XPMEM
         CmiExitXpmem();
 #endif
@@ -1307,6 +1362,7 @@ void CommunicationServerThread(int sleepTime) {
 
 void ConverseExit(void) {
     int i;
+    if (quietModeRequested) quietMode = 1;
 #if !CMK_SMP || CMK_SMP_NO_COMMTHD
     LrtsDrainResources();
 #else
@@ -1335,7 +1391,7 @@ if (MSG_STATISTIC)
       CmiPrintf("[Partition %d][Node %d] End of program\n",CmiMyPartition(),CmiMyNode());
 #endif
 
-#if !CMK_SMP || CMK_SMP_NO_COMMTHD
+#if !CMK_SMP || CMK_BLUEGENEQ
 #if CMK_USE_PXSHM
     CmiExitPxshm();
 #endif
@@ -1350,6 +1406,13 @@ if (MSG_STATISTIC)
     commThdExit++;
     CmiUnlock(commThdExitLock);
     CmiNodeAllBarrier();
+#if CMK_SMP_NO_COMMTHD
+#if CMK_USE_XPMEM
+    if (CmiMyRank() == 0) CmiExitXpmem();
+    CmiNodeAllBarrier();
+#endif
+    if (CmiMyRank() == 0) LrtsExit();
+#endif
     if(CharmLibInterOperate)
       CmiYield();
     else 
@@ -1393,7 +1456,6 @@ void CmiAbort(const char *message) {
 void *CmiGetNonLocal(void) {
     CmiState cs = CmiGetState();
     void *msg = NULL;
-
 #if !CMK_SMP || CMK_SMP_NO_COMMTHD
     /**
       * In SMP mode with comm thread, it's possible a normal
@@ -1403,7 +1465,11 @@ void *CmiGetNonLocal(void) {
       * even there's only one worker thread, the polling of
       * network queue is still required.
       */
+#if CMK_CCS_AVAILABLE
+    if (CmiNumPes() == 1 && CmiNumPartitions() == 1 && ccsRunning != 1) return NULL;
+#else
     if (CmiNumPes() == 1 && CmiNumPartitions() == 1) return NULL;
+#endif
 #endif
 
     MACHSTATE2(3, "[%p] CmiGetNonLocal begin %d{", cs, CmiMyPe());
@@ -1411,13 +1477,19 @@ void *CmiGetNonLocal(void) {
     /* ?????although it seems that lock is not needed, I found it crashes very often
        on mpi-smp without lock */
     msg = CMIQueuePop(cs->recv);
-#if !CMK_SMP || CMK_SMP_NO_COMMTHD
+#if (!CMK_SMP || CMK_SMP_NO_COMMTHD) && !CMK_MULTICORE
     if (!msg) {
        AdvanceCommunication(0);
        msg = CMIQueuePop(cs->recv);
     }
 #else
 //    LrtsPostNonLocal();
+#endif
+#if CMK_CCS_AVAILABLE
+    if(msg != NULL && CmiNumPes() == 1 && CmiNumPartitions() == 1 )
+    {
+      ccsRunning = 0;
+    }
 #endif
 
     MACHSTATE3(3,"[%p] CmiGetNonLocal from queue %p with msg %p end }",CmiGetState(),(cs->recv), msg);
@@ -1463,12 +1535,15 @@ static void CmiNotifyBeginIdle(CmiIdleState *s) {
 #define SPINS_BEFORE_SLEEP 20
 static void CmiNotifyStillIdle(CmiIdleState *s) {
     MACHSTATE1(2,"still idle (%d) begin {",CmiMyPe())
-#if !CMK_SMP || CMK_SMP_NO_COMMTHD
+#if (!CMK_SMP || CMK_SMP_NO_COMMTHD) && !CMK_MULTICORE
     AdvanceCommunication(1);
 #else
     LrtsPostNonLocal();
 
-    if (_Cmi_sleepOnIdle) {
+#if CMK_SHARED_VARS_POSIX_THREADS_SMP
+    if (_Cmi_sleepOnIdle)
+#endif
+    {
     s->nIdles++;
     if (s->nIdles>SPINS_BEFORE_SLEEP) { /*Start giving some time back to the OS*/
         s->sleepMs+=2;

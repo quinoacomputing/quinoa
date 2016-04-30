@@ -32,7 +32,7 @@
 #include <infiniband/verbs.h>
 
 //#define QLOGIC
-#ifndef QLOGIC
+#if ! QLOGIC
 enum ibv_mtu mtu = IBV_MTU_2048;
 #else
 enum ibv_mtu mtu = IBV_MTU_4096;
@@ -447,7 +447,7 @@ static void checkAllQps(){
 		if(i != _Cmi_mynode){
 			if(!checkQp(nodes[i].infiData->qp)){
 				pollSendCq(0);
-				CmiAssert(0);
+				CmiEnforce(0);
 			}
 		}
 	}
@@ -479,8 +479,8 @@ static void CmiMachineInit(char **argv){
 	MACHSTATE1(3,"CmiMyNodeSize() %d",CmiMyNodeSize());
 	
 	devList =  ibv_get_device_list(&num_devices);
-        CmiAssert(num_devices > 0);
-	CmiAssert(devList != NULL);
+        CmiEnforce(num_devices > 0);
+	CmiEnforce(devList != NULL);
 	if (CmiGetArgStringDesc(argv,"+IBVDeviceName",&usr_ibv_device_name,"User set IBV device name"))
           {
 	    MACHSTATE1(3,"IBVDeviceName set %s",usr_ibv_device_name);
@@ -498,12 +498,12 @@ static void CmiMachineInit(char **argv){
         // try all devices, can't assume device 0 is IB, it may be ethernet
 loop:
 	dev = devList[idev];
-	CmiAssert(dev != NULL);
+	CmiEnforce(dev != NULL);
 
 	MACHSTATE2(3,"device name %s for %d",ibv_get_device_name(dev), idev);
 	//the context for this infiniband device 
 	context->context = ibv_open_device(dev);
-	CmiAssert(context->context != NULL);
+	CmiEnforce(context->context != NULL);
 
         // test ibPort
         for (ibPort = 1; ibPort < MAXPORT; ibPort++) {
@@ -548,7 +548,7 @@ loop:
 
 	//protection domain
 	context->pd = ibv_alloc_pd(context->context);
-	CmiAssert(context->pd != NULL);
+	CmiEnforce(context->pd != NULL);
 	MACHSTATE2(3,"pd %p pd->handle %d",context->pd,context->pd->handle);
 
   /******** At this point we know that this node is more or less serviceable
@@ -871,7 +871,7 @@ struct infiOtherNodeData *initInfiOtherNodeData(int node,int addr[3]){
 	
 	attr.qp_state 	    = IBV_QPS_RTS;
 // Here NON_SRQ is for QLOGIC
-#ifndef QLOGIC
+#if ! QLOGIC
 	attr.timeout 	    = 26;
 	attr.retry_cnt 	    = 20;
 #else
@@ -894,29 +894,37 @@ struct infiOtherNodeData *initInfiOtherNodeData(int node,int addr[3]){
 	  IBV_QP_MAX_QP_RD_ATOMIC)) {
 			MACHSTATE1(3,"ERROR changing qp state to RTS %d: will retry",err);
 	}
-	// Error code 22 means that there was an invalid parameter when calling to this verbs, try with qlogic-specific parameters 
-	if (err==22)
+	// Error code 22 means that there was an invalid parameter when calling to this verbs, try with alternate parameters
+	if (err == 22)
 	{
-	attr.timeout 	    = 26;
-	attr.retry_cnt 	    = 20;
+          //use inverted logic
+#if QLOGIC
+          mtu = IBV_MTU_2048;
+          attr.path_mtu             = mtu;
+          attr.timeout              = 26;
+          attr.retry_cnt            = 20;
+#else
+          mtu = IBV_MTU_4096;
+          attr.path_mtu             = mtu;
+          attr.timeout              = 14;
+          attr.retry_cnt            = 7;
+#endif
 
+          MACHSTATE3(3,"Retry:dlid 0x%x qp 0x%x psn 0x%x",attr.ah_attr.dlid,attr.dest_qp_num,attr.sq_psn);
+          if (err=ibv_modify_qp(ret->qp, &attr,
+                IBV_QP_STATE              |
+                IBV_QP_TIMEOUT            |
+                IBV_QP_RETRY_CNT          |
+                IBV_QP_RNR_RETRY          |
+                IBV_QP_SQ_PSN             |
+                IBV_QP_MAX_QP_RD_ATOMIC)) {
+            MACHSTATE1(3,"ERROR changing qp state to RTS %d",err);
+            CmiAbort("Failed to change qp state to RTS: you may need some device-specific parameters in machine-ibverbs");
+          }
 
-	MACHSTATE3(3,"Retry:dlid 0x%x qp 0x%x psn 0x%x",attr.ah_attr.dlid,attr.dest_qp_num,attr.sq_psn);
-	if (err=ibv_modify_qp(ret->qp, &attr,
-          IBV_QP_STATE              |
-          IBV_QP_TIMEOUT            |
-          IBV_QP_RETRY_CNT          |
-          IBV_QP_RNR_RETRY          |
-          IBV_QP_SQ_PSN             |
-          IBV_QP_MAX_QP_RD_ATOMIC)) {
-                        MACHSTATE1(3,"ERROR changing qp state to RTS %d",err);
-                        CmiAbort("Failed to change qp state to RTS: you may need some device-specific parameters in machine-ibevrbs");
+        } else if(err) {
+          CmiAbort("Failed to change qp state to RTS");
         }
-
-	}
-
-	else if(err)
-                        CmiAbort("Failed to change qp state to RTS");
 
 	MACHSTATE(3,"qp state changed to RTS");
 
@@ -1038,7 +1046,7 @@ void postInitialRecvs(struct infiBufferPool *recvBufferPool,int numRecvs,int siz
 	workRequests[numRecvs-1].next = NULL;
 	MACHSTATE(3,"About to call ibv_post_srq_recv");
 	if(ibv_post_srq_recv(context->srq,workRequests,&bad_wr)){
-		CmiAssert(0);
+		CmiEnforce(0);
 	}
 #else 
 // create a pool per processor and post initial receives to processor queue similar to send, split the buffer pool Equi-partitioning recv pool
@@ -1058,7 +1066,7 @@ void postInitialRecvs(struct infiBufferPool *recvBufferPool,int numRecvs,int siz
 					workRequests[numRecvs-1].next = NULL;
 				else
 					workRequests[(k+1)*perNodeRecvs-1].next = NULL;
-				if(ibv_post_recv(context->qp[n],&workRequests[k*perNodeRecvs],&bad_wr)){CmiAssert(0);}
+				if(ibv_post_recv(context->qp[n],&workRequests[k*perNodeRecvs],&bad_wr)){CmiEnforce(0);}
 				k++;
 				}
           }
@@ -1160,7 +1168,7 @@ static void inline EnqueuePacket(OtherNode node,infiPacket packet,int size,struc
 /*
 	if(!checkQp(node->infiData->qp)){
 		pollSendCq(1);
-		CmiAssert(0);
+		CmiEnforce(0);
 	}*/
 
 	if(retval = ibv_post_send(node->infiData->qp,&(packet->wr),&bad_wr)){
@@ -1178,7 +1186,7 @@ static void inline EnqueuePacket(OtherNode node,infiPacket packet,int size,struc
 
 /*	if(!checkQp(node->infiData->qp)){
 		pollSendCq(1);
-		CmiAssert(0);
+		CmiEnforce(0);
 	}*/
 
 #if CMK_IBVERBS_INCTOKENS	
@@ -1477,7 +1485,7 @@ static inline int pollRecvCq(const int toBuffer){
 	
 	for(i=0;i<ne;i++){
 		if(wc[i].status != IBV_WC_SUCCESS){
-			CmiAssert(0);
+			CmiEnforce(0);
 		}
 		switch(wc[i].opcode){
 			case IBV_WC_RECV:
@@ -1511,7 +1519,7 @@ static inline int pollSendCq(const int toBuffer){
 #if CMK_IBVERBS_STATS
 	printf("[%d] msgCount %d pktCount %d packetSize %d total Time %.6lf s processBufferedCount %d processBufferedTime %.6lf s maxTokens %d tokensLeft %d minTokensLeft %d \n",_Cmi_mynode,msgCount,pktCount,packetSize,CmiTimer(),processBufferedCount,processBufferedTime,maxTokens,context->tokensLeft,minTokensLeft);
 #endif
-			CmiAssert(0);
+			CmiEnforce(0);
 		}
 		switch(wc[i].opcode){
 			case IBV_WC_SEND:{
@@ -1862,7 +1870,7 @@ static inline void processRecvWC(struct ibv_wc *recvWC,const int toBuffer){
 		if(ibv_post_recv(node1->infiData->qp,&wr,&bad_wr))
 #endif 
 		{
-			CmiAssert(0);
+			CmiEnforce(0);
 		}
 	}
 
@@ -1962,7 +1970,7 @@ static inline void processRdmaRequest(struct infiRdmaPacket *_rdmaPacket,int fro
 		};
 		/** post and rdma_read that is a rdma get*/
 		if(ibv_post_send(node->infiData->qp,&wr,&bad_wr)){
-			CmiAssert(0);
+			CmiEnforce(0);
 		}
 	}
 
@@ -2257,7 +2265,7 @@ static inline void increaseTokens(OtherNode node){
 	currentCqSize = context->sendCqSize;
 	if(ibv_resize_cq(context->sendCq,currentCqSize+increase)){
 		fprintf(stderr,"[%d] failed to increase cq by %d from %d totalTokens %d \n",_Cmi_mynode,increase,currentCqSize, node->infiData->totalTokens);
-		CmiAssert(0);
+		CmiEnforce(0);
 	}
 	context->sendCqSize+= increase;
 };
@@ -2281,7 +2289,7 @@ static void increasePostedRecvs(int nodeNo){
 	//increase the size of the recvCq
 	currentCqSize = context->recvCqSize;
 	if(ibv_resize_cq(context->recvCq,currentCqSize+tokenIncrease)){
-		CmiAssert(0);
+		CmiEnforce(0);
 	}
 	context->recvCqSize += tokenIncrease;
 	if(recvIncrease > 0){
@@ -2543,7 +2551,7 @@ static inline void *getInfiCmiChunkThread(int dataSize){
 		return res;
 	}
 
-	CmiAssert(0);
+	CmiEnforce(0);
 
 	
 };
@@ -2641,7 +2649,7 @@ static inline void *getInfiCmiChunk(int dataSize){
                 return res;
         }
 
-        CmiAssert(0);
+        CmiEnforce(0);
 
 
 };
@@ -3230,7 +3238,7 @@ void CmiDirect_put(struct infiDirectUserHandle *userHandle){
 			};
 			/** post and rdma_read that is a rdma get*/
 			if(ibv_post_send(node->infiData->qp,&wr,&bad_wr)){
-				CmiAssert(0);
+				CmiEnforce(0);
 			}
 		}
 
@@ -3380,7 +3388,7 @@ static void pollCmiDirectQ(){
 		};
 //	 post and rdma_read that is a rdma get
 		if(ibv_post_send(node->infiData->qp,&wr,&bad_wr)){
-			CmiAssert(0);
+			CmiEnforce(0);
 		}
 	}
 			
@@ -3439,7 +3447,7 @@ static void recvBarrierMessage()
       pollSendCq(1); 
       for(i=0;i<ne;i++){
 	if(wc[i].status != IBV_WC_SUCCESS){
-	  CmiAssert(0);
+	  CmiEnforce(0);
 	}
 	switch(wc[i].opcode){
 	case IBV_WC_RECV: /* we have something to consider*/
@@ -3502,7 +3510,7 @@ static void recvBarrierMessage()
 	    struct ibv_recv_wr *bad_wr;
 	
 	    if(ibv_post_srq_recv(context->srq,&wr,&bad_wr)){
-	      CmiAssert(0);
+	      CmiEnforce(0);
 	    }
 	  }
 

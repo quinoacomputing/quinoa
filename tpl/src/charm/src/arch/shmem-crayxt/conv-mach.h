@@ -19,11 +19,9 @@
 #define CMI_IO_BUFFER_EXPLICIT                             1
 #define CMI_IO_FLUSH_USER                                  1
 
-#define CMK_NODE_QUEUE_AVAILABLE                           0
 
-#define CMK_RSH_IS_A_COMMAND                               0
-#define CMK_RSH_NOT_NEEDED                                 1
-#define CMK_RSH_USE_REMSH                                  0
+#define CMK_SSH_IS_A_COMMAND                               0
+#define CMK_SSH_NOT_NEEDED                                 1
 
 #define CMK_SHARED_VARS_UNAVAILABLE                        1
 #define CMK_SHARED_VARS_UNIPROCESSOR                       0

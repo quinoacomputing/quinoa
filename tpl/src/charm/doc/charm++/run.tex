@@ -79,18 +79,22 @@ the network version:
 
 \item[{\tt ++mpiexec}]
 \label{mpiexec}
-Use the cluster's {\tt mpiexec} job launcher instead of the built in rsh/ssh
+Use the cluster's {\tt mpiexec} job launcher instead of the built in ssh
 method.
 
 This will pass {\tt -n \$P} to indicate how many processes to
-launch. An executable named something other than {\tt mpiexec} can be
+launch.
+If {\tt -n \$P} is not required because the number of processes
+to launch is determined via queueing system environment varibles
+then use {\tt ++mpiexec-no-n} rather than {\tt ++mpiexec}.
+An executable named something other than {\tt mpiexec} can be
 used with the additional argument {\tt ++remote-shell} {\it runmpi},
 with `runmpi' replaced by the necessary name.
 
 Use of this option can potentially provide a few benefits:
 
 \begin{itemize}
-\item Faster startup compared to the SSH/RSH approach charmrun would
+\item Faster startup compared to the SSH approach charmrun would
   otherwise use
 \item No need to generate a nodelist file
 \item Multi-node job startup on clusters that do not allow connections
@@ -99,8 +103,9 @@ Use of this option can potentially provide a few benefits:
 
 At present, this option depends on the environment variables for some
 common MPI implementations. It supports OpenMPI ({\tt OMPI\_COMM\_WORLD\_RANK} and
-{\tt OMPI\_COMM\_WORLD\_SIZE}) and M(VA)PICH ({\tt MPIRUN\_RANK} and {\tt
-  MPIRUN\_NPROCS} or {\tt PMI\_RANK} and {\tt PMI\_SIZE}).
+{\tt OMPI\_COMM\_WORLD\_SIZE}), M(VA)PICH ({\tt MPIRUN\_RANK} and {\tt
+  MPIRUN\_NPROCS} or {\tt PMI\_RANK} and {\tt PMI\_SIZE}),
+and IBM POE ({\tt MP\_CHILD} and {\tt MP\_PROCS}).
 
 \item[{\tt ++debug}] Run each node under gdb in an xterm window, prompting
 the user to begin execution.
@@ -122,25 +127,25 @@ man pages for {\tt xhost} and {\tt xauth}).
 the user's path.
 
 \item The path must be set in the {\tt .cshrc} file, not the {\tt .login}
-file, because {\tt rsh} does not run the {\tt .login} file.
+file, because {\tt ssh} does not run the {\tt .login} file.
 
 \end{enumerate}
 
-\item[{\tt ++scalable-start}]   Scalable start, or SMP-aware startup. It is useful for scalable process launch on multi-core systems since it creates only one ssh session per node and spawn all clients from the same ssh session
+\item[{\tt ++scalable-start}]   Scalable start, or SMP-aware startup. It is useful for scalable process launch on multi-core systems since it creates only one ssh session per node and spawns all clients from that ssh session. This is the default startup strategy and the option is retained for backward compatibility.
 
 \item[{\tt ++batch}]            Ssh a set of node programs at a time, avoiding overloading Charmrun pe.  In this strategy, the nodes assigned to a charmrun are divided into sets of fixed size. Charmrun performs ssh to the nodes in the current set, waits for the clients to connect back and then performs ssh on the next set. We call the number of nodes in one ssh set as batch size.
 
-\item[{\tt ++maxrsh}] Maximum number of {\tt rsh}'s to run at a
-time.
+\item[{\tt ++maxssh}] Maximum number of {\tt ssh}'s to run at a
+time. For backwards compatibility, this option is also available as {\tt ++maxrsh}.
 
 \item[{\tt ++nodelist}] File containing list of nodes.
 
 
-\item[{\tt ++ppn}]              number of pes per node
+\item[{\tt ++ppn}]              Number of pes per node
 
-\item[{\tt ++help}]             print help messages
+\item[{\tt ++help}]             Print help messages
 
-\item[{\tt ++runscript}]        script to run node-program with. The specified run script is invoked with the node program and parameter. For example:
+\item[{\tt ++runscript}]        Script to run node-program with. The specified run script is invoked with the node program and parameter. For example:
 
 \begin{alltt}
 ./charmrun +p4 ./pgm 100 2 3 ++runscript ./set\_env\_script
@@ -148,15 +153,15 @@ time.
 
 In this case, the {\tt set\_env\_script} is invoked on each node before launching {\tt pgm}.
 
-\item[{\tt ++xterm}]            which xterm to use
+\item[{\tt ++xterm}]            Which xterm to use
 
 \item[{\tt ++in-xterm}]         Run each node in an xterm window
 
 \item[{\tt ++display}]          X Display for xterm
 
-\item[{\tt ++debugger}]         which debugger to use
+\item[{\tt ++debugger}]         Which debugger to use
 
-\item[{\tt ++remote-shell}]     which remote shell to use
+\item[{\tt ++remote-shell}]     Which remote shell to use
 
 \item[{\tt ++useip}]            Use IP address provided for charmrun IP
 
@@ -170,35 +175,35 @@ In this case, the {\tt set\_env\_script} is invoked on each node before launchin
 
 \item[{\tt ++server}]           Enable client-server (CCS) mode
 
-\item[{\tt ++nodegroup}]        which group of nodes to use
+\item[{\tt ++nodegroup}]        Which group of nodes to use
 
 \item[{\tt ++verbose}]          Print diagnostic messages
 
-\item[{\tt ++timeout}]          seconds to wait per host connection
+\item[{\tt ++timeout}]          Seconds to wait per host connection
 
-\item[{\tt ++p}]                number of processes to create
+\item[{\tt ++p}]                Number of processes to create
 
 \end{description}
 
-\subsection{Multicore Options}
+\subsection{SMP and Multicore Options}
 
 On multicore platforms, operating systems (by default) are free to move
 processes and threads among cores to balance load. This however sometimes can
 degrade the performance of Charm++ applications due to the extra overhead of
-moving processes and threads, especailly when Charm++ applications has already
-implemented its own dynamic load balancing.
+moving processes and threads, especially for Charm++ applications that already
+implement their own dynamic load balancing.
 
 Charm++ provides the following runtime options to set the processor affinity
 automatically so that processes or threads no longer move. When cpu affinity
 is supported by an operating system (tested at Charm++ configuration time),
-same runtime options can be used for all flavors of Charm++ versions including
-network and MPI versions, smp and non-smp versions.
+the same runtime options can be used for all flavors of Charm++ versions
+including network and MPI versions, smp and non-smp versions.
 
 \begin{description}
 
-\item[{\tt +setcpuaffinity}]             set cpu affinity automatically for processes (when Charm++ is based on non-smp versions) or threads (when smp)
+\item[{\tt +setcpuaffinity}]             Set cpu affinity automatically for processes (when Charm++ is based on non-smp versions) or threads (when smp). This option is the default on platforms that support it.
 
-\item[{\tt +excludecore <core \#>}]       does not set cpu affinity for the given core number. One can use this option multiple times to provide a list of core numbers to avoid.
+\item[{\tt +excludecore <core \#>}]       Do not set cpu affinity for the given core number. One can use this option multiple times to provide a list of core numbers to avoid.
 
 \item[{\tt +pemap L[-U[:S[.R]+O]][,...]}] Bind the execution threads to
   the sequence of cores described by the arguments using the operating
@@ -221,9 +226,6 @@ wanted to use 3 cores from each socket, one could write this as {\tt
 
 \item[{\tt +commap p[,q,...]}] Bind communication threads to the
   listed cores, one per process.
-
-\item[{\tt +nodesize } ] The number of processes within one physical node
-that use pxshm for intra-node communication.
 
 \end{description}
 
@@ -275,9 +277,9 @@ shell\\
 \end{tabbing}
 
 {\bf Note:}
-By default, charmrun uses a remote shell ``rsh'' to spawn node processes
+By default, charmrun uses a remote shell ``ssh'' to spawn node processes
 on the remote hosts. The {\tt shell} qualifier can be used to override
-it with say, ``ssh''. One can set the {\tt CONV\_RSH} environment variable
+it with say, ``rsh''. One can set the {\tt CONV\_RSH} environment variable
 or use charmrun option {\tt ++remote-shell} to override the default remote
 shell for all hosts with unspecified {\tt shell} qualifier.
 
@@ -330,12 +332,13 @@ Thus, if one specifies
 it will use ``localhost'' four times.  ``localhost'' is a Unix
 trick; it always find a name for whatever machine you're on.
 
-The user is required to set up remote login permissions on all nodes
-using the ``.rhosts'' file in the home directory if ``rsh'' is used for remote
-login into the hosts. If ``ssh'' is used, the user will have to setup
+Using ``ssh'', the user will have to setup
 password-less login to remote hosts using
-RSA authentication based on a key-pair and adding public keys to
+public key authentication based on a key-pair and adding public keys to
 ``.ssh/authorized\_keys'' file. See ``ssh'' documentation for more information.
+If ``rsh'' is used for remote
+login to the compute nodes, the user is required to set up remote login permissions on all nodes
+using the ``.rhosts'' file in their home directory.
 
 In a network environment, {\tt charmrun} must
 be able to locate the directory of the executable.  If all workstations

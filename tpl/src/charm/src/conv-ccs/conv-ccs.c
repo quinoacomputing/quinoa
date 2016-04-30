@@ -536,10 +536,8 @@ void CcsInit(char **argv)
   CpvInitialize(int, _bgCcsAck);
   CpvAccess(_bgCcsAck) = 0;
 #endif
-  CpvInitialize(int, cmiArgDebugFlag);
   CpvInitialize(char *, displayArgument);
   CpvInitialize(int, cpdSuspendStartup);
-  CpvAccess(cmiArgDebugFlag) = 0;
   CpvAccess(displayArgument) = NULL;
   CpvAccess(cpdSuspendStartup) = 0;
   
@@ -557,7 +555,7 @@ void CcsInit(char **argv)
    if (CmiGetArgFlagDesc(argv,"++server", "Create a CCS server port") | 
       CmiGetArgIntDesc(argv,"++server-port",&ccs_serverPort, "Listen on this TCP/IP port number") |
       CmiGetArgStringDesc(argv,"++server-auth",&ccs_serverAuth, "Use this CCS authentication file")) 
-    if (CmiMyPe()==0)
+     if (CmiMyPe()==0)
     {/*Create and occasionally poll on a CCS server port*/
       CcsServer_new(NULL,&ccs_serverPort,ccs_serverAuth);
       CcdCallOnConditionKeep(CcdPERIODIC,(CcdVoidFn)CcsServerCheck,NULL);
@@ -567,7 +565,7 @@ void CcsInit(char **argv)
   /* if in parallel debug mode i.e ++cpd, freeze */
   if (CmiGetArgFlagDesc(argv, "+cpd", "Used *only* in conjunction with parallel debugger"))
   {
-     CpvAccess(cmiArgDebugFlag) = 1;
+    if(CmiMyRank() == 0) CpvAccess(cmiArgDebugFlag) = 1;
      if (CmiGetArgStringDesc(argv, "+DebugDisplay",&(CpvAccess(displayArgument)), "X display for gdb used only in cpd mode"))
      {
         if (CpvAccess(displayArgument) == NULL)
@@ -580,7 +578,7 @@ void CcsInit(char **argv)
      }
 
      if (CmiGetArgFlagDesc(argv, "+DebugSuspend", "Suspend execution at beginning of program")) {
-       CpvAccess(cpdSuspendStartup) = 1;
+       if(CmiMyRank() == 0) CpvAccess(cpdSuspendStartup) = 1;
      }
   }
 

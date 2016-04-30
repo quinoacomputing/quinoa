@@ -1,3 +1,4 @@
+-include ../../common.mk
 # Point this to your charm installation
 CHARMHOME = ../../..
 
@@ -14,14 +15,13 @@ INTF      = mylib.ci pgm.ci
 # Specify the exe name and the arguments to run it with
 NP        = 4
 TARGET    = testTemplateEP
-ARGS      = $(TESTOPTS)
+ARGS      =
 
 # Specify the compilers, run script, flags etc.
 CXX       = $(CHARMBIN)/charmc
 CXXFLAGS += -language charm++ $(OPTS)
 CPPFLAGS += $(OPTS)
 LDFLAGS  +=
-EXEC      = ./charmrun
 EXECFLAGS = +p$(NP)
 ifdef $(NODELIST)
   EXECFLAGS += ++nodelist $(NODELIST)
@@ -45,7 +45,7 @@ again:
 
 test: all
 	@echo "########################################################################################"
-	$(EXEC) $(EXECFLAGS) ./$(TARGET) $(ARGS)
+	$(call run, $(EXECFLAGS) ./$(TARGET) $(ARGS))
 
 
 mylib.o: mylib.C mylib.h mylib.decl.h mylib.def.h

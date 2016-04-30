@@ -59,6 +59,16 @@ struct CkArrayIndexBase
             p|dimension;
             for (int i=0;i<nInts;i++) p|index[i];
         }
+
+        bool operator==(CkArrayIndexBase &other) {
+          if(nInts != other.nInts) return false;
+          if(dimension != other.dimension) return false;
+          for (int i=0;i<nInts;i++) {
+            if(index[i] != other.index[i]) return false;
+          }
+          return true;
+        }
+
 };
 
 
@@ -250,9 +260,10 @@ namespace ck {
 
       std::vector<unsigned int> bits;
       unsigned int sum = 0;
+      bool shorts = bounds.dimension > 3;
 
       for (int i = 0; i < bounds.dimension; ++i) {
-        int bound = (bounds.nInts <= 3) ? bounds.index[i] : bounds.indexShorts[i];
+        int bound = shorts ? bounds.indexShorts[i] : bounds.index[i];
         unsigned int b = bitCount(bound);
         bits.push_back(b);
         sum += b;

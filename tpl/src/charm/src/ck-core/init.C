@@ -165,7 +165,6 @@ int    _exitHandlerIdx;
 #if CMK_WITH_STATS
 static Stats** _allStats = 0;
 #endif
-static int   _numStatsRecd = 0;
 static int   _exitStarted = 0;
 
 static InitCallTable _initCallTable;
@@ -216,6 +215,23 @@ static char *_raiseEvacFile;
 void processRaiseEvacFile(char *raiseEvacFile);
 
 extern bool useNodeBlkMapping;
+
+extern "C" int quietMode;
+extern "C" int quietModeRequested;
+
+// Modules are required to register command line opts they will parse. These
+// options are stored in the _optSet, and then when parsing command line opts
+// users will be warned about options starting with a '+' that are not in this
+// table. This usually implies that they are attempting to use a Charm++ option
+// without having compiled Charm++ to use the module that options belongs to.
+std::set<std::string> _optSet;
+void _registerCommandLineOpt(const char* opt) {
+  // The command line options are only checked during init on PE0, so this makes
+  // thread safety easy.
+  if (CkMyPe() == 0) {
+    _optSet.insert(opt);
+  }
+}
 
 static inline void _parseCommandLineOpts(char **argv)
 {
@@ -423,13 +439,53 @@ static inline void _printStats(void)
 static inline void _printStats(void) {}
 #endif
 
+typedef struct _statsHeader
+{
+  int n;
+} statsHeader;
+
+static void * mergeStats(int *size, void *data, void **remote, int count)
+{
+  envelope *newData;
+  statsHeader *dataMsg = (statsHeader*)EnvToUsr((envelope*) data), *newDataMsg;
+  int nPes = dataMsg->n, currentIndex = 0;
+
+  for (int i = 0; i < count; ++i)
+  {
+    nPes += ((statsHeader *)EnvToUsr((envelope *)remote[i]))->n;
+  }
+
+  newData = _allocEnv(StatMsg, sizeof(statsHeader) + sizeof(Stats)*nPes);
+  *size = newData->getTotalsize();
+  newDataMsg = (statsHeader *)EnvToUsr(newData);
+  newDataMsg->n = nPes;
+
+  statsHeader *current = dataMsg;
+  Stats *currentStats = (Stats*)(current + 1), *destination = (Stats*)(newDataMsg + 1);
+  memcpy(destination + currentIndex, currentStats, sizeof(Stats) * current->n);
+  currentIndex += current->n;
+
+  for (int i = 0; i < count; ++i)
+  {
+    current = ((statsHeader *)EnvToUsr((envelope *)remote[i]));
+    currentStats = (Stats *)(current + 1);
+    memcpy(destination + currentIndex, currentStats, sizeof(Stats) * current->n);
+    currentIndex += current->n;
+  }
+
+  CmiFree(data);
+  return newData;
+}
+
 static inline void _sendStats(void)
 {
   DEBUGF(("[%d] _sendStats\n", CkMyPe()));
-  envelope *env = UsrToEnv(CkpvAccess(_myStats));
-  env->setSrcPe(CkMyPe());
+  envelope *env = _allocEnv(StatMsg, sizeof(statsHeader) + sizeof(Stats));
+  statsHeader* msg = (statsHeader*)EnvToUsr(env);
+  msg->n = 1;
+  memcpy(msg+1, CkpvAccess(_myStats), sizeof(Stats));
   CmiSetHandler(env, _exitHandlerIdx);
-  CmiSyncSendAndFree(0, env->getTotalsize(), (char *)env);
+  CmiReduce(env, env->getTotalsize(), mergeStats);
 }
 
 #if (defined(_FAULT_MLOG_) || defined(_FAULT_CAUSAL_))
@@ -444,17 +500,16 @@ extern void _skipCldHandler(void *converseMsg);
 
 void _discard_charm_message()
 {
-  CkNumberHandler(_charmHandlerIdx,(CmiHandler)_discardHandler);
-//  CkNumberHandler(CpvAccess(CldHandlerIndex), (CmiHandler)_discardHandler);
-  CkNumberHandler(index_skipCldHandler, (CmiHandler)_discardHandler);
+  CkNumberHandler(_charmHandlerIdx,_discardHandler);
+//  CkNumberHandler(CpvAccess(CldHandlerIndex), _discardHandler);
+  CkNumberHandler(index_skipCldHandler, _discardHandler);
 }
 
 void _resume_charm_message()
 {
-  CkNumberHandlerEx(_charmHandlerIdx,(CmiHandlerEx)_processHandler,
-  	CkpvAccess(_coreState));
-//  CkNumberHandler(CpvAccess(CldHandlerIndex), (CmiHandler)CldHandler);
-  CkNumberHandler(index_skipCldHandler, (CmiHandler)_skipCldHandler);
+  CkNumberHandlerEx(_charmHandlerIdx, _processHandler, CkpvAccess(_coreState));
+//  CkNumberHandler(CpvAccess(CldHandlerIndex), CldHandler);
+  CkNumberHandler(index_skipCldHandler, _skipCldHandler);
 }
 #endif
 
@@ -477,8 +532,9 @@ static void _exitHandler(envelope *env)
         return;
       }
       _exitStarted = 1;
-      CkNumberHandler(_charmHandlerIdx,(CmiHandler)_discardHandler);
-      CkNumberHandler(_bocHandlerIdx, (CmiHandler)_discardHandler);
+      CkNumberHandler(_charmHandlerIdx,_discardHandler);
+      CkNumberHandler(_bocHandlerIdx, _discardHandler);
+#if !CMK_BIGSIM_THREAD
       env->setMsgtype(ReqStatMsg);
       env->setSrcPe(CkMyPe());
       // if exit in ring, instead of broadcasting, send in ring
@@ -493,15 +549,19 @@ static void _exitHandler(envelope *env)
         CmiFree(env);
       }else{
 	CmiSyncBroadcastAllAndFree(env->getTotalsize(), (char *)env);
-      }	
+      }
+#else
+      CmiFree(env);
+      ConverseExit();
+#endif
       break;
     case ReqStatMsg:
 #if (defined(_FAULT_MLOG_) || defined(_FAULT_CAUSAL_))
       _messageLoggingExit();
 #endif
       DEBUGF(("ReqStatMsg on %d\n", CkMyPe()));
-      CkNumberHandler(_charmHandlerIdx,(CmiHandler)_discardHandler);
-      CkNumberHandler(_bocHandlerIdx, (CmiHandler)_discardHandler);
+      CkNumberHandler(_charmHandlerIdx,_discardHandler);
+      CkNumberHandler(_bocHandlerIdx, _discardHandler);
       /*FAULT_EVAC*/
       if(CmiNodeAlive(CkMyPe())){
 #if CMK_WITH_STATS
@@ -528,30 +588,40 @@ static void _exitHandler(envelope *env)
       else
         CmiFree(env);
       //everyone exits here - there may be issues with leftover messages in the queue
-#if CMK_WITH_STATS
-      if(CkMyPe())
+#if !CMK_WITH_STATS
+      DEBUGF(("[%d] Calling converse exit from ReqStatMsg \n",CkMyPe()));
+      ConverseExit();
+      if(CharmLibInterOperate)
+	CpvAccess(interopExitFlag) = 1;
 #endif
-      {
-        DEBUGF(("[%d] Calling converse exit \n",CkMyPe()));
-        ConverseExit();
-        if(CharmLibInterOperate)
-          CpvAccess(interopExitFlag) = 1;
-      }
       break;
 #if CMK_WITH_STATS
     case StatMsg:
+    {
       CkAssert(CkMyPe()==0);
-      _allStats[env->getSrcPe()] = (Stats*) EnvToUsr(env);
-      _numStatsRecd++;
-      DEBUGF(("StatMsg on %d with %d\n", CkMyPe(), _numStatsRecd));
-			/*FAULT_EVAC*/
-      if(_numStatsRecd==CkNumValidPes()) {
-        _printStats();
-        DEBUGF(("[%d] Calling converse exit \n",CkMyPe()));
-        ConverseExit();
-        if(CharmLibInterOperate)
-          CpvAccess(interopExitFlag) = 1;
+      statsHeader* header = (statsHeader*)EnvToUsr(env);
+      int n = header->n;
+      Stats* currentStats = (Stats*)(header + 1);
+      for (int i = 0; i < n; ++i)
+      {
+        _allStats[currentStats->getPe()] = currentStats;
+	currentStats++;
       }
+      DEBUGF(("StatMsg on %d with %d\n", CkMyPe(), n));
+			/*FAULT_EVAC*/
+      _printStats();
+      // broadcast to all others that they can now exit
+      envelope* env = _allocEnv(StatDoneMsg);
+      CmiSetHandler(env, _exitHandlerIdx);
+      CmiSyncBroadcastAllAndFree(env->getTotalsize(), (char*)env);
+    }
+    break;
+
+    case StatDoneMsg:
+      DEBUGF(("[%d] Calling converse exit from StatDoneMsg \n",CkMyPe()));
+      ConverseExit();
+      if (CharmLibInterOperate)
+        CpvAccess(interopExitFlag) = 1;
       break;
 #endif
     default:
@@ -567,7 +637,7 @@ static void _exitHandler(envelope *env)
 static inline void _processBufferedBocInits(void)
 {
   CkCoreState *ck = CkpvAccess(_coreState);
-  CkNumberHandlerEx(_bocHandlerIdx,(CmiHandlerEx)_processHandler, ck);
+  CkNumberHandlerEx(_bocHandlerIdx,_processHandler, ck);
   register int i = 0;
   PtrVec &inits=*CkpvAccess(_bocInitVec);
   register int len = inits.size();
@@ -604,8 +674,7 @@ static inline void _processBufferedNodeBocInits(void)
 
 static inline void _processBufferedMsgs(void)
 {
-  CkNumberHandlerEx(_charmHandlerIdx,(CmiHandlerEx)_processHandler,
-  	CkpvAccess(_coreState));
+  CkNumberHandlerEx(_charmHandlerIdx, _processHandler, CkpvAccess(_coreState));
   envelope *env;
   while(NULL!=(env=(envelope*)CkpvAccess(_buffQ)->deq())) {
     if(env->getMsgtype()==NewChareMsg || env->getMsgtype()==NewVChareMsg) {
@@ -667,10 +736,11 @@ void _initDone(void)
   CkpvAccess(_initdone) ++;
   DEBUGF(("[%d] _initDone.\n", CkMyPe()));
   if (!CksvAccess(_triggersSent)) _sendTriggers();
-  CkNumberHandler(_triggerHandlerIdx, (CmiHandler)_discardHandler);
+  CkNumberHandler(_triggerHandlerIdx, _discardHandler);
   CmiNodeBarrier();
   if(CkMyRank() == 0) {
     _processBufferedNodeBocInits();
+    quietMode = 0; // re-enable CmiPrintf's if they were disabled
   }
   CmiNodeBarrier(); // wait for all nodegroups to be created
   _processBufferedBocInits();
@@ -808,8 +878,8 @@ void _CkExit(void)
   CmiAssert(CkMyPe() == 0);
   // Shuts down Converse handlers for the upper layers on this processor
   //
-  CkNumberHandler(_charmHandlerIdx,(CmiHandler)_discardHandler);
-  CkNumberHandler(_bocHandlerIdx, (CmiHandler)_discardHandler);
+  CkNumberHandler(_charmHandlerIdx,_discardHandler);
+  CkNumberHandler(_bocHandlerIdx, _discardHandler);
   DEBUGF(("[%d] CkExit - _exitStarted:%d %d\n", CkMyPe(), _exitStarted, _exitHandlerIdx));
 
   if(CkMyPe()==0) {
@@ -1049,22 +1119,20 @@ void _initCharm(int unused_argc, char **argv)
 	CkpvAccess(_ckout) = new _CkOutStream();
 	CkpvAccess(_ckerr) = new _CkErrStream();
 
-	_charmHandlerIdx = CkRegisterHandler((CmiHandler)_bufferHandler);
-	_initHandlerIdx = CkRegisterHandler((CmiHandler)_initHandler);
-	CkNumberHandlerEx(_initHandlerIdx, (CmiHandlerEx)_initHandler, CkpvAccess(_coreState));
-	_roRestartHandlerIdx = CkRegisterHandler((CmiHandler)_roRestartHandler);
-	_exitHandlerIdx = CkRegisterHandler((CmiHandler)_exitHandler);
+	_charmHandlerIdx = CkRegisterHandler(_bufferHandler);
+	_initHandlerIdx = CkRegisterHandlerEx(_initHandler, CkpvAccess(_coreState));
+	_roRestartHandlerIdx = CkRegisterHandler(_roRestartHandler);
+	_exitHandlerIdx = CkRegisterHandler(_exitHandler);
 	//added for interoperabilitY
-	_libExitHandlerIdx = CkRegisterHandler((CmiHandler)_libExitHandler);
-	_bocHandlerIdx = CkRegisterHandler((CmiHandler)_initHandler);
-	CkNumberHandlerEx(_bocHandlerIdx, (CmiHandlerEx)_initHandler, CkpvAccess(_coreState));
+	_libExitHandlerIdx = CkRegisterHandler(_libExitHandler);
+	_bocHandlerIdx = CkRegisterHandlerEx(_initHandler, CkpvAccess(_coreState));
 
 #ifdef __BIGSIM__
 	if(BgNodeRank()==0) 
 #endif
 	_infoIdx = CldRegisterInfoFn((CldInfoFn)_infoFn);
 
-	_triggerHandlerIdx = CkRegisterHandler((CmiHandler)_triggerHandler);
+	_triggerHandlerIdx = CkRegisterHandler(_triggerHandler);
 	_ckModuleInit();
 
 	CldRegisterEstimator((CldEstimator)_charmLoadEstimator);
@@ -1236,8 +1304,8 @@ void _initCharm(int unused_argc, char **argv)
 	for(int vProc=0;vProc<CkNumPes();vProc++){
 		CpvAccess(_validProcessors)[vProc]=1;
 	}
-	_ckEvacBcastIdx = CkRegisterHandler((CmiHandler)_ckEvacBcast);
-	_ckAckEvacIdx = CkRegisterHandler((CmiHandler)_ckAckEvac);
+	_ckEvacBcastIdx = CkRegisterHandler(_ckEvacBcast);
+	_ckAckEvacIdx = CkRegisterHandler(_ckAckEvac);
 #endif
 	CkpvAccess(startedEvac) = 0;
 	CpvAccess(serializer) = 0;
@@ -1348,6 +1416,32 @@ void _initCharm(int unused_argc, char **argv)
 		_allStats = new Stats*[CkNumPes()];
 #endif
 		register size_t i, nMains=_mainTable.size();
+
+		// Check CkArgMsg and warn if it contains any args starting with '+'.
+		// These args may be args intended for Charm++ but because of the specific
+		// build, were not parsed by the RTS.
+		int count = 0;
+		int argc = CmiGetArgc(argv);
+		for (int i = 1; i < argc; i++) {
+			// The +vp option for TCharm is a special case that needs to be checked
+			// separately, because the number passed does not need a space after
+			// the vp, and the option can be specified with a '+' or a '-'.
+			if (strncmp(argv[i],"+vp",3) == 0) {
+				if (_optSet.count("+vp") == 0) {
+					count++;
+					CmiPrintf("WARNING: %s is a TCharm command line argument, but you have not compiled with TCharm\n", argv[i]);
+				}
+			} else if (strncmp(argv[i],"-vp",3) == 0) {
+				CmiPrintf("WARNING: %s is no longer valid because -vp has been deprecated. Please use +vp.\n", argv[i]);
+			} else if (argv[i][0] == '+' && _optSet.count(argv[i]) == 0) {
+				count++;
+				CmiPrintf("WARNING: %s is a command line argument beginning with a '+' but was not parsed by the RTS.\n", argv[i]);
+			}
+		}
+		if (count) {
+			CmiPrintf("If any of the above arguments were intended for the RTS you may need to recompile Charm++ with different options.\n");
+		}
+
 		for(i=0;i<nMains;i++)  /* Create all mainchares */
 		{
 			register int size = _chareTable[_mainTable[i]->chareIdx]->size;
@@ -1359,7 +1453,9 @@ void _initCharm(int unused_argc, char **argv)
 			register CkArgMsg *msg = (CkArgMsg *)CkAllocMsg(0, sizeof(CkArgMsg), 0);
 			msg->argc = CmiGetArgc(argv);
 			msg->argv = argv;
+      quietMode = 0;  // allow printing any mainchare user messages
 			_entryTable[_mainTable[i]->entryIdx]->call(msg, obj);
+      if (quietModeRequested) quietMode = 1;
 #if (defined(_FAULT_MLOG_) || defined(_FAULT_CAUSAL_))
             CpvAccess(_currentObj) = (Chare *)obj;
 #endif
@@ -1414,11 +1510,8 @@ void _initCharm(int unused_argc, char **argv)
 	DEBUGF(("[%d,%d%.6lf] inCommThread %d\n",CmiMyPe(),CmiMyRank(),CmiWallTimer(),inCommThread));
 	// when I am a communication thread, I don't participate initDone.
         if (inCommThread) {
-                CkNumberHandlerEx(_bocHandlerIdx,(CmiHandlerEx)_processHandler,
-                                        CkpvAccess(_coreState));
-                CkNumberHandlerEx(_charmHandlerIdx,(CmiHandlerEx)_processHandler
-,
-                                        CkpvAccess(_coreState));
+                CkNumberHandlerEx(_bocHandlerIdx, _processHandler, CkpvAccess(_coreState));
+                CkNumberHandlerEx(_charmHandlerIdx, _processHandler, CkpvAccess(_coreState));
                 _processBufferedMsgs();
         }
 

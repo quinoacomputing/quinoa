@@ -172,6 +172,19 @@ int CkDDT::getContents(int nIndex, int ni, int na, int nd, int i[], int a[], int
   return dttype->getContents(ni, na, nd, i, a, d);
 }
 
+void
+CkDDT::setName(int nIndex, char *name, int len)
+{
+  CkDDT_DataType* dttype = getType(nIndex);
+  dttype->setName(name, len);
+}
+
+void
+CkDDT::getName(int nIndex, char *name, int *len)
+{
+  CkDDT_DataType* dttype = getType(nIndex);
+  dttype->getName(name, len);
+}
 
 void
 CkDDT::newContiguous(int count, CkDDT_Type oldType, CkDDT_Type *newType)
@@ -329,7 +342,7 @@ CkDDT_DataType::CkDDT_DataType(int type):datatype(type)
       break;
 #if CMK_LONG_LONG_DEFINED
     case CkDDT_LONG_LONG_INT:
-      size = sizeof(CmiInt8);
+      size = sizeof(long long);
       break;
 #endif
     default:

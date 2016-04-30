@@ -7,8 +7,10 @@
 
 #include "pup_c.h"
 
+/*If you are incrementing these numbers, you also need to increment MAJOR and MINOR
+variables in ParDebug.java(in ccs_tools) to match, otherwise CharmDebug won't work*/
 #define CHARMDEBUG_MAJOR   10
-#define CHARMDEBUG_MINOR    7
+#define CHARMDEBUG_MINOR    8
 
 #ifdef __cplusplus
 extern "C" {

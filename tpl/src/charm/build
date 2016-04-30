@@ -1,7 +1,15 @@
 #!/bin/sh
 
 # Silly shorthand, used for source reorganization
-src="src/arch"
+if [ $(dirname $0) = "." ]
+then
+  srcbaseabs="./src"
+  srcbase="../../src"
+else
+  srcbaseabs="$(cd $(dirname $0)/src/; pwd)"
+  srcbase=$srcbaseabs
+fi
+src="$srcbaseabs/arch/"
 
 more=0
 
@@ -81,8 +89,8 @@ syntax() {
   echo "  --build-shared     build Charm++ dynamic libraries (.so) "
   echo ''
   echo 'Enable/disable features:'
-  src/scripts/configure --help | grep enable-
-  src/scripts/configure --help | grep with-
+  $srcbaseabs/scripts/configure --help | grep enable-
+  $srcbaseabs/scripts/configure --help | grep with-
   echo "  --with-production       build Charm++ with all optimizations for maximum performance, and disabling all above features"
   echo ''
   echo 'Miscellaneous options:'
@@ -278,6 +286,7 @@ for w in $VERSOPTS; do
           BOPTS="$BOPTS $w"
           [ $w =  "bigemulator" ] && BUILD_EMULATOR=1
           [ $w =  "bigsim" ] && BUILD_EMULATOR=1
+          [ $w =  "cuda"   ] && BUILD_CUDA=1
         fi
 done
 
@@ -505,6 +514,13 @@ then
   DESTINATION="$VERSION"
 fi
 
+if [ $(dirname $DESTINATION) != "." ]
+then
+  srcbaseabs="$(cd $srcbaseabs; pwd)"
+  srcbase=$srcbaseabs
+  src="$srcbaseabs/arch/"
+fi
+
 if [ -n "$DESTINATION_SUFFIX" ]
 then
   DESTINATION="$DESTINATION-$DESTINATION_SUFFIX"
@@ -562,16 +578,16 @@ EOF
   $DESTINATION/tmp/system_ln $DESTINATION/include/VERSION VERSION
 fi
 
-$DESTINATION/tmp/system_ln "../../src/scripts/Make.depends" $DESTINATION/tmp/Make.depends
-$DESTINATION/tmp/system_ln "../../src/scripts/Make.cidepends" $DESTINATION/tmp/Make.cidepends
-if test -f src/ck-ldb/Make.lb
+$DESTINATION/tmp/system_ln "$srcbase/scripts/Make.depends" $DESTINATION/tmp/Make.depends
+$DESTINATION/tmp/system_ln "$srcbase/scripts/Make.cidepends" $DESTINATION/tmp/Make.cidepends
+if test -f "$srcbaseabs/ck-ldb/Make.lb"
 then
-$DESTINATION/tmp/system_ln "../../src/ck-ldb/Make.lb" $DESTINATION/tmp/Make.lb
+$DESTINATION/tmp/system_ln "$srcbase/ck-ldb/Make.lb" $DESTINATION/tmp/Make.lb
 else
 touch $DESTINATION/tmp/Make.lb
 fi
-$DESTINATION/tmp/system_ln "../../src/scripts/Makefile" $DESTINATION/tmp/Makefile
-$DESTINATION/tmp/system_ln "../../src/scripts/Make.tau" $DESTINATION/tmp/Make.tau
+$DESTINATION/tmp/system_ln "$srcbase/scripts/Makefile" $DESTINATION/tmp/Makefile
+$DESTINATION/tmp/system_ln "$srcbase/scripts/Make.tau" $DESTINATION/tmp/Make.tau
 touch $DESTINATION/tmp/Makefile.machine
 touch $DESTINATION/tmp/Make.extlib
 
@@ -608,6 +624,29 @@ then
 fi
 if test -n "$BOPTS"
 then
+    # pxshm+smp note: When combining the 'smp' and 'pxshm' directives, it is
+    #                 important that they be included in $ConvHeader in that
+    #                 exact order. See bug #717.
+    TMP=""
+    HAS_PXSHM=0
+    HAS_SMP=0
+    for i in $BOPTS; do
+      if [ "$i" = "smp" ]; then
+        HAS_SMP=1
+      elif [ "$i" = "pxshm" ]; then
+        HAS_PXSHM=1
+      else
+        TMP="$TMP $i"
+      fi
+    done
+    if [ $HAS_PXSHM -eq 1 ]; then
+      TMP="pxshm $TMP"
+    fi
+    if [ $HAS_SMP -eq 1 ]; then
+      TMP="smp $TMP"
+    fi
+
+    BOPTS=$TMP
     for i in $BOPTS
     do
       echo '#include "'conv-mach-$i.h'"' >> $ConvHeader
@@ -654,14 +693,15 @@ then
           TAU_MAKEFILE=""
 	fi
 fi
-[ -z "$TAU_MAKEFILE" ] && TAU_MAKEFILE="Make.tau"
-SED_CHARMC="s@TAU_MAKEFILE=\(.*\)@TAU_MAKEFILE=$TAU_MAKEFILE@"
-
-sed -e $SED_CHARMC src/scripts/Makefile > .Makefile.$$ && cp .Makefile.$$ src/scripts/Makefile && rm -f  .Makefile.$$
-sed -e $SED_CHARMC src/scripts/charmc > .charmc.$$ && cp .charmc.$$ src/scripts/charmc && rm -f .charmc.$$
 
 if test $WITH_TAU -eq 1
 then
+    [ -z "$TAU_MAKEFILE" ] && TAU_MAKEFILE="Make.tau"
+    SED_CHARMC="s@TAU_MAKEFILE=\(.*\)@TAU_MAKEFILE=$TAU_MAKEFILE@"
+
+    sed -e $SED_CHARMC $srcbaseabs/scripts/Makefile > .Makefile.$$ && cp .Makefile.$$ $srcbaseabs/scripts/Makefile && rm -f  .Makefile.$$
+    sed -e $SED_CHARMC $srcbaseabs/scripts/charmc > .charmc.$$ && cp .charmc.$$ $srcbaseabs/scripts/charmc && rm -f .charmc.$$
+
     echo "#define CMK_WITH_TAU               1" >> $ConvHeader
     echo "#define pthread_create             tau_pthread_create" >> $ConvHeader
     echo "#define pthread_exit               tau_pthread_exit" >> $ConvHeader
@@ -695,6 +735,7 @@ printError()
 }
 
 echo 'BUILDOPTS="'$OPTS'"'  >> $ConvSh
+echo "SRCBASE=$srcbase" > $DESTINATION/tmp/charmpath.mk
 
 Echo "Performing '$MAKE $MAKEOPTS basics OPTS="$OPTS" QUIET="$QUIET" CONFIG_OPTS="$CONFIG_OPTS"' in $DESTINATION/tmp"
 cd $DESTINATION/tmp 

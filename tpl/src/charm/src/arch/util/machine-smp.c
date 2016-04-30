@@ -79,6 +79,7 @@ CmiIdleLock_checkMessage
 */
 
 #include "machine-smp.h"
+#include "sockRoutines.h"
 
 void CmiStateInit(int pe, int rank, CmiState state);
 void CommunicationServerInit();
@@ -249,6 +250,7 @@ static void CmiStartThreads(char **argv)
 static void CmiDestroyLocks()
 {
   CloseHandle(comm_mutex);
+  comm_mutex = 0;
   CloseHandle(CmiMemLock_lock);
   CmiMemLock_lock = 0;
   CloseHandle(barrier_mutex);
@@ -451,7 +453,6 @@ static void CmiStartThreads(char **argv)
 
   MACHSTATE(4,"CmiStartThreads")
   CmiMemLock_lock=CmiCreateLock();
-  comm_mutex=CmiCreateLock();
   _smp_mutex = CmiCreateLock();
 #if defined(CMK_NO_ASM_AVAILABLE) && CMK_PCQUEUE_LOCK
   cmiMemoryLock = CmiCreateLock();
@@ -504,7 +505,10 @@ static void CmiStartThreads(char **argv)
     pthread_attr_init(&attr);
     pthread_attr_setscope(&attr, PTHREAD_SCOPE_SYSTEM);
     ok = pthread_create(&pid, &attr, call_startfn, (void *)i);
-    if (ok<0) PerrorExit("pthread_create"); 
+    if (ok!=0){
+      CmiPrintf("CmiStartThreads: %s(%d)\n", strerror(errno), errno);
+      PerrorExit("pthread_create");
+    }
     pthread_attr_destroy(&attr);
   }
 #if ! (CMK_HAS_TLS_VARIABLES && !CMK_NOT_USE_TLS_THREAD)
@@ -522,6 +526,7 @@ static void CmiStartThreads(char **argv)
 static void CmiDestroyLocks()
 {
   CmiDestroyLock(comm_mutex);
+  comm_mutex = 0;
   CmiDestroyLock(CmiMemLock_lock);
   CmiMemLock_lock = 0;
   pthread_mutex_destroy(&barrier_mutex);
@@ -559,6 +564,10 @@ void CmiNodeAllBarrier(void) {
  * lock so that if a message for them arrives, they can be
  * woken up.
  **********************************************************/
+
+static int CmiIdleLock_hasMessage(CmiState cs) {
+  return cs->idle.hasMessages;
+}
 
 #if CMK_SHARED_VARS_NT_THREADS
 
