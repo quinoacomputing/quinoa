@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Partitioner.h
   \author    J. Bakosi
-  \date      Sat 20 Feb 2016 12:01:56 PM MST
+  \date      Sat 30 Apr 2016 02:39:00 PM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Charm++ chare partitioner group used to perform mesh partitioning
   \details   Charm++ chare partitioner group used to parform mesh partitioning.
@@ -24,6 +24,7 @@
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wconversion"
+  #pragma GCC diagnostic ignored "-Wreorder"
 #endif
 
 #include "conductor.decl.h"
@@ -730,6 +731,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wconversion"
+  #pragma GCC diagnostic ignored "-Wreorder"
 #endif
 
 #define CK_TEMPLATES_ONLY

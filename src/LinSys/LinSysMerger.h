@@ -30,6 +30,7 @@
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wconversion"
+  #pragma GCC diagnostic ignored "-Wreorder"
 #endif
 
 #include "conductor.decl.h"
@@ -678,6 +679,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wconversion"
+  #pragma GCC diagnostic ignored "-Wreorder"
 #endif
 
 #define CK_TEMPLATES_ONLY
