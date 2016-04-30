@@ -106,12 +106,17 @@ to the tools.
   - Web: http://libcxx.llvm.org
   - License: \subpage LibCPP_license
 
-\subsection openmpi_license 20. OpenMPI for the message passing interface
+\subsection musllibc_license 20. Musl-libc for standard C library
+  - Either Optional
+  - Web: https://www.musl-libc.org
+  - License: \subpage Musllibc_license
+
+\subsection openmpi_license 21. OpenMPI for the message passing interface
   - Required
   - Web: http://www.open-mpi.org
   - License: \subpage OpenMPI_license
 
-\subsection mkl_license 21. Intel Math Kernel Library for BLAS/LAPACK and random number generation
+\subsection mkl_license 22. Intel Math Kernel Library for BLAS/LAPACK and random number generation
   - Optional
   - Web: https://software.intel.com/en-us/intel-mkl
   - License: \subpage MKL_license
@@ -155,7 +160,7 @@ to the tools.
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Fri 29 Apr 2016 08:59:14 AM MDT
+<em>Page last updated:</em> Sat Apr 30 09:42:47 2016
 <em>Copyright 2012-2016, Jozsef Bakosi.</em>
 </small></div>
 */

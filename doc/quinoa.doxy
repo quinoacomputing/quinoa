@@ -817,6 +817,7 @@ INPUT                  = \
   @CMAKE_CURRENT_SOURCE_DIR@/../doc/licenses/AEC_license.dox \
   @CMAKE_CURRENT_SOURCE_DIR@/../doc/licenses/LibStdCPP_license.dox \
   @CMAKE_CURRENT_SOURCE_DIR@/../doc/licenses/LibCPP_license.dox \
+  @CMAKE_CURRENT_SOURCE_DIR@/../doc/licenses/Musllibc_license.dox \
   @CMAKE_CURRENT_SOURCE_DIR@/../doc/licenses/OpenMPI_license.dox \
   @CMAKE_CURRENT_SOURCE_DIR@/../doc/licenses/MKL_license.dox \
   . \
