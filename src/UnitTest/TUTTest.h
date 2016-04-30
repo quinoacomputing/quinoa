@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/TUTTest.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 01:43:58 PM MDT
+  \date      Sat 30 Apr 2016 02:40:31 PM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Template Unit Test unit test class declaration
   \details   Template Unit Test unit test class declaration.
@@ -19,6 +19,7 @@
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wconversion"
+  #pragma GCC diagnostic ignored "-Wreorder"
 #endif
 
 #include "tuttest.decl.h"
@@ -54,6 +55,7 @@ class TUTTest : public CBase_TUTTest< Proxy > {
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wconversion"
+  #pragma GCC diagnostic ignored "-Wreorder"
 #endif
 
 #define CK_TEMPLATES_ONLY
