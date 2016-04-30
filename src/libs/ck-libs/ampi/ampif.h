@@ -1,3 +1,5 @@
+       !!! Values here must match those in ampi.h !!!
+
        integer, parameter :: MPI_SUCCESS                 =0
        integer, parameter :: MPI_ERR_BUFFER              =1
        integer, parameter :: MPI_ERR_COUNT               =2
@@ -53,15 +55,23 @@
        integer, parameter :: MPI_ERR_UNSUPPORTED_OPERATION =52
        integer, parameter :: MPI_ERR_WIN                 =53
        integer, parameter :: MPI_ERR_LASTCODE            =53
+       integer, parameter :: MPI_ERR_LASTUSEDCODE        =53
 
-       integer, parameter :: MPI_ERRORS_ARE_FATAL        =119
-       integer, parameter :: MPI_ERRORS_RETURN           =120
+       integer, parameter :: MPI_ERRHANDLER_NULL         =0
+       integer, parameter :: MPI_ERRORS_RETURN           =1
+       integer, parameter :: MPI_ERRORS_ARE_FATAL        =2
 
        integer, parameter :: MPI_MAX_PROCESSOR_NAME = 256
        integer, parameter :: MPI_MAX_ERROR_STRING = 256
+       integer, parameter :: MPI_MAX_LIBRARY_VERSION_STRING = 256
 
-       integer, parameter :: MPI_VERSION = 1
-       integer, parameter :: MPI_SUBVERSION = 3
+       integer, parameter :: MPI_VERSION = 2
+       integer, parameter :: MPI_SUBVERSION = 2
+
+       integer, parameter :: MPI_THREAD_SINGLE = 1
+       integer, parameter :: MPI_THREAD_FUNNELED = 2
+       integer, parameter :: MPI_THREAD_SERIALIZED = 3
+       integer, parameter :: MPI_THREAD_MULTIPLE = 4
 
        integer, parameter :: MPI_DATATYPE_NULL = -1
        integer, parameter :: MPI_DOUBLE_PRECISION = 0
@@ -69,18 +79,30 @@
        integer, parameter :: MPI_INTEGER = 1
        integer, parameter :: MPI_INTEGER4 = 1
        integer, parameter :: MPI_REAL = 2
+       integer, parameter :: MPI_REAL4 = 2
        integer, parameter :: MPI_COMPLEX = 3
        integer, parameter :: MPI_LOGICAL = 4
        integer, parameter :: MPI_CHARACTER = 5
        integer, parameter :: MPI_BYTE = 6
        integer, parameter :: MPI_PACKED = 7
+       integer, parameter :: MPI_INTEGER8 = 9
+       integer, parameter :: MPI_2INTEGER = 18
        integer, parameter :: MPI_2REAL = 21
        integer, parameter :: MPI_2DOUBLE_PRECISION = 22
-       integer, parameter :: MPI_2INTEGER = 18
        integer, parameter :: MPI_LB = 23
        integer, parameter :: MPI_UB = 24
        integer, parameter :: MPI_DOUBLE_COMPLEX = 26
-       
+
+       integer, parameter :: MPI_COMBINER_NAMED = 1
+       integer, parameter :: MPI_COMBINER_CONTIGUOUS = 2
+       integer, parameter :: MPI_COMBINER_VECTOR = 3
+       integer, parameter :: MPI_COMBINER_HVECTOR = 4
+       integer, parameter :: MPI_COMBINER_INDEXED = 5
+       integer, parameter :: MPI_COMBINER_HINDEXED = 6
+       integer, parameter :: MPI_COMBINER_STRUCT = 7
+       integer, parameter :: MPI_COMBINER_DARRAY = 8
+       integer, parameter :: MPI_COMBINER_RESIZED = 9
+       integer, parameter :: MPI_COMBINER_SUBARRAY = 10
 
        integer, parameter :: MPI_PROC_NULL = -2
        integer, parameter :: MPI_ANY_SOURCE = -1
@@ -97,16 +119,33 @@
        integer, parameter :: MPI_BOTTOM = 0
        integer, parameter :: MPI_UNDEFINED = -32766
 
-       integer, parameter :: MPI_IDENT    = 0
-       integer, parameter :: MPI_SIMILAR  = 1
-       integer, parameter :: MPI_UNEQUAL  = 2
+       integer, parameter :: MPI_IDENT = 0
+       integer, parameter :: MPI_SIMILAR = 1
+       integer, parameter :: MPI_CONGRUENT = 2
+       integer, parameter :: MPI_UNEQUAL = 3
 
        integer, parameter :: MPI_OP_NULL = 0
 
        integer, parameter :: MPI_GRAPH = 1
        integer, parameter :: MPI_CART = 2
 
-       integer, parameter :: MPI_TAG_UB = -10
+       integer, parameter :: MPI_TAG_UB = -1
+       integer, parameter :: MPI_HOST = -2
+       integer, parameter :: MPI_IO = -3
+       integer, parameter :: MPI_WTIME_IS_GLOBAL = -4
+       integer, parameter :: MPI_APPNUM = -5
+       integer, parameter :: MPI_UNIVERSE_SIZE = -6
+       integer, parameter :: MPI_WIN_BASE = -7
+       integer, parameter :: MPI_WIN_SIZE = -8
+       integer, parameter :: MPI_WIN_DISP_UNIT = -9
+       integer, parameter :: MPI_WIN_MODEL = -10
+       integer, parameter :: MPI_WIN_CREATE_FLAVOR = -11
+       integer, parameter :: AMPI_MY_PE = -12
+       integer, parameter :: AMPI_NUM_PES = -13
+       integer, parameter :: AMPI_MY_NODE = -14
+       integer, parameter :: AMPI_NUM_NODES = -15
+
+       integer, parameter :: MPI_TAG_UB_VALUE = 1073741824
 
        integer, parameter :: MPI_STATUS_SIZE=8
        integer, parameter :: MPI_TAG=1
@@ -142,7 +181,24 @@
        integer, parameter :: MPI_BXOR = 109
        integer, parameter :: MPI_MAXLOC = 110
        integer, parameter :: MPI_MINLOC = 111
-!
+       integer, parameter :: MPI_REPLACE = 112
+       integer, parameter :: MPI_NO_OP = 113
+
        integer, parameter :: MPI_OFFSET_KIND = 8
        integer, parameter :: MPI_ADDRESS_KIND = 8
 
+       integer, parameter :: MPI_BSEND_OVERHEAD = 1
+       integer, parameter :: MPI_MAX_OBJECT_NAME = 255
+       integer, parameter :: MPI_MAX_INFO_KEY = 255
+       integer, parameter :: MPI_MAX_INFO_VAL = 1024
+       integer, parameter :: MPI_LOCK_SHARED = 54
+       integer, parameter :: MPI_LOCK_EXCLUSIVE = 55
+       integer, parameter :: MPI_WIN_NULL = -1
+
+       integer, parameter :: MPI_WIN_FLAVOR_CREATE = 1
+       integer, parameter :: MPI_WIN_FLAVOR_ALLOCATE = 2
+       integer, parameter :: MPI_WIN_FLAVOR_DYNAMIC = 3
+       integer, parameter :: MPI_WIN_FLAVOR_SHARED = 4
+
+       integer, parameter :: MPI_WIN_UNIFIED = 0
+       integer, parameter :: MPI_WIN_SEPARATE = 1

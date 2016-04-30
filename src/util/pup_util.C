@@ -194,17 +194,31 @@ size_t CmiFwrite(const void *ptr, size_t size, size_t nmemb, FILE *f)
 {
         size_t nwritten = 0;
         const char *buf = (const char *)ptr;
-        while (nwritten < nmemb) {
+        double firsttime = 0;
+	while (nwritten < nmemb) {
           size_t ncur = fwrite(buf+nwritten*size,size,nmemb-nwritten,f);
           if (ncur <= 0) {
             if  (errno == EINTR)
               CmiError("Warning: CmiFwrite retrying ...\n");
-            else
+            else if(errno == ENOMEM)
+	    {
+#ifndef CMK_BIGSIM_CHARM
+	      if(firsttime == 0) firsttime = CmiWallTimer();
+              if(CmiWallTimer()-firsttime > 300)
+		break;
+#endif
+            }
+	    else
               break;
           }
           else
             nwritten += ncur;
         }
+#ifndef CMK_BIGSIM_CHARM
+	if(firsttime != 0)
+	  CmiError("Warning: CmiFwrite retried for %lf ...\n", CmiWallTimer() - firsttime);
+#endif
+
         return nwritten;
 }
 
@@ -290,7 +304,12 @@ int CmiFclose(FILE *fp)
 
 /*Disk PUP::er's*/
 void PUP::toDisk::bytes(void *p,int n,size_t itemSize,dataType /*t*/)
-{/* CkPrintf("writing %d bytes\n",itemSize*n); */ CmiFwrite(p,itemSize,n,F);}
+{/* CkPrintf("writing %d bytes\n",itemSize*n); */ 
+  if(CmiFwrite(p,itemSize,n,F) != n)
+  {
+    error = true;
+  }
+}
 void PUP::fromDisk::bytes(void *p,int n,size_t itemSize,dataType /*t*/)
 {/* CkPrintf("reading %d bytes\n",itemSize*n); */ CmiFread(p,itemSize,n,F);}
 

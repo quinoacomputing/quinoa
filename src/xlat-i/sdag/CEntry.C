@@ -1,5 +1,7 @@
 #include "CEntry.h"
 #include "xi-symbol.h"
+#include "xi-Chare.h"
+#include "constructs/Constructs.h"
 #include "CStateVar.h"
 
 using std::list;
@@ -169,4 +171,33 @@ namespace xi {
     defs << "}\n\n";
     templateGuardEnd(defs);
   }
+
+list<Entry*> CEntry::getCandidates()
+{
+  return candidateEntries_;
+}
+
+void CEntry::addCandidate(Entry *e)
+{
+  candidateEntries_.push_front(e);
+}
+
+void CEntry::check()
+{
+  if (decl_entry == NULL) {
+    XStr str;
+    paramlist->printTypes(str);
+    std::string msg = "no matching declaration for entry method \'" +
+      std::string(entry->get_string_const()) +
+      "(" + std::string(str.get_string_const()) + ")\'";
+    XLAT_ERROR_NOCOL(msg, first_line_);
+
+    std::list<Entry*> clist = getCandidates();
+    if (!clist.empty())
+      for (std::list<Entry*>::iterator it = clist.begin(); it != clist.end(); ++it)
+        XLAT_NOTE("candidate method not viable: type signatures must match exactly",
+                  (*it)->first_line_);
+  }
+}
+
 }

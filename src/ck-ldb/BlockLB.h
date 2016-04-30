@@ -5,15 +5,14 @@
 
 void CreateBlockLB ();
 
-class BlockLB : public CentralLB
+class BlockLB : public CBase_BlockLB
 {
   public:
     BlockLB (const CkLBOptions &opt);
-    BlockLB (CkMigrateMessage *m) : CentralLB (m) { };
+    BlockLB (CkMigrateMessage *m) : CBase_BlockLB (m) { };
 
     void work (LDStats *stats);
-
-    void pup (PUP::er &p) { CentralLB::pup(p); }
+    void pup (PUP::er &p) { }
 
   private:
     bool QueryBalanceNow (int step);

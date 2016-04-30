@@ -75,9 +75,6 @@ namespace Ck { namespace IO {
         Director(CkMigrateMessage *m) : CBase_Director(m) { }
 
         void pup(PUP::er &p) {
-          CBase_Director::pup(p);
-          __sdag_pup(p);
-
           // FIXME: All files must be closed across checkpoint/restart
           if (files.size() != 0)
             CkAbort("CkIO: All files must be closed across checkpoint/restart");
@@ -135,7 +132,7 @@ namespace Ck { namespace IO {
 
         void sessionComplete(FileToken token) {
           CProxy_CkArray(files[token].session.ckGetArrayID()).ckDestroy();
-          files[token].complete.send();
+          files[token].complete.send(CkReductionMsg::buildNew(0, NULL));
           files[token].complete = CkCallback(CkCallback::invalid);
         }
 
@@ -166,9 +163,6 @@ namespace Ck { namespace IO {
         }
 
         void pup(PUP::er &p) {
-          CBase_Manager::pup(p);
-          __sdag_pup(p);
-
           p | opnum;
 
           // FIXME: All files must be closed across checkpoint/restart
@@ -178,7 +172,7 @@ namespace Ck { namespace IO {
 
         void prepareFile(FileToken token, string name, Options opts) {
           CkAssert(files.end() == files.find(token));
-          CkAssert(lastActivePE(opts) < CkNumPes());
+          //CkAssert(lastActivePE(opts) < CkNumPes());
           CkAssert(opts.writeStripe <= opts.peStripe);
           files[token] = impl::FileInfo(name, opts);
 

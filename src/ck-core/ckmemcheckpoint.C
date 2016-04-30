@@ -379,7 +379,6 @@ CkMemCheckPT::~CkMemCheckPT()
 
 void CkMemCheckPT::pup(PUP::er& p) 
 { 
-  CBase_CkMemCheckPT::pup(p); 
   p|cpStarter;
   p|thisFailedPe;
   p|failedPes;
@@ -825,11 +824,11 @@ inline int CkMemCheckPT::isMaster(int buddype)
 
 #if 0
 // helper class to pup all elements that belong to same ckLocMgr
-class ElementDestoryer : public CkLocIterator {
+class ElementDestroyer : public CkLocIterator {
 private:
         CkLocMgr *locMgr;
 public:
-        ElementDestoryer(CkLocMgr* mgr_):locMgr(mgr_){};
+        ElementDestroyer(CkLocMgr* mgr_):locMgr(mgr_){};
         void addLocation(CkLocation &loc) {
 		CkArrayIndex idx=loc.getIndex();
 		CkPrintf("[%d] destroy: ", CkMyPe()); idx.print();
@@ -865,7 +864,7 @@ void CkMemCheckPT::resetLB(int diepe)
 }
 
 // in case when failedPe dies, everybody go through its checkpoint table:
-// destory all array elements
+// destroy all array elements
 // recover lost buddies
 // reconstruct all array elements from check point data
 // called on all processors
@@ -918,13 +917,13 @@ void CkMemCheckPT::removeArrayElements()
   if (CkMyPe()==thisFailedPe) CmiAssert(len == 0);
 
   // get rid of all buffering and remote recs
-  // including destorying all array elements
+  // including destroying all array elements
 #if CK_NO_PROC_POOL  
 	CKLOCMGR_LOOP(mgr->flushAllRecs(););
 #else
 	CKLOCMGR_LOOP(mgr->flushLocalRecs(););
 #endif
-//  CKLOCMGR_LOOP(ElementDestoryer chk(mgr); mgr->iterate(chk););
+//  CKLOCMGR_LOOP(ElementDestroyer chk(mgr); mgr->iterate(chk););
 
   //thisProxy[0].quiescence(CkCallback(CkIndex_CkMemCheckPT::resetReductionMgr(), thisProxy));
   barrier(CkCallback(CkIndex_CkMemCheckPT::resetReductionMgr(), thisProxy));
@@ -960,7 +959,7 @@ void CkMemCheckPT::recoverBuddies()
   int idx;
   int len = ckTable.length();
   // ready to flush reduction manager
-  // cannot be CkMemCheckPT::restart because destory will modify states
+  // cannot be CkMemCheckPT::restart because destroy will modify states
   double curTime = CmiWallTimer();
   if (CkMyPe() == thisFailedPe)
   CkPrintf("[%d] CkMemCheckPT ----- %s  in %f seconds\n",CkMyPe(), stage, curTime-startTime);
@@ -1317,7 +1316,7 @@ static void * minChkpNumMsg(int * size, void * data, void ** remote, int count)
   for(int i = 0; i < count;i++)
   {
     int num = *(int *)((char *)(remote[i])+CmiMsgHeaderSizeBytes);
-    if(num != -1 && num < minNum)
+    if(num != -1 && (num < minNum || minNum == -1))
     {
       minNum = num;
     }
@@ -1581,16 +1580,18 @@ void init_memcheckpt(char **argv)
 }
 #endif
 
+extern "C" int quietModeRequested;
+
 class CkMemCheckPTInit: public Chare {
 public:
   CkMemCheckPTInit(CkArgMsg *m) {
     delete m;
 #if CMK_MEM_CHECKPOINT
     if (arg_where == CkCheckPoint_inDISK) {
-      CkPrintf("Charm++> Double-disk Checkpointing. \n");
+      if (!quietModeRequested) CkPrintf("Charm++> Double-disk Checkpointing. \n");
     }
     ckCheckPTGroupID = CProxy_CkMemCheckPT::ckNew(arg_where);
-    CkPrintf("Charm++> CkMemCheckPTInit mainchare is created!\n");
+    if (!quietModeRequested) CkPrintf("Charm++> CkMemCheckPTInit mainchare is created!\n");
 #endif
   }
 };
@@ -1753,22 +1754,22 @@ void pingBuddy()
 void CkRegisterRestartHandler( )
 {
 #if CMK_MEM_CHECKPOINT
-  notifyHandlerIdx = CkRegisterHandler((CmiHandler)notifyHandler);
-  askProcDataHandlerIdx = CkRegisterHandler((CmiHandler)askProcDataHandler);
-  recoverProcDataHandlerIdx = CkRegisterHandler((CmiHandler)recoverProcDataHandler);
-  restartBcastHandlerIdx = CkRegisterHandler((CmiHandler)restartBcastHandler);
-  restartBeginHandlerIdx = CkRegisterHandler((CmiHandler)restartBeginHandler);
-  reportChkpSeqHandlerIdx = CkRegisterHandler((CmiHandler)reportChkpSeqHandler);
-  getChkpSeqHandlerIdx = CkRegisterHandler((CmiHandler)getChkpSeqHandler);
+  notifyHandlerIdx = CkRegisterHandler(notifyHandler);
+  askProcDataHandlerIdx = CkRegisterHandler(askProcDataHandler);
+  recoverProcDataHandlerIdx = CkRegisterHandler(recoverProcDataHandler);
+  restartBcastHandlerIdx = CkRegisterHandler(restartBcastHandler);
+  restartBeginHandlerIdx = CkRegisterHandler(restartBeginHandler);
+  reportChkpSeqHandlerIdx = CkRegisterHandler(reportChkpSeqHandler);
+  getChkpSeqHandlerIdx = CkRegisterHandler(getChkpSeqHandler);
 
 #if CMK_CONVERSE_MPI
-  pingHandlerIdx = CkRegisterHandler((CmiHandler)pingHandler);
-  pingCheckHandlerIdx = CkRegisterHandler((CmiHandler)pingCheckHandler);
-  buddyDieHandlerIdx = CkRegisterHandler((CmiHandler)buddyDieHandler);
-  replicaDieHandlerIdx = CkRegisterHandler((CmiHandler)replicaDieHandler);
-  replicaDieBcastHandlerIdx = CkRegisterHandler((CmiHandler)replicaDieBcastHandler);
+  pingHandlerIdx = CkRegisterHandler(pingHandler);
+  pingCheckHandlerIdx = CkRegisterHandler(pingCheckHandler);
+  buddyDieHandlerIdx = CkRegisterHandler(buddyDieHandler);
+  replicaDieHandlerIdx = CkRegisterHandler(replicaDieHandler);
+  replicaDieBcastHandlerIdx = CkRegisterHandler(replicaDieBcastHandler);
 #endif
-  changePhaseHandlerIdx = CkRegisterHandler((CmiHandler)changePhaseHandler);
+  changePhaseHandlerIdx = CkRegisterHandler(changePhaseHandler);
 
   CpvInitialize(CkProcCheckPTMessage **, procChkptBuf);
   CpvAccess(procChkptBuf) = new CkProcCheckPTMessage *[2];

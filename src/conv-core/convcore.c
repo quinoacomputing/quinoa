@@ -56,6 +56,8 @@
 #ifndef _WIN32
 #include <sys/time.h>
 #include <sys/resource.h>
+#else
+#define snprintf _snprintf
 #endif
 
 #include "converse.h"
@@ -302,6 +304,7 @@ static void CmiPrintCLAs(void) {
  */
 void CmiArgInit(char **argv) {
 	int i;
+	CmiLock(_smp_mutex);
 	for (i=0;argv[i]!=NULL;i++)
 	{
 		if (0==strcmp(argv[i],"-?") ||
@@ -319,6 +322,7 @@ void CmiArgInit(char **argv) {
 		free(CLAlist); CLAlist=NULL;
 	}
 	usageChecked=1;
+	CmiUnlock(_smp_mutex);
 }
 
 /** Return 1 if we're currently printing command-line usage information. */
@@ -376,18 +380,27 @@ and sets argv={"a.out","foo","bar"};
 */
 int CmiGetArgStringDesc(char **argv,const char *arg,char **optDest,const char *desc)
 {
-	int i;
+	int i, found=0;
+	char buf[256];
 	CmiAddCLA(arg,"string",desc);
 	for (i=0;argv[i]!=NULL;i++)
-		if (0==strcmp(argv[i],arg))
-		{/*We found the argument*/
-			if (argv[i+1]==NULL) CmiAbort("Argument not complete!");
-			*optDest=argv[i+1];
+		if (0==strcmp(argv[i],arg)) { /*We found the argument*/
+			if (!found) {
+				if (argv[i+1]==NULL) CmiAbort("Argument not complete!");
+				*optDest=argv[i+1];
+				found = 1;
+			}
+			else { /* found == 1 which means users used this option more than once in the command line */
+				snprintf(buf, 256, "Option %s is used more than once\n", argv[i]);
+				CmiAbort(buf);
+			}
 			CmiDeleteArgs(&argv[i],2);
-			return 1;
+			i=i-1;
 		}
-	return 0;/*Didn't find the argument*/
+
+	return found; /*return the result of the loop above : 0 -> not found, 1 ->found*/
 }
+
 int CmiGetArgString(char **argv,const char *arg,char **optDest) {
 	return CmiGetArgStringDesc(argv,arg,optDest,"");
 }
@@ -415,12 +428,14 @@ but not argv=={...,"-packsize",...}.
 */
 int CmiGetArgIntDesc(char **argv,const char *arg,int *optDest,const char *desc)
 {
-	int i;
+	int i, found = 0;
+	char buf[256];
+
 	int argLen=strlen(arg);
 	CmiAddCLA(arg,"integer",desc);
-	for (i=0;argv[i]!=NULL;i++)
-		if (0==strncmp(argv[i],arg,argLen))
-		{/*We *may* have found the argument*/
+	for (i=0;argv[i]!=NULL;i++) {
+		if (0==strncmp(argv[i],arg,argLen)) {
+			/*We *may* have found the argument*/
 			const char *opt=NULL;
 			int nDel=0;
 			switch(argv[i][argLen]) {
@@ -437,16 +452,26 @@ int CmiGetArgIntDesc(char **argv,const char *arg,int *optDest,const char *desc)
 				continue; /*False alarm-- skip it*/
 			}
 			if (opt==NULL) continue; /*False alarm*/
-			if (sscanf(opt,"%i",optDest)<1) {
-			/*Bad command line argument-- die*/
-				fprintf(stderr,"Cannot parse %s option '%s' "
-					"as an integer.\n",arg,opt);
-				CmiAbort("Bad command-line argument\n");
+
+			if (!found) {
+				if (sscanf(opt,"%i",optDest)<1) {
+					/*Bad command line argument-- die*/
+					fprintf(stderr,"Cannot parse %s option '%s' "
+						"as an integer.\n",arg,opt);
+					CmiAbort("Bad command-line argument\n");
+				}
+				found = 1;
 			}
+			else { /* found == 1 which means users used this option more than once in the command line */
+				snprintf(buf, 256, "Option %s is used more than once\n", argv[i]);
+				CmiAbort(buf);
+			}
+
 			CmiDeleteArgs(&argv[i],nDel);
-			return 1;
+			i = i - 1;
 		}
-	return 0;/*Didn't find the argument-- dest is unchanged*/	
+	}
+	return found; /*return the result of the loop above : 0 -> not found, 1 ->found*/
 }
 int CmiGetArgInt(char **argv,const char *arg,int *optDest) {
 	return CmiGetArgIntDesc(argv,arg,optDest,"");
@@ -454,12 +479,13 @@ int CmiGetArgInt(char **argv,const char *arg,int *optDest) {
 
 int CmiGetArgLongDesc(char **argv,const char *arg,CmiInt8 *optDest,const char *desc)
 {
-	int i;
+	int i, found = 0;
+	char buf[256];
+
 	int argLen=strlen(arg);
 	CmiAddCLA(arg,"integer",desc);
 	for (i=0;argv[i]!=NULL;i++)
-		if (0==strncmp(argv[i],arg,argLen))
-		{/*We *may* have found the argument*/
+		if (0==strncmp(argv[i],arg,argLen)) {/*We *may* have found the argument*/
 			const char *opt=NULL;
 			int nDel=0;
 			switch(argv[i][argLen]) {
@@ -476,16 +502,24 @@ int CmiGetArgLongDesc(char **argv,const char *arg,CmiInt8 *optDest,const char *d
 				continue; /*False alarm-- skip it*/
 			}
 			if (opt==NULL) continue; /*False alarm*/
-			if (sscanf(opt,"%ld",optDest)<1) {
-			/*Bad command line argument-- die*/
-				fprintf(stderr,"Cannot parse %s option '%s' "
-					"as a long integer.\n",arg,opt);
-				CmiAbort("Bad command-line argument\n");
+			if (!found) {
+				if (sscanf(opt,"%ld",optDest) < 1) {
+					/*Bad command line argument-- die*/
+					fprintf(stderr,"Cannot parse %s option '%s' "
+						"as a long integer.\n",arg,opt);
+					CmiAbort("Bad command-line argument\n");
+				}
+				found = 1;
 			}
+			else {/* found == 1 which means users used this option more than once in the command line */
+				snprintf(buf, 256, "Option %s is used more than once\n", argv[i]);
+				CmiAbort(buf);
+			}
+
 			CmiDeleteArgs(&argv[i],nDel);
-			return 1;
+			i = i-1;
 		}
-	return 0;/*Didn't find the argument-- dest is unchanged*/	
+	return found; /*return the result of the loop above : 0 -> not found, 1 ->found*/
 }
 int CmiGetArgLong(char **argv,const char *arg,CmiInt8 *optDest) {
 	return CmiGetArgLongDesc(argv,arg,optDest,"");
@@ -498,20 +532,35 @@ argv={...,"-foobar",...}.
 */
 int CmiGetArgFlagDesc(char **argv,const char *arg,const char *desc)
 {
-	int i;
+	int i, found = 0;
+	char buf[256];
+
 	CmiAddCLA(arg,"",desc);
-	for (i=0;argv[i]!=NULL;i++)
-		if (0==strcmp(argv[i],arg))
-		{/*We found the argument*/
+	for (i=0;argv[i]!=NULL;i++) {
+		if (0==strcmp(argv[i],arg)) {/*We found the argument*/
+			if (!found)
+				found = 1;
+			else { /* found == 1 which means users used this option more than once in the command line */
+				snprintf(buf, 256, "Option %s is used more than once\n", argv[i]);
+				CmiAbort(buf);
+			}
 			CmiDeleteArgs(&argv[i],1);
-			return 1;
+			i = i-1;
 		}
-	return 0;/*Didn't find the argument*/
+	}
+	return found; /*return the result of the loop above : 0 -> not found, 1 ->found*/
 }
 int CmiGetArgFlag(char **argv,const char *arg) {
 	return CmiGetArgFlagDesc(argv,arg,"");
 }
 
+void CmiDeprecateArgInt(char **argv,const char *arg,const char *desc,const char *warning)
+{
+  int dummy = 0, found = CmiGetArgIntDesc(argv, arg, &dummy, desc);
+
+  if (found)
+    CmiPrintf(warning);
+}
 
 /*****************************************************************************
  *
@@ -938,25 +987,27 @@ void CmiTimerInit(char **argv)
   struct rusage ru;
   CpvInitialize(double, inittime_virtual);
 
-  _absoluteTime = CmiGetArgFlagDesc(argv,"+useAbsoluteTime", "Use system's absolute time as wallclock time.");
-
+  int tmptime = CmiGetArgFlagDesc(argv,"+useAbsoluteTime", "Use system's absolute time as wallclock time.");
+  if(CmiMyRank() == 0) _absoluteTime = tmptime;   /* initialize only  once */
 #if !(__FAULT__)
   /* try to synchronize calling barrier */
   CmiBarrier();
   CmiBarrier();
   CmiBarrier();
 #endif
-
-  gettimeofday(&tv,0);
-  inittime_wallclock = (tv.tv_sec * 1.0) + (tv.tv_usec*0.000001);
+if(CmiMyRank() == 0) /* initialize only  once */
+  {
+    gettimeofday(&tv,0);
+    inittime_wallclock = (tv.tv_sec * 1.0) + (tv.tv_usec*0.000001);
 #ifndef RUSAGE_WHO
-  CpvAccess(inittime_virtual) = inittime_wallclock;
+    CpvAccess(inittime_virtual) = inittime_wallclock;
 #else
-  getrusage(RUSAGE_WHO, &ru); 
-  CpvAccess(inittime_virtual) =
-    (ru.ru_utime.tv_sec * 1.0)+(ru.ru_utime.tv_usec * 0.000001) +
-    (ru.ru_stime.tv_sec * 1.0)+(ru.ru_stime.tv_usec * 0.000001);
+    getrusage(RUSAGE_WHO, &ru); 
+    CpvAccess(inittime_virtual) =
+      (ru.ru_utime.tv_sec * 1.0)+(ru.ru_utime.tv_usec * 0.000001) +
+      (ru.ru_stime.tv_sec * 1.0)+(ru.ru_stime.tv_usec * 0.000001);
 #endif
+  }
 
 #if !(__FAULT__)
   CmiBarrier();
@@ -2119,11 +2170,10 @@ void CsdInit(argv)
   CpvInitialize(void *, CsdSchedQueue);
   CpvInitialize(int,   CsdStopFlag);
   CpvInitialize(int,   CsdLocalCounter);
-  if(!CmiGetArgIntDesc(argv,"+csdLocalMax",&CsdLocalMax,"Set the max number of local messages to process before forcing a check for remote messages."))
-    {
-      CsdLocalMax= CSD_LOCAL_MAX_DEFAULT;
-    }
-  CpvAccess(CsdLocalCounter) = CsdLocalMax;
+  int argCsdLocalMax=CSD_LOCAL_MAX_DEFAULT;
+  int argmaxset = CmiGetArgIntDesc(argv,"+csdLocalMax",&argCsdLocalMax,"Set the max number of local messages to process before forcing a check for remote messages.");
+  if (CmiMyRank() == 0 ) CsdLocalMax = argCsdLocalMax;
+  CpvAccess(CsdLocalCounter) = argCsdLocalMax;
   CpvAccess(CsdSchedQueue) = (void *)CqsCreate();
    #if CMK_USE_STL_MSGQ
    if (CmiMyPe() == 0) CmiPrintf("Charm++> Using STL-based msgQ:\n");
@@ -2270,7 +2320,6 @@ CmiReduction* CmiGetReductionCreate(int id, short int numChildren) {
   }
   if (red == NULL || red->numChildren < numChildren) {
     CmiReduction *newred;
-    if (red != NULL) CmiPrintf("[%d] Reduction structure reallocated\n",CmiMyPe());
     CmiAssert(red == NULL || red->localContributed == 0);
     if (numChildren == 0) numChildren = 4;
     newred = (CmiReduction*)malloc(sizeof(CmiReduction)+numChildren*sizeof(void*));
@@ -3498,6 +3547,30 @@ int CmiEndianness()
   return  _cmi_endianness;
 }
 
+#if CMK_USE_TSAN
+/* This fixes bug #713, which is caused by tsan deadlocking inside
+ * a 'write' syscall inside a mutex. */
+static void checkTSanOptions()
+{
+  char *env = getenv("TSAN_OPTIONS");
+
+  if (!env ||
+      !strstr(env, "log_path=") ||
+      strstr(env, "log_path=stdout") ||
+      strstr(env, "log_path=stderr")) {
+    CmiAbort("TSAN output must be redirected to disk.\n"
+             "Run this program with TSAN_OPTIONS=\"log_path=filename\"");
+  }
+}
+#endif
+
+#if CMK_CCS_AVAILABLE
+int ccsRunning;
+#endif
+
+int quietModeRequested;  // user has requested quiet mode
+int quietMode; // quiet mode active (CmiPrintf's are disabled)
+
 /**
   Main Converse initialization routine.  This routine is 
   called by the machine file (machine.c) to set up Converse.
@@ -3525,24 +3598,8 @@ int CmiEndianness()
 */
 void ConverseCommonInit(char **argv)
 {
-
-/**
- * The reason to initialize this variable here:
- * cmiArgDebugFlag is possibly accessed in CmiPrintf/CmiError etc.,
- * therefore, we have to initialize this variable before any calls
- * to those functions (such as CmiPrintf). Otherwise, we may encounter
- * a memory segmentation fault (bad memory access). Note, even
- * testing CpvInitialized(cmiArgDebugFlag) doesn't help to solve
- * this problem because the variable indicating whether cmiArgDebugFlag is 
- * initialized or not is not initialized, thus possibly causing another
- * bad memory access. --Chao Mei
- */
   CpvInitialize(int, _urgentSend);
   CpvAccess(_urgentSend) = 0;
-#if CMK_CCS_AVAILABLE
-  CpvInitialize(int, cmiArgDebugFlag);
-  CpvAccess(cmiArgDebugFlag) = 0;
-#endif
   CpvInitialize(int,interopExitFlag);
   CpvAccess(interopExitFlag) = 0;
 
@@ -3596,11 +3653,16 @@ void ConverseCommonInit(char **argv)
 #endif
   CmiProcessPriority(argv);
 
+#if CMK_USE_TSAN
+  checkTSanOptions();
+#endif
+
   CmiPersistentInit();
   CmiIsomallocInit(argv);
   CmiDeliversInit();
   CsdInit(argv);
 #if CMK_CCS_AVAILABLE
+  ccsRunning = 0;
   CcsInit(argv);
 #endif
   CpdInit();
@@ -3741,6 +3803,7 @@ void CmiIOInit(char **argv) {
 
 void CmiPrintf(const char *format, ...)
 {
+  if (quietMode) return;
   CpdSystemEnter();
   {
   va_list args;
@@ -3783,11 +3846,10 @@ void CmiError(const char *format, ...)
 
 #endif
 
-void __cmi_assert(const char *expr, const char *file, int line)
+void __cmi_assert(const char *errmsg)
 {
-  CmiError("[%d] Assertion \"%s\" failed in file %s line %d.\n",
-      CmiMyPe(), expr, file, line);
-  CmiAbort("");
+  CmiError("[%d] %s\n", CmiMyPe(), errmsg);
+  CmiAbort(errmsg);
 }
 
 char *CmiCopyMsg(char *msg, int len)

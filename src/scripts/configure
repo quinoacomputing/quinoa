@@ -638,6 +638,7 @@ enable_controlpoint
 enable_lbuserdata
 with_numa
 with_lbtime_type
+with_qlogic
 with_refnum_type
 with_prio_type
 enable_randomized_msgq
@@ -1271,6 +1272,7 @@ Optional Packages:
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
   --with-numa             support memory affinity with NUMA
   --with-lbtime-type=type load balancing timer type
+  --with-qlogic           QLogic based Infiniband
   --with-refnum-type=type size of the envelope refnum field
   --with-prio-type=type   size of expected message priorities
   --with-metis            support the METIS graph partitioner and associated
@@ -1711,6 +1713,11 @@ ac_config_headers="$ac_config_headers conv-autoconfig.h"
 ac_config_commands="$ac_config_commands config-cleanup"
 
 
+#clean up conv-mach-opt.sh
+sed -e '/Option added by configure/d' ../include/conv-mach-opt.sh  | sed -e '/^$/d' > conv-mach-opt.sh.clean
+cp -f conv-mach-opt.sh.clean   ../include/conv-mach-opt.sh
+rm -f conv-mach-opt.sh.clean
+
 CHARMINC="."
 CHARMBIN="../bin"
 test -r ./conv-config.sh && . ./conv-config.sh
@@ -1718,7 +1725,7 @@ test -r ./conv-config.sh && . ./conv-config.sh
 # Decimal representation of Charm++ release line and API revision
 # Increment the last 2 digits when making an API change
 # Increase the first three after branching for a release
-VERSION=60601
+VERSION=60701
 echo $VERSION > ../include/VERSION
 
 cat >>confdefs.h <<_ACEOF
@@ -1761,13 +1768,6 @@ remove_flag() {
      cp tmp.$$ ../include/conv-mach-opt.sh
      /bin/rm -f tmp.$$
 }
-
-
-#clean up conv-mach-opt.sh
-sed -e '/Option added by configure/d' ../include/conv-mach-opt.sh  | sed -e '/^$/d' > conv-mach-opt.sh.clean
-cp -f conv-mach-opt.sh.clean   ../include/conv-mach-opt.sh
-rm -f conv-mach-opt.sh.clean
-
 
 # enable/disable error checking
 # Check whether --enable-error-checking was given.
@@ -2038,6 +2038,30 @@ else
 fi
 
 
+# Check whether --with-qlogic was given.
+if test "${with_qlogic+set}" = set; then :
+  withval=$with_qlogic; with_qlogic=yes
+else
+  with_qlogic=no
+fi
+
+
+if test "$with_qlogic" = "no"
+then
+
+cat >>confdefs.h <<_ACEOF
+#define QLOGIC 0
+_ACEOF
+
+else
+  Echo "QLogic based Infiniband"
+
+cat >>confdefs.h <<_ACEOF
+#define QLOGIC 1
+_ACEOF
+
+fi
+
 #
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking machine name" >&5
 $as_echo_n "checking machine name... " >&6; }
@@ -2272,19 +2296,6 @@ $as_echo "$CP" >&6; }
 add_flag CP=\""$CP"\" "cp command"
 
 
-# try to decide the version of glibc
-get_glibc_version() {
-t=test.c
-cat > $t <<EOT
-#include <stdio.h>
-#include <gnu/libc-version.h>
-int main (void) { puts (gnu_get_libc_version ()); return 0; }
-EOT
-gcc -o gver test.c
-GLIBCVERSION=`./gver`
-/bin/rm -f $t gver
-}
-
 cat > $t <<EOT
 #include <stdio.h>
 void foo(void) {
@@ -2357,16 +2368,61 @@ then
   fi
 fi
 
-if echo "$base_version" | grep "linux" > /dev/null 2> /dev/null
+if echo "$CMK_CC" | grep -E "gcc|clang|icc" > /dev/null 2> /dev/null
 then
   test_link "whether compiler accept -fno-stack-protector" "ok" "no" "-fno-stack-protector"
   if test $strictpass -eq 1
   then
-	add_flag OPTS_CC='"$OPTS_CC -fno-stack-protector"' "linux compiler"
-	add_flag OPTS_CXX='"$OPTS_CXX -fno-stack-protector"' "linux compiler"
+	add_flag OPTS_CC='"$OPTS_CC -fno-stack-protector"' "stack-protection disabling"
+	add_flag OPTS_CXX='"$OPTS_CXX -fno-stack-protector"' "stack-protection disabling"
   fi
 fi
 
+#### check if C++ compiler will accept early C++11 variadic templates without warning ####
+cat > $t <<EOT
+class CkMigrateMessage;
+
+struct base {
+  base(void) { }
+  base(CkMigrateMessage *) { }
+};
+
+template <class Parent>
+struct CBaseT1 : Parent {
+
+  CBaseT1(void) :Parent()  { }
+  CBaseT1(CkMigrateMessage *m) :Parent(m) { }
+
+  template <typename... Args>
+    CBaseT1(Args... args) : Parent(args...) { }
+};
+
+template struct CBaseT1<base>;
+EOT
+got_cpp11=""
+test_cxx "whether C++ compiler supports variadic templates without flags" "yes" "no" ""
+if test $strictpass -eq 1
+then
+  got_cpp11="true"
+else
+# Flags for g++/clang++, xlC++, and pgCC, respectively
+for i in "-std=c++0x" "-qlanglvl=extended0x" "--c++11" "-h std=c++11"; do
+    test_cxx "whether C++ compiler supports variadic templates with '$i'" "yes" "no" "$i"
+    if test $strictpass -eq 1
+    then
+      add_flag "$(echo OPTS_CXX=\"\$OPTS_CXX $i\")" "Enable C++11 support"
+      OPTS_CXX="$OPTS_CXX $i"
+      got_cpp11="true"
+      break
+    fi
+done
+fi
+
+if test -z $got_cpp11
+then
+  echo "Charm++ requires some C++11 support, but doesn't know the flag to enable it"
+  test_finish 1
+fi
 
 # Figure out if the user has asked to enable the latest language standards
 USER_ASKED_FOR_NEW_STD=`echo "$BUILDOPTS" | grep "-use-new-std" | wc -l`
@@ -4260,7 +4316,7 @@ int main() {
     return 0;
 }
 EOT
-test_linkc "whether Cray rca library is available" "yes" "no" "-lrca"
+test_linkc "whether Cray rca library is available" "yes" "no" "$CRAY_RCA_POST_LINK_OPTS -lrca"
 
 cat >>confdefs.h <<_ACEOF
 #define CMK_HAS_RCALIB $pass
@@ -4278,7 +4334,7 @@ int main() {
     return 0;
 }
 EOT
-test_linkc "whether Cray rca_has get_max_dimension" "yes" "no" "-lrca"
+test_linkc "whether Cray rca_has get_max_dimension" "yes" "no" "$CRAY_RCA_POST_LINK_OPTS -lrca"
 
 cat >>confdefs.h <<_ACEOF
 #define CMK_HAS_RCA_MAX_DIMENSION $pass
@@ -5878,7 +5934,7 @@ $as_echo "$as_me: executing $ac_file commands" >&6;}
 
 
   case $ac_file$ac_mode in
-    "config-cleanup":C) sed -i -e 's:^#define\s\+PACKAGE://&:' conv-autoconfig.h ;;
+    "config-cleanup":C) sed -i -e 's:^#define\s\+PACKAGE.*:/* & */:' conv-autoconfig.h ;;
     "default":C) chmod +x libs/ck-libs/ampi/ampiCC libs/ck-libs/ampi/ampirun
  ;;
 

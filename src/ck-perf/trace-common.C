@@ -303,7 +303,7 @@ void TraceArray::traceEndOnCommThread() {
 }
 
 #if CMK_MULTICORE
-extern int Cmi_commthread;
+extern "C" int Cmi_commthread;
 #endif
 
 /*Install the beginIdle/endIdle condition handlers.*/
@@ -354,6 +354,34 @@ extern "C" void traceEnd(void) {
   }
   CkpvAccess(_traces)->traceEnd();
   CpvAccess(traceOn) = 0;
+#endif
+}
+
+extern "C" void traceBeginComm(void) {
+#if CMK_TRACE_ENABLED && CMK_SMP_TRACE_COMMTHREAD
+#if CMK_MULTICORE
+  if (Cmi_commthread)
+#endif
+    if (CmiMyRank() == 0) {
+      if (CkpvAccessOther(traceOn, CmiMyNodeSize()) != 1) {
+        CkpvAccessOther(_traces, CmiMyNodeSize())->traceBeginOnCommThread();
+        CkpvAccessOther(traceOn, CmiMyNodeSize()) = 1;
+      }
+    }
+#endif
+}
+
+extern "C" void traceEndComm(void) {
+#if CMK_TRACE_ENABLED && CMK_SMP_TRACE_COMMTHREAD
+#if CMK_MULTICORE
+  if (Cmi_commthread)
+#endif
+    if (CmiMyRank() == 0) {
+      if (CkpvAccessOther(traceOn, CmiMyNodeSize()) != 0) {
+        CkpvAccessOther(_traces, CmiMyNodeSize())->traceEndOnCommThread();
+        CkpvAccessOther(traceOn, CmiMyNodeSize()) = 0;
+      }
+    }
 #endif
 }
 

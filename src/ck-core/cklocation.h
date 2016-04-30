@@ -93,7 +93,7 @@ public:
   virtual ~CkArrayMap();
   virtual int registerArray(const CkArrayIndex& numElements, CkArrayID aid);
   virtual void unregisterArray(int idx);
-  virtual void populateInitial(int arrayHdl,CkArrayIndex& numElements,void *ctorMsg,CkArrMgr *mgr);
+  virtual void populateInitial(int arrayHdl,CkArrayOptions& options,void *ctorMsg,CkArrMgr *mgr);
   virtual int procNum(int arrayHdl,const CkArrayIndex &element) =0;
   virtual int homePe(int arrayHdl,const CkArrayIndex &element)
              { return procNum(arrayHdl, element); }
@@ -300,8 +300,8 @@ public:
         void deleteManager(CkArrayID aid, CkArrMgr *mgr);
 
 	/// Populate this array with initial elements
-	void populateInitial(CkArrayIndex& numElements,void *initMsg,CkArrMgr *mgr)
-    { map->populateInitial(mapHandle,numElements,initMsg,mgr); }
+	void populateInitial(CkArrayOptions& options,void *initMsg,CkArrMgr *mgr)
+    { map->populateInitial(mapHandle,options,initMsg,mgr); }
 
 	/// Add a new local array element, calling element's constructor
 	///  Returns true if the element was successfully added;
@@ -379,6 +379,8 @@ public:
 	//mark the duringMigration variable .. used for parallel restart
 	void setDuringMigration(bool _duringMigration);
 #endif
+
+	void setDuringDestruction(bool _duringDestruction);
 
 	/// Pass each of our locations (each separate array index) to this destination.
 	void iterate(CkLocIterator &dest);
@@ -494,6 +496,8 @@ public:
 
 	/// This flag is set while we delete an old copy of a migrator
 	bool duringMigration;
+	/// This flag is set while we are deleting location manager
+	bool duringDestruction;
 
 	//Occasionally clear out stale remote pointers
 	static void staticSpringCleaning(void *mgr,double curWallTime);

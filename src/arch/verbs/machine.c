@@ -220,6 +220,10 @@ int printf(const char *fmt, ...) {
 
 #include "machine-smp.h"
 
+// This is used by machine-pxshm.c, which is included by machine-common-core.c
+// (itself included below.)
+static int Cmi_charmrun_pid;
+
 #include "machine-lrts.h"
 #include "machine-common-core.c"
 
@@ -287,6 +291,9 @@ static SOCKET       dataskt;
 
 extern void TokenUpdatePeriodic();
 extern void getAvailSysMem();
+
+static int Lrts_numNodes;
+static int Lrts_myNode;
 
 /****************************************************************************
  *
@@ -367,8 +374,6 @@ static void KillOnAllSigs(int sigNo)
   }
 #endif
   
-  CmiDestroyLocks();
-
   if (sigNo==SIGSEGV) {
      sig="segmentation violation";
      suggestion="Try running with '++debug', or linking with '-memory paranoid' (memory paranoid requires '+netpoll' at runtime).";
@@ -457,10 +462,10 @@ Horrific #defines to hide the differences between select() and poll().
 # define CMK_PIPE_PARAM struct kevent* ke
 # define CMK_PIPE_ADDREAD(rd_fd) \
         do { EV_SET(ke, rd_fd, EVFILT_READ, EV_ADD, 0, 10, NULL); \
-                kevent(_kq, ke, 1, NULL, 0, NULL); memset(ke, 0, sizeof(ke));} while(0)
+                kevent(_kq, ke, 1, NULL, 0, NULL); memset(ke, 0, sizeof(*ke));} while(0)
 # define CMK_PIPE_ADDWRITE(wr_fd) \
         do { EV_SET(ke, wr_fd, EVFILT_WRITE, EV_ADD, 0, 10, NULL); \
-                kevent(_kq, ke, 1, NULL, 0, NULL); memset(ke, 0, sizeof(ke));} while(0)
+                kevent(_kq, ke, 1, NULL, 0, NULL); memset(ke, 0, sizeof(*ke));} while(0)
 # define CMK_PIPE_CHECKREAD(rd_fd) (ke->ident == rd_fd && ke->filter == EVFILT_READ)
 # define CMK_PIPE_CHECKWRITE(wr_fd) (ke->ident == wr_fd && ke->filter == EVFILT_WRITE)
 
@@ -603,7 +608,6 @@ void CmiEnableNonblockingIO(int fd) { }
 static skt_ip_t   Cmi_self_IP;
 static skt_ip_t   Cmi_charmrun_IP; /*Address of charmrun machine*/
 static int        Cmi_charmrun_port;
-static int        Cmi_charmrun_pid;
 static int        Cmi_charmrun_fd=-1;
 /* Magic number to be used for sanity check in messege header */
 static int 				Cmi_net_magic;
@@ -614,7 +618,7 @@ static int    Cmi_idlepoll;
 static int    Cmi_syncprint;
 static int Cmi_print_stats = 0;
 
-#if ! CMK_SMP && ! defined(_WIN32)
+#if ! defined(_WIN32)
 /* parse forks only used in non-smp mode */
 static void parse_forks(void) {
   char *forkstr;
@@ -629,8 +633,10 @@ static void parse_forks(void) {
 		if(pid<0) CmiAbort("Fork returned an error");
 		if(pid==0) { /* forked process */
 			/* reset mynode,pe & exit loop */
-			_Cmi_mynode+=i;
+			Lrts_myNode+=i;
+#if ! CMK_SMP
 			_Cmi_mype+=i;
+#endif
 			break;
 		}
 	}
@@ -657,7 +663,7 @@ static void parse_netstart(void)
   {/*Read values set by Charmrun*/
         char Cmi_charmrun_name[1024];
         nread = sscanf(ns, "%d%s%d%d%d",
-                 &_Cmi_mynode,
+                 &Lrts_myNode,
                  Cmi_charmrun_name, &Cmi_charmrun_port,
                  &Cmi_charmrun_pid, &port);
 	Cmi_charmrun_IP=skt_lookup_ip(Cmi_charmrun_name);
@@ -668,7 +674,7 @@ static void parse_netstart(void)
         }
   } else 
   {/*No charmrun-- set flag values for standalone operation*/
-  	_Cmi_mynode=0;
+  	Lrts_myNode=0;
   	Cmi_charmrun_IP=_skt_invalid_ip;
   	Cmi_charmrun_port=0;
   	Cmi_charmrun_pid=0;
@@ -677,7 +683,7 @@ static void parse_netstart(void)
 #if CMK_USE_IBVERBS | CMK_USE_IBUD
 	char *cmi_num_nodes = getenv("CmiNumNodes");
 	if(cmi_num_nodes != NULL){
-		sscanf(cmi_num_nodes,"%d",&_Cmi_numnodes);
+		sscanf(cmi_num_nodes,"%d",&Lrts_numNodes);
 	}
 #endif	
 }
@@ -726,7 +732,7 @@ static void log_init(void)
 static void log_done(void)
 {
   char logname[100]; FILE *f; int i, size;
-  sprintf(logname, "log.%d", _Cmi_mynode);
+  sprintf(logname, "log.%d", Lrts_myNode);
   f = fopen(logname, "w");
   if (f==0) KillEveryone("fopen problem");
   if (log_wrap) size = 50000; else size=log_pos;
@@ -745,8 +751,8 @@ void printLog(void)
   if (logged)
       return;
   logged = 1;
-  CmiPrintf("Logging: %d\n", _Cmi_mynode);
-  sprintf(logname, "log.%d", _Cmi_mynode);
+  CmiPrintf("Logging: %d\n", Lrts_myNode);
+  sprintf(logname, "log.%d", Lrts_myNode);
   f = fopen(logname, "w");
   if (f==0) KillEveryone("fopen problem");
   for (i = 5000; i; i--)
@@ -767,7 +773,7 @@ void printLog(void)
     }
   }
   fclose(f);
-  CmiPrintf("Done Logging: %d\n", _Cmi_mynode);
+  CmiPrintf("Done Logging: %d\n", Lrts_myNode);
 }
 
 #define LOG(t,s,k,d,q) { if (log_pos==50000) { log_pos=0; log_wrap=1;} { logent ent=log+log_pos; ent->time=t; ent->srcpe=s; ent->kind=k; ent->dstpe=d; ent->seqno=q; log_pos++; }}
@@ -792,7 +798,7 @@ void printLog(void)
 static CmiNodeLock    Cmi_scanf_mutex;
 static double         Cmi_clock;
 static double         Cmi_check_delay = 3.0;
-int inProgress[128];
+int* inProgress;
 
 /** Mechanism to prevent dual locking when comm-layer functions, including prints, 
  * are called recursively. (UN)LOCK_IF_AVAILABLE is used before and after a code piece
@@ -888,8 +894,6 @@ static void CmiDestroyLocks()
 
 #endif
 
-CpvExtern(int,_charmEpoch);
-
 /*Add a message to this processor's receive queue 
   Must be called while holding comm. lock
 */
@@ -911,7 +915,7 @@ by the commlock.*/
 static int Cmi_charmrun_fd_sendflag=0;
 
 /* ctrl_sendone */
-static int sendone_abort_fn(int code,const char *msg) {
+static int sendone_abort_fn(SOCKET skt,int code,const char *msg) {
 	fprintf(stderr,"Socket error %d in ctrl_sendone! %s\n",code,msg);
 	machine_exit(1);
 	return -1;
@@ -993,7 +997,7 @@ static void pingCharmrunPeriodic(void *ignored)
   CcdCallFnAfter((CcdVoidFn)pingCharmrunPeriodic,NULL,1000);
 }
 
-static int ignore_further_errors(int c,const char *msg) {machine_exit(2);return -1;}
+static int ignore_further_errors(SOCKET skt,int c,const char *msg) {machine_exit(2);return -1;}
 static void charmrun_abort(const char *s)
 {
   if (Cmi_charmrun_fd==-1) {/*Standalone*/
@@ -1182,6 +1186,8 @@ static int InternalScanf(char *fmt, va_list l)
 /*New stdarg.h declarations*/
 void CmiPrintf(const char *fmt, ...)
 {
+  extern int quietMode;
+  if (quietMode) return;
   CpdSystemEnter();
   {
   va_list p; va_start(p, fmt);
@@ -1423,7 +1429,7 @@ void copyInfiAddr(ChInfiAddr *qpList);
 #if CMK_USE_IBVERBS && CMK_IBVERBS_FAST_START
 static void send_partial_init()
 {
-  ChMessageInt_t nodeNo = ChMessageInt_new(_Cmi_mynode);
+  ChMessageInt_t nodeNo = ChMessageInt_new(Lrts_myNode);
 	ctrl_sendone_nolock("partinit",(const char *)&(nodeNo),sizeof(nodeNo),NULL,0);
 }	
 #endif
@@ -1472,11 +1478,11 @@ static void node_addresses_obtain(char **argv)
   { /*Contact charmrun for machine info.*/
 	ChSingleNodeinfo me;
 
-  	me.nodeNo=ChMessageInt_new(_Cmi_mynode);
+  	me.nodeNo=ChMessageInt_new(Lrts_myNode);
 
 #if CMK_USE_IBVERBS
 	{
-		int qpListSize = (_Cmi_numnodes-1)*sizeof(ChInfiAddr);
+		int qpListSize = (Lrts_numNodes-1)*sizeof(ChInfiAddr);
 		me.info.qpList = malloc(qpListSize);
 		copyInfiAddr(me.info.qpList);
 		MACHSTATE1(3,"me.info.qpList created and copied size %d bytes",qpListSize);
@@ -1517,6 +1523,9 @@ static void node_addresses_obtain(char **argv)
   	ChMessage_recv(Cmi_charmrun_fd,&nodetabmsg);
         MACHSTATE(2,"} recv initnode");
   }
+  ChMessageInt_t *n32 = (ChMessageInt_t *) nodetabmsg.data;
+  ChNodeinfo *d = (ChNodeinfo *) (n32+1);
+  _Cmi_myphysnode_numprocesses = ChMessageInt(d[Lrts_myNode].nProcessesInPhysNode);
 //#if CMK_USE_IBVERBS	
 //#else
   node_addresses_store(&nodetabmsg);
@@ -1571,13 +1580,13 @@ int DeliverOutgoingMessage(OutgoingMsg ogm)
 /**
  * Set up an OutgoingMsg structure for this message.
  */
-static OutgoingMsg PrepareOutgoing(CmiState cs,int pe,int size,int freemode,char *data) {
+static OutgoingMsg PrepareOutgoing(int pe,int size,int freemode,char *data) {
   OutgoingMsg ogm;
   MallocOutgoingMsg(ogm);
   MACHSTATE2(2,"Preparing outgoing message for pe %d, size %d",pe,size);
   ogm->size = size;
   ogm->data = data;
-  ogm->src = CmiGetPeGlobal(cs->pe,CmiMyPartition());
+  ogm->src = CmiMyPeGlobal();
   ogm->dst = pe;
   ogm->freemode = freemode;
   ogm->refcount = 0;
@@ -1601,11 +1610,11 @@ static OutgoingMsg PrepareOutgoing(CmiState cs,int pe,int size,int freemode,char
 CmiCommHandle LrtsSendFunc(int destNode, int pe, int size, char *data, int freemode)
 {
   int sendonnetwork;
-  CmiState cs = CmiGetState(); OutgoingMsg ogm;
+  OutgoingMsg ogm;
   MACHSTATE(1,"CmiGeneralSend {");
 
   CMI_MSG_SIZE(data)=size;
-  ogm=PrepareOutgoing(cs,pe,size,'F',data);
+  ogm=PrepareOutgoing(pe,size,'F',data);
 
 #if CMK_SMP_NOT_RELAX_LOCK  
   int acqLock = 0;
@@ -1784,8 +1793,6 @@ void LrtsPreCommonInit(int everReturn)
 
 void LrtsPostCommonInit(int everReturn)
 {
-  CmiIdleState *s=CmiNotifyGetState();
-
    /* better to show the status here */
   if (CmiMyPe() == 0) {
     if (Cmi_netpoll == 1) {
@@ -1917,7 +1924,7 @@ static void set_signals(void)
 */
 static void obtain_idleFn(void) {sleep(0);}
 
-static int net_default_skt_abort(int code,const char *msg)
+static int net_default_skt_abort(SOCKET skt,int code,const char *msg)
 {
   fprintf(stderr,"Fatal socket error: code %d-- %s\n",code,msg);
   machine_exit(1);
@@ -1971,7 +1978,7 @@ void LrtsInit(int *argc, char ***argv, int *numNodes, int *myNodeID)
   atexit(machine_atexit_check);
   parse_netstart();
   parse_magic();
-#if ! CMK_SMP && ! defined(_WIN32)
+#if ! defined(_WIN32)
   /* only get forks in non-smp mode */
   parse_forks();
 #endif
@@ -1992,7 +1999,7 @@ void LrtsInit(int *argc, char ***argv, int *numNodes, int *myNodeID)
 	skt_tcp_no_nagle(Cmi_charmrun_fd);
 	CmiStdoutInit();
   } else {/*Standalone operation*/
-  	printf("Charm++: standalone mode (not using charmrun)\n");
+  	CmiPrintf("Charm++: standalone mode (not using charmrun)\n");
   	dataskt=-1;
   	Cmi_charmrun_fd=-1;
   }
@@ -2005,14 +2012,15 @@ void LrtsInit(int *argc, char ***argv, int *numNodes, int *myNodeID)
   CmiCommunicationInit(*argv);
 
   skt_set_idle(CmiYield);
-  Cmi_check_delay = 1.0+0.25*_Cmi_numnodes;
+  Cmi_check_delay = 1.0+0.25*Lrts_numNodes;
 
   if (Cmi_charmrun_fd==-1) /*Don't bother with check in standalone mode*/
       Cmi_check_delay=1.0e30;
 
-  for(i = 0; i < _Cmi_mynodesize; i++)
-      inProgress[i] = 0;
+  inProgress = calloc(_Cmi_mynodesize, sizeof(int));
 
+  *numNodes = Lrts_numNodes;
+  *myNodeID = Lrts_myNode;
 }
 
 

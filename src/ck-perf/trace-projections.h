@@ -494,10 +494,10 @@ public:
     void creation(char *m);
     void creationMulticast(envelope *e, int epIdx, int num=1, int *pelist=NULL);
     void creationDone(int num=1);
-    void beginExecute(envelope *e);
+    void beginExecute(envelope *e, void *obj=NULL);
     void beginExecute(char *msg);
     void beginExecute(CmiObjId  *tid);
-    void beginExecute(int event,int msgType,int ep,int srcPe,int ml,CmiObjId *idx=NULL);
+    void beginExecute(int event,int msgType,int ep,int srcPe,int ml,CmiObjId *idx=NULL, void *obj=NULL);
     void changeLastEntryTimestamp(double ts);
     void beginExecuteLocal(int event,int msgType,int ep,int srcPe,int ml,CmiObjId *idx=NULL);
     void endExecute(void);

@@ -48,6 +48,7 @@ to the emulator.
 
 #include "bigsim_ooc.h" //out-of-core module
 #include "bigsim_debug.h"
+#include "errno.h"
 
 //#define  DEBUGF(x)      //CmiPrintf x;
 
@@ -281,6 +282,18 @@ inline int HandlerTable::registerHandler(BgHandler h)
     return cur;
 }
 
+inline int HandlerTable::registerHandlerEx(BgHandlerEx h, void *uPtr)
+{
+    ASSERT(!cva(simState).inEmulatorInit);
+    /* leave 0 as blank, so it can report error luckily */
+    int cur = handlerTableCount++;
+    if (cur >= MAX_HANDLERS)
+      CmiAbort("BG> HandlerID exceed the maximum.\n");
+    handlerTable[cur].fnPtr = h;
+    handlerTable[cur].userPtr = uPtr;
+    return cur;
+}
+
 inline void HandlerTable::numberHandler(int idx, BgHandler h)
 {
     ASSERT(!cva(simState).inEmulatorInit);
@@ -318,7 +331,6 @@ inline BgHandlerInfo * HandlerTable::getHandle(int handler)
 int BgRegisterHandler(BgHandler h)
 {
   ASSERT(!cva(simState).inEmulatorInit);
-  int cur;
 #if CMK_BIGSIM_NODE
   return tMYNODE->handlerTable.registerHandler(h);
 #else
@@ -330,6 +342,22 @@ int BgRegisterHandler(BgHandler h)
   }
 #endif
 }
+
+int BgRegisterHandlerEx(BgHandlerEx h, void *uPtr)
+{
+  ASSERT(!cva(simState).inEmulatorInit);
+#if CMK_BIGSIM_NODE
+  return tMYNODE->handlerTable.registerHandlerEx(h, uPtr);
+#else
+  if (tTHREADTYPE == COMM_THREAD) {
+    return tMYNODE->handlerTable.registerHandlerEx(h, uPtr);
+  }
+  else {
+    return tHANDLETAB.registerHandlerEx(h, uPtr);
+  }
+#endif
+}
+
 
 void BgNumberHandler(int idx, BgHandler h)
 {
@@ -1765,6 +1793,7 @@ CmiStartFn bgMain(int argc, char **argv)
 
   if (CmiMyRank() == 0)
     initLock = CmiCreateLock();     // used for BnvInitialize
+  CmiNodeAllBarrier(); //barrier to make sure initLock is created
 
   bgstreaming.init(cva(numNodes));
 
@@ -2183,6 +2212,11 @@ static void writeToDisk()
      #endif	
       BgTimeLineRec &t = cva(nodeinfo)[j].timelines[i];
       procOffsets[j*cva(bgMach).numWth + i] = ftell(f);
+      if(procOffsets[j*cva(bgMach).numWth + i] == -1) {
+        CmiPrintf("ftell operation failure while writing bigsim logs to %s with"
+                  " error %s (%d)\n", d, strerror(errno), errno);
+        CmiAbort("Error while writing logs\n");
+      }
       t.pup(p);
     }
   }
@@ -2191,7 +2225,8 @@ static void writeToDisk()
   p(procOffsets,numLocalProcs);
   fclose(f);
 
-  CmiPrintf("[%d] Wrote to disk for %d BG nodes. \n", CmiMyPe(), cva(numNodes));
+  if(CmiMyPe() == 0) 
+    CmiPrintf("[%d] Wrote to disk for %d BG nodes. \n", CmiMyPe(), cva(numNodes));
 }
 
 

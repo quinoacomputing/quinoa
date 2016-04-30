@@ -97,7 +97,7 @@ static double Cmi_ack_delay;
 static int    Cmi_dgram_max_data;
 static int    Cmi_comm_periodic_delay;
 static int    Cmi_comm_clock_delay;
-static int writeableAcks,writeableDgrams;/*Write-queue counts (to know when to sleep)*/
+static int CMK_SMP_volatile writeableAcks,writeableDgrams;/*Write-queue counts (to know when to sleep)*/
 
 static void setspeed_atm()
 {
@@ -180,7 +180,7 @@ typedef struct OutgoingMsgStruct
 
 typedef struct ExplicitDgramStruct
 {
-  struct ExplicitDgramStruct *next;
+  struct ExplicitDgramStruct CMK_SMP_volatile *next;
   int  srcpe, rank, seqno, broot;
   unsigned int len, dummy; /* dummy to fix bug in rs6k alignment */
   double data[1];
@@ -189,7 +189,7 @@ typedef struct ExplicitDgramStruct
 
 typedef struct ImplicitDgramStruct
 {
-  struct ImplicitDgramStruct *next;
+  struct ImplicitDgramStruct CMK_SMP_volatile *next;
   struct OtherNodeStruct *dest;
   int srcpe, rank, seqno, broot;
   char  *dataptr;
@@ -215,12 +215,13 @@ typedef struct OtherNodeStruct
 #if CMK_USE_TCP 
   SOCKET	sock;		/* for TCP */
 #endif
+  CmiNodeLock              send_queue_lock;
 
   unsigned int             send_last;    /* seqno of last dgram sent */
   ImplicitDgram           *send_window;  /* datagrams sent, not acked */
-  ImplicitDgram            send_queue_h; /* head of send queue */
-  ImplicitDgram            send_queue_t; /* tail of send queue */
-  unsigned int             send_next;    /* next seqno to go into queue */
+  ImplicitDgram CMK_SMP_volatile           send_queue_h; /* head of send queue */
+  ImplicitDgram CMK_SMP_volatile           send_queue_t; /* tail of send queue */
+  unsigned int  CMK_SMP_volatile           send_next;    /* next seqno to go into queue */
   unsigned int             send_good;    /* last acknowledged seqno */
   double                   send_primer;  /* time to send retransmit */
   unsigned int             send_ack_seqno; /* next ack seqno to send */
@@ -269,6 +270,8 @@ static void OtherNode_init(OtherNode node)
     node->send_next=0;
     node->send_good=(unsigned int)(-1);
     node->send_ack_seqno=0;
+
+    node->send_queue_lock = CmiCreateLock();
 
     /*
     TODO: The initial values of the Ammasso related members will be set by the machine layer
@@ -349,22 +352,22 @@ static void node_addresses_store(ChMessage *msg)
   int nodestart;
   int i,j,n;
   MACHSTATE(1,"node_addresses_store {");	
-  _Cmi_numnodes=ChMessageInt(n32[0]);
+  Lrts_numNodes=ChMessageInt(n32[0]);
 
-  if ((sizeof(ChMessageInt_t)+sizeof(ChNodeinfo)*_Cmi_numnodes)
+  if ((sizeof(ChMessageInt_t)+sizeof(ChNodeinfo)*Lrts_numNodes)
          !=(unsigned int)msg->len)
     {printf("Node table has inconsistent length!");machine_exit(1);}
 
-  nodes = (OtherNode)malloc(_Cmi_numnodes * sizeof(struct OtherNodeStruct));
+  nodes = (OtherNode)malloc(Lrts_numNodes * sizeof(struct OtherNodeStruct));
   nodestart=0;
-  for (i=0; i<_Cmi_numnodes; i++) {
+  for (i=0; i<Lrts_numNodes; i++) {
     nodes[i].nodestart = nodestart;
     nodes[i].nodesize  = ChMessageInt(d[i].nPE);
     MACHSTATE2(3,"node %d nodesize %d",i,nodes[i].nodesize);
     nodes[i].mach_id = ChMessageInt(d[i].mach_id);
 
     nodes[i].IP=d[i].IP;
-    if (i==_Cmi_mynode) {
+    if (i==Lrts_myNode) {
       Cmi_nodestart=nodes[i].nodestart;
       _Cmi_mynodesize=nodes[i].nodesize;
       Cmi_self_IP=nodes[i].IP;
@@ -381,11 +384,11 @@ static void node_addresses_store(ChMessage *msg)
   _Cmi_numpes=nodestart;
   n = _Cmi_numpes;
 #ifdef CMK_CPV_IS_SMP
-  n += _Cmi_numnodes;
+  n += Lrts_numNodes;
 #endif
   nodes_by_pe = (OtherNode*)malloc(n * sizeof(OtherNode));
   _MEMCHECK(nodes_by_pe);
-  for (i=0; i<_Cmi_numnodes; i++) {
+  for (i=0; i<Lrts_numNodes; i++) {
     OtherNode node = nodes + i;
     OtherNode_init(node);
     for (j=0; j<node->nodesize; j++) {
@@ -394,7 +397,7 @@ static void node_addresses_store(ChMessage *msg)
   }
 #ifdef CMK_CPV_IS_SMP
   /* index for communication threads */
-  for (i=_Cmi_numpes; i<_Cmi_numpes+_Cmi_numnodes; i++) {
+  for (i=_Cmi_numpes; i<_Cmi_numpes+Lrts_numNodes; i++) {
     OtherNode node = nodes + i-_Cmi_numpes;
     nodes_by_pe[i] = node;
   }
@@ -462,37 +465,46 @@ void printNetStatistics(void)
 
 /************** free list management *****************/
 
+static CmiNodeLock   Cmi_freelist_mutex;
 static ExplicitDgram Cmi_freelist_explicit;
 static ImplicitDgram Cmi_freelist_implicit;
 /*static OutgoingMsg   Cmi_freelist_outgoing;*/
 
 #define FreeImplicitDgram(dg) {\
+  CmiLock(Cmi_freelist_mutex);\
   ImplicitDgram d=(dg);\
   d->next = Cmi_freelist_implicit;\
   Cmi_freelist_implicit = d;\
+  CmiUnlock(Cmi_freelist_mutex);\
 }
 
 #define MallocImplicitDgram(dg) {\
+  CmiLock(Cmi_freelist_mutex);\
   ImplicitDgram d = Cmi_freelist_implicit;\
   if (d==0) {d = ((ImplicitDgram)malloc(sizeof(struct ImplicitDgramStruct)));\
              _MEMCHECK(d);\
   } else Cmi_freelist_implicit = d->next;\
   dg = d;\
+  CmiUnlock(Cmi_freelist_mutex);\
 }
 
 #define FreeExplicitDgram(dg) {\
+  CmiLock(Cmi_freelist_mutex);\
   ExplicitDgram d=(dg);\
   d->next = Cmi_freelist_explicit;\
   Cmi_freelist_explicit = d;\
+  CmiUnlock(Cmi_freelist_mutex);\
 }
 
 #define MallocExplicitDgram(dg) {\
+  CmiLock(Cmi_freelist_mutex);\
   ExplicitDgram d = Cmi_freelist_explicit;\
   if (d==0) { d = ((ExplicitDgram)malloc \
 		   (sizeof(struct ExplicitDgramStruct) + Cmi_max_dgram_size));\
               _MEMCHECK(d);\
   } else Cmi_freelist_explicit = d->next;\
   dg = d;\
+  CmiUnlock(Cmi_freelist_mutex);\
 }
 
 /* Careful with these next two, need concurrency control */
@@ -525,13 +537,9 @@ static int dataskt_ready_write;
 void GarbageCollectMsg(OutgoingMsg ogm)
 {
   MACHSTATE2(3,"GarbageCollectMsg called on ogm %p refcount %d",ogm,ogm->refcount);
-	if (ogm->refcount == 0) {
-    if (ogm->freemode == 'A') {
-      ogm->freemode = 'X';
-    } else {
-      if (ogm->freemode != 'G') CmiFree(ogm->data);
-      FreeOutgoingMsg(ogm);
-    }
+  if (ogm->refcount == 0) {
+    CmiFree(ogm->data);
+    FreeOutgoingMsg(ogm);
   }
 }
 
@@ -557,7 +565,9 @@ static void CommunicationsClock(void)
     MACHSTATE(2,"CommunicationsClock timing out acks");    
     Cmi_ack_last=Cmi_clock;
     writeableAcks=1;
+    CmiLock(Cmi_comm_var_mutex);
     writeableDgrams=1;
+    CmiUnlock(Cmi_comm_var_mutex);
   }
   
   if (Cmi_clock > Cmi_check_last + Cmi_check_delay) {

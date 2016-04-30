@@ -22,7 +22,7 @@ CMK_LD="eval $CMK_CC "
 CMK_LIBS='-lckqt'
 CMK_LD_LIBRARY_PATH="-rpath $CHARMLIBSO/ $PMI_LIBS $UGNI_LIBS"
 
-CMK_QT="generic64"
+CMK_QT="generic64-light"
 
 # compiler for compiling sequential programs
 if test -n "$PGCC"
@@ -54,9 +54,16 @@ CMK_NATIVE_LIBS=""
 CMK_RANLIB="ranlib"
 
 # for F90 compiler
+if test -n "$ICPC"
+then
+CMK_CF77="ftn -auto "
+CMK_CF90="ftn -auto "
+CMK_F90LIBS="-lifcore -lifport "
+else
 CMK_CF77="ftn "
 CMK_CF90="ftn "
 CMK_F90LIBS=""
+fi
 CMK_F90_USE_MODDIR=1
 CMK_F90_MODINC="-I"
 CMK_MOD_EXT="mod"

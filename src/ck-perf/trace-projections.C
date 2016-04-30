@@ -145,7 +145,7 @@ void traceThreadListener_resume(struct CthThreadListener *l)
   /* here, we activate the appropriate trace codes for the appropriate
      registered modules */
   _TRACE_BEGIN_EXECUTE_DETAILED(a->event,a->msgType,a->ep,a->srcPe,a->ml,
-				CthGetThreadID(a->base.thread));
+				CthGetThreadID(a->base.thread), NULL);
   a->event=-1;
   a->srcPe=CkMyPe(); /* potential lie to migrated threads */
   a->ml=0;
@@ -1042,10 +1042,9 @@ void LogEntry::pup(PUP::er &p)
 TraceProjections::TraceProjections(char **argv): 
   curevent(0), inEntry(0), computationStarted(0), 
 	converseExit(0), endTime(0.0), traceNestedEvents(0),
-	currentPhaseID(0), lastPhaseEvent(NULL)
+	currentPhaseID(0), lastPhaseEvent(NULL), _logPool(NULL)
 {
   //  CkPrintf("Trace projections dummy constructor called on %d\n",CkMyPe());
-
   if (CkpvAccess(traceOnPe) == 0) return;
 
   CtvInitialize(int,curThreadEvent);
@@ -1433,7 +1432,7 @@ void TraceProjections::beginExecute(CmiObjId *tid)
   inEntry = 1;
 }
 
-void TraceProjections::beginExecute(envelope *e)
+void TraceProjections::beginExecute(envelope *e, void *obj)
 {
 #if CMK_TRACE_ENABLED
   if(e==0) {
@@ -1469,7 +1468,7 @@ void TraceProjections::beginExecute(char *msg){
 }
 
 void TraceProjections::beginExecute(int event, int msgType, int ep, int srcPe,
-				    int mlen, CmiObjId *idx)
+				    int mlen, CmiObjId *idx, void *obj )
 {
   if (traceNestedEvents) {
     if (! nestedEvents.isEmpty()) {

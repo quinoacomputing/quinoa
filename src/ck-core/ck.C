@@ -642,7 +642,7 @@ static inline void _invokeEntry(int epIdx,envelope *env,void *obj)
 
 #if CMK_TRACE_ENABLED 
   if (_entryTable[epIdx]->traceEnabled) {
-    _TRACE_BEGIN_EXECUTE(env);
+    _TRACE_BEGIN_EXECUTE(env, obj);
     if(_entryTable[epIdx]->appWork)
         _TRACE_BEGIN_APPWORK();
     _invokeEntryNoTrace(epIdx,env,obj);
@@ -709,10 +709,16 @@ void CkCreateLocalGroup(CkGroupID groupID, int epIdx, envelope *env)
   PtrQ *ptrq = CkpvAccess(_groupTable)->find(groupID).getPending();
   if(ptrq) {
     void *pending;
-    while((pending=ptrq->deq())!=0)
+    while((pending=ptrq->deq())!=0) {
+#if CMK_BIGSIM_CHARM
+      //In BigSim, CpvAccess(CsdSchedQueue) is not used. _CldEnqueue resets the
+      //handler to converse-level BigSim handler.
       _CldEnqueue(CkMyPe(), pending, _infoIdx);
-//    delete ptrq;
-      CkpvAccess(_groupTable)->find(groupID).clearPending();
+#else
+      CsdEnqueueGeneral(pending, CQS_QUEUEING_FIFO, 0, 0);
+#endif
+    }
+    CkpvAccess(_groupTable)->find(groupID).clearPending();
   }
   CmiImmediateUnlock(CkpvAccess(_groupTableImmLock));
 
@@ -772,10 +778,10 @@ void CkCreateLocalNodeGroup(CkGroupID groupID, int epIdx, envelope *env)
   PtrQ *ptrq = CksvAccess(_nodeGroupTable)->find(groupID).getPending();
   if(ptrq) {
     void *pending;
-    while((pending=ptrq->deq())!=0)
+    while((pending=ptrq->deq())!=0) {
       _CldNodeEnqueue(CkMyNode(), pending, _infoIdx);
-//    delete ptrq;
-      CksvAccess(_nodeGroupTable)->find(groupID).clearPending();
+    }
+    CksvAccess(_nodeGroupTable)->find(groupID).clearPending();
   }
   CmiImmediateUnlock(CksvAccess(_nodeGroupTableImmLock));
 }
@@ -2031,11 +2037,11 @@ void CkNodeGroupMsgPrep(int eIdx, void *msg, CkGroupID gID)
 { _prepareMsgBranch(eIdx,msg,gID,ForNodeBocMsg); }
 
 void _ckModuleInit(void) {
-	index_skipCldHandler = CkRegisterHandler((CmiHandler)_skipCldHandler);
+	index_skipCldHandler = CkRegisterHandler(_skipCldHandler);
 #if CMK_OBJECT_QUEUE_AVAILABLE
-	index_objectQHandler = CkRegisterHandler((CmiHandler)_ObjectQHandler);
+	index_objectQHandler = CkRegisterHandler(_ObjectQHandler);
 #endif
-	index_tokenHandler = CkRegisterHandler((CmiHandler)_TokenHandler);
+	index_tokenHandler = CkRegisterHandler(_TokenHandler);
 	CkpvInitialize(TokenPool*, _tokenPool);
 	CkpvAccess(_tokenPool) = new TokenPool;
 }
@@ -2576,12 +2582,16 @@ void CkMessageWatcherInit(char **argv,CkCoreState *ck) {
     char *procs = NULL;
     _replaySystem = 0;
     if (CmiGetArgFlagDesc(argv,"+recplay-crc","Enable CRC32 checksum for message record-replay")) {
-      _recplay_crc = 1;
+      if(CmiMyRank() == 0) _recplay_crc = 1;
     }
     if (CmiGetArgFlagDesc(argv,"+recplay-xor","Enable simple XOR checksum for message record-replay")) {
-      _recplay_checksum = 1;
+      if(CmiMyRank() == 0) _recplay_checksum = 1;
     }
-    CmiGetArgIntDesc(argv,"+recplay-logsize",&_recplay_logsize,"Specify the size of the buffer used by the message recorder");
+    int tmplogsize;
+    if(CmiGetArgIntDesc(argv,"+recplay-logsize",&tmplogsize,"Specify the size of the buffer used by the message recorder"))
+      {
+	if(CmiMyRank() == 0) _recplay_logsize = tmplogsize;
+      }
     REPLAYDEBUG("CkMessageWatcherInit ");
     if (CmiGetArgStringDesc(argv,"+record-detail",&procs,"Record full message content for the specified processors")) {
 #if CMK_REPLAYSYSTEM

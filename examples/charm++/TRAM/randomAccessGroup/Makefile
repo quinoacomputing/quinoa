@@ -1,11 +1,11 @@
+-include ../../../common.mk
 CHARMC = ../../../../bin/charmc
 BINARY = random_access
 
-SRCFILES = $(wildcard *.cc)
-OBJFILES = $(SRCFILES:.cc=.o)
+SRCFILES = $(wildcard *.C)
+OBJFILES = $(SRCFILES:.C=.o)
 CIFILES = $(wildcard *.ci)
 HFILES = $(CIFILES:.ci=.decl.h) $(CIFILES:.ci=.def.h)
-OPTS ?= -optimize -production
 CHARMCFLAGS= $(OPTS)
 
 all: $(BINARY)
@@ -13,19 +13,19 @@ all: $(BINARY)
 random_access: $(OBJFILES)
 	$(CHARMC) $(CHARMCFLAGS) -language charm++ -o $@ $+ -module NDMeshStreamer
 
-.SECONDARY: $(patsubst %.cc,%.decl.h,$(wildcard *.cc))
-.SECONDARY: $(patsubst %.cc,%.def.h,$(wildcard *.cc))
+.SECONDARY: $(patsubst %.C,%.decl.h,$(wildcard *.C))
+.SECONDARY: $(patsubst %.C,%.def.h,$(wildcard *.C))
 
 %.def.h %.decl.h: %.ci
 	$(CHARMC) $(CHARMCFLAGS) $<
 
-%.o: %.cc
+%.o: %.C
 
-%.o: %.cc $(HFILES)
+%.o: %.C $(HFILES)
 	$(CHARMC) $(CHARMCFLAGS) $<
 
 test: $(BINARY)
-	./charmrun +p4 ./random_access 14 $(TESTOPTS)
+	$(call run, +p4 ./random_access 14 )
 
 clean:
 	rm -f *.o *.decl.h *.def.h $(BINARY) charmrun*

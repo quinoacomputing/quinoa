@@ -14,6 +14,7 @@
 
 #include <stdlib.h>
 #include <converse.h>
+#define ENABLE_TIMER 0
 
 //Number of iterations for each message size
 enum {nCycles = 100};
@@ -23,10 +24,13 @@ enum { maxMsgSize = 1 << 18 };
 //Variable declarations
 CpvDeclare(int,msgSize);
 CpvDeclare(int,cycleNum);
+CpvDeclare(int, ackCount);
+CpvDeclare(int, twoway);
 
 CpvDeclare(int,exitHandler);
 CpvDeclare(int,node0Handler);
 CpvDeclare(int,node1Handler);
+CpvDeclare(int,ackHandler);
 CpvStaticDeclare(double,startTime);
 CpvStaticDeclare(double,endTime);
 
@@ -60,10 +64,6 @@ void ApplIdleEnd(void *, double cur)
 
 void startOperation()
 {
-    //CmiBarrier();  //On some machines with a two way benchmark a 
-                     //barrier may be necessary to prevent processors 
-                     //from going out of sync
-
     CpvAccess(cycleNum) = 0;
     CpvAccess(msgSize) = (CpvAccess(msgSize)-CmiMsgHeaderSizeBytes)*2 + 
         CmiMsgHeaderSizeBytes;
@@ -88,18 +88,33 @@ void operationFinished(char *msg)
 
     double compute_time = cycle_time - 
         (1e6*(CpvAccess(IdleTime)))/(1.0*nCycles*(CpvAccess(kFactor)+1));
-    
+
+#if ENABLE_TIMER
     CmiPrintf("[%d] %d \t %5.3lfus \t %5.3lfus\n", CmiMyPe(),
               CpvAccess(msgSize) - CmiMsgHeaderSizeBytes, 
               cycle_time, compute_time);
+#endif
     
     if (CpvAccess(msgSize) < maxMsgSize)
         startOperation();
-    else if(CmiMyPe() == 0){
-        void *sendmsg = CmiAlloc(CmiMsgHeaderSizeBytes);
-        CmiSetHandler(sendmsg,CpvAccess(exitHandler));
-        CmiSyncBroadcastAllAndFree(CmiMsgHeaderSizeBytes,sendmsg);
+    else {
+      void *sendmsg = CmiAlloc(CmiMsgHeaderSizeBytes);
+      CmiSetHandler(sendmsg,CpvAccess(ackHandler));
+      CmiSyncSendAndFree(0, CmiMsgHeaderSizeBytes, sendmsg);
     }
+}
+
+CmiHandler ackHandlerFunc(char *msg)
+{
+    CmiFree(msg);
+    CpvAccess(ackCount)++;
+    int max = CpvAccess(twoway) ? CmiNumPes() : CmiNumPes()/2;
+    if(CpvAccess(ackCount) == max) {
+      void *sendmsg = CmiAlloc(CmiMsgHeaderSizeBytes);
+      CmiSetHandler(sendmsg,CpvAccess(exitHandler));
+      CmiSyncBroadcastAllAndFree(CmiMsgHeaderSizeBytes,sendmsg);
+    }
+    return 0;
 }
 
 CmiHandler exitHandlerFunc(char *msg)
@@ -153,7 +168,7 @@ CmiHandler node1HandlerFunc(char *msg)
 
 CmiStartFn mymain(int argc, char **argv)
 {
-    int twoway = 0;
+    if(CmiMyRank() == CmiMyNodeSize()) return 0;
 
     CpvInitialize(int,msgSize);
     CpvInitialize(int,cycleNum);
@@ -171,12 +186,23 @@ CmiStartFn mymain(int argc, char **argv)
     CpvAccess(node0Handler) = CmiRegisterHandler((CmiHandler) node0HandlerFunc);
     CpvInitialize(int,node1Handler);
     CpvAccess(node1Handler) = CmiRegisterHandler((CmiHandler) node1HandlerFunc);
+    CpvInitialize(int,ackHandler);
+    CpvAccess(ackHandler) = CmiRegisterHandler((CmiHandler) ackHandlerFunc);
     
     CpvInitialize(double,startTime);
     CpvInitialize(double,endTime);
     
+    CpvInitialize(double, IdleStartTime);
+    CpvInitialize(double, IdleTime);
+
+    CpvInitialize(int,ackCount);
+    CpvAccess(ackCount) = 0;
+
+    CpvInitialize(int,twoway);
+    CpvAccess(twoway) = 0;
+
     if(argc > 1)
-        twoway = atoi(argv[1]);
+        CpvAccess(twoway) = atoi(argv[1]);
     
     if(argc > 2)
         CpvAccess(kFactor) = atoi(argv[2]);
@@ -187,7 +213,7 @@ CmiStartFn mymain(int argc, char **argv)
     CcdCallOnConditionKeep(CcdPROCESSOR_END_IDLE, ApplIdleEnd, NULL);
     
     if(CmiMyPe() == 0) {
-        if(!twoway)
+        if(!CpvAccess(twoway))
             CmiPrintf("Starting Multiping with oneway traffic, kFactor = %d\n", 
                       CpvAccess(kFactor));
         else
@@ -195,7 +221,7 @@ CmiStartFn mymain(int argc, char **argv)
                       CpvAccess(kFactor));
     }
 
-    if ((CmiMyPe() < CmiNumPes()/2) || twoway)
+    if ((CmiMyPe() < CmiNumPes()/2) || CpvAccess(twoway))
         startOperation();
     
     return 0;

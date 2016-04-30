@@ -9,7 +9,7 @@
 
 CreateLBFunc_Def(RefineLB, "Move objects away from overloaded processor to reach average")
 
-RefineLB::RefineLB(const CkLBOptions &opt): CentralLB(opt)
+RefineLB::RefineLB(const CkLBOptions &opt): CBase_RefineLB(opt)
 {
   lbname = (char *)"RefineLB";
   if (CkMyPe() == 0)
@@ -35,7 +35,7 @@ void RefineLB::work(LDStats* stats)
   // Get a new buffer to refine into
   int* to_procs = Refiner::AllocProcs(n_pes, stats);
 
-  Refiner refiner(1.003);  // overload tolerance=1.05
+  Refiner refiner(1.05);  // overload tolerance=1.05
 
   refiner.Refine(n_pes, stats, from_procs, to_procs);
 

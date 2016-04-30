@@ -353,6 +353,7 @@ public:
       env->sender.type = TypeInvalid;
       env->recver.type = TypeInvalid;
       env->SN = 0;
+      env->flags = 0;
 #if defined(_FAULT_CAUSAL_)
       env->TN = 0;
 #endif
@@ -489,11 +490,11 @@ public:
 
 
 inline envelope *UsrToEnv(const void *const msg) {
-  return (((envelope *) msg)-1);
+  return (envelope *)((intptr_t)msg - sizeof(envelope));
 }
 
 inline void *EnvToUsr(const envelope *const env) {
-  return ((void *)(env+1));
+  return (void *)((intptr_t)env + sizeof(envelope));
 }
 
 inline envelope *_allocEnv(const int msgtype, const int size=0, const int prio=0) {

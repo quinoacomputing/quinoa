@@ -6,6 +6,11 @@ AC_CONFIG_HEADER(conv-autoconfig.h)
 AC_CONFIG_COMMANDS([config-cleanup],
                    [sed -i -e 's:^#define\s\+PACKAGE://&:' conv-autoconfig.h])
 
+#clean up conv-mach-opt.sh
+sed -e '/Option added by configure/d' ../include/conv-mach-opt.sh  | sed -e '/^$/d' > conv-mach-opt.sh.clean
+cp -f conv-mach-opt.sh.clean   ../include/conv-mach-opt.sh
+rm -f conv-mach-opt.sh.clean
+
 CHARMINC="."
 CHARMBIN="../bin"
 test -r ./conv-config.sh && . ./conv-config.sh
@@ -13,7 +18,7 @@ test -r ./conv-config.sh && . ./conv-config.sh
 # Decimal representation of Charm++ release line and API revision
 # Increment the last 2 digits when making an API change
 # Increase the first three after branching for a release
-VERSION=60601
+VERSION=60701
 echo $VERSION > ../include/VERSION
 AC_DEFINE_UNQUOTED([CHARM_VERSION], $VERSION, [Charm++ Release/API version number])
 
@@ -52,13 +57,6 @@ remove_flag() {
      cp tmp.$$ ../include/conv-mach-opt.sh
      /bin/rm -f tmp.$$
 }
-
-
-#clean up conv-mach-opt.sh
-sed -e '/Option added by configure/d' ../include/conv-mach-opt.sh  | sed -e '/^$/d' > conv-mach-opt.sh.clean
-cp -f conv-mach-opt.sh.clean   ../include/conv-mach-opt.sh
-rm -f conv-mach-opt.sh.clean
-
 
 # enable/disable error checking
 AC_ARG_ENABLE([error-checking],
@@ -225,6 +223,18 @@ else
   test_finish 1
 fi
 
+AC_ARG_WITH([qlogic],
+            [AS_HELP_STRING([--with-qlogic],
+              [QLogic based Infiniband])],[with_qlogic=yes],
+            [with_qlogic=no])
+
+if test "$with_qlogic" = "no"
+then
+  AC_DEFINE_UNQUOTED(QLOGIC, 0, [disable qlogic])
+else
+  Echo "QLogic based Infiniband"
+  AC_DEFINE_UNQUOTED(QLOGIC, 1, [enable qlogic])
+fi
 
 #
 AC_MSG_CHECKING(machine name)
@@ -433,19 +443,6 @@ AC_MSG_RESULT($CP)
 add_flag CP=\""$CP"\" "cp command"
  
 
-# try to decide the version of glibc
-get_glibc_version() {
-t=test.c
-cat > $t <<EOT
-#include <stdio.h>
-#include <gnu/libc-version.h>
-int main (void) { puts (gnu_get_libc_version ()); return 0; }
-EOT
-gcc -o gver test.c
-GLIBCVERSION=`./gver`
-/bin/rm -f $t gver
-}
-
 cat > $t <<EOT
 #include <stdio.h>
 void foo(void) {
@@ -510,16 +507,61 @@ then
   fi
 fi
 
-if echo "$base_version" | grep "linux" > /dev/null 2> /dev/null
+if echo "$CMK_CC" | grep -E "gcc|clang|icc" > /dev/null 2> /dev/null
 then
   test_link "whether compiler accept -fno-stack-protector" "ok" "no" "-fno-stack-protector"
   if test $strictpass -eq 1
   then
-	add_flag OPTS_CC='"$OPTS_CC -fno-stack-protector"' "linux compiler"
-	add_flag OPTS_CXX='"$OPTS_CXX -fno-stack-protector"' "linux compiler"
+	add_flag OPTS_CC='"$OPTS_CC -fno-stack-protector"' "stack-protection disabling"
+	add_flag OPTS_CXX='"$OPTS_CXX -fno-stack-protector"' "stack-protection disabling"
   fi
 fi
 
+#### check if C++ compiler will accept early C++11 variadic templates without warning ####
+cat > $t <<EOT
+class CkMigrateMessage;
+
+struct base { 
+  base(void) { }
+  base(CkMigrateMessage *) { }
+};
+
+template <class Parent>
+struct CBaseT1 : Parent {
+
+  CBaseT1(void) :Parent()  { }
+  CBaseT1(CkMigrateMessage *m) :Parent(m) { }
+
+  template <typename... Args>
+    CBaseT1(Args... args) : Parent(args...) { }
+};
+
+template struct CBaseT1<base>;
+EOT
+got_cpp11=""
+test_cxx "whether C++ compiler supports variadic templates without flags" "yes" "no" ""
+if test $strictpass -eq 1
+then
+  got_cpp11="true"
+else
+# Flags for g++/clang++, xlC++, and pgCC, respectively
+for i in "-std=c++0x" "-qlanglvl=extended0x" "--c++11" "-h std=c++11"; do
+    test_cxx "whether C++ compiler supports variadic templates with '$i'" "yes" "no" "$i"
+    if test $strictpass -eq 1
+    then
+      add_flag "$(echo OPTS_CXX=\"\$OPTS_CXX $i\")" "Enable C++11 support"
+      OPTS_CXX="$OPTS_CXX $i"
+      got_cpp11="true"
+      break
+    fi
+done
+fi
+
+if test -z $got_cpp11
+then
+  echo "Charm++ requires some C++11 support, but doesn't know the flag to enable it"
+  test_finish 1
+fi
 
 # Figure out if the user has asked to enable the latest language standards
 USER_ASKED_FOR_NEW_STD=`echo "$BUILDOPTS" | grep "-use-new-std" | wc -l`
@@ -2004,7 +2046,7 @@ int main() {
     return 0;
 }
 EOT
-test_linkc "whether Cray rca library is available" "yes" "no" "-lrca"
+test_linkc "whether Cray rca library is available" "yes" "no" "$CRAY_RCA_POST_LINK_OPTS -lrca"
 AC_DEFINE_UNQUOTED(CMK_HAS_RCALIB, $pass, [whether Cray rca library is available])
 
 #### test if Cray mesh dimension query function will work ####
@@ -2018,7 +2060,7 @@ int main() {
     return 0;
 }
 EOT
-test_linkc "whether Cray rca_has get_max_dimension" "yes" "no" "-lrca"
+test_linkc "whether Cray rca_has get_max_dimension" "yes" "no" "$CRAY_RCA_POST_LINK_OPTS -lrca"
 AC_DEFINE_UNQUOTED(CMK_HAS_RCA_MAX_DIMENSION, $pass, [whether Cray rca has rca_get_max_dimension])
 
 #### query Cray machine max NID if get_max_dimension not exist ####

@@ -201,8 +201,6 @@ void CentralLB::AtSync()
 #endif
 }
 
-#include "ComlibStrategy.h"
-
 void CentralLB::ProcessAtSync()
 {
 #if CMK_LBDB_ON
@@ -1281,10 +1279,6 @@ void CentralLB::ResumeClients(int balancing)
     double end_lb_time = CkWallTimer();
   }
 
-#if (!defined(_FAULT_MLOG_) && !defined(_FAULT_CAUSAL_))
-  if (balancing) ComlibNotifyMigrationDone();  
-#endif
-
   theLbdb->ResumeClients();
   if (balancing)  {
 
@@ -1707,7 +1701,6 @@ void CentralLB::findSimResults(LDStats* stats, int count, LBMigrateMsg* msg, LBS
 }
 
 void CentralLB::pup(PUP::er &p) { 
-  BaseLB::pup(p); 
   if (p.isUnpacking())  {
     initLB(CkLBOptions(seqno)); 
   }

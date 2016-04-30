@@ -176,41 +176,79 @@ void CkArrayMap::unregisterArray(int idx)
 { }
 
 #define CKARRAYMAP_POPULATE_INITIAL(POPULATE_CONDITION) \
-        int i; \
-	for (int i1=0; i1<numElements.data()[0]; i1++) { \
-          if (numElements.dimension == 1) { \
-            /* Make 1D indices */ \
-            i = i1; \
-            CkArrayIndex1D idx(i1); \
-            if (POPULATE_CONDITION) \
-              mgr->insertInitial(idx,CkCopyMsg(&ctorMsg)); \
-          } else { \
-            /* higher dimensionality */ \
-            for (int i2=0; i2<numElements.data()[1]; i2++) { \
-              if (numElements.dimension == 2) { \
-                /* Make 2D indices */ \
-                i = i1 * numElements.data()[1] + i2; \
-                CkArrayIndex2D idx(i1, i2); \
-                if (POPULATE_CONDITION) \
-                  mgr->insertInitial(idx,CkCopyMsg(&ctorMsg)); \
-              } else { \
-                /* higher dimensionality */ \
-                CkAssert(numElements.dimension == 3); \
-                for (int i3=0; i3<numElements.data()[2]; i3++) { \
-                  /* Make 3D indices */ \
-                  i = (i1 * numElements.data()[1] + i2) * numElements.data()[2] + i3; \
-                  CkArrayIndex3D idx(i1, i2, i3 ); \
-                  if (POPULATE_CONDITION) \
-                    mgr->insertInitial(idx,CkCopyMsg(&ctorMsg)); \
-                } \
+int i; \
+int index[6]; \
+int start_data[6], end_data[6], step_data[6]; \
+for (int d = 0; d < 6; d++) { \
+  start_data[d] = 0; \
+  end_data[d] = step_data[d] = 1; \
+  if (end.dimension >= 4 && d < end.dimension) { \
+    start_data[d] = ((short int*)start.data())[d]; \
+    end_data[d] = ((short int*)end.data())[d]; \
+    step_data[d] = ((short int*)step.data())[d]; \
+  } else if (d < end.dimension) { \
+    start_data[d] = start.data()[d]; \
+    end_data[d] = end.data()[d]; \
+    step_data[d] = step.data()[d]; \
+  } \
+} \
+ \
+for (index[0] = start_data[0]; index[0] < end_data[0]; index[0] += step_data[0]) { \
+  for (index[1] = start_data[1]; index[1] < end_data[1]; index[1] += step_data[1]) { \
+    for (index[2] = start_data[2]; index[2] < end_data[2]; index[2] += step_data[2]) { \
+      for (index[3] = start_data[3]; index[3] < end_data[3]; index[3] += step_data[3]) { \
+        for (index[4] = start_data[4]; index[4] < end_data[4]; index[4] += step_data[4]) { \
+          for (index[5] = start_data[5]; index[5] < end_data[5]; index[5] += step_data[5]) { \
+            if (end.dimension == 1) { \
+              i = index[0]; \
+              CkArrayIndex1D idx(index[0]); \
+              if (POPULATE_CONDITION) { \
+                mgr->insertInitial(idx,CkCopyMsg(&ctorMsg)); \
+              } \
+            } else if (end.dimension == 2) { \
+              i = index[0] * end_data[1] + index[1]; \
+              CkArrayIndex2D idx(index[0], index[1]); \
+              if (POPULATE_CONDITION) { \
+                mgr->insertInitial(idx,CkCopyMsg(&ctorMsg)); \
+              } \
+            } else if (end.dimension == 3) { \
+              i = (index[0]*end_data[1] + index[1]) * end_data[2] + index[2]; \
+              CkArrayIndex3D idx(index[0], index[1], index[2]); \
+              if (POPULATE_CONDITION) { \
+                mgr->insertInitial(idx,CkCopyMsg(&ctorMsg)); \
+              } \
+            } else if (end.dimension == 4) { \
+              i = ((index[0]*end_data[1] + index[1]) * end_data[2] + index[2]) * end_data[3] + index[3]; \
+              CkArrayIndex4D idx(index[0], index[1], index[2], index[3]); \
+              if (POPULATE_CONDITION) { \
+                mgr->insertInitial(idx,CkCopyMsg(&ctorMsg)); \
+              } \
+            } else if (end.dimension == 5) { \
+              i = (((index[0]*end_data[1] + index[1]) * end_data[2] + index[2]) * end_data[3] + index[3]) * end_data[4] + index[4]; \
+              CkArrayIndex5D idx(index[0], index[1], index[2], index[3], index[4]); \
+              if (POPULATE_CONDITION) { \
+                mgr->insertInitial(idx,CkCopyMsg(&ctorMsg)); \
+              } \
+            } else if (end.dimension == 6) { \
+              i = ((((index[0]*end_data[1] + index[1]) * end_data[2] + index[2]) * end_data[3] + index[3]) * end_data[4] + index[4]) * end_data[5] + index[5]; \
+              CkArrayIndex6D idx(index[0], index[1], index[2], index[3], index[4], index[5]); \
+              if (POPULATE_CONDITION) { \
+                mgr->insertInitial(idx,CkCopyMsg(&ctorMsg)); \
               } \
             } \
           } \
-	}
-
-void CkArrayMap::populateInitial(int arrayHdl,CkArrayIndex& numElements,void *ctorMsg,CkArrMgr *mgr)
+        } \
+      } \
+    } \
+  } \
+}
+  
+void CkArrayMap::populateInitial(int arrayHdl,CkArrayOptions& options,void *ctorMsg,CkArrMgr *mgr)
 {
-	if (numElements.nInts==0) {
+  CkArrayIndex start = options.getStart();
+  CkArrayIndex end = options.getEnd();
+  CkArrayIndex step = options.getStep();
+	if (end.nInts==0) {
           CkFreeMsg(ctorMsg);
           return;
         }
@@ -236,32 +274,31 @@ class RRMap : public CkArrayMap
 public:
   RRMap(void)
   {
-	  DEBC((AA "Creating RRMap\n" AB));
+    DEBC((AA "Creating RRMap\n" AB));
   }
   RRMap(CkMigrateMessage *m):CkArrayMap(m){}
   int procNum(int /*arrayHdl*/, const CkArrayIndex &i)
   {
 #if 1
-    if (i.nInts==1) {
+    if (i.dimension==1) {
       //Map 1D integer indices in simple round-robin fashion
-      int ans= (i.data()[0])%CkNumPes();
+      int ans = (i.data()[0])%CkNumPes();
       while(!CmiNodeAlive(ans) || (ans == CkMyPe() && CkpvAccess(startedEvac))){
-        ans = (ans +1 )%CkNumPes();
+        ans = (ans+1)%CkNumPes();
       }
       return ans;
     }
     else 
 #endif
-      {
+    {
 	//Map other indices based on their hash code, mod a big prime.
 	unsigned int hash=(i.hash()+739)%1280107;
 	int ans = (hash % CkNumPes());
 	while(!CmiNodeAlive(ans)){
-		ans = (ans +1 )%CkNumPes();
+	  ans = (ans+1)%CkNumPes();
 	}
 	return ans;
-
-      }
+    }
   }
 };
 
@@ -303,12 +340,21 @@ public:
     //Now assuming homogenous nodes where each node has the same number of PEs
     int numNodes = CkNumNodes();
 
-    if (_nelems.nInts == 1) {
+    if (_nelems.dimension == 1) {
       _numChares = _nelems.data()[0];
-    } else if (_nelems.nInts == 2) {
+    } else if (_nelems.dimension == 2) {
       _numChares = _nelems.data()[0] * _nelems.data()[1];
-    } else if (_nelems.nInts == 3) {
+    } else if (_nelems.dimension == 3) {
       _numChares = _nelems.data()[0] * _nelems.data()[1] * _nelems.data()[2];
+    } else if (_nelems.dimension == 4) {
+      _numChares = (int)(((short int*)_nelems.data())[0] * ((short int*)_nelems.data())[1] * ((short int*)_nelems.data())[2] *
+                   ((short int*)_nelems.data())[3]);
+    } else if (_nelems.dimension == 5) {
+      _numChares = (int)(((short int*)_nelems.data())[0] * ((short int*)_nelems.data())[1] * ((short int*)_nelems.data())[2] *
+                   ((short int*)_nelems.data())[3] * ((short int*)_nelems.data())[4]);
+    } else if (_nelems.dimension == 6) {
+      _numChares = (int)(((short int*)_nelems.data())[0] * ((short int*)_nelems.data())[1] * ((short int*)_nelems.data())[2] *
+                   ((short int*)_nelems.data())[3] * ((short int*)_nelems.data())[4] * ((short int*)_nelems.data())[5]);
     }
 
     _remChares = _numChares % numPes;
@@ -369,20 +415,36 @@ public:
  
   int procNum(int arrayHdl, const CkArrayIndex &i) {
     int flati;
-    if (amaps[arrayHdl]->_nelems.nInts == 0) {
+    if (amaps[arrayHdl]->_nelems.dimension == 0) {
       return RRMap::procNum(arrayHdl, i);
     }
 
-    if (i.nInts == 1) {
+    if (i.dimension == 1) {
       flati = i.data()[0];
-    } else if (i.nInts == 2) {
+    } else if (i.dimension == 2) {
       flati = i.data()[0] * amaps[arrayHdl]->_nelems.data()[1] + i.data()[1];
-    } else if (i.nInts == 3) {
-      flati = (i.data()[0] * amaps[arrayHdl]->_nelems.data()[1] + i.data()[1]) * amaps[arrayHdl]->_nelems.data()[2] + i.data()[2];
+    } else if (i.dimension == 3) {
+      flati = (i.data()[0] * amaps[arrayHdl]->_nelems.data()[1] + i.data()[1]) *
+              amaps[arrayHdl]->_nelems.data()[2] + i.data()[2];
+    } else if (i.dimension == 4) {
+      flati = (int)(((((short int*)i.data())[0] * ((short int*)amaps[arrayHdl]->_nelems.data())[1] + ((short int*)i.data())[1]) *
+              ((short int*)amaps[arrayHdl]->_nelems.data())[2] + ((short int*)i.data())[2]) *
+              ((short int*)amaps[arrayHdl]->_nelems.data())[3] + ((short int*)i.data())[3]);
+    } else if (i.dimension == 5) {
+      flati = (int)((((((short int*)i.data())[0] * ((short int*)amaps[arrayHdl]->_nelems.data())[1] + ((short int*)i.data())[1]) *
+              ((short int*)amaps[arrayHdl]->_nelems.data())[2] + ((short int*)i.data())[2]) *
+              ((short int*)amaps[arrayHdl]->_nelems.data())[3] + ((short int*)i.data())[3]) *
+              ((short int*)amaps[arrayHdl]->_nelems.data())[4] + ((short int*)i.data())[4]);
+    } else if (i.dimension == 6) {
+      flati = (int)(((((((short int*)i.data())[0] * ((short int*)amaps[arrayHdl]->_nelems.data())[1] + ((short int*)i.data())[1]) *
+              ((short int*)amaps[arrayHdl]->_nelems.data())[2] + ((short int*)i.data())[2]) *
+              ((short int*)amaps[arrayHdl]->_nelems.data())[3] + ((short int*)i.data())[3]) *
+              ((short int*)amaps[arrayHdl]->_nelems.data())[4] + ((short int*)i.data())[4]) *
+              ((short int*)amaps[arrayHdl]->_nelems.data())[5] + ((short int*)i.data())[5]);
     }
 #if CMK_ERROR_CHECKING
     else {
-      CkAbort("CkArrayIndex has more than 3 integers!");
+      CkAbort("CkArrayIndex has more than 6 dimensions!");
     }
 #endif
 
@@ -455,20 +517,36 @@ public:
 
   int procNum(int arrayHdl, const CkArrayIndex &i) {
     int flati = 0;
-    if (amaps[arrayHdl]->_nelems.nInts == 0) {
+    if (amaps[arrayHdl]->_nelems.dimension == 0) {
       return RRMap::procNum(arrayHdl, i);
     }
 
-    if (i.nInts == 1) {
+    if (i.dimension == 1) {
       flati = i.data()[0];
-    } else if (i.nInts == 2) {
+    } else if (i.dimension == 2) {
       flati = i.data()[0] * amaps[arrayHdl]->_nelems.data()[1] + i.data()[1];
-    } else if (i.nInts == 3) {
-      flati = (i.data()[0] * amaps[arrayHdl]->_nelems.data()[1] + i.data()[1]) * amaps[arrayHdl]->_nelems.data()[2] + i.data()[2];
+    } else if (i.dimension == 3) {
+      flati = (i.data()[0] * amaps[arrayHdl]->_nelems.data()[1] + i.data()[1]) *
+              amaps[arrayHdl]->_nelems.data()[2] + i.data()[2];
+    } else if (i.dimension == 4) {
+      flati = (int)(((((short int*)i.data())[0] * ((short int*)amaps[arrayHdl]->_nelems.data())[1] + ((short int*)i.data())[1]) *
+              ((short int*)amaps[arrayHdl]->_nelems.data())[2] + ((short int*)i.data())[2]) *
+              ((short int*)amaps[arrayHdl]->_nelems.data())[3] + ((short int*)i.data())[3]);
+    } else if (i.dimension == 5) {
+      flati = (int)((((((short int*)i.data())[0] * ((short int*)amaps[arrayHdl]->_nelems.data())[1] + ((short int*)i.data())[1]) *
+              ((short int*)amaps[arrayHdl]->_nelems.data())[2] + ((short int*)i.data())[2]) *
+              ((short int*)amaps[arrayHdl]->_nelems.data())[3] + ((short int*)i.data())[3]) *
+              ((short int*)amaps[arrayHdl]->_nelems.data())[4] + ((short int*)i.data())[4]);
+    } else if (i.dimension == 6) {
+      flati = (int)(((((((short int*)i.data())[0] * ((short int*)amaps[arrayHdl]->_nelems.data())[1] + ((short int*)i.data())[1]) *
+              ((short int*)amaps[arrayHdl]->_nelems.data())[2] + ((short int*)i.data())[2]) *
+              ((short int*)amaps[arrayHdl]->_nelems.data())[3] + ((short int*)i.data())[3]) *
+              ((short int*)amaps[arrayHdl]->_nelems.data())[4] + ((short int*)i.data())[4]) *
+              ((short int*)amaps[arrayHdl]->_nelems.data())[5] + ((short int*)i.data())[5]);
     }
 #if CMK_ERROR_CHECKING
     else {
-      CkAbort("CkArrayIndex has more than 3 integers!");
+      CkAbort("CkArrayIndex has more than 6 dimensions!");
     }
 #endif
 
@@ -504,8 +582,8 @@ bool myCompare(hilbert_pair p1, hilbert_pair p2)
 
 class HilbertArrayMap: public DefaultArrayMap
 {
-    std::vector<int> allpairs;
-    int *procList;
+  std::vector<int> allpairs;
+  int *procList;
 public:
   HilbertArrayMap(void) {
     procList = new int[CkNumPes()]; 
@@ -517,8 +595,8 @@ public:
 
   ~HilbertArrayMap()
   {
-      if(procList)
-          delete []procList;
+    if(procList)
+      delete []procList;
   }
 
   int registerArray(const CkArrayIndex& i, CkArrayID aid)
@@ -526,31 +604,32 @@ public:
     int idx;
     idx = DefaultArrayMap::registerArray(i, aid);
    
-    if (i.nInts == 1) {
+    if (i.dimension == 1) {
       //CkPrintf("1D %d\n", amaps[idx]->_nelems.data()[0]); 
-    } else if (i.nInts == 2) {
+    } else if (i.dimension == 2) {
       //CkPrintf("2D %d:%d\n", amaps[idx]->_nelems.data()[0], amaps[idx]->_nelems.data()[1]); 
-      int dims = 2;
+      const int dims = 2;
       int nDim0 = amaps[idx]->_nelems.data()[0];
       int nDim1 = amaps[idx]->_nelems.data()[1];
       int index;
       int counter = 0;
       std::vector<int> coords;
       allpairs.resize(nDim0*nDim1);
-      coords.resize(2);
+      coords.resize(dims);
       for(int i=0; i<nDim0; i++)
-          for(int j=0; j<nDim1; j++)
-          {
-              coords[0] = i;
-              coords[1] = j;
-              index = Hilbert_to_int( coords, dims);
-              //CkPrintf("(%d:%d)----------> %d \n", i, j, index);
-              allpairs[counter] = index;
-              counter++;
-          }
-    } else if (i.nInts == 3) {
-      CkPrintf("3D %d:%d:%d\n", amaps[idx]->_nelems.data()[0], amaps[idx]->_nelems.data()[1], amaps[idx]->_nelems.data()[2]); 
-      int dims = 3;
+        for(int j=0; j<nDim1; j++)
+        {
+          coords[0] = i;
+          coords[1] = j;
+          index = Hilbert_to_int( coords, dims);
+          //CkPrintf("(%d:%d)----------> %d \n", i, j, index);
+          allpairs[counter] = index;
+          counter++;
+        }
+    } else if (i.dimension == 3) {
+      //CkPrintf("3D %d:%d:%d\n", amaps[idx]->_nelems.data()[0], amaps[idx]->_nelems.data()[1],
+      //        amaps[idx]->_nelems.data()[2]);
+      const int dims = 3;
       int nDim0 = amaps[idx]->_nelems.data()[0];
       int nDim1 = amaps[idx]->_nelems.data()[1];
       int nDim2 = amaps[idx]->_nelems.data()[2];
@@ -558,19 +637,106 @@ public:
       int counter = 0;
       std::vector<int> coords;
       allpairs.resize(nDim0*nDim1*nDim2);
-      coords.resize(3);
+      coords.resize(dims);
       for(int i=0; i<nDim0; i++)
-          for(int j=0; j<nDim1; j++)
-              for(int k=0; k<nDim2; k++)
+        for(int j=0; j<nDim1; j++)
+          for(int k=0; k<nDim2; k++)
+          {
+            coords[0] = i;
+            coords[1] = j;
+            coords[2] = k;
+            index = Hilbert_to_int( coords, dims);
+            allpairs[counter] = index;
+            counter++;
+          }
+    } else if (i.dimension == 4) {
+      //CkPrintf("4D %hd:%hd:%hd:%hd\n", ((short int*)amaps[idx]->_nelems.data())[0],
+      //        ((short int*)amaps[idx]->_nelems.data())[1], ((short int*)amaps[idx]->_nelems.data())[2],
+      //        ((short int*)amaps[idx]->_nelems.data())[3]);
+      const int dims = 4;
+      int nDim[dims];
+      for(int k=0; k<dims; k++) {
+        nDim[k] = (int)((short int*)amaps[idx]->_nelems.data())[k];
+      }
+      int index;
+      int counter = 0;
+      std::vector<int> coords;
+      allpairs.resize(nDim[0]*nDim[1]*nDim[2]*nDim[3]);
+      coords.resize(dims);
+      for(int i=0; i<nDim[0]; i++)
+        for(int j=0; j<nDim[1]; j++)
+          for(int k=0; k<nDim[2]; k++)
+            for(int x=0; x<nDim[3]; x++)
+            {
+              coords[0] = i;
+              coords[1] = j;
+              coords[2] = k;
+              coords[3] = x;
+              index = Hilbert_to_int(coords, dims);
+              allpairs[counter] = index;
+              counter++;
+            }
+    } else if (i.dimension == 5) {
+      //CkPrintf("5D %hd:%hd:%hd:%hd:%hd\n", ((short int*)amaps[idx]->_nelems.data())[0],
+      //        ((short int*)amaps[idx]->_nelems.data())[1], ((short int*)amaps[idx]->_nelems.data())[2],
+      //        ((short int*)amaps[idx]->_nelems.data())[3], ((short int*)amaps[idx]->_nelems.data())[4]);
+      const int dims = 5;
+      int nDim[dims];
+      for(int k=0; k<dims; k++) {
+        nDim[k] = (int)((short int*)amaps[idx]->_nelems.data())[k];
+      }
+      int index;
+      int counter = 0;
+      std::vector<int> coords;
+      allpairs.resize(nDim[0]*nDim[1]*nDim[2]*nDim[3]*nDim[4]);
+      coords.resize(dims);
+      for(int i=0; i<nDim[0]; i++)
+        for(int j=0; j<nDim[1]; j++)
+          for(int k=0; k<nDim[2]; k++)
+            for(int x=0; x<nDim[3]; x++)
+              for(int y=0; y<nDim[4]; y++)
               {
+                coords[0] = i;
+                coords[1] = j;
+                coords[2] = k;
+                coords[3] = x;
+                coords[4] = y;
+                index = Hilbert_to_int(coords, dims);
+                allpairs[counter] = index;
+                counter++;
+              }
+    } else if (i.dimension == 6) {
+      //CkPrintf("6D %hd:%hd:%hd:%hd:%hd:%hd\n", ((short int*)amaps[idx]->_nelems.data())[0],
+      //        ((short int*)amaps[idx]->_nelems.data())[1], ((short int*)amaps[idx]->_nelems.data())[2],
+      //        ((short int*)amaps[idx]->_nelems.data())[3], ((short int*)amaps[idx]->_nelems.data())[4],
+      //        ((short int*)amaps[idx]->_nelems.data())[5]);
+      const int dims = 6;
+      int nDim[dims];
+      for(int k=0; k<dims; k++) {
+        nDim[k] = (int)((short int*)amaps[idx]->_nelems.data())[k];
+      }
+      int index;
+      int counter = 0;
+      std::vector<int> coords;
+      allpairs.resize(nDim[0]*nDim[1]*nDim[2]*nDim[3]*nDim[4]*nDim[5]);
+      coords.resize(dims);
+      for(int i=0; i<nDim[0]; i++)
+        for(int j=0; j<nDim[1]; j++)
+          for(int k=0; k<nDim[2]; k++)
+            for(int x=0; x<nDim[3]; x++)
+              for(int y=0; y<nDim[4]; y++)
+                for(int z=0; z<nDim[5]; z++)
+                {
                   coords[0] = i;
                   coords[1] = j;
                   coords[2] = k;
-                  index = Hilbert_to_int( coords, dims);
+                  coords[3] = x;
+                  coords[4] = y;
+                  coords[5] = y;
+                  index = Hilbert_to_int(coords, dims);
                   allpairs[counter] = index;
                   counter++;
-              }
-
+                }
     }
     return idx;
   }
@@ -579,28 +745,67 @@ public:
     int flati = 0;
     int myInt;
     int dest;
-    if (amaps[arrayHdl]->_nelems.nInts == 0) {
+    if (amaps[arrayHdl]->_nelems.dimension == 0) {
       return RRMap::procNum(arrayHdl, i);
     }
-    if (i.nInts == 1) {
+    if (i.dimension == 1) {
       flati = i.data()[0];
-    } else if (i.nInts == 2) {
-        int nDim0 = amaps[arrayHdl]->_nelems.data()[0];
-        int nDim1 = amaps[arrayHdl]->_nelems.data()[1];
-        myInt = i.data()[0] * nDim1 + i.data()[1]; 
-        flati = allpairs[myInt]; 
-    } else if (i.nInts == 3) {
-        hilbert_pair mypair;
-        mypair.coords.resize(3);
-        int nDim0 = amaps[arrayHdl]->_nelems.data()[0];
-        int nDim1 = amaps[arrayHdl]->_nelems.data()[1];
-        int nDim2 = amaps[arrayHdl]->_nelems.data()[2];
-        myInt = i.data()[0] * nDim1 *nDim2 + i.data()[1] * nDim2 + i.data()[2]; 
-        flati = allpairs[myInt]; 
+    } else if (i.dimension == 2) {
+      int nDim1 = amaps[arrayHdl]->_nelems.data()[1];
+      myInt = i.data()[0] * nDim1 + i.data()[1];
+      flati = allpairs[myInt];
+    } else if (i.dimension == 3) {
+      hilbert_pair mypair;
+      mypair.coords.resize(3);
+      int nDim[2];
+      for (int j = 0; j < 2; j++) {
+        nDim[j] = amaps[arrayHdl]->_nelems.data()[j+1];
+      }
+      myInt = i.data()[0] * nDim[0] * nDim[1] + i.data()[1] * nDim[1] + i.data()[2];
+      flati = allpairs[myInt];
+    } else if (i.dimension == 4) {
+      hilbert_pair mypair;
+      mypair.coords.resize(4);
+      short int nDim[3];
+      for (int j = 0; j < 3; j++) {
+        nDim[j] = ((short int*)amaps[arrayHdl]->_nelems.data())[j+1];
+      }
+      myInt = (int)(((short int*)i.data())[0] * nDim[0] * nDim[1] * nDim[2] +
+              ((short int*)i.data())[1] * nDim[1] * nDim[2] +
+              ((short int*)i.data())[2] * nDim[2] +
+              ((short int*)i.data())[3]);
+      flati = allpairs[myInt];
+    } else if (i.dimension == 5) {
+      hilbert_pair mypair;
+      mypair.coords.resize(5);
+      short int nDim[4];
+      for (int j = 0; j < 4; j++) {
+        nDim[j] = ((short int*)amaps[arrayHdl]->_nelems.data())[j+1];
+      }
+      myInt = (int)(((short int*)i.data())[0] * nDim[0] * nDim[1] * nDim[2] * nDim[3] +
+              ((short int*)i.data())[1] * nDim[1] * nDim[2] * nDim[3] +
+              ((short int*)i.data())[2] * nDim[2] * nDim[3] +
+              ((short int*)i.data())[3] * nDim[3] +
+              ((short int*)i.data())[4]);
+      flati = allpairs[myInt];
+    } else if (i.dimension == 6) {
+      hilbert_pair mypair;
+      mypair.coords.resize(6);
+      short int nDim[5];
+      for (int j = 0; j < 5; j++) {
+        nDim[j] = ((short int*)amaps[arrayHdl]->_nelems.data())[j+1];
+      }
+      myInt = (int)(((short int*)i.data())[0] * nDim[0] * nDim[1] * nDim[2] * nDim[3] * nDim[4] +
+              ((short int*)i.data())[1] * nDim[1] * nDim[2] * nDim[3] * nDim[4] +
+              ((short int*)i.data())[2] * nDim[2] * nDim[3] * nDim[4] +
+              ((short int*)i.data())[3] * nDim[3] * nDim[4] +
+              ((short int*)i.data())[4] * nDim[4] +
+              ((short int*)i.data())[5]);
+      flati = allpairs[myInt];
     }
 #if CMK_ERROR_CHECKING
     else {
-      CkAbort("CkArrayIndex has more than 3 integers!");
+      CkAbort("CkArrayIndex has more than 6 dimensions!");
     }
 #endif
 
@@ -644,14 +849,26 @@ public:
     if(mapping.size() == 0) {
       int numChares;
 
-      if (amaps[idx]->_nelems.nInts == 1) {
-	numChares = amaps[idx]->_nelems.data()[0];
-      } else if (amaps[idx]->_nelems.nInts == 2) {
-	numChares = amaps[idx]->_nelems.data()[0] * amaps[idx]->_nelems.data()[1];
-      } else if (amaps[idx]->_nelems.nInts == 3) {
-	numChares = amaps[idx]->_nelems.data()[0] * amaps[idx]->_nelems.data()[1] * amaps[idx]->_nelems.data()[2];
+      if (amaps[idx]->_nelems.dimension == 1) {
+        numChares = amaps[idx]->_nelems.data()[0];
+      } else if (amaps[idx]->_nelems.dimension == 2) {
+        numChares = amaps[idx]->_nelems.data()[0] * amaps[idx]->_nelems.data()[1];
+      } else if (amaps[idx]->_nelems.dimension == 3) {
+        numChares = amaps[idx]->_nelems.data()[0] * amaps[idx]->_nelems.data()[1] *
+                    amaps[idx]->_nelems.data()[2];
+      } else if (amaps[idx]->_nelems.dimension == 4) {
+        numChares = (int)(((short int*)amaps[idx]->_nelems.data())[0] * ((short int*)amaps[idx]->_nelems.data())[1] *
+                    ((short int*)amaps[idx]->_nelems.data())[2] * ((short int*)amaps[idx]->_nelems.data())[3]);
+      } else if (amaps[idx]->_nelems.dimension == 5) {
+        numChares = (int)(((short int*)amaps[idx]->_nelems.data())[0] * ((short int*)amaps[idx]->_nelems.data())[1] *
+                    ((short int*)amaps[idx]->_nelems.data())[2] * ((short int*)amaps[idx]->_nelems.data())[3] *
+                    ((short int*)amaps[idx]->_nelems.data())[4]);
+      } else if (amaps[idx]->_nelems.dimension == 6) {
+        numChares = (int)(((short int*)amaps[idx]->_nelems.data())[0] * ((short int*)amaps[idx]->_nelems.data())[1] *
+                    ((short int*)amaps[idx]->_nelems.data())[2] * ((short int*)amaps[idx]->_nelems.data())[3] *
+                    ((short int*)amaps[idx]->_nelems.data())[4] * ((short int*)amaps[idx]->_nelems.data())[5]);
       } else {
-	CkAbort("CkArrayIndex has more than 3 integers!");
+        CkAbort("CkArrayIndex has more than 6 dimension!");
       }
 
       mapping.resize(numChares);
@@ -660,8 +877,8 @@ public:
       int x, y, z, t;
 
       for(int i=0; i<numChares; i++) {
-	(void) fscanf(mapf, "%d %d %d %d", &x, &y, &z, &t);
-	mapping[i] = tmgr.coordinatesToRank(x, y, z, t);
+        (void) fscanf(mapf, "%d %d %d %d", &x, &y, &z, &t);
+        mapping[i] = tmgr.coordinatesToRank(x, y, z, t);
       }
       fclose(mapf);
     }
@@ -672,14 +889,30 @@ public:
   int procNum(int arrayHdl, const CkArrayIndex &i) {
     int flati;
 
-    if (i.nInts == 1) {
+    if (i.dimension == 1) {
       flati = i.data()[0];
-    } else if (i.nInts == 2) {
+    } else if (i.dimension == 2) {
       flati = i.data()[0] * amaps[arrayHdl]->_nelems.data()[1] + i.data()[1];
-    } else if (i.nInts == 3) {
-      flati = (i.data()[0] * amaps[arrayHdl]->_nelems.data()[1] + i.data()[1]) * amaps[arrayHdl]->_nelems.data()[2] + i.data()[2];
+    } else if (i.dimension == 3) {
+      flati = (i.data()[0] * amaps[arrayHdl]->_nelems.data()[1] + i.data()[1]) *
+              amaps[arrayHdl]->_nelems.data()[2] + i.data()[2];
+    } else if (i.dimension == 4) {
+      flati = (int)(((((short int*)i.data())[0] * ((short int*)amaps[arrayHdl]->_nelems.data())[1] + ((short int*)i.data())[1]) *
+              ((short int*)amaps[arrayHdl]->_nelems.data())[2] + ((short int*)i.data())[2]) *
+              ((short int*)amaps[arrayHdl]->_nelems.data())[3] + ((short int*)i.data())[3]);
+    } else if (i.dimension == 5) {
+      flati = (int)((((((short int*)i.data())[0] * ((short int*)amaps[arrayHdl]->_nelems.data())[1] + ((short int*)i.data())[1]) *
+              ((short int*)amaps[arrayHdl]->_nelems.data())[2] + ((short int*)i.data())[2]) *
+              ((short int*)amaps[arrayHdl]->_nelems.data())[3] + ((short int*)i.data())[3]) *
+              ((short int*)amaps[arrayHdl]->_nelems.data())[4] + ((short int*)i.data())[4]);
+    } else if (i.dimension == 6) {
+      flati = (int)(((((((short int*)i.data())[0] * ((short int*)amaps[arrayHdl]->_nelems.data())[1] + ((short int*)i.data())[1]) *
+              ((short int*)amaps[arrayHdl]->_nelems.data())[2] + ((short int*)i.data())[2]) *
+              ((short int*)amaps[arrayHdl]->_nelems.data())[3] + ((short int*)i.data())[3]) *
+              ((short int*)amaps[arrayHdl]->_nelems.data())[4] + ((short int*)i.data())[4]) *
+              ((short int*)amaps[arrayHdl]->_nelems.data())[5] + ((short int*)i.data())[5]);
     } else {
-      CkAbort("CkArrayIndex has more than 3 integers!");
+      CkAbort("CkArrayIndex has more than 6 dimensions!");
     }
 
     return mapping[flati];
@@ -695,38 +928,50 @@ class BlockMap : public RRMap
 {
 public:
   BlockMap(void){
-	DEBC((AA "Creating BlockMap\n" AB));
+    DEBC((AA "Creating BlockMap\n" AB));
   }
   BlockMap(CkMigrateMessage *m):RRMap(m){ }
-  void populateInitial(int arrayHdl,CkArrayIndex& numElements,void *ctorMsg,CkArrMgr *mgr){
-	if (numElements.nInts==0) {
-          CkFreeMsg(ctorMsg);
-          return;
-        }
-	int thisPe=CkMyPe();
-	int numPes=CkNumPes();
-        int binSize;
-        if (numElements.nInts == 1) {
-          binSize = (int)ceil((double)numElements.data()[0]/(double)numPes);
-        } else if (numElements.nInts == 2) {
-          binSize = (int)ceil((double)(numElements.data()[0]*numElements.data()[1])/(double)numPes);
-        } else if (numElements.nInts == 3) {
-          binSize = (int)ceil((double)(numElements.data()[0]*numElements.data()[1]*numElements.data()[2])/(double)numPes);
-        } else {
-          CkAbort("CkArrayIndex has more than 3 integers!");
-        }
-        CKARRAYMAP_POPULATE_INITIAL(i/binSize==thisPe);
+  void populateInitial(int arrayHdl,CkArrayOptions& options,void *ctorMsg,CkArrMgr *mgr){
+    CkArrayIndex start = options.getStart();
+    CkArrayIndex end = options.getEnd();
+    CkArrayIndex step = options.getStep();
+    if (end.dimension == 0) {
+      CkFreeMsg(ctorMsg);
+      return;
+    }
+    int thisPe=CkMyPe();
+    int numPes=CkNumPes();
+    int binSize;
+    if (end.dimension == 1) {
+      binSize = (int)ceil((double)(end.data()[0]) / (double)numPes);
+    } else if (end.dimension == 2) {
+      binSize = (int)ceil((double)(end.data()[0] * end.data()[1]) / (double)numPes);
+    } else if (end.dimension == 3) {
+      binSize = (int)ceil((double)(end.data()[0] * end.data()[1] * end.data()[2])) / (double)numPes;
+    } else if (end.dimension == 4) {
+      binSize = (int)ceil((double)(((short int*)end.data())[0] * ((short int*)end.data())[1] *
+                ((short int*)end.data())[2] * ((short int*)end.data())[3]) / (double)numPes);
+    } else if (end.dimension == 5) {
+      binSize = (int)ceil((double)(((short int*)end.data())[0] * ((short int*)end.data())[1] *
+                ((short int*)end.data())[2] * ((short int*)end.data())[3] * ((short int*)end.data())[4]) /
+                (double)numPes);
+    } else if (end.dimension == 6) {
+      binSize = (int)ceil((double)(((short int*)end.data())[0] * ((short int*)end.data())[1] *
+                ((short int*)end.data())[2] * ((short int*)end.data())[3] * ((short int*)end.data())[4] *
+                ((short int*)end.data())[5]) / (double)numPes);
+    } else {
+      CkAbort("CkArrayIndex has more than 6 dimensions!");
+    }
+    CKARRAYMAP_POPULATE_INITIAL(i/binSize==thisPe);
 
-        /*
-        CkArrayIndex idx;
-	for (idx=numElements.begin(); idx<numElements; idx.getNext(numElements)) {
-          //for (int i=0;i<numElements;i++) {
-		int binSize = (int)ceil((double)numElements.getCombinedCount()/(double)numPes);
-		if (i/binSize==thisPe)
-			mgr->insertInitial(idx,CkCopyMsg(&ctorMsg));
-        }*/
-	mgr->doneInserting();
-	CkFreeMsg(ctorMsg);
+    /*CkArrayIndex idx;
+    for (idx=numElements.begin(); idx<numElements; idx.getNext(numElements)) {
+      int binSize = (int)ceil((double)numElements.getCombinedCount()/(double)numPes);
+      if (i/binSize==thisPe)
+        mgr->insertInitial(idx,CkCopyMsg(&ctorMsg));
+    }*/
+    mgr->doneInserting();
+    CkFreeMsg(ctorMsg);
   }
 };
 
@@ -743,7 +988,7 @@ public:
   CldMap(CkMigrateMessage *m):CkArrayMap(m){}
   int homePe(int /*arrayHdl*/, const CkArrayIndex &i)
   {
-    if (i.nInts==1) {
+    if (i.dimension == 1) {
       //Map 1D integer indices in simple round-robin fashion
       return (i.data()[0])%CkNumPes();
     }
@@ -758,8 +1003,11 @@ public:
   {
      return CLD_ANYWHERE;   // -1
   }
-  void populateInitial(int arrayHdl,CkArrayIndex& numElements,void *ctorMsg,CkArrMgr *mgr)  {
-        if (numElements.nInts==0) {
+  void populateInitial(int arrayHdl,CkArrayOptions& options,void *ctorMsg,CkArrMgr *mgr)  {
+        CkArrayIndex start = options.getStart();
+        CkArrayIndex end = options.getEnd();
+        CkArrayIndex step = options.getStep();
+        if (end.dimension == 0) {
           CkFreeMsg(ctorMsg);
           return;
         }
@@ -875,19 +1123,22 @@ public:
   ConfigurableRRMap(CkMigrateMessage *m):RRMap(m){ }
 
 
-  void populateInitial(int arrayHdl,CkArrayIndex& numElements,void *ctorMsg,CkArrMgr *mgr){
+  void populateInitial(int arrayHdl,CkArrayOptions& options,void *ctorMsg,CkArrMgr *mgr){
+    CkArrayIndex start = options.getStart();
+    CkArrayIndex end = options.getEnd();
+    CkArrayIndex step = options.getStep();
     // Try to load the configuration from command line argument
     CkAssert(haveConfigurableRRMap());
     ConfigurableRRMapLoader &loader =  CkpvAccess(myConfigRRMapState);
-    if (numElements.nInts==0) {
+    if (end.dimension == 0) {
       CkFreeMsg(ctorMsg);
       return;
     }
     int thisPe=CkMyPe();
-    int maxIndex = numElements.data()[0];
-    DEBUG(("[%d] ConfigurableRRMap: index=%d,%d,%d\n", CkMyPe(),(int)numElements.data()[0], (int)numElements.data()[1], (int)numElements.data()[2]));
+    int maxIndex = end.data()[0];
+    DEBUG(("[%d] ConfigurableRRMap: index=%d,%d,%d\n", CkMyPe(),(int)end.data()[0], (int)end.data()[1], (int)end.data()[2]));
 
-    if (numElements.nInts != 1) {
+    if (end.dimension != 1) {
       CkAbort("ConfigurableRRMap only supports dimension 1!");
     }
 	
@@ -919,7 +1170,6 @@ class arrInfo {
  private:
    CkArrayIndex _nelems;
    int *_map;
-   void distrib(int *speeds);
  public:
    arrInfo(void):_map(NULL){}
    arrInfo(const CkArrayIndex& n, int *speeds)
@@ -930,6 +1180,7 @@ class arrInfo {
    }
    ~arrInfo() { delete[] _map; }
    int getMap(const CkArrayIndex &i);
+   void distrib(int *speeds);
    void pup(PUP::er& p){
      p|_nelems;
      int totalElements = _nelems.getCombinedCount();
@@ -996,7 +1247,7 @@ arrInfo::distrib(int *speeds)
 int
 arrInfo::getMap(const CkArrayIndex &i)
 {
-  if(i.nInts==1)
+  if(i.dimension == 1)
     return _map[i.data()[0]];
   else
     return _map[((i.hash()+739)%1280107)%_nelems.getCombinedCount()];
@@ -1027,7 +1278,7 @@ static void _speedHdlr(void *m)
 void _propMapInit(void)
 {
   speeds = new int[CkNumPes()];
-  int hdlr = CkRegisterHandler((CmiHandler)_speedHdlr);
+  int hdlr = CkRegisterHandler(_speedHdlr);
   CmiPrintf("[%d]Measuring processor speed for prop. mapping...\n", CkMyPe());
   int s = LDProcessorSpeed();
   speedMsg msg;
@@ -1080,7 +1331,17 @@ public:
     return arrs[arrayHdl]->getMap(i);
   }
   void pup(PUP::er& p){
+    int oldNumPes = -1;
+    if(p.isPacking()){
+      oldNumPes = CkNumPes();
+    }
+    p|oldNumPes;
     p|arrs;
+    if(p.isUnpacking() && oldNumPes != CkNumPes()){
+      for(int idx = 0; idx < arrs.length(); ++idx){
+        arrs[idx]->distrib(speeds);
+      }
+    }
   }
 };
 
@@ -1140,7 +1401,7 @@ void CkArrayPrefetch_writeToSwap(FILE *swapfile,void *objptr) {
 
   //Save the element's data to disk:
   PUP::toDisk p(swapfile);
-  elt->pup(p);
+  elt->virtual_pup(p);
 
   //Call the element's destructor in-place (so pointer doesn't change)
   CkpvAccess(CkSaveRestorePrefetch)=1;
@@ -1162,7 +1423,7 @@ void CkArrayPrefetch_readFromSwap(FILE *swapfile,void *objptr) {
   
   //Restore the element's data from disk:
   PUP::fromDisk p(swapfile);
-  elt->pup(p);
+  elt->virtual_pup(p);
 }
 
 static void _CkMigratable_prefetchInit(void) 
@@ -1220,6 +1481,7 @@ void CkMigratable::commonInit(void) {
 #if CMK_LBDB_ON
   if (_lb_args.metaLbOn()) {
     atsync_iteration = myRec->getMetaBalancer()->get_iteration();
+    myRec->getMetaBalancer()->AdjustCountForNewContributor(atsync_iteration);
   }
 #endif
 
@@ -1294,6 +1556,10 @@ CkMigratable::~CkMigratable() {
 	  else
 		myRec->getLBDB()->RemoveLocalBarrierReceiver(ldBarrierRecvHandle);
 	}
+
+  if (_lb_args.metaLbOn()) {
+    myRec->getMetaBalancer()->AdjustCountForDeadContributor(atsync_iteration);
+  }
 #endif
 	//To detect use-after-delete
 	thisIndexMax.nInts=-12345;
@@ -1417,7 +1683,7 @@ void CkMigratable::AtSync(int waitForMigration)
   if (usesAutoMeasure == false) UserSetLBLoad();
 
   PUP::sizer ps;
-  this->pup(ps);
+  this->virtual_pup(ps);
   setPupSize(ps.size());
 
   if (!_lb_args.metaLbOn()) {
@@ -1440,6 +1706,13 @@ void CkMigratable::AtSync(int waitForMigration)
   double tmp = prev_load;
   prev_load = myRec->getObjTime();
   double current_load = prev_load - tmp;
+
+  // If the load for the chares are based on certain model, then set the
+  // current_load to be whatever is the obj load.
+  if (!usesAutoMeasure) {
+    current_load = myRec->getObjTime();
+  }
+
   if (atsync_iteration <= myRec->getMetaBalancer()->get_finished_iteration()) {
     CkPrintf("[%d:%s] Error!! Contributing to iter %d < current iter %d\n",
       CkMyPe(), idx2str(thisIndexMax), atsync_iteration,
@@ -1772,7 +2045,7 @@ bool CkLocRec_local::invokeEntry(CkMigratable *obj,void *msg,
 	//	CkPrintf("ckLocation.C beginExecuteDetailed %d %d \n",env->getEvent(),env->getsetArraySrcPe());
 		if (_entryTable[epIdx]->traceEnabled)
         {
-            _TRACE_BEGIN_EXECUTE_DETAILED(env->getEvent(), ForChareMsg,epIdx,env->getSrcPe(), env->getTotalsize(), idx.getProjectionID(env->getArrayMgrIdx()));
+            _TRACE_BEGIN_EXECUTE_DETAILED(env->getEvent(), ForChareMsg,epIdx,env->getSrcPe(), env->getTotalsize(), idx.getProjectionID(env->getArrayMgrIdx()), obj);
             if(_entryTable[epIdx]->appWork)
                 _TRACE_BEGIN_APPWORK();
         }
@@ -2274,7 +2547,7 @@ CkLocMgr::CkLocMgr(CkArrayOptions opts)
 	mapID = opts.getMap();
 	map=(CkArrayMap *)CkLocalBranch(mapID);
 	if (map==NULL) CkAbort("ERROR!  Local branch of array map is NULL!");
-	mapHandle=map->registerArray(opts.getNumInitial(), thisgroup);
+	mapHandle=map->registerArray(opts.getEnd(), thisgroup);
 
         // Figure out the mapping from indices to object IDs if one is possible
         compressor = ck::FixedArrayIndexCompressor::make(opts.getBounds());
@@ -2451,7 +2724,7 @@ void CkLocMgr::deleteManager(CkArrayID id, CkArrMgr *mgr) {
   ManagerRec *cur = firstManager;
   while (cur->mgr != mgr) {
     prev = &cur->next;
-    ++cur;
+    cur = cur->next;
   }
 
   CkAssert(cur);
@@ -2611,7 +2884,8 @@ bool CkLocMgr::addElementToRec(CkLocRec_local *rec,ManagerRec *m,
 
 #if CMK_OUT_OF_CORE
 	/* Register new element with out-of-core */
-	PUP::sizer p_getSize; elt->pup(p_getSize);
+	PUP::sizer p_getSize;
+	elt->virtual_pup(p_getSize);
 	elt->prefetchObjID=CooRegisterObject(&CkArrayElementPrefetcher,p_getSize.size(),elt);
 #endif
 	
@@ -2658,7 +2932,7 @@ void CkLocMgr::reclaim(const CkArrayIndex &idx,int localIdx) {
 		
 	if (!duringMigration) 
 	{ //This is a local element dying a natural death
-	    #if CMK_BIGSIM_CHARM
+#if CMK_BIGSIM_CHARM
 		//After migration, reclaimRemote will be called through 
 		//the CkRemoveArrayElement in the pupping routines for those 
 		//objects that are not on the home processors. However,
@@ -2667,15 +2941,16 @@ void CkLocMgr::reclaim(const CkArrayIndex &idx,int localIdx) {
 		//that seeking where is the object will be accumulated (a circular
 		//msg chain) and causes the program no progress
 		if(_BgOutOfCoreFlag==1) return; 
-	    #endif
+#endif
 		int home=homePe(idx);
 		if (home!=CkMyPe())
 #if CMK_MEM_CHECKPOINT
 	        if (!CkInRestarting()) // all array elements are removed anyway
 #endif
-			thisProxy[home].reclaimRemote(idx,CkMyPe());
-	/*	//Install a zombie to keep the living from re-using this index.
-		insertRecN(new CkLocRec_dead(this),idx); */
+	        if (!duringDestruction)
+	            thisProxy[home].reclaimRemote(idx,CkMyPe());
+	        /*  //Install a zombie to keep the living from re-using this index.
+	            insertRecN(new CkLocRec_dead(this),idx); */
 	}
 }
 
@@ -3015,14 +3290,14 @@ void CkLocMgr::pupElementsFor(PUP::er &p,CkLocRec_local *rec,
             CkMigratable *elt=m->element(localIdx);
             if (elt!=NULL)
                 {
-                       elt->pup(p);
+                       elt->virtual_pup(p);
                 }
         }
     }else{
             for(int i=0;i<dummyElts.size();i++){
                 CkMigratable *elt = dummyElts[i];
                 if (elt!=NULL){
-            elt->pup(p);
+            elt->virtual_pup(p);
         		}
                 delete elt;
             }
@@ -3065,7 +3340,7 @@ void CkLocMgr::pupElementsFor(PUP::er &p,CkLocRec_local *rec,
 		CkMigratable *elt=m->element(localIdx);
 		if (elt!=NULL)
                 {
-                        elt->pup(p);
+                        elt->virtual_pup(p);
 #if CMK_ERROR_CHECKING
                         if (p.isUnpacking()) elt->sanitycheck();
 #endif
@@ -3423,6 +3698,9 @@ void CkLocMgr::setDuringMigration(bool _duringMigration){
 }
 #endif
 
+void CkLocMgr::setDuringDestruction(bool _duringDestruction) {
+  duringDestruction = _duringDestruction;
+}
 
 //Add given element array record at idx, replacing the existing record
 void CkLocMgr::insertRec(CkLocRec *rec,const CkArrayIndex &idx) {

@@ -89,15 +89,35 @@ public:
         CmiUnlock(loop_info_inited_lock);
     }
     int getNextChunkIdx() {
+#if defined(_WIN32)
+#if CMK_SMP
+        int next_chunk_id;
+        CmiLock(cmiMemoryLock);
+        curChunkIdx=curChunkIdx+1;
+        next_chunk_id = curChunkIdx;
+        CmiUnlock(cmiMemoryLock);
+        return next_chunk_id;
+#else
+        curChunkIdx++;
+        return curChunkIdx;
+#endif
+#else
         return __sync_add_and_fetch(&curChunkIdx, 1);
+#endif
     }
     void reportFinished(int counter) {
         if (counter==0) return;
-//#if !CMK_SMP
+#if defined(_WIN32)
+#if CMK_SMP
+        CmiLock(cmiMemoryLock);
+        finishFlag=finishFlag+counter;
+        CmiUnlock(cmiMemoryLock);
+#else
+        finishFlag=finishFlag+counter;
+#endif
+#else
         __sync_add_and_fetch(&finishFlag, counter);
-//#else
-//	CmiMemoryAtomicFetchAndInc(finishFlag, counter);
-//#endif
+#endif
     }
 
     int isFree() {
@@ -131,6 +151,8 @@ public:
   FuncSingleHelper *localHelper;
 };
 
+class DestroyNotifyMsg: public CMessage_DestroyNotifyMsg {};
+
 class FuncCkLoop : public CBase_FuncCkLoop {
     friend class FuncSingleHelper;
 
@@ -161,6 +183,7 @@ public:
 
     void createPThreads();
     void exit();
+    void init(int mode_, int numThreads_);
 
     int getNumHelpers() {
         return numHelpers;
@@ -174,8 +197,11 @@ public:
                          int numChunks, /* number of chunks to be partitioned */
                          int lowerRange, int upperRange, /* the loop-like parallelization happens in [lowerRange, upperRange] */
                          int sync=1, /* whether the flow will continue until all chunks have finished */
-                         void *redResult=NULL, REDUCTION_TYPE type=CKLOOP_NONE /* the reduction result, ONLY SUPPORT SINGLE VAR of TYPE int/float/double */
+                         void *redResult=NULL, REDUCTION_TYPE type=CKLOOP_NONE, /* the reduction result, ONLY SUPPORT SINGLE VAR of TYPE int/float/double */
+                         CallerFn cfunc=NULL, /* the caller PE will call this function before starting to work on the chunks */
+                         int cparamNum=0, void* cparam=NULL /* the input parameters to the above function */
                         );
+    void destroyHelpers();
     void reduce(void **redBufs, void *redBuf, REDUCTION_TYPE type, int numChunks);
     void pup(PUP::er &p);
 };
@@ -258,10 +284,11 @@ public:
 #endif
 
     void stealWork(CharmNotifyMsg *msg);
+    void destroyMyself() {
+      delete this;
+    }
 
     FuncSingleHelper(CkMigrateMessage *m) : CBase_FuncSingleHelper(m) {}
-
-    void pup(PUP::er &p);
 
  private:
     void createNotifyMsg();
