@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/RNGSSE.h
   \author    J. Bakosi
-  \date      Tue 23 Feb 2016 02:06:49 PM MST
+  \date      Sat 30 Apr 2016 06:21:35 PM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Interface to RNGSSE random number generators
   \details   Interface to RNGSSE random number generators
@@ -16,7 +16,6 @@
 
 #include <boost/random/beta_distribution.hpp>
 
-#include "Make_unique.h"
 #include "Exception.h"
 #include "Macro.h"
 
@@ -62,7 +61,7 @@ class RNGSSE {
       Assert( m_init != nullptr, "nullptr passed to RNGSSE constructor" );
       Assert( nthreads > 0, "Need at least one thread" );
       // Allocate array of stream-pointers for threads
-      m_stream = tk::make_unique< State[] >( nthreads );
+      m_stream = std::make_unique< State[] >( nthreads );
       // Initialize thread-streams
       for (SeqNumType i=0; i<nthreads; ++i) m_init( &m_stream[i], i );
     }
@@ -128,7 +127,7 @@ class RNGSSE {
     RNGSSE& operator=( const RNGSSE& x ) {
       m_nthreads = x.m_nthreads;
       m_init = x.m_init;
-      m_stream = tk::make_unique< State[] >( x.m_nthreads );
+      m_stream = std::make_unique< State[] >( x.m_nthreads );
       for (SeqNumType i=0; i<x.m_nthreads; ++i) m_init( &m_stream[i], i );
       return *this;
     }
@@ -140,7 +139,7 @@ class RNGSSE {
     RNGSSE& operator=( RNGSSE&& x ) {
       m_nthreads = x.m_nthreads;
       m_init = x.m_init;
-      m_stream = tk::make_unique< State[] >( x.m_nthreads );
+      m_stream = std::make_unique< State[] >( x.m_nthreads );
       for (SeqNumType i=0; i<x.m_nthreads; ++i) {
         m_stream[i] = x.m_stream[i];
         std::memset( &x.m_stream[i], 0, sizeof(x.m_stream[i]) );

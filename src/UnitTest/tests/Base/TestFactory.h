@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/TestFactory.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 03:12:22 PM MDT
+  \date      Sat 30 Apr 2016 06:22:13 PM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Unit tests for Base/Factory.h
   \details   Unit tests for Base/Factory.h
@@ -15,7 +15,6 @@
 
 #include <tut/tut.hpp>
 
-#include "Make_unique.h"
 #include "Factory.h"
 #include "charmchild.decl.h"
 
@@ -53,7 +52,7 @@ struct Factory_common {
     //! of class T was pre-constructed.
     template< typename T >
     explicit VBase( T x ) :
-      self( tk::make_unique< Model<T> >( std::move(x) ) ), ctor( "val" ) {}
+      self( std::make_unique< Model<T> >( std::move(x) ) ), ctor( "val" ) {}
 
     //! Constructor taking a function pointer to a constructor of an object
     //! modeling Concept (see below). Passing std::function allows late
@@ -61,7 +60,7 @@ struct Factory_common {
     //! constructor, and thus usage from a factory.
     template< typename T >
     explicit VBase( std::function<T()> x ) :
-      self( tk::make_unique< Model<T> >( std::move(x()) ) ), ctor( "fun" ) {}
+      self( std::make_unique< Model<T> >( std::move(x()) ) ), ctor( "fun" ) {}
 
     //! Public interface to querying the child constructor type invoked
     std::string Type() const { return self->Type(); }
@@ -390,7 +389,7 @@ struct VBase {
   template< typename T, typename... ConstrArgs,
     typename std::enable_if< tk::HasTypedefProxy<T>::value, int >::type = 0 >
   explicit VBase( std::function<T()> c, ConstrArgs... args ) :
-    self( tk::make_unique< Model< typename T::Proxy > >
+    self( std::make_unique< Model< typename T::Proxy > >
          (std::move(T::Proxy::ckNew(std::forward<ConstrArgs>(args)...))) ) {
     Assert( c == nullptr, "std::function argument to VBase Charm "
                           "constructor must be nullptr" );

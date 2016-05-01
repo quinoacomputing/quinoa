@@ -2,7 +2,7 @@
 /*!
   \file      src/Walker/Collector.h
   \author    J. Bakosi
-  \date      Tue 19 Jan 2016 03:42:27 PM MST
+  \date      Sat 30 Apr 2016 06:24:56 PM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Charm++ module interface file for collecting contributions from
              Integrators
@@ -17,7 +17,6 @@
 
 #include "Types.h"
 #include "PDFReducer.h"
-#include "Make_unique.h"
 #include "Distributor.h"
 #include "Walker/InputDeck/InputDeck.h"
 

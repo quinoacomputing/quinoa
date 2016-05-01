@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/MKLRNG.h
   \author    J. Bakosi
-  \date      Tue 23 Feb 2016 02:43:52 PM MST
+  \date      Sat 30 Apr 2016 06:21:53 PM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Interface to Intel MKL VSL random number generators
   \details   Interface to Intel MKL VSL random number generators.
@@ -46,7 +46,7 @@ class MKLRNG {
       Assert( nthreads > 0, "Need at least one thread" );
       Assert( brng > 0, "Basic RNG MKL parameter must be positive" );
       // Allocate array of stream-pointers for threads
-      m_stream = tk::make_unique< VSLStreamStatePtr[] >(
+      m_stream = std::make_unique< VSLStreamStatePtr[] >(
                    static_cast<std::size_t>(nthreads) );
       // Initialize thread-streams for block-splitting. These MKL VSL functions
       // dynamically allocate memory, so these calls being in a constructor are
@@ -118,7 +118,7 @@ class MKLRNG {
       m_gaussian_method = x.m_gaussian_method;
       m_beta_method = x.m_beta_method;
       m_nthreads = x.m_nthreads;
-      m_stream = tk::make_unique< VSLStreamStatePtr[] >(
+      m_stream = std::make_unique< VSLStreamStatePtr[] >(
                    static_cast<std::size_t>(x.m_nthreads) );
       if (m_nthreads == 1)
         errchk( vslNewStream( &m_stream[0], x.m_brng, x.m_seed ) );
@@ -143,7 +143,7 @@ class MKLRNG {
       m_gaussian_method = x.m_gaussian_method;
       m_beta_method = x.m_beta_method;
       m_nthreads = x.m_nthreads;
-      m_stream = tk::make_unique< VSLStreamStatePtr[] >(
+      m_stream = std::make_unique< VSLStreamStatePtr[] >(
                    static_cast<std::size_t>(x.m_nthreads) );
       for (int i=0; i<x.m_nthreads; ++i) {
         auto I = static_cast< std::size_t >( i );

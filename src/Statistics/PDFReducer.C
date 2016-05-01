@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/PDFReducer.C
   \author    J. Bakosi
-  \date      Tue 19 Jan 2016 07:43:42 AM MST
+  \date      Sat 30 Apr 2016 06:21:04 PM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Custom Charm++ reducer for merging PDFs across PEs
   \details   Custom Charm++ reducer for merging PDFs across PEs.
@@ -10,7 +10,6 @@
 //******************************************************************************
 
 #include "PDFReducer.h"
-#include "Make_unique.h"
 
 namespace tk {
 
@@ -34,7 +33,7 @@ serialize( const std::vector< tk::UniPDF >& u,
   sizer | const_cast< std::vector< tk::TriPDF >& >( t );
 
   // Create raw character stream to store the serialized PDFs
-  std::unique_ptr<char[]> flatData = tk::make_unique<char[]>( sizer.size() );
+  std::unique_ptr<char[]> flatData = std::make_unique<char[]>( sizer.size() );
 
   // Serialize PDFs, each message will contain a vector of PDFs
   PUP::toMem packer( flatData.get() );

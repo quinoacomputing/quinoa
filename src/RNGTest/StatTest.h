@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/StatTest.h
   \author    J. Bakosi
-  \date      Thu 10 Sep 2015 12:11:04 PM MDT
+  \date      Sat 30 Apr 2016 06:22:31 PM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Random number generator statistical test
   \details   This file defines a generic random number generator statistical
@@ -30,7 +30,6 @@
   #pragma GCC diagnostic pop
 #endif
 
-#include "Make_unique.h"
 #include "CharmUtil.h"
 #include "Options/RNG.h"
 
@@ -54,7 +53,7 @@ class StatTest {
     //!   argument.
     template< typename T >
     explicit StatTest( T x ) :
-      self( tk::make_unique< Model<T> >( std::move(x) ) ){}
+      self( std::make_unique< Model<T> >( std::move(x) ) ){}
 
     //! \brief Constructor taking a std::function holding a constructor bound to
     //!   its arguments of an object modeling Concept (see below)
@@ -68,7 +67,7 @@ class StatTest {
     template< typename T,
       typename std::enable_if< !tk::HasTypedefProxy<T>::value, int >::type = 0 >
     explicit StatTest( std::function<T()> x ) :
-      self( tk::make_unique< Model<T> >( std::move(x()) ) ) {}
+      self( std::make_unique< Model<T> >( std::move(x()) ) ) {}
 
     //! \brief Constructor taking a function pointer to a constructor of an
     //!    object modeling Concept
@@ -95,7 +94,7 @@ class StatTest {
     template< typename T, typename... ConstrArgs,
       typename std::enable_if< tk::HasTypedefProxy<T>::value, int >::type = 0 >
     explicit StatTest( std::function<T()> c, ConstrArgs... args ) :
-      self( tk::make_unique< Model< typename T::Proxy > >
+      self( std::make_unique< Model< typename T::Proxy > >
             (std::move(T::Proxy::ckNew(std::forward<ConstrArgs>(args)...))) ) {
       Assert( c == nullptr, "std::function argument to StatTest Charm "
                             "constructor must be nullptr" );

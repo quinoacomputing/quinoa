@@ -2,7 +2,7 @@
 /*!
   \file      src/PDE/PDE.h
   \author    J. Bakosi
-  \date      Mon 14 Mar 2016 09:39:33 AM MDT
+  \date      Sat 30 Apr 2016 06:20:53 PM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Partial differential equation
   \details   This file defines a generic partial differential equation class.
@@ -22,7 +22,6 @@
 #include <functional>
 
 #include "Types.h"
-#include "Make_unique.h"
 #include "MeshNodes.h"
 
 namespace inciter {
@@ -47,7 +46,7 @@ class PDE {
     //! \param[in] x Instantiated object of type T given by the template
     //!   argument.
     template< typename T > explicit PDE( T x ) :
-      self( tk::make_unique< Model<T> >( std::move(x) ) ) {}
+      self( std::make_unique< Model<T> >( std::move(x) ) ) {}
 
     //! \brief Constructor taking a function pointer to a constructor of an
     //!   object modeling Concept.
@@ -69,7 +68,7 @@ class PDE {
     //! \param[in] args Zero or more constructor arguments
     template< typename T, typename...Args >
     explicit PDE( std::function<T(Args...)> x, Args&&... args ) :
-      self( tk::make_unique< Model<T> >(
+      self( std::make_unique< Model<T> >(
               std::move( x( std::forward<Args>(args)... ) ) ) ) {}
 
     //! Public interface to setting the initial conditions for the diff eq
