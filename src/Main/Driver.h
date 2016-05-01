@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Driver.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:40:17 PM MDT
+  \date      Sat 30 Apr 2016 06:24:40 PM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Driver base class declaration
   \details   Driver base class declaration. This class used as a base for
@@ -12,8 +12,6 @@
 //******************************************************************************
 #ifndef Driver_h
 #define Driver_h
-
-#include "Make_unique.h"
 
 namespace tk {
 
@@ -28,7 +26,8 @@ class Driver {
   public:
     //! Constructor taking an object modeling Concept (see below)
     template< typename T >
-    explicit Driver( T x ) : self( make_unique< Model<T> >( std::move(x) ) ) {}
+    explicit Driver( T x ) :
+      self( std::make_unique< Model<T> >( std::move(x) ) ) {}
 
     //! Constructor taking a function pointer to a constructor of an object
     //! modeling Concept (see below). Passing std::function allows late
@@ -36,7 +35,7 @@ class Driver {
     //! constructor, and thus usage from a factory.
     template< typename T >
     explicit Driver( std::function<T()> x ) :
-      self( make_unique< Model<T> >( std::move(x()) ) ) {}
+      self( std::make_unique< Model<T> >( std::move(x()) ) ) {}
 
     //! Public interface to execute
     void execute() const { self->execute(); }

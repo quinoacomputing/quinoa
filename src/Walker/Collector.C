@@ -2,7 +2,7 @@
 /*!
   \file      src/Walker/Collector.C
   \author    J. Bakosi
-  \date      Tue 19 Jan 2016 03:43:47 PM MST
+  \date      Sat 30 Apr 2016 06:24:48 PM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Charm++ module interface file for collecting contributions from
              Integrators
@@ -11,7 +11,6 @@
 */
 //******************************************************************************
 
-#include "Make_unique.h"
 #include "Collector.h"
 
 namespace walker {
