@@ -2,7 +2,7 @@
 /*!
   \file      src/LoadBalance/UnsMeshMap.h
   \author    J. Bakosi
-  \date      Sat 30 May 2015 11:59:56 AM MDT
+  \date      Sat 30 Apr 2016 06:05:17 PM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Advanced Charm++ array creation with a map using an unstructured
              grid
@@ -77,7 +77,7 @@ class UnsMeshMap : public CkArrayMap {
 
     //! \brief Create initial set of array elements based on the
     //!   unstructured-mesh-aware distribution computed in the constructor
-    void populateInitial( int, CkArrayIndex& idx, void *msg, CkArrMgr *mgr )
+    void populateInitial( int, CkArrayOptions& opt, void *msg, CkArrMgr *mgr )
     override;
 
   private:

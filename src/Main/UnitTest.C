@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/UnitTest.C
   \author    J. Bakosi
-  \date      Sat 30 Apr 2016 02:30:20 PM MDT
+  \date      Sat 30 Apr 2016 06:00:49 PM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     UnitTest's Charm++ main chare and main().
   \details   UnitTest's Charm++ main chare and main(). This file contains
@@ -119,8 +119,8 @@ const int MAX_TESTS_IN_GROUP = 80;
 #include "tests/RNG/TestRNGSSE.h"
 
 #include "tests/LoadBalance/TestLoadDistributor.h"
-//#include "tests/LoadBalance/TestLinearMap.h"
-//#include "tests/LoadBalance/TestUnsMeshMap.h"
+#include "tests/LoadBalance/TestLinearMap.h"
+#include "tests/LoadBalance/TestUnsMeshMap.h"
 
 //! \brief Charm handle to the main proxy, facilitates call-back to finalize,
 //!    etc., must be in global scope, unique per executable
@@ -414,7 +414,7 @@ int main( int argc, char **argv ) {
 #include "charmchild.def.h"
 #include "charmtimer.def.h"
 #include "migrated.def.h"
-//#include "testarray.def.h"
+#include "testarray.def.h"
 #include "unittest.def.h"
 
 #if defined(__clang__) || defined(__GNUC__)

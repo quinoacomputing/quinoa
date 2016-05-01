@@ -16,7 +16,7 @@ addCharmModule( "tutsuite" "UnitTest" )
 addCharmModule( "charmchild" "UnitTest" )
 addCharmModule( "migrated" "UnitTest" )
 addCharmModule( "charmtimer" "UnitTest" )
-#addCharmModule( "testarray" "UnitTest" )
+addCharmModule( "testarray" "UnitTest" )
 
 removeWarnings( "TUTSuite.C;TUTTest.C;Assessment.C" )
 
@@ -28,8 +28,8 @@ add_dependencies("UnitTest" "unittestCharmModule")
 # Add extra dependency of TUTSuite on charm modules testing advanced array
 # element placement using maps. This is required since TUTSuite spawns chare
 # arrays testing advanced array element placement maps.
-#add_dependencies( "tutsuiteCharmModule" "linearmapCharmModule" )
-#add_dependencies( "tutsuiteCharmModule" "unsmeshmapCharmModule" )
+add_dependencies( "tutsuiteCharmModule" "linearmapCharmModule" )
+add_dependencies( "tutsuiteCharmModule" "unsmeshmapCharmModule" )
 
 INSTALL(TARGETS UnitTest
         RUNTIME DESTINATION bin COMPONENT Runtime

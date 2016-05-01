@@ -2,7 +2,7 @@
 /*!
   \file      src/LoadBalance/LinearMap.h
   \author    J. Bakosi
-  \date      Sat 30 May 2015 11:54:09 AM MDT
+  \date      Sat 30 Apr 2016 05:57:55 PM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Advanced Charm++ array creation with a map in a linear fashion
   \details   Advanced Charm++ array creation refers to various ways arrays can
@@ -70,7 +70,7 @@ class LinearMap : public CkArrayMap {
     int procNum( int, const CkArrayIndex& idx ) override;
 
     //! Create initial set of array elements based on linear distribution
-    void populateInitial( int, CkArrayIndex& idx, void *msg, CkArrMgr *mgr )
+    void populateInitial( int, CkArrayOptions& opt, void *msg, CkArrMgr *mgr )
     override;
 
   private:

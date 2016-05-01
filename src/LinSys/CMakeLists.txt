@@ -18,8 +18,8 @@ removeWarnings("ZoltanInterOp.C;LinSysMerger.C")
 # the possible specializations of LinSys using various map placement strategies.
 # For example, LinSys is specialized with Conductor which in turn depends on
 # array placement maps.
-#add_dependencies( "LinSys" "linearmapCharmModule" )
-#add_dependencies( "LinSys" "unsmeshmapCharmModule" )
+add_dependencies( "LinSys" "linearmapCharmModule" )
+add_dependencies( "LinSys" "unsmeshmapCharmModule" )
 
 # Add extra dependency of LinSysMerger charm module on Conductor charm module.
 # This is required to make sure conductor.decl.h is generated before

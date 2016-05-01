@@ -6,12 +6,12 @@ include(charm)
 
 add_library(LoadBalance
             CommMap.C
-            #LinearMap.C
-            #UnsMeshMap.C
+            LinearMap.C
+            UnsMeshMap.C
 )
 
-#addCharmModule( "linearmap" "LoadBalance" )
-#addCharmModule( "unsmeshmap" "LoadBalance" )
+addCharmModule( "linearmap" "LoadBalance" )
+addCharmModule( "unsmeshmap" "LoadBalance" )
 removeWarnings( "CommMap.C;LinearMap.C;UnsMeshMap.C")
 
 INSTALL(TARGETS LoadBalance
