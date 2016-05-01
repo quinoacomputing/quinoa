@@ -2,7 +2,7 @@
 /*!
   \file      src/LoadBalance/UnsMeshMap.C
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 03:36:48 PM MDT
+  \date      Sat 30 Apr 2016 06:15:12 PM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Advanced Charm++ array creation with a map using an unstructured
              grid
@@ -180,19 +180,21 @@ UnsMeshMap::procNum( int, const CkArrayIndex& idx )
 }
 
 void
-UnsMeshMap::populateInitial( int, CkArrayIndex& idx, void *msg, CkArrMgr *mgr )
+UnsMeshMap::populateInitial( int, CkArrayOptions& opt,
+                             void *msg,
+                             CkArrMgr *mgr )
 //******************************************************************************
 //  Create initial set of array elements based on the unstructured-mesh-aware
 //  distribution computed in the constructor
-//! \param[in] idx Charm++ array index object containing the number of initial
+//! \param[in] opt Charm++ array options object containing the number of initial
 //!   array elements to be created
 //! \param[in] msg Charm++ messsage to use for array element creation
 //! \param[in] mgr Array manager to use
 //! \author J. Bakosi
 //******************************************************************************
 {
-  int nelem = *idx.data();      // number of array elements requested
-  if (nelem == 0) return;       // no initial elements requested
+  int nelem = *opt.getNumInitial().data(); // number of array elements requested
+  if (nelem == 0) return;                  // no initial elements requested
 
   Assert( nelem <= m_pe.size(), "Number of initial array elements larger than "
           "the UnsMeshMap object holds PEs for" );

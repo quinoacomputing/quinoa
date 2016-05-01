@@ -2,7 +2,7 @@
 /*!
   \file      src/LoadBalance/LinearMap.C
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 01:32:19 PM MDT
+  \date      Sat 30 Apr 2016 06:04:53 PM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Advanced Charm++ array creation with a map in a linear fashion
   \details   Advanced Charm++ array creation refers to various ways arrays can
@@ -73,18 +73,18 @@ LinearMap::procNum( int, const CkArrayIndex& idx )
 }
 
 void
-LinearMap::populateInitial( int, CkArrayIndex& idx, void *msg, CkArrMgr *mgr )
+LinearMap::populateInitial( int, CkArrayOptions& opt, void *msg, CkArrMgr *mgr )
 //******************************************************************************
 // Create initial set of array elements based on linear distribution
-//! \param[in] idx Charm++ array index object containing the number of initial
+//! \param[in] opt Charm++ array options object containing the number of initial
 //!   array elements to be created
 //! \param[in] msg Charm++ messsage to use for array element creation
 //! \param[in] mgr Array manager to use
 //! \author J. Bakosi
 //******************************************************************************
 {
-  int nelem = *idx.data();      // number of array elements requested
-  if (nelem == 0) return;       // no initial elements requested
+  int nelem = *opt.getNumInitial().data(); // number of array elements requested
+  if (nelem == 0) return;                  // no initial elements requested
 
   auto lower = CkMyPe() * m_chunksize;
   auto upper = lower + m_chunksize;
