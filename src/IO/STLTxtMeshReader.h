@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/STLTxtMeshReader.h
   \author    J. Bakosi
-  \date      Wed 04 Nov 2015 08:02:02 AM MST
+  \date      Wed 04 May 2016 08:19:13 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     ASCII STL (STereoLithography) reader class declaration
   \details   ASCII STL (STereoLithographu) reader class declaration.
@@ -41,7 +41,8 @@ class STLTxtMeshReader : public Reader {
       const std::string correct;        //!< Keyword that should be read in
 
       //! Initializer constructor
-      explicit STLKeyword( const std::string& corr ) noexcept : correct(corr) {}
+      explicit STLKeyword( const std::string& corr ) noexcept :
+        read(), correct(corr) {}
 
       //! Operator >> for reading a keyword and hande error
       friend std::ifstream& operator>> (std::ifstream& is, STLKeyword& kw) {

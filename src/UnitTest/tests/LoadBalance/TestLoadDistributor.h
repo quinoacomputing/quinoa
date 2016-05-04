@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/LoadBalance/TestLoadDistributor.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 03:16:40 PM MDT
+  \date      Wed 04 May 2016 03:11:44 PM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Unit tests for LoadBalance/LoadDistributor
   \details   Unit tests for LoadBalance/LoadDistributor
@@ -11,7 +11,7 @@
 #ifndef test_LoadDistributor_h
 #define test_LoadDistributor_h
 
-#include <tut/tut.hpp>
+#include "NoWarning/tut.h"
 
 #include "LoadDistributor.h"
 
@@ -23,6 +23,11 @@ extern std::string g_executable;
 
 namespace tut {
 
+#if defined(__GNUC__) && !defined(__clang__)
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wsuggest-attribute=noreturn"
+#endif
+
 //! All tests in group inherited from this base
 struct LoadDistributor_common {};
 
@@ -32,7 +37,7 @@ using LoadDistributor_group =
 using LoadDistributor_object = LoadDistributor_group::object;
 
 //! Define test group
-LoadDistributor_group LoadDistributor( "LoadBalance/LoadDistributor" );
+static LoadDistributor_group LoadDistributor( "LoadBalance/LoadDistributor" );
 
 //! Test definitions for group
 
@@ -157,6 +162,10 @@ void LoadDistributor_object::test< 7 >() {
   }
   #endif
 }
+
+#if defined(__GNUC__) && !defined(__clang__)
+  #pragma GCC diagnostic pop
+#endif
 
 } // tut::
 

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/FileParser.C
   \author    J. Bakosi
-  \date      Tue 01 Dec 2015 10:39:40 AM MST
+  \date      Wed 04 May 2016 08:21:48 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     File parser base class definition
   \details   File parser base class defintion. File parser base serves as a
@@ -76,6 +76,7 @@ FileParser::diagnostics( const tk::Print& print,
     std::string parsed;                      //!< original line parsed
     std::string underline;                   //!< underline
     std::vector< std::string > msg;          //!< error or warning messages
+    ErroneousLine() : dlnum(0), parsed(), underline(), msg() {}
   };
 
   Reader id( m_filename );        // file reader for extracting erroneous lines

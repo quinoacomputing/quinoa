@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/TestPUPUtil.h
   \author    J. Bakosi
-  \date      Mon 07 Sep 2015 08:23:24 AM MDT
+  \date      Wed 04 May 2016 11:49:58 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Unit tests for Base/PUPUtil.h
   \details   Unit tests for Base/PUPUtil.h
@@ -11,10 +11,9 @@
 #ifndef test_PUPUtil_h
 #define test_PUPUtil_h
 
-#include <tut/tut.hpp>
+#include "NoWarning/tut.h"
 
 #include "PUPUtil.h"
-#include "migrated.decl.h"
 #include "tests/Base/MigratedTypes.h"
 
 namespace unittest {
@@ -33,15 +32,29 @@ using PUPUtil_group = test_group< PUPUtil_common, MAX_TESTS_IN_GROUP >;
 using PUPUtil_object = PUPUtil_group::object;
 
 //! Define test group
-PUPUtil_group PUPUtil( "Base/PUPUtil" );
+static PUPUtil_group PUPUtil( "Base/PUPUtil" );
 
 //! Test definitions for group
 
 //! Charm++ chare to test Pack/Unpack utilities during network migration
-struct Migrated : CBase_Migrated {
+class Migrated : public CBase_Migrated {
+
+  public:
 
   //! Constructor taking (and migrating) a default strongly-typed enum
-  explicit Migrated( charm::Enum_default e ) : m_enum_default(e) {
+  explicit Migrated( charm::Enum_default e ) :
+    m_enum_default(e),
+    m_enum_uint8_t(),
+    m_enum_cstyle(),
+    m_pair(),
+    m_vector(),
+    m_tuple(),
+    m_array(),
+    m_unordered_map(),
+    m_boost_optional_str(),
+    m_boost_optional_int(),
+    m_tagged_tuple()
+ {
     // Create test result struct, assume test is ok
     tut::test_result tr( "Base/PUPUtil", 1,
                          "Charm:migrate enum 2",
@@ -70,7 +83,19 @@ struct Migrated : CBase_Migrated {
   }
 
   //! Constructor taking (and migrating) a uint8_t strongly-typed enum
-  explicit Migrated( charm::Enum_uint8_t e ) : m_enum_uint8_t(e) {
+  explicit Migrated( charm::Enum_uint8_t e ) :
+    m_enum_default(),
+    m_enum_uint8_t(e),
+    m_enum_cstyle(),
+    m_pair(),
+    m_vector(),
+    m_tuple(),
+    m_array(),
+    m_unordered_map(),
+    m_boost_optional_str(),
+    m_boost_optional_int(),
+    m_tagged_tuple()
+  {
     // Create test result struct, assume test is ok
     tut::test_result tr( "Base/PUPUtil", 2,
                          "Charm:migrate uint_8t enum 2",
@@ -99,7 +124,19 @@ struct Migrated : CBase_Migrated {
   }
 
   //! Constructor taking (and migrating) a C-style enum
-  explicit Migrated( charm::Enum_cstyle e ) : m_enum_cstyle(e) {
+  explicit Migrated( charm::Enum_cstyle e ) :
+    m_enum_default(),
+    m_enum_uint8_t(),
+    m_enum_cstyle(e),
+    m_pair(),
+    m_vector(),
+    m_tuple(),
+    m_array(),
+    m_unordered_map(),
+    m_boost_optional_str(),
+    m_boost_optional_int(),
+    m_tagged_tuple()
+  {
     // Create test result struct, assume test is ok
     tut::test_result tr( "Base/PUPUtil", 3,
                          "Charm:migrate C-style enum 2",
@@ -124,20 +161,33 @@ struct Migrated : CBase_Migrated {
   }
 
   //! Constructor taking (and migrating) a std::pair<int,double>
-  explicit Migrated( charm::Pair p ) : m_pair(p) {
+  explicit Migrated( charm::Pair p ) :
+    m_enum_default(),
+    m_enum_uint8_t(),
+    m_enum_cstyle(),
+    m_pair(p),
+    m_vector(),
+    m_tuple(),
+    m_array(),
+    m_unordered_map(),
+    m_boost_optional_str(),
+    m_boost_optional_int(),
+    m_tagged_tuple()
+  {
     // Create test result struct, assume test is ok
     tut::test_result tr( "Base/PUPUtil", 4,
                          "Charm:migrate std::pair<int,double> 2",
                          tut::test_result::result_type::ok );
     try {
       // Generate error message with expected and actual value in case if fail
-      std::string expected = "( 2, 3.14 )";
-      std::string actual = "( " + std::to_string( m_pair.first ) +
-                           ", " + std::to_string( m_pair.second ) + " )";
+      double precision = 1.0e-15;    // required floating-point precision
       // Evaluate test
-      ensure( "std::pair different after migrated: "
-              "expected `" + expected + "` actual `" + actual + "`",
-              m_pair.first == 2 && m_pair.second == 3.14 );
+      ensure_equals( "std::pair (1st) different after migrated: "
+                     "expected `2` actual `" + std::to_string(m_pair.first) +
+                     "`", m_pair.first, 2.0, precision );
+      ensure_equals( "std::pair (2nd) different after migrated: "
+                     "expected `3.14` actual `" + std::to_string(m_pair.second)
+                     + "`", m_pair.second, 3.14, precision );
     } catch ( const failure& ex ) {
       tr.result = ex.result();
       tr.exception_typeid = ex.type();
@@ -150,7 +200,19 @@ struct Migrated : CBase_Migrated {
   }
 
   //! Constructor taking (and migrating) a std::vector< std::string >
-  explicit Migrated( charm::Vector v ) : m_vector(v) {
+  explicit Migrated( charm::Vector v ) :
+    m_enum_default(),
+    m_enum_uint8_t(),
+    m_enum_cstyle(),
+    m_pair(),
+    m_vector(v),
+    m_tuple(),
+    m_array(),
+    m_unordered_map(),
+    m_boost_optional_str(),
+    m_boost_optional_int(),
+    m_tagged_tuple()
+  {
     // Create test result struct, assume test is ok
     tut::test_result tr( "Base/PUPUtil", 5,
                          "Charm:migrate std::vector< std::string > 2",
@@ -177,7 +239,19 @@ struct Migrated : CBase_Migrated {
   }
 
   //! Constructor taking (and migrating) a std::tuple
-  explicit Migrated( charm::Tuple t ) : m_tuple(t) {
+  explicit Migrated( charm::Tuple t ) :
+    m_enum_default(),
+    m_enum_uint8_t(),
+    m_enum_cstyle(),
+    m_pair(),
+    m_vector(),
+    m_tuple(t),
+    m_array(),
+    m_unordered_map(),
+    m_boost_optional_str(),
+    m_boost_optional_int(),
+    m_tagged_tuple()
+  {
     // Create test result struct, assume test is ok
     tut::test_result tr( "Base/PUPUtil", 6,
                          "Charm:migrate std::tuple 2",
@@ -241,7 +315,19 @@ struct Migrated : CBase_Migrated {
   }
 
   //! Constructor taking (and migrating) a std::array
-  explicit Migrated( charm::Array a ) : m_array(a) {
+  explicit Migrated( charm::Array a ) :
+    m_enum_default(),
+    m_enum_uint8_t(),
+    m_enum_cstyle(),
+    m_pair(),
+    m_vector(),
+    m_tuple(),
+    m_array(a),
+    m_unordered_map(),
+    m_boost_optional_str(),
+    m_boost_optional_int(),
+    m_tagged_tuple()
+  {
     // Create test result struct, assume test is ok
     tut::test_result tr( "Base/PUPUtil", 7,
                          "Charm:migrate std::array<int,2> 2",
@@ -267,7 +353,19 @@ struct Migrated : CBase_Migrated {
   }
 
   //! Constructor taking (and migrating) a std::unordered_map
-  explicit Migrated( charm::UnorderedMap m ) : m_unordered_map(m) {
+  explicit Migrated( charm::UnorderedMap m ) :
+    m_enum_default(),
+    m_enum_uint8_t(),
+    m_enum_cstyle(),
+    m_pair(),
+    m_vector(),
+    m_tuple(),
+    m_array(),
+    m_unordered_map(m),
+    m_boost_optional_str(),
+    m_boost_optional_int(),
+    m_tagged_tuple()
+  {
     // Create test result struct, assume test is ok
     tut::test_result tr( "Base/PUPUtil", 8,
                          "Charm:migrate std::unordered_map<int,str> 2",
@@ -276,8 +374,8 @@ struct Migrated : CBase_Migrated {
       // Generate error message with expected and actual value in case if fail
       std::string expected = R"([ {11, "eleven"} {12, "twelve"} ])";
       std::string actual = "[ ";
-      for (const auto& m : m_unordered_map) {
-        actual += "{" + std::to_string(m.first) + ", " + m.second + "} ";
+      for (const auto& n : m_unordered_map) {
+        actual += "{" + std::to_string(n.first) + ", " + n.second + "} ";
       }
       actual += "]";
       // Evaluate test
@@ -297,7 +395,19 @@ struct Migrated : CBase_Migrated {
   }
 
   //! Constructor taking (and migrating) a boost::optional< std::string >
-  explicit Migrated( charm::BoostOptionalStr o ) : m_boost_optional_str(o) {
+  explicit Migrated( charm::BoostOptionalStr o ) :
+    m_enum_default(),
+    m_enum_uint8_t(),
+    m_enum_cstyle(),
+    m_pair(),
+    m_vector(),
+    m_tuple(),
+    m_array(),
+    m_unordered_map(),
+    m_boost_optional_str(o),
+    m_boost_optional_int(),
+    m_tagged_tuple()
+  {
     // Create test result struct, assume test is ok
     tut::test_result tr( "Base/PUPUtil", 9,
                          "Charm:migrate boost::optional<str> 2",
@@ -323,7 +433,19 @@ struct Migrated : CBase_Migrated {
   }
 
   //! Constructor taking (and migrating) an uninitialized boost::optional< int >
-  explicit Migrated( charm::BoostOptionalInt o ) : m_boost_optional_int(o) {
+  explicit Migrated( charm::BoostOptionalInt o ) :
+    m_enum_default(),
+    m_enum_uint8_t(),
+    m_enum_cstyle(),
+    m_pair(),
+    m_vector(),
+    m_tuple(),
+    m_array(),
+    m_unordered_map(),
+    m_boost_optional_str(),
+    m_boost_optional_int(o),
+    m_tagged_tuple()
+  {
     // Create test result struct, assume test is ok
     tut::test_result tr( "Base/PUPUtil", 10,
                          "Charm:migrate boost::optional<int> 2",
@@ -349,7 +471,19 @@ struct Migrated : CBase_Migrated {
   }
 
   //! Constructor taking (and migrating) a tk::tuple::tagged_tuple
-  explicit Migrated( charm::TaggedTuple t ) : m_tagged_tuple(t) {
+  explicit Migrated( charm::TaggedTuple t ) :
+    m_enum_default(),
+    m_enum_uint8_t(),
+    m_enum_cstyle(),
+    m_pair(),
+    m_vector(),
+    m_tuple(),
+    m_array(),
+    m_unordered_map(),
+    m_boost_optional_str(),
+    m_boost_optional_int(),
+    m_tagged_tuple(t)
+  {
     // Create test result struct, assume test is ok
     tut::test_result tr( "Base/PUPUtil", 11,
                          "Charm:migrate tk::tuple::tagged_tuple 2",

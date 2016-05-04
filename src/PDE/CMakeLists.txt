@@ -6,8 +6,6 @@ add_library(PDE
             PDEStack.C
 )
 
-removeWarnings( "PDEStack.C" )
-
 INSTALL(TARGETS PDE
   	RUNTIME DESTINATION bin COMPONENT Runtime
   	LIBRARY DESTINATION lib COMPONENT Runtime

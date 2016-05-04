@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Control/Options/TestMKLGaussianMethod.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 03:15:24 PM MDT
+  \date      Wed 04 May 2016 12:09:39 PM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Unit tests for Control/Options/MKLGaussianMethod
   \details   Unit tests for Control/Options/MKLGaussianMethod
@@ -11,7 +11,7 @@
 #ifndef test_MKLGaussianMethod_h
 #define test_MKLGaussianMethod_h
 
-#include <tut/tut.hpp>
+#include "NoWarning/tut.h"
 
 #include "Options/MKLGaussianMethod.h"
 
@@ -19,6 +19,7 @@ namespace tut {
 
 //! All tests in group inherited from this base
 struct MKLGaussianMethod_common {
+  MKLGaussianMethod_common() : m() {}
   const tk::ctr::MKLGaussianMethod m;
 };
 
@@ -28,7 +29,8 @@ using MKLGaussianMethod_group =
 using MKLGaussianMethod_object = MKLGaussianMethod_group::object;
 
 //! Define test group
-MKLGaussianMethod_group MKLGaussianMethod( "Control/Options/MKLGaussianMethod" );
+static MKLGaussianMethod_group
+ MKLGaussianMethod( "Control/Options/MKLGaussianMethod" );
 
 //! Test definitions for group
 

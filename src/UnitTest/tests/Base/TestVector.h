@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/TestVector.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 03:11:53 PM MDT
+  \date      Tue 03 May 2016 08:03:41 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Unit tests for Base/Vector.h
   \details   Unit tests for Base/Vector.h
@@ -13,7 +13,7 @@
 
 #include <unistd.h>
 
-#include <tut/tut.hpp>
+#include "NoWarning/tut.h"
 
 #include "Vector.h"
 
@@ -29,7 +29,7 @@ using Vector_group = test_group< Vector_common, MAX_TESTS_IN_GROUP >;
 using Vector_object = Vector_group::object;
 
 //! Define test group
-Vector_group Vector( "Base/Vector" );
+static Vector_group Vector( "Base/Vector" );
 
 //! Test definitions for group
 

@@ -2,7 +2,7 @@
 /*!
   \file      src/Walker/Distributor.h
   \author    J. Bakosi
-  \date      Fri 15 Jan 2016 09:13:37 AM MST
+  \date      Wed 04 May 2016 11:25:18 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Distributor drives the time integration of differential equations
   \details   Distributor drives the time integration of differential equations.
@@ -32,27 +32,29 @@
 #include "WalkerPrint.h"
 #include "Walker/CmdLine/CmdLine.h"
 
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wconversion"
-#endif
-
-#include <sdag.h>
-#include "integrator.decl.h"
-#include "distributor.decl.h"
-
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic pop
-#endif
+#include "NoWarning/integrator.decl.h"
 
 namespace walker {
 
 //! Distributor drives the time integration of differential equations
 class Distributor : public CBase_Distributor {
 
+  #if defined(__clang__)
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wunused-parameter"
+  #elif defined(__GNUC__)
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wunused-parameter"
+    #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+  #endif
   // Include Charm++ SDAG code. See http://charm.cs.illinois.edu/manuals/html/
   // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
   Distributor_SDAG_CODE
+  #if defined(__clang__)
+    #pragma clang diagnostic pop
+  #elif defined(__GNUC__)
+    #pragma GCC diagnostic pop
+  #endif
 
   public:
     //! Constructor
@@ -123,11 +125,9 @@ class Distributor : public CBase_Distributor {
 
     //! Pretty printer
     WalkerPrint m_print;
-
     //! Output indicators
     tk::tuple::tagged_tuple< tag::stat, bool,
                              tag::pdf,  bool > m_output;
-
     uint64_t m_it;                              //!< Iteration count
     tk::real m_npar;                            //!< Total number of particles
     tk::real m_t;                               //!< Physical time

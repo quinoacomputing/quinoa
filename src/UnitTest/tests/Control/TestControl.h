@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Control/TestControl.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 03:14:49 PM MDT
+  \date      Tue 03 May 2016 08:05:22 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Unit tests for Control/Control
   \details   Unit tests for Control/Control
@@ -11,7 +11,7 @@
 #ifndef test_Control_h
 #define test_Control_h
 
-#include <tut/tut.hpp>
+#include "NoWarning/tut.h"
 
 #include "Control.h"
 
@@ -64,7 +64,7 @@ using Control_group = test_group< Control_common, MAX_TESTS_IN_GROUP >;
 using Control_object = Control_group::object;
 
 //! Define test group
-Control_group Control( "Control/Control" );
+static Control_group Control( "Control/Control" );
 
 //! Test definitions for group
 
@@ -371,10 +371,10 @@ void Control_object::test< 12 >() {
   control c;
 
   try {
-    int a = c.convert< int >( "a" );
+    c.convert< int >( "a" );
     fail( "should throw exception" );
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     // exception thrown, test ok
   }
 }
@@ -391,7 +391,7 @@ void Control_object::test< 13 >() {
     int a = c.convert< int >( "345" );
     ensure_equals( "conversion", a, 345 );
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     fail( "should not throw exception" );
   }
 }
@@ -408,7 +408,7 @@ void Control_object::test< 14 >() {
     std::string a = c.convert( 345 );
     ensure_equals( "conversion", a, "345" );
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     fail( "should not throw exception" );
   }
 }

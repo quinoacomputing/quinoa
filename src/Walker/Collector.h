@@ -2,7 +2,7 @@
 /*!
   \file      src/Walker/Collector.h
   \author    J. Bakosi
-  \date      Sat 30 Apr 2016 06:24:56 PM MDT
+  \date      Tue 03 May 2016 11:12:42 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Charm++ module interface file for collecting contributions from
              Integrators
@@ -19,17 +19,6 @@
 #include "PDFReducer.h"
 #include "Distributor.h"
 #include "Walker/InputDeck/InputDeck.h"
-
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wconversion"
-#endif
-
-#include "collector.decl.h"
-
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic pop
-#endif
 
 namespace walker {
 

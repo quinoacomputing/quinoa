@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/TestProcessControl.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 03:13:38 PM MDT
+  \date      Tue 03 May 2016 08:03:28 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Unit tests for Base/ProcessControl.h
   \details   Unit tests for Base/ProcessControl.h
@@ -11,7 +11,7 @@
 #ifndef test_ProcessControl_h
 #define test_ProcessControl_h
 
-#include <tut/tut.hpp>
+#include "NoWarning/tut.h"
 
 #include "ProcessControl.h"
 
@@ -26,7 +26,7 @@ using ProcessControl_group =
 using ProcessControl_object = ProcessControl_group::object;
 
 //! Define test group
-ProcessControl_group ProcessControl( "Base/ProcessControl" );
+static ProcessControl_group ProcessControl( "Base/ProcessControl" );
 
 //! Test definitions for group
 
@@ -42,7 +42,7 @@ void ProcessControl_object::test< 1 >() {
     fail( "should throw exception in DEBUG mode" );
     #endif
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     // exception thrown in DEBUG mode, test ok
     // Assert skipped in RELEASE mode, tk::rm() still did not fail, test ok
   }

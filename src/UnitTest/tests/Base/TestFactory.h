@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/TestFactory.h
   \author    J. Bakosi
-  \date      Sat 30 Apr 2016 06:22:13 PM MDT
+  \date      Wed 04 May 2016 03:09:51 PM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Unit tests for Base/Factory.h
   \details   Unit tests for Base/Factory.h
@@ -13,10 +13,10 @@
 
 #include <unistd.h>
 
-#include <tut/tut.hpp>
+#include "NoWarning/tut.h"
 
+#include "Macro.h"
 #include "Factory.h"
-#include "charmchild.decl.h"
 
 namespace unittest {
 
@@ -25,6 +25,11 @@ extern CProxy_TUTSuite g_suiteProxy;
 } // unittest::
 
 namespace tut {
+
+#if defined(__GNUC__) && !defined(__clang__)
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wsuggest-attribute=noreturn"
+#endif
 
 //! All tests in group inherited from this base
 struct Factory_common {
@@ -36,7 +41,7 @@ struct Factory_common {
   };
   struct Child : Base {
     Child() : Base( "def" ) {}
-    Child( int a ) : Base( "int" ) {}
+    Child( int ) : Base( "int" ) {}
   };
   using Factory = std::map< int, std::function< Base*() > >;
 
@@ -52,7 +57,9 @@ struct Factory_common {
     //! of class T was pre-constructed.
     template< typename T >
     explicit VBase( T x ) :
-      self( std::make_unique< Model<T> >( std::move(x) ) ), ctor( "val" ) {}
+      self( std::make_unique< Model<T> >( std::move(x) ) ),
+      ctor( "val" ),
+      assg() {}
 
     //! Constructor taking a function pointer to a constructor of an object
     //! modeling Concept (see below). Passing std::function allows late
@@ -60,7 +67,9 @@ struct Factory_common {
     //! constructor, and thus usage from a factory.
     template< typename T >
     explicit VBase( std::function<T()> x ) :
-      self( std::make_unique< Model<T> >( std::move(x()) ) ), ctor( "fun" ) {}
+      self( std::make_unique< Model<T> >( std::move(x()) ) ),
+      ctor( "fun" ),
+      assg() {}
 
     //! Public interface to querying the child constructor type invoked
     std::string Type() const { return self->Type(); }
@@ -68,7 +77,7 @@ struct Factory_common {
     VBase& operator=( const VBase& x )
     { VBase tmp(x); *this = std::move(tmp); assg = "cpy"; return *this; }
     //! Copy constructor
-    VBase( const VBase& x ) : self( x.self->copy() ), ctor( "cpy" ) {}
+    VBase( const VBase& x ) : self( x.self->copy() ), ctor( "cpy" ), assg() {}
     //! Move assignment: could be default
     VBase& operator=( VBase&& x ) noexcept {
       self = std::move( x.self );
@@ -76,8 +85,15 @@ struct Factory_common {
       assg = "mov";
       return *this;
     }
+    #if defined(__GNUC__)
+      #pragma GCC diagnostic push
+      #pragma GCC diagnostic ignored "-Weffc++"
+    #endif
     //! Move constructor: could be default, but in terms of move assignment
     VBase( VBase&& x ) noexcept { *this = std::move(x); ctor = "mov"; }
+    #if defined(__GNUC__)
+      #pragma GCC diagnostic pop
+    #endif
 
     //! Accessor to ctor type
     std::string ctortype() const { return ctor; }
@@ -87,6 +103,8 @@ struct Factory_common {
     //! Concept is a pure virtual base struct specifying the requirements of
     //! polymorphic objects deriving from it
     struct Concept {
+      Concept() = default;
+      Concept( const Concept& ) = default;
       virtual ~Concept() = default;
       virtual Concept* copy() const = 0;
       virtual std::string Type() const = 0;
@@ -110,7 +128,7 @@ struct Factory_common {
   //! Child struct used polymorphically with VBase
   struct VChild {
     VChild() : type( "def" ) {}
-    VChild( int a ) : type( "int" ) {}
+    VChild( int ) : type( "int" ) {}
     std::string Type() const { return type; }
     std::string type;
   };
@@ -123,7 +141,7 @@ using Factory_group = test_group< Factory_common, MAX_TESTS_IN_GROUP >;
 using Factory_object = Factory_group::object;
 
 //! Define test group
-Factory_group Factory( "Base/Factory" );
+static Factory_group Factory( "Base/Factory" );
 
 //! Test definitions for group
 
@@ -205,7 +223,7 @@ void Factory_object::test< 4 >() {
     tk::instantiate(f,2);
     fail( "tk::instantiate with non-existent key must throw if DEBUG mode" );
   }
-  catch( tk::Exception& e ) {
+  catch( tk::Exception& ) {
     // exception thrown, test ok
   }
   #else
@@ -393,6 +411,9 @@ struct VBase {
          (std::move(T::Proxy::ckNew(std::forward<ConstrArgs>(args)...))) ) {
     Assert( c == nullptr, "std::function argument to VBase Charm "
                           "constructor must be nullptr" );
+    #ifdef NDEBUG
+    IGNORE(c);
+    #endif
   }
   //! Copy assignment
   VBase& operator=( const VBase& x )
@@ -406,6 +427,8 @@ struct VBase {
   //! Concept is a pure virtual base struct specifying the requirements of
   //! polymorphic objects deriving from it
   struct Concept {
+    Concept() = default;
+    Concept( const Concept& ) = default;
     virtual ~Concept() = default;
     virtual Concept* copy() const = 0;
   };
@@ -422,7 +445,8 @@ struct VBase {
 
 //! Child struct used polymorphically with VBase (Charm++ chare)
 //! (not in Factory_common, so Charm++ can find it)
-struct CharmChild : CBase_CharmChild {
+class CharmChild : public CBase_CharmChild {
+  public:
   using Proxy = CProxy_CharmChild;
   CharmChild() {
     // If we got here, the second part of this test succeeded. Construct and
@@ -434,7 +458,7 @@ struct CharmChild : CBase_CharmChild {
       { tr.group, tr.name, std::to_string(tr.result), tr.message,
         tr.exception_typeid } );
   }
-  CharmChild( tk::real a ) {
+  CharmChild( tk::real ) {
     // If we got here, the second part of this test succeeded. Construct and
     // send back a new test result, with tag "2", signaling the second part.
     tut::test_result tr( "Base/Factory", 8, 
@@ -512,6 +536,10 @@ void Factory_object::test< 14 >() {
   else
     fail( "cannot find key in factory" );
 }
+
+#if defined(__GNUC__) && !defined(__clang__)
+  #pragma GCC diagnostic pop
+#endif
 
 } // tut::
 

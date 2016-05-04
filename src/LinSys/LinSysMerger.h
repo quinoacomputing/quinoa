@@ -27,18 +27,7 @@
 #include "HypreVector.h"
 #include "HypreSolver.h"
 
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wconversion"
-  #pragma GCC diagnostic ignored "-Wreorder"
-#endif
-
-#include "conductor.decl.h"
-#include "linsysmerger.decl.h"
-
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic pop
-#endif
+#include "NoWarning/conductor.decl.h"
 
 namespace tk {
 
@@ -53,9 +42,22 @@ namespace tk {
 template< class HostProxy, class WorkerProxy  >
 class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
 
+  #if defined(__clang__)
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wunused-parameter"
+  #elif defined(__GNUC__)
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+    #pragma GCC diagnostic ignored "-Wunused-parameter"
+  #endif
   // Include Charm++ SDAG code. See http://charm.cs.illinois.edu/manuals/html/
   // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
   LinSysMerger_SDAG_CODE
+  #if defined(__clang__)
+    #pragma clang diagnostic pop
+  #elif defined(__GNUC__)
+    #pragma GCC diagnostic pop
+  #endif
 
   private:
     using Group = CBase_LinSysMerger< HostProxy, WorkerProxy >;
@@ -68,11 +70,36 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
     LinSysMerger( const HostProxy& host,
                   const WorkerProxy& worker,
                   std::size_t ncomp ) :
+      __dep(),
       m_host( host ),
       m_worker( worker ),
       m_ncomp( ncomp ),
       m_nchare( 0 ),
-      m_nperow( 0 )
+      m_nperow( 0 ),
+      m_lower( 0 ),
+      m_upper( 0 ),
+      m_myworker(),
+      m_rowimport(),
+      m_solimport(),
+      m_lhsimport(),
+      m_rhsimport(),
+      m_row(),
+      m_sol(),
+      m_lhs(),
+      m_rhs(),
+      m_x(),
+      m_A(),
+      m_b(),
+      m_solver(),
+      m_hypreRows(),
+      m_hypreNcols(),
+      m_hypreCols(),
+      m_hypreMat(),
+      m_hypreRhs(),
+      m_hypreSol(),
+      m_lid(),
+      m_div(),
+      m_pe()
     {
       // Activate SDAG waits for assembling lhs, rhs, and solution
       wait4sol();
@@ -100,7 +127,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       // Store inverse of PE-division map stored on all PE
       m_div[ {lower,upper} ] = pe;
       // If we have all PEs' bounds, signal the runtime system to continue
-      if (m_div.size() == CkNumPes()) {
+      if (m_div.size() == static_cast<std::size_t>(CkNumPes())) {
         // Create my PE's lhs matrix distributed across all PEs
         m_A.create( m_lower*m_ncomp, m_upper*m_ncomp );
         // Create my PE's rhs and unknown vectors distributed across all PEs
@@ -133,7 +160,6 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
     void checkin() { ++m_nchare; }
 
     //! Chares contribute their global row ids
-    //! \param[in] worker Worker proxy contribution coming from
     //! \param[in] fromch Charm chare array index contribution coming from
     //! \param[in] row Global mesh point (row) indices contributed
     //! \note This function does not have to be declared as a Charm++ entry
@@ -160,7 +186,6 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       if (rowcomplete()) signal2host_row_complete( m_host );
     }
     //! Receive global row ids from fellow group branches
-    //! \param[in] worker Worker proxy contribution coming from
     //! \param[in] fromch Charm chare array index contribution coming from
     //! \param[in] frompe PE contribution coming from
     //! \param[in] row Global mesh point (row) indices received
@@ -175,7 +200,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
     void recrow() {
       --m_nperow;
       if (rowcomplete()) signal2host_row_complete( m_host );
-    };
+    }
 
     //! Chares contribute their solution nonzero values
     //! \param[in] fromch Charm chare array index contribution coming from
@@ -603,6 +628,10 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       updateSolution();
     }
 
+    #if defined(__clang__)
+      #pragma clang diagnostic push
+      #pragma clang diagnostic ignored "-Wdocumentation"
+    #endif
     /** @name Host signal calls
       * \brief These functions signal back to the host via a global reduction
       *   originating from each PE branch
@@ -672,21 +701,37 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
        CkCallback( CkIndex_Conductor::redn_wrapper_setup(NULL), host ) );
     }
     ///@}
+    #if defined(__clang__)
+      #pragma GCC diagnostic pop
+    #endif
 };
 
 } // tk::
 
-#if defined(__clang__) || defined(__GNUC__)
+#if defined(__clang__)
+  #pragma clang diagnostic push
+  #pragma clang diagnostic ignored "-Wextra-semi"
+  #pragma clang diagnostic ignored "-Wold-style-cast"
+  #pragma clang diagnostic ignored "-Wsign-conversion"
+  #pragma clang diagnostic ignored "-Wunused-parameter"
+  #pragma clang diagnostic ignored "-Wshorten-64-to-32"
+  #pragma clang diagnostic ignored "-Wreorder"
+#elif defined(__GNUC__)
   #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wconversion"
+  #pragma GCC diagnostic ignored "-Wnon-virtual-dtor"
   #pragma GCC diagnostic ignored "-Wreorder"
+  #pragma GCC diagnostic ignored "-Wcast-qual"
+  #pragma GCC diagnostic ignored "-Weffc++"
+  #pragma GCC diagnostic ignored "-Wunused-parameter"
 #endif
 
 #define CK_TEMPLATES_ONLY
 #include "linsysmerger.def.h"
 #undef CK_TEMPLATES_ONLY
 
-#if defined(__clang__) || defined(__GNUC__)
+#if defined(__clang__)
+  #pragma clang diagnostic pop
+#elif defined(__GNUC__)
   #pragma GCC diagnostic pop
 #endif
 

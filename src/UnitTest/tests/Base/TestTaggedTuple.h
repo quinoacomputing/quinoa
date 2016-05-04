@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/TestTaggedTuple.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 03:11:41 PM MDT
+  \date      Tue 03 May 2016 07:29:37 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Unit tests for Base/TaggedTuple.h
   \details   Unit tests for Base/TaggedTuple.h
@@ -11,7 +11,7 @@
 #ifndef test_TaggedTuple_h
 #define test_TaggedTuple_h
 
-#include <tut/tut.hpp>
+#include "NoWarning/tut.h"
 
 #include "TaggedTuple.h"
 
@@ -38,7 +38,7 @@ using TaggedTuple_group = test_group< TaggedTuple_common, MAX_TESTS_IN_GROUP >;
 using TaggedTuple_object = TaggedTuple_group::object;
 
 //! Define test group
-TaggedTuple_group TaggedTuple( "Base/TaggedTuple" );
+static TaggedTuple_group TaggedTuple( "Base/TaggedTuple" );
 
 //! Test definitions for group
 

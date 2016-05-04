@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/TestU01Stack.C
   \author    J. Bakosi
-  \date      Sun 03 Apr 2016 10:06:49 AM MDT
+  \date      Wed 04 May 2016 10:06:14 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Stack of TestU01 RNG statistical tests
   \details   Stack of TestU01 RNG statistical tests
@@ -34,7 +34,7 @@ extern ctr::InputDeck g_inputdeck;
 
 using rngtest::TestU01Stack;
 
-TestU01Stack::TestU01Stack()
+TestU01Stack::TestU01Stack() : m_generator()
 //******************************************************************************
 //  Constructor
 //! \details Associate RNGs to global-scope wrappers. Admittedly, this code is

@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/PDFWriter.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:27:05 PM MDT
+  \date      Tue 03 May 2016 06:01:53 PM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     PDF writer class declaration
   \details   This file declares a PDF writer class that facilitates outputing
@@ -15,6 +15,7 @@
 
 #include <string>
 
+#include "Macro.h"
 #include "Writer.h"
 #include "UniPDF.h"
 #include "BiPDF.h"
@@ -72,6 +73,9 @@ class PDFWriter : public tk::Writer {
     //! Assert the number of sample space dimensions given
     template< std::size_t size, class Container >
     void assertSampleSpaceDimensions( const Container& c ) const {
+      #ifdef NDEBUG
+      IGNORE(c);
+      #endif
       Assert( c.size() == size,
               "Number of sample space variables must equal " +
               std::to_string( size ) + " in PDF writer." );

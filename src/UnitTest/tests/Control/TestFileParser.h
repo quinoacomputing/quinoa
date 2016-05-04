@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Control/TestFileParser.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 03:14:56 PM MDT
+  \date      Tue 03 May 2016 08:05:57 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Unit tests for Control/FileParser
   \details   Unit tests for Control/FileParser
@@ -11,7 +11,7 @@
 #ifndef test_FileParser_h
 #define test_FileParser_h
 
-#include <tut/tut.hpp>
+#include "NoWarning/tut.h"
 
 #include "FileParser.h"
 
@@ -41,7 +41,7 @@ using FileParser_group = test_group< FileParser_common, MAX_TESTS_IN_GROUP >;
 using FileParser_object = FileParser_group::object;
 
 //! Define test group
-FileParser_group FileParser( "Control/FileParser" );
+static FileParser_group FileParser( "Control/FileParser" );
 
 //! Test definitions for group
 
@@ -164,7 +164,7 @@ void FileParser_object::test< 6 >() {
     // Feed "Warning" to diagnostics()
     p.diagnostics( tk::Print(), { { "Warning" } } );
 
-  } catch( tk::Exception& e ) {
+  } catch( tk::Exception& ) {
     fail( "should not throw exception" );
   } // if any other type of exception is thrown, test fails with except
 }
@@ -183,7 +183,7 @@ void FileParser_object::test< 7 >() {
     // Feed empty vector to diagnostics()
     p.diagnostics( tk::Print(), { {  } } );
 
-  } catch( tk::Exception& e ) {
+  } catch( tk::Exception& ) {
     fail( "should not throw exception" );
   } // if any other type of exception is thrown, test fails with except
 }

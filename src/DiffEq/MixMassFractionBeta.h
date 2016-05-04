@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/MixMassFractionBeta.h
   \author    J. Bakosi
-  \date      Sun 03 Apr 2016 06:04:29 PM MDT
+  \date      Wed 04 May 2016 11:19:56 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     System of mix mass-fraction beta SDEs
   \details   This file implements the time integration of a system of stochastic
@@ -65,6 +65,7 @@
 #ifndef MixMassFractionBeta_h
 #define MixMassFractionBeta_h
 
+#include <vector>
 #include <cmath>
 
 #include "InitPolicy.h"
@@ -109,6 +110,13 @@ class MixMassFractionBeta {
       m_rng( g_rng.at( tk::ctr::raw( g_inputdeck.get< tag::param,
                                                       tag::mixmassfracbeta,
                                                       tag::rng >().at(c) ) ) ),
+      m_bprime(),
+      m_S(),
+      m_kprime(),
+      m_rho2(),
+      m_r(),
+      m_b(),
+      m_k(),
       coeff(
         m_ncomp,
         g_inputdeck.get< tag::param,
@@ -130,7 +138,7 @@ class MixMassFractionBeta {
 
     //! Initalize SDE, prepare for time integration
     //! \param[in] stream Thread (or more precisely stream) ID 
-    //! \param[inout] particles Array of particle properties 
+    //! \param[in,out] particles Array of particle properties 
     //! \author J. Bakosi
     void initialize( int stream, tk::Particles& particles ) {
       //! Set initial conditions using initialization policy
@@ -146,7 +154,7 @@ class MixMassFractionBeta {
 
     //! \brief Advance particles according to the system of mix mass-fraction
     //!   beta SDEs
-    //! \param[inout] particles Array of particle properties
+    //! \param[in,out] particles Array of particle properties
     //! \param[in] stream Thread (or more precisely stream) ID
     //! \param[in] dt Time step size
     //! \param[in] moments Map of statistical moments
@@ -164,8 +172,8 @@ class MixMassFractionBeta {
       const auto npar = particles.nunk();
       for (auto p=decltype(npar){0}; p<npar; ++p) {
         // Generate Gaussian random numbers with zero mean and unit variance
-        tk::real dW[m_ncomp];
-        m_rng.gaussian( stream, m_ncomp, dW );
+        std::vector< tk::real > dW( m_ncomp );
+        m_rng.gaussian( stream, m_ncomp, dW.data() );
         // Advance all m_ncomp scalars
         for (ncomp_t i=0; i<m_ncomp; ++i) {
           tk::real& Y = particles( p, i, m_offset );
@@ -184,7 +192,6 @@ class MixMassFractionBeta {
     const ncomp_t m_ncomp;              //!< Number of components
     const ncomp_t m_offset;             //!< Offset SDE operates from
     const tk::RNG& m_rng;               //!< Random number generator
-    tk::real m_t;                       //!< Time
 
     //! Coefficients
     std::vector< kw::sde_bprime::info::expect::type > m_bprime;
@@ -221,7 +228,7 @@ class MixMassFractionBeta {
     }
 
     //! Compute instantaneous values derived from updated Y
-    //! \param[inout] particles Particle properties array
+    //! \param[in,out] particles Particle properties array
     //! \param[in] p Particle index
     //! \param[in] i Component index
     void derived( tk::Particles& particles, ncomp_t p, ncomp_t i ) const {

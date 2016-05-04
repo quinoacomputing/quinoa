@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/UnitTest/CmdLine/CmdLine.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:20:00 PM MDT
+  \date      Mon 02 May 2016 01:42:48 PM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     UnitTest's command line
   \details   This file defines the heterogeneous stack that is used for storing
@@ -18,6 +18,7 @@
 #include <boost/mpl/set.hpp>
 #include <boost/mpl/for_each.hpp>
 
+#include "Macro.h"
 #include "Control.h"
 #include "HelpFactory.h"
 #include "Keywords.h"
@@ -62,6 +63,7 @@ class CmdLine : public tk::Control<
     //!    that do have both command-line argument and control file parsers
     //! \see walker::ctr::CmdLine
     CmdLine( tk::ctr::HelpFactory ctrnfo = tk::ctr::HelpFactory() ) {
+      IGNORE(ctrnfo);
       set< tag::verbose >( false ); // Use quiet output by default
       // Initialize help: fill from own keywords
       boost::mpl::for_each< keywords >( tk::ctr::Info( get< tag::cmdinfo >() ) );
@@ -70,7 +72,7 @@ class CmdLine : public tk::Control<
     /** @name Pack/Unpack: Serialize CmdLine object for Charm++ */
     ///@{
     //! \brief Pack/Unpack serialize member function
-    //! \param[inout] p Charm++'s PUP::er serializer object reference
+    //! \param[in,out] p Charm++'s PUP::er serializer object reference
     //! \author J. Bakosi
     void pup( PUP::er& p ) {
       tk::Control< tag::verbose, bool,
@@ -83,8 +85,8 @@ class CmdLine : public tk::Control<
                    tag::error,   std::vector< std::string > >::pup(p);
     }
     //! \brief Pack/Unpack serialize operator|
-    //! \param[inout] p Charm++'s PUP::er serializer object reference
-    //! \param[inout] c CmdLine object reference
+    //! \param[in,out] p Charm++'s PUP::er serializer object reference
+    //! \param[in,out] c CmdLine object reference
     //! \author J. Bakosi
     friend void operator|( PUP::er& p, CmdLine& c ) { c.pup(p); }
     //@}

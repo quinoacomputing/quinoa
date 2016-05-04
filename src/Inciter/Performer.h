@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.h
   \author    J. Bakosi
-  \date      Thu 10 Mar 2016 09:04:46 PM MST
+  \date      Wed 04 May 2016 10:44:49 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Performer advances a PDE
   \details   Performer advances a PDE. There are a potentially
@@ -25,20 +25,11 @@
 
 #include "Types.h"
 #include "MeshNodes.h"
+#include "DerivedData.h"
 #include "Inciter/InputDeck/InputDeck.h"
 
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wconversion"
-#endif
-
-#include "conductor.decl.h"
-#include "performer.decl.h"
-#include "linsysmerger.decl.h"
-
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic pop
-#endif
+#include "NoWarning/conductor.decl.h"
+#include "NoWarning/performer.decl.h"
 
 namespace tk { class ExodusIIMeshWriter; }
 
@@ -63,6 +54,22 @@ class Performer : public CBase_Performer {
 
     //! Migrate constructor
     explicit Performer( CkMigrateMessage* ) :
+      // WARNING: This is a "blind" copy of the standard constructor initializer
+      // list - it must be changed for migration to be correct.
+      m_it( 0 ),
+      m_itf( 0 ),
+      m_t( g_inputdeck.get< tag::discr, tag::t0 >() ),
+      m_stage( 0 ),
+      m_nsol( 0 ),
+      m_outFilename( g_inputdeck.get< tag::cmd, tag::io, tag::output >() + "." +
+                     std::to_string( thisIndex ) ),
+      m_conductor(),
+      m_linsysmerger(),
+      m_cid(),
+      m_el(),     // fills m_inpoel and m_gid
+      m_lid(),
+      m_coord(),
+      m_psup( tk::genPsup( m_inpoel, 4, tk::genEsup(m_inpoel,4) ) ),
       m_u( 0, g_inputdeck.get< tag::component >().nprop() ),
       m_uf( 0, g_inputdeck.get< tag::component >().nprop() ),
       m_un( 0, g_inputdeck.get< tag::component >().nprop() ),

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Wed 17 Feb 2016 07:01:34 AM MST
+  \date      Sun 01 May 2016 10:46:53 PM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Inciter's input deck definition
   \details   This file defines the heterogeneous stack that is used for storing
@@ -98,7 +98,7 @@ class InputDeck :
     /** @name Pack/Unpack: Serialize InputDeck object for Charm++ */
     ///@{
     //! \brief Pack/Unpack serialize member function
-    //! \param[inout] p Charm++'s PUP::er serializer object reference
+    //! \param[in,out] p Charm++'s PUP::er serializer object reference
     //! \author J. Bakosi
     void pup( PUP::er& p ) {
       tk::Control< tag::title,      kw::title::info::expect::type,
@@ -111,8 +111,8 @@ class InputDeck :
                    tag::error,      std::vector< std::string > >::pup(p);
     }
     //! \brief Pack/Unpack serialize operator|
-    //! \param[inout] p Charm++'s PUP::er serializer object reference
-    //! \param[inout] i InputDeck object reference
+    //! \param[in,out] p Charm++'s PUP::er serializer object reference
+    //! \param[in,out] i InputDeck object reference
     //! \author J. Bakosi
     friend void operator|( PUP::er& p, InputDeck& i ) { i.pup(p); }
     //@}

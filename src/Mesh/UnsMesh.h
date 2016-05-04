@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/UnsMesh.h
   \author    J. Bakosi
-  \date      Fri 06 Nov 2015 02:25:57 PM MST
+  \date      Wed 04 May 2016 02:28:33 PM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     3D unstructured mesh class declaration
   \details   3D unstructured mesh class declaration. This mesh class currently
@@ -29,12 +29,15 @@ class UnsMesh {
     /** @name Constructors */
     ///@{
     //! Constructor without initializing anything
-    explicit UnsMesh() {}
+    explicit UnsMesh() : m_graphsize(0), m_lininpoel(), m_triinpoel(),
+      m_tetinpoel(), m_x(), m_y(), m_z(), m_lintag(), m_tritag(), m_tettag() {}
 
     //! Constructor copying over element connectivity
     explicit UnsMesh( const std::vector< std::size_t >& tetinp ) :
       m_graphsize( graphsize( tetinp ) ),
-      m_tetinpoel( tetinp )
+      m_lininpoel(), m_triinpoel(),
+      m_tetinpoel( tetinp ),
+      m_x(), m_y(), m_z(), m_lintag(), m_tritag(), m_tettag()
     {
       Assert( m_tetinpoel.size()%4 == 0,
               "Size of tetinpoel must be divisible by 4" );
@@ -43,7 +46,9 @@ class UnsMesh {
     //! Constructor swallowing element connectivity
     explicit UnsMesh( std::vector< std::size_t >&& tetinp ) :
       m_graphsize( graphsize( tetinp ) ),
-      m_tetinpoel( std::move(tetinp) )
+      m_lininpoel(), m_triinpoel(),
+      m_tetinpoel( std::move(tetinp) ),
+      m_x(), m_y(), m_z(), m_lintag(), m_tritag(), m_tettag()
     {
       Assert( m_tetinpoel.size()%4 == 0,
               "Size of tetinpoel must be divisible by 4" );
@@ -55,10 +60,12 @@ class UnsMesh {
                       const std::vector< tk::real >& Y,
                       const std::vector< tk::real >& Z ) :
       m_graphsize( graphsize( tetinp ) ),
+      m_lininpoel(), m_triinpoel(),
       m_tetinpoel( tetinp ),
       m_x( X ),
       m_y( Y ),
-      m_z( Z )
+      m_z( Z ),
+      m_lintag(), m_tritag(), m_tettag()
     {
       Assert( m_tetinpoel.size()%4 == 0,
               "Size of tetinpoel must be divisible by 4" );
@@ -69,10 +76,12 @@ class UnsMesh {
     explicit UnsMesh( const std::vector< std::size_t >& tetinp,
                       const std::array< std::vector< tk::real >, 3 >& coord ) :
       m_graphsize( graphsize( tetinp ) ),
+      m_lininpoel(), m_triinpoel(),
       m_tetinpoel( tetinp ),
       m_x( coord[0] ),
       m_y( coord[1] ),
-      m_z( coord[2] )
+      m_z( coord[2] ),
+      m_lintag(), m_tritag(), m_tettag()
     {
       Assert( m_tetinpoel.size()%4 == 0,
               "Size of tetinpoel must be divisible by 4" );
@@ -84,10 +93,12 @@ class UnsMesh {
                       std::vector< tk::real >&& Y,
                       std::vector< tk::real >&& Z ) :
       m_graphsize( graphsize( tetinp ) ),
+      m_lininpoel(), m_triinpoel(),
       m_tetinpoel( std::move(tetinp) ),
       m_x( std::move(X) ),
       m_y( std::move(Y) ),
-      m_z( std::move(Z) )
+      m_z( std::move(Z) ),
+      m_lintag(), m_tritag(), m_tettag()
     {
       Assert( m_tetinpoel.size()%4 == 0,
               "Size of tetinpoel must be divisible by 4" );
@@ -99,10 +110,12 @@ class UnsMesh {
     explicit UnsMesh( std::vector< std::size_t >&& tetinp,
                       std::array< std::vector< tk::real >, 3 >&& coord ) :
       m_graphsize( graphsize( tetinp ) ),
+      m_lininpoel(), m_triinpoel(),
       m_tetinpoel( std::move(tetinp) ),
       m_x( std::move(coord[0]) ),
       m_y( std::move(coord[1]) ),
-      m_z( std::move(coord[2]) )
+      m_z( std::move(coord[2]) ),
+      m_lintag(), m_tritag(), m_tettag()
     {
       Assert( m_tetinpoel.size()%4 == 0,
               "Size of tetinpoel must be divisible by 4" );

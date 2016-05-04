@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/ProcessControl.h
   \author    J. Bakosi
-  \date      Fri 22 May 2015 08:21:45 AM MDT
+  \date      Tue 03 May 2016 09:20:47 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     POSIX process control wrapper definitions
   \details   POSIX process control wrapper definitions.
@@ -14,16 +14,7 @@
 #include <istream>
 #include <type_traits>
 
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wconversion"
-#endif
-
 #include <pstreams/pstream.h>
-
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic pop
-#endif
 
 #include "ProcessControl.h"
 #include "Exception.h"

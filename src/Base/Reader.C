@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Reader.C
   \author    J. Bakosi
-  \date      Wed 13 Jan 2016 11:57:46 AM MST
+  \date      Wed 04 May 2016 07:59:55 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Reader class definition
   \details   Reader base class declaration. Reader base servers as a base class
@@ -21,7 +21,7 @@
 using tk::Reader;
 
 Reader::Reader( const std::string& filename, std::ios_base::openmode mode ) :
-  m_filename( filename )
+  m_filename( filename ), m_inFile()
 //******************************************************************************
 //  Constructor: Acquire file handle
 //! \param[in] filename Name of file to open for reading

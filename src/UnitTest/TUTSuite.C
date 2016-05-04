@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/TUTSuite.C
   \author    J. Bakosi
-  \date      Mon 07 Mar 2016 03:50:24 PM MST
+  \date      Tue 03 May 2016 09:23:05 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Template Unit Test suite class definition
   \details   Template Unit Test suite class definition. In principle there can
@@ -17,13 +17,14 @@
 
 #include <boost/format.hpp>
 
-#include <tut/tut_runner.hpp>
+#include "NoWarning/tut_runner.h"
 
 #include "Tags.h"
 #include "TUTSuite.h"
 #include "TUTTest.h"
 #include "Assessment.h"
-#include "unittest.decl.h"
+
+#include "NoWarning/unittest.decl.h"
 
 extern CProxy_Main mainProxy;
 
@@ -147,13 +148,4 @@ TUTSuite::evaluate( std::vector< std::string > status )
   }
 }
 
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wconversion"
-#endif
-
-#include "tutsuite.def.h"
-
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic pop
-#endif
+#include "NoWarning/tutsuite.def.h"

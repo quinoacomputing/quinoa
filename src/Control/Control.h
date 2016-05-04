@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Control.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:19:14 PM MDT
+  \date      Sun 01 May 2016 12:57:35 PM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Control base contains generic accessors to tagged tuple elements
   \details   Control is a slightly more specialized level of a tagged tuple,
@@ -675,12 +675,12 @@ class Control : public tuple::tagged_tuple<Ts...> {
     /** @name Pack/Unpack: Serialize Control object for Charm++ */
     ///@{
     //! \brief Pack/Unpack serialize member function
-    //! \param[inout] p Charm++'s PUP::er serializer object reference
+    //! \param[in,out] p Charm++'s PUP::er serializer object reference
     //! \author J. Bakosi
     void pup( PUP::er& p ) { Tuple::pup(p); }
     //! \brief Pack/Unpack serialize operator|
-    //! \param[inout] p Charm++'s PUP::er serializer object reference
-    //! \param[inout] c Control object reference
+    //! \param[in,out] p Charm++'s PUP::er serializer object reference
+    //! \param[in,out] c Control object reference
     //! \author J. Bakosi
     friend void operator|( PUP::er& p, Control<Ts...>& c ) { c.pup(p); }
     ///@}

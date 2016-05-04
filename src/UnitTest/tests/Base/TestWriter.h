@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/TestWriter.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 03:11:58 PM MDT
+  \date      Tue 03 May 2016 08:03:00 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Unit tests for Base/Writer
   \details   Unit tests for Base/Writer
@@ -11,7 +11,7 @@
 #ifndef test_Writer_h
 #define test_Writer_h
 
-#include <tut/tut.hpp>
+#include "NoWarning/tut.h"
 
 #include "Writer.h"
 
@@ -35,7 +35,7 @@ using Writer_group = test_group< Writer_common, MAX_TESTS_IN_GROUP >;
 using Writer_object = Writer_group::object;
 
 //! Define test group
-Writer_group Writer( "Base/Writer" );
+static Writer_group Writer( "Base/Writer" );
 
 //! Test definitions for group
 

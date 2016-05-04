@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/DiffEq.h
   \author    J. Bakosi
-  \date      Sat 30 Apr 2016 06:20:33 PM MDT
+  \date      Tue 03 May 2016 11:24:18 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Differential equation
   \details   This file defines a generic differential equation class. The class
@@ -93,6 +93,8 @@ class DiffEq {
     //! \brief Concept is a pure virtual base class specifying the requirements
     //!   of polymorphic objects deriving from it
     struct Concept {
+      Concept() = default;
+      Concept( const Concept& ) = default;
       virtual ~Concept() = default;
       virtual Concept* copy() const = 0;
       virtual void initialize( int, tk::Particles& ) = 0;

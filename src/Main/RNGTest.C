@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTest.C
   \author    J. Bakosi
-  \date      Sun 03 Apr 2016 10:04:41 AM MDT
+  \date      Wed 04 May 2016 11:35:33 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     RNGTest's random number generator test suite's Charm++ main chare.
   \details   RNGTest's random number generator test suite's Charm++ main chare.
@@ -34,15 +34,22 @@
 #include "RNGTest/CmdLine/Parser.h"
 #include "RNGTest/InputDeck/InputDeck.h"
 
-#include <charm.h>
-#include <pup.h>
-#include <ckmessage.h>
+#include "NoWarning/charm.h"
+#include "NoWarning/pup.h"
+#include "NoWarning/rngtest.decl.h"
 
-#include "rngtest.decl.h"
+#if defined(__clang__)
+  #pragma clang diagnostic push
+  #pragma clang diagnostic ignored "-Wmissing-variable-declarations"
+#endif
 
 //! \brief Charm handle to the main proxy, facilitates call-back to finalize,
 //!    etc., must be in global scope, unique per executable
 CProxy_Main mainProxy;
+
+#if defined(__clang__)
+  #pragma clang diagnostic pop
+#endif
 
 //! RNGTest declarations and definitions
 namespace rngtest {
@@ -84,6 +91,11 @@ namespace rngtest {
 //! RNGTestDriver constructor, which initializes the data required for the
 //! migration).
 
+#if defined(__clang__)
+  #pragma clang diagnostic push
+  #pragma clang diagnostic ignored "-Wmissing-variable-declarations"
+#endif
+
 //! Defaults of input deck, facilitates detection what is set by user
 //! \details This object is in global scope, it contains the default of all
 //!   possible user input, and thus it is made available to all PEs for
@@ -108,6 +120,10 @@ std::map< tk::ctr::RawRNGType, tk::RNG > g_rng;
 //!   initialization. Once distributed by the runtime system, the objects do not
 //!   change.
 TestStack g_testStack;
+
+#if defined(__clang__)
+  #pragma clang diagnostic pop
+#endif
 
 //! Pack/Unpack selected RNGs. This Pack/Unpack method (re-)creates the full RNG
 //! stack since it needs to (re-)bind function pointers on different processing
@@ -179,6 +195,7 @@ class Main : public CBase_Main {
     //! \see http://charm.cs.illinois.edu/manuals/html/charm++/manual.html
     Main( CkArgMsg* msg )
     try :
+      m_cmdline(),
       // Parse command line into m_cmdline using default simple pretty printer
       m_cmdParser( msg->argc, msg->argv, tk::Print(), m_cmdline ),
       // Create pretty printer initializing output streams based on command line
@@ -190,7 +207,8 @@ class Main : public CBase_Main {
                           tk::HeaderType::RNGTEST,
                           RNGTEST_EXECUTABLE,
                           m_print ) ),
-      m_timer(1)        // Start new timer measuring the total runtime
+      m_timer(1),       // Start new timer measuring the total runtime
+      m_timestamp()
     {
       delete msg;
       mainProxy = thisProxy;
@@ -238,6 +256,8 @@ class Main : public CBase_Main {
 //!    has finished migrating all global-scoped read-only objects which happens
 //!    after the main chare constructor has finished.
 //! \author J. Bakosi
-struct execute : CBase_execute { execute() { mainProxy.execute(); } };
+class execute : public CBase_execute {
+  public: execute() { mainProxy.execute(); }
+};
 
-#include "rngtest.def.h"
+#include "NoWarning/rngtest.def.h"

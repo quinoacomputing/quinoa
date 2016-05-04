@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/PDFWriter.C
   \author    J. Bakosi
-  \date      Sun 03 Apr 2016 10:06:27 AM MDT
+  \date      Mon 02 May 2016 01:39:53 PM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Univariate PDF writer
   \brief     PDF writer class definition
@@ -14,18 +14,8 @@
 
 #include <iostream>
 
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wconversion"
-#endif
-
-#include <exodusII.h>
-
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic pop
-#endif
-
-#include <ne_nemesisI.h>
+#include "NoWarning/exodusII.h"
+#include "NoWarning/ne_nemesisI.h"
 
 #include "PDFWriter.h"
 #include "Exception.h"
@@ -371,9 +361,9 @@ PDFWriter::writeGmshTxt( const BiPDF& pdf,
   // Output grid points of discretized sample space (2D Cartesian grid)
   m_outFile << "$Nodes\n" << (nbix+1)*(nbiy+1) << std::endl;
   int k=0;
-  for (int i=0; i<=nbiy; i++) {
+  for (std::size_t i=0; i<=nbiy; i++) {
     tk::real y = ymin + i*binsize[1];
-    for (int j=0; j<=nbix; j++) {
+    for (std::size_t j=0; j<=nbix; j++) {
       tk::real x = xmin + j*binsize[0];
       m_outFile << ++k << ' ' << x << ' ' << y << " 0\n";
     }
@@ -406,7 +396,8 @@ PDFWriter::writeGmshTxt( const BiPDF& pdf,
       const auto bin = (p.first[1] - ext[2]) * static_cast<long>(nbix) +
                        (p.first[0] - ext[0]) % static_cast<long>(nbix);
       Assert( bin >= 0, "Bin underflow in PDFWriter::writeGmshTxt()." );
-      Assert( bin < nbix*nbiy, "Bin overflow in PDFWriter::writeGmshTxt()." );
+      Assert( static_cast<std::size_t>(bin) < nbix*nbiy,
+              "Bin overflow in PDFWriter::writeGmshTxt()." );
       out[ static_cast<std::size_t>(bin) ] = true;
       m_outFile << bin+1 << '\t'
                 << p.second / binsize[0] / binsize[1]
@@ -484,11 +475,11 @@ PDFWriter::writeGmshTxt( const TriPDF& pdf,
   // Output grid points of discretized sample space (3D Cartesian grid)
   m_outFile << "$Nodes\n" << (nbix+1)*(nbiy+1)*(nbiz+1) << std::endl;
   int l=0;
-  for (int k=0; k<=nbiz; k++) {
+  for (std::size_t k=0; k<=nbiz; k++) {
     tk::real z = zmin + k*binsize[2];
-    for (int j=0; j<=nbiy; j++) {
+    for (std::size_t j=0; j<=nbiy; j++) {
       tk::real y = ymin + j*binsize[1];
-      for (int i=0; i<=nbix; i++) {
+      for (std::size_t i=0; i<=nbix; i++) {
         tk::real x = xmin + i*binsize[0];
         m_outFile << ++l << ' ' << x << ' ' << y << ' ' << z << '\n';
       }
@@ -523,16 +514,16 @@ PDFWriter::writeGmshTxt( const TriPDF& pdf,
   if (uext.empty()) {
 
     std::vector< bool > out( nbix*nbiy*nbiz, false ); // indicate bins filled
-    for (const auto& p : pdf.map()) {
-      const auto bin = (p.first[2] - ext[4]) * static_cast<long>(nbix*nbiy) +
-                       (p.first[1] - ext[2]) * static_cast<long>(nbix) +
-                       (p.first[0] - ext[0]) % static_cast<long>(nbix);
+    for (const auto& q : pdf.map()) {
+      const auto bin = (q.first[2] - ext[4]) * static_cast<long>(nbix*nbiy) +
+                       (q.first[1] - ext[2]) * static_cast<long>(nbix) +
+                       (q.first[0] - ext[0]) % static_cast<long>(nbix);
       Assert( bin >= 0, "Bin underflow in PDFWriter::writeGmshTxt()." );
-      Assert( bin < nbix*nbiy*nbiz,
+      Assert( static_cast<std::size_t>(bin) < nbix*nbiy*nbiz,
               "Bin overflow in PDFWriter::writeGmshTxt()." );
       out[ static_cast<std::size_t>(bin) ] = true;
       m_outFile << bin+1 << '\t'
-                << p.second / binsize[0] / binsize[1] / binsize[2]
+                << q.second / binsize[0] / binsize[1] / binsize[2]
                             / static_cast<tk::real>(pdf.nsample())
                 << std::endl;
     }
@@ -544,7 +535,7 @@ PDFWriter::writeGmshTxt( const TriPDF& pdf,
   } else { // If user-specified sample space extents, output outpdf array
 
     std::size_t bin = 0;
-    for (const auto& p : outpdf) m_outFile << ++bin << ' ' << p << std::endl;
+    for (const auto& q : outpdf) m_outFile << ++bin << ' ' << q << std::endl;
 
   }
 
@@ -609,9 +600,9 @@ PDFWriter::writeGmshBin( const BiPDF& pdf,
   m_outFile << "$Nodes\n" << (nbix+1)*(nbiy+1) << std::endl;
   int k = 0;
   tk::real z = 0.0;
-  for (int i=0; i<=nbiy; i++) {
+  for (std::size_t i=0; i<=nbiy; i++) {
     tk::real y = ymin + i*binsize[1];
-    for (int j=0; j<=nbix; j++) {
+    for (std::size_t j=0; j<=nbix; j++) {
       tk::real x = xmin + j*binsize[0];
       ++k;
       m_outFile.write( reinterpret_cast< char* >( &k ), sizeof(int) );
@@ -661,7 +652,8 @@ PDFWriter::writeGmshBin( const BiPDF& pdf,
       const auto bin = (p.first[1] - ext[2]) * static_cast<long>(nbix) +
                        (p.first[0] - ext[0]) % static_cast<long>(nbix);
       Assert( bin >= 0, "Bin underflow in PDFWriter::writeGmshBin()." );
-      Assert( bin < nbix*nbiy, "Bin overflow in PDFWriter::writeGmshBin()." );
+      Assert( static_cast<std::size_t>(bin) < nbix*nbiy,
+              "Bin overflow in PDFWriter::writeGmshBin()." );
       out[ static_cast<std::size_t>(bin) ] = true;
       auto id = static_cast<int>(bin+1);
       tk::real prob = p.second / binsize[0] / binsize[1]
@@ -752,11 +744,11 @@ PDFWriter::writeGmshBin( const TriPDF& pdf,
   // Output grid points of discretized sample space (3D Cartesian grid)
   m_outFile << "$Nodes\n" << (nbix+1)*(nbiy+1)*(nbiz+1) << std::endl;
   int l=0;
-  for (int k=0; k<=nbiz; k++) {
+  for (std::size_t k=0; k<=nbiz; k++) {
     tk::real z = zmin + k*binsize[2];
-    for (int j=0; j<=nbiy; j++) {
+    for (std::size_t j=0; j<=nbiy; j++) {
       tk::real y = ymin + j*binsize[1];
-      for (int i=0; i<=nbix; i++) {
+      for (std::size_t i=0; i<=nbix; i++) {
         tk::real x = xmin + i*binsize[0];
         ++l;
         m_outFile.write( reinterpret_cast< char* >( &l ), sizeof(int) );
@@ -809,16 +801,16 @@ PDFWriter::writeGmshBin( const TriPDF& pdf,
   if (uext.empty()) {
 
     std::vector< bool > out( nbix*nbiy*nbiz, false ); // indicate bins filled
-    for (const auto& p : pdf.map()) {
-      const auto bin = (p.first[2] - ext[4]) * static_cast<long>(nbix*nbiy) +
-                       (p.first[1] - ext[2]) * static_cast<long>(nbix) +
-                       (p.first[0] - ext[0]) % static_cast<long>(nbix);
+    for (const auto& q : pdf.map()) {
+      const auto bin = (q.first[2] - ext[4]) * static_cast<long>(nbix*nbiy) +
+                       (q.first[1] - ext[2]) * static_cast<long>(nbix) +
+                       (q.first[0] - ext[0]) % static_cast<long>(nbix);
       Assert( bin >= 0, "Bin underflow in PDFWriter::writeGmshBin()." );
-      Assert( bin < nbix*nbiy*nbiz,
+      Assert( static_cast<std::size_t>(bin) < nbix*nbiy*nbiz,
               "Bin overflow in PDFWriter::writeGmshBin()." );
       out[ static_cast<std::size_t>(bin) ] = true;
       auto id = static_cast<int>(bin+1);
-      tk::real prob = p.second / binsize[0] / binsize[1] / binsize[2]
+      tk::real prob = q.second / binsize[0] / binsize[1] / binsize[2]
                                / static_cast<tk::real>(pdf.nsample());
       m_outFile.write( reinterpret_cast< char* >( &id ), sizeof(int) );
       m_outFile.write( reinterpret_cast< char* >( &prob ), sizeof(tk::real) );
@@ -836,10 +828,10 @@ PDFWriter::writeGmshBin( const TriPDF& pdf,
   } else { // If user-specified sample space extents, output outpdf array
 
     int bin = 0;
-    for (auto& p : outpdf) {
+    for (auto& q : outpdf) {
       ++bin;
       m_outFile.write( reinterpret_cast< char* >( &bin ), sizeof(int) );
-      m_outFile.write( reinterpret_cast< char* >( &p ), sizeof(tk::real) );
+      m_outFile.write( reinterpret_cast< char* >( &q ), sizeof(tk::real) );
     }
 
   }
@@ -903,8 +895,8 @@ PDFWriter::writeExodusII( const BiPDF& pdf,
   std::vector< tk::real > y( nnode, 0.0 );
   std::vector< tk::real > z( nnode, 0.0 );
   std::size_t k = 0;
-  for (int i=0; i<=nbiy; i++)
-    for (int j=0; j<=nbix; j++) {
+  for (std::size_t i=0; i<=nbiy; i++)
+    for (std::size_t j=0; j<=nbix; j++) {
       x[k] = xmin + j*binsize[0];
       y[k] = ymin + i*binsize[1];
       ++k;
@@ -923,11 +915,11 @@ PDFWriter::writeExodusII( const BiPDF& pdf,
           "Failed to write QUDARANGLE element block to file: " + m_filename );
   // Write element connectivity
   for (std::size_t i=0; i<nelem; ++i) {
-    auto y = i/nbix;
-    int con[4] = { static_cast< int >( i+y+1 ),
-                   static_cast< int >( i+y+2 ),
-                   static_cast< int >( i+y+nbix+3 ),
-                   static_cast< int >( i+y+nbix+2 ) };
+    auto ye = i/nbix;
+    int con[4] = { static_cast< int >( i+ye+1 ),
+                   static_cast< int >( i+ye+2 ),
+                   static_cast< int >( i+ye+nbix+3 ),
+                   static_cast< int >( i+ye+nbix+2 ) };
     ErrChk(
       ne_put_n_elem_conn( outFile, 1, static_cast<int64_t>(i+1), 1, con ) == 0,
       "Failed to write element connectivity to file: " + m_filename );
@@ -957,7 +949,8 @@ PDFWriter::writeExodusII( const BiPDF& pdf,
       const auto bin = (p.first[1] - ext[2]) * static_cast<long>(nbix) +
                        (p.first[0] - ext[0]) % static_cast<long>(nbix);
       Assert( bin >= 0, "Bin underflow in PDFWriter::writeExodusII()." );
-      Assert( bin < nbix*nbiy, "Bin overflow in PDFWriter::writeExodusII()." );
+      Assert( static_cast<std::size_t>(bin) < nbix*nbiy,
+              "Bin overflow in PDFWriter::writeExodusII()." );
       prob[ static_cast<std::size_t>(bin) ] =
         p.second / binsize[0] / binsize[1]
                  / static_cast<tk::real>(pdf.nsample());
@@ -1051,15 +1044,15 @@ PDFWriter::writeExodusII( const TriPDF& pdf,
   const auto n = nbix*nbiy;
   const auto p = (nbix+1)*(nbiy+1);
   for (std::size_t i=0; i<nelem; ++i) {
-    const auto y = i/nbix + i/n*(nbix+1);
-    int con[8] = { static_cast< int >( i+y+1 ),
-                   static_cast< int >( i+y+2 ),
-                   static_cast< int >( i+y+nbix+3 ),
-                   static_cast< int >( i+y+nbix+2 ),
-                   static_cast< int >( i+y+p+1 ),
-                   static_cast< int >( i+y+p+2 ),
-                   static_cast< int >( i+y+p+nbix+3 ),
-                   static_cast< int >( i+y+p+nbix+2 ) };
+    const auto ye = i/nbix + i/n*(nbix+1);
+    int con[8] = { static_cast< int >( i+ye+1 ),
+                   static_cast< int >( i+ye+2 ),
+                   static_cast< int >( i+ye+nbix+3 ),
+                   static_cast< int >( i+ye+nbix+2 ),
+                   static_cast< int >( i+ye+p+1 ),
+                   static_cast< int >( i+ye+p+2 ),
+                   static_cast< int >( i+ye+p+nbix+3 ),
+                   static_cast< int >( i+ye+p+nbix+2 ) };
     ErrChk(
       ne_put_n_elem_conn( outFile, 1, static_cast<int64_t>(i+1), 1, con ) == 0,
       "Failed to write element connectivity to file: " + m_filename );
@@ -1085,15 +1078,15 @@ PDFWriter::writeExodusII( const TriPDF& pdf,
 
     // Output PDF function values in element centers
     std::vector< tk::real > prob( nbix*nbiy*nbiz, 0.0 );
-    for (const auto& p : pdf.map()) {
-      const auto bin = (p.first[2] - ext[4]) * static_cast<long>(nbix*nbiy) +
-                       (p.first[1] - ext[2]) * static_cast<long>(nbix) +
-                       (p.first[0] - ext[0]) % static_cast<long>(nbix);
+    for (const auto& q : pdf.map()) {
+      const auto bin = (q.first[2] - ext[4]) * static_cast<long>(nbix*nbiy) +
+                       (q.first[1] - ext[2]) * static_cast<long>(nbix) +
+                       (q.first[0] - ext[0]) % static_cast<long>(nbix);
       Assert( bin >= 0, "Bin underflow in PDFWriter::writeExodusII()." );
-      Assert( bin < nbix*nbiy*nbiz,
+      Assert( static_cast<std::size_t>(bin) < nbix*nbiy*nbiz,
               "Bin overflow in PDFWriter::writeExodusII()." );
       prob[ static_cast<std::size_t>(bin) ] =
-        p.second / binsize[0] / binsize[1] / binsize[2]
+        q.second / binsize[0] / binsize[1] / binsize[2]
                  / static_cast<tk::real>(pdf.nsample());
     }
     writeExVar( outFile, it+1, centering, prob );
@@ -1148,13 +1141,12 @@ PDFWriter::writeExHdr( int outFileId, int nnode, int nelem ) const
 
 void
 PDFWriter::writeExVar( int exoFile,
-                       std::size_t it,
+                       std::size_t,
                        ctr::PDFCenteringType centering,
                        const std::vector< tk::real >& probability ) const
 //******************************************************************************
 //  Output probability density function as Exodus II results field
 //! \param[in] exoFile ExodusII file handle to write to
-//! \param[in] it Iteration count
 //! \param[in] centering Node-, or element-centering to use on sample space mesh
 //! \param[in] probability Probabilities at each sample space location
 //! \author J. Bakosi
@@ -1241,8 +1233,9 @@ PDFWriter::extents( const UniPDF& pdf,
       // Only copy probability value if shifted bin indices fall within
       // user-requested extents (lower inclusive, upper exclusive)
       if (bin >= 0 && bin < std::lround( (uext[1] - uext[0]) / binsize )) {
-        Assert( bin < nbi, "Bin overflow in user-specified-extent-based bin "
-                           "calculation of univariate PDF extents." );
+        Assert( static_cast<std::size_t>(bin) < nbi,
+                "Bin overflow in user-specified-extent-based bin "
+                "calculation of univariate PDF extents." );
         // Copy normalized probability to output pdf
         outpdf[ static_cast<std::size_t>(bin) ] =
           p.second / binsize / static_cast<tk::real>(pdf.nsample());

@@ -2,7 +2,7 @@
 /*!
   \file      src/Walker/Integrator.C
   \author    J. Bakosi
-  \date      Mon 01 Feb 2016 03:19:31 PM MST
+  \date      Mon 02 May 2016 07:22:46 PM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Integrator advances differential equations
   \details   Integrator advances differential equations. There are a potentially
@@ -177,14 +177,4 @@ Integrator::accumulateCenPDF( const std::vector< tk::real >& ord )
                                             m_stat.ctpdf() );
 }
 
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wconversion"
-#endif
-
-#include "integrator.def.h"
-
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic pop
-#endif
-
+#include "NoWarning/integrator.def.h"

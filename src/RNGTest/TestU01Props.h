@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/TestU01Props.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 12:40:29 PM MDT
+  \date      Wed 04 May 2016 11:09:33 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     TestU01 statistical test properties class
   \details   This file defines a generic TestU01 statistical test properties
@@ -16,6 +16,7 @@
 #include <vector>
 #include <functional>
 
+#include "Macro.h"
 #include "RNG.h"
 #include "Timer.h"
 #include "Options/RNG.h"
@@ -56,7 +57,11 @@ class TestU01Props {
     //! \details Required as migratable. Called by Charm++. Initialize what we
     //!    can.
     explicit TestU01Props() :
+      m_proxy(),
       m_rng( tk::ctr::RNGType::NO_RNG ),
+      m_names(),
+      m_xargs(),
+      m_gen( nullptr ),
       m_runner( g_testStack.TestU01.runner.get<Test>() ),
       m_res( ResultPtr(Creator()) ),
       m_time( 0.0 ) {}
@@ -98,8 +103,17 @@ class TestU01Props {
       m_time = x.m_time;
       return *this;
     }
+
+    #if defined(__GNUC__)
+      #pragma GCC diagnostic push
+      #pragma GCC diagnostic ignored "-Weffc++"
+    #endif
     //! Copy constructor: in terms of copy assignment
     TestU01Props( const TestU01Props& x ) { operator=(x); }
+    #if defined(__GNUC__)
+      #pragma GCC diagnostic pop
+    #endif
+
     //! Move assignment
     TestU01Props& operator=( TestU01Props&& ) = default;
     //! Move constructor
@@ -108,7 +122,7 @@ class TestU01Props {
     /** @name Pack/Unpack: Serialize Term object for Charm++ */
     ///@{
     //! Pack/Unpack serialize member function
-    //! \param[inout] p Charm++'s PUP::er serializer object reference
+    //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er& p ) {
       p | m_proxy;
       p | m_rng;
@@ -122,8 +136,8 @@ class TestU01Props {
       p | m_time;
     }
     //! \brief Pack/Unpack serialize operator|
-    //! \param[inout] p Charm++'s PUP::er serializer object reference
-    //! \param[inout] c TestU01Props object reference
+    //! \param[in,out] p Charm++'s PUP::er serializer object reference
+    //! \param[in,out] c TestU01Props object reference
     friend void operator|( PUP::er& p, TestU01Props& c ) { c.pup(p); }
     ///@}
 
@@ -188,10 +202,11 @@ class TestU01Props {
     //!   enables the compiler to generate a different wrapper for a different
     //!   RNG facilitating simultaneous calls to any or all wrappers as they are
     //!   unique functions.
-    //! \param[inout] p Charm++'s PUP::er serializer object reference
-    //! \param[inout] g Reference to raw function pointer to TestU01 statistical
-    //!    test
+    //! \param[in,out] p Charm++'s PUP::er serializer object reference
+    //! \param[in,out] g Reference to raw function pointer to TestU01
+    //!   statistical test
     void pup( PUP::er& p, unif01_Gen*& g ) {
+      IGNORE(p);
       using tk::ctr::RNGType;
       using tk::ctr::raw;
       const auto& rngname = tk::ctr::RNG().name(m_rng);

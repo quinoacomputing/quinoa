@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/RNG/TestRNGSSE.h
   \author    J. Bakosi
-  \date      Tue 23 Feb 2016 03:28:46 PM MST
+  \date      Tue 03 May 2016 08:16:43 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Unit tests for RNG/RNGSSE.h
   \details   Unit tests for RNG/RNGSSE.h
@@ -11,7 +11,7 @@
 #ifndef test_RNGSSE_h
 #define test_RNGSSE_h
 
-#include <tut/tut.hpp>
+#include "NoWarning/tut.h"
 
 #include <gm19.h>
 #include <gm29.h>
@@ -37,7 +37,7 @@ using RNGSSE_group = test_group< RNGSSE_common, MAX_TESTS_IN_GROUP >;
 using RNGSSE_object = RNGSSE_group::object;
 
 //! Define test group
-RNGSSE_group RNGSSE( "RNG/RNGSSE" );
+static RNGSSE_group RNGSSE( "RNG/RNGSSE" );
 
 //! Test definitions for group
 

@@ -136,8 +136,10 @@ set(NUMDIFF_EXECUTABLE numdiff)
 # Create set of all executables tested. These are the executables that do
 # "interesting things", i.e., excluding unittest but keeping rngtest as that is
 # (to be) regression tested
-set(NONTEST_EXECUTABLES ${INCITER_EXECUTABLE} ${RNGTEST_EXECUTABLE}
-                        ${MESHCONV_EXECUTABLE} ${WALKER_EXECUTABLE})
+set(NONTEST_EXECUTABLES ${INCITER_EXECUTABLE}
+                        ${RNGTEST_EXECUTABLE}
+                        ${MESHCONV_EXECUTABLE}
+                        ${WALKER_EXECUTABLE})
 
 # Create set of all executables.
 set(EXECUTABLES ${INCITER_EXECUTABLE}
@@ -152,75 +154,77 @@ include(GetGitRevisionDescription)
 git_describe(GIT_SHA1 --always)
 message(STATUS "git commit sha1: ${GIT_SHA1}")
 
-# Add compiler flags
-include(CheckCXXCompilerFlag)
-
+# Macro to add compiler flags
 macro (add_compiler_flag flag)
-  check_cxx_compiler_flag(${flag} COMPILER_HAS${flag})
-  if(COMPILER_HAS${flag})
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${flag}")
-  endif()
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${flag}")
 endmacro (add_compiler_flag)
-
-# Try and use the following arguments for all compilers
-add_compiler_flag("-Wall")
-add_compiler_flag("-pedantic")
-add_compiler_flag("-Wextra")
-add_compiler_flag("-Wshadow")
-add_compiler_flag("-Wformat")
-add_compiler_flag("-Wsign-compare")
-add_compiler_flag("-Wpointer-arith")
-add_compiler_flag("-Winvalid-pch")
-add_compiler_flag("-Wcast-align")
-add_compiler_flag("-Wwrite-strings")
-add_compiler_flag("-Wunused")
-add_compiler_flag("-Woverloaded-virtual")
-add_compiler_flag("-fdiagnostics-show-option")
-
-#add_compiler_flag("-default-to-aout")
-
-# Suppress warning for all compilers: ISO C++ forbids variable length array
-add_compiler_flag("-Wno-vla")
-
-# Include function that allows to set standard C++ library
-include(libstdcxx)
 
 # Compiler-specific settings
 if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")  # clang-specific settings
 
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fcolor-diagnostics")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Qunused-arguments")
+  # Include function that allows to set standard C++ library
+  include(libstdcxx)
 
   # Offer switch between libc++ and libstdc++, using libc++ as default
   if (libc++_FOUND)
     set_libstdcpp_vs_libcpp(CMAKE_CXX_FLAGS "libc++")
   endif()
 
-  # Reduce opt level for release mode (clang 3.8 fails to list LinSysMerger with
-  # -O2 and segfaults with -O3)
-  set(CMAKE_CXX_FLAGS_RELEASE "-O1 -DNDEBUG" CACHE STRING "CMAKE_CXX_FLAGS_RELEASE: Flags used by the compiler during release builds." FORCE)
+  # Compiler flags
+  add_compiler_flag("-Weverything")
+  add_compiler_flag("-Wno-c++98-compat")
+  add_compiler_flag("-Wno-c++98-compat-pedantic")
+  add_compiler_flag("-Wno-padded")
+  add_compiler_flag("-Wno-exit-time-destructors")
+  add_compiler_flag("-Wno-global-constructors")
+  add_compiler_flag("-Wno-weak-vtables")
 
-  # See all template error messages
-  #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ftemplate-backtrace-limit=0")
-
-  # Don't warn on variable-length arrays
-  add_compiler_flag("-Wno-vla-extension")
-  # Don't warn on defined but unused functions
-  add_compiler_flag("-Wno-unused-function")
-  # Dont' warn on unused local typedef
-  add_compiler_flag("-Wno-unused-local-typedef")
-  # Warn on implicit conversions
-  add_compiler_flag("-Wconversion")
-
-  # Suppress the following warnings for Charm++ hostfiles including the
-  # Charm-generated .decl.h and .def.h:
-  set(HOSTFILE_FLAGS "-Wno-shadow -Wno-unused-variable -Wno-unused-parameter -Wno-deprecated-register -Wno-mismatched-tags -Wno-cast-align -Wno-zero-length-array -Wno-sign-compare -Wno-unused-private-field ")
-  # Ignore warnings for linking with a Charm++ module
-  set(PARTOF_FLAGS "-Wno-unused-parameter")
+  # Linker flags
+  set(CMAKE_SHARED_LIBRARY_LINK_CXX_FLAGS)      # clear link flags
+  set(CMAKE_EXE_LINKER_FLAGS "-Wno-missing-prototypes -Wno-unused-parameter")
 
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")  # gcc-specific settings
 
   # Gnu will use libstdc++ by default. We do not offer libc++.
+
+  # Compiler flags
+  add_compiler_flag("-Wall")
+  add_compiler_flag("-Wextra")
+  add_compiler_flag("-Weffc++")
+  add_compiler_flag("-pedantic")
+  add_compiler_flag("-pedantic-errors")
+  add_compiler_flag("-Wcast-align")
+  add_compiler_flag("-Wcast-qual")
+  add_compiler_flag("-Wdisabled-optimization")
+  add_compiler_flag("-Wfloat-equal")
+  add_compiler_flag("-Wformat=2")
+  add_compiler_flag("-Wformat-nonliteral")
+  add_compiler_flag("-Wformat-security")
+  add_compiler_flag("-Wformat-y2k")
+  add_compiler_flag("-Wimport")
+  add_compiler_flag("-Winit-self")
+  add_compiler_flag("-Winvalid-pch")
+  add_compiler_flag("-Wmissing-field-initializers")
+  add_compiler_flag("-Wmissing-format-attribute")
+  add_compiler_flag("-Wmissing-include-dirs")
+  add_compiler_flag("-Wmissing-noreturn")
+  add_compiler_flag("-Wpacked")
+  add_compiler_flag("-Wpointer-arith")
+  add_compiler_flag("-Wredundant-decls")
+  add_compiler_flag("-Wshadow")
+  add_compiler_flag("-Wstack-protector")
+  add_compiler_flag("-Wstrict-aliasing=2")
+  add_compiler_flag("-Wswitch-default")
+  add_compiler_flag("-Wunreachable-code")
+  add_compiler_flag("-Wunused")
+  add_compiler_flag("-Wunused-parameter")
+  add_compiler_flag("-Wvariadic-macros")
+  add_compiler_flag("-Wwrite-strings")
+  add_compiler_flag("-Wno-sign-compare")
+  add_compiler_flag("-Wno-unused-function")
+
+  # Linker flags
+  set(CMAKE_EXE_LINKER_FLAGS "-Wno-unused-parameter")
 
   # Detect gcc version
   execute_process(COMMAND ${CMAKE_C_COMPILER} -dumpversion
@@ -230,24 +234,15 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")  # gcc-specific settings
   list(GET GCC_VERSION_COMPONENTS 1 GCC_MINOR)
   message(STATUS "GCC version: ${GCC_MAJOR}.${GCC_MINOR}")
 
-  add_compiler_flag("-Wno-literal-suffix")
-  add_compiler_flag("-Wno-unused-local-typedefs")
-  add_compiler_flag("-Wno-unused-function")
-  add_compiler_flag("-Wno-deprecated-declarations")
-  add_compiler_flag("-fdiagnostics-color")
-
-  # Warn on implicit conversions
-  add_compiler_flag("-Wconversion")
-  # Dont' warn on multi-line comments
-  add_compiler_flag("-Wno-comment")
-
-  # Suppress the following warnings for Charm++ hostfiles including the
-  # Charm-generated .decl.h and .def.h:
-  set(HOSTFILE_FLAGS "-Wno-shadow -Wno-unused-variable -Wno-unused-parameter -Wno-cast-align -Wno-sign-compare -Wno-pedantic")
-  # Ignore warnings for linking with a Charm++ module
-  set(PARTOF_FLAGS "-Wno-unused-parameter")
-
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
+
+  # Include function that allows to set standard C++ library
+  include(libstdcxx)
+
+  # Offer switch between libc++ and libstdc++, using libc++ as default
+  if (libc++_FOUND)
+    set_libstdcpp_vs_libcpp(CMAKE_CXX_FLAGS "libc++")
+  endif()
 
   # Use the C++14 standard (CMAKE_CXX_STANDARD does not set this for intel)
   add_compiler_flag("-std=c++14")
@@ -278,11 +273,6 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
   add_compiler_flag("-no-inline-max-total-size")
   add_compiler_flag("-no-inline-max-per-routine")
 
-  # Offer switch between libc++ and libstdc++, using libc++ as default
-  if (libc++_FOUND)
-    set_libstdcpp_vs_libcpp(CMAKE_CXX_FLAGS "libc++")
-  endif()
-
   # Suppress the following Intel compiler warnings/remarks for Charm++
   # hostfiles including the Charm-generated .decl.h and .def.h:
   #  177: variable was declared but never referenced
@@ -305,11 +295,6 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "PGI")  # pgi-specific settings
 
 endif()
-
-# Echo Charm++ hostfile extra compiler flags
-message(STATUS "Charm++ host extra compiler flags: ${HOSTFILE_FLAGS}")
-# Echo Charm++ module extra link flags
-message(STATUS "Charm++ module extra linker flags: ${PARTOF_FLAGS}")
 
 # Set charmrun path. This is used when generating code coverage and running
 # regression tests using ctest. Note that ninja puts chamrun to <build> while

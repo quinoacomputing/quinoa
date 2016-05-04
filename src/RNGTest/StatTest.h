@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/StatTest.h
   \author    J. Bakosi
-  \date      Sat 30 Apr 2016 06:22:31 PM MDT
+  \date      Tue 03 May 2016 07:21:05 PM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Random number generator statistical test
   \details   This file defines a generic random number generator statistical
@@ -19,17 +19,9 @@
 
 #include <functional>
 
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wconversion"
-#endif
+#include "NoWarning/charm++.h"
 
-#include <charm++.h>
-
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic pop
-#endif
-
+#include "Macro.h"
 #include "CharmUtil.h"
 #include "Options/RNG.h"
 
@@ -98,6 +90,9 @@ class StatTest {
             (std::move(T::Proxy::ckNew(std::forward<ConstrArgs>(args)...))) ) {
       Assert( c == nullptr, "std::function argument to StatTest Charm "
                             "constructor must be nullptr" );
+      #ifdef NDEBUG
+      IGNORE(c);
+      #endif
     }
 
     //! Public interface to contribute number of results/test, i.e., p-values
@@ -126,6 +121,8 @@ class StatTest {
     //! Concept is a pure virtual base class specifying the requirements of
     //! polymorphic objects deriving from it
     struct Concept {
+      Concept() = default;
+      Concept( const Concept& ) = default;
       virtual ~Concept() = default;
       virtual Concept* copy() const = 0;
       virtual void npval() = 0;

@@ -2,7 +2,7 @@
 /*!
   \file      src/Walker/Collector.C
   \author    J. Bakosi
-  \date      Sat 30 Apr 2016 06:24:48 PM MDT
+  \date      Mon 02 May 2016 07:10:42 PM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Charm++ module interface file for collecting contributions from
              Integrators
@@ -187,13 +187,5 @@ Collector::chareCenPDF( const std::vector< tk::UniPDF >& updf,
     for (auto& p : m_centpdf) p.zero();
   }
 }
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wconversion"
-#endif
 
-#include "collector.def.h"
-
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic pop
-#endif
+#include "NoWarning/collector.def.h"

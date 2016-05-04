@@ -53,7 +53,6 @@ target_link_libraries(${UNITTEST_EXECUTABLE}
 
 # Add custom dependencies for UnitTest's main Charm++ module
 addCharmModule( "unittest" "${UNITTEST_EXECUTABLE}" )
-removeWarnings( "UnitTest.C;UnitTestDriver.C")
 
 INSTALL(TARGETS ${UNITTEST_EXECUTABLE}
         RUNTIME DESTINATION bin COMPONENT Runtime
@@ -109,7 +108,6 @@ target_link_libraries(${INCITER_EXECUTABLE}
 
 # Add custom dependencies for Inciter's main Charm++ module
 addCharmModule( "inciter" "${INCITER_EXECUTABLE}" )
-removeWarnings( "InciterDriver.C;InciterPrint.C;Inciter.C")
 
 INSTALL(TARGETS ${INCITER_EXECUTABLE}
         RUNTIME DESTINATION bin COMPONENT Runtime
@@ -159,7 +157,6 @@ target_link_libraries(${RNGTEST_EXECUTABLE}
 
 # Add custom dependencies for RNGTest's main Charm++ module
 addCharmModule( "rngtest" "${RNGTEST_EXECUTABLE}" )
-removeWarnings( "RNGTest.C;RNGTestDriver.C;RNGPrint.C")
 
 INSTALL(TARGETS ${RNGTEST_EXECUTABLE}
         RUNTIME DESTINATION bin COMPONENT Runtime
@@ -207,7 +204,6 @@ target_link_libraries(${MESHCONV_EXECUTABLE}
 
 # Add custom dependencies for MeshConv's main Charm++ module
 addCharmModule( "meshconv" "${MESHCONV_EXECUTABLE}" )
-removeWarnings( "MeshConv.C;MeshConvDriver.C" )
 
 INSTALL(TARGETS ${MESHCONV_EXECUTABLE}
         RUNTIME DESTINATION bin COMPONENT Runtime
@@ -266,7 +262,6 @@ target_link_libraries(${WALKER_EXECUTABLE}
 
 # Add custom dependencies for Walker's main Charm++ module
 addCharmModule( "walker" "${WALKER_EXECUTABLE}" )
-removeWarnings( "WalkerDriver.C;WalkerPrint.C;Walker.C")
 
 INSTALL(TARGETS ${WALKER_EXECUTABLE}
         RUNTIME DESTINATION bin COMPONENT Runtime

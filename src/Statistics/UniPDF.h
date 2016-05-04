@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/UniPDF.h
   \author    J. Bakosi
-  \date      Thu 14 Jan 2016 03:33:43 PM MST
+  \date      Wed 04 May 2016 08:52:11 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Univariate PDF estimator
   \details   Univariate PDF estimator. This class can be used to estimate a
@@ -46,12 +46,12 @@ class UniPDF {
     using map_type = std::unordered_map< key_type, tk::real >;
 
     //! Empty constructor for Charm++
-    explicit UniPDF() : m_binsize( 0 ), m_nsample( 0 ) {}
+    explicit UniPDF() : m_binsize( 0 ), m_nsample( 0 ), m_pdf() {}
 
     //! Constructor: Initialize univariate PDF container
     //! \param[in] binsize Sample space bin size
     explicit UniPDF( tk::real binsize ) :
-      m_binsize( binsize ), m_nsample( 0 ) {}
+      m_binsize( binsize ), m_nsample( 0 ), m_pdf() {}
 
     //! Accessor to number of samples
     //! \return Number of samples collected
@@ -96,15 +96,15 @@ class UniPDF {
     /** @name Pack/Unpack: Serialize UniPDF object for Charm++ */
     ///@{
     //! Pack/Unpack serialize member function
-    //! \param[inout] p Charm++'s PUP::er serializer object reference
+    //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er& p ) {
       p | m_binsize;
       p | m_nsample;
       p | m_pdf;
     }
     //! \brief Pack/Unpack serialize operator|
-    //! \param[inout] p Charm++'s PUP::er serializer object reference
-    //! \param[inout] c UniPDF object reference
+    //! \param[in,out] p Charm++'s PUP::er serializer object reference
+    //! \param[in,out] c UniPDF object reference
     friend void operator|( PUP::er& p, UniPDF& c ) { c.pup(p); }
     ///@}
 
@@ -115,7 +115,7 @@ class UniPDF {
 };
 
 //! Output univariate PDF to output stream
-//! \param[inout] os Stream to output to
+//! \param[in,out] os Stream to output to
 //! \param[in] p PDF to output
 //! \return Updated stream
 //! \note Used for debugging.

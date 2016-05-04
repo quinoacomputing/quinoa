@@ -2,7 +2,7 @@
 /*!
   \file      src/PDE/Euler.h
   \author    J. Bakosi
-  \date      Wed 17 Feb 2016 10:36:07 AM MST
+  \date      Mon 02 May 2016 04:58:30 PM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Euler equations describing compressible flow
   \details   This file implements the time integration of the Euler equations
@@ -12,6 +12,7 @@
 #ifndef Euler_h
 #define Euler_h
 
+#include "Macro.h"
 #include "EulerProblem.h"
 
 namespace inciter {
@@ -38,12 +39,15 @@ class Euler {
     {}
 
     //! Initalize the Euler equations, prepare for time integration
-    //! \param[inout] unk Array of unknowns
+    //! \param[in,out] unk Array of unknowns
     //! \author J. Bakosi
     void initialize( const std::array< std::vector< tk::real >, 3 >& coord,
                      tk::MeshNodes& unk,
                      tk::real t )
     {
+      IGNORE(coord);
+      IGNORE(unk);
+      IGNORE(t);
       //! Set initial conditions using problem configuration policy
       //Problem::template init< tag::euler >( g_inputdeck, unk, m_offset );
     }
@@ -51,9 +55,9 @@ class Euler {
     //! Compute the left hand side sparse matrix
     //! \param[in] coord Mesh node coordinates
     //! \param[in] inpoel Mesh element connectivity
-    //! \param[in] Linked lists storing IDs of points surrounding points
-    //! \param[input] lhsd Diagonal of the sparse matrix storing nonzeros
-    //! \param[input] lhso Off-diagonal of the sparse matrix storing nonzeros
+    //! \param[in] psup Linked lists storing IDs of points surrounding points
+    //! \param[in,out] lhsd Diagonal of the sparse matrix storing nonzeros
+    //! \param[in,out] lhso Off-diagonal of the sparse matrix storing nonzeros
     //! \details Sparse matrix storing the nonzero matrix values at rows and
     //!   columns given by psup. The format is similar to compressed row
     //!   storage, but the diagonal and off-diagonal data are stored in separate
@@ -68,7 +72,14 @@ class Euler {
               const std::pair< std::vector< std::size_t >,
                                std::vector< std::size_t > >& psup,
               tk::MeshNodes& lhsd,
-              tk::MeshNodes& lhso ) {}
+              tk::MeshNodes& lhso )
+    {
+      IGNORE(coord);
+      IGNORE(inpoel);
+      IGNORE(psup);
+      IGNORE(lhsd);
+      IGNORE(lhso);
+    }
 
     //! Compute right hand side
     //! \param[in] mult Multiplier differentiating the different stages in
@@ -78,7 +89,7 @@ class Euler {
     //! \param[in] inpoel Mesh element connectivity
     //! \param[in] U Solution vector at recent time step stage
     //! \param[in] Un Solution vector at previous time step
-    //! \param[inout] R Right-hand side vector computed
+    //! \param[in,out] R Right-hand side vector computed
     //! \author J. Bakosi
     void rhs( tk::real mult,
               tk::real dt,
@@ -86,14 +97,27 @@ class Euler {
               const std::vector< std::size_t >& inpoel,
               const tk::MeshNodes& U,
               const tk::MeshNodes& Un,
-              tk::MeshNodes& R ) {}
+              tk::MeshNodes& R )
+    {
+      IGNORE(mult);
+      IGNORE(dt);
+      IGNORE(coord);
+      IGNORE(inpoel);
+      IGNORE(U);
+      IGNORE(Un);
+      IGNORE(R);
+    }
 
     //! \brief Advance unknowns according to the Euler equations
-    //! \param[inout] unk Array of unknowns
+    //! \param[in,out] unk Array of unknowns
     //! \param[in] dt Time step size
     //! \param[in] t Physical time
     //! \author J. Bakosi
-    void advance( tk::MeshNodes& unk, tk::real dt, tk::real t ) {}
+    void advance( tk::MeshNodes& unk, tk::real dt, tk::real t ) {
+      IGNORE(unk);
+      IGNORE(dt);
+      IGNORE(t);
+    }
 
     //! Return field names to be output to file
     //! \return Vector of strings labelling fields output in file
@@ -106,7 +130,7 @@ class Euler {
     //! Return field output going to file
     //! \param[in] t Physical time
     //! \param[in] coord Mesh node coordinates
-    //! \param[inout] U Solution vector at recent time step stage
+    //! \param[in,out] U Solution vector at recent time step stage
     //! \return Vector of vectors to be output to file
     //! \details Note that U is overwritten
     std::vector< std::vector< tk::real > >
@@ -114,6 +138,9 @@ class Euler {
             const std::array< std::vector< tk::real >, 3 >& coord,
             tk::MeshNodes& U )
     {
+      IGNORE(t);
+      IGNORE(coord);
+      IGNORE(U);
       std::vector< std::vector< tk::real > > out;
       // ...
       return out;

@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Partitioner.h
   \author    J. Bakosi
-  \date      Sat 30 Apr 2016 02:39:00 PM MDT
+  \date      Wed 04 May 2016 10:30:31 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Charm++ chare partitioner group used to perform mesh partitioning
   \details   Charm++ chare partitioner group used to parform mesh partitioning.
@@ -21,19 +21,6 @@
 #include "Inciter/InputDeck/InputDeck.h"
 #include "LinSysMerger.h"
 
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wconversion"
-  #pragma GCC diagnostic ignored "-Wreorder"
-#endif
-
-#include "conductor.decl.h"
-#include "partitioner.decl.h"
-
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic pop
-#endif
-
 namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
@@ -50,9 +37,22 @@ class Partitioner : public CBase_Partitioner< HostProxy,
                                               WorkerProxy,
                                               LinSysMergerProxy > {
 
+  #if defined(__clang__)
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wunused-parameter"
+  #elif defined(__GNUC__)
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wunused-parameter"
+    #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+  #endif
   // Include Charm++ SDAG code. See http://charm.cs.illinois.edu/manuals/html/
   // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
   Partitioner_SDAG_CODE
+  #if defined(__clang__)
+    #pragma clang diagnostic pop
+  #elif defined(__GNUC__)
+    #pragma GCC diagnostic pop
+  #endif
 
   private:
     using Group =
@@ -60,19 +60,36 @@ class Partitioner : public CBase_Partitioner< HostProxy,
 
   public:
     //! Constructor
-    //! \param[in] hostproxy Host Charm++ proxy we are being called from
+    //! \param[in] host Host Charm++ proxy we are being called from
+    //! \param[in] worker Worker Charm++ proxy we spawn work to
     //! \param[in] lsm Linear system merger proxy (required by the workers)
     Partitioner( const HostProxy& host,
                  const WorkerProxy& worker,
                  const LinSysMergerProxy& lsm ) :
+      __dep(),
       m_host( host ),
       m_worker( worker ),
       m_linsysmerger( lsm ),
       m_npe( 0 ),
+      m_req(),
       m_reordered( 0 ),
       m_start( 0 ),
       m_noffset( 0 ),
-      m_nquery( 0 )
+      m_nquery( 0 ),
+      m_tetinpoel(),
+      m_gelemid(),
+      m_centroid(),
+      m_nchare( 0 ),
+      m_lower( 0 ),
+      m_upper( 0 ),
+      m_node(),
+      m_comm(),
+      m_communication(),
+      m_id(),
+      m_sid(),
+      m_newid(),
+      m_chcid(),
+      m_cost( 0.0 )
     {
       tk::ExodusIIMeshReader
         er( g_inputdeck.get< tag::cmd, tag::io, tag::input >() );
@@ -105,7 +122,6 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     }
 
     //! Receive number of uniquely assigned global mesh node IDs from lower PEs
-    //! \param[in] Number of uniquely assigned global mesh node IDs of sender PE
     //! \details This function computes the offset each PE will need to start
     //!   assigning its new node IDs from (for those nodes that are not assigned
     //!   new IDs by any PEs with lower indices). The offset for a PE is the
@@ -123,7 +139,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     //!   reordering.
     void offset( int pe, std::size_t u ) {
       if (pe < CkMyPe()) m_start += u;
-      if (++m_noffset == CkNumPes()) reorder();
+      if (++m_noffset == static_cast<std::size_t>(CkNumPes())) reorder();
     }
 
     //! Request new global node IDs for old node IDs
@@ -234,9 +250,10 @@ class Partitioner : public CBase_Partitioner< HostProxy,
         for (std::size_t i=0; i<rec.size(); ++i)
           if (rec[i]) id.insert( m_id[i] );
       }
-      if (++m_nquery == CkNumPes()) {
+      if (++m_nquery == static_cast<std::size_t>(CkNumPes())) {
         // Make sure we have received all we need
-        Assert( m_comm.size() == CkMyPe(), "Communication map size on PE " +
+        Assert( m_comm.size() == static_cast<std::size_t>(CkMyPe()),
+                "Communication map size on PE " +
                 std::to_string(CkMyPe()) + " must equal " +
                 std::to_string(CkMyPe()) );
         // Fill new hash-map, keeping only unique node IDs obtained from the
@@ -472,9 +489,9 @@ class Partitioner : public CBase_Partitioner< HostProxy,
       // Make sure we are not fed garbage
       int chunksize, mynchare;
       std::tie( chunksize, mynchare ) = chareDistribution();
-      Assert( m_node.size() == mynchare, "Global mesh nodes ids associated "
-              "to chares on PE " + std::to_string( CkMyPe() ) + " is "
-              "incomplete" );
+      Assert( m_node.size() == static_cast<std::size_t>(mynchare),
+              "Global mesh nodes ids associated to chares on PE " +
+              std::to_string( CkMyPe() ) + " is incomplete" );
       // Flatten node IDs of elements our chares operate on
       for (auto& c : m_node)
         m_id.insert( end(m_id), begin(c.second), end(c.second) );
@@ -670,7 +687,6 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     //! Compute communication cost of linear system merging for our PE
     //! \param[in] lower Lower global row ID of linear system this PE works on
     //! \param[in] upper Upper global row ID of linear system this PE works on
-    //! \param[in] stage Stage of the communication cost estimation
     //! \return Communicatoin cost of merging the linear system for our PE
     //! \details The cost is a real number between 0 and 1, defined as the
     //!   number of mesh points we do not own, i.e., need to send to some other
@@ -728,18 +744,8 @@ class Partitioner : public CBase_Partitioner< HostProxy,
 
 } // inciter::
 
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wconversion"
-  #pragma GCC diagnostic ignored "-Wreorder"
-#endif
-
 #define CK_TEMPLATES_ONLY
-#include "partitioner.def.h"
+#include "NoWarning/partitioner.def.h"
 #undef CK_TEMPLATES_ONLY
-
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic pop
-#endif
 
 #endif // Partitioner_h

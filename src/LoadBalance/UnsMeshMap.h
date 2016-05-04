@@ -2,7 +2,7 @@
 /*!
   \file      src/LoadBalance/UnsMeshMap.h
   \author    J. Bakosi
-  \date      Sat 30 Apr 2016 06:05:17 PM MDT
+  \date      Mon 02 May 2016 01:02:46 PM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Advanced Charm++ array creation with a map using an unstructured
              grid
@@ -44,16 +44,7 @@
 #include <vector>
 #include <cstddef>
 
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wconversion"
-#endif
-
-#include "unsmeshmap.decl.h"
-
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic pop
-#endif
+#include "NoWarning/unsmeshmap.decl.h"
 
 namespace tk {
 

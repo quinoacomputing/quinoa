@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/GeneralizedDirichlet.h
   \author    J. Bakosi
-  \date      Sun 03 Apr 2016 06:04:07 PM MDT
+  \date      Wed 04 May 2016 11:13:39 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Lochner's generalized Dirichlet SDE
   \details   This file implements the time integration of a system of stochastic
@@ -54,6 +54,8 @@
 #ifndef GeneralizedDirichlet_h
 #define GeneralizedDirichlet_h
 
+#include <vector>
+
 #include "InitPolicy.h"
 #include "GeneralizedDirichletCoeffPolicy.h"
 #include "RNG.h"
@@ -92,6 +94,10 @@ class GeneralizedDirichlet {
       m_offset( g_inputdeck.get< tag::component >().offset< tag::gendir >(c) ),
       m_rng( g_rng.at( tk::ctr::raw(
         g_inputdeck.get< tag::param, tag::gendir, tag::rng >().at(c) ) ) ),
+      m_b(),
+      m_S(),
+      m_k(),
+      m_cij(),
       coeff( m_ncomp,
              g_inputdeck.get< tag::param, tag::gendir, tag::b >().at(c),
              g_inputdeck.get< tag::param, tag::gendir, tag::S >().at(c),
@@ -101,7 +107,7 @@ class GeneralizedDirichlet {
 
     //! Initalize SDE, prepare for time integration
     //! \param[in] stream Thread (or more precisely stream) ID 
-    //! \param[inout] particles Array of particle properties 
+    //! \param[in,out] particles Array of particle properties 
     //! \author J. Bakosi
     void initialize( int stream, tk::Particles& particles ) {
       //! Set initial conditions using initialization policy
@@ -111,34 +117,35 @@ class GeneralizedDirichlet {
     }
 
     //! \brief Advance particles according to the generalized Dirichlet SDE
-    //! \param[inout] particles Array of particle properties
+    //! \param[in,out] particles Array of particle properties
     //! \param[in] stream Thread (or more precisely stream) ID
     //! \param[in] dt Time step size
-    //! \param[in] t Physical time
-    //! \param[in] moments Map of statistical moments
     //! \author J. Bakosi
     void advance( tk::Particles& particles,
                   int stream,
                   tk::real dt,
-                  tk::real t,
-                  const std::map< tk::ctr::Product, tk::real >& moments )
+                  tk::real,
+                  const std::map< tk::ctr::Product, tk::real >& )
     {
       const auto npar = particles.nunk();
       for (auto p=decltype(npar){0}; p<npar; ++p) {
         // Y_i = 1 - sum_{k=1}^{i} y_k
-        tk::real Y[m_ncomp];
+        std::vector< tk::real > Y( m_ncomp );
         Y[0] = 1.0 - particles( p, 0, m_offset );
         for (ncomp_t i=1; i<m_ncomp; ++i)
           Y[i] = Y[i-1] - particles( p, i, m_offset );
 
         // U_i = prod_{j=1}^{K-i} 1/Y_{K-j}
-        tk::real U[m_ncomp];
+        std::vector< tk::real > U( m_ncomp );
         U[m_ncomp-1] = 1.0;
-        for (long i=static_cast<long>(m_ncomp)-2; i>=0; --i) U[i] = U[i+1]/Y[i];
+        for (long i=static_cast<long>(m_ncomp)-2; i>=0; --i) {
+          auto I = static_cast< std::size_t >( i );
+          U[I] = U[I+1]/Y[I];
+        }
 
         // Generate Gaussian random numbers with zero mean and unit variance
-        tk::real dW[m_ncomp];
-        m_rng.gaussian( stream, m_ncomp, dW );
+        std::vector< tk::real > dW( m_ncomp );
+        m_rng.gaussian( stream, m_ncomp, dW.data() );
 
         // Advance first m_ncomp (K=N-1) scalars
         ncomp_t k=0;

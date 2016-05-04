@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/HypreVector.h
   \author    J. Bakosi
-  \date      Thu 10 Mar 2016 11:04:47 AM MST
+  \date      Tue 03 May 2016 09:19:53 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Hypre IJ vector class
   \details   Hypre IJ vector class.
@@ -11,17 +11,8 @@
 #ifndef HypreVector_h
 #define HypreVector_h
 
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wconversion"
-#endif
-
 #include <HYPRE.h>
 #include <HYPRE_parcsr_ls.h>
-
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic pop
-#endif
 
 namespace tk {
 namespace hypre {
@@ -69,7 +60,7 @@ class HypreVector {
     //! Hypre vector accessor
     HYPRE_ParVector get() const {
       HYPRE_ParVector v;
-      HYPRE_IJVectorGetObject( m_v, (void**) &v );
+      HYPRE_IJVectorGetObject( m_v, reinterpret_cast<void**>(&v) );
       return v;
     }
 

@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Conductor.h
   \author    J. Bakosi
-  \date      Tue 26 Jan 2016 08:23:41 AM MST
+  \date      Tue 03 May 2016 11:03:50 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Conductor drives the time integration of a PDE
   \details   Conductor drives the time integration of a PDE
@@ -26,18 +26,7 @@
 #include "InciterPrint.h"
 #include "Partitioner.h"
 
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wconversion"
-#endif
-
-#include "linsysmerger.decl.h"
-#include "conductor.decl.h"
-#include "performer.decl.h"
-
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic pop
-#endif
+#include "NoWarning/performer.decl.h"
 
 namespace inciter {
 

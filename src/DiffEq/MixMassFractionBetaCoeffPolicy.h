@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/MixMassFractionBetaCoeffPolicy.h
   \author    J. Bakosi
-  \date      Wed 17 Feb 2016 10:28:25 AM MST
+  \date      Tue 03 May 2016 07:18:01 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Mix mass-fraction beta SDE coefficients policies
   \details   This file defines coefficients policy classes for the mix
@@ -144,12 +144,12 @@ class MixMassFracBetaCoeffDecay {
       const std::map< tk::ctr::Product, tk::real >& moments,
       const std::vector< kw::sde_bprime::info::expect::type  >& bprime,
       const std::vector< kw::sde_kappaprime::info::expect::type >& kprime,
-      const std::vector< kw::sde_rho2::info::expect::type >& rho2,
-      const std::vector< kw::sde_r::info::expect::type >& r,
+      const std::vector< kw::sde_rho2::info::expect::type >&,
+      const std::vector< kw::sde_r::info::expect::type >&,
       std::vector< kw::sde_b::info::expect::type  >& b,
       std::vector< kw::sde_kappa::info::expect::type >& k,
-      std::vector< kw::sde_S::info::expect::type >& S,
-      tk::real t = 0.0 ) const
+      std::vector< kw::sde_S::info::expect::type >&,
+      tk::real ) const
     {
       for (ncomp_t c=0; c<ncomp; ++c) {
         tk::real m = tk::ctr::lookup( tk::ctr::mean(depvar,c), moments );
@@ -231,7 +231,7 @@ class MixMassFracBetaCoeffHomDecay {
       std::vector< kw::sde_b::info::expect::type  >& b,
       std::vector< kw::sde_kappa::info::expect::type >& k,
       std::vector< kw::sde_S::info::expect::type >& S,
-      tk::real t = 0.0 ) const
+      tk::real ) const
     {
       using tk::ctr::lookup;
       using tk::ctr::mean;
@@ -353,7 +353,7 @@ class MixMassFracBetaCoeffMonteCarloHomDecay {
       std::vector< kw::sde_b::info::expect::type  >& b,
       std::vector< kw::sde_kappa::info::expect::type >& k,
       std::vector< kw::sde_S::info::expect::type >& S,
-      tk::real t = 0.0 ) const
+      tk::real) const
     {
       using tk::ctr::lookup;
       using tk::ctr::mean;
@@ -514,8 +514,8 @@ class MixMassFracBetaCoeffHydroTimeScaleHomDecay {
         const auto dscorr = tk::ctr::Product( { s1, s2 } );
         tk::real ds = -lookup( dscorr, moments );                  // b = -<rv>
 
-        tk::real m = lookup( mean(depvar,c), moments );            // <Y>
-        tk::real v = lookup( variance(depvar,c), moments );        // <y^2>
+        //tk::real m = lookup( mean(depvar,c), moments );            // <Y>
+        //tk::real v = lookup( variance(depvar,c), moments );        // <y^2>
         tk::real d = lookup( mean(depvar,c+ncomp), moments );      // <R>
         tk::real d2 = lookup( variance(depvar,c+ncomp), moments ); // <r^2>
         tk::real d3 = lookup( cen3(depvar,c+ncomp), moments );     // <r^3>
@@ -523,7 +523,7 @@ class MixMassFracBetaCoeffHydroTimeScaleHomDecay {
         tk::real yt = ry/d;
 
         tk::real a = r[c]/(1.0+r[c]*yt);
-        tk::real n = 1.0;
+        //tk::real n = 1.0;
         tk::real bnm = a*a*yt*(1.0-yt);
         tk::real theta = 1.0 - ds/bnm;
         tk::real A = 0.15;

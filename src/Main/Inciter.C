@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Inciter.C
   \author    J. Bakosi
-  \date      Sun 03 Apr 2016 10:05:04 AM MDT
+  \date      Wed 04 May 2016 12:38:41 PM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Inciter, computational shock hydrodynamics tool, Charm++ main
     chare.
@@ -30,20 +30,20 @@
 #include "Inciter/CmdLine/CmdLine.h"
 #include "Inciter/InputDeck/InputDeck.h"
 
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wconversion"
-#endif
+#include "NoWarning/inciter.decl.h"
 
-#include "inciter.decl.h"
-
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic pop
+#if defined(__clang__)
+  #pragma clang diagnostic push
+  #pragma clang diagnostic ignored "-Wmissing-variable-declarations"
 #endif
 
 //! \brief Charm handle to the main proxy, facilitates call-back to finalize,
 //!    etc., must be in global scope, unique per executable
 CProxy_Main mainProxy;
+
+#if defined(__clang__)
+  #pragma clang diagnostic pop
+#endif
 
 //! Inciter declarations and definitions
 namespace inciter {
@@ -54,6 +54,11 @@ namespace inciter {
 //! http://charm.cs.illinois.edu/manuals/html/charm++/manual.html. The data
 //! below is global-scope because they must be available to all PEs which could
 //! be on different machines.
+
+#if defined(__clang__)
+  #pragma clang diagnostic push
+  #pragma clang diagnostic ignored "-Wmissing-variable-declarations"
+#endif
 
 //! Defaults of input deck, facilitates detection what is set by user
 //! \details This object is in global scope, it contains the default of all
@@ -72,6 +77,10 @@ ctr::InputDeck g_inputdeck;
 //!   objects, and thus must be distributed to all PEs during initialization.
 //!   Once distributed by the runtime system, the objects do not change.
 std::vector< PDE > g_pdes;
+
+#if defined(__clang__)
+  #pragma clang diagnostic pop
+#endif
 
 //! Pack/Unpack selected partial differential equations. This Pack/Unpack method
 //! (re-)creates the PDE factory since it needs to (re-)bind function
@@ -124,6 +133,7 @@ class Main : public CBase_Main {
     //! \see http://charm.cs.illinois.edu/manuals/html/charm++/manual.html
     Main( CkArgMsg* msg )
     try :
+      m_cmdline(),
       // Parse command line into m_cmdline using default simple pretty printer
       m_cmdParser( msg->argc, msg->argv, tk::Print(), m_cmdline ),
       // Create pretty printer initializing output streams based on command line
@@ -136,7 +146,8 @@ class Main : public CBase_Main {
                           INCITER_EXECUTABLE,
                           m_print ) ),
       // Start new timer measuring the total runtime
-      m_timer(1)
+      m_timer(1),
+      m_timestamp()
     {
       delete msg;
       mainProxy = thisProxy;
@@ -186,15 +197,8 @@ class Main : public CBase_Main {
 //!    has finished migrating all global-scoped read-only objects which happens
 //!    after the main chare constructor has finished.
 //! \author J. Bakosi
-struct execute : CBase_execute { execute() { mainProxy.execute(); } };
+class execute : public CBase_execute {
+ public: execute() { mainProxy.execute(); }
+};
 
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wconversion"
-#endif
-
-#include "inciter.def.h"
-
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic pop
-#endif
+#include "NoWarning/inciter.def.h"

@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/ZoltanInterOp.C
   \author    J. Bakosi
-  \date      Wed 23 Dec 2015 10:01:48 PM MST
+  \date      Tue 03 May 2016 09:32:35 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Interoperation with the Zoltan library
   \details   Interoperation with the Zoltan library, used for static mesh graph
@@ -10,18 +10,8 @@
 */
 //******************************************************************************
 
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wconversion"
-#endif
-
-#include <Zoltan2_MeshAdapter.hpp>
-#include <Zoltan2_PartitioningProblem.hpp>
-
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic pop
-#endif
-
+#include "NoWarning/Zoltan2_MeshAdapter.h"
+#include "NoWarning/Zoltan2_PartitioningProblem.h"
 #include <Zoltan2_PartitioningSolution.hpp>
 
 #include "ZoltanInterOp.h"
@@ -61,17 +51,18 @@ class GeometricMeshElemAdapter : public Zoltan2::MeshAdapter< ZoltanTypes > {
 
     //! Returns the number of mesh entities on this rank
     //! \return Number of mesh elements on this rank
-    std::size_t getLocalNumOf( MeshEntityType etype ) const override
+    std::size_t getLocalNumOf( MeshEntityType ) const override
     { return m_nelem; }
 
     //! Provide a pointer to this rank's identifiers
-    //! \param[inout] Ids Pointer to the list of global element Ids on this rank
-    void getIDsViewOf( MeshEntityType etype, const gno_t*& Ids) const override
+    //! \param[in,out] Ids Pointer to the list of global element Ids on this
+    //!   rank
+    void getIDsViewOf( MeshEntityType, const gno_t*& Ids) const override
     { Ids = m_elemid.data(); }
 
     //! Provide a pointer to the entity topology types
     //! \param Types Pointer to the list of entity topology types on this rank
-    void getTopologyViewOf( MeshEntityType etype,
+    void getTopologyViewOf( MeshEntityType,
                             const EntityTopologyType*& Types ) const override
     { Types = &m_topology; }
 
@@ -82,13 +73,13 @@ class GeometricMeshElemAdapter : public Zoltan2::MeshAdapter< ZoltanTypes > {
     //! Provide a pointer to one dimension of mesh element coordinates
     //! \param[in] coords Pointer to a list of coordinate values for the
     //!   dimension
-    //! \param[inout] stride Describes the layout of the coordinate values in
+    //! \param[in,out] stride Describes the layout of the coordinate values in
     //!   the coords list. If stride is one, then the ith coordinate value is
     //!   coords[i], but if stride is two, then the ith coordinate value is
     //!   coords[2*i]
     //! \param dim Value from 0 to one less than getEntityCoordinateDimension()
     //!   specifying which dimension is being provided in the coords list
-    void getCoordinatesViewOf( MeshEntityType etype,
+    void getCoordinatesViewOf( MeshEntityType,
                                const scalar_t*& coords,
                                int &stride,
                                int dim ) const override

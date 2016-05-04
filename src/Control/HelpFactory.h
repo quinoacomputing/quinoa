@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/HelpFactory.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:02:26 PM MDT
+  \date      Wed 04 May 2016 09:34:25 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Command-line and input deck help factory
   \details   This file contains some types that facilitate the generation of
@@ -20,6 +20,17 @@
 
 namespace tk {
 namespace ctr {
+
+// The structs KeywordInfo and HelpKw below do not define consutrctors on
+// purpose so that the compiler generates constructors taking initializer lists.
+// The warning -Weffc++ complains about the data member not being initialized,
+// however, defining the default constructors would prohibit the compiler
+// implicitly defining the initializer-list constructors, required in struct
+// Info::operator(). Thus the "-Weffc++" warning is suppressed.
+#if defined(__GNUC__)
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Weffc++"
+#endif
 
 //! \brief Keyword information bundle
 //! \details This bundle contains the information that is used to display
@@ -43,7 +54,7 @@ struct KeywordInfo {
   /** @name Pack/Unpack: Serialize KeywordInfo object for Charm++ */
   ///@{
   //! \brief Pack/Unpack serialize member function
-  //! \param[inout] p Charm++'s PUP::er serializer object reference
+  //! \param[in,out] p Charm++'s PUP::er serializer object reference
   //! \author J. Bakosi
   void pup( PUP::er& p ) {
     p | shortDescription;
@@ -53,8 +64,8 @@ struct KeywordInfo {
     p | choices;
   }
   //! \brief Pack/Unpack serialize operator|
-  //! \param[inout] p Charm++'s PUP::er serializer object reference
-  //! \param[inout] info KeywordInfo object reference
+  //! \param[in,out] p Charm++'s PUP::er serializer object reference
+  //! \param[in,out] info KeywordInfo object reference
   //! \author J. Bakosi
   friend void operator|( PUP::er& p, KeywordInfo& info ) { info.pup(p); }
   ///@}
@@ -78,16 +89,20 @@ struct HelpKw {
   /** @name Pack/Unpack: Serialize HelpKw object for Charm++ */
   ///@{
   //! \brief Pack/Unpack serialize member function
-  //! \param[inout] p Charm++'s PUP::er serializer object reference
+  //! \param[in,out] p Charm++'s PUP::er serializer object reference
   //! \author J. Bakosi
   void pup( PUP::er& p ) { p|keyword; p|info; p|cmd; }
   //! \brief Pack/Unpack serialize operator|
-  //! \param[inout] p Charm++'s PUP::er serializer object reference
-  //! \param[inout] h HelpKw object reference
+  //! \param[in,out] p Charm++'s PUP::er serializer object reference
+  //! \param[in,out] h HelpKw object reference
   //! \author J. Bakosi
   friend void operator|( PUP::er& p, HelpKw& h ) { h.pup(p); }
   ///@}
 };
+
+#if defined(__GNUC__)
+  #pragma GCC diagnostic pop
+#endif
 
 //! \brief Function object for filling a HelpFactory (std::map) with keywords
 //!   and their associated information bundle

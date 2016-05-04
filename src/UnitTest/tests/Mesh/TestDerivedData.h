@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Mesh/TestDerivedData.h
   \author    J. Bakosi
-  \date      Wed 11 Nov 2015 06:59:38 AM MST
+  \date      Wed 04 May 2016 03:11:16 PM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Unit tests for Mesh/DerivedData
   \details   Unit tests for Mesh/DerivedData. All unit tests start from simple
@@ -114,11 +114,16 @@
 #ifndef test_DerivedData_h
 #define test_DerivedData_h
 
-#include <tut/tut.hpp>
+#include "NoWarning/tut.h"
 
 #include "DerivedData.h"
 
 namespace tut {
+
+#if defined(__GNUC__) && !defined(__clang__)
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wsuggest-attribute=noreturn"
+#endif
 
 //! All tests in group inherited from this base
 struct DerivedData_common {};
@@ -130,7 +135,7 @@ using DerivedData_group = test_group< DerivedData_common, MAX_TESTS_IN_GROUP >;
 using DerivedData_object = DerivedData_group::object;
 
 //! Define test group
-DerivedData_group DerivedData( "Mesh/DerivedData" );
+static DerivedData_group DerivedData( "Mesh/DerivedData" );
 
 //! Test definitions for group
 
@@ -269,7 +274,7 @@ void DerivedData_object::test< 5 >() {
     tk::genEsup( empty, 4 );
     fail( "should throw exception in DEBUG mode" );
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     // exception thrown in DEBUG mode, test ok
   }
   #endif
@@ -291,7 +296,7 @@ void DerivedData_object::test< 6 >() {
     auto esup = tk::genEsup( inpoel, 0 );
     fail( "should throw exception in DEBUG mode" );
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     // exception thrown in DEBUG mode, test ok
   }
   #endif
@@ -313,7 +318,7 @@ void DerivedData_object::test< 7 >() {
     fail( "should throw exception in DEBUG mode" );
     #endif
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     // exception thrown in DEBUG mode, test ok
     // Assert skipped in RELEASE mode, genEsup still graceful, test ok
   }
@@ -502,7 +507,7 @@ void DerivedData_object::test< 10 >() {
     tk::genPsup( empty, 4, tk::genEsup(inpoel,4) );
     fail( "should throw exception in DEBUG mode" );
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     // exception thrown in DEBUG mode, test ok
   }
   #endif
@@ -522,7 +527,7 @@ void DerivedData_object::test< 11 >() {
     tk::genPsup( inpoel, 0, tk::genEsup(inpoel,4) );
     fail( "should throw exception in DEBUG mode" );
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     // exception thrown in DEBUG mode, test ok
   }
   #endif
@@ -542,7 +547,7 @@ void DerivedData_object::test< 12 >() {
     tk::genPsup( inpoel, 4, {} );
     fail( "should throw exception in DEBUG mode" );
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     // exception thrown, test ok
   }
   #endif
@@ -562,7 +567,7 @@ void DerivedData_object::test< 13 >() {
     tk::genPsup( inpoel, 4, {{1},{}} );
     fail( "should throw exception in DEBUG mode" );
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     // exception thrown, test ok
   }
   #endif
@@ -585,7 +590,7 @@ void DerivedData_object::test< 14 >() {
     tk::genPsup( inpoel, 4, tk::genEsup(inpoel,4) );
     fail( "should throw exception in DEBUG mode" );
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     // exception thrown in DEBUG mode, test ok
   }
   #endif
@@ -775,7 +780,7 @@ void DerivedData_object::test< 17 >() {
     tk::genEsupel( empty, 4, tk::genEsup(inpoel,4) );
     fail( "should throw exception in DEBUG mode" );
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     // exception thrown in DEBUG mode, test ok
   }
   #endif
@@ -795,7 +800,7 @@ void DerivedData_object::test< 18 >() {
     tk::genEsupel( inpoel, 0, tk::genEsup(inpoel,4) );
     fail( "should throw exception in DEBUG mode" );
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     // exception thrown in DEBUG mode, test ok
   }
   #endif
@@ -815,7 +820,7 @@ void DerivedData_object::test< 19 >() {
     tk::genEsupel( inpoel, 4, {} );
     fail( "should throw exception in DEBUG mode" );
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     // exception thrown, test ok
   }
   #endif
@@ -835,7 +840,7 @@ void DerivedData_object::test< 20 >() {
     tk::genEsupel( inpoel, 4, {{1},{}} );
     fail( "should throw exception in DEBUG mode" );
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     // exception thrown, test ok
   }
   #endif
@@ -857,7 +862,7 @@ void DerivedData_object::test< 21 >() {
     fail( "should throw exception in DEBUG mode" );
     #endif
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     // exception thrown in DEBUG mode, test ok
     // Assert skipped in RELEASE mode, genEsupel still graceful, test ok
   }
@@ -1079,7 +1084,7 @@ void DerivedData_object::test< 24 >() {
     fail( "should throw exception in DEBUG mode" );
     #endif
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     // exception thrown in DEBUG mode, test ok
     // Assert skipped in RELEASE mode, genEsuel still graceful, test ok
   }
@@ -1099,7 +1104,7 @@ void DerivedData_object::test< 25 >() {
     tk::genEsuel( inpoel, 0, tk::genEsup(inpoel,4) );
     fail( "should throw exception in DEBUG mode" );
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     // exception thrown in DEBUG mode, test ok
   }
   #endif
@@ -1119,7 +1124,7 @@ void DerivedData_object::test< 26 >() {
     tk::genEsuel( inpoel, 4, {} );
     fail( "should throw exception in DEBUG mode" );
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     // exception thrown, test ok
   }
   #endif
@@ -1139,7 +1144,7 @@ void DerivedData_object::test< 27 >() {
     tk::genEsuel( inpoel, 4, {{1},{}} );
     fail( "should throw exception in DEBUG mode" );
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     // exception thrown, test ok
   }
   #endif
@@ -1161,7 +1166,7 @@ void DerivedData_object::test< 28 >() {
     tk::genEsuel( inpoel, 4, tk::genEsup(inpoel,4) );
     fail( "should throw exception in DEBUG mode" );
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     // exception thrown in DEBUG mode, test ok
   }
   #endif
@@ -1374,7 +1379,7 @@ void DerivedData_object::test< 31 >() {
     tk::genEdsup( empty, 4, tk::genEsup(inpoel,4) );
     fail( "should throw exception in DEBUG mode" );
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     // exception thrown in DEBUG mode, test ok
   }
   #endif
@@ -1394,7 +1399,7 @@ void DerivedData_object::test< 32 >() {
     tk::genEdsup( inpoel, 0, tk::genEsup(inpoel,4) );
     fail( "should throw exception in DEBUG mode" );
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     // exception thrown in DEBUG mode, test ok
   }
   #endif
@@ -1415,7 +1420,7 @@ void DerivedData_object::test< 33 >() {
     tk::genEdsup( inpoel, 5, tk::genEsup(inpoel,4) );
     fail( "should throw exception in DEBUG mode" );
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     // exception thrown in DEBUG mode, test ok
   }
   #endif
@@ -1435,7 +1440,7 @@ void DerivedData_object::test< 34 >() {
     tk::genEdsup( inpoel, 4, {} );
     fail( "should throw exception in DEBUG mode" );
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     // exception thrown, test ok
   }
   #endif
@@ -1455,7 +1460,7 @@ void DerivedData_object::test< 35 >() {
     tk::genEdsup( inpoel, 4, {{1},{}} );
     fail( "should throw exception in DEBUG mode" );
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     // exception thrown, test ok
   }
   #endif
@@ -1478,7 +1483,7 @@ void DerivedData_object::test< 36 >() {
     tk::genEdsup( inpoel, 4, tk::genEsup(inpoel,4) );
     fail( "should throw exception in DEBUG mode" );
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     // exception thrown in DEBUG mode, test ok
   }
   #endif
@@ -1690,7 +1695,7 @@ void DerivedData_object::test< 39 >() {
     tk::genInpoed( empty, 4, tk::genEsup(inpoel,4) );
     fail( "should throw exception in DEBUG mode" );
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     // exception thrown in DEBUG mode, test ok
   }
   #endif
@@ -1710,7 +1715,7 @@ void DerivedData_object::test< 40 >() {
     tk::genInpoed( inpoel, 0, tk::genEsup(inpoel,4) );
     fail( "should throw exception in DEBUG mode" );
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     // exception thrown in DEBUG mode, test ok
   }
   #endif
@@ -1731,7 +1736,7 @@ void DerivedData_object::test< 41 >() {
     tk::genInpoed( inpoel, 5, tk::genEsup(inpoel,4) );
     fail( "should throw exception in DEBUG mode" );
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     // exception thrown in DEBUG mode, test ok
   }
   #endif
@@ -1751,7 +1756,7 @@ void DerivedData_object::test< 42 >() {
     tk::genInpoed( inpoel, 4, {} );
     fail( "should throw exception in DEBUG mode" );
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     // exception thrown, test ok
   }
   #endif
@@ -1771,7 +1776,7 @@ void DerivedData_object::test< 43 >() {
     tk::genInpoed( inpoel, 4, {{1},{}} );
     fail( "should throw exception in DEBUG mode" );
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     // exception thrown, test ok
   }
   #endif
@@ -1794,7 +1799,7 @@ void DerivedData_object::test< 44 >() {
     tk::genInpoed( inpoel, 4, tk::genEsup(inpoel,4) );
     fail( "should throw exception in DEBUG mode" );
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     // exception thrown in DEBUG mode, test ok
   }
   #endif
@@ -1952,7 +1957,7 @@ void DerivedData_object::test< 47 >() {
     tk::genInedel( empty, 4, tk::genInpoed(inpoel,4,tk::genEsup(inpoel,4)) );
     fail( "should throw exception in DEBUG mode" );
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     // exception thrown in DEBUG mode, test ok
   }
   #endif
@@ -1972,7 +1977,7 @@ void DerivedData_object::test< 48 >() {
     tk::genInedel( inpoel, 0, tk::genInpoed(inpoel,4,tk::genEsup(inpoel,4)) );
     fail( "should throw exception in DEBUG mode" );
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     // exception thrown in DEBUG mode, test ok
   }
   #endif
@@ -1993,7 +1998,7 @@ void DerivedData_object::test< 49 >() {
     tk::genInedel( inpoel, 5, tk::genInpoed(inpoel,4,tk::genEsup(inpoel,4)) );
     fail( "should throw exception in DEBUG mode" );
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     // exception thrown in DEBUG mode, test ok
   }
   #endif
@@ -2013,7 +2018,7 @@ void DerivedData_object::test< 50 >() {
     tk::genInedel( inpoel, 0, {} );
     fail( "should throw exception in DEBUG mode" );
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     // exception thrown, test ok
   }
   #endif
@@ -2036,7 +2041,7 @@ void DerivedData_object::test< 51 >() {
     tk::genInedel( inpoel, 4, tk::genInpoed(inpoel,4,tk::genEsup(inpoel,4)) );
     fail( "should throw exception in DEBUG mode" );
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     // exception thrown in DEBUG mode, test ok
   }
   #endif
@@ -2248,7 +2253,7 @@ void DerivedData_object::test< 54 >() {
     tk::genEsued( empty, 4, tk::genEsup(inpoel,4) );
     fail( "should throw exception in DEBUG mode" );
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     // exception thrown in DEBUG mode, test ok
   }
   #endif
@@ -2268,7 +2273,7 @@ void DerivedData_object::test< 55 >() {
     tk::genEsued( inpoel, 0, tk::genEsup(inpoel,4) );
     fail( "should throw exception in DEBUG mode" );
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     // exception thrown in DEBUG mode, test ok
   }
   #endif
@@ -2289,7 +2294,7 @@ void DerivedData_object::test< 56 >() {
     tk::genEsued( inpoel, 5, tk::genEsup(inpoel,4) );
     fail( "should throw exception in DEBUG mode" );
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     // exception thrown in DEBUG mode, test ok
   }
   #endif
@@ -2309,7 +2314,7 @@ void DerivedData_object::test< 57 >() {
     tk::genEsued( inpoel, 4, {} );
     fail( "should throw exception in DEBUG mode" );
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     // exception thrown, test ok
   }
   #endif
@@ -2329,7 +2334,7 @@ void DerivedData_object::test< 58 >() {
     tk::genEsued( inpoel, 4, {{1},{}} );
     fail( "should throw exception in DEBUG mode" );
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     // exception thrown, test ok
   }
   #endif
@@ -2352,7 +2357,7 @@ void DerivedData_object::test< 59 >() {
     tk::genEsued( inpoel, 4, tk::genEsup(inpoel,4) );
     fail( "should throw exception in DEBUG mode" );
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     // exception thrown in DEBUG mode, test ok
   }
   #endif
@@ -2592,6 +2597,10 @@ void DerivedData_object::test< 61 >() {
     correct_esued.erase( elements );
   }
 }
+
+#if defined(__GNUC__) && !defined(__clang__)
+  #pragma GCC diagnostic pop
+#endif
 
 } // tut::
 

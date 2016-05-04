@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Print.h
   \author    J. Bakosi
-  \date      Thu 07 Jan 2016 07:04:09 PM MST
+  \date      Wed 04 May 2016 08:11:03 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     General purpose pretty printer functionality
   \details   This file contains general purpose printer functions. Using the
@@ -49,11 +49,12 @@ class Print {
     //! std::clog, is only used to detect whether client code passed a default
     //! argument or not: if it did not, the string stream is used for verbose
     //! output, if it did, the specified stream is used for the verbose output.
-    //! \param[inout] str Verbose stream
-    //! \param[inout] qstr Quiet stream
+    //! \param[in,out] str Verbose stream
+    //! \param[in,out] qstr Quiet stream
     //! \author J. Bakosi
     explicit Print( std::ostream& str = std::clog,
                     std::ostream& qstr = std::cout ) :
+      m_null(),
       m_stream( str.rdbuf() == std::clog.rdbuf() ? m_null : str ),
       m_qstream( qstr ) {}
 
@@ -90,6 +91,11 @@ class Print {
     friend const Print& operator<<( const Print& os, const T& t )
     { os.m_stream << t; return os; }
 
+    #if defined(__GNUC__)
+      #pragma GCC diagnostic push
+      #pragma GCC diagnostic ignored "-Weffc++"
+    #endif
+
     //! Operator % for printing any type to the quiet stream.
     //! \param[in] os Reference to pretty printer object
     //! \param[in] t Reference to an arbitrary object of type T. T must define
@@ -100,16 +106,6 @@ class Print {
     friend const Print& operator%( const Print& os, const T& t )
     { os.m_qstream << t; return os; }
 
-    //! Operator << for a function pointer taking ostream returning ostream.
-    //! This is so that several of operators of << can be chained together.
-    //! \param[in] os Reference to pretty printer object
-    //! \param[in] pf Function pointer taking a reference to std::ostream and
-    //!   returning a reference to std::ostream
-    //! \return Reference to pretty printer object
-    //! \author J. Bakosi
-    friend const Print& operator<<( const Print& os,
-      std::ostream& (*pf)(std::ostream&) ) { os.m_stream << pf; return os; }
-
     //! Operator % for a function pointer taking ostream returning ostream.
     //! This is so that several of operators of % can be chained together.
     //! \param[in] os Reference to pretty printer object
@@ -119,6 +115,20 @@ class Print {
     //! \author J. Bakosi
     friend const Print& operator%( const Print& os,
       std::ostream& (*pf)(std::ostream&) ) { os.m_qstream << pf; return os; }
+
+    #if defined(__GNUC__)
+      #pragma GCC diagnostic pop
+    #endif
+
+    //! Operator << for a function pointer taking ostream returning ostream.
+    //! This is so that several of operators of << can be chained together.
+    //! \param[in] os Reference to pretty printer object
+    //! \param[in] pf Function pointer taking a reference to std::ostream and
+    //!   returning a reference to std::ostream
+    //! \return Reference to pretty printer object
+    //! \author J. Bakosi
+    friend const Print& operator<<( const Print& os,
+      std::ostream& (*pf)(std::ostream&) ) { os.m_stream << pf; return os; }
 
     //! Formatted print of part header: title.
     //! \param[in] t Part title to be printed

@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/InciterDriver.C
   \author    J. Bakosi
-  \date      Fri 08 Jan 2016 06:11:29 AM MST
+  \date      Tue 03 May 2016 09:41:26 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Inciter driver
   \details   Inciter driver.
@@ -17,16 +17,7 @@
 #include "Inciter/CmdLine/CmdLine.h"
 #include "Inciter/InputDeck/InputDeck.h"
 
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wconversion"
-#endif
-
-#include "conductor.decl.h"
-
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic pop
-#endif
+#include "NoWarning/conductor.decl.h"
 
 namespace inciter {
 

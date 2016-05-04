@@ -2,7 +2,7 @@
 /*!
   \file      src/PDE/AdvDiffProblem.h
   \author    J. Bakosi
-  \date      Fri 19 Feb 2016 09:45:32 AM MST
+  \date      Sun 01 May 2016 11:49:56 PM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Problem configurations for the advection-diffusion equation
   \details   This file defines policy classes for the advection-diffusion
@@ -74,7 +74,7 @@ class AdvDiffProblemShearDiff {
     //! Set initial conditions for dispersion in simple shear flow
     //! \param[in] deck Input deck
     //! \param[in] coord Mesh node coordinates
-    //! \param[inout] unk Array of unknowns
+    //! \param[in,out] unk Array of unknowns
     //! \param[in] e Equation system index, i.e., which advection-diffusion
     //!   system we operate on among the systems of PDEs
     //! \param[in] offset System offset specifying the position of the system of

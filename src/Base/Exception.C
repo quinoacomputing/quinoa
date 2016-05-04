@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Exception.C
   \author    J. Bakosi
-  \date      Tue 23 Feb 2016 10:02:31 PM MST
+  \date      Wed 04 May 2016 07:53:15 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Exception class definition
   \details   Exception class definition
@@ -126,7 +126,7 @@ Exception::echoTrace() noexcept
 {
   // Allocate string which will be filled with the demangled function name
   size_t funcnamesize = 256;
-  char* funcname = (char*)malloc(funcnamesize);
+  char* funcname = static_cast< char* >( malloc(funcnamesize) );
 
   // Iterate over the returned symbol lines. skip the first two, these are the
   // addresses of Exception::saveTrace() and the Exception constructor

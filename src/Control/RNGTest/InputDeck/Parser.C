@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/InputDeck/Parser.C
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 01:41:04 PM MDT
+  \date      Wed 04 May 2016 10:57:23 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Random number generator test suite input deck parser
   \details   This file declares the input deck, i.e., control file, parser for
@@ -13,7 +13,7 @@
 #include <ostream>
 #include <type_traits>
 
-#include <pegtl/pegtl.hh>
+#include "NoWarning/pegtl.h"
 
 #include "Print.h"
 #include "Tags.h"
@@ -40,7 +40,8 @@ InputDeckParser::InputDeckParser( const tk::Print& print,
 //  Constructor
 //! \param[in] print Pretty printer
 //! \param[in] cmdline Command line stack
-//! \param[inout] inputdeck Input deck stack where data is stored during parsing
+//! \param[in,out] inputdeck Input deck stack where data is stored during
+//!   parsing
 //! \author  J. Bakosi
 //******************************************************************************
 {

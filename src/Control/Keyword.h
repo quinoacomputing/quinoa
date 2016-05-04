@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Keyword.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:13:51 PM MDT
+  \date      Wed 04 May 2016 08:37:55 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Generic definition of a keyword
   \details   Generic definition of all keywords - both command-line arguments
@@ -14,16 +14,7 @@
 
 #include <boost/optional.hpp>
 
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wshadow"
-#endif
-
-#include <pegtl.hh>
-
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic pop
-#endif
+#include "NoWarning/pegtl.h"
 
 #include "Has.h"
 

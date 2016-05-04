@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/LinSysMerger.C
   \author    J. Bakosi
-  \date      Thu 03 Mar 2016 03:42:25 PM MST
+  \date      Tue 03 May 2016 11:56:55 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Linear system merger
   \details   Linear system merger.
@@ -11,15 +11,11 @@
 
 #include "LinSysMerger.h"
 
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wconversion"
-#endif
+#include "NoWarning/performer.decl.h"
 
-#include "performer.decl.h"
-
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic pop
+#if defined(__clang__)
+  #pragma clang diagnostic push
+  #pragma clang diagnostic ignored "-Wweak-template-vtables"
 #endif
 
 namespace tk {
@@ -36,4 +32,22 @@ template class LinSysMerger< inciter::CProxy_Conductor,
 
 } // tk::
 
+#if defined(__clang__)
+  #pragma clang diagnostic pop
+#endif
+
+#if defined(__clang__)
+  #pragma clang diagnostic push
+  #pragma clang diagnostic ignored "-Wextra-semi"
+  #pragma clang diagnostic ignored "-Wold-style-cast"
+  #pragma clang diagnostic ignored "-Wsign-conversion"
+  #pragma clang diagnostic ignored "-Wunused-parameter"
+  #pragma clang diagnostic ignored "-Wshorten-64-to-32"
+  #pragma clang diagnostic ignored "-Wreorder"
+#endif
+
 #include "linsysmerger.def.h"
+
+#if defined(__clang__)
+  #pragma clang diagnostic pop
+#endif

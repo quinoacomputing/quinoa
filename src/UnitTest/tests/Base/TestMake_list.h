@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/TestMake_list.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 03:12:41 PM MDT
+  \date      Mon 02 May 2016 10:23:14 PM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Unit tests for Base/Make_list.h
   \details   Unit tests for Base/Make_list.h
@@ -11,7 +11,7 @@
 #ifndef test_Make_list_h
 #define test_Make_list_h
 
-#include <tut/tut.hpp>
+#include "NoWarning/tut.h"
 
 #include <boost/mpl/at.hpp>
 
@@ -34,7 +34,7 @@ using Make_list_group = test_group< Make_list_common, MAX_TESTS_IN_GROUP >;
 using Make_list_object = Make_list_group::object;
 
 //! Define test group
-Make_list_group Make_list( "Base/Make_list" );
+static Make_list_group Make_list( "Base/Make_list" );
 
 //! Test definitions for group
 

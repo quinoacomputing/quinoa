@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/MeshConv.C
   \author    J. Bakosi
-  \date      Sun 03 Apr 2016 10:04:59 AM MDT
+  \date      Wed 04 May 2016 10:38:57 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Mesh file converter Charm++ main chare
   \details   Mesh file converter Charm++ main chare. This file contains the
@@ -27,22 +27,21 @@
 #include "MeshConv/CmdLine/Parser.h"
 #include "ProcessException.h"
 
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wconversion"
-#endif
+#include "NoWarning/charm.h"
+#include "NoWarning/meshconv.decl.h"
 
-#include <charm.h>
-#include <ckmessage.h>
-#include "meshconv.decl.h"
-
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic pop
+#if defined(__clang__)
+  #pragma clang diagnostic push
+  #pragma clang diagnostic ignored "-Wmissing-variable-declarations"
 #endif
 
 //! \brief Charm handle to the main proxy, facilitates call-back to finalize,
 //!    etc., must be in global scope, unique per executable
 CProxy_Main mainProxy;
+
+#if defined(__clang__)
+  #pragma clang diagnostic pop
+#endif
 
 //! \brief Charm++ main chare for the mesh converter executable, meshconv.
 //! \details Note that this object should not be in a namespace.
@@ -67,6 +66,7 @@ class Main : public CBase_Main {
     //! \see http://charm.cs.illinois.edu/manuals/html/charm++/manual.html
     Main( CkArgMsg* msg )
     try :
+      m_cmdline(),
       // Parse command line into m_cmdline using default simple pretty printer
       m_cmdParser( msg->argc, msg->argv, tk::Print(), m_cmdline ),
       // Create pretty printer initializing output streams based on command line
@@ -78,7 +78,8 @@ class Main : public CBase_Main {
                           tk::HeaderType::MESHCONV,
                           MESHCONV_EXECUTABLE,
                           m_print ) ),
-      m_timer(1)        // Start new timer measuring the total runtime
+      m_timer(1),       // Start new timer measuring the total runtime
+      m_timestamp()
     {
       delete msg;
       mainProxy = thisProxy;
@@ -134,15 +135,8 @@ class Main : public CBase_Main {
 //!    has finished migrating all global-scoped read-only objects which happens
 //!    after the main chare constructor has finished.
 //! \author J. Bakosi
-struct execute : CBase_execute { execute() { mainProxy.execute(); } };
+class execute : public CBase_execute {
+  public: execute() { mainProxy.execute(); }
+};
 
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wconversion"
-#endif
-
-#include "meshconv.def.h"
-
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic pop
-#endif
+#include "NoWarning/meshconv.def.h"

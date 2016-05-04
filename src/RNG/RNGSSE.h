@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/RNGSSE.h
   \author    J. Bakosi
-  \date      Sat 30 Apr 2016 06:21:35 PM MDT
+  \date      Wed 04 May 2016 10:56:49 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Interface to RNGSSE random number generators
   \details   Interface to RNGSSE random number generators
@@ -56,7 +56,8 @@ class RNGSSE {
                      InitFn fnMed = nullptr) :
        m_nthreads( nthreads ),
        m_init( seqlen == ctr::RNGSSESeqLenType::LONG ? fnLong :
-               seqlen == ctr::RNGSSESeqLenType::MEDIUM ? fnMed : fnShort )
+               seqlen == ctr::RNGSSESeqLenType::MEDIUM ? fnMed : fnShort ),
+       m_stream()
     {
       Assert( m_init != nullptr, "nullptr passed to RNGSSE constructor" );
       Assert( nthreads > 0, "Need at least one thread" );
@@ -69,9 +70,9 @@ class RNGSSE {
     //! Uniform RNG: Generate uniform random numbers
     //! \param[in] tid Thread (or more precisely) stream ID
     //! \param[in] num Number of RNGs to generate
-    //! \param[inout] r Pointer to memory to write the random numbers to
+    //! \param[in,out] r Pointer to memory to write the random numbers to
     void uniform( int tid, ncomp_t num, double* r ) const {
-      for (int i=0; i<num; ++i)
+      for (ncomp_t i=0; i<num; ++i)
         r[i] = static_cast<double>(
                  Generate( &m_stream[ static_cast<std::size_t>(tid) ] ) )
                / 4294967296.0;
@@ -80,7 +81,7 @@ class RNGSSE {
     //! Gaussian RNG: Generate Gaussian random numbers
     //! \param[in] tid Thread (or more precisely stream) ID
     //! \param[in] num Number of RNGs to generate
-    //! \param[inout] r Pointer to memory to write the random numbers to
+    //! \param[in,out] r Pointer to memory to write the random numbers to
     //! \details Generating Gaussian random numbers is implemented via an
     //!   adaptor, modeling std::UniformRandomNumberGenerator, outsourcing the
     //!   transformation of uniform random numbers to Gaussian ones, to the
@@ -97,7 +98,7 @@ class RNGSSE {
     void gaussian( int tid, ncomp_t num, double* r ) const {
       Adaptor generator( m_stream, tid );
       std::normal_distribution<> gauss_dist( 0.0, 1.0 );
-      for (int i=0; i<num; ++i) r[i] = gauss_dist( generator );
+      for (ncomp_t i=0; i<num; ++i) r[i] = gauss_dist( generator );
     }
 
     //! Beta RNG: Generate beta random numbers
@@ -107,7 +108,7 @@ class RNGSSE {
     //! \param[in] q Second beta shape parameter
     //! \param[in] a Beta displacement parameter
     //! \param[in] b Beta scale factor
-    //! \param[inout] r Pointer to memory to write the random numbers to
+    //! \param[in,out] r Pointer to memory to write the random numbers to
     //! \details Generating beta-distributed random numbers is implemented via
     //!   an adaptor, modeling boost::UniformRandomNumberGenerator, outsourcing
     //!   the transformation of uniform random numbers to beta-distributed ones,
@@ -120,7 +121,7 @@ class RNGSSE {
                double* r ) const {
       Adaptor generator( m_stream, tid );
       boost::random::beta_distribution<> beta_dist( p, q );
-      for (int i=0; i<num; ++i) r[i] = beta_dist( generator ) * b + a;
+      for (ncomp_t i=0; i<num; ++i) r[i] = beta_dist( generator ) * b + a;
     }
 
     //! Copy assignment
@@ -132,8 +133,15 @@ class RNGSSE {
       return *this;
     }
 
+    #if defined(__GNUC__)
+      #pragma GCC diagnostic push
+      #pragma GCC diagnostic ignored "-Weffc++"
+    #endif
     //! Copy constructor: in terms of copy assignment
     RNGSSE( const RNGSSE& x ) { operator=(x); }
+    #if defined(__GNUC__)
+      #pragma GCC diagnostic pop
+    #endif
 
     //! Move assignment
     RNGSSE& operator=( RNGSSE&& x ) {

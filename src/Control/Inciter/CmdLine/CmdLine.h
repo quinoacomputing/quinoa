@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/CmdLine/CmdLine.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:14:28 PM MDT
+  \date      Sun 01 May 2016 10:45:32 PM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Inciter's command line definition
   \details   This file defines the heterogeneous stack that is used for storing
@@ -101,7 +101,7 @@ class CmdLine : public tk::Control<
     /** @name Pack/Unpack: Serialize CmdLine object for Charm++ */
     ///@{
     //! \brief Pack/Unpack serialize member function
-    //! \param[inout] p Charm++'s PUP::er serializer object reference
+    //! \param[in,out] p Charm++'s PUP::er serializer object reference
     //! \author J. Bakosi
     void pup( PUP::er& p ) {
       tk::Control< tag::io,             ios,
@@ -115,8 +115,8 @@ class CmdLine : public tk::Control<
                    tag::error,          std::vector< std::string > >::pup(p);
     }
     //! \brief Pack/Unpack serialize operator|
-    //! \param[inout] p Charm++'s PUP::er serializer object reference
-    //! \param[inout] c CmdLine object reference
+    //! \param[in,out] p Charm++'s PUP::er serializer object reference
+    //! \param[in,out] c CmdLine object reference
     //! \author J. Bakosi
     friend void operator|( PUP::er& p, CmdLine& c ) { c.pup(p); }
     //@}

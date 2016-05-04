@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Control/Options/TestRNG.h
   \author    J. Bakosi
-  \date      Tue 23 Feb 2016 09:20:24 AM MST
+  \date      Wed 04 May 2016 12:10:19 PM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Unit tests for Control/Options/RNG
   \details   Unit tests for Control/Options/RNG
@@ -11,7 +11,7 @@
 #ifndef test_RNGOptions_h
 #define test_RNGOptions_h
 
-#include <tut/tut.hpp>
+#include "NoWarning/tut.h"
 
 #include "Options/RNG.h"
 #include "RNGParam.h"
@@ -20,6 +20,7 @@ namespace tut {
 
 //! All tests in group inherited from this base
 struct RNGOptions_common {
+  RNGOptions_common() : m() {}
   const tk::ctr::RNG m;
 };
 
@@ -28,7 +29,7 @@ using RNGOptions_group = test_group< RNGOptions_common, MAX_TESTS_IN_GROUP >;
 using RNGOptions_object = RNGOptions_group::object;
 
 //! Define test group
-RNGOptions_group RNGOptions( "Control/Options/RNGOptions" );
+static RNGOptions_group RNGOptions( "Control/Options/RNGOptions" );
 
 //! Test definitions for group
 

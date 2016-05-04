@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Timer.h
   \author    J. Bakosi
-  \date      Thu 10 Mar 2016 09:08:56 AM MST
+  \date      Mon 02 May 2016 07:58:08 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Timer declaration
   \details   Timer declaration. Timer is a simple class to do timing various
@@ -17,16 +17,7 @@
 #include <chrono>
 #include <map>
 
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wconversion"
-#endif
-
-#include <pup.h>
-
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic pop
-#endif
+#include "NoWarning/pup.h"
 
 #include "Types.h"
 #include "Exception.h"
@@ -87,13 +78,13 @@ class Timer {
     /** @name Pack/Unpack: Serialize Timer object for Charm++ */
     ///@{
     //! Pack/Unpack serialize member function
-    //! \param[inout] p Charm++'s PUP::er serializer object reference
+    //! \param[in,out] p Charm++'s PUP::er serializer object reference
     //! \author J. Bakosi
     void pup( PUP::er& p )
     { p( reinterpret_cast<char*>(&m_start), sizeof(clock::time_point) ); }
     //! \brief Pack/Unpack serialize operator|
-    //! \param[inout] p Charm++'s PUP::er serializer object reference
-    //! \param[inout] t Timer object reference
+    //! \param[in,out] p Charm++'s PUP::er serializer object reference
+    //! \param[in,out] t Timer object reference
     //! \author J. Bakosi
     friend void operator|( PUP::er& p, Timer& t ) { t.pup(p); } 
     ///@}

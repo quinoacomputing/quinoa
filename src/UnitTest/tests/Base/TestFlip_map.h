@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/TestFlip_map.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 03:12:27 PM MDT
+  \date      Mon 02 May 2016 10:23:07 PM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Unit tests for Base/Flip_map.h
   \details   Unit tests for Base/Flip_map.h
@@ -11,7 +11,7 @@
 #ifndef test_Flip_map_h
 #define test_Flip_map_h
 
-#include <tut/tut.hpp>
+#include "NoWarning/tut.h"
 
 #include "Flip_map.h"
 
@@ -25,7 +25,7 @@ using Flip_map_group = test_group< Flip_map_common, MAX_TESTS_IN_GROUP >;
 using Flip_map_object = Flip_map_group::object;
 
 //! Define test group
-Flip_map_group Flip_map( "Base/Flip_map" );
+static Flip_map_group Flip_map( "Base/Flip_map" );
 
 //! Test definitions for group
 

@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/MKLRNG.h
   \author    J. Bakosi
-  \date      Sat 30 Apr 2016 06:21:53 PM MDT
+  \date      Wed 04 May 2016 10:52:22 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Interface to Intel MKL VSL random number generators
   \details   Interface to Intel MKL VSL random number generators.
@@ -41,7 +41,8 @@ class MKLRNG {
       m_uniform_method( uniform_method ),
       m_gaussian_method( gaussian_method ),
       m_beta_method( beta_method ),
-      m_nthreads( nthreads )
+      m_nthreads( nthreads ),
+      m_stream()
     {
       Assert( nthreads > 0, "Need at least one thread" );
       Assert( brng > 0, "Basic RNG MKL parameter must be positive" );
@@ -71,7 +72,7 @@ class MKLRNG {
     //! Uniform RNG: Generate uniform random numbers
     //! \param[in] tid Thread (or more precisely stream) ID
     //! \param[in] num Number of RNGs to generate
-    //! \param[inout] r Pointer to memory to write the random numbers to
+    //! \param[in,out] r Pointer to memory to write the random numbers to
     void uniform( int tid, ncomp_t num, double* r ) const {
       vdRngUniform( m_uniform_method,
                     m_stream[ static_cast<std::size_t>(tid) ],
@@ -83,7 +84,7 @@ class MKLRNG {
     //! Gaussian RNG: Generate Gaussian random numbers
     //! \param[in] tid Thread (or more precisely stream) ID
     //! \param[in] num Number of RNGs to generate
-    //! \param[inout] r Pointer to memory to write the random numbers to
+    //! \param[in,out] r Pointer to memory to write the random numbers to
     void gaussian( int tid, ncomp_t num, double* r ) const {
       vdRngGaussian( m_gaussian_method,
                      m_stream[ static_cast<std::size_t>(tid) ],
@@ -99,7 +100,7 @@ class MKLRNG {
     //! \param[in] q Second beta shape parameter
     //! \param[in] a Beta displacement parameter
     //! \param[in] b Beta scale factor
-    //! \param[inout] r Pointer to memory to write the random numbers to
+    //! \param[in,out] r Pointer to memory to write the random numbers to
     void beta( int tid, ncomp_t num, double p, double q, double a, double b,
                double* r ) const
     {
@@ -131,8 +132,15 @@ class MKLRNG {
       return *this;
     }
 
+    #if defined(__GNUC__)
+      #pragma GCC diagnostic push
+      #pragma GCC diagnostic ignored "-Weffc++"
+    #endif
     //! Copy constructor: in terms of copy assignment
     MKLRNG( const MKLRNG& x ) { operator=(x); }
+    #if defined(__GNUC__)
+      #pragma GCC diagnostic pop
+    #endif
 
     //! Move assignment
     MKLRNG& operator=( MKLRNG&& x ) {

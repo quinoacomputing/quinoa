@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/UnitTestPrint.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:39:31 PM MDT
+  \date      Wed 04 May 2016 08:57:44 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     UnitTest's printer
   \details   UnitTest's printer
@@ -24,8 +24,8 @@ class UnitTestPrint : public tk::Print {
 
   public:
     //! Constructor
-    //! \param[inout] str Verbose stream
-    //! \param[inout] qstr Quiet stream
+    //! \param[in,out] str Verbose stream
+    //! \param[in,out] qstr Quiet stream
     //! \see tk::Print::Print
     //! \author J. Bakosi
     explicit UnitTestPrint( std::ostream& str = std::clog,
@@ -33,17 +33,17 @@ class UnitTestPrint : public tk::Print {
       Print( str, qstr ) {}
 
     //! Print unit tests header (with legend)
-    //! \param[in] title Section title
+    //! \param[in] t Section title
     //! \param[in] group String attempting to match unit test groups
     //! \author J. Bakosi
-    void unithead( const std::string& title, const std::string& group ) const {
+    void unithead( const std::string& t, const std::string& group ) const {
       std::string g = group.empty() ? "all" : group;
       m_stream << m_section_title_fmt % m_section_indent
                                       % m_section_bullet
-                                      % title;
+                                      % t;
       m_stream << m_section_underline_fmt
                   % m_section_indent
-                  % std::string( m_section_indent.size() + 2 + title.size(),
+                  % std::string( m_section_indent.size() + 2 + t.size(),
                                 '-' );
       raw( m_item_indent + "Groups: " + g + " (use -g str to match groups)\n" +
            m_item_indent + "Legend: [done/failed] group:test : result\n\n" );

@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/DiffEqStack.h
   \author    J. Bakosi
-  \date      Sun 03 Apr 2016 06:06:18 PM MDT
+  \date      Mon 02 May 2016 07:17:55 PM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Stack of differential equations
   \details   This file declares class DiffEqStack, which implements various
@@ -119,7 +119,7 @@ class DiffEqStack {
     //!   during control file parsing, containing user input.
     //! \param[in] eq The unique differential equation key whose object to
     //!   instantiate.
-    //! \param[inout] cnt Counter, a std::map, that counts all instantiated
+    //! \param[in,out] cnt Counter, a std::map, that counts all instantiated
     //!   differential equations by type.
     //! \author J. Bakosi
     template< class EqTag >
@@ -192,7 +192,7 @@ class DiffEqStack {
 
     //! \brief Insert spike information (used to specify delta PDFs) into info
     //!   vector
-    //! \param[inout] info Info vector of string-pairs to insert to
+    //! \param[in,out] info Info vector of string-pairs to insert to
     //! \param[in] spike Vector of vectors specifying spike info
     //! \author J. Bakosi
     template< typename Info, typename VV >
@@ -206,7 +206,7 @@ class DiffEqStack {
 
     //! \brief Insert betapdf information (used to specify beta PDFs) into info
     //!   vector
-    //! \param[inout] info Info vector of string-pairs to insert to
+    //! \param[in,out] info Info vector of string-pairs to insert to
     //! \param[in] betapdf Vector of vectors specifying betapdf info
     //! \author J. Bakosi
     template< typename Info, typename VV >

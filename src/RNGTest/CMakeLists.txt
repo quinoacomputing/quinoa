@@ -22,8 +22,6 @@ addCharmModule( "testu01suite" "RNGTest" )
 # proxy defined in the Charm++ module rngtest (in Main/RNGTest.C).
 add_dependencies("RNGTest" "rngtestCharmModule")
 
-removeWarnings( "TestU01Suite.C;TestU01Stack.C;SmallCrush.C;Crush.C;BigCrush.C;TestU01.C" )
-
 INSTALL(TARGETS RNGTest
         RUNTIME DESTINATION bin COMPONENT Runtime
         LIBRARY DESTINATION lib COMPONENT Runtime

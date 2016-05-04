@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/MeshConv/CmdLine/CmdLine.h
   \author    J. Bakosi
-  \date      Tue 24 Nov 2015 08:19:55 AM MST
+  \date      Mon 02 May 2016 10:26:19 PM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     MeshConv's command line definition
   \details   This file defines the heterogeneous stack that is used for storing
@@ -18,6 +18,7 @@
 #include <boost/mpl/set.hpp>
 #include <boost/mpl/for_each.hpp>
 
+#include "Macro.h"
 #include "Control.h"
 #include "Keywords.h"
 #include "HelpFactory.h"
@@ -65,6 +66,7 @@ class CmdLine :
     //!    that do have both command-line argument and control file parsers
     //! \see walker::ctr::CmdLine
     CmdLine( tk::ctr::HelpFactory ctrnfo = tk::ctr::HelpFactory() ) {
+      IGNORE(ctrnfo);
       set< tag::verbose >( false ); // Use quiet output by default
       set< tag::reorder >( false ); // Do not reorder by default
       // Initialize help: fill from own keywords
@@ -74,7 +76,7 @@ class CmdLine :
     /** @name Pack/Unpack: Serialize CmdLine object for Charm++ */
     ///@{
     //! \brief Pack/Unpack serialize member function
-    //! \param[inout] p Charm++'s PUP::er serializer object reference
+    //! \param[in,out] p Charm++'s PUP::er serializer object reference
     //! \author J. Bakosi
     void pup( PUP::er& p ) {
       tk::Control< tag::io,       ios,
@@ -88,8 +90,8 @@ class CmdLine :
                    tag::error,    std::vector< std::string > >::pup(p);
     }
     //! \brief Pack/Unpack serialize operator|
-    //! \param[inout] p Charm++'s PUP::er serializer object reference
-    //! \param[inout] c CmdLine object reference
+    //! \param[in,out] p Charm++'s PUP::er serializer object reference
+    //! \param[in,out] c CmdLine object reference
     //! \author J. Bakosi
     friend void operator|( PUP::er& p, CmdLine& c ) { c.pup(p); }
     //@}

@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/ExodusIIMeshWriter.C
   \author    J. Bakosi
-  \date      Fri 15 Apr 2016 12:08:27 PM MDT
+  \date      Wed 04 May 2016 08:48:08 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     ExodusII mesh-based data writer
   \details   ExodusII mesh-based data writer class definition.
@@ -17,16 +17,7 @@
 #include <cstdint>
 #include <cstdio>
 
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wconversion"
-#endif
-
-#include <exodusII.h>
-
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic pop
-#endif
+#include "NoWarning/exodusII.h"
 
 #include "ExodusIIMeshWriter.h"
 #include "Exception.h"
@@ -213,6 +204,15 @@ const
 //! \author J. Bakosi
 //******************************************************************************
 {
+  #if defined(__clang__)
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wvla"
+    #pragma clang diagnostic ignored "-Wvla-extension"
+  #elif defined(__GNUC__)
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wvla"
+  #endif
+
   ErrChk(
     ex_put_var_param( m_outFile, "n", static_cast< int >( nv.size() ) ) == 0,
     "Failed to write nodal output variable parameters to ExodusII file: " +
@@ -228,6 +228,12 @@ const
                             names ) == 0,
           "Failed to write nodal output variable names to ExodusII file: " +
           m_filename );
+
+  #if defined(__clang__)
+    #pragma clang diagnostic pop
+  #elif defined(__GNUC__)
+    #pragma GCC diagnostic pop
+  #endif
 }
 
 void
@@ -239,6 +245,15 @@ const
 //! \author J. Bakosi
 //******************************************************************************
 {
+  #if defined(__clang__)
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wvla"
+    #pragma clang diagnostic ignored "-Wvla-extension"
+  #elif defined(__GNUC__)
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wvla"
+  #endif
+
   ErrChk(
     ex_put_var_param( m_outFile, "e", static_cast< int >( ev.size() ) ) == 0,
     "Failed to write element output variable parameters to ExodusII file: " +
@@ -254,6 +269,12 @@ const
                             names ) == 0,
           "Failed to write element output variable names to ExodusII file: " +
           m_filename );
+
+  #if defined(__clang__)
+    #pragma clang diagnostic pop
+  #elif defined(__GNUC__)
+    #pragma GCC diagnostic pop
+  #endif
 }
 
 void

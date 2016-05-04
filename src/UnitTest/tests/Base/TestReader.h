@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/TestReader.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 03:11:25 PM MDT
+  \date      Tue 03 May 2016 08:02:32 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Unit tests for Base/Reader
   \details   Unit tests for Base/Reader
@@ -11,7 +11,7 @@
 #ifndef test_Reader_h
 #define test_Reader_h
 
-#include <tut/tut.hpp>
+#include "NoWarning/tut.h"
 
 #include "Reader.h"
 
@@ -31,7 +31,7 @@ using Reader_group = test_group< Reader_common, MAX_TESTS_IN_GROUP >;
 using Reader_object = Reader_group::object;
 
 //! Define test group
-Reader_group Reader( "Base/Reader" );
+static Reader_group Reader( "Base/Reader" );
 
 //! Test definitions for group
 

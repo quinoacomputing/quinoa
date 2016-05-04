@@ -2,7 +2,7 @@
 /*!
   \file      src/Walker/Distributor.C
   \author    J. Bakosi
-  \date      Fri 29 Apr 2016 07:15:06 AM MDT
+  \date      Wed 04 May 2016 11:27:11 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Distributor drives the time integration of differential equations
   \details   Distributor drives the time integration of differential equations.
@@ -28,6 +28,7 @@
 #include <boost/format.hpp>
 #include <boost/optional.hpp>
 
+#include "Macro.h"
 #include "Print.h"
 #include "Tags.h"
 #include "StatCtr.h"
@@ -43,22 +44,33 @@
 #include "Options/PDFFile.h"
 #include "Options/PDFPolicy.h"
 #include "Walker/InputDeck/InputDeck.h"
-#include "walker.decl.h"
+#include "NoWarning/walker.decl.h"
 
 extern CProxy_Main mainProxy;
 
 using walker::Distributor;
 
 Distributor::Distributor( const ctr::CmdLine& cmdline ) :
+  __dep(),
   m_print( cmdline.get< tag::verbose >() ? std::cout : std::clog ),
   m_output( false, false ),
   m_it( 0 ),
+  m_npar( 0 ),
   m_t( 0.0 ),
   m_dt( computedt() ),
+  m_intproxy(),
+  m_timer(),
   m_nameOrdinary( g_inputdeck.momentNames( tk::ctr::ordinary ) ),
   m_nameCentral( g_inputdeck.momentNames( tk::ctr::central ) ),
   m_ordinary( m_nameOrdinary.size(), 0.0 ),
-  m_central( m_nameCentral.size(), 0.0 )
+  m_central( m_nameCentral.size(), 0.0 ),
+  m_ordupdf(),
+  m_ordbpdf(),
+  m_ordtpdf(),
+  m_cenupdf(),
+  m_cenbpdf(),
+  m_centpdf(),
+  m_moments()
 //******************************************************************************
 // Constructor
 //! \param[in] cmdline Data structure storing data from the command-line parser
@@ -221,6 +233,10 @@ Distributor::estimateOrd( tk::real* ord, std::size_t n )
 //! \author J. Bakosi
 //******************************************************************************
 {
+  #ifdef NDEBUG
+  IGNORE(n);
+  #endif
+
   Assert( n == m_ordinary.size(),
           "Number of ordinary moments contributed not equal to expected" );
 
@@ -243,6 +259,10 @@ Distributor::estimateCen( tk::real* cen, std::size_t n )
 //! \author J. Bakosi
 //******************************************************************************
 {
+  #ifdef NDEBUG
+  IGNORE(n);
+  #endif
+
   Assert( n == m_central.size(),
           "Number of central moments contributed not equal to expected" );
 
@@ -695,13 +715,4 @@ Distributor::report()
   }
 }
 
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wconversion"
-#endif
-
-#include "distributor.def.h"
-
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic pop
-#endif
+#include "NoWarning/distributor.def.h"

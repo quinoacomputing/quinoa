@@ -2,26 +2,16 @@
 /*!
   \file      src/RNGTest/SmallCrush.C
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 01:57:15 PM MDT
+  \date      Tue 03 May 2016 11:10:12 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Class re-creating the TestU01 library's SmallCrush battery
   \details   Class re-creating the TestU01 library's SmallCrush battery.
 */
 //******************************************************************************
 
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wconversion"
-#endif
-
-#include <charm.h>
-#include <pup_stl.h>
-
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic pop
-#endif
-
-#include <pup.h>
+#include "NoWarning/charm.h"
+#include "NoWarning/pup_stl.h"
+#include "NoWarning/pup.h"
 
 extern "C" {
   #include <gdef.h>
@@ -40,8 +30,6 @@ extern "C" {
 #include "TestU01Props.h"
 #include "TestU01Stack.h"
 #include "SmallCrush.h"
-
-#include "testu01suite.decl.h"
 
 namespace rngtest {
 
@@ -73,7 +61,6 @@ SmallCrush::addTests( std::vector< std::function< StatTest() > >& tests,
 
   static const long THOUSAND = 1000;
   static const long MILLION = THOUSAND * THOUSAND;
-  static const long BILLION = THOUSAND * MILLION;
 
   // Marsaglia's BirthdaySpacings
   #ifdef USE_LONGLONG

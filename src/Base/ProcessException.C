@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/ProcessException.C
   \author    J. Bakosi
-  \date      Fri 22 May 2015 08:24:48 AM MDT
+  \date      Mon 02 May 2016 07:54:56 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Process an exception
   \details   This file contains the implementation of processing an exception.
@@ -19,17 +19,8 @@
 
 #include <exception>
 
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wconversion"
-#endif
-
-#include <charm.h>
-#include <mpi.h>
-
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic pop
-#endif
+#include "NoWarning/charm.h"
+#include "NoWarning/mpi.h"
 
 #include "Exception.h"
 #include "ProcessException.h"
@@ -78,7 +69,15 @@ processExceptionMPI()
 //******************************************************************************
 {
   int peid;
+
+  #if defined(__clang__)
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wold-style-cast"
+  #endif
   MPI_Comm_rank( MPI_COMM_WORLD, &peid );  
+  #if defined(__clang__)
+    #pragma GCC diagnostic pop
+  #endif
 
   try {
     throw;      // rethrow exception to deal with it here
@@ -99,8 +98,15 @@ processExceptionMPI()
     if (peid == 0) qe.handleException();
   }
 
+  #if defined(__clang__)
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wold-style-cast"
+  #endif
   // Tell the runtime system to exit with error code
   MPI_Abort( MPI_COMM_WORLD, tk::ErrCode::FAILURE );
+  #if defined(__clang__)
+    #pragma GCC diagnostic pop
+  #endif
 }
 
 } // tk::

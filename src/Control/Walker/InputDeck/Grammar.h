@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:18:18 PM MDT
+  \date      Mon 02 May 2016 12:17:24 PM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Walker's input deck grammar definition
   \details   Walker's input deck grammar definition. We use the [Parsing
@@ -63,18 +63,18 @@ namespace deck {
   //! \brief Number of registered equations
   //! \details Counts the number of parsed equation blocks during parsing.
   //! \author J. Bakosi
-  tk::tuple::tagged_tuple< tag::dirichlet,       std::size_t,
-                           tag::gendir,          std::size_t,
-                           tag::wrightfisher,    std::size_t,
-                           tag::ou,              std::size_t,
-                           tag::diagou,          std::size_t,
-                           tag::skewnormal,      std::size_t,
-                           tag::gamma,           std::size_t,
-                           tag::beta,            std::size_t,
-                           tag::numfracbeta,     std::size_t,
-                           tag::massfracbeta,    std::size_t,
-                           tag::mixnumfracbeta,  std::size_t,
-                           tag::mixmassfracbeta, std::size_t > neq;
+  static tk::tuple::tagged_tuple< tag::dirichlet,       std::size_t,
+                                  tag::gendir,          std::size_t,
+                                  tag::wrightfisher,    std::size_t,
+                                  tag::ou,              std::size_t,
+                                  tag::diagou,          std::size_t,
+                                  tag::skewnormal,      std::size_t,
+                                  tag::gamma,           std::size_t,
+                                  tag::beta,            std::size_t,
+                                  tag::numfracbeta,     std::size_t,
+                                  tag::massfracbeta,    std::size_t,
+                                  tag::mixnumfracbeta,  std::size_t,
+                                  tag::mixmassfracbeta, std::size_t > neq;
 
   // Walker's InputDeck actions
 
@@ -96,7 +96,7 @@ namespace deck {
   //! \author J. Bakosi
   template< class eq >
   struct register_eq : pegtl::action_base< register_eq< eq > > {
-    static void apply( const std::string& value, Stack& stack ) {
+    static void apply( const std::string&, Stack& ) {
       ++neq.get< eq >();
     }
   };

@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/UnitTest.C
   \author    J. Bakosi
-  \date      Sat 30 Apr 2016 06:00:49 PM MDT
+  \date      Wed 04 May 2016 11:52:48 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     UnitTest's Charm++ main chare and main().
   \details   UnitTest's Charm++ main chare and main(). This file contains
@@ -22,24 +22,15 @@
 #include <boost/format.hpp>
 #include <boost/optional.hpp>
 
-#include <tut/tut_result.hpp>
-#include <tut/tut_runner.hpp>
+#include "NoWarning/tut_result.h"
+#include "NoWarning/tut_runner.h"
 
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wconversion"
-#endif
+#include "NoWarning/charm.h"
+#include "NoWarning/mpi.h"
+#include "NoWarning/mpi-interoperate.h"
 
-#include <mpi.h>
-#include <charm.h>
-#include <ckmessage.h>
-#include <pup.h>
-#include <mpi-interoperate.h>
-#include "tutsuite.decl.h"
-
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic pop
-#endif
+#include "NoWarning/tutsuite.decl.h"
+#include "NoWarning/unittest.decl.h"
 
 #include "Print.h"
 #include "Timer.h"
@@ -54,17 +45,6 @@
 #include "UnitTestPrint.h"
 #include "UnitTestDriver.h"
 #include "UnitTest/CmdLine/Parser.h"
-
-#if defined(__clang__)
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wshorten-64-to-32"
-#endif
-
-#include "unittest.decl.h"
-
-#if defined(__clang__)
-  #pragma GCC diagnostic pop
-#endif
 
 namespace tut {
 
@@ -122,9 +102,18 @@ const int MAX_TESTS_IN_GROUP = 80;
 #include "tests/LoadBalance/TestLinearMap.h"
 #include "tests/LoadBalance/TestUnsMeshMap.h"
 
+#if defined(__clang__)
+  #pragma clang diagnostic push
+  #pragma clang diagnostic ignored "-Wmissing-variable-declarations"
+#endif
+
 //! \brief Charm handle to the main proxy, facilitates call-back to finalize,
 //!    etc., must be in global scope, unique per executable
 CProxy_Main mainProxy;
+
+#if defined(__clang__)
+  #pragma clang diagnostic pop
+#endif
 
 //! UnitTest declarations and definitions
 namespace unittest {
@@ -135,6 +124,11 @@ namespace unittest {
 //! http://charm.cs.illinois.edu/manuals/html/charm++/manual.html. The data
 //! below is global-scope because they must be available to all PEs which could
 //! be on different machines.
+
+#if defined(__clang__)
+  #pragma clang diagnostic push
+  #pragma clang diagnostic ignored "-Wmissing-variable-declarations"
+#endif
 
 //! Template Unit Test test runner
 tut::test_runner_singleton g_runner;
@@ -152,6 +146,10 @@ int g_maxTestsInGroup = tut::MAX_TESTS_IN_GROUP;
 
 //! Bool indicating whether all Charm++ and serial tests have passed
 bool g_charmpass = true;
+
+#if defined(__clang__)
+  #pragma clang diagnostic pop
+#endif
 
 //! Pack/Unpack test runner. This Pack/Unpack method (re-)creates the
 //! test runner singleton on all processing elements. Therefore we circumvent
@@ -196,6 +194,8 @@ class Main : public CBase_Main {
     //! \see http://charm.cs.illinois.edu/manuals/html/charm++/manual.html
     Main( CkArgMsg* msg )
     try :
+      m_helped( false ),
+      m_cmdline(),
       // Parse command line into m_cmdline using default simple pretty printer
       m_cmdParser( msg->argc, msg->argv, tk::Print(), m_cmdline, m_helped ),
       // Create pretty printer initializing output streams based on command line
@@ -207,7 +207,8 @@ class Main : public CBase_Main {
                           tk::HeaderType::UNITTEST,
                           UNITTEST_EXECUTABLE,
                           m_print ) ),
-      m_timer(1)  // Start new timer measuring the serial+Charm++ runtime
+      m_timer(1), // Start new timer measuring the serial+Charm++ runtime
+      m_timestamp()
     {
       // Immediately exit if any help was requested; help is printed in main()
       if (m_helped) CkExit();
@@ -264,7 +265,9 @@ class Main : public CBase_Main {
 //!    has finished migrating all global-scoped read-only objects which happens
 //!    after the main chare constructor has finished.
 //! \author J. Bakosi
-struct execute : CBase_execute { execute() { mainProxy.execute(); } };
+class execute : public CBase_execute {
+ public: execute() { mainProxy.execute(); }
+};
 
 //! \brief UnitTest main()
 //! \details UnitTest does have a main() function so that we can have tests
@@ -277,6 +280,11 @@ struct execute : CBase_execute { execute() { mainProxy.execute(); } };
 int main( int argc, char **argv ) {
 
   int peid, numpes;
+  
+  #if defined(__clang__)
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wold-style-cast"
+  #endif
 
   // Initialize MPI
   MPI_Init( &argc, &argv );
@@ -291,9 +299,9 @@ int main( int argc, char **argv ) {
 
   // Lambda to compute exit code based on test failures and exit. This is the
   // single exit point and we must exit from the program.
-  auto stop = [numpes](int mpipass) {
+  auto stop = [numpes](int pass) {
     // Combine pass-status from Charm++/serial and MPI suites
-    int mypass = unittest::g_charmpass && mpipass ? 1 : 0;
+    int mypass = unittest::g_charmpass && pass ? 1 : 0;
     // Add up every PE's pass status
     int g = 0;
     MPI_Allreduce( &mypass, &g, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD );
@@ -307,6 +315,10 @@ int main( int argc, char **argv ) {
     // matter, however, calling exit() here is important, because we must exit.
     exit( tk::ErrCode::SUCCESS );
   };
+
+  #if defined(__clang__)
+    #pragma clang diagnostic pop
+  #endif
 
   // Run MPI test suite
   try {
@@ -406,17 +418,8 @@ int main( int argc, char **argv ) {
   stop( mpipass );
 }
 
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wconversion"
-#endif
-
-#include "charmchild.def.h"
-#include "charmtimer.def.h"
-#include "migrated.def.h"
-#include "testarray.def.h"
-#include "unittest.def.h"
-
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic pop
-#endif
+#include "NoWarning/charmchild.def.h"
+#include "NoWarning/charmtimer.def.h"
+#include "NoWarning/migrated.def.h"
+#include "NoWarning/testarray.def.h"
+#include "NoWarning/unittest.def.h"

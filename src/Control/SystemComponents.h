@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/SystemComponents.h
   \author    J. Bakosi
-  \date      Thu 04 Feb 2016 05:42:03 AM MST
+  \date      Wed 04 May 2016 09:16:30 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Operations on numbers of scalar components of systems of equations
   \details   Operations on numbers of scalar components of systems of equations,
@@ -222,7 +222,7 @@ class ncomponents : public tk::tuple::tagged_tuple< Tags... > {
     //! \author J. Bakosi
     OffsetMap offsetmap( const std::vector< std::vector< char > >& depvars )
     const {
-      OffsetMap offset;
+      OffsetMap o;
       // This is now simple, as the heavy lifting has already been done by
       // extracting the dependent variables to a vector of vectors that is
       // passed in. Note that for now, we simply assign linearly increasing
@@ -230,10 +230,8 @@ class ncomponents : public tk::tuple::tagged_tuple< Tags... > {
       // implement a user-configurable order of the data layout for the various
       // equations.
       ncomp_type c = 0;
-      for (const auto& vec : depvars)
-        for (const auto& v : vec)
-          offset[ v ] = c++;
-      return offset;
+      for (const auto& vec : depvars) for (const auto& v : vec) o[ v ] = c++;
+      return o;
     }
 };
 

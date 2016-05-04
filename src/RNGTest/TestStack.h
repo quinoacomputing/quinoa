@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/TestStack.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:08:40 PM MDT
+  \date      Wed 04 May 2016 11:34:24 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Stack collecting all types of random number generator statistical
      tests
@@ -19,6 +19,7 @@ namespace rngtest {
 
 //! Stack collecting all types of random RNG statistical tests
 struct TestStack {
+  TestStack() : TestU01() {}
   TestU01Stack TestU01;
 };
 

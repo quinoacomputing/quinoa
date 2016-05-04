@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/ExceptionMPI.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:09:17 PM MDT
+  \date      Tue 03 May 2016 07:34:54 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Exception macros interoperating with MPI
   \details   Exception macros interoperating with MPI.
@@ -11,16 +11,7 @@
 #ifndef ExceptionMPI_h
 #define ExceptionMPI_h
 
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wconversion"
-#endif
-
-#include <mpi.h>
-
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic pop
-#endif
+#include "NoWarning/mpi.h"
 
 #include "Exception.h"
 

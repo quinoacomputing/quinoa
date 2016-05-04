@@ -6,8 +6,6 @@ add_library(DiffEq
             DiffEqStack.C
 )
 
-removeWarnings( "DiffEqStack.C" )
-
 INSTALL(TARGETS DiffEq
   	RUNTIME DESTINATION bin COMPONENT Runtime
   	LIBRARY DESTINATION lib COMPONENT Runtime

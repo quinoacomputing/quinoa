@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/WrightFisher.h
   \author    J. Bakosi
-  \date      Fri 01 Apr 2016 03:39:48 PM MDT
+  \date      Wed 04 May 2016 11:23:14 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Wright-Fisher SDE
   \details   This file implements the time integration of a system of stochastic
@@ -15,6 +15,7 @@
 #define WrightFisher_h
 
 #include <numeric>
+#include <vector>
 
 #ifdef HAS_MKL
   #include <mkl_lapacke.h>
@@ -22,6 +23,7 @@
   #include <lapacke.h>
 #endif
 
+#include "Macro.h"
 #include "InitPolicy.h"
 #include "WrightFisherCoeffPolicy.h"
 #include "RNG.h"
@@ -74,6 +76,7 @@ class WrightFisher {
         g_inputdeck.get< tag::component >().offset< tag::wrightfisher >(c) ),
       m_rng( g_rng.at( tk::ctr::raw(
         g_inputdeck.get< tag::param, tag::wrightfisher, tag::rng >().at(c) ) ) ),
+      m_omega(),
       coeff(
         m_ncomp,
         g_inputdeck.get< tag::param, tag::wrightfisher, tag::omega >().at(c),
@@ -84,9 +87,10 @@ class WrightFisher {
     }
     //! Initalize SDE, prepare for time integration
     //! \param[in] stream Thread (or more precisely stream) ID 
-    //! \param[inout] particles Array of particle properties 
+    //! \param[in,out] particles Array of particle properties 
     //! \author J. Bakosi
     void initialize( int stream, tk::Particles& particles ) {
+      IGNORE( stream );
       //! Set initial conditions using initialization policy
       //Init::template
       //  init< tag::wrightfisher >
@@ -110,21 +114,28 @@ class WrightFisher {
     }
 
     //! \brief Advance particles according to the Wright-Fisher SDE
-    //! \param[inout] particles Array of particle properties
+    //! \param[in,out] particles Array of particle properties
     //! \param[in] stream Thread (or more precisely stream) ID
     //! \param[in] dt Time step size
-    //! \param[in] t Physical time
-    //! \param[in] moments Map of statistical moments
     //! \author J. Bakosi
     void advance( tk::Particles& particles,
                   int stream,
                   tk::real dt,
-                  tk::real t,
-                  const std::map< tk::ctr::Product, tk::real >& moments )
+                  tk::real,
+                  const std::map< tk::ctr::Product, tk::real >& )
     {
       // Compute sum of coefficients
       const auto omega = std::accumulate( begin(m_omega), end(m_omega), 0.0 );
       const auto npar = particles.nunk();
+
+      #if defined(__clang__)
+        #pragma clang diagnostic push
+        #pragma clang diagnostic ignored "-Wvla"
+        #pragma clang diagnostic ignored "-Wvla-extension"
+      #elif defined(__GNUC__)
+        #pragma GCC diagnostic push
+        #pragma GCC diagnostic ignored "-Wvla"
+      #endif
 
       for (auto p=decltype(npar){0}; p<npar; ++p) {
         // Need to build the square-root of the Wright-Fisher diffusion matrix:
@@ -231,6 +242,12 @@ class WrightFisher {
           }
         }
       }
+
+      #if defined(__clang__)
+        #pragma clang diagnostic pop
+      #elif defined(__GNUC__)
+        #pragma GCC diagnostic pop
+      #endif
     }
 
   private:

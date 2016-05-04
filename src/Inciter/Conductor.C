@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Conductor.C
   \author    J. Bakosi
-  \date      Fri 29 Apr 2016 07:14:57 AM MDT
+  \date      Wed 04 May 2016 11:06:22 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Conductor drives the time integration of a PDE
   \details   Conductor drives the time integration of a PDE
@@ -27,7 +27,7 @@
 #include "ExodusIIMeshReader.h"
 #include "Inciter/InputDeck/InputDeck.h"
 
-#include "inciter.decl.h"
+#include "NoWarning/inciter.decl.h"
 
 extern CProxy_Main mainProxy;
 
@@ -35,10 +35,16 @@ using inciter::Conductor;
 
 Conductor::Conductor() :
   m_print( g_inputdeck.get<tag::cmd,tag::verbose>() ? std::cout : std::clog ),
+  m_nchare( 0 ),
   m_it( 0 ),
   m_t( g_inputdeck.get< tag::discr, tag::t0 >() ),
   m_dt( computedt() ),
-  m_stage( 0 )
+  m_stage( 0 ),
+  m_linsysmerger(),
+  m_performer(),
+  m_partitioner(),
+  m_avcost( 0.0 ),
+  m_timer()
 //******************************************************************************
 //  Constructor
 //! \author J. Bakosi
@@ -380,13 +386,4 @@ Conductor::report()
   }
 }
 
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wconversion"
-#endif
-
-#include "conductor.def.h"
-
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic pop
-#endif
+#include "NoWarning/conductor.def.h"

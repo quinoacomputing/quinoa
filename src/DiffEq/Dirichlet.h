@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/Dirichlet.h
   \author    J. Bakosi
-  \date      Sun 03 Apr 2016 06:03:50 PM MDT
+  \date      Wed 04 May 2016 11:13:01 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Dirichlet SDE
   \details   This file implements the time integration of a system of stochastic
@@ -34,6 +34,7 @@
 #ifndef Dirichlet_h
 #define Dirichlet_h
 
+#include <vector>
 #include <cmath>
 
 #include "InitPolicy.h"
@@ -73,6 +74,9 @@ class Dirichlet {
       m_offset( g_inputdeck.get< tag::component >().offset< tag::dirichlet >(c) ),
       m_rng( g_rng.at( tk::ctr::raw(
         g_inputdeck.get< tag::param, tag::dirichlet, tag::rng >().at(c) ) ) ),
+      m_b(),
+      m_S(),
+      m_k(),
       coeff( m_ncomp,
              g_inputdeck.get< tag::param, tag::dirichlet, tag::b >().at(c),
              g_inputdeck.get< tag::param, tag::dirichlet, tag::S >().at(c),
@@ -81,7 +85,7 @@ class Dirichlet {
 
     //! Initalize SDE, prepare for time integration
     //! \param[in] stream Thread (or more precisely stream) ID 
-    //! \param[inout] particles Array of particle properties 
+    //! \param[in,out] particles Array of particle properties 
     //! \author J. Bakosi
     void initialize( int stream, tk::Particles& particles ) {
       //! Set initial conditions using initialization policy
@@ -91,17 +95,15 @@ class Dirichlet {
     }
 
     //! \brief Advance particles according to the Dirichlet SDE
-    //! \param[inout] particles Array of particle properties
+    //! \param[in,out] particles Array of particle properties
     //! \param[in] stream Thread (or more precisely stream) ID
     //! \param[in] dt Time step size
-    //! \param[in] t Physical time
-    //! \param[in] moments Map of statistical moments
     //! \author J. Bakosi
     void advance( tk::Particles& particles,
                   int stream,
                   tk::real dt,
-                  tk::real t,
-                  const std::map< tk::ctr::Product, tk::real >& moments )
+                  tk::real,
+                  const std::map< tk::ctr::Product, tk::real >& )
     {
       const auto npar = particles.nunk();
       for (auto p=decltype(npar){0}; p<npar; ++p) {
@@ -111,8 +113,8 @@ class Dirichlet {
           yn -= particles( p, i, m_offset );
 
         // Generate Gaussian random numbers with zero mean and unit variance
-        tk::real dW[m_ncomp];
-        m_rng.gaussian( stream, m_ncomp, dW );
+        std::vector< tk::real > dW( m_ncomp );
+        m_rng.gaussian( stream, m_ncomp, dW.data() );
 
         // Advance first m_ncomp (K=N-1) scalars
         for (ncomp_t i=0; i<m_ncomp; ++i) {

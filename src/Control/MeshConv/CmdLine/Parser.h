@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/MeshConv/CmdLine/Parser.h
   \author    J. Bakosi
-  \date      Fri 29 May 2015 11:33:45 PM MDT
+  \date      Wed 04 May 2016 08:50:49 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     MeshConv's command line parser
   \details   This file declares the command-line argument parser for the mesh
@@ -15,7 +15,7 @@
 #include "StringParser.h"
 #include "MeshConv/CmdLine/CmdLine.h"
 
-namespace tk { class Print; };
+namespace tk { class Print; }
 
 namespace meshconv {
 

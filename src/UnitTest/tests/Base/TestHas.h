@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/TestHas.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 03:12:32 PM MDT
+  \date      Tue 03 May 2016 07:24:36 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Unit tests for Base/Has.h
   \details   Unit tests for Base/Has.h
@@ -13,7 +13,7 @@
 
 #include <unistd.h>
 
-#include <tut/tut.hpp>
+#include "NoWarning/tut.h"
 
 #include "Has.h"
 
@@ -38,7 +38,7 @@ using Has_group = test_group< Has_common, MAX_TESTS_IN_GROUP >;
 using Has_object = Has_group::object;
 
 //! Define test group
-Has_group Has( "Base/Has" );
+static Has_group Has( "Base/Has" );
 
 //! Test definitions for group
 

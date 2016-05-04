@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/PUPUtil.h
   \author    J. Bakosi
-  \date      Fri 22 Jan 2016 02:47:18 PM MST
+  \date      Wed 04 May 2016 02:44:29 PM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Charm++ Pack/UnPack utilities
   \brief     This file contains some extensions to Charm++'s Pack/UnPack
@@ -18,16 +18,7 @@
 
 #include <boost/optional.hpp>
 
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wconversion"
-#endif
-
-#include <pup_stl.h>
-
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic pop
-#endif
+#include "NoWarning/pup_stl.h"
 
 #include "CharmUtil.h"
 
@@ -36,9 +27,13 @@ namespace PUP {
 
 //////////////////// Serialize enum class ////////////////////
 
-#if defined(__clang__) || defined(__GNUC__)
+#if defined(__clang__)
+  #pragma clang diagnostic push
+  #pragma clang diagnostic ignored "-Wuninitialized"
+#elif defined(__GNUC__)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wuninitialized"
+  #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 #endif
 
 //! \brief Pack/Unpack enum class.
@@ -58,7 +53,9 @@ inline void pup( PUP::er& p, E& e ) {
   e = static_cast< E >( v );
 }
 
-#if defined(__clang__) || defined(__GNUC__)
+#if defined(__clang__)
+  #pragma clang diagnostic pop
+#elif defined(__GNUC__)
   #pragma GCC diagnostic pop
 #endif
 
@@ -121,7 +118,7 @@ template< class Key,
 inline void pup( PUP::er& p, std::unordered_map< Key, T, Hash, KeyEqual >& m ) {
   auto size = PUP_stl_container_size( p, m );
   if (p.isUnpacking()) {
-    for (std::size_t s=0; s<size; ++s) {
+    for (decltype(size) s=0; s<size; ++s) {
       std::pair< Key, T > node;
       p | node;
       m.emplace( node );

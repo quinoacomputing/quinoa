@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Wed 17 Feb 2016 10:20:01 AM MST
+  \date      Mon 02 May 2016 12:17:42 PM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Inciter's input deck grammar definition
   \details   Inciter's input deck grammar definition. We use the Parsing
@@ -52,8 +52,8 @@ namespace deck {
   //! \brief Number of registered equations
   //! \details Counts the number of parsed equation blocks during parsing.
   //! \author J. Bakosi
-  tk::tuple::tagged_tuple< tag::advdiff, std::size_t,
-                           tag::euler,   std::size_t > neq;
+  static tk::tuple::tagged_tuple< tag::advdiff, std::size_t,
+                                  tag::euler,   std::size_t > neq;
 
   // Inciter's InputDeck actions
 
@@ -63,7 +63,7 @@ namespace deck {
   //! \author J. Bakosi
   template< class eq >
   struct register_eq : pegtl::action_base< register_eq< eq > > {
-    static void apply( const std::string& value, Stack& stack ) {
+    static void apply( const std::string&, Stack& ) {
       ++neq.get< eq >();
     }
   };
