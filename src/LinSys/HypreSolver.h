@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/HypreSolver.h
   \author    J. Bakosi
-  \date      Thu 07 Jan 2016 06:07:57 PM MST
+  \date      Tue 03 May 2016 09:19:41 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Hypre solver class
   \details   Hypre solver class.
@@ -13,18 +13,10 @@
 
 #include <iostream>
 
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wconversion"
-#endif
+#include "NoWarning/charm.h"
 
 #include <HYPRE.h>
 #include <HYPRE_krylov.h>
-#include <charm.h>
-
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic pop
-#endif
 
 namespace tk {
 namespace hypre {

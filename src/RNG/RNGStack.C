@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/RNGStack.C
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 04:22:40 PM MDT
+  \date      Wed 04 May 2016 10:53:16 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Stack of random number generators
   \details   This file defines class RNGStack, which implements various
@@ -17,16 +17,7 @@
 #include <iterator>
 #include <utility>
 
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wconversion"
-#endif
-
-#include <charm.h>
-
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic pop
-#endif
+#include "NoWarning/charm.h"
 
 #include <gm19.h>
 #include <gm29.h>
@@ -61,6 +52,7 @@ RNGStack::RNGStack(
                     const tk::ctr::RNGMKLParameters& mklparam,
                     #endif
                     const tk::ctr::RNGSSEParameters& rngsseparam )
+ : m_factory()
 //******************************************************************************
 //  Constructor: register generators into factory for each supported library
 //! \param[in] mklparam MKL RNG parameters to use to configure MKL RNGs

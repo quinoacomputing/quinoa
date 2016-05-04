@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/TestU01Suite.C
   \author    J. Bakosi
-  \date      Sun 03 Apr 2016 10:07:08 AM MDT
+  \date      Wed 04 May 2016 10:37:23 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     TestU01 random number generator test suite
   \details   This file declares the TestU01 random number generator test suite,
@@ -25,7 +25,7 @@
 #include "BigCrush.h"
 #include "Options/RNG.h"
 #include "RNGTest/Options/Battery.h"
-#include "rngtest.decl.h"
+#include "NoWarning/rngtest.decl.h"
 
 extern CProxy_Main mainProxy;
 
@@ -40,7 +40,15 @@ using rngtest::TestU01Suite;
 TestU01Suite::TestU01Suite( ctr::BatteryType suite ) :
   m_print( rngtest::g_inputdeck.get< tag::cmd, tag::verbose >() ?
            std::cout : std::clog ),
-  m_npval(0), m_ncomplete(0), m_ntest(0)
+  m_ctrs(),
+  m_tests(),
+  m_name(),
+  m_npval(0),
+  m_ncomplete(0),
+  m_ntest(0),
+  m_nfail(),
+  m_time(),
+  m_failed()
 //******************************************************************************
 // Constructor
 //! \param[in] suite Enum id selecting TestU01 battery type
@@ -203,13 +211,4 @@ TestU01Suite::ntest() const
   return m_ctrs.size() / rngs.size();
 }
 
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wconversion"
-#endif
-
-#include "testu01suite.def.h"
-
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic pop
-#endif
+#include "NoWarning/testu01suite.def.h"

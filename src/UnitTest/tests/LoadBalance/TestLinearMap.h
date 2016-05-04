@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/LoadBalance/TestLinearMap.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 03:16:35 PM MDT
+  \date      Tue 03 May 2016 11:07:43 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Unit tests for LoadBalance/LinearMap
   \details   Unit tests for LoadBalance/LinearMap
@@ -11,11 +11,10 @@
 #ifndef test_LinearMap_h
 #define test_LinearMap_h
 
-#include <tut/tut.hpp>
+#include "NoWarning/tut.h"
 
 #include "LinearMap.h"
 #include "TestArray.h"
-#include "linearmap.decl.h"
 
 namespace unittest {
 
@@ -34,7 +33,7 @@ using LinearMap_group =
 using LinearMap_object = LinearMap_group::object;
 
 //! Define test group
-LinearMap_group LinearMap( "LoadBalance/LinearMap" );
+static LinearMap_group LinearMap( "LoadBalance/LinearMap" );
 
 //! Test definitions for group
 

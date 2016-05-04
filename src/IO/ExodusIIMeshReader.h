@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/ExodusIIMeshReader.h
   \author    J. Bakosi
-  \date      Mon 21 Dec 2015 11:35:32 AM MST
+  \date      Mon 02 May 2016 12:30:40 PM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     ExodusII mesh reader
   \details   ExodusII mesh reader class declaration.
@@ -17,7 +17,7 @@
 #include <array>
 #include <unordered_map>
 
-#include <ne_nemesisI.h>
+#include "NoWarning/ne_nemesisI.h"
 
 #include "Types.h"
 #include "Exception.h"
@@ -55,9 +55,9 @@ class ExodusIIMeshReader {
 
     //! Read coordinates of a single mesh node from ExodusII file
     //! \param[in] id Node id whose coordinates to read
-    //! \param[inout] x Vector of x coordinates to push to
-    //! \param[inout] y Vector of y coordinates to push to
-    //! \param[inout] z Vector of z coordinates to push to
+    //! \param[in,out] x Vector of x coordinates to push to
+    //! \param[in,out] y Vector of y coordinates to push to
+    //! \param[in,out] z Vector of z coordinates to push to
     void readNode( std::size_t id,
                    std::vector< tk::real >& x,
                    std::vector< tk::real >& y,
@@ -72,7 +72,7 @@ class ExodusIIMeshReader {
 
     //! Read coordinates of a single mesh node from ExodusII file
     //! \param[in] id Node id whose coordinates to read
-    //! \param[inout] coord Array of x, y, and z coordinates
+    //! \param[in,out] coord Array of x, y, and z coordinates
     void readNode( std::size_t id, std::array< tk::real, 3 >& coord ) const
     { readNode( id, coord[0], coord[1], coord[2] ); }
 

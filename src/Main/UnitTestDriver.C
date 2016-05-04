@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/UnitTestDriver.C
   \author    J. Bakosi
-  \date      Tue 23 Feb 2016 10:37:14 AM MST
+  \date      Mon 02 May 2016 09:59:13 PM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Unit test driver
   \details   Unit test driver.
@@ -15,16 +15,7 @@
 #include "UnitTestDriver.h"
 #include "UnitTest/CmdLine/CmdLine.h"
 
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wconversion"
-#endif
-
-#include "tutsuite.decl.h"
-
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic pop
-#endif
+#include "NoWarning/tutsuite.decl.h"
 
 using unittest::UnitTestDriver;
 

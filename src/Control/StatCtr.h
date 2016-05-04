@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/StatCtr.h
   \author    J. Bakosi
-  \date      Thu 14 Jan 2016 11:37:13 AM MST
+  \date      Wed 04 May 2016 09:12:25 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Types and associated functions to deal with moments and PDFs
   \details   Types and associated functions to deal with statistical moments and
@@ -42,7 +42,7 @@ struct Term {
   /** @name Pack/Unpack: Serialize Term object for Charm++ */
   ///@{
   //! Pack/Unpack serialize member function
-  //! \param[inout] p Charm++'s PUP::er serializer object reference
+  //! \param[in,out] p Charm++'s PUP::er serializer object reference
   //! \author J. Bakosi
   void pup( PUP::er& p ) {
     p | var;
@@ -50,8 +50,8 @@ struct Term {
     PUP::pup( p, moment );
   }
   //! \brief Pack/Unpack serialize operator|
-  //! \param[inout] p Charm++'s PUP::er serializer object reference
-  //! \param[inout] t Term object reference
+  //! \param[in,out] p Charm++'s PUP::er serializer object reference
+  //! \param[in,out] t Term object reference
   //! \author J. Bakosi
   friend void operator|( PUP::er& p, Term& t ) { t.pup(p); } 
   ///@}
@@ -95,10 +95,28 @@ struct Term {
 };
 
 //! \brief Pack/Unpack: Namespace-scope serialize Term object for Charm++
-//! \param[inout] p Charm++'s PUP::er serializer object reference
-//! \param[inout] t Term object reference
+//! \param[in,out] p Charm++'s PUP::er serializer object reference
+//! \param[in,out] t Term object reference
 //! \author J. Bakosi
 inline void pup( PUP::er& p, Term& t ) { t.pup(p); }
+
+//! \brief Products are arbitrary number of Terms to be multiplied and ensemble
+//!   averaged.
+//! \details An example is the scalar flux in x direction which needs two terms
+//! for ensemble averaging: (Y-\<Y\>) and (U-\<U\>), then the central moment is
+//! \<yu\> = <(Y-\<Y\>)(U-\<U\>)>, another example is the third mixed central
+//! moment of three scalars which needs three terms for ensemble averaging:
+//! (Y1-\<Y1\>), (Y2-\<Y2\>), and (Y3-\<Y3\>), then the central moment is
+//! \<y1y2y3\> = \<(Y1-\<Y1\>)(Y2-\<Y2\>)(Y3-\<Y3\>)\>.
+//! \author J. Bakosi
+using Product = std::vector< Term >;
+
+
+// The following functions are useful for debugging, and unused.
+#if defined(__clang__)
+  #pragma clang diagnostic push
+  #pragma clang diagnostic ignored "-Wunused-function"
+#endif
 
 //! \brief Operator + for adding Term (var+field) to a std::string
 //! \param[in] lhs std::string to add to
@@ -113,7 +131,7 @@ static std::string operator+ ( const std::string& lhs, const Term& term ) {
 }
 
 //! \brief Operator += for adding Term (var+field) to a std::string
-//! \param[inout] os std::string to add to
+//! \param[in,out] os std::string to add to
 //! \param[in] term Term to add
 //! \return Updated std::string
 //! \author J. Bakosi
@@ -125,7 +143,7 @@ static std::string& operator+= ( std::string& os, const Term& term ) {
 }
 
 //! \brief Operator << for writing Term to output streams
-//! \param[inout] os Output stream to write to
+//! \param[in,out] os Output stream to write to
 //! \param[in] term Term to write
 //! \return Updated output stream
 //! \author J. Bakosi
@@ -133,17 +151,6 @@ static std::ostream& operator<< ( std::ostream& os, const Term& term ) {
   os << term.var << term.field+1;
   return os;
 }
-
-//! \brief Products are arbitrary number of Terms to be multiplied and ensemble
-//!   averaged.
-//! \details An example is the scalar flux in x direction which needs two terms
-//! for ensemble averaging: (Y-\<Y\>) and (U-\<U\>), then the central moment is
-//! \<yu\> = <(Y-\<Y\>)(U-\<U\>)>, another example is the third mixed central
-//! moment of three scalars which needs three terms for ensemble averaging:
-//! (Y1-\<Y1\>), (Y2-\<Y2\>), and (Y3-\<Y3\>), then the central moment is
-//! \<y1y2y3\> = \<(Y1-\<Y1\>)(Y2-\<Y2\>)(Y3-\<Y3\>)\>.
-//! \author J. Bakosi
-using Product = std::vector< Term >;
 
 //! \brief Operator + for adding products (var+field) to a std::string
 //! \param[in] lhs std::string to add to
@@ -163,7 +170,7 @@ static std::string operator+ ( const std::string& lhs, const Product& p ) {
 }
 
 //! \brief Operator << for writing products to output streams
-//! \param[inout] os Output stream to write to
+//! \param[in,out] os Output stream to write to
 //! \param[in] p Product, std::vector< Term >, to write
 //! \return Updated output stream
 //! \author J. Bakosi
@@ -178,7 +185,7 @@ std::ostream& operator<< ( std::ostream& os, const Product& p ) {
 }
 
 //! \brief Function for writing PDF sample space variables to output streams
-//! \param[inout] os Output stream to write to
+//! \param[in,out] os Output stream to write to
 //! \param[in] var Vector of Terms to write
 //! \param[in] bin Vector of PDF bin sizes
 //! \param[in] name Name of PDF
@@ -214,6 +221,10 @@ std::ostream& pdf( std::ostream& os,
   os << ") ";
   return os;
 }
+
+#if defined(__clang__)
+  #pragma clang diagnostic pop
+#endif
 
 //! \brief Case-insensitive character comparison functor
 //! \author J. Bakosi

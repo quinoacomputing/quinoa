@@ -2,7 +2,7 @@
 /*!
   \file      src/PDE/AdvDiff.h
   \author    J. Bakosi
-  \date      Fri 19 Feb 2016 01:21:41 PM MST
+  \date      Mon 02 May 2016 04:52:35 PM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Advection-diffusion equation of a transported scalar
   \details   This file implements the time integration of the
@@ -44,7 +44,7 @@ class AdvDiff {
     }
 
     //! Initalize the advection-diffusion equations using problem policy
-    //! \param[inout] unk Array of unknowns
+    //! \param[in,out] unk Array of unknowns
     //! \param[in] coord Mesh node coordinates
     //! \param[in] t Physical time
     //! \author J. Bakosi
@@ -60,9 +60,9 @@ class AdvDiff {
     //! Compute the left hand side sparse matrix
     //! \param[in] coord Mesh node coordinates
     //! \param[in] inpoel Mesh element connectivity
-    //! \param[in] Linked lists storing IDs of points surrounding points
-    //! \param[input] lhsd Diagonal of the sparse matrix storing nonzeros
-    //! \param[input] lhso Off-diagonal of the sparse matrix storing nonzeros
+    //! \param[in] psup Linked lists storing IDs of points surrounding points
+    //! \param[in,out] lhsd Diagonal of the sparse matrix storing nonzeros
+    //! \param[in,out] lhso Off-diagonal of the sparse matrix storing nonzeros
     //! \details Sparse matrix storing the nonzero matrix values at rows and
     //!   columns given by psup. The format is similar to compressed row
     //!   storage, but the diagonal and off-diagonal data are stored in separate
@@ -151,7 +151,7 @@ class AdvDiff {
     //! \param[in] inpoel Mesh element connectivity
     //! \param[in] U Solution vector at recent time step stage
     //! \param[in] Un Solution vector at previous time step
-    //! \param[inout] R Right-hand side vector computed
+    //! \param[in,out] R Right-hand side vector computed
     //! \author J. Bakosi
     void rhs( tk::real mult,
               tk::real dt,
@@ -270,11 +270,12 @@ class AdvDiff {
     }
 
     //! Advance unknowns according to the Euler equations
-    //! \param[inout] unk Array of unknowns
+    //! \param[in,out] unk Array of unknowns
     //! \param[in] dt Time step size
     //! \param[in] t Physical time
     //! \author J. Bakosi
-    void advance( tk::MeshNodes& unk, tk::real dt, tk::real t ) {}
+    //void advance( tk::MeshNodes& unk, tk::real dt, tk::real t ) {}
+    void advance( tk::MeshNodes&, tk::real, tk::real ) {}
 
     //! Return field names to be output to file
     //! \return Vector of strings labelling fields output in file
@@ -296,7 +297,7 @@ class AdvDiff {
     //! Return field output going to file
     //! \param[in] t Physical time
     //! \param[in] coord Mesh node coordinates
-    //! \param[inout] U Solution vector at recent time step stage
+    //! \param[in,out] U Solution vector at recent time step stage
     //! \return Vector of vectors to be output to file
     //! \details This functions should be written in conjunction with names(),
     //!   which provides the vector of field names

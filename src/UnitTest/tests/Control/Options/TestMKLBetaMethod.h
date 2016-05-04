@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Control/Options/TestMKLBetaMethod.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 04:10:43 PM MDT
+  \date      Wed 04 May 2016 12:09:52 PM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Unit tests for Control/Options/MKLBetaMethod
   \details   Unit tests for Control/Options/MKLBetaMethod
@@ -11,7 +11,7 @@
 #ifndef test_MKLBetaMethod_h
 #define test_MKLBetaMethod_h
 
-#include <tut/tut.hpp>
+#include "NoWarning/tut.h"
 
 #include "Options/MKLBetaMethod.h"
 
@@ -19,6 +19,7 @@ namespace tut {
 
 //! All tests in group inherited from this base
 struct MKLBetaMethod_common {
+  MKLBetaMethod_common() : m() {}
   const tk::ctr::MKLBetaMethod m;
 };
 
@@ -28,7 +29,7 @@ using MKLBetaMethod_group =
 using MKLBetaMethod_object = MKLBetaMethod_group::object;
 
 //! Define test group
-MKLBetaMethod_group MKLBetaMethod( "Control/Options/MKLBetaMethod" );
+static MKLBetaMethod_group MKLBetaMethod( "Control/Options/MKLBetaMethod" );
 
 //! Test definitions for group
 

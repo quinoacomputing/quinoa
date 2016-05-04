@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/CmdLine/Parser.C
   \author    J. Bakosi
-  \date      Sun 03 Apr 2016 10:07:36 AM MDT
+  \date      Wed 04 May 2016 09:50:35 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Inciter's command line parser
   \details   This file defines the command-line argument parser for the
@@ -14,18 +14,8 @@
 #include <ostream>
 #include <type_traits>
 
-#include <pegtl/pegtl.hh>
-
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wconversion"
-#endif
-
-#include <charm.h>
-
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic pop
-#endif
+#include "NoWarning/pegtl.h"
+#include "NoWarning/charm.h"
 
 #include "Print.h"
 #include "QuinoaConfig.h"
@@ -63,7 +53,7 @@ CmdLineParser::CmdLineParser( int argc, char** argv,
 //! \param[in] argc Number of C-style character arrays in argv
 //! \param[in] argv C-style character array of character arrays
 //! \param[in] print Pretty printer
-//! \param[inout] cmdline Command-line stack where data is stored from parsing
+//! \param[in,out] cmdline Command-line stack where data is stored from parsing
 //! \author  J. Bakosi
 //******************************************************************************
 {

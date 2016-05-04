@@ -2,7 +2,7 @@
 /*!
   \file      src/PDE/PDEStack.C
   \author    J. Bakosi
-  \date      Sun 03 Apr 2016 02:26:31 PM MDT
+  \date      Wed 04 May 2016 09:36:58 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Stack of partial differential equations
   \details   This file defines class PDEStack, which implements various
@@ -14,7 +14,7 @@
 */
 //******************************************************************************
 
-#include <boost/mpl/cartesian_product.hpp>
+#include "NoWarning/cartesian_product.h"
 
 #include "PDEStack.h"
 #include "Tags.h"
@@ -29,7 +29,7 @@
 
 using inciter::PDEStack;
 
-PDEStack::PDEStack()
+PDEStack::PDEStack() : m_factory(), m_eqTypes()
 //******************************************************************************
 //  Constructor: register all partial differential equations into factory
 //! \details This constructor consists of several blocks, each registering a

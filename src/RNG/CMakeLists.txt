@@ -6,8 +6,6 @@ add_library(RNG
             RNGStack.C
 )
 
-removeWarnings( "RNGStack.C" )
-
 INSTALL(TARGETS RNG
   	RUNTIME DESTINATION bin COMPONENT Runtime
   	LIBRARY DESTINATION lib COMPONENT Runtime

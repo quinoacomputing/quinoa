@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/InitPolicy.h
   \author    J. Bakosi
-  \date      Sun 03 Apr 2016 05:57:48 PM MDT
+  \date      Tue 03 May 2016 07:00:53 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Initialization policies
   \details   This file defines initialization policy classes. As opposed to
@@ -69,7 +69,16 @@ struct InitRaw {
                     tk::Particles& particles,
                     tk::ctr::ncomp_type e,
                     tk::ctr::ncomp_type ncomp,
-                    tk::ctr::ncomp_type offset ) {}
+                    tk::ctr::ncomp_type offset )
+  {
+    IGNORE( deck );
+    IGNORE( rng );
+    IGNORE( stream );
+    IGNORE( particles );
+    IGNORE( e );
+    IGNORE( ncomp );
+    IGNORE( offset );
+  }
 
   static ctr::InitPolicyType type() noexcept
   { return ctr::InitPolicyType::RAW; }
@@ -88,6 +97,12 @@ struct InitZero {
                     tk::ctr::ncomp_type ncomp,
                     tk::ctr::ncomp_type offset )
   {
+    IGNORE( deck );
+    IGNORE( rng );
+    IGNORE( stream );
+    IGNORE( e );
+    IGNORE( ncomp );
+    IGNORE( offset );
     particles.fill( 0.0 );
   }
 
@@ -108,6 +123,8 @@ struct InitDelta {
                     tk::ctr::ncomp_type ncomp,
                     tk::ctr::ncomp_type offset )
   {
+    IGNORE( rng );
+    IGNORE( stream );
     using ncomp_t = kw::ncomp::info::expect::type;
 
     const auto& spike = deck.template get< tag::param, eq, tag::spike >().at(e);

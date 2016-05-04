@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.C
   \author    J. Bakosi
-  \date      Thu 10 Mar 2016 09:05:55 PM MST
+  \date      Wed 04 May 2016 10:15:25 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Performer advances a PDE
   \details   Performer advances a PDE. There are a potentially
@@ -54,6 +54,8 @@ Performer::Performer(
   m_linsysmerger( lsm ),
   m_cid( cid ),
   m_el( tk::global2local( conn ) ),     // fills m_inpoel and m_gid
+  m_lid(),
+  m_coord(),
   m_psup( tk::genPsup( m_inpoel, 4, tk::genEsup(m_inpoel,4) ) ),
   m_u( m_gid.size(), g_inputdeck.get< tag::component >().nprop() ),
   m_uf( m_gid.size(), g_inputdeck.get< tag::component >().nprop() ),
@@ -372,13 +374,4 @@ Performer::updateSolution( const std::vector< std::size_t >& gid,
   }
 }
 
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wconversion"
-#endif
-
-#include "performer.def.h"
-
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic pop
-#endif
+#include "NoWarning/performer.def.h"

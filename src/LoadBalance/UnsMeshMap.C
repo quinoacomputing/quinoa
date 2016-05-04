@@ -2,7 +2,7 @@
 /*!
   \file      src/LoadBalance/UnsMeshMap.C
   \author    J. Bakosi
-  \date      Sat 30 Apr 2016 06:15:12 PM MDT
+  \date      Wed 04 May 2016 08:43:28 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Advanced Charm++ array creation with a map using an unstructured
              grid
@@ -41,17 +41,7 @@
 
 #include <algorithm>
 
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wconversion"
-#endif
-
-#include <charm.h>
-
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic pop
-#endif
-
+#include "NoWarning/charm.h"
 #include "Exception.h"
 #include "UnsMeshMap.h"
 
@@ -59,6 +49,7 @@ using tk::UnsMeshMap;
 
 UnsMeshMap::UnsMeshMap( std::size_t npoin,
                         const std::vector< std::vector< std::size_t > >& point )
+ : m_pe()
 //******************************************************************************
 // Constructor
 //! \param[in] npoin Total number of points in mesh
@@ -67,7 +58,7 @@ UnsMeshMap::UnsMeshMap( std::size_t npoin,
 //******************************************************************************
 {
   Assert( npoin > 0, "Need at least a single mesh point" );
-  Assert( point.size() >= CkNumPes(),
+  Assert( point.size() >= static_cast< std::size_t >( CkNumPes() ),
           "UnsMeshMap only works with nchare >= numPEs" );
 
   // Vector of maps to associate the number of mesh points an array element
@@ -82,7 +73,7 @@ UnsMeshMap::UnsMeshMap( std::size_t npoin,
   for (std::size_t e=0; e<point.size(); ++e)    // for all array elements
     for (auto p : point[e]) {           // for all points array element e owns
       auto pe = p / chunksize;          // PE array element e contributes to
-      if (pe == CkNumPes()) --pe;
+      if (pe == static_cast<std::size_t>(CkNumPes())) --pe;
       ++owner[e][pe];  // count up number of points element e contributing to pe
     }
 
@@ -117,18 +108,14 @@ UnsMeshMap::fixPEs()
   std::set< std::size_t > nkind;
   for (auto p : m_pe) nkind.insert( p );
 
-//   std::cout << CkMyPe() << ": ";
-//   for (auto p : m_pe) std::cout << p << " ";
-//   std::cout << std::endl;
-
   // If not all PEs have at least one array element to create, go through all
   // PEs that have no array elements assigned, and construct a map that
   // associates the number of PEs to array elements. Then as a replacement PE,
   // pick the PE that has the most array elements assigned. Then assign the
   // first of the elements assigned to the PE with the most work to the
   // replacement PE.
-  if (nkind.size() != CkNumPes())
-    for (std::size_t p=0; p<CkNumPes(); ++p)
+  if (nkind.size() != static_cast<std::size_t>(CkNumPes()))
+    for (std::size_t p=0; p<static_cast<std::size_t>(CkNumPes()); ++p)
       if (!nkind.count(p)) {    // if PE p has no array elements to create
         // Count up number elements for each PE
         std::map< std::size_t, std::size_t > npe;
@@ -149,7 +136,7 @@ UnsMeshMap::fixPEs()
 
   nkind.clear();
   for (auto p : m_pe) nkind.insert( p );
-  Assert( nkind.size() == CkNumPes(),
+  Assert( nkind.size() == static_cast<std::size_t>(CkNumPes()),
           "There are still PE(s) with no array elements assigned" );
 }
 
@@ -196,24 +183,17 @@ UnsMeshMap::populateInitial( int, CkArrayOptions& opt,
   int nelem = *opt.getNumInitial().data(); // number of array elements requested
   if (nelem == 0) return;                  // no initial elements requested
 
-  Assert( nelem <= m_pe.size(), "Number of initial array elements larger than "
+  Assert( static_cast<std::size_t>(nelem) <= m_pe.size(),
+          "Number of initial array elements larger than "
           "the UnsMeshMap object holds PEs for" );
 
   for (int e=0; e<nelem; ++e)
-    if (m_pe[ static_cast<std::size_t>(e) ] == CkMyPe())
+    if (m_pe[ static_cast<std::size_t>(e) ] ==
+        static_cast<std::size_t>(CkMyPe()))
       mgr->insertInitial( e, CkCopyMsg(&msg) );
 
   mgr->doneInserting();
   CkFreeMsg( msg );
 }
 
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wconversion"
-#endif
-
-#include "unsmeshmap.def.h"
-
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic pop
-#endif
+#include "NoWarning/unsmeshmap.def.h"

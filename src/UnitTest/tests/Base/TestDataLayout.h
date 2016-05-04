@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/TestDataLayout.h
   \author    J. Bakosi
-  \date      Fri 29 Apr 2016 07:16:03 AM MDT
+  \date      Tue 03 May 2016 07:27:13 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Unit tests for Base/DataLayout.h
   \details   Unit tests for Base/DataLayout.h
@@ -11,7 +11,7 @@
 #ifndef test_DataLayout_h
 #define test_DataLayout_h
 
-#include <tut/tut.hpp>
+#include "NoWarning/tut.h"
 
 #include <boost/mpl/at.hpp>
 
@@ -27,7 +27,7 @@ using DataLayout_group = test_group< DataLayout_common, MAX_TESTS_IN_GROUP >;
 using DataLayout_object = DataLayout_group::object;
 
 //! Define test group
-DataLayout_group DataLayout( "Base/DataLayout" );
+static DataLayout_group DataLayout( "Base/DataLayout" );
 
 //! Test definitions for group
 
@@ -91,67 +91,67 @@ void DataLayout_object::test< 3 >() {
   // Test all template specializations const-ref access
 
   try {
-    const tk::real& u = pp( 2, 2, 2 );   // unknown out of bounds
+    pp( 2, 2, 2 );   // unknown out of bounds
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     // exception thrown in DEBUG mode, test ok
     // Assert skipped in RELEASE mode, test ok
   }
 
   try {
-    const tk::real& u = pp( 1, 3, 2 );   // offset+component out of bounds
+    pp( 1, 3, 2 );   // offset+component out of bounds
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     // exception thrown in DEBUG mode, test ok
     // Assert skipped in RELEASE mode, test ok
   }
 
   try {
-    const tk::real& u = pp( 1, 2, 3 );   // offset+component out of bounds
+    pp( 1, 2, 3 );   // offset+component out of bounds
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     // exception thrown in DEBUG mode, test ok
     // Assert skipped in RELEASE mode, test ok
   }
 
   try {
-    const tk::real& u = pe( 2, 2, 2 );   // unknown out of bounds
+    pe( 2, 2, 2 );   // unknown out of bounds
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     // exception thrown in DEBUG mode, test ok
     // Assert skipped in RELEASE mode, test ok
   }
 
   try {
-    const tk::real& u = pe( 1, 3, 2 );   // offset+component out of bounds
+    pe( 1, 3, 2 );   // offset+component out of bounds
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     // exception thrown in DEBUG mode, test ok
     // Assert skipped in RELEASE mode, test ok
   }
 
   try {
-    const tk::real& u = pe( 1, 2, 3 );   // offset+component out of bounds
+    pe( 1, 2, 3 );   // offset+component out of bounds
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     // exception thrown in DEBUG mode, test ok
     // Assert skipped in RELEASE mode, test ok
   }
@@ -159,67 +159,67 @@ void DataLayout_object::test< 3 >() {
   // Test all template specializations non-const-ref access
 
   try {
-   tk::real& u = pp( 2, 2, 2 );  // unknown out of bounds
+    pp( 2, 2, 2 );  // unknown out of bounds
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     // exception thrown in DEBUG mode, test ok
     // Assert skipped in RELEASE mode, test ok
   }
 
   try {
-    tk::real& u = pp( 1, 3, 2 );  // offset+component out of bounds
+    pp( 1, 3, 2 );  // offset+component out of bounds
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     // exception thrown in DEBUG mode, test ok
     // Assert skipped in RELEASE mode, test ok
   }
 
   try {
-    tk::real& u = pp( 1, 2, 3 );  // offset+component out of bounds
+    pp( 1, 2, 3 );  // offset+component out of bounds
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     // exception thrown in DEBUG mode, test ok
     // Assert skipped in RELEASE mode, test ok
   }
 
   try {
-    tk::real& u = pe( 2, 2, 2 );  // unknown out of bounds
+    pe( 2, 2, 2 );  // unknown out of bounds
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     // exception thrown in DEBUG mode, test ok
     // Assert skipped in RELEASE mode, test ok
   }
 
   try {
-    tk::real& u = pe( 1, 3, 2 );  // offset+component out of bounds
+    pe( 1, 3, 2 );  // offset+component out of bounds
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     // exception thrown in DEBUG mode, test ok
     // Assert skipped in RELEASE mode, test ok
   }
 
   try {
-    tk::real& u = pe( 1, 2, 3 );  // offset+component out of bounds
+    pe( 1, 2, 3 );  // offset+component out of bounds
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     // exception thrown in DEBUG mode, test ok
     // Assert skipped in RELEASE mode, test ok
   }
@@ -267,72 +267,72 @@ void DataLayout_object::test< 5 >() {
 
   try {
     // unknown out of bounds
-    const tk::real& u = pp.var( pp.cptr(2,2), 2 );
+    pp.var( pp.cptr(2,2), 2 );
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     // exception thrown in DEBUG mode, test ok
     // Assert skipped in RELEASE mode, test ok
   }
 
   try {
     // offset+component out of bounds
-    const tk::real& u = pp.var( pp.cptr(1,3), 2 );
+    pp.var( pp.cptr(1,3), 2 );
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     // exception thrown in DEBUG mode, test ok
     // Assert skipped in RELEASE mode, test ok
   }
 
   try {
     // offset+component out of bounds
-    const tk::real& u = pp.var( pp.cptr(1,2), 3 );
+    pp.var( pp.cptr(1,2), 3 );
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     // exception thrown in DEBUG mode, test ok
     // Assert skipped in RELEASE mode, test ok
   }
 
   try {
     // unknown out of bounds
-    const tk::real& u = pe.var( pe.cptr(2,2), 2 );
+    pe.var( pe.cptr(2,2), 2 );
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     // exception thrown in DEBUG mode, test ok
     // Assert skipped in RELEASE mode, test ok
   }
 
   try {
     // offset+component out of bounds
-    const tk::real& u = pe.var( pe.cptr(1,3), 2 );
+    pe.var( pe.cptr(1,3), 2 );
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     // exception thrown in DEBUG mode, test ok
     // Assert skipped in RELEASE mode, test ok
   }
 
   try {
     // offset+component out of bounds
-    const tk::real& u = pe.var( pe.cptr(1,2), 3 );
+    pe.var( pe.cptr(1,2), 3 );
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     // exception thrown in DEBUG mode, test ok
     // Assert skipped in RELEASE mode, test ok
   }
@@ -341,72 +341,72 @@ void DataLayout_object::test< 5 >() {
 
   try {
    // unknown out of bounds
-   tk::real& u = pp.var( pp.cptr(2,2), 2 );
+   pp.var( pp.cptr(2,2), 2 );
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     // exception thrown in DEBUG mode, test ok
     // Assert skipped in RELEASE mode, test ok
   }
 
   try {
     // offset+component out of bounds
-    tk::real& u = pp.var( pp.cptr(1,3), 2 );
+    pp.var( pp.cptr(1,3), 2 );
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     // exception thrown in DEBUG mode, test ok
     // Assert skipped in RELEASE mode, test ok
   }
 
   try {
     // offset+component out of bounds
-    tk::real& u = pp.var( pp.cptr(1,2), 3 );
+    pp.var( pp.cptr(1,2), 3 );
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     // exception thrown in DEBUG mode, test ok
     // Assert skipped in RELEASE mode, test ok
   }
 
   try {
     // unknown out of bounds
-    tk::real& u = pe.var( pe.cptr(2,2), 2 );
+    pe.var( pe.cptr(2,2), 2 );
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     // exception thrown in DEBUG mode, test ok
     // Assert skipped in RELEASE mode, test ok
   }
 
   try {
     // offset+component out of bounds
-    tk::real& u = pe.var( pe.cptr(1,3), 2 );
+    pe.var( pe.cptr(1,3), 2 );
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     // exception thrown in DEBUG mode, test ok
     // Assert skipped in RELEASE mode, test ok
   }
 
   try {
     // offset+component out of bounds
-    tk::real& u = pe.var( pe.cptr(1,2), 3 );
+    pe.var( pe.cptr(1,2), 3 );
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     // exception thrown in DEBUG mode, test ok
     // Assert skipped in RELEASE mode, test ok
   }

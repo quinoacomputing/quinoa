@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshMeshReader.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:26:46 PM MDT
+  \date      Mon 02 May 2016 12:32:14 PM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Gmsh mesh reader class declaration
   \details   Gmsh mesh reader class declaration. Currently, this class supports
@@ -53,7 +53,7 @@ class GmshMeshReader : public Reader {
     void readElements( UnsMesh& mesh );
 
     //! Read "$PhysicalNames--$EndPhysicalNames" section
-    void readPhysicalNames();
+    void readPhysicalNames() __attribute__ ((noreturn));
 
     //! \brief Mesh ASCII type query
     //! \return true if member variable m_type indicates an ASCII mesh format

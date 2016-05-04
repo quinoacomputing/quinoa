@@ -7,8 +7,6 @@ add_library(Statistics
             PDFReducer.C
 )
 
-removeWarnings( "Statistics.C;PDFReducer.C" )
-
 INSTALL(TARGETS Statistics
   	RUNTIME DESTINATION bin COMPONENT Runtime
   	LIBRARY DESTINATION lib COMPONENT Runtime

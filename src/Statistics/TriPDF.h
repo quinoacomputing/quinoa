@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/TriPDF.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:07:32 PM MDT
+  \date      Wed 04 May 2016 08:59:01 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Joint trivariate PDF estimator
   \details   Joint trivariate PDF estimator. This class can be used to estimate
@@ -54,13 +54,14 @@ class TriPDF {
     using map_type = std::unordered_map< key_type, tk::real, key_hash >;
 
     //! Empty constructor for Charm++
-    explicit TriPDF() : m_binsize( {{ 0, 0, 0 }} ), m_nsample( 0 ) {}
+    explicit TriPDF() : m_binsize( {{ 0, 0, 0 }} ), m_nsample( 0 ), m_pdf() {}
 
     //! Constructor: Initialize joint trivariate PDF container
     //! \param[in] bs Sample space bin size in all three directions
     explicit TriPDF( const std::vector< tk::real >& bs ) :
       m_binsize( {{ bs[0], bs[1], bs[2] }} ),
-      m_nsample( 0 ) {}
+      m_nsample( 0 ),
+      m_pdf() {}
 
     //! Accessor to number of samples
     //! \return Number of samples collected
@@ -116,15 +117,15 @@ class TriPDF {
     /** @name Pack/Unpack: Serialize BiPDF object for Charm++ */
     ///@{
     //! Pack/Unpack serialize member function
-    //! \param[inout] p Charm++'s PUP::er serializer object reference
+    //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er& p ) {
       p | m_binsize;
       p | m_nsample;
       p | m_pdf;
     }
     //! \brief Pack/Unpack serialize operator|
-    //! \param[inout] p Charm++'s PUP::er serializer object reference
-    //! \param[inout] c TriPDF object reference
+    //! \param[in,out] p Charm++'s PUP::er serializer object reference
+    //! \param[in,out] c TriPDF object reference
     friend void operator|( PUP::er& p, TriPDF& c ) { c.pup(p); }
     ///@}
 

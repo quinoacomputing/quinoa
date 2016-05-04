@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/TestContainerUtil.h
   \author    J. Bakosi
-  \date      Tue 23 Feb 2016 09:32:45 PM MST
+  \date      Tue 03 May 2016 08:04:21 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Unit tests for Base/ContainerUtil.h
   \details   Unit tests for Base/ContainerUtil.h
@@ -18,7 +18,7 @@
 
 #include <unistd.h>
 
-#include <tut/tut.hpp>
+#include "NoWarning/tut.h"
 
 #include "ContainerUtil.h"
 #include "StatCtr.h"
@@ -36,7 +36,7 @@ using ContainerUtil_group =
 using ContainerUtil_object = ContainerUtil_group::object;
 
 //! Define test group
-ContainerUtil_group ContainerUtil( "Base/ContainerUtil" );
+static ContainerUtil_group ContainerUtil( "Base/ContainerUtil" );
 
 //! Test definitions for group
 
@@ -89,7 +89,7 @@ void ContainerUtil_object::test< 2 >() {
     fail( "should throw exception in DEBUG mode" );
     #endif
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     // exception thrown in DEBUG mode, test ok
     // Assert skipped in RELEASE mode, test ok
   }
@@ -158,7 +158,7 @@ void ContainerUtil_object::test< 5 >() {
     fail( "should throw exception in DEBUG mode" );
     #endif
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     // exception thrown in DEBUG mode, test ok
     // Assert skipped in RELEASE mode, test ok
   }
@@ -171,7 +171,7 @@ void ContainerUtil_object::test< 5 >() {
     fail( "should throw exception in DEBUG mode" );
     #endif
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     // exception thrown in DEBUG mode, test ok
     // Assert skipped in RELEASE mode, test ok
   }
@@ -228,7 +228,7 @@ void ContainerUtil_object::test< 5 >() {
     fail( "should throw exception in DEBUG mode" );
     #endif
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     // exception thrown in DEBUG mode, test ok
     // Assert skipped in RELEASE mode, test ok
   }

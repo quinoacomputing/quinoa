@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Writer.C
   \author    J. Bakosi
-  \date      Tue 03 Nov 2015 03:24:52 PM MST
+  \date      Wed 04 May 2016 08:04:56 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Writer base class definition
   \details   Writer base class definition. Writer base serves as a base class
@@ -21,7 +21,7 @@
 using tk::Writer;
 
 Writer::Writer( const std::string& filename, std::ios_base::openmode mode ) :
-  m_filename( filename )
+  m_filename( filename ), m_outFile()
 //******************************************************************************
 //  Constructor: Acquire file handle
 //! \param[in] filename Name of file to open for writing

@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/STLTxtMeshReader.C
   \author    J. Bakosi
-  \date      Wed 13 Jan 2016 12:17:32 PM MST
+  \date      Wed 04 May 2016 02:21:22 PM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     ASCII STL (STereoLithography) reader class definition
   \details   ASCII STL (STereoLithography) reader class definition.
@@ -60,11 +60,18 @@ STLTxtMeshReader::readFacets( const bool store,
 //! \author J. Bakosi
 //******************************************************************************
 {
+  #if defined(__GNUC__)
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Winline"
+  #endif
   // Define possible keywords in ASCI STL file: objects and their correct
   // string values (for error checking)
   STLKeyword solid("solid"), facet("facet"), normal("normal"), outer("outer"),
              loop("loop"), vertex("vertex"), endloop("endloop"),
              endfacet("endfacet");
+  #if defined(__GNUC__)
+    #pragma GCC diagnostic pop
+  #endif
 
   // Read in solids with their facets until eof
   std::size_t num = 0;

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Options/RNG.h
   \author    J. Bakosi
-  \date      Sun 03 Apr 2016 10:07:44 AM MDT
+  \date      Mon 02 May 2016 07:58:27 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Random number generator options and associations
   \details   Random number generator options and associations
@@ -17,9 +17,7 @@
 
 #include "QuinoaConfig.h"
 
-#ifdef HAS_MKL
-#include <mkl_vsl.h>
-#endif
+#include "NoWarning/mkl_vsl.h"
 
 #include "Toggle.h"
 #include "Keywords.h"

@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/BiPDF.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:08:13 PM MDT
+  \date      Wed 04 May 2016 08:55:58 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Joint bivariate PDF estimator
   \details   Joint bivariate PDF estimator. This class can be used to estimate a
@@ -52,13 +52,12 @@ class BiPDF {
     using map_type = std::unordered_map< key_type, tk::real, key_hash >;
 
     //! Empty constructor for Charm++
-    explicit BiPDF() : m_binsize( {{ 0, 0 }} ), m_nsample( 0 ) {}
+    explicit BiPDF() : m_binsize( {{ 0, 0 }} ), m_nsample( 0 ), m_pdf() {}
 
     //! Constructor: Initialize joint bivariate PDF container
     //! \param[in] bs Sample space bin size in both directions
     explicit BiPDF( const std::vector< tk::real >& bs ) :
-      m_binsize( {{ bs[0], bs[1] }} ),
-      m_nsample( 0 ) {}
+      m_binsize( {{ bs[0], bs[1] }} ), m_nsample( 0 ), m_pdf() {}
 
     //! Accessor to number of samples
     //! \return Number of samples collected
@@ -109,15 +108,15 @@ class BiPDF {
     /** @name Pack/Unpack: Serialize BiPDF object for Charm++ */
     ///@{
     //! Pack/Unpack serialize member function
-    //! \param[inout] p Charm++'s PUP::er serializer object reference
+    //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er& p ) {
       p | m_binsize;
       p | m_nsample;
       p | m_pdf;
     }
     //! \brief Pack/Unpack serialize operator|
-    //! \param[inout] p Charm++'s PUP::er serializer object reference
-    //! \param[inout] c BiPDF object reference
+    //! \param[in,out] p Charm++'s PUP::er serializer object reference
+    //! \param[in,out] c BiPDF object reference
     friend void operator|( PUP::er& p, BiPDF& c ) { c.pup(p); }
     ///@}
 

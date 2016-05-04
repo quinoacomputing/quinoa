@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/MeshConv/CmdLine/Parser.C
   \author    J. Bakosi
-  \date      Sun 03 Apr 2016 10:08:07 AM MDT
+  \date      Wed 04 May 2016 08:50:25 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     MeshConv's command line parser
   \details   This file defines the command-line argument parser for the mesh
@@ -15,19 +15,9 @@
 #include <string>
 #include <type_traits>
 
-#include <pegtl/pegtl.hh>
+#include "NoWarning/pegtl.h"
 
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wconversion"
-#endif
-
-#include <charm.h>
-
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic pop
-#endif
-
+#include "NoWarning/charm.h"
 #include "QuinoaConfig.h"
 #include "Exception.h"
 #include "Print.h"

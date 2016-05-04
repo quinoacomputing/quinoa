@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/TestTimer.h
   \author    J. Bakosi
-  \date      Mon 11 Apr 2016 08:00:38 AM MDT
+  \date      Tue 03 May 2016 11:08:37 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Unit tests for Base/Timer.h
   \details   Unit tests for Base/Timer.h
@@ -12,11 +12,11 @@
 #define test_Timer_h
 
 #include <unistd.h>
-#include <tut/tut.hpp>
+
+#include "NoWarning/tut.h"
 
 #include "Timer.h"
 #include "ContainerUtil.h"
-#include "charmtimer.decl.h"
 
 namespace unittest {
 
@@ -36,7 +36,7 @@ using Timer_group = test_group< Timer_common, MAX_TESTS_IN_GROUP >;
 using Timer_object = Timer_group::object;
 
 //! Define test group
-Timer_group Timer( "Base/Timer" );
+static Timer_group Timer( "Base/Timer" );
 
 //! Test definitions for group
 
@@ -157,7 +157,8 @@ void Timer_object::test< 5 >() {
 }
 
 //! Charm chare having a tk::Timer object
-struct CharmTimer : CBase_CharmTimer {
+class CharmTimer : public CBase_CharmTimer {
+  public:
   CharmTimer( const tk::Timer& timer ) {
     // Create test result struct, assume test is ok
     tut::test_result tr( "Base/Timer", 7,
@@ -231,7 +232,7 @@ void Timer_object::test< 8 >() {
     tk::cref_find( timer, std::string("some non-existent timer") );
     fail( "should throw exception" );
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     // exception thrown, test ok
   }
 }

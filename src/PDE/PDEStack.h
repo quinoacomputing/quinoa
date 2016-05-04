@@ -2,7 +2,7 @@
 /*!
   \file      src/PDE/PDEStack.h
   \author    J. Bakosi
-  \date      Mon 14 Mar 2016 08:13:02 AM MDT
+  \date      Sun 01 May 2016 11:49:48 PM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Stack of differential equations
   \details   This file declares class PDEStack, which implements various
@@ -112,7 +112,7 @@ class PDEStack {
     //!   filled during control file parsing, containing user input.
     //! \param[in] eq The unique partial differential equation key whose object
     //!   to instantiate.
-    //! \param[inout] cnt Counter, a std::map, that counts all instantiated
+    //! \param[in,out] cnt Counter, a std::map, that counts all instantiated
     //!   partial differential equations by type.
     //! \author J. Bakosi
     template< class EqTag >

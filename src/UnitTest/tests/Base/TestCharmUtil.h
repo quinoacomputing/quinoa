@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/TestCharmUtil.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 03:12:09 PM MDT
+  \date      Tue 03 May 2016 07:21:42 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Unit tests for Base/CharmUtil.h
   \details   Unit tests for Base/CharmUtil.h
@@ -13,7 +13,7 @@
 
 #include <unistd.h>
 
-#include <tut/tut.hpp>
+#include "NoWarning/tut.h"
 
 #include "CharmUtil.h"
 
@@ -30,7 +30,7 @@ using CharmUtil_group = test_group< CharmUtil_common, MAX_TESTS_IN_GROUP >;
 using CharmUtil_object = CharmUtil_group::object;
 
 //! Define test group
-CharmUtil_group CharmUtil( "Base/CharmUtil" );
+static CharmUtil_group CharmUtil( "Base/CharmUtil" );
 
 //! Test definitions for group
 

@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/TestU01Suite.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 01:40:10 PM MDT
+  \date      Mon 02 May 2016 10:47:50 PM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     TestU01 random number generator test suite
   \details   This file declares the TestU01 random number generator test suite,
@@ -28,7 +28,7 @@
 #include "RNGTestPrint.h"
 #include "RNGTest/InputDeck/InputDeck.h"
 #include "RNGTest/Options/Battery.h"
-#include "testu01suite.decl.h"
+#include "NoWarning/testu01suite.decl.h"
 
 extern "C" {
   #include <swrite.h>

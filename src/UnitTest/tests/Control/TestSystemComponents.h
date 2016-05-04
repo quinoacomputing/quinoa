@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Control/TestSystemComponents.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 03:15:07 PM MDT
+  \date      Tue 03 May 2016 08:04:45 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Unit tests for Control/SystemComponents
   \details   Unit tests for Control/SystemComponents
@@ -11,7 +11,7 @@
 #ifndef test_SystemComponents_h
 #define test_SystemComponents_h
 
-#include <tut/tut.hpp>
+#include "NoWarning/tut.h"
 
 #include "SystemComponents.h"
 
@@ -64,7 +64,7 @@ using SystemComponents_group =
 using SystemComponents_object = SystemComponents_group::object;
 
 //! Define test group
-SystemComponents_group SystemComponents( "Control/SystemComponents" );
+static SystemComponents_group SystemComponents( "Control/SystemComponents" );
 
 //! Test definitions for group
 

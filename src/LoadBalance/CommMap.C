@@ -2,7 +2,7 @@
 /*!
   \file      src/LoadBalance/CommMap.C
   \author    J. Bakosi
-  \date      Wed 04 Nov 2015 10:16:33 AM MST
+  \date      Tue 03 May 2016 07:14:03 PM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Calculation of communication maps for unstructured meshes
   \details   Calculation of communication maps for unstructured meshes.
@@ -93,11 +93,11 @@ poinCommMaps( std::size_t graphsize,
 
   #ifndef NDEBUG
   std::size_t c = 0;
-  #endif
   for (const auto& e : comm)
     Assert( e.first == c++,
             "Export/import maps should not be missing for chare id " +
             std::to_string(c-1) );
+  #endif
 
   // Construct final product: a vector of export maps associating receiver
   // chare ids to unique communicated global point ids for all chare ids, and

@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/HypreMatrix.h
   \author    J. Bakosi
-  \date      Thu 10 Mar 2016 11:04:21 AM MST
+  \date      Tue 03 May 2016 09:19:32 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Hypre IJ matrix class
   \details   Hypre IJ matrix class.
@@ -11,17 +11,8 @@
 #ifndef HypreMatrix_h
 #define HypreMatrix_h
 
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wconversion"
-#endif
-
 #include <HYPRE.h>
 #include <HYPRE_parcsr_ls.h>
-
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic pop
-#endif
 
 namespace tk {
 namespace hypre {
@@ -68,7 +59,7 @@ class HypreMatrix {
     //! Hypre matrix accessor
     HYPRE_ParCSRMatrix get() const {
       HYPRE_ParCSRMatrix m;
-      HYPRE_IJMatrixGetObject( m_A, (void**) &m );
+      HYPRE_IJMatrixGetObject( m_A, reinterpret_cast<void**>(&m) );
       return m;
     }
 

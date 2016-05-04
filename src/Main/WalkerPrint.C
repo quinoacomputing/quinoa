@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/WalkerPrint.C
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 10:01:55 AM MDT
+  \date      Wed 04 May 2016 10:20:03 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Walker-specific pretty printer functionality
   \details   Walker-specific pretty printer functionality.
@@ -31,55 +31,55 @@ extern std::vector< DiffEq > g_diffeqs;
 } // walker::
 
 void
-WalkerPrint::inthead( const std::string& title,
+WalkerPrint::inthead( const std::string& t,
                       const std::string& name,
                       const std::string& legend,
                       const std::string& head ) const
 //******************************************************************************
 //  Print time integration header
-//! \param[in] title Section title
+//! \param[in] t Section title
 //! \param[in] name Section name
 //! \param[in] legend Legend to print
 //! \param[in] head Head to append
 //! \author J. Bakosi
 //******************************************************************************
 {
-  section( title, name );
+  section( t, name );
   std::string l( legend );
   boost::replace_all( l, "\n", "\n" + m_item_indent );
   raw( m_item_indent + l + head );
 }
 
 void
-WalkerPrint::statistics( const std::string& title ) const
+WalkerPrint::statistics( const std::string& t ) const
 //******************************************************************************
 //  Print statistics and PDFs
-//! \param[in] title Section title
+//! \param[in] t Section title
 //! \author J. Bakosi
 //******************************************************************************
 {
   if ( !g_inputdeck.get< tag::stat >().empty() ||
        !g_inputdeck.get< tag::pdf >().empty() )
   {
-    section( title );
+    section( t );
     stats( "Estimated statistical moments" );
     pdfs( "Estimated PDFs", tk::ctr::pdf );
   }
 }
 
 void
-WalkerPrint::diffeqs( const std::string& title, const std::vector< std::vector<
+WalkerPrint::diffeqs( const std::string& t, const std::vector< std::vector<
   std::pair< std::string, std::string > > >& info ) const
 //******************************************************************************
 //  Print configuration of a stack of differential equations
-//! \param[in] title Title to use
+//! \param[in] t Title to use
 //! \param[in] info Info vector to use
 //! \author J. Bakosi
 //******************************************************************************
 {
   if ( !info.empty() ) {
     std::stringstream ss;
-    ss << title << " (" << g_diffeqs.size() << ")";
+    ss << t << " (" << g_diffeqs.size() << ")";
     section( ss.str() );
     for (std::size_t e=0; e<info.size(); ++e) {
       subsection( info[e][0].first );

@@ -51,7 +51,7 @@ if (libc++_FOUND)
         setlibstdcxx(${STDLIBCPP})
       endif()
       if(LIBCXX_CPP)  # set compiler flags for use of libc++
-        set(${FLAGS2ADD2} "${${FLAGS2ADD2}} -stdlib=libc++ -lc++abi")
+        set(${FLAGS2ADD2} "${${FLAGS2ADD2}} -stdlib=libc++")
       else()  # set compiler flags for use of libstdc++
         set(${FLAGS2ADD2} "${${FLAGS2ADD2}} -stdlib=libstdc++")
       endif()

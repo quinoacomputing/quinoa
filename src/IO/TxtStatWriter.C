@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/TxtStatWriter.C
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:26:07 PM MDT
+  \date      Wed 04 May 2016 08:41:04 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Text statistics writer declaration
   \details   This file declares the ASCII statistics writer class that
@@ -21,7 +21,9 @@ TxtStatWriter::TxtStatWriter( const std::string& filename,
                               ctr::TxtFloatFormatType format,
                               kw::precision::info::expect::type precision,
                               std::ios_base::openmode mode ) :
-  Writer( filename, mode )
+  Writer( filename, mode ),
+  m_precision( static_cast<int>(precision) ),
+  m_width( std::max( 16, m_precision+8 ) )
 //******************************************************************************
 //  Constructor
 //! \param[in] filename Output filename to which output the PDF
@@ -43,9 +45,6 @@ TxtStatWriter::TxtStatWriter( const std::string& filename,
   // Set numeric precision for output file stream if the input makes sense
   if (precision > 0 && precision < std::numeric_limits< tk::real >::digits10+2)
     m_outFile << std::setprecision( static_cast<int>(precision) );
-
-  m_precision = static_cast<int>(precision);
-  m_width = std::max( 16, m_precision+8 );
 }
 
 void

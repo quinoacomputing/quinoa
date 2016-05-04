@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/MeshConvDriver.C
   \author    J. Bakosi
-  \date      Mon 14 Dec 2015 10:18:53 PM MST
+  \date      Wed 04 May 2016 10:09:59 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Mesh converter driver
   \details   Mesh converter driver.
@@ -16,16 +16,7 @@
 #include "MeshConvDriver.h"
 #include "MeshFactory.h"
 
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wconversion"
-#endif
-
-#include "meshconv.decl.h"
-
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic pop
-#endif
+#include "NoWarning/meshconv.decl.h"
 
 using meshconv::MeshConvDriver;
 
@@ -34,7 +25,9 @@ extern CProxy_Main mainProxy;
 MeshConvDriver::MeshConvDriver( const tk::Print& print,
                                 const ctr::CmdLine& cmdline )
   : m_print( print ),
-    m_reorder( cmdline.get< tag::reorder >() )
+    m_reorder( cmdline.get< tag::reorder >() ),
+    m_input(),
+    m_output()
 //******************************************************************************
 //  Constructor
 //! \param[in] print Pretty printer

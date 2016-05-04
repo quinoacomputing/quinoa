@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Control/TestStringParser.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 03:15:01 PM MDT
+  \date      Tue 03 May 2016 08:06:09 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Unit tests for Control/StringParser
   \details   Unit tests for Control/StringParser
@@ -11,7 +11,7 @@
 #ifndef test_StringParser_h
 #define test_StringParser_h
 
-#include <tut/tut.hpp>
+#include "NoWarning/tut.h"
 
 #include "StringParser.h"
 
@@ -34,7 +34,7 @@ using StringParser_group =
 using StringParser_object = StringParser_group::object;
 
 //! Define test group
-StringParser_group StringParser( "Control/StringParser" );
+static StringParser_group StringParser( "Control/StringParser" );
 
 //! Test definitions for group
 

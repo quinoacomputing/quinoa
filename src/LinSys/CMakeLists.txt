@@ -11,7 +11,6 @@ add_library(LinSys
 )
 
 addCharmModule( "linsysmerger" "LinSys" )
-removeWarnings("ZoltanInterOp.C;LinSysMerger.C")
 
 # Add extra dependency of LinSys on charm modules implementing advanced array
 # element placement using maps. This is required to pull in the dependencies of

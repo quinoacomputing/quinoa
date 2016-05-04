@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:16:27 PM MDT
+  \date      Sun 01 May 2016 11:44:27 PM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Random number generator test suite input deck
   \details   This file defines the heterogeneous stack that is used for storing
@@ -104,7 +104,7 @@ class InputDeck : public tk::Control<
     /** @name Pack/Unpack: Serialize InputDeck object for Charm++ */
     ///@{
     //! \brief Pack/Unpack serialize member function
-    //! \param[inout] p Charm++'s PUP::er serializer object reference
+    //! \param[in,out] p Charm++'s PUP::er serializer object reference
     //! \author J. Bakosi
     void pup( PUP::er& p ) {
       tk::Control< tag::title,      kw::title::info::expect::type,
@@ -115,8 +115,8 @@ class InputDeck : public tk::Control<
                    tag::error,      std::vector< std::string > >::pup(p);
     }
     //! \brief Pack/Unpack serialize operator|
-    //! \param[inout] p Charm++'s PUP::er serializer object reference
-    //! \param[inout] i InputDeck object reference
+    //! \param[in,out] p Charm++'s PUP::er serializer object reference
+    //! \param[in,out] i InputDeck object reference
     //! \author J. Bakosi
     friend void operator|( PUP::er& p, InputDeck& i ) { i.pup(p); }
     //@}

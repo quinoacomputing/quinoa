@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/TestException.h
   \author    J. Bakosi
-  \date      Wed 24 Feb 2016 07:36:52 AM MST
+  \date      Tue 03 May 2016 07:30:10 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Unit tests for Base/Exception.h
   \details   Unit tests for Base/Exception.h
@@ -11,7 +11,7 @@
 #ifndef test_Exception_h
 #define test_Exception_h
 
-#include <tut/tut.hpp>
+#include "NoWarning/tut.h"
 
 #include "Exception.h"
 #include "ProcessControl.h"
@@ -26,7 +26,7 @@ using Exception_group = test_group< Exception_common, MAX_TESTS_IN_GROUP >;
 using Exception_object = Exception_group::object;
 
 //! Define test group
-Exception_group Exception( "Base/Exception" );
+static Exception_group Exception( "Base/Exception" );
 
 //! Test definitions for group
 
@@ -65,7 +65,7 @@ void Exception_object::test< 3 >() {
     Throw( "msg" );
     fail( "should throw exception" );
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     // exception thrown, test ok
   }
 }
@@ -82,7 +82,7 @@ void Exception_object::test< 4 >() {
     fail( "should throw exception in DEBUG mode" );
     #endif
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     // exception thrown in DEBUG mode, test ok
     // Assert skipped in RELEASE mode, test ok
   }
@@ -97,7 +97,7 @@ void Exception_object::test< 5 >() {
   try {
     Assert( 1 == 1, "msg" );
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     fail( "should not throw exception" );
   }
 }
@@ -112,7 +112,7 @@ void Exception_object::test< 6 >() {
     ErrChk( 0 == 1, "msg" );
     fail( "should throw excecption" );
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     // exception thrown, test ok
   }
 }
@@ -126,7 +126,7 @@ void Exception_object::test< 7 >() {
   try {
     ErrChk( 0 != 1, "msg" );
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     fail( "should not throw excecption" );
   }
 }

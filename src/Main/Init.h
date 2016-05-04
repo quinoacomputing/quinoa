@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Init.h
   \author    J. Bakosi
-  \date      Fri 29 Apr 2016 04:09:41 PM MDT
+  \date      Mon 02 May 2016 07:39:26 PM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Common initialization routines for main() functions for multiple
      exectuables
@@ -62,7 +62,7 @@ static std::string curtime()
   // Obtain current time as seconds elapsed since the Epoch
   current_time = time( NULL );
 
-  if (current_time == ((time_t)-1))
+  if (current_time == static_cast<time_t>(-1))
     Throw( "Failure to compute the current time" );
 
   // Convert to local time format

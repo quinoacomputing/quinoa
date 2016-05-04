@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Control/Options/TestMKLUniformMethod.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 03:15:32 PM MDT
+  \date      Wed 04 May 2016 12:09:17 PM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Unit tests for Control/Options/MKLUniformMethod
   \details   Unit tests for Control/Options/MKLUniformMethod
@@ -11,7 +11,7 @@
 #ifndef test_MKLUniformMethod_h
 #define test_MKLUniformMethod_h
 
-#include <tut/tut.hpp>
+#include "NoWarning/tut.h"
 
 #include "Options/MKLUniformMethod.h"
 
@@ -19,6 +19,7 @@ namespace tut {
 
 //! All tests in group inherited from this base
 struct MKLUniformMethod_common {
+  MKLUniformMethod_common() : m() {}
   const tk::ctr::MKLUniformMethod m;
 };
 
@@ -28,6 +29,7 @@ using MKLUniformMethod_group =
 using MKLUniformMethod_object = MKLUniformMethod_group::object;
 
 //! Define test group
+static
 MKLUniformMethod_group MKLUniformMethod( "Control/Options/MKLUniformMethod" );
 
 //! Test definitions for group

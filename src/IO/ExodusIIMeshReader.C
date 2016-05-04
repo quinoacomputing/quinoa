@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/ExodusIIMeshReader.C
   \author    J. Bakosi
-  \date      Mon 21 Dec 2015 12:03:11 PM MST
+  \date      Wed 04 May 2016 08:46:58 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     ExodusII mesh reader
   \details   ExodusII mesh reader class definition. Currently, this is a bare
@@ -17,18 +17,8 @@
 #include <numeric>
 #include <unordered_map>
 
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wconversion"
-#endif
-
-#include <exodusII.h>
-
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic pop
-#endif
-
-#include <ne_nemesisI.h>
+#include "NoWarning/exodusII.h"
+#include "NoWarning/ne_nemesisI.h"
 
 #include "ExodusIIMeshReader.h"
 #include "Exception.h"
@@ -42,6 +32,9 @@ ExodusIIMeshReader::ExodusIIMeshReader( const std::string& filename,
                                         int iowordsize ) :
   m_filename( filename ),
   m_inFile( 0 ),
+  m_nnode( 0 ),
+  m_neblk( 0 ),
+  m_eid(),
   m_eidt( m_nnpe.size(), -1 ),
   m_nel( m_nnpe.size(), -1 )
 //******************************************************************************
@@ -294,7 +287,8 @@ ExodusIIMeshReader::readElement( std::size_t id,
 //! \author J. Bakosi
 //******************************************************************************
 {
-  Assert( std::accumulate(begin(m_eidt), end(m_eidt), 0) != -m_nnpe.size(),
+  Assert( static_cast< std::size_t >(
+            std::accumulate(begin(m_eidt), end(m_eidt), 0) ) != -m_nnpe.size(),
           "A call to ExodusIIMeshReader::readElement() must be preceded by a "
           "call to ExodusIIMeshReader::readElemBlockIDs()" );
 
@@ -328,7 +322,8 @@ ExodusIIMeshReader::readElements( const std::array< std::size_t, 2 >& ext,
 //! \author J. Bakosi
 //******************************************************************************
 {
-  Assert( std::accumulate(begin(m_eidt), end(m_eidt), 0) != -m_nnpe.size(),
+  Assert( static_cast< std::size_t >(
+            std::accumulate(begin(m_eidt), end(m_eidt), 0) ) != -m_nnpe.size(),
           "A call to ExodusIIMeshReader::readElement() must be preceded by a "
           "call to ExodusIIMeshReader::readElemBlockIDs()" );
 
@@ -365,7 +360,8 @@ ExodusIIMeshReader::readElements( const std::array< std::size_t, 2 >& ext,
 //! \author J. Bakosi
 //******************************************************************************
 {
-  Assert( std::accumulate(begin(m_eidt), end(m_eidt), 0) != -m_nnpe.size(),
+  Assert( static_cast< std::size_t >(
+            std::accumulate(begin(m_eidt), end(m_eidt), 0) ) != -m_nnpe.size(),
           "A call to ExodusIIMeshReader::readElement() must be preceded by a "
           "call to ExodusIIMeshReader::readElemBlockIDs()" );
 
@@ -406,7 +402,8 @@ ExodusIIMeshReader::nel( tk::ExoElemType elemtype ) const
 //! \author J. Bakosi
 //******************************************************************************
 {
-  Assert( std::accumulate(begin(m_eidt),end(m_eidt),0) != -m_nnpe.size(),
+  Assert( static_cast< std::size_t >(
+            std::accumulate(begin(m_eidt),end(m_eidt),0) ) != -m_nnpe.size(),
           "A call to ExodusIIMeshReader::readElement() must be preceded by a "
           "call to ExodusIIMeshReader::readElemBlockIDs()" );
 

@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Control/TestToggle.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 03:15:13 PM MDT
+  \date      Tue 03 May 2016 08:06:22 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Unit tests for Control/Toggle
   \details   Unit tests for Control/Toggle
@@ -11,7 +11,7 @@
 #ifndef test_Toggle_h
 #define test_Toggle_h
 
-#include <tut/tut.hpp>
+#include "NoWarning/tut.h"
 
 #include "Toggle.h"
 
@@ -48,7 +48,7 @@ using Toggle_group = test_group< Toggle_common, MAX_TESTS_IN_GROUP >;
 using Toggle_object = Toggle_group::object;
 
 //! Define test group
-Toggle_group Toggle( "Control/Toggle" );
+static Toggle_group Toggle( "Control/Toggle" );
 
 //! Test definitions for group
 

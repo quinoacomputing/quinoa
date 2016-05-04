@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTestPrint.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:39:53 PM MDT
+  \date      Wed 04 May 2016 10:33:43 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     RNGTest-specific pretty printer functionality
   \details   RNGTest-specific pretty printer functionality.
@@ -26,8 +26,8 @@ class RNGTestPrint : public tk::RNGPrint {
 
   public:
     //! Constructor
-    //! \param[inout] str Verbose stream
-    //! \param[inout] qstr Quiet stream
+    //! \param[in,out] str Verbose stream
+    //! \param[in,out] qstr Quiet stream
     //! \see tk::RNGPrint::RNGPrint and tk::Print::Print
     //! \author J. Bakosi
     explicit RNGTestPrint( std::ostream& str = std::clog,
@@ -102,15 +102,14 @@ class RNGTestPrint : public tk::RNGPrint {
     }
 
     //! Print statistical tests header (with legend)
-    //! \param[in] title String to use as title
+    //! \param[in] t String to use as title
     //! \param[in] npval Number of p-values from tests
     //! \param[in] ntest Number of tests
     //! \author J. Bakosi
-    void statshead( const std::string& title,
-                    std::size_t npval,
-                    std::size_t ntest ) const {
+    void statshead( const std::string& t, std::size_t npval, std::size_t ntest )
+    const {
       std::stringstream ss;
-      ss << title << " (" << npval << " stats from " << ntest << " tests)";
+      ss << t << " (" << npval << " stats from " << ntest << " tests)";
       m_stream << m_section_title_fmt % m_section_indent
                                       % m_section_bullet
                                       % ss.str();
@@ -174,17 +173,17 @@ class RNGTestPrint : public tk::RNGPrint {
     //! \brief Print failed statistical test names, RNGs, and p-values
     //! \details Requirements on the template argument, class Failed: must have
     //!    public fields test, rng, and pval.
-    //! \param[in] title String to use as title
+    //! \param[in] t String to use as title
     //! \param[in] npval Number of p-values from tests
     //! \param[in] nfail Number of failed tests for RNG
     //! \author J. Bakosi
     template< class Failed >
-    void failed( const std::string& title,
+    void failed( const std::string& t,
                  std::size_t npval,
                  const std::vector< Failed >& nfail ) const
     {
       std::stringstream ss;
-      ss << title << " (" << nfail.size() << "/" << npval << ")";
+      ss << t << " (" << nfail.size() << "/" << npval << ")";
       section( ss.str() );
       raw( m_item_indent + "The following tests gave p-values outside "
                            "[0.001, 0.999]\n" +
@@ -208,14 +207,14 @@ class RNGTestPrint : public tk::RNGPrint {
     //! Print RNGs and their measured run times
     //! \param[in] name Section name
     //! \param[in] costnote A note on how to interpret the costs
-    //! \param[in] t Costs for RNGs
+    //! \param[in] cost Costs for RNGs
     //! \author J. Bakosi
     void cost( const std::string& name,
                const std::string& costnote,
-               std::map< std::string, tk::real > t ) const
+               std::map< std::string, tk::real > cost ) const
     {
-      Assert( !t.empty(), "Empty map passed to cost()" );
-      std::multimap< tk::real, std::string > times = tk::flip_map( t );
+      Assert( !cost.empty(), "Empty map passed to cost()" );
+      std::multimap< tk::real, std::string > times = tk::flip_map( cost );
       section< tk::QUIET >( name );
       raw< tk::QUIET >( m_item_indent + costnote + "\n\n" );
       tk::real fastest = times.begin()->first;

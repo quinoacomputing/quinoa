@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/TestPrint.h
   \author    J. Bakosi
-  \date      Tue 18 Aug 2015 07:56:48 AM MDT
+  \date      Wed 04 May 2016 11:39:47 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Unit tests for Base/Print.h
   \details   Unit tests for Base/Print.h
@@ -11,7 +11,7 @@
 #ifndef test_Print_h
 #define test_Print_h
 
-#include <tut/tut.hpp>
+#include "NoWarning/tut.h"
 
 #include "Print.h"
 #include "RNGTest/Options/Battery.h"
@@ -21,7 +21,7 @@ namespace tut {
 
 //! All tests in group inherited from this base
 struct Print_common {
-  Print_common() : prd(), prv( verb ), prq( verb, quiet ) {}
+  Print_common() : verb(), quiet(), prd(), prv( verb ), prq( verb, quiet ) {}
   std::stringstream verb;
   std::stringstream quiet;
   tk::Print prd;                //!< for testing default-constructed object
@@ -34,7 +34,7 @@ using Print_group = test_group< Print_common, MAX_TESTS_IN_GROUP >;
 using Print_object = Print_group::object;
 
 //! Define test group
-Print_group Print( "Base/Print" );
+static Print_group Print( "Base/Print" );
 
 //! Test definitions for group
 

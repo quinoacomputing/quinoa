@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/LoadBalance/TestUnsMeshMap.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 03:16:44 PM MDT
+  \date      Tue 03 May 2016 11:08:04 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Unit tests for LoadBalance/UnsMeshMap
   \details   Unit tests for LoadBalance/UnsMeshMap
@@ -11,22 +11,10 @@
 #ifndef test_UnsMeshMap_h
 #define test_UnsMeshMap_h
 
-#include <tut/tut.hpp>
+#include "NoWarning/tut.h"
 
 #include "UnsMeshMap.h"
 #include "TestArray.h"
-#include "unsmeshmap.decl.h"
-
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wconversion"
-#endif
-
-#include "testarray.decl.h"
-
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic pop
-#endif
 
 namespace unittest {
 
@@ -45,7 +33,7 @@ using UnsMeshMap_group =
 using UnsMeshMap_object = UnsMeshMap_group::object;
 
 //! Define test group
-UnsMeshMap_group UnsMeshMap( "LoadBalance/UnsMeshMap" );
+static UnsMeshMap_group UnsMeshMap( "LoadBalance/UnsMeshMap" );
 
 //! Test definitions for group
 

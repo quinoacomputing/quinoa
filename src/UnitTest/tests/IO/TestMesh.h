@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/IO/TestMesh.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 03:16:05 PM MDT
+  \date      Tue 03 May 2016 08:12:00 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Unit tests for unstructured-mesh reader and writers in IO
   \details   Unit tests for unstructured-mesh reader and writers in IO
@@ -11,7 +11,7 @@
 #ifndef test_Mesh_h
 #define test_Mesh_h
 
-#include <tut/tut.hpp>
+#include "NoWarning/tut.h"
 
 #include "MeshFactory.h"
 #include "Reorder.h"
@@ -31,13 +31,9 @@ struct Mesh_common {
 
   //! Generic test function for testing writing and reading a tetrahedron mesh
   //! \param[in] reader Reader type
-  //! \param[in] writer Writer type
   //! \param[in] ascii Boolean selecting ASCII (TEXT) or binary mesh type
   //! \author J. Bakosi
-  void testPureTetMesh( tk::MeshReader reader,
-                        tk::MeshWriter writer,
-                        bool ascii = false )
-  {
+  void testPureTetMesh( tk::MeshReader reader, bool ascii = false ) {
     // Coordinates for simple tetrahedron-mesh
     std::vector< tk::real > coord { 0,   0,   0,
                                     1,   0,   0,
@@ -183,7 +179,7 @@ using Mesh_group = test_group< Mesh_common, MAX_TESTS_IN_GROUP >;
 using Mesh_object = Mesh_group::object;
 
 //! Define test group
-Mesh_group Mesh( "IO/Mesh" );
+static Mesh_group Mesh( "IO/Mesh" );
 
 //! Test definitions for group
 
@@ -192,7 +188,7 @@ Mesh_group Mesh( "IO/Mesh" );
 template<> template<>
 void Mesh_object::test< 1 >() {
   set_test_name( "write/read Gmsh ASCII tet-mesh" );
-  testPureTetMesh( tk::MeshReader::GMSH, tk::MeshWriter::GMSH, true );
+  testPureTetMesh( tk::MeshReader::GMSH, true );
 }
 
 //! Write and read Gmsh binary mesh
@@ -200,7 +196,7 @@ void Mesh_object::test< 1 >() {
 template<> template<>
 void Mesh_object::test< 2 >() {
   set_test_name( "write/read Gmsh binary tet-mesh" );
-  testPureTetMesh( tk::MeshReader::GMSH, tk::MeshWriter::GMSH );
+  testPureTetMesh( tk::MeshReader::GMSH );
 }
 
 //! Write and read ExodusII mesh
@@ -208,7 +204,7 @@ void Mesh_object::test< 2 >() {
 template<> template<>
 void Mesh_object::test< 3 >() {
   set_test_name( "write/read ExodusII tet-mesh" );
-  testPureTetMesh( tk::MeshReader::EXODUSII, tk::MeshWriter::EXODUSII );
+  testPureTetMesh( tk::MeshReader::EXODUSII );
 }
 
 //! Write and read Netgen mesh
@@ -216,7 +212,7 @@ void Mesh_object::test< 3 >() {
 template<> template<>
 void Mesh_object::test< 4 >() {
   set_test_name( "write/read Netgen tet-mesh" );
-  testPureTetMesh( tk::MeshReader::NETGEN, tk::MeshWriter::NETGEN );
+  testPureTetMesh( tk::MeshReader::NETGEN );
 }
 
 } // tut::

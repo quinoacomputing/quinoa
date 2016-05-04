@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/WalkerDriver.C
   \author    J. Bakosi
-  \date      Fri 05 Feb 2016 06:09:39 AM MST
+  \date      Tue 03 May 2016 09:42:05 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     WalkerDriver that drives Walker
   \details   WalkerDriver that drives Walker
@@ -21,16 +21,7 @@
 #include "Walker/CmdLine/CmdLine.h"
 #include "Walker/InputDeck/InputDeck.h"
 
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wconversion"
-#endif
-
-#include "distributor.decl.h"
-
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic pop
-#endif
+#include "NoWarning/distributor.decl.h"
 
 namespace walker {
 

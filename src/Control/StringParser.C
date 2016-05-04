@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/StringParser.C
   \author    J. Bakosi
-  \date      Fri 29 May 2015 04:15:00 PM MDT
+  \date      Wed 04 May 2016 08:11:38 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     String parser base class definition
   \details   String parser base class definition. String parser base serves as
@@ -21,7 +21,7 @@
 
 using tk::StringParser;
 
-StringParser::StringParser( int argc, char** argv )
+StringParser::StringParser( int argc, char** argv ) : m_string()
 //******************************************************************************
 //  Constructor
 //! \param[in] argc Number of C-style character arrays in argv

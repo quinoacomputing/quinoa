@@ -12,7 +12,6 @@ add_library(LoadBalance
 
 addCharmModule( "linearmap" "LoadBalance" )
 addCharmModule( "unsmeshmap" "LoadBalance" )
-removeWarnings( "CommMap.C;LinearMap.C;UnsMeshMap.C")
 
 INSTALL(TARGETS LoadBalance
   	RUNTIME DESTINATION bin COMPONENT Runtime

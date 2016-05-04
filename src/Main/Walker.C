@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Walker.C
   \author    J. Bakosi
-  \date      Sun 03 Apr 2016 10:04:44 AM MDT
+  \date      Wed 04 May 2016 12:06:52 PM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Random walker Charm++ main chare
   \details   Random walker Charm++ main chare. This file contains the definition
@@ -17,18 +17,8 @@
 
 #include <boost/format.hpp>
 
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wconversion"
-#endif
-
-#include <charm.h>
-#include <ckmessage.h>
-#include <pup.h>
-
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic pop
-#endif
+#include "NoWarning/charm.h"
+#include "NoWarning/pup.h"
 
 #include "Print.h"
 #include "Timer.h"
@@ -48,21 +38,20 @@
 #include "Walker/CmdLine/CmdLine.h"
 #include "Walker/InputDeck/InputDeck.h"
 
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wconversion"
-#endif
+#include "NoWarning/walker.decl.h"
 
-#include "walker.decl.h"
-#include "distributor.decl.h"
-
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic pop
+#if defined(__clang__)
+  #pragma clang diagnostic push
+  #pragma clang diagnostic ignored "-Wmissing-variable-declarations"
 #endif
 
 //! \brief Charm handle to the main proxy, facilitates call-back to finalize,
 //!    etc., must be in global scope, unique per executable
 CProxy_Main mainProxy;
+
+#if defined(__clang__)
+  #pragma clang diagnostic pop
+#endif
 
 //! Walker declarations and definitions
 namespace walker {
@@ -73,6 +62,11 @@ namespace walker {
 //! http://charm.cs.illinois.edu/manuals/html/charm++/manual.html. The data
 //! below is global-scope because they must be available to all PEs which could
 //! be on different machines.
+
+#if defined(__clang__)
+  #pragma clang diagnostic push
+  #pragma clang diagnostic ignored "-Wmissing-variable-declarations"
+#endif
 
 //! Defaults of input deck, facilitates detection what is set by user
 //! \details This object is in global scope, it contains the default of all
@@ -100,6 +94,10 @@ std::vector< DiffEq > g_diffeqs;
 //! Distributor Charm++ proxy facilitating call-back to Distributor by the
 //! individual integrators
 CProxy_Distributor g_DistributorProxy;
+
+#if defined(__clang__)
+  #pragma clang diagnostic pop
+#endif
 
 //! Pack/Unpack selected RNGs. This Pack/Unpack method (re-)creates the full RNG
 //! stack since it needs to (re-)bind function pointers on different processing
@@ -172,6 +170,7 @@ class Main : public CBase_Main {
     //! \see http://charm.cs.illinois.edu/manuals/html/charm++/manual.html
     Main( CkArgMsg* msg )
     try :
+      m_cmdline(),
       // Parse command line into m_cmdline using default simple pretty printer
       m_cmdParser( msg->argc, msg->argv, tk::Print(), m_cmdline ),
       // Create pretty printer initializing output streams based on command line
@@ -183,8 +182,8 @@ class Main : public CBase_Main {
                           tk::HeaderType::WALKER,
                           WALKER_EXECUTABLE,
                           m_print ) ),
-      // Start new timer measuring the total runtime
-      m_timer(1)
+      m_timer(1),       // start new timer measuring the total runtime
+      m_timestamp()
     {
       delete msg;
       mainProxy = thisProxy;
@@ -241,15 +240,8 @@ class Main : public CBase_Main {
 //!    has finished migrating all global-scoped read-only objects which happens
 //!    after the main chare constructor has finished.
 //! \author J. Bakosi
-struct execute : CBase_execute { execute() { mainProxy.execute(); } };
+class execute : public CBase_execute {
+ public: execute() { mainProxy.execute(); }
+};
 
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wconversion"
-#endif
-
-#include "walker.def.h"
-
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic pop
-#endif
+#include "NoWarning/walker.def.h"

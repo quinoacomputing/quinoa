@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/TestStrConvUtil.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 03:11:35 PM MDT
+  \date      Tue 03 May 2016 08:02:44 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Unit tests for Base/StrConvUtil.h
   \details   Unit tests for Base/StrConvUtil.h
@@ -11,7 +11,7 @@
 #ifndef test_StrConvUtil_h
 #define test_StrConvUtil_h
 
-#include <tut/tut.hpp>
+#include "NoWarning/tut.h"
 
 #include "StrConvUtil.h"
 
@@ -25,7 +25,7 @@ using StrConvUtil_group = test_group< StrConvUtil_common, MAX_TESTS_IN_GROUP >;
 using StrConvUtil_object = StrConvUtil_group::object;
 
 //! Define test group
-StrConvUtil_group StrConvUtil( "Base/StrConvUtil" );
+static StrConvUtil_group StrConvUtil( "Base/StrConvUtil" );
 
 //! Test definitions for group
 

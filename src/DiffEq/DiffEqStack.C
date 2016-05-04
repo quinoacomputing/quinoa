@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/DiffEqStack.C
   \author    J. Bakosi
-  \date      Sun 03 Apr 2016 05:56:58 PM MDT
+  \date      Wed 04 May 2016 11:11:29 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Stack of differential equations
   \details   This file defines class DiffEqStack, which implements various
@@ -14,7 +14,7 @@
 */
 //******************************************************************************
 
-#include <boost/mpl/cartesian_product.hpp>
+#include "NoWarning/cartesian_product.h"
 
 #include "DiffEqStack.h"
 #include "Tags.h"
@@ -51,7 +51,7 @@
 
 using walker::DiffEqStack;
 
-DiffEqStack::DiffEqStack()
+DiffEqStack::DiffEqStack() : m_factory(), m_eqTypes()
 //******************************************************************************
 //  Constructor: register all differential equations into factory
 //! \details This constructor consists of several blocks, each registering a

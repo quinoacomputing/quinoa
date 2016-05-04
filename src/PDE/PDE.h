@@ -2,7 +2,7 @@
 /*!
   \file      src/PDE/PDE.h
   \author    J. Bakosi
-  \date      Sat 30 Apr 2016 06:20:53 PM MDT
+  \date      Tue 03 May 2016 11:23:36 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Partial differential equation
   \details   This file defines a generic partial differential equation class.
@@ -124,6 +124,8 @@ class PDE {
     //! \brief Concept is a pure virtual base class specifying the requirements
     //!   of polymorphic objects deriving from it
     struct Concept {
+      Concept() = default;
+      Concept( const Concept& ) = default;
       virtual ~Concept() = default;
       virtual Concept* copy() const = 0;
       virtual void initialize( const std::array< std::vector< tk::real >, 3 >&,

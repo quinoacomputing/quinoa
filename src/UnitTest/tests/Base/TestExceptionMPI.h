@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/TestExceptionMPI.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 03:09:33 PM MDT
+  \date      Tue 03 May 2016 09:19:03 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Unit tests for Base/TestExceptionMPI.h
   \details   Unit tests for Base/TestExceptionMPI.h
@@ -11,7 +11,7 @@
 #ifndef test_ExceptionMPI_h
 #define test_ExceptionMPI_h
 
-#include <tut/tut.hpp>
+#include "NoWarning/tut.h"
 
 #include "ExceptionMPI.h"
 
@@ -26,7 +26,7 @@ using ExceptionMPI_group =
 using ExceptionMPI_object = ExceptionMPI_group::object;
 
 //! Define test group
-ExceptionMPI_group ExceptionMPI( "Base/ExceptionMPI" );
+static ExceptionMPI_group ExceptionMPI( "Base/ExceptionMPI" );
 
 //! Test definitions for group
 
@@ -42,7 +42,7 @@ void ExceptionMPI_object::test< 1 >() {
     fail( "should throw exception in DEBUG mode" );
     #endif
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     // exception thrown in DEBUG mode, test ok
     // Assert skipped in RELEASE mode, test ok
   }
@@ -57,10 +57,17 @@ void ExceptionMPI_object::test< 2 >() {
   try {
     AssertMPI( 1 == 1, "msg" );
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     fail( "should not throw exception" );
   }
 }
+
+// The ErrChkMPI macro generates a warning that is disabled below. It would be
+// great if this can be done inside that macro in Base/ExceptionMPI.h.
+#if defined(__clang__)
+  #pragma clang diagnostic push
+  #pragma clang diagnostic ignored "-Wold-style-cast"
+#endif
 
 //! Test that ErrChkMPI macro throws if condition is false on all ranks
 //! \author J. Bakosi
@@ -72,7 +79,7 @@ void ExceptionMPI_object::test< 3 >() {
     ErrChkMPI( 0 == 1, "msg" );
     fail( "should throw excecption" );
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     // exception thrown, test ok
   }
 }
@@ -86,7 +93,7 @@ void ExceptionMPI_object::test< 4 >() {
   try {
     ErrChkMPI( 0 != 1, "msg" );
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     fail( "should not throw excecption" );
   }
 }
@@ -103,7 +110,7 @@ void ExceptionMPI_object::test< 5 >() {
     ErrChkMPI( peid == 0 ? 0 == 1 : 1 == 1, "msg" );
     fail( "should throw exception" );
   }
-  catch ( tk::Exception& e ) {
+  catch ( tk::Exception& ) {
     // exception thrown, test ok
   }
 }
@@ -123,12 +130,16 @@ void ExceptionMPI_object::test< 6 >() {
       ErrChkMPI( peid == 0 ? 1 == 1 : 0 == 1, "msg" );
       fail( "should throw exception" );
     }
-    catch ( tk::Exception& e ) {
+    catch ( tk::Exception& ) {
       // exception thrown, test ok
     }
   else
     skip( "in serial, needs multiple PEs" );
 }
+
+#if defined(__clang__)
+  #pragma clang diagnostic pop
+#endif
 
 } // tut::
 

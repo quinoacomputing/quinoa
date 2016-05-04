@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/TUTSuite.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 01:02:06 PM MDT
+  \date      Mon 02 May 2016 08:23:13 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Template Unit Test suite class declaration
   \details   Template Unit Test suite class declaration. In principle there can
@@ -23,16 +23,7 @@
 #include "UnitTestPrint.h"
 #include "UnitTest/CmdLine/CmdLine.h"
 
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wconversion"
-#endif
-
-#include "tutsuite.decl.h"
-
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic pop
-#endif
+#include "NoWarning/tutsuite.decl.h"
 
 namespace unittest {
 

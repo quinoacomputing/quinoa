@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/Battery.h
   \author    J. Bakosi
-  \date      Sat 30 Apr 2016 06:22:45 PM MDT
+  \date      Tue 03 May 2016 07:26:30 PM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Random number generator test harness
   \details   This file defines a generic random number generator test harness
@@ -19,19 +19,11 @@
 
 #include <functional>
 
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wconversion"
-#endif
+#include "NoWarning/charm++.h"
 
-#include <charm++.h>
-
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic pop
-#endif
-
-#include "CharmUtil.h"
+#include "Macro.h"
 #include "Has.h"
+#include "CharmUtil.h"
 
 namespace rngtest {
 
@@ -95,6 +87,9 @@ class Battery {
             (std::move(T::Proxy::ckNew(std::forward<ConstrArgs>(args)...))) ) {
       Assert( c == nullptr, "std::function argument to Battery Charm++ "
                             "constructor must be nullptr" );
+      #ifdef NDEBUG
+      IGNORE(c);
+      #endif
     }
 
     //! Public interface to evaluating a statistical test
@@ -121,6 +116,8 @@ class Battery {
     //! Concept is a pure virtual base class specifying the requirements of
     //! polymorphic objects deriving from it
     struct Concept {
+      Concept() = default;
+      Concept( const Concept& ) = default;
       virtual ~Concept() = default;
       virtual Concept* copy() const = 0;
       virtual void evaluate( std::vector< std::vector< std::string > >

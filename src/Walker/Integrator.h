@@ -2,7 +2,7 @@
 /*!
   \file      src/Walker/Integrator.h
   \author    J. Bakosi
-  \date      Fri 05 Feb 2016 08:49:17 AM MST
+  \date      Wed 04 May 2016 10:44:34 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Integrator advances differential equations
   \details   Integrator advances differential equations. There are a potentially
@@ -29,16 +29,7 @@
 #include "Statistics.h"
 #include "Walker/InputDeck/InputDeck.h"
 
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wconversion"
-#endif
-
-#include "integrator.decl.h"
-
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic pop
-#endif
+#include "NoWarning/integrator.decl.h"
 
 namespace walker {
 
@@ -55,6 +46,10 @@ class Integrator : public CBase_Integrator {
 
     //! Migrate constructor
     explicit Integrator( CkMigrateMessage* ) :
+      // WARNING: This is a "blind" copy of the standard constructor initializer
+      // list - it must be changed for migration to be correct.      
+      m_hostproxy(),
+      m_collproxy(),
       m_particles( 0, g_inputdeck.get< tag::component >().nprop() ),
       m_stat( m_particles,
                 g_inputdeck.get< tag::component >().offsetmap( 

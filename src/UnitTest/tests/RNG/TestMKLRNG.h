@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/RNG/TestMKLRNG.h
   \author    J. Bakosi
-  \date      Wed 24 Feb 2016 07:40:55 AM MST
+  \date      Wed 04 May 2016 03:11:32 PM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Unit tests for RNG/MKLRNG.h
   \details   Unit tests for RNG/MKLRNG.h
@@ -11,11 +11,16 @@
 #ifndef test_MKLRNG_h
 #define test_MKLRNG_h
 
-#include <tut/tut.hpp>
+#include "NoWarning/tut.h"
 
 #include "MKLRNG.h"
 
 namespace tut {
+
+#if defined(__GNUC__) && !defined(__clang__)
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wsuggest-attribute=noreturn"
+#endif
 
 //! All tests in group inherited from this base
 struct MKLRNG_common {};
@@ -25,7 +30,7 @@ using MKLRNG_group = test_group< MKLRNG_common, MAX_TESTS_IN_GROUP >;
 using MKLRNG_object = MKLRNG_group::object;
 
 //! Define test group
-MKLRNG_group MKLRNG( "RNG/MKLRNG" );
+static MKLRNG_group MKLRNG( "RNG/MKLRNG" );
 
 //! Test definitions for group
 
@@ -330,6 +335,10 @@ void MKLRNG_object::test< 23 >() {
 //   tk::MKLRNG r( 4, VSL_BRNG_WH );
 //   RNG_common::test_move_assignment( r );
 // }
+
+#if defined(__GNUC__) && !defined(__clang__)
+  #pragma GCC diagnostic pop
+#endif
 
 } // tut::
 

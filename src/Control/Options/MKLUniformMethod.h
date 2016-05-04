@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Options/MKLUniformMethod.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:22:24 PM MDT
+  \date      Mon 02 May 2016 07:58:42 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Intel MKL uniform RNG method options
   \details   Intel MKL uniform RNG method options
@@ -15,7 +15,7 @@
 
 #include <boost/mpl/vector.hpp>
 
-#include <mkl_vsl.h>
+#include "NoWarning/mkl_vsl.h"
 
 #include "Toggle.h"
 #include "Keywords.h"

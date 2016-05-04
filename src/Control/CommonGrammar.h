@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/CommonGrammar.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:02:39 PM MDT
+  \date      Wed 04 May 2016 09:20:36 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Generic, low-level grammar, re-used by specific grammars
   \details   Generic, low-level grammar. We use the [Parsing Expression Grammar
@@ -243,7 +243,7 @@ namespace grm {
   //!   template arguments define (1) the grammar stack (Stack, a tagged tuple)
   //!   to operate on, (2) the message type (error or warning), and (3) the
   //!   message key used to look up the error message associated with the key.
-  //! \param[inout] stack Grammar stack (a tagged tuple) to operate on
+  //! \param[in,out] stack Grammar stack (a tagged tuple) to operate on
   //! \param[in] value Last parsed token (can be empty, depending on what
   //!   context this function gets called.
   //! \author J. Bakosi
@@ -269,6 +269,13 @@ namespace grm {
     }
   }
 
+  #if defined(__clang__)
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wunused-local-typedef"
+  #elif defined(__GNUC__)
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wunused-local-typedefs"
+  #endif
   //! \brief Compile-time test functor verifying that type U is a keyword
   //! \details This functor is used for triggering a compiler error if any of
   //!   the expected option values is not in the keywords pool of the grammar.
@@ -281,9 +288,18 @@ namespace grm {
   template< template< class > class use >
   struct is_keyword {
     template< typename U > void operator()( U ) {
+      // Attempting to define the type blow accomplishes triggering an error if
+      // the type does not define pegtl_string. The compiler, however, does not
+      // see that far, and generates a warning: unused type alias 'kw', so we
+      // ignore it around this template.
       using kw = typename use< U >::pegtl_string;
     }
   };
+  #if defined(__clang__)
+    #pragma clang diagnostic pop
+  #elif defined(__GNUC__)
+    #pragma GCC diagnostic pop
+  #endif
 
   //! \brief Put option (i.e., a tk::Toggle) in grammar state (or stack) at a
   //!   position given by tags
@@ -295,7 +311,7 @@ namespace grm {
   //!   a series tags (empty structs, see Control/Tags.h) addressing a
   //!   particular field of the tagged tuple, i.e., one tag for every additional
   //!   depth level.
-  //! \param[inout] stack Grammar stack (a tagged tuple) to operate on
+  //! \param[in,out] stack Grammar stack (a tagged tuple) to operate on
   //! \param[in] value Last parsed token
   //! \param[in] defaults Reference to a copy of the full grammar stack at the
   //!   initial state, i.e., containing the defaults for all of its fields. This
@@ -444,7 +460,7 @@ namespace grm {
   //! \author J. Bakosi
   template< class Stack, typename tag, typename... tags >
   struct Store_switch : pegtl::action_base< Store_switch<Stack,tag,tags...> > {
-    static void apply(const std::string& value, Stack& stack) {
+    static void apply(const std::string&, Stack& stack) {
       stack.template set<tag,tags...>(true);
     }
   };
@@ -557,7 +573,7 @@ namespace grm {
         try {
           precision = std::stol( value ); // try to convert matched str to int
         }
-        catch ( std::exception& e ) {
+        catch ( std::exception& ) {
           Message< Stack, ERROR, MsgKey::BADPRECISION >( stack, value );
         }
         // only set precision given if it makes sense
@@ -790,7 +806,7 @@ namespace grm {
   //! \author J. Bakosi
   template< class Stack, class eq, class param >
   struct check_vector : pegtl::action_base< check_vector< Stack, eq, param > > {
-    static void apply( const std::string& value, Stack& stack ) {}
+    static void apply( const std::string&, Stack& ) {}
   };
 
   //! \brief Check if the spikes parameter vector specifications are correct

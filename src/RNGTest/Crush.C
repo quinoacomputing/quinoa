@@ -2,26 +2,16 @@
 /*!
   \file      src/RNGTest/Crush.C
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 01:59:07 PM MDT
+  \date      Tue 03 May 2016 11:10:17 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Class re-creating the TestU01 library's Crush battery
   \details   Class re-creating the TestU01 library's Crush battery.
 */
 //******************************************************************************
 
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wconversion"
-#endif
-
-#include <charm.h>
-#include <pup_stl.h>
-
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic pop
-#endif
-
-#include <pup.h>
+#include "NoWarning/charm.h"
+#include "NoWarning/pup_stl.h"
+#include "NoWarning/pup.h"
 
 extern "C" {
   #include <gdef.h>
@@ -44,8 +34,6 @@ extern "C" {
 #include "TestU01Props.h"
 #include "TestU01Stack.h"
 #include "Crush.h"
-
-#include "testu01suite.decl.h"
 
 namespace rngtest {
 

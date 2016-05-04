@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.C
   \author    J. Bakosi
-  \date      Mon 08 Feb 2016 06:02:27 AM MST
+  \date      Wed 04 May 2016 09:19:40 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Statistics class definition
   \details   This file implements a statistics class that can be used to
@@ -38,8 +38,29 @@ Statistics::Statistics( const tk::Particles& particles,
                         const std::vector< ctr::Probability >& pdf,
                         const std::vector< std::vector< tk::real > >& binsize )
   : m_particles( particles ),
+    m_instOrd(),
+    m_ordinary(),
+    m_ordTerm(),
     m_nord( 0 ),
-    m_ncen( 0 )
+    m_instCen(),
+    m_central(),
+    m_ctr(),
+    m_ncen( 0 ),
+    m_instOrdUniPDF(),
+    m_ordupdf(),
+    m_instCenUniPDF(),
+    m_cenupdf(),
+    m_ctrUniPDF(),
+    m_instOrdBiPDF(),
+    m_ordbpdf(),
+    m_instCenBiPDF(),
+    m_cenbpdf(),
+    m_ctrBiPDF(),
+    m_instOrdTriPDF(),
+    m_ordtpdf(),
+    m_instCenTriPDF(),
+    m_centpdf(),
+    m_ctrTriPDF()
 //******************************************************************************
 //  Constructor
 //! \param[in] particles Particles data to estimate from

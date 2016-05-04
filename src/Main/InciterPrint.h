@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/InciterPrint.h
   \author    J. Bakosi
-  \date      Fri 05 Feb 2016 07:59:50 AM MST
+  \date      Wed 04 May 2016 11:01:36 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Inciter-specific pretty printer functionality
   \details   Inciter-specific pretty printer functionality.
@@ -31,43 +31,13 @@ class InciterPrint : public tk::Print {
 
   public:
     //! Constructor
-    //! \param[inout] str Verbose stream
-    //! \param[inout] qstr Quiet stream
+    //! \param[in,out] str Verbose stream
+    //! \param[in,out] qstr Quiet stream
     //! \see tk::RNGPrint::RNGPrint and tk::Print::Print
     //! \author J. Bakosi
     explicit InciterPrint( std::ostream& str = std::clog,
                            std::ostream& qstr = std::cout ) :
       Print( str, qstr ) {}
-
-//     //! Print control option: 'group : option' only if differs from its default
-//     template< typename Option, typename... tags >
-//     void Section() const {
-//       if (g_inputdeck.get< tags... >() !=
-//             g_inputdeck_defaults.get< tags... >() ) {
-//         Option opt;
-//         auto& group = opt.group();
-//         auto& value = opt.name( g_inputdeck.get< tags... >() );
-//         m_stream << m_section_title_value_fmt % m_section_indent
-//                                               % m_section_bullet
-//                                               % group
-//                                               % value;
-//         m_stream << m_section_underline_fmt
-//                     % m_section_indent
-//                     % std::string( m_section_indent.size() + 3 +
-//                                    group.size() + value.size(), '-' );
-//       }
-//     }
-// 
-//     //! Print item: 'name : value' only if differs from its default
-//     //! \param[in] name Name of item
-//     //! \author J. Bakosi
-//     template< typename... tags >
-//     void Item( const std::string& name ) const {
-//       if (g_inputdeck.get< tags... >() !=
-//             g_inputdeck_defaults.get< tags... >() )
-//         m_stream << m_item_name_value_fmt
-//                     % m_item_indent % name % g_inputdeck.get<tags...>();
-//     }
 
     //! Print control option: 'group : option'
     //! \author J. Bakosi
@@ -84,15 +54,12 @@ class InciterPrint : public tk::Print {
     class Policies {
       public:
         // Default constructor
-        explicit Policies() {}
+        explicit Policies() : prob() {}
         // Initializer constructor
-        explicit Policies( const std::string& p ) :
-          prob(p) {}
+        explicit Policies( const std::string& p ) : prob(p) {}
         // Operator += for adding up two Policies structs
-        Policies& operator+= ( const Policies& p ) {
-          prob += p.prob;
-          return *this;
-        }
+        Policies& operator+= ( const Policies& p )
+       {  prob += p.prob; return *this; }
         // Output unique policies to output stream
         friend std::ostream& operator<< ( std::ostream& os, const Policies& p )
         {
@@ -104,24 +71,22 @@ class InciterPrint : public tk::Print {
 
       private:
         // Make all policies unique
-        void unique() {
-          tk::unique( prob );
-        }
+        void unique() { tk::unique( prob ); }
 
         std::string prob;
     };
 
     //! Print equation list with policies
-    //! \param[in] title Section title
+    //! \param[in] t Section title
     //! \param[in] factory Factory to get equation data from
     //! \param[in] ntypes Unique equation types
     //! \author J. Bakosi
     template< class Factory >
-    void eqlist( const std::string& title,
+    void eqlist( const std::string& t,
                  const Factory& factory,
                  std::size_t ntypes ) const {
       if (!factory.empty()) {
-        section( title );
+        section( t );
         item( "Unique equation types", ntypes );
         item( "With all policy combinations", factory.size() );
         raw( '\n' );
@@ -148,12 +113,12 @@ class InciterPrint : public tk::Print {
     }
 
     //! Print configuration of a stack of partial differential equations
-    void pdes( const std::string& title,
+    void pdes( const std::string& t,
       const std::vector< std::vector< std::pair< std::string, std::string > > >&
         info ) const;
 
     //! Print time integration header
-    void inthead( const std::string& title, const std::string& name,
+    void inthead( const std::string& t, const std::string& name,
                   const std::string& legend, const std::string& head ) const;
 
   private:

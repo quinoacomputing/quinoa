@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/WalkerPrint.h
   \author    J. Bakosi
-  \date      Tue 15 Dec 2015 09:50:11 AM MST
+  \date      Wed 04 May 2016 10:19:44 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Walker-specific pretty printer functionality
   \details   Walker-specific pretty printer functionality.
@@ -45,8 +45,8 @@ class WalkerPrint : public tk::RNGPrint {
 
   public:
     //! Constructor
-    //! \param[inout] str Verbose stream
-    //! \param[inout] qstr Quiet stream
+    //! \param[in,out] str Verbose stream
+    //! \param[in,out] qstr Quiet stream
     //! \see tk::RNGPrint::RNGPrint and tk::Print::Print
     //! \author J. Bakosi
     explicit WalkerPrint( std::ostream& str = std::clog,
@@ -102,7 +102,7 @@ class WalkerPrint : public tk::RNGPrint {
     class Policies {
       public:
         // Default constructor
-        explicit Policies() {}
+        explicit Policies() : init(), coef() {}
         // Initializer constructor
         explicit Policies( const std::string& i, const std::string& c ) :
           init(i), coef(c) {}
@@ -133,16 +133,17 @@ class WalkerPrint : public tk::RNGPrint {
     };
 
     //! Print equation list with policies
-    //! \param[in] title Section title
+    //! \param[in] t Section title
     //! \param[in] factory Factory to get equation data from
     //! \param[in] ntypes Unique equation types
     //! \author J. Bakosi
     template< class Factory >
-    void eqlist( const std::string& title,
+    void eqlist( const std::string& t,
                  const Factory& factory,
-                 std::size_t ntypes ) const {
+                 std::size_t ntypes ) const
+    {
       if (!factory.empty()) {
-        section( title );
+        section( t );
         item( "Unique equation types", ntypes );
         item( "With all policy combinations", factory.size() );
         raw( '\n' );
@@ -186,14 +187,14 @@ class WalkerPrint : public tk::RNGPrint {
     }
 
     //! Print time integration header
-    void inthead( const std::string& title, const std::string& name,
+    void inthead( const std::string& t, const std::string& name,
                   const std::string& legend, const std::string& head ) const;
 
     //! Print statistics and PDFs
-    void statistics( const std::string& title ) const;
+    void statistics( const std::string& t ) const;
 
     //! Print configuration of a stack of differential equations
-    void diffeqs( const std::string& title,
+    void diffeqs( const std::string& t,
       const std::vector< std::vector< std::pair< std::string, std::string > > >&
         info ) const;
 

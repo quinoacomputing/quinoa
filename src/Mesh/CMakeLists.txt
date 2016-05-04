@@ -10,8 +10,6 @@ add_library(Mesh
             STLMesh.C
 )
 
-removeWarnings( "DerivedData.C" )
-
 INSTALL(TARGETS Mesh
   	RUNTIME DESTINATION bin COMPONENT Runtime
   	LIBRARY DESTINATION lib COMPONENT Runtime

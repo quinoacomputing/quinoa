@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/RNG/TestRNG.h
   \author    J. Bakosi
-  \date      Fri 26 Feb 2016 03:27:14 PM MST
+  \date      Wed 04 May 2016 11:51:38 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Unit tests for RNG/RNG.h
   \details   Unit tests for RNG/RNG.h
@@ -14,7 +14,7 @@
 #include <functional>
 
 #include <boost/functional/value_factory.hpp>
-#include <tut/tut.hpp>
+#include "NoWarning/tut.h"
 
 #ifdef HAS_MKL
   #include <mkl_vsl_types.h>
@@ -42,7 +42,8 @@ namespace tut {
 struct RNG_common {
 
   //! Constructor: create a vector of RNGs to be tested by most tests
-  RNG_common() {
+  RNG_common() : rngs()
+  {
     #ifdef HAS_MKL
     rngs.emplace_back( tk::MKLRNG( 4, VSL_BRNG_MCG31 ) );
     #endif
@@ -103,7 +104,7 @@ struct RNG_common {
     auto n = r.nthreads();
     for (std::size_t i=0; i<n; ++i)
       r.uniform( static_cast<int>(i), num/n, &numbers[i*num/n] );
-    for (auto n : numbers) ensure( "sample space incorrect", 0.0<n && n<1.0 );
+    for (auto m : numbers) ensure( "sample space incorrect", 0.0<m && m<1.0 );
     test_stats( numbers, 0.5, 1.0/12.0, 0.0, -6.0/5.0 );
   }
 
@@ -145,8 +146,8 @@ struct RNG_common {
     for (std::size_t i=0; i<n; ++i)
       r.beta( static_cast<int>(i), num/n, a, b, 0.0, 1.0, &numbers[i*num/n] );
     // test sample space
-    for (auto n : numbers)
-      ensure( "sample space incorrect", -eps<n && n<1.0+eps );
+    for (auto m : numbers)
+      ensure( "sample space incorrect", -eps<m && m<1.0+eps );
     // test first four moments
     test_stats( numbers, a/(a+b), a*b/(a+b)/(a+b)/(a+b+1.0),
                 2.0*(b-a)*std::sqrt(a+b+1.0)/(a+b+2.0)/std::sqrt(a*b),
@@ -154,8 +155,8 @@ struct RNG_common {
     // test scaled sample space
     for (std::size_t i=0; i<n; ++i)
       r.beta( static_cast<int>(i), num/n, a, b, 0.5, 2.5, &numbers[i*num/n] );
-    for (auto n : numbers)
-      ensure( "sample space incorrect", 0.5-eps<n && n<3.0+eps );
+    for (auto m : numbers)
+      ensure( "sample space incorrect", 0.5-eps<m && m<3.0+eps );
   }
 
   //! Test copy constructor of a random number generator
@@ -232,7 +233,7 @@ using RNG_group = test_group< RNG_common, MAX_TESTS_IN_GROUP >;
 using RNG_object = RNG_group::object;
 
 //! Define test group
-RNG_group RNG( "RNG/RNG" );
+static RNG_group RNG( "RNG/RNG" );
 
 //! Test definitions for group
 
