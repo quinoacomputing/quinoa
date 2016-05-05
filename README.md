@@ -1,5 +1,3 @@
-[![Join the chat at https://gitter.im/quinoacomputing/quinoa](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/quinoacomputing/quinoa?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-
 ## What is Quinoa?
 
 Quinoa is a set of computational tools that enables research and numerical analysis in fluid dynamics. At this time it is a test-bed to experiment with various algorithms using fully asynchronous runtime systems.
