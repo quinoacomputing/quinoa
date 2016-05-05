@@ -3,7 +3,7 @@
   \file      src/DiffEq/OrnsteinUhlenbeckCoeffPolicy.h
   \author    J. Bakosi
   \date      Sun 03 Apr 2016 06:02:00 PM MDT
-  \copyright 2012-2016, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Ornstein-Uhlenbeck coefficients policies
   \details   This file defines coefficients policy classes for the
     Ornstein-Uhlenbeck SDE, defined in DiffEq/OrnsteinUhlenbeck.h.

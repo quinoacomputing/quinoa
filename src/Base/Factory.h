@@ -3,7 +3,7 @@
   \file      src/Base/Factory.h
   \author    J. Bakosi
   \date      Sun 13 Mar 2016 08:47:35 PM MDT
-  \copyright 2012-2016, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Factory utilities
   \details   Factory utilities. The functions defined in this file help
     interfacing with object factories. For a short introduction on what

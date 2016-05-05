@@ -3,7 +3,7 @@
   \file      src/Main/WalkerDriver.h
   \author    J. Bakosi
   \date      Mon 30 Nov 2015 12:34:32 PM MST
-  \copyright 2012-2016, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     WalkerDriver that drives Walker
   \details   WalkerDriver that drives Walker
 */

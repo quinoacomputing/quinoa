@@ -3,7 +3,7 @@
   \file      src/Control/Breeze/InputDeck/Parser.C
   \author    J. Bakosi
   \date      Fri 29 May 2015 05:23:16 PM MDT
-  \copyright 2012-2016, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Breeze's input deck file parser
   \details   This file declares the input deck, i.e., control file, parser for
     the computational fluid dynamics tool, Breeze.

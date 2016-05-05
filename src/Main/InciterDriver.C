@@ -3,7 +3,7 @@
   \file      src/Main/InciterDriver.C
   \author    J. Bakosi
   \date      Tue 03 May 2016 09:41:26 AM MDT
-  \copyright 2012-2016, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Inciter driver
   \details   Inciter driver.
 */

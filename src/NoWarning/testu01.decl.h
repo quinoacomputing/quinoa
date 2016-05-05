@@ -3,7 +3,7 @@
   \file      src/NoWarning/testu01.decl.h
   \author    J. Bakosi
   \date      Wed 04 May 2016 10:58:23 AM MDT
-  \copyright 2012-2016, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include testu01.decl.h with turning off specific compiler warnings
 */
 //******************************************************************************

@@ -3,7 +3,7 @@
   \file      src/Mesh/UnsMesh.h
   \author    J. Bakosi
   \date      Wed 04 May 2016 02:28:33 PM MDT
-  \copyright 2012-2016, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     3D unstructured mesh class declaration
   \details   3D unstructured mesh class declaration. This mesh class currently
     supports line, triangle, and tetrahedron elements.

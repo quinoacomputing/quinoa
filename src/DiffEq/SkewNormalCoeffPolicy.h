@@ -3,7 +3,7 @@
   \file      src/DiffEq/SkewNormalCoeffPolicy.h
   \author    J. Bakosi
   \date      Sun 03 Apr 2016 06:02:16 PM MDT
-  \copyright 2012-2016, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Skew-normal coefficients policies
   \details   This file defines coefficients policy classes for the diagonal
     skew-normal SDE, defined in DiffEq/SkewNormal.h.

@@ -3,7 +3,7 @@
   \file      src/NoWarning/testarray.def.h
   \author    J. Bakosi
   \date      Tue 03 May 2016 08:38:03 AM MDT
-  \copyright 2012-2016, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include testarray.def.h with turning off specific compiler
              warnings
 */

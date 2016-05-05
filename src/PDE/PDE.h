@@ -3,7 +3,7 @@
   \file      src/PDE/PDE.h
   \author    J. Bakosi
   \date      Tue 03 May 2016 11:23:36 AM MDT
-  \copyright 2012-2016, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Partial differential equation
   \details   This file defines a generic partial differential equation class.
     The class uses runtime polymorphism without client-side inheritance:

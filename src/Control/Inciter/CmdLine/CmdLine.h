@@ -3,7 +3,7 @@
   \file      src/Control/Inciter/CmdLine/CmdLine.h
   \author    J. Bakosi
   \date      Sun 01 May 2016 10:45:32 PM MDT
-  \copyright 2012-2016, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Inciter's command line definition
   \details   This file defines the heterogeneous stack that is used for storing
      the data from user input during the command-line parsing of the

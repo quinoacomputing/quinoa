@@ -3,7 +3,7 @@
   \file      src/IO/SiloWriter.C
   \author    J. Bakosi
   \date      Mon 01 Jun 2015 02:26:37 PM MDT
-  \copyright 2012-2016, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Silo writer definition.
   \details   Silo writer definition. This class currently only supports writing
     an STL triangulation into a Silo file. See also

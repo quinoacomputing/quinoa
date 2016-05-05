@@ -3,7 +3,7 @@
   \file      src/Control/Walker/InputDeck/Parser.C
   \author    J. Bakosi
   \date      Wed 04 May 2016 11:35:55 AM MDT
-  \copyright 2012-2016, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Walker's input deck file parser
   \details   Walker's input deck file parser
 */

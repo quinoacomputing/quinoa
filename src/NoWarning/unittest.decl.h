@@ -3,7 +3,7 @@
   \file      src/NoWarning/unittest.decl.h
   \author    J. Bakosi
   \date      Wed 04 May 2016 09:35:31 AM MDT
-  \copyright 2012-2016, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include unittest.decl.h with turning off specific compiler warnings
 */
 //******************************************************************************

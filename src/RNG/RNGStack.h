@@ -3,7 +3,7 @@
   \file      src/RNG/RNGStack.h
   \author    J. Bakosi
   \date      Sun 03 Apr 2016 10:06:07 AM MDT
-  \copyright 2012-2016, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Stack of random number generators
   \details   This file declares class RNGStack, which implements various
     functionality related to registering and instantiating random number

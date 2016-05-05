@@ -3,7 +3,7 @@
   \file      src/Control/Walker/CmdLine/Grammar.h
   \author    J. Bakosi
   \date      Mon 01 Jun 2015 02:17:40 PM MDT
-  \copyright 2012-2016, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Walker's command line grammar definition
   \details   Grammar definition for parsing the command line. We use the Parsing
   Expression Grammar Template Library (PEGTL) to create the grammar and the

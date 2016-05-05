@@ -3,7 +3,7 @@
   \file      src/Base/Exception.h
   \author    J. Bakosi
   \date      Tue 23 Feb 2016 10:02:36 PM MST
-  \copyright 2012-2016, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Exception class declaration
   \details   Exception class declaration. The basic functionality provided by
     the Exception class is to facilitate printing out a message, together with

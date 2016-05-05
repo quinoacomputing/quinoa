@@ -3,7 +3,7 @@
   \file      src/DiffEq/MixMassFractionBetaCoeffPolicy.h
   \author    J. Bakosi
   \date      Tue 03 May 2016 07:18:01 AM MDT
-  \copyright 2012-2016, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Mix mass-fraction beta SDE coefficients policies
   \details   This file defines coefficients policy classes for the mix
     mass-fraction beta SDE, defined in DiffEq/MixMassFractionBeta.h.

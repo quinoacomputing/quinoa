@@ -3,7 +3,7 @@
   \file      src/Control/HelpFactory.h
   \author    J. Bakosi
   \date      Wed 04 May 2016 09:34:25 AM MDT
-  \copyright 2012-2016, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Command-line and input deck help factory
   \details   This file contains some types that facilitate the generation of
      on-screen help.

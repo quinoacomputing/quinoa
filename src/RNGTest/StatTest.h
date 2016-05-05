@@ -3,7 +3,7 @@
   \file      src/RNGTest/StatTest.h
   \author    J. Bakosi
   \date      Tue 03 May 2016 07:21:05 PM MDT
-  \copyright 2012-2016, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Random number generator statistical test
   \details   This file defines a generic random number generator statistical
     test class. The class uses runtime polymorphism without client-side

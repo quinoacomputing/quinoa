@@ -3,7 +3,7 @@
   \file      src/IO/TxtStatWriter.C
   \author    J. Bakosi
   \date      Wed 04 May 2016 08:41:04 AM MDT
-  \copyright 2012-2016, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Text statistics writer declaration
   \details   This file declares the ASCII statistics writer class that
      facilitates outputing statistics to text files.

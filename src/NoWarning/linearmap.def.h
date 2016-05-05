@@ -3,7 +3,7 @@
   \file      src/NoWarning/linearmap.def.h
   \author    J. Bakosi
   \date      Mon 02 May 2016 12:59:45 PM MDT
-  \copyright 2012-2016, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include linearmap.def.h with turning off specific compiler warnings
 */
 //******************************************************************************

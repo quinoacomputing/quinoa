@@ -3,7 +3,7 @@
   \file      src/Main/RNGTestDriver.C
   \author    J. Bakosi
   \date      Mon 01 Jun 2015 09:17:02 AM MDT
-  \copyright 2012-2016, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Random number generator test suite driver
   \details   Random number generator test suite driver.
 */

@@ -3,7 +3,7 @@
   \file      src/RNG/RNG.h
   \author    J. Bakosi
   \date      Tue 03 May 2016 11:24:05 AM MDT
-  \copyright 2012-2016, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Random number generator
   \details   This file defines a generic random number generator class. The
     class uses runtime polymorphism without client-side inheritance: inheritance

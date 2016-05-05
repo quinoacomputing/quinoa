@@ -3,7 +3,7 @@
   \file      src/Control/Walker/InputDeck/InputDeck.h
   \author    J. Bakosi
   \date      Tue 15 Dec 2015 09:50:04 AM MST
-  \copyright 2012-2016, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Walker's input deck
   \details   Walker's input deck
 */

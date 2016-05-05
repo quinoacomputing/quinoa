@@ -3,7 +3,7 @@
   \file      src/Control/Breeze/InputDeck/InputDeck.h
   \author    J. Bakosi
   \date      Mon 01 Jun 2015 02:20:12 PM MDT
-  \copyright 2012-2016, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Breeze's input deck definition
   \details   This file defines the heterogeneous stack that is used for storing
      the data from user input during the control file parsing of the

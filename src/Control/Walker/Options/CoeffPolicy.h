@@ -3,7 +3,7 @@
   \file      src/Control/Walker/Options/CoeffPolicy.h
   \author    J. Bakosi
   \date      Thu 04 Feb 2016 06:13:35 AM MST
-  \copyright 2012-2016, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Differential equation coefficients policy options
   \details   Differential equation coefficients policy options
 */

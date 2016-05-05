@@ -3,7 +3,7 @@
   \file      src/UnitTest/Assessment.C
   \author    J. Bakosi
   \date      Mon 07 Mar 2016 04:24:17 PM MST
-  \copyright 2012-2016, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Unit test suite assessment
   \details   Unit test suite assessment.
 */

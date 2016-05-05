@@ -3,7 +3,7 @@
   \file      src/DiffEq/GammaCoeffPolicy.h
   \author    J. Bakosi
   \date      Sun 03 Apr 2016 05:59:50 PM MDT
-  \copyright 2012-2016, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Gamma coefficients policies
   \details   This file defines coefficients policy classes for the gamma SDE,
     defined in DiffEq/Gamma.h.

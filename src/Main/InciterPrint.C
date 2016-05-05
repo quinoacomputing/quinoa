@@ -3,7 +3,7 @@
   \file      src/Main/InciterPrint.C
   \author    J. Bakosi
   \date      Wed 04 May 2016 11:01:49 AM MDT
-  \copyright 2012-2016, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Inciter-specific pretty printer functionality
   \details   Inciter-specific pretty printer functionality.
 */

@@ -3,7 +3,7 @@
   \file      src/NoWarning/mpi-interoperate.h
   \author    J. Bakosi
   \date      Thu 05 May 2016 08:58:48 AM MDT
-  \copyright 2012-2016, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include mpi-interoperate.h with turning off specific compiler warnings
 */
 //******************************************************************************

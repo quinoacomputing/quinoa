@@ -3,7 +3,7 @@
   \file      src/UnitTest/tests/LoadBalance/TestLoadDistributor.h
   \author    J. Bakosi
   \date      Wed 04 May 2016 03:11:44 PM MDT
-  \copyright 2012-2016, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Unit tests for LoadBalance/LoadDistributor
   \details   Unit tests for LoadBalance/LoadDistributor
 */

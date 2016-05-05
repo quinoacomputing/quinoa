@@ -3,7 +3,7 @@
   \file      src/Base/Macro.h
   \author    J. Bakosi
   \date      Thu 11 Dec 2014 07:54:11 AM MST
-  \copyright 2012-2016, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Macro definitions
   \details   Macro definitions for various utility functionality.
 */
