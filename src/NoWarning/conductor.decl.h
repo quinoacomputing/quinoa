@@ -2,7 +2,7 @@
 /*!
   \file      src/NoWarning/conductor.decl.h
   \author    J. Bakosi
-  \date      Wed 04 May 2016 02:39:26 PM MDT
+  \date      Thu 05 May 2016 08:45:04 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Include conductor.decl.h with turning off specific compiler warnings
 */
@@ -48,6 +48,10 @@
   #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
   #pragma GCC diagnostic ignored "-Wextra"
   #pragma GCC diagnostic ignored "-Wstrict-aliasing"
+#elif defined(__INTEL_COMPILER)
+  #pragma warning( push )
+  #pragma warning( disable: 181 )
+  #pragma warning( disable: 1720 )
 #endif
 
 #include "../Inciter/conductor.decl.h"
@@ -56,6 +60,8 @@
   #pragma clang diagnostic pop
 #elif defined(__GNUC__)
   #pragma GCC diagnostic pop
+#elif defined(__INTEL_COMPILER)
+  #pragma warning( pop )
 #endif
 
 #endif // nowarning_conductor_decl_h

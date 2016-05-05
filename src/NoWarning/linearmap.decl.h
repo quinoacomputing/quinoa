@@ -2,7 +2,7 @@
 /*!
   \file      src/NoWarning/linearmap.decl.h
   \author    J. Bakosi
-  \date      Wed 04 May 2016 02:22:09 PM MDT
+  \date      Thu 05 May 2016 08:44:47 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Include linearmap.decl.h with turning off specific compiler warnings
 */
@@ -48,6 +48,10 @@
   #pragma GCC diagnostic ignored "-Wswitch-default"
   #pragma GCC diagnostic ignored "-Wextra"
   #pragma GCC diagnostic ignored "-Wstrict-aliasing"
+#elif defined(__INTEL_COMPILER)
+  #pragma warning( push )
+  #pragma warning( disable: 181 )
+  #pragma warning( disable: 1720 )
 #endif
 
 #include "../LoadBalance/linearmap.decl.h"
@@ -56,6 +60,8 @@
   #pragma clang diagnostic pop
 #elif defined(__GNUC__)
   #pragma GCC diagnostic pop
+#elif defined(__INTEL_COMPILER)
+  #pragma warning( pop )
 #endif
 
 #endif // nowarning_linearmap_decl_h

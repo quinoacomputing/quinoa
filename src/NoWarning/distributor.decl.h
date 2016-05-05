@@ -2,7 +2,7 @@
 /*!
   \file      src/NoWarning/distributor.decl.h
   \author    J. Bakosi
-  \date      Wed 04 May 2016 02:44:45 PM MDT
+  \date      Thu 05 May 2016 08:45:20 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Include distributor.decl.h with turning off specific compiler
              warnings
@@ -50,6 +50,10 @@
   #pragma GCC diagnostic ignored "-Wpedantic"
   #pragma GCC diagnostic ignored "-Wswitch-default"
   #pragma GCC diagnostic ignored "-Wstrict-aliasing"
+#elif defined(__INTEL_COMPILER)
+  #pragma warning( push )
+  #pragma warning( disable: 181 )
+  #pragma warning( disable: 1720 )
 #endif
 
 #include "../Walker/distributor.decl.h"
@@ -58,6 +62,8 @@
   #pragma clang diagnostic pop
 #elif defined(__GNUC__)
   #pragma GCC diagnostic pop
+#elif defined(__INTEL_COMPILER)
+  #pragma warning( pop )
 #endif
 
 #endif // nowarning_distributor_decl_h

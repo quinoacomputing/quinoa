@@ -170,7 +170,7 @@ if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")  # clang-specific settings
     set_libstdcpp_vs_libcpp(CMAKE_CXX_FLAGS "libc++")
   endif()
 
-  # Compiler flags
+  # Compiler flags for clang
   add_compiler_flag("-Weverything")
   add_compiler_flag("-Wno-c++98-compat")
   add_compiler_flag("-Wno-c++98-compat-pedantic")
@@ -178,8 +178,9 @@ if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")  # clang-specific settings
   add_compiler_flag("-Wno-exit-time-destructors")
   add_compiler_flag("-Wno-global-constructors")
   add_compiler_flag("-Wno-weak-vtables")
+  add_compiler_flag("-Wno-unknown-pragmas")
 
-  # Linker flags
+  # Linker flags for clang
   set(CMAKE_SHARED_LIBRARY_LINK_CXX_FLAGS)      # clear link flags
   set(CMAKE_EXE_LINKER_FLAGS "-Wno-missing-prototypes -Wno-unused-parameter")
 
@@ -187,7 +188,7 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")  # gcc-specific settings
 
   # Gnu will use libstdc++ by default. We do not offer libc++.
 
-  # Compiler flags
+  # Compiler flags for gcc
   add_compiler_flag("-Wall")
   add_compiler_flag("-Wextra")
   add_compiler_flag("-Weffc++")
@@ -223,7 +224,7 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")  # gcc-specific settings
   add_compiler_flag("-Wno-sign-compare")
   add_compiler_flag("-Wno-unused-function")
 
-  # Linker flags
+  # Linker flags for gcc
   set(CMAKE_EXE_LINKER_FLAGS "-Wno-unused-parameter")
 
   # Detect gcc version
@@ -247,50 +248,45 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
   # Use the C++14 standard (CMAKE_CXX_STANDARD does not set this for intel)
   add_compiler_flag("-std=c++14")
 
-  add_compiler_flag("-Wremarks")
-  # Suppress the following Intel compiler remarks:
-  #     7: unrecognized token
+  # Compiler flags for intel
+  add_compiler_flag("-w3")       # enable diagnostics: remarks, warnings, errors
+  add_compiler_flag("-Wremarks") # display remarks and comments
+  add_compiler_flag("-no-gcc")   # do not define GNU pragmas
+
+  # Globally suppress the following Intel compiler remarks:
+  #    68: integer conversion resulted in a change of sign
   #   111: statement is unreachable
+  #   186: pointless comparison of unsigned integer with zero
+  #   177: function was declared but never referenced
   #   193: zero used for undefined preprocessing identifier
+  #   280: selector expression is constant
   #   304: access control not specified ("public" by default)
-  #   367: duplicate friend declaration
   #   383: value copied to temporary, reference to temporary used
   #   411: defines no constructor for initializer_list<>
   #   444: destructor for base class is not virtual
+  #   593: parameter was set but never used
   #   869: parameter was never referenced
   #   981: operands are evaluated in unspecified order
   #  1418: external function definition with no prior declaration
-  #  2282: unrecognized GCC pragma
+  #  1572: floating-point equality and inequality comparisons are unreliable
+  #  2259: non-pointer conversion from "int" to "char" may lose significant bits
+  #  2407: the initialization of class will be done before that of member
   #  2415: variable of static storage duration was declared but never referenced
-  #  2547: path was specified as both a system and non-system include directory
-  #  3346: dynamic exception specifications are deprecated
-  #  3377: constexpr function return is non-constant
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -diag-disable 7,111,193,304,367,383,411,444,869,981,1418,2282,2415,2547,3346,3377 ")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -qopt-report=0 -qopt-report-phase=loop,vec -qopt-report-file=stderr")
+  #  2557: comparison between signed and unsigned operands
+  #  3280: declaration hides member
+  #  3656: variable may be used before its value is set
+  add_compiler_flag("-diag-disable 68,111,177,186,193,280,304,383,411,444,593,869,981,1418,1572,2259,2407,2415,2557,3280,3656")
+
+  # Compiler flags for optimization report
+  #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -qopt-report=0 -qopt-report-phase=loop,vec -qopt-report-file=stderr")
 
   # No limit on inlining
-  add_compiler_flag("-no-inline-max-size")
-  add_compiler_flag("-no-inline-max-total-size")
-  add_compiler_flag("-no-inline-max-per-routine")
+  #add_compiler_flag("-no-inline-max-size")
+  #add_compiler_flag("-no-inline-max-total-size")
+  #add_compiler_flag("-no-inline-max-per-routine")
 
-  # Suppress the following Intel compiler warnings/remarks for Charm++
-  # hostfiles including the Charm-generated .decl.h and .def.h:
-  #  177: variable was declared but never referenced
-  #  181: argument of type "unsigned char *" is incompatible with format
-  #       "%c", expecting argument of type "char *"
-  # 1572: floating-point equality and inequality comparisons are unreliable
-  # 1599: declaration hides variable
-  # 1720: function "<class>::operator new" has no corresponding member
-  #       operator delete (to be called if an exception is thrown during
-  #       initialization of an allocated object)
-  # 1944: declaration shadows a member of 'this'
-  # 2259: non-pointer conversion from "int" to "unsigned char" may lose
-  #       significant bits
-  # 2557: comparison between signed and unsigned operands
-  # 3280: declaration hides member
-  set(HOSTFILE_FLAGS "-diag-disable 177,181,1572,1599,1720,1944,2259,2557,3280 ")
-  # Ignore warnings for linking with a Charm++ module
-  set(PARTOF_FLAGS "-Wno-unused-parameter")
+  # Linker flags for intel
+  set(CMAKE_EXE_LINKER_FLAGS "-diag-disable 869")
 
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "PGI")  # pgi-specific settings
 
