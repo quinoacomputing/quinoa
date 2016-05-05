@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/HypreMatrix.h
   \author    J. Bakosi
-  \date      Tue 03 May 2016 09:19:32 AM MDT
+  \date      Thu 05 May 2016 01:43:09 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Hypre IJ matrix class
   \details   Hypre IJ matrix class.
@@ -12,7 +12,7 @@
 #define HypreMatrix_h
 
 #include <HYPRE.h>
-#include <HYPRE_parcsr_ls.h>
+#include "NoWarning/HYPRE_parcsr_ls.h"
 
 namespace tk {
 namespace hypre {

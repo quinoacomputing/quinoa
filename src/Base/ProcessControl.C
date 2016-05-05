@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/ProcessControl.h
   \author    J. Bakosi
-  \date      Tue 03 May 2016 09:20:47 AM MDT
+  \date      Thu 05 May 2016 03:30:09 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     POSIX process control wrapper definitions
   \details   POSIX process control wrapper definitions.
@@ -14,7 +14,7 @@
 #include <istream>
 #include <type_traits>
 
-#include <pstreams/pstream.h>
+#include "NoWarning/pstream.h"
 
 #include "ProcessControl.h"
 #include "Exception.h"
