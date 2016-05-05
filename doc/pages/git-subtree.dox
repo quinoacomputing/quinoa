@@ -16,8 +16,8 @@ This page explains how to use git subtree to work with TPLs and tools. This
 setup is only required
 
  - if you expect to make changes to
-   [TPLs](https://github.com/jbakosi/quinoa/blob/master/tpl/src) or
-   [tools](https://github.com/jbakosi/quinoa/blob/master/tool/src) and want to
+   [TPLs](https://github.com/quinoacomputing/quinoa/blob/master/tpl/src) or
+   [tools](https://github.com/quinoacomputing/quinoa/blob/master/tool/src) and want to
    push those changes upstream to the TPL or tool, or
 
  - if you want to update a TPL or a tool to a new version.
@@ -115,7 +115,7 @@ If you are happy with the diff, push the changes to the TPL:
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Fri 29 Apr 2016 08:51:22 AM MDT
+<em>Page last updated:</em> Thu 05 May 2016 11:20:50 AM MDT
 <em>Copyright 2012-2016, Jozsef Bakosi.</em>
 </small></div>
 */

@@ -4,8 +4,8 @@
 
 Here are the links to full verbatim texts of the licenses of all third-party
 libraries (TPLs), and the list of compilers and tools used by Quinoa. The [TPL
-sources](https://github.com/jbakosi/quinoa/blob/master/tpl/src) as well as the
-[tools sources](https://github.com/jbakosi/quinoa/blob/master/tool/src) are part
+sources](https://github.com/quinoacomputing/quinoa/blob/master/tpl/src) as well as the
+[tools sources](https://github.com/quinoacomputing/quinoa/blob/master/tool/src) are part
 of the distribution. While the Quinoa executables link to TPLs, they do not link
 to the tools.
 
@@ -160,7 +160,7 @@ to the tools.
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Sat Apr 30 09:42:47 2016
+<em>Page last updated:</em> Thu 05 May 2016 11:21:11 AM MDT
 <em>Copyright 2012-2016, Jozsef Bakosi.</em>
 </small></div>
 */

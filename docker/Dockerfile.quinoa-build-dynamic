@@ -1,7 +1,7 @@
 # vim: filetype=dockerfile:
 #
 # Author:    J. Bakosi
-# Date:      Thu 05 May 2016 09:14:19 AM MDT
+# Date:      Thu 05 May 2016 11:26:19 AM MDT
 # Copyright: 2012-2016, Jozsef Bakosi.
 
 # Dockerfile for a simple dynamic build of Quinoa using the native (system-wide
@@ -40,7 +40,7 @@ WORKDIR /home/quinoa
 CMD ["/bin/bash"]
 
 # Clone quinoa
-RUN git clone https://github.com/jbakosi/quinoa.git
+RUN git clone https://github.com/quinoacomputing/quinoa.git
 # Build TPLs
 RUN cd quinoa && mkdir -p tpl/build && cd tpl/build && cmake -DCMAKE_BUILD_TYPE=Release .. && make -sj`cat /proc/cpuinfo | grep MHz | wc -l`
 # Build & test

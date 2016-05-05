@@ -1,4 +1,4 @@
-[![License](https://img.shields.io/github/license/jbakosi/ndiff.svg)](https://github.com/jbakosi/ndiff/blob/master/LICENSE)
+[![License](https://img.shields.io/github/license/quinoacomputing/ndiff.svg)](https://github.com/quinoacomputing/ndiff/blob/master/LICENSE)
 
 ## ndiff
 
@@ -15,7 +15,7 @@ To the knowledge of the author, the _ndiff_ tool does not seem to have any equiv
 The _ndiff_ tool is written entirely in the C programming language with no external dependencies to ensure maximum portability and performance. It is very efficient to deal with both large input of data and large number of rules (i.e., user-defined constraints). _ndiff_ can process more than 100 MB of data per second (i.e., nearly at the rate of disk I/O) and compare few millions numbers per second on recent computers.
 
 ## Documentation
-https://github.com/jbakosi/ndiff/blob/master/doc/CERN-ACC-NOTE-2013-0005.pdf
+https://github.com/quinoacomputing/ndiff/blob/master/doc/CERN-ACC-NOTE-2013-0005.pdf
 
 ## Fork
 This forks http://svn.cern.ch/guest/madx/trunk/madX/tools/numdiff.
