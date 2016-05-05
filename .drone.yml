@@ -22,7 +22,7 @@ matrix:
   COMPILER:
     - gnu/system
     - clang/system
-#    - intel/latest
+    - intel/latest
   MKL:
     - mkl
     -
