@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \date      Sun 02 Aug 2015 10:06:34 PM MDT
 # \copyright 2012-2016, Jozsef Bakosi.
-# \brief     Update documentation and test coverage and upload to github pages
+# \brief     Update Thu 05 May 2016 11:25:42 AM MDT
 # \details   This script assumes that
 #   - a clone already exists and the TPLs are already built
 #   - the environment is setup for running cmake
@@ -43,7 +43,7 @@ mv doc/html/test_coverage /tmp
 rm * .ninja_* -rf
 
 # Start out in empty build-dir with a fresh clone of the gh-pages branch
-git clone git@github.com:jbakosi/quinoa.git --branch gh-pages --single-branch doc/html
+git clone git@github.com:quinoacomputing/quinoa.git --branch gh-pages --single-branch doc/html
 cd doc/html
 git rm -rf .
 cd -
