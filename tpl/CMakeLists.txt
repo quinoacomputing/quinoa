@@ -313,7 +313,6 @@ if(BUILD_SHARED_LIBS)
   set(CHARM_SHARED "--build-shared")
 endif()
 # Enable "--with-production" for Charm++ build for Release builds
-message(STATUS "c: ${CMAKE_BUILD_TYPE}")
 if(CMAKE_BUILD_TYPE MATCHES "REL")      # Release | RelWithDebInfo | MinSizeRel
   set(CHARM_RELEASE_BUILD "--with-production")
 endif()
