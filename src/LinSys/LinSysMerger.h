@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/LinSysMerger.h
   \author    J. Bakosi
-  rdate      Thu 07 Jan 2016 07:33:27 PM MST
+  \date      Thu 05 May 2016 09:50:51 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Linear system merger
   \details   Linear system merger.
@@ -45,6 +45,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
   #if defined(__clang__)
     #pragma clang diagnostic push
     #pragma clang diagnostic ignored "-Wunused-parameter"
+    #pragma clang diagnostic ignored "-Wdeprecated-declarations"
   #elif defined(__GNUC__)
     #pragma GCC diagnostic push
     #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
