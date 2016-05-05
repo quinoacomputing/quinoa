@@ -2,7 +2,7 @@
 /*!
   \file      src/NoWarning/walker.decl.h
   \author    J. Bakosi
-  \date      Wed 04 May 2016 02:53:05 PM MDT
+  \date      Thu 05 May 2016 08:45:08 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Include walker.decl.h with turning off specific compiler warnings
 */
@@ -49,6 +49,10 @@
   #pragma GCC diagnostic ignored "-Wpedantic"
   #pragma GCC diagnostic ignored "-Wfloat-equal"
   #pragma GCC diagnostic ignored "-Wstrict-aliasing"
+#elif defined(__INTEL_COMPILER)
+  #pragma warning( push )
+  #pragma warning( disable: 181 )
+  #pragma warning( disable: 1720 )
 #endif
 
 #include "../Main/walker.decl.h"
@@ -57,6 +61,8 @@
   #pragma clang diagnostic pop
 #elif defined(__GNUC__)
   #pragma GCC diagnostic pop
+#elif defined(__INTEL_COMPILER)
+  #pragma warning( pop )
 #endif
 
 #endif // nowarning_walker_decl_h

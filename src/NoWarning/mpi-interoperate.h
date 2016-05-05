@@ -2,7 +2,7 @@
 /*!
   \file      src/NoWarning/mpi-interoperate.h
   \author    J. Bakosi
-  \date      Wed 04 May 2016 02:46:09 PM MDT
+  \date      Thu 05 May 2016 08:58:48 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Include mpi-interoperate.h with turning off specific compiler warnings
 */
@@ -47,6 +47,10 @@
   #pragma GCC diagnostic ignored "-Wswitch-default"
   #pragma GCC diagnostic ignored "-Wextra"
   #pragma GCC diagnostic ignored "-Wstrict-aliasing"
+#elif defined(__INTEL_COMPILER)
+  #pragma warning( push )
+  #pragma warning( disable: 181 )
+  #pragma warning( disable: 1720 )
 #endif
 
 #include <mpi-interoperate.h>
@@ -55,6 +59,8 @@
   #pragma clang diagnostic pop
 #elif defined(__GNUC__)
   #pragma GCC diagnostic pop
+#elif defined(__INTEL_COMPILER)
+  #pragma warning( pop )
 #endif
 
 #endif // nowarning_mpi_interoperate_h

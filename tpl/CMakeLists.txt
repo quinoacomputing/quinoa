@@ -108,9 +108,6 @@ endif()
 message(STATUS "Charm++ architecture: '${CHARM_ARCHITECTURE}'")
 message(STATUS "Charm++ compiler: '${CHARM_COMPILER}'")
 
-# Include function that allows to set standard C++ library
-include(libstdcxx)
-
 # Compilers
 # =========
 # There are three sets of compilers, given by the following CMake variables:
@@ -135,6 +132,9 @@ include(libstdcxx)
 # Compiler-specific settings
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")  # clang-specific settings
 
+  # Include function that allows to set standard C++ library
+  include(libstdcxx)
+
   # Offer switch between libc++ and libstdc++, using libc++ as default
   if (libc++_FOUND)
     set_libstdcpp_vs_libcpp(CXXFLAGS "libc++")
@@ -157,6 +157,9 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")  # gcc-specific settings
   message(STATUS "GCC version: ${GCC_MAJOR}.${GCC_MINOR}")
 
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
+
+  # Include function that allows to set standard C++ library
+  include(libstdcxx)
 
   # Offer switch between libc++ and libstdc++, using libc++ as default
   if (libc++_FOUND)

@@ -2,7 +2,7 @@
 /*!
   \file      src/NoWarning/Zoltam2_MeshAdapter.h
   \author    J. Bakosi
-  \date      Wed 04 May 2016 12:34:04 PM MDT
+  \date      Thu 05 May 2016 08:41:16 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Include Zoltan2_MeshAdapter.hpp with turning off specific compiler
              warnings
@@ -43,6 +43,10 @@
   #pragma GCC diagnostic ignored "-Wunused-parameter"
   #pragma GCC diagnostic ignored "-Wswitch-default"
   #pragma GCC diagnostic ignored "-Wsuggest-attribute=noreturn"
+#elif defined(__INTEL_COMPILER)
+  #pragma warning( push )
+  #pragma warning( disable: 239 )
+  #pragma warning( disable: 3346 )
 #endif
 
 #include <Zoltan2_MeshAdapter.hpp>
@@ -51,6 +55,8 @@
   #pragma clang diagnostic pop
 #elif defined(__GNUC__)
   #pragma GCC diagnostic pop
+#elif defined(__INTEL_COMPILER)
+  #pragma warning( pop )
 #endif
 
 #endif // nowarning_Zoltan2_MeshAdapter_h

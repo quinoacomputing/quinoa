@@ -2,7 +2,7 @@
 /*!
   \file      src/NoWarning/charm++.h
   \author    J. Bakosi
-  \date      Wed 04 May 2016 02:38:25 PM MDT
+  \date      Thu 05 May 2016 08:45:12 AM MDT
   \copyright 2012-2016, Jozsef Bakosi.
   \brief     Include charm++.h with turning off specific compiler warnings
 */
@@ -47,6 +47,10 @@
   #pragma GCC diagnostic ignored "-Wswitch-default"
   #pragma GCC diagnostic ignored "-Wextra"
   #pragma GCC diagnostic ignored "-Wstrict-aliasing"
+#elif defined(__INTEL_COMPILER)
+  #pragma warning( push )
+  #pragma warning( disable: 181 )
+  #pragma warning( disable: 1720 )
 #endif
 
 #include <charm++.h>
@@ -55,6 +59,8 @@
   #pragma clang diagnostic pop
 #elif defined(__GNUC__)
   #pragma GCC diagnostic pop
+#elif defined(__INTEL_COMPILER)
+  #pragma warning( pop )
 #endif
 
 #endif // nowarning_charmpp_h
