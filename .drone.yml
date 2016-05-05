@@ -34,8 +34,3 @@ exclude:
     - gnu/system
   STDLIBCPP:
     - libc++
-exclude:
-  COMPILER:
-    - intel/latest
-  BUILD:
-    - Release
