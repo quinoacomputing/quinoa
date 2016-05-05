@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/HyperMeshReader.C
   \author    J. Bakosi
-  \date      Wed 13 Jan 2016 12:19:00 PM MST
+  \date      Thu 05 May 2016 12:48:10 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Hyper mesh reader class definition
   \details   Hyper mesh reader class definition. Only supports tetrahedra.
@@ -12,7 +12,7 @@
 #include <array>
 #include <string>
 
-#include <pugixml.hpp>
+#include "NoWarning/pugixml.h"
 
 #include "Types.h"
 #include "Exception.h"
