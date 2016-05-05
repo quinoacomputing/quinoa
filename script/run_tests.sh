@@ -5,7 +5,7 @@
 # \file      script/run_tests.sh
 # \author    J. Bakosi
 # \date      Fri 29 Apr 2016 09:25:59 AM MDT
-# \copyright 2012-2016, Jozsef Bakosi.
+# \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Run multiple test suites as part of automated testing
 # \details   Run multiple test suites as part of automated testing.
 #

@@ -3,7 +3,7 @@
   \file      src/RNGTest/Crush.h
   \author    J. Bakosi
   \date      Mon 01 Jun 2015 10:39:35 AM MDT
-  \copyright 2012-2016, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Class re-creating the TestU01 library's Crush battery
   \details   Class re-creating the TestU01 library's Crush battery.
 */

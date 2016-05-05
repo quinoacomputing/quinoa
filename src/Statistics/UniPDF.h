@@ -3,7 +3,7 @@
   \file      src/Statistics/UniPDF.h
   \author    J. Bakosi
   \date      Wed 04 May 2016 08:52:11 AM MDT
-  \copyright 2012-2016, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Univariate PDF estimator
   \details   Univariate PDF estimator. This class can be used to estimate a
     probability density function of (PDF) a scalar variable from an ensemble.

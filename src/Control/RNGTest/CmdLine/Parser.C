@@ -3,7 +3,7 @@
   \file      src/Control/RNGTest/CmdLine/Parser.C
   \author    J. Bakosi
   \date      Wed 04 May 2016 09:39:16 AM MDT
-  \copyright 2012-2016, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     RNGTest's command line parser
   \details   This file defines the command-line argument parser for the random
     number generator test suite, RNGTest.

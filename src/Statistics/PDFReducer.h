@@ -3,7 +3,7 @@
   \file      src/Statistics/PDFReducer.h
   \author    J. Bakosi
   \date      Mon 02 May 2016 07:41:32 AM MDT
-  \copyright 2012-2016, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Custom Charm++ reducer for merging PDFs across PEs
   \details   Custom Charm++ reducer for merging PDFs across PEs.
 */

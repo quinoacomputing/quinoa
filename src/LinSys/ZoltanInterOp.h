@@ -3,7 +3,7 @@
   \file      src/LinSys/ZoltanInterOp.h
   \author    J. Bakosi
   \date      Tue 01 Dec 2015 09:33:00 AM MST
-  \copyright 2012-2016, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Interoperation with the Zoltan library
   \details   Interoperation with the Zoltan library, used for static mesh
     partitioning.

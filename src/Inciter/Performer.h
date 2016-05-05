@@ -3,7 +3,7 @@
   \file      src/Inciter/Performer.h
   \author    J. Bakosi
   \date      Wed 04 May 2016 10:44:49 AM MDT
-  \copyright 2012-2016, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Performer advances a PDE
   \details   Performer advances a PDE. There are a potentially
     large number of Performer Charm++ chares created by Conductor. Each

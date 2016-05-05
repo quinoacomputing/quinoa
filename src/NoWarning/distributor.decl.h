@@ -3,7 +3,7 @@
   \file      src/NoWarning/distributor.decl.h
   \author    J. Bakosi
   \date      Thu 05 May 2016 08:45:20 AM MDT
-  \copyright 2012-2016, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include distributor.decl.h with turning off specific compiler
              warnings
 */

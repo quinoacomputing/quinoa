@@ -3,7 +3,7 @@
 # \file      script/build_openmpi.sh
 # \author    J. Bakosi
 # \date      Tue 07 Jul 2015 06:19:16 AM MDT
-# \copyright 2012-2016, Jozsef Bakosi.
+# \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Download and build OpenMPI
 #
 ################################################################################

@@ -3,7 +3,7 @@
   \file      src/IO/PDFWriter.h
   \author    J. Bakosi
   \date      Tue 03 May 2016 06:01:53 PM MDT
-  \copyright 2012-2016, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     PDF writer class declaration
   \details   This file declares a PDF writer class that facilitates outputing
     probability density functions (PDFs) into files in various formats using

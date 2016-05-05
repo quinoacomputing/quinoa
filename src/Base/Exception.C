@@ -3,7 +3,7 @@
   \file      src/Base/Exception.C
   \author    J. Bakosi
   \date      Wed 04 May 2016 07:53:15 AM MDT
-  \copyright 2012-2016, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Exception class definition
   \details   Exception class definition
 */

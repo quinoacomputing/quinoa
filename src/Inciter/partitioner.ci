@@ -3,7 +3,7 @@
   \file      src/Inciter/partitioner.ci
   \author    J. Bakosi
   \date      Fri 29 Jan 2016 08:45:06 AM MST
-  \copyright 2012-2016, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ module interface file for the chare partitioner group
   \details   Charm++ module interface file for the chare partitioner group used
              to perform mesh partitioning.

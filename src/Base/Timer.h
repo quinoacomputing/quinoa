@@ -3,7 +3,7 @@
   \file      src/Base/Timer.h
   \author    J. Bakosi
   \date      Mon 02 May 2016 07:58:08 AM MDT
-  \copyright 2012-2016, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Timer declaration
   \details   Timer declaration. Timer is a simple class to do timing various
     parts of the code in a portable way. The functionality is intended to be

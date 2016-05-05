@@ -3,7 +3,7 @@
   \file      src/Base/Vector.h
   \author    J. Bakosi
   \date      Mon 01 Jun 2015 02:09:47 PM MDT
-  \copyright 2012-2016, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Vector algebra
   \details   Vector algebra.
 */

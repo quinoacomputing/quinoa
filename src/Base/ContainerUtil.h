@@ -3,7 +3,7 @@
   \file      src/Base/ContainerUtil.h
   \author    J. Bakosi
   \date      Wed 02 Mar 2016 08:12:36 AM MST
-  \copyright 2012-2016, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Various STL container utilities
   \details   Various STL container utilities.
 */

@@ -3,7 +3,7 @@
   \file      src/Control/Walker/Options/InitPolicy.h
   \author    J. Bakosi
   \date      Thu 04 Feb 2016 06:14:29 AM MST
-  \copyright 2012-2016, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Differential equation initialization policy options for walker
   \details   Differential equation initialization policy options for walker
 */

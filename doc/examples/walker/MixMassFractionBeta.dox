@@ -599,6 +599,6 @@ r = 9.0; plot "stat.txt" u 2:41 w l t "<rv^2>", "" u 2:(-r*r*$28/(1.0+r*$9/$8)*(
 <hr>
 <div><small>
 <em>Page last updated:</em> Tue 04 Aug 2015 10:52:14 AM MDT
-<em>Copyright 2012-2016, Jozsef Bakosi.</em>
+<em>Copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.</em>
 </small></div>
 */

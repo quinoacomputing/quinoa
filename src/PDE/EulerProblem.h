@@ -3,7 +3,7 @@
   \file      src/PDE/EulerProblem.h
   \author    J. Bakosi
   \date      Wed 03 Feb 2016 04:16:54 PM MST
-  \copyright 2012-2016, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Problem configurations for the Euler equation
   \details   This file defines policy classes for the Euler system of artial
     differential equations, defined in PDE/Euler.h.

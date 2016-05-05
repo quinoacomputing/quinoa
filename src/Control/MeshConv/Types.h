@@ -3,7 +3,7 @@
   \file      src/Control/MeshConv/Types.h
   \author    J. Bakosi
   \date      Tue 24 Nov 2015 08:18:52 AM MST
-  \copyright 2012-2016, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Types for MeshConv's parsers
   \details   Types for UnitTest's parsers. This file defines the components of
     the tagged tuple that stores heteroegeneous objects in a hierarchical way.

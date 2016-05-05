@@ -3,7 +3,7 @@
   \file      src/Control/Breeze/Options/Hydro.h
   \author    J. Bakosi
   \date      Mon 01 Jun 2015 02:21:51 PM MDT
-  \copyright 2012-2016, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Hydro model options
   \details   Hydro model options
 */

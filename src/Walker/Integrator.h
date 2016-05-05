@@ -3,7 +3,7 @@
   \file      src/Walker/Integrator.h
   \author    J. Bakosi
   \date      Wed 04 May 2016 10:44:34 AM MDT
-  \copyright 2012-2016, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Integrator advances differential equations
   \details   Integrator advances differential equations. There are a potentially
     large number of Integrator Charm++ chares created by Distributor. Each

@@ -3,7 +3,7 @@
   \file      src/NoWarning/ne_nemesisI.h
   \author    J. Bakosi
   \date      Mon 02 May 2016 12:30:16 PM MDT
-  \copyright 2012-2016, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include ne_nemesisI.h with turning off specific compiler warnings
 */
 //******************************************************************************
