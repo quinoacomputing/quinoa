@@ -13,8 +13,8 @@ if { [module-info mode load] } {
 
 setenv  _MODULES_CC     [module-info name]
 
-setenv  CC  clang
-setenv  CXX clang++
+setenv  CC  clang-3.8
+setenv  CXX clang++-3.8
 setenv  F77 gfortran
 setenv  F90 gfortran
 setenv  FC  gfortran

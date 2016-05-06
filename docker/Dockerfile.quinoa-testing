@@ -5,7 +5,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Dockerfile for a setting up a test environment for Quinoa
-# \date      Fri 06 May 2016 06:45:49 AM MDT
+# \date      Fri 06 May 2016 07:06:40 AM MDT
 #
 ################################################################################
 
@@ -38,8 +38,8 @@ ENV https_proxy https://proxyout.lanl.gov:8080/
 # Install system-wide prerequisites, including gcc and clang
 RUN apt-get -y update && apt-get install -y debian-keyring debian-archive-keyring wget
 RUN wget -O - http://llvm.org/apt/llvm-snapshot.gpg.key | apt-key add -
-RUN echo "deb http://ftp.us.debian.org/debian testing main non-free contrib \n deb http://security.debian.org testing/updates main contrib non-free \n deb http://llvm.org/apt/unstable/ llvm-toolchain main" > /etc/apt/sources.list
-RUN apt-get -y update && apt-get install -y m4 sudo zlib1g-dev procps cpio git cmake gfortran gcc g++ clang libc++-dev libc++abi-dev environment-modules libpugixml-dev libpstreams-dev libboost-all-dev liblapack-dev liblapacke-dev libhdf5-dev libhdf5-openmpi-dev libhypre-dev ninja-build gmsh
+RUN echo "deb http://ftp.us.debian.org/debian testing main non-free contrib \n deb http://security.debian.org testing/updates main contrib non-free \n deb http://llvm.org/apt/jessie/ llvm-toolchain-jessie main \n deb http://llvm.org/apt/unstable/ llvm-toolchain main" > /etc/apt/sources.list
+RUN apt-get -y update && apt-get install -y m4 sudo zlib1g-dev procps cpio git cmake gfortran gcc g++ clang-3.8 libc++-dev libc++abi-dev environment-modules libpugixml-dev libpstreams-dev libboost-all-dev liblapack-dev liblapacke-dev libhdf5-dev libhdf5-openmpi-dev libhypre-dev ninja-build gmsh
 
 # Copy over install of Intel Parallel Studio XE Professional Edition for Fortran and C++ Linux
 COPY intel /opt/intel
