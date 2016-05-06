@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Setup target for code coverage analysis
-# \date      Fri 06 May 2016 06:40:56 AM MDT
+# \date      Fri 06 May 2016 07:33:43 AM MDT
 #
 ################################################################################
 
@@ -56,7 +56,7 @@ FUNCTION(SETUP_TARGET_FOR_COVERAGE suite path targetname testrunner)
     MESSAGE(FATAL_ERROR "genhtml not found! Aborting...")
   ENDIF()
 
-  # Set shorcut for output: path/target
+  # Set shortcut for output: path/target
   set(OUTPUT ${path}/${targetname})
   file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/${path})
 
@@ -73,7 +73,7 @@ FUNCTION(SETUP_TARGET_FOR_COVERAGE suite path targetname testrunner)
     # Combine trace files
     COMMAND ${LCOV} --rc lcov_branch_coverage=1 --add-tracefile ${OUTPUT}.base.info --add-tracefile ${OUTPUT}.test.info --output-file ${OUTPUT}.total.info
     # Filter out unwanted files
-    COMMAND ${LCOV} --rc lcov_branch_coverage=1 --remove ${OUTPUT}.total.info 'UnitTest/tests/*' 'c++/*' 'include/*' 'boost/*' 'charm/*' '*.decl.h' '*.def.h' 'openmpi/*' 'pstreams/*' 'pegtl/*' 'tut/*' 'moduleinit*' --output-file ${OUTPUT}.filtered.info
+    COMMAND ${LCOV} --rc lcov_branch_coverage=1 --remove ${OUTPUT}.total.info 'UnitTest/tests/*' 'c++/*' 'include/*' 'boost/*' 'charm/*' '*.decl.h' '*.def.h' 'STDIN' 'openmpi/*' 'pstreams/*' 'pegtl/*' 'tut/*' 'moduleinit*' --output-file ${OUTPUT}.filtered.info
     # Copy over report customization files for genhtml
     COMMAND ${CMAKE_COMMAND} -E copy
             ${CMAKE_SOURCE_DIR}/../doc/quinoa.gcov.css
@@ -82,7 +82,7 @@ FUNCTION(SETUP_TARGET_FOR_COVERAGE suite path targetname testrunner)
             ${CMAKE_SOURCE_DIR}/../doc/quinoa.lcov.prolog
             ${CMAKE_BINARY_DIR}
     # Generate HTML report
-    COMMAND ${GENHTML} --legend --branch-coverage --demangle-cpp --css-file quinoa.gcov.css --html-prolog quinoa.lcov.prolog --title "${GIT_REFSPEC}:${GIT_SHA1}" -o ${OUTPUT} ${OUTPUT}.filtered.info
+    COMMAND ${GENHTML} --legend --branch-coverage --demangle-cpp --css-file quinoa.gcov.css --html-prolog quinoa.lcov.prolog --title "${GIT_SHA1}" -o ${OUTPUT} ${OUTPUT}.filtered.info
     # Customize page headers in generated html to own
     COMMAND find ${OUTPUT} -type f -print | xargs file | grep text | cut -f1 -d: | xargs sed -i 's/LCOV - code coverage report/Quinoa ${suite} test code coverage report/g'
     COMMAND find ${OUTPUT} -type f -print | xargs file | grep text | cut -f1 -d: | xargs sed -i 's/<td class="headerItem">Test:<\\/td>/<td class="headerItem">Commit:<\\/td>/g'
@@ -176,7 +176,7 @@ FUNCTION(SETUP_TARGET_FOR_ALL_COVERAGE suite path targetname)
             ${CMAKE_SOURCE_DIR}/../doc/quinoa.lcov.prolog
             ${CMAKE_BINARY_DIR}
     # Generate HTML report
-    COMMAND ${GENHTML} --legend --branch-coverage --demangle-cpp --css-file quinoa.gcov.css --html-prolog quinoa.lcov.prolog --title "${GIT_REFSPEC}:${GIT_SHA1}" -o ${OUTPUT} ${OUTPUT}.filtered.info
+    COMMAND ${GENHTML} --legend --branch-coverage --demangle-cpp --css-file quinoa.gcov.css --html-prolog quinoa.lcov.prolog --title "${GIT_SHA1}" -o ${OUTPUT} ${OUTPUT}.filtered.info
     # Customize page headers in generated html to own
     COMMAND find ${OUTPUT} -type f -print | xargs file | grep text | cut -f1 -d: | xargs sed -i 's/LCOV - code coverage report/Quinoa ${suite} test code coverage report/g'
     COMMAND find ${OUTPUT} -type f -print | xargs file | grep text | cut -f1 -d: | xargs sed -i 's/<td class="headerItem">Test:<\\/td>/<td class="headerItem">Commit:<\\/td>/g'
