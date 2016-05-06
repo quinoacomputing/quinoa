@@ -1,3 +1,13 @@
+################################################################################
+#
+# \file      cmake/get_compiler_flags.cmake
+# \author    J. Bakosi
+# \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+# \brief     Cmake code to get compiler flags
+# \date      Fri 06 May 2016 06:44:41 AM MDT
+#
+################################################################################
+
 macro(get_compiler_flags)
 
   # Convert CMAKE_BUILD_TYPE to upper case so even if the user gives it via the

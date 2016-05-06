@@ -1,3 +1,13 @@
+################################################################################
+#
+# \file      cmake/Findlibc++.cmake
+# \author    J. Bakosi
+# \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+# \brief     Find libc++
+# \date      Fri 06 May 2016 06:43:12 AM MDT
+#
+################################################################################
+
 # Find libc++.
 # See libc++: http://libcxx.llvm.org, libc++abi: http://libcxxabi.llvm.org.
 #

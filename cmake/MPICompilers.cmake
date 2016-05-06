@@ -1,3 +1,13 @@
+################################################################################
+#
+# \file      cmake/MPICompilers.cmake
+# \author    J. Bakosi
+# \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+# \brief     Find the MPI wrappers
+# \date      Fri 06 May 2016 06:43:41 AM MDT
+#
+################################################################################
+
 if(__get_mpi_compilers)
 	return()
 endif()

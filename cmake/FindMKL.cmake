@@ -1,3 +1,13 @@
+################################################################################
+#
+# \file      cmake/FindLMKL.cmake
+# \author    J. Bakosi
+# \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+# \brief     Find the Math Kernel Library from Intel
+# \date      Fri 06 May 2016 06:42:37 AM MDT
+#
+################################################################################
+
 # Find the Math Kernel Library from Intel
 #
 #  MKL_FOUND - System has MKL

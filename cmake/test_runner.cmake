@@ -1,3 +1,13 @@
+################################################################################
+#
+# \file      cmake/test_runner.cmake
+# \author    J. Bakosi
+# \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+# \brief     Regression test runner using the cmake scripting language
+# \date      Fri 06 May 2016 06:45:01 AM MDT
+#
+################################################################################
+
 # Regression test runner using the cmake scripting language. See also
 # http://www.cmake.org/Wiki/CMake/Language_Syntax.
 

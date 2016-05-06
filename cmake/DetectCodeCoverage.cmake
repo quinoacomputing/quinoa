@@ -1,3 +1,13 @@
+################################################################################
+#
+# \file      cmake/DetectCodeCoverage.cmake
+# \author    J. Bakosi
+# \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+# \brief     Detect prerequesites for code coverage analysis
+# \date      Fri 06 May 2016 06:41:14 AM MDT
+#
+################################################################################
+
 # Attempt to find tools required for code coverage analysis
 find_program( GCOV gcov )
 find_program( LCOV lcov )

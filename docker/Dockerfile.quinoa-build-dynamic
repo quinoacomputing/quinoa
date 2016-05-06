@@ -1,8 +1,13 @@
+################################################################################
 # vim: filetype=dockerfile:
 #
-# Author:    J. Bakosi
-# Date:      Thu 05 May 2016 11:26:19 AM MDT
-# Copyright: 2012-2016, Jozsef Bakosi.
+# \file      docker/Dockerfile.quinoa-build-dynamic
+# \author    J. Bakosi
+# \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+# \brief     Dockerfile for a dynamic build of Quinoa
+# \date      Fri 06 May 2016 06:45:29 AM MDT
+#
+################################################################################
 
 # Dockerfile for a simple dynamic build of Quinoa using the native (system-wide
 # compiler and mpi wrappers). We start from the debian/testing distribution and

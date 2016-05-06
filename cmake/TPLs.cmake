@@ -1,4 +1,12 @@
-# Find third-party libraries
+################################################################################
+#
+# \file      cmake/TPLs.cmake
+# \author    J. Bakosi
+# \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+# \brief     Find the third-party libraries required to build Quinoa
+# \date      Fri 06 May 2016 06:43:52 AM MDT
+#
+################################################################################
 
 # Add TPL_DIR/include to modules directory for TPLs that provide cmake
 # FIND_PACKAGE code, such as Trilinos

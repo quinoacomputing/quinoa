@@ -1,4 +1,12 @@
-# Configure data layouts
+################################################################################
+#
+# \file      cmake/ConfigureDataLayout.cmake
+# \author    J. Bakosi
+# \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+# \brief     Configure data layouts
+# \date      Fri 06 May 2016 06:41:06 AM MDT
+#
+################################################################################
 
 # Configure data layout for particle data
 
