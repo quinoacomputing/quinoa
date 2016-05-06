@@ -1,3 +1,13 @@
+################################################################################
+#
+# \file      cmake/Findpugixml.cmake
+# \author    J. Bakosi
+# \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+# \brief     Find the pugixml library
+# \date      Fri 06 May 2016 06:43:27 AM MDT
+#
+################################################################################
+
 # Find the pugixml library
 #
 #  PUGIXML_FOUND - System has pugixml

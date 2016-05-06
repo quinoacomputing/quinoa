@@ -1,4 +1,12 @@
-# Build quinoa
+################################################################################
+#
+# \file      src/CMakeLists.txt
+# \author    J. Bakosi
+# \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+# \brief     Build quinoa
+# \date      Fri 06 May 2016 06:46:36 AM MDT
+#
+################################################################################
 
 cmake_minimum_required(VERSION 3.1.0 FATAL_ERROR)
 
@@ -282,7 +290,7 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
 
   # No limit on inlining. This avoids some compiler warnings, but significiantly
   # increases the build time.
-  if(CMAKE_BUILD_TYPE MATCHES "REL")      # Release | RelWithDebInfo | MinSizeRel
+  if(CMAKE_BUILD_TYPE MATCHES "REL") # Release | RelWithDebInfo | MinSizeRel
     add_compiler_flag("-no-inline-max-size")
     add_compiler_flag("-no-inline-max-total-size")
     add_compiler_flag("-no-inline-max-per-routine")

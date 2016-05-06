@@ -1,4 +1,13 @@
-# Detect operating system
+################################################################################
+#
+# \file      cmake/DetectOS.cmake
+# \author    J. Bakosi
+# \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+# \brief     Detect operating system
+# \date      Fri 06 May 2016 06:41:22 AM MDT
+#
+################################################################################
+
 function(detect_os)
   if(APPLE)
     set(os "mac")

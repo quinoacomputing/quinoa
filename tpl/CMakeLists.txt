@@ -1,4 +1,12 @@
-# Build quinoa third-party Libraries
+################################################################################
+#
+# \file      src/CMakeLists.txt
+# \author    J. Bakosi
+# \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+# \brief     Build quinoa third-party Libraries
+# \date      Fri 06 May 2016 06:46:49 AM MDT
+#
+################################################################################
 
 cmake_minimum_required(VERSION 3.1.0 FATAL_ERROR)
 

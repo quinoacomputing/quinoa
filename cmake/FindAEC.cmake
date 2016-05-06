@@ -1,3 +1,13 @@
+################################################################################
+#
+# \file      cmake/FindAEC.cmake
+# \author    J. Bakosi
+# \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+# \brief     Find the Adaptive Entropy Coding library
+# \date      Fri 06 May 2016 06:41:51 AM MDT
+#
+################################################################################
+
 # Find the Adaptive Entropy Coding library from
 # https://www.dkrz.de/redmine/projects/aec/wiki
 #
