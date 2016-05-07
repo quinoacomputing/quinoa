@@ -16,6 +16,7 @@
 #include "NoWarning/tut.h"
 
 #include "Macro.h"
+#include "Make_unique.h"
 #include "Factory.h"
 
 namespace unittest {
@@ -57,7 +58,7 @@ struct Factory_common {
     //! of class T was pre-constructed.
     template< typename T >
     explicit VBase( T x ) :
-      self( std::make_unique< Model<T> >( std::move(x) ) ),
+      self( tk::make_unique< Model<T> >( std::move(x) ) ),
       ctor( "val" ),
       assg() {}
 
@@ -67,7 +68,7 @@ struct Factory_common {
     //! constructor, and thus usage from a factory.
     template< typename T >
     explicit VBase( std::function<T()> x ) :
-      self( std::make_unique< Model<T> >( std::move(x()) ) ),
+      self( tk::make_unique< Model<T> >( std::move(x()) ) ),
       ctor( "fun" ),
       assg() {}
 
@@ -407,7 +408,7 @@ struct VBase {
   template< typename T, typename... ConstrArgs,
     typename std::enable_if< tk::HasTypedefProxy<T>::value, int >::type = 0 >
   explicit VBase( std::function<T()> c, ConstrArgs... args ) :
-    self( std::make_unique< Model< typename T::Proxy > >
+    self( tk::make_unique< Model< typename T::Proxy > >
          (std::move(T::Proxy::ckNew(std::forward<ConstrArgs>(args)...))) ) {
     Assert( c == nullptr, "std::function argument to VBase Charm "
                           "constructor must be nullptr" );

@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Build quinoa
-# \date      Fri 06 May 2016 11:08:58 AM MDT
+# \date      Fri 06 May 2016 10:15:54 PM MDT
 #
 ################################################################################
 
@@ -129,9 +129,10 @@ execute_process(
 string(REGEX REPLACE "[\r\n]" "" BUILD_DATE "${BUILD_DATE}")
 
 # Set the requirement for the C++ standard
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+message(STATUS "Required language standard: C++${CMAKE_CXX_STANDARD}")
 
 # Set names of executables
 set(INCITER_EXECUTABLE inciter)
@@ -258,7 +259,7 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
   endif()
 
   # Use the C++14 standard (CMAKE_CXX_STANDARD does not set this for intel)
-  add_compiler_flag("-std=c++14")
+  add_compiler_flag("-std=c++11")
 
   # Compiler flags for intel
   add_compiler_flag("-w3")       # enable diagnostics: remarks, warnings, errors
