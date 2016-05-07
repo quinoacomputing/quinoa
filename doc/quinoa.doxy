@@ -764,7 +764,6 @@ WARN_LOGFILE           =
 # Note: If this tag is empty the current directory is searched.
 
 INPUT                  = \
-  @CMAKE_CURRENT_SOURCE_DIR@/../doc/pages/mainpage.dox \
   @CMAKE_CURRENT_SOURCE_DIR@/../doc/pages/why.dox \
   @CMAKE_CURRENT_SOURCE_DIR@/../doc/pages/inciter.dox \
   @CMAKE_CURRENT_SOURCE_DIR@/../doc/pages/walker.dox \
@@ -821,6 +820,7 @@ INPUT                  = \
   @CMAKE_CURRENT_SOURCE_DIR@/../doc/licenses/OpenMPI_license.dox \
   @CMAKE_CURRENT_SOURCE_DIR@/../doc/licenses/MKL_license.dox \
   . \
+  @CMAKE_CURRENT_SOURCE_DIR@/../README.md \
   @CMAKE_CURRENT_SOURCE_DIR@/../src/ \
   @CMAKE_CURRENT_SOURCE_DIR@/../script/
 
@@ -993,7 +993,7 @@ FILTER_SOURCE_PATTERNS =
 # (index.html). This can be useful if you have a project on for instance GitHub
 # and want to reuse the introduction page also for the doxygen output.
 
-USE_MDFILE_AS_MAINPAGE = 
+USE_MDFILE_AS_MAINPAGE = README.md
 
 #---------------------------------------------------------------------------
 # Configuration options related to source browsing
