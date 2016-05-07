@@ -1,5 +1,6 @@
 ## What is Quinoa?
 
+![](quinoa.svg)
 Quinoa is a set of computational tools that enables research and numerical analysis in fluid dynamics. At this time it is a test-bed to experiment with various algorithms using fully asynchronous runtime systems.
 
 ## Organization
