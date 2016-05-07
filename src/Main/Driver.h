@@ -13,6 +13,8 @@
 #ifndef Driver_h
 #define Driver_h
 
+#include "Make_unique.h"
+
 namespace tk {
 
 //! Driver. The class below uses runtime polymorphism without client-side
@@ -26,8 +28,7 @@ class Driver {
   public:
     //! Constructor taking an object modeling Concept (see below)
     template< typename T >
-    explicit Driver( T x ) :
-      self( std::make_unique< Model<T> >( std::move(x) ) ) {}
+    explicit Driver( T x ) : self( make_unique< Model<T> >( std::move(x) ) ) {}
 
     //! Constructor taking a function pointer to a constructor of an object
     //! modeling Concept (see below). Passing std::function allows late
@@ -35,7 +36,7 @@ class Driver {
     //! constructor, and thus usage from a factory.
     template< typename T >
     explicit Driver( std::function<T()> x ) :
-      self( std::make_unique< Model<T> >( std::move(x()) ) ) {}
+      self( make_unique< Model<T> >( std::move(x()) ) ) {}
 
     //! Public interface to execute
     void execute() const { self->execute(); }
