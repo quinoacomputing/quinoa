@@ -22,6 +22,7 @@
 #include "NoWarning/charm++.h"
 
 #include "Macro.h"
+#include "Make_unique.h"
 #include "CharmUtil.h"
 #include "Options/RNG.h"
 
@@ -45,7 +46,7 @@ class StatTest {
     //!   argument.
     template< typename T >
     explicit StatTest( T x ) :
-      self( std::make_unique< Model<T> >( std::move(x) ) ){}
+      self( tk::make_unique< Model<T> >( std::move(x) ) ){}
 
     //! \brief Constructor taking a std::function holding a constructor bound to
     //!   its arguments of an object modeling Concept (see below)
@@ -59,7 +60,7 @@ class StatTest {
     template< typename T,
       typename std::enable_if< !tk::HasTypedefProxy<T>::value, int >::type = 0 >
     explicit StatTest( std::function<T()> x ) :
-      self( std::make_unique< Model<T> >( std::move(x()) ) ) {}
+      self( tk::make_unique< Model<T> >( std::move(x()) ) ) {}
 
     //! \brief Constructor taking a function pointer to a constructor of an
     //!    object modeling Concept
@@ -86,7 +87,7 @@ class StatTest {
     template< typename T, typename... ConstrArgs,
       typename std::enable_if< tk::HasTypedefProxy<T>::value, int >::type = 0 >
     explicit StatTest( std::function<T()> c, ConstrArgs... args ) :
-      self( std::make_unique< Model< typename T::Proxy > >
+      self( tk::make_unique< Model< typename T::Proxy > >
             (std::move(T::Proxy::ckNew(std::forward<ConstrArgs>(args)...))) ) {
       Assert( c == nullptr, "std::function argument to StatTest Charm "
                             "constructor must be nullptr" );

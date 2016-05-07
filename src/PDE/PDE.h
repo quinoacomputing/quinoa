@@ -22,6 +22,7 @@
 #include <functional>
 
 #include "Types.h"
+#include "Make_unique.h"
 #include "MeshNodes.h"
 
 namespace inciter {
@@ -46,7 +47,7 @@ class PDE {
     //! \param[in] x Instantiated object of type T given by the template
     //!   argument.
     template< typename T > explicit PDE( T x ) :
-      self( std::make_unique< Model<T> >( std::move(x) ) ) {}
+      self( tk::make_unique< Model<T> >( std::move(x) ) ) {}
 
     //! \brief Constructor taking a function pointer to a constructor of an
     //!   object modeling Concept.
@@ -68,7 +69,7 @@ class PDE {
     //! \param[in] args Zero or more constructor arguments
     template< typename T, typename...Args >
     explicit PDE( std::function<T(Args...)> x, Args&&... args ) :
-      self( std::make_unique< Model<T> >(
+      self( tk::make_unique< Model<T> >(
               std::move( x( std::forward<Args>(args)... ) ) ) ) {}
 
     //! Public interface to setting the initial conditions for the diff eq
