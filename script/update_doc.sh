@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \date      Sun 02 Aug 2015 10:06:34 PM MDT
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
-# \brief     Update Thu 05 May 2016 11:25:42 AM MDT
+# \brief     Update Sun 08 May 2016 08:10:58 AM MDT
 # \details   This script assumes that
 #   - a clone already exists and the TPLs are already built
 #   - the environment is setup for running cmake
@@ -56,6 +56,7 @@ mv /tmp/unittest_coverage .
 mv /tmp/regression_coverage .
 mv /tmp/test_coverage .
 touch .nojekyll
+cp ../images/quinoa.svg .
 git add .
 git commit -m "Automated documentation build for changeset ${DOC4COMMIT}"
 git push origin gh-pages
