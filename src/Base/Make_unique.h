@@ -22,7 +22,7 @@ namespace tk {
 // r181765 (e.g., r203847 already has it), until that we'll use the one taken
 // from gcc below
 
-#if _LIBCPP_STD_VER <= 11
+#if not defined (_LIBCPP_STD_VER) || (_LIBCPP_STD_VER <= 11)
 
 using std::unique_ptr;
 using std::remove_extent;
