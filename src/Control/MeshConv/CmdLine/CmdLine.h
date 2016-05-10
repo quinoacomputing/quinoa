@@ -15,7 +15,7 @@
 
 #include <string>
 
-#include <boost/mpl/set.hpp>
+#include "NoWarning/set.h"
 #include "NoWarning/for_each.h"
 
 #include "Macro.h"
