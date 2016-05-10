@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Control/MeshConv/CmdLine/Parser.h
   \author    J. Bakosi
@@ -8,7 +8,7 @@
   \details   This file declares the command-line argument parser for the mesh
      file converter, MeshConv.
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef MeshConvCmdLineParser_h
 #define MeshConvCmdLineParser_h
 

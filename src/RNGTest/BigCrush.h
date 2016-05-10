@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/RNGTest/BigCrush.h
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Class re-creating the TestU01 library's BigCrush battery
   \details   Class re-creating the TestU01 library's BigCrush battery.
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef BigCrush_h
 #define BigCrush_h
 

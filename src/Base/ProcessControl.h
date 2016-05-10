@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Base/ProcessControl.h
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     POSIX process control wrapper definitions
   \details   POSIX process control wrapper definitions.
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef ProcessControl_h
 #define ProcessControl_h
 

@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Control/RNGParam.h
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Types for storing parameters of random number generators
   \details   Types for storing parameters of random number generators.
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef RNGParam_h
 #define RNGParam_h
 

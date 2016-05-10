@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/UnitTest/TUTSuite.C
   \author    J. Bakosi
@@ -9,7 +9,7 @@
     be unit test suites other than this one which uses the Template Unit Test
     library.
 */
-//******************************************************************************
+// *****************************************************************************
 
 #include <iostream>
 #include <utility>
@@ -47,11 +47,11 @@ TUTSuite::TUTSuite( const ctr::CmdLine& cmdline ) :
   m_nwarn( 0 ),
   m_nexcp( 0 ),
   m_nmigr( 0 )
-//******************************************************************************
+// *****************************************************************************
 // Constructor
 //! \param[in] cmdline Data structure storing data from the command-line parser
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   m_print.part( "Factory" );
 
@@ -101,11 +101,11 @@ TUTSuite::TUTSuite( const ctr::CmdLine& cmdline ) :
 
 void
 TUTSuite::spawngrp( const std::string& g )
-//******************************************************************************
+// *****************************************************************************
 //  Fire up all tests in a test group
 //! \param[in] g Name of the test group
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   ++m_ngroup;         // increase number of test groups to run
 
@@ -121,12 +121,12 @@ TUTSuite::spawngrp( const std::string& g )
 
 void
 TUTSuite::evaluate( std::vector< std::string > status )
-//******************************************************************************
+// *****************************************************************************
 // Evaluate a unit test
 //! \param[in] status Vector strings containing the test results. See
 //!   unittest::TUTTest constructor for the expected structure of status.
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   // Increase number tests run (including dummies)
   ++m_nrun;

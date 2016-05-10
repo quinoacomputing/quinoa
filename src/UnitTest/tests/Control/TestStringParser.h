@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/UnitTest/tests/Control/TestStringParser.h
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Unit tests for Control/StringParser
   \details   Unit tests for Control/StringParser
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef test_StringParser_h
 #define test_StringParser_h
 

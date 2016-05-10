@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Control/RNGTest/InputDeck/InputDeck.h
   \author    J. Bakosi
@@ -9,7 +9,7 @@
      the data from user input during the control file parsing of the random
      number generator test suite, RNGTest.
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef RNGTestInputDeck_h
 #define RNGTestInputDeck_h
 

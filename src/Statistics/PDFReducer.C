@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Statistics/PDFReducer.C
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Custom Charm++ reducer for merging PDFs across PEs
   \details   Custom Charm++ reducer for merging PDFs across PEs.
 */
-//******************************************************************************
+// *****************************************************************************
 
 #include "PDFReducer.h"
 #include "Make_unique.h"
@@ -18,14 +18,14 @@ std::pair< int, std::unique_ptr<char[]> >
 serialize( const std::vector< tk::UniPDF >& u,
            const std::vector< tk::BiPDF >& b,
            const std::vector< tk::TriPDF >& t )
-//******************************************************************************
+// *****************************************************************************
 // Serialize vectors of PDFs to raw memory stream
 //! \param[in] u Vector of univariate PDFs
 //! \param[in] b Vector of bivariate PDFs
 //! \param[in] t Vector of trivariate PDFs
 //! \return Pair of the length and the raw stream containing the serialized PDFs
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   // Prepare for serializing PDFs to a raw binary stream, compute size
   PUP::sizer sizer;
@@ -48,13 +48,13 @@ serialize( const std::vector< tk::UniPDF >& u,
 
 CkReductionMsg*
 mergePDF( int nmsg, CkReductionMsg **msgs )
-//******************************************************************************
+// *****************************************************************************
 // Charm++ custom reducer for merging PDFs during reduction across PEs
 //! \param[in] nmsg Number of messages in msgs
 //! \param[in] msgs Charm++ reduction message containing the serialized PDFs
 //! \return Aggregated PDFs built for further aggregation if needed
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   // Will store deserialized uni-, bi-, and tri-variate PDFs
   std::vector< tk::UniPDF > updf;

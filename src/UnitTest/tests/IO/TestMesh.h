@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/UnitTest/tests/IO/TestMesh.h
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Unit tests for unstructured-mesh reader and writers in IO
   \details   Unit tests for unstructured-mesh reader and writers in IO
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef test_Mesh_h
 #define test_Mesh_h
 

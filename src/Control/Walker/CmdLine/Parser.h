@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Control/Walker/CmdLine/Parser.h
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Walker's command line parser
   \details   Walker's command line parser
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef WalkerCmdLineParser_h
 #define WalkerCmdLineParser_h
 

@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/DiffEq/OrnsteinUhlenbeckCoeffPolicy.h
   \author    J. Bakosi
@@ -44,7 +44,7 @@
       which returns the enum value of the option from the underlying option
       class, collecting all possible options for coefficients policies.
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef OrnsteinUhlenbeckCoeffPolicy_h
 #define OrnsteinUhlenbeckCoeffPolicy_h
 

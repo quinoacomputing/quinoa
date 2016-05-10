@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/UnitTest/tests/Control/TestFileParser.h
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Unit tests for Control/FileParser
   \details   Unit tests for Control/FileParser
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef test_FileParser_h
 #define test_FileParser_h
 

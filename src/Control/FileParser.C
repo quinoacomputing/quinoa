@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Control/FileParser.C
   \author    J. Bakosi
@@ -10,7 +10,7 @@
     generic low-level I/O, e.g., testing whether the file to be parsed exits or
     not and associated error handling, as well as after-parser diagnostics.
 */
-//******************************************************************************
+// *****************************************************************************
 
 #include <map>
 
@@ -22,7 +22,7 @@
 using tk::FileParser;
 
 FileParser::FileParser( const std::string& filename ) : m_filename( filename )
-//******************************************************************************
+// *****************************************************************************
 //  Constructor
 //! \param[in] filename File to be parsed by the parser
 //! \details This constructor does basic tests in an attempt to determine if the
@@ -33,7 +33,7 @@ FileParser::FileParser( const std::string& filename ) : m_filename( filename )
 //!   outsourcing the parsing (to PEGTL), so there is no need to store the file
 //!   stream handle here.
 //! \author  J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   // Make sure there is a filename
   Assert( !filename.empty(), "No filename specified" );
@@ -63,12 +63,12 @@ FileParser::FileParser( const std::string& filename ) : m_filename( filename )
 void
 FileParser::diagnostics( const tk::Print& print,
                          const std::vector< std::string >& messages )
-//******************************************************************************
+// *****************************************************************************
 //  Echo errors and warnings accumulated during parsing
 //! \param[in] print    Pretty printer
 //! \param[in] messages Vector of strings of errors and warnings
 //! \author  J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   // Bundle storing multiple messages for a single errouneous line
   struct ErroneousLine {

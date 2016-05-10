@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/DiffEq/DiffEqStack.h
   \author    J. Bakosi
@@ -12,7 +12,7 @@
     differential equation keys to their constructor calls. For more details, see
     the in-code documentation of the constructor.
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef DiffEqStack_h
 #define DiffEqStack_h
 

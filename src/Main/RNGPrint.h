@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Main/RNGPrint.h
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Pretty printer base for pretty printers supporting RNGs
   \details   Pretty printer base for pretty printers supporting RNGs.
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef RNGPrint_h
 #define RNGPrint_h
 

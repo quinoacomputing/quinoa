@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Inciter/Conductor.C
   \author    J. Bakosi
@@ -12,7 +12,7 @@
     overview of the algorithm structure and how it interfaces with Charm++ is
     discussed in the Charm++ interface file src/Inciter/conductor.ci.
 */
-//******************************************************************************
+// *****************************************************************************
 
 #include <string>
 #include <iostream>
@@ -45,10 +45,10 @@ Conductor::Conductor() :
   m_partitioner(),
   m_avcost( 0.0 ),
   m_timer()
-//******************************************************************************
+// *****************************************************************************
 //  Constructor
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   m_print.part( "Factory" );
 
@@ -117,13 +117,13 @@ Conductor::Conductor() :
 
 void
 Conductor::load( uint64_t nelem )
-//******************************************************************************
+// *****************************************************************************
 // Reduction target indicating that all Partitioner chare groups have finished
 // reading their part of the contiguously-numbered computational mesh graph and
 // we are ready to compute the computational load
 //! \param[in] nelem Total number of mesh elements (summed across all PEs)
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   m_print.diagend( "done" );    // "Reading mesh graph ..."
 
@@ -163,12 +163,12 @@ Conductor::load( uint64_t nelem )
 
 void
 Conductor::partition()
-//******************************************************************************
+// *****************************************************************************
 // Reduction target indicating that all Partitioner chare groups have finished
 // setting up the necessary data structures for partitioning the computational
 // mesh and we are ready for partitioning
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   m_print.diagstart( "Partitioning and distributing mesh ..." );
   m_partitioner.partition( m_nchare );
@@ -176,7 +176,7 @@ Conductor::partition()
 
 void
 Conductor::aveCost( tk::real c )
-//******************************************************************************
+// *****************************************************************************
 // Reduction target estimating the average communication cost of merging the
 // linear system
 //! \param[in] c Communication cost summed across all PEs. The cost associated
@@ -187,7 +187,7 @@ Conductor::aveCost( tk::real c )
 //!   communication cost across all PEs, while the standard deviation, computed
 //!   by stdCost(), gives an idea on the expected load imbalance.
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   m_print.diagend( "done" );    // "Partitioning and distributing mesh ...";
   // Compute average and broadcast it back to all partitioners (PEs)
@@ -197,7 +197,7 @@ Conductor::aveCost( tk::real c )
 
 void
 Conductor::stdCost( tk::real c )
-//******************************************************************************
+// *****************************************************************************
 // Reduction target estimating the standard deviation of the communication cost
 // of merging the linear system
 //! \param[in] c Sum of the squares of the communication cost minus the average,
@@ -209,7 +209,7 @@ Conductor::stdCost( tk::real c )
 //!   communication cost across all PEs, while the standard deviation, computed
 //!   here, gives an idea on the expected load imbalance.
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   m_print.diag( "Linear system communication cost: avg = " +
                 std::to_string( m_avcost ) + ", std = " +
@@ -218,7 +218,7 @@ Conductor::stdCost( tk::real c )
 
 void
 Conductor::rowcomplete()
-//******************************************************************************
+// *****************************************************************************
 // Reduction target indicating that all linear system merger branches have done
 // their part of storing and exporting global row ids
 //! \details This function is a Charm++ reduction target that is called when
@@ -227,7 +227,7 @@ Conductor::rowcomplete()
 //!   all Spawners and thus implicitly all Performer chares to continue with
 //!   the initialization step.
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   m_linsysmerger.rowsreceived();
   m_performer.init( m_dt );
@@ -235,11 +235,11 @@ Conductor::rowcomplete()
 
 void
 Conductor::initcomplete()
-//******************************************************************************
+// *****************************************************************************
 //  Reduction target indicating that all Performer chares have finished their
 //  initialization step and have already continued with start time stepping
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   m_print.diag( "Starting time stepping ..." );
   header();   // print out time integration header
@@ -247,10 +247,10 @@ Conductor::initcomplete()
 
 void
 Conductor::evaluateTime()
-//******************************************************************************
+// *****************************************************************************
 //  Evaluate time step: decide if it is time to quit
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   const auto term = g_inputdeck.get< tag::discr, tag::term >();
   const auto eps = std::numeric_limits< tk::real >::epsilon();
@@ -279,11 +279,11 @@ Conductor::evaluateTime()
 
 void
 Conductor::advance()
-//******************************************************************************
+// *****************************************************************************
 //  Reduction target indicating that all Performer chares have finished their
 //  initialization step
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   // If not final stage, continue with next stage, increasing the stage. If
   // final stage, continue with next time step zeroing stage and using new time
@@ -296,11 +296,11 @@ Conductor::advance()
 
 tk::real
 Conductor::computedt()
-//******************************************************************************
+// *****************************************************************************
 // Compute size of next time step
 //! \return Size of dt for the next time step
 //! \author  J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   // Simply return the constant user-defined initial dt for now
   return g_inputdeck.get< tag::discr, tag::dt >();
@@ -308,10 +308,10 @@ Conductor::computedt()
 
 void
 Conductor::finish()
-//******************************************************************************
+// *****************************************************************************
 // Normal finish of time stepping
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   // Print out reason for stopping
   const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
@@ -329,10 +329,10 @@ Conductor::finish()
 
 void
 Conductor::header()
-//******************************************************************************
+// *****************************************************************************
 // Print out time integration header
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   m_print.inthead( "Time integration", "Unstructured-mesh PDE solver testbed",
     "Legend: it - iteration count\n"
@@ -348,10 +348,10 @@ Conductor::header()
 
 void
 Conductor::report()
-//******************************************************************************
+// *****************************************************************************
 // Print out one-liner report on time step
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   if (!(m_it % g_inputdeck.get< tag::interval, tag::tty >())) {
 

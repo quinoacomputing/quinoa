@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Statistics/Statistics.C
   \author    J. Bakosi
@@ -12,7 +12,7 @@
     spaces of ordinary and/or central sample space variables. See the header
     file documentation for more information on the nomenclature.
 */
-//******************************************************************************
+// *****************************************************************************
 
 #include <map>
 #include <iterator>
@@ -61,7 +61,7 @@ Statistics::Statistics( const tk::Particles& particles,
     m_instCenTriPDF(),
     m_centpdf(),
     m_ctrTriPDF()
-//******************************************************************************
+// *****************************************************************************
 //  Constructor
 //! \param[in] particles Particles data to estimate from
 //! \param[in] offset Map of offsets in memory to address variable fields
@@ -69,7 +69,7 @@ Statistics::Statistics( const tk::Particles& particles,
 //! \param[in] pdf List of requested probability density functions (PDF)
 //! \param[in] binsize List of binsize vectors configuring the PDF estimators
 //! \author  J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   // Prepare for computing ordinary and central moments, PDFs
   setupOrdinary( offset, stat );
@@ -80,12 +80,12 @@ Statistics::Statistics( const tk::Particles& particles,
 void
 Statistics::setupOrdinary( const ctr::OffsetMap& offset,
                            const std::vector< ctr::Product >& stat )
-//******************************************************************************
+// *****************************************************************************
 //  Prepare for computing ordinary moments
 //! \param[in] offset Map of offsets in memory to address variable fields
 //! \param[in] stat List of requested statistical moments
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   for (const auto& product : stat)
     if (ordinary(product)) {
@@ -127,12 +127,12 @@ Statistics::setupOrdinary( const ctr::OffsetMap& offset,
 void
 Statistics::setupCentral( const ctr::OffsetMap& offset,
                           const std::vector< ctr::Product >& stat )
-//******************************************************************************
+// *****************************************************************************
 //  Prepare for computing central moments
 //! \param[in] offset Map of offsets in memory to address variable fields
 //! \param[in] stat List of requested statistical moments
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   // Central moments can only be estimated about ordinary moments
   if (m_nord)
@@ -164,13 +164,13 @@ void
 Statistics::setupPDF( const ctr::OffsetMap& offset,
                       const std::vector< ctr::Probability >& pdf,
                       const std::vector< std::vector< tk::real > >& binsize )
-//******************************************************************************
+// *****************************************************************************
 //  Prepare for computing PDFs
 //! \param[in] offset Map of offsets in memory to address variable fields
 //! \param[in] pdf List of requested probability density functions (PDF)
 //! \param[in] binsize List of binsize vectors configuring the PDF estimators
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   std::size_t i = 0;
   for (const auto& probability : pdf) {
@@ -245,12 +245,12 @@ Statistics::setupPDF( const ctr::OffsetMap& offset,
 
 std::size_t
 Statistics::mean( const tk::ctr::Term& term ) const
-//******************************************************************************
+// *****************************************************************************
 //  Return mean for fluctuation
 //! \param[in] term Term (a fluctuation) whose mean to search for
 //! \return Index to mean
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   const auto size = m_ordTerm.size();
   for (auto i=decltype(size){0}; i<size; ++i) {
@@ -264,10 +264,10 @@ Statistics::mean( const tk::ctr::Term& term ) const
 
 void
 Statistics::accumulateOrd()
-//******************************************************************************
+// *****************************************************************************
 //  Accumulate (i.e., only do the sum for) ordinary moments
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   if (m_nord) {
     // Zero ordinary moment accumulators
@@ -291,7 +291,7 @@ Statistics::accumulateOrd()
 
 void
 Statistics::accumulateCen( const std::vector< tk::real >& ord )
-//******************************************************************************
+// *****************************************************************************
 //  Accumulate (i.e., only do the sum for) central moments
 //! \details The ordinary moments container, m_ordinary, is overwritten here
 //!   with the argument ord, because each of multiple Statistics class objects
@@ -302,7 +302,7 @@ Statistics::accumulateCen( const std::vector< tk::real >& ord )
 //!   client-code, see walker::Distributor.
 //! \param[in] ord Ordinary moments
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   if (m_ncen) {
     // Overwrite ordinary moments by those computed across all PEs
@@ -329,10 +329,10 @@ Statistics::accumulateCen( const std::vector< tk::real >& ord )
 
 void
 Statistics::accumulateOrdPDF()
-//******************************************************************************
+// *****************************************************************************
 //  Accumulate (i.e., only do the sum for) ordinary PDFs
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   if (!m_ordupdf.empty() || !m_ordbpdf.empty() || !m_ordtpdf.empty()) {
     // Zero PDF accumulators
@@ -369,7 +369,7 @@ Statistics::accumulateOrdPDF()
 
 void
 Statistics::accumulateCenPDF( const std::vector< tk::real >& ord )
-//******************************************************************************
+// *****************************************************************************
 //  Accumulate (i.e., only do the sum for) central PDFs
 //! \details The ordinary moments container, m_ordinary, is overwritten here
 //!   with the argument ord, because each of multiple Statistics class objects
@@ -380,7 +380,7 @@ Statistics::accumulateCenPDF( const std::vector< tk::real >& ord )
 //!   client-code, see walker::Distributor.
 //! \param[in] ord Ordinary moments
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   if (!m_cenupdf.empty() || !m_cenbpdf.empty() || !m_centpdf.empty()) {
     // Overwrite ordinary moments by those computed across all PEs

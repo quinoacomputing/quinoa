@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/UnitTest/migrated.ci
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Charm++ module interface file for migrated test chare Migrated
   \details   Charm++ module interface file for migrated test chare Migrated
 */
-//******************************************************************************
+// *****************************************************************************
 
 module migrated {
 

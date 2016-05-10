@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Mesh/Reorder.h
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Mesh reordering routines for unstructured meshes
   \details   Mesh reordering routines for unstructured meshes.
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef Reorder_h
 #define Reorder_h
 

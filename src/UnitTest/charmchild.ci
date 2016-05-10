@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/UnitTest/charmchild.ci
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Charm++ module interface file for polymorphic test chare VChild
   \details   Charm++ module interface file for polymorphic test chare VChild
 */
-//******************************************************************************
+// *****************************************************************************
 
 module charmchild {
 

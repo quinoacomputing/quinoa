@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/DiffEq/MixMassFractionBetaCoeffPolicy.h
   \author    J. Bakosi
@@ -72,7 +72,7 @@
       parameters, and _b_, _k_, _S_, are the SDE parameters computed, see
       DiffEq/MixMassFractionBeta.h.
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef MixMassFractionBetaCoeffPolicy_h
 #define MixMassFractionBetaCoeffPolicy_h
 

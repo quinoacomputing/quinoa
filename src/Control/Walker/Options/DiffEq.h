@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Control/Walker/Options/DiffEq.h
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Differential equation options and associations for walker
   \details   Differential equation options and associations for walker
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef WalkerDiffEqOptions_h
 #define WalkerDiffEqOptions_h
 

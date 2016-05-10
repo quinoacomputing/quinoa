@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/NoWarning/Zoltan2_PartitioningProblem.h
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Include Zoltan2_PartitioningProblem.hpp with turning off specific
              compiler warnings
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef nowarning_Zoltan2_PartitioningProblem_h
 #define nowarning_Zoltan2_PartitioningProblem_h
 

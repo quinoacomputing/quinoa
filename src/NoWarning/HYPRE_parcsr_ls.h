@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/NoWarning/HYPRE_parcsr_ls.h
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Include HYPRE_parcsr_ls.h with turning off specific compiler
              warnings
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef nowarning_HYPRE_parcsr_ls_h
 #define nowarning_HYPRE_parcsr_ls_h
 

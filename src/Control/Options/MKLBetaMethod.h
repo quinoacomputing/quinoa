@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Control/Options/MKLBetaMethod.h
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Intel MKL Beta RNG method options
   \details   Intel MKL Beta RNG method options
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef MKLBetaMethodOptions_h
 #define MKLBetaMethodOptions_h
 

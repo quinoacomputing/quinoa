@@ -1,8 +1,8 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/DiffEq/OrnsteinUhlenbeck.h
   \author    J. Bakosi
-  \date      Wed 04 May 2016 11:14:31 AM MDT
+  \date      Tue 10 May 2016 02:25:59 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     System of Ornstein-Uhlenbeck SDEs
   \details   This file implements the time integration of a system of stochastic
@@ -44,7 +44,7 @@
       +\sum_{\gamma=1}^N \sigma_{\alpha\gamma} \sigma_{\gamma\beta}.
     \f]
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef OrnsteinUhlenbeck_h
 #define OrnsteinUhlenbeck_h
 
@@ -54,7 +54,7 @@
 #ifdef HAS_MKL
   #include "NoWarning/mkl_lapacke.h"
 #else
-  #include <lapacke.h>
+  #include "NoWarning/lapacke.h"
 #endif
 
 #include "InitPolicy.h"

@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Control/RNGTest/InputDeck/Parser.h
   \author    J. Bakosi
@@ -8,7 +8,7 @@
   \details   This file declares the input deck, i.e., control file, parser for
     the random number generator test suite, RNGTest.
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef RNGTestInputDeckParser_h
 #define RNGTestInputDeckParser_h
 

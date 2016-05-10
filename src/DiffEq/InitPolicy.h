@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/DiffEq/InitPolicy.h
   \author    J. Bakosi
@@ -41,7 +41,7 @@
       which returns the enum value of the option from the underlying option
       class, collecting all possible options for initialization policies.
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef InitPolicy_h
 #define InitPolicy_h
 

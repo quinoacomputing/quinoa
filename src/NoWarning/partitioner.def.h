@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/NoWarning/partitioner.def.h
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Include partitioner.def.h with turning off specific compiler
              warnings
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef nowarning_partitioner_def_h
 #define nowarning_partitioner_def_h
 

@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/DiffEq/DiffEqStack.C
   \author    J. Bakosi
@@ -12,7 +12,7 @@
     differential equation keys to their constructor calls. For more details, see
     the in-code documentation of the constructor.
 */
-//******************************************************************************
+// *****************************************************************************
 
 #include "NoWarning/cartesian_product.h"
 
@@ -52,7 +52,7 @@
 using walker::DiffEqStack;
 
 DiffEqStack::DiffEqStack() : m_factory(), m_eqTypes()
-//******************************************************************************
+// *****************************************************************************
 //  Constructor: register all differential equations into factory
 //! \details This constructor consists of several blocks, each registering a
 //!   potentially large number of entries in the differential equation factory,
@@ -118,7 +118,7 @@ DiffEqStack::DiffEqStack() : m_factory(), m_eqTypes()
 //!   for counting up the number of unique differential equation types
 //!   registered, used for diagnostics purposes.
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   namespace mpl = boost::mpl;
 
@@ -228,11 +228,11 @@ DiffEqStack::DiffEqStack() : m_factory(), m_eqTypes()
 
 std::vector< walker::DiffEq >
 DiffEqStack::selected() const
-//******************************************************************************
+// *****************************************************************************
 //  Instantiate all selected differential equations
 //! \return std::vector of instantiated differential equation objects
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   std::map< ctr::DiffEqType, ncomp_t > cnt; // count DiffEqs per type
   std::vector< DiffEq > diffeqs;            // will store instantiated DiffEqs
@@ -270,12 +270,12 @@ DiffEqStack::selected() const
 
 std::vector< std::vector< std::pair< std::string, std::string > > >
 DiffEqStack::info() const
-//******************************************************************************
+// *****************************************************************************
 //  Return information on all selected differential equations
 //! \return A vector of vector of pair of strings, containing the configuration
 //!   for each selected differential equation
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   std::map< ctr::DiffEqType, ncomp_t > cnt; // count DiffEqs per type
   // will store info on all differential equations selected
@@ -314,12 +314,12 @@ DiffEqStack::info() const
 
 std::vector< std::pair< std::string, std::string > >
 DiffEqStack::infoDirichlet( std::map< ctr::DiffEqType, ncomp_t >& cnt ) const
-//******************************************************************************
+// *****************************************************************************
 //  Return information on the Dirichlet SDE
 //! \param[inout] cnt std::map of counters for all differential equation types
 //! \return vector of string pairs describing the SDE configuration
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   auto c = ++cnt[ ctr::DiffEqType::DIRICHLET ];       // count eqs
   --c;  // used to index vectors starting with 0
@@ -359,12 +359,12 @@ DiffEqStack::infoDirichlet( std::map< ctr::DiffEqType, ncomp_t >& cnt ) const
 
 std::vector< std::pair< std::string, std::string > >
 DiffEqStack::infoGenDir( std::map< ctr::DiffEqType, ncomp_t >& cnt ) const
-//******************************************************************************
+// *****************************************************************************
 //  Return information on Lochner's generalized Dirichlet SDE
 //! \param[inout] cnt std::map of counters for all differential equation types
 //! \return vector of string pairs describing the SDE configuration
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   auto c = ++cnt[ ctr::DiffEqType::GENDIR ];  // count eqs
   --c;  // used to index vectors starting with 0
@@ -408,12 +408,12 @@ DiffEqStack::infoGenDir( std::map< ctr::DiffEqType, ncomp_t >& cnt ) const
 
 std::vector< std::pair< std::string, std::string > >
 DiffEqStack::infoWrightFisher( std::map< ctr::DiffEqType, ncomp_t >& cnt ) const
-//******************************************************************************
+// *****************************************************************************
 //  Return information on the Wright-Fisher SDE
 //! \param[inout] cnt std::map of counters for all differential equation types
 //! \return vector of string pairs describing the SDE configuration
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   auto c = ++cnt[ ctr::DiffEqType::WRIGHTFISHER ];       // count eqs
   --c;  // used to index vectors starting with 0
@@ -450,12 +450,12 @@ DiffEqStack::infoWrightFisher( std::map< ctr::DiffEqType, ncomp_t >& cnt ) const
 
 std::vector< std::pair< std::string, std::string > >
 DiffEqStack::infoOU( std::map< ctr::DiffEqType, ncomp_t >& cnt ) const
-//******************************************************************************
+// *****************************************************************************
 //  Return information on the Ornstein-Uhlenbeck SDE
 //! \param[inout] cnt std::map of counters for all differential equation types
 //! \return vector of string pairs describing the SDE configuration
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   auto c = ++cnt[ ctr::DiffEqType::OU ];       // count eqs
   --c;  // used to index vectors starting with 0
@@ -493,12 +493,12 @@ DiffEqStack::infoOU( std::map< ctr::DiffEqType, ncomp_t >& cnt ) const
 
 std::vector< std::pair< std::string, std::string > >
 DiffEqStack::infoDiagOU( std::map< ctr::DiffEqType, ncomp_t >& cnt ) const
-//******************************************************************************
+// *****************************************************************************
 //  Return information on the diagonal Ornstein-Uhlenbeck SDE
 //! \param[inout] cnt std::map of counters for all differential equation types
 //! \return vector of string pairs describing the SDE configuration
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   auto c = ++cnt[ ctr::DiffEqType::DIAG_OU ];       // count eqs
   --c;  // used to index vectors starting with 0
@@ -538,12 +538,12 @@ DiffEqStack::infoDiagOU( std::map< ctr::DiffEqType, ncomp_t >& cnt ) const
 
 std::vector< std::pair< std::string, std::string > >
 DiffEqStack::infoBeta( std::map< ctr::DiffEqType, ncomp_t >& cnt ) const
-//******************************************************************************
+// *****************************************************************************
 //  Return information on the beta SDE
 //! \param[inout] cnt std::map of counters for all differential equation types
 //! \return vector of string pairs describing the SDE configuration
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   auto c = ++cnt[ ctr::DiffEqType::BETA ];       // count eqs
   --c;  // used to index vectors starting with 0
@@ -585,12 +585,12 @@ DiffEqStack::infoBeta( std::map< ctr::DiffEqType, ncomp_t >& cnt ) const
 std::vector< std::pair< std::string, std::string > >
 DiffEqStack::infoNumberFractionBeta( std::map< ctr::DiffEqType, ncomp_t >& cnt )
 const
-//******************************************************************************
+// *****************************************************************************
 //  Return information on the number-fraction beta SDE
 //! \param[inout] cnt std::map of counters for all differential equation types
 //! \return vector of string pairs describing the SDE configuration
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   auto c = ++cnt[ ctr::DiffEqType::NUMFRACBETA ];       // count eqs
   --c;  // used to index vectors starting with 0
@@ -645,12 +645,12 @@ const
 std::vector< std::pair< std::string, std::string > >
 DiffEqStack::infoMassFractionBeta( std::map< ctr::DiffEqType, ncomp_t >& cnt )
 const
-//******************************************************************************
+// *****************************************************************************
 //  Return information on the mass-fraction beta SDE
 //! \param[inout] cnt std::map of counters for all differential equation types
 //! \return vector of string pairs describing the SDE configuration
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   auto c = ++cnt[ ctr::DiffEqType::MASSFRACBETA ];       // count eqs
   --c;  // used to index vectors starting with 0
@@ -705,12 +705,12 @@ const
 std::vector< std::pair< std::string, std::string > >
 DiffEqStack::infoMixNumFracBeta( std::map< ctr::DiffEqType, ncomp_t >& cnt )
 const
-//******************************************************************************
+// *****************************************************************************
 //  Return information on the mix number-fraction beta SDE
 //! \param[inout] cnt std::map of counters for all differential equation types
 //! \return vector of string pairs describing the SDE configuration
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   auto c = ++cnt[ ctr::DiffEqType::MIXNUMFRACBETA ];       // count eqs
   --c;  // used to index vectors starting with 0
@@ -771,12 +771,12 @@ const
 std::vector< std::pair< std::string, std::string > >
 DiffEqStack::infoMixMassFracBeta( std::map< ctr::DiffEqType, ncomp_t >& cnt )
 const
-//******************************************************************************
+// *****************************************************************************
 //  Return information on the mix mass-fraction beta SDE
 //! \param[inout] cnt std::map of counters for all differential equation types
 //! \return vector of string pairs describing the SDE configuration
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   auto c = ++cnt[ ctr::DiffEqType::MIXMASSFRACBETA ];       // count eqs
   --c;  // used to index vectors starting with 0
@@ -836,12 +836,12 @@ const
 
 std::vector< std::pair< std::string, std::string > >
 DiffEqStack::infoSkewNormal( std::map< ctr::DiffEqType, ncomp_t >& cnt ) const
-//******************************************************************************
+// *****************************************************************************
 //  Return information on the skew-normal SDE
 //! \param[inout] cnt std::map of counters for all differential equation types
 //! \return vector of string pairs describing the SDE configuration
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   auto c = ++cnt[ ctr::DiffEqType::SKEWNORMAL ];       // count eqs
   --c;  // used to index vectors starting with 0
@@ -886,12 +886,12 @@ DiffEqStack::infoSkewNormal( std::map< ctr::DiffEqType, ncomp_t >& cnt ) const
 
 std::vector< std::pair< std::string, std::string > >
 DiffEqStack::infoGamma( std::map< ctr::DiffEqType, ncomp_t >& cnt ) const
-//******************************************************************************
+// *****************************************************************************
 //  Return information on the gamma SDE
 //! \param[inout] cnt std::map of counters for all differential equation types
 //! \return vector of string pairs describing the SDE configuration
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   auto c = ++cnt[ ctr::DiffEqType::GAMMA ];       // count eqs
   --c;  // used to index vectors starting with 0

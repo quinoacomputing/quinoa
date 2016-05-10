@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/UnitTest/tests/Base/TestContainerUtil.h
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Unit tests for Base/ContainerUtil.h
   \details   Unit tests for Base/ContainerUtil.h
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef test_ContainerUtil_h
 #define test_ContainerUtil_h
 

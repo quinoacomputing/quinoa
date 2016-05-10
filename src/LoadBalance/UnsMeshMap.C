@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/LoadBalance/UnsMeshMap.C
   \author    J. Bakosi
@@ -37,7 +37,7 @@
      The heavy portion of array element placement should therefore be done in
      the constructor.
 */
-//******************************************************************************
+// *****************************************************************************
 
 #include <algorithm>
 
@@ -50,12 +50,12 @@ using tk::UnsMeshMap;
 UnsMeshMap::UnsMeshMap( std::size_t npoin,
                         const std::vector< std::vector< std::size_t > >& point )
  : m_pe()
-//******************************************************************************
+// *****************************************************************************
 // Constructor
 //! \param[in] npoin Total number of points in mesh
 //! \param[in] point Global mesh point ids owned by each array element
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   Assert( npoin > 0, "Need at least a single mesh point" );
   Assert( point.size() >= static_cast< std::size_t >( CkNumPes() ),
@@ -95,14 +95,14 @@ UnsMeshMap::UnsMeshMap( std::size_t npoin,
 
 void
 UnsMeshMap::fixPEs()
-//******************************************************************************
+// *****************************************************************************
 //  Check that all PEs create at least a single array element, fix if not
 //! \details This is required because if the array elements, placed using this
 //!   map object, send messages to some Charm++ chare group branches and the
 //!   group happens to use Charm++'s structured dagger, such as LinSysMerger,
 //!   memory problems will occur.
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   // Build unique set of PEs the array elements are assigned to
   std::set< std::size_t > nkind;
@@ -142,14 +142,14 @@ UnsMeshMap::fixPEs()
 
 int
 UnsMeshMap::procNum( int, const CkArrayIndex& idx )
-//******************************************************************************
+// *****************************************************************************
 //  Return the home processor number for the array element based on
 //  unstructured-mesh-aware distribution computed in the constructor
 //! \param[in] idx Charm++ array index object containing the array element index
 //!   to assign a PE to
 //! \return PE assigned
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   // array element we assign PE for
   auto elem = static_cast<std::size_t>(*idx.data());
@@ -170,7 +170,7 @@ void
 UnsMeshMap::populateInitial( int, CkArrayOptions& opt,
                              void *msg,
                              CkArrMgr *mgr )
-//******************************************************************************
+// *****************************************************************************
 //  Create initial set of array elements based on the unstructured-mesh-aware
 //  distribution computed in the constructor
 //! \param[in] opt Charm++ array options object containing the number of initial
@@ -178,7 +178,7 @@ UnsMeshMap::populateInitial( int, CkArrayOptions& opt,
 //! \param[in] msg Charm++ messsage to use for array element creation
 //! \param[in] mgr Array manager to use
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   int nelem = *opt.getNumInitial().data(); // number of array elements requested
   if (nelem == 0) return;                  // no initial elements requested

@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/NoWarning/pegtl.h
   \author    J. Bakosi
@@ -6,7 +6,7 @@
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include pegtl/pegtl.hh with turning off specific compiler warnings
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef nowarning_pegtl_h
 #define nowarning_pegtl_h
 

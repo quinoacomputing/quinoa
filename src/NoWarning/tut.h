@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/NoWarning/tut.h
   \author    J. Bakosi
@@ -6,7 +6,7 @@
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include tut/tut.hpp with turning off specific compiler warnings
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef nowarning_tut_h
 #define nowarning_tut_h
 

@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/NoWarning/testu01.def.h
   \author    J. Bakosi
@@ -6,7 +6,7 @@
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include testu01.def.h with turning off specific compiler warnings
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef nowarning_testu01_def_h
 #define nowarning_testu01_def_h
 

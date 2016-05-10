@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/NoWarning/tutsuite.def.h
   \author    J. Bakosi
@@ -6,7 +6,7 @@
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include tutsuite.def.h with turning off specific compiler warnings
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef nowarning_tutsuite_def_h
 #define nowarning_tutsuite_def_h
 

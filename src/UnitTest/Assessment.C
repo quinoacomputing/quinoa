@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/UnitTest/Assessment.C
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Unit test suite assessment
   \details   Unit test suite assessment.
 */
-//******************************************************************************
+// *****************************************************************************
 
 #include <string>
 
@@ -25,7 +25,7 @@ evaluate( std::vector< std::string > status,
           std::size_t& nskip,
           std::size_t& nexcp,
           std::size_t& nfail )
-//******************************************************************************
+// *****************************************************************************
 //  Evaluate a single unit test
 //! \param[in] status Vector of strings containing the test results. See
 //!   unittest::TUTTest constructor for the expected structure of status.
@@ -35,7 +35,7 @@ evaluate( std::vector< std::string > status,
 //! \param[inout] nexcp Number of tests with an exception
 //! \param[inout] nfail Number of failed tests
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   if (status[2] != "8") {             // only care about non-dummy tests
     ++ncomplete;                      // count number of tests completed
@@ -58,7 +58,7 @@ assess( const tk::Print& print,
         std::size_t nskip,
         std::size_t nexcp,
         std::size_t ncomplete )
-//******************************************************************************
+// *****************************************************************************
 // Echo final assessment after the full unit test suite has finished
 //! \param[in] print Pretty printer
 //! \param[in] suite Name of the test suite
@@ -70,7 +70,7 @@ assess( const tk::Print& print,
 //! \return True of all tests passed, false if there was at least a failure or
 //!   an exception
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   if (!nfail && !nwarn && !nskip && !nexcp) {
     print.note< tk::QUIET >

@@ -1,17 +1,17 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Base/CharmUtil.h
   \author    J. Bakosi
-  \date      Wed 31 Dec 2014 05:01:37 PM MST
+  \date      Tue 10 May 2016 01:57:55 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ utilities
   \details   Charm++ utilities
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef CharmUtil_h
 #define CharmUtil_h
 
-#include <boost/type_traits/detail/ice_and.hpp>
+#include "NoWarning/ice_and.h"
 
 namespace tk {
 

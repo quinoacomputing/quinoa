@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/RNGTest/SmallCrush.C
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Class re-creating the TestU01 library's SmallCrush battery
   \details   Class re-creating the TestU01 library's SmallCrush battery.
 */
-//******************************************************************************
+// *****************************************************************************
 
 #include "NoWarning/charm.h"
 #include "NoWarning/pup_stl.h"
@@ -43,7 +43,7 @@ void
 SmallCrush::addTests( std::vector< std::function< StatTest() > >& tests,
                       tk::ctr::RNGType rng,
                       CProxy_TestU01Suite& proxy )
-//******************************************************************************
+// *****************************************************************************
 // Add statistical tests to battery
 //! \details This function adds, i.e., registers, all statistical tests to the
 //!   test stack corresponding to the TestU01 library's SmallCrush battery.
@@ -51,7 +51,7 @@ SmallCrush::addTests( std::vector< std::function< StatTest() > >& tests,
 //! \param[in] rng RNG ID enum associated with the RNG to be tested
 //! \param[in] proxy Charm++ host proxy to which the tests will call back to
 //! \author  J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   // Select test stack
   const auto& stack = g_testStack.TestU01;

@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Base/TaggedTuple.h
   \author    J. Bakosi
@@ -19,7 +19,7 @@
     compile-time associated container between tags and an arbitrary type. As an
     example, see rngtest::TestU01Stack::runner.
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef TaggedTuple_h
 #define TaggedTuple_h
 

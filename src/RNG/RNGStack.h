@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/RNG/RNGStack.h
   \author    J. Bakosi
@@ -12,7 +12,7 @@
     associative container), associating unique RNG keys to their constructor
     calls. For more details, see the in-code documentation of the constructor.
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef RNGStack_h
 #define RNGStack_h
 

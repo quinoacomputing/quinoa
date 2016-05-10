@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Control/UnitTest/CmdLine/CmdLine.h
   \author    J. Bakosi
@@ -9,7 +9,7 @@
      the data from user input during the command-line parsing of the unit test
      suite, UnitTest.
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef UnitTestCmdLine_h
 #define UnitTestCmdLine_h
 

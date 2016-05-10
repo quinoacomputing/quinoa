@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Control/Walker/InputDeck/Parser.h
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Walker's input deck file parser
   \details   Walker's input deck file parser
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef WalkerInputDeckParser_h
 #define WalkerInputDeckParser_h
 

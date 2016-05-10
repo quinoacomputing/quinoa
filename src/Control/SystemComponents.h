@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Control/SystemComponents.h
   \author    J. Bakosi
@@ -66,7 +66,7 @@
     For example client-code, see walker::Dirichlet::Dirichlet() in
     DiffEq/Dirichlet.h, or walker::Integrator::Integrator in Walker/Integrator.h.
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef SystemComponents_h
 #define SystemComponents_h
 

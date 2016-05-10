@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/NoWarning/charmtimer.def.h
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Include charmtimer.def.h with turning off specific compiler
              warnings
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef nowarning_charmtimer_def_h
 #define nowarning_charmtimer_def_h
 

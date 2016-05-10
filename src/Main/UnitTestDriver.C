@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Main/UnitTestDriver.C
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Unit test driver
   \details   Unit test driver.
 */
-//******************************************************************************
+// *****************************************************************************
 
 #include "UnitTestPrint.h"
 #include "UnitTestDriver.h"
@@ -26,13 +26,13 @@ extern CProxy_TUTSuite g_suiteProxy;
 UnitTestDriver::UnitTestDriver( const UnitTestPrint& print,
                                 const ctr::CmdLine& cmdline ) :
   m_print( print )
-//******************************************************************************
+// *****************************************************************************
 //  Constructor
 //! \param[in] print Pretty printer
 //! \param[in] cmdline Command line object storing data parsed from the command
 //!   line arguments
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   // All global-scope data to be migrated to all PEs initialized here (if any)
   m_print.endpart();

@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/NoWarning/replace.h
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Include boost/algorithm/string/replace.hpp with turning off
              specific compiler warnings
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef nowarning_replace_h
 #define nowarning_replace_h
 

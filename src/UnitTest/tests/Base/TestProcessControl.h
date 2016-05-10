@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/UnitTest/tests/Base/TestProcessControl.h
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Unit tests for Base/ProcessControl.h
   \details   Unit tests for Base/ProcessControl.h
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef test_ProcessControl_h
 #define test_ProcessControl_h
 

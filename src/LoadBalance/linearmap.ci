@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/LoadBalance/linearmap.ci
   \author    J. Bakosi
@@ -9,7 +9,7 @@
      http://charm.cs.illinois.edu/manuals/html/charm++/manual.html, Sec.
      Advanced Array Creation. This class does a simple block distribution.
 */
-//******************************************************************************
+// *****************************************************************************
 
 module linearmap {
 

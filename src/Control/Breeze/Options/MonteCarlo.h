@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Control/Breeze/Options/MonteCarlo.h
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     MonteCarlo options
   \details   MonteCarlo options
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef BreezeMonteCarloOptions_h
 #define BreezeMonteCarloOptions_h
 

@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/NoWarning/charm.h
   \author    J. Bakosi
@@ -6,7 +6,7 @@
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include charm.h with turning off specific compiler warnings
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef nowarning_charm_h
 #define nowarning_charm_h
 

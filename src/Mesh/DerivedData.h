@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Mesh/DerivedData.h
   \author    J. Bakosi
@@ -8,7 +8,7 @@
   \details   Generate data structures derived from the connectivity information
      of an unstructured mesh.
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef DerivedData_h
 #define DerivedData_h
 

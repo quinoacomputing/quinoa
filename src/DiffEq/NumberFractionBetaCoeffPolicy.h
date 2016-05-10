@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/DiffEq/NumberFractionBetaCoeffPolicy.h
   \author    J. Bakosi
@@ -47,7 +47,7 @@
       which returns the enum value of the option from the underlying option
       class, collecting all possible options for coefficients policies.
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef NumberFractionBetaCoeffPolicy_h
 #define NumberFractionBetaCoeffPolicy_h
 

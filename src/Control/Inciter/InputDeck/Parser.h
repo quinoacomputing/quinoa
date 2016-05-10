@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Control/Inciter/InputDeck/Parser.h
   \author    J. Bakosi
@@ -8,7 +8,7 @@
   \details   This file declares the input deck, i.e., control file, parser for
     the computational shock hydrodynamics tool, Inciter.
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef InciterInputDeckParser_h
 #define InciterInputDeckParser_h
 

@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/DiffEq/GeneralizedDirichlet.h
   \author    J. Bakosi
@@ -50,7 +50,7 @@
     on the coefficients must be satisfied. For more details on the generalized
     Dirichlet SDE, see http://dx.doi.org/10.1063/1.4822416.
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef GeneralizedDirichlet_h
 #define GeneralizedDirichlet_h
 

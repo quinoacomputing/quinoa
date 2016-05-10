@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/IO/MeshFactory.h
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Unstructured mesh reader and writer factory
   \details   Unstructured mesh reader and writer factory.
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef MeshFactory_h
 #define MeshFactory_h
 

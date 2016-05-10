@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Mesh/DerivedData.C
   \author    J. Bakosi
@@ -8,7 +8,7 @@
   \details   Generate data structures derived from the connectivity information
      of an unstructured mesh.
 */
-//******************************************************************************
+// *****************************************************************************
 
 #include <set>
 #include <map>
@@ -24,7 +24,7 @@ namespace tk {
 
 std::pair< std::vector< std::size_t >, std::vector< std::size_t > >
 genEsup( const std::vector< std::size_t >& inpoel, std::size_t nnpe )
-//******************************************************************************
+// *****************************************************************************
 //  Generate derived data structure, elements surrounding points
 //! \param[in] inpoel Inteconnectivity of points and elements. These are the
 //!   node ids of each element of an unstructured mesh. Example:
@@ -59,7 +59,7 @@ genEsup( const std::vector< std::size_t >& inpoel, std::size_t nnpe )
 //!   however, only nnpe = 4 (tetrahedra) and nnpe = 3 (triangles) are tested.
 //! \see Lohner, An Introduction to Applied CFD Techniques, Wiley, 2008
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   Assert( !inpoel.empty(), "Attempt to call genEsup() on empty container" );
   Assert( nnpe > 0, "Attempt to call genEsup() with zero nodes per element" );
@@ -111,7 +111,7 @@ genPsup( const std::vector< std::size_t >& inpoel,
          std::size_t nnpe,
          const std::pair< std::vector< std::size_t >,
                           std::vector< std::size_t > >& esup )
-//******************************************************************************
+// *****************************************************************************
 //  Generate derived data structure, points surrounding points
 //! \param[in] inpoel Inteconnectivity of points and elements. These are the
 //!   node ids of each element of an unstructured mesh. Example:
@@ -152,7 +152,7 @@ genPsup( const std::vector< std::size_t >& inpoel,
 //!   however, only nnpe = 4 (tetrahedra) and nnpe = 3 (triangles) are tested.
 //! \see Lohner, An Introduction to Applied CFD Techniques, Wiley, 2008
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   Assert( !inpoel.empty(), "Attempt to call genPsup() on empty container" );
   Assert( nnpe > 0, "Attempt to call genPsup() with zero nodes per element" );
@@ -207,7 +207,7 @@ genEdsup( const std::vector< std::size_t >& inpoel,
           std::size_t nnpe,
           const std::pair< std::vector< std::size_t >,
                            std::vector< std::size_t > >& esup )
-//******************************************************************************
+// *****************************************************************************
 //  Generate derived data structure, edges surrounding points
 //! \param[in] inpoel Inteconnectivity of points and elements. These are the
 //!   node ids of each element of an unstructured mesh. Example:
@@ -252,7 +252,7 @@ genEdsup( const std::vector< std::size_t >& inpoel,
 //! \see tk::genInpoed for similar data that sometimes may be more advantageous
 //! \see Lohner, An Introduction to Applied CFD Techniques, Wiley, 2008
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   Assert( !inpoel.empty(), "Attempt to call genEdsup() on empty container" );
   Assert( nnpe > 0, "Attempt to call genEdsup() with zero nodes per element" );
@@ -311,7 +311,7 @@ genInpoed( const std::vector< std::size_t >& inpoel,
            std::size_t nnpe,
            const std::pair< std::vector< std::size_t >,
                             std::vector< std::size_t > >& esup )
-//******************************************************************************
+// *****************************************************************************
 //  Generate derived data structure, edge connectivity
 //! \param[in] inpoel Inteconnectivity of points and elements. These are the
 //!   node ids of each element of an unstructured mesh. Example:
@@ -354,7 +354,7 @@ genInpoed( const std::vector< std::size_t >& inpoel,
 //! \see tk::genEdsup for similar data that sometimes may be more advantageous
 //! \see Lohner, An Introduction to Applied CFD Techniques, Wiley, 2008
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   Assert( !inpoel.empty(), "Attempt to call genInpoed() on empty container" );
   Assert( nnpe > 0, "Attempt to call genInpoed() with zero nodes per element" );
@@ -414,7 +414,7 @@ genEsupel( const std::vector< std::size_t >& inpoel,
            std::size_t nnpe,
            const std::pair< std::vector< std::size_t >,
                             std::vector< std::size_t > >& esup )
-//******************************************************************************
+// *****************************************************************************
 //  Generate derived data structure, elements surrounding points of elements
 //! \param[in] inpoel Inteconnectivity of points and elements. These are the
 //!   node ids of each element of an unstructured mesh. Example:
@@ -450,7 +450,7 @@ genEsupel( const std::vector< std::size_t >& inpoel,
 //!   however, only nnpe = 4 (tetrahedra) and nnpe = 3 (triangles) are tested.
 //! \see Lohner, An Introduction to Applied CFD Techniques, Wiley, 2008
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   Assert( !inpoel.empty(), "Attempt to call genEsupel() on empty container" );
   Assert( nnpe > 0, "Attempt to call genEsupel() with zero nodes per element" );
@@ -491,7 +491,7 @@ genEsuel( const std::vector< std::size_t >& inpoel,
           std::size_t nnpe,
           const std::pair< std::vector< std::size_t >,
                            std::vector< std::size_t > >& esup )
-//******************************************************************************
+// *****************************************************************************
 //  Generate derived data structure, elements surrounding elements
 //! \param[in] inpoel Inteconnectivity of points and elements. These are the
 //!   node ids of each element of an unstructured mesh. Example:
@@ -526,7 +526,7 @@ genEsuel( const std::vector< std::size_t >& inpoel,
 //!   however, only nnpe = 4 (tetrahedra) and nnpe = 3 (triangles) are tested.
 //! \see Lohner, An Introduction to Applied CFD Techniques, Wiley, 2008
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   Assert( !inpoel.empty(), "Attempt to call genEsuel() on empty container" );
   Assert( nnpe > 0, "Attempt to call genEsuel() with zero nodes per element" );
@@ -580,7 +580,7 @@ std::vector< std::size_t >
 genInedel( const std::vector< std::size_t >& inpoel,
            std::size_t nnpe,
            const std::vector< std::size_t >& inpoed )
-//******************************************************************************
+// *****************************************************************************
 //  Generate derived data structure, edges of elements
 //! \param[in] inpoel Inteconnectivity of points and elements. These are the
 //!   node ids of each element of an unstructured mesh. Example:
@@ -629,7 +629,7 @@ genInedel( const std::vector< std::size_t >& inpoel,
 //!   and tetrahedra element connectivity.
 //! \see Lohner, An Introduction to Applied CFD Techniques, Wiley, 2008
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   Assert( !inpoel.empty(), "Attempt to call genInedel() on empty container" );
   Assert( nnpe > 0, "Attempt to call genInedel() with zero nodes per element" );
@@ -702,7 +702,7 @@ genEsued( const std::vector< std::size_t >& inpoel,
           std::size_t nnpe,
           const std::pair< std::vector< std::size_t >,
                            std::vector< std::size_t > >& esup )
-//******************************************************************************
+// *****************************************************************************
 //  Generate derived data structure, elements surrounding edges
 //! \param[in] inpoel Inteconnectivity of points and elements. These are the
 //!   node ids of each element of an unstructured mesh. Example:
@@ -744,7 +744,7 @@ genEsued( const std::vector< std::size_t >& inpoel,
 //!   and tetrahedra element connectivity.
 //! \see Lohner, An Introduction to Applied CFD Techniques, Wiley, 2008
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   Assert( !inpoel.empty(), "Attempt to call genEsued() on empty container" );
   Assert( nnpe > 0, "Attempt to call genEsued() with zero nodes per element" );

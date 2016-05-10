@@ -1,8 +1,8 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Base/Factory.h
   \author    J. Bakosi
-  \date      Mon 09 May 2016 03:40:43 PM MDT
+  \date      Tue 10 May 2016 02:23:04 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Factory utilities
   \details   Factory utilities. The functions defined in this file help
@@ -10,7 +10,7 @@
     factories are good for, see
     http://www.boost.org/doc/libs/release/libs/functional/factory.
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef Factory_h
 #define Factory_h
 
@@ -151,11 +151,12 @@ template< class Host, class ModelConstructor, class Factory, class Key,
 void recordModelLate( Factory& f, const Key& key, ModelConstrArg ) {
   // Prescribe late binding the model constructor to its single argument
   std::function< ModelConstructor(const ModelConstrArg&) > c =
-    boost::bind( boost::value_factory< ModelConstructor >(), _1 );
+    boost::bind( boost::value_factory< ModelConstructor >(), boost::arg<1>() );
   // Bind host to std::function of model constructor and place in factory and
   // also explicitly bind single model constructor argument to host constructor
   f.emplace( key,
-    boost::bind( boost::value_factory< Host >(), std::move(c), _1 ) );
+    boost::bind( boost::value_factory< Host >(), std::move(c), boost::arg<1>() )
+  );
 }
 
 //! Register Charm++ model class of host into factory with given key. We bind a

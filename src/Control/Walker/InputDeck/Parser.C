@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Control/Walker/InputDeck/Parser.C
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Walker's input deck file parser
   \details   Walker's input deck file parser
 */
-//******************************************************************************
+// *****************************************************************************
 
 #include <ostream>
 #include <vector>
@@ -37,13 +37,13 @@ InputDeckParser::InputDeckParser( const tk::Print& print,
                                   const ctr::CmdLine& cmdline,
                                   ctr::InputDeck& inputdeck ) :
   FileParser( cmdline.get< tag::io, tag::control >() )
-//******************************************************************************
+// *****************************************************************************
 //  Constructor
 //! \param[in] print Pretty printer
 //! \param[in] cmdline Command line stack
 //! \param[inout] inputdeck Input deck stack where data is stored during parsing
 //! \author  J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   // Create PEGTL file input from std::string
   pegtl::file_input< ctr::Location > input( m_filename );

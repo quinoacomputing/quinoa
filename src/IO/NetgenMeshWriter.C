@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/IO/NetgenMeshWriter.C
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Netgen mesh writer class definition
   \details   Netgen mesh writer class definition. Only supports tetrahedra.
 */
-//******************************************************************************
+// *****************************************************************************
 
 #include <iomanip>
 #include <ostream>
@@ -27,11 +27,11 @@ using tk::NetgenMeshWriter;
 
 void
 NetgenMeshWriter::writeMesh( const UnsMesh& mesh )
-//******************************************************************************
+// *****************************************************************************
 //  Public interface for writing Netgen mesh
 //! \param[in] mesh Unstructured mesh object
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   writeNodes( mesh );
   writeElements( mesh );
@@ -39,11 +39,11 @@ NetgenMeshWriter::writeMesh( const UnsMesh& mesh )
 
 void
 NetgenMeshWriter::writeNodes( const UnsMesh& mesh )
-//******************************************************************************
+// *****************************************************************************
 //  Write nodes
 //! \param[in] mesh Unstructured mesh object
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   // Write out number of nodes
   m_outFile << mesh.nnode() << std::endl;
@@ -59,11 +59,11 @@ NetgenMeshWriter::writeNodes( const UnsMesh& mesh )
 
 void
 NetgenMeshWriter::writeElements( const UnsMesh& mesh )
-//******************************************************************************
+// *****************************************************************************
 //  Write elements, i.e., connectivity
 //! \param[in] mesh Unstructured mesh object
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   if (mesh.tetinpoel().empty()) return;
 

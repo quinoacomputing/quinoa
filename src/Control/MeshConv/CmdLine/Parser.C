@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Control/MeshConv/CmdLine/Parser.C
   \author    J. Bakosi
@@ -8,7 +8,7 @@
   \details   This file defines the command-line argument parser for the mesh
      file converter, MeshConv.
 */
-//******************************************************************************
+// *****************************************************************************
 
 #include <map>
 #include <ostream>
@@ -42,14 +42,14 @@ CmdLineParser::CmdLineParser( int argc,
                               const tk::Print& print,
                               ctr::CmdLine& cmdline ) :
   StringParser( argc, argv )
-//******************************************************************************
+// *****************************************************************************
 //  Contructor: parse the command line for MeshConv
 //! \param[in] argc Number of C-style character arrays in argv
 //! \param[in] argv C-style character array of character arrays
 //! \param[in] print Pretty printer
 //! \param[inout] cmdline Command-line stack where data is stored from parsing
 //! \author  J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   // Create PEGTL string input from std::string, i.e., concatenated argv[]
   pegtl::string_input< ctr::Location > input( m_string );

@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/DiffEq/GeneralizedDirichletCoeffPolicy.h
   \author    J. Bakosi
@@ -46,7 +46,7 @@
       which returns the enum value of the option from the underlying option
       class, collecting all possible options for coefficients policies.
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef GeneralizedDirichletCoeffPolicy_h
 #define GeneralizedDirichletCoeffPolicy_h
 

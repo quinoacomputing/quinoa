@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/NoWarning/value_factory.h
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Include boost/functional/value_factory.hpp with turning off
              specific compiler warnings
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef nowarning_value_factory_h
 #define nowarning_value_factory_h
 

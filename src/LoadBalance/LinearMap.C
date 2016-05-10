@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/LoadBalance/LinearMap.C
   \author    J. Bakosi
@@ -32,7 +32,7 @@
      The heavy portion of array element placement should therefore be done in
      the constructor.
 */
-//******************************************************************************
+// *****************************************************************************
 
 #include <string>
 
@@ -43,14 +43,14 @@ using tk::LinearMap;
 
 int
 LinearMap::procNum( int, const CkArrayIndex& idx )
-//******************************************************************************
+// *****************************************************************************
 //  Return the home processor number for the array element for linear
 //  distribution
 //! \param[in] idx Charm++ array index object containing the array element index
 //!   to assign a PE to
 //! \return PE assigned
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   int elem = *idx.data();       // array element we assign PE for
   auto pe = elem / m_chunksize;
@@ -64,14 +64,14 @@ LinearMap::procNum( int, const CkArrayIndex& idx )
 
 void
 LinearMap::populateInitial( int, CkArrayOptions& opt, void *msg, CkArrMgr *mgr )
-//******************************************************************************
+// *****************************************************************************
 // Create initial set of array elements based on linear distribution
 //! \param[in] opt Charm++ array options object containing the number of initial
 //!   array elements to be created
 //! \param[in] msg Charm++ messsage to use for array element creation
 //! \param[in] mgr Array manager to use
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   int nelem = *opt.getNumInitial().data(); // number of array elements requested
   if (nelem == 0) return;                  // no initial elements requested

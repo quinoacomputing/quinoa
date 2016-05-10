@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Control/Options/MKLGaussianMethod.h
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Intel MKL Gaussian RNG method options
   \details   Intel MKL Gaussian RNG method options
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef MKLGaussianMethodOptions_h
 #define MKLGaussianMethodOptions_h
 

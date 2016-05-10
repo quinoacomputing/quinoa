@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Control/RNGTest/Options/Battery.h
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Random number generator test suite batteries options
   \details   Random number generator test suite batteries options
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef RNGTestBatteryOptions_h
 #define RNGTestBatteryOptions_h
 

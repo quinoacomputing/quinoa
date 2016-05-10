@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/LinSys/ZoltanInterOp.C
   \author    J. Bakosi
@@ -8,7 +8,7 @@
   \details   Interoperation with the Zoltan library, used for static mesh graph
     partitioning.
 */
-//******************************************************************************
+// *****************************************************************************
 
 #include "NoWarning/Zoltan2_MeshAdapter.h"
 #include "NoWarning/Zoltan2_PartitioningProblem.h"
@@ -105,7 +105,7 @@ geomPartMesh( tk::ctr::PartitioningAlgorithmType algorithm,
               const std::vector< std::size_t >& elemid,
               std::size_t nelem,
               int npart )
-//******************************************************************************
+// *****************************************************************************
 //  Partition mesh using Zoltan2 with a geometric partitioner, such as RCB, RIB
 //! \param[in] algorithm Partitioning algorithm type
 //! \param[in] centroid Mesh element coordinates
@@ -117,7 +117,7 @@ geomPartMesh( tk::ctr::PartitioningAlgorithmType algorithm,
 //! \details This function uses Zoltan to partition the mesh graph in parallel.
 //!   It assumes that the mesh graph is distributed among all the MPI ranks.
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   // Set Zoltan parameters
   Teuchos::ParameterList params( "Zoltan parameters" );

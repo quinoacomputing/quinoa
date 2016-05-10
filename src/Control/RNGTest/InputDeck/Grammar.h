@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Control/RNGTest/InputDeck/Grammar.h
   \author    J. Bakosi
@@ -10,7 +10,7 @@
   grammar and the associated parser. Credit goes to Colin Hirsch (pegtl@cohi.at)
   for PEGTL. Word of advice: read from the bottom up.
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef RNGTestInputDeckGrammar_h
 #define RNGTestInputDeckGrammar_h
 

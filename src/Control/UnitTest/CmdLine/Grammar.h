@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Control/UnitTest/CmdLine/Grammar.h
   \author    J. Bakosi
@@ -10,7 +10,7 @@
   associated parser. Credit goes to Colin Hirsch (pegtl@cohi.at) for PEGTL. Word
   of advice: read from the bottom up.
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef UnitTestCmdLineGrammar_h
 #define UnitTestCmdLineGrammar_h
 

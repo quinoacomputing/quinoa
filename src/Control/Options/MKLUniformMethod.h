@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Control/Options/MKLUniformMethod.h
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Intel MKL uniform RNG method options
   \details   Intel MKL uniform RNG method options
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef MKLUniformMethodOptions_h
 #define MKLUniformMethodOptions_h
 

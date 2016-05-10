@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/PDE/PDEStack.C
   \author    J. Bakosi
@@ -12,7 +12,7 @@
     associating unique partial differential equation keys to their constructor
     calls. For more details, see the in-code documentation of the constructor.
 */
-//******************************************************************************
+// *****************************************************************************
 
 #include "NoWarning/cartesian_product.h"
 
@@ -30,7 +30,7 @@
 using inciter::PDEStack;
 
 PDEStack::PDEStack() : m_factory(), m_eqTypes()
-//******************************************************************************
+// *****************************************************************************
 //  Constructor: register all partial differential equations into factory
 //! \details This constructor consists of several blocks, each registering a
 //!   potentially large number of entries in the partial differential equation
@@ -96,7 +96,7 @@ PDEStack::PDEStack() : m_factory(), m_eqTypes()
 //!   for counting up the number of unique differential equation types
 //!   registered, used for diagnostics purposes.
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   namespace mpl = boost::mpl;
 
@@ -117,11 +117,11 @@ PDEStack::PDEStack() : m_factory(), m_eqTypes()
 
 std::vector< inciter::PDE >
 PDEStack::selected() const
-//******************************************************************************
+// *****************************************************************************
 //  Instantiate all selected partial differential equations
 //! \return std::vector of instantiated partial differential equation objects
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   std::map< ctr::PDEType, ncomp_t > cnt;    // count PDEs per type
   std::vector< PDE > pdes;                      // will store instantiated PDEs
@@ -139,12 +139,12 @@ PDEStack::selected() const
 
 std::vector< std::vector< std::pair< std::string, std::string > > >
 PDEStack::info() const
-//******************************************************************************
+// *****************************************************************************
 //  Return information on all selected partial differential equations
 //! \return A vector of vector of pair of strings, containing the configuration
 //!   for each selected partial differential equation
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   std::map< ctr::PDEType, ncomp_t > cnt; // count PDEs per type
   // will store info on all differential equations selected
@@ -163,13 +163,13 @@ PDEStack::info() const
 
 std::vector< std::pair< std::string, std::string > >
 PDEStack::infoAdvDiff( std::map< ctr::PDEType, ncomp_t >& cnt ) const
-//******************************************************************************
+// *****************************************************************************
 //  Return information on the advection-diffusion PDE
 //! \param[inout] cnt std::map of counters for all partial differential equation
 //!   types
 //! \return vector of string pairs describing the PDE configuration
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   auto c = ++cnt[ ctr::PDEType::ADV_DIFF ];       // count eqs
   --c;  // used to index vectors starting with 0
@@ -198,13 +198,13 @@ PDEStack::infoAdvDiff( std::map< ctr::PDEType, ncomp_t >& cnt ) const
 
 std::vector< std::pair< std::string, std::string > >
 PDEStack::infoEuler( std::map< ctr::PDEType, ncomp_t >& cnt ) const
-//******************************************************************************
+// *****************************************************************************
 //  Return information on the Euler system of PDEs
 //! \param[inout] cnt std::map of counters for all partial differential equation
 //!   types
 //! \return vector of string pairs describing the PDE configuration
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   auto c = ++cnt[ ctr::PDEType::EULER ];       // count eqs
   --c;  // used to index vectors starting with 0

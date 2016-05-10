@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/IO/TxtStatWriter.C
   \author    J. Bakosi
@@ -8,7 +8,7 @@
   \details   This file declares the ASCII statistics writer class that
      facilitates outputing statistics to text files.
 */
-//******************************************************************************
+// *****************************************************************************
 
 #include <iostream>
 #include <iomanip>
@@ -24,14 +24,14 @@ TxtStatWriter::TxtStatWriter( const std::string& filename,
   Writer( filename, mode ),
   m_precision( static_cast<int>(precision) ),
   m_width( std::max( 16, m_precision+8 ) )
-//******************************************************************************
+// *****************************************************************************
 //  Constructor
 //! \param[in] filename Output filename to which output the PDF
 //! \param[in] format Configure floating-point output format ASCII output
 //! \param[in] precision Configure precision for floating-point ASCII output
 //! \param[in] mode Configure file open mode
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   // Set floating-point format for output file stream
   if (format == ctr::TxtFloatFormatType::DEFAULT)
@@ -50,12 +50,12 @@ TxtStatWriter::TxtStatWriter( const std::string& filename,
 void
 TxtStatWriter::header( const std::vector< std::string >& nameOrd,
                        const std::vector< std::string >& nameCen ) const
-//******************************************************************************
+// *****************************************************************************
 //  Write out statistics file header
 //! \param[in] nameOrd Vector of strings with the names of ordinary moments
 //! \param[in] nameCen Vector of strings with the names of central moments
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   m_outFile << "#" << std::setw(9) << "1:it";
   m_outFile << std::setw(m_width) << "2:t";
@@ -84,7 +84,7 @@ TxtStatWriter::stat( uint64_t it,
                      tk::real t,
                      const std::vector< tk::real >& ordinary,
                      const std::vector< tk::real >& central )
-//******************************************************************************
+// *****************************************************************************
 //  Write out statistics
 //! \param[in] it Iteration counter
 //! \param[in] t Time
@@ -92,7 +92,7 @@ TxtStatWriter::stat( uint64_t it,
 //! \param[in] central Vector with the central moment statistics
 //! \return The total number of statistics written to the output file
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   m_outFile << std::setw(10) << it;
   m_outFile << std::setw(m_width) << t;

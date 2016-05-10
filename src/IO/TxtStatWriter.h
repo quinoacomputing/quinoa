@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/IO/TxtStatWriter.h
   \author    J. Bakosi
@@ -8,7 +8,7 @@
   \details   This file declares the ASCII statistics writer class that
      facilitates outputing statistics to text files.
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef TxtStatWriter_h
 #define TxtStatWriter_h
 

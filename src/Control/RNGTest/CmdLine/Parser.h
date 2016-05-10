@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Control/RNGTest/CmdLine/Parser.h
   \author    J. Bakosi
@@ -8,7 +8,7 @@
   \details   This file declares the command-line argument parser for the random
      number generator test suite, RNGTest.
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef RNGTestCmdLineParser_h
 #define RNGTestCmdLineParser_h
 

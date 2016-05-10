@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Mesh/UnsMesh.h
   \author    J. Bakosi
@@ -8,7 +8,7 @@
   \details   3D unstructured mesh class declaration. This mesh class currently
     supports line, triangle, and tetrahedron elements.
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef UnsMesh_h
 #define UnsMesh_h
 

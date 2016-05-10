@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Main/WalkerPrint.h
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Walker-specific pretty printer functionality
   \details   Walker-specific pretty printer functionality.
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef WalkerPrint_h
 #define WalkerPrint_h
 

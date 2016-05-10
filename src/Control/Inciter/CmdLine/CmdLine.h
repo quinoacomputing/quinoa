@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Control/Inciter/CmdLine/CmdLine.h
   \author    J. Bakosi
@@ -9,7 +9,7 @@
      the data from user input during the command-line parsing of the
      computational shock hydrodynamics tool, Inciter.
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef InciterCmdLine_h
 #define InciterCmdLine_h
 

@@ -1,8 +1,8 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/DiffEq/WrightFisher.h
   \author    J. Bakosi
-  \date      Wed 04 May 2016 11:23:14 AM MDT
+  \date      Tue 10 May 2016 02:29:09 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Wright-Fisher SDE
   \details   This file implements the time integration of a system of stochastic
@@ -10,7 +10,7 @@
     distribution. For more details on the Wright-Fisher SDE, see
     http://www.sciencedirect.com/science/article/pii/S0040580912001013.
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef WrightFisher_h
 #define WrightFisher_h
 
@@ -18,9 +18,9 @@
 #include <vector>
 
 #ifdef HAS_MKL
-  #include <mkl_lapacke.h>
+  #include "NoWarning/mkl_lapacke.h"
 #else
-  #include <lapacke.h>
+  #include "NoWarning/lapacke.h"
 #endif
 
 #include "Macro.h"

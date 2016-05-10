@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/DiffEq/GammaCoeffPolicy.h
   \author    J. Bakosi
@@ -42,7 +42,7 @@
       which returns the enum value of the option from the underlying option
       class, collecting all possible options for coefficients policies.
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef GammaCoeffPolicy_h
 #define GammaCoeffPolicy_h
 

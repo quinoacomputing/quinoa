@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Base/ExceptionMPI.h
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Exception macros interoperating with MPI
   \details   Exception macros interoperating with MPI.
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef ExceptionMPI_h
 #define ExceptionMPI_h
 

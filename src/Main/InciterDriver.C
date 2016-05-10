@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Main/InciterDriver.C
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Inciter driver
   \details   Inciter driver.
 */
-//******************************************************************************
+// *****************************************************************************
 
 #include <unordered_map>
 
@@ -30,13 +30,13 @@ using inciter::InciterDriver;
 InciterDriver::InciterDriver( const InciterPrint& print,
                               const ctr::CmdLine& cmdline ) :
   m_print( print )
-//******************************************************************************
+// *****************************************************************************
 //  Constructor
 //! \param[in] print Pretty printer
 //! \param[in] cmdline Command line object storing data parsed from the command
 //!   line arguments
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   // All global-scope data to be migrated to all PEs initialized here (if any)
 
@@ -49,10 +49,10 @@ InciterDriver::InciterDriver( const InciterPrint& print,
 
 void
 InciterDriver::execute() const
-//******************************************************************************
+// *****************************************************************************
 //  Run inciter
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   // Instantiate Conductor chare which drives the time-integration of a PDE via
   // several Performer chares.

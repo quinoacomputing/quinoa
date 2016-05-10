@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/NoWarning/charmchild.def.h
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Include charmchild.def.h with turning off specific compiler
              warnings
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef nowarning_charmchild_def_h
 #define nowarning_charmchild_def_h
 

@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/IO/ExodusIIMeshWriter.h
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     ExodusII mesh-based data writer
   \details   ExodusII mesh-based data writer class declaration.
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef ExodusIIMeshWriter_h
 #define ExodusIIMeshWriter_h
 

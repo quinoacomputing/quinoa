@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Base/ProcessControl.h
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     POSIX process control wrapper definitions
   \details   POSIX process control wrapper definitions.
 */
-//******************************************************************************
+// *****************************************************************************
 
 #include <string>
 #include <vector>
@@ -21,7 +21,7 @@
 
 namespace tk {
 
-//******************************************************************************
+// *****************************************************************************
 //  Remove file from file system
 //! \param[in] file File name to delete (shell wildcards NOT expanded)
 //! \details Since we use pstream's basic_ipstream constructor with signature
@@ -30,7 +30,7 @@ namespace tk {
 //!   are duplicated in searching for an executable in PATH. The shell will not
 //!   interpret the other arguments, so wildcard expansion will not take place.
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 void rm( const std::string& file ) {
   std::vector< std::string > argv;
   argv.push_back( "rm" );

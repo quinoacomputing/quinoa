@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/PDE/AdvDiffProblem.h
   \author    J. Bakosi
@@ -21,7 +21,7 @@
       which returns the enum value of the option from the underlying option
       class, collecting all possible options for coefficients policies.
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef AdvDiffProblem_h
 #define AdvDiffProblem_h
 

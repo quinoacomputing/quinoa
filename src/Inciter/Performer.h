@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Inciter/Performer.h
   \author    J. Bakosi
@@ -10,7 +10,7 @@
     performer gets a chunk of the full load (part of the mesh) and does the
     same: initializes and advances a PDE in time.
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef Performer_h
 #define Performer_h
 

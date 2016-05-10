@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/IO/STLTxtMeshReader.C
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     ASCII STL (STereoLithography) reader class definition
   \details   ASCII STL (STereoLithography) reader class definition.
 */
-//******************************************************************************
+// *****************************************************************************
 
 #include "STLMesh.h"
 #include "STLTxtMeshReader.h"
@@ -16,12 +16,12 @@ using tk::STLTxtMeshReader;
 
 STLTxtMeshReader::STLTxtMeshReader( const std::string filename, STLMesh& mesh )
   : Reader( filename ), m_mesh( mesh )
-//******************************************************************************
+// *****************************************************************************
 // Constructor
 //! \param[in] filename File to read STL data from
 //! \param[inout] mesh STLMesh object to store STL mesh
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   // Set mesh name as filename modulo extension
   mesh.setName( filename.substr( 0, filename.find_last_of(".") ) );
@@ -29,10 +29,10 @@ STLTxtMeshReader::STLTxtMeshReader( const std::string filename, STLMesh& mesh )
 
 void
 STLTxtMeshReader::readMesh()
-//******************************************************************************
+// *****************************************************************************
 //  Read ASCII STL mesh
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   // Count up number of vertices in STL mesh
   auto nnodes = readFacets( COUNT );
@@ -50,7 +50,7 @@ STLTxtMeshReader::readFacets( const bool store,
                               tk::real* const x,
                               tk::real* const y,
                               tk::real* const z )
-//******************************************************************************
+// *****************************************************************************
 //  Read ASCII STL mesh
 //  \param[in]  store  Whether to store the facets or not (i.e., only count)
 //  \param[in]  x      Vertex x coordinates
@@ -58,7 +58,7 @@ STLTxtMeshReader::readFacets( const bool store,
 //  \param[in]  z      Vertex z coordinates
 //  \return            Number of vertices counted
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   #if defined(__GNUC__)
     #pragma GCC diagnostic push

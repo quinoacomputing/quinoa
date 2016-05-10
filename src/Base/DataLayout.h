@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Base/DataLayout.h
   \author    J. Bakosi
@@ -8,7 +8,7 @@
   \details   Generic data access abstraction for different data layouts. See
     also the rationale discussed in the [design](layout.html) document.
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef DataLayout_h
 #define DataLayout_h
 

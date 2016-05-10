@@ -1,13 +1,13 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Walker/distributor.ci
   \author    J. Bakosi
-  \date      Wed 27 Jan 2016 09:39:55 PM MST
+  \date      Tue 10 May 2016 02:08:55 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ module interface file for Distributor
   \details   Charm++ module interface file for Distributor
 */
-//******************************************************************************
+// *****************************************************************************
 
 module distributor {
 
@@ -53,7 +53,7 @@ module distributor {
       // NoSt for the moment - those will be discussed at the very end.
       //
       // After initialization a time step starts by advancing all particles
-      // (AdvP, Integrator::advance()). When that's finished (no global
+      // (AdvP, Integrator::advance()). When that is finished (no global
       // synchronization), each PE starts with the estimation of its portion of
       // the ordinary moments (OrdM). When a PE finished with its part of the
       // estimation of the ordinary moments, it calls back to its host,
@@ -64,7 +64,7 @@ module distributor {
       //
       // Understanding 'wait4ord'. Once the host has finished collecting
       // partially accumulated ordinary moment (sums) from all PEs, it signals
-      // Charm++'s SDAG runtime that all ordinary moments are updated and the
+      // Charm++ SDAG runtime that all ordinary moments are updated and the
       // estimation of central moments and PDFs can start. This is a necessary
       // synchronization point (central moments can only be estimated about some
       // ordinary moments, i.e., means), realized by two steps: (1) starting off
@@ -79,7 +79,7 @@ module distributor {
       //
       // Understanding 'wait4cen'. Once the host has finished collecting
       // partially accumulated central moment (sums) from all PEs, it signals
-      // Charm++'s SDAG runtime that all central moments are updated and the
+      // Charm++ SDAG runtime that all central moments are updated and the
       // statistics (moments) are ready to be written to disk (OutS) (if
       // scheduled in this step). This is also a necessary synchronization point
       // and done similarly to the one discussed above, but this time by
@@ -92,7 +92,7 @@ module distributor {
       // Understanding 'wait4pdf'. Once a PE has finished its part of the
       // accumuluation of the central PDFs (started from 'wait4ord'), it sends
       // its portion of the sums back to its host which collects from all PEs
-      // and finishes the estimation. The host then signals Charm++'s SDAG
+      // and finishes the estimation. The host then signals Charm++ SDAG
       // runtime that all central PDFs have been estimated. This is also a
       // necessary synchronization point and done similarly to the ones
       // discussed above, but this time by 'wait4pdf' waiting for two signals,

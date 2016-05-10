@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/UnitTest/tests/Base/TestDataLayout.h
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Unit tests for Base/DataLayout.h
   \details   Unit tests for Base/DataLayout.h
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef test_DataLayout_h
 #define test_DataLayout_h
 

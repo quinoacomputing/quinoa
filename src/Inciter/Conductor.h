@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Inciter/Conductor.h
   \author    J. Bakosi
@@ -12,7 +12,7 @@
     overview of the algorithm structure and how it interfaces with Charm++ is
     discussed in the Charm++ interface file src/Inciter/conductor.ci.
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef Conductor_h
 #define Conductor_h
 

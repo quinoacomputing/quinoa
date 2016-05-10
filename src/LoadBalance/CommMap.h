@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/LoadBalance/CommMap.h
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Calculation of communication maps for unstructured meshes
   \details   Calculation of communication maps for unstructured meshes.
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef CommMap_h
 #define CommMap_h
 

@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/IO/NetgenMeshReader.h
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Netgen mesh reader class declaration
   \details   Netgen mesh reader class declaration. Only supports tetrahedra.
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef NetgenMeshReader_h
 #define NetgenMeshReader_h
 

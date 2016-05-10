@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Control/StatCtr.h
   \author    J. Bakosi
@@ -8,7 +8,7 @@
   \details   Types and associated functions to deal with statistical moments and
     probability density functions.
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef StatControl_h
 #define StatControl_h
 

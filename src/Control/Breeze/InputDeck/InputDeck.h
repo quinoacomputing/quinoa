@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Control/Breeze/InputDeck/InputDeck.h
   \author    J. Bakosi
@@ -9,7 +9,7 @@
      the data from user input during the control file parsing of the
      computational fluid dynamics tool, Breeze.
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef BreezeInputDeck_h
 #define BreezeInputDeck_h
 

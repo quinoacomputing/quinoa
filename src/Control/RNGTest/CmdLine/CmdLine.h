@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Control/RNGTest/CmdLine/CmdLine.h
   \author    J. Bakosi
@@ -9,7 +9,7 @@
      the data from user input during the command-line parsing of the
      random number generator test suite, RNGTest.
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef RNGTestCmdLine_h
 #define RNGTestCmdLine_h
 

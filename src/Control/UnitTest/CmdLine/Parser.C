@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Control/UnitTest/CmdLine/Parser.C
   \author    J. Bakosi
@@ -8,7 +8,7 @@
   \details   This file defines the command-line argument parser for the unit
      test suite, UnitTest.
 */
-//******************************************************************************
+// *****************************************************************************
 
 #include <map>
 #include <ostream>
@@ -39,7 +39,7 @@ CmdLineParser::CmdLineParser( int argc,
                               ctr::CmdLine& cmdline,
                               bool& helped ) :
   StringParser( argc, argv )
-//******************************************************************************
+// *****************************************************************************
 //  Contructor: parse the command line for UnitTest
 //! \param[in] argc Number of C-style character arrays in argv
 //! \param[in] argv C-style character array of character arrays
@@ -47,7 +47,7 @@ CmdLineParser::CmdLineParser( int argc,
 //! \param[inout] cmdline Command-line stack where data is stored from parsing
 //! \param[inout] helped Boolean indicating if command-line help was requested
 //! \author  J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   // Create PEGTL string input from std::string (i.e. concatenated argv[])
   pegtl::string_input< ctr::Location > input( m_string );

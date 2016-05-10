@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Main/RNGTestPrint.h
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     RNGTest-specific pretty printer functionality
   \details   RNGTest-specific pretty printer functionality.
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef RNGTestPrint_h
 #define RNGTestPrint_h
 

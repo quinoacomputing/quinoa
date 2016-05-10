@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Control/Inciter/InputDeck/InputDeck.h
   \author    J. Bakosi
@@ -9,7 +9,7 @@
      the data from user input during the control file parsing of the
      computational shock hydrodynamics tool, Inciter.
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef InciterInputDeck_h
 #define InciterInputDeck_h
 
