@@ -1,30 +1,27 @@
 //******************************************************************************
 /*!
-  \file      src/NoWarning/cartesian_product.h
+  \file      src/NoWarning/for_each.h
   \author    J. Bakosi
-  \date      Mon 09 May 2016 04:03:22 PM MDT
+  \date      Mon 09 May 2016 03:52:31 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
-  \brief     Include cartesian_product.h with turning off specific compiler
-             warnings
+  \brief     Include boost/mpl/for_each.hpp with turning off specific
+             compiler warnings
 */
 //******************************************************************************
-#ifndef nowarning_cartesian_product_h
-#define nowarning_cartesian_product_h
+#ifndef nowarning_for_each_h
+#define nowarning_for_each_h
 
 #if defined(__clang__)
-  #pragma clang diagnostic push
-  #pragma clang diagnostic ignored "-Wold-style-cast"
 #elif defined(__GNUC__)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Weffc++"
 #endif
 
-#include <boost/mpl/cartesian_product.hpp>
+#include <boost/mpl/for_each.hpp>
 
 #if defined(__clang__)
-  #pragma clang diagnostic pop
 #elif defined(__GNUC__)
   #pragma GCC diagnostic pop
 #endif
 
-#endif // nowarning_cartesian_product_h
+#endif // nowarning_for_each_h

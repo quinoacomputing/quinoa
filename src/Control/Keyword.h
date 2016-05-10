@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Keyword.h
   \author    J. Bakosi
-  \date      Wed 04 May 2016 08:37:55 AM MDT
+  \date      Mon 09 May 2016 03:53:57 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Generic definition of a keyword
   \details   Generic definition of all keywords - both command-line arguments
@@ -12,7 +12,7 @@
 #ifndef Keyword_h
 #define Keyword_h
 
-#include <boost/optional.hpp>
+#include "NoWarning/optional.h"
 
 #include "NoWarning/pegtl.h"
 

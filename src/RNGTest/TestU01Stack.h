@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/TestU01Stack.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 01:38:34 PM MDT
+  \date      Mon 09 May 2016 04:15:20 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Stack of TestU01 RNG statistical tests
   \details   Stack of TestU01 RNG statistical tests
@@ -18,7 +18,7 @@
 #include <tuple>
 #include <type_traits>
 
-#include <boost/functional/value_factory.hpp>
+#include "NoWarning/value_factory.h"
 
 extern "C" {
   #include <sres.h>

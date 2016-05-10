@@ -19,9 +19,6 @@
 #include <utility>
 #include <cstddef>
 
-#include <boost/format.hpp>
-#include <boost/optional.hpp>
-
 #include "NoWarning/tut_result.h"
 #include "NoWarning/tut_runner.h"
 

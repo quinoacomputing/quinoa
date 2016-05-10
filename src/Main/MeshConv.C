@@ -14,8 +14,6 @@
 #include <utility>
 #include <iostream>
 
-#include <boost/format.hpp>
-
 #include "Print.h"
 #include "Timer.h"
 #include "Types.h"

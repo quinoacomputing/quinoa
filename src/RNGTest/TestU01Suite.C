@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/TestU01Suite.C
   \author    J. Bakosi
-  \date      Wed 04 May 2016 10:37:23 AM MDT
+  \date      Mon 09 May 2016 04:16:54 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     TestU01 random number generator test suite
   \details   This file declares the TestU01 random number generator test suite,
@@ -15,7 +15,7 @@
 #include <iostream>
 #include <cstddef>
 
-#include <boost/format.hpp>
+#include "NoWarning/format.h"
 
 #include "Print.h"
 #include "TestU01Suite.h"

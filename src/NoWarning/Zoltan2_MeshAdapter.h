@@ -43,6 +43,7 @@
   #pragma GCC diagnostic ignored "-Wunused-parameter"
   #pragma GCC diagnostic ignored "-Wswitch-default"
   #pragma GCC diagnostic ignored "-Wsuggest-attribute=noreturn"
+  #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #elif defined(__INTEL_COMPILER)
   #pragma warning( push )
   #pragma warning( disable: 239 )

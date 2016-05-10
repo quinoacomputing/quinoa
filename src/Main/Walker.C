@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Walker.C
   \author    J. Bakosi
-  \date      Wed 04 May 2016 12:06:52 PM MDT
+  \date      Mon 09 May 2016 04:09:34 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Random walker Charm++ main chare
   \details   Random walker Charm++ main chare. This file contains the definition
@@ -15,7 +15,7 @@
 #include <utility>
 #include <vector>
 
-#include <boost/format.hpp>
+#include "NoWarning/format.h"
 
 #include "NoWarning/charm.h"
 #include "NoWarning/pup.h"

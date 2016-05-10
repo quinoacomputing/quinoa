@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Print.h
   \author    J. Bakosi
-  \date      Wed 04 May 2016 08:11:03 AM MDT
+  \date      Mon 09 May 2016 03:32:14 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     General purpose pretty printer functionality
   \details   This file contains general purpose printer functions. Using the
@@ -19,7 +19,7 @@
 #include <iomanip>
 #include <list>
 
-#include <boost/format.hpp>
+#include "NoWarning/format.h"
 
 #include "Timer.h"
 #include "Exception.h"

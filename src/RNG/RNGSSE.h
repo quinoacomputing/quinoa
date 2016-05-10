@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/RNGSSE.h
   \author    J. Bakosi
-  \date      Wed 04 May 2016 10:56:49 AM MDT
+  \date      Mon 09 May 2016 03:42:16 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Interface to RNGSSE random number generators
   \details   Interface to RNGSSE random number generators
@@ -14,7 +14,7 @@
 #include <cstring>
 #include <random>
 
-#include <boost/random/beta_distribution.hpp>
+#include "NoWarning/beta_distribution.h"
 
 #include "Make_unique.h"
 #include "Exception.h"

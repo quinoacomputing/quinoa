@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/CmdLine/CmdLine.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:17:51 PM MDT
+  \date      Mon 09 May 2016 03:56:14 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Walker's command line
   \details   Walker's command line
@@ -14,7 +14,7 @@
 #include <string>
 
 #include <boost/mpl/set.hpp>
-#include <boost/mpl/for_each.hpp>
+#include "NoWarning/for_each.h"
 
 #include "Control.h"
 #include "HelpFactory.h"

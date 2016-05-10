@@ -9,7 +9,7 @@
 */
 //******************************************************************************
 
-#include <boost/algorithm/string/replace.hpp>
+#include "NoWarning/replace.h"
 #include <boost/iterator/iterator_traits.hpp>
 
 #include "PDE.h"

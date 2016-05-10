@@ -14,8 +14,7 @@
 #include <iostream>
 #include <string>
 
-#include <boost/format.hpp>
-#include <boost/optional.hpp>
+#include "NoWarning/format.h"
 
 #include "Print.h"
 #include "ContainerUtil.h"
