@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Control/Breeze/InputDeck/Parser.h
   \author    J. Bakosi
@@ -8,7 +8,7 @@
   \details   This file declares the input deck, i.e., control file, parser for
     the computational fluid dynamics tool, Breeze.
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef BreezeInputDeckParser_h
 #define BreezeInputDeckParser_h
 

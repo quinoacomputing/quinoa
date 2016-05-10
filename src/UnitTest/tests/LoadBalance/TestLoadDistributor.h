@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/UnitTest/tests/LoadBalance/TestLoadDistributor.h
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Unit tests for LoadBalance/LoadDistributor
   \details   Unit tests for LoadBalance/LoadDistributor
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef test_LoadDistributor_h
 #define test_LoadDistributor_h
 

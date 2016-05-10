@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Control/StringParser.C
   \author    J. Bakosi
@@ -9,7 +9,7 @@
     a base class for various string parsers, e.g., command-line parsers. It does
     generic after-parser diagnostics.
 */
-//******************************************************************************
+// *****************************************************************************
 
 #include <vector>
 #include <iostream>
@@ -22,7 +22,7 @@
 using tk::StringParser;
 
 StringParser::StringParser( int argc, char** argv ) : m_string()
-//******************************************************************************
+// *****************************************************************************
 //  Constructor
 //! \param[in] argc Number of C-style character arrays in argv
 //! \param[in] argv C-style character array of character arrays
@@ -30,7 +30,7 @@ StringParser::StringParser( int argc, char** argv ) : m_string()
 //!   std::string substrings separated by spaces. Exception safety: basic
 //!   guarantee: if an exception is thrown, the stream is in a valid state.
 //! \author  J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   for (int i=1; i<argc; ++i)
     m_string += std::string(argv[i]) + ' ';
@@ -39,12 +39,12 @@ StringParser::StringParser( int argc, char** argv ) : m_string()
 void
 StringParser::diagnostics( const tk::Print& print,
                            const std::vector< std::string >& messages )
-//******************************************************************************
+// *****************************************************************************
 //  Echo errors and warnings accumulated during parsing
 //! \param[in] print Pretty printer
 //! \param[in] messages Vector of strings of errors and warnings
 //! \author  J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   bool err = false;     // signaling whether there were any errors
 

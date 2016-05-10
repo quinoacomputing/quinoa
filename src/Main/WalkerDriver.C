@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Main/WalkerDriver.C
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     WalkerDriver that drives Walker
   \details   WalkerDriver that drives Walker
 */
-//******************************************************************************
+// *****************************************************************************
 
 #include <string>
 
@@ -32,13 +32,13 @@ using walker::WalkerDriver;
 WalkerDriver::WalkerDriver( const WalkerPrint& print,
                             const ctr::CmdLine& cmdline ) :
   m_print( print )
-//******************************************************************************
+// *****************************************************************************
 //  Constructor
 //! \param[in] print Pretty printer
 //! \param[in] cmdline Command line object storing data parsed from the command
 //!   line arguments
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   // All global-scope data to be migrated to all PEs initialized here (if any)
 

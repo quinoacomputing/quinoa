@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/DiffEq/MixNumberFractionBetaCoeffPolicy.h
   \author    J. Bakosi
@@ -68,7 +68,7 @@
       moments, _bprime_, _kprime_ are user-defined parameters, and _b_, _k_ are
       the SDE parameters computed, see DiffEq/MixNumberFractionBeta.h.
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef MixNumberFractionBetaCoeffPolicy_h
 #define MixNumberFractionBetaCoeffPolicy_h
 

@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/IO/GmshMeshWriter.C
   \author    J. Bakosi
@@ -8,7 +8,7 @@
   \details   Gmsh mesh writer class definition. Currently, this class supports
     line, triangle, tetrahedron, and point Gmsh element types.
 */
-//******************************************************************************
+// *****************************************************************************
 
 #include <iterator>
 #include <iomanip>
@@ -30,14 +30,14 @@ GmshMeshWriter::GmshMeshWriter( const std::string& filename,
                                 tk::real version,
                                 int datasize ) :
   Writer( filename ), m_type( type )
-//******************************************************************************
+// *****************************************************************************
 //  Constructor: write mandatory "$MeshFormat" section
 //! \param[in] filename File to open as a Gmsh file
 //! \param[in] type Gmsh file type: ASCII or binary
 //! \param[in] version Gmsh file version
 //! \param[in] datasize Size of double precision number on machine
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   using tk::operator<<;
 
@@ -62,11 +62,11 @@ GmshMeshWriter::GmshMeshWriter( const std::string& filename,
 
 void
 GmshMeshWriter::writeMesh( const UnsMesh& mesh )
-//******************************************************************************
+// *****************************************************************************
 //  Write Gmsh mesh file
 //! \param[in] mesh Unstructured mesh object
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   // Write sections
   writeNodes( mesh );
@@ -75,11 +75,11 @@ GmshMeshWriter::writeMesh( const UnsMesh& mesh )
 
 void
 GmshMeshWriter::writeNodes( const UnsMesh& mesh )
-//******************************************************************************
+// *****************************************************************************
 //  Write "$Nodes--$EndNodes" section
 //! \param[in] mesh Unstructured mesh object
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   m_outFile << "$Nodes" << std::endl;
 
@@ -115,11 +115,11 @@ GmshMeshWriter::writeNodes( const UnsMesh& mesh )
 
 void
 GmshMeshWriter::writeElements( const UnsMesh& mesh )
-//******************************************************************************
+// *****************************************************************************
 //  Write "$Elements--$EndElements" section
 //! \param[in] mesh Unstructured mesh object
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   m_outFile << "$Elements" << std::endl;
 
@@ -147,14 +147,14 @@ GmshMeshWriter::writeElemBlock( std::size_t nnpe,
                                 GmshElemType type,
                                 const std::vector< std::vector< int > >& tag,
                                 const std::vector< std::size_t >& inpoel )
-//******************************************************************************
+// *****************************************************************************
 //  Write element block: element ids, tags, and connectivity (node list)
 //! \param[in] nnpe Number of nodes per element
 //! \param[in] type Element type
 //! \param[in] tag Vectors of element tags
 //! \param[in] inpoel Element connectivity (must be zero-based)
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   // Return if connectivity is empty, there is no such element block in mesh
   if (inpoel.empty()) return;

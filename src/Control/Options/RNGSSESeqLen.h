@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Control/Options/RNGSSESeqLen.h
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     RNGSSE sequence length options
   \details   RNGSSE sequence length options
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef RNGSSESeqLenOptions_h
 #define RNGSSESeqLenOptions_h
 

@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/LoadBalance/CommMap.C
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Calculation of communication maps for unstructured meshes
   \details   Calculation of communication maps for unstructured meshes.
 */
-//******************************************************************************
+// *****************************************************************************
 
 #include <vector>
 #include <set>
@@ -31,7 +31,7 @@ poinCommMaps( std::size_t graphsize,
               const std::vector< std::size_t >& tetinpoel,
               std::size_t nchare,
               std::string&& toofine )
-//******************************************************************************
+// *****************************************************************************
 //  Compute point-based communication maps
 //! \param[in] graphsize Size of unstructured mesh graph object
 //! \param[in] chp Array of chare ownership IDs mapping graph points to
@@ -69,7 +69,7 @@ poinCommMaps( std::size_t graphsize,
 //! \note This function is only supposed to operate on MPI rank 0.
 //! \note This function does not and should not modify global-scope data.
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   // Map to associate a chare id to a map of receiver chare ids associated to
   // unique global point ids sent (export map)
@@ -133,7 +133,7 @@ elemCommMaps(
   const std::vector< std::size_t >& tetinpoel,
   const std::vector< std::vector< std::vector< std::size_t > > >& element,
   std::size_t nchare )
-//******************************************************************************
+// *****************************************************************************
 //! Compute element-based communication maps
 //! \param[in] chp Array of chare ownership IDs mapping graph points to
 //!   concurrent async chares
@@ -171,7 +171,7 @@ elemCommMaps(
 //! \note This function is only supposed to operate on MPI rank 0.
 //! \note This function does not and should not modify global-scope data.
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   // Map to associate a chare id to a map of receiver chare ids associated to
   // unique global point ids sent (export map)

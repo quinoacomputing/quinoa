@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/IO/GmshMeshReader.h
   \author    J. Bakosi
@@ -8,7 +8,7 @@
   \details   Gmsh mesh reader class declaration. Currently, this class supports
     line, triangle, tetrahedron, and point Gmsh element types.
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef GmshMeshReader_h
 #define GmshMeshReader_h
 

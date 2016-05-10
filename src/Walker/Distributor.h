@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Walker/Distributor.h
   \author    J. Bakosi
@@ -12,7 +12,7 @@
     of the algorithm structure and how it interfaces with Charm++ is discussed
     in the Charm++ interface file src/Walker/distributor.ci.
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef Distributor_h
 #define Distributor_h
 

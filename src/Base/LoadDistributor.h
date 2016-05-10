@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/LoadBalance/LoadDistributor.h
   \author    J. Bakosi
@@ -8,7 +8,7 @@
   \details   Load distributors and partitioning data types. Load distributors
      compute chunksize based on the degree of virtualization.
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef LoadDistributor_h
 #define LoadDistributor_h
 

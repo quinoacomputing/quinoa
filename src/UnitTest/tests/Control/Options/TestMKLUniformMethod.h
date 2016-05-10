@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/UnitTest/tests/Control/Options/TestMKLUniformMethod.h
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Unit tests for Control/Options/MKLUniformMethod
   \details   Unit tests for Control/Options/MKLUniformMethod
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef test_MKLUniformMethod_h
 #define test_MKLUniformMethod_h
 

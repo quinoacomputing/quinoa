@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/NoWarning/testarray.def.h
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Include testarray.def.h with turning off specific compiler
              warnings
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef nowarning_testarray_def_h
 #define nowarning_testarray_def_h
 

@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Control/MeshConv/CmdLine/CmdLine.h
   \author    J. Bakosi
@@ -9,7 +9,7 @@
      the data from user input during the command-line parsing of the mesh
      converter, MeshConv.
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef MeshConvCmdLine_h
 #define MeshConvCmdLine_h
 

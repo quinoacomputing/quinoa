@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/NoWarning/testu01suite.decl.h
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Include testu01suite.decl.h with turning off specific compiler
              warnings
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef nowarning_testu01suite_decl_h
 #define nowarning_testu01suite_decl_h
 

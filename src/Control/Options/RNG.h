@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Control/Options/RNG.h
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Random number generator options and associations
   \details   Random number generator options and associations
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef RNGOptions_h
 #define RNGOptions_h
 

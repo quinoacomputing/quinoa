@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Control/Options/TxtFloatFormat.h
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Text floating-point output options
   \details   Text floating-point output options
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef TxtFloatFormatOptions_h
 #define TxtFloatFormatOptions_h
 

@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Main/RNGTestDriver.h
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Random number generator test suite driver
   \details   Random number generator test suite driver.
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef RNGTestDriver_h
 #define RNGTestDriver_h
 

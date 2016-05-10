@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Main/Init.h
   \author    J. Bakosi
@@ -10,7 +10,7 @@
      exectuables. The functions in this file are used by multiple execitables
      to ensure code-reuse and a uniform screen-output.
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef Init_h
 #define Init_h
 
@@ -35,11 +35,11 @@ enum class HeaderType : uint8_t { INCITER=0,
 
 
 static std::string workdir()
-//******************************************************************************
+// *****************************************************************************
 //! \brief Wrapper for POSIX API's getcwd() from unistd.h
 //! \return A stirng containing the current working directory
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   char cwd[1024];
 
@@ -50,11 +50,11 @@ static std::string workdir()
 }
 
 static std::string curtime()
-//******************************************************************************
+// *****************************************************************************
 //! \brief Wrapper for the standard C library's gettimeofday() from
 //! \return A stirng containing the current date and time
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   time_t current_time;
   char* c_time_string;
@@ -79,12 +79,12 @@ static std::string curtime()
 }
 
 static void echoHeader( const Print& print, HeaderType header )
-//******************************************************************************
+// *****************************************************************************
 //! \brief Echo program header
 //! \param[in] print Pretty printer
 //! \param[in] header Header type enum indicating which header to print
 //! \author  J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   if ( header == HeaderType::INCITER )
     print.headerInciter();
@@ -101,14 +101,14 @@ static void echoHeader( const Print& print, HeaderType header )
 }
 
 static void echoBuildEnv( const Print& print, const std::string& executable )
-//******************************************************************************
+// *****************************************************************************
 //! \brief Echo build environment
 //! \details Echo information read from <build>/Base/Config.h filled by
 //!    CMake based on src/Main/Config.h.in.
 //! \param[in] print Pretty printer
 //! \param[in] executable Name of the executable
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   print.section( "Build environment" );
   print.item( "Hostname", BUILD_HOSTNAME );
@@ -132,14 +132,14 @@ static void echoBuildEnv( const Print& print, const std::string& executable )
 }
 
 static void echoRunEnv( const Print& print, int argc, char** argv, bool verbose )
-//******************************************************************************
+// *****************************************************************************
 //! \brief Echo runtime environment
 //! \param[in] print Pretty printer
 //! \param[in] argc Number of command-line arguments to executable
 //! \param[in] argv C-style string array to command-line arguments to executable
 //! \param[in] verbose True for verbose screen-output
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   print.section( "Run-time environment" );
 

@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Control/Walker/InputDeck/Grammar.h
   \author    J. Bakosi
@@ -11,7 +11,7 @@
     associated parser. Credit goes to Colin Hirsch (pegtl@cohi.at) for PEGTL.
     Word of advice: read from the bottom up.
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef WalkerInputDeckGrammar_h
 #define WalkerInputDeckGrammar_h
 

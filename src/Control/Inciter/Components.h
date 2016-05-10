@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Control/Inciter/Components.h
   \author    J. Bakosi
@@ -8,7 +8,7 @@
   \details   Storage for number of components. This is part of the input deck
      stack and is thus populated during the control file parsing.
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef InciterComponents_h
 #define InciterComponents_h
 

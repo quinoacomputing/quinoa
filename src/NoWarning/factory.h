@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/NoWarning/factory.h
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Include boost/functional/factory.hpp with turning off specific
              compiler warnings
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef nowarning_factory_h
 #define nowarning_factory_h
 

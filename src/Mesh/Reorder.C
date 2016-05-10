@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Mesh/Reorder.C
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Mesh reordering routines for unstructured meshes
   \details   Mesh reordering routines for unstructured meshes.
 */
-//******************************************************************************
+// *****************************************************************************
 
 #include <algorithm>
 #include <iterator>
@@ -21,7 +21,7 @@ namespace tk {
 
 std::size_t
 shiftToZero( std::vector< std::size_t >& inpoel )
-//******************************************************************************
+// *****************************************************************************
 //  Shift node IDs to start with zero in element connectivity
 //! \param[inout] inpoel Inteconnectivity of points and elements
 //! \return Amount shifted
@@ -31,7 +31,7 @@ shiftToZero( std::vector< std::size_t >& inpoel )
 //! \note It is okay to call this function with an empty container; it will
 //!    simply return without throwing an exception.
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   if (inpoel.empty()) return 0;
 
@@ -46,7 +46,7 @@ shiftToZero( std::vector< std::size_t >& inpoel )
 
 void
 remap( std::vector< std::size_t >& id, const std::vector< std::size_t >& newid )
-//******************************************************************************
+// *****************************************************************************
 //  Reorder mesh points given a new order, i.e., index map
 //! \param[inout] id Vector of point ids
 //! \param[in] newid Array of indices creating a new order
@@ -57,7 +57,7 @@ remap( std::vector< std::size_t >& id, const std::vector< std::size_t >& newid )
 //! \note It is okay to call this function with either of the containers empty;
 //!   it will simply return without throwing an exception.
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   if (id.empty() || newid.empty()) return;
 
@@ -71,12 +71,12 @@ remap( std::vector< std::size_t >& id, const std::vector< std::size_t >& newid )
 std::pair< std::vector< std::size_t >, std::vector< std::size_t > >
 renumber( const std::pair< std::vector< std::size_t >,
                            std::vector< std::size_t > >& psup )
-//******************************************************************************
+// *****************************************************************************
 //  Reorder mesh points with the advancing front technique
 //! \param[in] psup Points surrounding points
 //! \return Pair of maps between old->new and new->old order
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   // Find out number of nodes in graph
   auto npoin = psup.second.size()-1;
@@ -119,12 +119,12 @@ renumber( const std::pair< std::vector< std::size_t >,
 
 std::map< std::size_t, std::size_t >
 assignLid( const std::vector< std::size_t >& gid )
-//******************************************************************************
+// *****************************************************************************
 //  Assign local ids to global ids
 //! \param[in] gid Global ids
 //! \return Map associating global ids to local ids
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   std::map< std::size_t, std::size_t > lid;
   std::size_t l = 0;
@@ -134,14 +134,14 @@ assignLid( const std::vector< std::size_t >& gid )
 
 std::pair< std::vector< std::size_t >, std::vector< std::size_t > >
 global2local( const std::vector< std::size_t >& ginpoel )
-//******************************************************************************
+// *****************************************************************************
 //  Generate element connectivity of local node IDs from connectivity of global
 //  node IDs also returning the mapping between local to global IDs
 //! \param[in] ginpoel Element connectivity with global node IDs
 //! \return Pair of element connectivity with local node IDs and the vector of
 //!   unique global node IDs (i.e., the mapping between local to global IDs)
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   // Make a copy of the element connectivity with global node ids
   auto gid = ginpoel;

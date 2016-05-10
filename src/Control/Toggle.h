@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Control/Toggle.h
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Toggle is the base for an Option, doing generic searches
   \details   Toggle is the base for an Option, doing generic searches.
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef Toggle_h
 #define Toggle_h
 

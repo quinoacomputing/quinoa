@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Control/CommonGrammar.h
   \author    J. Bakosi
@@ -10,7 +10,7 @@
     create the grammar and the associated parser. Credit goes to Colin Hirsch
     (pegtl@cohi.at) for PEGTL.
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef CommonGrammar_h
 #define CommonGrammar_h
 

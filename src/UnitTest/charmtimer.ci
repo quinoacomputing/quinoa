@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/UnitTest/charmtimer.ci
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Charm++ module interface file for migration testing of tk::Timer
   \details   Charm++ module interface file for migration testing of tk::Timer
 */
-//******************************************************************************
+// *****************************************************************************
 
 module charmtimer {
 

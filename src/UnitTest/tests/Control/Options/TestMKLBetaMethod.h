@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/UnitTest/tests/Control/Options/TestMKLBetaMethod.h
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Unit tests for Control/Options/MKLBetaMethod
   \details   Unit tests for Control/Options/MKLBetaMethod
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef test_MKLBetaMethod_h
 #define test_MKLBetaMethod_h
 

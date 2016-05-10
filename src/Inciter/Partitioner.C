@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Inciter/Partitioner.C
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Charm++ chare partitioner group used to perform mesh partitioning
   \details   Charm++ chare partitioner group used to parform mesh partitioning.
 */
-//******************************************************************************
+// *****************************************************************************
 
 #include "Partitioner.h"
 

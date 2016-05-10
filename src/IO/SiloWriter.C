@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/IO/SiloWriter.C
   \author    J. Bakosi
@@ -9,7 +9,7 @@
     an STL triangulation into a Silo file. See also
     https://wci.llnl.gov/codes/silo.
 */
-//******************************************************************************
+// *****************************************************************************
 
 #include <string>
 #include <sstream>
@@ -22,11 +22,11 @@
 
 void
 tk::SiloError( char* msg )
-//******************************************************************************
+// *****************************************************************************
 //  Silo error handler
 //! \param[in]  msg  Error message
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   // Take out newlines from error message coming from library
   std::string str(msg);
@@ -46,13 +46,13 @@ SiloWriter::SiloWriter( const std::string& filename,
   m_filename( filename ),
   m_mesh( mesh ),
   m_dbfile( nullptr )
-//******************************************************************************
+// *****************************************************************************
 //  Constructor
 //  \param[in] filename Name of Silo file to be created
 //  \param[in] mesh Mesh object
 //  \param[in] errLevel Silo library error output level
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   // Save Silo's error handler and reporting level
   m_errFunc = DBErrfunc();
@@ -67,11 +67,11 @@ SiloWriter::SiloWriter( const std::string& filename,
 }
 
 SiloWriter::~SiloWriter() noexcept
-//******************************************************************************
+// *****************************************************************************
 //  Destructor
 //! \details Exception safety: no-throw guarantee: never throws exceptions.
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   // Close Silo file
   DBClose(m_dbfile);
@@ -82,10 +82,10 @@ SiloWriter::~SiloWriter() noexcept
 
 void
 SiloWriter::write()
-//******************************************************************************
+// *****************************************************************************
 //  Write out Silo file
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   tk::real* coords[] = { m_mesh.getx(), m_mesh.gety(), m_mesh.getz() };
   int nnodes = m_mesh.nnodes();

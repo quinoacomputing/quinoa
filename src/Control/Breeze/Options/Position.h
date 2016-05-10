@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Control/Breeze/Options/Position.h
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Position model options
   \details   Position model options
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef BreezePositionOptions_h
 #define BreezePositionOptions_h
 

@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/LoadBalance/LoadDistributor.C
   \author    J. Bakosi
@@ -8,7 +8,7 @@
   \details   Load distributors compute chunksize based on the degree of
      virtualization.
 */
-//******************************************************************************
+// *****************************************************************************
 
 #include <limits>
 
@@ -24,7 +24,7 @@ linearLoadDistributor( tk::real virtualization,
                        int npe,
                        uint64_t& chunksize,
                        uint64_t& remainder )
-//******************************************************************************
+// *****************************************************************************
 //  Compute linear load distribution for given total work and virtualization
 //! \param[in] virtualization Degree of virtualization [0.0...1.0]
 //! \param[in] load Total load, e.g., number of particles, number of mesh cells
@@ -59,7 +59,7 @@ linearLoadDistributor( tk::real virtualization,
 //!    - load = total work, e.g., number of particles, number of mesh cells
 //!    - npes = number of hardware processing elements
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   Assert( virtualization > -std::numeric_limits< tk::real >::epsilon() &&
           virtualization < 1.0+std::numeric_limits< tk::real >::epsilon(),

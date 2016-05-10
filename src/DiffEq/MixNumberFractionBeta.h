@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/DiffEq/MixNumberFractionBeta.h
   \author    J. Bakosi
@@ -62,7 +62,7 @@
 
     _All of this is unpublished, but will be linked in here once published_.
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef MixNumberFractionBeta_h
 #define MixNumberFractionBeta_h
 

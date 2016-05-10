@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Main/MeshConv.C
   \author    J. Bakosi
@@ -8,7 +8,7 @@
   \details   Mesh file converter Charm++ main chare. This file contains the
     definition of the Charm++ main chare, equivalent to main() in Charm++-land.
 */
-//******************************************************************************
+// *****************************************************************************
 
 #include <vector>
 #include <utility>

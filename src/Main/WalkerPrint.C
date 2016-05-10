@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Main/WalkerPrint.C
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Walker-specific pretty printer functionality
   \details   Walker-specific pretty printer functionality.
 */
-//******************************************************************************
+// *****************************************************************************
 
 #include "NoWarning/replace.h"
 #include <boost/iterator/iterator_traits.hpp>
@@ -35,14 +35,14 @@ WalkerPrint::inthead( const std::string& t,
                       const std::string& name,
                       const std::string& legend,
                       const std::string& head ) const
-//******************************************************************************
+// *****************************************************************************
 //  Print time integration header
 //! \param[in] t Section title
 //! \param[in] name Section name
 //! \param[in] legend Legend to print
 //! \param[in] head Head to append
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   section( t, name );
   std::string l( legend );
@@ -52,11 +52,11 @@ WalkerPrint::inthead( const std::string& t,
 
 void
 WalkerPrint::statistics( const std::string& t ) const
-//******************************************************************************
+// *****************************************************************************
 //  Print statistics and PDFs
 //! \param[in] t Section title
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   if ( !g_inputdeck.get< tag::stat >().empty() ||
        !g_inputdeck.get< tag::pdf >().empty() )
@@ -70,12 +70,12 @@ WalkerPrint::statistics( const std::string& t ) const
 void
 WalkerPrint::diffeqs( const std::string& t, const std::vector< std::vector<
   std::pair< std::string, std::string > > >& info ) const
-//******************************************************************************
+// *****************************************************************************
 //  Print configuration of a stack of differential equations
 //! \param[in] t Title to use
 //! \param[in] info Info vector to use
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   if ( !info.empty() ) {
     std::stringstream ss;
@@ -93,11 +93,11 @@ WalkerPrint::diffeqs( const std::string& t, const std::vector< std::vector<
 
 void
 WalkerPrint::stats( const std::string& msg ) const
-//******************************************************************************
+// *****************************************************************************
 //  Echo statistics container contents if differs from default
 //! \param[in] msg Message to print
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   Assert( !msg.empty(), "Empty message size in WalkerPrint::stats()." );
   const auto& c = g_inputdeck.get< tag::stat >();
@@ -125,14 +125,14 @@ WalkerPrint::pdfs( const std::string& msg,
                                      const std::string&,
                                      const std::vector< tk::real >& ext ) > op )
 const
-//******************************************************************************
+// *****************************************************************************
 //  Echo pdfs container contents if differs from default applying op.
 //! \param[in] msg Message to print
 //! \param[in] op Functor to use
 //! \details See src/Control/StatCtr.h for the definition of functions that may
 //!    be passed in as op. Currently, the only example is tk::ctr::pdf.
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   Assert( !msg.empty(), "Empty message size in WalkerPrint::vec()." );
 

@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Base/Writer.C
   \author    J. Bakosi
@@ -9,7 +9,7 @@
     for various file writers. It does generic low-level I/O, e.g., opening and
     closing a file, and associated error handling.
 */
-//******************************************************************************
+// *****************************************************************************
 
 #include <string>
 #include <exception>
@@ -22,13 +22,13 @@ using tk::Writer;
 
 Writer::Writer( const std::string& filename, std::ios_base::openmode mode ) :
   m_filename( filename ), m_outFile()
-//******************************************************************************
+// *****************************************************************************
 //  Constructor: Acquire file handle
 //! \param[in] filename Name of file to open for writing
 //! \param[in] mode Open mode, see
 //!   http://en.cppreference.com/w/cpp/io/ios_base/openmode
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   // Doing this if-test gives the derived class an option to pass an empty
   // string in case the file does not need to be opened, because e.g., there is
@@ -41,14 +41,14 @@ Writer::Writer( const std::string& filename, std::ios_base::openmode mode ) :
 }
 
 Writer::~Writer() noexcept
-//******************************************************************************
+// *****************************************************************************
 //  Destructor: Release file handle
 //! \details Exception safety: no-throw guarantee: never throws exceptions.
 //!   Error handling, while done by throwing and catching exceptions, results in
 //!   warnings to terminal. We use C-style printf, since that will not throw
 //!   exceptions.
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   if (!m_filename.empty()) {
     try {

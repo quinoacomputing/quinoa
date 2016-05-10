@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Main/InciterPrint.C
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Inciter-specific pretty printer functionality
   \details   Inciter-specific pretty printer functionality.
 */
-//******************************************************************************
+// *****************************************************************************
 
 #include "NoWarning/replace.h"
 #include <boost/iterator/iterator_traits.hpp>
@@ -28,14 +28,14 @@ InciterPrint::inthead( const std::string& t,
                        const std::string& name,
                        const std::string& legend,
                        const std::string& head ) const
-//******************************************************************************
+// *****************************************************************************
 //  Print time integration header
 //! \param[in] t Section title
 //! \param[in] name Section name
 //! \param[in] legend Legend to print
 //! \param[in] head Head to append
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   section( t, name );
   std::string l( legend );
@@ -46,12 +46,12 @@ InciterPrint::inthead( const std::string& t,
 void
 InciterPrint::pdes( const std::string& t, const std::vector< std::vector<
   std::pair< std::string, std::string > > >& info ) const
-//******************************************************************************
+// *****************************************************************************
 //  Print configuration of a stack of partial differential equations
 //! \param[in] t Title to use
 //! \param[in] info Info vector to use
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   if ( !info.empty() ) {
     std::stringstream ss;

@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/RNGTest/SmallCrush.h
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Class re-creating the TestU01 library's SmallCrush battery
   \details   Class re-creating the TestU01 library's SmallCrush battery.
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef SmallCrush_h
 #define SmallCrush_h
 

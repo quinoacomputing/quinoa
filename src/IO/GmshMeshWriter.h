@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/IO/GmshMeshWriter.h
   \author    J. Bakosi
@@ -8,7 +8,7 @@
   \details   Gmsh mesh writer class declaration. Currently, this class supports
     line, triangle, tetrahedron, and point Gmsh element types.
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef GmshMeshWriter_h
 #define GmshMeshWriter_h
 

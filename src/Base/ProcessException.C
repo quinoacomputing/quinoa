@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Base/ProcessException.C
   \author    J. Bakosi
@@ -15,7 +15,7 @@
     which is a lot less than those which throw, so processing an exception is
     separated here.
 */
-//******************************************************************************
+// *****************************************************************************
 
 #include <exception>
 
@@ -29,12 +29,12 @@ namespace tk {
 
 void
 processExceptionCharm()
-//******************************************************************************
+// *****************************************************************************
 //  Process an exception from the Charm++ runtime system
 //! \details See Josuttis, The C++ Standard Library - A Tutorial and Reference,
 //!    2nd Edition, 2012.
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   try {
     throw;      // rethrow exception to deal with it here
@@ -61,12 +61,12 @@ processExceptionCharm()
 
 void
 processExceptionMPI()
-//******************************************************************************
+// *****************************************************************************
 //  Process an exception from the MPI runtime system
 //! \details See Josuttis, The C++ Standard Library - A Tutorial and Reference,
 //!    2nd Edition, 2012.
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   int peid;
 

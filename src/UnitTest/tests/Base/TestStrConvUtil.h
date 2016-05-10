@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/UnitTest/tests/Base/TestStrConvUtil.h
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Unit tests for Base/StrConvUtil.h
   \details   Unit tests for Base/StrConvUtil.h
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef test_StrConvUtil_h
 #define test_StrConvUtil_h
 

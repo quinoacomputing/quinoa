@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/NoWarning/cartesian_product.h
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Include cartesian_product.h with turning off specific compiler
              warnings
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef nowarning_cartesian_product_h
 #define nowarning_cartesian_product_h
 

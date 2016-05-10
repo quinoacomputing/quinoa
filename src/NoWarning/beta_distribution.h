@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/NoWarning/beta_distribution.h
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Include boost/random/beta_distribution.hpp with turning off
              specific compiler warnings
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef nowarning_beta_distribution_h
 #define nowarning_beta_distribution_h
 

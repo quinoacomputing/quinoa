@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/IO/MeshFactory.C
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Unstructured mesh reader and writer factory
   \details   Unstructured mesh reader and writer factory.
 */
-//******************************************************************************
+// *****************************************************************************
 
 #include <string>
 #include <stdexcept>
@@ -30,12 +30,12 @@ namespace tk {
 
 MeshReader
 detectInput( const std::string& filename )
-//******************************************************************************
+// *****************************************************************************
 //  Detect input mesh file type
 //! \param[in] filename File to open and detect its type
 //! \return enum specifying the mesh reader type
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   // Get first three letters from input file
   std::string s( Reader( filename ).firstline().substr(0,3) );
@@ -63,12 +63,12 @@ detectInput( const std::string& filename )
 
 MeshWriter
 pickOutput( const std::string& filename )
-//******************************************************************************
+// *****************************************************************************
 //  Determine output mesh file type
 //! \param[in] filename Filename to pick its type based on extension given
 //! \return enum specifying the mesh writer type
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   // Get extension of input file name
   std::string fn = filename;
@@ -92,7 +92,7 @@ UnsMesh
 readUnsMesh( const tk::Print& print,
              const std::string& filename,
              std::pair< std::string, tk::real >& timestamp )
-//******************************************************************************
+// *****************************************************************************
 //  Read unstructured mesh from file
 //! \param[in] print Pretty printer
 //! \param[in] filename Filename to read mesh from
@@ -100,7 +100,7 @@ readUnsMesh( const tk::Print& print,
 //!   and a time state (a tk::real in seconds) measuring the mesh read time
 //! \return Unstructured mesh object
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   print.diagstart( "Reading mesh from file ..." );
 
@@ -134,7 +134,7 @@ writeUnsMesh( const tk::Print& print,
               const std::string& filename,
               UnsMesh& mesh,
               bool reorder )
-//******************************************************************************
+// *****************************************************************************
 //  Write unstructured mesh to file
 //! \param[in] print Pretty printer
 //! \param[in] filename Filename to write mesh to
@@ -144,7 +144,7 @@ writeUnsMesh( const tk::Print& print,
 //!   time state (a tk::real in seconds) measuring the renumber and the mesh
 //!   write time
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   std::vector< std::pair< std::string, tk::real > > times;
 

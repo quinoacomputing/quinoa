@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Control/Breeze/Options/Frequency.h
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Turbulence frequency model options
   \details   Turbulence frequency model options
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef BreezeFrequencyOptions_h
 #define BreezeFrequencyOptions_h
 

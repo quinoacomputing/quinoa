@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Control/Options/PartitioningAlgorithm.h
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Mesh partitioning algorithm options
   \details   Mesh partitioning algorithm options
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef InciterPartitioningAlgorithmOptions_h
 #define InciterPartitioningAlgorithmOptions_h
 

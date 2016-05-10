@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Control/Inciter/Types.h
   \author    J. Bakosi
@@ -10,7 +10,7 @@
     components are therefore part of the grammar stack that is filled during
     parsing (both command-line argument parsing and control file parsing).
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef IncitierTypes_h
 #define IncitierTypes_h
 

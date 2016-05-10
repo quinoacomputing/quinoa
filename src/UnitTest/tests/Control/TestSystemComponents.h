@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/UnitTest/tests/Control/TestSystemComponents.h
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Unit tests for Control/SystemComponents
   \details   Unit tests for Control/SystemComponents
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef test_SystemComponents_h
 #define test_SystemComponents_h
 

@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Inciter/Performer.C
   \author    J. Bakosi
@@ -10,7 +10,7 @@
     performer gets a chunk of the full load (part of the mesh) and does the
     same: initializes and advances a PDE in time.
 */
-//******************************************************************************
+// *****************************************************************************
 
 #include <string>
 
@@ -62,7 +62,7 @@ Performer::Performer(
   m_un( m_gid.size(), g_inputdeck.get< tag::component >().nprop() ),
   m_lhsd( m_psup.second.size()-1, g_inputdeck.get< tag::component >().nprop() ),
   m_lhso( m_psup.first.size(), g_inputdeck.get< tag::component >().nprop() )
-//******************************************************************************
+// *****************************************************************************
 //  Constructor
 //! \param[in] conductor Host (Conductor) proxy
 //! \param[in] lsm Linear system merger (LinSysMerger) proxy
@@ -70,7 +70,7 @@ Performer::Performer(
 //! \param[in] cid Map associating old node IDs (as in file) to new node IDs (as
 //!   in producing contiguous-row-id linear system contributions)
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   Assert( m_psup.second.size()-1 == m_gid.size(),
           "Number of mesh points and number of global IDs unequal" );
@@ -81,10 +81,10 @@ Performer::Performer(
 
 void
 Performer::setup()
-//******************************************************************************
+// *****************************************************************************
 // Initialize mesh IDs, element connectivity, coordinates
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   // Send off global row IDs to linear system merger, setup global->local IDs
   setupIds();
@@ -98,10 +98,10 @@ Performer::setup()
 
 void
 Performer::setupIds()
-//******************************************************************************
+// *****************************************************************************
 // Send off global row IDs to linear system merger, setup global->local IDs
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   // Send off global row IDs to linear system merger
   m_linsysmerger.ckLocalBranch()->charerow( thisIndex, m_gid );
@@ -111,10 +111,10 @@ Performer::setupIds()
 
 void
 Performer::init( tk::real dt )
-//******************************************************************************
+// *****************************************************************************
 // Initialize linear system
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   // Set initial conditions for all PDEs
   for (const auto& eq : g_pdes) eq.initialize( m_coord, m_u, m_t );
@@ -138,10 +138,10 @@ Performer::init( tk::real dt )
 
 void
 Performer::lhs()
-//******************************************************************************
+// *****************************************************************************
 // Compute left-hand side of PDE
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   // Compute left-hand side matrix for all equations
   for (const auto& eq : g_pdes)
@@ -157,7 +157,7 @@ Performer::rhs( tk::real mult,
                 tk::real dt,
                 const tk::MeshNodes& sol,
                 tk::MeshNodes& rhs )
-//******************************************************************************
+// *****************************************************************************
 // Compute right-hand side of PDE
 //! \param[in] mult Multiplier differentiating the different stages in
 //!    multi-stage time stepping
@@ -165,7 +165,7 @@ Performer::rhs( tk::real mult,
 //! \param[in] sol Solution vector at current stage
 //! \param[inout] rhs Right-hand side vector computed
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   // Compute right-hand side vector for all equations
   for (const auto& eq : g_pdes)
@@ -177,10 +177,10 @@ Performer::rhs( tk::real mult,
 
 void
 Performer::readCoords()
-//******************************************************************************
+// *****************************************************************************
 //  Read coordinates of mesh nodes from file
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   tk::ExodusIIMeshReader
     er( g_inputdeck.get< tag::cmd, tag::io, tag::input >() );
@@ -193,10 +193,10 @@ Performer::readCoords()
 
 void
 Performer::writeMesh()
-//******************************************************************************
+// *****************************************************************************
 // Output chare mesh to file
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   // Create mesh object initializing element connectivity and point coords
   tk::UnsMesh mesh( m_inpoel, m_coord );
@@ -211,12 +211,12 @@ Performer::writeMesh()
 void
 Performer::writeChareId( const tk::ExodusIIMeshWriter& ew,
                          uint64_t it ) const
-//******************************************************************************
+// *****************************************************************************
 // Output chare id field to file
 //! \param[in] ew ExodusII mesh-based writer object
 //! \param[in] it Iteration count
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   // Write elem chare id field to mesh
   std::vector< tk::real > chid( m_inpoel.size()/4,
@@ -229,14 +229,14 @@ Performer::writeSolution( const tk::ExodusIIMeshWriter& ew,
                           uint64_t it,
                           const std::vector< std::vector< tk::real > >& u )
   const
-//******************************************************************************
+// *****************************************************************************
 // Output solution to file
 //! \param[in] ew ExodusII mesh-based writer object
 //! \param[in] it Iteration count
 //! \param[in] varid Exodus variable ID
 //! \param[in] u Vector of fields to write to file
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   int varid = 0;
   for (const auto& f : u) ew.writeNodeScalar( it, ++varid, f );
@@ -244,10 +244,10 @@ Performer::writeSolution( const tk::ExodusIIMeshWriter& ew,
 
 void
 Performer::writeMeta() const
-//******************************************************************************
+// *****************************************************************************
 // Output mesh-based fields metadata to file
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   // Create ExodusII writer
   tk::ExodusIIMeshWriter ew( m_outFilename, tk::ExoWriter::OPEN );
@@ -266,11 +266,11 @@ Performer::writeMeta() const
 
 void
 Performer::writeFields( tk::real time )
-//******************************************************************************
+// *****************************************************************************
 // Output mesh-based fields to file
 //! \param[in] time Physical time
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   // Increase field output iteration count
   ++m_itf;
@@ -297,14 +297,14 @@ Performer::writeFields( tk::real time )
 
 void
 Performer::advance( uint8_t stage, tk::real dt, uint64_t it, tk::real t )
-//******************************************************************************
+// *****************************************************************************
 // Advance equations to next stage in multi-stage time stepping
 //! \param[in] stage Stage in multi-stage time stepping
 //! \param[in] dt Size of time step
 //! \param[in] it Iteration count
 //! \param[in] t Physical time
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   // Update local copy of time step stage
   m_stage = stage;
@@ -328,12 +328,12 @@ Performer::advance( uint8_t stage, tk::real dt, uint64_t it, tk::real t )
 void
 Performer::updateSolution( const std::vector< std::size_t >& gid,
                            const std::vector< tk::real >& u )
-//******************************************************************************
+// *****************************************************************************
 // Update solution vector
 //! \param[in] gid Global row indices of the vector updated
 //! \param[in] u Portion of the unknown/solution vector updated
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   auto ncomp = g_inputdeck.get< tag::component >().nprop();
   Assert( gid.size() * ncomp == u.size(),

@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Base/Msg.h
   \author    J. Bakosi
@@ -9,7 +9,7 @@
     somewhat experimental, not well tested, and is not currently in use. The
     best is to avoid this kind of low-level messages as this can be error-prone.
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef Msg_h
 #define Msg_h
 

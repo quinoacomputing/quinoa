@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/DiffEq/Gamma.h
   \author    J. Bakosi
@@ -23,7 +23,7 @@
     with independent increments. The invariant distribution is the joint gamma
     distribution. This system of SDEs consists of N independent equations.
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef Gamma_h
 #define Gamma_h
 

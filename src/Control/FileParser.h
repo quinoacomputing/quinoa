@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Control/FileParser.h
   \author    J. Bakosi
@@ -10,7 +10,7 @@
     generic low-level I/O, e.g., testing whether the file to be parsed exits or
     not and associated error handling, as well as after-parser diagnostics.
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef FileParser_h
 #define FileParser_h
 

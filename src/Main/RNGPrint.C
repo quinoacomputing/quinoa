@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Main/RNGPrint.C
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Pretty printer base for pretty printers supporting RNGs
   \details   Pretty printer base for pretty printers supporting RNGs.
 */
-//******************************************************************************
+// *****************************************************************************
 
 #include <map>
 #include <utility>
@@ -31,11 +31,11 @@ using tk::RNGPrint;
 #ifdef HAS_MKL
 void
 RNGPrint::echoMKLParams( const ctr::RNGMKLParam& p ) const
-//******************************************************************************
+// *****************************************************************************
 //  Echo information on MKL random number generator
 //! \param[in] p MKL RNG parameters
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   ctr::MKLUniformMethod um;
   ctr::MKLGaussianMethod gm;
@@ -61,13 +61,13 @@ void
 RNGPrint::echoRNGSSEParams( const ctr::RNGSSEParam& p,
                             const ctr::RNG& rng,
                             const ctr::RNGType& r ) const
-//******************************************************************************
+// *****************************************************************************
 //  Echo information on RNGSSE random number generator
 //! \param[in] p RNGSSE RNG parameters
 //! \param[in] rng RNG options object
 //! \param[in] r RNG type enum
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   m_stream << m_item_name_value_fmt
               % m_item_indent
@@ -87,12 +87,12 @@ RNGPrint::echoRNGSSEParams( const ctr::RNGSSEParam& p,
 void
 RNGPrint::MKLParams( const std::vector< ctr::RNGType >& vec,
                      const ctr::RNGMKLParameters& map ) const
-//******************************************************************************
+// *****************************************************************************
 //  Print all fields of MKL RNG parameters
 //! \param[in] vec Vector of RNG type enums to print
 //! \param[in] map MKL RNG parameters map
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   ctr::RNG rng;
 
@@ -113,12 +113,12 @@ RNGPrint::MKLParams( const std::vector< ctr::RNGType >& vec,
 void
 RNGPrint::RNGSSEParams( const std::vector< ctr::RNGType >& vec,
                         const ctr::RNGSSEParameters& map ) const
-//******************************************************************************
+// *****************************************************************************
 //  Print all fields of RNGSSE RNG parameters
 //! \param[in] vec Vector of RNG type enums to print
 //! \param[in] map RNGSSE RNG parameters map
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   ctr::RNG rng;
 

@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Control/Walker/Options/InitPolicy.h
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Differential equation initialization policy options for walker
   \details   Differential equation initialization policy options for walker
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef InitPolicyOptions_h
 #define InitPolicyOptions_h
 

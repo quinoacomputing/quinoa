@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/RNGTest/TestU01Util.h
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Interfacing the TestU01 random number generator test suite
   \details   Interfacing the TestU01 random number generator test suite.
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef TestU01Util_h
 #define TestU01Util_h
 

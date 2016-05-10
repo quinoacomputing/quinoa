@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/IO/HyperMeshReader.C
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Hyper mesh reader class definition
   \details   Hyper mesh reader class definition. Only supports tetrahedra.
 */
-//******************************************************************************
+// *****************************************************************************
 
 #include <array>
 #include <string>
@@ -23,11 +23,11 @@ using tk::HyperMeshReader;
 
 void
 HyperMeshReader::readMesh( UnsMesh& mesh )
-//******************************************************************************
+// *****************************************************************************
 //  Read Hyper mesh
 //! \param[in] mesh Unstructured mesh object
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   auto filenames = getFileNames();
 
@@ -40,11 +40,11 @@ HyperMeshReader::readMesh( UnsMesh& mesh )
 
 std::pair< std::string, std::string >
 HyperMeshReader::getFileNames() const
-//******************************************************************************
+// *****************************************************************************
 //  Read Hyper mesh metadata and extract filenames we need to read
 //! \return Vector of strings containing the filenames
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   // Read XML file for metadata
   pugi::xml_document meta;
@@ -80,13 +80,13 @@ HyperMeshReader::getFileNames() const
         
 void
 HyperMeshReader::readNodes( const std::string& filename, UnsMesh& mesh ) const
-//******************************************************************************
+// *****************************************************************************
 //  Read nodes
 //! \param[in] filename Filename to read nodes from
 //! \param[in] mesh Unstructured mesh object to put nodes coordinates
 //! \note We throw away the node ID, which means the nodes must be in order.
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   // Read in node coordinates: x-coord y-coord z-coord
   for (auto& line : tk::Reader(filename).lines()) {
@@ -103,13 +103,13 @@ HyperMeshReader::readNodes( const std::string& filename, UnsMesh& mesh ) const
 void
 HyperMeshReader::readElements( const std::string& filename, UnsMesh& mesh )
 const
-//******************************************************************************
+// *****************************************************************************
 //  Read element connectivity
 //! \param[in] filename Filename to read nodes from
 //! \param[in] mesh Unstructured mesh object to put element connectivity
 //! \note We throw away the element ID.
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   for (auto& line : tk::Reader(filename).lines()) {
     std::stringstream ss(line);

@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/UnitTest/tests/Base/TestTaggedTuple.h
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Unit tests for Base/TaggedTuple.h
   \details   Unit tests for Base/TaggedTuple.h
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef test_TaggedTuple_h
 #define test_TaggedTuple_h
 

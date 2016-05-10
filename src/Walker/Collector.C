@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Walker/Collector.C
   \author    J. Bakosi
@@ -9,7 +9,7 @@
   \details   Charm++ module interface file for collecting contributions from
              Integrators.
 */
-//******************************************************************************
+// *****************************************************************************
 
 #include "Collector.h"
 
@@ -32,13 +32,13 @@ using walker::Collector;
 
 void
 Collector::chareOrd( const std::vector< tk::real >& ord )
-//******************************************************************************
+// *****************************************************************************
 // Chares contribute ordinary moments
 //! \param[in] ord Vector of partial sums for the estimation of ordinary moments
 //! \note This function does not have to be declared as a Charm++ entry
 //!   method since it is always called by chares on the same PE.
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   ++m_nord;
 
@@ -62,13 +62,13 @@ Collector::chareOrd( const std::vector< tk::real >& ord )
 
 void
 Collector::chareCen( const std::vector< tk::real >& cen )
-//******************************************************************************
+// *****************************************************************************
 // Chares contribute central moments
 //! \param[in] cen Vector of partial sums for the estimation of central moments
 //! \note This function does not have to be declared as a Charm++ entry
 //!   method since it is always called by chares on the same PE.
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   ++m_ncen;
 
@@ -94,7 +94,7 @@ void
 Collector::chareOrdPDF( const std::vector< tk::UniPDF >& updf,
                         const std::vector< tk::BiPDF >& bpdf,
                         const std::vector< tk::TriPDF >& tpdf )
-//******************************************************************************
+// *****************************************************************************
 // Chares contribute ordinary PDFs
 //! \param[in] updf Vector of partial sums for the estimation of univariate
 //!   ordinary PDFs
@@ -105,7 +105,7 @@ Collector::chareOrdPDF( const std::vector< tk::UniPDF >& updf,
 //! \note This function does not have to be declared as a Charm++ entry
 //!   method since it is always called by chares on the same PE.
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   ++m_nopdf;
 
@@ -143,7 +143,7 @@ void
 Collector::chareCenPDF( const std::vector< tk::UniPDF >& updf,
                         const std::vector< tk::BiPDF >& bpdf,
                         const std::vector< tk::TriPDF >& tpdf )
-//******************************************************************************
+// *****************************************************************************
 // Chares contribute central PDFs
 //! \param[in] updf Vector of partial sums for the estimation of univariate
 //!   central PDFs
@@ -154,7 +154,7 @@ Collector::chareCenPDF( const std::vector< tk::UniPDF >& updf,
 //! \note This function does not have to be declared as a Charm++ entry
 //!   method since it is always called by chares on the same PE.
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   ++m_ncpdf;
 

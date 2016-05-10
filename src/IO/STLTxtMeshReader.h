@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/IO/STLTxtMeshReader.h
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     ASCII STL (STereoLithography) reader class declaration
   \details   ASCII STL (STereoLithographu) reader class declaration.
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef STLTxtMeshReader_h
 #define STLTxtMeshReader_h
 

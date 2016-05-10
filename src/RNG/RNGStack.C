@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/RNG/RNGStack.C
   \author    J. Bakosi
@@ -12,7 +12,7 @@
     associative container), associating unique RNG keys to their constructor
     calls. For more details, see the in-code documentation of the constructor.
 */
-//******************************************************************************
+// *****************************************************************************
 
 #include <iterator>
 #include <utility>
@@ -53,12 +53,12 @@ RNGStack::RNGStack(
                     #endif
                     const tk::ctr::RNGSSEParameters& rngsseparam )
  : m_factory()
-//******************************************************************************
+// *****************************************************************************
 //  Constructor: register generators into factory for each supported library
 //! \param[in] mklparam MKL RNG parameters to use to configure MKL RNGs
 //! \param[in] rngsseparam RNGSSE RNG parameters to use to configure RNGSSE RNGs
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   #ifdef HAS_MKL
   regMKL( CkNumPes(), mklparam );
@@ -68,12 +68,12 @@ RNGStack::RNGStack(
 
 std::map< tk::ctr::RawRNGType, tk::RNG >
 RNGStack::selected( const std::vector< tk::ctr::RNGType >& sel ) const
-//******************************************************************************
+// *****************************************************************************
 //  Instantiate selected RNGs from factory and place them in map
 //! \param[in] sel Vector of selected RNGs to instantiate (selected by the user)
 //! \return A std::map of keys and their associated instantiated RNG objects
 //! \author  J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   using tk::ctr::RawRNGType;
   std::map< RawRNGType, tk::RNG > rng;
@@ -89,7 +89,7 @@ RNGStack::selected( const std::vector< tk::ctr::RNGType >& sel ) const
 #ifdef HAS_MKL
 void
 RNGStack::regMKL( int nstreams, const tk::ctr::RNGMKLParameters& param )
-//******************************************************************************
+// *****************************************************************************
 //  Register MKL random number generators into factory
 //! \details Note that registering these entries in the map does not
 //!   invoke the constructors. The mapped value simply stores how the
@@ -100,7 +100,7 @@ RNGStack::regMKL( int nstreams, const tk::ctr::RNGMKLParameters& param )
 //! \param[in] nstreams Register MKL RNG using this many independent streams
 //! \param[in] param MKL RNG parameters to use to configure the RNGs
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   using tk::ctr::RNGType;
   using tk::ctr::MKLUniformMethodType;
@@ -153,7 +153,7 @@ RNGStack::regMKL( int nstreams, const tk::ctr::RNGMKLParameters& param )
 
 void
 RNGStack::regRNGSSE( int nstreams, const tk::ctr::RNGSSEParameters& param )
-//******************************************************************************
+// *****************************************************************************
 //  Register RNGSSE random number generators into factory
 //! \details Note that registering these entries in the map does not
 //!   invoke the constructors. The mapped value simply stores how the
@@ -164,7 +164,7 @@ RNGStack::regRNGSSE( int nstreams, const tk::ctr::RNGSSEParameters& param )
 //! \param[in] nstreams Register RNGSSE RNG using this many independent streams
 //! \param[in] param RNGSSE RNG parameters to use to configure the RNGs
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   using tk::RNG;
   using tk::RNGSSE;

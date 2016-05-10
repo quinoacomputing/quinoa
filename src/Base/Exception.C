@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Base/Exception.C
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Exception class definition
   \details   Exception class definition
 */
-//******************************************************************************
+// *****************************************************************************
 
 #include <string>
 #include <sstream>
@@ -25,7 +25,7 @@ Exception::Exception( std::string&& message,
                       std::string&& file,
                       std::string&& function,
                       unsigned int line ) noexcept
-//******************************************************************************
+// *****************************************************************************
 //  Constructor: generate error message
 //! \param[in] message String (moved from) with an error message
 //! \param[in] file String (moved from) with the file name in which the
@@ -39,7 +39,7 @@ Exception::Exception( std::string&& message,
 //!   exceptions.
 //! \see Assert, ErrChk, Throw
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 try :
 #ifdef NDEBUG
   m_trace( false ),
@@ -79,12 +79,12 @@ try :
   }
 
 Exception::~Exception() noexcept
-//******************************************************************************
+// *****************************************************************************
 //  Destructor
 //! \details Exception safety: no-throw guarantee: this member function never
 //!   throws exceptions.
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   // allocated by execinfo.h's backtrace_symbols() in Exception::saveTrace()
   if (m_trace) free(m_symbolList);
@@ -92,14 +92,14 @@ Exception::~Exception() noexcept
 
 void
 Exception::saveTrace() noexcept
-//******************************************************************************
+// *****************************************************************************
 //  Save call-trace
 //! \details Exception safety: no-throw guarantee: this member function never
 //!   throws exceptions. For more information see the libc manual at
 //!   http://www.gnu.org/software/libc/manual/html_node/Backtraces.html.
 //!   Requires stdio.h, execinfo.h.
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   // Retrieve current stack addresses
   m_addrLength = backtrace(m_addrList, sizeof(m_addrList)/sizeof(void*));
@@ -113,7 +113,7 @@ Exception::saveTrace() noexcept
 
 void
 Exception::echoTrace() noexcept
-//******************************************************************************
+// *****************************************************************************
 //  Demangle and echo call trace
 //! \details Exception safety: no-throw guarantee: this member function never
 //!   throws exceptions. Credit goes to Timo Bingmann at http://idlebox.net,
@@ -122,7 +122,7 @@ Exception::echoTrace() noexcept
 //!   * http://panthema.net/2008/0901-stacktrace-demangled/cxa_demangle.html
 //!   * http://gcc.gnu.org/onlinedocs/libstdc++/latest-doxygen
 //! \author T. Bingmann, J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   // Allocate string which will be filled with the demangled function name
   size_t funcnamesize = 256;
@@ -176,13 +176,13 @@ Exception::echoTrace() noexcept
 
 tk::ErrCode
 Exception::handleException() noexcept
-//******************************************************************************
+// *****************************************************************************
 //  Handle Exception: Print cumulative message
 //! \return Error code, as defined in stdlib.h, i.e., cstdlib
 //! \details Exception safety: no-throw guarantee: this member function never
 //!   throws exceptions.
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   printf("\n>>> Error: %s\n", what());
 

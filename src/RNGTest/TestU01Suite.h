@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/RNGTest/TestU01Suite.h
   \author    J. Bakosi
@@ -9,7 +9,7 @@
     which facilitates subjecting any supported random number generator to a
     battery of statistical tests interfaced to the TestU01 library.
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef TestU01Suite_h
 #define TestU01Suite_h
 

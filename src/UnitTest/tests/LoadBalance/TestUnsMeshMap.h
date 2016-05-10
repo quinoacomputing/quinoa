@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/UnitTest/tests/LoadBalance/TestUnsMeshMap.h
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Unit tests for LoadBalance/UnsMeshMap
   \details   Unit tests for LoadBalance/UnsMeshMap
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef test_UnsMeshMap_h
 #define test_UnsMeshMap_h
 

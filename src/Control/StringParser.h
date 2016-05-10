@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Control/StringParser.h
   \author    J. Bakosi
@@ -9,7 +9,7 @@
     a base class for various string parsers, e.g., command-line parsers. It does
     generic after-parser diagnostics.
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef StringParser_h
 #define StringParser_h
 

@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Control/Options/PDFCentering.h
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     PDF output file centering type options
   \details   PDF output file centering type options
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef PDFCenteringOptions_h
 #define PDFCenteringOptions_h
 

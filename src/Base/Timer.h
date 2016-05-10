@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Base/Timer.h
   \author    J. Bakosi
@@ -10,7 +10,7 @@
     very minimal and simple, but still convenient to use, with as little state
     as possible. For an example client code, see walker::Main in Main/Walker.C.
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef Timer_h
 #define Timer_h
 

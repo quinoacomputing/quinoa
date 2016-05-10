@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Base/Reader.C
   \author    J. Bakosi
@@ -9,7 +9,7 @@
     for various file readers. It does generic low-level I/O, e.g., opening and
     closing a file, and associated error handling.
 */
-//******************************************************************************
+// *****************************************************************************
 
 #include <cstdio>
 #include <exception>
@@ -22,13 +22,13 @@ using tk::Reader;
 
 Reader::Reader( const std::string& filename, std::ios_base::openmode mode ) :
   m_filename( filename ), m_inFile()
-//******************************************************************************
+// *****************************************************************************
 //  Constructor: Acquire file handle
 //! \param[in] filename Name of file to open for reading
 //! \param[in] mode Open mode, see
 //!   http://en.cppreference.com/w/cpp/io/ios_base/openmode
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   // Make sure there is a filename
   Assert( !filename.empty(), "No filename specified" );
@@ -57,14 +57,14 @@ Reader::Reader( const std::string& filename, std::ios_base::openmode mode ) :
 }
 
 Reader::~Reader() noexcept
-//******************************************************************************
+// *****************************************************************************
 //  Destructor: Release file handle
 //! \details    Exception safety: no-throw guarantee: never throws exceptions.
 //!   Error handling, while done by throwing and catching exceptions, results in
 //!   warnings to terminal. We use C-style printf, since that will not throw
 //!   exceptions.
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   // Clear failbit triggered by eof, so close() won't throw a false FAILED_CLOSE
   m_inFile.clear();
@@ -89,12 +89,12 @@ Reader::~Reader() noexcept
 
 std::string
 Reader::firstline()
-//******************************************************************************
+// *****************************************************************************
 //  Return first line (for detection of file type based on header)
 //! \return First line read from file. This can be used for detection of file
 //!   type based on header.
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   std::string s;
   std::getline( m_inFile, s );          // read the first line
@@ -104,11 +104,11 @@ Reader::firstline()
 
 std::vector< std::string >
 Reader::lines()
-//******************************************************************************
+// *****************************************************************************
 // Read file and return a string for each line
 //! \return A std::vector< std::string >, a string for each line of a file.
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   std::string s;
   std::vector< std::string > ls;
@@ -118,12 +118,12 @@ Reader::lines()
 
 std::string
 Reader::line( std::size_t lineNum )
-//******************************************************************************
+// *****************************************************************************
 // Read a given line from file
 //! \param[in] lineNum Line number to read from file
 //! \return Line read from file at line given
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   std::string s;
   std::size_t num = 0;

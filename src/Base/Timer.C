@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Base/Timer.C
   \author    J. Bakosi
@@ -10,7 +10,7 @@
     very minimal and simple, but still convenient to use, with as little state
     as possible. For an example client code, see Main.
 */
-//******************************************************************************
+// *****************************************************************************
 
 #include <iostream>
 
@@ -20,13 +20,13 @@ using tk::Timer;
 
 tk::Timer::Watch
 Timer::hms() const
-//******************************************************************************
+// *****************************************************************************
 //  Return time elapsed between start and stop for timer as hours, minutes, and
 //  seconds.
 //! \return Time elapsed between start and stop as hours, minutes, and seconds,
 //!   as a Watch struct.
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   using std::chrono::duration_cast;
 
@@ -43,7 +43,7 @@ Timer::hms() const
 void
 Timer::eta( tk::real term, tk::real time, uint64_t nstep, uint64_t it,
             Watch& elapsedWatch, Watch& estimatedWatch ) const
-//******************************************************************************
+// *****************************************************************************
 //  Estimate time for accomplishment
 //! \param[in]  term            Time at which to terminate time stepping
 //! \param[in]  time            Current time
@@ -52,7 +52,7 @@ Timer::eta( tk::real term, tk::real time, uint64_t nstep, uint64_t it,
 //! \param[out] elapsedWatch    Elapsed time in h:m:s
 //! \param[out] estimatedWatch  Estimated time for accomplishmet in h:m:s
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   using std::chrono::duration_cast;
 
@@ -92,12 +92,12 @@ namespace tk {
 
 Timer::Watch
 hms( tk::real stamp )
-//******************************************************************************
+// *****************************************************************************
 //! Convert existing time stamp as a real to Watch (global-scope)
 //! \param[in] stamp Time stamp as a real number
 //! \return Time as hours, minutes, and seconds, as a Watch struct.
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   using std::chrono::duration_cast;
   const auto d = Timer::Dsec( stamp );

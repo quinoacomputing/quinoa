@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/NoWarning/Zoltam2_MeshAdapter.h
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Include Zoltan2_MeshAdapter.hpp with turning off specific compiler
              warnings
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef nowarning_Zoltan2_MeshAdapter_h
 #define nowarning_Zoltan2_MeshAdapter_h
 

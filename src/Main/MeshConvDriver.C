@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Main/MeshConvDriver.C
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Mesh converter driver
   \details   Mesh converter driver.
 */
-//******************************************************************************
+// *****************************************************************************
 
 #include <utility>
 
@@ -28,13 +28,13 @@ MeshConvDriver::MeshConvDriver( const tk::Print& print,
     m_reorder( cmdline.get< tag::reorder >() ),
     m_input(),
     m_output()
-//******************************************************************************
+// *****************************************************************************
 //  Constructor
 //! \param[in] print Pretty printer
 //! \param[in] cmdline Command line object storing data parsed from the command
 //!   line arguments
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   // Save input file name
   m_input = cmdline.get< tag::io, tag::input >();
@@ -44,10 +44,10 @@ MeshConvDriver::MeshConvDriver( const tk::Print& print,
 
 void
 MeshConvDriver::execute() const
-//******************************************************************************
+// *****************************************************************************
 //  Execute: Convert mesh file
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   m_print.endsubsection();
 

@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/NoWarning/integrator.decl.h
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Include integrator.decl.h with turning off specific compiler
              warnings
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef nowarning_integrator_decl_h
 #define nowarning_integrator_decl_h
 

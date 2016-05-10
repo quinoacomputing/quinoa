@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Walker/Integrator.C
   \author    J. Bakosi
@@ -12,7 +12,7 @@
     Note that there is no spatial dependence, these equations describe spatially
     homogeneous processes.
 */
-//******************************************************************************
+// *****************************************************************************
 
 #include "Integrator.h"
 #include "Collector.h"
@@ -37,13 +37,13 @@ Integrator::Integrator( CProxy_Distributor& hostproxy,
           g_inputdeck.get< tag::stat >(),
           g_inputdeck.get< tag::pdf >(),
           g_inputdeck.get< tag::discr, tag::binsize >() )
-//******************************************************************************
+// *****************************************************************************
 // Constructor
 //! \param[in] hostproxy Host proxy to call back to
 //! \param[in] collproxy Collector proxy to send results to
 //! \param[in] npar Number of particles this integrator advances
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   // register with the local branch of the statistics collector
   m_collproxy.ckLocalBranch()->checkin();
@@ -63,13 +63,13 @@ Integrator::setup( tk::real dt,
                    tk::real t,
                    uint64_t it,
                    const std::map< tk::ctr::Product, tk::real >& moments )
-//******************************************************************************
+// *****************************************************************************
 // Perform setup: set initial conditions and advance a time step
 //! \param[in] dt Size of time step
 //! \param[in] t Physical time
 //! \param[in] it Iteration count
 //! \param[in] moments Map of statistical moments
-//******************************************************************************
+// *****************************************************************************
 {
   ic();                           // set initial conditions for all equations
   advance( dt, t, it, moments );  // start time stepping all equations
@@ -77,10 +77,10 @@ Integrator::setup( tk::real dt,
 
 void
 Integrator::ic()
-//******************************************************************************
+// *****************************************************************************
 // Set initial conditions
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   for (const auto& eq : g_diffeqs) eq.initialize( CkMyPe(), m_particles );
 }
@@ -90,14 +90,14 @@ Integrator::advance( tk::real dt,
                      tk::real t,
                      uint64_t it,
                      const std::map< tk::ctr::Product, tk::real >& moments )
-//******************************************************************************
+// *****************************************************************************
 // Advance all particles owned by this integrator
 //! \param[in] dt Size of time step
 //! \param[in] t Physical time
 //! \param[in] it Iteration count
 //! \param[in] moments Map of statistical moments
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   // Advance all equations one step in time. At the 0th iteration skip advance
   // but estimate statistics and (potentially) PDFs (at the interval given by
@@ -121,10 +121,10 @@ Integrator::advance( tk::real dt,
 
 void
 Integrator::accumulateOrd()
-//******************************************************************************
+// *****************************************************************************
 // Accumulate sums for ordinary moments
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   // Accumulate partial sums for ordinary moments
   m_stat.accumulateOrd();
@@ -134,11 +134,11 @@ Integrator::accumulateOrd()
 
 void
 Integrator::accumulateCen( const std::vector< tk::real >& ord )
-//******************************************************************************
+// *****************************************************************************
 // Accumulate sums for central moments
 //! \param[in] ord Estimated ordinary moments (collected from all PEs)
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   // Accumulate partial sums for central moments
   m_stat.accumulateCen( ord );
@@ -148,10 +148,10 @@ Integrator::accumulateCen( const std::vector< tk::real >& ord )
 
 void
 Integrator::accumulateOrdPDF()
-//******************************************************************************
+// *****************************************************************************
 // Accumulate sums for ordinary PDFs
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   // Accumulate partial sums for ordinary PDFs
   m_stat.accumulateOrdPDF();
@@ -163,11 +163,11 @@ Integrator::accumulateOrdPDF()
 
 void
 Integrator::accumulateCenPDF( const std::vector< tk::real >& ord )
-//******************************************************************************
+// *****************************************************************************
 // Accumulate sums for central PDFs
 //! \param[in] ord Estimated ordinary moments (collected from all PEs)
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   // Accumulate partial sums for central PDFs
   m_stat.accumulateCenPDF( ord );

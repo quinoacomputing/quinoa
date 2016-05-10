@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/UnitTest/tests/Control/Options/TestRNG.h
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Unit tests for Control/Options/RNG
   \details   Unit tests for Control/Options/RNG
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef test_RNGOptions_h
 #define test_RNGOptions_h
 

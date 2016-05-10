@@ -1,13 +1,13 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/LinSys/linsysmerger.ci
   \author    J. Bakosi
-  \date      Thu 11 Feb 2016 02:06:03 PM MST
+  \date      Tue 10 May 2016 02:17:50 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ module interface file for merging a linear system
   \details   Charm++ module interface file for merging a linear system
 */
-//******************************************************************************
+// *****************************************************************************
 
 module linsysmerger {
 
@@ -18,7 +18,7 @@ module linsysmerger {
     // List all possible specializations of templated chare to instantiate
     // registration and delivery of code for the individual specializations
 
-    // Will specialize linear system merger for inciter's Conductor & Performer
+    // Will specialize linear system merger for Conductor & Performer
     chare LinSysMerger< inciter::CProxy_Conductor, inciter::CProxy_Performer >;
 
     // LinSysMerger is templated so that the same code (parameterized by the

@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/NoWarning/performer.def.h
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Include performer.def.h with turning off specific compiler
              warnings
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef nowarning_performer_def_h
 #define nowarning_performer_def_h
 

@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/RNGTest/TestU01Wrappers.h
   \author    J. Bakosi
@@ -9,7 +9,7 @@
     are in global-scope, see Main/RNGTest.C, for more info on why they are
     static inline, see http://stackoverflow.com/a/9399539.
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef TestU01Wrappers_h
 #define TestU01Wrappers_h
 
@@ -23,7 +23,7 @@ extern std::map< tk::ctr::RawRNGType, tk::RNG > g_rng;
 
 template< tk::ctr::RawRNGType id >
 static inline double uniform( void*, void* )
-//******************************************************************************
+// *****************************************************************************
 //  Global-scope TestU01 uniform RNG wrapper
 //! \details This functions is used as an external uniform random number
 //!   generator (i.e., external to TestU01) that is called by the TestU01
@@ -34,7 +34,7 @@ static inline double uniform( void*, void* )
 //!   any or all wrappers as they are unique functions.
 //! \return Random number generated as a double-precision floating point value
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   double r = 0.0;
   const auto rng = g_rng.find( id );
@@ -47,7 +47,7 @@ static inline double uniform( void*, void* )
 
 template< tk::ctr::RawRNGType id >
 static inline unsigned long uniform_bits( void*, void* )
-//******************************************************************************
+// *****************************************************************************
 //  Global-scope TestU01 uniform RNG bits wrapper
 //! \details This functions is used as an external uniform random number
 //!   generator (i.e., external to TestU01) that is called by the TestU01
@@ -58,7 +58,7 @@ static inline unsigned long uniform_bits( void*, void* )
 //!   any or all wrappers as they are unique functions.
 //! \return Random number generated as a unsigned long integer value
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   double r = 0.0;
   const auto rng = g_rng.find( id );
@@ -71,7 +71,7 @@ static inline unsigned long uniform_bits( void*, void* )
 
 template< tk::ctr::RawRNGType id >
 static inline unif01_Gen* createTestU01Gen( const std::string& name )
-//******************************************************************************
+// *****************************************************************************
 //  Global-scope create TestU01 external generator
 //! \details This is the function that contains the TestU01 library call to
 //!   register a TestU01-external random number generator that later can be
@@ -80,7 +80,7 @@ static inline unif01_Gen* createTestU01Gen( const std::string& name )
 //!   different external generators.
 //! \param[in] name Random number generator name
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   return unif01_CreateExternGen01( const_cast<char*>(name.c_str()),
                                    uniform< id >, uniform_bits< id > );

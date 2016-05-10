@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Control/UnitTest/CmdLine/Parser.h
   \author    J. Bakosi
@@ -8,7 +8,7 @@
   \details   This file declares the command-line argument parser for the unit
      test suite, UnitTest.
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef UnitTestCmdLineParser_h
 #define UnitTestCmdLineParser_h
 

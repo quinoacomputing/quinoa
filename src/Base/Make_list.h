@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Base/Make_list.h
   \author    J. Bakosi
@@ -12,7 +12,7 @@
     http://www.boost.org/doc/libs/release/libs/mpl/doc/refmanual/list.html.
     Credit goes to Dmytro Shandyba: http://blog.shandyba.com/2009/12/17/converting-variadic-template-arguments-pack-to-boost-mpl-sequence.
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef Make_list_h
 #define Make_list_h
 

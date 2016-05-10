@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/UnitTest/tests/Base/TestExceptionMPI.h
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Unit tests for Base/TestExceptionMPI.h
   \details   Unit tests for Base/TestExceptionMPI.h
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef test_ExceptionMPI_h
 #define test_ExceptionMPI_h
 

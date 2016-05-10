@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Main/Walker.C
   \author    J. Bakosi
@@ -8,7 +8,7 @@
   \details   Random walker Charm++ main chare. This file contains the definition
     of the Charm++ main chare, equivalent to main() in Charm++-land.
 */
-//******************************************************************************
+// *****************************************************************************
 
 #include <map>
 #include <iostream>

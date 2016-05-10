@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/NoWarning/meshconv.decl.h
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Include meshconv.decl.h with turning off specific compiler
              warnings
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef nowarning_meshconv_decl_h
 #define nowarning_meshconv_decl_h
 

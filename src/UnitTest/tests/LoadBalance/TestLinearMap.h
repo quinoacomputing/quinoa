@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/UnitTest/tests/LoadBalance/TestLinearMap.h
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Unit tests for LoadBalance/LinearMap
   \details   Unit tests for LoadBalance/LinearMap
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef test_LinearMap_h
 #define test_LinearMap_h
 

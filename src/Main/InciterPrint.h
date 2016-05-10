@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Main/InciterPrint.h
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Inciter-specific pretty printer functionality
   \details   Inciter-specific pretty printer functionality.
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef InciterPrint_h
 #define InciterPrint_h
 

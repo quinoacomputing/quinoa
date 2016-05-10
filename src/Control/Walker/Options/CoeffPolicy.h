@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Control/Walker/Options/CoeffPolicy.h
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Differential equation coefficients policy options
   \details   Differential equation coefficients policy options
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef CoeffPolicyOptions_h
 #define CoeffPolicyOptions_h
 

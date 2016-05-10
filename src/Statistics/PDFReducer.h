@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Statistics/PDFReducer.h
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Custom Charm++ reducer for merging PDFs across PEs
   \details   Custom Charm++ reducer for merging PDFs across PEs.
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef PDFReducer_h
 #define PDFReducer_h
 

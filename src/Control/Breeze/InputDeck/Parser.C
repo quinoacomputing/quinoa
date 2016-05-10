@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Control/Breeze/InputDeck/Parser.C
   \author    J. Bakosi
@@ -8,7 +8,7 @@
   \details   This file declares the input deck, i.e., control file, parser for
     the computational fluid dynamics tool, Breeze.
 */
-//******************************************************************************
+// *****************************************************************************
 
 #include "Print.h"
 #include "Breeze/InputDeck/Parser.h"
@@ -27,13 +27,13 @@ InputDeckParser::InputDeckParser( const tk::Print& print,
                                   const ctr::CmdLine& cmdline,
                                   ctr::InputDeck& inputdeck ) :
   FileParser( cmdline.get< tag::io, tag::control >() )
-//******************************************************************************
+// *****************************************************************************
 //  Constructor
 //! \param[in] print Pretty printer
 //! \param[in] cmdline Command line stack
 //! \param[inout] inputdeck Input deck stack where data is stored during parsing
 //! \author  J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   // Create PEGTL file input from std::string
   pegtl::file_input< ctr::Location > input( m_filename );

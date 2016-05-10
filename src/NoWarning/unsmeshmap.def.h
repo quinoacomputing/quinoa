@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/NoWarning/unsmeshmap.def.h
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Include unsmeshmap.def.h with turning off specific compiler
              warnings
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef nowarning_unsmeshmap_def_h
 #define nowarning_unsmeshmap_def_h
 

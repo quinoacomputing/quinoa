@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Main/RNGTestDriver.C
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Random number generator test suite driver
   \details   Random number generator test suite driver.
 */
-//******************************************************************************
+// *****************************************************************************
 
 #include <string>
 #include <utility>
@@ -34,13 +34,13 @@ using rngtest::RNGTestDriver;
 RNGTestDriver::RNGTestDriver( const RNGTestPrint& print,
                               const ctr::CmdLine& cmdline ) :
   m_print( print )
-//******************************************************************************
+// *****************************************************************************
 //  Constructor
 //! \param[in] print Pretty printer
 //! \param[in] cmdline Command line object storing data parsed from the command
 //!   line arguments
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   // All global-scope data to be migrated to all PEs initialized here
 
@@ -53,10 +53,10 @@ RNGTestDriver::RNGTestDriver( const RNGTestPrint& print,
 
 void
 RNGTestDriver::execute() const
-//******************************************************************************
+// *****************************************************************************
 //  Run battery
 //! \author J. Bakosi
-//******************************************************************************
+// *****************************************************************************
 {
   m_print.part( "Factory" );
 

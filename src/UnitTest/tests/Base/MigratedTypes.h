@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/UnitTest/tests/Base/MigratedTypes.h
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Type definitions for unit tests of Charm++ migrated data
   \details   Type definitions for unit tests of Charm++ migrated data
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef test_MigratedTypes_h
 #define test_MigratedTypes_h
 

@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Control/UnitTest/Types.h
   \author    J. Bakosi
@@ -10,7 +10,7 @@
     These components are therefore part of the grammar stack that is filled
     during command-line argument parsing.
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef UnitTestTypes_h
 #define UnitTestTypes_h
 

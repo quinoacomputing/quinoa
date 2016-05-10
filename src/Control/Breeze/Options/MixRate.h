@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Control/Breeze/Options/MixRate.h
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Turbulence frequency model options
   \details   Turbulence frequency model options
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef BreezeMixRateOptions_h
 #define BreezeMixRateOptions_h
 

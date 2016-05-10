@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/NoWarning/distributor.def.h
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Include distributor.def.h with turning off specific compiler
              warnings
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef nowarning_distributor_def_h
 #define nowarning_distributor_def_h
 

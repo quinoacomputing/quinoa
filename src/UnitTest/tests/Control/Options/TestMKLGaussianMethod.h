@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/UnitTest/tests/Control/Options/TestMKLGaussianMethod.h
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Unit tests for Control/Options/MKLGaussianMethod
   \details   Unit tests for Control/Options/MKLGaussianMethod
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef test_MKLGaussianMethod_h
 #define test_MKLGaussianMethod_h
 

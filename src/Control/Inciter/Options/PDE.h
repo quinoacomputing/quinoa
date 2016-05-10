@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Control/Inciter/Options/PDE.h
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Partial differential equation options and associations for inciter
   \details   Partial differential equation options and associations for inciter
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef InciterPDEOptions_h
 #define InciterPDEOptions_h
 

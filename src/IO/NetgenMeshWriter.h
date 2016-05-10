@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/IO/NetgenMeshWriter.h
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Netgen mesh writer class declaration
   \details   Netgen mesh writer class declaration. Only supports tetrahedra.
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef NetgenMeshWriter_h
 #define NetgenMeshWriter_h
 

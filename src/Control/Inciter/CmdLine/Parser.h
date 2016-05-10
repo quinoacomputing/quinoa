@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/Control/Inciter/CmdLine/Parser.h
   \author    J. Bakosi
@@ -8,7 +8,7 @@
   \details   This file declares the command-line argument parser for the
      computational shock hydrodynamics tool, Inciter.
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef InciterCmdLineParser_h
 #define InciterCmdLineParser_h
 

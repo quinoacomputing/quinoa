@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/IO/HyperMeshReader.h
   \author    J. Bakosi
@@ -7,7 +7,7 @@
   \brief     Hyper mesh reader class declaration
   \details   Hyper mesh reader class declaration. Only supports tetrahedra.
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef HyperMeshReader_h
 #define HyperMeshReader_h
 

@@ -1,4 +1,4 @@
-//******************************************************************************
+// *****************************************************************************
 /*!
   \file      src/PDE/PDEStack.h
   \author    J. Bakosi
@@ -12,7 +12,7 @@
     associating unique partial differential equation keys to their constructor
     calls. For more details, see the in-code documentation of the constructor.
 */
-//******************************************************************************
+// *****************************************************************************
 #ifndef PDEStack_h
 #define PDEStack_h
 
