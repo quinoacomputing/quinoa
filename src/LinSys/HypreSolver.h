@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/HypreSolver.h
   \author    J. Bakosi
-  \date      Tue 03 May 2016 09:19:41 AM MDT
+  \date      Tue 10 May 2016 10:02:44 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Hypre solver class
   \details   Hypre solver class.
@@ -16,7 +16,7 @@
 #include "NoWarning/charm.h"
 
 #include <HYPRE.h>
-#include <HYPRE_krylov.h>
+#include "NoWarning/HYPRE_krylov.h"
 
 namespace tk {
 namespace hypre {
@@ -25,6 +25,11 @@ namespace hypre {
 class HypreSolver {
 
   public:
+    #if defined(__clang__)
+      #pragma clang diagnostic push
+      #pragma clang diagnostic ignored "-Wold-style-cast"
+    #endif
+
     //! Create and initialize Hypre solver
     void create( ) {
       // Create Hypre solver
@@ -36,6 +41,10 @@ class HypreSolver {
       HYPRE_PCGSetPrintLevel( m_solver, 1 ); // print out iteration info
       HYPRE_PCGSetLogging( m_solver, 1 );    // for run info
     }
+
+    #if defined(__clang__)
+      #pragma clang diagnostic pop
+    #endif
 
     //! Solve the linear system
     void solve( const HypreMatrix& A,

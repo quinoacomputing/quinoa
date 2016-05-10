@@ -19,7 +19,7 @@
 
 #include "NoWarning/bind.h"
 #include "NoWarning/factory.h"
-#include <boost/functional/value_factory.hpp>
+#include "NoWarning/value_factory.h"
 
 #include "Exception.h"
 

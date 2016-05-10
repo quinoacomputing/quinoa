@@ -1,31 +1,25 @@
 //******************************************************************************
 /*!
-  \file      src/NoWarning/bind.h
+  \file      src/NoWarning/HYPRE_krylov.h
   \author    J. Bakosi
-  \date      Mon 09 May 2016 03:38:38 PM MDT
+  \date      Tue 10 May 2016 10:01:51 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
-  \brief     Include boost/bind/bind.hpp with turning off specific compiler
+  \brief     Include HYPRE_krylov.h with turning off specific compiler
              warnings
 */
 //******************************************************************************
-#ifndef nowarning_bind_h
-#define nowarning_bind_h
+#ifndef nowarning_HYPRE_krylov_h
+#define nowarning_HYPRE_krylov_h
 
 #if defined(__clang__)
   #pragma clang diagnostic push
   #pragma clang diagnostic ignored "-Wdocumentation-unknown-command"
-  #pragma clang diagnostic ignored "-Wreserved-id-macro"
-#elif defined(__GNUC__)
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Weffc++"
 #endif
 
-#include <boost/bind/bind.hpp>
+#include <HYPRE_krylov.h>
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
-#elif defined(__GNUC__)
-  #pragma GCC diagnostic pop
 #endif
 
-#endif // nowarning_bind_h
+#endif // nowarning_HYPRE_krylov_h

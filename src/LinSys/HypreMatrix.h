@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/HypreMatrix.h
   \author    J. Bakosi
-  \date      Thu 05 May 2016 01:43:09 PM MDT
+  \date      Tue 10 May 2016 09:59:37 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Hypre IJ matrix class
   \details   Hypre IJ matrix class.
@@ -21,6 +21,11 @@ namespace hypre {
 class HypreMatrix {
 
   public:
+    #if defined(__clang__)
+      #pragma clang diagnostic push
+      #pragma clang diagnostic ignored "-Wold-style-cast"
+    #endif
+
     //! Create and initialize Hypre IJ matrix
     void create( std::size_t lower, std::size_t upper ) {
       // Create Hypre IJ matrix
@@ -35,6 +40,10 @@ class HypreMatrix {
       // Initialize before setting coefficients
       HYPRE_IJMatrixInitialize( m_A );
     }
+
+    #if defined(__clang__)
+      #pragma clang diagnostic pop
+    #endif
 
     //! \brief Destructor: destroy Hypre IJ matrix
     //! \note There is no problem with destroying a Hypre matrix without

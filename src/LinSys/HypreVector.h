@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/HypreVector.h
   \author    J. Bakosi
-  \date      Tue 03 May 2016 09:19:53 AM MDT
+  \date      Tue 10 May 2016 10:00:28 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Hypre IJ vector class
   \details   Hypre IJ vector class.
@@ -21,6 +21,11 @@ namespace hypre {
 class HypreVector {
 
   public:
+    #if defined(__clang__)
+      #pragma clang diagnostic push
+      #pragma clang diagnostic ignored "-Wold-style-cast"
+    #endif
+
     //! Create and initialize Hypre IJ vector
     void create( std::size_t lower, std::size_t upper ) {
       // Create Hypre IJ vector
@@ -33,6 +38,10 @@ class HypreVector {
       // Initialize before setting coefficients
       HYPRE_IJVectorInitialize( m_v );
     }
+
+    #if defined(__clang__)
+      #pragma clang diagnostic pop
+    #endif
 
     //! \brief Destructor: destroy Hypre IJ vector
     //! \note There is no problem with destroying a Hypre vector without

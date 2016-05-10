@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Options/PartitioningAlgorithm.h
   \author    J. Bakosi
-  \date      Thu 19 Nov 2015 10:11:50 PM MST
+  \date      Tue 10 May 2016 10:04:21 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Mesh partitioning algorithm options
   \details   Mesh partitioning algorithm options
@@ -13,7 +13,7 @@
 
 #include <map>
 
-#include <boost/mpl/vector.hpp>
+#include "NoWarning/vector.h"
 
 #include "Toggle.h"
 #include "Keywords.h"
