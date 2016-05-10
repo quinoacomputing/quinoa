@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Sun 01 May 2016 10:46:53 PM MDT
+  \date      Mon 09 May 2016 03:56:58 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Inciter's input deck definition
   \details   This file defines the heterogeneous stack that is used for storing
@@ -16,7 +16,7 @@
 #include <limits>
 
 #include <boost/mpl/set.hpp>
-#include <boost/mpl/for_each.hpp>
+#include "NoWarning/for_each.h"
 
 #include "Control.h"
 #include "Inciter/CmdLine/CmdLine.h"

@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTestDriver.C
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 09:17:02 AM MDT
+  \date      Mon 09 May 2016 04:25:00 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Random number generator test suite driver
   \details   Random number generator test suite driver.
@@ -12,9 +12,6 @@
 #include <string>
 #include <utility>
 #include <iterator>
-
-#include <boost/format.hpp>
-#include <boost/optional.hpp>
 
 #include "Tags.h"
 #include "Exception.h"

@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/WalkerPrint.h
   \author    J. Bakosi
-  \date      Wed 04 May 2016 10:19:44 AM MDT
+  \date      Mon 09 May 2016 04:18:29 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Walker-specific pretty printer functionality
   \details   Walker-specific pretty printer functionality.
@@ -19,8 +19,7 @@
 #include <utility>
 #include <cstddef>
 
-#include <boost/format.hpp>
-#include <boost/optional.hpp>
+#include "NoWarning/format.h"
 
 #include "Keywords.h"
 #include "Print.h"

@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGPrint.C
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 04:25:14 PM MDT
+  \date      Mon 09 May 2016 04:18:14 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Pretty printer base for pretty printers supporting RNGs
   \details   Pretty printer base for pretty printers supporting RNGs.
@@ -12,8 +12,7 @@
 #include <map>
 #include <utility>
 
-#include <boost/format.hpp>
-#include <boost/optional.hpp>
+#include "NoWarning/format.h"
 
 #include "Tags.h"
 #include "Print.h"

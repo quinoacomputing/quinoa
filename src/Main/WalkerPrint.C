@@ -2,14 +2,14 @@
 /*!
   \file      src/Main/WalkerPrint.C
   \author    J. Bakosi
-  \date      Wed 04 May 2016 10:20:03 AM MDT
+  \date      Mon 09 May 2016 04:08:04 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Walker-specific pretty printer functionality
   \details   Walker-specific pretty printer functionality.
 */
 //******************************************************************************
 
-#include <boost/algorithm/string/replace.hpp>
+#include "NoWarning/replace.h"
 #include <boost/iterator/iterator_traits.hpp>
 
 #include "Exception.h"

@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Factory.h
   \author    J. Bakosi
-  \date      Sun 13 Mar 2016 08:47:35 PM MDT
+  \date      Mon 09 May 2016 03:40:43 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Factory utilities
   \details   Factory utilities. The functions defined in this file help
@@ -17,8 +17,8 @@
 #include <list>
 #include <functional>
 
-#include <boost/bind.hpp>
-#include <boost/functional/factory.hpp>
+#include "NoWarning/bind.h"
+#include "NoWarning/factory.h"
 #include <boost/functional/value_factory.hpp>
 
 #include "Exception.h"
