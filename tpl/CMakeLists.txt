@@ -73,6 +73,27 @@ else()
   message(STATUS "CMAKE_INSTALL_PREFIX: " ${CMAKE_INSTALL_PREFIX})
 endif()
 
+# Compilers
+# =========
+# There are three sets of compilers, given by the following CMake variables:
+#
+# 1. The underlying compiler suite
+#
+#    UNDERLYING_C_COMPILER
+#    UNDERLYING_CXX_COMPILER
+#    UNDERLYING_Fortran_COMPILER
+#
+# 2. The MPI wrappers (of the underlying compilers)
+#
+#    MPI_C_COMPILER
+#    MPI_CXX_COMPILER
+#    MPI_Fortran_COMPILER
+#
+# 3. The Charm++ wrapper (of the MPI wrappers or around the underlying
+#    compilers, depending on CHARM_COMPILER), the compiler used to build Charm++
+#
+#    CHARM_COMPILER
+
 # Convert system name to lower case
 string(TOLOWER ${CMAKE_SYSTEM_NAME} SYSTEM_NAME)
 
@@ -116,29 +137,8 @@ endif()
 message(STATUS "Charm++ architecture: '${CHARM_ARCHITECTURE}'")
 message(STATUS "Charm++ compiler: '${CHARM_COMPILER}'")
 
-# Compilers
-# =========
-# There are three sets of compilers, given by the following CMake variables:
-#
-# 1. The underlying compiler suite
-#
-#    UNDERLYING_C_COMPILER
-#    UNDERLYING_CXX_COMPILER
-#    UNDERLYING_Fortran_COMPILER
-#
-# 2. The MPI wrappers (of the underlying compilers)
-#
-#    MPI_C_COMPILER
-#    MPI_CXX_COMPILER
-#    MPI_Fortran_COMPILER
-#
-# 3. The Charm++ wrapper (of the MPI wrappers or around the underlying
-#    compilers, depending on CHARM_COMPILER), the compiler used to build Charm++
-#
-#    CHARM_COMPILER
-
 # Compiler-specific settings
-if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")  # clang-specific settings
+if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")  # clang-specific settings
 
   # Include function that allows to set standard C++ library
   include(libstdcxx)
