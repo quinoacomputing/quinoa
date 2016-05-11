@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Detect operating system
-# \date      Fri 06 May 2016 06:41:22 AM MDT
+# \date      Wed 11 May 2016 08:03:16 AM MDT
 #
 ################################################################################
 
@@ -15,7 +15,7 @@ function(detect_os)
     set(os "windows")
   else()
     execute_process(COMMAND cat /etc/os-release
-                    COMMAND grep ^ID
+                    COMMAND grep ^ID=
                     COMMAND awk -F= "{ print $2 }"
                     COMMAND tr "\n" " "
                     COMMAND sed "s/ //"
