@@ -2,7 +2,7 @@
 /*!
   \file      src/NoWarning/vector.h
   \author    J. Bakosi
-  \date      Tue 10 May 2016 10:04:38 AM MDT
+  \date      Wed 11 May 2016 06:59:08 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include boost/mpl/vector.hpp with turning off specific compiler
              warnings
@@ -14,12 +14,17 @@
 #if defined(__clang__)
   #pragma clang diagnostic push
   #pragma clang diagnostic ignored "-Wreserved-id-macro"
+#elif defined(__GNUC__)
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wstrict-aliasing"
 #endif
 
 #include <boost/mpl/vector.hpp>
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
+#elif defined(__GNUC__)
+  #pragma GCC diagnostic pop
 #endif
 
 #endif // nowarning_vector_h
