@@ -173,6 +173,7 @@ static int ProcessLine (char *line)
 
 /**************************************************************************/
 
+#if 0
 int main (int argc, char *argv[])
 {
    char *p, *q;
@@ -207,3 +208,4 @@ int main (int argc, char *argv[])
    fclose (fin);
    return 0;
 }
+#endif
