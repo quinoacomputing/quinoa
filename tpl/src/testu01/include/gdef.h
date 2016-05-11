@@ -51,7 +51,9 @@ typedef int  lebool;
 #ifdef USE_LONGLONG
    typedef long long  longlong;
    typedef unsigned long long  ulonglong;
+#undef PRIdLEAST64
 #define PRIdLEAST64  "lld"
+#undef PRIuLEAST64
 #define PRIuLEAST64  "llu"
 #endif
 
