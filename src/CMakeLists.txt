@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Build quinoa
-# \date      Tue 10 May 2016 02:49:35 PM MDT
+# \date      Wed 11 May 2016 12:13:48 PM MDT
 #
 ################################################################################
 
@@ -258,7 +258,7 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
     set_libstdcpp_vs_libcpp(CMAKE_CXX_FLAGS "libc++")
   endif()
 
-  # Use the C++14 standard (CMAKE_CXX_STANDARD does not set this for intel)
+  # Use the C++11 standard (CMAKE_CXX_STANDARD does not set this for intel)
   add_compiler_flag("-std=c++11")
 
   # Compiler flags for intel
