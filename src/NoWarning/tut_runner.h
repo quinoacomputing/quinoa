@@ -2,7 +2,7 @@
 /*!
   \file      src/NoWarning/tut_runner.h
   \author    J. Bakosi
-  \date      Thu 05 May 2016 08:55:53 AM MDT
+  \date      Tue 10 May 2016 02:50:15 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include tut/tut_runner.hpp with turning off specific compiler
              warnings
@@ -20,7 +20,6 @@
 #elif defined(__INTEL_COMPILER)
   #pragma warning( push )
   #pragma warning( disable: 1720 )
-  #pragma warning( disable: 3346 )
 #endif
 
 #include <tut/tut_runner.hpp>

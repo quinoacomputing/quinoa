@@ -2,7 +2,7 @@
 /*!
   \file      src/NoWarning/Zoltam2_MeshAdapter.h
   \author    J. Bakosi
-  \date      Thu 05 May 2016 08:41:16 AM MDT
+  \date      Tue 10 May 2016 02:50:20 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include Zoltan2_MeshAdapter.hpp with turning off specific compiler
              warnings
@@ -47,7 +47,6 @@
 #elif defined(__INTEL_COMPILER)
   #pragma warning( push )
   #pragma warning( disable: 239 )
-  #pragma warning( disable: 3346 )
 #endif
 
 #include <Zoltan2_MeshAdapter.hpp>

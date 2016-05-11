@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Build quinoa
-# \date      Fri 06 May 2016 10:15:54 PM MDT
+# \date      Tue 10 May 2016 02:49:35 PM MDT
 #
 ################################################################################
 
@@ -287,8 +287,9 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
   #  2415: variable of static storage duration was declared but never referenced
   #  2557: comparison between signed and unsigned operands
   #  3280: declaration hides member
+  #  3346: dynamic exception specifications are deprecated
   #  3656: variable may be used before its value is set
-  add_compiler_flag("-diag-disable 68,111,177,186,193,280,304,383,411,444,593,869,981,1418,1572,2259,2407,2415,2557,3280,3656")
+  add_compiler_flag("-diag-disable 68,111,177,186,193,280,304,383,411,444,593,869,981,1418,1572,2259,2407,2415,2557,3280,3346,3656")
 
   # Compiler flags for optimization report
   #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -qopt-report=0 -qopt-report-phase=loop,vec -qopt-report-file=stderr")
