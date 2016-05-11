@@ -2,7 +2,7 @@
 /*!
   \file      src/NoWarning/tut.h
   \author    J. Bakosi
-  \date      Thu 05 May 2016 01:37:14 PM MDT
+  \date      Tue 10 May 2016 02:50:08 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include tut/tut.hpp with turning off specific compiler warnings
 */
@@ -28,9 +28,6 @@
   #pragma GCC diagnostic ignored "-Wnon-virtual-dtor"
   #pragma GCC diagnostic ignored "-Wswitch-default"
   #pragma GCC diagnostic ignored "-Wunused-variable"
-#elif defined(__INTEL_COMPILER)
-  #pragma warning( push )
-  #pragma warning( disable: 3346 )
 #endif
 
 #include <tut/tut.hpp>
@@ -39,8 +36,6 @@
   #pragma clang diagnostic pop
 #elif defined(__GNUC__)
   #pragma GCC diagnostic pop
-#elif defined(__INTEL_COMPILER)
-  #pragma warning( pop )
 #endif
 
 #endif // nowarning_tut_h
