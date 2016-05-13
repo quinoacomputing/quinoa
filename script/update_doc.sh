@@ -4,7 +4,7 @@
 # 
 # \file      script/update_doc.sh
 # \author    J. Bakosi
-# \date      Wed 11 May 2016 11:59:39 AM MDT
+# \date      Fri 13 May 2016 10:47:28 AM MDT
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Regenerate doc and test coverage and upload to github pages
 # \details   This script clones the github repository, builds the third-party
@@ -32,9 +32,10 @@ cd ${WORKDIR}
 git clone git@github.com:quinoacomputing/quinoa.git
 cd ${WORKDIR}/quinoa
 
-# Get git commit sha1 for code and doc branches
+# Get git commit sha1 for latest code commit and for the commit which doc was
+# most recently generated
 CODE_SHA=$(git rev-parse --verify master)
-DOC_SHA=$(git rev-parse --verify origin/gh-pages)
+DOC_SHA=$(git log -1 origin/gh-pages --pretty=%B | awk '{print $4}')
 
 # See if doc commit sha1 equals that of code (if so, no need to regenerate doc)
 if [ $CODE_SHA != $DOC_SHA ]; then
