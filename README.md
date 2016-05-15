@@ -6,7 +6,7 @@ Quinoa is a set of computational tools that enables research and numerical analy
 ## Organization
 
 Currently, Quinoa consists of the following tools:
-  - [<B>inciter</B>](https://quinoacomputing.github.io/quinoa/inciter_doc.html) - Solve a PDE on an unstructured mesh using overdecomposition
+  - [<B>inciter</B>](https://quinoacomputing.github.io/quinoa/inciter_doc.html) - Solve a system of partial differential equations discretized on a 3D unstructured mesh using overdecomposition
   - [<B>walker</B>](https://quinoacomputing.github.io/quinoa/walker_doc.html) - Random walker for stochastic differential equations
   - [<B>rngtest</B>](https://quinoacomputing.github.io/quinoa/rngtest_doc.html) - Random number generator test suite
   - [<B>unittest</B>](https://quinoacomputing.github.io/quinoa/unittest_doc.html) - Unit test suite
