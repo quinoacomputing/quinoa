@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/LinSysMerger.h
   \author    J. Bakosi
-  \date      Thu 05 May 2016 09:50:51 AM MDT
+  \date      Sat 14 May 2016 04:47:07 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Linear system merger
   \details   Linear system merger.
@@ -50,6 +50,9 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
     #pragma GCC diagnostic push
     #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
     #pragma GCC diagnostic ignored "-Wunused-parameter"
+  #elif defined(__INTEL_COMPILER)
+    #pragma warning( push )
+    #pragma warning( disable: 1478 )
   #endif
   // Include Charm++ SDAG code. See http://charm.cs.illinois.edu/manuals/html/
   // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
@@ -58,6 +61,8 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
     #pragma clang diagnostic pop
   #elif defined(__GNUC__)
     #pragma GCC diagnostic pop
+  #elif defined(__INTEL_COMPILER)
+    #pragma warning( pop )
   #endif
 
   private:

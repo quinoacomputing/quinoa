@@ -2,7 +2,7 @@
 /*!
   \file      src/Walker/Distributor.h
   \author    J. Bakosi
-  \date      Thu 05 May 2016 09:50:04 AM MDT
+  \date      Sat 14 May 2016 04:45:54 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Distributor drives the time integration of differential equations
   \details   Distributor drives the time integration of differential equations.
@@ -47,6 +47,9 @@ class Distributor : public CBase_Distributor {
     #pragma GCC diagnostic push
     #pragma GCC diagnostic ignored "-Wunused-parameter"
     #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+  #elif defined(__INTEL_COMPILER)
+    #pragma warning( push )
+    #pragma warning( disable: 1478 )
   #endif
   // Include Charm++ SDAG code. See http://charm.cs.illinois.edu/manuals/html/
   // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
@@ -55,6 +58,8 @@ class Distributor : public CBase_Distributor {
     #pragma clang diagnostic pop
   #elif defined(__GNUC__)
     #pragma GCC diagnostic pop
+  #elif defined(__INTEL_COMPILER)
+    #pragma warning( pop )
   #endif
 
   public:
