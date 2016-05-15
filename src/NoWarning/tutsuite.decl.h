@@ -2,7 +2,7 @@
 /*!
   \file      src/NoWarning/tutsuite.decl.h
   \author    J. Bakosi
-  \date      Thu 05 May 2016 08:56:40 AM MDT
+  \date      Sun 15 May 2016 07:27:15 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include tutsuite.decl.h with turning off specific compiler warnings
 */
@@ -35,6 +35,7 @@
   #pragma clang diagnostic ignored "-Wswitch-enum"
   #pragma clang diagnostic ignored "-Wdeprecated"
   #pragma clang diagnostic ignored "-Wmismatched-tags"
+  #pragma clang diagnostic ignored "-Wundefined-func-template"
 #elif defined(__GNUC__)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Weffc++"

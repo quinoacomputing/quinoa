@@ -2,7 +2,7 @@
 /*!
   \file      src/Walker/Integrator.h
   \author    J. Bakosi
-  \date      Wed 04 May 2016 10:44:34 AM MDT
+  \date      Sun 15 May 2016 09:38:35 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Integrator advances differential equations
   \details   Integrator advances differential equations. There are a potentially
@@ -34,6 +34,11 @@
 namespace walker {
 
 extern ctr::InputDeck g_inputdeck;
+
+#if defined(__clang__)
+  #pragma clang diagnostic push
+  #pragma clang diagnostic ignored "-Wundefined-func-template"
+#endif
 
 //! Integrator Charm++ chare used to advance differential equations in time
 class Integrator : public CBase_Integrator {
@@ -91,6 +96,10 @@ class Integrator : public CBase_Integrator {
     tk::Particles m_particles;          //!< Particle properties
     tk::Statistics m_stat;              //!< Statistics
 };
+
+#if defined(__clang__)
+  #pragma clang diagnostic pop
+#endif
 
 } // walker::
 

@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/LinSysMerger.h
   \author    J. Bakosi
-  \date      Sat 14 May 2016 04:47:07 PM MDT
+  \date      Sun 15 May 2016 08:12:13 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Linear system merger
   \details   Linear system merger.
@@ -30,6 +30,11 @@
 #include "NoWarning/conductor.decl.h"
 
 namespace tk {
+
+#if defined(__clang__)
+  #pragma clang diagnostic push
+  #pragma clang diagnostic ignored "-Wundefined-func-template"
+#endif
 
 //! Linear system merger Charm++ chare group class
 //! \details Instantiations of LinSysMerger comprise a processor aware Charm++
@@ -711,6 +716,10 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       #pragma GCC diagnostic pop
     #endif
 };
+
+#if defined(__clang__)
+  #pragma clang diagnostic pop
+#endif
 
 } // tk::
 

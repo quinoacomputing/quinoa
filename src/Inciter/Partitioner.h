@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Partitioner.h
   \author    J. Bakosi
-  \date      Sat 14 May 2016 04:47:39 PM MDT
+  \date      Sun 15 May 2016 08:12:22 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ chare partitioner group used to perform mesh partitioning
   \details   Charm++ chare partitioner group used to parform mesh partitioning.
@@ -25,6 +25,11 @@ namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
 extern CkReduction::reducerType NodesMerger;
+
+#if defined(__clang__)
+  #pragma clang diagnostic push
+  #pragma clang diagnostic ignored "-Wundefined-func-template"
+#endif
 
 //! Partitioner Charm++ chare group class
 //! \details Instantiations of Partitioner comprise a processor aware Charm++
@@ -747,6 +752,10 @@ class Partitioner : public CBase_Partitioner< HostProxy,
         CkCallback(CkIndex_Conductor::redn_wrapper_flattened(NULL), host ));
     }
 };
+
+#if defined(__clang__)
+  #pragma clang diagnostic pop
+#endif
 
 } // inciter::
 

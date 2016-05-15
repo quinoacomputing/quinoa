@@ -2,7 +2,7 @@
 /*!
   \file      src/NoWarning/Zoltam2_MeshAdapter.h
   \author    J. Bakosi
-  \date      Tue 10 May 2016 02:50:20 PM MDT
+  \date      Sun 15 May 2016 11:11:04 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include Zoltan2_MeshAdapter.hpp with turning off specific compiler
              warnings
@@ -34,6 +34,8 @@
   #pragma clang diagnostic ignored "-Wunused-exception-parameter"
   #pragma clang diagnostic ignored "-Wused-but-marked-unused"
   #pragma clang diagnostic ignored "-Wfloat-equal"
+  #pragma clang diagnostic ignored "-Wundefined-func-template"
+  #pragma clang diagnostic ignored "-Wundefined-var-template"
 #elif defined(__GNUC__)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Weffc++"

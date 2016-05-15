@@ -2,7 +2,7 @@
 /*!
   \file      src/NoWarning/mpi-interoperate.h
   \author    J. Bakosi
-  \date      Thu 05 May 2016 08:58:48 AM MDT
+  \date      Sun 15 May 2016 09:40:10 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include mpi-interoperate.h with turning off specific compiler warnings
 */
@@ -34,6 +34,7 @@
   #pragma clang diagnostic ignored "-Wdeprecated"
   #pragma clang diagnostic ignored "-Wcovered-switch-default"
   #pragma clang diagnostic ignored "-Wmismatched-tags"
+  #pragma clang diagnostic ignored "-Wundefined-func-template"
 #elif defined(__GNUC__)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Weffc++"
