@@ -100,6 +100,9 @@ target_link_libraries(${INCITER_EXECUTABLE}
                       ${SEACASExodus_LIBRARIES}
                       ${HYPRE_LIBRARY}
                       ${Zoltan2_LIBRARIES}
+                      ${MKL_INTERFACE_LIBRARY}
+                      ${MKL_CORE_LIBRARY}
+                      ${MKL_SEQUENTIAL_LAYER_LIBRARY}
                       ${NETCDF_LIBRARIES}       # only for static link
                       ${HDF5_LIBRARIES}         # only for static link
                       ${AEC_LIBRARY}            # only for static link

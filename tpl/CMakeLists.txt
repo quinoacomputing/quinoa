@@ -507,6 +507,9 @@ endif()
 if (HOST_OS MATCHES "alpine")
   set(TRILINOS_ALPINE "-DBLAS_LIBRARY_DIRS=${CMAKE_INSTALL_PREFIX}/lib;-DLAPACK_LIBRARY_DIRS=${CMAKE_INSTALL_PREFIX}/lib")
 endif()
+if (MKL_FOUND)
+  set(TRILINOS_MKL "-DTPL_ENABLE_MKL=ON;-DMKL_LIBRARY_DIRS=$ENV{MKLROOT}/lib/intel64;-DTPL_BLAS_LIBRARIES=${MKL_LIBS};-DTPL_LAPACK_LIBRARIES=${MKL_LIBS}")
+endif()
 ExternalProject_Add(
   trilinos
   DEPENDS ${hdf5} ${netcdf} ${blas} ${lapack}
@@ -526,6 +529,7 @@ ExternalProject_Add(
              ${tr_hdf5}
              ${TRILINOS_SHARED}
              ${TRILINOS_ALPINE}
+             ${TRILINOS_MKL}
              ${MACOSX_RPATH}
              -D TPL_ENABLE_Netcdf:BOOL=ON
              -D Netcdf_LIBRARY_DIRS:PATH=${netcdf_library_dirs}
