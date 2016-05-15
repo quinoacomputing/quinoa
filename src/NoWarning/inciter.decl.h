@@ -2,7 +2,7 @@
 /*!
   \file      src/NoWarning/inciter.decl.h
   \author    J. Bakosi
-  \date      Thu 05 May 2016 08:47:35 AM MDT
+  \date      Sun 15 May 2016 07:40:58 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include inciter.decl.h with turning off specific compiler
              warnings
@@ -37,6 +37,7 @@
   #pragma clang diagnostic ignored "-Wswitch-enum"
   #pragma clang diagnostic ignored "-Wdouble-promotion"
   #pragma clang diagnostic ignored "-Wheader-hygiene"
+  #pragma clang diagnostic ignored "-Wundefined-func-template"
 #elif defined(__GNUC__)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wunused-parameter"

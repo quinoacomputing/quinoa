@@ -2,7 +2,7 @@
 /*!
   \file      src/Walker/Collector.h
   \author    J. Bakosi
-  \date      Tue 03 May 2016 11:12:42 AM MDT
+  \date      Sun 15 May 2016 09:37:00 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ module interface file for collecting contributions from
              Integrators
@@ -25,6 +25,11 @@ namespace walker {
 
 extern ctr::InputDeck g_inputdeck;
 extern CkReduction::reducerType PDFMerger;
+
+#if defined(__clang__)
+  #pragma clang diagnostic push
+  #pragma clang diagnostic ignored "-Wundefined-func-template"
+#endif
 
 //! Collector Charm++ chare group class
 //! \details Instantiations of Collector comprise a processor aware Charm++
@@ -121,6 +126,10 @@ class Collector : public CBase_Collector {
     std::vector< tk::BiPDF > m_cenbpdf;         //!< Central bivariate PDFs
     std::vector< tk::TriPDF > m_centpdf;        //!< Central trivariate PDFs
 };
+
+#if defined(__clang__)
+  #pragma clang diagnostic pop
+#endif
 
 } // walker::
 
