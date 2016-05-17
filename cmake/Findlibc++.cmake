@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Find libc++
-# \date      Fri 06 May 2016 06:43:12 AM MDT
+# \date      Mon 16 May 2016 10:54:32 PM MDT
 #
 ################################################################################
 
@@ -16,12 +16,12 @@
 #  libc++_LIBRARIES - The libraries needed to use libc++
 #  libc++abi_LIBRARIES - The libraries needed to use libc++abi
 #
-#  Set libc++_ROOT before calling find_package to a path to add an additional
-#  search path, e.g.,
+#  Set the LIBCXX_ROOT cmake variable or shell environment variable before
+#  calling find_package to a path to add an additional search path, e.g.,
 #
 #  Usage:
 #
-#  set(libc++_ROOT "/path/to/custom/libc++") # prefer over system
+#  set(LIBCXX_ROOT "/path/to/custom/libc++") # prefer over system
 #  find_package(libc++)
 #  if(libc++_FOUND)
 #    target_link_libraries (TARGET ${libc++_LIBRARIES} ${libc++abi_LIBRARIES})
@@ -32,16 +32,21 @@ if(libc++_INCLUDES AND libc++_LIBRARIES AND libc++abi_LIBRARIES)
   set (libc++_FIND_QUIETLY TRUE)
 endif()
 
-find_path(libc++_INCLUDES NAMES cxxabi.h HINTS ${libc++_ROOT}/include
+find_path(libc++_INCLUDES NAMES cxxabi.h HINTS ${LIBCXX_ROOT}/include
                                                /usr/include/c++/v1
+                                               $ENV{LIBCXX_ROOT}/include
                                                $ENV{CPLUS_INCLUDE_PATH}/c++/v1)
 
 if(BUILD_SHARED_LIBS)
-  find_library(libc++_LIBRARIES NAMES c++ HINTS ${libc++_ROOT}/lib)
-  find_library(libc++abi_LIBRARIES NAMES c++abi HINTS ${libc++_ROOT}/lib)
+  find_library(libc++_LIBRARIES NAMES c++ HINTS ${LIBCXX_ROOT}/lib
+                                                $ENV{LIBCXX_ROOT}/lib)
+  find_library(libc++abi_LIBRARIES NAMES c++abi HINTS ${LIBCXX_ROOT}/lib
+                                                $ENV{LIBCXX_ROOT}/lib)
 else()
-  find_library(libc++_LIBRARIES NAMES libc++.a HINTS ${libc++_ROOT}/lib)
-  find_library(libc++abi_LIBRARIES NAMES libc++abi.a HINTS ${libc++_ROOT}/lib)
+  find_library(libc++_LIBRARIES NAMES libc++.a HINTS ${LIBCXX_ROOT}/lib
+                                                     $ENV{LIBCXX_ROOT}/lib)
+  find_library(libc++abi_LIBRARIES NAMES libc++abi.a HINTS ${LIBCXX_ROOT}/lib
+                                                     $ENV{LIBCXX_ROOT}/lib)
 endif()
 
 # Handle the QUIETLY and REQUIRED arguments and set libc++_FOUND to TRUE if
