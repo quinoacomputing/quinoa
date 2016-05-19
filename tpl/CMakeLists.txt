@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Build quinoa third-party Libraries
-# \date      Fri 06 May 2016 06:46:49 AM MDT
+# \date      Wed 18 May 2016 10:41:53 PM MDT
 #
 ################################################################################
 
@@ -459,7 +459,7 @@ if (blas)
                      ${PROJECT_BINARY_DIR}/blas
     CONFIGURE_COMMAND ${CMAKE_COMMAND} -E make_directory 
                       ${CMAKE_INSTALL_PREFIX}/lib
-    BUILD_COMMAND make -j${PROCESSOR_COUNT} PLAT=''
+    BUILD_COMMAND make -j${PROCESSOR_COUNT} PLAT='' OPTS=-fPIC
                   FORTRAN=${UNDERLYING_Fortran_COMPILER}
     INSTALL_COMMAND ${CMAKE_COMMAND} -E copy
                     ${PROJECT_BINARY_DIR}/blas/blas.a
