@@ -6,11 +6,11 @@ Quinoa is a set of computational tools that enables research and numerical analy
 ## Organization
 
 Currently, Quinoa consists of the following tools:
-  - [<B>inciter</B>](https://quinoacomputing.github.io/quinoa/inciter_doc.html) - Solve a system of partial differential equations discretized on a 3D unstructured mesh using overdecomposition
-  - [<B>walker</B>](https://quinoacomputing.github.io/quinoa/walker_doc.html) - Random walker for stochastic differential equations
-  - [<B>rngtest</B>](https://quinoacomputing.github.io/quinoa/rngtest_doc.html) - Random number generator test suite
-  - [<B>unittest</B>](https://quinoacomputing.github.io/quinoa/unittest_doc.html) - Unit test suite
-  - [<B>meshconv</B>](https://quinoacomputing.github.io/quinoa/meshconv_doc.html) - Mesh file converter
+  - [<B>inciter</B>](http://quinoacomputing.github.io/quinoa/inciter_doc.html) - Solve a system of partial differential equations discretized on a 3D unstructured mesh using overdecomposition
+  - [<B>walker</B>](http://quinoacomputing.github.io/quinoa/walker_doc.html) - Random walker for stochastic differential equations
+  - [<B>rngtest</B>](http://quinoacomputing.github.io/quinoa/rngtest_doc.html) - Random number generator test suite
+  - [<B>unittest</B>](http://quinoacomputing.github.io/quinoa/unittest_doc.html) - Unit test suite
+  - [<B>meshconv</B>](http://quinoacomputing.github.io/quinoa/meshconv_doc.html) - Mesh file converter
 
 ## Build
 
@@ -49,5 +49,5 @@ Jozsef Bakosi (jbakosi@lanl.gov)
  - [<B>Source</B>](https://github.com/quinoacomputing/quinoa)
  - [<B>License</B>](https://github.com/quinoacomputing/quinoa/blob/master/LICENSE)
  - [<B>Documentation</B>](http://quinoacomputing.github.io/quinoa/index.html)
- - [<B>Manifesto</B>](https://quinoacomputing.github.io/quinoa/why.html)
+ - [<B>Manifesto</B>](http://quinoacomputing.github.io/quinoa/why.html)
  - [<B>Roadmap</B>](https://github.com/quinoacomputing/quinoa/issues)
