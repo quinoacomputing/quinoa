@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/HyperMeshReader.h
   \author    J. Bakosi
-  \date      Wed 13 Jan 2016 12:01:27 PM MST
+  \date      Fri 20 May 2016 08:10:40 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Hyper mesh reader class declaration
   \details   Hyper mesh reader class declaration. Only supports tetrahedra.
@@ -21,8 +21,8 @@ class UnsMesh;
 
 //! \brief HyperMeshReader : tk::Reader
 //! \details Mesh reader class facilitating reading a mesh from a file saved by
-//!   the HyperMesh mesh generator by Altair.:
-//!   http://www.altairhyperworks.com/Product,7,HyperMesh.aspx
+//!   the HyperMesh mesh generator by Altair:
+//!    http://www.altairhyperworks.com/product/HyperMesh
 class HyperMeshReader : public Reader {
 
   public:
