@@ -12,26 +12,6 @@ Currently, Quinoa consists of the following tools:
   - [<B>unittest</B>](https://quinoacomputing.github.io/quinoa/unittest_doc.html) - Unit test suite
   - [<B>meshconv</B>](https://quinoacomputing.github.io/quinoa/meshconv_doc.html) - Mesh file converter
 
-## Goals
-
-  - [<B>Designed for the exascale era</B>](https://quinoacomputing.github.io/quinoa/why.html#exascale)
-  - [<B>Verified and proven to be correct</B>](https://quinoacomputing.github.io/quinoa/why.html#correct)
-  - [<B>Optimized for performance, power, and reliability</B>](https://quinoacomputing.github.io/quinoa/why.html#optimized)
-  - [<B>Advanced computer science outsourced to experts</B>](https://quinoacomputing.github.io/quinoa/why.html#outsource)
-  - [<B>Using a language that can cope with complexity</B>](https://quinoacomputing.github.io/quinoa/why.html#language)
-  - [<B>Highly-valued programmer productivity</B>](https://quinoacomputing.github.io/quinoa/why.html#productivity)
-  - [<B>User and developer friendly</B>](https://quinoacomputing.github.io/quinoa/why.html#friendly)
-  - [<B>Well documented</B>](https://quinoacomputing.github.io/quinoa/why.html#documented)
-  - [<B>Fun to work on</B>](https://quinoacomputing.github.io/quinoa/why.html#fun)
-
-## License
-
-See the [license](https://github.com/quinoacomputing/quinoa/blob/master/LICENSE)
-
-## Authors
-
-Jozsef Bakosi (jbakosi@lanl.gov)
-
 ## Build
 
 ### 1. Install prerequisites
@@ -59,4 +39,15 @@ Jozsef Bakosi (jbakosi@lanl.gov)
    ```
 
    - All executables will be in <tt>quinoa/build/Main</tt>
-   - Browse the [documentation](http://quinoacomputing.github.io/quinoa/index.html)
+
+## Authors
+
+Jozsef Bakosi (jbakosi@lanl.gov)
+
+## Resources
+
+ - [<B>Source</B>](https://github.com/quinoacomputing/quinoa)
+ - [<B>License</B>](https://github.com/quinoacomputing/quinoa/blob/master/LICENSE)
+ - [<B>Documentation</B>](http://quinoacomputing.github.io/quinoa/index.html)
+ - [<B>Manifesto</B>](https://quinoacomputing.github.io/quinoa/why.html)
+ - [<B>Roadmap</B>](https://github.com/quinoacomputing/quinoa/issues)
