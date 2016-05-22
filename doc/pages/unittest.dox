@@ -3,14 +3,16 @@
   \image html unittest.svg
 
 UnitTest is used to run [unit tests](http://en.wikipedia.org/wiki/Unit_testing).
-In Quinoa unit tests are written using the [C++ Template Unit Test
-framework](http://tut-framework.sourceforge.net). The unit tests are organized
-into directories under src/UnitTest/tests mirroring the directories of the
-tested code.
-
 The test suite uses the [Charm++](http://charm.cs.illinois.edu) runtime system
 to run the tests concurrently, either on a single machine or a networked set of
-computers.
+computers. UnitTest is capable of running hundreds of tests per second, capable
+of testing serial, synchronous (e.g., MPI), and asynchronous (e.g., Charm++)
+functions.
+
+In Quinoa unit tests are written using the [C++ Template Unit Test
+framework](http://tut-framework.sourceforge.net). The tests are organized into
+directories under src/UnitTest/tests mirroring the directories of the tested
+code.
 
 Help on command-line parameters
 -------------------------------
@@ -20,6 +22,7 @@ executable. Example output, excluding Charm++ command-line parameters:
 \code{.py}
 $ unittest -h
 unittest Command-line Parameters:
+         -g, --group     string Select test group(s) to run
           -h, --help            Display one-liner help on all command-line arguments
         -H, --helpkw     string Display verbose help on a single keyword
        -v, --verbose            Select verbose screen output
@@ -27,7 +30,7 @@ unittest Command-line Parameters:
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Wed 18 Nov 2015 10:01:24 AM MST
+<em>Page last updated:</em> Sun 22 May 2016 10:49:54 AM MDT
 <em>Copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.</em>
 </small></div>
 */
