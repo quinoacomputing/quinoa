@@ -2,14 +2,14 @@
   \page      rngtest_doc RNGTest: Random number generator test suite
   \image html rngtest.svg
 
-RNGTest is used to subject the various random number generators (RNG) available
-in Quinoa to a battery of statistical tests. These tests give a quantitative
-ranking of the various generators with respect to their quality and
-computational cost.
+RNGTest is a fully asynchronous distributed-memory-parallel test harness to
+subject random number generators to stringent statistical tests enabling
+quantitative ranking with respect to generator quality and computational cost.
 
 The test suite uses the [Charm++](http://charm.cs.illinois.edu) runtime system
 to run the tests concurrently, either on a single machine or a networked set of
-computers.
+computers. The software design is fully asynchronous, yielding 100% CPU
+utilization at all times, independent of the time taken by the individual tests.
 
 Examples
 --------
@@ -288,7 +288,7 @@ Main/RNGTest.C.
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Sun 22 May 2016 10:02:27 PM MDT
+<em>Page last updated:</em> Tue 24 May 2016 06:38:37 PM MDT
 <em>Copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.</em>
 </small></div>
 */

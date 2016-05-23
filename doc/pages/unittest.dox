@@ -2,12 +2,15 @@
   \page      unittest_doc UnitTest: Unit test suite
   \image html unittest.svg
 
-UnitTest is used to run [unit tests](http://en.wikipedia.org/wiki/Unit_testing).
-The test suite uses the [Charm++](http://charm.cs.illinois.edu) runtime system
+UnitTest is a fully asynchronous distributed-memory-parallel [unit
+test](http://en.wikipedia.org/wiki/Unit_testing) harness, running hundreds of
+tests per second, capable of testing serial, synchronous (e.g., MPI), and
+asynchronous (e.g., Charm++) functions.
+
+UnitTest uses the [Charm++](http://charm.cs.illinois.edu) runtime system
 to run the tests concurrently, either on a single machine or a networked set of
-computers. UnitTest is capable of running hundreds of tests per second, capable
-of testing serial, synchronous (e.g., MPI), and asynchronous (e.g., Charm++)
-functions.
+computers. The software design is fully asynchronous, yielding 100% CPU
+utilization at all times, independent of the time taken by the individual tests.
 
 In Quinoa unit tests are written using the [C++ Template Unit Test
 framework](http://tut-framework.sourceforge.net). The tests are organized into
@@ -30,7 +33,7 @@ unittest Command-line Parameters:
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Sun 22 May 2016 10:49:54 AM MDT
+<em>Page last updated:</em> Tue 24 May 2016 06:37:06 PM MDT
 <em>Copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.</em>
 </small></div>
 */
