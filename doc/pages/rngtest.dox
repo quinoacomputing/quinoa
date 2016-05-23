@@ -33,7 +33,7 @@ rngtest Command-line Parameters:
 Requirements, features
 ----------------------
 
-1. __Works with different libraries of RNGs:__
+1. __Works with current and future libraries of RNGs:__
 Currently Intel's MKL's vector statistical library (VSL) RNGs and RNGSSE's RNGs
 are interfaced. References:
 
@@ -42,10 +42,13 @@ are interfaced. References:
  - RNGSSE: http://dx.doi.org/10.1016/j.cpc.2011.03.022 and
            http://dx.doi.org/10.1016/j.cpc.2013.04.007 <br><br>
 
+ Note that MKL is entirely optional. If unavailable, all features of Quinoa can
+ be used via RNGSSE.
+
  Both of these libraries implement a variety of different pseudo random number
  generators and importantly, both support concurrent sampling from random number
- streams: MKL supports block splitting and leap frogging, while RNGSSE supports
- block splitting (jumping ahead and initialization of a large number of
+ streams: while MKL supports both block splitting and leap frogging, and RNGSSE
+ supports block splitting (jumping ahead and initialization of a large number of
  independent streams).
 
 2. __Works with different libraries of statistical tests:__
@@ -56,7 +59,8 @@ TestU01: http://www.iro.umontreal.ca/~simardr/testu01/tu01.html
 3. __The batteries work in parallel:__
 The user selects a number of RNGs (with optionally specifying parameters for
 each, e.g., seed, sequence length, etc.) as well as a battery of statistical
-tests. The tests are then run concurrently.
+tests. The tests are then run concurrently. RNGs from both MKL and RNGSSE can be
+tested (and thus compared to each other) at the same time.
 
 4. __Generator quality and computational cost:__
 As the tests of the battery are run, the various RNGs are timed separately,
@@ -69,6 +73,9 @@ Concurrency
 An arbitrary number of RNGs can be subjected to a single battery at a time. The
 tests are run concurrently using [Charm++](http://charm.cs.illinois.edu) on a
 single machine or across a set of machines distributed over the network.
+The software design fully asynchronous yielding 100% CPU utilization at all
+times, independnt of the time taken by the individual tests.
+
 Concurrency via Charm++ requires serializable objects. Charm++ discourages
 pointers, function pointers, references, while encourages stateless objects (or
 objects with as little and simple state as possible).
@@ -79,13 +86,15 @@ Inheritance and runtime polymorphism
 While Charm++ supports migratable objects (chares) that inherit from a pure base
 class to implement runtime polymorphism via reference semantics, the current
 design of RNGTest does not rely on Charm++ to do this. Instead we use [Sean
-Parent's concept-based polymorphism](https://github.com/sean-parent/sean-parent.github.com/wiki/Papers-and-Presentations) which achieves polymorphism without
-client-side inheritance and enables value semantics. In concept-based
-polymorphism inheritance in confined to the internals of a "base" class, which,
-at instantiation, is initialized via a templated constructor by a
-"derived"-class object. This locality enables an easier reasoning about the
-code, eliminates the need for heap-allocation, client-side indirection, and in
-general, leads to tighter and more readable code.
+Parent's concept-based
+polymorphism](https://github.com/sean-parent/sean-parent.github.com/wiki/Papers-and-Presentations)
+which achieves polymorphism without client-side inheritance and enables value
+semantics. In concept-based polymorphism inheritance in confined to the
+internals of a "base" class, which, at instantiation, is initialized via a
+templated constructor by a "derived"-class object. This locality enables an
+easier reasoning about the code, eliminates the need for client-side
+heap-allocation, client-side indirection, and in general, leads to tighter and
+more readable, simpler client-code.
 
 Battery \a rngtest::TestU01Suite is thus used polymorphically with \a
 rngtest::Battery. All polymorphism (in a classical OOP sense) is confined to the
@@ -93,10 +102,9 @@ internals of class \a Battery. A client still uses \a rngtest::TestU01Suite
 polymorphically as a \a rngtest::Battery.
 
 Analogous to the relationship between classes \a rngtest::Battery and \a
-rngtest::TestU01Suite, the random number generators available from the the MKL
-and RNGSSSE libraries are also used polymorphically with class \a tk::RNG via
-concept-base polymorphism.  This used not only in RNGTest but other parts of the
-code, e.g., used for Monte Carlo simulations.
+rngtest::TestU01Suite, the random number generators, available from the the MKL
+and RNGSSSE libraries, are also used polymorphically with class \a tk::RNG via
+concept-base polymorphism.
 
 Analogous to the relationship between \a rngtest::Battery and \a
 rngtest::TestU01Suite, individual statistical tests of TestU01 are also used
@@ -162,10 +170,9 @@ Charm++ design
 --------------
 
 Before porting to Charm++ RNGTest used OpenMP for concurrency. The last commit
-before porting to Charm++ is 49f86e6edfda64d4725ef2d87210f2db95d696aa and the
-commit where the Charm++ port is fully functional is
-ab31f576656907d73c3a38db72864482759c668f. Note that during Charm++ port of
-rngtest target quinoa does not build.
+before porting to Charm++ is [49f86e6](https://github.com/quinoacomputing/quinoa/commit/49f86e6edfda64d4725ef2d87210f2db95d696aa)
+and the commit where the Charm++ port is fully functional is [ab31f57](https://github.com/quinoacomputing/quinoa/commit/ab31f576656907d73c3a38db72864482759c668f).
+Note that during Charm++ port of rngtest target quinoa does not fully build.
 
 The discussion below details only _some_ of the details encountered during the
 Charm++ port of RNGTest. More documentation can be found in the source code
@@ -195,7 +202,7 @@ of the following challenges have been identified _before_ porting to Charm++.
   value-semantics, the "derived" class \a rngtest::TestU01 chare does not need
   Charm++'s machinery facilitating runtime polymorphism using the PUP::able
   framework. Though in the final design Charm++'s runtime polymorphism is not
-  used, a working example is in commit af25060366b259119ec01b6edeb44b09c7e6c2b5.
+  used, a working example is in commit [af25060](https://github.com/quinoacomputing/quinoa/commit/af25060366b259119ec01b6edeb44b09c7e6c2b5).
 
 - Conveniently holding references to Base is hardly an option with Charm++
   objects that should be migratable. Making Base migratable is not a viable
@@ -249,11 +256,12 @@ Charm++ design -- Global-scope data
 
 __Background.__ In RNGTest both the RNGs and the statistical test suites are
 provided by third-party libraries. In other words, rngtest is only a glue-code
-that ties together the RNGs and the statistical tests. This constrains how the
-RNGs must be called by the batteries as the RNGs must be passed, as external
-generators, to the statistical test suites. Since the currently only supported
-set of batteries (TestU01) are a C library, this is done through global-scope
-wrappers.
+that ties together the RNGs and the statistical tests. Note that neither
+third-party libraries (neither the test suites nor the RNGs) are aware of
+Charm++'s fully asynchronous nature. This constrains how the RNGs must be called
+by the batteries as the RNGs must be passed, as external generators, to the
+statistical test suites. Since the currently only supported set of batteries
+(TestU01) are a C library, this is done through global-scope wrappers.
 
 __Global-scope wrappers.__ The RNGs, wrapped through the base \a tk::RNG and
 children \a tk::MKLRNG and \a tk::RNGSSERNG, are invoked via concept-based
@@ -280,7 +288,7 @@ Main/RNGTest.C.
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Wed 18 Nov 2015 10:01:43 AM MST
+<em>Page last updated:</em> Sun 22 May 2016 10:02:27 PM MDT
 <em>Copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.</em>
 </small></div>
 */
