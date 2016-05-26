@@ -2,7 +2,7 @@
 /*!
   \file      src/Walker/distributor.ci
   \author    J. Bakosi
-  \date      Tue 10 May 2016 02:08:55 PM MDT
+  \date      Wed 25 May 2016 11:17:48 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ module interface file for Distributor
   \details   Charm++ module interface file for Distributor
@@ -38,19 +38,17 @@ module distributor {
       //                                        OrdM - estimate ordinary moments
       // AdvP -- OrdM -- CenM -- OutS           CenM - estimate central moments
       //  |  \       \             |            OrdP - estimate ordinary PDFs
-      //  |   OrdP    CenP         |            CenP - estimate central PDFs
-      //   \   | \       \         |            OutS - output statistics (mom)
-      //    \  |   ------ OutP -- EvT           OutP - output PDFs
-      //     \  \                 /             EvT  - Evaluate time step
-      //      \   --- NoP ------ /              NoSt - No stats & nor PDFs
-      //       \                /               NoP  - No PDFs
-      //        ----- NoSt ----
+      //   \  OrdP    CenP         |            CenP - estimate central PDFs
+      //    \   \       \          |            OutS - output statistics (mom)
+      //     \    ------ OutP -- EvT            OutP - output PDFs
+      //      \                   /             EvT  - Evaluate time step
+      //        ---- NoSt ------ /              NoSt - No stats & nor PDFs
       //
       // Interpretation of the above DAG
       // -------------------------------
       // Control flow is from left to right and top to bottom. In the discussion
-      // below, concentrate first on the first three lines and ignore NoP and
-      // NoSt for the moment - those will be discussed at the very end.
+      // below, concentrate first on the first three lines and ignore NoSt for
+      // the moment - those will be discussed at the very end.
       //
       // After initialization a time step starts by advancing all particles
       // (AdvP, Integrator::advance()). When that is finished (no global
@@ -114,28 +112,27 @@ module distributor {
       // moments, there is a barrier at OrdM, but this is overlapped with OrdP,
       // (2) since statistics (moments) can only be output to disk if they all
       // have been estimated and collected, there is a barrier at CenM, but this
-      // is overlapped with OrdP, CenP, and OutP, and (3) since PDF can only be
+      // is overlapped with OrdP, CenP, and OutP, and (3) since PDFs can only be
       // output to disk if they all have been estimated and collected, there is
-      // a barrier at CenP, but this is overlapped with OrdP, OrdM, CenM, and
-      // OutS.
+      // a barrier at CenP, but this is overlapped with OrdP, CenM, and OutS.
       //
       // NoSt in the graph signals a potential shortcut which is activated if
       // there are no statistics nor PDFs need to be estimated. In that case,
       // after advancing the particles, control flow just to evaluating the time
       // step, skipping over several synchronization points.
       //
-      // Similar to NoSt, NoP signals a potential shortcut which is activated if
-      // there are no PDFs need to be estimated. This happens when either the
-      // the user did not request any PDF estimation or the interval for
-      // estimating and outputing PDFs is such that at the given time step PDFs
-      // are not estimated. (Estimation of PDFs, especially multi-dimensional
-      // ones, can be quite costly, and thus PDF estimation is recommended only
-      // at certain intervals, i.e., not every time step.) If the shortcut is
-      // activated due to no PDF esimation, the control flow in wait4cen() skips
-      // ahead to evaluate time, i.e., finish the time step, after the central
-      // moments (if any) have been estimated. Similarly, of the shortcut is
-      // activated due to no PDF estimation, the control flow in wait4ord()
-      // skips the estimation of central PDFs.
+      // Similar to NoSt, the estimateion of the PDFs can also be potentially
+      // skipped. This happens when either the the user did not request any PDF
+      // estimation or the interval for estimating and outputing PDFs is such
+      // that at the given time step PDFs are not estimated. (Estimation of
+      // PDFs, especially multi-dimensional ones, can be quite costly, and thus
+      // PDF estimation is recommended only at certain intervals, i.e., not
+      // every time step.) If the shortcut is activated due to no PDF esimation,
+      // the control flow in wait4cen() skips ahead to evaluate time, i.e.,
+      // finish the time step, after the central moments (if any) have been
+      // estimated. Similarly, of the shortcut is activated due to no PDF
+      // estimation, the control flow in wait4ord() skips the estimation of
+      // central PDFs.
 
       // SDAG wait-for: wait for ordinary moments to have been estimated
       entry void wait4ord() {
