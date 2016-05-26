@@ -2,7 +2,7 @@
 /*!
   \file      src/Walker/Distributor.h
   \author    J. Bakosi
-  \date      Sat 14 May 2016 04:45:54 PM MDT
+  \date      Wed 25 May 2016 10:26:37 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Distributor drives the time integration of differential equations
   \details   Distributor drives the time integration of differential equations.
@@ -11,6 +11,43 @@
     the structured dagger (SDAG) Charm++ functionality. The high-level overview
     of the algorithm structure and how it interfaces with Charm++ is discussed
     in the Charm++ interface file src/Walker/distributor.ci.
+
+    #### Call graph ####
+    The following is a directed acyclic graph (DAG) that outlines the
+    asynchronous algorithm implemented in this class The detailed discussion of
+    the algorithm is given in the Charm++ interface file distributor.ci,
+    which also repeats the graph below using ASCII graphics. On the DAG orange
+    fills denote global synchronization points, orange frames with white fill
+    are partial synchronization points that overlap with other tasks, and dashed
+    lines are potential shortcuts that allow jumping over some of the task-graph
+    under some circumstances. See the detailed discussion in distributor.ci.
+    \dot
+    digraph "Distributor SDAG" {
+      rankdir="LR";
+      node [shape=record, fontname=Helvetica, fontsize=10];
+      AdvP [ label="AdvP" tooltip="advance particles" style=filled
+             color="#c96a00" URL="\ref walker::Integrator::advance"];
+      OrdM [ label="OrdM" tooltip="estimate ordinary moments" color="#e6851c"
+             URL="\ref walker::Integrator::accumulateOrd"];
+      CenM [ label="CenM" tooltip="estimate central moments" color="#e6851c"
+             URL="\ref walker::Integrator::accumulateCen"];
+      OutS [ label="OutS" tooltip="output statistical moments"
+             URL="\ref walker::Distributor::outStat"];
+      OrdP [ label="OrdP" tooltip="estimate ordinary PDFs"
+             URL="\ref walker::Integrator::accumulateOrdPDF"];
+      CenP [ label="CenP" tooltip="estimate central PDFs" color="#e6851c"
+             URL="\ref walker::Integrator::accumulateCenPDF"];
+      OutP [ label="OutP" tooltip="output PDFs"
+             URL="\ref walker::Distributor::outPDF"];
+      EvT  [ label="EvT" tooltip="evaluate time step" style=filled
+             color="#c96a00" URL="\ref walker::Distributor::evaluateTime"];
+      AdvP -> OrdM -> CenM -> OutS -> EvT [ style="solid" ];
+      AdvP -> OrdP -> OutP -> EvT [ style="dashed" ];
+      OrdM -> CenP -> OutP [ style="dashed" ];
+      AdvP -> EvT [ style="dashed" label="NoSt" ];
+    }
+    \enddot
+    \include Walker/distributor.ci
 */
 // *****************************************************************************
 #ifndef Distributor_h
