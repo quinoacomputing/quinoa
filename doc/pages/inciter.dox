@@ -2,10 +2,17 @@
   \page      inciter_doc Inciter: Solve a PDE on unstructured meshes
   \image html inciter.svg
 
-Inciter is used to experiment with asynchronous algorithms to numerically solve
-a system of partial differential equations discretized with unstructured meshes
-using overdecomposition. Similar to the rest of Quinoa, inciter also uses the
-Charm++ runtime system.
+Inciter is a fully asynchronous distributed-memory-parallel finite element field
+solver for partial differential equations using 3D unstructured grids. It is
+used to research asynchronous mesh-based algorithms using overdecomposition and
+to experiment with coupling asynchronous and bulk-synchronous parallel code
+using widely used libraries.
+
+Inciter uses the [Charm++](http://charm.cs.illinois.edu) runtime system to run
+concurrently, either on a single machine or a networked set of computers. The
+software design is fully asynchronous and it exhibits perfect, i.e., 100%
+efficiency, [strong
+scaling](https://en.wikipedia.org/wiki/Scalability#Weak_versus_strong_scaling).
 
 Help on command-line parameters
 -------------------------------
@@ -25,9 +32,27 @@ inciter Command-line Parameters:
 -u, --virtualization       real Set degree of virtualization
 \endcode
 
+Equations solved
+----------------
+
+\image html inciter_scaling.png
+
+Currently, Inciter can solve a system of linear [advection-diffusion
+equations](https://en.wikipedia.org/wiki/Convection%E2%80%93diffusion_equation).
+It has parallel I/O, graph-based domain decomposition using
+[Zoltan2](http://www.cs.sandia.gov/zoltan), asynchronous linear system assembly,
+and solves the distributed linear system using
+[hypre](http://computation.llnl.gov/project/linear_solvers/software.php). The
+figure on the right quantifies the excellent scalability of this prototype,
+taking 10 time steps with a 76M-cell tetrahedron mesh including setup and I/O,
+up to 4K CPU cores, the most tested. The insert depicts the CPU utilization from
+Charm++'s performance analysis tool,
+[Projections](http://charmplusplus.org/tools), showing excellent resource usage
+during setup (left side) as well as during the 10 two-stage time-steps.
+
 <hr>
 <div><small>
-<em>Page last updated:</em> Wed 18 Nov 2015 10:01:52 AM MST
+<em>Page last updated:</em> Fri 27 May 2016 10:35:57 PM MDT
 <em>Copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.</em>
 </small></div>
 */
