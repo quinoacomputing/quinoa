@@ -229,6 +229,13 @@ div.image img[src="gamma_cov.svg"]{
   float:  right;
   width:  50%;
 }
+
+div.image img[src="inciter_scaling.png"]{
+  height: auto;
+  float:  right;
+  width:  30%;
+}
+
 .title {
   font-size: 26px;
 }
