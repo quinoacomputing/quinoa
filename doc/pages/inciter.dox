@@ -1,5 +1,5 @@
 /*!
-  \page      inciter_doc Inciter: Solve a PDE on unstructured meshes
+  \page      inciter_doc Inciter: Partial differential equations solver on 3D unstructured grids
   \image html inciter.svg
 
 Inciter is a fully asynchronous distributed-memory-parallel finite element field
@@ -52,7 +52,7 @@ during setup (left side) as well as during the 10 two-stage time-steps.
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Fri 27 May 2016 10:35:57 PM MDT
+<em>Page last updated:</em> Sun 29 May 2016 11:10:44 AM MDT
 <em>Copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.</em>
 </small></div>
 */
