@@ -388,6 +388,14 @@ namespace Sacado {
     static const bool value = false;
   };
 
+  //! Specialization of %IsStaticallySized for const types
+  /*!
+   * This should work for most types
+   */
+  template <typename T> struct IsStaticallySized<const T> {
+    static const bool value = IsStaticallySized<T>::value;
+  };
+
   //! Base template specification for static size
   template <typename T> struct StaticSize {
     static const unsigned value = 0;
@@ -444,6 +452,36 @@ namespace Sacado {
     static const bool value = true;                       \
   };
 
+#define SACADO_BUILTIN_SPECIALIZATION_COMPLEX(t,NAME)     \
+  template <> struct ScalarType< t > {                    \
+    typedef t type;                                       \
+  };                                                      \
+  template <> struct ValueType< t > {                     \
+    typedef t type;                                       \
+  };                                                      \
+  template <> struct IsADType< t > {                      \
+    static const bool value = false;                      \
+  };                                                      \
+  template <> struct IsScalarType< t > {                  \
+    static const bool value = true;                       \
+  };                                                      \
+  template <> struct Value< t > {                         \
+    static const t& eval(const t& x) { return x; }        \
+  };                                                      \
+  template <> struct ScalarValue< t > {                   \
+    static const t& eval(const t& x) { return x; }        \
+  };                                                      \
+  template <> struct StringName< t > {                    \
+    static std::string eval() { return NAME; }            \
+  };                                                      \
+  template <> struct IsEqual< t > {                       \
+    static bool eval(const t& x, const t& y) {            \
+      return x == y; }                                    \
+  };                                                      \
+  template <> struct IsStaticallySized< t > {             \
+    static const bool value = true;                       \
+  };
+
   SACADO_BUILTIN_SPECIALIZATION(char,"char")
   SACADO_BUILTIN_SPECIALIZATION(float,"float")
   SACADO_BUILTIN_SPECIALIZATION(double,"double")
@@ -453,11 +491,12 @@ namespace Sacado {
   SACADO_BUILTIN_SPECIALIZATION(unsigned long,"unsigned long")
   SACADO_BUILTIN_SPECIALIZATION(bool,"bool")
 #ifdef HAVE_SACADO_COMPLEX
-  SACADO_BUILTIN_SPECIALIZATION(std::complex<double>,"std::complex<double>")
-  SACADO_BUILTIN_SPECIALIZATION(std::complex<float>,"std::complex<float>")
+  SACADO_BUILTIN_SPECIALIZATION_COMPLEX(std::complex<double>,"std::complex<double>")
+  SACADO_BUILTIN_SPECIALIZATION_COMPLEX(std::complex<float>,"std::complex<float>")
 #endif
 
 #undef SACADO_BUILTIN_SPECIALIZATION
+#undef SACADO_BUILTIN_SPECIALIZATION_COMPLEX
 
 template< typename T , T v , bool NonZero = ( v != T(0) ) >
 struct integral_nonzero

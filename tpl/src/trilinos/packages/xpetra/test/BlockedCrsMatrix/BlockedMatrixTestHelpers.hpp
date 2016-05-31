@@ -1,5 +1,8 @@
 
+#include <iterator>
 #include <Epetra_CrsMatrix.h>
+
+#include <Xpetra_Map.hpp>
 
 namespace XpetraBlockMatrixTests {
 
@@ -25,6 +28,25 @@ Teuchos::RCP<Epetra_Map> SplitMap(const Epetra_Map& Amap, const Epetra_Map& Agiv
   return Aunknown;
 }
 
+// Xpetra version of SplitMap
+template<class LocalOrdinal, class GlobalOrdinal, class Node>
+Teuchos::RCP<Xpetra::Map<LocalOrdinal, GlobalOrdinal, Node> > SplitMap(const Xpetra::Map<LocalOrdinal, GlobalOrdinal, Node> & Amap, const Xpetra::Map<LocalOrdinal, GlobalOrdinal, Node> & Agiven) {
+  Teuchos::RCP<const Teuchos::Comm<int> > comm = Amap.getComm();
+
+  size_t count=0;
+  std::vector<GlobalOrdinal> myaugids(Amap.getNodeNumElements());
+  for (size_t i=0; i<Amap.getNodeNumElements(); ++i) {
+    const GlobalOrdinal gid = Amap.getGlobalElement(i);
+    if (Agiven.isNodeGlobalElement(gid)) continue;
+    myaugids[Teuchos::as<GlobalOrdinal>(count)] = gid;
+    ++count;
+  }
+  myaugids.resize(count);
+  GlobalOrdinal gcount;
+  Teuchos::reduceAll(*comm, Teuchos::REDUCE_SUM, count, Teuchos::outArg(gcount));
+  return Teuchos::rcp(new Xpetra::Map<LocalOrdinal, GlobalOrdinal, Node> (gcount,count,&myaugids[0],0,comm));
+}
+
 Teuchos::RCP<Epetra_Map> CreateMap(const std::set<int>& gids, const Epetra_Comm& comm) {
   std::vector<int> mapvec;
   mapvec.reserve(gids.size());
@@ -39,13 +61,33 @@ Teuchos::RCP<Epetra_Map> CreateMap(const std::set<int>& gids, const Epetra_Comm&
   return map;
 }
 
+// Xpetra version of CreateMap
+template<class LocalOrdinal, class GlobalOrdinal, class Node>
+Teuchos::RCP<Xpetra::Map<LocalOrdinal, GlobalOrdinal, Node> > CreateMap(const std::set<GlobalOrdinal>& gids, const Teuchos::Comm<int>& comm) {
+  std::vector<GlobalOrdinal> mapvec;
+  mapvec.reserve(gids.size());
+  mapvec.assign(gids.begin(), gids.end());
+  GlobalOrdinal count = Teuchos::as<GlobalOrdinal>(mapvec.size());
+  GlobalOrdinal gcount;
+  Teuchos::reduceAll(comm, Teuchos::REDUCE_SUM, count, Teuchos::outArg(gcount));
+
+  Teuchos::RCP<Xpetra::Map<LocalOrdinal, GlobalOrdinal, Node> > map =
+      Teuchos::rcp(new Xpetra::Map<LocalOrdinal, GlobalOrdinal, Node>(gcount,
+          mapvec.size(),
+          &mapvec[0],
+          0,
+          Teuchos::rcpFromRef(comm)));
+  mapvec.clear();
+  return map;
+}
+
 Teuchos::RCP<Epetra_Map> MergeMaps(const std::vector<Teuchos::RCP<const Epetra_Map> >& maps) {
   if (maps.size()==0)
     std::cout << "no maps to merge" << std::endl;
   for (unsigned i=0; i<maps.size(); ++i) {
     if (maps[i]==Teuchos::null)
       std::cout << "can not merge extractor with null maps" << std::endl;
-    if (not maps[i]->UniqueGIDs())
+    if (maps[i]->UniqueGIDs() == false)
       std::cout << "map " << i <<  " not unique" << std::endl;
   }
   std::set<int> mapentries;

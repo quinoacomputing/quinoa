@@ -63,7 +63,8 @@
 
 namespace MueLu {
 
-  AmesosSmoother::AmesosSmoother(const std::string& type, const Teuchos::ParameterList& paramList)
+  template <class Node>
+  AmesosSmoother<Node>::AmesosSmoother(const std::string& type, const Teuchos::ParameterList& paramList)
     : type_(type) {
     this->SetParameterList(paramList);
 
@@ -103,21 +104,21 @@ namespace MueLu {
     }
   }
 
-  AmesosSmoother::~AmesosSmoother() {}
-
-  void AmesosSmoother::DeclareInput(Level &currentLevel) const {
-    Input(currentLevel, "A");
+  template <class Node>
+  void AmesosSmoother<Node>::DeclareInput(Level &currentLevel) const {
+    this->Input(currentLevel, "A");
   }
 
-  void AmesosSmoother::Setup(Level& currentLevel) {
+  template <class Node>
+  void AmesosSmoother<Node>::Setup(Level& currentLevel) {
     FactoryMonitor m(*this, "Setup Smoother", currentLevel);
 
     if (SmootherPrototype::IsSetup() == true)
-      GetOStream(Warnings0) << "MueLu::AmesosSmoother::Setup(): Setup() has already been called" << std::endl;
+      this->GetOStream(Warnings0) << "MueLu::AmesosSmoother::Setup(): Setup() has already been called" << std::endl;
 
-    A_ = Get< RCP<Matrix> >(currentLevel, "A");
+    A_ = Factory::Get< RCP<Matrix> >(currentLevel, "A");
 
-    RCP<Epetra_CrsMatrix> epA = Utils::Op2NonConstEpetraCrs(A_);
+    RCP<Epetra_CrsMatrix> epA = Utilities::Op2NonConstEpetraCrs(A_);
     linearProblem_ = rcp( new Epetra_LinearProblem() );
     linearProblem_->SetOperator(epA.get());
 
@@ -139,16 +140,17 @@ namespace MueLu {
 
     int r = prec_->NumericFactorization();
     TEUCHOS_TEST_FOR_EXCEPTION(r != 0, Exceptions::RuntimeError, "MueLu::AmesosSmoother::Setup(): Amesos solver returns value of " +
-                               Teuchos::Utils::toString(r) + " during NumericFactorization()");
+                               Teuchos::toString(r) + " during NumericFactorization()");
 
     SmootherPrototype::IsSetup(true);
   }
 
-  void AmesosSmoother::Apply(MultiVector& X, const MultiVector& B, bool InitialGuessIsZero) const {
+  template <class Node>
+  void AmesosSmoother<Node>::Apply(MultiVector& X, const MultiVector& B, bool InitialGuessIsZero) const {
     TEUCHOS_TEST_FOR_EXCEPTION(SmootherPrototype::IsSetup() == false, Exceptions::RuntimeError, "MueLu::AmesosSmoother::Apply(): Setup() has not been called");
 
-    Epetra_MultiVector &epX = Utils::MV2NonConstEpetraMV(X);
-    Epetra_MultiVector const &epB = Utils::MV2EpetraMV(B);
+    Epetra_MultiVector &epX = Utilities::MV2NonConstEpetraMV(X);
+    Epetra_MultiVector const &epB = Utilities::MV2EpetraMV(B);
     //Epetra_LinearProblem takes the right-hand side as a non-const pointer.
     //I think this const_cast is safe because Amesos won't modify the rhs.
     Epetra_MultiVector &nonconstB = const_cast<Epetra_MultiVector&>(epB);
@@ -163,11 +165,13 @@ namespace MueLu {
     linearProblem_->SetRHS(0);
   }
 
-  RCP<MueLu::SmootherPrototype<double,int,int> > AmesosSmoother::Copy() const {
-    return rcp( new AmesosSmoother(*this) );
+  template <class Node>
+  RCP<MueLu::SmootherPrototype<double,int,int,Node> > AmesosSmoother<Node>::Copy() const {
+    return rcp( new AmesosSmoother<Node>(*this) );
   }
 
-  std::string AmesosSmoother::description() const {
+  template <class Node>
+  std::string AmesosSmoother<Node>::description() const {
     std::ostringstream out;
     out << SmootherPrototype::description();
     out << "{type = " << type_ << "}";
@@ -175,7 +179,8 @@ namespace MueLu {
   }
 
   //using MueLu::Describable::describe; // overloading, not hiding
-  void AmesosSmoother::print(Teuchos::FancyOStream& out, const VerbLevel verbLevel) const {
+  template <class Node>
+  void AmesosSmoother<Node>::print(Teuchos::FancyOStream& out, const VerbLevel verbLevel) const {
     MUELU_DESCRIBE;
 
     if (verbLevel & Parameters0)
@@ -203,5 +208,13 @@ namespace MueLu {
   }
 
 } // namespace MueLu
+
+// The AmesosSmoother is only templated on the Node, since it is an Epetra only object
+// Therefore we do not need the full ETI instantiations as we do for the other MueLu
+// objects which are instantiated on all template parameters.
+#if defined(HAVE_MUELU_EPETRA)
+template class MueLu::AmesosSmoother<Xpetra::EpetraNode>;
+#endif
+
 
 #endif // HAVE_MUELU_EPETRA && HAVE_MUELU_AMESOS

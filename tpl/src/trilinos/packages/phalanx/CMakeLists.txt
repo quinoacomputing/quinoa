@@ -12,6 +12,11 @@ TRIBITS_PACKAGE(Phalanx)
 
 TRIBITS_ADD_SHOW_DEPRECATED_WARNINGS_OPTION()
 
+TRIBITS_ADD_OPTION_AND_DEFINE(${PACKAGE_NAME}_ALLOW_MULTIPLE_EVALUATORS_FOR_SAME_FIELD
+  PHX_ALLOW_MULTIPLE_EVALUATORS_FOR_SAME_FIELD
+  "Enable to use backwards compatible mode where multiple evaluators can be registered that evalaute the same field. Phalanx will use the first evaluator it finds. This should default to off but for backwards compatibility with current codes, we default this to ON."
+  ON )
+
 TRIBITS_ADD_OPTION_AND_DEFINE(${PACKAGE_NAME}_EXPLICIT_TEMPLATE_INSTANTIATION
   PHX_ETI
   "Build with explicit template instation enabled."
@@ -93,7 +98,7 @@ TRIBITS_ADD_OPTION_AND_DEFINE(${PACKAGE_NAME}_ENABLE_TEUCHOS_TIME_MONITOR
   "Build with Teuchos TimeMonitors wrapped around each evaluator."
   "${${PROJECT_NAME}_ENABLE_TEUCHOS_TIME_MONITOR}" )
 
-IF(HAVE_INTREPID_KOKKOSCORE AND ${PACKAGE_NAME}_ENABLE_Intrepid)
+IF(${PACKAGE_NAME}_ENABLE_Intrepid2)
   MESSAGE(STATUS "Build MDField support for Intrepid: ON")
 ELSE()
   MESSAGE(STATUS "Build MDField support for Intrepid: OFF")

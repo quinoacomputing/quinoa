@@ -129,6 +129,9 @@ namespace Belos {
       base_type ()
     {}
     virtual ~PseudoBlockCGSolMgr () {}
+
+    Teuchos::RCP<StatusTestGenResNorm<ScalarType,MV,OP> >
+    getResidualStatusTest() const { return Teuchos::null; }
   };
 
 
@@ -163,6 +166,12 @@ namespace Belos {
      *   - "Verbosity" - a sum of MsgType specifying the verbosity. Default: Belos::Errors
      *   - "Output Style" - a OutputType specifying the style of output. Default: Belos::General
      *   - "Convergence Tolerance" - a \c MagnitudeType specifying the level that residual norms must reach to decide convergence.
+     *		\param pl [in] ParameterList with construction information
+     *			\htmlonly
+     *			<iframe src="belos_PseudoBlockCG.xml" width=100% scrolling="no" frameborder="0">
+     *			</iframe>
+     *			<hr />
+     *			\endhtmlonly   
      */
     PseudoBlockCGSolMgr( const Teuchos::RCP<LinearProblem<ScalarType,MV,OP> > &problem,
                          const Teuchos::RCP<Teuchos::ParameterList> &pl );
@@ -224,6 +233,10 @@ namespace Belos {
       \note Only works if "Estimate Condition Number" is set on parameterlist
     */
     ScalarType getConditionEstimate() const {return condEstimate_;}
+
+    //! Return the residual status test
+    Teuchos::RCP<StatusTestGenResNorm<ScalarType,MV,OP> >
+    getResidualStatusTest() const { return convTest_; }
 
     //@}
 

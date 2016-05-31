@@ -43,17 +43,16 @@
 // ***********************************************************************
 //
 // @HEADER
-#include "MueLu_ExplicitInstantiation.hpp"
+
+
 
 #include "MueLu_HierarchyHelpers_def.hpp"
 
-#include "TpetraCore_ETIHelperMacros.h"
+#define MUELU_ETI_GROUP(SC,LO,GO,NO) \
+  template class MueLu::TopRAPFactory<SC,LO,GO,NO>; \
+  template class MueLu::TopSmootherFactory<SC,LO,GO,NO>; \
+  template class MueLu::HierarchyUtils<SC,LO,GO,NO>;
 
-#define MUELU_LOCAL_INSTANT(S,LO,GO,N) \
-        template class MueLu::TopRAPFactory<S,LO,GO,N>; \
-        template class MueLu::TopSmootherFactory<S,LO,GO,N>; \
-        template class MueLu::HierarchyUtils<S,LO,GO,N>;
+#include "MueLu_ETI_4arg.hpp"
 
-TPETRA_ETI_MANGLING_TYPEDEFS()
 
-TPETRA_INSTANTIATE_SLGN_NO_ORDINAL_SCALAR(MUELU_LOCAL_INSTANT)

@@ -1,13 +1,13 @@
 /*
 //@HEADER
 // ************************************************************************
-// 
+//
 //                        Kokkos v. 2.0
 //              Copyright (2014) Sandia Corporation
-// 
+//
 // Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
 // the U.S. Government retains certain rights in this software.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -36,7 +36,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 // Questions? Contact  H. Carter Edwards (hcedwar@sandia.gov)
-// 
+//
 // ************************************************************************
 //@HEADER
 */
@@ -322,6 +322,10 @@ void ThreadsExec::fence()
 
   s_current_function     = 0 ;
   s_current_function_arg = 0 ;
+
+  // Make sure function and arguments are cleared before
+  // potentially re-activating threads with a subsequent launch.
+  memory_fence();
 }
 
 /** \brief  Begin execution of the asynchronous functor */
@@ -335,6 +339,9 @@ void ThreadsExec::start( void (*func)( ThreadsExec & , const void * ) , const vo
 
   s_current_function     = func ;
   s_current_function_arg = arg ;
+
+  // Make sure function and arguments are written before activating threads.
+  memory_fence();
 
   // Activate threads:
   for ( int i = s_thread_pool_size[0] ; 0 < i-- ; ) {
@@ -395,6 +402,9 @@ void ThreadsExec::execute_serial( void (*func)( ThreadsExec & , const void * ) )
   s_current_function = func ;
   s_current_function_arg = & s_threads_process ;
 
+  // Make sure function and arguments are written before activating threads.
+  memory_fence();
+
   const unsigned begin = s_threads_process.m_pool_base ? 1 : 0 ;
 
   for ( unsigned i = s_thread_pool_size[0] ; begin < i ; ) {
@@ -413,6 +423,9 @@ void ThreadsExec::execute_serial( void (*func)( ThreadsExec & , const void * ) )
 
   s_current_function_arg = 0 ;
   s_current_function = 0 ;
+
+  // Make sure function and arguments are cleared before proceeding.
+  memory_fence();
 }
 
 //----------------------------------------------------------------------------
@@ -607,7 +620,8 @@ void ThreadsExec::initialize( unsigned thread_count ,
     // then they will be given default values based upon hwloc detection
     // and allowed asynchronous execution.
 
-    const bool hwloc_avail = hwloc::available();
+    const bool hwloc_avail = Kokkos::hwloc::available();
+    const bool hwloc_can_bind = hwloc_avail && Kokkos::hwloc::can_bind_threads();
 
     if ( thread_count == 0 ) {
       thread_count = hwloc_avail
@@ -645,7 +659,11 @@ void ThreadsExec::initialize( unsigned thread_count ,
       // If hwloc available then spawned thread will
       // choose its own entry in 's_threads_coord'
       // otherwise specify the entry.
-      s_current_function_arg = (void*)static_cast<uintptr_t>( hwloc_avail ? ~0u : ith );
+      s_current_function_arg = (void*)static_cast<uintptr_t>( hwloc_can_bind ? ~0u : ith );
+
+      // Make sure all outstanding memory writes are complete
+      // before spawning the new thread.
+      memory_fence();
 
       // Spawn thread executing the 'driver()' function.
       // Wait until spawned thread has attempted to initialize.
@@ -674,9 +692,13 @@ void ThreadsExec::initialize( unsigned thread_count ,
     s_current_function_arg = 0 ;
     s_threads_process.m_pool_state = ThreadsExec::Inactive ;
 
+    memory_fence();
+
     if ( ! thread_spawn_failed ) {
       // Bind process to the core on which it was located before spawning occured
-      Kokkos::hwloc::bind_this_thread( proc_coord );
+      if (hwloc_can_bind) {
+        Kokkos::hwloc::bind_this_thread( proc_coord );
+      }
 
       if ( thread_spawn_begin ) { // Include process in pool.
         const std::pair<unsigned,unsigned> coord = Kokkos::hwloc::get_this_thread_coordinate();
@@ -759,7 +781,9 @@ void ThreadsExec::finalize()
     s_threads_exec[0] = 0 ;
   }
 
-  Kokkos::hwloc::unbind_this_thread();
+  if (Kokkos::hwloc::can_bind_threads() ) {
+    Kokkos::hwloc::unbind_this_thread();
+  }
 
   s_thread_pool_size[0] = 0 ;
   s_thread_pool_size[1] = 0 ;

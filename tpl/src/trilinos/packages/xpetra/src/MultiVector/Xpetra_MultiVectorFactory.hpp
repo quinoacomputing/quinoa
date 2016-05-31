@@ -108,13 +108,21 @@ namespace Xpetra {
 
   };
 
+
+// we need the Epetra specialization only if Epetra is enabled
+#if (defined(HAVE_XPETRA_EPETRA) && !defined(XPETRA_EPETRA_NO_32BIT_GLOBAL_INDICES))
+
+
+  // Specialization for Scalar=double, LO=GO=int and Serial node
+  // Used both for Epetra and Tpetra
+  // For any other node definition the general default implementation is used which allows Tpetra only
   template <>
-  class MultiVectorFactory<double, int, int> {
+  class MultiVectorFactory<double, int, int, EpetraNode> {
 
     typedef double Scalar;
     typedef int LocalOrdinal;
     typedef int GlobalOrdinal;
-    typedef MultiVector<double, int, GlobalOrdinal>::node_type Node;
+    typedef EpetraNode Node;
 
   private:
     //! Private constructor. This is a static class.
@@ -130,12 +138,8 @@ namespace Xpetra {
         return rcp( new TpetraMultiVector<Scalar, LocalOrdinal, GlobalOrdinal, Node> (map, NumVectors, zeroOut) );
 #endif
 
-#ifdef HAVE_XPETRA_EPETRA
-#ifndef XPETRA_EPETRA_NO_32BIT_GLOBAL_INDICES
       if (map->lib() == UseEpetra)
-        return rcp( new EpetraMultiVectorT<int>(map, NumVectors, zeroOut) );
-#endif
-#endif
+        return rcp( new EpetraMultiVectorT<int,Node>(map, NumVectors, zeroOut) );
 
       XPETRA_FACTORY_END;
     }
@@ -149,26 +153,24 @@ namespace Xpetra {
         return rcp( new TpetraMultiVector<Scalar, LocalOrdinal, GlobalOrdinal, Node> (map, ArrayOfPtrs, NumVectors) );
 #endif
 
-#ifdef HAVE_XPETRA_EPETRA
-#ifndef XPETRA_EPETRA_NO_32BIT_GLOBAL_INDICES
       if (map->lib() == UseEpetra)
-        return rcp( new EpetraMultiVectorT<int>(map, ArrayOfPtrs, NumVectors) );
-#endif
-#endif
+        return rcp( new EpetraMultiVectorT<int,Node>(map, ArrayOfPtrs, NumVectors) );
 
       XPETRA_FACTORY_END;
     }
 
   };
 
-#ifdef HAVE_XPETRA_INT_LONG_LONG
+// we need the Epetra specialization only if Epetra is enabled
+#if (defined(HAVE_XPETRA_EPETRA) && !defined(XPETRA_EPETRA_NO_64BIT_GLOBAL_INDICES))
+
   template <>
-  class MultiVectorFactory<double, int, long long> {
+  class MultiVectorFactory<double, int, long long, EpetraNode> {
 
     typedef double Scalar;
     typedef int LocalOrdinal;
     typedef long long GlobalOrdinal;
-    typedef MultiVector<double, int, GlobalOrdinal>::node_type Node;
+    typedef EpetraNode Node;
 
   private:
     //! Private constructor. This is a static class.
@@ -184,12 +186,8 @@ namespace Xpetra {
         return rcp( new TpetraMultiVector<Scalar, LocalOrdinal, GlobalOrdinal, Node> (map, NumVectors, zeroOut) );
 #endif
 
-#ifdef HAVE_XPETRA_EPETRA
-#ifndef XPETRA_EPETRA_NO_64BIT_GLOBAL_INDICES
       if (map->lib() == UseEpetra)
-        return rcp( new EpetraMultiVectorT<long long>(map, NumVectors, zeroOut) );
-#endif
-#endif
+        return rcp( new EpetraMultiVectorT<long long,Node>(map, NumVectors, zeroOut) );
 
       XPETRA_FACTORY_END;
     }
@@ -203,18 +201,15 @@ namespace Xpetra {
         return rcp( new TpetraMultiVector<Scalar, LocalOrdinal, GlobalOrdinal, Node> (map, ArrayOfPtrs, NumVectors) );
 #endif
 
-#ifdef HAVE_XPETRA_EPETRA
-#ifndef XPETRA_EPETRA_NO_64BIT_GLOBAL_INDICES
       if (map->lib() == UseEpetra)
-        return rcp( new EpetraMultiVectorT<long long>(map, ArrayOfPtrs, NumVectors) );
-#endif
-#endif
+        return rcp( new EpetraMultiVectorT<long long,Node>(map, ArrayOfPtrs, NumVectors) );
 
       XPETRA_FACTORY_END;
     }
 
   };
 #endif // HAVE_XPETRA_INT_LONG_LONG
+#endif // HAVE_XPETRA_SERIAL
 
 }
 

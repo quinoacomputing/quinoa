@@ -144,22 +144,25 @@ namespace Belos {
   class BlockCGSolMgr<ScalarType, MV, OP, true> :
     public Details::SolverManagerRequiresLapack<ScalarType, MV, OP, true>
   {
-#if defined(HAVE_TEUCHOSCORE_CXX11)
-#  if defined(HAVE_TEUCHOS_COMPLEX)
-    static_assert (std::is_same<ScalarType, std::complex<float> >::value ||
-                   std::is_same<ScalarType, std::complex<double> >::value ||
-                   std::is_same<ScalarType, float>::value ||
-                   std::is_same<ScalarType, double>::value,
-                   "Belos::GCRODRSolMgr: ScalarType must be one of the four "
-                   "types (S,D,C,Z) supported by LAPACK.");
-#  else
-    static_assert (std::is_same<ScalarType, float>::value ||
-                   std::is_same<ScalarType, double>::value,
-                   "Belos::GCRODRSolMgr: ScalarType must be float or double.  "
-                   "Complex arithmetic support is currently disabled.  To "
-                   "enable it, set Teuchos_ENABLE_COMPLEX=ON.");
-#  endif // defined(HAVE_TEUCHOS_COMPLEX)
-#endif // defined(HAVE_TEUCHOSCORE_CXX11)
+    // This partial specialization is already chosen for those scalar types
+    // that support lapack, so we don't need to have an additional compile-time
+    // check that the scalar type is float/double/complex.
+// #if defined(HAVE_TEUCHOSCORE_CXX11)
+// #  if defined(HAVE_TEUCHOS_COMPLEX)
+//     static_assert (std::is_same<ScalarType, std::complex<float> >::value ||
+//                    std::is_same<ScalarType, std::complex<double> >::value ||
+//                    std::is_same<ScalarType, float>::value ||
+//                    std::is_same<ScalarType, double>::value,
+//                    "Belos::GCRODRSolMgr: ScalarType must be one of the four "
+//                    "types (S,D,C,Z) supported by LAPACK.");
+// #  else
+//     static_assert (std::is_same<ScalarType, float>::value ||
+//                    std::is_same<ScalarType, double>::value,
+//                    "Belos::GCRODRSolMgr: ScalarType must be float or double.  "
+//                    "Complex arithmetic support is currently disabled.  To "
+//                    "enable it, set Teuchos_ENABLE_COMPLEX=ON.");
+// #  endif // defined(HAVE_TEUCHOS_COMPLEX)
+// #endif // defined(HAVE_TEUCHOSCORE_CXX11)
 
   private:
     typedef MultiVecTraits<ScalarType,MV> MVT;
@@ -207,6 +210,12 @@ namespace Belos {
      *                                         relative residual norm is printed if convergence
      *                                         information is printed. Default: false
      *   - "Timer Label" - a \c std::string to use as a prefix for the timer labels.  Default: "Belos"
+     *		\param pl [in] ParameterList with construction information
+     *			\htmlonly
+     *			<iframe src="belos_BlockCG.xml" width=100% scrolling="no" frameborder="0">
+     *			</iframe>
+     *			<hr />
+     *			\endhtmlonly
      */
     BlockCGSolMgr( const Teuchos::RCP<LinearProblem<ScalarType,MV,OP> > &problem,
                    const Teuchos::RCP<Teuchos::ParameterList> &pl );

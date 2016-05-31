@@ -72,7 +72,6 @@ using Teuchos::ArrayView;
 
 typedef Tpetra::CrsGraph<zlno_t, zgno_t, znode_t> tgraph_t;
 typedef Xpetra::CrsGraph<zlno_t, zgno_t, znode_t> xgraph_t;
-typedef Epetra_CrsGraph egraph_t;
 
 void printGraph(RCP<const Comm<int> > &comm, zlno_t nvtx,
     const zgno_t *vtxIds, const zlno_t *offsets, const zgno_t *edgeIds)
@@ -147,6 +146,7 @@ int main(int argc, char *argv[])
   RCP<const Comm<int> > comm = DefaultComm<int>::getComm();
   int rank = comm->getRank();
   int fail = 0, gfail=0;
+  bool aok = true;
 
   // Create an object that can give us test Tpetra, Xpetra
   // and Epetra graphs for testing.
@@ -158,8 +158,10 @@ int main(int argc, char *argv[])
       rcp(new UserInputForTests(testDataFilePath,std::string("simple"), comm, true));
   }
   catch(std::exception &e){
-    TEST_FAIL_AND_EXIT(*comm, 0, string("input ")+e.what(), 1);
+    aok = false;
+    std::cout << e.what() << std::endl;
   }
+  TEST_FAIL_AND_EXIT(*comm, aok, "input ", 1);
 
   RCP<tgraph_t> tG;     // original graph (for checking)
   RCP<tgraph_t> newG;   // migrated graph
@@ -196,9 +198,10 @@ int main(int argc, char *argv[])
         rcp(new Zoltan2::XpetraCrsGraphAdapter<tgraph_t>(ctG));
     }
     catch (std::exception &e){
-      TEST_FAIL_AND_EXIT(*comm, 0,
-        string("XpetraCrsGraphAdapter ")+e.what(), 1);
+      aok = false;
+      std::cout << e.what() << std::endl;
     }
+    TEST_FAIL_AND_EXIT(*comm, aok, "XpetraCrsGraphAdapter ", 1);
 
     if (rank==0)
       std::cout << "Input adapter for Tpetra::CrsGraph" << std::endl;
@@ -226,9 +229,10 @@ int main(int argc, char *argv[])
           newInput = rcp(new Zoltan2::XpetraCrsGraphAdapter<tgraph_t>(cnewG));
         }
         catch (std::exception &e){
-          TEST_FAIL_AND_EXIT(*comm, 0,
-            string("XpetraCrsGraphAdapter 2 ")+e.what(), 1);
+          aok = false;
+          std::cout << e.what() << std::endl;
         }
+        TEST_FAIL_AND_EXIT(*comm, aok, "XpetraCrsGraphAdapter 2 ", 1);
 
         if (rank==0){
           std::cout <<
@@ -257,9 +261,10 @@ int main(int argc, char *argv[])
         rcp(new Zoltan2::XpetraCrsGraphAdapter<xgraph_t>(cxG));
     }
     catch (std::exception &e){
-      TEST_FAIL_AND_EXIT(*comm, 0,
-        string("XpetraCrsGraphAdapter 3 ")+e.what(), 1);
+      aok = false;
+      std::cout << e.what() << std::endl;
     }
+    TEST_FAIL_AND_EXIT(*comm, aok, "XpetraCrsGraphAdapter 3 ", 1);
 
     if (rank==0){
       std::cout << "Input adapter for Xpetra::CrsGraph" << std::endl;
@@ -287,9 +292,10 @@ int main(int argc, char *argv[])
             rcp(new Zoltan2::XpetraCrsGraphAdapter<xgraph_t>(cnewG));
         }
         catch (std::exception &e){
-          TEST_FAIL_AND_EXIT(*comm, 0,
-            string("XpetraCrsGraphAdapter 4 ")+e.what(), 1);
+          aok = false;
+          std::cout << e.what() << std::endl;
         }
+        TEST_FAIL_AND_EXIT(*comm, aok, "XpetraCrsGraphAdapter 4 ", 1);
 
         if (rank==0){
           std::cout <<
@@ -309,6 +315,7 @@ int main(int argc, char *argv[])
 #ifdef HAVE_EPETRA_DATA_TYPES
   /////////////////////////////////////////////////////////////
   // User object is Epetra_CrsGraph
+  typedef Epetra_CrsGraph egraph_t;
   if (!gfail){
     RCP<egraph_t> eG = uinput->getUIEpetraCrsGraph();
     RCP<const egraph_t> ceG = rcp_const_cast<const egraph_t>(eG);
@@ -319,9 +326,10 @@ int main(int argc, char *argv[])
         rcp(new Zoltan2::XpetraCrsGraphAdapter<egraph_t>(ceG));
     }
     catch (std::exception &e){
-      TEST_FAIL_AND_EXIT(*comm, 0,
-        string("XpetraCrsGraphAdapter 5 ")+e.what(), 1);
+      aok = false;
+      std::cout << e.what() << std::endl;
     }
+    TEST_FAIL_AND_EXIT(*comm, aok, "XpetraCrsGraphAdapter 5 ", 1);
 
     if (rank==0){
       std::cout << "Input adapter for Epetra_CrsGraph" << std::endl;
@@ -349,9 +357,10 @@ int main(int argc, char *argv[])
             rcp(new Zoltan2::XpetraCrsGraphAdapter<egraph_t>(cnewG));
         }
         catch (std::exception &e){
-          TEST_FAIL_AND_EXIT(*comm, 0,
-            string("XpetraCrsGraphAdapter 6 ")+e.what(), 1);
+          aok = false;
+          std::cout << e.what() << std::endl;
         }
+        TEST_FAIL_AND_EXIT(*comm, aok, "XpetraCrsGraphAdapter 6 ", 1);
 
         if (rank==0){
           std::cout <<

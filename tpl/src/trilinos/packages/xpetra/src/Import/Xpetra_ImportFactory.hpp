@@ -61,8 +61,8 @@
 
 namespace Xpetra {
 
-  template <class LocalOrdinal = Import<>::local_ordinal_type,
-            class GlobalOrdinal = typename Import<LocalOrdinal>::global_ordinal_type,
+  template <class LocalOrdinal/* = Import<>::local_ordinal_type*/,
+            class GlobalOrdinal/* = typename Import<LocalOrdinal>::global_ordinal_type*/,
             class Node = typename Import<LocalOrdinal, GlobalOrdinal>::node_type>
   class ImportFactory {
   private:
@@ -88,12 +88,17 @@ namespace Xpetra {
 
   };
 
-  template <>
-  class ImportFactory<int, int> {
+// we need the Epetra specialization only if Epetra is enabled
+#if (defined(HAVE_XPETRA_EPETRA) && !defined(XPETRA_EPETRA_NO_32BIT_GLOBAL_INDICES))
 
+  // Specialization on LO=GO=int with serial node.
+  // Used for Epetra and Tpetra
+  // For any other node definition the general default implementation is used which allows Tpetra only
+  template <>
+  class ImportFactory<int, int, EpetraNode> {
     typedef int LocalOrdinal;
     typedef int GlobalOrdinal;
-    typedef Import<int, GlobalOrdinal>::node_type Node;
+    typedef EpetraNode Node;
 
   private:
     //! Private constructor. This is a static class.
@@ -110,25 +115,23 @@ namespace Xpetra {
         return rcp( new TpetraImport<LocalOrdinal, GlobalOrdinal, Node>(source, target));
 #endif
 
-#ifdef HAVE_XPETRA_EPETRA
-#ifndef XPETRA_EPETRA_NO_32BIT_GLOBAL_INDICES
       if (source->lib() == UseEpetra)
-        return rcp( new EpetraImportT<int>(source, target));
-#endif
-#endif
+        return rcp( new EpetraImportT<int,Node>(source, target));
 
       XPETRA_FACTORY_END;
     }
 
   };
+#endif
 
-#ifdef HAVE_XPETRA_INT_LONG_LONG
+// we need the Epetra specialization only if Epetra is enabled
+#if (defined(HAVE_XPETRA_EPETRA) && !defined(XPETRA_EPETRA_NO_64BIT_GLOBAL_INDICES))
   template <>
-  class ImportFactory<int, long long> {
+  class ImportFactory<int, long long, EpetraNode> {
 
     typedef int LocalOrdinal;
     typedef long long GlobalOrdinal;
-    typedef Import<int, GlobalOrdinal>::node_type Node;
+    typedef EpetraNode Node;
 
   private:
     //! Private constructor. This is a static class.
@@ -145,19 +148,14 @@ namespace Xpetra {
         return rcp( new TpetraImport<LocalOrdinal, GlobalOrdinal, Node>(source, target));
 #endif
 
-#ifdef HAVE_XPETRA_EPETRA
-#ifndef XPETRA_EPETRA_NO_64BIT_GLOBAL_INDICES
       if (source->lib() == UseEpetra)
-        return rcp( new EpetraImportT<long long>(source, target));
-#endif
-#endif
+        return rcp( new EpetraImportT<long long,Node>(source, target));
 
       XPETRA_FACTORY_END;
     }
 
   };
-#endif // HAVE_XPETRA_INT_LONG_LONG
-
+#endif
 }
 
 #define XPETRA_IMPORTFACTORY_SHORT

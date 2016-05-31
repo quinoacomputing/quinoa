@@ -78,7 +78,7 @@ namespace MueLu {
 
   /*!
     @class Ifpack2Smoother
-    @ingroup MueLuSmootherClasses 
+    @ingroup MueLuSmootherClasses
     @brief Class that encapsulates Ifpack2 smoothers.
 
     This class creates an Ifpack2 preconditioner factory. The factory creates a smoother based
@@ -90,8 +90,7 @@ namespace MueLu {
             class LocalOrdinal = typename SmootherPrototype<Scalar>::local_ordinal_type,
             class GlobalOrdinal = typename SmootherPrototype<Scalar, LocalOrdinal>::global_ordinal_type,
             class Node = typename SmootherPrototype<Scalar, LocalOrdinal, GlobalOrdinal>::node_type>
-  class Ifpack2Smoother : public SmootherPrototype<Scalar,LocalOrdinal,GlobalOrdinal,Node>
-  {
+  class Ifpack2Smoother : public SmootherPrototype<Scalar,LocalOrdinal,GlobalOrdinal,Node> {
 #undef MUELU_IFPACK2SMOOTHER_SHORT
 #include "MueLu_UseShortNames.hpp"
 
@@ -254,6 +253,50 @@ namespace MueLu {
 #endif
   }
 
+#ifdef HAVE_MUELU_EPETRA
+
+# if ((defined(EPETRA_HAVE_OMP) && (!defined(HAVE_TPETRA_INST_OPENMP) || !defined(HAVE_TPETRA_INST_INT_INT))) || \
+    (!defined(EPETRA_HAVE_OMP) && (!defined(HAVE_TPETRA_INST_SERIAL) || !defined(HAVE_TPETRA_INST_INT_INT))))
+  // Stub specialization for missing Epetra template args
+  template<>
+  class Ifpack2Smoother<double,int,int,Xpetra::EpetraNode> : public SmootherPrototype<double,int,int,Xpetra::EpetraNode> {
+    typedef double              Scalar;
+    typedef int                 LocalOrdinal;
+    typedef int                 GlobalOrdinal;
+    typedef Xpetra::EpetraNode  Node;
+#undef MUELU_AMESOS2SMOOTHER_SHORT
+#include "MueLu_UseShortNames.hpp"
+
+  public:
+#ifndef _MSC_VER
+    // Avoid error C3772: invalid friend template declaration
+    template<class Scalar2, class LocalOrdinal2, class GlobalOrdinal2, class Node2>
+    friend class Ifpack2Smoother;
+#endif
+
+    Ifpack2Smoother(const std::string& type, const Teuchos::ParameterList& paramList = Teuchos::ParameterList(), const LocalOrdinal& overlap = 0) {
+      MUELU_TPETRA_ETI_EXCEPTION("Ifpack2Smoother<double,int,int,EpetraNode>","Ifpack2Smoother<double,int,int,EpetraNode>","int");
+    };
+
+    virtual ~Ifpack2Smoother() { }
+
+    void SetParameterList(const Teuchos::ParameterList& paramList) {}
+    void DeclareInput(Level &currentLevel) const {}
+    void Setup(Level &currentLevel) {}
+    void Apply(MultiVector& X, const MultiVector& B, bool InitialGuessIsZero = false) const {}
+    RCP<SmootherPrototype> Copy() const { return Teuchos::null;}
+
+    template<typename Node2>
+    RCP<MueLu::Ifpack2Smoother<Scalar,LocalOrdinal,GlobalOrdinal,Node2> >
+    clone(const RCP<Node2>& node2, const Teuchos::RCP<const Matrix >& A_newnode) const { return Teuchos::null; }
+    std::string description() const { return std::string(""); }
+    void print(Teuchos::FancyOStream &out, const VerbLevel verbLevel = Default) const {}
+  private:
+    void SetPrecParameters(const Teuchos::ParameterList& list = Teuchos::ParameterList()) const {}
+  };
+# endif
+
+#endif // HAVE_MUELU_EPETRA
 
 } // namespace MueLu
 

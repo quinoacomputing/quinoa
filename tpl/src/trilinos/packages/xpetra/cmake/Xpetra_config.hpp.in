@@ -23,7 +23,10 @@
 
 #cmakedefine XPETRA_EPETRA_NO_64BIT_GLOBAL_INDICES
 
-/* Whether Xpetra enables LocalOrdinal = int and GlobalOrdinal = long long */
-#cmakedefine HAVE_XPETRA_INT_LONG_LONG
+/* Flags for active Tpetra nodes if Tpetra is enabled */
+#cmakedefine HAVE_XPETRA_SERIAL
+#cmakedefine HAVE_XPETRA_PTHREAD
+#cmakedefine HAVE_XPETRA_OPENMP
+#cmakedefine HAVE_XPETRA_CUDA
 
 #endif // XPETRA_CONFIG_HPP

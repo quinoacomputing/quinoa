@@ -43,21 +43,14 @@
 // ***********************************************************************
 //
 // @HEADER
-#include "MueLu_ExplicitInstantiation.hpp"
+
+
 
 #include "MueLu_Utilities_def.hpp"
 
-#include "TpetraCore_ETIHelperMacros.h"
+#define MUELU_ETI_GROUP(SC,LO,GO,NO) \
+  template class MueLu::Utilities<SC,LO,GO,NO>;
 
-#ifndef _MSC_VER // error C2950: 'MueLu::Utils2<double,int,int>' : cannot explicitly instantiate an explicit specialization
-#define MUELU_LOCAL_INSTANT(S,LO,GO,N)          \
-  template class MueLu::Utils<S,LO,GO,N>;       \
-  template class MueLu::Utils2<S,LO,GO,N>;
-#else
-#define MUELU_LOCAL_INSTANT(S,LO,GO,N)           \
-  template class MueLu::Utils<S,LO,GO,N>;
-#endif
+#include "MueLu_ETI_4arg.hpp"
 
-TPETRA_ETI_MANGLING_TYPEDEFS()
 
-TPETRA_INSTANTIATE_SLGN_NO_ORDINAL_SCALAR(MUELU_LOCAL_INSTANT)

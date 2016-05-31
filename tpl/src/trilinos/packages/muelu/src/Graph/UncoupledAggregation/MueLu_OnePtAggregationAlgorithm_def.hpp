@@ -88,23 +88,22 @@ void OnePtAggregationAlgorithm<LocalOrdinal, GlobalOrdinal, Node>::BuildAggregat
   LocalOrdinal nLocalAggregates = aggregates.GetNumAggregates();    // number of local aggregates on current proc
   LocalOrdinal iNode1  = 0;        // current node
 
-  // main loop over all local rows of grpah(A)
+  // main loop over all local rows of graph(A)
   while (iNode1 < nRows) {
 
     if (aggStat[iNode1] == ONEPT) {
 
       aggregates.SetIsRoot(iNode1);    // mark iNode1 as root node for new aggregate 'ag'
-      Aggregate ag;
-      ag.list.push_back(iNode1);
-      ag.index = nLocalAggregates++;
+      std::vector<int> aggList;
+      aggList.push_back(iNode1);
+      int aggIndex = nLocalAggregates++;
 
-      // finalize aggregate
-      for(size_t k=0; k<ag.list.size(); k++) {
-        aggStat[ag.list[k]] = IGNORED;
-        vertex2AggId[ag.list[k]] = ag.index;
-        procWinner[ag.list[k]] = myRank;
+      for (size_t k = 0; k < aggList.size(); k++) {
+        aggStat[aggList[k]] = IGNORED;
+        vertex2AggId[aggList[k]] = aggIndex;
+        procWinner[aggList[k]] = myRank;
       }
-      numNonAggregatedNodes -= ag.list.size();
+      numNonAggregatedNodes -= aggList.size();
     }
 
     iNode1++;

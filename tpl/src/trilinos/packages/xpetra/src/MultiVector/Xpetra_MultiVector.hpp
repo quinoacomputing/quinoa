@@ -175,9 +175,6 @@ namespace Xpetra {
     //! Compute Inf-norm of each vector in multi-vector.
     virtual void normInf(const Teuchos::ArrayView< typename Teuchos::ScalarTraits< Scalar >::magnitudeType > &norms) const = 0;
 
-    //!
-    virtual void normWeighted(const MultiVector< Scalar, LocalOrdinal, GlobalOrdinal, Node > &weights, const Teuchos::ArrayView< typename Teuchos::ScalarTraits< Scalar >::magnitudeType > &norms) const = 0;
-
     //! Compute mean (average) value of each vector in multi-vector. The outcome of this routine is undefined for non-floating point scalar types (e.g., int).
     virtual void meanValue(const Teuchos::ArrayView< Scalar > &means) const = 0;
 
@@ -275,10 +272,13 @@ namespace Xpetra {
         typename dual_view_type::t_host_um>::type
     getLocalView () const {
       if(Kokkos::Impl::is_same<
-          typename dev_execution_space::memory_space,
-          typename TargetDeviceType::memory_space>::value) {
+                   typename host_execution_space::memory_space,
+                   typename TargetDeviceType::memory_space
+         >::value) {
+        return getHostLocalView();
+      } else {
         return getDeviceLocalView();
-      } else return getHostLocalView();
+      }
     }
 
     virtual typename dual_view_type::t_host_um getHostLocalView ()  const {

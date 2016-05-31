@@ -34,32 +34,31 @@ TRIBITS_ADD_TEST(
     FAIL_REGULAR_EXPRESSION "FAIL"
 )
 
-IF(${PROJECT_NAME}_ENABLE_DEVELOPMENT_MODE)
-  TRIBITS_ADD_TEST(
-      test_driver
-      NAME geometricVwgtTest
-      NUM_MPI_PROCS 4
-      COMM serial mpi
-      ARGS
-      "./driverinputs/geometricVwgtTest.xml"
-      PASS_REGULAR_EXPRESSION "PASS"
-      FAIL_REGULAR_EXPRESSION "FAIL"
-  )
+TRIBITS_ADD_TEST(
+    test_driver
+    NAME geometricVwgtTest
+    NUM_MPI_PROCS 4
+    COMM serial mpi
+    ARGS
+    "./driverinputs/geometricVwgtTest.xml"
+    PASS_REGULAR_EXPRESSION "PASS"
+    FAIL_REGULAR_EXPRESSION "FAIL"
+)
 
-  TRIBITS_ADD_TEST(
-      test_driver
-      NAME geometricVwgt2Test
-      NUM_MPI_PROCS 4
-      COMM serial mpi
-      ARGS
-      "./driverinputs/geometricVwgt2Test.xml"
-      PASS_REGULAR_EXPRESSION "PASS"
-      FAIL_REGULAR_EXPRESSION "FAIL"
-  )
-ENDIF()
+TRIBITS_ADD_TEST(
+    test_driver
+    NAME geometricVwgt2Test
+    NUM_MPI_PROCS 4
+    COMM serial mpi
+    ARGS
+    "./driverinputs/geometricVwgt2Test.xml"
+    PASS_REGULAR_EXPRESSION "PASS"
+    FAIL_REGULAR_EXPRESSION "FAIL"
+)
 
 # MultiJagged Tests
-TRIBITS_ADD_TEST(
+IF (${PROJECT_NAME}_ENABLE_Galeri)
+  TRIBITS_ADD_TEST(
     test_driver
     NAME coordinateDriverTest
     NUM_MPI_PROCS 4
@@ -68,7 +67,8 @@ TRIBITS_ADD_TEST(
     "./driverinputs/galeriTest.xml"
     PASS_REGULAR_EXPRESSION "PASS"
     FAIL_REGULAR_EXPRESSION "FAIL"
-)
+  )
+ENDIF()
 
 TRIBITS_ADD_TEST(
     test_driver
@@ -98,36 +98,35 @@ TRIBITS_ADD_TEST(
 # KDD: there.  Also, we don't want to use hard-code paths in XML files.
 # KDD: Copying the files here seems to be best, unless we can make CMAKE
 # KDD: do macro substitution in the XML files.
-IF(${PROJECT_NAME}_ENABLE_DEVELOPMENT_MODE)
-  TRIBITS_COPY_FILES_TO_BINARY_DIR(copy_zoltan_simple_for_driver_tests_
-    SOURCE_FILES
-      simple.coords
-      simple.graph
-    SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../../zoltan/test/ch_simple
-    DEST_DIR ${CMAKE_CURRENT_BINARY_DIR}
-  )
+TRIBITS_COPY_FILES_TO_BINARY_DIR(copy_zoltan_simple_for_driver_tests_
+  SOURCE_FILES
+    simple.coords
+    simple.graph
+  SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../../zoltan/test/ch_simple
+  DEST_DIR ${CMAKE_CURRENT_BINARY_DIR}
+)
 
-  TRIBITS_COPY_FILES_TO_BINARY_DIR(copy_zoltan_vwgt_for_driver_tests_
-    SOURCE_FILES
-      vwgt.coords
-      vwgt.graph
-    SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../../zoltan/test/ch_vwgt
-    DEST_DIR ${CMAKE_CURRENT_BINARY_DIR}
-  )
+TRIBITS_COPY_FILES_TO_BINARY_DIR(copy_zoltan_vwgt_for_driver_tests_
+  SOURCE_FILES
+    vwgt.coords
+    vwgt.graph
+  SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../../zoltan/test/ch_vwgt
+  DEST_DIR ${CMAKE_CURRENT_BINARY_DIR}
+)
 
-  TRIBITS_COPY_FILES_TO_BINARY_DIR(copy_zoltan_vwgt2_for_driver_tests_
-    SOURCE_FILES
-      vwgt2.coords
-      vwgt2.graph
-    SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../../zoltan/test/ch_vwgt2
-    DEST_DIR ${CMAKE_CURRENT_BINARY_DIR}
-  )
+TRIBITS_COPY_FILES_TO_BINARY_DIR(copy_zoltan_vwgt2_for_driver_tests_
+  SOURCE_FILES
+    vwgt2.coords
+    vwgt2.graph
+  SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../../zoltan/test/ch_vwgt2
+  DEST_DIR ${CMAKE_CURRENT_BINARY_DIR}
+)
 
-  TRIBITS_COPY_FILES_TO_BINARY_DIR(copy_zoltan_ewgt_for_driver_tests_
-    SOURCE_FILES
-      ewgt.coords
-      ewgt.graph
-    SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../../zoltan/test/ch_ewgt
-    DEST_DIR ${CMAKE_CURRENT_BINARY_DIR}
-  )
-ENDIF()
+TRIBITS_COPY_FILES_TO_BINARY_DIR(copy_zoltan_ewgt_for_driver_tests_
+  SOURCE_FILES
+    ewgt.coords
+    ewgt.graph
+  SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../../zoltan/test/ch_ewgt
+  DEST_DIR ${CMAKE_CURRENT_BINARY_DIR}
+)
+

@@ -110,6 +110,24 @@ namespace MueLu {
 
   };  //class Zoltan2Interface
 
+#ifdef HAVE_MUELU_EPETRA
+
+#if ((defined(EPETRA_HAVE_OMP) && (!defined(HAVE_TPETRA_INST_OPENMP) || !defined(HAVE_TPETRA_INST_INT_INT))) || \
+    (!defined(EPETRA_HAVE_OMP) && (!defined(HAVE_TPETRA_INST_SERIAL) || !defined(HAVE_TPETRA_INST_INT_INT))))
+  // Stub partial specialization of Zoltan2Interface for EpetraNode
+  template<>
+  class Zoltan2Interface<double,int,int,Xpetra::EpetraNode> : public SingleLevelFactoryBase {
+  public:
+    Zoltan2Interface() { throw Exceptions::RuntimeError("Tpetra does not support <double,int,int,EpetraNode> instantiation"); }
+    virtual ~Zoltan2Interface() { }
+    RCP<const ParameterList> GetValidParameterList() const { return Teuchos::null; };
+    void DeclareInput(Level& level) const {};
+    void Build(Level &level) const {};
+  };
+#endif
+
+#endif // HAVE_MUELU_EPETRA
+
 } //namespace MueLu
 
 #define MUELU_ZOLTAN2INTERFACE_SHORT

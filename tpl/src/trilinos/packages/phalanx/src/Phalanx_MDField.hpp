@@ -47,7 +47,7 @@
 
 #include <iostream>
 #include <string>
-#include <boost/any.hpp>
+#include "Phalanx_any.hpp"
 #include "Teuchos_ArrayRCP.hpp"
 #include "Phalanx_FieldTag_Tag.hpp"
 #include "Kokkos_View.hpp"
@@ -262,7 +262,7 @@ namespace PHX {
 
     void setFieldTag(const PHX::Tag<DataT>& t);
     
-    void setFieldData(const boost::any& a);
+    void setFieldData(const PHX::any& a);
     
     void print(std::ostream& os, bool printValues = false) const;
 
@@ -422,7 +422,7 @@ namespace PHX {
 
     void setFieldTag(const PHX::Tag<DataT>& t);
     
-    void setFieldData(const boost::any& a);
+    void setFieldData(const PHX::any& a);
     
     void print(std::ostream& os, bool printValues = false) const;
 
@@ -437,6 +437,16 @@ namespace PHX {
 
     void deep_copy(const DataT source);
     
+  private:
+    template<typename MDFieldTypeA, typename MDFieldTypeB, unsigned int RANK>
+    struct V_MultiplyFunctor{
+      V_MultiplyFunctor(const MDFieldTypeA &base, const MDFieldTypeB &source) :base_(base), source_(source){}
+      void operator()(const int & i) const;
+      MDFieldTypeA base_;
+      MDFieldTypeB source_;
+    };
+  public:
+
     template<typename MDFieldType>
     void V_Multiply(const MDFieldType& source);
  

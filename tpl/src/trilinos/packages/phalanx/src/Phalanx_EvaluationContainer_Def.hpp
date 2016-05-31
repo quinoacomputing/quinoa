@@ -46,11 +46,10 @@
 #define PHX_SCALAR_CONTAINER_DEF_HPP
 
 #include "Teuchos_Assert.hpp"
+#include "Phalanx_Traits.hpp"
 #include "Phalanx_Evaluator.hpp"
 #include "Phalanx_TypeStrings.hpp"
 #include "Phalanx_KokkosViewFactoryFunctor.hpp"
-#include <boost/mpl/for_each.hpp>
-#include <boost/mpl/at.hpp>
 #include <sstream>
 
 // *************************************************************************
@@ -58,7 +57,7 @@ template <typename EvalT, typename Traits>
 PHX::EvaluationContainer<EvalT, Traits>::EvaluationContainer() :
   post_registration_setup_called_(false)
 {
-  this->vp_manager_.setEvaluationTypeName( PHX::typeAsString<EvalT>() );
+  this->dag_manager_.setEvaluationTypeName( PHX::typeAsString<EvalT>() );
 }
 
 // *************************************************************************
@@ -73,7 +72,7 @@ template <typename EvalT, typename Traits>
 void PHX::EvaluationContainer<EvalT, Traits>::
 requireField(const PHX::FieldTag& f)
 {
-  this->vp_manager_.requireField(f);
+  this->dag_manager_.requireField(f);
 }
 
 // *************************************************************************
@@ -81,7 +80,7 @@ template <typename EvalT, typename Traits>
 void PHX::EvaluationContainer<EvalT, Traits>::
 registerEvaluator(const Teuchos::RCP<PHX::Evaluator<Traits> >& p)
 {
-  this->vp_manager_.registerEvaluator(p);
+  this->dag_manager_.registerEvaluator(p);
 }
 
 // *************************************************************************
@@ -91,16 +90,16 @@ postRegistrationSetup(typename Traits::SetupData d,
 		      PHX::FieldManager<Traits>& fm)
 {
   // Figure out all evaluator dependencies
-  if ( !(this->vp_manager_.sortingCalled()) )
-    this->vp_manager_.sortAndOrderEvaluators();
+  if ( !(this->dag_manager_.sortingCalled()) )
+    this->dag_manager_.sortAndOrderEvaluators();
   
   const std::vector< Teuchos::RCP<PHX::FieldTag> >& var_list = 
-    this->vp_manager_.getFieldTags();
+    this->dag_manager_.getFieldTags();
 
   std::vector< Teuchos::RCP<PHX::FieldTag> >::const_iterator  var;
 
   for (var = var_list.begin(); var != var_list.end(); ++var) {
-    typedef typename boost::mpl::at<typename Traits::EvalToDataMap,EvalT>::type EvalDataTypes;
+    typedef typename PHX::eval_scalar_types<EvalT>::type EvalDataTypes;
     Sacado::mpl::for_each<EvalDataTypes>(PHX::KokkosViewFactoryFunctor<EvalT>(fields_,*(*var),kokkos_extended_data_type_dimensions_));
 
     TEUCHOS_TEST_FOR_EXCEPTION(fields_.find((*var)->identifier()) == fields_.end(),std::runtime_error,
@@ -108,7 +107,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   }
 
   // Allow fields in evaluators to grab pointers to relevant field data
-  this->vp_manager_.postRegistrationSetup(d,fm);
+  this->dag_manager_.postRegistrationSetup(d,fm);
 
   post_registration_setup_called_ = true;
 }
@@ -123,7 +122,7 @@ evaluateFields(typename Traits::EvalData d)
 		      "You must call post registration setup for each evaluation type before calling the evaluateFields() method for that type!");
 #endif
 
-  this->vp_manager_.evaluateFields(d);
+  this->dag_manager_.evaluateFields(d);
 }
 
 // *************************************************************************
@@ -136,7 +135,7 @@ preEvaluate(typename Traits::PreEvalData d)
 		      "You must call post registration setup for each evaluation type before calling the preEvaluate() method for that type!");
 #endif
 
-  this->vp_manager_.preEvaluate(d);
+  this->dag_manager_.preEvaluate(d);
 }
 
 // *************************************************************************
@@ -149,7 +148,7 @@ postEvaluate(typename Traits::PostEvalData d)
 		      "You must call post registration setup for each evaluation type before calling the postEvaluate() method for that type!");
 #endif
 
-  this->vp_manager_.postEvaluate(d);
+  this->dag_manager_.postEvaluate(d);
 }
 
 // *************************************************************************
@@ -174,11 +173,11 @@ getKokkosExtendedDataTypeDimensions() const
 
 // *************************************************************************
 template <typename EvalT, typename Traits>
-boost::any
+PHX::any
 PHX::EvaluationContainer<EvalT, Traits>::getFieldData(const PHX::FieldTag& f)
 {
   //return fields_[f.identifier()];
-  boost::unordered_map<std::string,boost::any>::iterator a= fields_.find(f.identifier());
+  std::unordered_map<std::string,PHX::any>::iterator a= fields_.find(f.identifier());
    if (a==fields_.end()){
     std::cout << " PHX::EvaluationContainer<EvalT, Traits>::getFieldData can't find an f.identifier() "<<  f.identifier() << std::endl;
    }
@@ -211,8 +210,8 @@ void PHX::EvaluationContainer<EvalT, Traits>::print(std::ostream& os) const
   os << "Starting PHX::EvaluationContainer Output" << std::endl;
   os << "Evaluation Type = " << type << std::endl;
   os << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
-  os << this->vp_manager_ << std::endl;
-  for (boost::unordered_map<std::string,boost::any>::const_iterator i = 
+  os << this->dag_manager_ << std::endl;
+  for (std::unordered_map<std::string,PHX::any>::const_iterator i = 
 	 fields_.begin(); i != fields_.end(); ++i)
     os << i->first << std::endl;
   os << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
@@ -220,6 +219,14 @@ void PHX::EvaluationContainer<EvalT, Traits>::print(std::ostream& os) const
   os << "Evaluation Type = " << type << std::endl;
   os << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
   os << std::endl;
+}
+
+// *************************************************************************
+template <typename EvalT, typename Traits>
+void PHX::EvaluationContainer<EvalT, Traits>::
+analyzeGraph(double& speedup, double& parallelizability) const
+{
+  this->dag_manager_.analyzeGraph(speedup,parallelizability);
 }
 
 // *************************************************************************

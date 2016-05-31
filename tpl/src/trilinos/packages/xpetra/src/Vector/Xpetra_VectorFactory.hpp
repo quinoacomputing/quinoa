@@ -61,10 +61,10 @@
 
 namespace Xpetra {
 
-  template <class Scalar = Vector<>::scalar_type,
-            class LocalOrdinal = typename Vector<Scalar>::local_ordinal_type,
-            class GlobalOrdinal = typename Vector<Scalar, LocalOrdinal>::local_ordinal_type,
-            class Node = typename Vector<Scalar, LocalOrdinal, GlobalOrdinal>::node_type>
+  template <class Scalar/* = Vector<>::scalar_type*/,
+            class LocalOrdinal/* = typename Vector<Scalar>::local_ordinal_type*/,
+            class GlobalOrdinal/* = typename Vector<Scalar, LocalOrdinal>::local_ordinal_type*/,
+            class Node/* = typename Vector<Scalar, LocalOrdinal, GlobalOrdinal>::node_type*/>
   class VectorFactory {
 #undef XPETRA_VECTORFACTORY_SHORT
 #include "Xpetra_UseShortNames.hpp"
@@ -91,13 +91,19 @@ namespace Xpetra {
   };
 #define XPETRA_VECTORFACTORY_SHORT
 
-  template <>
-  class VectorFactory<double, int, int> {
+// we need the Epetra specialization only if Epetra is enabled
+#if (defined(HAVE_XPETRA_EPETRA) && !defined(XPETRA_EPETRA_NO_32BIT_GLOBAL_INDICES))
 
+  // Specialization for Scalar=double, LO=GO=int and EpetraNode node
+  // Used both for Epetra and Tpetra
+  // For any other node definition the general default implementation is used which allows Tpetra only
+  template <>
+  class VectorFactory<double, int, int, EpetraNode> {
     typedef double                              Scalar;
     typedef int                                 LocalOrdinal;
     typedef int                                 GlobalOrdinal;
-    typedef Vector<double, int, GlobalOrdinal>::node_type Node;
+    typedef EpetraNode Node;
+
 #undef XPETRA_VECTORFACTORY_SHORT
 #include "Xpetra_UseShortNames.hpp"
 
@@ -115,26 +121,28 @@ namespace Xpetra {
         return rcp( new TpetraVector(map, zeroOut) );
 #endif
 
-#ifdef HAVE_XPETRA_EPETRA
-#ifndef XPETRA_EPETRA_NO_32BIT_GLOBAL_INDICES
       if (map->lib() == UseEpetra)
-        return rcp( new EpetraVectorT<int>(map, zeroOut) );
-#endif
-#endif
+        return rcp( new EpetraVectorT<int,Node>(map, zeroOut) );
 
       XPETRA_FACTORY_END;
     }
 
   };
+#endif
 
-#ifdef HAVE_XPETRA_INT_LONG_LONG
+  // Specialization for Scalar=double, LO=int, GO=long long and EpetraNode
+  // Used both for Epetra and Tpetra
+  // For any other node definition the general default implementation is used which allows Tpetra only
+#if (defined(HAVE_XPETRA_EPETRA) && !defined(XPETRA_EPETRA_NO_64BIT_GLOBAL_INDICES))
+
   template <>
-  class VectorFactory<double, int, long long> {
+  class VectorFactory<double, int, long long, EpetraNode> {
 
     typedef double                              Scalar;
     typedef int                                 LocalOrdinal;
     typedef long long                           GlobalOrdinal;
-    typedef Vector<double, int, GlobalOrdinal>::node_type Node;
+    typedef EpetraNode Node;
+
 #undef XPETRA_VECTORFACTORY_SHORT
 #include "Xpetra_UseShortNames.hpp"
 
@@ -152,26 +160,32 @@ namespace Xpetra {
         return rcp( new TpetraVector(map, zeroOut) );
 #endif
 
-#if defined(HAVE_XPETRA_EPETRA) && ! defined(XPETRA_EPETRA_NO_64BIT_GLOBAL_INDICES)
       if (map->lib() == UseEpetra)
-        return rcp( new EpetraVectorT<long long>(map, zeroOut) );
-#endif
+        return rcp( new EpetraVectorT<long long,Node>(map, zeroOut) );
 
       XPETRA_FACTORY_END;
     }
 
   };
-#endif // HAVE_XPETRA_INT_LONG_LONG
+#endif
 
 #define XPETRA_VECTORFACTORY_SHORT
 
-  template <>
-  class VectorFactory<int, int, int> {
+// we need the Epetra specialization only if Epetra is enabled
+#if (defined(HAVE_XPETRA_EPETRA) && !defined(XPETRA_EPETRA_NO_32BIT_GLOBAL_INDICES))
 
-    typedef int                              Scalar;
-    typedef int                              LocalOrdinal;
-    typedef int                              GlobalOrdinal;
-    typedef Vector<int, int, GlobalOrdinal>::node_type Node;
+
+  // Specialization for Scalar=int, LO=GO=int and EpetraNode
+  // Used both for Epetra and Tpetra
+  // For any other node definition the general default implementation is used which allows Tpetra only
+  template <>
+  class VectorFactory<int, int, int, EpetraNode> {
+
+    typedef int                                 Scalar;
+    typedef int                                 LocalOrdinal;
+    typedef int                                 GlobalOrdinal;
+    typedef EpetraNode Node;
+
 #undef XPETRA_VECTORFACTORY_SHORT
 #include "Xpetra_UseShortNames.hpp"
 
@@ -189,26 +203,30 @@ namespace Xpetra {
         return rcp( new TpetraVector(map, zeroOut) );
 #endif
 
-#ifdef HAVE_XPETRA_EPETRA
-#ifndef XPETRA_EPETRA_NO_32BIT_GLOBAL_INDICES
       if (map->lib() == UseEpetra)
-        return rcp( new EpetraIntVectorT<int>(map, zeroOut) );
-#endif
-#endif
+        return rcp( new EpetraIntVectorT<int,Node>(map, zeroOut) );
 
       XPETRA_FACTORY_END;
     }
 
   };
+#endif
 
-#ifdef HAVE_XPETRA_INT_LONG_LONG
+// we need the Epetra specialization only if Epetra is enabled
+#if (defined(HAVE_XPETRA_EPETRA) && !defined(XPETRA_EPETRA_NO_64BIT_GLOBAL_INDICES))
+
+  // Specialization for Scalar=int, LO=int, GO=long long and Serial node
+  // Used both for Epetra and Tpetra
+  // For any other node definition the general default implementation is used which allows Tpetra only
+
   template <>
-  class VectorFactory<int, int, long long> {
+  class VectorFactory<int, int, long long, EpetraNode> {
 
-    typedef int                              Scalar;
-    typedef int                              LocalOrdinal;
-    typedef long long                        GlobalOrdinal;
-    typedef Vector<int, int, GlobalOrdinal>::node_type Node;
+    typedef int                                 Scalar;
+    typedef int                                 LocalOrdinal;
+    typedef long long                           GlobalOrdinal;
+    typedef EpetraNode Node;
+
 #undef XPETRA_VECTORFACTORY_SHORT
 #include "Xpetra_UseShortNames.hpp"
 
@@ -226,19 +244,15 @@ namespace Xpetra {
         return rcp( new TpetraVector(map, zeroOut) );
 #endif
 
-#if defined(HAVE_XPETRA_EPETRA) && ! defined(XPETRA_EPETRA_NO_64BIT_GLOBAL_INDICES)
       if (map->lib() == UseEpetra)
-        return rcp( new EpetraIntVectorT<long long>(map, zeroOut) );
-#endif
+        return rcp( new EpetraIntVectorT<long long,Node>(map, zeroOut) );
 
       XPETRA_FACTORY_END;
     }
 
   };
-#endif // HAVE_XPETRA_INT_LONG_LONG
-
+#endif
 }
 
 #define XPETRA_VECTORFACTORY_SHORT
 #endif
-// TODO: one factory for both Vector and MultiVector ?

@@ -43,7 +43,9 @@
 
 #include <Tpetra_ConfigDefs.hpp>
 #include <Tpetra_TestingUtilities.hpp>
+#include <MatrixMarket_Tpetra.hpp>
 #include <Tpetra_Experimental_BlockCrsMatrix.hpp>
+#include <Tpetra_Experimental_BlockCrsMatrix_Helpers.hpp>
 #include <Tpetra_Experimental_BlockVector.hpp>
 
 namespace {
@@ -261,7 +263,7 @@ namespace {
     // Test that getLocalRowView returns the right column indices.
     Array<LO> lclColInds (maxNumEntPerRow);
     Array<LO> myLclColIndsCopy (maxNumEntPerRow);
-    Array<Scalar> myValsCopy (maxNumEntPerRow);
+    Array<Scalar> myValsCopy (maxNumEntPerRow*entriesPerBlock);
     Array<LO> myLclColIndsSorted (maxNumEntPerRow);
     for (LO lclRowInd = meshRowMap.getMinLocalIndex ();
          lclRowInd <= meshRowMap.getMaxLocalIndex (); ++lclRowInd) {
@@ -815,8 +817,7 @@ namespace {
     typedef Teuchos::ScalarTraits<Scalar> STS;
     typedef typename STS::magnitudeType MT;
 
-    out << "Testing Tpetra::Experimental::BlockCrsMatrix basic "
-      "functionality" << endl;
+    out << "Testing output of a Tpetra::Experimental::BlockCrsMatrix" << endl;
     Teuchos::OSTab tab0 (out);
 
     RCP<const Comm<int> > comm = getDefaultComm ();
@@ -930,6 +931,247 @@ namespace {
     //pl.set("print MatrixMarket header",false);
     Tpetra::Experimental::blockCrsMatrixWriter(blockMat, "savedBlockMatrix.m", pl);
   }
+
+
+  // Test BlockCrsMatrix::getLocalDiagCopy.
+  TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL( ExpBlockCrsMatrix, getLocalDiagCopy, Scalar, LO, GO, Node )
+  {
+    using Kokkos::ALL;
+    using Kokkos::subview;
+    typedef Tpetra::Experimental::BlockCrsMatrix<Scalar, LO, GO, Node> BCM;
+    typedef typename BCM::device_type device_type;
+    typedef typename BCM::impl_scalar_type IST;
+    typedef Tpetra::CrsGraph<LO, GO, Node> graph_type;
+    typedef Tpetra::Map<LO, GO, Node> map_type;
+    // The typedef below is also a test.  BlockCrsMatrix must have
+    // this typedef, or this test won't compile.
+    typedef typename BCM::little_block_type little_block_type;
+    typedef Teuchos::ScalarTraits<Scalar> STS;
+
+    int lclSuccess = 1;
+    int gblSuccess = 1;
+
+    out << "Test Tpetra::BlockCrsMatrix::getLocalDiagCopy" << endl;
+    Teuchos::OSTab tab0 (out);
+
+    out << "Create mesh row Map" << endl;
+    RCP<const Comm<int> > comm = getDefaultComm ();
+    const size_t numLclMeshPoints = 7;
+    const GST numGblMeshPoints = comm->getSize () * numLclMeshPoints;
+    const GO indexBase = 0;
+
+    // mfh 12 Dec 2015: Tpetra::CrsGraph still needs the row Map as an
+    // RCP.  Later interface changes will let us pass in the Map by
+    // const reference and assume view semantics.
+    RCP<const map_type> meshRowMapPtr =
+      rcp (new map_type (numGblMeshPoints, numLclMeshPoints, indexBase, comm));
+    const map_type& meshRowMap = *meshRowMapPtr;
+
+    // Make a graph.  It will have two entries per global row i_gbl:
+    // the diagonal entry (i_gbl, i_gbl), and the off-diagonal entry
+    // (i_gbl, (i_gbl+1) % N), where N is the global number of
+    // columns.  The mod ensures that the relative order of the
+    // diagonal and off-diagonal entries differs in different rows (so
+    // that getLocalDiagOffsets actually has to search).
+    out << "Creating mesh graph" << endl;
+
+    const size_t maxNumEntPerRow = 2;
+    graph_type graph (meshRowMapPtr, maxNumEntPerRow, Tpetra::StaticProfile);
+
+    // Fill the graph.
+    Teuchos::Array<GO> gblColInds (maxNumEntPerRow);
+    const GO globalNumRows = meshRowMap.getGlobalNumElements ();
+    for (LO lclRowInd = meshRowMap.getMinLocalIndex ();
+         lclRowInd <= meshRowMap.getMaxLocalIndex (); ++lclRowInd) {
+      const GO gblRowInd = meshRowMap.getGlobalElement (lclRowInd);
+      gblColInds[0] = gblRowInd; // diagonal entry
+      const GO gblOffDiagColInd = indexBase +
+        ((gblRowInd - indexBase) + static_cast<GO> (1)) % static_cast<GO> (globalNumRows);
+      gblColInds[1] = gblOffDiagColInd; // off-diagonal entry
+      graph.insertGlobalIndices (gblRowInd, gblColInds ());
+    }
+    graph.fillComplete ();
+
+    lclSuccess = success ? 1 : 0;
+    reduceAll<int, int> (*comm, REDUCE_MIN, lclSuccess, outArg (gblSuccess));
+    TEST_EQUALITY_CONST( gblSuccess, 1 );
+
+    // Get the graph's column Map (the "mesh column Map").
+    map_type meshColMap = * (graph.getColMap ());
+
+    // Use a block size that is not a power of 2, to test correctness
+    // in case BlockCrsMatrix ever were to pad blocks for SIMD.
+    const LO blockSize = 3;
+    //const size_t entriesPerBlock = blockSize * blockSize;
+
+    // Construct the BlockCrsMatrix.
+    out << "Create BlockCrsMatrix" << endl;
+    BCM blockMat = BCM (graph, blockSize);
+
+    // Get the (mesh) offsets of the diagonal blocks; we'll need them
+    // later for getLocalDiagCopy.
+    Teuchos::ArrayRCP<size_t> diagMeshOffsets; // allocated by the method
+    try {
+      blockMat.getLocalDiagOffsets (diagMeshOffsets);
+    } catch (std::exception& e) {
+      success = false;
+      std::ostringstream os;
+      os << "Proc " << comm->getRank () << ": getLocalDiagOffsets "
+        "threw an exception: " << e.what () << endl;
+      std::cerr << os.str ();
+    }
+
+    lclSuccess = success ? 1 : 0;
+    reduceAll<int, int> (*comm, REDUCE_MIN, lclSuccess, outArg (gblSuccess));
+    TEST_EQUALITY_CONST( gblSuccess, 1 );
+    if (gblSuccess != 1) {
+      out << "Test FAILED before or at getLocalDiagOffsets call; "
+        "doesn't make sense to continue." << endl;
+      return;
+    }
+
+    // Test that the mesh offsets are correct.  Use the Kokkos local
+    // graph to test this.  (Mesh offsets are "locally absolute" --
+    // this is technically an implementation detail (the result of
+    // getLocalDiagOffsets is supposed to be opaque) but I think it's
+    // OK to use here.)
+    bool meshOffsetsCorrect = true;
+    if (numLclMeshPoints == 0) {
+      TEST_EQUALITY( diagMeshOffsets.size (), 0 );
+      if (diagMeshOffsets.size () != 0) {
+        meshOffsetsCorrect = false;
+      }
+    }
+    else {
+      TEST_ASSERT( diagMeshOffsets.size () != 0 );
+      auto localGraph = graph.getLocalGraph ();
+      const auto& colMap = * (graph.getColMap ());
+
+      TEST_EQUALITY( static_cast<size_t> (numLclMeshPoints + 1),
+                     static_cast<size_t> (localGraph.row_map.dimension_0 ()) );
+      if (static_cast<size_t> (numLclMeshPoints + 1) ==
+          static_cast<size_t> (localGraph.row_map.dimension_0 ())) {
+        for (LO lclRowInd = 0;
+             lclRowInd < static_cast<LO> (numLclMeshPoints);
+             ++lclRowInd) {
+          const GO gblRowInd = meshRowMap.getGlobalElement (lclRowInd);
+          const GO gblColInd = gblRowInd;
+          bool diagOffsetCorrect = false;
+
+          const LO* lclColInds = NULL;
+          Scalar* lclVals = NULL;
+          LO numEnt = 0;
+          LO err = blockMat.getLocalRowView (lclRowInd, lclColInds, lclVals, numEnt);
+          TEST_ASSERT( err == 0 );
+          if (err == 0) {
+            const size_t offset = diagMeshOffsets[lclRowInd];
+            if (offset >= static_cast<size_t> (numEnt)) {
+              diagOffsetCorrect = false;
+            }
+            else {
+              const LO actualLclColInd = lclColInds[offset];
+              const GO actualGblColInd = colMap.getGlobalElement (actualLclColInd);
+              diagOffsetCorrect = (actualGblColInd == gblColInd);
+            }
+          }
+
+          TEST_ASSERT( diagOffsetCorrect );
+          if (! diagOffsetCorrect ) {
+            meshOffsetsCorrect = false;
+          }
+        }
+      }
+    }
+    TEST_ASSERT( meshOffsetsCorrect );
+
+    lclSuccess = success ? 1 : 0;
+    reduceAll<int, int> (*comm, REDUCE_MIN, lclSuccess, outArg (gblSuccess));
+    TEST_EQUALITY_CONST( gblSuccess, 1 );
+    if (gblSuccess != 1) {
+      out << "Test FAILED early; doesn't make sense to continue." << endl;
+      return;
+    }
+
+    // FIXME (mfh 13 Dec 2015) If the mesh offsets are wrong on some
+    // process, then we should stop the test early.
+
+    // Fill the BlockCrsMatrix in such a way that we can easily tell,
+    // by inspecting the values,
+    //
+    //   1. which block is the diagonal block, and
+    //   2. whether the layout of the returned blocks is correct.
+    out << "Fill the BlockCrsMatrix" << endl;
+    for (LO lclRowInd = meshRowMap.getMinLocalIndex ();
+         lclRowInd <= meshRowMap.getMaxLocalIndex (); ++lclRowInd) {
+      const GO gblRowInd = meshRowMap.getGlobalElement (lclRowInd);
+      const LO* lclColInds = NULL;
+      Scalar* myVals = NULL;
+      LO numEnt = 0;
+      blockMat.getLocalRowView (lclRowInd, lclColInds, myVals, numEnt);
+
+      // Fill the diagonal block D such that D(i,j) = (lclRowInd+1) *
+      // (1 + i + j*blockSize).  Fill the off-diagonal block with -1.
+      // This ensures that we can tell we got the right blocks, and
+      // that we copied them in the correct order.
+      for (LO k = 0; k < numEnt; ++k) {
+        const LO offset = blockSize * blockSize * k;
+        little_block_type curBlock (reinterpret_cast<IST*> (myVals) + offset,
+                                    blockSize, blockSize, 1); // row major
+        const GO gblColInd = meshColMap.getGlobalElement (lclColInds[k]);
+        if (gblColInd == gblRowInd) { // the diagonal block
+          IST curVal = STS::one ();
+          for (LO j = 0; j < blockSize; ++j) {
+            for (LO i = 0; i < blockSize; ++i) {
+              curBlock(i,j) = curVal;
+              curVal += static_cast<IST> (STS::one ());
+            }
+          }
+        }
+        else { // not the diagonal block
+          Tpetra::Experimental::deep_copy (curBlock, static_cast<IST> (-STS::one ()));
+        }
+      }
+    } // for each local mesh row
+
+    // Now that we've filled the BlockCrsMatrix, use the previously
+    // computed offsets to get the local diagonal copy.
+    typedef Kokkos::View<IST***, device_type> diag_blocks_type;
+    diag_blocks_type diagBlocks ("diagBlocks", numLclMeshPoints,
+                                 blockSize, blockSize);
+    blockMat.getLocalDiagCopy (diagBlocks, diagMeshOffsets ());
+
+    bool allBlocksGood = true;
+    for (LO lclRowInd = 0; lclRowInd < static_cast<LO> (numLclMeshPoints); ++lclRowInd) {
+      const GO gblRowInd = meshRowMap.getGlobalElement (lclRowInd);
+      const LO* lclColInds = NULL;
+      Scalar* myVals = NULL;
+      LO numEnt = 0;
+      blockMat.getLocalRowView (lclRowInd, lclColInds, myVals, numEnt);
+
+      // Make sure that the diagonal blocks from getLocalDiagCopy
+      // match those in the matrix.
+      for (LO k = 0; k < numEnt; ++k) {
+        const LO offset = blockSize * blockSize * k;
+        little_block_type curBlock (reinterpret_cast<IST*> (myVals) + offset,
+                                    blockSize, blockSize, 1); // row major
+        const GO gblColInd = meshColMap.getGlobalElement (lclColInds[k]);
+        if (gblColInd == gblRowInd) { // the diagonal block
+          auto diagBlock = subview (diagBlocks, lclRowInd, ALL (), ALL ());
+          for (LO j = 0; j < blockSize; ++j) {
+            for (LO i = 0; i < blockSize; ++i) {
+              if (curBlock(i,j) != diagBlock(i,j)) {
+                allBlocksGood = false;
+                break;
+              }
+            }
+          }
+        }
+      }
+    } // for each local mesh row
+
+    TEST_ASSERT( allBlocksGood );
+  }
+
 
 
   // Test BlockCrsMatrix::setAllToScalar.
@@ -1444,12 +1686,14 @@ namespace {
   //
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL( ExpBlockCrsMatrix, localGSDiagonalMatrix, Scalar, LO, GO, Node )
   {
+    using Kokkos::ALL;
     typedef Scalar ST;
     typedef Tpetra::Experimental::BlockVector<ST, LO, GO, Node> BV;
     typedef Tpetra::Experimental::BlockCrsMatrix<ST, LO, GO, Node> BCM;
     typedef Tpetra::CrsGraph<LO, GO, Node> graph_type;
     typedef Tpetra::Map<LO, GO, Node> map_type;
-    //typedef typename BCM::impl_scalar_type impl_scalar_type;
+    typedef typename graph_type::device_type device_type;
+    typedef typename BCM::impl_scalar_type impl_scalar_type;
     typedef Teuchos::ScalarTraits<ST> STS;
 
     const ST two = STS::one () + STS::one ();
@@ -1545,39 +1789,45 @@ namespace {
       solution.replaceLocalValues (lclRowInd, baseResidual.getRawPtr ());
     }
 
-    BCM diagonalMat(graph, blockSize);
-
     Teuchos::ArrayRCP<size_t> diagonalOffsets(numLocalMeshPoints);
     blockMat.getLocalDiagOffsets(diagonalOffsets);
-    blockMat.getLocalDiagCopy(diagonalMat, diagonalOffsets());
 
-    Scalar* blockVals;
-    Scalar* diagVals;
-    const LO* blkColInds;
-    const LO* diagColInds;
-    LO blkNumColInds;
-    LO diagNumColInds;
+    typedef Kokkos::View<impl_scalar_type***, device_type> block_diag_type;
+    block_diag_type blockDiag ("blockDiag", numLocalMeshPoints,
+                               blockSize, blockSize);
+    blockMat.getLocalDiagCopy (blockDiag, diagonalOffsets());
 
-    Teuchos::Array<int> pivots (blockSize*numLocalMeshPoints+1, 1);
-    out << "pivots size = " << pivots.size() << endl;
+    Kokkos::View<int**, device_type> pivots ("pivots", numLocalMeshPoints, blockSize);
+    // That's how we found this test: the pivots array was filled with ones.
+    Kokkos::deep_copy (pivots, 1);
+    out << "pivots size = " << pivots.dimension_0() << endl;
 
-    int* ipiv = pivots.getRawPtr ();
-    for (LO lclRowInd = meshRowMap.getMinLocalIndex ();
-         lclRowInd <= meshRowMap.getMaxLocalIndex (); ++lclRowInd) {
-      blockMat.getLocalRowView (lclRowInd, blkColInds, blockVals, blkNumColInds);
-      diagonalMat.getLocalRowView (lclRowInd, diagColInds, diagVals, diagNumColInds);
-      for (LO k = 0; k < blockSize*blockSize; ++k) {
-        TEST_EQUALITY( blockVals[k], diagVals[k] );
+    for (LO lclMeshRow = 0; lclMeshRow < static_cast<LO> (numLocalMeshPoints); ++lclMeshRow) {
+      auto diagBlock = Kokkos::subview (blockDiag, lclMeshRow, ALL (), ALL ());
+
+      // Make sure that the diagonal block is correct.
+      Scalar* blkVals = NULL;
+      const LO* blkColInds = NULL;
+      LO blkNumEnt = 0;
+      blockMat.getLocalRowView (lclMeshRow, blkColInds, blkVals, blkNumEnt);
+
+      TEST_EQUALITY( blkNumEnt, static_cast<LO> (1) );
+      if (blkNumEnt == 1) {
+        typename BCM::const_little_block_type diagBlock2 (blkVals, blockSize, blockSize, 1);
+        for (LO j = 0; j < blockSize; ++j) {
+          for (LO i = 0; i < blockSize; ++i) {
+            TEST_EQUALITY( diagBlock(i,j), diagBlock2(i,j) );
+          }
+        }
       }
 
-      typename BCM::little_block_type diagBlock =
-        diagonalMat.getLocalBlock(lclRowInd, lclRowInd);
-      const LO pivotOffset = blockSize * (lclRowInd - meshRowMap.getMinLocalIndex ());
-      int info = -5;
-      diagBlock.factorize (&ipiv[pivotOffset], info);
+      auto ipiv = Kokkos::subview (pivots, lclMeshRow, ALL ());
+      int info = 0;
+      Tpetra::Experimental::GETF2 (diagBlock, ipiv, info);
+      TEST_EQUALITY( info, 0 );
     }
 
-    blockMat.localGaussSeidel (residual, solution, diagonalMat, &pivots[0],
+    blockMat.localGaussSeidel (residual, solution, blockDiag, pivots,
                                STS::one(), Tpetra::Forward);
 
     for (LO lclRowInd = meshRowMap.getMinLocalIndex ();
@@ -1591,9 +1841,8 @@ namespace {
       }
     }
 
-    blockMat.localGaussSeidel (residual, solution, diagonalMat,
-                               pivots.getRawPtr (), STS::one (),
-                               Tpetra::Backward);
+    blockMat.localGaussSeidel (residual, solution, blockDiag, pivots,
+                               STS::one (), Tpetra::Backward);
     for (LO lclRowInd = meshRowMap.getMinLocalIndex ();
          lclRowInd <= meshRowMap.getMaxLocalIndex (); ++lclRowInd) {
       typename BV::little_vec_type xlcl = solution.getLocalBlock (lclRowInd);
@@ -1615,9 +1864,12 @@ namespace {
   //
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL( ExpBlockCrsMatrix, localGSTriangularMatrices, ST, LO, GO, Node )
   {
+    using Kokkos::ALL;
     typedef Tpetra::Experimental::BlockVector<ST, LO, GO, Node> BV;
     typedef Tpetra::Experimental::BlockCrsMatrix<ST, LO, GO, Node> BCM;
+    typedef typename BCM::impl_scalar_type impl_scalar_type;
     typedef Tpetra::CrsGraph<LO, GO, Node> graph_type;
+    typedef typename graph_type::device_type device_type;
     typedef Tpetra::Map<LO, GO, Node> map_type;
     typedef Teuchos::ScalarTraits<ST> STS;
 
@@ -1682,9 +1934,6 @@ namespace {
     TEST_NOTHROW( residual = BV (meshRowMap, blockSize));
     BV solution;
     TEST_NOTHROW( solution = BV (meshRowMap, blockSize));
-    blockMat.computeDiagonalGraph();
-    BCM diagonalMat;
-    TEST_NOTHROW( diagonalMat = BCM (* (blockMat.getDiagonalGraph ()), blockSize) );
 
     Teuchos::Array<ST> basematrix (maxNumEntPerRow * maxNumEntPerRow, STS::zero ());
     basematrix[0] = two;
@@ -1743,32 +1992,25 @@ namespace {
 
     Teuchos::ArrayRCP<size_t> diagonalOffsets(numLocalMeshPoints);
     blockMat.getLocalDiagOffsets(diagonalOffsets);
-    blockMat.getLocalDiagCopy(diagonalMat, diagonalOffsets());
 
-    ST* blockVals;
-    ST* diagVals;
+    typedef Kokkos::View<impl_scalar_type***, device_type> block_diag_type;
+    block_diag_type blockDiag ("blockDiag", numLocalMeshPoints,
+                               blockSize, blockSize);
+    blockMat.getLocalDiagCopy (blockDiag, diagonalOffsets());
 
-    Teuchos::Array<int> pivots(blockSize*numLocalMeshPoints+1, Teuchos::OrdinalTraits<int>::one());
+    Kokkos::View<int**, device_type> pivots ("pivots", numLocalMeshPoints, blockSize);
+    // That's how we found this test: the pivots array was filled with ones.
+    Kokkos::deep_copy (pivots, 1);
 
-    int* ipiv = pivots.getRawPtr ();
-    for (LO lclRowInd = meshRowMap.getMinLocalIndex ();
-         lclRowInd <= meshRowMap.getMaxLocalIndex (); ++lclRowInd) {
-      typename BCM::little_block_type diagBlock =
-        diagonalMat.getLocalBlock (lclRowInd, lclRowInd);
-      typename BCM::little_block_type block =
-        blockMat.getLocalBlock (lclRowInd, lclRowInd);
-
-      diagVals = reinterpret_cast<ST*> (diagBlock.getRawPtr ());
-      blockVals = reinterpret_cast<ST*> (block.getRawPtr ());
-      for (LO k = 0; k < blockSize * blockSize; ++k) {
-        TEST_EQUALITY( blockVals[k], diagVals[k] );
-      }
-      const LO pivotOffset = blockSize * (lclRowInd - meshRowMap.getMinLocalIndex ());
-      int info = -5;
-      diagBlock.factorize (&ipiv[pivotOffset], info);
+    for (LO lclMeshRow = 0; lclMeshRow < static_cast<LO> (numLocalMeshPoints); ++lclMeshRow) {
+      auto diagBlock = Kokkos::subview (blockDiag, lclMeshRow, ALL (), ALL ());
+      auto ipiv = Kokkos::subview (pivots, lclMeshRow, ALL ());
+      int info = 0;
+      Tpetra::Experimental::GETF2 (diagBlock, ipiv, info);
+      TEST_EQUALITY( info, 0 );
     }
 
-    blockMat.localGaussSeidel (residual, solution, diagonalMat, &pivots[0],
+    blockMat.localGaussSeidel (residual, solution, blockDiag, pivots,
                                STS::one (), Tpetra::Forward);
 
     for (LO lclRowInd = meshRowMap.getMinLocalIndex ();
@@ -1816,26 +2058,17 @@ namespace {
       }
     }
 
-    blockMat.getLocalDiagCopy (diagonalMat, diagonalOffsets ());
+    blockMat.getLocalDiagCopy (blockDiag, diagonalOffsets ());
 
-    ipiv = pivots.getRawPtr();
-    for (LO lclRowInd = meshRowMap.getMinLocalIndex ();
-         lclRowInd <= meshRowMap.getMaxLocalIndex (); ++lclRowInd) {
-      typename BCM::little_block_type diagBlock =
-        diagonalMat.getLocalBlock(lclRowInd, lclRowInd);
-      typename BCM::little_block_type block =
-        blockMat.getLocalBlock(lclRowInd, lclRowInd);
-      diagVals = reinterpret_cast<ST*> (diagBlock.getRawPtr ());
-      blockVals = reinterpret_cast<ST*> (block.getRawPtr ());
-      for (LO k = 0; k < blockSize*blockSize; ++k) {
-        TEST_EQUALITY( blockVals[k], diagVals[k] );
-      }
-      const LO pivotOffset = blockSize * (lclRowInd - meshRowMap.getMinLocalIndex ());
-      int info = -5;
-      diagBlock.factorize (&ipiv[pivotOffset], info);
+    for (LO lclMeshRow = 0; lclMeshRow < static_cast<LO> (numLocalMeshPoints); ++lclMeshRow) {
+      auto diagBlock = Kokkos::subview (blockDiag, lclMeshRow, ALL (), ALL ());
+      auto ipiv = Kokkos::subview (pivots, lclMeshRow, ALL ());
+      int info = 0;
+      Tpetra::Experimental::GETF2 (diagBlock, ipiv, info);
+      TEST_EQUALITY( info, 0 );
     }
 
-    blockMat.localGaussSeidel (residual, solution, diagonalMat, &pivots[0],
+    blockMat.localGaussSeidel (residual, solution, blockDiag, pivots,
                                STS::one (), Tpetra::Symmetric);
 
     for (LO lclRowInd = meshRowMap.getMinLocalIndex ();
@@ -1856,6 +2089,75 @@ namespace {
     TEST_EQUALITY_CONST( gblSuccess, 1 );
   }
 
+  //
+  // Test conversion from CrsMatrix to BlockCrsMatrix.  This test is valid only on
+  // 1, 2, or 4 processes.  (See note below.)
+  //
+  TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL( ExpBlockCrsMatrix, point2block, ST, LO, GO, Node )
+  {
+    typedef Tpetra::Experimental::BlockCrsMatrix<ST, LO, GO, Node> block_matrix_type;
+    typedef Tpetra::CrsMatrix<ST, LO, GO, Node>                    crs_matrix_type;
+    typedef Tpetra::Import<LO, GO, Node>                           import_type;
+    typedef Tpetra::MultiVector<ST, LO, GO, Node>                  mv_type;
+    typedef Tpetra::Map<LO, GO, Node>                              map_type;
+    typedef Tpetra::MatrixMarket::Reader<crs_matrix_type>          reader_type;
+    typedef Teuchos::ScalarTraits<ST>                              STS;
+    typedef typename STS::magnitudeType                            magnitude_type;
+    ST zero = STS::zero(), one = STS::one();
+
+    RCP<const Comm<int> > comm = getDefaultComm();
+    RCP<Node> node = getNode<Node>();
+    std::string matrixFile;
+    if (STS::isComplex)
+      matrixFile = "blockA-complex.mm";
+    else
+      matrixFile = "blockA.mm";
+    out << "reading " << matrixFile << std::endl;
+    RCP<crs_matrix_type> pointMatrix = reader_type::readSparseFile(matrixFile, comm, node);
+
+    // Migrate pointMatrix to final parallel distribution.
+    // Note that the input matrix has 12 point rows, with block size 3.  Point rows associated with a mesh node
+    // must stay together.  This means the serial matrix can only be migrated to 1,2 or 4 processes.  3 processes
+    // would split up dofs associate with a mesh node.
+    Tpetra::global_size_t numGlobElts = pointMatrix->getRowMap()->getGlobalNumElements();
+    RCP<const map_type> parPointMap     = Tpetra::createUniformContigMapWithNode<LO,GO,Node>(numGlobElts, comm, node);
+    RCP<crs_matrix_type> parPointMatrix = rcp(new crs_matrix_type(parPointMap,pointMatrix->getGlobalMaxNumRowEntries()));
+    RCP<const import_type> importer     = Tpetra::createImport<LO,GO,Node>(pointMatrix->getRowMap(), parPointMap);
+    parPointMatrix->doImport(*pointMatrix, *importer, Tpetra::INSERT);
+    parPointMatrix->fillComplete();
+    pointMatrix.swap(parPointMatrix);
+
+    int blockSize = 3;
+    RCP<block_matrix_type> blockMatrix = Tpetra::Experimental::convertToBlockCrsMatrix(*pointMatrix,blockSize);
+
+    //normalized pseudo-random vector
+    RCP<mv_type> randVec = rcp(new mv_type(pointMatrix->getDomainMap(),1));
+    randVec->randomize();
+    Teuchos::Array<magnitude_type> normVec1(1);
+    randVec->norm2(normVec1);
+    randVec->scale(1.0/normVec1[0]);
+
+    RCP<mv_type> resultVec1 = rcp(new mv_type(pointMatrix->getRangeMap(),1));
+    pointMatrix->apply(*randVec, *resultVec1, Teuchos::NO_TRANS, one, zero);
+    resultVec1->norm2(normVec1);
+
+    RCP<mv_type> resultVec2 = rcp(new mv_type(blockMatrix->getRangeMap(),1));
+    blockMatrix->apply(*randVec, *resultVec2, Teuchos::NO_TRANS, one, zero);
+    Teuchos::Array<magnitude_type> normVec2(1);
+    resultVec2->norm2(normVec2);
+
+    resultVec2->update(-1.0,*resultVec1,1.0);
+    Teuchos::Array<magnitude_type> normDelta(1);
+    resultVec2->norm2(normDelta);
+    Teuchos::Array<magnitude_type> relativeError(1);
+    relativeError[0] = std::abs(normDelta[0] / normVec1[0]);
+
+    std::ostringstream normStr;
+    normStr << "||CSR*xrand|| = " << normVec1[0] << ", ||CSR*xrand - BCSR*xrand|| / ||CSR*xrand|| = " << relativeError[0];
+    out << normStr.str() << std::endl;
+    TEUCHOS_TEST_FOR_EXCEPTION(relativeError[0]>1e-8, std::runtime_error, "BlockCrsMatrix matvec does not produce same result as CrsMatrix matvec.");
+  }
+
 
 //
 // INSTANTIATIONS
@@ -1865,11 +2167,13 @@ namespace {
   TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( ExpBlockCrsMatrix, ctor, SCALAR, LO, GO, NODE ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( ExpBlockCrsMatrix, basic, SCALAR, LO, GO, NODE ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( ExpBlockCrsMatrix, write, SCALAR, LO, GO, NODE ) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( ExpBlockCrsMatrix, getLocalDiagCopy, SCALAR, LO, GO, NODE ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( ExpBlockCrsMatrix, SetAllToScalar, SCALAR, LO, GO, NODE ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( ExpBlockCrsMatrix, ImportCopy, SCALAR, LO, GO, NODE ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( ExpBlockCrsMatrix, ExportDiffRowMaps, SCALAR, LO, GO, NODE ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( ExpBlockCrsMatrix, localGSDiagonalMatrix, SCALAR, LO, GO, NODE ) \
-  TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( ExpBlockCrsMatrix, localGSTriangularMatrices, SCALAR, LO, GO, NODE )
+  TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( ExpBlockCrsMatrix, localGSTriangularMatrices, SCALAR, LO, GO, NODE ) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( ExpBlockCrsMatrix, point2block, SCALAR, LO, GO, NODE )
 
   TPETRA_ETI_MANGLING_TYPEDEFS()
 

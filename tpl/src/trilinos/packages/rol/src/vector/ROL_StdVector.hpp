@@ -70,42 +70,62 @@ public:
   StdVector(const Teuchos::RCP<std::vector<Element> > & std_vec) : std_vec_(std_vec) {}
 
   void set( const Vector<Real> &x ) {
+
+    TEUCHOS_TEST_FOR_EXCEPTION( dimension() != x.dimension(),
+                                std::invalid_argument,
+                                "Error: Vectors must have the same dimension." );
+
     const StdVector &ex = Teuchos::dyn_cast<const StdVector>(x);
     const std::vector<Element>& xval = *ex.getVector();
     std::copy(xval.begin(),xval.end(),std_vec_->begin());   
   }
 
   void plus( const Vector<Real> &x ) {
+
+    TEUCHOS_TEST_FOR_EXCEPTION( dimension() != x.dimension(),
+                                std::invalid_argument,
+                                "Error: Vectors must have the same dimension." );
+
     const StdVector &ex = Teuchos::dyn_cast<const StdVector>(x);
     const std::vector<Element>& xval = *ex.getVector();
-    unsigned dimension  = std_vec_->size();
-    for (unsigned i=0; i<dimension; i++) {
+    uint dim  = std_vec_->size();
+    for (uint i=0; i<dim; i++) {
       (*std_vec_)[i] += xval[i];
     }
   }
 
   void axpy( const Real alpha, const Vector<Real> &x ) {
+
+    TEUCHOS_TEST_FOR_EXCEPTION( dimension() != x.dimension(),
+                                std::invalid_argument,
+                                "Error: Vectors must have the same dimension." );
+
     const StdVector &ex = Teuchos::dyn_cast<const StdVector>(x);
     const std::vector<Element>& xval = *ex.getVector();
-    uint dimension  = std_vec_->size();
-    for (uint i=0; i<dimension; i++) {
+    uint dim  = std_vec_->size();
+    for (uint i=0; i<dim; i++) {
       (*std_vec_)[i] += alpha*xval[i];
     }
   }
 
   void scale( const Real alpha ) {
-    uint dimension = std_vec_->size();
-    for (uint i=0; i<dimension; i++) {
+    uint dim = std_vec_->size();
+    for (uint i=0; i<dim; i++) {
       (*std_vec_)[i] *= alpha;
     }
   }
 
-  Real dot( const Vector<Real> &x ) const {
+  virtual Real dot( const Vector<Real> &x ) const {
+
+    TEUCHOS_TEST_FOR_EXCEPTION( dimension() != x.dimension(),
+                                std::invalid_argument,
+                                "Error: Vectors must have the same dimension." );
+
     const StdVector & ex = Teuchos::dyn_cast<const StdVector>(x);
     const std::vector<Element>& xval = *ex.getVector();
-    uint dimension  = std_vec_->size();
+    uint dim  = std_vec_->size();
     Real val = 0;
-    for (uint i=0; i<dimension; i++) {
+    for (uint i=0; i<dim; i++) {
       val += (*std_vec_)[i]*xval[i];
     }
     return val;
@@ -117,7 +137,7 @@ public:
     return val;
   }
 
-  Teuchos::RCP<Vector<Real> > clone() const {
+  virtual Teuchos::RCP<Vector<Real> > clone() const {
     return Teuchos::rcp( new StdVector( Teuchos::rcp(new std::vector<Element>(std_vec_->size())) ));
   }
 
@@ -130,6 +150,11 @@ public:
   }
 
   Teuchos::RCP<Vector<Real> > basis( const int i ) const {
+
+    TEUCHOS_TEST_FOR_EXCEPTION( i >= dimension() || i<0,
+                                std::invalid_argument,
+                                "Error: Basis index must be between 0 and vector dimension." );
+
     Teuchos::RCP<StdVector> e = Teuchos::rcp( new StdVector( Teuchos::rcp(new std::vector<Element>(std_vec_->size(), 0.0)) ));
     (*e->getVector())[i] = 1.0;
     return e;
@@ -140,18 +165,22 @@ public:
   }
 
   void applyUnary( const Elementwise::UnaryFunction<Real> &f ) {
-    uint dimension  = std_vec_->size();
-    for(uint i=0; i<dimension; ++i) {
+    uint dim  = std_vec_->size();
+    for(uint i=0; i<dim; ++i) {
       (*std_vec_)[i] = f.apply((*std_vec_)[i]);
     }
-
   }
 
   void applyBinary( const Elementwise::BinaryFunction<Real> &f, const Vector<Real> &x ) {
+
+    TEUCHOS_TEST_FOR_EXCEPTION( dimension() != x.dimension(),
+                                std::invalid_argument,
+                                "Error: Vectors must have the same dimension." );
+
     const StdVector & ex = Teuchos::dyn_cast<const StdVector>(x);
     const std::vector<Element>& xval = *ex.getVector();
-    uint dimension  = std_vec_->size();
-    for (uint i=0; i<dimension; i++) {
+    uint dim  = std_vec_->size();
+    for (uint i=0; i<dim; i++) {
       (*std_vec_)[i] = f.apply((*std_vec_)[i],xval[i]);
     }
 
@@ -159,8 +188,8 @@ public:
 
   Real reduce( const Elementwise::ReductionOp<Real> &r ) const {
     Real result = r.initialValue();
-    uint dimension  = std_vec_->size();
-    for(uint i=0; i<dimension; ++i) {
+    uint dim  = std_vec_->size();
+    for(uint i=0; i<dim; ++i) {
       r.reduce((*std_vec_)[i],result);
     }
     return result;

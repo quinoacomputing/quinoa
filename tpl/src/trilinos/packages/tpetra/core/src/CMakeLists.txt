@@ -113,17 +113,22 @@ ENDFUNCTION(TPETRA_NODE_MACRO_NAME)
 #   TPETRA_SLG_MACRO_NAME function (see above) implements the
 #   conversion process from the original name to the macro name.
 FUNCTION(TPETRA_SC_MACRO_EXPR SC_MACRO_EXPR SC GO SC_MACRO_NAME)
-  # SC = int and SC = GO are special cases.  Tpetra doesn't have
+  # SC = int,char and SC = GO are special cases.  Tpetra doesn't have
   # macros for these cases.  That means the expression is empty.
   STRING(COMPARE EQUAL "${SC}" "int" IS_INT)
   IF(IS_INT)
     SET(SC_MACRO_EXPR_TMP "")
   ELSE()
-    STRING(COMPARE EQUAL "${SC}" "${GO}" IS_GO)
-    IF(IS_GO)
+    STRING(COMPARE EQUAL "${SC}" "char" IS_CHAR)
+    IF(IS_CHAR)
       SET(SC_MACRO_EXPR_TMP "")
     ELSE()
-      SET(SC_MACRO_EXPR_TMP "&& defined(HAVE_TPETRA_INST_${SC_MACRO_NAME})")
+      STRING(COMPARE EQUAL "${SC}" "${GO}" IS_GO)
+      IF(IS_GO)
+        SET(SC_MACRO_EXPR_TMP "")
+      ELSE()
+        SET(SC_MACRO_EXPR_TMP "&& defined(HAVE_TPETRA_INST_${SC_MACRO_NAME})")
+      ENDIF()
     ENDIF()
   ENDIF()
 
@@ -264,6 +269,7 @@ SET(HEADERS "")
 SET(SOURCES "")
 
 SET_AND_INC_DIRS(DIR ${CMAKE_CURRENT_SOURCE_DIR})
+APPEND_GLOB(HEADERS ${DIR}/*.h)
 APPEND_GLOB(HEADERS ${DIR}/*.hpp)
 APPEND_GLOB(SOURCES ${DIR}/*.cpp)
 TRILINOS_CREATE_CLIENT_TEMPLATE_HEADERS(${DIR})
@@ -300,7 +306,7 @@ IF (${PACKAGE_NAME}_ENABLE_EXPLICIT_INSTANTIATION)
 
   # Zoltan2 wants Scalar = int for CrsMatrix (Bug 6298), and thus
   # indirectly for RowMatrix as well.
-  SET (CrsMatrix_ETI_SCALARS ${TpetraCore_ETI_SCALARS})
+  SET (CrsMatrix_ETI_SCALARS ${MultiVector_ETI_SCALARS})
 
   # Generate ETI .cpp files for Tpetra::CrsMatrix.
   TPETRA_PROCESS_ALL_SLGN_TEMPLATES(CRSMATRIX_OUTPUT_FILES "Tpetra_ETI_SC_LO_GO_NT.tmpl" "CrsMatrix" "CRSMATRIX" "${CrsMatrix_ETI_SCALARS}" "${TpetraCore_ETI_LORDS}" "${TpetraCore_ETI_GORDS}" "${TpetraCore_ETI_NODES}" TRUE)
@@ -317,6 +323,20 @@ IF (${PACKAGE_NAME}_ENABLE_EXPLICIT_INSTANTIATION)
   # Generate ETI .cpp files for Tpetra::Experimental::BlockCrsMatrix.
   TPETRA_PROCESS_ALL_SLGN_TEMPLATES(BLOCKCRSMATRIX_OUTPUT_FILES "Tpetra_ETI_SC_LO_GO_NT.tmpl" "Experimental_BlockCrsMatrix" "EXPERIMENTAL_BLOCKCRSMATRIX" "${TpetraCore_ETI_SCALARS_NO_ORDS}" "${TpetraCore_ETI_LORDS}" "${TpetraCore_ETI_GORDS}" "${TpetraCore_ETI_NODES}" FALSE)
   LIST(APPEND SOURCES ${BLOCKCRSMATRIX_OUTPUT_FILES})
+
+  # Generate ETI .cpp files for Tpetra::Experimental::BlockCrsMatrix helpers.
+  TPETRA_PROCESS_ALL_SLGN_TEMPLATES(BLOCKCRSMATRIX_HELPER_OUTPUT_FILES "Tpetra_ETI_SC_LO_GO_NT.tmpl"
+  "Experimental_BlockCrsMatrix_Helpers" "EXPERIMENTAL_BLOCKCRSMATRIX_HELPERS" "${TpetraCore_ETI_SCALARS_NO_ORDS}" "${TpetraCore_ETI_LORDS}" "${TpetraCore_ETI_GORDS}" "${TpetraCore_ETI_NODES}" FALSE)
+  LIST(APPEND SOURCES ${BLOCKCRSMATRIX_HELPER_OUTPUT_FILES})
+
+  # DistObject requires the same Scalar type instantiations as
+  # MultiVector, plus Scalar = char (for CrsMatrix).
+  SET (DistObject_ETI_SCALARS ${MultiVector_ETI_SCALARS})
+  LIST(APPEND DistObject_ETI_SCALARS "char")
+
+  # Generate ETI .cpp files for Tpetra::DistObject.
+  TPETRA_PROCESS_ALL_SLGN_TEMPLATES(DISTOBJECT_OUTPUT_FILES "Tpetra_ETI_SC_LO_GO_NT.tmpl" "DistObject" "DISTOBJECT" "${DistObject_ETI_SCALARS}" "${TpetraCore_ETI_LORDS}" "${TpetraCore_ETI_GORDS}" "${TpetraCore_ETI_NODES}" TRUE)
+  LIST(APPEND SOURCES ${DISTOBJECT_OUTPUT_FILES})
 
   #MESSAGE(STATUS "SOURCES = ${SOURCES}")
 ENDIF()
@@ -342,6 +362,5 @@ SET_PROPERTY(
 # Make a trivial change to this comment if you add / remove a file
 # either to / from this directory, or to / from the 'impl'
 # subdirectory.  That ensures that running "make" will also rerun
-# CMake in order to regenerate Makefiles.  Here is another such
-# change.
+# CMake in order to regenerate Makefiles.
 #

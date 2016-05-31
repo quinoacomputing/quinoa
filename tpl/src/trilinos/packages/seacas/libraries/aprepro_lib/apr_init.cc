@@ -47,7 +47,6 @@ namespace SEAMS {
 extern SEAMS::Aprepro *aprepro;
 
 void init_table(const char *comment);
-char comm_string[32];
 char vers_string[32];
   
 struct init_d arith_fncts[] =
@@ -179,10 +178,6 @@ struct str_c_init string_c_fncts[] =
   {"rescan",         do_rescan,      "rescan(svar)","The difference between execute(sv1) and rescan(sv2) is that sv1 must be a valid expression, but sv2 can contain zero or more expressions. "},
   {"include_path",   do_include_path,"include_path(path)","Specify an optional path to be prepended to a filename when opening a file. Can also be specified via the -I command line option when executing aprepro."},
   {"Units",          do_Units,       "Units(svar)","See manual. svar is one of the defined units systems:\n\t\t\t'si', 'cgs', 'cgs-ev', 'shock', 'swap', 'ft-lbf-s', 'ft-lbm-s', 'in-lbf-s'"},
-#if defined(EXODUSII)
-  {"exodus_info",    do_exodus_info, "exodus_info(ex_fn)","Parses the info records extracted from the exodus file 'ex_fn'"},
-  {"exodus_meta",    do_exodus_meta, "exodus_meta(ex_fn)","Creates several variables related to the exodusII metadata in the specified file. Experimental."},
-#endif
   {"delete",         do_delete,      "delete(var_name)", "Delete the variable with name 'var_name'."},
   {"if",             do_str_if,      "if(x)", "Handles the if statements. x can be any valid expression; nonzero is true"},
   {"If",             do_str_if,      "If(x)", "Handles the if statements. x can be any valid expression; nonzero is true"},
@@ -460,10 +455,8 @@ struct svar_init svariables[] =
       ptr->value.svar = svariables[i].value;
     }
 
-    comm_string[0] = '#';
-    
     symrec *ptr = putsym("_C_", STRING_VARIABLE, 1);
-    ptr->value.svar = comm_string;
+    ptr->value.svar = comment;
 
     {
       std::strncpy(vers_string, aprepro->version().c_str(), 32);

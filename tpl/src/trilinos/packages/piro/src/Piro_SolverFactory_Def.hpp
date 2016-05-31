@@ -42,14 +42,19 @@
 
 #include "Piro_ConfigDefs.hpp"
 
-#ifdef Piro_ENABLE_NOX
+#ifdef HAVE_PIRO_NOX
 #include "Piro_NOXSolver.hpp"
 #include "Piro_LOCASolver.hpp"
-#endif /* Piro_ENABLE_NOX */
+#include "Piro_VelocityVerletSolver.hpp"
+#include "Piro_TrapezoidRuleSolver.hpp"
+#endif /* HAVE_PIRO_NOX */
 
-#ifdef Piro_ENABLE_Rythmos
+#ifdef HAVE_PIRO_RYTHMOS
+// This "define" turns on the extended template interface in RythmosSolver. This should be cleaned up at some
+// point.
+#define ALBANY_BUILD
 #include "Piro_RythmosSolver.hpp"
-#endif /* Piro_ENABLE_Rythmos */
+#endif /* HAVE_PIRO_RYTHMOS */
 
 #include "Teuchos_TestForException.hpp"
 
@@ -58,7 +63,7 @@
 
 namespace Piro {
 
-template <typename Scalar>
+template <typename Scalar, typename LocalOrdinal, typename GlobalOrdinal, typename Node>
 Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<Scalar> > SolverFactory::createSolver(
     const Teuchos::RCP<Teuchos::ParameterList> &piroParams,
     const Teuchos::RCP<Thyra::ModelEvaluator<Scalar> > &model,
@@ -68,19 +73,25 @@ Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<Scalar> > SolverFactory::crea
 
   const std::string &solverType = piroParams->get("Solver Type", "NOX");
 
-#ifdef Piro_ENABLE_NOX
+#ifdef HAVE_PIRO_NOX
   if (solverType == "NOX") {
     result = Teuchos::rcp(new NOXSolver<Scalar>(piroParams, model, observer));
+  } else
+  if (solverType == "Velocity Verlet") {
+    result = Teuchos::rcp(new VelocityVerletSolver<Scalar>(piroParams, model, observer));
+  } else
+  if (solverType == "Trapezoid Rule") {
+    result = Teuchos::rcp(new TrapezoidRuleSolver<Scalar>(piroParams, model, observer));
   } else
   if (solverType == "LOCA") {
     result = observedLocaSolver(piroParams, model, observer);
   } else
-#endif /* Piro_ENABLE_NOX */
-#ifdef Piro_ENABLE_Rythmos
+#endif /* HAVE_PIRO_NOX */
+#ifdef HAVE_PIRO_RYTHMOS
   if (solverType == "Rythmos") {
-    result = rythmosSolver(piroParams, model, observer);
+    result = rythmosSolver<Scalar, LocalOrdinal, GlobalOrdinal, Node>(piroParams, model, observer);
   } else
-#endif /* Piro_ENABLE_Rythmos */
+#endif /* HAVE_PIRO_RYTHMOS */
   {
     TEUCHOS_TEST_FOR_EXCEPTION(
         true,

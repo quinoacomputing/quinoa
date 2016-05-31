@@ -44,6 +44,9 @@
 #ifndef ROL_UNARYFUNCTIONS_H
 #define ROL_UNARYFUNCTIONS_H
 
+#include <cstdlib>
+#include <ctime>
+
 #include "ROL_Elementwise_Function.hpp"
 
 namespace ROL {
@@ -61,7 +64,83 @@ private:
   Real value_;
 }; // class Fill
 
-}
+
+// Get the elementwise reciprocal of a vector
+template<class Real> 
+class Reciprocal : public UnaryFunction<Real> {
+public:
+  Real apply( const Real &x ) const {
+    return static_cast<Real>(1)/x;
+  }  
+}; // class Reciprocal
+
+
+// Compute the elementwise power of a vector
+template<class Real> 
+class Power : public UnaryFunction<Real> {
+private:
+  Real exponent_;
+public:
+  Power( const Real &exponent ) : exponent_(exponent) {}
+
+  Real apply( const Real &x ) const {
+    return std::pow(x,exponent_);
+  } 
+
+
+}; // class Power
+
+
+// Generate a uniformly distributed random number
+// between lower and upper
+template<class Real> 
+class UniformlyRandom : public UnaryFunction<Real> {
+private:
+  const Real lower_;
+  const Real upper_;
+
+public:
+  UniformlyRandom( const Real &lower = 0.0, const Real &upper = 1.0) : 
+    lower_(lower), upper_(upper) {
+  }
+
+  Real apply( const Real &x ) const {
+    return (static_cast<Real>(rand()) / static_cast<Real>(RAND_MAX)) * (upper_-lower_) + lower_;
+  }
+}; // class UniformlyRandom
+
+template<class Real>
+class ThresholdUpper : public UnaryFunction<Real> {
+
+private:
+  const Real threshold_;
+
+public:
+  ThresholdUpper( const Real threshold ) : 
+    threshold_(threshold) {}
+
+  Real apply( const Real &x ) const {
+    return std::max(threshold_,x);
+  }
+
+
+}; 
+
+
+template<class Real>
+class Logarithm : public UnaryFunction<Real> {
+public:
+
+  Real apply( const Real &x) const {
+    return std::log(x);
+  }
+
+};
+
+
+
+
+} // namespace Elementwise
 } // namespace ROL
 
 #endif // ROL_UNARYFUNCTIONS_H

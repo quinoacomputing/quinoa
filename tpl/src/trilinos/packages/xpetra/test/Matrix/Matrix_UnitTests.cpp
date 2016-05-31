@@ -85,11 +85,11 @@ namespace {
 #ifdef HAVE_XPETRA_TPETRA
   using Xpetra::TpetraCrsMatrix; //TMP
 #endif
-#ifdef HAVE_XPETRA_EPETRA
-#ifndef XPETRA_EPETRA_NO_32BIT_GLOBAL_INDICES
-  using Xpetra::EpetraCrsMatrix; //TMP
-#endif
-#endif
+//#ifdef HAVE_XPETRA_EPETRA
+//#ifndef XPETRA_EPETRA_NO_32BIT_GLOBAL_INDICES
+//  using Xpetra::EpetraCrsMatrixT<int>; //TMP
+//#endif
+//#endif
 
   using Xpetra::Map;
 
@@ -211,7 +211,7 @@ namespace {
 
     RCP<const Map<int,int,Node> > epmap = Xpetra::MapFactory<int,int,Node>::createContigMap(Xpetra::UseEpetra, INVALID, numLocal, comm);
      {
-       EpetraCrsMatrix t =  EpetraCrsMatrix(epmap, numLocal);
+       Xpetra::EpetraCrsMatrixT<int,Node> t =  Xpetra::EpetraCrsMatrixT<int,Node>(epmap, numLocal);
 
        // Test of constructor
        EpCrsMatrix op(epmap,1);
@@ -240,7 +240,9 @@ namespace {
 
   typedef KokkosClassic::DefaultNode::DefaultNodeType DefaultNodeType;
 #ifndef XPETRA_TEST_USE_LONGLONG_GO
+#ifdef XPETRA_TPETRA_INST_INT_INT // todo refactor me
   UNIT_TEST_GROUP_ORDINAL(double, int, int, DefaultNodeType)
+#endif
 #else
   typedef long long LongLongInt;
   UNIT_TEST_GROUP_ORDINAL(double, int, LongLongInt, DefaultNodeType)

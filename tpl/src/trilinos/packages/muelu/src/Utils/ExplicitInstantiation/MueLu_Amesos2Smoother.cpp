@@ -45,17 +45,12 @@
 // @HEADER
 #include "MueLu_ConfigDefs.hpp"
 #if defined(HAVE_MUELU_TPETRA) && defined(HAVE_MUELU_AMESOS2)
-#include "MueLu_ExplicitInstantiation.hpp"
 
 #include "MueLu_Amesos2Smoother_def.hpp"
 
-#include "TpetraCore_ETIHelperMacros.h"
+#define MUELU_ETI_GROUP(SC,LO,GO,NO) \
+  template class MueLu::Amesos2Smoother<SC,LO,GO,NO>;
 
-#define MUELU_LOCAL_INSTANT(S,LO,GO,N) \
-        template class MueLu::Amesos2Smoother<S,LO,GO,N>;
-
-TPETRA_ETI_MANGLING_TYPEDEFS()
-
-TPETRA_INSTANTIATE_SLGN_NO_ORDINAL_SCALAR(MUELU_LOCAL_INSTANT)
+#include "MueLu_ETI_4arg.hpp"
 
 #endif

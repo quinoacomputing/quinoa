@@ -30,6 +30,8 @@
 
   <!-- ===========  STEP SUBLIST  =========== -->
   <ParameterList name="Step">
+    <Parameter name="Type" type="string" value="Trust Region" />
+
     <!-- ===========  LINE SEARCH  =========== -->
     <ParameterList name="Line Search">
       <Parameter name="Function Evaluation Limit"      type="int"    value="20"    />
@@ -42,7 +44,7 @@
       <!-- ===========  DESCENT ALGORITHM SPECIFICATION  =========== -->
       <ParameterList name="Descent Method">
         <Parameter name="Type"              type="string" value="Newton-Krylov"    /> 
-        <Parameter name="Nonlinear CG Type" type="string" value="Hestenes-Stiefel" />
+        <Parameter name="Nonlinear CG Type" type="string" value="Oren-Luenberger"  />
       </ParameterList>
 
       <!-- ===========  CURVATURE CONDITION SPECIFICATION  =========== -->

@@ -50,9 +50,13 @@
 
 #include "MueLu_AmesosSmoother.hpp"
 
-#include "MueLu_UseDefaultTypes.hpp"
-
 namespace MueLuTests {
+
+  typedef double                Scalar;
+  typedef int                   LocalOrdinal;
+  typedef int                   GlobalOrdinal;
+  typedef Xpetra::EpetraNode    Node;
+#include "MueLu_UseShortNames.hpp"
 
   using namespace TestHelpers::Smoothers;
 
@@ -60,7 +64,7 @@ namespace MueLuTests {
   {
     MUELU_TEST_ONLY_FOR(Xpetra::UseEpetra)
     {
-      testApplyNoSetup(MueLu::AmesosSmoother(), out, success);
+      testApplyNoSetup(AmesosSmoother(), out, success);
     }
   }
 
@@ -68,14 +72,14 @@ namespace MueLuTests {
   {
     MUELU_TEST_ONLY_FOR(Xpetra::UseEpetra)
     {
-      Teuchos::RCP<MueLu::AmesosSmoother> smoother;
+      Teuchos::RCP<AmesosSmoother > smoother;
 #ifdef HAVE_AMESOS_KLU
-      smoother = rcp(new MueLu::AmesosSmoother("Klu"));
+      smoother = rcp(new AmesosSmoother("Klu"));
       testDirectSolver(*smoother, out, success);
 #endif
 
 #ifdef HAVE_AMESOS_SUPERLU
-      smoother = rcp(new MueLu::AmesosSmoother("Superlu"));
+      smoother = rcp(new AmesosSmoother("Superlu"));
       testDirectSolver(*smoother, out, success);
 #endif
     }

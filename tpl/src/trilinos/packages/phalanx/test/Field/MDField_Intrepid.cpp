@@ -83,13 +83,12 @@ namespace phalanx_test {
     PHX::InitializeKokkosDevice();
 
     RCP<DataLayout> dl = rcp(new MDALayout<Cell,Point,Dim>(10,4,3));
-
     // runtime non-const
     {
       PHX::MDField<double> a("density a",dl);
       a.setFieldData(PHX::KokkosViewFactory<double,PHX::Device>::buildView(a.fieldTag()));
       
-      ArrayWrapper<double, PHX::MDField<double>, Rank<PHX::MDField<double> >::value, false> 
+      Intrepid2::ArrayWrapper<double, PHX::MDField<double>, Intrepid2::Rank<PHX::MDField<double> >::value, false> 
 	a_wrap(a);
     }
 
@@ -98,7 +97,7 @@ namespace phalanx_test {
       PHX::MDField<double> b("density b",dl);
       b.setFieldData(PHX::KokkosViewFactory<double,PHX::Device>::buildView(b.fieldTag()));
       
-      ArrayWrapper<double, const PHX::MDField<double>, Rank<const PHX::MDField<double> >::value, false> 
+      Intrepid2::ArrayWrapper<double, const PHX::MDField<double>, Intrepid2::Rank<const PHX::MDField<double> >::value, false> 
 	b_wrap(b);
     }
 
@@ -107,7 +106,7 @@ namespace phalanx_test {
       PHX::MDField<double,Cell,Point,Dim> c("density c",dl);
       c.setFieldData(PHX::KokkosViewFactory<double,PHX::Device>::buildView(c.fieldTag()));
       
-      ArrayWrapper<double, PHX::MDField<double,Cell,Point,Dim>, Rank<PHX::MDField<double,Cell,Point,Dim> >::value, false> 
+      Intrepid2::ArrayWrapper<double, PHX::MDField<double,Cell,Point,Dim>, Intrepid2::Rank<PHX::MDField<double,Cell,Point,Dim> >::value, false> 
 	c_wrap(c);
     }
 
@@ -116,10 +115,9 @@ namespace phalanx_test {
       PHX::MDField<double,Cell,Point,Dim> d("density d",dl);
       d.setFieldData(PHX::KokkosViewFactory<double,PHX::Device>::buildView(d.fieldTag()));
       
-      ArrayWrapper<double, const PHX::MDField<double,Cell,Point,Dim>, Rank<const PHX::MDField<double,Cell,Point,Dim> >::value, false> 
+      Intrepid2::ArrayWrapper<double, const PHX::MDField<double,Cell,Point,Dim>, Intrepid2::Rank<const PHX::MDField<double,Cell,Point,Dim> >::value, false> 
 	d_wrap(d);
     }
-
 
     // NOTE: Need to add a call to an intrepid function here.
 

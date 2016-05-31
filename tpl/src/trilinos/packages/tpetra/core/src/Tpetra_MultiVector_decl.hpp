@@ -694,6 +694,68 @@ namespace Tpetra {
                  const dual_view_type& origView,
                  const Teuchos::ArrayView<const size_t>& whichVectors);
 
+    /// \brief "Offset view" constructor; make a view of a contiguous
+    ///   subset of rows on each process.
+    ///
+    /// Return a view of the MultiVector \c X, which views a subset of
+    /// the rows of \c X.  Specify the subset by a subset Map of this
+    /// MultiVector's current row Map, and an optional (local) offset.
+    /// "View" means "alias": if the original (this) MultiVector's
+    /// data change, the view will see the changed data.
+    ///
+    /// \param X [in] The MultiVector to view.
+    /// \param subMap [in] The row Map for the new MultiVector.  This
+    ///   must be a subset Map of the input MultiVector's row Map.
+    /// \param offset [in] The local row offset at which to start the view.
+    ///
+    /// Suppose that you have a MultiVector X, and you want to view X,
+    /// on all processes in X's (MPI) communicator, as split into two
+    /// row blocks X1 and X2.  One could express this in Matlab
+    /// notation as X = [X1; X2], except that here, X1 and X2 are
+    /// views into X, rather than copies of X's data.  This method
+    /// assumes that the <i>local</i> indices of X1 and X2 are each
+    /// contiguous, and that the local indices of X2 follow those of
+    /// X1.  If that is not the case, you cannot use views to divide X
+    /// into blocks like this; you must instead use the Import or
+    /// Export functionality, which copies the relevant rows of X.
+    ///
+    /// Here is how you would construct the views X1 and X2.
+    /// \code
+    /// MultiVector<> X (...); // the input MultiVector
+    /// // ... fill X with data ...
+    ///
+    /// // Map that on each process in X's communicator,
+    /// // contains the global indices of the rows of X1.
+    /// Map<> map1 (...);
+    /// // Map that on each process in X's communicator,
+    /// // contains the global indices of the rows of X2.
+    /// Map<> map2 (...);
+    ///
+    /// // Create the first view X1.  The second argument, the offset,
+    /// // is the index of the local row at which to start the view.
+    /// // X1 is the topmost block of X, so the offset is zero.
+    /// MultiVector<> X1 (X, map1, 0);
+    ///
+    /// // Create the second view X2.  X2 is directly below X1 in X,
+    /// // so the offset is the local number of rows in X1.  This is
+    /// // the same as the local number of entries in map1.
+    /// MultiVector<> X1 (X, map2, X1.getLocalLength ());
+    /// \endcode
+    ///
+    /// It is legal, in the above example, for X1 or X2 to have zero
+    /// local rows on any or all process(es).  In that case, the
+    /// corresponding Map must have zero local entries on that / those
+    /// process(es).  In particular, if X2 has zero local rows on a
+    /// process, then the corresponding offset on that process would
+    /// be the number of local rows in X (and therefore in X1) on that
+    /// process.  This is the only case in which the sum of the local
+    /// number of entries in \c subMap (in this case, zero) and the
+    /// offset may equal the number of local entries in
+    /// <tt>*this</tt>.
+    MultiVector (const MultiVector<Scalar, LocalOrdinal, GlobalOrdinal, Node, classic>& X,
+                 const map_type& subMap,
+                 const size_t offset = 0);
+
     /// \brief Return a deep copy of this MultiVector, with a
     ///   different Node type.
     ///
@@ -713,6 +775,19 @@ namespace Tpetra {
     //! @name Post-construction modification routines
     //@{
 
+  protected:
+    /// \brief Whether sumIntoLocalValue and sumIntoGlobalValue should
+    ///   use atomic updates by default.
+    ///
+    /// \warning This is an implementation detail.
+    static const bool useAtomicUpdatesByDefault =
+#ifdef KOKKOS_HAVE_SERIAL
+      ! std::is_same<execution_space, Kokkos::Serial>::value;
+#else
+      true;
+#endif // KOKKOS_HAVE_SERIAL
+
+  public:
     /// \brief Replace value, using global (row) index.
     ///
     /// Replace the current value at row \c globalRow (a global index)
@@ -732,7 +807,7 @@ namespace Tpetra {
     void
     replaceGlobalValue (GlobalOrdinal globalRow,
                         size_t col,
-                        const impl_scalar_type& value);
+                        const impl_scalar_type& value) const;
 
     /// \brief Like the above replaceGlobalValue, but only enabled if
     ///   T differs from impl_scalar_type.
@@ -755,7 +830,7 @@ namespace Tpetra {
     typename std::enable_if<! std::is_same<T, impl_scalar_type>::value && std::is_convertible<T, impl_scalar_type>::value, void>::type
     replaceGlobalValue (GlobalOrdinal globalRow,
                         size_t col,
-                        const T& value)
+                        const T& value) const
     {
       replaceGlobalValue (globalRow, col, static_cast<impl_scalar_type> (value));
     }
@@ -774,12 +849,19 @@ namespace Tpetra {
     /// discussion of DualView semantics elsewhere in the
     /// documentation.
     ///
-    /// \pre \c globalRow must be a valid global element on this
-    ///   process, according to the row Map.
+    /// \param globalRow [in] Global row index of the entry to modify.
+    ///   This <i>must</i> be a valid global row index on the calling
+    ///   process with respect to the MultiVector's Map.
+    /// \param col [in] Column index of the entry to modify.
+    /// \param value [in] Incoming value to add to the entry.
+    /// \param atomic [in] Whether to use an atomic update.  If this
+    ///   class' execution space is not Kokkos::Serial, then this is
+    ///   true by default, else it is false by default.
     void
-    sumIntoGlobalValue (GlobalOrdinal globalRow,
-                        size_t col,
-                        const impl_scalar_type& value);
+    sumIntoGlobalValue (const GlobalOrdinal globalRow,
+                        const size_t col,
+                        const impl_scalar_type& value,
+                        const bool atomic = useAtomicUpdatesByDefault) const;
 
     /// \brief Like the above sumIntoGlobalValue, but only enabled if
     ///   T differs from impl_scalar_type.
@@ -798,13 +880,23 @@ namespace Tpetra {
     /// getDualView().  Please see modify(), sync(), and the
     /// discussion of DualView semantics elsewhere in the
     /// documentation.
+    ///
+    /// \param globalRow [in] Global row index of the entry to modify.
+    ///   This <i>must</i> be a valid global row index on the calling
+    ///   process with respect to the MultiVector's Map.
+    /// \param col [in] Column index of the entry to modify.
+    /// \param value [in] Incoming value to add to the entry.
+    /// \param atomic [in] Whether to use an atomic update.  If this
+    ///   class' execution space is not Kokkos::Serial, then this is
+    ///   true by default, else it is false by default.
     template<typename T>
     typename std::enable_if<! std::is_same<T, impl_scalar_type>::value && std::is_convertible<T, impl_scalar_type>::value, void>::type
-    sumIntoGlobalValue (GlobalOrdinal globalRow,
-                        size_t col,
-                        const T& value)
+    sumIntoGlobalValue (const GlobalOrdinal globalRow,
+                        const size_t col,
+                        const T& value,
+                        const bool atomic = useAtomicUpdatesByDefault) const
     {
-      sumIntoGlobalValue (globalRow, col, static_cast<impl_scalar_type> (value));
+      sumIntoGlobalValue (globalRow, col, static_cast<impl_scalar_type> (value), atomic);
     }
 
     /// \brief Replace value, using local (row) index.
@@ -826,7 +918,7 @@ namespace Tpetra {
     void
     replaceLocalValue (LocalOrdinal localRow,
                        size_t col,
-                       const impl_scalar_type& value);
+                       const impl_scalar_type& value) const;
 
     /// \brief Like the above replaceLocalValue, but only enabled if
     ///   T differs from impl_scalar_type.
@@ -849,7 +941,7 @@ namespace Tpetra {
     typename std::enable_if<! std::is_same<T, impl_scalar_type>::value && std::is_convertible<T, impl_scalar_type>::value, void>::type
     replaceLocalValue (LocalOrdinal localRow,
                        size_t col,
-                       const T& value)
+                       const T& value) const
     {
       replaceLocalValue (localRow, col, static_cast<impl_scalar_type> (value));
     }
@@ -868,12 +960,17 @@ namespace Tpetra {
     /// discussion of DualView semantics elsewhere in the
     /// documentation.
     ///
-    /// \pre \c localRow must be a valid local element on this process,
-    ///   according to the row Map.
+    /// \param localRow [in] Local row index of the entry to modify.
+    /// \param col [in] Column index of the entry to modify.
+    /// \param value [in] Incoming value to add to the entry.
+    /// \param atomic [in] Whether to use an atomic update.  If this
+    ///   class' execution space is not Kokkos::Serial, then this is
+    ///   true by default, else it is false by default.
     void
-    sumIntoLocalValue (LocalOrdinal localRow,
-                       size_t col,
-                       const impl_scalar_type& value);
+    sumIntoLocalValue (const LocalOrdinal localRow,
+                       const size_t col,
+                       const impl_scalar_type& value,
+                       const bool atomic = useAtomicUpdatesByDefault) const;
 
     /// \brief Like the above sumIntoLocalValue, but only enabled if
     ///   T differs from impl_scalar_type.
@@ -892,17 +989,38 @@ namespace Tpetra {
     /// getDualView().  Please see modify(), sync(), and the
     /// discussion of DualView semantics elsewhere in the
     /// documentation.
+    ///
+    /// \param localRow [in] Local row index of the entry to modify.
+    /// \param col [in] Column index of the entry to modify.
+    /// \param value [in] Incoming value to add to the entry.
+    /// \param atomic [in] Whether to use an atomic update.  If this
+    ///   class' execution space is not Kokkos::Serial, then this is
+    ///   true by default, else it is false by default.
     template<typename T>
     typename std::enable_if<! std::is_same<T, impl_scalar_type>::value && std::is_convertible<T, impl_scalar_type>::value, void>::type
     sumIntoLocalValue (LocalOrdinal localRow,
                        size_t col,
-                       const T& value)
+                       const T& value,
+                       const bool atomic = useAtomicUpdatesByDefault) const
     {
-      sumIntoLocalValue (localRow, col, static_cast<impl_scalar_type> (value));
+      sumIntoLocalValue (localRow, col, static_cast<impl_scalar_type> (value), atomic);
     }
 
     //! Set all values in the multivector with the given value.
     void putScalar (const Scalar& value);
+
+    /// \brief Set all values in the multivector with the given value.
+    ///
+    /// This method only exists if the template parameter \c T and
+    /// impl_scalar_type differ.  If C++11 is enabled, we further
+    /// require that it be possible to convert \c T to
+    /// impl_scalar_type.
+    template<typename T>
+    typename std::enable_if<! std::is_same<T, impl_scalar_type>::value && std::is_convertible<T, impl_scalar_type>::value, void>::type
+    putScalar (const T& value)
+    {
+      putScalar (static_cast<impl_scalar_type> (value));
+    }
 
     /// \brief Set all values in the multivector to pseudorandom numbers.
     ///
@@ -1690,13 +1808,19 @@ namespace Tpetra {
       }
     }
 
-    //! Compute Weighted 2-norm (RMS Norm) of each vector in multi-vector.
-    //! The outcome of this routine is undefined for non-floating point scalar types (e.g., int).
-    void
+    /// \brief Compute Weighted 2-norm (RMS Norm) of each column.
+    ///
+    /// \warning This method has been DEPRECATED.
+    ///
+    /// The results of this method are undefined for scalar types that
+    /// are not floating-point types (e.g., int).
+    void TPETRA_DEPRECATED
     normWeighted (const MultiVector<Scalar, LocalOrdinal, GlobalOrdinal, Node, classic>& weights,
                   const Teuchos::ArrayView<mag_type>& norms) const;
 
     /// \brief Compute the weighted 2-norm (RMS Norm) of each column.
+    ///
+    /// \warning This method is DEPRECATED.
     ///
     /// The outcome of this routine is undefined for non-floating
     /// point scalar types (e.g., int).
@@ -1712,6 +1836,7 @@ namespace Tpetra {
     /// \c void, as above.
     template <typename T>
     typename std::enable_if< ! (std::is_same<mag_type,T>::value), void >::type
+    TPETRA_DEPRECATED
     normWeighted (const MultiVector<Scalar, LocalOrdinal, GlobalOrdinal, Node, classic>& weights,
                   const Teuchos::ArrayView<T>& norms) const
     {
@@ -2346,7 +2471,6 @@ namespace Tpetra {
       }
     }
   }
-
 } // namespace Tpetra
 
 

@@ -7,7 +7,6 @@ export TRIBITS_DEV_ENV_BASE=@DEV_ENV_BASE@
 # A) Common tools independent of the compiler
 export PATH=${TRIBITS_DEV_ENV_BASE}/common_tools:$PATH
 export PATH=${TRIBITS_DEV_ENV_BASE}/common_tools/cmake-@CMAKE_VERSION@/bin:$PATH
-export PATH=${TRIBITS_DEV_ENV_BASE}/common_tools/git-@GIT_VERSION@/bin:$PATH
 export PATH=${TRIBITS_DEV_ENV_BASE}/common_tools/autoconf-@AUTOCONF_VERSION@/bin:$PATH
 
 # B) GCC compiler stack base dir
@@ -29,3 +28,4 @@ export LOADED_TRIBITS_DEV_ENV=$TRIBITS_DEV_ENV_GCC_VERSION
 # Shortcut for gitdist dist-repo-status and --dist-mod-only
 alias gitdist-status="gitdist dist-repo-status"
 alias gitdist-mod="gitdist --dist-mod-only"
+alias gitdist-mod-status="gitdist dist-repo-status --dist-mod-only"

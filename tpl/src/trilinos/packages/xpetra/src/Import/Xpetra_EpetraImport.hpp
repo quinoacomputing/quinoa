@@ -58,22 +58,17 @@
 
 namespace Xpetra {
 
-  // TODO: move that elsewhere
-  //   template<class GlobalOrdinal>
-  //   const Epetra_Import & toEpetra(const Import<int, GlobalOrdinal> &);
-
-  template<class GlobalOrdinal>
-  RCP< const Import<int, GlobalOrdinal > > toXpetra(const Epetra_Import *import);
+  template<class GlobalOrdinal, class Node>
+  RCP< const Import<int, GlobalOrdinal, Node > > toXpetra(const Epetra_Import *import);
   //
 
-  template<class EpetraGlobalOrdinal>
+  template<class EpetraGlobalOrdinal, class Node>
   class EpetraImportT
-    : public Import<int, EpetraGlobalOrdinal>
+    : public Import<int, EpetraGlobalOrdinal, Node>
   {
 
     typedef int LocalOrdinal;
     typedef EpetraGlobalOrdinal GlobalOrdinal;
-    typedef typename Import<int, GlobalOrdinal>::node_type Node;
     //! The specialization of Map used by this class.
     typedef Map<LocalOrdinal,GlobalOrdinal,Node> map_type;
 
@@ -83,7 +78,9 @@ namespace Xpetra {
     //@{
 
     //! Construct an Import from the source and target Maps.
-    EpetraImportT(const Teuchos::RCP< const map_type > &source, const Teuchos::RCP< const map_type > &target);
+    EpetraImportT(const Teuchos::RCP<const map_type > & source, const Teuchos::RCP<const map_type > & target)
+      : import_(rcp(new Epetra_Import(toEpetra<GlobalOrdinal,Node>(target), toEpetra<GlobalOrdinal,Node>(source)))) { } // Warning: Epetra(Target, Source) vs. Tpetra(Source, Target)
+
 
     ////! Constructor (with list of parameters).
 	// Definition not in cpp, so comment out
@@ -108,34 +105,51 @@ namespace Xpetra {
     size_t getNumPermuteIDs() const { XPETRA_MONITOR("EpetraImportT::getNumPermuteIDs"); return import_->NumPermuteIDs(); }
 
     //! List of local IDs in the source Map that are permuted.
-    ArrayView< const LocalOrdinal > getPermuteFromLIDs() const;
+    ArrayView< const LocalOrdinal > getPermuteFromLIDs() const {
+      XPETRA_MONITOR("EpetraImportT::getPermuteFromLIDs");
+      TEUCHOS_TEST_FOR_EXCEPTION(1, Xpetra::Exceptions::NotImplemented, "TODO EpetraImportT<EpetraGlobalOrdinal>::getExportImageIDs not implemented"); }
+
 
     //! List of local IDs in the target Map that are permuted.
-    ArrayView< const LocalOrdinal > getPermuteToLIDs() const;
+    ArrayView< const LocalOrdinal > getPermuteToLIDs() const {
+      XPETRA_MONITOR("EpetraImportT::getPermuteToLIDs");
+      TEUCHOS_TEST_FOR_EXCEPTION(1, Xpetra::Exceptions::NotImplemented, "TODO EpetraImportT<EpetraGlobalOrdinal>::getPermuteToLIDs not implemented"); }
+
 
     //! Number of entries not on the calling process.
-    size_t getNumRemoteIDs() const;
+    size_t getNumRemoteIDs() const { XPETRA_MONITOR("EpetraImportT::getNumRemoteIDs"); return import_->NumRemoteIDs(); }
 
     //! List of entries in the target Map to receive from other processes.
-    ArrayView< const LocalOrdinal > getRemoteLIDs() const;
+    ArrayView< const LocalOrdinal > getRemoteLIDs() const {
+      XPETRA_MONITOR("EpetraImportT::getRemoteLIDs");
+      TEUCHOS_TEST_FOR_EXCEPTION(1, Xpetra::Exceptions::NotImplemented, "TODO EpetraImportT<EpetraGlobalOrdinal>::getRemoteLIDs not implemented"); }
+
 
     //! List of entries in the target Map to receive from other processes.
-    ArrayView< const LocalOrdinal > getRemotePIDs() const;
+    ArrayView< const LocalOrdinal > getRemotePIDs() const {
+      XPETRA_MONITOR("EpetraImportT::getRemotePIDs");
+      TEUCHOS_TEST_FOR_EXCEPTION(1, Xpetra::Exceptions::NotImplemented, "TODO EpetraImportT<EpetraGlobalOrdinal>::getRemotePIDs not implemented"); }
+
 
     //! Number of entries that must be sent by the calling process to other processes.
-    size_t getNumExportIDs() const;
+    size_t getNumExportIDs() const { XPETRA_MONITOR("EpetraImportT::getNumExportIDs"); return import_->NumExportIDs(); }
+
 
     //! List of entries in the source Map that will be sent to other processes.
-    ArrayView< const LocalOrdinal > getExportLIDs() const;
+    ArrayView< const LocalOrdinal > getExportLIDs() const {
+        XPETRA_MONITOR("EpetraImportT::getExportLIDs");
+        TEUCHOS_TEST_FOR_EXCEPTION(1, Xpetra::Exceptions::NotImplemented, "TODO EpetraImportT<EpetraGlobalOrdinal>::getExportLIDs not implemented"); }
+
 
     //! List of processes to which entries will be sent.
-    ArrayView< const int > getExportPIDs() const;
+    ArrayView< const int > getExportPIDs() const { XPETRA_MONITOR("EpetraImportT::getExportImageIDs"); return ArrayView<const int> (import_->ExportPIDs(),import_->NumExportIDs()); }
+
 
     //! The Source Map used to construct this Import object.
-    Teuchos::RCP< const Map< LocalOrdinal, GlobalOrdinal, Node > > getSourceMap() const { XPETRA_MONITOR("EpetraImportT::getSourceMap"); return toXpetra<GlobalOrdinal>(import_->SourceMap()); }
+    Teuchos::RCP< const Map< LocalOrdinal, GlobalOrdinal, Node > > getSourceMap() const { XPETRA_MONITOR("EpetraImportT::getSourceMap"); return toXpetra<GlobalOrdinal, Node>(import_->SourceMap()); }
 
     //! The Target Map used to construct this Import object.
-    Teuchos::RCP< const Map< LocalOrdinal, GlobalOrdinal, Node > > getTargetMap() const { XPETRA_MONITOR("EpetraImportT::getTargetMap"); return toXpetra<GlobalOrdinal>(import_->TargetMap()); }
+    Teuchos::RCP< const Map< LocalOrdinal, GlobalOrdinal, Node > > getTargetMap() const { XPETRA_MONITOR("EpetraImportT::getTargetMap"); return toXpetra<GlobalOrdinal, Node>(import_->TargetMap()); }
 
     //@}
 
@@ -143,7 +157,7 @@ namespace Xpetra {
     //@{
 
     //! Print the Import's data to the given output stream.
-    void print(std::ostream &os) const;
+    void print(std::ostream &os) const { XPETRA_MONITOR("EpetraImportT::print"); import_->Print(os); }
 
     //@}
 
@@ -163,14 +177,6 @@ namespace Xpetra {
     RCP<const Epetra_Import> import_;
 
   }; // EpetraImportT class
-
-#ifndef XPETRA_EPETRA_NO_32BIT_GLOBAL_INDICES
-  typedef EpetraImportT<int> EpetraImport;
-#endif
-
-#ifndef XPETRA_EPETRA_NO_64BIT_GLOBAL_INDICES
-  typedef EpetraImportT<long long> EpetraImport64;
-#endif
 
 } // Xpetra namespace
 
