@@ -2,7 +2,7 @@
 /*!
   \file      src/NoWarning/Zoltan2_PartitioningProblem.h
   \author    J. Bakosi
-  \date      Sun 15 May 2016 07:42:05 AM MDT
+  \date      Tue 31 May 2016 08:08:55 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include Zoltan2_PartitioningProblem.hpp with turning off specific
              compiler warnings
@@ -30,6 +30,9 @@
   #pragma clang diagnostic ignored "-Wfloat-conversion"
   #pragma clang diagnostic ignored "-Wdeprecated"
   #pragma clang diagnostic ignored "-Wundefined-func-template"
+  #pragma clang diagnostic ignored "-Wcast-align"
+  #pragma clang diagnostic ignored "-Wconditional-uninitialized"
+  #pragma clang diagnostic ignored "-Wunused-local-typedef"
 #elif defined(__GNUC__)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Weffc++"
@@ -38,6 +41,8 @@
   #pragma GCC diagnostic ignored "-Wfloat-equal"
   #pragma GCC diagnostic ignored "-Wunused-but-set-parameter"
   #pragma GCC diagnostic ignored "-Wswitch-default"
+  #pragma GCC diagnostic ignored "-Wunused-local-typedefs"
+  #pragma GCC diagnostic ignored "-Wstrict-aliasing"
 #endif
 
 #include <Zoltan2_PartitioningProblem.hpp>
