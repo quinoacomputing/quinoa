@@ -61,12 +61,12 @@
 
 namespace MueLuTests {
 
-#include "MueLu_UseShortNames.hpp"
 
-  TEUCHOS_UNIT_TEST(SaPFactory_kokkos, Constructor)
+  TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(SaPFactory_kokkos, Constructor, Scalar, LocalOrdinal, GlobalOrdinal, Node)
   {
-    MueLu::VerboseObject::SetDefaultOStream(Teuchos::rcpFromRef(out));
-
+#   include "MueLu_UseShortNames.hpp"
+    MUELU_TESTING_SET_OSTREAM;
+    MUELU_TESTING_LIMIT_SCOPE(Scalar,GlobalOrdinal,Node);
     out << "version: " << MueLu::Version() << std::endl;
 
     RCP<SaPFactory_kokkos> sapFactory = rcp(new SaPFactory_kokkos);
@@ -75,9 +75,12 @@ namespace MueLuTests {
     out << *sapFactory << std::endl;
   }
 
-  TEUCHOS_UNIT_TEST(SaPFactory_kokkos, Build)
+  TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(SaPFactory_kokkos, Build, Scalar, LocalOrdinal, GlobalOrdinal, Node)
   {
-    MueLu::VerboseObject::SetDefaultOStream(Teuchos::rcpFromRef(out));
+#   include "MueLu_UseShortNames.hpp"
+    MUELU_TESTING_SET_OSTREAM;
+    MUELU_TESTING_LIMIT_SCOPE(Scalar,GlobalOrdinal,Node);
+    out << "version: " << MueLu::Version() << std::endl;
 
     RCP<const Teuchos::Comm<int> > comm = Teuchos::DefaultComm<int>::getComm();
 
@@ -113,7 +116,7 @@ namespace MueLuTests {
 
     // construct the data to compare
     SC omega = dampingFactor / lambdaMax;
-    RCP<Vector> invDiag = Utils_kokkos::GetMatrixDiagonalInverse(*A);
+    RCP<Vector> invDiag = Utilities_kokkos::GetMatrixDiagonalInverse(*A);
     RCP<Matrix> Ptest   = Xpetra::IteratorOps<SC,LO,GO,NO>::Jacobi(omega, *invDiag, *A, *Ptent, Teuchos::null, out, "label");
 
     // compare matrices by multiplying them by a random vector
@@ -131,7 +134,7 @@ namespace MueLuTests {
     Ptest->apply(*X, *Btest, Teuchos::NO_TRANS, one, zero);
     Btest->update(-one, *Bfact, one);
 
-    Array<STS::magnitudeType> norms(1);
+    Array<typename STS::magnitudeType> norms(1);
     Btest->norm2(norms);
     out << "|| B_factory - B_test || = " << norms[0] << std::endl;
     TEST_EQUALITY(norms[0] < 1e-12, true);
@@ -142,6 +145,7 @@ namespace MueLuTests {
 #if defined(HAVE_MUELU_TPETRA) && defined(HAVE_MUELU_EPETRA) && defined(HAVE_MUELU_EPETRAEXT) && defined(HAVE_MUELU_IFPACK) && defined(HAVE_MUELU_IFPACK2)
   TEUCHOS_UNIT_TEST(SaPFactory_kokkos, EpetraVsTpetra)
   {
+#   include "MueLu_UseShortNames.hpp"
     MueLu::VerboseObject::SetDefaultOStream(Teuchos::rcpFromRef(out));
 
     out << "version: " << MueLu::Version() << std::endl;
@@ -306,7 +310,7 @@ namespace MueLuTests {
         TEST_EQUALITY(R2->getGlobalNumRows(), 7);
         TEST_EQUALITY(R2->getGlobalNumCols(), 21);
 
-        Teuchos::RCP<Xpetra::Matrix<Scalar,LO,GO> > PtentTPtent = MueLu::Utils<Scalar,LO,GO>::Multiply(*P1,true,*P1,false,out);
+        Teuchos::RCP<Xpetra::Matrix<Scalar,LO,GO> > PtentTPtent = Xpetra::MatrixMatrix<Scalar,LO,GO>::Multiply(*P1,true,*P1,false,out);
         TEST_EQUALITY(PtentTPtent->getGlobalMaxNumRowEntries()-3<1e-12, true);
         TEST_EQUALITY(P1->getGlobalMaxNumRowEntries()-2<1e-12, true);
         TEST_EQUALITY(P2->getGlobalMaxNumRowEntries()-2<1e-12, true);
@@ -341,5 +345,12 @@ namespace MueLuTests {
   } //SaPFactory_EpetraVsTpetra
 #endif
 #endif
+
+#define MUELU_ETI_GROUP(SC,LO,GO,NO) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(SaPFactory_kokkos, Constructor, SC, LO, GO, NO) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(SaPFactory_kokkos, Build,       SC, LO, GO, NO)
+
+#include <MueLu_ETI_4arg.hpp>
+
 
 }//namespace MueLuTests

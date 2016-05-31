@@ -45,17 +45,12 @@
 // @HEADER
 #include "MueLu_ConfigDefs.hpp"
 #if defined(HAVE_MUELU_ZOLTAN) && defined(HAVE_MPI)
-#include "MueLu_ExplicitInstantiation.hpp"
 
 #include "MueLu_ZoltanInterface_def.hpp"
 
-#include "TpetraCore_ETIHelperMacros.h"
+#define MUELU_ETI_GROUP(SC,LO,GO,NO) \
+  template class MueLu::ZoltanInterface<SC,LO,GO,NO>;
 
-#define MUELU_LOCAL_INSTANT(LO,GO,N) \
-        template class MueLu::ZoltanInterface<LO,GO,N>;
-
-TPETRA_ETI_MANGLING_TYPEDEFS()
-
-TPETRA_INSTANTIATE_LGN(MUELU_LOCAL_INSTANT)
+#include "MueLu_ETI_4arg.hpp"
 
 #endif

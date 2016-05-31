@@ -85,15 +85,19 @@ static void zoltanObjList(void *data, int nGidEnt, int nLidEnt,
                           int wdim, float *wgts, int *ierr) 
 {
   const Adapter *adp = static_cast<Adapter *>(data);
+  typedef typename Adapter::gno_t gno_t;
+  typedef typename Adapter::lno_t lno_t;
   *ierr = ZOLTAN_OK;
 
   size_t mynObj = adp->getLocalNumIDs();
-   
-  const typename Adapter::gno_t *myids = NULL;
+
+  const gno_t *myids = NULL;
   adp->getIDsView(myids);
   for (size_t i = 0; i < mynObj; i++) {
-    gids[i] = ZOLTAN_ID_TYPE(myids[i]); // TODO TRAITS CONVERSION MAY BE NEEDED
-    lids[i] = ZOLTAN_ID_TYPE(i);      // TODO TRAITS CONVERSION MAY BE NEEDED
+    ZOLTAN_ID_PTR idPtr = &(gids[i*nGidEnt]);
+    TPL_Traits<ZOLTAN_ID_PTR,gno_t>::ASSIGN_TPL_T(idPtr, myids[i]);
+    idPtr = &(lids[i*nLidEnt]);
+    TPL_Traits<ZOLTAN_ID_PTR,lno_t>::ASSIGN_TPL_T(idPtr, lno_t(i));
   }
 
   if (wdim) {
@@ -123,13 +127,17 @@ static void zoltanParts(void *data, int nGidEnt, int nLidEnt, int nObj,
                         ZOLTAN_ID_PTR gids, ZOLTAN_ID_PTR lids,
                         int *parts, int *ierr)
 {
+  typedef typename Adapter::lno_t lno_t;
   const Adapter *adp = static_cast<Adapter *>(data);
   *ierr = ZOLTAN_OK;
   const typename Adapter::part_t *myparts;
   adp->getPartsView(myparts);
   // User parts from input adapter
-  for (int i = 0; i < nObj; i++)
-    parts[i] = int(myparts[lids[i]]);
+  for (int i = 0; i < nObj; i++) {
+    lno_t lidx;
+    TPL_Traits<lno_t,ZOLTAN_ID_PTR>::ASSIGN_TPL_T(lidx, &(lids[i*nLidEnt]));
+    parts[i] = int(myparts[lidx]);
+  }
 }
 
 /////////////////////
@@ -149,6 +157,7 @@ static void zoltanGeom(void *data, int nGidEnt, int nLidEnt, int nObj,
                        ZOLTAN_ID_PTR gids, ZOLTAN_ID_PTR lids,
                        int nDim, double *coords, int *ierr)
 {
+  typedef typename Adapter::lno_t lno_t;
   const Adapter *adp = static_cast<Adapter *>(data);
   *ierr = ZOLTAN_OK;
 
@@ -156,38 +165,114 @@ static void zoltanGeom(void *data, int nGidEnt, int nLidEnt, int nObj,
     const typename Adapter::scalar_t *mycoords;
     int mystride;
     adp->getCoordinatesView(mycoords, mystride, d);
-    for (int i = 0; i < nObj; i++)
-      coords[i*nDim+d] = double(mycoords[lids[i]*mystride]);
+    for (int i = 0; i < nObj; i++) {
+      lno_t lidx;
+      TPL_Traits<lno_t,ZOLTAN_ID_PTR>::ASSIGN_TPL_T(lidx, &(lids[i*nLidEnt]));
+      coords[i*nDim+d] = double(mycoords[lidx*mystride]);
+    }
   }
 }
 
 /////////////////////////////////////////////////////////////////////////////
-// MATRIX ADAPTER CALLBACKS
+// HYPERGRAPH CALLBACKS USING A MATRIX ADAPTER
+// Building the most straightforward hypergraph from a matrix and, thus,
+// avoiding use of HypergraphModel.
+// Assuming vertices are rows or columns, and pins are nonzeros.
 /////////////////////////////////////////////////////////////////////////////
 
 ///////////////////////
 // ZOLTAN_HG_SIZE_CS_FN
 template <typename Adapter>
-static void zoltanHGSizeCSForMatrixAdapter(
-  void *data, int *nEdges, int *nPins,
-  int *format, int *ierr
+static void zoltanHGSizeCS_withMatrixAdapter(void *data, int *nLists, int *nPins,
+                                             int *format, int *ierr
 ) 
 {
-  std::cout << "HELLO FROM HGSizeCS with MATRIX ADAPTER" << std::endl;
-  *ierr = ZOLTAN_FATAL;
+  *ierr = ZOLTAN_OK;  
+  typedef typename Adapter::user_t user_t;
+  const MatrixAdapter<user_t>* madp = static_cast<MatrixAdapter<user_t>* >(data);
+
+  *nPins = madp->getLocalNumEntries();
+
+  MatrixEntityType etype = madp->getPrimaryEntityType();
+  if (etype == MATRIX_ROW && madp->CRSViewAvailable()) {
+    *nLists = madp->getLocalNumRows();
+    *format = ZOLTAN_COMPRESSED_VERTEX;
+  }
+  else if (etype == MATRIX_ROW && madp->CCSViewAvailable()) {
+    *nLists = madp->getLocalNumColumns();
+    *format = ZOLTAN_COMPRESSED_EDGE;
+  }
+  else if (etype == MATRIX_COLUMN && madp->CRSViewAvailable()) {
+    *nLists = madp->getLocalNumRows();
+    *format = ZOLTAN_COMPRESSED_EDGE;
+  }
+  else if (etype == MATRIX_COLUMN && madp->CCSViewAvailable()) {
+      *nLists = madp->getLocalNumColumns();
+      *format = ZOLTAN_COMPRESSED_VERTEX;
+  }
+  else {
+    // Need either CRSView or CCSView.
+    // Also, not yet implemented for matrix nonzeros; may need a hypergraph model.
+    *ierr = ZOLTAN_FATAL;
+  }
 }
 
 //////////////////
 // ZOLTAN_HG_CS_FN
 template <typename Adapter>
-static void zoltanHGCSForMatrixAdapter(
-  void *data, int nGidEnt, int nEdges, int nPins,
-  int format, ZOLTAN_ID_PTR edgeIds, 
-  int *edgeIdx, ZOLTAN_ID_PTR pinIds, int *ierr
+static void zoltanHGCS_withMatrixAdapter(void *data, int nGidEnt, int nLists, 
+                                         int nPins, int format, 
+                                         ZOLTAN_ID_PTR listIds, int *listIdx,
+                                         ZOLTAN_ID_PTR pinIds, int *ierr
 )
 {
-  std::cout << "HELLO FROM HGCS with MATRIX ADAPTER" << std::endl;
-  *ierr = ZOLTAN_FATAL;
+  *ierr = ZOLTAN_OK;  
+  typedef typename Adapter::gno_t gno_t;
+  typedef typename Adapter::lno_t lno_t;  
+  typedef typename Adapter::user_t user_t;
+  const MatrixAdapter<user_t>* madp = static_cast<MatrixAdapter<user_t>* >(data);
+
+  const gno_t *Ids;
+  const gno_t *pIds;
+  const lno_t *offsets;
+
+  // Get the pins and list IDs.
+  if (madp->CRSViewAvailable()) {
+    try {
+      madp->getRowIDsView(Ids);
+      madp->getCRSView(offsets, pIds);
+    }
+    catch (std::exception &e) {
+      *ierr = ZOLTAN_FATAL;
+    }
+  }
+  else if (madp->CCSViewAvailable()) {
+    try {
+      madp->getColumnIDsView(Ids);
+      madp->getCCSView(offsets, pIds);
+    }
+    catch (std::exception &e) {
+      *ierr = ZOLTAN_FATAL;
+    }
+  }
+  else {
+    // Need either CRSView or CCSView.
+    *ierr = ZOLTAN_FATAL;
+  }
+
+  if (*ierr == ZOLTAN_OK) {
+    // copy into Zoltan's memory
+    for (int i=0; i < nLists; i++) {
+      ZOLTAN_ID_PTR idPtr = &(listIds[i*nGidEnt]);
+      TPL_Traits<ZOLTAN_ID_PTR,gno_t>::ASSIGN_TPL_T(idPtr, Ids[i]);
+      listIdx[i] = Teuchos::as<int>(offsets[i]);
+    }
+    listIdx[nLists] = Teuchos::as<int>(offsets[nLists]);
+    for (int i=0; i < nPins; i++) {
+      ZOLTAN_ID_PTR idPtr = &(pinIds[i*nGidEnt]);
+      TPL_Traits<ZOLTAN_ID_PTR,gno_t>::ASSIGN_TPL_T(idPtr, pIds[i]);
+    }
+  }
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -195,14 +280,124 @@ static void zoltanHGCSForMatrixAdapter(
 
 
 /////////////////////////////////////////////////////////////////////////////
-// HYPERGRAPH MODEL CALLBACKS
+// HYPERGRAPH CALLBACKS USING A MESH ADAPTER
+// Implement Boman/Chevalier's hypergraph mesh model
+// Skip explicit construction of a HypergraphModel
+// Return either (depending on available adjacencies):
+// +  for each primary entity (vtx), the list of assoc adjacency entities (edges)
+// +  for each adjacency entity (edge), the list of assoc primary entities (vtx)
+/////////////////////////////////////////////////////////////////////////////
+
+///////////////////////
+// ZOLTAN_HG_SIZE_CS_FN
+template <typename Adapter>
+static void zoltanHGSizeCS_withMeshAdapter(void *data, int *nLists, int *nPins,
+                                           int *format, int *ierr
+) 
+{
+  *ierr = ZOLTAN_OK;  
+  typedef typename Adapter::user_t user_t;
+  const MeshAdapter<user_t>* madp = static_cast<MeshAdapter<user_t>* >(data);
+  if (madp->availAdjs(madp->getPrimaryEntityType(),
+                      madp->getAdjacencyEntityType()))
+  {
+    *nLists = madp->getLocalNumOf(madp->getPrimaryEntityType());
+    *nPins = madp->getLocalNumAdjs(madp->getPrimaryEntityType(),
+                                   madp->getAdjacencyEntityType());
+    *format = ZOLTAN_COMPRESSED_VERTEX;
+  }
+  else if (madp->availAdjs(madp->getAdjacencyEntityType(),
+                           madp->getPrimaryEntityType())) 
+  {
+    *nLists = madp->getLocalNumOf(madp->getAdjacencyEntityType());
+    *nPins = madp->getLocalNumAdjs(madp->getAdjacencyEntityType(),
+                                   madp->getPrimaryEntityType());
+    *format = ZOLTAN_COMPRESSED_EDGE;
+  }
+  else {
+    *nLists = 0;
+    *nPins = 0;
+    *format = -1*ZOLTAN_COMPRESSED_VERTEX;
+    *ierr = ZOLTAN_FATAL;
+  }
+}
+
+//////////////////
+// ZOLTAN_HG_CS_FN
+template <typename Adapter>
+static void zoltanHGCS_withMeshAdapter(
+  void *data, int nGidEnt, int nLists, int nPins,
+  int format, ZOLTAN_ID_PTR listIds, 
+  int *listIdx, ZOLTAN_ID_PTR pinIds, int *ierr
+)
+{
+  *ierr = ZOLTAN_OK;
+  typedef typename Adapter::gno_t gno_t;
+  typedef typename Adapter::lno_t lno_t;  
+  typedef typename Adapter::user_t user_t;
+  const MeshAdapter<user_t>* madp = static_cast<MeshAdapter<user_t>*>(data);
+
+  // Select listType and pinType based on format specified in ZOLTAN_HG_CS_SIZE_FN
+  MeshEntityType listType, pinType;
+  if (format == ZOLTAN_COMPRESSED_VERTEX)
+  {
+    listType = madp->getPrimaryEntityType();
+    pinType = madp->getAdjacencyEntityType();
+  }
+  else if (format == ZOLTAN_COMPRESSED_EDGE)
+  {
+    listType = madp->getAdjacencyEntityType();
+    pinType = madp->getPrimaryEntityType();
+  }
+  else {
+    *ierr = ZOLTAN_FATAL;
+  }
+  
+  if (*ierr == ZOLTAN_OK) {
+
+    // get list IDs
+    const gno_t *Ids;
+    try {
+      madp->getIDsViewOf(listType,Ids);
+    }
+    catch (std::exception &e) {
+      *ierr = ZOLTAN_FATAL;
+    }
+
+    // get pins
+    const lno_t* offsets;
+    const gno_t* adjIds;
+    try {
+      madp->getAdjsView(listType, pinType, offsets, adjIds);
+    }
+    catch (std::exception &e) {
+      *ierr = ZOLTAN_FATAL;
+    }
+
+    // copy into Zoltan's memory
+    for (int i=0; i < nLists; i++) {
+      ZOLTAN_ID_PTR idPtr = &(listIds[i*nGidEnt]);
+      TPL_Traits<ZOLTAN_ID_PTR,gno_t>::ASSIGN_TPL_T(idPtr, Ids[i]);
+      listIdx[i] = Teuchos::as<int>(offsets[i]);
+    }
+    listIdx[nLists] = Teuchos::as<int>(offsets[nLists]);
+    for (int i=0; i < nPins; i++) {
+      ZOLTAN_ID_PTR idPtr = &(pinIds[i*nGidEnt]);
+      TPL_Traits<ZOLTAN_ID_PTR,gno_t>::ASSIGN_TPL_T(idPtr, adjIds[i]);
+    }
+  }
+}
+
+/////////////////////////////////////////////////////////////////////////////
+// HYPERGRAPH CALLBACKS FROM A HYPERGRAPH MODEL
 /////////////////////////////////////////////////////////////////////////////
 
 ////////////////////
 // ZOLTAN_NUM_OBJ_FN
 template <typename Adapter>
-static int zoltanHGModelNumObj(void *data, int *ierr) {
-  const HyperGraphModel<Adapter>* mdl = static_cast<HyperGraphModel<Adapter>* >(data);
+static int zoltanHGNumObj_withModel(void *data, int *ierr) {
+  const HyperGraphModel<Adapter>* mdl = 
+                                  static_cast<HyperGraphModel<Adapter>* >(data);
   *ierr = ZOLTAN_OK;
   return int(mdl->getLocalNumOwnedVertices());
 }
@@ -210,11 +405,12 @@ static int zoltanHGModelNumObj(void *data, int *ierr) {
 /////////////////////
 // ZOLTAN_OBJ_LIST_FN
 template <typename Adapter>
-static void zoltanHGModelObjList(void *data, int nGidEnt, int nLidEnt, 
-                          ZOLTAN_ID_PTR gids, ZOLTAN_ID_PTR lids,
-                          int wdim, float *wgts, int *ierr) 
+static void zoltanHGObjList_withModel(void *data, int nGidEnt, int nLidEnt, 
+                                      ZOLTAN_ID_PTR gids, ZOLTAN_ID_PTR lids,
+                                      int wdim, float *wgts, int *ierr) 
 {
-  const HyperGraphModel<Adapter>* mdl = static_cast<HyperGraphModel<Adapter>* >(data);
+  const HyperGraphModel<Adapter>* mdl = 
+                                  static_cast<HyperGraphModel<Adapter>* >(data);
   typedef typename Adapter::gno_t       gno_t;
   typedef typename Adapter::lno_t       lno_t;
   typedef typename Adapter::scalar_t    scalar_t;
@@ -229,8 +425,10 @@ static void zoltanHGModelObjList(void *data, int nGidEnt, int nLidEnt,
   int j=0;
   for (size_t i=0;i<num_verts;i++) {
     if (isOwner[i]) {
-      lids[j] = i;
-      gids[j] = Ids[i];
+      ZOLTAN_ID_PTR idPtr = &(gids[j*nGidEnt]);
+      TPL_Traits<ZOLTAN_ID_PTR,gno_t>::ASSIGN_TPL_T(idPtr, Ids[i]);
+      idPtr = &(lids[j*nLidEnt]);
+      TPL_Traits<ZOLTAN_ID_PTR,lno_t>::ASSIGN_TPL_T(idPtr, lno_t(i));
       j++;
     }
   }
@@ -262,13 +460,13 @@ static void zoltanHGModelObjList(void *data, int nGidEnt, int nLidEnt,
 ///////////////////////
 // ZOLTAN_HG_SIZE_CS_FN
 template <typename Adapter>
-static void zoltanHGModelSizeCSForMeshAdapter(
-  void *data, int *nEdges, int *nPins,
-  int *format, int *ierr
+static void zoltanHGSizeCS_withModel(void *data, int *nEdges, int *nPins,
+                                     int *format, int *ierr
 ) 
 {
   *ierr = ZOLTAN_OK;
-  const HyperGraphModel<Adapter>* mdl = static_cast<HyperGraphModel<Adapter>* >(data);
+  const HyperGraphModel<Adapter>* mdl = 
+                                  static_cast<HyperGraphModel<Adapter>* >(data);
   *nEdges = mdl->getLocalNumHyperEdges();
   *nPins = mdl->getLocalNumPins();
   if (mdl->getCentricView()==HYPEREDGE_CENTRIC)
@@ -280,14 +478,14 @@ static void zoltanHGModelSizeCSForMeshAdapter(
 //////////////////
 // ZOLTAN_HG_CS_FN
 template <typename Adapter>
-static void zoltanHGModelCSForMeshAdapter(
-  void *data, int nGidEnt, int nEdges, int nPins,
-  int format, ZOLTAN_ID_PTR edgeIds, 
-  int *edgeIdx, ZOLTAN_ID_PTR pinIds, int *ierr
+static void zoltanHGCS_withModel(void *data, int nGidEnt, int nEdges, int nPins,
+                                 int format, ZOLTAN_ID_PTR edgeIds, 
+                                 int *edgeIdx, ZOLTAN_ID_PTR pinIds, int *ierr
 )
 {
   *ierr = ZOLTAN_OK;
-  const HyperGraphModel<Adapter>* mdl = static_cast<HyperGraphModel<Adapter>* >(data);
+  const HyperGraphModel<Adapter>* mdl = 
+                                  static_cast<HyperGraphModel<Adapter>* >(data);
   typedef typename Adapter::gno_t       gno_t;
   typedef typename Adapter::lno_t       lno_t;
   typedef typename Adapter::scalar_t    scalar_t;
@@ -301,60 +499,15 @@ static void zoltanHGModelCSForMeshAdapter(
   ArrayView<input_t> pin_wgts;
   mdl->getPinList(pinIds_,offsets,pin_wgts);
   for (int i=0;i<nEdges;i++) {
-    edgeIds[i]=Ids[i];
-    edgeIdx[i]=offsets[i];
+    ZOLTAN_ID_PTR idPtr = &(edgeIds[i*nGidEnt]);
+    TPL_Traits<ZOLTAN_ID_PTR,gno_t>::ASSIGN_TPL_T(idPtr, Ids[i]);
+    edgeIdx[i] = Teuchos::as<int>(offsets[i]);
   }
   
-  for (int i=0;i<nPins;i++)
-    pinIds[i] = pinIds_[i];
-}
-
-/////////////////////////////////////////////////////////////////////////////
-// MESH ADAPTER CALLBACKS
-/////////////////////////////////////////////////////////////////////////////
-
-///////////////////////
-// ZOLTAN_HG_SIZE_CS_FN
-template <typename Adapter>
-static void zoltanHGSizeCSForMeshAdapter(
-  void *data, int *nEdges, int *nPins,
-  int *format, int *ierr
-) 
-{
-  *ierr = ZOLTAN_OK;  
-  typedef typename Adapter::user_t user_t;
-  const MeshAdapter<user_t>* madp = static_cast<MeshAdapter<user_t>* >(data);
-  *nEdges = madp->getLocalNumOf(madp->getAdjacencyEntityType());
-  *nPins = madp->getLocalNumAdjs(madp->getAdjacencyEntityType(),madp->getPrimaryEntityType());
-  *format = ZOLTAN_COMPRESSED_EDGE;
-}
-
-//////////////////
-// ZOLTAN_HG_CS_FN
-template <typename Adapter>
-static void zoltanHGCSForMeshAdapter(
-  void *data, int nGidEnt, int nEdges, int nPins,
-  int format, ZOLTAN_ID_PTR edgeIds, 
-  int *edgeIdx, ZOLTAN_ID_PTR pinIds, int *ierr
-)
-{
-  *ierr = ZOLTAN_OK;
-  typedef typename Adapter::gno_t       gno_t;
-  typedef typename Adapter::lno_t       lno_t;  
-  typedef typename Adapter::user_t      user_t;
-  const MeshAdapter<user_t>* madp = static_cast<MeshAdapter<user_t>*>(data);
-  const gno_t *Ids;
-  madp->getIDsViewOf(madp->getAdjacencyEntityType(),Ids);
-  const lno_t* offsets;
-  const gno_t* adjIds;
-  madp->getAdjsView(madp->getAdjacencyEntityType(), madp->getPrimaryEntityType(),
-                    offsets, adjIds);
-  for (int i=0;i<nEdges;i++) {
-    edgeIds[i]=Ids[i];
-    edgeIdx[i]=offsets[i];
+  for (int i=0;i<nPins;i++) {
+    ZOLTAN_ID_PTR idPtr = &(pinIds[i*nGidEnt]);
+    TPL_Traits<ZOLTAN_ID_PTR,gno_t>::ASSIGN_TPL_T(idPtr, pinIds_[i]);
   }
-  for (int i=0;i<nPins;i++)
-    pinIds[i] = adjIds[i];
 }
 
 }

@@ -63,10 +63,10 @@ Real Objective<Real>::dirDeriv( const Vector<Real> &x, const Vector<Real> &d, Re
 template <class Real>
 void Objective<Real>::gradient( Vector<Real> &g, const Vector<Real> &x, Real &tol ) {
   g.zero();
-  Real deriv = 0.0;
-  Real h     = 0.0;
+  Real deriv = 0.0, h = 0.0, xi = 0.0;
   for (int i = 0; i < g.dimension(); i++) {
-    h     = x.dot(*x.basis(i))*tol;
+    xi    = std::abs(x.dot(*x.basis(i)));
+    h     = ((xi < ROL_EPSILON) ? 1. : xi)*tol;
     deriv = this->dirDeriv(x,*x.basis(i),h);
     g.axpy(deriv,*g.basis(i));
   }
@@ -177,14 +177,14 @@ std::vector<std::vector<Real> > Objective<Real>::checkGradient( const Vector<Rea
     gCheck[i][2] = weights[order-1][0] * val;
 
     for(int j=0; j<order; ++j) {
-        // Evaluate at x <- x+eta*c_i*d.
-        xnew->axpy(eta*shifts[order-1][j], d);
+      // Evaluate at x <- x+eta*c_i*d.
+      xnew->axpy(eta*shifts[order-1][j], d);
 
-        // Only evaluate at shifts where the weight is nonzero  
-        if( weights[order-1][j+1] != 0 ) {        
-            this->update(*xnew);
-            gCheck[i][2] += weights[order-1][j+1] * this->value(*xnew,tol);
-        }
+      // Only evaluate at shifts where the weight is nonzero  
+      if( weights[order-1][j+1] != 0 ) {
+        this->update(*xnew);
+        gCheck[i][2] += weights[order-1][j+1] * this->value(*xnew,tol);
+      }
     }
 
     gCheck[i][2] /= eta;
@@ -193,12 +193,12 @@ std::vector<std::vector<Real> > Objective<Real>::checkGradient( const Vector<Rea
 
     if (printToStream) {
       if (i==0) {
-      outStream << std::right
-                << std::setw(20) << "Step size"
-                << std::setw(20) << "grad'*dir"
-                << std::setw(20) << "FD approx"
-                << std::setw(20) << "abs error"
-                << "\n";
+        outStream << std::right
+                  << std::setw(20) << "Step size"
+                  << std::setw(20) << "grad'*dir"
+                  << std::setw(20) << "FD approx"
+                  << std::setw(20) << "abs error"
+                  << "\n";
       }
       outStream << std::scientific << std::setprecision(11) << std::right
                 << std::setw(20) << gCheck[i][0]

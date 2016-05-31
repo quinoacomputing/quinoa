@@ -65,6 +65,11 @@
 //#include "Amesos2_Basker_decl.hpp"
 //#include "Amesos2_Basker_def.hpp"
 
+//#ifdef SHYLUBASKER
+//#pragma message("FLAG EXISTS")
+//#endif
+
+
 namespace {
 
   using std::cout;
@@ -303,6 +308,8 @@ namespace {
 
     Xhat->randomize();
     Xhat->describe(*(getDefaultOStream()), Teuchos::VERB_EXTREME);
+    X->describe(*(getDefaultOStream()), Teuchos::VERB_EXTREME);
+    B->describe(*(getDefaultOStream()), Teuchos::VERB_EXTREME);
 
 
     // Solve A*Xhat = B for Xhat using the Bakser solver
@@ -557,7 +564,18 @@ namespace {
   /*
    * Instantiations
    */
-#ifdef HAVE_TEUCHOS_COMPLEX
+
+#if defined(HAVE_TEUCHOS_COMPLEX) && !defined(SHYLUBASKER)
+  //#ifndef SHYLUBASKER
+
+  // mfh 11 Jan 2016: Clang 3.7 doesn't like the following
+  // commented-out pragma.  It says: "error: pragma message requires
+  // parenthesized string".  I' m not sure how to fix that (the string
+  // looks parenthesized to me!), so I'll comment this out for now,
+  // just so that I can get Basker to build with Clang 3.7.
+  //
+  //#pragma message("T COMPLEX");
+
 #  define UNIT_TEST_GROUP_ORDINAL_COMPLEX_SCALAR(LO, GO, SCALAR)        \
   typedef std::complex<SCALAR>  Complex##SCALAR;                        \
   TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT( Basker, Initialization, Complex##SCALAR, LO, GO ) \
@@ -571,19 +589,20 @@ namespace {
   UNIT_TEST_GROUP_ORDINAL_COMPLEX_SCALAR(LO, GO, float)
 #  else
 #  define UNIT_TEST_GROUP_ORDINAL_COMPLEX_FLOAT(LO, GO)
-#  endif
+#  endif//end have complex_flox
 
 #  ifdef HAVE_TPETRA_INST_COMPLEX_DOUBLE
 #  define UNIT_TEST_GROUP_ORDINAL_COMPLEX_DOUBLE(LO, GO)        \
   UNIT_TEST_GROUP_ORDINAL_COMPLEX_SCALAR(LO, GO, double)
 #  else
 #  define UNIT_TEST_GROUP_ORDINAL_COMPLEX_DOUBLE(LO, GO)
-#  endif
-
+#  endif//end complex_double
+       //#endif //SHYLUBASKER
 #else  // !(defined HAVE_TEUCHOS_COMPLEX
 #  define UNIT_TEST_GROUP_ORDINAL_COMPLEX_FLOAT(LO, GO)
 #  define UNIT_TEST_GROUP_ORDINAL_COMPLEX_DOUBLE(LO, GO)
 #endif
+  //#endif
 
 #ifdef HAVE_TPETRA_INST_FLOAT
 #  define UNIT_TEST_GROUP_ORDINAL_FLOAT( LO, GO )       \
@@ -603,12 +622,24 @@ namespace {
   // #define FAST_DEVELOPMENT_UNIT_TEST_BUILD
   //TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT( KLU2, SolveTrans, SCALAR, LO, GO )
 
+#ifdef SHYLUBASKER
+
+#define UNIT_TEST_GROUP_ORDINAL_SCALAR( LO, GO, SCALAR )                \
+  TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT( Basker, NumericFactorization, SCALAR, LO, GO ) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT( Basker, Solve, SCALAR, LO, GO )
+
+
+
+
+#else
+
 #define UNIT_TEST_GROUP_ORDINAL_SCALAR( LO, GO, SCALAR )                \
   TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT( Basker, Initialization, SCALAR, LO, GO ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT( Basker, SymbolicFactorization, SCALAR, LO, GO ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT( Basker, NumericFactorization, SCALAR, LO, GO ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT( Basker, Solve, SCALAR, LO, GO )
 
+#endif
 
 #define UNIT_TEST_GROUP_ORDINAL( ORDINAL )              \
   UNIT_TEST_GROUP_ORDINAL_ORDINAL( ORDINAL, ORDINAL )
@@ -625,16 +656,25 @@ namespace {
   UNIT_TEST_GROUP_ORDINAL_DOUBLE(LO, GO)                \
   UNIT_TEST_GROUP_ORDINAL_COMPLEX_DOUBLE(LO,GO)
 
+  //Add JDB (10-19-215)
+#ifndef HAVE_AMESOS2_EXPLICIT_INSTANTIATION
   UNIT_TEST_GROUP_ORDINAL(int)
-
-#  ifndef HAVE_AMESOS2_EXPLICIT_INSTANTIATION
   typedef long int LongInt;
   UNIT_TEST_GROUP_ORDINAL_ORDINAL( int, LongInt )
-#    ifdef HAVE_TPETRA_INT_LONG_LONG
+  #ifdef HAVE_TPETRA_INT_LONG_LONG
   typedef long long int LongLongInt;
   UNIT_TEST_GROUP_ORDINAL_ORDINAL( int, LongLongInt )
-#    endif
-#  endif  // EXPL-INST
+  #endif
+#else  //ETI
+  #ifdef HAVE_TPETRA_INST_INT_INT
+  UNIT_TEST_GROUP_ORDINAL(int)
+  #endif
+  #ifdef HAVE_TPETRA_INST_INT_LONG
+  typedef long int LongInt;
+  UNIT_TEST_GROUP_ORDINAL_ORDINAL(int,LongInt)
+  #endif
+#endif  // EXPL-INST
+
 
 #endif // FAST_DEVELOPMENT_UNIT_TEST_BUILD
 

@@ -364,7 +364,7 @@ namespace Sacado {
       KOKKOS_INLINE_FUNCTION
       void copyForWrite() volatile {  }
 
-      //! Returns whether two ETV objects have the same values
+      //! Returns whether two MP objects have the same values
       template <typename S>
       KOKKOS_INLINE_FUNCTION
       bool isEqualTo(const Expr<S>& xx) const {
@@ -377,7 +377,7 @@ namespace Sacado {
         return eq;
       }
 
-      //! Returns whether two ETV objects have the same values
+      //! Returns whether two MP objects have the same values
       template <typename S>
       KOKKOS_INLINE_FUNCTION
       bool isEqualTo(const Expr<S>& xx) const volatile {
@@ -1668,14 +1668,27 @@ namespace Sacado {
     //------------------------------------------------------------------------
 
     /**\brief  Define a partition of a View of Sacado::MP::Vector type */
+    template <unsigned Size = 0>
     struct VectorPartition {
+      static const unsigned PartitionSize = Size;
       unsigned begin ;
       unsigned end ;
 
       template< typename iType0 , typename iType1 >
       KOKKOS_INLINE_FUNCTION
       VectorPartition( const iType0 & i0 , const iType1 & i1 ) :
-        begin(i0), end(i1) {}
+        begin(i0), end(i1) {
+      }
+    };
+
+    template <typename T>
+    struct is_vector_partition {
+      static const bool value = false;
+    };
+
+    template <unsigned Size>
+    struct is_vector_partition< VectorPartition<Size> > {
+      static const bool value = true;
     };
 
   } // namespace MP

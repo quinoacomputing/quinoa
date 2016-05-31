@@ -66,20 +66,18 @@ namespace MueLu {
 
   /*!
     @class AmesosSmoother
-    @ingroup MueLuSmootherClasses 
+    @ingroup MueLuSmootherClasses
     @brief Class that encapsulates Amesos direct solvers.
 
     This class creates an Amesos preconditioner factory.  The factory is capable of generating direct solvers
     based on the type and ParameterList passed into the constructor.  See the constructor for more information.
   */
-
-  class AmesosSmoother : public SmootherPrototype<double, int, int>
+  template <class Node = typename SmootherPrototype<double,int,int>::node_type>
+  class AmesosSmoother : public SmootherPrototype<double, int, int, Node>
   {
     typedef double Scalar;
     typedef int    LocalOrdinal;
     typedef int    GlobalOrdinal;
-    typedef KokkosClassic::DefaultNode::DefaultNodeType Node;
-
 
 #undef MUELU_AMESOSSMOOTHER_SHORT
 #include "MueLu_UseShortNames.hpp"
@@ -118,7 +116,7 @@ namespace MueLu {
     AmesosSmoother(const std::string& type = "", const Teuchos::ParameterList& paramList = Teuchos::ParameterList());
 
     //! Destructor
-    virtual ~AmesosSmoother();
+    virtual ~AmesosSmoother() { };
 
     //@}
 
@@ -188,24 +186,25 @@ namespace MueLu {
 
   }; // class AmesosSmoother
 
-  //! Non-member templated function GetAmesosSmoother() returns a new AmesosSmoother object when <Scalar, LocalOrdinal, GlobalOrdinal> == <double, int, int>. Otherwise, an exception is thrown.
+  //! Non-member templated function GetAmesosSmoother() returns a new AmesosSmoother object
+  // when <Scalar, LocalOrdinal, GlobalOrdinal> == <double, int, int>. Otherwise, an exception is thrown.
   //! This function simplifies the usage of AmesosSmoother objects inside of templates as templates do not have to be specialized for <double, int, int> (see DirectSolver for an example).
   template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
   RCP<MueLu::SmootherPrototype<Scalar, LocalOrdinal, GlobalOrdinal, Node> >
-  GetAmesosSmoother (const std::string& type = "",
-                     const Teuchos::ParameterList& paramList = Teuchos::ParameterList ())
-  {
-    TEUCHOS_TEST_FOR_EXCEPTION(true, Exceptions::RuntimeError, "AmesosSmoother cannot be used with Scalar != double, LocalOrdinal != int, GlobalOrdinal != int");
+  GetAmesosSmoother (const std::string& type = "", const Teuchos::ParameterList& paramList = Teuchos::ParameterList ()) {
+    TEUCHOS_TEST_FOR_EXCEPTION(true, Exceptions::RuntimeError,
+                               "AmesosSmoother cannot be used with Scalar != double, LocalOrdinal != int, GlobalOrdinal != int");
     return Teuchos::null;
   }
 
+  // specialization for Epetra
+#if defined(HAVE_MUELU_SERIAL)
   template <>
-  inline RCP<MueLu::SmootherPrototype<double, int, int> >
-  GetAmesosSmoother<double, int, int> (const std::string& type,
-                                       const Teuchos::ParameterList& paramList)
-  {
-    return rcp (new AmesosSmoother (type, paramList));
+  inline RCP<MueLu::SmootherPrototype<double, int, int, Xpetra::EpetraNode> >
+  GetAmesosSmoother<double, int, int, Xpetra::EpetraNode> (const std::string& type, const Teuchos::ParameterList& paramList) {
+    return rcp (new MueLu::AmesosSmoother<Xpetra::EpetraNode>(type, paramList));
   }
+#endif // HAVE_MUELU_SERIAL
 
 } // namespace MueLu
 

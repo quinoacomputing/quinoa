@@ -50,6 +50,7 @@
 #include "Ifpack2_Partitioner.hpp"
 #include "Ifpack2_Details_CanChangeMatrix.hpp"
 #include "Teuchos_Time.hpp"
+#include "Tpetra_Experimental_BlockCrsMatrix_decl.hpp"
 #include <type_traits>
 
 namespace Ifpack2 {
@@ -156,7 +157,7 @@ public:
 
   //! Sets all the parameters for the preconditioner
   /**
-     Valid parameters include the following:
+     Valid parameters are:
      <ul>
       <li> "relaxation: type"<br>
         Valid values (string):<br>
@@ -166,11 +167,21 @@ public:
          <li> "Symmetric Gauss-Seidel"
         </ul>
       <li> "relaxation: sweeps" (int)
-      <li> "relaxation: damping factor" (floating-point)
-      <li> "relaxation: min diagonal value" (floating-point)
+      <li> "relaxation: damping factor" (scalar)
       <li> "relaxation: zero starting solution" (bool)
       <li> "relaxation: backward mode" (bool)
+      <li> "partitioner: type" <br>
+        Valid values (string):<br>
+        <ul>
+         <li> "linear"
+         <li> "line"
+         <li> "user"
+        </ul>
+      <li> "partitioner: local parts" (local ordinal)
+      <li> "partitioner: overlap" (int)
      </ul>
+
+     \see Ifpack2::Details::UserPartitioner.
   */
   void setParameters(const Teuchos::ParameterList& params);
 
@@ -181,6 +192,8 @@ public:
   inline bool isInitialized() const {
     return(IsInitialized_);
   }
+
+  void computeBlockCrs();
 
   //! compute the preconditioner for the specified matrix, diagonal perturbation thresholds and relaxation parameters.
   void compute();
@@ -316,8 +329,11 @@ private:
   //@{
   typedef Tpetra::MultiVector<scalar_type, local_ordinal_type,
                               global_ordinal_type, node_type> MV;
+  typedef Tpetra::Vector<scalar_type,local_ordinal_type,global_ordinal_type,node_type> vector_type;
   typedef Teuchos::ScalarTraits<scalar_type> STS;
   typedef Teuchos::ScalarTraits<magnitude_type> STM;
+  typedef Tpetra::Experimental::BlockCrsMatrix<scalar_type, local_ordinal_type,
+                            global_ordinal_type, node_type> block_crs_matrix_type;
   //@}
 
   //! Copy constructor; do not use (declared but unimplemented)
@@ -341,6 +357,8 @@ private:
 
   void ExtractSubmatrices ();
 
+  void getMatDiag() const;
+
   //@}
   //! \name Internal data and parameters
   //@{
@@ -355,7 +373,7 @@ private:
   Teuchos::RCP<const Tpetra::Import<local_ordinal_type,global_ordinal_type,node_type> > Importer_;
 
   //! Weights for overlapping overlapped Jacobi only.
-  Teuchos::RCP<Tpetra::Vector<scalar_type,local_ordinal_type,global_ordinal_type,node_type> > W_;
+  Teuchos::RCP<vector_type> W_;
 
   // Level of overlap among blocks (for overlapped Jacobi only).
   int OverlapLevel_;
@@ -363,13 +381,12 @@ private:
   //! Contains the (block) diagonal elements of \c Matrix.
   mutable std::vector<Teuchos::RCP<ContainerType> > Containers_;
 
-  //  mutable Tpetra::Vector<Scalar,LocalOrdinal,GlobalOrdinal,Node>* Diagonal_;
-
   // FIXME (mfh 06 Oct 2014) This doesn't comply with the naming
   // convention for instance members of a class.  Furthermore, the
   // class should keep the Vector, not the ArrayRCP to the data _in_
   // the Vector.
-  Teuchos::ArrayRCP< const scalar_type > DiagRCP;
+  // FIXED! (amk 10 Nov 2015)
+  mutable Teuchos::RCP<vector_type> DiagRCP_;
 
   //! Contains information about non-overlapping partitions.
   Teuchos::RCP<Ifpack2::Partitioner<Tpetra::RowGraph<local_ordinal_type,global_ordinal_type,node_type> > > Partitioner_;
@@ -438,6 +455,8 @@ private:
 
   //! Number of global nonzeros.
   global_size_t NumGlobalNonzeros_;
+
+  bool hasBlockCrsMatrix_;
   //@}
 }; //class BlockRelaxation
 

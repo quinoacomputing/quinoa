@@ -87,12 +87,14 @@ namespace Xpetra {
 
   };
 
+// we need the Epetra specialization only if Epetra is enabled
+#if (defined(HAVE_XPETRA_EPETRA) && !defined(XPETRA_EPETRA_NO_32BIT_GLOBAL_INDICES))
   template <>
-  class ExportFactory<int, int> {
+  class ExportFactory<int, int, EpetraNode> {
 
     typedef int LocalOrdinal;
     typedef int GlobalOrdinal;
-    typedef Export<int, GlobalOrdinal>::node_type Node;
+    typedef EpetraNode Node;
 
   private:
     //! Private constructor. This is a static class.
@@ -110,25 +112,23 @@ namespace Xpetra {
         return rcp( new TpetraExport<LocalOrdinal, GlobalOrdinal, Node>(source, target));
 #endif
 
-#ifdef HAVE_XPETRA_EPETRA
-#ifndef XPETRA_EPETRA_NO_32BIT_GLOBAL_INDICES
       if (source->lib() == UseEpetra)
-        return rcp( new EpetraExportT<int>(source, target));
-#endif
-#endif
+        return rcp( new EpetraExportT<int, Node>(source, target));
 
       XPETRA_FACTORY_END;
     }
 
   };
+#endif
 
-#ifdef HAVE_XPETRA_INT_LONG_LONG
+// we need the Epetra specialization only if Epetra is enabled
+#if (defined(HAVE_XPETRA_EPETRA) && !defined(XPETRA_EPETRA_NO_64BIT_GLOBAL_INDICES))
   template <>
-  class ExportFactory<int, long long> {
+  class ExportFactory<int, long long, EpetraNode> {
 
     typedef int LocalOrdinal;
     typedef long long GlobalOrdinal;
-    typedef Export<int, GlobalOrdinal>::node_type Node;
+    typedef EpetraNode Node;
 
   private:
     //! Private constructor. This is a static class.
@@ -146,18 +146,15 @@ namespace Xpetra {
         return rcp( new TpetraExport<LocalOrdinal, GlobalOrdinal, Node>(source, target));
 #endif
 
-#ifdef HAVE_XPETRA_EPETRA
-#ifndef XPETRA_EPETRA_NO_64BIT_GLOBAL_INDICES
       if (source->lib() == UseEpetra)
-        return rcp( new EpetraExportT<long long>(source, target));
-#endif
-#endif
+        return rcp( new EpetraExportT<long long, Node>(source, target));
 
       XPETRA_FACTORY_END;
     }
 
   };
-#endif // HAVE_XPETRA_INT_LONG_LONG
+#endif
+
 }
 
 #define XPETRA_EXPORTFACTORY_SHORT

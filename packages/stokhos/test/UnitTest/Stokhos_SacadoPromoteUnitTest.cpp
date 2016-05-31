@@ -155,22 +155,13 @@ TEUCHOS_UNIT_TEST_TEMPLATE_1_DECL( Promote, Promote, UQ )
   success = testPromote<UQ>();
 }
 
-//
-// Sacado::ETV::Vector
-//
-typedef Stokhos::StandardStorage<int,double> storage_type;
-typedef Sacado::ETV::Vector<double,storage_type> vector_type;
-TEUCHOS_UNIT_TEST_TEMPLATE_1_INSTANT( Promote, Promote, vector_type )
+typedef Kokkos::DefaultExecutionSpace device;
 
-//
-// Sacado::ETV::Vector2
-//
-typedef Sacado::ETV::Vector2<double,storage_type> vector2_type;
-TEUCHOS_UNIT_TEST_TEMPLATE_1_INSTANT( Promote, Promote, vector2_type )
-
+#ifdef HAVE_STOKHOS_PCE_SCALAR_TYPE
 //
 // Sacado::PCE::OrthogPoly
 //
+typedef Stokhos::StandardStorage<int,double> storage_type;
 typedef Sacado::PCE::OrthogPoly<double,storage_type> orthog_poly_type;
 TEUCHOS_UNIT_TEST_TEMPLATE_1_INSTANT( Promote, Promote, orthog_poly_type )
 
@@ -181,19 +172,22 @@ typedef Sacado::ETPCE::OrthogPoly<double,storage_type> et_orthog_poly_type;
 TEUCHOS_UNIT_TEST_TEMPLATE_1_INSTANT( Promote, Promote, et_orthog_poly_type )
 
 //
-// Sacado::MP::Vector
-//
-typedef Kokkos::DefaultExecutionSpace device;
-typedef Stokhos::StaticFixedStorage<int,double,32,device> static_storage_type;
-typedef Sacado::MP::Vector<static_storage_type> kokkos_mp_type;
-TEUCHOS_UNIT_TEST_TEMPLATE_1_INSTANT( Promote, Promote, kokkos_mp_type )
-
-//
 // Sacado::UQ::PCE
 //
 typedef Stokhos::DynamicStorage<int,double,device> dynamic_storage_type;
 typedef Sacado::UQ::PCE<dynamic_storage_type> kokkos_pce_type;
 TEUCHOS_UNIT_TEST_TEMPLATE_1_INSTANT( Promote, Promote, kokkos_pce_type )
+#endif
+
+#ifdef HAVE_STOKHOS_ENSEMBLE_SCALAR_TYPE
+//
+// Sacado::MP::Vector
+//
+
+typedef Stokhos::StaticFixedStorage<int,double,32,device> static_storage_type;
+typedef Sacado::MP::Vector<static_storage_type> kokkos_mp_type;
+TEUCHOS_UNIT_TEST_TEMPLATE_1_INSTANT( Promote, Promote, kokkos_mp_type )
+#endif
 
 int main( int argc, char* argv[] ) {
   Teuchos::GlobalMPISession mpiSession(&argc, &argv);

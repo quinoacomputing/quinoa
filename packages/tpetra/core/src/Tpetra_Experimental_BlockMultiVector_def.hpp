@@ -220,6 +220,39 @@ BlockMultiVector (const mv_type& X_mv,
 
 template<class Scalar, class LO, class GO, class Node>
 BlockMultiVector<Scalar, LO, GO, Node>::
+BlockMultiVector (const BlockMultiVector<Scalar, LO, GO, Node>& X,
+                  const map_type& newMeshMap,
+                  const map_type& newPointMap,
+                  const size_t offset) :
+  dist_object_type (Teuchos::rcp (new map_type (newMeshMap))), // shallow copy
+  meshMap_ (newMeshMap),
+  pointMap_ (newPointMap),
+  mv_ (X.mv_, newPointMap, offset * X.getBlockSize ()), // MV "offset view" constructor
+  mvData_ (getRawPtrFromMultiVector (mv_)),
+  blockSize_ (X.getBlockSize ())
+{
+  // Make sure that mv_ has view semantics.
+  mv_.setCopyOrView (Teuchos::View);
+}
+
+template<class Scalar, class LO, class GO, class Node>
+BlockMultiVector<Scalar, LO, GO, Node>::
+BlockMultiVector (const BlockMultiVector<Scalar, LO, GO, Node>& X,
+                  const map_type& newMeshMap,
+                  const size_t offset) :
+  dist_object_type (Teuchos::rcp (new map_type (newMeshMap))), // shallow copy
+  meshMap_ (newMeshMap),
+  pointMap_ (makePointMap (newMeshMap, X.getBlockSize ())),
+  mv_ (X.mv_, pointMap_, offset * X.getBlockSize ()), // MV "offset view" constructor
+  mvData_ (getRawPtrFromMultiVector (mv_)),
+  blockSize_ (X.getBlockSize ())
+{
+  // Make sure that mv_ has view semantics.
+  mv_.setCopyOrView (Teuchos::View);
+}
+
+template<class Scalar, class LO, class GO, class Node>
+BlockMultiVector<Scalar, LO, GO, Node>::
 BlockMultiVector () :
   dist_object_type (Teuchos::null),
   mvData_ (NULL),
@@ -285,7 +318,7 @@ replaceLocalValuesImpl (const LO localRowIndex,
   const LO strideX = 1;
   const_little_vec_type X_src (reinterpret_cast<const impl_scalar_type*> (vals),
                                getBlockSize (), strideX);
-  X_dst.assign (X_src);
+  deep_copy (X_dst, X_src);
 }
 
 
@@ -331,7 +364,7 @@ sumIntoLocalValuesImpl (const LO localRowIndex,
   const LO strideX = 1;
   const_little_vec_type X_src (reinterpret_cast<const impl_scalar_type*> (vals),
                                getBlockSize (), strideX);
-  X_dst.update (STS::one (), X_src);
+  AXPY (STS::one (), X_src, X_dst);
 }
 
 template<class Scalar, class LO, class GO, class Node>
@@ -374,7 +407,7 @@ getLocalRowView (const LO localRowIndex, const LO colIndex, Scalar*& vals) const
     return false;
   } else {
     little_vec_type X_ij = getLocalBlock (localRowIndex, colIndex);
-    vals = reinterpret_cast<Scalar*> (X_ij.getRawPtr ());
+    vals = reinterpret_cast<Scalar*> (X_ij.ptr_on_device ());
     return true;
   }
 }
@@ -389,7 +422,7 @@ getGlobalRowView (const GO globalRowIndex, const LO colIndex, Scalar*& vals) con
     return false;
   } else {
     little_vec_type X_ij = getLocalBlock (localRowIndex, colIndex);
-    vals = reinterpret_cast<Scalar*> (X_ij.getRawPtr ());
+    vals = reinterpret_cast<Scalar*> (X_ij.ptr_on_device ());
     return true;
   }
 }
@@ -477,7 +510,7 @@ copyAndPermute (const Tpetra::SrcDistObject& src,
   const LO numSame = static_cast<LO> (numSameIDs);
   for (LO j = 0; j < numVecs; ++j) {
     for (LO lclRow = 0; lclRow < numSame; ++lclRow) {
-      getLocalBlock (lclRow, j).assign (srcAsBmv.getLocalBlock (lclRow, j));
+      deep_copy (getLocalBlock (lclRow, j), srcAsBmv.getLocalBlock (lclRow, j));
     }
   }
 
@@ -487,7 +520,7 @@ copyAndPermute (const Tpetra::SrcDistObject& src,
   const LO numPermuteLIDs = static_cast<LO> (permuteToLIDs.size ());
   for (LO j = 0; j < numVecs; ++j) {
     for (LO k = numSame; k < numPermuteLIDs; ++k) {
-      getLocalBlock (permuteToLIDs[k], j).assign (srcAsBmv.getLocalBlock (permuteFromLIDs[k], j));
+      deep_copy (getLocalBlock (permuteToLIDs[k], j), srcAsBmv.getLocalBlock (permuteFromLIDs[k], j));
     }
   }
 }
@@ -535,7 +568,7 @@ packAndPrepare (const Tpetra::SrcDistObject& src,
         little_vec_type X_dst (curExportPtr, blockSize, 1);
         little_vec_type X_src = srcAsBmv.getLocalBlock (meshLid, j);
 
-        X_dst.assign (X_src);
+        deep_copy (X_dst, X_src);
       }
     }
   } catch (std::exception& e) {
@@ -590,11 +623,11 @@ unpackAndCombine (const Teuchos::ArrayView<const LO>& importLIDs,
       little_vec_type X_dst = getLocalBlock (meshLid, j);
 
       if (CM == INSERT || CM == REPLACE) {
-        X_dst.assign (X_src);
+        deep_copy (X_dst, X_src);
       } else if (CM == ADD) {
-        X_dst.update (STS::one (), X_src);
+        AXPY (STS::one (), X_src, X_dst);
       } else if (CM == ABSMAX) {
-        X_dst.absmax (X_src);
+        Impl::absMax (X_dst, X_src);
       }
     }
   }

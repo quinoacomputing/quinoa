@@ -112,6 +112,9 @@ public:
   typedef LocalOrdinal local_ordinal_type;
   //! This class' third template parameter; the type of global indices.
   typedef GlobalOrdinal global_ordinal_type;
+  //! The Kokkos device type.
+  typedef typename Node::device_type device_type;
+
   //! The Kokkos Node type.
   typedef Node node_type;
 
@@ -237,22 +240,58 @@ public:
   //! Replace current value at the specified location with specified value.
   /** \pre \c globalRow must be a valid global element on this node, according to the row map.
    */
-  void replaceGlobalValue (GlobalOrdinal globalRow, const Scalar& value);
+  void replaceGlobalValue (const GlobalOrdinal globalRow, const Scalar& value) const;
 
-  //! Adds specified value to existing value at the specified location.
-  /** \pre \c globalRow must be a valid global element on this node, according to the row map.
-   */
-  void sumIntoGlobalValue (GlobalOrdinal globalRow, const Scalar& value);
+  /// \brief Add value to existing value, using global (row) index.
+  ///
+  /// Add the given value to the existing value at row \c globalRow
+  /// (a global index).
+  ///
+  /// This method affects the host memory version of the data.  If the
+  /// \c DeviceType template parameter is a device that has two memory
+  /// spaces, and you want to modify the non-host version of the data,
+  /// you must access the DualView directly by calling getDualView().
+  /// Please see modify(), sync(), and the discussion of DualView
+  /// semantics elsewhere in the documentation.
+  ///
+  /// \param globalRow [in] Global row index of the entry to modify.
+  ///   This <i>must</i> be a valid global row index on the calling
+  ///   process with respect to the Vector's Map.
+  /// \param value [in] Incoming value to add to the entry.
+  /// \param atomic [in] Whether to use an atomic update.  If this
+  ///   class' execution space is not Kokkos::Serial, then this is
+  ///   true by default, else it is false by default.
+  void
+  sumIntoGlobalValue (const GlobalOrdinal globalRow,
+                      const Scalar& value,
+                      const bool atomic = base_type::useAtomicUpdatesByDefault) const;
 
   //! Replace current value at the specified location with specified values.
   /** \pre \c localRow must be a valid local element on this node, according to the row map.
    */
-  void replaceLocalValue (LocalOrdinal myRow, const Scalar& value);
+  void replaceLocalValue (const LocalOrdinal myRow, const Scalar& value) const;
 
-  //! Adds specified value to existing value at the specified location.
-  /** \pre \c localRow must be a valid local element on this node, according to the row map.
-   */
-  void sumIntoLocalValue (LocalOrdinal myRow, const Scalar& value);
+  /// \brief Add \c value to existing value, using local (row) index.
+  ///
+  /// Add the given value to the existing value at row \c localRow (a
+  /// local index).
+  ///
+  /// This method affects the host memory version of the data.  If the
+  /// \c DeviceType template parameter is a device that has two memory
+  /// spaces, and you want to modify the non-host version of the data,
+  /// you must access the DualView directly by calling getDualView().
+  /// Please see modify(), sync(), and the discussion of DualView
+  /// semantics elsewhere in the documentation.
+  ///
+  /// \param localRow [in] Local row index of the entry to modify.
+  /// \param value [in] Incoming value to add to the entry.
+  /// \param atomic [in] Whether to use an atomic update.  If this
+  ///   class' execution space is not Kokkos::Serial, then this is
+  ///   true by default, else it is false by default.
+  void
+  sumIntoLocalValue (const LocalOrdinal myRow,
+                     const Scalar& value,
+                     const bool atomic = base_type::useAtomicUpdatesByDefault) const;
 
   //@}
 
@@ -303,8 +342,10 @@ public:
   mag_type normInf() const;
 
   using MultiVector<Scalar, LocalOrdinal, GlobalOrdinal, Node, classic>::normWeighted; // overloading, not hiding
-  //! Compute Weighted 2-norm (RMS Norm) of this Vector.
-  mag_type
+  /// \brief Compute Weighted 2-norm (RMS Norm) of this Vector.
+  ///
+  /// \warning This method is DEPRECATED.
+  mag_type TPETRA_DEPRECATED
   normWeighted (const Vector<Scalar, LocalOrdinal, GlobalOrdinal, Node, classic>& weights) const;
 
   using MultiVector<Scalar, LocalOrdinal, GlobalOrdinal, Node, classic>::meanValue; // overloading, not hiding

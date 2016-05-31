@@ -97,6 +97,7 @@ IF (Sacado_ENABLE_KokkosCore)
       COMM serial mpi
       STANDARD_PASS_OUTPUT
       NUM_MPI_PROCS 1
+      RUN_SERIAL
       )
 
     TRIBITS_ADD_EXECUTABLE_AND_TEST(
@@ -106,6 +107,7 @@ IF (Sacado_ENABLE_KokkosCore)
       COMM serial mpi
       STANDARD_PASS_OUTPUT
       NUM_MPI_PROCS 1
+      RUN_SERIAL
       )
   ENDIF()
 
@@ -117,6 +119,7 @@ IF (Sacado_ENABLE_KokkosCore)
       COMM serial mpi
       STANDARD_PASS_OUTPUT
       NUM_MPI_PROCS 1
+      RUN_SERIAL
       )
 
     TRIBITS_ADD_EXECUTABLE_AND_TEST(
@@ -126,6 +129,7 @@ IF (Sacado_ENABLE_KokkosCore)
       COMM serial mpi
       STANDARD_PASS_OUTPUT
       NUM_MPI_PROCS 1
+      RUN_SERIAL
       )
   ENDIF()
 
@@ -157,6 +161,15 @@ IF (Sacado_ENABLE_CXX11)
   TRIBITS_ADD_EXECUTABLE_AND_TEST(
     PromoteTests
     SOURCES PromoteTests.cpp
+    ARGS
+    COMM serial mpi
+    NUM_MPI_PROCS 1
+    STANDARD_PASS_OUTPUT
+  )
+
+  TRIBITS_ADD_EXECUTABLE_AND_TEST(
+    MPLTests
+    SOURCES MPLTests.cpp
     ARGS
     COMM serial mpi
     NUM_MPI_PROCS 1

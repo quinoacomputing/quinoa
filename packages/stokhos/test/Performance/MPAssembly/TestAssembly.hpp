@@ -302,7 +302,7 @@ bool check_residuals(const ScalarViewType& scalar_residual,
                          host_ensemble_residual.dimension_0(), fbuf, success );
 
   const size_t num_node = host_scalar_residual.dimension_0();
-  const size_t num_ensemble = host_ensemble_residual.sacado_size();
+  const size_t num_ensemble = Kokkos::dimension_scalar(host_ensemble_residual);
   for (size_t i=0; i<num_node; ++i) {
     for (size_t j=0; j<num_ensemble; ++j) {
       TEUCHOS_TEST_FLOATING_EQUALITY(
@@ -431,5 +431,5 @@ void performance_test_driver( const Teuchos::RCP<const Teuchos::Comm<int> >& com
   typedef Sacado::mpl::range_c< int, entry_min, entry_max+1, entry_step > Range;
   PerformanceDriverOp<Storage> op(comm, use_print, use_trials,
                                   use_nodes, check, dev_config);
-  Sacado::mpl::for_each<Range> f(op);
+  Sacado::mpl::for_each_no_kokkos<Range> f(op);
 }

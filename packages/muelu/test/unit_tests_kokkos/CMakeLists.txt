@@ -7,6 +7,7 @@ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/../../src/Smoothers)
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/../../src/Smoothers/BlockedSmoothers)
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/../../gallery)
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/../../adapters)
+INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/../unit_tests)
 
 #INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR}/)
 
@@ -15,15 +16,18 @@ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/../../adapters)
 SET(SOURCES "")
 
 APPEND_SET(SOURCES
-  MueLu_UnitTests_kokkos.cpp
-  MueLu_TestHelpers_kokkos.cpp
+  Aggregates_kokkos.cpp
   CoalesceDropFactory_kokkos.cpp
+  CoarseMapFactory_kokkos.cpp
+  MueLu_TestHelpers_kokkos.cpp
+  MueLu_UnitTests_kokkos.cpp
   SaPFactory_kokkos.cpp
+  TentativePFactory_kokkos.cpp
 )
 
 ### Tests that require other Trilinos packages
 
-# first ensure that these cmake boolean variables are defined
+# First ensure that these cmake boolean variables are defined
 ASSERT_DEFINED(
   ${PACKAGE_NAME}_ENABLE_Amesos
   ${PACKAGE_NAME}_ENABLE_Amesos2

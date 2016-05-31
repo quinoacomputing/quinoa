@@ -120,6 +120,12 @@ other Trilinos solver technologies.
 #include "PyTrilinos_LinearProblem.hpp"
 #endif
 
+#ifdef HAVE_TPETRA
+#include "Tpetra_Map.hpp"
+#include "Tpetra_MultiVector.hpp"
+#include "Tpetra_Vector.hpp"
+#endif
+
 // Domi includes
 #include "Domi_Utils.hpp"
 #include "Domi_Version.hpp"
@@ -184,6 +190,21 @@ import numpy
 // External Epetra interface imports
 #ifdef HAVE_EPETRA
 %import "Epetra.i"
+#endif
+
+// External Tpetra interface imports
+#ifdef HAVE_TPETRA
+%import "Tpetra.i"
+
+// Define shortcuts for the default Tpetra template types
+%inline
+%{
+  typedef Tpetra::Details::DefaultTypes::scalar_type         DefaultScalarType;
+  typedef Tpetra::Details::DefaultTypes::local_ordinal_type  DefaultLOType;
+  typedef Tpetra::Details::DefaultTypes::global_ordinal_type DefaultGOType;
+  typedef Tpetra::Details::DefaultTypes::node_type           DefaultNodeType;
+
+%}
 #endif
 
 // General exception handling
@@ -411,8 +432,6 @@ import numpy
 ////////////////////////
 // Domi MDMap support //
 ////////////////////////
-%ignore Domi::MDMap::getTpetraMap;
-%ignore Domi::MDMap::getTpetraAxisMap;
 %extend Domi::MDMap< Node >
 {
   Domi::MDMap< Node > __getitem__(PyObject * indexes)
@@ -472,6 +491,14 @@ import numpy
   }
 }
 %include "Domi_MDMap.hpp"
+#ifdef HAVE_TPETRA
+%template(getTpetraMap) Domi::MDMap::getTpetraMap< PYTRILINOS_LOCAL_ORD,
+                                                   PYTRILINOS_GLOBAL_ORD,
+                                                   DefaultNodeType >;
+%template(getTpetraAxisMap) Domi::MDMap::getTpetraAxisMap< PYTRILINOS_LOCAL_ORD,
+                                                           PYTRILINOS_GLOBAL_ORD,
+                                                           DefaultNodeType >;
+#endif
 %teuchos_rcp(Domi::MDMap< Domi::DefaultNode::DefaultNodeType >)
 %template(MDMap_default) Domi::MDMap< Domi::DefaultNode::DefaultNodeType >;
 %pythoncode
@@ -561,17 +588,13 @@ MDMap = MDMap_default
 }
 %ignore Domi::MDVector::operator=;
 %ignore Domi::MDVector::operator[];
-%ignore Domi::MDVector::getTpetraVectorView;
-%ignore Domi::MDVector::getTpetraMultiVectorView;
-%ignore Domi::MDVector::getTpetraVectorCopy;
-%ignore Domi::MDVector::getTpetraMultiVectorCopy;
 %ignore Domi::MDVector::getDataNonConst;
 %ignore Domi::MDVector::getData;
 %include "Domi_MDVector.hpp"
-%teuchos_rcp(Domi::MDVector< int   , Domi::DefaultNode::DefaultNodeType >)
-%teuchos_rcp(Domi::MDVector< long  , Domi::DefaultNode::DefaultNodeType >)
-%teuchos_rcp(Domi::MDVector< float , Domi::DefaultNode::DefaultNodeType >)
-%teuchos_rcp(Domi::MDVector< double, Domi::DefaultNode::DefaultNodeType >)
+%teuchos_rcp(Domi::MDVector< int      , Domi::DefaultNode::DefaultNodeType >)
+%teuchos_rcp(Domi::MDVector< long long, Domi::DefaultNode::DefaultNodeType >)
+%teuchos_rcp(Domi::MDVector< double   , Domi::DefaultNode::DefaultNodeType >)
+//%teuchos_rcp(Domi::MDVector< float    , Domi::DefaultNode::DefaultNodeType >)
 %pythoncode
 %{
   def MDVector_getattr(self, name):
@@ -601,30 +624,48 @@ MDMap = MDMap_default
       class_array_add_comp(cls)
 
 %}
+#ifdef HAVE_TPETRA
+%template(getTpetraVectorView)
+    Domi::MDVector::getTpetraVectorView< PYTRILINOS_LOCAL_ORD,
+                                         PYTRILINOS_GLOBAL_ORD,
+                                         DefaultNodeType >;
+%template(getTpetraVectorCopy)
+    Domi::MDVector::getTpetraVectorCopy< PYTRILINOS_LOCAL_ORD,
+                                         PYTRILINOS_GLOBAL_ORD,
+                                         DefaultNodeType >;
+%template(getTpetraMultiVectorView)
+    Domi::MDVector::getTpetraMultiVectorView< PYTRILINOS_LOCAL_ORD,
+                                              PYTRILINOS_GLOBAL_ORD,
+                                              DefaultNodeType >;
+%template(getTpetraMultiVectorCopy)
+    Domi::MDVector::getTpetraMultiVectorCopy< PYTRILINOS_LOCAL_ORD,
+                                              PYTRILINOS_GLOBAL_ORD,
+                                              DefaultNodeType >;
+#endif
 %template(MDVector_int   )
-  Domi::MDVector< int   , Domi::DefaultNode::DefaultNodeType >;
+  Domi::MDVector< int      , Domi::DefaultNode::DefaultNodeType >;
 %pythoncode
 %{
   upgradeMDVectorClass(MDVector_int)
 %}
 %template(MDVector_long  )
-  Domi::MDVector< long  , Domi::DefaultNode::DefaultNodeType >;
+  Domi::MDVector< long long, Domi::DefaultNode::DefaultNodeType >;
 %pythoncode
 %{
   upgradeMDVectorClass(MDVector_long)
 %}
-%template(MDVector_float )
-  Domi::MDVector< float , Domi::DefaultNode::DefaultNodeType >;
-%pythoncode
-%{
-  upgradeMDVectorClass(MDVector_float)
-%}
 %template(MDVector_double)
-  Domi::MDVector< double, Domi::DefaultNode::DefaultNodeType >;
+  Domi::MDVector< double   , Domi::DefaultNode::DefaultNodeType >;
 %pythoncode
 %{
   upgradeMDVectorClass(MDVector_double)
 %}
+// %template(MDVector_float )
+//   Domi::MDVector< float    , Domi::DefaultNode::DefaultNodeType >;
+// %pythoncode
+// %{
+//   upgradeMDVectorClass(MDVector_float)
+// %}
 
 ////////////////////////////
 // from_DistArray support //

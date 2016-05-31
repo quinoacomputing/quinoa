@@ -45,17 +45,12 @@
 // @HEADER
 #include "MueLu_ConfigDefs.hpp"
 #if defined(HAVE_MUELU_KOKKOS_REFACTOR)
-#include "MueLu_ExplicitInstantiation.hpp"
 
 #include "MueLu_SaPFactory_kokkos_def.hpp"
 
-#include "TpetraCore_ETIHelperMacros.h"
+#define MUELU_ETI_GROUP(SC,LO,GO,NO) \
+  template class MueLu::SaPFactory_kokkos<SC,LO,GO,NO>;
 
-#define MUELU_LOCAL_INSTANT(S,LO,GO,N) \
-        template class MueLu::SaPFactory_kokkos<S,LO,GO,N>;
-
-TPETRA_ETI_MANGLING_TYPEDEFS()
-
-TPETRA_INSTANTIATE_SLGN_NO_ORDINAL_SCALAR(MUELU_LOCAL_INSTANT)
+#include "MueLu_ETI_4arg.hpp"
 
 #endif

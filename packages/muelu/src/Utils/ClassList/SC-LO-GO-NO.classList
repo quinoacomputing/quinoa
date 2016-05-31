@@ -15,10 +15,12 @@ CGSolver
 CoalesceDropFactory
 CoalesceDropFactory_kokkos - #if defined(HAVE_MUELU_KOKKOS_REFACTOR)
 CoarseMapFactory
+CoarseMapFactory_kokkos - #if defined(HAVE_MUELU_KOKKOS_REFACTOR)
 CoarseningVisualizationFactory
 Constraint
 ConstraintFactory
 CoordinatesTransferFactory
+CoordinatesTransferFactory_kokkos - #if defined(HAVE_MUELU_KOKKOS_REFACTOR)
 CoupledRBMFactory
 DemoFactory
 DirectSolver
@@ -42,6 +44,7 @@ MergedSmoother
 MLParameterListInterpreter
 MultiVectorTransferFactory
 NullspaceFactory
+NullspaceFactory_kokkos - #if defined(HAVE_MUELU_KOKKOS_REFACTOR)
 NullspacePresmoothFactory
 ParameterListInterpreter
 PatternFactory
@@ -65,8 +68,8 @@ SaPFactory
 SaPFactory_kokkos - #if defined(HAVE_MUELU_KOKKOS_REFACTOR)
 SchurComplementFactory - #ifdef HAVE_MUELU_EXPERIMENTAL
 SegregatedAFactory
-ShiftedLaplacian - #if defined(HAVE_MUELU_TPETRA) && defined(HAVE_MUELU_IFPACK2) && defined(HAVE_MUELU_BELOS)
-ShiftedLaplacianOperator - #if defined(HAVE_MUELU_TPETRA) && defined(HAVE_MUELU_BELOS)
+ShiftedLaplacian - #if defined(HAVE_MUELU_TPETRA) && defined(HAVE_MUELU_IFPACK2) && defined(HAVE_MUELU_BELOS) && defined(HAVE_MUELU_TPETRA_INST_INT_INT)
+ShiftedLaplacianOperator - #if defined(HAVE_MUELU_TPETRA) && defined(HAVE_MUELU_BELOS) && defined(HAVE_MUELU_TPETRA_INST_INT_INT)
 SimpleSmoother - #ifdef HAVE_MUELU_EXPERIMENTAL
 Smoother
 SmootherBase
@@ -76,6 +79,7 @@ SolverBase
 SteepestDescentSolver
 SubBlockAFactory - #ifdef HAVE_MUELU_EXPERIMENTAL
 TentativePFactory
+TentativePFactory_kokkos - #if defined(HAVE_MUELU_KOKKOS_REFACTOR)
 ThresholdAFilterFactory
 ToggleCoordinatesTransferFactory
 TogglePFactory
@@ -83,7 +87,11 @@ TpetraOperator
 TransPFactory
 TrilinosSmoother
 UserPFactory
+Utilities
+UtilitiesBase
+Utilities_kokkos - #if defined(HAVE_MUELU_KOKKOS_REFACTOR)
 SemiCoarsenPFactory
 UzawaSmoother - #ifdef HAVE_MUELU_EXPERIMENTAL
 VisualizationHelpers
+ZoltanInterface - #if defined(HAVE_MUELU_ZOLTAN) && defined(HAVE_MPI)
 Zoltan2Interface - #if defined(HAVE_MUELU_ZOLTAN2) && defined(HAVE_MPI)

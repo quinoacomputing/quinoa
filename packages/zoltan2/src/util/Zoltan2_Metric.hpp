@@ -57,11 +57,10 @@
 #include <Tpetra_CrsMatrix.hpp>
 #include <Zoltan2_GraphModel.hpp>
 
-#include <Epetra_SerialDenseVector.h>
-
 #include <cmath>
 #include <iomanip>
 #include <iostream>
+#include <vector>
 
 namespace Zoltan2{
 
@@ -775,6 +774,7 @@ template <typename Adapter>
 
   typedef GraphMetricValues<scalar_t> mv_t;
   typedef Tpetra::CrsMatrix<part_t,lno_t,gno_t,node_t>  sparse_matrix_type;
+  typedef Tpetra::Vector<part_t,lno_t,gno_t,node_t>     vector_t;
   typedef Tpetra::Map<lno_t, gno_t, node_t>                map_type;
   typedef Tpetra::global_size_t GST;
   const GST INVALID = Teuchos::OrdinalTraits<GST>::invalid ();
@@ -839,26 +839,22 @@ template <typename Adapter>
   // *************************** BUILD MAP FOR ADJS ***************************
   // **************************************************************************
 
-  Array<gno_t> vertexGIDs;
   RCP<const map_type> vertexMapG;
 
   // Build a list of the global vertex ids...
-  vertexGIDs.resize(localNumObj);
-  gno_t min;
-  min = as<gno_t> (Ids[0]);
+  gno_t min = std::numeric_limits<gno_t>::max();
+  size_t maxcols = 0;
   for (lno_t i = 0; i < localNumObj; ++i) {
-    vertexGIDs[i] = as<gno_t> (Ids[i]);
-
-    if (vertexGIDs[i] < min) {
-      min = vertexGIDs[i];
-    }
+    if (Ids[i] < min) min = Ids[i];
+    size_t ncols = offsets[i+1] - offsets[i];
+    if (ncols > maxcols) maxcols = ncols;
   }
 
   gno_t gmin;
   Teuchos::reduceAll<int, gno_t>(*comm,Teuchos::REDUCE_MIN,1,&min,&gmin);
 
   //Generate Map for vertex
-  vertexMapG = rcp(new map_type(INVALID, vertexGIDs(), gmin, comm));
+  vertexMapG = rcp(new map_type(INVALID, Ids, gmin, comm));
 
   // **************************************************************************
   // ************************** BUILD GRAPH FOR ADJS **************************
@@ -869,69 +865,37 @@ template <typename Adapter>
   // Construct Tpetra::CrsGraph objects.
   adjsMatrix = rcp (new sparse_matrix_type (vertexMapG, 0));
 
-  part_t justOne = 1;
-  ArrayView<part_t> justOneAV = Teuchos::arrayView (&justOne, 1);
+  Array<part_t> justOneA(maxcols, 1);
 
   for (lno_t localElement=0; localElement<localNumObj; ++localElement){
-
-    //globalRow for Tpetra Graph
-    gno_t globalRowT = as<gno_t> (Ids[localElement]);
-
-    for (lno_t j=offsets[localElement]; j<offsets[localElement+1]; ++j){
-      gno_t globalCol = as<gno_t> (edgeIds[j]);
-      //create ArrayView globalCol object for Tpetra
-      ArrayView<gno_t> globalColAV = Teuchos::arrayView (&globalCol,1);
-
-      //Update Tpetra adjs Graph
-      adjsMatrix->insertGlobalValues(globalRowT,globalColAV,justOneAV);
-    }// *** edge loop ***
-  }// *** vertex loop ***
+    // Insert all columns for global row Ids[localElement] 
+    size_t ncols = offsets[localElement+1] - offsets[localElement];
+    adjsMatrix->insertGlobalValues(Ids[localElement],
+                                   edgeIds(offsets[localElement], ncols),
+                                   justOneA(0, ncols));
+  }
 
   //Fill-complete adjs Graph
-  /*adjsMatrix->fillComplete (adjsMatrix->getRowMap());
+  adjsMatrix->fillComplete ();
 
-  // **************************************************************************
-  // ************************ BUILD IDENTITY FOR PARTS ************************
-  // **************************************************************************
-
-  RCP<sparse_matrix_type> Ipart;
-
-  // Ipart: Identity matrix for part numbers
-  Ipart = rcp (new sparse_matrix_type (vertexMapG, 0));
-
+  // Compute part
+  RCP<vector_t> scaleVec = Teuchos::rcp( new vector_t(vertexMapG,false) );
   for (lno_t localElement=0; localElement<localNumObj; ++localElement) {
-    part_t justPart = part[localElement];
-    ArrayView<part_t> justPartAV = Teuchos::arrayView (&justPart, 1);
+    scaleVec->replaceLocalValue(localElement,part[localElement]);
+  }
 
-    // globalRow for Tpetra Matrix
-    gno_t globalRowT = as<gno_t> (Ids[localElement]);
-
-    gno_t globalCol = as<gno_t> (Ids[localElement]);
-    //create ArrayView globalCol object for Tpetra
-    ArrayView<gno_t> globalColAV = Teuchos::arrayView (&globalCol,1);
-
-    //Update Tpetra Ipart matrix
-    Ipart->insertGlobalValues(globalRowT,globalColAV,justPartAV);
-  }// *** vertex loop ***
-
-  //Fill-complete parts Matrix
-  Ipart->fillComplete (Ipart->getRowMap());
-
-  // Create matrix to store adjs part
-  RCP<sparse_matrix_type> adjsPart = 
-    rcp (new sparse_matrix_type(adjsMatrix->getRowMap(),0));
-  Tpetra::MatrixMatrix::Multiply(*adjsMatrix,false,*Ipart,false,
-				 *adjsPart); // adjsPart:= adjsMatrix * Ipart
+  // Postmultiply adjsMatrix by part
+  adjsMatrix->rightScale(*scaleVec);
   Array<gno_t> Indices;
   Array<part_t> Values;
 
   if (!ewgtDim) {
     for (lno_t i=0; i < localNumObj; i++) {
       const gno_t globalRow = Ids[i];
-      size_t NumEntries = adjsPart->getNumEntriesInGlobalRow (globalRow);
+      size_t NumEntries = adjsMatrix->getNumEntriesInGlobalRow (globalRow);
       Indices.resize (NumEntries);
       Values.resize (NumEntries);
-      adjsPart->getGlobalRowCopy (globalRow,Indices(),Values(),NumEntries);
+      adjsMatrix->getGlobalRowCopy (globalRow,Indices(),Values(),NumEntries);
 
       for (size_t j=0; j < NumEntries; j++)
 	if (part[i] != Values[j])
@@ -945,18 +909,18 @@ template <typename Adapter>
     for (int edim = 0; edim < ewgtDim; edim++){
       for (lno_t i=0; i < localNumObj; i++) {
 	const gno_t globalRow = Ids[i];
-	size_t NumEntries = adjsPart->getNumEntriesInGlobalRow (globalRow);
+	size_t NumEntries = adjsMatrix->getNumEntriesInGlobalRow (globalRow);
 	Indices.resize (NumEntries);
 	Values.resize (NumEntries);
-	adjsPart->getGlobalRowCopy (globalRow,Indices(),Values(),NumEntries);
+	adjsMatrix->getGlobalRowCopy (globalRow,Indices(),Values(),NumEntries);
 
 	for (size_t j=0; j < NumEntries; j++)
 	  if (part[i] != Values[j])
-	    wgt[part[i]] = wgt[part[i]] + wgts[offsets[i] + j];
+	    wgt[part[i]] += wgts[edim][offsets[i] + j];
       }
       wgt += nparts;         // individual weights
     }
-    }*/
+  }
 
   //////////////////////////////////////////////////////////
   // Obtain global totals by part.
@@ -1055,8 +1019,9 @@ template <typename scalar_t, typename part_t>
   if (!psizes){
     scalar_t target = sumVals / targetNumParts;
     for (part_t p=0; p < numParts; p++){
-      scalar_t diff = abs(vals[p] - target);
-      scalar_t tmp = diff / target;
+      scalar_t diff = vals[p] - target;
+      scalar_t adiff = (diff >= 0 ? diff : -diff);
+      scalar_t tmp = adiff / target;
       avg += tmp;
       if (tmp > max) max = tmp;
       if (tmp < min) min = tmp;
@@ -1073,8 +1038,9 @@ template <typename scalar_t, typename part_t>
       if (psizes[p] > 0){
         if (p < numParts){
           scalar_t target = sumVals * psizes[p];
-          scalar_t diff = abs(vals[p] - target);
-          scalar_t tmp = diff / target;
+          scalar_t diff = vals[p] - target;
+          scalar_t adiff = (diff >= 0 ? diff : -diff);
+          scalar_t tmp = adiff / target;
           avg += tmp;
           if (tmp > max) max = tmp;
           if (tmp < min) min = tmp;
@@ -1156,7 +1122,7 @@ template <typename scalar_t, typename part_t>
   }
 
   double uniformSize = 1.0 / targetNumParts;
-  ArrayRCP<double> sizeVec(new double [numSizes], 0, numSizes, true);
+  std::vector<double> sizeVec(numSizes);
   for (int i=0; i < numSizes; i++){
     sizeVec[i] = uniformSize;
   }
@@ -1173,13 +1139,14 @@ template <typename scalar_t, typename part_t>
 
     // Vector of target amounts: T
 
-    for (int i=0; i < numSizes; i++)
+    double targetNorm = 0;
+    for (int i=0; i < numSizes; i++) {
       if (psizes[i].size() > 0)
         sizeVec[i] = psizes[i][p];
-
-    Epetra_SerialDenseVector target(View, sizeVec.getRawPtr(), numSizes);
-    target.Scale(sumVals);
-    double targetNorm = target.Norm2();
+      sizeVec[i] *= sumVals;
+      targetNorm += (sizeVec[i] * sizeVec[i]);
+    }
+    targetNorm = sqrt(targetNorm);
 
     // If part is supposed to be empty, we don't compute an
     // imbalance.  Same argument as above.
@@ -1188,15 +1155,18 @@ template <typename scalar_t, typename part_t>
 
       // Vector of actual amounts: A
 
-      Epetra_SerialDenseVector actual(numSizes);
-      for (int i=0; i < numSizes; i++)
+      std::vector<double> actual(numSizes);
+      double actualNorm = 0.;
+      for (int i=0; i < numSizes; i++) {
         actual[i] = vals[p] * -1.0;
+        actual[i] += sizeVec[i];
+        actualNorm += (actual[i] * actual[i]);
+      }
+      actualNorm = sqrt(actualNorm);
       
-      actual += target;
-
       //  |A - T| / |T|
 
-      scalar_t imbalance = actual.Norm2() / targetNorm;
+      scalar_t imbalance = actualNorm / targetNorm;
 
       if (imbalance < min)
         min = imbalance;
@@ -1236,9 +1206,12 @@ template <typename scalar_t, typename part_t>
  *   \param comm  The problem communicator.
  *   \param ia the InputAdapter object which corresponds to the Solution.
  *   \param solution the PartitioningSolution to be evaluated.
+ *   \param useDegreeAsWeight whether vertex degree is ever used as vertex
+ *           weight.
  *   \param mcNorm  is the multicriteria norm to use if the number of weights
  *           is greater than one.  See the multiCriteriaNorm enumerator for
  *           \c mcNorm values.
+ *   \param graphModel the graph model.
  *   \param numParts on return is the global number of parts in the solution
  *   \param numNonemptyParts on return is the global number of parts to which 
  *                                objects are assigned.
@@ -1264,8 +1237,10 @@ template <typename Adapter>
     const RCP<const Environment> &env,
     const RCP<const Comm<int> > &comm,
     multiCriteriaNorm mcNorm,
-    const RCP<const Adapter> &ia,
+    const RCP<const typename Adapter::base_adapter_t> &ia,
     const RCP<const PartitioningSolution<Adapter> > &solution,
+    bool useDegreeAsWeight,
+    const RCP<const GraphModel<typename Adapter::base_adapter_t> > &graphModel,
     typename Adapter::part_t &numParts,
     typename Adapter::part_t &numNonemptyParts,
     ArrayRCP<MetricValues<typename Adapter::scalar_t> > &metrics)
@@ -1273,8 +1248,10 @@ template <typename Adapter>
   env->debug(DETAILED_STATUS, "Entering objectMetrics");
 
   typedef typename Adapter::scalar_t scalar_t;
+  typedef typename Adapter::gno_t gno_t;
   typedef typename Adapter::lno_t lno_t;
   typedef typename Adapter::part_t part_t;
+  typedef typename Adapter::base_adapter_t base_adapter_t;
   typedef StridedData<lno_t, scalar_t> sdata_t;
 
   // Local number of objects.
@@ -1283,9 +1260,16 @@ template <typename Adapter>
 
   // Parts to which objects are assigned.
 
-  const part_t *parts = solution->getPartListView();
-  env->localInputAssertion(__FILE__, __LINE__, "parts not set", 
-    ((numLocalObjects == 0) || parts), BASIC_ASSERTION);
+  const part_t *parts;
+  if (solution != Teuchos::null) {
+    parts = solution->getPartListView();
+    env->localInputAssertion(__FILE__, __LINE__, "parts not set", 
+      ((numLocalObjects == 0) || parts), BASIC_ASSERTION);
+  } else {
+    part_t *procs = new part_t [numLocalObjects];
+    for (size_t i = 0; i < numLocalObjects; i++) procs[i] = comm->getRank();
+    parts = procs;
+  }
   ArrayView<const part_t> partArray(parts, numLocalObjects);
 
   // Weights, if any, for each object.
@@ -1300,12 +1284,33 @@ template <typename Adapter>
     weights[0] = sdata_t();
   }
   else{
-    for (int i=0; i < nWeights; i++){
-      int stride;
-      const scalar_t *wgt;
-      ia->getWeightsView(wgt, stride, i); 
-      ArrayRCP<const scalar_t> wgtArray(wgt, 0, stride*numLocalObjects, false);
-      weights[i] = sdata_t(wgtArray, stride);
+    if (useDegreeAsWeight) {
+      ArrayView<const gno_t> Ids;
+      ArrayView<sdata_t> vwgts;
+      if (graphModel == Teuchos::null) {
+	std::bitset<NUM_MODEL_FLAGS> modelFlags;
+	RCP<GraphModel<base_adapter_t> > graph;
+	graph = rcp(new GraphModel<base_adapter_t>(ia, env, comm, modelFlags));
+	graph->getVertexList(Ids, vwgts);
+      } else {
+	graphModel->getVertexList(Ids, vwgts);
+      }
+      scalar_t *wgt = new scalar_t[numLocalObjects];
+      for (int i=0; i < nWeights; i++){
+	for (size_t j=0; j < numLocalObjects; j++) {
+	  wgt[j] = vwgts[i][j];
+	}
+	ArrayRCP<const scalar_t> wgtArray(wgt,0,numLocalObjects,false);
+	weights[i] = sdata_t(wgtArray, 1);
+      }
+    } else {
+      for (int i=0; i < nWeights; i++){
+	const scalar_t *wgt;
+	int stride;
+	ia->getWeightsView(wgt, stride, i); 
+	ArrayRCP<const scalar_t> wgtArray(wgt,0,stride*numLocalObjects,false);
+	weights[i] = sdata_t(wgtArray, stride);
+      }
     }
   }
 
@@ -1369,7 +1374,7 @@ template <typename Adapter>
       numCriteria, partSizes.view(0, numCriteria),
       metrics[1].getGlobalSum(), wgts,
       min, max, avg);
-  
+
     metrics[1].setMinImbalance(1.0 + min);
     metrics[1].setMaxImbalance(1.0 + max);
     metrics[1].setAvgImbalance(1.0 + avg);
@@ -1428,6 +1433,30 @@ template <typename scalar_t, typename part_t>
   os << std::endl;
 }
 
+/*! \brief Print out a header and the values for a list of graph metrics.
+ */
+
+template <typename scalar_t, typename part_t>
+  void printMetrics( std::ostream &os,
+    part_t targetNumParts, part_t numParts, 
+    const ArrayView<GraphMetricValues<scalar_t> > &infoList)
+{
+  os << "NUMBER OF PARTS IS " << numParts;
+  os << std::endl;
+  if (targetNumParts != numParts)
+    os << "TARGET NUMBER OF PARTS IS " << targetNumParts << std::endl;
+
+  std::string unset("unset");
+
+  GraphMetricValues<scalar_t>::printHeader(os);
+
+  for (int i=0; i < infoList.size(); i++)
+    if (infoList[i].getName() != unset)
+      infoList[i].printLine(os);
+
+  os << std::endl;
+}
+
 /*! \brief Print out a header and the values for a single metric.
  */
 
@@ -1440,6 +1469,17 @@ template <typename scalar_t, typename part_t>
   printMetrics( os, targetNumParts, numParts, numNonemptyParts, infoList);
 }
 
+/*! \brief Print out a header and the values for a single metric.
+ */
+
+template <typename scalar_t, typename part_t>
+  void printMetrics( std::ostream &os,
+    part_t targetNumParts, part_t numParts, 
+    const GraphMetricValues<scalar_t> &info)
+{
+  ArrayView<GraphMetricValues<scalar_t> > infoList(&info, 1);
+  printMetrics( os, targetNumParts, numParts, infoList);
+}
 
 /*! \brief Compute the norm of the vector of weights.
  */

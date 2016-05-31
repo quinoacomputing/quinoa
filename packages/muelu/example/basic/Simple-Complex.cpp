@@ -48,6 +48,8 @@
 
 #include <Teuchos_StandardCatchMacros.hpp>
 
+#include "Kokkos_DefaultNode.hpp"  // points to FakeKokkos if epetra only
+
 // MueLu main header: include most common header files in one line
 #include "MueLu.hpp"
 #include "MueLu_FactoryManager.hpp"
@@ -82,8 +84,10 @@ int main(int argc, char *argv[]) {
     // this example require Tpetra+Ifpack2+Amesos2 or Epetra+Ifpack+Amesos
 #if   defined(HAVE_MUELU_TPETRA) && defined(HAVE_MUELU_IFPACK2) && defined(HAVE_MUELU_AMESOS2)
     Xpetra::UnderlyingLib lib = Xpetra::UseTpetra;
+    typedef KokkosClassic::DefaultNode::DefaultNodeType Node;
 #elif defined(HAVE_MUELU_EPETRA) && defined(HAVE_MUELU_IFPACK)  && defined(HAVE_MUELU_AMESOS)
     Xpetra::UnderlyingLib lib = Xpetra::UseEpetra;
+    typedef Kokkos::Compat::KokkosSerialWrapperNode Node;  // for Epetra we just use the serial node.
 #endif
 
     //
@@ -147,8 +151,8 @@ int main(int argc, char *argv[]) {
     // Solve Ax = b
     //
 
-    RCP<Xpetra::Vector<Scalar, LocalOrdinal, GlobalOrdinal> > X = Xpetra::VectorFactory<Scalar, LocalOrdinal, GlobalOrdinal>::Build(map);
-    RCP<Xpetra::Vector<Scalar, LocalOrdinal, GlobalOrdinal> > B = Xpetra::VectorFactory<Scalar, LocalOrdinal, GlobalOrdinal>::Build(map);
+    RCP<Xpetra::Vector<Scalar, LocalOrdinal, GlobalOrdinal, Node> > X = Xpetra::VectorFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::Build(map);
+    RCP<Xpetra::Vector<Scalar, LocalOrdinal, GlobalOrdinal, Node> > B = Xpetra::VectorFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::Build(map);
 
     X->putScalar((Scalar) 0.0);
     B->setSeed(846930886); B->randomize();
@@ -161,7 +165,7 @@ int main(int argc, char *argv[]) {
 
     // Print relative residual norm
     typedef Teuchos::ScalarTraits<Scalar> ST;
-    ST::magnitudeType residualNorms = MueLu::Utils<Scalar, LocalOrdinal, GlobalOrdinal>::ResidualNorm(*A, *X, *B)[0];
+    ST::magnitudeType residualNorms = MueLu::Utilities<Scalar, LocalOrdinal, GlobalOrdinal>::ResidualNorm(*A, *X, *B)[0];
     if (comm->getRank() == 0)
       std::cout << "||Residual|| = " << residualNorms << std::endl;
 

@@ -52,7 +52,22 @@
 #include <Kokkos_DefaultNode.hpp>
 #include <Teuchos_Describable.hpp>
 
+#ifdef HAVE_XPETRA_EPETRA
+#include "Epetra_config.h"
+#endif
+
 namespace Xpetra {
+
+  // TODO move this typedef to another place
+  // Node which is used for Epetra. This can be either the
+  // Serial node or OpenMP node (but not both)
+#ifdef HAVE_XPETRA_EPETRA
+# ifdef EPETRA_HAVE_OMP
+  typedef Kokkos::Compat::KokkosOpenMPWrapperNode EpetraNode;
+# else
+  typedef Kokkos::Compat::KokkosSerialWrapperNode EpetraNode;
+# endif
+#endif
 
   enum UnderlyingLib {
     UseEpetra,
@@ -193,8 +208,7 @@ namespace Xpetra {
     // need to understand the type of underlying matrix. But in src/Map we have no knowledge of StridedMaps, so
     // we cannot check for it by casting. This function allows us to avoid the restriction, as StridedMap redefines
     // it to return the base map.
-    virtual RCP<const Map> getMap() const { return rcpFromRef(*this); }
-
+    virtual RCP<const Xpetra::Map<LocalOrdinal, GlobalOrdinal, Node> > getMap() const { return rcpFromRef(*this); }
 
     //@}
 

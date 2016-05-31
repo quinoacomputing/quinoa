@@ -95,7 +95,7 @@ private:
   
   void setMPIComm(const RCP<const Comm<int> > &problemComm__) {
 #   ifdef HAVE_ZOLTAN2_MPI
-      mpicomm = TeuchosConst2MPI(problemComm__);
+      mpicomm = Teuchos::getRawMpiComm(*problemComm__);
 #   else
       mpicomm = MPI_COMM_WORLD;  // taken from siMPI
 #   endif
@@ -118,6 +118,12 @@ private:
     adapter->getPartsView(myparts);
     if (myparts != NULL)
       zz->Set_Part_Multi_Fn(zoltanParts<Adapter>, (void *) &(*adapter));
+
+    char tmp[4];
+    sprintf(tmp, "%d", TPL_Traits<ZOLTAN_ID_PTR, gno_t>::NUM_ID);
+    zz->Set_Param("NUM_GID_ENTRIES", tmp);
+    sprintf(tmp, "%d", TPL_Traits<ZOLTAN_ID_PTR, lno_t>::NUM_ID);
+    zz->Set_Param("NUM_LID_ENTRIES", tmp);
   }
 
   template <typename AdapterWithCoords>
@@ -157,14 +163,14 @@ private:
     // TODO:  If add parameter list to this function, can register 
     // TODO:  different callbacks depending on the hypergraph model to use
 
-    zz->Set_HG_Size_CS_Fn(zoltanHGSizeCSForMatrixAdapter<Adapter>,
+    zz->Set_HG_Size_CS_Fn(zoltanHGSizeCS_withMatrixAdapter<Adapter>,
                           (void *) &(*adp));
-    zz->Set_HG_CS_Fn(zoltanHGCSForMatrixAdapter<Adapter>,
+    zz->Set_HG_CS_Fn(zoltanHGCS_withMatrixAdapter<Adapter>,
                      (void *) &(*adp));
 
-    // zz->Set_HG_Size_Edge_Wts_Fn(zoltanHGSizeEdgeWtsForMatrixAdapter<Adapter>,
+    // zz->Set_HG_Size_Edge_Wts_Fn(zoltanHGSizeEdgeWts_withMatrixAdapter<Adapter>,
     //                             (void *) &(*adapter));
-    // zz->Set_HG_Edge_Wts_Fn(zoltanHGSizeEdgeWtsForMatrixAdapter<Adapter>,
+    // zz->Set_HG_Edge_Wts_Fn(zoltanHGSizeEdgeWts_withMatrixAdapter<Adapter>,
     //                             (void *) &(*adapter));
   }
 
@@ -187,24 +193,22 @@ private:
                                                           HYPEREDGE_CENTRIC);
       model = rcp(static_cast<const Model<Adapter>* >(mdl),true);
       
-      zz->Set_Num_Obj_Fn(zoltanHGModelNumObj<Adapter>, (void *) &(*mdl));
-      zz->Set_Obj_List_Fn(zoltanHGModelObjList<Adapter>, (void *) &(*mdl));
+      zz->Set_Num_Obj_Fn(zoltanHGNumObj_withModel<Adapter>, (void *) &(*mdl));
+      zz->Set_Obj_List_Fn(zoltanHGObjList_withModel<Adapter>, (void *) &(*mdl));
       
-      zz->Set_HG_Size_CS_Fn(zoltanHGModelSizeCSForMeshAdapter<Adapter>,
-                            (void *) &(*mdl));
-      zz->Set_HG_CS_Fn(zoltanHGModelCSForMeshAdapter<Adapter>,
-                       (void *) &(*mdl));
+      zz->Set_HG_Size_CS_Fn(zoltanHGSizeCS_withModel<Adapter>, (void *) &(*mdl));
+      zz->Set_HG_CS_Fn(zoltanHGCS_withModel<Adapter>, (void *) &(*mdl));
     }
     else {
       //If entities are unique we dont need the extra cost of the model
-      zz->Set_HG_Size_CS_Fn(zoltanHGSizeCSForMeshAdapter<Adapter>,
+      zz->Set_HG_Size_CS_Fn(zoltanHGSizeCS_withMeshAdapter<Adapter>,
                             (void *) &(*adp));
-      zz->Set_HG_CS_Fn(zoltanHGCSForMeshAdapter<Adapter>,
+      zz->Set_HG_CS_Fn(zoltanHGCS_withMeshAdapter<Adapter>,
                        (void *) &(*adp));
     }
-    // zz->Set_HG_Size_Edge_Wts_Fn(zoltanHGSizeEdgeWtsForMeshAdapter<Adapter>,
+    // zz->Set_HG_Size_Edge_Wts_Fn(zoltanHGSizeEdgeWts_withMeshAdapter<Adapter>,
     //                               (void *) &(*adp));
-    // zz->Set_HG_Edge_Wts_Fn(zoltanHGSizeEdgeWtsForMeshAdapter<Adapter>,
+    // zz->Set_HG_Edge_Wts_Fn(zoltanHGSizeEdgeWts_withMeshAdapter<Adapter>,
     //                         (void *) &(*adp));
   }
   
@@ -356,7 +360,9 @@ void AlgZoltan<Adapter>::partition(
 
   // Make the call to LB_Partition
   int changed = 0;
-  int nGidEnt = 1, nLidEnt = 1;
+  int nGidEnt = TPL_Traits<ZOLTAN_ID_PTR,gno_t>::NUM_ID;
+  int nLidEnt = TPL_Traits<ZOLTAN_ID_PTR,lno_t>::NUM_ID;
+
   int nDummy = -1;                         // Dummy vars to satisfy arglist
   ZOLTAN_ID_PTR dGids = NULL, dLids = NULL;
   int *dProcs = NULL, *dParts = NULL;
@@ -366,6 +372,7 @@ void AlgZoltan<Adapter>::partition(
 
   zz->Set_Param("RETURN_LISTS", "PARTS");  // required format for Zoltan2;
                                            // results in last five arguments
+
   int ierr = zz->LB_Partition(changed, nGidEnt, nLidEnt,
                               nDummy, dGids, dLids, dProcs, dParts,
                               nObj,   oGids, oLids, oProcs, oParts);
@@ -374,22 +381,29 @@ void AlgZoltan<Adapter>::partition(
     (ierr==ZOLTAN_OK || ierr==ZOLTAN_WARN), BASIC_ASSERTION, problemComm);
 
   int numObjects=nObj;
-  //The number of objects may be larger than zoltan knows due to copies that were removed by the hypergraph model
+  // The number of objects may be larger than zoltan knows due to copies that 
+  // were removed by the hypergraph model
   if (model!=RCP<const Model<Adapter> >() &&
       dynamic_cast<const HyperGraphModel<Adapter>* >(&(*model)) &&
-      !dynamic_cast<const HyperGraphModel<Adapter>* >(&(*model))->areVertexIDsUnique()) {
+      !(dynamic_cast<const HyperGraphModel<Adapter>* >(&(*model))->areVertexIDsUnique())) {
     numObjects=model->getLocalNumObjects();
   }
 
   // Load answer into the solution.
   ArrayRCP<part_t> partList(new part_t[numObjects], 0, numObjects, true);
-  for (int i = 0; i < nObj; i++) partList[oLids[i]] = oParts[i];
+  for (int i = 0; i < nObj; i++) {
+    lno_t tmp;
+    TPL_Traits<lno_t, ZOLTAN_ID_PTR>::ASSIGN_TPL_T(tmp, &(oLids[i*nLidEnt]));
+    partList[tmp] = oParts[i];
+  }
   
   if (model!=RCP<const Model<Adapter> >() &&
       dynamic_cast<const HyperGraphModel<Adapter>* >(&(*model)) &&
-      !dynamic_cast<const HyperGraphModel<Adapter>* >(&(*model))->areVertexIDsUnique()) {
-    //Setup the part ids for copied entities removed by ownership in hypergraph model.
-    const HyperGraphModel<Adapter>* mdl = static_cast<const HyperGraphModel<Adapter>* >(&(*model));
+      !(dynamic_cast<const HyperGraphModel<Adapter>* >(&(*model))->areVertexIDsUnique())) {
+    // Setup the part ids for copied entities removed by ownership in 
+    // hypergraph model.
+    const HyperGraphModel<Adapter>* mdl = 
+                    static_cast<const HyperGraphModel<Adapter>* >(&(*model));
     
     typedef typename HyperGraphModel<Adapter>::map_t map_t;
     Teuchos::RCP<const map_t> mapWithCopies;
@@ -414,7 +428,6 @@ void AlgZoltan<Adapter>::partition(
     lno_t nlocal = lno_t(mapWithCopies->getNodeNumElements());
     for (lno_t i = 0; i < nlocal; i++)
       partList[i] = vecWithCopies.getData()[i];
-
   }
   
   solution->setParts(partList);

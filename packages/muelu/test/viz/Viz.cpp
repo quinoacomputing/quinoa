@@ -52,6 +52,7 @@
 
 #include <Xpetra_MultiVectorFactory.hpp>
 #include <Xpetra_ImportFactory.hpp>
+#include <Xpetra_IO.hpp>
 
 // Galeri
 #include <Galeri_XpetraParameters.hpp>
@@ -209,10 +210,10 @@ int main(int argc, char *argv[]) {
       if (matrixType == "Elasticity3D")
         map = Xpetra::MapFactory<LO,GO,Node>::Build(map, 3);
 
-      galeriStream << "Processor subdomains in x direction: " << galeriList.get<int>("mx") << std::endl
-        << "Processor subdomains in y direction: " << galeriList.get<int>("my") << std::endl
-        << "Processor subdomains in z direction: " << galeriList.get<int>("mz") << std::endl
-        << "========================================================" << std::endl;
+      galeriStream << "Processor subdomains in x direction: " << galeriList.get<GO>("mx") << std::endl
+                   << "Processor subdomains in y direction: " << galeriList.get<GO>("my") << std::endl
+                   << "Processor subdomains in z direction: " << galeriList.get<GO>("mz") << std::endl
+                   << "========================================================" << std::endl;
 
       if (matrixType == "Elasticity2D" || matrixType == "Elasticity3D") {
         // Our default test case for elasticity: all boundaries of a square/cube have Neumann b.c. except left which has Dirichlet
@@ -235,19 +236,19 @@ int main(int argc, char *argv[]) {
 
     } else {
       if (!mapFile.empty())
-        map = Utils2::ReadMap(mapFile, lib, comm);
+        map = Xpetra::IO<SC,LO,GO,Node>::ReadMap(mapFile, lib, comm);
       comm->barrier();
 
       const bool binaryFormat = false;
 
       if (!binaryFormat && !map.is_null()) {
-        RCP<const Map> colMap    = (!colMapFile.empty()    ? Utils2::ReadMap(colMapFile,    lib, comm) : Teuchos::null);
-        RCP<const Map> domainMap = (!domainMapFile.empty() ? Utils2::ReadMap(domainMapFile, lib, comm) : Teuchos::null);
-        RCP<const Map> rangeMap  = (!rangeMapFile.empty()  ? Utils2::ReadMap(rangeMapFile,  lib, comm) : Teuchos::null);
-        A = Utils::Read(matrixFile, map, colMap, domainMap, rangeMap);
+        RCP<const Map> colMap    = (!colMapFile.empty()    ? Xpetra::IO<SC,LO,GO,Node>::ReadMap(colMapFile,    lib, comm) : Teuchos::null);
+        RCP<const Map> domainMap = (!domainMapFile.empty() ? Xpetra::IO<SC,LO,GO,Node>::ReadMap(domainMapFile, lib, comm) : Teuchos::null);
+        RCP<const Map> rangeMap  = (!rangeMapFile.empty()  ? Xpetra::IO<SC,LO,GO,Node>::ReadMap(rangeMapFile,  lib, comm) : Teuchos::null);
+        A = Xpetra::IO<SC,LO,GO,Node>::Read(matrixFile, map, colMap, domainMap, rangeMap);
 
       } else {
-        A = Utils::Read(matrixFile, lib, comm, binaryFormat);
+        A = Xpetra::IO<SC,LO,GO,Node>::Read(matrixFile, lib, comm, binaryFormat);
 
         if (!map.is_null()) {
           RCP<Matrix> newMatrix = MatrixFactory::Build(map, 1);
@@ -265,11 +266,11 @@ int main(int argc, char *argv[]) {
       if (!coordFile.empty()) {
         // NOTE: currently we only allow reading scalar matrices, thus coordinate
         // map is same as matrix map
-        coordinates = Utils2::ReadMultiVector(coordFile, map);
+        coordinates = Xpetra::IO<SC,LO,GO,Node>::ReadMultiVector(coordFile, map);
       }
 
       if (!nullFile.empty())
-        nullspace = Utils2::ReadMultiVector(nullFile, map);
+        nullspace = Xpetra::IO<SC,LO,GO,Node>::ReadMultiVector(nullFile, map);
     }
 
     comm->barrier();
@@ -395,7 +396,7 @@ int main(int argc, char *argv[]) {
 
         {
           // we set seed for reproducibility
-          Utils::SetRandomSeed(*comm);
+          Utilities::SetRandomSeed(*comm);
           X->randomize();
           A->apply(*X, *B, Teuchos::NO_TRANS, one, zero);
 

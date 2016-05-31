@@ -45,17 +45,12 @@
 // @HEADER
 
 
-#include "MueLu_ExplicitInstantiation.hpp"
 
 #include "MueLu_ParameterListInterpreter_def.hpp"
 
-#include "TpetraCore_ETIHelperMacros.h"
+#define MUELU_ETI_GROUP(SC,LO,GO,NO) \
+  template class MueLu::ParameterListInterpreter<SC,LO,GO,NO>;
 
-#define MUELU_LOCAL_INSTANT(S,LO,GO,N) \
-        template class MueLu::ParameterListInterpreter<S,LO,GO,N>;
-
-TPETRA_ETI_MANGLING_TYPEDEFS()
-
-TPETRA_INSTANTIATE_SLGN_NO_ORDINAL_SCALAR(MUELU_LOCAL_INSTANT)
+#include "MueLu_ETI_4arg.hpp"
 
 

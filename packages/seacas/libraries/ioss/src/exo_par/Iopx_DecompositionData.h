@@ -344,6 +344,8 @@ namespace Iopx {
 
       void simple_decompose(const std::string &method,
                             const std::vector<INT> &element_dist);
+      void simple_node_decompose(const std::string &method,
+				 const std::vector<INT> &node_dist);
 
       template <typename T>
       int handle_sset_df(int exodusId, ex_entity_id id, const Ioss::Field& field, T *ioss_data) const ;
@@ -378,7 +380,6 @@ namespace Iopx {
 
       void build_global_to_local_elem_map();
       void get_element_block_communication(size_t num_elem_block);
-      void get_element_block_counts(size_t num_elem_block);
 
       void generate_adjacency_list(int exodusId, std::vector<INT> &pointer, std::vector<INT> &adjacency, size_t block_count);
 

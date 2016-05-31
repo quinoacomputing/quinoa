@@ -87,36 +87,35 @@ TRIBITS_REPOSITORY_DEFINE_PACKAGES(
   AztecOO               packages/aztecoo                  PS
   Galeri                packages/galeri                   PS
   Amesos                packages/amesos                   PS
-  Amesos2               packages/amesos2                  SS
   Pamgen                packages/pamgen                   PS
-  SEACAS                packages/seacas                   SS # Depends on netcdf, optionally hdf5, xdmf, pamgen
-  Trios                 packages/trios                    EX #temporary
+  Zoltan2               packages/zoltan2                  SS
   Ifpack                packages/ifpack                   PS
-  Komplex               packages/komplex                  PS
   ML                    packages/ml                       PS
   Belos                 packages/belos                    PS
-  Anasazi               packages/anasazi                  PS
-  Zoltan2               packages/zoltan2                  SS
-  Ifpack2               packages/ifpack2                  PS
   ShyLU                 packages/shylu                    SS
+  Amesos2               packages/amesos2                  SS
+  SEACAS                packages/seacas                   SS # Depends on netcdf, optionally hdf5, xdmf, pamgen
+  Trios                 packages/trios                    EX #temporary
+  Komplex               packages/komplex                  PS
+  Anasazi               packages/anasazi                  PS
+  Ifpack2               packages/ifpack2                  PS
   Stratimikos           packages/stratimikos              PS
   FEI                   packages/fei                      PS
   Teko                  packages/teko                     SS
   TriKota               packages/TriKota                  SS
   Intrepid              packages/intrepid                 PS
+  Intrepid2             packages/intrepid2                SS
   STK                   packages/stk                      SS # Depends on boost
   SCORECapf_zoltan      SCOREC/zoltan                     SS
   SCORECapf_stk         SCOREC/stk                        SS
   SCORECma              SCOREC/ma                         SS
   SCOREC                SCOREC                            SS
   Phalanx               packages/phalanx                  SS
-  Phdmesh               packages/phdmesh                  EX # to be replaced by STK
   NOX                   packages/nox                      PS
   Moertel               packages/moertel                  PS
   MueLu                 packages/muelu                    SS
   Rythmos               packages/rythmos                  PS
   MOOCHO                packages/moocho                   PS
-  Aristos               packages/aristos                  EX
   Stokhos               packages/stokhos                  SS
   ROL                   packages/rol                      SS
   Piro                  packages/piro                     SS
@@ -126,14 +125,13 @@ TRIBITS_REPOSITORY_DEFINE_PACKAGES(
   ForTrilinos           packages/ForTrilinos              EX
   PyTrilinos            packages/PyTrilinos               SS
   WebTrilinos           packages/WebTrilinos              EX # Should be SS
-  Didasko               packages/didasko                  SS
   NewPackage            packages/new_package              EX # Should be SS
   Optika		packages/optika		          EX
   Mesquite              packages/mesquite                 PS
   MeshingGenie          packages/meshinggenie             EX
   TrilinosCouplings     packages/trilinoscouplings        SS
   Pike                  packages/pike                     SS
-  FEApp                 demos/FEApp                       SS # Capability demonstration package
+  xSDKTrilinos          packages/xSDKTrilinos             SS
   )
 
 # Allow builds even if some packages are missing
@@ -148,6 +146,14 @@ TRIBITS_ALLOW_MISSING_EXTERNAL_PACKAGES(SCORECspr)
 TRIBITS_ALLOW_MISSING_EXTERNAL_PACKAGES(SCORECapf_stk)
 TRIBITS_ALLOW_MISSING_EXTERNAL_PACKAGES(SCORECapf_zoltan)
 TRIBITS_ALLOW_MISSING_EXTERNAL_PACKAGES(SCORECma)
+TRIBITS_ALLOW_MISSING_EXTERNAL_PACKAGES(MOOCHO)
+TRIBITS_ALLOW_MISSING_EXTERNAL_PACKAGES(Optika)
+TRIBITS_ALLOW_MISSING_EXTERNAL_PACKAGES(Sundance)
+TRIBITS_ALLOW_MISSING_EXTERNAL_PACKAGES(Mesquite)
+TRIBITS_ALLOW_MISSING_EXTERNAL_PACKAGES(CTrilinos)
+TRIBITS_ALLOW_MISSING_EXTERNAL_PACKAGES(ForTrilinos)
+TRIBITS_ALLOW_MISSING_EXTERNAL_PACKAGES(WebTrilinos)
+TRIBITS_ALLOW_MISSING_EXTERNAL_PACKAGES(xSDKTrilinos)
 
 #
 # Disable certain packages on certain platforms.
@@ -159,7 +165,6 @@ TRIBITS_ALLOW_MISSING_EXTERNAL_PACKAGES(SCORECma)
 
 TRIBITS_DISABLE_PACKAGE_ON_PLATFORMS(MOOCHO Windows)
 TRIBITS_DISABLE_PACKAGE_ON_PLATFORMS(Phalanx Windows)
-TRIBITS_DISABLE_PACKAGE_ON_PLATFORMS(Phdmesh Windows)
 TRIBITS_DISABLE_PACKAGE_ON_PLATFORMS(PyTrilinos Windows)
 TRIBITS_DISABLE_PACKAGE_ON_PLATFORMS(Sundance Windows)
 TRIBITS_DISABLE_PACKAGE_ON_PLATFORMS(Tpetra Windows)
@@ -175,5 +180,4 @@ TRIBITS_DISABLE_PACKAGE_ON_PLATFORMS(Isorropia Windows)
 TRIBITS_DISABLE_PACKAGE_ON_PLATFORMS(Teko Windows)
 TRIBITS_DISABLE_PACKAGE_ON_PLATFORMS(Mesquite AIX)
 TRIBITS_DISABLE_PACKAGE_ON_PLATFORMS(Trios Windows)
-TRIBITS_DISABLE_PACKAGE_ON_PLATFORMS(Xpetra Windows)
 TRIBITS_DISABLE_PACKAGE_ON_PLATFORMS(Panzer Windows)

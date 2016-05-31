@@ -85,10 +85,6 @@
 #include <Ifpack2_Details_Amesos2Wrapper.hpp>
 #include <iostream>
 
-#if defined(HAVE_IFPACK2_QD) && !defined(HAVE_TPETRA_EXPLICIT_INSTANTIATION)
-#include <qd/dd_real.h>
-#endif
-
 #include <Ifpack2_UnitTestHelpers.hpp>
 
 namespace {
@@ -105,7 +101,6 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL(Ifpack2Amesos2Wrapper, Test0, Scalar, LocalOrd
   typedef Tpetra::Map<LocalOrdinal,GlobalOrdinal,Node> map_type;
   typedef Tpetra::CrsMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> crs_matrix_type;
   typedef Tpetra::RowMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> row_matrix_type;
-  typedef Tpetra::MultiVector<Scalar,LocalOrdinal,GlobalOrdinal,Node> mv_type;
 
   std::string version = Ifpack2::Version();
   out << "Ifpack2::Version(): " << version << std::endl;
@@ -141,6 +136,7 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL(Ifpack2Amesos2Wrapper, Test0, Scalar, LocalOrd
   TEST_NOTHROW(prec.initialize());
   prec.compute();
 
+  typedef Tpetra::MultiVector<Scalar,LocalOrdinal,GlobalOrdinal,Node> mv_type;
   mv_type x (rowmap,2), y (rowmap,2);
   x.putScalar (Teuchos::ScalarTraits<Scalar>::one ());
 
@@ -165,7 +161,6 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL(Ifpack2Amesos2Wrapper, Test1, Scalar, LocalOrd
   typedef Tpetra::Map<LocalOrdinal,GlobalOrdinal,Node> map_type;
   typedef Tpetra::CrsMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> crs_matrix_type;
   typedef Tpetra::RowMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> row_matrix_type;
-  typedef Tpetra::MultiVector<Scalar,LocalOrdinal,GlobalOrdinal,Node> mv_type;
 
   std::string version = Ifpack2::Version();
   out << "Ifpack2::Version(): " << version << std::endl;
@@ -191,6 +186,7 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL(Ifpack2Amesos2Wrapper, Test1, Scalar, LocalOrd
   TEST_NOTHROW(prec.initialize());
   prec.compute();
 
+  typedef Tpetra::MultiVector<Scalar,LocalOrdinal,GlobalOrdinal,Node> mv_type;
   mv_type x(rowmap,2), y(rowmap,2);
   x.putScalar (Teuchos::ScalarTraits<Scalar>::one ());
 
@@ -211,16 +207,23 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL(Ifpack2Amesos2Wrapper, Test1, Scalar, LocalOrd
   TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT( Ifpack2Amesos2Wrapper, Test0, Scalar, LocalOrdinal,GlobalOrdinal) \
   TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT( Ifpack2Amesos2Wrapper, Test1, Scalar, LocalOrdinal,GlobalOrdinal)
 
-//typedef std::complex<double> ComplexDouble;
-//UNIT_TEST_GROUP_SCALAR_ORDINAL(ComplexDouble, int, int)
-UNIT_TEST_GROUP_SCALAR_ORDINAL(double, int, int)
-#ifndef HAVE_IFPACK2_EXPLICIT_INSTANTIATION
-UNIT_TEST_GROUP_SCALAR_ORDINAL(float, short, int)
-#endif
+// mfh 21 Oct 2015: This class was only getting tested for Scalar =
+// double, LocalOrdinal = int, GlobalOrdinal = int, and the default
+// Node type.  As part of the fix for Bug 6358, I'm removing the
+// assumption that GlobalOrdinal = int exists.
 
-#if defined(HAVE_IFPACK2_QD) && !defined(HAVE_TPETRA_EXPLICIT_INSTANTIATION)
-UNIT_TEST_GROUP_SCALAR_ORDINAL(dd_real, int, int)
-#endif
+typedef Tpetra::MultiVector<>::scalar_type default_scalar_type;
+typedef Tpetra::MultiVector<>::local_ordinal_type default_local_ordinal_type;
+typedef Tpetra::MultiVector<>::global_ordinal_type default_global_ordinal_type;
+
+UNIT_TEST_GROUP_SCALAR_ORDINAL( default_scalar_type, default_local_ordinal_type, default_global_ordinal_type )
+
+// //typedef std::complex<double> ComplexDouble;
+// //UNIT_TEST_GROUP_SCALAR_ORDINAL(ComplexDouble, int, int)
+// UNIT_TEST_GROUP_SCALAR_ORDINAL(double, int, int)
+// #ifndef HAVE_IFPACK2_EXPLICIT_INSTANTIATION
+// UNIT_TEST_GROUP_SCALAR_ORDINAL(float, short, int)
+// #endif
 
 } // namespace (anonymous)
 

@@ -128,6 +128,7 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL( ThyraBlockedOperator, ThyraVectorSpace2Xpetra
 
   // TPetra version
 #ifdef HAVE_XPETRA_TPETRA
+#ifdef HAVE_XPETRA_TPETRA_INST_INT_INT // test only if LO=GO=int active
   {
     Teuchos::RCP<const Xpetra::Map<LO,GO,Node> > map = Xpetra::MapFactory<LO,GO,Node>::Build(Xpetra::UseTpetra, 1000, 0, comm);
     TEST_EQUALITY(Teuchos::is_null(map),false);
@@ -146,6 +147,7 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL( ThyraBlockedOperator, ThyraVectorSpace2Xpetra
     TEST_EQUALITY(xMap->isCompatible(*map),true);
     TEST_EQUALITY(xMap->isSameAs(*map),true);
   }
+#endif
 #endif
 
   // Epetra version
@@ -182,12 +184,16 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL( ThyraBlockedOperator, ThyraOperator2XpetraCrs
 
   // TPetra version
 #ifdef HAVE_XPETRA_TPETRA
+#ifdef HAVE_XPETRA_TPETRA_INST_INT_INT // only if LO=GO=int enabled
   libs.push_back(Xpetra::UseTpetra);
+  std::cout << "Test Tpetra" << std::endl;
+#endif
 #endif
 
   // Epetra version
 #ifdef HAVE_XPETRA_EPETRA
   libs.push_back(Xpetra::UseEpetra);
+  std::cout << "Test Epetra" << std::endl;
 #endif
 
   typedef Xpetra::Map<LO, GO, Node> MapClass;
@@ -294,16 +300,16 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL( ThyraBlockedOperator, ThyraBlockedOperator2Xp
   TEST_EQUALITY(SplitMatrix2x2(fullA,*velmap,*premap,A11,A12,A21,A22),true);
 
   // build Xpetra objects from Epetra_CrsMatrix objects
-  Teuchos::RCP<Xpetra::CrsMatrix<Scalar,LO,GO,Node> > xfuA = Teuchos::rcp(new Xpetra::EpetraCrsMatrix(fullA));
-  Teuchos::RCP<Xpetra::CrsMatrix<Scalar,LO,GO,Node> > xA11 = Teuchos::rcp(new Xpetra::EpetraCrsMatrix(A11));
-  Teuchos::RCP<Xpetra::CrsMatrix<Scalar,LO,GO,Node> > xA12 = Teuchos::rcp(new Xpetra::EpetraCrsMatrix(A12));
-  Teuchos::RCP<Xpetra::CrsMatrix<Scalar,LO,GO,Node> > xA21 = Teuchos::rcp(new Xpetra::EpetraCrsMatrix(A21));
-  Teuchos::RCP<Xpetra::CrsMatrix<Scalar,LO,GO,Node> > xA22 = Teuchos::rcp(new Xpetra::EpetraCrsMatrix(A22));
+  Teuchos::RCP<Xpetra::CrsMatrix<Scalar,LO,GO,Node> > xfuA = Teuchos::rcp(new Xpetra::EpetraCrsMatrixT<GO,Node>(fullA));
+  Teuchos::RCP<Xpetra::CrsMatrix<Scalar,LO,GO,Node> > xA11 = Teuchos::rcp(new Xpetra::EpetraCrsMatrixT<GO,Node>(A11));
+  Teuchos::RCP<Xpetra::CrsMatrix<Scalar,LO,GO,Node> > xA12 = Teuchos::rcp(new Xpetra::EpetraCrsMatrixT<GO,Node>(A12));
+  Teuchos::RCP<Xpetra::CrsMatrix<Scalar,LO,GO,Node> > xA21 = Teuchos::rcp(new Xpetra::EpetraCrsMatrixT<GO,Node>(A21));
+  Teuchos::RCP<Xpetra::CrsMatrix<Scalar,LO,GO,Node> > xA22 = Teuchos::rcp(new Xpetra::EpetraCrsMatrixT<GO,Node>(A22));
 
   // build map extractor
-  Teuchos::RCP<Xpetra::EpetraMap> xfullmap = Teuchos::rcp(new Xpetra::EpetraMap(fullmap));
-  Teuchos::RCP<Xpetra::EpetraMap> xvelmap  = Teuchos::rcp(new Xpetra::EpetraMap(velmap ));
-  Teuchos::RCP<Xpetra::EpetraMap> xpremap  = Teuchos::rcp(new Xpetra::EpetraMap(premap ));
+  Teuchos::RCP<Xpetra::EpetraMapT<GO,Node> > xfullmap = Teuchos::rcp(new Xpetra::EpetraMapT<GO,Node>(fullmap));
+  Teuchos::RCP<Xpetra::EpetraMapT<GO,Node> > xvelmap  = Teuchos::rcp(new Xpetra::EpetraMapT<GO,Node>(velmap ));
+  Teuchos::RCP<Xpetra::EpetraMapT<GO,Node> > xpremap  = Teuchos::rcp(new Xpetra::EpetraMapT<GO,Node>(premap ));
 
   std::vector<Teuchos::RCP<const Xpetra::Map<LO,GO,Node> > > xmaps;
   xmaps.push_back(xvelmap);
@@ -403,16 +409,16 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL( ThyraBlockedOperator, XpetraBlockedCrsMatCons
   TEST_EQUALITY(SplitMatrix2x2(fullA,*velmap,*premap,A11,A12,A21,A22),true);
 
   // build Xpetra objects from Epetra_CrsMatrix objects
-  Teuchos::RCP<Xpetra::CrsMatrix<Scalar,LO,GO,Node> > xfuA = Teuchos::rcp(new Xpetra::EpetraCrsMatrix(fullA));
-  Teuchos::RCP<Xpetra::CrsMatrix<Scalar,LO,GO,Node> > xA11 = Teuchos::rcp(new Xpetra::EpetraCrsMatrix(A11));
-  Teuchos::RCP<Xpetra::CrsMatrix<Scalar,LO,GO,Node> > xA12 = Teuchos::rcp(new Xpetra::EpetraCrsMatrix(A12));
-  Teuchos::RCP<Xpetra::CrsMatrix<Scalar,LO,GO,Node> > xA21 = Teuchos::rcp(new Xpetra::EpetraCrsMatrix(A21));
-  Teuchos::RCP<Xpetra::CrsMatrix<Scalar,LO,GO,Node> > xA22 = Teuchos::rcp(new Xpetra::EpetraCrsMatrix(A22));
+  Teuchos::RCP<Xpetra::CrsMatrix<Scalar,LO,GO,Node> > xfuA = Teuchos::rcp(new Xpetra::EpetraCrsMatrixT<GO,Node>(fullA));
+  Teuchos::RCP<Xpetra::CrsMatrix<Scalar,LO,GO,Node> > xA11 = Teuchos::rcp(new Xpetra::EpetraCrsMatrixT<GO,Node>(A11));
+  Teuchos::RCP<Xpetra::CrsMatrix<Scalar,LO,GO,Node> > xA12 = Teuchos::rcp(new Xpetra::EpetraCrsMatrixT<GO,Node>(A12));
+  Teuchos::RCP<Xpetra::CrsMatrix<Scalar,LO,GO,Node> > xA21 = Teuchos::rcp(new Xpetra::EpetraCrsMatrixT<GO,Node>(A21));
+  Teuchos::RCP<Xpetra::CrsMatrix<Scalar,LO,GO,Node> > xA22 = Teuchos::rcp(new Xpetra::EpetraCrsMatrixT<GO,Node>(A22));
 
   // build map extractor
-  Teuchos::RCP<Xpetra::EpetraMap> xfullmap = Teuchos::rcp(new Xpetra::EpetraMap(fullmap));
-  Teuchos::RCP<Xpetra::EpetraMap> xvelmap  = Teuchos::rcp(new Xpetra::EpetraMap(velmap ));
-  Teuchos::RCP<Xpetra::EpetraMap> xpremap  = Teuchos::rcp(new Xpetra::EpetraMap(premap ));
+  Teuchos::RCP<Xpetra::EpetraMapT<GO,Node> > xfullmap = Teuchos::rcp(new Xpetra::EpetraMapT<GO,Node>(fullmap));
+  Teuchos::RCP<Xpetra::EpetraMapT<GO,Node> > xvelmap  = Teuchos::rcp(new Xpetra::EpetraMapT<GO,Node>(velmap ));
+  Teuchos::RCP<Xpetra::EpetraMapT<GO,Node> > xpremap  = Teuchos::rcp(new Xpetra::EpetraMapT<GO,Node>(premap ));
 
   std::vector<Teuchos::RCP<const Xpetra::Map<LO,GO,Node> > > xmaps;
   xmaps.push_back(xvelmap);
@@ -489,8 +495,24 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL( ThyraBlockedOperator, XpetraBlockedCrsMatCons
     TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( ThyraBlockedOperator, ThyraBlockedOperator2XpetraBlockedCrsMat, SC, LO, GO, Node ) \
     TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( ThyraBlockedOperator, XpetraBlockedCrsMatConstructor, SC, LO, GO, Node)
 
-typedef KokkosClassic::DefaultNode::DefaultNodeType DefaultNodeType;
+// FIXME (mfh 28 Nov 2015) If Tpetra is enabled, but Tpetra does not
+// build Serial, then the code inside the #ifdef HAVE_XPETRA_SERIAL
+// ... #endif below causes linker errors.  My temporary fix is to
+// include TpetraCore_config.h to get HAVE_TPETRA_SERIAL, and test
+// that.
 
-UNIT_TEST_GROUP_ORDINAL(double, int, int, DefaultNodeType)
+#ifdef HAVE_XPETRA_TPETRA
+#include "TpetraCore_config.h"
+#ifdef HAVE_TPETRA_SERIAL
 
+// TODO: fix me
+#ifdef HAVE_XPETRA_EPETRA
+typedef Xpetra::EpetraNode EpetraNode;
+// all tests work only for LO=GO=int (and/or Epetra)
+// So, it is sufficient to define only a TEST_GROUP for LO=GO=int
+UNIT_TEST_GROUP_ORDINAL(double, int, int, EpetraNode)
+#endif
+
+#endif
+#endif
 }

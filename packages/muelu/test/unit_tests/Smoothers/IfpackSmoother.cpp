@@ -49,8 +49,6 @@
 
 #include "MueLu_IfpackSmoother.hpp"
 
-#include "MueLu_UseDefaultTypes.hpp"
-
 /*
    Comments about tests with hard coded results:
    1) Chebyshev smoothing must pass for any number of processors.
@@ -60,6 +58,12 @@
    */
 
 namespace MueLuTests {
+
+  typedef double                Scalar;
+  typedef int                   LocalOrdinal;
+  typedef int                   GlobalOrdinal;
+  typedef Xpetra::EpetraNode    Node;
+#include "MueLu_UseShortNames.hpp"
 
   // this namespace already has:  #include "MueLu_UseShortNames.hpp"
   using namespace TestHelpers::Smoothers;
