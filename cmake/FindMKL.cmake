@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Find the Math Kernel Library from Intel
-# \date      Fri 06 May 2016 06:42:37 AM MDT
+# \date      Wed 01 Jun 2016 01:29:27 PM MDT
 #
 ################################################################################
 
@@ -52,25 +52,29 @@ endif()
 
 find_library(MKL_INTERFACE_LIBRARY
              NAMES ${INT_LIB}
-             PATHS $ENV{MKLROOT}/lib/intel64
+             PATHS $ENV{MKLROOT}/lib
+                   $ENV{MKLROOT}/lib/intel64
                    $ENV{INTEL}/mkl/lib/intel64
              NO_DEFAULT_PATH)
 
 find_library(MKL_SEQUENTIAL_LAYER_LIBRARY
              NAMES ${SEQ_LIB}
-             PATHS $ENV{MKLROOT}/lib/intel64
+             PATHS $ENV{MKLROOT}/lib
+                   $ENV{MKLROOT}/lib/intel64
                    $ENV{INTEL}/mkl/lib/intel64
              NO_DEFAULT_PATH)
 
 find_library(MKL_THREADED_LAYER_LIBRARY
              NAMES ${THR_LIB}
-             PATHS $ENV{MKLROOT}/lib/intel64
+             PATHS $ENV{MKLROOT}/lib
+                   $ENV{MKLROOT}/lib/intel64
                    $ENV{INTEL}/mkl/lib/intel64
              NO_DEFAULT_PATH)
 
 find_library(MKL_CORE_LIBRARY
              NAMES ${COR_LIB}
-             PATHS $ENV{MKLROOT}/lib/intel64
+             PATHS $ENV{MKLROOT}/lib
+                   $ENV{MKLROOT}/lib/intel64
                    $ENV{INTEL}/mkl/lib/intel64
              NO_DEFAULT_PATH)
 
