@@ -31,6 +31,11 @@ if(MPI_LINK_FLAGS)
                         LINK_FLAGS "${MPI_LINK_FLAGS}")
 endif()
 
+# Conditionally enforce static linking
+if(NOT BUILD_SHARED_LIBS)
+  set_target_properties(${UNITTEST_EXECUTABLE} PROPERTIES LINK_FLAGS "-static")
+endif()
+
 target_link_libraries(${UNITTEST_EXECUTABLE}
                       Base
                       IO
@@ -84,6 +89,11 @@ endif()
 if(MPI_LINK_FLAGS)
   set_target_properties(${INCITER_EXECUTABLE} PROPERTIES
                         LINK_FLAGS "${MPI_LINK_FLAGS}")
+endif()
+
+# Conditionally enforce static linking
+if(NOT BUILD_SHARED_LIBS)
+  set_target_properties(${INCITER_EXECUTABLE} PROPERTIES LINK_FLAGS "-static")
 endif()
 
 target_link_libraries(${INCITER_EXECUTABLE}
@@ -144,6 +154,11 @@ if(MPI_LINK_FLAGS)
                         LINK_FLAGS "${MPI_LINK_FLAGS}")
 endif()
 
+# Conditionally enforce static linking
+if(NOT BUILD_SHARED_LIBS)
+  set_target_properties(${RNGTEST_EXECUTABLE} PROPERTIES LINK_FLAGS "-static")
+endif()
+
 target_link_libraries(${RNGTEST_EXECUTABLE}
                       RNG
                       RNGTest
@@ -192,6 +207,11 @@ if(MPI_LINK_FLAGS)
                         LINK_FLAGS "${MPI_LINK_FLAGS}")
 endif()
 
+# Conditionally enforce static linking
+if(NOT BUILD_SHARED_LIBS)
+  set_target_properties(${MESHCONV_EXECUTABLE} PROPERTIES LINK_FLAGS "-static")
+endif()
+
 target_link_libraries(${MESHCONV_EXECUTABLE}
                       IO
                       Mesh
@@ -238,6 +258,11 @@ endif()
 if(MPI_LINK_FLAGS)
   set_target_properties(${WALKER_EXECUTABLE} PROPERTIES
                         LINK_FLAGS "${MPI_LINK_FLAGS}")
+endif()
+
+# Conditionally enforce static linking
+if(NOT BUILD_SHARED_LIBS)
+  set_target_properties(${WALKER_EXECUTABLE} PROPERTIES LINK_FLAGS "-static")
 endif()
 
 target_link_libraries(${WALKER_EXECUTABLE}
