@@ -14,6 +14,12 @@ file(GLOB numdiff_src src/*.c)
 
 include_directories(src)
 add_executable(${NUMDIFF_EXECUTABLE} ${numdiff_src})
+
+# Conditionally enforce static linking
+if(NOT BUILD_SHARED_LIBS)
+  set_target_properties(${NUMDIFF_EXECUTABLE} PROPERTIES LINK_FLAGS "-static")
+endif()
+
 if(UNIX)
    target_link_libraries(${NUMDIFF_EXECUTABLE} m)
 endif()
