@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Build quinoa
-# \date      Sat 14 May 2016 04:42:22 PM MDT
+# \date      Tue 07 Jun 2016 04:31:22 PM MDT
 #
 ################################################################################
 
@@ -160,8 +160,8 @@ set(EXECUTABLES ${INCITER_EXECUTABLE}
 
 # Get git revision
 include(GetGitRevisionDescription)
-git_describe(GIT_SHA1 --always)
-message(STATUS "git commit sha1: ${GIT_SHA1}")
+get_git_head_revision(REFSPEC GIT_SHA1)
+message(STATUS "git refspec: ${REFSPEC}, sha1: ${GIT_SHA1}")
 
 # Macro to add compiler flags
 macro (add_compiler_flag flag)
