@@ -5,22 +5,23 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Dockerfile for a static build of Quinoa
-# \date      Fri 06 May 2016 06:45:19 AM MDT
+# \date      Wed 08 Jun 2016 10:50:14 AM MDT
 #
 ################################################################################
 
-# Dockerfile for a static build of Quinoa. We start from the minimalistic
-# official alpine/edge distribution (based on busybox and musl-libc) and
-# install all prerequisites, OpenMPI, etc. This docker image is intended to
-# create statically built release executables requiring absolutely no
-# dependencies. This container is intended for users.
+# Dockerfile for a static build of Quinoa, i.e., all executables statically
+# linked to all libraries. We start from a minimalistic official Alpine Linux
+# distribution (which is based on busybox and musl-libc) and install all
+# prerequisites, OpenMPI, etc. This docker image is intended to create
+# statically built release executables requiring absolutely no dependencies.
+# This container is intended for distributing releases.
 #
 # This container does not contain proprietary software and thus the container
 # image can be publicly distributed.
 #
 # All prerequisites for building the container are downloaded from the internet.
 
-FROM alpine:edge
+FROM alpine:3.4
 MAINTAINER Jozsef Bakosi <jbakosi@lanl.gov>
 
 # From behind LANL firewall
@@ -52,6 +53,33 @@ RUN cd quinoa && mkdir -p tpl/build && cd tpl/build && cmake -DCMAKE_CXX_COMPILE
 # Build & test
 RUN cd quinoa && mkdir -p build && cd build && cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=off -DMPIRUN_BIND_ARGS="-bind-to none -map-by node --allow-run-as-root" ../src && make -sj`cat /proc/cpuinfo | grep MHz | wc -l` && ../script/run_tests.sh
 
-# Clean everything not needed to run quinoa
-#RUN sudo -E apt-get clean -y && sudo -E apt-get autoclean -y && sudo -E apt-get autoremove -y && sudo rm -rf /usr/share/locale/* && sudo rm -rf /var/cache/debconf/*-old && sudo rm -rf /var/lib/apt/lists/* && sudo rm -rf /usr/share/doc/*
-#RUN cd quinoa && rm -rf .git doc docker src tool tpl/CMakeLists.txt tpl/build tpl/src
+# Ensure all executables are statically linked
+RUN cd quinoa/build && \
+    if ! file Main/unittest | grep static; then \
+      echo "Non-static executable: unittest"; exit 1; \
+    fi && \
+    if ! file Main/inciter | grep static; then \
+      echo "Non-static executable: inciter"; exit 1; \
+    fi && \
+    if ! file Main/rngtest | grep static; then \
+      echo "Non-static executable: rngtest"; exit 1; \
+    fi && \
+    if ! file Main/meshconv | grep static; then \
+      echo "Non-static executable: meshconv"; exit 1; \
+    fi && \
+    if ! file Main/walker | grep static; then \
+      echo "Non-static executable: walker"; exit 1; \
+    fi && \
+    if ! file regression/ndiff/numdiff | grep static; then \
+      echo "Non-static executable: numdiff"; exit 1; \
+    fi
+
+# Install executables
+RUN cd quinoa/build/Main && cp charmrun unittest inciter rngtest meshconv walker /usr/local/bin && sed -i 's/^args=""/args="--allow-run-as-root"/g' /usr/local/bin/charmrun
+
+# Set workdir and default interactive shell
+WORKDIR /home/quinoa
+CMD ["/bin/sh"]
+
+# Clean up (keep libexecinfo needed by mpirun)
+RUN apk del m4 file git cmake gfortran gcc g++ make perl grep boost-dev zlib-dev libexecinfo-dev ncurses-terminfo-base ncurses-terminfo ncurses-libs readline bash && apk add libexecinfo && rm -rf /var/cache/apk/* && rm -rf /quinoa
