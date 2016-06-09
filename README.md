@@ -12,6 +12,21 @@ Currently, Quinoa consists of the following tools:
   - [<B>unittest</B>](http://quinoacomputing.github.io/quinoa/unittest_doc.html) - Unit test suite
   - [<B>meshconv</B>](http://quinoacomputing.github.io/quinoa/meshconv_doc.html) - Mesh file converter
 
+## Try
+
+The quickest way to try Quinoa is to run the already built executables inside the [release](https://hub.docker.com/r/quinoacomputing/quinoa/) [docker](https://www.docker.com) container.
+
+1. Run the container on your local machine
+```
+docker run -ti quinoacomputing/quinoa
+```
+2. Run Quinoa executables inside the container, e.g.,
+```
+charmrun +p4 /usr/local/bin/unittest -v
+```
+
+The release docker container is configured to be used on a single computer. To run on clusters of networked compute nodes you must build from source:
+
 ## Build
 
 ### 1. Install prerequisites
@@ -51,3 +66,4 @@ Jozsef Bakosi (jbakosi@lanl.gov)
  - [<B>Documentation</B>](http://quinoacomputing.github.io/quinoa/index.html)
  - [<B>Manifesto</B>](http://quinoacomputing.github.io/quinoa/why.html)
  - [<B>Roadmap</B>](https://github.com/quinoacomputing/quinoa/issues)
+ - [<B>Docker</B>](https://hub.docker.com/r/quinoacomputing/quinoa)
