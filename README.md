@@ -25,7 +25,7 @@ docker run -ti quinoacomputing/quinoa
 charmrun +p4 /usr/local/bin/unittest -v
 ```
 
-The release docker container is configured to be used on a single computer. To run on clusters of networked compute nodes you must build from source:
+The release docker container is configured for a single computer. To run on clusters of networked compute nodes you must build from source:
 
 ## Build
 
