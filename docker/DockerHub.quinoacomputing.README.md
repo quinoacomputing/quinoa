@@ -1,5 +1,5 @@
 ### What is Quinoa?
-Quinoa (https://github.com/quinoacomputing/quinoa) is a set of computational tools that enables research and numerical analysis in fluid dynamics. At this time it is a test-bed to experiment with various algorithms using fully asynchronous runtime systems.
+[Quinoa](https://github.com/quinoacomputing/quinoa) is a set of computational tools that enables research and numerical analysis in fluid dynamics. At this time it is a test-bed to experiment with various algorithms using fully asynchronous runtime systems.
 
 ### Purpose
 This image contains all executables, configured for a single computer, and thus intended to quickly try Quinoa on a multi-core workstation. To run on clusters of networked compute nodes you must build from source, see the [README](https://github.com/quinoacomputing/quinoa/blob/master/README.md) for build instructions.
