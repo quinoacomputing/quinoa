@@ -17,10 +17,13 @@ Currently, Quinoa consists of the following tools:
 The quickest way to try Quinoa is to run the already built executables inside the [release](https://hub.docker.com/r/quinoacomputing/quinoa/) [docker](https://www.docker.com) container.
 
 #### 1. Run the container on your local machine
+
 ```
 docker run -ti quinoacomputing/quinoa
 ```
+
 #### 2. Run Quinoa executables inside the container, e.g.,
+
 ```
 charmrun +p4 /usr/local/bin/unittest -v
 ```
