@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Build quinoa third-party Libraries
-# \date      Fri 10 Jun 2016 02:34:01 PM MDT
+# \date      Fri 10 Jun 2016 08:07:22 PM MDT
 #
 ################################################################################
 
@@ -204,17 +204,17 @@ endif()
 if(HDF5_FOUND AND HDF5_IS_PARALLEL)
   set(hdf5 "")
   set(hdf5_include_dirs_flags "${HDF5_INCLUDE_DIRS}")
-  string(REGEX REPLACE "([^;]+)" "-I\\1" hdf5_include_dirs_flags
+  string(REGEX REPLACE "([^;]+)" "CPPFLAGS=-I\\1" hdf5_include_dirs_flags
          "${hdf5_include_dirs_flags}")
   set(hdf5_library_dirs_flags "${HDF5_LIBRARY_DIRS}")
-  string(REGEX REPLACE "([^;]+)" "-L\\1" hdf5_library_dirs_flags
+  string(REGEX REPLACE "([^;]+)" "LDFLAGS=-L\\1" hdf5_library_dirs_flags
         "${hdf5_library_dirs_flags}")
   set(hdf5_library_dirs "${HDF5_LIBRARY_DIRS}")
 else()
   message(STATUS "HDF5 either not found or not parallel: will build")
   set(hdf5 "hdf5")
-  set(hdf5_include_dirs_flags "-I${CMAKE_INSTALL_PREFIX}/include")
-  set(hdf5_library_dirs_flags "-L${CMAKE_INSTALL_PREFIX}/lib")
+  set(hdf5_include_dirs_flags "CPPFLAGS=-I${CMAKE_INSTALL_PREFIX}/include")
+  set(hdf5_library_dirs_flags "LDFLAGS=-L${CMAKE_INSTALL_PREFIX}/lib")
   set(hdf5_library_dirs "${CMAKE_INSTALL_PREFIX}/lib")
 endif()
 
@@ -407,8 +407,8 @@ if (netcdf)
                       CC=${MPI_C_COMPILER}
                       CFLAGS=${CFLAGS}
                       ${PGCPP}
-                      CPPFLAGS=${hdf5_include_dirs_flags}
-                      LDFLAGS=${hdf5_library_dirs_flags}
+                      ${hdf5_include_dirs_flags}
+                      ${hdf5_library_dirs_flags}
                       --enable-netcdf4
                       --disable-examples
                       --disable-fsync
