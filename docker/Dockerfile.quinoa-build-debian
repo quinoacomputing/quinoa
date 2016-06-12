@@ -5,7 +5,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Dockerfile for a simple dynamic build of Quinoa on Debian
-# \date      Sun 12 Jun 2016 03:58:12 PM MDT
+# \date      Sun 12 Jun 2016 04:53:00 PM MDT
 #
 ################################################################################
 
@@ -43,17 +43,13 @@ RUN apt-get update -y && apt-get install -y m4 sudo git cmake gfortran gcc g++ g
 # Switch to bash for the rest of the build
 RUN rm /bin/sh && ln -s /bin/bash /bin/sh
 
-# Create a non-root user 'quinoa' that can sudo without password
-RUN mkdir /home/quinoa && groupadd -r quinoa -g 433 && useradd -u 431 -r -g quinoa -d /home/quinoa -s /sbin/nologin -c "Quinoa quinoa" quinoa && echo "quinoa:quinoa" | chpasswd && adduser quinoa sudo && echo "quinoa ALL = NOPASSWD : ALL" > /etc/sudoers.d/quinoa && chmod 0440 /etc/sudoers.d/quinoa && chown -R quinoa:quinoa /home/quinoa
-# Switch default user to 'quinoa' and change default work directory
-USER quinoa
-WORKDIR /home/quinoa
-# Set default interactive shell
-CMD ["/bin/bash"]
-
 # Clone quinoa
 RUN git clone https://github.com/quinoacomputing/quinoa.git
 # Build TPLs
 RUN cd quinoa && mkdir -p tpl/build && cd tpl/build && cmake .. && make -sj$((`cat /proc/cpuinfo | grep MHz | wc -l`/4))
 # Build & test
 RUN cd quinoa && mkdir -p build && cd build && cmake -DCMAKE_CXX_FLAGS=-Werror ../src && make -sj$((`cat /proc/cpuinfo | grep MHz | wc -l`/4)) && ../script/run_tests.sh $((`cat /proc/cpuinfo | grep MHz | wc -l`/4))
+
+# Set workdir and default interactive shell
+WORKDIR /home/quinoa
+CMD ["/bin/bash"]
