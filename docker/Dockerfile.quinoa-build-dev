@@ -1,27 +1,25 @@
 ################################################################################
 # vim: filetype=dockerfile:
 #
-# \file      docker/Dockerfile.quinoa-testing
+# \file      docker/Dockerfile.quinoa-build-dev
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
-# \brief     Dockerfile for a setting up a test environment for Quinoa
-# \date      Fri 06 May 2016 07:06:40 AM MDT
+# \brief     Dockerfile for a setting up full development environment for Quinoa
+# \date      Sun 12 Jun 2016 04:21:39 PM MDT
 #
 ################################################################################
 
-# Dockerfile for setting up a complete environment in a docker container for
-# testing Quinoa. We start from the official debian/testing distribution and
-# install all prerequisites, compilers, OpenMPI, etc. This docker image is
-# intended to be created and stored in docker server or a docker registry from
-# which a continuous integration/delivery platform, such as drone, can fire up
-# a matrix of builds for testing the build and the code.
+# Dockerfile for setting up a complete development environment in a docker
+# container for Quinoa.
 
-# This container is only intended for testing and thus for developers and not
-# for users. Users should use the release containers.
+# We start from the Debian/testing Linux distribution and install all possible
+# prerequisites, multiple compilers with OpenMPI, etc., and thus setup a
+# complete development environment. This docker image is
+# intended for developers
 
-# This container contains proprietary software, such as Intel's C++ and Fortran
-# Compilers and the MKL library, and thus the container image is not publicly
-# distributed.
+# WARNING: This container contains proprietary software, such as Intel's C++ and
+# Fortran Compilers and the MKL library, and thus the container image is not to
+# be publicly distributed.
 #
 # Prerequisites that must be supplied before this container can be built:
 #
@@ -60,22 +58,22 @@ COPY modules/mkl/latest /usr/share/modules/modulefiles/mkl/
 # Install OpenMPI with gnu, clang, intel
 ADD https://www.open-mpi.org/software/ompi/v1.10/downloads/openmpi-1.10.2.tar.bz2 /install/
 RUN cd /install/ && tar xjf openmpi-1.10.2.tar.bz2
-RUN CPUS=`cat /proc/cpuinfo | grep MHz | wc -l` ; source /usr/share/modules/init/bash && module load gnu/system && cd /install/openmpi-1.10.2 && ./configure --prefix=/opt/openmpi/1.10.2/gnu/system && make -sj$CPUS install
-RUN CPUS=`cat /proc/cpuinfo | grep MHz | wc -l` ; source /usr/share/modules/init/bash && module load clang/system && cd /install/openmpi-1.10.2 && ./configure --prefix=/opt/openmpi/1.10.2/clang/system && make -sj$CPUS install
-RUN CPUS=`cat /proc/cpuinfo | grep MHz | wc -l` ; source /usr/share/modules/init/bash && module load intel/latest && cd /install/openmpi-1.10.2 && ./configure --prefix=/opt/openmpi/1.10.2/intel/latest && make -sj$CPUS install
+RUN source /usr/share/modules/init/bash && module load gnu/system && cd /install/openmpi-1.10.2 && ./configure --prefix=/opt/openmpi/1.10.2/gnu/system && make -sj$((`cat /proc/cpuinfo | grep MHz | wc -l`/4)) install
+RUN source /usr/share/modules/init/bash && module load clang/system && cd /install/openmpi-1.10.2 && ./configure --prefix=/opt/openmpi/1.10.2/clang/system && make -sj$((`cat /proc/cpuinfo | grep MHz | wc -l`/4)) install
+RUN source /usr/share/modules/init/bash && module load intel/latest && cd /install/openmpi-1.10.2 && ./configure --prefix=/opt/openmpi/1.10.2/intel/latest && make -sj$((`cat /proc/cpuinfo | grep MHz | wc -l`/4)) install
 RUN rm -rf /install/openmpi-1.10.2
 
 # Remove /install - no more installs after this line
 RUN rm -rf /install
 
 # Copy init script used to initialize interactive shell and ncpus query script
-COPY init.sh cpus.sh /home/tester/
-# Create a non-root user 'tester' that can sudo without password
-RUN groupadd -r tester -g 433 && useradd -u 431 -r -g tester -d /home/tester -s /sbin/nologin -c "Quinoa tester" tester && echo "tester:tester" | chpasswd && adduser tester sudo && echo "tester ALL = NOPASSWD : ALL" > /etc/sudoers.d/tester && chmod 0440 /etc/sudoers.d/tester && chown -R tester:tester /home/tester
+COPY init.sh cpus.sh /home/quinoa/
+# Create a non-root user 'quinoa' that can sudo without password
+RUN groupadd -r quinoa -g 433 && useradd -u 431 -r -g quinoa -d /home/quinoa -s /sbin/nologin -c "Quinoa" quinoa && echo "quinoa:quinoa" | chpasswd && adduser quinoa sudo && echo "quinoa ALL = NOPASSWD : ALL" > /etc/sudoers.d/quinoa && chmod 0440 /etc/sudoers.d/quinoa && chown -R quinoa:quinoa /home/quinoa
 # Make init script as the entry point
-ENTRYPOINT ["/home/tester/init.sh"]
-# Switch default user to 'tester' and change default work directory
-USER tester
-WORKDIR /home/tester
+ENTRYPOINT ["/home/quinoa/init.sh"]
+# Switch default user to 'quinoa' and change default work directory
+USER quinoa
+WORKDIR /home/quinoa
 # Set bash as default interactive shell
 CMD ["/bin/bash"]
