@@ -5,7 +5,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Dockerfile for a simple dynamic build of Quinoa on Debian
-# \date      Sun 12 Jun 2016 02:32:55 PM MDT
+# \date      Sun 12 Jun 2016 02:35:01 PM MDT
 #
 ################################################################################
 
@@ -49,6 +49,6 @@ CMD ["/bin/bash"]
 # Clone quinoa
 RUN git clone https://github.com/quinoacomputing/quinoa.git
 # Build TPLs
-RUN cd quinoa && mkdir -p tpl/build && cd tpl/build && cmake .. && make -sj`cat /proc/cpuinfo | grep MHz | wc -l`
+RUN cd quinoa && mkdir -p tpl/build && cd tpl/build && cmake .. && make -sj$[`cat /proc/cpuinfo | grep MHz | wc -l`/4]
 # Build & test
-RUN cd quinoa && mkdir -p build && cd build && cmake -DCMAKE_CXX_FLAGS=-Werror ../src && make -sj`cat /proc/cpuinfo | grep MHz | wc -l` && ../script/run_tests.sh
+RUN cd quinoa && mkdir -p build && cd build && cmake -DCMAKE_CXX_FLAGS=-Werror ../src && make -sj$[`cat /proc/cpuinfo | grep MHz | wc -l`/4] && ../script/run_tests.sh
