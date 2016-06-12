@@ -1,20 +1,22 @@
 ################################################################################
 # vim: filetype=dockerfile:
 #
-# \file      docker/Dockerfile.quinoa-build-dynamic
+# \file      docker/Dockerfile.quinoa-build-debian
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
-# \brief     Dockerfile for a dynamic build of Quinoa
-# \date      Fri 06 May 2016 06:45:29 AM MDT
+# \brief     Dockerfile for a simple dynamic build of Quinoa on Debian
+# \date      Sun 12 Jun 2016 02:07:00 PM MDT
 #
 ################################################################################
 
-# Dockerfile for a simple dynamic build of Quinoa using the native (system-wide
-# compiler and mpi wrappers). We start from the debian/testing distribution and
-# install all prerequisites. This docker image is intended to demonstrate one of
-# the simplest way of building Quinoa. It creates dynamically built executables
-# which require runtime libraries. This container is intended for developers and
-# users.
+# Dockerfile for a simple dynamic build of Quinoa on Debian Linux using the
+# native (system-wide compiler and MPI wrappers). We start from the
+# Debian/testing Linux distribution and install all possible prerequisites, then
+# build the required but missing third-party libraries, build the code and test.
+#
+# This docker image is intended to test and demonstrate one of the simplest way
+# of building Quinoa. It creates dynamically built executables which require
+# runtime libraries. This container is intended for developers and users.
 #
 # This container does not contain proprietary software and thus the container
 # image can be publicly distributed.
@@ -50,7 +52,3 @@ RUN git clone https://github.com/quinoacomputing/quinoa.git
 RUN cd quinoa && mkdir -p tpl/build && cd tpl/build && cmake -DCMAKE_BUILD_TYPE=Release .. && make -sj`cat /proc/cpuinfo | grep MHz | wc -l`
 # Build & test
 RUN cd quinoa && mkdir -p build && cd build && cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS=-Werror ../src && make -sj`cat /proc/cpuinfo | grep MHz | wc -l` && ../script/run_tests.sh
-
-# Clean everything not needed to run quinoa
-#RUN sudo -E apt-get clean -y && sudo -E apt-get autoclean -y && sudo -E apt-get autoremove -y && sudo rm -rf /usr/share/locale/* && sudo rm -rf /var/cache/debconf/*-old && sudo rm -rf /var/lib/apt/lists/* && sudo rm -rf /usr/share/doc/*
-#RUN cd quinoa && rm -rf .git doc docker src tool tpl/CMakeLists.txt tpl/build tpl/src
