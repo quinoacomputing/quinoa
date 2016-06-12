@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Find the Pstreams library
-# \date      Fri 06 May 2016 06:43:02 AM MDT
+# \date      Sat 11 Jun 2016 08:20:07 PM MDT
 #
 ################################################################################
 
@@ -27,7 +27,7 @@ if(PSTREAMS_INCLUDES)
 endif()
 
 FIND_PATH(PSTREAMS_INCLUDES NAMES pstreams/pstream.h
-          HINTS ${PSTREAMS_ROOT}/include)
+          HINTS ${PSTREAMS_ROOT}/include $ENV{PSTREAMS_ROOT})
 
 # Handle the QUIETLY and REQUIRED arguments and set PSTREAMS_FOUND to TRUE if
 # all listed variables are TRUE.
