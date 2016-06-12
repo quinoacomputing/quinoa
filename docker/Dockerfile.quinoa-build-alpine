@@ -5,7 +5,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Dockerfile for a static build of Quinoa
-# \date      Sun 12 Jun 2016 02:58:13 PM MDT
+# \date      Sun 12 Jun 2016 03:57:40 PM MDT
 #
 ################################################################################
 
@@ -38,7 +38,7 @@ RUN apk update && apk add bash m4 file git cmake gfortran gcc g++ make perl grep
 
 # Install OpenMPI
 ADD https://www.open-mpi.org/software/ompi/v1.10/downloads/openmpi-1.10.2.tar.bz2 /install/
-RUN cd /install/ && tar xjf openmpi-1.10.2.tar.bz2 && cd openmpi-1.10.2 && ./configure --enable-static --disable-shared --enable-contrib-no-build=vt --prefix=/opt/openmpi && make -sj$[`cat /proc/cpuinfo | grep MHz | wc -l`/4] install
+RUN cd /install/ && tar xjf openmpi-1.10.2.tar.bz2 && cd openmpi-1.10.2 && ./configure --enable-static --disable-shared --enable-contrib-no-build=vt --prefix=/opt/openmpi && make -sj$((`cat /proc/cpuinfo | grep MHz | wc -l`/4)) install
 ENV PATH /opt/openmpi/bin:$PATH
 ENV LD_LIBRARY_PATH /opt/openmpi/lib:$LD_LIBRARY_PATH
 ENV MANPATH /opt/openmpi/share/man:$MANPATH
@@ -53,9 +53,9 @@ RUN ln -s /usr/bin/cpp /lib/cpp
 # Clone quinoa
 RUN git clone https://github.com/quinoacomputing/quinoa.git
 # Build TPLs
-RUN cd quinoa && mkdir -p tpl/build && cd tpl/build && cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DCMAKE_Fortran_COMPILER=mpif90 -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=off .. && make -sj$[`cat /proc/cpuinfo | grep MHz | wc -l`/4]
+RUN cd quinoa && mkdir -p tpl/build && cd tpl/build && cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DCMAKE_Fortran_COMPILER=mpif90 -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=off .. && make -sj$((`cat /proc/cpuinfo | grep MHz | wc -l`/4))
 # Build & test
-RUN cd quinoa && mkdir -p build && cd build && cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=off -DMPIRUN_BIND_ARGS="-bind-to none -map-by node --allow-run-as-root" ../src && make -sj$[`cat /proc/cpuinfo | grep MHz | wc -l`/4] && ../script/run_tests.sh $[`cat /proc/cpuinfo | grep MHz | wc -l`/4]
+RUN cd quinoa && mkdir -p build && cd build && cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=off -DMPIRUN_BIND_ARGS="-bind-to none -map-by node --allow-run-as-root" ../src && make -sj$((`cat /proc/cpuinfo | grep MHz | wc -l`/4)) && ../script/run_tests.sh $[`cat /proc/cpuinfo | grep MHz | wc -l`/4]
 
 # Ensure all executables are statically linked
 RUN cd quinoa/build && \
