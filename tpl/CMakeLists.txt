@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Build quinoa third-party Libraries
-# \date      Fri 10 Jun 2016 08:07:22 PM MDT
+# \date      Sat 11 Jun 2016 08:08:31 PM MDT
 #
 ################################################################################
 
@@ -661,7 +661,7 @@ endif()
 
 #### Pstreams (POSIX Process Control in C++) ###################################
 # http://pstreams.sourceforge.net/
-# Header only
+# Header only, only if not found
 if (pstreams)
   ExternalProject_Add(
     pstreams

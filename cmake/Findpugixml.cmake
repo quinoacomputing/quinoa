@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Find the pugixml library
-# \date      Fri 06 May 2016 06:43:27 AM MDT
+# \date      Sat 11 Jun 2016 08:03:29 PM MDT
 #
 ################################################################################
 
@@ -30,12 +30,15 @@ if(PUGIXML_INCLUDES)
   set (PUGIXML_FIND_QUIETLY TRUE)
 endif()
 
-FIND_PATH(PUGIXML_INCLUDES NAMES pugixml.hpp HINTS ${PUGIXML_ROOT}/include)
+FIND_PATH(PUGIXML_INCLUDES NAMES pugixml.hpp HINTS ${PUGIXML_ROOT}/include
+                                                   $ENV{PUGIXML_ROOT}/include)
 
 if(NOT BUILD_SHARED_LIBS)
- find_library(PUGIXML_LIBRARIES NAMES libpugixml.a HINTS ${PUGIXML_ROOT}/lib)
+ find_library(PUGIXML_LIBRARIES NAMES libpugixml.a HINTS ${PUGIXML_ROOT}/lib
+                                                   $ENV{PUGIXML_ROOT}/lib64)
 else()
- find_library(PUGIXML_LIBRARIES NAMES pugixml HINTS ${PUGIXML_ROOT}/lib)
+ find_library(PUGIXML_LIBRARIES NAMES pugixml HINTS ${PUGIXML_ROOT}/lib
+                                                    $ENV{PUGIXML_ROOT}/lib64)
 endif()
 
 # Handle the QUIETLY and REQUIRED arguments and set PUGIXML_FOUND to TRUE if
