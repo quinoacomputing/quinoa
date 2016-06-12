@@ -5,16 +5,20 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Dockerfile for a static build of Quinoa
-# \date      Sun 12 Jun 2016 02:45:33 PM MDT
+# \date      Sun 12 Jun 2016 02:58:13 PM MDT
 #
 ################################################################################
 
 # Dockerfile for a static build of Quinoa, i.e., all executables statically
-# linked to all libraries. We start from a minimalistic official Alpine Linux
-# distribution (which is based on busybox and musl-libc) and install all
-# prerequisites, OpenMPI, etc. This docker image is intended to create
-# statically built release executables requiring absolutely no dependencies.
-# This container is intended for distributing releases.
+# linked to all libraries.
+#
+# We start from a minimalistic official Alpine Linux distribution (which is
+# based on busybox and musl-libc) and install all prerequisites, OpenMPI, etc.
+# This docker image creates statically built release executables requiring
+# absolutely no dependencies. This container is cleaned at the end, it only
+# contains the absolute minimal setup required to run the executables in order
+# to reduce the container size. This container is intended for distributing
+# containerized releases.
 #
 # This container does not contain proprietary software and thus the container
 # image can be publicly distributed.
