@@ -19,7 +19,7 @@ The quickest way to try Quinoa is to run the already built executables inside th
 #### 1. Run the container on your local machine
 
 ```
-docker run -ti quinoacomputing/quinoa
+docker run -ti quinoacomputing/quinoa:alpine
 ```
 
 #### 2. Run Quinoa executables inside the container, e.g.,
@@ -28,7 +28,7 @@ docker run -ti quinoacomputing/quinoa
 charmrun +p4 /usr/local/bin/unittest -v
 ```
 
-The the release docker container executables are configured for a single computer. To run on clusters of networked compute nodes you must build from source:
+The the release docker container executables are configured for a single computer. To run on clusters of networked compute nodes you should build from source:
 
 ## Build
 
