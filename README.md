@@ -22,7 +22,7 @@ The quickest way to try Quinoa is to run the already built executables inside th
 docker run -ti quinoacomputing/quinoa:alpine
 ```
 
-#### 2. Run Quinoa executables inside the container, e.g.,
+#### 2. Run executables inside the container, e.g.,
 
 ```
 charmrun +p4 /usr/local/bin/unittest -v
