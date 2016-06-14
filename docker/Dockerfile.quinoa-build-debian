@@ -5,7 +5,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Dockerfile for a simple dynamic build of Quinoa on Debian
-# \date      Mon 13 Jun 2016 10:51:32 PM MDT
+# \date      Mon 13 Jun 2016 10:57:24 PM MDT
 #
 ################################################################################
 
@@ -18,14 +18,15 @@
 #
 # This docker image is intended to test and demonstrate one of the simplest way
 # of building Quinoa. It creates dynamically built executables which require
-# runtime libraries. This container is not cleaned at the end, it contains the
-# full operating system, compilers, libraries, source code, documentation, etc.,
-# and is intended as a complete development environment using the system-wide
-# GNU compilers and OpenMPI.
+# runtime libraries. At the end we clean the clone, preparing the ground for
+# development via a docker host mount. The container still contains the full
+# operating system, compilers, and libraries. The image is intended as a
+# complete development environment using the system-wide GNU compilers and
+# OpenMPI.
 #
 # This container does not contain proprietary software and thus the container
 # image can be publicly distributed.
-#
+
 FROM debian:testing
 MAINTAINER Jozsef Bakosi <jbakosi@lanl.gov>
 
