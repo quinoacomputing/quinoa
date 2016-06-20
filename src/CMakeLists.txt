@@ -180,6 +180,8 @@ if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")  # clang-specific settings
   endif()
 
   # Compiler flags for clang
+  add_compiler_flag("-fcolor-diagnostics")
+
   add_compiler_flag("-Weverything")
   add_compiler_flag("-Wno-c++98-compat")
   add_compiler_flag("-Wno-c++98-compat-pedantic")
@@ -202,6 +204,8 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")  # gcc-specific settings
   # Gnu will use libstdc++ by default. We do not offer libc++.
 
   # Compiler flags for gcc
+  add_compiler_flag("-fdiagnostics-color")
+
   add_compiler_flag("-Wall")
   add_compiler_flag("-Wextra")
   add_compiler_flag("-Weffc++")
