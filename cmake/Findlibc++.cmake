@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Find libc++
-# \date      Mon 16 May 2016 10:54:32 PM MDT
+# \date      Mon 20 Jun 2016 12:58:37 PM MDT
 #
 ################################################################################
 
@@ -34,8 +34,7 @@ endif()
 
 find_path(libc++_INCLUDES NAMES cxxabi.h HINTS ${LIBCXX_ROOT}/include
                                                /usr/include/c++/v1
-                                               $ENV{LIBCXX_ROOT}/include
-                                               $ENV{CPLUS_INCLUDE_PATH}/c++/v1)
+                                               $ENV{LIBCXX_ROOT}/include/c++/v1)
 
 if(BUILD_SHARED_LIBS)
   find_library(libc++_LIBRARIES NAMES c++ HINTS ${LIBCXX_ROOT}/lib
