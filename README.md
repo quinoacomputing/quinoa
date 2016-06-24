@@ -52,8 +52,8 @@ The release container executables are configured for a single computer. To run o
 
    ```
    git clone https://github.com/quinoacomputing/quinoa.git; cd quinoa
-   mkdir tpl/build; cd tpl/build; cmake ..; make; cd -
-   mkdir build; cd build; cmake ../src; make; ../script/run_tests.sh
+   mkdir tpl/build; cd tpl/build; cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DCMAKE_Fortran_COMPILER=mpif90 ..; make; cd -
+   mkdir build; cd build; cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc ../src; make; ../script/run_tests.sh
    ```
 
    - All executables will be in <tt>quinoa/build/Main</tt>
