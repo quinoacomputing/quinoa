@@ -38,13 +38,14 @@ detectInput( const std::string& filename )
 // *****************************************************************************
 {
   // Get first three letters from input file
-  std::string s( Reader( filename ).firstline().substr(0,3) );
+  std::string s( Reader( filename ).firstline().substr(0,4) );
 
-  if ( s == "$Me" ) {
+  if ( s.find("$Me") != std::string::npos ) {
     return MeshReader::GMSH;
-  } else if ( s == "CDF" || s == "HDF" ) {
+  } else if ( s.find("CDF") != std::string::npos ||
+              s.find("HDF") != std::string::npos ) {
     return MeshReader::EXODUSII;
-  } else if ( s == "<?x" ) {
+  } else if ( s.find("<?x") != std::string::npos ) {
     return MeshReader::HYPERMESH;
   } else {
     try {

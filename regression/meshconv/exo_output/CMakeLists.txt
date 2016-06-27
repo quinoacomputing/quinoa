@@ -24,3 +24,11 @@ add_regression_test(gmshbin2exo ${MESHCONV_EXECUTABLE}
                     BIN_BASELINE box_24.exo.std
                     BIN_RESULT box_24.exo
                     BIN_DIFF_PROG_CONF exodiff.cfg)
+
+add_regression_test(multiblockexo2exo ${MESHCONV_EXECUTABLE}
+                    NUMPES 1
+                    INPUTFILES shear_5blocks.exo shear.exo.std exodiff.cfg
+                    ARGS -i shear_5blocks.exo -o shear.exo -v
+                    BIN_BASELINE shear.exo.std
+                    BIN_RESULT shear.exo
+                    BIN_DIFF_PROG_CONF exodiff.cfg)
