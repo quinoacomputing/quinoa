@@ -1,0 +1,24 @@
+set node constraint on
+brick x 24000 y 6800 z 1000
+brick x 24000 y 6800 z 1000
+brick x 24000 y 6800 z 1000
+brick x 24000 y 6800 z 1000
+brick x 24000 y 6800 z 1000
+move Volume 2 z 1000 include_merged
+move Volume 3 z 2000 include_merged
+move Volume 4 z 3000 include_merged
+move Volume 5 z 4000 include_merged
+volume 1 scheme Tetmesh
+volume 2 scheme Tetmesh
+volume 3 scheme Tetmesh
+volume 4 scheme Tetmesh
+volume 5 scheme Tetmesh
+set tetmesher interior points on
+set tetmesher optimize level 3  overconstrained  off sliver  off
+set tetmesher boundary recovery  off
+volume 1 tetmesh growth_factor 1.0
+volume 2 tetmesh growth_factor 1.0
+volume 3 tetmesh growth_factor 1.0
+volume 4 tetmesh growth_factor 1.0
+volume 5 tetmesh growth_factor 1.0
+mesh volume 1 2 3 4 5
