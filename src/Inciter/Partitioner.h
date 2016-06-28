@@ -6,6 +6,48 @@
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ chare partitioner group used to perform mesh partitioning
   \details   Charm++ chare partitioner group used to parform mesh partitioning.
+    The implementation uses the Charm++ runtime system and is fully
+    asynchronous, overlapping computation, communication as well as I/O. The
+    algorithm utilizes the structured dagger (SDAG) Charm++ functionality. The
+    high-level overview of the algorithm structure and how it interfaces with
+    Charm++ is discussed in the Charm++ interface file
+    src/Inciter/partitioner.ci.
+
+    #### Call graph ####
+    The following is a directed acyclic graph (DAG) that outlines the
+    asynchronous algorithm implemented in this class The detailed discussion of
+    the algorithm is given in the Charm++ interface file partitioner.ci,
+    which also repeats the graph below using ASCII graphics. On the DAG orange
+    fills denote global synchronization points, orange frames with white fill
+    are partial synchronization points that overlap with other tasks, and dashed
+    lines are potential shortcuts that allow jumping over some of the task-graph
+    under some circumstances. See the detailed discussion in partitioner.ci.
+    \dot
+    digraph "Partitioner SDAG" {
+      rankdir="LR";
+      node [shape=record, fontname=Helvetica, fontsize=10];
+      Own [ label="Own" tooltip="owned nodes reordered"
+             URL="\ref inciter::Partitioner::reorder"];
+      Req [ label="Req" tooltip="nodes requested"
+             URL="\ref inciter::Partitioner::request"];
+      Pre [ label="Pre" tooltip="start preparing node IDs" color="#e6851c"
+            URL="\ref inciter::Partitioner::prepare" color="#e6851c"];
+      Low [ label="Low" tooltip="lower bound received"
+             URL="\ref inciter::Partitioner::lower"];
+      Upp [ label="Upp" tooltip="upper bound computed"
+             URL="\ref inciter::Partitioner::bounds"];
+      Par [ label="Par" tooltip="partitioners participated"
+             URL="\ref inciter::Partitioner::prepare"];
+      Cre [ label="Cre" tooltip="create workers"
+             URL="\ref inciter::Partitioner::create" color="#e6851c"];
+      Own -> Pre [ style="solid" ];
+      Req -> Pre [ style="solid" ];
+      Low -> Cre [ style="solid" ];
+      Upp -> Cre [ style="solid" ];
+      Par -> Cre [ style="solid" ];
+    }
+    \enddot
+    \include Inciter/partitioner.ci
 */
 // *****************************************************************************
 #ifndef Partitioner_h
