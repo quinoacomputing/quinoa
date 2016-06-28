@@ -55,17 +55,71 @@ module linsysmerger {
       // High-level overview of the dependency and asynchronous call structure
       // ---------------------------------------------------------------------
       //
-      // Directed Acyclic Graph (DAG):        DAG legend:
-      // -----------------------------          WPe  - Query worker PEs
-      //                                        Sys  - Create linear system
-      // WPe -- Pts                             Pts  - Export mesh points
-      //           \                            Init - Initialized
-      // Sys ------ Init
+      // Directed Acyclic Graph (DAG):
+      // -----------------------------
+      //
+      // ChSol -- HypreSol -- FillSol -- AsmSol -
+      //                                         \
+      // ChLhs -- HypreLhs -- FillLhs -- AsmLhs -- Sol - Upd
+      //                                         /
+      // ChRhs -- HypreRhs -- FillRhs -- AsmRhs -
+      //
+      // DAG legend:
+      //   ChSol - Chares contribute their solution vector nonzeros
+      //   ChLhs - Chares contribute their left hand side matrix nonzeros
+      //   ChRhs - Chares contribute their right hand side vector nonzeros
+      //   HypreSol - Convert solution vector to Hypre format
+      //   HypreLhs - Convert left hand side matrix to Hypre format
+      //   HypreSol - Convert right hand side vector to Hypre format
+      //   FillSol - Fill/set solution vector
+      //   FillLhs - Fill/set left hand side matrix
+      //   FillRhs - Fill/set right hand side vector
+      //   AsmSol - Assemble solution vector
+      //   AsmLhs - Assemble left hand side matrix
+      //   AsmRhs - Assemble right hand side vector
+      //   Sol - Solve linear system
+      //   Upd - Update solution vector (propagate new solution back to workers)
       //
       // Interpretation of the above DAG
       // -------------------------------
       // Control flow is from left to right and top to bottom.
       //
+      // We start out with all Performer (worker) chares contributing their
+      // portion of the solution (unknown) vector, the nonzero values of the
+      // left hand side matrix, and the right hand side vector to those Linear
+      // System Merger group branch (one per CPU) they happened to reside on.
+      // These steps are denoted by ChSol, ChLhs, and ChRhs in the graph above,
+      // performed by the member functions charesol(), charelhs(), and
+      // charerhs(), respectively.
+      //
+      // Once each of the tasks, ChSol, ChLhs, ChRhs, (not all at the same time
+      // but separately) are done, we continue by converting these data
+      // structures to a format that Hypre expects, done in hypresol(),
+      // hyprelhs(), and hyprerhs(), denoted by similars labels in the graph.
+      // These functions basically flatten the C++ data structures to C-style
+      // arrays and linked arrays (for the matrix).
+      //
+      // Once the tasks, HypreSol, HypreLhs, HypreRhs, (not all at the same time
+      // but separately) are done, we continue by assigning the flattened data
+      // structures (more precisely, their pointers) to the Hypre vectors and
+      // matrix. These are denoted FillSol, FillLhs, and FillRhs in the DAG and
+      // correspond to the functions sol(), lhs(), and rhs().
+      //
+      // Once the tasks, FillSol, FillLhs, FIllRhs, (not all at the same time,
+      // but separately) are, we continue by calling the Hypre "assembly"
+      // routines for the solution vector, the left hand side matrix, and the
+      // right hand side vector. These are denoted by AsmSol, AsmLhs, and AsmRhs
+      // in the DAG, and performed by the member functions assemblesol(),
+      // assemblelhs(), and assemblerhs(), respectively.
+      //
+      // Once the assembly of the solution (unknown) vector, the left hand side
+      // matrix, and the right hand side vector are all done (on a CPU), we call
+      // the solve() member function which solves the linear system calling
+      // Hypre and also updates the solution, i.e., propagates the new solution
+      // back to the worker (Performer) chares.
+      //
+      // Note that Sol and Upd are both partial synchronization points, since
+      // they can happen at different times on different CPUs.
 
       entry void wait4sol()
       { when trigger_sol_complete() serial "hypresol" { hypresol(); } };
