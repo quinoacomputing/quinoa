@@ -30,18 +30,24 @@
              URL="\ref inciter::Partitioner::reorder"];
       Req [ label="Req" tooltip="nodes requested"
              URL="\ref inciter::Partitioner::request"];
-      Pre [ label="Pre" tooltip="start preparing node IDs" color="#e6851c"
+      Pre [ label="Pre" tooltip="start preparing node IDs"
             URL="\ref inciter::Partitioner::prepare" color="#e6851c"];
+      Ord [ label="Ord" tooltip="Node IDs reordered"
+            URL="\ref inciter::Partitioner::reordered" color="#e6851c"];
       Low [ label="Low" tooltip="lower bound received"
              URL="\ref inciter::Partitioner::lower"];
       Upp [ label="Upp" tooltip="upper bound computed"
              URL="\ref inciter::Partitioner::bounds"];
       Par [ label="Par" tooltip="partitioners participated"
-             URL="\ref inciter::Partitioner::prepare"];
+             URL="\ref inciter::Partitioner::neworder"];
       Cre [ label="Cre" tooltip="create workers"
              URL="\ref inciter::Partitioner::create" color="#e6851c"];
       Own -> Pre [ style="solid" ];
       Req -> Pre [ style="solid" ];
+      Pre -> Ord [ style="solid" ];
+      Ord -> Low [ style="solid" ];
+      Ord -> Upp [ style="solid" ];
+      Ord -> Par [ style="solid" ];
       Low -> Cre [ style="solid" ];
       Upp -> Cre [ style="solid" ];
       Par -> Cre [ style="solid" ];

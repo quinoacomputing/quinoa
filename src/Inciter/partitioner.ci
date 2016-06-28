@@ -47,16 +47,12 @@ module partitioner {
       // Directed Acyclic Graph (DAG):        DAG legend:
       // -----------------------------          Own - Owned nodes reordered
       //                                        Req - Node IDs requested
-      // Own --  Pre                            Pre - Start preparing nodes IDs
-      //       /
-      // Req --
-      //
-      //
-      // Low ----  Cre                          Low - Lower bound received
-      //         /  |                           Upp - Upper bound computed
-      // Upp ---   /                            Cre - Create workers
-      //          /                             Par - Partitioners participated
-      // Par ----
+      // Own --  Pre -- Ord -- Low ---  Cre     Pre - Start preparing nodes IDs
+      //       /         | \           /  |     Ord - Nodes reordered
+      // Req -           |   -- Upp ---  /      Low - Lower bound received
+      //                  \             /       Upp - Upper bound computed
+      //                    -- Par ----         Cre - Create workers
+      //                                        Par - Partitioners participated
       //
       // Interpretation of the above DAG
       // -------------------------------
@@ -89,24 +85,26 @@ module partitioner {
       // automatically re-enable the trigger for Own, i.e., wait only for Req,
       // i.e., new requests.
       //
-      // The second graph, independent of the first one, is done later in time,
+      // The second part of the graph, only happend after reordering is done,
       // after the mesh reordering has been completed and started by a call to
-      // bounds() inside reordered(). First the upper bounds of the node IDs
-      // are computed on each PE, and once that is done the lower bounds are
-      // communicated among the fellow Partitioner branches, since the lower
-      // bound of PE n is the upper bound of PE n-1. Only when both upper and
-      // lower bounds have been stored on a PE, can Performer chare array
-      // elements be inserted, done in create(). Initiation of estimating the
-      // average and standard deviation of the communication cost of merging
-      // the linear system is done in the beginning of create(), which starts
-      // two reductions, which must be done after each other: the first one
-      // accumulates the sum of the cost from each PE, and once the average is
-      // available on Conductor, a second round accumulates the variances back
-      // to Conductor.
+      // bounds() inside reordered(). Ord is a partial synchronization point,
+      // because it happens at different times on different PEs.
+
+      // First the upper bounds of the node IDs are computed on each PE, and
+      // once that is done the lower bounds are communicated among the fellow
+      // Partitioner branches, since the lower bound of PE n is the upper bound
+      // of PE n-1. Only when both upper and lower bounds have been stored on a
+      // PE, can Performer chare array elements be inserted, done in create().
+      // Initiation of estimating the average and standard deviation of the
+      // communication cost of merging the linear system is done in the
+      // beginning of create(), which starts two reductions, which must be done
+      // after each other: the first one accumulates the sum of the cost from
+      // each PE, and once the average is available on Conductor, a second round
+      // accumulates the variances back to Conductor.
       //
       // While the tasks carried out as described in the previous paragraph lead
-      // to correct results, there is an additional trigger, participated, that
-      // needs to be enabled before create() is called. The role of
+      // to correct results, there is an additional trigger, _participated_,
+      // that needs to be enabled before create() is called. The role of
       // trigger_participated is to make sure that all PEs participate in the
       // distribution of new (reordered) mesh node IDs during reordering. In
       // particular, since PE 0 has nothing to receive from others, if this
@@ -126,6 +124,11 @@ module partitioner {
       // PE had to receive new node IDs from others. Thus node reordering is
       // only considered complete if every PE has participated in communication
       // of the new node IDs.
+      //
+      // Note that Pre, Ord, and Cre are partial synchronization points: while
+      // Pre always happens before Ord, and Cre on the same PE, they happen at
+      // different times on different PEs, so these are not considered global
+      // synchronization points.
 
       entry void wait4prep() {
         when trigger_reorderowned_complete(), trigger_nodes_requested()

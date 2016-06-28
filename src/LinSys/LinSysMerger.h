@@ -4,8 +4,78 @@
   \author    J. Bakosi
   \date      Sun 15 May 2016 08:12:13 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
-  \brief     Linear system merger
-  \details   Linear system merger.
+  \brief     Charm++ chare linear system merger group to solve a linear system
+  \details   Charm++ chare linear system merger group used to collect and
+    assemble the left hand side matrix, the right hand side vector, and the
+    solution (unknown) vector from individual worker (Performer) chares. The
+    solution is outsourced to hypre, an MPI-only library.
+
+    The implementation uses the Charm++ runtime system and is fully
+    asynchronous, overlapping computation and communication. The algorithm
+    utilizes the structured dagger (SDAG) Charm++ functionality. The high-level
+    overview of the algorithm structure and how it interfaces with Charm++ is
+    discussed in the Charm++ interface file src/LinSys/linsysmerger.ci.
+
+    #### Call graph ####
+    The following is a directed acyclic graph (DAG) that outlines the
+    asynchronous algorithm implemented in this class The detailed discussion of
+    the algorithm is given in the Charm++ interface file linsysmerger.ci,
+    which also repeats the graph below using ASCII graphics. On the DAG orange
+    fills denote global synchronization points, orange frames with white fill
+    are partial synchronization points that overlap with other tasks, and dashed
+    lines are potential shortcuts that allow jumping over some of the task-graph
+    under some circumstances. See the detailed discussion in linsysmrger.ci.
+    \dot
+    digraph "LinSysMerger SDAG" {
+      rankdir="LR";
+      node [shape=record, fontname=Helvetica, fontsize=10];
+      ChSol [ label="ChSol"
+              tooltip="chares contribute their solution vector nonzeros"
+              URL="\ref tk::LinSysMerger::charesol"];
+      ChLhs [ label="ChLhs"
+              tooltip="chares contribute their left hand side matrix nonzeros"
+              URL="\ref tk::LinSysMerger::charelhs"];
+      ChRhs [ label="ChRhs"
+              tooltip="chares contribute their right hand side vector nonzeros"
+              URL="\ref tk::LinSysMerger::charesol"];
+      HypreSol [ label="HypreSol"
+              tooltip="convert solution vector to hypre format"
+              URL="\ref tk::LinSysMerger::hypresol"];
+      HypreLhs [ label="HypreLhs"
+              tooltip="convert left hand side matrix to hypre format"
+              URL="\ref tk::LinSysMerger::hyprelhs"];
+      HypreRhs [ label="HypreRhs"
+              tooltip="convert right hand side vector to hypre format"
+              URL="\ref tk::LinSysMerger::hyprerhs"];
+      FillSol [ label="FillSol"
+              tooltip="fill/set solution vector"
+              URL="\ref tk::LinSysMerger::sol"];
+      FillLhs [ label="FillLhs"
+              tooltip="fill/set lefth hand side matrix"
+              URL="\ref tk::LinSysMerger::lhs"];
+      FillRhs [ label="FillRhs"
+              tooltip="fill/set right hand side vector"
+              URL="\ref tk::LinSysMerger::rhs"];
+      AsmSol [ label="AsmSol"
+              tooltip="assemble solution vector"
+              URL="\ref tk::LinSysMerger::assemblesol"];
+      AsmLhs [ label="AsmLhs"
+              tooltip="assemble left hand side matrix"
+              URL="\ref tk::LinSysMerger::assemblelhs"];
+      AsmRhs [ label="AsmRhs"
+              tooltip="assemble right hand side vector"
+              URL="\ref tk::LinSysMerger::assemblerhs"];
+      Sol [ label="Sol" tooltip="solve linear system" color="#e6851c"
+            URL="\ref tk::LinSysMerger::solve"];
+      Upd [ label="Upd" tooltip="update solution" color="#e6851c"
+            URL="\ref tk::LinSysMerger::updateSolution"];
+      ChSol -> HypreSol -> FillSol -> AsmSol -> Sol [ style="solid" ];
+      ChLhs -> HypreLhs -> FillLhs -> AsmLhs -> Sol [ style="solid" ];
+      ChRhs -> HypreRhs -> FillRhs -> AsmRhs -> Sol [ style="solid" ];
+      Sol -> Upd [ style="solid" ];
+    }
+    \enddot
+    \include LinSys/linsysmerger.ci
 */
 // *****************************************************************************
 #ifndef LinSysMerger_h
