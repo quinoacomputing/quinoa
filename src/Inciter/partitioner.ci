@@ -65,7 +65,7 @@ module partitioner {
       // before we start preparing node IDs for the requestor.
       //
       // Reordering of node IDs consists of two main parts: (1) Reordering those
-      // nodes that are unique on our PE, i.e., does not exist on any other PE.
+      // nodes that are unique on our PE, i.e., do not exist on any other PE.
       // These nodes can be assigned a new node ID without any communication.
       // (2) Reordering those nodes that connect to mesh cells on other PEs.
       // Assignment of new node IDs, i.e., reordering, must be handled in a way

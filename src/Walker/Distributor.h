@@ -6,11 +6,12 @@
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Distributor drives the time integration of differential equations
   \details   Distributor drives the time integration of differential equations.
-    The implementation uses the Charm++ runtime system and is fully asynchronous,
-    overlapping computation, communication as well I/O. The algorithm utilizes
-    the structured dagger (SDAG) Charm++ functionality. The high-level overview
-    of the algorithm structure and how it interfaces with Charm++ is discussed
-    in the Charm++ interface file src/Walker/distributor.ci.
+    The implementation uses the Charm++ runtime system and is fully
+    asynchronous, overlapping computation, communication as well as I/O. The
+    algorithm utilizes the structured dagger (SDAG) Charm++ functionality. The
+    high-level overview of the algorithm structure and how it interfaces with
+    Charm++ is discussed in the Charm++ interface file
+    src/Walker/distributor.ci.
 
     #### Call graph ####
     The following is a directed acyclic graph (DAG) that outlines the
