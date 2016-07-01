@@ -28,6 +28,11 @@
 
 #include "LinSysMerger.h"
 
+// Force the compiler to not instantiate the template below as it is
+// instantiated in LinSys/LinSysMerger.C (only required on mac)
+extern template class tk::LinSysMerger< inciter::CProxy_Conductor,
+                                        inciter::CProxy_Performer >;
+
 namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;

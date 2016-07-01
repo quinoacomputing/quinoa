@@ -18,19 +18,15 @@
   #pragma clang diagnostic ignored "-Wweak-template-vtables"
 #endif
 
-namespace tk {
-
 // Some compilers (e.g., GNU and Intel) do not find some of the SDAG code
 // generated for Charm++ entry methods defined entirely inside .ci files, such
-// as LinSysnMerger<>::wait4init(), thus we must explicitly spell out all
+// as LinSysnMerger<>::wait4sol(), thus we must explicitly spell out all
 // possible instantiations of LinSysMerger here, similar to that in the .ci file
 // to instantiate registration and delivery of code for the individual
 // specializations. See also
 // https://isocpp.org/wiki/faq/templates#separate-template-class-defn-from-decl.
-template class LinSysMerger< inciter::CProxy_Conductor,
-                             inciter::CProxy_Performer >;
-
-} // tk::
+template class tk::LinSysMerger< inciter::CProxy_Conductor,
+                                 inciter::CProxy_Performer >;
 
 #if defined(__clang__)
   #pragma clang diagnostic pop

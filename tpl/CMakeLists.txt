@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Build quinoa third-party Libraries
-# \date      Sat 11 Jun 2016 08:08:31 PM MDT
+# \date      Fri 01 Jul 2016 03:35:25 PM MDT
 #
 ################################################################################
 
@@ -678,20 +678,18 @@ endif()
 
 #### Hypre #####################################################################
 # http://computation.llnl.gov/project/linear_solvers/software.php
-if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")  # force static libs on MAC OS X
-  set(hypre_shared_off_mac "-DHYPRE_SHARED:BOOL=OFF")
-endif()
 if (hypre)
   ExternalProject_Add(
     hypre
     PREFIX hypre
     SOURCE_DIR ${PROJECT_SOURCE_DIR}/src/hypre/src
     CMAKE_ARGS -D CMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
+               -D CMAKE_C_COMPILER:PATH=${MPI_C_COMPILER}
+               -D CMAKE_C_FLAGS:STRING=${CFLAGS}
                -D CMAKE_CXX_COMPILER:PATH=${MPI_CXX_COMPILER}
                -D CMAKE_CXX_FLAGS:STRING=${CXXFLAGS}
                ${MACOSX_RPATH}
                -D HYPRE_SHARED:BOOL=${BUILD_SHARED_LIBS}
-               ${hypre_shared_off_mac}
                -D HYPRE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX}
     DOWNLOAD_COMMAND ""
     LOG_CONFIGURE 1
