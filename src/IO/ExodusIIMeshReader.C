@@ -18,7 +18,6 @@
 #include <unordered_map>
 
 #include "NoWarning/exodusII.h"
-#include "NoWarning/ne_nemesisI.h"
 
 #include "ExodusIIMeshReader.h"
 #include "Exception.h"
@@ -161,7 +160,7 @@ ExodusIIMeshReader::readNodes( const std::array< std::size_t, 2 >& ext ) const
   std::vector< tk::real > px( num ), py( num ), pz( num );
 
   ErrChk(
-    ne_get_n_coord(
+    ex_get_n_coord(
       m_inFile, static_cast<int64_t>(ext[0])+1, static_cast<int64_t>(num),
       px.data(), py.data(), pz.data() ) == 0,
       "Failed to read coordinates of nodes [" + std::to_string(ext[0]) +
@@ -298,7 +297,7 @@ ExodusIIMeshReader::readElement( std::size_t id,
 
   // Read element connectivity from file
   ErrChk(
-    ne_get_n_elem_conn(
+    ex_get_n_elem_conn(
       m_inFile, m_eidt[bid], static_cast<int64_t>(id)+1, 1, c.data() ) == 0,
       "Failed to read element connectivity of element " + std::to_string( id ) +
       " from block " + std::to_string(m_eidt[bid]) + " from ExodusII file: " +
@@ -335,7 +334,7 @@ ExodusIIMeshReader::readElements( const std::array< std::size_t, 2 >& ext,
 
   // Read element connectivity from file
   ErrChk(
-    ne_get_n_elem_conn(
+    ex_get_n_elem_conn(
       m_inFile, m_eidt[bid], static_cast<int64_t>(ext[0])+1,
       static_cast<int64_t>(num), c.data() ) == 0,
       "Failed to read element connectivity of elements [" +
@@ -373,7 +372,7 @@ ExodusIIMeshReader::readElements( const std::array< std::size_t, 2 >& ext,
 
   // Read element connectivity from file
   ErrChk(
-    ne_get_n_elem_conn(
+    ex_get_n_elem_conn(
       m_inFile, m_eidt[bid], static_cast<int64_t>(ext[0])+1,
       static_cast<int64_t>(num), c.data() ) == 0,
       "Failed to read element connectivity of elements [" +
