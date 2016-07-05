@@ -93,11 +93,6 @@ class ExodusIIMeshReader {
                        tk::ExoElemType elemtype,
                        std::vector< std::size_t >& conn ) const;
 
-    //! Read element connectivity of a number of mesh cells from file
-    std::unordered_map< std::size_t, std::vector< std::size_t > >
-    readElements( const std::array< std::size_t, 2 >& extent,
-                  tk::ExoElemType elemtype ) const;
-
     //!  Return number of elements in a mesh block in the ExodusII file
     int nel( tk::ExoElemType elemtype ) const;
 

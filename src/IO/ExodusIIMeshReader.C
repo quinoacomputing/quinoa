@@ -346,50 +346,50 @@ ExodusIIMeshReader::readElements( const std::array< std::size_t, 2 >& ext,
   for (auto i : c) conn.push_back( static_cast<std::size_t>(i)-1 );
 }
 
-std::unordered_map< std::size_t, std::vector< std::size_t > >
-ExodusIIMeshReader::readElements( const std::array< std::size_t, 2 >& ext,
-                                  tk::ExoElemType elemtype ) const
-// *****************************************************************************
-//  Read element connectivity of a single mesh cell from ExodusII file
-//! \param[in] ext Extents of element ids whose connectivity to read, both
-//!   inclusive
-//! \param[in] elemtype Element type
-//! \return Connectivity of mesh elements read
-//! \note Must be preceded by a call to readElemBlockIDs()
-//! \author J. Bakosi
-// *****************************************************************************
-{
-  Assert( static_cast< std::size_t >(
-            std::accumulate(begin(m_eidt), end(m_eidt), 0) ) != -m_nnpe.size(),
-          "A call to ExodusIIMeshReader::readElement() must be preceded by a "
-          "call to ExodusIIMeshReader::readElemBlockIDs()" );
-
-  auto bid = static_cast< std::size_t >( elemtype );
-
-  auto num = ext[1] - ext[0] + 1;
-
-  std::vector< int > c( num * m_nnpe[bid] );
-
-  // Read element connectivity from file
-  ErrChk(
-    ex_get_n_elem_conn(
-      m_inFile, m_eidt[bid], static_cast<int64_t>(ext[0])+1,
-      static_cast<int64_t>(num), c.data() ) == 0,
-      "Failed to read element connectivity of elements [" +
-      std::to_string(ext[0]) + "..." + std::to_string(ext[1]) +
-      "] from block " + std::to_string(m_eidt[bid]) + " from ExodusII file: " +
-      m_filename );
-
-  // Return element connectivity using zero-based node indexing
-  std::unordered_map< std::size_t, std::vector< std::size_t > > conn;
-  std::size_t e = 0;
-  for (auto i : c) {
-    auto eid = ext[0] + e++ / m_nnpe[bid];
-    conn[ eid ].push_back( static_cast<std::size_t>(i)-1 );
-  }
-  Assert( conn.size() == num, "Element connectivity incompletely built" );
-  return conn;
-}
+// std::unordered_map< std::size_t, std::vector< std::size_t > >
+// ExodusIIMeshReader::readElements( const std::array< std::size_t, 2 >& ext,
+//                                   tk::ExoElemType elemtype ) const
+// // *****************************************************************************
+// //  Read element connectivity of a single mesh cell from ExodusII file
+// //! \param[in] ext Extents of element ids whose connectivity to read, both
+// //!   inclusive
+// //! \param[in] elemtype Element type
+// //! \return Connectivity of mesh elements read
+// //! \note Must be preceded by a call to readElemBlockIDs()
+// //! \author J. Bakosi
+// // *****************************************************************************
+// {
+//   Assert( static_cast< std::size_t >(
+//             std::accumulate(begin(m_eidt), end(m_eidt), 0) ) != -m_nnpe.size(),
+//           "A call to ExodusIIMeshReader::readElement() must be preceded by a "
+//           "call to ExodusIIMeshReader::readElemBlockIDs()" );
+// 
+//   auto bid = static_cast< std::size_t >( elemtype );
+// 
+//   auto num = ext[1] - ext[0] + 1;
+// 
+//   std::vector< int > c( num * m_nnpe[bid] );
+// 
+//   // Read element connectivity from file
+//   ErrChk(
+//     ex_get_n_elem_conn(
+//       m_inFile, m_eidt[bid], static_cast<int64_t>(ext[0])+1,
+//       static_cast<int64_t>(num), c.data() ) == 0,
+//       "Failed to read element connectivity of elements [" +
+//       std::to_string(ext[0]) + "..." + std::to_string(ext[1]) +
+//       "] from block " + std::to_string(m_eidt[bid]) + " from ExodusII file: " +
+//       m_filename );
+// 
+//   // Return element connectivity using zero-based node indexing
+//   std::unordered_map< std::size_t, std::vector< std::size_t > > conn;
+//   std::size_t e = 0;
+//   for (auto i : c) {
+//     auto eid = ext[0] + e++ / m_nnpe[bid];
+//     conn[ eid ].push_back( static_cast<std::size_t>(i)-1 );
+//   }
+//   Assert( conn.size() == num, "Element connectivity incompletely built" );
+//   return conn;
+// }
 
 int
 ExodusIIMeshReader::nel( tk::ExoElemType elemtype ) const
