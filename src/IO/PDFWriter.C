@@ -15,7 +15,6 @@
 #include <iostream>
 
 #include "NoWarning/exodusII.h"
-#include "NoWarning/ne_nemesisI.h"
 
 #include "PDFWriter.h"
 #include "Exception.h"
@@ -921,7 +920,7 @@ PDFWriter::writeExodusII( const BiPDF& pdf,
                    static_cast< int >( i+ye+nbix+3 ),
                    static_cast< int >( i+ye+nbix+2 ) };
     ErrChk(
-      ne_put_n_elem_conn( outFile, 1, static_cast<int64_t>(i+1), 1, con ) == 0,
+      ex_put_n_elem_conn( outFile, 1, static_cast<int64_t>(i+1), 1, con ) == 0,
       "Failed to write element connectivity to file: " + m_filename );
   }
 
@@ -1054,7 +1053,7 @@ PDFWriter::writeExodusII( const TriPDF& pdf,
                    static_cast< int >( i+ye+p+nbix+3 ),
                    static_cast< int >( i+ye+p+nbix+2 ) };
     ErrChk(
-      ne_put_n_elem_conn( outFile, 1, static_cast<int64_t>(i+1), 1, con ) == 0,
+      ex_put_n_elem_conn( outFile, 1, static_cast<int64_t>(i+1), 1, con ) == 0,
       "Failed to write element connectivity to file: " + m_filename );
   }
 
