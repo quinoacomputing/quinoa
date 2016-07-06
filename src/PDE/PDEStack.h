@@ -2,7 +2,7 @@
 /*!
   \file      src/PDE/PDEStack.h
   \author    J. Bakosi
-  \date      Sun 01 May 2016 11:49:48 PM MDT
+  \date      Wed 06 Jul 2016 11:49:24 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Stack of differential equations
   \details   This file declares class PDEStack, which implements various
@@ -140,6 +140,9 @@ class PDEStack {
     //! Get information on the advection-diffusion PDE
     std::vector< std::pair< std::string, std::string > >
     infoAdvDiff( std::map< ctr::PDEType, ncomp_t >& cnt ) const;
+    //! Get information on the Poisson PDE
+    std::vector< std::pair< std::string, std::string > >
+    infoPoisson( std::map< ctr::PDEType, ncomp_t >& cnt ) const;
     //! Get information on the Euler PDE
     std::vector< std::pair< std::string, std::string > >
     infoEuler( std::map< ctr::PDEType, ncomp_t >& cnt ) const;

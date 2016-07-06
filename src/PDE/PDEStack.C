@@ -2,7 +2,7 @@
 /*!
   \file      src/PDE/PDEStack.C
   \author    J. Bakosi
-  \date      Wed 04 May 2016 09:36:58 AM MDT
+  \date      Wed 06 Jul 2016 11:54:38 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Stack of partial differential equations
   \details   This file defines class PDEStack, which implements various
@@ -22,9 +22,11 @@
 #include "Inciter/Options/Problem.h"
 
 #include "AdvDiff.h"
+#include "Poisson.h"
 #include "Euler.h"
 
 #include "AdvDiffProblem.h"
+#include "PoissonProblem.h"
 #include "EulerProblem.h"
 
 using inciter::PDEStack;
@@ -107,6 +109,13 @@ PDEStack::PDEStack() : m_factory(), m_eqTypes()
   mpl::cartesian_product< AdvDiffPolicies >(
     registerPDE< AdvDiff >( m_factory, ctr::PDEType::ADV_DIFF, m_eqTypes ) );
 
+  // Poisson PDE
+  // Construct vector of vectors for all possible policies for PDE
+  using PoissonPolicies = mpl::vector< PoissonProblems >;
+  // Register PDE for all combinations of policies
+  mpl::cartesian_product< PoissonPolicies >(
+    registerPDE< Poisson >( m_factory, ctr::PDEType::POISSON, m_eqTypes ) );
+
   // Euler system of PDEs
   // Construct vector of vectors for all possible policies for PDE
   using EulerPolicies = mpl::vector< EulerProblems >;
@@ -129,6 +138,8 @@ PDEStack::selected() const
   for (const auto& d : g_inputdeck.get< tag::selected, tag::pde >()) {
     if (d == ctr::PDEType::ADV_DIFF)
       pdes.push_back( createPDE< tag::advdiff >( d, cnt ) );
+    else if (d == ctr::PDEType::POISSON)
+      pdes.push_back( createPDE< tag::poisson >( d, cnt ) );
     else if (d == ctr::PDEType::EULER)
       pdes.push_back( createPDE< tag::euler >( d, cnt ) );
     else Throw( "Can't find selected PDE" );
@@ -153,6 +164,8 @@ PDEStack::info() const
   for (const auto& d : g_inputdeck.get< tag::selected, tag::pde >()) {
     if (d == ctr::PDEType::ADV_DIFF)
       info.emplace_back( infoAdvDiff( cnt ) );
+    else if (d == ctr::PDEType::POISSON)
+      info.emplace_back( infoPoisson( cnt ) );
     else if (d == ctr::PDEType::EULER)
       info.emplace_back( infoEuler( cnt ) );
     else Throw( "Can't find selected PDE" );
@@ -192,6 +205,32 @@ PDEStack::infoAdvDiff( std::map< ctr::PDEType, ncomp_t >& cnt ) const
   info.emplace_back( "coeff lambda [" + std::to_string( ncomp ) + "]",
     parameters(
       g_inputdeck.get< tag::param, tag::advdiff, tag::lambda >().at(c) ) );
+
+  return info;
+}
+
+std::vector< std::pair< std::string, std::string > >
+PDEStack::infoPoisson( std::map< ctr::PDEType, ncomp_t >& cnt ) const
+// *****************************************************************************
+//  Return information on the Poisson PDE
+//! \param[inout] cnt std::map of counters for all partial differential equation
+//!   types
+//! \return vector of string pairs describing the PDE configuration
+//! \author J. Bakosi
+// *****************************************************************************
+{
+  auto c = ++cnt[ ctr::PDEType::POISSON ];       // count eqs
+  --c;  // used to index vectors starting with 0
+
+  std::vector< std::pair< std::string, std::string > > info;
+
+  info.emplace_back( ctr::PDE().name( ctr::PDEType::POISSON ), "" );
+  info.emplace_back( "problem", ctr::Problem().name(
+    g_inputdeck.get< tag::param, tag::poisson, tag::problem >()[c] ) );
+  info.emplace_back( "start offset in unknowns array", std::to_string(
+    g_inputdeck.get< tag::component >().offset< tag::poisson >(c) ) );
+  auto ncomp = g_inputdeck.get< tag::component >().get< tag::poisson >()[c];
+  info.emplace_back( "number of components", std::to_string( ncomp ) );
 
   return info;
 }

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/Types.h
   \author    J. Bakosi
-  \date      Wed 17 Feb 2016 06:57:12 AM MST
+  \date      Wed 06 Jul 2016 11:52:48 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Types for Incitier's parsers
   \details   Types for Incitier's parsers. This file defines the components of the
@@ -63,6 +63,12 @@ using AdvDiffPDEParameters = tk::tuple::tagged_tuple<
                       kw::pde_u0::info::expect::type > >
 >;
 
+//! Poisson equation parameters storage
+using PoissonPDEParameters = tk::tuple::tagged_tuple<
+  tag::depvar,      std::vector< char >,
+  tag::problem,     std::vector< ProblemType >
+>;
+
 //! Euler equation parameters storage
 using EulerPDEParameters = tk::tuple::tagged_tuple<
   tag::problem,     std::vector< ProblemType >
@@ -71,6 +77,7 @@ using EulerPDEParameters = tk::tuple::tagged_tuple<
 //! Parameters storage
 using parameters = tk::tuple::tagged_tuple<
   tag::advdiff,     AdvDiffPDEParameters,
+  tag::poisson,     PoissonPDEParameters,
   tag::euler,       EulerPDEParameters
 >;
 

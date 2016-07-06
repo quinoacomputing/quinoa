@@ -2,7 +2,7 @@
 /*!
   \file      src/PDE/PDE.h
   \author    J. Bakosi
-  \date      Tue 03 May 2016 11:23:36 AM MDT
+  \date      Wed 06 Jul 2016 12:12:28 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Partial differential equation
   \details   This file defines a generic partial differential equation class.
@@ -97,10 +97,6 @@ class PDE {
               tk::MeshNodes& R ) const
     { self->rhs( mult, dt, coord, inpoel, U, Un, R ); }
 
-    //! Public interface to advancing the PDE in time
-    void advance( tk::MeshNodes& unk, tk::real dt, tk::real t ) const
-    { self->advance( unk, dt, t ); }
-
     //! Public interface to returning field output labels
     std::vector< std::string > names() const { return self->names(); }
 
@@ -141,7 +137,6 @@ class PDE {
                         const std::vector< std::size_t >&,
                         const tk::MeshNodes&, const tk::MeshNodes&,
                         tk::MeshNodes& ) = 0;
-      virtual void advance( tk::MeshNodes&, tk::real, tk::real ) = 0;
       virtual std::vector< std::string > names() = 0;
       virtual std::vector< std::vector< tk::real > > output(
         tk::real,
@@ -171,8 +166,6 @@ class PDE {
                 const tk::MeshNodes& Un,
                 tk::MeshNodes& R ) override
       { data.rhs( mult, dt, coord, inpoel, U, Un, R ); }
-      void advance( tk::MeshNodes& unk, tk::real dt, tk::real t ) override
-      { data.advance( unk, dt, t ); }
       std::vector< std::string > names() override { return data.names(); }
       std::vector< std::vector< tk::real > > output(
         tk::real t,
