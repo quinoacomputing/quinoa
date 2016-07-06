@@ -93,6 +93,10 @@ class ExodusIIMeshReader {
                        tk::ExoElemType elemtype,
                        std::vector< std::size_t >& conn ) const;
 
+    //! Read all side sets from ExodusII file
+    std::map< int, std::pair< std::vector< int >, std::vector< int > > >
+    readSidesets() const;
+
     //!  Return number of elements in a mesh block in the ExodusII file
     int nel( tk::ExoElemType elemtype ) const;
 
@@ -128,9 +132,10 @@ class ExodusIIMeshReader {
     int m_inFile;                       //!< ExodusII file handle
     std::size_t m_nnode;                //!< Number of nodes in file
     std::size_t m_neblk;                //!< Number of element blocks in file
+    std::size_t m_neset;                //!< Number of element sets in file
     std::vector< int > m_eid;           //!< Element block IDs
     std::vector< int > m_eidt;          //!< Element block IDs mapped to enum
-    std::vector< int > m_nel; //!< Nunmber of elements in a block mapped to enum
+    std::vector< int > m_nel;  //!< Number of elements in a block mapped to enum
 };
 
 } // tk::

@@ -113,6 +113,7 @@ ExodusIIMeshReader::readHeader()
   ErrChk( ndim == 3, "Need a 3D mesh from ExodusII file " + m_filename);
 
   m_neblk = static_cast< std::size_t >( neblk );
+  m_neset = static_cast< std::size_t >( nelemset );
 
   return static_cast< std::size_t >( nnode );
 }
@@ -346,50 +347,42 @@ ExodusIIMeshReader::readElements( const std::array< std::size_t, 2 >& ext,
   for (auto i : c) conn.push_back( static_cast<std::size_t>(i)-1 );
 }
 
-// std::unordered_map< std::size_t, std::vector< std::size_t > >
-// ExodusIIMeshReader::readElements( const std::array< std::size_t, 2 >& ext,
-//                                   tk::ExoElemType elemtype ) const
-// // *****************************************************************************
-// //  Read element connectivity of a single mesh cell from ExodusII file
-// //! \param[in] ext Extents of element ids whose connectivity to read, both
-// //!   inclusive
-// //! \param[in] elemtype Element type
-// //! \return Connectivity of mesh elements read
-// //! \note Must be preceded by a call to readElemBlockIDs()
-// //! \author J. Bakosi
-// // *****************************************************************************
-// {
-//   Assert( static_cast< std::size_t >(
-//             std::accumulate(begin(m_eidt), end(m_eidt), 0) ) != -m_nnpe.size(),
-//           "A call to ExodusIIMeshReader::readElement() must be preceded by a "
-//           "call to ExodusIIMeshReader::readElemBlockIDs()" );
-// 
-//   auto bid = static_cast< std::size_t >( elemtype );
-// 
-//   auto num = ext[1] - ext[0] + 1;
-// 
-//   std::vector< int > c( num * m_nnpe[bid] );
-// 
-//   // Read element connectivity from file
-//   ErrChk(
-//     ex_get_n_elem_conn(
-//       m_inFile, m_eidt[bid], static_cast<int64_t>(ext[0])+1,
-//       static_cast<int64_t>(num), c.data() ) == 0,
-//       "Failed to read element connectivity of elements [" +
-//       std::to_string(ext[0]) + "..." + std::to_string(ext[1]) +
-//       "] from block " + std::to_string(m_eidt[bid]) + " from ExodusII file: " +
-//       m_filename );
-// 
-//   // Return element connectivity using zero-based node indexing
-//   std::unordered_map< std::size_t, std::vector< std::size_t > > conn;
-//   std::size_t e = 0;
-//   for (auto i : c) {
-//     auto eid = ext[0] + e++ / m_nnpe[bid];
-//     conn[ eid ].push_back( static_cast<std::size_t>(i)-1 );
-//   }
-//   Assert( conn.size() == num, "Element connectivity incompletely built" );
-//   return conn;
-// }
+std::map< int, std::pair< std::vector< int >, std::vector< int > > >
+ExodusIIMeshReader::readSidesets() const
+// *****************************************************************************
+//  Read all side sets from ExodusII file
+//! \return Elem and side lists mapped to side set ids
+//! \author J. Bakosi
+// *****************************************************************************
+{
+  std::vector< int > ids( m_neset );
+
+  // Read all side set ids from file
+  ErrChk( ex_get_side_set_ids( m_inFile, ids.data() ) == 0,
+          "Failed to read side set ids from ExodusII file: " + m_filename );
+
+  // Elem and side lists mapped to side set ids
+  std::map< int, std::pair< std::vector< int >, std::vector< int > > > side;
+
+  // Read in element and side lists for all side sets
+  for (auto i : ids) {
+    std::size_t nside, ndis;
+    // Read number of elements and sides in side set i
+    ErrChk( ex_get_side_set_param( m_inFile, i, &nside, &ndis ) == 0,
+            "Failed to read side set " + std::to_string(i) + " parameters "
+            "from ExodusII file: " + m_filename );
+    auto& lists = side[ i ];
+    lists.first.resize( nside );
+    lists.second.resize( nside );
+    // Read in element and side lists for side set i
+    ErrChk( ex_get_side_set( m_inFile, i, lists.first.data(),
+                             lists.second.data() ) == 0,
+            "Failed to side set " + std::to_string(i) + " from ExodusII "
+            "file: " + m_filename );
+  }
+
+  return side;
+}
 
 int
 ExodusIIMeshReader::nel( tk::ExoElemType elemtype ) const
