@@ -2,7 +2,7 @@
 /*!
   \file      src/PDE/Euler.h
   \author    J. Bakosi
-  \date      Mon 02 May 2016 04:58:30 PM MDT
+  \date      Wed 06 Jul 2016 12:12:53 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Euler equations describing compressible flow
   \details   This file implements the time integration of the Euler equations
@@ -106,17 +106,6 @@ class Euler {
       IGNORE(U);
       IGNORE(Un);
       IGNORE(R);
-    }
-
-    //! \brief Advance unknowns according to the Euler equations
-    //! \param[in,out] unk Array of unknowns
-    //! \param[in] dt Time step size
-    //! \param[in] t Physical time
-    //! \author J. Bakosi
-    void advance( tk::MeshNodes& unk, tk::real dt, tk::real t ) {
-      IGNORE(unk);
-      IGNORE(dt);
-      IGNORE(t);
     }
 
     //! Return field names to be output to file

@@ -111,7 +111,7 @@ class Performer : public CBase_Performer {
     std::pair< std::vector< std::size_t >, std::vector< std::size_t > > m_el;
     //! Alias to element connectivity in m_el
     decltype(m_el.first)& m_inpoel = m_el.first;
-    //! Alias to global node IDs of owned elements in in m_el
+    //! Alias to global node IDs of owned elements in m_el
     decltype(m_el.second)& m_gid = m_el.second;
     //!< Local node ids associated to the global ones of owned elements
     std::unordered_map< std::size_t, std::size_t > m_lid;

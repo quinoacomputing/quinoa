@@ -2,7 +2,7 @@
 /*!
   \file      src/PDE/AdvDiff.h
   \author    J. Bakosi
-  \date      Mon 02 May 2016 04:52:35 PM MDT
+  \date      Wed 06 Jul 2016 12:12:36 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Advection-diffusion equation of a transported scalar
   \details   This file implements the time integration of the
@@ -268,14 +268,6 @@ class AdvDiff {
             }
       }
     }
-
-    //! Advance unknowns according to the Euler equations
-    //! \param[in,out] unk Array of unknowns
-    //! \param[in] dt Time step size
-    //! \param[in] t Physical time
-    //! \author J. Bakosi
-    //void advance( tk::MeshNodes& unk, tk::real dt, tk::real t ) {}
-    void advance( tk::MeshNodes&, tk::real, tk::real ) {}
 
     //! Return field names to be output to file
     //! \return Vector of strings labelling fields output in file

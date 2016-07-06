@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Keywords.h
   \author    J. Bakosi
-  \date      Sun 03 Apr 2016 05:51:19 PM MDT
+  \date      Wed 06 Jul 2016 12:23:04 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Definition of all keywords
   \details   This file contains the definition of all keywords, including those
@@ -2472,7 +2472,7 @@ using user_defined = keyword< user_defined_info, u,s,e,r,'_',d,e,f,i,n,e,d >;
 struct shear_diff_info {
   static std::string name() { return "S"; }
   static std::string shortDescription() { return
-    "Select test shear + diffusion test problem "; }
+    "Select shear + diffusion test problem "; }
   static std::string longDescription() { return
     R"(This keyword is used to select the shear diffusion test problem. The
     initial and boundary conditions are specified to set up the test problem
@@ -2483,6 +2483,22 @@ struct shear_diff_info {
   };
 };
 using shear_diff = keyword< shear_diff_info, s,h,e,a,r,'_',d,i,f,f >;
+
+struct dir_neu_info {
+  static std::string name() { return "D"; }
+  static std::string shortDescription() { return
+    "Select Poisson equation test problem with Dirichlet and Neumann BCs"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select a Poisson equation test problem.
+    Dirichlet and Neumann boundary conditions are simply hard-coded to set up
+    the test problem, suitable to exercise and test the finite element
+    discretization of the Laplace operator yielding both volume and boundary
+    integral terms in its weak form. Example: "problem dir_neu".)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+  };
+};
+using dir_neu = keyword< dir_neu_info, d,i,r,'_',n,e,u >;
 
 struct slot_cyl_info {
   static std::string name() { return "C"; }
@@ -2513,6 +2529,7 @@ struct problem_info {
     static std::string choices() {
       return '\'' + user_defined::string() + "\' | \'"
                   + shear_diff::string() + "\' | \'"
+                  + dir_neu::string() + "\' | \'"
                   + slot_cyl::string() + '\'';
     }
   };
@@ -2586,6 +2603,22 @@ struct advdiff_info {
   }
 };
 using advdiff = keyword< advdiff_info, a,d,v,d,i,f,f >;
+
+struct poisson_info {
+  static std::string name() { return "Poisson equation"; }
+  static std::string shortDescription() { return
+    "Start configuration block for a Poisson equation"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to introduce an poisson ... end block, used to
+    specify the configuration for a partial differential equation of
+    Poisson type. Keywords allowed in an poisson ... end block: )"
+    + std::string("\'")
+    + problem::string() + "\'. "
+    + R"(For an example poisson ... end block, see
+      doc/html/inicter_example_poisson.html.)";
+  }
+};
+using poisson = keyword< poisson_info, p,o,i,s,s,o,n >;
 
 struct euler_info {
   static std::string name() { return "Euler equations"; }
