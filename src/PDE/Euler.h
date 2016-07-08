@@ -2,7 +2,7 @@
 /*!
   \file      src/PDE/Euler.h
   \author    J. Bakosi
-  \date      Wed 06 Jul 2016 12:12:53 PM MDT
+  \date      Thu 07 Jul 2016 02:29:11 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Euler equations describing compressible flow
   \details   This file implements the time integration of the Euler equations
@@ -11,6 +11,8 @@
 // *****************************************************************************
 #ifndef Euler_h
 #define Euler_h
+
+#include <unordered_map>
 
 #include "Macro.h"
 #include "EulerProblem.h"
@@ -71,12 +73,15 @@ class Euler {
               const std::vector< std::size_t >& inpoel,
               const std::pair< std::vector< std::size_t >,
                                std::vector< std::size_t > >& psup,
+              const  std::unordered_map< int, std::pair< std::vector< int >,
+                       std::vector< int > > >& side,
               tk::MeshNodes& lhsd,
               tk::MeshNodes& lhso )
     {
       IGNORE(coord);
       IGNORE(inpoel);
       IGNORE(psup);
+      IGNORE(side);
       IGNORE(lhsd);
       IGNORE(lhso);
     }
@@ -95,6 +100,8 @@ class Euler {
               tk::real dt,
               const std::array< std::vector< tk::real >, 3 >& coord,
               const std::vector< std::size_t >& inpoel,
+              const  std::unordered_map< int, std::pair< std::vector< int >,
+                       std::vector< int > > >& side,
               const tk::MeshNodes& U,
               const tk::MeshNodes& Un,
               tk::MeshNodes& R )
@@ -103,6 +110,7 @@ class Euler {
       IGNORE(dt);
       IGNORE(coord);
       IGNORE(inpoel);
+      IGNORE(side);
       IGNORE(U);
       IGNORE(Un);
       IGNORE(R);

@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Conductor.C
   \author    J. Bakosi
-  \date      Wed 04 May 2016 11:06:22 AM MDT
+  \date      Thu 07 Jul 2016 03:10:44 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Conductor drives the time integration of a PDE
   \details   Conductor drives the time integration of a PDE
@@ -109,9 +109,19 @@ Conductor::Conductor() :
 
     // Create (empty) worker array
     m_performer = PerformerProxy::ckNew();
+
+    // Create ExodusII reader for reading side sets from file. When creating
+    // LinSysMerger, er.readSideSets() reads all side sets from file, which is
+    // a serial read, then send the same copy to all PEs. Performers then will
+    // query the side sets from their local LinSysMerger branch.
+    tk::ExodusIIMeshReader
+      er( g_inputdeck.get< tag::cmd, tag::io, tag::input >() );
+
     // Create linear system merger chare group
     m_linsysmerger = LinSysMergerProxy::ckNew( thisProxy, m_performer,
+                       er.readSidesets(),
                        g_inputdeck.get< tag::component >().nprop() );
+
     // Create mesh partitioner Charm++ chare group and start partitioning mesh
     m_print.diagstart( "Reading mesh graph ..." );
     m_partitioner =

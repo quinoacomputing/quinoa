@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Mon 02 May 2016 12:17:42 PM MDT
+  \date      Thu 07 Jul 2016 03:44:35 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Inciter's input deck grammar definition
   \details   Inciter's input deck grammar definition. We use the Parsing
@@ -53,6 +53,7 @@ namespace deck {
   //! \details Counts the number of parsed equation blocks during parsing.
   //! \author J. Bakosi
   static tk::tuple::tagged_tuple< tag::advdiff, std::size_t,
+                                  tag::poisson, std::size_t,
                                   tag::euler,   std::size_t > neq;
 
   // Inciter's InputDeck actions
@@ -179,6 +180,27 @@ namespace deck {
                                                  tag::u0 > >,
            check_errors< tag::advdiff > > {};
 
+  //! Poisson partial differential equation for a scalar
+  struct poisson :
+         pegtl::ifmust<
+           scan_eq< use< kw::poisson >, tag::poisson >,
+           tk::grm::block< Stack,
+                           use< kw::end >,
+                           tk::grm::policy< Stack,
+                                            use,
+                                            use< kw::problem >,
+                                            ctr::Problem,
+                                            tag::poisson,
+                                            tag::problem >,
+                          tk::grm::depvar< Stack,
+                                           use,
+                                           tag::poisson,
+                                           tag::depvar >,
+                           tk::grm::component< Stack,
+                                               use< kw::ncomp >,
+                                               tag::poisson > >,
+           check_errors< tag::poisson > > {};
+
   //! partitioning ... end block
   struct partitioning :
          pegtl::ifmust<
@@ -195,7 +217,7 @@ namespace deck {
 
   //! equation types
   struct equations :
-         pegtl::sor< advdiff > {};
+         pegtl::sor< advdiff, poisson > {};
 
   //! plotvar ... end block
   struct plotvar :

@@ -2,7 +2,7 @@
 /*!
   \file      src/PDE/PDE.h
   \author    J. Bakosi
-  \date      Wed 06 Jul 2016 12:12:28 PM MDT
+  \date      Thu 07 Jul 2016 03:07:27 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Partial differential equation
   \details   This file defines a generic partial differential equation class.
@@ -20,6 +20,7 @@
 #include <string>
 #include <vector>
 #include <functional>
+#include <unordered_map>
 
 #include "Types.h"
 #include "Make_unique.h"
@@ -83,19 +84,23 @@ class PDE {
               const std::vector< std::size_t >& inpoel,
               const std::pair< std::vector< std::size_t >,
                                std::vector< std::size_t > >& psup,
+              const std::unordered_map< int, std::pair< std::vector< int >,
+                       std::vector< int > > >& side,
               tk::MeshNodes& lhsd,
               tk::MeshNodes& lhso ) const
-    { self->lhs( coord, inpoel, psup, lhsd, lhso ); }
+    { self->lhs( coord, inpoel, psup, side, lhsd, lhso ); }
 
     //! Public interface to computing the right-hand side vector for the diff eq
     void rhs( tk::real mult,
               tk::real dt,
               const std::array< std::vector< tk::real >, 3 >& coord,
               const std::vector< std::size_t >& inpoel,
+              const std::unordered_map< int, std::pair< std::vector< int >,
+                       std::vector< int > > >& side,
               const tk::MeshNodes& U,
               const tk::MeshNodes& Un,
               tk::MeshNodes& R ) const
-    { self->rhs( mult, dt, coord, inpoel, U, Un, R ); }
+    { self->rhs( mult, dt, coord, inpoel, side, U, Un, R ); }
 
     //! Public interface to returning field output labels
     std::vector< std::string > names() const { return self->names(); }
@@ -131,10 +136,16 @@ class PDE {
                         const std::vector< std::size_t >&,
                         const std::pair< std::vector< std::size_t >,
                                          std::vector< std::size_t > >&,
+                        const std::unordered_map< int,
+                                 std::pair< std::vector< int >,
+                                            std::vector< int > > >&,
                         tk::MeshNodes&, tk::MeshNodes& ) = 0;
       virtual void rhs( tk::real, tk::real,
                         const std::array< std::vector< tk::real >, 3 >&,
                         const std::vector< std::size_t >&,
+                        const std::unordered_map< int,
+                                std::pair< std::vector< int >,
+                                           std::vector< int > > >&,
                         const tk::MeshNodes&, const tk::MeshNodes&,
                         tk::MeshNodes& ) = 0;
       virtual std::vector< std::string > names() = 0;
@@ -157,15 +168,19 @@ class PDE {
                 const std::vector< std::size_t >& inpoel,
                 const std::pair< std::vector< std::size_t >,
                                  std::vector< std::size_t > >& psup,
+                const std::unordered_map< int, std::pair< std::vector< int >,
+                         std::vector< int > > >& side,
                 tk::MeshNodes& lhsd, tk::MeshNodes& lhso ) override
-      { data.lhs( coord, inpoel, psup, lhsd, lhso ); }
+      { data.lhs( coord, inpoel, psup, side, lhsd, lhso ); }
       void rhs( tk::real mult, tk::real dt,
                 const std::array< std::vector< tk::real >, 3 >& coord,
                 const std::vector< std::size_t >& inpoel,
+                const std::unordered_map< int, std::pair< std::vector< int >,
+                         std::vector< int > > >& side,
                 const tk::MeshNodes& U,
                 const tk::MeshNodes& Un,
                 tk::MeshNodes& R ) override
-      { data.rhs( mult, dt, coord, inpoel, U, Un, R ); }
+      { data.rhs( mult, dt, coord, inpoel, side, U, Un, R ); }
       std::vector< std::string > names() override { return data.names(); }
       std::vector< std::vector< tk::real > > output(
         tk::real t,
