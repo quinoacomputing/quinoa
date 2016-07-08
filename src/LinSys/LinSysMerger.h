@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/LinSysMerger.h
   \author    J. Bakosi
-  \date      Sun 15 May 2016 08:12:13 AM MDT
+  \date      Thu 07 Jul 2016 03:05:45 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ chare linear system merger group to solve a linear system
   \details   Charm++ chare linear system merger group used to collect and
@@ -92,6 +92,7 @@
 #include "Types.h"
 #include "Exception.h"
 #include "ContainerUtil.h"
+#include "PUPUtil.h"
 #include "MeshNodes.h"
 #include "HypreMatrix.h"
 #include "HypreVector.h"
@@ -150,10 +151,13 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
     //! \param[in] ncomp Total number of scalar components in the linear system
     LinSysMerger( const HostProxy& host,
                   const WorkerProxy& worker,
+                  const std::unordered_map< int, std::pair< std::vector< int >,
+                          std::vector< int > > >& side,
                   std::size_t ncomp ) :
       __dep(),
       m_host( host ),
       m_worker( worker ),
+      m_side( side ),
       m_ncomp( ncomp ),
       m_nchare( 0 ),
       m_nperow( 0 ),
@@ -451,9 +455,19 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       hyprerow();
     }
 
+    //! Chares query side set info
+    //! \note This function does not have to be declared as a Charm++ entry
+    //!   method since it is always called by chares on the same PE.
+    const std::unordered_map< int,
+      std::pair< std::vector< int >, std::vector< int > > >& side()
+    { return m_side; }
+
   private:
     HostProxy m_host;           //!< Host proxy
     WorkerProxy m_worker;       //!< Worker proxy
+    //! Elem and side lists mapped to all side set ids of the mesh
+    std::unordered_map< int,
+      std::pair< std::vector< int >, std::vector< int > > > m_side;
     std::size_t m_ncomp;        //!< Number of scalar components per unknown
     std::size_t m_nchare;       //!< Number of chares contributing to my PE
     std::size_t m_nperow;       //!< Number of fellow PEs to send row ids to

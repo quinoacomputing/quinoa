@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.C
   \author    J. Bakosi
-  \date      Wed 06 Jul 2016 11:39:26 AM MDT
+  \date      Thu 07 Jul 2016 03:02:24 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Performer advances a PDE
   \details   Performer advances a PDE. There are a potentially
@@ -148,9 +148,12 @@ Performer::lhs()
 //! \author J. Bakosi
 // *****************************************************************************
 {
+  // Access side sets from LinSysMerger
+  auto& side = m_linsysmerger.ckLocalBranch()->side();
+
   // Compute left-hand side matrix for all equations
   for (const auto& eq : g_pdes)
-    eq.lhs( m_coord, m_inpoel, m_psup, m_lhsd, m_lhso );
+    eq.lhs( m_coord, m_inpoel, m_psup, side, m_lhsd, m_lhso );
 
   // Send off left hand side for assembly
   m_linsysmerger.ckLocalBranch()->
@@ -172,9 +175,12 @@ Performer::rhs( tk::real mult,
 //! \author J. Bakosi
 // *****************************************************************************
 {
+  // Access side sets from LinSysMerger
+  auto& side = m_linsysmerger.ckLocalBranch()->side();
+
   // Compute right-hand side vector for all equations
   for (const auto& eq : g_pdes)
-    eq.rhs( mult, dt, m_coord, m_inpoel, sol, m_u, rhs );
+    eq.rhs( mult, dt, m_coord, m_inpoel, side, sol, m_u, rhs );
 
   // Send off right-hand sides for assembly
   m_linsysmerger.ckLocalBranch()->charerhs( thisIndex, m_gid, rhs );

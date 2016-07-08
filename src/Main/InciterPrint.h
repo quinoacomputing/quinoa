@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/InciterPrint.h
   \author    J. Bakosi
-  \date      Wed 04 May 2016 11:01:36 AM MDT
+  \date      Thu 07 Jul 2016 03:47:40 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Inciter-specific pretty printer functionality
   \details   Inciter-specific pretty printer functionality.
@@ -97,6 +97,8 @@ class InciterPrint : public tk::Print {
                kw::user_defined::info::name() + " - user-defined\n" +
              m_item_indent + "   " +
                kw::shear_diff::info::name() + " - shear diffusion\n" +
+             m_item_indent + "   " +
+               kw::dir_neu::info::name() + " - Dirichlet & Neumann\n" +
              m_item_indent + "   " +
                kw::slot_cyl::info::name() + " - slotted cylinder\n\n" );
         // extract eqname and supported policies

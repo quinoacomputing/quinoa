@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/ExodusIIMeshReader.C
   \author    J. Bakosi
-  \date      Wed 04 May 2016 08:46:58 AM MDT
+  \date      Thu 07 Jul 2016 04:05:11 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     ExodusII mesh reader
   \details   ExodusII mesh reader class definition. Currently, this is a bare
@@ -33,6 +33,7 @@ ExodusIIMeshReader::ExodusIIMeshReader( const std::string& filename,
   m_inFile( 0 ),
   m_nnode( 0 ),
   m_neblk( 0 ),
+  m_neset( 0 ),
   m_eid(),
   m_eidt( m_nnpe.size(), -1 ),
   m_nel( m_nnpe.size(), -1 )
@@ -347,38 +348,46 @@ ExodusIIMeshReader::readElements( const std::array< std::size_t, 2 >& ext,
   for (auto i : c) conn.push_back( static_cast<std::size_t>(i)-1 );
 }
 
-std::map< int, std::pair< std::vector< int >, std::vector< int > > >
-ExodusIIMeshReader::readSidesets() const
+std::unordered_map< int, std::pair< std::vector< int >, std::vector< int > > >
+ExodusIIMeshReader::readSidesets()
 // *****************************************************************************
 //  Read all side sets from ExodusII file
 //! \return Elem and side lists mapped to side set ids
 //! \author J. Bakosi
 // *****************************************************************************
 {
-  std::vector< int > ids( m_neset );
-
-  // Read all side set ids from file
-  ErrChk( ex_get_side_set_ids( m_inFile, ids.data() ) == 0,
-          "Failed to read side set ids from ExodusII file: " + m_filename );
+  // Read ExodusII file header (fills m_neset)
+  readHeader();
 
   // Elem and side lists mapped to side set ids
-  std::map< int, std::pair< std::vector< int >, std::vector< int > > > side;
+  std::unordered_map< int,
+    std::pair< std::vector< int >, std::vector< int > > > side;
 
-  // Read in element and side lists for all side sets
-  for (auto i : ids) {
-    std::size_t nside, ndis;
-    // Read number of elements and sides in side set i
-    ErrChk( ex_get_side_set_param( m_inFile, i, &nside, &ndis ) == 0,
-            "Failed to read side set " + std::to_string(i) + " parameters "
-            "from ExodusII file: " + m_filename );
-    auto& lists = side[ i ];
-    lists.first.resize( nside );
-    lists.second.resize( nside );
-    // Read in element and side lists for side set i
-    ErrChk( ex_get_side_set( m_inFile, i, lists.first.data(),
-                             lists.second.data() ) == 0,
-            "Failed to side set " + std::to_string(i) + " from ExodusII "
-            "file: " + m_filename );
+  if (m_neset > 0) {
+
+    std::vector< int > ids( m_neset );
+
+    // Read all side set ids from file
+    ErrChk( ex_get_side_set_ids( m_inFile, ids.data() ) == 0,
+            "Failed to read side set ids from ExodusII file: " + m_filename );
+
+    // Read in element and side lists for all side sets
+    for (auto i : ids) {
+      std::size_t nside, ndis;
+      // Read number of elements and sides in side set i
+      ErrChk( ex_get_side_set_param( m_inFile, i, &nside, &ndis ) == 0,
+              "Failed to read side set " + std::to_string(i) + " parameters "
+              "from ExodusII file: " + m_filename );
+      auto& lists = side[ i ];
+      lists.first.resize( nside );
+      lists.second.resize( nside );
+      // Read in element and side lists for side set i
+      ErrChk( ex_get_side_set( m_inFile, i, lists.first.data(),
+                               lists.second.data() ) == 0,
+              "Failed to side set " + std::to_string(i) + " from ExodusII "
+              "file: " + m_filename );
+    }
+
   }
 
   return side;
