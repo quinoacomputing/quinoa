@@ -2,7 +2,7 @@
 /*!
   \file      src/PDE/PDE.h
   \author    J. Bakosi
-  \date      Thu 07 Jul 2016 03:07:27 PM MDT
+  \date      Mon 11 Jul 2016 11:55:07 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Partial differential equation
   \details   This file defines a generic partial differential equation class.
@@ -20,7 +20,6 @@
 #include <string>
 #include <vector>
 #include <functional>
-#include <unordered_map>
 
 #include "Types.h"
 #include "Make_unique.h"
@@ -76,31 +75,32 @@ class PDE {
     //! Public interface to setting the initial conditions for the diff eq
     void initialize( const std::array< std::vector< tk::real >, 3 >& coord,
                      tk::MeshNodes& unk,
-                     tk::real t )
-    const { self->initialize( coord, unk, t ); }
+                     tk::real t ) const
+    { self->initialize( coord, unk, t ); }
 
     //! Public interface to computing the left-hand side matrix for the diff eq
     void lhs( const std::array< std::vector< tk::real >, 3 >& coord,
               const std::vector< std::size_t >& inpoel,
               const std::pair< std::vector< std::size_t >,
                                std::vector< std::size_t > >& psup,
-              const std::unordered_map< int, std::pair< std::vector< int >,
-                       std::vector< int > > >& side,
               tk::MeshNodes& lhsd,
               tk::MeshNodes& lhso ) const
-    { self->lhs( coord, inpoel, psup, side, lhsd, lhso ); }
+    { self->lhs( coord, inpoel, psup, lhsd, lhso ); }
 
     //! Public interface to computing the right-hand side vector for the diff eq
     void rhs( tk::real mult,
               tk::real dt,
               const std::array< std::vector< tk::real >, 3 >& coord,
               const std::vector< std::size_t >& inpoel,
-              const std::unordered_map< int, std::pair< std::vector< int >,
-                       std::vector< int > > >& side,
               const tk::MeshNodes& U,
               const tk::MeshNodes& Un,
               tk::MeshNodes& R ) const
-    { self->rhs( mult, dt, coord, inpoel, side, U, Un, R ); }
+    { self->rhs( mult, dt, coord, inpoel, U, Un, R ); }
+
+    //! \brief Public interface for querying if a Dirichlet boundary condition
+    //!   has set by the user on any side set for any component in the PDE
+    bool bc_dirichlet( int sideset ) const
+    { return self->bc_dirichlet( sideset ); }
 
     //! Public interface to returning field output labels
     std::vector< std::string > names() const { return self->names(); }
@@ -131,28 +131,23 @@ class PDE {
       virtual ~Concept() = default;
       virtual Concept* copy() const = 0;
       virtual void initialize( const std::array< std::vector< tk::real >, 3 >&,
-                               tk::MeshNodes&, tk::real ) = 0;
+                               tk::MeshNodes&, tk::real ) const = 0;
       virtual void lhs( const std::array< std::vector< tk::real >, 3 >&,
                         const std::vector< std::size_t >&,
                         const std::pair< std::vector< std::size_t >,
                                          std::vector< std::size_t > >&,
-                        const std::unordered_map< int,
-                                 std::pair< std::vector< int >,
-                                            std::vector< int > > >&,
-                        tk::MeshNodes&, tk::MeshNodes& ) = 0;
+                        tk::MeshNodes&, tk::MeshNodes& ) const = 0;
       virtual void rhs( tk::real, tk::real,
                         const std::array< std::vector< tk::real >, 3 >&,
                         const std::vector< std::size_t >&,
-                        const std::unordered_map< int,
-                                std::pair< std::vector< int >,
-                                           std::vector< int > > >&,
                         const tk::MeshNodes&, const tk::MeshNodes&,
-                        tk::MeshNodes& ) = 0;
-      virtual std::vector< std::string > names() = 0;
+                        tk::MeshNodes& ) const = 0;
+      virtual bool bc_dirichlet( int ) const = 0;
+      virtual std::vector< std::string > names() const = 0;
       virtual std::vector< std::vector< tk::real > > output(
         tk::real,
         const std::array< std::vector< tk::real >, 3 >&,
-        tk::MeshNodes& ) = 0;
+        tk::MeshNodes& ) const = 0;
     };
 
     //! \brief Model models the Concept above by deriving from it and overriding
@@ -162,30 +157,28 @@ class PDE {
       Model( T x ) : data( std::move(x) ) {}
       Concept* copy() const override { return new Model( *this ); }
       void initialize( const std::array< std::vector< tk::real >, 3 >& coord,
-                       tk::MeshNodes& unk, tk::real t ) override
+                       tk::MeshNodes& unk, tk::real t ) const override
       { data.initialize( coord, unk, t ); }
       void lhs( const std::array< std::vector< tk::real >, 3 >& coord,
                 const std::vector< std::size_t >& inpoel,
                 const std::pair< std::vector< std::size_t >,
                                  std::vector< std::size_t > >& psup,
-                const std::unordered_map< int, std::pair< std::vector< int >,
-                         std::vector< int > > >& side,
-                tk::MeshNodes& lhsd, tk::MeshNodes& lhso ) override
-      { data.lhs( coord, inpoel, psup, side, lhsd, lhso ); }
+                tk::MeshNodes& lhsd, tk::MeshNodes& lhso ) const override
+      { data.lhs( coord, inpoel, psup, lhsd, lhso ); }
       void rhs( tk::real mult, tk::real dt,
                 const std::array< std::vector< tk::real >, 3 >& coord,
                 const std::vector< std::size_t >& inpoel,
-                const std::unordered_map< int, std::pair< std::vector< int >,
-                         std::vector< int > > >& side,
                 const tk::MeshNodes& U,
                 const tk::MeshNodes& Un,
-                tk::MeshNodes& R ) override
-      { data.rhs( mult, dt, coord, inpoel, side, U, Un, R ); }
-      std::vector< std::string > names() override { return data.names(); }
+                tk::MeshNodes& R ) const override
+      { data.rhs( mult, dt, coord, inpoel, U, Un, R ); }
+      bool bc_dirichlet( int sideset ) const override
+      { return data.bc_dirichlet( sideset ); }
+      std::vector< std::string > names() const override { return data.names(); }
       std::vector< std::vector< tk::real > > output(
         tk::real t,
         const std::array< std::vector< tk::real >, 3 >& coord,
-        tk::MeshNodes& U ) override { return data.output( t, coord, U ); }
+        tk::MeshNodes& U ) const override { return data.output( t, coord, U ); }
       T data;
     };
 

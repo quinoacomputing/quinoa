@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/LinSysMerger.C
   \author    J. Bakosi
-  \date      Tue 03 May 2016 11:56:55 AM MDT
+  \date      Wed 13 Jul 2016 09:21:05 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Linear system merger
   \details   Linear system merger.
@@ -17,6 +17,21 @@
   #pragma clang diagnostic push
   #pragma clang diagnostic ignored "-Wweak-template-vtables"
 #endif
+
+namespace tk {
+
+//! \brief Charm++ BC merger reducer
+//! \details This variable is defined here in the .C file and declared as extern
+//!   in LinSysMerger.h. If instead one defines it in the header (as static),
+//!   a new version of the variable is created any time the header file is
+//!   included, yielding no compilation nor linking errors. However, that leads
+//!   to runtime errors, since LinSysMerger::registerBCMerger(), a Charm++
+//!   "initnode" entry method, *may* fill one while contribute() may use the
+//!   other (unregistered) one. Result: undefined behavior, segfault, and
+//!   formatting the internet ...
+CkReduction::reducerType BCMerger;
+
+}
 
 // Some compilers (e.g., GNU and Intel) do not find some of the SDAG code
 // generated for Charm++ entry methods defined entirely inside .ci files, such
@@ -40,10 +55,15 @@ template class tk::LinSysMerger< inciter::CProxy_Conductor,
   #pragma clang diagnostic ignored "-Wunused-parameter"
   #pragma clang diagnostic ignored "-Wshorten-64-to-32"
   #pragma clang diagnostic ignored "-Wreorder"
+#elif defined(__GNUC__)
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wswitch-default"
 #endif
 
 #include "linsysmerger.def.h"
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
+#elif defined(__GNUC__)
+  #pragma GCC diagnostic pop
 #endif

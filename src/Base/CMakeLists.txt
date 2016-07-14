@@ -12,6 +12,7 @@ add_library(Base
             Timer.C
             Reader.C
             Writer.C
+            VectorReducer.C
 #            Msg.C
 )
 

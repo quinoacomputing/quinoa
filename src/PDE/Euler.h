@@ -2,7 +2,7 @@
 /*!
   \file      src/PDE/Euler.h
   \author    J. Bakosi
-  \date      Thu 07 Jul 2016 02:29:11 PM MDT
+  \date      Mon 11 Jul 2016 11:32:05 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Euler equations describing compressible flow
   \details   This file implements the time integration of the Euler equations
@@ -12,7 +12,7 @@
 #ifndef Euler_h
 #define Euler_h
 
-#include <unordered_map>
+#include <cmath>
 
 #include "Macro.h"
 #include "EulerProblem.h"
@@ -45,7 +45,7 @@ class Euler {
     //! \author J. Bakosi
     void initialize( const std::array< std::vector< tk::real >, 3 >& coord,
                      tk::MeshNodes& unk,
-                     tk::real t )
+                     tk::real t ) const
     {
       IGNORE(coord);
       IGNORE(unk);
@@ -73,15 +73,12 @@ class Euler {
               const std::vector< std::size_t >& inpoel,
               const std::pair< std::vector< std::size_t >,
                                std::vector< std::size_t > >& psup,
-              const  std::unordered_map< int, std::pair< std::vector< int >,
-                       std::vector< int > > >& side,
               tk::MeshNodes& lhsd,
-              tk::MeshNodes& lhso )
+              tk::MeshNodes& lhso ) const
     {
       IGNORE(coord);
       IGNORE(inpoel);
       IGNORE(psup);
-      IGNORE(side);
       IGNORE(lhsd);
       IGNORE(lhso);
     }
@@ -100,25 +97,36 @@ class Euler {
               tk::real dt,
               const std::array< std::vector< tk::real >, 3 >& coord,
               const std::vector< std::size_t >& inpoel,
-              const  std::unordered_map< int, std::pair< std::vector< int >,
-                       std::vector< int > > >& side,
               const tk::MeshNodes& U,
               const tk::MeshNodes& Un,
-              tk::MeshNodes& R )
+              tk::MeshNodes& R ) const
     {
       IGNORE(mult);
       IGNORE(dt);
       IGNORE(coord);
       IGNORE(inpoel);
-      IGNORE(side);
       IGNORE(U);
       IGNORE(Un);
       IGNORE(R);
     }
 
+    //! \brief Query if a Dirichlet boundary condition has set by the user on
+    //!   any side set for any component in the PDE system
+    //! \param[in] sideset Side set ID
+    //! \return True if the user has set a Dirichlet boundary condition on any
+    //!   of the side sets for any component in the PDE system.
+    bool bc_dirichlet( int sideset ) const {
+      const auto& bc =
+        g_inputdeck.get< tag::param, tag::euler, tag::bc_dirichlet >();
+      for (const auto& s : bc)
+        if (static_cast<int>(std::round(s[0])) == sideset)
+          return true;
+      return false;
+    }
+
     //! Return field names to be output to file
     //! \return Vector of strings labelling fields output in file
-    std::vector< std::string > names() {
+    std::vector< std::string > names() const {
       std::vector< std::string > n( m_ncomp );
       // ...
       return n;
@@ -133,7 +141,7 @@ class Euler {
     std::vector< std::vector< tk::real > >
     output( tk::real t,
             const std::array< std::vector< tk::real >, 3 >& coord,
-            tk::MeshNodes& U )
+            tk::MeshNodes& U ) const
     {
       IGNORE(t);
       IGNORE(coord);

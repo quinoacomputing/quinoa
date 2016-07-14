@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/LinSysMerger.h
   \author    J. Bakosi
-  \date      Thu 07 Jul 2016 03:05:45 PM MDT
+  \date      Fri 15 Jul 2016 10:00:04 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ chare linear system merger group to solve a linear system
   \details   Charm++ chare linear system merger group used to collect and
@@ -24,11 +24,28 @@
     fills denote global synchronization points, orange frames with white fill
     are partial synchronization points that overlap with other tasks, and dashed
     lines are potential shortcuts that allow jumping over some of the task-graph
-    under some circumstances. See the detailed discussion in linsysmrger.ci.
+    under some circumstances or optional code paths (taken, e.g., only in DEBUG
+    mode). See the detailed discussion in linsysmrger.ci.
     \dot
     digraph "LinSysMerger SDAG" {
       rankdir="LR";
       node [shape=record, fontname=Helvetica, fontsize=10];
+      ChRow [ label="ChRow"
+              tooltip="chares contribute their global row IDs"
+              URL="\ref tk::LinSysMerger::charerow"];
+      ChBCs [ label="ChBCs"
+              tooltip="chares contribute their global node IDs at which
+                       they can set boundary conditions"
+              URL="\ref tk::LinSysMerger::charebc"];
+      Ver   [ label="Ver" color="#e6851c" style="filled"
+              tooltip="start optional verifications and HypreRow"
+              URL="\ref tk::LinSysMerger::rowsreceived"];
+      VerRow [ label="VerRow"
+              tooltip="optional verification ensuring consistent row IDs"
+              URL="\ref tk::LinSysMerger::rowsreceived"];
+      VerBCs [ label="VerBCs" color="#e6851c" style="filled"
+              tooltip="optional verification ensuring consistent BC node IDs"
+              URL="\ref tk::LinSysMerger::verifybc"];
       ChSol [ label="ChSol"
               tooltip="chares contribute their solution vector nonzeros"
               URL="\ref tk::LinSysMerger::charesol"];
@@ -38,6 +55,9 @@
       ChRhs [ label="ChRhs"
               tooltip="chares contribute their right hand side vector nonzeros"
               URL="\ref tk::LinSysMerger::charesol"];
+      HypreRow [ label="HypreRow" color="#e6851c"
+              tooltip="convert global row ID vector to hypre format"
+              URL="\ref tk::LinSysMerger::hyprerow"];
       HypreSol [ label="HypreSol"
               tooltip="convert solution vector to hypre format"
               URL="\ref tk::LinSysMerger::hypresol"];
@@ -69,6 +89,19 @@
             URL="\ref tk::LinSysMerger::solve"];
       Upd [ label="Upd" tooltip="update solution" color="#e6851c"
             URL="\ref tk::LinSysMerger::updateSolution"];
+      ChRow -> Ver [ style="solid" ];
+      ChBCs -> Ver [ style="solid" ];
+      Ver -> HypreRow [ style="solid" ];
+      Ver -> VerRow [ style="dashed" ];
+      Ver -> VerBCs [ style="dashed" ];
+      VerBCs -> HypreRhs [ style="dashed" ];
+      VerBCs -> HypreLhs [ style="dashed" ];
+      Ver -> ChSol [ style="solid" ];
+      Ver -> ChLhs [ style="solid" ];
+      Ver -> ChRhs [ style="solid" ];
+      HypreRow -> FillSol [ style="solid" ];
+      HypreRow -> FillLhs [ style="solid" ];
+      HypreRow -> FillRhs [ style="solid" ];
       ChSol -> HypreSol -> FillSol -> AsmSol -> Sol [ style="solid" ];
       ChLhs -> HypreLhs -> FillLhs -> AsmLhs -> Sol [ style="solid" ];
       ChRhs -> HypreRhs -> FillRhs -> AsmRhs -> Sol [ style="solid" ];
@@ -86,6 +119,7 @@
 #include <unordered_map>
 #include <utility>
 #include <numeric>
+#include <algorithm>
 #include <iosfwd>
 #include <cstddef>
 
@@ -97,10 +131,13 @@
 #include "HypreMatrix.h"
 #include "HypreVector.h"
 #include "HypreSolver.h"
+#include "VectorReducer.h"
 
 #include "NoWarning/conductor.decl.h"
 
 namespace tk {
+
+extern CkReduction::reducerType BCMerger;
 
 #if defined(__clang__)
   #pragma clang diagnostic push
@@ -151,8 +188,8 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
     //! \param[in] ncomp Total number of scalar components in the linear system
     LinSysMerger( const HostProxy& host,
                   const WorkerProxy& worker,
-                  const std::unordered_map< int, std::pair< std::vector< int >,
-                          std::vector< int > > >& side,
+                  const std::unordered_map< int,
+                    std::vector< std::size_t > >& side,
                   std::size_t ncomp ) :
       __dep(),
       m_host( host ),
@@ -161,6 +198,8 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       m_ncomp( ncomp ),
       m_nchare( 0 ),
       m_nperow( 0 ),
+      m_nchbc( 0 ),
+      m_npebc( 0 ),
       m_lower( 0 ),
       m_upper( 0 ),
       m_myworker(),
@@ -184,9 +223,12 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       m_hypreSol(),
       m_lid(),
       m_div(),
-      m_pe()
+      m_pe(),
+      m_bc(),
+      m_oldbc()
     {
       // Activate SDAG waits for assembling lhs, rhs, and solution
+      wait4row();
       wait4sol();
       wait4lhs();
       wait4rhs();
@@ -197,7 +239,20 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       wait4filllhs();
       wait4fillrhs();
       wait4asm();
+      #ifdef NDEBUG     // skip verification of BCs in RELEASE mode
+      trigger_ver_complete();
+      #endif
     }
+
+    //! \brief Configure Charm++ reduction types for concatenating BC nodelists
+    //! \details Since this is a [nodeinit] routine, see linsysmerger.ci, the
+    //!   Charm++ runtime system executes the routine exactly once on every
+    //!   logical node early on in the Charm++ init sequence. Must be static as
+    //!   it is called without an object. See also: Section "Initializations at
+    //!   Program Startup" at in the Charm++ manual
+    //!   http://charm.cs.illinois.edu/manuals/html/charm++/manual.html.
+    static void registerBCMerger()
+    { BCMerger = CkReduction::addReducer( tk::mergeVector ); }
 
     //! Receive lower and upper global node IDs all PEs will operate on
     //! \param[in] pe PE whose bounds being received
@@ -265,10 +320,9 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       m_nperow += exp.size();
       for (const auto& p : exp) {
         auto tope = static_cast< int >( p.first );
-        Group::thisProxy[ tope ].
-          addrow( fromch, CkMyPe(), p.second );
+        Group::thisProxy[ tope ].addrow( fromch, CkMyPe(), p.second );
       }
-      if (rowcomplete()) signal2host_row_complete( m_host );
+      if (rowcomplete()) trigger_row_complete();
     }
     //! Receive global row ids from fellow group branches
     //! \param[in] fromch Charm chare array index contribution coming from
@@ -284,7 +338,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
     //! Acknowledge received row ids
     void recrow() {
       --m_nperow;
-      if (rowcomplete()) signal2host_row_complete( m_host );
+      if (rowcomplete()) trigger_row_complete();
     }
 
     //! Chares contribute their solution nonzero values
@@ -448,9 +502,12 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
               m_row.size() == m_upper-m_lower &&
               // 3. all fellow PEs have received my row ids contribution
               m_nperow == 0,
-              // if any of the above is not satisfied, the row ids are
-              // incomplete
-              "Row ids are incomplete on PE " + std::to_string( CkMyPe() ) );
+              // if any of the above is unsatisfied, the row ids are incomplete
+              "Row ids are incomplete on PE " + std::to_string(CkMyPe()) );
+      // verify if the BCs to be set match the user's BCs
+      #ifndef NDEBUG
+      verifybc();
+      #endif
       // now that the global row ids are complete, build Hypre data from it
       hyprerow();
     }
@@ -458,19 +515,68 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
     //! Chares query side set info
     //! \note This function does not have to be declared as a Charm++ entry
     //!   method since it is always called by chares on the same PE.
-    const std::unordered_map< int,
-      std::pair< std::vector< int >, std::vector< int > > >& side()
+    const std::unordered_map< int, std::vector< std::size_t > >& side()
     { return m_side; }
+
+    //! Chares offer their global row ids at which they can set BCs
+    //! \param[in] fromch Charm chare array index contribution coming from
+    //! \param[in] bc List of old and new global mesh point (row) indices mapped
+    //!   to sides
+    //! \note This function does not have to be declared as a Charm++ entry
+    //!   method since it is always called by chares on the same PE.
+    void charebc( int fromch, const std::vector< std::size_t >& bc ) {
+      // Store nodes owned
+      auto& b = m_bc[ fromch ];
+      b.insert( end(b), begin(bc), end(bc) );
+      // Forward all bcs received to fellow branches
+      if (++m_nchbc == m_nchare) {
+        if (CkNumPes() == 1) trigger_bc_complete();
+        for (int p=0; p<CkNumPes(); ++p)
+          if (p!=CkMyPe()) Group::thisProxy[ p ].addbc( m_bc );
+      }
+    }
+    //! Receive global row ids at which to set BCs from fellow group branches
+    //! \param[in] bc Global mesh point (row) indices received (at which BC set)
+    void addbc( const std::unordered_map< int,
+                  std::vector< std::size_t > >& bc ) {
+      for (const auto& c : bc) {
+        auto& b = m_bc[ c.first ];
+        b.insert( end(b), begin(c.second), end(c.second) );
+      }
+      if (++m_npebc == static_cast<std::size_t>(CkNumPes()-1))
+        trigger_bc_complete();
+    }
+
+    //! Chares return old global node IDs
+    //! \param[in] fromch Charm chare array index contribution coming from
+    //! \param[in] oldids Vector of old (as in file) global node ID
+    //! \details This is the second step to verify if the BCs we will set
+    //!   matches the user's BCs. Here we receive the old node IDs. Once all of
+    //    them are received, we flatten them and send them to the host, which
+    //    does the verification.
+    //! \note This function does not have to be declared as a Charm++ entry
+    //!   method since it is always called by chares on the same PE.
+    void oldID( int fromch, const std::vector< std::size_t >& oldids ) {
+       m_oldbc[ fromch ] = oldids;
+       // if we have heard from every chare, flatten, unique, and send to host
+       if (m_oldbc.size() == m_bc.size()) {
+         std::vector< std::size_t > b;
+         for (const auto& c : m_oldbc)
+           b.insert( end(b), begin(c.second), end(c.second) );
+         signal2host_verifybc( m_host, b );
+       }
+    }
 
   private:
     HostProxy m_host;           //!< Host proxy
     WorkerProxy m_worker;       //!< Worker proxy
-    //! Elem and side lists mapped to all side set ids of the mesh
-    std::unordered_map< int,
-      std::pair< std::vector< int >, std::vector< int > > > m_side;
+    //! Global (as in file) row id lists mapped to all side set ids of the mesh
+    std::unordered_map< int, std::vector< std::size_t > > m_side;
     std::size_t m_ncomp;        //!< Number of scalar components per unknown
     std::size_t m_nchare;       //!< Number of chares contributing to my PE
     std::size_t m_nperow;       //!< Number of fellow PEs to send row ids to
+    std::size_t m_nchbc;        //!< Number of chares we received bcs from
+    std::size_t m_npebc;        //!< Number of fellow PEs we received bcs from
     std::size_t m_lower;        //!< Lower index of the global rows on my PE
     std::size_t m_upper;        //!< Upper index of the global rows on my PE
     //! Ids of workers on my PE
@@ -531,6 +637,14 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
     //!   find the PE for a communicated mesh node after the node is in the
     //!   cache.
     std::map< std::size_t, int > m_pe;
+    //! \brief Map associating lists of new global row ids to chare ids that we
+    //!   set boundary conditions on
+    //! \details 'New' as in producing contiguous-row-id linear system
+    //!   contributions, see also Partitioner.h.
+    std::unordered_map< int, std::vector< std::size_t > > m_bc;
+    //! Flat list of old global row ids at boundary conditions are set
+    //! \details 'Old' as in file, see also Partitioner.h.
+    decltype(m_bc) m_oldbc;
 
     //! Return processing element for global mesh row id
     //! \param[in] gid Global mesh point (matrix or vector row) id
@@ -585,6 +699,17 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
     //!   received
     bool rhscomplete() const { return m_rhsimport == m_rowimport; }
 
+    //! Verify if the BCs we will set match the user's BCs
+    //! \details This is only the first step: we send out queries to workers
+    //!   which then return with the old node IDs.
+    void verifybc() {
+      // Make BC node lists unqiue
+      for (auto& s : m_bc) tk::unique( s.second );
+      // Query old (as in file) node IDs from chares that offered them
+      for (const auto& c : m_bc)
+        m_worker[ c.first ].oldID( CkMyPe(), c.second );
+    }
+
     //! Build Hypre data for our portion of the global row ids
     //! \note Hypre only likes one-based indexing. Zero-based row indexing fails
     //!   to update the vector with HYPRE_IJVectorGetValues().
@@ -594,6 +719,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
         std::iota( begin(h), end(h), r*m_ncomp+1 );
         m_hypreRows.insert( end(m_hypreRows), begin(h), end(h) );
       }
+      trigger_hyprerow_complete();
     }
     //! Build Hypre data for our portion of the solution vector
     void hypresol() {
@@ -627,6 +753,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
         }
       }
       trigger_hyprelhs_complete();
+      trigger_ver_complete();
     }
     //! Build Hypre data for our portion of the right-hand side vector
     void hyprerhs() {
@@ -636,6 +763,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       for (const auto& r : m_rhs)
         m_hypreRhs.insert( end(m_hypreRhs), begin(r.second), end(r.second) );
       trigger_hyprerhs_complete();
+      trigger_ver_complete();
     }
 
     //! Set our portion of values of the distributed solution vector
@@ -647,6 +775,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
                m_hypreRows.data(),
                m_hypreSol.data() );
       trigger_fillsol_complete();
+      trigger_hyprerow_complete();
     }
     //! Set our portion of values of the distributed matrix
     void lhs() {
@@ -659,6 +788,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
                m_hypreCols.data(),
                m_hypreMat.data() );
       trigger_filllhs_complete();
+      trigger_hyprerow_complete();
     }
     //! Set our portion of values of the distributed right-hand side vector
     void rhs() {
@@ -669,6 +799,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
                m_hypreRows.data(),
                m_hypreRhs.data() );
       trigger_fillrhs_complete();
+      trigger_hyprerow_complete();
     }
 
     //! Assemble distributed solution vector
@@ -780,6 +911,14 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       using inciter::CkIndex_Conductor;
       Group::contribute(
         CkCallback( CkIndex_Conductor::redn_wrapper_rowcomplete(NULL), host ) );
+    }
+    //! Send nodelists of BCs we set to host to verify aggregated BCs
+    void signal2host_verifybc( const inciter::CProxy_Conductor& host,
+                               const std::vector< std::size_t >& bc ) {
+      using inciter::CkIndex_Conductor;
+      auto stream = tk::serialize( bc );
+      CkCallback cb( CkIndex_Conductor::verifybc(nullptr), host );
+      Group::contribute( stream.first, stream.second.get(), BCMerger, cb );
     }
     //! \brief Signal back to host that enabling the SDAG waits for assembling
     //!    the right-hand side is complete and ready for a new advance in time

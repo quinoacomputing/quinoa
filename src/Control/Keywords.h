@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Keywords.h
   \author    J. Bakosi
-  \date      Wed 06 Jul 2016 12:23:04 PM MDT
+  \date      Mon 11 Jul 2016 10:07:30 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Definition of all keywords
   \details   This file contains the definition of all keywords, including those
@@ -2635,6 +2635,38 @@ struct euler_info {
   }
 };
 using euler = keyword< euler_info, e,u,l,e,r >;
+
+struct sideset_info {
+  static std::string name() { return "sideset"; }
+  static std::string shortDescription() { return
+    "Specify configuration for setting BC on a side set";
+  }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify boundary conditions on a side set for a
+    solving partial differential equation.)";
+  }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real(s)"; }
+  };
+};
+using sideset = keyword< sideset_info, s,i,d,e,s,e,t >;
+
+struct bc_dirichlet_info {
+  static std::string name() { return "Dirichlet boundary condition"; }
+  static std::string shortDescription() { return
+    "Start configuration block describing Dirichlet boundary conditions"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to introduce an bc_dirichlet ... end block, used to
+    specify the configuration for setting Dirichlet boundary conditions for a
+    partial differential equation. Keywords allowed in an bc_dirichler ... end
+    block: )" + std::string("\'")
+    + sideset::string() + "\'. "
+    + R"(For an example bc_dirichlet ... end block, see
+      doc/html/inicter_example_poisson.html.)";
+  }
+};
+using bc_dirichlet = keyword< bc_dirichlet_info, b,c,'_',d,i,r,i,c,h,l,e,t >;
 
 struct rcb_info {
   static std::string name() { return "recursive coordinate bisection"; }
