@@ -26,7 +26,7 @@ function(addCharmModule MODULE PARTOF)
   # Add custom command generating .decl.h and .def.h from .ci
   add_custom_command(OUTPUT ${MODULE}.decl.h ${MODULE}.def.h
                      DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${MODULE}.ci
-                     COMMAND ${CHARM_COMPILER}
+                     COMMAND ${CHARM_COMPILER} -module RefineLB
                              ${CMAKE_CURRENT_SOURCE_DIR}/${MODULE}.ci)
   # Add custom target dependency for Charm++ module
   add_custom_target(${MODULE}CharmModule

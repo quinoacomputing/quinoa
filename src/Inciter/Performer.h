@@ -53,8 +53,8 @@ class Performer : public CBase_Performer {
                  const std::unordered_map< std::size_t, std::size_t >& cid );
 
     //! Migrate constructor
-    explicit Performer( CkMigrateMessage* ) :
-      // WARNING: This is a "blind" copy of the standard constructor initializer
+    explicit Performer( CkMigrateMessage* ) { }
+      /*// WARNING: This is a "blind" copy of the standard constructor initializer
       // list - it must be changed for migration to be correct.
       m_it( 0 ),
       m_itf( 0 ),
@@ -75,7 +75,7 @@ class Performer : public CBase_Performer {
       m_un( 0, g_inputdeck.get< tag::component >().nprop() ),
       m_lhsd( 0, g_inputdeck.get< tag::component >().nprop() ),
       m_lhso( 0, g_inputdeck.get< tag::component >().nprop() )
-    {}
+    {}*/
 
     //! Initialize mesh IDs, element connectivity, coordinates
     void setup();
@@ -89,6 +89,28 @@ class Performer : public CBase_Performer {
 
     //! Advance equations to next stage in multi-stage time stepping
     void advance( uint8_t stage, tk::real dt, uint64_t it, tk::real t );
+  
+    //! Create PUP routine to prepare Performer chare for object migration
+		void pup(PUP::er &p) {
+      //! Call PUP routine for superclass
+      CBase_Performer::pup(p);
+      //! Basic primitives
+			p | m_it;
+			p | m_itf;
+			p | m_t;
+			p | m_stage;
+			p | m_nsol;
+			p | m_outFilename;
+			p | m_conductor;
+			p | m_linsysmerger;
+			p | m_cid;
+			p | m_el;
+			p | m_lid;
+			p | m_coord;
+			p | m_psup;
+			p | m_u; p | m_uf; p | m_un;
+			p | m_lhsd; p | m_lhso;
+    }
 
   private:
     using ncomp_t = kw::ncomp::info::expect::type;
