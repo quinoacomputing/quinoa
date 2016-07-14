@@ -20,6 +20,8 @@
 #include "Keywords.h"
 #include "Exception.h"
 
+#include "pup_stl.h"
+
 namespace tk {
 
 //! Tags for selecting data layout policies
@@ -36,6 +38,7 @@ class DataLayout {
     using ncomp_t = kw::ncomp::info::expect::type;
 
   public:
+    explicit DataLayout(){}
     //! Constructor
     //! \param[in] nunk Number of unknowns to allocate memory for
     //! \param[in] nprop Total number of properties, i.e., scalar variables or
@@ -273,6 +276,12 @@ class DataLayout {
     //! \return The name of the data layout used
     //! \author J. Bakosi
     static std::string layout() { return layout( int2type< Layout >() ); }
+
+		void pup(PUP::er &p) {
+			p | m_vec;
+			p | m_nunk;
+			p | m_nprop;
+		}
 
   private:
     //! Transform a compile-time uint8_t into a type, used for dispatch
