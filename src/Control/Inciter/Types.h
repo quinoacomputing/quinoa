@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/Types.h
   \author    J. Bakosi
-  \date      Wed 06 Jul 2016 11:52:48 AM MDT
+  \date      Mon 11 Jul 2016 10:54:08 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Types for Incitier's parsers
   \details   Types for Incitier's parsers. This file defines the components of the
@@ -60,18 +60,24 @@ using AdvDiffPDEParameters = tk::tuple::tagged_tuple<
   tag::lambda,      std::vector< std::vector<
                       kw::pde_lambda::info::expect::type > >,
   tag::u0,          std::vector< std::vector<
-                      kw::pde_u0::info::expect::type > >
+                      kw::pde_u0::info::expect::type > >,
+  tag::bc_dirichlet, std::vector< std::vector<
+                       kw::sideset::info::expect::type > >
 >;
 
 //! Poisson equation parameters storage
 using PoissonPDEParameters = tk::tuple::tagged_tuple<
-  tag::depvar,      std::vector< char >,
-  tag::problem,     std::vector< ProblemType >
+  tag::depvar,       std::vector< char >,
+  tag::problem,      std::vector< ProblemType >,
+  tag::bc_dirichlet, std::vector< std::vector<
+                       kw::sideset::info::expect::type > >
 >;
 
 //! Euler equation parameters storage
 using EulerPDEParameters = tk::tuple::tagged_tuple<
-  tag::problem,     std::vector< ProblemType >
+  tag::problem,     std::vector< ProblemType >,
+  tag::bc_dirichlet, std::vector< std::vector<
+                       kw::sideset::info::expect::type > >
 >;
 
 //! Parameters storage

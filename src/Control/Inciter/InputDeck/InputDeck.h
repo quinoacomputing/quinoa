@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Wed 06 Jul 2016 12:24:01 PM MDT
+  \date      Mon 11 Jul 2016 10:18:36 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Inciter's input deck definition
   \details   This file defines the heterogeneous stack that is used for storing
@@ -75,6 +75,8 @@ class InputDeck :
                                        kw::pde_u0,
                                        kw::poisson,
                                        kw::dir_neu,
+                                       kw::bc_dirichlet,
+                                       kw::sideset,
                                        kw::depvar >;
                                      
     //! \brief Constructor: set defaults

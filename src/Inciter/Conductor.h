@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Conductor.h
   \author    J. Bakosi
-  \date      Tue 03 May 2016 11:03:50 AM MDT
+  \date      Mon 11 Jul 2016 12:47:46 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Conductor drives the time integration of a PDE
   \details   Conductor drives the time integration of a PDE
@@ -25,6 +25,7 @@
 #include "Types.h"
 #include "InciterPrint.h"
 #include "Partitioner.h"
+#include "VectorReducer.h"
 
 #include "NoWarning/performer.decl.h"
 
@@ -67,6 +68,12 @@ class Conductor : public CBase_Conductor {
     //!   branches have done their part of storing and exporting global row ids
     void rowcomplete();
 
+    //! Reduction target initiating verification of the boundary conditions set
+    void verifybc( CkReductionMsg* msg );
+
+    //! Reduction target as a 2nd (final) of the verification of BCs
+    void doverifybc( CkReductionMsg* msg );
+
     //! \brief Reduction target indicating that all Performer chares have
     //!   finished their initialization step
     void initcomplete();
@@ -104,6 +111,9 @@ class Conductor : public CBase_Conductor {
     enum class TimerTag { TIMESTEP };
     //! Timers
     std::map< TimerTag, tk::Timer > m_timer;
+    //! \brief Aggregate 'old' (as in file) node ID list at which LinSysMerger
+    //!   sets boundary conditions, see also Partitioner.h
+    std::vector< std::size_t > m_linsysbc;
 
     //! Compute size of next time step
     tk::real computedt();

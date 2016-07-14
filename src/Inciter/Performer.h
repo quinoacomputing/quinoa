@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.h
   \author    J. Bakosi
-  \date      Wed 04 May 2016 10:44:49 AM MDT
+  \date      Fri 15 Jul 2016 08:23:48 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Performer advances a PDE
   \details   Performer advances a PDE. There are a potentially
@@ -26,6 +26,7 @@
 #include "Types.h"
 #include "MeshNodes.h"
 #include "DerivedData.h"
+#include "VectorReducer.h"
 #include "Inciter/InputDeck/InputDeck.h"
 
 #include "NoWarning/conductor.decl.h"
@@ -36,6 +37,7 @@ namespace tk { class ExodusIIMeshWriter; }
 namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
+extern CkReduction::reducerType VerifyBCMerger;
 
 //! Performer Charm++ chare used to advance a PDE in time
 class Performer : public CBase_Performer {
@@ -77,8 +79,24 @@ class Performer : public CBase_Performer {
       m_lhso( 0, g_inputdeck.get< tag::component >().nprop() )
     {}
 
+    //! \brief Configure Charm++ reduction types for concatenating BC nodelists
+    //! \details Since this is a [nodeinit] routine, see linsysmerger.ci, the
+    //!   Charm++ runtime system executes the routine exactly once on every
+    //!   logical node early on in the Charm++ init sequence. Must be static as
+    //!   it is called without an object. See also: Section "Initializations at
+    //!   Program Startup" at in the Charm++ manual
+    //!   http://charm.cs.illinois.edu/manuals/html/charm++/manual.html.
+    static void registerVerifyBCMerger()
+    { VerifyBCMerger = CkReduction::addReducer( tk::mergeVector ); }
+
     //! Initialize mesh IDs, element connectivity, coordinates
     void setup();
+
+    //! Request owned node IDs on which a Dirichlet BC is set by the user
+    void requestBCs();
+
+    //! Look up and return old node ID for new one
+    void oldID( int frompe, const std::vector< std::size_t >& newids );
 
     //! Initialize communication and mesh data
     void init( tk::real dt );
@@ -126,6 +144,15 @@ class Performer : public CBase_Performer {
 
     //! Send off global row IDs to linear system merger, setup global->local IDs
     void setupIds();
+
+    //! Extract node IDs from element side sets and match to BCs
+    std::vector< std::size_t > queryBCs();
+
+    //! Query old node IDs for a list of new node IDs
+    std::vector< std::size_t > old( const std::vector< std::size_t >& newids );
+
+    //! Send node list to our LinSysMerger branch which is then used to set BCs
+    void sendBCs( const std::vector< std::size_t >& bc );
 
     //! Read coordinates of mesh nodes given
     void readCoords();

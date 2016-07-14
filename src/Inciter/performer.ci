@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/performer.ci
   \author    J. Bakosi
-  \date      Fri 08 Jan 2016 12:23:21 PM MST
+  \date      Fri 15 Jul 2016 08:23:56 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ module interface file for Performer
   \details   Charm++ module interface file for Performer
@@ -23,7 +23,10 @@ module performer {
                                                   CProxy_Performer >& lsm,
                    const std::vector< std::size_t >& conn,
                    const std::unordered_map< std::size_t, std::size_t >& cid );
+      initnode void registerVerifyBCMerger();
       entry void setup();
+      entry void requestBCs();
+      entry void oldID( int frompe, const std::vector< std::size_t >& newids );
       entry void init( tk::real dt );
       entry void updateSolution( const std::vector< std::size_t >& gid,
                                  const std::vector< tk::real >& sol );

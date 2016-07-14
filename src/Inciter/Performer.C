@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.C
   \author    J. Bakosi
-  \date      Thu 07 Jul 2016 03:02:24 PM MDT
+  \date      Fri 15 Jul 2016 09:32:30 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Performer advances a PDE
   \details   Performer advances a PDE. There are a potentially
@@ -37,6 +37,17 @@ namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
 extern std::vector< PDE > g_pdes;
+
+//! \brief Charm++ BC merger reducer for verifying BCs
+//! \details This variable is defined here in the .C file and declared as extern
+//!   in Performer.h. If instead one defines it in the header (as static),
+//!   a new version of the variable is created any time the header file is
+//!   included, yielding no compilation nor linking errors. However, that leads
+//!   to runtime errors, since Performer::registerVerifyBCMerger(), a Charm++
+//!   "initnode" entry method, *may* fill one while contribute() may use the
+//!   other (unregistered) one. Result: undefined behavior, segfault, and
+//!   formatting the internet ...
+CkReduction::reducerType VerifyBCMerger;
 
 } // inciter::
 
@@ -93,6 +104,8 @@ Performer::setup()
 {
   // Send off global row IDs to linear system merger, setup global->local IDs
   setupIds();
+  // Send node IDs from element side sets matched to user-specified BCs
+  sendBCs( queryBCs() );
   // Read coordinates of owned and received mesh nodes
   readCoords();
   // Output chare mesh to file
@@ -112,6 +125,114 @@ Performer::setupIds()
   m_linsysmerger.ckLocalBranch()->charerow( thisIndex, m_gid );
   // Associate local node IDs to global ones
   for (std::size_t i=0; i<m_gid.size(); ++i) m_lid[ m_gid[i] ] = i;
+}
+
+std::vector< std::size_t >
+Performer::queryBCs()
+// *****************************************************************************
+//  Extract nodes IDs from side sets node lists and match to boundary conditions
+//! \return List of owned node IDs on which a Dirichlet BC is set by the user
+//! \details Boundary conditions, mathematically speaking, are applied on
+//!   finite surfaces. These finite surfaces are given by element sets. This
+//!   function takes the node lists mapped to side set IDs and extracts only
+//!   those nodes that we own that the user has specified boundary condition on
+//!   and returns the 'new' (as in producing contiguous-row-id linear system
+//!   contributions, see also Partitioner.h) node IDs.
+//! \author J. Bakosi
+// *****************************************************************************
+{
+  // Access all side sets from LinSysMerger
+  auto& side = m_linsysmerger.ckLocalBranch()->side();
+
+  // lambda to find out if we own the old (as in file) global node id. We
+  // perform a linear search on the map value so we do not have to invert the
+  // map and return the map key (the new global id, new as in producing
+  // contiguous-row-id linear system contributions, see also Partitioner.h).
+  auto own = [ this ]( std::size_t id ) -> std::pair< bool, std::size_t > {
+    for (const auto& i : this->m_cid)
+      if (i.second == id)
+        return { true, i.first };
+    return { false, 0 };
+  };
+
+  // lambda to find out if the user has specified a Dirichlet BC on the given
+  // side set for any component of any of the PDEs integrated
+  auto userbc = []( int sideset ) -> bool {
+    for (const auto& eq : g_pdes) if (eq.bc_dirichlet(sideset)) return true;
+    return false;
+  };
+
+  // Collect list of owned node IDs on which a Dirichlet BC is given by the user
+  std::vector< std::size_t > bc;
+  for (const auto& s : side) {
+    auto ubc = userbc( s.first );
+    for (auto n : s.second) {
+      auto o = own(n);
+      if (o.first && ubc) bc.push_back( o.second );
+    }
+  }
+
+  // Make BC node list unique. The node list extracted here can still contain
+  // repeating IDs, because the nodes are originally extracted by the Exodus
+  // reader by interrogating elements whose faces are adjacent to side sets,
+  // which can contain repeating node IDs for those nodes that elements share.
+  // See also the Exodus user manual.
+  tk::unique(bc);
+
+  return bc;
+}
+
+void
+Performer::sendBCs( const std::vector< std::size_t >& bc )
+// *****************************************************************************
+// Send node list to our LinSysMerger branch which is then used to set BCs
+//! \param[in] bc List of node IDs to send
+//! \author J. Bakosi
+// *****************************************************************************
+{
+  // Offer list of owned node IDs mapped to side sets to LinSysMerger
+  m_linsysmerger.ckLocalBranch()->charebc( thisIndex, bc );
+}
+
+std::vector< std::size_t >
+Performer::old( const std::vector< std::size_t >& newids )
+// *****************************************************************************
+// Query old node IDs for a list of new node IDs
+//! \param[in] newids Vector of new node IDs
+//! \details 'old' as in file, 'new' as in as in producing contiguous-row-id
+//!   linear system contributions, see also Partitioner.h.
+//! \author J. Bakosi
+// *****************************************************************************
+{
+  std::vector< std::size_t > oldids;
+  for (auto i : newids) oldids.push_back( tk::cref_find(m_cid,i) );
+  return oldids;
+}
+
+void
+Performer::requestBCs()
+// *****************************************************************************
+// Request owned node IDs on which a Dirichlet BC is set by the user
+//! \details Called from host (Conductor), contributing the result back to host
+//! \author J. Bakosi
+// *****************************************************************************
+{
+   auto stream = tk::serialize( old( queryBCs() ) );
+   CkCallback cb( CkIndex_Conductor::doverifybc(nullptr), m_conductor );
+   contribute( stream.first, stream.second.get(), VerifyBCMerger, cb );
+}
+
+void
+Performer::oldID( int frompe, const std::vector< std::size_t >& newids )
+// *****************************************************************************
+// Look up and return old node IDs for new ones
+//! \param[in] newids Vector of new node IDs
+//! \details Old (as in file), new (as in producing contiguous-row-id linear
+//!   system contributions
+//! \author J. Bakosi
+// *****************************************************************************
+{
+  m_linsysmerger[ frompe ].oldID( thisIndex, old(newids) );
 }
 
 void
@@ -148,12 +269,9 @@ Performer::lhs()
 //! \author J. Bakosi
 // *****************************************************************************
 {
-  // Access side sets from LinSysMerger
-  auto& side = m_linsysmerger.ckLocalBranch()->side();
-
   // Compute left-hand side matrix for all equations
   for (const auto& eq : g_pdes)
-    eq.lhs( m_coord, m_inpoel, m_psup, side, m_lhsd, m_lhso );
+    eq.lhs( m_coord, m_inpoel, m_psup, m_lhsd, m_lhso );
 
   // Send off left hand side for assembly
   m_linsysmerger.ckLocalBranch()->
@@ -175,12 +293,9 @@ Performer::rhs( tk::real mult,
 //! \author J. Bakosi
 // *****************************************************************************
 {
-  // Access side sets from LinSysMerger
-  auto& side = m_linsysmerger.ckLocalBranch()->side();
-
   // Compute right-hand side vector for all equations
   for (const auto& eq : g_pdes)
-    eq.rhs( mult, dt, m_coord, m_inpoel, side, sol, m_u, rhs );
+    eq.rhs( mult, dt, m_coord, m_inpoel, sol, m_u, rhs );
 
   // Send off right-hand sides for assembly
   m_linsysmerger.ckLocalBranch()->charerhs( thisIndex, m_gid, rhs );

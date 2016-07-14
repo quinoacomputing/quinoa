@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Tags.h
   \author    J. Bakosi
-  \date      Wed 06 Jul 2016 11:49:40 AM MDT
+  \date      Mon 11 Jul 2016 10:07:58 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Tags
   \details   Tags are unique types, used for metaprogramming.
@@ -132,6 +132,7 @@ struct euler {};
 struct problem {};
 struct diffusivity {};
 struct u0 {};
+struct bc_dirichlet {};
 
 struct BirthdaySpacings {};
 struct Collision {};

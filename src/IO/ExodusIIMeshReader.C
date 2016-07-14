@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/ExodusIIMeshReader.C
   \author    J. Bakosi
-  \date      Thu 07 Jul 2016 04:05:11 PM MDT
+  \date      Mon 11 Jul 2016 07:53:13 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     ExodusII mesh reader
   \details   ExodusII mesh reader class definition. Currently, this is a bare
@@ -20,6 +20,7 @@
 #include "NoWarning/exodusII.h"
 
 #include "ExodusIIMeshReader.h"
+#include "ContainerUtil.h"
 #include "Exception.h"
 #include "UnsMesh.h"
 #include "Reorder.h"
@@ -348,10 +349,10 @@ ExodusIIMeshReader::readElements( const std::array< std::size_t, 2 >& ext,
   for (auto i : c) conn.push_back( static_cast<std::size_t>(i)-1 );
 }
 
-std::unordered_map< int, std::pair< std::vector< int >, std::vector< int > > >
+std::unordered_map< int, std::vector< std::size_t > >
 ExodusIIMeshReader::readSidesets()
 // *****************************************************************************
-//  Read all side sets from ExodusII file
+//  Read node list of all side sets from ExodusII file
 //! \return Elem and side lists mapped to side set ids
 //! \author J. Bakosi
 // *****************************************************************************
@@ -359,35 +360,34 @@ ExodusIIMeshReader::readSidesets()
   // Read ExodusII file header (fills m_neset)
   readHeader();
 
-  // Elem and side lists mapped to side set ids
-  std::unordered_map< int,
-    std::pair< std::vector< int >, std::vector< int > > > side;
+  // Node lists mapped to side set ids
+  std::unordered_map< int, std::vector< std::size_t > > side;
 
   if (m_neset > 0) {
-
-    std::vector< int > ids( m_neset );
-
     // Read all side set ids from file
+    std::vector< int > ids( m_neset );
     ErrChk( ex_get_side_set_ids( m_inFile, ids.data() ) == 0,
             "Failed to read side set ids from ExodusII file: " + m_filename );
-
-    // Read in element and side lists for all side sets
+    // Read in node list for all side sets
     for (auto i : ids) {
-      std::size_t nside, ndis;
-      // Read number of elements and sides in side set i
-      ErrChk( ex_get_side_set_param( m_inFile, i, &nside, &ndis ) == 0,
+      int nface, ndist;
+      // Read number of faces and number of distribution factors in side set i
+      ErrChk( ex_get_side_set_param( m_inFile, i, &nface, &ndist ) == 0,
               "Failed to read side set " + std::to_string(i) + " parameters "
               "from ExodusII file: " + m_filename );
-      auto& lists = side[ i ];
-      lists.first.resize( nside );
-      lists.second.resize( nside );
-      // Read in element and side lists for side set i
-      ErrChk( ex_get_side_set( m_inFile, i, lists.first.data(),
-                               lists.second.data() ) == 0,
-              "Failed to side set " + std::to_string(i) + " from ExodusII "
-              "file: " + m_filename );
+      std::vector< int > df( static_cast< std::size_t >( nface ) );
+      std::vector< int > nodes( static_cast< std::size_t >( ndist ) );
+      // Read in node list for side set i
+      ErrChk( ex_get_side_set_node_list( m_inFile, i, df.data(), nodes.data() )
+                == 0, "Failed to read node list of side set " +
+                      std::to_string(i) + " from ExodusII file: " +
+                      m_filename );
+      // Make node list unique
+      tk::unique( nodes );
+      // Store 0-based node ID list as std::size_t vector instead of ints
+      auto& list = side[ i ];
+      for (auto&& n : nodes) list.push_back( static_cast<std::size_t>(n-1) );
     }
-
   }
 
   return side;

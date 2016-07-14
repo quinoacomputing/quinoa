@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Thu 07 Jul 2016 03:44:35 PM MDT
+  \date      Mon 11 Jul 2016 10:18:16 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Inciter's input deck grammar definition
   \details   Inciter's input deck grammar definition. We use the Parsing
@@ -150,6 +150,23 @@ namespace deck {
                                     eq,
                                     param > {};
 
+  //! Dirichlet boundary condition
+  template< class eq, class param >
+  struct bc_dirichlet :
+           pegtl::ifmust<
+             tk::grm::readkw< Stack, use< kw::bc_dirichlet >::pegtl_string >,
+             tk::grm::block<
+               Stack,
+               use< kw::end >,
+               tk::grm::parameter_vector< Stack,
+                                          use,
+                                          use< kw::sideset >,
+                                          tk::grm::Store_back_back,
+                                          tk::grm::start_vector,
+                                          tk::grm::check_vector,
+                                          eq,
+                                          param > > > {};
+
   //! advection-diffusion partial differential equation for a scalar
   struct advdiff :
          pegtl::ifmust<
@@ -198,7 +215,8 @@ namespace deck {
                                            tag::depvar >,
                            tk::grm::component< Stack,
                                                use< kw::ncomp >,
-                                               tag::poisson > >,
+                                               tag::poisson >,
+                           bc_dirichlet< tag::poisson, tag::bc_dirichlet > >,
            check_errors< tag::poisson > > {};
 
   //! partitioning ... end block

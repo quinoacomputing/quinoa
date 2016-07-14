@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Conductor.C
   \author    J. Bakosi
-  \date      Thu 07 Jul 2016 03:10:44 PM MDT
+  \date      Wed 13 Jul 2016 10:52:28 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Conductor drives the time integration of a PDE
   \details   Conductor drives the time integration of a PDE
@@ -49,7 +49,8 @@ Conductor::Conductor() :
   m_performer(),
   m_partitioner(),
   m_avcost( 0.0 ),
-  m_timer()
+  m_timer(),
+  m_linsysbc()
 // *****************************************************************************
 //  Constructor
 //! \author J. Bakosi
@@ -246,6 +247,63 @@ Conductor::rowcomplete()
 {
   m_linsysmerger.rowsreceived();
   m_performer.init( m_dt );
+}
+
+void
+Conductor::verifybc( CkReductionMsg* msg )
+// *****************************************************************************
+// Reduction target initiating verification of the boundary conditions set
+//! \param[in] msg Serialized and concatenated vectors of BC nodelists
+//! \details As a final step aggregating all node lists at which LinSysMerger
+//!   will set boundary conditions, this function initiates verification that
+//!   the aggregate boundary conditions to be set match the user's BCs. This
+//!   function is a Charm++ reduction target that is called when all linear
+//!   system merger branches have received from worker chares offering setting
+//!   boundary conditions. This is the first step of the verification. First
+//!   receives the aggregated node list at which LinSysMerger will set boundary
+//!   conditions. Then we do a broadcast to all workers (Performers) to query
+//!   the worker-owned node IDs on which a Dirichlet BC is set by the user (on
+//!   any component of any PDEs integrated by the worker).
+//! \author J. Bakosi
+// *****************************************************************************
+{
+  // Deserialize final BC node list vector set by LinSysMerger
+  PUP::fromMem creator( msg->getData() );
+  creator | m_linsysbc;
+  delete msg;
+
+  // Issue broadcast querying the BCs set
+  m_performer.requestBCs();
+}
+
+void
+Conductor::doverifybc( CkReductionMsg* msg )
+// *****************************************************************************
+// Reduction target as a 2nd (final) of the verification of BCs
+//! \param[in] msg Serialized and concatenated vectors of BC nodelists
+//! \details This function finishes off the verification that the aggregate
+//!   boundary conditions to be set by LinSysMerger objects match the user's
+//!   BCs. This function is a Charm++ reduction target that is called by
+//!   Performer::requestBCs() This is the last step of the verification, doing
+//!   the actual verification of the BCs after receiving the aggregate BC node
+//!   list from Performers querying user BCs from the input file.
+//! \see Conductor::verifybc()
+//! \author J. Bakosi
+// *****************************************************************************
+{
+  // Deserialize final user BC node list vector
+  PUP::fromMem creator( msg->getData() );
+  std::vector< std::size_t > bc;
+  creator | bc;
+  delete msg;
+
+  Assert( m_linsysbc == bc, "The boundary conditions node list to be set does "
+          "not match the boundary condition node list based on the side sets "
+          "given in the input file." );
+
+  m_print.diag( "Boundary conditions verified (DEBUG only)" );
+
+  m_linsysmerger.trigger_ver_complete();
 }
 
 void
