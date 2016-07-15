@@ -1,0 +1,152 @@
+// *****************************************************************************
+/*!
+  \file      src/Inciter/partitioner.ci
+  \author    J. Bakosi
+  \date      Tue 10 May 2016 02:17:31 PM MDT
+  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \brief     Charm++ module interface file for the chare partitioner group
+  \details   Charm++ module interface file for the chare partitioner group used
+             to perform mesh partitioning.
+*/
+// *****************************************************************************
+
+module partitioner {
+
+  namespace inciter {
+
+    chare Partitioner< CProxy_Conductor,
+                       CProxy_Performer,
+                       tk::CProxy_LinSysMerger< CProxy_Conductor,
+                                                CProxy_Performer > >;
+
+    template< class HostProxy, class WorkerProxy, class LinSysMergerProxy >
+    group Partitioner {
+      entry Partitioner( const HostProxy& host,
+                         const WorkerProxy& worker,
+                         const LinSysMergerProxy& lsm );
+      entry void partition( int nchare );
+      entry void add( int frompe,
+            const std::unordered_map< int, std::vector< std::size_t > >& elem );
+      entry void recv();
+      entry void offset( int pe, std::size_t u );
+      entry void request( int pe, const std::set< std::size_t >& id );
+      entry void neworder(
+                   const std::unordered_map< std::size_t, std::size_t >& id );
+      entry void lower( std::size_t low );
+      entry void stdCost( tk::real av );
+      entry void gather();
+      entry void query( int pe, const std::vector< std::size_t >& low );
+      entry void mask( int pe, const std::vector< int >& rec );
+
+      // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
+      // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
+
+      // High-level overview of the dependency and asynchronous call structure
+      // ---------------------------------------------------------------------
+      //
+      // Directed Acyclic Graph (DAG):        DAG legend:
+      // -----------------------------          Own - Owned nodes reordered
+      //                                        Req - Node IDs requested
+      // Own --  Pre -- Ord -- Low ---  Cre     Pre - Start preparing nodes IDs
+      //       /         | \           /  |     Ord - Nodes reordered
+      // Req -           |   -- Upp ---  /      Low - Lower bound received
+      //                  \             /       Upp - Upper bound computed
+      //                    -- Par ----         Cre - Create workers
+      //                                        Par - Partitioners participated
+      //
+      // Interpretation of the above DAG
+      // -------------------------------
+      // Control flow is from left to right and top to bottom. As the above
+      // graph shows, we wait for both Own and Req conditions to be complete
+      // before we start preparing node IDs for the requestor.
+      //
+      // Reordering of node IDs consists of two main parts: (1) Reordering those
+      // nodes that are unique on our PE, i.e., do not exist on any other PE.
+      // These nodes can be assigned a new node ID without any communication.
+      // (2) Reordering those nodes that connect to mesh cells on other PEs.
+      // Assignment of new node IDs, i.e., reordering, must be handled in a way
+      // that the same new node IDs will be assigned to the nodes that are
+      // physically the same but happen to exist on other PEs as well as on
+      // ours.
+      //
+      // Accordingly, reordering starts with the owned, i.e., independently
+      // reordered nodes, on each PE. When that is done, Own is triggered,
+      // signaling that the new order for the owned nodes are ready to be
+      // queried. On another path, every PE immediately sends out requests to
+      // fellow PEs for nodes that they cannot reorder by themselves. However,
+      // those can only be sent back when the PE they are requested from has
+      // finished reordering them, so we wait until Own is satisfied on that PE.
+      // Req is triggered when a PE has received a request. Only when Own and
+      // Req are both satisfied do we need to prepare a set of new node IDs for
+      // a requestor, hence the above logic in the SDAG. Since there can be
+      // multiple requests arriving before any (or some or all) of them can be
+      // satisfied, the requests are queued into a vector and when the runtime
+      // system calls prepare(), we fullfill all requests, clear the queue, and
+      // automatically re-enable the trigger for Own, i.e., wait only for Req,
+      // i.e., new requests.
+      //
+      // The second part of the graph, only happend after reordering is done,
+      // after the mesh reordering has been completed and started by a call to
+      // bounds() inside reordered(). Ord is a partial synchronization point,
+      // because it happens at different times on different PEs.
+
+      // First the upper bounds of the node IDs are computed on each PE, and
+      // once that is done the lower bounds are communicated among the fellow
+      // Partitioner branches, since the lower bound of PE n is the upper bound
+      // of PE n-1. Only when both upper and lower bounds have been stored on a
+      // PE, can Performer chare array elements be inserted, done in create().
+      // Initiation of estimating the average and standard deviation of the
+      // communication cost of merging the linear system is done in the
+      // beginning of create(), which starts two reductions, which must be done
+      // after each other: the first one accumulates the sum of the cost from
+      // each PE, and once the average is available on Conductor, a second round
+      // accumulates the variances back to Conductor.
+      //
+      // While the tasks carried out as described in the previous paragraph lead
+      // to correct results, there is an additional trigger, _participated_,
+      // that needs to be enabled before create() is called. The role of
+      // trigger_participated is to make sure that all PEs participate in the
+      // distribution of new (reordered) mesh node IDs during reordering. In
+      // particular, since PE 0 has nothing to receive from others, if this
+      // trigger is not in place, PE 0 goes ahead of every other PE and calls
+      // create() which calls Performer constructors, a potentially heavy
+      // function. This is undesired at this point since PE 0 will surely need
+      // to answer to requests from other PEs with new node IDs, which can only
+      // be done (if the participated trigger is not in place) when the
+      // Performers have been created. This introduces unnecessarly delays and
+      // load imbalance during reordering. Thus requiring trigger_participated
+      // in addition to lower and upper, delays creating of Performers. As a
+      // result, PE 0 is ready for requests from other PEs for new node IDs
+      // earlier than without the participate trigger, which yields a lot
+      // tighter CPU utilization during reordering. The participated trigger is
+      // enabled in two places: (1) in prepare(), i.e., if a PE had to prepare
+      // some of its new node IDs for others, and (2) in neworder(), i.e., if a
+      // PE had to receive new node IDs from others. Thus node reordering is
+      // only considered complete if every PE has participated in communication
+      // of the new node IDs.
+      //
+      // Note that Pre, Ord, and Cre are partial synchronization points: while
+      // Pre always happens before Ord, and Cre on the same PE, they happen at
+      // different times on different PEs, so these are not considered global
+      // synchronization points.
+
+      entry void wait4prep() {
+        when trigger_reorderowned_complete(), trigger_nodes_requested()
+        serial "prepare" { prepare(); }
+      };
+
+      entry void wait4bounds() {
+        when trigger_lower(), trigger_upper(), trigger_participated()
+        serial "create" { create(); }
+      };
+
+      entry void trigger_reorderowned_complete();
+      entry void trigger_nodes_requested();
+      entry void trigger_lower();
+      entry void trigger_upper();
+      entry void trigger_participated();
+    };
+
+  } // inciter::
+
+}
