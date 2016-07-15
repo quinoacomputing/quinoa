@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/LinSysMerger.h
   \author    J. Bakosi
-  \date      Fri 15 Jul 2016 10:00:04 AM MDT
+  \date      Fri 15 Jul 2016 11:21:26 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ chare linear system merger group to solve a linear system
   \details   Charm++ chare linear system merger group used to collect and
@@ -132,12 +132,14 @@
 #include "HypreVector.h"
 #include "HypreSolver.h"
 #include "VectorReducer.h"
+#include "HashMapReducer.h"
 
 #include "NoWarning/conductor.decl.h"
 
 namespace tk {
 
-extern CkReduction::reducerType BCMerger;
+extern CkReduction::reducerType BCVectorMerger;
+extern CkReduction::reducerType BCMapMerger;
 
 #if defined(__clang__)
   #pragma clang diagnostic push
@@ -251,8 +253,11 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
     //!   it is called without an object. See also: Section "Initializations at
     //!   Program Startup" at in the Charm++ manual
     //!   http://charm.cs.illinois.edu/manuals/html/charm++/manual.html.
-    static void registerBCMerger()
-    { BCMerger = CkReduction::addReducer( tk::mergeVector ); }
+    static void registerBCMerger() {
+      BCVectorMerger = CkReduction::addReducer( tk::mergeVector );
+      BCMapMerger = CkReduction::addReducer(
+                      tk::mergeHashMap< int, std::vector< std::size_t > > );
+    }
 
     //! Receive lower and upper global node IDs all PEs will operate on
     //! \param[in] pe PE whose bounds being received
@@ -530,21 +535,18 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       b.insert( end(b), begin(bc), end(bc) );
       // Forward all bcs received to fellow branches
       if (++m_nchbc == m_nchare) {
-        if (CkNumPes() == 1) trigger_bc_complete();
-        for (int p=0; p<CkNumPes(); ++p)
-          if (p!=CkMyPe()) Group::thisProxy[ p ].addbc( m_bc );
+        auto stream = tk::serialize( m_bc );
+        CkCallback cb( CkIndex_LinSysMerger< HostProxy, WorkerProxy >::
+                         addbc(nullptr), Group::thisProxy );
+        Group::contribute( stream.first, stream.second.get(), BCMapMerger, cb );
       }
     }
-    //! Receive global row ids at which to set BCs from fellow group branches
-    //! \param[in] bc Global mesh point (row) indices received (at which BC set)
-    void addbc( const std::unordered_map< int,
-                  std::vector< std::size_t > >& bc ) {
-      for (const auto& c : bc) {
-        auto& b = m_bc[ c.first ];
-        b.insert( end(b), begin(c.second), end(c.second) );
-      }
-      if (++m_npebc == static_cast<std::size_t>(CkNumPes()-1))
-        trigger_bc_complete();
+    // Reduction target collecting the final aggregated BC node list map
+    void addbc( CkReductionMsg* msg ) {
+      PUP::fromMem creator( msg->getData() );
+      creator | m_bc;
+      delete msg;
+      trigger_bc_complete();
     }
 
     //! Chares return old global node IDs
@@ -917,8 +919,8 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
                                const std::vector< std::size_t >& bc ) {
       using inciter::CkIndex_Conductor;
       auto stream = tk::serialize( bc );
-      CkCallback cb( CkIndex_Conductor::verifybc(nullptr), host );
-      Group::contribute( stream.first, stream.second.get(), BCMerger, cb );
+      CkCallback c( CkIndex_Conductor::verifybc(nullptr), host );
+      Group::contribute( stream.first, stream.second.get(), BCVectorMerger, c );
     }
     //! \brief Signal back to host that enabling the SDAG waits for assembling
     //!    the right-hand side is complete and ready for a new advance in time
@@ -954,6 +956,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
   #pragma clang diagnostic ignored "-Wunused-parameter"
   #pragma clang diagnostic ignored "-Wshorten-64-to-32"
   #pragma clang diagnostic ignored "-Wreorder"
+  #pragma clang diagnostic ignored "-Wunused-variable"
 #elif defined(__GNUC__)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wnon-virtual-dtor"
@@ -961,6 +964,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
   #pragma GCC diagnostic ignored "-Wcast-qual"
   #pragma GCC diagnostic ignored "-Weffc++"
   #pragma GCC diagnostic ignored "-Wunused-parameter"
+  #pragma GCC diagnostic ignored "-Wunused-variable"
 #endif
 
 #define CK_TEMPLATES_ONLY
