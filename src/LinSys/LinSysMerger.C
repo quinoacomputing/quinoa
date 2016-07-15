@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/LinSysMerger.C
   \author    J. Bakosi
-  \date      Wed 13 Jul 2016 09:21:05 AM MDT
+  \date      Fri 15 Jul 2016 10:55:26 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Linear system merger
   \details   Linear system merger.
@@ -29,7 +29,8 @@ namespace tk {
 //!   "initnode" entry method, *may* fill one while contribute() may use the
 //!   other (unregistered) one. Result: undefined behavior, segfault, and
 //!   formatting the internet ...
-CkReduction::reducerType BCMerger;
+CkReduction::reducerType BCVectorMerger;
+CkReduction::reducerType BCMapMerger;
 
 }
 
