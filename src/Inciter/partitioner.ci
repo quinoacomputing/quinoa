@@ -17,13 +17,16 @@ module partitioner {
     chare Partitioner< CProxy_Conductor,
                        CProxy_Performer,
                        tk::CProxy_LinSysMerger< CProxy_Conductor,
-                                                CProxy_Performer > >;
+                                                CProxy_Performer >,
+                       CProxy_Tracker >;
 
-    template< class HostProxy, class WorkerProxy, class LinSysMergerProxy >
+    template< class HostProxy, class WorkerProxy, class LinSysMergerProxy,
+              class TrackerProxy >
     group Partitioner {
       entry Partitioner( const HostProxy& host,
                          const WorkerProxy& worker,
-                         const LinSysMergerProxy& lsm );
+                         const LinSysMergerProxy& lsm,
+                         const TrackerProxy& tracker );
       entry void partition( int nchare );
       entry void add( int frompe,
             const std::unordered_map< int, std::vector< std::size_t > >& elem );

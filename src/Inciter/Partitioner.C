@@ -12,6 +12,7 @@
 #include "Partitioner.h"
 
 #include "NoWarning/performer.decl.h"
+#include "NoWarning/tracker.decl.h"
 
 #if defined(__clang__)
   #pragma clang diagnostic push
@@ -29,7 +30,8 @@ template class inciter::Partitioner<
                  inciter::CProxy_Conductor,
                  inciter::CProxy_Performer,
                  tk::CProxy_LinSysMerger< inciter::CProxy_Conductor,
-                                          inciter::CProxy_Performer > >;
+                                          inciter::CProxy_Performer >,
+                 inciter::CProxy_Tracker >;
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
