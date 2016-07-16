@@ -1,0 +1,25 @@
+// *****************************************************************************
+/*!
+  \file      src/Inciter/tracker.ci
+  \author    F.J. Gonzalez
+  \date      Fri 15 Jul 2016 09:11:01 PM MDT
+  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \brief     Charm++ module interface file for Tracker
+  \details   Charm++ module interface file for Tracker.
+*/
+// *****************************************************************************
+
+module tracker {
+
+  extern module conductor;
+
+  namespace inciter {
+
+    array [1D] Tracker {
+      entry Tracker( const CProxy_Conductor& conductor );
+      entry void advance( tk::real dt, uint64_t it, tk::real t );
+    };
+
+  } // inciter::
+
+}
