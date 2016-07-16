@@ -28,6 +28,7 @@
 #include "VectorReducer.h"
 
 #include "NoWarning/performer.decl.h"
+#include "NoWarning/tracker.decl.h"
 
 namespace inciter {
 
@@ -92,9 +93,11 @@ class Conductor : public CBase_Conductor {
     using LinSysMergerProxy = tk::CProxy_LinSysMerger< CProxy_Conductor,
                                                        CProxy_Performer >;
     using PerformerProxy = CProxy_Performer;
+    using TrackerProxy = CProxy_Tracker;
     using PartitionerProxy = CProxy_Partitioner< CProxy_Conductor,
                                                  CProxy_Performer,
-                                                 LinSysMergerProxy >;
+                                                 LinSysMergerProxy,
+                                                 TrackerProxy >;
 
     InciterPrint m_print;               //!< Pretty printer
     int m_nchare;                       //!< Number of performer chares
@@ -104,6 +107,7 @@ class Conductor : public CBase_Conductor {
     uint8_t m_stage;                    //!< Stage in multi-stage time stepping
     LinSysMergerProxy m_linsysmerger;   //!< Linear system merger group proxy
     PerformerProxy m_performer;         //!< Performer chare array proxy
+    TrackerProxy m_tracker;             //!< Tracker chare array proxy
     PartitionerProxy m_partitioner;     //!< Partitioner group proxy
     //! Average communication cost of merging the linear system
     tk::real m_avcost;

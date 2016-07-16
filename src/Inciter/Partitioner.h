@@ -5,7 +5,7 @@
   \date      Sun 15 May 2016 08:12:22 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ chare partitioner group used to perform mesh partitioning
-  \details   Charm++ chare partitioner group used to parform mesh partitioning.
+  \details   Charm++ chare partitioner group used to perform mesh partitioning.
     The implementation uses the Charm++ runtime system and is fully
     asynchronous, overlapping computation, communication as well as I/O. The
     algorithm utilizes the structured dagger (SDAG) Charm++ functionality. The
@@ -85,10 +85,12 @@ extern CkReduction::reducerType NodesMerger;
 //!   more (as opposed to individual chares or chare array object elements). See
 //!   also the Charm++ interface file partitioner.ci.
 //! \author J. Bakosi
-template< class HostProxy, class WorkerProxy, class LinSysMergerProxy >
+template< class HostProxy, class WorkerProxy, class LinSysMergerProxy,
+         class TrackerProxy >
 class Partitioner : public CBase_Partitioner< HostProxy,
                                               WorkerProxy,
-                                              LinSysMergerProxy > {
+                                              LinSysMergerProxy,
+                                              TrackerProxy > {
 
   #if defined(__clang__)
     #pragma clang diagnostic push
@@ -114,21 +116,24 @@ class Partitioner : public CBase_Partitioner< HostProxy,
   #endif
 
   private:
-    using Group =
-      CBase_Partitioner< HostProxy, WorkerProxy, LinSysMergerProxy >;
+    using Group = CBase_Partitioner< HostProxy, WorkerProxy, LinSysMergerProxy,
+                                     TrackerProxy >;
 
   public:
     //! Constructor
     //! \param[in] host Host Charm++ proxy we are being called from
-    //! \param[in] worker Worker Charm++ proxy we spawn work to
+    //! \param[in] worker Worker Charm++ proxy we spawn PDE work to
+    //! \param[in] tracker Tracker Charm++ proxy we spawn tracking work to
     //! \param[in] lsm Linear system merger proxy (required by the workers)
     Partitioner( const HostProxy& host,
                  const WorkerProxy& worker,
-                 const LinSysMergerProxy& lsm ) :
+                 const LinSysMergerProxy& lsm,
+                 const TrackerProxy& tracker ) :
       __dep(),
       m_host( host ),
       m_worker( worker ),
       m_linsysmerger( lsm ),
+      m_tracker( tracker ),
       m_npe( 0 ),
       m_req(),
       m_reordered( 0 ),
@@ -342,6 +347,8 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     WorkerProxy m_worker;
     //! Linear system merger proxy
     LinSysMergerProxy m_linsysmerger;
+    //! Tracker proxy
+    TrackerProxy m_tracker;
     //! Number of fellow PEs to send elem IDs to
     std::size_t m_npe;
     //! Queue of requested node IDs from PEs
@@ -737,8 +744,10 @@ class Partitioner : public CBase_Partitioner< HostProxy,
                                 tk::cref_find( m_node, cid ),
                                 tk::cref_find( m_chcid, cid ),
                                 CkMyPe() );
+        m_tracker[ cid ].insert( m_host, CkMyPe() );
       }
       m_worker.doneInserting();
+      m_tracker.doneInserting();
       // Broadcast our bounds of global node IDs to all linear system mergers
       m_linsysmerger.bounds( CkMyPe(), m_lower, m_upper );
     }
