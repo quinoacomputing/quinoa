@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Mon 11 Jul 2016 10:18:16 AM MDT
+  \date      Sat 16 Jul 2016 09:59:21 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Inciter's input deck grammar definition
   \details   Inciter's input deck grammar definition. We use the Parsing
@@ -54,7 +54,8 @@ namespace deck {
   //! \author J. Bakosi
   static tk::tuple::tagged_tuple< tag::advdiff, std::size_t,
                                   tag::poisson, std::size_t,
-                                  tag::euler,   std::size_t > neq;
+                                  tag::euler,   std::size_t,
+                                  tag::compns,  std::size_t > neq;
 
   // Inciter's InputDeck actions
 
@@ -76,17 +77,20 @@ namespace deck {
   struct check_eq : pegtl::action_base< check_eq< eq > > {
     static void apply( const std::string& value, Stack& stack ) {
 
-      // Error out if no dependent variable has been selected
-      const auto& depvar = stack.get< tag::param, eq, tag::depvar >();
-      if (depvar.empty() || depvar.size() != neq.get< eq >())
-        tk::grm::Message< Stack, tk::grm::ERROR, tk::grm::MsgKey::NODEPVAR >
-                        ( stack, value );
+// The below is commented out for now as CompNS (and in the future Euler as
+// well) will not have depvar and ncomp.
 
-      // Error out if no number of components has been selected
-      const auto& ncomp = stack.get< tag::component, eq >();
-      if (ncomp.empty() || ncomp.size() != neq.get< eq >())
-        tk::grm::Message< Stack, tk::grm::ERROR, tk::grm::MsgKey::NONCOMP >
-                        ( stack, value );
+//      // Error out if no dependent variable has been selected
+//      const auto& depvar = stack.get< tag::param, eq, tag::depvar >();
+//      if (depvar.empty() || depvar.size() != neq.get< eq >())
+//        tk::grm::Message< Stack, tk::grm::ERROR, tk::grm::MsgKey::NODEPVAR >
+//                        ( stack, value );
+//
+//      // Error out if no number of components has been selected
+//      const auto& ncomp = stack.get< tag::component, eq >();
+//      if (ncomp.empty() || ncomp.size() != neq.get< eq >())
+//        tk::grm::Message< Stack, tk::grm::ERROR, tk::grm::MsgKey::NONCOMP >
+//                        ( stack, value );
 
       // Error out if no test problem has been selected
       const auto& problem = stack.get< tag::param, eq, tag::problem >();
@@ -179,10 +183,10 @@ namespace deck {
                                             ctr::Problem,
                                             tag::advdiff,
                                             tag::problem >,
-                          tk::grm::depvar< Stack,
-                                           use,
-                                           tag::advdiff,
-                                           tag::depvar >,
+                           tk::grm::depvar< Stack,
+                                            use,
+                                            tag::advdiff,
+                                            tag::depvar >,
                            tk::grm::component< Stack,
                                                use< kw::ncomp >,
                                                tag::advdiff >,
@@ -219,6 +223,20 @@ namespace deck {
                            bc_dirichlet< tag::poisson, tag::bc_dirichlet > >,
            check_errors< tag::poisson > > {};
 
+  //! compressible Navier-Stokes equation
+  struct compns :
+         pegtl::ifmust<
+           scan_eq< use< kw::compns >, tag::compns >,
+           tk::grm::block< Stack,
+                           use< kw::end >,
+                           tk::grm::policy< Stack,
+                                            use,
+                                            use< kw::problem >,
+                                            ctr::Problem,
+                                            tag::compns,
+                                            tag::problem > >,
+           check_errors< tag::compns > > {};
+
   //! partitioning ... end block
   struct partitioning :
          pegtl::ifmust<
@@ -235,7 +253,7 @@ namespace deck {
 
   //! equation types
   struct equations :
-         pegtl::sor< advdiff, poisson > {};
+         pegtl::sor< advdiff, poisson, compns > {};
 
   //! plotvar ... end block
   struct plotvar :

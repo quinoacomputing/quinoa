@@ -129,6 +129,7 @@ struct gid {};
 struct advdiff {};
 struct poisson {};
 struct euler {};
+struct compns {};
 struct problem {};
 struct diffusivity {};
 struct u0 {};

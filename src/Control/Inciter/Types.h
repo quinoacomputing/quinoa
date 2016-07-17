@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/Types.h
   \author    J. Bakosi
-  \date      Mon 11 Jul 2016 10:54:08 AM MDT
+  \date      Sat 16 Jul 2016 10:03:09 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Types for Incitier's parsers
   \details   Types for Incitier's parsers. This file defines the components of the
@@ -80,11 +80,19 @@ using EulerPDEParameters = tk::tuple::tagged_tuple<
                        kw::sideset::info::expect::type > >
 >;
 
+//! Compressible Navier-Stokes equation parameters storage
+using CompNSPDEParameters = tk::tuple::tagged_tuple<
+  tag::problem,     std::vector< ProblemType >,
+  tag::bc_dirichlet, std::vector< std::vector<
+                       kw::sideset::info::expect::type > >
+>;
+
 //! Parameters storage
 using parameters = tk::tuple::tagged_tuple<
   tag::advdiff,     AdvDiffPDEParameters,
   tag::poisson,     PoissonPDEParameters,
-  tag::euler,       EulerPDEParameters
+  tag::euler,       EulerPDEParameters,
+  tag::compns,      CompNSPDEParameters
 >;
 
 //! PEGTL location type to use throughout Incitier's parsers
