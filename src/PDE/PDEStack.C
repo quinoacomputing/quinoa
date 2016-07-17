@@ -23,9 +23,11 @@
 
 #include "AdvDiff.h"
 #include "Euler.h"
+#include "CompNS.h"
 
 #include "AdvDiffProblem.h"
 #include "EulerProblem.h"
+#include "CompNSProblem.h"
 
 using inciter::PDEStack;
 
@@ -113,6 +115,13 @@ PDEStack::PDEStack() : m_factory(), m_eqTypes()
   // Register PDE for all combinations of policies
   mpl::cartesian_product< EulerPolicies >(
     registerPDE< Euler >( m_factory, ctr::PDEType::EULER, m_eqTypes ) );
+
+  // Compressible Navier-Stokes system of PDEs
+  // Construct vector of vectors for all possible policies for PDE
+  using CompNSPolicies = mpl::vector< CompNSProblems >;
+  // Register PDE for all combinations of policies
+  mpl::cartesian_product< CompNSPolicies >(
+    registerPDE< CompNS >( m_factory, ctr::PDEType::COMPNS, m_eqTypes ) );
 }
 
 std::vector< inciter::PDE >
@@ -131,6 +140,8 @@ PDEStack::selected() const
       pdes.push_back( createPDE< tag::advdiff >( d, cnt ) );
     else if (d == ctr::PDEType::EULER)
       pdes.push_back( createPDE< tag::euler >( d, cnt ) );
+    else if (d == ctr::PDEType::COMPNS)
+      pdes.push_back( createPDE< tag::compns >( d, cnt ) );
     else Throw( "Can't find selected PDE" );
   }
 
@@ -155,6 +166,8 @@ PDEStack::info() const
       info.emplace_back( infoAdvDiff( cnt ) );
     else if (d == ctr::PDEType::EULER)
       info.emplace_back( infoEuler( cnt ) );
+    else if (d == ctr::PDEType::COMPNS)
+      info.emplace_back( infoCompNS( cnt ) );
     else Throw( "Can't find selected PDE" );
   }
 
@@ -212,6 +225,32 @@ PDEStack::infoEuler( std::map< ctr::PDEType, ncomp_t >& cnt ) const
   std::vector< std::pair< std::string, std::string > > info;
 
   info.emplace_back( ctr::PDE().name( ctr::PDEType::EULER ), "" );
+  info.emplace_back( "problem", ctr::Problem().name(
+    g_inputdeck.get< tag::param, tag::euler, tag::problem >()[c] ) );
+  info.emplace_back( "start offset in unknowns array", std::to_string(
+    g_inputdeck.get< tag::component >().offset< tag::euler >(c) ) );
+  auto ncomp = g_inputdeck.get< tag::component >().get< tag::euler >()[c];
+  info.emplace_back( "number of components", std::to_string( ncomp ) );
+
+  return info;
+}
+
+std::vector< std::pair< std::string, std::string > >
+PDEStack::infoCompNS( std::map< ctr::PDEType, ncomp_t >& cnt ) const
+// *****************************************************************************
+//  Return information on the compressible Navier-Stokes system of PDEs
+//! \param[inout] cnt std::map of counters for all partial differential equation
+//!   types
+//! \return vector of string pairs describing the PDE configuration
+//! \author J. Bakosi
+// *****************************************************************************
+{
+  auto c = ++cnt[ ctr::PDEType::COMPNS ];       // count eqs
+  --c;  // used to index vectors starting with 0
+
+  std::vector< std::pair< std::string, std::string > > info;
+
+  info.emplace_back( ctr::PDE().name( ctr::PDEType::COMPNS ), "" );
   info.emplace_back( "problem", ctr::Problem().name(
     g_inputdeck.get< tag::param, tag::euler, tag::problem >()[c] ) );
   info.emplace_back( "start offset in unknowns array", std::to_string(
