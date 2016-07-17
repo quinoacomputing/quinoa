@@ -13,7 +13,7 @@
 // *****************************************************************************
 
 #include <string>
-#include <math.h>
+#include <cmath>
 
 #include "Performer.h"
 #include "Vector.h"
@@ -376,21 +376,23 @@ Performer::updateSolution( const std::vector< std::size_t >& gid,
     // evaluateTime(), is called upon completion of the reduction.
     contribute(
       CkCallback( CkReductionTarget( Conductor, evaluateTime ), m_conductor ) );
-		// TEST FEATURE: Manually migrate this chare by using migrateMe to see if
-		// all relevant state variables are being PUPed correctly. 
-		//CkPrintf("I'm performer chare %d on PE %d\n",thisIndex,CkMyPe());
-		if (thisIndex == 2 && CkMyPe() == 2) {
-			/*int j;
-			for (int i; i < 50*pow(thisIndex,4); i++) {
-				j = i*thisIndex;
-			}*/
-			CkPrintf("I'm performer chare %d on PE %d\n",thisIndex,CkMyPe());
-			migrateMe(1);
-		} 
-		if (thisIndex == 2 && CkMyPe() == 1) {
-			CkPrintf("I'm performer chare %d on PE %d\n",thisIndex,CkMyPe());
-			migrateMe(2);
-		}
+
+//     // TEST FEATURE: Manually migrate this chare by using migrateMe to see if
+//     // all relevant state variables are being PUPed correctly.
+//     //CkPrintf("I'm performer chare %d on PE %d\n",thisIndex,CkMyPe());
+//     if (thisIndex == 2 && CkMyPe() == 2) {
+//       /*int j;
+//       for (int i; i < 50*std::pow(thisIndex,4); i++) {
+//         j = i*thisIndex;
+//       }*/
+//       CkPrintf("I'm performer chare %d on PE %d\n",thisIndex,CkMyPe());
+//       migrateMe(1);
+//    }
+//    if (thisIndex == 2 && CkMyPe() == 1) {
+//      CkPrintf("I'm performer chare %d on PE %d\n",thisIndex,CkMyPe());
+//      migrateMe(2);
+//    }
+
   }
 }
 

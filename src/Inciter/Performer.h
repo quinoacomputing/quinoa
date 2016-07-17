@@ -52,30 +52,17 @@ class Performer : public CBase_Performer {
                  const std::vector< std::size_t >& conn,
                  const std::unordered_map< std::size_t, std::size_t >& cid );
 
+    #if defined(__GNUC__)
+      #pragma GCC diagnostic push
+      #pragma GCC diagnostic ignored "-Weffc++"
+    #endif
+
     //! Migrate constructor
-    explicit Performer( CkMigrateMessage* ) { }
-      /*// WARNING: This is a "blind" copy of the standard constructor initializer
-      // list - it must be changed for migration to be correct.
-      m_it( 0 ),
-      m_itf( 0 ),
-      m_t( g_inputdeck.get< tag::discr, tag::t0 >() ),
-      m_stage( 0 ),
-      m_nsol( 0 ),
-      m_outFilename( g_inputdeck.get< tag::cmd, tag::io, tag::output >() + "." +
-                     std::to_string( thisIndex ) ),
-      m_conductor(),
-      m_linsysmerger(),
-      m_cid(),
-      m_el(),     // fills m_inpoel and m_gid
-      m_lid(),
-      m_coord(),
-      m_psup( tk::genPsup( m_inpoel, 4, tk::genEsup(m_inpoel,4) ) ),
-      m_u( 0, g_inputdeck.get< tag::component >().nprop() ),
-      m_uf( 0, g_inputdeck.get< tag::component >().nprop() ),
-      m_un( 0, g_inputdeck.get< tag::component >().nprop() ),
-      m_lhsd( 0, g_inputdeck.get< tag::component >().nprop() ),
-      m_lhso( 0, g_inputdeck.get< tag::component >().nprop() )
-    {}*/
+    explicit Performer( CkMigrateMessage* ) {}
+
+    #if defined(__GNUC__)
+      #pragma GCC diagnostic pop
+    #endif
 
     //! Initialize mesh IDs, element connectivity, coordinates
     void setup();
@@ -89,28 +76,36 @@ class Performer : public CBase_Performer {
 
     //! Advance equations to next stage in multi-stage time stepping
     void advance( uint8_t stage, tk::real dt, uint64_t it, tk::real t );
-  
-    //! Create PUP routine to prepare Performer chare for object migration
-		void pup(PUP::er &p) {
-      //! Call PUP routine for superclass
+
+
+    /** @name Pack/Unpack: Serialize Performer object for Charm++ */
+    ///@{
+    //! \brief Pack/Unpack serialize member function
+    //! \param[in,out] p Charm++'s PUP::er serializer object reference
+    void pup( PUP::er &p ) {
       CBase_Performer::pup(p);
-      //! Basic primitives
-			p | m_it;
-			p | m_itf;
-			p | m_t;
-			p | m_stage;
-			p | m_nsol;
-			p | m_outFilename;
-			p | m_conductor;
-			p | m_linsysmerger;
-			p | m_cid;
-			p | m_el;
-			p | m_lid;
-			p | m_coord;
-			p | m_psup;
-			p | m_u; p | m_uf; p | m_un;
-			p | m_lhsd; p | m_lhso;
+      p | m_it;
+      p | m_itf;
+      p | m_t;
+      p | m_stage;
+      p | m_nsol;
+      p | m_outFilename;
+      p | m_conductor;
+      p | m_linsysmerger;
+      p | m_cid;
+      p | m_el;
+      if (p.isUnpacking()) { m_inpoel = m_el.first; m_gid = m_el.second; }
+      p | m_lid;
+      p | m_coord;
+      p | m_psup;
+      p | m_u; p | m_uf; p | m_un;
+      p | m_lhsd; p | m_lhso;
     }
+    //! \brief Pack/Unpack serialize operator|
+    //! \param[in,out] p Charm++'s PUP::er serializer object reference
+    //! \param[in,out] i Performer object reference
+    //! \author J. Bakosi
+    friend void operator|( PUP::er& p, Performer& i ) { i.pup(p); }
 
   private:
     using ncomp_t = kw::ncomp::info::expect::type;

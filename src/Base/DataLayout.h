@@ -38,7 +38,9 @@ class DataLayout {
     using ncomp_t = kw::ncomp::info::expect::type;
 
   public:
-    explicit DataLayout(){}
+    //! Default constructor (required for Charm++ migration)
+    explicit DataLayout() : m_vec(), m_nunk(), m_nprop() {}
+
     //! Constructor
     //! \param[in] nunk Number of unknowns to allocate memory for
     //! \param[in] nprop Total number of properties, i.e., scalar variables or
@@ -277,11 +279,22 @@ class DataLayout {
     //! \author J. Bakosi
     static std::string layout() { return layout( int2type< Layout >() ); }
 
-		void pup(PUP::er &p) {
-			p | m_vec;
-			p | m_nunk;
-			p | m_nprop;
-		}
+    /** @name Pack/Unpack: Serialize DataLayout object for Charm++ */
+    ///@{
+    //! \brief Pack/Unpack serialize member function
+    //! \param[in,out] p Charm++'s PUP::er serializer object reference
+    //! \author F.J. Gonzalez
+    void pup( PUP::er &p ) {
+      p | m_vec;
+      p | m_nunk;
+      p | m_nprop;
+    }
+    //! \brief Pack/Unpack serialize operator|
+    //! \param[in,out] p Charm++'s PUP::er serializer object reference
+    //! \param[in,out] d DataLyaout object reference
+    //! \author J. Bakosi
+    friend void operator|( PUP::er& p, DataLayout& d ) { d.pup(p); }
+    //@}
 
   private:
     //! Transform a compile-time uint8_t into a type, used for dispatch

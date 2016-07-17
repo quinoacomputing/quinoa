@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Function used to setup a Charm++ module
-# \date      Fri 06 May 2016 06:44:30 AM MDT
+# \date      Sat 16 Jul 2016 08:50:27 PM MDT
 #
 ################################################################################
 
@@ -26,7 +26,7 @@ function(addCharmModule MODULE PARTOF)
   # Add custom command generating .decl.h and .def.h from .ci
   add_custom_command(OUTPUT ${MODULE}.decl.h ${MODULE}.def.h
                      DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${MODULE}.ci
-                     COMMAND ${CHARM_COMPILER} -module RefineLB
+                     COMMAND ${CHARM_COMPILER}
                              ${CMAKE_CURRENT_SOURCE_DIR}/${MODULE}.ci)
   # Add custom target dependency for Charm++ module
   add_custom_target(${MODULE}CharmModule
