@@ -128,6 +128,7 @@ struct psup {};
 struct gid {};
 struct advdiff {};
 struct euler {};
+struct compns {};
 struct problem {};
 struct diffusivity {};
 struct u0 {};

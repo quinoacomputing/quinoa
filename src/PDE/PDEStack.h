@@ -143,6 +143,9 @@ class PDEStack {
     //! Get information on the Euler PDE
     std::vector< std::pair< std::string, std::string > >
     infoEuler( std::map< ctr::PDEType, ncomp_t >& cnt ) const;
+    //! Get information on the compresisble Navier-Stokes PDE
+    std::vector< std::pair< std::string, std::string > >
+    infoCompNS( std::map< ctr::PDEType, ncomp_t >& cnt ) const;
     ///@}
 
     //! \brief Convert and return values from vector as string

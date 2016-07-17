@@ -2603,6 +2603,22 @@ struct euler_info {
 };
 using euler = keyword< euler_info, e,u,l,e,r >;
 
+struct compns_info {
+  static std::string name() { return "Compressible Navier-Stokes equations"; }
+  static std::string shortDescription() { return
+    "Start configuration block for the compressible Navier-Stokes equations"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to introduce the compns ... end block, used to
+    specify the configuration for a system of partial differential equations,
+    governing compressible viscous fluid flow, the Navier-Stokes equations.
+    Keywords allowed in an compns ... end block: )" + std::string("\'")
+    + problem::string() + "\'."
+    + R"(For an example compns ... end block, see
+      doc/html/inicter_example_compns.html.)";
+  }
+};
+using compns = keyword< compns_info, c,o,m,p,n,s >;
+
 struct rcb_info {
   static std::string name() { return "recursive coordinate bisection"; }
   static std::string shortDescription() { return
