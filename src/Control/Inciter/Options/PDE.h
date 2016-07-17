@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/Options/PDE.h
   \author    J. Bakosi
-  \date      Wed 06 Jul 2016 11:54:10 AM MDT
+  \date      Sat 16 Jul 2016 10:02:47 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Partial differential equation options and associations for inciter
   \details   Partial differential equation options and associations for inciter
@@ -25,7 +25,8 @@ namespace ctr {
 enum class PDEType : uint8_t { NO_PDE=0,
                                ADV_DIFF,
                                POISSON,
-                               EULER };
+                               EULER,
+                               COMPNS };
 
 //! Pack/Unpack: forward overload to generic enum class packer
 inline void operator|( PUP::er& p, PDEType& e ) { PUP::pup( p, e ); }
@@ -43,6 +44,7 @@ class PDE : public tk::Toggle< PDEType > {
     using keywords = boost::mpl::vector< kw::advdiff
                                        , kw::poisson
                                        , kw::euler
+                                       , kw::compns
                                        >;
 
     //! Constructor: pass associations references to base, which will handle
@@ -53,12 +55,14 @@ class PDE : public tk::Toggle< PDEType > {
         { { PDEType::NO_PDE, "n/a" },
           { PDEType::ADV_DIFF, kw::advdiff::name() },
           { PDEType::POISSON, kw::poisson::name() },
-          { PDEType::EULER, kw::euler::name() } },
+          { PDEType::EULER, kw::euler::name() },
+          { PDEType::COMPNS, kw::compns::name() } },
         //! keywords -> Enums
         { { "no_pde", PDEType::NO_PDE },
           { kw::advdiff::string(), PDEType::ADV_DIFF },
           { kw::poisson::string(), PDEType::POISSON },
-          { kw::euler::string(), PDEType::EULER } } ) {}
+          { kw::euler::string(), PDEType::EULER },
+          { kw::compns::string(), PDEType::COMPNS } } ) {}
 };
 
 } // ctr::
