@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/LinSysMerger.h
   \author    J. Bakosi
-  \date      Fri 15 Jul 2016 11:21:26 AM MDT
+  \date      Fri 15 Jul 2016 12:01:34 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ chare linear system merger group to solve a linear system
   \details   Charm++ chare linear system merger group used to collect and
@@ -244,6 +244,8 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       #ifdef NDEBUG     // skip verification of BCs in RELEASE mode
       trigger_ver_complete();
       #endif
+      trigger_lhsbc_complete();
+      trigger_rhsbc_complete();
     }
 
     //! \brief Configure Charm++ reduction types for concatenating BC nodelists
@@ -294,6 +296,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       m_rhsimport.clear();
       m_rhs.clear();
       m_hypreRhs.clear();
+      trigger_rhsbc_complete();
       trigger_asmsol_complete();
       trigger_asmlhs_complete();
       signal2host_advance( m_host );
