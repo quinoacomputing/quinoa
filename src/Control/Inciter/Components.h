@@ -20,7 +20,8 @@ namespace ctr {
 //! Number of components of partial differential equations
 using ncomps = tk::ctr::ncomponents<
   tag::advdiff,      std::vector< tk::ctr::ncomp_type >,
-  tag::euler,        std::vector< tk::ctr::ncomp_type >
+  tag::euler,        std::vector< tk::ctr::ncomp_type >,
+  tag::compns,       std::vector< tk::ctr::ncomp_type >
 >;
 
 } // ctr::

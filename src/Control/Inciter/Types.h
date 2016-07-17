@@ -68,10 +68,16 @@ using EulerPDEParameters = tk::tuple::tagged_tuple<
   tag::problem,     std::vector< ProblemType >
 >;
 
+//! Compressible Navier-Stokes equation parameters storage
+using CompNSPDEParameters = tk::tuple::tagged_tuple<
+  tag::problem,     std::vector< ProblemType >
+>;
+
 //! Parameters storage
 using parameters = tk::tuple::tagged_tuple<
   tag::advdiff,     AdvDiffPDEParameters,
-  tag::euler,       EulerPDEParameters
+  tag::euler,       EulerPDEParameters,
+  tag::compns,      CompNSPDEParameters
 >;
 
 //! PEGTL location type to use throughout Incitier's parsers

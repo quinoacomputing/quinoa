@@ -24,7 +24,8 @@ namespace ctr {
 //! Differential equation types
 enum class PDEType : uint8_t { NO_PDE=0,
                                ADV_DIFF,
-                               EULER };
+                               EULER,
+                               COMPNS };
 
 //! Pack/Unpack: forward overload to generic enum class packer
 inline void operator|( PUP::er& p, PDEType& e ) { PUP::pup( p, e ); }
@@ -41,6 +42,7 @@ class PDE : public tk::Toggle< PDEType > {
     // List valid expected choices to make them also available at compile-time
     using keywords = boost::mpl::vector< kw::advdiff
                                        , kw::euler
+                                       , kw::compns
                                        >;
 
     //! Constructor: pass associations references to base, which will handle
@@ -50,11 +52,13 @@ class PDE : public tk::Toggle< PDEType > {
         //! Enums -> names
         { { PDEType::NO_PDE, "n/a" },
           { PDEType::ADV_DIFF, kw::advdiff::name() },
-          { PDEType::EULER, kw::euler::name() } },
+          { PDEType::EULER, kw::euler::name() },
+          { PDEType::COMPNS, kw::compns::name() } },
         //! keywords -> Enums
         { { "no_pde", PDEType::NO_PDE },
           { kw::advdiff::string(), PDEType::ADV_DIFF },
-          { kw::euler::string(), PDEType::EULER } } ) {}
+          { kw::euler::string(), PDEType::EULER },
+          { kw::euler::string(), PDEType::COMPNS } } ) {}
 };
 
 } // ctr::
