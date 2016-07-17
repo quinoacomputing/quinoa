@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/DataLayout.h
   \author    J. Bakosi
-  \date      Fri 29 Apr 2016 07:14:12 AM MDT
+  \date      Fri 15 Jul 2016 03:15:40 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Generic data access abstraction for different data layouts
   \details   Generic data access abstraction for different data layouts. See
@@ -20,6 +20,8 @@
 #include "Keywords.h"
 #include "Exception.h"
 
+#include "NoWarning/pup_stl.h"
+
 namespace tk {
 
 //! Tags for selecting data layout policies
@@ -36,6 +38,9 @@ class DataLayout {
     using ncomp_t = kw::ncomp::info::expect::type;
 
   public:
+    //! Default constructor (required for Charm++ migration)
+    explicit DataLayout() : m_vec(), m_nunk(), m_nprop() {}
+
     //! Constructor
     //! \param[in] nunk Number of unknowns to allocate memory for
     //! \param[in] nprop Total number of properties, i.e., scalar variables or
@@ -273,6 +278,23 @@ class DataLayout {
     //! \return The name of the data layout used
     //! \author J. Bakosi
     static std::string layout() { return layout( int2type< Layout >() ); }
+
+    /** @name Pack/Unpack: Serialize DataLayout object for Charm++ */
+    ///@{
+    //! \brief Pack/Unpack serialize member function
+    //! \param[in,out] p Charm++'s PUP::er serializer object reference
+    //! \author F.J. Gonzalez
+    void pup( PUP::er &p ) {
+      p | m_vec;
+      p | m_nunk;
+      p | m_nprop;
+    }
+    //! \brief Pack/Unpack serialize operator|
+    //! \param[in,out] p Charm++'s PUP::er serializer object reference
+    //! \param[in,out] d DataLyaout object reference
+    //! \author J. Bakosi
+    friend void operator|( PUP::er& p, DataLayout& d ) { d.pup(p); }
+    //@}
 
   private:
     //! Transform a compile-time uint8_t into a type, used for dispatch
