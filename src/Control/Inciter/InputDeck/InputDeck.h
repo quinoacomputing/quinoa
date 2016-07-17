@@ -73,6 +73,7 @@ class InputDeck :
                                        kw::pde_diffusivity,
                                        kw::pde_lambda,
                                        kw::pde_u0,
+                                       kw::compns,
                                        kw::depvar >;
                                      
     //! \brief Constructor: set defaults
