@@ -2,7 +2,7 @@
 /*!
   \file      src/PDE/PDEStack.C
   \author    J. Bakosi
-  \date      Wed 06 Jul 2016 11:54:38 AM MDT
+  \date      Tue 19 Jul 2016 12:49:56 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Stack of partial differential equations
   \details   This file defines class PDEStack, which implements various
@@ -291,10 +291,10 @@ PDEStack::infoCompNS( std::map< ctr::PDEType, ncomp_t >& cnt ) const
 
   info.emplace_back( ctr::PDE().name( ctr::PDEType::COMPNS ), "" );
   info.emplace_back( "problem", ctr::Problem().name(
-    g_inputdeck.get< tag::param, tag::euler, tag::problem >()[c] ) );
+    g_inputdeck.get< tag::param, tag::compns, tag::problem >()[c] ) );
   info.emplace_back( "start offset in unknowns array", std::to_string(
-    g_inputdeck.get< tag::component >().offset< tag::euler >(c) ) );
-  auto ncomp = g_inputdeck.get< tag::component >().get< tag::euler >()[c];
+    g_inputdeck.get< tag::component >().offset< tag::compns >(c) ) );
+  auto ncomp = g_inputdeck.get< tag::component >().get< tag::compns >()[c];
   info.emplace_back( "number of components", std::to_string( ncomp ) );
 
   return info;

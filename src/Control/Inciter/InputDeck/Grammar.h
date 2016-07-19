@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Sat 16 Jul 2016 09:59:21 PM MDT
+  \date      Tue 19 Jul 2016 12:52:55 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Inciter's input deck grammar definition
   \details   Inciter's input deck grammar definition. We use the Parsing
@@ -71,32 +71,48 @@ namespace deck {
   };
 
   //! \brief Do general error checking on the differential equation block
-  //! \details This is error checking that all equation types must satisfy.
+  //! \details This is error checking that generic equation types, such as
+  //!   advection-diffusion or the Poisson equation must satisfy. For more
+  //!   specific equations, such as Euler or compressible Navier-Stokes, a more
+  //!   specialized equation checker does and can do better error checking. See,
+  //!   e.g, check_compns.
   //! \author J. Bakosi
   template< class eq >
   struct check_eq : pegtl::action_base< check_eq< eq > > {
     static void apply( const std::string& value, Stack& stack ) {
-
-// The below is commented out for now as CompNS (and in the future Euler as
-// well) will not have depvar and ncomp.
-
-//      // Error out if no dependent variable has been selected
-//      const auto& depvar = stack.get< tag::param, eq, tag::depvar >();
-//      if (depvar.empty() || depvar.size() != neq.get< eq >())
-//        tk::grm::Message< Stack, tk::grm::ERROR, tk::grm::MsgKey::NODEPVAR >
-//                        ( stack, value );
-//
-//      // Error out if no number of components has been selected
-//      const auto& ncomp = stack.get< tag::component, eq >();
-//      if (ncomp.empty() || ncomp.size() != neq.get< eq >())
-//        tk::grm::Message< Stack, tk::grm::ERROR, tk::grm::MsgKey::NONCOMP >
-//                        ( stack, value );
-
+     // Error out if no dependent variable has been selected
+     const auto& depvar = stack.get< tag::param, eq, tag::depvar >();
+     if (depvar.empty() || depvar.size() != neq.get< eq >())
+       tk::grm::Message< Stack, tk::grm::ERROR, tk::grm::MsgKey::NODEPVAR >
+                       ( stack, value );
+     // Error out if no number of components has been selected
+     const auto& ncomp = stack.get< tag::component, eq >();
+     if (ncomp.empty() || ncomp.size() != neq.get< eq >())
+       tk::grm::Message< Stack, tk::grm::ERROR, tk::grm::MsgKey::NONCOMP >
+                       ( stack, value );
       // Error out if no test problem has been selected
       const auto& problem = stack.get< tag::param, eq, tag::problem >();
       if (problem.empty() || problem.size() != neq.get< eq >())
         tk::grm::Message< Stack, tk::grm::ERROR, tk::grm::MsgKey::NOINIT >
                         ( stack, value );
+    }
+  };
+
+  //! \brief Set defaults and do error checking on the compressible
+  //!   Navier-Stokes equation block
+  //! \details This is error checking that only the compressible Navier-Stokes
+  //!   equation block must satisfy. Besides error checking we also set defaults
+  //!   here as this block is called when parsing of a compns...end block has
+  //!   just finished.
+  //! \author J. Bakosi
+  template< class eq >
+  struct check_compns : pegtl::action_base< check_compns< eq > > {
+    static void apply( const std::string&, Stack& stack ) {
+      // Set default number of components to 5 (mass, 3 x mom, energy)
+      stack.get< tag::component, eq >().push_back( 5 );
+      // If problem type is not given, default to 'user_defined'
+      auto& problem = stack.get< tag::param, eq, tag::problem >();
+      if (problem.empty()) problem.push_back( ctr::ProblemType::USER_DEFINED );
     }
   };
 
@@ -126,13 +142,13 @@ namespace deck {
                                                     tag::pde > > {};
 
   //! Error checks after an equation...end block has been parsed
-  template< class eq >
+  template< class eq, template< class > class eqchecker >
   struct check_errors :
          pegtl::seq<
            // register differential equation block
            pegtl::apply< register_eq< eq > >,
            // do error checking on this block
-           pegtl::apply< check_eq< eq > > > {};
+           pegtl::apply< eqchecker< eq > > > {};
 
   //! Discretization parameters
   struct discretization_parameters :
@@ -199,7 +215,7 @@ namespace deck {
                            pde_parameter_vector< kw::pde_u0,
                                                  tag::advdiff,
                                                  tag::u0 > >,
-           check_errors< tag::advdiff > > {};
+           check_errors< tag::advdiff, check_eq > > {};
 
   //! Poisson partial differential equation for a scalar
   struct poisson :
@@ -221,7 +237,7 @@ namespace deck {
                                                use< kw::ncomp >,
                                                tag::poisson >,
                            bc_dirichlet< tag::poisson, tag::bc_dirichlet > >,
-           check_errors< tag::poisson > > {};
+           check_errors< tag::poisson, check_eq > > {};
 
   //! compressible Navier-Stokes equation
   struct compns :
@@ -234,8 +250,9 @@ namespace deck {
                                             use< kw::problem >,
                                             ctr::Problem,
                                             tag::compns,
-                                            tag::problem > >,
-           check_errors< tag::compns > > {};
+                                            tag::problem >,
+                           bc_dirichlet< tag::compns, tag::bc_dirichlet > >,
+           check_errors< tag::compns, check_compns > > {};
 
   //! partitioning ... end block
   struct partitioning :
