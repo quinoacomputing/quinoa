@@ -15,6 +15,7 @@
 #include <iosfwd>
 #include <vector>
 #include <array>
+#include <map>
 #include <unordered_map>
 
 #include "NoWarning/exodusII.h"
