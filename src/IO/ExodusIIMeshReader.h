@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/ExodusIIMeshReader.h
   \author    J. Bakosi
-  \date      Mon 11 Jul 2016 07:50:53 AM MDT
+  \date      Tue 19 Jul 2016 09:33:31 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     ExodusII mesh reader
   \details   ExodusII mesh reader class declaration.
@@ -94,7 +94,7 @@ class ExodusIIMeshReader {
                        std::vector< std::size_t >& conn ) const;
 
     //! Read node list of all side sets from ExodusII file
-    std::unordered_map< int, std::vector< std::size_t > > readSidesets();
+    std::map< int, std::vector< std::size_t > > readSidesets();
 
     //!  Return number of elements in a mesh block in the ExodusII file
     int nel( tk::ExoElemType elemtype ) const;

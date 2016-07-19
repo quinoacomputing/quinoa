@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.C
   \author    J. Bakosi
-  \date      Fri 15 Jul 2016 09:32:30 AM MDT
+  \date      Tue 19 Jul 2016 09:39:41 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Performer advances a PDE
   \details   Performer advances a PDE. There are a potentially
@@ -159,7 +159,7 @@ Performer::queryBCs()
   // lambda to find out if the user has specified a Dirichlet BC on the given
   // side set for any component of any of the PDEs integrated
   auto userbc = []( int sideset ) -> bool {
-    for (const auto& eq : g_pdes) if (eq.bc_dirichlet(sideset)) return true;
+    for (const auto& eq : g_pdes) if (eq.anydirbc(sideset)) return true;
     return false;
   };
 
@@ -234,6 +234,68 @@ Performer::oldID( int frompe, const std::vector< std::size_t >& newids )
 // *****************************************************************************
 {
   m_linsysmerger[ frompe ].oldID( thisIndex, old(newids) );
+}
+
+void
+Performer::bcval( int frompe, const std::vector< std::size_t >& nodes )
+// *****************************************************************************
+// Look up boundary condition values at node IDs for all PDEs
+//! \param[in] nodes Vector of node IDs at which to query BC values
+//! \author J. Bakosi
+// *****************************************************************************
+{
+  // Access all side sets from LinSysMerger
+  auto& side = m_linsysmerger.ckLocalBranch()->side();
+
+  // lambda to query the user-specified Dirichlet BCs on a given side set for
+  // all components of all the PDEs integrated
+  auto bc = []( int sideset ) -> std::vector< std::pair< bool, tk::real > > {
+    std::vector< std::pair< bool, tk::real > > b;
+    for (const auto& eq : g_pdes) {
+      auto e = eq.dirbc( sideset );  // query BC values for all components of eq
+      b.insert( end(b), begin(e), end(e) );
+    }
+    return b;
+  };
+
+  // lambda to find out whether 'new' node id is in the list of 'old' node ids
+  // given in s (which contains the old node ids of a side set). Here 'old'
+  // means as in file, while 'new' means as in producing contiguous-row-id
+  // linear system contributions. See also Partitioner.h.
+  auto inset = [ this ]( std::size_t id, const std::vector< std::size_t >& s )
+  -> bool {
+    for (auto n : s) if (tk::cref_find(this->m_cid,id) == n) return true;
+    return false;
+  };
+
+  // Collect vector of pairs of bool and BC value, where the bool indicates
+  // whether the BC value is set at the given node by the user. The size of the
+  // vectors is the number of PDEs integrated times the number of scalar
+  // components in all PDEs. The vector is associated to global node IDs at
+  // which the boundary condition will be set. If a node belongs to multiple
+  // side sets in the file, we keep it associated to the first side set given by
+  // the user.
+  std::unordered_map< std::size_t,
+                      std::vector< std::pair< bool, tk::real > > > bcv;
+  for (const auto& s : side) {
+    auto b = bc( s.first );    // query BC values for all components of all PDEs
+    for (auto n : nodes)
+      if (inset( n, s.second )) {
+        auto& v = bcv[n];
+        if (v.empty()) v.insert( begin(v), begin(b), end(b) );
+      }
+  }
+
+//  for (const auto& n : bcv) {
+//     std::cout << n.first+1 << ':';
+//     for (const auto& p : n.second) {
+//       if (p.first) std::cout << p.second << ','; else std::cout << "*,";
+//     }
+//     std::cout << '\n';
+//   }
+//   std::cout << "----\n";
+
+  m_linsysmerger[ frompe ].charebcval( bcv );
 }
 
 void

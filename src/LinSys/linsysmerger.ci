@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/linsysmerger.ci
   \author    J. Bakosi
-  \date      Fri 15 Jul 2016 11:58:51 AM MDT
+  \date      Tue 19 Jul 2016 09:33:07 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ module interface file for merging a linear system
   \details   Charm++ module interface file for merging a linear system
@@ -30,7 +30,7 @@ module linsysmerger {
     group LinSysMerger {
       entry LinSysMerger( const HostProxy& host,
                           const WorkerProxy& worker,
-                          const std::unordered_map< int,
+                          const std::map< int,
                             std::vector< std::size_t > >& side,
                           std::size_t ncomp );
       initnode void registerBCMerger();
@@ -42,6 +42,9 @@ module linsysmerger {
       entry void recrow();
       entry [reductiontarget] void addbc( CkReductionMsg* msg );
       entry void oldID( int fromch, const std::vector< std::size_t >& oldids );
+      entry void charebcval( const std::unordered_map< std::size_t,
+                             std::vector< std::pair< bool, tk::real > > > bcv );
+      entry [reductiontarget] void bcval( CkReductionMsg* msg );
       entry void addsol( int fromch,
                          const std::map< std::size_t,
                                          std::vector< tk::real > >& sol );
@@ -167,6 +170,13 @@ module linsysmerger {
       { when trigger_row_complete(), trigger_bc_complete() serial "row"
         { signal2host_row_complete( m_host ); } };
 
+      entry void wait4lhsbc()
+      { when trigger_lhs_complete(), trigger_bcval_complete() serial "lhsbc"
+        { lhsbc(); } };
+      entry void wait4rhsbc()
+      { when trigger_rhs_complete(), trigger_bcval_complete() serial "rhsbc"
+        { rhsbc(); } };
+
       entry void wait4sol()
       { when trigger_sol_complete() serial "hypresol" { hypresol(); } };
       entry void wait4lhs()
@@ -204,9 +214,10 @@ module linsysmerger {
 
       entry void trigger_row_complete();
       entry void trigger_bc_complete();
-      entry void trigger_ver_complete();
+      entry void trigger_bcval_complete();
       entry void trigger_lhsbc_complete();
       entry void trigger_rhsbc_complete();
+      entry void trigger_ver_complete();
       entry void trigger_hyprerow_complete();
       entry void trigger_lhs_complete();
       entry void trigger_rhs_complete();

@@ -2,7 +2,7 @@
 /*!
   \file      src/PDE/CompNS
   \author    J. Bakosi
-  \date      Sat 16 Jul 2016 10:13:47 PM MDT
+  \date      Mon 18 Jul 2016 11:38:23 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Navier-Stokes equations describing compressible flow
   \details   This file implements the time integration of the Navier-Stokes
@@ -382,13 +382,26 @@ class CompNS {
     //! \param[in] sideset Side set ID
     //! \return True if the user has set a Dirichlet boundary condition on any
     //!   of the side sets for any component in the PDE system.
-    bool bc_dirichlet( int sideset ) const {
+    bool anydirbc( int sideset ) const {
       const auto& bc =
         g_inputdeck.get< tag::param, tag::compns, tag::bc_dirichlet >();
       for (const auto& s : bc)
         if (static_cast<int>(std::round(s[0])) == sideset)
           return true;
       return false;
+    }
+
+    //! \brief Query Dirichlet boundary condition value set by the user on a
+    //!   given side set for all components in this PDE system
+    //! \param[in] sideset Side set ID
+    //! \return Vector of pairs of bool and BC value for all components
+    std::vector< std::pair< bool, tk::real > > dirbc( int sideset ) const {
+      const auto& bc =
+        g_inputdeck.get< tag::param, tag::poisson, tag::bc_dirichlet >();
+      std::vector< std::pair< bool, tk::real > > b( m_ncomp, { false, 0.0 } );
+      IGNORE(sideset);
+      IGNORE(bc);
+      return b;
     }
 
     //! Return field names to be output to file

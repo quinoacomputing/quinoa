@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.h
   \author    J. Bakosi
-  \date      Fri 15 Jul 2016 08:23:48 AM MDT
+  \date      Mon 18 Jul 2016 10:56:24 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Performer advances a PDE
   \details   Performer advances a PDE. There are a potentially
@@ -84,6 +84,9 @@ class Performer : public CBase_Performer {
 
     //! Look up and return old node ID for new one
     void oldID( int frompe, const std::vector< std::size_t >& newids );
+
+    //! Look up boundary condition values at node IDs for all PDEs
+    void bcval( int frompe, const std::vector< std::size_t >& nodes );
 
     //! Initialize communication and mesh data
     void init( tk::real dt );

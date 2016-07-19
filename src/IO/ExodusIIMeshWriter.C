@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/ExodusIIMeshWriter.C
   \author    J. Bakosi
-  \date      Wed 04 May 2016 08:48:08 AM MDT
+  \date      Mon 18 Jul 2016 01:50:03 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     ExodusII mesh-based data writer
   \details   ExodusII mesh-based data writer class definition.
@@ -174,7 +174,7 @@ const
     "Failed to write " + eltype + " element block to ExodusII file: " +
     m_filename );
 
-  // Write element connectivity with 1-based element ids
+  // Write element connectivity with 1-based node ids
   std::vector< int > inp;
   for (auto p : inpoel) inp.push_back( static_cast< int >( p+1 ) );
   ErrChk( ex_put_elem_conn( m_outFile, elclass, inp.data() ) == 0,

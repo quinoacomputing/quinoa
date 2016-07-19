@@ -2,7 +2,7 @@
 /*!
   \file      src/PDE/PDE.h
   \author    J. Bakosi
-  \date      Mon 11 Jul 2016 11:55:07 AM MDT
+  \date      Mon 18 Jul 2016 11:28:17 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Partial differential equation
   \details   This file defines a generic partial differential equation class.
@@ -99,8 +99,13 @@ class PDE {
 
     //! \brief Public interface for querying if a Dirichlet boundary condition
     //!   has set by the user on any side set for any component in the PDE
-    bool bc_dirichlet( int sideset ) const
-    { return self->bc_dirichlet( sideset ); }
+    bool anydirbc( int sideset ) const
+    { return self->anydirbc( sideset ); }
+
+    //! \brief Public interfac for querying Dirichlet boundary condition values
+    //!  set by the user on a given side set for all components in a PDE system
+    std::vector< std::pair< bool, tk::real > > dirbc( int sideset ) const
+    { return self->dirbc( sideset ); }
 
     //! Public interface to returning field output labels
     std::vector< std::string > names() const { return self->names(); }
@@ -142,7 +147,8 @@ class PDE {
                         const std::vector< std::size_t >&,
                         const tk::MeshNodes&, const tk::MeshNodes&,
                         tk::MeshNodes& ) const = 0;
-      virtual bool bc_dirichlet( int ) const = 0;
+      virtual bool anydirbc( int ) const = 0;
+      virtual std::vector< std::pair< bool, tk::real > > dirbc( int ) const = 0;
       virtual std::vector< std::string > names() const = 0;
       virtual std::vector< std::vector< tk::real > > output(
         tk::real,
@@ -172,8 +178,10 @@ class PDE {
                 const tk::MeshNodes& Un,
                 tk::MeshNodes& R ) const override
       { data.rhs( mult, dt, coord, inpoel, U, Un, R ); }
-      bool bc_dirichlet( int sideset ) const override
-      { return data.bc_dirichlet( sideset ); }
+      bool anydirbc( int sideset ) const override
+      { return data.anydirbc( sideset ); }
+      std::vector< std::pair< bool, tk::real > > dirbc( int sideset ) const
+      override { return data.dirbc( sideset ); }
       std::vector< std::string > names() const override { return data.names(); }
       std::vector< std::vector< tk::real > > output(
         tk::real t,
