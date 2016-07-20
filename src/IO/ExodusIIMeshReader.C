@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/ExodusIIMeshReader.C
   \author    J. Bakosi
-  \date      Mon 11 Jul 2016 07:53:13 AM MDT
+  \date      Tue 19 Jul 2016 09:33:40 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     ExodusII mesh reader
   \details   ExodusII mesh reader class definition. Currently, this is a bare
@@ -349,7 +349,7 @@ ExodusIIMeshReader::readElements( const std::array< std::size_t, 2 >& ext,
   for (auto i : c) conn.push_back( static_cast<std::size_t>(i)-1 );
 }
 
-std::unordered_map< int, std::vector< std::size_t > >
+std::map< int, std::vector< std::size_t > >
 ExodusIIMeshReader::readSidesets()
 // *****************************************************************************
 //  Read node list of all side sets from ExodusII file
@@ -361,7 +361,7 @@ ExodusIIMeshReader::readSidesets()
   readHeader();
 
   // Node lists mapped to side set ids
-  std::unordered_map< int, std::vector< std::size_t > > side;
+  std::map< int, std::vector< std::size_t > > side;
 
   if (m_neset > 0) {
     // Read all side set ids from file
