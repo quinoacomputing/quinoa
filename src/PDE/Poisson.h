@@ -2,7 +2,7 @@
 /*!
   \file      src/PDE/Poisson.h
   \author    J. Bakosi
-  \date      Tue 19 Jul 2016 09:19:14 AM MDT
+  \date      Wed 20 Jul 2016 12:28:19 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Poisson equation
   \details   This file implements the Poisson equation.
@@ -279,6 +279,19 @@ class Poisson {
 //         out.push_back( U.extract( c, m_offset ) );
       return out;
     }
+
+   //! Contribute diagnostics from this PDE system
+   //! \param[in] U Solution vector at recent time step stage
+   //! \return Vector of L1 norms of all scalar components
+   std::vector< tk::real > diagnostics( const tk::MeshNodes& U ) const {
+     std::vector< tk::real > d( m_ncomp, 0.0 );
+     for (ncomp_t c=0; c<m_ncomp; ++c)
+       for (auto n : U.extract( c, m_offset ))
+         d[c] += std::abs( n );
+      std::transform( d.begin(), d.end(), d.begin(),
+                      [this]( tk::real& r ){ return r /= this->m_ncomp; } );
+     return d;
+   }
 
   private:
     const ncomp_t m_c;                  //!< Equation system index

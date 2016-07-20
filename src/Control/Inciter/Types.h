@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/Types.h
   \author    J. Bakosi
-  \date      Sat 16 Jul 2016 10:03:09 PM MDT
+  \date      Wed 20 Jul 2016 11:01:33 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Types for Incitier's parsers
   \details   Types for Incitier's parsers. This file defines the components of the
@@ -19,6 +19,7 @@
 #include "Inciter/Options/PDE.h"
 #include "Inciter/Options/Problem.h"
 #include "Options/PartitioningAlgorithm.h"
+#include "Options/TxtFloatFormat.h"
 #include "PUPUtil.h"
 
 namespace inciter {
@@ -38,17 +39,29 @@ using discretization = tk::tuple::tagged_tuple<
   tag::dt,        kw::dt::info::expect::type     //!< Size of time step
 >;
 
+//! ASCII output floating-point precision in digits
+using precision = tk::tuple::tagged_tuple<
+  tag::diag, kw::precision::info::expect::type //!< Diagnostics output precision
+>;
+
+//! ASCII output floating-point format
+using floatformat = tk::tuple::tagged_tuple<
+  tag::diag, tk::ctr::TxtFloatFormatType  //!< Diagnostics output format
+>;
+
 //! Output intervals storage
 using intervals = tk::tuple::tagged_tuple<
   tag::tty,   kw::ttyi::info::expect::type,       //!< TTY output interval
-  tag::field, kw::interval::info::expect::type    //!< Field output interval
+  tag::field, kw::interval::info::expect::type,   //!< Field output interval
+  tag::diag,  kw::interval::info::expect::type    //!< Diags output interval
 >;
 
 //! IO parameters storage
 using ios = tk::tuple::tagged_tuple<
   tag::control,     kw::control::info::expect::type,  //!< Control filename
   tag::input,       std::string,                      //!< Input filename
-  tag::output,      std::string                       //!< Output filename
+  tag::output,      std::string,                      //!< Output filename
+  tag::diag,        std::string                       //!< Diagnostics filename
 >;
 
 //! Advection-diffusion transport equation parameters storage

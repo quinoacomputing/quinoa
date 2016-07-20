@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Conductor.C
   \author    J. Bakosi
-  \date      Wed 13 Jul 2016 10:52:28 AM MDT
+  \date      Wed 20 Jul 2016 11:49:48 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Conductor drives the time integration of a PDE
   \details   Conductor drives the time integration of a PDE
@@ -19,12 +19,14 @@
 #include <cstddef>
 #include <unordered_set>
 
+#include "Macro.h"
 #include "Conductor.h"
 #include "MeshNodes.h"
 #include "PDEStack.h"
 #include "ContainerUtil.h"
 #include "LoadDistributor.h"
 #include "ExodusIIMeshReader.h"
+#include "DiagWriter.h"
 #include "Inciter/InputDeck/InputDeck.h"
 
 #include "NoWarning/inciter.decl.h"
@@ -49,6 +51,7 @@ Conductor::Conductor() :
   m_performer(),
   m_partitioner(),
   m_avcost( 0.0 ),
+  m_npoin( 0 ),
   m_timer(),
   m_linsysbc()
 // *****************************************************************************
@@ -101,12 +104,22 @@ Conductor::Conductor() :
     m_print.section( "Output filenames" );
     m_print.item( "Field", g_inputdeck.get< tag::cmd, tag::io, tag::output >()
                            + ".<chareid>" );
+    m_print.item( "Diagnostics",
+                  g_inputdeck.get< tag::cmd, tag::io, tag::diag >() );
 
     // Print output intervals
     m_print.section( "Output intervals" );
     m_print.item( "TTY", g_inputdeck.get< tag::interval, tag::tty>() );
     m_print.item( "Field", g_inputdeck.get< tag::interval, tag::field >() );
+    m_print.item( "Diagnostics", g_inputdeck.get< tag::interval, tag::diag >() );
     m_print.endsubsection();
+
+    // Output header for diagnostics output file
+    tk::DiagWriter dw( g_inputdeck.get< tag::cmd, tag::io, tag::diag >(),
+                       g_inputdeck.get< tag::flformat, tag::diag >(),
+                       g_inputdeck.get< tag::prec, tag::diag >() );
+    dw.header( { "density", "x-momentum", "y-momentum", "z-momentum",
+                 "energy" } );
 
     // Create (empty) worker array
     m_performer = PerformerProxy::ckNew();
@@ -155,8 +168,8 @@ Conductor::load( uint64_t nelem )
   m_print.section( "Input mesh graph statistics" );
   m_print.item( "Number of tetrahedra", nelem );
   tk::ExodusIIMeshReader er(g_inputdeck.get< tag::cmd, tag::io, tag::input >());
-  auto npoin = er.readHeader();
-  m_print.item( "Number of nodes", npoin );
+  m_npoin = er.readHeader();
+  m_print.item( "Number of nodes", m_npoin );
 
   // Print out info on load distribution
   m_print.section( "Load distribution" );
@@ -319,6 +332,30 @@ Conductor::initcomplete()
 }
 
 void
+Conductor::diagnostics( tk::real* d, std::size_t n )
+// *****************************************************************************
+// Reduction target optionally collecting diagnostics, e.g., residuals, from all
+// Performer chares
+//! \param[in] d Diagnostics (sums) collected over all chares
+//! \param[in] n Number of diagnostics in array d
+//! \author J. Bakosi
+// *****************************************************************************
+{
+  #ifdef NDEBUG
+  IGNORE(n);
+  #endif
+
+  Assert( n == m_diag.size(),
+          "Number of diagnostics contributed not equal to expected" );
+
+  // Add contribution from PE to total sums, i.e., u[i] += v[i] for all i
+  for (std::size_t i=0; i<m_diag.size(); ++i) m_diag[i] += d[i];
+
+  // Finish computing diagnostics, i.e., divide sums by the number of samples
+  for (auto& m : m_diag) m /= m_npoin;
+}
+ 
+void
 Conductor::evaluateTime()
 // *****************************************************************************
 //  Evaluate time step: decide if it is time to quit
@@ -426,6 +463,18 @@ Conductor::report()
 //! \author J. Bakosi
 // *****************************************************************************
 {
+  bool diag = false;
+
+  // Append diagnostics file at selected times
+  if (!(m_it % g_inputdeck.get< tag::interval, tag::diag >())) {
+    tk::DiagWriter dw( g_inputdeck.get< tag::cmd, tag::io, tag::diag >(),
+                       g_inputdeck.get< tag::flformat, tag::diag >(),
+                       g_inputdeck.get< tag::prec, tag::diag >(),
+                       std::ios_base::app );
+    std::vector< tk::real > diags{ 0.0, 0.0 };
+    if (dw.diag( m_it, m_t, diags )) diag = true;
+  }
+
   if (!(m_it % g_inputdeck.get< tag::interval, tag::tty >())) {
 
     // estimate time elapsed and time for accomplishment
@@ -454,6 +503,7 @@ Conductor::report()
 
     // Augment one-liner with output indicators
     if (!(m_it % g_inputdeck.get<tag::interval,tag::field>())) m_print << 'F';
+    if (diag) m_print << 'D';
 
     m_print << '\n';
   }

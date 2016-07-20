@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Keywords.h
   \author    J. Bakosi
-  \date      Sat 16 Jul 2016 10:36:16 PM MDT
+  \date      Wed 20 Jul 2016 08:09:12 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Definition of all keywords
   \details   This file contains the definition of all keywords, including those
@@ -1831,7 +1831,7 @@ using betapdf = keyword< betapdf_info, b,e,t,a,p,d,f >;
 struct icbeta_info {
   static std::string name() { return "icbeta"; }
   static std::string shortDescription() { return
-    R"(Introduce a icbeta...end block used to configure beta distributions)"; }
+    R"(Introduce an icbeta...end block used to configure beta distributions)"; }
   static std::string longDescription() { return
     R"(This keyword is used to introduce an icbeta...end block in which beta
     distributions are configured for the beta initialization policy. Example:
@@ -1841,6 +1841,17 @@ struct icbeta_info {
     jointbeta and betapdf.)"; }
 };
 using icbeta = keyword< icbeta_info, i,c,b,e,t,a >;
+
+struct ic_info {
+  static std::string name() { return "ic"; }
+  static std::string shortDescription() { return
+    R"(Introduce an ic...end block used to configure initial conditions)"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to introduce an ic...end block used to set initial
+    conditions. Example: "ic density 1.0 end" - set the initial density field to
+    1.0 across the whole domain.)"; }
+};
+using ic = keyword< ic_info, i,c >;
 
 struct depvar_info {
   static std::string name() { return "depvar"; }
@@ -2405,6 +2416,21 @@ struct output_info {
 };
 using output = keyword< output_info, o,u,t,p,u,t >;
 
+struct diagnostics_info {
+  static std::string name() { return "diagnostics"; }
+  static std::string shortDescription()
+  { return "Specify the diagnostics file"; }
+  static std::string longDescription() { return
+    R"(This option is used to define the diagnostics file name.)";
+  }
+  using alias = Alias< d >;
+  struct expect {
+    using type = std::string;
+    static std::string description() { return "string"; }
+  };
+};
+using diagnostics = keyword< diagnostics_info, d,i,a,g,n,o,s,t,i,c,s >;
+
 struct reorder_info {
   static std::string name() { return "reorder"; }
   static std::string shortDescription() { return "Reorder mesh nodes"; }
@@ -2668,6 +2694,21 @@ struct bc_dirichlet_info {
 };
 using bc_dirichlet = keyword< bc_dirichlet_info, b,c,'_',d,i,r,i,c,h,l,e,t >;
 
+struct velocity_info {
+  static std::string name() { return "velocity"; }
+  static std::string shortDescription() { return
+    "Specify velocity initial conditions";
+  }
+  static std::string longDescription() { return
+    R"(This keyword is used to set initial conditions for the velocity field.)";
+  }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real(s)"; }
+  };
+};
+using velocity = keyword< velocity_info, v,e,l,o,c,i,t,y >;
+
 struct compns_info {
   static std::string name() { return "Compressible Navier-Stokes"; }
   static std::string shortDescription() { return
@@ -2907,7 +2948,6 @@ using velocity_z = keyword<undefined_info,  W >;
 using velocity_fluctuation_z = keyword<undefined_info,  w >;
 using pressure = keyword<undefined_info,  P >;
 using pressure_fluctuation = keyword<undefined_info,  p >;
-using density = keyword<undefined_info,  R >;
 using density_fluctuation = keyword<undefined_info,  r >;
 
 } // kw::

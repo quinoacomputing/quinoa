@@ -117,6 +117,10 @@ class PDE {
       tk::MeshNodes& U ) const
     { return self->output( t, coord, U ); }
 
+    //! Public interface to returning diagnostics
+    std::vector< tk::real > diagnostics( const tk::MeshNodes& U ) const
+    { return self->diagnostics( U ); }
+
     //! Copy assignment
     PDE& operator=( const PDE& x )
     { PDE tmp(x); *this = std::move(tmp); return *this; }
@@ -154,6 +158,8 @@ class PDE {
         tk::real,
         const std::array< std::vector< tk::real >, 3 >&,
         tk::MeshNodes& ) const = 0;
+      virtual std::vector< tk::real > diagnostics( const tk::MeshNodes& )
+        const = 0;
     };
 
     //! \brief Model models the Concept above by deriving from it and overriding
@@ -187,6 +193,8 @@ class PDE {
         tk::real t,
         const std::array< std::vector< tk::real >, 3 >& coord,
         tk::MeshNodes& U ) const override { return data.output( t, coord, U ); }
+      std::vector< tk::real > diagnostics( const tk::MeshNodes& U ) const
+      override { return data.diagnostics( U ); }
       T data;
     };
 

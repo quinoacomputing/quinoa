@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/TxtStatWriter.C
   \author    J. Bakosi
-  \date      Wed 04 May 2016 08:41:04 AM MDT
+  \date      Wed 20 Jul 2016 10:34:41 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Text statistics writer declaration
   \details   This file declares the ASCII statistics writer class that
@@ -26,7 +26,7 @@ TxtStatWriter::TxtStatWriter( const std::string& filename,
   m_width( std::max( 16, m_precision+8 ) )
 // *****************************************************************************
 //  Constructor
-//! \param[in] filename Output filename to which output the PDF
+//! \param[in] filename Output filename to which output the statistics
 //! \param[in] format Configure floating-point output format ASCII output
 //! \param[in] precision Configure precision for floating-point ASCII output
 //! \param[in] mode Configure file open mode

@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.C
   \author    J. Bakosi
-  \date      Tue 19 Jul 2016 09:39:41 AM MDT
+  \date      Wed 20 Jul 2016 01:04:32 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Performer advances a PDE
   \details   Performer advances a PDE. There are a potentially
@@ -515,6 +515,27 @@ Performer::advance( uint8_t stage, tk::real dt, uint64_t it, tk::real t )
 }
 
 void
+Performer::diagnostics() const
+// *****************************************************************************
+// Compute and contribute diagnostics to host
+//! \author J. Bakosi
+// *****************************************************************************
+{
+  std::vector< tk::real > diag;
+  for (const auto& eq : g_pdes) {
+    auto d = eq.diagnostics( m_u );
+    diag.insert( end(diag), begin(d), end(d) );
+  }
+
+  // Create Charm++ callback function for reduction
+  CkCallback cb( CkReductionTarget( Conductor, diagnostics ), m_conductor );
+
+//   // Contribute partial sums to host via Charm++ reduction
+//   contribute( static_cast< int >( diag.size() * sizeof(tk::real) ),
+//               diag.data(), CkReduction::sum_double, cb );
+}
+
+void
 Performer::updateSolution( const std::vector< std::size_t >& gid,
                            const std::vector< tk::real >& u )
 // *****************************************************************************
@@ -548,10 +569,14 @@ Performer::updateSolution( const std::vector< std::size_t >& gid,
       m_u = m_un;
       if (!((m_it+1) % g_inputdeck.get< tag::interval, tag::field >()))
         writeFields( m_t + g_inputdeck.get< tag::discr, tag::dt >() );
+      // Optionally contribute diagnostics, e.g., residuals, back to host
+//       if (!((m_it+1) % g_inputdeck.get< tag::interval, tag::diag >()))
+//         diagnostics();
     }
 
     // Prepare for next time step stage
     m_nsol = 0;
+
     // Tell the Charm++ runtime system to call back to Conductor::evaluateTime()
     // once all Performer chares have received the update. The reduction is done
     // via creating a callback that invokes the typed reduction client, where

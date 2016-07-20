@@ -202,6 +202,9 @@ class Performer : public CBase_Performer {
 
     //! Output mesh-based fields to file
     void writeFields( tk::real time );
+
+    //! Compute and contribute diagnostics to host
+    void diagnostics() const;
 };
 
 } // inciter::

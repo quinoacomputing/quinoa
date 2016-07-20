@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Tue 19 Jul 2016 12:52:55 PM MDT
+  \date      Wed 20 Jul 2016 11:07:14 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Inciter's input deck grammar definition
   \details   Inciter's input deck grammar definition. We use the Parsing
@@ -170,7 +170,7 @@ namespace deck {
                                     eq,
                                     param > {};
 
-  //! Dirichlet boundary condition
+  //! Dirichlet boundary conditions
   template< class eq, class param >
   struct bc_dirichlet :
            pegtl::ifmust<
@@ -181,6 +181,23 @@ namespace deck {
                tk::grm::parameter_vector< Stack,
                                           use,
                                           use< kw::sideset >,
+                                          tk::grm::Store_back_back,
+                                          tk::grm::start_vector,
+                                          tk::grm::check_vector,
+                                          eq,
+                                          param > > > {};
+
+  //! initial conditions for compressible Navier-Stokes
+  template< class eq, class param >
+  struct ic_compns :
+           pegtl::ifmust<
+             tk::grm::readkw< Stack, use< kw::ic >::pegtl_string >,
+             tk::grm::block<
+               Stack,
+               use< kw::end >,
+               tk::grm::parameter_vector< Stack,
+                                          use,
+                                          use< kw::velocity >,
                                           tk::grm::Store_back_back,
                                           tk::grm::start_vector,
                                           tk::grm::check_vector,
@@ -251,6 +268,7 @@ namespace deck {
                                             ctr::Problem,
                                             tag::compns,
                                             tag::problem >,
+                           //ic_compns< tag::compns, tag::ic > >,
                            bc_dirichlet< tag::compns, tag::bc_dirichlet > >,
            check_errors< tag::compns, check_compns > > {};
 
@@ -287,11 +305,12 @@ namespace deck {
          pegtl::ifmust<
            tk::grm::readkw< Stack, use< kw::inciter >::pegtl_string >,
            pegtl::sor< tk::grm::block< Stack,
-                                       use< kw::end >,
-                                       discretization_parameters,
-                                       equations,
-                                       partitioning,
-                                       plotvar >,
+                         use< kw::end >,
+                         discretization_parameters,
+                         equations,
+                         partitioning,
+                         plotvar,
+                         tk::grm::diagnostics< Stack, use, store_option > >,
                        pegtl::apply<
                           tk::grm::error< Stack,
                                           tk::grm::MsgKey::UNFINISHED > > > > {};
