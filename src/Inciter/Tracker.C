@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Tracker.C
   \author    F.J. Gonzalez
-  \date      Fri 15 Jul 2016 09:32:30 AM MDT
+  \date      Wed Jul 20 14:27:33 2016
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \details   Tracker advances Lagrangian particles passively tracking fluid
     flow.. There are a potentially large number of Tracker Charm++ chares
@@ -17,7 +17,9 @@
 
 using inciter::Tracker;
 
-Tracker::Tracker( const ConductorProxy& conductor ) : m_conductor( conductor )
+Tracker::Tracker( const ConductorProxy& conductor,
+                  const PerformerProxy& performer ) :
+  m_conductor( conductor )
 // *****************************************************************************
 //  Constructor
 //! \param[in] conductor Host (Conductor) proxy
