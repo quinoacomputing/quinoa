@@ -19,13 +19,24 @@ using inciter::Tracker;
 
 Tracker::Tracker( const ConductorProxy& conductor,
                   const PerformerProxy& performer ) :
-  m_conductor( conductor )
+  m_conductor( conductor ),
+  m_performer( performer )
 // *****************************************************************************
 //  Constructor
 //! \param[in] conductor Host (Conductor) proxy
 //! \author F.J. Gonzalez
 // *****************************************************************************
 {
+  /*auto& x = m_pcoord[0];
+  auto& y = m_pcoord[1];
+  auto& z = m_pcoord[2];
+  for (std::size_t i=0; i<10; ++i) {
+    tk::real a=i;
+    x.push_back(a/10);
+    y.push_back(a/10);
+    z.push_back(a/10);
+  }*/
+  m_performer[thisIndex].genPar(10);
 }
 
 void

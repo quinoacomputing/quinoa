@@ -10,7 +10,6 @@
 // *****************************************************************************
 
 module performer {
-
   extern module conductor;
   extern module linsysmerger;
 
@@ -32,6 +31,10 @@ module performer {
       entry void updateSolution( const std::vector< std::size_t >& gid,
                                  const std::vector< tk::real >& sol );
       entry void advance( uint8_t stage, tk::real dt, uint64_t it, tk::real t );
+      entry void genPar( std::size_t npar );
+      entry void recPartLoc( const std::vector< tk::real >& x,
+                             const std::vector< tk::real >& y,
+                             const std::vector< tk::real >& z );
     };
 
   } // inciter::
