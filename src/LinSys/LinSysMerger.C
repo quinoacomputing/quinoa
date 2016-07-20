@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/LinSysMerger.C
   \author    J. Bakosi
-  \date      Fri 15 Jul 2016 10:55:26 AM MDT
+  \date      Tue 19 Jul 2016 08:41:03 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Linear system merger
   \details   Linear system merger.
@@ -20,17 +20,18 @@
 
 namespace tk {
 
-//! \brief Charm++ BC merger reducer
-//! \details This variable is defined here in the .C file and declared as extern
-//!   in LinSysMerger.h. If instead one defines it in the header (as static),
-//!   a new version of the variable is created any time the header file is
-//!   included, yielding no compilation nor linking errors. However, that leads
-//!   to runtime errors, since LinSysMerger::registerBCMerger(), a Charm++
-//!   "initnode" entry method, *may* fill one while contribute() may use the
-//!   other (unregistered) one. Result: undefined behavior, segfault, and
-//!   formatting the internet ...
+//! \brief Charm++ reducers used by LinSysMerger
+//! \details These variables are defined here in the .C file and declared as
+//!   extern in LinSysMerger.h. If instead one defines them in the header (as
+//!   static), a new version of any of these variables is created any time the
+//!   header file is included, yielding no compilation nor linking errors.
+//!   However, that leads to runtime errors, since
+//!   LinSysMerger::registerBCMerger(), a Charm++ "initnode" entry method, *may*
+//!   fill one while contribute() may use the other (unregistered) one. Result:
+//!   undefined behavior, segfault, and formatting the internet ...
 CkReduction::reducerType BCVectorMerger;
 CkReduction::reducerType BCMapMerger;
+CkReduction::reducerType BCValMerger;
 
 }
 

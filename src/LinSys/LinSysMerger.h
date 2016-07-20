@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/LinSysMerger.h
   \author    J. Bakosi
-  \date      Fri 15 Jul 2016 11:21:26 AM MDT
+  \date      Tue 19 Jul 2016 09:47:26 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ chare linear system merger group to solve a linear system
   \details   Charm++ chare linear system merger group used to collect and
@@ -140,6 +140,7 @@ namespace tk {
 
 extern CkReduction::reducerType BCVectorMerger;
 extern CkReduction::reducerType BCMapMerger;
+extern CkReduction::reducerType BCValMerger;
 
 #if defined(__clang__)
   #pragma clang diagnostic push
@@ -190,8 +191,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
     //! \param[in] ncomp Total number of scalar components in the linear system
     LinSysMerger( const HostProxy& host,
                   const WorkerProxy& worker,
-                  const std::unordered_map< int,
-                    std::vector< std::size_t > >& side,
+                  const std::map< int, std::vector< std::size_t > >& side,
                   std::size_t ncomp ) :
       __dep(),
       m_host( host ),
@@ -201,7 +201,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       m_nchare( 0 ),
       m_nperow( 0 ),
       m_nchbc( 0 ),
-      m_npebc( 0 ),
+      m_nchbcval( 0 ),
       m_lower( 0 ),
       m_upper( 0 ),
       m_myworker(),
@@ -227,10 +227,13 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       m_div(),
       m_pe(),
       m_bc(),
-      m_oldbc()
+      m_oldbc(),
+      m_bcval()
     {
       // Activate SDAG waits for assembling lhs, rhs, and solution
       wait4row();
+      wait4lhsbc();
+      wait4rhsbc();
       wait4sol();
       wait4lhs();
       wait4rhs();
@@ -257,6 +260,9 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       BCVectorMerger = CkReduction::addReducer( tk::mergeVector );
       BCMapMerger = CkReduction::addReducer(
                       tk::mergeHashMap< int, std::vector< std::size_t > > );
+      BCValMerger = CkReduction::addReducer(
+                      tk::mergeHashMap< std::size_t,
+                        std::vector< std::pair< bool, tk::real > > > );
     }
 
     //! Receive lower and upper global node IDs all PEs will operate on
@@ -288,6 +294,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
     //! Re-enable SDAG waits for rebuilding the right-hand side vector only
     void enable_wait4rhs() {
       wait4rhs();
+      wait4rhsbc();
       wait4hyprerhs();
       wait4fillrhs();
       wait4asm();
@@ -513,6 +520,8 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       #ifndef NDEBUG
       verifybc();
       #endif
+      // start collecting boundary condition values
+      querybcval();
       // now that the global row ids are complete, build Hypre data from it
       hyprerow();
     }
@@ -520,8 +529,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
     //! Chares query side set info
     //! \note This function does not have to be declared as a Charm++ entry
     //!   method since it is always called by chares on the same PE.
-    const std::unordered_map< int, std::vector< std::size_t > >& side()
-    { return m_side; }
+    const std::map< int, std::vector< std::size_t > >& side() { return m_side; }
 
     //! Chares offer their global row ids at which they can set BCs
     //! \param[in] fromch Charm chare array index contribution coming from
@@ -569,16 +577,55 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
        }
     }
 
+    //! Chares contribute their BC values
+    //! \param[in] bcv Vector of pairs of bool and BC value associated to global
+    //!   node IDs at which the boundary condition is set. Here the bool
+    //!   indicates whether the BC value is set at the given node by the user.
+    //!   The size of the vectors is the number of PDEs integrated times the
+    //!   number of scalar components in all PDEs.
+    void charebcval( const std::unordered_map< std::size_t,
+                             std::vector< std::pair< bool, tk::real > > > bcv )
+    {
+      for (auto&& n : bcv) {
+        Assert( n.second.size() == m_ncomp, "The total number of scalar "
+          "components does not equal that of set in the BC data structure." );
+        m_bcval[ n.first ] = std::move(n.second);
+      }
+      if (--m_nchbcval == 0) trigger_bcval_complete();
+    }
+
+    //! \brief Receive BC node/row IDs and values from all other PEs and zero
+    //!   the distributed matrix columns at which BCs are set
+    void bcval( CkReductionMsg* msg ) {
+      decltype(m_bcval) bcval;
+      PUP::fromMem creator( msg->getData() );
+      creator | bcval;
+      delete msg;
+      for (const auto& n : bcval) {
+        auto& b = n.second;
+        for (decltype(m_ncomp) i=0; i<m_ncomp; ++i)
+          if (b[i].first)       // zero our portion of the column
+            for (auto& r : m_lhs) {
+              auto it = r.second.find( n.first );
+              if (it != end(r.second) && r.first != n.first)
+                it->second[ i ] = 0.0;
+            }
+      }
+      trigger_lhsbc_complete();
+      trigger_lhs_complete();
+      trigger_bcval_complete();
+    }
+
   private:
     HostProxy m_host;           //!< Host proxy
     WorkerProxy m_worker;       //!< Worker proxy
     //! Global (as in file) row id lists mapped to all side set ids of the mesh
-    std::unordered_map< int, std::vector< std::size_t > > m_side;
+    std::map< int, std::vector< std::size_t > > m_side;
     std::size_t m_ncomp;        //!< Number of scalar components per unknown
     std::size_t m_nchare;       //!< Number of chares contributing to my PE
     std::size_t m_nperow;       //!< Number of fellow PEs to send row ids to
     std::size_t m_nchbc;        //!< Number of chares we received bcs from
-    std::size_t m_npebc;        //!< Number of fellow PEs we received bcs from
+    std::size_t m_nchbcval;     //!< Number of chares we received bc values from
     std::size_t m_lower;        //!< Lower index of the global rows on my PE
     std::size_t m_upper;        //!< Upper index of the global rows on my PE
     //! Ids of workers on my PE
@@ -639,14 +686,23 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
     //!   find the PE for a communicated mesh node after the node is in the
     //!   cache.
     std::map< std::size_t, int > m_pe;
-    //! \brief Map associating lists of new global row ids to chare ids that we
-    //!   set boundary conditions on
+    //! \brief Map associating lists of new global row ids to chare ids at which
+    //!   we set boundary conditions on
     //! \details 'New' as in producing contiguous-row-id linear system
     //!   contributions, see also Partitioner.h.
     std::unordered_map< int, std::vector< std::size_t > > m_bc;
     //! Flat list of old global row ids at boundary conditions are set
     //! \details 'Old' as in file, see also Partitioner.h.
     decltype(m_bc) m_oldbc;
+    //! \brief Values (for each scalar equation solved) of Dirichlet boundary
+    //!   conditions assigned to global node IDs we set
+    //! \details The map key is the global mesh node/row ID, the value is a
+    //!   vector of pairs in which the bool (.first) indicates whether the
+    //!   boundary condition value (.second) is set at the given node. The size
+    //!   of the vectors is the number of PDEs integrated times the number of
+    //!   scalar components in all PDEs.
+    std::unordered_map< std::size_t,
+                        std::vector< std::pair< bool, tk::real > > > m_bcval;
 
     //! Return processing element for global mesh row id
     //! \param[in] gid Global mesh point (matrix or vector row) id
@@ -723,11 +779,81 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       }
       trigger_hyprerow_complete();
     }
+
+    //! Collect boundary condition values from workers
+    void querybcval() {
+      // Create flat node lists at which we set BCs associated to chares
+      std::unordered_map< int, std::vector< std::size_t > > b;
+      for (const auto& c : m_bc) {
+        auto& q = b[ c.first ];
+        for (auto n : c.second)
+          if (n >= m_lower && n < m_upper)  // if own
+            q.push_back( n );
+      }
+      // Query BC values from chares
+      m_nchbcval = b.size();
+      for (const auto& c : b) m_worker[ c.first ].bcval( CkMyPe(), c.second );
+    }
+
+    //! Set boundary conditions on the left-hand side matrix
+    //! \details Here we only zero the row and put 1.0 in main diagonal, zeroing
+    //!   the column requires communication among all fellow PEs and is done at
+    //!   the receiving side in bcval().
+    void lhsbc() {
+      Assert( lhscomplete(),
+              "Nonzero values of distributed matrix on PE " +
+              std::to_string( CkMyPe() ) + " is incomplete: cannot set BCs" );
+      Assert( m_lhs.size() == m_hypreRows.size() / m_ncomp,
+              "Left-hand side matrix incomplete on PE " +
+              std::to_string(CkMyPe()) + ": cannot set BCs" );
+      for (const auto& n : m_bcval) {
+        auto& row = tk::ref_find( m_lhs, n.first );
+        auto& b = n.second;
+        for (decltype(m_ncomp) i=0; i<m_ncomp; ++i)
+          if (b[i].first) { // zero row and put 1.0 in main diagonal
+            for (auto& col : row) col.second[i] = 0.0;
+            tk::ref_find( row, n.first )[ i ] = 1.0;
+          }
+      }
+      // Export BC node IDs and values to all other PEs so that all of the
+      // distributed matrix columns can be zeroed on all PEs where BCs are set
+      auto stream = tk::serialize( m_bcval );
+      CkCallback c( CkIndex_LinSysMerger< HostProxy, WorkerProxy >::
+                      bcval(nullptr), Group::thisProxy );
+      Group::contribute( stream.first, stream.second.get(), BCValMerger, c );
+    }
+
+    //! Set boundary conditions on the right-hand side vector
+    void rhsbc() {
+      Assert( rhscomplete(),
+              "Values of distributed right-hand-side vector on PE " +
+              std::to_string( CkMyPe() ) + " is incomplete: cannot set BCs" );
+      Assert( m_rhs.size() == m_hypreRows.size() / m_ncomp,
+              "Right-hand side vector incomplete on PE " +
+              std::to_string(CkMyPe()) + ": cannot set BCs" );
+      for (const auto& n : m_bcval) {
+        //std::cout << n.first+1 << '\n';
+        auto& row = tk::ref_find( m_rhs, n.first );
+        auto& b = n.second;
+        for (decltype(m_ncomp) i=0; i<m_ncomp; ++i)
+          if (b[i].first) {
+            //std::cout << n.first << ", " << b[i].second << '\n';
+            row[i] = b[i].second;  // put in BC value
+          }
+      }
+      trigger_rhsbc_complete();
+      trigger_rhs_complete();
+      trigger_bcval_complete();
+    }
+
     //! Build Hypre data for our portion of the solution vector
     void hypresol() {
       Assert( solcomplete(),
               "Values of distributed solution vector on PE " +
               std::to_string( CkMyPe() ) + " is incomplete" );
+      Assert( m_sol.size() == m_hypreRows.size() / m_ncomp,
+              "Solution vector incomplete on PE " + std::to_string(CkMyPe()) +
+              ": cannot convert" );
       std::size_t i = 0;
       for (const auto& r : m_sol) {
         m_lid[ r.first ] = i++;
@@ -741,10 +867,10 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
     void hyprelhs() {
       Assert( lhscomplete(),
               "Nonzero values of distributed matrix on PE " +
-              std::to_string( CkMyPe() ) + " is incomplete" );
+              std::to_string( CkMyPe() ) + " is incomplete: cannot convert" );
       Assert( m_lhs.size() == m_hypreRows.size() / m_ncomp,
               "Left-hand side matrix incomplete on PE " +
-              std::to_string(CkMyPe()) );
+              std::to_string(CkMyPe()) + ": cannot convert" );
       for (const auto& r : m_lhs) {
         for (decltype(m_ncomp) i=0; i<m_ncomp; ++i) {
           m_hypreNcols.push_back( static_cast< int >( r.second.size() ) );
@@ -761,9 +887,14 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
     void hyprerhs() {
       Assert( rhscomplete(),
               "Values of distributed right-hand-side vector on PE " +
-              std::to_string( CkMyPe() ) + " is incomplete" );
-      for (const auto& r : m_rhs)
+              std::to_string( CkMyPe() ) + " is incomplete: cannot convert" );
+      Assert( m_rhs.size() == m_hypreRows.size() / m_ncomp,
+              "Right-hand side vector incomplete on PE " +
+              std::to_string(CkMyPe()) + ": cannot convert" );
+      for (const auto& r : m_rhs) {
         m_hypreRhs.insert( end(m_hypreRhs), begin(r.second), end(r.second) );
+        //std::cout << r.first << ", " << r.second[0] << '\n';
+      }
       trigger_hyprerhs_complete();
       trigger_ver_complete();
     }
@@ -817,6 +948,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
     //! Assemble distributed right-hand side vector
     void assemblerhs() {
       m_b.assemble();
+      //m_b.print( "rhs" );
       trigger_asmrhs_complete();
     }
 

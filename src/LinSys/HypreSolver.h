@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/HypreSolver.h
   \author    J. Bakosi
-  \date      Tue 10 May 2016 10:02:44 AM MDT
+  \date      Mon 18 Jul 2016 04:11:45 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Hypre solver class
   \details   Hypre solver class.
@@ -58,7 +58,7 @@ class HypreSolver {
         HYPRE_PCGGetNumIterations( m_solver, &niter );
         double resnorm;
         HYPRE_PCGGetFinalRelativeResidualNorm( m_solver, &resnorm );
-        //std::cout << "it = " << niter << ", norm = " << resnorm << std::endl;
+        std::cout << "it = " << niter << ", norm = " << resnorm << std::endl;
       }
     }
 

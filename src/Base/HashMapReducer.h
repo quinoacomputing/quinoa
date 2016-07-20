@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/HashMapReducer.h
   \author    J. Bakosi
-  \date      Fri 15 Jul 2016 11:14:28 AM MDT
+  \date      Tue 19 Jul 2016 09:28:57 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Custom Charm++ reducer for merging std::unordered_maps across PEs
   \details   Custom Charm++ reducer for merging std::unordered_maps across PEs.
@@ -76,7 +76,6 @@ mergeHashMap( int nmsg, CkReductionMsg **msgs ) {
     for (const auto& c : u) {
       auto& b = p[ c.first ];
       b.insert( end(b), begin(c.second), end(c.second) );
-      tk::unique( b );
     }
   }
 

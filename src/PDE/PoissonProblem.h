@@ -2,7 +2,7 @@
 /*!
   \file      src/PDE/PoissonProblem.h
   \author    J. Bakosi
-  \date      Wed 06 Jul 2016 12:26:58 PM MDT
+  \date      Mon 18 Jul 2016 03:46:24 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Problem configurations for the Poisson equation
   \details   This file defines policy classes for the Poisson
@@ -72,12 +72,12 @@ class PoissonProblemDirNeu {
                       tk::real t )
     {
       IGNORE(deck);
-      IGNORE(coord);
-      IGNORE(unk);
       IGNORE(e);
-      IGNORE(ncomp);
-      IGNORE(offset);
       IGNORE(t);
+      const auto& x = coord[0];
+      for (ncomp_t c=0; c<ncomp; ++c)
+        for (ncomp_t i=0; i<x.size(); ++i)
+          unk( i, c, offset ) = 0.0;
     }
 
     //! Problem type enum accessor

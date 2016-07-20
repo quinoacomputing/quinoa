@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Keywords.h
   \author    J. Bakosi
-  \date      Mon 11 Jul 2016 10:07:30 AM MDT
+  \date      Tue Jul 19 23:03:29 2016
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Definition of all keywords
   \details   This file contains the definition of all keywords, including those
@@ -2586,7 +2586,7 @@ struct pde_u0_info {
 using pde_u0 = keyword< pde_u0_info, u,'0' >;
 
 struct advdiff_info {
-  static std::string name() { return "Scalar advection-diffusion"; }
+  static std::string name() { return "Advection-diffusion"; }
   static std::string shortDescription() { return
     "Start configuration block for an advection-diffusion equation"; }
   static std::string longDescription() { return
@@ -2605,7 +2605,7 @@ struct advdiff_info {
 using advdiff = keyword< advdiff_info, a,d,v,d,i,f,f >;
 
 struct poisson_info {
-  static std::string name() { return "Poisson equation"; }
+  static std::string name() { return "Poisson"; }
   static std::string shortDescription() { return
     "Start configuration block for a Poisson equation"; }
   static std::string longDescription() { return
@@ -2621,7 +2621,7 @@ struct poisson_info {
 using poisson = keyword< poisson_info, p,o,i,s,s,o,n >;
 
 struct euler_info {
-  static std::string name() { return "Euler equations"; }
+  static std::string name() { return "Euler"; }
   static std::string shortDescription() { return
     "Start configuration block for the Euler equations"; }
   static std::string longDescription() { return
@@ -2667,6 +2667,22 @@ struct bc_dirichlet_info {
   }
 };
 using bc_dirichlet = keyword< bc_dirichlet_info, b,c,'_',d,i,r,i,c,h,l,e,t >;
+
+struct compns_info {
+  static std::string name() { return "Compressible Navier-Stokes"; }
+  static std::string shortDescription() { return
+    "Start configuration block for the compressible Navier-Stokes equations"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to introduce the compns ... end block, used to
+    specify the configuration for a system of partial differential equations,
+    governing compressible viscous fluid flow, the Navier-Stokes equations.
+    Keywords allowed in an compns ... end block: )" + std::string("\'")
+    + problem::string() + "\'."
+    + R"(For an example compns ... end block, see
+      doc/html/inicter_example_compns.html.)";
+  }
+};
+using compns = keyword< compns_info, c,o,m,p,n,s >;
 
 struct rcb_info {
   static std::string name() { return "recursive coordinate bisection"; }

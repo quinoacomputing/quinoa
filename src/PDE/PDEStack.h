@@ -2,7 +2,7 @@
 /*!
   \file      src/PDE/PDEStack.h
   \author    J. Bakosi
-  \date      Wed 06 Jul 2016 11:49:24 AM MDT
+  \date      Tue Jul 19 23:09:58 2016
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Stack of differential equations
   \details   This file declares class PDEStack, which implements various
@@ -146,6 +146,9 @@ class PDEStack {
     //! Get information on the Euler PDE
     std::vector< std::pair< std::string, std::string > >
     infoEuler( std::map< ctr::PDEType, ncomp_t >& cnt ) const;
+    //! Get information on the compressible Navier-Stokes PDE
+    std::vector< std::pair< std::string, std::string > >
+    infoCompNS( std::map< ctr::PDEType, ncomp_t >& cnt ) const;
     ///@}
 
     //! \brief Convert and return values from vector as string
