@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/LinSysMerger.h
   \author    J. Bakosi
-  \date      Tue 19 Jul 2016 09:47:26 AM MDT
+  \date      Wed 20 Jul 2016 10:06:21 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ chare linear system merger group to solve a linear system
   \details   Charm++ chare linear system merger group used to collect and
@@ -583,8 +583,8 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
     //!   indicates whether the BC value is set at the given node by the user.
     //!   The size of the vectors is the number of PDEs integrated times the
     //!   number of scalar components in all PDEs.
-    void charebcval( const std::unordered_map< std::size_t,
-                             std::vector< std::pair< bool, tk::real > > > bcv )
+    void charebcval( std::unordered_map< std::size_t,
+                       std::vector< std::pair< bool, tk::real > > >& bcv )
     {
       for (auto&& n : bcv) {
         Assert( n.second.size() == m_ncomp, "The total number of scalar "

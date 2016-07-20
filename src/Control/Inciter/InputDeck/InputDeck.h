@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Sat 16 Jul 2016 09:56:01 PM MDT
+  \date      Wed 20 Jul 2016 11:10:21 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Inciter's input deck definition
   \details   This file defines the heterogeneous stack that is used for storing
@@ -36,6 +36,8 @@ class InputDeck :
                       tag::title,      kw::title::info::expect::type,
                       tag::selected,   selects,
                       tag::discr,      discretization,
+                      tag::prec,       precision,
+                      tag::flformat,   floatformat,
                       tag::component,  ncomps,
                       tag::interval,   intervals,
                       tag::cmd,        CmdLine,
@@ -78,6 +80,13 @@ class InputDeck :
                                        kw::bc_dirichlet,
                                        kw::sideset,
                                        kw::compns,
+                                       kw::ic,
+                                       kw::txt_float_format,
+                                       kw::txt_float_default,
+                                       kw::txt_float_fixed,
+                                       kw::txt_float_scientific,
+                                       kw::precision,
+                                       kw::diagnostics,
                                        kw::depvar >;
                                      
     //! \brief Constructor: set defaults
@@ -91,6 +100,8 @@ class InputDeck :
       set< tag::discr, tag::term >( 1.0 );
       set< tag::discr, tag::t0 >( 0.0 );
       set< tag::discr, tag::dt >( 0.5 );
+     // Default txt floating-point output precision in digits
+      set< tag::prec, tag::diag >( std::cout.precision() );
       // Default intervals
       set< tag::interval, tag::tty >( 1 );
       set< tag::interval, tag::field >( 1 );
@@ -109,6 +120,8 @@ class InputDeck :
       tk::Control< tag::title,      kw::title::info::expect::type,
                    tag::selected,   selects,
                    tag::discr,      discretization,
+                   tag::prec,       precision,
+                   tag::flformat,   floatformat,
                    tag::component,  ncomps,
                    tag::interval,   intervals,
                    tag::cmd,        CmdLine,

@@ -2,7 +2,7 @@
 /*!
   \file      src/PDE/AdvDiff.h
   \author    J. Bakosi
-  \date      Mon 18 Jul 2016 11:38:08 AM MDT
+  \date      Wed 20 Jul 2016 12:28:07 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Advection-diffusion equation of a transported scalar
   \details   This file implements the time integration of the
@@ -292,7 +292,7 @@ class AdvDiff {
     //! \return Vector of pairs of bool and BC value for all components
     std::vector< std::pair< bool, tk::real > > dirbc( int sideset ) const {
       const auto& bc =
-        g_inputdeck.get< tag::param, tag::poisson, tag::bc_dirichlet >();
+        g_inputdeck.get< tag::param, tag::advdiff, tag::bc_dirichlet >();
       std::vector< std::pair< bool, tk::real > > b( m_ncomp, { false, 0.0 } );
       IGNORE(sideset);
       IGNORE(bc);
@@ -340,6 +340,19 @@ class AdvDiff {
         out.push_back( U.extract( c, m_offset ) );
       return out;
     }
+
+   //! Contribute diagnostics from this PDE system
+   //! \param[in] U Solution vector at recent time step stage
+   //! \return Vector of L1 norms of all scalar components
+   std::vector< tk::real > diagnostics( const tk::MeshNodes& U ) const {
+     std::vector< tk::real > d( m_ncomp, 0.0 );
+     for (ncomp_t c=0; c<m_ncomp; ++c)
+       for (auto n : U.extract( c, m_offset ))
+         d[c] += std::abs( n );
+      std::transform( d.begin(), d.end(), d.begin(),
+                      [this]( tk::real& r ){ return r /= this->m_ncomp; } );
+     return d;
+   }
 
   private:
     const ncomp_t m_c;                  //!< Equation system index

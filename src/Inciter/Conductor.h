@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Conductor.h
   \author    J. Bakosi
-  \date      Mon 11 Jul 2016 12:47:46 PM MDT
+  \date      Wed 20 Jul 2016 12:38:16 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Conductor drives the time integration of a PDE
   \details   Conductor drives the time integration of a PDE
@@ -78,6 +78,10 @@ class Conductor : public CBase_Conductor {
     //!   finished their initialization step
     void initcomplete();
 
+    //! \brief Reduction target optionally collecting diagnostics, e.g.,
+    //!   residuals, from all Performer chares
+    void diagnostics( tk::real* d, std::size_t n );
+
     //! \brief Reduction target indicating that all Performer chares have
     //!   finished a time step and it is time to decide whether to continue
     void evaluateTime();
@@ -107,6 +111,8 @@ class Conductor : public CBase_Conductor {
     PartitionerProxy m_partitioner;     //!< Partitioner group proxy
     //! Average communication cost of merging the linear system
     tk::real m_avcost;
+    //! Total number of mesh nodes
+    std::size_t m_npoin;
     //! Timer tags
     enum class TimerTag { TIMESTEP };
     //! Timers
@@ -114,6 +120,8 @@ class Conductor : public CBase_Conductor {
     //! \brief Aggregate 'old' (as in file) node ID list at which LinSysMerger
     //!   sets boundary conditions, see also Partitioner.h
     std::vector< std::size_t > m_linsysbc;
+    //! Diagnostics
+    std::vector< tk::real > m_diag;
 
     //! Compute size of next time step
     tk::real computedt();

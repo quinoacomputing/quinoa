@@ -1,8 +1,8 @@
 // *****************************************************************************
 /*!
-  \file      src/PDE/CompNS
+  \file      src/PDE/CompNS.h
   \author    J. Bakosi
-  \date      Mon 18 Jul 2016 11:38:23 AM MDT
+  \date      Fri 22 Jul 2016 11:52:48 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Navier-Stokes equations describing compressible flow
   \details   This file implements the time integration of the Navier-Stokes
@@ -11,6 +11,9 @@
 // *****************************************************************************
 #ifndef CompNS_h
 #define CompNS_h
+
+#include <algorithm>
+#include <cmath>
 
 #include "Macro.h"
 #include "CompNSProblem.h"
@@ -39,18 +42,20 @@ class CompNS {
       IGNORE(c);
     }
 
-    //! Initalize the Navier-Stokes equations, prepare for time integration
+    //! \brief Initalize the compressible Navier-Stokes equations, prepare for
+    //!   time integration
     //! \param[in,out] unk Array of unknowns
+    //! \param[in] coord Mesh node coordinates
+    //! \param[in] t Physical time
     //! \author J. Bakosi
     void initialize( const std::array< std::vector< tk::real >, 3 >& coord,
                      tk::MeshNodes& unk,
                      tk::real t ) const
     {
-      IGNORE(coord);
-      IGNORE(unk);
       IGNORE(t);
       //! Set initial conditions using problem configuration policy
-      //Problem::template init< tag::euler >( g_inputdeck, unk, m_offset );
+      Problem::template
+        init< tag::compns >( g_inputdeck, coord, unk, m_ncomp, m_offset );
     }
 
     //! Compute the left hand side sparse matrix
@@ -215,9 +220,9 @@ class CompNS {
         std::vector< const tk::real* > r( m_ncomp );
         for (ncomp_t c=0; c<m_ncomp; ++c) r[c] = R.cptr( c, m_offset );
 
-        tk::real gamma = 1.4;
-        tk::real mu = 0.1;
-        tk::real cv = 1.005;
+        tk::real gamma = 1.4;   // ratio of specific heats
+        tk::real mu = 0.1;      // dynamic viscosity
+        tk::real cv = 1.005;    // specific heat at constant volume
         tk::real kc = 0.029;    // thermal conductivity
 
         // compute pressure
@@ -397,38 +402,84 @@ class CompNS {
     //! \return Vector of pairs of bool and BC value for all components
     std::vector< std::pair< bool, tk::real > > dirbc( int sideset ) const {
       const auto& bc =
-        g_inputdeck.get< tag::param, tag::poisson, tag::bc_dirichlet >();
+        g_inputdeck.get< tag::param, tag::compns, tag::bc_dirichlet >();
       std::vector< std::pair< bool, tk::real > > b( m_ncomp, { false, 0.0 } );
-      IGNORE(sideset);
-      IGNORE(bc);
+      for (const auto& s : bc) {
+        Assert( s.size() == 3, "Side set vector size incorrect" );
+        if (static_cast<int>(std::round(s[0])) == sideset)
+          b[ static_cast<std::size_t>(std::round(s[1]))-1 ] = { true, s[2] };
+      }
       return b;
     }
 
     //! Return field names to be output to file
     //! \return Vector of strings labelling fields output in file
     std::vector< std::string > names() const {
-      std::vector< std::string > n( m_ncomp );
-      // ...
+      std::vector< std::string > n;
+      n.push_back( "density" );
+      n.push_back( "x-velocity" );
+      n.push_back( "y-velocity" );
+      n.push_back( "z-velocity" );
+      n.push_back( "specific total energy" );
+      n.push_back( "pressure" );
       return n;
     }
 
     //! Return field output going to file
     //! \param[in] t Physical time
     //! \param[in] coord Mesh node coordinates
-    //! \param[in,out] U Solution vector at recent time step stage
+    //! \param[in] U Solution vector at recent time step stage
     //! \return Vector of vectors to be output to file
-    //! \details Note that U is overwritten
     std::vector< std::vector< tk::real > >
     output( tk::real t,
             const std::array< std::vector< tk::real >, 3 >& coord,
-            tk::MeshNodes& U ) const
+            const tk::MeshNodes& U ) const
     {
       IGNORE(t);
       IGNORE(coord);
-      IGNORE(U);
       std::vector< std::vector< tk::real > > out;
-      // ...
+      const auto r = U.extract( 0, m_offset );
+      const auto ru = U.extract( 1, m_offset );
+      const auto rv = U.extract( 2, m_offset );
+      const auto rw = U.extract( 3, m_offset );
+      const auto re = U.extract( 4, m_offset );
+      out.push_back( r );
+      std::vector< tk::real > u = ru;
+      std::transform( r.begin(), r.end(), u.begin(), u.begin(),
+                      []( tk::real s, tk::real& d ){ return d /= s; } );
+      out.push_back( u );
+      std::vector< tk::real > v = rv;
+      std::transform( r.begin(), r.end(), v.begin(), v.begin(),
+                      []( tk::real s, tk::real& d ){ return d /= s; } );
+      out.push_back( v );
+      std::vector< tk::real > w = rw;
+      std::transform( r.begin(), r.end(), w.begin(), w.begin(),
+                      []( tk::real s, tk::real& d ){ return d /= s; } );
+      out.push_back( w );
+      std::vector< tk::real > e = re;
+      std::transform( r.begin(), r.end(), e.begin(), e.begin(),
+                      []( tk::real s, tk::real& d ){ return d /= s; } );
+      out.push_back( e );
+      std::vector< tk::real > p = re;
+      tk::real gamma = 1.4;   // ratio of specific heats
+      for (std::size_t i=0; i<p.size(); ++i)
+        p[i] = (gamma-1.0)*(re[i] -
+                 (ru[i]*ru[i] + rv[i]*rv[i] + rw[i]*rw[i])/2.0/r[i]);
+      out.push_back( p );
       return out;
+   }
+
+   //! Contribute diagnostics from this PDE system
+   //! \param[in] U Solution vector at recent time step stage
+   //! \return Vector of L1 norms of all scalar components
+   std::vector< tk::real > diagnostics( const tk::MeshNodes& U ) const {
+     std::vector< tk::real > d( m_ncomp, 0.0 );
+     for (ncomp_t c=0; c<m_ncomp; ++c)
+       for (auto n : U.extract( c, m_offset ))
+         d[c] += std::abs( n );
+      std::transform( d.begin(), d.end(), d.begin(),
+                      [this]( tk::real& r ){ return r /= this->m_ncomp; } );
+     return d;
    }
 
   private:
