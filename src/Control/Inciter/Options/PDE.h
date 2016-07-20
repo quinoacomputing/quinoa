@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/Options/PDE.h
   \author    J. Bakosi
-  \date      Wed 04 May 2016 02:38:00 PM MDT
+  \date      Tue Jul 19 22:22:55 2016
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Partial differential equation options and associations for inciter
   \details   Partial differential equation options and associations for inciter
@@ -58,7 +58,7 @@ class PDE : public tk::Toggle< PDEType > {
         { { "no_pde", PDEType::NO_PDE },
           { kw::advdiff::string(), PDEType::ADV_DIFF },
           { kw::euler::string(), PDEType::EULER },
-          { kw::euler::string(), PDEType::COMPNS } } ) {}
+          { kw::compns::string(), PDEType::COMPNS } } ) {}
 };
 
 } // ctr::
