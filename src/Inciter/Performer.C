@@ -326,6 +326,18 @@ Performer::init( tk::real dt )
 }
 
 void
+Performer::recPartLoc( const std::vector< tk::real >& x,
+                       const std::vector< tk::real >& y,
+                       const std::vector< tk::real >& z )
+// *****************************************************************************
+// Receive particles from the Tracker 
+//! \param[in] pcoord Particle coordinates
+//! \author F.J. Gonzalez
+// *****************************************************************************
+{
+}
+
+void
 Performer::lhs()
 // *****************************************************************************
 // Compute left-hand side of PDE
@@ -514,6 +526,37 @@ Performer::advance( uint8_t stage, tk::real dt, uint64_t it, tk::real t )
   }
 }
 
+void 
+Performer::genPar( std::size_t npar )
+// *****************************************************************************
+// Update solution vector
+//! \param[in] npar Number of particles to generate
+// *****************************************************************************
+{
+  std::vector< tk::real > xp(npar), yp(npar), zp(npar);
+  const auto& x = m_coord[0];                                                          
+  const auto& y = m_coord[1];                                                            
+  const auto& z = m_coord[2];  
+  for (std::size_t i=0; i<npar; ++i) { 
+    tk::real NA=0.1, NB=0.2, NC=0.3, ND = 1-NA-NB-NC;
+    if ( std::min(NA,1-NA) > 0 && 
+         std::min(NB,1-NB) > 0 && 
+         std::min(NC,1-NC) > 0 && 
+         std::min(ND,1-ND) > 0 ) {
+      for (std::size_t e=0; e<m_inpoel.size()/4; ++e) {
+        const auto A = m_inpoel[e*4+0];
+        const auto B = m_inpoel[e*4+1];
+        const auto C = m_inpoel[e*4+2]; 
+        const auto D = m_inpoel[e*4+3];
+
+        xp[i] = x[A]*NA + x[B]*NB + x[C]*NC + x[D]*ND;
+        yp[i] = y[A]*NA + y[B]*NB + y[C]*NC + y[D]*ND;
+        zp[i] = z[A]*NA + z[B]*NB + z[C]*NC + z[D]*ND;
+      }
+    }
+  }
+  //Call tracker
+}
 void
 Performer::updateSolution( const std::vector< std::size_t >& gid,
                            const std::vector< tk::real >& u )

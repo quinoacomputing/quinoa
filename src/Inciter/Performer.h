@@ -98,6 +98,14 @@ class Performer : public CBase_Performer {
     //! Advance equations to next stage in multi-stage time stepping
     void advance( uint8_t stage, tk::real dt, uint64_t it, tk::real t );
 
+    //! Generates particles into mesh cells
+    void genPar( std::size_t npar );
+
+    //! Receive particles from the Tracker 
+    //! NOTE: Currently hard coding particle locations
+    void recPartLoc( const std::vector< tk::real >& x,
+                     const std::vector< tk::real >& y,
+                     const std::vector< tk::real >& z );  
 
     /** @name Pack/Unpack: Serialize Performer object for Charm++ */
     ///@{

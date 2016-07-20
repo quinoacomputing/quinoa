@@ -16,6 +16,7 @@
 #define Tracker_h
 
 #include <unordered_map>
+#include <array>
 
 #include "Types.h"
 
@@ -44,7 +45,9 @@ class Tracker : public CBase_Tracker {
     void advance( tk::real dt, uint64_t it, tk::real t );
 
   private:
-    ConductorProxy m_conductor;         //!< Conductor proxy
+    ConductorProxy m_conductor;                          //!< Conductor proxy
+    PerformerProxy m_performer;                          //!< Performer proxy
+    std::array< std::vector< tk::real >, 3 > m_pcoord;   //!< Particle coords.
 };
 
 } // inciter::
