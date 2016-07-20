@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Tracker.h
   \author    F.J. Gonzalez
-  \date      Fri 15 Jul 2016 09:18:58 PM MDT
+  \date      Wed Jul 20 14:26:23 2016
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Tracker advances Lagrangian particles passively tracking fluid flow
   \details   Tracker advances Lagrangian particles passively tracking fluid
@@ -30,10 +30,12 @@ class Tracker : public CBase_Tracker {
 
   private:
     using ConductorProxy = CProxy_Conductor;
+    using PerformerProxy = CProxy_Performer;
 
   public:
     //! Constructor
-    explicit Tracker( const CProxy_Conductor& conductor );
+    explicit Tracker( const ConductorProxy& conductor,
+                      const PerformerProxy& performer );
 
     //! Migrate constructor
     explicit Tracker( CkMigrateMessage* ) : m_conductor() {}
