@@ -100,11 +100,11 @@ target_link_libraries(${INCITER_EXECUTABLE}
                       PDE
                       InciterControl
                       LoadBalance
+                      LinSys
                       Inciter
                       Base
                       IO
                       Mesh
-                      LinSys
                       ${PUGIXML_LIBRARIES}
                       ${SEACASNemesis_LIBRARIES}
                       ${SEACASExodus_LIBRARIES}
