@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Conductor.h
   \author    J. Bakosi
-  \date      Mon 11 Jul 2016 12:47:46 PM MDT
+  \date      Thu 21 Jul 2016 02:10:35 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Conductor drives the time integration of a PDE
   \details   Conductor drives the time integration of a PDE
@@ -28,7 +28,6 @@
 #include "VectorReducer.h"
 
 #include "NoWarning/performer.decl.h"
-#include "NoWarning/tracker.decl.h"
 
 namespace inciter {
 
@@ -93,7 +92,7 @@ class Conductor : public CBase_Conductor {
     using LinSysMergerProxy = tk::CProxy_LinSysMerger< CProxy_Conductor,
                                                        CProxy_Performer >;
     using PerformerProxy = CProxy_Performer;
-    using TrackerProxy = CProxy_Tracker;
+    using TrackerProxy = CProxy_Tracker< PerformerProxy >;
     using PartitionerProxy = CProxy_Partitioner< CProxy_Conductor,
                                                  CProxy_Performer,
                                                  LinSysMergerProxy,
