@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.C
   \author    J. Bakosi
-  \date      Tue 19 Jul 2016 09:39:41 AM MDT
+  \date      Thu 21 Jul 2016 02:49:02 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Performer advances a PDE
   \details   Performer advances a PDE. There are a potentially
@@ -26,7 +26,7 @@
 #include "Inciter/InputDeck/InputDeck.h"
 #include "DerivedData.h"
 #include "PDE.h"
-
+#include "Tracker.h"
 #include "LinSysMerger.h"
 
 // Force the compiler to not instantiate the template below as it is
@@ -57,6 +57,7 @@ using inciter::Performer;
 Performer::Performer(
   const ConductorProxy& conductor,
   const LinSysMergerProxy& lsm,
+  const TrackerProxy& tracker,
   const std::vector< std::size_t >& conn,
   const std::unordered_map< std::size_t, std::size_t >& cid )
 :
@@ -69,6 +70,7 @@ Performer::Performer(
                  std::to_string( thisIndex ) ),
   m_conductor( conductor ),
   m_linsysmerger( lsm ),
+  m_tracker( tracker ),
   m_cid( cid ),
   m_el( tk::global2local( conn ) ),     // fills m_inpoel and m_gid
   m_lid(),
@@ -109,6 +111,8 @@ Performer::setup()
   sendBCs( queryBCs() );
   // Read coordinates of owned and received mesh nodes
   readCoords();
+  // Generate particles
+  genPar( 10 );
   // Output chare mesh to file
   writeMesh();
   // Output mesh-based fields metadata to file
@@ -335,6 +339,7 @@ Performer::recPartLoc( const std::vector< tk::real >& x,
 //! \author F.J. Gonzalez
 // *****************************************************************************
 {
+  std::cout << "performer id " << thisIndex << ": recPartLoc\n";
 }
 
 void
@@ -534,9 +539,8 @@ Performer::genPar( std::size_t npar )
 // *****************************************************************************
 {
   std::vector< tk::real > xp(npar), yp(npar), zp(npar);
-  const auto& x = m_coord[0];                                                          
-  const auto& y = m_coord[1];                                                            
-  const auto& z = m_coord[2];  
+  const auto& x = m_coord[0];                                                          const auto& y = m_coord[1];
+  const auto& z = m_coord[2];
   for (std::size_t i=0; i<npar; ++i) { 
     tk::real NA=0.1, NB=0.2, NC=0.3, ND = 1-NA-NB-NC;
     if ( std::min(NA,1-NA) > 0 && 
@@ -548,14 +552,14 @@ Performer::genPar( std::size_t npar )
         const auto B = m_inpoel[e*4+1];
         const auto C = m_inpoel[e*4+2]; 
         const auto D = m_inpoel[e*4+3];
-
         xp[i] = x[A]*NA + x[B]*NB + x[C]*NC + x[D]*ND;
         yp[i] = y[A]*NA + y[B]*NB + y[C]*NC + y[D]*ND;
         zp[i] = z[A]*NA + z[B]*NB + z[C]*NC + z[D]*ND;
       }
     }
   }
-  //Call tracker
+
+  m_tracker[ thisIndex ].advance( 0.0, m_it, m_t );
 }
 void
 Performer::updateSolution( const std::vector< std::size_t >& gid,

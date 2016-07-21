@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/LinSysMerger.C
   \author    J. Bakosi
-  \date      Tue 19 Jul 2016 08:41:03 AM MDT
+  \date      Thu 21 Jul 2016 02:06:47 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Linear system merger
   \details   Linear system merger.
@@ -11,6 +11,7 @@
 
 #include "LinSysMerger.h"
 
+#include "NoWarning/tracker.decl.h"
 #include "NoWarning/performer.decl.h"
 
 #if defined(__clang__)

@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.h
   \author    J. Bakosi
-  \date      Mon 18 Jul 2016 10:56:24 AM MDT
+  \date      Thu 21 Jul 2016 02:07:54 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Performer advances a PDE
   \details   Performer advances a PDE. There are a potentially
@@ -30,6 +30,7 @@
 #include "Inciter/InputDeck/InputDeck.h"
 
 #include "NoWarning/conductor.decl.h"
+#include "NoWarning/tracker.decl.h"
 #include "NoWarning/performer.decl.h"
 
 namespace tk { class ExodusIIMeshWriter; }
@@ -46,11 +47,14 @@ class Performer : public CBase_Performer {
     using ConductorProxy = CProxy_Conductor;
     using LinSysMergerProxy = tk::CProxy_LinSysMerger< CProxy_Conductor,
                                                        CProxy_Performer >;
+    using TrackerProxy = CProxy_Tracker< CProxy_Performer >;
+
   public:
     //! Constructor
     explicit
       Performer( const CProxy_Conductor& conductor,
                  const LinSysMergerProxy& lsm,
+                 const TrackerProxy& tracker,
                  const std::vector< std::size_t >& conn,
                  const std::unordered_map< std::size_t, std::size_t >& cid );
 
@@ -121,6 +125,7 @@ class Performer : public CBase_Performer {
       p | m_outFilename;
       p | m_conductor;
       p | m_linsysmerger;
+      p | m_tracker;
       p | m_cid;
       p | m_el;
       if (p.isUnpacking()) { m_inpoel = m_el.first; m_gid = m_el.second; }
@@ -147,6 +152,7 @@ class Performer : public CBase_Performer {
     std::string m_outFilename;          //!< Output filename
     ConductorProxy m_conductor;         //!< Conductor proxy
     LinSysMergerProxy m_linsysmerger;   //!< Linear system merger proxy
+    TrackerProxy m_tracker;             //!< Tracker proxy
     //! \brief Map associating old node IDs (as in file) to new node IDs (as in
     //!   producing contiguous-row-id linear system contributions)
     std::unordered_map< std::size_t, std::size_t > m_cid;

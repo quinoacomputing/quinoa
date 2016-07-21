@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Partitioner.h
   \author    J. Bakosi
-  \date      Wed Jul 20 14:29:22 2016
+  \date      Thu 21 Jul 2016 02:18:13 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ chare partitioner group used to perform mesh partitioning
   \details   Charm++ chare partitioner group used to perform mesh partitioning.
@@ -68,6 +68,7 @@
 #include "ZoltanInterOp.h"
 #include "Inciter/InputDeck/InputDeck.h"
 #include "LinSysMerger.h"
+#include "Tracker.h"
 
 namespace inciter {
 
@@ -86,7 +87,7 @@ extern CkReduction::reducerType NodesMerger;
 //!   also the Charm++ interface file partitioner.ci.
 //! \author J. Bakosi
 template< class HostProxy, class WorkerProxy, class LinSysMergerProxy,
-         class TrackerProxy >
+          class TrackerProxy >
 class Partitioner : public CBase_Partitioner< HostProxy,
                                               WorkerProxy,
                                               LinSysMergerProxy,
@@ -741,6 +742,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
         // Create array element
         m_worker[ cid ].insert( m_host,
                                 m_linsysmerger,
+                                m_tracker,
                                 tk::cref_find( m_node, cid ),
                                 tk::cref_find( m_chcid, cid ),
                                 CkMyPe() );
