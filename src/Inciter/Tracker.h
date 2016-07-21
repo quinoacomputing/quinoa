@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Tracker.h
   \author    F.J. Gonzalez
-  \date      Thu 21 Jul 2016 02:48:08 PM MDT
+  \date      Thu 21 Jul 2016 02:53:44 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Tracker advances Lagrangian particles passively tracking fluid flow
   \details   Tracker advances Lagrangian particles passively tracking fluid
@@ -81,9 +81,7 @@ class Tracker : public CBase_Tracker< WorkerProxy > {
   #pragma GCC diagnostic ignored "-Wnon-virtual-dtor"
   #pragma GCC diagnostic ignored "-Wreorder"
   #pragma GCC diagnostic ignored "-Wcast-qual"
-  //#pragma GCC diagnostic ignored "-Weffc++"
   #pragma GCC diagnostic ignored "-Wunused-parameter"
-  //#pragma GCC diagnostic ignored "-Wunused-variable"
 #endif
 
 #define CK_TEMPLATES_ONLY
