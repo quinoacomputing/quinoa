@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Conductor.C
   \author    J. Bakosi
-  \date      Wed 20 Jul 2016 11:49:48 AM MDT
+  \date      Thu 21 Jul 2016 09:00:52 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Conductor drives the time integration of a PDE
   \details   Conductor drives the time integration of a PDE
@@ -41,6 +41,7 @@ extern CProxy_Main mainProxy;
 using inciter::Conductor;
 
 Conductor::Conductor() :
+  __dep(),
   m_print( g_inputdeck.get<tag::cmd,tag::verbose>() ? std::cout : std::clog ),
   m_nchare( 0 ),
   m_it( 0 ),
@@ -53,7 +54,8 @@ Conductor::Conductor() :
   m_avcost( 0.0 ),
   m_npoin( 0 ),
   m_timer(),
-  m_linsysbc()
+  m_linsysbc(),
+  m_diag( 5 )   // <- WRONG FOR EVERYTHING BUT A SINGLE COMPNS
 // *****************************************************************************
 //  Constructor
 //! \author J. Bakosi
@@ -99,6 +101,9 @@ Conductor::Conductor() :
   // is smaller than the duration of the time to be simulated, we have work to
   // do, otherwise, finish right away
   if ( nstep != 0 && term > t0 && dt < term-t0 ) {
+
+    // Enable SDAG waits
+    wait4report();
 
     // Print I/O filenames
     m_print.section( "Output filenames" );
@@ -353,6 +358,8 @@ Conductor::diagnostics( tk::real* d, std::size_t n )
 
   // Finish computing diagnostics, i.e., divide sums by the number of samples
   for (auto& m : m_diag) m /= m_npoin;
+
+  trigger_diag_complete();
 }
  
 void
@@ -374,17 +381,17 @@ Conductor::evaluateTime()
     m_t += m_dt;
     // Truncate the size of last time step
     if (m_t > term) m_t = term;
-    // Echo one-liner info on time step just taken
-    report();
   }
+
+  trigger_eval_complete();
 
   // if not final stage of time step or if neither max iterations nor max time
   // reached, will continue (by telling all linear system merger group
   // elements to prepare for a new rhs), otherwise, finish
-  if (m_stage < 1 || (std::fabs(m_t-term) > eps && m_it < nstep))
+  if (m_stage < 1 || (std::fabs(m_t-term) > eps && m_it < nstep)) {
     m_linsysmerger.enable_wait4rhs();
-  else
-    finish();
+    wait4report();      // re-enable SDAG wait for report
+  } else finish();
 }
 
 void
@@ -471,8 +478,7 @@ Conductor::report()
                        g_inputdeck.get< tag::flformat, tag::diag >(),
                        g_inputdeck.get< tag::prec, tag::diag >(),
                        std::ios_base::app );
-    std::vector< tk::real > diags{ 0.0, 0.0 };
-    if (dw.diag( m_it, m_t, diags )) diag = true;
+    if (dw.diag( m_it, m_t, m_diag )) diag = true;
   }
 
   if (!(m_it % g_inputdeck.get< tag::interval, tag::tty >())) {
