@@ -601,18 +601,17 @@ Performer::parinel( const std::vector< tk::real >& xp,
       
       // Evaluate shapefunctions at particle locations using LAPACK
       // NOTE: you have to build the matrix. 
+      std::array< tk::real, 4 > N;
 
-      NA=0;
-      NB=0;
-      NC=0;
-      ND=0;
+      N[0]=0;
+      N[1]=0;
+      N[2]=0;
+      N[3]=0;
 
 
       // Check to see if particle i is in element e
-      if ( std::min(NA,1-NA) > 0 && 
-           std::min(NB,1-NB) > 0 && 
-           std::min(NC,1-NC) > 0 && 
-           std::min(ND,1-ND) > 0 ) { 
+      if ( std::min(N[0],1-N[0]) > 0 && std::min(N[1],1-N[1]) > 0 &&
+           std::min(N[2],1-N[2]) > 0 && std::min(N[3],1-N[3]) > 0 ) {
         // You get velocities fromt the field data m_u. This should be passed
         // back to Tracker to move that particle one time step.
         // Write out particle id and element id (should print once per particle)
