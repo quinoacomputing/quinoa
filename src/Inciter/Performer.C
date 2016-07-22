@@ -15,6 +15,8 @@
 #include <string>
 #include <cmath>
 
+#include <gm19.h>
+
 #include "Performer.h"
 #include "Vector.h"
 #include "Reader.h"
@@ -28,6 +30,7 @@
 #include "PDE.h"
 #include "Tracker.h"
 #include "LinSysMerger.h"
+#include "RNGSSE.h"
 
 // Force the compiler to not instantiate the template below as it is
 // instantiated in LinSys/LinSysMerger.C (only required on mac)
@@ -538,23 +541,27 @@ Performer::genPar( std::size_t npar )
 //! \param[in] npar Number of particles to generate
 // *****************************************************************************
 {
+  auto rng =
+   tk::RNGSSE< gm19_state, unsigned, gm19_generate_ >( 1, gm19_init_sequence_ );
+
   std::vector< tk::real > xp(npar), yp(npar), zp(npar);
-  const auto& x = m_coord[0];                                                          const auto& y = m_coord[1];
+  const auto& x = m_coord[0];
+  const auto& y = m_coord[1];
   const auto& z = m_coord[2];
   for (std::size_t i=0; i<npar; ++i) { 
-    tk::real NA=0.1, NB=0.2, NC=0.3, ND = 1-NA-NB-NC;
-    if ( std::min(NA,1-NA) > 0 && 
-         std::min(NB,1-NB) > 0 && 
-         std::min(NC,1-NC) > 0 && 
-         std::min(ND,1-ND) > 0 ) {
+    std::array< tk::real, 4 > N;
+    rng.uniform( 0, 3, N.data() );
+    N[3] = 1.0 - N[0] - N[1] - N[2];
+    if ( std::min(N[0],1-N[0]) > 0 && std::min(N[1],1-N[1]) > 0 &&
+         std::min(N[2],1-N[2]) > 0 && std::min(N[3],1-N[3]) > 0 ) {
       for (std::size_t e=0; e<m_inpoel.size()/4; ++e) {
         const auto A = m_inpoel[e*4+0];
         const auto B = m_inpoel[e*4+1];
         const auto C = m_inpoel[e*4+2]; 
         const auto D = m_inpoel[e*4+3];
-        xp[i] = x[A]*NA + x[B]*NB + x[C]*NC + x[D]*ND;
-        yp[i] = y[A]*NA + y[B]*NB + y[C]*NC + y[D]*ND;
-        zp[i] = z[A]*NA + z[B]*NB + z[C]*NC + z[D]*ND;
+        xp[i] = x[A]*N[0] + x[B]*N[1] + x[C]*N[2] + x[D]*N[3];
+        yp[i] = y[A]*N[0] + y[B]*N[1] + y[C]*N[2] + y[D]*N[3];
+        zp[i] = z[A]*N[0] + z[B]*N[1] + z[C]*N[2] + z[D]*N[3];
       }
     }
   }
