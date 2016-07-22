@@ -51,10 +51,6 @@ class Tracker : public CBase_Tracker< WorkerProxy > {
 
     //! Advance particles to next stage
     void advance( tk::real dt, uint64_t it, tk::real t ) {
-      std::cout << "tracker id " << Array::thisIndex << ": advance\n";
-      m_worker[ Array::thisIndex ].recPartLoc( m_pcoord[0],
-                                               m_pcoord[1],
-                                               m_pcoord[2] );
       IGNORE(dt);
       IGNORE(it);
       IGNORE(t);

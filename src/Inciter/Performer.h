@@ -105,11 +105,12 @@ class Performer : public CBase_Performer {
     //! Generates particles into mesh cells
     void genPar( std::size_t npar );
 
-    //! Receive particles from the Tracker 
+    //! Receive particles coordinate information 
     //! NOTE: Currently hard coding particle locations
-    void recPartLoc( const std::vector< tk::real >& x,
-                     const std::vector< tk::real >& y,
-                     const std::vector< tk::real >& z );  
+    void parinel( const std::vector< tk::real >& xp,
+                  const std::vector< tk::real >& yp,
+                  const std::vector< tk::real >& zp,
+                  std::size_t npar );  
 
     /** @name Pack/Unpack: Serialize Performer object for Charm++ */
     ///@{

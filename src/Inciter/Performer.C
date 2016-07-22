@@ -112,7 +112,7 @@ Performer::setup()
   // Read coordinates of owned and received mesh nodes
   readCoords();
   // Generate particles
-  genPar( 10 );
+  genPar( 2 );
   // Output chare mesh to file
   writeMesh();
   // Output mesh-based fields metadata to file
@@ -330,19 +330,6 @@ Performer::init( tk::real dt )
 }
 
 void
-Performer::recPartLoc( const std::vector< tk::real >& x,
-                       const std::vector< tk::real >& y,
-                       const std::vector< tk::real >& z )
-// *****************************************************************************
-// Receive particles from the Tracker 
-//! \param[in] pcoord Particle coordinates
-//! \author F.J. Gonzalez
-// *****************************************************************************
-{
-  std::cout << "performer id " << thisIndex << ": recPartLoc\n";
-}
-
-void
 Performer::lhs()
 // *****************************************************************************
 // Compute left-hand side of PDE
@@ -531,18 +518,29 @@ Performer::advance( uint8_t stage, tk::real dt, uint64_t it, tk::real t )
   }
 }
 
-void 
+void
 Performer::genPar( std::size_t npar )
 // *****************************************************************************
-// Update solution vector
+// Generate the particles within the mesh
 //! \param[in] npar Number of particles to generate
+//! \author F.J. Gonzalez
 // *****************************************************************************
 {
+  // Create vector of particle coordinates
   std::vector< tk::real > xp(npar), yp(npar), zp(npar);
-  const auto& x = m_coord[0];                                                          const auto& y = m_coord[1];
+  
+  // Create a reference of mesh point coordinates
+  const auto& x = m_coord[0];
+  const auto& y = m_coord[1];
   const auto& z = m_coord[2];
+
+  // Loop over the number of particles and interpolate each particle's location
+  // within the element
   for (std::size_t i=0; i<npar; ++i) { 
+    // Note: These values will eventually be created randomly
     tk::real NA=0.1, NB=0.2, NC=0.3, ND = 1-NA-NB-NC;
+
+    // Check to see if the randomly created shape functions meet this criterion
     if ( std::min(NA,1-NA) > 0 && 
          std::min(NB,1-NB) > 0 && 
          std::min(NC,1-NC) > 0 && 
@@ -559,8 +557,68 @@ Performer::genPar( std::size_t npar )
     }
   }
 
-  m_tracker[ thisIndex ].advance( 0.0, m_it, m_t );
+  // After creating particle positions we now check to see in which element
+  // they reside by solving for the shape functions using the particle and node
+  // positions, we will use this information to backout a velocity for each
+  // particle. 
+  // NOTE: This may only seem circular for the first step.  We create
+  // random shape functions to interpolate each particle's initial positions. We
+  // can then skip directly to finding the initial velocity. However, after the
+  // first time step each particle will have a completely different position.
+  // This is where solving for the shape functions comes into play since now
+  // there is no guarantee that the particle will be in the same element. 
+  parinel( xp, yp, zp, npar );
 }
+
+void
+Performer::parinel( const std::vector< tk::real >& xp,
+                    const std::vector< tk::real >& yp,
+                    const std::vector< tk::real >& zp,
+                    std::size_t npar )
+// *****************************************************************************
+// Receive particle coordinate information and check which element its in
+//! \param[in] xp, yp, zp Particle coordinates
+//! \param[in] npar Number of particles
+//! \author F.J. Gonzalez
+// *****************************************************************************
+{
+  // Create a reference of mesh point coordinates
+  const auto& x = m_coord[0];
+  const auto& y = m_coord[1];
+  const auto& z = m_coord[2];
+  
+  // Loop over the number of particles and evaluate shapefunctions at each
+  // particle's location
+  for (std::size_t i=0; i<npar; ++i) { 
+    for (std::size_t e=0; e<m_inpoel.size()/4; ++e) {
+      const auto A = m_inpoel[e*4+0];
+      const auto B = m_inpoel[e*4+1];
+      const auto C = m_inpoel[e*4+2]; 
+      const auto D = m_inpoel[e*4+3]; // We definitely need this!
+      
+      // Evaluate shapefunctions at particle locations using LAPACK
+      // NOTE: you have to build the matrix. 
+
+      NA=0;
+      NB=0;
+      NC=0;
+      ND=0;
+
+
+      // Check to see if particle i is in element e
+      if ( std::min(NA,1-NA) > 0 && 
+           std::min(NB,1-NB) > 0 && 
+           std::min(NC,1-NC) > 0 && 
+           std::min(ND,1-ND) > 0 ) { 
+        // You get velocities fromt the field data m_u. This should be passed
+        // back to Tracker to move that particle one time step.
+        // Write out particle id and element id (should print once per particle)
+        CkPrintf("Particle %d on element %d\n",i,e);
+      }
+    }
+  }
+}
+
 void
 Performer::updateSolution( const std::vector< std::size_t >& gid,
                            const std::vector< tk::real >& u )
