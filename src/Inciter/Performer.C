@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.C
   \author    J. Bakosi
-  \date      Thu 21 Jul 2016 02:49:02 PM MDT
+  \date      Fri 22 Jul 2016 11:31:43 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Performer advances a PDE
   \details   Performer advances a PDE. There are a potentially
@@ -14,6 +14,8 @@
 
 #include <string>
 #include <cmath>
+
+#include <gm19.h>
 
 #include "Performer.h"
 #include "Vector.h"
@@ -28,6 +30,7 @@
 #include "PDE.h"
 #include "Tracker.h"
 #include "LinSysMerger.h"
+#include "RNGSSE.h"
 
 // Force the compiler to not instantiate the template below as it is
 // instantiated in LinSys/LinSysMerger.C (only required on mac)
@@ -59,13 +62,15 @@ Performer::Performer(
   const LinSysMergerProxy& lsm,
   const TrackerProxy& tracker,
   const std::vector< std::size_t >& conn,
-  const std::unordered_map< std::size_t, std::size_t >& cid )
+  const std::unordered_map< std::size_t, std::size_t >& cid,
+  int nperf )
 :
   m_it( 0 ),
   m_itf( 0 ),
   m_t( g_inputdeck.get< tag::discr, tag::t0 >() ),
   m_stage( 0 ),
   m_nsol( 0 ),
+  m_nperf( nperf ),
   m_outFilename( g_inputdeck.get< tag::cmd, tag::io, tag::output >() + "." +
                  std::to_string( thisIndex ) ),
   m_conductor( conductor ),
@@ -526,10 +531,10 @@ Performer::genPar( std::size_t npar )
 //! \author F.J. Gonzalez
 // *****************************************************************************
 {
-  // Create vector of particle coordinates
+  auto rng = tk::RNGSSE< gm19_state, unsigned, gm19_generate_ >
+                       ( static_cast<unsigned>(m_nperf), gm19_init_sequence_ );
+
   std::vector< tk::real > xp(npar), yp(npar), zp(npar);
-  
-  // Create a reference of mesh point coordinates
   const auto& x = m_coord[0];
   const auto& y = m_coord[1];
   const auto& z = m_coord[2];
@@ -537,24 +542,22 @@ Performer::genPar( std::size_t npar )
   // Loop over the number of particles and interpolate each particle's location
   // within the element
   for (std::size_t i=0; i<npar; ++i) { 
-    // Note: These values will eventually be created randomly
-    tk::real NA=0.1, NB=0.2, NC=0.3, ND = 1-NA-NB-NC;
-
-    // Check to see if the randomly created shape functions meet this criterion
-    if ( std::min(NA,1-NA) > 0 && 
-         std::min(NB,1-NB) > 0 && 
-         std::min(NC,1-NC) > 0 && 
-         std::min(ND,1-ND) > 0 ) {
+    
+    std::array< tk::real, 4 > N;
+    rng.uniform( thisIndex, 3, N.data() );
+    N[3] = 1.0 - N[0] - N[1] - N[2];
+    if ( std::min(N[0],1-N[0]) > 0 && std::min(N[1],1-N[1]) > 0 &&
+         std::min(N[2],1-N[2]) > 0 && std::min(N[3],1-N[3]) > 0 ) {
       for (std::size_t e=0; e<m_inpoel.size()/4; ++e) {
         const auto A = m_inpoel[e*4+0];
         const auto B = m_inpoel[e*4+1];
         const auto C = m_inpoel[e*4+2]; 
         const auto D = m_inpoel[e*4+3];
-        xp[i] = x[A]*NA + x[B]*NB + x[C]*NC + x[D]*ND;
-        yp[i] = y[A]*NA + y[B]*NB + y[C]*NC + y[D]*ND;
-        zp[i] = z[A]*NA + z[B]*NB + z[C]*NC + z[D]*ND;
+        xp[i] = x[A]*N[0] + x[B]*N[1] + x[C]*N[2] + x[D]*N[3];
+        yp[i] = y[A]*N[0] + y[B]*N[1] + y[C]*N[2] + y[D]*N[3];
+        zp[i] = z[A]*N[0] + z[B]*N[1] + z[C]*N[2] + z[D]*N[3];
       }
-    }
+    } else --i; // retry if particle was not generated into tetrahedron
   }
 
   // After creating particle positions we now check to see in which element
