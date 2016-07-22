@@ -105,11 +105,13 @@ target_link_libraries(${INCITER_EXECUTABLE}
                       Base
                       IO
                       Mesh
+                      RNG
                       ${PUGIXML_LIBRARIES}
                       ${SEACASNemesis_LIBRARIES}
                       ${SEACASExodus_LIBRARIES}
                       ${HYPRE_LIBRARY}
                       ${Zoltan2_LIBRARIES}
+                      ${RNGSSE_LIBRARY}
                       ${MKL_INTERFACE_LIBRARY}
                       ${MKL_CORE_LIBRARY}
                       ${MKL_SEQUENTIAL_LAYER_LIBRARY}
