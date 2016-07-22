@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.h
   \author    J. Bakosi
-  \date      Thu 21 Jul 2016 02:07:54 PM MDT
+  \date      Fri 22 Jul 2016 11:23:25 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Performer advances a PDE
   \details   Performer advances a PDE. There are a potentially
@@ -56,7 +56,8 @@ class Performer : public CBase_Performer {
                  const LinSysMergerProxy& lsm,
                  const TrackerProxy& tracker,
                  const std::vector< std::size_t >& conn,
-                 const std::unordered_map< std::size_t, std::size_t >& cid );
+                 const std::unordered_map< std::size_t, std::size_t >& cid,
+                 int nperf );
 
     #if defined(__GNUC__)
       #pragma GCC diagnostic push
@@ -150,6 +151,7 @@ class Performer : public CBase_Performer {
     tk::real m_t;                       //!< Physical time
     uint8_t m_stage;                    //!< Stage in multi-stage time stepping
     std::size_t m_nsol;                 //!< Counter for solution nodes updated
+    int m_nperf;                        //!< Total number of performer chares
     std::string m_outFilename;          //!< Output filename
     ConductorProxy m_conductor;         //!< Conductor proxy
     LinSysMergerProxy m_linsysmerger;   //!< Linear system merger proxy
