@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Conductor.h
   \author    J. Bakosi
-  \date      Fri 22 Jul 2016 12:21:56 PM MDT
+  \date      Mon 25 Jul 2016 11:06:00 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Conductor drives the time integration of systems of systems of PDEs
   \details   Conductor drives the time integration of systems of systems of
@@ -69,6 +69,7 @@ class Conductor : public CBase_Conductor {
     #if defined(__clang__)
       #pragma clang diagnostic push
       #pragma clang diagnostic ignored "-Wunused-parameter"
+      #pragma clang diagnostic ignored "-Wdeprecated-declarations"
     #elif defined(__GNUC__)
       #pragma GCC diagnostic push
       #pragma GCC diagnostic ignored "-Wunused-parameter"
