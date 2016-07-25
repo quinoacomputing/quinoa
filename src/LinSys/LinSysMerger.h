@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/LinSysMerger.h
   \author    J. Bakosi
-  \date      Fri 22 Jul 2016 03:45:05 PM MDT
+  \date      Mon 25 Jul 2016 11:08:08 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ chare linear system merger group to solve a linear system
   \details   Charm++ chare linear system merger group used to collect and
@@ -572,7 +572,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
        if (m_oldbc.size() == m_bc.size()) {
          std::vector< std::size_t > b;
          for (const auto& c : m_oldbc)
-           b.insert( end(b), begin(c.second), end(c.second) );
+           b.insert( end(b), c.second.begin(), c.second.end() );
          signal2host_verifybc( m_host, b );
        }
     }
