@@ -2,7 +2,7 @@
 /*!
   \file      src/PDE/PDE.h
   \author    J. Bakosi
-  \date      Tue 03 May 2016 11:23:36 AM MDT
+  \date      Fri 22 Jul 2016 03:43:56 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Partial differential equation
   \details   This file defines a generic partial differential equation class.
@@ -75,8 +75,8 @@ class PDE {
     //! Public interface to setting the initial conditions for the diff eq
     void initialize( const std::array< std::vector< tk::real >, 3 >& coord,
                      tk::MeshNodes& unk,
-                     tk::real t )
-    const { self->initialize( coord, unk, t ); }
+                     tk::real t ) const
+    { self->initialize( coord, unk, t ); }
 
     //! Public interface to computing the left-hand side matrix for the diff eq
     void lhs( const std::array< std::vector< tk::real >, 3 >& coord,
@@ -97,9 +97,15 @@ class PDE {
               tk::MeshNodes& R ) const
     { self->rhs( mult, dt, coord, inpoel, U, Un, R ); }
 
-    //! Public interface to advancing the PDE in time
-    void advance( tk::MeshNodes& unk, tk::real dt, tk::real t ) const
-    { self->advance( unk, dt, t ); }
+    //! \brief Public interface for querying if a Dirichlet boundary condition
+    //!   has set by the user on any side set for any component in the PDE
+    bool anydirbc( int sideset ) const
+    { return self->anydirbc( sideset ); }
+
+    //! \brief Public interfac for querying Dirichlet boundary condition values
+    //!  set by the user on a given side set for all components in a PDE system
+    std::vector< std::pair< bool, tk::real > > dirbc( int sideset ) const
+    { return self->dirbc( sideset ); }
 
     //! Public interface to returning field output labels
     std::vector< std::string > names() const { return self->names(); }
@@ -130,23 +136,24 @@ class PDE {
       virtual ~Concept() = default;
       virtual Concept* copy() const = 0;
       virtual void initialize( const std::array< std::vector< tk::real >, 3 >&,
-                               tk::MeshNodes&, tk::real ) = 0;
+                               tk::MeshNodes&, tk::real ) const = 0;
       virtual void lhs( const std::array< std::vector< tk::real >, 3 >&,
                         const std::vector< std::size_t >&,
                         const std::pair< std::vector< std::size_t >,
                                          std::vector< std::size_t > >&,
-                        tk::MeshNodes&, tk::MeshNodes& ) = 0;
+                        tk::MeshNodes&, tk::MeshNodes& ) const = 0;
       virtual void rhs( tk::real, tk::real,
                         const std::array< std::vector< tk::real >, 3 >&,
                         const std::vector< std::size_t >&,
                         const tk::MeshNodes&, const tk::MeshNodes&,
-                        tk::MeshNodes& ) = 0;
-      virtual void advance( tk::MeshNodes&, tk::real, tk::real ) = 0;
-      virtual std::vector< std::string > names() = 0;
+                        tk::MeshNodes& ) const = 0;
+      virtual bool anydirbc( int ) const = 0;
+      virtual std::vector< std::pair< bool, tk::real > > dirbc( int ) const = 0;
+      virtual std::vector< std::string > names() const = 0;
       virtual std::vector< std::vector< tk::real > > output(
         tk::real,
         const std::array< std::vector< tk::real >, 3 >&,
-        tk::MeshNodes& ) = 0;
+        tk::MeshNodes& ) const = 0;
     };
 
     //! \brief Model models the Concept above by deriving from it and overriding
@@ -156,28 +163,30 @@ class PDE {
       Model( T x ) : data( std::move(x) ) {}
       Concept* copy() const override { return new Model( *this ); }
       void initialize( const std::array< std::vector< tk::real >, 3 >& coord,
-                       tk::MeshNodes& unk, tk::real t ) override
+                       tk::MeshNodes& unk, tk::real t ) const override
       { data.initialize( coord, unk, t ); }
       void lhs( const std::array< std::vector< tk::real >, 3 >& coord,
                 const std::vector< std::size_t >& inpoel,
                 const std::pair< std::vector< std::size_t >,
                                  std::vector< std::size_t > >& psup,
-                tk::MeshNodes& lhsd, tk::MeshNodes& lhso ) override
+                tk::MeshNodes& lhsd, tk::MeshNodes& lhso ) const override
       { data.lhs( coord, inpoel, psup, lhsd, lhso ); }
       void rhs( tk::real mult, tk::real dt,
                 const std::array< std::vector< tk::real >, 3 >& coord,
                 const std::vector< std::size_t >& inpoel,
                 const tk::MeshNodes& U,
                 const tk::MeshNodes& Un,
-                tk::MeshNodes& R ) override
+                tk::MeshNodes& R ) const override
       { data.rhs( mult, dt, coord, inpoel, U, Un, R ); }
-      void advance( tk::MeshNodes& unk, tk::real dt, tk::real t ) override
-      { data.advance( unk, dt, t ); }
-      std::vector< std::string > names() override { return data.names(); }
+      bool anydirbc( int sideset ) const override
+      { return data.anydirbc( sideset ); }
+      std::vector< std::pair< bool, tk::real > > dirbc( int sideset ) const
+      override { return data.dirbc( sideset ); }
+      std::vector< std::string > names() const override { return data.names(); }
       std::vector< std::vector< tk::real > > output(
         tk::real t,
         const std::array< std::vector< tk::real >, 3 >& coord,
-        tk::MeshNodes& U ) override { return data.output( t, coord, U ); }
+        tk::MeshNodes& U ) const override { return data.output( t, coord, U ); }
       T data;
     };
 

@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Conductor.C
   \author    J. Bakosi
-  \date      Wed 04 May 2016 11:06:22 AM MDT
+  \date      Fri 22 Jul 2016 03:57:37 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Conductor drives the time integration of a PDE
   \details   Conductor drives the time integration of a PDE
@@ -19,12 +19,14 @@
 #include <cstddef>
 #include <unordered_set>
 
+#include "Macro.h"
 #include "Conductor.h"
 #include "MeshNodes.h"
 #include "PDEStack.h"
 #include "ContainerUtil.h"
 #include "LoadDistributor.h"
 #include "ExodusIIMeshReader.h"
+#include "DiagWriter.h"
 #include "Inciter/InputDeck/InputDeck.h"
 
 #include "NoWarning/inciter.decl.h"
@@ -39,6 +41,7 @@ extern CProxy_Main mainProxy;
 using inciter::Conductor;
 
 Conductor::Conductor() :
+  __dep(),
   m_print( g_inputdeck.get<tag::cmd,tag::verbose>() ? std::cout : std::clog ),
   m_nchare( 0 ),
   m_it( 0 ),
@@ -49,7 +52,10 @@ Conductor::Conductor() :
   m_performer(),
   m_partitioner(),
   m_avcost( 0.0 ),
-  m_timer()
+  m_npoin( 0 ),
+  m_timer(),
+  m_linsysbc(),
+  m_diag( 5, 0.0 )   // <- WRONG FOR EVERYTHING BUT A SINGLE COMPNS
 // *****************************************************************************
 //  Constructor
 //! \author J. Bakosi
@@ -96,22 +102,44 @@ Conductor::Conductor() :
   // do, otherwise, finish right away
   if ( nstep != 0 && term > t0 && dt < term-t0 ) {
 
+    // Enable SDAG waits
+    wait4report();
+
     // Print I/O filenames
     m_print.section( "Output filenames" );
     m_print.item( "Field", g_inputdeck.get< tag::cmd, tag::io, tag::output >()
                            + ".<chareid>" );
+    m_print.item( "Diagnostics",
+                  g_inputdeck.get< tag::cmd, tag::io, tag::diag >() );
 
     // Print output intervals
     m_print.section( "Output intervals" );
     m_print.item( "TTY", g_inputdeck.get< tag::interval, tag::tty>() );
     m_print.item( "Field", g_inputdeck.get< tag::interval, tag::field >() );
+    m_print.item( "Diagnostics", g_inputdeck.get< tag::interval, tag::diag >() );
     m_print.endsubsection();
+
+    // Output header for diagnostics output file
+    tk::DiagWriter dw( g_inputdeck.get< tag::cmd, tag::io, tag::diag >(),
+                       g_inputdeck.get< tag::flformat, tag::diag >(),
+                       g_inputdeck.get< tag::prec, tag::diag >() );
+    dw.header( { "r", "ru", "rv", "rw", "re" } );
 
     // Create (empty) worker array
     m_performer = PerformerProxy::ckNew();
+
+    // Create ExodusII reader for reading side sets from file. When creating
+    // LinSysMerger, er.readSideSets() reads all side sets from file, which is
+    // a serial read, then send the same copy to all PEs. Performers then will
+    // query the side sets from their local LinSysMerger branch.
+    tk::ExodusIIMeshReader
+      er( g_inputdeck.get< tag::cmd, tag::io, tag::input >() );
+
     // Create linear system merger chare group
     m_linsysmerger = LinSysMergerProxy::ckNew( thisProxy, m_performer,
+                       er.readSidesets(),
                        g_inputdeck.get< tag::component >().nprop() );
+
     // Create mesh partitioner Charm++ chare group and start partitioning mesh
     m_print.diagstart( "Reading mesh graph ..." );
     m_partitioner =
@@ -144,8 +172,8 @@ Conductor::load( uint64_t nelem )
   m_print.section( "Input mesh graph statistics" );
   m_print.item( "Number of tetrahedra", nelem );
   tk::ExodusIIMeshReader er(g_inputdeck.get< tag::cmd, tag::io, tag::input >());
-  auto npoin = er.readHeader();
-  m_print.item( "Number of nodes", npoin );
+  m_npoin = er.readHeader();
+  m_print.item( "Number of nodes", m_npoin );
 
   // Print out info on load distribution
   m_print.section( "Load distribution" );
@@ -239,6 +267,63 @@ Conductor::rowcomplete()
 }
 
 void
+Conductor::verifybc( CkReductionMsg* msg )
+// *****************************************************************************
+// Reduction target initiating verification of the boundary conditions set
+//! \param[in] msg Serialized and concatenated vectors of BC nodelists
+//! \details As a final step aggregating all node lists at which LinSysMerger
+//!   will set boundary conditions, this function initiates verification that
+//!   the aggregate boundary conditions to be set match the user's BCs. This
+//!   function is a Charm++ reduction target that is called when all linear
+//!   system merger branches have received from worker chares offering setting
+//!   boundary conditions. This is the first step of the verification. First
+//!   receives the aggregated node list at which LinSysMerger will set boundary
+//!   conditions. Then we do a broadcast to all workers (Performers) to query
+//!   the worker-owned node IDs on which a Dirichlet BC is set by the user (on
+//!   any component of any PDEs integrated by the worker).
+//! \author J. Bakosi
+// *****************************************************************************
+{
+  // Deserialize final BC node list vector set by LinSysMerger
+  PUP::fromMem creator( msg->getData() );
+  creator | m_linsysbc;
+  delete msg;
+
+  // Issue broadcast querying the BCs set
+  m_performer.requestBCs();
+}
+
+void
+Conductor::doverifybc( CkReductionMsg* msg )
+// *****************************************************************************
+// Reduction target as a 2nd (final) of the verification of BCs
+//! \param[in] msg Serialized and concatenated vectors of BC nodelists
+//! \details This function finishes off the verification that the aggregate
+//!   boundary conditions to be set by LinSysMerger objects match the user's
+//!   BCs. This function is a Charm++ reduction target that is called by
+//!   Performer::requestBCs() This is the last step of the verification, doing
+//!   the actual verification of the BCs after receiving the aggregate BC node
+//!   list from Performers querying user BCs from the input file.
+//! \see Conductor::verifybc()
+//! \author J. Bakosi
+// *****************************************************************************
+{
+  // Deserialize final user BC node list vector
+  PUP::fromMem creator( msg->getData() );
+  std::vector< std::size_t > bc;
+  creator | bc;
+  delete msg;
+
+  Assert( m_linsysbc == bc, "The boundary conditions node list to be set does "
+          "not match the boundary condition node list based on the side sets "
+          "given in the input file." );
+
+  m_print.diag( "Boundary conditions verified (DEBUG only)" );
+
+  m_linsysmerger.trigger_ver_complete();
+}
+
+void
 Conductor::initcomplete()
 // *****************************************************************************
 //  Reduction target indicating that all Performer chares have finished their
@@ -250,6 +335,29 @@ Conductor::initcomplete()
   header();   // print out time integration header
 }
 
+void
+Conductor::diagnostics( tk::real* d, std::size_t n )
+// *****************************************************************************
+// Reduction target optionally collecting diagnostics, e.g., residuals, from all
+// Performer chares
+//! \param[in] d Diagnostics (sums) collected over all chares
+//! \param[in] n Number of diagnostics in array d
+//! \author J. Bakosi
+// *****************************************************************************
+{
+  #ifdef NDEBUG
+  IGNORE(n);
+  #endif
+
+  Assert( n == m_diag.size(),
+          "Number of diagnostics contributed not equal to expected" );
+
+  // Finish computing diagnostics, i.e., divide sums by the number of samples
+  for (std::size_t i=0; i<m_diag.size(); ++i) m_diag[i] = d[i] / m_npoin;
+
+  trigger_diag_complete();
+}
+ 
 void
 Conductor::evaluateTime()
 // *****************************************************************************
@@ -269,17 +377,17 @@ Conductor::evaluateTime()
     m_t += m_dt;
     // Truncate the size of last time step
     if (m_t > term) m_t = term;
-    // Echo one-liner info on time step just taken
-    report();
   }
+
+  trigger_eval_complete();
 
   // if not final stage of time step or if neither max iterations nor max time
   // reached, will continue (by telling all linear system merger group
   // elements to prepare for a new rhs), otherwise, finish
-  if (m_stage < 1 || (std::fabs(m_t-term) > eps && m_it < nstep))
+  if (m_stage < 1 || (std::fabs(m_t-term) > eps && m_it < nstep)) {
     m_linsysmerger.enable_wait4rhs();
-  else
-    finish();
+    wait4report();      // re-enable SDAG wait for report
+  } else finish();
 }
 
 void
@@ -345,7 +453,7 @@ Conductor::header()
     "        dt - time step size\n"
     "       ETE - estimated time elapsed (h:m:s)\n"
     "       ETA - estimated time for accomplishment (h:m:s)\n"
-    "       out - output-saved flags (F: field)\n",
+    "       out - output-saved flags (F: field, D: diagnostics)\n",
     "\n      it             t            dt        ETE        ETA   out\n"
       " ---------------------------------------------------------------\n" );
   m_timer[ TimerTag::TIMESTEP ];
@@ -358,6 +466,17 @@ Conductor::report()
 //! \author J. Bakosi
 // *****************************************************************************
 {
+  bool diag = false;
+
+  // Append diagnostics file at selected times
+  if (!(m_it % g_inputdeck.get< tag::interval, tag::diag >())) {
+    tk::DiagWriter dw( g_inputdeck.get< tag::cmd, tag::io, tag::diag >(),
+                       g_inputdeck.get< tag::flformat, tag::diag >(),
+                       g_inputdeck.get< tag::prec, tag::diag >(),
+                       std::ios_base::app );
+    if (dw.diag( m_it, m_t, m_diag )) diag = true;
+  }
+
   if (!(m_it % g_inputdeck.get< tag::interval, tag::tty >())) {
 
     // estimate time elapsed and time for accomplishment
@@ -386,6 +505,7 @@ Conductor::report()
 
     // Augment one-liner with output indicators
     if (!(m_it % g_inputdeck.get<tag::interval,tag::field>())) m_print << 'F';
+    if (diag) m_print << 'D';
 
     m_print << '\n';
   }

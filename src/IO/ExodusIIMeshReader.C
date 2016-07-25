@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/ExodusIIMeshReader.C
   \author    J. Bakosi
-  \date      Wed 04 May 2016 08:46:58 AM MDT
+  \date      Tue 19 Jul 2016 09:33:40 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     ExodusII mesh reader
   \details   ExodusII mesh reader class definition. Currently, this is a bare
@@ -20,6 +20,7 @@
 #include "NoWarning/exodusII.h"
 
 #include "ExodusIIMeshReader.h"
+#include "ContainerUtil.h"
 #include "Exception.h"
 #include "UnsMesh.h"
 #include "Reorder.h"
@@ -33,6 +34,7 @@ ExodusIIMeshReader::ExodusIIMeshReader( const std::string& filename,
   m_inFile( 0 ),
   m_nnode( 0 ),
   m_neblk( 0 ),
+  m_neset( 0 ),
   m_eid(),
   m_eidt( m_nnpe.size(), -1 ),
   m_nel( m_nnpe.size(), -1 )
@@ -113,6 +115,7 @@ ExodusIIMeshReader::readHeader()
   ErrChk( ndim == 3, "Need a 3D mesh from ExodusII file " + m_filename);
 
   m_neblk = static_cast< std::size_t >( neblk );
+  m_neset = static_cast< std::size_t >( nelemset );
 
   return static_cast< std::size_t >( nnode );
 }
@@ -346,49 +349,48 @@ ExodusIIMeshReader::readElements( const std::array< std::size_t, 2 >& ext,
   for (auto i : c) conn.push_back( static_cast<std::size_t>(i)-1 );
 }
 
-std::unordered_map< std::size_t, std::vector< std::size_t > >
-ExodusIIMeshReader::readElements( const std::array< std::size_t, 2 >& ext,
-                                  tk::ExoElemType elemtype ) const
+std::map< int, std::vector< std::size_t > >
+ExodusIIMeshReader::readSidesets()
 // *****************************************************************************
-//  Read element connectivity of a single mesh cell from ExodusII file
-//! \param[in] ext Extents of element ids whose connectivity to read, both
-//!   inclusive
-//! \param[in] elemtype Element type
-//! \return Connectivity of mesh elements read
-//! \note Must be preceded by a call to readElemBlockIDs()
+//  Read node list of all side sets from ExodusII file
+//! \return Elem and side lists mapped to side set ids
 //! \author J. Bakosi
 // *****************************************************************************
 {
-  Assert( static_cast< std::size_t >(
-            std::accumulate(begin(m_eidt), end(m_eidt), 0) ) != -m_nnpe.size(),
-          "A call to ExodusIIMeshReader::readElement() must be preceded by a "
-          "call to ExodusIIMeshReader::readElemBlockIDs()" );
+  // Read ExodusII file header (fills m_neset)
+  readHeader();
 
-  auto bid = static_cast< std::size_t >( elemtype );
+  // Node lists mapped to side set ids
+  std::map< int, std::vector< std::size_t > > side;
 
-  auto num = ext[1] - ext[0] + 1;
-
-  std::vector< int > c( num * m_nnpe[bid] );
-
-  // Read element connectivity from file
-  ErrChk(
-    ex_get_n_elem_conn(
-      m_inFile, m_eidt[bid], static_cast<int64_t>(ext[0])+1,
-      static_cast<int64_t>(num), c.data() ) == 0,
-      "Failed to read element connectivity of elements [" +
-      std::to_string(ext[0]) + "..." + std::to_string(ext[1]) +
-      "] from block " + std::to_string(m_eidt[bid]) + " from ExodusII file: " +
-      m_filename );
-
-  // Return element connectivity using zero-based node indexing
-  std::unordered_map< std::size_t, std::vector< std::size_t > > conn;
-  std::size_t e = 0;
-  for (auto i : c) {
-    auto eid = ext[0] + e++ / m_nnpe[bid];
-    conn[ eid ].push_back( static_cast<std::size_t>(i)-1 );
+  if (m_neset > 0) {
+    // Read all side set ids from file
+    std::vector< int > ids( m_neset );
+    ErrChk( ex_get_side_set_ids( m_inFile, ids.data() ) == 0,
+            "Failed to read side set ids from ExodusII file: " + m_filename );
+    // Read in node list for all side sets
+    for (auto i : ids) {
+      int nface, ndist;
+      // Read number of faces and number of distribution factors in side set i
+      ErrChk( ex_get_side_set_param( m_inFile, i, &nface, &ndist ) == 0,
+              "Failed to read side set " + std::to_string(i) + " parameters "
+              "from ExodusII file: " + m_filename );
+      std::vector< int > df( static_cast< std::size_t >( nface ) );
+      std::vector< int > nodes( static_cast< std::size_t >( ndist ) );
+      // Read in node list for side set i
+      ErrChk( ex_get_side_set_node_list( m_inFile, i, df.data(), nodes.data() )
+                == 0, "Failed to read node list of side set " +
+                      std::to_string(i) + " from ExodusII file: " +
+                      m_filename );
+      // Make node list unique
+      tk::unique( nodes );
+      // Store 0-based node ID list as std::size_t vector instead of ints
+      auto& list = side[ i ];
+      for (auto&& n : nodes) list.push_back( static_cast<std::size_t>(n-1) );
+    }
   }
-  Assert( conn.size() == num, "Element connectivity incompletely built" );
-  return conn;
+
+  return side;
 }
 
 int

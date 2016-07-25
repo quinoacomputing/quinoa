@@ -2,7 +2,7 @@
 /*!
   \file      src/PDE/AdvDiffProblem.h
   \author    J. Bakosi
-  \date      Sun 01 May 2016 11:49:56 PM MDT
+  \date      Fri 08 Jul 2016 12:53:35 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Problem configurations for the advection-diffusion equation
   \details   This file defines policy classes for the advection-diffusion
@@ -32,20 +32,6 @@
 #include "Inciter/Options/Problem.h"
 
 namespace inciter {
-
-// //! Advection-diffusion PDE problem: user-defined
-// class AdvDiffProblemUserDefined {
-//   public:
-//     static void init( const ctr::InputDeck& deck,
-//                       const std::array< std::vector< tk::real >, 3 >& coord,
-//                       tk::MeshNodes& unk,
-//                       tk::ctr::ncomp_type component,
-//                       tk::ctr::ncomp_type offset,
-//                       tk::real t ) {}
-// 
-//     static ctr::ProblemType type() noexcept
-//     { return ctr::ProblemType::USER_DEFINED; }
-// };
 
 //! Advection-diffusion PDE problem: diffusion of a shear layer
 class AdvDiffProblemShearDiff {
@@ -157,11 +143,24 @@ class AdvDiffProblemShearDiff {
 //                       tk::ctr::ncomp_type component,
 //                       tk::ctr::ncomp_type offset,
 //                       tk::real t ) {}
-// 
+//
 //     static ctr::ProblemType type() noexcept
 //     { return ctr::ProblemType::SLOT_CYL; }
 // };
 
+// //! Advection-diffusion PDE problem: user-defined
+// class AdvDiffProblemUserDefined {
+//   public:
+//     static void init( const ctr::InputDeck& deck,
+//                       const std::array< std::vector< tk::real >, 3 >& coord,
+//                       tk::MeshNodes& unk,
+//                       tk::ctr::ncomp_type component,
+//                       tk::ctr::ncomp_type offset,
+//                       tk::real t ) {}
+//
+//     static ctr::ProblemType type() noexcept
+//     { return ctr::ProblemType::USER_DEFINED; }
+// };
 
 //! List of all advection-diffusion PDE's problem policies
 using AdvDiffProblems = boost::mpl::vector< //AdvDiffProblemUserDefined

@@ -1,23 +1,23 @@
 // *****************************************************************************
 /*!
-  \file      src/IO/TxtStatWriter.C
+  \file      src/IO/DiagWriter.C
   \author    J. Bakosi
-  \date      Wed 20 Jul 2016 10:34:41 AM MDT
+  \date      Wed 20 Jul 2016 10:36:42 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
-  \brief     Text statistics writer declaration
-  \details   This file declares the ASCII statistics writer class that
-     facilitates outputing statistics to text files.
+  \brief     Text diagnostics writer declaration
+  \details   This file declares the ASCII diagnostics writer class that
+     facilitates outputing diagnostics to text files.
 */
 // *****************************************************************************
 
 #include <iostream>
 #include <iomanip>
 
-#include "TxtStatWriter.h"
+#include "DiagWriter.h"
 
-using tk::TxtStatWriter;
+using tk::DiagWriter;
 
-TxtStatWriter::TxtStatWriter( const std::string& filename,
+DiagWriter::DiagWriter( const std::string& filename,
                               ctr::TxtFloatFormatType format,
                               kw::precision::info::expect::type precision,
                               std::ios_base::openmode mode ) :
@@ -26,7 +26,7 @@ TxtStatWriter::TxtStatWriter( const std::string& filename,
   m_width( std::max( 16, m_precision+8 ) )
 // *****************************************************************************
 //  Constructor
-//! \param[in] filename Output filename to which output the statistics
+//! \param[in] filename Output filename to which output the diagnostics
 //! \param[in] format Configure floating-point output format ASCII output
 //! \param[in] precision Configure precision for floating-point ASCII output
 //! \param[in] mode Configure file open mode
@@ -48,12 +48,10 @@ TxtStatWriter::TxtStatWriter( const std::string& filename,
 }
 
 void
-TxtStatWriter::header( const std::vector< std::string >& nameOrd,
-                       const std::vector< std::string >& nameCen ) const
+DiagWriter::header( const std::vector< std::string >& name ) const
 // *****************************************************************************
-//  Write out statistics file header
-//! \param[in] nameOrd Vector of strings with the names of ordinary moments
-//! \param[in] nameCen Vector of strings with the names of central moments
+//  Write out diagnostics file header
+//! \param[in] name Vector of strings with the names of diagnostics
 //! \author J. Bakosi
 // *****************************************************************************
 {
@@ -61,17 +59,10 @@ TxtStatWriter::header( const std::vector< std::string >& nameOrd,
   m_outFile << std::setw(m_width) << "2:t";
   std::stringstream out;
 
-  // Output names of ordinary moments
+  // Output names of diagnostics
   std::size_t column = 3;
-  for (const auto& n : nameOrd) {
-    out << column++ << ":<" << n << ">";
-    m_outFile << std::setw(m_width) << out.str();
-    out.str("");
-  }
-
-  // Output name of central moments
-  for (const auto& c : nameCen) {
-    out << column++ << ":<" << c << ">";
+  for (const auto& n : name) {
+    out << column++ << ':' << n;
     m_outFile << std::setw(m_width) << out.str();
     out.str("");
   }
@@ -80,30 +71,25 @@ TxtStatWriter::header( const std::vector< std::string >& nameOrd,
 }
 
 std::size_t
-TxtStatWriter::stat( uint64_t it,
-                     tk::real t,
-                     const std::vector< tk::real >& ordinary,
-                     const std::vector< tk::real >& central )
+DiagWriter::diag( uint64_t it,
+                  tk::real t,
+                  const std::vector< tk::real >& name )
 // *****************************************************************************
-//  Write out statistics
+//  Write out diagnostics
 //! \param[in] it Iteration counter
 //! \param[in] t Time
-//! \param[in] ordinary Vector with the ordinary moment statistics
-//! \param[in] central Vector with the central moment statistics
-//! \return The total number of statistics written to the output file
+//! \param[in] name Vector with the diagnostics
+//! \return The total number of diagnostics written to the output file
 //! \author J. Bakosi
 // *****************************************************************************
 {
   m_outFile << std::setw(10) << it;
   m_outFile << std::setw(m_width) << t;
 
-  // Output ordinary moments
-  for (const auto& o : ordinary) m_outFile << std::setw(m_width) << o;
-
-  // Output central moments
-  for (const auto& c : central) m_outFile << std::setw(m_width) << c;
+  // Output diagnostics
+  for (const auto& d : name) m_outFile << std::setw(m_width) << d;
 
   m_outFile << std::endl;
 
-  return ordinary.size() + central.size();
+  return name.size();
 }

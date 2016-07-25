@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Tags.h
   \author    J. Bakosi
-  \date      Tue 16 Feb 2016 05:25:58 PM MST
+  \date      Wed 20 Jul 2016 10:39:11 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Tags
   \details   Tags are unique types, used for metaprogramming.
@@ -17,6 +17,7 @@ namespace tag {
 struct io {};
 struct input {};
 struct output {};
+struct diag {};
 struct seed {};
 struct uniform_method {};
 struct gaussian_method {};
@@ -127,11 +128,17 @@ struct esup {};
 struct psup {};
 struct gid {};
 struct advdiff {};
+struct poisson {};
 struct euler {};
 struct compns {};
 struct problem {};
 struct diffusivity {};
 struct u0 {};
+struct bc_dirichlet {};
+struct material {};
+struct id {};
+struct cv {};
+struct k {};
 
 struct BirthdaySpacings {};
 struct Collision {};
