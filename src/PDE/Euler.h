@@ -2,7 +2,7 @@
 /*!
   \file      src/PDE/Euler.h
   \author    J. Bakosi
-  \date      Wed 20 Jul 2016 12:27:53 PM MDT
+  \date      Fri 22 Jul 2016 03:43:29 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Euler equations describing compressible flow
   \details   This file implements the time integration of the Euler equations
@@ -161,19 +161,6 @@ class Euler {
       std::vector< std::vector< tk::real > > out;
       // ...
       return out;
-   }
-
-   //! Contribute diagnostics from this PDE system
-   //! \param[in] U Solution vector at recent time step stage
-   //! \return Vector of L1 norms of all scalar components
-   std::vector< tk::real > diagnostics( const tk::MeshNodes& U ) const {
-     std::vector< tk::real > d( m_ncomp, 0.0 );
-     for (ncomp_t c=0; c<m_ncomp; ++c)
-       for (auto n : U.extract( c, m_offset ))
-         d[c] += std::abs( n );
-      std::transform( d.begin(), d.end(), d.begin(),
-                      [this]( tk::real& r ){ return r /= this->m_ncomp; } );
-     return d;
    }
 
   private:

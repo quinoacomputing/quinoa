@@ -135,6 +135,10 @@ struct problem {};
 struct diffusivity {};
 struct u0 {};
 struct bc_dirichlet {};
+struct material {};
+struct id {};
+struct cv {};
+struct k {};
 
 struct BirthdaySpacings {};
 struct Collision {};

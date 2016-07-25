@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/LinSysMerger.h
   \author    J. Bakosi
-  \date      Wed 20 Jul 2016 10:06:21 AM MDT
+  \date      Fri 22 Jul 2016 03:45:05 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ chare linear system merger group to solve a linear system
   \details   Charm++ chare linear system merger group used to collect and
@@ -616,6 +616,16 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       trigger_bcval_complete();
     }
 
+    //! Compute diagnostics (residuals) and contribute them back to host
+    //! \details Diagnostics: L1 norm for all components
+    void diagnostics() {
+      std::vector< tk::real > diag( m_ncomp, 0.0 );
+      for (std::size_t i=0; i<m_hypreSol.size()/m_ncomp; ++i)
+        for (std::size_t c=0; c<m_ncomp; ++c)
+          diag[c] += std::abs( m_hypreSol[i*m_ncomp+c] );
+      signal2host_diag( m_host, diag );
+    }
+
   private:
     HostProxy m_host;           //!< Host proxy
     WorkerProxy m_worker;       //!< Worker proxy
@@ -1067,6 +1077,14 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       using inciter::CkIndex_Conductor;
       Group::contribute(
        CkCallback( CkIndex_Conductor::redn_wrapper_setup(NULL), host ) );
+    }
+    //! Contribute diagnostics back to host
+    void signal2host_diag( const inciter::CProxy_Conductor& host,
+                           const std::vector< tk::real >& diag ) {
+      using inciter::CkIndex_Conductor;
+      Group::contribute( static_cast< int >( diag.size() * sizeof(tk::real) ),
+                         diag.data(), CkReduction::sum_double,
+        CkCallback( CkReductionTarget( Conductor, diagnostics), host ) );
     }
     ///@}
     #if defined(__clang__)

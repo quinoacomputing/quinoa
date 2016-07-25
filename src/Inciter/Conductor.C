@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Conductor.C
   \author    J. Bakosi
-  \date      Thu 21 Jul 2016 09:00:52 AM MDT
+  \date      Fri 22 Jul 2016 03:57:37 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Conductor drives the time integration of a PDE
   \details   Conductor drives the time integration of a PDE
@@ -55,7 +55,7 @@ Conductor::Conductor() :
   m_npoin( 0 ),
   m_timer(),
   m_linsysbc(),
-  m_diag( 5 )   // <- WRONG FOR EVERYTHING BUT A SINGLE COMPNS
+  m_diag( 5, 0.0 )   // <- WRONG FOR EVERYTHING BUT A SINGLE COMPNS
 // *****************************************************************************
 //  Constructor
 //! \author J. Bakosi
@@ -123,8 +123,7 @@ Conductor::Conductor() :
     tk::DiagWriter dw( g_inputdeck.get< tag::cmd, tag::io, tag::diag >(),
                        g_inputdeck.get< tag::flformat, tag::diag >(),
                        g_inputdeck.get< tag::prec, tag::diag >() );
-    dw.header( { "density", "x-momentum", "y-momentum", "z-momentum",
-                 "energy" } );
+    dw.header( { "r", "ru", "rv", "rw", "re" } );
 
     // Create (empty) worker array
     m_performer = PerformerProxy::ckNew();
@@ -353,11 +352,8 @@ Conductor::diagnostics( tk::real* d, std::size_t n )
   Assert( n == m_diag.size(),
           "Number of diagnostics contributed not equal to expected" );
 
-  // Add contribution from PE to total sums, i.e., u[i] += v[i] for all i
-  for (std::size_t i=0; i<m_diag.size(); ++i) m_diag[i] += d[i];
-
   // Finish computing diagnostics, i.e., divide sums by the number of samples
-  for (auto& m : m_diag) m /= m_npoin;
+  for (std::size_t i=0; i<m_diag.size(); ++i) m_diag[i] = d[i] / m_npoin;
 
   trigger_diag_complete();
 }
@@ -457,7 +453,7 @@ Conductor::header()
     "        dt - time step size\n"
     "       ETE - estimated time elapsed (h:m:s)\n"
     "       ETA - estimated time for accomplishment (h:m:s)\n"
-    "       out - output-saved flags (F: field)\n",
+    "       out - output-saved flags (F: field, D: diagnostics)\n",
     "\n      it             t            dt        ETE        ETA   out\n"
       " ---------------------------------------------------------------\n" );
   m_timer[ TimerTag::TIMESTEP ];
