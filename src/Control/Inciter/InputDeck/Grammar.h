@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Wed 20 Jul 2016 11:07:14 AM MDT
+  \date      Mon 25 Jul 2016 08:17:40 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Inciter's input deck grammar definition
   \details   Inciter's input deck grammar definition. We use the Parsing
@@ -42,7 +42,8 @@ namespace deck {
   template< typename keyword >
   using use = tk::grm::use< keyword,
                             ctr::InputDeck::keywords1,
-                            ctr::InputDeck::keywords2 >;
+                            ctr::InputDeck::keywords2,
+                            ctr::InputDeck::keywords3 >;
 
   // Inciter's InputDeck state
 
@@ -170,7 +171,7 @@ namespace deck {
                                     eq,
                                     param > {};
 
-  //! Dirichlet boundary conditions
+  //! Dirichlet boundary conditions block
   template< class eq, class param >
   struct bc_dirichlet :
            pegtl::ifmust<
@@ -187,7 +188,7 @@ namespace deck {
                                           eq,
                                           param > > > {};
 
-  //! initial conditions for compressible Navier-Stokes
+  //! initial conditions block for compressible Navier-Stokes
   template< class eq, class param >
   struct ic_compns :
            pegtl::ifmust<
@@ -203,6 +204,25 @@ namespace deck {
                                           tk::grm::check_vector,
                                           eq,
                                           param > > > {};
+
+  //! put in material property for equation matching keyword
+  template< typename eq, typename keyword, typename property >
+  struct material_property :
+         tk::grm::process< Stack, use< keyword >,
+           tk::grm::Store_back< Stack, tag::param, eq, property > > {};
+
+  //! Material properties block for compressible Navier-Stokes
+  template< class eq >
+  struct material_properties :
+           pegtl::ifmust<
+             tk::grm::readkw< Stack, use< kw::material >::pegtl_string >,
+             tk::grm::block< Stack,
+                             use< kw::end >,
+                             material_property< eq, kw::id, tag::id >,
+                             material_property< eq, kw::mat_gamma, tag::gamma >,
+                             material_property< eq, kw::mat_mu, tag::mu >,
+                             material_property< eq, kw::mat_cv, tag::cv >,
+                             material_property< eq, kw::mat_k, tag::k > > > {};
 
   //! advection-diffusion partial differential equation for a scalar
   struct advdiff :
@@ -269,6 +289,7 @@ namespace deck {
                                             tag::compns,
                                             tag::problem >,
                            //ic_compns< tag::compns, tag::ic > >,
+                           material_properties< tag::compns >,
                            bc_dirichlet< tag::compns, tag::bc_dirichlet > >,
            check_errors< tag::compns, check_compns > > {};
 

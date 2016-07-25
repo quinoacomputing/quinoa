@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.h
   \author    J. Bakosi
-  \date      Fri 22 Jul 2016 12:20:20 PM MDT
+  \date      Fri 22 Jul 2016 03:42:54 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Performer advances a system of systems of PDEs
   \details   Performer advances a system of systems of PDEs. There are a
@@ -202,9 +202,6 @@ class Performer : public CBase_Performer {
 
     //! Output mesh-based fields to file
     void writeFields( tk::real time );
-
-    //! Compute and contribute diagnostics to host
-    void diagnostics();
 };
 
 } // inciter::

@@ -2,13 +2,14 @@
 /*!
   \file      src/Control/Inciter/Types.h
   \author    J. Bakosi
-  \date      Wed 20 Jul 2016 11:01:33 AM MDT
+  \date      Mon 25 Jul 2016 08:05:41 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Types for Incitier's parsers
-  \details   Types for Incitier's parsers. This file defines the components of the
-    tagged tuple that stores heteroegeneous objects in a hierarchical way. These
-    components are therefore part of the grammar stack that is filled during
-    parsing (both command-line argument parsing and control file parsing).
+  \details   Types for Incitier's parsers. This file defines the components of
+    the agged tuple that stores heteroegeneous objects in a hierarchical way.
+    These components are therefore part of the grammar stack that is filled
+    during parsing (both command-line argument parsing and control file
+    parsing).
 */
 // *****************************************************************************
 #ifndef IncitierTypes_h
@@ -88,16 +89,26 @@ using PoissonPDEParameters = tk::tuple::tagged_tuple<
 
 //! Euler equation parameters storage
 using EulerPDEParameters = tk::tuple::tagged_tuple<
-  tag::problem,     std::vector< ProblemType >,
+  tag::problem,      std::vector< ProblemType >,
   tag::bc_dirichlet, std::vector< std::vector<
                        kw::sideset::info::expect::type > >
 >;
 
 //! Compressible Navier-Stokes equation parameters storage
 using CompNSPDEParameters = tk::tuple::tagged_tuple<
-  tag::problem,     std::vector< ProblemType >,
+  tag::problem,      std::vector< ProblemType >,
   tag::bc_dirichlet, std::vector< std::vector<
-                       kw::sideset::info::expect::type > >
+                       kw::sideset::info::expect::type > >,
+  //! Material ID
+  tag::id,    std::vector< kw::id::info::expect::type >,
+  //! Ratio of spec heats
+  tag::gamma, std::vector< kw::mat_gamma::info::expect::type >,
+  //! Dynamic viscosity
+  tag::mu,    std::vector< kw::mat_mu::info::expect::type >,
+  //! Spec. heat at const vol.
+  tag::cv,    std::vector< kw::mat_cv::info::expect::type >,
+   //! Heat conductivity
+  tag::k,     std::vector< kw::mat_k::info::expect::type >
 >;
 
 //! Parameters storage

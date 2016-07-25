@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.C
   \author    J. Bakosi
-  \date      Thu 21 Jul 2016 08:46:28 AM MDT
+  \date      Fri 22 Jul 2016 03:42:46 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Performer advances a PDE
   \details   Performer advances a PDE. There are a potentially
@@ -515,26 +515,6 @@ Performer::advance( uint8_t stage, tk::real dt, uint64_t it, tk::real t )
 }
 
 void
-Performer::diagnostics()
-// *****************************************************************************
-// Compute and contribute diagnostics to host
-//! \author J. Bakosi
-// *****************************************************************************
-{
-  std::vector< tk::real > diag;
-  for (const auto& eq : g_pdes) {
-    auto d = eq.diagnostics( m_u );
-    diag.insert( end(diag), begin(d), end(d) );
-  }
-
-  // Create Charm++ callback function for reduction
-  CkCallback cb( CkReductionTarget( Conductor, diagnostics ), m_conductor );
-  // Contribute partial sums to host via Charm++ reduction
-  contribute( static_cast< int >( diag.size() * sizeof(tk::real) ),
-              diag.data(), CkReduction::sum_double, cb );
-}
-
-void
 Performer::updateSolution( const std::vector< std::size_t >& gid,
                            const std::vector< tk::real >& u )
 // *****************************************************************************
@@ -575,8 +555,8 @@ Performer::updateSolution( const std::vector< std::size_t >& gid,
 
       // Optionally contribute diagnostics, e.g., residuals, back to host
       if (!((m_it+1) % g_inputdeck.get< tag::interval, tag::diag >()))
-        diagnostics();
-      else // if if no diagnostics at this time, signal back to host
+        m_linsysmerger.ckLocalBranch()->diagnostics();
+      else // if no diagnostics at this time, still signal back to host
         contribute(
           CkCallback( CkReductionTarget( Conductor, diagcomplete ),
                       m_conductor ) );

@@ -2,7 +2,7 @@
 /*!
   \file      src/PDE/CompNSProblem.h
   \author    J. Bakosi
-  \date      Wed 20 Jul 2016 08:49:21 AM MDT
+  \date      Fri 22 Jul 2016 02:49:02 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Problem configurations for the compressible Navier-Stokes equation
   \details   This file defines policy classes for the compressible Navier-Stokes
@@ -58,7 +58,7 @@ class CompNSProblemUserDefined {
          unk( i, 1, offset ) = 0.0;     // density * velocity
          unk( i, 2, offset ) = 0.0;
          unk( i, 3, offset ) = -1.0;
-         unk( i, 4, offset ) = 1.0;     // energy
+         unk( i, 4, offset ) = 293.0;     // density * specific total energy
       }
     }
 
