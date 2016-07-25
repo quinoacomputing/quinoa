@@ -14,6 +14,13 @@
 
 #include <string>
 #include <cmath>
+#include <array>
+
+#ifdef HAS_MKL
+  #include "NoWarning/mkl_lapacke.h"
+#else
+  #include "NoWarning/lapacke.h"
+#endif
 
 #include <gm19.h>
 
@@ -117,7 +124,7 @@ Performer::setup()
   // Read coordinates of owned and received mesh nodes
   readCoords();
   // Generate particles
-  genPar( 2 );
+  genPar( 1 );
   // Output chare mesh to file
   writeMesh();
   // Output mesh-based fields metadata to file
@@ -545,6 +552,7 @@ Performer::genPar( std::size_t npar )
     
     std::array< tk::real, 4 > N;
     rng.uniform( thisIndex, 3, N.data() );
+    N[0]=0.15;N[1]=0.22;N[2]=0.31;
     N[3] = 1.0 - N[0] - N[1] - N[2];
     if ( std::min(N[0],1-N[0]) > 0 && std::min(N[1],1-N[1]) > 0 &&
          std::min(N[2],1-N[2]) > 0 && std::min(N[3],1-N[3]) > 0 ) {
@@ -557,6 +565,9 @@ Performer::genPar( std::size_t npar )
         yp[i] = y[A]*N[0] + y[B]*N[1] + y[C]*N[2] + y[D]*N[3];
         zp[i] = z[A]*N[0] + z[B]*N[1] + z[C]*N[2] + z[D]*N[3];
       }
+      std::cout<<"xp = "<<xp[i]<<std::endl;
+      std::cout<<"yp = "<<yp[i]<<std::endl;
+      std::cout<<"zp = "<<zp[i]<<std::endl;
     } else --i; // retry if particle was not generated into tetrahedron
   }
 
@@ -597,25 +608,73 @@ Performer::parinel( const std::vector< tk::real >& xp,
       const auto A = m_inpoel[e*4+0];
       const auto B = m_inpoel[e*4+1];
       const auto C = m_inpoel[e*4+2]; 
-      const auto D = m_inpoel[e*4+3]; // We definitely need this!
+      const auto D = m_inpoel[e*4+3];
       
       // Evaluate shapefunctions at particle locations using LAPACK
-      // NOTE: you have to build the matrix. 
-      std::array< tk::real, 4 > N;
+      // 
+      //    | xp |   | x1 x2 x3 x4 |   | N1 |
+      //    | yp | = | y1 y2 y3 y4 | • | N2 |
+      //    | zp |   | z1 z2 z3 z4 |   | N3 |
+      //    | 1  |   | 1  1  1  1  |   | N4 |
+      //
+     
+      lapack_int INFO;
+      lapack_int IPIV[4];
+      tk::real N[4] = { xp[i],
+                        yp[i],
+                        zp[i],
+                          1.0 };
+      tk::real  Ar[16] = { x[A], x[B], x[C], x[D],
+                           y[A], y[B], y[C], y[D],
+                           z[A], z[B], z[C], z[D],
+                            1.0,  1.0,  1.0,  1.0 };
+      
+      // DGETRF computes an LU factorization of a general MxN matrix A
+      // Arguments:
+      // Matrix_layout (input) int     - Row or column major
+      // M (input) int                 - Number of rows in A
+      // N (input) int                 - Number of columns in A
+      // A (input/output) double array - Entry: MxN matrix to be factored
+      //                                 Exit: L and U from factorization
+      // LDA (input) int               - Leading dimension of the array A
+      // IPIV (output) int array       - The pivot indicies
+      INFO = LAPACKE_dgetrf(LAPACK_COL_MAJOR, 4, 4, Ar, 4, IPIV);
+      if (INFO != 0) {
+        std::cout << "LU factorization failed!" << std::endl;
+        std::cout << "DEBUG: INFO = " << INFO << std::endl;
+        CkExit();
+      }
 
-      N[0]=0;
-      N[1]=0;
-      N[2]=0;
-      N[3]=0;
-
+      // Solving the linear system A * X = B with a general NxN matrix A using
+      // the LU factorization computed by dgetrf()
+      // Arguments:
+      // Matrix_layout (input) int     - Row or column major
+      // TRANS (input) char            - = 'N': A*X=B (No transpose)
+      //                                 = 'T': A'*X=B (Transpose)
+      //                                 = 'C': A'*X=B (Conjugate transpose)
+      // N (input) int                 - The order of the matrix A
+      // NRHS (input) int              - The number of right hand sides
+      // A (input) double array        - L and U factors from factorization
+      //                                 A=P*L*U computed in dgetrf()
+      // LDA (input) int               - The leading dimension of the array A
+      // IPIV (input) int array        - The pivot indicies from dgetrf()
+      // B (input/output) double array - Entry: rhs matrix B
+      //                                 Exit: the solution matrix X
+      // LDB (input) int               - The leading dimension of B
+      INFO = LAPACKE_dgetrs(LAPACK_COL_MAJOR, 'T', 4, 1, Ar, 4, IPIV, N, 4);
+      if (INFO != 0) {
+        std::cout << "Linear system solve failed!" << std::endl;
+        std::cout << "DEBUG: INFO = " << INFO << std::endl;
+        CkExit();
+      }
 
       // Check to see if particle i is in element e
       if ( std::min(N[0],1-N[0]) > 0 && std::min(N[1],1-N[1]) > 0 &&
            std::min(N[2],1-N[2]) > 0 && std::min(N[3],1-N[3]) > 0 ) {
-        // You get velocities fromt the field data m_u. This should be passed
+        // You get velocities from the field data m_u. This should be passed
         // back to Tracker to move that particle one time step.
         // Write out particle id and element id (should print once per particle)
-        CkPrintf("Particle %d on element %d\n",i,e);
+        std::cout<<"Particle "<<i<<" is in element "<<e<<std::endl;
       }
     }
   }
