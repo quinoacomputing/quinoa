@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/ExodusIIMeshReader.h
   \author    J. Bakosi
-  \date      Mon 02 May 2016 12:30:40 PM MDT
+  \date      Tue 19 Jul 2016 09:33:31 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     ExodusII mesh reader
   \details   ExodusII mesh reader class declaration.
@@ -15,6 +15,7 @@
 #include <iosfwd>
 #include <vector>
 #include <array>
+#include <map>
 #include <unordered_map>
 
 #include "NoWarning/exodusII.h"
@@ -93,10 +94,8 @@ class ExodusIIMeshReader {
                        tk::ExoElemType elemtype,
                        std::vector< std::size_t >& conn ) const;
 
-    //! Read element connectivity of a number of mesh cells from file
-    std::unordered_map< std::size_t, std::vector< std::size_t > >
-    readElements( const std::array< std::size_t, 2 >& extent,
-                  tk::ExoElemType elemtype ) const;
+    //! Read node list of all side sets from ExodusII file
+    std::map< int, std::vector< std::size_t > > readSidesets();
 
     //!  Return number of elements in a mesh block in the ExodusII file
     int nel( tk::ExoElemType elemtype ) const;
@@ -125,17 +124,16 @@ class ExodusIIMeshReader {
     void readAllElements( UnsMesh& mesh );
 
     const std::string m_filename;          //!< File name
-
     //! \brief List of number of nodes per element for different element types
     //!   supported in the order of tk::ExoElemType
     const std::array< std::size_t, 2 > m_nnpe {{ 4, 3 }};
-
     int m_inFile;                       //!< ExodusII file handle
     std::size_t m_nnode;                //!< Number of nodes in file
     std::size_t m_neblk;                //!< Number of element blocks in file
+    std::size_t m_neset;                //!< Number of element sets in file
     std::vector< int > m_eid;           //!< Element block IDs
     std::vector< int > m_eidt;          //!< Element block IDs mapped to enum
-    std::vector< int > m_nel; //!< Nunmber of elements in a block mapped to enum
+    std::vector< int > m_nel;  //!< Number of elements in a block mapped to enum
 };
 
 } // tk::

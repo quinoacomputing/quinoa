@@ -2,13 +2,13 @@
 /*!
   \file      src/Inciter/Performer.h
   \author    J. Bakosi
-  \date      Wed 04 May 2016 10:44:49 AM MDT
+  \date      Fri 22 Jul 2016 03:42:54 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
-  \brief     Performer advances a PDE
-  \details   Performer advances a PDE. There are a potentially
-    large number of Performer Charm++ chares created by Conductor. Each
-    performer gets a chunk of the full load (part of the mesh) and does the
-    same: initializes and advances a PDE in time.
+  \brief     Performer advances a system of systems of PDEs
+  \details   Performer advances a system of systems of PDEs. There are a
+    potentially large number of Performer Charm++ chares created by Conductor.
+    Each performer gets a chunk of the full load (part of the mesh) and does the
+    same: initializes and advances a system of systems of PDEs in time.
 */
 // *****************************************************************************
 #ifndef Performer_h
@@ -26,6 +26,7 @@
 #include "Types.h"
 #include "MeshNodes.h"
 #include "DerivedData.h"
+#include "VectorReducer.h"
 #include "Inciter/InputDeck/InputDeck.h"
 
 #include "NoWarning/conductor.decl.h"
@@ -36,6 +37,7 @@ namespace tk { class ExodusIIMeshWriter; }
 namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
+extern CkReduction::reducerType VerifyBCMerger;
 
 //! Performer Charm++ chare used to advance a PDE in time
 class Performer : public CBase_Performer {
@@ -64,8 +66,27 @@ class Performer : public CBase_Performer {
       #pragma GCC diagnostic pop
     #endif
 
+    //! \brief Configure Charm++ reduction types
+    //! \details Since this is a [nodeinit] routine, see linsysmerger.ci, the
+    //!   Charm++ runtime system executes the routine exactly once on every
+    //!   logical node early on in the Charm++ init sequence. Must be static as
+    //!   it is called without an object. See also: Section "Initializations at
+    //!   Program Startup" at in the Charm++ manual
+    //!   http://charm.cs.illinois.edu/manuals/html/charm++/manual.html.
+    static void registerVerifyBCMerger()
+    { VerifyBCMerger = CkReduction::addReducer( tk::mergeVector ); }
+
     //! Initialize mesh IDs, element connectivity, coordinates
     void setup();
+
+    //! Request owned node IDs on which a Dirichlet BC is set by the user
+    void requestBCs();
+
+    //! Look up and return old node ID for new one
+    void oldID( int frompe, const std::vector< std::size_t >& newids );
+
+    //! Look up boundary condition values at node IDs for all PDEs
+    void bcval( int frompe, const std::vector< std::size_t >& nodes );
 
     //! Initialize communication and mesh data
     void init( tk::real dt );
@@ -128,7 +149,7 @@ class Performer : public CBase_Performer {
     std::pair< std::vector< std::size_t >, std::vector< std::size_t > > m_el;
     //! Alias to element connectivity in m_el
     decltype(m_el.first)& m_inpoel = m_el.first;
-    //! Alias to global node IDs of owned elements in in m_el
+    //! Alias to global node IDs of owned elements in m_el
     decltype(m_el.second)& m_gid = m_el.second;
     //!< Local node ids associated to the global ones of owned elements
     std::unordered_map< std::size_t, std::size_t > m_lid;
@@ -143,6 +164,15 @@ class Performer : public CBase_Performer {
 
     //! Send off global row IDs to linear system merger, setup global->local IDs
     void setupIds();
+
+    //! Extract node IDs from element side sets and match to BCs
+    std::vector< std::size_t > queryBCs();
+
+    //! Query old node IDs for a list of new node IDs
+    std::vector< std::size_t > old( const std::vector< std::size_t >& newids );
+
+    //! Send node list to our LinSysMerger branch which is then used to set BCs
+    void sendBCs( const std::vector< std::size_t >& bc );
 
     //! Read coordinates of mesh nodes given
     void readCoords();

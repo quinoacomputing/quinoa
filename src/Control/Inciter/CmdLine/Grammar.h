@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/CmdLine/Grammar.h
   \author    J. Bakosi
-  \date      Fri 29 May 2015 10:31:39 PM MDT
+  \date      Wed 20 Jul 2016 11:08:20 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Inciter's command line grammar definition
   \details   Grammar definition for parsing the command line. We use the Parsing
@@ -98,7 +98,8 @@ namespace cmd {
                      helpkw,
                      io< use< kw::control >, tag::control >,
                      io< use< kw::input >, tag::input >,
-                     io< use< kw::output >, tag::output > > {};
+                     io< use< kw::output >, tag::output >,
+                     io< use< kw::diagnostics >, tag::diag > > {};
 
   //! \brief Grammar entry point: parse keywords until end of string
   //! \author J. Bakosi

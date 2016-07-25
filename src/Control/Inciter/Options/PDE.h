@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/Options/PDE.h
   \author    J. Bakosi
-  \date      Tue Jul 19 22:22:55 2016
+  \date      Wed 20 Jul 2016 07:39:36 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Partial differential equation options and associations for inciter
   \details   Partial differential equation options and associations for inciter
@@ -24,6 +24,7 @@ namespace ctr {
 //! Differential equation types
 enum class PDEType : uint8_t { NO_PDE=0,
                                ADV_DIFF,
+                               POISSON,
                                EULER,
                                COMPNS };
 
@@ -41,6 +42,7 @@ class PDE : public tk::Toggle< PDEType > {
   public:
     // List valid expected choices to make them also available at compile-time
     using keywords = boost::mpl::vector< kw::advdiff
+                                       , kw::poisson
                                        , kw::euler
                                        , kw::compns
                                        >;
@@ -52,11 +54,13 @@ class PDE : public tk::Toggle< PDEType > {
         //! Enums -> names
         { { PDEType::NO_PDE, "n/a" },
           { PDEType::ADV_DIFF, kw::advdiff::name() },
+          { PDEType::POISSON, kw::poisson::name() },
           { PDEType::EULER, kw::euler::name() },
           { PDEType::COMPNS, kw::compns::name() } },
         //! keywords -> Enums
         { { "no_pde", PDEType::NO_PDE },
           { kw::advdiff::string(), PDEType::ADV_DIFF },
+          { kw::poisson::string(), PDEType::POISSON },
           { kw::euler::string(), PDEType::EULER },
           { kw::compns::string(), PDEType::COMPNS } } ) {}
 };

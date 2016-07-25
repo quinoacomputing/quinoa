@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/CmdLine/CmdLine.h
   \author    J. Bakosi
-  \date      Tue 10 May 2016 10:03:22 AM MDT
+  \date      Wed 20 Jul 2016 11:07:59 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Inciter's command line definition
   \details   This file defines the heterogeneous stack that is used for storing
@@ -56,6 +56,7 @@ class CmdLine : public tk::Control<
                                     , kw::control
                                     , kw::input
                                     , kw::output
+                                    , kw::diagnostics
                                     >;
 
     //! \brief Constructor: set all defaults.
@@ -91,6 +92,7 @@ class CmdLine : public tk::Control<
     //! \author J. Bakosi
     CmdLine( tk::ctr::HelpFactory ctrinfo = tk::ctr::HelpFactory() ) {
       set< tag::io, tag::output >( "out" );
+      set< tag::io, tag::diag >( "diag" );
       set< tag::virtualization >( 0.0 );
       set< tag::verbose >( false ); // Quiet output by default
       // Initialize help: fill from own keywords + add map passed in
