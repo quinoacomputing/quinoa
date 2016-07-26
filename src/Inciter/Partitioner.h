@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Partitioner.h
   \author    J. Bakosi
-  \date      Fri 22 Jul 2016 11:24:22 AM MDT
+  \date      Tue 26 Jul 2016 11:22:13 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ chare partitioner group used to perform mesh partitioning
   \details   Charm++ chare partitioner group used to perform mesh partitioning.
@@ -726,7 +726,9 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     //!   function, which allows specifying the PE on which the array element is
     //!   created and we send each chare array element the global mesh element
     //!   connectivity, i.e., node IDs, it contributes to and the old->new node
-    //!   ID map.
+    //!   ID map. Optionally, we also create the same number of Tracker chares
+    //!   (the same way, on the same PEs), which advance optional passive
+    //!   tracker particles across the domain.
     void create() {
       // Initiate asynchronous reduction across all Partitioner objects
       // computing the average communication cost of merging the linear system
@@ -736,10 +738,19 @@ class Partitioner : public CBase_Partitioner< HostProxy,
       auto mynchare = chunksize;
       if (CkMyPe() == CkNumPes()-1) mynchare += m_nchare % CkNumPes();
       // Create worker chare array elements
+      createWorkers( chunksize, mynchare );
+      // Broadcast our bounds of global node IDs to all linear system mergers
+      m_linsysmerger.bounds( CkMyPe(), m_lower, m_upper );
+    }
+
+    //! Create chare array elements on this PE
+    //! \param[in] chunksize The number of chares created by PEs 0 ... N-2
+    //! \param[in] mynchare The number of worker chares to create on this PE
+    void createWorkers( int chunksize, int mynchare ) {
       for (int c=0; c<mynchare; ++c) {
         // Compute chare ID
         auto cid = CkMyPe() * chunksize + c;
-        // Create array element
+        // Create performer array element
         m_worker[ cid ].insert( m_host,
                                 m_linsysmerger,
                                 m_tracker,
@@ -747,12 +758,11 @@ class Partitioner : public CBase_Partitioner< HostProxy,
                                 tk::cref_find( m_chcid, cid ),
                                 m_nchare,
                                 CkMyPe() );
+        // Create tracker array element
         m_tracker[ cid ].insert( m_host, m_worker, CkMyPe() );
       }
       m_worker.doneInserting();
       m_tracker.doneInserting();
-      // Broadcast our bounds of global node IDs to all linear system mergers
-      m_linsysmerger.bounds( CkMyPe(), m_lower, m_upper );
     }
 
     //! Compute communication cost of linear system merging for our PE
