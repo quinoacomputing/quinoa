@@ -87,6 +87,7 @@ Performer::Performer(
   m_el( tk::global2local( conn ) ),     // fills m_inpoel and m_gid
   m_lid(),
   m_coord(),
+  m_pcoord(),
   m_psup( tk::genPsup( m_inpoel, 4, tk::genEsup(m_inpoel,4) ) ),
   m_u( m_gid.size(), g_inputdeck.get< tag::component >().nprop() ),
   m_uf( m_gid.size(), g_inputdeck.get< tag::component >().nprop() ),
@@ -541,7 +542,11 @@ Performer::genPar( std::size_t npar )
   auto rng = tk::RNGSSE< gm19_state, unsigned, gm19_generate_ >
                        ( static_cast<unsigned>(m_nperf), gm19_init_sequence_ );
 
-  std::vector< tk::real > xp(npar), yp(npar), zp(npar);
+  // Create a reference of particle coordinates
+  auto& xp = m_pcoord[0]; xp.push_back(npar);
+  auto& yp = m_pcoord[1]; yp.push_back(npar);
+  auto& zp = m_pcoord[2]; zp.push_back(npar);
+  // Create a reference of mesh point coordinates
   const auto& x = m_coord[0];
   const auto& y = m_coord[1];
   const auto& z = m_coord[2];
@@ -552,7 +557,6 @@ Performer::genPar( std::size_t npar )
     
     std::array< tk::real, 4 > N;
     rng.uniform( thisIndex, 3, N.data() );
-    N[0]=0.15;N[1]=0.22;N[2]=0.31;
     N[3] = 1.0 - N[0] - N[1] - N[2];
     if ( std::min(N[0],1-N[0]) > 0 && std::min(N[1],1-N[1]) > 0 &&
          std::min(N[2],1-N[2]) > 0 && std::min(N[3],1-N[3]) > 0 ) {
@@ -581,14 +585,12 @@ Performer::genPar( std::size_t npar )
   // first time step each particle will have a completely different position.
   // This is where solving for the shape functions comes into play since now
   // there is no guarantee that the particle will be in the same element. 
-  parinel( xp, yp, zp, npar );
+  //parinel( xp, yp, zp, npar );
+  parinel( npar );
 }
 
 void
-Performer::parinel( const std::vector< tk::real >& xp,
-                    const std::vector< tk::real >& yp,
-                    const std::vector< tk::real >& zp,
-                    std::size_t npar )
+Performer::parinel( std::size_t npar )
 // *****************************************************************************
 // Receive particle coordinate information and check which element its in
 //! \param[in] xp, yp, zp Particle coordinates
@@ -596,6 +598,10 @@ Performer::parinel( const std::vector< tk::real >& xp,
 //! \author F.J. Gonzalez
 // *****************************************************************************
 {
+  // Create a reference of particle coordinates
+  auto& xp = m_pcoord[0];
+  auto& yp = m_pcoord[1];
+  auto& zp = m_pcoord[2];
   // Create a reference of mesh point coordinates
   const auto& x = m_coord[0];
   const auto& y = m_coord[1];

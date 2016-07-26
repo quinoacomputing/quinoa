@@ -108,10 +108,7 @@ class Performer : public CBase_Performer {
 
     //! Receive particles coordinate information 
     //! NOTE: Currently hard coding particle locations
-    void parinel( const std::vector< tk::real >& xp,
-                  const std::vector< tk::real >& yp,
-                  const std::vector< tk::real >& zp,
-                  std::size_t npar );  
+    void parinel( std::size_t npar );  
 
     /** @name Pack/Unpack: Serialize Performer object for Charm++ */
     ///@{
@@ -133,6 +130,7 @@ class Performer : public CBase_Performer {
       if (p.isUnpacking()) { m_inpoel = m_el.first; m_gid = m_el.second; }
       p | m_lid;
       p | m_coord;
+      p | m_pcoord;
       p | m_psup;
       p | m_u; p | m_uf; p | m_un;
       p | m_lhsd; p | m_lhso;
@@ -172,6 +170,8 @@ class Performer : public CBase_Performer {
     std::unordered_map< std::size_t, std::size_t > m_lid;
     //! Mesh point coordinates
     std::array< std::vector< tk::real >, 3 > m_coord;
+    //! Particle coordinates
+    std::array< std::vector< tk::real >, 3 > m_pcoord;
     //! Points surrounding points of our chunk of the mesh
     std::pair< std::vector< std::size_t >, std::vector< std::size_t > > m_psup;
     //! Unknown/solution vector: global mesh point row ids and values

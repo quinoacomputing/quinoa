@@ -35,10 +35,7 @@ module performer {
       entry void updateSolution( const std::vector< std::size_t >& gid,
                                  const std::vector< tk::real >& sol );
       entry void advance( uint8_t stage, tk::real dt, uint64_t it, tk::real t );
-      entry void parinel( const std::vector< tk::real >& xp,
-                          const std::vector< tk::real >& yp,
-                          const std::vector< tk::real >& zp,
-                          std::size_t npar );
+      entry void parinel( std::size_t npar );
     };
 
   } // inciter::
