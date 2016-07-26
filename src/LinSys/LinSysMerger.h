@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/LinSysMerger.h
   \author    J. Bakosi
-  \date      Tue 19 Jul 2016 09:47:26 AM MDT
+  \date      Tue 26 Jul 2016 07:08:29 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ chare linear system merger group to solve a linear system
   \details   Charm++ chare linear system merger group used to collect and
@@ -572,7 +572,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
        if (m_oldbc.size() == m_bc.size()) {
          std::vector< std::size_t > b;
          for (const auto& c : m_oldbc)
-           b.insert( end(b), begin(c.second), end(c.second) );
+           b.insert( end(b), c.second.cbegin(), c.second.cend() );
          signal2host_verifybc( m_host, b );
        }
     }
@@ -584,12 +584,12 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
     //!   The size of the vectors is the number of PDEs integrated times the
     //!   number of scalar components in all PDEs.
     void charebcval( const std::unordered_map< std::size_t,
-                             std::vector< std::pair< bool, tk::real > > > bcv )
+                       std::vector< std::pair< bool, tk::real > > >& bcv )
     {
-      for (auto&& n : bcv) {
+      for (auto& n : bcv) {
         Assert( n.second.size() == m_ncomp, "The total number of scalar "
           "components does not equal that of set in the BC data structure." );
-        m_bcval[ n.first ] = std::move(n.second);
+        m_bcval[ n.first ] = n.second;
       }
       if (--m_nchbcval == 0) trigger_bcval_complete();
     }
@@ -614,6 +614,16 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       trigger_lhsbc_complete();
       trigger_lhs_complete();
       trigger_bcval_complete();
+    }
+
+    //! Compute diagnostics (residuals) and contribute them back to host
+    //! \details Diagnostics: L1 norm for all components
+    void diagnostics() {
+      std::vector< tk::real > diag( m_ncomp, 0.0 );
+      for (std::size_t i=0; i<m_hypreSol.size()/m_ncomp; ++i)
+        for (std::size_t c=0; c<m_ncomp; ++c)
+          diag[c] += std::abs( m_hypreSol[i*m_ncomp+c] );
+      signal2host_diag( m_host, diag );
     }
 
   private:
@@ -1067,6 +1077,14 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       using inciter::CkIndex_Conductor;
       Group::contribute(
        CkCallback( CkIndex_Conductor::redn_wrapper_setup(NULL), host ) );
+    }
+    //! Contribute diagnostics back to host
+    void signal2host_diag( const inciter::CProxy_Conductor& host,
+                           const std::vector< tk::real >& diag ) {
+      using inciter::CkIndex_Conductor;
+      Group::contribute( static_cast< int >( diag.size() * sizeof(tk::real) ),
+                         diag.data(), CkReduction::sum_double,
+        CkCallback( CkReductionTarget( Conductor, diagnostics), host ) );
     }
     ///@}
     #if defined(__clang__)

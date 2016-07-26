@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/WrightFisher.h
   \author    J. Bakosi
-  \date      Tue 10 May 2016 02:29:09 PM MDT
+  \date      Tue 26 Jul 2016 07:40:15 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Wright-Fisher SDE
   \details   This file implements the time integration of a system of stochastic
@@ -16,6 +16,8 @@
 
 #include <numeric>
 #include <vector>
+
+#include "QuinoaConfig.h"
 
 #ifdef HAS_MKL
   #include "NoWarning/mkl_lapacke.h"

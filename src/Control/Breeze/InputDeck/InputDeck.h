@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Breeze/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Mon 09 May 2016 03:58:52 PM MDT
+  \date      Tue 26 Jul 2016 07:42:18 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Breeze's input deck definition
   \details   This file defines the heterogeneous stack that is used for storing
@@ -19,6 +19,7 @@
 #include "NoWarning/for_each.h"
 
 #include "Control.h"
+#include "QuinoaConfig.h"
 #include "Breeze/CmdLine/CmdLine.h"
 #include "Breeze/Components.h"
 

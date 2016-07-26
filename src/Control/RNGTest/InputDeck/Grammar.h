@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Tue 17 Nov 2015 12:16:23 PM MST
+  \date      Tue 26 Jul 2016 07:41:48 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Random number generator test suite grammar definition
   \details   Random number generator test suite input deck grammar definition.
@@ -17,6 +17,7 @@
 #include "CommonGrammar.h"
 #include "PEGTLParsed.h"
 #include "Keywords.h"
+#include "QuinoaConfig.h"
 
 #ifdef HAS_MKL
 #include "MKLGrammar.h"

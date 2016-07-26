@@ -11,6 +11,7 @@ add_library(IO
             HyperMeshReader.C
             PDFWriter.C                 # writers
             TxtStatWriter.C
+            DiagWriter.C
             GmshMeshWriter.C
             NetgenMeshWriter.C
             ExodusIIMeshWriter.C

@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/conductor.ci
   \author    J. Bakosi
-  \date      Mon 11 Jul 2016 12:48:02 PM MDT
+  \date      Fri 22 Jul 2016 12:13:00 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ module interface file for Conductor
   \details   Charm++ module interface file for Conductor
@@ -28,9 +28,46 @@ module conductor {
       entry [reductiontarget] void verifybc( CkReductionMsg* msg );
       entry [reductiontarget] void doverifybc( CkReductionMsg* msg );
       entry [reductiontarget] void initcomplete();
+      entry [reductiontarget] void diagnostics( tk::real d[n], std::size_t n );
+      entry [reductiontarget] void diagcomplete();
       entry [reductiontarget] void evaluateTime();
       entry [reductiontarget] void advance();
       entry [reductiontarget] void finish();
+
+      // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
+      // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
+
+      // High-level overview of the dependency and asynchronous call structure
+      // ---------------------------------------------------------------------
+      //
+      // Directed Acyclic Graph (DAG):
+      // -----------------------------
+      //                                        DAG legend:
+      //  Diag -- Rep                             Diag - compute diagnostics
+      //         /                                Eval - evlaute time step
+      //  Eval --                                 Rep - Output one-liner report
+      //
+      // Interpretation of the above DAG
+      // -------------------------------
+      // Control flow is from left to right and top to bottom.
+      //
+      // Outputing a one-liner report (Rep) can only be done if both the
+      // diagnostics have been collected (Diag) as well as the time step has
+      // been evaluated (Eval). The report is only output at the final time step
+      // stage. Collecting diagnostics if optional, i.e., it does not happen
+      // every time step. If diagnostics are collected trigger_diag_complete()
+      // is signaled from the reduction target, Conductor::diagnostics(). If
+      // diagnostics are not collected in a time step, collection is skipped,
+      // and trigger_diag_complete() is signaled from the shortcut function,
+      // Conductor::diagcomplete(). Either way, the above DAG and its logic
+      // remains the same.
+
+      entry void wait4report()
+      { when trigger_diag_complete(), trigger_eval_complete() serial "eval"
+        { if (m_stage == 1) report(); } };
+
+      entry void trigger_diag_complete();
+      entry void trigger_eval_complete();
     }
 
   } // inciter::

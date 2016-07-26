@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Keywords.h
   \author    J. Bakosi
-  \date      Tue Jul 19 23:03:29 2016
+  \date      Tue 26 Jul 2016 07:42:07 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Definition of all keywords
   \details   This file contains the definition of all keywords, including those
@@ -141,6 +141,7 @@
 
 #include "Types.h"
 #include "Keyword.h"
+#include "QuinoaConfig.h"
 
 //! Keywords used by all input deck and command line parsers
 namespace kw {
@@ -1831,7 +1832,7 @@ using betapdf = keyword< betapdf_info, b,e,t,a,p,d,f >;
 struct icbeta_info {
   static std::string name() { return "icbeta"; }
   static std::string shortDescription() { return
-    R"(Introduce a icbeta...end block used to configure beta distributions)"; }
+    R"(Introduce an icbeta...end block used to configure beta distributions)"; }
   static std::string longDescription() { return
     R"(This keyword is used to introduce an icbeta...end block in which beta
     distributions are configured for the beta initialization policy. Example:
@@ -1841,6 +1842,17 @@ struct icbeta_info {
     jointbeta and betapdf.)"; }
 };
 using icbeta = keyword< icbeta_info, i,c,b,e,t,a >;
+
+struct ic_info {
+  static std::string name() { return "ic"; }
+  static std::string shortDescription() { return
+    R"(Introduce an ic...end block used to configure initial conditions)"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to introduce an ic...end block used to set initial
+    conditions. Example: "ic density 1.0 end" - set the initial density field to
+    1.0 across the whole domain.)"; }
+};
+using ic = keyword< ic_info, i,c >;
 
 struct depvar_info {
   static std::string name() { return "depvar"; }
@@ -2405,6 +2417,21 @@ struct output_info {
 };
 using output = keyword< output_info, o,u,t,p,u,t >;
 
+struct diagnostics_info {
+  static std::string name() { return "diagnostics"; }
+  static std::string shortDescription()
+  { return "Specify the diagnostics file"; }
+  static std::string longDescription() { return
+    R"(This option is used to define the diagnostics file name.)";
+  }
+  using alias = Alias< d >;
+  struct expect {
+    using type = std::string;
+    static std::string description() { return "string"; }
+  };
+};
+using diagnostics = keyword< diagnostics_info, d,i,a,g,n,o,s,t,i,c,s >;
+
 struct reorder_info {
   static std::string name() { return "reorder"; }
   static std::string shortDescription() { return "Reorder mesh nodes"; }
@@ -2659,7 +2686,7 @@ struct bc_dirichlet_info {
   static std::string longDescription() { return
     R"(This keyword is used to introduce an bc_dirichlet ... end block, used to
     specify the configuration for setting Dirichlet boundary conditions for a
-    partial differential equation. Keywords allowed in an bc_dirichler ... end
+    partial differential equation. Keywords allowed in an bc_dirichlet ... end
     block: )" + std::string("\'")
     + sideset::string() + "\'. "
     + R"(For an example bc_dirichlet ... end block, see
@@ -2667,6 +2694,115 @@ struct bc_dirichlet_info {
   }
 };
 using bc_dirichlet = keyword< bc_dirichlet_info, b,c,'_',d,i,r,i,c,h,l,e,t >;
+
+struct id_info {
+  static std::string name() { return "id"; }
+  static std::string shortDescription() { return "ID"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify an ID, a positive integer.)";
+  }
+  struct expect {
+    using type = uint64_t;
+    static constexpr type lower = 1;
+    static std::string description() { return "uint"; }
+  };
+};
+using id = keyword< id_info, i,d >;
+
+struct mat_gamma_info {
+  static std::string name() { return "gamma"; }
+  static std::string shortDescription() { return "ratio of specific heats"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify the material property, ratio of specific
+       heats.)";
+  }
+  struct expect {
+    using type = tk::real;
+    static constexpr type lower = 0.0;
+    static std::string description() { return "real"; }
+  };
+};
+using mat_gamma = keyword< mat_gamma_info, g,a,m,m,a >;
+
+struct mat_mu_info {
+  static std::string name() { return "mu"; }
+  static std::string shortDescription() { return "dynamic viscosity"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify the material property, dynamic
+       viscosity.)";
+  }
+  struct expect {
+    using type = tk::real;
+    static constexpr type lower = 0.0;
+    static std::string description() { return "real"; }
+  };
+};
+using mat_mu = keyword< mat_mu_info, m,u >;
+
+struct mat_cv_info {
+  static std::string name() { return "cv"; }
+  static std::string shortDescription() {
+    return "specific heat at constant volume"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify the material property, specific heat at
+       constant volume.)";
+  }
+  struct expect {
+    using type = tk::real;
+    static constexpr type lower = 0.0;
+    static std::string description() { return "real"; }
+  };
+};
+using mat_cv = keyword< mat_cv_info, c,v >;
+
+struct mat_k_info {
+  static std::string name() { return "k"; }
+  static std::string shortDescription() { return "heat conductivity"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify the material property, heat
+       conductivity.)";
+  }
+  struct expect {
+    using type = tk::real;
+    static constexpr type lower = 0.0;
+    static std::string description() { return "real"; }
+  };
+};
+using mat_k = keyword< mat_k_info, k >;
+
+struct material_info {
+  static std::string name() { return "Material properties block"; }
+  static std::string shortDescription() { return
+    "Start configuration block for material properties"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to introduce a material ... end block, used to
+    specify material properties. Keywords allowed in a material ... end
+    block: )" + std::string("\'")
+    + id::string()+ "\', \'"
+    + mat_gamma::string()+ "\', \'"
+    + mat_mu::string()+ "\', \'"
+    + mat_cv::string()+ "\', \'"
+    + mat_k::string() + "\'. "
+    + R"(For an example material ... end block, see
+      doc/html/inicter_example_compns.html.)";
+  }
+};
+using material = keyword< material_info, m,a,t,e,r,i,a,l >;
+
+struct velocity_info {
+  static std::string name() { return "velocity"; }
+  static std::string shortDescription() { return
+    "Specify velocity initial conditions";
+  }
+  static std::string longDescription() { return
+    R"(This keyword is used to set initial conditions for the velocity field.)";
+  }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real(s)"; }
+  };
+};
+using velocity = keyword< velocity_info, v,e,l,o,c,i,t,y >;
 
 struct compns_info {
   static std::string name() { return "Compressible Navier-Stokes"; }
