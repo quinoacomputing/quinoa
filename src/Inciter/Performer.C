@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.C
   \author    J. Bakosi
-  \date      Tue 26 Jul 2016 07:43:07 AM MDT
+  \date      Tue 26 Jul 2016 12:00:27 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Performer advances a PDE
   \details   Performer advances a PDE. There are a potentially
@@ -94,14 +94,18 @@ Performer::Performer(
   m_uf( m_gid.size(), g_inputdeck.get< tag::component >().nprop() ),
   m_un( m_gid.size(), g_inputdeck.get< tag::component >().nprop() ),
   m_lhsd( m_psup.second.size()-1, g_inputdeck.get< tag::component >().nprop() ),
-  m_lhso( m_psup.first.size(), g_inputdeck.get< tag::component >().nprop() )
+  m_lhso( m_psup.first.size(), g_inputdeck.get< tag::component >().nprop() ),
+  m_particles( g_inputdeck.get< tag::param, tag::compns, tag::npar >() *
+               m_inpoel.size()/4, 3 )
 // *****************************************************************************
 //  Constructor
 //! \param[in] conductor Host (Conductor) proxy
 //! \param[in] lsm Linear system merger (LinSysMerger) proxy
+//! \param[in] tracker Passive tracker proxy
 //! \param[in] conn Vector of mesh element connectivity owned (global IDs)
 //! \param[in] cid Map associating old node IDs (as in file) to new node IDs (as
 //!   in producing contiguous-row-id linear system contributions)
+//! \param[in] nper Total number of Performer chares
 //! \author J. Bakosi
 // *****************************************************************************
 {
@@ -126,7 +130,7 @@ Performer::setup()
   // Read coordinates of owned and received mesh nodes
   readCoords();
   // Generate particles
-  genPar( 1 );
+  genPar();
   // Output chare mesh to file
   writeMesh();
   // Output mesh-based fields metadata to file
@@ -533,45 +537,39 @@ Performer::advance( uint8_t stage, tk::real dt, uint64_t it, tk::real t )
 }
 
 void
-Performer::genPar( std::size_t npar )
+Performer::genPar()
 // *****************************************************************************
 // Generate the particles within the mesh
-//! \param[in] npar Number of particles to generate
 //! \author F.J. Gonzalez
 // *****************************************************************************
 {
   auto rng = tk::RNGSSE< gm19_state, unsigned, gm19_generate_ >
                        ( static_cast<unsigned>(m_nperf), gm19_init_sequence_ );
 
-  std::vector< tk::real > xp(npar), yp(npar), zp(npar);
   const auto& x = m_coord[0];
   const auto& y = m_coord[1];
   const auto& z = m_coord[2];
 
-  // Loop over the number of particles and interpolate each particle's location
-  // within the element
-  for (std::size_t i=0; i<npar; ++i) { 
-    
-    std::array< tk::real, 4 > N;
-    rng.uniform( thisIndex, 3, N.data() );
-    N[0]=0.15;N[1]=0.22;N[2]=0.31;
-    N[3] = 1.0 - N[0] - N[1] - N[2];
-    if ( std::min(N[0],1-N[0]) > 0 && std::min(N[1],1-N[1]) > 0 &&
-         std::min(N[2],1-N[2]) > 0 && std::min(N[3],1-N[3]) > 0 ) {
-      for (std::size_t e=0; e<m_inpoel.size()/4; ++e) {
-        const auto A = m_inpoel[e*4+0];
-        const auto B = m_inpoel[e*4+1];
-        const auto C = m_inpoel[e*4+2]; 
-        const auto D = m_inpoel[e*4+3];
-        xp[i] = x[A]*N[0] + x[B]*N[1] + x[C]*N[2] + x[D]*N[3];
-        yp[i] = y[A]*N[0] + y[B]*N[1] + y[C]*N[2] + y[D]*N[3];
-        zp[i] = z[A]*N[0] + z[B]*N[1] + z[C]*N[2] + z[D]*N[3];
-      }
-      std::cout<<"xp = "<<xp[i]<<std::endl;
-      std::cout<<"yp = "<<yp[i]<<std::endl;
-      std::cout<<"zp = "<<zp[i]<<std::endl;
-    } else --i; // retry if particle was not generated into tetrahedron
-  }
+  // Generate npar number of particles into each mesh cell
+  auto npar = g_inputdeck.get< tag::param, tag::compns, tag::npar >();
+  for (std::size_t e=0; e<m_inpoel.size()/4; ++e)
+    for (std::size_t p=0; p<npar; ++p) {
+      std::array< tk::real, 4 > N;
+      rng.uniform( thisIndex, 3, N.data() );
+      N[3] = 1.0 - N[0] - N[1] - N[2];
+      if ( std::min(N[0],1-N[0]) > 0 && std::min(N[1],1-N[1]) > 0 &&
+           std::min(N[2],1-N[2]) > 0 && std::min(N[3],1-N[3]) > 0 ) {
+          const auto A = m_inpoel[e*4+0];
+          const auto B = m_inpoel[e*4+1];
+          const auto C = m_inpoel[e*4+2];
+          const auto D = m_inpoel[e*4+3];
+          const auto i = e * npar + p;
+          m_particles( i, 0, 0 ) = x[A]*N[0] + x[B]*N[1] + x[C]*N[2] + x[D]*N[3];
+          m_particles( i, 1, 0 ) = y[A]*N[0] + y[B]*N[1] + y[C]*N[2] + y[D]*N[3];
+          m_particles( i, 2, 0 ) = z[A]*N[0] + z[B]*N[1] + z[C]*N[2] + z[D]*N[3];
+          std::cout << "p " << i << " in e " << e << '\n';
+        } else --p; // retry if particle was not generated into cell
+    }
 
   // After creating particle positions we now check to see in which element
   // they reside by solving for the shape functions using the particle and node
@@ -583,18 +581,13 @@ Performer::genPar( std::size_t npar )
   // first time step each particle will have a completely different position.
   // This is where solving for the shape functions comes into play since now
   // there is no guarantee that the particle will be in the same element. 
-  parinel( xp, yp, zp, npar );
+  parinel();
 }
 
 void
-Performer::parinel( const std::vector< tk::real >& xp,
-                    const std::vector< tk::real >& yp,
-                    const std::vector< tk::real >& zp,
-                    std::size_t npar )
+Performer::parinel()
 // *****************************************************************************
 // Receive particle coordinate information and check which element its in
-//! \param[in] xp, yp, zp Particle coordinates
-//! \param[in] npar Number of particles
 //! \author F.J. Gonzalez
 // *****************************************************************************
 {
@@ -602,35 +595,35 @@ Performer::parinel( const std::vector< tk::real >& xp,
   const auto& x = m_coord[0];
   const auto& y = m_coord[1];
   const auto& z = m_coord[2];
-  
+
   // Loop over the number of particles and evaluate shapefunctions at each
   // particle's location
-  for (std::size_t i=0; i<npar; ++i) { 
+  for (std::size_t i=0; i<m_particles.nunk(); ++i) {
     for (std::size_t e=0; e<m_inpoel.size()/4; ++e) {
       const auto A = m_inpoel[e*4+0];
       const auto B = m_inpoel[e*4+1];
       const auto C = m_inpoel[e*4+2]; 
       const auto D = m_inpoel[e*4+3];
-      
+
       // Evaluate shapefunctions at particle locations using LAPACK
-      // 
+      //
       //    | xp |   | x1 x2 x3 x4 |   | N1 |
       //    | yp | = | y1 y2 y3 y4 | • | N2 |
       //    | zp |   | z1 z2 z3 z4 |   | N3 |
       //    | 1  |   | 1  1  1  1  |   | N4 |
       //
-     
+
       lapack_int INFO;
       lapack_int IPIV[4];
-      tk::real N[4] = { xp[i],
-                        yp[i],
-                        zp[i],
-                          1.0 };
+      tk::real N[4] = { m_particles( i, 0, 0 ),
+                        m_particles( i, 1, 0 ),
+                        m_particles( i, 2, 0 ),
+                        1.0 };
       tk::real  Ar[16] = { x[A], x[B], x[C], x[D],
                            y[A], y[B], y[C], y[D],
                            z[A], z[B], z[C], z[D],
-                            1.0,  1.0,  1.0,  1.0 };
-      
+                           1.0,  1.0,  1.0,  1.0 };
+
       // DGETRF computes an LU factorization of a general MxN matrix A
       // Arguments:
       // Matrix_layout (input) int     - Row or column major
@@ -677,6 +670,7 @@ Performer::parinel( const std::vector< tk::real >& xp,
         // back to Tracker to move that particle one time step.
         // Write out particle id and element id (should print once per particle)
         std::cout<<"Particle "<<i<<" is in element "<<e<<std::endl;
+        e = m_inpoel.size()/4;  // search for next particle
       }
     }
   }
