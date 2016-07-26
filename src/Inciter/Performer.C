@@ -127,7 +127,7 @@ Performer::setup()
   // Read coordinates of owned and received mesh nodes
   readCoords();
   // Generate particles
-  genPar( 1 );
+  genPar( 2 );
   // Output chare mesh to file
   writeMesh();
   // Output mesh-based fields metadata to file
@@ -545,9 +545,10 @@ Performer::genPar( std::size_t npar )
                        ( static_cast<unsigned>(m_nperf), gm19_init_sequence_ );
 
   // Create a reference of particle coordinates
-  auto& xp = m_pcoord[0]; xp.push_back(npar);
-  auto& yp = m_pcoord[1]; yp.push_back(npar);
-  auto& zp = m_pcoord[2]; zp.push_back(npar);
+  /*
+  auto& xp = m_pcoord[0];
+  auto& yp = m_pcoord[1];
+  auto& zp = m_pcoord[2]; */
   // Create a reference of mesh point coordinates
   const auto& x = m_coord[0];
   const auto& y = m_coord[1];
@@ -567,13 +568,10 @@ Performer::genPar( std::size_t npar )
         const auto B = m_inpoel[e*4+1];
         const auto C = m_inpoel[e*4+2]; 
         const auto D = m_inpoel[e*4+3];
-        xp[i] = x[A]*N[0] + x[B]*N[1] + x[C]*N[2] + x[D]*N[3];
-        yp[i] = y[A]*N[0] + y[B]*N[1] + y[C]*N[2] + y[D]*N[3];
-        zp[i] = z[A]*N[0] + z[B]*N[1] + z[C]*N[2] + z[D]*N[3];
+        m_pcoord[0].push_back(x[A]*N[0] + x[B]*N[1] + x[C]*N[2] + x[D]*N[3]);
+        m_pcoord[1].push_back(y[A]*N[0] + y[B]*N[1] + y[C]*N[2] + y[D]*N[3]);
+        m_pcoord[2].push_back(z[A]*N[0] + z[B]*N[1] + z[C]*N[2] + z[D]*N[3]);
       }
-      std::cout<<"xp = "<<xp[i]<<std::endl;
-      std::cout<<"yp = "<<yp[i]<<std::endl;
-      std::cout<<"zp = "<<zp[i]<<std::endl;
     } else --i; // retry if particle was not generated into tetrahedron
   }
 
@@ -609,9 +607,9 @@ Performer::parinel( std::size_t npar )
   const auto& y = m_coord[1];
   const auto& z = m_coord[2];
   
-  // Loop over the number of particles and evaluate shapefunctions at each
+  // Loop over the number of total particles and evaluate shapefunctions at each
   // particle's location
-  for (std::size_t i=0; i<npar; ++i) { 
+  for (std::size_t i=0; i<(npar*m_inpoel.size()/4); ++i) { 
     for (std::size_t e=0; e<m_inpoel.size()/4; ++e) {
       const auto A = m_inpoel[e*4+0];
       const auto B = m_inpoel[e*4+1];
