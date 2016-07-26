@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/TestU01Stack.C
   \author    J. Bakosi
-  \date      Wed 04 May 2016 10:06:14 AM MDT
+  \date      Tue 26 Jul 2016 07:44:42 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Stack of TestU01 RNG statistical tests
   \details   Stack of TestU01 RNG statistical tests
@@ -19,6 +19,7 @@
 #include "TestU01Stack.h"
 #include "TestU01Wrappers.h"
 #include "RNGTest/InputDeck/InputDeck.h"
+#include "QuinoaConfig.h"
 
 extern "C" {
   #include <svaria.h>

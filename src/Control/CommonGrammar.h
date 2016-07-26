@@ -1370,6 +1370,26 @@ namespace grm {
                                precision< Stack, use, tag::stat >,
                                parse_expectations< Stack > > > {};
 
+  //! \brief Parse diagnostics ... end block
+  //! \author J. Bakosi
+  template< class Stack,
+            template< class > class use,
+            template< class... Ts > class store >
+  struct diagnostics :
+         pegtl::ifmust< readkw< Stack,
+                                typename use< kw::diagnostics >::pegtl_string >,
+                        block< Stack,
+                               use< kw::end >,
+                               interval< Stack, use< kw::interval >,
+                                         tag::diag >,
+                               process< Stack,
+                                        use< kw::txt_float_format >,
+                                        store< tk::ctr::TxtFloatFormat,
+                                               tag::flformat,
+                                               tag::diag >,
+                                        pegtl::alpha >,
+                               precision< Stack, use, tag::diag > > > {};
+
   //! \brief Match model parameter
   //! \author J. Bakosi
   template< class Stack, typename keyword, typename kw_type, typename model,
