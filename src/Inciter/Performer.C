@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.C
   \author    J. Bakosi
-  \date      Tue 26 Jul 2016 12:00:27 PM MDT
+  \date      Tue 26 Jul 2016 12:07:10 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Performer advances a PDE
   \details   Performer advances a PDE. There are a potentially
@@ -546,6 +546,7 @@ Performer::genPar()
   auto rng = tk::RNGSSE< gm19_state, unsigned, gm19_generate_ >
                        ( static_cast<unsigned>(m_nperf), gm19_init_sequence_ );
 
+  // Create a reference of mesh point coordinates
   const auto& x = m_coord[0];
   const auto& y = m_coord[1];
   const auto& z = m_coord[2];
