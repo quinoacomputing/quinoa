@@ -2,7 +2,7 @@
 /*!
   \file      src/PDE/AdvDiff.h
   \author    J. Bakosi
-  \date      Mon 18 Jul 2016 11:38:08 AM MDT
+  \date      Fri 22 Jul 2016 03:43:11 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Advection-diffusion equation of a transported scalar
   \details   This file implements the time integration of the
@@ -292,7 +292,7 @@ class AdvDiff {
     //! \return Vector of pairs of bool and BC value for all components
     std::vector< std::pair< bool, tk::real > > dirbc( int sideset ) const {
       const auto& bc =
-        g_inputdeck.get< tag::param, tag::poisson, tag::bc_dirichlet >();
+        g_inputdeck.get< tag::param, tag::advdiff, tag::bc_dirichlet >();
       std::vector< std::pair< bool, tk::real > > b( m_ncomp, { false, 0.0 } );
       IGNORE(sideset);
       IGNORE(bc);

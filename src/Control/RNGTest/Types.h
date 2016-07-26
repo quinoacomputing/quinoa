@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/Types.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 02:15:42 PM MDT
+  \date      Tue 26 Jul 2016 07:41:18 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Types for RNGTest's parsers
   \details   Types for RNGTest's parsers. This file defines the components of
@@ -20,6 +20,7 @@
 #include "RNGParam.h"
 #include "RNGTest/Options/Battery.h"
 #include "Options/RNG.h"
+#include "QuinoaConfig.h"
 
 namespace rngtest {
 namespace ctr {

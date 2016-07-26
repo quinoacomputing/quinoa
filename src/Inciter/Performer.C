@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.C
   \author    J. Bakosi
-  \date      Fri 22 Jul 2016 11:31:43 AM MDT
+  \date      Tue 26 Jul 2016 07:43:07 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Performer advances a PDE
   \details   Performer advances a PDE. There are a potentially
@@ -15,6 +15,8 @@
 #include <string>
 #include <cmath>
 #include <array>
+
+#include "QuinoaConfig.h"
 
 #ifdef HAS_MKL
   #include "NoWarning/mkl_lapacke.h"
@@ -715,15 +717,28 @@ Performer::updateSolution( const std::vector< std::size_t >& gid,
   if (m_nsol == m_gid.size()) {
 
     if (m_stage < 1) {
+
       m_uf = m_un;
+
     } else {
+
       m_u = m_un;
+
       if (!((m_it+1) % g_inputdeck.get< tag::interval, tag::field >()))
         writeFields( m_t + g_inputdeck.get< tag::discr, tag::dt >() );
+
+      // Optionally contribute diagnostics, e.g., residuals, back to host
+      if (!((m_it+1) % g_inputdeck.get< tag::interval, tag::diag >()))
+        m_linsysmerger.ckLocalBranch()->diagnostics();
+      else // if no diagnostics at this time, still signal back to host
+        contribute(
+          CkCallback( CkReductionTarget( Conductor, diagcomplete ),
+                      m_conductor ) );
     }
 
     // Prepare for next time step stage
     m_nsol = 0;
+
     // Tell the Charm++ runtime system to call back to Conductor::evaluateTime()
     // once all Performer chares have received the update. The reduction is done
     // via creating a callback that invokes the typed reduction client, where

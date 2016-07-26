@@ -2,7 +2,7 @@
 /*!
   \file      src/PDE/Euler.h
   \author    J. Bakosi
-  \date      Mon 18 Jul 2016 11:38:13 AM MDT
+  \date      Fri 22 Jul 2016 03:43:29 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Euler equations describing compressible flow
   \details   This file implements the time integration of the Euler equations
@@ -130,7 +130,7 @@ class Euler {
     //! \return Vector of pairs of bool and BC value for all components
     std::vector< std::pair< bool, tk::real > > dirbc( int sideset ) const {
       const auto& bc =
-        g_inputdeck.get< tag::param, tag::poisson, tag::bc_dirichlet >();
+        g_inputdeck.get< tag::param, tag::euler, tag::bc_dirichlet >();
       std::vector< std::pair< bool, tk::real > > b( m_ncomp, { false, 0.0 } );
       IGNORE(sideset);
       IGNORE(bc);
@@ -148,13 +148,12 @@ class Euler {
     //! Return field output going to file
     //! \param[in] t Physical time
     //! \param[in] coord Mesh node coordinates
-    //! \param[in,out] U Solution vector at recent time step stage
+    //! \param[in] U Solution vector at recent time step stage
     //! \return Vector of vectors to be output to file
-    //! \details Note that U is overwritten
     std::vector< std::vector< tk::real > >
     output( tk::real t,
             const std::array< std::vector< tk::real >, 3 >& coord,
-            tk::MeshNodes& U ) const
+            const tk::MeshNodes& U ) const
     {
       IGNORE(t);
       IGNORE(coord);
