@@ -59,14 +59,12 @@ The release container executables are configured for a single computer. To run o
    - All executables will be in <tt>quinoa/build/Main</tt>
 
 ## Authors
+(in chronological order of contribution)
 
-Jozsef Bakosi (jbakosi@lanl.gov)
+1. [Jozsef Bakosi](https://github.com/jbakosi)
+2. [Francisco Gonzalez](https://github.com/franjgonzalez)
+3. [Brandon Rogers](https://github.com/brog2610)
 
 ## Resources
 
- - [<B>Source</B>](https://github.com/quinoacomputing/quinoa)
- - [<B>License</B>](https://github.com/quinoacomputing/quinoa/blob/master/LICENSE)
- - [<B>Documentation</B>](http://quinoacomputing.github.io/quinoa/index.html)
- - [<B>Manifesto</B>](http://quinoacomputing.github.io/quinoa/why.html)
- - [<B>Roadmap</B>](https://github.com/quinoacomputing/quinoa/issues)
- - [<B>Docker</B>](https://hub.docker.com/r/quinoacomputing/quinoa)
+[source](https://github.com/quinoacomputing/quinoa) - [license](https://github.com/quinoacomputing/quinoa/blob/master/LICENSE) - [documentation](http://quinoacomputing.github.io/quinoa/index.html) - [manifesto](http://quinoacomputing.github.io/quinoa/why.html) - [roadmap](https://github.com/quinoacomputing/quinoa/issues) - [docker](https://hub.docker.com/r/quinoacomputing/quinoa)
