@@ -2,7 +2,7 @@
 /*!
   \file      src/Walker/Distributor.C
   \author    J. Bakosi
-  \date      Mon 09 May 2016 04:01:09 PM MDT
+  \date      Tue 26 Jul 2016 10:27:14 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Distributor drives the time integration of differential equations
   \details   Distributor drives the time integration of differential equations.
@@ -87,7 +87,7 @@ Distributor::Distributor( const ctr::CmdLine& cmdline ) :
                   chunksize,
                   remainder );
 
-  // Compute total number of particles distributed over all workers Note that
+  // Compute total number of particles distributed over all workers. Note that
   // this number will not necessarily be the same as given by the user, coming
   // from g_inputdeck.get< tag::discr, tag::npar >(), since each Charm++ chare
   // array element constructor takes this chunksize argument, which equals the

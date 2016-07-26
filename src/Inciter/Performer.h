@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.h
   \author    J. Bakosi
-  \date      Tue 26 Jul 2016 07:42:59 AM MDT
+  \date      Tue 26 Jul 2016 12:06:33 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Performer advances a system of systems of PDEs
   \details   Performer advances a system of systems of PDEs. There are a
@@ -25,6 +25,7 @@
 
 #include "Types.h"
 #include "MeshNodes.h"
+#include "Particles.h"
 #include "DerivedData.h"
 #include "VectorReducer.h"
 #include "Inciter/InputDeck/InputDeck.h"
@@ -104,11 +105,11 @@ class Performer : public CBase_Performer {
     void advance( uint8_t stage, tk::real dt, uint64_t it, tk::real t );
 
     //! Generates particles into mesh cells
-    void genPar( std::size_t npar );
+    void genPar();
 
     //! Receive particles coordinate information 
     //! NOTE: Currently hard coding particle locations
-    void parinel( std::size_t npar );  
+    void parinel();
 
     /** @name Pack/Unpack: Serialize Performer object for Charm++ */
     ///@{
@@ -130,10 +131,10 @@ class Performer : public CBase_Performer {
       if (p.isUnpacking()) { m_inpoel = m_el.first; m_gid = m_el.second; }
       p | m_lid;
       p | m_coord;
-      p | m_pcoord;
       p | m_psup;
       p | m_u; p | m_uf; p | m_un;
       p | m_lhsd; p | m_lhso;
+      p | m_particles;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -170,14 +171,13 @@ class Performer : public CBase_Performer {
     std::unordered_map< std::size_t, std::size_t > m_lid;
     //! Mesh point coordinates
     std::array< std::vector< tk::real >, 3 > m_coord;
-    //! Particle coordinates
-    std::array< std::vector< tk::real >, 3 > m_pcoord;
     //! Points surrounding points of our chunk of the mesh
     std::pair< std::vector< std::size_t >, std::vector< std::size_t > > m_psup;
     //! Unknown/solution vector: global mesh point row ids and values
     tk::MeshNodes m_u, m_uf, m_un;
     //! Sparse matrix sotring the diagonals and off-diagonals of nonzeros
     tk::MeshNodes m_lhsd, m_lhso;
+    tk::Particles m_particles;          //!< (Tracker) particles properties
 
     //! Send off global row IDs to linear system merger, setup global->local IDs
     void setupIds();
