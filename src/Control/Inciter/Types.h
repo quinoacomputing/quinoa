@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/Types.h
   \author    J. Bakosi
-  \date      Tue 26 Jul 2016 06:59:17 AM MDT
+  \date      Tue 26 Jul 2016 08:24:37 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Types for Incitier's parsers
   \details   Types for Incitier's parsers. This file defines the components of
@@ -107,8 +107,10 @@ using CompNSPDEParameters = tk::tuple::tagged_tuple<
   tag::mu,    std::vector< kw::mat_mu::info::expect::type >,
   //! Spec. heat at const vol.
   tag::cv,    std::vector< kw::mat_cv::info::expect::type >,
-   //! Heat conductivity
-  tag::k,     std::vector< kw::mat_k::info::expect::type >
+  //! Heat conductivity
+  tag::k,     std::vector< kw::mat_k::info::expect::type >,
+  //! total number of optional passive tracker particles for visualization
+  tag::npar,      kw::npar::info::expect::type
 >;
 
 //! Parameters storage

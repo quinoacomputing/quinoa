@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/Options/PDE.h
   \author    J. Bakosi
-  \date      Tue 26 Jul 2016 06:59:40 AM MDT
+  \date      Tue 26 Jul 2016 08:44:39 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Partial differential equation options and associations for inciter
   \details   Partial differential equation options and associations for inciter
@@ -44,6 +44,7 @@ class PDE : public tk::Toggle< PDEType > {
     using keywords = boost::mpl::vector< kw::advdiff
                                        , kw::poisson
                                        , kw::euler
+                                       , kw::compns
                                        >;
 
     //! Constructor: pass associations references to base, which will handle

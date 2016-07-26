@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Tue 26 Jul 2016 07:04:37 AM MDT
+  \date      Tue 26 Jul 2016 08:35:35 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Inciter's input deck definition
   \details   This file defines the heterogeneous stack that is used for storing
@@ -93,6 +93,7 @@ class InputDeck :
                                        kw::mat_mu >;
     using keywords3 = boost::mpl::set< kw::mat_cv,
                                        kw::mat_k,
+                                       kw::npar,
                                        kw::depvar >;
                                      
     //! \brief Constructor: set defaults
