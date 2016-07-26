@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/Types.h
   \author    J. Bakosi
-  \date      Thu 04 Feb 2016 06:09:12 AM MST
+  \date      Tue 26 Jul 2016 07:40:27 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Types for Walker's parsers
   \details   Types for Walker's parsers. This file defines the components of the
@@ -25,6 +25,7 @@
 #include "Options/PDFCentering.h"
 #include "Options/TxtFloatFormat.h"
 #include "Options/RNG.h"
+#include "QuinoaConfig.h"
 
 namespace walker {
 namespace ctr {

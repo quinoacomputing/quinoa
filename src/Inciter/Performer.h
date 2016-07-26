@@ -2,13 +2,13 @@
 /*!
   \file      src/Inciter/Performer.h
   \author    J. Bakosi
-  \date      Fri 22 Jul 2016 11:23:25 AM MDT
+  \date      Tue 26 Jul 2016 07:42:59 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
-  \brief     Performer advances a PDE
-  \details   Performer advances a PDE. There are a potentially
-    large number of Performer Charm++ chares created by Conductor. Each
-    performer gets a chunk of the full load (part of the mesh) and does the
-    same: initializes and advances a PDE in time.
+  \brief     Performer advances a system of systems of PDEs
+  \details   Performer advances a system of systems of PDEs. There are a
+    potentially large number of Performer Charm++ chares created by Conductor.
+    Each performer gets a chunk of the full load (part of the mesh) and does the
+    same: initializes and advances a system of systems of PDEs in time.
 */
 // *****************************************************************************
 #ifndef Performer_h
@@ -71,7 +71,7 @@ class Performer : public CBase_Performer {
       #pragma GCC diagnostic pop
     #endif
 
-    //! \brief Configure Charm++ reduction types for concatenating BC nodelists
+    //! \brief Configure Charm++ reduction types
     //! \details Since this is a [nodeinit] routine, see linsysmerger.ci, the
     //!   Charm++ runtime system executes the routine exactly once on every
     //!   logical node early on in the Charm++ init sequence. Must be static as

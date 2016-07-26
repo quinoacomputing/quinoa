@@ -2,13 +2,14 @@
 /*!
   \file      src/Control/Inciter/Types.h
   \author    J. Bakosi
-  \date      Tue Jul 19 23:03:18 2016
+  \date      Tue 26 Jul 2016 06:59:17 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Types for Incitier's parsers
-  \details   Types for Incitier's parsers. This file defines the components of the
-    tagged tuple that stores heteroegeneous objects in a hierarchical way. These
-    components are therefore part of the grammar stack that is filled during
-    parsing (both command-line argument parsing and control file parsing).
+  \details   Types for Incitier's parsers. This file defines the components of
+    the agged tuple that stores heteroegeneous objects in a hierarchical way.
+    These components are therefore part of the grammar stack that is filled
+    during parsing (both command-line argument parsing and control file
+    parsing).
 */
 // *****************************************************************************
 #ifndef IncitierTypes_h
@@ -19,6 +20,7 @@
 #include "Inciter/Options/PDE.h"
 #include "Inciter/Options/Problem.h"
 #include "Options/PartitioningAlgorithm.h"
+#include "Options/TxtFloatFormat.h"
 #include "PUPUtil.h"
 
 namespace inciter {
@@ -38,17 +40,29 @@ using discretization = tk::tuple::tagged_tuple<
   tag::dt,        kw::dt::info::expect::type     //!< Size of time step
 >;
 
+//! ASCII output floating-point precision in digits
+using precision = tk::tuple::tagged_tuple<
+  tag::diag, kw::precision::info::expect::type //!< Diagnostics output precision
+>;
+
+//! ASCII output floating-point format
+using floatformat = tk::tuple::tagged_tuple<
+  tag::diag, tk::ctr::TxtFloatFormatType  //!< Diagnostics output format
+>;
+
 //! Output intervals storage
 using intervals = tk::tuple::tagged_tuple<
   tag::tty,   kw::ttyi::info::expect::type,       //!< TTY output interval
-  tag::field, kw::interval::info::expect::type    //!< Field output interval
+  tag::field, kw::interval::info::expect::type,   //!< Field output interval
+  tag::diag,  kw::interval::info::expect::type    //!< Diags output interval
 >;
 
 //! IO parameters storage
 using ios = tk::tuple::tagged_tuple<
   tag::control,     kw::control::info::expect::type,  //!< Control filename
   tag::input,       std::string,                      //!< Input filename
-  tag::output,      std::string                       //!< Output filename
+  tag::output,      std::string,                      //!< Output filename
+  tag::diag,        std::string                       //!< Diagnostics filename
 >;
 
 //! Advection-diffusion transport equation parameters storage
@@ -75,16 +89,26 @@ using PoissonPDEParameters = tk::tuple::tagged_tuple<
 
 //! Euler equation parameters storage
 using EulerPDEParameters = tk::tuple::tagged_tuple<
-  tag::problem,     std::vector< ProblemType >,
+  tag::problem,      std::vector< ProblemType >,
   tag::bc_dirichlet, std::vector< std::vector<
                        kw::sideset::info::expect::type > >
 >;
 
 //! Compressible Navier-Stokes equation parameters storage
 using CompNSPDEParameters = tk::tuple::tagged_tuple<
-  tag::problem,     std::vector< ProblemType >,
+  tag::problem,      std::vector< ProblemType >,
   tag::bc_dirichlet, std::vector< std::vector<
-                       kw::sideset::info::expect::type > >
+                       kw::sideset::info::expect::type > >,
+  //! Material ID
+  tag::id,    std::vector< kw::id::info::expect::type >,
+  //! Ratio of spec heats
+  tag::gamma, std::vector< kw::mat_gamma::info::expect::type >,
+  //! Dynamic viscosity
+  tag::mu,    std::vector< kw::mat_mu::info::expect::type >,
+  //! Spec. heat at const vol.
+  tag::cv,    std::vector< kw::mat_cv::info::expect::type >,
+   //! Heat conductivity
+  tag::k,     std::vector< kw::mat_k::info::expect::type >
 >;
 
 //! Parameters storage

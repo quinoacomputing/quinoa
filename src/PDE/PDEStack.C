@@ -2,7 +2,7 @@
 /*!
   \file      src/PDE/PDEStack.C
   \author    J. Bakosi
-  \date      Tue Jul 19 23:04:00 2016
+  \date      Tue 26 Jul 2016 06:56:54 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Stack of partial differential equations
   \details   This file defines class PDEStack, which implements various
@@ -283,6 +283,16 @@ PDEStack::infoCompNS( std::map< ctr::PDEType, ncomp_t >& cnt ) const
     g_inputdeck.get< tag::component >().offset< tag::compns >(c) ) );
   auto ncomp = g_inputdeck.get< tag::component >().get< tag::compns >()[c];
   info.emplace_back( "number of components", std::to_string( ncomp ) );
+  info.emplace_back( "material id", parameters(
+    g_inputdeck.get< tag::param, tag::compns, tag::id >() ) );
+  info.emplace_back( "ratio of specific heats", parameters(
+    g_inputdeck.get< tag::param, tag::compns, tag::gamma >() ) );
+  info.emplace_back( "dynamic viscosity", parameters(
+    g_inputdeck.get< tag::param, tag::compns, tag::mu >() ) );
+  info.emplace_back( "specific heat at const. volume", parameters(
+    g_inputdeck.get< tag::param, tag::compns, tag::cv >() ) );
+  info.emplace_back( "heat conductivity", parameters(
+    g_inputdeck.get< tag::param, tag::compns, tag::k >() ) );
 
   return info;
 }

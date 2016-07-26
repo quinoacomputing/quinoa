@@ -2,15 +2,46 @@
 /*!
   \file      src/Inciter/Conductor.h
   \author    J. Bakosi
-  \date      Thu 21 Jul 2016 02:10:35 PM MDT
+  \date      Tue 26 Jul 2016 06:57:44 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
-  \brief     Conductor drives the time integration of a PDE
-  \details   Conductor drives the time integration of a PDE
-    The implementation uses the Charm++ runtime system and is fully asynchronous,
-    overlapping computation, communication as well as I/O. The algorithm
+  \brief     Conductor drives the time integration of systems of systems of PDEs
+  \details   Conductor drives the time integration of systems of systems of
+    PDEs.
+
+    The implementation uses the Charm++ runtime system and is fully
+    asynchronous, overlapping computation and communication. The algorithm
     utilizes the structured dagger (SDAG) Charm++ functionality. The high-level
     overview of the algorithm structure and how it interfaces with Charm++ is
     discussed in the Charm++ interface file src/Inciter/conductor.ci.
+
+    #### Call graph ####
+    The following is a directed acyclic graph (DAG) that outlines the
+    asynchronous algorithm implemented in this class The detailed discussion of
+    the algorithm is given in the Charm++ interface file conductor.ci, which
+    also repeats the graph below using ASCII graphics. On the DAG orange
+    fills denote global synchronization points, orange frames with white fill
+    are partial synchronization points that overlap with other tasks, and dashed
+    lines are potential shortcuts that allow jumping over some of the task-graph
+    under some circumstances or optional code paths (taken, e.g., only in DEBUG
+    mode). See the detailed discussion in conductor.ci.
+    \dot
+    digraph "Conductor SDAG" {
+      rankdir="LR";
+      node [shape=record, fontname=Helvetica, fontsize=10];
+      Diag [ label="Diag"
+              tooltip="chares contribute diagnostics"
+              URL="\ref inciter::Performer::diagnostics"];
+      Eval [ label="Eval"
+              tooltip="evaluate time at the end of the time step"
+              URL="\ref inciter::Conductor::evaluateTime"];
+      Rep [ label="Rep"
+              tooltip="output one-liner report"
+              URL="\ref inciter::Conductor::report"];
+      Diag -> Rep [ style="dashed" ];
+      Eval -> Rep [ style="solid" ];
+    }
+    \enddot
+    \include Inciter/conductor.ci
 */
 // *****************************************************************************
 #ifndef Conductor_h
@@ -35,6 +66,29 @@ namespace inciter {
 class Conductor : public CBase_Conductor {
 
   public:
+    #if defined(__clang__)
+      #pragma clang diagnostic push
+      #pragma clang diagnostic ignored "-Wunused-parameter"
+      #pragma clang diagnostic ignored "-Wdeprecated-declarations"
+    #elif defined(__GNUC__)
+      #pragma GCC diagnostic push
+      #pragma GCC diagnostic ignored "-Wunused-parameter"
+      #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+    #elif defined(__INTEL_COMPILER)
+      #pragma warning( push )
+      #pragma warning( disable: 1478 )
+    #endif
+    // Include Charm++ SDAG code. See http://charm.cs.illinois.edu/manuals/html/
+    // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
+    Conductor_SDAG_CODE
+    #if defined(__clang__)
+      #pragma clang diagnostic pop
+    #elif defined(__GNUC__)
+    #pragma GCC diagnostic pop
+    #elif defined(__INTEL_COMPILER)
+      #pragma warning( pop )
+    #endif
+
     //! Constructor
     explicit Conductor();
 
@@ -78,6 +132,14 @@ class Conductor : public CBase_Conductor {
     //!   finished their initialization step
     void initcomplete();
 
+    //! \brief Reduction target optionally collecting diagnostics, e.g.,
+    //!   residuals, from all Performer chares
+    void diagnostics( tk::real* d, std::size_t n );
+
+    //! \brief Reduction target indicating that Performer chares contribute no
+    //!    diagnostics and we ready to output the one-liner report
+    void diagcomplete() { trigger_diag_complete(); }
+
     //! \brief Reduction target indicating that all Performer chares have
     //!   finished a time step and it is time to decide whether to continue
     void evaluateTime();
@@ -110,6 +172,8 @@ class Conductor : public CBase_Conductor {
     PartitionerProxy m_partitioner;     //!< Partitioner group proxy
     //! Average communication cost of merging the linear system
     tk::real m_avcost;
+    //! Total number of mesh nodes
+    std::size_t m_npoin;
     //! Timer tags
     enum class TimerTag { TIMESTEP };
     //! Timers
@@ -117,6 +181,8 @@ class Conductor : public CBase_Conductor {
     //! \brief Aggregate 'old' (as in file) node ID list at which LinSysMerger
     //!   sets boundary conditions, see also Partitioner.h
     std::vector< std::size_t > m_linsysbc;
+    //! Diagnostics
+    std::vector< tk::real > m_diag;
 
     //! Compute size of next time step
     tk::real computedt();
