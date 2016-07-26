@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.h
   \author    J. Bakosi
-  \date      Tue 26 Jul 2016 11:34:34 AM MDT
+  \date      Tue 26 Jul 2016 12:06:33 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Performer advances a system of systems of PDEs
   \details   Performer advances a system of systems of PDEs. There are a
@@ -134,6 +134,7 @@ class Performer : public CBase_Performer {
       p | m_psup;
       p | m_u; p | m_uf; p | m_un;
       p | m_lhsd; p | m_lhso;
+      p | m_particles;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
