@@ -118,8 +118,8 @@ target_link_libraries(${INCITER_EXECUTABLE}
                       ${MKL_SEQUENTIAL_LAYER_LIBRARY}
                       ${H5PART_LIBRARY}
                       ${NETCDF_LIBRARIES}       # only for static link
-                      ${HDF5_LIBRARIES}         # only for static link
                       ${AEC_LIBRARY}            # only for static link
+                      ${HDF5_LIBRARIES}         # only for static link
                       ${LAPACK_LIBRARIES}       # only for static link
 )
 
