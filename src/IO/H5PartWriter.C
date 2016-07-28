@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/H5PartWriter.C
   \author    J. Bakosi
-  \date      Thu 28 Jul 2016 09:01:24 AM MDT
+  \date      Thu 28 Jul 2016 10:16:28 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     H5Part particles data writer
   \details   H5Part particles data writer class definition, facilitating writing
@@ -53,4 +53,36 @@ H5PartWriter::~H5PartWriter() noexcept
 // *****************************************************************************
 {
   H5PartCloseFile( m_outFile );
+}
+
+void
+H5PartWriter::writeTimeStamp( uint64_t it, uint64_t npar ) const
+// *****************************************************************************
+//  Write a new time stamp to H5Part file
+//! \param[in] it Iteration number
+//! \param[in] npar Number of particles we will write in this iteration
+//! \author J. Bakosi
+// *****************************************************************************
+{
+  Assert( npar > 0, "Attempting to write 0 particles into H5Part file" );
+
+  H5PartSetStep( m_outFile, static_cast< h5part_int64_t >( it ) );
+  H5PartSetNumParticles( m_outFile, static_cast< h5part_int64_t >( npar ) );
+}
+
+void
+H5PartWriter::writeCoords( const std::vector< tk::real >& x,
+                           const std::vector< tk::real >& y,
+                           const std::vector< tk::real >& z ) const
+// *****************************************************************************
+//  Write particle coordinates to H5Part file
+//! \param[in] x X coordinates of particles
+//! \param[in] y Y coordinates of particles
+//! \param[in] z Z coordinates of particles
+//! \author J. Bakosi
+// *****************************************************************************
+{
+  H5PartWriteDataFloat64( m_outFile, "x", x.data() );
+  H5PartWriteDataFloat64( m_outFile, "y", y.data() );
+  H5PartWriteDataFloat64( m_outFile, "z", z.data() );
 }

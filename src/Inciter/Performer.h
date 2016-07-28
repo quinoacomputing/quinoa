@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.h
   \author    J. Bakosi
-  \date      Thu 28 Jul 2016 08:56:44 AM MDT
+  \date      Thu 28 Jul 2016 10:01:19 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Performer advances a system of systems of PDEs
   \details   Performer advances a system of systems of PDEs. There are a
@@ -28,6 +28,7 @@
 #include "Particles.h"
 #include "DerivedData.h"
 #include "VectorReducer.h"
+#include "H5PartWriter.h"
 #include "Inciter/InputDeck/InputDeck.h"
 
 #include "NoWarning/conductor.decl.h"
@@ -66,7 +67,9 @@ class Performer : public CBase_Performer {
     #endif
 
     //! Migrate constructor
-    explicit Performer( CkMigrateMessage* ) {}
+    explicit Performer( CkMigrateMessage* ) :
+      m_partFile( g_inputdeck.get< tag::cmd, tag::io, tag::part >() )
+    {}
 
     #if defined(__GNUC__)
       #pragma GCC diagnostic pop
@@ -173,7 +176,9 @@ class Performer : public CBase_Performer {
     //! Sparse matrix sotring the diagonals and off-diagonals of nonzeros
     tk::MeshNodes m_lhsd, m_lhso;
     //! (Tracker) particles properties
-    tk::Particles m_particles;          
+    tk::Particles m_particles;
+    //! Particle output file
+    tk::H5PartWriter m_partFile;
 
     //! Send off global row IDs to linear system merger, setup global->local IDs
     void setupIds();
@@ -216,10 +221,10 @@ class Performer : public CBase_Performer {
     //! Search particles in our chunk of the mesh
     void track();
 
-    //! Advance particles
-    void advanceParticles( std::size_t i,
-                           std::size_t e,
-                           const std::array< tk::real, 4>& N );
+    //! Advance particles based on velocity from mesh cell
+    void advanceParticle( std::size_t i,
+                          std::size_t e,
+                          const std::array< tk::real, 4>& N );
 
     //! Apply boundary conditions to particles
     void applyParBC( std::size_t i );
