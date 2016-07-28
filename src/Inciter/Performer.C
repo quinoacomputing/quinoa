@@ -96,7 +96,9 @@ Performer::Performer(
   m_lhsd( m_psup.second.size()-1, g_inputdeck.get< tag::component >().nprop() ),
   m_lhso( m_psup.first.size(), g_inputdeck.get< tag::component >().nprop() ),
   m_particles( g_inputdeck.get< tag::param, tag::compns, tag::npar >() *
-               m_inpoel.size()/4, 3 )
+               m_inpoel.size()/4, 3 ),
+  m_vp1(),
+  m_vp2()
 // *****************************************************************************
 //  Constructor
 //! \param[in] conductor Host (Conductor) proxy
@@ -517,6 +519,11 @@ Performer::advance( uint8_t stage, tk::real dt, uint64_t it, tk::real t )
 //! \author J. Bakosi
 // *****************************************************************************
 {
+  // Create a reference of particle velocities
+  auto& Vx1 = m_vp1[0]; auto& Vx2 = m_vp2[0];
+  auto& Vy1 = m_vp1[1]; auto& Vy2 = m_vp2[1];
+  auto& Vz1 = m_vp1[2]; auto& Vz2 = m_vp2[2];
+  
   // Update local copy of time step stage
   m_stage = stage;
 
@@ -525,6 +532,12 @@ Performer::advance( uint8_t stage, tk::real dt, uint64_t it, tk::real t )
 
     rhs( 0.5, dt, m_u, m_uf );
 
+    // Update particle coordinates
+    for (std::size_t i=0; i<m_particles.nunk(); ++i) {
+      m_particles( i, 0, 0) = m_particles( i, 0, 0) + dt*(Vx1[i]-Vx2[i]);
+      m_particles( i, 1, 0) = m_particles( i, 1, 0) + dt*(Vy1[i]-Vy2[i]);
+      m_particles( i, 2, 0) = m_particles( i, 2, 0) + dt*(Vz1[i]-Vz2[i]);
+    }
   } else {
 
     // Update local copy of physical time and iteration count at the final stage
@@ -532,7 +545,13 @@ Performer::advance( uint8_t stage, tk::real dt, uint64_t it, tk::real t )
     m_it = it;
 
     rhs( 1.0, dt, m_uf, m_un );
-
+    
+    // Update particle coordinates
+    for (std::size_t i=0; i<m_particles.nunk(); ++i) {
+      m_particles( i, 0, 0) = m_particles( i, 0, 0) + dt*(Vx1[i]-Vx2[i]);
+      m_particles( i, 1, 0) = m_particles( i, 1, 0) + dt*(Vy1[i]-Vy2[i]);
+      m_particles( i, 2, 0) = m_particles( i, 2, 0) + dt*(Vz1[i]-Vz2[i]);
+    }
   }
 }
 
@@ -550,10 +569,15 @@ Performer::genPar()
   const auto& x = m_coord[0];
   const auto& y = m_coord[1];
   const auto& z = m_coord[2];
+  
+  // Create a reference of particle velocities
+  auto& Vx1 = m_vp1[0];
+  auto& Vy1 = m_vp1[1];
+  auto& Vz1 = m_vp1[2];
 
   // Generate npar number of particles into each mesh cell
   auto npar = g_inputdeck.get< tag::param, tag::compns, tag::npar >();
-  for (std::size_t e=0; e<m_inpoel.size()/4; ++e)
+  for (std::size_t e=0; e<m_inpoel.size()/4; ++e) {
     for (std::size_t p=0; p<npar; ++p) {
       std::array< tk::real, 4 > N;
       rng.uniform( thisIndex, 3, N.data() );
@@ -569,20 +593,29 @@ Performer::genPar()
           m_particles( i, 1, 0 ) = y[A]*N[0] + y[B]*N[1] + y[C]*N[2] + y[D]*N[3];
           m_particles( i, 2, 0 ) = z[A]*N[0] + z[B]*N[1] + z[C]*N[2] + z[D]*N[3];
           std::cout << "p " << i << " in e " << e << '\n';
+          std::cout << "Initializing velocity for p "<<i<<std::endl;
+          Vx1.push_back(0.0);
+          Vy1.push_back(0.0);
+          Vz1.push_back(0.0);
+
         } else --p; // retry if particle was not generated into cell
     }
 
-  // After creating particle positions we now check to see in which element
-  // they reside by solving for the shape functions using the particle and node
-  // positions, we will use this information to backout a velocity for each
-  // particle. 
-  // NOTE: This may only seem circular for the first step.  We create
-  // random shape functions to interpolate each particle's initial positions. We
-  // can then skip directly to finding the initial velocity. However, after the
-  // first time step each particle will have a completely different position.
-  // This is where solving for the shape functions comes into play since now
-  // there is no guarantee that the particle will be in the same element. 
-  parinel();
+    // After creating particle positions we now check to see in which element
+    // they reside by solving for the shape functions using the particle and
+    // node positions, we will use this information to backout a velocity for
+    // each particle. 
+    // NOTE: This may only seem circular for the first step.  We create
+    // random shape functions to interpolate each particle's initial positions.
+    // We can then skip directly to finding the initial velocity. However, after
+    // the first time step each particle will have a completely different
+    // posititon. This is where solving for the shape functions comes into play
+    // since now there is no guarantee that the particle will be in the same
+    // element. 
+    parinel();
+  }
+  // Initialize m_vp2
+  m_vp2 = m_vp1;
 }
 
 void
@@ -596,6 +629,13 @@ Performer::parinel()
   const auto& x = m_coord[0];
   const auto& y = m_coord[1];
   const auto& z = m_coord[2];
+  
+  // Create a reference of particle velocities
+  auto& Vx1 = m_vp1[0];
+  auto& Vy1 = m_vp1[1];
+  auto& Vz1 = m_vp1[2];
+
+  std::cout<<"m_particles.nunk(): "<<m_particles.nunk()<<std::endl;
 
   // Loop over the number of particles and evaluate shapefunctions at each
   // particle's location
@@ -620,9 +660,9 @@ Performer::parinel()
                         m_particles( i, 1, 0 ),
                         m_particles( i, 2, 0 ),
                         1.0 };
-      tk::real  Ar[16] = { x[A], x[B], x[C], x[D],
-                           y[A], y[B], y[C], y[D],
-                           z[A], z[B], z[C], z[D],
+      tk::real Ar[16] = { x[A], x[B], x[C], x[D],
+                          y[A], y[B], y[C], y[D],
+                          z[A], z[B], z[C], z[D],
                            1.0,  1.0,  1.0,  1.0 };
 
       // DGETRF computes an LU factorization of a general MxN matrix A
@@ -667,10 +707,27 @@ Performer::parinel()
       // Check to see if particle i is in element e
       if ( std::min(N[0],1-N[0]) > 0 && std::min(N[1],1-N[1]) > 0 &&
            std::min(N[2],1-N[2]) > 0 && std::min(N[3],1-N[3]) > 0 ) {
-        // You get velocities from the field data m_u. This should be passed
-        // back to Tracker to move that particle one time step.
-        // Write out particle id and element id (should print once per particle)
-        std::cout<<"Particle "<<i<<" is in element "<<e<<std::endl;
+        // If this condition is true, search for and interpolate the particle
+        // velocity using the shape functions defined above. 
+        tk::real Vx[4] = { m_u(A,1,0)/m_u(A,0,0),
+                           m_u(B,1,0)/m_u(B,0,0),
+                           m_u(C,1,0)/m_u(C,0,0),
+                           m_u(D,1,0)/m_u(D,0,0) };
+        tk::real Vy[4] = { m_u(A,2,0)/m_u(A,0,0),
+                           m_u(B,2,0)/m_u(B,0,0),
+                           m_u(C,2,0)/m_u(C,0,0),
+                           m_u(D,2,0)/m_u(D,0,0) };
+        tk::real Vz[4] = { m_u(A,3,0)/m_u(A,0,0),
+                           m_u(B,3,0)/m_u(B,0,0),
+                           m_u(C,3,0)/m_u(C,0,0),
+                           m_u(D,3,0)/m_u(D,0,0) };
+        
+        // NOTE: This should only be done once, otherwise it'll make the
+        // particle velocity vector bigger and bigger when parinel() is called
+        // after each time step.
+        Vx1[i] = N[A]*Vx[0] + N[B]*Vx[1] + N[C]*Vx[2] + N[D]*Vx[3];
+        Vy1[i] = N[A]*Vy[0] + N[B]*Vy[1] + N[C]*Vy[2] + N[D]*Vy[3];
+        Vz1[i] = N[A]*Vz[0] + N[B]*Vz[1] + N[C]*Vz[2] + N[D]*Vz[3];
         e = m_inpoel.size()/4;  // search for next particle
       }
     }
@@ -727,6 +784,7 @@ Performer::updateSolution( const std::vector< std::size_t >& gid,
 
     // Prepare for next time step stage
     m_nsol = 0;
+    m_vp2 = m_vp1;
 
     // Tell the Charm++ runtime system to call back to Conductor::evaluateTime()
     // once all Performer chares have received the update. The reduction is done

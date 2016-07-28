@@ -64,8 +64,8 @@ class ExodusIIMeshReader {
                    std::vector< tk::real >& y,
                    std::vector< tk::real >& z ) const
     {
-      tk::real px, py, pz;
-      readNode( id, px, py, pz );
+      tk::real px, py, pz; 
+      readNode( id, px, py, pz ); 
       x.push_back( px );
       y.push_back( py );
       z.push_back( pz );
