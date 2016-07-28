@@ -800,6 +800,7 @@ INPUT                  = \
   @CMAKE_CURRENT_SOURCE_DIR@/../doc/licenses/Charm++_license.dox \
   @CMAKE_CURRENT_SOURCE_DIR@/../doc/licenses/PEGTL_license.dox \
   @CMAKE_CURRENT_SOURCE_DIR@/../doc/licenses/TUT_license.dox \
+  @CMAKE_CURRENT_SOURCE_DIR@/../doc/licenses/H5Part_license.dox \
   @CMAKE_CURRENT_SOURCE_DIR@/../doc/licenses/Boost_license.dox \
   @CMAKE_CURRENT_SOURCE_DIR@/../doc/licenses/Cartesian_Product_license.dox \
   @CMAKE_CURRENT_SOURCE_DIR@/../doc/licenses/PStreams_license.dox \
