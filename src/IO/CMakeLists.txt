@@ -15,6 +15,7 @@ add_library(IO
             GmshMeshWriter.C
             NetgenMeshWriter.C
             ExodusIIMeshWriter.C
+            H5PartWriter.C
 #            SiloWriter.C
 )
 
