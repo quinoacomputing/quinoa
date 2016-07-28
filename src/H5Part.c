@@ -246,7 +246,7 @@ _H5Part_open_file (
 		/* select the HDF5 VFD */
 		if (flags & H5PART_VFD_MPIPOSIX) {
 			_H5Part_print_info ( "Selecting MPI-POSIX VFD" );
-			if (H5Pset_fapl_mpiposix ( f->access_prop, comm, 0 ) < 0) {
+			if (H5Pset_fapl_mpio ( f->access_prop, comm, 0 ) < 0) {
 				HANDLE_H5P_SET_FAPL_ERR;
 				goto error_cleanup;
 			}
