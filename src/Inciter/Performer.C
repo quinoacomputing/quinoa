@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.C
   \author    J. Bakosi
-  \date      Tue 26 Jul 2016 12:07:10 PM MDT
+  \date      Thu 28 Jul 2016 07:57:28 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Performer advances a PDE
   \details   Performer advances a PDE. There are a potentially
@@ -133,9 +133,11 @@ Performer::setup()
   readCoords();
   // Generate particles
   genPar();
-  // Output chare mesh to file
-  writeMesh();
-  // Output mesh-based fields metadata to file
+  // Output header to output file
+  writeHeader();
+  // Output element blocks to output file
+  writeElemBlocks();
+  // Output fields metadata to output file
   writeMeta();
 }
 
@@ -405,37 +407,77 @@ Performer::readCoords()
 }
 
 void
-Performer::writeMesh()
+Performer::writeHeader()
 // *****************************************************************************
-// Output chare mesh to file
+// Output header to output file
 //! \author J. Bakosi
 // *****************************************************************************
 {
-  // Create mesh object initializing element connectivity and point coords
-  tk::UnsMesh mesh( m_inpoel, m_coord );
-
   // Create ExodusII writer
   tk::ExodusIIMeshWriter ew( m_outFilename, tk::ExoWriter::CREATE );
 
-  // Write chare mesh
-  ew.writeMesh( mesh );
+  // Write file header
+  auto npar = g_inputdeck.get< tag::param, tag::compns, tag::npar >();
+  if (npar > 0) npar *= m_inpoel.size()/4;
+
+  ew.writeHeader( m_coord[0].size() + npar,     // number of nodes
+                  m_inpoel.size()/4 + npar,     // number of elements
+                  npar > 0 ? 2 : 1 );           // number of element blocks
 }
 
 void
-Performer::writeChareId( const tk::ExodusIIMeshWriter& ew,
-                         uint64_t it ) const
+Performer::writeElemBlocks()
 // *****************************************************************************
-// Output chare id field to file
-//! \param[in] ew ExodusII mesh-based writer object
-//! \param[in] it Iteration count
+// Output chare element blocks to file
 //! \author J. Bakosi
 // *****************************************************************************
 {
-  // Write elem chare id field to mesh
-  std::vector< tk::real > chid( m_inpoel.size()/4,
-                                static_cast<tk::real>(thisIndex) );
-  ew.writeElemScalar( it, 1, chid );
+  // Create ExodusII writer
+  tk::ExodusIIMeshWriter ew( m_outFilename, tk::ExoWriter::OPEN );
+
+  // Optionally write out particle coordinates
+  std::vector< tk::real > x, y, z;
+  if (g_inputdeck.get< tag::param, tag::compns, tag::npar >() > 0) {
+    x = m_particles.extract( 0, 0 );
+    y = m_particles.extract( 1, 0 );
+    z = m_particles.extract( 2, 0 );
+  }
+
+  // Write chare mesh initializing element connectivity and point coords
+  ew.writeMesh( tk::UnsMesh( m_inpoel, m_coord ), x, y, z );
+
+
+  std::string fn( "p.h5part" );
+  m_partfile = H5PartOpenFileParallel( fn.c_str(), H5PART_WRITE, MPI_COMM_WORLD );
+  H5PartWriteFileAttribString( m_partfile, "Origin", "Written by Quinoa" );
+
+  H5PartSetStep(m_partfile, 0); // only 1 timestep in this file
+
+  auto npar = g_inputdeck.get< tag::param, tag::compns, tag::npar >();
+  if (npar > 0) npar *= m_inpoel.size()/4;
+
+  H5PartSetNumParticles( m_partfile, npar );
+
+  H5PartWriteDataFloat64( m_partfile, "x", x.data() ); 
+  H5PartWriteDataFloat64( m_partfile, "y", y.data() );
+  H5PartWriteDataFloat64( m_partfile, "z", z.data() );
 }
+
+// void
+// Performer::writeChareId( const tk::ExodusIIMeshWriter& ew,
+//                          uint64_t it ) const
+// // *****************************************************************************
+// // Output chare id field to file
+// //! \param[in] ew ExodusII mesh-based writer object
+// //! \param[in] it Iteration count
+// //! \author J. Bakosi
+// // *****************************************************************************
+// {
+//   // Write elem chare id field to mesh
+//   std::vector< tk::real > chid( m_inpoel.size()/4,
+//                                 static_cast<tk::real>(thisIndex) );
+//   ew.writeElemScalar( it, 1, chid );
+// }
 
 void
 Performer::writeSolution( const tk::ExodusIIMeshWriter& ew,
@@ -465,14 +507,24 @@ Performer::writeMeta() const
   // Create ExodusII writer
   tk::ExodusIIMeshWriter ew( m_outFilename, tk::ExoWriter::OPEN );
 
-  ew.writeElemVarNames( { "Chare Id" } );
+  std::vector< std::string > names;
+
+  //names.push_back( "Chare Id" );
+
+//   // Optionally output particle element block
+//   if (g_inputdeck.get< tag::param, tag::compns, tag::npar >() > 0)
+//     names.push_back( "particles" );
+
+  // Write elem field names
+  //ew.writeElemVarNames( names );
 
   // Collect nodal field output names from all PDEs
-  std::vector< std::string > names;
+  names.clear();
   for (const auto& eq : g_pdes) {
     auto n = eq.names();
     names.insert( end(names), begin(n), end(n) );
   }
+
   // Write node field names
   ew.writeNodeVarNames( names );
 }
@@ -495,7 +547,9 @@ Performer::writeFields( tk::real time )
   ew.writeTimeStamp( m_itf, time );
 
   // Write element fields
-  writeChareId( ew, m_itf );
+  //writeChareId( ew, m_itf );
+//   if (g_inputdeck.get< tag::param, tag::compns, tag::npar >() > 0)
+//     writeParticles(
 
   // Collect node fields output from all PDEs
   m_un = m_u;   // make a copy as eq::output() is allowed to overwrite its arg
@@ -506,6 +560,28 @@ Performer::writeFields( tk::real time )
   }
   // Write node fields
   writeSolution( ew, m_itf, output );
+
+  std::vector< tk::real > x, y, z;
+  if (g_inputdeck.get< tag::param, tag::compns, tag::npar >() > 0) {
+    x = m_particles.extract( 0, 0 );
+    y = m_particles.extract( 1, 0 );
+    z = m_particles.extract( 2, 0 );
+  }
+
+  for (auto& p : x) p += 1.0;
+
+  H5PartSetStep(m_partfile, 1); // only 1 timestep in this file
+
+  auto npar = g_inputdeck.get< tag::param, tag::compns, tag::npar >();
+  if (npar > 0) npar *= m_inpoel.size()/4;
+
+  H5PartSetNumParticles( m_partfile, npar );
+
+  H5PartWriteDataFloat64( m_partfile, "x", x.data() ); 
+  H5PartWriteDataFloat64( m_partfile, "y", y.data() );
+  H5PartWriteDataFloat64( m_partfile, "z", z.data() );
+
+  H5PartCloseFile(m_partfile);
 }
 
 void
@@ -592,12 +668,6 @@ Performer::genPar()
           m_particles( i, 0, 0 ) = x[A]*N[0] + x[B]*N[1] + x[C]*N[2] + x[D]*N[3];
           m_particles( i, 1, 0 ) = y[A]*N[0] + y[B]*N[1] + y[C]*N[2] + y[D]*N[3];
           m_particles( i, 2, 0 ) = z[A]*N[0] + z[B]*N[1] + z[C]*N[2] + z[D]*N[3];
-          std::cout << "p " << i << " in e " << e << '\n';
-          std::cout << "Initializing velocity for p "<<i<<std::endl;
-          Vx1.push_back(0.0);
-          Vy1.push_back(0.0);
-          Vz1.push_back(0.0);
-
         } else --p; // retry if particle was not generated into cell
     }
 
@@ -707,27 +777,6 @@ Performer::parinel()
       // Check to see if particle i is in element e
       if ( std::min(N[0],1-N[0]) > 0 && std::min(N[1],1-N[1]) > 0 &&
            std::min(N[2],1-N[2]) > 0 && std::min(N[3],1-N[3]) > 0 ) {
-        // If this condition is true, search for and interpolate the particle
-        // velocity using the shape functions defined above. 
-        tk::real Vx[4] = { m_u(A,1,0)/m_u(A,0,0),
-                           m_u(B,1,0)/m_u(B,0,0),
-                           m_u(C,1,0)/m_u(C,0,0),
-                           m_u(D,1,0)/m_u(D,0,0) };
-        tk::real Vy[4] = { m_u(A,2,0)/m_u(A,0,0),
-                           m_u(B,2,0)/m_u(B,0,0),
-                           m_u(C,2,0)/m_u(C,0,0),
-                           m_u(D,2,0)/m_u(D,0,0) };
-        tk::real Vz[4] = { m_u(A,3,0)/m_u(A,0,0),
-                           m_u(B,3,0)/m_u(B,0,0),
-                           m_u(C,3,0)/m_u(C,0,0),
-                           m_u(D,3,0)/m_u(D,0,0) };
-        
-        // NOTE: This should only be done once, otherwise it'll make the
-        // particle velocity vector bigger and bigger when parinel() is called
-        // after each time step.
-        Vx1[i] = N[A]*Vx[0] + N[B]*Vx[1] + N[C]*Vx[2] + N[D]*Vx[3];
-        Vy1[i] = N[A]*Vy[0] + N[B]*Vy[1] + N[C]*Vy[2] + N[D]*Vy[3];
-        Vz1[i] = N[A]*Vz[0] + N[B]*Vz[1] + N[C]*Vz[2] + N[D]*Vz[3];
         e = m_inpoel.size()/4;  // search for next particle
       }
     }
