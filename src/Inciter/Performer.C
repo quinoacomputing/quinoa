@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.C
   \author    J. Bakosi
-  \date      Thu 28 Jul 2016 07:57:28 AM MDT
+  \date      Thu 28 Jul 2016 08:07:40 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Performer advances a PDE
   \details   Performer advances a PDE. There are a potentially
@@ -133,10 +133,8 @@ Performer::setup()
   readCoords();
   // Generate particles
   genPar();
-  // Output header to output file
-  writeHeader();
-  // Output element blocks to output file
-  writeElemBlocks();
+  // Output chare mesh to file
+  writeMesh();
   // Output fields metadata to output file
   writeMeta();
 }
@@ -407,26 +405,7 @@ Performer::readCoords()
 }
 
 void
-Performer::writeHeader()
-// *****************************************************************************
-// Output header to output file
-//! \author J. Bakosi
-// *****************************************************************************
-{
-  // Create ExodusII writer
-  tk::ExodusIIMeshWriter ew( m_outFilename, tk::ExoWriter::CREATE );
-
-  // Write file header
-  auto npar = g_inputdeck.get< tag::param, tag::compns, tag::npar >();
-  if (npar > 0) npar *= m_inpoel.size()/4;
-
-  ew.writeHeader( m_coord[0].size() + npar,     // number of nodes
-                  m_inpoel.size()/4 + npar,     // number of elements
-                  npar > 0 ? 2 : 1 );           // number of element blocks
-}
-
-void
-Performer::writeElemBlocks()
+Performer::writeMesh()
 // *****************************************************************************
 // Output chare element blocks to file
 //! \author J. Bakosi
@@ -434,50 +413,9 @@ Performer::writeElemBlocks()
 {
   // Create ExodusII writer
   tk::ExodusIIMeshWriter ew( m_outFilename, tk::ExoWriter::OPEN );
-
-  // Optionally write out particle coordinates
-  std::vector< tk::real > x, y, z;
-  if (g_inputdeck.get< tag::param, tag::compns, tag::npar >() > 0) {
-    x = m_particles.extract( 0, 0 );
-    y = m_particles.extract( 1, 0 );
-    z = m_particles.extract( 2, 0 );
-  }
-
   // Write chare mesh initializing element connectivity and point coords
-  ew.writeMesh( tk::UnsMesh( m_inpoel, m_coord ), x, y, z );
-
-
-  std::string fn( "p.h5part" );
-  m_partfile = H5PartOpenFileParallel( fn.c_str(), H5PART_WRITE, MPI_COMM_WORLD );
-  H5PartWriteFileAttribString( m_partfile, "Origin", "Written by Quinoa" );
-
-  H5PartSetStep(m_partfile, 0); // only 1 timestep in this file
-
-  auto npar = g_inputdeck.get< tag::param, tag::compns, tag::npar >();
-  if (npar > 0) npar *= m_inpoel.size()/4;
-
-  H5PartSetNumParticles( m_partfile, npar );
-
-  H5PartWriteDataFloat64( m_partfile, "x", x.data() ); 
-  H5PartWriteDataFloat64( m_partfile, "y", y.data() );
-  H5PartWriteDataFloat64( m_partfile, "z", z.data() );
+  ew.writeMesh( tk::UnsMesh( m_inpoel, m_coord ) );
 }
-
-// void
-// Performer::writeChareId( const tk::ExodusIIMeshWriter& ew,
-//                          uint64_t it ) const
-// // *****************************************************************************
-// // Output chare id field to file
-// //! \param[in] ew ExodusII mesh-based writer object
-// //! \param[in] it Iteration count
-// //! \author J. Bakosi
-// // *****************************************************************************
-// {
-//   // Write elem chare id field to mesh
-//   std::vector< tk::real > chid( m_inpoel.size()/4,
-//                                 static_cast<tk::real>(thisIndex) );
-//   ew.writeElemScalar( it, 1, chid );
-// }
 
 void
 Performer::writeSolution( const tk::ExodusIIMeshWriter& ew,
@@ -507,19 +445,8 @@ Performer::writeMeta() const
   // Create ExodusII writer
   tk::ExodusIIMeshWriter ew( m_outFilename, tk::ExoWriter::OPEN );
 
-  std::vector< std::string > names;
-
-  //names.push_back( "Chare Id" );
-
-//   // Optionally output particle element block
-//   if (g_inputdeck.get< tag::param, tag::compns, tag::npar >() > 0)
-//     names.push_back( "particles" );
-
-  // Write elem field names
-  //ew.writeElemVarNames( names );
-
   // Collect nodal field output names from all PDEs
-  names.clear();
+  std::vector< std::string > names;
   for (const auto& eq : g_pdes) {
     auto n = eq.names();
     names.insert( end(names), begin(n), end(n) );
@@ -546,11 +473,6 @@ Performer::writeFields( tk::real time )
   // Write time stamp
   ew.writeTimeStamp( m_itf, time );
 
-  // Write element fields
-  //writeChareId( ew, m_itf );
-//   if (g_inputdeck.get< tag::param, tag::compns, tag::npar >() > 0)
-//     writeParticles(
-
   // Collect node fields output from all PDEs
   m_un = m_u;   // make a copy as eq::output() is allowed to overwrite its arg
   std::vector< std::vector< tk::real > > output;
@@ -560,28 +482,6 @@ Performer::writeFields( tk::real time )
   }
   // Write node fields
   writeSolution( ew, m_itf, output );
-
-  std::vector< tk::real > x, y, z;
-  if (g_inputdeck.get< tag::param, tag::compns, tag::npar >() > 0) {
-    x = m_particles.extract( 0, 0 );
-    y = m_particles.extract( 1, 0 );
-    z = m_particles.extract( 2, 0 );
-  }
-
-  for (auto& p : x) p += 1.0;
-
-  H5PartSetStep(m_partfile, 1); // only 1 timestep in this file
-
-  auto npar = g_inputdeck.get< tag::param, tag::compns, tag::npar >();
-  if (npar > 0) npar *= m_inpoel.size()/4;
-
-  H5PartSetNumParticles( m_partfile, npar );
-
-  H5PartWriteDataFloat64( m_partfile, "x", x.data() ); 
-  H5PartWriteDataFloat64( m_partfile, "y", y.data() );
-  H5PartWriteDataFloat64( m_partfile, "z", z.data() );
-
-  H5PartCloseFile(m_partfile);
 }
 
 void
@@ -646,11 +546,6 @@ Performer::genPar()
   const auto& y = m_coord[1];
   const auto& z = m_coord[2];
   
-  // Create a reference of particle velocities
-  auto& Vx1 = m_vp1[0];
-  auto& Vy1 = m_vp1[1];
-  auto& Vz1 = m_vp1[2];
-
   // Generate npar number of particles into each mesh cell
   auto npar = g_inputdeck.get< tag::param, tag::compns, tag::npar >();
   for (std::size_t e=0; e<m_inpoel.size()/4; ++e) {
@@ -699,11 +594,6 @@ Performer::parinel()
   const auto& x = m_coord[0];
   const auto& y = m_coord[1];
   const auto& z = m_coord[2];
-  
-  // Create a reference of particle velocities
-  auto& Vx1 = m_vp1[0];
-  auto& Vy1 = m_vp1[1];
-  auto& Vz1 = m_vp1[2];
 
   std::cout<<"m_particles.nunk(): "<<m_particles.nunk()<<std::endl;
 
