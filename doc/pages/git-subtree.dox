@@ -47,6 +47,7 @@ make life easier.
      $ git remote add --tags -f lapack git@github.com:quinoacomputing/LAPACK.git
      $ git remote add --tags -f aec https://gitlab.dkrz.de/k202009/libaec.git
      $ git remote add --tags -f ndiff git@github.com:quinoacomputing/ndiff.git
+     $ git remote add --tags -f h5part git@github.com:quinoacomputing/H5Part.git
    \endcode
 
 ### Git subtree commands to initially merge in a set of commits (squashed) from the TPLs and tools
@@ -75,6 +76,7 @@ documentation of what and how it has been done to set up the subtrees.
      $ git subtree add --prefix=tpl/src/lapack lapack master --squash
      $ git subtree add --prefix=tpl/src/blas blas master --squash
      $ git subtree add --prefix=tpl/src/aec aec v0.3.2 --squash
+     $ git subtree add --prefix=tpl/src/h5part h5part master --squash
      $ git subtree add --prefix=tool/src/ndiff ndiff master --squash
    \endcode
 
@@ -115,7 +117,7 @@ If you are happy with the diff, push the changes to the TPL:
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Thu 05 May 2016 11:20:50 AM MDT
+<em>Page last updated:</em> Thu 28 Jul 2016 07:47:55 AM MDT
 <em>Copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.</em>
 </small></div>
 */
