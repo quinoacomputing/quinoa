@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.h
   \author    J. Bakosi
-  \date      Wed 27 Jul 2016 11:32:31 AM MDT
+  \date      Thu 28 Jul 2016 08:05:19 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Performer advances a system of systems of PDEs
   \details   Performer advances a system of systems of PDEs. There are a
@@ -22,11 +22,6 @@
 #include <cstring>
 #include <cmath>
 #include <unordered_map>
-
-#define PARALLEL_IO
-#include <H5Part.h>
-#include <H5Block.h>
-#undef PARALLEL_IO
 
 #include "Types.h"
 #include "MeshNodes.h"
@@ -184,7 +179,8 @@ class Performer : public CBase_Performer {
     tk::MeshNodes m_lhsd, m_lhso;
     //! (Tracker) particles properties
     tk::Particles m_particles;          
-    H5PartFile* m_partfile;
+    //! Particle velocities
+    std::array< std::vector< tk::real >, 3 > m_vp1, m_vp2;
 
     //! Send off global row IDs to linear system merger, setup global->local IDs
     void setupIds();
@@ -210,14 +206,8 @@ class Performer : public CBase_Performer {
               const tk::MeshNodes& sol,
               tk::MeshNodes& rhs );
 
-    //! Output header to output file
-    void writeHeader();
-
     //! Output chare element blocks to output file
-    void writeElemBlocks();
-
-    //! Output chare mesh chare id field to file
-    //void writeChareId( const tk::ExodusIIMeshWriter& ew, uint64_t it ) const;
+    void writeMesh();
 
     //! Output solution to file
     void writeSolution( const tk::ExodusIIMeshWriter& ew,
