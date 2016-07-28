@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.C
   \author    J. Bakosi
-  \date      Thu 28 Jul 2016 08:49:34 AM MDT
+  \date      Thu 28 Jul 2016 08:57:43 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Performer advances a PDE
   \details   Performer advances a PDE. There are a potentially
@@ -515,7 +515,7 @@ Performer::advance( uint8_t stage, tk::real dt, uint64_t it, tk::real t )
 void
 Performer::genPar()
 // *****************************************************************************
-// Generate the particles within the mesh
+// Generate particles to each of our mesh cells
 //! \author F.J. Gonzalez
 // *****************************************************************************
 {
@@ -550,9 +550,9 @@ Performer::genPar()
 }
 
 void
-Performer::parinel()
+Performer::track()
 // *****************************************************************************
-// Receive particle coordinate information and check which element its in
+// Search particles in our chunk of the mesh
 //! \author F.J. Gonzalez
 // *****************************************************************************
 {
@@ -629,7 +629,7 @@ Performer::parinel()
         CkExit();
       }
 
-      // Check to see if particle i is in element e
+      // If particle is found, advance, and process next one
       if ( std::min(N[0],1-N[0]) > 0 && std::min(N[1],1-N[1]) > 0 &&
            std::min(N[2],1-N[2]) > 0 && std::min(N[3],1-N[3]) > 0 ) {
         advanceParticles( i, e, N );
@@ -644,7 +644,7 @@ Performer::advanceParticles( std::size_t i,
                              std::size_t e,
                              const std::array< tk::real, 4>& N)
 // *****************************************************************************
-// Receive particle coordinate information and check which element its in
+// Advance particles
 //! \author F.J. Gonzalez
 // *****************************************************************************
 {
@@ -677,7 +677,7 @@ Performer::advanceParticles( std::size_t i,
   m_particles( i, 2, 0) += 
     dt*(N[A]*dvz[0] + N[B]*dvz[1] + N[C]*dvz[2] + N[D]*dvz[3]);
 
-  applyBC( i );
+  applyParBC( i );
   
   std::cout<<"particle coord: "<<m_particles(i,0,0)<<","
                                <<m_particles(i,1,0)<<","
@@ -686,9 +686,9 @@ Performer::advanceParticles( std::size_t i,
 }
 
 void
-Performer::applyBC( std::size_t i )
+Performer::applyParBC( std::size_t i )
 // *****************************************************************************
-// Receive particle coordinate information and check which element its in
+// Apply boundary conditions to particles
 //! \author F.J. Gonzalez
 // *****************************************************************************
 {
@@ -742,7 +742,7 @@ Performer::updateSolution( const std::vector< std::size_t >& gid,
       m_up = m_u;
       m_u = m_un;
       
-      parinel();
+      track();
 
       if (!((m_it+1) % g_inputdeck.get< tag::interval, tag::field >()))
         writeFields( m_t + g_inputdeck.get< tag::discr, tag::dt >() );

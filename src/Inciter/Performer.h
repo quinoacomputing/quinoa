@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.h
   \author    J. Bakosi
-  \date      Thu 28 Jul 2016 08:50:01 AM MDT
+  \date      Thu 28 Jul 2016 08:56:44 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Performer advances a system of systems of PDEs
   \details   Performer advances a system of systems of PDEs. There are a
@@ -107,11 +107,6 @@ class Performer : public CBase_Performer {
     //! Generates particles into mesh cells
     void genPar();
 
-    //! Receive particles coordinate information 
-    //! NOTE: Currently hard coding particle locations
-    void parinel();
-
-    /** @name Pack/Unpack: Serialize Performer object for Charm++ */
     ///@{
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -218,13 +213,16 @@ class Performer : public CBase_Performer {
     //! Output mesh-based fields to file
     void writeFields( tk::real time );
     
+    //! Search particles in our chunk of the mesh
+    void track();
+
     //! Advance particles
     void advanceParticles( std::size_t i,
                            std::size_t e,
                            const std::array< tk::real, 4>& N );
 
     //! Apply boundary conditions to particles
-    void applyBC( std::size_t i );
+    void applyParBC( std::size_t i );
 };
 
 } // inciter::
