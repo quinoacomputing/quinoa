@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Build quinoa third-party Libraries
-# \date      Fri 15 Jul 2016 02:29:05 PM MDT
+# \date      Thu 28 Jul 2016 07:21:32 AM MDT
 #
 ################################################################################
 
@@ -210,12 +210,14 @@ if(HDF5_FOUND AND HDF5_IS_PARALLEL)
   string(REGEX REPLACE "([^;]+)" "LDFLAGS=-L\\1" hdf5_library_dirs_flags
         "${hdf5_library_dirs_flags}")
   set(hdf5_library_dirs "${HDF5_LIBRARY_DIRS}")
+  set(h5part_hdf5_library_dir "${HDF5_LIBRARY_DIRS}")
 else()
   message(STATUS "HDF5 either not found or not parallel: will build")
   set(hdf5 "hdf5")
   set(hdf5_include_dirs_flags "CPPFLAGS=-I${CMAKE_INSTALL_PREFIX}/include")
   set(hdf5_library_dirs_flags "LDFLAGS=-L${CMAKE_INSTALL_PREFIX}/lib")
   set(hdf5_library_dirs "${CMAKE_INSTALL_PREFIX}/lib")
+  set(h5part_hdf5_library_dir "${CMAKE_INSTALL_PREFIX}")
 endif()
 
 # Detect NetCDF, exclude if found, build if not
@@ -309,7 +311,7 @@ if(NOT BUILD_SHARED_LIBS)
 endif()
 
 # Output TPLs to be built
-message(STATUS "Will build: charm trilinos pegtl tut cartesian_product rngsse2 testu01 ${hdf5} ${netcdf} ${blas} ${boost} ${pstreams} ${hypre} ${pugixml} ${lapack} ${aec}")
+message(STATUS "Will build: charm trilinos pegtl tut cartesian_product rngsse2 testu01 h5part ${hdf5} ${netcdf} ${blas} ${boost} ${pstreams} ${hypre} ${pugixml} ${lapack} ${aec}")
 
 # Define fine-grained targets
 set_property(DIRECTORY PROPERTY EP_STEP_TARGETS
@@ -717,3 +719,25 @@ if (pugixml)
     LOG_INSTALL 1
   )
 endif()
+
+#### H5part ####################################################################
+# http://vis.lbl.gov/Research/H5Part
+ExternalProject_Add(
+  h5part
+  DEPENDS ${hdf5}
+  PREFIX h5part
+  DOWNLOAD_COMMAND ${CMAKE_COMMAND} -E copy_directory
+                   ${PROJECT_SOURCE_DIR}/src/h5part
+                   ${PROJECT_BINARY_DIR}/h5part
+  CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/h5part/configure
+                    CC=${MPI_C_COMPILER}
+                    CFLAGS=${CFLAGS}
+                    --with-hdf5=${h5part_hdf5_library_dir}
+                    --enable-parallel
+                    --prefix=${CMAKE_INSTALL_PREFIX}
+  BUILD_IN_SOURCE 1
+  LOG_DOWNLOAD 1
+  LOG_CONFIGURE 1
+  LOG_BUILD 1
+  LOG_INSTALL 1
+)
