@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Find the third-party libraries required to build Quinoa
-# \date      Fri 06 May 2016 06:43:52 AM MDT
+# \date      Thu 28 Jul 2016 07:06:53 AM MDT
 #
 ################################################################################
 
@@ -50,12 +50,15 @@ find_package(Hypre REQUIRED)
 set(PUGIXML_ROOT ${TPL_DIR}) # prefer ours
 find_package(pugixml REQUIRED)
 
-#### HDF5 (only for static link)
+### HDF5/NetCDF (NetCDF only for static link)
 if(NOT BUILD_SHARED_LIBS)
   set(HDF5_PREFER_PARALLEL true)
   set(HDF5_USE_STATIC_LIBRARIES true)
   find_package(HDF5 COMPONENTS HL)
   find_package(NetCDF)
+else()
+  set(HDF5_PREFER_PARALLEL true)
+  find_package(HDF5 COMPONENTS HL)
 endif()
 
 #### AEC (only for static link)
@@ -85,6 +88,14 @@ find_package(SEACASExodiff REQUIRED)
 if(SEACASExodiff_FOUND)
   message(STATUS "Found SEACASExodiff: ${SEACASExodiff_LIBRARY_DIRS}")
 endif()
+
+#### H5Part library
+set(H5PART_LIBRARY "NOTFOUND")
+find_library(H5PART_LIBRARY
+             NAMES H5Part
+             PATHS ${TPL_DIR}/lib
+             NO_DEFAULT_PATH
+             REQUIRED)
 
 #### RNGSSE2 library
 set(RNGSSE_LIBRARY "NOTFOUND")
