@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/Types.h
   \author    J. Bakosi
-  \date      Tue 26 Jul 2016 08:24:37 AM MDT
+  \date      Thu 28 Jul 2016 09:15:11 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Types for Incitier's parsers
   \details   Types for Incitier's parsers. This file defines the components of
@@ -62,7 +62,8 @@ using ios = tk::tuple::tagged_tuple<
   tag::control,     kw::control::info::expect::type,  //!< Control filename
   tag::input,       std::string,                      //!< Input filename
   tag::output,      std::string,                      //!< Output filename
-  tag::diag,        std::string                       //!< Diagnostics filename
+  tag::diag,        std::string,                      //!< Diagnostics filename
+  tag::part,        std::string                       //!< Particles filename
 >;
 
 //! Advection-diffusion transport equation parameters storage

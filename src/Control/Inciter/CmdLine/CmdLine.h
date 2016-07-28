@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/CmdLine/CmdLine.h
   \author    J. Bakosi
-  \date      Wed 20 Jul 2016 11:07:59 AM MDT
+  \date      Thu 28 Jul 2016 09:37:55 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Inciter's command line definition
   \details   This file defines the heterogeneous stack that is used for storing
@@ -93,6 +93,7 @@ class CmdLine : public tk::Control<
     CmdLine( tk::ctr::HelpFactory ctrinfo = tk::ctr::HelpFactory() ) {
       set< tag::io, tag::output >( "out" );
       set< tag::io, tag::diag >( "diag" );
+      set< tag::io, tag::part >( "track.h5part" );
       set< tag::virtualization >( 0.0 );
       set< tag::verbose >( false ); // Quiet output by default
       // Initialize help: fill from own keywords + add map passed in

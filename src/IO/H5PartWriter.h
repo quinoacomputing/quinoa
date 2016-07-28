@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/H5PartWriter.h
   \author    J. Bakosi
-  \date      Thu 28 Jul 2016 08:32:55 AM MDT
+  \date      Thu 28 Jul 2016 09:32:34 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     H5Part particles data writer
   \details   H5Part particles data writer class declaration, facilitating
@@ -12,6 +12,8 @@
 // *****************************************************************************
 #ifndef H5PartWriter_h
 #define H5PartWriter_h
+
+#include <vector>
 
 #include <NoWarning/H5Part.h>
 
@@ -33,8 +35,12 @@ class H5PartWriter {
     //! Destructor
     ~H5PartWriter() noexcept;
 
-    //!  Write time stamp to ExodusII file
-    void writeTimeStamp( tk::real time ) const;
+    //!  Write a new time stamp to H5Part file
+    void writeTimeStamp( uint64_t it, uint64_t npar ) const;
+
+    void writeCoords( const std::vector< tk::real >& x,
+                      const std::vector< tk::real >& y,
+                      const std::vector< tk::real >& z ) const;
 
   private:
     const std::string m_filename;          //!< File name

@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.C
   \author    J. Bakosi
-  \date      Thu 28 Jul 2016 08:57:43 AM MDT
+  \date      Thu 28 Jul 2016 10:18:15 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Performer advances a PDE
   \details   Performer advances a PDE. There are a potentially
@@ -96,7 +96,8 @@ Performer::Performer(
   m_lhsd( m_psup.second.size()-1, g_inputdeck.get< tag::component >().nprop() ),
   m_lhso( m_psup.first.size(), g_inputdeck.get< tag::component >().nprop() ),
   m_particles( g_inputdeck.get< tag::param, tag::compns, tag::npar >() *
-               m_inpoel.size()/4, 3 )
+               m_inpoel.size()/4, 3 ),
+  m_partFile( g_inputdeck.get< tag::cmd, tag::io, tag::part >() )
 // *****************************************************************************
 //  Constructor
 //! \param[in] conductor Host (Conductor) proxy
@@ -410,7 +411,7 @@ Performer::writeMesh()
 // *****************************************************************************
 {
   // Create ExodusII writer
-  tk::ExodusIIMeshWriter ew( m_outFilename, tk::ExoWriter::OPEN );
+  tk::ExodusIIMeshWriter ew( m_outFilename, tk::ExoWriter::CREATE );
   // Write chare mesh initializing element connectivity and point coords
   ew.writeMesh( tk::UnsMesh( m_inpoel, m_coord ) );
 }
@@ -632,19 +633,24 @@ Performer::track()
       // If particle is found, advance, and process next one
       if ( std::min(N[0],1-N[0]) > 0 && std::min(N[1],1-N[1]) > 0 &&
            std::min(N[2],1-N[2]) > 0 && std::min(N[3],1-N[3]) > 0 ) {
-        advanceParticles( i, e, N );
+        advanceParticle( i, e, N );
         e = m_inpoel.size()/4;  // search for next particle
       }
     }
   }
+
+  m_partFile.writeTimeStamp( m_it, m_particles.nunk() );
+  m_partFile.writeCoords( m_particles.extract( 0, 0 ),
+                          m_particles.extract( 1, 0 ),
+                          m_particles.extract( 2, 0 ) );
 }
 
 void
-Performer::advanceParticles( std::size_t i,
-                             std::size_t e,
-                             const std::array< tk::real, 4>& N)
+Performer::advanceParticle( std::size_t i,
+                            std::size_t e,
+                            const std::array< tk::real, 4>& N)
 // *****************************************************************************
-// Advance particles
+// Advance particle based on velocity from mesh cell
 //! \author F.J. Gonzalez
 // *****************************************************************************
 {
@@ -670,19 +676,14 @@ Performer::advanceParticles( std::size_t i,
                       m_u(C,3,0)/m_u(C,0,0) - m_up(C,3,0)/m_up(C,0,0),
                       m_u(D,3,0)/m_u(D,0,0) - m_up(D,3,0)/m_up(D,0,0) };
         
-  m_particles( i, 0, 0) += 
-    dt*(N[A]*dvx[0] + N[B]*dvx[1] + N[C]*dvx[2] + N[D]*dvx[3]);
-  m_particles( i, 1, 0) += 
-    dt*(N[A]*dvy[0] + N[B]*dvy[1] + N[C]*dvy[2] + N[D]*dvy[3]);
-  m_particles( i, 2, 0) += 
-    dt*(N[A]*dvz[0] + N[B]*dvz[1] + N[C]*dvz[2] + N[D]*dvz[3]);
-
-  applyParBC( i );
-  
-  std::cout<<"particle coord: "<<m_particles(i,0,0)<<","
-                               <<m_particles(i,1,0)<<","
-                               <<m_particles(i,2,0)<<"\n";
-
+//   m_particles( i, 0, 0) +=
+//     dt*(N[A]*dvx[0] + N[B]*dvx[1] + N[C]*dvx[2] + N[D]*dvx[3]);
+//   m_particles( i, 1, 0) +=
+//     dt*(N[A]*dvy[0] + N[B]*dvy[1] + N[C]*dvy[2] + N[D]*dvy[3]);
+//   m_particles( i, 2, 0) +=
+//     dt*(N[A]*dvz[0] + N[B]*dvz[1] + N[C]*dvz[2] + N[D]*dvz[3]);
+//
+//   applyParBC( i );
 }
 
 void
