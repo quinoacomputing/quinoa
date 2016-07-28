@@ -177,7 +177,10 @@ class Performer : public CBase_Performer {
     tk::MeshNodes m_u, m_uf, m_un;
     //! Sparse matrix sotring the diagonals and off-diagonals of nonzeros
     tk::MeshNodes m_lhsd, m_lhso;
-    tk::Particles m_particles;          //!< (Tracker) particles properties
+    //!< (Tracker) particles properties
+    tk::Particles m_particles;          
+    //! Particle velocities
+    std::array< std::vector< tk::real >, 3 > m_vp1, m_vp2;
 
     //! Send off global row IDs to linear system merger, setup global->local IDs
     void setupIds();
