@@ -174,13 +174,11 @@ class Performer : public CBase_Performer {
     //! Points surrounding points of our chunk of the mesh
     std::pair< std::vector< std::size_t >, std::vector< std::size_t > > m_psup;
     //! Unknown/solution vector: global mesh point row ids and values
-    tk::MeshNodes m_u, m_uf, m_un;
+    tk::MeshNodes m_u, m_uf, m_un, m_up;
     //! Sparse matrix sotring the diagonals and off-diagonals of nonzeros
     tk::MeshNodes m_lhsd, m_lhso;
     //!< (Tracker) particles properties
     tk::Particles m_particles;          
-    //! Particle velocities
-    std::array< std::vector< tk::real >, 3 > m_vp1, m_vp2;
 
     //! Send off global row IDs to linear system merger, setup global->local IDs
     void setupIds();
@@ -222,6 +220,13 @@ class Performer : public CBase_Performer {
 
     //! Output mesh-based fields to file
     void writeFields( tk::real time );
+    
+    //! Advance particles
+    void advanceParticles( std::size_t i,
+                           std::size_t e,
+                           const std::array< tk::real, 4>& N );
+    //! Apply boundary conditions to particles
+    void applyBC( std::size_t i, std::size_t e );
 };
 
 } // inciter::
