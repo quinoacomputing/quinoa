@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.C
   \author    J. Bakosi
-  \date      Thu 28 Jul 2016 08:07:40 AM MDT
+  \date      Thu 28 Jul 2016 08:49:34 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Performer advances a PDE
   \details   Performer advances a PDE. There are a potentially
@@ -96,9 +96,7 @@ Performer::Performer(
   m_lhsd( m_psup.second.size()-1, g_inputdeck.get< tag::component >().nprop() ),
   m_lhso( m_psup.first.size(), g_inputdeck.get< tag::component >().nprop() ),
   m_particles( g_inputdeck.get< tag::param, tag::compns, tag::npar >() *
-               m_inpoel.size()/4, 3 ),
-  m_vp1(),
-  m_vp2()
+               m_inpoel.size()/4, 3 )
 // *****************************************************************************
 //  Constructor
 //! \param[in] conductor Host (Conductor) proxy
@@ -495,11 +493,6 @@ Performer::advance( uint8_t stage, tk::real dt, uint64_t it, tk::real t )
 //! \author J. Bakosi
 // *****************************************************************************
 {
-  // Create a reference of particle velocities
-  auto& Vx1 = m_vp1[0]; auto& Vx2 = m_vp2[0];
-  auto& Vy1 = m_vp1[1]; auto& Vy2 = m_vp2[1];
-  auto& Vz1 = m_vp1[2]; auto& Vz2 = m_vp2[2];
-  
   // Update local copy of time step stage
   m_stage = stage;
 
@@ -508,12 +501,6 @@ Performer::advance( uint8_t stage, tk::real dt, uint64_t it, tk::real t )
 
     rhs( 0.5, dt, m_u, m_uf );
 
-    // Update particle coordinates
-    for (std::size_t i=0; i<m_particles.nunk(); ++i) {
-      m_particles( i, 0, 0) = m_particles( i, 0, 0) + dt*(Vx1[i]-Vx2[i]);
-      m_particles( i, 1, 0) = m_particles( i, 1, 0) + dt*(Vy1[i]-Vy2[i]);
-      m_particles( i, 2, 0) = m_particles( i, 2, 0) + dt*(Vz1[i]-Vz2[i]);
-    }
   } else {
 
     // Update local copy of physical time and iteration count at the final stage
@@ -522,12 +509,6 @@ Performer::advance( uint8_t stage, tk::real dt, uint64_t it, tk::real t )
 
     rhs( 1.0, dt, m_uf, m_un );
     
-    // Update particle coordinates
-    for (std::size_t i=0; i<m_particles.nunk(); ++i) {
-      m_particles( i, 0, 0) = m_particles( i, 0, 0) + dt*(Vx1[i]-Vx2[i]);
-      m_particles( i, 1, 0) = m_particles( i, 1, 0) + dt*(Vy1[i]-Vy2[i]);
-      m_particles( i, 2, 0) = m_particles( i, 2, 0) + dt*(Vz1[i]-Vz2[i]);
-    }
   }
 }
 
@@ -545,7 +526,7 @@ Performer::genPar()
   const auto& x = m_coord[0];
   const auto& y = m_coord[1];
   const auto& z = m_coord[2];
-  
+
   // Generate npar number of particles into each mesh cell
   auto npar = g_inputdeck.get< tag::param, tag::compns, tag::npar >();
   for (std::size_t e=0; e<m_inpoel.size()/4; ++e) {
@@ -555,32 +536,17 @@ Performer::genPar()
       N[3] = 1.0 - N[0] - N[1] - N[2];
       if ( std::min(N[0],1-N[0]) > 0 && std::min(N[1],1-N[1]) > 0 &&
            std::min(N[2],1-N[2]) > 0 && std::min(N[3],1-N[3]) > 0 ) {
-          const auto A = m_inpoel[e*4+0];
-          const auto B = m_inpoel[e*4+1];
-          const auto C = m_inpoel[e*4+2];
-          const auto D = m_inpoel[e*4+3];
-          const auto i = e * npar + p;
-          m_particles( i, 0, 0 ) = x[A]*N[0] + x[B]*N[1] + x[C]*N[2] + x[D]*N[3];
-          m_particles( i, 1, 0 ) = y[A]*N[0] + y[B]*N[1] + y[C]*N[2] + y[D]*N[3];
-          m_particles( i, 2, 0 ) = z[A]*N[0] + z[B]*N[1] + z[C]*N[2] + z[D]*N[3];
-        } else --p; // retry if particle was not generated into cell
+        const auto A = m_inpoel[e*4+0];
+        const auto B = m_inpoel[e*4+1];
+        const auto C = m_inpoel[e*4+2];
+        const auto D = m_inpoel[e*4+3];
+        const auto i = e * npar + p;
+        m_particles( i, 0, 0 ) = x[A]*N[0] + x[B]*N[1] + x[C]*N[2] + x[D]*N[3];
+        m_particles( i, 1, 0 ) = y[A]*N[0] + y[B]*N[1] + y[C]*N[2] + y[D]*N[3];
+        m_particles( i, 2, 0 ) = z[A]*N[0] + z[B]*N[1] + z[C]*N[2] + z[D]*N[3];
+      } else --p; // retry if particle was not generated into cell
     }
-
-    // After creating particle positions we now check to see in which element
-    // they reside by solving for the shape functions using the particle and
-    // node positions, we will use this information to backout a velocity for
-    // each particle. 
-    // NOTE: This may only seem circular for the first step.  We create
-    // random shape functions to interpolate each particle's initial positions.
-    // We can then skip directly to finding the initial velocity. However, after
-    // the first time step each particle will have a completely different
-    // posititon. This is where solving for the shape functions comes into play
-    // since now there is no guarantee that the particle will be in the same
-    // element. 
-    parinel();
   }
-  // Initialize m_vp2
-  m_vp2 = m_vp1;
 }
 
 void
@@ -594,8 +560,6 @@ Performer::parinel()
   const auto& x = m_coord[0];
   const auto& y = m_coord[1];
   const auto& z = m_coord[2];
-
-  std::cout<<"m_particles.nunk(): "<<m_particles.nunk()<<std::endl;
 
   // Loop over the number of particles and evaluate shapefunctions at each
   // particle's location
@@ -616,10 +580,10 @@ Performer::parinel()
 
       lapack_int INFO;
       lapack_int IPIV[4];
-      tk::real N[4] = { m_particles( i, 0, 0 ),
-                        m_particles( i, 1, 0 ),
-                        m_particles( i, 2, 0 ),
-                        1.0 };
+      std::array< tk::real, 4 > N {{ m_particles( i, 0, 0 ),
+                                     m_particles( i, 1, 0 ),
+                                     m_particles( i, 2, 0 ),
+                                     1.0 }};
       tk::real Ar[16] = { x[A], x[B], x[C], x[D],
                           y[A], y[B], y[C], y[D],
                           z[A], z[B], z[C], z[D],
@@ -657,7 +621,8 @@ Performer::parinel()
       // B (input/output) double array - Entry: rhs matrix B
       //                                 Exit: the solution matrix X
       // LDB (input) int               - The leading dimension of B
-      INFO = LAPACKE_dgetrs(LAPACK_COL_MAJOR, 'T', 4, 1, Ar, 4, IPIV, N, 4);
+      INFO = 
+        LAPACKE_dgetrs(LAPACK_COL_MAJOR, 'T', 4, 1, Ar, 4, IPIV, N.data(), 4);
       if (INFO != 0) {
         std::cout << "Linear system solve failed!" << std::endl;
         std::cout << "DEBUG: INFO = " << INFO << std::endl;
@@ -667,10 +632,77 @@ Performer::parinel()
       // Check to see if particle i is in element e
       if ( std::min(N[0],1-N[0]) > 0 && std::min(N[1],1-N[1]) > 0 &&
            std::min(N[2],1-N[2]) > 0 && std::min(N[3],1-N[3]) > 0 ) {
+        advanceParticles( i, e, N );
         e = m_inpoel.size()/4;  // search for next particle
       }
     }
   }
+}
+
+void
+Performer::advanceParticles( std::size_t i,
+                             std::size_t e,
+                             const std::array< tk::real, 4>& N)
+// *****************************************************************************
+// Receive particle coordinate information and check which element its in
+//! \author F.J. Gonzalez
+// *****************************************************************************
+{
+  auto dt = g_inputdeck.get< tag::discr, tag::dt >();
+  const auto A = m_inpoel[e*4+0];
+  const auto B = m_inpoel[e*4+1];
+  const auto C = m_inpoel[e*4+2]; 
+  const auto D = m_inpoel[e*4+3];
+  
+  // Update particle coordinates
+  // If this condition is true, search for and interpolate the particle
+  // velocity using the shape functions defined above. 
+  tk::real dvx[4] = { m_u(A,1,0)/m_u(A,0,0) - m_up(A,1,0)/m_up(A,0,0),
+                      m_u(B,1,0)/m_u(B,0,0) - m_up(B,1,0)/m_up(B,0,0),
+                      m_u(C,1,0)/m_u(C,0,0) - m_up(C,1,0)/m_up(C,0,0),
+                      m_u(D,1,0)/m_u(D,0,0) - m_up(D,1,0)/m_up(D,0,0) };
+  tk::real dvy[4] = { m_u(A,2,0)/m_u(A,0,0) - m_up(A,2,0)/m_up(A,0,0),
+                      m_u(B,2,0)/m_u(B,0,0) - m_up(B,2,0)/m_up(B,0,0),
+                      m_u(C,2,0)/m_u(C,0,0) - m_up(C,2,0)/m_up(C,0,0),
+                      m_u(D,2,0)/m_u(D,0,0) - m_up(D,2,0)/m_up(D,0,0) };
+  tk::real dvz[4] = { m_u(A,3,0)/m_u(A,0,0) - m_up(A,3,0)/m_up(A,0,0),
+                      m_u(B,3,0)/m_u(B,0,0) - m_up(B,3,0)/m_up(B,0,0),
+                      m_u(C,3,0)/m_u(C,0,0) - m_up(C,3,0)/m_up(C,0,0),
+                      m_u(D,3,0)/m_u(D,0,0) - m_up(D,3,0)/m_up(D,0,0) };
+        
+  m_particles( i, 0, 0) += 
+    dt*(N[A]*dvx[0] + N[B]*dvx[1] + N[C]*dvx[2] + N[D]*dvx[3]);
+  m_particles( i, 1, 0) += 
+    dt*(N[A]*dvy[0] + N[B]*dvy[1] + N[C]*dvy[2] + N[D]*dvy[3]);
+  m_particles( i, 2, 0) += 
+    dt*(N[A]*dvz[0] + N[B]*dvz[1] + N[C]*dvz[2] + N[D]*dvz[3]);
+
+  applyBC( i );
+  
+  std::cout<<"particle coord: "<<m_particles(i,0,0)<<","
+                               <<m_particles(i,1,0)<<","
+                               <<m_particles(i,2,0)<<"\n";
+
+}
+
+void
+Performer::applyBC( std::size_t i )
+// *****************************************************************************
+// Receive particle coordinate information and check which element its in
+//! \author F.J. Gonzalez
+// *****************************************************************************
+{
+  auto& x = m_particles(i,0,0);
+  auto& y = m_particles(i,1,0);
+  auto& z = m_particles(i,2,0);
+
+  if ( z > 0 ) z -= 40;
+  if ( z < -40 ) z += 40;
+  if ( y < -7.5 ) y = -7.5 - (y + 7.5); 
+  if ( y > 7.5 ) y = 7.5 - (y - 7.5);
+  if ( x < -0.125 ) y = -0.125 - (y + 0.125); 
+  if ( x > 0.125 ) y = 0.125 - (y - 0.125);
+  
 }
 
 void
@@ -707,7 +739,10 @@ Performer::updateSolution( const std::vector< std::size_t >& gid,
 
     } else {
 
+      m_up = m_u;
       m_u = m_un;
+      
+      parinel();
 
       if (!((m_it+1) % g_inputdeck.get< tag::interval, tag::field >()))
         writeFields( m_t + g_inputdeck.get< tag::discr, tag::dt >() );
@@ -723,7 +758,6 @@ Performer::updateSolution( const std::vector< std::size_t >& gid,
 
     // Prepare for next time step stage
     m_nsol = 0;
-    m_vp2 = m_vp1;
 
     // Tell the Charm++ runtime system to call back to Conductor::evaluateTime()
     // once all Performer chares have received the update. The reduction is done
