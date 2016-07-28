@@ -3,7 +3,6 @@ ACLOCAL_AMFLAGS=-I m4
 SUBDIRS = \
 	doc \
 	src \
-	test \
 	tools
 
 MAINTAINERCLEANFILES = \
