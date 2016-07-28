@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/H5PartWriter.C
   \author    J. Bakosi
-  \date      Thu 28 Jul 2016 08:34:16 AM MDT
+  \date      Thu 28 Jul 2016 09:01:24 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     H5Part particles data writer
   \details   H5Part particles data writer class definition, facilitating writing
@@ -33,7 +33,8 @@ H5PartWriter::H5PartWriter( const std::string& filename ) :
     #pragma clang diagnostic ignored "-Wold-style-cast"
   #endif
 
-  H5PartOpenFileParallel( filename.c_str(), H5PART_WRITE, MPI_COMM_WORLD );
+  m_outFile =
+    H5PartOpenFileParallel( filename.c_str(), H5PART_WRITE, MPI_COMM_WORLD );
 
   #if defined(__clang__)
     #pragma clang diagnostic pop
