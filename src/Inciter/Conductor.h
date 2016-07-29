@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Conductor.h
   \author    J. Bakosi
-  \date      Tue 26 Jul 2016 06:57:44 AM MDT
+  \date      Fri 29 Jul 2016 02:35:43 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Conductor drives the time integration of systems of systems of PDEs
   \details   Conductor drives the time integration of systems of systems of
@@ -59,6 +59,7 @@
 #include "VectorReducer.h"
 
 #include "NoWarning/performer.decl.h"
+#include "NoWarning/particlewriter.decl.h"
 
 namespace inciter {
 
@@ -122,6 +123,10 @@ class Conductor : public CBase_Conductor {
     //!   branches have done their part of storing and exporting global row ids
     void rowcomplete();
 
+    //! \brief Reduction target indicating that all workers have registered
+    //!    with their particle writer branches
+    void regcomplete();
+
     //! Reduction target initiating verification of the boundary conditions set
     void verifybc( CkReductionMsg* msg );
 
@@ -155,21 +160,24 @@ class Conductor : public CBase_Conductor {
                                                        CProxy_Performer >;
     using PerformerProxy = CProxy_Performer;
     using TrackerProxy = CProxy_Tracker< PerformerProxy >;
+    using ParticleWriterProxy = tk::CProxy_ParticleWriter;
     using PartitionerProxy = CProxy_Partitioner< CProxy_Conductor,
                                                  CProxy_Performer,
                                                  LinSysMergerProxy,
-                                                 TrackerProxy >;
+                                                 TrackerProxy,
+                                                 ParticleWriterProxy >;
 
-    InciterPrint m_print;               //!< Pretty printer
-    int m_nchare;                       //!< Number of performer chares
-    uint64_t m_it;                      //!< Iteration count
-    tk::real m_t;                       //!< Physical time
-    tk::real m_dt;                      //!< Physical time step size
-    uint8_t m_stage;                    //!< Stage in multi-stage time stepping
-    LinSysMergerProxy m_linsysmerger;   //!< Linear system merger group proxy
-    PerformerProxy m_performer;         //!< Performer chare array proxy
-    TrackerProxy m_tracker;             //!< Tracker chare array proxy
-    PartitionerProxy m_partitioner;     //!< Partitioner group proxy
+    InciterPrint m_print;                //!< Pretty printer
+    int m_nchare;                        //!< Number of performer chares
+    uint64_t m_it;                       //!< Iteration count
+    tk::real m_t;                        //!< Physical time
+    tk::real m_dt;                       //!< Physical time step size
+    uint8_t m_stage;                     //!< Stage in multi-stage time stepping
+    LinSysMergerProxy m_linsysmerger;    //!< Linear system merger group proxy
+    PerformerProxy m_performer;          //!< Performer chare array proxy
+    TrackerProxy m_tracker;              //!< Tracker chare array proxy
+    ParticleWriterProxy m_particlewriter;//!< Particle writer group proxy
+    PartitionerProxy m_partitioner;      //!< Partitioner group proxy
     //! Average communication cost of merging the linear system
     tk::real m_avcost;
     //! Total number of mesh nodes

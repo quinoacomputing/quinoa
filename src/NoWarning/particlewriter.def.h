@@ -1,29 +1,28 @@
 // *****************************************************************************
 /*!
-  \file      src/NoWarning/performer.decl.h
-  \author    J. Bakosi
+  \file      src/NoWarning/particlewriter.def.h
+  \author    F.J. Gonzalez
   \date      Wed 04 May 2016 09:41:18 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
-  \brief     Include performer.decl.h with turning off specific compiler
+  \brief     Include particlewriter.def.h with turning off specific compiler
              warnings.
 */
 // *****************************************************************************
-#ifndef nowarning_performer_decl_h
-#define nowarning_performer_decl_h
+#ifndef nowarning_particlewriter_def_h
+#define nowarning_particlewriter_def_h
 
 #if defined(__clang__)
   #pragma clang diagnostic push
-  #pragma clang diagnostic ignored "-Wreserved-id-macro"
-  #pragma clang diagnostic ignored "-Wunused-parameter"
   #pragma clang diagnostic ignored "-Wold-style-cast"
+  #pragma clang diagnostic ignored "-Wsign-conversion"
   #pragma clang diagnostic ignored "-Wshorten-64-to-32"
 #elif defined(__GNUC__)
   #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wunused-parameter"
-  #pragma GCC diagnostic ignored "-Wshadow"
+  #pragma GCC diagnostic ignored "-Weffc++"
+  #pragma GCC diagnostic ignored "-Wcast-qual"
 #endif
 
-#include "../Inciter/performer.decl.h"
+#include "../IO/particlewriter.def.h"
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
@@ -31,4 +30,4 @@
   #pragma GCC diagnostic pop
 #endif
 
-#endif // nowarning_performer_decl_h
+#endif // nowarning_particlewriter_def_h

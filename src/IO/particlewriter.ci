@@ -1,0 +1,22 @@
+// *****************************************************************************
+/*!
+  \file      src/IO/particlewriter.ci
+  \author    J. Bakosi
+  \date      Fri 29 Jul 2016 01:06:54 PM MDT
+  \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
+  \brief     Charm++ module interface file for outputing particle data to file
+  \details   Charm++ module interface file for outputing particle data to file.
+*/
+// *****************************************************************************
+
+module particlewriter {
+
+  namespace tk {
+
+    group ParticleWriter {
+      entry ParticleWriter( const std::string& filename );
+    };
+
+  } // tk::
+
+}

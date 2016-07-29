@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Conductor.C
   \author    J. Bakosi
-  \date      Tue 26 Jul 2016 07:06:29 AM MDT
+  \date      Fri 29 Jul 2016 02:38:58 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Conductor drives the time integration of a PDE
   \details   Conductor drives the time integration of a PDE
@@ -51,6 +51,7 @@ Conductor::Conductor() :
   m_linsysmerger(),
   m_performer(),
   m_tracker(),
+  m_particlewriter(),
   m_partitioner(),
   m_avcost( 0.0 ),
   m_npoin( 0 ),
@@ -104,6 +105,7 @@ Conductor::Conductor() :
   if ( nstep != 0 && term > t0 && dt < term-t0 ) {
 
     // Enable SDAG waits
+    wait4init();
     wait4report();
 
     // Print I/O filenames
@@ -144,10 +146,15 @@ Conductor::Conductor() :
                        er.readSidesets(),
                        g_inputdeck.get< tag::component >().nprop() );
 
+    // Create particle writer Charm++ chare group
+    m_particlewriter = ParticleWriterProxy::ckNew(
+                         g_inputdeck.get< tag::cmd, tag::io, tag::part >() );
+
     // Create mesh partitioner Charm++ chare group and start partitioning mesh
     m_print.diagstart( "Reading mesh graph ..." );
     m_partitioner = PartitionerProxy::ckNew( thisProxy, m_performer,
-                                             m_linsysmerger, m_tracker );
+                                             m_linsysmerger, m_tracker,
+                                             m_particlewriter );
 
   } else finish();      // stop if no time stepping requested
 }
@@ -260,14 +267,29 @@ Conductor::rowcomplete()
 // their part of storing and exporting global row ids
 //! \details This function is a Charm++ reduction target that is called when
 //!   all linear system merger branches have done their part of storing and
-//!   exporting global row ids. Once this is done, we issue a broadcast to
-//!   all Spawners and thus implicitly all Performer chares to continue with
+//!   exporting global row ids. This is a necessary precondition to be done
+//!   before we can issue a broadcast to all Performer chares to continue with
 //!   the initialization step.
 //! \author J. Bakosi
 // *****************************************************************************
 {
   m_linsysmerger.rowsreceived();
-  m_performer.init( m_dt );
+  trigger_row_complete();
+}
+
+void
+Conductor::regcomplete()
+// *****************************************************************************
+// Reduction target indicating that all workers have registered with their
+// particle writer branches
+//! \details This function is a Charm++ reduction target that is called when
+//!   all workers have registered with their particle writer branches. This is a
+//!   necessary precondition to be done before we can issue a broadcast to all
+//!   Performer chares to continue with the initialization step.
+//! \author J. Bakosi
+// *****************************************************************************
+{
+  trigger_reg_complete();
 }
 
 void
