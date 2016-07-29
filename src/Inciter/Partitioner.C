@@ -13,6 +13,7 @@
 
 #include "NoWarning/performer.decl.h"
 #include "NoWarning/tracker.decl.h"
+#include "NoWarning/particlewriter.decl.h"
 
 #if defined(__clang__)
   #pragma clang diagnostic push
@@ -31,7 +32,8 @@ template class inciter::Partitioner<
                  inciter::CProxy_Performer,
                  tk::CProxy_LinSysMerger< inciter::CProxy_Conductor,
                                           inciter::CProxy_Performer >,
-                 inciter::CProxy_Tracker< inciter::CProxy_Performer > >;
+                 inciter::CProxy_Tracker< inciter::CProxy_Performer >,
+                 tk::CProxy_ParticleWriter >;
 
 #if defined(__clang__)
   #pragma clang diagnostic pop

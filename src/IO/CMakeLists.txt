@@ -2,6 +2,9 @@ cmake_minimum_required(VERSION 2.8.5)
 
 project(IO CXX)
 
+# Include function for adding Charm++ modules
+include(charm)
+
 add_library(IO
             MeshFactory.C
             GmshMeshReader.C            # readers
@@ -16,8 +19,11 @@ add_library(IO
             NetgenMeshWriter.C
             ExodusIIMeshWriter.C
             H5PartWriter.C
+            ParticleWriter.C
 #            SiloWriter.C
 )
+
+addCharmModule( "particlewriter" "IO" )
 
 INSTALL(TARGETS IO
   	RUNTIME DESTINATION bin COMPONENT Runtime

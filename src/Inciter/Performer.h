@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.h
   \author    J. Bakosi
-  \date      Thu 28 Jul 2016 10:01:19 AM MDT
+  \date      Fri 29 Jul 2016 02:52:08 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Performer advances a system of systems of PDEs
   \details   Performer advances a system of systems of PDEs. There are a
@@ -28,12 +28,12 @@
 #include "Particles.h"
 #include "DerivedData.h"
 #include "VectorReducer.h"
-#include "H5PartWriter.h"
 #include "Inciter/InputDeck/InputDeck.h"
 
 #include "NoWarning/conductor.decl.h"
 #include "NoWarning/tracker.decl.h"
 #include "NoWarning/performer.decl.h"
+#include "NoWarning/particlewriter.decl.h"
 
 namespace tk { class ExodusIIMeshWriter; }
 
@@ -50,6 +50,7 @@ class Performer : public CBase_Performer {
     using LinSysMergerProxy = tk::CProxy_LinSysMerger< CProxy_Conductor,
                                                        CProxy_Performer >;
     using TrackerProxy = CProxy_Tracker< CProxy_Performer >;
+    using ParticleWriterProxy = tk::CProxy_ParticleWriter;
 
   public:
     //! Constructor
@@ -57,9 +58,11 @@ class Performer : public CBase_Performer {
       Performer( const CProxy_Conductor& conductor,
                  const LinSysMergerProxy& lsm,
                  const TrackerProxy& tracker,
+                 const ParticleWriterProxy& pw,
                  const std::vector< std::size_t >& conn,
                  const std::unordered_map< std::size_t, std::size_t >& cid,
-                 int nperf );
+                 int nperf,
+                 int nel );
 
     #if defined(__GNUC__)
       #pragma GCC diagnostic push
@@ -67,9 +70,7 @@ class Performer : public CBase_Performer {
     #endif
 
     //! Migrate constructor
-    explicit Performer( CkMigrateMessage* ) :
-      m_partFile( g_inputdeck.get< tag::cmd, tag::io, tag::part >() )
-    {}
+    explicit Performer( CkMigrateMessage* ) {}
 
     #if defined(__GNUC__)
       #pragma GCC diagnostic pop
@@ -120,10 +121,13 @@ class Performer : public CBase_Performer {
       p | m_t;
       p | m_stage;
       p | m_nsol;
+      p | m_nperf;
+      p | m_nel;
       p | m_outFilename;
       p | m_conductor;
       p | m_linsysmerger;
       p | m_tracker;
+      p | m_particlewriter;
       p | m_cid;
       p | m_el;
       if (p.isUnpacking()) { m_inpoel = m_el.first; m_gid = m_el.second; }
@@ -143,16 +147,18 @@ class Performer : public CBase_Performer {
   private:
     using ncomp_t = kw::ncomp::info::expect::type;
 
-    uint64_t m_it;                      //!< Iteration count
-    uint64_t m_itf;                     //!< Field output iteration count
-    tk::real m_t;                       //!< Physical time
-    uint8_t m_stage;                    //!< Stage in multi-stage time stepping
-    std::size_t m_nsol;                 //!< Counter for solution nodes updated
-    int m_nperf;                        //!< Total number of performer chares
-    std::string m_outFilename;          //!< Output filename
-    ConductorProxy m_conductor;         //!< Conductor proxy
-    LinSysMergerProxy m_linsysmerger;   //!< Linear system merger proxy
-    TrackerProxy m_tracker;             //!< Tracker proxy
+    uint64_t m_it;                       //!< Iteration count
+    uint64_t m_itf;                      //!< Field output iteration count
+    tk::real m_t;                        //!< Physical time
+    uint8_t m_stage;                     //!< Stage in multi-stage time stepping
+    std::size_t m_nsol;                  //!< Counter for solution nodes updated
+    int m_nperf;                         //!< Total number of performer chares
+    int m_nel;                           //!< Total number of mesh cells
+    std::string m_outFilename;           //!< Output filename
+    ConductorProxy m_conductor;          //!< Conductor proxy
+    LinSysMergerProxy m_linsysmerger;    //!< Linear system merger proxy
+    TrackerProxy m_tracker;              //!< Tracker proxy
+    ParticleWriterProxy m_particlewriter;//!< Particle writer proxy
     //! \brief Map associating old node IDs (as in file) to new node IDs (as in
     //!   producing contiguous-row-id linear system contributions)
     std::unordered_map< std::size_t, std::size_t > m_cid;
@@ -177,8 +183,6 @@ class Performer : public CBase_Performer {
     tk::MeshNodes m_lhsd, m_lhso;
     //! (Tracker) particles properties
     tk::Particles m_particles;
-    //! Particle output file
-    tk::H5PartWriter m_partFile;
 
     //! Send off global row IDs to linear system merger, setup global->local IDs
     void setupIds();

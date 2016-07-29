@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Partitioner.h
   \author    J. Bakosi
-  \date      Tue 26 Jul 2016 11:22:13 AM MDT
+  \date      Fri 29 Jul 2016 02:47:56 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ chare partitioner group used to perform mesh partitioning
   \details   Charm++ chare partitioner group used to perform mesh partitioning.
@@ -87,11 +87,12 @@ extern CkReduction::reducerType NodesMerger;
 //!   also the Charm++ interface file partitioner.ci.
 //! \author J. Bakosi
 template< class HostProxy, class WorkerProxy, class LinSysMergerProxy,
-          class TrackerProxy >
+          class TrackerProxy, class ParticleWriterProxy >
 class Partitioner : public CBase_Partitioner< HostProxy,
                                               WorkerProxy,
                                               LinSysMergerProxy,
-                                              TrackerProxy > {
+                                              TrackerProxy,
+                                              ParticleWriterProxy > {
 
   #if defined(__clang__)
     #pragma clang diagnostic push
@@ -118,7 +119,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
 
   private:
     using Group = CBase_Partitioner< HostProxy, WorkerProxy, LinSysMergerProxy,
-                                     TrackerProxy >;
+                                     TrackerProxy, ParticleWriterProxy >;
 
   public:
     //! Constructor
@@ -129,12 +130,14 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     Partitioner( const HostProxy& host,
                  const WorkerProxy& worker,
                  const LinSysMergerProxy& lsm,
-                 const TrackerProxy& tracker ) :
+                 const TrackerProxy& tracker,
+                 const ParticleWriterProxy& pw ) :
       __dep(),
       m_host( host ),
       m_worker( worker ),
       m_linsysmerger( lsm ),
       m_tracker( tracker ),
+      m_particlewriter( pw ),
       m_npe( 0 ),
       m_req(),
       m_reordered( 0 ),
@@ -350,6 +353,8 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     LinSysMergerProxy m_linsysmerger;
     //! Tracker proxy
     TrackerProxy m_tracker;
+    //! Particle writer proxy
+    ParticleWriterProxy m_particlewriter;
     //! Number of fellow PEs to send elem IDs to
     std::size_t m_npe;
     //! Queue of requested node IDs from PEs
@@ -369,6 +374,8 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     //!   gathering the node IDs that need to be received (instead of uniquely
     //!   assigned) by each PE
     std::size_t m_nquery;
+    //! Total number of mesh cells in file
+    int m_nel;
     //! Tetrtahedron element connectivity of our chunk of the mesh
     std::vector< std::size_t > m_tetinpoel;
     //! Global element IDs we read (our chunk of the mesh)
@@ -425,14 +432,14 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     void readGraph( tk::ExodusIIMeshReader& er ) {
       // Get number of mesh points and number of tetrahedron elements in file
       er.readElemBlockIDs();
-      auto nel = er.nel( tk::ExoElemType::TET );
+      m_nel = er.nel( tk::ExoElemType::TET );
       // Read our contiguously-numbered chunk of tetrahedron element
       // connectivity from file and also generate and store the list of global
       // element indices for our chunk of the mesh
-      auto chunk = nel / CkNumPes();
+      auto chunk = m_nel / CkNumPes();
       auto from = CkMyPe() * chunk;
       auto till = from + chunk;
-      if (CkMyPe() == CkNumPes()-1) till += nel % CkNumPes();
+      if (CkMyPe() == CkNumPes()-1) till += m_nel % CkNumPes();
       std::array< std::size_t, 2 > ext = { {static_cast<std::size_t>(from),
                                             static_cast<std::size_t>(till-1)} };
       er.readElements( ext, tk::ExoElemType::TET, m_tetinpoel );
@@ -754,9 +761,11 @@ class Partitioner : public CBase_Partitioner< HostProxy,
         m_worker[ cid ].insert( m_host,
                                 m_linsysmerger,
                                 m_tracker,
+                                m_particlewriter,
                                 tk::cref_find( m_node, cid ),
                                 tk::cref_find( m_chcid, cid ),
                                 m_nchare,
+                                m_nel,
                                 CkMyPe() );
         // Create tracker array element
         m_tracker[ cid ].insert( m_host, m_worker, CkMyPe() );

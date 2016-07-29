@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.C
   \author    J. Bakosi
-  \date      Thu 28 Jul 2016 10:18:15 AM MDT
+  \date      Fri 29 Jul 2016 03:05:27 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Performer advances a PDE
   \details   Performer advances a PDE. There are a potentially
@@ -27,6 +27,9 @@
 #include <gm19.h>
 
 #include "Performer.h"
+#include "Tracker.h"
+#include "LinSysMerger.h"
+#include "ParticleWriter.h"
 #include "Vector.h"
 #include "Reader.h"
 #include "ContainerUtil.h"
@@ -37,8 +40,6 @@
 #include "Inciter/InputDeck/InputDeck.h"
 #include "DerivedData.h"
 #include "PDE.h"
-#include "Tracker.h"
-#include "LinSysMerger.h"
 #include "RNGSSE.h"
 
 // Force the compiler to not instantiate the template below as it is
@@ -70,9 +71,11 @@ Performer::Performer(
   const ConductorProxy& conductor,
   const LinSysMergerProxy& lsm,
   const TrackerProxy& tracker,
+  const ParticleWriterProxy& pw,
   const std::vector< std::size_t >& conn,
   const std::unordered_map< std::size_t, std::size_t >& cid,
-  int nperf )
+  int nperf,
+  int nel )
 :
   m_it( 0 ),
   m_itf( 0 ),
@@ -80,11 +83,13 @@ Performer::Performer(
   m_stage( 0 ),
   m_nsol( 0 ),
   m_nperf( nperf ),
+  m_nel( nel ),
   m_outFilename( g_inputdeck.get< tag::cmd, tag::io, tag::output >() + "." +
                  std::to_string( thisIndex ) ),
   m_conductor( conductor ),
   m_linsysmerger( lsm ),
   m_tracker( tracker ),
+  m_particlewriter( pw ),
   m_cid( cid ),
   m_el( tk::global2local( conn ) ),     // fills m_inpoel and m_gid
   m_lid(),
@@ -93,11 +98,11 @@ Performer::Performer(
   m_u( m_gid.size(), g_inputdeck.get< tag::component >().nprop() ),
   m_uf( m_gid.size(), g_inputdeck.get< tag::component >().nprop() ),
   m_un( m_gid.size(), g_inputdeck.get< tag::component >().nprop() ),
+  m_up( m_gid.size(), g_inputdeck.get< tag::component >().nprop() ),
   m_lhsd( m_psup.second.size()-1, g_inputdeck.get< tag::component >().nprop() ),
   m_lhso( m_psup.first.size(), g_inputdeck.get< tag::component >().nprop() ),
   m_particles( g_inputdeck.get< tag::param, tag::compns, tag::npar >() *
-               m_inpoel.size()/4, 3 ),
-  m_partFile( g_inputdeck.get< tag::cmd, tag::io, tag::part >() )
+               m_inpoel.size()/4, 3 )
 // *****************************************************************************
 //  Constructor
 //! \param[in] conductor Host (Conductor) proxy
@@ -107,6 +112,7 @@ Performer::Performer(
 //! \param[in] cid Map associating old node IDs (as in file) to new node IDs (as
 //!   in producing contiguous-row-id linear system contributions)
 //! \param[in] nper Total number of Performer chares
+//! \param[in] nel Total number of mesh cells (from input file)
 //! \author J. Bakosi
 // *****************************************************************************
 {
@@ -115,6 +121,11 @@ Performer::Performer(
 
   // Register ourselves with the linear system merger
   m_linsysmerger.ckLocalBranch()->checkin();
+  // Register ourselves with the particle writer
+  m_particlewriter.ckLocalBranch()->checkin();
+  // signal back to host that we have registered with the particle writer
+  contribute( CkCallback( CkReductionTarget( Conductor, regcomplete ),
+                          m_conductor ) );
 }
 
 void
@@ -481,6 +492,14 @@ Performer::writeFields( tk::real time )
   }
   // Write node fields
   writeSolution( ew, m_itf, output );
+
+  // Write particle fields
+  m_particlewriter.ckLocalBranch()->writeTimeStamp( m_it,
+    g_inputdeck.get< tag::param, tag::compns, tag::npar >() *
+    static_cast< uint64_t >( m_nel ) );
+  m_particlewriter.ckLocalBranch()->writeCoords( m_particles.extract( 0, 0 ),
+                                                 m_particles.extract( 1, 0 ),
+                                                 m_particles.extract( 2, 0 ) );
 }
 
 void
@@ -527,6 +546,8 @@ Performer::genPar()
   const auto& x = m_coord[0];
   const auto& y = m_coord[1];
   const auto& z = m_coord[2];
+
+std::cout << CkMyPe() << ": " << m_inpoel.size()/4 << '\n';
 
   // Generate npar number of particles into each mesh cell
   auto npar = g_inputdeck.get< tag::param, tag::compns, tag::npar >();
@@ -684,11 +705,6 @@ Performer::track()
       }
     }
   }
-
-  m_partFile.writeTimeStamp( m_it, m_particles.nunk() );
-  m_partFile.writeCoords( m_particles.extract( 0, 0 ),
-                          m_particles.extract( 1, 0 ),
-                          m_particles.extract( 2, 0 ) );
 }
 
 void
