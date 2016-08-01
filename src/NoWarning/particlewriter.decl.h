@@ -49,6 +49,7 @@
   #pragma GCC diagnostic ignored "-Wfloat-equal"
   #pragma GCC diagnostic ignored "-Wswitch-default"
   #pragma GCC diagnostic ignored "-Wextra"
+  #pragma GCC diagnostic ignored "-Wpedantic"
 #endif
 
 #include "../IO/particlewriter.decl.h"
