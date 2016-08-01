@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.h
   \author    J. Bakosi
-  \date      Fri 29 Jul 2016 02:52:08 PM MDT
+  \date      Mon 01 Aug 2016 07:59:42 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Performer advances a system of systems of PDEs
   \details   Performer advances a system of systems of PDEs. There are a
@@ -50,7 +50,7 @@ class Performer : public CBase_Performer {
     using LinSysMergerProxy = tk::CProxy_LinSysMerger< CProxy_Conductor,
                                                        CProxy_Performer >;
     using TrackerProxy = CProxy_Tracker< CProxy_Performer >;
-    using ParticleWriterProxy = tk::CProxy_ParticleWriter;
+    using ParticleWriterProxy = tk::CProxy_ParticleWriter< ConductorProxy >;
 
   public:
     //! Constructor
@@ -61,8 +61,7 @@ class Performer : public CBase_Performer {
                  const ParticleWriterProxy& pw,
                  const std::vector< std::size_t >& conn,
                  const std::unordered_map< std::size_t, std::size_t >& cid,
-                 int nperf,
-                 int nel );
+                 int nperf );
 
     #if defined(__GNUC__)
       #pragma GCC diagnostic push
@@ -122,7 +121,6 @@ class Performer : public CBase_Performer {
       p | m_stage;
       p | m_nsol;
       p | m_nperf;
-      p | m_nel;
       p | m_outFilename;
       p | m_conductor;
       p | m_linsysmerger;
@@ -153,7 +151,6 @@ class Performer : public CBase_Performer {
     uint8_t m_stage;                     //!< Stage in multi-stage time stepping
     std::size_t m_nsol;                  //!< Counter for solution nodes updated
     int m_nperf;                         //!< Total number of performer chares
-    int m_nel;                           //!< Total number of mesh cells
     std::string m_outFilename;           //!< Output filename
     ConductorProxy m_conductor;          //!< Conductor proxy
     LinSysMergerProxy m_linsysmerger;    //!< Linear system merger proxy
@@ -220,7 +217,7 @@ class Performer : public CBase_Performer {
     void writeMeta() const;
 
     //! Output mesh-based fields to file
-    void writeFields( tk::real time );
+    void writeFields( uint64_t it, tk::real time );
     
     //! Search particles in our chunk of the mesh
     void track();

@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.C
   \author    J. Bakosi
-  \date      Fri 29 Jul 2016 03:05:27 PM MDT
+  \date      Mon 01 Aug 2016 09:26:36 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Performer advances a PDE
   \details   Performer advances a PDE. There are a potentially
@@ -29,7 +29,6 @@
 #include "Performer.h"
 #include "Tracker.h"
 #include "LinSysMerger.h"
-#include "ParticleWriter.h"
 #include "Vector.h"
 #include "Reader.h"
 #include "ContainerUtil.h"
@@ -37,6 +36,7 @@
 #include "Reorder.h"
 #include "ExodusIIMeshReader.h"
 #include "ExodusIIMeshWriter.h"
+#include "ParticleWriter.h"
 #include "Inciter/InputDeck/InputDeck.h"
 #include "DerivedData.h"
 #include "PDE.h"
@@ -74,8 +74,7 @@ Performer::Performer(
   const ParticleWriterProxy& pw,
   const std::vector< std::size_t >& conn,
   const std::unordered_map< std::size_t, std::size_t >& cid,
-  int nperf,
-  int nel )
+  int nperf )
 :
   m_it( 0 ),
   m_itf( 0 ),
@@ -83,7 +82,6 @@ Performer::Performer(
   m_stage( 0 ),
   m_nsol( 0 ),
   m_nperf( nperf ),
-  m_nel( nel ),
   m_outFilename( g_inputdeck.get< tag::cmd, tag::io, tag::output >() + "." +
                  std::to_string( thisIndex ) ),
   m_conductor( conductor ),
@@ -112,7 +110,6 @@ Performer::Performer(
 //! \param[in] cid Map associating old node IDs (as in file) to new node IDs (as
 //!   in producing contiguous-row-id linear system contributions)
 //! \param[in] nper Total number of Performer chares
-//! \param[in] nel Total number of mesh cells (from input file)
 //! \author J. Bakosi
 // *****************************************************************************
 {
@@ -121,11 +118,11 @@ Performer::Performer(
 
   // Register ourselves with the linear system merger
   m_linsysmerger.ckLocalBranch()->checkin();
-  // Register ourselves with the particle writer
-  m_particlewriter.ckLocalBranch()->checkin();
-  // signal back to host that we have registered with the particle writer
-  contribute( CkCallback( CkReductionTarget( Conductor, regcomplete ),
-                          m_conductor ) );
+  // Send number of partciles we will contribute to particle writer
+  m_particlewriter.ckLocalBranch()->npar( m_particles.nunk() );
+  // Signal back to host that we are done with sending our number of particles
+  contribute(
+      CkCallback( CkReductionTarget( Conductor, nparcomplete ), m_conductor ) );
 }
 
 void
@@ -342,8 +339,8 @@ Performer::init( tk::real dt )
   // Set initial conditions for all PDEs
   for (const auto& eq : g_pdes) eq.initialize( m_coord, m_u, m_t );
 
-  // Output initial conditions to file (it = 1, time = 0.0)
-  writeFields( m_t );
+  // Output initial conditions to file (it = 0, time = 0.0)
+  writeFields( m_it, m_t );
 
   // Send off initial conditions for assembly
   m_linsysmerger.ckLocalBranch()->charesol( thisIndex, m_gid, m_u );
@@ -467,9 +464,10 @@ Performer::writeMeta() const
 }
 
 void
-Performer::writeFields( tk::real time )
+Performer::writeFields( uint64_t it, tk::real time )
 // *****************************************************************************
 // Output mesh-based fields to file
+//! \param[in] it Iteration count
 //! \param[in] time Physical time
 //! \author J. Bakosi
 // *****************************************************************************
@@ -494,9 +492,7 @@ Performer::writeFields( tk::real time )
   writeSolution( ew, m_itf, output );
 
   // Write particle fields
-  m_particlewriter.ckLocalBranch()->writeTimeStamp( m_it,
-    g_inputdeck.get< tag::param, tag::compns, tag::npar >() *
-    static_cast< uint64_t >( m_nel ) );
+  m_particlewriter.ckLocalBranch()->writeTimeStamp( it );
   m_particlewriter.ckLocalBranch()->writeCoords( m_particles.extract( 0, 0 ),
                                                  m_particles.extract( 1, 0 ),
                                                  m_particles.extract( 2, 0 ) );
@@ -546,8 +542,6 @@ Performer::genPar()
   const auto& x = m_coord[0];
   const auto& y = m_coord[1];
   const auto& z = m_coord[2];
-
-std::cout << CkMyPe() << ": " << m_inpoel.size()/4 << '\n';
 
   // Generate npar number of particles into each mesh cell
   auto npar = g_inputdeck.get< tag::param, tag::compns, tag::npar >();
@@ -808,7 +802,11 @@ Performer::updateSolution( const std::vector< std::size_t >& gid,
       track();
 
       if (!((m_it+1) % g_inputdeck.get< tag::interval, tag::field >()))
-        writeFields( m_t + g_inputdeck.get< tag::discr, tag::dt >() );
+        writeFields( m_it+1, m_t + g_inputdeck.get< tag::discr, tag::dt >() );
+      else // if no fields at this time, still signal back to host
+        contribute(
+          CkCallback( CkReductionTarget( Conductor, parcomplete ),
+                      m_conductor ) );
 
       // Optionally contribute diagnostics, e.g., residuals, back to host
       if (!((m_it+1) % g_inputdeck.get< tag::interval, tag::diag >()))

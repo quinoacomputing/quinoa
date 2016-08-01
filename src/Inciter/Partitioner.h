@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Partitioner.h
   \author    J. Bakosi
-  \date      Fri 29 Jul 2016 02:47:56 PM MDT
+  \date      Mon 01 Aug 2016 08:09:19 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ chare partitioner group used to perform mesh partitioning
   \details   Charm++ chare partitioner group used to perform mesh partitioning.
@@ -374,8 +374,6 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     //!   gathering the node IDs that need to be received (instead of uniquely
     //!   assigned) by each PE
     std::size_t m_nquery;
-    //! Total number of mesh cells in file
-    int m_nel;
     //! Tetrtahedron element connectivity of our chunk of the mesh
     std::vector< std::size_t > m_tetinpoel;
     //! Global element IDs we read (our chunk of the mesh)
@@ -432,14 +430,14 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     void readGraph( tk::ExodusIIMeshReader& er ) {
       // Get number of mesh points and number of tetrahedron elements in file
       er.readElemBlockIDs();
-      m_nel = er.nel( tk::ExoElemType::TET );
+      auto nel = er.nel( tk::ExoElemType::TET );
       // Read our contiguously-numbered chunk of tetrahedron element
       // connectivity from file and also generate and store the list of global
       // element indices for our chunk of the mesh
-      auto chunk = m_nel / CkNumPes();
+      auto chunk = nel / CkNumPes();
       auto from = CkMyPe() * chunk;
       auto till = from + chunk;
-      if (CkMyPe() == CkNumPes()-1) till += m_nel % CkNumPes();
+      if (CkMyPe() == CkNumPes()-1) till += nel % CkNumPes();
       std::array< std::size_t, 2 > ext = { {static_cast<std::size_t>(from),
                                             static_cast<std::size_t>(till-1)} };
       er.readElements( ext, tk::ExoElemType::TET, m_tetinpoel );
@@ -765,7 +763,6 @@ class Partitioner : public CBase_Partitioner< HostProxy,
                                 tk::cref_find( m_node, cid ),
                                 tk::cref_find( m_chcid, cid ),
                                 m_nchare,
-                                m_nel,
                                 CkMyPe() );
         // Create tracker array element
         m_tracker[ cid ].insert( m_host, m_worker, CkMyPe() );
