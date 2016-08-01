@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Conductor.C
   \author    J. Bakosi
-  \date      Mon 01 Aug 2016 08:27:40 AM MDT
+  \date      Mon 01 Aug 2016 01:16:48 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Conductor drives the time integration of a PDE
   \details   Conductor drives the time integration of a PDE
@@ -28,7 +28,6 @@
 #include "ExodusIIMeshReader.h"
 #include "Inciter/InputDeck/InputDeck.h"
 #include "DiagWriter.h"
-#include "ParticleWriter.h"
 
 #include "NoWarning/inciter.decl.h"
 
@@ -36,7 +35,6 @@
 // instantiated in LinSys/LinSysMerger.C (only required on mac)
 extern template class tk::LinSysMerger< inciter::CProxy_Conductor,
                                         inciter::CProxy_Performer >;
-//extern template class tk::ParticleWriter< inciter::CProxy_Conductor >;
 
 extern CProxy_Main mainProxy;
 
@@ -335,7 +333,7 @@ Conductor::doverifybc( CkReductionMsg* msg )
           "not match the boundary condition node list based on the side sets "
           "given in the input file." );
 
-  m_print.diag( "Boundary conditions verified (DEBUG only)" );
+  m_print.diag( "Boundary conditions verified" );
 
   m_linsysmerger.trigger_ver_complete();
 }
@@ -401,10 +399,10 @@ Conductor::evaluateTime()
   // if not final stage of time step or if neither max iterations nor max time
   // reached, will continue (by telling all linear system merger group
   // elements to prepare for a new rhs), otherwise finish
-  if (m_stage < 1 || (std::fabs(m_t-term) > eps && m_it < nstep)) {
+  if (m_stage < 1 || (std::fabs(m_t-term) > eps && m_it < nstep))
     m_linsysmerger.enable_wait4rhs();
-    wait4report();      // re-enable SDAG wait for report
-  } else finish();
+  else
+    finish();
 }
 
 void
@@ -483,48 +481,52 @@ Conductor::report()
 //! \author J. Bakosi
 // *****************************************************************************
 {
-  bool diag = false;
+  if (m_stage == 1) {
+    bool diag = false;
 
-  // Append diagnostics file at selected times
-  if (!(m_it % g_inputdeck.get< tag::interval, tag::diag >())) {
-    tk::DiagWriter dw( g_inputdeck.get< tag::cmd, tag::io, tag::diag >(),
-                       g_inputdeck.get< tag::flformat, tag::diag >(),
-                       g_inputdeck.get< tag::prec, tag::diag >(),
-                       std::ios_base::app );
-    if (dw.diag( m_it, m_t, m_diag )) diag = true;
-  }
+    // Append diagnostics file at selected times
+    if (!(m_it % g_inputdeck.get< tag::interval, tag::diag >())) {
+      tk::DiagWriter dw( g_inputdeck.get< tag::cmd, tag::io, tag::diag >(),
+                         g_inputdeck.get< tag::flformat, tag::diag >(),
+                         g_inputdeck.get< tag::prec, tag::diag >(),
+                         std::ios_base::app );
+      if (dw.diag( m_it, m_t, m_diag )) diag = true;
+    }
 
-  if (!(m_it % g_inputdeck.get< tag::interval, tag::tty >())) {
+    if (!(m_it % g_inputdeck.get< tag::interval, tag::tty >())) {
 
-    // estimate time elapsed and time for accomplishment
-    tk::Timer::Watch ete, eta;
-    const auto& timer = tk::cref_find( m_timer, TimerTag::TIMESTEP );
-    timer.eta( g_inputdeck.get< tag::discr, tag::term >() -
-                 g_inputdeck.get< tag::discr, tag::t0 >(),
-               m_t - g_inputdeck.get< tag::discr, tag::t0 >(),
-               g_inputdeck.get< tag::discr, tag::nstep >(),
-               m_it,
-               ete,
-               eta );
+      // estimate time elapsed and time for accomplishment
+      tk::Timer::Watch ete, eta;
+      const auto& timer = tk::cref_find( m_timer, TimerTag::TIMESTEP );
+      timer.eta( g_inputdeck.get< tag::discr, tag::term >() -
+                   g_inputdeck.get< tag::discr, tag::t0 >(),
+                 m_t - g_inputdeck.get< tag::discr, tag::t0 >(),
+                 g_inputdeck.get< tag::discr, tag::nstep >(),
+                 m_it,
+                 ete,
+                 eta );
 
-    // Output one-liner
-    m_print << std::setfill(' ') << std::setw(8) << m_it << "  "
-            << std::scientific << std::setprecision(6)
-            << std::setw(12) << m_t << "  "
-            << m_dt << "  "
-            << std::setfill('0')
-            << std::setw(3) << ete.hrs.count() << ":"
-            << std::setw(2) << ete.min.count() << ":"
-            << std::setw(2) << ete.sec.count() << "  "
-            << std::setw(3) << eta.hrs.count() << ":"
-            << std::setw(2) << eta.min.count() << ":"
-            << std::setw(2) << eta.sec.count() << "  ";
+      // Output one-liner
+      m_print << std::setfill(' ') << std::setw(8) << m_it << "  "
+              << std::scientific << std::setprecision(6)
+              << std::setw(12) << m_t << "  "
+              << m_dt << "  "
+              << std::setfill('0')
+              << std::setw(3) << ete.hrs.count() << ":"
+              << std::setw(2) << ete.min.count() << ":"
+              << std::setw(2) << ete.sec.count() << "  "
+              << std::setw(3) << eta.hrs.count() << ":"
+              << std::setw(2) << eta.min.count() << ":"
+              << std::setw(2) << eta.sec.count() << "  ";
 
-    // Augment one-liner with output indicators
-    if (!(m_it % g_inputdeck.get<tag::interval,tag::field>())) m_print << 'F';
-    if (diag) m_print << 'D';
+      // Augment one-liner with output indicators
+      if (!(m_it % g_inputdeck.get<tag::interval,tag::field>())) m_print << 'F';
+      if (diag) m_print << 'D';
 
-    m_print << '\n';
+      m_print << '\n';
+    }
+
+    wait4report();      // re-enable SDAG wait for next report
   }
 }
 

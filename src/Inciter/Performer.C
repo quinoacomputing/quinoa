@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.C
   \author    J. Bakosi
-  \date      Mon 01 Aug 2016 09:26:36 AM MDT
+  \date      Mon 01 Aug 2016 01:14:55 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Performer advances a PDE
   \details   Performer advances a PDE. There are a potentially
@@ -801,6 +801,7 @@ Performer::updateSolution( const std::vector< std::size_t >& gid,
       
       track();
 
+      // Optionally output field data
       if (!((m_it+1) % g_inputdeck.get< tag::interval, tag::field >()))
         writeFields( m_it+1, m_t + g_inputdeck.get< tag::discr, tag::dt >() );
       else // if no fields at this time, still signal back to host
