@@ -727,6 +727,11 @@ endif()
 
 #### H5part ####################################################################
 # http://vis.lbl.gov/Research/H5Part
+if(BUILD_SHARED_LIBS)
+  set(H5PART_SHARED "--enable-shared;--disable-static")
+else()
+  set(H5PART_SHARED "--disable-shared;--enable-static")
+endif()
 ExternalProject_Add(
   h5part
   DEPENDS ${hdf5}
@@ -739,6 +744,7 @@ ExternalProject_Add(
                     CFLAGS=${CFLAGS}
                     --with-hdf5=${hdf5_root}
                     --enable-parallel
+                    ${H5PART_SHARED}
                     --prefix=${CMAKE_INSTALL_PREFIX}
   BUILD_IN_SOURCE 1
   LOG_DOWNLOAD 1
