@@ -105,6 +105,7 @@ target_link_libraries(${INCITER_EXECUTABLE}
                       Inciter
                       Base
                       IO
+                      AsyncIO
                       Mesh
                       RNG
                       ${PUGIXML_LIBRARIES}
@@ -225,8 +226,8 @@ target_link_libraries(${MESHCONV_EXECUTABLE}
                       ${SEACASNemesis_LIBRARIES}
                       ${SEACASExodus_LIBRARIES}
                       ${H5PART_LIBRARY}
+                      ${HDF5_LIBRARIES}
                       ${NETCDF_LIBRARIES}       # only for static link
-                      ${HDF5_LIBRARIES}         # only for static link
                       ${AEC_LIBRARY}            # only for static link
 )
 

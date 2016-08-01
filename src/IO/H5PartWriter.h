@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/H5PartWriter.h
   \author    J. Bakosi
-  \date      Thu 28 Jul 2016 09:32:34 AM MDT
+  \date      Mon 01 Aug 2016 09:07:22 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     H5Part particles data writer
   \details   H5Part particles data writer class declaration, facilitating
@@ -14,6 +14,7 @@
 #define H5PartWriter_h
 
 #include <vector>
+#include <memory>
 
 #include <NoWarning/H5Part.h>
 
@@ -43,8 +44,8 @@ class H5PartWriter {
                       const std::vector< tk::real >& z ) const;
 
   private:
-    const std::string m_filename;          //!< File name
-    H5PartFile* m_outFile;                 //!< H5Part file handle
+    const std::string m_filename;               //!< File name
+    std::unique_ptr< H5PartFile > m_outFile;    //!< H5Part file handle
 };
 
 } // tk::

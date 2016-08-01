@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/particlewriter.ci
   \author    J. Bakosi
-  \date      Fri 29 Jul 2016 01:06:54 PM MDT
+  \date      Mon 01 Aug 2016 09:12:41 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ module interface file for outputing particle data to file
   \details   Charm++ module interface file for outputing particle data to file.
@@ -11,10 +11,24 @@
 
 module particlewriter {
 
+  extern module conductor;
+
   namespace tk {
 
+    // List all possible specializations of templated chare to instantiate
+    // registration and delivery of code for the individual specializations
+
+    // Will specialize particle writer for Conductor
+    chare ParticleWriter< inciter::CProxy_Conductor >;
+
+    // ParticleWriter is templated so that the same code (parameterized by the
+    // type given by the template argument, HostProxy) can be generated for
+    // different types of proxies. Howver, all possible specializations must be
+    // listed above to ensure that Charm++ generates correct code.
+    template< class HostProxy >
     group ParticleWriter {
-      entry ParticleWriter( const std::string& filename );
+      entry ParticleWriter( const HostProxy& host,
+                            const std::string& filename );
     };
 
   } // tk::

@@ -33,7 +33,7 @@ template class inciter::Partitioner<
                  tk::CProxy_LinSysMerger< inciter::CProxy_Conductor,
                                           inciter::CProxy_Performer >,
                  inciter::CProxy_Tracker< inciter::CProxy_Performer >,
-                 tk::CProxy_ParticleWriter >;
+                 tk::CProxy_ParticleWriter< inciter::CProxy_Conductor > >;
 
 #if defined(__clang__)
   #pragma clang diagnostic pop

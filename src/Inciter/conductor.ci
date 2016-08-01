@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/conductor.ci
   \author    J. Bakosi
-  \date      Fri 29 Jul 2016 02:13:31 PM MDT
+  \date      Mon 01 Aug 2016 08:31:54 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ module interface file for Conductor
   \details   Charm++ module interface file for Conductor
@@ -25,12 +25,13 @@ module conductor {
       entry [reductiontarget] void aveCost( tk::real c );
       entry [reductiontarget] void stdCost( tk::real c );
       entry [reductiontarget] void rowcomplete();
-      entry [reductiontarget] void regcomplete();
+      entry [reductiontarget] void nparcomplete();
       entry [reductiontarget] void verifybc( CkReductionMsg* msg );
       entry [reductiontarget] void doverifybc( CkReductionMsg* msg );
       entry [reductiontarget] void initcomplete();
       entry [reductiontarget] void diagnostics( tk::real d[n], std::size_t n );
       entry [reductiontarget] void diagcomplete();
+      entry [reductiontarget] void parcomplete();
       entry [reductiontarget] void evaluateTime();
       entry [reductiontarget] void advance();
       entry [reductiontarget] void finish();
@@ -43,14 +44,23 @@ module conductor {
       //
       // Directed Acyclic Graph (DAG):
       // -----------------------------
-      //                                        DAG legend:
-      //  Diag -- Rep                             Diag - compute diagnostics
-      //         /                                Eval - evlaute time step
-      //  Eval --                                 Rep - Output one-liner report
+      //                                    DAG legend:
+      //  Row  -- Init                        Row  - linear system rows complete
+      //         /                            Npar - number of particles sent
+      //  Npar --                             Init - initialization continues
+      //
+      //  Diag -- Rep                         Diag - compute diagnostics
+      //         /                            Eval - evalaute time step
+      //  Eval --                             Rep  - output one-liner report
       //
       // Interpretation of the above DAG
       // -------------------------------
       // Control flow is from left to right and top to bottom.
+      //
+      // Only if both all linear system merger branches have done their part of
+      // storing and exporting global row ids (Row) and the number of particles
+      // workers will contribute to outputing to file (Npar), the initialization
+      // can continue (Init).
       //
       // Outputing a one-liner report (Rep) can only be done if both the
       // diagnostics have been collected (Diag) as well as the time step has
@@ -64,17 +74,20 @@ module conductor {
       // remains the same.
 
       entry void wait4init()
-      { when trigger_row_complete(), trigger_reg_complete() serial "init"
+      { when trigger_row_complete(), trigger_npar_complete() serial "init"
         { m_performer.init( m_dt ); } };
- 
+
       entry void wait4report()
-      { when trigger_diag_complete(), trigger_eval_complete() serial "eval"
+      { when trigger_eval_complete(),
+             trigger_par_complete(),
+             trigger_diag_complete() serial "report"
         { if (m_stage == 1) report(); } };
 
       entry void trigger_row_complete();
-      entry void trigger_reg_complete();
-      entry void trigger_diag_complete();
+      entry void trigger_npar_complete();
       entry void trigger_eval_complete();
+      entry void trigger_par_complete();
+      entry void trigger_diag_complete();
     }
 
   } // inciter::

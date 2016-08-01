@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Conductor.C
   \author    J. Bakosi
-  \date      Fri 29 Jul 2016 02:38:58 PM MDT
+  \date      Mon 01 Aug 2016 08:27:40 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Conductor drives the time integration of a PDE
   \details   Conductor drives the time integration of a PDE
@@ -26,8 +26,9 @@
 #include "ContainerUtil.h"
 #include "LoadDistributor.h"
 #include "ExodusIIMeshReader.h"
-#include "DiagWriter.h"
 #include "Inciter/InputDeck/InputDeck.h"
+#include "DiagWriter.h"
+#include "ParticleWriter.h"
 
 #include "NoWarning/inciter.decl.h"
 
@@ -35,6 +36,7 @@
 // instantiated in LinSys/LinSysMerger.C (only required on mac)
 extern template class tk::LinSysMerger< inciter::CProxy_Conductor,
                                         inciter::CProxy_Performer >;
+//extern template class tk::ParticleWriter< inciter::CProxy_Conductor >;
 
 extern CProxy_Main mainProxy;
 
@@ -148,6 +150,7 @@ Conductor::Conductor() :
 
     // Create particle writer Charm++ chare group
     m_particlewriter = ParticleWriterProxy::ckNew(
+                         thisProxy,
                          g_inputdeck.get< tag::cmd, tag::io, tag::part >() );
 
     // Create mesh partitioner Charm++ chare group and start partitioning mesh
@@ -269,27 +272,15 @@ Conductor::rowcomplete()
 //!   all linear system merger branches have done their part of storing and
 //!   exporting global row ids. This is a necessary precondition to be done
 //!   before we can issue a broadcast to all Performer chares to continue with
-//!   the initialization step.
+//!   the initialization step. The other, also necessary but by itself not
+//!   sufficient, one is parcomplete(). Together rowcomplete() and
+//!   parcomplete() are sufficient for continuing with the initialization. See
+//!   also conductor.ci.
 //! \author J. Bakosi
 // *****************************************************************************
 {
   m_linsysmerger.rowsreceived();
   trigger_row_complete();
-}
-
-void
-Conductor::regcomplete()
-// *****************************************************************************
-// Reduction target indicating that all workers have registered with their
-// particle writer branches
-//! \details This function is a Charm++ reduction target that is called when
-//!   all workers have registered with their particle writer branches. This is a
-//!   necessary precondition to be done before we can issue a broadcast to all
-//!   Performer chares to continue with the initialization step.
-//! \author J. Bakosi
-// *****************************************************************************
-{
-  trigger_reg_complete();
 }
 
 void
@@ -409,7 +400,7 @@ Conductor::evaluateTime()
 
   // if not final stage of time step or if neither max iterations nor max time
   // reached, will continue (by telling all linear system merger group
-  // elements to prepare for a new rhs), otherwise, finish
+  // elements to prepare for a new rhs), otherwise finish
   if (m_stage < 1 || (std::fabs(m_t-term) > eps && m_it < nstep)) {
     m_linsysmerger.enable_wait4rhs();
     wait4report();      // re-enable SDAG wait for report
