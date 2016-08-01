@@ -545,6 +545,7 @@ Performer::genPar()
         m_particles( i, 0, 0 ) = x[A]*N[0] + x[B]*N[1] + x[C]*N[2] + x[D]*N[3];
         m_particles( i, 1, 0 ) = y[A]*N[0] + y[B]*N[1] + y[C]*N[2] + y[D]*N[3];
         m_particles( i, 2, 0 ) = z[A]*N[0] + z[B]*N[1] + z[C]*N[2] + z[D]*N[3];
+        // std::cout"p "<<i<<"in e "<<e<<std::endl;
       } else --p; // retry if particle was not generated into cell
     }
   }
@@ -562,6 +563,7 @@ Performer::track()
   const auto& y = m_coord[1];
   const auto& z = m_coord[2];
 
+  bool found = false;
   // Loop over the number of particles and evaluate shapefunctions at each
   // particle's location
   for (std::size_t i=0; i<m_particles.nunk(); ++i) {
@@ -575,6 +577,14 @@ Performer::track()
       const auto& yp = m_particles( i, 1, 0 );
       const auto& zp = m_particles( i, 2, 0 );
 
+      // Evaluate shapefunctions at particle locations using Cramer's Rule
+      //
+      //    | xp |   | x1 x2 x3 x4 |   | N1 |
+      //    | yp | = | y1 y2 y3 y4 | • | N2 |
+      //    | zp |   | z1 z2 z3 z4 |   | N3 |
+      //    | 1  |   | 1  1  1  1  |   | N4 |
+      //
+      
       tk::real DetX = (y[B]*z[C] - y[C]*z[B] - y[B]*z[D] + y[D]*z[B] + 
         y[C]*z[D] - y[D]*z[C])*x[A] + x[B]*y[C]*z[A] - x[B]*y[A]*z[C] +
         x[C]*y[A]*z[B] - x[C]*y[B]*z[A] + x[B]*y[A]*z[D] - x[B]*y[D]*z[A] -
@@ -615,74 +625,16 @@ Performer::track()
                                      DetX3/DetX,
                                      DetX4/DetX }};
 
-
-
-      /*// Evaluate shapefunctions at particle locations using LAPACK
-      //
-      //    | xp |   | x1 x2 x3 x4 |   | N1 |
-      //    | yp | = | y1 y2 y3 y4 | • | N2 |
-      //    | zp |   | z1 z2 z3 z4 |   | N3 |
-      //    | 1  |   | 1  1  1  1  |   | N4 |
-      //
-
-      lapack_int INFO;
-      lapack_int IPIV[4];
-      std::array< tk::real, 4 > N {{ m_particles( i, 0, 0 ),
-                                     m_particles( i, 1, 0 ),
-                                     m_particles( i, 2, 0 ),
-                                     1.0 }};
-      tk::real Ar[16] = { x[A], x[B], x[C], x[D],
-                          y[A], y[B], y[C], y[D],
-                          z[A], z[B], z[C], z[D],
-                           1.0,  1.0,  1.0,  1.0 };
-
-      // DGETRF computes an LU factorization of a general MxN matrix A
-      // Arguments:
-      // Matrix_layout (input) int     - Row or column major
-      // M (input) int                 - Number of rows in A
-      // N (input) int                 - Number of columns in A
-      // A (input/output) double array - Entry: MxN matrix to be factored
-      //                                 Exit: L and U from factorization
-      // LDA (input) int               - Leading dimension of the array A
-      // IPIV (output) int array       - The pivot indicies
-      INFO = LAPACKE_dgetrf(LAPACK_COL_MAJOR, 4, 4, Ar, 4, IPIV);
-      if (INFO != 0) {
-        std::cout << "LU factorization failed!" << std::endl;
-        std::cout << "DEBUG: INFO = " << INFO << std::endl;
-        CkExit();
-      }
-
-      // Solving the linear system A * X = B with a general NxN matrix A using
-      // the LU factorization computed by dgetrf()
-      // Arguments:
-      // Matrix_layout (input) int     - Row or column major
-      // TRANS (input) char            - = 'N': A*X=B (No transpose)
-      //                                 = 'T': A'*X=B (Transpose)
-      //                                 = 'C': A'*X=B (Conjugate transpose)
-      // N (input) int                 - The order of the matrix A
-      // NRHS (input) int              - The number of right hand sides
-      // A (input) double array        - L and U factors from factorization
-      //                                 A=P*L*U computed in dgetrf()
-      // LDA (input) int               - The leading dimension of the array A
-      // IPIV (input) int array        - The pivot indicies from dgetrf()
-      // B (input/output) double array - Entry: rhs matrix B
-      //                                 Exit: the solution matrix X
-      // LDB (input) int               - The leading dimension of B
-      INFO = 
-        LAPACKE_dgetrs(LAPACK_COL_MAJOR, 'T', 4, 1, Ar, 4, IPIV, N.data(), 4);
-      if (INFO != 0) {
-        std::cout << "Linear system solve failed!" << std::endl;
-        std::cout << "DEBUG: INFO = " << INFO << std::endl;
-        CkExit();
-      }*/
-
       // If particle is found, advance, and process next one
       if ( std::min(N[0],1-N[0]) > 0 && std::min(N[1],1-N[1]) > 0 &&
            std::min(N[2],1-N[2]) > 0 && std::min(N[3],1-N[3]) > 0 ) {
-        advanceParticle( i, e, N );
+        // advanceParticle( i, e, N );
+        // std::cout<<"a: p "<<i<<"in e "<<e<<std::endl;
+        found = true;
         e = m_inpoel.size()/4;  // search for next particle
       }
     }
+    if ( found == false ) std::cout<<"particle not found"<<std::endl;
   }
 
   m_partFile.writeTimeStamp( m_it, m_particles.nunk() );
@@ -722,14 +674,14 @@ Performer::advanceParticle( std::size_t i,
                       m_u(C,3,0)/m_u(C,0,0) - m_up(C,3,0)/m_up(C,0,0),
                       m_u(D,3,0)/m_u(D,0,0) - m_up(D,3,0)/m_up(D,0,0) };
         
-//   m_particles( i, 0, 0) +=
-//     dt*(N[A]*dvx[0] + N[B]*dvx[1] + N[C]*dvx[2] + N[D]*dvx[3]);
-//   m_particles( i, 1, 0) +=
-//     dt*(N[A]*dvy[0] + N[B]*dvy[1] + N[C]*dvy[2] + N[D]*dvy[3]);
-//   m_particles( i, 2, 0) +=
-//     dt*(N[A]*dvz[0] + N[B]*dvz[1] + N[C]*dvz[2] + N[D]*dvz[3]);
-//
-//   applyParBC( i );
+  m_particles( i, 0, 0) +=
+    dt*(N[A]*dvx[0] + N[B]*dvx[1] + N[C]*dvx[2] + N[D]*dvx[3]);
+  m_particles( i, 1, 0) +=
+    dt*(N[A]*dvy[0] + N[B]*dvy[1] + N[C]*dvy[2] + N[D]*dvy[3]);
+  m_particles( i, 2, 0) +=
+    dt*(N[A]*dvz[0] + N[B]*dvz[1] + N[C]*dvz[2] + N[D]*dvz[3]);
+  
+  applyParBC( i );
 }
 
 void
@@ -749,6 +701,8 @@ Performer::applyParBC( std::size_t i )
   if ( y > 7.5 ) y = 7.5 - (y - 7.5);
   if ( x < -0.125 ) y = -0.125 - (y + 0.125); 
   if ( x > 0.125 ) y = 0.125 - (y - 0.125);
+  // Cylinder boundary conditions
+  if ( sqrt( y*y + (z+10.5)*(x+10.5) ) <= 0.5 ) z -= 0.5;
   
 }
 
