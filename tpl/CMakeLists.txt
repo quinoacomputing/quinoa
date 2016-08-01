@@ -210,8 +210,8 @@ if(HDF5_FOUND AND HDF5_IS_PARALLEL)
   string(REGEX REPLACE "([^;]+)" "LDFLAGS=-L\\1" hdf5_library_dirs_flags
         "${hdf5_library_dirs_flags}")
   set(hdf5_library_dirs "${HDF5_LIBRARY_DIRS}")
-  set(hdf5_root "${HDF5_LIBRARY_DIRS}")
-  if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+  set(hdf5_root "${HDF5_INCLUDE_DIRS}")
+  if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin" AND NOT ${hdf5_root} STREQUAL "")
     get_filename_component( hdf5_root ${hdf5_root} DIRECTORY ) # strip "/lib"
   endif()
 else()
