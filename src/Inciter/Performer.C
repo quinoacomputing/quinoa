@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.C
   \author    J. Bakosi
-  \date      Thu 28 Jul 2016 10:18:15 AM MDT
+  \date      Mon 01 Aug 2016 09:26:36 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Performer advances a PDE
   \details   Performer advances a PDE. There are a potentially
@@ -27,6 +27,8 @@
 #include <gm19.h>
 
 #include "Performer.h"
+#include "Tracker.h"
+#include "LinSysMerger.h"
 #include "Vector.h"
 #include "Reader.h"
 #include "ContainerUtil.h"
@@ -34,11 +36,10 @@
 #include "Reorder.h"
 #include "ExodusIIMeshReader.h"
 #include "ExodusIIMeshWriter.h"
+#include "ParticleWriter.h"
 #include "Inciter/InputDeck/InputDeck.h"
 #include "DerivedData.h"
 #include "PDE.h"
-#include "Tracker.h"
-#include "LinSysMerger.h"
 #include "RNGSSE.h"
 
 // Force the compiler to not instantiate the template below as it is
@@ -70,6 +71,7 @@ Performer::Performer(
   const ConductorProxy& conductor,
   const LinSysMergerProxy& lsm,
   const TrackerProxy& tracker,
+  const ParticleWriterProxy& pw,
   const std::vector< std::size_t >& conn,
   const std::unordered_map< std::size_t, std::size_t >& cid,
   int nperf )
@@ -85,6 +87,7 @@ Performer::Performer(
   m_conductor( conductor ),
   m_linsysmerger( lsm ),
   m_tracker( tracker ),
+  m_particlewriter( pw ),
   m_cid( cid ),
   m_el( tk::global2local( conn ) ),     // fills m_inpoel and m_gid
   m_lid(),
@@ -93,11 +96,11 @@ Performer::Performer(
   m_u( m_gid.size(), g_inputdeck.get< tag::component >().nprop() ),
   m_uf( m_gid.size(), g_inputdeck.get< tag::component >().nprop() ),
   m_un( m_gid.size(), g_inputdeck.get< tag::component >().nprop() ),
+  m_up( m_gid.size(), g_inputdeck.get< tag::component >().nprop() ),
   m_lhsd( m_psup.second.size()-1, g_inputdeck.get< tag::component >().nprop() ),
   m_lhso( m_psup.first.size(), g_inputdeck.get< tag::component >().nprop() ),
   m_particles( g_inputdeck.get< tag::param, tag::compns, tag::npar >() *
-               m_inpoel.size()/4, 3 ),
-  m_partFile( g_inputdeck.get< tag::cmd, tag::io, tag::part >() )
+               m_inpoel.size()/4, 3 )
 // *****************************************************************************
 //  Constructor
 //! \param[in] conductor Host (Conductor) proxy
@@ -115,6 +118,11 @@ Performer::Performer(
 
   // Register ourselves with the linear system merger
   m_linsysmerger.ckLocalBranch()->checkin();
+  // Send number of partciles we will contribute to particle writer
+  m_particlewriter.ckLocalBranch()->npar( m_particles.nunk() );
+  // Signal back to host that we are done with sending our number of particles
+  contribute(
+      CkCallback( CkReductionTarget( Conductor, nparcomplete ), m_conductor ) );
 }
 
 void
@@ -331,8 +339,8 @@ Performer::init( tk::real dt )
   // Set initial conditions for all PDEs
   for (const auto& eq : g_pdes) eq.initialize( m_coord, m_u, m_t );
 
-  // Output initial conditions to file (it = 1, time = 0.0)
-  writeFields( m_t );
+  // Output initial conditions to file (it = 0, time = 0.0)
+  writeFields( m_it, m_t );
 
   // Send off initial conditions for assembly
   m_linsysmerger.ckLocalBranch()->charesol( thisIndex, m_gid, m_u );
@@ -456,9 +464,10 @@ Performer::writeMeta() const
 }
 
 void
-Performer::writeFields( tk::real time )
+Performer::writeFields( uint64_t it, tk::real time )
 // *****************************************************************************
 // Output mesh-based fields to file
+//! \param[in] it Iteration count
 //! \param[in] time Physical time
 //! \author J. Bakosi
 // *****************************************************************************
@@ -481,6 +490,12 @@ Performer::writeFields( tk::real time )
   }
   // Write node fields
   writeSolution( ew, m_itf, output );
+
+  // Write particle fields
+  m_particlewriter.ckLocalBranch()->writeTimeStamp( it );
+  m_particlewriter.ckLocalBranch()->writeCoords( m_particles.extract( 0, 0 ),
+                                                 m_particles.extract( 1, 0 ),
+                                                 m_particles.extract( 2, 0 ) );
 }
 
 void
@@ -636,11 +651,6 @@ Performer::track()
     }
     if ( found == false ) std::cout<<"particle not found"<<std::endl;
   }
-
-  m_partFile.writeTimeStamp( m_it, m_particles.nunk() );
-  m_partFile.writeCoords( m_particles.extract( 0, 0 ),
-                          m_particles.extract( 1, 0 ),
-                          m_particles.extract( 2, 0 ) );
 }
 
 void
@@ -746,7 +756,11 @@ Performer::updateSolution( const std::vector< std::size_t >& gid,
       track();
 
       if (!((m_it+1) % g_inputdeck.get< tag::interval, tag::field >()))
-        writeFields( m_t + g_inputdeck.get< tag::discr, tag::dt >() );
+        writeFields( m_it+1, m_t + g_inputdeck.get< tag::discr, tag::dt >() );
+      else // if no fields at this time, still signal back to host
+        contribute(
+          CkCallback( CkReductionTarget( Conductor, parcomplete ),
+                      m_conductor ) );
 
       // Optionally contribute diagnostics, e.g., residuals, back to host
       if (!((m_it+1) % g_inputdeck.get< tag::interval, tag::diag >()))

@@ -210,14 +210,17 @@ if(HDF5_FOUND AND HDF5_IS_PARALLEL)
   string(REGEX REPLACE "([^;]+)" "LDFLAGS=-L\\1" hdf5_library_dirs_flags
         "${hdf5_library_dirs_flags}")
   set(hdf5_library_dirs "${HDF5_LIBRARY_DIRS}")
-  set(h5part_hdf5_library_dir "${HDF5_LIBRARY_DIRS}")
+  set(hdf5_root "${HDF5_LIBRARY_DIRS}")
+  if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    get_filename_component( hdf5_root ${hdf5_root} DIRECTORY ) # strip "/lib"
+  endif()
 else()
-  message(STATUS "HDF5 either not found or not parallel: will build")
+  message(STATUS "HDF5 either not found, not parallel, or NO_SYSTEM_HDF5=true: will build")
   set(hdf5 "hdf5")
   set(hdf5_include_dirs_flags "CPPFLAGS=-I${CMAKE_INSTALL_PREFIX}/include")
   set(hdf5_library_dirs_flags "LDFLAGS=-L${CMAKE_INSTALL_PREFIX}/lib")
   set(hdf5_library_dirs "${CMAKE_INSTALL_PREFIX}/lib")
-  set(h5part_hdf5_library_dir "${CMAKE_INSTALL_PREFIX}")
+  set(hdf5_root "${CMAKE_INSTALL_PREFIX}")
 endif()
 
 # Detect NetCDF, exclude if found, build if not
@@ -732,7 +735,7 @@ ExternalProject_Add(
   CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/h5part/configure
                     CC=${MPI_C_COMPILER}
                     CFLAGS=${CFLAGS}
-                    --with-hdf5=${h5part_hdf5_library_dir}
+                    --with-hdf5=${hdf5_root}
                     --enable-parallel
                     --prefix=${CMAKE_INSTALL_PREFIX}
   BUILD_IN_SOURCE 1

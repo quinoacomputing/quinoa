@@ -11,6 +11,8 @@
 
 module linsysmerger {
 
+  include "unordered_map";
+
   extern module conductor;
 
   namespace tk {

@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/H5PartWriter.C
   \author    J. Bakosi
-  \date      Thu 28 Jul 2016 10:16:28 AM MDT
+  \date      Mon 01 Aug 2016 09:07:11 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     H5Part particles data writer
   \details   H5Part particles data writer class definition, facilitating writing
@@ -33,17 +33,17 @@ H5PartWriter::H5PartWriter( const std::string& filename ) :
     #pragma clang diagnostic ignored "-Wold-style-cast"
   #endif
 
-  m_outFile =
-    H5PartOpenFileParallel( filename.c_str(), H5PART_WRITE, MPI_COMM_WORLD );
+  m_outFile.reset(
+    H5PartOpenFileParallel( filename.c_str(), H5PART_WRITE, MPI_COMM_WORLD ) );
 
   #if defined(__clang__)
     #pragma clang diagnostic pop
   #endif
 
-  ErrChk( m_outFile != nullptr,
+  ErrChk( m_outFile,
          "Failed to create/open H5Part file: " + filename );
 
-  H5PartWriteFileAttribString( m_outFile, "Origin", "Written by Quinoa" );
+  H5PartWriteFileAttribString( m_outFile.get(), "Origin", "Written by Quinoa" );
 }
 
 H5PartWriter::~H5PartWriter() noexcept
@@ -52,7 +52,7 @@ H5PartWriter::~H5PartWriter() noexcept
 //! \author J. Bakosi
 // *****************************************************************************
 {
-  H5PartCloseFile( m_outFile );
+  H5PartCloseFile( m_outFile.get() );
 }
 
 void
@@ -66,8 +66,8 @@ H5PartWriter::writeTimeStamp( uint64_t it, uint64_t npar ) const
 {
   Assert( npar > 0, "Attempting to write 0 particles into H5Part file" );
 
-  H5PartSetStep( m_outFile, static_cast< h5part_int64_t >( it ) );
-  H5PartSetNumParticles( m_outFile, static_cast< h5part_int64_t >( npar ) );
+  H5PartSetStep( m_outFile.get(), static_cast< h5part_int64_t >( it ) );
+  H5PartSetNumParticles( m_outFile.get(), static_cast<h5part_int64_t>(npar) );
 }
 
 void
@@ -82,7 +82,7 @@ H5PartWriter::writeCoords( const std::vector< tk::real >& x,
 //! \author J. Bakosi
 // *****************************************************************************
 {
-  H5PartWriteDataFloat64( m_outFile, "x", x.data() );
-  H5PartWriteDataFloat64( m_outFile, "y", y.data() );
-  H5PartWriteDataFloat64( m_outFile, "z", z.data() );
+  H5PartWriteDataFloat64( m_outFile.get(), "x", x.data() );
+  H5PartWriteDataFloat64( m_outFile.get(), "y", y.data() );
+  H5PartWriteDataFloat64( m_outFile.get(), "z", z.data() );
 }
