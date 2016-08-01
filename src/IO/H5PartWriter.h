@@ -14,6 +14,7 @@
 #define H5PartWriter_h
 
 #include <vector>
+#include <string>
 #include <memory>
 
 #include <NoWarning/H5Part.h>
