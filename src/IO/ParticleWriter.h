@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/ParticleWriter.h
   \author    J. Bakosi
-  \date      Mon 01 Aug 2016 09:14:35 AM MDT
+  \date      Mon 01 Aug 2016 03:26:57 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ group for outputing particle data to file via H5Part
   \details   Charm++ group for outputing particle data to file via H5Part in
@@ -16,6 +16,7 @@
 #include "H5PartWriter.h"
 
 #include "NoWarning/particlewriter.decl.h"
+#include "NoWarning/conductor.decl.h"
 
 namespace tk {
 
