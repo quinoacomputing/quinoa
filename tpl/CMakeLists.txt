@@ -213,6 +213,7 @@ if(HDF5_FOUND AND HDF5_IS_PARALLEL)
   set(hdf5_root "${HDF5_INCLUDE_DIRS}")
   if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin" AND NOT ${hdf5_root} STREQUAL "")
     get_filename_component( hdf5_root ${hdf5_root} DIRECTORY ) # strip "/lib"
+    set(hdf5_library_dirs_flags "LDFLAGS=-L${hdf5_root}/lib")
   endif()
 else()
   message(STATUS "HDF5 either not found, not parallel, or NO_SYSTEM_HDF5=true: will build")
