@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Build quinoa
-# \date      Sat 11 Jun 2016 08:55:16 AM MDT
+# \date      Fri 29 Jul 2016 11:34:06 AM MDT
 #
 ################################################################################
 
@@ -413,6 +413,7 @@ include_directories(${QUINOA_SOURCE_DIR}
                     ${PROJECT_BINARY_DIR}/RNGTest       # for Charm++ modules
                     ${PROJECT_BINARY_DIR}/UnitTest      # for Charm++ modules
                     ${PROJECT_BINARY_DIR}/LinSys        # for Charm++ modules
+                    ${PROJECT_BINARY_DIR}/IO            # for Charm++ modules
 )
 
 # Components

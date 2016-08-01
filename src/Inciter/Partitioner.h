@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Partitioner.h
   \author    J. Bakosi
-  \date      Tue 26 Jul 2016 11:22:13 AM MDT
+  \date      Mon 01 Aug 2016 08:09:19 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ chare partitioner group used to perform mesh partitioning
   \details   Charm++ chare partitioner group used to perform mesh partitioning.
@@ -87,11 +87,12 @@ extern CkReduction::reducerType NodesMerger;
 //!   also the Charm++ interface file partitioner.ci.
 //! \author J. Bakosi
 template< class HostProxy, class WorkerProxy, class LinSysMergerProxy,
-          class TrackerProxy >
+          class TrackerProxy, class ParticleWriterProxy >
 class Partitioner : public CBase_Partitioner< HostProxy,
                                               WorkerProxy,
                                               LinSysMergerProxy,
-                                              TrackerProxy > {
+                                              TrackerProxy,
+                                              ParticleWriterProxy > {
 
   #if defined(__clang__)
     #pragma clang diagnostic push
@@ -118,7 +119,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
 
   private:
     using Group = CBase_Partitioner< HostProxy, WorkerProxy, LinSysMergerProxy,
-                                     TrackerProxy >;
+                                     TrackerProxy, ParticleWriterProxy >;
 
   public:
     //! Constructor
@@ -129,12 +130,14 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     Partitioner( const HostProxy& host,
                  const WorkerProxy& worker,
                  const LinSysMergerProxy& lsm,
-                 const TrackerProxy& tracker ) :
+                 const TrackerProxy& tracker,
+                 const ParticleWriterProxy& pw ) :
       __dep(),
       m_host( host ),
       m_worker( worker ),
       m_linsysmerger( lsm ),
       m_tracker( tracker ),
+      m_particlewriter( pw ),
       m_npe( 0 ),
       m_req(),
       m_reordered( 0 ),
@@ -350,6 +353,8 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     LinSysMergerProxy m_linsysmerger;
     //! Tracker proxy
     TrackerProxy m_tracker;
+    //! Particle writer proxy
+    ParticleWriterProxy m_particlewriter;
     //! Number of fellow PEs to send elem IDs to
     std::size_t m_npe;
     //! Queue of requested node IDs from PEs
@@ -754,6 +759,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
         m_worker[ cid ].insert( m_host,
                                 m_linsysmerger,
                                 m_tracker,
+                                m_particlewriter,
                                 tk::cref_find( m_node, cid ),
                                 tk::cref_find( m_chcid, cid ),
                                 m_nchare,

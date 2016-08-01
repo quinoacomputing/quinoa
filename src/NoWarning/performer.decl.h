@@ -4,7 +4,8 @@
   \author    J. Bakosi
   \date      Wed 04 May 2016 09:41:18 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
-  \brief     Include performer.decl.h with turning off specific compiler warnings
+  \brief     Include performer.decl.h with turning off specific compiler
+             warnings.
 */
 // *****************************************************************************
 #ifndef nowarning_performer_decl_h
@@ -19,6 +20,7 @@
 #elif defined(__GNUC__)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wunused-parameter"
+  #pragma GCC diagnostic ignored "-Wshadow"
 #endif
 
 #include "../Inciter/performer.decl.h"

@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Conductor.C
   \author    J. Bakosi
-  \date      Tue 26 Jul 2016 07:06:29 AM MDT
+  \date      Mon 01 Aug 2016 08:27:40 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Conductor drives the time integration of a PDE
   \details   Conductor drives the time integration of a PDE
@@ -26,8 +26,9 @@
 #include "ContainerUtil.h"
 #include "LoadDistributor.h"
 #include "ExodusIIMeshReader.h"
-#include "DiagWriter.h"
 #include "Inciter/InputDeck/InputDeck.h"
+#include "DiagWriter.h"
+#include "ParticleWriter.h"
 
 #include "NoWarning/inciter.decl.h"
 
@@ -35,6 +36,7 @@
 // instantiated in LinSys/LinSysMerger.C (only required on mac)
 extern template class tk::LinSysMerger< inciter::CProxy_Conductor,
                                         inciter::CProxy_Performer >;
+//extern template class tk::ParticleWriter< inciter::CProxy_Conductor >;
 
 extern CProxy_Main mainProxy;
 
@@ -51,6 +53,7 @@ Conductor::Conductor() :
   m_linsysmerger(),
   m_performer(),
   m_tracker(),
+  m_particlewriter(),
   m_partitioner(),
   m_avcost( 0.0 ),
   m_npoin( 0 ),
@@ -104,6 +107,7 @@ Conductor::Conductor() :
   if ( nstep != 0 && term > t0 && dt < term-t0 ) {
 
     // Enable SDAG waits
+    wait4init();
     wait4report();
 
     // Print I/O filenames
@@ -144,10 +148,16 @@ Conductor::Conductor() :
                        er.readSidesets(),
                        g_inputdeck.get< tag::component >().nprop() );
 
+    // Create particle writer Charm++ chare group
+    m_particlewriter = ParticleWriterProxy::ckNew(
+                         thisProxy,
+                         g_inputdeck.get< tag::cmd, tag::io, tag::part >() );
+
     // Create mesh partitioner Charm++ chare group and start partitioning mesh
     m_print.diagstart( "Reading mesh graph ..." );
     m_partitioner = PartitionerProxy::ckNew( thisProxy, m_performer,
-                                             m_linsysmerger, m_tracker );
+                                             m_linsysmerger, m_tracker,
+                                             m_particlewriter );
 
   } else finish();      // stop if no time stepping requested
 }
@@ -260,14 +270,17 @@ Conductor::rowcomplete()
 // their part of storing and exporting global row ids
 //! \details This function is a Charm++ reduction target that is called when
 //!   all linear system merger branches have done their part of storing and
-//!   exporting global row ids. Once this is done, we issue a broadcast to
-//!   all Spawners and thus implicitly all Performer chares to continue with
-//!   the initialization step.
+//!   exporting global row ids. This is a necessary precondition to be done
+//!   before we can issue a broadcast to all Performer chares to continue with
+//!   the initialization step. The other, also necessary but by itself not
+//!   sufficient, one is parcomplete(). Together rowcomplete() and
+//!   parcomplete() are sufficient for continuing with the initialization. See
+//!   also conductor.ci.
 //! \author J. Bakosi
 // *****************************************************************************
 {
   m_linsysmerger.rowsreceived();
-  m_performer.init( m_dt );
+  trigger_row_complete();
 }
 
 void
@@ -387,7 +400,7 @@ Conductor::evaluateTime()
 
   // if not final stage of time step or if neither max iterations nor max time
   // reached, will continue (by telling all linear system merger group
-  // elements to prepare for a new rhs), otherwise, finish
+  // elements to prepare for a new rhs), otherwise finish
   if (m_stage < 1 || (std::fabs(m_t-term) > eps && m_it < nstep)) {
     m_linsysmerger.enable_wait4rhs();
     wait4report();      // re-enable SDAG wait for report
