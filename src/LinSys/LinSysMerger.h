@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/LinSysMerger.h
   \author    J. Bakosi
-  \date      Tue 26 Jul 2016 07:08:29 AM MDT
+  \date      Mon 01 Aug 2016 01:27:26 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ chare linear system merger group to solve a linear system
   \details   Charm++ chare linear system merger group used to collect and
@@ -202,6 +202,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       m_nperow( 0 ),
       m_nchbc( 0 ),
       m_nchbcval( 0 ),
+      m_nchdiag( 0 ),
       m_lower( 0 ),
       m_upper( 0 ),
       m_myworker(),
@@ -623,7 +624,11 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       for (std::size_t i=0; i<m_hypreSol.size()/m_ncomp; ++i)
         for (std::size_t c=0; c<m_ncomp; ++c)
           diag[c] += std::abs( m_hypreSol[i*m_ncomp+c] );
-      signal2host_diag( m_host, diag );
+      // if we have heard from every chare, signal back to host
+      if (++m_nchdiag == m_nchare) {
+        signal2host_diag( m_host, diag );
+        m_nchdiag = 0;
+      }
     }
 
   private:
@@ -636,6 +641,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
     std::size_t m_nperow;       //!< Number of fellow PEs to send row ids to
     std::size_t m_nchbc;        //!< Number of chares we received bcs from
     std::size_t m_nchbcval;     //!< Number of chares we received bc values from
+    std::size_t m_nchdiag;      //!< Number of chares we received diags from
     std::size_t m_lower;        //!< Lower index of the global rows on my PE
     std::size_t m_upper;        //!< Upper index of the global rows on my PE
     //! Ids of workers on my PE
