@@ -33,6 +33,16 @@ add_dependencies( "Inciter" "inciterCharmModule" )
 # Inciter including those.
 add_dependencies( "Inciter" "linsysmergerCharmModule" )
 
+# Add extra dependency of Inciter on ParticleWriter charm module. This is
+# required so that particlewriter.decl.h and particlewriter.def.h are generated
+# before Inciter including those.
+add_dependencies( "Inciter" "particlewriterCharmModule" )
+
+# Add extra dependency of Performer charm module on ParticleWriter charm module.
+# This is required so that particlewriter.decl.h and particlewriter.def.h are
+# generated before Performer including those.
+add_dependencies( "performerCharmModule" "particlewriterCharmModule" )
+
 INSTALL(TARGETS Inciter
   	RUNTIME DESTINATION bin COMPONENT Runtime
   	LIBRARY DESTINATION lib COMPONENT Runtime
