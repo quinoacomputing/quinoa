@@ -643,8 +643,8 @@ Performer::track()
       // If particle is found, advance, and process next one
       if ( std::min(N[0],1-N[0]) > 0 && std::min(N[1],1-N[1]) > 0 &&
            std::min(N[2],1-N[2]) > 0 && std::min(N[3],1-N[3]) > 0 ) {
-        // advanceParticle( i, e, N );
-        // std::cout<<"a: p "<<i<<"in e "<<e<<std::endl;
+        advanceParticle( i, e, N );
+        //std::cout<<"a: p "<<i<<"in e "<<e<<std::endl;
         found = true;
         e = m_inpoel.size()/4;  // search for next particle
       }
