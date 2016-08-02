@@ -16,14 +16,6 @@
 #include <cmath>
 #include <array>
 
-#include "QuinoaConfig.h"
-
-#ifdef HAS_MKL
-  #include "NoWarning/mkl_lapacke.h"
-#else
-  #include "NoWarning/lapacke.h"
-#endif
-
 #include <gm19.h>
 
 #include "Performer.h"
