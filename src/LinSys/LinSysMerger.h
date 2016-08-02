@@ -134,6 +134,7 @@
 #include "VectorReducer.h"
 #include "HashMapReducer.h"
 
+#include "NoWarning/linsysmerger.decl.h"
 #include "NoWarning/conductor.decl.h"
 
 namespace tk {
