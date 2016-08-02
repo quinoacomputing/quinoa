@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/conductor.ci
   \author    J. Bakosi
-  \date      Mon 01 Aug 2016 01:13:17 PM MDT
+  \date      Tue 02 Aug 2016 08:11:38 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ module interface file for Conductor
   \details   Charm++ module interface file for Conductor
@@ -11,7 +11,6 @@
 
 module conductor {
 
-  extern module linsysmerger;
   extern module partitioner;
 
   namespace inciter {

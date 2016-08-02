@@ -199,7 +199,7 @@ if(NOT NO_SYSTEM_HDF5)
   if(NOT BUILD_SHARED_LIBS)
     set(HDF5_USE_STATIC_LIBRARIES true)
   endif()
-  find_package(HDF5 COMPONENTS HL)
+  find_package(HDF5 COMPONENTS C HL)
 endif()
 if(HDF5_FOUND AND HDF5_IS_PARALLEL)
   set(hdf5 "")
@@ -740,8 +740,12 @@ ExternalProject_Add(
                    ${PROJECT_SOURCE_DIR}/src/h5part
                    ${PROJECT_BINARY_DIR}/h5part
   CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/h5part/configure
+                    FC=${MPI_Fortran_COMPILER}
+                    FFLAGS=${FFLAGS}
                     CC=${MPI_C_COMPILER}
                     CFLAGS=${CFLAGS}
+                    CXX=${MPI_CXX_COMPILER}
+                    CXXFLAGS=${CXXFLAGS}
                     --with-hdf5=${hdf5_root}
                     --enable-parallel
                     ${H5PART_SHARED}
