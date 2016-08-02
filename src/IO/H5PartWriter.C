@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/H5PartWriter.C
   \author    J. Bakosi
-  \date      Mon 01 Aug 2016 09:07:11 AM MDT
+  \date      Tue 02 Aug 2016 10:54:32 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     H5Part particles data writer
   \details   H5Part particles data writer class definition, facilitating writing
@@ -10,10 +10,6 @@
     data files in parallel, using MPI-IO.
 */
 // *****************************************************************************
-
-#include <NoWarning/mpi.h>
-#include <NoWarning/H5Part.h>
-#include <NoWarning/H5Block.h>
 
 #include "H5PartWriter.h"
 #include "Exception.h"
