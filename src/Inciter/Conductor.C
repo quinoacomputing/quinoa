@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Conductor.C
   \author    J. Bakosi
-  \date      Mon 01 Aug 2016 01:16:48 PM MDT
+  \date      Tue 02 Aug 2016 10:23:12 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Conductor drives the time integration of a PDE
   \details   Conductor drives the time integration of a PDE
@@ -108,6 +108,12 @@ Conductor::Conductor() :
     wait4init();
     wait4report();
 
+    // Should not wait for particle output if there are no particles
+    if (g_inputdeck.get< tag::param, tag::compns, tag::npar >() == 0) {
+      trigger_npar_complete();
+      trigger_par_complete();
+    }
+
     // Print I/O filenames
     m_print.section( "Output filenames" );
     m_print.item( "Field", g_inputdeck.get< tag::cmd, tag::io, tag::output >()
@@ -147,9 +153,10 @@ Conductor::Conductor() :
                        g_inputdeck.get< tag::component >().nprop() );
 
     // Create particle writer Charm++ chare group
-    m_particlewriter = ParticleWriterProxy::ckNew(
-                         thisProxy,
-                         g_inputdeck.get< tag::cmd, tag::io, tag::part >() );
+    if (g_inputdeck.get< tag::param, tag::compns, tag::npar >() > 0)
+      m_particlewriter = ParticleWriterProxy::ckNew(
+                           thisProxy,
+                           g_inputdeck.get< tag::cmd, tag::io, tag::part >() );
 
     // Create mesh partitioner Charm++ chare group and start partitioning mesh
     m_print.diagstart( "Reading mesh graph ..." );
@@ -527,6 +534,9 @@ Conductor::report()
     }
 
     wait4report();      // re-enable SDAG wait for next report
+    // Should not wait for particle output if there are no particles
+    if (g_inputdeck.get< tag::param, tag::compns, tag::npar >() == 0)
+      trigger_par_complete();
   }
 }
 

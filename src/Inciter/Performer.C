@@ -111,10 +111,12 @@ Performer::Performer(
   // Register ourselves with the linear system merger
   m_linsysmerger.ckLocalBranch()->checkin();
   // Send number of partciles we will contribute to particle writer
-  m_particlewriter.ckLocalBranch()->npar( m_particles.nunk() );
-  // Signal back to host that we are done with sending our number of particles
-  contribute(
-      CkCallback( CkReductionTarget( Conductor, nparcomplete ), m_conductor ) );
+  if (g_inputdeck.get< tag::param, tag::compns, tag::npar >() > 0) {
+    m_particlewriter.ckLocalBranch()->npar( m_particles.nunk() );
+    // Signal back to host that we are done with sending our number of particles
+    contribute(
+        CkCallback( CkReductionTarget(Conductor,nparcomplete), m_conductor ) );
+  }
 }
 
 void
@@ -484,10 +486,12 @@ Performer::writeFields( uint64_t it, tk::real time )
   writeSolution( ew, m_itf, output );
 
   // Write particle fields
-  m_particlewriter.ckLocalBranch()->writeTimeStamp( it );
-  m_particlewriter.ckLocalBranch()->writeCoords( m_particles.extract( 0, 0 ),
-                                                 m_particles.extract( 1, 0 ),
-                                                 m_particles.extract( 2, 0 ) );
+  if (g_inputdeck.get< tag::param, tag::compns, tag::npar >() > 0) {
+    m_particlewriter.ckLocalBranch()->writeTimeStamp( it );
+    m_particlewriter.ckLocalBranch()->writeCoords( m_particles.extract(0,0),
+                                                   m_particles.extract(1,0),
+                                                   m_particles.extract(2,0) );
+  }
 }
 
 void
@@ -751,9 +755,10 @@ Performer::updateSolution( const std::vector< std::size_t >& gid,
       if (!((m_it+1) % g_inputdeck.get< tag::interval, tag::field >()))
         writeFields( m_it+1, m_t + g_inputdeck.get< tag::discr, tag::dt >() );
       else // if no fields at this time, still signal back to host
-        contribute(
-          CkCallback( CkReductionTarget( Conductor, parcomplete ),
-                      m_conductor ) );
+        if (g_inputdeck.get< tag::param, tag::compns, tag::npar >() > 0)
+          contribute(
+            CkCallback( CkReductionTarget( Conductor, parcomplete ),
+                        m_conductor ) );
 
       // Optionally contribute diagnostics, e.g., residuals, back to host
       if (!((m_it+1) % g_inputdeck.get< tag::interval, tag::diag >()))
