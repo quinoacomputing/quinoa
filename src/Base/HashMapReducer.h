@@ -1,8 +1,8 @@
 // *****************************************************************************
 /*!
-  \file      src/Statistics/HashMapReducer.h
+  \file      src/Base/HashMapReducer.h
   \author    J. Bakosi
-  \date      Tue 19 Jul 2016 09:28:57 AM MDT
+  \date      Wed 03 Aug 2016 08:23:36 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Custom Charm++ reducer for merging std::unordered_maps across PEs
   \details   Custom Charm++ reducer for merging std::unordered_maps across PEs.
@@ -50,7 +50,12 @@ serialize( const std::unordered_map< Key, T, Hash, KeyEqual >& m ) {
 //! \param[in] nmsg Number of messages in msgs
 //! \param[in] msgs Charm++ reduction message containing the serialized maps
 //! \return Aggregated std::unordered_maps built for further aggregation if
-//     needed
+//!    needed
+//! \details During aggregation the map keys are inserted, i.e., the keys remain
+//!   unique and the mapped values, assuming containers defining begin() and
+//!   end() iterators() are concatenated.
+//! \note The mapped type must be a container, i.e., must provide iterators
+//!   begin() and end().
 //! \author J. Bakosi
 template< class Key,
           class T,

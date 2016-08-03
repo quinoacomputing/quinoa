@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Conductor.h
   \author    J. Bakosi
-  \date      Mon 01 Aug 2016 08:38:55 AM MDT
+  \date      Wed 03 Aug 2016 02:01:26 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Conductor drives the time integration of systems of systems of PDEs
   \details   Conductor drives the time integration of systems of systems of
@@ -34,11 +34,15 @@
       Npar [ label="Npar"
               tooltip="number of particles is sent by Performer chares"
               URL="\ref inciter::Performer::Performer"];
-      Init [ label="Init"
+      Msum [ label="Msum"
+              tooltip="mesh surrounding mesh data structure computed"
+              URL="\ref inciter::Performer::msum"];
+      Init [ label="Init" color="#e6851c"
               tooltip="inciter::Performer::init"
               URL="\ref inciter::Conductor::report"];
-      Row -> Init [ style="dashed" ];
-      Npar -> Init [ style="solid" ];
+      Row -> Init [ style="solid" ];
+      Npar -> Init [ style="dashed" ];
+      Msum -> Init [ style="dashed" ];
 
       Diag [ label="Diag"
               tooltip="chares contribute diagnostics"
@@ -46,11 +50,15 @@
       Eval [ label="Eval"
               tooltip="evaluate time at the end of the time step"
               URL="\ref inciter::Conductor::evaluateTime"];
-      Rep [ label="Rep"
+      Par [ label="Par"
+              tooltip="particles output to file"
+              URL="\ref inciter::Performer::writeFields"];
+      Rep [ label="Rep" color="#e6851c"
               tooltip="output one-liner report"
               URL="\ref inciter::Conductor::report"];
-      Diag -> Rep [ style="dashed" ];
       Eval -> Rep [ style="solid" ];
+      Par -> Rep [ style="dashed" ];
+      Diag -> Rep [ style="dashed" ];
     }
     \enddot
     \include Inciter/conductor.ci
@@ -138,6 +146,9 @@ class Conductor : public CBase_Conductor {
     //! \brief Reduction target indicating that all workers have sent their
     //!   number of particles to be output
     void nparcomplete() { trigger_npar_complete(); }
+
+    //! \brief Reduction target indicating ...
+    void msumcomplete() { trigger_msum_complete(); }
 
     //! Reduction target initiating verification of the boundary conditions set
     void verifybc( CkReductionMsg* msg );

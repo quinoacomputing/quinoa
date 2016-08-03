@@ -25,6 +25,7 @@ module conductor {
       entry [reductiontarget] void stdCost( tk::real c );
       entry [reductiontarget] void rowcomplete();
       entry [reductiontarget] void nparcomplete();
+      entry [reductiontarget] void msumcomplete();
       entry [reductiontarget] void verifybc( CkReductionMsg* msg );
       entry [reductiontarget] void doverifybc( CkReductionMsg* msg );
       entry [reductiontarget] void initcomplete();
@@ -45,35 +46,52 @@ module conductor {
       // -----------------------------
       //                                    DAG legend:
       //  Row  -- Init                        Row  - linear system rows complete
-      //         /                            Npar - number of particles sent
-      //  Npar --                             Init - initialization continues
+      //         /  |                         Npar - number of particles sent
+      //  Npar --   |                         Msum - mesh surrounding mesh
+      //           /                          Init - initialization continues
+      //  Msum ---
       //
       //  Diag -- Rep                         Diag - compute diagnostics
-      //         /                            Eval - evalaute time step
-      //  Eval --                             Rep  - output one-liner report
+      //         / |                          Eval - evalaute time step
+      //  Eval --  |                          Par  - particle output to file
+      //           /                          Rep  - output one-liner report
+      //  Par ----
+      //
       //
       // Interpretation of the above DAG
       // -------------------------------
       // Control flow is from left to right and top to bottom.
       //
-      // Only if both all linear system merger branches have done their part of
-      // storing and exporting global row ids (Row) and the number of particles
-      // workers will contribute to outputing to file (Npar), the initialization
-      // can continue (Init).
+      // Only if both all of (1) linear system merger branches have done their
+      // part of storing and exporting global row ids (Row), (2) the number of
+      // particles workers will contribute to have been received by the particle
+      // writers (Npar), and (3) the mesh chunks surrounding mesh chunks data
+      // structure has been built (Msum), the initialization can continue
+      // (Init). Note that Npar and Msum are optional, and only required (and
+      // triggered) if there are particles to advance (given by user input).
       //
-      // Outputing a one-liner report (Rep) can only be done if both the
-      // diagnostics have been collected (Diag) as well as the time step has
-      // been evaluated (Eval). The report is only output at the final time step
-      // stage. Collecting diagnostics if optional, i.e., it does not happen
-      // every time step. If diagnostics are collected trigger_diag_complete()
-      // is signaled from the reduction target, Conductor::diagnostics(). If
-      // diagnostics are not collected in a time step, collection is skipped,
-      // and trigger_diag_complete() is signaled from the shortcut function,
-      // Conductor::diagcomplete(). Either way, the above DAG and its logic
+      // Outputing a one-liner report (Rep) can only be done if all of (1) the
+      // diagnostics have been collected (Diag), (2) the time step has been
+      // evaluated (Eval), and (3) particles have been output. The report is
+      // only output at the final time step stage. Collecting diagnostics is
+      // optional, i.e., it does not happen every time step. If diagnostics are
+      // collected trigger_diag_complete() is signaled from the reduction
+      // target, Conductor::diagnostics(). If diagnostics are not collected in a
+      // time step, collection is skipped, and trigger_diag_complete() is
+      // signaled from the shortcut function, Conductor::diagcomplete(). Similar
+      // to diagnostics output, particle output is also optional and does not
+      // happen every time step. The Charm++ reduction target
+      // Conductor::parcomplete() is reached either way but on different routes:
+      // if particles are output the reduction originates from the
+      // ParticleWriter Charm++ group after writeCoords() finished the output,
+      // if particles are not output, the reduction originates from
+      // Performer::updateSolution(). Either way, the above DAG and its logic
       // remains the same.
 
       entry void wait4init()
-      { when trigger_row_complete(), trigger_npar_complete() serial "init"
+      { when trigger_row_complete(),
+             trigger_npar_complete(),
+             trigger_msum_complete() serial "init"
         { m_performer.init( m_dt ); } };
 
       entry void wait4report()
@@ -84,6 +102,7 @@ module conductor {
 
       entry void trigger_row_complete();
       entry void trigger_npar_complete();
+      entry void trigger_msum_complete();
       entry void trigger_eval_complete();
       entry void trigger_par_complete();
       entry void trigger_diag_complete();

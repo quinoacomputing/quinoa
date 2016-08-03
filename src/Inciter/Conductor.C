@@ -111,6 +111,7 @@ Conductor::Conductor() :
     // Should not wait for particle output if there are no particles
     if (g_inputdeck.get< tag::param, tag::compns, tag::npar >() == 0) {
       trigger_npar_complete();
+      trigger_msum_complete();
       trigger_par_complete();
     }
 
