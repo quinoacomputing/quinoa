@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.C
   \author    J. Bakosi
-  \date      Mon 01 Aug 2016 01:14:55 PM MDT
+  \date      Wed 03 Aug 2016 12:49:08 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Performer advances a PDE
   \details   Performer advances a PDE. There are a potentially
@@ -44,16 +44,17 @@ namespace inciter {
 extern ctr::InputDeck g_inputdeck;
 extern std::vector< PDE > g_pdes;
 
-//! \brief Charm++ BC merger reducer for verifying BCs
-//! \details This variable is defined here in the .C file and declared as extern
-//!   in Performer.h. If instead one defines it in the header (as static),
+//! \brief Charm++ reducers used by Performer
+//! \details These variables are defined here in the .C file and declared as
+//!   extern in Performer.h. If instead one defines it in the header (as static),
 //!   a new version of the variable is created any time the header file is
 //!   included, yielding no compilation nor linking errors. However, that leads
-//!   to runtime errors, since Performer::registerVerifyBCMerger(), a Charm++
+//!   to runtime errors, since Performer::registerReducers(), a Charm++
 //!   "initnode" entry method, *may* fill one while contribute() may use the
 //!   other (unregistered) one. Result: undefined behavior, segfault, and
 //!   formatting the internet ...
 CkReduction::reducerType VerifyBCMerger;
+CkReduction::reducerType MeshNodeMerger;
 
 } // inciter::
 
@@ -116,7 +117,41 @@ Performer::Performer(
     // Signal back to host that we are done with sending our number of particles
     contribute(
         CkCallback( CkReductionTarget(Conductor,nparcomplete), m_conductor ) );
+    // Collect fellow chare IDs our mesh neighbors
+    std::vector< std::pair< int, std::unordered_set< std::size_t > > >
+      meshnodes{ { thisIndex, { begin(m_gid), end(m_gid) } } };
+    auto stream = serialize( meshnodes );
+    CkCallback cb( CkIndex_Performer::msum(nullptr), thisProxy );
+    contribute( stream.first, stream.second.get(), MeshNodeMerger, cb );
   }
+}
+
+void
+Performer::msum( CkReductionMsg* msg )
+// *****************************************************************************
+// Reduction target finishing collecting fellow chare mesh node IDs
+//! \param[in] msg Serialized aggregated mesh node IDs categorized by chares
+//! \author J. Bakosi
+// *****************************************************************************
+{
+  std::vector< std::pair< int, std::unordered_set< std::size_t > > > meshnodes;
+  PUP::fromMem creator( msg->getData() );
+  creator | meshnodes;
+  delete msg;
+
+  for (const auto& c : meshnodes)
+    for (auto i : m_gid)
+      if (c.first != thisIndex && c.second.find(i) != c.second.end()) {
+        m_sum.push_back( c.first );
+        break;
+      }
+
+//   std::cout << thisIndex << ": ";
+//   for (auto i : m_sum) std::cout << i << ' ';
+//   std::cout << '\n';
+
+  contribute(
+     CkCallback( CkReductionTarget(Conductor,msumcomplete), m_conductor ) );
 }
 
 void

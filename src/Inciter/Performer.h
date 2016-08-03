@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.h
   \author    J. Bakosi
-  \date      Mon 01 Aug 2016 07:59:42 AM MDT
+  \date      Wed 03 Aug 2016 08:39:13 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Performer advances a system of systems of PDEs
   \details   Performer advances a system of systems of PDEs. There are a
@@ -28,6 +28,7 @@
 #include "Particles.h"
 #include "DerivedData.h"
 #include "VectorReducer.h"
+#include "MeshNodeMerger.h"
 #include "Inciter/InputDeck/InputDeck.h"
 
 #include "NoWarning/conductor.decl.h"
@@ -41,6 +42,7 @@ namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
 extern CkReduction::reducerType VerifyBCMerger;
+extern CkReduction::reducerType MeshNodeMerger;
 
 //! Performer Charm++ chare used to advance a PDE in time
 class Performer : public CBase_Performer {
@@ -76,14 +78,18 @@ class Performer : public CBase_Performer {
     #endif
 
     //! \brief Configure Charm++ reduction types
-    //! \details Since this is a [nodeinit] routine, see linsysmerger.ci, the
+    //! \details Since this is a [nodeinit] routine, see performer.ci, the
     //!   Charm++ runtime system executes the routine exactly once on every
     //!   logical node early on in the Charm++ init sequence. Must be static as
     //!   it is called without an object. See also: Section "Initializations at
     //!   Program Startup" at in the Charm++ manual
     //!   http://charm.cs.illinois.edu/manuals/html/charm++/manual.html.
-    static void registerVerifyBCMerger()
-    { VerifyBCMerger = CkReduction::addReducer( tk::mergeVector ); }
+    static void registerReducers() {
+      VerifyBCMerger = CkReduction::addReducer( tk::mergeVector );
+      MeshNodeMerger = CkReduction::addReducer( mergeMeshNodes< std::size_t > );
+    }
+
+    void msum( CkReductionMsg* msg );
 
     //! Initialize mesh IDs, element connectivity, coordinates
     void setup();
@@ -180,6 +186,8 @@ class Performer : public CBase_Performer {
     tk::MeshNodes m_lhsd, m_lhso;
     //! (Tracker) particles properties
     tk::Particles m_particles;
+    //! Fellow Performer chare indices holding neighboring mesh chunks
+    std::vector< int > m_sum;
 
     //! Send off global row IDs to linear system merger, setup global->local IDs
     void setupIds();
