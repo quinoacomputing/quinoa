@@ -613,15 +613,15 @@ Performer::track()
   // Loop over the number of particles and evaluate shapefunctions at each
   // particle's location
   for (std::size_t i=0; i<m_particles.nunk(); ++i) {
+    // Create a reference of particle coordinates
+    const auto& xp = m_particles( i, 0, 0 );
+    const auto& yp = m_particles( i, 1, 0 );
+    const auto& zp = m_particles( i, 2, 0 );
     for (std::size_t e=0; e<m_inpoel.size()/4; ++e) {
       const auto A = m_inpoel[e*4+0];
       const auto B = m_inpoel[e*4+1];
       const auto C = m_inpoel[e*4+2]; 
       const auto D = m_inpoel[e*4+3];
-      // Create a reference of particle coordinates
-      const auto& xp = m_particles( i, 0, 0 );
-      const auto& yp = m_particles( i, 1, 0 );
-      const auto& zp = m_particles( i, 2, 0 );
 
       // Evaluate shapefunctions at particle locations using Cramer's Rule
       //
@@ -674,13 +674,19 @@ Performer::track()
       // If particle is found, advance, and process next one
       if ( std::min(N[0],1-N[0]) > 0 && std::min(N[1],1-N[1]) > 0 &&
            std::min(N[2],1-N[2]) > 0 && std::min(N[3],1-N[3]) > 0 ) {
-        // advanceParticle( i, e, N );
-        // std::cout<<"a: p "<<i<<"in e "<<e<<std::endl;
+        advanceParticle( i, e, N );
+        //std::cout<<"a: p "<<i<<"in e "<<e<<std::endl;
         found = true;
         e = m_inpoel.size()/4;  // search for next particle
       }
     }
-    if ( found == false ) std::cout<<"particle not found"<<std::endl;
+    if ( found == false ) {
+      std::cout<<"particle "<<i<<" not found"<<std::endl;
+      std::cout<<"xp: "<<xp<<std::endl;
+      std::cout<<"yp: "<<yp<<std::endl;
+      std::cout<<"zp: "<<zp<<std::endl;
+      CkExit();
+    }
   }
 }
 
@@ -716,11 +722,11 @@ Performer::advanceParticle( std::size_t i,
                       m_u(D,3,0)/m_u(D,0,0) - m_up(D,3,0)/m_up(D,0,0) };
         
   m_particles( i, 0, 0) +=
-    dt*(N[A]*dvx[0] + N[B]*dvx[1] + N[C]*dvx[2] + N[D]*dvx[3]);
+    dt*(N[0]*dvx[0] + N[1]*dvx[1] + N[2]*dvx[2] + N[3]*dvx[3]);
   m_particles( i, 1, 0) +=
-    dt*(N[A]*dvy[0] + N[B]*dvy[1] + N[C]*dvy[2] + N[D]*dvy[3]);
+    dt*(N[0]*dvy[0] + N[1]*dvy[1] + N[2]*dvy[2] + N[3]*dvy[3]);
   m_particles( i, 2, 0) +=
-    dt*(N[A]*dvz[0] + N[B]*dvz[1] + N[C]*dvz[2] + N[D]*dvz[3]);
+    dt*(N[0]*dvz[0] + N[1]*dvz[1] + N[2]*dvz[2] + N[3]*dvz[3]);
   
   applyParBC( i );
 }
