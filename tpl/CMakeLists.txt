@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Build quinoa third-party Libraries
-# \date      Thu 28 Jul 2016 07:21:32 AM MDT
+# \date      Wed 03 Aug 2016 05:55:48 AM MDT
 #
 ################################################################################
 
@@ -75,7 +75,7 @@ endif()
 
 # Compilers
 # =========
-# There are three sets of compilers, given by the following CMake variables:
+# There are two sets of compilers, given by the following CMake variables:
 #
 # 1. The underlying compiler suite
 #
@@ -88,11 +88,6 @@ endif()
 #    MPI_C_COMPILER
 #    MPI_CXX_COMPILER
 #    MPI_Fortran_COMPILER
-#
-# 3. The Charm++ wrapper (of the MPI wrappers or around the underlying
-#    compilers, depending on CHARM_COMPILER), the compiler used to build Charm++
-#
-#    CHARM_COMPILER
 
 # Convert system name to lower case
 string(TOLOWER ${CMAKE_SYSTEM_NAME} SYSTEM_NAME)
@@ -119,23 +114,7 @@ endif()
 # Set Charm++ architecture
 set(CHARM_ARCHITECTURE "mpi-${SYSTEM_NAME}${CHARM_ARCH}")
 
-# Set Charm++ compiler
-if(CMAKE_CXX_COMPILER MATCHES "mpi")    # using mpi wrappers
-
-  if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-    set(CHARM_COMPILER "mpicxx")
-  elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    set(CHARM_COMPILER "")
-  endif()
-
-else()  # if not using mpi wrappers
-
-  set(CHARM_COMPILER "")
-
-endif()
-
 message(STATUS "Charm++ architecture: '${CHARM_ARCHITECTURE}'")
-message(STATUS "Charm++ compiler: '${CHARM_COMPILER}'")
 
 # Compiler-specific settings
 if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")  # clang-specific settings
@@ -353,7 +332,6 @@ ExternalProject_Add(
   BUILD_COMMAND ${CMAKE_INSTALL_PREFIX}/charm/build
                 LIBS
                 ${CHARM_ARCHITECTURE}
-                ${CHARM_COMPILER}
                 ${CHARM_PTHREADS}
                 ${CHARM_SHARED}
                 ${CHARM_RELEASE_BUILD}
