@@ -2,7 +2,7 @@
 /*!
   \file      src/NoWarning/particlewriter.decl.h
   \author    F.J. Gonzalez
-  \date      Fri 29 Jul 2016 11:59:33 AM MDT
+  \date      Wed 03 Aug 2016 06:08:28 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include particlewriter.decl.h with turning off specific compiler
              warnings.
@@ -50,6 +50,10 @@
   #pragma GCC diagnostic ignored "-Wswitch-default"
   #pragma GCC diagnostic ignored "-Wextra"
   #pragma GCC diagnostic ignored "-Wpedantic"
+#elif defined(__INTEL_COMPILER)
+  #pragma warning( push )
+  #pragma warning( disable: 181 )
+  #pragma warning( disable: 1720 )
 #endif
 
 #include "../IO/particlewriter.decl.h"
@@ -58,6 +62,8 @@
   #pragma clang diagnostic pop
 #elif defined(__GNUC__)
   #pragma GCC diagnostic pop
+#elif defined(__INTEL_COMPILER)
+  #pragma warning( pop )
 #endif
 
 #endif // nowarning_particlewriter_decl_h
