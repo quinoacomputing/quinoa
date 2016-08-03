@@ -93,7 +93,8 @@ Performer::Performer(
   m_lhsd( m_psup.second.size()-1, g_inputdeck.get< tag::component >().nprop() ),
   m_lhso( m_psup.first.size(), g_inputdeck.get< tag::component >().nprop() ),
   m_particles( g_inputdeck.get< tag::param, tag::compns, tag::npar >() *
-               m_inpoel.size()/4, 3 )
+               m_inpoel.size()/4, 3 ),
+  m_sum()
 // *****************************************************************************
 //  Constructor
 //! \param[in] conductor Host (Conductor) proxy
