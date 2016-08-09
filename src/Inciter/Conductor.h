@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Conductor.h
   \author    J. Bakosi
-  \date      Wed 03 Aug 2016 02:01:26 PM MDT
+  \date      Tue 09 Aug 2016 08:40:47 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Conductor drives the time integration of systems of systems of PDEs
   \details   Conductor drives the time integration of systems of systems of
@@ -31,9 +31,6 @@
       Row [ label="Row"
             tooltip="row indices of the linear system is complete"
             URL="\ref tk::LinSysMerger::signal2host_row_complete"];
-      Npar [ label="Npar"
-              tooltip="number of particles is sent by Performer chares"
-              URL="\ref inciter::Performer::Performer"];
       Msum [ label="Msum"
               tooltip="mesh surrounding mesh data structure computed"
               URL="\ref inciter::Performer::msum"];
@@ -41,24 +38,27 @@
               tooltip="inciter::Performer::init"
               URL="\ref inciter::Conductor::report"];
       Row -> Init [ style="solid" ];
-      Npar -> Init [ style="dashed" ];
-      Msum -> Init [ style="dashed" ];
+      Msum -> Init [ style="solid" ];
 
+      ParCom [ label="ParCom"
+              tooltip="particle communication among Performer chares"
+              URL="\ref inciter::Performer::track"];
+      Npar [ label="Npar"
+              tooltip="number of particles to be output to file counted"
+              URL="\ref inciter::Performer::writeParticles"];
       Diag [ label="Diag"
               tooltip="chares contribute diagnostics"
               URL="\ref inciter::Performer::diagnostics"];
-      Eval [ label="Eval"
+      Out [ label="Out"
+              tooltip="particles output to file"
+              URL="\ref inciter::Performer::doWriteParticles"];
+      Eval [ label="Eval" color="#e6851c"
               tooltip="evaluate time at the end of the time step"
               URL="\ref inciter::Conductor::evaluateTime"];
-      Par [ label="Par"
-              tooltip="particles output to file"
-              URL="\ref inciter::Performer::writeFields"];
-      Rep [ label="Rep" color="#e6851c"
-              tooltip="output one-liner report"
-              URL="\ref inciter::Conductor::report"];
-      Eval -> Rep [ style="solid" ];
-      Par -> Rep [ style="dashed" ];
-      Diag -> Rep [ style="dashed" ];
+      ParCom -> Npar [ style="solid" ];
+      Npar -> Out [ style="solid" ];
+      Diag -> Eval [ style="solid" ];
+      Out -> Eval [ style="solid" ];
     }
     \enddot
     \include Inciter/conductor.ci
@@ -143,10 +143,6 @@ class Conductor : public CBase_Conductor {
     //!   branches have done their part of storing and exporting global row ids
     void rowcomplete();
 
-    //! \brief Reduction target indicating that all workers have sent their
-    //!   number of particles to be output
-    void nparcomplete() { trigger_npar_complete(); }
-
     //! \brief Reduction target indicating ...
     void msumcomplete() { trigger_msum_complete(); }
 
@@ -160,6 +156,13 @@ class Conductor : public CBase_Conductor {
     //!   finished their initialization step
     void initcomplete();
 
+    //! \brief Reduction target indicating that all workers have sent their
+    //!   number of particles to be output
+    void nparcomplete() { trigger_npar_complete(); }
+
+    //! \brief Reduction target ...
+    void parcomcomplete() { trigger_parcom_complete(); }
+
     //! \brief Reduction target optionally collecting diagnostics, e.g.,
     //!   residuals, from all Performer chares
     void diagnostics( tk::real* d, std::size_t n );
@@ -171,21 +174,11 @@ class Conductor : public CBase_Conductor {
     //! \brief Reduction target indicating that all particles writers have
     //!   finished outputing particles to file
     //! \details This function is a Charm++ reduction target that is called when
-    //!   all performer chares have done their part of sending thir number of
-    //!   particles to be output to file to threir particle writer group
-    //!   branches. This is a necessary precondition to be done before we can
-    //!   issue a broadcast to all Performer chares to continue with the
-    //!   initialization step. The other, also necessary but by itself not
-    //!   sufficient, one is rowcomplete(). Together rowcomplete() and
-    //!   parcomplete() are sufficient for continuing with the initialization.
-    //!   See also conductor.ci.
-    void parcomplete() { trigger_par_complete(); }
+    //!   all performer chares have finished communicating particles
+    void outcomplete() { trigger_out_complete(); }
 
-    //! \brief Reduction target indicating that all Performer chares have
-    //!   finished a time step and it is time to decide whether to continue
-    void evaluateTime();
-
-    //! \brief Reduction target indicating that all ...
+    //! \brief Reduction target indicating that the linear system mergers are
+    //!   ready for the next time step
     void advance();
 
     //! Normal finish of time stepping
@@ -234,8 +227,8 @@ class Conductor : public CBase_Conductor {
     //! Print out time integration header
     void header();
 
-    //! Print out one-liner report on time step
-    void report();
+    //! Evaluate time step and output one-liner report
+    void evaluateTime();
 };
 
 } // inciter::

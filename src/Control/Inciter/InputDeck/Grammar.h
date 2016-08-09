@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Tue 26 Jul 2016 08:42:52 AM MDT
+  \date      Sun 07 Aug 2016 01:24:55 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Inciter's input deck grammar definition
   \details   Inciter's input deck grammar definition. We use the Parsing
@@ -291,11 +291,11 @@ namespace deck {
                            //ic_compns< tag::compns, tag::ic > >,
                            material_properties< tag::compns >,
                            bc_dirichlet< tag::compns, tag::bc_dirichlet >,
-                           tk::grm::control<
-                             Stack,
-                             use< kw::npar >,
-                             pegtl::digit,
-                             tag::param, tag::compns, tag::npar > >,
+                           tk::grm::process< Stack, use< kw::npar >,
+                             tk::grm::Store_back< Stack,
+                                                  tag::param,
+                                                  tag::compns,
+                                                  tag::npar > > >,
            check_errors< tag::compns, check_compns > > {};
 
   //! partitioning ... end block
