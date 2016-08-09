@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Tue 26 Jul 2016 10:26:26 AM MDT
+  \date      Sun 07 Aug 2016 01:17:58 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Inciter's input deck definition
   \details   This file defines the heterogeneous stack that is used for storing
@@ -113,8 +113,6 @@ class InputDeck :
       // Default intervals
       set< tag::interval, tag::tty >( 1 );
       set< tag::interval, tag::field >( 1 );
-      // Defaults for the compressible Navier-Stokes PDE
-      set< tag:: param, tag::compns, tag::npar >( 0 );
       // Initialize help: fill own keywords
       const auto& ctrinfoFill = tk::ctr::Info( get< tag::cmd, tag::ctrinfo >() );
       boost::mpl::for_each< keywords1 >( ctrinfoFill );

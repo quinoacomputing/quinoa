@@ -43,6 +43,11 @@ add_dependencies( "Inciter" "particlewriterCharmModule" )
 # generated before Performer including those.
 add_dependencies( "performerCharmModule" "particlewriterCharmModule" )
 
+# Add extra dependency of Performer charm module on LinSysMerger charm module.
+# This is required so that linsysmerger.decl.h and linsysmerger.def.h are
+# generated before Performer including those.
+add_dependencies( "performerCharmModule" "linsysmergerCharmModule" )
+
 INSTALL(TARGETS Inciter
   	RUNTIME DESTINATION bin COMPONENT Runtime
   	LIBRARY DESTINATION lib COMPONENT Runtime

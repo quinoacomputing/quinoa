@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.h
   \author    J. Bakosi
-  \date      Wed 03 Aug 2016 02:05:50 PM MDT
+  \date      Tue 09 Aug 2016 06:12:43 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Performer advances a system of systems of PDEs
   \details   Performer advances a system of systems of PDEs. There are a
@@ -22,6 +22,7 @@
 #include <cstring>
 #include <cmath>
 #include <unordered_map>
+#include <set>
 
 #include "Types.h"
 #include "MeshNodes.h"
@@ -114,7 +115,29 @@ class Performer : public CBase_Performer {
     void advance( uint8_t stage, tk::real dt, uint64_t it, tk::real t );
 
     //! Generates particles into mesh cells
-    void genPar();
+    void genpar();
+
+    //! Find particles missing by the requestor and make those found ours
+    void findpar( int fromch,
+                  const std::vector< std::size_t >& miss,
+                  const tk::Particles& ps );
+
+    //! Collect particle indices found elsewhere (by fellow neighbors)
+    void foundpar( const std::vector< std::size_t >& found );
+
+    //! Find particles missing by the requestor and make those found ours    
+    void collectpar( int fromch,
+                     const std::vector< std::size_t >& miss,
+                     const tk::Particles& ps );
+
+    //! Collect particle indices found elsewhere (by far fellows)
+    void collectedpar( const std::vector< std::size_t >& found );
+
+    //! Output mesh and particle fields to files
+    void out();
+
+    //! Output particles fields to file
+    void doWriteParticles();
 
     ///@{
     //! \brief Pack/Unpack serialize member function
@@ -126,6 +149,7 @@ class Performer : public CBase_Performer {
       p | m_t;
       p | m_stage;
       p | m_nsol;
+      p | m_nchpar;
       p | m_nperf;
       p | m_outFilename;
       p | m_conductor;
@@ -134,14 +158,23 @@ class Performer : public CBase_Performer {
       p | m_particlewriter;
       p | m_cid;
       p | m_el;
-      if (p.isUnpacking()) { m_inpoel = m_el.first; m_gid = m_el.second; }
+      if (p.isUnpacking()) {
+        m_inpoel = m_el.first;
+        m_gid = m_el.second;
+      }
       p | m_lid;
       p | m_coord;
       p | m_psup;
-      p | m_u; p | m_uf; p | m_un; p | m_up;
-      p | m_lhsd; p | m_lhso;
+      p | m_u;
+      p | m_uf;
+      p | m_un;
+      p | m_up;
+      p | m_lhsd;
+      p | m_lhso;
       p | m_particles;
-      p | m_sum;
+      p | m_msum;
+      p | m_parmiss;
+      p | m_parelse;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -157,7 +190,8 @@ class Performer : public CBase_Performer {
     tk::real m_t;                        //!< Physical time
     uint8_t m_stage;                     //!< Stage in multi-stage time stepping
     std::size_t m_nsol;                  //!< Counter for solution nodes updated
-    int m_nperf;                         //!< Total number of performer chares
+    std::size_t m_nchpar;                //!< Numbr of chares recvd partcls from
+    std::size_t m_nperf;                 //!< Total number of performer chares
     std::string m_outFilename;           //!< Output filename
     ConductorProxy m_conductor;          //!< Conductor proxy
     LinSysMergerProxy m_linsysmerger;    //!< Linear system merger proxy
@@ -188,7 +222,11 @@ class Performer : public CBase_Performer {
     //! (Tracker) particles properties
     tk::Particles m_particles;
     //! Fellow Performer chare indices holding neighboring mesh chunks
-    std::vector< int > m_sum;
+    std::vector< int > m_msum;
+    //! Indicies of particles not found here (missing)
+    std::set< std::size_t > m_parmiss;
+    //! Indicies of particles not found here but found by fellows
+    decltype(m_parmiss) m_parelse;
 
     //! Send off global row IDs to linear system merger, setup global->local IDs
     void setupIds();
@@ -226,8 +264,11 @@ class Performer : public CBase_Performer {
     void writeMeta() const;
 
     //! Output mesh-based fields to file
-    void writeFields( uint64_t it, tk::real time );
-    
+    void writeFields( tk::real time );
+
+    //! Search particle ina single mesh cell
+    bool parinel( std::size_t p, std::size_t e, std::array< tk::real, 4 >& N );
+
     //! Search particles in our chunk of the mesh
     void track();
 
@@ -238,6 +279,13 @@ class Performer : public CBase_Performer {
 
     //! Apply boundary conditions to particles
     void applyParBC( std::size_t i );
+
+    //! Try to find particles and add those found to the list of ours
+    std::vector< std::size_t > addpar( const std::vector< std::size_t >& miss,
+                                       const tk::Particles& ps );
+
+    //! Output number of particles we will write to file in this step
+    void writeParticles();
 };
 
 } // inciter::

@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Conductor.C
   \author    J. Bakosi
-  \date      Tue 02 Aug 2016 10:23:12 AM MDT
+  \date      Tue 09 Aug 2016 08:09:15 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Conductor drives the time integration of a PDE
   \details   Conductor drives the time integration of a PDE
@@ -106,14 +106,9 @@ Conductor::Conductor() :
 
     // Enable SDAG waits
     wait4init();
-    wait4report();
-
-    // Should not wait for particle output if there are no particles
-    if (g_inputdeck.get< tag::param, tag::compns, tag::npar >() == 0) {
-      trigger_npar_complete();
-      trigger_msum_complete();
-      trigger_par_complete();
-    }
+    wait4parcom();
+    wait4npar();
+    wait4eval();
 
     // Print I/O filenames
     m_print.section( "Output filenames" );
@@ -154,7 +149,7 @@ Conductor::Conductor() :
                        g_inputdeck.get< tag::component >().nprop() );
 
     // Create particle writer Charm++ chare group
-    if (g_inputdeck.get< tag::param, tag::compns, tag::npar >() > 0)
+    //if (g_inputdeck.get< tag::param, tag::compns, tag::npar >() > 0)
       m_particlewriter = ParticleWriterProxy::ckNew(
                            thisProxy,
                            g_inputdeck.get< tag::cmd, tag::io, tag::part >() );
@@ -382,38 +377,6 @@ Conductor::diagnostics( tk::real* d, std::size_t n )
 }
 
 void
-Conductor::evaluateTime()
-// *****************************************************************************
-//  Evaluate time step: decide if it is time to quit
-//! \author J. Bakosi
-// *****************************************************************************
-{
-  const auto term = g_inputdeck.get< tag::discr, tag::term >();
-  const auto eps = std::numeric_limits< tk::real >::epsilon();
-  const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
-
-  // if at final stage of time step, finish time step just taken
-  if (m_stage == 1) {
-    // Increase number of iterations taken
-    ++m_it;
-    // Advance physical time to include time step just finished
-    m_t += m_dt;
-    // Truncate the size of last time step
-    if (m_t > term) m_t = term;
-  }
-
-  trigger_eval_complete();
-
-  // if not final stage of time step or if neither max iterations nor max time
-  // reached, will continue (by telling all linear system merger group
-  // elements to prepare for a new rhs), otherwise finish
-  if (m_stage < 1 || (std::fabs(m_t-term) > eps && m_it < nstep))
-    m_linsysmerger.enable_wait4rhs();
-  else
-    finish();
-}
-
-void
 Conductor::advance()
 // *****************************************************************************
 //  Reduction target indicating that all Performer chares have finished their
@@ -483,13 +446,25 @@ Conductor::header()
 }
 
 void
-Conductor::report()
+Conductor::evaluateTime()
 // *****************************************************************************
-// Print out one-liner report on time step
+// Evaluate time step and output one-liner report
 //! \author J. Bakosi
 // *****************************************************************************
 {
+  const auto term = g_inputdeck.get< tag::discr, tag::term >();
+  const auto eps = std::numeric_limits< tk::real >::epsilon();
+  const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
+
+  // if at final stage of time step, finish time step just taken
   if (m_stage == 1) {
+    // Increase number of iterations taken
+    ++m_it;
+    // Advance physical time to include time step just finished
+    m_t += m_dt;
+    // Truncate the size of last time step
+    if (m_t > term) m_t = term;
+
     bool diag = false;
 
     // Append diagnostics file at selected times
@@ -533,12 +508,19 @@ Conductor::report()
 
       m_print << '\n';
     }
-
-    wait4report();      // re-enable SDAG wait for next report
-    // Should not wait for particle output if there are no particles
-    if (g_inputdeck.get< tag::param, tag::compns, tag::npar >() == 0)
-      trigger_par_complete();
   }
+
+  // if not final stage of time step or if neither max iterations nor max time
+  // reached, will continue (by telling all linear system merger group
+  // elements to prepare for a new rhs), otherwise finish
+  if (m_stage < 1 || (std::fabs(m_t-term) > eps && m_it < nstep))
+    m_linsysmerger.enable_wait4rhs();
+  else
+    finish();
+
+  wait4parcom();
+  wait4npar();
+  wait4eval();
 }
 
 #include "NoWarning/conductor.def.h"

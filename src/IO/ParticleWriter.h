@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/ParticleWriter.h
   \author    J. Bakosi
-  \date      Mon 01 Aug 2016 03:26:57 PM MDT
+  \date      Tue 09 Aug 2016 08:08:40 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ group for outputing particle data to file via H5Part
   \details   Charm++ group for outputing particle data to file via H5Part in
@@ -16,7 +16,7 @@
 #include "H5PartWriter.h"
 
 #include "NoWarning/particlewriter.decl.h"
-#include "NoWarning/conductor.decl.h"
+#include "NoWarning/performer.decl.h"
 
 namespace tk {
 
@@ -54,7 +54,7 @@ class ParticleWriter : public CBase_ParticleWriter< HostProxy > {
     //!   method since it is always called by chares on the same PE.
     //! \author J. Bakosi
     void writeTimeStamp( uint64_t it ) {
-      if (!m_timestamped) m_writer.writeTimeStamp( it, m_npar );
+      if (m_npar > 0 && !m_timestamped) m_writer.writeTimeStamp( it, m_npar );
       m_timestamped = true;
     }
 
@@ -69,6 +69,7 @@ class ParticleWriter : public CBase_ParticleWriter< HostProxy > {
                       const std::vector< tk::real >& y,
                       const std::vector< tk::real >& z )
     {
+      if (m_npar == 0) { signal2host_outcomplete( m_host ); return; }
       Assert( m_timestamped, "Outputing the time stamp must precede the "
                              "particle coordinates" );
       Assert( x.size() == y.size() && y.size() == z.size(),
@@ -80,10 +81,11 @@ class ParticleWriter : public CBase_ParticleWriter< HostProxy > {
       // if received from all chares on my PE, write to file
       if (m_x.size() == m_npar) {
         m_writer.writeCoords( m_x, m_y, m_z );
-        signal2host_parcomplete( m_host );
+        signal2host_outcomplete( m_host );
         m_x.clear();        // prepare for next step
         m_y.clear();
         m_z.clear();
+        m_npar = 0;
         m_timestamped = false;
       }
     }
@@ -150,11 +152,11 @@ class ParticleWriter : public CBase_ParticleWriter< HostProxy > {
     ///@{
     //! \brief Signal back to host that the initialization of the row indices of
     //!   the linear system is complete
-    void signal2host_parcomplete( const inciter::CProxy_Conductor& host )
+    void signal2host_outcomplete( const inciter::CProxy_Conductor& host )
     {
       using inciter::CkIndex_Conductor;
       Group::contribute(
-        CkCallback( CkIndex_Conductor::redn_wrapper_parcomplete(NULL), host ) );
+        CkCallback( CkIndex_Conductor::redn_wrapper_outcomplete(NULL), host ) );
     }
     ///@}
     #if defined(__clang__)

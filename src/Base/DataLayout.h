@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/DataLayout.h
   \author    J. Bakosi
-  \date      Fri 15 Jul 2016 03:15:40 PM MDT
+  \date      Tue 09 Aug 2016 08:04:21 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Generic data access abstraction for different data layouts
   \details   Generic data access abstraction for different data layouts. See
@@ -15,6 +15,8 @@
 #include <array>
 #include <string>
 #include <cstdint>
+#include <vector>
+#include <set>
 
 #include "Types.h"
 #include "Keywords.h"
@@ -218,8 +220,7 @@ class DataLayout {
     std::vector< tk::real >
     extract( ncomp_t unknown ) const {
       std::vector< tk::real > w( m_nprop );
-      for (ncomp_t i=0; i<m_nprop; ++i)
-        w[i] = operator()( unknown, i, 0 );
+      for (ncomp_t i=0; i<m_nprop; ++i) w[i] = operator()( unknown, i, 0 );
       return w;
     }
 
@@ -252,6 +253,37 @@ class DataLayout {
     {
       auto p = cptr( component, offset );
       return {{ var(p,A), var(p,B), var(p,C), var(p,D) }};
+    }
+
+    //! Add new unknown
+    //! \param[in] prop Vector of properties to initialize the new unknown with
+    //! \author J. Bakosi
+    void add( const std::vector< tk::real >& prop ) {
+      Assert( prop.size() == m_nprop, "Incorrect number of properties" );
+      m_vec.resize( (m_nunk+1) * m_nprop );
+      ncomp_t u = m_nunk;
+      ++m_nunk;
+      for (ncomp_t i=0; i<m_nprop; ++i) operator()( u, i, 0 ) = prop[i];
+    }
+
+    //! Remove a number of unknowns
+    //! \param[in] unknown Set of indices of unknowns to remove
+    //! \author J. Bakosi
+    void rm( const std::set< ncomp_t >& unknown ) {
+
+      auto rem = [ &unknown ]( std::size_t i ) -> bool {
+        if (unknown.find(i) != end(unknown)) return true;
+        return false;
+      };
+
+      std::size_t last = 0;
+      for(std::size_t i=0; i<m_nunk; ++i, ++last) {
+        while( rem(i) ) ++i;
+        if (i >= m_nunk) break;
+        for (ncomp_t p = 0; p<m_nprop; ++p) m_vec[ last+p ] = m_vec[ i+p ];
+      }
+      m_vec.resize( last*m_nprop );
+      m_nunk -= unknown.size();
     }
 
     //! Fill vector of unknowns with the same value

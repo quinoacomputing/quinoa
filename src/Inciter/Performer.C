@@ -15,6 +15,7 @@
 #include <string>
 #include <cmath>
 #include <array>
+#include <set>
 
 #include <gm19.h>
 
@@ -60,21 +61,20 @@ CkReduction::reducerType MeshNodeMerger;
 
 using inciter::Performer;
 
-Performer::Performer(
-  const ConductorProxy& conductor,
-  const LinSysMergerProxy& lsm,
-  const TrackerProxy& tracker,
-  const ParticleWriterProxy& pw,
-  const std::vector< std::size_t >& conn,
-  const std::unordered_map< std::size_t, std::size_t >& cid,
-  int nperf )
-:
+Performer::Performer( const ConductorProxy& conductor,
+                      const LinSysMergerProxy& lsm,
+                      const TrackerProxy& tracker,
+                      const ParticleWriterProxy& pw,
+                      const std::vector< std::size_t >& conn,
+                      const std::unordered_map< std::size_t, std::size_t >& cid,
+                      int nperf ) :
   m_it( 0 ),
   m_itf( 0 ),
   m_t( g_inputdeck.get< tag::discr, tag::t0 >() ),
   m_stage( 0 ),
   m_nsol( 0 ),
-  m_nperf( nperf ),
+  m_nchpar( 0 ),
+  m_nperf( static_cast< std::size_t >( nperf ) ),
   m_outFilename( g_inputdeck.get< tag::cmd, tag::io, tag::output >() + "." +
                  std::to_string( thisIndex ) ),
   m_conductor( conductor ),
@@ -92,9 +92,10 @@ Performer::Performer(
   m_up( m_gid.size(), g_inputdeck.get< tag::component >().nprop() ),
   m_lhsd( m_psup.second.size()-1, g_inputdeck.get< tag::component >().nprop() ),
   m_lhso( m_psup.first.size(), g_inputdeck.get< tag::component >().nprop() ),
-  m_particles( g_inputdeck.get< tag::param, tag::compns, tag::npar >() *
-               m_inpoel.size()/4, 3 ),
-  m_sum()
+  m_particles( 0 * m_inpoel.size()/4, 3 ),
+  m_msum(),
+  m_parmiss(),
+  m_parelse()
 // *****************************************************************************
 //  Constructor
 //! \param[in] conductor Host (Conductor) proxy
@@ -112,19 +113,13 @@ Performer::Performer(
 
   // Register ourselves with the linear system merger
   m_linsysmerger.ckLocalBranch()->checkin();
-  // Send number of partciles we will contribute to particle writer
-  if (g_inputdeck.get< tag::param, tag::compns, tag::npar >() > 0) {
-    m_particlewriter.ckLocalBranch()->npar( m_particles.nunk() );
-    // Signal back to host that we are done with sending our number of particles
-    contribute(
-        CkCallback( CkReductionTarget(Conductor,nparcomplete), m_conductor ) );
-    // Collect fellow chare IDs our mesh neighbors
-    std::vector< std::pair< int, std::unordered_set< std::size_t > > >
-      meshnodes{ { thisIndex, { begin(m_gid), end(m_gid) } } };
-    auto stream = serialize( meshnodes );
-    CkCallback cb( CkIndex_Performer::msum(nullptr), thisProxy );
-    contribute( stream.first, stream.second.get(), MeshNodeMerger, cb );
-  }
+
+  // Collect fellow chare IDs of our mesh neighbors
+  std::vector< std::pair< int, std::unordered_set< std::size_t > > >
+    meshnodes{ { thisIndex, { begin(m_gid), end(m_gid) } } };
+  auto stream = serialize( meshnodes );
+  CkCallback cb( CkIndex_Performer::msum(nullptr), thisProxy );
+  contribute( stream.first, stream.second.get(), MeshNodeMerger, cb );
 }
 
 void
@@ -143,13 +138,9 @@ Performer::msum( CkReductionMsg* msg )
   for (const auto& c : meshnodes)
     for (auto i : m_gid)
       if (c.first != thisIndex && c.second.find(i) != c.second.end()) {
-        m_sum.push_back( c.first );
+        m_msum.push_back( c.first );
         break;
       }
-
-//   std::cout << thisIndex << ": ";
-//   for (auto i : m_sum) std::cout << i << ' ';
-//   std::cout << '\n';
 
   contribute(
      CkCallback( CkReductionTarget(Conductor,msumcomplete), m_conductor ) );
@@ -169,7 +160,7 @@ Performer::setup()
   // Read coordinates of owned and received mesh nodes
   readCoords();
   // Generate particles
-  genPar();
+  genpar();
   // Output chare mesh to file
   writeMesh();
   // Output fields metadata to output file
@@ -347,15 +338,6 @@ Performer::bcval( int frompe, const std::vector< std::size_t >& nodes )
       }
   }
 
-//  for (const auto& n : bcv) {
-//     std::cout << n.first+1 << ':';
-//     for (const auto& p : n.second) {
-//       if (p.first) std::cout << p.second << ','; else std::cout << "*,";
-//     }
-//     std::cout << '\n';
-//   }
-//   std::cout << "----\n";
-
   m_linsysmerger[ frompe ].charebcval( bcv );
 }
 
@@ -369,8 +351,8 @@ Performer::init( tk::real dt )
   // Set initial conditions for all PDEs
   for (const auto& eq : g_pdes) eq.initialize( m_coord, m_u, m_t );
 
-  // Output initial conditions to file (it = 0, time = 0.0)
-  writeFields( m_it, m_t );
+  // Output initial conditions to file (time = 0.0)
+  //out();
 
   // Send off initial conditions for assembly
   m_linsysmerger.ckLocalBranch()->charesol( thisIndex, m_gid, m_u );
@@ -494,10 +476,9 @@ Performer::writeMeta() const
 }
 
 void
-Performer::writeFields( uint64_t it, tk::real time )
+Performer::writeFields( tk::real time )
 // *****************************************************************************
 // Output mesh-based fields to file
-//! \param[in] it Iteration count
 //! \param[in] time Physical time
 //! \author J. Bakosi
 // *****************************************************************************
@@ -520,14 +501,33 @@ Performer::writeFields( uint64_t it, tk::real time )
   }
   // Write node fields
   writeSolution( ew, m_itf, output );
+}
 
-  // Write particle fields
-  if (g_inputdeck.get< tag::param, tag::compns, tag::npar >() > 0) {
-    m_particlewriter.ckLocalBranch()->writeTimeStamp( it );
-    m_particlewriter.ckLocalBranch()->writeCoords( m_particles.extract(0,0),
-                                                   m_particles.extract(1,0),
-                                                   m_particles.extract(2,0) );
-  }
+void
+Performer::writeParticles()
+// *****************************************************************************
+// Output number of particles we will write to file in this step
+//! \author J. Bakosi
+// *****************************************************************************
+{
+  // Send number of partciles we will contribute to particle writer
+  m_particlewriter.ckLocalBranch()->npar( m_particles.nunk() );
+  // Signal back to host that we are done with sending our number of particles
+  contribute(
+      CkCallback( CkReductionTarget(Conductor,nparcomplete), m_conductor ) );
+}
+
+void
+Performer::doWriteParticles()
+// *****************************************************************************
+// Output particles fields to file
+//! \author J. Bakosi
+// *****************************************************************************
+{
+  m_particlewriter.ckLocalBranch()->writeTimeStamp( m_it );
+  m_particlewriter.ckLocalBranch()->writeCoords( m_particles.extract(0,0),
+                                                 m_particles.extract(1,0),
+                                                 m_particles.extract(2,0) );
 }
 
 void
@@ -541,27 +541,20 @@ Performer::advance( uint8_t stage, tk::real dt, uint64_t it, tk::real t )
 //! \author J. Bakosi
 // *****************************************************************************
 {
-  // Update local copy of time step stage
+  // Update local copy of time step stage, hysical time, and iteration count
   m_stage = stage;
+  m_t = t;
+  m_it = it;
 
   // Advance stage in multi-stage time stepping by updating the rhs
-  if (m_stage < 1) {
-
+  if (m_stage < 1)
     rhs( 0.5, dt, m_u, m_uf );
-
-  } else {
-
-    // Update local copy of physical time and iteration count at the final stage
-    m_t = t;
-    m_it = it;
-
+  else
     rhs( 1.0, dt, m_uf, m_un );
-    
-  }
 }
 
 void
-Performer::genPar()
+Performer::genpar()
 // *****************************************************************************
 // Generate particles to each of our mesh cells
 //! \author F.J. Gonzalez
@@ -576,7 +569,7 @@ Performer::genPar()
   const auto& z = m_coord[2];
 
   // Generate npar number of particles into each mesh cell
-  auto npar = g_inputdeck.get< tag::param, tag::compns, tag::npar >();
+  auto npar = m_particles.nunk() / (m_inpoel.size()/4);
   for (std::size_t e=0; e<m_inpoel.size()/4; ++e) {
     for (std::size_t p=0; p<npar; ++p) {
       std::array< tk::real, 4 > N;
@@ -589,112 +582,280 @@ Performer::genPar()
         const auto C = m_inpoel[e*4+2];
         const auto D = m_inpoel[e*4+3];
         const auto i = e * npar + p;
-        m_particles( i, 0, 0 ) = x[A]*N[0] + x[B]*N[1] + x[C]*N[2] + x[D]*N[3];
-        m_particles( i, 1, 0 ) = y[A]*N[0] + y[B]*N[1] + y[C]*N[2] + y[D]*N[3];
-        m_particles( i, 2, 0 ) = z[A]*N[0] + z[B]*N[1] + z[C]*N[2] + z[D]*N[3];
-        // std::cout"p "<<i<<"in e "<<e<<std::endl;
+        m_particles(i,0,0) = x[A]*N[0] + x[B]*N[1] + x[C]*N[2] + x[D]*N[3];
+        m_particles(i,1,0) = y[A]*N[0] + y[B]*N[1] + y[C]*N[2] + y[D]*N[3];
+        m_particles(i,2,0) = z[A]*N[0] + z[B]*N[1] + z[C]*N[2] + z[D]*N[3];
       } else --p; // retry if particle was not generated into cell
     }
   }
 }
 
-void
-Performer::track()
+bool
+Performer::parinel( std::size_t p, std::size_t e, std::array< tk::real, 4 >& N )
 // *****************************************************************************
-// Search particles in our chunk of the mesh
+// Search particle in a single mesh cell
+//! \param[in] p Particle index
+//! \param[in] e Mesh cell index
+//! \param[inout] N Shapefunctions evaluated at the particle position
+//! \return True if particle is in mesh cell
 //! \author F.J. Gonzalez
 // *****************************************************************************
 {
-  // Create a reference of mesh point coordinates
+  // Tetrahedron node indices
+  const auto A = m_inpoel[e*4+0];
+  const auto B = m_inpoel[e*4+1];
+  const auto C = m_inpoel[e*4+2]; 
+  const auto D = m_inpoel[e*4+3];
+
+  // Tetrahedron node coordinates
   const auto& x = m_coord[0];
   const auto& y = m_coord[1];
   const auto& z = m_coord[2];
 
-  bool found = false;
-  // Loop over the number of particles and evaluate shapefunctions at each
-  // particle's location
-  for (std::size_t i=0; i<m_particles.nunk(); ++i) {
-    // Create a reference of particle coordinates
-    const auto& xp = m_particles( i, 0, 0 );
-    const auto& yp = m_particles( i, 1, 0 );
-    const auto& zp = m_particles( i, 2, 0 );
+  // Particle coordinates
+  const auto& xp = m_particles( p, 0, 0 );
+  const auto& yp = m_particles( p, 1, 0 );
+  const auto& zp = m_particles( p, 2, 0 );
+
+  // Evaluate linear shapefunctions at particle locations using Cramer's Rule
+  //    | xp |   | x1 x2 x3 x4 |   | N1 |
+  //    | yp | = | y1 y2 y3 y4 | • | N2 |
+  //    | zp |   | z1 z2 z3 z4 |   | N3 |
+  //    | 1  |   | 1  1  1  1  |   | N4 |
+
+  tk::real DetX = (y[B]*z[C] - y[C]*z[B] - y[B]*z[D] + y[D]*z[B] + 
+    y[C]*z[D] - y[D]*z[C])*x[A] + x[B]*y[C]*z[A] - x[B]*y[A]*z[C] +
+    x[C]*y[A]*z[B] - x[C]*y[B]*z[A] + x[B]*y[A]*z[D] - x[B]*y[D]*z[A] -
+    x[D]*y[A]*z[B] + x[D]*y[B]*z[A] - x[C]*y[A]*z[D] + x[C]*y[D]*z[A] +
+    x[D]*y[A]*z[C] - x[D]*y[C]*z[A] - x[B]*y[C]*z[D] + x[B]*y[D]*z[C] +
+    x[C]*y[B]*z[D] - x[C]*y[D]*z[B] - x[D]*y[B]*z[C] + x[D]*y[C]*z[B];
+
+  tk::real DetX1 = (y[D]*z[C] - y[C]*z[D] + y[C]*zp - yp*z[C] -
+    y[D]*zp + yp*z[D])*x[B] + x[C]*y[B]*z[D] - x[C]*y[D]*z[B] - 
+    x[D]*y[B]*z[C] + x[D]*y[C]*z[B] - x[C]*y[B]*zp + x[C]*yp*z[B] +
+    xp*y[B]*z[C] - xp*y[C]*z[B] + x[D]*y[B]*zp - x[D]*yp*z[B] - 
+    xp*y[B]*z[D] + xp*y[D]*z[B] + x[C]*y[D]*zp - x[C]*yp*z[D] - 
+    x[D]*y[C]*zp + x[D]*yp*z[C] + xp*y[C]*z[D] - xp*y[D]*z[C];
+
+  tk::real DetX2 = (y[C]*z[D] - y[D]*z[C] - y[C]*zp + yp*z[C] +
+    y[D]*zp - yp*z[D])*x[A] + x[C]*y[D]*z[A] - x[C]*y[A]*z[D] +
+    x[D]*y[A]*z[C] - x[D]*y[C]*z[A] + x[C]*y[A]*zp - x[C]*yp*z[A] -
+    xp*y[A]*z[C] + xp*y[C]*z[A] - x[D]*y[A]*zp + x[D]*yp*z[A] +
+    xp*y[A]*z[D] - xp*y[D]*z[A] - x[C]*y[D]*zp + x[C]*yp*z[D] + 
+    x[D]*y[C]*zp - x[D]*yp*z[C] - xp*y[C]*z[D] + xp*y[D]*z[C];
+
+  tk::real DetX3 = (y[D]*z[B] - y[B]*z[D] + y[B]*zp - yp*z[B] -
+    y[D]*zp + yp*z[D])*x[A] + x[B]*y[A]*z[D] - x[B]*y[D]*z[A] -
+    x[D]*y[A]*z[B] + x[D]*y[B]*z[A] - x[B]*y[A]*zp + x[B]*yp*z[A] +
+    xp*y[A]*z[B] - xp*y[B]*z[A] + x[D]*y[A]*zp - x[D]*yp*z[A] - 
+    xp*y[A]*z[D] + xp*y[D]*z[A] + x[B]*y[D]*zp - x[B]*yp*z[D] - 
+    x[D]*y[B]*zp + x[D]*yp*z[B] + xp*y[B]*z[D] - xp*y[D]*z[B];
+
+  tk::real DetX4 = (y[B]*z[C] - y[C]*z[B] - y[B]*zp + yp*z[B] +
+    y[C]*zp - yp*z[C])*x[A] + x[B]*y[C]*z[A] - x[B]*y[A]*z[C] +
+    x[C]*y[A]*z[B] - x[C]*y[B]*z[A] + x[B]*y[A]*zp - x[B]*yp*z[A] -
+    xp*y[A]*z[B] + xp*y[B]*z[A] - x[C]*y[A]*zp + x[C]*yp*z[A] +
+    xp*y[A]*z[C] - xp*y[C]*z[A] - x[B]*y[C]*zp + x[B]*yp*z[C] +
+    x[C]*y[B]*zp - x[C]*yp*z[B] - xp*y[B]*z[C] + xp*y[C]*z[B];
+
+  // Shape functions evaluated at particle location
+  N[0] = DetX1/DetX;
+  N[1] = DetX2/DetX;
+  N[2] = DetX3/DetX;
+  N[3] = DetX4/DetX;
+
+  // if min( N^i, 1-N^i ) > 0 for all i, particle is in cell
+  if ( std::min(N[0],1.0-N[0]) > 0 && std::min(N[1],1.0-N[1]) > 0 &&
+       std::min(N[2],1.0-N[2]) > 0 && std::min(N[3],1.0-N[3]) > 0 )
+    return true;
+  else
+    return false;
+}
+
+std::vector< std::size_t >
+Performer::addpar( const std::vector< std::size_t >& miss,
+                   const tk::Particles& ps )
+// *****************************************************************************
+// Try to find particles and add those found to the list of ours
+//! \param[in] miss Indices of particles to find
+//! \param[in] ps Particle data associated to those particle indices to find
+//! \return Particle indices found
+//! \author J. Bakosi
+// *****************************************************************************
+{
+  std::vector< std::size_t > found;     // will store indices of particles found
+
+  // try to find particles received
+  for (std::size_t i=0; i<ps.nunk(); ++i)
     for (std::size_t e=0; e<m_inpoel.size()/4; ++e) {
-      const auto A = m_inpoel[e*4+0];
-      const auto B = m_inpoel[e*4+1];
-      const auto C = m_inpoel[e*4+2]; 
-      const auto D = m_inpoel[e*4+3];
+      std::array< tk::real, 4 > N;
+      auto last = m_particles.nunk();
+      m_particles.add( ps[i] );
+      if (parinel( last, e, N ))
+        found.push_back( miss[i] );
+      else
+        m_particles.rm( { last } );
+    }
 
-      // Evaluate shapefunctions at particle locations using Cramer's Rule
-      //
-      //    | xp |   | x1 x2 x3 x4 |   | N1 |
-      //    | yp | = | y1 y2 y3 y4 | • | N2 |
-      //    | zp |   | z1 z2 z3 z4 |   | N3 |
-      //    | 1  |   | 1  1  1  1  |   | N4 |
-      //
-      
-      tk::real DetX = (y[B]*z[C] - y[C]*z[B] - y[B]*z[D] + y[D]*z[B] + 
-        y[C]*z[D] - y[D]*z[C])*x[A] + x[B]*y[C]*z[A] - x[B]*y[A]*z[C] +
-        x[C]*y[A]*z[B] - x[C]*y[B]*z[A] + x[B]*y[A]*z[D] - x[B]*y[D]*z[A] -
-        x[D]*y[A]*z[B] + x[D]*y[B]*z[A] - x[C]*y[A]*z[D] + x[C]*y[D]*z[A] +
-        x[D]*y[A]*z[C] - x[D]*y[C]*z[A] - x[B]*y[C]*z[D] + x[B]*y[D]*z[C] +
-        x[C]*y[B]*z[D] - x[C]*y[D]*z[B] - x[D]*y[B]*z[C] + x[D]*y[C]*z[B];
+  return found;
+}
 
-      tk::real DetX1 = (y[D]*z[C] - y[C]*z[D] + y[C]*zp - yp*z[C] -
-        y[D]*zp + yp*z[D])*x[B] + x[C]*y[B]*z[D] - x[C]*y[D]*z[B] - 
-        x[D]*y[B]*z[C] + x[D]*y[C]*z[B] - x[C]*y[B]*zp + x[C]*yp*z[B] +
-        xp*y[B]*z[C] - xp*y[C]*z[B] + x[D]*y[B]*zp - x[D]*yp*z[B] - 
-        xp*y[B]*z[D] + xp*y[D]*z[B] + x[C]*y[D]*zp - x[C]*yp*z[D] - 
-        x[D]*y[C]*zp + x[D]*yp*z[C] + xp*y[C]*z[D] - xp*y[D]*z[C];
+void
+Performer::track()
+// *****************************************************************************
+// Advance our particles and search for their new mesh cells
+//! \author F.J. Gonzalez
+// *****************************************************************************
+{
+  // Only advance particles in the finel time step stage
+  if (m_stage < 1) {
+    contribute( CkCallback( CkReductionTarget( Conductor, parcomcomplete ),
+                m_conductor));
+    return;
+  }
 
-      tk::real DetX2 = (y[C]*z[D] - y[D]*z[C] - y[C]*zp + yp*z[C] +
-        y[D]*zp - yp*z[D])*x[A] + x[C]*y[D]*z[A] - x[C]*y[A]*z[D] +
-        x[D]*y[A]*z[C] - x[D]*y[C]*z[A] + x[C]*y[A]*zp - x[C]*yp*z[A] -
-        xp*y[A]*z[C] + xp*y[C]*z[A] - x[D]*y[A]*zp + x[D]*yp*z[A] +
-        xp*y[A]*z[D] - xp*y[D]*z[A] - x[C]*y[D]*zp + x[C]*yp*z[D] + 
-        x[D]*y[C]*zp - x[D]*yp*z[C] - xp*y[C]*z[D] + xp*y[D]*z[C];
-
-      tk::real DetX3 = (y[D]*z[B] - y[B]*z[D] + y[B]*zp - yp*z[B] -
-        y[D]*zp + yp*z[D])*x[A] + x[B]*y[A]*z[D] - x[B]*y[D]*z[A] -
-        x[D]*y[A]*z[B] + x[D]*y[B]*z[A] - x[B]*y[A]*zp + x[B]*yp*z[A] +
-        xp*y[A]*z[B] - xp*y[B]*z[A] + x[D]*y[A]*zp - x[D]*yp*z[A] - 
-        xp*y[A]*z[D] + xp*y[D]*z[A] + x[B]*y[D]*zp - x[B]*yp*z[D] - 
-        x[D]*y[B]*zp + x[D]*yp*z[B] + xp*y[B]*z[D] - xp*y[D]*z[B];
-
-      tk::real DetX4 = (y[B]*z[C] - y[C]*z[B] - y[B]*zp + yp*z[B] +
-        y[C]*zp - yp*z[C])*x[A] + x[B]*y[C]*z[A] - x[B]*y[A]*z[C] +
-        x[C]*y[A]*z[B] - x[C]*y[B]*z[A] + x[B]*y[A]*zp - x[B]*yp*z[A] -
-        xp*y[A]*z[B] + xp*y[B]*z[A] - x[C]*y[A]*zp + x[C]*yp*z[A] +
-        xp*y[A]*z[C] - xp*y[C]*z[A] - x[B]*y[C]*zp + x[B]*yp*z[C] +
-        x[C]*y[B]*zp - x[C]*yp*z[B] - xp*y[B]*z[C] + xp*y[C]*z[B];
-
-      std::array< tk::real, 4 > N {{ DetX1/DetX,
-                                     DetX2/DetX,
-                                     DetX3/DetX,
-                                     DetX4/DetX }};
-
-      // If particle is found, advance, and process next one
-      if ( std::min(N[0],1-N[0]) > 0 && std::min(N[1],1-N[1]) > 0 &&
-           std::min(N[2],1-N[2]) > 0 && std::min(N[3],1-N[3]) > 0 ) {
-        advanceParticle( i, e, N );
-        //std::cout<<"a: p "<<i<<"in e "<<e<<std::endl;
+  for (std::size_t i=0; i<m_particles.nunk(); ++i) {
+    bool found = false;
+    for (std::size_t e=0; e<m_inpoel.size()/4; ++e) {
+      std::array< tk::real, 4 > N;
+      if (parinel( i, e, N )) {
         found = true;
+        advanceParticle( i, e, N );
         e = m_inpoel.size()/4;  // search for next particle
       }
     }
-    if ( found == false ) {
-      std::cout<<"particle "<<i<<" not found"<<std::endl;
-      std::cout<<"xp: "<<xp<<std::endl;
-      std::cout<<"yp: "<<yp<<std::endl;
-      std::cout<<"zp: "<<zp<<std::endl;
-      CkExit();
+    if (!found) m_parmiss.insert( i );
+  }
+
+  if (m_parmiss.empty()) {
+    m_nchpar = 0;
+    m_parmiss.clear();
+    m_parelse.clear();
+    contribute( CkCallback( CkReductionTarget( Conductor, parcomcomplete ),
+                m_conductor));
+  } else {
+    decltype(m_particles) pexp( m_parmiss.size(), 3 );
+    std::size_t p = 0;
+    for (auto i : m_parmiss) {
+      pexp( p, 0, 0 ) = m_particles( i, 0, 0 );
+      pexp( p, 1, 0 ) = m_particles( i, 1, 0 );
+      pexp( p, 2, 0 ) = m_particles( i, 2, 0 );
+      ++p;
     }
+    std::vector< std::size_t > miss( begin(m_parmiss), end(m_parmiss) );
+    for (auto n : m_msum) thisProxy[ n ].findpar( thisIndex, miss, pexp );
+  }
+}
+
+void
+Performer::findpar( int fromch,
+                    const std::vector< std::size_t >& miss,
+                    const tk::Particles& ps )
+// *****************************************************************************
+// Find particles missing by the requestor and make those found ours
+//! \param[in] fromch Chare ID the request originates from
+//! \param[in] miss Indices of particles to find
+//! \param[in] ps Particle data associated to those particle indices to find
+//! \author J. Bakosi
+// *****************************************************************************
+{
+  // Try to find particles missing by the requestor and make those found ours
+  auto found = addpar( miss, ps );
+
+  // Send the particle indices we found back to the requestor
+  thisProxy[ fromch ].foundpar( found );
+}
+
+void
+Performer::foundpar( const std::vector< std::size_t >& found )
+// *****************************************************************************
+// Collect particle indices found elsewhere (by fellow neighbors)
+//! \param[in] found Indices of particles found
+//! \author J. Bakosi
+// *****************************************************************************
+{
+  m_parelse.insert( begin(found), end(found) );
+
+  if (++m_nchpar == m_msum.size()) {    // if we have heard from all neighbors
+
+    // find the particle indices that are still have not been found
+    decltype(m_parelse) far;
+    std::set_difference( begin(m_parmiss), end(m_parmiss),
+                         begin(m_parelse), end(m_parelse), 
+                         std::inserter( far, begin(far) ) );
+
+    m_parmiss = far;
+
+    if (m_parmiss.empty()) {
+      m_particles.rm( m_parmiss );
+      m_nchpar = 0;
+      m_parmiss.clear();
+      m_parelse.clear();
+      contribute( CkCallback( CkReductionTarget( Conductor, parcomcomplete ),
+                  m_conductor));
+    } else {
+      decltype(m_particles) pexp( m_parmiss.size(), 3 );
+      std::size_t p = 0;
+      for (auto i : m_parmiss) {
+        pexp( p, 0, 0 ) = m_particles( i, 0, 0 );
+        pexp( p, 1, 0 ) = m_particles( i, 1, 0 );
+        pexp( p, 2, 0 ) = m_particles( i, 2, 0 );
+        ++p;
+      }
+      m_particles.rm( m_parmiss );
+      m_nchpar = 0;
+      m_parelse.clear();
+      std::vector< std::size_t > miss( begin(m_parmiss), end(m_parmiss) );
+      thisProxy.collectpar( thisIndex, miss, pexp );  // broadcast to everyone
+    }
+  }
+}
+
+void
+Performer::collectpar( int fromch,
+                       const std::vector< std::size_t >& miss,
+                       const tk::Particles& ps )
+// *****************************************************************************
+// Find particles missing by the requestor and make those found ours
+//! \param[in] fromch Chare ID the request originates from
+//! \param[in] miss Indices of particles to find
+//! \param[in] ps Particle data associated to those particle indices to find
+//! \author J. Bakosi
+// *****************************************************************************
+{
+  // Try to find particles missing by the requestor and make those found ours
+  auto found = addpar( miss, ps );
+
+  // Send the particle indices we found back to the requestor
+  thisProxy[ fromch ].collectedpar( found );
+}
+
+void
+Performer::collectedpar( const std::vector< std::size_t >& found )
+// *****************************************************************************
+// Collect particle indices found elsewhere (by far fellows)
+//! \param[in] found Indices of particles found
+//! \author J. Bakosi
+// *****************************************************************************
+{
+  // Collect particle indices found elsewhere (by distant neighbors)
+  m_parelse.insert( begin(found), end(found) );
+
+  if (++m_nchpar == m_nperf) {  // if we have heard from everyone
+    Assert( m_parmiss == m_parelse, "Not all particles have been found on "
+            "chare " + std::to_string(thisIndex) + '\n' );
+    m_nchpar = 0;
+    m_parmiss.clear();
+    m_parelse.clear();
+    contribute( CkCallback( CkReductionTarget( Conductor, parcomcomplete ),
+                m_conductor));
   }
 }
 
 void
 Performer::advanceParticle( std::size_t i,
                             std::size_t e,
-                            const std::array< tk::real, 4>& N)
+                            const std::array< tk::real, 4>& N )
 // *****************************************************************************
 // Advance particle based on velocity from mesh cell
 //! \author F.J. Gonzalez
@@ -706,9 +867,8 @@ Performer::advanceParticle( std::size_t i,
   const auto C = m_inpoel[e*4+2]; 
   const auto D = m_inpoel[e*4+3];
   
-  // Update particle coordinates
-  // If this condition is true, search for and interpolate the particle
-  // velocity using the shape functions defined above. 
+  // Update particle coordinates interpolating the particle velocity using the
+  // shape functions.
   tk::real dvx[4] = { m_u(A,1,0)/m_u(A,0,0) - m_up(A,1,0)/m_up(A,0,0),
                       m_u(B,1,0)/m_u(B,0,0) - m_up(B,1,0)/m_up(B,0,0),
                       m_u(C,1,0)/m_u(C,0,0) - m_up(C,1,0)/m_up(C,0,0),
@@ -726,9 +886,9 @@ Performer::advanceParticle( std::size_t i,
     dt*(N[0]*dvx[0] + N[1]*dvx[1] + N[2]*dvx[2] + N[3]*dvx[3]);
   m_particles( i, 1, 0) +=
     dt*(N[0]*dvy[0] + N[1]*dvy[1] + N[2]*dvy[2] + N[3]*dvy[3]);
-  m_particles( i, 2, 0) +=
+  m_particles( i, 2, 0) += //0.2;
     dt*(N[0]*dvz[0] + N[1]*dvz[1] + N[2]*dvz[2] + N[3]*dvz[3]);
-  
+
   applyParBC( i );
 }
 
@@ -743,15 +903,39 @@ Performer::applyParBC( std::size_t i )
   auto& y = m_particles(i,1,0);
   auto& z = m_particles(i,2,0);
 
-  if ( z > 0 ) z -= 40;
-  if ( z < -40 ) z += 40;
-  if ( y < -7.5 ) y = -7.5 - (y + 7.5); 
-  if ( y > 7.5 ) y = 7.5 - (y - 7.5);
-  if ( x < -0.125 ) y = -0.125 - (y + 0.125); 
-  if ( x > 0.125 ) y = 0.125 - (y - 0.125);
-  // Cylinder boundary conditions
-  if ( sqrt( y*y + (z+10.5)*(x+10.5) ) <= 0.5 ) z -= 0.5;
-  
+//   if ( z > 0 ) z -= 40;
+//   if ( z < -40 ) z += 40;
+//   if ( y < -5.0 ) y = -5.0 - (y + 5.0); 
+//   if ( y > 5.0 ) y = 5.0 - (y - 5.0);
+//   if ( x < -0.25 ) y = -0.25 - (y + 0.25); 
+//   if ( x > 0.25 ) y = 0.25 - (y - 0.25);
+//   // Cylinder boundary conditions
+//   if ( sqrt( y*y + (z+10.5)*(x+10.5) ) <= 0.5 ) z -= 0.5;
+
+  if (z > 1) z = 0.9;
+  if (z < 0) z = 0.1;
+  if (y > 1) y = 0.9;
+  if (y < 0) y = 0.1;
+  if (x > 1) x = 0.9;
+  if (x < 0) x = 0.1;
+}
+
+void
+Performer::out()
+// *****************************************************************************
+// Output mesh and particle fields
+//! \author J. Bakosi
+// *****************************************************************************
+{
+  // Optionally output field and particle data
+  if (m_stage == 1 &&
+      !(m_it % g_inputdeck.get< tag::interval, tag::field >()))
+  {
+    writeFields( m_t + g_inputdeck.get< tag::discr, tag::dt >() );
+    writeParticles();
+  } else
+    contribute(
+       CkCallback( CkReductionTarget(Conductor,outcomplete), m_conductor ) );
 }
 
 void
@@ -783,44 +967,22 @@ Performer::updateSolution( const std::vector< std::size_t >& gid,
   if (m_nsol == m_gid.size()) {
 
     if (m_stage < 1) {
-
       m_uf = m_un;
-
     } else {
-
       m_up = m_u;
       m_u = m_un;
-      
-      track();
-
-      // Optionally output field data
-      if (!((m_it+1) % g_inputdeck.get< tag::interval, tag::field >()))
-        writeFields( m_it+1, m_t + g_inputdeck.get< tag::discr, tag::dt >() );
-      else // if no fields at this time, still signal back to host
-        if (g_inputdeck.get< tag::param, tag::compns, tag::npar >() > 0)
-          contribute(
-            CkCallback( CkReductionTarget( Conductor, parcomplete ),
-                        m_conductor ) );
-
-      // Optionally contribute diagnostics, e.g., residuals, back to host
-      if (!((m_it+1) % g_inputdeck.get< tag::interval, tag::diag >()))
-        m_linsysmerger.ckLocalBranch()->diagnostics();
-      else // if no diagnostics at this time, still signal back to host
-        contribute(
-          CkCallback( CkReductionTarget( Conductor, diagcomplete ),
-                      m_conductor ) );
     }
 
-    // Prepare for next time step stage
     m_nsol = 0;
 
-    // Tell the Charm++ runtime system to call back to Conductor::evaluateTime()
-    // once all Performer chares have received the update. The reduction is done
-    // via creating a callback that invokes the typed reduction client, where
-    // m_conductor is the proxy on which the reduction target method,
-    // evaluateTime(), is called upon completion of the reduction.
-    contribute(
-      CkCallback( CkReductionTarget( Conductor, evaluateTime ), m_conductor ) );
+    track();
+
+    // Optionally contribute diagnostics, e.g., residuals, back to host
+    if (m_stage == 1 && !(m_it % g_inputdeck.get< tag::interval, tag::diag >()))
+      m_linsysmerger.ckLocalBranch()->diagnostics();
+    else
+      contribute(
+        CkCallback(CkReductionTarget(Conductor,diagcomplete), m_conductor) );
 
 //     // TEST FEATURE: Manually migrate this chare by using migrateMe to see if
 //     // all relevant state variables are being PUPed correctly.
