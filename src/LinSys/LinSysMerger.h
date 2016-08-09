@@ -599,13 +599,14 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
     //! \brief Receive BC node/row IDs and values from all other PEs and zero
     //!   the distributed matrix columns at which BCs are set
     void bcval( CkReductionMsg* msg ) {
-      decltype(m_bcval) bcval;
+      std::unordered_map< std::size_t,
+                        std::vector< std::pair< bool, tk::real > > > bcval;
       PUP::fromMem creator( msg->getData() );
       creator | bcval;
       delete msg;
       for (const auto& n : bcval) {
         auto& b = n.second;
-        for (decltype(m_ncomp) i=0; i<m_ncomp; ++i)
+        for (std::size_t i=0; i<m_ncomp; ++i)
           if (b[i].first)       // zero our portion of the column
             for (auto& r : m_lhs) {
               auto it = r.second.find( n.first );
@@ -710,7 +711,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
     std::unordered_map< int, std::vector< std::size_t > > m_bc;
     //! Flat list of old global row ids at boundary conditions are set
     //! \details 'Old' as in file, see also Partitioner.h.
-    decltype(m_bc) m_oldbc;
+    std::unordered_map< int, std::vector< std::size_t > > m_oldbc;
     //! \brief Values (for each scalar equation solved) of Dirichlet boundary
     //!   conditions assigned to global node IDs we set
     //! \details The map key is the global mesh node/row ID, the value is a
@@ -790,7 +791,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
     //!   to update the vector with HYPRE_IJVectorGetValues().
     void hyprerow() {
       for (auto r : m_row) {
-        decltype(m_hypreRows) h( m_ncomp );
+        std::vector< int > h( m_ncomp );
         std::iota( begin(h), end(h), r*m_ncomp+1 );
         m_hypreRows.insert( end(m_hypreRows), begin(h), end(h) );
       }
@@ -826,7 +827,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       for (const auto& n : m_bcval) {
         auto& row = tk::ref_find( m_lhs, n.first );
         auto& b = n.second;
-        for (decltype(m_ncomp) i=0; i<m_ncomp; ++i)
+        for (std::size_t i=0; i<m_ncomp; ++i)
           if (b[i].first) { // zero row and put 1.0 in main diagonal
             for (auto& col : row) col.second[i] = 0.0;
             tk::ref_find( row, n.first )[ i ] = 1.0;
@@ -852,7 +853,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
         //std::cout << n.first+1 << '\n';
         auto& row = tk::ref_find( m_rhs, n.first );
         auto& b = n.second;
-        for (decltype(m_ncomp) i=0; i<m_ncomp; ++i)
+        for (std::size_t i=0; i<m_ncomp; ++i)
           if (b[i].first) {
             //std::cout << n.first << ", " << b[i].second << '\n';
             row[i] = b[i].second;  // put in BC value
@@ -889,7 +890,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
               "Left-hand side matrix incomplete on PE " +
               std::to_string(CkMyPe()) + ": cannot convert" );
       for (const auto& r : m_lhs) {
-        for (decltype(m_ncomp) i=0; i<m_ncomp; ++i) {
+        for (std::size_t i=0; i<m_ncomp; ++i) {
           m_hypreNcols.push_back( static_cast< int >( r.second.size() ) );
           for (const auto& c : r.second) {
             m_hypreCols.push_back( static_cast< int >( c.first*m_ncomp+i+1 ) );
