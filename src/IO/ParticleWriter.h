@@ -16,7 +16,7 @@
 #include "H5PartWriter.h"
 
 #include "NoWarning/particlewriter.decl.h"
-#include "NoWarning/performer.decl.h"
+#include "NoWarning/conductor.decl.h"
 
 namespace tk {
 
