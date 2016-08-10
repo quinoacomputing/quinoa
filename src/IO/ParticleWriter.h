@@ -150,8 +150,7 @@ class ParticleWriter : public CBase_ParticleWriter< HostProxy > {
       *   Sections "Processor-Aware Chare Collections" and "Chare Arrays".
       * */
     ///@{
-    //! \brief Signal back to host that the initialization of the row indices of
-    //!   the linear system is complete
+    //! \brief Signal back to host that the output of particles is complete
     void signal2host_outcomplete( const inciter::CProxy_Conductor& host )
     {
       using inciter::CkIndex_Conductor;

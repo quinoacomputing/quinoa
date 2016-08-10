@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.h
   \author    J. Bakosi
-  \date      Tue 09 Aug 2016 06:12:43 AM MDT
+  \date      Wed 10 Aug 2016 03:26:52 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Performer advances a system of systems of PDEs
   \details   Performer advances a system of systems of PDEs. There are a
@@ -33,7 +33,6 @@
 #include "Inciter/InputDeck/InputDeck.h"
 
 #include "NoWarning/conductor.decl.h"
-#include "NoWarning/tracker.decl.h"
 #include "NoWarning/performer.decl.h"
 #include "NoWarning/particlewriter.decl.h"
 
@@ -52,7 +51,6 @@ class Performer : public CBase_Performer {
     using ConductorProxy = CProxy_Conductor;
     using LinSysMergerProxy = tk::CProxy_LinSysMerger< CProxy_Conductor,
                                                        CProxy_Performer >;
-    using TrackerProxy = CProxy_Tracker< CProxy_Performer >;
     using ParticleWriterProxy = tk::CProxy_ParticleWriter< ConductorProxy >;
 
   public:
@@ -60,7 +58,6 @@ class Performer : public CBase_Performer {
     explicit
       Performer( const CProxy_Conductor& conductor,
                  const LinSysMergerProxy& lsm,
-                 const TrackerProxy& tracker,
                  const ParticleWriterProxy& pw,
                  const std::vector< std::size_t >& conn,
                  const std::unordered_map< std::size_t, std::size_t >& cid,
@@ -154,7 +151,6 @@ class Performer : public CBase_Performer {
       p | m_outFilename;
       p | m_conductor;
       p | m_linsysmerger;
-      p | m_tracker;
       p | m_particlewriter;
       p | m_cid;
       p | m_el;
@@ -181,6 +177,7 @@ class Performer : public CBase_Performer {
     //! \param[in,out] i Performer object reference
     //! \author J. Bakosi
     friend void operator|( PUP::er& p, Performer& i ) { i.pup(p); }
+    //@}
 
   private:
     using ncomp_t = kw::ncomp::info::expect::type;
@@ -195,7 +192,6 @@ class Performer : public CBase_Performer {
     std::string m_outFilename;           //!< Output filename
     ConductorProxy m_conductor;          //!< Conductor proxy
     LinSysMergerProxy m_linsysmerger;    //!< Linear system merger proxy
-    TrackerProxy m_tracker;              //!< Tracker proxy
     ParticleWriterProxy m_particlewriter;//!< Particle writer proxy
     //! \brief Map associating old node IDs (as in file) to new node IDs (as in
     //!   producing contiguous-row-id linear system contributions)
@@ -219,7 +215,7 @@ class Performer : public CBase_Performer {
     tk::MeshNodes m_u, m_uf, m_un, m_up;
     //! Sparse matrix sotring the diagonals and off-diagonals of nonzeros
     tk::MeshNodes m_lhsd, m_lhso;
-    //! (Tracker) particles properties
+    //! Particle properties
     tk::Particles m_particles;
     //! Fellow Performer chare indices holding neighboring mesh chunks
     std::vector< int > m_msum;

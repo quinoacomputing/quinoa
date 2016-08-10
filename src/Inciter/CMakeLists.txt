@@ -8,13 +8,11 @@ include(charm)
 add_library(Inciter
             Conductor.C
             Performer.C
-            Tracker.C
             Partitioner.C
 )
 
 addCharmModule( "conductor" "Inciter" )
 addCharmModule( "performer" "Inciter" )
-addCharmModule( "tracker" "Inciter" )
 addCharmModule( "partitioner" "Inciter" )
 
 # Add extra dependency of Inciter on inciterCharmModule. This is required as

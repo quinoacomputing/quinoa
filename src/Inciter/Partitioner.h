@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Partitioner.h
   \author    J. Bakosi
-  \date      Mon 01 Aug 2016 08:09:19 AM MDT
+  \date      Wed 10 Aug 2016 12:17:28 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ chare partitioner group used to perform mesh partitioning
   \details   Charm++ chare partitioner group used to perform mesh partitioning.
@@ -68,7 +68,6 @@
 #include "ZoltanInterOp.h"
 #include "Inciter/InputDeck/InputDeck.h"
 #include "LinSysMerger.h"
-#include "Tracker.h"
 
 namespace inciter {
 
@@ -87,11 +86,10 @@ extern CkReduction::reducerType NodesMerger;
 //!   also the Charm++ interface file partitioner.ci.
 //! \author J. Bakosi
 template< class HostProxy, class WorkerProxy, class LinSysMergerProxy,
-          class TrackerProxy, class ParticleWriterProxy >
+          class ParticleWriterProxy >
 class Partitioner : public CBase_Partitioner< HostProxy,
                                               WorkerProxy,
                                               LinSysMergerProxy,
-                                              TrackerProxy,
                                               ParticleWriterProxy > {
 
   #if defined(__clang__)
@@ -119,24 +117,21 @@ class Partitioner : public CBase_Partitioner< HostProxy,
 
   private:
     using Group = CBase_Partitioner< HostProxy, WorkerProxy, LinSysMergerProxy,
-                                     TrackerProxy, ParticleWriterProxy >;
+                                     ParticleWriterProxy >;
 
   public:
     //! Constructor
     //! \param[in] host Host Charm++ proxy we are being called from
     //! \param[in] worker Worker Charm++ proxy we spawn PDE work to
-    //! \param[in] tracker Tracker Charm++ proxy we spawn tracking work to
     //! \param[in] lsm Linear system merger proxy (required by the workers)
     Partitioner( const HostProxy& host,
                  const WorkerProxy& worker,
                  const LinSysMergerProxy& lsm,
-                 const TrackerProxy& tracker,
                  const ParticleWriterProxy& pw ) :
       __dep(),
       m_host( host ),
       m_worker( worker ),
       m_linsysmerger( lsm ),
-      m_tracker( tracker ),
       m_particlewriter( pw ),
       m_npe( 0 ),
       m_req(),
@@ -351,8 +346,6 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     WorkerProxy m_worker;
     //! Linear system merger proxy
     LinSysMergerProxy m_linsysmerger;
-    //! Tracker proxy
-    TrackerProxy m_tracker;
     //! Particle writer proxy
     ParticleWriterProxy m_particlewriter;
     //! Number of fellow PEs to send elem IDs to
@@ -731,9 +724,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     //!   function, which allows specifying the PE on which the array element is
     //!   created and we send each chare array element the global mesh element
     //!   connectivity, i.e., node IDs, it contributes to and the old->new node
-    //!   ID map. Optionally, we also create the same number of Tracker chares
-    //!   (the same way, on the same PEs), which advance optional passive
-    //!   tracker particles across the domain.
+    //!   ID map.
     void create() {
       // Initiate asynchronous reduction across all Partitioner objects
       // computing the average communication cost of merging the linear system
@@ -758,17 +749,13 @@ class Partitioner : public CBase_Partitioner< HostProxy,
         // Create performer array element
         m_worker[ cid ].insert( m_host,
                                 m_linsysmerger,
-                                m_tracker,
                                 m_particlewriter,
                                 tk::cref_find( m_node, cid ),
                                 tk::cref_find( m_chcid, cid ),
                                 m_nchare,
                                 CkMyPe() );
-        // Create tracker array element
-        m_tracker[ cid ].insert( m_host, m_worker, CkMyPe() );
       }
       m_worker.doneInserting();
-      m_tracker.doneInserting();
     }
 
     //! Compute communication cost of linear system merging for our PE
