@@ -15,6 +15,5 @@
 // *****************************************************************************
 
 #include "Tracker.h"
-#include "NoWarning/performer.decl.h"
 
 #include "tracker.def.h"

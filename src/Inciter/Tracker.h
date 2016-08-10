@@ -25,6 +25,7 @@
 
 #include "NoWarning/conductor.decl.h"
 #include "NoWarning/tracker.decl.h"
+#include "NoWarning/performer.decl.h"
 
 namespace inciter {
 
