@@ -11,7 +11,6 @@
 
 #include "LinSysMerger.h"
 
-#include "NoWarning/tracker.decl.h"
 #include "NoWarning/performer.decl.h"
 
 #if defined(__clang__)

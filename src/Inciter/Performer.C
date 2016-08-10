@@ -20,7 +20,6 @@
 #include <gm19.h>
 
 #include "Performer.h"
-#include "Tracker.h"
 #include "LinSysMerger.h"
 #include "Vector.h"
 #include "Reader.h"
@@ -63,7 +62,6 @@ using inciter::Performer;
 
 Performer::Performer( const ConductorProxy& conductor,
                       const LinSysMergerProxy& lsm,
-                      const TrackerProxy& tracker,
                       const ParticleWriterProxy& pw,
                       const std::vector< std::size_t >& conn,
                       const std::unordered_map< std::size_t, std::size_t >& cid,
@@ -79,7 +77,6 @@ Performer::Performer( const ConductorProxy& conductor,
                  std::to_string( thisIndex ) ),
   m_conductor( conductor ),
   m_linsysmerger( lsm ),
-  m_tracker( tracker ),
   m_particlewriter( pw ),
   m_cid( cid ),
   m_el( tk::global2local( conn ) ),     // fills m_inpoel and m_gid
@@ -92,7 +89,7 @@ Performer::Performer( const ConductorProxy& conductor,
   m_up( m_gid.size(), g_inputdeck.get< tag::component >().nprop() ),
   m_lhsd( m_psup.second.size()-1, g_inputdeck.get< tag::component >().nprop() ),
   m_lhso( m_psup.first.size(), g_inputdeck.get< tag::component >().nprop() ),
-  m_particles( 0 * m_inpoel.size()/4, 3 ),
+  m_particles( 1 * m_inpoel.size()/4, 3 ),
   m_msum(),
   m_parmiss(),
   m_parelse()
@@ -100,7 +97,6 @@ Performer::Performer( const ConductorProxy& conductor,
 //  Constructor
 //! \param[in] conductor Host (Conductor) proxy
 //! \param[in] lsm Linear system merger (LinSysMerger) proxy
-//! \param[in] tracker Passive tracker proxy
 //! \param[in] conn Vector of mesh element connectivity owned (global IDs)
 //! \param[in] cid Map associating old node IDs (as in file) to new node IDs (as
 //!   in producing contiguous-row-id linear system contributions)

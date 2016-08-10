@@ -160,7 +160,7 @@ class Conductor : public CBase_Conductor {
     //!   number of particles to be output
     void nparcomplete() { trigger_npar_complete(); }
 
-    //! \brief Reduction target ...
+    //! Reduction target indicating the particle communication is complete
     void parcomcomplete() { trigger_parcom_complete(); }
 
     //! \brief Reduction target optionally collecting diagnostics, e.g.,
@@ -188,12 +188,10 @@ class Conductor : public CBase_Conductor {
     using LinSysMergerProxy = tk::CProxy_LinSysMerger< CProxy_Conductor,
                                                        CProxy_Performer >;
     using PerformerProxy = CProxy_Performer;
-    using TrackerProxy = CProxy_Tracker< PerformerProxy >;
     using ParticleWriterProxy = tk::CProxy_ParticleWriter< CProxy_Conductor >;
     using PartitionerProxy = CProxy_Partitioner< CProxy_Conductor,
                                                  CProxy_Performer,
                                                  LinSysMergerProxy,
-                                                 TrackerProxy,
                                                  ParticleWriterProxy >;
 
     InciterPrint m_print;                //!< Pretty printer
@@ -204,7 +202,6 @@ class Conductor : public CBase_Conductor {
     uint8_t m_stage;                     //!< Stage in multi-stage time stepping
     LinSysMergerProxy m_linsysmerger;    //!< Linear system merger group proxy
     PerformerProxy m_performer;          //!< Performer chare array proxy
-    TrackerProxy m_tracker;              //!< Tracker chare array proxy
     ParticleWriterProxy m_particlewriter;//!< Particle writer group proxy
     PartitionerProxy m_partitioner;      //!< Partitioner group proxy
     //! Average communication cost of merging the linear system

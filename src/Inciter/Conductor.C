@@ -50,7 +50,6 @@ Conductor::Conductor() :
   m_stage( 0 ),
   m_linsysmerger(),
   m_performer(),
-  m_tracker(),
   m_particlewriter(),
   m_partitioner(),
   m_avcost( 0.0 ),
@@ -133,9 +132,6 @@ Conductor::Conductor() :
     // Create (empty) worker array
     m_performer = PerformerProxy::ckNew();
 
-    // Create (empty) particle tracker array
-    m_tracker = TrackerProxy::ckNew();
-
     // Create ExodusII reader for reading side sets from file. When creating
     // LinSysMerger, er.readSideSets() reads all side sets from file, which is
     // a serial read, then send the same copy to all PEs. Performers then will
@@ -157,7 +153,7 @@ Conductor::Conductor() :
     // Create mesh partitioner Charm++ chare group and start partitioning mesh
     m_print.diagstart( "Reading mesh graph ..." );
     m_partitioner = PartitionerProxy::ckNew( thisProxy, m_performer,
-                                             m_linsysmerger, m_tracker,
+                                             m_linsysmerger,
                                              m_particlewriter );
 
   } else finish();      // stop if no time stepping requested
