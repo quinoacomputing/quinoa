@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/TestU01Suite.C
   \author    J. Bakosi
-  \date      Mon 09 May 2016 04:16:54 PM MDT
+  \date      Tue 26 Jul 2016 07:45:24 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     TestU01 random number generator test suite
   \details   This file declares the TestU01 random number generator test suite,
@@ -26,6 +26,7 @@
 #include "Options/RNG.h"
 #include "RNGTest/Options/Battery.h"
 #include "NoWarning/rngtest.decl.h"
+#include "QuinoaConfig.h"
 
 extern CProxy_Main mainProxy;
 

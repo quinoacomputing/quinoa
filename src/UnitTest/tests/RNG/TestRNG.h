@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/RNG/TestRNG.h
   \author    J. Bakosi
-  \date      Wed 04 May 2016 11:51:38 AM MDT
+  \date      Tue 26 Jul 2016 07:44:25 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Unit tests for RNG/RNG.h
   \details   Unit tests for RNG/RNG.h
@@ -15,6 +15,7 @@
 
 #include <boost/functional/value_factory.hpp>
 #include "NoWarning/tut.h"
+#include "QuinoaConfig.h"
 
 #ifdef HAS_MKL
   #include <mkl_vsl_types.h>

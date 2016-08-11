@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGParam.h
   \author    J. Bakosi
-  \date      Mon 01 Jun 2015 04:30:37 PM MDT
+  \date      Tue 26 Jul 2016 07:41:09 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Types for storing parameters of random number generators
   \details   Types for storing parameters of random number generators.
@@ -15,6 +15,7 @@
 #include "Tags.h"
 #include "Options/RNG.h"
 #include "Options/RNGSSESeqLen.h"
+#include "QuinoaConfig.h"
 
 #ifdef HAS_MKL
   #include "Options/MKLUniformMethod.h"

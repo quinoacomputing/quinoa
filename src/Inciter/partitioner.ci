@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/partitioner.ci
   \author    J. Bakosi
-  \date      Tue 10 May 2016 02:17:31 PM MDT
+  \date      Wed 10 Aug 2016 12:16:11 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ module interface file for the chare partitioner group
   \details   Charm++ module interface file for the chare partitioner group used
@@ -12,18 +12,23 @@
 
 module partitioner {
 
+  include "unordered_map";
+
   namespace inciter {
 
     chare Partitioner< CProxy_Conductor,
                        CProxy_Performer,
                        tk::CProxy_LinSysMerger< CProxy_Conductor,
-                                                CProxy_Performer > >;
+                                                CProxy_Performer >,
+                       tk::CProxy_ParticleWriter< CProxy_Conductor > >;
 
-    template< class HostProxy, class WorkerProxy, class LinSysMergerProxy >
+    template< class HostProxy, class WorkerProxy, class LinSysMergerProxy,
+              class ParticleWriterProxy >
     group Partitioner {
       entry Partitioner( const HostProxy& host,
                          const WorkerProxy& worker,
-                         const LinSysMergerProxy& lsm );
+                         const LinSysMergerProxy& lsm,
+                         const ParticleWriterProxy& pw );
       entry void partition( int nchare );
       entry void add( int frompe,
             const std::unordered_map< int, std::vector< std::size_t > >& elem );

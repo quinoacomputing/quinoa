@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/Components.h
   \author    J. Bakosi
-  \date      Sat 16 Jul 2016 09:59:53 PM MDT
+  \date      Tue Jul 19 23:06:08 2016
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Storage for number of components
   \details   Storage for number of components. This is part of the input deck

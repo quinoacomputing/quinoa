@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Keywords.h
   \author    J. Bakosi
-  \date      Wed 20 Jul 2016 08:09:12 AM MDT
+  \date      Tue 26 Jul 2016 07:42:07 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Definition of all keywords
   \details   This file contains the definition of all keywords, including those
@@ -141,6 +141,7 @@
 
 #include "Types.h"
 #include "Keyword.h"
+#include "QuinoaConfig.h"
 
 //! Keywords used by all input deck and command line parsers
 namespace kw {
@@ -3042,6 +3043,7 @@ using velocity_z = keyword<undefined_info,  W >;
 using velocity_fluctuation_z = keyword<undefined_info,  w >;
 using pressure = keyword<undefined_info,  P >;
 using pressure_fluctuation = keyword<undefined_info,  p >;
+using density = keyword<undefined_info,  R >;
 using density_fluctuation = keyword<undefined_info,  r >;
 
 } // kw::

@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/conductor.ci
   \author    J. Bakosi
-  \date      Fri 22 Jul 2016 12:13:00 PM MDT
+  \date      Tue 09 Aug 2016 08:34:11 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ module interface file for Conductor
   \details   Charm++ module interface file for Conductor
@@ -11,7 +11,6 @@
 
 module conductor {
 
-  extern module linsysmerger;
   extern module partitioner;
 
   namespace inciter {
@@ -25,12 +24,15 @@ module conductor {
       entry [reductiontarget] void aveCost( tk::real c );
       entry [reductiontarget] void stdCost( tk::real c );
       entry [reductiontarget] void rowcomplete();
+      entry [reductiontarget] void msumcomplete();
       entry [reductiontarget] void verifybc( CkReductionMsg* msg );
       entry [reductiontarget] void doverifybc( CkReductionMsg* msg );
       entry [reductiontarget] void initcomplete();
+      entry [reductiontarget] void parcomcomplete();
+      entry [reductiontarget] void nparcomplete();
       entry [reductiontarget] void diagnostics( tk::real d[n], std::size_t n );
       entry [reductiontarget] void diagcomplete();
-      entry [reductiontarget] void evaluateTime();
+      entry [reductiontarget] void outcomplete();
       entry [reductiontarget] void advance();
       entry [reductiontarget] void finish();
 
@@ -42,32 +44,78 @@ module conductor {
       //
       // Directed Acyclic Graph (DAG):
       // -----------------------------
-      //                                        DAG legend:
-      //  Diag -- Rep                             Diag - compute diagnostics
-      //         /                                Eval - evlaute time step
-      //  Eval --                                 Rep - Output one-liner report
+      //                                   DAG legend:
+      //  Row  -- Init                       Row  - linear system rows complete
+      //         /                           Msum - mesh surrounding mesh
+      //  Msum --                            Init - initialization continues
+      //                                     Diag - compute diagnostics
+      //                                     Out - Output particles to file
+      //  ParCom -- Npar - Out -- Eval       ParCom - particle communications
+      //                         /           Eval - evalaute time step
+      //                    Diag             Npar - output number of particles
+      //
       //
       // Interpretation of the above DAG
       // -------------------------------
       // Control flow is from left to right and top to bottom.
       //
-      // Outputing a one-liner report (Rep) can only be done if both the
-      // diagnostics have been collected (Diag) as well as the time step has
-      // been evaluated (Eval). The report is only output at the final time step
-      // stage. Collecting diagnostics if optional, i.e., it does not happen
-      // every time step. If diagnostics are collected trigger_diag_complete()
-      // is signaled from the reduction target, Conductor::diagnostics(). If
-      // diagnostics are not collected in a time step, collection is skipped,
-      // and trigger_diag_complete() is signaled from the shortcut function,
-      // Conductor::diagcomplete(). Either way, the above DAG and its logic
-      // remains the same.
+      // First graph: Only if both (1) linear system merger branches have done
+      // their part of storing and exporting global row ids (Row), and (2) the
+      // mesh chunks surrounding mesh chunks data structure has been built
+      // (Msum), the initialization can continue (Init).
+      //
+      // Second graph (happening after the first graph): At the final time step
+      // stage particles are advanced on each Performer chare followed by
+      // searching for the mesh cells of each particle, which may require
+      // communication if some particles have left the mesh cunk held by
+      // Performer chares. After the particle communication has been completed
+      // (ParCom), each Performer chare sends its number particles (Npar) the it
+      // will contribute to the particle output in the given time step. Once
+      // that is done particles are sent and buffered for output with done by
+      // ParticleWriter. In the meantime diagnostics are also computed by the
+      // linear system merger group objects on each PE. The time step is
+      // evaluated only if both the diagnostics and the particle output have
+      // been done.
+      //
+      // Collecting diagnostics is optional, i.e., it does not happen every time
+      // step. If diagnostics are collected trigger_diag_complete() is signaled
+      // from the reduction target, Conductor::diagnostics(). If diagnostics are
+      // not collected in a time step, collection is skipped, and
+      // trigger_diag_complete() is signaled from the shortcut function,
+      // Conductor::diagcomplete().
+      //
+      // Similar to diagnostics output, particle output is also optional and
+      // does not happen every time step. The Charm++ reduction target
+      // Conductor::outcomplete() is reached either way but on different routes:
+      // if particles are output, the reduction originates from the
+      // ParticleWriter Charm++ group after writeCoords() finished the output,
+      // if particles are not output, the reduction originates from
+      // Performer::out(). Either way, the above DAG and its logic remains the
+      // same.
 
-      entry void wait4report()
-      { when trigger_diag_complete(), trigger_eval_complete() serial "eval"
-        { if (m_stage == 1) report(); } };
+      entry void wait4init()
+      { when trigger_row_complete(),
+             trigger_msum_complete() serial "init"
+        { m_performer.init( m_dt ); } };
 
+      entry void wait4parcom()
+      { when trigger_parcom_complete() serial "recvpar"
+        { m_performer.out(); } };
+
+      entry void wait4npar()
+      { when trigger_npar_complete() serial "par"
+        { m_performer.doWriteParticles(); } };
+
+      entry void wait4eval()
+      { when trigger_out_complete(), trigger_diag_complete() serial "eval"
+        { evaluateTime(); } };
+
+      entry void trigger_row_complete();
+      entry void trigger_msum_complete();
+      entry void trigger_parcom_complete();
+      entry void trigger_npar_complete();
+      entry void trigger_out_complete();
       entry void trigger_diag_complete();
-      entry void trigger_eval_complete();
     }
 
   } // inciter::

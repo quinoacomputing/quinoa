@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/PUPUtil.h
   \author    J. Bakosi
-  \date      Mon 09 May 2016 03:48:21 PM MDT
+  \date      Wed 03 Aug 2016 08:33:25 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ Pack/UnPack utilities
   \brief     This file contains some extensions to Charm++'s Pack/UnPack
@@ -154,7 +154,7 @@ template< class Key,
 inline void pup( PUP::er& p, std::unordered_set< Key, Hash, KeyEqual >& s ) {
   auto size = PUP_stl_container_size( p, s );
   if (p.isUnpacking()) {
-    for (std::size_t i=0; i<size; ++i) {
+    for (decltype(size) i=0; i<size; ++i) {
       Key node;
       p | node;
       s.emplace( node );

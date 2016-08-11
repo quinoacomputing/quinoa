@@ -13,8 +13,7 @@ if(__get_mpi_compilers)
 endif()
 set(__get_mpi_compilers YES)
 
-macro(get_compiler CMAKE_COMPILER CMAKE_MPI_COMPILER UNDERLYING_COMPILER
-                   COMP_TYPE)
+macro(get_compiler CMAKE_MPI_COMPILER UNDERLYING_COMPILER)
 
   set(UNDERLYING_COMPILER "")
 
@@ -73,18 +72,15 @@ function(get_mpi_compilers)
 
   # Find underlying C, C++, and Fortran compilers
   if (MPI_C_COMPILER)
-    get_compiler(${CMAKE_C_COMPILER} ${MPI_C_COMPILER}
-                 UNDERLYING_C_COMPILER "C")
+    get_compiler(${MPI_C_COMPILER} UNDERLYING_C_COMPILER)
   endif()
 
   if (MPI_CXX_COMPILER)
-    get_compiler(${CMAKE_CXX_COMPILER} ${MPI_CXX_COMPILER}
-                 UNDERLYING_CXX_COMPILER "C++")
+    get_compiler(${MPI_CXX_COMPILER} UNDERLYING_CXX_COMPILER)
   endif()
 
   if (MPI_Fortran_COMPILER)
-    get_compiler(${CMAKE_Fortran_COMPILER} ${MPI_Fortran_COMPILER}
-                 UNDERLYING_Fortran_COMPILER "Fortran")
+    get_compiler(${MPI_Fortran_COMPILER} UNDERLYING_Fortran_COMPILER)
   endif()
 
   # Echo MPI wrappers

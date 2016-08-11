@@ -2,7 +2,7 @@
 /*!
   \file      src/PDE/PDEStack.C
   \author    J. Bakosi
-  \date      Mon 25 Jul 2016 08:43:44 AM MDT
+  \date      Sun 07 Aug 2016 01:29:49 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Stack of partial differential equations
   \details   This file defines class PDEStack, which implements various
@@ -306,6 +306,10 @@ PDEStack::infoCompNS( std::map< ctr::PDEType, ncomp_t >& cnt ) const
     g_inputdeck.get< tag::param, tag::compns, tag::cv >() ) );
   info.emplace_back( "heat conductivity", parameters(
     g_inputdeck.get< tag::param, tag::compns, tag::k >() ) );
+
+  auto& npar = g_inputdeck.get< tag::param, tag::compns, tag::npar >();
+  if (!npar.empty())
+    info.emplace_back( "number of tracker particles", parameters( npar ) );
 
   return info;
 }

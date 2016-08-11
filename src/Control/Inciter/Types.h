@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/Types.h
   \author    J. Bakosi
-  \date      Mon 25 Jul 2016 08:05:41 AM MDT
+  \date      Sun 07 Aug 2016 01:12:45 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Types for Incitier's parsers
   \details   Types for Incitier's parsers. This file defines the components of
@@ -62,7 +62,8 @@ using ios = tk::tuple::tagged_tuple<
   tag::control,     kw::control::info::expect::type,  //!< Control filename
   tag::input,       std::string,                      //!< Input filename
   tag::output,      std::string,                      //!< Output filename
-  tag::diag,        std::string                       //!< Diagnostics filename
+  tag::diag,        std::string,                      //!< Diagnostics filename
+  tag::part,        std::string                       //!< Particles filename
 >;
 
 //! Advection-diffusion transport equation parameters storage
@@ -107,8 +108,10 @@ using CompNSPDEParameters = tk::tuple::tagged_tuple<
   tag::mu,    std::vector< kw::mat_mu::info::expect::type >,
   //! Spec. heat at const vol.
   tag::cv,    std::vector< kw::mat_cv::info::expect::type >,
-   //! Heat conductivity
-  tag::k,     std::vector< kw::mat_k::info::expect::type >
+  //! Heat conductivity
+  tag::k,     std::vector< kw::mat_k::info::expect::type >,
+  //! total number of optional passive tracker particles for visualization
+  tag::npar,  std::vector< kw::npar::info::expect::type >
 >;
 
 //! Parameters storage

@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGPrint.C
   \author    J. Bakosi
-  \date      Mon 09 May 2016 04:18:14 PM MDT
+  \date      Tue 26 Jul 2016 07:39:27 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Pretty printer base for pretty printers supporting RNGs
   \details   Pretty printer base for pretty printers supporting RNGs.
@@ -14,6 +14,7 @@
 
 #include "NoWarning/format.h"
 
+#include "QuinoaConfig.h"
 #include "Tags.h"
 #include "Print.h"
 #include "RNGParam.h"

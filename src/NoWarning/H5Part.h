@@ -1,31 +1,31 @@
 // *****************************************************************************
 /*!
-  \file      src/NoWarning/performer.def.h
+  \file      src/NoWarning/H5Part.h
   \author    J. Bakosi
-  \date      Wed 03 Aug 2016 02:06:18 PM MDT
+  \date      Thu 28 Jul 2016 09:30:51 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
-  \brief     Include performer.def.h with turning off specific compiler
-             warnings
+  \brief     Include H5Part.h with turning off specific compiler warnings
 */
 // *****************************************************************************
-#ifndef nowarning_performer_def_h
-#define nowarning_performer_def_h
+#ifndef nowarning_H5Part_h
+#define nowarning_H5Part_h
 
 #if defined(__clang__)
   #pragma clang diagnostic push
-  #pragma clang diagnostic ignored "-Wextra-semi"
+  #pragma clang diagnostic ignored "-Wreserved-id-macro"
   #pragma clang diagnostic ignored "-Wold-style-cast"
   #pragma clang diagnostic ignored "-Wsign-conversion"
-  #pragma clang diagnostic ignored "-Wshorten-64-to-32"
-  #pragma clang diagnostic ignored "-Wunused-variable"
+  #pragma clang diagnostic ignored "-Wdeprecated"
+  #pragma clang diagnostic ignored "-Wcast-align"
 #elif defined(__GNUC__)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Weffc++"
-  #pragma GCC diagnostic ignored "-Wcast-qual"
-  #pragma GCC diagnostic ignored "-Wunused-variable"
+  #pragma GCC diagnostic ignored "-Wlong-long"
 #endif
 
-#include "../Inciter/performer.def.h"
+#define PARALLEL_IO
+#include <H5Part.h>
+#undef PARALLEL_IO
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
@@ -33,4 +33,4 @@
   #pragma GCC diagnostic pop
 #endif
 
-#endif // nowarning_performer_def_h
+#endif // nowarning_H5Part_h

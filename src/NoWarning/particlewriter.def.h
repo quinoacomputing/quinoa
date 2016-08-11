@@ -1,31 +1,34 @@
 // *****************************************************************************
 /*!
-  \file      src/NoWarning/performer.def.h
-  \author    J. Bakosi
-  \date      Wed 03 Aug 2016 02:06:18 PM MDT
+  \file      src/NoWarning/particlewriter.def.h
+  \author    F.J. Gonzalez
+  \date      Sat 30 Jul 2016 08:31:38 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
-  \brief     Include performer.def.h with turning off specific compiler
-             warnings
+  \brief     Include particlewriter.def.h with turning off specific compiler
+             warnings.
 */
 // *****************************************************************************
-#ifndef nowarning_performer_def_h
-#define nowarning_performer_def_h
+#ifndef nowarning_particlewriter_def_h
+#define nowarning_particlewriter_def_h
 
 #if defined(__clang__)
   #pragma clang diagnostic push
-  #pragma clang diagnostic ignored "-Wextra-semi"
   #pragma clang diagnostic ignored "-Wold-style-cast"
   #pragma clang diagnostic ignored "-Wsign-conversion"
   #pragma clang diagnostic ignored "-Wshorten-64-to-32"
-  #pragma clang diagnostic ignored "-Wunused-variable"
+  #pragma clang diagnostic ignored "-Wextra-semi"
+  #pragma clang diagnostic ignored "-Wunused-parameter"
+  #pragma clang diagnostic ignored "-Wreorder"
 #elif defined(__GNUC__)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Weffc++"
   #pragma GCC diagnostic ignored "-Wcast-qual"
-  #pragma GCC diagnostic ignored "-Wunused-variable"
+  #pragma GCC diagnostic ignored "-Wnon-virtual-dtor"
+  #pragma GCC diagnostic ignored "-Wreorder"
+  #pragma GCC diagnostic ignored "-Wunused-parameter"
 #endif
 
-#include "../Inciter/performer.def.h"
+#include "../IO/particlewriter.def.h"
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
@@ -33,4 +36,4 @@
   #pragma GCC diagnostic pop
 #endif
 
-#endif // nowarning_performer_def_h
+#endif // nowarning_particlewriter_def_h

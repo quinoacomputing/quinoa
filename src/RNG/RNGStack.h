@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/RNGStack.h
   \author    J. Bakosi
-  \date      Sun 03 Apr 2016 10:06:07 AM MDT
+  \date      Tue 26 Jul 2016 07:43:27 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Stack of random number generators
   \details   This file declares class RNGStack, which implements various
@@ -24,6 +24,7 @@
 #include "RNG.h"
 #include "RNGParam.h"
 #include "Options/RNG.h"
+#include "QuinoaConfig.h"
 
 namespace tk {
 

@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Conductor.C
   \author    J. Bakosi
-  \date      Fri 22 Jul 2016 03:57:37 PM MDT
+  \date      Tue 09 Aug 2016 08:09:15 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Conductor drives the time integration of a PDE
   \details   Conductor drives the time integration of a PDE
@@ -26,8 +26,8 @@
 #include "ContainerUtil.h"
 #include "LoadDistributor.h"
 #include "ExodusIIMeshReader.h"
-#include "DiagWriter.h"
 #include "Inciter/InputDeck/InputDeck.h"
+#include "DiagWriter.h"
 
 #include "NoWarning/inciter.decl.h"
 
@@ -50,6 +50,7 @@ Conductor::Conductor() :
   m_stage( 0 ),
   m_linsysmerger(),
   m_performer(),
+  m_particlewriter(),
   m_partitioner(),
   m_avcost( 0.0 ),
   m_npoin( 0 ),
@@ -103,7 +104,10 @@ Conductor::Conductor() :
   if ( nstep != 0 && term > t0 && dt < term-t0 ) {
 
     // Enable SDAG waits
-    wait4report();
+    wait4init();
+    wait4parcom();
+    wait4npar();
+    wait4eval();
 
     // Print I/O filenames
     m_print.section( "Output filenames" );
@@ -140,10 +144,17 @@ Conductor::Conductor() :
                        er.readSidesets(),
                        g_inputdeck.get< tag::component >().nprop() );
 
+    // Create particle writer Charm++ chare group
+    //if (g_inputdeck.get< tag::param, tag::compns, tag::npar >() > 0)
+      m_particlewriter = ParticleWriterProxy::ckNew(
+                           thisProxy,
+                           g_inputdeck.get< tag::cmd, tag::io, tag::part >() );
+
     // Create mesh partitioner Charm++ chare group and start partitioning mesh
     m_print.diagstart( "Reading mesh graph ..." );
-    m_partitioner =
-      PartitionerProxy::ckNew( thisProxy, m_performer, m_linsysmerger );
+    m_partitioner = PartitionerProxy::ckNew( thisProxy, m_performer,
+                                             m_linsysmerger,
+                                             m_particlewriter );
 
   } else finish();      // stop if no time stepping requested
 }
@@ -256,14 +267,17 @@ Conductor::rowcomplete()
 // their part of storing and exporting global row ids
 //! \details This function is a Charm++ reduction target that is called when
 //!   all linear system merger branches have done their part of storing and
-//!   exporting global row ids. Once this is done, we issue a broadcast to
-//!   all Spawners and thus implicitly all Performer chares to continue with
-//!   the initialization step.
+//!   exporting global row ids. This is a necessary precondition to be done
+//!   before we can issue a broadcast to all Performer chares to continue with
+//!   the initialization step. The other, also necessary but by itself not
+//!   sufficient, one is parcomplete(). Together rowcomplete() and
+//!   parcomplete() are sufficient for continuing with the initialization. See
+//!   also conductor.ci.
 //! \author J. Bakosi
 // *****************************************************************************
 {
   m_linsysmerger.rowsreceived();
-  m_performer.init( m_dt );
+  trigger_row_complete();
 }
 
 void
@@ -318,7 +332,7 @@ Conductor::doverifybc( CkReductionMsg* msg )
           "not match the boundary condition node list based on the side sets "
           "given in the input file." );
 
-  m_print.diag( "Boundary conditions verified (DEBUG only)" );
+  m_print.diag( "Boundary conditions verified" );
 
   m_linsysmerger.trigger_ver_complete();
 }
@@ -356,38 +370,6 @@ Conductor::diagnostics( tk::real* d, std::size_t n )
   for (std::size_t i=0; i<m_diag.size(); ++i) m_diag[i] = d[i] / m_npoin;
 
   trigger_diag_complete();
-}
- 
-void
-Conductor::evaluateTime()
-// *****************************************************************************
-//  Evaluate time step: decide if it is time to quit
-//! \author J. Bakosi
-// *****************************************************************************
-{
-  const auto term = g_inputdeck.get< tag::discr, tag::term >();
-  const auto eps = std::numeric_limits< tk::real >::epsilon();
-  const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
-
-  // if at final stage of time step, finish time step just taken
-  if (m_stage == 1) {
-    // Increase number of iterations taken
-    ++m_it;
-    // Advance physical time to include time step just finished
-    m_t += m_dt;
-    // Truncate the size of last time step
-    if (m_t > term) m_t = term;
-  }
-
-  trigger_eval_complete();
-
-  // if not final stage of time step or if neither max iterations nor max time
-  // reached, will continue (by telling all linear system merger group
-  // elements to prepare for a new rhs), otherwise, finish
-  if (m_stage < 1 || (std::fabs(m_t-term) > eps && m_it < nstep)) {
-    m_linsysmerger.enable_wait4rhs();
-    wait4report();      // re-enable SDAG wait for report
-  } else finish();
 }
 
 void
@@ -460,55 +442,81 @@ Conductor::header()
 }
 
 void
-Conductor::report()
+Conductor::evaluateTime()
 // *****************************************************************************
-// Print out one-liner report on time step
+// Evaluate time step and output one-liner report
 //! \author J. Bakosi
 // *****************************************************************************
 {
-  bool diag = false;
+  const auto term = g_inputdeck.get< tag::discr, tag::term >();
+  const auto eps = std::numeric_limits< tk::real >::epsilon();
+  const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
 
-  // Append diagnostics file at selected times
-  if (!(m_it % g_inputdeck.get< tag::interval, tag::diag >())) {
-    tk::DiagWriter dw( g_inputdeck.get< tag::cmd, tag::io, tag::diag >(),
-                       g_inputdeck.get< tag::flformat, tag::diag >(),
-                       g_inputdeck.get< tag::prec, tag::diag >(),
-                       std::ios_base::app );
-    if (dw.diag( m_it, m_t, m_diag )) diag = true;
+  // if at final stage of time step, finish time step just taken
+  if (m_stage == 1) {
+    // Increase number of iterations taken
+    ++m_it;
+    // Advance physical time to include time step just finished
+    m_t += m_dt;
+    // Truncate the size of last time step
+    if (m_t > term) m_t = term;
+
+    bool diag = false;
+
+    // Append diagnostics file at selected times
+    if (!(m_it % g_inputdeck.get< tag::interval, tag::diag >())) {
+      tk::DiagWriter dw( g_inputdeck.get< tag::cmd, tag::io, tag::diag >(),
+                         g_inputdeck.get< tag::flformat, tag::diag >(),
+                         g_inputdeck.get< tag::prec, tag::diag >(),
+                         std::ios_base::app );
+      if (dw.diag( m_it, m_t, m_diag )) diag = true;
+    }
+
+    if (!(m_it % g_inputdeck.get< tag::interval, tag::tty >())) {
+
+      // estimate time elapsed and time for accomplishment
+      tk::Timer::Watch ete, eta;
+      const auto& timer = tk::cref_find( m_timer, TimerTag::TIMESTEP );
+      timer.eta( g_inputdeck.get< tag::discr, tag::term >() -
+                   g_inputdeck.get< tag::discr, tag::t0 >(),
+                 m_t - g_inputdeck.get< tag::discr, tag::t0 >(),
+                 g_inputdeck.get< tag::discr, tag::nstep >(),
+                 m_it,
+                 ete,
+                 eta );
+
+      // Output one-liner
+      m_print << std::setfill(' ') << std::setw(8) << m_it << "  "
+              << std::scientific << std::setprecision(6)
+              << std::setw(12) << m_t << "  "
+              << m_dt << "  "
+              << std::setfill('0')
+              << std::setw(3) << ete.hrs.count() << ":"
+              << std::setw(2) << ete.min.count() << ":"
+              << std::setw(2) << ete.sec.count() << "  "
+              << std::setw(3) << eta.hrs.count() << ":"
+              << std::setw(2) << eta.min.count() << ":"
+              << std::setw(2) << eta.sec.count() << "  ";
+
+      // Augment one-liner with output indicators
+      if (!(m_it % g_inputdeck.get<tag::interval,tag::field>())) m_print << 'F';
+      if (diag) m_print << 'D';
+
+      m_print << '\n';
+    }
   }
 
-  if (!(m_it % g_inputdeck.get< tag::interval, tag::tty >())) {
+  // if not final stage of time step or if neither max iterations nor max time
+  // reached, will continue (by telling all linear system merger group
+  // elements to prepare for a new rhs), otherwise finish
+  if (m_stage < 1 || (std::fabs(m_t-term) > eps && m_it < nstep))
+    m_linsysmerger.enable_wait4rhs();
+  else
+    finish();
 
-    // estimate time elapsed and time for accomplishment
-    tk::Timer::Watch ete, eta;
-    const auto& timer = tk::cref_find( m_timer, TimerTag::TIMESTEP );
-    timer.eta( g_inputdeck.get< tag::discr, tag::term >() -
-                 g_inputdeck.get< tag::discr, tag::t0 >(),
-               m_t - g_inputdeck.get< tag::discr, tag::t0 >(),
-               g_inputdeck.get< tag::discr, tag::nstep >(),
-               m_it,
-               ete,
-               eta );
-
-    // Output one-liner
-    m_print << std::setfill(' ') << std::setw(8) << m_it << "  "
-            << std::scientific << std::setprecision(6)
-            << std::setw(12) << m_t << "  "
-            << m_dt << "  "
-            << std::setfill('0')
-            << std::setw(3) << ete.hrs.count() << ":"
-            << std::setw(2) << ete.min.count() << ":"
-            << std::setw(2) << ete.sec.count() << "  "
-            << std::setw(3) << eta.hrs.count() << ":"
-            << std::setw(2) << eta.min.count() << ":"
-            << std::setw(2) << eta.sec.count() << "  ";
-
-    // Augment one-liner with output indicators
-    if (!(m_it % g_inputdeck.get<tag::interval,tag::field>())) m_print << 'F';
-    if (diag) m_print << 'D';
-
-    m_print << '\n';
-  }
+  wait4parcom();
+  wait4npar();
+  wait4eval();
 }
 
 #include "NoWarning/conductor.def.h"
