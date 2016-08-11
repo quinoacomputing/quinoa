@@ -2,7 +2,7 @@
 /*!
   \file      src/NoWarning/particlewriter.decl.h
   \author    F.J. Gonzalez
-  \date      Wed 03 Aug 2016 06:08:28 AM MDT
+  \date      Thu 11 Aug 2016 12:34:46 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include particlewriter.decl.h with turning off specific compiler
              warnings.
@@ -23,6 +23,7 @@
   #pragma clang diagnostic ignored "-Wcast-align"
   #pragma clang diagnostic ignored "-Wshadow"
   #pragma clang diagnostic ignored "-Wundef"
+  #pragma clang diagnostic ignored "-Wundefined-func-template"
   #pragma clang diagnostic ignored "-Wextra-semi"
   #pragma clang diagnostic ignored "-Wmismatched-tags"
   #pragma clang diagnostic ignored "-Wdeprecated"
