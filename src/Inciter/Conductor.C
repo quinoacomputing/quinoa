@@ -145,10 +145,9 @@ Conductor::Conductor() :
                        g_inputdeck.get< tag::component >().nprop() );
 
     // Create particle writer Charm++ chare group
-    //if (g_inputdeck.get< tag::param, tag::compns, tag::npar >() > 0)
-      m_particlewriter = ParticleWriterProxy::ckNew(
-                           thisProxy,
-                           g_inputdeck.get< tag::cmd, tag::io, tag::part >() );
+    m_particlewriter = ParticleWriterProxy::ckNew(
+                         thisProxy,
+                         g_inputdeck.get< tag::cmd, tag::io, tag::part >() );
 
     // Create mesh partitioner Charm++ chare group and start partitioning mesh
     m_print.diagstart( "Reading mesh graph ..." );

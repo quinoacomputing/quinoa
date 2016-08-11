@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/H5PartWriter.h
   \author    J. Bakosi
-  \date      Tue 02 Aug 2016 10:43:50 AM MDT
+  \date      Thu 11 Aug 2016 04:10:07 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     H5Part particles data writer
   \details   H5Part particles data writer class declaration, facilitating
@@ -34,19 +34,14 @@ class H5PartWriter {
     //! Constructor: create/open H5Part file
     explicit H5PartWriter( const std::string& filename );
 
-    //! Destructor
-    ~H5PartWriter() noexcept;
-
-    //!  Write a new time stamp to H5Part file
-    void writeTimeStamp( uint64_t it, uint64_t npar ) const;
-
-    void writeCoords( const std::vector< tk::real >& x,
+    //! Write particle coordinates to H5Part file
+    void writeCoords( uint64_t it,
+                      const std::vector< tk::real >& x,
                       const std::vector< tk::real >& y,
                       const std::vector< tk::real >& z ) const;
 
   private:
     const std::string m_filename;               //!< File name
-    std::unique_ptr< H5PartFile > m_outFile;    //!< H5Part file handle
 };
 
 } // tk::
