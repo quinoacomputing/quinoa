@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/ParticleWriter.h
   \author    J. Bakosi
-  \date      Tue 09 Aug 2016 08:08:40 AM MDT
+  \date      Thu 11 Aug 2016 04:08:00 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ group for outputing particle data to file via H5Part
   \details   Charm++ group for outputing particle data to file via H5Part in
@@ -11,6 +11,9 @@
 // *****************************************************************************
 #ifndef ParticleWriter_h
 #define ParticleWriter_h
+
+#include <string>
+#include <vector>
 
 #include "Exception.h"
 #include "H5PartWriter.h"
@@ -33,7 +36,6 @@ class ParticleWriter : public CBase_ParticleWriter< HostProxy > {
                              const std::string& filename ) :
       m_host( host ),
       m_writer( filename ),
-      m_timestamped( 0 ),
       m_npar( 0 ),
       m_x(),
       m_y(),
@@ -45,19 +47,6 @@ class ParticleWriter : public CBase_ParticleWriter< HostProxy > {
     //!   method since it is always called by chares on the same PE.
     void npar( std::size_t npar ) { m_npar += npar; }
 
-    //! Write a new time stamp to the particle file
-    //! \param[in] it Iteration number
-    //! \details Since potentially this function may be called mutliple times
-    //!   (by multiple chare array elements on our PE, we make sure the
-    //!   function call to output the new time stamp is only called once per PE.
-    //! \note This function does not have to be declared as a Charm++ entry
-    //!   method since it is always called by chares on the same PE.
-    //! \author J. Bakosi
-    void writeTimeStamp( uint64_t it ) {
-      if (m_npar > 0 && !m_timestamped) m_writer.writeTimeStamp( it, m_npar );
-      m_timestamped = true;
-    }
-
     //! Receive, buffer, and write particle coordinates to file
     //! \param[in] x X coordinates of particles
     //! \param[in] y Y coordinates of particles
@@ -65,13 +54,12 @@ class ParticleWriter : public CBase_ParticleWriter< HostProxy > {
     //! \note This function does not have to be declared as a Charm++ entry
     //!   method since it is always called by chares on the same PE.
     //! \author J. Bakosi
-    void writeCoords( const std::vector< tk::real >& x,
+    void writeCoords( uint64_t it,
+                      const std::vector< tk::real >& x,
                       const std::vector< tk::real >& y,
                       const std::vector< tk::real >& z )
     {
       if (m_npar == 0) { signal2host_outcomplete( m_host ); return; }
-      Assert( m_timestamped, "Outputing the time stamp must precede the "
-                             "particle coordinates" );
       Assert( x.size() == y.size() && y.size() == z.size(),
               "Particle coordinates array sizes mismatch" );
       // buffer up coordinates
@@ -80,20 +68,18 @@ class ParticleWriter : public CBase_ParticleWriter< HostProxy > {
       m_z.insert( end(m_z), begin(z), end(z) );
       // if received from all chares on my PE, write to file
       if (m_x.size() == m_npar) {
-        m_writer.writeCoords( m_x, m_y, m_z );
+        m_writer.writeCoords( it, m_x, m_y, m_z );
         signal2host_outcomplete( m_host );
         m_x.clear();        // prepare for next step
         m_y.clear();
         m_z.clear();
         m_npar = 0;
-        m_timestamped = false;
       }
     }
 
   private:
     HostProxy m_host;
-    tk::H5PartWriter m_writer;      //!< Particle file format writer
-    bool m_timestamped;  //!< Whether time stamp has been written out on this PE
+    tk::H5PartWriter m_writer;     //!< Particle file format writer
     uint64_t m_npar;               //!< Number of particles to be written
     std::vector< tk::real > m_x;   //!< Buffer collecting x coordinates
     std::vector< tk::real > m_y;   //!< Buffer collecting y coordinates

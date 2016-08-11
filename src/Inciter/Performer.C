@@ -522,8 +522,8 @@ Performer::doWriteParticles()
 //! \author J. Bakosi
 // *****************************************************************************
 {
-  m_particlewriter.ckLocalBranch()->writeTimeStamp( m_it );
-  m_particlewriter.ckLocalBranch()->writeCoords( m_particles.extract(0,0),
+  m_particlewriter.ckLocalBranch()->writeCoords( m_it,
+                                                 m_particles.extract(0,0),
                                                  m_particles.extract(1,0),
                                                  m_particles.extract(2,0) );
 }
