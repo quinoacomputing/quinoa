@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.h
   \author    J. Bakosi
-  \date      Wed 10 Aug 2016 03:26:52 PM MDT
+  \date      Thu 11 Aug 2016 07:38:51 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Performer advances a system of systems of PDEs
   \details   Performer advances a system of systems of PDEs. There are a
@@ -119,7 +119,7 @@ class Performer : public CBase_Performer {
                   const std::vector< std::size_t >& miss,
                   const tk::Particles& ps );
 
-    //! Collect particle indices found elsewhere (by fellow neighbors)
+    //! Receive particle indices found elsewhere (by fellow neighbors)
     void foundpar( const std::vector< std::size_t >& found );
 
     //! Find particles missing by the requestor and make those found ours    
@@ -211,12 +211,17 @@ class Performer : public CBase_Performer {
     std::array< std::vector< tk::real >, 3 > m_coord;
     //! Points surrounding points of our chunk of the mesh
     std::pair< std::vector< std::size_t >, std::vector< std::size_t > > m_psup;
+    //! Elements surrounding points of elements of mesh chunk we operate on
+    std::pair< std::vector< std::size_t >, std::vector< std::size_t > >
+      m_esupel;
     //! Unknown/solution vector: global mesh point row ids and values
     tk::MeshNodes m_u, m_uf, m_un, m_up;
     //! Sparse matrix sotring the diagonals and off-diagonals of nonzeros
     tk::MeshNodes m_lhsd, m_lhso;
     //! Particle properties
     tk::Particles m_particles;
+    //! Element ID in which a particle has last been found for all particles
+    std::vector< std::size_t > m_elp;
     //! Fellow Performer chare indices holding neighboring mesh chunks
     std::vector< int > m_msum;
     //! Indicies of particles not found here (missing)
