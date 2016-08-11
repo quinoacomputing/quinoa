@@ -83,13 +83,15 @@ Performer::Performer( const ConductorProxy& conductor,
   m_lid(),
   m_coord(),
   m_psup( tk::genPsup( m_inpoel, 4, tk::genEsup(m_inpoel,4) ) ),
+  m_esupel( tk::genEsupel( m_inpoel, 4, tk::genEsup(m_inpoel,4) ) ),
   m_u( m_gid.size(), g_inputdeck.get< tag::component >().nprop() ),
   m_uf( m_gid.size(), g_inputdeck.get< tag::component >().nprop() ),
   m_un( m_gid.size(), g_inputdeck.get< tag::component >().nprop() ),
   m_up( m_gid.size(), g_inputdeck.get< tag::component >().nprop() ),
   m_lhsd( m_psup.second.size()-1, g_inputdeck.get< tag::component >().nprop() ),
   m_lhso( m_psup.first.size(), g_inputdeck.get< tag::component >().nprop() ),
-  m_particles( 1 * m_inpoel.size()/4, 3 ),
+  m_particles( 10 * m_inpoel.size()/4, 3 ),
+  m_elp( m_particles.nunk() ),
   m_msum(),
   m_parmiss(),
   m_parelse()
@@ -564,6 +566,9 @@ Performer::genpar()
   const auto& y = m_coord[1];
   const auto& z = m_coord[2];
 
+  Assert( m_elp.size() >= m_particles.nunk(),
+          "Element-of-particle array not large enough" );
+
   // Generate npar number of particles into each mesh cell
   auto npar = m_particles.nunk() / (m_inpoel.size()/4);
   for (std::size_t e=0; e<m_inpoel.size()/4; ++e) {
@@ -581,6 +586,7 @@ Performer::genpar()
         m_particles(i,0,0) = x[A]*N[0] + x[B]*N[1] + x[C]*N[2] + x[D]*N[3];
         m_particles(i,1,0) = y[A]*N[0] + y[B]*N[1] + y[C]*N[2] + y[D]*N[3];
         m_particles(i,2,0) = z[A]*N[0] + z[B]*N[1] + z[C]*N[2] + z[D]*N[3];
+        m_elp[i] = e;
       } else --p; // retry if particle was not generated into cell
     }
   }
@@ -663,9 +669,13 @@ Performer::parinel( std::size_t p, std::size_t e, std::array< tk::real, 4 >& N )
   // if min( N^i, 1-N^i ) > 0 for all i, particle is in cell
   if ( std::min(N[0],1.0-N[0]) > 0 && std::min(N[1],1.0-N[1]) > 0 &&
        std::min(N[2],1.0-N[2]) > 0 && std::min(N[3],1.0-N[3]) > 0 )
+  {
+    m_elp.resize( p+1 );
+    m_elp[ p ] = e;
     return true;
-  else
+  } else {
     return false;
+  }
 }
 
 std::vector< std::size_t >
@@ -687,10 +697,13 @@ Performer::addpar( const std::vector< std::size_t >& miss,
       std::array< tk::real, 4 > N;
       auto last = m_particles.nunk();
       m_particles.add( ps[i] );
-      if (parinel( last, e, N ))
+      if (parinel( last, e, N )) {
         found.push_back( miss[i] );
-      else
+        m_elp.resize( last+1 );
+        m_elp[ last ] = e;
+      } else {
         m_particles.rm( { last } );
+      }
     }
 
   return found;
@@ -710,19 +723,44 @@ Performer::track()
     return;
   }
 
+  // Lambda to attempt to find and advance particle i in element e. Returns true
+  // if the particle was found (and advanced), false if it was not found.
+  std::array< tk::real, 4 > N;
+  auto adv = [ this, &N ]( std::size_t i, std::size_t e ) -> bool {
+    if (this->parinel( i, e, N )) {
+      advanceParticle( i, e, N );
+      return true;
+    }
+    return false;
+  };
+
+  // Search cells of our mesh chunk for all particles
   for (std::size_t i=0; i<m_particles.nunk(); ++i) {
-    bool found = false;
-    for (std::size_t e=0; e<m_inpoel.size()/4; ++e) {
-      std::array< tk::real, 4 > N;
-      if (parinel( i, e, N )) {
-        found = true;
-        advanceParticle( i, e, N );
-        e = m_inpoel.size()/4;  // search for next particle
+    // First try to find particle where it has last been found
+    bool found = adv( i, m_elp[i] );
+    // Next search in the elements surroundings the points of the element where
+    // the particle has last been found
+    if (!found) {
+      auto last = m_esupel.second[m_elp[i]+1];
+      for (auto j=m_esupel.second[m_elp[i]]+1; j<=last; ++j) {
+        found = adv( i, m_esupel.first[j] );
+        if (found) j = last;  // search for next particle
       }
     }
-    if (!found) m_parmiss.insert( i );
+    // Next search all cells in our chunk of the mesh
+    if (!found) {
+      for (std::size_t e=0; e<m_inpoel.size()/4; ++e) {
+        found = adv( i, e );
+        if (found) e = m_inpoel.size()/4;  // search for next particle
+      }
+      // If the particle still has not been found, it left our chunk of the
+      // mesh, mark as missing (will initiate communication to find it)
+      if (!found) m_parmiss.insert( i );
+    }
   }
 
+  // If we have no missing particles, we are done, if we do, send out requests
+  // to find them to those Performer chares with which we neighbor mesh cells
   if (m_parmiss.empty()) {
     m_nchpar = 0;
     m_parmiss.clear();
@@ -765,7 +803,7 @@ Performer::findpar( int fromch,
 void
 Performer::foundpar( const std::vector< std::size_t >& found )
 // *****************************************************************************
-// Collect particle indices found elsewhere (by fellow neighbors)
+// Receive particle indices found elsewhere (by fellow neighbors)
 //! \param[in] found Indices of particles found
 //! \author J. Bakosi
 // *****************************************************************************
@@ -774,16 +812,18 @@ Performer::foundpar( const std::vector< std::size_t >& found )
 
   if (++m_nchpar == m_msum.size()) {    // if we have heard from all neighbors
 
-    // find the particle indices that are still have not been found
+    // find the particle indices that are still have not been found (by close
+    // neighbors)
     decltype(m_parelse) far;
     std::set_difference( begin(m_parmiss), end(m_parmiss),
                          begin(m_parelse), end(m_parelse), 
                          std::inserter( far, begin(far) ) );
-
     m_parmiss = far;
 
+    // if there are still missing particles (not found by close neighbors we
+    // share mesh nodes with), we resort to requesting them to be searched by
+    // all Performers
     if (m_parmiss.empty()) {
-      m_particles.rm( m_parmiss );
       m_nchpar = 0;
       m_parmiss.clear();
       m_parelse.clear();
