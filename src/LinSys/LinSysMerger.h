@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/LinSysMerger.h
   \author    J. Bakosi
-  \date      Mon 25 Jul 2016 11:08:08 AM MDT
+  \date      Mon 01 Aug 2016 01:27:26 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ chare linear system merger group to solve a linear system
   \details   Charm++ chare linear system merger group used to collect and
@@ -134,6 +134,7 @@
 #include "VectorReducer.h"
 #include "HashMapReducer.h"
 
+#include "NoWarning/linsysmerger.decl.h"
 #include "NoWarning/conductor.decl.h"
 
 namespace tk {
@@ -202,6 +203,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       m_nperow( 0 ),
       m_nchbc( 0 ),
       m_nchbcval( 0 ),
+      m_nchdiag( 0 ),
       m_lower( 0 ),
       m_upper( 0 ),
       m_myworker(),
@@ -572,7 +574,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
        if (m_oldbc.size() == m_bc.size()) {
          std::vector< std::size_t > b;
          for (const auto& c : m_oldbc)
-           b.insert( end(b), c.second.begin(), c.second.end() );
+           b.insert( end(b), c.second.cbegin(), c.second.cend() );
          signal2host_verifybc( m_host, b );
        }
     }
@@ -583,13 +585,13 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
     //!   indicates whether the BC value is set at the given node by the user.
     //!   The size of the vectors is the number of PDEs integrated times the
     //!   number of scalar components in all PDEs.
-    void charebcval( std::unordered_map< std::size_t,
+    void charebcval( const std::unordered_map< std::size_t,
                        std::vector< std::pair< bool, tk::real > > >& bcv )
     {
-      for (auto&& n : bcv) {
+      for (auto& n : bcv) {
         Assert( n.second.size() == m_ncomp, "The total number of scalar "
           "components does not equal that of set in the BC data structure." );
-        m_bcval[ n.first ] = std::move(n.second);
+        m_bcval[ n.first ] = n.second;
       }
       if (--m_nchbcval == 0) trigger_bcval_complete();
     }
@@ -624,7 +626,11 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       for (std::size_t i=0; i<m_hypreSol.size()/m_ncomp; ++i)
         for (std::size_t c=0; c<m_ncomp; ++c)
           diag[c] += std::abs( m_hypreSol[i*m_ncomp+c] );
-      signal2host_diag( m_host, diag );
+      // if we have heard from every chare, signal back to host
+      if (++m_nchdiag == m_nchare) {
+        signal2host_diag( m_host, diag );
+        m_nchdiag = 0;
+      }
     }
 
   private:
@@ -637,6 +643,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
     std::size_t m_nperow;       //!< Number of fellow PEs to send row ids to
     std::size_t m_nchbc;        //!< Number of chares we received bcs from
     std::size_t m_nchbcval;     //!< Number of chares we received bc values from
+    std::size_t m_nchdiag;      //!< Number of chares we received diags from
     std::size_t m_lower;        //!< Lower index of the global rows on my PE
     std::size_t m_upper;        //!< Upper index of the global rows on my PE
     //! Ids of workers on my PE

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Mon 25 Jul 2016 08:17:40 AM MDT
+  \date      Sun 07 Aug 2016 01:24:55 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Inciter's input deck grammar definition
   \details   Inciter's input deck grammar definition. We use the Parsing
@@ -236,10 +236,10 @@ namespace deck {
                                             ctr::Problem,
                                             tag::advdiff,
                                             tag::problem >,
-                           tk::grm::depvar< Stack,
-                                            use,
-                                            tag::advdiff,
-                                            tag::depvar >,
+                          tk::grm::depvar< Stack,
+                                           use,
+                                           tag::advdiff,
+                                           tag::depvar >,
                            tk::grm::component< Stack,
                                                use< kw::ncomp >,
                                                tag::advdiff >,
@@ -290,7 +290,12 @@ namespace deck {
                                             tag::problem >,
                            //ic_compns< tag::compns, tag::ic > >,
                            material_properties< tag::compns >,
-                           bc_dirichlet< tag::compns, tag::bc_dirichlet > >,
+                           bc_dirichlet< tag::compns, tag::bc_dirichlet >,
+                           tk::grm::process< Stack, use< kw::npar >,
+                             tk::grm::Store_back< Stack,
+                                                  tag::param,
+                                                  tag::compns,
+                                                  tag::npar > > >,
            check_errors< tag::compns, check_compns > > {};
 
   //! partitioning ... end block

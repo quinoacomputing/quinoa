@@ -15,10 +15,26 @@ add_library(IO
             GmshMeshWriter.C
             NetgenMeshWriter.C
             ExodusIIMeshWriter.C
+            H5PartWriter.C
 #            SiloWriter.C
 )
 
 INSTALL(TARGETS IO
+  	RUNTIME DESTINATION bin COMPONENT Runtime
+  	LIBRARY DESTINATION lib COMPONENT Runtime
+ 	ARCHIVE DESTINATION lib COMPONENT Development
+)
+
+# Include function for adding Charm++ modules
+include(charm)
+
+add_library(AsyncIO
+            ParticleWriter.C
+)
+
+addCharmModule( "particlewriter" "AsyncIO" )
+
+INSTALL(TARGETS AsyncIO
   	RUNTIME DESTINATION bin COMPONENT Runtime
   	LIBRARY DESTINATION lib COMPONENT Runtime
  	ARCHIVE DESTINATION lib COMPONENT Development

@@ -19,6 +19,7 @@
 #include "Make_unique.h"
 #include "Exception.h"
 #include "Macro.h"
+#include "Options/RNGSSESeqLen.h"
 
 namespace tk {
 

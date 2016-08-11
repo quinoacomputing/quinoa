@@ -2,10 +2,10 @@
 /*!
   \file      src/Inciter/Partitioner.h
   \author    J. Bakosi
-  \date      Sun 15 May 2016 08:12:22 AM MDT
+  \date      Wed 10 Aug 2016 12:17:28 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ chare partitioner group used to perform mesh partitioning
-  \details   Charm++ chare partitioner group used to parform mesh partitioning.
+  \details   Charm++ chare partitioner group used to perform mesh partitioning.
     The implementation uses the Charm++ runtime system and is fully
     asynchronous, overlapping computation, communication as well as I/O. The
     algorithm utilizes the structured dagger (SDAG) Charm++ functionality. The
@@ -85,10 +85,12 @@ extern CkReduction::reducerType NodesMerger;
 //!   more (as opposed to individual chares or chare array object elements). See
 //!   also the Charm++ interface file partitioner.ci.
 //! \author J. Bakosi
-template< class HostProxy, class WorkerProxy, class LinSysMergerProxy >
+template< class HostProxy, class WorkerProxy, class LinSysMergerProxy,
+          class ParticleWriterProxy >
 class Partitioner : public CBase_Partitioner< HostProxy,
                                               WorkerProxy,
-                                              LinSysMergerProxy > {
+                                              LinSysMergerProxy,
+                                              ParticleWriterProxy > {
 
   #if defined(__clang__)
     #pragma clang diagnostic push
@@ -114,21 +116,23 @@ class Partitioner : public CBase_Partitioner< HostProxy,
   #endif
 
   private:
-    using Group =
-      CBase_Partitioner< HostProxy, WorkerProxy, LinSysMergerProxy >;
+    using Group = CBase_Partitioner< HostProxy, WorkerProxy, LinSysMergerProxy,
+                                     ParticleWriterProxy >;
 
   public:
     //! Constructor
     //! \param[in] host Host Charm++ proxy we are being called from
-    //! \param[in] worker Worker Charm++ proxy we spawn work to
+    //! \param[in] worker Worker Charm++ proxy we spawn PDE work to
     //! \param[in] lsm Linear system merger proxy (required by the workers)
     Partitioner( const HostProxy& host,
                  const WorkerProxy& worker,
-                 const LinSysMergerProxy& lsm ) :
+                 const LinSysMergerProxy& lsm,
+                 const ParticleWriterProxy& pw ) :
       __dep(),
       m_host( host ),
       m_worker( worker ),
       m_linsysmerger( lsm ),
+      m_particlewriter( pw ),
       m_npe( 0 ),
       m_req(),
       m_reordered( 0 ),
@@ -342,6 +346,8 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     WorkerProxy m_worker;
     //! Linear system merger proxy
     LinSysMergerProxy m_linsysmerger;
+    //! Particle writer proxy
+    ParticleWriterProxy m_particlewriter;
     //! Number of fellow PEs to send elem IDs to
     std::size_t m_npe;
     //! Queue of requested node IDs from PEs
@@ -728,19 +734,28 @@ class Partitioner : public CBase_Partitioner< HostProxy,
       auto mynchare = chunksize;
       if (CkMyPe() == CkNumPes()-1) mynchare += m_nchare % CkNumPes();
       // Create worker chare array elements
+      createWorkers( chunksize, mynchare );
+      // Broadcast our bounds of global node IDs to all linear system mergers
+      m_linsysmerger.bounds( CkMyPe(), m_lower, m_upper );
+    }
+
+    //! Create chare array elements on this PE
+    //! \param[in] chunksize The number of chares created by PEs 0 ... N-2
+    //! \param[in] mynchare The number of worker chares to create on this PE
+    void createWorkers( int chunksize, int mynchare ) {
       for (int c=0; c<mynchare; ++c) {
         // Compute chare ID
         auto cid = CkMyPe() * chunksize + c;
-        // Create array element
+        // Create performer array element
         m_worker[ cid ].insert( m_host,
                                 m_linsysmerger,
+                                m_particlewriter,
                                 tk::cref_find( m_node, cid ),
                                 tk::cref_find( m_chcid, cid ),
+                                m_nchare,
                                 CkMyPe() );
       }
       m_worker.doneInserting();
-      // Broadcast our bounds of global node IDs to all linear system mergers
-      m_linsysmerger.bounds( CkMyPe(), m_lower, m_upper );
     }
 
     //! Compute communication cost of linear system merging for our PE

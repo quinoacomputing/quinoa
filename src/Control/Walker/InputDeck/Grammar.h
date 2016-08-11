@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Mon 02 May 2016 12:17:24 PM MDT
+  \date      Tue 26 Jul 2016 07:40:52 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Walker's input deck grammar definition
   \details   Walker's input deck grammar definition. We use the [Parsing
@@ -21,6 +21,7 @@
 #include "Walker/Types.h"
 #include "Keywords.h"
 #include "CommonGrammar.h"
+#include "QuinoaConfig.h"
 #include "Walker/Options/InitPolicy.h"
 #include "Walker/Options/CoeffPolicy.h"
 

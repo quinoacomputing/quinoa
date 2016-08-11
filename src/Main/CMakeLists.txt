@@ -51,8 +51,9 @@ target_link_libraries(${UNITTEST_EXECUTABLE}
                       ${MKL_INTERFACE_LIBRARY}
                       ${MKL_CORE_LIBRARY}
                       ${MKL_SEQUENTIAL_LAYER_LIBRARY}
+                      ${H5PART_LIBRARY}
+                      ${HDF5_C_LIBRARIES}
                       ${NETCDF_LIBRARIES}       # only for static link
-                      ${HDF5_LIBRARIES}         # only for static link
                       ${AEC_LIBRARY}            # only for static link
 )
 
@@ -104,17 +105,21 @@ target_link_libraries(${INCITER_EXECUTABLE}
                       Inciter
                       Base
                       IO
+                      AsyncIO
                       Mesh
+                      RNG
                       ${PUGIXML_LIBRARIES}
                       ${SEACASNemesis_LIBRARIES}
                       ${SEACASExodus_LIBRARIES}
                       ${HYPRE_LIBRARY}
                       ${Zoltan2_LIBRARIES}
+                      ${RNGSSE_LIBRARY}
                       ${MKL_INTERFACE_LIBRARY}
                       ${MKL_CORE_LIBRARY}
                       ${MKL_SEQUENTIAL_LAYER_LIBRARY}
+                      ${H5PART_LIBRARY}
+                      ${HDF5_C_LIBRARIES}
                       ${NETCDF_LIBRARIES}       # only for static link
-                      ${HDF5_LIBRARIES}         # only for static link
                       ${AEC_LIBRARY}            # only for static link
                       ${LAPACK_LIBRARIES}       # only for static link
 )
@@ -220,8 +225,9 @@ target_link_libraries(${MESHCONV_EXECUTABLE}
                       ${PUGIXML_LIBRARIES}
                       ${SEACASNemesis_LIBRARIES}
                       ${SEACASExodus_LIBRARIES}
+                      ${H5PART_LIBRARY}
+                      ${HDF5_C_LIBRARIES}
                       ${NETCDF_LIBRARIES}       # only for static link
-                      ${HDF5_LIBRARIES}         # only for static link
                       ${AEC_LIBRARY}            # only for static link
 )
 
@@ -283,8 +289,9 @@ target_link_libraries(${WALKER_EXECUTABLE}
                       ${MKL_CORE_LIBRARY}
                       ${MKL_SEQUENTIAL_LAYER_LIBRARY}
                       ${RNGSSE_LIBRARY}
+                      ${H5PART_LIBRARY}
+                      ${HDF5_C_LIBRARIES}
                       ${NETCDF_LIBRARIES}       # only for static link
-                      ${HDF5_LIBRARIES}         # only for static link
                       ${AEC_LIBRARY}            # only for static link
 )
 

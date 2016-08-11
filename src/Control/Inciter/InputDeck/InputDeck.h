@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Mon 25 Jul 2016 08:15:26 AM MDT
+  \date      Sun 07 Aug 2016 01:17:58 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Inciter's input deck definition
   \details   This file defines the heterogeneous stack that is used for storing
@@ -93,6 +93,7 @@ class InputDeck :
                                        kw::mat_mu >;
     using keywords3 = boost::mpl::set< kw::mat_cv,
                                        kw::mat_k,
+                                       kw::npar,
                                        kw::depvar >;
                                      
     //! \brief Constructor: set defaults
@@ -107,7 +108,7 @@ class InputDeck :
          ( std::numeric_limits< kw::term::info::expect::type >::max() );
       set< tag::discr, tag::t0 >( 0.0 );
       set< tag::discr, tag::dt >( 0.5 );
-     // Default txt floating-point output precision in digits
+      // Default txt floating-point output precision in digits
       set< tag::prec, tag::diag >( std::cout.precision() );
       // Default intervals
       set< tag::interval, tag::tty >( 1 );

@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Conductor.h
   \author    J. Bakosi
-  \date      Mon 25 Jul 2016 11:06:00 AM MDT
+  \date      Tue 09 Aug 2016 08:40:47 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Conductor drives the time integration of systems of systems of PDEs
   \details   Conductor drives the time integration of systems of systems of
@@ -28,17 +28,37 @@
     digraph "Conductor SDAG" {
       rankdir="LR";
       node [shape=record, fontname=Helvetica, fontsize=10];
+      Row [ label="Row"
+            tooltip="row indices of the linear system is complete"
+            URL="\ref tk::LinSysMerger::signal2host_row_complete"];
+      Msum [ label="Msum"
+              tooltip="mesh surrounding mesh data structure computed"
+              URL="\ref inciter::Performer::msum"];
+      Init [ label="Init" color="#e6851c"
+              tooltip="inciter::Performer::init"
+              URL="\ref inciter::Conductor::report"];
+      Row -> Init [ style="solid" ];
+      Msum -> Init [ style="solid" ];
+
+      ParCom [ label="ParCom"
+              tooltip="particle communication among Performer chares"
+              URL="\ref inciter::Performer::track"];
+      Npar [ label="Npar"
+              tooltip="number of particles to be output to file counted"
+              URL="\ref inciter::Performer::writeParticles"];
       Diag [ label="Diag"
               tooltip="chares contribute diagnostics"
               URL="\ref inciter::Performer::diagnostics"];
-      Eval [ label="Eval"
+      Out [ label="Out"
+              tooltip="particles output to file"
+              URL="\ref inciter::Performer::doWriteParticles"];
+      Eval [ label="Eval" color="#e6851c"
               tooltip="evaluate time at the end of the time step"
               URL="\ref inciter::Conductor::evaluateTime"];
-      Rep [ label="Rep"
-              tooltip="output one-liner report"
-              URL="\ref inciter::Conductor::report"];
-      Diag -> Rep [ style="dashed" ];
-      Eval -> Rep [ style="solid" ];
+      ParCom -> Npar [ style="solid" ];
+      Npar -> Out [ style="solid" ];
+      Diag -> Eval [ style="solid" ];
+      Out -> Eval [ style="solid" ];
     }
     \enddot
     \include Inciter/conductor.ci
@@ -57,6 +77,7 @@
 #include "InciterPrint.h"
 #include "Partitioner.h"
 #include "VectorReducer.h"
+#include "ParticleWriter.h"
 
 #include "NoWarning/performer.decl.h"
 
@@ -122,6 +143,9 @@ class Conductor : public CBase_Conductor {
     //!   branches have done their part of storing and exporting global row ids
     void rowcomplete();
 
+    //! \brief Reduction target indicating ...
+    void msumcomplete() { trigger_msum_complete(); }
+
     //! Reduction target initiating verification of the boundary conditions set
     void verifybc( CkReductionMsg* msg );
 
@@ -132,6 +156,13 @@ class Conductor : public CBase_Conductor {
     //!   finished their initialization step
     void initcomplete();
 
+    //! \brief Reduction target indicating that all workers have sent their
+    //!   number of particles to be output
+    void nparcomplete() { trigger_npar_complete(); }
+
+    //! Reduction target indicating the particle communication is complete
+    void parcomcomplete() { trigger_parcom_complete(); }
+
     //! \brief Reduction target optionally collecting diagnostics, e.g.,
     //!   residuals, from all Performer chares
     void diagnostics( tk::real* d, std::size_t n );
@@ -140,11 +171,14 @@ class Conductor : public CBase_Conductor {
     //!    diagnostics and we ready to output the one-liner report
     void diagcomplete() { trigger_diag_complete(); }
 
-    //! \brief Reduction target indicating that all Performer chares have
-    //!   finished a time step and it is time to decide whether to continue
-    void evaluateTime();
+    //! \brief Reduction target indicating that all particles writers have
+    //!   finished outputing particles to file
+    //! \details This function is a Charm++ reduction target that is called when
+    //!   all performer chares have finished communicating particles
+    void outcomplete() { trigger_out_complete(); }
 
-    //! \brief Reduction target indicating that all ...
+    //! \brief Reduction target indicating that the linear system mergers are
+    //!   ready for the next time step
     void advance();
 
     //! Normal finish of time stepping
@@ -154,19 +188,22 @@ class Conductor : public CBase_Conductor {
     using LinSysMergerProxy = tk::CProxy_LinSysMerger< CProxy_Conductor,
                                                        CProxy_Performer >;
     using PerformerProxy = CProxy_Performer;
+    using ParticleWriterProxy = tk::CProxy_ParticleWriter< CProxy_Conductor >;
     using PartitionerProxy = CProxy_Partitioner< CProxy_Conductor,
                                                  CProxy_Performer,
-                                                 LinSysMergerProxy >;
+                                                 LinSysMergerProxy,
+                                                 ParticleWriterProxy >;
 
-    InciterPrint m_print;               //!< Pretty printer
-    int m_nchare;                       //!< Number of performer chares
-    uint64_t m_it;                      //!< Iteration count
-    tk::real m_t;                       //!< Physical time
-    tk::real m_dt;                      //!< Physical time step size
-    uint8_t m_stage;                    //!< Stage in multi-stage time stepping
-    LinSysMergerProxy m_linsysmerger;   //!< Linear system merger group proxy
-    PerformerProxy m_performer;         //!< Performer chare array proxy
-    PartitionerProxy m_partitioner;     //!< Partitioner group proxy
+    InciterPrint m_print;                //!< Pretty printer
+    int m_nchare;                        //!< Number of performer chares
+    uint64_t m_it;                       //!< Iteration count
+    tk::real m_t;                        //!< Physical time
+    tk::real m_dt;                       //!< Physical time step size
+    uint8_t m_stage;                     //!< Stage in multi-stage time stepping
+    LinSysMergerProxy m_linsysmerger;    //!< Linear system merger group proxy
+    PerformerProxy m_performer;          //!< Performer chare array proxy
+    ParticleWriterProxy m_particlewriter;//!< Particle writer group proxy
+    PartitionerProxy m_partitioner;      //!< Partitioner group proxy
     //! Average communication cost of merging the linear system
     tk::real m_avcost;
     //! Total number of mesh nodes
@@ -187,8 +224,8 @@ class Conductor : public CBase_Conductor {
     //! Print out time integration header
     void header();
 
-    //! Print out one-liner report on time step
-    void report();
+    //! Evaluate time step and output one-liner report
+    void evaluateTime();
 };
 
 } // inciter::
