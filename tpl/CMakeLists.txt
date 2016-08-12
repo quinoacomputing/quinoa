@@ -190,8 +190,11 @@ if(HDF5_FOUND AND HDF5_IS_PARALLEL)
         "${hdf5_library_dirs_flags}")
   set(hdf5_library_dirs "${HDF5_LIBRARY_DIRS}")
   list(GET HDF5_LIBRARY_DIRS 0 hdf5_root)  # get the first item of cmake list
+  get_filename_component(hdf5_root_last ${hdf5_root} NAME)
+  if ("${hdf5_root_last}" MATCHES "lib")
+    get_filename_component( hdf5_root ${hdf5_root} DIRECTORY ) # strip "/lib"
+  endif()
   if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    get_filename_component( hdf5_root ${hdf5_root} DIRECTORY ) # strip "/[...]"
     set(hdf5_library_dirs_flags "LDFLAGS=-L${hdf5_root}/lib")
   endif()
 else()
