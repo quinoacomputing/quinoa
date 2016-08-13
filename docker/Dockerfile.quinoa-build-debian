@@ -5,7 +5,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Dockerfile for a simple dynamic build of Quinoa on Debian
-# \date      Fri 12 Aug 2016 04:51:38 PM MDT
+# \date      Fri 12 Aug 2016 10:29:54 PM MDT
 #
 ################################################################################
 
@@ -37,13 +37,13 @@ ENV https_proxy https://proxyout.lanl.gov:8080/
 # Install system-wide prerequisites
 RUN apt-get update -y && apt-get install -y debian-keyring debian-archive-keyring wget
 RUN echo "deb http://ftp.us.debian.org/debian testing main \n deb http://security.debian.org testing/updates main" > /etc/apt/sources.list
-RUN apt-get update -y && apt-get install -y m4 git cmake gfortran-5 gcc-5 g++-5 gmsh libpugixml-dev libpstreams-dev libboost-all-dev libblas-dev liblapack-dev liblapacke-dev libhdf5-dev libhdf5-openmpi-dev libhypre-dev
+RUN apt-get update -y && apt-get install -y m4 git cmake gfortran gcc g++ gmsh libpugixml-dev libpstreams-dev libboost-all-dev libblas-dev liblapack-dev liblapacke-dev libhdf5-dev libhdf5-openmpi-dev libhypre-dev
 
 # Clone quinoa
 RUN git clone https://github.com/quinoacomputing/quinoa.git
 # Build TPLs
 RUN cd quinoa && mkdir -p tpl/build && cd tpl/build && cmake .. && make -sj$((`cat /proc/cpuinfo | grep MHz | wc -l`/4))
 # Build & test
-RUN cd quinoa && mkdir -p build && cd build && cmake -DCMAKE_CXX_FLAGS=-Werror -DMPIRUN_BIND_ARGS="-bind-to none -map-by node --allow-run-as-root" ../src && make -sj$((`cat /proc/cpuinfo | grep MHz | wc -l`/4)) && ../script/run_tests.sh $((`cat /proc/cpuinfo | grep MHz | wc -l`/4))
+RUN cd quinoa && mkdir -p build && cd build && cmake -DMPIRUN_BIND_ARGS="-bind-to none -map-by node --allow-run-as-root" ../src && make -sj$((`cat /proc/cpuinfo | grep MHz | wc -l`/4)) && ../script/run_tests.sh $((`cat /proc/cpuinfo | grep MHz | wc -l`/4))
 # Clean code
 RUN rm -rf /quinoa
