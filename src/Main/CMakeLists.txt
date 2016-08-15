@@ -52,8 +52,10 @@ target_link_libraries(${UNITTEST_EXECUTABLE}
                       ${MKL_CORE_LIBRARY}
                       ${MKL_SEQUENTIAL_LAYER_LIBRARY}
                       ${H5PART_LIBRARY}
-                      ${HDF5_C_LIBRARIES}
                       ${NETCDF_LIBRARIES}       # only for static link
+                      ${HDF5_C_LIBRARIES}
+                      ${ZLIB_LIBRARIES}         # only for static link
+                      ${HDF5_HL_LIBRARIES}      # only for static link
                       ${AEC_LIBRARY}            # only for static link
 )
 
@@ -101,8 +103,8 @@ target_link_libraries(${INCITER_EXECUTABLE}
                       PDE
                       InciterControl
                       LoadBalance
-                      LinSys
                       Inciter
+                      LinSys
                       Base
                       IO
                       AsyncIO
@@ -118,8 +120,10 @@ target_link_libraries(${INCITER_EXECUTABLE}
                       ${MKL_CORE_LIBRARY}
                       ${MKL_SEQUENTIAL_LAYER_LIBRARY}
                       ${H5PART_LIBRARY}
-                      ${HDF5_C_LIBRARIES}
                       ${NETCDF_LIBRARIES}       # only for static link
+                      ${HDF5_C_LIBRARIES}
+                      ${ZLIB_LIBRARIES}         # only for static link
+                      ${HDF5_HL_LIBRARIES}      # only for static link
                       ${AEC_LIBRARY}            # only for static link
                       ${LAPACK_LIBRARIES}       # only for static link
 )
@@ -226,8 +230,10 @@ target_link_libraries(${MESHCONV_EXECUTABLE}
                       ${SEACASNemesis_LIBRARIES}
                       ${SEACASExodus_LIBRARIES}
                       ${H5PART_LIBRARY}
-                      ${HDF5_C_LIBRARIES}
                       ${NETCDF_LIBRARIES}       # only for static link
+                      ${HDF5_C_LIBRARIES}
+                      ${ZLIB_LIBRARIES}         # only for static link
+                      ${HDF5_HL_LIBRARIES}      # only for static link
                       ${AEC_LIBRARY}            # only for static link
 )
 
@@ -290,8 +296,10 @@ target_link_libraries(${WALKER_EXECUTABLE}
                       ${MKL_SEQUENTIAL_LAYER_LIBRARY}
                       ${RNGSSE_LIBRARY}
                       ${H5PART_LIBRARY}
-                      ${HDF5_C_LIBRARIES}
                       ${NETCDF_LIBRARIES}       # only for static link
+                      ${HDF5_C_LIBRARIES}
+                      ${ZLIB_LIBRARIES}         # only for static link
+                      ${HDF5_HL_LIBRARIES}      # only for static link
                       ${AEC_LIBRARY}            # only for static link
 )
 
