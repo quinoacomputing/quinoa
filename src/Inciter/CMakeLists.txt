@@ -6,12 +6,12 @@ project(Inciter CXX)
 include(charm)
 
 add_library(Inciter
-            Conductor.C
+            Transporter.C
             Performer.C
             Partitioner.C
 )
 
-addCharmModule( "conductor" "Inciter" )
+addCharmModule( "transporter" "Inciter" )
 addCharmModule( "performer" "Inciter" )
 addCharmModule( "partitioner" "Inciter" )
 
@@ -20,11 +20,12 @@ addCharmModule( "partitioner" "Inciter" )
 # inciter (in Main/Inciter.C).
 add_dependencies( "Inciter" "inciterCharmModule" )
 
-## Add extra dependency of Conductor charm module on charm modules implementing
-## advanced array element placement using maps. This is required since Conductor
-## charm module depends on and uses advanced array element placement maps.
-#add_dependencies( "conductorCharmModule" "linearmapCharmModule" )
-#add_dependencies( "conductorCharmModule" "unsmeshmapCharmModule" )
+## Add extra dependency of Transporter charm module on charm modules implementing
+## advanced array element placement using maps. This is required since
+## Transporter charm module depends on and uses advanced array element placement
+## maps.
+#add_dependencies( "transporterCharmModule" "linearmapCharmModule" )
+#add_dependencies( "transporterCharmModule" "unsmeshmapCharmModule" )
 
 # Add extra dependency of Inciter on LinSysMerger charm module. This is required
 # so that linsysmerger.decl.h and linsysmerger.def.h are generated before

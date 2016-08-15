@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/LinSysMerger.h
   \author    J. Bakosi
-  \date      Mon 01 Aug 2016 01:27:26 PM MDT
+  \date      Mon 15 Aug 2016 10:29:41 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ chare linear system merger group to solve a linear system
   \details   Charm++ chare linear system merger group used to collect and
@@ -135,7 +135,7 @@
 #include "HashMapReducer.h"
 
 #include "NoWarning/linsysmerger.decl.h"
-#include "NoWarning/conductor.decl.h"
+#include "NoWarning/transporter.decl.h"
 
 namespace tk {
 
@@ -1014,9 +1014,9 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       * \brief These functions signal back to the host via a global reduction
       *   originating from each PE branch
       * \details Singal calls contribute to a reduction on all branches (PEs)
-      *   of LinSysMerger to the host, e.g., inciter::CProxy_Conductor, given by
-      *   the template argument HostProxy. The signal functions are overloads on
-      *   the specialization, e.g., inciter::CProxy_Conductor, of the
+      *   of LinSysMerger to the host, e.g., inciter::CProxy_Transporter, given
+      *   by the template argument HostProxy. The signal functions are overloads
+      *   on the specialization, e.g., inciter::CProxy_Transporter, of the
       *   LinSysMerger template. They create Charm++ reduction targets via
       *   creating a callback that invokes the typed reduction client, where
       *   host is the proxy on which the reduction target method, given by the
@@ -1041,12 +1041,12 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       *      than type resolution and the string of the template argument would
       *      be substituted instead of the type specialized (which is not what
       *      we want here), and
-      *    * the template argument class, e.g, CProxy_Conductor, is in a
+      *    * the template argument class, e.g, CProxy_Transporter, is in a
       *      namespace different than that of LinSysMerger. When a new class is
       *      used to specialize LinSysMerger, the compiler will alert that a new
       *      overload needs to be defined.
       *
-      * \note This simplifies client-code, e.g., inciter::Conductor, which now
+      * \note This simplifies client-code, e.g., inciter::Transporter, which now
       *   requires no explicit book-keeping with counters, etc. Also a reduction
       *   (instead of a direct call to the host) better utilizes the
       *   communication network as computational nodes can send their aggregated
@@ -1059,40 +1059,40 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
     ///@{
     //! \brief Signal back to host that the initialization of the row indices of
     //!   the linear system is complete
-    void signal2host_row_complete( const inciter::CProxy_Conductor& host ) {
-      using inciter::CkIndex_Conductor;
+    void signal2host_row_complete( const inciter::CProxy_Transporter& host ) {
+      using inciter::CkIndex_Transporter;
       Group::contribute(
-        CkCallback( CkIndex_Conductor::redn_wrapper_rowcomplete(NULL), host ) );
+        CkCallback( CkIndex_Transporter::redn_wrapper_rowcomplete(NULL), host ) );
     }
     //! Send nodelists of BCs we set to host to verify aggregated BCs
-    void signal2host_verifybc( const inciter::CProxy_Conductor& host,
+    void signal2host_verifybc( const inciter::CProxy_Transporter& host,
                                const std::vector< std::size_t >& bc ) {
-      using inciter::CkIndex_Conductor;
+      using inciter::CkIndex_Transporter;
       auto stream = tk::serialize( bc );
-      CkCallback c( CkIndex_Conductor::verifybc(nullptr), host );
+      CkCallback c( CkIndex_Transporter::verifybc(nullptr), host );
       Group::contribute( stream.first, stream.second.get(), BCVectorMerger, c );
     }
     //! \brief Signal back to host that enabling the SDAG waits for assembling
     //!    the right-hand side is complete and ready for a new advance in time
-    void signal2host_advance( const inciter::CProxy_Conductor& host ) {
-      using inciter::CkIndex_Conductor;
+    void signal2host_advance( const inciter::CProxy_Transporter& host ) {
+      using inciter::CkIndex_Transporter;
       Group::contribute(
-       CkCallback( CkIndex_Conductor::redn_wrapper_advance(NULL), host ) );
+       CkCallback( CkIndex_Transporter::redn_wrapper_advance(NULL), host ) );
     }
     //! \brief Signal back to host that receiving the inverse PE-division map is
     //!  complete and we are ready for Prformers to start their setup.
-    void signal2host_setup( const inciter::CProxy_Conductor& host ) {
-      using inciter::CkIndex_Conductor;
+    void signal2host_setup( const inciter::CProxy_Transporter& host ) {
+      using inciter::CkIndex_Transporter;
       Group::contribute(
-       CkCallback( CkIndex_Conductor::redn_wrapper_setup(NULL), host ) );
+       CkCallback( CkIndex_Transporter::redn_wrapper_setup(NULL), host ) );
     }
     //! Contribute diagnostics back to host
-    void signal2host_diag( const inciter::CProxy_Conductor& host,
+    void signal2host_diag( const inciter::CProxy_Transporter& host,
                            const std::vector< tk::real >& diag ) {
-      using inciter::CkIndex_Conductor;
+      using inciter::CkIndex_Transporter;
       Group::contribute( static_cast< int >( diag.size() * sizeof(tk::real) ),
                          diag.data(), CkReduction::sum_double,
-        CkCallback( CkReductionTarget( Conductor, diagnostics), host ) );
+        CkCallback( CkReductionTarget( Transporter, diagnostics), host ) );
     }
     ///@}
     #if defined(__clang__)

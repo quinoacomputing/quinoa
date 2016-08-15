@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/LinSysMerger.C
   \author    J. Bakosi
-  \date      Thu 21 Jul 2016 02:06:47 PM MDT
+  \date      Mon 15 Aug 2016 10:29:53 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Linear system merger
   \details   Linear system merger.
@@ -42,7 +42,7 @@ CkReduction::reducerType BCValMerger;
 // to instantiate registration and delivery of code for the individual
 // specializations. See also
 // https://isocpp.org/wiki/faq/templates#separate-template-class-defn-from-decl.
-template class tk::LinSysMerger< inciter::CProxy_Conductor,
+template class tk::LinSysMerger< inciter::CProxy_Transporter,
                                  inciter::CProxy_Performer >;
 
 #if defined(__clang__)

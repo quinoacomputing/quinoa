@@ -1,14 +1,15 @@
 // *****************************************************************************
 /*!
-  \file      src/NoWarning/conductor.decl.h
+  \file      src/NoWarning/transporter.decl.h
   \author    J. Bakosi
-  \date      Sun 15 May 2016 07:27:02 AM MDT
+  \date      Mon 15 Aug 2016 10:31:23 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
-  \brief     Include conductor.decl.h with turning off specific compiler warnings
+  \brief     Include transporter.decl.h with turning off specific compiler
+             warnings
 */
 // *****************************************************************************
-#ifndef nowarning_conductor_decl_h
-#define nowarning_conductor_decl_h
+#ifndef nowarning_transporter_decl_h
+#define nowarning_transporter_decl_h
 
 #if defined(__clang__)
   #pragma clang diagnostic push
@@ -56,7 +57,7 @@
   #pragma warning( disable: 1720 )
 #endif
 
-#include "../Inciter/conductor.decl.h"
+#include "../Inciter/transporter.decl.h"
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
@@ -66,4 +67,4 @@
   #pragma warning( pop )
 #endif
 
-#endif // nowarning_conductor_decl_h
+#endif // nowarning_transporter_decl_h

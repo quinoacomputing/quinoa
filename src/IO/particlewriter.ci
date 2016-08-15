@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/particlewriter.ci
   \author    J. Bakosi
-  \date      Mon 01 Aug 2016 03:24:58 PM MDT
+  \date      Mon 15 Aug 2016 10:28:56 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ module interface file for outputing particle data to file
   \details   Charm++ module interface file for outputing particle data to file.
@@ -16,8 +16,8 @@ module particlewriter {
     // List all possible specializations of templated chare to instantiate
     // registration and delivery of code for the individual specializations
 
-    // Will specialize particle writer for Conductor
-    chare ParticleWriter< inciter::CProxy_Conductor >;
+    // Will specialize particle writer for Transporter
+    chare ParticleWriter< inciter::CProxy_Transporter >;
 
     // ParticleWriter is templated so that the same code (parameterized by the
     // type given by the template argument, HostProxy) can be generated for

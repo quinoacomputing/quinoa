@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/ParticleWriter.h
   \author    J. Bakosi
-  \date      Thu 11 Aug 2016 04:08:00 PM MDT
+  \date      Mon 15 Aug 2016 10:28:41 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ group for outputing particle data to file via H5Part
   \details   Charm++ group for outputing particle data to file via H5Part in
@@ -19,7 +19,7 @@
 #include "H5PartWriter.h"
 
 #include "NoWarning/particlewriter.decl.h"
-#include "NoWarning/conductor.decl.h"
+#include "NoWarning/transporter.decl.h"
 
 namespace tk {
 
@@ -93,10 +93,10 @@ class ParticleWriter : public CBase_ParticleWriter< HostProxy > {
       * \brief These functions signal back to the host via a global reduction
       *   originating from each PE branch
       * \details Singal calls contribute to a reduction on all branches (PEs)
-      *   of ParticleWriter to the host, e.g., inciter::CProxy_Conductor, given
-      *   by the template argument HostProxy. The signal functions are overloads
-      *   on the specialization, e.g., inciter::CProxy_Conductor, of the
-      *   ParticleWriter template. They create Charm++ reduction targets via
+      *   of ParticleWriter to the host, e.g., inciter::CProxy_Transporter,
+      *   given by the template argument HostProxy. The signal functions are
+      *   overloads on the specialization, e.g., inciter::CProxy_Transporter, of
+      *   the ParticleWriter template. They create Charm++ reduction targets via
       *   creating a callback that invokes the typed reduction client, where
       *   host is the proxy on which the reduction target method, given by the
       *   string followed by "redn_wrapper_", e.g., parcomplete(), is called
@@ -120,12 +120,12 @@ class ParticleWriter : public CBase_ParticleWriter< HostProxy > {
       *      than type resolution and the string of the template argument would
       *      be substituted instead of the type specialized (which is not what
       *      we want here), and
-      *    * the template argument class, e.g, CProxy_Conductor, is in a
+      *    * the template argument class, e.g, CProxy_Transporter, is in a
       *      namespace different than that of ParticleWriter. When a new class
       *      is used to specialize ParticleWriter, the compiler will alert that
       *      a new overload needs to be defined.
       *
-      * \note This simplifies client-code, e.g., inciter::Conductor, which now
+      * \note This simplifies client-code, e.g., inciter::Transporter, which now
       *   requires no explicit book-keeping with counters, etc. Also a reduction
       *   (instead of a direct call to the host) better utilizes the
       *   communication network as computational nodes can send their aggregated
@@ -137,11 +137,11 @@ class ParticleWriter : public CBase_ParticleWriter< HostProxy > {
       * */
     ///@{
     //! \brief Signal back to host that the output of particles is complete
-    void signal2host_outcomplete( const inciter::CProxy_Conductor& host )
+    void signal2host_outcomplete( const inciter::CProxy_Transporter& host )
     {
-      using inciter::CkIndex_Conductor;
+      using inciter::CkIndex_Transporter;
       Group::contribute(
-        CkCallback( CkIndex_Conductor::redn_wrapper_outcomplete(NULL), host ) );
+        CkCallback(CkIndex_Transporter::redn_wrapper_outcomplete(NULL), host) );
     }
     ///@}
     #if defined(__clang__)
