@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/linsysmerger.ci
   \author    J. Bakosi
-  \date      Tue 26 Jul 2016 07:08:38 AM MDT
+  \date      Mon 15 Aug 2016 10:30:56 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ module interface file for merging a linear system
   \details   Charm++ module interface file for merging a linear system
@@ -13,15 +13,16 @@ module linsysmerger {
 
   include "unordered_map";
 
-  extern module conductor;
+  extern module transporter;
 
   namespace tk {
 
     // List all possible specializations of templated chare to instantiate
     // registration and delivery of code for the individual specializations
 
-    // Will specialize linear system merger for Conductor & Performer
-    chare LinSysMerger< inciter::CProxy_Conductor, inciter::CProxy_Performer >;
+    // Will specialize linear system merger for Transporter & Performer
+    chare LinSysMerger< inciter::CProxy_Transporter,
+                        inciter::CProxy_Performer >;
 
     // LinSysMerger is templated so that the same code (parameterized by the
     // type given by the template arguments, HostProxy and WorkerProxy) can be
@@ -121,13 +122,13 @@ module linsysmerger {
       // of these verification code paths only happen in DEBUG mode and skipped
       // in RELEASE (optimized) mode. While VerRow is simply an Assert in
       // rowsreceived(), VerBCs involves multiple steps of communication via
-      // multiple functions calls across three classes, LinSysMerger, Conductor,
-      // and Performer. While the VerBCs optional code path only happens in
-      // DEBUG mode, the code path does block on HypreLhs as well as on
-      // HypreRhs, which cannot proceed until VerBCs is finished. This is
+      // multiple functions calls across three classes, LinSysMerger,
+      // Transporter, and Performer. While the VerBCs optional code path only
+      // happens in DEBUG mode, the code path does block on HypreLhs as well as
+      // on HypreRhs, which cannot proceed until VerBCs is finished. This is
       // facilitated by 'trigger_ver_bc' which is only true by default, set in
       // the constructor only in RELEASE mode; in DEBUG mode it must be
-      // triggered by Conductor::doverifybc(), which is the last step of
+      // triggered by Transporter::doverifybc(), which is the last step of
       // verifying the BCs.
       //
       // Once the row IDs are contributed, we then continue by all Performer

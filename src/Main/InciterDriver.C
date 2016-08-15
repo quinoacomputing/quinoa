@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/InciterDriver.C
   \author    J. Bakosi
-  \date      Tue 03 May 2016 09:41:26 AM MDT
+  \date      Mon 15 Aug 2016 10:36:53 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Inciter driver
   \details   Inciter driver.
@@ -17,7 +17,7 @@
 #include "Inciter/CmdLine/CmdLine.h"
 #include "Inciter/InputDeck/InputDeck.h"
 
-#include "NoWarning/conductor.decl.h"
+#include "NoWarning/transporter.decl.h"
 
 namespace inciter {
 
@@ -54,7 +54,7 @@ InciterDriver::execute() const
 //! \author J. Bakosi
 // *****************************************************************************
 {
-  // Instantiate Conductor chare which drives the time-integration of a PDE via
-  // several Performer chares.
-  CProxy_Conductor::ckNew();
+  // Instantiate Transporter chare which drives the time-integration of a PDE
+  // via several Performer chares.
+  CProxy_Transporter::ckNew();
 }

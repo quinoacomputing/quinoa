@@ -1,14 +1,15 @@
 // *****************************************************************************
 /*!
-  \file      src/NoWarning/conductor.def.h
+  \file      src/NoWarning/transporter.def.h
   \author    J. Bakosi
-  \date      Thu 21 Jul 2016 08:53:16 AM MDT
+  \date      Mon 15 Aug 2016 10:31:53 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
-  \brief     Include conductor.def.h with turning off specific compiler warnings
+  \brief     Include transporter.def.h with turning off specific compiler
+             warnings
 */
 // *****************************************************************************
-#ifndef nowarning_conductor_def_h
-#define nowarning_conductor_def_h
+#ifndef nowarning_transporter_def_h
+#define nowarning_transporter_def_h
 
 #if defined(__clang__)
   #pragma clang diagnostic push
@@ -28,7 +29,7 @@
   #pragma GCC diagnostic ignored "-Wshadow"
 #endif
 
-#include "../Inciter/conductor.def.h"
+#include "../Inciter/transporter.def.h"
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
@@ -36,4 +37,4 @@
   #pragma GCC diagnostic pop
 #endif
 
-#endif // nowarning_conductor_def_h
+#endif // nowarning_transporter_def_h

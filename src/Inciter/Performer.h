@@ -2,11 +2,11 @@
 /*!
   \file      src/Inciter/Performer.h
   \author    J. Bakosi
-  \date      Thu 11 Aug 2016 07:38:51 AM MDT
+  \date      Mon 15 Aug 2016 10:23:40 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Performer advances a system of systems of PDEs
   \details   Performer advances a system of systems of PDEs. There are a
-    potentially large number of Performer Charm++ chares created by Conductor.
+    potentially large number of Performer Charm++ chares created by Transporter.
     Each performer gets a chunk of the full load (part of the mesh) and does the
     same: initializes and advances a system of systems of PDEs in time.
 */
@@ -32,7 +32,7 @@
 #include "MeshNodeMerger.h"
 #include "Inciter/InputDeck/InputDeck.h"
 
-#include "NoWarning/conductor.decl.h"
+#include "NoWarning/transporter.decl.h"
 #include "NoWarning/performer.decl.h"
 #include "NoWarning/particlewriter.decl.h"
 
@@ -48,15 +48,15 @@ extern CkReduction::reducerType MeshNodeMerger;
 class Performer : public CBase_Performer {
 
   private:
-    using ConductorProxy = CProxy_Conductor;
-    using LinSysMergerProxy = tk::CProxy_LinSysMerger< CProxy_Conductor,
+    using TransporterProxy = CProxy_Transporter;
+    using LinSysMergerProxy = tk::CProxy_LinSysMerger< CProxy_Transporter,
                                                        CProxy_Performer >;
-    using ParticleWriterProxy = tk::CProxy_ParticleWriter< ConductorProxy >;
+    using ParticleWriterProxy = tk::CProxy_ParticleWriter< TransporterProxy >;
 
   public:
     //! Constructor
     explicit
-      Performer( const CProxy_Conductor& conductor,
+      Performer( const CProxy_Transporter& transporter,
                  const LinSysMergerProxy& lsm,
                  const ParticleWriterProxy& pw,
                  const std::vector< std::size_t >& conn,
@@ -149,7 +149,7 @@ class Performer : public CBase_Performer {
       p | m_nchpar;
       p | m_nperf;
       p | m_outFilename;
-      p | m_conductor;
+      p | m_transporter;
       p | m_linsysmerger;
       p | m_particlewriter;
       p | m_cid;
@@ -190,7 +190,7 @@ class Performer : public CBase_Performer {
     std::size_t m_nchpar;                //!< Numbr of chares recvd partcls from
     std::size_t m_nperf;                 //!< Total number of performer chares
     std::string m_outFilename;           //!< Output filename
-    ConductorProxy m_conductor;          //!< Conductor proxy
+    TransporterProxy m_transporter;      //!< Transporter proxy
     LinSysMergerProxy m_linsysmerger;    //!< Linear system merger proxy
     ParticleWriterProxy m_particlewriter;//!< Particle writer proxy
     //! \brief Map associating old node IDs (as in file) to new node IDs (as in

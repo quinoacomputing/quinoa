@@ -2,11 +2,11 @@
 /*!
   \file      src/Inciter/Performer.C
   \author    J. Bakosi
-  \date      Wed 03 Aug 2016 12:49:08 PM MDT
+  \date      Mon 15 Aug 2016 10:22:03 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Performer advances a PDE
   \details   Performer advances a PDE. There are a potentially
-    large number of Performer Charm++ chares created by Conductor. Each
+    large number of Performer Charm++ chares created by Transporter. Each
     performer gets a chunk of the full load (part of the mesh) and does the
     same: initializes and advances a PDE in time.
 */
@@ -36,7 +36,7 @@
 
 // Force the compiler to not instantiate the template below as it is
 // instantiated in LinSys/LinSysMerger.C (only required on mac)
-extern template class tk::LinSysMerger< inciter::CProxy_Conductor,
+extern template class tk::LinSysMerger< inciter::CProxy_Transporter,
                                         inciter::CProxy_Performer >;
 
 namespace inciter {
@@ -60,7 +60,7 @@ CkReduction::reducerType MeshNodeMerger;
 
 using inciter::Performer;
 
-Performer::Performer( const ConductorProxy& conductor,
+Performer::Performer( const TransporterProxy& transporter,
                       const LinSysMergerProxy& lsm,
                       const ParticleWriterProxy& pw,
                       const std::vector< std::size_t >& conn,
@@ -75,7 +75,7 @@ Performer::Performer( const ConductorProxy& conductor,
   m_nperf( static_cast< std::size_t >( nperf ) ),
   m_outFilename( g_inputdeck.get< tag::cmd, tag::io, tag::output >() + "." +
                  std::to_string( thisIndex ) ),
-  m_conductor( conductor ),
+  m_transporter( transporter ),
   m_linsysmerger( lsm ),
   m_particlewriter( pw ),
   m_cid( cid ),
@@ -97,7 +97,7 @@ Performer::Performer( const ConductorProxy& conductor,
   m_parelse()
 // *****************************************************************************
 //  Constructor
-//! \param[in] conductor Host (Conductor) proxy
+//! \param[in] transporter Host (Transporter) proxy
 //! \param[in] lsm Linear system merger (LinSysMerger) proxy
 //! \param[in] conn Vector of mesh element connectivity owned (global IDs)
 //! \param[in] cid Map associating old node IDs (as in file) to new node IDs (as
@@ -141,7 +141,7 @@ Performer::msum( CkReductionMsg* msg )
       }
 
   contribute(
-     CkCallback( CkReductionTarget(Conductor,msumcomplete), m_conductor ) );
+     CkCallback( CkReductionTarget(Transporter,msumcomplete), m_transporter ) );
 }
 
 void
@@ -264,12 +264,12 @@ void
 Performer::requestBCs()
 // *****************************************************************************
 // Request owned node IDs on which a Dirichlet BC is set by the user
-//! \details Called from host (Conductor), contributing the result back to host
+//! \details Called from host (Transporter), contributing the result back to host
 //! \author J. Bakosi
 // *****************************************************************************
 {
    auto stream = tk::serialize( old( queryBCs() ) );
-   CkCallback cb( CkIndex_Conductor::doverifybc(nullptr), m_conductor );
+   CkCallback cb( CkIndex_Transporter::doverifybc(nullptr), m_transporter );
    contribute( stream.first, stream.second.get(), VerifyBCMerger, cb );
 }
 
@@ -355,10 +355,10 @@ Performer::init( tk::real dt )
   // Send off initial conditions for assembly
   m_linsysmerger.ckLocalBranch()->charesol( thisIndex, m_gid, m_u );
 
-  // Call back to Conductor::initcomplete(), signaling that the initialization
+  // Call back to Transporter::initcomplete(), signaling that the initialization
   // is complete and we are now starting time stepping
   contribute(
-      CkCallback( CkReductionTarget( Conductor, initcomplete ), m_conductor ) );
+      CkCallback(CkReductionTarget(Transporter,initcomplete), m_transporter));
 
   // Compute left-hand side of PDE
   lhs();
@@ -512,7 +512,7 @@ Performer::writeParticles()
   m_particlewriter.ckLocalBranch()->npar( m_particles.nunk() );
   // Signal back to host that we are done with sending our number of particles
   contribute(
-      CkCallback( CkReductionTarget(Conductor,nparcomplete), m_conductor ) );
+      CkCallback(CkReductionTarget(Transporter,nparcomplete), m_transporter) );
 }
 
 void
@@ -718,8 +718,8 @@ Performer::track()
 {
   // Only advance particles in the finel time step stage
   if (m_stage < 1) {
-    contribute( CkCallback( CkReductionTarget( Conductor, parcomcomplete ),
-                m_conductor));
+    contribute( CkCallback( CkReductionTarget( Transporter, parcomcomplete ),
+                m_transporter));
     return;
   }
 
@@ -765,8 +765,8 @@ Performer::track()
     m_nchpar = 0;
     m_parmiss.clear();
     m_parelse.clear();
-    contribute( CkCallback( CkReductionTarget( Conductor, parcomcomplete ),
-                m_conductor));
+    contribute( CkCallback( CkReductionTarget( Transporter, parcomcomplete ),
+                m_transporter));
   } else {
     decltype(m_particles) pexp( m_parmiss.size(), 3 );
     std::size_t p = 0;
@@ -827,8 +827,8 @@ Performer::foundpar( const std::vector< std::size_t >& found )
       m_nchpar = 0;
       m_parmiss.clear();
       m_parelse.clear();
-      contribute( CkCallback( CkReductionTarget( Conductor, parcomcomplete ),
-                  m_conductor));
+      contribute( CkCallback( CkReductionTarget( Transporter, parcomcomplete ),
+                  m_transporter));
     } else {
       decltype(m_particles) pexp( m_parmiss.size(), 3 );
       std::size_t p = 0;
@@ -883,8 +883,8 @@ Performer::collectedpar( const std::vector< std::size_t >& found )
     m_nchpar = 0;
     m_parmiss.clear();
     m_parelse.clear();
-    contribute( CkCallback( CkReductionTarget( Conductor, parcomcomplete ),
-                m_conductor));
+    contribute( CkCallback( CkReductionTarget( Transporter, parcomcomplete ),
+                m_transporter));
   }
 }
 
@@ -971,7 +971,7 @@ Performer::out()
     writeParticles();
   } else
     contribute(
-       CkCallback( CkReductionTarget(Conductor,outcomplete), m_conductor ) );
+       CkCallback(CkReductionTarget(Transporter,outcomplete), m_transporter) );
 }
 
 void
@@ -1018,7 +1018,7 @@ Performer::updateSolution( const std::vector< std::size_t >& gid,
       m_linsysmerger.ckLocalBranch()->diagnostics();
     else
       contribute(
-        CkCallback(CkReductionTarget(Conductor,diagcomplete), m_conductor) );
+        CkCallback(CkReductionTarget(Transporter,diagcomplete), m_transporter));
 
 //     // TEST FEATURE: Manually migrate this chare by using migrateMe to see if
 //     // all relevant state variables are being PUPed correctly.

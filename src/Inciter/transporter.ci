@@ -1,22 +1,22 @@
 // *****************************************************************************
 /*!
-  \file      src/Inciter/conductor.ci
+  \file      src/Inciter/transporter.ci
   \author    J. Bakosi
-  \date      Tue 09 Aug 2016 08:34:11 AM MDT
+  \date      Mon 15 Aug 2016 10:19:16 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
-  \brief     Charm++ module interface file for Conductor
-  \details   Charm++ module interface file for Conductor
+  \brief     Charm++ module interface file for Transporter
+  \details   Charm++ module interface file for Transporter
 */
 // *****************************************************************************
 
-module conductor {
+module transporter {
 
   extern module partitioner;
 
   namespace inciter {
 
-    chare Conductor {
-      entry Conductor();
+    chare Transporter {
+      entry Transporter();
       entry [reductiontarget] void load( uint64_t nelem );
       entry [reductiontarget] void partition();
       entry [reductiontarget] void flattened();
@@ -79,15 +79,15 @@ module conductor {
       //
       // Collecting diagnostics is optional, i.e., it does not happen every time
       // step. If diagnostics are collected trigger_diag_complete() is signaled
-      // from the reduction target, Conductor::diagnostics(). If diagnostics are
-      // not collected in a time step, collection is skipped, and
+      // from the reduction target, Transporter::diagnostics(). If diagnostics
+      // are not collected in a time step, collection is skipped, and
       // trigger_diag_complete() is signaled from the shortcut function,
-      // Conductor::diagcomplete().
+      // Transporter::diagcomplete().
       //
       // Similar to diagnostics output, particle output is also optional and
       // does not happen every time step. The Charm++ reduction target
-      // Conductor::outcomplete() is reached either way but on different routes:
-      // if particles are output, the reduction originates from the
+      // Transporter::outcomplete() is reached either way but on different
+      // routes: if particles are output, the reduction originates from the
       // ParticleWriter Charm++ group after writeCoords() finished the output,
       // if particles are not output, the reduction originates from
       // Performer::out(). Either way, the above DAG and its logic remains the

@@ -1,31 +1,30 @@
 // *****************************************************************************
 /*!
-  \file      src/Inciter/Conductor.h
+  \file      src/Inciter/Transporter.h
   \author    J. Bakosi
-  \date      Tue 09 Aug 2016 08:40:47 AM MDT
+  \date      Mon 15 Aug 2016 10:26:01 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
-  \brief     Conductor drives the time integration of systems of systems of PDEs
-  \details   Conductor drives the time integration of systems of systems of
-    PDEs.
+  \brief     Transporter drives the time integration of transport equations
+  \details   Transporter drives the time integration of transport equations.
 
     The implementation uses the Charm++ runtime system and is fully
     asynchronous, overlapping computation and communication. The algorithm
     utilizes the structured dagger (SDAG) Charm++ functionality. The high-level
     overview of the algorithm structure and how it interfaces with Charm++ is
-    discussed in the Charm++ interface file src/Inciter/conductor.ci.
+    discussed in the Charm++ interface file src/Inciter/transporter.ci.
 
     #### Call graph ####
     The following is a directed acyclic graph (DAG) that outlines the
     asynchronous algorithm implemented in this class The detailed discussion of
-    the algorithm is given in the Charm++ interface file conductor.ci, which
+    the algorithm is given in the Charm++ interface file transporter.ci, which
     also repeats the graph below using ASCII graphics. On the DAG orange
     fills denote global synchronization points, orange frames with white fill
     are partial synchronization points that overlap with other tasks, and dashed
     lines are potential shortcuts that allow jumping over some of the task-graph
     under some circumstances or optional code paths (taken, e.g., only in DEBUG
-    mode). See the detailed discussion in conductor.ci.
+    mode). See the detailed discussion in transporter.ci.
     \dot
-    digraph "Conductor SDAG" {
+    digraph "Transporter SDAG" {
       rankdir="LR";
       node [shape=record, fontname=Helvetica, fontsize=10];
       Row [ label="Row"
@@ -36,7 +35,7 @@
               URL="\ref inciter::Performer::msum"];
       Init [ label="Init" color="#e6851c"
               tooltip="inciter::Performer::init"
-              URL="\ref inciter::Conductor::report"];
+              URL="\ref inciter::Transporter::report"];
       Row -> Init [ style="solid" ];
       Msum -> Init [ style="solid" ];
 
@@ -54,18 +53,18 @@
               URL="\ref inciter::Performer::doWriteParticles"];
       Eval [ label="Eval" color="#e6851c"
               tooltip="evaluate time at the end of the time step"
-              URL="\ref inciter::Conductor::evaluateTime"];
+              URL="\ref inciter::Transporter::evaluateTime"];
       ParCom -> Npar [ style="solid" ];
       Npar -> Out [ style="solid" ];
       Diag -> Eval [ style="solid" ];
       Out -> Eval [ style="solid" ];
     }
     \enddot
-    \include Inciter/conductor.ci
+    \include Inciter/transporter.ci
 */
 // *****************************************************************************
-#ifndef Conductor_h
-#define Conductor_h
+#ifndef Transporter_h
+#define Transporter_h
 
 #include <map>
 #include <vector>
@@ -83,8 +82,8 @@
 
 namespace inciter {
 
-//! Conductor drives the time integration of a PDE
-class Conductor : public CBase_Conductor {
+//! Transporter drives the time integration of transport equations
+class Transporter : public CBase_Transporter {
 
   public:
     #if defined(__clang__)
@@ -101,7 +100,7 @@ class Conductor : public CBase_Conductor {
     #endif
     // Include Charm++ SDAG code. See http://charm.cs.illinois.edu/manuals/html/
     // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
-    Conductor_SDAG_CODE
+    Transporter_SDAG_CODE
     #if defined(__clang__)
       #pragma clang diagnostic pop
     #elif defined(__GNUC__)
@@ -111,7 +110,7 @@ class Conductor : public CBase_Conductor {
     #endif
 
     //! Constructor
-    explicit Conductor();
+    explicit Transporter();
 
     //! \brief Reduction target indicating that all Partitioner chare groups
     //!   have finished reading their part of the computational mesh graph and
@@ -185,11 +184,11 @@ class Conductor : public CBase_Conductor {
     void finish();
 
   private:
-    using LinSysMergerProxy = tk::CProxy_LinSysMerger< CProxy_Conductor,
+    using LinSysMergerProxy = tk::CProxy_LinSysMerger< CProxy_Transporter,
                                                        CProxy_Performer >;
     using PerformerProxy = CProxy_Performer;
-    using ParticleWriterProxy = tk::CProxy_ParticleWriter< CProxy_Conductor >;
-    using PartitionerProxy = CProxy_Partitioner< CProxy_Conductor,
+    using ParticleWriterProxy = tk::CProxy_ParticleWriter< CProxy_Transporter >;
+    using PartitionerProxy = CProxy_Partitioner< CProxy_Transporter,
                                                  CProxy_Performer,
                                                  LinSysMergerProxy,
                                                  ParticleWriterProxy >;
@@ -230,4 +229,4 @@ class Conductor : public CBase_Conductor {
 
 } // inciter::
 
-#endif // Conductor_h
+#endif // Transporter_h

@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Partitioner.C
   \author    J. Bakosi
-  \date      Wed 10 Aug 2016 12:17:44 PM MDT
+  \date      Mon 15 Aug 2016 10:27:44 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ chare partitioner group used to perform mesh partitioning
   \details   Charm++ chare partitioner group used to parform mesh partitioning.
@@ -27,11 +27,11 @@
 // specializations. See also
 // https://isocpp.org/wiki/faq/templates#separate-template-class-defn-from-decl.
 template class inciter::Partitioner<
-                 inciter::CProxy_Conductor,
+                 inciter::CProxy_Transporter,
                  inciter::CProxy_Performer,
-                 tk::CProxy_LinSysMerger< inciter::CProxy_Conductor,
+                 tk::CProxy_LinSysMerger< inciter::CProxy_Transporter,
                                           inciter::CProxy_Performer >,
-                 tk::CProxy_ParticleWriter< inciter::CProxy_Conductor > >;
+                 tk::CProxy_ParticleWriter< inciter::CProxy_Transporter > >;
 
 #if defined(__clang__)
   #pragma clang diagnostic pop

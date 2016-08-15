@@ -15,16 +15,16 @@ addCharmModule( "linsysmerger" "LinSys" )
 # Add extra dependency of LinSys on charm modules implementing advanced array
 # element placement using maps. This is required to pull in the dependencies of
 # the possible specializations of LinSys using various map placement strategies.
-# For example, LinSys is specialized with Conductor which in turn depends on
+# For example, LinSys is specialized with Transporter which in turn depends on
 # array placement maps.
 add_dependencies( "LinSys" "linearmapCharmModule" )
 add_dependencies( "LinSys" "unsmeshmapCharmModule" )
 
-# Add extra dependency of LinSysMerger charm module on Conductor charm module.
-# This is required to make sure conductor.decl.h is generated before
+# Add extra dependency of LinSysMerger charm module on Transporter charm module.
+# This is required to make sure transporter.decl.h is generated before
 # linsysmerger.ci is processed, as LinSysMerger is specialized on
-# CProxy_Conductor.
-add_dependencies( "linsysmergerCharmModule" "conductorCharmModule" )
+# CProxy_Transporter.
+add_dependencies( "linsysmergerCharmModule" "transporterCharmModule" )
 
 # Add extra dependency of LinSysMerger charm module on Performer charm module.
 # This is required to make sure performer.decl.h is generated before

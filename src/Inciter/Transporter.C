@@ -1,16 +1,16 @@
 // *****************************************************************************
 /*!
-  \file      src/Inciter/Conductor.C
+  \file      src/Inciter/Transporter.C
   \author    J. Bakosi
-  \date      Tue 09 Aug 2016 08:09:15 AM MDT
+  \date      Mon 15 Aug 2016 10:35:15 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
-  \brief     Conductor drives the time integration of a PDE
-  \details   Conductor drives the time integration of a PDE
+  \brief     Transporter drives the time integration of transport equations
+  \details   Transporter drives the time integration of transport equations.
     The implementation uses the Charm++ runtime system and is fully asynchronous,
     overlapping computation, communication as well as I/O. The algorithm
     utilizes the structured dagger (SDAG) Charm++ functionality. The high-level
     overview of the algorithm structure and how it interfaces with Charm++ is
-    discussed in the Charm++ interface file src/Inciter/conductor.ci.
+    discussed in the Charm++ interface file src/Inciter/transporter.ci.
 */
 // *****************************************************************************
 
@@ -20,7 +20,7 @@
 #include <unordered_set>
 
 #include "Macro.h"
-#include "Conductor.h"
+#include "Transporter.h"
 #include "MeshNodes.h"
 #include "PDEStack.h"
 #include "ContainerUtil.h"
@@ -33,14 +33,14 @@
 
 // Force the compiler to not instantiate the template below as it is
 // instantiated in LinSys/LinSysMerger.C (only required on mac)
-extern template class tk::LinSysMerger< inciter::CProxy_Conductor,
+extern template class tk::LinSysMerger< inciter::CProxy_Transporter,
                                         inciter::CProxy_Performer >;
 
 extern CProxy_Main mainProxy;
 
-using inciter::Conductor;
+using inciter::Transporter;
 
-Conductor::Conductor() :
+Transporter::Transporter() :
   __dep(),
   m_print( g_inputdeck.get<tag::cmd,tag::verbose>() ? std::cout : std::clog ),
   m_nchare( 0 ),
@@ -159,7 +159,7 @@ Conductor::Conductor() :
 }
 
 void
-Conductor::load( uint64_t nelem )
+Transporter::load( uint64_t nelem )
 // *****************************************************************************
 // Reduction target indicating that all Partitioner chare groups have finished
 // reading their part of the contiguously-numbered computational mesh graph and
@@ -205,7 +205,7 @@ Conductor::load( uint64_t nelem )
 }
 
 void
-Conductor::partition()
+Transporter::partition()
 // *****************************************************************************
 // Reduction target indicating that all Partitioner chare groups have finished
 // setting up the necessary data structures for partitioning the computational
@@ -218,7 +218,7 @@ Conductor::partition()
 }
 
 void
-Conductor::aveCost( tk::real c )
+Transporter::aveCost( tk::real c )
 // *****************************************************************************
 // Reduction target estimating the average communication cost of merging the
 // linear system
@@ -239,7 +239,7 @@ Conductor::aveCost( tk::real c )
 }
 
 void
-Conductor::stdCost( tk::real c )
+Transporter::stdCost( tk::real c )
 // *****************************************************************************
 // Reduction target estimating the standard deviation of the communication cost
 // of merging the linear system
@@ -260,7 +260,7 @@ Conductor::stdCost( tk::real c )
 }
 
 void
-Conductor::rowcomplete()
+Transporter::rowcomplete()
 // *****************************************************************************
 // Reduction target indicating that all linear system merger branches have done
 // their part of storing and exporting global row ids
@@ -271,7 +271,7 @@ Conductor::rowcomplete()
 //!   the initialization step. The other, also necessary but by itself not
 //!   sufficient, one is parcomplete(). Together rowcomplete() and
 //!   parcomplete() are sufficient for continuing with the initialization. See
-//!   also conductor.ci.
+//!   also transporter.ci.
 //! \author J. Bakosi
 // *****************************************************************************
 {
@@ -280,7 +280,7 @@ Conductor::rowcomplete()
 }
 
 void
-Conductor::verifybc( CkReductionMsg* msg )
+Transporter::verifybc( CkReductionMsg* msg )
 // *****************************************************************************
 // Reduction target initiating verification of the boundary conditions set
 //! \param[in] msg Serialized and concatenated vectors of BC nodelists
@@ -307,7 +307,7 @@ Conductor::verifybc( CkReductionMsg* msg )
 }
 
 void
-Conductor::doverifybc( CkReductionMsg* msg )
+Transporter::doverifybc( CkReductionMsg* msg )
 // *****************************************************************************
 // Reduction target as a 2nd (final) of the verification of BCs
 //! \param[in] msg Serialized and concatenated vectors of BC nodelists
@@ -317,7 +317,7 @@ Conductor::doverifybc( CkReductionMsg* msg )
 //!   Performer::requestBCs() This is the last step of the verification, doing
 //!   the actual verification of the BCs after receiving the aggregate BC node
 //!   list from Performers querying user BCs from the input file.
-//! \see Conductor::verifybc()
+//! \see Transporter::verifybc()
 //! \author J. Bakosi
 // *****************************************************************************
 {
@@ -337,7 +337,7 @@ Conductor::doverifybc( CkReductionMsg* msg )
 }
 
 void
-Conductor::initcomplete()
+Transporter::initcomplete()
 // *****************************************************************************
 //  Reduction target indicating that all Performer chares have finished their
 //  initialization step and have already continued with start time stepping
@@ -349,7 +349,7 @@ Conductor::initcomplete()
 }
 
 void
-Conductor::diagnostics( tk::real* d, std::size_t n )
+Transporter::diagnostics( tk::real* d, std::size_t n )
 // *****************************************************************************
 // Reduction target optionally collecting diagnostics, e.g., residuals, from all
 // Performer chares
@@ -372,7 +372,7 @@ Conductor::diagnostics( tk::real* d, std::size_t n )
 }
 
 void
-Conductor::advance()
+Transporter::advance()
 // *****************************************************************************
 //  Reduction target indicating that all Performer chares have finished their
 //  initialization step
@@ -389,7 +389,7 @@ Conductor::advance()
 }
 
 tk::real
-Conductor::computedt()
+Transporter::computedt()
 // *****************************************************************************
 // Compute size of next time step
 //! \return Size of dt for the next time step
@@ -401,7 +401,7 @@ Conductor::computedt()
 }
 
 void
-Conductor::finish()
+Transporter::finish()
 // *****************************************************************************
 // Normal finish of time stepping
 //! \author J. Bakosi
@@ -422,7 +422,7 @@ Conductor::finish()
 }
 
 void
-Conductor::header()
+Transporter::header()
 // *****************************************************************************
 // Print out time integration header
 //! \author J. Bakosi
@@ -441,7 +441,7 @@ Conductor::header()
 }
 
 void
-Conductor::evaluateTime()
+Transporter::evaluateTime()
 // *****************************************************************************
 // Evaluate time step and output one-liner report
 //! \author J. Bakosi
@@ -518,4 +518,4 @@ Conductor::evaluateTime()
   wait4eval();
 }
 
-#include "NoWarning/conductor.def.h"
+#include "NoWarning/transporter.def.h"

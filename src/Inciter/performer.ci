@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/performer.ci
   \author    J. Bakosi
-  \date      Wed 10 Aug 2016 12:21:14 PM MDT
+  \date      Mon 15 Aug 2016 10:27:03 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ module interface file for Performer
   \details   Charm++ module interface file for Performer
@@ -11,7 +11,7 @@
 
 module performer {
 
-  extern module conductor;
+  extern module transporter;
   extern module linsysmerger;
   extern module particlewriter;
 
@@ -21,10 +21,10 @@ module performer {
 
     array [1D] Performer {
       entry
-        Performer( const CProxy_Conductor& conductor,
-                   const tk::CProxy_LinSysMerger< CProxy_Conductor,
+        Performer( const CProxy_Transporter& transporter,
+                   const tk::CProxy_LinSysMerger< CProxy_Transporter,
                                                   CProxy_Performer >& lsm,
-                   const tk::CProxy_ParticleWriter< CProxy_Conductor >& pw,
+                   const tk::CProxy_ParticleWriter< CProxy_Transporter >& pw,
                    const std::vector< std::size_t >& conn,
                    const std::unordered_map< std::size_t, std::size_t >& cid,
                    int nperf );

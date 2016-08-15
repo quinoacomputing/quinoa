@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/partitioner.ci
   \author    J. Bakosi
-  \date      Wed 10 Aug 2016 12:16:11 PM MDT
+  \date      Mon 15 Aug 2016 10:22:32 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ module interface file for the chare partitioner group
   \details   Charm++ module interface file for the chare partitioner group used
@@ -16,11 +16,11 @@ module partitioner {
 
   namespace inciter {
 
-    chare Partitioner< CProxy_Conductor,
+    chare Partitioner< CProxy_Transporter,
                        CProxy_Performer,
-                       tk::CProxy_LinSysMerger< CProxy_Conductor,
+                       tk::CProxy_LinSysMerger< CProxy_Transporter,
                                                 CProxy_Performer >,
-                       tk::CProxy_ParticleWriter< CProxy_Conductor > >;
+                       tk::CProxy_ParticleWriter< CProxy_Transporter > >;
 
     template< class HostProxy, class WorkerProxy, class LinSysMergerProxy,
               class ParticleWriterProxy >
@@ -104,8 +104,8 @@ module partitioner {
       // communication cost of merging the linear system is done in the
       // beginning of create(), which starts two reductions, which must be done
       // after each other: the first one accumulates the sum of the cost from
-      // each PE, and once the average is available on Conductor, a second round
-      // accumulates the variances back to Conductor.
+      // each PE, and once the average is available on Transporter, a second
+      // round accumulates the variances back to Transporter.
       //
       // While the tasks carried out as described in the previous paragraph lead
       // to correct results, there is an additional trigger, _participated_,

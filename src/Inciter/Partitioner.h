@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Partitioner.h
   \author    J. Bakosi
-  \date      Wed 10 Aug 2016 12:17:28 PM MDT
+  \date      Mon 15 Aug 2016 10:18:17 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ chare partitioner group used to perform mesh partitioning
   \details   Charm++ chare partitioner group used to perform mesh partitioning.
@@ -777,18 +777,18 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     //!   mesh graph
     //! \details Signaling back is done via a Charm++ typed reduction, which
     //!   also computes the sum of the number of mesh cells our PE operates on.
-    void signal2host_graph_complete( const CProxy_Conductor& host,
+    void signal2host_graph_complete( const CProxy_Transporter& host,
                                      uint64_t nelem ) {
       Group::contribute(sizeof(uint64_t), &nelem, CkReduction::sum_int,
-                        CkCallback( CkReductionTarget(Conductor,load), host ));
+                        CkCallback(CkReductionTarget(Transporter,load), host));
     }
     //! Compute average communication cost of merging the linear system
     //! \details This is done via a Charm++ typed reduction, adding up the cost
     //!   across all PEs and reducing the result to our host chare.
-    void signal2host_avecost( const CProxy_Conductor& host ) {
+    void signal2host_avecost( const CProxy_Transporter& host ) {
       m_cost = cost( m_lower, m_upper );
       Group::contribute( sizeof(tk::real), &m_cost, CkReduction::sum_double,
-                         CkCallback( CkReductionTarget(Conductor,aveCost),
+                         CkCallback( CkReductionTarget(Transporter,aveCost),
                          host ));
     }
     //! \brief Compute standard deviation of the communication cost of merging
@@ -798,21 +798,21 @@ class Partitioner : public CBase_Partitioner< HostProxy,
     //! \details This is done via a Charm++ typed reduction, adding up the
     //!   squares of the communication cost minus the average across all PEs and
     //!   reducing the result to our host chare.
-    void signal2host_stdcost( const CProxy_Conductor& host, tk::real var ) {
+    void signal2host_stdcost( const CProxy_Transporter& host, tk::real var ) {
       Group::contribute( sizeof(tk::real), &var, CkReduction::sum_double,
-                         CkCallback( CkReductionTarget(Conductor,stdCost),
+                         CkCallback( CkReductionTarget(Transporter,stdCost),
                          host ));
     }
     //! Signal back to host that we are ready for partitioning the mesh
-    void signal2host_setup_complete( const CProxy_Conductor& host ) {
+    void signal2host_setup_complete( const CProxy_Transporter& host ) {
       Group::contribute(
-        CkCallback(CkIndex_Conductor::redn_wrapper_partition(NULL), host ));
+        CkCallback(CkIndex_Transporter::redn_wrapper_partition(NULL), host ));
     }
     //! \brief Signal host that we are ready for computing the communication
     //!   map, required for parallel distributed global mesh node reordering
-    void signal2host_flattened( const CProxy_Conductor& host ) {
+    void signal2host_flattened( const CProxy_Transporter& host ) {
       Group::contribute(
-        CkCallback(CkIndex_Conductor::redn_wrapper_flattened(NULL), host ));
+        CkCallback(CkIndex_Transporter::redn_wrapper_flattened(NULL), host ));
     }
 };
 
