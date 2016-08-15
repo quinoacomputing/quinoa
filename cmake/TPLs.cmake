@@ -67,6 +67,11 @@ if(NOT BUILD_SHARED_LIBS)
   find_package(AEC REQUIRED)
 endif()
 
+#### Zlib (only for static link)
+if(NOT BUILD_SHARED_LIBS)
+  find_package(ZLIB REQUIRED)
+endif()
+
 #### TPLs we always want ours ##################################################
 
 #### Zoltan2 library
