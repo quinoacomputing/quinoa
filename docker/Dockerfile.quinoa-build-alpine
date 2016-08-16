@@ -5,7 +5,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Dockerfile for a static build of Quinoa
-# \date      Mon 15 Aug 2016 02:47:12 PM MDT
+# \date      Tue 16 Aug 2016 08:00:03 AM MDT
 #
 ################################################################################
 
@@ -59,22 +59,22 @@ RUN cd quinoa && mkdir -p build && cd build && cmake -DCMAKE_CXX_COMPILER=mpicxx
 
 # Ensure all executables are statically linked
 RUN cd quinoa/build && \
-    if ! file Main/unittest | grep static; then \
+    if ! ldd Main/unittest | grep -v ldd | wc -l > /dev/null; then \
       echo "Non-static executable: unittest"; exit 1; \
     fi && \
-    if ! file Main/inciter | grep static; then \
+    if ! ldd Main/inciter | grep -v ldd | wc -l > /dev/null; then \
       echo "Non-static executable: inciter"; exit 1; \
     fi && \
-    if ! file Main/rngtest | grep static; then \
+    if ! ldd Main/rngtest | grep -v ldd | wc -l > /dev/null; then \
       echo "Non-static executable: rngtest"; exit 1; \
     fi && \
-    if ! file Main/meshconv | grep static; then \
+    if ! ldd Main/meshconv | grep -v ldd | wc -l > /dev/null; then \
       echo "Non-static executable: meshconv"; exit 1; \
     fi && \
-    if ! file Main/walker | grep static; then \
+    if ! ldd Main/walker | grep -v ldd | wc -l > /dev/null; then \
       echo "Non-static executable: walker"; exit 1; \
     fi && \
-    if ! file regression/ndiff/numdiff | grep static; then \
+    if ! ldd regression/ndiff/numdiff | grep -v ldd | wc -l > /dev/null; then \
       echo "Non-static executable: numdiff"; exit 1; \
     fi
 
