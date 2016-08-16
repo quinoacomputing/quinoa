@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Transporter.C
   \author    J. Bakosi
-  \date      Mon 15 Aug 2016 10:35:15 AM MDT
+  \date      Tue 16 Aug 2016 09:16:55 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Transporter drives the time integration of transport equations
   \details   Transporter drives the time integration of transport equations.
@@ -34,7 +34,7 @@
 // Force the compiler to not instantiate the template below as it is
 // instantiated in LinSys/LinSysMerger.C (only required on mac)
 extern template class tk::LinSysMerger< inciter::CProxy_Transporter,
-                                        inciter::CProxy_Performer >;
+                                        inciter::CProxy_Carrier >;
 
 extern CProxy_Main mainProxy;
 
@@ -49,7 +49,7 @@ Transporter::Transporter() :
   m_dt( computedt() ),
   m_stage( 0 ),
   m_linsysmerger(),
-  m_performer(),
+  m_carrier(),
   m_particlewriter(),
   m_partitioner(),
   m_avcost( 0.0 ),
@@ -130,17 +130,17 @@ Transporter::Transporter() :
     dw.header( { "r", "ru", "rv", "rw", "re" } );
 
     // Create (empty) worker array
-    m_performer = PerformerProxy::ckNew();
+    m_carrier = CarrierProxy::ckNew();
 
     // Create ExodusII reader for reading side sets from file. When creating
     // LinSysMerger, er.readSideSets() reads all side sets from file, which is
-    // a serial read, then send the same copy to all PEs. Performers then will
+    // a serial read, then send the same copy to all PEs. Carriers then will
     // query the side sets from their local LinSysMerger branch.
     tk::ExodusIIMeshReader
       er( g_inputdeck.get< tag::cmd, tag::io, tag::input >() );
 
     // Create linear system merger chare group
-    m_linsysmerger = LinSysMergerProxy::ckNew( thisProxy, m_performer,
+    m_linsysmerger = LinSysMergerProxy::ckNew( thisProxy, m_carrier,
                        er.readSidesets(),
                        g_inputdeck.get< tag::component >().nprop() );
 
@@ -151,7 +151,7 @@ Transporter::Transporter() :
 
     // Create mesh partitioner Charm++ chare group and start partitioning mesh
     m_print.diagstart( "Reading mesh graph ..." );
-    m_partitioner = PartitionerProxy::ckNew( thisProxy, m_performer,
+    m_partitioner = PartitionerProxy::ckNew( thisProxy, m_carrier,
                                              m_linsysmerger,
                                              m_particlewriter );
 
@@ -267,7 +267,7 @@ Transporter::rowcomplete()
 //! \details This function is a Charm++ reduction target that is called when
 //!   all linear system merger branches have done their part of storing and
 //!   exporting global row ids. This is a necessary precondition to be done
-//!   before we can issue a broadcast to all Performer chares to continue with
+//!   before we can issue a broadcast to all Carrier chares to continue with
 //!   the initialization step. The other, also necessary but by itself not
 //!   sufficient, one is parcomplete(). Together rowcomplete() and
 //!   parcomplete() are sufficient for continuing with the initialization. See
@@ -291,7 +291,7 @@ Transporter::verifybc( CkReductionMsg* msg )
 //!   system merger branches have received from worker chares offering setting
 //!   boundary conditions. This is the first step of the verification. First
 //!   receives the aggregated node list at which LinSysMerger will set boundary
-//!   conditions. Then we do a broadcast to all workers (Performers) to query
+//!   conditions. Then we do a broadcast to all workers (Carriers) to query
 //!   the worker-owned node IDs on which a Dirichlet BC is set by the user (on
 //!   any component of any PDEs integrated by the worker).
 //! \author J. Bakosi
@@ -303,7 +303,7 @@ Transporter::verifybc( CkReductionMsg* msg )
   delete msg;
 
   // Issue broadcast querying the BCs set
-  m_performer.requestBCs();
+  m_carrier.requestBCs();
 }
 
 void
@@ -314,9 +314,9 @@ Transporter::doverifybc( CkReductionMsg* msg )
 //! \details This function finishes off the verification that the aggregate
 //!   boundary conditions to be set by LinSysMerger objects match the user's
 //!   BCs. This function is a Charm++ reduction target that is called by
-//!   Performer::requestBCs() This is the last step of the verification, doing
+//!   Carrier::requestBCs() This is the last step of the verification, doing
 //!   the actual verification of the BCs after receiving the aggregate BC node
-//!   list from Performers querying user BCs from the input file.
+//!   list from Carriers querying user BCs from the input file.
 //! \see Transporter::verifybc()
 //! \author J. Bakosi
 // *****************************************************************************
@@ -339,7 +339,7 @@ Transporter::doverifybc( CkReductionMsg* msg )
 void
 Transporter::initcomplete()
 // *****************************************************************************
-//  Reduction target indicating that all Performer chares have finished their
+//  Reduction target indicating that all Carrier chares have finished their
 //  initialization step and have already continued with start time stepping
 //! \author J. Bakosi
 // *****************************************************************************
@@ -352,7 +352,7 @@ void
 Transporter::diagnostics( tk::real* d, std::size_t n )
 // *****************************************************************************
 // Reduction target optionally collecting diagnostics, e.g., residuals, from all
-// Performer chares
+// Carrier chares
 //! \param[in] d Diagnostics (sums) collected over all chares
 //! \param[in] n Number of diagnostics in array d
 //! \author J. Bakosi
@@ -374,7 +374,7 @@ Transporter::diagnostics( tk::real* d, std::size_t n )
 void
 Transporter::advance()
 // *****************************************************************************
-//  Reduction target indicating that all Performer chares have finished their
+//  Reduction target indicating that all Carrier chares have finished their
 //  initialization step
 //! \author J. Bakosi
 // *****************************************************************************
@@ -383,9 +383,9 @@ Transporter::advance()
   // final stage, continue with next time step zeroing stage and using new time
   // step size.
   if (m_stage < 1)
-    m_performer.advance( ++m_stage, m_dt, m_it, m_t );
+    m_carrier.advance( ++m_stage, m_dt, m_it, m_t );
   else
-    m_performer.advance( m_stage=0, m_dt=computedt(), m_it, m_t );
+    m_carrier.advance( m_stage=0, m_dt=computedt(), m_it, m_t );
 }
 
 tk::real

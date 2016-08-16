@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/InciterDriver.C
   \author    J. Bakosi
-  \date      Mon 15 Aug 2016 10:36:53 AM MDT
+  \date      Tue 16 Aug 2016 09:05:11 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Inciter driver
   \details   Inciter driver.
@@ -55,6 +55,6 @@ InciterDriver::execute() const
 // *****************************************************************************
 {
   // Instantiate Transporter chare which drives the time-integration of a PDE
-  // via several Performer chares.
+  // via several Carrier chares.
   CProxy_Transporter::ckNew();
 }

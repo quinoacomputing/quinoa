@@ -1,15 +1,15 @@
 // *****************************************************************************
 /*!
-  \file      src/NoWarning/performer.decl.h
+  \file      src/NoWarning/carrier.decl.h
   \author    J. Bakosi
-  \date      Sun 07 Aug 2016 03:26:44 PM MDT
+  \date      Tue 16 Aug 2016 09:21:13 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
-  \brief     Include performer.decl.h with turning off specific compiler
+  \brief     Include carrier.decl.h with turning off specific compiler
              warnings.
 */
 // *****************************************************************************
-#ifndef nowarning_performer_decl_h
-#define nowarning_performer_decl_h
+#ifndef nowarning_carrier_decl_h
+#define nowarning_carrier_decl_h
 
 #if defined(__clang__)
   #pragma clang diagnostic push
@@ -25,7 +25,7 @@
   #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #endif
 
-#include "../Inciter/performer.decl.h"
+#include "../Inciter/carrier.decl.h"
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
@@ -33,4 +33,4 @@
   #pragma GCC diagnostic pop
 #endif
 
-#endif // nowarning_performer_decl_h
+#endif // nowarning_carrier_decl_h

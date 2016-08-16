@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Transporter.h
   \author    J. Bakosi
-  \date      Mon 15 Aug 2016 10:26:01 AM MDT
+  \date      Tue 16 Aug 2016 09:14:10 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Transporter drives the time integration of transport equations
   \details   Transporter drives the time integration of transport equations.
@@ -32,25 +32,25 @@
             URL="\ref tk::LinSysMerger::signal2host_row_complete"];
       Msum [ label="Msum"
               tooltip="mesh surrounding mesh data structure computed"
-              URL="\ref inciter::Performer::msum"];
+              URL="\ref inciter::Carrier::msum"];
       Init [ label="Init" color="#e6851c"
-              tooltip="inciter::Performer::init"
+              tooltip="inciter::Carrier::init"
               URL="\ref inciter::Transporter::report"];
       Row -> Init [ style="solid" ];
       Msum -> Init [ style="solid" ];
 
       ParCom [ label="ParCom"
-              tooltip="particle communication among Performer chares"
-              URL="\ref inciter::Performer::track"];
+              tooltip="particle communication among Carrier chares"
+              URL="\ref inciter::Carrier::track"];
       Npar [ label="Npar"
               tooltip="number of particles to be output to file counted"
-              URL="\ref inciter::Performer::writeParticles"];
+              URL="\ref inciter::Carrier::writeParticles"];
       Diag [ label="Diag"
               tooltip="chares contribute diagnostics"
-              URL="\ref inciter::Performer::diagnostics"];
+              URL="\ref inciter::Carrier::diagnostics"];
       Out [ label="Out"
               tooltip="particles output to file"
-              URL="\ref inciter::Performer::doWriteParticles"];
+              URL="\ref inciter::Carrier::doWriteParticles"];
       Eval [ label="Eval" color="#e6851c"
               tooltip="evaluate time at the end of the time step"
               URL="\ref inciter::Transporter::evaluateTime"];
@@ -78,7 +78,7 @@
 #include "VectorReducer.h"
 #include "ParticleWriter.h"
 
-#include "NoWarning/performer.decl.h"
+#include "NoWarning/carrier.decl.h"
 
 namespace inciter {
 
@@ -136,7 +136,7 @@ class Transporter : public CBase_Transporter {
     void stdCost( tk::real c );
 
     //! Reduction target indicating that all chare groups are ready for workers
-    void setup() { m_performer.setup(); }
+    void setup() { m_carrier.setup(); }
 
     //! \brief Reduction target indicating that all linear system merger
     //!   branches have done their part of storing and exporting global row ids
@@ -151,7 +151,7 @@ class Transporter : public CBase_Transporter {
     //! Reduction target as a 2nd (final) of the verification of BCs
     void doverifybc( CkReductionMsg* msg );
 
-    //! \brief Reduction target indicating that all Performer chares have
+    //! \brief Reduction target indicating that all Carrier chares have
     //!   finished their initialization step
     void initcomplete();
 
@@ -163,17 +163,17 @@ class Transporter : public CBase_Transporter {
     void parcomcomplete() { trigger_parcom_complete(); }
 
     //! \brief Reduction target optionally collecting diagnostics, e.g.,
-    //!   residuals, from all Performer chares
+    //!   residuals, from all Carrier chares
     void diagnostics( tk::real* d, std::size_t n );
 
-    //! \brief Reduction target indicating that Performer chares contribute no
+    //! \brief Reduction target indicating that Carrier chares contribute no
     //!    diagnostics and we ready to output the one-liner report
     void diagcomplete() { trigger_diag_complete(); }
 
     //! \brief Reduction target indicating that all particles writers have
     //!   finished outputing particles to file
     //! \details This function is a Charm++ reduction target that is called when
-    //!   all performer chares have finished communicating particles
+    //!   all carrier chares have finished communicating particles
     void outcomplete() { trigger_out_complete(); }
 
     //! \brief Reduction target indicating that the linear system mergers are
@@ -185,22 +185,22 @@ class Transporter : public CBase_Transporter {
 
   private:
     using LinSysMergerProxy = tk::CProxy_LinSysMerger< CProxy_Transporter,
-                                                       CProxy_Performer >;
-    using PerformerProxy = CProxy_Performer;
+                                                       CProxy_Carrier >;
+    using CarrierProxy = CProxy_Carrier;
     using ParticleWriterProxy = tk::CProxy_ParticleWriter< CProxy_Transporter >;
     using PartitionerProxy = CProxy_Partitioner< CProxy_Transporter,
-                                                 CProxy_Performer,
+                                                 CarrierProxy,
                                                  LinSysMergerProxy,
                                                  ParticleWriterProxy >;
 
     InciterPrint m_print;                //!< Pretty printer
-    int m_nchare;                        //!< Number of performer chares
+    int m_nchare;                        //!< Number of carrier chares
     uint64_t m_it;                       //!< Iteration count
     tk::real m_t;                        //!< Physical time
     tk::real m_dt;                       //!< Physical time step size
     uint8_t m_stage;                     //!< Stage in multi-stage time stepping
     LinSysMergerProxy m_linsysmerger;    //!< Linear system merger group proxy
-    PerformerProxy m_performer;          //!< Performer chare array proxy
+    CarrierProxy m_carrier;              //!< Carrier chare array proxy
     ParticleWriterProxy m_particlewriter;//!< Particle writer group proxy
     PartitionerProxy m_partitioner;      //!< Partitioner group proxy
     //! Average communication cost of merging the linear system

@@ -7,12 +7,12 @@ include(charm)
 
 add_library(Inciter
             Transporter.C
-            Performer.C
+            Carrier.C
             Partitioner.C
 )
 
 addCharmModule( "transporter" "Inciter" )
-addCharmModule( "performer" "Inciter" )
+addCharmModule( "carrier" "Inciter" )
 addCharmModule( "partitioner" "Inciter" )
 
 # Add extra dependency of Inciter on inciterCharmModule. This is required as
@@ -37,10 +37,10 @@ add_dependencies( "Inciter" "linsysmergerCharmModule" )
 # before Inciter including those.
 add_dependencies( "Inciter" "particlewriterCharmModule" )
 
-# Add extra dependency of Performer charm module on ParticleWriter charm module.
+# Add extra dependency of Carrier charm module on ParticleWriter charm module.
 # This is required so that particlewriter.decl.h and particlewriter.def.h are
-# generated before Performer including those.
-add_dependencies( "performerCharmModule" "particlewriterCharmModule" )
+# generated before Carrier including those.
+add_dependencies( "carrierCharmModule" "particlewriterCharmModule" )
 
 INSTALL(TARGETS Inciter
   	RUNTIME DESTINATION bin COMPONENT Runtime

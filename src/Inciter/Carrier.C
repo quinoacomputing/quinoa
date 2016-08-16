@@ -1,13 +1,13 @@
 // *****************************************************************************
 /*!
-  \file      src/Inciter/Performer.C
+  \file      src/Inciter/Carrier.C
   \author    J. Bakosi
-  \date      Mon 15 Aug 2016 10:22:03 AM MDT
+  \date      Tue 16 Aug 2016 09:24:06 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
-  \brief     Performer advances a PDE
-  \details   Performer advances a PDE. There are a potentially
-    large number of Performer Charm++ chares created by Transporter. Each
-    performer gets a chunk of the full load (part of the mesh) and does the
+  \brief     Carrier advances a system of transport equations
+  \details   Carrier advances a system of transport equations. There are a
+    potentially large number of Carrier Charm++ chares created by Transporter.
+    Each carrier gets a chunk of the full load (part of the mesh) and does the
     same: initializes and advances a PDE in time.
 */
 // *****************************************************************************
@@ -19,7 +19,7 @@
 
 #include <gm19.h>
 
-#include "Performer.h"
+#include "Carrier.h"
 #include "LinSysMerger.h"
 #include "Vector.h"
 #include "Reader.h"
@@ -37,19 +37,19 @@
 // Force the compiler to not instantiate the template below as it is
 // instantiated in LinSys/LinSysMerger.C (only required on mac)
 extern template class tk::LinSysMerger< inciter::CProxy_Transporter,
-                                        inciter::CProxy_Performer >;
+                                        inciter::CProxy_Carrier >;
 
 namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
 extern std::vector< PDE > g_pdes;
 
-//! \brief Charm++ reducers used by Performer
+//! \brief Charm++ reducers used by Carrier
 //! \details These variables are defined here in the .C file and declared as
-//!   extern in Performer.h. If instead one defines it in the header (as static),
+//!   extern in Carrier.h. If instead one defines it in the header (as static),
 //!   a new version of the variable is created any time the header file is
 //!   included, yielding no compilation nor linking errors. However, that leads
-//!   to runtime errors, since Performer::registerReducers(), a Charm++
+//!   to runtime errors, since Carrier::registerReducers(), a Charm++
 //!   "initnode" entry method, *may* fill one while contribute() may use the
 //!   other (unregistered) one. Result: undefined behavior, segfault, and
 //!   formatting the internet ...
@@ -58,21 +58,21 @@ CkReduction::reducerType MeshNodeMerger;
 
 } // inciter::
 
-using inciter::Performer;
+using inciter::Carrier;
 
-Performer::Performer( const TransporterProxy& transporter,
-                      const LinSysMergerProxy& lsm,
-                      const ParticleWriterProxy& pw,
-                      const std::vector< std::size_t >& conn,
-                      const std::unordered_map< std::size_t, std::size_t >& cid,
-                      int nperf ) :
+Carrier::Carrier( const TransporterProxy& transporter,
+                  const LinSysMergerProxy& lsm,
+                  const ParticleWriterProxy& pw,
+                  const std::vector< std::size_t >& conn,
+                  const std::unordered_map< std::size_t, std::size_t >& cid,
+                  int ncarr ) :
   m_it( 0 ),
   m_itf( 0 ),
   m_t( g_inputdeck.get< tag::discr, tag::t0 >() ),
   m_stage( 0 ),
   m_nsol( 0 ),
   m_nchpar( 0 ),
-  m_nperf( static_cast< std::size_t >( nperf ) ),
+  m_ncarr( static_cast< std::size_t >( ncarr ) ),
   m_outFilename( g_inputdeck.get< tag::cmd, tag::io, tag::output >() + "." +
                  std::to_string( thisIndex ) ),
   m_transporter( transporter ),
@@ -102,7 +102,7 @@ Performer::Performer( const TransporterProxy& transporter,
 //! \param[in] conn Vector of mesh element connectivity owned (global IDs)
 //! \param[in] cid Map associating old node IDs (as in file) to new node IDs (as
 //!   in producing contiguous-row-id linear system contributions)
-//! \param[in] nper Total number of Performer chares
+//! \param[in] nper Total number of Carrier chares
 //! \author J. Bakosi
 // *****************************************************************************
 {
@@ -116,12 +116,12 @@ Performer::Performer( const TransporterProxy& transporter,
   std::vector< std::pair< int, std::unordered_set< std::size_t > > >
     meshnodes{ { thisIndex, { begin(m_gid), end(m_gid) } } };
   auto stream = serialize( meshnodes );
-  CkCallback cb( CkIndex_Performer::msum(nullptr), thisProxy );
+  CkCallback cb( CkIndex_Carrier::msum(nullptr), thisProxy );
   contribute( stream.first, stream.second.get(), MeshNodeMerger, cb );
 }
 
 void
-Performer::msum( CkReductionMsg* msg )
+Carrier::msum( CkReductionMsg* msg )
 // *****************************************************************************
 // Reduction target finishing collecting fellow chare mesh node IDs
 //! \param[in] msg Serialized aggregated mesh node IDs categorized by chares
@@ -145,7 +145,7 @@ Performer::msum( CkReductionMsg* msg )
 }
 
 void
-Performer::setup()
+Carrier::setup()
 // *****************************************************************************
 // Initialize mesh IDs, element connectivity, coordinates
 //! \author J. Bakosi
@@ -166,7 +166,7 @@ Performer::setup()
 }
 
 void
-Performer::setupIds()
+Carrier::setupIds()
 // *****************************************************************************
 // Send off global row IDs to linear system merger, setup global->local IDs
 //! \author J. Bakosi
@@ -179,7 +179,7 @@ Performer::setupIds()
 }
 
 std::vector< std::size_t >
-Performer::queryBCs()
+Carrier::queryBCs()
 // *****************************************************************************
 //  Extract nodes IDs from side sets node lists and match to boundary conditions
 //! \return List of owned node IDs on which a Dirichlet BC is set by the user
@@ -234,7 +234,7 @@ Performer::queryBCs()
 }
 
 void
-Performer::sendBCs( const std::vector< std::size_t >& bc )
+Carrier::sendBCs( const std::vector< std::size_t >& bc )
 // *****************************************************************************
 // Send node list to our LinSysMerger branch which is then used to set BCs
 //! \param[in] bc List of node IDs to send
@@ -246,7 +246,7 @@ Performer::sendBCs( const std::vector< std::size_t >& bc )
 }
 
 std::vector< std::size_t >
-Performer::old( const std::vector< std::size_t >& newids )
+Carrier::old( const std::vector< std::size_t >& newids )
 // *****************************************************************************
 // Query old node IDs for a list of new node IDs
 //! \param[in] newids Vector of new node IDs
@@ -261,7 +261,7 @@ Performer::old( const std::vector< std::size_t >& newids )
 }
 
 void
-Performer::requestBCs()
+Carrier::requestBCs()
 // *****************************************************************************
 // Request owned node IDs on which a Dirichlet BC is set by the user
 //! \details Called from host (Transporter), contributing the result back to host
@@ -274,7 +274,7 @@ Performer::requestBCs()
 }
 
 void
-Performer::oldID( int frompe, const std::vector< std::size_t >& newids )
+Carrier::oldID( int frompe, const std::vector< std::size_t >& newids )
 // *****************************************************************************
 // Look up and return old node IDs for new ones
 //! \param[in] newids Vector of new node IDs
@@ -287,7 +287,7 @@ Performer::oldID( int frompe, const std::vector< std::size_t >& newids )
 }
 
 void
-Performer::bcval( int frompe, const std::vector< std::size_t >& nodes )
+Carrier::bcval( int frompe, const std::vector< std::size_t >& nodes )
 // *****************************************************************************
 // Look up boundary condition values at node IDs for all PDEs
 //! \param[in] nodes Vector of node IDs at which to query BC values
@@ -340,7 +340,7 @@ Performer::bcval( int frompe, const std::vector< std::size_t >& nodes )
 }
 
 void
-Performer::init( tk::real dt )
+Carrier::init( tk::real dt )
 // *****************************************************************************
 // Initialize linear system
 //! \author J. Bakosi
@@ -367,7 +367,7 @@ Performer::init( tk::real dt )
 }
 
 void
-Performer::lhs()
+Carrier::lhs()
 // *****************************************************************************
 // Compute left-hand side of PDE
 //! \author J. Bakosi
@@ -383,10 +383,10 @@ Performer::lhs()
 }
 
 void
-Performer::rhs( tk::real mult,
-                tk::real dt,
-                const tk::MeshNodes& sol,
-                tk::MeshNodes& rhs )
+Carrier::rhs( tk::real mult,
+              tk::real dt,
+              const tk::MeshNodes& sol,
+              tk::MeshNodes& rhs )
 // *****************************************************************************
 // Compute right-hand side of PDE
 //! \param[in] mult Multiplier differentiating the different stages in
@@ -406,7 +406,7 @@ Performer::rhs( tk::real mult,
 }
 
 void
-Performer::readCoords()
+Carrier::readCoords()
 // *****************************************************************************
 //  Read coordinates of mesh nodes from file
 //! \author J. Bakosi
@@ -422,7 +422,7 @@ Performer::readCoords()
 }
 
 void
-Performer::writeMesh()
+Carrier::writeMesh()
 // *****************************************************************************
 // Output chare element blocks to file
 //! \author J. Bakosi
@@ -435,10 +435,9 @@ Performer::writeMesh()
 }
 
 void
-Performer::writeSolution( const tk::ExodusIIMeshWriter& ew,
-                          uint64_t it,
-                          const std::vector< std::vector< tk::real > >& u )
-  const
+Carrier::writeSolution( const tk::ExodusIIMeshWriter& ew,
+                        uint64_t it,
+                        const std::vector< std::vector< tk::real > >& u ) const
 // *****************************************************************************
 // Output solution to file
 //! \param[in] ew ExodusII mesh-based writer object
@@ -453,7 +452,7 @@ Performer::writeSolution( const tk::ExodusIIMeshWriter& ew,
 }
 
 void
-Performer::writeMeta() const
+Carrier::writeMeta() const
 // *****************************************************************************
 // Output mesh-based fields metadata to file
 //! \author J. Bakosi
@@ -474,7 +473,7 @@ Performer::writeMeta() const
 }
 
 void
-Performer::writeFields( tk::real time )
+Carrier::writeFields( tk::real time )
 // *****************************************************************************
 // Output mesh-based fields to file
 //! \param[in] time Physical time
@@ -502,7 +501,7 @@ Performer::writeFields( tk::real time )
 }
 
 void
-Performer::writeParticles()
+Carrier::writeParticles()
 // *****************************************************************************
 // Output number of particles we will write to file in this step
 //! \author J. Bakosi
@@ -516,7 +515,7 @@ Performer::writeParticles()
 }
 
 void
-Performer::doWriteParticles()
+Carrier::doWriteParticles()
 // *****************************************************************************
 // Output particles fields to file
 //! \author J. Bakosi
@@ -529,7 +528,7 @@ Performer::doWriteParticles()
 }
 
 void
-Performer::advance( uint8_t stage, tk::real dt, uint64_t it, tk::real t )
+Carrier::advance( uint8_t stage, tk::real dt, uint64_t it, tk::real t )
 // *****************************************************************************
 // Advance equations to next stage in multi-stage time stepping
 //! \param[in] stage Stage in multi-stage time stepping
@@ -552,14 +551,14 @@ Performer::advance( uint8_t stage, tk::real dt, uint64_t it, tk::real t )
 }
 
 void
-Performer::genpar()
+Carrier::genpar()
 // *****************************************************************************
 // Generate particles to each of our mesh cells
 //! \author F.J. Gonzalez
 // *****************************************************************************
 {
   auto rng = tk::RNGSSE< gm19_state, unsigned, gm19_generate_ >
-                       ( static_cast<unsigned>(m_nperf), gm19_init_sequence_ );
+                       ( static_cast<unsigned>(m_ncarr), gm19_init_sequence_ );
 
   // Create a reference of mesh point coordinates
   const auto& x = m_coord[0];
@@ -593,7 +592,7 @@ Performer::genpar()
 }
 
 bool
-Performer::parinel( std::size_t p, std::size_t e, std::array< tk::real, 4 >& N )
+Carrier::parinel( std::size_t p, std::size_t e, std::array< tk::real, 4 >& N )
 // *****************************************************************************
 // Search particle in a single mesh cell
 //! \param[in] p Particle index
@@ -679,8 +678,8 @@ Performer::parinel( std::size_t p, std::size_t e, std::array< tk::real, 4 >& N )
 }
 
 std::vector< std::size_t >
-Performer::addpar( const std::vector< std::size_t >& miss,
-                   const tk::Particles& ps )
+Carrier::addpar( const std::vector< std::size_t >& miss,
+                 const tk::Particles& ps )
 // *****************************************************************************
 // Try to find particles and add those found to the list of ours
 //! \param[in] miss Indices of particles to find
@@ -710,7 +709,7 @@ Performer::addpar( const std::vector< std::size_t >& miss,
 }
 
 void
-Performer::track()
+Carrier::track()
 // *****************************************************************************
 // Advance our particles and search for their new mesh cells
 //! \author F.J. Gonzalez
@@ -760,7 +759,7 @@ Performer::track()
   }
 
   // If we have no missing particles, we are done, if we do, send out requests
-  // to find them to those Performer chares with which we neighbor mesh cells
+  // to find them to those Carrier chares with which we neighbor mesh cells
   if (m_parmiss.empty()) {
     m_nchpar = 0;
     m_parmiss.clear();
@@ -782,9 +781,9 @@ Performer::track()
 }
 
 void
-Performer::findpar( int fromch,
-                    const std::vector< std::size_t >& miss,
-                    const tk::Particles& ps )
+Carrier::findpar( int fromch,
+                  const std::vector< std::size_t >& miss,
+                  const tk::Particles& ps )
 // *****************************************************************************
 // Find particles missing by the requestor and make those found ours
 //! \param[in] fromch Chare ID the request originates from
@@ -801,7 +800,7 @@ Performer::findpar( int fromch,
 }
 
 void
-Performer::foundpar( const std::vector< std::size_t >& found )
+Carrier::foundpar( const std::vector< std::size_t >& found )
 // *****************************************************************************
 // Receive particle indices found elsewhere (by fellow neighbors)
 //! \param[in] found Indices of particles found
@@ -822,7 +821,7 @@ Performer::foundpar( const std::vector< std::size_t >& found )
 
     // if there are still missing particles (not found by close neighbors we
     // share mesh nodes with), we resort to requesting them to be searched by
-    // all Performers
+    // all Carriers
     if (m_parmiss.empty()) {
       m_nchpar = 0;
       m_parmiss.clear();
@@ -848,9 +847,9 @@ Performer::foundpar( const std::vector< std::size_t >& found )
 }
 
 void
-Performer::collectpar( int fromch,
-                       const std::vector< std::size_t >& miss,
-                       const tk::Particles& ps )
+Carrier::collectpar( int fromch,
+                     const std::vector< std::size_t >& miss,
+                     const tk::Particles& ps )
 // *****************************************************************************
 // Find particles missing by the requestor and make those found ours
 //! \param[in] fromch Chare ID the request originates from
@@ -867,7 +866,7 @@ Performer::collectpar( int fromch,
 }
 
 void
-Performer::collectedpar( const std::vector< std::size_t >& found )
+Carrier::collectedpar( const std::vector< std::size_t >& found )
 // *****************************************************************************
 // Collect particle indices found elsewhere (by far fellows)
 //! \param[in] found Indices of particles found
@@ -877,7 +876,7 @@ Performer::collectedpar( const std::vector< std::size_t >& found )
   // Collect particle indices found elsewhere (by distant neighbors)
   m_parelse.insert( begin(found), end(found) );
 
-  if (++m_nchpar == m_nperf) {  // if we have heard from everyone
+  if (++m_nchpar == m_ncarr) {  // if we have heard from everyone
     Assert( m_parmiss == m_parelse, "Not all particles have been found on "
             "chare " + std::to_string(thisIndex) + '\n' );
     m_nchpar = 0;
@@ -889,9 +888,9 @@ Performer::collectedpar( const std::vector< std::size_t >& found )
 }
 
 void
-Performer::advanceParticle( std::size_t i,
-                            std::size_t e,
-                            const std::array< tk::real, 4>& N )
+Carrier::advanceParticle( std::size_t i,
+                          std::size_t e,
+                          const std::array< tk::real, 4>& N )
 // *****************************************************************************
 // Advance particle based on velocity from mesh cell
 //! \author F.J. Gonzalez
@@ -929,7 +928,7 @@ Performer::advanceParticle( std::size_t i,
 }
 
 void
-Performer::applyParBC( std::size_t i )
+Carrier::applyParBC( std::size_t i )
 // *****************************************************************************
 // Apply boundary conditions to particles
 //! \author F.J. Gonzalez
@@ -957,7 +956,7 @@ Performer::applyParBC( std::size_t i )
 }
 
 void
-Performer::out()
+Carrier::out()
 // *****************************************************************************
 // Output mesh and particle fields
 //! \author J. Bakosi
@@ -975,8 +974,8 @@ Performer::out()
 }
 
 void
-Performer::updateSolution( const std::vector< std::size_t >& gid,
-                           const std::vector< tk::real >& u )
+Carrier::updateSolution( const std::vector< std::size_t >& gid,
+                         const std::vector< tk::real >& u )
 // *****************************************************************************
 // Update solution vector
 //! \param[in] gid Global row indices of the vector updated
@@ -1022,21 +1021,21 @@ Performer::updateSolution( const std::vector< std::size_t >& gid,
 
 //     // TEST FEATURE: Manually migrate this chare by using migrateMe to see if
 //     // all relevant state variables are being PUPed correctly.
-//     //CkPrintf("I'm performer chare %d on PE %d\n",thisIndex,CkMyPe());
+//     //CkPrintf("I'm carrier chare %d on PE %d\n",thisIndex,CkMyPe());
 //     if (thisIndex == 2 && CkMyPe() == 2) {
 //       /*int j;
 //       for (int i; i < 50*std::pow(thisIndex,4); i++) {
 //         j = i*thisIndex;
 //       }*/
-//       CkPrintf("I'm performer chare %d on PE %d\n",thisIndex,CkMyPe());
+//       CkPrintf("I'm carrier chare %d on PE %d\n",thisIndex,CkMyPe());
 //       migrateMe(1);
 //    }
 //    if (thisIndex == 2 && CkMyPe() == 1) {
-//      CkPrintf("I'm performer chare %d on PE %d\n",thisIndex,CkMyPe());
+//      CkPrintf("I'm carrier chare %d on PE %d\n",thisIndex,CkMyPe());
 //      migrateMe(2);
 //    }
 
   }
 }
 
-#include "NoWarning/performer.def.h"
+#include "NoWarning/carrier.def.h"
