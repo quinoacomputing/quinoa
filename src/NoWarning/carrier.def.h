@@ -1,15 +1,15 @@
 // *****************************************************************************
 /*!
-  \file      src/NoWarning/performer.def.h
+  \file      src/NoWarning/carrier.def.h
   \author    J. Bakosi
-  \date      Wed 03 Aug 2016 02:06:18 PM MDT
+  \date      Tue 16 Aug 2016 09:21:22 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
-  \brief     Include performer.def.h with turning off specific compiler
+  \brief     Include carrier.def.h with turning off specific compiler
              warnings
 */
 // *****************************************************************************
-#ifndef nowarning_performer_def_h
-#define nowarning_performer_def_h
+#ifndef nowarning_carrier_def_h
+#define nowarning_carrier_def_h
 
 #if defined(__clang__)
   #pragma clang diagnostic push
@@ -25,7 +25,7 @@
   #pragma GCC diagnostic ignored "-Wunused-variable"
 #endif
 
-#include "../Inciter/performer.def.h"
+#include "../Inciter/carrier.def.h"
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
@@ -33,4 +33,4 @@
   #pragma GCC diagnostic pop
 #endif
 
-#endif // nowarning_performer_def_h
+#endif // nowarning_carrier_def_h

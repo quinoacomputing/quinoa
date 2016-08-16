@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/LinSysMerger.C
   \author    J. Bakosi
-  \date      Mon 15 Aug 2016 10:29:53 AM MDT
+  \date      Tue 16 Aug 2016 09:18:07 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Linear system merger
   \details   Linear system merger.
@@ -11,7 +11,7 @@
 
 #include "LinSysMerger.h"
 
-#include "NoWarning/performer.decl.h"
+#include "NoWarning/carrier.decl.h"
 
 #if defined(__clang__)
   #pragma clang diagnostic push
@@ -43,7 +43,7 @@ CkReduction::reducerType BCValMerger;
 // specializations. See also
 // https://isocpp.org/wiki/faq/templates#separate-template-class-defn-from-decl.
 template class tk::LinSysMerger< inciter::CProxy_Transporter,
-                                 inciter::CProxy_Performer >;
+                                 inciter::CProxy_Carrier >;
 
 #if defined(__clang__)
   #pragma clang diagnostic pop

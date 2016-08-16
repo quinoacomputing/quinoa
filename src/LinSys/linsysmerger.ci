@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/linsysmerger.ci
   \author    J. Bakosi
-  \date      Mon 15 Aug 2016 10:30:56 AM MDT
+  \date      Tue 16 Aug 2016 09:20:38 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ module interface file for merging a linear system
   \details   Charm++ module interface file for merging a linear system
@@ -20,9 +20,9 @@ module linsysmerger {
     // List all possible specializations of templated chare to instantiate
     // registration and delivery of code for the individual specializations
 
-    // Will specialize linear system merger for Transporter & Performer
+    // Will specialize linear system merger for Transporter & Carrier
     chare LinSysMerger< inciter::CProxy_Transporter,
-                        inciter::CProxy_Performer >;
+                        inciter::CProxy_Carrier >;
 
     // LinSysMerger is templated so that the same code (parameterized by the
     // type given by the template arguments, HostProxy and WorkerProxy) can be
@@ -109,35 +109,34 @@ module linsysmerger {
       // -------------------------------
       // Control flow is from left to right and top to bottom.
       //
-      // We start out with all Performer (worker) chares contributing their
-      // porition of the global row IDs that each work on. This is labelled
-      // ChRow. The Performer chares also contribute, in parallel, their portion
-      // of the global node ID lists at which they can set boundary conditions,
-      // labelled, ChBCs. Once both row IDs and BC node lists are received on
-      // LinSysMerger, the row IDs start being converted to a flat data
-      // structure understood by hypre, labelled HypreRow.
+      // We start out with all worker chares contributing their porition of the
+      // global row IDs that each work on. This is labelled ChRow. The worker
+      // chares also contribute, in parallel, their portion of the global node
+      // ID lists at which they can set boundary conditions, labelled, ChBCs.
+      // Once both row IDs and BC node lists are received on LinSysMerger, the
+      // row IDs start being converted to a flat data structure understood by
+      // hypre, labelled HypreRow.
       //
       // The Ver partial synchronization point, besides HypreRow, also triggers
       // two code paths verifying the received BCs as well as the row IDs. Both
       // of these verification code paths only happen in DEBUG mode and skipped
       // in RELEASE (optimized) mode. While VerRow is simply an Assert in
       // rowsreceived(), VerBCs involves multiple steps of communication via
-      // multiple functions calls across three classes, LinSysMerger,
-      // Transporter, and Performer. While the VerBCs optional code path only
-      // happens in DEBUG mode, the code path does block on HypreLhs as well as
-      // on HypreRhs, which cannot proceed until VerBCs is finished. This is
-      // facilitated by 'trigger_ver_bc' which is only true by default, set in
-      // the constructor only in RELEASE mode; in DEBUG mode it must be
-      // triggered by Transporter::doverifybc(), which is the last step of
-      // verifying the BCs.
+      // multiple functions calls across three classes, LinSysMerger, host, and
+      // worker. While the VerBCs optional code path only happens in DEBUG mode,
+      // the code path does block on HypreLhs as well as on HypreRhs, which
+      // cannot proceed until VerBCs is finished. This is facilitated by
+      // 'trigger_ver_bc' which is only true by default, set in the constructor
+      // only in RELEASE mode; in DEBUG mode it must be triggered by
+      // host::doverifybc(), which is the last step of verifying the BCs.
       //
-      // Once the row IDs are contributed, we then continue by all Performer
-      // (worker) chares contributing their portion of the solution (unknown)
-      // vector, the nonzero values of the left hand side matrix, and the right
-      // hand side vector to those Linear System Merger group branch (one per
-      // CPU) they happened to reside on. These steps are denoted by ChSol,
-      // ChLhs, and ChRhs in the graph above, performed by the member functions
-      // charesol(), charelhs(), and charerhs(), respectively.
+      // Once the row IDs are contributed, we then continue by all worker chares
+      // contributing their portion of the solution (unknown) vector, the
+      // nonzero values of the left hand side matrix, and the right hand side
+      // vector to those Linear System Merger group branch (one per CPU) they
+      // happened to reside on. These steps are denoted by ChSol, ChLhs, and
+      // ChRhs in the graph above, performed by the member functions charesol(),
+      // charelhs(), and charerhs(), respectively.
       //
       // Once each of the tasks, ChSol, ChLhs, ChRhs, (not all at the same time
       // but separately) are done, we continue by converting these data
@@ -164,7 +163,7 @@ module linsysmerger {
       // matrix, and the right hand side vector are all done (on a CPU), we call
       // the solve() member function which solves the linear system calling
       // Hypre and also updates the solution, i.e., propagates the new solution
-      // back to the worker (Performer) chares.
+      // back to the worker chares.
       //
       // Note that Sol and Upd are both partial synchronization points, since
       // they can happen at different times on different CPUs.

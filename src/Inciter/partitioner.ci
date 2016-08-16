@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/partitioner.ci
   \author    J. Bakosi
-  \date      Mon 15 Aug 2016 10:22:32 AM MDT
+  \date      Tue 16 Aug 2016 09:10:37 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ module interface file for the chare partitioner group
   \details   Charm++ module interface file for the chare partitioner group used
@@ -17,9 +17,9 @@ module partitioner {
   namespace inciter {
 
     chare Partitioner< CProxy_Transporter,
-                       CProxy_Performer,
+                       CProxy_Carrier,
                        tk::CProxy_LinSysMerger< CProxy_Transporter,
-                                                CProxy_Performer >,
+                                                CProxy_Carrier >,
                        tk::CProxy_ParticleWriter< CProxy_Transporter > >;
 
     template< class HostProxy, class WorkerProxy, class LinSysMergerProxy,
@@ -99,7 +99,7 @@ module partitioner {
       // once that is done the lower bounds are communicated among the fellow
       // Partitioner branches, since the lower bound of PE n is the upper bound
       // of PE n-1. Only when both upper and lower bounds have been stored on a
-      // PE, can Performer chare array elements be inserted, done in create().
+      // PE, can Worker chare array elements be inserted, done in create().
       // Initiation of estimating the average and standard deviation of the
       // communication cost of merging the linear system is done in the
       // beginning of create(), which starts two reductions, which must be done
@@ -114,13 +114,13 @@ module partitioner {
       // distribution of new (reordered) mesh node IDs during reordering. In
       // particular, since PE 0 has nothing to receive from others, if this
       // trigger is not in place, PE 0 goes ahead of every other PE and calls
-      // create() which calls Performer constructors, a potentially heavy
+      // create() which calls Worker constructors, a potentially heavy
       // function. This is undesired at this point since PE 0 will surely need
       // to answer to requests from other PEs with new node IDs, which can only
       // be done (if the participated trigger is not in place) when the
-      // Performers have been created. This introduces unnecessarly delays and
+      // Workers have been created. This introduces unnecessarly delays and
       // load imbalance during reordering. Thus requiring trigger_participated
-      // in addition to lower and upper, delays creating of Performers. As a
+      // in addition to lower and upper, delays creating of Workers. As a
       // result, PE 0 is ready for requests from other PEs for new node IDs
       // earlier than without the participate trigger, which yields a lot
       // tighter CPU utilization during reordering. The participated trigger is

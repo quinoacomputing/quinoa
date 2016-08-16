@@ -1,18 +1,18 @@
 // *****************************************************************************
 /*!
-  \file      src/Inciter/Performer.h
+  \file      src/Inciter/Carrier.h
   \author    J. Bakosi
-  \date      Mon 15 Aug 2016 10:23:40 AM MDT
+  \date      Tue 16 Aug 2016 09:23:38 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
-  \brief     Performer advances a system of systems of PDEs
-  \details   Performer advances a system of systems of PDEs. There are a
-    potentially large number of Performer Charm++ chares created by Transporter.
-    Each performer gets a chunk of the full load (part of the mesh) and does the
+  \brief     Carrier advances a system of transport equations
+  \details   Carrier advances a system of transport equations. There are a
+    potentially large number of Carrier Charm++ chares created by Transporter.
+    Each carrier gets a chunk of the full load (part of the mesh) and does the
     same: initializes and advances a system of systems of PDEs in time.
 */
 // *****************************************************************************
-#ifndef Performer_h
-#define Performer_h
+#ifndef Carrier_h
+#define Carrier_h
 
 #include <array>
 #include <cstddef>
@@ -33,7 +33,7 @@
 #include "Inciter/InputDeck/InputDeck.h"
 
 #include "NoWarning/transporter.decl.h"
-#include "NoWarning/performer.decl.h"
+#include "NoWarning/carrier.decl.h"
 #include "NoWarning/particlewriter.decl.h"
 
 namespace tk { class ExodusIIMeshWriter; }
@@ -44,24 +44,24 @@ extern ctr::InputDeck g_inputdeck;
 extern CkReduction::reducerType VerifyBCMerger;
 extern CkReduction::reducerType MeshNodeMerger;
 
-//! Performer Charm++ chare used to advance a PDE in time
-class Performer : public CBase_Performer {
+//! Carrier Charm++ chare array used to advance transport equations in time
+class Carrier : public CBase_Carrier {
 
   private:
     using TransporterProxy = CProxy_Transporter;
     using LinSysMergerProxy = tk::CProxy_LinSysMerger< CProxy_Transporter,
-                                                       CProxy_Performer >;
+                                                       CProxy_Carrier >;
     using ParticleWriterProxy = tk::CProxy_ParticleWriter< TransporterProxy >;
 
   public:
     //! Constructor
     explicit
-      Performer( const CProxy_Transporter& transporter,
-                 const LinSysMergerProxy& lsm,
-                 const ParticleWriterProxy& pw,
-                 const std::vector< std::size_t >& conn,
-                 const std::unordered_map< std::size_t, std::size_t >& cid,
-                 int nperf );
+      Carrier( const CProxy_Transporter& transporter,
+               const LinSysMergerProxy& lsm,
+               const ParticleWriterProxy& pw,
+               const std::vector< std::size_t >& conn,
+               const std::unordered_map< std::size_t, std::size_t >& cid,
+               int ncarr );
 
     #if defined(__GNUC__)
       #pragma GCC diagnostic push
@@ -69,14 +69,14 @@ class Performer : public CBase_Performer {
     #endif
 
     //! Migrate constructor
-    explicit Performer( CkMigrateMessage* ) {}
+    explicit Carrier( CkMigrateMessage* ) {}
 
     #if defined(__GNUC__)
       #pragma GCC diagnostic pop
     #endif
 
     //! \brief Configure Charm++ reduction types
-    //! \details Since this is a [nodeinit] routine, see performer.ci, the
+    //! \details Since this is a [nodeinit] routine, see carrier.ci, the
     //!   Charm++ runtime system executes the routine exactly once on every
     //!   logical node early on in the Charm++ init sequence. Must be static as
     //!   it is called without an object. See also: Section "Initializations at
@@ -140,14 +140,14 @@ class Performer : public CBase_Performer {
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er &p ) {
-      CBase_Performer::pup(p);
+      CBase_Carrier::pup(p);
       p | m_it;
       p | m_itf;
       p | m_t;
       p | m_stage;
       p | m_nsol;
       p | m_nchpar;
-      p | m_nperf;
+      p | m_ncarr;
       p | m_outFilename;
       p | m_transporter;
       p | m_linsysmerger;
@@ -174,9 +174,9 @@ class Performer : public CBase_Performer {
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
-    //! \param[in,out] i Performer object reference
+    //! \param[in,out] i Carrier object reference
     //! \author J. Bakosi
-    friend void operator|( PUP::er& p, Performer& i ) { i.pup(p); }
+    friend void operator|( PUP::er& p, Carrier& i ) { i.pup(p); }
     //@}
 
   private:
@@ -188,7 +188,7 @@ class Performer : public CBase_Performer {
     uint8_t m_stage;                     //!< Stage in multi-stage time stepping
     std::size_t m_nsol;                  //!< Counter for solution nodes updated
     std::size_t m_nchpar;                //!< Numbr of chares recvd partcls from
-    std::size_t m_nperf;                 //!< Total number of performer chares
+    std::size_t m_ncarr;                 //!< Total number of carrier chares
     std::string m_outFilename;           //!< Output filename
     TransporterProxy m_transporter;      //!< Transporter proxy
     LinSysMergerProxy m_linsysmerger;    //!< Linear system merger proxy
@@ -222,7 +222,7 @@ class Performer : public CBase_Performer {
     tk::Particles m_particles;
     //! Element ID in which a particle has last been found for all particles
     std::vector< std::size_t > m_elp;
-    //! Fellow Performer chare indices holding neighboring mesh chunks
+    //! Fellow Carrier chare indices holding neighboring mesh chunks
     std::vector< int > m_msum;
     //! Indicies of particles not found here (missing)
     std::set< std::size_t > m_parmiss;
@@ -291,4 +291,4 @@ class Performer : public CBase_Performer {
 
 } // inciter::
 
-#endif // Performer_h
+#endif // Carrier_h

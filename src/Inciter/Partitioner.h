@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Partitioner.h
   \author    J. Bakosi
-  \date      Mon 15 Aug 2016 10:18:17 AM MDT
+  \date      Tue 16 Aug 2016 09:05:31 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ chare partitioner group used to perform mesh partitioning
   \details   Charm++ chare partitioner group used to perform mesh partitioning.
@@ -746,7 +746,7 @@ class Partitioner : public CBase_Partitioner< HostProxy,
       for (int c=0; c<mynchare; ++c) {
         // Compute chare ID
         auto cid = CkMyPe() * chunksize + c;
-        // Create performer array element
+        // Create worker array element
         m_worker[ cid ].insert( m_host,
                                 m_linsysmerger,
                                 m_particlewriter,

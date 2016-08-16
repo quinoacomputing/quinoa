@@ -2,12 +2,12 @@
 /*!
   \file      src/LinSys/LinSysMerger.h
   \author    J. Bakosi
-  \date      Mon 15 Aug 2016 10:29:41 AM MDT
+  \date      Tue 16 Aug 2016 09:17:44 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ chare linear system merger group to solve a linear system
   \details   Charm++ chare linear system merger group used to collect and
     assemble the left hand side matrix, the right hand side vector, and the
-    solution (unknown) vector from individual worker (Performer) chares. The
+    solution (unknown) vector from individual worker (e.g., Carrier) chares. The
     solution is outsourced to hypre, an MPI-only library.
 
     The implementation uses the Charm++ runtime system and is fully
@@ -970,7 +970,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       trigger_asmrhs_complete();
     }
 
-    //! Update solution vector in our PE's performers
+    //! Update solution vector in our PE's workers
     void updateSolution() {
       // Get solution vector values for our PE
       m_x.get( static_cast< int >( (m_upper - m_lower)*m_ncomp ),
