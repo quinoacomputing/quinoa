@@ -901,29 +901,40 @@ Carrier::advanceParticle( std::size_t i,
   const auto B = m_inpoel[e*4+1];
   const auto C = m_inpoel[e*4+2]; 
   const auto D = m_inpoel[e*4+3];
-  
-  // Update particle coordinates interpolating the particle velocity using the
-  // shape functions.
-  tk::real dvx[4] = { m_u(A,1,0)/m_u(A,0,0) - m_up(A,1,0)/m_up(A,0,0),
-                      m_u(B,1,0)/m_u(B,0,0) - m_up(B,1,0)/m_up(B,0,0),
-                      m_u(C,1,0)/m_u(C,0,0) - m_up(C,1,0)/m_up(C,0,0),
-                      m_u(D,1,0)/m_u(D,0,0) - m_up(D,1,0)/m_up(D,0,0) };
-  tk::real dvy[4] = { m_u(A,2,0)/m_u(A,0,0) - m_up(A,2,0)/m_up(A,0,0),
-                      m_u(B,2,0)/m_u(B,0,0) - m_up(B,2,0)/m_up(B,0,0),
-                      m_u(C,2,0)/m_u(C,0,0) - m_up(C,2,0)/m_up(C,0,0),
-                      m_u(D,2,0)/m_u(D,0,0) - m_up(D,2,0)/m_up(D,0,0) };
-  tk::real dvz[4] = { m_u(A,3,0)/m_u(A,0,0) - m_up(A,3,0)/m_up(A,0,0),
-                      m_u(B,3,0)/m_u(B,0,0) - m_up(B,3,0)/m_up(B,0,0),
-                      m_u(C,3,0)/m_u(C,0,0) - m_up(C,3,0)/m_up(C,0,0),
-                      m_u(D,3,0)/m_u(D,0,0) - m_up(D,3,0)/m_up(D,0,0) };
-        
-  m_particles( i, 0, 0) +=
+
+  // Extract velocity at the four cell nodes at current and previous time step.
+  // To keep the code below as general as possible, we interrogate all PDEs
+  // configured and use the last nonzero velocity vector.
+  std::vector< std::array< tk::real, 4 > > c, p;
+  for (const auto& eq : g_pdes) {
+    auto v = eq.velocity( m_u, A, B, C, D );
+    if (!v.empty()) c = std::move(v);
+    auto w = eq.velocity( m_up, A, B, C, D );
+    if (!w.empty()) p = std::move(w);
+  }
+
+  Assert(c.size() == 3 && p.size() == 3, "PDE velocity must have 3 components");
+
+  // Compute velocity differnce between current and previous time steps
+  const auto& cx = c[0];
+  const auto& px = p[0];
+  const auto& cy = c[1];
+  const auto& py = p[1];
+  const auto& cz = c[2];
+  const auto& pz = p[2];
+  tk::real dvx[4] = { cx[0]-px[0], cx[1]-px[1], cx[2]-px[2], cx[3]-px[3] };
+  tk::real dvy[4] = { cy[0]-py[0], cy[1]-py[1], cy[2]-py[2], cy[3]-py[3] };
+  tk::real dvz[4] = { cz[0]-pz[0], cz[1]-pz[1], cz[2]-pz[2], cz[3]-pz[3] };
+
+  // Advance particle coordinates using the interpolated velocity
+  m_particles( i, 0, 0 ) +=
     dt*(N[0]*dvx[0] + N[1]*dvx[1] + N[2]*dvx[2] + N[3]*dvx[3]);
-  m_particles( i, 1, 0) +=
+  m_particles( i, 1, 0 ) +=
     dt*(N[0]*dvy[0] + N[1]*dvy[1] + N[2]*dvy[2] + N[3]*dvy[3]);
-  m_particles( i, 2, 0) += //0.2;
+  m_particles( i, 2, 0 ) +=
     dt*(N[0]*dvz[0] + N[1]*dvz[1] + N[2]*dvz[2] + N[3]*dvz[3]);
 
+  // Apply boundary conditions to particle
   applyParBC( i );
 }
 

@@ -2,7 +2,7 @@
 /*!
   \file      src/PDE/AdvDiff.h
   \author    J. Bakosi
-  \date      Fri 22 Jul 2016 03:43:11 PM MDT
+  \date      Wed 17 Aug 2016 08:38:05 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Advection-diffusion equation of a transported scalar
   \details   This file implements the time integration of the
@@ -270,6 +270,22 @@ class AdvDiff {
                                     * grad[j][k] * s[c][j];
             }
       }
+    }
+
+    //! Extract the velocity field at cell nodes
+    //! \param[in] U Solution vector at recent time step stage
+    //! \param[in] A Index of 1st cell node to query
+    //! \param[in] B Index of 2nd cell node to query
+    //! \param[in] C Index of 3rd cell node to query
+    //! \param[in] D Index of 4th cell node to query
+    //! \return Array of the four values of the three velocity coordinates
+    std::vector< std::array< tk::real, 4 > >
+    velocity( const tk::MeshNodes& U,
+              ncomp_t A, ncomp_t B, ncomp_t C, ncomp_t D ) const
+    {
+      IGNORE(U); IGNORE(A); IGNORE(B); IGNORE(C); IGNORE(D);
+      std::vector< std::array< tk::real, 4 > > v;
+      return v;
     }
 
     //! \brief Query if a Dirichlet boundary condition has set by the user on
