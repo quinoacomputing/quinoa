@@ -2,7 +2,7 @@
 /*!
   \file      src/PDE/CompNS.h
   \author    J. Bakosi
-  \date      Mon 25 Jul 2016 08:40:14 AM MDT
+  \date      Wed 17 Aug 2016 07:43:57 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Navier-Stokes equations describing compressible flow
   \details   This file implements the time integration of the Navier-Stokes
@@ -374,6 +374,31 @@ class CompNS {
             R.var(r[4],D) += mult * dt * J/24.0 * grad[k][i] * T[k] * kc;
           }
       }
+    }
+
+    //! Extract the velocity field at cell nodes
+    //! \param[in] U Solution vector at recent time step stage
+    //! \param[in] A Index of 1st cell node to query
+    //! \param[in] B Index of 2nd cell node to query
+    //! \param[in] C Index of 3rd cell node to query
+    //! \param[in] D Index of 4th cell node to query
+    //! \return Array of the four values of the three velocity coordinates
+    std::vector< std::array< tk::real, 4 > >
+    velocity( const tk::MeshNodes& U,
+              ncomp_t A, ncomp_t B, ncomp_t C, ncomp_t D ) const
+    {
+      std::vector< std::array< tk::real, 4 > > v( 3 );
+      v[0] = U.extract( 1, m_offset, A, B, C, D );
+      v[1] = U.extract( 2, m_offset, A, B, C, D );
+      v[2] = U.extract( 3, m_offset, A, B, C, D );
+      auto r = U.extract( 0, m_offset, A, B, C, D );
+      std::transform( r.begin(), r.end(), v[0].begin(), v[0].begin(),
+                      []( tk::real s, tk::real& d ){ return d /= s; } );
+      std::transform( r.begin(), r.end(), v[1].begin(), v[1].begin(),
+                      []( tk::real s, tk::real& d ){ return d /= s; } );
+      std::transform( r.begin(), r.end(), v[2].begin(), v[2].begin(),
+                      []( tk::real s, tk::real& d ){ return d /= s; } );
+      return v;
     }
 
     //! \brief Query if a Dirichlet boundary condition has set by the user on

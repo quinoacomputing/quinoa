@@ -97,6 +97,12 @@ class PDE {
               tk::MeshNodes& R ) const
     { self->rhs( mult, dt, coord, inpoel, U, Un, R ); }
 
+    //! Public interface for extracting the velocity field at cell nodes
+    std::vector< std::array< tk::real, 4 > >
+    velocity( const tk::MeshNodes& U,
+              ncomp_t A, ncomp_t B, ncomp_t C, ncomp_t D ) const
+    { return self->velocity( U, A, B, C, D ); }
+
     //! \brief Public interface for querying if a Dirichlet boundary condition
     //!   has set by the user on any side set for any component in the PDE
     bool anydirbc( int sideset ) const
@@ -148,6 +154,9 @@ class PDE {
                         const tk::MeshNodes&, const tk::MeshNodes&,
                         tk::MeshNodes& ) const = 0;
       virtual bool anydirbc( int ) const = 0;
+      virtual std::vector< std::array< tk::real, 4 > > velocity(
+        const tk::MeshNodes& U, ncomp_t A, ncomp_t B, ncomp_t C, ncomp_t D )
+        const = 0;
       virtual std::vector< std::pair< bool, tk::real > > dirbc( int ) const = 0;
       virtual std::vector< std::string > names() const = 0;
       virtual std::vector< std::vector< tk::real > > output(
@@ -178,6 +187,9 @@ class PDE {
                 const tk::MeshNodes& Un,
                 tk::MeshNodes& R ) const override
       { data.rhs( mult, dt, coord, inpoel, U, Un, R ); }
+      std::vector< std::array< tk::real, 4 > > velocity(
+        const tk::MeshNodes& U, ncomp_t A, ncomp_t B, ncomp_t C, ncomp_t D )
+        const override { return data.velocity( U, A, B, C, D ); }
       bool anydirbc( int sideset ) const override
       { return data.anydirbc( sideset ); }
       std::vector< std::pair< bool, tk::real > > dirbc( int sideset ) const
