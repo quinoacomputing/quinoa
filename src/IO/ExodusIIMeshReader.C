@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/ExodusIIMeshReader.C
   \author    J. Bakosi
-  \date      Tue 19 Jul 2016 09:33:40 AM MDT
+  \date      Thu 18 Aug 2016 09:26:28 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     ExodusII mesh reader
   \details   ExodusII mesh reader class definition. Currently, this is a bare
@@ -370,13 +370,18 @@ ExodusIIMeshReader::readSidesets()
             "Failed to read side set ids from ExodusII file: " + m_filename );
     // Read in node list for all side sets
     for (auto i : ids) {
-      int nface, ndist;
+      int nface, nnode;
       // Read number of faces and number of distribution factors in side set i
-      ErrChk( ex_get_side_set_param( m_inFile, i, &nface, &ndist ) == 0,
+      ErrChk( ex_get_side_set_param( m_inFile, i, &nface, &nnode ) == 0,
               "Failed to read side set " + std::to_string(i) + " parameters "
               "from ExodusII file: " + m_filename );
+      // Read number of nodes in side set i (overwrite nnode)
+      ErrChk( ex_get_side_set_node_list_len( m_inFile, i, &nnode ) == 0,
+              "Failed to read side set " + std::to_string(i) + " node list "
+              "length from ExodusII file: " + m_filename );
+      Assert(nnode > 0, "Number of nodes = 0 in side set" + std::to_string(i));
       std::vector< int > df( static_cast< std::size_t >( nface ) );
-      std::vector< int > nodes( static_cast< std::size_t >( ndist ) );
+      std::vector< int > nodes( static_cast< std::size_t >( nnode ) );
       // Read in node list for side set i
       ErrChk( ex_get_side_set_node_list( m_inFile, i, df.data(), nodes.data() )
                 == 0, "Failed to read node list of side set " +

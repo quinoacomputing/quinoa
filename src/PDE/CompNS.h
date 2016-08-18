@@ -46,13 +46,11 @@ class CompNS {
     //!   time integration
     //! \param[in,out] unk Array of unknowns
     //! \param[in] coord Mesh node coordinates
-    //! \param[in] t Physical time
     //! \author J. Bakosi
     void initialize( const std::array< std::vector< tk::real >, 3 >& coord,
                      tk::MeshNodes& unk,
-                     tk::real t ) const
+                     tk::real ) const
     {
-      IGNORE(t);
       //! Set initial conditions using problem configuration policy
       Problem::template
         init< tag::compns >( g_inputdeck, coord, unk, m_ncomp, m_offset );
@@ -425,8 +423,9 @@ class CompNS {
       std::vector< std::pair< bool, tk::real > > b( m_ncomp, { false, 0.0 } );
       for (const auto& s : bc) {
         Assert( s.size() == 3, "Side set vector size incorrect" );
-        if (static_cast<int>(std::round(s[0])) == sideset)
+        if (static_cast<int>(std::round(s[0])) == sideset) {
           b[ static_cast<std::size_t>(std::round(s[1]))-1 ] = { true, s[2] };
+        }
       }
       return b;
     }
@@ -446,17 +445,13 @@ class CompNS {
     }
 
     //! Return field output going to file
-    //! \param[in] t Physical time
-    //! \param[in] coord Mesh node coordinates
     //! \param[in] U Solution vector at recent time step stage
     //! \return Vector of vectors to be output to file
     std::vector< std::vector< tk::real > >
-    output( tk::real t,
-            const std::array< std::vector< tk::real >, 3 >& coord,
+    output( tk::real,
+            const std::array< std::vector< tk::real >, 3 >&,
             const tk::MeshNodes& U ) const
     {
-      IGNORE(t);
-      IGNORE(coord);
       std::vector< std::vector< tk::real > > out;
       const auto r = U.extract( 0, m_offset );
       const auto ru = U.extract( 1, m_offset );
