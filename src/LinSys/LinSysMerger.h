@@ -600,7 +600,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
     //!   the distributed matrix columns at which BCs are set
     void bcval( CkReductionMsg* msg ) {
       std::unordered_map< std::size_t,
-                        std::vector< std::pair< bool, tk::real > > > bcval;
+                          std::vector< std::pair< bool, tk::real > > > bcval;
       PUP::fromMem creator( msg->getData() );
       creator | bcval;
       delete msg;
@@ -850,14 +850,10 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
               "Right-hand side vector incomplete on PE " +
               std::to_string(CkMyPe()) + ": cannot set BCs" );
       for (const auto& n : m_bcval) {
-        //std::cout << n.first+1 << '\n';
         auto& row = tk::ref_find( m_rhs, n.first );
         auto& b = n.second;
         for (std::size_t i=0; i<m_ncomp; ++i)
-          if (b[i].first) {
-            //std::cout << n.first << ", " << b[i].second << '\n';
-            row[i] = b[i].second;  // put in BC value
-          }
+          if (b[i].first) row[i] = b[i].second;  // put in BC value
       }
       trigger_rhsbc_complete();
       trigger_rhs_complete();
@@ -909,10 +905,8 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       Assert( m_rhs.size() == m_hypreRows.size() / m_ncomp,
               "Right-hand side vector incomplete on PE " +
               std::to_string(CkMyPe()) + ": cannot convert" );
-      for (const auto& r : m_rhs) {
+      for (const auto& r : m_rhs)
         m_hypreRhs.insert( end(m_hypreRhs), begin(r.second), end(r.second) );
-        //std::cout << r.first << ", " << r.second[0] << '\n';
-      }
       trigger_hyprerhs_complete();
       trigger_ver_complete();
     }

@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Carrier.C
   \author    J. Bakosi
-  \date      Tue 16 Aug 2016 09:24:06 AM MDT
+  \date      Thu 18 Aug 2016 09:25:39 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Carrier advances a system of transport equations
   \details   Carrier advances a system of transport equations. There are a
@@ -305,6 +305,12 @@ Carrier::bcval( int frompe, const std::vector< std::size_t >& nodes )
       auto e = eq.dirbc( sideset );  // query BC values for all components of eq
       b.insert( end(b), begin(e), end(e) );
     }
+    Assert( b.size() == g_inputdeck.get< tag::component >().nprop(),
+            "The total number of scalar components of all configured PDEs (" +
+            std::to_string( g_inputdeck.get< tag::component >().nprop() ) + ") "
+            "and the sum of the lengths of the Dirichlet BC vectors returned "
+            "from all configured PDE::dirbc() calls (" +
+            std::to_string( b.size() ) + ") does not match" );
     return b;
   };
 
@@ -322,9 +328,10 @@ Carrier::bcval( int frompe, const std::vector< std::size_t >& nodes )
   // whether the BC value is set at the given node by the user. The size of the
   // vectors is the number of PDEs integrated times the number of scalar
   // components in all PDEs. The vector is associated to global node IDs at
-  // which the boundary condition will be set. If a node belongs to multiple
-  // side sets in the file, we keep it associated to the first side set given by
-  // the user.
+  // which the boundary condition will be set. If a node gets boundary
+  // conditions from multiple side sets, true values (the fact that a BC is set)
+  // overwrite existing false ones, i.e., the union of the boundary conditions
+  // will be applied at the node.
   std::unordered_map< std::size_t,
                       std::vector< std::pair< bool, tk::real > > > bcv;
   for (const auto& s : side) {
@@ -332,7 +339,8 @@ Carrier::bcval( int frompe, const std::vector< std::size_t >& nodes )
     for (auto n : nodes)
       if (inset( n, s.second )) {
         auto& v = bcv[n];
-        if (v.empty()) v.insert( begin(v), begin(b), end(b) );
+        v.resize( b.size() );
+        for (std::size_t i=0; i<b.size(); ++i) if (b[i].first) v[i] = b[i];
       }
   }
 
