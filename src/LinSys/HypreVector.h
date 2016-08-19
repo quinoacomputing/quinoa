@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/HypreVector.h
   \author    J. Bakosi
-  \date      Tue 10 May 2016 10:00:28 AM MDT
+  \date      Fri 19 Aug 2016 07:50:37 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Hypre IJ vector class
   \details   Hypre IJ vector class.
@@ -69,7 +69,14 @@ class HypreVector {
     //! Hypre vector accessor
     HYPRE_ParVector get() const {
       HYPRE_ParVector v;
+      #if defined(__GNUC__)
+        #pragma GCC diagnostic push
+        #pragma GCC diagnostic ignored "-Wstrict-aliasing"
+      #endif
       HYPRE_IJVectorGetObject( m_v, reinterpret_cast<void**>(&v) );
+      #if defined(__GNUC__)
+        #pragma GCC diagnostic pop
+      #endif
       return v;
     }
 

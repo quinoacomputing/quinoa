@@ -2,7 +2,7 @@
 /*!
   \file      src/NoWarning/distributor.def.h
   \author    J. Bakosi
-  \date      Wed 04 May 2016 11:28:40 AM MDT
+  \date      Fri 19 Aug 2016 07:51:33 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include distributor.def.h with turning off specific compiler
              warnings
@@ -27,6 +27,7 @@
   #pragma GCC diagnostic ignored "-Wshadow"
   #pragma GCC diagnostic ignored "-Wcast-qual"
   #pragma GCC diagnostic ignored "-Wunused-variable"
+  #pragma GCC diagnostic ignored "-Wstrict-aliasing"
 #endif
 
 #include "../Walker/distributor.def.h"

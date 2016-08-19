@@ -2,7 +2,7 @@
 /*!
   \file      src/NoWarning/transporter.def.h
   \author    J. Bakosi
-  \date      Mon 15 Aug 2016 10:31:53 AM MDT
+  \date      Fri 19 Aug 2016 07:51:46 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Include transporter.def.h with turning off specific compiler
              warnings
@@ -27,6 +27,7 @@
   #pragma GCC diagnostic ignored "-Wcast-qual"
   #pragma GCC diagnostic ignored "-Wunused-variable"
   #pragma GCC diagnostic ignored "-Wshadow"
+  #pragma GCC diagnostic ignored "-Wstrict-aliasing"
 #endif
 
 #include "../Inciter/transporter.def.h"
