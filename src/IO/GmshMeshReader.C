@@ -229,11 +229,14 @@ GmshMeshReader::readElements( UnsMesh& mesh )
       // Put in element connectivity for different types of elements
       switch ( elmtype ) {
         case GmshElemType::LIN:
-          for (const auto& j : nodes) mesh.lininpoel().push_back( j ); break;
+          for (const auto& j : nodes) mesh.lininpoel().push_back( j );
+          break;
         case GmshElemType::TRI:
-          for (const auto& j : nodes) mesh.triinpoel().push_back( j ); break;
+          for (const auto& j : nodes) mesh.triinpoel().push_back( j );
+          break;
         case GmshElemType::TET:
-          for (const auto& j : nodes) mesh.tetinpoel().push_back( j ); break;
+          for (const auto& j : nodes) mesh.tetinpoel().push_back( j );
+          break;
         case GmshElemType::PNT:
           break;     // ignore 1-node 'point element' type
         default: Throw( std::string("Unsupported element type ") << elmtype <<

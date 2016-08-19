@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/HypreMatrix.h
   \author    J. Bakosi
-  \date      Tue 10 May 2016 09:59:37 AM MDT
+  \date      Fri 19 Aug 2016 07:50:21 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Hypre IJ matrix class
   \details   Hypre IJ matrix class.
@@ -68,7 +68,14 @@ class HypreMatrix {
     //! Hypre matrix accessor
     HYPRE_ParCSRMatrix get() const {
       HYPRE_ParCSRMatrix m;
+      #if defined(__GNUC__)
+        #pragma GCC diagnostic push
+        #pragma GCC diagnostic ignored "-Wstrict-aliasing"
+      #endif
       HYPRE_IJMatrixGetObject( m_A, reinterpret_cast<void**>(&m) );
+      #if defined(__GNUC__)
+        #pragma GCC diagnostic pop
+      #endif
       return m;
     }
 
