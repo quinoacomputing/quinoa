@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/Options/CoeffPolicy.h
   \author    J. Bakosi
-  \date      Thu 04 Feb 2016 06:13:35 AM MST
+  \date      Mon 22 Aug 2016 10:15:06 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Differential equation coefficients policy options
   \details   Differential equation coefficients policy options
@@ -12,6 +12,7 @@
 #define CoeffPolicyOptions_h
 
 #include <boost/mpl/vector.hpp>
+#include "NoWarning/for_each.h"
 
 #include "Toggle.h"
 #include "Keywords.h"
@@ -70,7 +71,47 @@ class CoeffPolicy : public tk::Toggle< CoeffPolicyType > {
            { kw::montecarlo_homdecay::string(),
              CoeffPolicyType::MONTE_CARLO_HOMOGENEOUS_DECAY },
            { kw::hydrotimescale::string(),
-             CoeffPolicyType::HYDROTIMESCALE_HOMOGENEOUS_DECAY } } ) {}
+             CoeffPolicyType::HYDROTIMESCALE_HOMOGENEOUS_DECAY } } )
+    {
+       boost::mpl::for_each< keywords >( assertPolicyCodes() );
+    }
+
+    //! \brief Return policy code based on Enum
+    //! \param[in] p Enum value of the option requested
+    //! \return Policy code of the option
+    //! \author J. Bakosi
+    const std::string& code( CoeffPolicyType p ) const {
+      using tk::operator<<;
+      auto it = policy.find( p );
+      Assert( it != end(policy),
+              std::string("Cannot find policy code for physics \"") << p <<
+                "\"" );
+      return it->second;
+    }
+
+  private:
+    //! Function object for ensuring the existence of policy codes
+    //! \author J. Bakosi
+    struct assertPolicyCodes {
+      //! \brief Function call operator templated on the type to assert the
+      //!   existence of a policy code
+      template< typename U > void operator()( U ) {
+        static_assert( tk::HasTypedefCode< typename U::info >::value,
+                       "Policy code undefined for keyword" );
+      }
+    };
+
+    //! Enums -> policy code
+    std::map< CoeffPolicyType, std::string > policy {
+        { CoeffPolicyType::CONSTANT, *kw::constant::code() }
+      , { CoeffPolicyType::DECAY, *kw::decay::code() }
+      , { CoeffPolicyType::HOMOGENEOUS_DECAY, *kw::homdecay::code() }
+      , { CoeffPolicyType::MONTE_CARLO_HOMOGENEOUS_DECAY,
+          *kw::montecarlo_homdecay::code() }
+      , { CoeffPolicyType::HYDROTIMESCALE_HOMOGENEOUS_DECAY,
+          *kw::hydrotimescale::code() }
+    };
+
 };
 
 } // ctr::

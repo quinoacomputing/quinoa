@@ -25,6 +25,8 @@ struct Has_common {
   struct yesProxy { using Proxy = int; };
   struct noAlias {};
   struct yesAlias { using alias = char; };
+  struct noCode {};
+  struct yesCode { using code = char; };
   struct noExpectType {};
   struct yesExpectType { struct expect{ using type = char; }; };
   struct noExpectDescription {};
@@ -82,11 +84,31 @@ void Has_object::test< 4 >() {
   ensure_equals( "struct has alias", yes().value, true );
 }
 
+//! Test if tk::HasTypedefCode correctly detects the absence of typedef code
+//! \author J. Bakosi
+template<> template<>
+void Has_object::test< 5 >() {
+  set_test_name( "HasTypedefCode detects absence" );
+
+  struct no { bool value = tk::HasTypedefCode< noCode >::value; };
+  ensure_equals( "struct has no code", no().value, false );
+}
+
+//! Test if tk::HasTypedefCode correctly detects the presence of typedef code
+//! \author J. Bakosi
+template<> template<>
+void Has_object::test< 6 >() {
+  set_test_name( "HasTypedefCode detects presence" );
+
+  struct yes { bool value = tk::HasTypedefCode< yesCode >::value; };
+  ensure_equals( "struct has code", yes().value, true );
+}
+
 //! \brief Test if tk::HasTypedefExpectType correctly detects the absence of
 //!   typedef expect::type
 //! \author J. Bakosi
 template<> template<>
-void Has_object::test< 5 >() {
+void Has_object::test< 7 >() {
   set_test_name( "HasTypedefExpectType: absence" );
 
   struct no { bool value = tk::HasTypedefExpectType< noExpectType >::value; };
@@ -97,7 +119,7 @@ void Has_object::test< 5 >() {
 //!   typedef expect::type
 //! \author J. Bakosi
 template<> template<>
-void Has_object::test< 6 >() {
+void Has_object::test< 8 >() {
   set_test_name( "HasTypedefExpectType: presence" );
 
   struct yes { bool value = tk::HasTypedefExpectType< yesExpectType >::value; };
@@ -108,7 +130,7 @@ void Has_object::test< 6 >() {
 //!   absence of function expect::description()
 //! \author J. Bakosi
 template<> template<>
-void Has_object::test< 7 >() {
+void Has_object::test< 9 >() {
   set_test_name( "HasFunctionExpectDescription: absence" );
 
   struct no {
@@ -121,7 +143,7 @@ void Has_object::test< 7 >() {
 //!   presence of function expect::description()
 //! \author J. Bakosi
 template<> template<>
-void Has_object::test< 8 >() {
+void Has_object::test< 10 >() {
   set_test_name( "HasFunctionExpectDescription: presence" );
 
   struct yes {
@@ -134,7 +156,7 @@ void Has_object::test< 8 >() {
 //!   function expect::choices()
 //! \author J. Bakosi
 template<> template<>
-void Has_object::test< 9 >() {
+void Has_object::test< 11 >() {
   set_test_name( "HasFunctionExpectChoices: absence" );
 
   struct no {
@@ -147,7 +169,7 @@ void Has_object::test< 9 >() {
 //!   of function expect::choices()
 //! \author J. Bakosi
 template<> template<>
-void Has_object::test< 10 >() {
+void Has_object::test< 12 >() {
   set_test_name( "HasFunctionExpectChoices: presence" );
 
   struct yes {

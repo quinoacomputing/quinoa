@@ -2,7 +2,7 @@
 /*!
   \file      src/PDE/PDEStack.C
   \author    J. Bakosi
-  \date      Sun 07 Aug 2016 01:29:49 PM MDT
+  \date      Fri 19 Aug 2016 02:12:06 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Stack of partial differential equations
   \details   This file defines class PDEStack, which implements various
@@ -23,13 +23,15 @@
 
 #include "AdvDiff.h"
 #include "Poisson.h"
-#include "Euler.h"
-#include "CompNS.h"
+#include "CompFlow.h"
+
+#include "AdvDiffPhysics.h"
+#include "PoissonPhysics.h"
+#include "CompFlowPhysics.h"
 
 #include "AdvDiffProblem.h"
 #include "PoissonProblem.h"
-#include "EulerProblem.h"
-#include "CompNSProblem.h"
+#include "CompFlowProblem.h"
 
 using inciter::PDEStack;
 
@@ -106,31 +108,24 @@ PDEStack::PDEStack() : m_factory(), m_eqTypes()
 
   // Advection-diffusion PDE
   // Construct vector of vectors for all possible policies for PDE
-  using AdvDiffPolicies = mpl::vector< AdvDiffProblems >;
+  using AdvDiffPolicies = mpl::vector< AdvDiffPhysics, AdvDiffProblems >;
   // Register PDE for all combinations of policies
   mpl::cartesian_product< AdvDiffPolicies >(
     registerPDE< AdvDiff >( m_factory, ctr::PDEType::ADV_DIFF, m_eqTypes ) );
 
   // Poisson PDE
   // Construct vector of vectors for all possible policies for PDE
-  using PoissonPolicies = mpl::vector< PoissonProblems >;
+  using PoissonPolicies = mpl::vector< PoissonPhysics, PoissonProblems >;
   // Register PDE for all combinations of policies
   mpl::cartesian_product< PoissonPolicies >(
     registerPDE< Poisson >( m_factory, ctr::PDEType::POISSON, m_eqTypes ) );
 
-  // Euler system of PDEs
+  // Compressible flow system of PDEs
   // Construct vector of vectors for all possible policies for PDE
-  using EulerPolicies = mpl::vector< EulerProblems >;
+  using CompFlowPolicies = mpl::vector< CompFlowPhysics, CompFlowProblems >;
   // Register PDE for all combinations of policies
-  mpl::cartesian_product< EulerPolicies >(
-    registerPDE< Euler >( m_factory, ctr::PDEType::EULER, m_eqTypes ) );
-
-  // Compressible Navier-Stokes system of PDEs
-  // Construct vector of vectors for all possible policies for PDE
-  using CompNSPolicies = mpl::vector< CompNSProblems >;
-  // Register PDE for all combinations of policies
-  mpl::cartesian_product< CompNSPolicies >(
-    registerPDE< CompNS >( m_factory, ctr::PDEType::COMPNS, m_eqTypes ) );
+  mpl::cartesian_product< CompFlowPolicies >(
+    registerPDE< CompFlow >( m_factory, ctr::PDEType::COMPFLOW, m_eqTypes ) );
 }
 
 std::vector< inciter::PDE >
@@ -149,10 +144,8 @@ PDEStack::selected() const
       pdes.push_back( createPDE< tag::advdiff >( d, cnt ) );
     else if (d == ctr::PDEType::POISSON)
       pdes.push_back( createPDE< tag::poisson >( d, cnt ) );
-    else if (d == ctr::PDEType::EULER)
-      pdes.push_back( createPDE< tag::euler >( d, cnt ) );
-    else if (d == ctr::PDEType::COMPNS)
-      pdes.push_back( createPDE< tag::compns >( d, cnt ) );
+    else if (d == ctr::PDEType::COMPFLOW)
+      pdes.push_back( createPDE< tag::compflow >( d, cnt ) );
     else Throw( "Can't find selected PDE" );
   }
 
@@ -177,10 +170,8 @@ PDEStack::info() const
       info.emplace_back( infoAdvDiff( cnt ) );
     else if (d == ctr::PDEType::POISSON)
       info.emplace_back( infoPoisson( cnt ) );
-    else if (d == ctr::PDEType::EULER)
-      info.emplace_back( infoEuler( cnt ) );
-    else if (d == ctr::PDEType::COMPNS)
-      info.emplace_back( infoCompNS( cnt ) );
+    else if (d == ctr::PDEType::COMPFLOW)
+      info.emplace_back( infoCompFlow( cnt ) );
     else Throw( "Can't find selected PDE" );
   }
 
@@ -249,65 +240,41 @@ PDEStack::infoPoisson( std::map< ctr::PDEType, ncomp_t >& cnt ) const
 }
 
 std::vector< std::pair< std::string, std::string > >
-PDEStack::infoEuler( std::map< ctr::PDEType, ncomp_t >& cnt ) const
+PDEStack::infoCompFlow( std::map< ctr::PDEType, ncomp_t >& cnt ) const
 // *****************************************************************************
-//  Return information on the Euler system of PDEs
+//  Return information on the compressible flow system of PDEs
 //! \param[inout] cnt std::map of counters for all partial differential equation
 //!   types
 //! \return vector of string pairs describing the PDE configuration
 //! \author J. Bakosi
 // *****************************************************************************
 {
-  auto c = ++cnt[ ctr::PDEType::EULER ];       // count eqs
+  auto c = ++cnt[ ctr::PDEType::COMPFLOW ];       // count eqs
   --c;  // used to index vectors starting with 0
 
   std::vector< std::pair< std::string, std::string > > info;
 
-  info.emplace_back( ctr::PDE().name( ctr::PDEType::EULER ), "" );
+  info.emplace_back( ctr::PDE().name( ctr::PDEType::COMPFLOW ), "" );
+  info.emplace_back( "physics", ctr::Physics().name(
+    g_inputdeck.get< tag::param, tag::compflow, tag::physics >()[c] ) );
   info.emplace_back( "problem", ctr::Problem().name(
-    g_inputdeck.get< tag::param, tag::euler, tag::problem >()[c] ) );
+    g_inputdeck.get< tag::param, tag::compflow, tag::problem >()[c] ) );
   info.emplace_back( "start offset in unknowns array", std::to_string(
-    g_inputdeck.get< tag::component >().offset< tag::euler >(c) ) );
-  auto ncomp = g_inputdeck.get< tag::component >().get< tag::euler >()[c];
-  info.emplace_back( "number of components", std::to_string( ncomp ) );
-
-  return info;
-}
-
-std::vector< std::pair< std::string, std::string > >
-PDEStack::infoCompNS( std::map< ctr::PDEType, ncomp_t >& cnt ) const
-// *****************************************************************************
-//  Return information on the compressible Navier-Stokes system of PDEs
-//! \param[inout] cnt std::map of counters for all partial differential equation
-//!   types
-//! \return vector of string pairs describing the PDE configuration
-//! \author J. Bakosi
-// *****************************************************************************
-{
-  auto c = ++cnt[ ctr::PDEType::COMPNS ];       // count eqs
-  --c;  // used to index vectors starting with 0
-
-  std::vector< std::pair< std::string, std::string > > info;
-
-  info.emplace_back( ctr::PDE().name( ctr::PDEType::COMPNS ), "" );
-  info.emplace_back( "problem", ctr::Problem().name(
-    g_inputdeck.get< tag::param, tag::compns, tag::problem >()[c] ) );
-  info.emplace_back( "start offset in unknowns array", std::to_string(
-    g_inputdeck.get< tag::component >().offset< tag::compns >(c) ) );
-  auto ncomp = g_inputdeck.get< tag::component >().get< tag::compns >()[c];
+    g_inputdeck.get< tag::component >().offset< tag::compflow >(c) ) );
+  auto ncomp = g_inputdeck.get< tag::component >().get< tag::compflow >()[c];
   info.emplace_back( "number of components", std::to_string( ncomp ) );
   info.emplace_back( "material id", parameters(
-    g_inputdeck.get< tag::param, tag::compns, tag::id >() ) );
+    g_inputdeck.get< tag::param, tag::compflow, tag::id >() ) );
   info.emplace_back( "ratio of specific heats", parameters(
-    g_inputdeck.get< tag::param, tag::compns, tag::gamma >() ) );
+    g_inputdeck.get< tag::param, tag::compflow, tag::gamma >() ) );
   info.emplace_back( "dynamic viscosity", parameters(
-    g_inputdeck.get< tag::param, tag::compns, tag::mu >() ) );
+    g_inputdeck.get< tag::param, tag::compflow, tag::mu >() ) );
   info.emplace_back( "specific heat at const. volume", parameters(
-    g_inputdeck.get< tag::param, tag::compns, tag::cv >() ) );
+    g_inputdeck.get< tag::param, tag::compflow, tag::cv >() ) );
   info.emplace_back( "heat conductivity", parameters(
-    g_inputdeck.get< tag::param, tag::compns, tag::k >() ) );
+    g_inputdeck.get< tag::param, tag::compflow, tag::k >() ) );
 
-  auto& npar = g_inputdeck.get< tag::param, tag::compns, tag::npar >();
+  auto& npar = g_inputdeck.get< tag::param, tag::compflow, tag::npar >();
   if (!npar.empty())
     info.emplace_back( "number of tracker particles", parameters( npar ) );
 

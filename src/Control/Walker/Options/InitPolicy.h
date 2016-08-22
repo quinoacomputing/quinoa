@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/Options/InitPolicy.h
   \author    J. Bakosi
-  \date      Thu 04 Feb 2016 06:14:29 AM MST
+  \date      Mon 22 Aug 2016 10:16:27 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Differential equation initialization policy options for walker
   \details   Differential equation initialization policy options for walker
@@ -12,6 +12,7 @@
 #define InitPolicyOptions_h
 
 #include <boost/mpl/vector.hpp>
+#include "NoWarning/for_each.h"
 
 #include "Toggle.h"
 #include "Keywords.h"
@@ -61,7 +62,43 @@ class InitPolicy : public tk::Toggle< InitPolicyType > {
         { { kw::raw::string(), InitPolicyType::RAW },
           { kw::zero::string(), InitPolicyType::ZERO },
           { kw::jointdelta::string(), InitPolicyType::JOINTDELTA },
-          { kw::jointbeta::string(), InitPolicyType::JOINTBETA } } ) {}
+          { kw::jointbeta::string(), InitPolicyType::JOINTBETA } } )
+    {
+       boost::mpl::for_each< keywords >( assertPolicyCodes() );
+    }
+
+    //! \brief Return policy code based on Enum
+    //! \param[in] p Enum value of the option requested
+    //! \return Policy code of the option
+    //! \author J. Bakosi
+    const std::string& code( InitPolicyType p ) const {
+      using tk::operator<<;
+      auto it = policy.find( p );
+      Assert( it != end(policy),
+              std::string("Cannot find policy code for physics \"") << p <<
+                "\"" );
+      return it->second;
+    }
+
+  private:
+    //! Function object for ensuring the existence of policy codes
+    //! \author J. Bakosi
+    struct assertPolicyCodes {
+      //! \brief Function call operator templated on the type to assert the
+      //!   existence of a policy code
+      template< typename U > void operator()( U ) {
+        static_assert( tk::HasTypedefCode< typename U::info >::value,
+                       "Policy code undefined for keyword" );
+      }
+    };
+
+    //! Enums -> policy code
+    std::map< InitPolicyType, std::string > policy {
+        { InitPolicyType::RAW, *kw::raw::code() }
+      , { InitPolicyType::ZERO, *kw::zero::code() }
+      , { InitPolicyType::JOINTDELTA, *kw::jointdelta::code() }
+      , { InitPolicyType::JOINTBETA, *kw::jointbeta::code() }
+    };
 };
 
 } // ctr::

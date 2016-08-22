@@ -1,33 +1,35 @@
 // *****************************************************************************
 /*!
-  \file      src/PDE/CompNS.h
+  \file      src/PDE/CompFlow.h
   \author    J. Bakosi
-  \date      Wed 17 Aug 2016 07:43:57 AM MDT
+  \date      Fri 19 Aug 2016 02:15:46 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
-  \brief     Navier-Stokes equations describing compressible flow
-  \details   This file implements the time integration of the Navier-Stokes
-    equations governing compressible fluid flow.
+  \brief     Governing equations describing compressible single-phase flow
+  \details   This file implements the time integration of the equations
+     governing compressible fluid flow.
 */
 // *****************************************************************************
-#ifndef CompNS_h
-#define CompNS_h
+#ifndef CompFlow_h
+#define CompFlow_h
 
 #include <algorithm>
 #include <cmath>
 
 #include "Macro.h"
-#include "CompNSProblem.h"
+#include "CompFlowPhysics.h"
+#include "CompFlowProblem.h"
 
 namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
 
-//! \brief CompNS used polymorphically with tk::PDE
+//! \brief CompFlow used polymorphically with tk::PDE
 //! \details The template arguments specify policies and are used to configure
 //!   the behavior of the class. The policies are:
-//!   - Problem - problem configuration, see PDE/CompNSProblem.h
-template< class Problem >
-class CompNS {
+//!   - Physics - physics configuration, see PDE/CompFlowPhysics.h
+//!   - Problem - problem configuration, see PDE/CompFlowProblem.h
+template< class Physics, class Problem >
+class CompFlow {
 
   private:
     using ncomp_t = kw::ncomp::info::expect::type;
@@ -35,15 +37,14 @@ class CompNS {
   public:
     //! \brief Constructor
     //! \author J. Bakosi
-    explicit CompNS( ncomp_t c ) :
+    explicit CompFlow( ncomp_t c ) :
       m_ncomp( 5 ),
       m_offset( 0 )
     {
       IGNORE(c);
     }
 
-    //! \brief Initalize the compressible Navier-Stokes equations, prepare for
-    //!   time integration
+    //! Initalize the compressible flow equations, prepare for time integration
     //! \param[in,out] unk Array of unknowns
     //! \param[in] coord Mesh node coordinates
     //! \author J. Bakosi
@@ -53,7 +54,7 @@ class CompNS {
     {
       //! Set initial conditions using problem configuration policy
       Problem::template
-        init< tag::compns >( g_inputdeck, coord, unk, m_ncomp, m_offset );
+        init< tag::compflow >( g_inputdeck, coord, unk, m_ncomp, m_offset );
     }
 
     //! Compute the left hand side sparse matrix
@@ -219,13 +220,13 @@ class CompNS {
         for (ncomp_t c=0; c<m_ncomp; ++c) r[c] = R.cptr( c, m_offset );
 
         // ratio of specific heats
-        tk::real g = g_inputdeck.get< tag::param, tag::compns, tag::gamma >()[0];
+        tk::real g = g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[0];
         // dynamic viscosity
-        tk::real mu = g_inputdeck.get< tag::param, tag::compns, tag::mu >()[0];
+        tk::real mu = g_inputdeck.get< tag::param, tag::compflow, tag::mu >()[0];
         // specific heat at constant volume
-        tk::real cv = g_inputdeck.get< tag::param, tag::compns, tag::cv >()[0];
+        tk::real cv = g_inputdeck.get< tag::param, tag::compflow, tag::cv >()[0];
         // thermal conductivity
-        tk::real kc = g_inputdeck.get< tag::param, tag::compns, tag::k >()[0];
+        tk::real kc = g_inputdeck.get< tag::param, tag::compflow, tag::k >()[0];
 
         // compute pressure
         std::array< tk::real, 4 > p;
@@ -406,7 +407,7 @@ class CompNS {
     //!   of the side sets for any component in the PDE system.
     bool anydirbc( int sideset ) const {
       const auto& bc =
-        g_inputdeck.get< tag::param, tag::compns, tag::bc_dirichlet >();
+        g_inputdeck.get< tag::param, tag::compflow, tag::bc_dirichlet >();
       for (const auto& s : bc)
         if (static_cast<int>(std::round(s[0])) == sideset)
           return true;
@@ -419,7 +420,7 @@ class CompNS {
     //! \return Vector of pairs of bool and BC value for all components
     std::vector< std::pair< bool, tk::real > > dirbc( int sideset ) const {
       const auto& bc =
-        g_inputdeck.get< tag::param, tag::compns, tag::bc_dirichlet >();
+        g_inputdeck.get< tag::param, tag::compflow, tag::bc_dirichlet >();
       std::vector< std::pair< bool, tk::real > > b( m_ncomp, { false, 0.0 } );
       for (const auto& s : bc) {
         Assert( s.size() == 3, "Side set vector size incorrect" );
@@ -476,12 +477,12 @@ class CompNS {
                       []( tk::real s, tk::real& d ){ return d /= s; } );
       out.push_back( e );
       std::vector< tk::real > p = r;
-      tk::real g = g_inputdeck.get< tag::param, tag::compns, tag::gamma >()[0];
+      tk::real g = g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[0];
       for (std::size_t i=0; i<p.size(); ++i)
         p[i] = (g-1.0)*r[i]*(e[i] - (u[i]*u[i] + v[i]*v[i] + w[i]*w[i])/2.0);
       out.push_back( p );
       std::vector< tk::real > T = r;
-      tk::real cv = g_inputdeck.get< tag::param, tag::compns, tag::cv >()[0];
+      tk::real cv = g_inputdeck.get< tag::param, tag::compflow, tag::cv >()[0];
       for (std::size_t i=0; i<T.size(); ++i)
         T[i] = cv*(e[i] - (u[i]*u[i] + v[i]*v[i] + w[i]*w[i])/2.0);
       out.push_back( p );
@@ -495,4 +496,4 @@ class CompNS {
 
 } // inciter::
 
-#endif // CompNS_h
+#endif // CompFlow_h

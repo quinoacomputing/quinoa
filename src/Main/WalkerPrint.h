@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/WalkerPrint.h
   \author    J. Bakosi
-  \date      Mon 09 May 2016 04:18:29 PM MDT
+  \date      Mon 22 Aug 2016 10:16:48 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Walker-specific pretty printer functionality
   \details   Walker-specific pretty printer functionality.
@@ -20,6 +20,7 @@
 #include <cstddef>
 
 #include "NoWarning/format.h"
+#include "NoWarning/for_each.h"
 
 #include "Keywords.h"
 #include "Print.h"
@@ -148,40 +149,30 @@ class WalkerPrint : public tk::RNGPrint {
         raw( '\n' );
         raw( m_item_indent + "Legend: equation name : supported policies\n" );
         raw( '\n' );
-        raw( m_item_indent + "Policy codes:\n" +
-             m_item_indent + " * i: initialization policy:\n" +
-             m_item_indent + "   " +
-               kw::raw::info::name() + " - raw\n" +
-             m_item_indent + "   " +
-               kw::zero::info::name() + " - zero\n" +
-             m_item_indent + "   " +
-               kw::jointdelta::info::name() + " - delta\n" +
-             m_item_indent + "   " +
-               kw::jointbeta::info::name() + " - beta\n" +
-             m_item_indent + " * c: coefficients policy:\n" +
-             m_item_indent + "   " +
-               kw::constant::info::name() + " - const\n" +
-             m_item_indent + "   " +
-               kw::decay::info::name() + " - decay\n" +
-             m_item_indent + "   " +
-               kw::homdecay::info::name() + " - homogeneous decay\n" +
-             m_item_indent + "   " +
-               kw::montecarlo_homdecay::info::name() +
-               " - Monte Carlo homogeneous decay\n" +
-             m_item_indent + "   " +
-               kw::hydrotimescale::info::name() +
-               " - hydro-timescale homogeneous decay\n\n" );
+        raw( m_item_indent + "Policy codes:\n" );
+        static_assert( tk::HasTypedefCode< kw::init::info >::value,
+                       "Policy code undefined for keyword" );
+        static_assert( tk::HasTypedefCode< kw::coeff::info >::value,
+                       "Policy code undefined for keyword" );
+        raw( m_item_indent + " * " + *kw::init::code() + ": "
+                           + kw::init::name() + ":\n" );
+        boost::mpl::for_each< ctr::InitPolicy::keywords >( echoPolicies(this) );
+        raw( m_item_indent + " * " + *kw::coeff::code() + ": "
+                           + kw::coeff::name() + ":\n" );
+        boost::mpl::for_each< ctr::CoeffPolicy::keywords >( echoPolicies(this) );
+        raw( '\n' );
         // extract eqname and supported policies
         const auto ip = ctr::InitPolicy();
         const auto cp = ctr::CoeffPolicy();
         std::map< std::string, Policies > eqs;      // eqname : policies
         for (const auto& f : factory)
           eqs[ DiffEqName( f.first ) ] +=
-            Policies( ip.name( f.first.template get< tag::initpolicy >() ),
-                      cp.name( f.first.template get< tag::coeffpolicy >() ) );
+            Policies( ip.code( f.first.template get< tag::initpolicy >() ),
+                      cp.code( f.first.template get< tag::coeffpolicy >() ) );
         // output eqname and supported policies
         for (const auto& e : eqs)
-          m_stream << m_item_name_value_fmt % m_item_indent % e.first % e.second;
+          m_stream << m_item_name_value_fmt % m_item_indent
+                                            % e.first % e.second;
       }
     }
 

@@ -1,14 +1,14 @@
 // *****************************************************************************
 /*!
-  \file      src/PDE/CompNSProblem.h
+  \file      src/PDE/CompFlowProblem.h
   \author    J. Bakosi
   \date      Fri 22 Jul 2016 02:49:02 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
-  \brief     Problem configurations for the compressible Navier-Stokes equation
-  \details   This file defines policy classes for the compressible Navier-Stokes
-    equations, defined in PDE/CompNS.h.
+  \brief     Problem configurations for the compressible flow equations
+  \details   This file defines policy classes for the compressible flow
+    equations, defined in PDE/CompFlow.h.
 
-    General requirements on Navier-Stokes equations problem policy classes:
+    General requirements on flow equations problem policy classes:
 
     - Must define the static function _type()_, returning the enum value of the
       policy option. Example:
@@ -21,8 +21,8 @@
       class, collecting all possible options for coefficients policies.
 */
 // *****************************************************************************
-#ifndef CompNSProblem_h
-#define CompNSProblem_h
+#ifndef CompFlowProblem_h
+#define CompFlowProblem_h
 
 #include <boost/mpl/vector.hpp>
 
@@ -31,8 +31,8 @@
 
 namespace inciter {
 
-//! CompNS system of PDEs problem: user defined
-class CompNSProblemUserDefined {
+//! CompFlow system of PDEs problem: user defined
+class CompFlowProblemUserDefined {
   public:
 
     //! Set initial conditions
@@ -40,7 +40,7 @@ class CompNSProblemUserDefined {
     //! \param[in] coord Mesh node coordinates
     //! \param[in,out] unk Array of unknowns
     //! \param[in] e Equation system index, i.e., which compressible
-    //!   Navier-Stokes equation system we operate on among the systems of PDEs
+    //!   flow equation system we operate on among the systems of PDEs
     //! \param[in] offset System offset specifying the position of the system of
     //!   PDEs among other systems
     template< class eq >
@@ -66,9 +66,9 @@ class CompNSProblemUserDefined {
     { return ctr::ProblemType::USER_DEFINED; }
 };
 
-//! List of all CompNS problem policies
-using CompNSProblems = boost::mpl::vector< CompNSProblemUserDefined >;
+//! List of all CompFlow problem policies
+using CompFlowProblems = boost::mpl::vector< CompFlowProblemUserDefined >;
 
 } // inciter::
 
-#endif // CompNSProblem_h
+#endif // CompFlowProblem_h

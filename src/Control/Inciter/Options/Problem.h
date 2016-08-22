@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/Options/Problem.h
   \author    J. Bakosi
-  \date      Wed 06 Jul 2016 12:25:08 PM MDT
+  \date      Mon 22 Aug 2016 10:15:19 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Problem options for inciter
   \details   Problem options for inciter
@@ -12,6 +12,7 @@
 #define ProblemOptions_h
 
 #include <boost/mpl/vector.hpp>
+#include "NoWarning/for_each.h"
 
 #include "Toggle.h"
 #include "Keywords.h"
@@ -60,7 +61,43 @@ class Problem : public tk::Toggle< ProblemType > {
         { { kw::user_defined::string(), ProblemType::USER_DEFINED },
           { kw::shear_diff::string(), ProblemType::SHEAR_DIFF },
           { kw::dir_neu::string(), ProblemType::DIR_NEU },
-          { kw::slot_cyl::string(), ProblemType::SLOT_CYL } } ) {}
+          { kw::slot_cyl::string(), ProblemType::SLOT_CYL } } )
+    {
+       boost::mpl::for_each< keywords >( assertPolicyCodes() );
+    }
+
+    //! \brief Return policy code based on Enum
+    //! \param[in] p Enum value of the problem option requested
+    //! \return Policy code of the option
+    //! \author J. Bakosi
+    const std::string& code( ProblemType p ) const {
+      using tk::operator<<;
+      auto it = policy.find( p );
+      Assert( it != end(policy),
+              std::string("Cannot find policy code for problem \"") << p <<
+                "\"" );
+      return it->second;
+    }
+
+  private:
+    //! Function object for ensuring the existence of policy codes
+    //! \author J. Bakosi
+    struct assertPolicyCodes {
+      //! \brief Function call operator templated on the type to assert the
+      //!   existence of a policy code
+      template< typename U > void operator()( U ) {
+        static_assert( tk::HasTypedefCode< typename U::info >::value,
+                       "Policy code undefined for keyword" );
+      }
+    };
+
+    //! Enums -> policy code
+    std::map< ProblemType, std::string > policy {
+        { ProblemType::USER_DEFINED, *kw::user_defined::code() }
+      , { ProblemType::SHEAR_DIFF, *kw::shear_diff::code() }
+      , { ProblemType::DIR_NEU, *kw::dir_neu::code() }
+      , { ProblemType::SLOT_CYL, *kw::slot_cyl::code() }
+    };
 };
 
 } // ctr::

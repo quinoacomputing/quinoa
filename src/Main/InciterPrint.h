@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/InciterPrint.h
   \author    J. Bakosi
-  \date      Thu 07 Jul 2016 03:47:40 PM MDT
+  \date      Mon 22 Aug 2016 10:17:00 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Inciter-specific pretty printer functionality
   \details   Inciter-specific pretty printer functionality.
@@ -15,10 +15,13 @@
 #include <string>
 
 #include "NoWarning/format.h"
+#include "NoWarning/for_each.h"
 
 #include "Print.h"
 #include "ContainerUtil.h"
 #include "Inciter/InputDeck/InputDeck.h"
+#include "Inciter/Options/Physics.h"
+#include "Inciter/Options/Problem.h"
 
 namespace inciter {
 
@@ -53,25 +56,30 @@ class InciterPrint : public tk::Print {
     class Policies {
       public:
         // Default constructor
-        explicit Policies() : prob() {}
+        explicit Policies() : phys(), prob() {}
         // Initializer constructor
-        explicit Policies( const std::string& p ) : prob(p) {}
+        explicit Policies( const std::string& h, const std::string& r ) :
+          phys(h), prob(r) {}
         // Operator += for adding up two Policies structs
-        Policies& operator+= ( const Policies& p )
-       {  prob += p.prob; return *this; }
+        Policies& operator+= ( const Policies& p ) {
+          phys += p.phys;
+          prob += p.prob;
+          return *this;
+        }
         // Output unique policies to output stream
         friend std::ostream& operator<< ( std::ostream& os, const Policies& p )
         {
           Policies copy( p );     // copy policies
           copy.unique();          // get rid of duplicate policies
-          os << "p:" << copy.prob;
+          os << "h:" << copy.phys << ", r:" << copy.prob;
           return os;
         }
 
       private:
         // Make all policies unique
-        void unique() { tk::unique( prob ); }
+        void unique() { tk::unique( phys ); tk::unique( prob ); }
 
+        std::string phys;
         std::string prob;
     };
 
@@ -83,7 +91,8 @@ class InciterPrint : public tk::Print {
     template< class Factory >
     void eqlist( const std::string& t,
                  const Factory& factory,
-                 std::size_t ntypes ) const {
+                 std::size_t ntypes ) const
+    {
       if (!factory.empty()) {
         section( t );
         item( "Unique equation types", ntypes );
@@ -91,25 +100,30 @@ class InciterPrint : public tk::Print {
         raw( '\n' );
         raw( m_item_indent + "Legend: equation name : supported policies\n" );
         raw( '\n' );
-        raw( m_item_indent + "Policy codes:\n" +
-             m_item_indent + " * p: problem configuration:\n" +
-             m_item_indent + "   " +
-               kw::user_defined::info::name() + " - user-defined\n" +
-             m_item_indent + "   " +
-               kw::shear_diff::info::name() + " - shear diffusion\n" +
-             m_item_indent + "   " +
-               kw::dir_neu::info::name() + " - Dirichlet & Neumann\n" +
-             m_item_indent + "   " +
-               kw::slot_cyl::info::name() + " - slotted cylinder\n\n" );
-        // extract eqname and supported policies
-        const auto p = ctr::Problem();
+        raw( m_item_indent + "Policy codes:\n" );
+        static_assert( tk::HasTypedefCode< kw::physics::info >::value,
+                       "Policy code undefined for keyword" );
+        static_assert( tk::HasTypedefCode< kw::problem::info >::value,
+                       "Policy code undefined for keyword" );
+        raw( m_item_indent + " * " + *kw::physics::code() + ": "
+                           + kw::physics::name() + ":\n" );
+        boost::mpl::for_each< ctr::Physics::keywords >( echoPolicies( this ) );
+        raw( m_item_indent + " * " + *kw::problem::code() + ": "
+                           + kw::problem::name() + ":\n" );
+        boost::mpl::for_each< ctr::Problem::keywords >( echoPolicies( this ) );
+        raw( '\n' );
+        // extract eqname and supported policies for output
+        const auto h = ctr::Physics();
+        const auto r = ctr::Problem();
         std::map< std::string, Policies > eqs;      // eqname : policies
         for (const auto& f : factory)
           eqs[ PDEName( f.first ) ] +=
-            Policies( p.name( f.first.template get< tag::problem >() ) );
+            Policies( h.code( f.first.template get< tag::physics >() ),
+                      r.code( f.first.template get< tag::problem >() ) );
         // output eqname and supported policies
         for (const auto& e : eqs)
-          m_stream << m_item_name_value_fmt % m_item_indent % e.first % e.second;
+          m_stream << m_item_name_value_fmt % m_item_indent
+                                            % e.first % e.second;
       }
     }
 

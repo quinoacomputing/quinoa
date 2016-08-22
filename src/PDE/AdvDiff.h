@@ -14,6 +14,7 @@
 
 #include <cmath>
 
+#include "AdvDiffPhysics.h"
 #include "AdvDiffProblem.h"
 #include "Vector.h"
 #include "DerivedData.h"
@@ -27,8 +28,9 @@ extern ctr::InputDeck g_inputdeck;
 //! \brief Advection-diffusion equation used polymorphically with tk::PDE
 //! \details The template argument(s) specify policies and are used to configure
 //!   the behavior of the class. The policies are:
+//!   - Physics - physics configuration, see PDE/AdvDiffPhysics.h
 //!   - Problem - problem configuration, see PDE/AdvDiffProblem.h
-template< class Problem >
+template< class Physics, class Problem >
 class AdvDiff {
 
   private:

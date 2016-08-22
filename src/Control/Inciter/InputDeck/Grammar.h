@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Sun 07 Aug 2016 01:24:55 PM MDT
+  \date      Mon 22 Aug 2016 08:09:53 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Inciter's input deck grammar definition
   \details   Inciter's input deck grammar definition. We use the Parsing
@@ -54,9 +54,8 @@ namespace deck {
   //! \details Counts the number of parsed equation blocks during parsing.
   //! \author J. Bakosi
   static tk::tuple::tagged_tuple< tag::advdiff, std::size_t,
-                                  tag::poisson, std::size_t,
-                                  tag::euler,   std::size_t,
-                                  tag::compns,  std::size_t > neq;
+                                  tag::poisson,  std::size_t,
+                                  tag::compflow, std::size_t > neq;
 
   // Inciter's InputDeck actions
 
@@ -74,9 +73,9 @@ namespace deck {
   //! \brief Do general error checking on the differential equation block
   //! \details This is error checking that generic equation types, such as
   //!   advection-diffusion or the Poisson equation must satisfy. For more
-  //!   specific equations, such as Euler or compressible Navier-Stokes, a more
-  //!   specialized equation checker does and can do better error checking. See,
-  //!   e.g, check_compns.
+  //!   specific equations, such as compressible flow, a more specialized
+  //!   equation checker does and can do better error checking. See, e.g,
+  //!   check_compflow.
   //! \author J. Bakosi
   template< class eq >
   struct check_eq : pegtl::action_base< check_eq< eq > > {
@@ -99,15 +98,15 @@ namespace deck {
     }
   };
 
-  //! \brief Set defaults and do error checking on the compressible
-  //!   Navier-Stokes equation block
-  //! \details This is error checking that only the compressible Navier-Stokes
-  //!   equation block must satisfy. Besides error checking we also set defaults
-  //!   here as this block is called when parsing of a compns...end block has
+  //! \brief Set defaults and do error checking on the compressible flow
+  //!   equation block
+  //! \details This is error checking that only the compressible flow equation
+  //!   block must satisfy. Besides error checking we also set defaults here as
+  //!   this block is called when parsing of a compflow...end block has
   //!   just finished.
   //! \author J. Bakosi
   template< class eq >
-  struct check_compns : pegtl::action_base< check_compns< eq > > {
+  struct check_compflow : pegtl::action_base< check_compflow< eq > > {
     static void apply( const std::string&, Stack& stack ) {
       // Set default number of components to 5 (mass, 3 x mom, energy)
       stack.get< tag::component, eq >().push_back( 5 );
@@ -188,9 +187,9 @@ namespace deck {
                                           eq,
                                           param > > > {};
 
-  //! initial conditions block for compressible Navier-Stokes
+  //! initial conditions block for compressible flow
   template< class eq, class param >
-  struct ic_compns :
+  struct ic_compflow :
            pegtl::ifmust<
              tk::grm::readkw< Stack, use< kw::ic >::pegtl_string >,
              tk::grm::block<
@@ -211,7 +210,7 @@ namespace deck {
          tk::grm::process< Stack, use< keyword >,
            tk::grm::Store_back< Stack, tag::param, eq, property > > {};
 
-  //! Material properties block for compressible Navier-Stokes
+  //! Material properties block for compressible flow
   template< class eq >
   struct material_properties :
            pegtl::ifmust<
@@ -276,27 +275,33 @@ namespace deck {
                            bc_dirichlet< tag::poisson, tag::bc_dirichlet > >,
            check_errors< tag::poisson, check_eq > > {};
 
-  //! compressible Navier-Stokes equation
-  struct compns :
+  //! compressible flow
+  struct compflow :
          pegtl::ifmust<
-           scan_eq< use< kw::compns >, tag::compns >,
+           scan_eq< use< kw::compflow >, tag::compflow >,
            tk::grm::block< Stack,
                            use< kw::end >,
                            tk::grm::policy< Stack,
                                             use,
+                                            use< kw::physics >,
+                                            ctr::Physics,
+                                            tag::compflow,
+                                            tag::physics >,
+                           tk::grm::policy< Stack,
+                                            use,
                                             use< kw::problem >,
                                             ctr::Problem,
-                                            tag::compns,
+                                            tag::compflow,
                                             tag::problem >,
-                           //ic_compns< tag::compns, tag::ic > >,
-                           material_properties< tag::compns >,
-                           bc_dirichlet< tag::compns, tag::bc_dirichlet >,
+                           //ic_compflow< tag::compflow, tag::ic > >,
+                           material_properties< tag::compflow >,
+                           bc_dirichlet< tag::compflow, tag::bc_dirichlet >,
                            tk::grm::process< Stack, use< kw::npar >,
                              tk::grm::Store_back< Stack,
                                                   tag::param,
-                                                  tag::compns,
+                                                  tag::compflow,
                                                   tag::npar > > >,
-           check_errors< tag::compns, check_compns > > {};
+           check_errors< tag::compflow, check_compflow > > {};
 
   //! partitioning ... end block
   struct partitioning :
@@ -314,7 +319,7 @@ namespace deck {
 
   //! equation types
   struct equations :
-         pegtl::sor< advdiff, poisson, compns > {};
+         pegtl::sor< advdiff, poisson, compflow > {};
 
   //! plotvar ... end block
   struct plotvar :

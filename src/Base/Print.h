@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Print.h
   \author    J. Bakosi
-  \date      Mon 09 May 2016 03:32:14 PM MDT
+  \date      Mon 22 Aug 2016 09:39:24 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     General purpose pretty printer functionality
   \details   This file contains general purpose printer functions. Using the
@@ -23,6 +23,7 @@
 
 #include "Timer.h"
 #include "Exception.h"
+#include "Has.h"
 
 namespace tk {
 
@@ -418,6 +419,24 @@ class Print {
     //! \author J. Bakosi
     template< Style s = VERBOSE >
     std::ostream& stream() const noexcept { return s ? m_stream : m_qstream; }
+
+    //! Function object for echoing policies to screen
+    //! \author J. Bakosi
+    struct echoPolicies {
+      //! Need to store reference to host class whose data we operate on
+      const Print* const m_host;
+      //! Constructor: store host object pointer
+      echoPolicies( const Print* const host ) : m_host( host ) {}
+      //! Function call operator templated on the type that echos a policy
+      template< typename U > void operator()( U ) {
+        static_assert( tk::HasTypedefCode< typename U::info >::value,
+                       "Policy code undefined for keyword" );
+        // Print policy code - policy name
+        m_host->raw( m_host->m_item_indent + "   " +
+                     *U::code() + " - " + U::info::name() + '\n' );
+
+      }
+    };
 
     //! Print Inciter header. Text ASCII Art Generator used for executable
     //! names: http://patorjk.com/software/taag, Picture ASCII Art Generator
