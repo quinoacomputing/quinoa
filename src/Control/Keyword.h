@@ -32,6 +32,17 @@ struct Alias {
   static const int value = Char;
 };
 
+//! \brief Keyword code helper
+//! \details This struct is used to define both a type and a value for a keyword
+//!   code, which is a single character. Used for printing out policy code.
+//! \see Control/Keywords.h
+//! \author J. Bakosi
+template< int Char >
+struct Code {
+  using type = pegtl::one< Char >;
+  static const int value = Char;
+};
+
 //! \brief Generic definition of a keyword
 //! \details A keyword is a struct that collects the information that makes up a
 //!    keyword. The requirement on the first template argument, Info, is that it
@@ -108,6 +119,26 @@ struct keyword {
   template< typename T = Info, typename std::enable_if<
     !tk::HasTypedefAlias< T >::value, int >::type = 0 >
   static boost::optional< std::string > alias()
+  { return boost::none; }
+
+  //! \brief Overloads to optional policy code accessor depending on the
+  //!   existence of Info::Code
+  //! \return An initialized (or uninitialized) boost::optional< std::string >
+  //! \details As to why type Info has to be aliased to a local type T for
+  //!   SFINAE to work, see http://stackoverflow.com/a/22671495. Though a code
+  //!   is only a single character, it returns it as std::string since
+  //!   pegtl::escape returns std::string.
+  //! \see http://www.boost.org/doc/libs/release/libs/optional/doc/html/index.html
+  //! \see http://en.cppreference.com/w/cpp/language/sfinae
+  //! \see http://en.cppreference.com/w/cpp/types/enable_if
+  template< typename T = Info, typename std::enable_if<
+    tk::HasTypedefCode< T >::value, int >::type = 0 >
+  static boost::optional< std::string > code()
+  { return pegtl::escape( Info::code::value ); }
+
+  template< typename T = Info, typename std::enable_if<
+    !tk::HasTypedefCode< T >::value, int >::type = 0 >
+  static boost::optional< std::string > code()
   { return boost::none; }
 
   //! \brief Overloads to optional expected type description depending on the

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Sun 07 Aug 2016 01:17:58 PM MDT
+  \date      Mon 22 Aug 2016 08:09:58 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Inciter's input deck definition
   \details   This file defines the heterogeneous stack that is used for storing
@@ -58,7 +58,6 @@ class InputDeck :
                                        kw::dt,
                                        kw::ttyi,
                                        kw::advdiff,
-                                       kw::euler,
                                        kw::end,
                                        kw::shear_diff,
                                        kw::slot_cyl,
@@ -79,7 +78,7 @@ class InputDeck :
                                        kw::dir_neu,
                                        kw::bc_dirichlet,
                                        kw::sideset,
-                                       kw::compns,
+                                       kw::compflow,
                                        kw::ic,
                                        kw::txt_float_format,
                                        kw::txt_float_default,
@@ -94,6 +93,10 @@ class InputDeck :
     using keywords3 = boost::mpl::set< kw::mat_cv,
                                        kw::mat_k,
                                        kw::npar,
+                                       kw::physics,
+                                       kw::base,
+                                       kw::compflow_navierstokes,
+                                       kw::compflow_euler,
                                        kw::depvar >;
                                      
     //! \brief Constructor: set defaults

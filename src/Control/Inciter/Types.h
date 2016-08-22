@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/Types.h
   \author    J. Bakosi
-  \date      Sun 07 Aug 2016 01:12:45 PM MDT
+  \date      Fri 19 Aug 2016 03:53:43 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Types for Incitier's parsers
   \details   Types for Incitier's parsers. This file defines the components of
@@ -69,6 +69,7 @@ using ios = tk::tuple::tagged_tuple<
 //! Advection-diffusion transport equation parameters storage
 using AdvDiffPDEParameters = tk::tuple::tagged_tuple<
   tag::depvar,      std::vector< char >,
+  tag::physics,      std::vector< PhysicsType >,
   tag::problem,     std::vector< ProblemType >,
   tag::diffusivity, std::vector< std::vector<
                       kw::pde_diffusivity::info::expect::type > >,
@@ -83,20 +84,15 @@ using AdvDiffPDEParameters = tk::tuple::tagged_tuple<
 //! Poisson equation parameters storage
 using PoissonPDEParameters = tk::tuple::tagged_tuple<
   tag::depvar,       std::vector< char >,
+  tag::physics,      std::vector< PhysicsType >,
   tag::problem,      std::vector< ProblemType >,
   tag::bc_dirichlet, std::vector< std::vector<
                        kw::sideset::info::expect::type > >
 >;
 
-//! Euler equation parameters storage
-using EulerPDEParameters = tk::tuple::tagged_tuple<
-  tag::problem,      std::vector< ProblemType >,
-  tag::bc_dirichlet, std::vector< std::vector<
-                       kw::sideset::info::expect::type > >
->;
-
-//! Compressible Navier-Stokes equation parameters storage
-using CompNSPDEParameters = tk::tuple::tagged_tuple<
+//! Compressible flow equation parameters storage
+using CompFlowPDEParameters = tk::tuple::tagged_tuple<
+  tag::physics,      std::vector< PhysicsType >,
   tag::problem,      std::vector< ProblemType >,
   tag::bc_dirichlet, std::vector< std::vector<
                        kw::sideset::info::expect::type > >,
@@ -118,8 +114,7 @@ using CompNSPDEParameters = tk::tuple::tagged_tuple<
 using parameters = tk::tuple::tagged_tuple<
   tag::advdiff,     AdvDiffPDEParameters,
   tag::poisson,     PoissonPDEParameters,
-  tag::euler,       EulerPDEParameters,
-  tag::compns,      CompNSPDEParameters
+  tag::compflow,    CompFlowPDEParameters
 >;
 
 //! PEGTL location type to use throughout Incitier's parsers

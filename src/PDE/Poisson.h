@@ -13,6 +13,7 @@
 
 #include <cmath>
 
+#include "PoissonPhysics.h"
 #include "PoissonProblem.h"
 #include "Vector.h"
 #include "DerivedData.h"
@@ -25,8 +26,9 @@ extern ctr::InputDeck g_inputdeck;
 //! \brief Poisso equation used polymorphically with tk::PDE
 //! \details The template argument(s) specify policies and are used to configure
 //!   the behavior of the class. The policies are:
+//!   - Physics - physics configuration, see PDE/PoissonPhysics.h
 //!   - Problem - problem configuration, see PDE/PoissonProblem.h
-template< class Problem >
+template< class Physics, class Problem >
 class Poisson {
 
   private:

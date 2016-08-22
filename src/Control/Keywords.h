@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Keywords.h
   \author    J. Bakosi
-  \date      Tue 26 Jul 2016 07:42:07 AM MDT
+  \date      Mon 22 Aug 2016 10:13:27 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Definition of all keywords
   \details   This file contains the definition of all keywords, including those
@@ -62,7 +62,7 @@
         }
 
         // Optional keyword alias. See also kw::Alias and
-        // <tpl_build>/pegtl/src/pegtl/include/pegtl/constants.hh for examples
+        // <tpl_install_dir>/include/pegtl/pegtl/constants.hh for examples
         // of what can be passed as template arguments (basically single
         // characters). The one below defines the character 'c' as the alias.
         // Aliases are single character long. The idea of an alias is to have a
@@ -80,6 +80,14 @@
         // the alias. Defining an alias for a control file keyword can be done
         // but has no effect in a control file parser.
         using alias = Alias< c >;
+
+        // Optional single-character (policy) code. See also kw::Code and
+        // <tpl_install_dir/include/pegtl/pegtl/constants.hh for examples
+        // of what can be passed as template arguments (basically single
+        // characters). The one below defines the character 'C' as the (policy)
+        // code. This code is used for abbreviating policies used to configure
+        // various orthogonal behaviors of classes using policy-based design.
+        using code = Code< C >;
 
         // Optional expected data for the keyword - bundled to struct expect.
         // This struct is entirely optional within a keyword definition.
@@ -1128,7 +1136,8 @@ struct centering_info {
 using pdf_centering = keyword< centering_info, c,e,n,t,e,r,i,n,g >;
 
 struct raw_info {
-  static std::string name() { return "R"; }
+  using code = Code< R >;
+  static std::string name() { return "raw"; }
   static std::string shortDescription() { return
     "Select the raw initialization policy"; }
   static std::string longDescription() { return
@@ -1143,7 +1152,8 @@ struct raw_info {
 using raw = keyword< raw_info, r,a,w >;
 
 struct zero_info {
-  static std::string name() { return "Z"; }
+  using code = Code< Z >;
+  static std::string name() { return "zero"; }
   static std::string shortDescription() { return
     "Select the zero initialization policy"; }
   static std::string longDescription() { return
@@ -1158,7 +1168,8 @@ struct zero_info {
 using zero = keyword< zero_info, z,e,r,o >;
 
 struct jointdelta_info {
-  static std::string name() { return "D"; }
+  using code = Code< D >;
+  static std::string name() { return "delta"; }
   static std::string shortDescription() { return
     "Select the joint delta initialization policy"; }
   static std::string longDescription() { return
@@ -1179,7 +1190,8 @@ struct jointdelta_info {
 using jointdelta = keyword< jointdelta_info, j,o,i,n,t,d,e,l,t,a >;
 
 struct jointbeta_info {
-  static std::string name() { return "B"; }
+  using code = Code< B >;
+  static std::string name() { return "beta"; }
   static std::string shortDescription() { return
     "Select the joint beta initialization policy"; }
   static std::string longDescription() { return
@@ -1198,7 +1210,8 @@ struct jointbeta_info {
 using jointbeta = keyword< jointbeta_info, j,o,i,n,t,b,e,t,a >;
 
 struct init_info {
-  static std::string name() { return "initpolicy"; }
+  using code = Code< i >;
+  static std::string name() { return "initialization policy"; }
   static std::string shortDescription() { return
     "Select initialization policy"; }
   static std::string longDescription() { return
@@ -1222,7 +1235,8 @@ struct init_info {
 using init = keyword< init_info, i,n,i,t >;
 
 struct const_info {
-  static std::string name() { return "C"; }
+  using code = Code< C >;
+  static std::string name() { return "constant"; }
   static std::string shortDescription() { return
     "Select constant coefficients policy"; }
   static std::string longDescription() { return
@@ -1237,7 +1251,8 @@ struct const_info {
 using constant = keyword< const_info, c,o,n,s,t >;
 
 struct decay_info {
-  static std::string name() { return "D"; }
+  using code = Code< D >;
+  static std::string name() { return "decay"; }
   static std::string shortDescription() { return
     "Select decay coefficients policy"; }
   static std::string longDescription() { return
@@ -1254,7 +1269,8 @@ struct decay_info {
 using decay = keyword< decay_info, d,e,c,a,y >;
 
 struct homdecay_info {
-  static std::string name() { return "H"; }
+  using code = Code< H >;
+  static std::string name() { return "homogeneous decay"; }
   static std::string shortDescription() { return
     "Select homogeneous decay coefficients policy"; }
   static std::string longDescription() { return
@@ -1276,7 +1292,8 @@ struct homdecay_info {
 using homdecay = keyword< homdecay_info, h,o,m,d,e,c,a,y >;
 
 struct montecarlo_homdecay_info {
-  static std::string name() { return "M"; }
+  using code = Code< M >;
+  static std::string name() { return "Monte Carlo homogeneous decay"; }
   static std::string shortDescription() { return
     "Select Monte Carlo homogeneous decay coefficients policy"; }
   static std::string longDescription() { return
@@ -1300,7 +1317,8 @@ using montecarlo_homdecay =
   keyword< montecarlo_homdecay_info, m,o,n,t,e,c,a,r,l,o,'_',h,o,m,d,e,c,a,y >;
 
 struct hydrotimescale_info {
-  static std::string name() { return "T"; }
+  using code = Code< T >;
+  static std::string name() { return "hydro-timescale homogeneous decay"; }
   static std::string shortDescription() { return
     "Select hydro-timescale homogeneous decay coefficients policy"; }
   static std::string longDescription() { return
@@ -1326,7 +1344,8 @@ using hydrotimescale =
   keyword< hydrotimescale_info, h,y,d,r,o,t,i,m,e,s,c,a,l,e >;
 
 struct coeff_info {
-  static std::string name() { return "coeffpolicy"; }
+  using code = Code< c >;
+  static std::string name() { return "coeficients fpolicy"; }
   static std::string shortDescription() { return
     "Select the coefficients policy"; }
   static std::string longDescription() { return
@@ -2480,7 +2499,8 @@ struct inciter_info {
 using inciter = keyword< inciter_info, i,n,c,i,t,e,r >;
 
 struct user_defined_info {
-  static std::string name() { return "U"; }
+  using code = Code< U >;
+  static std::string name() { return "User-defined"; }
   static std::string shortDescription() { return
     "Select user-defined specification for a problem"; }
   static std::string longDescription() { return
@@ -2497,7 +2517,8 @@ struct user_defined_info {
 using user_defined = keyword< user_defined_info, u,s,e,r,'_',d,e,f,i,n,e,d >;
 
 struct shear_diff_info {
-  static std::string name() { return "S"; }
+  using code = Code< S >;
+  static std::string name() { return "Shear-diffusion"; }
   static std::string shortDescription() { return
     "Select shear + diffusion test problem "; }
   static std::string longDescription() { return
@@ -2512,7 +2533,8 @@ struct shear_diff_info {
 using shear_diff = keyword< shear_diff_info, s,h,e,a,r,'_',d,i,f,f >;
 
 struct dir_neu_info {
-  static std::string name() { return "D"; }
+  using code = Code< D >;
+  static std::string name() { return "Diricihlet & Neumann"; }
   static std::string shortDescription() { return
     "Select Poisson equation test problem with Dirichlet and Neumann BCs"; }
   static std::string longDescription() { return
@@ -2528,7 +2550,8 @@ struct dir_neu_info {
 using dir_neu = keyword< dir_neu_info, d,i,r,'_',n,e,u >;
 
 struct slot_cyl_info {
-  static std::string name() { return "C"; }
+  using code = Code< Z >;
+  static std::string name() { return "Zalesak's slotted cylinder"; }
   static std::string shortDescription() { return
     "Select Zalesak's slotted cylinder test problem"; }
   static std::string longDescription() { return
@@ -2543,6 +2566,7 @@ struct slot_cyl_info {
 using slot_cyl = keyword< slot_cyl_info, s,l,o,t,'_',c,y,l >;
 
 struct problem_info {
+  using code = Code< r >;
   static std::string name() { return "problem"; }
   static std::string shortDescription() { return
     "Specify problem configuration for a partial differential equation solver";
@@ -2646,22 +2670,6 @@ struct poisson_info {
   }
 };
 using poisson = keyword< poisson_info, p,o,i,s,s,o,n >;
-
-struct euler_info {
-  static std::string name() { return "Euler"; }
-  static std::string shortDescription() { return
-    "Start configuration block for the Euler equations"; }
-  static std::string longDescription() { return
-    R"(This keyword is used to introduce the euler ... end block, used to
-    specify the configuration for a system of partial differential equation,
-    governing compressible inviscid fluid flow, the Euler equations. Keywords
-    allowed in an euler ... end block: )" + std::string("\'")
-    + problem::string() + "\'."
-    + R"(For an example euler ... end block, see
-      doc/html/inicter_example_euler.html.)";
-  }
-};
-using euler = keyword< euler_info, e,u,l,e,r >;
 
 struct sideset_info {
   static std::string name() { return "sideset"; }
@@ -2784,7 +2792,7 @@ struct material_info {
     + mat_cv::string()+ "\', \'"
     + mat_k::string() + "\'. "
     + R"(For an example material ... end block, see
-      doc/html/inicter_example_compns.html.)";
+      doc/html/inicter_example_compflow.html.)";
   }
 };
 using material = keyword< material_info, m,a,t,e,r,i,a,l >;
@@ -2804,21 +2812,21 @@ struct velocity_info {
 };
 using velocity = keyword< velocity_info, v,e,l,o,c,i,t,y >;
 
-struct compns_info {
-  static std::string name() { return "Compressible Navier-Stokes"; }
+struct compflow_info {
+  static std::string name() { return "Compressible flow"; }
   static std::string shortDescription() { return
-    "Start configuration block for the compressible Navier-Stokes equations"; }
+    "Start configuration block for the compressible flow equations"; }
   static std::string longDescription() { return
-    R"(This keyword is used to introduce the compns ... end block, used to
+    R"(This keyword is used to introduce the compflow ... end block, used to
     specify the configuration for a system of partial differential equations,
-    governing compressible viscous fluid flow, the Navier-Stokes equations.
-    Keywords allowed in an compns ... end block: )" + std::string("\'")
+    governing compressible fluid flow. Keywords allowed in an compflow ... end
+    block: )" + std::string("\'")
     + problem::string() + "\'."
-    + R"(For an example compns ... end block, see
-      doc/html/inicter_example_compns.html.)";
+    + R"(For an example compflow ... end block, see
+      doc/html/inicter_example_compflow.html.)";
   }
 };
-using compns = keyword< compns_info, c,o,m,p,n,s >;
+using compflow = keyword< compflow_info, c,o,m,p,f,l,o,w >;
 
 struct rcb_info {
   static std::string name() { return "recursive coordinate bisection"; }
@@ -2886,6 +2894,76 @@ struct partitioning_info {
   }
 };
 using partitioning = keyword< partitioning_info, p,a,r,t,i,t,i,o,n,i,n,g >;
+
+struct base_info {
+  using code = Code< B >;
+  static std::string name() { return "Base"; }
+  static std::string shortDescription() { return
+    "Specify the base physics configuration for a PDE "; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the base physics configuration for a PDE.
+    Example: "advdiff physics base end")";
+    }
+  struct expect {
+    static std::string description() { return "string"; }
+  };
+};
+using base = keyword< base_info, b,a,s,e >;
+
+struct compflow_navierstokes_info {
+  using code = Code< N >;
+  static std::string name() { return "Navier-Stokes"; }
+  static std::string shortDescription() { return "Specify the Navier-Stokes "
+    "(viscous) compressible flow physics configuration"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the Navier-Stokes (viscous) compressible "
+    "flow physics configuration. Example: "compflow physics navierstokes end")";
+    }
+  struct expect {
+    static std::string description() { return "string"; }
+  };
+};
+using compflow_navierstokes =
+  keyword< compflow_navierstokes_info, n,a,v,i,e,r,s,t,o,k,e,s >;
+
+struct compflow_euler_info {
+  using code = Code< E >;
+  static std::string name() { return "Euler"; }
+  static std::string shortDescription() { return "Specify the Euler (inviscid) "
+    "compressible flow physics configuration"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the Euler (inviscid) compressible "
+    "flow physics configuration. Example: "compflow physics euler end")";
+    }
+  struct expect {
+    static std::string description() { return "string"; }
+  };
+};
+using compflow_euler = keyword< compflow_euler_info, e,u,l,e,r >;
+
+struct physics_info {
+  using code = Code< h >;
+  static std::string name() { return "physics configuration"; }
+  static std::string shortDescription() { return
+    "Specify the physics configuration for a system of PDEs"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the physics configuration for a particular
+    PDE system. Example: "physics navierstokes", which selects the Navier-Stokes
+    equations for solving viscous compressible flow, given within the
+    compflow ... end block. Valid options depend on the given block the keyword
+    is used.)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+    static std::string choices() {
+      return '\'' + base::string() + "\' | \'"
+                  + compflow_navierstokes::string() + "\' | \'"
+                  + compflow_euler::string() + '\'';
+    }
+  };
+};
+using physics = keyword< physics_info, p,h,y,s,i,c,s >;
+
+
 
 ////////// NOT YET FULLY DOCUMENTED //////////
 

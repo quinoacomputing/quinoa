@@ -2,7 +2,7 @@
 /*!
   \file      src/PDE/PDEStack.h
   \author    J. Bakosi
-  \date      Tue Jul 19 23:09:58 2016
+  \date      Fri 19 Aug 2016 02:08:48 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Stack of differential equations
   \details   This file declares class PDEStack, which implements various
@@ -81,7 +81,7 @@ class PDEStack {
     //!   template argument (the policies of Eq), since we can figure it out
     //!   here. See also http://stackoverflow.com/a/214900
     //! \author J. Bakosi
-    template< template< class > class Eq >
+    template< template< class, class > class Eq >
     struct registerPDE {
       //! Need to store the reference to factory we are registering into
       PDEFactory& factory;
@@ -97,11 +97,13 @@ class PDEStack {
       template< typename U > void operator()( U ) {
         namespace mpl = boost::mpl;
         // Get problem policy: 1st type of mpl::vector U
-        using Problem = typename mpl::at< U, mpl::int_<0> >::type;
+        using Physics = typename mpl::at< U, mpl::int_<0> >::type;
+        // Get problem policy: 2nd type of mpl::vector U
+        using Problem = typename mpl::at< U, mpl::int_<1> >::type;
         // Build differential equation key
-        ctr::PDEKey key{ type, Problem::type() };
+        ctr::PDEKey key{ type, Physics::type(), Problem::type() };
         // Register equation (with policies given by mpl::vector U) into factory
-        tk::recordModelLate< PDE, Eq< Problem > >
+        tk::recordModelLate< PDE, Eq< Physics, Problem > >
                            ( factory, key, static_cast<ncomp_t>(0) );
       }
     };
@@ -129,6 +131,7 @@ class PDEStack {
       if ( g_inputdeck.get< tag::component, EqTag >()[c] ) {
         // re-create key and search for it
         ctr::PDEKey key{ eq,
+          g_inputdeck.get< tag::param, EqTag, tag::physics >()[c],
           g_inputdeck.get< tag::param, EqTag, tag::problem >()[c] };
         const auto it = m_factory.find( key );
         Assert( it != end( m_factory ), "Can't find PDE in factory" );
@@ -143,12 +146,9 @@ class PDEStack {
     //! Get information on the Poisson PDE
     std::vector< std::pair< std::string, std::string > >
     infoPoisson( std::map< ctr::PDEType, ncomp_t >& cnt ) const;
-    //! Get information on the Euler PDE
+    //! Get information on the compressible flow PDEs
     std::vector< std::pair< std::string, std::string > >
-    infoEuler( std::map< ctr::PDEType, ncomp_t >& cnt ) const;
-    //! Get information on the compressible Navier-Stokes PDE
-    std::vector< std::pair< std::string, std::string > >
-    infoCompNS( std::map< ctr::PDEType, ncomp_t >& cnt ) const;
+    infoCompFlow( std::map< ctr::PDEType, ncomp_t >& cnt ) const;
     ///@}
 
     //! \brief Convert and return values from vector as string

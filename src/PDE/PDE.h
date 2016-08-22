@@ -2,7 +2,7 @@
 /*!
   \file      src/PDE/PDE.h
   \author    J. Bakosi
-  \date      Fri 22 Jul 2016 03:43:56 PM MDT
+  \date      Fri 19 Aug 2016 02:11:12 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Partial differential equation
   \details   This file defines a generic partial differential equation class.
@@ -34,7 +34,7 @@ namespace inciter {
 //!   enabling client-side value semantics. Credit goes to Sean Parent at Adobe:
 //!   https://github.com/sean-parent/sean-parent.github.com/wiki/
 //!   Papers-and-Presentations. For example client code that models a PDE,
-//!   see inciter::Euler.
+//!   see inciter::CompFlow.
 //! \author J. Bakosi
 class PDE {
 
