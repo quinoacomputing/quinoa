@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/TestDataLayout.h
   \author    J. Bakosi
-  \date      Tue 03 May 2016 07:27:13 AM MDT
+  \date      Tue 23 Aug 2016 10:04:37 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Unit tests for Base/DataLayout.h
   \details   Unit tests for Base/DataLayout.h
@@ -570,7 +570,7 @@ void DataLayout_object::test< 10 >() {
 //! \author J. Bakosi
 template<> template<>
 void DataLayout_object::test< 11 >() {
-  set_test_name( "extract() array of four reals" );
+  set_test_name( "extract() array of four reals for A,B,C,D" );
 
   tk::DataLayout< tk::UnkEqComp > pp( 8, 2 );
   tk::DataLayout< tk::EqCompUnk > pe( 8, 2 );
@@ -639,10 +639,83 @@ void DataLayout_object::test< 11 >() {
             pe.extract( 0, 1, 1, 3, 5, 7 ) );
 }
 
-//! Test that tk::DataLayout's fill() correctly fills complete data array
+//! Test that tk::DataLayout's extract() returns correct array of four reals
 //! \author J. Bakosi
 template<> template<>
 void DataLayout_object::test< 12 >() {
+  set_test_name( "extract() array of four reals for N[4]" );
+
+  tk::DataLayout< tk::UnkEqComp > pp( 8, 2 );
+  tk::DataLayout< tk::EqCompUnk > pe( 8, 2 );
+
+  pp( 0, 0, 0 ) = 0.1;
+  pp( 1, 0, 0 ) = 0.2;
+  pp( 2, 0, 0 ) = 0.3;
+  pp( 3, 0, 0 ) = 0.4;
+  pp( 4, 0, 0 ) = 0.5;
+  pp( 5, 0, 0 ) = 0.6;
+  pp( 6, 0, 0 ) = 0.7;
+  pp( 7, 0, 0 ) = 0.8;
+
+  pp( 0, 1, 0 ) = 1.1;
+  pp( 1, 1, 0 ) = 1.2;
+  pp( 2, 1, 0 ) = 1.3;
+  pp( 3, 1, 0 ) = 1.4;
+  pp( 4, 1, 0 ) = 1.5;
+  pp( 5, 1, 0 ) = 1.6;
+  pp( 6, 1, 0 ) = 1.7;
+  pp( 7, 1, 0 ) = 1.8;
+
+  pe( 0, 0, 0 ) = 0.1;
+  pe( 1, 0, 0 ) = 0.2;
+  pe( 2, 0, 0 ) = 0.3;
+  pe( 3, 0, 0 ) = 0.4;
+  pe( 4, 0, 0 ) = 0.5;
+  pe( 5, 0, 0 ) = 0.6;
+  pe( 6, 0, 0 ) = 0.7;
+  pe( 7, 0, 0 ) = 0.8;
+
+  pe( 0, 1, 0 ) = 1.1;
+  pe( 1, 1, 0 ) = 1.2;
+  pe( 2, 1, 0 ) = 1.3;
+  pe( 3, 1, 0 ) = 1.4;
+  pe( 4, 1, 0 ) = 1.5;
+  pe( 5, 1, 0 ) = 1.6;
+  pe( 6, 1, 0 ) = 1.7;
+  pe( 7, 1, 0 ) = 1.8;
+
+  // Test all template specializations
+  ensure( "<UnkEqComp>::extract() array of four reals at 0,0:3,2,1,0 incorrect",
+          std::array< tk::real, 4 >{{ 0.4, 0.3, 0.2, 0.1 }} ==
+            pp.extract( 0, 0, {{3,2,1,0}} ) );
+  ensure( "<UnkEqComp>::extract() array of four reals at 0,0:1,3,5,7 incorrect",
+          std::array< tk::real, 4 >{{ 0.2, 0.4, 0.6, 0.8 }} ==
+            pp.extract( 0, 0, {{1,3,5,7}} ) );
+  ensure( "<UnkEqComp>::extract() array of four reals at 0,1:3,2,1,0 incorrect",
+          std::array< tk::real, 4 >{{ 1.4, 1.3, 1.2, 1.1 }} ==
+            pp.extract( 0, 1, {{3,2,1,0}} ) );
+  ensure( "<UnkEqComp>::extract() array of four reals at 0,1:1,3,5,7 incorrect",
+          std::array< tk::real, 4 >{{ 1.2, 1.4, 1.6, 1.8 }} ==
+            pp.extract( 0, 1, {{1,3,5,7}} ) );
+
+  ensure( "<EqCompUnk>::extract() array of four reals at 0,0:3,2,1,0 incorrect",
+          std::array< tk::real, 4 >{{ 0.4, 0.3, 0.2, 0.1 }} ==
+            pe.extract( 0, 0, {{3,2,1,0}} ) );
+  ensure( "<EqCompUnk>::extract() array of four reals at 0,0:1,3,5,7 incorrect",
+          std::array< tk::real, 4 >{{ 0.2, 0.4, 0.6, 0.8 }} ==
+            pe.extract( 0, 0, {{1,3,5,7}} ) );
+  ensure( "<EqCompUnk>::extract() array of four reals at 0,1:3,2,1,0 incorrect",
+          std::array< tk::real, 4 >{{ 1.4, 1.3, 1.2, 1.1 }} ==
+            pe.extract( 0, 1, {{3,2,1,0}} ) );
+  ensure( "<kEqCompUnk>::extract() array of four reals 0,1:1,3,5,7 incorrect",
+          std::array< tk::real, 4 >{{ 1.2, 1.4, 1.6, 1.8 }} ==
+            pe.extract( 0, 1, {{1,3,5,7}} ) );
+}
+
+//! Test that tk::DataLayout's fill() correctly fills complete data array
+//! \author J. Bakosi
+template<> template<>
+void DataLayout_object::test< 13 >() {
   set_test_name( "fill() all with the same value" );
 
   tk::DataLayout< tk::UnkEqComp > pp( 3, 2 );
@@ -670,7 +743,7 @@ void DataLayout_object::test< 12 >() {
 //! Test that tk::DataLayout's fill() correctly fills vector of unknowns
 //! \author J. Bakosi
 template<> template<>
-void DataLayout_object::test< 13 >() {
+void DataLayout_object::test< 14 >() {
   set_test_name( "fill() vector of unknowns with the same value" );
 
   tk::DataLayout< tk::UnkEqComp > pp( 3, 2 );
@@ -708,7 +781,7 @@ void DataLayout_object::test< 13 >() {
 //!   correct strides
 //! \author J. Bakosi
 template<> template<>
-void DataLayout_object::test< 14 >() {
+void DataLayout_object::test< 15 >() {
   set_test_name( "strides" );
 
   tk::DataLayout< tk::UnkEqComp > pp( 2, 5 );
@@ -729,7 +802,7 @@ void DataLayout_object::test< 14 >() {
 //! Test tk::DataLayout's copy constructor
 //! \author J. Bakosi
 template<> template<>
-void DataLayout_object::test< 15 >() {
+void DataLayout_object::test< 16 >() {
   set_test_name( "copy constructor" );
 
   tk::DataLayout< tk::UnkEqComp > p( 3, 2 );
@@ -762,7 +835,7 @@ void DataLayout_object::test< 15 >() {
 //! Test tk::DataLayout's copy assignment
 //! \author J. Bakosi
 template<> template<>
-void DataLayout_object::test< 16 >() {
+void DataLayout_object::test< 17 >() {
   set_test_name( "copy assignment" );
 
   tk::DataLayout< tk::UnkEqComp > p( 3, 2 );
@@ -796,7 +869,7 @@ void DataLayout_object::test< 16 >() {
 //! Test tk::DataLayout's move constructor
 //! \author J. Bakosi
 template<> template<>
-void DataLayout_object::test< 17 >() {
+void DataLayout_object::test< 18 >() {
   set_test_name( "move constructor" );
 
   tk::DataLayout< tk::UnkEqComp > p( 3, 2 );
@@ -829,7 +902,7 @@ void DataLayout_object::test< 17 >() {
 //! Test tk::DataLayout's move assignment
 //! \author J. Bakosi
 template<> template<>
-void DataLayout_object::test< 18 >() {
+void DataLayout_object::test< 19 >() {
   set_test_name( "move assignment" );
 
   tk::DataLayout< tk::UnkEqComp > p( 3, 2 );

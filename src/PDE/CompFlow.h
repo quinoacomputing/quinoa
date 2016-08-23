@@ -2,7 +2,7 @@
 /*!
   \file      src/PDE/CompFlow.h
   \author    J. Bakosi
-  \date      Fri 19 Aug 2016 02:15:46 PM MDT
+  \date      Tue 23 Aug 2016 10:06:34 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Governing equations describing compressible single-phase flow
   \details   This file implements the time integration of the equations
@@ -28,6 +28,7 @@ extern ctr::InputDeck g_inputdeck;
 //!   the behavior of the class. The policies are:
 //!   - Physics - physics configuration, see PDE/CompFlowPhysics.h
 //!   - Problem - problem configuration, see PDE/CompFlowProblem.h
+//! \note The default physics is Euler, set in inciter::deck::check_compflow()
 template< class Physics, class Problem >
 class CompFlow {
 
@@ -37,12 +38,10 @@ class CompFlow {
   public:
     //! \brief Constructor
     //! \author J. Bakosi
-    explicit CompFlow( ncomp_t c ) :
+    explicit CompFlow( ncomp_t ) :
       m_ncomp( 5 ),
       m_offset( 0 )
-    {
-      IGNORE(c);
-    }
+    {}
 
     //! Initalize the compressible flow equations, prepare for time integration
     //! \param[in,out] unk Array of unknowns
@@ -176,15 +175,13 @@ class CompFlow {
       for (ncomp_t c=0; c<m_ncomp; ++c) R.fill( c, m_offset, 0.0 );
 
       for (std::size_t e=0; e<inpoel.size()/4; ++e) {
-        const auto A = inpoel[e*4+0];
-        const auto B = inpoel[e*4+1];
-        const auto C = inpoel[e*4+2];
-        const auto D = inpoel[e*4+3];
-
+        const std::array< std::size_t, 4 > N{{ inpoel[e*4+0], inpoel[e*4+1],
+                                               inpoel[e*4+2], inpoel[e*4+3] }};
         // compute element Jacobi determinant
-        const std::array< tk::real, 3 > ba{{ x[B]-x[A], y[B]-y[A], z[B]-z[A] }},
-                                        ca{{ x[C]-x[A], y[C]-y[A], z[C]-z[A] }},
-                                        da{{ x[D]-x[A], y[D]-y[A], z[D]-z[A] }};
+        const std::array< tk::real, 3 >
+          ba{{ x[N[1]]-x[N[0]], y[N[1]]-y[N[0]], z[N[1]]-z[N[0]] }},
+          ca{{ x[N[2]]-x[N[0]], y[N[2]]-y[N[0]], z[N[2]]-z[N[0]] }},
+          da{{ x[N[3]]-x[N[0]], y[N[3]]-y[N[0]], z[N[3]]-z[N[0]] }};
         const auto J = tk::triple( ba, ca, da );
 
         // construct tetrahedron element-level matrices
@@ -209,24 +206,17 @@ class CompFlow {
 
         // access solution at element nodes at time n
         std::vector< std::array< tk::real, 4 > > u( m_ncomp );
-        for (ncomp_t c=0; c<m_ncomp; ++c)
-          u[c] = Un.extract( c, m_offset, A, B, C, D );
+        for (ncomp_t c=0; c<m_ncomp; ++c) u[c] = Un.extract( c, m_offset, N );
         // access solution at element nodes at recent time step stage
         std::vector< std::array< tk::real, 4 > > s( m_ncomp );
-        for (ncomp_t c=0; c<m_ncomp; ++c)
-          s[c] = U.extract( c, m_offset, A, B, C, D );
+        for (ncomp_t c=0; c<m_ncomp; ++c) s[c] = U.extract( c, m_offset, N );
         // access pointer to right hand side at component and offset
         std::vector< const tk::real* > r( m_ncomp );
         for (ncomp_t c=0; c<m_ncomp; ++c) r[c] = R.cptr( c, m_offset );
 
         // ratio of specific heats
-        tk::real g = g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[0];
-        // dynamic viscosity
-        tk::real mu = g_inputdeck.get< tag::param, tag::compflow, tag::mu >()[0];
-        // specific heat at constant volume
-        tk::real cv = g_inputdeck.get< tag::param, tag::compflow, tag::cv >()[0];
-        // thermal conductivity
-        tk::real kc = g_inputdeck.get< tag::param, tag::compflow, tag::k >()[0];
+        tk::real g =
+          g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[0];
 
         // compute pressure
         std::array< tk::real, 4 > p;
@@ -235,143 +225,65 @@ class CompFlow {
                                      s[2][i]*s[2][i] +
                                      s[3][i]*s[3][i])/2.0/s[0][i]);
 
-        // compute temperature
-        std::array< tk::real, 4 > T;
-        for (std::size_t i=0; i<4; ++i)
-          T[i] = cv*(s[4][i] - (s[1][i]*s[1][i] +
-                                s[2][i]*s[2][i] +
-                                s[3][i]*s[3][i])/2.0/s[0][i]) / s[0][i];
-
         // add mass contribution for all equations
         for (ncomp_t c=0; c<m_ncomp; ++c)
           for (std::size_t j=0; j<4; ++j) {
-            R.var(r[c],A) += mass[0][j] * u[c][j];
-            R.var(r[c],B) += mass[1][j] * u[c][j];
-            R.var(r[c],C) += mass[2][j] * u[c][j];
-            R.var(r[c],D) += mass[3][j] * u[c][j];
+            R.var(r[c],N[0]) += mass[0][j] * u[c][j];
+            R.var(r[c],N[1]) += mass[1][j] * u[c][j];
+            R.var(r[c],N[2]) += mass[2][j] * u[c][j];
+            R.var(r[c],N[3]) += mass[3][j] * u[c][j];
           }
 
         // add advection contribution to mass conservation
         for (std::size_t j=0; j<3; ++j)
           for (std::size_t k=0; k<4; ++k) {
-            R.var(r[0],A) -= mult * dt * J/24.0 * grad[k][j] * s[j+1][k];
-            R.var(r[0],B) -= mult * dt * J/24.0 * grad[k][j] * s[j+1][k];
-            R.var(r[0],C) -= mult * dt * J/24.0 * grad[k][j] * s[j+1][k];
-            R.var(r[0],D) -= mult * dt * J/24.0 * grad[k][j] * s[j+1][k];
+            R.var(r[0],N[0]) -= mult * dt * J/24.0 * grad[k][j] * s[j+1][k];
+            R.var(r[0],N[1]) -= mult * dt * J/24.0 * grad[k][j] * s[j+1][k];
+            R.var(r[0],N[2]) -= mult * dt * J/24.0 * grad[k][j] * s[j+1][k];
+            R.var(r[0],N[3]) -= mult * dt * J/24.0 * grad[k][j] * s[j+1][k];
           }
 
         // add advection contribution to momentum conservation
         for (std::size_t i=0; i<3; ++i)
           for (std::size_t j=0; j<3; ++j)
             for (std::size_t k=0; k<4; ++k) {
-              R.var(r[i+1],A) -= mult * dt * J/24.0 * grad[k][j] *
+              R.var(r[i+1],N[0]) -= mult * dt * J/24.0 * grad[k][j] *
                                  s[i+1][k]*s[j+1][k]/s[0][k];
-              R.var(r[i+1],B) -= mult * dt * J/24.0 * grad[k][j] *
+              R.var(r[i+1],N[1]) -= mult * dt * J/24.0 * grad[k][j] *
                                  s[i+1][k]*s[j+1][k]/s[0][k];
-              R.var(r[i+1],C) -= mult * dt * J/24.0 * grad[k][j] *
+              R.var(r[i+1],N[2]) -= mult * dt * J/24.0 * grad[k][j] *
                                  s[i+1][k]*s[j+1][k]/s[0][k];
-              R.var(r[i+1],D) -= mult * dt * J/24.0 * grad[k][j] *
+              R.var(r[i+1],N[3]) -= mult * dt * J/24.0 * grad[k][j] *
                                  s[i+1][k]*s[j+1][k]/s[0][k];
             }
 
         // add pressure gradient contribution to momentum conservation
         for (std::size_t i=0; i<3; ++i)
           for (std::size_t k=0; k<4; ++k) {
-            R.var(r[i+1],A) -= mult * dt * J/24.0 * grad[k][i] * p[k];
-            R.var(r[i+1],B) -= mult * dt * J/24.0 * grad[k][i] * p[k];
-            R.var(r[i+1],C) -= mult * dt * J/24.0 * grad[k][i] * p[k];
-            R.var(r[i+1],D) -= mult * dt * J/24.0 * grad[k][i] * p[k];
+            R.var(r[i+1],N[0]) -= mult * dt * J/24.0 * grad[k][i] * p[k];
+            R.var(r[i+1],N[1]) -= mult * dt * J/24.0 * grad[k][i] * p[k];
+            R.var(r[i+1],N[2]) -= mult * dt * J/24.0 * grad[k][i] * p[k];
+            R.var(r[i+1],N[3]) -= mult * dt * J/24.0 * grad[k][i] * p[k];
           }
-
-        // add deviatoric viscous stress contribution to momentum conservation
-        for (std::size_t i=0; i<3; ++i)
-          for (std::size_t j=0; j<3; ++j)
-            for (std::size_t k=0; k<4; ++k) {
-              R.var(r[i+1],A) -= mult * dt * J/6.0 * mu *
-                                 grad[0][j]*(grad[k][j]*s[i+1][k] +
-                                             grad[k][i]*s[j+1][k])/s[0][k];
-              R.var(r[i+1],B) -= mult * dt * J/6.0 * mu *
-                                 grad[1][j]*(grad[k][j]*s[i+1][k] +
-                                             grad[k][i]*s[j+1][k])/s[0][k];
-              R.var(r[i+1],C) -= mult * dt * J/6.0 * mu *
-                                 grad[2][j]*(grad[k][j]*s[i+1][k] +
-                                             grad[k][i]*s[j+1][k])/s[0][k];
-              R.var(r[i+1],D) -= mult * dt * J/6.0 * mu *
-                                 grad[3][j]*(grad[k][j]*s[i+1][k] +
-                                             grad[k][i]*s[j+1][k])/s[0][k];
-            }
-
-        // add isotropic viscous stress contribution to momentum conservation
-        for (std::size_t i=0; i<3; ++i)
-          for (std::size_t j=0; j<3; ++j)
-            for (std::size_t k=0; k<4; ++k) {
-              R.var(r[i+1],A) += mult * dt * J/6.0 * 2.0/3.0*mu *
-                                 grad[0][i]*grad[k][j]*s[j+1][k]/s[0][k];
-              R.var(r[i+1],B) += mult * dt * J/6.0 * 2.0/3.0*mu *
-                                 grad[1][i]*grad[k][j]*s[j+1][k]/s[0][k];
-              R.var(r[i+1],C) += mult * dt * J/6.0 * 2.0/3.0*mu *
-                                 grad[2][i]*grad[k][j]*s[j+1][k]/s[0][k];
-              R.var(r[i+1],D) += mult * dt * J/6.0 * 2.0/3.0*mu *
-                                 grad[3][i]*grad[k][j]*s[j+1][k]/s[0][k];
-            }
 
         // add advection and pressure grad contribution to energy conservation
         for (std::size_t j=0; j<3; ++j)
           for (std::size_t k=0; k<4; ++k) {
-            R.var(r[4],A) -= mult * dt * J/24.0 * grad[k][j] *
+            R.var(r[4],N[0]) -= mult * dt * J/24.0 * grad[k][j] *
                              (s[4][k] + p[k]) * s[j+1][k]/s[0][k];
-            R.var(r[4],B) -= mult * dt * J/24.0 * grad[k][j] *
+            R.var(r[4],N[1]) -= mult * dt * J/24.0 * grad[k][j] *
                              (s[4][k] + p[k]) * s[j+1][k]/s[0][k];
-            R.var(r[4],C) -= mult * dt * J/24.0 * grad[k][j] *
+            R.var(r[4],N[2]) -= mult * dt * J/24.0 * grad[k][j] *
                              (s[4][k] + p[k]) * s[j+1][k]/s[0][k];
-            R.var(r[4],D) -= mult * dt * J/24.0 * grad[k][j] *
+            R.var(r[4],N[3]) -= mult * dt * J/24.0 * grad[k][j] *
                              (s[4][k] + p[k]) * s[j+1][k]/s[0][k];
           }
 
-        // add deviatoric viscous stress contribution to energy conservation
-        for (std::size_t i=0; i<3; ++i)
-          for (std::size_t j=0; j<3; ++j)
-            for (std::size_t k=0; k<4; ++k) {
-              R.var(r[4],A) -= mult * dt * J/24.0 * mu * s[i+1][k]/s[0][k] *
-                               grad[0][j]*(grad[k][j]*s[i+1][k] +
-                                           grad[k][i]*s[j+1][k])/s[0][k];
-              R.var(r[4],B) -= mult * dt * J/24.0 * mu * s[i+1][k]/s[0][k] *
-                               grad[1][j]*(grad[k][j]*s[i+1][k] +
-                                           grad[k][i]*s[j+1][k])/s[0][k];
-              R.var(r[4],C) -= mult * dt * J/24.0 * mu * s[i+1][k]/s[0][k] *
-                               grad[2][j]*(grad[k][j]*s[i+1][k] +
-                                           grad[k][i]*s[j+1][k])/s[0][k];
-              R.var(r[4],D) -= mult * dt * J/24.0 * mu * s[i+1][k]/s[0][k] *
-                               grad[3][j]*(grad[k][j]*s[i+1][k] +
-                                           grad[k][i]*s[j+1][k])/s[0][k];
-            }
+        // add viscous stress contribution to momentum and energy rhs
+        Physics::viscousRhs( mult, dt, J, N, grad, s, r, R );
 
-        // add isotropic viscous stress contribution to energy conservation
-        for (std::size_t i=0; i<3; ++i)
-          for (std::size_t j=0; j<3; ++j)
-            for (std::size_t k=0; k<4; ++k) {
-              R.var(r[4],A) += mult * dt * J/24.0 * s[i+1][k]/s[0][k] *
-                               grad[0][i]*grad[k][j]*s[j+1][k]/s[0][k] *
-                               2.0/3.0*mu;
-              R.var(r[4],B) += mult * dt * J/24.0 * s[i+1][k]/s[0][k] *
-                               grad[1][i]*grad[k][j]*s[j+1][k]/s[0][k] *
-                               2.0/3.0*mu;
-              R.var(r[4],C) += mult * dt * J/24.0 * s[i+1][k]/s[0][k] *
-                               grad[2][i]*grad[k][j]*s[j+1][k]/s[0][k] *
-                               2.0/3.0*mu;
-              R.var(r[4],D) += mult * dt * J/24.0 * s[i+1][k]/s[0][k] *
-                               grad[3][i]*grad[k][j]*s[j+1][k]/s[0][k] *
-                               2.0/3.0*mu;
-            }
-
-        // add heat conduction contribution to energy conservation
-        for (std::size_t i=0; i<3; ++i)
-          for (std::size_t k=0; k<4; ++k) {
-            R.var(r[4],A) += mult * dt * J/24.0 * grad[k][i] * T[k] * kc;
-            R.var(r[4],B) += mult * dt * J/24.0 * grad[k][i] * T[k] * kc;
-            R.var(r[4],C) += mult * dt * J/24.0 * grad[k][i] * T[k] * kc;
-            R.var(r[4],D) += mult * dt * J/24.0 * grad[k][i] * T[k] * kc;
-          }
+        // add heat conduction contribution to energy rhs
+        Physics::conductRhs( mult, dt, J, N, grad, s, r, R );
       }
     }
 

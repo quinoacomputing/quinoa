@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Carrier.C
   \author    J. Bakosi
-  \date      Thu 18 Aug 2016 09:25:39 AM MDT
+  \date      Mon 22 Aug 2016 03:59:23 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Carrier advances a system of transport equations
   \details   Carrier advances a system of transport equations. There are a
@@ -898,7 +898,7 @@ Carrier::collectedpar( const std::vector< std::size_t >& found )
 void
 Carrier::advanceParticle( std::size_t i,
                           std::size_t e,
-                          const std::array< tk::real, 4>& N )
+                          const std::array< tk::real, 4 >& N )
 // *****************************************************************************
 // Advance particle based on velocity from mesh cell
 //! \author F.J. Gonzalez
