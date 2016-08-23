@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Mon 22 Aug 2016 08:09:53 AM MDT
+  \date      Tue 23 Aug 2016 09:54:36 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Inciter's input deck grammar definition
   \details   Inciter's input deck grammar definition. We use the Parsing
@@ -110,6 +110,9 @@ namespace deck {
     static void apply( const std::string&, Stack& stack ) {
       // Set default number of components to 5 (mass, 3 x mom, energy)
       stack.get< tag::component, eq >().push_back( 5 );
+      // If physics type is not given, default to 'euler'
+      auto& physics = stack.get< tag::param, eq, tag::physics >();
+      if (physics.empty()) physics.push_back( ctr::PhysicsType::EULER );
       // If problem type is not given, default to 'user_defined'
       auto& problem = stack.get< tag::param, eq, tag::problem >();
       if (problem.empty()) problem.push_back( ctr::ProblemType::USER_DEFINED );

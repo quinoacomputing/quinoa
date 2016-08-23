@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/DataLayout.h
   \author    J. Bakosi
-  \date      Tue 09 Aug 2016 08:04:21 AM MDT
+  \date      Tue 23 Aug 2016 09:59:16 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Generic data access abstraction for different data layouts
   \details   Generic data access abstraction for different data layouts. See
@@ -253,6 +253,23 @@ class DataLayout {
     {
       auto p = cptr( component, offset );
       return {{ var(p,A), var(p,B), var(p,C), var(p,D) }};
+    }
+
+    //! Extract (a copy of) four values of unknowns
+    //! \details Requirement: offset + component < nprop, for all N[i] < nunk,
+    //!   enforced with an assert in DEBUG mode, see also the constructor.
+    //! \param[in] component Component index, i.e., position of a scalar within
+    //!   a system
+    //! \param[in] offset System offset specifying the position of the system of
+    //!   equations among other systems
+    //! \param[in] N Indices of the 4 unknowns
+    //! \return Array of the four values of component at offset
+    //! \author J. Bakosi
+    std::array< tk::real, 4 >
+    extract( ncomp_t component, ncomp_t offset,
+             const std::array< ncomp_t, 4 >& N ) const
+    {
+      return extract( component, offset, N[0], N[1], N[2], N[3] );
     }
 
     //! Add new unknown
