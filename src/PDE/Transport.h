@@ -2,7 +2,7 @@
 /*!
   \file      src/PDE/Transport.h
   \author    J. Bakosi
-  \date      Mon 29 Aug 2016 12:52:07 PM MDT
+  \date      Mon 29 Aug 2016 02:30:57 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Transport equation
   \details   This file implements the time integration of a transport equation
@@ -30,6 +30,8 @@ extern ctr::InputDeck g_inputdeck;
 //!   the behavior of the class. The policies are:
 //!   - Physics - physics configuration, see PDE/TransportPhysics.h
 //!   - Problem - problem configuration, see PDE/TransportProblem.h
+//! \note The default physics is Advection, set in
+//!    inciter::deck::check_transport()
 template< class Physics, class Problem >
 class Transport {
 
@@ -179,24 +181,17 @@ class Transport {
       const auto& y = coord[1];
       const auto& z = coord[2];
 
-      // get reference to diffusivities for all components
-      const auto& diff =
-        g_inputdeck.get< tag::param, tag::transport, tag::diffusivity >().
-          at(m_c);
-
       // zero right hand side for all components
       for (ncomp_t c=0; c<m_ncomp; ++c) R.fill( c, m_offset, 0.0 );
 
       for (std::size_t e=0; e<inpoel.size()/4; ++e) {
-        const auto A = inpoel[e*4+0];
-        const auto B = inpoel[e*4+1];
-        const auto C = inpoel[e*4+2];
-        const auto D = inpoel[e*4+3];
-
+        const std::array< std::size_t, 4 > N{{ inpoel[e*4+0], inpoel[e*4+1],
+                                               inpoel[e*4+2], inpoel[e*4+3] }};
         // compute element Jacobi determinant
-        const std::array< tk::real, 3 > ba{{ x[B]-x[A], y[B]-y[A], z[B]-z[A] }},
-                                        ca{{ x[C]-x[A], y[C]-y[A], z[C]-z[A] }},
-                                        da{{ x[D]-x[A], y[D]-y[A], z[D]-z[A] }};
+        const std::array< tk::real, 3 >
+          ba{{ x[N[1]]-x[N[0]], y[N[1]]-y[N[0]], z[N[1]]-z[N[0]] }},
+          ca{{ x[N[2]]-x[N[0]], y[N[2]]-y[N[0]], z[N[2]]-z[N[0]] }},
+          da{{ x[N[3]]-x[N[0]], y[N[3]]-y[N[0]], z[N[3]]-z[N[0]] }};
         const auto J = tk::triple( ba, ca, da );
 
         // construct tetrahedron element-level matrices
@@ -221,12 +216,10 @@ class Transport {
 
         // access solution at element nodes at time n
         std::vector< std::array< tk::real, 4 > > u( m_ncomp );
-        for (ncomp_t c=0; c<m_ncomp; ++c)
-          u[c] = Un.extract( c, m_offset, A, B, C, D );
+        for (ncomp_t c=0; c<m_ncomp; ++c) u[c] = Un.extract( c, m_offset, N );
         // access solution at element nodes at recent time step stage
         std::vector< std::array< tk::real, 4 > > s( m_ncomp );
-        for (ncomp_t c=0; c<m_ncomp; ++c)
-          s[c] = U.extract( c, m_offset, A, B, C, D );
+        for (ncomp_t c=0; c<m_ncomp; ++c) s[c] = U.extract( c, m_offset, N );
         // access pointer to right hand side at component and offset
         std::vector< const tk::real* > r( m_ncomp );
         for (ncomp_t c=0; c<m_ncomp; ++c) r[c] = R.cptr( c, m_offset );
@@ -234,16 +227,15 @@ class Transport {
         // get velocity for problem
         const auto vel =
           Problem::template
-            velocity< tag::transport >
-                    ( g_inputdeck, A, B, C, D, coord, m_c, m_ncomp );
+            velocity< tag::transport >( g_inputdeck, N, coord, m_c, m_ncomp );
 
         // add mass contribution to right hand side
         for (ncomp_t c=0; c<m_ncomp; ++c)
           for (std::size_t j=0; j<4; ++j) {
-            R.var(r[c],A) += mass[0][j] * u[c][j];
-            R.var(r[c],B) += mass[1][j] * u[c][j];
-            R.var(r[c],C) += mass[2][j] * u[c][j];
-            R.var(r[c],D) += mass[3][j] * u[c][j];
+            R.var(r[c],N[0]) += mass[0][j] * u[c][j];
+            R.var(r[c],N[1]) += mass[1][j] * u[c][j];
+            R.var(r[c],N[2]) += mass[2][j] * u[c][j];
+            R.var(r[c],N[3]) += mass[3][j] * u[c][j];
           }
 
         // add advection contribution to right hand side
@@ -251,29 +243,18 @@ class Transport {
           for (std::size_t j=0; j<4; ++j)
             for (std::size_t k=0; k<3; ++k)
               for (std::size_t l=0; l<4; ++l) {
-                R.var(r[c],A) -= mult * dt * mass[0][j] * vel[c][k][j]
-                                      * grad[l][k] * s[c][l];
-                R.var(r[c],B) -= mult * dt * mass[1][j] * vel[c][k][j]
-                                      * grad[l][k] * s[c][l];
-                R.var(r[c],C) -= mult * dt * mass[2][j] * vel[c][k][j]
-                                      * grad[l][k] * s[c][l];
-                R.var(r[c],D) -= mult * dt * mass[3][j] * vel[c][k][j]
-                                      * grad[l][k] * s[c][l];
+                R.var(r[c],N[0]) -= mult * dt * mass[0][j] * vel[c][k][j]
+                                         * grad[l][k] * s[c][l];
+                R.var(r[c],N[1]) -= mult * dt * mass[1][j] * vel[c][k][j]
+                                         * grad[l][k] * s[c][l];
+                R.var(r[c],N[2]) -= mult * dt * mass[2][j] * vel[c][k][j]
+                                         * grad[l][k] * s[c][l];
+                R.var(r[c],N[3]) -= mult * dt * mass[3][j] * vel[c][k][j]
+                                         * grad[l][k] * s[c][l];
               }
 
         // add diffusion contribution to right hand side
-        for (ncomp_t c=0; c<m_ncomp; ++c)
-          for (std::size_t j=0; j<4; ++j)
-            for (std::size_t k=0; k<3; ++k) {
-              R.var(r[c],A) -= mult * dt * diff[c] * J * grad[0][k]
-                                    * grad[j][k] * s[c][j];
-              R.var(r[c],B) -= mult * dt * diff[c] * J * grad[1][k]
-                                    * grad[j][k] * s[c][j];
-              R.var(r[c],C) -= mult * dt * diff[c] * J * grad[2][k]
-                                    * grad[j][k] * s[c][j];
-              R.var(r[c],D) -= mult * dt * diff[c] * J * grad[3][k]
-                                    * grad[j][k] * s[c][j];
-            }
+        Physics::diffusionRhs( m_c, m_ncomp, mult, dt, J, N, grad, s, r, R );
       }
     }
 
@@ -289,7 +270,7 @@ class Transport {
               ncomp_t A, ncomp_t B, ncomp_t C, ncomp_t D ) const
     {
       IGNORE(U); IGNORE(A); IGNORE(B); IGNORE(C); IGNORE(D);
-      std::vector< std::array< tk::real, 4 > > v;
+      std::vector< std::array< tk::real, 4 > > v( 3, {{0.0, 0.0, 0.0}} );
       return v;
     }
 

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Mon 29 Aug 2016 12:55:54 PM MDT
+  \date      Mon 29 Aug 2016 02:10:56 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Inciter's input deck grammar definition
   \details   Inciter's input deck grammar definition. We use the Parsing
@@ -92,6 +92,31 @@ namespace deck {
       const auto& problem = stack.get< tag::param, eq, tag::problem >();
       if (problem.empty() || problem.size() != neq.get< eq >())
         tk::grm::Message< Stack, tk::grm::ERROR, tk::grm::MsgKey::NOINIT >
+                        ( stack, value );
+    }
+  };
+
+  //! \brief Set defaults and do error checking on the transport equation block
+  //! \details This is error checking that only the transport equation block
+  //!   must satisfy. Besides error checking we also set defaults here as
+  //!   this block is called when parsing of a transport...end block has
+  //!   just finished.
+  //! \author J. Bakosi
+  template< class eq >
+  struct check_transport : pegtl::action_base< check_transport< eq > > {
+    static void apply( const std::string& value, Stack& stack ) {
+      // If no number of components has been selected, default to 1
+      const auto& ncomp = stack.get< tag::component, eq >();
+      if (ncomp.empty() || ncomp.size() != neq.get< eq >())
+        stack.get< tag::component, eq >().push_back( 1 );
+      // If physics type is not given, default to 'advection'
+      auto& physics = stack.get< tag::param, eq, tag::advection >();
+      if (physics.empty() || physics.size() != neq.get< eq >())
+        physics.push_back( ctr::PhysicsType::ADVECTION );
+      // If problem type is not given, error out
+      auto& problem = stack.get< tag::param, eq, tag::problem >();
+      if (problem.empty() || problem.size() != neq.get< eq >())
+        tk::grm::Message< Stack, tk::grm::ERROR, tk::grm::MsgKey::NOPROBLEM >
                         ( stack, value );
     }
   };
@@ -249,6 +274,12 @@ namespace deck {
            scan_eq< use< kw::transport >, tag::transport >,
            tk::grm::block< Stack,
                            use< kw::end >,
+                           tk::grm::policy< Stack,
+                                            use,
+                                            use< kw::physics >,
+                                            ctr::Physics,
+                                            tag::transport,
+                                            tag::physics >,
                            tk::grm::policy< Stack,
                                             use,
                                             use< kw::problem >,

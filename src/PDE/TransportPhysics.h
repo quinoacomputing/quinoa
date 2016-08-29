@@ -2,7 +2,7 @@
 /*!
   \file      src/PDE/TransportPhysics.h
   \author    J. Bakosi
-  \date      Mon 29 Aug 2016 01:13:31 PM MDT
+  \date      Mon 29 Aug 2016 02:12:29 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Physics configurations for a system of transport equations
   \details   This file defines policy classes for transport equations,
@@ -33,15 +33,77 @@ namespace inciter {
 
 //! Transport equation system of PDEs problem: advection
 class TransportPhysicsAdvection {
-  public:
 
+  public:
+    //! Add diffusion contribution to rhs (no-op)
+    static void
+    diffusionRhs( tk::ctr::ncomp_type,
+                  tk::ctr::ncomp_type,
+                  tk::real,
+                  tk::real,
+                  tk::real,
+                  const std::array< std::size_t, 4 >&,
+                  const std::array< std::array< tk::real, 3 >, 4 >&,
+                  const std::vector< std::array< tk::real, 4 > >&,
+                  const std::vector< const tk::real* >&,
+                  tk::MeshNodes& ) {}
 
     static ctr::PhysicsType type() noexcept
     { return ctr::PhysicsType::ADVECTION; }
 };
 
+//! Transport equation system of PDEs problem: advection + diffusion
+class TransportPhysicsAdvDiff {
+
+  public:
+    //! Add diffusion contribution to rhs
+    //! \param[in] e Equation system index, i.e., which transport equation
+    //!   system we operate on among the systems of PDEs
+    //! \param[in] ncomp Number of components in this PDE
+    //! \param[in] mult Multiplier differentiating the different stages in
+    //!    multi-stage time stepping
+    //! \param[in] dt Size of time step
+    //! \param[in] J Element Jacobi determinant
+    //! \param[in] N Element node indices
+    //! \param[in] grad Shape function derivatives, nnode*ndim [4][3]
+    //! \param[in] s Solution at element nodes at recent time step stage
+    //! \param[in] r Pointers to right hand side at component and offset
+    //! \param[in,out] R Right-hand side vector contributing to
+    static void
+    diffusionRhs( tk::ctr::ncomp_type e,
+                  tk::ctr::ncomp_type ncomp,
+                  tk::real mult,
+                  tk::real dt,
+                  tk::real J,
+                  const std::array< std::size_t, 4 >& N,
+                  const std::array< std::array< tk::real, 3 >, 4 >& grad,
+                  const std::vector< std::array< tk::real, 4 > >& s,
+                  const std::vector< const tk::real* >& r,
+                  tk::MeshNodes& R )
+    {
+      // get reference to diffusivities for all components
+      const auto& diff =
+        g_inputdeck.get< tag::param, tag::transport, tag::diffusivity >().at(e);
+
+      // add diffusion contribution to right hand side
+      for (ncomp_t c=0; c<ncomp; ++c) {
+        tk::real a = mult * dt * diff[c] * J;
+        for (std::size_t j=0; j<4; ++j)
+          for (std::size_t k=0; k<3; ++k) {
+            R.var(r[c],N[0]) -= a * grad[0][k] * grad[j][k] * s[c][j];
+            R.var(r[c],N[1]) -= a * grad[1][k] * grad[j][k] * s[c][j];
+            R.var(r[c],N[2]) -= a * grad[2][k] * grad[j][k] * s[c][j];
+            R.var(r[c],N[3]) -= a * grad[3][k] * grad[j][k] * s[c][j];
+          }
+      }
+    }
+
+    static ctr::PhysicsType type() noexcept
+    { return ctr::PhysicsType::ADVDIFF; }
+};
 //! List of all Transport equation problem policies
-using TransportPhysics = boost::mpl::vector< TransportPhysicsAdvection >;
+using TransportPhysics = boost::mpl::vector< TransportPhysicsAdvection
+                                           , TransportPhysicsAdvDiff >;
 
 } // inciter::
 

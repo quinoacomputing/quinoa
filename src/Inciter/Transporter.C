@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Transporter.C
   \author    J. Bakosi
-  \date      Fri 19 Aug 2016 02:11:47 PM MDT
+  \date      Mon 29 Aug 2016 02:43:33 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Transporter drives the time integration of transport equations
   \details   Transporter drives the time integration of transport equations.
@@ -56,7 +56,7 @@ Transporter::Transporter() :
   m_npoin( 0 ),
   m_timer(),
   m_linsysbc(),
-  m_diag( 5, 0.0 )   // <- WRONG FOR EVERYTHING BUT A SINGLE COMPFLOW
+  m_diag( g_inputdeck.get< tag::component >().nprop(), 0.0 )
 // *****************************************************************************
 //  Constructor
 //! \author J. Bakosi
