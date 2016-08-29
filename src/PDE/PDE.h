@@ -2,7 +2,7 @@
 /*!
   \file      src/PDE/PDE.h
   \author    J. Bakosi
-  \date      Fri 19 Aug 2016 02:11:12 PM MDT
+  \date      Mon 29 Aug 2016 03:09:30 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Partial differential equation
   \details   This file defines a generic partial differential equation class.
@@ -100,8 +100,9 @@ class PDE {
     //! Public interface for extracting the velocity field at cell nodes
     std::vector< std::array< tk::real, 4 > >
     velocity( const tk::MeshNodes& U,
-              ncomp_t A, ncomp_t B, ncomp_t C, ncomp_t D ) const
-    { return self->velocity( U, A, B, C, D ); }
+              const std::array< std::vector< tk::real >, 3 >& coord,
+              const std::array< std::size_t, 4 >& N ) const
+    { return self->velocity( U, coord, N ); }
 
     //! \brief Public interface for querying if a Dirichlet boundary condition
     //!   has set by the user on any side set for any component in the PDE
@@ -155,8 +156,9 @@ class PDE {
                         tk::MeshNodes& ) const = 0;
       virtual bool anydirbc( int ) const = 0;
       virtual std::vector< std::array< tk::real, 4 > > velocity(
-        const tk::MeshNodes& U, ncomp_t A, ncomp_t B, ncomp_t C, ncomp_t D )
-        const = 0;
+        const tk::MeshNodes& U,
+        const std::array< std::vector< tk::real >, 3 >& coord,
+        const std::array< std::size_t, 4 >& N  ) const = 0;
       virtual std::vector< std::pair< bool, tk::real > > dirbc( int ) const = 0;
       virtual std::vector< std::string > names() const = 0;
       virtual std::vector< std::vector< tk::real > > output(
@@ -188,8 +190,10 @@ class PDE {
                 tk::MeshNodes& R ) const override
       { data.rhs( mult, dt, coord, inpoel, U, Un, R ); }
       std::vector< std::array< tk::real, 4 > > velocity(
-        const tk::MeshNodes& U, ncomp_t A, ncomp_t B, ncomp_t C, ncomp_t D )
-        const override { return data.velocity( U, A, B, C, D ); }
+        const tk::MeshNodes& U,
+        const std::array< std::vector< tk::real >, 3 >& coord,
+        const std::array< std::size_t, 4 >& N  ) const override
+      { return data.velocity( U, coord, N ); }
       bool anydirbc( int sideset ) const override
       { return data.anydirbc( sideset ); }
       std::vector< std::pair< bool, tk::real > > dirbc( int sideset ) const

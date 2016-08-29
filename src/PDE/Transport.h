@@ -2,7 +2,7 @@
 /*!
   \file      src/PDE/Transport.h
   \author    J. Bakosi
-  \date      Mon 29 Aug 2016 02:30:57 PM MDT
+  \date      Mon 29 Aug 2016 03:45:09 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Transport equation
   \details   This file implements the time integration of a transport equation
@@ -49,7 +49,7 @@ class Transport {
       m_offset(
         g_inputdeck.get< tag::component >().offset< tag::transport >(c) )
     {
-      Problem::template errchk< tag::transport >( g_inputdeck, m_c, m_ncomp );
+      Problem::template errchk< tag::transport >( m_c, m_ncomp );
     }
 
     //! Initalize the transport equations using problem policy
@@ -62,8 +62,7 @@ class Transport {
                      tk::real t ) const
     {
       Problem::template
-        init< tag::transport >
-            ( g_inputdeck, coord, unk, m_c, m_ncomp, m_offset, t );
+        init< tag::transport >( coord, unk, m_c, m_ncomp, m_offset, t );
     }
 
     //! Compute the left hand side sparse matrix
@@ -227,7 +226,7 @@ class Transport {
         // get velocity for problem
         const auto vel =
           Problem::template
-            velocity< tag::transport >( g_inputdeck, N, coord, m_c, m_ncomp );
+            prescribedVelocity< tag::transport >( N, coord, m_c, m_ncomp );
 
         // add mass contribution to right hand side
         for (ncomp_t c=0; c<m_ncomp; ++c)
@@ -259,19 +258,13 @@ class Transport {
     }
 
     //! Extract the velocity field at cell nodes
-    //! \param[in] U Solution vector at recent time step stage
-    //! \param[in] A Index of 1st cell node to query
-    //! \param[in] B Index of 2nd cell node to query
-    //! \param[in] C Index of 3rd cell node to query
-    //! \param[in] D Index of 4th cell node to query
     //! \return Array of the four values of the three velocity coordinates
     std::vector< std::array< tk::real, 4 > >
     velocity( const tk::MeshNodes& U,
-              ncomp_t A, ncomp_t B, ncomp_t C, ncomp_t D ) const
+              const std::array< std::vector< tk::real >, 3 >& coord,
+              const std::array< std::size_t, 4 >& N ) const
     {
-      IGNORE(U); IGNORE(A); IGNORE(B); IGNORE(C); IGNORE(D);
-      std::vector< std::array< tk::real, 4 > > v( 3, {{0.0, 0.0, 0.0}} );
-      return v;
+      return Problem::velocity( U, coord, N );
     }
 
     //! \brief Query if a Dirichlet boundary condition has set by the user on
