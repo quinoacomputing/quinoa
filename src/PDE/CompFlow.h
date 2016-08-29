@@ -2,7 +2,7 @@
 /*!
   \file      src/PDE/CompFlow.h
   \author    J. Bakosi
-  \date      Thu 25 Aug 2016 10:17:26 AM MDT
+  \date      Mon 29 Aug 2016 03:07:37 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Governing equations describing compressible single-phase flow
   \details   This file implements the time integration of the equations
@@ -260,20 +260,18 @@ class CompFlow {
 
     //! Extract the velocity field at cell nodes
     //! \param[in] U Solution vector at recent time step stage
-    //! \param[in] A Index of 1st cell node to query
-    //! \param[in] B Index of 2nd cell node to query
-    //! \param[in] C Index of 3rd cell node to query
-    //! \param[in] D Index of 4th cell node to query
+    //! \param[in] N Element node indices    
     //! \return Array of the four values of the three velocity coordinates
     std::vector< std::array< tk::real, 4 > >
     velocity( const tk::MeshNodes& U,
-              ncomp_t A, ncomp_t B, ncomp_t C, ncomp_t D ) const
+              const std::array< std::vector< tk::real >, 3 >&,
+              const std::array< std::size_t, 4 >& N ) const
     {
       std::vector< std::array< tk::real, 4 > > v( 3 );
-      v[0] = U.extract( 1, m_offset, A, B, C, D );
-      v[1] = U.extract( 2, m_offset, A, B, C, D );
-      v[2] = U.extract( 3, m_offset, A, B, C, D );
-      auto r = U.extract( 0, m_offset, A, B, C, D );
+      v[0] = U.extract( 1, m_offset, N );
+      v[1] = U.extract( 2, m_offset, N );
+      v[2] = U.extract( 3, m_offset, N );
+      auto r = U.extract( 0, m_offset, N );
       std::transform( r.begin(), r.end(), v[0].begin(), v[0].begin(),
                       []( tk::real s, tk::real& d ){ return d /= s; } );
       std::transform( r.begin(), r.end(), v[1].begin(), v[1].begin(),

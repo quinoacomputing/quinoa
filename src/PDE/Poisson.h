@@ -2,7 +2,7 @@
 /*!
   \file      src/PDE/Poisson.h
   \author    J. Bakosi
-  \date      Wed 17 Aug 2016 08:45:25 AM MDT
+  \date      Mon 29 Aug 2016 03:27:41 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Poisson equation
   \details   This file implements the Poisson equation.
@@ -208,21 +208,15 @@ class Poisson {
       for (ncomp_t c=0; c<m_ncomp; ++c) R.fill( c, m_offset, 0.0 );
     }
 
-    //! Extract the velocity field at cell nodes
-    //! \param[in] U Solution vector at recent time step stage
-    //! \param[in] A Index of 1st cell node to query
-    //! \param[in] B Index of 2nd cell node to query
-    //! \param[in] C Index of 3rd cell node to query
-    //! \param[in] D Index of 4th cell node to query
+    //! Return the velocity field at cell nodes
     //! \return Array of the four values of the three velocity coordinates
     std::vector< std::array< tk::real, 4 > >
-    velocity( const tk::MeshNodes& U,
-              ncomp_t A, ncomp_t B, ncomp_t C, ncomp_t D ) const
-    {
-      IGNORE(U); IGNORE(A); IGNORE(B); IGNORE(C); IGNORE(D);
-      std::vector< std::array< tk::real, 4 > > v;
-      return v;
-    }
+    velocity( const tk::MeshNodes&,
+              const std::array< std::vector< tk::real >, 3 >&,
+              const std::array< std::size_t, 4 >&) const
+    { return { {{0.0, 0.0, 0.0, 0.0}},
+               {{0.0, 0.0, 0.0, 0.0}},
+               {{0.0, 0.0, 0.0, 0.0}} }; }
 
     //! \brief Query if a Dirichlet boundary condition has set by the user on
     //!   a given side set for any component in the PDE system

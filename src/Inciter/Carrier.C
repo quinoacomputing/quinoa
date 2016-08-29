@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Carrier.C
   \author    J. Bakosi
-  \date      Mon 22 Aug 2016 03:59:23 PM MDT
+  \date      Mon 29 Aug 2016 03:47:21 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Carrier advances a system of transport equations
   \details   Carrier advances a system of transport equations. There are a
@@ -898,26 +898,24 @@ Carrier::collectedpar( const std::vector< std::size_t >& found )
 void
 Carrier::advanceParticle( std::size_t i,
                           std::size_t e,
-                          const std::array< tk::real, 4 >& N )
+                          const std::array< tk::real, 4 >& Np )
 // *****************************************************************************
 // Advance particle based on velocity from mesh cell
 //! \author F.J. Gonzalez
 // *****************************************************************************
 {
   auto dt = g_inputdeck.get< tag::discr, tag::dt >();
-  const auto A = m_inpoel[e*4+0];
-  const auto B = m_inpoel[e*4+1];
-  const auto C = m_inpoel[e*4+2]; 
-  const auto D = m_inpoel[e*4+3];
 
   // Extract velocity at the four cell nodes at current and previous time step.
   // To keep the code below as general as possible, we interrogate all PDEs
   // configured and use the last nonzero velocity vector.
   std::vector< std::array< tk::real, 4 > > c, p;
   for (const auto& eq : g_pdes) {
-    auto v = eq.velocity( m_u, A, B, C, D );
+    const std::array< std::size_t, 4 > N{{ m_inpoel[e*4+0], m_inpoel[e*4+1],
+                                           m_inpoel[e*4+2], m_inpoel[e*4+3] }}; 
+    auto v = eq.velocity( m_u, m_coord, N );
     if (!v.empty()) c = std::move(v);
-    auto w = eq.velocity( m_up, A, B, C, D );
+    auto w = eq.velocity( m_up, m_coord, N );
     if (!w.empty()) p = std::move(w);
   }
 
@@ -936,11 +934,11 @@ Carrier::advanceParticle( std::size_t i,
 
   // Advance particle coordinates using the interpolated velocity
   m_particles( i, 0, 0 ) +=
-    dt*(N[0]*dvx[0] + N[1]*dvx[1] + N[2]*dvx[2] + N[3]*dvx[3]);
+    dt*(Np[0]*dvx[0] + Np[1]*dvx[1] + Np[2]*dvx[2] + Np[3]*dvx[3]);
   m_particles( i, 1, 0 ) +=
-    dt*(N[0]*dvy[0] + N[1]*dvy[1] + N[2]*dvy[2] + N[3]*dvy[3]);
+    dt*(Np[0]*dvy[0] + Np[1]*dvy[1] + Np[2]*dvy[2] + Np[3]*dvy[3]);
   m_particles( i, 2, 0 ) +=
-    dt*(N[0]*dvz[0] + N[1]*dvz[1] + N[2]*dvz[2] + N[3]*dvz[3]);
+    dt*(Np[0]*dvz[0] + Np[1]*dvz[1] + Np[2]*dvz[2] + Np[3]*dvz[3]);
 
   // Apply boundary conditions to particle
   applyParBC( i );
