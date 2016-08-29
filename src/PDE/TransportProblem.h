@@ -2,7 +2,7 @@
 /*!
   \file      src/PDE/TransportProblem.h
   \author    J. Bakosi
-  \date      Mon 29 Aug 2016 01:17:39 PM MDT
+  \date      Mon 29 Aug 2016 01:54:03 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Problem configurations for the advection-diffusion equation
   \details   This file defines policy classes for the advection-diffusion
@@ -96,10 +96,7 @@ class TransportProblemShearDiff {
     }
 
     //! Assign prescribed shear velocity to nodes of tetrahedron element
-    //! \param[in] A Vertex index of tetrahedron element
-    //! \param[in] B Vertex index of tetrahedron element
-    //! \param[in] C Vertex index of tetrahedron element
-    //! \param[in] D Vertex index of tetrahedron element
+    //! \param[in] N Element node indices
     //! \param[in] coord Mesh node coordinates
     //! \param[in] e Equation system index, i.e., which advection-diffusion
     //!   system we operate on among the systems of PDEs
@@ -108,7 +105,7 @@ class TransportProblemShearDiff {
     template< class eq >
     static std::vector< std::array< std::array< tk::real, 4 >, 3 > >
     velocity( const ctr::InputDeck& deck,
-              std::size_t A, std::size_t B, std::size_t C, std::size_t D,
+              const std::array< std::size_t, 4 >& N,
               const std::array< std::vector< tk::real >, 3 >& coord,
               tk::ctr::ncomp_type e,
               tk::ctr::ncomp_type ncomp )
@@ -119,10 +116,10 @@ class TransportProblemShearDiff {
       std::vector< std::array< std::array< tk::real, 4 >, 3 > > vel( ncomp );
       for (ncomp_t c=0; c<ncomp; ++c) {
         std::array< std::array< tk::real, 4 >, 3 > v;
-        v[0][0] = u0[c] + lambda[c]*y[A];  v[1][0] = 0.0;  v[2][0] = 0.0;
-        v[0][1] = u0[c] + lambda[c]*y[B];  v[1][1] = 0.0;  v[2][1] = 0.0;
-        v[0][2] = u0[c] + lambda[c]*y[C];  v[1][2] = 0.0;  v[2][2] = 0.0;
-        v[0][3] = u0[c] + lambda[c]*y[D];  v[1][3] = 0.0;  v[2][3] = 0.0;
+        v[0][0] = u0[c] + lambda[c]*y[N[0]];  v[1][0] = 0.0;  v[2][0] = 0.0;
+        v[0][1] = u0[c] + lambda[c]*y[N[1]];  v[1][1] = 0.0;  v[2][1] = 0.0;
+        v[0][2] = u0[c] + lambda[c]*y[N[2]];  v[1][2] = 0.0;  v[2][2] = 0.0;
+        v[0][3] = u0[c] + lambda[c]*y[N[3]];  v[1][3] = 0.0;  v[2][3] = 0.0;
         vel[c] = std::move(v);
       }
       return vel;
@@ -160,7 +157,7 @@ class TransportProblemSlotCyl {
     template< class eq >
     static std::vector< std::array< std::array< tk::real, 4 >, 3 > >
     velocity( const ctr::InputDeck&,
-              std::size_t, std::size_t, std::size_t, std::size_t,
+              const std::array< std::size_t, 4 >&,
               const std::array< std::vector< tk::real >, 3 >&,
               tk::ctr::ncomp_type,
               tk::ctr::ncomp_type ncomp )

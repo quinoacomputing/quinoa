@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Keywords.h
   \author    J. Bakosi
-  \date      Mon 29 Aug 2016 01:11:57 PM MDT
+  \date      Mon 29 Aug 2016 02:14:52 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Definition of all keywords
   \details   This file contains the definition of all keywords, including those
@@ -2655,6 +2655,21 @@ struct advection_info {
 };
 using advection = keyword< advection_info, a,d,v,e,c,t,i,o,n >;
 
+struct advdiff_info {
+  using code = Code< D >;
+  static std::string name() { return "Advection + diffusion"; }
+  static std::string shortDescription() { return
+    "Specify the advection + diffusion physics configuration for a PDE "; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the advection +diffusion physics
+    configuration for a PDE. Example: "transport physics advdiff end")";
+    }
+  struct expect {
+    static std::string description() { return "string"; }
+  };
+};
+using advdiff = keyword< advdiff_info, a,d,v,d,i,f,f >;
+
 struct laplace_info {
   using code = Code< L >;
   static std::string name() { return "Laplace"; }
@@ -2788,7 +2803,7 @@ struct pde_p0_info {
 using pde_p0 = keyword< pde_p0_info, p,'0' >;
 
 struct transport_info {
-  static std::string name() { return "Transport equation"; }
+  static std::string name() { return "Transport"; }
   static std::string shortDescription() { return
     "Start configuration block for an transport equation"; }
   static std::string longDescription() { return

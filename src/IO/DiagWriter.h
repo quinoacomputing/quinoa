@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/DiagWriter.h
   \author    J. Bakosi
-  \date      Wed 20 Jul 2016 10:29:20 AM MDT
+  \date      Mon 29 Aug 2016 02:41:53 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Text diagnostics writer declaration
   \details   This file declares the ASCII diagnostics writer class that
@@ -43,7 +43,7 @@ class DiagWriter : public tk::Writer {
     //! Write diagnostics file
     std::size_t diag( uint64_t it,
                       tk::real t,
-                      const std::vector< tk::real >& name );
+                      const std::vector< tk::real >& diagnostics );
 
   private:
     int m_precision;    //!< Floating-point precision in digits

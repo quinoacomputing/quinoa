@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/DiagWriter.C
   \author    J. Bakosi
-  \date      Wed 20 Jul 2016 10:36:42 AM MDT
+  \date      Mon 29 Aug 2016 02:42:21 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Text diagnostics writer declaration
   \details   This file declares the ASCII diagnostics writer class that
@@ -73,12 +73,12 @@ DiagWriter::header( const std::vector< std::string >& name ) const
 std::size_t
 DiagWriter::diag( uint64_t it,
                   tk::real t,
-                  const std::vector< tk::real >& name )
+                  const std::vector< tk::real >& diagnostics )
 // *****************************************************************************
 //  Write out diagnostics
 //! \param[in] it Iteration counter
 //! \param[in] t Time
-//! \param[in] name Vector with the diagnostics
+//! \param[in] diagnostics Vector with the diagnostics
 //! \return The total number of diagnostics written to the output file
 //! \author J. Bakosi
 // *****************************************************************************
@@ -87,9 +87,9 @@ DiagWriter::diag( uint64_t it,
   m_outFile << std::setw(m_width) << t;
 
   // Output diagnostics
-  for (const auto& d : name) m_outFile << std::setw(m_width) << d;
+  for (const auto& d : diagnostics) m_outFile << std::setw(m_width) << d;
 
   m_outFile << std::endl;
 
-  return name.size();
+  return diagnostics.size();
 }
