@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Tue 23 Aug 2016 09:54:36 AM MDT
+  \date      Mon 29 Aug 2016 11:31:12 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Inciter's input deck grammar definition
   \details   Inciter's input deck grammar definition. We use the Parsing
@@ -74,8 +74,7 @@ namespace deck {
   //! \details This is error checking that generic equation types, such as
   //!   advection-diffusion or the Poisson equation must satisfy. For more
   //!   specific equations, such as compressible flow, a more specialized
-  //!   equation checker does and can do better error checking. See, e.g,
-  //!   check_compflow.
+  //!   equation checker does and can do better error checking.
   //! \author J. Bakosi
   template< class eq >
   struct check_eq : pegtl::action_base< check_eq< eq > > {
@@ -107,15 +106,28 @@ namespace deck {
   //! \author J. Bakosi
   template< class eq >
   struct check_compflow : pegtl::action_base< check_compflow< eq > > {
-    static void apply( const std::string&, Stack& stack ) {
-      // Set default number of components to 5 (mass, 3 x mom, energy)
+    static void apply( const std::string& value, Stack& stack ) {
+      // Set number of components to 5 (mass, 3 x mom, energy)
       stack.get< tag::component, eq >().push_back( 5 );
       // If physics type is not given, default to 'euler'
       auto& physics = stack.get< tag::param, eq, tag::physics >();
-      if (physics.empty()) physics.push_back( ctr::PhysicsType::EULER );
+      if (physics.empty() || physics.size() != neq.get< eq >())
+        physics.push_back( ctr::PhysicsType::EULER );
       // If problem type is not given, default to 'user_defined'
       auto& problem = stack.get< tag::param, eq, tag::problem >();
-      if (problem.empty()) problem.push_back( ctr::ProblemType::USER_DEFINED );
+      if (problem.empty() || problem.size() != neq.get< eq >())
+        problem.push_back( ctr::ProblemType::USER_DEFINED );
+      else if (problem.back() == ctr::ProblemType::VORTICAL_FLOW) {
+        const auto& alpha = stack.get< tag::param, eq, tag::alpha >();
+        const auto& beta = stack.get< tag::param, eq, tag::beta >();
+        const auto& p0 = stack.get< tag::param, eq, tag::p0 >();
+        if ( alpha.size() != problem.size() ||
+             beta.size() != problem.size() ||
+             p0.size() != problem.size() )
+          tk::grm::Message< Stack, tk::grm::ERROR,
+                            tk::grm::MsgKey::VORTICAL_UNFINISHED >
+                          ( stack, value );
+      }
     }
   };
 
@@ -226,6 +238,12 @@ namespace deck {
                              material_property< eq, kw::mat_cv, tag::cv >,
                              material_property< eq, kw::mat_k, tag::k > > > {};
 
+  //! put in PDE parameter for equation matching keyword
+  template< typename eq, typename keyword, typename p >
+  struct parameter :
+         tk::grm::process< Stack, use< keyword >,
+           tk::grm::Store_back< Stack, tag::param, eq, p > > {};
+
   //! advection-diffusion partial differential equation for a scalar
   struct advdiff :
          pegtl::ifmust<
@@ -298,12 +316,11 @@ namespace deck {
                                             tag::problem >,
                            //ic_compflow< tag::compflow, tag::ic > >,
                            material_properties< tag::compflow >,
-                           bc_dirichlet< tag::compflow, tag::bc_dirichlet >,
-                           tk::grm::process< Stack, use< kw::npar >,
-                             tk::grm::Store_back< Stack,
-                                                  tag::param,
-                                                  tag::compflow,
-                                                  tag::npar > > >,
+                           parameter< tag::compflow, kw::npar, tag::npar >,
+                           parameter< tag::compflow, kw::pde_alpha, tag::alpha >,
+                           parameter< tag::compflow, kw::pde_beta, tag::beta >,
+                           parameter< tag::compflow, kw::pde_p0, tag::p0 >,
+                           bc_dirichlet< tag::compflow, tag::bc_dirichlet > >,
            check_errors< tag::compflow, check_compflow > > {};
 
   //! partitioning ... end block

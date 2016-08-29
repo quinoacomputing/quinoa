@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/Types.h
   \author    J. Bakosi
-  \date      Fri 19 Aug 2016 03:53:43 PM MDT
+  \date      Thu 25 Aug 2016 10:56:18 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Types for Incitier's parsers
   \details   Types for Incitier's parsers. This file defines the components of
@@ -96,6 +96,12 @@ using CompFlowPDEParameters = tk::tuple::tagged_tuple<
   tag::problem,      std::vector< ProblemType >,
   tag::bc_dirichlet, std::vector< std::vector<
                        kw::sideset::info::expect::type > >,
+  //! Parameter vector (for specific, e.g., verification, problems)
+  tag::alpha, std::vector< kw::pde_alpha::info::expect::type >,
+  //! Parameter vector (for specific, e.g., verification, problems)
+  tag::beta, std::vector< kw::pde_beta::info::expect::type >,
+  //! Parameter vector (for specific, e.g., verification, problems)
+  tag::p0, std::vector< kw::pde_p0::info::expect::type >,
   //! Material ID
   tag::id,    std::vector< kw::id::info::expect::type >,
   //! Ratio of spec heats

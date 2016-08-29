@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/Options/Problem.h
   \author    J. Bakosi
-  \date      Mon 22 Aug 2016 10:15:19 AM MDT
+  \date      Wed 24 Aug 2016 08:59:29 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Problem options for inciter
   \details   Problem options for inciter
@@ -26,6 +26,7 @@ namespace ctr {
 enum class ProblemType : uint8_t { USER_DEFINED=0,
                                    SHEAR_DIFF,
                                    DIR_NEU,
+                                   VORTICAL_FLOW,
                                    SLOT_CYL };
 
 //! Pack/Unpack ProblemType: forward overload to generic enum class packer
@@ -39,8 +40,10 @@ class Problem : public tk::Toggle< ProblemType > {
   public:
     //! Valid expected choices to make them also available at compile-time
     //! \author J. Bakosi
-    using keywords = boost::mpl::vector< kw::shear_diff
+    using keywords = boost::mpl::vector< kw::user_defined
+                                       , kw::shear_diff
                                        , kw::dir_neu
+                                       , kw::vortical_flow
                                        , kw::slot_cyl
                                        >;
 
@@ -56,11 +59,13 @@ class Problem : public tk::Toggle< ProblemType > {
         { { ProblemType::USER_DEFINED, kw::user_defined::name() },
           { ProblemType::SHEAR_DIFF, kw::shear_diff::name() },
           { ProblemType::DIR_NEU, kw::dir_neu::name() },
+          { ProblemType::VORTICAL_FLOW, kw::vortical_flow::name() },
           { ProblemType::SLOT_CYL, kw::slot_cyl::name() } },
         //! keywords -> Enums
         { { kw::user_defined::string(), ProblemType::USER_DEFINED },
           { kw::shear_diff::string(), ProblemType::SHEAR_DIFF },
           { kw::dir_neu::string(), ProblemType::DIR_NEU },
+          { kw::vortical_flow::string(), ProblemType::VORTICAL_FLOW },
           { kw::slot_cyl::string(), ProblemType::SLOT_CYL } } )
     {
        boost::mpl::for_each< keywords >( assertPolicyCodes() );
@@ -96,6 +101,7 @@ class Problem : public tk::Toggle< ProblemType > {
         { ProblemType::USER_DEFINED, *kw::user_defined::code() }
       , { ProblemType::SHEAR_DIFF, *kw::shear_diff::code() }
       , { ProblemType::DIR_NEU, *kw::dir_neu::code() }
+      , { ProblemType::VORTICAL_FLOW, *kw::vortical_flow::code() }
       , { ProblemType::SLOT_CYL, *kw::slot_cyl::code() }
     };
 };

@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/HypreSolver.h
   \author    J. Bakosi
-  \date      Thu 21 Jul 2016 08:56:41 AM MDT
+  \date      Thu 25 Aug 2016 11:14:59 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Hypre solver class
   \details   Hypre solver class.

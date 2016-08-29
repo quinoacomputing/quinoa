@@ -2,7 +2,7 @@
 /*!
   \file      src/PDE/CompFlowPhysics.h
   \author    J. Bakosi
-  \date      Tue 23 Aug 2016 09:48:57 AM MDT
+  \date      Thu 25 Aug 2016 09:42:56 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Physics configurations for the compressible flow equations
   \details   This file defines policy classes for the compressible flow
@@ -53,8 +53,8 @@ class CompFlowPhysicsNavierStokes {
                 tk::real J,
                 const std::array< std::size_t, 4 >& N,
                 const std::array< std::array< tk::real, 3 >, 4 >& grad,
-                const std::vector< std::array< tk::real, 4 > >& s,
-                const std::vector< const tk::real* >& r,
+                const std::array< std::array< tk::real, 4 >, 5 >& s,
+                const std::array< const tk::real*, 5 >& r,
                 tk::MeshNodes& R )
     {
       // dynamic viscosity
@@ -145,8 +145,8 @@ class CompFlowPhysicsNavierStokes {
                 tk::real J,
                 const std::array< std::size_t, 4 >& N,
                 const std::array< std::array< tk::real, 3 >, 4 >& grad,
-                const std::vector< std::array< tk::real, 4 > >& s,
-                const std::vector< const tk::real* >& r,
+                const std::array< std::array< tk::real, 4 >, 5 >& s,
+                const std::array< const tk::real*, 5 >& r,
                 tk::MeshNodes& R )
     {
       // specific heat at constant volume
@@ -189,8 +189,8 @@ class CompFlowPhysicsEuler {
                 tk::real,
                 const std::array< std::size_t, 4 >&,
                 const std::array< std::array< tk::real, 3 >, 4 >&,
-                const std::vector< std::array< tk::real, 4 > >&,
-                const std::vector< const tk::real* >&,
+                const std::array< std::array< tk::real, 4 >, 5 >&,
+                const std::array< const tk::real*, 5 >&,
                 tk::MeshNodes& ) {}
 
     //! Add heat conduction contribution to energy rhs (noop)
@@ -200,8 +200,8 @@ class CompFlowPhysicsEuler {
                 tk::real,
                 const std::array< std::size_t, 4 >&,
                 const std::array< std::array< tk::real, 3 >, 4 >&,
-                const std::vector< std::array< tk::real, 4 > >&,
-                const std::vector< const tk::real* >&,
+                const std::array< std::array< tk::real, 4 >, 5 >&,
+                const std::array< const tk::real*, 5 >&,
                 tk::MeshNodes& ) {}
 
     static ctr::PhysicsType type() noexcept
