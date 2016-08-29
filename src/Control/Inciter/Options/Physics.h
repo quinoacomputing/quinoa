@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/Options/Physics.h
   \author    J. Bakosi
-  \date      Mon 22 Aug 2016 08:41:17 AM MDT
+  \date      Mon 29 Aug 2016 01:10:20 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Physics options for inciter
   \details   Physics options for inciter
@@ -23,7 +23,8 @@ namespace ctr {
 
 //! Physics types
 //! \author J. Bakosi
-enum class PhysicsType : uint8_t { BASE=0,
+enum class PhysicsType : uint8_t { ADVECTION=0,
+                                   LAPLACE,
                                    NAVIERSTOKES,
                                    EULER};
 
@@ -38,7 +39,8 @@ class Physics : public tk::Toggle< PhysicsType > {
   public:
     //! Valid expected choices to make them also available at compile-time
     //! \author J. Bakosi
-    using keywords = boost::mpl::vector< kw::base
+    using keywords = boost::mpl::vector< kw::advection
+                                       , kw::laplace
                                        , kw::compflow_navierstokes
                                        , kw::compflow_euler
                                        >;
@@ -52,11 +54,13 @@ class Physics : public tk::Toggle< PhysicsType > {
         //! Group, i.e., options, name
         "Physics configuration",
         //! Enums -> names (if defined, policy codes, if not, name)
-        { { PhysicsType::BASE, kw::base::name() },
+        { { PhysicsType::ADVECTION, kw::advection::name() },
+          { PhysicsType::LAPLACE, kw::laplace::name() },
           { PhysicsType::NAVIERSTOKES, kw::compflow_navierstokes::name() },
           { PhysicsType::EULER, kw::compflow_euler::name() } },
         //! keywords -> Enums
-        { { kw::base::string(), PhysicsType::BASE },
+        { { kw::advection::string(), PhysicsType::ADVECTION },
+          { kw::laplace::string(), PhysicsType::LAPLACE },
           { kw::compflow_navierstokes::string(), PhysicsType::NAVIERSTOKES },
           { kw::compflow_euler::string(), PhysicsType::EULER } } )
     {
@@ -90,7 +94,8 @@ class Physics : public tk::Toggle< PhysicsType > {
 
     //! Enums -> policy code
     std::map< PhysicsType, std::string > policy {
-        { PhysicsType::BASE, *kw::base::code() }
+        { PhysicsType::ADVECTION, *kw::advection::code() }
+      , { PhysicsType::LAPLACE, *kw::laplace::code() }
       , { PhysicsType::NAVIERSTOKES, *kw::compflow_navierstokes::code() }
       , { PhysicsType::EULER, *kw::compflow_euler::code() }
     };

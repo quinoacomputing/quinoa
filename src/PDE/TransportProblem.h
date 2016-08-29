@@ -1,12 +1,12 @@
 // *****************************************************************************
 /*!
-  \file      src/PDE/AdvDiffProblem.h
+  \file      src/PDE/TransportProblem.h
   \author    J. Bakosi
-  \date      Fri 08 Jul 2016 12:53:35 PM MDT
+  \date      Mon 29 Aug 2016 01:17:39 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Problem configurations for the advection-diffusion equation
   \details   This file defines policy classes for the advection-diffusion
-    partial differential equation, defined in PDE/AdvDiff.h.
+    partial differential equation, defined in PDE/Transport.h.
 
     General requirements on advection-diffusion partial differential equation
     problem policy classes:
@@ -22,8 +22,8 @@
       class, collecting all possible options for coefficients policies.
 */
 // *****************************************************************************
-#ifndef AdvDiffProblem_h
-#define AdvDiffProblem_h
+#ifndef TransportProblem_h
+#define TransportProblem_h
 
 #include <boost/mpl/vector.hpp>
 
@@ -33,8 +33,8 @@
 
 namespace inciter {
 
-//! Advection-diffusion PDE problem: diffusion of a shear layer
-class AdvDiffProblemShearDiff {
+//! Transport PDE problem: diffusion of a shear layer
+class TransportProblemShearDiff {
 
   public:
     //! Do error checking on PDE parameters
@@ -134,40 +134,50 @@ class AdvDiffProblemShearDiff {
     { return ctr::ProblemType::SHEAR_DIFF; }
 };
 
-// //! Advection-diffusion PDE problem: Zalesak's slotted cylinder
-// class AdvDiffProblemSlotCyl {
-//   public:
-//     static void init( const ctr::InputDeck& deck,
-//                       const std::array< std::vector< tk::real >, 3 >& coord,
-//                       tk::MeshNodes& unk,
-//                       tk::ctr::ncomp_type component,
-//                       tk::ctr::ncomp_type offset,
-//                       tk::real t ) {}
-//
-//     static ctr::ProblemType type() noexcept
-//     { return ctr::ProblemType::SLOT_CYL; }
-// };
+//! Transport PDE problem: rotation of Zalesak's slotted cylinder
+class TransportProblemSlotCyl {
 
-// //! Advection-diffusion PDE problem: user-defined
-// class AdvDiffProblemUserDefined {
-//   public:
-//     static void init( const ctr::InputDeck& deck,
-//                       const std::array< std::vector< tk::real >, 3 >& coord,
-//                       tk::MeshNodes& unk,
-//                       tk::ctr::ncomp_type component,
-//                       tk::ctr::ncomp_type offset,
-//                       tk::real t ) {}
-//
-//     static ctr::ProblemType type() noexcept
-//     { return ctr::ProblemType::USER_DEFINED; }
-// };
+  public:
+    //! Do error checking on PDE parameters
+    template< class eq >
+    static void errchk( const ctr::InputDeck&,
+                        tk::ctr::ncomp_type,
+                        tk::ctr::ncomp_type ) {}
+
+    //! Set initial conditions for dispersion in simple shear flow
+    template< class eq >
+    static void init( const ctr::InputDeck&,
+                      const std::array< std::vector< tk::real >, 3 >&,
+                      tk::MeshNodes&,
+                      tk::ctr::ncomp_type,
+                      tk::ctr::ncomp_type,
+                      tk::ctr::ncomp_type,
+                      tk::real ) {}
+
+    //! Assign prescribed shear velocity to nodes of tetrahedron element
+    //! \return Velocity assigned to all vertices of a tetrehedron, size:
+    //!   ncomp * ndim * nnode = [ncomp][3][4]
+    template< class eq >
+    static std::vector< std::array< std::array< tk::real, 4 >, 3 > >
+    velocity( const ctr::InputDeck&,
+              std::size_t, std::size_t, std::size_t, std::size_t,
+              const std::array< std::vector< tk::real >, 3 >&,
+              tk::ctr::ncomp_type,
+              tk::ctr::ncomp_type ncomp )
+    {
+      std::vector< std::array< std::array< tk::real, 4 >, 3 > > vel( ncomp );
+      return vel;
+    }
+
+    static ctr::ProblemType type() noexcept
+    { return ctr::ProblemType::SLOT_CYL; }
+};
 
 //! List of all advection-diffusion PDE's problem policies
-using AdvDiffProblems = boost::mpl::vector< //AdvDiffProblemUserDefined
-                                           AdvDiffProblemShearDiff
-                                          //, AdvDiffProblemSlotCyl 
-                                          >;
+using TransportProblems = boost::mpl::vector< TransportProblemShearDiff
+                                            , TransportProblemSlotCyl 
+                                            >;
 
 } // inciter::
 
-#endif // AdvDiffProblem_h
+#endif // TransportProblem_h

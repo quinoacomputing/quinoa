@@ -2,7 +2,7 @@
 /*!
   \file      src/PDE/CompFlowPhysics.h
   \author    J. Bakosi
-  \date      Thu 25 Aug 2016 09:42:56 AM MDT
+  \date      Mon 29 Aug 2016 11:47:33 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Physics configurations for the compressible flow equations
   \details   This file defines policy classes for the compressible flow
@@ -182,7 +182,7 @@ class CompFlowPhysicsNavierStokes {
 class CompFlowPhysicsEuler {
 
   public:
-    //! Add viscous stress contribution to momentum and energy rhs (noop)
+    //! Add viscous stress contribution to momentum and energy rhs (no-op)
     static void
     viscousRhs( tk::real,
                 tk::real,
@@ -193,7 +193,7 @@ class CompFlowPhysicsEuler {
                 const std::array< const tk::real*, 5 >&,
                 tk::MeshNodes& ) {}
 
-    //! Add heat conduction contribution to energy rhs (noop)
+    //! Add heat conduction contribution to energy rhs (no-op)
     static void
     conductRhs( tk::real,
                 tk::real,

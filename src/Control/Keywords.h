@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Keywords.h
   \author    J. Bakosi
-  \date      Thu 25 Aug 2016 10:55:43 AM MDT
+  \date      Mon 29 Aug 2016 01:11:57 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Definition of all keywords
   \details   This file contains the definition of all keywords, including those
@@ -2609,6 +2609,90 @@ struct problem_info {
 };
 using problem = keyword< problem_info, p,r,o,b,l,e,m >;
 
+struct compflow_navierstokes_info {
+  using code = Code< N >;
+  static std::string name() { return "Navier-Stokes"; }
+  static std::string shortDescription() { return "Specify the Navier-Stokes "
+    "(viscous) compressible flow physics configuration"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the Navier-Stokes (viscous) compressible "
+    "flow physics configuration. Example: "compflow physics navierstokes end")";
+    }
+  struct expect {
+    static std::string description() { return "string"; }
+  };
+};
+using compflow_navierstokes =
+  keyword< compflow_navierstokes_info, n,a,v,i,e,r,s,t,o,k,e,s >;
+
+struct compflow_euler_info {
+  using code = Code< E >;
+  static std::string name() { return "Euler"; }
+  static std::string shortDescription() { return "Specify the Euler (inviscid) "
+    "compressible flow physics configuration"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the Euler (inviscid) compressible "
+    "flow physics configuration. Example: "compflow physics euler end")";
+    }
+  struct expect {
+    static std::string description() { return "string"; }
+  };
+};
+using compflow_euler = keyword< compflow_euler_info, e,u,l,e,r >;
+
+struct advection_info {
+  using code = Code< A >;
+  static std::string name() { return "Advection"; }
+  static std::string shortDescription() { return
+    "Specify the advection physics configuration for a PDE "; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the advection physics configuration for a
+    PDE. Example: "transport physics advection end")";
+    }
+  struct expect {
+    static std::string description() { return "string"; }
+  };
+};
+using advection = keyword< advection_info, a,d,v,e,c,t,i,o,n >;
+
+struct laplace_info {
+  using code = Code< L >;
+  static std::string name() { return "Laplace"; }
+  static std::string shortDescription() { return
+    "Specify the Laplace physics configuration for a PDE "; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the Laplace physics configuration for a
+    PDE. Example: "poisson physics laplace end")";
+    }
+  struct expect {
+    static std::string description() { return "string"; }
+  };
+};
+using laplace = keyword< laplace_info, l,a,p,l,a,c,e >;
+
+struct physics_info {
+  using code = Code< h >;
+  static std::string name() { return "physics configuration"; }
+  static std::string shortDescription() { return
+    "Specify the physics configuration for a system of PDEs"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the physics configuration for a particular
+    PDE system. Example: "physics navierstokes", which selects the Navier-Stokes
+    equations for solving viscous compressible flow, given within the
+    compflow ... end block. Valid options depend on the given block the keyword
+    is used.)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+    static std::string choices() {
+      return '\'' + advection::string() + "\' | \'"
+                  + laplace::string() + "\' | \'"
+                  + compflow_navierstokes::string() + "\' | \'"
+                  + compflow_euler::string() + '\'';
+    }
+  };
+};
+using physics = keyword< physics_info, p,h,y,s,i,c,s >;
+
 struct pde_diffusivity_info {
   static std::string name() { return "diffusivity"; }
   static std::string shortDescription() { return
@@ -2703,24 +2787,24 @@ struct pde_p0_info {
 };
 using pde_p0 = keyword< pde_p0_info, p,'0' >;
 
-struct advdiff_info {
-  static std::string name() { return "Advection-diffusion"; }
+struct transport_info {
+  static std::string name() { return "Transport equation"; }
   static std::string shortDescription() { return
-    "Start configuration block for an advection-diffusion equation"; }
+    "Start configuration block for an transport equation"; }
   static std::string longDescription() { return
-    R"(This keyword is used to introduce an advdiff ... end block, used to
-    specify the configuration for a partial differential equation of
-    advection-diffusion type. Keywords allowed
-    in an advdiff ... end block: )" + std::string("\'")
+    R"(This keyword is used to introduce an transport ... end block, used to
+    specify the configuration for a transport equation type. Keywords allowed
+    in an transport ... end block: )" + std::string("\'")
     + problem::string() + "\', \'"
+    + physics::string() + "\', \'"
     + pde_diffusivity::string() + "\', \'"
     + pde_lambda::string() + "\', \'"
     + pde_u0::string() + "\'. "
-    + R"(For an example advdiff ... end block, see
-      doc/html/inicter_example_advdiff.html.)";
+    + R"(For an example transport ... end block, see
+      doc/html/inicter_example_transport.html.)";
   }
 };
-using advdiff = keyword< advdiff_info, a,d,v,d,i,f,f >;
+using transport = keyword< transport_info, t,r,a,n,s,p,o,r,t >;
 
 struct poisson_info {
   static std::string name() { return "Poisson"; }
@@ -2961,74 +3045,6 @@ struct partitioning_info {
   }
 };
 using partitioning = keyword< partitioning_info, p,a,r,t,i,t,i,o,n,i,n,g >;
-
-struct base_info {
-  using code = Code< B >;
-  static std::string name() { return "Base"; }
-  static std::string shortDescription() { return
-    "Specify the base physics configuration for a PDE "; }
-  static std::string longDescription() { return
-    R"(This keyword is used to select the base physics configuration for a PDE.
-    Example: "advdiff physics base end")";
-    }
-  struct expect {
-    static std::string description() { return "string"; }
-  };
-};
-using base = keyword< base_info, b,a,s,e >;
-
-struct compflow_navierstokes_info {
-  using code = Code< N >;
-  static std::string name() { return "Navier-Stokes"; }
-  static std::string shortDescription() { return "Specify the Navier-Stokes "
-    "(viscous) compressible flow physics configuration"; }
-  static std::string longDescription() { return
-    R"(This keyword is used to select the Navier-Stokes (viscous) compressible "
-    "flow physics configuration. Example: "compflow physics navierstokes end")";
-    }
-  struct expect {
-    static std::string description() { return "string"; }
-  };
-};
-using compflow_navierstokes =
-  keyword< compflow_navierstokes_info, n,a,v,i,e,r,s,t,o,k,e,s >;
-
-struct compflow_euler_info {
-  using code = Code< E >;
-  static std::string name() { return "Euler"; }
-  static std::string shortDescription() { return "Specify the Euler (inviscid) "
-    "compressible flow physics configuration"; }
-  static std::string longDescription() { return
-    R"(This keyword is used to select the Euler (inviscid) compressible "
-    "flow physics configuration. Example: "compflow physics euler end")";
-    }
-  struct expect {
-    static std::string description() { return "string"; }
-  };
-};
-using compflow_euler = keyword< compflow_euler_info, e,u,l,e,r >;
-
-struct physics_info {
-  using code = Code< h >;
-  static std::string name() { return "physics configuration"; }
-  static std::string shortDescription() { return
-    "Specify the physics configuration for a system of PDEs"; }
-  static std::string longDescription() { return
-    R"(This keyword is used to select the physics configuration for a particular
-    PDE system. Example: "physics navierstokes", which selects the Navier-Stokes
-    equations for solving viscous compressible flow, given within the
-    compflow ... end block. Valid options depend on the given block the keyword
-    is used.)"; }
-  struct expect {
-    static std::string description() { return "string"; }
-    static std::string choices() {
-      return '\'' + base::string() + "\' | \'"
-                  + compflow_navierstokes::string() + "\' | \'"
-                  + compflow_euler::string() + '\'';
-    }
-  };
-};
-using physics = keyword< physics_info, p,h,y,s,i,c,s >;
 
 
 

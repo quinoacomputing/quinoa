@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/Options/PDE.h
   \author    J. Bakosi
-  \date      Fri 19 Aug 2016 02:12:29 PM MDT
+  \date      Mon 29 Aug 2016 12:56:56 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Partial differential equation options and associations for inciter
   \details   Partial differential equation options and associations for inciter
@@ -23,8 +23,7 @@ namespace inciter {
 namespace ctr {
 
 //! Differential equation types
-enum class PDEType : uint8_t { NO_PDE=0,
-                               ADV_DIFF,
+enum class PDEType : uint8_t { TRANSPORT=0,
                                POISSON,
                                COMPFLOW };
 
@@ -42,7 +41,7 @@ class PDE : public tk::Toggle< PDEType > {
 
   public:
     // List valid expected choices to make them also available at compile-time
-    using keywords = boost::mpl::vector< kw::advdiff
+    using keywords = boost::mpl::vector< kw::transport
                                        , kw::poisson
                                        , kw::compflow
                                        >;
@@ -52,13 +51,11 @@ class PDE : public tk::Toggle< PDEType > {
     explicit PDE() :
       Toggle< PDEType >( "Partial differential equation",
         //! Enums -> names
-        { { PDEType::NO_PDE, "n/a" },
-          { PDEType::ADV_DIFF, kw::advdiff::name() },
+        { { PDEType::TRANSPORT, kw::transport::name() },
           { PDEType::POISSON, kw::poisson::name() },
           { PDEType::COMPFLOW, kw::compflow::name() } },
         //! keywords -> Enums
-        { { "no_pde", PDEType::NO_PDE },
-          { kw::advdiff::string(), PDEType::ADV_DIFF },
+        { { kw::transport::string(), PDEType::TRANSPORT },
           { kw::poisson::string(), PDEType::POISSON },
           { kw::compflow::string(), PDEType::COMPFLOW } } ) {}
 };

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Mon 29 Aug 2016 11:31:12 AM MDT
+  \date      Mon 29 Aug 2016 12:55:54 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Inciter's input deck grammar definition
   \details   Inciter's input deck grammar definition. We use the Parsing
@@ -53,9 +53,9 @@ namespace deck {
   //! \brief Number of registered equations
   //! \details Counts the number of parsed equation blocks during parsing.
   //! \author J. Bakosi
-  static tk::tuple::tagged_tuple< tag::advdiff, std::size_t,
-                                  tag::poisson,  std::size_t,
-                                  tag::compflow, std::size_t > neq;
+  static tk::tuple::tagged_tuple< tag::transport, std::size_t,
+                                  tag::poisson,   std::size_t,
+                                  tag::compflow,  std::size_t > neq;
 
   // Inciter's InputDeck actions
 
@@ -71,9 +71,8 @@ namespace deck {
   };
 
   //! \brief Do general error checking on the differential equation block
-  //! \details This is error checking that generic equation types, such as
-  //!   advection-diffusion or the Poisson equation must satisfy. For more
-  //!   specific equations, such as compressible flow, a more specialized
+  //! \details This is error checking that all equation types must satisfy. For
+  //!   more specific equations, such as compressible flow, a more specialized
   //!   equation checker does and can do better error checking.
   //! \author J. Bakosi
   template< class eq >
@@ -244,35 +243,35 @@ namespace deck {
          tk::grm::process< Stack, use< keyword >,
            tk::grm::Store_back< Stack, tag::param, eq, p > > {};
 
-  //! advection-diffusion partial differential equation for a scalar
-  struct advdiff :
+  //! transport equation for scalars
+  struct transport :
          pegtl::ifmust<
-           scan_eq< use< kw::advdiff >, tag::advdiff >,
+           scan_eq< use< kw::transport >, tag::transport >,
            tk::grm::block< Stack,
                            use< kw::end >,
                            tk::grm::policy< Stack,
                                             use,
                                             use< kw::problem >,
                                             ctr::Problem,
-                                            tag::advdiff,
+                                            tag::transport,
                                             tag::problem >,
                           tk::grm::depvar< Stack,
                                            use,
-                                           tag::advdiff,
+                                           tag::transport,
                                            tag::depvar >,
                            tk::grm::component< Stack,
                                                use< kw::ncomp >,
-                                               tag::advdiff >,
+                                               tag::transport >,
                            pde_parameter_vector< kw::pde_diffusivity,
-                                                 tag::advdiff,
+                                                 tag::transport,
                                                  tag::diffusivity >,
                            pde_parameter_vector< kw::pde_lambda,
-                                                 tag::advdiff,
+                                                 tag::transport,
                                                  tag::lambda >,
                            pde_parameter_vector< kw::pde_u0,
-                                                 tag::advdiff,
+                                                 tag::transport,
                                                  tag::u0 > >,
-           check_errors< tag::advdiff, check_eq > > {};
+           check_errors< tag::transport, check_eq > > {};
 
   //! Poisson partial differential equation for a scalar
   struct poisson :
@@ -339,7 +338,7 @@ namespace deck {
 
   //! equation types
   struct equations :
-         pegtl::sor< advdiff, poisson, compflow > {};
+         pegtl::sor< transport, poisson, compflow > {};
 
   //! plotvar ... end block
   struct plotvar :

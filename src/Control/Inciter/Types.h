@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/Types.h
   \author    J. Bakosi
-  \date      Thu 25 Aug 2016 10:56:18 AM MDT
+  \date      Mon 29 Aug 2016 12:50:40 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Types for Incitier's parsers
   \details   Types for Incitier's parsers. This file defines the components of
@@ -66,8 +66,8 @@ using ios = tk::tuple::tagged_tuple<
   tag::part,        std::string                       //!< Particles filename
 >;
 
-//! Advection-diffusion transport equation parameters storage
-using AdvDiffPDEParameters = tk::tuple::tagged_tuple<
+//! Transport equation parameters storage
+using TransportPDEParameters = tk::tuple::tagged_tuple<
   tag::depvar,      std::vector< char >,
   tag::physics,      std::vector< PhysicsType >,
   tag::problem,     std::vector< ProblemType >,
@@ -118,7 +118,7 @@ using CompFlowPDEParameters = tk::tuple::tagged_tuple<
 
 //! Parameters storage
 using parameters = tk::tuple::tagged_tuple<
-  tag::advdiff,     AdvDiffPDEParameters,
+  tag::transport,   TransportPDEParameters,
   tag::poisson,     PoissonPDEParameters,
   tag::compflow,    CompFlowPDEParameters
 >;

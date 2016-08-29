@@ -2,7 +2,7 @@
 /*!
   \file      src/PDE/PDEStack.h
   \author    J. Bakosi
-  \date      Fri 19 Aug 2016 02:08:48 PM MDT
+  \date      Mon 29 Aug 2016 01:00:51 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Stack of differential equations
   \details   This file declares class PDEStack, which implements various
@@ -140,9 +140,9 @@ class PDEStack {
     }
 
     /** @name Configuration-querying functions for PDEs */
-    //! Get information on the advection-diffusion PDE
+    //! Get information on the transport PDE
     std::vector< std::pair< std::string, std::string > >
-    infoAdvDiff( std::map< ctr::PDEType, ncomp_t >& cnt ) const;
+    infoTransport( std::map< ctr::PDEType, ncomp_t >& cnt ) const;
     //! Get information on the Poisson PDE
     std::vector< std::pair< std::string, std::string > >
     infoPoisson( std::map< ctr::PDEType, ncomp_t >& cnt ) const;
