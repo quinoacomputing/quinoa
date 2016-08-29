@@ -1,28 +1,28 @@
 // *****************************************************************************
 /*!
-  \file      src/PDE/AdvDiffPhysics.h
+  \file      src/PDE/TransportPhysics.h
   \author    J. Bakosi
-  \date      Fri 22 Jul 2016 02:49:02 PM MDT
+  \date      Mon 29 Aug 2016 01:13:31 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
-  \brief     Physics configurations for the advection-diffusion equations
-  \details   This file defines policy classes for advection-diffusion equations,
-    defined in PDE/AdvDiff.h.
+  \brief     Physics configurations for a system of transport equations
+  \details   This file defines policy classes for transport equations,
+    defined in PDE/Transport.h.
 
-    General requirements on advection-diffusion equation physics policy classes:
+    General requirements on transport equation physics policy classes:
 
     - Must define the static function _type()_, returning the enum value of the
       policy option. Example:
       \code{.cpp}
         static ctr::PhysicsType type() noexcept {
-          return ctr::PhysicsType::BASE;
+          return ctr::PhysicsType::Advection;
         }
       \endcode
       which returns the enum value of the option from the underlying option
       class, collecting all possible options for coefficients policies.
 */
 // *****************************************************************************
-#ifndef AdvDiffPhysics_h
-#define AdvDiffPhysics_h
+#ifndef TransportPhysics_h
+#define TransportPhysics_h
 
 #include <boost/mpl/vector.hpp>
 
@@ -31,18 +31,18 @@
 
 namespace inciter {
 
-//! AdvDiff system of PDEs problem: basic (advection + diffusion)
-class AdvDiffPhysicsBase {
+//! Transport equation system of PDEs problem: advection
+class TransportPhysicsAdvection {
   public:
 
 
     static ctr::PhysicsType type() noexcept
-    { return ctr::PhysicsType::BASE; }
+    { return ctr::PhysicsType::ADVECTION; }
 };
 
-//! List of all AdvDiff problem policies
-using AdvDiffPhysics = boost::mpl::vector< AdvDiffPhysicsBase >;
+//! List of all Transport equation problem policies
+using TransportPhysics = boost::mpl::vector< TransportPhysicsAdvection >;
 
 } // inciter::
 
-#endif // AdvDifAdvDiff_h
+#endif // AdvDifTransport_h

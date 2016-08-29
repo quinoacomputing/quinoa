@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Tags.h
   \author    J. Bakosi
-  \date      Thu 25 Aug 2016 10:56:45 AM MDT
+  \date      Mon 29 Aug 2016 12:50:13 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Tags
   \details   Tags are unique types, used for metaprogramming.
@@ -130,7 +130,7 @@ struct group {};
 struct esup {};
 struct psup {};
 struct gid {};
-struct advdiff {};
+struct transport {};
 struct poisson {};
 struct compflow {};
 struct problem {};

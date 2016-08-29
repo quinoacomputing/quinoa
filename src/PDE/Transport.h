@@ -1,21 +1,21 @@
 // *****************************************************************************
 /*!
-  \file      src/PDE/AdvDiff.h
+  \file      src/PDE/Transport.h
   \author    J. Bakosi
-  \date      Wed 17 Aug 2016 08:38:05 AM MDT
+  \date      Mon 29 Aug 2016 12:52:07 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
-  \brief     Advection-diffusion equation of a transported scalar
-  \details   This file implements the time integration of the
-    advection-diffusion equation of a single scalar.
+  \brief     Transport equation
+  \details   This file implements the time integration of a transport equation
+     of set of scalars.
 */
 // *****************************************************************************
-#ifndef AdvDiff_h
-#define AdvDiff_h
+#ifndef Transport_h
+#define Transport_h
 
 #include <cmath>
 
-#include "AdvDiffPhysics.h"
-#include "AdvDiffProblem.h"
+#include "TransportPhysics.h"
+#include "TransportProblem.h"
 #include "Vector.h"
 #include "DerivedData.h"
 #include "Exception.h"
@@ -25,13 +25,13 @@ namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
 
-//! \brief Advection-diffusion equation used polymorphically with tk::PDE
+//! \brief Transport equation used polymorphically with tk::PDE
 //! \details The template argument(s) specify policies and are used to configure
 //!   the behavior of the class. The policies are:
-//!   - Physics - physics configuration, see PDE/AdvDiffPhysics.h
-//!   - Problem - problem configuration, see PDE/AdvDiffProblem.h
+//!   - Physics - physics configuration, see PDE/TransportPhysics.h
+//!   - Problem - problem configuration, see PDE/TransportProblem.h
 template< class Physics, class Problem >
-class AdvDiff {
+class Transport {
 
   private:
     using ncomp_t = kw::ncomp::info::expect::type;
@@ -40,15 +40,17 @@ class AdvDiff {
     //! Constructor
     //! \param[in] c Equation system index (among multiple systems configured)
     //! \author J. Bakosi
-    explicit AdvDiff( ncomp_t c ) :
+    explicit Transport( ncomp_t c ) :
       m_c( c ),
-      m_ncomp( g_inputdeck.get< tag::component >().get< tag::advdiff >().at(c) ),
-      m_offset( g_inputdeck.get< tag::component >().offset< tag::advdiff >(c) )
+      m_ncomp(
+        g_inputdeck.get< tag::component >().get< tag::transport >().at(c) ),
+      m_offset(
+        g_inputdeck.get< tag::component >().offset< tag::transport >(c) )
     {
-      Problem::template errchk< tag::advdiff >( g_inputdeck, m_c, m_ncomp );
+      Problem::template errchk< tag::transport >( g_inputdeck, m_c, m_ncomp );
     }
 
-    //! Initalize the advection-diffusion equations using problem policy
+    //! Initalize the transport equations using problem policy
     //! \param[in,out] unk Array of unknowns
     //! \param[in] coord Mesh node coordinates
     //! \param[in] t Physical time
@@ -58,7 +60,7 @@ class AdvDiff {
                      tk::real t ) const
     {
       Problem::template
-        init< tag::advdiff >
+        init< tag::transport >
             ( g_inputdeck, coord, unk, m_c, m_ncomp, m_offset, t );
     }
 
@@ -179,7 +181,8 @@ class AdvDiff {
 
       // get reference to diffusivities for all components
       const auto& diff =
-        g_inputdeck.get< tag::param, tag::advdiff, tag::diffusivity >().at(m_c);
+        g_inputdeck.get< tag::param, tag::transport, tag::diffusivity >().
+          at(m_c);
 
       // zero right hand side for all components
       for (ncomp_t c=0; c<m_ncomp; ++c) R.fill( c, m_offset, 0.0 );
@@ -231,7 +234,7 @@ class AdvDiff {
         // get velocity for problem
         const auto vel =
           Problem::template
-            velocity< tag::advdiff >
+            velocity< tag::transport >
                     ( g_inputdeck, A, B, C, D, coord, m_c, m_ncomp );
 
         // add mass contribution to right hand side
@@ -297,7 +300,7 @@ class AdvDiff {
     //!   of the side sets for any component in the PDE system.
     bool anydirbc( int sideset ) const {
       const auto& bc =
-        g_inputdeck.get< tag::param, tag::advdiff, tag::bc_dirichlet >();
+        g_inputdeck.get< tag::param, tag::transport, tag::bc_dirichlet >();
       for (const auto& s : bc)
         if (static_cast<int>(std::round(s[0])) == sideset)
           return true;
@@ -310,7 +313,7 @@ class AdvDiff {
     //! \return Vector of pairs of bool and BC value for all components
     std::vector< std::pair< bool, tk::real > > dirbc( int sideset ) const {
       const auto& bc =
-        g_inputdeck.get< tag::param, tag::advdiff, tag::bc_dirichlet >();
+        g_inputdeck.get< tag::param, tag::transport, tag::bc_dirichlet >();
       std::vector< std::pair< bool, tk::real > > b( m_ncomp, { false, 0.0 } );
       IGNORE(sideset);
       IGNORE(bc);
@@ -324,7 +327,7 @@ class AdvDiff {
     std::vector< std::string > names() const {
       std::vector< std::string > n;
       const auto& depvar =
-        g_inputdeck.get< tag::param, tag::advdiff, tag::depvar >().at(m_c);
+        g_inputdeck.get< tag::param, tag::transport, tag::depvar >().at(m_c);
       // will output numerical solution for all components
       for (ncomp_t c=0; c<m_ncomp; ++c)
         n.push_back( depvar + std::to_string(c) + "_numerical" );
@@ -367,4 +370,4 @@ class AdvDiff {
 
 } // inciter::
 
-#endif // AdvDiff_h
+#endif // Transport_h

@@ -2,7 +2,7 @@
 /*!
   \file      src/PDE/PDEStack.C
   \author    J. Bakosi
-  \date      Fri 19 Aug 2016 02:12:06 PM MDT
+  \date      Mon 29 Aug 2016 01:02:10 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Stack of partial differential equations
   \details   This file defines class PDEStack, which implements various
@@ -21,15 +21,15 @@
 #include "SystemComponents.h"
 #include "Inciter/Options/Problem.h"
 
-#include "AdvDiff.h"
+#include "Transport.h"
 #include "Poisson.h"
 #include "CompFlow.h"
 
-#include "AdvDiffPhysics.h"
+#include "TransportPhysics.h"
 #include "PoissonPhysics.h"
 #include "CompFlowPhysics.h"
 
-#include "AdvDiffProblem.h"
+#include "TransportProblem.h"
 #include "PoissonProblem.h"
 #include "CompFlowProblem.h"
 
@@ -106,12 +106,12 @@ PDEStack::PDEStack() : m_factory(), m_eqTypes()
 {
   namespace mpl = boost::mpl;
 
-  // Advection-diffusion PDE
+  // Transport PDE
   // Construct vector of vectors for all possible policies for PDE
-  using AdvDiffPolicies = mpl::vector< AdvDiffPhysics, AdvDiffProblems >;
+  using TransportPolicies = mpl::vector< TransportPhysics, TransportProblems >;
   // Register PDE for all combinations of policies
-  mpl::cartesian_product< AdvDiffPolicies >(
-    registerPDE< AdvDiff >( m_factory, ctr::PDEType::ADV_DIFF, m_eqTypes ) );
+  mpl::cartesian_product< TransportPolicies >(
+    registerPDE< Transport >( m_factory, ctr::PDEType::TRANSPORT, m_eqTypes ) );
 
   // Poisson PDE
   // Construct vector of vectors for all possible policies for PDE
@@ -140,8 +140,8 @@ PDEStack::selected() const
   std::vector< PDE > pdes;                      // will store instantiated PDEs
 
   for (const auto& d : g_inputdeck.get< tag::selected, tag::pde >()) {
-    if (d == ctr::PDEType::ADV_DIFF)
-      pdes.push_back( createPDE< tag::advdiff >( d, cnt ) );
+    if (d == ctr::PDEType::TRANSPORT)
+      pdes.push_back( createPDE< tag::transport >( d, cnt ) );
     else if (d == ctr::PDEType::POISSON)
       pdes.push_back( createPDE< tag::poisson >( d, cnt ) );
     else if (d == ctr::PDEType::COMPFLOW)
@@ -166,8 +166,8 @@ PDEStack::info() const
   std::vector< std::vector< std::pair< std::string, std::string > > > info;
 
   for (const auto& d : g_inputdeck.get< tag::selected, tag::pde >()) {
-    if (d == ctr::PDEType::ADV_DIFF)
-      info.emplace_back( infoAdvDiff( cnt ) );
+    if (d == ctr::PDEType::TRANSPORT)
+      info.emplace_back( infoTransport( cnt ) );
     else if (d == ctr::PDEType::POISSON)
       info.emplace_back( infoPoisson( cnt ) );
     else if (d == ctr::PDEType::COMPFLOW)
@@ -179,36 +179,36 @@ PDEStack::info() const
 }
 
 std::vector< std::pair< std::string, std::string > >
-PDEStack::infoAdvDiff( std::map< ctr::PDEType, ncomp_t >& cnt ) const
+PDEStack::infoTransport( std::map< ctr::PDEType, ncomp_t >& cnt ) const
 // *****************************************************************************
-//  Return information on the advection-diffusion PDE
+//  Return information on the transport PDE
 //! \param[inout] cnt std::map of counters for all partial differential equation
 //!   types
 //! \return vector of string pairs describing the PDE configuration
 //! \author J. Bakosi
 // *****************************************************************************
 {
-  auto c = ++cnt[ ctr::PDEType::ADV_DIFF ];       // count eqs
+  auto c = ++cnt[ ctr::PDEType::TRANSPORT ];       // count eqs
   --c;  // used to index vectors starting with 0
 
   std::vector< std::pair< std::string, std::string > > info;
 
-  info.emplace_back( ctr::PDE().name( ctr::PDEType::ADV_DIFF ), "" );
+  info.emplace_back( ctr::PDE().name( ctr::PDEType::TRANSPORT ), "" );
   info.emplace_back( "problem", ctr::Problem().name(
-    g_inputdeck.get< tag::param, tag::advdiff, tag::problem >()[c] ) );
+    g_inputdeck.get< tag::param, tag::transport, tag::problem >()[c] ) );
   info.emplace_back( "start offset in unknowns array", std::to_string(
-    g_inputdeck.get< tag::component >().offset< tag::advdiff >(c) ) );
-  auto ncomp = g_inputdeck.get< tag::component >().get< tag::advdiff >()[c];
+    g_inputdeck.get< tag::component >().offset< tag::transport >(c) ) );
+  auto ncomp = g_inputdeck.get< tag::component >().get< tag::transport >()[c];
   info.emplace_back( "number of components", std::to_string( ncomp ) );
   info.emplace_back( "coeff diffusivity [" + std::to_string( ncomp ) + "]",
     parameters(
-      g_inputdeck.get< tag::param, tag::advdiff, tag::diffusivity >().at(c) ) );
+      g_inputdeck.get< tag::param, tag::transport, tag::diffusivity >().at(c) ) );
   info.emplace_back( "coeff u0 [" + std::to_string( ncomp ) + "]",
     parameters(
-      g_inputdeck.get< tag::param, tag::advdiff, tag::u0 >().at(c) ) );
+      g_inputdeck.get< tag::param, tag::transport, tag::u0 >().at(c) ) );
   info.emplace_back( "coeff lambda [" + std::to_string( ncomp ) + "]",
     parameters(
-      g_inputdeck.get< tag::param, tag::advdiff, tag::lambda >().at(c) ) );
+      g_inputdeck.get< tag::param, tag::transport, tag::lambda >().at(c) ) );
 
   return info;
 }
