@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Tags.h
   \author    J. Bakosi
-  \date      Fri 19 Aug 2016 03:51:20 PM MDT
+  \date      Thu 25 Aug 2016 10:56:45 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Tags
   \details   Tags are unique types, used for metaprogramming.
@@ -45,11 +45,13 @@ struct extent {};
 struct dirichlet {};
 struct gendir {};
 struct wrightfisher {};
+struct p0 {};
 struct beta {};
 struct numfracbeta {};
 struct massfracbeta {};
 struct mixnumfracbeta {};
 struct mixmassfracbeta {};
+struct alpha {};
 struct gamma {};
 struct spike {};
 struct betapdf {};

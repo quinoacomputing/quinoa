@@ -2,7 +2,7 @@
 /*!
   \file      src/PDE/CompFlow.h
   \author    J. Bakosi
-  \date      Tue 23 Aug 2016 10:06:34 AM MDT
+  \date      Thu 25 Aug 2016 10:17:26 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Governing equations describing compressible single-phase flow
   \details   This file implements the time integration of the equations
@@ -13,7 +13,6 @@
 #define CompFlow_h
 
 #include <algorithm>
-#include <cmath>
 
 #include "Macro.h"
 #include "CompFlowPhysics.h"
@@ -38,10 +37,7 @@ class CompFlow {
   public:
     //! \brief Constructor
     //! \author J. Bakosi
-    explicit CompFlow( ncomp_t ) :
-      m_ncomp( 5 ),
-      m_offset( 0 )
-    {}
+    explicit CompFlow( ncomp_t ) : m_offset( 0 ) {}
 
     //! Initalize the compressible flow equations, prepare for time integration
     //! \param[in,out] unk Array of unknowns
@@ -52,8 +48,7 @@ class CompFlow {
                      tk::real ) const
     {
       //! Set initial conditions using problem configuration policy
-      Problem::template
-        init< tag::compflow >( g_inputdeck, coord, unk, m_ncomp, m_offset );
+      Problem::init( g_inputdeck, coord, unk, 0, m_offset );
     }
 
     //! Compute the left hand side sparse matrix
@@ -100,7 +95,7 @@ class CompFlow {
       const auto& z = coord[2];
 
       // Zero matrix for all components
-      for (ncomp_t c=0; c<m_ncomp; ++c) {
+      for (ncomp_t c=0; c<5; ++c) {
         lhsd.fill( c, m_offset, 0.0 );
         lhso.fill( c, m_offset, 0.0 );
       }
@@ -115,7 +110,7 @@ class CompFlow {
                                   da{{ x[D]-x[A], y[D]-y[A], z[D]-z[A] }};
         const auto J = tk::triple( ba, ca, da ) / 120.0;
 
-        for (ncomp_t c=0; c<m_ncomp; ++c) {
+        for (ncomp_t c=0; c<5; ++c) {
           const auto r = lhsd.cptr( c, m_offset );
           lhsd.var( r, A ) += 2.0 * J;
           lhsd.var( r, B ) += 2.0 * J;
@@ -172,7 +167,7 @@ class CompFlow {
       const auto& z = coord[2];
 
       // zero right hand side for all components
-      for (ncomp_t c=0; c<m_ncomp; ++c) R.fill( c, m_offset, 0.0 );
+      for (ncomp_t c=0; c<5; ++c) R.fill( c, m_offset, 0.0 );
 
       for (std::size_t e=0; e<inpoel.size()/4; ++e) {
         const std::array< std::size_t, 4 > N{{ inpoel[e*4+0], inpoel[e*4+1],
@@ -205,18 +200,22 @@ class CompFlow {
           grad[0][i] = -grad[1][i]-grad[2][i]-grad[3][i];
 
         // access solution at element nodes at time n
-        std::vector< std::array< tk::real, 4 > > u( m_ncomp );
-        for (ncomp_t c=0; c<m_ncomp; ++c) u[c] = Un.extract( c, m_offset, N );
+        std::array< std::array< tk::real, 4 >, 5 > u;
+        for (ncomp_t c=0; c<5; ++c) u[c] = Un.extract( c, m_offset, N );
         // access solution at element nodes at recent time step stage
-        std::vector< std::array< tk::real, 4 > > s( m_ncomp );
-        for (ncomp_t c=0; c<m_ncomp; ++c) s[c] = U.extract( c, m_offset, N );
+        std::array< std::array< tk::real, 4 >, 5 > s;
+        for (ncomp_t c=0; c<5; ++c) s[c] = U.extract( c, m_offset, N );
         // access pointer to right hand side at component and offset
-        std::vector< const tk::real* > r( m_ncomp );
-        for (ncomp_t c=0; c<m_ncomp; ++c) r[c] = R.cptr( c, m_offset );
+        std::array< const tk::real*, 5 > r;
+        for (ncomp_t c=0; c<5; ++c) r[c] = R.cptr( c, m_offset );
 
         // ratio of specific heats
         tk::real g =
           g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[0];
+
+        // add source to rhs for all equations
+        Problem::sourceRhs( coord, 0, mult, dt, J, N, grad, mass, r, s, R,
+                            const_cast<tk::MeshNodes&>(U) );
 
         // compute pressure
         std::array< tk::real, 4 > p;
@@ -225,59 +224,31 @@ class CompFlow {
                                      s[2][i]*s[2][i] +
                                      s[3][i]*s[3][i])/2.0/s[0][i]);
 
-        // add mass contribution for all equations
-        for (ncomp_t c=0; c<m_ncomp; ++c)
-          for (std::size_t j=0; j<4; ++j) {
-            R.var(r[c],N[0]) += mass[0][j] * u[c][j];
-            R.var(r[c],N[1]) += mass[1][j] * u[c][j];
-            R.var(r[c],N[2]) += mass[2][j] * u[c][j];
-            R.var(r[c],N[3]) += mass[3][j] * u[c][j];
-          }
+        // mass contribution for rhs of all equations
+        for (ncomp_t c=0; c<5; ++c)
+          for (std::size_t j=0; j<4; ++j)
+            for (std::size_t k=0; k<4; ++k)
+              R.var(r[c],N[j]) += mass[k][j] * u[c][k];
 
-        // add advection contribution to mass conservation
-        for (std::size_t j=0; j<3; ++j)
-          for (std::size_t k=0; k<4; ++k) {
-            R.var(r[0],N[0]) -= mult * dt * J/24.0 * grad[k][j] * s[j+1][k];
-            R.var(r[0],N[1]) -= mult * dt * J/24.0 * grad[k][j] * s[j+1][k];
-            R.var(r[0],N[2]) -= mult * dt * J/24.0 * grad[k][j] * s[j+1][k];
-            R.var(r[0],N[3]) -= mult * dt * J/24.0 * grad[k][j] * s[j+1][k];
-          }
-
-        // add advection contribution to momentum conservation
+        tk::real c = mult * dt * J/24.0;
         for (std::size_t i=0; i<3; ++i)
-          for (std::size_t j=0; j<3; ++j)
+          for (std::size_t j=0; j<4; ++j)
             for (std::size_t k=0; k<4; ++k) {
-              R.var(r[i+1],N[0]) -= mult * dt * J/24.0 * grad[k][j] *
-                                 s[i+1][k]*s[j+1][k]/s[0][k];
-              R.var(r[i+1],N[1]) -= mult * dt * J/24.0 * grad[k][j] *
-                                 s[i+1][k]*s[j+1][k]/s[0][k];
-              R.var(r[i+1],N[2]) -= mult * dt * J/24.0 * grad[k][j] *
-                                 s[i+1][k]*s[j+1][k]/s[0][k];
-              R.var(r[i+1],N[3]) -= mult * dt * J/24.0 * grad[k][j] *
-                                 s[i+1][k]*s[j+1][k]/s[0][k];
+              // advection contribution to mass rhs
+              R.var(r[0],N[j]) -= c * grad[k][i] * s[i+1][k];
+
+              // advection contribution to momentum rhs
+              for (std::size_t l=0; l<3; ++l)
+                R.var(r[i+1],N[j]) -= c * grad[k][l] *
+                                      s[i+1][k] * s[l+1][k]/s[0][k];
+
+              // pressure gradient contribution to momentum rhs
+              R.var(r[i+1],N[j]) -= c * grad[k][i] * p[k];
+
+              // advection and pressure gradient contribution to energy rhs
+              R.var(r[4],N[j]) -= c * grad[k][i] *
+                                  (s[4][k] + p[k]) * s[i+1][k]/s[0][k];
             }
-
-        // add pressure gradient contribution to momentum conservation
-        for (std::size_t i=0; i<3; ++i)
-          for (std::size_t k=0; k<4; ++k) {
-            R.var(r[i+1],N[0]) -= mult * dt * J/24.0 * grad[k][i] * p[k];
-            R.var(r[i+1],N[1]) -= mult * dt * J/24.0 * grad[k][i] * p[k];
-            R.var(r[i+1],N[2]) -= mult * dt * J/24.0 * grad[k][i] * p[k];
-            R.var(r[i+1],N[3]) -= mult * dt * J/24.0 * grad[k][i] * p[k];
-          }
-
-        // add advection and pressure grad contribution to energy conservation
-        for (std::size_t j=0; j<3; ++j)
-          for (std::size_t k=0; k<4; ++k) {
-            R.var(r[4],N[0]) -= mult * dt * J/24.0 * grad[k][j] *
-                             (s[4][k] + p[k]) * s[j+1][k]/s[0][k];
-            R.var(r[4],N[1]) -= mult * dt * J/24.0 * grad[k][j] *
-                             (s[4][k] + p[k]) * s[j+1][k]/s[0][k];
-            R.var(r[4],N[2]) -= mult * dt * J/24.0 * grad[k][j] *
-                             (s[4][k] + p[k]) * s[j+1][k]/s[0][k];
-            R.var(r[4],N[3]) -= mult * dt * J/24.0 * grad[k][j] *
-                             (s[4][k] + p[k]) * s[j+1][k]/s[0][k];
-          }
 
         // add viscous stress contribution to momentum and energy rhs
         Physics::viscousRhs( mult, dt, J, N, grad, s, r, R );
@@ -312,11 +283,11 @@ class CompFlow {
       return v;
     }
 
-    //! \brief Query if a Dirichlet boundary condition has set by the user on
-    //!   any side set for any component in the PDE system
+    //! \brief Query if a Dirichlet boundary condition has been set on a side
+    //!   set for any component in the PDE system
     //! \param[in] sideset Side set ID
-    //! \return True if the user has set a Dirichlet boundary condition on any
-    //!   of the side sets for any component in the PDE system.
+    //! \return True if a Dirichlet boundary condition has been set on the side
+    //!   set for any component in the PDE system.
     bool anydirbc( int sideset ) const {
       const auto& bc =
         g_inputdeck.get< tag::param, tag::compflow, tag::bc_dirichlet >();
@@ -326,14 +297,14 @@ class CompFlow {
       return false;
     }
 
-    //! \brief Query Dirichlet boundary condition value set by the user on a
-    //!   given side set for all components in this PDE system
+    //! \brief Query Dirichlet boundary condition value on a given side set for
+    //!    all components in this PDE system
     //! \param[in] sideset Side set ID
     //! \return Vector of pairs of bool and BC value for all components
     std::vector< std::pair< bool, tk::real > > dirbc( int sideset ) const {
       const auto& bc =
         g_inputdeck.get< tag::param, tag::compflow, tag::bc_dirichlet >();
-      std::vector< std::pair< bool, tk::real > > b( m_ncomp, { false, 0.0 } );
+      std::vector< std::pair< bool, tk::real > > b( 5, { false, 0.0 } );
       for (const auto& s : bc) {
         Assert( s.size() == 3, "Side set vector size incorrect" );
         if (static_cast<int>(std::round(s[0])) == sideset) {
@@ -345,64 +316,18 @@ class CompFlow {
 
     //! Return field names to be output to file
     //! \return Vector of strings labelling fields output in file
-    std::vector< std::string > names() const {
-      std::vector< std::string > n;
-      n.push_back( "density" );
-      n.push_back( "x-velocity" );
-      n.push_back( "y-velocity" );
-      n.push_back( "z-velocity" );
-      n.push_back( "specific total energy" );
-      n.push_back( "pressure" );
-      n.push_back( "temperature" );
-      return n;
-    }
+    std::vector< std::string > names() const { return Problem::names(); }
 
     //! Return field output going to file
     //! \param[in] U Solution vector at recent time step stage
     //! \return Vector of vectors to be output to file
     std::vector< std::vector< tk::real > >
-    output( tk::real,
-            const std::array< std::vector< tk::real >, 3 >&,
+    output( tk::real t,
+            const std::array< std::vector< tk::real >, 3 >& coord,
             const tk::MeshNodes& U ) const
-    {
-      std::vector< std::vector< tk::real > > out;
-      const auto r = U.extract( 0, m_offset );
-      const auto ru = U.extract( 1, m_offset );
-      const auto rv = U.extract( 2, m_offset );
-      const auto rw = U.extract( 3, m_offset );
-      const auto re = U.extract( 4, m_offset );
-      out.push_back( r );
-      std::vector< tk::real > u = ru;
-      std::transform( r.begin(), r.end(), u.begin(), u.begin(),
-                      []( tk::real s, tk::real& d ){ return d /= s; } );
-      out.push_back( u );
-      std::vector< tk::real > v = rv;
-      std::transform( r.begin(), r.end(), v.begin(), v.begin(),
-                      []( tk::real s, tk::real& d ){ return d /= s; } );
-      out.push_back( v );
-      std::vector< tk::real > w = rw;
-      std::transform( r.begin(), r.end(), w.begin(), w.begin(),
-                      []( tk::real s, tk::real& d ){ return d /= s; } );
-      out.push_back( w );
-      std::vector< tk::real > e = re;
-      std::transform( r.begin(), r.end(), e.begin(), e.begin(),
-                      []( tk::real s, tk::real& d ){ return d /= s; } );
-      out.push_back( e );
-      std::vector< tk::real > p = r;
-      tk::real g = g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[0];
-      for (std::size_t i=0; i<p.size(); ++i)
-        p[i] = (g-1.0)*r[i]*(e[i] - (u[i]*u[i] + v[i]*v[i] + w[i]*w[i])/2.0);
-      out.push_back( p );
-      std::vector< tk::real > T = r;
-      tk::real cv = g_inputdeck.get< tag::param, tag::compflow, tag::cv >()[0];
-      for (std::size_t i=0; i<T.size(); ++i)
-        T[i] = cv*(e[i] - (u[i]*u[i] + v[i]*v[i] + w[i]*w[i])/2.0);
-      out.push_back( p );
-      return out;
-   }
+    { return Problem::output( 0, m_offset, t, coord, U ); }
 
   private:
-    const ncomp_t m_ncomp;              //!< Number of components
     const ncomp_t m_offset;             //!< Offset PDE operates from
 };
 
