@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/TestDataLayout.h
   \author    J. Bakosi
-  \date      Tue 23 Aug 2016 10:04:37 AM MDT
+  \date      Wed 31 Aug 2016 12:43:18 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Unit tests for Base/DataLayout.h
   \details   Unit tests for Base/DataLayout.h
@@ -10,6 +10,10 @@
 // *****************************************************************************
 #ifndef test_DataLayout_h
 #define test_DataLayout_h
+
+#include <limits>
+#include <array>
+#include <vector>
 
 #include "NoWarning/tut.h"
 
@@ -20,7 +24,31 @@
 namespace tut {
 
 //! All tests in group inherited from this base
-struct DataLayout_common {};
+struct DataLayout_common {
+
+  const tk::real prec = std::numeric_limits< tk::real >::epsilon();
+
+  // Ensure equality of all element of a vector of reals
+  void veceq( const std::string& msg,
+              const std::vector< tk::real >& a,
+              std::vector< tk::real >&& b )
+  {
+    std::transform( a.begin(), a.end(), b.begin(), b.begin(),
+                    [ &msg, this ]( tk::real s, tk::real& d ){
+                      ensure_equals( msg, s, d, this->prec ); return true; } );
+  }
+
+  // Ensure equality of all element of a array of reals
+  template< std::size_t N >
+  void veceq( const std::string& msg,
+              const std::array< tk::real, N >& a,
+              std::array< tk::real, N >&& b )
+  {
+    std::transform( a.begin(), a.end(), b.begin(), b.begin(),
+                    [ &msg, this ]( tk::real s, tk::real& d ){
+                      ensure_equals( msg, s, d, this->prec ); return true; } );
+  }
+};
 
 //! Test group shortcuts
 using DataLayout_group = test_group< DataLayout_common, MAX_TESTS_IN_GROUP >;
@@ -426,9 +454,9 @@ void DataLayout_object::test< 6 >() {
 
   // Test all template specializations
   ensure_equals( "<UnkEqComp>::var(cptr) value incorrect",
-                 pp.var( pp.cptr(2,3), 1 ), pp(1,2,3) );
+                 pp.var( pp.cptr(2,3), 1 ), pp(1,2,3), prec );
   ensure_equals( "<EqCompUnk>::var(cptr) value incorrect",
-                 pe.var( pe.cptr(2,3), 1 ), pe(1,2,3) );
+                 pe.var( pe.cptr(2,3), 1 ), pe(1,2,3), prec );
 }
 
 //! Test that tk::DataLayout's layou() returns correct string
@@ -469,31 +497,31 @@ void DataLayout_object::test< 8 >() {
   pe( 1, 2, 0 ) = 0.6;
 
   // Test all template specializations
-  ensure( "<UnkEqComp>::extract() vector of unknowns at 0,0 incorrect",
-          std::vector< tk::real >{ 0.1, 0.4 } == pp.extract( 0, 0 ) );
-  ensure( "<UnkEqComp>::extract() vector of unknowns at 1,0 incorrect",
-          std::vector< tk::real >{ 0.2, 0.5 } == pp.extract( 1, 0 ) );
-  ensure( "<UnkEqComp>::extract() vector of unknowns at 2,0 incorrect",
-          std::vector< tk::real >{ 0.3, 0.6 } == pp.extract( 2, 0 ) );
-  ensure( "<UnkEqComp>::extract() vector of unknowns at 0,1 incorrect",
-          std::vector< tk::real >{ 0.2, 0.5 } == pp.extract( 0, 1 ) );
-  ensure( "<UnkEqComp>::extract() vector of unknowns at 1,1 incorrect",
-          std::vector< tk::real >{ 0.3, 0.6 } == pp.extract( 1, 1 ) );
-  ensure( "<UnkEqComp>::extract() vector of unknowns at 0,2 incorrect",
-          std::vector< tk::real >{ 0.3, 0.6 } == pp.extract( 0, 2 ) );
+  veceq( "<UnkEqComp>::extract() vector of unknowns at 0,0 incorrect",
+         std::vector< tk::real >{ 0.1, 0.4 }, pp.extract( 0, 0 ) );
+  veceq( "<UnkEqComp>::extract() vector of unknowns at 1,0 incorrect",
+         std::vector< tk::real >{ 0.2, 0.5 }, pp.extract( 1, 0 ) );
+  veceq( "<UnkEqComp>::extract() vector of unknowns at 2,0 incorrect",
+         std::vector< tk::real >{ 0.3, 0.6 }, pp.extract( 2, 0 ) );
+  veceq( "<UnkEqComp>::extract() vector of unknowns at 0,1 incorrect",
+         std::vector< tk::real >{ 0.2, 0.5 }, pp.extract( 0, 1 ) );
+  veceq( "<UnkEqComp>::extract() vector of unknowns at 1,1 incorrect",
+         std::vector< tk::real >{ 0.3, 0.6 }, pp.extract( 1, 1 ) );
+  veceq( "<UnkEqComp>::extract() vector of unknowns at 0,2 incorrect",
+         std::vector< tk::real >{ 0.3, 0.6 }, pp.extract( 0, 2 ) );
 
-  ensure( "<EqCompUnk>::extract() vector of unknowns at 0,0 incorrect",
-          std::vector< tk::real >{ 0.1, 0.4 } == pe.extract( 0, 0 ) );
-  ensure( "<EqCompUnk>::extract() vector of unknowns at 1,0 incorrect",
-          std::vector< tk::real >{ 0.2, 0.5 } == pe.extract( 1, 0 ) );
-  ensure( "<EqCompUnk>::extract() vector of unknowns at 2,0 incorrect",
-          std::vector< tk::real >{ 0.3, 0.6 } == pe.extract( 2, 0 ) );
-  ensure( "<EqCompUnk>::extract() vector of unknowns at 0,1 incorrect",
-          std::vector< tk::real >{ 0.2, 0.5 } == pe.extract( 0, 1 ) );
-  ensure( "<EqCompUnk>::extract() vector of unknowns at 1,1 incorrect",
-          std::vector< tk::real >{ 0.3, 0.6 } == pe.extract( 1, 1 ) );
-  ensure( "<EqCompUnk>::extract() vector of unknowns at 0,2 incorrect",
-          std::vector< tk::real >{ 0.3, 0.6 } == pe.extract( 0, 2 ) );
+  veceq( "<EqCompUnk>::extract() vector of unknowns at 0,0 incorrect",
+         std::vector< tk::real >{ 0.1, 0.4 }, pe.extract( 0, 0 ) );
+  veceq( "<EqCompUnk>::extract() vector of unknowns at 1,0 incorrect",
+         std::vector< tk::real >{ 0.2, 0.5 }, pe.extract( 1, 0 ) );
+  veceq( "<EqCompUnk>::extract() vector of unknowns at 2,0 incorrect",
+         std::vector< tk::real >{ 0.3, 0.6 }, pe.extract( 2, 0 ) );
+  veceq( "<EqCompUnk>::extract() vector of unknowns at 0,1 incorrect",
+         std::vector< tk::real >{ 0.2, 0.5 }, pe.extract( 0, 1 ) );
+  veceq( "<EqCompUnk>::extract() vector of unknowns at 1,1 incorrect",
+         std::vector< tk::real >{ 0.3, 0.6 }, pe.extract( 1, 1 ) );
+  veceq( "<EqCompUnk>::extract() vector of unknowns at 0,2 incorrect",
+         std::vector< tk::real >{ 0.3, 0.6 }, pe.extract( 0, 2 ) );
 }
 
 //! Test that tk::DataLayout's extract() returns correct vector components
@@ -520,15 +548,15 @@ void DataLayout_object::test< 9 >() {
   pe( 1, 2, 0 ) = 0.4;
 
   // Test all template specializations
-  ensure( "<UnkEqComp>::extract() vector of components at 0 incorrect",
-          std::vector< tk::real >{ 0.1, 0.2, 0.3 } == pp.extract( 0 ) );
-  ensure( "<UnkEqComp>::extract() vector of components at 1 incorrect",
-          std::vector< tk::real >{ 0.4, 0.5, 0.6 } == pp.extract( 1 ) );
+  veceq( "<UnkEqComp>::extract() vector of components at 0 incorrect",
+         std::vector< tk::real >{ 0.1, 0.2, 0.3 }, pp.extract( 0 ) );
+  veceq( "<UnkEqComp>::extract() vector of components at 1 incorrect",
+         std::vector< tk::real >{ 0.4, 0.5, 0.6 }, pp.extract( 1 ) );
 
-  ensure( "<EqCompUnk>::extract() vector of components at 0 incorrect",
-          std::vector< tk::real >{ 0.3, 0.2, 0.1 } == pe.extract( 0 ) );
-  ensure( "<EqCompUnk>::extract() vector of components at 1 incorrect",
-          std::vector< tk::real >{ 0.6, 0.5, 0.4 } == pe.extract( 1 ) );
+  veceq( "<EqCompUnk>::extract() vector of components at 0 incorrect",
+         std::vector< tk::real >{ 0.3, 0.2, 0.1 }, pe.extract( 0 ) );
+  veceq( "<EqCompUnk>::extract() vector of components at 1 incorrect",
+         std::vector< tk::real >{ 0.6, 0.5, 0.4 }, pe.extract( 1 ) );
 }
 
 //! Test that tk::DataLayout's operator[] returns correct vector components
@@ -555,15 +583,15 @@ void DataLayout_object::test< 10 >() {
   pe( 1, 2, 0 ) = 0.4;
 
   // Test all template specializations
-  ensure( "<UnkEqComp>::operator[] returning vector of components at 0 incorrect",
-          std::vector< tk::real >{ 0.1, 0.2, 0.3 } == pp[0] );
-  ensure( "<UnkEqComp>::operator[] returning vector of components at 1 incorrect",
-          std::vector< tk::real >{ 0.4, 0.5, 0.6 } == pp[1] );
+  veceq( "<UnkEqComp>::operator[] returning vector of components at 0 incorrect",
+         std::vector< tk::real >{ 0.1, 0.2, 0.3 }, pp[0] );
+  veceq( "<UnkEqComp>::operator[] returning vector of components at 1 incorrect",
+         std::vector< tk::real >{ 0.4, 0.5, 0.6 }, pp[1] );
 
-  ensure( "<EqCompUnk>::operator[] returning vector of components at 0 incorrect",
-          std::vector< tk::real >{ 0.3, 0.2, 0.1 } == pe[0] );
-  ensure( "<EqCompUnk>::operator[] returning vector of components at 1 incorrect",
-          std::vector< tk::real >{ 0.6, 0.5, 0.4 } == pe[1] );
+  veceq( "<EqCompUnk>::operator[] returning vector of components at 0 incorrect",
+         std::vector< tk::real >{ 0.3, 0.2, 0.1 }, pe[0] );
+  veceq( "<EqCompUnk>::operator[] returning vector of components at 1 incorrect",
+         std::vector< tk::real >{ 0.6, 0.5, 0.4 }, pe[1] );
 }
 
 //! Test that tk::DataLayout's extract() returns correct array of four reals
@@ -612,31 +640,31 @@ void DataLayout_object::test< 11 >() {
   pe( 7, 1, 0 ) = 1.8;
 
   // Test all template specializations
-  ensure( "<UnkEqComp>::extract() array of four reals at 0,0:3,2,1,0 incorrect",
-          std::array< tk::real, 4 >{{ 0.4, 0.3, 0.2, 0.1 }} ==
-            pp.extract( 0, 0, 3, 2, 1, 0 ) );
-  ensure( "<UnkEqComp>::extract() array of four reals at 0,0:1,3,5,7 incorrect",
-          std::array< tk::real, 4 >{{ 0.2, 0.4, 0.6, 0.8 }} ==
-            pp.extract( 0, 0, 1, 3, 5, 7 ) );
-  ensure( "<UnkEqComp>::extract() array of four reals at 0,1:3,2,1,0 incorrect",
-          std::array< tk::real, 4 >{{ 1.4, 1.3, 1.2, 1.1 }} ==
-            pp.extract( 0, 1, 3, 2, 1, 0 ) );
-  ensure( "<UnkEqComp>::extract() array of four reals at 0,1:1,3,5,7 incorrect",
-          std::array< tk::real, 4 >{{ 1.2, 1.4, 1.6, 1.8 }} ==
-            pp.extract( 0, 1, 1, 3, 5, 7 ) );
+  veceq( "<UnkEqComp>::extract() array of four reals at 0,0:3,2,1,0 incorrect",
+         std::array< tk::real, 4 >{{ 0.4, 0.3, 0.2, 0.1 }},
+           pp.extract( 0, 0, 3, 2, 1, 0 ) );
+  veceq( "<UnkEqComp>::extract() array of four reals at 0,0:1,3,5,7 incorrect",
+         std::array< tk::real, 4 >{{ 0.2, 0.4, 0.6, 0.8 }},
+           pp.extract( 0, 0, 1, 3, 5, 7 ) );
+  veceq( "<UnkEqComp>::extract() array of four reals at 0,1:3,2,1,0 incorrect",
+         std::array< tk::real, 4 >{{ 1.4, 1.3, 1.2, 1.1 }},
+           pp.extract( 0, 1, 3, 2, 1, 0 ) );
+  veceq( "<UnkEqComp>::extract() array of four reals at 0,1:1,3,5,7 incorrect",
+         std::array< tk::real, 4 >{{ 1.2, 1.4, 1.6, 1.8 }},
+           pp.extract( 0, 1, 1, 3, 5, 7 ) );
 
-  ensure( "<EqCompUnk>::extract() array of four reals at 0,0:3,2,1,0 incorrect",
-          std::array< tk::real, 4 >{{ 0.4, 0.3, 0.2, 0.1 }} ==
-            pe.extract( 0, 0, 3, 2, 1, 0 ) );
-  ensure( "<EqCompUnk>::extract() array of four reals at 0,0:1,3,5,7 incorrect",
-          std::array< tk::real, 4 >{{ 0.2, 0.4, 0.6, 0.8 }} ==
-            pe.extract( 0, 0, 1, 3, 5, 7 ) );
-  ensure( "<EqCompUnk>::extract() array of four reals at 0,1:3,2,1,0 incorrect",
-          std::array< tk::real, 4 >{{ 1.4, 1.3, 1.2, 1.1 }} ==
-            pe.extract( 0, 1, 3, 2, 1, 0 ) );
-  ensure( "<kEqCompUnk>::extract() array of four reals 0,1:1,3,5,7 incorrect",
-          std::array< tk::real, 4 >{{ 1.2, 1.4, 1.6, 1.8 }} ==
-            pe.extract( 0, 1, 1, 3, 5, 7 ) );
+  veceq( "<EqCompUnk>::extract() array of four reals at 0,0:3,2,1,0 incorrect",
+         std::array< tk::real, 4 >{{ 0.4, 0.3, 0.2, 0.1 }},
+           pe.extract( 0, 0, 3, 2, 1, 0 ) );
+  veceq( "<EqCompUnk>::extract() array of four reals at 0,0:1,3,5,7 incorrect",
+         std::array< tk::real, 4 >{{ 0.2, 0.4, 0.6, 0.8 }},
+           pe.extract( 0, 0, 1, 3, 5, 7 ) );
+  veceq( "<EqCompUnk>::extract() array of four reals at 0,1:3,2,1,0 incorrect",
+         std::array< tk::real, 4 >{{ 1.4, 1.3, 1.2, 1.1 }},
+           pe.extract( 0, 1, 3, 2, 1, 0 ) );
+  veceq( "<kEqCompUnk>::extract() array of four reals 0,1:1,3,5,7 incorrect",
+         std::array< tk::real, 4 >{{ 1.2, 1.4, 1.6, 1.8 }},
+           pe.extract( 0, 1, 1, 3, 5, 7 ) );
 }
 
 //! Test that tk::DataLayout's extract() returns correct array of four reals
@@ -685,30 +713,30 @@ void DataLayout_object::test< 12 >() {
   pe( 7, 1, 0 ) = 1.8;
 
   // Test all template specializations
-  ensure( "<UnkEqComp>::extract() array of four reals at 0,0:3,2,1,0 incorrect",
-          std::array< tk::real, 4 >{{ 0.4, 0.3, 0.2, 0.1 }} ==
+  veceq( "<UnkEqComp>::extract() array of four reals at 0,0:3,2,1,0 incorrect",
+          std::array< tk::real, 4 >{{ 0.4, 0.3, 0.2, 0.1 }},
             pp.extract( 0, 0, {{3,2,1,0}} ) );
-  ensure( "<UnkEqComp>::extract() array of four reals at 0,0:1,3,5,7 incorrect",
-          std::array< tk::real, 4 >{{ 0.2, 0.4, 0.6, 0.8 }} ==
+  veceq( "<UnkEqComp>::extract() array of four reals at 0,0:1,3,5,7 incorrect",
+          std::array< tk::real, 4 >{{ 0.2, 0.4, 0.6, 0.8 }},
             pp.extract( 0, 0, {{1,3,5,7}} ) );
-  ensure( "<UnkEqComp>::extract() array of four reals at 0,1:3,2,1,0 incorrect",
-          std::array< tk::real, 4 >{{ 1.4, 1.3, 1.2, 1.1 }} ==
+  veceq( "<UnkEqComp>::extract() array of four reals at 0,1:3,2,1,0 incorrect",
+          std::array< tk::real, 4 >{{ 1.4, 1.3, 1.2, 1.1 }},
             pp.extract( 0, 1, {{3,2,1,0}} ) );
-  ensure( "<UnkEqComp>::extract() array of four reals at 0,1:1,3,5,7 incorrect",
-          std::array< tk::real, 4 >{{ 1.2, 1.4, 1.6, 1.8 }} ==
+  veceq( "<UnkEqComp>::extract() array of four reals at 0,1:1,3,5,7 incorrect",
+          std::array< tk::real, 4 >{{ 1.2, 1.4, 1.6, 1.8 }},
             pp.extract( 0, 1, {{1,3,5,7}} ) );
 
-  ensure( "<EqCompUnk>::extract() array of four reals at 0,0:3,2,1,0 incorrect",
-          std::array< tk::real, 4 >{{ 0.4, 0.3, 0.2, 0.1 }} ==
+  veceq( "<EqCompUnk>::extract() array of four reals at 0,0:3,2,1,0 incorrect",
+          std::array< tk::real, 4 >{{ 0.4, 0.3, 0.2, 0.1 }},
             pe.extract( 0, 0, {{3,2,1,0}} ) );
-  ensure( "<EqCompUnk>::extract() array of four reals at 0,0:1,3,5,7 incorrect",
-          std::array< tk::real, 4 >{{ 0.2, 0.4, 0.6, 0.8 }} ==
+  veceq( "<EqCompUnk>::extract() array of four reals at 0,0:1,3,5,7 incorrect",
+          std::array< tk::real, 4 >{{ 0.2, 0.4, 0.6, 0.8 }},
             pe.extract( 0, 0, {{1,3,5,7}} ) );
-  ensure( "<EqCompUnk>::extract() array of four reals at 0,1:3,2,1,0 incorrect",
-          std::array< tk::real, 4 >{{ 1.4, 1.3, 1.2, 1.1 }} ==
+  veceq( "<EqCompUnk>::extract() array of four reals at 0,1:3,2,1,0 incorrect",
+          std::array< tk::real, 4 >{{ 1.4, 1.3, 1.2, 1.1 }},
             pe.extract( 0, 1, {{3,2,1,0}} ) );
-  ensure( "<kEqCompUnk>::extract() array of four reals 0,1:1,3,5,7 incorrect",
-          std::array< tk::real, 4 >{{ 1.2, 1.4, 1.6, 1.8 }} ==
+  veceq( "<kEqCompUnk>::extract() array of four reals 0,1:1,3,5,7 incorrect",
+          std::array< tk::real, 4 >{{ 1.2, 1.4, 1.6, 1.8 }},
             pe.extract( 0, 1, {{1,3,5,7}} ) );
 }
 
@@ -725,19 +753,19 @@ void DataLayout_object::test< 13 >() {
   pe.fill( 0.1 );
 
   // Test all template specializations
-  ensure( "<UnkEqComp>::fill() all with the same value at 0,0 incorrect",
-          std::vector< tk::real >{ 0.0, 0.0, 0.0 } == pp.extract( 0, 0 ) );
-  ensure( "<UnkEqComp>::fill() all with the same value at 1,0 incorrect",
-          std::vector< tk::real >{ 0.0, 0.0, 0.0 } == pp.extract( 1, 0 ) );
-  ensure( "<UnkEqComp>::fill() all with the same value at 0,1 incorrect",
-          std::vector< tk::real >{ 0.0, 0.0, 0.0 } == pp.extract( 0, 1 ) );
+  veceq( "<UnkEqComp>::fill() all with the same value at 0,0 incorrect",
+          std::vector< tk::real >{ 0.0, 0.0, 0.0 }, pp.extract( 0, 0 ) );
+  veceq( "<UnkEqComp>::fill() all with the same value at 1,0 incorrect",
+          std::vector< tk::real >{ 0.0, 0.0, 0.0 }, pp.extract( 1, 0 ) );
+  veceq( "<UnkEqComp>::fill() all with the same value at 0,1 incorrect",
+          std::vector< tk::real >{ 0.0, 0.0, 0.0 }, pp.extract( 0, 1 ) );
 
-  ensure( "<EqCompUnk>::fill() all with the same value at 0,0 incorrect",
-          std::vector< tk::real >{ 0.1, 0.1, 0.1 } == pe.extract( 0, 0 ) );
-  ensure( "<EqCompUnk>::fill() all with the same value at 1,0 incorrect",
-          std::vector< tk::real >{ 0.1, 0.1, 0.1 } == pe.extract( 1, 0 ) );
-  ensure( "<EqCompUnk>::fill() all with the same value at 0,1 incorrect",
-          std::vector< tk::real >{ 0.1, 0.1, 0.1 } == pe.extract( 0, 1 ) );
+  veceq( "<EqCompUnk>::fill() all with the same value at 0,0 incorrect",
+          std::vector< tk::real >{ 0.1, 0.1, 0.1 }, pe.extract( 0, 0 ) );
+  veceq( "<EqCompUnk>::fill() all with the same value at 1,0 incorrect",
+          std::vector< tk::real >{ 0.1, 0.1, 0.1 }, pe.extract( 1, 0 ) );
+  veceq( "<EqCompUnk>::fill() all with the same value at 0,1 incorrect",
+          std::vector< tk::real >{ 0.1, 0.1, 0.1 }, pe.extract( 0, 1 ) );
 }
 
 //! Test that tk::DataLayout's fill() correctly fills vector of unknowns
@@ -756,25 +784,25 @@ void DataLayout_object::test< 14 >() {
   pe.fill( 1, 0, -0.5 );
 
   // Test all template specializations
-  ensure(
+  veceq(
     "<UnkEqComp>::fill() vector of unknowns with the same value at 0,0 incorrect",
-    std::vector< tk::real >{ 1.5, 1.5, 1.5 } == pp.extract( 0, 0 ) );
-  ensure(
+    std::vector< tk::real >{ 1.5, 1.5, 1.5 }, pp.extract( 0, 0 ) );
+  veceq(
     "<UnkEqComp>::fill() vector of unknowns with the same value at 1,0 incorrect",
-    std::vector< tk::real >{ 2.5, 2.5, 2.5 } == pp.extract( 1, 0 ) );
-  ensure(
+    std::vector< tk::real >{ 2.5, 2.5, 2.5 }, pp.extract( 1, 0 ) );
+  veceq(
     "<UnkEqComp>::fill() vector of unknowns with the same value at 0,1 incorrect",
-    std::vector< tk::real >{ 2.5, 2.5, 2.5 } == pp.extract( 0, 1 ) );
+    std::vector< tk::real >{ 2.5, 2.5, 2.5 }, pp.extract( 0, 1 ) );
 
-  ensure(
+  veceq(
     "<EqCompUnk>::fill() vector of unknowns with the same value at 0,0 incorrect",
-    std::vector< tk::real >{ 0.5, 0.5, 0.5 } == pe.extract( 0, 0 ) );
-  ensure(
+    std::vector< tk::real >{ 0.5, 0.5, 0.5 }, pe.extract( 0, 0 ) );
+  veceq(
     "<EqCompUnk>::fill() vector of unknowns with the same value at 1,0 incorrect",
-    std::vector< tk::real >{ -0.5, -0.5, -0.5 } == pe.extract( 1, 0 ) );
-  ensure(
+    std::vector< tk::real >{ -0.5, -0.5, -0.5 }, pe.extract( 1, 0 ) );
+  veceq(
     "<EqCompUnk>::fill() vector of unknowns with the same value at 0,1 incorrect",
-    std::vector< tk::real >{ -0.5, -0.5, -0.5 } == pe.extract( 0, 1 ) );
+    std::vector< tk::real >{ -0.5, -0.5, -0.5 }, pe.extract( 0, 1 ) );
 }
 
 //! \brief Test that tk::DataLayout's memory layout, i.e., stores data with
@@ -817,19 +845,19 @@ void DataLayout_object::test< 16 >() {
   w.push_back( e );
 
   // Test all template specializations
-  ensure( "<UnkEqComp>::ctor() at 0,0 incorrect",
-          std::vector< tk::real >{ 0.1, 0.1, 0.1 } == v[0].extract( 0, 0 ) );
-  ensure( "<UnkEqComp>::ctor() at 1,0 incorrect",
-          std::vector< tk::real >{ 0.1, 0.1, 0.1 } == v[0].extract( 1, 0 ) );
-  ensure( "<UnkEqComp>::ctor() at 0,1 incorrect",
-          std::vector< tk::real >{ 0.1, 0.1, 0.1 } == v[0].extract( 0, 1 ) );
+  veceq( "<UnkEqComp>::ctor() at 0,0 incorrect",
+         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, v[0].extract( 0, 0 ) );
+  veceq( "<UnkEqComp>::ctor() at 1,0 incorrect",
+         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, v[0].extract( 1, 0 ) );
+  veceq( "<UnkEqComp>::ctor() at 0,1 incorrect",
+         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, v[0].extract( 0, 1 ) );
 
-  ensure( "<EqCompUnk>::ctor() at 0,0 incorrect",
-          std::vector< tk::real >{ 0.2, 0.2, 0.2 } == w[0].extract( 0, 0 ) );
-  ensure( "<EqCompUnk>::ctor() at 1,0 incorrect",
-          std::vector< tk::real >{ 0.2, 0.2, 0.2 } == w[0].extract( 1, 0 ) );
-  ensure( "<EqCompUnk>::ctor() at 0,1 incorrect",
-          std::vector< tk::real >{ 0.2, 0.2, 0.2 } == w[0].extract( 0, 1 ) );
+  veceq( "<EqCompUnk>::ctor() at 0,0 incorrect",
+         std::vector< tk::real >{ 0.2, 0.2, 0.2 }, w[0].extract( 0, 0 ) );
+  veceq( "<EqCompUnk>::ctor() at 1,0 incorrect",
+         std::vector< tk::real >{ 0.2, 0.2, 0.2 }, w[0].extract( 1, 0 ) );
+  veceq( "<EqCompUnk>::ctor() at 0,1 incorrect",
+         std::vector< tk::real >{ 0.2, 0.2, 0.2 }, w[0].extract( 0, 1 ) );
 }
 
 //! Test tk::DataLayout's copy assignment
@@ -851,19 +879,19 @@ void DataLayout_object::test< 17 >() {
   e1 = e;
 
   // Test all template specializations
-  ensure( "<UnkEqComp>::ctor() at 0,0 incorrect",
-          std::vector< tk::real >{ 0.1, 0.1, 0.1 } == p1.extract( 0, 0 ) );
-  ensure( "<UnkEqComp>::ctor() at 1,0 incorrect",
-          std::vector< tk::real >{ 0.1, 0.1, 0.1 } == p1.extract( 1, 0 ) );
-  ensure( "<UnkEqComp>::ctor() at 0,1 incorrect",
-          std::vector< tk::real >{ 0.1, 0.1, 0.1 } == p1.extract( 0, 1 ) );
+  veceq( "<UnkEqComp>::cass() at 0,0 incorrect",
+         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, p1.extract( 0, 0 ) );
+  veceq( "<UnkEqComp>::cass() at 1,0 incorrect",
+         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, p1.extract( 1, 0 ) );
+  veceq( "<UnkEqComp>::cass() at 0,1 incorrect",
+         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, p1.extract( 0, 1 ) );
 
-  ensure( "<EqCompUnk>::ctor() at 0,0 incorrect",
-          std::vector< tk::real >{ 0.2, 0.2, 0.2 } == e1.extract( 0, 0 ) );
-  ensure( "<EqCompUnk>::ctor() at 1,0 incorrect",
-          std::vector< tk::real >{ 0.2, 0.2, 0.2 } == e1.extract( 1, 0 ) );
-  ensure( "<EqCompUnk>::ctor() at 0,1 incorrect",
-          std::vector< tk::real >{ 0.2, 0.2, 0.2 } == e1.extract( 0, 1 ) );
+  veceq( "<EqCompUnk>::cass() at 0,0 incorrect",
+         std::vector< tk::real >{ 0.2, 0.2, 0.2 }, e1.extract( 0, 0 ) );
+  veceq( "<EqCompUnk>::cass() at 1,0 incorrect",
+         std::vector< tk::real >{ 0.2, 0.2, 0.2 }, e1.extract( 1, 0 ) );
+  veceq( "<EqCompUnk>::cass() at 0,1 incorrect",
+         std::vector< tk::real >{ 0.2, 0.2, 0.2 }, e1.extract( 0, 1 ) );
 }
 
 //! Test tk::DataLayout's move constructor
@@ -884,19 +912,19 @@ void DataLayout_object::test< 18 >() {
   w.emplace_back( e );
 
   // Test all template specializations
-  ensure( "<UnkEqComp>::ctor() at 0,0 incorrect",
-          std::vector< tk::real >{ 0.1, 0.1, 0.1 } == v[0].extract( 0, 0 ) );
-  ensure( "<UnkEqComp>::ctor() at 1,0 incorrect",
-          std::vector< tk::real >{ 0.1, 0.1, 0.1 } == v[0].extract( 1, 0 ) );
-  ensure( "<UnkEqComp>::ctor() at 0,1 incorrect",
-          std::vector< tk::real >{ 0.1, 0.1, 0.1 } == v[0].extract( 0, 1 ) );
+  veceq( "<UnkEqComp>::mctor() at 0,0 incorrect",
+         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, v[0].extract( 0, 0 ) );
+  veceq( "<UnkEqComp>::mctor() at 1,0 incorrect",
+         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, v[0].extract( 1, 0 ) );
+  veceq( "<UnkEqComp>::mctor() at 0,1 incorrect",
+         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, v[0].extract( 0, 1 ) );
 
-  ensure( "<EqCompUnk>::ctor() at 0,0 incorrect",
-          std::vector< tk::real >{ 0.2, 0.2, 0.2 } == w[0].extract( 0, 0 ) );
-  ensure( "<EqCompUnk>::ctor() at 1,0 incorrect",
-          std::vector< tk::real >{ 0.2, 0.2, 0.2 } == w[0].extract( 1, 0 ) );
-  ensure( "<EqCompUnk>::ctor() at 0,1 incorrect",
-          std::vector< tk::real >{ 0.2, 0.2, 0.2 } == w[0].extract( 0, 1 ) );
+  veceq( "<EqCompUnk>::mctor() at 0,0 incorrect",
+         std::vector< tk::real >{ 0.2, 0.2, 0.2 }, w[0].extract( 0, 0 ) );
+  veceq( "<EqCompUnk>::mctor() at 1,0 incorrect",
+         std::vector< tk::real >{ 0.2, 0.2, 0.2 }, w[0].extract( 1, 0 ) );
+  veceq( "<EqCompUnk>::mctor() at 0,1 incorrect",
+         std::vector< tk::real >{ 0.2, 0.2, 0.2 }, w[0].extract( 0, 1 ) );
 }
 
 //! Test tk::DataLayout's move assignment
@@ -915,19 +943,205 @@ void DataLayout_object::test< 19 >() {
   auto e1 = std::move( e );
 
   // Test all template specializations
-  ensure( "<UnkEqComp>::ctor() at 0,0 incorrect",
-          std::vector< tk::real >{ 0.1, 0.1, 0.1 } == p1.extract( 0, 0 ) );
-  ensure( "<UnkEqComp>::ctor() at 1,0 incorrect",
-          std::vector< tk::real >{ 0.1, 0.1, 0.1 } == p1.extract( 1, 0 ) );
-  ensure( "<UnkEqComp>::ctor() at 0,1 incorrect",
-          std::vector< tk::real >{ 0.1, 0.1, 0.1 } == p1.extract( 0, 1 ) );
+  veceq( "<UnkEqComp>::mass() at 0,0 incorrect",
+         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, p1.extract( 0, 0 ) );
+  veceq( "<UnkEqComp>::mass() at 1,0 incorrect",
+         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, p1.extract( 1, 0 ) );
+  veceq( "<UnkEqComp>::mass() at 0,1 incorrect",
+         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, p1.extract( 0, 1 ) );
 
-  ensure( "<EqCompUnk>::ctor() at 0,0 incorrect",
-          std::vector< tk::real >{ 0.2, 0.2, 0.2 } == e1.extract( 0, 0 ) );
-  ensure( "<EqCompUnk>::ctor() at 1,0 incorrect",
-          std::vector< tk::real >{ 0.2, 0.2, 0.2 } == e1.extract( 1, 0 ) );
-  ensure( "<EqCompUnk>::ctor() at 0,1 incorrect",
-          std::vector< tk::real >{ 0.2, 0.2, 0.2 } == e1.extract( 0, 1 ) );
+  veceq( "<EqCompUnk>::mass() at 0,0 incorrect",
+         std::vector< tk::real >{ 0.2, 0.2, 0.2 }, e1.extract( 0, 0 ) );
+  veceq( "<EqCompUnk>::mass() at 1,0 incorrect",
+         std::vector< tk::real >{ 0.2, 0.2, 0.2 }, e1.extract( 1, 0 ) );
+  veceq( "<EqCompUnk>::mass() at 0,1 incorrect",
+         std::vector< tk::real >{ 0.2, 0.2, 0.2 }, e1.extract( 0, 1 ) );
+}
+
+//! Test tk::DataLayout's operator-=
+//! \author J. Bakosi
+template<> template<>
+void DataLayout_object::test< 20 >() {
+  set_test_name( "operator-=" );
+
+  tk::DataLayout< tk::UnkEqComp > p1( 3, 2 ), p2( 3, 2 );
+  tk::DataLayout< tk::EqCompUnk > e1( 3, 2 ), e2( 3, 2 );
+
+  p1.fill( 0.1 );       p2.fill( 0.3 );
+  e1.fill( 0.3 );       e2.fill( 0.1 );
+
+  p1 -= p2;
+  e1 -= e2;
+
+  // Test all template specializations
+  veceq( "<UnkEqComp>::operator-=() at 0,0 incorrect",
+         std::vector< tk::real >{ -0.2, -0.2, -0.2 }, p1.extract( 0, 0 ) );
+  veceq( "<UnkEqComp>::operator-=() at 1,0 incorrect",
+         std::vector< tk::real >{ -0.2, -0.2, -0.2 }, p1.extract( 1, 0 ) );
+  veceq( "<UnkEqComp>::operator-=() at 0,1 incorrect",
+         std::vector< tk::real >{ -0.2, -0.2, -0.2 }, p1.extract( 0, 1 ) );
+
+  veceq( "<EqCompUnk>::operator-=() at 0,0 incorrect",
+         std::vector< tk::real >{ 0.2, 0.2, 0.2 }, e1.extract( 0, 0 ) );
+  veceq( "<EqCompUnk>::operator-=() at 1,0 incorrect",
+         std::vector< tk::real >{ 0.2, 0.2, 0.2 }, e1.extract( 1, 0 ) );
+  veceq( "<EqCompUnk>::operator-=() at 0,1 incorrect",
+         std::vector< tk::real >{ 0.2, 0.2, 0.2 }, e1.extract( 0, 1 ) );
+}
+
+//! Test tk::DataLayout's operator-
+//! \author J. Bakosi
+template<> template<>
+void DataLayout_object::test< 21 >() {
+  set_test_name( "operator-" );
+
+  tk::DataLayout< tk::UnkEqComp > p1( 3, 2 ), p2( 3, 2 );
+  tk::DataLayout< tk::EqCompUnk > e1( 3, 2 ), e2( 3, 2 );
+
+  p1.fill( 0.1 );       p2.fill( 0.3 );
+  e1.fill( 0.3 );       e2.fill( 0.1 );
+
+  auto p = p1 - p2;
+  auto e = e1 - e2;
+
+  // Test all template specializations
+  veceq( "<UnkEqComp>::operator-() at 0,0 incorrect",
+         std::vector< tk::real >{ -0.2, -0.2, -0.2 }, p.extract( 0, 0 ) );
+  veceq( "<UnkEqComp>::operator-() at 1,0 incorrect",
+         std::vector< tk::real >{ -0.2, -0.2, -0.2 }, p.extract( 1, 0 ) );
+  veceq( "<UnkEqComp>::operator-() at 0,1 incorrect",
+         std::vector< tk::real >{ -0.2, -0.2, -0.2 }, p.extract( 0, 1 ) );
+
+  veceq( "<EqCompUnk>::operator-() at 0,0 incorrect",
+         std::vector< tk::real >{ 0.2, 0.2, 0.2 }, e.extract( 0, 0 ) );
+  veceq( "<EqCompUnk>::operator-() at 1,0 incorrect",
+         std::vector< tk::real >{ 0.2, 0.2, 0.2 }, e.extract( 1, 0 ) );
+  veceq( "<EqCompUnk>::operator-() at 0,1 incorrect",
+         std::vector< tk::real >{ 0.2, 0.2, 0.2 }, e.extract( 0, 1 ) );
+}
+
+//! Test tk::DataLayout's operator+=
+//! \author J. Bakosi
+template<> template<>
+void DataLayout_object::test< 22 >() {
+  set_test_name( "operator+=" );
+
+  tk::DataLayout< tk::UnkEqComp > p1( 3, 2 ), p2( 3, 2 );
+  tk::DataLayout< tk::EqCompUnk > e1( 3, 2 ), e2( 3, 2 );
+
+  p1.fill( 0.1 );       p2.fill( 0.3 );
+  e1.fill( 0.3 );       e2.fill( 0.1 );
+
+  p1 += p2;
+  e1 += e2;
+
+  // Test all template specializations
+  veceq( "<UnkEqComp>::operator+=() at 0,0 incorrect",
+         std::vector< tk::real >{ 0.4, 0.4, 0.4 }, p1.extract( 0, 0 ) );
+  veceq( "<UnkEqComp>::operator+=() at 1,0 incorrect",
+         std::vector< tk::real >{ 0.4, 0.4, 0.4 }, p1.extract( 1, 0 ) );
+  veceq( "<UnkEqComp>::operator+=() at 0,1 incorrect",
+         std::vector< tk::real >{ 0.4, 0.4, 0.4 }, p1.extract( 0, 1 ) );
+
+  veceq( "<EqCompUnk>::operator+=() at 0,0 incorrect",
+         std::vector< tk::real >{ 0.4, 0.4, 0.4 }, e1.extract( 0, 0 ) );
+  veceq( "<EqCompUnk>::operator+=() at 1,0 incorrect",
+         std::vector< tk::real >{ 0.4, 0.4, 0.4 }, e1.extract( 1, 0 ) );
+  veceq( "<EqCompUnk>::operator+=() at 0,1 incorrect",
+         std::vector< tk::real >{ 0.4, 0.4, 0.4 }, e1.extract( 0, 1 ) );
+}
+
+//! Test tk::DataLayout's operator+
+//! \author J. Bakosi
+template<> template<>
+void DataLayout_object::test< 23 >() {
+  set_test_name( "operator+" );
+
+  tk::DataLayout< tk::UnkEqComp > p1( 3, 2 ), p2( 3, 2 );
+  tk::DataLayout< tk::EqCompUnk > e1( 3, 2 ), e2( 3, 2 );
+
+  p1.fill( 0.1 );       p2.fill( 0.3 );
+  e1.fill( 0.3 );       e2.fill( 0.1 );
+
+  auto p = p1 + p2;
+  auto e = e1 + e2;
+
+  // Test all template specializations
+  veceq( "<UnkEqComp>::operator+() at 0,0 incorrect",
+         std::vector< tk::real >{ 0.4, 0.4, 0.4 }, p.extract( 0, 0 ) );
+  veceq( "<UnkEqComp>::operator+() at 1,0 incorrect",
+         std::vector< tk::real >{ 0.4, 0.4, 0.4 }, p.extract( 1, 0 ) );
+  veceq( "<UnkEqComp>::operator+() at 0,1 incorrect",
+         std::vector< tk::real >{ 0.4, 0.4, 0.4 }, p.extract( 0, 1 ) );
+
+  veceq( "<EqCompUnk>::operator+() at 0,0 incorrect",
+         std::vector< tk::real >{ 0.4, 0.4, 0.4 }, e.extract( 0, 0 ) );
+  veceq( "<EqCompUnk>::operator+() at 1,0 incorrect",
+         std::vector< tk::real >{ 0.4, 0.4, 0.4 }, e.extract( 1, 0 ) );
+  veceq( "<EqCompUnk>::operator+() at 0,1 incorrect",
+         std::vector< tk::real >{ 0.4, 0.4, 0.4 }, e.extract( 0, 1 ) );
+}
+
+//! Test tk::DataLayout's operator*=
+//! \author J. Bakosi
+template<> template<>
+void DataLayout_object::test< 24 >() {
+  set_test_name( "operator*=" );
+
+  tk::DataLayout< tk::UnkEqComp > p1( 3, 2 ), p2( 3, 2 );
+  tk::DataLayout< tk::EqCompUnk > e1( 3, 2 ), e2( 3, 2 );
+
+  p1.fill( 0.1 );       p2.fill( 0.3 );
+  e1.fill( 0.3 );       e2.fill( 0.1 );
+
+  p1 *= p2;
+  e1 *= e2;
+
+  // Test all template specializations
+  veceq( "<UnkEqComp>::operator*=() at 0,0 incorrect",
+         std::vector< tk::real >{ 0.03, 0.03, 0.03 }, p1.extract( 0, 0 ) );
+  veceq( "<UnkEqComp>::operator*=() at 1,0 incorrect",
+         std::vector< tk::real >{ 0.03, 0.03, 0.03 }, p1.extract( 1, 0 ) );
+  veceq( "<UnkEqComp>::operator*=() at 0,1 incorrect",
+         std::vector< tk::real >{ 0.03, 0.03, 0.03 }, p1.extract( 0, 1 ) );
+
+  veceq( "<EqCompUnk>::operator*=() at 0,0 incorrect",
+         std::vector< tk::real >{ 0.03, 0.03, 0.03 }, e1.extract( 0, 0 ) );
+  veceq( "<EqCompUnk>::operator*=() at 1,0 incorrect",
+         std::vector< tk::real >{ 0.03, 0.03, 0.03 }, e1.extract( 1, 0 ) );
+  veceq( "<EqCompUnk>::operator*=() at 0,1 incorrect",
+         std::vector< tk::real >{ 0.03, 0.03, 0.03 }, e1.extract( 0, 1 ) );
+}
+
+//! Test tk::DataLayout's operator*
+//! \author J. Bakosi
+template<> template<>
+void DataLayout_object::test< 25 >() {
+  set_test_name( "operator*" );
+
+  tk::DataLayout< tk::UnkEqComp > p1( 3, 2 ), p2( 3, 2 );
+  tk::DataLayout< tk::EqCompUnk > e1( 3, 2 ), e2( 3, 2 );
+
+  p1.fill( 0.1 );       p2.fill( 0.3 );
+  e1.fill( 0.3 );       e2.fill( 0.1 );
+
+  auto p = p1 * p2;
+  auto e = e1 * e2;
+
+  // Test all template specializations
+  veceq( "<UnkEqComp>::operator*() at 0,0 incorrect",
+         std::vector< tk::real >{ 0.03, 0.03, 0.03 }, p.extract( 0, 0 ) );
+  veceq( "<UnkEqComp>::operator*() at 1,0 incorrect",
+         std::vector< tk::real >{ 0.03, 0.03, 0.03 }, p.extract( 1, 0 ) );
+  veceq( "<UnkEqComp>::operator*() at 0,1 incorrect",
+         std::vector< tk::real >{ 0.03, 0.03, 0.03 }, p.extract( 0, 1 ) );
+
+  veceq( "<EqCompUnk>::operator*() at 0,0 incorrect",
+         std::vector< tk::real >{ 0.03, 0.03, 0.03 }, e.extract( 0, 0 ) );
+  veceq( "<EqCompUnk>::operator*() at 1,0 incorrect",
+         std::vector< tk::real >{ 0.03, 0.03, 0.03 }, e.extract( 1, 0 ) );
+  veceq( "<EqCompUnk>::operator*() at 0,1 incorrect",
+         std::vector< tk::real >{ 0.03, 0.03, 0.03 }, e.extract( 0, 1 ) );
 }
 
 } // tut::

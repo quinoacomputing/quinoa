@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/DataLayout.h
   \author    J. Bakosi
-  \date      Tue 23 Aug 2016 09:59:16 AM MDT
+  \date      Wed 31 Aug 2016 12:41:18 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Generic data access abstraction for different data layouts
   \details   Generic data access abstraction for different data layouts. See
@@ -17,6 +17,7 @@
 #include <cstdint>
 #include <vector>
 #include <set>
+#include <algorithm>
 
 #include "Types.h"
 #include "Keywords.h"
@@ -271,6 +272,71 @@ class DataLayout {
     {
       return extract( component, offset, N[0], N[1], N[2], N[3] );
     }
+
+    //! Const-ref accessor to underlying raw data
+    //! \return Constant reference to underlying raw data
+    //! \author J. Bakosi
+    const std::vector< tk::real >& data() const { return m_vec; }
+
+    //! Compound operator-=
+    //! \param[in] rhs DataLayout object to subtract
+    //! \return Reference to ourselves after subtraction
+    //! \author J. Bakosi
+    DataLayout< Layout >& operator-= ( const DataLayout< Layout >& rhs ) {
+      Assert( rhs.nunk() == m_nunk, "Incorrect number of unknowns" );
+      Assert( rhs.nprop() == m_nprop, "Incorrect number of unknowns" );
+      std::transform( rhs.data().begin(), rhs.data().end(),
+                      m_vec.begin(), m_vec.begin(),
+                      []( tk::real s, tk::real& d ){ return d -= s; } );
+      return *this;
+    }
+    //! Operator -
+    //! \param[in] rhs DataLayout object to subtract
+    //! \return Copy of DataLayout object after rhs has been subtracted
+    //! \details Implemented in terms of compound operator-=
+    //! \author J. Bakosi
+    DataLayout< Layout > operator- ( const DataLayout< Layout >& rhs )
+    const { return DataLayout< Layout >( *this ) -= rhs; }
+
+    //! Compound operator+=
+    //! \param[in] rhs DataLayout object to add
+    //! \return Reference to ourselves after addition
+    //! \author J. Bakosi
+    DataLayout< Layout >& operator+= ( const DataLayout< Layout >& rhs ) {
+      Assert( rhs.nunk() == m_nunk, "Incorrect number of unknowns" );
+      Assert( rhs.nprop() == m_nprop, "Incorrect number of unknowns" );
+      std::transform( rhs.data().begin(), rhs.data().end(),
+                      m_vec.begin(), m_vec.begin(),
+                      []( tk::real s, tk::real& d ){ return d += s; } );
+      return *this;
+    }
+    //! Operator +
+    //! \param[in] rhs DataLayout object to add
+    //! \return Copy of DataLayout object after rhs has been multiplied with
+    //! \details Implemented in terms of compound operator+=
+    //! \author J. Bakosi
+    DataLayout< Layout > operator+ ( const DataLayout< Layout >& rhs )
+    const { return DataLayout< Layout >( *this ) += rhs; }
+
+    //! Compound operator*=
+    //! \param[in] rhs DataLayout object to multiply with
+    //! \return Reference to ourselves after multiplication
+    //! \author J. Bakosi
+    DataLayout< Layout >& operator*= ( const DataLayout< Layout >& rhs ) {
+      Assert( rhs.nunk() == m_nunk, "Incorrect number of unknowns" );
+      Assert( rhs.nprop() == m_nprop, "Incorrect number of unknowns" );
+      std::transform( rhs.data().begin(), rhs.data().end(),
+                      m_vec.begin(), m_vec.begin(),
+                      []( tk::real s, tk::real& d ){ return d *= s; } );
+      return *this;
+    }
+    //! Operator *
+    //! \param[in] rhs DataLayout object to multiply with
+    //! \return Copy of DataLayout object after rhs has been multiplied with
+    //! \details Implemented in terms of compound operator*=
+    //! \author J. Bakosi
+    DataLayout< Layout > operator* ( const DataLayout< Layout >& rhs )
+    const { return DataLayout< Layout >( *this ) *= rhs; }
 
     //! Add new unknown
     //! \param[in] prop Vector of properties to initialize the new unknown with
