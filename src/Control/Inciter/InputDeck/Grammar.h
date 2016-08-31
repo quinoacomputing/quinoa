@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Mon 29 Aug 2016 02:10:56 PM MDT
+  \date      Tue 30 Aug 2016 11:00:22 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Inciter's input deck grammar definition
   \details   Inciter's input deck grammar definition. We use the Parsing
@@ -78,16 +78,16 @@ namespace deck {
   template< class eq >
   struct check_eq : pegtl::action_base< check_eq< eq > > {
     static void apply( const std::string& value, Stack& stack ) {
-     // Error out if no dependent variable has been selected
-     const auto& depvar = stack.get< tag::param, eq, tag::depvar >();
-     if (depvar.empty() || depvar.size() != neq.get< eq >())
-       tk::grm::Message< Stack, tk::grm::ERROR, tk::grm::MsgKey::NODEPVAR >
-                       ( stack, value );
-     // Error out if no number of components has been selected
-     const auto& ncomp = stack.get< tag::component, eq >();
-     if (ncomp.empty() || ncomp.size() != neq.get< eq >())
-       tk::grm::Message< Stack, tk::grm::ERROR, tk::grm::MsgKey::NONCOMP >
-                       ( stack, value );
+      // Error out if no dependent variable has been selected
+      const auto& depvar = stack.get< tag::param, eq, tag::depvar >();
+      if (depvar.empty() || depvar.size() != neq.get< eq >())
+        tk::grm::Message< Stack, tk::grm::ERROR, tk::grm::MsgKey::NODEPVAR >
+                        ( stack, value );
+      // Error out if no number of components has been selected
+      const auto& ncomp = stack.get< tag::component, eq >();
+      if (ncomp.empty() || ncomp.size() != neq.get< eq >())
+        tk::grm::Message< Stack, tk::grm::ERROR, tk::grm::MsgKey::NONCOMP >
+                        ( stack, value );
       // Error out if no test problem has been selected
       const auto& problem = stack.get< tag::param, eq, tag::problem >();
       if (problem.empty() || problem.size() != neq.get< eq >())
@@ -105,12 +105,16 @@ namespace deck {
   template< class eq >
   struct check_transport : pegtl::action_base< check_transport< eq > > {
     static void apply( const std::string& value, Stack& stack ) {
+      // Error out if no dependent variable has been selected
+      auto& depvar = stack.get< tag::param, eq, tag::depvar >();
+      if (depvar.empty() || depvar.size() != neq.get< eq >())
+        depvar.push_back( 'c' );
       // If no number of components has been selected, default to 1
-      const auto& ncomp = stack.get< tag::component, eq >();
+      auto& ncomp = stack.get< tag::component, eq >();
       if (ncomp.empty() || ncomp.size() != neq.get< eq >())
-        stack.get< tag::component, eq >().push_back( 1 );
+        ncomp.push_back( 1 );
       // If physics type is not given, default to 'advection'
-      auto& physics = stack.get< tag::param, eq, tag::advection >();
+      auto& physics = stack.get< tag::param, eq, tag::physics >();
       if (physics.empty() || physics.size() != neq.get< eq >())
         physics.push_back( ctr::PhysicsType::ADVECTION );
       // If problem type is not given, error out
@@ -302,7 +306,7 @@ namespace deck {
                            pde_parameter_vector< kw::pde_u0,
                                                  tag::transport,
                                                  tag::u0 > >,
-           check_errors< tag::transport, check_eq > > {};
+           check_errors< tag::transport, check_transport > > {};
 
   //! Poisson partial differential equation for a scalar
   struct poisson :

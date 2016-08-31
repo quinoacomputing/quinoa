@@ -2,7 +2,7 @@
 /*!
   \file      src/PDE/PDEStack.C
   \author    J. Bakosi
-  \date      Mon 29 Aug 2016 01:02:10 PM MDT
+  \date      Tue 30 Aug 2016 11:09:01 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Stack of partial differential equations
   \details   This file defines class PDEStack, which implements various
@@ -200,15 +200,20 @@ PDEStack::infoTransport( std::map< ctr::PDEType, ncomp_t >& cnt ) const
     g_inputdeck.get< tag::component >().offset< tag::transport >(c) ) );
   auto ncomp = g_inputdeck.get< tag::component >().get< tag::transport >()[c];
   info.emplace_back( "number of components", std::to_string( ncomp ) );
-  info.emplace_back( "coeff diffusivity [" + std::to_string( ncomp ) + "]",
-    parameters(
-      g_inputdeck.get< tag::param, tag::transport, tag::diffusivity >().at(c) ) );
-  info.emplace_back( "coeff u0 [" + std::to_string( ncomp ) + "]",
-    parameters(
-      g_inputdeck.get< tag::param, tag::transport, tag::u0 >().at(c) ) );
-  info.emplace_back( "coeff lambda [" + std::to_string( ncomp ) + "]",
-    parameters(
-      g_inputdeck.get< tag::param, tag::transport, tag::lambda >().at(c) ) );
+  const auto& diff =
+     g_inputdeck.get< tag::param, tag::transport, tag::diffusivity >();
+  if (diff.size() > c)
+    info.emplace_back( "coeff diffusivity [" + std::to_string( ncomp ) + "]",
+                       parameters( diff[c] ) );
+  const auto& u0 = g_inputdeck.get< tag::param, tag::transport, tag::u0 >();
+  if (u0.size() > c)
+    info.emplace_back( "coeff u0 [" + std::to_string( ncomp ) + "]",
+                       parameters( u0[c] ) );
+  const auto& lambda =
+    g_inputdeck.get< tag::param, tag::transport, tag::lambda >();
+  if (lambda.size() > c)
+    info.emplace_back( "coeff lambda [" + std::to_string( ncomp ) + "]",
+      parameters( lambda[c] ) );
 
   return info;
 }
