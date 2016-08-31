@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/CommonGrammar.h
   \author    J. Bakosi
-  \date      Thu 25 Aug 2016 11:43:05 AM MDT
+  \date      Tue 30 Aug 2016 10:53:00 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Generic, low-level grammar, re-used by specific grammars
   \details   Generic, low-level grammar. We use the [Parsing Expression Grammar
@@ -148,11 +148,11 @@ namespace grm {
     { MsgKey::NODEPVAR, "Dependent variable not specified within the block "
       "preceding this position. This is mandatory for the preceding block. Use "
       "the keyword 'depvar' to specify the dependent variable." },
-    { MsgKey::NONCOMP, "The number of components has not specified within the "
+    { MsgKey::NONCOMP, "The number of components has not been specified in the "
       "block preceding this position. This is mandatory for the preceding "
       "block. Use the keyword 'ncomp' to specify the number of components." },
-    { MsgKey::NORNG, "The random number generator has not specified within the "
-      "block preceding this position. This is mandatory for the preceding "
+    { MsgKey::NORNG, "The random number generator has not been specified in "
+      "the block preceding this position. This is mandatory for the preceding "
       "block. Use the keyword 'rng' to specify the random number generator." },
     { MsgKey::NOINIT, "No initialization policy has been specified within the "
       "block preceding this position. This is mandatory for the preceding "

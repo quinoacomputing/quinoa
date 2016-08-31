@@ -230,27 +230,19 @@ class Transport {
 
         // add mass contribution to right hand side
         for (ncomp_t c=0; c<m_ncomp; ++c)
-          for (std::size_t j=0; j<4; ++j) {
-            R.var(r[c],N[0]) += mass[0][j] * u[c][j];
-            R.var(r[c],N[1]) += mass[1][j] * u[c][j];
-            R.var(r[c],N[2]) += mass[2][j] * u[c][j];
-            R.var(r[c],N[3]) += mass[3][j] * u[c][j];
-          }
+          for (std::size_t i=0; i<4; ++i)
+            for (std::size_t j=0; j<4; ++j)
+              R.var(r[c],N[j]) += mass[j][i] * u[c][i];
 
         // add advection contribution to right hand side
+        tk::real a = mult * dt;
         for (ncomp_t c=0; c<m_ncomp; ++c)
-          for (std::size_t j=0; j<4; ++j)
-            for (std::size_t k=0; k<3; ++k)
-              for (std::size_t l=0; l<4; ++l) {
-                R.var(r[c],N[0]) -= mult * dt * mass[0][j] * vel[c][k][j]
-                                         * grad[l][k] * s[c][l];
-                R.var(r[c],N[1]) -= mult * dt * mass[1][j] * vel[c][k][j]
-                                         * grad[l][k] * s[c][l];
-                R.var(r[c],N[2]) -= mult * dt * mass[2][j] * vel[c][k][j]
-                                         * grad[l][k] * s[c][l];
-                R.var(r[c],N[3]) -= mult * dt * mass[3][j] * vel[c][k][j]
-                                         * grad[l][k] * s[c][l];
-              }
+          for (std::size_t i=0; i<4; ++i)
+            for (std::size_t j=0; j<4; ++j)
+              for (std::size_t k=0; k<3; ++k)
+                for (std::size_t l=0; l<4; ++l)
+                  R.var(r[c],N[j]) -= a * mass[j][i] * vel[c][k][i]
+                                        * grad[l][k] * s[c][l];
 
         // add diffusion contribution to right hand side
         Physics::diffusionRhs( m_c, m_ncomp, mult, dt, J, N, grad, s, r, R );

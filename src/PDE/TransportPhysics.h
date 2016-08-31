@@ -88,13 +88,10 @@ class TransportPhysicsAdvDiff {
       // add diffusion contribution to right hand side
       for (ncomp_t c=0; c<ncomp; ++c) {
         tk::real a = mult * dt * diff[c] * J;
-        for (std::size_t j=0; j<4; ++j)
-          for (std::size_t k=0; k<3; ++k) {
-            R.var(r[c],N[0]) -= a * grad[0][k] * grad[j][k] * s[c][j];
-            R.var(r[c],N[1]) -= a * grad[1][k] * grad[j][k] * s[c][j];
-            R.var(r[c],N[2]) -= a * grad[2][k] * grad[j][k] * s[c][j];
-            R.var(r[c],N[3]) -= a * grad[3][k] * grad[j][k] * s[c][j];
-          }
+        for (std::size_t i=0; i<4; ++i)
+          for (std::size_t j=0; j<4; ++j)
+            for (std::size_t k=0; k<3; ++k)
+              R.var(r[c],N[j]) -= a * grad[j][k] * grad[i][k] * s[c][i];
       }
     }
 
