@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Carrier.C
   \author    J. Bakosi
-  \date      Mon 29 Aug 2016 03:47:21 PM MDT
+  \date      Thu 01 Sep 2016 07:43:43 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Carrier advances a system of transport equations
   \details   Carrier advances a system of transport equations. There are a
@@ -78,6 +78,7 @@ Carrier::Carrier( const TransporterProxy& transporter,
   m_transporter( transporter ),
   m_linsysmerger( lsm ),
   m_particlewriter( pw ),
+  m_fluxcorrector(),
   m_cid( cid ),
   m_el( tk::global2local( conn ) ),     // fills m_inpoel and m_gid
   m_lid(),
@@ -1021,7 +1022,8 @@ Carrier::updateSolution( const std::vector< std::size_t >& gid,
     if (m_stage < 1) {
       m_uf = m_un;
     } else {
-      m_up = m_u;
+      m_up = m_u;       // save time n solution for particle update
+      m_fluxcorrector.fct( m_coord, m_inpoel, m_u, m_un );
       m_u = m_un;
     }
 

@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Carrier.h
   \author    J. Bakosi
-  \date      Tue 16 Aug 2016 09:23:38 AM MDT
+  \date      Wed 31 Aug 2016 10:15:25 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Carrier advances a system of transport equations
   \details   Carrier advances a system of transport equations. There are a
@@ -30,6 +30,7 @@
 #include "DerivedData.h"
 #include "VectorReducer.h"
 #include "MeshNodeMerger.h"
+#include "FluxCorrector.h"
 #include "Inciter/InputDeck/InputDeck.h"
 
 #include "NoWarning/transporter.decl.h"
@@ -56,7 +57,7 @@ class Carrier : public CBase_Carrier {
   public:
     //! Constructor
     explicit
-      Carrier( const CProxy_Transporter& transporter,
+      Carrier( const TransporterProxy& transporter,
                const LinSysMergerProxy& lsm,
                const ParticleWriterProxy& pw,
                const std::vector< std::size_t >& conn,
@@ -152,6 +153,7 @@ class Carrier : public CBase_Carrier {
       p | m_transporter;
       p | m_linsysmerger;
       p | m_particlewriter;
+      p | m_fluxcorrector;
       p | m_cid;
       p | m_el;
       if (p.isUnpacking()) {
@@ -193,6 +195,7 @@ class Carrier : public CBase_Carrier {
     TransporterProxy m_transporter;      //!< Transporter proxy
     LinSysMergerProxy m_linsysmerger;    //!< Linear system merger proxy
     ParticleWriterProxy m_particlewriter;//!< Particle writer proxy
+    FluxCorrector m_fluxcorrector;       //!< Flux corrector performing FCT
     //! \brief Map associating old node IDs (as in file) to new node IDs (as in
     //!   producing contiguous-row-id linear system contributions)
     std::unordered_map< std::size_t, std::size_t > m_cid;

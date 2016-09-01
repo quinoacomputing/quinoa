@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Keywords.h
   \author    J. Bakosi
-  \date      Mon 29 Aug 2016 02:14:52 PM MDT
+  \date      Thu 01 Sep 2016 08:03:53 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Definition of all keywords
   \details   This file contains the definition of all keywords, including those
@@ -2801,6 +2801,27 @@ struct pde_p0_info {
   };
 };
 using pde_p0 = keyword< pde_p0_info, p,'0' >;
+
+struct ctau_info {
+  static std::string name() { return "ctau"; }
+  static std::string shortDescription() { return
+    R"(Set FCT mass diffusion coefficient, ctau)"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to set the mass diffusion coefficient used in
+    flux-corrected transport, used for integrating transport equations. Example:
+    "ctau 1.0".)"; }
+  struct expect {
+    using type = tk::real;
+    static constexpr type lower = 0.0;
+    static constexpr type upper = 1.0;
+    static std::string description() { return "real"; }
+    static std::string choices() {
+      return "real between [" + std::to_string(lower) + "..." +
+             std::to_string(upper) + "]";
+    }
+  };
+};
+using ctau = keyword< ctau_info, c,t,a,u >;
 
 struct transport_info {
   static std::string name() { return "Transport"; }

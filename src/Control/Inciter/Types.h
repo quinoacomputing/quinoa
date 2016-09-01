@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/Types.h
   \author    J. Bakosi
-  \date      Mon 29 Aug 2016 12:50:40 PM MDT
+  \date      Thu 01 Sep 2016 08:01:06 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Types for Incitier's parsers
   \details   Types for Incitier's parsers. This file defines the components of
@@ -37,7 +37,8 @@ using discretization = tk::tuple::tagged_tuple<
   tag::nstep,     kw::nstep::info::expect::type, //!< Number of time steps
   tag::term,      kw::term::info::expect::type,  //!< Time to terminate
   tag::t0,        kw::t0::info::expect::type,    //!< Starting time
-  tag::dt,        kw::dt::info::expect::type     //!< Size of time step
+  tag::dt,        kw::dt::info::expect::type,    //!< Size of time step
+  tag::ctau,      kw::ctau::info::expect::type   //!< FCT mass diffisivity
 >;
 
 //! ASCII output floating-point precision in digits

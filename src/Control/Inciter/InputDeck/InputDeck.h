@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Mon 29 Aug 2016 02:37:02 PM MDT
+  \date      Thu 01 Sep 2016 08:04:49 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Inciter's input deck definition
   \details   This file defines the heterogeneous stack that is used for storing
@@ -104,6 +104,7 @@ class InputDeck :
                                        kw::pde_beta,
                                        kw::pde_p0,
                                        kw::laplace,
+                                       kw::ctau,
                                        kw::depvar >;
                                      
     //! \brief Constructor: set defaults
@@ -118,6 +119,7 @@ class InputDeck :
          ( std::numeric_limits< kw::term::info::expect::type >::max() );
       set< tag::discr, tag::t0 >( 0.0 );
       set< tag::discr, tag::dt >( 0.5 );
+      set< tag::discr, tag::ctau >( 1.0 );
       // Default txt floating-point output precision in digits
       set< tag::prec, tag::diag >( std::cout.precision() );
       // Default intervals
