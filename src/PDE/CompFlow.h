@@ -2,7 +2,7 @@
 /*!
   \file      src/PDE/CompFlow.h
   \author    J. Bakosi
-  \date      Mon 29 Aug 2016 03:07:37 PM MDT
+  \date      Thu 01 Sep 2016 08:20:55 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Governing equations describing compressible single-phase flow
   \details   This file implements the time integration of the equations
@@ -15,6 +15,7 @@
 #include <algorithm>
 
 #include "Macro.h"
+#include "Keywords.h"
 #include "CompFlowPhysics.h"
 #include "CompFlowProblem.h"
 
@@ -181,18 +182,16 @@ class CompFlow {
 
         // construct tetrahedron element-level matrices
 
-        // consistent mass
-        std::array< std::array< tk::real, 4 >, 4 > mass;  // nnode*nnode [4][4]
-        // diagonal
-        mass[0][0] = mass[1][1] = mass[2][2] = mass[3][3] = J/60.0;
-        // off-diagonal
-        mass[0][1] = mass[0][2] = mass[0][3] =
+        // consistent mass, nnode*nnode [4][4]
+        std::array< std::array< tk::real, 4 >, 4 > mass;
+        mass[0][0] = mass[1][1] = mass[2][2] = mass[3][3] = J/60.0;  // diagonal
+        mass[0][1] = mass[0][2] = mass[0][3] =                   // off-diagonal
         mass[1][0] = mass[1][2] = mass[1][3] =
         mass[2][0] = mass[2][1] = mass[2][3] =
         mass[3][0] = mass[3][1] = mass[3][2] = J/120.0;
 
-        // shape function derivatives
-        std::array< std::array< tk::real, 3 >, 4 > grad;  // nnode*ndim [4][3]
+        // shape function derivatives, nnode*ndim [4][3]
+        std::array< std::array< tk::real, 3 >, 4 > grad;
         grad[1] = tk::crossdiv( ca, da, J );
         grad[2] = tk::crossdiv( da, ba, J );
         grad[3] = tk::crossdiv( ba, ca, J );

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Tue 30 Aug 2016 11:00:22 AM MDT
+  \date      Thu 01 Sep 2016 08:02:11 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Inciter's input deck grammar definition
   \details   Inciter's input deck grammar definition. We use the Parsing
@@ -199,6 +199,7 @@ namespace deck {
                      tk::grm::discr< Stack, use< kw::term >, tag::term >,
                      tk::grm::discr< Stack, use< kw::t0 >, tag::t0 >,
                      tk::grm::discr< Stack, use< kw::dt >, tag::dt >,
+                     tk::grm::discr< Stack, use< kw::ctau >, tag::ctau >,
                      tk::grm::interval< Stack, use< kw::ttyi >, tag::tty > > {};
 
   //! PDE parameter vector
