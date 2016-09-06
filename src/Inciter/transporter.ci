@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/transporter.ci
   \author    J. Bakosi
-  \date      Tue 16 Aug 2016 09:14:39 AM MDT
+  \date      Tue 06 Sep 2016 10:53:19 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ module interface file for Transporter
   \details   Charm++ module interface file for Transporter
@@ -78,11 +78,10 @@ module transporter {
       // been done.
       //
       // Collecting diagnostics is optional, i.e., it does not happen every time
-      // step. If diagnostics are collected trigger_diag_complete() is signaled
-      // from the reduction target, Transporter::diagnostics(). If diagnostics
-      // are not collected in a time step, collection is skipped, and
-      // trigger_diag_complete() is signaled from the shortcut function,
-      // Transporter::diagcomplete().
+      // step. If diagnostics are collected diag_complete() is signaled from the
+      // reduction target, Transporter::diagnostics(). If diagnostics are not
+      // collected in a time step, collection is skipped, and diag_complete() is
+      // signaled from the shortcut function, Transporter::diagcomplete().
       //
       // Similar to diagnostics output, particle output is also optional and
       // does not happen every time step. The Charm++ reduction target
@@ -93,29 +92,28 @@ module transporter {
       // Carrier::out(). Either way, the above DAG and its logic remains the
       // same.
 
-      entry void wait4init()
-      { when trigger_row_complete(),
-             trigger_msum_complete() serial "init"
-        { m_carrier.init( m_dt ); } };
+      entry void wait4init() {
+        when row_complete(), msum_complete() serial "init" {
+          m_carrier.init( m_dt ); } };
 
-      entry void wait4parcom()
-      { when trigger_parcom_complete() serial "recvpar"
-        { m_carrier.out(); } };
+      entry void wait4parcom() {
+        when parcom_complete() serial "recvpar" {
+          m_carrier.out(); } };
 
-      entry void wait4npar()
-      { when trigger_npar_complete() serial "par"
-        { m_carrier.doWriteParticles(); } };
+      entry void wait4npar() {
+        when npar_complete() serial "par" {
+          m_carrier.doWriteParticles(); } };
 
-      entry void wait4eval()
-      { when trigger_out_complete(), trigger_diag_complete() serial "eval"
-        { evaluateTime(); } };
+      entry void wait4eval() {
+        when out_complete(), diag_complete() serial "eval" {
+          evaluateTime(); } };
 
-      entry void trigger_row_complete();
-      entry void trigger_msum_complete();
-      entry void trigger_parcom_complete();
-      entry void trigger_npar_complete();
-      entry void trigger_out_complete();
-      entry void trigger_diag_complete();
+      entry void row_complete();
+      entry void msum_complete();
+      entry void parcom_complete();
+      entry void npar_complete();
+      entry void out_complete();
+      entry void diag_complete();
     }
 
   } // inciter::
