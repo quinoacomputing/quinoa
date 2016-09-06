@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/FluxCorrector.C
   \author    J. Bakosi
-  \date      Fri 02 Sep 2016 09:58:52 AM MDT
+  \date      Tue 06 Sep 2016 12:27:30 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     FluxCorrector performs limiting for transport equations
   \details   FluxCorrector performs limiting for transport equations. There is a
@@ -43,8 +43,8 @@ FluxCorrector::aec( const std::array< std::vector< tk::real >, 3 >& coord,
                     const tk::MeshNodes& Un,
                     const tk::MeshNodes& Uh )
 // *****************************************************************************
-//  Compute antidiffusive element contributions
-//! \details The antidiffusive element contributions are computed as the
+//  Compute antidiffusive element contributions (AEC)
+//! \details The antidiffusive element contributions (AEC) are computed as the
 //!   difference between the high and low order solution, where the high order
 //!   solution is consistent mass Taylor-Galerkin and the low order solution is
 //!   lumped mass Taylor-Galerkin + diffusion.

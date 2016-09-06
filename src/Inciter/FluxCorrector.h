@@ -42,7 +42,7 @@ class FluxCorrector {
                      std::vector< std::size_t > >& esup() const
     { return m_esup; }
 
-    //! Compute antidiffusive element contributions
+    //! Compute antidiffusive element contributions (AEC)
     tk::MeshNodes
     aec( const std::array< std::vector< tk::real >, 3 >& coord,
          const std::vector< std::size_t >& inpoel,
