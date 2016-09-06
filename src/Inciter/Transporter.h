@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Transporter.h
   \author    J. Bakosi
-  \date      Tue 16 Aug 2016 09:14:10 AM MDT
+  \date      Tue 06 Sep 2016 10:53:33 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Transporter drives the time integration of transport equations
   \details   Transporter drives the time integration of transport equations.
@@ -143,7 +143,7 @@ class Transporter : public CBase_Transporter {
     void rowcomplete();
 
     //! \brief Reduction target indicating ...
-    void msumcomplete() { trigger_msum_complete(); }
+    void msumcomplete() { msum_complete(); }
 
     //! Reduction target initiating verification of the boundary conditions set
     void verifybc( CkReductionMsg* msg );
@@ -157,10 +157,10 @@ class Transporter : public CBase_Transporter {
 
     //! \brief Reduction target indicating that all workers have sent their
     //!   number of particles to be output
-    void nparcomplete() { trigger_npar_complete(); }
+    void nparcomplete() { npar_complete(); }
 
     //! Reduction target indicating the particle communication is complete
-    void parcomcomplete() { trigger_parcom_complete(); }
+    void parcomcomplete() { parcom_complete(); }
 
     //! \brief Reduction target optionally collecting diagnostics, e.g.,
     //!   residuals, from all Carrier chares
@@ -168,13 +168,13 @@ class Transporter : public CBase_Transporter {
 
     //! \brief Reduction target indicating that Carrier chares contribute no
     //!    diagnostics and we ready to output the one-liner report
-    void diagcomplete() { trigger_diag_complete(); }
+    void diagcomplete() { diag_complete(); }
 
     //! \brief Reduction target indicating that all particles writers have
     //!   finished outputing particles to file
     //! \details This function is a Charm++ reduction target that is called when
     //!   all carrier chares have finished communicating particles
-    void outcomplete() { trigger_out_complete(); }
+    void outcomplete() { out_complete(); }
 
     //! \brief Reduction target indicating that the linear system mergers are
     //!   ready for the next time step

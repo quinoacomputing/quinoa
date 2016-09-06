@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Transporter.C
   \author    J. Bakosi
-  \date      Fri 02 Sep 2016 03:27:24 PM MDT
+  \date      Tue 06 Sep 2016 10:53:43 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Transporter drives the time integration of transport equations
   \details   Transporter drives the time integration of transport equations.
@@ -276,7 +276,7 @@ Transporter::rowcomplete()
 // *****************************************************************************
 {
   m_linsysmerger.rowsreceived();
-  trigger_row_complete();
+  row_complete();
 }
 
 void
@@ -368,7 +368,7 @@ Transporter::diagnostics( tk::real* d, std::size_t n )
   // Finish computing diagnostics, i.e., divide sums by the number of samples
   for (std::size_t i=0; i<m_diag.size(); ++i) m_diag[i] = d[i] / m_npoin;
 
-  trigger_diag_complete();
+  diag_complete();
 }
 
 void
