@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Transporter.C
   \author    J. Bakosi
-  \date      Mon 29 Aug 2016 02:43:33 PM MDT
+  \date      Fri 02 Sep 2016 03:27:24 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Transporter drives the time integration of transport equations
   \details   Transporter drives the time integration of transport equations.
@@ -333,7 +333,7 @@ Transporter::doverifybc( CkReductionMsg* msg )
 
   m_print.diag( "Boundary conditions verified" );
 
-  m_linsysmerger.trigger_ver_complete();
+  m_linsysmerger.ver_complete(); m_linsysmerger.ver_complete();
 }
 
 void

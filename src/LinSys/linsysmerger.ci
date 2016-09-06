@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/linsysmerger.ci
   \author    J. Bakosi
-  \date      Tue 16 Aug 2016 09:20:38 AM MDT
+  \date      Fri 02 Sep 2016 03:23:29 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ module interface file for merging a linear system
   \details   Charm++ module interface file for merging a linear system
@@ -58,6 +58,12 @@ module linsysmerger {
       entry void addrhs( int fromch,
                          const std::map< std::size_t,
                                          std::vector< tk::real > >& rhs );
+      entry void adddiff( int fromch,
+                            const std::map< std::size_t,
+                                            std::vector< tk::real > >& diff );
+      entry void addlump( int fromch,
+                            const std::map< std::size_t,
+                                            std::vector< tk::real > >& mass );
       entry void rowsreceived();
 
       // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
@@ -126,9 +132,9 @@ module linsysmerger {
       // worker. While the VerBCs optional code path only happens in DEBUG mode,
       // the code path does block on HypreLhs as well as on HypreRhs, which
       // cannot proceed until VerBCs is finished. This is facilitated by
-      // 'trigger_ver_bc' which is only true by default, set in the constructor
-      // only in RELEASE mode; in DEBUG mode it must be triggered by
-      // host::doverifybc(), which is the last step of verifying the BCs.
+      // 'ver_complete' which is true by default, set in the constructor only in
+      // RELEASE mode; in DEBUG mode it must be triggered by host::doverifybc(),
+      // which is the last step of verifying the BCs.
       //
       // Once the row IDs are contributed, we then continue by all worker chares
       // contributing their portion of the solution (unknown) vector, the
@@ -168,71 +174,68 @@ module linsysmerger {
       // Note that Sol and Upd are both partial synchronization points, since
       // they can happen at different times on different CPUs.
 
-      entry void wait4row()
-      { when trigger_row_complete(), trigger_bc_complete() serial "row"
-        { signal2host_row_complete( m_host ); } };
+      entry void wait4row() {
+        when row_complete(), bc_complete() serial "row" {
+          signal2host_row_complete( m_host ); } };
 
-      entry void wait4lhsbc()
-      { when trigger_lhs_complete(), trigger_bcval_complete() serial "lhsbc"
-        { lhsbc(); } };
-      entry void wait4rhsbc()
-      { when trigger_rhs_complete(), trigger_bcval_complete() serial "rhsbc"
-        { rhsbc(); } };
+      entry void wait4lhsbc() {
+        when lhs_complete(), bcval_complete() serial "lhsbc" { lhsbc(); } };
+      entry void wait4rhsbc() {
+        when rhs_complete(), bcval_complete() serial "rhsbc" { rhsbc(); } };
 
-      entry void wait4sol()
-      { when trigger_sol_complete() serial "hypresol" { hypresol(); } };
-      entry void wait4lhs()
-      { when trigger_lhs_complete(),
-             trigger_lhsbc_complete(),
-             trigger_ver_complete() serial "hyprelhs" { hyprelhs(); } };
-      entry void wait4rhs()
-      { when trigger_rhs_complete(),
-             trigger_rhsbc_complete(),
-             trigger_ver_complete() serial "hyprerhs" { hyprerhs(); } };
+      entry void wait4sol() {
+        when sol_complete() serial "hypresol" { hypresol(); } };
+      entry void wait4lhs() {
+        when lhs_complete(), lhsbc_complete(), ver_complete() serial "hyprelhs"{
+          hyprelhs(); } };
+      entry void wait4rhs() {
+        when rhs_complete(), rhsbc_complete(), ver_complete() serial "hyprerhs"{
+          hyprerhs(); } };
+      entry void wait4loworder() {
+        when rhs_complete(), sol_complete(), diff_complete(), lump_complete()
+        serial "lowsolve" { lowsolve(); } };
 
-      entry void wait4hypresol()
-      { when trigger_hypresol_complete(),
-             trigger_hyprerow_complete() serial "sol" { sol(); } };
-      entry void wait4hyprelhs()
-      { when trigger_hyprelhs_complete(),
-             trigger_hyprerow_complete() serial "lhs" { lhs(); } };
-      entry void wait4hyprerhs()
-      { when trigger_hyprerhs_complete(),
-             trigger_hyprerow_complete() serial "rhs" { rhs(); } };
+      entry void wait4hypresol() {
+        when hypresol_complete(), hyprerow_complete() serial "sol" { sol(); } };
+      entry void wait4hyprelhs() {
+        when hyprelhs_complete(), hyprerow_complete() serial "lhs" { lhs(); } };
+      entry void wait4hyprerhs() {
+        when hyprerhs_complete(), hyprerow_complete() serial "rhs" { rhs(); } };
 
-      entry void wait4fillsol()
-      { when trigger_fillsol_complete() serial "asmsol" { assemblesol(); } };
-      entry void wait4filllhs()
-      { when trigger_filllhs_complete() serial "asmlhs" { assemblelhs(); } };
-      entry void wait4fillrhs()
-      { when trigger_fillrhs_complete() serial "asmrhs" { assemblerhs(); } };
+      entry void wait4fillsol() {
+        when fillsol_complete() serial "asmsol" { assemblesol(); } };
+      entry void wait4filllhs() {
+        when filllhs_complete() serial "asmlhs" { assemblelhs(); } };
+      entry void wait4fillrhs() {
+        when fillrhs_complete() serial "asmrhs" { assemblerhs(); } };
 
       entry void wait4asm() {
-        when trigger_asmsol_complete(),
-             trigger_asmlhs_complete(),
-             trigger_asmrhs_complete()
-        serial "solve" { solve(); }
-      };
+        when asmsol_complete(), asmlhs_complete(), asmrhs_complete(),
+             lowsolve_complete()
+        serial "solve" { solve(); } };
 
-      entry void trigger_row_complete();
-      entry void trigger_bc_complete();
-      entry void trigger_bcval_complete();
-      entry void trigger_lhsbc_complete();
-      entry void trigger_rhsbc_complete();
-      entry void trigger_ver_complete();
-      entry void trigger_hyprerow_complete();
-      entry void trigger_lhs_complete();
-      entry void trigger_rhs_complete();
-      entry void trigger_sol_complete();
-      entry void trigger_hyprelhs_complete();
-      entry void trigger_hyprerhs_complete();
-      entry void trigger_hypresol_complete();
-      entry void trigger_filllhs_complete();
-      entry void trigger_fillrhs_complete();
-      entry void trigger_fillsol_complete();
-      entry void trigger_asmlhs_complete();
-      entry void trigger_asmrhs_complete();
-      entry void trigger_asmsol_complete();
+      entry void row_complete();
+      entry void bc_complete();
+      entry void bcval_complete();
+      entry void lhsbc_complete();
+      entry void rhsbc_complete();
+      entry void ver_complete();
+      entry void hyprerow_complete();
+      entry void lhs_complete();
+      entry void rhs_complete();
+      entry void sol_complete();
+      entry void diff_complete();
+      entry void lump_complete();
+      entry void hyprelhs_complete();
+      entry void hyprerhs_complete();
+      entry void hypresol_complete();
+      entry void filllhs_complete();
+      entry void fillrhs_complete();
+      entry void fillsol_complete();
+      entry void asmlhs_complete();
+      entry void asmrhs_complete();
+      entry void asmsol_complete();
+      entry void lowsolve_complete();
     };
 
   } // tk::
