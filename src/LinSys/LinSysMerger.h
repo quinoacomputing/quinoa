@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/LinSysMerger.h
   \author    J. Bakosi
-  \date      Tue 16 Aug 2016 09:17:44 AM MDT
+  \date      Mon 05 Sep 2016 03:13:27 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ chare linear system merger group to solve a linear system
   \details   Charm++ chare linear system merger group used to collect and
@@ -211,10 +211,14 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       m_solimport(),
       m_lhsimport(),
       m_rhsimport(),
+      m_diffimport(),
+      m_lumpimport(),
       m_row(),
       m_sol(),
       m_lhs(),
       m_rhs(),
+      m_diff(),
+      m_lump(),
       m_x(),
       m_A(),
       m_b(),
@@ -239,6 +243,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       wait4sol();
       wait4lhs();
       wait4rhs();
+      wait4loworder();
       wait4hypresol();
       wait4hyprelhs();
       wait4hyprerhs();
@@ -247,7 +252,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       wait4fillrhs();
       wait4asm();
       #ifdef NDEBUG     // skip verification of BCs in RELEASE mode
-      trigger_ver_complete();
+      ver_complete(); ver_complete();
       #endif
     }
 
@@ -300,12 +305,21 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       wait4hyprerhs();
       wait4fillrhs();
       wait4asm();
+      wait4loworder();
       m_rhsimport.clear();
+      m_diffimport.clear();
+      m_lumpimport.clear();
       m_rhs.clear();
+      m_diff.clear();
+      m_lump.clear();
       m_hypreRhs.clear();
-      trigger_asmsol_complete();
-      trigger_asmlhs_complete();
+      hyprerow_complete();
+      asmsol_complete();
+      asmlhs_complete();
+      ver_complete();
+      sol_complete();
       signal2host_advance( m_host );
+      querybcval();
     }
 
     //! Chares register on my PE
@@ -336,7 +350,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
         auto tope = static_cast< int >( p.first );
         Group::thisProxy[ tope ].addrow( fromch, CkMyPe(), p.second );
       }
-      if (rowcomplete()) trigger_row_complete();
+      if (rowcomplete()) row_complete();
     }
     //! Receive global row ids from fellow group branches
     //! \param[in] fromch Charm chare array index contribution coming from
@@ -352,7 +366,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
     //! Acknowledge received row ids
     void recrow() {
       --m_nperow;
-      if (rowcomplete()) trigger_row_complete();
+      if (rowcomplete()) row_complete();
     }
 
     //! Chares contribute their solution nonzero values
@@ -382,7 +396,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
         auto tope = static_cast< int >( p.first );
         Group::thisProxy[ tope ].addsol( fromch, p.second );
       }
-      if (solcomplete()) trigger_sol_complete();
+      if (solcomplete()) { sol_complete(); sol_complete(); }
     }
     //! Receive solution vector nonzeros from fellow group branches
     //! \param[in] fromch Charm chare array index contribution coming from
@@ -395,7 +409,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
         m_solimport[ fromch ].push_back( r.first );
         m_sol[ r.first ] = r.second;
       }
-      if (solcomplete()) trigger_sol_complete();
+      if (solcomplete()) { sol_complete(); sol_complete(); }
     }
 
     //! Chares contribute their matrix nonzero values
@@ -446,7 +460,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       // Export non-owned matrix rows values to fellow branches that own them
       for (const auto& p : exp)
         Group::thisProxy[ p.first ].addlhs( fromch, p.second );
-      if (lhscomplete()) trigger_lhs_complete();
+      if (lhscomplete()) { lhs_complete(); lhs_complete(); }
     }
     //! Receive matrix nonzeros from fellow group branches
     //! \param[in] fromch Charm chare array index contribution coming from
@@ -462,7 +476,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
         auto& row = m_lhs[ r.first ];
         for (const auto& c : r.second) row[ c.first ] += c.second;
       }
-      if (lhscomplete()) trigger_lhs_complete();
+      if (lhscomplete()) { lhs_complete(); lhs_complete(); }
     }
 
     //! Chares contribute their rhs nonzero values
@@ -490,7 +504,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
         auto tope = static_cast< int >( p.first );
         Group::thisProxy[ tope ].addrhs( fromch, p.second );
       }
-      if (rhscomplete()) trigger_rhs_complete();
+      if (rhscomplete()) { rhs_complete(); rhs_complete(); rhs_complete(); }
     }
     //! Receive+add right-hand side vector nonzeros from fellow group branches
     //! \param[in] fromch Charm chare array index contribution coming from
@@ -502,7 +516,89 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
         m_rhsimport[ fromch ].push_back( r.first );
         m_rhs[ r.first ] += r.second;
       }
-      if (rhscomplete()) trigger_rhs_complete();
+      if (rhscomplete()) { rhs_complete(); rhs_complete(); rhs_complete(); }
+    }
+
+    //! Chares contribute their mass diffusion rhs to low order system
+    //! \param[in] fromch Charm chare array index contribution coming from
+    //! \param[in] gid Global row indices of the vector contributed
+    //! \param[in] diff Portion of the mass diffusion rhs vector contributed
+    //! \note This function does not have to be declared as a Charm++ entry
+    //!   method since it is always called by chares on the same PE.
+    void charediff( int fromch,
+                    const std::vector< std::size_t >& gid,
+                    const MeshNodes& diff )
+    {
+      Assert( gid.size() == diff.nunk(),
+              "Size of mass diffusion rhs and row ID vectors must equal" );
+      // Store+add vector of nonzero values owned and pack those to be exported
+      std::map< int, std::map< std::size_t, std::vector< tk::real > > > exp;
+      for (std::size_t i=0; i<gid.size(); ++i)
+        if (gid[i] >= m_lower && gid[i] < m_upper) {  // if own
+          m_diffimport[ fromch ].push_back( gid[i] );
+          m_diff[ gid[i] ] += diff[i];
+        } else
+          exp[ pe(gid[i]) ][ gid[i] ] = diff[i];
+      // Export non-owned vector values to fellow branches that own them
+      for (const auto& p : exp) {
+        auto tope = static_cast< int >( p.first );
+        Group::thisProxy[ tope ].adddiff( fromch, p.second );
+      }
+      if (diffcomplete()) diff_complete();
+    }
+    //! Receive+add massdiffusion rhs vector nonzeros from fellow group branches
+    //! \param[in] fromch Charm chare array index contribution coming from
+    //! \param[in] diff Portion of the right-hand side vector contributed,
+    //!   containing global row indices and values
+    void adddiff( int fromch, const std::map< std::size_t,
+                                std::vector< tk::real > >& diff )
+    {
+      for (const auto& r : diff) {
+        m_diffimport[ fromch ].push_back( r.first );
+        m_diff[ r.first ] += r.second;
+      }
+      if (diffcomplete()) diff_complete();
+    }
+
+    //! Chares contribute their lumped mass lhs to low order system
+    //! \param[in] fromch Charm chare array index contribution coming from
+    //! \param[in] gid Global row indices of the vector contributed
+    //! \param[in] mass Portion of the lumped mass lhs vector contributed
+    //! \note This function does not have to be declared as a Charm++ entry
+    //!   method since it is always called by chares on the same PE.
+    void charelump( int fromch,
+                    const std::vector< std::size_t >& gid,
+                    const MeshNodes& mass )
+    {
+      Assert( gid.size() == mass.nunk(),
+              "Size of mass diffusion rhs and row ID vectors must equal" );
+      // Store+add vector of nonzero values owned and pack those to be exported
+      std::map< int, std::map< std::size_t, std::vector< tk::real > > > exp;
+      for (std::size_t i=0; i<gid.size(); ++i)
+        if (gid[i] >= m_lower && gid[i] < m_upper) {  // if own
+          m_lumpimport[ fromch ].push_back( gid[i] );
+          m_lump[ gid[i] ] += mass[i];
+        } else
+          exp[ pe(gid[i]) ][ gid[i] ] = mass[i];
+      // Export non-owned vector values to fellow branches that own them
+      for (const auto& p : exp) {
+        auto tope = static_cast< int >( p.first );
+        Group::thisProxy[ tope ].addlump( fromch, p.second );
+      }
+      if (lumpcomplete()) lump_complete();
+    }
+    //! Receive+add lumped mass lhs vector from fellow group branches
+    //! \param[in] fromch Charm chare array index contribution coming from
+    //! \param[in] mass Portion of the lumped mass lhs vector contributed,
+    //!   containing global row indices and values
+    void addlump( int fromch, const std::map< std::size_t,
+                                std::vector< tk::real > >& mass )
+    {
+      for (const auto& r : mass) {
+        m_lumpimport[ fromch ].push_back( r.first );
+        m_lump[ r.first ] += r.second;
+      }
+      if (lumpcomplete()) lump_complete();
     }
 
     //! Assert that all global row indices have been received on my PE
@@ -556,7 +652,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       PUP::fromMem creator( msg->getData() );
       creator | m_bc;
       delete msg;
-      trigger_bc_complete();
+      bc_complete();
     }
 
     //! Chares return old global node IDs
@@ -593,7 +689,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
           "components does not equal that of set in the BC data structure." );
         m_bcval[ n.first ] = n.second;
       }
-      if (--m_nchbcval == 0) trigger_bcval_complete();
+      if (--m_nchbcval == 0) { bcval_complete(); bcval_complete(); }
     }
 
     //! \brief Receive BC node/row IDs and values from all other PEs and zero
@@ -614,9 +710,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
                 it->second[ i ] = 0.0;
             }
       }
-      trigger_lhsbc_complete();
-      trigger_lhs_complete();
-      trigger_bcval_complete();
+      lhsbc_complete();
     }
 
     //! Compute diagnostics (residuals) and contribute them back to host
@@ -660,6 +754,12 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
     //! \brief Import map associating a list of global row ids to a worker chare
     //!   id during the communication of the righ-hand side vector
     std::map< int, std::vector< std::size_t > > m_rhsimport;
+    //! \brief Import map associating a list of global row ids to a worker chare
+    //!   id during the communication of the mass diffusion rhs vector
+    std::map< int, std::vector< std::size_t > > m_diffimport;
+    //! \brief Import map associating a list of global row ids to a worker chare
+    //!   id during the communication of the lumped mass lhs vector
+    std::map< int, std::vector< std::size_t > > m_lumpimport;
     //! Part of global row indices owned by my PE
     std::set< std::size_t > m_row;
     //! \brief Part of unknown/solution vector owned by my PE
@@ -675,6 +775,16 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
     //! \details Vector of values (for each scalar equation solved) associated
     //!   to global mesh point row ids
     std::map< std::size_t, std::vector< tk::real > > m_rhs;
+    //! \brief Part of mass diffusion right-hand side vector owned by my PE
+    //! \details Vector of values (for each scalar equation solved) associated
+    //!   to global mesh point row ids. This vector collects the mass diffusion
+    //!   terms to be added to the right-hand side for the low order solution.
+    std::map< std::size_t, std::vector< tk::real > > m_diff;
+    //! \brief Part of lumped mass left-hand side vector owned by my PE
+    //! \details Vector of values (for each scalar equation solved) associated
+    //!   to global mesh point row ids. This vector collects the nonzero values
+    //!   of the lumped mass matrix for the low order solution.
+    std::map< std::size_t, std::vector< tk::real > > m_lump;
     tk::hypre::HypreVector m_x; //!< Hypre vector to store the solution/unknowns
     tk::hypre::HypreMatrix m_A; //!< Hypre matrix to store the left-hand side
     tk::hypre::HypreVector m_b; //!< Hypre vector to store the right-hand side
@@ -774,6 +884,14 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
     //! \return True if all parts of the right-hand side vector have been
     //!   received
     bool rhscomplete() const { return m_rhsimport == m_rowimport; }
+    //! Check if our portion of the mass diffusion rhs vector values is complete
+    //! \return True if all parts of the mass diffusion rhs vector have been
+    //!   received
+    bool diffcomplete() const { return m_diffimport == m_rowimport; }
+    //! Check if our portion of the lumped mass lhs vector values is complete
+    //! \return True if all parts of the lumped mass lhs vector have been
+    //!   received
+    bool lumpcomplete() const { return m_lumpimport == m_rowimport; }
 
     //! Verify if the BCs we will set match the user's BCs
     //! \details This is only the first step: we send out queries to workers
@@ -795,7 +913,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
         std::iota( begin(h), end(h), r*m_ncomp+1 );
         m_hypreRows.insert( end(m_hypreRows), begin(h), end(h) );
       }
-      trigger_hyprerow_complete();
+      hyprerow_complete(); hyprerow_complete(); hyprerow_complete();
     }
 
     //! Collect boundary condition values from workers
@@ -855,9 +973,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
         for (std::size_t i=0; i<m_ncomp; ++i)
           if (b[i].first) row[i] = b[i].second;  // put in BC value
       }
-      trigger_rhsbc_complete();
-      trigger_rhs_complete();
-      trigger_bcval_complete();
+      rhsbc_complete();
     }
 
     //! Build Hypre data for our portion of the solution vector
@@ -873,7 +989,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
         m_lid[ r.first ] = i++;
         m_hypreSol.insert( end(m_hypreSol), begin(r.second), end(r.second) );
       }
-      trigger_hypresol_complete();
+      hypresol_complete();
     }
     //! Build Hypre data for our portion of the matrix
     //! \note Hypre only likes one-based indexing. Zero-based row indexing fails
@@ -894,8 +1010,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
           }
         }
       }
-      trigger_hyprelhs_complete();
-      trigger_ver_complete();
+      hyprelhs_complete();
     }
     //! Build Hypre data for our portion of the right-hand side vector
     void hyprerhs() {
@@ -907,8 +1022,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
               std::to_string(CkMyPe()) + ": cannot convert" );
       for (const auto& r : m_rhs)
         m_hypreRhs.insert( end(m_hypreRhs), begin(r.second), end(r.second) );
-      trigger_hyprerhs_complete();
-      trigger_ver_complete();
+      hyprerhs_complete();
     }
 
     //! Set our portion of values of the distributed solution vector
@@ -919,8 +1033,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       m_x.set( static_cast< int >( (m_upper - m_lower)*m_ncomp ),
                m_hypreRows.data(),
                m_hypreSol.data() );
-      trigger_fillsol_complete();
-      trigger_hyprerow_complete();
+      fillsol_complete();
     }
     //! Set our portion of values of the distributed matrix
     void lhs() {
@@ -932,8 +1045,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
                m_hypreRows.data(),
                m_hypreCols.data(),
                m_hypreMat.data() );
-      trigger_filllhs_complete();
-      trigger_hyprerow_complete();
+      filllhs_complete();
     }
     //! Set our portion of values of the distributed right-hand side vector
     void rhs() {
@@ -943,25 +1055,24 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       m_b.set( static_cast< int >( (m_upper - m_lower)*m_ncomp ),
                m_hypreRows.data(),
                m_hypreRhs.data() );
-      trigger_fillrhs_complete();
-      trigger_hyprerow_complete();
+      fillrhs_complete();
     }
 
     //! Assemble distributed solution vector
     void assemblesol() {
       m_x.assemble();
-      trigger_asmsol_complete();
+      asmsol_complete();
     }
     //! Assemble distributed matrix
     void assemblelhs() {
       m_A.assemble();
-      trigger_asmlhs_complete();
+      asmlhs_complete();
     }
     //! Assemble distributed right-hand side vector
     void assemblerhs() {
       m_b.assemble();
       //m_b.print( "rhs" );
-      trigger_asmrhs_complete();
+      asmrhs_complete();
     }
 
     //! Update solution vector in our PE's workers
@@ -994,10 +1105,33 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       }
     }
 
-    //! Solve linear system
+    //! Solve high order linear system
     void solve() {
       m_solver.solve( m_A, m_b, m_x );
       updateSolution();
+    }
+
+    //! Solve low order linear system
+    void lowsolve() {
+      Assert( rhscomplete(),
+              "Values of distributed right-hand-side vector on PE " +
+              std::to_string( CkMyPe() ) + " is incomplete: cannot solve low "
+              "order system" );
+      Assert( solcomplete(),
+              "Values of distributed solution vector on PE " +
+              std::to_string( CkMyPe() ) + " is incomplete: cannot solve low "
+              "order system" );
+      Assert( diffcomplete(),
+              "Values of distributed mass diffusion rhs vector on PE " +
+              std::to_string( CkMyPe() ) + " is incomplete: cannot solve low "
+              "order system" );
+      Assert( lumpcomplete(),
+              "Values of distributed lumped mass lhs vector on PE " +
+              std::to_string( CkMyPe() ) + " is incomplete: cannot solve low "
+              "order system" );
+      lowsolve_complete();
+//       for (const auto& r : m_rhs)
+//         m_hypreRhs.insert( end(m_hypreRhs), begin(r.second), end(r.second) );
     }
 
     #if defined(__clang__)

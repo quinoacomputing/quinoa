@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Carrier.h
   \author    J. Bakosi
-  \date      Wed 31 Aug 2016 10:15:25 AM MDT
+  \date      Fri 02 Sep 2016 07:21:26 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Carrier advances a system of transport equations
   \details   Carrier advances a system of transport equations. There are a
@@ -137,6 +137,11 @@ class Carrier : public CBase_Carrier {
     //! Output particles fields to file
     void doWriteParticles();
 
+    //! Finish summing antidiffusive element contributions on chare-boundaries
+    void sumaec( int fromch,
+                 const std::vector< std::size_t >& gid,
+                 const std::vector< std::vector< tk::real > >& P );
+
     ///@{
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -167,6 +172,7 @@ class Carrier : public CBase_Carrier {
       p | m_uf;
       p | m_un;
       p | m_up;
+      p | m_p;
       p | m_lhsd;
       p | m_lhso;
       p | m_particles;
@@ -195,7 +201,6 @@ class Carrier : public CBase_Carrier {
     TransporterProxy m_transporter;      //!< Transporter proxy
     LinSysMergerProxy m_linsysmerger;    //!< Linear system merger proxy
     ParticleWriterProxy m_particlewriter;//!< Particle writer proxy
-    FluxCorrector m_fluxcorrector;       //!< Flux corrector performing FCT
     //! \brief Map associating old node IDs (as in file) to new node IDs (as in
     //!   producing contiguous-row-id linear system contributions)
     std::unordered_map< std::size_t, std::size_t > m_cid;
@@ -212,21 +217,26 @@ class Carrier : public CBase_Carrier {
     std::unordered_map< std::size_t, std::size_t > m_lid;
     //! Mesh point coordinates
     std::array< std::vector< tk::real >, 3 > m_coord;
+    //! Flux corrector performing FCT
+    FluxCorrector m_fluxcorrector;
     //! Points surrounding points of our chunk of the mesh
     std::pair< std::vector< std::size_t >, std::vector< std::size_t > > m_psup;
     //! Elements surrounding points of elements of mesh chunk we operate on
     std::pair< std::vector< std::size_t >, std::vector< std::size_t > >
       m_esupel;
     //! Unknown/solution vector: global mesh point row ids and values
-    tk::MeshNodes m_u, m_uf, m_un, m_up;
+    tk::MeshNodes m_u, m_uf, m_un, m_up, m_p;
     //! Sparse matrix sotring the diagonals and off-diagonals of nonzeros
     tk::MeshNodes m_lhsd, m_lhso;
     //! Particle properties
     tk::Particles m_particles;
     //! Element ID in which a particle has last been found for all particles
     std::vector< std::size_t > m_elp;
-    //! Fellow Carrier chare indices holding neighboring mesh chunks
-    std::vector< int > m_msum;
+    //! \brief Global mesh node IDs bordering the mesh chunk held by fellow
+    //!   Carrier chares associated to their chare IDs
+    //! \details msum: mesh chunks surrounding mesh chunks and their neighbor
+    //!   points
+    std::unordered_map< int, std::vector< std::size_t > > m_msum;
     //! Indicies of particles not found here (missing)
     std::set< std::size_t > m_parmiss;
     //! Indicies of particles not found here but found by fellows
@@ -290,6 +300,9 @@ class Carrier : public CBase_Carrier {
 
     //! Output number of particles we will write to file in this step
     void writeParticles();
+
+    //! Compute and sum antidiffusive element contributions to mesh nodes
+    void aec();
 };
 
 } // inciter::

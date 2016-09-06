@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/FluxCorrector.h
   \author    J. Bakosi
-  \date      Thu 01 Sep 2016 08:21:03 AM MDT
+  \date      Fri 02 Sep 2016 09:56:07 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     FluxCorrector performs limiting for transport equations
   \details   FluxCorrector performs limiting for transport equations. There is a
@@ -14,6 +14,8 @@
 // *****************************************************************************
 #ifndef FluxCorrector_h
 #define FluxCorrector_h
+
+#include <utility>
 
 #include "NoWarning/pup.h"
 
@@ -31,15 +33,32 @@ class FluxCorrector {
 
   public:
     //! Constructor
-    explicit FluxCorrector();
+    explicit FluxCorrector(
+      std::pair< std::vector< std::size_t >,
+                 std::vector< std::size_t > >&& esup = {} );
 
-    void fct( const std::array< std::vector< tk::real >, 3 >& coord,
-              const std::vector< std::size_t >& inpoel,
-              const tk::MeshNodes& u, const tk::MeshNodes& uh );
+    //! Const-ref accessor to elements surrounding points
+    const std::pair< std::vector< std::size_t >,
+                     std::vector< std::size_t > >& esup() const
+    { return m_esup; }
+
+    //! Compute antidiffusive element contributions
+    tk::MeshNodes
+    aec( const std::array< std::vector< tk::real >, 3 >& coord,
+         const std::vector< std::size_t >& inpoel,
+         const tk::MeshNodes& u,
+         const tk::MeshNodes& uh );
+
+    //! Compute mass diffusion to be added to the low order solution rhs
+    std::pair< tk::MeshNodes, tk::MeshNodes >
+    low( const std::array< std::vector< tk::real >, 3 >& coord,
+         const std::vector< std::size_t >& inpoel,
+         const tk::MeshNodes& Un );
 
     ///@{
     //! \brief Pack/Unpack serialize member function
-    void pup( PUP::er& ) {
+    void pup( PUP::er& p ) {
+      p | m_esup;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -51,11 +70,9 @@ class FluxCorrector {
   private:
     using ncomp_t = kw::ncomp::info::expect::type;
 
-    //CarrierProxy m_carrier;      //!< Carrier proxy
-
-    void aec( const std::array< std::vector< tk::real >, 3 >& coord,
-              const std::vector< std::size_t >& inpoel,
-              const tk::MeshNodes& u, const tk::MeshNodes& uh );
+    //! Elements surrounding points of the mesh chunk we operate on
+    std::pair< std::vector< std::size_t >,
+               std::vector< std::size_t > > m_esup;
 };
 
 } // inciter::
