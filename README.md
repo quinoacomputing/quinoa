@@ -67,4 +67,4 @@ The release container executables are configured for a single computer. To run o
 
 ## Resources
 
-[source](https://github.com/quinoacomputing/quinoa) - [license](https://github.com/quinoacomputing/quinoa/blob/master/LICENSE) - [documentation](http://quinoacomputing.github.io/quinoa/index.html) - [manifesto](http://quinoacomputing.github.io/quinoa/why.html) - [roadmap](https://github.com/quinoacomputing/quinoa/issues) - [docker](https://hub.docker.com/r/quinoacomputing/quinoa)
+[source](https://github.com/quinoacomputing/quinoa) - [license](https://github.com/quinoacomputing/quinoa/blob/master/LICENSE) - [documentation](http://quinoacomputing.github.io/quinoa/index.html) - [manifesto](http://quinoacomputing.github.io/quinoa/why.html) - [roadmap](https://github.com/quinoacomputing/quinoa/issues) - [docker](https://hub.docker.com/r/quinoacomputing/quinoa) - [analytics](https://www.openhub.net/p/quinoacomputing)
