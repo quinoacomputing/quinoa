@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/LinSysMerger.h
   \author    J. Bakosi
-  \date      Mon 05 Sep 2016 03:13:27 PM MDT
+  \date      Tue 06 Sep 2016 01:58:18 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ chare linear system merger group to solve a linear system
   \details   Charm++ chare linear system merger group used to collect and
@@ -1111,6 +1111,29 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       updateSolution();
     }
 
+    //! Test if all keys of two maps are equal
+    //! \param[in] a 1st map to compare
+    //! \param[in] b 2nd map to compare
+    //! \return True if the maps have the same size and all keys (and only the
+    //!   keys) of the two maps are equal
+    //! \note It is an error to call this function with unequal-size maps,
+    //!   triggering an exception in DEBUG mode.
+    //! \note Operator != is used to compare the map keys.
+    template< typename Key >
+    bool keyEqual( const std::map< Key, std::vector< tk::real > >& a,
+                   const std::map< Key, std::vector< tk::real > >& b ) const
+    {
+      Assert( a.size() == b.size(), "Size mismatch comparing maps" );
+      auto ia = a.cbegin();
+      auto ib = b.cbegin();
+      while (ia != a.cend()) {
+        if (ia->first != ib->first) return false;
+        ++ia;
+        ++ib;
+      }
+      return true;
+    }
+
     //! Solve low order linear system
     void lowsolve() {
       Assert( rhscomplete(),
@@ -1129,9 +1152,31 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
               "Values of distributed lumped mass lhs vector on PE " +
               std::to_string( CkMyPe() ) + " is incomplete: cannot solve low "
               "order system" );
+      Assert( keyEqual( m_rhs, m_sol ), "Row IDs of rhs and solution vector "
+              "unequal on PE " + std::to_string( CkMyPe() ) + ": cannot solve "
+               "low order system" );
+      Assert( keyEqual( m_rhs, m_diff ), "Row IDs of rhs and mass diffusion "
+              "rhs vector unequal on PE " + std::to_string( CkMyPe() ) + ": "
+              "cannot solve low order system" );
+      Assert( keyEqual( m_rhs, m_lump ), "Row IDs of rhs and lumped mass lhs "
+              "vector unequal on PE " + std::to_string( CkMyPe() ) + ": cannot "
+              "solve low order system" );
+      auto ir = m_rhs.cbegin();
+      auto is = m_sol.cbegin();
+      auto id = m_diff.cbegin();
+      auto im = m_lump.begin();
+      while (ir != m_rhs.cend()) {
+        const auto& r = ir->second;
+        const auto& s = is->second;
+        const auto& d = id->second;
+        auto& m = im->second;
+        Assert( r.size() == m_ncomp && s.size() == m_ncomp &&
+                d.size() == m_ncomp && m.size() == m_ncomp,
+                "Wrong number of components in solving the low order system" );
+        for (std::size_t i=0; i<m_ncomp; ++i) m[i] = s[i] + (r[i]+d[i])/m[i];
+        ++ir; ++id; ++im; ++is;
+      }
       lowsolve_complete();
-//       for (const auto& r : m_rhs)
-//         m_hypreRhs.insert( end(m_hypreRhs), begin(r.second), end(r.second) );
     }
 
     #if defined(__clang__)
