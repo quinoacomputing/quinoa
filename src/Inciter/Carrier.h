@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Carrier.h
   \author    J. Bakosi
-  \date      Fri 02 Sep 2016 07:21:26 AM MDT
+  \date      Tue 06 Sep 2016 02:39:18 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Carrier advances a system of transport equations
   \details   Carrier advances a system of transport equations. There are a
@@ -105,9 +105,13 @@ class Carrier : public CBase_Carrier {
     //! Initialize communication and mesh data
     void init( tk::real dt );
 
-    //! Update solution vector
-    void updateSolution( const std::vector< std::size_t >& gid,
-                         const std::vector< tk::real >& sol );
+    //! Update high order solution vector
+    void updateHighSol( const std::vector< std::size_t >& gid,
+                        const std::vector< tk::real >& sol );
+
+    //! Update low order solution vector
+    void updateLowSol( const std::vector< std::size_t >& gid,
+                       const std::vector< tk::real >& sol );
 
     //! Advance equations to next stage in multi-stage time stepping
     void advance( uint8_t stage, tk::real dt, uint64_t it, tk::real t );
@@ -151,7 +155,8 @@ class Carrier : public CBase_Carrier {
       p | m_itf;
       p | m_t;
       p | m_stage;
-      p | m_nsol;
+      p | m_nhsol;
+      p | m_nlsol;
       p | m_nchpar;
       p | m_ncarr;
       p | m_outFilename;
@@ -168,9 +173,12 @@ class Carrier : public CBase_Carrier {
       p | m_lid;
       p | m_coord;
       p | m_psup;
-      p | m_u;
-      p | m_uf;
-      p | m_un;
+      p | m_uh;
+      p | m_ul;
+      p | m_uhf;
+      p | m_ulf;
+      p | m_uhn;
+      p | m_uln;
       p | m_up;
       p | m_p;
       p | m_lhsd;
@@ -194,7 +202,8 @@ class Carrier : public CBase_Carrier {
     uint64_t m_itf;                      //!< Field output iteration count
     tk::real m_t;                        //!< Physical time
     uint8_t m_stage;                     //!< Stage in multi-stage time stepping
-    std::size_t m_nsol;                  //!< Counter for solution nodes updated
+    std::size_t m_nhsol;      //!< Counter for high order solution nodes updated
+    std::size_t m_nlsol;      //!< Counter for low order solution nodes updated
     std::size_t m_nchpar;                //!< Numbr of chares recvd partcls from
     std::size_t m_ncarr;                 //!< Total number of carrier chares
     std::string m_outFilename;           //!< Output filename
@@ -224,8 +233,8 @@ class Carrier : public CBase_Carrier {
     //! Elements surrounding points of elements of mesh chunk we operate on
     std::pair< std::vector< std::size_t >, std::vector< std::size_t > >
       m_esupel;
-    //! Unknown/solution vector: global mesh point row ids and values
-    tk::MeshNodes m_u, m_uf, m_un, m_up, m_p;
+    //! Unknown/solution vectors: global mesh point row ids and values
+    tk::MeshNodes m_uh, m_ul, m_uhf, m_ulf, m_uhn, m_uln, m_up, m_p;
     //! Sparse matrix sotring the diagonals and off-diagonals of nonzeros
     tk::MeshNodes m_lhsd, m_lhso;
     //! Particle properties

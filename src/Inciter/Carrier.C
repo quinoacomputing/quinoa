@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Carrier.C
   \author    J. Bakosi
-  \date      Tue 06 Sep 2016 12:26:05 PM MDT
+  \date      Tue 06 Sep 2016 02:48:04 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Carrier advances a system of transport equations
   \details   Carrier advances a system of transport equations. There are a
@@ -70,7 +70,8 @@ Carrier::Carrier( const TransporterProxy& transporter,
   m_itf( 0 ),
   m_t( g_inputdeck.get< tag::discr, tag::t0 >() ),
   m_stage( 0 ),
-  m_nsol( 0 ),
+  m_nhsol( 0 ),
+  m_nlsol( 0 ),
   m_nchpar( 0 ),
   m_ncarr( static_cast< std::size_t >( ncarr ) ),
   m_outFilename( g_inputdeck.get< tag::cmd, tag::io, tag::output >() + "." +
@@ -85,11 +86,14 @@ Carrier::Carrier( const TransporterProxy& transporter,
   m_fluxcorrector( tk::genEsup(m_inpoel,4) ),
   m_psup( tk::genPsup( m_inpoel, 4, m_fluxcorrector.esup() ) ),
   m_esupel( tk::genEsupel( m_inpoel, 4, m_fluxcorrector.esup() ) ),
-  m_u( m_gid.size(), g_inputdeck.get< tag::component >().nprop() ),
-  m_uf( m_gid.size(), g_inputdeck.get< tag::component >().nprop() ),
-  m_un( m_gid.size(), g_inputdeck.get< tag::component >().nprop() ),
+  m_uh( m_gid.size(), g_inputdeck.get< tag::component >().nprop() ),
+  m_ul( m_gid.size(), g_inputdeck.get< tag::component >().nprop() ),
+  m_uhf( m_gid.size(), g_inputdeck.get< tag::component >().nprop() ),
+  m_ulf( m_gid.size(), g_inputdeck.get< tag::component >().nprop() ),
+  m_uhn( m_gid.size(), g_inputdeck.get< tag::component >().nprop() ),
+  m_uln( m_gid.size(), g_inputdeck.get< tag::component >().nprop() ),
   m_up( m_gid.size(), g_inputdeck.get< tag::component >().nprop() ),
-  m_p( m_u.nunk(), m_u.nprop()*2 ),
+  m_p( m_uh.nunk(), m_uh.nprop()*2 ),
   m_lhsd( m_psup.second.size()-1, g_inputdeck.get< tag::component >().nprop() ),
   m_lhso( m_psup.first.size(), g_inputdeck.get< tag::component >().nprop() ),
   m_particles( 0 * m_inpoel.size()/4, 3 ),
@@ -371,13 +375,13 @@ Carrier::init( tk::real dt )
 // *****************************************************************************
 {
   // Set initial conditions for all PDEs
-  for (const auto& eq : g_pdes) eq.initialize( m_coord, m_u, m_t );
+  for (const auto& eq : g_pdes) eq.initialize( m_coord, m_uh, m_t );
 
   // Output initial conditions to file (time = 0.0)
   //out();
 
   // Send off initial conditions for assembly
-  m_linsysmerger.ckLocalBranch()->charesol( thisIndex, m_gid, m_u );
+  m_linsysmerger.ckLocalBranch()->charesol( thisIndex, m_gid, m_uh );
 
   // Call back to Transporter::initcomplete(), signaling that the initialization
   // is complete and we are now starting time stepping
@@ -423,7 +427,7 @@ Carrier::rhs( tk::real mult,
 {
   // Compute right-hand side vector for all equations
   for (const auto& eq : g_pdes)
-    eq.rhs( mult, dt, m_coord, m_inpoel, sol, m_u, rhs );
+    eq.rhs( mult, dt, m_coord, m_inpoel, sol, m_uh, rhs );
   // Send off right-hand sides for assembly
   m_linsysmerger.ckLocalBranch()->charerhs( thisIndex, m_gid, rhs );
 
@@ -520,10 +524,10 @@ Carrier::writeFields( tk::real time )
   ew.writeTimeStamp( m_itf, time );
 
   // Collect node fields output from all PDEs
-  m_un = m_u;   // make a copy as eq::output() is allowed to overwrite its arg
+  m_uhn = m_uh;   // make a copy as eq::output() is allowed to overwrite its arg
   std::vector< std::vector< tk::real > > output;
   for (const auto& eq : g_pdes) {
-    auto o = eq.output( time, m_coord, m_un );
+    auto o = eq.output( time, m_coord, m_uhn );
     output.insert( end(output), begin(o), end(o) );
   }
   // Write node fields
@@ -619,9 +623,9 @@ Carrier::advance( uint8_t stage, tk::real dt, uint64_t it, tk::real t )
 
   // Advance stage in multi-stage time stepping by updating the rhs
   if (m_stage < 1)
-    rhs( 0.5, dt, m_u, m_uf );
+    rhs( 0.5, dt, m_uh, m_uhf );
   else
-    rhs( 1.0, dt, m_uf, m_un );
+    rhs( 1.0, dt, m_uhf, m_uhn );
 }
 
 void
@@ -980,7 +984,7 @@ Carrier::advanceParticle( std::size_t i,
   for (const auto& eq : g_pdes) {
     const std::array< std::size_t, 4 > N{{ m_inpoel[e*4+0], m_inpoel[e*4+1],
                                            m_inpoel[e*4+2], m_inpoel[e*4+3] }}; 
-    auto v = eq.velocity( m_u, m_coord, N );
+    auto v = eq.velocity( m_uh, m_coord, N );
     if (!v.empty()) c = std::move(v);
     auto w = eq.velocity( m_up, m_coord, N );
     if (!w.empty()) p = std::move(w);
@@ -1058,10 +1062,10 @@ Carrier::out()
 }
 
 void
-Carrier::updateSolution( const std::vector< std::size_t >& gid,
-                         const std::vector< tk::real >& u )
+Carrier::updateLowSol( const std::vector< std::size_t >& gid,
+                       const std::vector< tk::real >& u )
 // *****************************************************************************
-// Update solution vector
+// Update low order solution vector
 //! \param[in] gid Global row indices of the vector updated
 //! \param[in] u Portion of the unknown/solution vector updated
 //! \author J. Bakosi
@@ -1070,31 +1074,70 @@ Carrier::updateSolution( const std::vector< std::size_t >& gid,
   auto ncomp = g_inputdeck.get< tag::component >().nprop();
   Assert( gid.size() * ncomp == u.size(),
           "Size of row ID vector times the number of scalar components and the "
-          "size of the solution vector must equal" );
+          "size of the low order solution vector must equal" );
 
   // Receive update of solution vector
   for (std::size_t i=0; i<gid.size(); ++i) {
     auto id = tk::cref_find( m_lid, gid[i] );
-    for (ncomp_t c=0; c<ncomp; ++c) m_un( id, c, 0 ) = u[ i*ncomp+c ];
+    for (ncomp_t c=0; c<ncomp; ++c) m_uln( id, c, 0 ) = u[ i*ncomp+c ];
   }
 
   // Count number of solution nodes updated
-  m_nsol += gid.size();
+  m_nlsol += gid.size();
 
   // If all contributions we own have been received, continue by updating a
   // different solution vector depending on time step stage
-  if (m_nsol == m_gid.size()) {
+  if (m_nlsol == m_gid.size()) {
 
     if (m_stage < 1) {
-      aec( m_u, m_un );
-      m_uf = m_un;
+      m_ulf = m_uln;
     } else {
-      aec( m_uf, m_un );
-      m_up = m_u;       // save time n solution for particle update
-      m_u = m_un;
+      m_ul = m_uln;
     }
 
-    m_nsol = 0;
+    m_nlsol = 0;
+
+  }
+}
+
+void
+Carrier::updateHighSol( const std::vector< std::size_t >& gid,
+                        const std::vector< tk::real >& u )
+// *****************************************************************************
+// Update high order solution vector
+//! \param[in] gid Global row indices of the vector updated
+//! \param[in] u Portion of the unknown/solution vector updated
+//! \author J. Bakosi
+// *****************************************************************************
+{
+  auto ncomp = g_inputdeck.get< tag::component >().nprop();
+  Assert( gid.size() * ncomp == u.size(),
+          "Size of row ID vector times the number of scalar components and the "
+          "size of the high order solution vector must equal" );
+
+  // Receive update of solution vector
+  for (std::size_t i=0; i<gid.size(); ++i) {
+    auto id = tk::cref_find( m_lid, gid[i] );
+    for (ncomp_t c=0; c<ncomp; ++c) m_uhn( id, c, 0 ) = u[ i*ncomp+c ];
+  }
+
+  // Count number of solution nodes updated
+  m_nhsol += gid.size();
+
+  // If all contributions we own have been received, continue by updating a
+  // different solution vector depending on time step stage
+  if (m_nhsol == m_gid.size()) {
+
+    if (m_stage < 1) {
+      aec( m_uh, m_uhn );
+      m_uhf = m_uhn;
+    } else {
+      aec( m_uhf, m_uhn );
+      m_up = m_uh;       // save time n solution for particle update
+      m_uh = m_uhn;
+    }
+
+    m_nhsol = 0;
 
     // Advance particles
     track();

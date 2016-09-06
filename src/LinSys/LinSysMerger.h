@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/LinSysMerger.h
   \author    J. Bakosi
-  \date      Tue 06 Sep 2016 01:58:18 PM MDT
+  \date      Tue 06 Sep 2016 02:27:08 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ chare linear system merger group to solve a linear system
   \details   Charm++ chare linear system merger group used to collect and
@@ -1075,8 +1075,8 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       asmrhs_complete();
     }
 
-    //! Update solution vector in our PE's workers
-    void updateSolution() {
+    //! Update high order solution vector in our PE's workers
+    void updateHighSol() {
       // Get solution vector values for our PE
       m_x.get( static_cast< int >( (m_upper - m_lower)*m_ncomp ),
                m_hypreRows.data(),
@@ -1099,16 +1099,16 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
                         std::next( begin(m_hypreSol), e ) );
           } else
             Throw( "Can't find global row id " + std::to_string(r) +
-                   " to export in solution vector" );
+                   " to export in high order solution vector" );
         }
-        m_worker[ w.first ].updateSolution( gid, sol );
+        m_worker[ w.first ].updateHighSol( gid, sol );
       }
     }
 
     //! Solve high order linear system
     void solve() {
       m_solver.solve( m_A, m_b, m_x );
-      updateSolution();
+      updateHighSol();
     }
 
     //! Test if all keys of two maps are equal
@@ -1132,6 +1132,26 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
         ++ib;
       }
       return true;
+    }
+
+    //! Update low order solution vector in our PE's workers
+    void updateLowSol() {
+      // Group solution vector by workers and send each the parts back to
+      // workers that own them
+      for (const auto& w : m_solimport) {
+        std::vector< std::size_t > gid;
+        std::vector< tk::real > sol;
+        for (auto r : w.second) {
+          const auto it = m_lump.find( r );
+          if (it != end(m_lump)) {
+            gid.push_back( it->first );
+            sol.insert( end(sol), begin(it->second), end(it->second) );
+          } else
+            Throw( "Can't find global row id " + std::to_string(r) +
+                   " to export in low order solution vector" );
+        }
+        m_worker[ w.first ].updateLowSol( gid, sol );
+      }
     }
 
     //! Solve low order linear system
@@ -1176,6 +1196,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
         for (std::size_t i=0; i<m_ncomp; ++i) m[i] = s[i] + (r[i]+d[i])/m[i];
         ++ir; ++id; ++im; ++is;
       }
+      updateLowSol();
       lowsolve_complete();
     }
 
