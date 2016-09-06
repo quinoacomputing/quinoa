@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/TestDataLayout.h
   \author    J. Bakosi
-  \date      Wed 31 Aug 2016 12:43:18 PM MDT
+  \date      Tue 06 Sep 2016 03:46:00 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Unit tests for Base/DataLayout.h
   \details   Unit tests for Base/DataLayout.h
@@ -1144,6 +1144,67 @@ void DataLayout_object::test< 25 >() {
          std::vector< tk::real >{ 0.03, 0.03, 0.03 }, e.extract( 0, 1 ) );
 }
 
+//! Test tk::DataLayout's operator min
+//! \author J. Bakosi
+template<> template<>
+void DataLayout_object::test< 26 >() {
+  set_test_name( "operator min" );
+
+  tk::DataLayout< tk::UnkEqComp > p1( 3, 2 ), p2( 3, 2 );
+  tk::DataLayout< tk::EqCompUnk > e1( 3, 2 ), e2( 3, 2 );
+
+  p1.fill( 0.1 );       p2.fill( 0.3 );
+  e1.fill( 0.3 );       e2.fill( 0.1 );
+
+  auto p = tk::min( p1, p2 );
+  auto e = tk::min( e1, e2 );
+
+  // Test all template specializations
+  veceq( "<UnkEqComp>::operator min() at 0,0 incorrect",
+         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, p.extract( 0, 0 ) );
+  veceq( "<UnkEqComp>::operator min() at 1,0 incorrect",
+         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, p.extract( 1, 0 ) );
+  veceq( "<UnkEqComp>::operator min() at 0,1 incorrect",
+         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, p.extract( 0, 1 ) );
+
+  veceq( "<EqCompUnk>::operator min() at 0,0 incorrect",
+         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, e.extract( 0, 0 ) );
+  veceq( "<EqCompUnk>::operator min() at 1,0 incorrect",
+         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, e.extract( 1, 0 ) );
+  veceq( "<EqCompUnk>::operator min() at 0,1 incorrect",
+         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, e.extract( 0, 1 ) );
+}
+
+//! Test tk::DataLayout's operator max
+//! \author J. Bakosi
+template<> template<>
+void DataLayout_object::test< 27 >() {
+  set_test_name( "operator max" );
+
+  tk::DataLayout< tk::UnkEqComp > p1( 3, 2 ), p2( 3, 2 );
+  tk::DataLayout< tk::EqCompUnk > e1( 3, 2 ), e2( 3, 2 );
+
+  p1.fill( 0.1 );       p2.fill( 0.3 );
+  e1.fill( 0.3 );       e2.fill( 0.1 );
+
+  auto p = tk::max( p1, p2 );
+  auto e = tk::max( e1, e2 );
+
+  // Test all template specializations
+  veceq( "<UnkEqComp>::operator max() at 0,0 incorrect",
+         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, p.extract( 0, 0 ) );
+  veceq( "<UnkEqComp>::operator max() at 1,0 incorrect",
+         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, p.extract( 1, 0 ) );
+  veceq( "<UnkEqComp>::operator max() at 0.3 incorrect",
+         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, p.extract( 0, 1 ) );
+
+  veceq( "<EqCompUnk>::operator max() at 0,0 incorrect",
+         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, e.extract( 0, 0 ) );
+  veceq( "<EqCompUnk>::operator max() at 1,0 incorrect",
+         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, e.extract( 1, 0 ) );
+  veceq( "<EqCompUnk>::operator max() at 0.3 incorrect",
+         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, e.extract( 0, 1 ) );
+}
 } // tut::
 
 #endif // test_DataLayout_h
