@@ -278,16 +278,21 @@ class DataLayout {
     //! \author J. Bakosi
     const std::vector< tk::real >& data() const { return m_vec; }
 
+    //! Non-const-ref accessor to underlying raw data
+    //! \return Non-constant reference to underlying raw data
+    //! \author J. Bakosi
+    std::vector< tk::real >& data() { return m_vec; }
+
     //! Compound operator-=
     //! \param[in] rhs DataLayout object to subtract
     //! \return Reference to ourselves after subtraction
     //! \author J. Bakosi
     DataLayout< Layout >& operator-= ( const DataLayout< Layout >& rhs ) {
       Assert( rhs.nunk() == m_nunk, "Incorrect number of unknowns" );
-      Assert( rhs.nprop() == m_nprop, "Incorrect number of unknowns" );
-      std::transform( rhs.data().begin(), rhs.data().end(),
-                      m_vec.begin(), m_vec.begin(),
-                      []( tk::real s, tk::real& d ){ return d -= s; } );
+      Assert( rhs.nprop() == m_nprop, "Incorrect number of properties" );
+      std::transform( rhs.data().cbegin(), rhs.data().cend(),
+                      m_vec.cbegin(), m_vec.begin(),
+                      []( tk::real s, tk::real d ){ return d-s; } );
       return *this;
     }
     //! Operator -
@@ -304,10 +309,10 @@ class DataLayout {
     //! \author J. Bakosi
     DataLayout< Layout >& operator+= ( const DataLayout< Layout >& rhs ) {
       Assert( rhs.nunk() == m_nunk, "Incorrect number of unknowns" );
-      Assert( rhs.nprop() == m_nprop, "Incorrect number of unknowns" );
-      std::transform( rhs.data().begin(), rhs.data().end(),
-                      m_vec.begin(), m_vec.begin(),
-                      []( tk::real s, tk::real& d ){ return d += s; } );
+      Assert( rhs.nprop() == m_nprop, "Incorrect number of properties" );
+      std::transform( rhs.data().cbegin(), rhs.data().cend(),
+                      m_vec.cbegin(), m_vec.begin(),
+                      []( tk::real s, tk::real d ){ return d+s; } );
       return *this;
     }
     //! Operator +
@@ -324,10 +329,10 @@ class DataLayout {
     //! \author J. Bakosi
     DataLayout< Layout >& operator*= ( const DataLayout< Layout >& rhs ) {
       Assert( rhs.nunk() == m_nunk, "Incorrect number of unknowns" );
-      Assert( rhs.nprop() == m_nprop, "Incorrect number of unknowns" );
-      std::transform( rhs.data().begin(), rhs.data().end(),
-                      m_vec.begin(), m_vec.begin(),
-                      []( tk::real s, tk::real& d ){ return d *= s; } );
+      Assert( rhs.nprop() == m_nprop, "Incorrect number of properties" );
+      std::transform( rhs.data().cbegin(), rhs.data().cend(),
+                      m_vec.cbegin(), m_vec.begin(),
+                      []( tk::real s, tk::real d ){ return d*s; } );
       return *this;
     }
     //! Operator *
@@ -513,6 +518,52 @@ class DataLayout {
     ncomp_t m_nunk;                     //!< Number of unknowns
     ncomp_t m_nprop;                    //!< Number of properties/unknown
 };
+
+
+//! Operator min between two DataLayout objects
+//! \param[in] a 1st DataLayout object
+//! \param[in] b 2nd DataLayout object
+//! \return New DataLayout object containing the minimum of all values for each
+//!   value in _a_ and _b_
+//! \note The DataLayout objects _a_ and _b_ must have the same number of
+//!   unknowns and properties.
+//! \note As opposed to std::min, this function creates and returns a new object
+//!   instead of returning a reference to the smaller one of the operands.
+template< uint8_t Layout >
+DataLayout< Layout > min( const DataLayout< Layout >& a,
+                          const DataLayout< Layout >& b )
+{
+  Assert( a.nunk() == b.nunk(), "Number of unknowns unequal" );
+  Assert( a.nprop() == b.nprop(), "Number of properties unequal" );
+  DataLayout< Layout > r( a.nunk(), a.nprop() );
+  std::transform( a.data().cbegin(), a.data().cend(),
+                  b.data().cbegin(), r.data().begin(),
+                  []( tk::real s, tk::real d ){ return std::min(s,d); } );
+  return r;
+}
+
+//! Operator max between two DataLayout objects
+//! \param[in] a 1st DataLayout object
+//! \param[in] b 2nd DataLayout object
+//! \return New DataLayout object containing the maximum of all values for each
+//!   value in _a_ and _b_
+//! \note The DataLayout objects _a_ and _b_ must have the same number of
+//!   unknowns and properties.
+//! \note As opposed to std::max, this function creates and returns a new object
+//!   instead of returning a reference to the smaller one of the operands.
+template< uint8_t Layout >
+DataLayout< Layout > max( const DataLayout< Layout >& a,
+                          const DataLayout< Layout >& b )
+{
+  Assert( a.nunk() == b.nunk(), "Number of unknowns unequal" );
+  Assert( a.nprop() == b.nprop(), "Number of properties unequal" );
+  DataLayout< Layout > r( a.nunk(), a.nprop() );
+  std::transform( a.data().cbegin(), a.data().cend(),
+                  b.data().cbegin(), r.data().begin(),
+                  []( tk::real s, tk::real d ){ return std::max(s,d); } );
+  return r;
+}
+
 
 } // tk::
 
