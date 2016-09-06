@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Carrier.C
   \author    J. Bakosi
-  \date      Fri 02 Sep 2016 03:49:19 PM MDT
+  \date      Tue 06 Sep 2016 12:26:05 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Carrier advances a system of transport equations
   \details   Carrier advances a system of transport equations. There are a
@@ -558,7 +558,7 @@ Carrier::doWriteParticles()
 }
 
 void
-Carrier::aec()
+Carrier::aec( const tk::MeshNodes& Un, const tk::MeshNodes& Uh )
 // *****************************************************************************
 //  Compute and sum antidiffusive element contributions to mesh nodes
 //! \author J. Bakosi
@@ -567,7 +567,7 @@ Carrier::aec()
   // Compute and sum antidiffusive element contributions to mesh nodes. Note
   // that the sums are complete on nodes that are not shared with other chares
   // and only partial sums on chare-boundary nodes.
-  m_p = m_fluxcorrector.aec( m_coord, m_inpoel, m_u, m_un );
+  m_p = m_fluxcorrector.aec( m_coord, m_inpoel, Un, Uh );
 
   // Send contributions to chare-boundary nodes to fellow chares
   for (const auto& n : m_msum) {
@@ -592,7 +592,7 @@ Carrier::sumaec( int fromch,
 {
   for (std::size_t i=0; i<gid.size(); ++i) {
     auto lid = tk::cref_find( m_lid, gid[i] );
-    Assert( lid > m_p.nunk(),
+    Assert( lid < m_p.nunk(),
             "Indexing out of unknowns summing AEC on chare-boundaries" );
     const auto& p = P[i];
     Assert( p.size() == m_p.nprop(),
@@ -1085,11 +1085,11 @@ Carrier::updateSolution( const std::vector< std::size_t >& gid,
   // different solution vector depending on time step stage
   if (m_nsol == m_gid.size()) {
 
-    //aec();
-
     if (m_stage < 1) {
+      aec( m_u, m_un );
       m_uf = m_un;
     } else {
+      aec( m_uf, m_un );
       m_up = m_u;       // save time n solution for particle update
       m_u = m_un;
     }

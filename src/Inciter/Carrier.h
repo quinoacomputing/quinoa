@@ -302,7 +302,7 @@ class Carrier : public CBase_Carrier {
     void writeParticles();
 
     //! Compute and sum antidiffusive element contributions to mesh nodes
-    void aec();
+    void aec( const tk::MeshNodes& Un, const tk::MeshNodes& Uh );
 };
 
 } // inciter::
