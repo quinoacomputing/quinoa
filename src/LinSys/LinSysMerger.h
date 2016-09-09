@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/LinSysMerger.h
   \author    J. Bakosi
-  \date      Tue 06 Sep 2016 02:27:08 PM MDT
+  \date      Fri 09 Sep 2016 03:12:22 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ chare linear system merger group to solve a linear system
   \details   Charm++ chare linear system merger group used to collect and
@@ -19,13 +19,12 @@
     #### Call graph ####
     The following is a directed acyclic graph (DAG) that outlines the
     asynchronous algorithm implemented in this class The detailed discussion of
-    the algorithm is given in the Charm++ interface file linsysmerger.ci,
-    which also repeats the graph below using ASCII graphics. On the DAG orange
-    fills denote global synchronization points, orange frames with white fill
-    are partial synchronization points that overlap with other tasks, and dashed
-    lines are potential shortcuts that allow jumping over some of the task-graph
-    under some circumstances or optional code paths (taken, e.g., only in DEBUG
-    mode). See the detailed discussion in linsysmrger.ci.
+    the algorithm is given in the Charm++ interface file linsysmerger.ci. On the
+    DAG orange fills denote global synchronization points that contain or
+    eventually lead to global reductions. Dashed lines are potential shortcuts
+    that allow jumping over some of the task-graph under some circumstances or
+    optional code paths (taken, e.g., only in DEBUG mode). See the detailed
+    discussion in linsysmrger.ci.
     \dot
     digraph "LinSysMerger SDAG" {
       rankdir="LR";
@@ -37,8 +36,18 @@
               tooltip="chares contribute their global node IDs at which
                        they can set boundary conditions"
               URL="\ref tk::LinSysMerger::charebc"];
-      Ver   [ label="Ver" color="#e6851c" style="filled"
-              tooltip="start optional verifications and HypreRow"
+      RowComplete   [ label="RowComplete" color="#e6851c" style="filled"
+              tooltip="all linear system merger branches have done heir part of
+              storing and exporting global row ids"
+              URL="\ref inciter::Transporter::rowcomplete"];
+      Init [ label="Init"
+              tooltip="Carrier chares start initialization (setting ICs, sending
+              unknown/solution vectors for assembly to LinSysMerger, start
+              computing LHS, RHS, sending both for assembly)"
+              URL="\ref inciter::Carrier::init"];
+      Ver  [ label="Ver"
+              tooltip="start optional verifications, query BCs, and converting
+                       row IDs to hypre format"
               URL="\ref tk::LinSysMerger::rowsreceived"];
       VerRow [ label="VerRow"
               tooltip="optional verification ensuring consistent row IDs"
@@ -46,6 +55,18 @@
       VerBCs [ label="VerBCs" color="#e6851c" style="filled"
               tooltip="optional verification ensuring consistent BC node IDs"
               URL="\ref tk::LinSysMerger::verifybc"];
+      QueryBCVal [ label="QueryBCVal"
+              tooltip="query boundary condition values from Carrier chares"
+              URL="\ref tk::LinSysMerger::querybcval"];
+      LhsBC [ label="LhsBC"
+              tooltip="set boundary conditions on the left-hand side matrix"
+              URL="\ref tk::LinSysMerger::lhsbc"];
+      RhsBC [ label="RhsBC"
+              tooltip="set boundary conditions on the right-hand side vector"
+              URL="\ref tk::LinSysMerger::rhsbc"];
+      LumpBC [ label="LumpBC"
+              tooltip="set boundary conditions on the lumped mass left-hand side
+              matrix" URL="\ref tk::LinSysMerger::lumpbc"];
       ChSol [ label="ChSol"
               tooltip="chares contribute their solution vector nonzeros"
               URL="\ref tk::LinSysMerger::charesol"];
@@ -55,7 +76,7 @@
       ChRhs [ label="ChRhs"
               tooltip="chares contribute their right hand side vector nonzeros"
               URL="\ref tk::LinSysMerger::charesol"];
-      HypreRow [ label="HypreRow" color="#e6851c"
+      HypreRow [ label="HypreRow"
               tooltip="convert global row ID vector to hypre format"
               URL="\ref tk::LinSysMerger::hyprerow"];
       HypreSol [ label="HypreSol"
@@ -85,27 +106,43 @@
       AsmRhs [ label="AsmRhs"
               tooltip="assemble right hand side vector"
               URL="\ref tk::LinSysMerger::assemblerhs"];
-      Sol [ label="Sol" tooltip="solve linear system" color="#e6851c"
-            URL="\ref tk::LinSysMerger::solve"];
-      Upd [ label="Upd" tooltip="update solution" color="#e6851c"
-            URL="\ref tk::LinSysMerger::updateSolution"];
-      ChRow -> Ver [ style="solid" ];
-      ChBCs -> Ver [ style="solid" ];
+      Solve [ label="Solve" tooltip="solve high order linear system"
+              URL="\ref tk::LinSysMerger::solve"];
+      LowSolve [ label="LowSolve" tooltip="solve low order linear system"
+              URL="\ref tk::LinSysMerger::lowsolve"];
+      HighUpd [ label="HighUpd" tooltip="update high order solution"
+                color="#e6851c" style="filled"
+                URL="\ref tk::LinSysMerger::updateHighSol"];
+      LowUpd [ label="LowUpd" tooltip="update low order solution"
+               color="#e6851c"style="filled"
+               URL="\ref tk::LinSysMerger::updateLowSol"];
+      ChRow -> RowComplete [ style="solid" ];
+      ChBCs -> RowComplete Ver [ style="solid" ];
+      RowComplete -> Init [ style="solid" ];
+      RowComplete -> Ver [ style="solid" ];
       Ver -> HypreRow [ style="solid" ];
       Ver -> VerRow [ style="dashed" ];
       Ver -> VerBCs [ style="dashed" ];
-      VerBCs -> HypreRhs [ style="dashed" ];
-      VerBCs -> HypreLhs [ style="dashed" ];
-      Ver -> ChSol [ style="solid" ];
-      Ver -> ChLhs [ style="solid" ];
-      Ver -> ChRhs [ style="solid" ];
+      Ver -> QueryBCVal [ style="solid" ];
+      VerBCs -> HighUpd [ style="dashed" ];
+      VerBCs -> LowUpd [ style="dashed" ];
+      QueryBCVal -> LhsBC [ style="solid" ];
+      QueryBCVal -> RhsBC [ style="solid" ];
+      QueryBCVal -> LumpBC [ style="solid" ];
+      LhsBC -> HypreLhs [ style="solid" ];
+      RhsBC -> HypreRhs [ style="solid" ];
+      LumpBC -> LowSolve [ style="solid" ];
+      Init -> ChSol [ style="solid" ];
+      Init -> ChLhs [ style="solid" ];
+      Init -> ChRhs [ style="solid" ];
       HypreRow -> FillSol [ style="solid" ];
       HypreRow -> FillLhs [ style="solid" ];
       HypreRow -> FillRhs [ style="solid" ];
-      ChSol -> HypreSol -> FillSol -> AsmSol -> Sol [ style="solid" ];
-      ChLhs -> HypreLhs -> FillLhs -> AsmLhs -> Sol [ style="solid" ];
-      ChRhs -> HypreRhs -> FillRhs -> AsmRhs -> Sol [ style="solid" ];
-      Sol -> Upd [ style="solid" ];
+      ChSol -> HypreSol -> FillSol -> AsmSol -> Solve [ style="solid" ];
+      ChLhs -> HypreLhs -> FillLhs -> AsmLhs -> Solve [ style="solid" ];
+      ChRhs -> HypreRhs -> FillRhs -> AsmRhs -> Solve [ style="solid" ];
+      Solve -> HighUpd [ style="solid" ];
+      LowSolve -> LowUpd [ style="solid" ];
     }
     \enddot
     \include LinSys/linsysmerger.ci
@@ -236,10 +273,11 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       m_oldbc(),
       m_bcval()
     {
-      // Activate SDAG waits for assembling lhs, rhs, and solution
+      // Activate SDAG waits
       wait4row();
       wait4lhsbc();
       wait4rhsbc();
+      wait4lumpbc();
       wait4sol();
       wait4lhs();
       wait4rhs();
@@ -251,6 +289,8 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       wait4filllhs();
       wait4fillrhs();
       wait4asm();
+      wait4solve();
+      wait4lowsolve();
       #ifdef NDEBUG     // skip verification of BCs in RELEASE mode
       ver_complete(); ver_complete();
       #endif
@@ -306,18 +346,20 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       wait4fillrhs();
       wait4asm();
       wait4loworder();
+      wait4solve();
+      wait4lowsolve();
       m_rhsimport.clear();
       m_diffimport.clear();
-      m_lumpimport.clear();
       m_rhs.clear();
       m_diff.clear();
-      m_lump.clear();
       m_hypreRhs.clear();
+      m_bcval.clear();
       hyprerow_complete();
       asmsol_complete();
       asmlhs_complete();
-      ver_complete();
+      ver_complete(); ver_complete();
       sol_complete();
+      lumpbc_complete();
       signal2host_advance( m_host );
       querybcval();
     }
@@ -637,8 +679,10 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
     //!   method since it is always called by chares on the same PE.
     void charebc( int fromch, const std::vector< std::size_t >& bc ) {
       // Store nodes owned
-      auto& b = m_bc[ fromch ];
-      b.insert( end(b), begin(bc), end(bc) );
+      if (!bc.empty()) {        // only of chare has anything to offer
+        auto& b = m_bc[ fromch ];
+        b.insert( end(b), begin(bc), end(bc) );
+      }
       // Forward all bcs received to fellow branches
       if (++m_nchbc == m_nchare) {
         auto stream = tk::serialize( m_bc );
@@ -689,7 +733,9 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
           "components does not equal that of set in the BC data structure." );
         m_bcval[ n.first ] = n.second;
       }
-      if (--m_nchbcval == 0) { bcval_complete(); bcval_complete(); }
+      if (--m_nchbcval == 0) {
+        bcval_complete(); bcval_complete(); bcval_complete();
+      }
     }
 
     //! \brief Receive BC node/row IDs and values from all other PEs and zero
@@ -712,6 +758,9 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       }
       lhsbc_complete();
     }
+
+    //! Reduction target indicating that verification of the BCs are complete
+    void vercomplete() { ver_complete(); ver_complete(); }
 
     //! Compute diagnostics (residuals) and contribute them back to host
     //! \details Diagnostics: L1 norm for all components
@@ -899,9 +948,11 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
     void verifybc() {
       // Make BC node lists unqiue
       for (auto& s : m_bc) tk::unique( s.second );
-      // Query old (as in file) node IDs from chares that offered them
-      for (const auto& c : m_bc)
-        m_worker[ c.first ].oldID( CkMyPe(), c.second );
+      if (m_bc.empty()) { // if no BCs, we are done (nothing to verify)
+        ver_complete(); ver_complete();
+      } else // query old (as in file) node IDs from chares that offered them
+        for (const auto& c : m_bc)
+          m_worker[ c.first ].oldID( CkMyPe(), c.second );
     }
 
     //! Build Hypre data for our portion of the global row ids
@@ -927,26 +978,27 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
             q.push_back( n );
       }
       // Query BC values from chares
-      m_nchbcval = b.size();
-      for (const auto& c : b) m_worker[ c.first ].bcval( CkMyPe(), c.second );
+      if (b.empty()) {
+        bcval_complete(); bcval_complete(); bcval_complete();
+      } else {
+        m_nchbcval = b.size();
+        for (const auto& c : b) m_worker[ c.first ].bcval( CkMyPe(), c.second );
+      }
     }
 
     //! Set boundary conditions on the left-hand side matrix
-    //! \details Here we only zero the row and put 1.0 in main diagonal, zeroing
+    //! \details Here we only zero the row and put 1.0 in the diagonal, zeroing
     //!   the column requires communication among all fellow PEs and is done at
     //!   the receiving side in bcval().
     void lhsbc() {
       Assert( lhscomplete(),
               "Nonzero values of distributed matrix on PE " +
               std::to_string( CkMyPe() ) + " is incomplete: cannot set BCs" );
-      Assert( m_lhs.size() == m_hypreRows.size() / m_ncomp,
-              "Left-hand side matrix incomplete on PE " +
-              std::to_string(CkMyPe()) + ": cannot set BCs" );
       for (const auto& n : m_bcval) {
         auto& row = tk::ref_find( m_lhs, n.first );
         auto& b = n.second;
         for (std::size_t i=0; i<m_ncomp; ++i)
-          if (b[i].first) { // zero row and put 1.0 in main diagonal
+          if (b[i].first) { // zero row and put 1.0 in diagonal
             for (auto& col : row) col.second[i] = 0.0;
             tk::ref_find( row, n.first )[ i ] = 1.0;
           }
@@ -964,9 +1016,6 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       Assert( rhscomplete(),
               "Values of distributed right-hand-side vector on PE " +
               std::to_string( CkMyPe() ) + " is incomplete: cannot set BCs" );
-      Assert( m_rhs.size() == m_hypreRows.size() / m_ncomp,
-              "Right-hand side vector incomplete on PE " +
-              std::to_string(CkMyPe()) + ": cannot set BCs" );
       for (const auto& n : m_bcval) {
         auto& row = tk::ref_find( m_rhs, n.first );
         auto& b = n.second;
@@ -976,14 +1025,26 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       rhsbc_complete();
     }
 
+    //! Set boundary conditions on the lumped mass left-hand side matrix
+    //! \details We put 1.0 in the diagonal and we are done.
+    void lumpbc() {
+      Assert( lumpcomplete(),
+              "Values of distributed lumped mass lhs vector on PE " +
+              std::to_string( CkMyPe() ) + " is incomplete: cannot set BCs" );
+      for (const auto& n : m_bcval) {
+        auto& row = tk::ref_find( m_lump, n.first );
+        auto& b = n.second;
+        for (std::size_t i=0; i<m_ncomp; ++i)
+          if (b[i].first) row[i] = 1.0; // put 1.0 in diagonal
+      }
+      lumpbc_complete();
+    }
+
     //! Build Hypre data for our portion of the solution vector
     void hypresol() {
       Assert( solcomplete(),
               "Values of distributed solution vector on PE " +
               std::to_string( CkMyPe() ) + " is incomplete" );
-      Assert( m_sol.size() == m_hypreRows.size() / m_ncomp,
-              "Solution vector incomplete on PE " + std::to_string(CkMyPe()) +
-              ": cannot convert" );
       std::size_t i = 0;
       for (const auto& r : m_sol) {
         m_lid[ r.first ] = i++;
@@ -998,9 +1059,6 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       Assert( lhscomplete(),
               "Nonzero values of distributed matrix on PE " +
               std::to_string( CkMyPe() ) + " is incomplete: cannot convert" );
-      Assert( m_lhs.size() == m_hypreRows.size() / m_ncomp,
-              "Left-hand side matrix incomplete on PE " +
-              std::to_string(CkMyPe()) + ": cannot convert" );
       for (const auto& r : m_lhs) {
         for (std::size_t i=0; i<m_ncomp; ++i) {
           m_hypreNcols.push_back( static_cast< int >( r.second.size() ) );
@@ -1017,9 +1075,6 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       Assert( rhscomplete(),
               "Values of distributed right-hand-side vector on PE " +
               std::to_string( CkMyPe() ) + " is incomplete: cannot convert" );
-      Assert( m_rhs.size() == m_hypreRows.size() / m_ncomp,
-              "Right-hand side vector incomplete on PE " +
-              std::to_string(CkMyPe()) + ": cannot convert" );
       for (const auto& r : m_rhs)
         m_hypreRhs.insert( end(m_hypreRhs), begin(r.second), end(r.second) );
       hyprerhs_complete();
@@ -1071,7 +1126,6 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
     //! Assemble distributed right-hand side vector
     void assemblerhs() {
       m_b.assemble();
-      //m_b.print( "rhs" );
       asmrhs_complete();
     }
 
@@ -1108,7 +1162,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
     //! Solve high order linear system
     void solve() {
       m_solver.solve( m_A, m_b, m_x );
-      updateHighSol();
+      solve_complete();
     }
 
     //! Test if all keys of two maps are equal
@@ -1196,7 +1250,6 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
         for (std::size_t i=0; i<m_ncomp; ++i) m[i] = s[i] + (r[i]+d[i])/m[i];
         ++ir; ++id; ++im; ++is;
       }
-      updateLowSol();
       lowsolve_complete();
     }
 

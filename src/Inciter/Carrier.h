@@ -2,13 +2,48 @@
 /*!
   \file      src/Inciter/Carrier.h
   \author    J. Bakosi
-  \date      Tue 06 Sep 2016 02:39:18 PM MDT
+  \date      Fri 09 Sep 2016 02:35:37 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Carrier advances a system of transport equations
   \details   Carrier advances a system of transport equations. There are a
     potentially large number of Carrier Charm++ chares created by Transporter.
     Each carrier gets a chunk of the full load (part of the mesh) and does the
     same: initializes and advances a system of systems of PDEs in time.
+
+    The implementation uses the Charm++ runtime system and is fully
+    asynchronous, overlapping computation and communication. The algorithm
+    utilizes the structured dagger (SDAG) Charm++ functionality. The high-level
+    overview of the algorithm structure and how it interfaces with Charm++ is
+    discussed in the Charm++ interface file src/Inciter/carrier.ci.
+
+    #### Call graph ####
+    The following is a directed acyclic graph (DAG) that outlines the
+    asynchronous algorithm implemented in this class The detailed discussion of
+    the algorithm is given in the Charm++ interface file transporter.ci, which
+    also repeats the graph below using ASCII graphics. On the DAG orange
+    fills denote global synchronization points that contain or eventually lead
+    to global reductions. Dashed lines are potential shortcuts that allow
+    jumping over some of the task-graph under some circumstances or optional
+    code paths (taken, e.g., only in DEBUG mode). See the detailed discussion in
+    carrier.ci.
+    \dot
+    digraph "Carrier SDAG" {
+      rankdir="LR";
+      node [shape=record, fontname=Helvetica, fontsize=10];
+      AEC [ label="AEC"
+            tooltip="communication antidiffusive element contributions"
+            URL="\ref inciter::Carrier::aec"];
+      Allowed [ label="Allowed"
+            tooltip="communication allowed solution increments and decrements"
+            URL="\ref inciter::Carrier::allowed"];
+      Limit [ label="Limit" color="#e6851c" style="filled"
+            tooltip="perform limiting"
+            URL="\ref inciter::Carrier::limit"];
+      AEC -> Limit [ style="solid" ];
+      Allowed -> Limit [ style="solid" ];
+    }
+    \enddot
+    \include Inciter/carrier.ci
 */
 // *****************************************************************************
 #ifndef Carrier_h
@@ -55,6 +90,28 @@ class Carrier : public CBase_Carrier {
     using ParticleWriterProxy = tk::CProxy_ParticleWriter< TransporterProxy >;
 
   public:
+    #if defined(__clang__)
+      #pragma clang diagnostic push
+      #pragma clang diagnostic ignored "-Wunused-parameter"
+    #elif defined(__GNUC__)
+      #pragma GCC diagnostic push
+      #pragma GCC diagnostic ignored "-Wunused-parameter"
+      #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+    #elif defined(__INTEL_COMPILER)
+      #pragma warning( push )
+      #pragma warning( disable: 1478 )
+    #endif
+    // Include Charm++ SDAG code. See http://charm.cs.illinois.edu/manuals/html/
+    // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
+    Carrier_SDAG_CODE
+    #if defined(__clang__)
+      #pragma clang diagnostic pop
+    #elif defined(__GNUC__)
+      #pragma GCC diagnostic pop
+    #elif defined(__INTEL_COMPILER)
+      #pragma warning( pop )
+    #endif
+
     //! Constructor
     explicit
       Carrier( const TransporterProxy& transporter,
@@ -88,6 +145,13 @@ class Carrier : public CBase_Carrier {
       MeshNodeMerger = CkReduction::addReducer( mergeMeshNodes< std::size_t > );
     }
 
+    //! \brief Starts collecting global mesh node IDs bordering the mesh chunk
+    //!   held by fellow Carrier chares associated to their chare IDs
+    void comm();
+
+    //! \brief Reduction target finishing collecting global mesh node IDs
+    //!   bordering the mesh chunk held by fellow Carrier chares associated to
+    //!   their chare IDs
     void msum( CkReductionMsg* msg );
 
     //! Initialize mesh IDs, element connectivity, coordinates
@@ -142,9 +206,25 @@ class Carrier : public CBase_Carrier {
     void doWriteParticles();
 
     //! Finish summing antidiffusive element contributions on chare-boundaries
-    void sumaec( int fromch,
-                 const std::vector< std::size_t >& gid,
-                 const std::vector< std::vector< tk::real > >& P );
+    void finishaec( int fromch,
+                    const std::vector< std::size_t >& gid,
+                    const std::vector< std::vector< tk::real > >& P );
+
+    //! \brief Acknowledge received antidiffusive element contributions on
+    //!   chare-boundaries
+    void recaec();
+
+    //! Finish computing the allowed solution values on chare-boundaries
+    void finishallowed( int fromch,
+                        const std::vector< std::size_t >& gid,
+                        const std::vector< std::vector< tk::real > >& A );
+
+    //! \brief Acknowledge received allowed solution increments and decrements
+    //!   on chare-boundaries
+    void recallowed();
+
+    //! Perform limiting as the final step of flux-corrected transport (FCT)
+    void limit();
 
     ///@{
     //! \brief Pack/Unpack serialize member function
@@ -157,6 +237,8 @@ class Carrier : public CBase_Carrier {
       p | m_stage;
       p | m_nhsol;
       p | m_nlsol;
+      p | m_naec;
+      p | m_nalw;
       p | m_nchpar;
       p | m_ncarr;
       p | m_outFilename;
@@ -181,6 +263,7 @@ class Carrier : public CBase_Carrier {
       p | m_uln;
       p | m_up;
       p | m_p;
+      p | m_q;
       p | m_lhsd;
       p | m_lhso;
       p | m_particles;
@@ -198,18 +281,36 @@ class Carrier : public CBase_Carrier {
   private:
     using ncomp_t = kw::ncomp::info::expect::type;
 
-    uint64_t m_it;                       //!< Iteration count
-    uint64_t m_itf;                      //!< Field output iteration count
-    tk::real m_t;                        //!< Physical time
-    uint8_t m_stage;                     //!< Stage in multi-stage time stepping
-    std::size_t m_nhsol;      //!< Counter for high order solution nodes updated
-    std::size_t m_nlsol;      //!< Counter for low order solution nodes updated
-    std::size_t m_nchpar;                //!< Numbr of chares recvd partcls from
-    std::size_t m_ncarr;                 //!< Total number of carrier chares
-    std::string m_outFilename;           //!< Output filename
-    TransporterProxy m_transporter;      //!< Transporter proxy
-    LinSysMergerProxy m_linsysmerger;    //!< Linear system merger proxy
-    ParticleWriterProxy m_particlewriter;//!< Particle writer proxy
+    //! Iteration count
+    uint64_t m_it;
+    //! Field output iteration count
+    uint64_t m_itf;
+    //! Physical time
+    tk::real m_t;
+    //! Stage in multi-stage time stepping
+    uint8_t m_stage;
+    //! Counter for high order solution nodes updated
+    std::size_t m_nhsol;
+    //! Counter for low order solution nodes updated
+    std::size_t m_nlsol;
+    //! \brief Number of chares received our anitdiffusive element contributions
+    //!   on chare boundaries
+    std::size_t m_naec;
+    //! \brief Number of chares received our allowed solution increments and
+    //!   decrements element contributions on chare boundaries
+    std::size_t m_nalw;
+    //! Number of chares we received particles from
+    std::size_t m_nchpar;
+    //! Total number of carrier chares
+    std::size_t m_ncarr;
+    //! Output filename
+    std::string m_outFilename;
+    //! Transporter proxy
+    TransporterProxy m_transporter;
+    //! Linear system merger proxy
+    LinSysMergerProxy m_linsysmerger;
+    //! Particle writer proxy
+    ParticleWriterProxy m_particlewriter;
     //! \brief Map associating old node IDs (as in file) to new node IDs (as in
     //!   producing contiguous-row-id linear system contributions)
     std::unordered_map< std::size_t, std::size_t > m_cid;
@@ -234,7 +335,7 @@ class Carrier : public CBase_Carrier {
     std::pair< std::vector< std::size_t >, std::vector< std::size_t > >
       m_esupel;
     //! Unknown/solution vectors: global mesh point row ids and values
-    tk::MeshNodes m_uh, m_ul, m_uhf, m_ulf, m_uhn, m_uln, m_up, m_p;
+    tk::MeshNodes m_uh, m_ul, m_uhf, m_ulf, m_uhn, m_uln, m_up, m_p, m_q;
     //! Sparse matrix sotring the diagonals and off-diagonals of nonzeros
     tk::MeshNodes m_lhsd, m_lhso;
     //! Particle properties
@@ -266,10 +367,10 @@ class Carrier : public CBase_Carrier {
     //! Read coordinates of mesh nodes given
     void readCoords();
 
-    //! Compute left-hand side matrix of PDE
+    //! Compute left-hand side of transport equations
     void lhs();
 
-    //! Compute righ-hand side vector of PDE
+    //! Compute righ-hand side vector of transport equations
     void rhs( tk::real mult,
               tk::real dt,
               const tk::MeshNodes& sol,
@@ -312,6 +413,9 @@ class Carrier : public CBase_Carrier {
 
     //! Compute and sum antidiffusive element contributions to mesh nodes
     void aec( const tk::MeshNodes& Un, const tk::MeshNodes& Uh );
+
+    //! Compute the allowed solution values at mesh nodes
+    void allowed( const tk::MeshNodes& Ul, const tk::MeshNodes& Un );
 };
 
 } // inciter::

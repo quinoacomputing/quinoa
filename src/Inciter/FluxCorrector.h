@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/FluxCorrector.h
   \author    J. Bakosi
-  \date      Fri 02 Sep 2016 09:56:07 AM MDT
+  \date      Thu 08 Sep 2016 07:27:39 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     FluxCorrector performs limiting for transport equations
   \details   FluxCorrector performs limiting for transport equations. There is a
@@ -21,8 +21,11 @@
 
 #include "Keywords.h"
 #include "MeshNodes.h"
+#include "Inciter/InputDeck/InputDeck.h"
 
 namespace inciter {
+
+extern ctr::InputDeck g_inputdeck;
 
 //! FluxCorrector Charm++ chare array used to perform flux-corrected transport
 //! \see Löhner, R., Morgan, K., Peraire, J. and Vahdati, M. (1987), Finite
@@ -33,32 +36,44 @@ class FluxCorrector {
 
   public:
     //! Constructor
-    explicit FluxCorrector(
-      std::pair< std::vector< std::size_t >,
-                 std::vector< std::size_t > >&& esup = {} );
-
-    //! Const-ref accessor to elements surrounding points
-    const std::pair< std::vector< std::size_t >,
-                     std::vector< std::size_t > >& esup() const
-    { return m_esup; }
+    //! \param[in] is Size of the mesh element connectivity vector (inpoel size)
+    explicit FluxCorrector( std::size_t is = 0 ) :
+      m_aec( is, g_inputdeck.get< tag::component >().nprop() ) {}
 
     //! Compute antidiffusive element contributions (AEC)
     tk::MeshNodes
     aec( const std::array< std::vector< tk::real >, 3 >& coord,
          const std::vector< std::size_t >& inpoel,
-         const tk::MeshNodes& u,
-         const tk::MeshNodes& uh );
+         const tk::MeshNodes& Un,
+         const tk::MeshNodes& Uh );
 
-    //! Compute mass diffusion to be added to the low order solution rhs
-    std::pair< tk::MeshNodes, tk::MeshNodes >
-    low( const std::array< std::vector< tk::real >, 3 >& coord,
-         const std::vector< std::size_t >& inpoel,
-         const tk::MeshNodes& Un );
+    //! Compute lumped mass matrix lhs for low order system
+    tk::MeshNodes
+    lump( const std::array< std::vector< tk::real >, 3 >& coord,
+          const std::vector< std::size_t >& inpoel ) const;
+
+    //! Compute mass diffusion contribution to the rhs of the low order system
+    tk::MeshNodes
+    diff( const std::array< std::vector< tk::real >, 3 >& coord,
+          const std::vector< std::size_t >& inpoel,
+          const tk::MeshNodes& Un ) const;
+
+    //! Compute the allowed solution increments and decrements at mesh nodes
+    tk::MeshNodes
+    allowed( const std::vector< std::size_t >& inpoel,
+             const tk::MeshNodes& Un,
+             const tk::MeshNodes& Ul ) const;
+
+    //! Perform limiting
+    void limit( const std::vector< std::size_t >& inpoel,
+                const tk::MeshNodes& P,
+                tk::MeshNodes& Q,
+                tk::MeshNodes& U ) const;
 
     ///@{
     //! \brief Pack/Unpack serialize member function
     void pup( PUP::er& p ) {
-      p | m_esup;
+      p | m_aec;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -70,9 +85,9 @@ class FluxCorrector {
   private:
     using ncomp_t = kw::ncomp::info::expect::type;
 
-    //! Elements surrounding points of the mesh chunk we operate on
-    std::pair< std::vector< std::size_t >,
-               std::vector< std::size_t > > m_esup;
+   //! Antidiffusive element contributions for all scalar components
+   tk::MeshNodes m_aec;
+
 };
 
 } // inciter::

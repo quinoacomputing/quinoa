@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Transporter.C
   \author    J. Bakosi
-  \date      Tue 06 Sep 2016 10:53:43 AM MDT
+  \date      Fri 09 Sep 2016 08:39:58 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Transporter drives the time integration of transport equations
   \details   Transporter drives the time integration of transport equations.
@@ -104,6 +104,7 @@ Transporter::Transporter() :
   if ( nstep != 0 && term > t0 && dt < term-t0 ) {
 
     // Enable SDAG waits
+    wait4setup();
     wait4init();
     wait4parcom();
     wait4npar();
@@ -333,7 +334,7 @@ Transporter::doverifybc( CkReductionMsg* msg )
 
   m_print.diag( "Boundary conditions verified" );
 
-  m_linsysmerger.ver_complete(); m_linsysmerger.ver_complete();
+  m_linsysmerger.vercomplete();
 }
 
 void
