@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Transporter.h
   \author    J. Bakosi
-  \date      Tue 06 Sep 2016 10:53:33 AM MDT
+  \date      Fri 09 Sep 2016 02:23:58 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Transporter drives the time integration of transport equations
   \details   Transporter drives the time integration of transport equations.
@@ -18,11 +18,11 @@
     asynchronous algorithm implemented in this class The detailed discussion of
     the algorithm is given in the Charm++ interface file transporter.ci, which
     also repeats the graph below using ASCII graphics. On the DAG orange
-    fills denote global synchronization points, orange frames with white fill
-    are partial synchronization points that overlap with other tasks, and dashed
-    lines are potential shortcuts that allow jumping over some of the task-graph
-    under some circumstances or optional code paths (taken, e.g., only in DEBUG
-    mode). See the detailed discussion in transporter.ci.
+    fills denote global synchronization points that contain or eventually lead
+    to global reductions. Dashed lines are potential shortcuts that allow
+    jumping over some of the task-graph under some circumstances or optional
+    code paths (taken, e.g., only in DEBUG mode). See the detailed discussion in
+    transporter.ci.
     \dot
     digraph "Transporter SDAG" {
       rankdir="LR";
@@ -33,11 +33,14 @@
       Msum [ label="Msum"
               tooltip="mesh surrounding mesh data structure computed"
               URL="\ref inciter::Carrier::msum"];
-      Init [ label="Init" color="#e6851c"
+      Setup [ label="Setup"
+              tooltip="inciter::Carrier::setup"
+              URL="\ref inciter::Carrier::setup"];
+      Init [ label="Init"
               tooltip="inciter::Carrier::init"
-              URL="\ref inciter::Transporter::report"];
+              URL="\ref inciter::Carrier::init"];
       Row -> Init [ style="solid" ];
-      Msum -> Init [ style="solid" ];
+      Msum -> Setup [ style="solid" ];
 
       ParCom [ label="ParCom"
               tooltip="particle communication among Carrier chares"
@@ -51,7 +54,7 @@
       Out [ label="Out"
               tooltip="particles output to file"
               URL="\ref inciter::Carrier::doWriteParticles"];
-      Eval [ label="Eval" color="#e6851c"
+      Eval [ label="Eval"
               tooltip="evaluate time at the end of the time step"
               URL="\ref inciter::Transporter::evaluateTime"];
       ParCom -> Npar [ style="solid" ];
@@ -104,7 +107,7 @@ class Transporter : public CBase_Transporter {
     #if defined(__clang__)
       #pragma clang diagnostic pop
     #elif defined(__GNUC__)
-    #pragma GCC diagnostic pop
+      #pragma GCC diagnostic pop
     #elif defined(__INTEL_COMPILER)
       #pragma warning( pop )
     #endif
@@ -135,15 +138,15 @@ class Transporter : public CBase_Transporter {
     //!   communication cost of merging the linear system
     void stdCost( tk::real c );
 
+    //! \brief Reduction target indicating ...
+    void msumcomplete() { msum_complete(); }
+
     //! Reduction target indicating that all chare groups are ready for workers
-    void setup() { m_carrier.setup(); }
+    void setup() { m_carrier.comm(); }
 
     //! \brief Reduction target indicating that all linear system merger
     //!   branches have done their part of storing and exporting global row ids
     void rowcomplete();
-
-    //! \brief Reduction target indicating ...
-    void msumcomplete() { msum_complete(); }
 
     //! Reduction target initiating verification of the boundary conditions set
     void verifybc( CkReductionMsg* msg );
@@ -155,12 +158,16 @@ class Transporter : public CBase_Transporter {
     //!   finished their initialization step
     void initcomplete();
 
+    //! Reduction target indicating the particle communication is complete
+    void parcomcomplete() { parcom_complete(); }
+
     //! \brief Reduction target indicating that all workers have sent their
     //!   number of particles to be output
     void nparcomplete() { npar_complete(); }
 
-    //! Reduction target indicating the particle communication is complete
-    void parcomcomplete() { parcom_complete(); }
+    //! \brief Reduction target indicating that all workers have finished
+    //!    computing their prerequsities to perform FCT
+    void limit() { m_carrier.limit(); }
 
     //! \brief Reduction target optionally collecting diagnostics, e.g.,
     //!   residuals, from all Carrier chares

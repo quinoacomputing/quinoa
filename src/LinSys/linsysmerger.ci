@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/linsysmerger.ci
   \author    J. Bakosi
-  \date      Fri 02 Sep 2016 03:23:29 PM MDT
+  \date      Fri 09 Sep 2016 03:14:48 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ module interface file for merging a linear system
   \details   Charm++ module interface file for merging a linear system
@@ -48,6 +48,7 @@ module linsysmerger {
       entry void charebcval( const std::unordered_map< std::size_t,
                             std::vector< std::pair< bool, tk::real > > >& bcv );
       entry [reductiontarget] void bcval( CkReductionMsg* msg );
+      entry void vercomplete();
       entry void addsol( int fromch,
                          const std::map< std::size_t,
                                          std::vector< tk::real > >& sol );
@@ -75,88 +76,86 @@ module linsysmerger {
       // Directed Acyclic Graph (DAG):
       // -----------------------------
       //
-      //                  -- ChSol -- HypreSol -- FillSol -- AsmSol --
-      //                 /                      /                     \
-      //   ChRow --- Ver --- ChLhs -- HypreLhs -- FillLhs -- AsmLhs -- Sol - Upd
-      //             /| \            /          |   /                  /
-      //            / |  \          |           |---                  /
-      //           /  |   \         |           |                    /
-      //   ChBCs --   |    - ChRhs -- HypreRhs -- FillRhs -- AsmRhs -
-      //              |             |/          /     /
-      //              |-- HypreRow ------------------
-      //              |             |
-      //              |-- VerRow    |
-      //              \            /
-      //               -- VerBCs --
+      // See src/LinSys/LinSysMerger.h.
       //
-      // DAG legend:
-      //   ChRow - Chares contribute their global row (mesh node) IDs
-      //   ChBCs - Chares offer their global node IDs at which they can set BCs
-      //   ChSol - Chares contribute their solution vector nonzeros
-      //   ChLhs - Chares contribute their left hand side matrix nonzeros
-      //   ChRhs - Chares contribute their right hand side vector nonzeros
-      //   Ver - Start optional verifications and HypreRow (see below)
-      //   VerRow - Optional verification ensuring consistent row IDs
-      //   VerBCs - Optional verification ensuring consistent BC node IDs
-      //   HypreRow - Convert global row ID vector to Hypre format
-      //   HypreSol - Convert solution vector to Hypre format
-      //   HypreLhs - Convert left hand side matrix to Hypre format
-      //   HypreSol - Convert right hand side vector to Hypre format
-      //   FillSol - Fill/set solution vector
-      //   FillLhs - Fill/set left hand side matrix
-      //   FillRhs - Fill/set right hand side vector
-      //   AsmSol - Assemble solution vector
-      //   AsmLhs - Assemble left hand side matrix
-      //   AsmRhs - Assemble right hand side vector
-      //   Sol - Solve linear system
-      //   Upd - Update solution vector (propagate new solution back to workers)
-      //
-      // Interpretation of the above DAG
-      // -------------------------------
+      // Interpretation of the DAG in src/LinSys/LinSysMerger.h
+      // ------------------------------------------------------
       // Control flow is from left to right and top to bottom.
       //
       // We start out with all worker chares contributing their porition of the
       // global row IDs that each work on. This is labelled ChRow. The worker
       // chares also contribute, in parallel, their portion of the global node
       // ID lists at which they can set boundary conditions, labelled, ChBCs.
-      // Once both row IDs and BC node lists are received on LinSysMerger, the
-      // row IDs start being converted to a flat data structure understood by
-      // hypre, labelled HypreRow.
+      // Once both row IDs and BC node lists are received on LinSysMerger, we do
+      // a global reduction to Transport::rowcomplete() spawns two broadcasts:
+      // (1) to LinSysMerger::rowsreceived(), and (2) to worker::setup().
       //
-      // The Ver partial synchronization point, besides HypreRow, also triggers
-      // two code paths verifying the received BCs as well as the row IDs. Both
-      // of these verification code paths only happen in DEBUG mode and skipped
-      // in RELEASE (optimized) mode. While VerRow is simply an Assert in
-      // rowsreceived(), VerBCs involves multiple steps of communication via
-      // multiple functions calls across three classes, LinSysMerger, host, and
-      // worker. While the VerBCs optional code path only happens in DEBUG mode,
-      // the code path does block on HypreLhs as well as on HypreRhs, which
-      // cannot proceed until VerBCs is finished. This is facilitated by
-      // 'ver_complete' which is true by default, set in the constructor only in
-      // RELEASE mode; in DEBUG mode it must be triggered by host::doverifybc(),
-      // which is the last step of verifying the BCs.
-      //
-      // Once the row IDs are contributed, we then continue by all worker chares
-      // contributing their portion of the solution (unknown) vector, the
-      // nonzero values of the left hand side matrix, and the right hand side
-      // vector to those Linear System Merger group branch (one per CPU) they
-      // happened to reside on. These steps are denoted by ChSol, ChLhs, and
-      // ChRhs in the graph above, performed by the member functions charesol(),
-      // charelhs(), and charerhs(), respectively.
+      // The member function tk::LinSysMerger::rowsreceived(), labeled Ver in
+      // the task-graph, triggers and performs a number tasks: (1) Verification
+      /// that ensures consistent global row IDs, labeled VerRow. This step only
+      // happens in DEBUG mode: VerRow is simply an Assert in member function
+      // rowsreceived). (2) Verification of the boundary contitions to be set
+      // that they match those set by the user, labeled VerBCs. While this step
+      // only happens in DEBUG mode, it involves multiple steps of communication
+      // via multiple functions calls across three classes, LinSysMerger, host,
+      // and worker. Note that this also involves multiple global reductions to
+      // host originating from both the worker chares as well as from the
+      // LinSysMerger group. Thus VerBCs is a global synchronization point and
+      // thus colored and filled on the task-graph. The VerBCs code-path
+      // culminates in tk::LinSysMerger::ver_complete(). Note both high and low
+      // order solution updates, labeled HighUpd and LowUpd, respectively,
+      // depend on ver_complete(). While this is is not strictly necessary from
+      // the correctness viewpoint, these dependencies are used to prevent the
+      // runtime system prematurely scheduling other reductions that these
+      // updates trigger in the worker chares, e.g., as a result of
+      // inciter::Carrier::aec() and inciter::Carrier::allowed(). As to why it
+      // is a problem to have multiple reductions in flight directed towards the
+      // same host objects see the discussion at
+      // https://lists.cs.illinois.edu/lists/arc/charm/2016-07/msg00033.html.
+      // (3) The third task tk::LinSysMerger::rowsreceived() initiates is
+      // labeled QueryBCVal. This initiates querying boundary condition values
+      // from worker chares. This step culminates is triggering the SDAG signals
+      // bcval_complete(), which is a prerequisite for setting boundary
+      // conditions on both left and right hand sides of both the low and the
+      // high order system. (4) The final step tk::LinSysMerger::rowsreceived()
+      // initiates is building Hypre data from the global row indices received,
+      // labeled HypreRow.
+
+      // Once the row IDs are contributed, tk::Transporter::rowcomplete(), not
+      // only spaws tk::LinSysMerger::rowsreceived() but also issues a broadcast
+      // to the worker chares to start initializing their system. This is
+      // started with a call to the worker's init() member function. The tasks
+      // include setting initial conditions, sending unknown/solution vectors
+      // for assembly to LinSysMerger, start computing the left and right hand
+      // sides for both the high and low order systems, and sending all this for
+      // linear system assembly. All worker chares contribute their portion of
+      // the solution (unknown) vector, the nonzero values of the left hand side
+      // matrix their portion of the diagonal lumped mass matrix, the right hand
+      // side vector for the high order system, as well as for the mass
+      // diffusion term that is added to the high order system to create the low
+      // order system in conjunction with the lumped mass matrix. The
+      // contribution goes to those Linear System Merger group branch (one per
+      // CPU) the workers happen to reside on. These steps are denoted by ChSol,
+      // ChLhs, and ChRhs in the graph above, and the contributions/assembly is
+      // performed by the member functions charesol(), charelhs(), and
+      // charerhs(), respectively.
       //
       // Once each of the tasks, ChSol, ChLhs, ChRhs, (not all at the same time
       // but separately) are done, we continue by converting these data
       // structures to a format that Hypre expects, done in hypresol(),
       // hyprelhs(), and hyprerhs(), denoted by similars labels in the graph.
       // These functions basically flatten the C++ data structures to C-style
-      // arrays and linked arrays (for the matrix).
+      // arrays and linked arrays (for the matrix). Note that the left and right
+      // hand sides can only begin to be converted to Hypre data format if the
+      // boundary conditions have also been applied on each. These are labeled
+      // LhsBC, RhsBC, and LumpBC and computed after QueryBCVal has finished.
       //
       // Once the tasks, HypreSol, HypreLhs, HypreRhs, (not all at the same time
-      // but separately) are done and the hypre data structure for the row IDs
+      // but separately) are done and the Hypre data structure for the row IDs
       // are complete, we continue by assigning the flattened data structures
-      // (more precisely, their pointers) to the Hypre vectors and matrix. These
-      // are denoted FillSol, FillLhs, and FillRhs in the DAG and correspond to
-      // the functions sol(), lhs(), and rhs().
+      // (more precisely, their pointers) to the Hypre vectors and Hypre matrix.
+      // These are denoted FillSol, FillLhs, and FillRhs in the DAG and
+      // correspond to the member functions sol(), lhs(), and rhs().
       //
       // Once the tasks, FillSol, FillLhs, FIllRhs, (not all at the same time,
       // but separately) are, we continue by calling the Hypre "assembly"
@@ -166,13 +165,33 @@ module linsysmerger {
       // assemblelhs(), and assemblerhs(), respectively.
       //
       // Once the assembly of the solution (unknown) vector, the left hand side
-      // matrix, and the right hand side vector are all done (on a CPU), we call
-      // the solve() member function which solves the linear system calling
-      // Hypre and also updates the solution, i.e., propagates the new solution
-      // back to the worker chares.
+      // matrix, and the right hand side vector are all done (on a CPU), labels
+      // AsmSol, AsmLhs, AsmRhs, respectively, we call the solve() member
+      // function which solves the high order linear system by calling Hypre and
+      // also updates the high order solution, i.e., propagates the new solution
+      // back to the worker chares, labeled HighUpd.
       //
-      // Note that Sol and Upd are both partial synchronization points, since
-      // they can happen at different times on different CPUs.
+      // The low order solution is performed once the high order right hand side
+      // vector, the solution/unknown vector, the mass diffusion term (to added
+      // to the right hand side), the lumped mass matrix are all complete. This
+      // is a simple back-substitution, since the system is diagonal.
+      //
+      // Note that propagating the new hight and low order solutions only happen
+      // if not only the solutions are finished, but alse when the optional
+      // verification step is completed. As discussed above this is required so
+      // that we don't end up with multiple reductions in flight at the same. If
+      // these were not in place, the strict ordering of each CPU contributing
+      // to multiple reductions could not be guaranteed. See also the discussion
+      // on the charm email list linked above.
+      //
+      // A word on multiple invokation of SDAG triggers: As the commit message
+      // of b79ea29 explains, the "triggers", such as lhs_complete(), enumerated
+      // below, at threir call site should be thought of as messages being put
+      // in some message queue and consumed at when clauses wherever they
+      // appear. If they appear in multiple when clauses, they consume multple
+      // message, thus they have to be triggered multiple times. See also the
+      // commit message of b79ea29 and
+      // https://lists.cs.illinois.edu/lists/arc/charm/2016-09/msg00002.html.
 
       entry void wait4row() {
         when row_complete(), bc_complete() serial "row" {
@@ -182,18 +201,17 @@ module linsysmerger {
         when lhs_complete(), bcval_complete() serial "lhsbc" { lhsbc(); } };
       entry void wait4rhsbc() {
         when rhs_complete(), bcval_complete() serial "rhsbc" { rhsbc(); } };
+      entry void wait4lumpbc() {
+        when lump_complete(), bcval_complete() serial "lumpbc" { lumpbc(); } };
 
       entry void wait4sol() {
         when sol_complete() serial "hypresol" { hypresol(); } };
       entry void wait4lhs() {
-        when lhs_complete(), lhsbc_complete(), ver_complete() serial "hyprelhs"{
+        when lhs_complete(), lhsbc_complete() serial "hyprelhs" {
           hyprelhs(); } };
       entry void wait4rhs() {
-        when rhs_complete(), rhsbc_complete(), ver_complete() serial "hyprerhs"{
+        when rhs_complete(), rhsbc_complete() serial "hyprerhs" {
           hyprerhs(); } };
-      entry void wait4loworder() {
-        when rhs_complete(), sol_complete(), diff_complete(), lump_complete()
-        serial "lowsolve" { lowsolve(); } };
 
       entry void wait4hypresol() {
         when hypresol_complete(), hyprerow_complete() serial "sol" { sol(); } };
@@ -210,15 +228,25 @@ module linsysmerger {
         when fillrhs_complete() serial "asmrhs" { assemblerhs(); } };
 
       entry void wait4asm() {
-        when asmsol_complete(), asmlhs_complete(), asmrhs_complete(),
-             lowsolve_complete()
-        serial "solve" { solve(); } };
+        when asmsol_complete(), asmlhs_complete(), asmrhs_complete()
+          serial "solve" { solve(); } };
+      entry void wait4loworder() {
+        when rhs_complete(), sol_complete(), diff_complete(), lumpbc_complete()
+          serial "lowsolve" { lowsolve(); } };
+
+      entry void wait4solve() {
+        when solve_complete(), ver_complete() serial "updatehigh" {
+          updateHighSol(); } };
+      entry void wait4lowsolve() {
+        when lowsolve_complete(), ver_complete() serial "updatelow" {
+          updateLowSol(); } };
 
       entry void row_complete();
       entry void bc_complete();
       entry void bcval_complete();
       entry void lhsbc_complete();
       entry void rhsbc_complete();
+      entry void lumpbc_complete();
       entry void ver_complete();
       entry void hyprerow_complete();
       entry void lhs_complete();
@@ -235,6 +263,7 @@ module linsysmerger {
       entry void asmlhs_complete();
       entry void asmrhs_complete();
       entry void asmsol_complete();
+      entry void solve_complete();
       entry void lowsolve_complete();
     };
 

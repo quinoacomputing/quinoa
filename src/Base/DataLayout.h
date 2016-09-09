@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/DataLayout.h
   \author    J. Bakosi
-  \date      Wed 31 Aug 2016 12:41:18 PM MDT
+  \date      Wed 07 Sep 2016 07:32:35 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Generic data access abstraction for different data layouts
   \details   Generic data access abstraction for different data layouts. See
@@ -563,7 +563,6 @@ DataLayout< Layout > max( const DataLayout< Layout >& a,
                   []( tk::real s, tk::real d ){ return std::max(s,d); } );
   return r;
 }
-
 
 } // tk::
 
