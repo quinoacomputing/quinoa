@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Function used to add a regression test to the ctest test suite
-# \date      Fri 06 May 2016 06:44:21 AM MDT
+# \date      Mon 12 Sep 2016 08:55:27 AM MDT
 #
 ################################################################################
 
@@ -31,8 +31,9 @@
 # Mandatory arguments:
 # --------------------
 #
-# <test_name> - Name of the test. Note that "_PEs{NUMPES}" will be appended to
-# the name. See also argument NUMPES below.
+# <test_name> - Name of the test. Note that "<executable>" will be prefixed and
+#               "_PEs{NUMPES}" will be postfixed to the test name. See also
+#               argument NUMPES below.
 #
 # <executable> - Name of the executable to test.
 #
@@ -66,6 +67,9 @@
 # TEXT_DIFF_PROG_CONF ndiff.cfg - Textual diff program configuration file.
 # Default: "".
 #
+# TEXT_DIFF_PROG_ARGS arg1 arg2 ... - Textual diff program arguments.
+# Default: "".
+#
 # BIN_DIFF_PROG bindiff - Diff program used for binary diffs. Default: exodiff.
 #
 # BIN_BASELINE stat1.std stat2.std ... - Binary file(s) containing the known
@@ -96,7 +100,8 @@ function(ADD_REGRESSION_TEST test_name executable)
   set(oneValueArgs NUMPES TEXT_DIFF_PROG BIN_DIFF_PROG TEXT_DIFF_PROG_CONF
                    BIN_DIFF_PROG_CONF POSTPROCESS_PROG POSTPROCESS_PROG_OUTPUT)
   set(multiValueArgs INPUTFILES ARGS TEXT_BASELINE TEXT_RESULT BIN_BASELINE
-                     BIN_RESULT LABELS POSTPROCESS_PROG_ARGS)
+                     BIN_RESULT LABELS POSTPROCESS_PROG_ARGS
+                     TEXT_DIFF_PROG_ARGS)
   cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}"
                         ${ARGN})
 
@@ -131,8 +136,8 @@ function(ADD_REGRESSION_TEST test_name executable)
     set(BIN_DIFF_PROG ${ARG_BIN_DIFF_PROG})
   endif()
 
-  # Append NUMPES to test name
-  set(test_name "${test_name}_pe${NUMPES}")
+  # Prefix executable and append NUMPES to test name
+  set(test_name "${executable}:${test_name}_pe${NUMPES}")
 
   # Do sainity check on and prepare to pass as cmake script arguments the
   # filenames of text baseline(s) and text result(s)
@@ -171,6 +176,12 @@ function(ADD_REGRESSION_TEST test_name executable)
     # runner cmake script below
     string(REPLACE ";" " " ARG_POSTPROCESS_PROG_ARGS
            "${ARG_POSTPROCESS_PROG_ARGS}")
+  endif()
+
+  if(ARG_TEXT_DIFF_PROG_ARGS)
+    # Convert list to space-separated string for passing as arguments to test
+    # runner cmake script below
+    string(REPLACE ";" " " ARG_TEXT_DIFF_PROG_ARGS "${ARG_TEXT_DIFF_PROG_ARGS}")
   endif()
 
   # Construct and echo configuration for test being added
@@ -212,7 +223,7 @@ function(ADD_REGRESSION_TEST test_name executable)
            -DTEST_LABELS=${ARG_LABELS}
            -DNUMPES=${NUMPES}
            -DTEXT_DIFF_PROG=${TEXT_DIFF_PROG}
-           -DTEXT_DIFF_PROG_ARGS=
+           -DTEXT_DIFF_PROG_ARGS=${ARG_TEXT_DIFF_PROG_ARGS}
            -DTEXT_DIFF_PROG_CONF=${ARG_TEXT_DIFF_PROG_CONF}
            -DTEXT_BASELINE=${ARG_TEXT_BASELINE}
            -DTEXT_RESULT=${ARG_TEXT_RESULT}

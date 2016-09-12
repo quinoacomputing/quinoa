@@ -4,7 +4,7 @@
 # \author    J. Bakosi
 # \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
 # \brief     Regression test runner using the cmake scripting language
-# \date      Fri 06 May 2016 06:45:01 AM MDT
+# \date      Mon 12 Sep 2016 08:56:59 AM MDT
 #
 ################################################################################
 
@@ -101,7 +101,8 @@ else() # Test command ran successfully, attempt to do diffs
     math(EXPR b "0")
     foreach(baseline IN LISTS TEXT_BASELINE)
       list(GET TEXT_RESULT ${b} result)
-      set(text_diff_command ${TEXT_DIFF_PROG} -b -t ${TEST_NAME}
+      set(text_diff_command ${TEXT_DIFF_PROG} ${TEXT_DIFF_PROG_ARGS}
+                            -b -t ${TEST_NAME}
                             ${baseline} ${result} ${TEXT_DIFF_PROG_CONF})
       string(REPLACE ";" " " text_diff_command_string "${text_diff_command}")
       message("\nRunning text diff command: '${text_diff_command_string}'\n")
