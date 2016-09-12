@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/LinSysMerger.h
   \author    J. Bakosi
-  \date      Fri 09 Sep 2016 03:12:22 PM MDT
+  \date      Mon 12 Sep 2016 10:30:55 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ chare linear system merger group to solve a linear system
   \details   Charm++ chare linear system merger group used to collect and
@@ -73,9 +73,16 @@
       ChLhs [ label="ChLhs"
               tooltip="chares contribute their left hand side matrix nonzeros"
               URL="\ref tk::LinSysMerger::charelhs"];
+      ChLump [ label="ChLump"
+              tooltip="chares contribute their lumped mass left hand side matrix"
+              URL="\ref tk::LinSysMerger::charelump"];
       ChRhs [ label="ChRhs"
               tooltip="chares contribute their right hand side vector nonzeros"
               URL="\ref tk::LinSysMerger::charesol"];
+      ChDiff [ label="ChDiff"
+              tooltip="chares contribute their mass diffusion contribution to
+                       the right hand side vector"
+              URL="\ref tk::LinSysMerger::charediff"];
       HypreRow [ label="HypreRow"
               tooltip="convert global row ID vector to hypre format"
               URL="\ref tk::LinSysMerger::hyprerow"];
@@ -129,18 +136,26 @@
       QueryBCVal -> LhsBC [ style="solid" ];
       QueryBCVal -> RhsBC [ style="solid" ];
       QueryBCVal -> LumpBC [ style="solid" ];
+      ChLhs -> LhsBC [ style="solid" ];
+      ChRhs -> RhsBC [ style="solid" ];
+      ChLump -> LumpBC [ style="solid" ];
       LhsBC -> HypreLhs [ style="solid" ];
       RhsBC -> HypreRhs [ style="solid" ];
       LumpBC -> LowSolve [ style="solid" ];
+      ChRhs -> LowSolve [ style="solid" ];
+      ChSol -> LowSolve [ style="solid" ];
+      ChDiff -> LowSolve [ style="solid" ];
       Init -> ChSol [ style="solid" ];
       Init -> ChLhs [ style="solid" ];
+      Init -> ChLump [ style="solid" ];
       Init -> ChRhs [ style="solid" ];
+      Init -> ChDiff [ style="solid" ];
       HypreRow -> FillSol [ style="solid" ];
       HypreRow -> FillLhs [ style="solid" ];
       HypreRow -> FillRhs [ style="solid" ];
       ChSol -> HypreSol -> FillSol -> AsmSol -> Solve [ style="solid" ];
-      ChLhs -> HypreLhs -> FillLhs -> AsmLhs -> Solve [ style="solid" ];
-      ChRhs -> HypreRhs -> FillRhs -> AsmRhs -> Solve [ style="solid" ];
+      HypreLhs -> FillLhs -> AsmLhs -> Solve [ style="solid" ];
+      HypreRhs -> FillRhs -> AsmRhs -> Solve [ style="solid" ];
       Solve -> HighUpd [ style="solid" ];
       LowSolve -> LowUpd [ style="solid" ];
     }
@@ -502,7 +517,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       // Export non-owned matrix rows values to fellow branches that own them
       for (const auto& p : exp)
         Group::thisProxy[ p.first ].addlhs( fromch, p.second );
-      if (lhscomplete()) { lhs_complete(); lhs_complete(); }
+      if (lhscomplete()) lhs_complete();
     }
     //! Receive matrix nonzeros from fellow group branches
     //! \param[in] fromch Charm chare array index contribution coming from
@@ -518,7 +533,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
         auto& row = m_lhs[ r.first ];
         for (const auto& c : r.second) row[ c.first ] += c.second;
       }
-      if (lhscomplete()) { lhs_complete(); lhs_complete(); }
+      if (lhscomplete()) lhs_complete();
     }
 
     //! Chares contribute their rhs nonzero values
@@ -546,7 +561,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
         auto tope = static_cast< int >( p.first );
         Group::thisProxy[ tope ].addrhs( fromch, p.second );
       }
-      if (rhscomplete()) { rhs_complete(); rhs_complete(); rhs_complete(); }
+      if (rhscomplete()) { rhs_complete(); rhs_complete(); }
     }
     //! Receive+add right-hand side vector nonzeros from fellow group branches
     //! \param[in] fromch Charm chare array index contribution coming from
@@ -558,7 +573,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
         m_rhsimport[ fromch ].push_back( r.first );
         m_rhs[ r.first ] += r.second;
       }
-      if (rhscomplete()) { rhs_complete(); rhs_complete(); rhs_complete(); }
+      if (rhscomplete()) { rhs_complete(); rhs_complete(); }
     }
 
     //! Chares contribute their mass diffusion rhs to low order system
