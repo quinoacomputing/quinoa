@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/LinSysMerger.h
   \author    J. Bakosi
-  \date      Mon 12 Sep 2016 10:30:55 AM MDT
+  \date      Mon 12 Sep 2016 11:57:48 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ chare linear system merger group to solve a linear system
   \details   Charm++ chare linear system merger group used to collect and
@@ -1211,8 +1211,8 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
         std::vector< std::size_t > gid;
         std::vector< tk::real > sol;
         for (auto r : w.second) {
-          const auto it = m_lump.find( r );
-          if (it != end(m_lump)) {
+          const auto it = m_diff.find( r );
+          if (it != end(m_diff)) {
             gid.push_back( it->first );
             sol.insert( end(sol), begin(it->second), end(it->second) );
           } else
@@ -1252,18 +1252,18 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
               "solve low order system" );
       auto ir = m_rhs.cbegin();
       auto is = m_sol.cbegin();
-      auto id = m_diff.cbegin();
-      auto im = m_lump.begin();
+      auto id = m_diff.begin();
+      auto im = m_lump.cbegin();
       while (ir != m_rhs.cend()) {
         const auto& r = ir->second;
         const auto& s = is->second;
-        const auto& d = id->second;
-        auto& m = im->second;
+        const auto& m = im->second;
+        auto& d = id->second;
         Assert( r.size() == m_ncomp && s.size() == m_ncomp &&
-                d.size() == m_ncomp && m.size() == m_ncomp,
+                m.size() == m_ncomp && d.size() == m_ncomp,
                 "Wrong number of components in solving the low order system" );
-        for (std::size_t i=0; i<m_ncomp; ++i) m[i] = s[i] + (r[i]+d[i])/m[i];
-        ++ir; ++id; ++im; ++is;
+        for (std::size_t i=0; i<m_ncomp; ++i) d[i] = s[i] + (r[i]+d[i])/m[i];
+        ++ir; ++is; ++id; ++im;
       }
       lowsolve_complete();
     }

@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Carrier.C
   \author    J. Bakosi
-  \date      Fri 09 Sep 2016 08:46:39 AM MDT
+  \date      Mon 12 Sep 2016 11:59:19 AM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Carrier advances a system of transport equations
   \details   Carrier advances a system of transport equations. There are a
@@ -899,7 +899,7 @@ Carrier::track()
     contribute( CkCallback( CkReductionTarget( Transporter, parcomcomplete ),
                 m_transporter));
     return;
-  } 
+  }
 
   // Lambda to attempt to find and advance particle i in element e. Returns true
   // if the particle was found (and advanced), false if it was not found.
