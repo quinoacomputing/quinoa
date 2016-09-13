@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Carrier.h
   \author    J. Bakosi
-  \date      Fri 09 Sep 2016 02:35:37 PM MDT
+  \date      Mon 12 Sep 2016 02:49:39 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Carrier advances a system of transport equations
   \details   Carrier advances a system of transport equations. There are a
@@ -255,12 +255,12 @@ class Carrier : public CBase_Carrier {
       p | m_lid;
       p | m_coord;
       p | m_psup;
-      p | m_uh;
+      p | m_u;
       p | m_ul;
-      p | m_uhf;
+      p | m_uf;
       p | m_ulf;
-      p | m_uhn;
-      p | m_uln;
+      p | m_du;
+      p | m_dul;
       p | m_up;
       p | m_p;
       p | m_q;
@@ -335,7 +335,7 @@ class Carrier : public CBase_Carrier {
     std::pair< std::vector< std::size_t >, std::vector< std::size_t > >
       m_esupel;
     //! Unknown/solution vectors: global mesh point row ids and values
-    tk::MeshNodes m_uh, m_ul, m_uhf, m_ulf, m_uhn, m_uln, m_up, m_p, m_q;
+    tk::MeshNodes m_u, m_ul, m_uf, m_ulf, m_du, m_dul, m_up, m_p, m_q;
     //! Sparse matrix sotring the diagonals and off-diagonals of nonzeros
     tk::MeshNodes m_lhsd, m_lhso;
     //! Particle properties

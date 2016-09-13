@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/LinSysMerger.h
   \author    J. Bakosi
-  \date      Mon 12 Sep 2016 11:57:48 AM MDT
+  \date      Mon 12 Sep 2016 03:52:27 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ chare linear system merger group to solve a linear system
   \details   Charm++ chare linear system merger group used to collect and
@@ -143,7 +143,6 @@
       RhsBC -> HypreRhs [ style="solid" ];
       LumpBC -> LowSolve [ style="solid" ];
       ChRhs -> LowSolve [ style="solid" ];
-      ChSol -> LowSolve [ style="solid" ];
       ChDiff -> LowSolve [ style="solid" ];
       Init -> ChSol [ style="solid" ];
       Init -> ChLhs [ style="solid" ];
@@ -373,7 +372,6 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
       asmsol_complete();
       asmlhs_complete();
       ver_complete(); ver_complete();
-      sol_complete();
       lumpbc_complete();
       signal2host_advance( m_host );
       querybcval();
@@ -453,7 +451,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
         auto tope = static_cast< int >( p.first );
         Group::thisProxy[ tope ].addsol( fromch, p.second );
       }
-      if (solcomplete()) { sol_complete(); sol_complete(); }
+      if (solcomplete()) sol_complete();
     }
     //! Receive solution vector nonzeros from fellow group branches
     //! \param[in] fromch Charm chare array index contribution coming from
@@ -466,7 +464,7 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
         m_solimport[ fromch ].push_back( r.first );
         m_sol[ r.first ] = r.second;
       }
-      if (solcomplete()) { sol_complete(); sol_complete(); }
+      if (solcomplete()) sol_complete();
     }
 
     //! Chares contribute their matrix nonzero values
@@ -1229,10 +1227,6 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
               "Values of distributed right-hand-side vector on PE " +
               std::to_string( CkMyPe() ) + " is incomplete: cannot solve low "
               "order system" );
-      Assert( solcomplete(),
-              "Values of distributed solution vector on PE " +
-              std::to_string( CkMyPe() ) + " is incomplete: cannot solve low "
-              "order system" );
       Assert( diffcomplete(),
               "Values of distributed mass diffusion rhs vector on PE " +
               std::to_string( CkMyPe() ) + " is incomplete: cannot solve low "
@@ -1241,9 +1235,6 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
               "Values of distributed lumped mass lhs vector on PE " +
               std::to_string( CkMyPe() ) + " is incomplete: cannot solve low "
               "order system" );
-      Assert( keyEqual( m_rhs, m_sol ), "Row IDs of rhs and solution vector "
-              "unequal on PE " + std::to_string( CkMyPe() ) + ": cannot solve "
-               "low order system" );
       Assert( keyEqual( m_rhs, m_diff ), "Row IDs of rhs and mass diffusion "
               "rhs vector unequal on PE " + std::to_string( CkMyPe() ) + ": "
               "cannot solve low order system" );
@@ -1251,19 +1242,16 @@ class LinSysMerger : public CBase_LinSysMerger< HostProxy, WorkerProxy > {
               "vector unequal on PE " + std::to_string( CkMyPe() ) + ": cannot "
               "solve low order system" );
       auto ir = m_rhs.cbegin();
-      auto is = m_sol.cbegin();
       auto id = m_diff.begin();
       auto im = m_lump.cbegin();
       while (ir != m_rhs.cend()) {
         const auto& r = ir->second;
-        const auto& s = is->second;
         const auto& m = im->second;
         auto& d = id->second;
-        Assert( r.size() == m_ncomp && s.size() == m_ncomp &&
-                m.size() == m_ncomp && d.size() == m_ncomp,
+        Assert( r.size()==m_ncomp && m.size()==m_ncomp && d.size()==m_ncomp,
                 "Wrong number of components in solving the low order system" );
-        for (std::size_t i=0; i<m_ncomp; ++i) d[i] = s[i] + (r[i]+d[i])/m[i];
-        ++ir; ++is; ++id; ++im;
+        for (std::size_t i=0; i<m_ncomp; ++i) d[i] = (r[i]+d[i])/m[i];
+        ++ir; ++id; ++im;
       }
       lowsolve_complete();
     }

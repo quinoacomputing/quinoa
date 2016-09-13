@@ -158,7 +158,6 @@ class Transport {
     //! \param[in] coord Mesh node coordinates
     //! \param[in] inpoel Mesh element connectivity
     //! \param[in] U Solution vector at recent time step stage
-    //! \param[in] Un Solution vector at previous time step
     //! \param[in,out] R Right-hand side vector computed
     //! \author J. Bakosi
     void rhs( tk::real mult,
@@ -166,13 +165,10 @@ class Transport {
               const std::array< std::vector< tk::real >, 3 >& coord,
               const std::vector< std::size_t >& inpoel,
               const tk::MeshNodes& U,
-              const tk::MeshNodes& Un,
               tk::MeshNodes& R ) const
     {
       Assert( U.nunk() == coord[0].size(), "Number of unknowns in solution "
               "vector at recent time step incorrect" );
-      Assert( Un.nunk() == coord[0].size(), "Number of unknowns in solution "
-              "vector at previous time step incorrect" );
       Assert( R.nunk() == coord[0].size(), "Number of unknowns in right-hand "
               "side vector incorrect" );
 
@@ -213,9 +209,6 @@ class Transport {
         for (std::size_t i=0; i<3; ++i)
           grad[0][i] = -grad[1][i]-grad[2][i]-grad[3][i];
 
-        // access solution at element nodes at time n
-        std::vector< std::array< tk::real, 4 > > u( m_ncomp );
-        for (ncomp_t c=0; c<m_ncomp; ++c) u[c] = Un.extract( c, m_offset, N );
         // access solution at element nodes at recent time step stage
         std::vector< std::array< tk::real, 4 > > s( m_ncomp );
         for (ncomp_t c=0; c<m_ncomp; ++c) s[c] = U.extract( c, m_offset, N );
@@ -227,12 +220,6 @@ class Transport {
         const auto vel =
           Problem::template
             prescribedVelocity< tag::transport >( N, coord, m_c, m_ncomp );
-
-        // add mass contribution to right hand side
-        for (ncomp_t c=0; c<m_ncomp; ++c)
-          for (std::size_t i=0; i<4; ++i)
-            for (std::size_t j=0; j<4; ++j)
-              R.var(r[c],N[j]) += mass[j][i] * u[c][i];
 
         // add advection contribution to right hand side
         tk::real a = mult * dt;

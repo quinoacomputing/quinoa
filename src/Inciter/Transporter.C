@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Transporter.C
   \author    J. Bakosi
-  \date      Fri 09 Sep 2016 08:39:58 AM MDT
+  \date      Mon 12 Sep 2016 03:09:50 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Transporter drives the time integration of transport equations
   \details   Transporter drives the time integration of transport equations.
@@ -96,6 +96,8 @@ Transporter::Transporter() :
   m_print.item( "Start time", t0 );
   m_print.item( "Terminate time", term );
   m_print.item( "Initial time step size", dt );
+  m_print.item( "Mass diffusion coeff",
+                g_inputdeck.get< tag::discr, tag::ctau >() );
 
   // If the desired max number of time steps is larger than zero, and the
   // termination time is larger than the initial time, and the initial time step

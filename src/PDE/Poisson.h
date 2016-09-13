@@ -179,7 +179,6 @@ class Poisson {
     //! \param[in] coord Mesh node coordinates
     //! \param[in] inpoel Mesh element connectivity
     //! \param[in] U Solution vector at recent time step stage
-    //! \param[in] Un Solution vector at previous time step
     //! \param[in,out] R Right-hand side vector computed
     //! \author J. Bakosi
     void rhs( tk::real mult,
@@ -187,7 +186,6 @@ class Poisson {
               const std::array< std::vector< tk::real >, 3 >& coord,
               const std::vector< std::size_t >& inpoel,
               const tk::MeshNodes& U,
-              const tk::MeshNodes& Un,
               tk::MeshNodes& R ) const
     {
       IGNORE(mult);
@@ -195,12 +193,9 @@ class Poisson {
       IGNORE(coord);
       IGNORE(inpoel);
       IGNORE(U);
-      IGNORE(Un);
 
       Assert( U.nunk() == coord[0].size(), "Number of unknowns in solution "
               "vector at recent time step incorrect" );
-      Assert( Un.nunk() == coord[0].size(), "Number of unknowns in solution "
-              "vector at previous time step incorrect" );
       Assert( R.nunk() == coord[0].size(), "Number of unknowns in right-hand "
               "side vector incorrect" );
 
