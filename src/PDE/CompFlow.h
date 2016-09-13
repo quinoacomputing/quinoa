@@ -145,7 +145,6 @@ class CompFlow {
     //! \param[in] coord Mesh node coordinates
     //! \param[in] inpoel Mesh element connectivity
     //! \param[in] U Solution vector at recent time step stage
-    //! \param[in] Un Solution vector at previous time step
     //! \param[in,out] R Right-hand side vector computed
     //! \author J. Bakosi
     void rhs( tk::real mult,
@@ -153,13 +152,10 @@ class CompFlow {
               const std::array< std::vector< tk::real >, 3 >& coord,
               const std::vector< std::size_t >& inpoel,
               const tk::MeshNodes& U,
-              const tk::MeshNodes& Un,
               tk::MeshNodes& R ) const
     {
       Assert( U.nunk() == coord[0].size(), "Number of unknowns in solution "
               "vector at recent time step incorrect" );
-      Assert( Un.nunk() == coord[0].size(), "Number of unknowns in solution "
-              "vector at previous time step incorrect" );
       Assert( R.nunk() == coord[0].size(), "Number of unknowns in right-hand "
               "side vector incorrect" );
 
@@ -198,9 +194,6 @@ class CompFlow {
         for (std::size_t i=0; i<3; ++i)
           grad[0][i] = -grad[1][i]-grad[2][i]-grad[3][i];
 
-        // access solution at element nodes at time n
-        std::array< std::array< tk::real, 4 >, 5 > u;
-        for (ncomp_t c=0; c<5; ++c) u[c] = Un.extract( c, m_offset, N );
         // access solution at element nodes at recent time step stage
         std::array< std::array< tk::real, 4 >, 5 > s;
         for (ncomp_t c=0; c<5; ++c) s[c] = U.extract( c, m_offset, N );
@@ -222,12 +215,6 @@ class CompFlow {
           p[i] = (g-1.0)*(s[4][i] - (s[1][i]*s[1][i] +
                                      s[2][i]*s[2][i] +
                                      s[3][i]*s[3][i])/2.0/s[0][i]);
-
-        // mass contribution for rhs of all equations
-        for (ncomp_t c=0; c<5; ++c)
-          for (std::size_t j=0; j<4; ++j)
-            for (std::size_t k=0; k<4; ++k)
-              R.var(r[c],N[j]) += mass[k][j] * u[c][k];
 
         tk::real c = mult * dt * J/24.0;
         for (std::size_t i=0; i<3; ++i)

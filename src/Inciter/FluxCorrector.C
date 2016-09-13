@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/FluxCorrector.C
   \author    J. Bakosi
-  \date      Fri 09 Sep 2016 03:11:58 PM MDT
+  \date      Mon 12 Sep 2016 03:55:47 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     FluxCorrector performs limiting for transport equations
   \details   FluxCorrector performs limiting for transport equations. There is a
@@ -139,7 +139,7 @@ FluxCorrector::lump( const std::array< std::vector< tk::real >, 3 >& coord,
       ba{{ x[N[1]]-x[N[0]], y[N[1]]-y[N[0]], z[N[1]]-z[N[0]] }},
       ca{{ x[N[2]]-x[N[0]], y[N[2]]-y[N[0]], z[N[2]]-z[N[0]] }},
       da{{ x[N[3]]-x[N[0]], y[N[3]]-y[N[0]], z[N[3]]-z[N[0]] }};
-    const auto J = tk::triple( ba, ca, da );
+    const auto J = tk::triple( ba, ca, da ) * 5.0 / 120.0;
 
     // access pointer to lumped mass left hand side at element nodes
     std::vector< const tk::real* > l( ncomp );
@@ -148,7 +148,7 @@ FluxCorrector::lump( const std::array< std::vector< tk::real >, 3 >& coord,
     // scatter-add lumped mass element contributions to lhs nodes
     for (ncomp_t c=0; c<ncomp; ++c)
       for (std::size_t j=0; j<4; ++j)
-        L.var(l[c],N[j]) += 5.0*J/120.0;
+        L.var(l[c],N[j]) += J;
   }
 
   return L;

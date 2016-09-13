@@ -93,9 +93,8 @@ class PDE {
               const std::array< std::vector< tk::real >, 3 >& coord,
               const std::vector< std::size_t >& inpoel,
               const tk::MeshNodes& U,
-              const tk::MeshNodes& Un,
               tk::MeshNodes& R ) const
-    { self->rhs( mult, dt, coord, inpoel, U, Un, R ); }
+    { self->rhs( mult, dt, coord, inpoel, U, R ); }
 
     //! Public interface for extracting the velocity field at cell nodes
     std::vector< std::array< tk::real, 4 > >
@@ -152,7 +151,7 @@ class PDE {
       virtual void rhs( tk::real, tk::real,
                         const std::array< std::vector< tk::real >, 3 >&,
                         const std::vector< std::size_t >&,
-                        const tk::MeshNodes&, const tk::MeshNodes&,
+                        const tk::MeshNodes&,
                         tk::MeshNodes& ) const = 0;
       virtual bool anydirbc( int ) const = 0;
       virtual std::vector< std::array< tk::real, 4 > > velocity(
@@ -186,9 +185,8 @@ class PDE {
                 const std::array< std::vector< tk::real >, 3 >& coord,
                 const std::vector< std::size_t >& inpoel,
                 const tk::MeshNodes& U,
-                const tk::MeshNodes& Un,
                 tk::MeshNodes& R ) const override
-      { data.rhs( mult, dt, coord, inpoel, U, Un, R ); }
+      { data.rhs( mult, dt, coord, inpoel, U, R ); }
       std::vector< std::array< tk::real, 4 > > velocity(
         const tk::MeshNodes& U,
         const std::array< std::vector< tk::real >, 3 >& coord,

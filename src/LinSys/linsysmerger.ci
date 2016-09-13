@@ -2,7 +2,7 @@
 /*!
   \file      src/LinSys/linsysmerger.ci
   \author    J. Bakosi
-  \date      Mon 12 Sep 2016 10:30:18 AM MDT
+  \date      Mon 12 Sep 2016 03:53:45 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Charm++ module interface file for merging a linear system
   \details   Charm++ module interface file for merging a linear system
@@ -172,9 +172,9 @@ module linsysmerger {
       // back to the worker chares, labeled HighUpd.
       //
       // The low order solution is performed once the high order right hand side
-      // vector, the solution/unknown vector, the mass diffusion term (to added
-      // to the right hand side), the lumped mass matrix are all complete. This
-      // is a simple back-substitution, since the system is diagonal.
+      // vector, the mass diffusion term (to added to the right hand side), and
+      // the lumped mass matrix are all complete. This is a simple
+      // back-substitution, since the system is diagonal.
       //
       // Note that propagating the new hight and low order solutions only happen
       // if not only the solutions are finished, but alse when the optional
@@ -229,7 +229,7 @@ module linsysmerger {
         when asmsol_complete(), asmlhs_complete(), asmrhs_complete()
           serial "solve" { solve(); } };
       entry void wait4loworder() {
-        when rhs_complete(), sol_complete(), diff_complete(), lumpbc_complete()
+        when rhs_complete(), diff_complete(), lumpbc_complete()
           serial "lowsolve" { lowsolve(); } };
 
       entry void wait4solve() {
