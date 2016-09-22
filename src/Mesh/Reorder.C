@@ -162,7 +162,7 @@ global2local( const std::vector< std::size_t >& ginpoel )
   for (auto p : ginpoel) inpoel.push_back( tk::cref_find( lid, p ) );
 
   // Return element connectivty with local node IDs
-  return { inpoel, gid, lid };
+  return std::make_tuple( inpoel, gid, lid );
 }
 
 } // tk::
